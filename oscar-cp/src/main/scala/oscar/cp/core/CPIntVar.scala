@@ -21,6 +21,7 @@ import oscar.cp.constraints.InSet
 import oscar.cp.constraints.InSetReif
 import oscar.cp.constraints.ModuloLHS
 import scala.util.Random
+import oscar.cp.core.domains.SparseSetDomain
 
 trait DomainIterator extends Iterator[Int] {
   def removeValue: CPOutcome
@@ -747,6 +748,11 @@ object CPIntVar {
       case set: Set[Int] => setDomain(set, name, store)
       case iterable => iterableDomain(iterable, name, store)
     }
+  }
+  
+  def sparse(minValue: Int, maxValue: Int, name: String)(implicit store: CPStore): CPIntVar = {
+    val domain = new SparseSetDomain(store, minValue, maxValue)
+    new CPIntVarImpl(store, domain, name)
   }
 
   /**

@@ -49,7 +49,7 @@ class SparseSetDomain(override val context: ReversibleContext, val minValue: Int
   }
 
   override def hasValue(v: Int): Boolean = {
-    if (v < offset || v >= offset + indexes.size) false
+    if (v < offset || v >= offset + indexes.length) false
     else indexes(v - offset) < _size.value
   }
 
