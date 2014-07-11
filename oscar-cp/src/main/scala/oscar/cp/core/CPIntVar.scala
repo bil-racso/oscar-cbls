@@ -21,6 +21,7 @@ import oscar.cp.constraints.InSet
 import oscar.cp.constraints.InSetReif
 import oscar.cp.constraints.ModuloLHS
 import scala.util.Random
+import oscar.cp.core.domains.SparseSetDomain
 
 trait DomainIterator extends Iterator[Int] {
   def removeValue: CPOutcome
@@ -63,9 +64,15 @@ abstract class CPIntVar(override val store: CPStore, override val name: String =
   /**
    * @return the unique value in the domain, None if variable is not bound
    */
-  def value: Int = min
+  def value: Int = {
+    if (isBound) min
+    else throw new NoSuchElementException("the variable is not bound")
+  }
 
-  def getValue: Int = min
+  def getValue: Int = {
+    if (isBound) min
+    else throw new NoSuchElementException("the variable is not bound")
+  }
 
   /**
    * @param val
@@ -742,6 +749,13 @@ object CPIntVar {
       case iterable => iterableDomain(iterable, name, store)
     }
   }
+  
+  def sparse(minValue: Int, maxValue: Int, name: String)(implicit store: CPStore): CPIntVar = {
+    val domain = new SparseSetDomain(store, minValue, maxValue)
+    new CPIntVarImpl(store, domain, name)
+  }
+  
+  def sparse(minValue: Int, maxValue: Int)(implicit store: CPStore): CPIntVar = sparse(minValue, maxValue, "")(store)
 
   /**
    * Creates a new CP Integer Variable with an iterable as initial domain

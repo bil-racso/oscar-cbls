@@ -52,8 +52,6 @@ class CPBoolVar(val x: CPIntVar, name: String = "") extends CPIntVar(x.store, na
     x.iterator
   }
 
-  override def toString() = "BoolVar View on (" + x + ")";
-
   def callPropagateWhenBind(c: Constraint, trackDelta: Boolean = false) = x.callPropagateWhenBind(c)
 
   def callPropagateWhenBoundsChange(c: Constraint, trackDelta: Boolean = false) = x.callPropagateWhenBoundsChange(c, trackDelta)
@@ -156,6 +154,12 @@ class CPBoolVar(val x: CPIntVar, name: String = "") extends CPIntVar(x.store, na
     store.post(new oscar.cp.constraints.Not(this, not))
     not
     */
+  }
+  
+  override def toString: String = {
+    if (isTrue) "1"
+    else if (isFalse) "0"
+    else "{0,1}"
   }
 
   def implies(y: CPBoolVar) = {
