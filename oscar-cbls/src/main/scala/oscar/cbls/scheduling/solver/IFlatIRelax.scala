@@ -1,11 +1,8 @@
-package oscar.cbls.scheduling.algo
+package oscar.cbls.scheduling.solver
 
-import oscar.cbls.invariants.core.computation.Solution
-import oscar.cbls.invariants.core.computation.Store
-import oscar.cbls.scheduling.model.Activity
-import oscar.cbls.scheduling.model.Planning
-import oscar.cbls.scheduling.model.PrecedenceCleaner
-import oscar.cbls.scheduling.model.Resource
+import oscar.cbls.invariants.core.computation.{Solution, Store}
+import oscar.cbls.scheduling.algo.CriticalPathFinder
+import oscar.cbls.scheduling.model.{Activity, Planning, PrecedenceCleaner, Resource}
 import oscar.cbls.search.SearchEngine
 
 /**

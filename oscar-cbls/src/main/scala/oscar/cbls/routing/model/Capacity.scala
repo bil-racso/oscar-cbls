@@ -21,7 +21,7 @@ package oscar.cbls.routing.model
 
 import oscar.cbls.invariants.core.computation.CBLSIntVar
 import oscar.cbls.invariants.core.computation.CBLSIntVar.int2IntVar
-import oscar.cbls.invariants.lib.numeric.SumElements
+import oscar.cbls.invariants.lib.numeric.{Sum, SumElements}
 import oscar.cbls.invariants.lib.minmax.Min2
 import oscar.cbls.modeling.Algebra._
 
@@ -48,7 +48,7 @@ abstract trait NodeWeighting{
   * THIS IS EXPERIMENTAL
   */
 class CommutativeSummedCapacity(val vrp:VRP with NodesOfVehicle, val name:String = "SummedCapacity") extends NodeWeighting{
-  val vehicleSum = Array.tabulate(vrp.V)(v => SumElements(nodeWeight,vrp.NodesOfVehicle(v)).toIntVar)
+  val vehicleSum = Array.tabulate(vrp.V)(v => Sum(nodeWeight,vrp.NodesOfVehicle(v)).toIntVar)
 }
 
 /** Maintains a capacity that spans on the route of a vehicle.

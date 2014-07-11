@@ -13,16 +13,16 @@
   * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
   ******************************************************************************/
 
-package oscar.cbls.search.moves
+package oscar.cbls.search.move
 
-import oscar.cbls.invariants.core.computation.{Variable, CBLSSetVar, CBLSIntVar}
+import oscar.cbls.invariants.core.computation.{CBLSIntVar, CBLSSetVar, Variable}
 
 /** standard move template
   *
   * @param objAfter the objective after this assignation will be performed
   * @author renaud.delandtsheer@cetic.be
   */
-abstract class Move(val objAfter:Int){
+abstract class Move(val objAfter:Int, val neighborhoodName:String = null){
   /**to actually take the move*/
   def commit()
 
@@ -44,8 +44,8 @@ abstract class Move(val objAfter:Int){
   * @param neighborhoodName a string describing the neighborhood hat found the move (for debug purposes)
   * @author renaud.delandtsheer@cetic.be
   */
-case class AssignMove(i:CBLSIntVar,v:Int, override val objAfter:Int, neighborhoodName:String = null)
-  extends Move(objAfter){
+case class AssignMove(i:CBLSIntVar,v:Int, override val objAfter:Int, override val neighborhoodName:String = null)
+  extends Move(objAfter, neighborhoodName){
 
   override def commit() {i := v}
 
@@ -65,8 +65,8 @@ case class AssignMove(i:CBLSIntVar,v:Int, override val objAfter:Int, neighborhoo
   * @param neighborhoodName a string describing the neighborhood hat found the move (for debug purposes)
   * @author renaud.delandtsheer@cetic.be
   */
-case class SwapMove(i:CBLSIntVar,j:CBLSIntVar, override val objAfter:Int, neighborhoodName:String = null)
-  extends Move(objAfter){
+case class SwapMove(i:CBLSIntVar,j:CBLSIntVar, override val objAfter:Int, override val neighborhoodName:String = null)
+  extends Move(objAfter, neighborhoodName){
 
   override def commit() {i :=: j}
 
@@ -86,8 +86,8 @@ case class SwapMove(i:CBLSIntVar,j:CBLSIntVar, override val objAfter:Int, neighb
   * @param neighborhoodName a string describing the neighborhood hat found the move (for debug purposes)
   * @author renaud.delandtsheer@cetic.be
   */
-case class AddToSetMove(s:CBLSSetVar,v:Int, override val objAfter:Int, neighborhoodName:String = null)
-  extends Move(objAfter){
+case class AddToSetMove(s:CBLSSetVar,v:Int, override val objAfter:Int, override val neighborhoodName:String = null)
+  extends Move(objAfter, neighborhoodName){
 
   override def commit() {s :+= v}
 
@@ -107,8 +107,8 @@ case class AddToSetMove(s:CBLSSetVar,v:Int, override val objAfter:Int, neighborh
   * @param neighborhoodName a string describing the neighborhood hat found the move (for debug purposes)
   * @author renaud.delandtsheer@cetic.be
   */
-case class RemoveFromSetMove(s:CBLSSetVar,v:Int, override val objAfter:Int, neighborhoodName:String = null)
-  extends Move(objAfter){
+case class RemoveFromSetMove(s:CBLSSetVar,v:Int, override val objAfter:Int, override val neighborhoodName:String = null)
+  extends Move(objAfter, neighborhoodName){
 
   override def commit() {s :-= v}
 
@@ -127,8 +127,8 @@ case class RemoveFromSetMove(s:CBLSSetVar,v:Int, override val objAfter:Int, neig
   * @param neighborhoodName a string describing the neighborhood hat found the move (for debug purposes)
   * @author renaud.delandtsheer@cetic.be
   */
-case class CompositeMove(ml:List[Move], override val objAfter:Int, neighborhoodName:String = null)
-  extends Move(objAfter){
+case class CompositeMove(ml:List[Move], override val objAfter:Int, override val neighborhoodName:String = null)
+  extends Move(objAfter, neighborhoodName){
 
   def this(ml:List[Move]){
     this(ml, ml.last.objAfter)
@@ -153,7 +153,7 @@ case class CompositeMove(ml:List[Move], override val objAfter:Int, neighborhoodN
   * @param callBack the method to invoke before the actual move is taken
   * @author renaud.delandtsheer@cetic.be
   */
-case class CallBackMove(initialMove:Move, callBack: () => Unit) extends Move(initialMove.objAfter){
+case class CallBackMove(initialMove:Move, callBack: () => Unit) extends Move(initialMove.objAfter, initialMove.neighborhoodName){
   def commit(){
     callBack()
     initialMove.commit()

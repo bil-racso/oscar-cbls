@@ -13,16 +13,17 @@
   * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
   ******************************************************************************/
 
-package oscar.cbls.search.moves
+package oscar.cbls.search.core
 
 import oscar.cbls.invariants.core.computation.CBLSIntVar
 import oscar.cbls.objective.Objective
+import oscar.cbls.search.combinators._
+import oscar.cbls.search.move.Move
+
 import scala.language.implicitConversions
 
 abstract sealed class SearchResult
 case object NoMoveFound extends SearchResult
-case object ProblemSolved extends SearchResult
-//case object MovePerformed extends SearchResult
 
 case class MoveFound(m:Move) extends SearchResult{
   def commit(){m.commit()}
@@ -34,17 +35,18 @@ object SearchResult {
   implicit def moveToSearchResult(m: Move): MoveFound = MoveFound(m)
 }
 
-
-//TODO: add acceptor, and parametric searchZone, and best
-//TODO: add performMove instead of findMove
-
 /**
  * @author renaud.delandtsheer@cetic.be
  */
 abstract class Neighborhood{
 //  def getImprovingMove(acceptor:(Int,Int) => Boolean):SearchResult =  getImprovingMove()
 
-  def getImprovingMove:SearchResult
+  /**
+   * @param acceptanceCriterion oldObj,newObj => should the move to the newObj be kept (default is oldObj > newObj)
+   *                         beware that a changing criteria might interact unexpectedly with stateful neighborhood combinators
+   * @return an improving move
+   */
+  def getImprovingMove(acceptanceCriterion:(Int,Int) => Boolean = (oldObj,newObj) => oldObj > newObj):SearchResult
 
   //this resets the internal state of the Neighborhood
   def reset()
@@ -63,19 +65,24 @@ abstract class Neighborhood{
   /**
    * @return true if a move has been performed, false otherwise
    */
-  def doImprovingMove():Boolean = (0 != doAllImprovingMoves(1))
+  def doImprovingMove():Boolean = (0 != doAllImprovingMoves(_ >= 1))
 
   /**
    * @return the number of moves performed
    */
-  def doAllImprovingMoves(maxMoves:Int = Int.MaxValue):Int = {
+
+  /**
+   * @param shouldStop a function that takes the iteration number and returns true if search should be stopped
+   *                   eg if the problem is considered as solved
+   *                   you can evaluate some objective function there such as a violation degree
+   * @param acceptanceCriterion a criterion for accepting a move
+   * @return
+   */
+  def doAllImprovingMoves(shouldStop:Int => Boolean, acceptanceCriterion:(Int,Int) => Boolean = (oldObj,newObj) => oldObj > newObj):Int = {
     var toReturn = 0
-    var remainingMoves = maxMoves
-    while(remainingMoves != 0){
-      getImprovingMove match {
-        case ProblemSolved =>
-          if (verbose >= 1) println("problem solved after " + toReturn + " it")
-          return toReturn;
+    var moveCount = 0
+    while(!shouldStop(moveCount)){
+      getImprovingMove(acceptanceCriterion) match {
         case NoMoveFound =>
           if (verbose >= 1) println("no more move found after " + toReturn + " it")
           return toReturn;
@@ -85,9 +92,9 @@ abstract class Neighborhood{
           true
       }
       toReturn += 1
-      remainingMoves -= 1
+      moveCount += 1
     }
-    if(verbose >= 1)println("maxMoves ("+ maxMoves+") performed")
+    if(verbose >= 1)println("stop criteria met after "+ moveCount+" moves")
     toReturn
   }
 
@@ -156,7 +163,7 @@ abstract class Neighborhood{
     * notice that the count is reset by the reset operation
     * @author renaud.delandtsheer@cetic.be
     */
-  def maxMoves(maxMove:Int) = new BoundMoves(this, maxMove)
+  def maxMoves(maxMove:Int) = new MaxMoves(this, maxMove)
 
   /**makes a round robin on the neighborhood. it swaps as soon as one does not find a move
     * and swaps neighborhood after "step" invocations
@@ -201,6 +208,37 @@ abstract class Neighborhood{
     */
   def retry(n:Int = 1) = new Retry(this,n)
 
+  /**to build a composite neighborhood.
+    * the first neighborhood is used only to provide a round robin exploration on its possible moves
+    * you must ensure that this first neighborhood will perform a hotRestart, so that it will enumerate all its moves
+    * internally, this neighborhood will be called with a fully acceptant acceptanceCriteria,
+    *
+    * the move combinator for every move provided by the first neighborhood, the combinator calls the second one
+    * and we consider the composition of the two moves for the acceptance criteria.
+    * the returned move is the composition of the two found moves
+    *
+    * you must also ensure that the two neighborhood evaluate the same objective function,
+    * since this combinator needs to evaluate the whole composite move, and not only the last part of the composition
+    *
+    * A native composite neighborhood will probably be much faster than this combinator, so use this for prototyping
+    * for instance, this combinator does not allow for some form of symmetry breaking, unless you are really doing it the hard way.
+    *
+    * this move will reset the first neighborhood on every call, since it is probably bounded by the number of moves it can provide
+    *
+    * notice that you can use the following better syntax:
+    * {{{
+    *   myFirstNeighborhood maxMoves 5 andThen mySecondNeighborhood
+    * }}}
+    *
+    * since the proper mechanism is built into Neighborhood.maxMoves; see [[oscar.cbls.search.combinators.MaxMoves]]
+    *
+    * @param b given that the move returned by the first neighborhood is committed, we explore the globally improving moves of this one
+    * @param maxFirstStep the maximal number of moves to consider to the first neighborhood
+    *
+    * @author renaud.delandtsheer@cetic.be
+    */
+  def andThen(b:Neighborhood, maxFirstStep:Int) = new AndThen(this, b, maxFirstStep)
+
 }
 
 abstract class StatelessNeighborhood extends Neighborhood{
@@ -213,5 +251,5 @@ abstract class StatelessNeighborhood extends Neighborhood{
 /** a neighborhood that never finds any move (quite useless, actually)
   */
 case class NoMoveNeighborhood() extends StatelessNeighborhood{
-  override def getImprovingMove: SearchResult = NoMoveFound
+  override def getImprovingMove(acceptanceCriterion:(Int,Int) => Boolean): SearchResult = NoMoveFound
 }

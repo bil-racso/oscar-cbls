@@ -15,8 +15,12 @@
 package oscar.cbls
 
 /**
- * Created by rdl on 13/03/14.
- */
+ * This package helps you writing your search procedures
+ - selectors that are implemented into [[oscar.cbls.search.SearchEngine]] and [[oscar.cbls.search.SearchEngineTrait]]
+ - standard neighborhoods and moves in [[oscar.cbls.search.move]]
+ - combinators to assemble neighborhoods together and develop a search strategy.
+ * these combinators are actually interfaced in all neighborhood so you can use an infix notation straight with any neighborhood
+*/
 package object search {
 
 }
