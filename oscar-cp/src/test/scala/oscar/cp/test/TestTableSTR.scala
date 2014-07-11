@@ -97,6 +97,25 @@ class TestTableSTR extends FunSuite with ShouldMatchers  {
     
 
   }
-  
+    
+    test("Table Test 5") {
+    val cp = CPSolver()
+    var x = Array.fill(6)(CPIntVar(0 to 3)(cp))
+    var nbSol = 0
+    
+    val tuples = Array(
+        Array(2,2,3,2,2,3),
+        Array(2,1,2,3,2,0),
+        Array(2,3,0,2,3,0)
+        )
+
+    cp.post(new TableSTR(x,tuples))
+    cp.search(binaryStatic(x))
+    cp.onSolution {
+      nbSol += 1
+    }
+    cp.start()
+    nbSol should be(3)
+    }  
 
 }

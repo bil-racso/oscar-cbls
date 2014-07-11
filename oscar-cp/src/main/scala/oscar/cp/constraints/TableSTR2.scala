@@ -32,6 +32,9 @@ class TableSTR2(val X: Array[CPIntVar], table: Array[Array[Int]]) extends Constr
   }
   
   override def propagate(): CPOutcome = {
+    
+    /******* initialiaz S_val, S_sup and notGACValues *********************/
+    
 	var i = 0
     while(i < arity) {
       notGACValues(i).clear 
@@ -42,13 +45,15 @@ class TableSTR2(val X: Array[CPIntVar], table: Array[Array[Int]]) extends Constr
 	val unboundVariableIndexes = variablesIndexes.filter(i => !isBoundAndChecked(i).value)
 	i = 0
 	while (i<unboundVariableIndexes.length) {
-	  isInS_Sup(i) = true
-	  val inS_SVal = lastSize(i).value != X(i).size
-	  lastSize(i).value = X(i).size
-	  isInS_Val(i)=inS_SVal
+	  isInS_Sup(unboundVariableIndexes(i)) = true //variables that have to be checked
+	  val inS_SVal = lastSize(unboundVariableIndexes(i)).value != X(unboundVariableIndexes(i)).size //variables whose domain has changed since last execution of STR2
+	  lastSize(unboundVariableIndexes(i)).value = X(unboundVariableIndexes(i)).size
+	  isInS_Val(unboundVariableIndexes(i))=inS_SVal
 	  i += 1
 	}
-	  
+	
+	/*********************************************************************/
+	
 	i = 0
 	var unboundCpVarIndex = -1
 	var index = -1
@@ -60,21 +65,22 @@ class TableSTR2(val X: Array[CPIntVar], table: Array[Array[Int]]) extends Constr
 	  index = position(i)
 	  tau = table(index)
 	  
-	  //if is validTuple
+	  /******* check tuple validity *********************/
 	  unboundCpVarIndex = 0
 	  isCurrentTupleValid = true
 	  while (unboundCpVarIndex < unboundVariableIndexes.length && isCurrentTupleValid) {
-	    if(isInS_Val(unboundCpVarIndex) && !X(unboundVariableIndexes(unboundCpVarIndex)).hasValue(tau(unboundVariableIndexes(unboundCpVarIndex)))) // check only variables in S_Val
+	    if(isInS_Val(unboundVariableIndexes(unboundCpVarIndex)) && !X(unboundVariableIndexes(unboundCpVarIndex)).hasValue(tau(unboundVariableIndexes(unboundCpVarIndex)))) // check only variables in S_Val
 	        isCurrentTupleValid = false
 	    unboundCpVarIndex += 1      
 	  }
-	  
+
+	  //if is validTuple
 	  if(isCurrentTupleValid) {
 	    unboundCpVarIndex = 0
 	    while(unboundCpVarIndex < unboundVariableIndexes.length) {
-	    	if(isInS_Sup(unboundCpVarIndex)) { 
+	    	if(isInS_Sup(unboundVariableIndexes(unboundCpVarIndex))) { 
 	    	  notGACValues(unboundVariableIndexes(unboundCpVarIndex)).remove(tau(unboundVariableIndexes(unboundCpVarIndex)))
-	    	  if(notGACValues(unboundVariableIndexes(unboundCpVarIndex)).isEmpty) isInS_Sup(unboundCpVarIndex) = false
+	    	  if(notGACValues(unboundVariableIndexes(unboundCpVarIndex)).isEmpty) isInS_Sup(unboundVariableIndexes(unboundCpVarIndex)) = false
 	    	}
 	    	unboundCpVarIndex += 1
 	    }
@@ -91,16 +97,16 @@ class TableSTR2(val X: Array[CPIntVar], table: Array[Array[Int]]) extends Constr
 	
 	unboundCpVarIndex = 0
 	while(unboundCpVarIndex < unboundVariableIndexes.length) {
-	  if(isInS_Sup(unboundCpVarIndex)) {
+	  if(isInS_Sup(unboundVariableIndexes(unboundCpVarIndex))) {
 	    if (notGACValues(unboundVariableIndexes(unboundCpVarIndex)).size == X(unboundVariableIndexes(unboundCpVarIndex)).size)
 	      return Failure
-	      if(!notGACValues(unboundVariableIndexes(unboundCpVarIndex)).isEmpty) {
-	        for(value <- notGACValues(unboundVariableIndexes(unboundCpVarIndex)))
-	          X(unboundVariableIndexes(unboundCpVarIndex)).removeValue(value)
-	      }
+	    if(!notGACValues(unboundVariableIndexes(unboundCpVarIndex)).isEmpty) {
+	      for(value <- notGACValues(unboundVariableIndexes(unboundCpVarIndex)))
+	        X(unboundVariableIndexes(unboundCpVarIndex)).removeValue(value)
+	    }
 	    if(X(unboundVariableIndexes(unboundCpVarIndex)).isBound)
 	      isBoundAndChecked(unboundVariableIndexes(unboundCpVarIndex)).setValue(true)
-	    lastSize(unboundCpVarIndex).setValue(X(unboundVariableIndexes(unboundCpVarIndex)).size)
+	    lastSize(unboundVariableIndexes(unboundCpVarIndex)).setValue(X(unboundVariableIndexes(unboundCpVarIndex)).size)
 	  }
 	  unboundCpVarIndex += 1
     }
