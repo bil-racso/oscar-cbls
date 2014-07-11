@@ -63,9 +63,15 @@ abstract class CPIntVar(override val store: CPStore, override val name: String =
   /**
    * @return the unique value in the domain, None if variable is not bound
    */
-  def value: Int = min
+  def value: Int = {
+    if (isBound) min
+    else throw new NoSuchElementException("the variable is not bound")
+  }
 
-  def getValue: Int = min
+  def getValue: Int = {
+    if (isBound) min
+    else throw new NoSuchElementException("the variable is not bound")
+  }
 
   /**
    * @param val
