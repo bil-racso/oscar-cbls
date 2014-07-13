@@ -17,12 +17,10 @@
 package oscar.cp.modeling
 
 import java.util.LinkedList
-
 import scala.Vector
 import scala.collection.IndexedSeq
 import scala.collection.Iterable
 import scala.collection.immutable.Set
-
 import oscar.cp.constraints.AllDifferent
 import oscar.cp.constraints.Among
 import oscar.cp.constraints.AtLeastNValue
@@ -69,6 +67,7 @@ import oscar.cp.core.CPPropagStrength
 import oscar.cp.core.CPSetVar
 import oscar.cp.core.Constraint
 import oscar.cp.core._
+import oscar.cp.constraints.TableSTR2
 
 trait Constraints {
 
@@ -501,12 +500,12 @@ trait Constraints {
 
   def table(x: Array[CPIntVar], tuples: Array[Array[Int]]): Constraint = {
     //new TableSTR2(x,tuples)
-
+    
     import oscar.cp.constraints.TableAC5TCRecomp
     val data = new TableData(x.size)
     tuples.foreach(t => data.add(t: _*))
     new oscar.cp.constraints.TableAC5TCRecomp(data, x: _*)
-
+    
     /*
     val tab = new TableJava(x:_*)
     tuples.foreach(t => tab.addTupple(t:_*))
