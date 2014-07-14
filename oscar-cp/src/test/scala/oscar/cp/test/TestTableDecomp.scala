@@ -23,7 +23,7 @@ import org.junit.runner.RunWith
 import org.scalatest.junit.JUnitRunner
 
 @RunWith(classOf[JUnitRunner])
-class TestTableSTR2 extends FunSuite with ShouldMatchers  {
+class TestTableDecomp extends FunSuite with ShouldMatchers  {
 
 
   test("Table Test 1") {
@@ -33,7 +33,7 @@ class TestTableSTR2 extends FunSuite with ShouldMatchers  {
     val tuples = Array(Array(1,1,1),Array(1,2,3))
     
 
-    cp.post(new TableSTR2(x,tuples))
+    cp.post(new TableDecomp(x,tuples))
     	
     x(0).isBound should be(true)
     x(0).value should be(1)
@@ -56,7 +56,7 @@ class TestTableSTR2 extends FunSuite with ShouldMatchers  {
     
     
     val tuples = (for (i <- 0 until 5; j <- i+1 until 5) yield Array(i,j,i*4+j-1)).toArray
-    cp.post(new TableSTR2(Array(x,y,z),tuples))
+    cp.post(new TableDecomp(Array(x,y,z),tuples))
     cp.post(z == 0)
     x.value should be(0)
     y.value should be(1)
@@ -76,7 +76,7 @@ class TestTableSTR2 extends FunSuite with ShouldMatchers  {
     var nbSol = 0
     	
     cp.solve subjectTo {
-      cp.add(new TableSTR2(x,tuples))
+      cp.add(new TableDecomp(x,tuples))
     } search {
       binaryStatic(x)
     } onSolution {
@@ -93,80 +93,11 @@ class TestTableSTR2 extends FunSuite with ShouldMatchers  {
     val tuples = Array(Array(1,2),Array(2,1))
     
 
-    cp.post(new TableSTR2(x,tuples))
+    cp.post(new TableDecomp(x,tuples))
     cp.isFailed should be(true)
     
 
   }
-    
-    test("Table Test 5") {
-    implicit val cp = CPSolver()
-    var x = Array.fill(6)(CPIntVar(2 to 3)(cp))
-    var nbSol = 0
-    
-    val tuples = Array(
-        Array(2,2,3,2,2,3),
-        Array(2,3,2,2,3,2)
-        )
-    
+  
 
-    cp.post(new TableSTR2(x,tuples))
-    cp.search(binaryStatic(x))
-    cp.onSolution {
-      println(x.mkString(", "))
-      nbSol += 1
-    }
-    cp.start()
-    nbSol should be(2)
-    
-
-  }
-    
-    test("Table Test 6") {
-    implicit val cp = CPSolver()
-    var x = Array.fill(6)(CPIntVar(0 to 5)(cp))
-    var nbSol = 0
-    
-    val tuples = Array(
-        Array(5, 5, 0, 5, 1, 4),
-        Array(5, 5, 0, 3, 1, 1),
-        Array(3, 1, 4, 2, 3, 1)
-        )
-    
-
-    cp.post(new TableSTR2(x,tuples))
-    cp.search(binaryStatic(x))
-    cp.onSolution {
-      println(x.mkString(", "))
-      nbSol += 1
-    }
-    cp.start()
-    nbSol should be(3)
-    
-
-  }
-    
-    test("Table Test 7") {
-    implicit val cp = CPSolver()
-    var x = Array.fill(7)(CPIntVar(0 to 3)(cp))
-    var nbSol = 0
-    
-    val tuples = Array(
-		Array(1, 0, 3, 1, 0, 2, 1),
-		Array(1, 3, 3, 3, 2, 1, 3),
-		Array(1, 0, 3, 0, 0, 3, 1)
-        )
-    
-    cp.post(new TableSTR2(x,tuples))
-    cp.search(binaryStatic(x))
-    cp.onSolution {
-      println(x.mkString(", "))
-      nbSol += 1
-    }
-    cp.start()
-    nbSol should be(3)
-    
-
-  }
-    
 }

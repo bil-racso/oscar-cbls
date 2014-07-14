@@ -21,6 +21,7 @@ import oscar.cp.constraints.InSet
 import oscar.cp.constraints.InSetReif
 import oscar.cp.constraints.ModuloLHS
 import scala.util.Random
+import oscar.cp.core.domains.SparseSetDomain
 
 trait DomainIterator extends Iterator[Int] {
   def removeValue: CPOutcome
@@ -31,7 +32,7 @@ trait DomainIterator extends Iterator[Int] {
  * @author Pierre Schaus pschaus@gmail.com
  */
 abstract class CPIntVar(override val store: CPStore, override val name: String = "") extends CPVar with Iterable[Int] {
-  
+
   def transform(v: Int): Int
 
   def constraintDegree(): Int
@@ -63,9 +64,15 @@ abstract class CPIntVar(override val store: CPStore, override val name: String =
   /**
    * @return the unique value in the domain, None if variable is not bound
    */
-  def value: Int = min
+  def value: Int = {
+    if (isBound) min
+    else throw new NoSuchElementException("the variable is not bound")
+  }
 
-  def getValue: Int = min
+  def getValue: Int = {
+    if (isBound) min
+    else throw new NoSuchElementException("the variable is not bound")
+  }
 
   /**
    * @param val
@@ -83,7 +90,7 @@ abstract class CPIntVar(override val store: CPStore, override val name: String =
    * @return A random value in the domain of the variable (uniform distribution)
    */
   def randomValue(rand: Random): Int
-  
+
   /**
    * @return A random value in the domain of the variable (uniform distribution)
    */
@@ -277,7 +284,6 @@ abstract class CPIntVar(override val store: CPStore, override val name: String =
 
   def callValRemoveIdxWhenValueIsRemoved(c: Constraint, variable: CPIntVar, idx: Int): Unit
 
-
   /**
    * Level 1 registration: ask that the updateBoundsIdx(CPIntVar, int) method of the constraint c is called whenever
    * the minimum or maximum value of the domain changes
@@ -446,12 +452,12 @@ abstract class CPIntVar(override val store: CPStore, override val name: String =
    * @return a variable in the same store representing: x * c
    */
   def mul(y: Int): CPIntVar = {
-    if (y == 0)       CPIntVar(0)(this.store)
-    else if (y == 1)  this
-    else if (y > 0)   new CPIntVarViewTimes(this, y)
-    else              this.mul(-y).opposite    
+    if (y == 0) CPIntVar(0)(this.store)
+    else if (y == 1) this
+    else if (y > 0) new CPIntVarViewTimes(this, y)
+    else this.mul(-y).opposite
   }
-  
+
   /*
   def mul(c:Int): CPIntVar = {
     if (c == 1) {
@@ -608,7 +614,7 @@ abstract class CPIntVar(override val store: CPStore, override val name: String =
    * x*y
    */
   def *(y: CPIntVar): CPIntVar = {
-    if (y.isBound) this*(y.value)
+    if (y.isBound) this * (y.value)
     else this.mul(y)
   }
   /**
@@ -720,7 +726,7 @@ abstract class CPIntVar(override val store: CPStore, override val name: String =
     store.post(new InSetReif(this, set, b))
     b
   }
-  
+
   def %(y: Int) = ModuloLHS(this, y)
 
 }
@@ -743,6 +749,32 @@ object CPIntVar {
     }
   }
 
+  def sparse(values: Iterable[Int], name: String)(implicit store: CPStore): CPIntVar = {
+    val min = values.min
+    val max = values.max
+    val domain = new SparseSetDomain(store, min, max)
+    if (max - min + 1 > values.size) {
+      val set = values.toSet
+      var v = min + 1
+      while (v < max) {
+        if (!set.contains(v)) {
+          domain.removeValue(v)
+        }
+        v += 1
+      }
+    }
+    new CPIntVarImpl(store, domain, name)
+  }
+
+  def sparse(values: Iterable[Int])(implicit store: CPStore): CPIntVar = sparse(values, "")(store)
+
+  def sparse(minValue: Int, maxValue: Int, name: String)(implicit store: CPStore): CPIntVar = {
+    val domain = new SparseSetDomain(store, minValue, maxValue)
+    new CPIntVarImpl(store, domain, name)
+  }
+
+  def sparse(minValue: Int, maxValue: Int)(implicit store: CPStore): CPIntVar = sparse(minValue, maxValue, "")(store)
+
   /**
    * Creates a new CP Integer Variable with an iterable as initial domain
    * @param values the iterable defining the possible values for the variable
@@ -751,7 +783,7 @@ object CPIntVar {
    * The domain of the variable does not contains a given value more than once.
    */
   def apply(values: Iterable[Int])(implicit store: CPStore): CPIntVar = apply(values, "")(store)
-  
+
   /**
    * Creates a new CP Integer Variable with an array as initial domain
    * @param values the array defining the possible values for the variable
@@ -763,7 +795,7 @@ object CPIntVar {
   def apply(values: Array[Int], name: String)(implicit store: CPStore): CPIntVar = {
     iterableDomain(values, name, store)
   }
-  
+
   /**
    * Creates a new CP Integer Variable with an array as initial domain
    * @param values the array defining the possible values for the variable
@@ -818,7 +850,7 @@ object CPIntVar {
 
   @deprecated("use apply(values: Iterable[Int])(implicit store: CPStore) instead", "1.0")
   def apply(store: CPStore, values: Iterable[Int]): CPIntVar = apply(store, values, "")
-  
+
   @deprecated("use apply(values: Array[Int], name: String)(implicit store: CPStore) instead", "1.0")
   def apply(store: CPStore, values: Array[Int], name: String): CPIntVar = apply(values, name)(store)
 
