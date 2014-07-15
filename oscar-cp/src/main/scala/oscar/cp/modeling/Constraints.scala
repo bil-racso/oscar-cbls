@@ -463,7 +463,6 @@ trait Constraints {
    */
   def or(vars: Iterable[CPBoolVar]): Constraint = {
     new Or(vars.toArray)
-    //sum(vars) >= 1
   }
 
   /**
