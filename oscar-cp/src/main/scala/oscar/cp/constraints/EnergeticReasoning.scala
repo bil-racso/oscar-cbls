@@ -31,6 +31,8 @@ class EnergeticReasoning(starts: Array[CPIntVar], durations: Array[CPIntVar], en
   val tasksId = 0 until starts.length toArray 
   
   def setup(l: CPPropagStrength): CPOutcome = {
+    priorityL2 = 0
+    
     if (propagate == Failure) Failure
     else {
       for (task <- tasksId) {

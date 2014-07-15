@@ -43,8 +43,8 @@ import oscar.cp.constraints.GCCVar
 import oscar.cp.constraints.Inverse
 import oscar.cp.constraints.Knapsack
 import oscar.cp.constraints.LexLeq
-import oscar.cp.constraints.MaxCumulativeAlternative
 import oscar.cp.constraints.Maximum
+import oscar.cp.constraints.MaxCumulative
 import oscar.cp.constraints.MinAssignment
 import oscar.cp.constraints.Minimum
 import oscar.cp.constraints.Modulo
@@ -1087,7 +1087,7 @@ trait Constraints {
    * @param id, the resource on which we want to constraint the capacity (only tasks i with resources(i) = id are taken into account)
    */ 
   def maxCumulativeResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], demands: Array[CPIntVar], resources: Array[CPIntVar], capacity: CPIntVar, id: Int): Constraint = {
-    new MaxCumulativeAlternative(starts,durations,ends,demands,resources,capacity,id)
+    MaxCumulative(starts,durations,ends,demands,resources,capacity,id)
   }
   
   /**
