@@ -62,11 +62,8 @@ object ScalarProduct {
     (positivesSum + constant - negativesSum != 0)
   }
   
-  // the scalar product must be negative or zero, code is a copypasta of zero
-  def leq(vars: Seq[CPIntVar], scalars: Seq[Int])(implicit cp: CPStore): Constraint = {
+  def normalize(vars: Seq[CPIntVar], scalars: Seq[Int])(implicit cp: CPStore) = {
     assert(vars.size == scalars.size)
-//    sum(vars.zip(scalars).map { case (x, c) => x * c }) <= 0
-    
     val (constants, nonconstants) = vars.indices.partition { i => scalars(i) == 0 || vars(i).isBound }
     val constant = constants.foldLeft(0){ (acc, i) => acc + scalars(i) * vars(i).min }
     
@@ -74,9 +71,31 @@ object ScalarProduct {
     
     val positivesSum = if (!positives.isEmpty) sum(positives.map(i => vars(i) *  scalars(i))) else CPIntVar(0)
     val negativesSum = if (!negatives.isEmpty) sum(negatives.map(i => vars(i) * -scalars(i))) else CPIntVar(0)
-    // TODO: find out why first version is much more slow than the second
-//    (positivesSum + constant <= negativesSum)
-      (positivesSum + constant - negativesSum <= 0)
+    
+    (positivesSum, constant, negativesSum)
+  }
+  
+  // the scalar product must be negative or zero, code is a copypasta of zero
+  def leq(vars: Seq[CPIntVar], scalars: Seq[Int])(implicit cp: CPStore): Constraint = {
+    val (ps, c, ns) = normalize(vars, scalars)
+    
+    // TODO: find out why first version is much slower than the second
+    // (ps + c <= ns)
+     (ps + c - ns <= 0)
   }
 
+  def lt(vars: Seq[CPIntVar], scalars: Seq[Int])(implicit cp: CPStore): Constraint = {
+    val (ps, c, ns) = normalize(vars, scalars)
+    (ps + c - ns < 0)
+  }
+
+  def geq(vars: Seq[CPIntVar], scalars: Seq[Int])(implicit cp: CPStore): Constraint = {
+    val (ps, c, ns) = normalize(vars, scalars)
+    (ps + c - ns >= 0)
+  }
+  
+  def gt(vars: Seq[CPIntVar], scalars: Seq[Int])(implicit cp: CPStore): Constraint = {
+    val (ps, c, ns) = normalize(vars, scalars)
+    (ps + c - ns > 0)
+  }
 }
