@@ -472,10 +472,11 @@ object RoundRobinNoParam{
   * @param a the first neighborhood, all moves delivered by this one will be considered
   * @param b given that the move returned by the first neighborhood is committed, we explore the globally improving moves of this one
   * @param maxFirstStep the maximal number of moves to consider to the first neighborhood
+  * @param maximalIntermediaryDegradation the maximal degradation that is admitted for the intermediary step; the higher, the more moves will be considered
   *
   * @author renaud.delandtsheer@cetic.be
  */
-class AndThen(a:Neighborhood, b:Neighborhood, maxFirstStep:Int = 10) extends NeighborhoodCombinator(a,b){
+class AndThen(a:Neighborhood, b:Neighborhood, maxFirstStep:Int = 10, maximalIntermediaryDegradation:Int = Int.MaxValue) extends NeighborhoodCombinator(a,b){
 
   override def getImprovingMove(acceptanceCriteria:(Int,Int) => Boolean): SearchResult = {
 
@@ -484,18 +485,21 @@ class AndThen(a:Neighborhood, b:Neighborhood, maxFirstStep:Int = 10) extends Nei
     var remainingFirstSteps = maxFirstStep
 
     var oldObj:Int = 0
-    def instrumentedFullyAcceptanceCriteria:(Int,Int) => Boolean = (stolenOldObj,_) => {oldObj = stolenOldObj; true}
+    def instrumentedIntermediaryAcceptanceCriteria(stolenOldObj:Int,intermediaryObj:Int):Boolean = {
+      oldObj = stolenOldObj;
+      intermediaryObj - stolenOldObj <=  maximalIntermediaryDegradation
+    }
 
     while(remainingFirstSteps > 0){
       remainingFirstSteps -= 1
-      a.getImprovingMove(instrumentedFullyAcceptanceCriteria) match{
+      a.getImprovingMove(instrumentedIntermediaryAcceptanceCriteria) match{
         case NoMoveFound => return NoMoveFound
         case MoveFound(firstMove) => {
           val touchedVars = firstMove.touchedVariables
           val model = touchedVars.head.model
           val snapshot = model.saveValues(touchedVars:_*)
           firstMove.commit()
-          if(amIVerbose) println("Andthen: trying first move " + firstMove)
+          if(amIVerbose) println("AndThen: trying first move " + firstMove)
           def globalAcceptanceCriteria:(Int,Int) => Boolean = (_,newObj) => acceptanceCriteria(oldObj,newObj)
           b.getImprovingMove(globalAcceptanceCriteria) match{
             case NoMoveFound => model.restoreSnapshot(snapshot)

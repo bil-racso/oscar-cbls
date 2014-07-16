@@ -5,7 +5,7 @@ import oscar.cbls.invariants.core.computation.{CBLSIntVar, CBLSSetVar}
 import oscar.cbls.modeling.AlgebraTrait
 import oscar.cbls.objective.Objective
 import oscar.cbls.search.algo.{HotRestart, IdenticalAggregator}
-import oscar.cbls.search.core.{Neighborhood, NoMoveFound, SearchResult, StatelessNeighborhood}
+import oscar.cbls.search.core._
 import oscar.cbls.search.move.{AssignMove, CompositeMove, Move, SwapMove}
 
 import scala.collection.immutable.SortedSet
@@ -28,6 +28,9 @@ import scala.collection.immutable.SortedSet
  *                              only values belonging to different symmetry classes will be tested
  *                             Int.MinValue is considered different to itself
  *                             (this is only useful if your model is awfully expensive to evaluate)
+ * @param domain a function that receives a variable and its Id in the vars array
+ *               and returns the domain that is searched for the variable
+ *               by default, the domain of the variable is explored
  * @param hotRestart  if true, the exploration order in case you ar not going for the best is a hotRestart
  *                    even if you specify a searchZone that is: the exploration starts again
  *                    at the position where it stopped, and consider the indices in increasing order
@@ -36,24 +39,27 @@ import scala.collection.immutable.SortedSet
 case class AssignNeighborhood(vars:Array[CBLSIntVar],
                               obj:Objective,
                               name:String = "AssignNeighborhood",
-                              acceptanceCriteria:(Int,Int) => Boolean = (oldObj,newObj) => oldObj > newObj,
                               best:Boolean = false,
                               searchZone:CBLSSetVar = null,
                               symmetryClassOfVariables:Option[Int => Int] = None,
                               symmetryClassOfValues:Option[Int => Int => Int] = None,
+                              domain:(CBLSIntVar,Int) => Iterable[Int] = (v,i) => v.domain,
                               hotRestart:Boolean = true)
   extends Neighborhood with AlgebraTrait{
   //the indice to start with for the exploration
   var startIndice:Int = 0
   override def getImprovingMove(acceptanceCriteria:(Int,Int) => Boolean = (oldObj,newObj) => oldObj > newObj): SearchResult = {
     if (amIVerbose) println(name + ": trying")
-    var oldObj = obj.value
+    val startObj = obj.value
+    var oldObj = startObj
     var toReturn: SearchResult = NoMoveFound
 
     val iterationSchemeOnZone = if (searchZone == null)
       if (best) vars.indices
-      else if (hotRestart) {if(startIndice >= vars.size) startIndice = 0; vars.indices startBy startIndice} else vars.indices
-    else if (hotRestart)HotRestart(searchZone.value,startIndice) else searchZone.value
+      else if (hotRestart) {
+        if (startIndice >= vars.size) startIndice = 0; vars.indices startBy startIndice
+      } else vars.indices
+    else if (hotRestart) HotRestart(searchZone.value, startIndice) else searchZone.value
 
     val iterationScheme = symmetryClassOfVariables match {
       case None => iterationSchemeOnZone
@@ -65,32 +71,33 @@ case class AssignNeighborhood(vars:Array[CBLSIntVar],
       val oldVal = currentVar.value
 
       val domainIterationScheme = symmetryClassOfValues match {
-        case None => currentVar.domain
-        case Some(s) => IdenticalAggregator.removeIdenticalClassesLazily(currentVar.domain, s(i))
+        case None => domain(currentVar, i)
+        case Some(s) => IdenticalAggregator.removeIdenticalClassesLazily(domain(currentVar, i), s(i))
       }
 
       for (newVal <- domainIterationScheme if newVal != oldVal) {
         val newObj = obj.assignVal(currentVar, newVal)
 
-        if (acceptanceCriteria(oldObj, newObj)) {
-          if (best) {
-            oldObj = newObj
-            toReturn = AssignMove(currentVar, newVal, newObj, name)
-          } else {
-            startIndice = i+1
-            if (amIVerbose) println(name + ": move found")
-            return AssignMove(currentVar, newVal, newObj, name)
-          }
+        if (best && newObj < oldObj) {
+          oldObj = newObj
+          toReturn = AssignMove(currentVar, newVal, newObj, name)
+        } else if (acceptanceCriteria(oldObj, newObj)) {
+          startIndice = i + 1
+          if (amIVerbose) println(name + ": move found")
+          return AssignMove(currentVar, newVal, newObj, name)
         }
       }
     }
-    if(amIVerbose) {
-      toReturn match {
-        case NoMoveFound => println(name + ": no move found")
-        case _ => println(name + ": move found")
-      }
+
+    toReturn match {
+      case MoveFound(m)
+        if acceptanceCriteria(startObj, m.objAfter) =>
+        if(amIVerbose) println(name + ": move found")
+        toReturn
+      case _ =>
+        if(amIVerbose) println(name + ": no move found")
+        toReturn
     }
-    toReturn
   }
 
   //this resets the internal state of the Neighborhood
@@ -137,7 +144,8 @@ case class SwapsNeighborhood(vars:Array[CBLSIntVar],
   override def getImprovingMove(acceptanceCriteria:(Int,Int) => Boolean = (oldObj,newObj) => oldObj > newObj): SearchResult = {
 
     if(amIVerbose) println(name + ": trying")
-    var oldObj = obj.value
+    val startObj = obj.value
+    var oldObj = startObj
     var toReturn:SearchResult = NoMoveFound
 
     val firstIterationSchemeZone =
@@ -172,25 +180,27 @@ case class SwapsNeighborhood(vars:Array[CBLSIntVar],
             && firstVar.domain.contains(oldValOfSecondVar)) {
 
         val newObj = obj.swapVal(firstVar, secondVar)
-        if (acceptanceCriteria(oldObj,newObj)) {
-          if(best){
-            toReturn =  SwapMove(firstVar, secondVar, newObj, name)
-            oldObj = newObj
-          }else {
-            startIndice = i+1
-            if (amIVerbose) println(name + ": move found")
-            return SwapMove(firstVar, secondVar, newObj, name)
-          }
+
+        if (best && newObj < oldObj) {
+          oldObj = newObj
+          toReturn = SwapMove(firstVar, secondVar, newObj, name)
+        } else if (acceptanceCriteria(oldObj, newObj)) {
+          startIndice = i + 1
+          if (amIVerbose) println(name + ": move found")
+          return SwapMove(firstVar, secondVar, newObj, name)
         }
       }
     }
-    if(amIVerbose) {
-      toReturn match {
-        case NoMoveFound => println(name + ": no move found")
-        case _ => println(name + ": move found")
-      }
+
+    toReturn match {
+      case MoveFound(m)
+        if acceptanceCriteria(startObj, m.objAfter) =>
+        if(amIVerbose) println(name + ": move found")
+        toReturn
+      case _ =>
+        if(amIVerbose) println(name + ": no move found")
+        toReturn
     }
-    toReturn
   }
 
   //this resets the internal state of the Neighborhood
