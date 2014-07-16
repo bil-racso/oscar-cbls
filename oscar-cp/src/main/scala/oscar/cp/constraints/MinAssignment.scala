@@ -271,9 +271,11 @@ class MinAssignment(val xarg: Array[CPIntVar], val weightsarg: Array[Array[Int]]
       sum += weights(w)(matchJobByWorker(w).value)
       w += 1
     }
-    
-    
-    if (cost.updateMin(sum) == CPOutcome.Failure) return CPOutcome.Failure
+
+    if (cost.updateMin(sum) == CPOutcome.Failure) {
+      
+      return CPOutcome.Failure
+    }
     val maxSlack = cost.max - sum
     
     /*

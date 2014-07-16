@@ -99,7 +99,7 @@ class SweepMaxCumulative(starts: Array[CPIntVar], durations: Array[CPIntVar], en
 
   override def setup(l: CPPropagStrength): CPOutcome = {
 
-    priorityL2 = 0
+    priorityL2 = 2
 
     val oc = propagate()
 
