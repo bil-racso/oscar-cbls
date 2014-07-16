@@ -23,6 +23,7 @@ import scala.collection.generic._
 import scala.util.Random
 import oscar.cp.core.domains.IntDomain
 import oscar.cp.core.domains.AdaptableIntDomain
+import oscar.cp.core.CPOutcome._
 
 /**
  * @author Pierre Schaus pschaus@gmail.com
@@ -112,7 +113,7 @@ class CPIntVarImpl(store: CPStore, private val domain: IntDomain, name: String =
       domain.prevValue(value - 1)
     }
   }
-  
+
   /**
    * @return A random value in the domain of the variable (uniform distribution)
    */
@@ -410,30 +411,39 @@ class CPIntVarImpl(store: CPStore, private val domain: IntDomain, name: String =
    */
   def removeValue(value: Int): CPOutcome = {
 
-    val dom = domain
+    val inDomain = domain.hasValue(value)
 
-    val omin = dom.min
-    val omax = dom.max
-    val minRemoved = dom.min == value
-    val maxRemoved = dom.max == value
-    val indom = dom.hasValue(value)
-
-    if (!indom) CPOutcome.Suspend
+    if (!inDomain) Suspend
     else {
-      val ok = dom.removeValue(value)
-      if (ok == CPOutcome.Failure) CPOutcome.Failure
+      
+      // Checks if the bounds has changed if necessary
+      var boundsChanged = false
+      val checkBounds = onBoundsL1.hasValue || onBoundsIdxL1.hasValue || onBoundsL2.hasValue
+      if (checkBounds) {
+        boundsChanged = domain.min == value || domain.max == value
+      }
+
+      // Removes the value
+      val ok = domain.removeValue(value)
+      if (ok == Failure) Failure
       else {
-        if (minRemoved || maxRemoved) {
+        
+        // Notifies bounds watchers if some
+        if (boundsChanged) {
           store.notifyUpdateBoundsL1(onBoundsL1.value, this)
           store.notifyUpdateBoundsIdxL1(onBoundsIdxL1.value, this)
           store.notifyL2(onBoundsL2.value)
         }
-        if (indom) {
+        
+        // Notifies domain watchers if some
+        if (inDomain) {
           store.notifRemoveL1(onDomainL1.value, this, value)
           store.notifyRemoveIdxL1(onDomainIdxL1.value, this, value)
           store.notifyL2(onDomainL2.value)
         }
-        if (dom.isBound) {
+        
+        // Notifies bind watchers if some
+        if (domain.isBound) {
           store.notifyBindL1(onBindL1.value, this)
           store.notifyBindIdxL1(onBindIdxL1.value, this)
           store.notifyL2(onBindL2.value)

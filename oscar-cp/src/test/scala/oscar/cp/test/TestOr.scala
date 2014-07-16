@@ -176,15 +176,20 @@ class TestOr extends FunSuite with ShouldMatchers  {
   }
 
   test("or12") {
+    
     val rand = new scala.util.Random()
+    
     for (i <- 0 until 200) {
 
       implicit val cp = CPSolver()
-      val A = Array.fill(10)(CPBoolVar()(cp))
+
+      val A = Array.fill(10)(CPBoolVar())
+      
       def randClause(): Iterable[CPBoolVar] = {
         val rset = (for (i <- 0 until A.size/3) yield rand.nextInt(10)).toSet
         return (for (i <- rset) yield A(i))
       }
+      
       val randClauses = for (i <- 0 until 10) yield randClause()
       
       for (i <-0 until 3) {
@@ -197,13 +202,12 @@ class TestOr extends FunSuite with ShouldMatchers  {
           else add(or(c.toArray))
         }
       }
-      search(binaryFirstFail(A,_.randomValue))
-      val stat1 = startSubjectTo() {
-        myOr(false)
-      }
-      val stat2 = startSubjectTo() {
-        myOr(true)
-      }
+      
+      search(binaryFirstFail(A, _.randomValue))
+      
+      val stat1 = startSubjectTo() { myOr(false) }
+      val stat2 = startSubjectTo() { myOr(true) }
+      
       stat1.nSols should be(stat2.nSols)
       stat1.nFails should be(stat2.nFails)
     }
