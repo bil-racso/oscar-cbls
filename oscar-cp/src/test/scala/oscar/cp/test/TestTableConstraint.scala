@@ -37,7 +37,7 @@ abstract class TestTableConstraint(val tableConstraintName: String, val nTests: 
   def generateRandomTableProblem(maxArity: Int): TableInstance = {
     val rand = new scala.util.Random()
     val arity = 2 + rand.nextInt(maxArity - 2)
-    val nTuples = 1 + rand.nextInt(1000)
+    val nTuples = 1 + rand.nextInt(500)
     val nValues = 2 + rand.nextInt(7)
     val table = Array.tabulate(nTuples)(_ => Array.tabulate(arity)(_ => rand.nextInt(nValues)).toVector).distinct map (_ toArray)
     TableInstance(table,nValues)
@@ -70,7 +70,7 @@ abstract class TestTableConstraint(val tableConstraintName: String, val nTests: 
   test("test solveAll " + tableConstraintName) {
     (1 to nTests).forall(i => {
       //print("test " + cumulativeName + " instance " + i + ": ")
-      val instance = generateRandomTableProblem(10)
+      val instance = generateRandomTableProblem(5)
       val cpDecomp = new CPTable(instance)
       val cpTable = new CPTable(instance)
       val allSolsDecomp = solveAll(cpDecomp, true)
