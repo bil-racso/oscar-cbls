@@ -163,6 +163,8 @@ class TestElementVar extends FunSuite with ShouldMatchers {
 
     x.isBound should be(true)
     tab(1).min should be(2)
+    tab(1).size should be(2)
+    tab(0).value should be(1)
   }
 
   test("Test Element Var AC10") {
