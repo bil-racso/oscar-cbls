@@ -1,6 +1,6 @@
 package oscar.cp.constraints
 
-import oscar.cp.TestSuite
+import oscar.cp.testUtils.TestSuite
 import oscar.cp.core.CPIntVar
 import oscar.cp.modeling._
 

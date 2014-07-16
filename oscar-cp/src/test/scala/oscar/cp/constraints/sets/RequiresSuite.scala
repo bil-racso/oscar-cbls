@@ -1,6 +1,6 @@
 package oscar.cp.constraints.sets
 
-import oscar.cp.TestSuite
+import oscar.cp.testUtils.TestSuite
 import oscar.cp.core.CPSetVar
 import oscar.cp.modeling.CPSolver
 import oscar.cp.core.CPBoolVar
