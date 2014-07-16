@@ -51,7 +51,7 @@ case class AssignNeighborhood(vars:Array[CBLSIntVar],
   override def getImprovingMove(acceptanceCriteria:(Int,Int) => Boolean = (oldObj,newObj) => oldObj > newObj): SearchResult = {
     if (amIVerbose) println(name + ": trying")
     val startObj = obj.value
-    var oldObj = startObj
+    var oldObj = if(best) Integer.MAX_VALUE else startObj
     var toReturn: SearchResult = NoMoveFound
 
     val iterationSchemeOnZone = if (searchZone == null)
@@ -62,6 +62,7 @@ case class AssignNeighborhood(vars:Array[CBLSIntVar],
     else if (hotRestart) HotRestart(searchZone.value, startIndice) else searchZone.value
 
     val iterationScheme = symmetryClassOfVariables match {
+      case _ if best => iterationSchemeOnZone
       case None => iterationSchemeOnZone
       case Some(s) => IdenticalAggregator.removeIdenticalClassesLazily(iterationSchemeOnZone, s)
     }
@@ -69,18 +70,21 @@ case class AssignNeighborhood(vars:Array[CBLSIntVar],
     for (i <- iterationScheme) {
       val currentVar = vars(i)
       val oldVal = currentVar.value
-
       val domainIterationScheme = symmetryClassOfValues match {
         case None => domain(currentVar, i)
         case Some(s) => IdenticalAggregator.removeIdenticalClassesLazily(domain(currentVar, i), s(i))
       }
 
+      if (amIVerbose) println(name + ": exploring (" + best + ") " + currentVar + " values:" + domainIterationScheme)
+
       for (newVal <- domainIterationScheme if newVal != oldVal) {
         val newObj = obj.assignVal(currentVar, newVal)
 
-        if (best && newObj < oldObj) {
-          oldObj = newObj
-          toReturn = AssignMove(currentVar, newVal, newObj, name)
+        if (best){
+          if (newObj < oldObj) {
+            oldObj = newObj
+            toReturn = AssignMove(currentVar, newVal, newObj, name)
+          }
         } else if (acceptanceCriteria(oldObj, newObj)) {
           startIndice = i + 1
           if (amIVerbose) println(name + ": move found")
@@ -145,7 +149,7 @@ case class SwapsNeighborhood(vars:Array[CBLSIntVar],
 
     if(amIVerbose) println(name + ": trying")
     val startObj = obj.value
-    var oldObj = startObj
+    var oldObj = if(best) Integer.MAX_VALUE else startObj
     var toReturn:SearchResult = NoMoveFound
 
     val firstIterationSchemeZone =
@@ -181,9 +185,11 @@ case class SwapsNeighborhood(vars:Array[CBLSIntVar],
 
         val newObj = obj.swapVal(firstVar, secondVar)
 
-        if (best && newObj < oldObj) {
-          oldObj = newObj
-          toReturn = SwapMove(firstVar, secondVar, newObj, name)
+        if (best){
+          if (newObj < oldObj) {
+            oldObj = newObj
+            toReturn = SwapMove(firstVar, secondVar, newObj, name)
+          }
         } else if (acceptanceCriteria(oldObj, newObj)) {
           startIndice = i + 1
           if (amIVerbose) println(name + ": move found")
