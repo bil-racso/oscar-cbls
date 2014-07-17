@@ -57,7 +57,18 @@ class IntDivisionAC(val a : CPIntVar, val b: CPIntVar, val c: Int) extends Const
   }
   
   override def valRemove(intVar: CPIntVar, value: Int): CPOutcome = {
-    if (intVar == b) a.removeValue(value / c)
+    if (intVar == b) {
+      var supported = false
+      val m = value / c
+      var v = m*c
+      val n = m*c + c
+      while (!supported && v < n) {
+        if (b.hasValue(v)) supported = true
+        else v += 1
+      }
+      if (supported) Suspend
+      else a.removeValue(value / c)
+    }
     else {
       val m = value * c
       val n = m + c

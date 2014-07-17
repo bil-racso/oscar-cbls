@@ -112,23 +112,31 @@ class IntDivisionACSuite extends TestSuite {
     removeAndCheck(3)
   } 
   
-  test("v/c should be removed from a when v is removed from b") {
+  test("v/c should be removed from a when v is removed from b and v is the only support of v/c") {
     implicit val solver = CPSolver()
-    val values = -15 to 15
-    val a = CPIntVar(-5 to 5)
-    val b = CPIntVar(values)
-    val c = 3
+    val a = CPIntVar(1 to 5)
+    val b = CPIntVar(Set(1, 13, 20))
+    val c = 5
     solver.post(new IntDivisionAC(a, b, c)) 
     assert(!solver.isFailed)
-    def removeAndCheck(v: Int): Unit = {     
-      solver.post(b != v)
-      assert(!a.hasValue(v/4), (v/4) + " should not be in " + a)
-    }
-    removeAndCheck(-14)
-    removeAndCheck(-13)
-    removeAndCheck(-6)
-    removeAndCheck(0)
-    removeAndCheck(3)
-    removeAndCheck(7)
+    solver.post(b != 13)
+    assert(!a.hasValue(2), "2 should not be in " + a)
   } 
+  
+  test("removing v from b should not remove v/4 from a if v/4 has still some supports in b") {
+    implicit val solver = CPSolver()
+    val a = CPIntVar(1 to 5)
+    val b = CPIntVar(1 to 15)
+    val c = 5
+    solver.post(new IntDivisionAC(a, b, c)) 
+    assert(!solver.isFailed)
+    solver.post(b != 12)
+    assert(a.hasValue(2), "2 should be in " + a)
+    assert(b.hasValue(10), "10 should be in " + b)
+    assert(b.hasValue(11), "11 should be in " + b)
+    assert(!b.hasValue(12), "12 should not be in " + b)
+    assert(b.hasValue(13), "13 should be in " + b)
+    assert(b.hasValue(14), "14 should be in " + b)
+    assert(b.hasValue(15), "15 should be in " + b)
+  }
 }
