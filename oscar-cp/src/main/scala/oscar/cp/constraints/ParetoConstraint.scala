@@ -89,8 +89,8 @@ class ParetoConstraint[Sol](pareto: Pareto[Sol], isMax: Array[Boolean], objVars:
     if (propagate() == Failure) Failure
     else {
       for(o <- pareto.Objs if !objVars(o).isBound) {
-    	if (isMax(o)) objVars(o).callPropagateWhenMaxChanges(this)
-    	else objVars(o).callPropagateWhenMinChanges(this)
+    	if (isMax(o)) objVars(o).callPropagateWhenBoundsChange(this)
+    	else objVars(o).callPropagateWhenBoundsChange(this)
       }
       Suspend
     }

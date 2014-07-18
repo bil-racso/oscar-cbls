@@ -23,6 +23,7 @@ object QueensVisu extends CPModel with App {
 
   // Variables
   val queens = Array.fill(nQueens)(CPIntVar(Queens))
+  
 
   val tree = new Tree()
   // -----------------------------------------------
@@ -82,4 +83,6 @@ object QueensVisu extends CPModel with App {
 
   //print some statistics
   println(stats)
+  
+  
 }

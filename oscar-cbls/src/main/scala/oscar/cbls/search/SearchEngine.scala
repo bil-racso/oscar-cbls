@@ -93,16 +93,17 @@ trait SearchEngineTrait{
   /**return a couple (r,s) that is allowed: st(r,s) is true, and minimizing f(r,s) among the allowed couples
     * this selector is randomized; in case of tie breaks the returned one is chosen randomly
     * @param st is optional and set to true if not specified
+    * @param stop earlier stop if a couple (and output value is found)
     */
-  def selectMin2[R,S](r: Iterable[R] , s: Iterable[S], f: (R,S) => Int, st: ((R,S) => Boolean) = ((r:R, s:S) => true)): (R,S) = {
-    selectMax2[R,S](r , s, -f(_,_), st)
+  def selectMin2[R,S](r: Iterable[R] , s: Iterable[S], f: (R,S) => Int, st: ((R,S) => Boolean) = ((r:R, s:S) => true), stop: (R,S,Int) => Boolean = (_:R,_:S,_:Int) => false): (R,S) = {
+    selectMax2[R,S](r , s, -f(_,_), st, stop)
   }
 
   /**return a couple (r,s) that is allowed: st(r,s) is true, and maximizing f(r,s) among the allowed couples
    * this selector is randomized; in case of tie breaks the returned one is chosen randomly
    * @param st is optional and set to true if not specified
     */
-  def selectMax2[R,S](r: Iterable[R] , s: Iterable[S], f: (R,S) => Int, st: ((R,S) => Boolean) = ((r:R, s:S) => true)): (R,S) = {
+  def selectMax2[R,S](r: Iterable[R] , s: Iterable[S], f: (R,S) => Int, st: ((R,S) => Boolean) = ((r:R, s:S) => true), stop: (R,S,Int) => Boolean = (_:R,_:S,_:Int) => false): (R,S) = {
     val flattened:List[(R,S)] = for (rr <- r.toList; ss <- s.toList) yield (rr,ss)
     selectMax[(R,S)](flattened , (rands:(R,S)) => f(rands._1,rands._2), (rands:(R,S)) => st(rands._1,rands._2))
   }
@@ -111,12 +112,15 @@ trait SearchEngineTrait{
    * this selector is randomized; in case of tie breaks the returned one is chosen randomly
    * @param st is optional and set to true if not specified
    */
-  def selectMax[R](r: Iterable[R] , f: R => Int, st: (R => Boolean) = ((r:R) => true)): R = {
+  def selectMax[R](r: Iterable[R] , f: R => Int, st: (R => Boolean) = ((r:R) => true), stop: (R,Int) => Boolean = (_:R,_:Int) => false): R = {
     var MaxSoFar = Int.MinValue
     var Val:List[R] = List.empty
     for (i <- r) {
       if (st(i)) {
         val v:Int = f(i)
+        if(stop(i,v)){
+          return i
+        }
         if (v > MaxSoFar || Val.isEmpty) {
           Val = List(i)
           MaxSoFar = v
@@ -178,17 +182,16 @@ trait SearchEngineTrait{
    */
   def selectFrom[R](r: Iterable[R], st: (R => Boolean) = null): R = {
     if (st == null){
-      var i = RandomGenerator.nextInt(r.size) -1
+      var i = RandomGenerator.nextInt(r.size)
       val it = r.iterator
-      //TODO: is it possible to do to the nth directly instead of scrolling the iterator?
       while(i > 0){it.next(); i-=1}
       it.next()
     }else{
       val emptyRlist:List[R]=List.empty
-      var Val:List[R] = r.foldLeft(emptyRlist)((acc,rr) => (if (st(rr)) (rr :: acc) else acc))
-      if (Val.isEmpty) return null.asInstanceOf[R]
-      var i = RandomGenerator.nextInt(Val.size)
-      Val(i)
+      val filteredList:List[R] = r.foldLeft(emptyRlist)((acc,rr) => (if (st(rr)) (rr :: acc) else acc))
+      if (filteredList.isEmpty) return null.asInstanceOf[R]
+      var i = RandomGenerator.nextInt(filteredList.size)
+      filteredList(i)
     }
   }
 

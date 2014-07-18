@@ -25,10 +25,10 @@ package oscar.examples.cbls.scheduling
 
 import oscar.cbls.invariants.core.computation.{CBLSIntVar, Store}
 import oscar.cbls.scheduling._
-import oscar.cbls.scheduling.algo.{IFlatIRelaxTabu, IFlatIRelax}
 import oscar.cbls.scheduling.model._
 import oscar.cbls.invariants.core.propagation.Checker
 import oscar.cbls.scheduling.model.CumulativeResource
+import oscar.cbls.scheduling.solver.IFlatIRelax
 
 /**a simple model of Reagan president of USA
  * he is partly multitask, can do two things at the same time, except eating, which requires his full attention
@@ -39,7 +39,7 @@ object ReaganPray extends App {
   val model = new Store(verbose=false, checker = None, noCycle=false, topologicalSort = false)
 
   val planning = new Planning(model, 50)
-  val solver = new IFlatIRelaxTabu(planning)
+  val solver = new IFlatIRelax(planning)
 
   val Reagan = CumulativeResource(planning, 3, "Reagan")
 

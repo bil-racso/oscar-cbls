@@ -26,13 +26,15 @@ import oscar.visual.VisualFrame
  * @author Cyrille Dejemeppe cyrille.dejemeppe@gmail.com
  *
  */
-class VisualLabelledRoundRectangle(d: VisualDrawing, s: RoundRectangle2D.Double, label: String, _marginWidth: Double = 5) extends VisualRoundRectangle(d, s) {
-  
+class VisualLabelledRoundRectangle(d: VisualDrawing, s: RoundRectangle2D.Double, label: String, _marginWidth: Double = 0) extends VisualRoundRectangle(d, s) {
+
   def rect: RoundRectangle2D.Double = shape
   val textDraw = new VisualText(d, (x + marginWidth).toInt, (y + marginWidth + d.getFontMetrics(d.getFont()).getHeight()).toInt, label)
   var marginWidth = _marginWidth
+  
+  textDraw.move(xText, yText)
 
-  def this(d: VisualDrawing, x: Double, y: Double, label: String, arcw: Double = 7, arch: Double = 7, marginWidth: Double = 5) = {
+  def this(d: VisualDrawing, x: Double, y: Double, label: String, marginWidth: Double, arcw: Double, arch: Double) = {
     this(d, new RoundRectangle2D.Double(x,
         y,
         d.getFontMetrics(d.getFont()).stringWidth(label) + marginWidth * 2,
@@ -42,6 +44,10 @@ class VisualLabelledRoundRectangle(d: VisualDrawing, s: RoundRectangle2D.Double,
       label,
       marginWidth)
   }
+  
+  def this(d: VisualDrawing, x: Double, y: Double, label: String, marginWidth: Double) = this(d,x,y,label,marginWidth,7,7)
+  
+  def this(d: VisualDrawing, x: Double, y: Double, label: String) = this(d,x,y,label,5,7,7)
 
   /**
    * X coordinates of bottom left corner
@@ -60,8 +66,8 @@ class VisualLabelledRoundRectangle(d: VisualDrawing, s: RoundRectangle2D.Double,
    * @param x
    */
   override def move(x: Double, y: Double) {
-    textDraw.move(xText, yText)
     super.move(x, y)
+    textDraw.move(xText, yText)
   }
 
   def getWidth(newLabel: String) = {
@@ -76,7 +82,7 @@ object VisualLabelledRoundRectangle {
     val d = VisualDrawing(false);
     val inf = f.createFrame("Drawing");
 
-    val rect = new VisualLabelledRoundRectangle(d, 50, 50, "I'm a rectangle. Just a rectangle...", 10);
+    val rect = new VisualLabelledRoundRectangle(d, 50, 50, "I'm a rectangle. Just a rectangle...", marginWidth=10);
     rect.toolTip = ("Hello");
 
     inf.add(d);
@@ -84,6 +90,7 @@ object VisualLabelledRoundRectangle {
 
     Thread.sleep(1000);
     rect.innerCol = (Color.red);
+    rect.textDraw.innerCol = (Color.BLUE)
     Thread.sleep(1000);
     rect.move(100, 20);
     for (i <- 0 until 20) {

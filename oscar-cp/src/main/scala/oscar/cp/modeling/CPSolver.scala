@@ -19,7 +19,6 @@ import oscar.algo.search._
 import oscar.cp._
 import oscar.cp.core._
 import oscar.cp.constraints._
-import scala.util.continuations._
 import scala.collection.mutable.Stack
 import oscar.algo.reversible._
 import oscar.util._

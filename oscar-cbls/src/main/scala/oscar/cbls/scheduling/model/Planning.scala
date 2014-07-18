@@ -30,7 +30,6 @@ import oscar.cbls.invariants.lib.minmax.{ ArgMinArray, ArgMaxArray }
 import oscar.cbls.invariants.lib.logic.{ Filter, DenseRef }
 import oscar.visual.VisualFrame
 import oscar.visual.plot.PlotLine
-import oscar.cbls.scheduling.visu.Gantt
 import oscar.cbls.modeling.Algebra._
 import oscar.cbls.invariants.lib.logic.Sort
 import oscar.cbls.invariants.lib.numeric.SumElements
@@ -77,7 +76,7 @@ class Planning(val model: Store, val maxDuration: Int) {
 
   var sentinelActivity: Activity = null //a task that is added after all activities, to simplify algorithm construction
 
-  model.addToCallBeforeClose(_ => this.close())
+  model.addToCallBeforeClose(() => this.close())
 
   /**
    * this is to close the planning when you are done with declaring tasks, precedence  and resource
@@ -91,7 +90,9 @@ class Planning(val model: Store, val maxDuration: Int) {
     sentinelActivity.latestEndDate := maxDuration
 
     for (a <- activitiesNoSentinel) {
-      if (a.isTakenInSentinel) sentinelActivity.addStaticPredecessor(a)
+      if (a.isTakenInSentinel && ! a.hasSuccessor){
+        sentinelActivity.addStaticPredecessor(a)
+      }
     }
 
     activityArray = new Array[Activity](activityCount)
@@ -128,24 +129,6 @@ class Planning(val model: Store, val maxDuration: Int) {
     worseOvershotResource = ArgMaxArray(overshootArray, ResourceWithOvershoot)
   }
 
-  var gantt: Gantt = null
-  var plot: PlotLine = null
-  def displayVisualRendering() {
-    val frame = new VisualFrame("Cumulative JobShop Problem", 1, 1)
-    frame.setBounds(0, 0, 500, 800)
-    gantt = new Gantt(this)
-    frame.createFrame("Gantt chart").add(gantt)
-    //   plot = new Plot2D("makespan", "iterations", "makespan");
-    //   frame.createFrame("progress").add(plot)
-
-    frame.pack
-    frame.setSize(1500, 500)
-  }
-
-  def updateVisual() {
-    if (gantt != null) gantt.update(1.0f, 30)
-  }
-
   override def toString: String = toAsciiArt
 
   def toAsciiArt: String = {
@@ -160,18 +143,19 @@ class Planning(val model: Store, val maxDuration: Int) {
   }
 
   def dependencies: String = {
-    var toreturn: String = ""
+    var toreturnAdditional:String = ""
+    var toreturnInitial:String = ""
     for (activity <- activities.sortBy(t => t.earliestStartDate.value)) {
       for (t2 <- activity.allSucceedingActivities.value if t2 != activity.ID && t2 != sentinelActivity.ID) {
         val activity2 = activityArray(t2)
         if (activity2.additionalPredecessors.value.contains(activity.ID)) {
-          toreturn += activity.name + " -> " + activity2.name + "\n"
+          toreturnAdditional += activity.name + " -> " + activity2.name + "\n"
         } else {
-          toreturn += activity.name + " ->> " + activity2.name + "\n"
+          toreturnInitial += activity.name + " ->> " + activity2.name + "\n"
         }
       }
     }
-    toreturn
+    toreturnInitial + toreturnAdditional
   }
 
   def resourceUsage: String = {

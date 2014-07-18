@@ -15,43 +15,45 @@
 package oscar.examples.des
 
 
-
 import oscar.des.engine._
-import scala.util.continuations._
 
 
 /**
  * Two machines can be broken, they are two repair person to fix it so it can be done in parallel
- * @author Pierre Schaus, Sebastien Mouthuy
+ * @author pschaus
  */
 class Machine1(m : Model, name: String) extends Process(m,name) {
 	
 	val liveDur = new scala.util.Random(0)
 	val breakDur = new scala.util.Random(0)
 	
-	def beAlive(): Unit @ suspendable = {
+	def beAlive() {
 		println(name+" is alive");
-		m.wait (liveDur.nextInt(10).max(0).toDouble)
-		beBroken()
-		
+		m.wait (liveDur.nextInt(10).max(0).toDouble) {
+			beBroken()
+		}
 	}
 	
-	def beBroken(): Unit @ suspendable =  {
+	def beBroken() {
 		println(name+" is broken");
-		m.wait(breakDur.nextInt(2).max(0).toDouble)
+		m.wait(breakDur.nextInt(2).max(0).toDouble) {
+			beAlive()
+		}
+	}
+	
+	def run() {
 		beAlive()
 	}
-	
-	override def start() = beAlive()
-	
 	
 }
 
 object Machine1 {
-	def main(args: Array[String]){
+	def main(args: Array[String]) {
   		val mod = new Model()
 		val m1 = new Machine1(mod,"machine1")
+		m1.run()
 		val m2 = new Machine1(mod,"machine2")
+		m2.run()
 		mod.simulate(100,true);
 	}
 }

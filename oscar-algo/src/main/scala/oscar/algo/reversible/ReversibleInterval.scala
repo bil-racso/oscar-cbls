@@ -19,28 +19,28 @@ package oscar.algo.reversible
  * @author pschaus
  */
 class ReversibleInterval(s: ReversibleContext, val minValue: Int, val maxValue: Int) {
-  val _maxValue = if (maxValue == Int.MaxValue) Int.MaxValue - 10 else maxValue 
+  
+  private val _maxValue = if (maxValue - minValue - 1 < Int.MaxValue) maxValue 
+  else sys.error("the domain contains more than Int.MaxValue values")
+  
   private val _min = new ReversibleInt(s, minValue)
-
   private val _max = new ReversibleInt(s, _maxValue)
-
-  private val _size = new ReversibleInt(s, _maxValue - minValue + 1)
   
-  def size = 0 max _size.value
+  def size: Int = _max - _min + 1
   
-  def min: Int = {
+  @inline def min: Int = {
 	assert(!isEmpty)
     _min.value
   }
   
-  def max: Int = {
+  @inline def max: Int = {
     assert(!isEmpty)
     _max.value
   }
   
 
-  def isEmpty = {
-    size <= 0
+  @inline def isEmpty = {
+    _max.value < _min.value
   }
   
   /**
@@ -48,11 +48,9 @@ class ReversibleInterval(s: ReversibleContext, val minValue: Int, val maxValue: 
    * @return smallest value in the domain >= value, value-1 is returned if no such value
    */ 
   def nextValue(value: Int): Int = {
-    if (isEmpty || value > max) {
-      value-1
-    } else if (value < min) {
-      return min
-    } else value
+    if (isEmpty || value > _max) value -1
+    else if (value < _min) _min
+    else value
   }
   
   /**
@@ -60,11 +58,9 @@ class ReversibleInterval(s: ReversibleContext, val minValue: Int, val maxValue: 
    * @return largest value in the domain <= value, value+1 is returned if no such value
    */ 
   def prevValue(value: Int): Int = {
-    if (isEmpty || value < min) {
-      value+1
-    } else if (value > max) {
-      return max
-    } else value
+    if (isEmpty || value < _min) value + 1
+    else if (value > _max) _max
+    else value
   }
   
   def removeValue(value: Int) {
@@ -74,37 +70,26 @@ class ReversibleInterval(s: ReversibleContext, val minValue: Int, val maxValue: 
   
   def hasValue(value: Int) = !isEmpty && value <= max && value >= min
   
-  def iterator: Iterator[Int] = {
-    (min to max).iterator
-  }
+  def iterator: Iterator[Int] = (min to max).iterator
   
-  def updateMax(value: Int) {
-    if (value >= max) return
-    else if (value < min) _size.value = 0
-    else {
-      _size.value = value-min+1
+  def updateMax(value: Int): Unit = {
+    if (value < _min) _min.value = _max.value + 1
+    else if (value < _max) {
       _max.value = value
     }
   }
   
-  def updateMin(value: Int) {
-    if (value <= min) return
-    else if (value > max) _size.value = 0
-    else {
-      _size.value = max-value+1
+  def updateMin(value: Int): Unit = {
+    if (value > _max) _max.value = _min.value - 1
+    else if (value > _min) {
       _min.value = value
-    }    
-    
+    }
   }
   
-  def assign(value: Int) {
+  def assign(value: Int): Unit = {
     if (hasValue(value)) {
       _min.value = value
       _max.value = value
-      _size.value = 1
     }
-      //updateMax(value)
-      //if (!isEmpty) updateMin(value)
   }
-
 }

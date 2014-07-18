@@ -19,7 +19,7 @@ import oscar.util.RandomGenerator
 
 /**
   * @author Renaud Hartert ren.hartert@gmail.com
-  * @author: Cyrille Dejemeppe cyrille.dejemeppe@gmail.com
+  * @author Cyrille Dejemeppe cyrille.dejemeppe@gmail.com
   */
 class QT[U: Numeric](private val nDim: Int, private val cmp: (Int, Int) => Boolean) extends ParetoFront[U, QTNode[U]] with Traversable[QTNode[U]] {
   

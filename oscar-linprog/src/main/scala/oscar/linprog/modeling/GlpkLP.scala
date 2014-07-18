@@ -196,6 +196,10 @@ class GlpkLP extends AbstractLP {
     GLPK.glp_set_col_kind(lp, colId + 1, GLPKConstants.GLP_IV)
   }
 
+  def setBinary(colId: Int) {
+    GLPK.glp_set_col_kind(lp, colId + 1, GLPKConstants.GLP_BV)
+  }
+  
   def setFloat(colId: Int) {
     GLPK.glp_set_col_kind(lp, colId + 1, GLPKConstants.GLP_CV)
   }

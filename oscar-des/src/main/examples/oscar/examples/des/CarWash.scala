@@ -22,7 +22,6 @@ package oscar.examples.des
 import oscar.des.engine._
 import oscar.des.engine
 import oscar.invariants._
-import scala.util.continuations._
 import JSci.maths.statistics._
 
 //import org.scala_tools.time.Imports._

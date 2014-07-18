@@ -83,7 +83,7 @@ abstract class Neighborhood() {
     require(s.vrp.m.isClosed, "cannot run neighborhood if store is not closed")
     bestImprovingMove(s, moveAcceptor) match {
       case Some(m) =>
-        m.doMove; true
+        m.doMove(); true
       case None => false
     }
   }
@@ -114,7 +114,7 @@ abstract class Neighborhood() {
       //println("VRP before trying next move: " + s.vrp)
       firstImprovingMove(s, moveAcceptor) match {
         case None => return bestMove
-        case Some(move) if (move.objAfter < bestObj) =>
+        case Some(move) if move.objAfter < bestObj =>
           bestMove = Some(move)
           bestObj = move.objAfter
         case _ => ()
@@ -134,9 +134,9 @@ abstract class Neighborhood() {
 
 
   /**
-   * this method evaluates the result of moveAcceptor(objectiveFunction) after having comited the encoded move
+   * this method evaluates the result of moveAcceptor(objectiveFunction) after having committed the encoded move
    * it return the result of this evaluation
-   * it restores the state as it was before the move was comited (and records the move again)
+   * it restores the state as it was before the move was committed (and records the move again)
    * except if StayIfImprove is set to true. In this case, it does not restore the state if  moveAcceptor(objectiveFunction) return true
    * Besides, it wipes out the move description
    * @param moveAcceptor says if the move is accepted or not
@@ -172,7 +172,7 @@ case class SearchZone(relevantNeighbors: (Int => Iterable[Int]),
                       primaryNodeIterator: Iterator[Int],
                       vrp: VRP with VRPObjective with PositionInRouteAndRouteNr
                                with MoveDescription,
-                      abort: Unit => Boolean = (_ => false))
+                      abort: () => Boolean = {() => false})
 // format: ON
 
 abstract class SearchResult {

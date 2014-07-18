@@ -20,17 +20,17 @@
 
 package oscar.examples.cbls.queens
 
-import oscar.cbls.search._
-import oscar.cbls.invariants.core.computation._
 import oscar.cbls.constraints.core._
-import oscar.cbls.modeling.Algebra._
 import oscar.cbls.constraints.lib.global.AllDiff
-import oscar.cbls.invariants.lib.logic._
-import oscar.cbls.invariants.lib.minmax._
-import util.Random
 import oscar.cbls.invariants.core.computation.CBLSIntVar.int2IntVar
+import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.lib.logic.SelectLESetQueue
+import oscar.cbls.invariants.lib.minmax._
+import oscar.cbls.modeling.Algebra._
+import oscar.cbls.search._
+
 import scala.language.postfixOps
+import scala.util.Random
 
 //Beware: this requires a lot of memory, so I use to put this in the command line.
 //-Xms1000M -Xmx1000M
@@ -71,6 +71,7 @@ object NQueensBench1 extends SearchEngine(true) with StopWatch{
       	val N:Int=args(0).toInt
         println("Runing NQueen - this takes time depending on N")
         println(padToLength("N", 15) + padToLength("tClose[ms]", 15) + padToLength("tTotal[ms]", 15) + "it")
+        SolveNQueen(1000)
       	SolveNQueen(N)
     }
   }

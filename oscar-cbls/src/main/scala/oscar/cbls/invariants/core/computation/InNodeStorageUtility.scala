@@ -34,7 +34,7 @@ trait DistributedStorageUtility {
 }
 
 /**
- * integrate this trait somewhere as he dictionary defining unique keys for the [[oscar.cbls.invariants.core.propagation.DistributedStorageUtility]]
+ * integrate this trait somewhere as he dictionary defining unique keys for the [[oscar.cbls.invariants.core.computation.DistributedStorageUtility]]
  * @author renaud.delandtsheer@cetic.be
  */
 trait StorageUtilityManager {

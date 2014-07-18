@@ -21,22 +21,18 @@ package oscar.examples.cbls.queens
  *         by Renaud De Landtsheer and Christophe Ponsard
  ******************************************************************************/
 
-import scala.swing.SimpleSwingApplication
-import scala.swing.MainFrame
-import scala.swing.Button
-import scala.swing.GridPanel
-import scala.swing.Label
+import java.awt.Color
+import javax.swing.ImageIcon
+import javax.swing.border.LineBorder
+
 import oscar.cbls.constraints.core.ConstraintSystem
 import oscar.cbls.constraints.lib.global.AllDiff
-import oscar.cbls.modeling.Algebra._
-import javax.swing.ImageIcon
-import java.awt.Color
-import oscar.cbls.search.SearchEngineTrait
-import scala.swing.BoxPanel
-import scala.swing.Orientation
-import scala.swing.event.ButtonClicked
-import javax.swing.border.LineBorder
 import oscar.cbls.invariants.core.computation._
+import oscar.cbls.modeling.Algebra._
+import oscar.cbls.search.SearchEngineTrait
+
+import scala.swing.{BoxPanel, Button, GridPanel, Label, MainFrame, Orientation, SimpleSwingApplication}
+import scala.swing.event.ButtonClicked
 
 object NQueensWithUI extends SimpleSwingApplication with SearchEngineTrait {
 

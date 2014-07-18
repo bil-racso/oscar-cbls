@@ -110,6 +110,21 @@ class TestMinAssignment extends FunSuite with ShouldMatchers {
     x(0).value should be(0)
     //x(1).value should be(1) // if we do AC
     x(2).value should be(2)
+  }
+  
+  test("Test Assignment 7") {
+    val cp = CPSolver()
+    val w = Array(Array(0, 1, 2, 3), 
+                  Array(1, 1, 0, 0), 
+                  Array(2, 3, 0, 3))
+    val cost = CPIntVar(0 to 100)(cp)
+    val x = Array.fill(3)(CPIntVar(0 to 3)(cp))
+    cp.post(new MinAssignment(x, w, cost))
+    cost.min should be(0)
+    cp.post(cost <= 0)
+    x(0).value should be(0)
+    x(1).value should be(3)
+    x(2).value should be(2)
   }    
   
    

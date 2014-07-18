@@ -366,7 +366,7 @@ trait VRPObjective extends VRP {
     objectiveFunctionTerms = o :: objectiveFunctionTerms
   }
 
-  m.addToCallBeforeClose(_ => closeObjectiveFunction)
+  m.addToCallBeforeClose(() => closeObjectiveFunction)
 
   /**
    * This finished the accumulation of terms in the objective unction.
@@ -435,7 +435,7 @@ abstract trait PenaltyForUnrouted extends VRP with RoutedAndUnrouted {
   /**
    * the variable which maintains the sum of penalty of unrouted nodes, thanks to invariant SumElements.
    */
-  val unroutedPenalty: CBLSIntVar = SumElements(weightUnroutedPenalty, unrouted)
+  val unroutedPenalty: CBLSIntVar = Sum(weightUnroutedPenalty, unrouted)
 
   /**
    * It allows you to set the penalty of a given point.
@@ -712,7 +712,7 @@ trait PenaltyForEmptyRoute extends VRP with PositionInRouteAndRouteNr {
    * The variable which maintains the sum of route penalties,
    * thanks to SumElements invariant.
    */
-  val emptyRoutePenalty: CBLSIntVar = SumElements(emptyRoutePenaltyWeight, emptyRoutes)
+  val emptyRoutePenalty: CBLSIntVar = Sum(emptyRoutePenaltyWeight, emptyRoutes)
 
   /**
    * Allows client to set the penalty of a given vehicle route.

@@ -73,11 +73,14 @@ class Activity(val duration: CBLSIntVar, val planning: Planning, val name: Strin
 
   def addStaticPredecessor(j: Activity) {
     staticPredecessors = j :: staticPredecessors
+    j.hasSuccessor = true
   }
 
   def precedes(j: Activity) {
     j.addStaticPredecessor(this)
   }
+
+  var hasSuccessor:Boolean = false;
 
   def uses(n: CBLSIntVar): ActivityAndAmount = ActivityAndAmount(this, n)
 

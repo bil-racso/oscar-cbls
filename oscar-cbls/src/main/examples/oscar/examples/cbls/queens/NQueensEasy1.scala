@@ -20,11 +20,8 @@
 
 package oscar.examples.cbls.queens
 
-import oscar.cbls.modeling.Algebra._
-import oscar.cbls.constraints.core._
-import oscar.cbls.modeling._
-import oscar.util._
 import oscar.cbls.invariants.core.computation.CBLSIntVar
+import oscar.cbls.modeling._
 
 /**
  * Local Search for NQueens
@@ -67,7 +64,7 @@ object NQueensEasy1 extends CBLSModel with App{
         queens(q1) :=: queens(q2)
         tabu(q1)= it + tenure
         tabu(q2) = it + tenure
-      case _ => println("Warning: Tabu it too big compared to queens count")
+      case _ => ;
     }
     it += 1
   }
