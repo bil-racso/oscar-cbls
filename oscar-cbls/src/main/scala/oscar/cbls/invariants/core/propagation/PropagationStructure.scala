@@ -620,7 +620,7 @@ class StronglyConnectedComponentTopologicalSort(override val Elements: Iterable[
   }
 
   def InitiateDynamicGraphFromSameComponent(e:PropagationElement){
-    assert(component != null)
+    assert(e.component == this)
 
     def filterForListened(listened:PropagationElement,injector:(()=>Unit), isStillValid:(()=> Boolean)):Unit = {
       if(this == listened.component)
