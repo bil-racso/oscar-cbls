@@ -10,6 +10,13 @@ import oscar.cbls.objective.Objective
 import oscar.cbls.search.move.Move
 import oscar.cbls.search.{AssignNeighborhood, RandomizeNeighborhood, SwapsNeighborhood}
 
+
+/**
+ * this is a WarehouseLocation problem with a Tabu.
+ * the purpose is to illustrate how standard neighborhoods can be tuned to encompass
+ * additional behaviors. Here, we restrict a neighborhood to a specific set of variables that not tabu
+ * this set of variables is maintained through invariants
+ */
 object WarehouseLocationTabu extends App with AlgebraTrait{
 
   //the number of warehouses
@@ -18,7 +25,6 @@ object WarehouseLocationTabu extends App with AlgebraTrait{
   //the number of delivery points
   val D:Int = 150
 
-  
   val maxStepsWithNoImprovement = W
   val tabuTenure = W/3
 
@@ -31,7 +37,6 @@ object WarehouseLocationTabu extends App with AlgebraTrait{
   val minXY = 0
   val maxXY = 100
   val side = maxXY - minXY
-
 
   val weightingForOpeningWarehouseCost = 3
 
@@ -75,33 +80,30 @@ object WarehouseLocationTabu extends App with AlgebraTrait{
   val TabuArray = Array.tabulate(W)(w => CBLSIntVar(m))
   val It = CBLSIntVar(m)
 
-  val neighborhood = (AssignNeighborhood(warehouseOpenArray, obj, "SwitchWarehouseTabu",
+  val switchWithTabuNeighborhood = (AssignNeighborhood(warehouseOpenArray, obj, "SwitchWarehouseTabu",
     searchZone = SelectLESetQueue(TabuArray,It), best = true)
     onMove((mo:Move) => {
     for (v <- mo.touchedVariables) {
-      val i = v.getStorageAt[Int](warehouseKey,-1)
-      TabuArray(i) := It.value + tabuTenure
-      It :+= 1
+      TabuArray(v.getStorageAt[Int](warehouseKey)) := It.value + tabuTenure
     }
+    It :+= 1
   }) protectBest obj)
 
   m.close()
 
-  neighborhood.verbose = 1
-
-  //we accept all moves since the neighborhood is required to return the best found move.
+  switchWithTabuNeighborhood.verbose = 1
 
   var oldObj = obj.value
   var stepsSinceLastImprovement = 0
-  neighborhood.doAllImprovingMoves((it:Int) => {
+  switchWithTabuNeighborhood.doAllImprovingMoves((it:Int) => {
     if(obj.value < oldObj) {oldObj = obj.value; stepsSinceLastImprovement = 0}
     else stepsSinceLastImprovement +=1
     it >= W+D || stepsSinceLastImprovement >= maxStepsWithNoImprovement},
+    //all moves are accepted because the neighborhood returns the best found move, and tabu might degrade obj.
     (oldObj,newObj) => true)
 
-  neighborhood.restoreBest()
+  switchWithTabuNeighborhood.restoreBest()
 
   println(openWarehouses)
-
 }
 

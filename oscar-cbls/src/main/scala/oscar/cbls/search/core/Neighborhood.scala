@@ -76,9 +76,11 @@ abstract class Neighborhood{
    *                   eg if the problem is considered as solved
    *                   you can evaluate some objective function there such as a violation degree
    * @param acceptanceCriterion a criterion for accepting a move
+   *                            by default, we on
    * @return
    */
   def doAllImprovingMoves(shouldStop:Int => Boolean, acceptanceCriterion:(Int,Int) => Boolean = (oldObj,newObj) => oldObj > newObj):Int = {
+    var oldObj = Int.MaxValue
     var toReturn = 0
     var moveCount = 0
     while(!shouldStop(moveCount)){
@@ -87,7 +89,15 @@ abstract class Neighborhood{
           if (verbose >= 1) println("no more move found after " + toReturn + " it")
           return toReturn;
         case m: MoveFound =>
-          if (verbose >= 1) println(m)
+          if (verbose >= 1){
+            if(m.objAfter < oldObj) {
+              oldObj = m.objAfter
+              println(m + "*")
+            }else{
+              println(m)
+            }
+          }
+
           m.commit()
           true
       }

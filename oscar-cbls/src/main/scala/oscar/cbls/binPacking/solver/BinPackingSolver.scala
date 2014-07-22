@@ -213,7 +213,7 @@ case class JumpSwapItems(p:BinPackingProblem)
     match {
       case (item1,item2) =>
         if (verbose >= 2) println("Jump: swapping bins of " + item1 + " and " + item2)
-        SwapMove(item1.bin, item2.bin, 0, "Jump")
+        SwapMove(item1.bin, item2.bin, Int.MaxValue, "Jump")
       case null =>
         if (verbose >= 2) println("Jump: no move found")
         NoMoveFound
@@ -244,8 +244,8 @@ case class EmptyMostViolatedBin(p:BinPackingProblem)
       bin1.items.value.toList.map(itemid => {
         val item = p.items(itemid)
         val newBin = selectFrom(binList, (bin:Bin) => bin.number != bin1.number)
-        AssignMove(item.bin,newBin.number,0)
-      }), 0, "Jump, Emptying bin " + bin1.number
+        AssignMove(item.bin,newBin.number,Int.MaxValue)
+      }), Int.MaxValue, "Jump, Emptying bin " + bin1.number
     )
   }
 }
