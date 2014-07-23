@@ -26,7 +26,7 @@ import scala.collection.mutable.ArrayBuffer
  */
 class ReversibleContext {
 
-  protected var magicNumber: Int = 0
+  protected var magicNumber: Long = 0
   protected var trailStack: Trail = new Trail()
 
   private val pointerStack = new Stack[TrailEntry]()
@@ -35,7 +35,7 @@ class ReversibleContext {
   private val popListeners = new ArrayBuffer[() => Unit]()
   
   /** Returns the magic number of the context */
-  def magic: Int = magicNumber
+  def magic: Long = magicNumber
   
   /** Returns the stack of trails */
   def trail: Trail = trailStack
