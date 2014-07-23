@@ -63,7 +63,7 @@ class ReversiblePointer[@specialized T](n: ReversibleContext, v: T) extends Reve
   @inline def getValue(): T = pointer
 
   override def addOnTrail(): Unit = {
-    node.getTrail().addEntry(this, pointer)
+    node.trail.addEntry(this, pointer)
   }
 
   override def restore(value: Object): Unit = {

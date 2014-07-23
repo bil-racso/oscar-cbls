@@ -81,7 +81,7 @@ public class ReversibleBitSet extends Reversible {
 
 	@Override
 	protected void addOnTrail() {
-		node.getTrail().addEntry(this, bits.clone());
+		node.trail().addEntry(this, bits.clone());
 	}
 
 	@Override

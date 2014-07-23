@@ -13,13 +13,11 @@
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
 
-
 package oscar.algo.reversible
 
 import java.util.Stack
 import scala.collection.JavaConversions._
 import scala.collection.mutable.ArrayBuffer
-
 
 /**
  * Class representing a reversible node, that is a node able to restore all
@@ -28,51 +26,47 @@ import scala.collection.mutable.ArrayBuffer
  */
 class ReversibleContext {
 
-  var magic = 0
-  var trail = new Trail();
-  val pointerStack = new Stack[TrailEntry]()
+  protected var magicNumber: Int = 0
+  protected var trailStack: Trail = new Trail()
 
+  private val pointerStack = new Stack[TrailEntry]()
   
-  val popListeners = new ArrayBuffer[() => Unit]()
+  // Actions to execute when a pop operation occurs 
+  private val popListeners = new ArrayBuffer[() => Unit]()
   
-  def onPop(action: => Unit) {
-    popListeners.add(() => action)
-  }  
-
-  def getMagic() = magic
-
-  def getTrail() = trail
-
-
-  /**
-   * store the current state of the node on a stack.
-   */
-  def pushState() {
-    magic += 1
-    pointerStack.push(trail.getTopEntry())
+  /** Returns the magic number of the context */
+  def magic: Int = magicNumber
+  
+  /** Returns the stack of trails */
+  def trail: Trail = trailStack
+  
+  
+  /** Adds an action to execute when the `pop` function us called */
+  def onPop(action: => Unit): Unit = popListeners.add(() => action)
+  
+  /** Stores the current state of the node on a stack */
+  def pushState(): Unit = {
+    magicNumber += 1
+    pointerStack.push(trail.getTopEntry)
   }
 
-  /**
-   * Restore state on top of the stack of states and remove it from the stack.
-   */
-  def pop() {
+  /** Restores state on top of the stack of states and remove it from the stack */
+  def pop(): Unit = {
     trail.restoreUntil(pointerStack.pop())
     popListeners.foreach(_())
-    magic += 1 // increment the magic because we want to trail again
+    magicNumber += 1 // increment the magic because we want to trail again
   }
 
-  /**
-   * Restore the node to its initial state
+  /** 
+   *  Restores the node to its initial state 
+   *  Note: does not execute the on pop actions
    */
-  def popAll() {
+  def popAll(): Unit = {
     while (!pointerStack.empty()) {
       trail.restoreUntil(pointerStack.pop())
     }
-    magic += 1 // increment the magic because we want to trail again
+    magicNumber += 1 // increment the magic because we want to trail again
   }
 
-  override def toString() = {
-    "SearchNode: nbPushed" + pointerStack.size() + " currentTrailSize:" + trail.getSize();
-  }
-
+  override def toString: String = "SearchNode nPushed: " + pointerStack.size + " currentTrailSize: " + trail.getSize
 }

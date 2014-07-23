@@ -30,7 +30,7 @@ public abstract class Reversible {
 	}
 	
 	protected boolean mustBeTrailed() {
-		if (lastMagic == node.getMagic()) {
+		if (lastMagic == node.magic()) {
 			return false;
 		} else{
 			return true;
@@ -40,7 +40,7 @@ public abstract class Reversible {
 	protected void trail() {
 		if (!mustBeTrailed()) return;
 		else {
-			lastMagic = node.getMagic();
+			lastMagic = node.magic();
 			addOnTrail();
 		}
 	}
