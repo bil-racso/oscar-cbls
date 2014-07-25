@@ -35,31 +35,28 @@ class SearchStatistics(
  * @author Pierre Schaus pschaus@gmail.com
  */
 class Search(node: SearchNode, branching: Branching) {
-  
+
   type SolutionAction = () => Unit
-  
+
   private var solutionActions = List[SolutionAction]()
 
-  def onSolution(action: => Unit): Unit = {
-    solutionActions = (() => action) :: solutionActions
-  }
+  def onSolution(action: => Unit): Unit = solutionActions = (() => action) :: solutionActions
 
   def solFound(): Unit = solutionActions.foreach(_())
 
   def solveAll(nSols: Int = Int.MaxValue, failureLimit: Int = Int.MaxValue, timeLimit: Int = Int.MaxValue, maxDiscrepancy: Int = Int.MaxValue): SearchStatistics = {
 
-    // Resets the states of the node
+    // Resets the states of the reversible context
     node.resetStats()
+
+    val t0 = System.currentTimeMillis()
+    val discrepancy = new ReversibleInt(node, 0)
 
     var stack = scala.collection.mutable.Stack[(Int, Alternative, Boolean)]()
     var solCounter = 0
     var nbNodes = 0
     var nBkts = 0
 
-    val t0 = System.currentTimeMillis()
-    val discrepancy = new ReversibleInt(node, 0)
-    
-    // Initial state
     node.pushState()
 
     // retrieve alternatives not exceeding max discrepancy and stack them
@@ -80,7 +77,10 @@ class Search(node: SearchNode, branching: Branching) {
       }
     }
 
-    def searchLimitReached = (System.currentTimeMillis() - t0 / 1000 >= timeLimit) || (nBkts >= failureLimit)
+    def searchLimitReached: Boolean = {
+      ((System.currentTimeMillis() - t0) / 1000 >= timeLimit) || 
+      (nBkts >= failureLimit)
+    }
 
     // add initial alternatives of the root node
     if (!node.isFailed) {
@@ -97,7 +97,7 @@ class Search(node: SearchNode, branching: Branching) {
       nbNodes += 1
       val (d, a, last) = stack.pop() // (discrepancy,alternative)
       if (!last) node.pushState()
-      discrepancy.value += d
+      discrepancy.value = discrepancy.value + d
       a()
       if (!node.isFailed()) {
         // a node not failed without alternative is a solution
@@ -106,8 +106,11 @@ class Search(node: SearchNode, branching: Branching) {
           solCounter += 1
           nBkts += 1
           if (nSols == solCounter) done = true
-          else node.pop()
+          else {
+            node.pop()
+          }
         }
+
       } else {
         nBkts += 1
         node.pop()
