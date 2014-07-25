@@ -5,6 +5,8 @@ import org.scalatest.matchers.ShouldMatchers
 import oscar.cp.xcsp.modeling.DefaultConstraints
 import oscar.cp.xcsp.XCSPSolver
 import oscar.cp.modeling._
+import oscar.cp.xcsp.ast.ParameterParser
+import oscar.cp.xcsp.ast.IntegerVariable
 
 class TestXCSP extends FunSuite with ShouldMatchers  {
   
@@ -602,6 +604,18 @@ class TestXCSP extends FunSuite with ShouldMatchers  {
 	  cp.start()
 	  assert(nbSol === 3)
   } 
+  
+  
+  test("parsing variables in scope must work") {
+	  val parser = new ParameterParser(Seq("V0", "V01"))
+	  assert(parser.parseAll(parser.variableList,"[ V01 V0 ] ").get === List(IntegerVariable("V01"), IntegerVariable("V0")))
+  }
+  
+  test("parsing variables not in scope must not work") {
+	  val parser = new ParameterParser(Seq("V0"))
+	  intercept[RuntimeException] {parser.parseAll(parser.variableList,"[ V01 V0 ] ").get } 
+  }
+  
 
 }
 

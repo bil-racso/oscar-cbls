@@ -5,7 +5,7 @@ import oscar.cp.xcsp.XCSPParser
 
 class ParameterParser(variablesInScope : Seq[String]) extends JavaTokenParsers {
 
-  private val variables : Parser[String] = variablesInScope map {f => Parser(f)} reduce {_ | _} 
+  private val variables : Parser[String] = (variablesInScope sortBy(- _.length) reduce {(a,b) => a+"|"+b}).r
 
   private def effectiveIntegerValue = wholeNumber ^^ (v => EffectiveIntegerValue(v.toInt))
   private def integerVariable = variables ^^ (n => IntegerVariable(n))
