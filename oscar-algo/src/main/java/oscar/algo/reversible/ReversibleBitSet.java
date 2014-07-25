@@ -24,7 +24,7 @@ import java.util.TreeSet;
  * Class representing a reversible bitset data structure.
  * @author Pierre Schaus pschaus@gmail.com
  */
-public class ReversibleBitSet extends Reversible {
+public class ReversibleBitSet extends Reversible<Object> {
 	
 	private int min,max;
 	private BitSet bits;
@@ -80,12 +80,12 @@ public class ReversibleBitSet extends Reversible {
 	
 
 	@Override
-	protected void addOnTrail() {
-		node.trail().addEntry(this, bits.clone());
+	public void addOnTrail() {
+		node().pushOnTrail(this, bits.clone());
 	}
 
 	@Override
-	protected void restore(Object val) {
+	public void restore(Object val) {
 		assert(val instanceof BitSet);
 		this.bits = null;
 		this.bits = (BitSet) val;

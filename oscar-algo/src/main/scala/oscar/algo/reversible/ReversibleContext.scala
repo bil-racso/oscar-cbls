@@ -22,39 +22,65 @@ import scala.collection.mutable.ArrayBuffer
 /**
  * Class representing a reversible node, that is a node able to restore all
  * the reversible state attached to it (see Reversibles). <br>
+ * 
  * @author Pierre Schaus pschaus@gmail.com
+ * @author Renaud Hartert ren.hartert@gmail.com
  */
 class ReversibleContext {
-
-  protected var magicNumber: Long = 0
-  protected var trailStack: Trail = new Trail()
-
-  private val pointerStack = new Stack[TrailEntry]()
   
-  // Actions to execute when a pop operation occurs 
+  private var maxTrailSize: Int = 0
+  private var trailTime: Long = 0
+
+  def maxSize: Int = maxTrailSize 
+  def time: Long = trailTime
+  
+  private var magicNumber: Long = 0
+  
+  private val trailStack: TrailStack = new TrailStack(1000)
+  private val pointerStack: TrailStack = new TrailStack(100)
+  
+  // Used to reference the initial state
+  trailStack.push(null)
+  
+  // Actions to execute when a pop occurs 
   private val popListeners = new ArrayBuffer[() => Unit]()
   
   /** Returns the magic number of the context */
   def magic: Long = magicNumber
   
-  /** Returns the stack of trails */
-  def trail: Trail = trailStack
-  
-  
-  /** Adds an action to execute when the `pop` function us called */
+  /** Adds an action to execute when the `pop` function is called */
   def onPop(action: => Unit): Unit = popListeners.add(() => action)
+  
+  def pushOnTrail[T](reversible: Reversible[T], value: T): Unit = {
+    val entry = new TrailEntryImpl[T](reversible, value)
+    trailStack.push(entry)
+    val size = trailStack.size
+    if (size > maxTrailSize) maxTrailSize = size
+  }
   
   /** Stores the current state of the node on a stack */
   def pushState(): Unit = {
     magicNumber += 1
-    pointerStack.push(trail.getTopEntry)
+    pointerStack.push(trailStack.top)
   }
 
   /** Restores state on top of the stack of states and remove it from the stack */
   def pop(): Unit = {
-    trail.restoreUntil(pointerStack.pop())
+    // Restores the state of each reversible
+    restoreUntil(pointerStack.pop())
+    // Executes onPop actions
     popListeners.foreach(_())
-    magicNumber += 1 // increment the magic because we want to trail again
+    // Increments the magic because we want to trail again
+    magicNumber += 1
+  }
+  
+  @inline private def restoreUntil(until: TrailEntry): Unit = {
+    val t0 = System.currentTimeMillis()
+    while (trailStack.top != until) {
+      val entry = trailStack.pop()
+      entry.restore()
+    }    
+    trailTime += System.currentTimeMillis() - t0
   }
 
   /** 
@@ -62,11 +88,17 @@ class ReversibleContext {
    *  Note: does not execute the on pop actions
    */
   def popAll(): Unit = {
-    while (!pointerStack.empty()) {
-      trail.restoreUntil(pointerStack.pop())
+    if (!pointerStack.isEmpty) {
+      restoreUntil(pointerStack.last)
     }
-    magicNumber += 1 // increment the magic because we want to trail again
+    // Increments the magic because we want to trail again
+    magicNumber += 1 
   }
+  
+  def resetStats(): Unit = {
+    trailTime = 0
+    maxTrailSize = 0
+  } 
 
-  override def toString: String = "SearchNode nPushed: " + pointerStack.size + " currentTrailSize: " + trail.getSize
+  override def toString: String = "SearchNode nPushed: " + pointerStack.size + " currentTrailSize: " + trailStack.size
 }

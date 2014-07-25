@@ -45,11 +45,11 @@ class Search(node: SearchNode, branching: Branching) {
   }
 
   def solveAll(nSols: Int = Int.MaxValue, failureLimit: Int = Int.MaxValue, timeLimit: Int = Int.MaxValue, maxDiscrepancy: Int = Int.MaxValue): SearchStatistics = {
-    node.trail.resetStats()
-    val t0trail = node.trail.getTimeInRestore()
+    node.resetStats()
+    val t0trail = node.time
     val t0 = System.currentTimeMillis()
     def time = System.currentTimeMillis()-t0
-    def timeInTrail = node.trail.getTimeInRestore()-t0trail
+    def timeInTrail = node.time-t0trail
     
     
     var stack = scala.collection.mutable.Stack[(Int,Alternative,Boolean)]()
@@ -117,7 +117,7 @@ class Search(node: SearchNode, branching: Branching) {
       }
     }
     node.popAll()
-    new SearchStatistics(nbNodes,nFails = nBkts, time = time,completed = stack.isEmpty ,timeInTrail = timeInTrail , maxTrailSize = node.trail.getMaxSize() ,nSols = solCounter)
+    new SearchStatistics(nbNodes,nFails = nBkts, time = time,completed = stack.isEmpty ,timeInTrail = timeInTrail , maxTrailSize = node.maxSize ,nSols = solCounter)
   }
 
 }
