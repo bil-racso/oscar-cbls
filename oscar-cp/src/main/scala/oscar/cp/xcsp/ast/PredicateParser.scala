@@ -5,7 +5,7 @@ import util.parsing.combinator._
 class FunctionalPredicateParser(formalParameterNames : Seq[String]) extends JavaTokenParsers {
 
   //formal parameters accepted by the considered predicate
-  private val formalParameter : Parser[String] = formalParameterNames map {f => Parser(f)} reduce {_ | _} 
+  private val formalParameter : Parser[String] = (formalParameterNames sortBy(- _.length) reduce {(a,b) => a+"|"+b}).r
   
   private def integerExpression : Parser[IntegerExpr] = wholeNumber ^^ (v => IntegerValue(v.toInt)) | formalParameter ^^ (n => IntegerFormalParameter(n)) | integerUnaryOperator  | integerBinaryOperator | alternativeOperator
   

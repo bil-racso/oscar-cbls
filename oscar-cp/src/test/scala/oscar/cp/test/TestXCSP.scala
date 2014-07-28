@@ -5,6 +5,8 @@ import org.scalatest.matchers.ShouldMatchers
 import oscar.cp.xcsp.modeling.DefaultConstraints
 import oscar.cp.xcsp.XCSPSolver
 import oscar.cp.modeling._
+import oscar.cp.xcsp.ast.ParameterParser
+import oscar.cp.xcsp.ast.IntegerVariable
 
 class TestXCSP extends FunSuite with ShouldMatchers  {
   
@@ -477,13 +479,14 @@ class TestXCSP extends FunSuite with ShouldMatchers  {
 	  
   }
 
+  //index is going from 1 to n, not from 0 to n-1 in XCSP format (follows specifications of global constraint catalog)
   test("test element") { 
 	  val solver = new XCSPSolver with DefaultConstraints
 	  val str : String = """<?xml version="1.0" encoding="UTF-8"?>
 	  	<instance>
 	  		<presentation name="?" maxConstraintArity="3" format="XCSP 2.1"/>
 	  		<domains nbDomains="3">
-	  			<domain name="D0" nbValues="1">0..0</domain>
+	  			<domain name="D0" nbValues="1">1..1</domain>
 	    		<domain name="D1" nbValues="1">0..1</domain>
 	    		<domain name="D2" nbValues="1">1..1</domain>
 	  		</domains>
@@ -602,6 +605,50 @@ class TestXCSP extends FunSuite with ShouldMatchers  {
 	  cp.start()
 	  assert(nbSol === 3)
   } 
+  
+  
+  test("parsing variables in scope must work") {
+	  val parser = new ParameterParser(Seq("V0", "V01"))
+	  assert(parser.parseAll(parser.variableList,"[ V01 V0 ] ").get === List(IntegerVariable("V01"), IntegerVariable("V0")))
+  }
+  
+  test("parsing variables not in scope must not work") {
+	  val parser = new ParameterParser(Seq("V0"))
+	  intercept[RuntimeException] {parser.parseAll(parser.variableList,"[ V01 V0 ] ").get } 
+  }
+  
+  test("constraint in intension") {
+     val solver = new XCSPSolver with DefaultConstraints
+	  val str : String = """<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<instance>
+<presentation format="XCSP 2.1" maxConstraintArity="17"/>
+	    
+	    <domains nbDomains="1">
+	        <domain name="D11" nbValues="16">1..16</domain>
+	    </domains>
+	      <variables nbVariables="1">
+	        <variable domain="D11" name="V28"/>
+	    </variables> 
+	    <predicates nbPredicates="1">
+	    <predicate name="P3">
+      <parameters> int X0 int X1</parameters>
+      <expression> 
+        <functional>eq(add(mul(4,sub(X0,1)),1),sub(X1,1))</functional>
+      </expression>
+    </predicate>
+  </predicates>
+	    
+	    <constraints nbConstraints="1">
+	    <constraint arity="1" name="C21" reference="P3" scope="V28">
+      <parameters>2 V28</parameters> 
+    </constraint>
+	    </constraints>
+	    </instance>
+	    """
+	  val (cp, vars) = solver.model(str)
+	  
+	  assert((2-1)*4 + 1 === vars(0).value - 1)
+  }
 
 }
 
