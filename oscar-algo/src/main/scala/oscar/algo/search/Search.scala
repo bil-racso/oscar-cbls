@@ -18,6 +18,7 @@
 package oscar.algo.search
 
 import oscar.algo.reversible._
+import scala.collection.mutable.Stack
 
 class SearchStatistics(
   val nNodes: Int,
@@ -36,88 +37,95 @@ class SearchStatistics(
  */
 class Search(node: SearchNode, branching: Branching) {
 
-  type SolutionAction = () => Unit
+  // Action to execute in case of failed or solution node
+  private var solutionActions = List.empty[() => Unit]
+  private var failureActions = List.empty[() => Unit]
 
-  private var solutionActions = List[SolutionAction]()
+  // Stack of alternatives to define the DFS search
+  private val alternatives: Stack[(Int, Alternative, Boolean)] = Stack()
 
+  // Number of discrepancy on the current branch of the search tree
+  private val discrepancy = new ReversibleInt(node, 0)
+
+  /** Adds an action to execute when a solution node is found */
   def onSolution(action: => Unit): Unit = solutionActions = (() => action) :: solutionActions
 
-  def solFound(): Unit = solutionActions.foreach(_())
+  /** Adds an action to execute when a failed node is found */
+  def onFailure(action: => Unit): Unit = failureActions = (() => action) :: failureActions
+
+  @inline private def stackAlternatives(maxDiscrepancy: Int): Boolean = {
+    val alts = branching.alternatives
+    if (alts.isEmpty) false
+    else {
+      val currDiscrepancy = discrepancy.value
+      val slackDiscrepancy = maxDiscrepancy - currDiscrepancy
+      var i = (maxDiscrepancy - currDiscrepancy).min(alts.size - 1)
+      var last = true
+      while (i >= 0) {
+        alternatives.push((i, alts(i), last))
+        i -= 1
+        last = false
+      }
+      true
+    }
+  }
 
   def solveAll(nSols: Int = Int.MaxValue, failureLimit: Int = Int.MaxValue, timeLimit: Int = Int.MaxValue, maxDiscrepancy: Int = Int.MaxValue): SearchStatistics = {
 
-    // Resets the states of the reversible context
+    // Initializes the search
     node.resetStats()
+    alternatives.clear()
+    discrepancy.value = 0
 
     val t0 = System.currentTimeMillis()
-    val discrepancy = new ReversibleInt(node, 0)
-
-    var stack = scala.collection.mutable.Stack[(Int, Alternative, Boolean)]()
     var solCounter = 0
     var nbNodes = 0
     var nBkts = 0
 
     node.pushState()
 
-    // retrieve alternatives not exceeding max discrepancy and stack them
-    def stackAlternatives(): Boolean = {
-      val alts = branching.alternatives
-      if (alts.isEmpty) false
-      else {
-        val currDiscrepancy = discrepancy.value
-        val slackDiscrepancy = maxDiscrepancy - currDiscrepancy
-        var i = (maxDiscrepancy - currDiscrepancy).min(alts.size - 1)
-        var last = true
-        while (i >= 0) {
-          stack.push((i, alts(i), last))
-          i -= 1
-          last = false
-        }
-        true
-      }
-    }
-
     def searchLimitReached: Boolean = {
-      ((System.currentTimeMillis() - t0) / 1000 >= timeLimit) || 
-      (nBkts >= failureLimit)
+      ((System.currentTimeMillis() - t0) / 1000 >= timeLimit) ||
+        (nBkts >= failureLimit)
     }
 
-    // add initial alternatives of the root node
     if (!node.isFailed) {
       node.pushState()
-      if (!stackAlternatives()) {
-        solFound() // it seems that the root node is a solution
+
+      // The root is already a solution
+      if (!stackAlternatives(maxDiscrepancy)) {
+        solutionActions.foreach(_()) // it seems that the root node is a solution
         solCounter += 1
       }
-    }
 
-    var done = false
+      var done = false
 
-    while (!stack.isEmpty && !done && !searchLimitReached) {
-      nbNodes += 1
-      val (d, a, last) = stack.pop() // (discrepancy,alternative)
-      if (!last) node.pushState()
-      discrepancy.value = discrepancy.value + d
-      a()
-      if (!node.isFailed()) {
-        // a node not failed without alternative is a solution
-        if (!stackAlternatives()) {
-          solFound()
-          solCounter += 1
-          nBkts += 1
-          if (nSols == solCounter) done = true
-          else {
-            node.pop()
+      while (!alternatives.isEmpty && !done && !searchLimitReached) {
+        nbNodes += 1
+        val (d, a, last) = alternatives.pop() // (discrepancy,alternative)
+        if (!last) node.pushState()
+        discrepancy.value = discrepancy.value + d
+        a()
+        if (!node.isFailed()) {
+          // a node not failed without alternative is a solution
+          if (!stackAlternatives(maxDiscrepancy)) {
+            solutionActions.foreach(_())
+            solCounter += 1
+            nBkts += 1
+            if (nSols == solCounter) done = true
+            else {
+              node.pop()
+            }
           }
-        }
 
-      } else {
-        nBkts += 1
-        node.pop()
+        } else {
+          nBkts += 1
+          node.pop()
+        }
       }
     }
-    node.popAll()
-    new SearchStatistics(nbNodes, nFails = nBkts, time = System.currentTimeMillis() - t0, completed = stack.isEmpty, timeInTrail = node.time, maxTrailSize = node.maxSize, nSols = solCounter)
-  }
 
+    node.popAll()
+    new SearchStatistics(nbNodes, nFails = nBkts, time = System.currentTimeMillis() - t0, completed = alternatives.isEmpty, timeInTrail = node.time, maxTrailSize = node.maxSize, nSols = solCounter)
+  }
 }
