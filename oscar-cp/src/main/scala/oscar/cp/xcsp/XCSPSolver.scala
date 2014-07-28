@@ -67,12 +67,16 @@ abstract class XCSPSolver {
   for ((constraintName, constraint) <- constraints) {
    val (scope,reference,parametersOption) = constraint 
    parametersOption match {
-    case None => { //constraint in extension
-     val relation = relations.getOrElse(throw new RuntimeException(constraintName + " : Implicit parameters are deprecated since XCSP 2.1 and therefore are non-supported.")) (reference)
-     if (relation._1 == "supports") 
-      add(table(scope map {decisionVariables(_)},relation._2))
-     else
-      throw new RuntimeException("Conflicts tables are not supported.")
+    case None => { 
+      if(relations != None && relations.get.contains(reference)) { //constraint in extension
+        val relation = relations.get (reference)
+        if (relation._1 == "supports") add(table(scope map {decisionVariables(_)},relation._2))
+        else throw new RuntimeException("Conflicts tables are not supported.")
+      }
+      else if(reference == "global:allDifferent") //deprecated implicit parameters for allDiff is tolerated 
+        allDifferentHelper(scope, "["+ scope.reduce(_ + " " + _) + "]")
+      else 
+        throw new RuntimeException(constraintName + " : Implicit parameters are deprecated since XCSP 2.1 and therefore are non-supported.")
     }
     case Some(parameters) => { //constraint in intension or global
      XCSPParser.globalPrefix findFirstIn reference match {

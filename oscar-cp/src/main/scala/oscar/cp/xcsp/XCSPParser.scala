@@ -119,7 +119,7 @@ object XCSPParser {
    	assert(scope.size == arity)
    	val reference = (constraint \ "@reference").text
    	var parameters : Option[String] = None
-   	val parametersXML = constraint \ "parameters"//.map{case <parameters>{ n @ _* }</parameters> => n}.flatten
+   	val parametersXML = constraint \ "parameters"
    	val rawParameters = parametersXML.toString
    	if(rawParameters != "") { //the constraint is in intension or global
    	  parameters = Some(rawParameters.replace("<parameters>", "").replace("</parameters>", ""))
