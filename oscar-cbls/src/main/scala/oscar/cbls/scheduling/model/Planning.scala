@@ -31,6 +31,9 @@ import oscar.cbls.invariants.lib.logic.{ Filter, DenseRef }
 import oscar.visual.VisualFrame
 import oscar.visual.plot.PlotLine
 import oscar.cbls.modeling.Algebra._
+import oscar.cbls.invariants.lib.logic.Sort
+import oscar.cbls.invariants.lib.numeric.SumElements
+import oscar.cbls.invariants.lib.numeric.Sum
 
 /**
  * @param model
@@ -116,14 +119,14 @@ class Planning(val model: Store, val maxDuration: Int) {
       resourceArray(r.ResourceID) = r; r.close()
     }
 
-    val WorseOvershootArray: Array[CBLSIntVar] = new Array[CBLSIntVar](resourceCount)
+    val overshootArray: Array[CBLSIntVar] = new Array[CBLSIntVar](resourceCount)
     for (r <- resources) {
-      WorseOvershootArray(r.ResourceID) = r.overShoot
+      overshootArray(r.ResourceID) = r.overShoot
     }
 
-    val ResourceWithOvershoot: CBLSSetVar = Filter(WorseOvershootArray)
+    val ResourceWithOvershoot: CBLSSetVar = Filter(overshootArray)
 
-    worseOvershotResource = ArgMaxArray(WorseOvershootArray, ResourceWithOvershoot)
+    worseOvershotResource = ArgMaxArray(overshootArray, ResourceWithOvershoot)
   }
 
   override def toString: String = toAsciiArt
@@ -334,6 +337,26 @@ trait EarliestStartDate extends Planning {
 }
 
 /**
+ * This trait lets one use activities with due dates.
+ *
+ * @author yoann.guyot@cetic.be
+ */
+trait Deadlines extends Planning {
+  var activitiesWithDeadlines: List[ActivityWithDeadline] = List.empty
+  val totalTardiness = CBLSIntVar(model, Int.MinValue, Int.MaxValue, 0, "Total tardiness")
+
+  model.addToCallBeforeClose(_ => closeDeadlines())
+
+  private def closeDeadlines() {
+    totalTardiness <== Sum(activitiesWithDeadlines.toArray.map(_.tardiness))
+  }
+
+  def addActivityWithDeadline(activity: ActivityWithDeadline) {
+    activitiesWithDeadlines = activity :: activitiesWithDeadlines
+  }
+}
+
+/**
  * This trait lets one post variable resources.
  * Typically: resources which vary with week days.
  *
@@ -365,5 +388,23 @@ trait VariableResources extends Planning {
   def postVariableResource(availabilities: Array[Int],
                            name: String = null): VariableResource = {
     VariableResource(this, availabilities, name)
+  }
+}
+
+/**
+ * This trait maintains the total resources overshoot value of a planning.
+ * @author yoann.guyot@cetic.be
+ */
+trait TotalResourcesOvershootEvaluation extends Planning {
+  val totalOvershoot = CBLSIntVar(model, 0, name = "Total resources overshoot")
+  
+  model.addToCallBeforeClose(_ => setTotalOvershoot())
+
+  private def setTotalOvershoot() = {
+    val overshootArray: Array[CBLSIntVar] = new Array[CBLSIntVar](resourceCount)
+    for (r <- resources) {
+      overshootArray(r.ResourceID) = r.overShoot
+    }
+    totalOvershoot <== Sum(overshootArray)
   }
 }
