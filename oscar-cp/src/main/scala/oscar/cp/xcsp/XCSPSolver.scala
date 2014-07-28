@@ -248,10 +248,12 @@ abstract class XCSPSolver {
    post(disjunctive(starts,durations))
  }
  
+ 
  private def elementHelper(scope : Array[String], parameters : String)(implicit cp : CPSolver, decisionVariables : Map[String,CPIntVar]) : Unit = {
    val parser = new ParameterParser(scope)
    val (index , table, value ) = parser.parseAll(parser.elementParameters,parameters).get
-   post(element(table.toIndexedSeq,index,value))
+   //index -1 is mandatory as index is going from 1 to |table| and not from 0 to |table| - 1
+   post(element(table.toIndexedSeq,index - 1,value))
  }
  
  private def globalCardinalityHelper(scope : Array[String], parameters : String)(implicit cp : CPSolver, decisionVariables : Map[String,CPIntVar]) : Unit = {
@@ -265,7 +267,7 @@ abstract class XCSPSolver {
    val (variables , matrix, cost) = parser.parseAll(parser.minimumWeightAllDifferentParameters,parameters).get
    val matrixArray = Array.fill(variables.length)(Array.fill(variables.length)(0))
    for((i,j,c) <- matrix)
-     matrixArray(i.value-1)(j.value-1)=c.value
+     matrixArray(i.value-1)(j.value-1)=c.value //matrices indices begin at 1, not 0
    post(minimumWeightAllDifferent(variables.map(v => decisionVariables(v.name)).toArray,matrixArray,cost))
  }
  /***********************************************************************************************/
