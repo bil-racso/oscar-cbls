@@ -345,7 +345,7 @@ trait Deadlines extends Planning {
   var activitiesWithDeadlines: List[ActivityWithDeadline] = List.empty
   val totalTardiness = CBLSIntVar(model, Int.MinValue, Int.MaxValue, 0, "Total tardiness")
 
-  model.addToCallBeforeClose(_ => closeDeadlines())
+  model.addToCallBeforeClose(() => closeDeadlines())
 
   private def closeDeadlines() {
     totalTardiness <== Sum(activitiesWithDeadlines.toArray.map(_.tardiness))
@@ -398,7 +398,7 @@ trait VariableResources extends Planning {
 trait TotalResourcesOvershootEvaluation extends Planning {
   val totalOvershoot = CBLSIntVar(model, 0, name = "Total resources overshoot")
   
-  model.addToCallBeforeClose(_ => setTotalOvershoot())
+  model.addToCallBeforeClose(() => setTotalOvershoot())
 
   private def setTotalOvershoot() = {
     val overshootArray: Array[CBLSIntVar] = new Array[CBLSIntVar](resourceCount)
