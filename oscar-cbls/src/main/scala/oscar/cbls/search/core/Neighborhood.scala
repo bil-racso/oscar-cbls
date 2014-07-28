@@ -80,7 +80,8 @@ abstract class Neighborhood{
    * @return
    */
   def doAllImprovingMoves(shouldStop:Int => Boolean, acceptanceCriterion:(Int,Int) => Boolean = (oldObj,newObj) => oldObj > newObj):Int = {
-    var oldObj = Int.MaxValue
+    var bestObj = Int.MaxValue
+    var prevObj = Int.MaxValue
     var toReturn = 0
     var moveCount = 0
     while(!shouldStop(moveCount)){
@@ -90,12 +91,22 @@ abstract class Neighborhood{
           return toReturn;
         case m: MoveFound =>
           if (verbose >= 1){
-            if(m.objAfter < oldObj) {
-              oldObj = m.objAfter
-              println(m + "*")
-            }else{
-              println(m)
-            }
+
+            val firstPostfix = if(m.objAfter < prevObj) "-"
+            else if(m.objAfter == prevObj) "="
+            else "+"
+
+            prevObj = m.objAfter
+
+            val secondPostfix = if(m.objAfter < bestObj) {
+              bestObj = m.objAfter
+              " #"
+            }else if(m.objAfter == bestObj) " °"
+            else ""
+
+
+            println(m + firstPostfix + secondPostfix)
+
           }
 
           m.commit()

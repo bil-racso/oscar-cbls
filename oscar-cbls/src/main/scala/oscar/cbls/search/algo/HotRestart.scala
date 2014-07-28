@@ -13,6 +13,9 @@ object HotRestart {
   def apply(it:Iterable[Int], pivot:Int):Iterable[Int] = new ShiftedIterable(it, pivot)
 
   def apply(r:Range, pivot:Int):Iterable[Int] =  new InstrumentedRange(r) startBy pivot
+
+  def apply(s:SortedSet[Int], pivot:Int):Iterable[Int] =  new ShiftedSet(s,pivot)
+
 }
 
 
@@ -92,3 +95,51 @@ class ShiftedRange(val start:Int, val end:Int, val startBy:Int, val step:Int = 1
     }
   }
 }
+
+class ShiftedSet(s:SortedSet[Int], pivot:Int) extends Iterable[Int] {
+  override def iterator: Iterator[Int] = {
+    new ShiftedIterator(s, pivot)
+  }
+
+  class ShiftedIterator(s:SortedSet[Int], pivot:Int) extends Iterator[Int]{
+    var it:Iterator[Int] = s.iteratorFrom(pivot)
+    var first=true
+    var currentValue:Int = 0
+    var currentValueReady = false
+
+    /** returns true if a next value is available
+      *
+      * @return
+      */
+    def internalMoveToNext():Boolean = {
+      if(currentValueReady) return true
+      if(first){
+        if(it.hasNext) {
+          currentValue = it.next()
+          currentValueReady = true
+          return true
+        }else{
+          //start the second iterator
+          it = s.toIterator
+          first = false
+          //and continue the execution flow
+        }
+      }
+      //second iterator
+      if(!it.hasNext) return false
+      currentValue = it.next()
+      if(currentValue >= pivot) return false
+      currentValueReady = true
+      true
+    }
+
+    override def hasNext: Boolean = internalMoveToNext()
+
+    override def next(): Int = {
+      if(!internalMoveToNext()) throw new Error("no more elements to iterate")
+      currentValueReady = false
+      currentValue
+    }
+  }
+}
+

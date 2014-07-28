@@ -54,12 +54,19 @@ case class AssignNeighborhood(vars:Array[CBLSIntVar],
     var oldObj = if(best) Int.MaxValue else startObj
     var toReturn: SearchResult = NoMoveFound
 
-    val iterationSchemeOnZone = if (searchZone == null)
-      if (best) vars.indices
-      else if (hotRestart) {
-        if (startIndice >= vars.size) startIndice = 0; vars.indices startBy startIndice
-      } else vars.indices
-    else if (hotRestart) HotRestart(searchZone.value, startIndice) else searchZone.value
+    //TODO: improve the hotRestart:
+    //we must restart after the last explored variable except if this variable has not changed
+    //in which case we start from this variable, from the value just after the last explored one
+    //Also what happens to symmetry elimination in case of a hot restart?
+
+    val iterationSchemeOnZone =
+      if (searchZone == null) {
+        if (hotRestart && !best) {
+          if (startIndice >= vars.size) startIndice = 0
+          vars.indices startBy startIndice
+        }else vars.indices
+      }else if (hotRestart && !best) HotRestart(searchZone.value, startIndice)
+      else searchZone.value
 
     val iterationScheme = symmetryClassOfVariables match {
       case _ if best => iterationSchemeOnZone
@@ -75,7 +82,7 @@ case class AssignNeighborhood(vars:Array[CBLSIntVar],
         case Some(s) => IdenticalAggregator.removeIdenticalClassesLazily(domain(currentVar, i), s(i))
       }
 
-      if (amIVerbose) println(name + ": exploring (" + best + ") " + currentVar + " values:" + domainIterationScheme)
+      if (amIVerbose) println(name + ": exploring (best:" + best + ") " + currentVar + " values:" + domainIterationScheme)
 
       for (newVal <- domainIterationScheme if newVal != oldVal) {
         val newObj = obj.assignVal(currentVar, newVal)

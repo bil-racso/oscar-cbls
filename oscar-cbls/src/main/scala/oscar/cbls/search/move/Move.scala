@@ -16,6 +16,7 @@
 package oscar.cbls.search.move
 
 import oscar.cbls.invariants.core.computation.{CBLSIntVar, CBLSSetVar, Variable}
+import oscar.cbls.objective.Objective
 
 /** standard move template
   *
@@ -44,6 +45,40 @@ abstract class Move(val objAfter:Int = Int.MaxValue, val neighborhoodName:String
    * @return a readable string of the objective after wit ha space before, or an empty string
    */
   def objToString:String = if(objAfter == Int.MaxValue) "" else " objAfter:" +objAfter
+
+  /** this performs the move, evaluates he objective function, and backtracks the move
+    *notice that the objAfter is supposed to carry the proper value, so you generally do not need to call this
+    * since it is not an efficient way to proceed
+    * notice that it relies on the touchedVariables method.
+    * @param obj the objective function to evaluate
+    * @return the value of the objective function if the move were taken
+    */
+  def evaluate(obj:Objective):Int = {
+    val model = obj.objective.model
+    val snapshot = model.saveValues(touchedVariables:_*)
+    commit()
+    val toReturn = obj.value
+    model.restoreSnapshot(snapshot)
+    toReturn
+  }
+}
+
+object Move{
+  def apply(neighborhoodName:String = null, objAfter:Int = 0)(code: =>Unit):EasyMove = new EasyMove(objAfter, neighborhoodName, code)
+}
+class EasyMove(override val objAfter:Int, override val neighborhoodName:String = null, code: => Unit)
+  extends Move(objAfter, neighborhoodName){
+
+  override def commit() {code}
+
+  override def toString: String = if (neighborhoodName != null) neighborhoodName else "EasyMove"
+
+  /**
+   * this class does not provide an implementation for touchedVariables,
+   * since we are only inputting source code for executing the move
+   * @return the list of touched variables.
+   */
+  override def touchedVariables: List[Variable] = throw new Exception("EasyMove cannot provide touched variables")
 }
 
 /** standard move that assigns an int value to a CBLSIntVar
@@ -88,7 +123,7 @@ case class SwapMove(i:CBLSIntVar,j:CBLSIntVar, override val objAfter:Int, overri
   override def touchedVariables: List[Variable] = List(i,j)
 }
 
-/** standard move that adds a value to a CBLSSEtVar
+/** standard move that adds a value to a CBLSSetVar
   *
   * @param s the variable
   * @param v the value to add to the set
