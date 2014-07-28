@@ -89,7 +89,8 @@ class Search(node: SearchNode, branching: Branching) {
         (nBkts >= failureLimit)
     }
 
-    if (!node.isFailed) {
+    if (node.isFailed) failureActions.foreach(_())
+    else {
       node.pushState()
 
       // The root is already a solution
@@ -119,6 +120,7 @@ class Search(node: SearchNode, branching: Branching) {
           }
 
         } else {
+          failureActions.foreach(_())
           nBkts += 1
           node.pop()
         }
