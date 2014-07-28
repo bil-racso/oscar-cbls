@@ -160,16 +160,18 @@ case class SwapsNeighborhood(vars:Array[CBLSIntVar],
     var toReturn:SearchResult = NoMoveFound
 
     //TODO: improve the hotRestart:
-    //we must restart after the last explored varaible except if this varaiable has not changed
+    //we must restart after the last explored variable except if this variable has not changed
     //in which case we start from this variable, from the value just after the last explored one
 
     //also: symmetry breaking might be kept from one run to the other...
 
     val firstIterationSchemeZone =
-      if(searchZone1 == null)
-        if (best) vars.indices
-        else if (hotRestart) vars.indices startBy startIndice else vars.indices
-      else if (hotRestart) HotRestart(searchZone1.value,startIndice) else searchZone1.value
+      if(searchZone1 == null) {
+        if (hotRestart && !best) {
+          if (startIndice >= vars.size) startIndice = 0
+          vars.indices startBy startIndice
+        } else vars.indices
+      }else if (hotRestart && !best) HotRestart(searchZone1.value,startIndice) else searchZone1.value
 
     val firstIterationScheme = symmetryClassOfVariables match {
       case None => firstIterationSchemeZone
