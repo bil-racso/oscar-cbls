@@ -51,7 +51,7 @@ case class AssignNeighborhood(vars:Array[CBLSIntVar],
   override def getImprovingMove(acceptanceCriteria:(Int,Int) => Boolean = (oldObj,newObj) => oldObj > newObj): SearchResult = {
     if (amIVerbose) println(name + ": trying")
     val startObj = obj.value
-    var oldObj = if(best) Integer.MAX_VALUE else startObj
+    var oldObj = if(best) Int.MaxValue else startObj
     var toReturn: SearchResult = NoMoveFound
 
     val iterationSchemeOnZone = if (searchZone == null)
@@ -149,8 +149,14 @@ case class SwapsNeighborhood(vars:Array[CBLSIntVar],
 
     if(amIVerbose) println(name + ": trying")
     val startObj = obj.value
-    var oldObj = if(best) Integer.MAX_VALUE else startObj
+    var oldObj = if(best) Int.MaxValue else startObj
     var toReturn:SearchResult = NoMoveFound
+
+    //TODO: improve the hotRestart:
+    //we must restart after the last explored varaible except if this varaiable has not changed
+    //in which case we start from this variable, from the value just after the last explored one
+
+    //also: symmetry breaking might be kept from one run to the other...
 
     val firstIterationSchemeZone =
       if(searchZone1 == null)
@@ -239,7 +245,7 @@ case class RandomizeNeighborhood(vars:Array[CBLSIntVar],
     if(searchZone != null && searchZone.value.size <= degree){
       //We move everything
       for(i <- searchZone.value){
-        toReturn = AssignMove(vars(i),selectFrom(vars(i).domain),0) :: toReturn
+        toReturn = AssignMove(vars(i),selectFrom(vars(i).domain),Int.MaxValue) :: toReturn
       }
     }else{
       var touchedVars:Set[Int] = SortedSet.empty
@@ -247,11 +253,11 @@ case class RandomizeNeighborhood(vars:Array[CBLSIntVar],
         val i = selectFrom(vars.indices,(j:Int) => (searchZone == null || searchZone.value.contains(j)) && !touchedVars.contains(j))
         touchedVars = touchedVars + i
         val oldVal = vars(i).value
-        toReturn = AssignMove(vars(i),selectFrom(vars(i).domain, (_:Int) != oldVal),0) :: toReturn
+        toReturn = AssignMove(vars(i),selectFrom(vars(i).domain, (_:Int) != oldVal),Int.MaxValue) :: toReturn
       }
     }
     if(amIVerbose) println(name + ": move found")
-    CompositeMove(toReturn, 0, name)
+    CompositeMove(toReturn, Int.MaxValue, name)
   }
 }
 
