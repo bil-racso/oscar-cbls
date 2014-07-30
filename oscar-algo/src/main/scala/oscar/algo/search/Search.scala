@@ -33,15 +33,19 @@ class SearchStatistics(
  * @author Pierre Schaus pschaus@gmail.com
  */
 class Search(node: SearchNode, branching: Branching) {
-  type SolutionAction = () => Unit
-  private var solutionActions = List[SolutionAction]()
-
+  type SolutionActionStat = (SearchStatistics) => Unit
+  private var solutionActionsStat = List[SolutionActionStat]()
+  
   def onSolution(action: => Unit) {
-    solutionActions = (() => action) :: solutionActions
+    solutionActionsStat = ((s: SearchStatistics) => action) :: solutionActionsStat
   }
+  
+  def onSolutionWithStats(action: SearchStatistics => Unit) {
+    solutionActionsStat = (action) :: solutionActionsStat
+  }  
 
-  def solFound() {
-    solutionActions.foreach(_())
+  def solFound(stat: SearchStatistics) {
+    solutionActionsStat.foreach(_(stat))
   }
 
   def solveAll(nSols: Int = Int.MaxValue, failureLimit: Int = Int.MaxValue, timeLimit: Int = Int.MaxValue, maxDiscrepancy: Int = Int.MaxValue): SearchStatistics = {
@@ -77,19 +81,23 @@ class Search(node: SearchNode, branching: Branching) {
     var nbNodes = 0
     var nBkts = 0
     
+    def stat() =  new SearchStatistics(nbNodes,nFails = nBkts, time = time,completed = stack.isEmpty ,timeInTrail = timeInTrail , maxTrailSize = node.trail.getMaxSize() ,nSols = solCounter)
+
+    
     def searchLimitReached = (time/1000 >= timeLimit) || (nBkts >= failureLimit)
     
     // add initial alternatives of the root node
     if (!node.isFailed) {
       node.pushState()
       if (!stackAlternatives()) {
-         solFound() // it seems that the root node is a solution
+         solFound(stat()) // it seems that the root node is a solution
          solCounter += 1
       }
     }
     
     var done = false
     
+ 
     while (!stack.isEmpty && !done && !searchLimitReached) {
       nbNodes += 1
       val (d,a,last) = stack.pop() // (discrepancy,alternative)
@@ -99,7 +107,7 @@ class Search(node: SearchNode, branching: Branching) {
       if (!node.isFailed()) {
         // a node not failed without alternative is a solution
         if (!stackAlternatives()) { 
-            solFound()
+            solFound(stat())
             solCounter += 1
             nBkts += 1 
             if (nSols == solCounter) done = true
@@ -117,7 +125,7 @@ class Search(node: SearchNode, branching: Branching) {
       }
     }
     node.popAll()
-    new SearchStatistics(nbNodes,nFails = nBkts, time = time,completed = stack.isEmpty ,timeInTrail = timeInTrail , maxTrailSize = node.trail.getMaxSize() ,nSols = solCounter)
+    stat()
   }
 
 }

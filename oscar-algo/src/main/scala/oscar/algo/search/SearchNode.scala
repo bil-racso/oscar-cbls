@@ -74,12 +74,17 @@ class SearchNode extends ReversibleContext {
     this
   }
 
-  private var solCallBacks: List[() => Unit] = List.empty
+  private var solCallBacks: List[(SearchStatistics) => Unit] = List.empty
 
   def onSolution(block: => Unit): SearchNode = {
-    solCallBacks = (() => block) :: solCallBacks
+    solCallBacks = ((stat: SearchStatistics) => block) :: solCallBacks
     this
   }
+  
+  def onSolutionWithStats(block: SearchStatistics => Unit): SearchNode = {
+    solCallBacks = (block) :: solCallBacks
+    this
+  } 
   
   def clearOnsolution() {
     solCallBacks = List.empty
@@ -92,7 +97,7 @@ class SearchNode extends ReversibleContext {
     pushState()
     reversibleBlock
     val s = new Search(this, branchings)
-    solCallBacks.foreach(b => s.onSolution(b()))
+    solCallBacks.foreach(b => s.onSolutionWithStats(b))
     s.onSolution(solFound())
     val stats = s.solveAll(nSols = nSols, failureLimit = failureLimit, timeLimit = timeLimit, maxDiscrepancy = maxDiscrepancy)
     stats
