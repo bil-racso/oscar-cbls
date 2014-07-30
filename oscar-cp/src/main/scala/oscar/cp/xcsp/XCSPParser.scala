@@ -90,7 +90,7 @@ object XCSPParser {
     val predicates = predicatesXML \ "predicate"
     val nbPredicates = (predicatesXML \ "@nbPredicates").text.toInt
     val predicatesMapValue = predicates map { predicate =>
-     val parameterArray = (predicate \ "parameters").text split(" ") grouped(2) toArray
+     val parameterArray = (predicate \ "parameters").text split(" ") filter(_ != "") grouped(2) toArray
      val parameters = parameterArray map {t=>(t(0),t(1))} //(type, formal parameter name)
      val functionalExpressionXML = predicate \ "expression" \ "functional"
      val functionalExpression =  if(functionalExpressionXML.text != "") 
@@ -119,7 +119,7 @@ object XCSPParser {
    	assert(scope.size == arity)
    	val reference = (constraint \ "@reference").text
    	var parameters : Option[String] = None
-   	val parametersXML = constraint \ "parameters"//.map{case <parameters>{ n @ _* }</parameters> => n}.flatten
+   	val parametersXML = constraint \ "parameters"
    	val rawParameters = parametersXML.toString
    	if(rawParameters != "") { //the constraint is in intension or global
    	  parameters = Some(rawParameters.replace("<parameters>", "").replace("</parameters>", ""))

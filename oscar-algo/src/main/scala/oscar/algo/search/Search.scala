@@ -33,13 +33,16 @@ class SearchStatistics(
  * @author Pierre Schaus pschaus@gmail.com
  */
 class Search(node: SearchNode, branching: Branching) {
+
   type SolutionActionStat = (SearchStatistics) => Unit
   private var solutionActionsStat = List[SolutionActionStat]()
   
+  /** Adds an action to execute when a solution node is found */
   def onSolution(action: => Unit) {
     solutionActionsStat = ((s: SearchStatistics) => action) :: solutionActionsStat
   }
   
+  /** Adds an action to execute when a solution node is found, a statistics object on the search so far is given */
   def onSolutionWithStats(action: SearchStatistics => Unit) {
     solutionActionsStat = (action) :: solutionActionsStat
   }  
@@ -47,16 +50,21 @@ class Search(node: SearchNode, branching: Branching) {
   def solFound(stat: SearchStatistics) {
     solutionActionsStat.foreach(_(stat))
   }
-
+  
   def solveAll(nSols: Int = Int.MaxValue, failureLimit: Int = Int.MaxValue, timeLimit: Int = Int.MaxValue, maxDiscrepancy: Int = Int.MaxValue): SearchStatistics = {
-    node.trail.resetStats()
-    val t0trail = node.trail.getTimeInRestore()
+    node.resetStats()
+    val t0trail = node.time
     val t0 = System.currentTimeMillis()
     def time = System.currentTimeMillis()-t0
-    def timeInTrail = node.trail.getTimeInRestore()-t0trail
-    
-    
+    def timeInTrail = node.time-t0trail
+    var solCounter = 0
+    var nbNodes = 0
+    var nBkts = 0
     var stack = scala.collection.mutable.Stack[(Int,Alternative,Boolean)]()
+    
+    def stat() =  new SearchStatistics(nbNodes,nFails = nBkts, time = time,completed = stack.isEmpty ,timeInTrail = timeInTrail , maxTrailSize = node.maxSize ,nSols = solCounter)
+
+    
     val discrepancy = new ReversibleInt(node,0)
     node.pushState()
     
@@ -77,12 +85,7 @@ class Search(node: SearchNode, branching: Branching) {
       true
     }
     
-    var solCounter = 0
-    var nbNodes = 0
-    var nBkts = 0
     
-    def stat() =  new SearchStatistics(nbNodes,nFails = nBkts, time = time,completed = stack.isEmpty ,timeInTrail = timeInTrail , maxTrailSize = node.trail.getMaxSize() ,nSols = solCounter)
-
     
     def searchLimitReached = (time/1000 >= timeLimit) || (nBkts >= failureLimit)
     
@@ -97,7 +100,6 @@ class Search(node: SearchNode, branching: Branching) {
     
     var done = false
     
- 
     while (!stack.isEmpty && !done && !searchLimitReached) {
       nbNodes += 1
       val (d,a,last) = stack.pop() // (discrepancy,alternative)
@@ -115,10 +117,6 @@ class Search(node: SearchNode, branching: Branching) {
               node.pop()
             }
         } 
-        //else {
-          //  node.pushState()
-        //}
-
       } else {
         nBkts += 1 
         node.pop()

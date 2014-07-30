@@ -24,7 +24,7 @@ package oscar.algo.reversible
  * @author Pierre Schaus  pschaus@gmail.com
  * @author Renaud Hartert ren.hartert@gmail.com
  */
-class ReversiblePointer[@specialized T](n: ReversibleContext, v: T) extends Reversible(n) {
+class ReversiblePointer[@specialized T](n: ReversibleContext, v: T) extends Reversible[T](n) {
   
   // Pointer to the object to trail
   protected var pointer: T = v
@@ -62,11 +62,9 @@ class ReversiblePointer[@specialized T](n: ReversibleContext, v: T) extends Reve
    */
   @inline def getValue(): T = pointer
 
-  override def addOnTrail(): Unit = {
-    node.getTrail().addEntry(this, pointer)
-  }
+  override def addOnTrail(): Unit = node.pushOnTrail(this, pointer)
 
-  override def restore(value: Object): Unit = {
+  override def restore(value: T): Unit = {
     pointer = value.asInstanceOf[T]
   }
 

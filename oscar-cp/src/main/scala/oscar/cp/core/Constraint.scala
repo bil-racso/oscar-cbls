@@ -56,7 +56,6 @@ abstract class Constraint(val s: CPStore, val name: String = "cons") {
   val snapshotsVarInt = scala.collection.mutable.Map[CPIntVar, SnapshotVarInt]() 
   val snapshotsVarSet = scala.collection.mutable.Map[CPSetVar, SnapshotVarSet]()
 
-
   private var _mustSnapshot = false
 
   def addSnapshot(x: CPIntVar): Unit = {
