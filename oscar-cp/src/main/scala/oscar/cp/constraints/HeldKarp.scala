@@ -92,7 +92,7 @@ class HeldKarp(val edges: CPSetVar,val edgeData: Array[(Int,Int,Int)], val cost:
     var lb = 0
     var stepSize = 0.1
     var alpha = 2.0
-    val beta = 0.5
+    var beta = 0.5
     
     for (metaiter <- 0 until 5) {
       iter = 0
@@ -177,7 +177,8 @@ class HeldKarp(val edges: CPSetVar,val edgeData: Array[(Int,Int,Int)], val cost:
         }
       }
       // fini les iters
-      
+      alpha *= beta;
+      beta /= 2;
       
 
     }
