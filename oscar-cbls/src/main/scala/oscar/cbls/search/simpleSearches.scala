@@ -244,7 +244,6 @@ case class RandomizeNeighborhood(vars:Array[CBLSIntVar],
                                  name:String = "RandomizeNeighborhood",
                                  searchZone:CBLSSetVar = null)
   extends StatelessNeighborhood with AlgebraTrait with SearchEngineTrait{
-  //the indice to start with for the exploration
 
   override def getImprovingMove(acceptanceCriteria:(Int,Int) => Boolean = null): SearchResult = {
     if(amIVerbose) println("applying " + name)
@@ -265,6 +264,41 @@ case class RandomizeNeighborhood(vars:Array[CBLSIntVar],
         toReturn = AssignMove(vars(i),selectFrom(vars(i).domain, (_:Int) != oldVal),Int.MaxValue) :: toReturn
       }
     }
+    if(amIVerbose) println(name + ": move found")
+    CompositeMove(toReturn, Int.MaxValue, name)
+  }
+}
+
+/**
+ * will randomize the array, by performing swaps only.
+ *
+ * @param vars an array of [[oscar.cbls.invariants.core.computation.CBLSIntVar]] defining the search space
+ * @param degree the number of variables to change randomly
+ * @param searchZone a subset of the indices of vars to consider.
+ *                   If none is provided, all the array will be considered each time
+ * @param name the name of the neighborhood
+ */
+case class RandomSwapNeighborhood(vars:Array[CBLSIntVar],
+                                 degree:Int = 1,
+                                 name:String = "RandomSwapNeighborhood",
+                                 searchZone:CBLSSetVar = null)
+  extends StatelessNeighborhood with AlgebraTrait with SearchEngineTrait{
+
+  override def getImprovingMove(acceptanceCriteria:(Int,Int) => Boolean = null): SearchResult = {
+    if(amIVerbose) println("applying " + name)
+
+    var toReturn:List[Move] = List.empty
+
+    var touchedVars:Set[Int] = SortedSet.empty
+    val varsToMove = if (searchZone == null) vars.length else searchZone.value.size
+    for(r <- 1 to degree if varsToMove - touchedVars.size >= 2){
+      val i = selectFrom(vars.indices,(i:Int) => (searchZone == null || searchZone.value.contains(i)) && !touchedVars.contains(i))
+      touchedVars = touchedVars + i
+      val j = selectFrom(vars.indices,(j:Int) => (searchZone == null || searchZone.value.contains(j)) && !touchedVars.contains(j))
+      touchedVars = touchedVars + j
+      toReturn = SwapMove(vars(i), vars(j), Int.MaxValue) :: toReturn
+    }
+
     if(amIVerbose) println(name + ": move found")
     CompositeMove(toReturn, Int.MaxValue, name)
   }
