@@ -70,3 +70,4 @@ object WarehouseLocation extends App with AlgebraTrait{
   println(openWarehouses)
 }
 
+

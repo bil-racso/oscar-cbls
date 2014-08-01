@@ -80,30 +80,27 @@ object WarehouseLocationTabu extends App with AlgebraTrait{
   val TabuArray = Array.tabulate(W)(w => CBLSIntVar(m))
   val It = CBLSIntVar(m)
 
+  val nonTabuWarehouses = SelectLESetQueue(TabuArray,It).toSetVar("non tabu warehouses")
+  m.close()
+
+  //this composite neighborhood includes:
+  // *the search part restricted to non tabu warehouses
+  // *the update of the tabu and iteration count
+  // *the stop criterion based on maxMoves since last improvement over obj
+  // *the protection of the objectiveFunction
   val switchWithTabuNeighborhood = (AssignNeighborhood(warehouseOpenArray, obj, "SwitchWarehouseTabu",
-    searchZone = SelectLESetQueue(TabuArray,It), best = true)
+    searchZone = nonTabuWarehouses, best = true)
     onMove((mo:Move) => {
     for (v <- mo.touchedVariables) {
       TabuArray(v.getStorageAt[Int](warehouseKey)) := It.value + tabuTenure
     }
     It :+= 1
-  }) protectBest obj)
-
-  m.close()
+  }) maxMoves maxStepsWithNoImprovement withoutImprovementOver obj protectBest obj)
 
   switchWithTabuNeighborhood.verbose = 1
 
-  var oldObj = obj.value
-  var stepsSinceLastImprovement = 0
-  switchWithTabuNeighborhood.doAllImprovingMoves((it:Int) => {
-    if(obj.value < oldObj) {oldObj = obj.value; stepsSinceLastImprovement = 0}
-    else stepsSinceLastImprovement +=1
-    it >= W+D || stepsSinceLastImprovement >= maxStepsWithNoImprovement},
-    //all moves are accepted because the neighborhood returns the best found move, and tabu might degrade obj.
-    (oldObj,newObj) => true)
-
-  switchWithTabuNeighborhood.restoreBest()
+  //all moves are accepted because the neighborhood returns the best found move, and tabu might degrade obj.
+  switchWithTabuNeighborhood.doAllImprovingMovesAndRestoreBest(_ >= W+D,(oldObj,newObj) => true)
 
   println(openWarehouses)
 }
-

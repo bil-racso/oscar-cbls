@@ -198,10 +198,11 @@ case class CompositeMove(ml:List[Move], override val objAfter:Int, override val 
   * @param callBack the method to invoke before the actual move is taken
   * @author renaud.delandtsheer@cetic.be
   */
-case class CallBackMove(initialMove:Move, callBack: () => Unit) extends Move(initialMove.objAfter, initialMove.neighborhoodName){
+case class CallBackMove(initialMove:Move, callBack: () => Unit, afterMove: () => Unit = null) extends Move(initialMove.objAfter, initialMove.neighborhoodName){
   def commit(){
-    callBack()
+    if(callBack != null) callBack()
     initialMove.commit()
+    if(afterMove != null) afterMove()
   }
 
   override def toString: String = initialMove.toString

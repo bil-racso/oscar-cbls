@@ -68,16 +68,12 @@ abstract class Neighborhood{
   def doImprovingMove():Boolean = (0 != doAllImprovingMoves(_ >= 1))
 
   /**
-   * @return the number of moves performed
-   */
-
-  /**
    * @param shouldStop a function that takes the iteration number and returns true if search should be stopped
    *                   eg if the problem is considered as solved
    *                   you can evaluate some objective function there such as a violation degree
    * @param acceptanceCriterion a criterion for accepting a move
    *                            by default, we on
-   * @return
+   * @return the number of moves performed
    */
   def doAllImprovingMoves(shouldStop:Int => Boolean, acceptanceCriterion:(Int,Int) => Boolean = (oldObj,newObj) => oldObj > newObj):Int = {
     var bestObj = Int.MaxValue
@@ -186,6 +182,12 @@ abstract class Neighborhood{
     */
   def maxMoves(maxMove:Int) = new MaxMoves(this, maxMove)
 
+  /**bounds the number of tolerated moves without improvements over the best value
+    * the count is reset by the reset action.
+    * @author renaud.delandtsheer@cetic.be
+    */
+  def maxMovesWithoutImprovement(maxMove:Int, obj:Objective) = new MaxMovesWithoutImprovement(this, maxMove, obj)
+
   /**makes a round robin on the neighborhood. it swaps as soon as one does not find a move
     * and swaps neighborhood after "step" invocations
     * @author renaud.delandtsheer@cetic.be
@@ -228,6 +230,11 @@ abstract class Neighborhood{
     * @param n the maximal number of retries on a before concluding it is dead
     */
   def retry(n:Int = 1) = new Retry(this,n)
+
+  /** to prevent resetting the internal state of this neighborhood
+    * @return
+    */
+  def noReset:Neighborhood = new NoReset(this)
 
   /**to build a composite neighborhood.
     * the first neighborhood is used only to provide a round robin exploration on its possible moves

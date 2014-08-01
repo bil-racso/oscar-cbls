@@ -10,7 +10,20 @@ import scala.collection.immutable.SortedSet
  * and the values below the pivot later, in increasing order as well.
 */
 object HotRestart {
-  def apply(it:Iterable[Int], pivot:Int):Iterable[Int] = new ShiftedIterable(it, pivot)
+
+  /** this will return a shiftedIterable
+    * the most efficient method will be automatically selected for Range and sorted sets
+    * @param it
+    * @param pivot
+    * @return
+    */
+  def apply(it:Iterable[Int], pivot:Int):Iterable[Int] = {
+    it match{
+      case r:Range => new InstrumentedRange(r) startBy pivot
+      case s:SortedSet[Int] => new ShiftedSet(s,pivot)
+      case _ => new ShiftedIterable(it, pivot)
+    }
+  }
 
   def apply(r:Range, pivot:Int):Iterable[Int] =  new InstrumentedRange(r) startBy pivot
 

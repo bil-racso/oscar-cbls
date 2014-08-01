@@ -41,21 +41,21 @@ case class AssignNeighborhood(vars:Array[CBLSIntVar],
                               name:String = "AssignNeighborhood",
                               best:Boolean = false,
                               searchZone:CBLSSetVar = null,
-                              symmetryClassOfVariables:Option[Int => Int] = None,
+                              symmetryClassOfVariables:Option[Int => Int] = None,  //TODO: only if they have the same value!!!
                               symmetryClassOfValues:Option[Int => Int => Int] = None,
                               domain:(CBLSIntVar,Int) => Iterable[Int] = (v,i) => v.domain,
                               hotRestart:Boolean = true)
   extends Neighborhood with AlgebraTrait{
   //the indice to start with for the exploration
   var startIndice:Int = 0
-  override def getImprovingMove(acceptanceCriteria:(Int,Int) => Boolean = (oldObj,newObj) => oldObj > newObj): SearchResult = {
+  override def getImprovingMove(acceptanceCriterion:(Int,Int) => Boolean = (oldObj,newObj) => oldObj > newObj): SearchResult = {
     if (amIVerbose) println(name + ": trying")
     val startObj = obj.value
     var oldObj = if(best) Int.MaxValue else startObj
     var toReturn: SearchResult = NoMoveFound
 
     //TODO: improve the hotRestart:
-    //we must restart after the last explored variable except if this variable has not changed
+     //we must restart after the last explored variable except if this variable has not changed
     //in which case we start from this variable, from the value just after the last explored one
     //Also what happens to symmetry elimination in case of a hot restart?
 
@@ -69,7 +69,6 @@ case class AssignNeighborhood(vars:Array[CBLSIntVar],
       else searchZone.value
 
     val iterationScheme = symmetryClassOfVariables match {
-      case _ if best => iterationSchemeOnZone
       case None => iterationSchemeOnZone
       case Some(s) => IdenticalAggregator.removeIdenticalClassesLazily(iterationSchemeOnZone, s)
     }
@@ -82,7 +81,8 @@ case class AssignNeighborhood(vars:Array[CBLSIntVar],
         case Some(s) => IdenticalAggregator.removeIdenticalClassesLazily(domain(currentVar, i), s(i))
       }
 
-      if (amIVerbose) println(name + ": exploring (best:" + best + ") " + currentVar + " values:" + domainIterationScheme)
+      if (amIVerbose)
+        println(name + ": exploring (best:" + best + ") " + currentVar + " values:" + domainIterationScheme)
 
       for (newVal <- domainIterationScheme if newVal != oldVal) {
         val newObj = obj.assignVal(currentVar, newVal)
@@ -92,7 +92,7 @@ case class AssignNeighborhood(vars:Array[CBLSIntVar],
             oldObj = newObj
             toReturn = AssignMove(currentVar, newVal, newObj, name)
           }
-        } else if (acceptanceCriteria(oldObj, newObj)) {
+        } else if (acceptanceCriterion(oldObj, newObj)) {
           startIndice = i + 1
           if (amIVerbose) println(name + ": move found")
           return AssignMove(currentVar, newVal, newObj, name)
@@ -102,7 +102,7 @@ case class AssignNeighborhood(vars:Array[CBLSIntVar],
 
     toReturn match {
       case MoveFound(m)
-        if acceptanceCriteria(startObj, m.objAfter) =>
+        if acceptanceCriterion(startObj, m.objAfter) =>
         if(amIVerbose) println(name + ": move found")
         toReturn
       case _ =>
@@ -135,7 +135,7 @@ case class AssignNeighborhood(vars:Array[CBLSIntVar],
  *                      Int.MinValue is considered different to itself
  *                      if you set to None this will not be used at all
  * @param hotRestart  if true, the exploration order in case you ar not going for the best
- *                    is a hotRestart on the first indice
+ *                    is a hotRestart for the first swapped variable
  *                    even if you specify a searchZone that is: the exploration starts again
  *                    at the position where it stopped, and consider the indices in increasing order
  *                    if false, consider the exploration range in natural order from the first position.

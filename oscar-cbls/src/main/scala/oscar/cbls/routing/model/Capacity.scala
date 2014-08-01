@@ -45,7 +45,6 @@ abstract trait NodeWeighting{
 /** Maintains a cost associated to each vehicle, as the sum of the nodeWeight of each node reached by the vehicle.
   * The initial depot is taken into account in the sum, and it is counted exactly once.
   * @author renaud.delandtsheer@cetic.be
-  * THIS IS EXPERIMENTAL
   */
 class CommutativeSummedCapacity(val vrp:VRP with NodesOfVehicle, val name:String = "SummedCapacity") extends NodeWeighting{
   val vehicleSum = Array.tabulate(vrp.V)(v => Sum(nodeWeight,vrp.NodesOfVehicle(v)).toIntVar)
@@ -58,7 +57,6 @@ class CommutativeSummedCapacity(val vrp:VRP with NodesOfVehicle, val name:String
   *
   * @param vrp the routing model
   * @author renaud.delandtsheer@cetic.be
-  * THIS IS EXPERIMENTAL
   */
 class AccumulativeCapacity(vrp:VRP with Predecessors, val name:String="AccumulativeCapacity"){
 

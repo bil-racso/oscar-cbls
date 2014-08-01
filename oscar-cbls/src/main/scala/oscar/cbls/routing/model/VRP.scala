@@ -762,7 +762,8 @@ trait StrongConstraints extends VRPObjective {
 /**
  * This trait maintains an additional strong constraints system.
  * the e purpose is that this constraint system will be tested first for
- * truth value, and the primary one of the StrongConstraints trait will only be queried for truth value if this additonal constraint system is not violated
+ * truth value, and the primary one of the StrongConstraints trait will only be queried for truth value
+ * if this additonnal constraint system is not violated
  * the proper way to use it in order to get a speedup is to put the constraints
  * that can be checked quickly in the strongConstraintsFast
  * and to keep all the other ones in the strongCon.
