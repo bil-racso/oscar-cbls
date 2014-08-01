@@ -24,13 +24,15 @@ extends Constraint(capacity.store, "EFKameugne11WithResources") {
   def setup(strength: CPPropagStrength): CPOutcome = {
     priorityL2 = priority
     
-    def callback(v: CPIntVar) = { v.callPropagateWhenBoundsChange(this, false) }
-    starts    foreach callback
-    durations foreach callback
-    ends      foreach callback
-    demands   foreach callback
-    resources foreach callback
-    callback(capacity)
+    def sdeCB(v: CPIntVar) =  { v.callPropagateWhenBoundsChange(this, false) }
+    def resCB(v:CPIntVar)     = { v.callPropagateWhenBind(this) }
+    
+    starts    foreach sdeCB
+    durations foreach sdeCB
+    ends      foreach sdeCB
+    demands   foreach sdeCB
+    resources foreach resCB
+    sdeCB(capacity)
     
     propagate()
   }
@@ -178,8 +180,8 @@ object EFKameugne11WithResources {
   def apply(s: Array[CPIntVar], d: Array[CPIntVar], e: Array[CPIntVar], dem: Array[CPIntVar], r: Array[CPIntVar], capacity: CPIntVar, id :Int)(implicit store: CPStore) = {
     val rs = s.map(_.opposite).asInstanceOf[Array[CPIntVar]]
     val re = e.map(_.opposite).asInstanceOf[Array[CPIntVar]]
-    val priorityL2R = 2
-    val priorityR2L = 2
+    val priorityL2R = 1
+    val priorityR2L = 0
     Array(new EFKameugne11WithResources(s,  d, e,  dem, r, capacity, id, priorityL2R),
           new EFKameugne11WithResources(re, d, rs, dem, r, capacity, id, priorityR2L))
     // new EFKameugne11WithResources(s, d, e, dem, r, capacity, id, priorityL2R)
