@@ -446,7 +446,7 @@ abstract trait PenaltyForUnrouted extends VRP with RoutedAndUnrouted {
 
   /**
    * It allows you to set a specific penalty for all points of the VRP.
-   * @param p the penlaty.
+   * @param p the penalty.
    */
   def setUnroutedPenaltyWeight(p: Int) { weightUnroutedPenalty.foreach(penalty => penalty := p) }
 }
