@@ -5,23 +5,20 @@ package oscar.algo.reversible
  * @author Pierre Schaus  pschaus@gmail.com
  * @author Renaud Hartert ren.hartert@gmail.com
  */
-abstract class Reversible[T](val node: ReversibleContext) {
+abstract class Reversible[T](val context: ReversibleContext) {
   
   private var lastMagic: Long = -1L
-  
-  /** Returns true if the magic number is not the same as the magic number of the context */
-  protected def mustBeTrailed: Boolean = lastMagic != node.magic
 
-  @inline protected def trail(): Unit = {
-    val contextMagic = node.magic
-    if (lastMagic != contextMagic) {
+  @inline protected final def trail(): Unit = {
+    val contextMagic = context.magic
+    if (lastMagic != contextMagic) {   
       lastMagic = contextMagic
-      addOnTrail()
+      context.pushOnTrail(this, value)
     }
   }
   
-  /** Adds what encapsulates the state of the object on the trail */
-  protected def addOnTrail(): Unit
+  /** Return the current value of the reversible */
+  def value: T
   
   /** Restores the state of the object */
   def restore(value: T): Unit  

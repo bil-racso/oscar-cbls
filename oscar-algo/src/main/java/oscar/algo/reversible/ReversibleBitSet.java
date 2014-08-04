@@ -78,10 +78,9 @@ public class ReversibleBitSet extends Reversible<Object> {
 		return bits.get(v-min);
 	}
 	
-
 	@Override
-	public void addOnTrail() {
-		node().pushOnTrail(this, bits.clone());
+	public Object value() {
+		return bits.clone();
 	}
 
 	@Override

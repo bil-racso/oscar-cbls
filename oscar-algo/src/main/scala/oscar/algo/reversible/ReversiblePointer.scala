@@ -15,9 +15,7 @@
  * ****************************************************************************
  */
 
-
 package oscar.algo.reversible
-
 
 /**
  * Creates a generic reversible pointer
@@ -26,10 +24,10 @@ package oscar.algo.reversible
  */
 class ReversiblePointer[@specialized T](n: ReversibleContext, v: T) extends Reversible[T](n) {
   
-  // Pointer to the object to trail
+  // Reference on the current value
   protected var pointer: T = v
 
-  def setValue(value: T): Unit = {
+  @inline final def setValue(value: T): Unit = {
     if (value != pointer) {
       trail()
       this.pointer = value
@@ -39,36 +37,32 @@ class ReversiblePointer[@specialized T](n: ReversibleContext, v: T) extends Reve
   /**
    * @param value to assign
    */
-  def value_= (value: T): Unit = setValue(value)
+  @inline final def value_= (value: T): Unit = setValue(value)
   
   /**
    * @param value to assign
    */
-  def := (value: T): Unit = setValue(value)
+  final def := (value: T): Unit = setValue(value)
   
   /**
    * @return current value
    */
-  @inline def value = pointer
+  @inline override final def value = pointer
 
   /**
    * Check if the pointer is different from null
    * @return true if the pointer is != null, false otherwise
    */
-  @inline def hasValue(): Boolean = pointer != null
+  @inline final def hasValue(): Boolean = pointer != null
 
   /**
    * @return the current pointer
    */
-  @inline def getValue(): T = pointer
+  @inline final def getValue(): T = pointer
 
-  override def addOnTrail(): Unit = node.pushOnTrail(this, pointer)
+  @inline override final def restore(value: T): Unit = pointer = value.asInstanceOf[T]
 
-  override def restore(value: T): Unit = {
-    pointer = value.asInstanceOf[T]
-  }
-
-  override def toString(): String = if (hasValue) s"$pointer" else ""
+  override def toString(): String = if (hasValue) pointer.toString else ""
 }
 
 object ReversiblePointer {

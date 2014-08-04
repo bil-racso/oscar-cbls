@@ -1,8 +1,8 @@
 package oscar.algo
 
 /** 
- *  An array-based stack for objects. This means that elements of
- *  primitive types are boxed.
+ *  An array-based stack for objects. 
+ *  This means that primitive types are boxed.
  *  
  *  @author Renaud Hartert ren.hartert@gmail.com 
  */

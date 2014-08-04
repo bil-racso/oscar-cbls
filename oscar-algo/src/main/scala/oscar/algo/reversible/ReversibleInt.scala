@@ -23,28 +23,28 @@ package oscar.algo.reversible;
 class ReversibleInt(node: ReversibleContext, value: Int) extends ReversiblePointer[Int](node, value) {
 
   /** Increments the reversible integer by one */
-  def incr(): Int = {
+  @inline final def incr(): Int = {
     trail()
     pointer += 1
     pointer
   }
 
   /** Decrements the reversible integer by one */
-  def decr(): Int = {
+  @inline final def decr(): Int = {
     trail()
     pointer -= 1
     pointer
   }
 
   /** Increments the reversible integer by i */
-  def +=(i: Int): Int = {
+  @inline final def +=(i: Int): Int = {
     trail()
     pointer += i
     pointer
   }
 
   /** Decrements the reversible integer by i */
-  def -=(i: Int): Int = {
+  @inline final def -=(i: Int): Int = {
     trail()
     pointer -= i
     pointer

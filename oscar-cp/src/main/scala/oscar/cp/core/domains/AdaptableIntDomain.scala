@@ -58,8 +58,8 @@ class AdaptableIntDomain(override val context: ReversibleContext, val minValue: 
           // Dynamically change the representation of the domain
           // - Use a bit vector for a small and dense domain (not yet available)
           // - Otherwise, use a sparse set
-          //if (maxValue - minValue >= 32) { // 8 has been chosen arbitrarily
-            val sparse = new SparseSetDomain(domain.node, minValue, maxValue)
+          //if (maxValue - minValue >= 32) {
+            val sparse = new SparseSetDomain(domain.context, minValue, maxValue)
             domain.value = sparse
             sparse.removeValue(value)
           /*} else {
