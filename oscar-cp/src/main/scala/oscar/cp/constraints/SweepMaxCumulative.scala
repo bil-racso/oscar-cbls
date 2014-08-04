@@ -110,7 +110,7 @@ class SweepMaxCumulative(starts: Array[CPIntVar], durations: Array[CPIntVar], en
         if (!durations(i).isBound) durations(i).callPropagateWhenBoundsChange(this)
         if (!ends(i).isBound) ends(i).callPropagateWhenBoundsChange(this)
         if (!demands(i).isBound) demands(i).callPropagateWhenBoundsChange(this)
-        if (!resources(i).isBound) resources(i).callPropagateWhenDomainChanges(this)
+        if (!resources(i).isBound) resources(i).callPropagateWhenBind(this)
       }
     }
 

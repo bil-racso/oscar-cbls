@@ -68,6 +68,7 @@ import oscar.cp.core.CPSetVar
 import oscar.cp.core.Constraint
 import oscar.cp.core._
 import oscar.cp.constraints.TableSTR2
+import oscar.cp.constraints.MinCircuit
 
 trait Constraints {
 
@@ -184,14 +185,36 @@ trait Constraints {
 
   /**
    * Circuit Constraint (Available Filtering: Weak, Strong)
-   * @param vars an array of n variable with domains defined on (0..n-1)
-   * @return a constraint enforcing a circuit representation where vars(i) represents
+   * @param succ an array of n variable with domains defined on (0..n-1), where succ[i] represents the city visited after city i. 
+   * @return a constraint enforcing a circuit representation where succ(i) represents
    *         the city visited after city i (no city is visited twice and there is no sub-tours).
    *
    */
-  def circuit(vars: Array[CPIntVar]): Constraint = {
-    return new Circuit(vars)
+  def circuit(succ: Array[CPIntVar]): Constraint = {
+    return new Circuit(succ)
   }
+  
+
+/**
+ * 
+ * Ensures that succ represents a valid Hamiltonian circuit (only one tour) of length "cost" <br>
+ * Available propagation strengths are Weak, Medium and Strong.
+ * Weak = elements + circuit + alldiff (AC)
+ * Medium = Weak + minAssignment
+ * Strong = Medium + Held&Karp Lower-Bounds
+ * @param succ an array of n variable with domains defined on (0..n-1), where succ[i] represents the city visited after city i. 
+ * @param distMatrixSucc a distance matrix where distMatrix[i][j] is the distance for going from i to j
+ * @param addPredModel should be set to true (default) to have a redundant model on predecessor array, false otherwise.
+ * @return a constraint enforcing a circuit representation where succ(i) represents
+ *         the city visited after city i (no city is visited twice and there is no sub-tours).
+ *         cost = sum_i distMatrix[i][succ[i]]
+ * @param
+ * @see CPPropagStrength
+ * @author Pierre Schaus pschaus@gmail.com
+ */  
+  def minCircuit(succ: Array[CPIntVar], distMatrixSucc: Array[Array[Int]], cost: CPIntVar,addPredModel: Boolean = true): Constraint = {
+    return new MinCircuit(succ,distMatrixSucc,cost,addPredModel)
+  }  
 
   /**
    * Lexicographically Less or Equal Constraint

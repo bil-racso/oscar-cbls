@@ -40,7 +40,7 @@ class HeldKarp(val edges: CPSetVar,val edgeData: Array[(Int,Int,Int)], val cost:
 
   
   val edgeIndex = Array.fill(n,n)(-1)
-  val y = Array.fill(n)(0.0)//(new ReversibleDouble(s,0.0))
+  val y = Array.fill(n)(0.0)
   
   for (((i,j,w),idx) <- edgeData.zipWithIndex) {
     edgeIndex(i)(j) = idx
@@ -71,19 +71,17 @@ class HeldKarp(val edges: CPSetVar,val edgeData: Array[(Int,Int,Int)], val cost:
   }  
 
   override def setup(l: CPPropagStrength): CPOutcome = {
-    println("setup")
     for (((i,j,w),idx) <- edgeData.zipWithIndex) {
       if (!edges.isPossible(idx)) removeEdge(i,j)
       if (edges.isRequired(idx)) forceEdge(i,j)
     }
     edges.callPropagateWhenDomainChanges(this)
-    val oc = propagateNumSteps(1000)
-    //println("lb init:"+cost)
+    val oc = propagateNumSteps(100)
     return oc
   }
   
   override def propagate(): CPOutcome = {
-    propagateNumSteps(15)
+    propagateNumSteps(5)
   }
   
   def propagateNumSteps(nSteps: Int): CPOutcome = {
@@ -92,9 +90,9 @@ class HeldKarp(val edges: CPSetVar,val edgeData: Array[(Int,Int,Int)], val cost:
     var lb = 0
     var stepSize = 0.1
     var alpha = 2.0
-    val beta = 0.5
+    var beta = 0.5
     
-    for (metaiter <- 0 until 5) {
+    for (metaiter <- 0 until 3) {
       iter = 0
       while (iter < nSteps) {
         
@@ -148,7 +146,6 @@ class HeldKarp(val edges: CPSetVar,val edgeData: Array[(Int,Int,Int)], val cost:
             }
           }
         }
-        //println((2 * y.map(_ + 0.0).sum + weight))
         val oneTreeLB = ((2 * y.map(_ + 0.0).sum + weight)-epsilon).ceil.toInt
         if (lb < oneTreeLB) {
           improvement = true
@@ -157,8 +154,6 @@ class HeldKarp(val edges: CPSetVar,val edgeData: Array[(Int,Int,Int)], val cost:
           if (cost.updateMin(lb) == Failure) {
             return Failure
           }
-
-          //println(incident.mkString(","))
         }
         val denom: Double = (for (i <- 0 until n) yield ((2 - incident(i)) * (2 - incident(i)))).sum
          
@@ -166,32 +161,21 @@ class HeldKarp(val edges: CPSetVar,val edgeData: Array[(Int,Int,Int)], val cost:
         var target = if (cost.max - oneTreeLB < 0) oneTreeLB+0.1 else cost.max
         if (denom == 0) stepSize = 0
         else stepSize = alpha * (target - oneTreeLB) / denom
-        //stepSize = alpha * (cost.max - oneTreeLB) / denom
-        //println("stepSize:"+stepSize+ "denom:"+denom)
-        
-        //stepSize = 20 * Math.pow(rho, iter)
-        //println("stepSize:"+stepSize)
-
         for (i <- 0 until n) {
           y(i) += (stepSize * (2 - incident(i)))
         }
       }
-      // fini les iters
-      
+      // end of iters, can do edge filtering here
+      alpha *= beta;
+      beta /= 2;
       
 
     }
-    /*
-    if (lb > cost.min) {
-      
-      println("iter:"+iter+" lb:"+lb+" cost:"+cost)
-    }*/
     if (cost.updateMin(lb) == Failure) {
       return Failure
     } 
     return Suspend
-    
-    
+
   }
  
 }
@@ -235,8 +219,6 @@ class ChannelTSP(val succ: Array[CPIntVar],val distMatrix: Array[Array[Int]]) ex
   }
   
   override def valRemoveIdx(x: CPIntVar, idx: Int, v: Int): CPOutcome = {
-    //println("valRemoveIdx")
-    
     if (v != idx) {
       edgeVar.excludes(edgeIndex(idx)(v))
     }
@@ -244,35 +226,19 @@ class ChannelTSP(val succ: Array[CPIntVar],val distMatrix: Array[Array[Int]]) ex
   }
   
   override def valBindIdx(x: CPIntVar, idx: Int): CPOutcome = {
-    //println("valBindIdx")
     edgeVar.requires(edgeIndex(idx)(x.value))
   } 
   
   override def valExcluded(x: CPSetVar, v: Int): CPOutcome = {
-    //println("valExcluded")
     val (i,j,w) = edges(v)
     succ(i-n).removeValue(j)
   }  
 
   override def valRequired(x: CPSetVar, v: Int): CPOutcome = {
     val (i,j,w) = edges(v)
-    //println("valRequired "+v+" =edge:"+((i-n),j))
     if ((i-n) != j) {
       succ(i-n).assign(j)
     } else CPOutcome.Suspend
   }   
 
-}
-
-
-object HeldKarp extends App {
-  
-  implicit val cp = new CPSolver()
-  val edgeData = Array((0,1,5),(1,2,5),(2,3,5),(3,0,3))
-  val cost = CPIntVar(0 to 1000)
-  val edges = CPSetVar(Set(0,1,2,3),Set())
-  cp.add(new HeldKarp(edges,edgeData,cost))
-  println(cost)
-  
-  
 }
