@@ -1,19 +1,14 @@
-package oscar.algo.reversible
-
-abstract class TrailEntry { def restore(): Unit }
-
-class TrailEntryImpl[@specialized T](reversible: Reversible[T], value: T) extends TrailEntry {
-  override def restore(): Unit = reversible.restore(value)
-}
+package oscar.algo
 
 /** 
- *  An array-based stack for `TrailEntry`
+ *  An array-based stack for objects. This means that elements of
+ *  primitive types are boxed.
  *  
  *  @author Renaud Hartert ren.hartert@gmail.com 
  */
-class TrailStack(initialSize: Int = 100) {
+class ArrayStack[T](initialSize: Int = 100) {
   
-  private var stack: Array[TrailEntry] = Array.ofDim(initialSize)
+  private var stack: Array[AnyRef] = Array.ofDim[AnyRef](initialSize)
   private var index: Int = 0
 
   /**
@@ -21,14 +16,14 @@ class TrailStack(initialSize: Int = 100) {
    *  
    *  @return The size of the stack
    */
-  def size: Int = index
+  @inline final def size: Int = index
 
   /**
    *  Test if the stack is empty or not
    *  
    *  @return `true` if the stack is empty, `false` otherwise
    */
-  def isEmpty = index == 0
+  @inline final def isEmpty = index == 0
 
   /**
    *  Return the top element of the stack without removing it
@@ -37,18 +32,18 @@ class TrailStack(initialSize: Int = 100) {
    *  
    *  @return The top element of the stack
    */
-  def top: TrailEntry = stack(index - 1)
+  @inline final def top: T = stack(index - 1).asInstanceOf[T]
   
   /**
-   *  Return the last element of the stack
+   *  Return the last element of the stack in LIFO order
    *  
    *  Throws an exception if the stack is empty
    *  
-   *  @return The last element of the stack
+   *  @return The last element of the stack in LIFO order
    */
-  def last: TrailEntry = {
+  @inline final def last: T = {
     if (index == 0) sys.error("Stack empty")
-    else stack(0)
+    else stack(0).asInstanceOf[T]
   }
 
   /** 
@@ -56,9 +51,9 @@ class TrailStack(initialSize: Int = 100) {
    *
    *  @param entry The element to push
    */
-  def push(entry: TrailEntry): Unit = {
+  @inline final def push(entry: T): Unit = {
     if (index == stack.length) growStack()   
-    stack(index) = entry
+    stack(index) = entry.asInstanceOf[AnyRef] // boxing in case of primitive type
     index += 1
   }
   
@@ -67,15 +62,15 @@ class TrailStack(initialSize: Int = 100) {
    *  
    *  @return The element on top of the stack
    */
-  def pop(): TrailEntry = {
+  @inline final def pop(): T = {
     if (index == 0) sys.error("Stack empty")
     index -= 1
-    stack(index)
+    stack(index).asInstanceOf[T]
   }
   
   // Double the size of the stack
   @inline private def growStack(): Unit = {
-    val newStack = Array.ofDim[TrailEntry](stack.length * 2)
+    val newStack = Array.ofDim[AnyRef](stack.length * 2)
     System.arraycopy(stack, 0, newStack, 0, stack.length)
     stack = newStack
   }

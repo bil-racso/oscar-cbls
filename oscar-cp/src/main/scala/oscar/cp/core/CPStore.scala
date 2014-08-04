@@ -57,10 +57,22 @@ class CPStore(val propagStrength: CPPropagStrength) extends SearchNode {
   private val propagQueueL2 = Array.fill(CPStore.MaxPriorityL2 + 1)(new LinkedList[Constraint]())
 
   private val status: ReversiblePointer[CPOutcome] = new ReversiblePointer[CPOutcome](this, Suspend)
-  
+
   private val cutConstraints = new LinkedList[Constraint]()
 
-  // TODO: Used for model debugging, shoudl be moved in CPSolver
+  // Reference the last constraint called
+  private var lastConstraint: Constraint = null
+
+  /**
+   *  Returns the last constraint called in the propagate algorithm.
+   *
+   *  Note that `null` is returned if no constraint has been called.
+   *
+   *  @return The last constraint called by the propagate algorithm.
+   */
+  def lastConstraintCalled: Constraint = lastConstraint
+
+  // TODO: Used for model debugging, should be moved in CPSolver
   private var throwNoSolExceptions = true
 
   /** Changes the status of the store to Failure */
@@ -116,11 +128,13 @@ class CPStore(val propagStrength: CPPropagStrength) extends SearchNode {
     }
   }
 
+  @inline
   private def addQueueL1(c: Constraint, prior: Int, evt: => CPOutcome): Unit = {
     propagQueueL1(prior).add(() =>
       if (c.isActive) {
-        val oc = evt;
-        if (oc == Success) c.deactivate();
+        lastConstraint = c // last constraint called
+        val oc = evt
+        if (oc == Success) c.deactivate()
         oc
       } else Suspend);
     isL1QueueEmpty = false
@@ -320,6 +334,7 @@ class CPStore(val propagStrength: CPPropagStrength) extends SearchNode {
             highestPriorL1 = p
             while (highestPriorL1 <= p && !propagQueueL1(p).isEmpty && ok != Failure) {
               val event = propagQueueL1(p).removeFirst()
+
               isL1QueueEmpty = (p == 0 && propagQueueL1(p).isEmpty)
               highestPriorL1 = p
               // Execute the event
@@ -338,6 +353,7 @@ class CPStore(val propagStrength: CPPropagStrength) extends SearchNode {
           highestPriorL2 = p
           while (highestPriorL2 <= p && isL1QueueEmpty && !propagQueueL2(p).isEmpty && ok != Failure) {
             val c = propagQueueL2(p).removeFirst()
+            lastConstraint = c
             highestPriorL2 = p
             nbPropag += 1
             ok = c.execute()
@@ -347,7 +363,7 @@ class CPStore(val propagStrength: CPPropagStrength) extends SearchNode {
 
       inPropagate = false
       timeInFixPoint += System.currentTimeMillis() - t0
-      
+
       if (ok != Failure) Suspend
       else {
         status.value = Failure

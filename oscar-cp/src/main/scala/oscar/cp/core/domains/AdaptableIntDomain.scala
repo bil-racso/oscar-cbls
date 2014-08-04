@@ -19,21 +19,29 @@ class AdaptableIntDomain(override val context: ReversibleContext, val minValue: 
     new ReversiblePointer[IntervalDomain](context, new BoundDomain(context, minValue, maxValue))
   }
 
-  override def size: Int = domain.value.size
+  @inline
+  override final def size: Int = domain.value.size
 
-  override def isEmpty: Boolean = domain.value.isEmpty
+  @inline
+  override final def isEmpty: Boolean = domain.value.isEmpty
 
-  override def isBound: Boolean = domain.value.isBound
+  @inline
+  override final def isBound: Boolean = domain.value.isBound
 
-  override def max: Int = domain.value.max
+  @inline
+  override final def max: Int = domain.value.max
 
-  override def min: Int = domain.value.min
+  @inline
+  override final def min: Int = domain.value.min
 
-  override def randomValue(rand: Random): Int = domain.value.randomValue(rand)
+  @inline
+  override final def randomValue(rand: Random): Int = domain.value.randomValue(rand)
 
-  override def hasValue(value: Int): Boolean = domain.value.hasValue(value)
+  @inline
+  override final def hasValue(value: Int): Boolean = domain.value.hasValue(value)
 
-  override def removeValue(value: Int): CPOutcome = {
+  @inline
+  override final def removeValue(value: Int): CPOutcome = {
     val dom = domain.value
     // If sparse representation, remove
     if (dom.isInstanceOf[IntDomain]) {
@@ -64,15 +72,20 @@ class AdaptableIntDomain(override val context: ReversibleContext, val minValue: 
     }
   }
 
-  override def assign(value: Int): CPOutcome = domain.value.assign(value)
+  @inline
+  override final def assign(value: Int): CPOutcome = domain.value.assign(value)
 
-  override def updateMin(value: Int): CPOutcome = domain.value.updateMin(value)
+  @inline
+  override final def updateMin(value: Int): CPOutcome = domain.value.updateMin(value)
 
-  override def updateMax(value: Int): CPOutcome = domain.value.updateMax(value)
+  @inline
+  override final def updateMax(value: Int): CPOutcome = domain.value.updateMax(value)
 
-  override def nextValue(value: Int): Int = domain.value.nextValue(value)
+  @inline
+  override final def nextValue(value: Int): Int = domain.value.nextValue(value)
 
-  override def prevValue(value: Int): Int = domain.value.prevValue(value)
+  @inline
+  override final def prevValue(value: Int): Int = domain.value.prevValue(value)
 
   override def delta(oldMin: Int, oldMax: Int, oldSize: Int): Iterator[Int] = domain.value.delta(oldMin, oldMax, oldSize)
 

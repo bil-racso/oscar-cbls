@@ -15,8 +15,6 @@
 
 package oscar.algo.reversible
 
-import java.util.Stack
-import scala.collection.JavaConversions._
 import scala.collection.mutable.ArrayBuffer
 
 /**
@@ -30,14 +28,11 @@ class ReversibleContext {
   
   private var maxTrailSize: Int = 0
   private var trailTime: Long = 0
-
-  def maxSize: Int = maxTrailSize 
-  def time: Long = trailTime
-  
   private var magicNumber: Long = 0
   
-  private val trailStack: TrailStack = new TrailStack(1000)
-  private val pointerStack: TrailStack = new TrailStack(100)
+  import oscar.algo.ArrayStack // custom version of ArrayStack
+  private val trailStack: ArrayStack[TrailEntry] = new ArrayStack(1000)
+  private val pointerStack: ArrayStack[TrailEntry] = new ArrayStack(100)
   
   // Used to reference the initial state
   trailStack.push(null)
@@ -48,8 +43,14 @@ class ReversibleContext {
   /** Returns the magic number of the context */
   def magic: Long = magicNumber
   
+  /** Returns the maximal size of the trailing stack */
+  def maxSize: Int = maxTrailSize 
+  
+  /** Returns the time spent to pop states */
+  def time: Long = trailTime
+  
   /** Adds an action to execute when the `pop` function is called */
-  def onPop(action: => Unit): Unit = popListeners.add(() => action)
+  def onPop(action: => Unit): Unit = popListeners.append(() => action)
   
   def pushOnTrail[T](reversible: Reversible[T], value: T): Unit = {
     val entry = new TrailEntryImpl[T](reversible, value)
