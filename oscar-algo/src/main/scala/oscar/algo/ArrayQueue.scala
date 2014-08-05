@@ -11,6 +11,9 @@ class ArrayQueue[T](initialSize: Int = 8) {
   // The length of this array must be a power of 2
   private var queue: Array[AnyRef] = Array.ofDim[AnyRef](computeSize(initialSize))
   
+  // Used for fast position testing
+  private var bitMask: Int = queue.length - 1
+  
   private var head: Int = 0
   private var tail: Int = 0
   
@@ -19,7 +22,7 @@ class ArrayQueue[T](initialSize: Int = 8) {
    *  
    *  @return The size of the queue
    */
-  @inline final def size: Int = (tail - head) & (queue.length-1)
+  @inline final def size: Int = (tail - head) & bitMask
  
   /**
    *  Test if the queue is empty or not
@@ -60,14 +63,14 @@ class ArrayQueue[T](initialSize: Int = 8) {
   }
   
   @inline final def addFirst(elem: T): Unit = {
-    head = (head - 1) & (queue.length - 1)
+    head = (head - 1) & bitMask
     queue(head) = elem.asInstanceOf[AnyRef]
     if (head == tail) growQueue() // Increase the size of the queue
   }
   
   @inline final def addLast(elem: T): Unit = {
     queue(tail) = elem.asInstanceOf[AnyRef]
-    tail = (tail + 1) & (queue.length - 1)
+    tail = (tail + 1) & bitMask
     if (head == tail) growQueue() // Increase the size of the queue
   }
   
@@ -75,7 +78,7 @@ class ArrayQueue[T](initialSize: Int = 8) {
     if (head == tail) sys.error("Queue empty")
     else {
       val elem = queue(head).asInstanceOf[T]
-      head = (head + 1) & (queue.length - 1)
+      head = (head + 1) & bitMask
       elem
     }
   }
@@ -83,7 +86,7 @@ class ArrayQueue[T](initialSize: Int = 8) {
   @inline final def removeLast(): T = {
     if (head == tail) sys.error("Queue empty")
     else {
-      tail = (tail - 1) & (queue.length - 1)
+      tail = (tail - 1) & bitMask
       queue(tail).asInstanceOf[T]
     }
   }
@@ -92,7 +95,7 @@ class ArrayQueue[T](initialSize: Int = 8) {
     var i = head
     while (i != tail) {
       f(queue(i).asInstanceOf[T])
-      i = (i + 1) & (queue.length - 1)
+      i = (i + 1) & bitMask
     }
   }
   
@@ -118,7 +121,7 @@ class ArrayQueue[T](initialSize: Int = 8) {
 
   final def mkString(sep: String): String = mkString("", sep, "")
   
-  // Double the size of the stack
+  // Double the size of the queue
   @inline private def growQueue(): Unit = {
     // This function does not work if this condition does not hold
     assert(head == tail, "should not resize if head != tail")    
@@ -131,6 +134,7 @@ class ArrayQueue[T](initialSize: Int = 8) {
       System.arraycopy(queue, head, newQueue, 0, rest)
       System.arraycopy(queue, 0, newQueue, rest, head)
       queue = newQueue
+      bitMask = newQueue.length
       head = 0
       tail = size
     }
