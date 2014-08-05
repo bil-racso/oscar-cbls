@@ -52,7 +52,12 @@ class CPStore(val propagStrength: CPPropagStrength) extends SearchNode {
   // True if the L1 queue is not empty
   private var isL1QueueEmpty = true
 
-  // TODO: should use a more efficient structure
+  // Not yet available 
+  //import oscar.algo.ArrayQueue // custom array double ended queue
+  //private val propagQueueL1Bis = Array.fill(CPStore.MaxPriorityL1 + 1)(new ArrayQueue[() => CPOutcome](1024))
+  //private val propagQueueL2Bis = Array.fill(CPStore.MaxPriorityL2 + 1)(new ArrayQueue[Constraint](128))
+  //private val cutConstraintsBis = new ArrayQueue[Constraint](1) // usually empty
+  
   private val propagQueueL1 = Array.fill(CPStore.MaxPriorityL1 + 1)(new LinkedList[() => CPOutcome]())
   private val propagQueueL2 = Array.fill(CPStore.MaxPriorityL2 + 1)(new LinkedList[Constraint]())
 
@@ -366,6 +371,7 @@ class CPStore(val propagStrength: CPPropagStrength) extends SearchNode {
 
       if (ok != Failure) Suspend
       else {
+        cleanQueues() // May be not empty
         status.value = Failure
         Failure
       }
@@ -396,9 +402,6 @@ class CPStore(val propagStrength: CPPropagStrength) extends SearchNode {
       // so we must propagate because the queues may not be empty
       // we also check that posting this new constraint does not come from the propagate method otherwise we might have infinite recurtion
       if (!inPropagate) oc = propagate();
-    }
-    if (oc == Failure) {
-      cleanQueues()
     }
     status := oc
     status.value
@@ -446,14 +449,10 @@ class CPStore(val propagStrength: CPPropagStrength) extends SearchNode {
       }
       status.value = oc
       if (oc == Failure) {
-        cleanQueues()
         return oc
       }
     }
     oc = propagate()
-    if (oc == CPOutcome.Failure) {
-      cleanQueues()
-    }
     status.value = oc
     status.value
   }
@@ -542,7 +541,6 @@ class CPStore(val propagStrength: CPPropagStrength) extends SearchNode {
     if (oc != Failure) {
       oc = propagate()
     }
-    cleanQueues()
     status.value = oc
     return status.value
   }
@@ -553,7 +551,6 @@ class CPStore(val propagStrength: CPPropagStrength) extends SearchNode {
     if (oc != Failure) {
       oc = propagate()
     }
-    cleanQueues()
     status.value = oc
     return status.value
   }
@@ -574,8 +571,9 @@ object CPStore {
   /** The lowest priority for an Level 1 filtering method */
   val MinPriorityL1 = 0
 
-  /** The highest priority for the propagate method i.e. L2 */
+  /** The highest priority for an Level 2 filtering method */
   val MaxPriorityL2 = 7
 
+  /** The lowest priority for an Level 2 filtering method */
   val MinPriorityL2 = 0
 }
