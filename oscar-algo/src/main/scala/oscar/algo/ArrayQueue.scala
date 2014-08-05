@@ -134,7 +134,7 @@ class ArrayQueue[T](initialSize: Int = 8) {
       System.arraycopy(queue, head, newQueue, 0, rest)
       System.arraycopy(queue, 0, newQueue, rest, head)
       queue = newQueue
-      bitMask = newQueue.length
+      bitMask = newQueue.length - 1
       head = 0
       tail = size
     }
