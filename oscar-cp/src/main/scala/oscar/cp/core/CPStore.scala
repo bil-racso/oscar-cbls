@@ -53,13 +53,10 @@ class CPStore(val propagStrength: CPPropagStrength) extends SearchNode {
   private var isL1QueueEmpty = true
 
   // Not yet available 
-  //import oscar.algo.ArrayQueue // custom array double ended queue
-  //private val propagQueueL1Bis = Array.fill(CPStore.MaxPriorityL1 + 1)(new ArrayQueue[() => CPOutcome](1024))
-  //private val propagQueueL2Bis = Array.fill(CPStore.MaxPriorityL2 + 1)(new ArrayQueue[Constraint](128))
+  import oscar.algo.ArrayQueue // custom array double ended queue
+  private val propagQueueL1 = Array.fill(CPStore.MaxPriorityL1 + 1)(new ArrayQueue[() => CPOutcome](1000))
+  private val propagQueueL2 = Array.fill(CPStore.MaxPriorityL2 + 1)(new ArrayQueue[Constraint](100))
   //private val cutConstraintsBis = new ArrayQueue[Constraint](1) // usually empty
-  
-  private val propagQueueL1 = Array.fill(CPStore.MaxPriorityL1 + 1)(new LinkedList[() => CPOutcome]())
-  private val propagQueueL2 = Array.fill(CPStore.MaxPriorityL2 + 1)(new LinkedList[Constraint]())
 
   private val status: ReversiblePointer[CPOutcome] = new ReversiblePointer[CPOutcome](this, Suspend)
 
@@ -112,7 +109,7 @@ class CPStore(val propagStrength: CPPropagStrength) extends SearchNode {
     if (c.isActive && !c.isInQueue && (!c.inPropagate || !c.idempotent)) {
       c.setInQueue()
       val priority = c.priorityL2
-      propagQueueL2(priority).add(c)
+      propagQueueL2(priority).addLast(c)
       if (priority > highestPriorL2) {
         highestPriorL2 = priority
       }
@@ -135,7 +132,7 @@ class CPStore(val propagStrength: CPPropagStrength) extends SearchNode {
 
   @inline
   private def addQueueL1(c: Constraint, prior: Int, evt: => CPOutcome): Unit = {
-    propagQueueL1(prior).add(() =>
+    propagQueueL1(prior).addLast(() =>
       if (c.isActive) {
         lastConstraint = c // last constraint called
         val oc = evt
@@ -311,7 +308,7 @@ class CPStore(val propagStrength: CPPropagStrength) extends SearchNode {
       cutConstraints.foreach(c => {
         if (c.isActive) {
           c.setInQueue()
-          propagQueueL2(c.priorityL2).add(c)
+          propagQueueL2(c.priorityL2).addLast(c)
         }
       })
 
@@ -351,7 +348,7 @@ class CPStore(val propagStrength: CPPropagStrength) extends SearchNode {
         p = highestPriorL2
 
         // Adjust the L2 priority
-        while (p >= 0 && propagQueueL2(p).isEmpty()) p -= 1
+        while (p >= 0 && propagQueueL2(p).isEmpty) p -= 1
 
         if (p < 0) fixed = true
         else {
