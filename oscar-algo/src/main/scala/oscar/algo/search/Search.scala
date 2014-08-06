@@ -107,7 +107,6 @@ class Search(node: SearchNode, branching: Branching) {
     }
 
     var done = false
-
     while (!alternativesStack.isEmpty && !done && !searchLimitReached) {
       
       nbNodes += 1
