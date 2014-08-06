@@ -21,21 +21,41 @@ package oscar.cbls.objective
  ******************************************************************************/
 
 import oscar.cbls.invariants.core.computation._
+import scala.language.implicitConversions
 
-
-case class Objective(objective: CBLSIntVar) extends ObjectiveTrait {
-  setObjectiveVar(objective)
-  def value = objective.value
+object Objective{
+  implicit def objToCBLSIntVar(o:Objective):CBLSIntVar = o.objective
+  def apply(objective:CBLSIntVar) = new Objective(objective)
 }
 
 /**
  * a common class for modeling an objective, and querying its variations on different basic moves
-  * @author renaud.delandtsheer@cetic.be
+ *
+ * All queries on the variation on the objective following moves are performed
+ * by explicitly performing the move, evaluating the objective, and backtracking the move.
+ *
+ * hence all these queries return the value of the objective function after the move, and not a delta
+ * as you will find in Comet for instance.
+ *
+ * The reason is that this value is computed through explicit state change and restore,
+ * and since all moves are performed lazily,
+ * computing a delta would not enable OscaR.cbls to perform the state restore
+ * and the next state change in a single model propagation
+ * (you generally call a bunch of such methods in a row to find the move you want to perform actually)
+ * hence it would be much less efficient to compute a delta at this level than computing a value.
+ *
+ * If you need a delta, you should compute it by yourself.
+ *
+ * @author renaud.delandtsheer@cetic.be
  */
-trait ObjectiveTrait {
-  var ObjectiveVar: CBLSIntVar = null
+class Objective(val objective: CBLSIntVar) extends ObjectiveTrait {
+  setObjectiveVar(objective)
+}
 
-  def setObjectiveVar(v: CBLSIntVar) {
+trait ObjectiveTrait {
+  protected var ObjectiveVar: CBLSIntVar = null
+
+   protected def setObjectiveVar(v: CBLSIntVar) {
     ObjectiveVar = v
     ObjectiveVar.getPropagationStructure.registerForPartialPropagation(ObjectiveVar)
   }
@@ -83,5 +103,5 @@ trait ObjectiveTrait {
    * It is easy to override it, and perform a smarter propagation if needed.
    * @return the actual objective value.
    */
-  def propagateObjective = ObjectiveVar.value
+  protected def propagateObjective = ObjectiveVar.value
 }

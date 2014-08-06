@@ -25,11 +25,11 @@ trait DistributedStorageUtility {
   var storage: SortedMap[Int, AnyRef] = SortedMap.empty
 
   /**returns null if nothing was stored*/
-  final def getStorageAt[T](index: Int, default: T = null.asInstanceOf[T]) =
-    storage.getOrElse(index, default).asInstanceOf[T]
+  final def getStorageAt[T](key: Int, default: T = null.asInstanceOf[T]) =
+    storage.getOrElse(key, default).asInstanceOf[T]
 
-  final def storeAt(index: Int, value: AnyRef) {
-    storage = storage + ((index, value))
+  final def storeAt(key: Int, value: AnyRef) {
+    storage = storage + ((key, value))
   }
 }
 
@@ -40,7 +40,12 @@ trait DistributedStorageUtility {
 trait StorageUtilityManager {
   var nextStoragePlace: Int = 0
 
-  def getStorageIndex(): Int = {
+  /** creates a unique storage key tha can be used
+    * to store anything in all DistributedStorageUtility
+    * bound to this StorageUtilityManager
+    * @return
+    */
+  def getStorageKey(): Int = {
     val toreturn = nextStoragePlace
     nextStoragePlace += 1
     toreturn

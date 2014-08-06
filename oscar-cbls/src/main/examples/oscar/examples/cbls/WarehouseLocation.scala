@@ -50,9 +50,7 @@ object WarehouseLocation extends App with AlgebraTrait{
   val distanceToNearestOpenWarehouse = Array.tabulate(D)(d =>
     MinArray(distanceCost(d), openWarehouses, defaultCostForNoOpenWarehouse).toIntVar("distance_for_delivery_" + d))
 
-  val totalCost = Sum(distanceToNearestOpenWarehouse) + Sum(costForOpeningWarehouse, openWarehouses)
-
-  val obj = Objective(totalCost)
+  val obj = Objective(Sum(distanceToNearestOpenWarehouse) + Sum(costForOpeningWarehouse, openWarehouses))
 
   m.close()
 
@@ -64,8 +62,7 @@ object WarehouseLocation extends App with AlgebraTrait{
   //AssignNeighborhood(warehouseOpenArray, obj, "SwitchFirstWarehouse") maxMoves 5 andThen AssignNeighborhood(warehouseOpenArray, obj, "SwitchSecondWarehouse")
 
   neighborhood.verbose = 1
-  neighborhood.doAllImprovingMoves(_ >= W+D)
-  neighborhood.restoreBest()
+  neighborhood.doAllMovesAndRestoreBest(_ >= W+D)
 
   println(openWarehouses)
 }
