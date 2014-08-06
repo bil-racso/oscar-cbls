@@ -45,19 +45,19 @@ class NewSearch(node: SearchNode) {
   private var failureActions = List.empty[() => Unit]
 
   /** Returns the number of backtracks in the previous search */
-  def nBacktracks: Int = nbBkts
+  final def nBacktracks: Int = nbBkts
 
   /** Returns the number of backtracks in the previous search */
-  def nSolutions: Int = nbSols
+  final def nSolutions: Int = nbSols
 
   /** Returns the number nodes explored in the previous search */
-  def nNodes: Int = nbNodes
+  final def nNodes: Int = nbNodes
 
   /** Adds an action to execute when a failed node is found */
-  def onFailure(action: => Unit): Unit = failureActions = (() => action) :: failureActions
+  final def onFailure(action: => Unit): Unit = failureActions = (() => action) :: failureActions
 
   /** Adds an action to execute when a solution node is found */
-  def onSolution(action: => Unit): Unit = solutionActions = (() => action) :: solutionActions
+  final def onSolution(action: => Unit): Unit = solutionActions = (() => action) :: solutionActions
 
   @inline private def expand(branching: Branching): Boolean = {
     val alternatives = branching.alternatives
@@ -68,7 +68,7 @@ class NewSearch(node: SearchNode) {
     }
   }
 
-  def start(branching: Branching, stopCondition: NewSearch => Boolean): Unit = {
+  final def start(branching: Branching, stopCondition: NewSearch => Boolean): Unit = {
 
     // Initializes the search
     node.resetStats() // resets trailing time too
@@ -97,9 +97,9 @@ class NewSearch(node: SearchNode) {
 
       val alternatives = alternativesStack.top
       val alternative = alternatives.next()
-      // Last if no more alternative or if the maximal discrepancy is reached
+      
       val isLast = !alternatives.hasNext
-
+      
       if (!isLast) node.pushState()
       else alternativesStack.pop() // no more alternative in the sequence
 
