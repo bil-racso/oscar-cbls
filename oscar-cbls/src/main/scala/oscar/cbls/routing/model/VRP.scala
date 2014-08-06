@@ -26,7 +26,7 @@ package oscar.cbls.routing.model
 import collection.immutable.SortedMap
 import math._
 import oscar.cbls.constraints.core.ConstraintSystem
-import oscar.cbls.invariants.core.computation.{ CBLSSetVar, Store, CBLSIntVar }
+import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.lib.logic._
 import oscar.cbls.invariants.core.algo.heap.BinomialHeap
 import oscar.cbls.invariants.lib.numeric.SumElements
@@ -34,8 +34,6 @@ import oscar.cbls.invariants.lib.numeric.Sum
 import oscar.cbls.invariants.lib.logic.Filter
 import oscar.cbls.invariants.lib.logic.Predecessor
 import oscar.cbls.invariants.lib.set.Diff
-import oscar.cbls.invariants.core.computation.StorageUtilityManager
-import oscar.cbls.invariants.core.computation.StorageUtilityManager
 
 /**
  * The class constructor models a VRP problem with N points (deposits and customers)
@@ -198,12 +196,13 @@ trait MoveDescription extends VRP {
     affects = affect :: affects
   }
 
-  protected abstract class Affect {
+  protected abstract class Affect(variableNode:Int) {
     def comit(): Affect
-    def node: Int
+    def node: Int = variableNode
+    def variable =  next(variableNode)
   }
 
-  case class affectFromVariable(variableNode: Int, takeValueFromNode: Int) extends Affect {
+  case class affectFromVariable(variableNode: Int, takeValueFromNode: Int) extends Affect(variableNode) {
     def comit(): Affect = {
       val variable = next(variableNode)
       val takeValueFrom = next(takeValueFromNode)
@@ -213,10 +212,9 @@ trait MoveDescription extends VRP {
       affectFromConst(variableNode, oldValue)
     }
 
-    def node: Int = variableNode
   }
 
-  case class affectFromConst(variableNode: Int, takeValue: Int) extends Affect {
+  case class affectFromConst(variableNode: Int, takeValue: Int) extends Affect(variableNode) {
     def comit(): Affect = {
       val variable = next(variableNode)
       assert(variable.value != N || takeValue != N, "you cannot unroute a node that is already unrouted " + variable)
@@ -224,8 +222,6 @@ trait MoveDescription extends VRP {
       variable := takeValue
       affectFromConst(variableNode, oldValue)
     }
-
-    def node: Int = variableNode
   }
 
   protected case class Segment(start: Int, end: Int)
@@ -335,6 +331,8 @@ trait MoveDescription extends VRP {
     affects = List.empty
     Recording = true
   }
+
+  def touchedVariablesByEncodedMove:List[CBLSIntVar] = affects.map(_.variable)
 }
 
 /**

@@ -42,10 +42,11 @@ abstract class Move(val objAfter:Int = Int.MaxValue, val neighborhoodName:String
   def touchedVariables:List[Variable]
 
   /**
-   *
    * @return a readable string of the objective after wit ha space before, or an empty string
    */
   def objToString:String = if(objAfter == Int.MaxValue) "" else " objAfter:" +objAfter
+
+  def neighborhoodNameToString:String = if (neighborhoodName != null) neighborhoodName + ": " else ""
 
   /** this performs the move, evaluates he objective function, and backtracks the move
     *notice that the objAfter is supposed to carry the proper value, so you generally do not need to call this
@@ -72,7 +73,7 @@ class EasyMove(override val objAfter:Int, override val neighborhoodName:String =
 
   override def commit() {code}
 
-  override def toString: String = if (neighborhoodName != null) neighborhoodName else "EasyMove"
+  override def toString: String = neighborhoodNameToString + "EasyMove"
 
   /**
    * this class does not provide an implementation for touchedVariables,
@@ -96,8 +97,7 @@ case class AssignMove(i:CBLSIntVar,v:Int, override val objAfter:Int, override va
   override def commit() {i := v}
 
   override def toString: String = {
-    (if (neighborhoodName != null) neighborhoodName + ": " else "") +
-      "AssignMove(" + i + " set to " + v + objToString + ")"
+    neighborhoodNameToString + "AssignMove(" + i + " set to " + v + objToString + ")"
   }
 
   override def touchedVariables: List[Variable] = List(i)
@@ -117,8 +117,7 @@ case class SwapMove(i:CBLSIntVar,j:CBLSIntVar, override val objAfter:Int, overri
   override def commit() {i :=: j}
 
   override def toString: String  = {
-    (if (neighborhoodName != null) neighborhoodName + ": " else "") +
-      "SwapMove(" + i + " swapped with " + j + objToString + ")"
+    neighborhoodNameToString + "SwapMove(" + i + " swapped with " + j + objToString + ")"
   }
 
   override def touchedVariables: List[Variable] = List(i,j)
@@ -138,8 +137,7 @@ case class AddToSetMove(s:CBLSSetVar,v:Int, override val objAfter:Int, override 
   override def commit() {s :+= v}
 
   override def toString: String = {
-    (if (neighborhoodName != null) neighborhoodName + ": " else "") +
-      "AddToSetMove(" + s + " :+= " + v + objToString + ")"
+    neighborhoodNameToString + "AddToSetMove(" + s + " :+= " + v + objToString + ")"
   }
 
   override def touchedVariables: List[Variable] = List(s)
@@ -159,8 +157,7 @@ case class RemoveFromSetMove(s:CBLSSetVar,v:Int, override val objAfter:Int, over
   override def commit() {s :-= v}
 
   override def toString: String = {
-    (if (neighborhoodName != null) neighborhoodName + ": " else "") +
-      "RemoveFromSetMove(" + s + " :-= " + v + objToString + ")"
+    neighborhoodNameToString + "RemoveFromSetMove(" + s + " :-= " + v + objToString + ")"
   }
 
   override def touchedVariables: List[Variable] = List(s)
@@ -185,8 +182,7 @@ case class CompositeMove(ml:List[Move], override val objAfter:Int, override val 
   }
 
   override def toString: String  = {
-    (if (neighborhoodName != null) neighborhoodName + ": " else "") +
-    "CompositeMove(" + ml.mkString(" and ") + objToString + ")"
+    neighborhoodNameToString + "CompositeMove(" + ml.mkString(" and ") + objToString + ")"
   }
 
   override def touchedVariables: List[Variable] = ml.flatMap(_.touchedVariables)
