@@ -32,8 +32,7 @@ class SearchStatistics(
 
 /**
  * DFS and Bounded Dicrepancy DFS
- * 
- * @author Pierre Schaus pschaus@gmail.com
+ * @author Pierre Schaus  pschaus@gmail.com
  * @author Renaud Hartert ren.hartert@gmail.com
  */
 class Search(node: SearchNode, branching: Branching) {
@@ -43,21 +42,12 @@ class Search(node: SearchNode, branching: Branching) {
 
   // Used to count the number of discrepancy
   private val discrepancy = new ReversibleInt(node, 0)
-  
+
   // Actions to execute in case of solution node
   private var solutionActionsStat = List[(SearchStatistics) => Unit]()
-  
+
   // Actions to execute in case of failed node
   private var failureActions = List[() => Unit]()
-
-  private def expand(): Boolean = {
-    val alternatives = branching.alternatives
-    if (alternatives.isEmpty) false
-    else {
-      alternativesStack.push(Alternatives(alternatives))
-      true
-    }
-  }
 
   /** Adds an action to execute when a failed node is found */
   def onFailure(action: => Unit) {
@@ -78,14 +68,25 @@ class Search(node: SearchNode, branching: Branching) {
     solutionActionsStat.foreach(_(stat))
   }
 
+  private def expand(): Boolean = {
+    val alternatives = branching.alternatives
+    if (alternatives.isEmpty) false
+    else {
+      alternativesStack.push(Alternatives(alternatives))
+      true
+    }
+  }
+
   def solveAll(nSols: Int = Int.MaxValue, failureLimit: Int = Int.MaxValue, timeLimit: Int = Int.MaxValue, maxDiscrepancy: Int = Int.MaxValue): SearchStatistics = {
-    
+
     // Initializes the search
     node.resetStats() // resets trailing time too
+    alternativesStack.clear()
     discrepancy.value = 0
-    
-    val t0 = System.currentTimeMillis()    
-    
+
+    val t0 = System.currentTimeMillis()
+    val maxTime = timeLimit.toLong * 1000 + t0
+
     var solCounter = 0
     var nbNodes = 0
     var nBkts = 0
@@ -93,8 +94,7 @@ class Search(node: SearchNode, branching: Branching) {
     def stat() = new SearchStatistics(nbNodes, nFails = nBkts, time = System.currentTimeMillis() - t0, completed = alternativesStack.isEmpty, timeInTrail = node.time, maxTrailSize = node.maxSize, nSols = solCounter)
 
     node.pushState()
-
-    def searchLimitReached = (System.currentTimeMillis() - t0 / 1000 >= timeLimit) || (nBkts >= failureLimit)
+    val rootMagic = node.magic
 
     // add initial alternatives of the root node
     if (!node.isFailed) {
@@ -106,42 +106,41 @@ class Search(node: SearchNode, branching: Branching) {
       }
     }
 
-    var done = false
-    while (!alternativesStack.isEmpty && !done && !searchLimitReached) {
-      
-      nbNodes += 1
-      
-      // Next alternative
-      val alternatives = alternativesStack.top
-      val alternative = alternatives.next() 
-      
-      discrepancy += alternatives.discrepancy
-      
-      // Last if no remaining node in the sequence or if the maximal discrepancy is reached
-      val isLast = !alternatives.hasNext || discrepancy.value == maxDiscrepancy
+    while (!alternativesStack.isEmpty && solCounter < nSols && nBkts < failureLimit && System.currentTimeMillis() < maxTime) {
 
-      if (isLast) alternativesStack.pop()
-      else node.pushState()
+      nbNodes += 1
+
+      // Expandable version
+      val alternatives = alternativesStack.top
       
+      // Discrepancy of the current node
+      val d = discrepancy.value + alternatives.discrepancy
+      
+      // Last if no more alternative or if the maximal discrepancy is reached
+      val alternative = alternatives.next()
+      val isLast = !alternatives.hasNext || d == maxDiscrepancy
+
+      if (!isLast) node.pushState()
+      else alternativesStack.pop() // no more alternative in the sequence
+
+      discrepancy.value = d // update the discrepancy
       alternative() // apply the alternative
-      
-      if (!node.isFailed) {
-        val expandable = expand()
-        if (!expandable) {
+
+      if (!node.isFailed()) {
+        val isExpandable = expand()
+        if (!isExpandable) {
           solFound(stat())
           solCounter += 1
           nBkts += 1
-          if (nSols == solCounter) done = true
-          else node.pop()
-        }  
-      }
-      else {
+          node.pop()
+        }
+      } else {
         nBkts += 1
         node.pop
       }
     }
-    
-    node.popAll()
+
+    node.popUntil(rootMagic)
     stat()
   }
 }

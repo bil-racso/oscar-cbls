@@ -68,6 +68,8 @@ class ArrayStack[T](initialSize: Int = 100) {
     stack(index).asInstanceOf[T]
   }
   
+  @inline final def clear(): Unit = index = 0
+  
   // Double the size of the stack
   @inline private def growStack(): Unit = {
     val newStack = Array.ofDim[AnyRef](stack.length * 2)
