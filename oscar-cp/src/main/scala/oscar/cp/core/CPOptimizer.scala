@@ -86,7 +86,5 @@ class CPOptimizer(propagStrength: CPPropagStrength) extends CPStore(propagStreng
     this
   }
   
-  override def beforeStartAction(): Unit = { deactivateNoSolExceptions() }
-  
   override def update(): Unit = propagate()
 }

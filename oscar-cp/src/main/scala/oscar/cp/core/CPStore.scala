@@ -36,9 +36,18 @@ import oscar.cp.core.CPOutcome._
 class CPStore(val propagStrength: CPPropagStrength) extends SearchNode {
 
   def this() = this(CPPropagStrength.Weak)
+  
+  import oscar.algo.ArrayQueue // custom array-based double ended queue
+  private val propagQueueL1 = Array.fill(CPStore.MaxPriorityL1 + 1)(new ArrayQueue[() => CPOutcome](1000))
+  private val propagQueueL2 = Array.fill(CPStore.MaxPriorityL2 + 1)(new ArrayQueue[Constraint](100))
+  private val cutConstraints = new ArrayQueue[Constraint](1) // usually empty
+
+  // Status of the store
+  private val status: ReversiblePointer[CPOutcome] = new ReversiblePointer[CPOutcome](this, Suspend)
 
   // Number of calls to propagate method in any constraints
   private var nbPropag = 0
+  
   // Total time spent in the fix point algorithm
   private var timeInFixPoint: Long = 0
 
@@ -49,18 +58,8 @@ class CPStore(val propagStrength: CPPropagStrength) extends SearchNode {
   private var highestPriorL1 = 0
   private var highestPriorL2 = 0;
 
-  // True if the L1 queue is not empty
+  // True if the L1 queue is empty
   private var isL1QueueEmpty = true
-
-  // Not yet available 
-  import oscar.algo.ArrayQueue // custom array double ended queue
-  private val propagQueueL1 = Array.fill(CPStore.MaxPriorityL1 + 1)(new ArrayQueue[() => CPOutcome](1000))
-  private val propagQueueL2 = Array.fill(CPStore.MaxPriorityL2 + 1)(new ArrayQueue[Constraint](100))
-  //private val cutConstraintsBis = new ArrayQueue[Constraint](1) // usually empty
-
-  private val status: ReversiblePointer[CPOutcome] = new ReversiblePointer[CPOutcome](this, Suspend)
-
-  private val cutConstraints = new LinkedList[Constraint]()
 
   // Reference the last constraint called
   private var lastConstraint: Constraint = null
@@ -74,21 +73,14 @@ class CPStore(val propagStrength: CPPropagStrength) extends SearchNode {
    */
   def lastConstraintCalled: Constraint = lastConstraint
 
-  // TODO: Used for model debugging, should be moved in CPSolver
-  private var throwNoSolExceptions = true
-
   /** Changes the status of the store to Failure */
   override def fail(): Unit = status.setValue(Failure)
-
-  /** Deactivate the no solution exception when an add is used and an inconsistent model is detected */
-  def deactivateNoSolExceptions(): Unit = throwNoSolExceptions = false
 
   /** Returns true if the store is failed */
   override def isFailed: Boolean = status.value == CPOutcome.Failure;
 
   // Cleans the propagation queues
-  @inline
-  private def cleanQueues(): Unit = {
+  @inline private def cleanQueues(): Unit = {
     var i = 0
     // Clean queue L1
     while (i < propagQueueL1.length) {
@@ -104,8 +96,7 @@ class CPStore(val propagStrength: CPPropagStrength) extends SearchNode {
   }
 
   // Adds the constraint in the L2 queue
-  @inline
-  private def addQueueL2(c: Constraint): Unit = {
+  @inline private def addQueueL2(c: Constraint): Unit = {
     if (c.isActive && !c.isInQueue && (!c.inPropagate || !c.idempotent)) {
       c.setInQueue()
       val priority = c.priorityL2
@@ -130,8 +121,7 @@ class CPStore(val propagStrength: CPPropagStrength) extends SearchNode {
     }
   }
 
-  @inline
-  private def addQueueL1(c: Constraint, prior: Int, evt: => CPOutcome): Unit = {
+  @inline private def addQueueL1(c: Constraint, prior: Int, evt: => CPOutcome): Unit = {
     propagQueueL1(prior).addLast(() =>
       if (c.isActive) {
         lastConstraint = c // last constraint called
@@ -276,20 +266,17 @@ class CPStore(val propagStrength: CPPropagStrength) extends SearchNode {
    * call only the propagate method of the constraints and trigger the fix point does not post it
    * @param c
    */
-  def propagate(c: Constraint*): CPOutcome = {
-    if (status.getValue() == CPOutcome.Failure) return status.getValue();
-    for (cons <- c) {
-      if (cons.propagate() == CPOutcome.Failure) {
-        return CPOutcome.Failure;
-      }
+  def propagate(constraints: Constraint*): CPOutcome = {
+    if (status.value == Failure) Failure
+    else {
+      val failed = constraints.exists(_.propagate() == Failure)
+      if (failed) status.value = Failure
+      else if (propagate() == Failure) status.value = Failure
+      status.value
     }
-    if (propagate() == CPOutcome.Failure) {
-      status.setValue(CPOutcome.Failure);
-    }
-    return status.getValue();
   }
 
-  private def printQueue() {
+  private def printQueue(): Unit = {
     val q1 = propagQueueL1.reverse
     val q2 = propagQueueL2.reverse
     println("--- L1 queue ---")
@@ -410,7 +397,7 @@ class CPStore(val propagStrength: CPPropagStrength) extends SearchNode {
 
   def postCut(c: Constraint, st: CPPropagStrength): CPOutcome = {
     val ok = post(c, st);
-    cutConstraints.add(c);
+    cutConstraints.addLast(c);
     return ok;
   }
 
@@ -466,72 +453,6 @@ class CPStore(val propagStrength: CPPropagStrength) extends SearchNode {
 
   def post(constraints: Collection[Constraint]): CPOutcome = post(constraints.map(x => x.asInstanceOf[Constraint]), propagStrength)
 
-  /**
-   * Add a constraint to the store in a reversible way and trigger the fix-point algorithm. <br>
-   * In a reversible way means that the constraint is present in the store only for descendant nodes.
-   * @param c
-   * @param st the propagation strength asked for the constraint. Will be used only if available for the constraint (see specs of the constraint).
-   * @throws NoSolutionException if the fix point detects a failure that is one of the domain became empty
-   */
-  def add(c: Constraint, st: CPPropagStrength): CPOutcome = {
-    val res = post(c, st);
-    if ((res == Failure || status.value == Failure) && throwNoSolExceptions) {
-      throw new NoSolutionException("the store failed when adding constraint :" + c);
-    }
-    return res;
-  }
-
-  def add(c: Constraint): CPOutcome = add(c, propagStrength)
-  /**
-   * Add a constraint to the store (b == true) in a reversible way and trigger the fix-point algorithm. <br>
-   * In a reversible way means that the constraint is present in the store only for descendant nodes.
-   * @param c
-   * @throws NoSolutionException if the fix point detects a failure that is one of the domain became empty
-   */
-  def add(b: CPBoolVar): CPOutcome = {
-    val res = post(new Eq(b, 1));
-    if ((res == Failure || status.value == Failure) && throwNoSolExceptions) {
-      throw new NoSolutionException("the store failed when setting boolvar to true");
-    }
-    return res;
-  }
-
-  /**
-   * Add a set of constraints to the store in a reversible way and trigger the fix-point algorithm afterwards.
-   * In a reversible way means that the posted constraints are present in the store only for descendant nodes.
-   * @param constraints
-   * @param st the propagation strength asked for the constraint. Will be used only if available for the constraint (see specs of the constraint)
-   * @throws NoSolutionException if the fix point detects a failure that is one of the domain became empty, Suspend otherwise.
-   */
-  def add(constraints: Collection[Constraint], st: CPPropagStrength): CPOutcome = {
-    val res = post(constraints, st);
-    if ((res == Failure || status.value == Failure) && throwNoSolExceptions) {
-      throw new NoSolutionException("the store failed when adding constraints :" + constraints);
-    }
-    return res;
-  }
-
-  def add(constraints: Collection[Constraint]): CPOutcome = add(constraints, propagStrength)
-
-  def add(constraints: Iterable[Constraint], st: CPPropagStrength): CPOutcome = {
-    val cs = new LinkedList[Constraint]()
-    constraints.foreach(cs.add(_))
-    add(cs, st)
-  }
-
-  def add(constraints: Iterable[Constraint]): CPOutcome = add(constraints, propagStrength)
-
-  def +=(c: Constraint, st: CPPropagStrength): CPOutcome = add(c, st)
-  def +=(c: Constraint): CPOutcome = add(c, propagStrength)
-
-  def addCut(c: Constraint): CPOutcome = {
-    val res = postCut(c);
-    if ((res == Failure || status.value == Failure) && throwNoSolExceptions) {
-      throw new NoSolutionException("the store failed when adding constraint :" + c);
-    }
-    res;
-  }
-
   def assign(x: CPIntVar, v: Int): CPOutcome = {
     if (status.getValue() == Failure) return Failure
     var oc = x.assign(v)
@@ -551,7 +472,37 @@ class CPStore(val propagStrength: CPPropagStrength) extends SearchNode {
     status.value = oc
     return status.value
   }
+  
+  def add(c: Constraint, st: CPPropagStrength): CPOutcome = post(c, st)
 
+  def add(c: Constraint): CPOutcome = add(c, propagStrength)
+
+  def add(b: CPBoolVar): CPOutcome = post(new Eq(b, 1))
+
+
+  /**
+   * Add a set of constraints to the store in a reversible way and trigger the fix-point algorithm afterwards.
+   * In a reversible way means that the posted constraints are present in the store only for descendant nodes.
+   * @param constraints
+   * @param st the propagation strength asked for the constraint. Will be used only if available for the constraint (see specs of the constraint)
+   * @throws NoSolutionException if the fix point detects a failure that is one of the domain became empty, Suspend otherwise.
+   */
+  def add(constraints: Collection[Constraint], st: CPPropagStrength): CPOutcome = post(constraints, st);
+
+  def addCut(c: Constraint): CPOutcome = postCut(c)
+
+  def add(constraints: Collection[Constraint]): CPOutcome = add(constraints, propagStrength)
+
+  def add(constraints: Iterable[Constraint], st: CPPropagStrength): CPOutcome = {
+    val cs = new LinkedList[Constraint]()
+    constraints.foreach(cs.add(_))
+    add(cs, st)
+  }
+
+  def add(constraints: Iterable[Constraint]): CPOutcome = add(constraints, propagStrength)
+
+  def +=(c: Constraint, st: CPPropagStrength): CPOutcome = add(c, st)
+  def +=(c: Constraint): CPOutcome = add(c, propagStrength)
 }
 
 object CPStore {
