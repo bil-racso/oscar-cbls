@@ -25,10 +25,11 @@
 
 package oscar.cbls.routing.neighborhood2
 
-import oscar.cbls.invariants.core.computation.{Variable, CBLSSetVar}
-import oscar.cbls.routing.model.{PositionInRouteAndRouteNr, VRPObjective, MoveDescription, VRP}
+import oscar.cbls.invariants.core.computation.Variable
+import oscar.cbls.routing.model.{MoveDescription, PositionInRouteAndRouteNr, VRP, VRPObjective}
+import oscar.cbls.search.EasyNeighborhood
 import oscar.cbls.search.algo.HotRestart
-import oscar.cbls.search.core.{SearchResult, Neighborhood, MoveFound, NoMoveFound}
+import oscar.cbls.search.move.Move
 
 /**
  * Moves a point of a route to another place in the same or in an other route.
@@ -37,35 +38,33 @@ import oscar.cbls.search.core.{SearchResult, Neighborhood, MoveFound, NoMoveFoun
  * @author yoann.guyot@cetic.be
  * @author Florent Ghilain (UMONS)
  * */
-class OnePointMoveNeighborhood(NodesPrecedingNodesToMove:CBLSSetVar,
-                               relevantNeighbors:Int=>Iterable[Int],
+class OnePointMoveNeighborhood(NodesPrecedingNodesToMove:()=>Iterable[Int],
+                               relevantNeighbors:()=>Int=>Iterable[Int],
                                val vrp: VRP with MoveDescription with VRPObjective with PositionInRouteAndRouteNr,
                                val neighborhoodName:String = "OnePointMove",
                                val best:Boolean = false,
-                               val hotRestart:Boolean = true) extends Neighborhood {
+                               val hotRestart:Boolean = true) extends EasyNeighborhood(best,vrp.getObjective) {
 
   //the indice to start with for the exploration
   var startIndice:Int = 0
 
-  override def getImprovingMove(acceptanceCriterion: (Int, Int) => Boolean): SearchResult = {
-    val startObj: Int = vrp.getObjective()
-    var oldObj = if(best) Int.MaxValue else startObj
-    var toReturn: SearchResult = NoMoveFound
+  override def searchImprovingMoveEasy(){
 
     val iterationSchemeOnZone =
-      if (hotRestart && !best) HotRestart(NodesPrecedingNodesToMove.value, startIndice)
-      else NodesPrecedingNodesToMove.value
+      if (hotRestart && !best) HotRestart(NodesPrecedingNodesToMove(), startIndice)
+      else NodesPrecedingNodesToMove()
 
     vrp.cleanRecordedMoves()
 
+    val relevantNeighborsNow = relevantNeighbors()
+
     for (beforeMovedPoint <- iterationSchemeOnZone
          if vrp.isRouted(beforeMovedPoint)) {
-
+      startIndice = beforeMovedPoint + 1
       val movedPoint = vrp.next(beforeMovedPoint).value
 
       for (
-        insertionPoint <- relevantNeighbors(movedPoint)
-        //format: OFF (to prevent eclipse from formatting the following lines)
+        insertionPoint <- relevantNeighborsNow(movedPoint)
         if (vrp.isRouted(insertionPoint)
           && beforeMovedPoint != insertionPoint
           && movedPoint != insertionPoint
@@ -73,31 +72,13 @@ class OnePointMoveNeighborhood(NodesPrecedingNodesToMove:CBLSSetVar,
           && (!vrp.isADepot(movedPoint) || (vrp.onTheSameRoute(movedPoint, insertionPoint)))) {
 
         OnePointMove.encode(beforeMovedPoint, insertionPoint, vrp)
-
         vrp.commit(true)
         val newObj = vrp.getObjective
         vrp.undo()
 
-        if (best) {
-          if (newObj < oldObj) {
-            oldObj = newObj
-            toReturn = new OnePointMove(beforeMovedPoint, movedPoint, insertionPoint, newObj, vrp, neighborhoodName)
-          }
-        } else if (acceptanceCriterion(oldObj, newObj)) {
-          startIndice = beforeMovedPoint + 1
-          if (amIVerbose) println(neighborhoodName + ": move found")
-          return new OnePointMove(beforeMovedPoint, movedPoint, insertionPoint, newObj, vrp, neighborhoodName)
-        }
+        if (moveRequested(newObj))
+          if (submitFoundMove(OnePointMove(beforeMovedPoint, movedPoint, insertionPoint, newObj, vrp, neighborhoodName))) return
       }
-    }
-    toReturn match {
-      case MoveFound(m)
-        if acceptanceCriterion(startObj, m.objAfter) =>
-        if(amIVerbose) println(neighborhoodName + ": move found")
-        toReturn
-      case _ =>
-        if(amIVerbose) println(neighborhoodName + ": no move found")
-        toReturn
     }
   }
   //this resets the internal state of the Neighborhood
@@ -125,7 +106,7 @@ object OnePointMove{
  * @author yoann.guyot@cetic.be
  * @author Florent Ghilain (UMONS)
  */
-class OnePointMove( predOfMovedPoint: Int,
+case class OnePointMove( predOfMovedPoint: Int,
                     movedPoint:Int,
                     insertionPoint: Int,
                     override val objAfter: Int,
@@ -144,7 +125,7 @@ class OnePointMove( predOfMovedPoint: Int,
 abstract class VRPMove(override val objAfter: Int,
                        val vrp: VRP with MoveDescription,
                        override val neighborhoodName:String = null)
-  extends oscar.cbls.search.move.Move(objAfter, neighborhoodName) {
+  extends Move(objAfter, neighborhoodName) {
 
   /** to actually take the move */
   override def commit(){

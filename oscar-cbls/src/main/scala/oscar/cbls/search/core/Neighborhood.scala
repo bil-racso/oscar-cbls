@@ -35,6 +35,8 @@ object SearchResult {
   implicit def moveToSearchResult(m: Move): MoveFound = MoveFound(m)
 }
 
+
+
 /**
  * @author renaud.delandtsheer@cetic.be
  */
@@ -291,7 +293,7 @@ abstract class Neighborhood{
    * this combinator overrides accepts all moves (this is the withAcceptanceCriteria, given the fully acceptant criterion
    */
   def acceptAll:WithAcceptanceCriterion = new WithAcceptanceCriterion(this,(_:Int,_:Int) => true)
-  }
+}
 
 abstract class StatelessNeighborhood extends Neighborhood{
   //this resets the internal state of the move combinators

@@ -26,6 +26,7 @@ import scala.language.implicitConversions
 object Objective{
   implicit def objToCBLSIntVar(o:Objective):CBLSIntVar = o.objective
   def apply(objective:CBLSIntVar) = new Objective(objective)
+  implicit def objToFun(o:Objective):()=>Int = ()=>o.value
 }
 
 /**

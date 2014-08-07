@@ -883,6 +883,8 @@ object CBLSIntVar{
   }
 
   implicit def int2IntVar(a:Int):CBLSIntVar = CBLSIntConst(a)
+
+  implicit def toFunction(i:CBLSIntVar):()=>Int = () => i.value
 }
 
 /**
@@ -1094,6 +1096,8 @@ object CBLSSetVar{
   }
 
   implicit def intSet2IntSetVar(a:SortedSet[Int]):CBLSSetVar = CBLSSetConst(a)
+
+  implicit def toFunction(s:CBLSSetVar):()=>SortedSet[Int] = () => s.value
 }
 
 /**
