@@ -98,7 +98,6 @@ class SearchNode extends ReversibleContext {
     reversibleBlock
     val s = new Search(this, branchings)
     solCallBacks.foreach(b => s.onSolutionWithStats(b))
-    s.onSolution(solFound())
     val stats = s.solveAll(nSols = nSols, failureLimit = failureLimit, timeLimit = timeLimit, maxDiscrepancy = maxDiscrepancy)
     stats
   }

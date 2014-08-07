@@ -68,7 +68,9 @@ class NewSearch(node: SearchNode) {
     }
   }
 
-  final def start(branching: Branching, stopCondition: NewSearch => Boolean): Unit = {
+  final def start(branching: Branching, stopCondition: => Boolean): Unit = start(branching, (s:NewSearch) => stopCondition)
+  
+  final def start(branching: Branching, stopCondition: NewSearch => Boolean = _ => false): Unit = {
 
     // Initializes the search
     node.resetStats() // resets trailing time too
@@ -86,6 +88,7 @@ class NewSearch(node: SearchNode) {
       node.pushState()
       val isExpandable = expand(branching)
       if (!isExpandable) {
+        node.solFound()
         solutionActions.foreach(_())
         nbSols += 1
       }
@@ -108,6 +111,7 @@ class NewSearch(node: SearchNode) {
       if (!node.isFailed()) {
         val isExpandable = expand(branching)
         if (!isExpandable) {
+          node.solFound()
           solutionActions.foreach(_())
           nbSols += 1
           nbBkts += 1

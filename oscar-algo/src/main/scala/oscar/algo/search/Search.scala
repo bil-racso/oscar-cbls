@@ -64,11 +64,12 @@ class Search(node: SearchNode, branching: Branching) {
     solutionActionsStat = (action) :: solutionActionsStat
   }
 
-  def solFound(stat: SearchStatistics) {
+  @inline private def solFound(stat: SearchStatistics) {
+    node.solFound()
     solutionActionsStat.foreach(_(stat))
   }
 
-  private def expand(): Boolean = {
+  @inline private def expand(): Boolean = {
     val alternatives = branching.alternatives
     if (alternatives.isEmpty) false
     else {
