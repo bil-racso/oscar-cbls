@@ -110,19 +110,34 @@ class VRP(val N: Int, val V: Int, val m: Store) {
   }
 
   /**
+   * @return the list of unrouted nodes as a String.
+   */
+  def unroutedToString: String = {
+    "unrouted: " + nodes.filterNot(isRouted(_)).toList + "\n"
+  }
+
+  /**
+   * @return the route of a vehicle as a String.
+   */
+  def routeToString(vehicle: Int): String = {
+    var toReturn = "Vehicle " + vehicle + ": " + vehicle
+    var current = next(vehicle).value
+    while (current != vehicle) {
+      toReturn += " -> " + current
+      current = next(current).getValue(true)
+    }
+    toReturn
+  }
+
+  /**
    * Redefine the toString method.
    * @return the VRP problem as a String.
    */
   override def toString: String = {
-    var toReturn = "unrouted: " + nodes.filterNot(isRouted(_)).toList + "\n"
+    var toReturn = unroutedToString
 
     for (v <- 0 to V - 1) {
-      toReturn += "Vehicle " + v + ": " + v
-      var current = next(v).value
-      while (current != v) {
-        toReturn += " -> " + current
-        current = next(current).getValue(true)
-      }
+      toReturn += routeToString(v)
       toReturn += "\n"
     }
     toReturn
@@ -444,7 +459,7 @@ abstract trait PenaltyForUnrouted extends VRP with RoutedAndUnrouted {
 
   /**
    * It allows you to set a specific penalty for all points of the VRP.
-   * @param p the penlaty.
+   * @param p the penalty.
    */
   def setUnroutedPenaltyWeight(p: Int) { weightUnroutedPenalty.foreach(penalty => penalty := p) }
 }
@@ -777,7 +792,6 @@ trait StrongConstraintsFast extends StrongConstraints {
   override def getObjective(): Int =
     (if (!strongConstraintsFast.isTrue) Int.MaxValue else super.getObjective())
 }
-
 
 /**
  * This trait maintains weak constraints system.

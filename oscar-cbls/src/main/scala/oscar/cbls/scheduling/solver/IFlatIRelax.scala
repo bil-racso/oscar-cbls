@@ -76,7 +76,7 @@ class IFlatIRelax(p: Planning,
                   pkillPerRelax: Int = 50) extends SearchEngine {
   val model: Store = p.model
 
-  require(model.isClosed, "model should be closed before iFlatRelax algo can be isntantiated")
+  require(model.isClosed, "model should be closed before iFlatRelax algo can be instantiated")
   val maxIterations = (p.activityCount * (p.activityCount - 1)) / 2
   var it: Int = 0
 

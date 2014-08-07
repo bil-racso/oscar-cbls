@@ -27,9 +27,9 @@ import oscar.cbls.invariants.lib.logic.{Elements, IntElement, SetElement}
 import oscar.cbls.invariants.lib.numeric.{Div, Minus, Mod, Prod, Sum2}
 import oscar.cbls.invariants.lib.set._
 import oscar.cbls.search.algo.InstrumentedRange
-
 import scala.collection.immutable.SortedSet
 import scala.language.implicitConversions
+import oscar.cbls.constraints.lib.basic.BelongsTo
 
 /**Include this object whenever you want to use concise notation
  * It provides the following infix operators for IntVars: plus minus times, div, ==: !=: <<: >>: >=: <=:
@@ -71,6 +71,8 @@ trait AlgebraTrait{
     def >==(v: CBLSIntVar) = new GE(x, v)
 
     def le(v: CBLSIntVar) = new LE(x, v)
+    
+    def belongsTo(v: CBLSSetVar) = new BelongsTo(x, v)
 
     /** creates a IntSEt maintained as the inclusive interval between te two variable
       * see [[oscar.cbls.invariants.lib.set.Interval]]
@@ -101,9 +103,9 @@ trait AlgebraTrait{
   = new InstrumentedArrayOfIntVar(inputarray)
 
   class InstrumentedArrayOfIntVar(inputarray: Array[CBLSIntVar]) {
-    def element(index: CBLSIntVar): CBLSIntVar = IntElement(index, inputarray)
+    def element(index: CBLSIntVar) = IntElement(index, inputarray)
 
-    def elements(index: CBLSSetVar): CBLSSetVar = Elements(index, inputarray)
+    def elements(index: CBLSSetVar) = Elements(index, inputarray)
   }
 
   implicit def InstrumentArrayOfIntSetVar(inputarray: Array[CBLSSetVar]): InstrumentedArrayOfIntSetVar
