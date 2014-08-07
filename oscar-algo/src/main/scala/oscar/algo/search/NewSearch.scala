@@ -47,7 +47,7 @@ class NewSearch(node: SearchNode) {
   /** Returns the number of backtracks in the previous search */
   final def nBacktracks: Int = nbBkts
 
-  /** Returns the number of backtracks in the previous search */
+  /** Returns the number of solutions found in the previous search */
   final def nSolutions: Int = nbSols
 
   /** Returns the number nodes explored in the previous search */
@@ -79,7 +79,7 @@ class NewSearch(node: SearchNode) {
 
     // Register the root node
     node.pushState()
-    val rootMagic = node.magic
+    val rootMagic = node.magic // node reference
 
     // Expand the root node
     if (!node.isFailed) {
