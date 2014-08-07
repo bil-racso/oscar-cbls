@@ -23,6 +23,7 @@ import scala.collection.immutable.SortedSet
  *                      ony one of the variable in each class will be considered to make search faster
  *                      Int.MinValue is considered different to itself
  *                      if you set to None this will not be used at all
+ *                      variables of the same class with different values will not be considered as symmetrical
  * @param symmetryClassOfValues a function that inputs the ID of a variable and a possible value for this variable,
  *                              and returns a symmetry class for this variable and value
  *                              only values belonging to different symmetry classes will be tested
@@ -41,7 +42,7 @@ case class AssignNeighborhood(vars:Array[CBLSIntVar],
                               name:String = "AssignNeighborhood",
                               best:Boolean = false,
                               searchZone:CBLSSetVar = null,
-                              symmetryClassOfVariables:Option[Int => Int] = None,  //TODO: only if they have the same value!!!
+                              symmetryClassOfVariables:Option[Int => Int] = None,
                               symmetryClassOfValues:Option[Int => Int => Int] = None,
                               domain:(CBLSIntVar,Int) => Iterable[Int] = (v,i) => v.domain,
                               hotRestart:Boolean = true)
@@ -70,7 +71,7 @@ case class AssignNeighborhood(vars:Array[CBLSIntVar],
 
     val iterationScheme = symmetryClassOfVariables match {
       case None => iterationSchemeOnZone
-      case Some(s) => IdenticalAggregator.removeIdenticalClassesLazily(iterationSchemeOnZone, s)
+      case Some(s) => IdenticalAggregator.removeIdenticalClassesLazily(iterationSchemeOnZone, (index:Int) => (s(index),vars(index).value))
     }
 
     for (i <- iterationScheme) {
@@ -126,8 +127,12 @@ case class AssignNeighborhood(vars:Array[CBLSIntVar],
  *                   If none is provided, all the array will be considered each time
  * @param searchZone2 a subset of the indices of vars to consider for the second moved point
  *                   If none is provided, all the array will be considered each time
- * @param symmetryCanBeBroken set to true, and the neighborhood will break symmetries on indices of swapped vars
+ * @param symmetryCanBeBrokenOnIndices if set to true, the neighborhood will break symmetries on indices of swapped vars
+ *                            that is: thee first variable will always have an indice strictly smaller than the second swapped variable
  *                            typically, you always want it except if you have specified the two searchZones, and they are different
+ * @param symmetryCanBeBrokenOnValue if set to true, the neighborhood will break symmetries on values of swapped vars
+ *                            that is: thee first variable will always have a value strictly smaller than the value of second swapped variable
+ *                            you do not want to have both symmetryCanBeBrokenOnIndices and symmetryCanBeBrokenOnValue
  * @param name the name of the neighborhood
  * @param symmetryClassOfVariables a function that input the ID of a variable and returns a symmetry class;
  *                      for each role of the move, ony one of the variable in each class will be considered
@@ -145,7 +150,8 @@ case class SwapsNeighborhood(vars:Array[CBLSIntVar],
                              name:String = "SwapsNeighborhood",
                              searchZone1:CBLSSetVar = null,
                              searchZone2:CBLSSetVar = null,
-                             symmetryCanBeBroken:Boolean = true,
+                             symmetryCanBeBrokenOnIndices:Boolean = true,
+                             symmetryCanBeBrokenOnValue:Boolean = false,
                              best:Boolean = false,
                              symmetryClassOfVariables:Option[Int => Int] = None,
                              hotRestart:Boolean = true)
@@ -192,8 +198,9 @@ case class SwapsNeighborhood(vars:Array[CBLSIntVar],
       for(j:Int <- secondIterationScheme;
           secondVar = vars(j);
           oldValOfSecondVar = secondVar.value
-          if (!symmetryCanBeBroken || i < j)  //we break symmetry here
+          if (!symmetryCanBeBrokenOnIndices || i < j)  //we break symmetry on variables
             && i != j
+            && (!symmetryCanBeBrokenOnValue || oldValOfFirstVar < oldValOfSecondVar) //we break symmetry on values
             && oldValOfFirstVar != oldValOfSecondVar
             && secondVar.domain.contains(oldValOfFirstVar)
             && firstVar.domain.contains(oldValOfSecondVar)) {
@@ -320,7 +327,7 @@ class ConflictAssignNeighborhood(c:ConstraintSystem, variables:List[CBLSIntVar],
   var varArray = variables.toArray
   val violations:Array[CBLSIntVar] = varArray.clone().map(c.violation(_))
   override def getImprovingMove(acceptanceCriteria:(Int,Int) => Boolean = (oldObj,newObj) => oldObj > newObj): SearchResult = {
-    val oldObj = c.ObjectiveVar.value
+    val oldObj = c.violation.value
     val MaxViolVarID = selectMax(varArray.indices,violations(_:Int).value)
 
     val NewVal = if(best) selectMin(varArray(MaxViolVarID).domain)(c.assignVal(varArray(MaxViolVarID),_:Int))

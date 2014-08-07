@@ -882,8 +882,6 @@ object CBLSIntVar{
     def compare(o1: CBLSIntVar, o2: CBLSIntVar) = o1.compare(o2)
   }
 
-  def intVarToIntSetVar(i:CBLSIntVar):Singleton = Singleton(i)
-
   implicit def int2IntVar(a:Int):CBLSIntVar = CBLSIntConst(a)
 }
 
@@ -1245,32 +1243,3 @@ case class IdentitySet(v:CBLSSetVar) extends SetInvariant{
 }
 
 
-/** an invariant that defines a singleton set out of a single int var.
-  * @author renaud.delandtsheer@cetic.be
-  */
-case class Singleton(v: CBLSIntVar) extends SetInvariant  {
-
-  var output:CBLSSetVar = null
-  registerStaticAndDynamicDependency(v)
-  finishInitialization()
-
-  def myMin = v.minVal
-  def myMax = v.maxVal
-
-  override def checkInternals(c:Checker){
-    assert(output.getValue(true).size == 1)
-    assert(output.getValue(true).head == v.value)
-  }
-
-  override def setOutputVar(vv:CBLSSetVar){
-    output = vv
-    output.setValue(SortedSet(v.value))
-  }
-
-  override def notifyIntChanged(v:CBLSIntVar,OldVal:Int,NewVal:Int){
-    assert(v == this.v)
-    //ici, on propage tout de suite, c'est les variables qui font le stop and go.
-    output.deleteValue(OldVal)
-    output.insertValue(NewVal)
-  }
-}

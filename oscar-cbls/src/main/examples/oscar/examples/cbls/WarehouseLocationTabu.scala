@@ -7,7 +7,7 @@ import oscar.cbls.invariants.lib.numeric.Sum
 import oscar.cbls.invariants.lib.set.{Interval, MakeSet}
 import oscar.cbls.modeling.AlgebraTrait
 import oscar.cbls.objective.Objective
-import oscar.cbls.search.move.Move
+import oscar.cbls.search.move.{AssignMove, Move}
 import oscar.cbls.search.{AssignNeighborhood, RandomizeNeighborhood, SwapsNeighborhood}
 
 
@@ -25,10 +25,9 @@ object WarehouseLocationTabu extends App with AlgebraTrait{
   //the number of delivery points
   val D:Int = 150
 
-  val maxStepsWithNoImprovement = W
   val tabuTenure = W/3
 
-  println("WarehouseLocation(W:" + W + ", D:" + D + ")")
+  println("WarehouseLocationTabu(W:" + W + ", D:" + D + ")")
 
   //the cost per delivery point if no location is open
   val defaultCostForNoOpenWarehouse = 10000
@@ -58,9 +57,9 @@ object WarehouseLocationTabu extends App with AlgebraTrait{
 
   val m = Store()
 
-  //We store in each warehouse variable its warehouse ID,
+  //We store in each warehouse variable its warehouse ID, using the [[oscar.cbls.invariants.core.computation.DistributedStorageUtility]] mechanism
   //so we first ask a storageKey to the model
-  val warehouseKey = m.getStorageIndex()
+  val warehouseKey = m.getStorageKey()
 
   val warehouseOpenArray = Array.tabulate(W)(w => {
     val wVar = CBLSIntVar(m, 0 to 1, 0, "warehouse_" + w + "_open")
@@ -68,19 +67,18 @@ object WarehouseLocationTabu extends App with AlgebraTrait{
     wVar
   })
 
+  //by default, Filter selects the indices of each position where the variable is not zero
   val openWarehouses = Filter(warehouseOpenArray).toSetVar("openWarehouses")
 
   val distanceToNearestOpenWarehouse = Array.tabulate(D)(d =>
     MinArray(distanceCost(d), openWarehouses, defaultCostForNoOpenWarehouse).toIntVar("distance_for_delivery_" + d))
 
-  val totalCost = Sum(distanceToNearestOpenWarehouse) + Sum(costForOpeningWarehouse, openWarehouses)
-
-  val obj = Objective(totalCost)
+  val obj = Objective(Sum(distanceToNearestOpenWarehouse) + Sum(costForOpeningWarehouse, openWarehouses))
 
   val TabuArray = Array.tabulate(W)(w => CBLSIntVar(m))
   val It = CBLSIntVar(m)
-
   val nonTabuWarehouses = SelectLESetQueue(TabuArray,It).toSetVar("non tabu warehouses")
+
   m.close()
 
   //this composite neighborhood includes:
@@ -95,12 +93,12 @@ object WarehouseLocationTabu extends App with AlgebraTrait{
       TabuArray(v.getStorageAt[Int](warehouseKey)) := It.value + tabuTenure
     }
     It :+= 1
-  }) maxMoves maxStepsWithNoImprovement withoutImprovementOver obj protectBest obj)
+  }) maxMoves W withoutImprovementOver obj protectBest obj)
 
   switchWithTabuNeighborhood.verbose = 1
 
   //all moves are accepted because the neighborhood returns the best found move, and tabu might degrade obj.
-  switchWithTabuNeighborhood.doAllImprovingMovesAndRestoreBest(_ >= W+D,(oldObj,newObj) => true)
+  switchWithTabuNeighborhood.doAllMovesAndRestoreBest(_ >= W+D,(oldObj,newObj) => true)
 
   println(openWarehouses)
 }

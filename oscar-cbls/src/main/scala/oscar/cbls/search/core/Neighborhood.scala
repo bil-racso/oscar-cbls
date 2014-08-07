@@ -65,17 +65,22 @@ abstract class Neighborhood{
   /**
    * @return true if a move has been performed, false otherwise
    */
-  def doImprovingMove():Boolean = (0 != doAllImprovingMoves(_ >= 1))
+  def doImprovingMove():Boolean = (0 != doAllMoves(_ >= 1))
 
-  /**
+
+
+    /**
    * @param shouldStop a function that takes the iteration number and returns true if search should be stopped
    *                   eg if the problem is considered as solved
    *                   you can evaluate some objective function there such as a violation degree
    * @param acceptanceCriterion a criterion for accepting a move
-   *                            by default, we on
+   *                            by default, we only accept improving moves, but you could change it
+   *                            and accept degrading moves as well (eg for tabu search)
+   *                            notice that some moves do not consider the acceptance criterion
+   *                            because their purpose is to randomize the current solution.
    * @return the number of moves performed
    */
-  def doAllImprovingMoves(shouldStop:Int => Boolean, acceptanceCriterion:(Int,Int) => Boolean = (oldObj,newObj) => oldObj > newObj):Int = {
+  def doAllMoves(shouldStop:Int => Boolean, acceptanceCriterion:(Int,Int) => Boolean = (oldObj,newObj) => oldObj > newObj):Int = {
     var bestObj = Int.MaxValue
     var prevObj = Int.MaxValue
     var toReturn = 0
@@ -99,7 +104,6 @@ abstract class Neighborhood{
               " #"
             }else if(m.objAfter == bestObj) " °"
             else ""
-
 
             println(m + firstPostfix + secondPostfix)
 
@@ -222,8 +226,8 @@ abstract class Neighborhood{
     * @param proc the procedure to call on one first move that is performed from this neighborhood
     */
   def onFirstMove(proc: => Unit) = new  DoOnFirstMove(this,() => proc)
+
   def protectBest(i:CBLSIntVar) = new ProtectBest(this, i)
-  def protectBest(o:Objective) = new ProtectBest(this, o.objective)
 
   /** retries n times the move before concluding to noMove can be found
     * resets o nhe first found move, or on reset
@@ -235,6 +239,14 @@ abstract class Neighborhood{
     * @return
     */
   def noReset:Neighborhood = new NoReset(this)
+
+  /** defines a name wor this (composite) neighborhood
+    * this will be used as prefix for each move returned by this neighborhood (the original name will still exist)
+    * use this for debug and documentation purpose only
+    * @param name
+    * @return
+    */
+  def name(name:String) = new Name(this,name)
 
   /**to build a composite neighborhood.
     * the first neighborhood is used only to provide a round robin exploration on its possible moves
@@ -267,7 +279,19 @@ abstract class Neighborhood{
     */
   def andThen(b:Neighborhood, maxFirstStep:Int) = new AndThen(this, b, maxFirstStep)
 
-}
+  /**
+   * tis combinator overrides the acceptance criterion given to the whole neighborhood
+   * this can be necessary if you have a neighborhood with some phases only including simulated annealing
+   * @param overridingAcceptanceCriterion the acceptance criterion that is used instead of the one given to the overall sear
+   */
+  def withAcceptanceCriterion(overridingAcceptanceCriterion:(Int,Int) => Boolean)
+  = new WithAcceptanceCriterion(this,overridingAcceptanceCriterion)
+
+  /**
+   * this combinator overrides accepts all moves (this is the withAcceptanceCriteria, given the fully acceptant criterion
+   */
+  def acceptAll:WithAcceptanceCriterion = new WithAcceptanceCriterion(this,(_:Int,_:Int) => true)
+  }
 
 abstract class StatelessNeighborhood extends Neighborhood{
   //this resets the internal state of the move combinators

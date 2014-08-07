@@ -22,9 +22,10 @@ import oscar.cbls.objective.Objective
   *
   * @param objAfter the objective after this assignation will be performed
   *                 in case you degrade the objective because you make a jump, and you do not want to compute it,
-  *                 the convention is to put Int.MaxValue
+  *                 you must set it to Int.MaxValue or just do not specify it, as it is the default value
   *                 we did not use an option there because there would anyway be a need
   *                 for arithmetic on this option in combinators suh as [[oscar.cbls.search.combinators.Best]]
+  *                 Many combinators actually rely on this value to take decisions (eg: [[oscar.cbls.search.combinators.ProtectBest]] and [[oscar.cbls.search.combinators.Best]]
   * @author renaud.delandtsheer@cetic.be
   */
 abstract class Move(val objAfter:Int = Int.MaxValue, val neighborhoodName:String = null){

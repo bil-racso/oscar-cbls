@@ -36,7 +36,7 @@ object BinPackingSolver extends SearchEngineTrait {
               orElse (JumpSwapItems(p) maxMoves 3)
               orElse EmptyMostViolatedBin(p)) protectBest p.overallViolation.objective
 
-    x.doAllImprovingMoves(_ >= maxStep || p.overallViolation.value == 0)
+    x.doAllMoves(_ >= maxStep || p.overallViolation.value == 0)
     x.restoreBest()
   }
 }
