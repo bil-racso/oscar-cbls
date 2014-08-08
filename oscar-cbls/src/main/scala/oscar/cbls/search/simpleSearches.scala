@@ -53,6 +53,7 @@ case class AssignNeighborhood(vars:Array[CBLSIntVar],
   override def exploreNeighborhood() {
     if (amIVerbose) println(name + ": trying")
 
+    //TODO: improve the hot restart; we should continue from the last tried variable AND ITS LAST TRIED VALUE IF THE VARIABLE WAS NOT GIVEN THIS VALUE SINCE LAST TIME
     val iterationSchemeOnZone =
       if (searchZone == null) {
         if (hotRestart && !best) {
@@ -136,14 +137,11 @@ case class SwapsNeighborhood(vars:Array[CBLSIntVar],
   //the indice to start with for the exploration
   var startIndice:Int = 0
   override def exploreNeighborhood(){
-
     if (amIVerbose) println(name + ": trying")
 
     //TODO: improve the hotRestart:
     //we must restart after the last explored variable except if this variable has not changed
     //in which case we start from this variable, from the value just after the last explored one
-
-    //also: symmetry breaking might be kept from one run to the other...
 
     val firstIterationSchemeZone =
       if (searchZone1 == null) {

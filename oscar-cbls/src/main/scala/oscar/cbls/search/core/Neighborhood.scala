@@ -24,6 +24,7 @@ import scala.language.implicitConversions
 
 abstract sealed class SearchResult
 case object NoMoveFound extends SearchResult
+case object MovePerformed extends SearchResult
 
 case class MoveFound(m:Move) extends SearchResult{
   def commit(){m.commit()}
@@ -48,7 +49,19 @@ abstract class Neighborhood{
    *                         beware that a changing criteria might interact unexpectedly with stateful neighborhood combinators
    * @return an improving move
    */
-  def getImprovingMove(acceptanceCriterion:(Int,Int) => Boolean = (oldObj,newObj) => oldObj > newObj):SearchResult
+  def getImprovingMove(acceptanceCriterion:(Int,Int) => Boolean, justDoIt:Boolean):SearchResult = {
+    getImprovingMove(acceptanceCriterion) match{
+      case MoveFound(m) => {
+        m.commit()
+        MovePerformed
+      }
+      case o => o
+    }
+  }
+
+  def getImprovingMove(acceptanceCriterion:(Int,Int) => Boolean):SearchResult = {
+    throw new Error("no search procedure implemented for " + this)
+  }
 
   //this resets the internal state of the Neighborhood
   def reset()
@@ -63,7 +76,7 @@ abstract class Neighborhood{
     _verbose = i
   }
 
-  //the number of characters to display i ncase a verbose approcach is deployed.
+  //the number of characters to display in case a verbose approach is deployed.
   var paddingLength:Int = 100
 
   protected def amIVerbose = verbose >= 2
@@ -351,17 +364,31 @@ abstract class EasyNeighborhood(best:Boolean = false, obj:()=>Int, neighborhoodN
   private var toReturnMove:Move = null
   private var bestNewObj:Int = Int.MaxValue
 
-  final def getImprovingMove(acceptanceCriterion:(Int,Int) => Boolean = (oldObj,newObj) => oldObj > newObj):SearchResult = {
+  private var justDoIt:Boolean = false
+  private var alreadyRejected:Boolean = false
+private var justDidIt:Boolean = false
+  override final def getImprovingMove(acceptanceCriterion:(Int,Int) => Boolean, justDoIt:Boolean):SearchResult = {
     oldObj = obj()
     this.acceptanceCriterion = acceptanceCriterion
     toReturnMove = null
-    exploreNeighborhood()
     bestNewObj = Int.MaxValue
+    this.justDoIt = justDoIt
+    alreadyRejected = false
+    justDidIt = false;
 
-    if(toReturnMove == null || (best && !acceptanceCriterion(oldObj,bestNewObj))) {
+    exploreNeighborhood()
+
+    if(justDidIt){
+      if (amIVerbose) println(neighborhoodName + ": move performed")
+      MovePerformed
+    }else if(toReturnMove == null || (best && !acceptanceCriterion(oldObj,bestNewObj))) {
       if (amIVerbose) println(neighborhoodName + ": no move found")
       NoMoveFound
-    }else{
+    }else if (justDoIt){
+      toReturnMove.commit()
+      if (amIVerbose) println(neighborhoodName + ": move performed")
+      MovePerformed
+    }else {
       if (amIVerbose) println(neighborhoodName + ": move found")
       toReturnMove
     }
@@ -372,6 +399,18 @@ abstract class EasyNeighborhood(best:Boolean = false, obj:()=>Int, neighborhoodN
     * as explained in the documentation of this class
     */
   def exploreNeighborhood()
+
+  def earlyStopRequested(newObj:Int):Boolean = {
+    if(!best && justDoIt){
+      if (acceptanceCriterion(oldObj, newObj)){
+        justDidIt = true;
+        return true
+      }else{
+        alreadyRejected = true
+      }
+    }
+    false
+  }
 
   /**
    * @param newObj the new value of the objective function if we perform the move
@@ -385,11 +424,12 @@ abstract class EasyNeighborhood(best:Boolean = false, obj:()=>Int, neighborhoodN
         bestNewObj = newObj
         toReturnMove = m
       }
-    } else if (acceptanceCriterion(oldObj, newObj)) {
+    } else if (!(justDoIt && alreadyRejected) && acceptanceCriterion(oldObj, newObj)) {
       toReturnMove = m
       if(amIVerbose) println(neighborhoodName + ": move found")
       return true
     }
+    alreadyRejected = false
     false
   }
 

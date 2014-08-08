@@ -74,6 +74,12 @@ class OnePointMoveNeighborhood(NodesPrecedingNodesToMove:()=>Iterable[Int],
         OnePointMove.encode(beforeMovedPoint, insertionPoint, vrp)
         vrp.commit(true)
         val newObj = vrp.getObjective()
+        //TODO: when we have the JustDoIt feature in neighborhood (although it is not so important for one point move...)
+//        if(earlyStop(newObj)){
+//          vrp.cleanRecordedMoves()
+//          startIndice = beforeMovedPoint + 1
+//          return
+//        }
         vrp.undo()
 
         if (moveRequested(newObj)
