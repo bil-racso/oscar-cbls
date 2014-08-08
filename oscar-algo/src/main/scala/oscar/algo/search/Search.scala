@@ -64,11 +64,6 @@ class Search(node: SearchNode, branching: Branching) {
     solutionActionsStat = (action) :: solutionActionsStat
   }
 
-  @inline private def solFound(stat: SearchStatistics) {
-    node.solFound()
-    solutionActionsStat.foreach(_(stat))
-  }
-
   @inline private def expand(): Boolean = {
     val alternatives = branching.alternatives
     if (alternatives.isEmpty) false
@@ -102,7 +97,9 @@ class Search(node: SearchNode, branching: Branching) {
       node.pushState()
       val isExpandable = expand()
       if (!isExpandable) {
-        solFound(stat())
+        node.solFound()
+        val stats = stat()
+        solutionActionsStat.foreach(_(stats))
         solCounter += 1
       }
     }
@@ -113,10 +110,10 @@ class Search(node: SearchNode, branching: Branching) {
 
       // Expandable version
       val alternatives = alternativesStack.top
-      
+
       // Discrepancy of the current node
       val d = discrepancy.value + alternatives.discrepancy
-      
+
       // Last if no more alternative or if the maximal discrepancy is reached
       val alternative = alternatives.next()
       val isLast = !alternatives.hasNext || d == maxDiscrepancy
@@ -130,12 +127,15 @@ class Search(node: SearchNode, branching: Branching) {
       if (!node.isFailed()) {
         val isExpandable = expand()
         if (!isExpandable) {
-          solFound(stat())
+          node.solFound()
+          val stats = stat()
+          solutionActionsStat.foreach(_(stats))
           solCounter += 1
           nBkts += 1
           node.pop()
         }
       } else {
+        failureActions.foreach(_())
         nBkts += 1
         node.pop
       }
