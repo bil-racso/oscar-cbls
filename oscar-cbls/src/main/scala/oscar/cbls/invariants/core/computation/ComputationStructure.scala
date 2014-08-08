@@ -883,6 +883,8 @@ object CBLSIntVar{
   }
 
   implicit def int2IntVar(a:Int):CBLSIntVar = CBLSIntConst(a)
+
+  implicit def namedIntConst(valAndName:(Int,String)):CBLSIntVar = CBLSIntConst(valAndName._1, null, valAndName._2)
 }
 
 /**
@@ -891,10 +893,10 @@ object CBLSIntVar{
  * @param ConstValue: the value of the constant
  * @author renaud.delandtsheer@cetic.be
  */
-case class CBLSIntConst(ConstValue:Int, override val model:Store = null)
+case class CBLSIntConst(ConstValue:Int, override val model:Store = null, override val name: String = null)
   extends CBLSIntVar(model, (ConstValue to ConstValue), ConstValue, toString){
   override def getValue(NewValue:Boolean=false):Int = ConstValue //pour pas avoir de propagation
-  override def toString:String = "IntConst("+ ConstValue + ")"
+  override def toString:String = if (name == null) "IntConst("+ ConstValue + ")" else name + ":=" + ConstValue
 }
 
 /**An IntSetVar is a variable managed by the [[oscar.cbls.invariants.core.computation.Store]] whose type is set of integer.
