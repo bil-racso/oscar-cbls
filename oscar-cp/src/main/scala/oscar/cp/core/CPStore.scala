@@ -263,15 +263,17 @@ class CPStore(val propagStrength: CPPropagStrength) extends SearchNode {
   }
 
   /**
-   * call only the propagate method of the constraints and trigger the fix point does not post it
-   * @param c
+   *  Call the propagate function of the constraints and trigger the fix point algorithm
+   *  
+   *  Note that the constraints are not added to the model
+
+   *  @param constraints a sequence of constraints
    */
   def propagate(constraints: Constraint*): CPOutcome = {
     if (status.value == Failure) Failure
     else {
-      val failed = constraints.exists(_.propagate() == Failure)
-      if (failed) status.value = Failure
-      else if (propagate() == Failure) status.value = Failure
+      constraints.foreach(c => addQueueL2(c))
+      if (propagate() == Failure) status.value = Failure
       status.value
     }
   }
