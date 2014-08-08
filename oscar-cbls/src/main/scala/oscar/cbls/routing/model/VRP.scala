@@ -36,6 +36,9 @@ import oscar.cbls.invariants.lib.logic.Predecessor
 import oscar.cbls.invariants.lib.set.Diff
 import oscar.cbls.invariants.core.computation.StorageUtilityManager
 import oscar.cbls.invariants.core.computation.StorageUtilityManager
+import oscar.cbls.modeling.Algebra._
+import scala.collection.SortedSet
+import oscar.cbls.invariants.lib.set.Cardinality
 
 /**
  * The class constructor models a VRP problem with N points (deposits and customers)
@@ -612,8 +615,8 @@ trait HopDistanceAsObjectiveTerm extends VRPObjective with HopDistance {
  * @author renaud.delandtsheer@cetic.be
  */
 trait NodesOfVehicle extends PositionInRouteAndRouteNr with RoutedAndUnrouted {
-  val NodesOfVehicle = Cluster.MakeDense(routeNr).clusters
-  final override val unrouted = NodesOfVehicle(V)
+  val nodesOfVehicle = Cluster.MakeDense(routeNr).clusters
+  final override val unrouted = nodesOfVehicle(V)
 }
 
 /**
@@ -723,6 +726,49 @@ trait PenaltyForEmptyRoute extends VRP with PositionInRouteAndRouteNr {
    */
   val emptyRoutes: CBLSSetVar = Filter(routeLength, _ <= (1))
 
+  /**
+   * The variable which maintains the sum of route penalties,
+   * thanks to SumElements invariant.
+   */
+  val emptyRoutePenalty: CBLSIntVar = Sum(emptyRoutePenaltyWeight, emptyRoutes)
+
+  /**
+   * Allows client to set the penalty of a given vehicle route.
+   * @param n the node.
+   * @param p the penalty.
+   */
+  def setEmptyRoutePenaltyWeight(n: Int, p: Int) {
+    emptyRoutePenaltyWeight(n) := p
+  }
+
+  /**
+   * Allows client to set a specific penalty for all the VRP routes.
+   * @param p the penalty.
+   */
+  def setEmptyRoutePenaltyWeight(p: Int) {
+    emptyRoutePenaltyWeight.foreach(penalty => penalty := p)
+  }
+}
+
+trait PenaltyForEmptyRouteWithException extends VRP with NodesOfVehicle {
+  /**
+   * The data structure array which maintains route penalty.
+   */
+  private val emptyRoutePenaltyWeight: Array[CBLSIntVar] =
+    Array.tabulate(V)(v =>
+      CBLSIntVar(m, Int.MinValue, Int.MaxValue, 0, "penality of vehicule " + v))
+
+  val exceptionNodes: CBLSSetVar = new CBLSSetVar(m, 0, N - 1, "NodesNotToConsiderForEmptyRoutes")
+
+  private val nodesOfRealVehicles = Array.tabulate(V)(nodesOfVehicle)
+
+  /**
+   * The variable which maintains the set of empty routes.
+   * (that is: routes containing no other node than the vehicle node)
+   */
+  val emptyRoutes: CBLSSetVar = Filter(nodesOfRealVehicles.map(
+    (vehicleNodes: CBLSSetVar) => Cardinality(vehicleNodes minus exceptionNodes).toIntVar), _ == 1)
+    
   /**
    * The variable which maintains the sum of route penalties,
    * thanks to SumElements invariant.

@@ -52,7 +52,7 @@ abstract trait NodeWeighting {
  * @author renaud.delandtsheer@cetic.be
  */
 class CommutativeSummedCapacity(val vrp: VRP with NodesOfVehicle, val name: String = "SummedCapacity") extends NodeWeighting {
-  val vehicleSum = Array.tabulate(vrp.V)(v => Sum(nodeWeight, vrp.NodesOfVehicle(v)).toIntVar)
+  val vehicleSum = Array.tabulate(vrp.V)(v => Sum(nodeWeight, vrp.nodesOfVehicle(v)).toIntVar)
 }
 
 /**
@@ -68,7 +68,7 @@ class AccumulativeCapacity(vrp: VRP with Predecessors, inForNonRoutedPoints: Int
   val capacityOut: Array[CBLSIntVar] = Array.tabulate(vrp.N + 1)(n =>
     CBLSIntVar(vrp.m, value = if (n == vrp.N) inForNonRoutedPoints else 0,
       name = if (n == vrp.N) "capacityOutUnrouted" else name + "_Out_" + n))
-  val capacityIn: Array[CBLSIntVar] = Array.tabulate(vrp.N)(n => capacityOut.element(vrp.preds(n)).toIntVar(name + "_in_atPoint_" + n))
+  val capacityIn: Array[CBLSIntVar] = Array.tabulate(vrp.N)(n => capacityOut.element(vrp.preds(n)).toIntVar(name + "In_atNode" + n))
 }
 
 /**
