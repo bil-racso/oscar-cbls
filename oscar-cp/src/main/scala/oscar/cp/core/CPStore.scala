@@ -270,12 +270,11 @@ class CPStore(val propagStrength: CPPropagStrength) extends SearchNode {
    *  @param constraints a sequence of constraints
    */
   def propagate(constraints: Constraint*): CPOutcome = {
-    val s = status.value
-    if (s == Failure) Failure
+    if (status.value == Failure) Failure
     else {
       constraints.foreach(c => addQueueL2(c))
-      if (propagate() == Failure) Failure
-      else s
+      propagate()
+      status.value
     }
   }
 
