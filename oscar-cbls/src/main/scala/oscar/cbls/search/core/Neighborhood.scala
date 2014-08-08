@@ -28,7 +28,7 @@ case object NoMoveFound extends SearchResult
 case class MoveFound(m:Move) extends SearchResult{
   def commit(){m.commit()}
   def objAfter = m.objAfter
-  override def toString():String = m.toString()
+  override def toString:String = m.toString
 }
 
 object SearchResult {
@@ -63,11 +63,14 @@ abstract class Neighborhood{
     _verbose = i
   }
 
+  //the number of characters to display i ncase a verbose approcach is deployed.
+  var paddingLength:Int = 100
+
   protected def amIVerbose = verbose >= 2
   /**
    * @return true if a move has been performed, false otherwise
    */
-  def doImprovingMove():Boolean = (0 != doAllMoves(_ >= 1))
+  def doImprovingMove():Boolean = 0 != doAllMoves(_ >= 1)
 
 
 
@@ -95,6 +98,9 @@ abstract class Neighborhood{
         case m: MoveFound =>
           if (verbose >= 1){
 
+            def nStrings(n: Int, s: String): String = if (n <= 0) "" else s + nStrings(n - 1, s)
+            def padToLength(s: String, l: Int) = (s + nStrings(l, " ")).substring(0, l)
+
             val firstPostfix = if(m.objAfter < prevObj) "-"
             else if(m.objAfter == prevObj) "="
             else "+"
@@ -107,7 +113,7 @@ abstract class Neighborhood{
             }else if(m.objAfter == bestObj) " °"
             else ""
 
-            println(m + firstPostfix + secondPostfix)
+            println(padToLength(m.toString(), paddingLength) + " " + firstPostfix + secondPostfix)
 
           }
 
@@ -245,7 +251,7 @@ abstract class Neighborhood{
   /** defines a name wor this (composite) neighborhood
     * this will be used as prefix for each move returned by this neighborhood (the original name will still exist)
     * use this for debug and documentation purpose only
-    * @param name
+    * @param name the name that will prefix all returned moves, used for verbosities
     * @return
     */
   def name(name:String) = new Name(this,name)
@@ -306,4 +312,119 @@ abstract class StatelessNeighborhood extends Neighborhood{
   */
 case class NoMoveNeighborhood() extends StatelessNeighborhood{
   override def getImprovingMove(acceptanceCriterion:(Int,Int) => Boolean): SearchResult = NoMoveFound
+}
+
+/**
+ * This is an easier way to implement your neighborhood; it provides a simplified interface and hides away searching for the best move vs. the first move
+ * and the management of the acceptingCriterion.
+ *
+ * to implement a neighborhood, you must implement the method searchImprovingMoveEasy
+ * in this method, you evaluate moves, and to notify that a move has been explored you have two possibilities:
+ *
+ * either you do
+ * {{{
+ * if notifyMoveExplored(newObj, =>myMove) return
+ *}}}
+ * or you do
+ *{{{
+ * if(moveRequested(newObj) && submitFoundMove(myMove)) return
+ *}}}
+ *
+ * The second option is more efficient since it will not create a closure on each call
+ * and the move will only be instantiated when needed
+ *
+ * You can also save some state on return, eg if your neighborhood performs some hotRestart:
+ *{{{
+ * if(moveRequested(newObj) && submitFoundMove(myMove)){
+ *   hotRestartForNextTime = ...
+ *   return
+ * }
+ *}}}
+
+ * @param best true if you want the best move false if you want the first acceptable move
+ * @param obj the objective function. notice that it is actually a function. if you have an [[oscar.cbls.objective.Objective]] there is an implicit conversion available
+ * @param neighborhoodName the name of the neighborhood, used for verbosities
+ */
+abstract class EasyNeighborhood(best:Boolean = false, obj:()=>Int, neighborhoodName:String=null) extends Neighborhood{
+  private var oldObj:Int=0
+  private var acceptanceCriterion:(Int,Int) => Boolean=null
+  private var toReturnMove:Move = null
+  private var bestNewObj:Int = Int.MaxValue
+
+  final def getImprovingMove(acceptanceCriterion:(Int,Int) => Boolean = (oldObj,newObj) => oldObj > newObj):SearchResult = {
+    oldObj = obj()
+    this.acceptanceCriterion = acceptanceCriterion
+    toReturnMove = null
+    exploreNeighborhood()
+    bestNewObj = Int.MaxValue
+
+    if(toReturnMove == null || (best && !acceptanceCriterion(oldObj,bestNewObj))) {
+      if (amIVerbose) println(neighborhoodName + ": no move found")
+      NoMoveFound
+    }else{
+      if (amIVerbose) println(neighborhoodName + ": move found")
+      toReturnMove
+    }
+  }
+
+  /** This is the method you ust implement and that performs the search of your neighborhood.
+    * every time you explore a neighbor, you must perform the calls to notifyMoveExplored or moveRequested(newObj) && submitFoundMove(myMove)){
+    * as explained in the documentation of this class
+    */
+  def exploreNeighborhood()
+
+  /**
+   * @param newObj the new value of the objective function if we perform the move
+   * @param m a function that returns the found move. We expect a function here because the move might not need to be instantiated
+   * @return true if the search must be stopped right now
+   */
+  def notifyMoveExplored(newObj:Int, m: =>Move):Boolean = {
+
+    if (best) {
+      if (newObj < bestNewObj) {
+        bestNewObj = newObj
+        toReturnMove = m
+      }
+    } else if (acceptanceCriterion(oldObj, newObj)) {
+      toReturnMove = m
+      if(amIVerbose) println(neighborhoodName + ": move found")
+      return true
+    }
+    false
+  }
+
+
+  /**
+   * @param newObj the new value of the objective function
+   * @return true if the move is requested, then you should call submitFoundMove
+   */
+  def moveRequested(newObj:Int):Boolean = {
+    if (best) {
+      if (newObj < bestNewObj) {
+        bestNewObj = newObj
+        toReturnMove = null
+        return true
+      }
+    } else if (acceptanceCriterion(oldObj, newObj)) {
+      return true
+    }
+    false
+  }
+
+  /** you can only, and must call this method when you called moveRequested and it returned true
+    * @param m the move. notice that the obj must be accurate
+    * @return true if the search must be stopped right now (you can save some internal state by the way if you need  to, e.g. for a hotRestart
+    */
+  def submitFoundMove(m:Move):Boolean = {
+
+    if (best) {
+      bestNewObj = m.objAfter
+      toReturnMove = m
+      false
+    } else{ //we do not check acceptance criterion here anymore since it was tested in moveRequested, and it could be non-deterministic
+      toReturnMove = m
+      if(amIVerbose) println(neighborhoodName + ": move found")
+      true
+    }
+  }
 }

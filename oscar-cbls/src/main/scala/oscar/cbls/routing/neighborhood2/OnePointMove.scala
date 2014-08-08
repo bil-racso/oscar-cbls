@@ -27,8 +27,8 @@ package oscar.cbls.routing.neighborhood2
 
 import oscar.cbls.invariants.core.computation.Variable
 import oscar.cbls.routing.model.{MoveDescription, PositionInRouteAndRouteNr, VRP, VRPObjective}
-import oscar.cbls.search.EasyNeighborhood
 import oscar.cbls.search.algo.HotRestart
+import oscar.cbls.search.core.EasyNeighborhood
 import oscar.cbls.search.move.Move
 
 /**
@@ -41,14 +41,14 @@ import oscar.cbls.search.move.Move
 class OnePointMoveNeighborhood(NodesPrecedingNodesToMove:()=>Iterable[Int],
                                relevantNeighbors:()=>Int=>Iterable[Int],
                                val vrp: VRP with MoveDescription with VRPObjective with PositionInRouteAndRouteNr,
-                               val neighborhoodName:String = "OnePointMove",
+                               val neighborhoodName:String = "OnePointMoveNeighborhood",
                                val best:Boolean = false,
                                val hotRestart:Boolean = true) extends EasyNeighborhood(best,vrp.getObjective) {
 
   //the indice to start with for the exploration
   var startIndice:Int = 0
 
-  override def searchImprovingMoveEasy(){
+  override def exploreNeighborhood(){
 
     val iterationSchemeOnZone =
       if (hotRestart && !best) HotRestart(NodesPrecedingNodesToMove(), startIndice)
@@ -60,7 +60,7 @@ class OnePointMoveNeighborhood(NodesPrecedingNodesToMove:()=>Iterable[Int],
 
     for (beforeMovedPoint <- iterationSchemeOnZone
          if vrp.isRouted(beforeMovedPoint)) {
-      startIndice = beforeMovedPoint + 1
+
       val movedPoint = vrp.next(beforeMovedPoint).value
 
       for (
@@ -69,15 +69,18 @@ class OnePointMoveNeighborhood(NodesPrecedingNodesToMove:()=>Iterable[Int],
           && beforeMovedPoint != insertionPoint
           && movedPoint != insertionPoint
           && beforeMovedPoint != vrp.next(insertionPoint).value)
-          && (!vrp.isADepot(movedPoint) || (vrp.onTheSameRoute(movedPoint, insertionPoint)))) {
+          && (!vrp.isADepot(movedPoint) || vrp.onTheSameRoute(movedPoint, insertionPoint))) {
 
         OnePointMove.encode(beforeMovedPoint, insertionPoint, vrp)
         vrp.commit(true)
-        val newObj = vrp.getObjective
+        val newObj = vrp.getObjective()
         vrp.undo()
 
-        if (moveRequested(newObj))
-          if (submitFoundMove(OnePointMove(beforeMovedPoint, movedPoint, insertionPoint, newObj, vrp, neighborhoodName))) return
+        if (moveRequested(newObj)
+          && submitFoundMove(OnePointMove(beforeMovedPoint, movedPoint, insertionPoint, newObj, vrp, neighborhoodName))){
+          startIndice = beforeMovedPoint + 1
+          return
+        }
       }
     }
   }
@@ -129,16 +132,16 @@ abstract class VRPMove(override val objAfter: Int,
 
   /** to actually take the move */
   override def commit(){
-    vrp.cleanRecordedMoves
-    encodeMove
+    vrp.cleanRecordedMoves()
+    encodeMove()
     vrp.commit(false)
   }
 
   override def touchedVariables: List[Variable] = {
-    vrp.cleanRecordedMoves
-    encodeMove
+    vrp.cleanRecordedMoves()
+    encodeMove()
     val toReturn = vrp.touchedVariablesByEncodedMove
-    vrp.cleanRecordedMoves
+    vrp.cleanRecordedMoves()
     toReturn
   }
 

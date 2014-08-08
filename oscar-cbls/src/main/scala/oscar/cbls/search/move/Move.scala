@@ -36,7 +36,7 @@ abstract class Move(val objAfter:Int = Int.MaxValue, val neighborhoodName:String
    * to get the list of variables that are modified by the move.
    * use this to update a Tabu for instance
    * notice that is a variable is touched twice by the move, it will appear twice in this list
-   * This can happen with a set where we add two elements in two distinct moves that are aggregated into a [[CompositeMove]]
+   * This can happen with a set where we add two elements in two distinct moves that are aggregated into a [[oscar.cbls.search.move.CompositeMove]]
    * @return the list of touched variables.
    */
   def touchedVariables:List[Variable]

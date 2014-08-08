@@ -46,19 +46,12 @@ case class AssignNeighborhood(vars:Array[CBLSIntVar],
                               symmetryClassOfValues:Option[Int => Int => Int] = None,
                               domain:(CBLSIntVar,Int) => Iterable[Int] = (v,i) => v.domain,
                               hotRestart:Boolean = true)
-  extends Neighborhood with AlgebraTrait{
+  extends EasyNeighborhood(best,obj,name) with AlgebraTrait{
   //the indice to start with for the exploration
   var startIndice:Int = 0
-  override def getImprovingMove(acceptanceCriterion:(Int,Int) => Boolean = (oldObj,newObj) => oldObj > newObj): SearchResult = {
-    if (amIVerbose) println(name + ": trying")
-    val startObj = obj.value
-    var oldObj = if(best) Int.MaxValue else startObj
-    var toReturn: SearchResult = NoMoveFound
 
-    //TODO: improve the hotRestart:
-     //we must restart after the last explored variable except if this variable has not changed
-    //in which case we start from this variable, from the value just after the last explored one
-    //Also what happens to symmetry elimination in case of a hot restart?
+  override def exploreNeighborhood() {
+    if (amIVerbose) println(name + ": trying")
 
     val iterationSchemeOnZone =
       if (searchZone == null) {
@@ -75,6 +68,7 @@ case class AssignNeighborhood(vars:Array[CBLSIntVar],
     }
 
     for (i <- iterationScheme) {
+
       val currentVar = vars(i)
       val oldVal = currentVar.value
       val domainIterationScheme = symmetryClassOfValues match {
@@ -82,33 +76,16 @@ case class AssignNeighborhood(vars:Array[CBLSIntVar],
         case Some(s) => IdenticalAggregator.removeIdenticalClassesLazily(domain(currentVar, i), s(i))
       }
 
-      if (amIVerbose)
-        println(name + ": exploring (best:" + best + ") " + currentVar + " values:" + domainIterationScheme)
+      if (amIVerbose) println(name + ": exploring (best:" + best + ") " + currentVar + " values:" + domainIterationScheme)
 
       for (newVal <- domainIterationScheme if newVal != oldVal) {
         val newObj = obj.assignVal(currentVar, newVal)
 
-        if (best){
-          if (newObj < oldObj) {
-            oldObj = newObj
-            toReturn = AssignMove(currentVar, newVal, newObj, name)
-          }
-        } else if (acceptanceCriterion(oldObj, newObj)) {
+        if (moveRequested(newObj) && submitFoundMove(AssignMove(currentVar, newVal, newObj, name))){
           startIndice = i + 1
-          if (amIVerbose) println(name + ": move found")
-          return AssignMove(currentVar, newVal, newObj, name)
+          return
         }
       }
-    }
-
-    toReturn match {
-      case MoveFound(m)
-        if acceptanceCriterion(startObj, m.objAfter) =>
-        if(amIVerbose) println(name + ": move found")
-        toReturn
-      case _ =>
-        if(amIVerbose) println(name + ": no move found")
-        toReturn
     }
   }
 
@@ -155,15 +132,12 @@ case class SwapsNeighborhood(vars:Array[CBLSIntVar],
                              best:Boolean = false,
                              symmetryClassOfVariables:Option[Int => Int] = None,
                              hotRestart:Boolean = true)
-  extends Neighborhood with AlgebraTrait{
+  extends EasyNeighborhood(best,obj,name) with AlgebraTrait{
   //the indice to start with for the exploration
   var startIndice:Int = 0
-  override def getImprovingMove(acceptanceCriteria:(Int,Int) => Boolean = (oldObj,newObj) => oldObj > newObj): SearchResult = {
+  override def exploreNeighborhood(){
 
-    if(amIVerbose) println(name + ": trying")
-    val startObj = obj.value
-    var oldObj = if(best) Int.MaxValue else startObj
-    var toReturn:SearchResult = NoMoveFound
+    if (amIVerbose) println(name + ": trying")
 
     //TODO: improve the hotRestart:
     //we must restart after the last explored variable except if this variable has not changed
@@ -172,62 +146,46 @@ case class SwapsNeighborhood(vars:Array[CBLSIntVar],
     //also: symmetry breaking might be kept from one run to the other...
 
     val firstIterationSchemeZone =
-      if(searchZone1 == null) {
+      if (searchZone1 == null) {
         if (hotRestart && !best) {
           if (startIndice >= vars.size) startIndice = 0
           vars.indices startBy startIndice
         } else vars.indices
-      }else if (hotRestart && !best) HotRestart(searchZone1.value,startIndice) else searchZone1.value
+      } else if (hotRestart && !best) HotRestart(searchZone1.value, startIndice) else searchZone1.value
 
     val firstIterationScheme = symmetryClassOfVariables match {
       case None => firstIterationSchemeZone
       case Some(s) => IdenticalAggregator.removeIdenticalClassesLazily(firstIterationSchemeZone, s)
     }
 
-    val secondIterationSchemeZone = if(searchZone2 == null) vars.indices else searchZone2.value
+    val secondIterationSchemeZone = if (searchZone2 == null) vars.indices else searchZone2.value
 
     val secondIterationScheme = symmetryClassOfVariables match {
       case None => secondIterationSchemeZone
       case Some(s) => IdenticalAggregator.removeIdenticalClassesLazily(secondIterationSchemeZone, s)
     }
 
-    for(i:Int <- firstIterationScheme){
+    for (i: Int <- firstIterationScheme) {
       val firstVar = vars(i)
       val oldValOfFirstVar = firstVar.value
 
-      for(j:Int <- secondIterationScheme;
-          secondVar = vars(j);
-          oldValOfSecondVar = secondVar.value
-          if (!symmetryCanBeBrokenOnIndices || i < j)  //we break symmetry on variables
-            && i != j
-            && (!symmetryCanBeBrokenOnValue || oldValOfFirstVar < oldValOfSecondVar) //we break symmetry on values
-            && oldValOfFirstVar != oldValOfSecondVar
-            && secondVar.domain.contains(oldValOfFirstVar)
-            && firstVar.domain.contains(oldValOfSecondVar)) {
+      for (j: Int <- secondIterationScheme;
+           secondVar = vars(j);
+           oldValOfSecondVar = secondVar.value
+           if (!symmetryCanBeBrokenOnIndices || i < j) //we break symmetry on variables
+             && i != j
+             && (!symmetryCanBeBrokenOnValue || oldValOfFirstVar < oldValOfSecondVar) //we break symmetry on values
+             && oldValOfFirstVar != oldValOfSecondVar
+             && secondVar.domain.contains(oldValOfFirstVar)
+             && firstVar.domain.contains(oldValOfSecondVar)) {
 
         val newObj = obj.swapVal(firstVar, secondVar)
 
-        if (best){
-          if (newObj < oldObj) {
-            oldObj = newObj
-            toReturn = SwapMove(firstVar, secondVar, newObj, name)
-          }
-        } else if (acceptanceCriteria(oldObj, newObj)) {
+        if (moveRequested(newObj) && submitFoundMove(SwapMove(firstVar, secondVar, newObj, name))) {
           startIndice = i + 1
-          if (amIVerbose) println(name + ": move found")
-          return SwapMove(firstVar, secondVar, newObj, name)
+          return
         }
       }
-    }
-
-    toReturn match {
-      case MoveFound(m)
-        if acceptanceCriteria(startObj, m.objAfter) =>
-        if(amIVerbose) println(name + ": move found")
-        toReturn
-      case _ =>
-        if(amIVerbose) println(name + ": no move found")
-        toReturn
     }
   }
 
@@ -286,9 +244,9 @@ case class RandomizeNeighborhood(vars:Array[CBLSIntVar],
  * @param name the name of the neighborhood
  */
 case class RandomSwapNeighborhood(vars:Array[CBLSIntVar],
-                                 degree:Int = 1,
-                                 name:String = "RandomSwapNeighborhood",
-                                 searchZone:CBLSSetVar = null)
+                                  degree:Int = 1,
+                                  name:String = "RandomSwapNeighborhood",
+                                  searchZone:CBLSSetVar = null)
   extends StatelessNeighborhood with AlgebraTrait with SearchEngineTrait{
 
   override def getImprovingMove(acceptanceCriteria:(Int,Int) => Boolean = null): SearchResult = {
