@@ -52,7 +52,7 @@ class CPSolver(propagStrength: CPPropagStrength) extends CPOptimizer(propagStren
   /** Deactivate the no solution exception when an add is used and an inconsistent model is detected */
   def deactivateNoSolExceptions(): Unit = throwNoSolExceptions = false
 
-  override def beforeStartAction(): Unit = { deactivateNoSolExceptions() }
+  override def beforeStartAction(): Unit = deactivateNoSolExceptions()
 
   /**
    * return true if every variable is bound
@@ -92,7 +92,7 @@ class CPSolver(propagStrength: CPPropagStrength) extends CPOptimizer(propagStren
   override def add(c: Constraint, st: CPPropagStrength): CPOutcome = {
     val outcome = post(c, st)
     if ((outcome == Failure || isFailed) && throwNoSolExceptions) {
-      throw new NoSolutionException(s"$lastConstraintCalled failed when adding constraint $c")
+      throw new NoSolutionException(s"the stored failed when adding constraint $c")
     }
     outcome
   }
@@ -108,7 +108,7 @@ class CPSolver(propagStrength: CPPropagStrength) extends CPOptimizer(propagStren
   override def add(b: CPBoolVar): CPOutcome = {
     val outcome = post(new Eq(b, 1))
     if ((outcome == Failure || isFailed) && throwNoSolExceptions) {
-      throw new NoSolutionException(s"$lastConstraintCalled failed when setting " + b.name + " to true")
+      throw new NoSolutionException(s"the stored failed when setting " + b.name + " to true")
     }
     return outcome
   }
@@ -123,7 +123,7 @@ class CPSolver(propagStrength: CPPropagStrength) extends CPOptimizer(propagStren
   override def add(constraints: Collection[Constraint], st: CPPropagStrength): CPOutcome = {
     val outcome = post(constraints, st);
     if ((outcome == Failure || isFailed) && throwNoSolExceptions) {
-      throw new NoSolutionException(s"$lastConstraintCalled failed when adding constraint $constraints");
+      throw new NoSolutionException(s"the stored failed when adding constraint $constraints");
     }
     return outcome
   }
@@ -131,7 +131,7 @@ class CPSolver(propagStrength: CPPropagStrength) extends CPOptimizer(propagStren
   override def addCut(c: Constraint): CPOutcome = {
     val outcome = postCut(c)
     if ((outcome == Failure || isFailed) && throwNoSolExceptions) {
-      throw new NoSolutionException(s"$lastConstraintCalled failed when adding constraint $c")
+      throw new NoSolutionException(s"the stored failed when adding constraint $c")
     }
     outcome
   }

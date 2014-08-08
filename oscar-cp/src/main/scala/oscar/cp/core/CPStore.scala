@@ -77,7 +77,7 @@ class CPStore(val propagStrength: CPPropagStrength) extends SearchNode {
   override def fail(): Unit = status.setValue(Failure)
 
   /** Returns true if the store is failed */
-  override def isFailed: Boolean = status.value == CPOutcome.Failure;
+  override def isFailed: Boolean = status.value == Failure
 
   // Cleans the propagation queues
   @inline private def cleanQueues(): Unit = {
