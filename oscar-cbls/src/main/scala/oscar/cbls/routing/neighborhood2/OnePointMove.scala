@@ -87,7 +87,7 @@ class OnePointMoveNeighborhood(NodesPrecedingNodesToMove:()=>Iterable[Int],
       }
     }
   }
-  //this resets the internal state of the Neighborhood
+
   override def reset(): Unit = {
     startIndice = 0
   }
