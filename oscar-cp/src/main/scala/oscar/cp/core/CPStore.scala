@@ -16,18 +16,19 @@
  */
 package oscar.cp.core;
 
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.Random;
+import java.util.Collection
+import java.util.LinkedList
 
-import oscar.cp.constraints.Eq;
+import scala.collection.JavaConversions.asJavaCollection
+import scala.collection.JavaConversions.collectionAsScalaIterable
 
-import oscar.algo.reversible.ReversiblePointer;
-import oscar.algo.search.SearchNode;
-
-import collection.JavaConversions._
-
-import oscar.cp.core.CPOutcome._
+import oscar.algo.ArrayQueue
+import oscar.algo.reversible.ReversiblePointer
+import oscar.algo.search.SearchNode
+import oscar.cp.constraints.Eq
+import oscar.cp.core.CPOutcome.Failure
+import oscar.cp.core.CPOutcome.Success
+import oscar.cp.core.CPOutcome.Suspend
 
 /**
  * Constraint Programming CPStore
@@ -274,18 +275,8 @@ class CPStore(val propagStrength: CPPropagStrength) extends SearchNode {
     else {
       constraints.foreach(c => addQueueL2(c))
       propagate()
-      status.value
+      status.value // may be changed by propagate()
     }
-  }
-
-  private def printQueue(): Unit = {
-    val q1 = propagQueueL1.reverse
-    val q2 = propagQueueL2.reverse
-    println("--- L1 queue ---")
-    q1.foreach(q => println(q.mkString("[", ",", "]")))
-    println("--- L2 queue ---")
-    q2.foreach(q => println(q.mkString("[", ",", "]")))
-    println("---")
   }
 
   protected def propagate(): CPOutcome = {

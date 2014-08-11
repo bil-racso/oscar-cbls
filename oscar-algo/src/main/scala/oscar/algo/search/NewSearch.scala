@@ -79,9 +79,7 @@ class NewSearch(node: SearchNode) {
     nbBkts = 0
     nbNodes = 0
 
-    // Register the root node
     node.pushState()
-    val rootMagic = node.magic // node reference
 
     // Expand the root node
     if (!node.isFailed) {
@@ -123,8 +121,13 @@ class NewSearch(node: SearchNode) {
         node.pop
       }
     }
-
-    // Restore the root node
-    node.popUntil(rootMagic)
+    
+    // Pop the remaining nodes 
+    var i = alternativesStack.size
+    while (i != 0) {
+      node.pop
+      i -= 1
+    }
+    node.pop()
   }
 }
