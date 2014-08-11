@@ -25,11 +25,9 @@
 
 package oscar.cbls.routing.neighborhood2
 
-import oscar.cbls.invariants.core.computation.Variable
-import oscar.cbls.routing.model.{MoveDescription, PositionInRouteAndRouteNr, VRP, VRPObjective}
+import oscar.cbls.routing.model._
 import oscar.cbls.search.algo.HotRestart
 import oscar.cbls.search.core.EasyNeighborhood
-import oscar.cbls.search.move.Move
 
 /**
  * Moves a point of a route to another place in the same or in an other route.
@@ -74,12 +72,11 @@ class OnePointMoveNeighborhood(NodesPrecedingNodesToMove:()=>Iterable[Int],
         OnePointMove.encode(beforeMovedPoint, insertionPoint, vrp)
         vrp.commit(true)
         val newObj = vrp.getObjective()
-        //TODO: when we have the JustDoIt feature in neighborhood (although it is not so important for one point move...)
-//        if(earlyStop(newObj)){
-//          vrp.cleanRecordedMoves()
-//          startIndice = beforeMovedPoint + 1
-//          return
-//        }
+        if(earlyStopRequested(newObj)){
+          vrp.cleanRecordedMoves()
+          startIndice = beforeMovedPoint + 1
+          return
+        }
         vrp.undo()
 
         if (moveRequested(newObj)
@@ -131,25 +128,3 @@ case class OnePointMove( predOfMovedPoint: Int,
       + " after " + insertionPoint + objToString+ " )")
 }
 
-abstract class VRPMove(override val objAfter: Int,
-                       val vrp: VRP with MoveDescription,
-                       override val neighborhoodName:String = null)
-  extends Move(objAfter, neighborhoodName) {
-
-  /** to actually take the move */
-  override def commit(){
-    vrp.cleanRecordedMoves()
-    encodeMove()
-    vrp.commit(false)
-  }
-
-  override def touchedVariables: List[Variable] = {
-    vrp.cleanRecordedMoves()
-    encodeMove()
-    val toReturn = vrp.touchedVariablesByEncodedMove
-    vrp.cleanRecordedMoves()
-    toReturn
-  }
-
-  def encodeMove()
-}
