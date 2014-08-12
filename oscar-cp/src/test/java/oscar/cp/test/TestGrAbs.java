@@ -58,7 +58,7 @@ public class TestGrAbs extends TestCase {
     	
     	
     	
-    	s.post(new Eq(x[0],1));
+    	s.post(new EqCons(x[0],1));
     	
     	assertTrue(!s.isFailed());
 

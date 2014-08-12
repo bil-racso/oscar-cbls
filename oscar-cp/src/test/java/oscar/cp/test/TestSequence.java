@@ -55,7 +55,7 @@ public class TestSequence extends TestCase {
 		}
         SetIndexedArray set = new SetIndexedArray(1,1);
     
-        s.add(new Eq(x[2], 0));
+        s.add(new EqCons(x[2], 0));
         s.add(new Sequence(x, set, 2, 1, 2));
 
         assertTrue(x[3].isBound());
@@ -72,7 +72,7 @@ public class TestSequence extends TestCase {
 		}
         SetIndexedArray set = new SetIndexedArray(3,3);
 
-        s.add(new Eq(x[2], 2));
+        s.add(new EqCons(x[2], 2));
         s.add(new Sequence(x, set, 2, 1, 2));
 
         assertTrue(x[3].isBound());
@@ -89,7 +89,7 @@ public class TestSequence extends TestCase {
 		}
         SetIndexedArray set = new SetIndexedArray(2,3);
 
-        s.add(new Eq(x[2], 1));
+        s.add(new EqCons(x[2], 1));
         s.add(new Sequence(x, set, 2, 1, 2));
 
         assertTrue(x[1].getSize() == 2 && x[1].hasValue(2) && x[1].hasValue(3));
@@ -104,7 +104,7 @@ public class TestSequence extends TestCase {
 		}
         SetIndexedArray set = new SetIndexedArray(4,4);
 
-        s.add(new Eq(x[2], 1));
+        s.add(new EqCons(x[2], 1));
         s.post(new Sequence(x, set, 1, 1, 1));
 
         assertTrue(s.isFailed());

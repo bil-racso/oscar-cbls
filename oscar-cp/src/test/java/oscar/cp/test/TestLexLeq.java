@@ -63,9 +63,9 @@ public class TestLexLeq extends TestCase {
     	
     	
     	
-    	s.post(new Eq(y[0],0));  	
-    	s.post(new Eq(y[1],0));
-    	s.post(new Eq(x[2],1));
+    	s.post(new EqCons(y[0],0));  	
+    	s.post(new EqCons(y[1],0));
+    	s.post(new EqCons(x[2],1));
     	
     	
     	assertTrue(!s.isFailed());

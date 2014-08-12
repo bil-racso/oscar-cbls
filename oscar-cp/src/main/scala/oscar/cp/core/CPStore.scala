@@ -18,10 +18,8 @@ package oscar.cp.core;
 
 import java.util.Collection
 import java.util.LinkedList
-
 import scala.collection.JavaConversions.asJavaCollection
 import scala.collection.JavaConversions.collectionAsScalaIterable
-
 import oscar.algo.ArrayQueue
 import oscar.algo.reversible.ReversiblePointer
 import oscar.algo.search.SearchNode
@@ -29,6 +27,7 @@ import oscar.cp.constraints.Eq
 import oscar.cp.core.CPOutcome.Failure
 import oscar.cp.core.CPOutcome.Success
 import oscar.cp.core.CPOutcome.Suspend
+import oscar.cp.constraints.EqCons
 
 /**
  * Constraint Programming CPStore
@@ -407,7 +406,7 @@ class CPStore(val propagStrength: CPPropagStrength) extends SearchNode {
    * @param c, the constraint
    * @return Failure if the fix point detects a failure that is one of the domain became empty, Suspend otherwise
    */
-  def post(b: CPBoolVar): CPOutcome = post(new Eq(b, 1), propagStrength)
+  def post(b: CPBoolVar): CPOutcome = post(new EqCons(b, 1), propagStrength)
 
   /**
    * Add a set of constraints to the store in a reversible way and trigger the fix-point algorithm afterwards.
@@ -470,7 +469,7 @@ class CPStore(val propagStrength: CPPropagStrength) extends SearchNode {
 
   def add(c: Constraint): CPOutcome = add(c, propagStrength)
 
-  def add(b: CPBoolVar): CPOutcome = post(new Eq(b, 1))
+  def add(b: CPBoolVar): CPOutcome = post(new EqCons(b, 1))
 
 
   /**
