@@ -35,12 +35,12 @@ import oscar.cbls.search.core.EasyNeighborhood
  * @author yoann.guyot@cetic.be
  * @author Florent Ghilain (UMONS)
  */
-class SwapNeighborhood(NodesPrecedingNodesToMove:()=>Iterable[Int],
-                       relevantNeighbors:()=>Int=>Iterable[Int],
-                       val vrp: VRP with MoveDescription with VRPObjective with PositionInRouteAndRouteNr,
-                       val neighborhoodName:String = "SwapNeighborhood",
-                       val best:Boolean = false,
-                       val hotRestart:Boolean = true) extends EasyNeighborhood(best,vrp.getObjective) {
+class Swap(NodesPrecedingNodesToMove:()=>Iterable[Int],
+           relevantNeighbors:()=>Int=>Iterable[Int],
+           val vrp: VRP with MoveDescription with VRPObjective with PositionInRouteAndRouteNr,
+           val neighborhoodName:String = "SwapNeighborhood",
+           val best:Boolean = false,
+           val hotRestart:Boolean = true) extends EasyNeighborhood(best,vrp.getObjective) {
 
   //the indice to start with for the exploration
   var startIndice:Int = 0
@@ -77,7 +77,7 @@ class SwapNeighborhood(NodesPrecedingNodesToMove:()=>Iterable[Int],
         vrp.undo()
 
         if (moveRequested(newObj)
-          && submitFoundMove(Swap(beforeMovedPoint, insertionPoint, newObj, vrp, neighborhoodName))) {
+          && submitFoundMove(SwapMove(beforeMovedPoint, insertionPoint, newObj, vrp, neighborhoodName))) {
           startIndice = beforeMovedPoint + 1
           return
         }
@@ -109,12 +109,11 @@ object Swap{
  * @author yoann.guyot@cetic.be
  * @author Florent Ghilain (UMONS)
  * */
-case class Swap(
-                 fstPred: Int,
-                 sndPred: Int,
-                 override val objAfter: Int,
-                 override val vrp: VRP with MoveDescription,
-                 override val neighborhoodName:String = null) extends VRPMove(objAfter, vrp, neighborhoodName) {
+case class SwapMove(fstPred: Int,
+                    sndPred: Int,
+                    override val objAfter: Int,
+                    override val vrp: VRP with MoveDescription,
+                    override val neighborhoodName:String = null) extends VRPMove(objAfter, vrp, neighborhoodName) {
 
   def encodeMove() {
     Swap.encode(fstPred, sndPred, vrp)

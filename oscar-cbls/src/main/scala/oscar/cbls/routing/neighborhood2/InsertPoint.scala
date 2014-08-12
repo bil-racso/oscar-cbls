@@ -39,7 +39,7 @@ import oscar.cbls.search.core.EasyNeighborhood
  * @author Florent Ghilain (UMONS)
  * @author yoann.guyot@cetic.be
  */
-class InsertPoint(UnroutedNodesToInsert:()=>Iterable[Int],
+case class InsertPoint(UnroutedNodesToInsert:()=>Iterable[Int],
                   relevantNeighbors:()=>Int=>Iterable[Int],
                   val vrp: VRP with MoveDescription with VRPObjective,
                   val neighborhoodName:String = "InsertPoint",
@@ -103,12 +103,11 @@ object InsertPoint{
  * @param objAfter the objective value if we performed this reinsert-point operator.
  * @param vrp the given VRP problem.
  */
-case class InsertPointMove(
-                        beforeInsertedPoint: Int,
-                        insertedPoint: Int,
-                        override val objAfter: Int,
-                        override val vrp: VRP with MoveDescription,
-                        override val neighborhoodName:String = null)
+case class InsertPointMove(beforeInsertedPoint: Int,
+                           insertedPoint: Int,
+                           override val objAfter: Int,
+                           override val vrp: VRP with MoveDescription,
+                           override val neighborhoodName:String = null)
   extends VRPMove(objAfter, vrp, neighborhoodName) {
 
   override def encodeMove() {

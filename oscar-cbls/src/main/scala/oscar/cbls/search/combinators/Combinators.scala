@@ -516,10 +516,17 @@ object RoundRobinNoParam{
   * @param b given that the move returned by the first neighborhood is committed, we explore the globally improving moves of this one
   * @param maxFirstStep the maximal number of moves to consider to the first neighborhood
   * @param maximalIntermediaryDegradation the maximal degradation that is admitted for the intermediary step; the higher, the more moves will be considered
+  * @param stopAfterFirstIfEnough stops if an explored first move is enough; in this case the composite move is not explore, only the first move is returned.
   *
   * @author renaud.delandtsheer@cetic.be
  */
-class AndThen(a:Neighborhood, b:Neighborhood, maxFirstStep:Int = 10, maximalIntermediaryDegradation:Int = Int.MaxValue) extends NeighborhoodCombinator(a,b){
+class AndThen(a:Neighborhood, b:Neighborhood, maxFirstStep:Int = 10, maximalIntermediaryDegradation:Int = Int.MaxValue, stopAfterFirstIfEnough:Boolean = false) extends NeighborhoodCombinator(a,b){
+
+  /** this method is called by AndThen to notify the first step, and that it is now exploring successors of this step.
+    * this method is called before the step is actually taken.
+    * @param m
+    */
+  def notifyFirstStep(m:Move){}
 
   override def getImprovingMove(acceptanceCriteria:(Int,Int) => Boolean): SearchResult = {
 
@@ -538,9 +545,17 @@ class AndThen(a:Neighborhood, b:Neighborhood, maxFirstStep:Int = 10, maximalInte
       a.getImprovingMove(instrumentedIntermediaryAcceptanceCriteria) match{
         case NoMoveFound => return NoMoveFound
         case MoveFound(firstMove) => {
+
+          if(stopAfterFirstIfEnough){
+            if(acceptanceCriteria(oldObj, firstMove.objAfter)){
+              return firstMove
+            }
+          }
+
           val touchedVars = firstMove.touchedVariables
           val model = touchedVars.head.model
           val snapshot = model.saveValues(touchedVars:_*)
+          notifyFirstStep(firstMove)
           firstMove.commit()
           if(amIVerbose) println("AndThen: trying first move " + firstMove)
           def globalAcceptanceCriteria:(Int,Int) => Boolean = (_,newObj) => acceptanceCriteria(oldObj,newObj)

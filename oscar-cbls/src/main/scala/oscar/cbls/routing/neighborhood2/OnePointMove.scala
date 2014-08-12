@@ -36,12 +36,12 @@ import oscar.cbls.search.core.EasyNeighborhood
  * @author yoann.guyot@cetic.be
  * @author Florent Ghilain (UMONS)
  * */
-class OnePointMoveNeighborhood(NodesPrecedingNodesToMove:()=>Iterable[Int],
-                               relevantNeighbors:()=>Int=>Iterable[Int],
-                               val vrp: VRP with MoveDescription with VRPObjective with PositionInRouteAndRouteNr,
-                               val neighborhoodName:String = "OnePointMoveNeighborhood",
-                               val best:Boolean = false,
-                               val hotRestart:Boolean = true) extends EasyNeighborhood(best,vrp.getObjective) {
+case class OnePointMove(NodesPrecedingNodesToMove:()=>Iterable[Int],
+                        relevantNeighbors:()=>Int=>Iterable[Int],
+                        val vrp: VRP with MoveDescription with VRPObjective with PositionInRouteAndRouteNr,
+                        val neighborhoodName:String = "OnePointMoveNeighborhood",
+                        val best:Boolean = false,
+                        val hotRestart:Boolean = true) extends EasyNeighborhood(best,vrp.getObjective) {
 
   //the indice to start with for the exploration
   var startIndice:Int = 0
@@ -80,7 +80,7 @@ class OnePointMoveNeighborhood(NodesPrecedingNodesToMove:()=>Iterable[Int],
         vrp.undo()
 
         if (moveRequested(newObj)
-          && submitFoundMove(OnePointMove(beforeMovedPoint, movedPoint, insertionPoint, newObj, vrp, neighborhoodName))){
+          && submitFoundMove(OnePointMoveMove(beforeMovedPoint, movedPoint, insertionPoint, newObj, vrp, neighborhoodName))){
           startIndice = beforeMovedPoint + 1
           return
         }
@@ -112,7 +112,7 @@ object OnePointMove{
  * @author yoann.guyot@cetic.be
  * @author Florent Ghilain (UMONS)
  */
-case class OnePointMove( predOfMovedPoint: Int,
+case class OnePointMoveMove( predOfMovedPoint: Int,
                     movedPoint:Int,
                     insertionPoint: Int,
                     override val objAfter: Int,

@@ -39,7 +39,7 @@ import oscar.cbls.search.core.EasyNeighborhood
  * @author yoann.guyot@cetic.be
  * @author Florent Ghilain (UMONS)
  * */
-class TwoOptNeighborhood(PredecesorOfFirstMovedPoint:()=>Iterable[Int],
+case class TwoOpt(PredecesorOfFirstMovedPoint:()=>Iterable[Int],
                   relevantNeighbors:()=>Int=>Iterable[Int],
                   val vrp: VRP with MoveDescription with VRPObjective with PositionInRouteAndRouteNr,
                   val neighborhoodName:String = "TwoOptNeighborhood",
