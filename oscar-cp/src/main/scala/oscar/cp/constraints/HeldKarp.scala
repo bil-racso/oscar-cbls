@@ -41,8 +41,6 @@ class HeldKarp(val edges: CPSetVar,val edgeData: Array[(Int,Int,Int)], val cost:
   val cctree = new CCTree(n-1)
   val distMatrix = Array.fill(n,n)(new ReversibleInt(s,Int.MaxValue)) 
   
-
-  
   val edgeIndex = Array.fill(n,n)(-1)
   val y = Array.fill(n)(0.0)
   
@@ -129,10 +127,10 @@ class HeldKarp(val edges: CPSetVar,val edgeData: Array[(Int,Int,Int)], val cost:
             val t2 = component.find(j).data.get
             val t = cctree.merge(t1,t2,idx)
             component.union(i,j,t)
-            edgeUsed(idx) = true
           } else {
             nAdjacentToExcluded += 1
           }
+          edgeUsed(idx) = true
           if (incident(i) > 2 || incident(j) > 2) return Failure
           weight += edgeWeight(idx)
         }
@@ -140,7 +138,7 @@ class HeldKarp(val edges: CPSetVar,val edgeData: Array[(Int,Int,Int)], val cost:
         if (nAdjacentToExcluded > 2) {
           return Failure
         }
-
+        var heaviestWeightAdjacentToExcluded = Double.MaxValue 
         // then complete the minimum spanning tree with Kruskal
         val possible = edges.possibleNotRequiredValues.toArray.sortBy(i => edgeWeight(i))
         for (idx <- possible) {
@@ -161,7 +159,9 @@ class HeldKarp(val edges: CPSetVar,val edgeData: Array[(Int,Int,Int)], val cost:
               incident(i) += 1
               incident(j) += 1
               weight += edgeWeight(idx)
+              heaviestWeightAdjacentToExcluded = edgeWeight(idx)
               nAdjacentToExcluded += 1
+              edgeUsed(idx) = true
             }
           }
         }
@@ -182,7 +182,7 @@ class HeldKarp(val edges: CPSetVar,val edgeData: Array[(Int,Int,Int)], val cost:
         }
 
         // filtering of the edges
-        if (iter == nSteps && false) {
+        if (iter == nSteps) {
           val inorder = cctree.inorderCollect()
           val pos = Array.fill(inorder.length)(0)
           for (i <- 0 until inorder.length) {
@@ -192,11 +192,16 @@ class HeldKarp(val edges: CPSetVar,val edgeData: Array[(Int,Int,Int)], val cost:
           val rmq = new RangeMinQuery(heights)
           for (idx <- possible) {
             val (i, j, w) = edgeData(idx)
-            if (i != excluded && j != excluded && !edgeUsed(idx)) {
-              //println(rmq(pos(i),pos(j)))
-              val idxr = inorder(rmq(pos(i), pos(j))).value // this is the heaviest edge to be removed
-              val reducedCost = edgeWeight(idx) - edgeWeight(idxr)
-              //println("reducedCost:" + reducedCost)
+            if (!edgeUsed(idx)) {
+              val reducedCost =
+                if (i != excluded && j != excluded) {
+                  // marginal cost of the edges that can enter into the spanning tree
+                  val idxr = inorder(rmq(pos(i), pos(j))).value // this is the heaviest edge to be removed
+                  edgeWeight(idx) - edgeWeight(idxr)
+                } else {
+                  // marginal cost of the edges adjacent to "excluded" node
+                  edgeWeight(idx) - heaviestWeightAdjacentToExcluded
+                }
               if ((oneTreeLBf + reducedCost).ceil.toInt > cost.max) {
                 if (edges.excludes(idx) == Failure) return Failure
               }
@@ -213,20 +218,11 @@ class HeldKarp(val edges: CPSetVar,val edgeData: Array[(Int,Int,Int)], val cost:
         for (i <- 0 until n) {
           y(i) += (stepSize * (2 - incident(i)))
         }
-        
-        
-        
-        
-        
-        
+
       }
       // end of iters, can do edge filtering here
 
 
-      
-      
-      
-      
       alpha *= beta;
       beta /= 2;
       
