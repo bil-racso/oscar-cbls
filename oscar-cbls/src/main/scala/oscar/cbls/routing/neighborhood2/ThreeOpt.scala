@@ -27,10 +27,8 @@
 package oscar.cbls.routing.neighborhood2
 
 import oscar.cbls.routing.model._
-import oscar.cbls.routing.neighborhood.{SearchResult, NoMoveFound, ThreeOpt}
-import oscar.cbls.search.SearchEngineTrait
 import oscar.cbls.search.algo.HotRestart
-import oscar.cbls.search.core.{EasyNeighborhood, Neighborhood}
+import oscar.cbls.search.core.EasyNeighborhood
 
 /**
  * Removes three edges of routes, and rebuilds routes from the segments.
@@ -45,11 +43,11 @@ import oscar.cbls.search.core.{EasyNeighborhood, Neighborhood}
  */
 case class ThreeOpt(potentialInsertionPoints:()=>Iterable[Int],
                     relevantNeighbors:()=>Int=>Iterable[Int],
-                    val vrp: VRP with MoveDescription with VRPObjective with PositionInRouteAndRouteNr,
-                    val neighborhoodName:String = "ThreeOptNeighborhood",
-                    val best:Boolean = false,
-                    val hotRestart:Boolean = true,
-                    val KKIterationScheme:Boolean = true) extends EasyNeighborhood(best,vrp.getObjective) {
+                    vrp: VRP with MoveDescription with VRPObjective with PositionInRouteAndRouteNr,
+                    neighborhoodName:String = "ThreeOptNeighborhood",
+                    best:Boolean = false,
+                    hotRestart:Boolean = true,
+                    KKIterationScheme:Boolean = true) extends EasyNeighborhood(best,vrp.getObjective) {
 
   val REVERSE = true // this is a constant used for readability
 
@@ -186,7 +184,7 @@ def exploreNeighborhoodRouteExtension(){
      */
     ThreeOpt.encodeMove(beforeStart, segEndPoint, insertionPoint, !REVERSE, vrp)
     vrp.commit(false)
-    val objAfterFirstMove = vrp.getObjective
+    val objAfterFirstMove = vrp.getObjective()
 
     /**
      * SECOND, we reverse the moved segment, in place,
@@ -194,32 +192,28 @@ def exploreNeighborhoodRouteExtension(){
      */
     vrp.reverseSegmentInPlace(insertionPoint, segEndPoint) // REVERSE
     vrp.commit(true)
-    val objAfterSecondMove = vrp.getObjective
+    val objAfterSecondMove = vrp.getObjective()
 
-    val FirstMoveIsBestMove = (objAfterFirstMove < objAfterSecondMove)
+    val FirstMoveIsBestMove = objAfterFirstMove < objAfterSecondMove
     val bestObjAfter = if(FirstMoveIsBestMove) objAfterFirstMove else objAfterSecondMove
 
     if(this.earlyStopRequested(bestObjAfter)){
-      vrp.cleanRecordedMoves
       if(FirstMoveIsBestMove) {
         vrp.undo() // REVERSE BACK TO FIRST MOVE
       }else{
-        vrp.cleanRecordedMoves
+        vrp.cleanRecordedMoves()
       }
       return true
     }
 
     //put everything back to place, since we three-opted and reversed, the rollback performs the reverse
-    vrp.cleanRecordedMoves
+    vrp.cleanRecordedMoves()
     ThreeOpt.encodeMove(insertionPoint, segStartPoint, beforeStart, REVERSE, vrp)
     vrp.commit(false)
 
-
-    return (moveRequested(bestObjAfter)
-      && submitFoundMove(
-      ThreeOptMove(beforeStart, segEndPoint, insertionPoint,
-        !FirstMoveIsBestMove, bestObjAfter, vrp, this.neighborhoodName)))
-
+    (moveRequested(bestObjAfter)
+      && submitFoundMove(ThreeOptMove(beforeStart, segEndPoint, insertionPoint,
+      !FirstMoveIsBestMove, bestObjAfter, vrp, this.neighborhoodName)))
   }
 
   //this resets the internal state of the Neighborhood
