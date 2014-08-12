@@ -274,6 +274,16 @@ trait MoveDescription extends VRP {
     Segment(s.end, s.start)
   }
 
+  /**
+   * Reverse a routed segment in its right place.
+   * segments are handled internally, so nothing is returned
+   */
+  def reverseSegmentInPlace(beforeStart: Int, segEndPoint: Int) {
+    val seg = cut(beforeStart, segEndPoint)
+    val revSeg = reverse(seg)
+    insert(revSeg, beforeStart)
+  }
+
   def insert(s: Segment, node: Int) {
     //println("inserting " + s + " after node " + node)
     addMove(affectFromVariable(s.end, node))

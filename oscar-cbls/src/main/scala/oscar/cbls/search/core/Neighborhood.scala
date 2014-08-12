@@ -36,8 +36,6 @@ object SearchResult {
   implicit def moveToSearchResult(m: Move): MoveFound = MoveFound(m)
 }
 
-
-
 /**
  * @author renaud.delandtsheer@cetic.be
  */
@@ -353,20 +351,33 @@ case class NoMoveNeighborhood() extends StatelessNeighborhood{
  *   return
  * }
  *}}}
-
+ *
+ * you can also perform in a justDoIt fashion:
+ * when you performed a trial move to evaluate the objective function, before backtracking, you ca perform as follows:
+ *{{{
+ * if (earlyStopRequested(newObj))
+ *   hotRestartForNextTime = ...
+ *   return
+ * }
+ *}}}
+ *
  * @param best true if you want the best move false if you want the first acceptable move
  * @param obj the objective function. notice that it is actually a function. if you have an [[oscar.cbls.objective.Objective]] there is an implicit conversion available
  * @param neighborhoodName the name of the neighborhood, used for verbosities
  */
 abstract class EasyNeighborhood(best:Boolean = false, obj:()=>Int, neighborhoodName:String=null) extends Neighborhood{
+
+  //passing parameters, and getting return values from the search
   private var oldObj:Int=0
   private var acceptanceCriterion:(Int,Int) => Boolean=null
   private var toReturnMove:Move = null
   private var bestNewObj:Int = Int.MaxValue
 
+  //variables related to JustDoIt
   private var justDoIt:Boolean = false
   private var alreadyRejected:Boolean = false
-private var justDidIt:Boolean = false
+  private var justDidIt:Boolean = false
+
   override final def getImprovingMove(acceptanceCriterion:(Int,Int) => Boolean, justDoIt:Boolean):SearchResult = {
     oldObj = obj()
     this.acceptanceCriterion = acceptanceCriterion
