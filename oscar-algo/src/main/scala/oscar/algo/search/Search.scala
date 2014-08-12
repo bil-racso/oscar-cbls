@@ -90,7 +90,6 @@ class Search(node: SearchNode, branching: Branching) {
     def stat() = new SearchStatistics(nbNodes, nFails = nBkts, time = System.currentTimeMillis() - t0, completed = alternativesStack.isEmpty, timeInTrail = node.time, maxTrailSize = node.maxSize, nSols = solCounter)
 
     node.pushState()
-    val rootMagic = node.magic
 
     // add initial alternatives of the root node
     if (!node.isFailed) {
@@ -141,7 +140,14 @@ class Search(node: SearchNode, branching: Branching) {
       }
     }
 
-    node.popUntil(rootMagic)
-    stat()
+    // Pop the remaining nodes 
+    var i = alternativesStack.size
+    while (i != 0) {
+      node.pop
+      i -= 1
+    }
+    node.pop()
+
+    stat() // return the statistics of the search
   }
 }

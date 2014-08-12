@@ -58,11 +58,11 @@ public class TestStretch extends TestCase {
     	
     	Automaton automaton = Stretch.getStretchAutomaton(x, shortest, longest);
     	s.post(new Regular(x,automaton));
-    	s.post(new Eq(x[0],0));
+    	s.post(new EqCons(x[0], 0));
     	assertTrue(x[1].isBound() && x[1].getValue()==0);
-    	s.post(new Eq(x[1],0));
-    	s.post(new Eq(x[2],0));
-    	s.post(new Eq(x[3],0));
+    	s.post(new EqCons(x[1], 0));
+    	s.post(new EqCons(x[2], 0));
+    	s.post(new EqCons(x[3], 0));
     	assertTrue(!x[4].hasValue(0));
     }
     

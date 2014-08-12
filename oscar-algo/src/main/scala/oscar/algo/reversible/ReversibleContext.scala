@@ -55,7 +55,7 @@ class ReversibleContext {
   def onPop(action: => Unit): Unit = popListeners.append(() => action)
 
   def pushOnTrail[T](reversible: Reversible[T], value: T): Unit = {
-    val entry = new TrailEntryImpl[T](reversible, value, magicNumber)
+    val entry = new TrailEntryImpl[T](reversible, value)
     trailStack.push(entry)
     val size = trailStack.size
     if (size > maxTrailSize) maxTrailSize = size
@@ -95,16 +95,6 @@ class ReversibleContext {
       restoreUntil(pointerStack.last)
     }
     // Increments the magic because we want to trail again
-    magicNumber += 1
-  }
-
-  def popUntil(magic: Long): Unit = {
-    var pointer = pointerStack.top
-    while (pointer != null && pointer.magic >= magic) {
-      pointerStack.pop()
-      pointer = pointerStack.top
-    }
-    restoreUntil(pointer)
     magicNumber += 1
   }
 
