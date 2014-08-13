@@ -38,7 +38,7 @@ class MinCircuit(val succ: Array[CPIntVar], val distMatrixSucc: Array[Array[Int]
     val n = succ.size
     val pred = Array.fill(n)(CPIntVar(0 until n)(s))
 
-    if (s.post(new Circuit(succ), Strong) == Failure) return Failure
+    if (s.post(new Circuit(succ,false), Strong) == Failure) return Failure
 
     if (s.post(new Sum((0 until n).map(i => distMatrixSucc(i)(succ(i))), obj)) == Failure) return Failure
 
