@@ -24,10 +24,7 @@ object TSPVisu extends CPModel with App {
   val totDist = CPIntVar(0 to distMatrix.flatten.sum)
 
   // Constraints
-  add(circuit(succ), Strong)
-  add(minAssignment(succ, distMatrix, totDist))
-  add(sum(Cities)(i => distMatrix(i)(succ(i))) == totDist)
-
+  add(minCircuit(succ, distMatrix, totDist),Strong)
   // Search heuristic
   minimize(totDist) search binaryFirstFail(succ)
 

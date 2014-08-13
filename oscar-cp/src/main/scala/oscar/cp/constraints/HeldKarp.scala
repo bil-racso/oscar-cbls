@@ -26,6 +26,9 @@ import oscar.algo.reversible.ReversibleInt
 import oscar.algo.DisjointSets
 import CPOutcome._
 import scala.collection.mutable.ArrayBuffer
+import oscar.algo.CCTree
+import oscar.algo.CCTreeNode
+import oscar.algo.RangeMinQuery
 
 /**
  * @author Pierre Schaus pschaus@gmail.com
@@ -34,13 +37,13 @@ class HeldKarp(val edges: CPSetVar,val edgeData: Array[(Int,Int,Int)], val cost:
 
   val epsilon = 10e-6
   val n = (edgeData.map(_._1).max max (edgeData.map(_._2).max)) +1
-  val component = new DisjointSets(0,n-1)
+  val component = new DisjointSets[CCTreeNode](0,n-1)
+  val cctree = new CCTree(n-1)
   val distMatrix = Array.fill(n,n)(new ReversibleInt(s,Int.MaxValue)) 
-  
-
   
   val edgeIndex = Array.fill(n,n)(-1)
   val y = Array.fill(n)(0.0)
+  
   
   for (((i,j,w),idx) <- edgeData.zipWithIndex) {
     edgeIndex(i)(j) = idx
@@ -91,6 +94,7 @@ class HeldKarp(val edges: CPSetVar,val edgeData: Array[(Int,Int,Int)], val cost:
     var stepSize = 0.1
     var alpha = 2.0
     var beta = 0.5
+    val excluded = n-1
     
     for (metaiter <- 0 until 3) {
       iter = 0
@@ -98,43 +102,56 @@ class HeldKarp(val edges: CPSetVar,val edgeData: Array[(Int,Int,Int)], val cost:
         
         iter += 1
         improvement = false
-        val excluded = 0
+        
         component.reset()
+        cctree.reset()
+        component.resetAndSetData(i => cctree.nodes(i))
+        val edgeUsed = Array.fill(edgeData.length)(false)
+          
         val incident = Array.fill(n)(0)
 
         def edgeWeight(idx: Int): Double = {
           val (i, j, w) = edgeData(idx)
           (w - y(i) - y(j))
         }
-
+        // first add the required edges to the tree
         val required = edges.requiredSet()
         var weight = 0.0
         var nAdjacentToExcluded = 0
         for (idx <- required) {
           val (i, j, w) = edgeData(idx)
+          incident(i) += 1
+          incident(j) += 1
           if (i != excluded && j != excluded) {
-            component.union(component.find(i), component.find(j))
-            incident(i) += 1
-            incident(j) += 1
+            val t1 = component.find(i).data.get
+            val t2 = component.find(j).data.get
+            val t = cctree.merge(t1,t2,idx)
+            component.union(i,j,t)
           } else {
             nAdjacentToExcluded += 1
           }
+          edgeUsed(idx) = true
+          if (incident(i) > 2 || incident(j) > 2) return Failure
           weight += edgeWeight(idx)
         }
-
+        // check if out degree is not more than 2
         if (nAdjacentToExcluded > 2) {
           return Failure
         }
-
+        var heaviestWeightAdjacentToExcluded = Double.MaxValue 
+        // then complete the minimum spanning tree with Kruskal
         val possible = edges.possibleNotRequiredValues.toArray.sortBy(i => edgeWeight(i))
-
         for (idx <- possible) {
           val (i, j, w) = edgeData(idx)
           if (i != excluded && j != excluded) {
             if (component.find(i) != component.find(j)) {
               incident(i) += 1
               incident(j) += 1
-              component.union(component.find(i), component.find(j))
+              val t1 = component.find(i).data.get
+              val t2 = component.find(j).data.get
+              val t = cctree.merge(t1, t2, idx)
+              component.union(i, j, t)   
+              edgeUsed(idx) = true
               weight += edgeWeight(idx)
             }
           } else {
@@ -142,11 +159,14 @@ class HeldKarp(val edges: CPSetVar,val edgeData: Array[(Int,Int,Int)], val cost:
               incident(i) += 1
               incident(j) += 1
               weight += edgeWeight(idx)
+              heaviestWeightAdjacentToExcluded = edgeWeight(idx)
               nAdjacentToExcluded += 1
+              edgeUsed(idx) = true
             }
           }
         }
-        val oneTreeLB = ((2 * y.map(_ + 0.0).sum + weight)-epsilon).ceil.toInt
+        val oneTreeLBf = ((2 * y.map(_ + 0.0).sum + weight)-epsilon)
+        val oneTreeLB = oneTreeLBf.ceil.toInt
         if (lb < oneTreeLB) {
           improvement = true
           lb = oneTreeLB
@@ -155,17 +175,54 @@ class HeldKarp(val edges: CPSetVar,val edgeData: Array[(Int,Int,Int)], val cost:
             return Failure
           }
         }
-        val denom: Double = (for (i <- 0 until n) yield ((2 - incident(i)) * (2 - incident(i)))).sum
-         
+        if (!cctree.singleRoot) {
+          //println("=> problem, not single root")
+          // the graph without "excluded" is not connected
+          return Failure
+        }
+
+        // filtering of the edges
+        if (iter == nSteps) {
+          val inorder = cctree.inorderCollect()
+          val pos = Array.fill(inorder.length)(0)
+          for (i <- 0 until inorder.length) {
+            pos(inorder(i).index) = i
+          }
+          val heights = inorder.map(_.height)
+          val rmq = new RangeMinQuery(heights)
+          for (idx <- possible) {
+            val (i, j, w) = edgeData(idx)
+            if (!edgeUsed(idx)) {
+              val reducedCost =
+                if (i != excluded && j != excluded) {
+                  // marginal cost of the edges that can enter into the spanning tree
+                  val idxr = inorder(rmq(pos(i), pos(j))).value // this is the heaviest edge to be removed
+                  edgeWeight(idx) - edgeWeight(idxr)
+                } else {
+                  // marginal cost of the edges adjacent to "excluded" node
+                  edgeWeight(idx) - heaviestWeightAdjacentToExcluded
+                }
+              if ((oneTreeLBf + reducedCost).ceil.toInt > cost.max) {
+                if (edges.excludes(idx) == Failure) return Failure
+              }
+            }
+          }
+        }
+
         
+        // update the weights
+        val denom: Double = (for (i <- 0 until n) yield ((2 - incident(i)) * (2 - incident(i)))).sum
         var target = if (cost.max - oneTreeLB < 0) oneTreeLB+0.1 else cost.max
         if (denom == 0) stepSize = 0
         else stepSize = alpha * (target - oneTreeLB) / denom
         for (i <- 0 until n) {
           y(i) += (stepSize * (2 - incident(i)))
         }
+
       }
       // end of iters, can do edge filtering here
+
+
       alpha *= beta;
       beta /= 2;
       
