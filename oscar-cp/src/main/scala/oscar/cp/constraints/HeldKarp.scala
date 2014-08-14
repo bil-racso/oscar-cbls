@@ -26,8 +26,6 @@ import oscar.algo.reversible.ReversibleInt
 import oscar.algo.DisjointSets
 import CPOutcome._
 import scala.collection.mutable.ArrayBuffer
-import oscar.algo.CCTree
-import oscar.algo.CCTreeNode
 import oscar.algo.RangeMinQuery
 
 /**
@@ -95,8 +93,8 @@ class HeldKarp(val edges: CPSetVar,val edgeData: Array[(Int,Int,Int)], val cost:
     var alpha = 2.0
     var beta = 0.5
     val excluded = n-1
-    
-    for (metaiter <- 0 until 3) {
+    val nMetaIter = 2
+    for (metaiter <- 0 until nMetaIter) {
       iter = 0
       while (iter < nSteps) {
         
@@ -131,11 +129,15 @@ class HeldKarp(val edges: CPSetVar,val edgeData: Array[(Int,Int,Int)], val cost:
             nAdjacentToExcluded += 1
           }
           edgeUsed(idx) = true
-          if (incident(i) > 2 || incident(j) > 2) return Failure
+          if (incident(i) > 2 || incident(j) > 2) {
+            //println("failure h&k nadjecent exluced > 2")
+            return Failure
+          }
           weight += edgeWeight(idx)
         }
         // check if out degree is not more than 2
         if (nAdjacentToExcluded > 2) {
+          //println("failure h&k nadjecent exluced > 2")
           return Failure
         }
         var heaviestWeightAdjacentToExcluded = Double.MaxValue 
@@ -172,17 +174,18 @@ class HeldKarp(val edges: CPSetVar,val edgeData: Array[(Int,Int,Int)], val cost:
           lb = oneTreeLB
           
           if (cost.updateMin(lb) == Failure) {
+            //println("failure h&k lb:"+lb)
             return Failure
           }
         }
         if (!cctree.singleRoot) {
-          //println("=> problem, not single root")
+          //println("failure , not single root")
           // the graph without "excluded" is not connected
           return Failure
         }
 
         // filtering of the edges
-        if (iter == nSteps) {
+        if ((iter == nSteps) && (nMetaIter-1 == metaiter)) {
           val inorder = cctree.inorderCollect()
           val pos = Array.fill(inorder.length)(0)
           for (i <- 0 until inorder.length) {
@@ -203,6 +206,7 @@ class HeldKarp(val edges: CPSetVar,val edgeData: Array[(Int,Int,Int)], val cost:
                   edgeWeight(idx) - heaviestWeightAdjacentToExcluded
                 }
               if ((oneTreeLBf + reducedCost).ceil.toInt > cost.max) {
+                //println("failure h&k exclude edge")
                 if (edges.excludes(idx) == Failure) return Failure
               }
             }
@@ -229,6 +233,7 @@ class HeldKarp(val edges: CPSetVar,val edgeData: Array[(Int,Int,Int)], val cost:
 
     }
     if (cost.updateMin(lb) == Failure) {
+      //println("failure lb:"+lb)
       return Failure
     } 
     return Suspend
@@ -236,6 +241,97 @@ class HeldKarp(val edges: CPSetVar,val edgeData: Array[(Int,Int,Int)], val cost:
   }
  
 }
+
+
+
+/**
+ * Connected Component Tree
+ * @author Pierre Schaus pschaus@gmail.com
+ */
+class CCTreeNode(private[constraints] var parent: Int, private[constraints] var left: Int, private[constraints] var right: Int, val index: Int) {
+  private[constraints] var v: Int = -1
+  private[constraints] var h: Int = 0
+  def height = h
+  
+  private def reset() {
+    parent = -1
+    left = -1
+    right = -1
+  }
+  def value = v
+  def hasLeft = left >= 0
+  def hasRight = right >= 0
+  def hasParent = parent >= 0
+}
+
+/**
+ * @param n the number of leaf nodes
+ */
+class CCTree(n: Int) {
+  private var index = n
+  private var rooted = false
+
+  
+  def reset() {
+    index = n
+    rooted = false
+  }
+  
+
+  val nodes = Array.tabulate(n + n - 1)(i => new CCTreeNode(-1, -1, -1, i))
+  val nodesInorder = Array.tabulate(n + n - 1)(i => nodes(i))
+  def singleRoot = rooted
+
+  def merge(left: CCTreeNode, right: CCTreeNode, value: Int): CCTreeNode = {
+    assert(left.index < index && right.index < index)
+    val parent = nodes(index)
+    parent.left = left.index
+    parent.right = right.index
+    parent.v = value
+    parent.parent = -1
+    left.parent = index
+    right.parent = index
+    index += 1
+    rooted = (index == nodes.length)
+    if (rooted) computeHeights()
+    parent
+  }
+  
+  private def computeHeights() {
+    height(root)
+    def height(n : CCTreeNode) {
+      n.h = if (n.hasParent) nodes(n.parent).h + 1 else 0
+      if (n.hasLeft) height(nodes(n.left))
+      if (n.hasRight) height(nodes(n.right))
+    }
+  }
+
+  def root: CCTreeNode = {
+    assert(index == nodes.length)
+    nodes(nodes.length-1)
+  }
+
+  /**
+   * return the nodes sorted according to an inorder visit
+   */
+  def inorderCollect(): Array[CCTreeNode] = {
+    var r = root
+    var i = 0
+    inorder(root)
+    def inorder(n: CCTreeNode): Unit = {
+      if (n.left != -1) inorder(nodes(n.left))
+      nodesInorder(i) = n
+      i += 1
+      if (n.right != -1) inorder(nodes(n.right))
+    }
+    assert(i == index)
+    nodesInorder
+  }
+
+}
+
+
+
 
 /**
  * @author Pierre Schaus pschaus@gmail.com

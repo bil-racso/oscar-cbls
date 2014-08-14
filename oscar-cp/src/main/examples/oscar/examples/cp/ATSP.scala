@@ -12,7 +12,8 @@ import oscar.util._
  */
 object ATSP extends CPModel with App {
 
-    var lines = Source.fromFile("data/ATSP/ftv38.atsp").getLines.toArray//
+	//var lines = Source.fromFile("data/ATSP/ftv64.atsp").getLines.toArray
+    var lines = Source.fromFile("data/ATSP/ftv64.atsp").getLines.toArray//
     //var lines = Source.fromFile("data/ATSP/ftv33.atsp").getLines.toArray//
     
     
@@ -24,7 +25,7 @@ object ATSP extends CPModel with App {
     
     distMatrixSucc.foreach(i => println(i.mkString("\t")))
     val succ = Array.fill(n)(CPIntVar(0 until n))
-    val obj = CPIntVar(0 until 10000000)
+    val obj = CPIntVar(0 until 1000000)
     add(minCircuit(succ, distMatrixSucc,obj),Strong)
  
     minimize(obj)

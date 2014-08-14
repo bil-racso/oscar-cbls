@@ -15,30 +15,45 @@
 
 package oscar.algo
 
+
+
 /**
  * @author Pierre Schaus pschaus@gmail.com
+ * Range minimum query <O(n.log(n)),O(1)>
  */
-class RangeMinQuery(values: Array[Int]) {
+class RangeMinQuery(val values: Array[Int]) {
 
-    val n = values.length
-    val m = Array.fill(n,n)(Int.MinValue ) 
-    for (i <- 0 until n) m(i)(i) = i
-    for (i <- 0 until n; j <- i+1 until n) {
-      if (values(m(i)(j-1)) < values(j)) {
-        m(i)(j) = m(i)(j-1)
-      } else {
-        m(i)(j) = j
+    val n = values.length;
+    val logTable = Array.fill(n+1)(0)
+    for (i <- 2 to n)
+      logTable(i) = logTable(i >> 1) + 1
+    val rmq = Array.fill(logTable(n) + 1)(Array.fill(n)(0))
+
+    for (i <- 0 until n)
+      rmq(0)(i) = i;
+    var k = 1
+    while ((1 << k) < n) {
+      var i = 0
+      while ((i + (1 << k)) <= n) {
+        val x = rmq(k - 1)(i)
+        val y = rmq(k - 1)(i + (1 << k - 1))
+        rmq(k)(i) = if (values(x) <= values(y))  x else y
+        i += 1
       }
-    }
-    
-    
-    /**
-     * @param
-     * @return the index of the minimum value between indices i and j (included).
-     */
-    def apply(i: Int, j: Int): Int = {
-      assert(i < j)
-      m(i min j)(j max i)
+      k += 1
     }
   
+  /**
+   * @param 0 <= a < b < values.length
+   * @return values(rmq(i,j)) = min(values(a),values(a+1),...,values(b))
+   */
+  def apply(a: Int, b: Int): Int = {
+    val i = a min b
+    val j = a max b
+    val k = logTable(j - i)
+    val x = rmq(k)(i)
+    val y = rmq(k)(j - (1 << k) + 1)
+    if (values(x) <= values(y)) x else y
+  }
+
 }
