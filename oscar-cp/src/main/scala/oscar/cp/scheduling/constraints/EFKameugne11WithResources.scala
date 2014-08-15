@@ -19,6 +19,7 @@ extends Constraint(capacity.store, "EFKameugne11WithResources") {
   require(n == durations.size)
   require(n == ends.size)
   require(n == demands.size)
+  require(n == resources.size)
   
   
   def setup(strength: CPPropagStrength): CPOutcome = {
@@ -31,9 +32,10 @@ extends Constraint(capacity.store, "EFKameugne11WithResources") {
     durations foreach sdeCB
     ends      foreach sdeCB
     demands   foreach sdeCB
-    resources foreach resCB
     sdeCB(capacity)
-    
+
+    resources foreach resCB
+
     propagate()
   }
   
@@ -61,8 +63,7 @@ extends Constraint(capacity.store, "EFKameugne11WithResources") {
   val E       = Array.fill(n)(0) 
     
   override def propagate(): CPOutcome = {
-    // TODO: add resources, filter activities whose demand can be zero
-    
+    // TODO: filter activities whose demand can be zero
     var i = 0
     while (i < n) {
       startsmin(i) = starts(i).min
@@ -115,6 +116,11 @@ extends Constraint(capacity.store, "EFKameugne11WithResources") {
       while (i >= 0) {
         if (mandatory(i) && dmax(i) <= du) {                                                                   // \Omega is not << i, so task i can be lower bound of \Omega
           Energy += pmin(i) * cmin(i)
+          if (Energy > C * (du - rmin(i))) {
+            // println("Energy Overload")
+            return Failure                                                      // Energy overload on this interval
+          }
+            
           if ((r_rho == Int.MinValue && Energy > 0) || Energy * (du - r_rho) > maxEnergy * (du - rmin(i))) {   // Energy / (du-rmin(i)) > maxEnergy/(du-r_rho) => i has higher density
             maxEnergy = Energy
             r_rho = rmin(i)
@@ -125,6 +131,11 @@ extends Constraint(capacity.store, "EFKameugne11WithResources") {
           if (rest > 0) {                                                                                      // We do density updates only for \Theta \subseteq est_i, lct_i 
             Dupd(i) = math.max(Dupd(i), r_rho + ceiling_div(rest, cmin(i))) 
           }
+        }
+        else if (optional(i) && !mandatory(i) && dmax(i) <= du) {                   // if an activity that could be in this resource
+          if (Energy + pmin(i) * cmin(i) > C * (du - rmin(i)) &&   // would make it overload
+              resources(i).removeValue(id) == Failure)             // remove it from this resource
+            return Failure
         }
         
         E(i) = Energy
@@ -148,7 +159,7 @@ extends Constraint(capacity.store, "EFKameugne11WithResources") {
             val newlbpi = math.max(Dupd(i), SLupd(i))
                         
             if (newlbpi > rmin(i)) {
-//              println(s"* EF Updating ${r(i)} with $newlbpi")
+              // println(s"* EF Updating ${r(i)} with $newlbpi")
               if (mandatory(i) && r(i).updateMin(newlbpi) == Failure) return Failure
               if (optional(i) && newlbpi > r(i).max && resources(reorder(i)).removeValue(id) == Failure) return Failure
             }
@@ -170,21 +181,21 @@ extends Constraint(capacity.store, "EFKameugne11WithResources") {
       val q = a / b
       if (a > 0 && q * b != a) q + 1
       else q
-    }
-
+  }
  
 }
 
 
 object EFKameugne11WithResources {
-  def apply(s: Array[CPIntVar], d: Array[CPIntVar], e: Array[CPIntVar], dem: Array[CPIntVar], r: Array[CPIntVar], capacity: CPIntVar, id :Int)(implicit store: CPStore) = {
+  def apply(s: Array[CPIntVar], d: Array[CPIntVar], e: Array[CPIntVar], dem: Array[CPIntVar], r: Array[CPIntVar], capacity: CPIntVar, id :Int): Array[Constraint] = {
     val rs = s.map(_.opposite).asInstanceOf[Array[CPIntVar]]
     val re = e.map(_.opposite).asInstanceOf[Array[CPIntVar]]
     val priorityL2R = 1
-    val priorityR2L = 0
-    Array(new EFKameugne11WithResources(s,  d, e,  dem, r, capacity, id, priorityL2R),
-          new EFKameugne11WithResources(re, d, rs, dem, r, capacity, id, priorityR2L))
+    val priorityR2L = 1
+    Array[Constraint](new EFKameugne11WithResources(s,  d, e,  dem, r, capacity, id, priorityL2R),
+                      new EFKameugne11WithResources(re, d, rs, dem, r, capacity, id, priorityR2L))
     // new EFKameugne11WithResources(s, d, e, dem, r, capacity, id, priorityL2R)
+    // new EFKameugne11WithResources(re, d, rs, dem, r, capacity, id, priorityL2R)
   }
 }
 
