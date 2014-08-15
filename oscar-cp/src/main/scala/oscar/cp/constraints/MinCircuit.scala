@@ -22,7 +22,7 @@ import oscar.algo.reversible.ReversibleSparseSet
 
 /**
  * Ensures that succ represents a valid circuit. <br>
- * succ[i] represents the city visited after city i. Each city is visited once and
+ * succ(i) represents the city visited after city i. Each city is visited once and
  * there is only one tour.<br>
  * Available propagation strengths are Weak, Medium and Strong.
  * Weak = elements + circuit + alldiff (AC)
@@ -32,22 +32,33 @@ import oscar.algo.reversible.ReversibleSparseSet
  * @see CPPropagStrength
  * @author Pierre Schaus pschaus@gmail.com
  */
-class MinCircuit(val succ: Array[CPIntVar], val distMatrixSucc: Array[Array[Int]], obj: CPIntVar, addPredModel: Boolean = true) extends Constraint(obj.store, "MinCircuit") {
+class MinCircuit(val succ: Array[CPIntVar], val distMatrix: Array[Array[Int]], obj: CPIntVar, addPredModel: Boolean = true) extends Constraint(obj.store, "MinCircuit") {
 
+  
+  
   override def setup(l: CPPropagStrength): CPOutcome = {
     val n = succ.size
+    val distMatrixSucc = Array.tabulate(n,n)((i,j) => distMatrix(i)(j))
+    
+    
+    
     val pred = Array.fill(n)(CPIntVar(0 until n)(s))
 
-    if (s.post(new Circuit(succ), Strong) == Failure) return Failure
+    if (s.post(new Circuit(succ,false), Strong) == Failure) return Failure
 
     if (s.post(new Sum((0 until n).map(i => distMatrixSucc(i)(succ(i))), obj)) == Failure) return Failure
 
     if (l == CPPropagStrength.Medium || l == CPPropagStrength.Strong) {
-      if (s.post(minAssignment(succ, distMatrixSucc, obj)) == Failure) return Failure
+      if (s.post(minAssignment(succ, distMatrixSucc, obj)) == Failure) {
+        println("failure min assignment")
+        return Failure
+      }
     }
 
     if (l == CPPropagStrength.Strong) {
-      if (s.post(new AsymetricHeldKarp(succ, distMatrixSucc, obj)) == Failure) return Failure
+      if (s.post(new AsymetricHeldKarp(succ, distMatrixSucc, obj)) == Failure) {
+        return Failure
+      }
     }
 
     if (addPredModel) {

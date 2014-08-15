@@ -53,20 +53,9 @@ object BiTSP extends App {
 
   // Constraints
   // -----------
-  cp.paretoMinimize(totDists:_*) subjectTo {
-
-    // Channeling between predecessors and successors
-    cp.add(new Inverse(pred, succ))
-
-    // Consistency of the circuit with Strong filtering
-    cp.add(circuit(succ), Strong)
-    cp.add(circuit(pred), Strong)
-
+  cp.paretoMinimize(totDists: _*) subjectTo {
     for (o <- Objs) {
-      cp.add(sum(Cities)(i => distMatrices(o)(i)(succ(i))) == totDists(o))
-      cp.add(sum(Cities)(i => distMatrices(o)(i)(pred(i))) == totDists(o))
-      cp.add(minAssignment(pred, distMatrices(o), totDists(o)))
-      cp.add(minAssignment(succ, distMatrices(o), totDists(o)))
+      cp.add(minCircuit(succ, distMatrices(o), totDists(o)), Strong)
     }
   } search {
     binaryFirstFail(succ)

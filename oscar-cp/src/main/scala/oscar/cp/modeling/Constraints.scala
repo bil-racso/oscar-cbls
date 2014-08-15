@@ -186,12 +186,13 @@ trait Constraints {
   /**
    * Circuit Constraint (Available Filtering: Weak, Strong)
    * @param succ an array of n variable with domains defined on (0..n-1), where succ[i] represents the city visited after city i. 
+   * @param addPredModel should be set to true (default) to have a redundant model on predecessor array, false otherwise.
    * @return a constraint enforcing a circuit representation where succ(i) represents
    *         the city visited after city i (no city is visited twice and there is no sub-tours).
    *
    */
-  def circuit(succ: Array[CPIntVar]): Constraint = {
-    return new Circuit(succ)
+  def circuit(succ: Array[CPIntVar], addPredModel: Boolean = true): Constraint = {
+    return new Circuit(succ, addPredModel)
   }
   
 

@@ -13,12 +13,11 @@
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
 package oscar.cp.test;
+import junit.framework.TestCase;
 import oscar.cp.constraints.BinPackingFlow;
-import oscar.cp.constraints.Eq;
+import oscar.cp.constraints.EqCons;
 import oscar.cp.core.CPIntVar;
 import oscar.cp.core.CPStore;
-
-import junit.framework.TestCase;
 
 /**
  * @author Pierre Schaus pschaus@gmail.com
@@ -86,7 +85,7 @@ public class TestBinPackingFlow extends TestCase {
 				CPIntVar.apply(cp, 0,3)};
     	
     	cp.post(new BinPackingFlow(x, w, l,c));
-    	cp.post(new Eq(x[0], 0));
+    	cp.post(new EqCons(x[0], 0));
     	
     	assertTrue(cp.isFailed());	
     }     

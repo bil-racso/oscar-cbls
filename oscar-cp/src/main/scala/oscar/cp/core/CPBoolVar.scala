@@ -123,10 +123,10 @@ class CPBoolVar(val x: CPIntVar, name: String = "") extends CPIntVar(x.store, na
   // -----------------------------------------------------------
 
   /** @return a constraint setting the boolean variable to true (1) */
-  def constraintTrue(): Constraint = new oscar.cp.constraints.Eq(x, 1)
+  def constraintTrue(): Constraint = new oscar.cp.constraints.EqCons(x, 1)
 
   /** @return a constraint setting the boolean variable to false (0) */
-  def constraintFalse(): Constraint = new oscar.cp.constraints.Eq(x, 0)
+  def constraintFalse(): Constraint = new oscar.cp.constraints.EqCons(x, 0)
 
   /** @return true if the variable is bound and bound to value 1 */
   def isTrue: Boolean = isBound && value == 1

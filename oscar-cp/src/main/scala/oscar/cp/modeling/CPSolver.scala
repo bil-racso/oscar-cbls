@@ -111,7 +111,7 @@ class CPSolver(propagStrength: CPPropagStrength) extends CPOptimizer(propagStren
    * @throws NoSolutionException if the fix point detects a failure that is one of the domain became empty
    */
   override def add(b: CPBoolVar): CPOutcome = {
-    val outcome = post(new Eq(b, 1))
+    val outcome = post(new EqCons(b, 1))
     if ((outcome == Failure || isFailed) && throwNoSolExceptions) {
       throw new NoSolutionException(s"the stored failed when setting " + b.name + " to true")
     }
