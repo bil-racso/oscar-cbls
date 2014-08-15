@@ -31,14 +31,18 @@ class BoundDomain(override val context: ReversibleContext, val minValue: Int, va
 
   @inline
   override final def min: Int = {
-    if (isEmpty) sys.error("the domain is empty")
-    else _min.value
+    assert(!isEmpty, "the domain is empty")
+    _min.value
+    // if (isEmpty) sys.error("the domain is empty")
+    // else _min.value
   }
 
   @inline
   override final def max: Int = {
-    if (isEmpty) sys.error("the domain is empty")
-    else _max.value
+    assert(!isEmpty, "the domain is empty")
+    _max.value
+    // if () sys.error("the domain is empty")
+    // else _max.value
   }
 
   @inline
