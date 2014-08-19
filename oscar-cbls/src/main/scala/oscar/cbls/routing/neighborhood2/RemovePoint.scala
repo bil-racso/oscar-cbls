@@ -25,7 +25,6 @@
 package oscar.cbls.routing.neighborhood2
 
 import oscar.cbls.routing.model.{VRPObjective, MoveDescription, VRP}
-import oscar.cbls.search.SearchEngineTrait
 import oscar.cbls.search.algo.HotRestart
 import oscar.cbls.search.core.EasyNeighborhood
 
@@ -37,10 +36,10 @@ import oscar.cbls.search.core.EasyNeighborhood
  * @author Florent Ghilain (UMONS)
  */
 case class RemovePoint(PredecessorsOfRoutedPointsToRemove:()=>Iterable[Int],
-                       val vrp: VRP with MoveDescription with VRPObjective,
-                       val neighborhoodName:String = "RemovePoint",
-                       val best:Boolean = false,
-                       val hotRestart:Boolean = true) extends EasyNeighborhood(best,vrp.getObjective) {
+                       vrp: VRP with MoveDescription with VRPObjective,
+                       neighborhoodName:String = "RemovePoint",
+                       best:Boolean = false,
+                       hotRestart:Boolean = true) extends EasyNeighborhood(best,vrp.getObjective) {
 
   //the indice to start with for the exploration
   var startIndice: Int = 0

@@ -24,10 +24,7 @@
 
 package oscar.cbls.routing.neighborhood2
 
-import oscar.cbls.search.SearchEngine
-import oscar.cbls.modeling.Algebra._
 import oscar.cbls.routing.model._
-import oscar.cbls.search.SearchEngineTrait
 import oscar.cbls.search.algo.HotRestart
 import oscar.cbls.search.core.EasyNeighborhood
 
@@ -41,10 +38,10 @@ import oscar.cbls.search.core.EasyNeighborhood
  * */
 case class TwoOpt(PredecesorOfFirstMovedPoint:()=>Iterable[Int],
                   relevantNeighbors:()=>Int=>Iterable[Int],
-                  val vrp: VRP with MoveDescription with VRPObjective with PositionInRouteAndRouteNr,
-                  val neighborhoodName:String = "TwoOptNeighborhood",
-                  val best:Boolean = false,
-                  val hotRestart:Boolean = true) extends EasyNeighborhood(best,vrp.getObjective) {
+                  vrp: VRP with MoveDescription with VRPObjective with PositionInRouteAndRouteNr,
+                  neighborhoodName:String = "TwoOptNeighborhood",
+                  best:Boolean = false,
+                  hotRestart:Boolean = true) extends EasyNeighborhood(best,vrp.getObjective) {
 
   //the indice to start with for the exploration
   var startIndice: Int = 0
@@ -79,10 +76,6 @@ case class TwoOpt(PredecesorOfFirstMovedPoint:()=>Iterable[Int],
 
         vrp.commit(true)
         val newObj = vrp.getObjective()
-        if(earlyStopRequested(newObj)){
-          startIndice = fstPred + 1
-          return
-        }
         vrp.undo()
 
         if (moveRequested(newObj)

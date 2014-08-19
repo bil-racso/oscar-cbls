@@ -15,9 +15,8 @@
 package oscar.cbls.search.combinators
 
 import oscar.cbls.invariants.core.computation.{CBLSIntVar, Solution, Store}
-import oscar.cbls.objective.Objective
 import oscar.cbls.search.core._
-import oscar.cbls.search.move.{CompositeMove, CallBackMove, Move}
+import oscar.cbls.search.move.{CompositeMove, InstrumentedMove, Move}
 
 import scala.language.implicitConversions
 
@@ -53,16 +52,15 @@ class ProtectBest(a:Neighborhood, i:CBLSIntVar) extends NeighborhoodCombinator(a
 
     a.getImprovingMove(acceptanceCriteria) match{
       case NoMoveFound => NoMoveFound
-      case MoveFound(m) => {
+      case MoveFound(m) =>
         if(m.objAfter > objBeforeMove && objBeforeMove < bestObj){
           //solution degrades, and we were better than the best recorded
           //so we save
           best = s.solution(true)
           bestObj = objBeforeMove
-          if(verbose >= 2) println("saving best solution befopre degradation (obj:" + bestObj + ")")
+          if(verbose >= 2) println("saving best solution before degradation (obj:" + bestObj + ")")
         }
         MoveFound(m)
-      }
     }
   }
 
@@ -110,11 +108,11 @@ class DoOnQuery(a:Neighborhood, proc: () =>Unit) extends NeighborhoodCombinator(
  * @param procAfterMove a procedure to execute after the move is taken
  * @param procAfterMoveOnMove a procedure to execute after the move is taken, with the move as input parameter
  */
-class DoOnMove(a:Neighborhood, proc: ()=>Unit, procOnMove:Move => Unit = null, procAfterMove:()=>Unit = null, procAfterMoveOnMove:Move=>Unit = null) extends NeighborhoodCombinator(a){
+case class DoOnMove(a:Neighborhood, proc: ()=>Unit, procOnMove:Move => Unit = null, procAfterMove:()=>Unit = null, procAfterMoveOnMove:Move=>Unit = null) extends NeighborhoodCombinator(a){
   override def getImprovingMove(acceptanceCriteria:(Int,Int) => Boolean): SearchResult = {
     a.getImprovingMove(acceptanceCriteria) match {
      case m:MoveFound =>
-       CallBackMove(m.m, callBackBeforeMove(m.m), callBackAfterMove(m.m))
+       InstrumentedMove(m.m, callBackBeforeMove(m.m), callBackAfterMove(m.m))
      case x => x
     }
   }
@@ -141,7 +139,7 @@ class DoOnFirstMove(a:Neighborhood, proc: ()=>Unit) extends NeighborhoodCombinat
   override def getImprovingMove(acceptanceCriteria:(Int,Int) => Boolean): SearchResult = {
     if (isFirstMove) {
       a.getImprovingMove(acceptanceCriteria) match {
-        case m: MoveFound => CallBackMove(m.m, notifyMoveTaken)
+        case m: MoveFound => InstrumentedMove(m.m, notifyMoveTaken)
         case x => x
       }
     }else{
@@ -399,7 +397,7 @@ class MaxMoves(a:Neighborhood, val maxMove:Int) extends NeighborhoodCombinator(a
   override def getImprovingMove(acceptanceCriteria:(Int,Int) => Boolean): SearchResult = {
     if (remainingMoves > 0) {
       a.getImprovingMove(acceptanceCriteria) match{
-        case m:MoveFound => CallBackMove(m.m,notifyMoveTaken)
+        case m:MoveFound => InstrumentedMove(m.m,notifyMoveTaken)
         case x => x
       }
     } else{
@@ -450,46 +448,64 @@ class MaxMoves(a:Neighborhood, val maxMove:Int) extends NeighborhoodCombinator(a
   * and swaps neighborhood after "step" invocations
   * @author renaud.delandtsheer@cetic.be
   */
-class RoundRobin(a:Neighborhood, b:Neighborhood, steps:Int = 1) extends NeighborhoodCombinator(a,b){
-  var currentStep:Int = steps
-  override def getImprovingMove(acceptanceCriteria:(Int,Int) => Boolean): SearchResult = {
-    if(currentStep >0){
-      currentStep -= 1
-      if(currentStep == 0) currentStep = -steps
-      a.getImprovingMove(acceptanceCriteria) match{
+class RoundRobin(l:List[Neighborhood], steps:Int = 1) extends NeighborhoodCombinator(l:_*){
+  val robins = l.length
+  var remainingSteps:Int = steps
+  var tail:List[Neighborhood] = l
+  override def getImprovingMove(acceptanceCriteria:(Int,Int) => Boolean): SearchResult =
+    myGetImprovingMove(acceptanceCriteria)
+
+  private def myGetImprovingMove(acceptanceCriteria:(Int,Int) => Boolean, triedRobins:Int = 0): SearchResult = {
+    if (triedRobins >= robins){
+      NoMoveFound
+    }else if(remainingSteps > 0){
+      //no need to change neighborhood yet
+      remainingSteps -= 1
+      tail.head.getImprovingMove(acceptanceCriteria) match{
         case NoMoveFound =>
-          currentStep = - steps
-          b.reset()
-          b.getImprovingMove(acceptanceCriteria)
+          moveToNextRobin()
+          myGetImprovingMove(acceptanceCriteria, triedRobins +1)
         case x:MoveFound => x
       }
-    }else{
-      currentStep += 1
-      if(currentStep == 0) currentStep = steps
-      b.getImprovingMove(acceptanceCriteria) match{
-        case NoMoveFound =>
-          currentStep = steps
-          a.reset()
-          a.getImprovingMove(acceptanceCriteria)
-        case x:MoveFound => x
-      }
+    }else {
+      //move to next robin
+      remainingSteps = steps
+      moveToNextRobin()
+      myGetImprovingMove(acceptanceCriteria, triedRobins + 1)
     }
+  }
+
+  private def moveToNextRobin(){
+    if(tail.tail.isEmpty){
+      tail = l
+    }else{
+      tail = tail.tail
+    }
+    remainingSteps = steps
   }
 
   //this resets the internal state of the move combinators
   override def reset(){
-    currentStep = steps
+    remainingSteps = steps
     super.reset()
   }
+
+  /**
+   * proposes a round-robin with that.
+   * notice that you can chain steps; this will build a round-robin on the whole sequence (although this operation is not associative)
+   * @param b
+   * @return
+   */
+  override def step(b: Neighborhood): RoundRobin = new RoundRobin(l ::: List(b))
 }
 
-class RoundRobinNoParam(val a:Neighborhood,val b:Neighborhood){
-  def step(s:Int):Neighborhood = new RoundRobin(a,b,s)
+class RoundRobinNoParam(val a:Neighborhood, val b:Neighborhood){
+  def step(s:Int):Neighborhood = new RoundRobin(List(a,b),s)
 }
 
 object RoundRobinNoParam{
   implicit def toNeighBorHood(rr:RoundRobinNoParam):Neighborhood = {
-    val toReturn = new RoundRobin(rr.a,rr.b,1)
+    val toReturn = new RoundRobin(List(rr.a,rr.b),1)
     toReturn.verbose = rr.a.verbose
     toReturn
   }
@@ -536,7 +552,7 @@ class AndThen(a:Neighborhood, b:Neighborhood, maxFirstStep:Int = 10, maximalInte
 
     var oldObj:Int = 0
     def instrumentedIntermediaryAcceptanceCriteria(stolenOldObj:Int,intermediaryObj:Int):Boolean = {
-      oldObj = stolenOldObj;
+      oldObj = stolenOldObj
       intermediaryObj - stolenOldObj <=  maximalIntermediaryDegradation
     }
 
@@ -544,7 +560,7 @@ class AndThen(a:Neighborhood, b:Neighborhood, maxFirstStep:Int = 10, maximalInte
       remainingFirstSteps -= 1
       a.getImprovingMove(instrumentedIntermediaryAcceptanceCriteria) match{
         case NoMoveFound => return NoMoveFound
-        case MoveFound(firstMove) => {
+        case MoveFound(firstMove) =>
 
           if(stopAfterFirstIfEnough){
             if(acceptanceCriteria(oldObj, firstMove.objAfter)){
@@ -561,14 +577,12 @@ class AndThen(a:Neighborhood, b:Neighborhood, maxFirstStep:Int = 10, maximalInte
           def globalAcceptanceCriteria:(Int,Int) => Boolean = (_,newObj) => acceptanceCriteria(oldObj,newObj)
           b.getImprovingMove(globalAcceptanceCriteria) match{
             case NoMoveFound => model.restoreSnapshot(snapshot)
-            case MoveFound(secondMove) =>{
+            case MoveFound(secondMove) =>
               model.restoreSnapshot(snapshot)
               return CompositeMove(List(firstMove,secondMove),
                 secondMove.objAfter,
                 firstMove.neighborhoodName + "_AndThen_" + secondMove.neighborhoodName)
-            }
           }
-        }
       }
     }
    NoMoveFound
@@ -587,7 +601,7 @@ class MaxMovesWithoutImprovement(a:Neighborhood, val maxMovesWithoutImprovement:
     override def getImprovingMove(acceptanceCriteria:(Int,Int) => Boolean): SearchResult = {
       if (stepsSinceLastImprovement <= maxMovesWithoutImprovement) {
         a.getImprovingMove(acceptanceCriteria) match{
-          case m:MoveFound => CallBackMove(m.m,callBack = null, afterMove = notifyMoveTaken)
+          case m:MoveFound => InstrumentedMove(m.m,callBack = null, afterMove = notifyMoveTaken)
           case x => x
         }
       } else{

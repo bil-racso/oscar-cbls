@@ -18,13 +18,12 @@ package oscar.cbls.search.core
 import oscar.cbls.invariants.core.computation.CBLSIntVar
 import oscar.cbls.objective.Objective
 import oscar.cbls.search.combinators._
-import oscar.cbls.search.move.Move
+import oscar.cbls.search.move.{CallBackMove, Move}
 
 import scala.language.implicitConversions
 
 abstract sealed class SearchResult
 case object NoMoveFound extends SearchResult
-case object MovePerformed extends SearchResult
 
 case class MoveFound(m:Move) extends SearchResult{
   def commit(){m.commit()}
@@ -36,30 +35,39 @@ object SearchResult {
   implicit def moveToSearchResult(m: Move): MoveFound = MoveFound(m)
 }
 
+
+abstract class JumpNeighborhood extends Neighborhood{
+
+  def doIt()
+  def shortDescription():String
+
+  override def getImprovingMove(acceptanceCriterion: (Int, Int) => Boolean): SearchResult = {
+    CallBackMove(_ => doIt, Int.MaxValue, this.getClass.getSimpleName, shortDescription)
+  }
+}
+
+abstract class JumpNeighborhoodParam[T] extends Neighborhood{
+
+  def doIt(param:T)
+
+  /**if null is returned, the neighborhood returns NoMoveFound*/
+  def getParam():T
+  def getShortDescription(param:T):String
+
+  override def getImprovingMove(acceptanceCriterion: (Int, Int) => Boolean): SearchResult = {
+    val param = getParam()
+    if(param == null) NoMoveFound
+    else CallBackMove(doIt, Int.MaxValue, this.getClass.getSimpleName, () => getShortDescription(param),param)
+  }
+}
+
 /**
  * @author renaud.delandtsheer@cetic.be
  */
 abstract class Neighborhood{
-//  def getImprovingMove(acceptor:(Int,Int) => Boolean):SearchResult =  getImprovingMove()
 
-  /**
-   * @param acceptanceCriterion oldObj,newObj => should the move to the newObj be kept (default is oldObj > newObj)
-   *                         beware that a changing criteria might interact unexpectedly with stateful neighborhood combinators
-   * @return an improving move
-   */
-  def getImprovingMove(acceptanceCriterion:(Int,Int) => Boolean, justDoIt:Boolean):SearchResult = {
-    getImprovingMove(acceptanceCriterion) match{
-      case MoveFound(m) => {
-        m.commit()
-        MovePerformed
-      }
-      case o => o
-    }
-  }
 
-  def getImprovingMove(acceptanceCriterion:(Int,Int) => Boolean):SearchResult = {
-    throw new Error("no search procedure implemented for " + this)
-  }
+  def getImprovingMove(acceptanceCriterion:(Int,Int) => Boolean):SearchResult
 
   //this resets the internal state of the Neighborhood
   def reset()
@@ -82,8 +90,6 @@ abstract class Neighborhood{
    * @return true if a move has been performed, false otherwise
    */
   def doImprovingMove():Boolean = 0 != doAllMoves(_ >= 1)
-
-
 
     /**
    * @param shouldStop a function that takes the iteration number and returns true if search should be stopped
@@ -310,6 +316,14 @@ abstract class Neighborhood{
    * this combinator overrides accepts all moves (this is the withAcceptanceCriteria, given the fully acceptant criterion
    */
   def acceptAll:WithAcceptanceCriterion = new WithAcceptanceCriterion(this,(_:Int,_:Int) => true)
+
+  /**
+   * proposes a round-robin with that.
+   * notice that you can chain steps; this will build a round-robin on the whole sequence (although this operation is not associative, so better not use parentheses)
+   * @param b
+   * @return
+   */
+  def step(b:Neighborhood) = new RoundRobin(List(this,b))
 }
 
 abstract class StatelessNeighborhood extends Neighborhood{
@@ -352,15 +366,6 @@ case class NoMoveNeighborhood() extends StatelessNeighborhood{
  * }
  *}}}
  *
- * you can also perform in a justDoIt fashion:
- * when you performed a trial move to evaluate the objective function, before backtracking, you ca perform as follows:
- *{{{
- * if (earlyStopRequested(newObj))
- *   hotRestartForNextTime = ...
- *   return
- * }
- *}}}
- *
  * @param best true if you want the best move false if you want the first acceptable move
  * @param obj the objective function. notice that it is actually a function. if you have an [[oscar.cbls.objective.Objective]] there is an implicit conversion available
  * @param neighborhoodName the name of the neighborhood, used for verbosities
@@ -373,32 +378,17 @@ abstract class EasyNeighborhood(best:Boolean = false, obj:()=>Int, neighborhoodN
   private var toReturnMove:Move = null
   private var bestNewObj:Int = Int.MaxValue
 
-  //variables related to JustDoIt
-  private var justDoIt:Boolean = false
-  private var alreadyRejected:Boolean = false
-  private var justDidIt:Boolean = false
-
-  override final def getImprovingMove(acceptanceCriterion:(Int,Int) => Boolean, justDoIt:Boolean):SearchResult = {
+  override final def getImprovingMove(acceptanceCriterion:(Int,Int) => Boolean):SearchResult = {
     oldObj = obj()
     this.acceptanceCriterion = acceptanceCriterion
     toReturnMove = null
     bestNewObj = Int.MaxValue
-    this.justDoIt = justDoIt
-    alreadyRejected = false
-    justDidIt = false;
 
     exploreNeighborhood()
 
-    if(justDidIt){
-      if (amIVerbose) println(neighborhoodName + ": move performed")
-      MovePerformed
-    }else if(toReturnMove == null || (best && !acceptanceCriterion(oldObj,bestNewObj))) {
+    if(toReturnMove == null || (best && !acceptanceCriterion(oldObj,bestNewObj))) {
       if (amIVerbose) println(neighborhoodName + ": no move found")
       NoMoveFound
-    }else if (justDoIt){
-      toReturnMove.commit()
-      if (amIVerbose) println(neighborhoodName + ": move performed")
-      MovePerformed
     }else {
       if (amIVerbose) println(neighborhoodName + ": move found")
       toReturnMove
@@ -410,18 +400,6 @@ abstract class EasyNeighborhood(best:Boolean = false, obj:()=>Int, neighborhoodN
     * as explained in the documentation of this class
     */
   def exploreNeighborhood()
-
-  def earlyStopRequested(newObj:Int):Boolean = {
-    if(!best && justDoIt){
-      if (acceptanceCriterion(oldObj, newObj)){
-        justDidIt = true;
-        return true
-      }else{
-        alreadyRejected = true
-      }
-    }
-    false
-  }
 
   /**
    * @param newObj the new value of the objective function if we perform the move
@@ -435,12 +413,10 @@ abstract class EasyNeighborhood(best:Boolean = false, obj:()=>Int, neighborhoodN
         bestNewObj = newObj
         toReturnMove = m
       }
-    } else if (!(justDoIt && alreadyRejected) && acceptanceCriterion(oldObj, newObj)) {
+    } else if (acceptanceCriterion(oldObj, newObj)) {
       toReturnMove = m
-      if(amIVerbose) println(neighborhoodName + ": move found")
       return true
     }
-    alreadyRejected = false
     false
   }
 
@@ -474,7 +450,6 @@ abstract class EasyNeighborhood(best:Boolean = false, obj:()=>Int, neighborhoodN
       false
     } else{ //we do not check acceptance criterion here anymore since it was tested in moveRequested, and it could be non-deterministic
       toReturnMove = m
-      if(amIVerbose) println(neighborhoodName + ": move found")
       true
     }
   }

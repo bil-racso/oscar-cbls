@@ -38,10 +38,10 @@ import oscar.cbls.search.core.EasyNeighborhood
  * */
 case class OnePointMove(NodesPrecedingNodesToMove:()=>Iterable[Int],
                         relevantNeighbors:()=>Int=>Iterable[Int],
-                        val vrp: VRP with MoveDescription with VRPObjective with PositionInRouteAndRouteNr,
-                        val neighborhoodName:String = "OnePointMoveNeighborhood",
-                        val best:Boolean = false,
-                        val hotRestart:Boolean = true) extends EasyNeighborhood(best,vrp.getObjective) {
+                        vrp: VRP with MoveDescription with VRPObjective with PositionInRouteAndRouteNr,
+                        neighborhoodName:String = "OnePointMoveNeighborhood",
+                        best:Boolean = false,
+                        hotRestart:Boolean = true) extends EasyNeighborhood(best,vrp.getObjective) {
 
   //the indice to start with for the exploration
   var startIndice:Int = 0
@@ -72,11 +72,6 @@ case class OnePointMove(NodesPrecedingNodesToMove:()=>Iterable[Int],
         OnePointMove.encode(beforeMovedPoint, insertionPoint, vrp)
         vrp.commit(true)
         val newObj = vrp.getObjective()
-        if(earlyStopRequested(newObj)){
-          vrp.cleanRecordedMoves()
-          startIndice = beforeMovedPoint + 1
-          return
-        }
         vrp.undo()
 
         if (moveRequested(newObj)

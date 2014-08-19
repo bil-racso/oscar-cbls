@@ -41,10 +41,10 @@ import oscar.cbls.search.core.EasyNeighborhood
  */
 case class InsertPoint(UnroutedNodesToInsert:()=>Iterable[Int],
                   relevantNeighbors:()=>Int=>Iterable[Int],
-                  val vrp: VRP with MoveDescription with VRPObjective,
-                  val neighborhoodName:String = "InsertPoint",
-                  val best:Boolean = false,
-                  val hotRestart:Boolean = true) extends EasyNeighborhood(best,vrp.getObjective) {
+                  vrp: VRP with MoveDescription with VRPObjective,
+                  neighborhoodName:String = "InsertPoint",
+                  best:Boolean = false,
+                  hotRestart:Boolean = true) extends EasyNeighborhood(best,vrp.getObjective) {
 
   //the indice to start with for the exploration
   var startIndice: Int = 0
@@ -63,7 +63,7 @@ case class InsertPoint(UnroutedNodesToInsert:()=>Iterable[Int],
         "The search zone should be restricted to unrouted nodes when inserting.")
 
       for (beforeInsertedPoint <- relevantNeighborsNow(insertedPoint)
-           if (vrp.isRouted(beforeInsertedPoint))) {
+           if vrp.isRouted(beforeInsertedPoint)) {
         assert(vrp.isRecording, "MoveDescription should be recording now")
 
         InsertPoint.encode(beforeInsertedPoint, insertedPoint, vrp)

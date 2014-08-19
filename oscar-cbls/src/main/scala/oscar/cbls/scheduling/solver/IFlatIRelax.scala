@@ -30,40 +30,6 @@ import oscar.cbls.search.SearchEngine
  * ****************************************************************************
  */
 
-/*
-abstract class StopCriterion(){
-
-  //This method is called by the iFlatRelax at each step where the model is feasible
-  def shouldStop(it:Int,p:Planning):Boolean
-}
-
-case class plateauMaxItStopCriterion(maxIt: Int, stable: Int, verbose:Boolean)
-  extends StopCriterion{
-
-  var plateauLength = 0
-  var bestMakeSpan = Int.MaxValue
-
-  def shouldStop(it:Int,p:Planning):Boolean = {
-    if (p.makeSpan.value < bestMakeSpan) {
-      bestMakeSpan = p.makeSpan.value
-      plateauLength = 0
-      if (verbose) println("Better MakeSpan found: " + bestMakeSpan)
-    } else {
-      plateauLength += 1
-    }
-
-    if (it >= maxIt){
-      if (verbose) println("STOP criterion: maximum iteration number reached.")
-      return true
-    }
-    if (plateauLength >= stable){
-      if (verbose) println("STOP criterion: " + stable + " iterations without improvement.")
-      return true
-    }
-    return false
-  }
-}
-*/
 
 /**
  * @param p

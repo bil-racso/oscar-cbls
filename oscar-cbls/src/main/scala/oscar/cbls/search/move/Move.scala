@@ -39,7 +39,7 @@ abstract class Move(val objAfter:Int = Int.MaxValue, val neighborhoodName:String
    * This can happen with a set where we add two elements in two distinct moves that are aggregated into a [[oscar.cbls.search.move.CompositeMove]]
    * @return the list of touched variables.
    */
-  def touchedVariables:List[Variable]
+  def touchedVariables:List[Variable] = throw new Exception(this.getClass().getSimpleName + "cannot provide touched variables")
 
   /**
    * @return a readable string of the objective after wit ha space before, or an empty string
@@ -68,6 +68,10 @@ abstract class Move(val objAfter:Int = Int.MaxValue, val neighborhoodName:String
 object Move{
   def apply(neighborhoodName:String = null, objAfter:Int = 0)(code: =>Unit):EasyMove = new EasyMove(objAfter, neighborhoodName, code)
 }
+/**
+ * this class does not provide an implementation for touchedVariables,
+ * since we are only inputting source code for executing the move
+ * */
 class EasyMove(override val objAfter:Int, override val neighborhoodName:String = null, code: => Unit)
   extends Move(objAfter, neighborhoodName){
 
@@ -75,12 +79,6 @@ class EasyMove(override val objAfter:Int, override val neighborhoodName:String =
 
   override def toString: String = neighborhoodNameToString + "EasyMove"
 
-  /**
-   * this class does not provide an implementation for touchedVariables,
-   * since we are only inputting source code for executing the move
-   * @return the list of touched variables.
-   */
-  override def touchedVariables: List[Variable] = throw new Exception("EasyMove cannot provide touched variables")
 }
 
 /** standard move that assigns an int value to a CBLSIntVar
@@ -195,7 +193,7 @@ case class CompositeMove(ml:List[Move], override val objAfter:Int, override val 
   * @param callBack the method to invoke before the actual move is taken
   * @author renaud.delandtsheer@cetic.be
   */
-case class CallBackMove(initialMove:Move, callBack: () => Unit, afterMove: () => Unit = null) extends Move(initialMove.objAfter, initialMove.neighborhoodName){
+case class InstrumentedMove(initialMove:Move, callBack: () => Unit, afterMove: () => Unit = null) extends Move(initialMove.objAfter, initialMove.neighborhoodName){
   def commit(){
     if(callBack != null) callBack()
     initialMove.commit()
@@ -205,4 +203,12 @@ case class CallBackMove(initialMove:Move, callBack: () => Unit, afterMove: () =>
   override def toString: String = initialMove.toString
 
   override def touchedVariables: List[Variable] = initialMove.touchedVariables
+}
+
+case class CallBackMove[T](callBack: T => Unit, override val objAfter:Int, override val neighborhoodName:String, shortDescription:() => String, param:T = null) extends Move{
+  def commit(){
+    callBack(param)
+  }
+
+  override def toString: String = neighborhoodNameToString + "CallBackMove" + (if (shortDescription != null) "(" + shortDescription() + ")" else "")
 }

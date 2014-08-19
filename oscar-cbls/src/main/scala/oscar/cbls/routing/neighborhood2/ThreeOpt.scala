@@ -197,15 +197,6 @@ def exploreNeighborhoodRouteExtension(){
     val FirstMoveIsBestMove = objAfterFirstMove < objAfterSecondMove
     val bestObjAfter = if(FirstMoveIsBestMove) objAfterFirstMove else objAfterSecondMove
 
-    if(this.earlyStopRequested(bestObjAfter)){
-      if(FirstMoveIsBestMove) {
-        vrp.undo() // REVERSE BACK TO FIRST MOVE
-      }else{
-        vrp.cleanRecordedMoves()
-      }
-      return true
-    }
-
     //put everything back to place, since we three-opted and reversed, the rollback performs the reverse
     vrp.cleanRecordedMoves()
     ThreeOpt.encodeMove(insertionPoint, segStartPoint, beforeStart, REVERSE, vrp)
