@@ -71,6 +71,11 @@ class CPSolver(propagStrength: CPPropagStrength) extends CPOptimizer(propagStren
     super.minimize(Seq(objective): _*)
     this
   }
+  
+  override def minimize(objective: CPIntVar, ratio: Double): CPSolver = {
+    super.minimize(objective, ratio)
+    this
+  }
 
   override def maximize(objective: CPIntVar): CPSolver = {
     super.maximize(Seq(objective): _*)

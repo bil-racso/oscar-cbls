@@ -71,6 +71,7 @@ class CPObjective(val st: CPStore, val objs: CPObjectiveUnit*) extends Constrain
   /** Ensures that the domain of each objective objects only contains better values (according to 
    *  its tighten mode) than its best so far value. */
   override def propagate(): CPOutcome = {
+    // println("coucou")
     if (objs.forall(_.ensureBest() != CPOutcome.Failure)) CPOutcome.Suspend
     else {
       CPOutcome.Failure

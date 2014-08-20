@@ -9,6 +9,9 @@ import oscar.cp.constraints.CPObjectiveUnitMaximize
 import oscar.cp.constraints.CPObjective
 import oscar.cp.constraints.CPObjectiveUnitMinimize
 import oscar.cp.modeling.TightenType
+import oscar.cp.constraints.CPObjectiveGeometricMinimize
+import oscar.cp.constraints.CPObjectiveUnit
+import oscar.cp.constraints.CPObjectiveUnit
 
 class CPOptimizer(propagStrength: CPPropagStrength) extends CPStore(propagStrength) {
   
@@ -36,7 +39,12 @@ class CPOptimizer(propagStrength: CPPropagStrength) extends CPStore(propagStreng
   
   def minimize(objectives: CPIntVar*): CPOptimizer = 
     optimize(new CPObjective(this, objectives.map(new CPObjectiveUnitMinimize(_)): _*))
-
+  
+  def minimize(objective: CPIntVar, ratio: Double): CPOptimizer = {
+    val o = new CPObjectiveGeometricMinimize(objective, "GeometricMinimize", ratio): CPObjectiveUnit
+    optimize(new CPObjective(this, Array(o)))
+  }
+  
   def maximize(objective: CPIntVar): CPOptimizer = maximize(Seq(objective): _*)
 
   def maximize(objectives: CPIntVar*): CPOptimizer = 
@@ -76,7 +84,7 @@ class CPOptimizer(propagStrength: CPPropagStrength) extends CPStore(propagStreng
   @deprecated("solve is the default behavior of CPSolver and does not need to be specified anymore.", "1.0")
   def solve(): CPOptimizer = this
 
-  @deprecated("constraints do not need to be stated in the subectTo block anymore.", "1.0")
+  @deprecated("constraints do not need to be stated in the subjectTo block anymore.", "1.0")
   def subjectTo(constraintsBlock: => Unit): CPOptimizer = {
     try {
       constraintsBlock
