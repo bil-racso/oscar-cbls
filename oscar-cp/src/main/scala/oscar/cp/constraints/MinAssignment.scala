@@ -40,9 +40,7 @@ class MinAssignment(val xarg: Array[CPIntVar], val weightsarg: Array[Array[Int]]
   val J = 0 until n
   val W = 0 until n
   val maxVal = (0 until xarg.size).map(i => xarg(i).map(v => weightsarg(i)(v)).max).max
-  
   val M = (maxVal + 1) * n
-  
 
   val costMatrix = Array.tabulate(n, n)((i, j) => new ReversibleInt(s, if (!x(i).hasValue(j)) M else weights(i)(j)))
 
@@ -316,7 +314,7 @@ class MinAssignment(val xarg: Array[CPIntVar], val weightsarg: Array[Array[Int]]
     }
     for (i <- 0 until n; v <- 0 until n) {
       if (!x(i).hasValue(v)) {
-        valRemoveIdx(x(i), v, i)
+        valRemoveIdx(x(i), i, v)
       }
     }
     reduce()
