@@ -1,11 +1,12 @@
 package oscar.cbls.scheduling.solver
 
+import oscar.cbls.invariants.core.computation.Store
 import oscar.cbls.modeling.AlgebraTrait
 import oscar.cbls.scheduling.algo.CriticalPathFinder
 import oscar.cbls.scheduling.model.{Activity, PrecedenceCleaner, Resource, Planning}
-import oscar.cbls.search.SearchEngineTrait
+import oscar.cbls.search.{SearchEngine, SearchEngineTrait}
 import oscar.cbls.search.combinators.DoOnMove
-import oscar.cbls.search.core.{SearchResult, Neighborhood, JumpNeighborhoodParam, JumpNeighborhood}
+import oscar.cbls.search.core._
 import oscar.cbls.search.move.Move
 
 
@@ -118,20 +119,33 @@ case class Relax(p:Planning, pKill: Int,
 }
 
 
-case class RelaxUntilMakespanReduced(p:Planning, maxIterations:Int, pKill: Int,
-                                     doRelax:(Activity,Activity, Boolean) => Unit = (from: Activity, to: Activity, verbose:Boolean) => to.removeDynamicPredecessor(from, verbose),
-                                     minRelax: Int = 3) extends Neighborhood {
-  private var oldMakespan: Int = 0
-  private var makeSpanReduced: Boolean = false
+/**
+ * @param p
+ * @param verbose
+ * @author renaud.delandtsheer@cetic.be
+ */
+class IFlatIRelax2(p: Planning,
+                  verbose: Boolean = true,
+                  nbRelax: Int = 4,
+                  pkillPerRelax: Int = 50) {
 
-  private val baseNeighborhood = DoOnMove(Relax(p, pKill, doRelax) maxMoves (minRelax - 1) orElse (Relax(p, pKill, doRelax) when (() => !makeSpanReduced)),
-    proc = () => {oldMakespan = p.makeSpan.value},
-    procAfterMove = () => {if (p.makeSpan.value < oldMakespan) makeSpanReduced = true})
+  require(p.model.isClosed, "model should be closed before iFlatRelax algo can be instantiated")
+  val maxIterationsForFlatten = (p.activityCount * (p.activityCount - 1)) / 2
 
-  override def getImprovingMove(acceptanceCriterion: (Int, Int) => Boolean): SearchResult = baseNeighborhood.getImprovingMove(acceptanceCriterion)
+  /**
+   * This solves the jobshop by iterative relaxation and flattening
+   * @param maxIt the max number of iterations of the search
+   * @param stable the number of no successive noimprove that will cause the search to stop
+   */
+  def solve(maxIt: Int, stable: Int){
 
-  override def reset(): Unit = {
-    baseNeighborhood.reset
-    makeSpanReduced =  false
+    val saver = (NoMoveNeighborhood() protectBest p.makeSpan)
+    val iFLatRelaxStrategy = (FlattenWorseFirst(p,maxIterationsForFlatten) maxMoves 1 exhaustBack saver exhaustBack
+      (Relax(p, pkillPerRelax) untilImprovement(p.makeSpan, 3, maxIterationsForFlatten))
+      maxMoves stable withoutImprovementOver p.makeSpan )
+
+    iFLatRelaxStrategy.doAllMoves(_ >= maxIt)
+
+    saver.restoreBest()
   }
 }

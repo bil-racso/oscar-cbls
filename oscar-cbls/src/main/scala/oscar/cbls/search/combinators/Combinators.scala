@@ -627,6 +627,37 @@ class MaxMovesWithoutImprovement(a:Neighborhood, val maxMovesWithoutImprovement:
     }
 }
 
+/**calls the neighborhood until an improvement over obj is achieved
+  * the improvement is "since the last reset"
+ * @param a
+ * @param minMoves the min number of queries that will be forwarded to a (priority over the improvement)
+ * @param maxMove the max number of queries that will be forwarded to a (priority over the improvement)
+ * @param obj the obj that is looked for improvement
+ * @author renaud.delandtsheer@cetic.be
+ * */
+class UntilImprovement(a:Neighborhood, obj:CBLSIntVar, val minMoves:Int = 0, val maxMove:Int = Int.MaxValue)
+  extends NeighborhoodCombinator(a){
+
+  //TODO: pas sûr que cela fonctionne du premier coup; peut-être faut-il faire un reset au début de toute descente.
+  var oldObjOnReset = obj.value
+  var movesQueriedSinceReset = 0
+
+  override def getImprovingMove(acceptanceCriterion:(Int,Int) => Boolean): SearchResult = {
+    movesQueriedSinceReset += 1
+    if(movesQueriedSinceReset < maxMove
+      && (movesQueriedSinceReset < minMoves || obj.value >= oldObjOnReset))
+      a.getImprovingMove(acceptanceCriterion)
+    else NoMoveFound
+  }
+
+  //this resets the internal state of the move combinators
+  override def reset(){
+    oldObjOnReset = obj.value
+    movesQueriedSinceReset = 0
+    super.reset()
+  }
+}
+
 /** the purpose of this combinator is to change the name of the neighborhood it is given as parameter.
   * it will add a prefix to all moves sent back by this combinator
   * the only purposes are documentation and debug

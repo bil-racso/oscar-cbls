@@ -205,6 +205,11 @@ case class InstrumentedMove(initialMove:Move, callBack: () => Unit, afterMove: (
   override def touchedVariables: List[Variable] = initialMove.touchedVariables
 }
 
+object CallBackMove{
+  def apply(callBack: () => Unit, objAfter:Int, neighborhoodName:String, shortDescription:() => String)=
+    new CallBackMove[Unit](_ => {callBack()}, objAfter, neighborhoodName, shortDescription)
+}
+
 case class CallBackMove[T](callBack: T => Unit, override val objAfter:Int, override val neighborhoodName:String, shortDescription:() => String, param:T = null) extends Move{
   def commit(){
     callBack(param)

@@ -42,7 +42,7 @@ abstract class JumpNeighborhood extends Neighborhood{
   def shortDescription():String
 
   override def getImprovingMove(acceptanceCriterion: (Int, Int) => Boolean): SearchResult = {
-    CallBackMove(_ => doIt, Int.MaxValue, this.getClass.getSimpleName, shortDescription)
+    CallBackMove(() => doIt, Int.MaxValue, this.getClass.getSimpleName, shortDescription)
   }
 }
 
@@ -324,6 +324,17 @@ abstract class Neighborhood{
    * @return
    */
   def step(b:Neighborhood) = new RoundRobin(List(this,b))
+
+
+  /**calls the neighborhood until an improvement over obj is achieved
+    * the improvement is "since the last reset"
+    * @param minMoves the min number of queries that will be forwarded to a (priority over the improvement)
+    * @param maxMove the max number of queries that will be forwarded to a (priority over the improvement)
+    * @param obj the obj that is looked for improvement
+    * @author renaud.delandtsheer@cetic.be
+    * */
+  def untilImprovement(obj:CBLSIntVar, minMoves:Int = 0, maxMove:Int = Int.MaxValue) = new UntilImprovement(this, obj, minMoves, maxMove)
+
 }
 
 abstract class StatelessNeighborhood extends Neighborhood{
