@@ -21,9 +21,29 @@ import oscar.visual.shapes.VisualPolygon
 import oscar.visual.shapes.VisualLine
 import oscar.visual.VisualDrawing
 import scala.Array.canBuildFrom
-/*
-class VisualProfile(res: CumulativeResource, makespan: CPIntVar, color: Color = Color.WHITE) extends VisualDrawing(true, false) {
+import oscar.algo.HeightProfile
+import oscar.cp.modeling.CPSolver
+import oscar.visual.VisualFrame
 
+
+/**
+ * @author Pierre Schaus pschaus@gmail.com
+ * @author Renaud Hartert
+ */
+class VisualProfile(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], 
+                    demands: Array[CPIntVar], resourcesVar: Array[CPIntVar] ,
+                    capa: Int, id: Int, color: Color = Color.WHITE) extends VisualDrawing(true, false) {
+  
+  def this(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], 
+                    demands: Array[CPIntVar],capa: Int, color: Color) = this(starts,durations,ends,demands,Array.fill(starts.size)(CPIntVar(starts(0).store,0)),capa,0,color)  
+  
+
+  def compulsary(i: Int): Option[(Int,Int,Int)] = {
+    if (resourcesVar(i).isBoundTo(id) && starts(i).max < ends(i).min) Some(starts(i).max,ends(i).min-starts(i).max,demands(i).min)
+    else None
+  }
+  
+  
   // The profile is represented by a polygon
   private val polygon: VisualPolygon = VisualPolygon(this)
   polygon.innerCol = color
@@ -37,26 +57,60 @@ class VisualProfile(res: CumulativeResource, makespan: CPIntVar, color: Color = 
   private val zeroLine: VisualLine = VisualLine(this, 0, 0, 0, 0)
   zeroLine.outerCol = Color.BLUE;
 
-  def resource = res
+
 
   def update(xScale: Int, yScale: Int) {
+    
 
-    val activities = resource.cumulativeActivities
-    val rawPoints = CumulativeProfile.getCumulativeProfile(activities)
+    val rectangles = (for (i <- 0 until starts.size;j <- compulsary(i)) yield j).toArray
+    
+    val profile = HeightProfile.computeProfile(rectangles)
+    val start = profile(0)._1 
+    val end = {
+      val (s,d,_) = profile.last
+      s+d
+    }
 
-    // The end of a ProdConsActivity is not relevant
-    val points = rawPoints.map(p => if (p._1 > makespan.min) (makespan.min, p._2) else p)
+    val points = Array((start,0)) ++ profile.flatMap{case(s,d,h) => Array((s,h),(s+d,h))} ++ Array((end,0))
+    
 
-    val min = -points.map(_._2).min
+    
+    val min = points.map(_._1).min
+    val max = points.map(_._1).max
+    
+    println("min:"+min+" max:"+max)
 
     polygon.update(points.map(p => (p._1 * xScale, (p._2 + min) * yScale)))
 
-    capaLine.orig = (0, (resource.capacity + min) * yScale)
-    capaLine.dest = (xScale * makespan.getMax, (resource.capacity + min) * yScale)
+    capaLine.orig = (0, (capa + min) * yScale)
+    capaLine.dest = (xScale * max, (capa + min) * yScale)
 
     zeroLine.orig = (0, (min) * yScale)
-    zeroLine.dest = (xScale * makespan.getMax, (min) * yScale)
+    zeroLine.dest = (xScale * max, (min) * yScale)
 
     repaint()
   }
-}*/
+}
+
+object VisualProfile extends App {
+  implicit val cp = CPSolver()
+  
+  val s1 = CPIntVar(0)
+  val d1 = CPIntVar(10)
+  val e1 = s1+d1
+  val h1 = CPIntVar(3)
+  
+  val s2 = CPIntVar(5)
+  val d2 = CPIntVar(10)
+  val e2 = s2+d2
+  val h2 = CPIntVar(3)  
+  
+  val frame = new VisualFrame("Test Profile",1, 1)
+  val f1 = frame.createFrame("profile")
+  val vp = new VisualProfile(Array(s1,s2),Array(d1,d2),Array(e1,e2),Array(h1,h2),7,Color.CYAN)
+  f1.add(vp)
+  f1.pack()
+  frame.pack()
+  vp.update(100,100)
+  
+}

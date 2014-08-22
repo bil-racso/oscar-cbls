@@ -26,6 +26,7 @@ import scala.io.Source
 import oscar.cp.core.CPIntVar
 import oscar.cp.scheduling.visual.VisualGanttChart
 import oscar.cp.scheduling.search.SetTimesBranching
+import oscar.cp.scheduling.visual.VisualProfile
 
 object CumulativeJobShop extends CPModel with App {
 
@@ -80,8 +81,15 @@ object CumulativeJobShop extends CPModel with App {
   val frame = new VisualFrame("Cumulative JobShop Problem", nResources + 1, 1)
   val colors = VisualUtil.getRandomColors(nResources, true)
   val gantt = new VisualGanttChart(startsVar, durationsVar, endsVar, i => jobs(i), colors = i => colors(resources(i)))
-  onSolution { gantt.update(1, 20) }
+  
+
+  val profiles = Array.tabulate(nResources)(r => new VisualProfile(startsVar, durationsVar,endsVar, demandsVar, resourcesVar,2,r,color = colors(r)))
+  onSolution { 
+    gantt.update(1, 20) 
+    profiles.foreach(_.update(1, 20))
+  }
   frame.createFrame("Gantt chart").add(gantt)
+  for (r <- Resources) frame.createFrame("profile resource "+r).add(profiles(r))
   frame.pack
 
   // Search
