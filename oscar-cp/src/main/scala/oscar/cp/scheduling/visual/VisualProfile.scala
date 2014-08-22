@@ -72,13 +72,9 @@ class VisualProfile(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: A
     }
 
     val points = Array((start,0)) ++ profile.flatMap{case(s,d,h) => Array((s,h),(s+d,h))} ++ Array((end,0))
-    
 
-    
     val min = points.map(_._1).min
     val max = points.map(_._1).max
-    
-    println("min:"+min+" max:"+max)
 
     polygon.update(points.map(p => (p._1 * xScale, (p._2 + min) * yScale)))
 
