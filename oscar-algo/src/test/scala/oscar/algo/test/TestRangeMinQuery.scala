@@ -25,7 +25,6 @@ class TestRangeMinQuery extends FunSuite with ShouldMatchers {
     	val a = scala.util.Random.nextInt(20)
     	val b = (a + scala.util.Random.nextInt(20)).max(49)
     	val min = values.drop(a).take(b-a+1).min
-    	println("min of :"+values.drop(a).take(b-a+2).mkString(",") + " ==? "+min)
         values(rmq(a,b)) should be(min)
     }
   }  
