@@ -110,7 +110,6 @@ class TestHeldKarp extends FunSuite with ShouldMatchers  {
 
   
   test("HK") {
-    println("here")
     val rand = new scala.util.Random(0)
 
     for (i <- 0 until 100) {
