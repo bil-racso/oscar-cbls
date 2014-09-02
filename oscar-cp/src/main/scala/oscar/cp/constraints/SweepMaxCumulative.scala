@@ -22,7 +22,7 @@ import oscar.cp.core.CPOutcome
 import oscar.cp.core.Constraint
 import oscar.cp.core.CPPropagStrength
 import oscar.cp.modeling.CPSolver
-import oscar.algo.SortUtils.stableSort
+import oscar.algo.SortUtils._
 
 /**
  * @author Renaud Hartert ren.hartert@gmail.com
@@ -182,21 +182,31 @@ class SweepMaxCumulative(starts: Array[CPIntVar], durations: Array[CPIntVar], en
       capaContrib(i) = 0
     }
   }
-
+  
+  val permutation = Array.ofDim[Int](3*nTasks)
+  val dates = Array.ofDim[Int](3*nTasks)
+  
   private def sweepAlgorithm(): CPOutcome = {
 
     resetSweepLine
 
     // Sort events by increasing date
-    stableSort(eventPointSeries, 0, nEvents, (a: Event, b: Event) => a.date < b.date)
+    // stableSort(eventPointSeries, 0, nEvents, (a: Event, b: Event) => a.date < b.date)
+    for (i <- 0 until nEvents) {
+      permutation(i) = i
+      dates(i) = eventPointSeries(i).date
+    }
+    mergeSort(permutation, dates, 0, nEvents)
 
     // First position of the sweep line
-    var delta = eventPointSeries(0).date
+    //var delta = eventPointSeries(0).date
+    var delta = dates(permutation(0))
 
     var i = 0
     while (i < nEvents) {
 
-      val event = eventPointSeries(i)
+      //val event = eventPointSeries(i)
+      val event = eventPointSeries(permutation(i))
 
       if (event.eType != EventType.pruning) {
 
