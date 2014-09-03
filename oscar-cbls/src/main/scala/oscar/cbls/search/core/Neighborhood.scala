@@ -54,7 +54,7 @@ abstract class JumpNeighborhood extends Neighborhood{
 
 abstract class JumpNeighborhoodParam[T] extends Neighborhood{
 
-  def doIt: Unit ={
+  final def doIt{
     doIt(getParam)
   }
 

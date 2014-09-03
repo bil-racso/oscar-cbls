@@ -98,6 +98,7 @@ class Activity(val duration: CBLSIntVar, val planning: Planning, val name: Strin
     }
   }
 
+  @deprecated("method that perform such intricate operations have been moved as neighborhood", "1.2")
   def removeNonTightAdditionalPredecessors() {
     for (iD: Int <- additionalPredecessors.value) {
       if (!potentiallyKilledPredecessors.value.contains(iD)) {

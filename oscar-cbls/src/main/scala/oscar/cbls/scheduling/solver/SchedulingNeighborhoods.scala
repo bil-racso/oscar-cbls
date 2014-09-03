@@ -126,25 +126,49 @@ case class Relax(p:Planning, pKill: Int,
  * Warning: can only be called if there are no existing conflict!!
  * THIS IS COMPLETELY NEW EXPERIMENTAL AND UNTESTED
  * */
-case class RelaxNoConflict(p:Planning) extends JumpNeighborhood with SearchEngineTrait {
+case class RelaxNoConflict(p:Planning) extends JumpNeighborhoodParam[List[(Activity,Activity)]] with SearchEngineTrait {
 
-  override def doIt{
-    require(p.worseOvershotResource.value.isEmpty)
-    for (t: Activity <- p.activityArray) {
-      for (iD: Int <- t.additionalPredecessors.value) {
-        t.removeDynamicPredecessor(p.activityArray(iD), false)
-        if(!p.worseOvershotResource.value.isEmpty)
-          t.addDynamicPredecessor(p.activityArray(iD), false)
-      }
+  override def doIt(param: List[(Activity, Activity)]){
+    for((t,pred) <- param){
+      t.removeDynamicPredecessor(pred, false)
     }
   }
 
-  override def shortDescription(): String = "relaxes all precedences without introducing a conflict (based on planning.worseOvershotResource"
+  /** if null is returned, the neighborhood returns NoMoveFound */
+  override def getParam: List[(Activity, Activity)] = {
+    var toReturn:List[(Activity, Activity)] = List.empty
+    var improved = true;
+    while (improved) {
+      improved = false
 
+      for (t: Activity <- p.activityArray) {
+        for (iD: Int <- t.additionalPredecessors.value) {
+          val testedPredecessor = p.activityArray(iD)
+          t.removeDynamicPredecessor(testedPredecessor, false)
+          if (!p.worseOvershotResource.value.isEmpty) {
+            t.addDynamicPredecessor(testedPredecessor, false)
+          } else {
+            toReturn = (testedPredecessor,t) :: toReturn
+            improved = true
+          }
+        }
+      }
+    }
+
+    for((t,pred) <- toReturn){
+      t.addDynamicPredecessor(pred, false)
+    }
+
+    if(toReturn.isEmpty) null
+    else toReturn
+  }
+
+  override def getShortDescription(param: List[(Activity, Activity)]): String = {
+    "killed " + param.length + " precedences without introducing conflicts"
+  }
   //this resets the internal state of the Neighborhood
   override def reset(){}
 }
-
 
 /**removes all additional Activity precedences that are not tight
   * @param p the planning to relax
