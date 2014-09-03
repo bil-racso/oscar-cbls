@@ -84,6 +84,36 @@ class ProtectBest(a:Neighborhood, i:CBLSIntVar) extends NeighborhoodCombinator(a
     restoreBest()
     toReturn
   }
+
+  def restoreBestOnExhaust():RestoreBestOnExhaust = new RestoreBestOnExhaust(this)
+}
+
+class RestoreBestOnExhaust(a:ProtectBest) extends NeighborhoodCombinator(a){
+
+  def restoreBest(): Unit ={
+    a.restoreBest()
+  }
+
+  /**same as doAllImprovingMoves and calling restoreBest after.
+    * @param shouldStop a function that takes the iteration number and returns true if search should be stopped
+    *                   eg if the problem is considered as solved
+    *                   you can evaluate some objective function there such as a violation degree
+    * @param acceptanceCriterion a criterion for accepting a move
+    *                            by default, we only accept strictly improving moves
+    * @return the number of moves performed
+    */
+  def doAllMovesAndRestoreBest(shouldStop:Int => Boolean, acceptanceCriterion:(Int,Int) => Boolean = (oldObj,newObj) => oldObj > newObj):Int = {
+    a. doAllMovesAndRestoreBest(shouldStop, acceptanceCriterion)
+  }
+
+  override def getImprovingMove(acceptanceCriteria:(Int,Int) => Boolean): SearchResult = {
+    a.getImprovingMove(acceptanceCriteria) match{
+      case m:MoveFound => m
+      case x =>
+        restoreBest()
+        x
+    }
+  }
 }
 
 /** this combinator attaches a custom code to a given neighborhood.

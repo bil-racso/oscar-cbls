@@ -35,29 +35,39 @@ object SearchResult {
   implicit def moveToSearchResult(m: Move): MoveFound = MoveFound(m)
 }
 
-
 abstract class JumpNeighborhood extends Neighborhood{
 
   def doIt()
   def shortDescription():String
 
   override def getImprovingMove(acceptanceCriterion: (Int, Int) => Boolean): SearchResult = {
-    CallBackMove(() => doIt, Int.MaxValue, this.getClass.getSimpleName, shortDescription)
+    CallBackMove(() => doIt,valueAfter, this.getClass.getSimpleName, shortDescription)
   }
+
+  /** returns the value after the move
+    * called by getImprovingMove, by default, this is Int.MaxValue, which is the correct value for a jump
+    * in case your jump does not modify the obj function and you want to include this in the move description, override this method
+    * @return
+    */
+  def valueAfter = Int.MaxValue
 }
 
 abstract class JumpNeighborhoodParam[T] extends Neighborhood{
 
+  def doIt: Unit ={
+    doIt(getParam)
+  }
+
   def doIt(param:T)
 
   /**if null is returned, the neighborhood returns NoMoveFound*/
-  def getParam():T
+  def getParam:T
   def getShortDescription(param:T):String
 
   override def getImprovingMove(acceptanceCriterion: (Int, Int) => Boolean): SearchResult = {
-    val param = getParam()
+    val param:T = getParam
     if(param == null) NoMoveFound
-    else CallBackMove(doIt, Int.MaxValue, this.getClass.getSimpleName, () => getShortDescription(param),param)
+    else CallBackMove((param:T) => doIt(param), Int.MaxValue, this.getClass.getSimpleName, () => getShortDescription(param),param)
   }
 }
 
@@ -315,7 +325,7 @@ abstract class Neighborhood{
   /**
    * this combinator overrides accepts all moves (this is the withAcceptanceCriteria, given the fully acceptant criterion
    */
-  def acceptAll:WithAcceptanceCriterion = new WithAcceptanceCriterion(this,(_:Int,_:Int) => true)
+  def acceptAll = new WithAcceptanceCriterion(this,(_:Int,_:Int) => true)
 
   /**
    * proposes a round-robin with that.

@@ -77,8 +77,6 @@ case class AssignNeighborhood(vars:Array[CBLSIntVar],
         case Some(s) => IdenticalAggregator.removeIdenticalClassesLazily(domain(currentVar, i), s(i))
       }
 
-      if (amIVerbose) println(name + ": exploring (best:" + best + ") " + currentVar + " values:" + domainIterationScheme)
-
       for (newVal <- domainIterationScheme if newVal != oldVal) {
         val newObj = obj.assignVal(currentVar, newVal)
 
