@@ -1,12 +1,10 @@
 package oscar.cbls.scheduling.solver
 
+import oscar.cbls.invariants.core.computation.CBLSIntVar
 import oscar.cbls.scheduling.algo.CriticalPathFinder
 import oscar.cbls.scheduling.model.{Activity, Planning, PrecedenceCleaner, Resource}
 import oscar.cbls.search.SearchEngineTrait
 import oscar.cbls.search.core._
-
-//TODO: attention: il ne faut protégeer l'objectif que sur les schedules acceptables.
-//donc il faut une fct objectif acceptable qui vale MaxInt si le schedule ne l'est pas.
 
 /**
  * @param p
@@ -126,17 +124,10 @@ case class Relax(p:Planning, pKill: Int,
  * Warning: can only be called if there are no existing conflict!!
  * THIS IS COMPLETELY NEW EXPERIMENTAL AND UNTESTED
  * */
-case class RelaxNoConflict(p:Planning) extends JumpNeighborhoodParam[List[(Activity,Activity)]] with SearchEngineTrait {
+case class RelaxNoConflict(p:Planning) extends JumpNeighborhood with SearchEngineTrait {
 
-  override def doIt(param: List[(Activity, Activity)]){
-    for((t,pred) <- param){
-      t.removeDynamicPredecessor(pred, false)
-    }
-  }
-
-  /** if null is returned, the neighborhood returns NoMoveFound */
-  override def getParam: List[(Activity, Activity)] = {
-    var toReturn:List[(Activity, Activity)] = List.empty
+  override def doIt(): Unit ={
+    var relaxCount = 0
     var improved = true;
     while (improved) {
       improved = false
@@ -145,27 +136,19 @@ case class RelaxNoConflict(p:Planning) extends JumpNeighborhoodParam[List[(Activ
         for (iD: Int <- t.additionalPredecessors.value) {
           val testedPredecessor = p.activityArray(iD)
           t.removeDynamicPredecessor(testedPredecessor, false)
-          if (!p.worseOvershotResource.value.isEmpty) {
-            t.addDynamicPredecessor(testedPredecessor, false)
-          } else {
-            toReturn = (testedPredecessor,t) :: toReturn
+          if (!t.potentiallyKilledPredecessors.value.contains(iD) || p.worseOvershotResource.value.isEmpty) {
+            relaxCount += 1
             improved = true
+          }else{
+            t.addDynamicPredecessor(testedPredecessor, false)
           }
         }
       }
     }
-
-    for((t,pred) <- toReturn){
-      t.addDynamicPredecessor(pred, false)
-    }
-
-    if(toReturn.isEmpty) null
-    else toReturn
+    if(amIVerbose) println("RelaxNoConflict: relaxCount:" + relaxCount)
   }
+  override def shortDescription(): String = "relaxes all precedences without introducing a conflict (based on planning.worseOvershotResource)"
 
-  override def getShortDescription(param: List[(Activity, Activity)]): String = {
-    "killed " + param.length + " precedences without introducing conflicts"
-  }
   //this resets the internal state of the Neighborhood
   override def reset(){}
 }
@@ -192,37 +175,28 @@ case class CleanPrecedences(p:Planning) extends JumpNeighborhood with SearchEngi
   override def reset(){}
 }
 
-
-
-/**
- * @param p
- * @param verbose
- * @author renaud.delandtsheer@cetic.be
- * THIS IS COMPLETELY NEW EXPERIMENTAL AND UNTESTED
- */
-class IFlatIRelax2(p: Planning,
-                   verbose: Boolean = true,
-                   nbRelax: Int = 4,
-                   pkillPerRelax: Int = 50) {
-
-  require(p.model.isClosed, "model should be closed before iFlatRelax algo can be instantiated")
-  val maxIterationsForFlatten = (p.activityCount * (p.activityCount - 1)) / 2
+object SchedulingStrategies{
 
   /**
-   * This solves the jobshop by iterative relaxation and flattening
-   * @param maxIt the max number of iterations of the search
+   * @param p
+   * @param nbRelax the minimal number of relax to perform (actually, we relax until makespan reduced, with an upper bound just in case
+   * @param pkillPerRelax the probability of killing a precedence for each precedence on the critical path considered during a relax
    * @param stable the number of no successive noimprove that will cause the search to stop
+   * @param objective: the objective, typically the makespan, but you could try something else
+   * @return a neighborhood, you just have to do all moves, and restore the best solution
    */
-  def solve(maxIt: Int, stable: Int){
+  def iFlatRelax(p: Planning,
+                 nbRelax: Int = 4,
+                 pkillPerRelax: Int = 50,
+                 stable: Int,
+                 objective:CBLSIntVar):Neighborhood = {
+    require(p.model.isClosed, "model should be closed before iFlatRelax algo can be instantiated")
+    val maxIterationsForFlatten = (p.activityCount * (p.activityCount - 1)) / 2
 
-    val saver = (NoMoveNeighborhood() protectBest p.makeSpan)
-    val iFLatRelaxStrategy = (FlattenWorseFirst(p,maxIterationsForFlatten) maxMoves 1 exhaustBack saver exhaustBack
-      (Relax(p, pkillPerRelax) untilImprovement(p.makeSpan, 3, maxIterationsForFlatten))
-      maxMoves stable withoutImprovementOver p.makeSpan )
+    val searchLoop = (FlattenWorseFirst(p,maxIterationsForFlatten) maxMoves 1 exhaustBack
+      Relax(p, pkillPerRelax) untilImprovement(p.makeSpan, nbRelax, maxIterationsForFlatten))
 
-    iFLatRelaxStrategy.doAllMoves(_ >= maxIt)
-
-    saver.restoreBest()
+    (searchLoop maxMoves stable withoutImprovementOver objective
+      protectBest objective whenEmpty p.worseOvershotResource)
   }
 }
-
