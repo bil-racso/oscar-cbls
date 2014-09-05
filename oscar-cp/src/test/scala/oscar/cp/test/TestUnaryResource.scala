@@ -58,7 +58,6 @@ class TestUnaryResource extends FunSuite with ShouldMatchers {
   
   test("unary unit 1") {
 
-      
       implicit val cp = CPSolver()
       cp.silent = true
       val starts = Array(CPIntVar(10), CPIntVar(7), CPIntVar(10))
@@ -68,7 +67,23 @@ class TestUnaryResource extends FunSuite with ShouldMatchers {
       val required = Array(CPBoolVar(false),CPBoolVar(true),CPBoolVar(false))
       add(unaryResource(starts,durs,ends, required))
       cp.isFailed should be(false)
-  }  
+  } 
+  
+  test("unary unit 2") {
+      // s:{2..4},{2..4} dur:1,1 ends:{3..5},{3..5}newMin:2,2
+      implicit val cp = CPSolver()
+      cp.silent = true
+      val starts = Array(CPIntVar(2 to 4), CPIntVar(2 to 4))
+      val durations = Array(1,1)
+      val durs = durations.map(d => CPIntVar(d))
+      val ends = Array.tabulate(starts.size)(i => starts(i) + durations(i))
+      val required = Array(CPBoolVar(true),CPBoolVar(true))
+      add(unaryResource(starts,durs,ends, required))
+      cp.isFailed should be(false)
+      println(starts.mkString(","))
+  }   
+  
+  
   
   test("unary vs cumul") {
     for (i <- 0 to 10) {
@@ -143,7 +158,7 @@ class TestUnaryResource extends FunSuite with ShouldMatchers {
       statDecomp.nSols should be(statGlobal.nSols)
       statDecomp.nSols should be(factorial(n))
     }
-    for (i <- 0 until 10) {
+    for (i <- 0 until 100) {
       testPermutations(i)
     }
 
@@ -279,7 +294,7 @@ class TestUnaryResource extends FunSuite with ShouldMatchers {
 	}
 
   test("unary minimization with optional") {
-    for (i <- 0 to 10) {
+    for (i <- 0 to 100) {
       var n = 6
       val inst = randomInstance(n / 2, i)
       val durations = inst.map(_._1) ++ inst.map(_._1)
