@@ -23,6 +23,7 @@ import java.util.{Arrays => JArrays}
  */
 class UnaryResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], required: Array[CPBoolVar]) extends Constraint(starts(0).store) {
   
+  idempotent = true
   def this(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], resources: Array[CPIntVar], id: Int) = this(starts,durations,ends,resources.map(_.isEq(id)))
   
   def this(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar]) = {
