@@ -89,7 +89,7 @@ class TestSum extends FunSuite with ShouldMatchers  {
   
   val rand = new scala.util.Random(0)
   def solve(x: Array[CPIntVar], y: CPIntVar, decomp: Boolean = false): Int = {
-    val cp = y.s.asInstanceOf[CPSolver]
+    val cp = y.store.asInstanceOf[CPSolver]
     //cp.pushState()
     var nbSol = 0
     cp.solve subjectTo {

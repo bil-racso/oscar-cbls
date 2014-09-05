@@ -34,13 +34,13 @@ public class Gr extends Constraint {
      * @param y
      */
 	public Gr(CPIntVar x, CPIntVar y) {
-		super(x.s(),">");
+		super(x.store(),">");
 		this.x = x;
 		this.y = y;
 	}
 	
 	public Gr(CPIntVar x, int v) {
-		this(x, CPIntVar.apply(x.s(),v,v));
+		this(x, CPIntVar.apply(x.store(),v,v));
 	}
 	
 	@Override
@@ -48,8 +48,8 @@ public class Gr extends Constraint {
 		priorityL2_$eq(CPStore.MAXPRIORL2());
 		CPOutcome oc = propagate();
 		if(oc == CPOutcome.Suspend){
-			if (!y.isBound()) y.callPropagateWhenMinChanges(this,false);
-			if (!x.isBound()) x.callPropagateWhenMaxChanges(this,false);
+			if (!y.isBound()) y.callPropagateWhenBoundsChange(this,false);
+			if (!x.isBound()) x.callPropagateWhenBoundsChange(this,false);
 		}
 		return oc;
 	}

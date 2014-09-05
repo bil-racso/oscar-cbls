@@ -48,7 +48,7 @@ public class LexLeq extends Constraint {
      * @param y a vector of same length as x
      */
 	public LexLeq(CPIntVar [] x, CPIntVar [] y) {
-		super(x[0].s(),"LexLeq");
+		super(x[0].store(),"LexLeq");
 			
 		if (x.length != y.length) {
 			throw new RuntimeException("LexLeq: x and y must have the same length");
@@ -56,10 +56,10 @@ public class LexLeq extends Constraint {
 		
 		this.x = x;
 		this.y = y;
-		q = new ReversibleInt(super.s());
-		r = new ReversibleInt(super.s());		
-		s = new ReversibleInt(super.s());
-		u = new ReversibleInt(super.s());
+		q = new ReversibleInt(super.s(), 0);
+		r = new ReversibleInt(super.s(), 0);		
+		s = new ReversibleInt(super.s(), 0);
+		u = new ReversibleInt(super.s(), 0);
 		u.setValue(0);
 		
 		posted = false;

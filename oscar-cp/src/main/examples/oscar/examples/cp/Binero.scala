@@ -91,7 +91,7 @@ object Binero extends CPModel with App {
 /**
  * Custom constraint which obliges two arrays to be different
  */
-class TabNotEqual(val tab1: Array[CPIntVar], val tab2: Array[CPIntVar], val len: Int) extends Constraint(tab1(0).s) {
+class TabNotEqual(val tab1: Array[CPIntVar], val tab2: Array[CPIntVar], val len: Int) extends Constraint(tab1(0).store) {
 
   val valuesBin = Array(new ReversibleInt(s, 0), new ReversibleInt(s, 0))
   val numBound = Array(new ReversibleInt(s, 0), new ReversibleInt(s, 0))

@@ -24,7 +24,7 @@ import scala.collection.mutable.HashMap
 import oscar.algo.paretofront.ParetoFront
 
 /**
- * @author: Cyrille Dejemeppe cyrille.dejemeppe@gmail.com
+ * @author Cyrille Dejemeppe cyrille.dejemeppe@gmail.com
  */
 class SPEA2(val evaluator: MOEvaluator,
 			val populationSize: Int,

@@ -38,7 +38,7 @@ public class GrEqVarReif extends Constraint {
      * @param b
      */
 	public GrEqVarReif(CPIntVar x, CPIntVar y, CPBoolVar b) {
-		super(x.s(),"GrEqVarReif");
+		super(x.store(),"GrEqVarReif");
 		this.x = x;
 		this.y = y;
 		this.b = b;

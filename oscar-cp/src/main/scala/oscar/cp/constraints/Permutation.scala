@@ -38,7 +38,7 @@ import java.security.InvalidParameterException
  * x and y are such that x(y(i)) = i i.e. y(i) is the position of number i in x
  * @author Pierre Schaus - pschaus@gmail.com
  */
-class Permutation(x: Array[CPIntVar], y: Array[CPIntVar]) extends Constraint(y(0).s, "Permutation") {
+class Permutation(x: Array[CPIntVar], y: Array[CPIntVar]) extends Constraint(y(0).store, "Permutation") {
     
   val n = x.size-1
   if (x.size != y.size) throw new InvalidParameterException("x and y must have the same size")

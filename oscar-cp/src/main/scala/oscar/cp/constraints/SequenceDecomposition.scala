@@ -22,7 +22,7 @@ import oscar.cp.core.CPOutcome._
  * Sequence
  * @author Pierre Schaus pschaus@gmail.com
  */
-class SequenceDecomposition(val xinit: Array[CPIntVar], val values: Set[Int], val l: Int, min: Int, max: Int) extends Constraint(xinit(0).s, "Sequence") {
+class SequenceDecomposition(val xinit: Array[CPIntVar], val values: Set[Int], val l: Int, min: Int, max: Int) extends Constraint(xinit(0).store, "Sequence") {
 
   if (values.size <= 0) throw new IllegalArgumentException("Sequence: values.size <= 0")
   if (l > xinit.size) throw new IllegalArgumentException("Sequence: l > xinit.size")

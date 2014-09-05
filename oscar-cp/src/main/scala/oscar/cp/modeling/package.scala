@@ -14,7 +14,6 @@
  *******************************************************************************/
 package oscar.cp
 
-import scala.util.continuations._
 import scala.collection.IterableLike
 import scala.collection.SeqLike
 import scala.collection.generic.CanBuildFrom
@@ -93,31 +92,6 @@ package object modeling extends Constraints with Branchings {
 
   //implicit def convertSeqVars2ArrayVars[T <: CPIntVar](x: scala.collection.immutable.IndexedSeq[T]) : Array[T]= x.toArray
 
-  implicit def richIterable[A, Repr](xs: SeqLike[A, Repr]) = new {
-    def suspendable = new {
-      def foreach(yld: A => Unit @suspendable): Unit @suspendable = {
-        loop(xs.indices) {
-          i => yld(xs(i))
-        }
-      }
-    }
-  }
-
-  def loopWhile[T](cond: => Boolean)(body: => (Unit @suspendable)): Unit @suspendable = {
-    if (cond) {
-      body
-      loopWhile[T](cond)(body)
-    }
-  }
-
-  def loop(r: Range)(body: Int => (Unit @suspendable)): Unit @suspendable = {
-    var i = r.start
-    loopWhile(i < r.end) {
-      val k = i
-      body(i)
-      i = k + 1
-    }
-  }
 
   implicit def arrayVar2IterableVarOps(s: Array[CPIntVar]) = new IterableVarOps(s)
   implicit class IterableVarOps(val seq: Iterable[CPIntVar]) extends AnyVal {
@@ -150,7 +124,7 @@ package object modeling extends Constraints with Branchings {
    * relax randomly k variables in x, others are assigned to the values they have in sol
    */
   def relaxRandomly(x: IndexedSeq[_ <: CPIntVar], sol: CPSol, k: Int): CPOutcome = {
-    val cp = x.head.s
+    val cp = x.head.store
     val n = x.size
     val fixed = (0 until n).toSet -- (for (i <- 1 to k) yield scala.util.Random.nextInt(n)).toSet
     cp.post(fixed.map(i => x(i) == sol(x(i))).toArray[Constraint])
@@ -169,20 +143,34 @@ package object modeling extends Constraints with Branchings {
   def minVal(x: CPIntVar): Int = x.min
   def maxVal(x: CPIntVar): Int = x.max
   def minValminVal(x: CPIntVar): (Int, Int) = (x.min, x.min)
+  
+  def branchAssign(variable: CPIntVar, value: Int)(implicit solver: CPSolver): Seq[Alternative] = {
+    branch { solver.post(variable == value) } { solver.post(variable != value) }
+  }
 
   // helper functions to model with an implicit CPSolver
   def add(constraints: Iterable[_ <: Constraint])(implicit cp: CPSolver): Unit = cp.add(constraints)
-  def add(c: Constraint, propagStrengh: CPPropagStrength = Weak)(implicit cp: CPSolver): Unit = cp.add(c, propagStrengh)
+  
+  def add(c: Constraint, propagStrengh: CPPropagStrength)(implicit cp: CPSolver): Unit = cp.add(c, propagStrengh)
+  def add(c: Constraint)(implicit cp: CPSolver): Unit = cp.add(c)
+  
   def add(c: CPBoolVar)(implicit cp: CPSolver): Unit = cp.add(c)
+  
   def post(c: Constraint, propagStrengh: CPPropagStrength = Weak)(implicit cp: CPSolver): Unit = cp.post(c, propagStrengh)
+  def post(c: Constraint)(implicit cp: CPSolver): Unit = cp.post(c)
+  
   def search(branching: Branching)(implicit cp: CPSolver): SearchNode = cp.search(branching)
   def search(block: => Seq[Alternative])(implicit cp: CPSolver): SearchNode = cp.search(block)
+  
   def minimize(obj: CPIntVar)(implicit cp: CPSolver): CPSolver = cp.minimize(obj)
   def maximize(obj: CPIntVar)(implicit cp: CPSolver): CPSolver = cp.maximize(obj)
+  
   def onSolution(block: => Unit)(implicit cp: CPSolver): SearchNode = cp.onSolution(block)
+  
   def start(nSols: Int = Int.MaxValue, failureLimit: Int = Int.MaxValue, timeLimit: Int = Int.MaxValue, maxDiscrepancy: Int = Int.MaxValue)(implicit cp: CPSolver): SearchStatistics = {
     cp.start(nSols, failureLimit, timeLimit, maxDiscrepancy)
   }
+  
   def startSubjectTo(nSols: Int = Int.MaxValue, failureLimit: Int = Int.MaxValue, timeLimit: Int = Int.MaxValue, maxDiscrepancy: Int = Int.MaxValue)(reversibleBlock: => Unit = {})(implicit cp: CPSolver): SearchStatistics = {
     cp.startSubjectTo(nSols, failureLimit, timeLimit, maxDiscrepancy)(reversibleBlock)
   }

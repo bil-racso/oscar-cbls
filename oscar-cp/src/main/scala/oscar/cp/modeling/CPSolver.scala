@@ -19,7 +19,6 @@ import oscar.algo.search._
 import oscar.cp._
 import oscar.cp.core._
 import oscar.cp.constraints._
-import scala.util.continuations._
 import scala.collection.mutable.Stack
 import oscar.algo.reversible._
 import oscar.util._
@@ -27,21 +26,13 @@ import oscar.cp.multiobjective.ListPareto
 import oscar.cp.multiobjective.Pareto
 import oscar.cp.constraints.ParetoConstraint
 
-class CPSolver() extends CPStore() {
-
-  def +=(cons: Constraint, propagStrength: CPPropagStrength = CPPropagStrength.Weak): Unit = {
-    this.add(cons, propagStrength)
-  }
+class CPSolver(propagStrength: CPPropagStrength) extends CPOptimizer(propagStrength) {
   
-  var objective = new CPObjective(this, Array[CPObjectiveUnit]());
+  def this() = this(CPPropagStrength.Weak)
   
   private val decVariables = scala.collection.mutable.Set[CPIntVar]()
-  var lastSol = new CPSol(Set[CPIntVar]())
-  var paretoSet: Pareto[CPSol] = new ListPareto[CPSol](Array())
-  var recordNonDominatedSolutions = false
   
-  def nonDominatedSolutions: Seq[CPSol] = paretoSet.toList
-  def nonDominatedSolutionsObjs: Seq[IndexedSeq[Int]] = paretoSet.objectiveSols 
+  var lastSol = new CPSol(Set[CPIntVar]())
   
   def addDecisionVariables(x: Iterable[CPIntVar]): Unit = x.foreach(decVariables += _)
   
@@ -49,69 +40,6 @@ class CPSolver() extends CPStore() {
   
   private def recordSol(): Unit = {
     lastSol = new CPSol(decVariables.toSet)
-  }
-  
-  def obj(objVar: CPIntVar): CPObjectiveUnit = objective(objVar)
-
-  def optimize(obj: CPObjective): CPSolver = {
-    objective = obj
-    postCut(obj)
-    this
-  }
-
-  def minimize(objective: CPIntVar): CPSolver = minimize(Seq(objective): _*)
-  
-  def minimize(objectives: CPIntVar*): CPSolver = 
-    optimize(new CPObjective(this, objectives.map(new CPObjectiveUnitMinimize(_)): _*))
-
-  def maximize(objective: CPIntVar): CPSolver = maximize(Seq(objective): _*)
-
-  def maximize(objectives: CPIntVar*): CPSolver = 
-    optimize(new CPObjective(this, objectives.map(new CPObjectiveUnitMaximize(_)): _*))
-  
-  def paretoMinimize(objective: CPIntVar): CPSolver = paretoOptimize((objective, false))  
-  
-  def paretoMinimize(objectives: CPIntVar*): CPSolver = paretoOptimize(objectives.map((_, false)): _*)
-  
-  def paretoMaximize(objective: CPIntVar): CPSolver = paretoOptimize((objective, true))
-  
-  def paretoMaximize(objectives: CPIntVar*): CPSolver = paretoOptimize(objectives.map((_, true)): _*)
-  
-  def paretoOptimize(objVarModes: (CPIntVar, Boolean)): CPSolver = paretoOptimize(Seq(objVarModes): _*)
-  
-  def paretoOptimize(objVarMode: (CPIntVar, Boolean)*): CPSolver = {
-    
-    // objVar of each objective
-    val objectives = objVarMode.map(_._1).toArray
-    // true if objective i has to be maximized
-    val isMax = objVarMode.map(_._2).toArray
-
-    recordNonDominatedSolutions = true
-    objective = new CPObjective(this, (for (i <- 0 until isMax.size) yield {
-      if (isMax(i)) new CPObjectiveUnitMaximize(objectives(i))
-      else new CPObjectiveUnitMinimize(objectives(i))
-    }): _*)
-    postCut(objective)
-    objective.objs.foreach(_.tightenMode = TightenType.NoTighten)
-    
-    addDecisionVariables(objectives)
-    paretoSet = new ListPareto[CPSol](isMax)
-    // Adds a dominance constraint with all objectives in minimization mode
-    addCut(new ParetoConstraint(paretoSet, isMax, objectives.toArray))
-    this
-  }
-  
-  @deprecated("solve is the default behavior of CPSolver and does not need to be specified anymore.", "1.0")
-  def solve(): CPSolver = this
-
-  @deprecated("constraints do not need to be stated in the subectTo block anymore.", "1.0")
-  def subjectTo(constraintsBlock: => Unit): CPSolver = {
-    try {
-      constraintsBlock
-    } catch {
-      case ex: NoSolutionException => println("No Solution, inconsistent model")
-    }
-    this
   }
   
   override def beforeStartAction(): Unit = { deactivateNoSolExceptions() }
@@ -129,6 +57,16 @@ class CPSolver() extends CPStore() {
     true
   }
   
+  override def minimize(objective: CPIntVar): CPSolver = {
+    super.minimize(Seq(objective): _*)
+    this
+  }
+
+  override def maximize(objective: CPIntVar): CPSolver = {
+    super.maximize(Seq(objective): _*)
+    this
+  }
+  
   override def update(): Unit = propagate()
   
   override def solFound(): Unit = {
@@ -143,6 +81,19 @@ class CPSolver() extends CPStore() {
 }
 
 object CPSolver {
+  
   /** Creates a new CP Solver */
   def apply(): CPSolver = new CPSolver()
+  
+  /** Creates a new CP Solver with `propagStrength` as default level of propagation */
+  def apply(propagStrength: CPPropagStrength) = new CPSolver(propagStrength)
+  
+  /** Creates a new CP Solver with `Weak` as default level of propagation */
+  def weak: CPSolver = new CPSolver(CPPropagStrength.Weak)
+  
+  /** Creates a new CP Solver with `Medium` as default level of propagation */
+  def medium: CPSolver = new CPSolver(CPPropagStrength.Medium)
+  
+  /** Creates a new CP Solver with `Strong` as default level of propagation */
+  def strong: CPSolver = new CPSolver(CPPropagStrength.Strong)
 }

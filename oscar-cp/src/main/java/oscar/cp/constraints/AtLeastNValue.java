@@ -38,7 +38,7 @@ public class AtLeastNValue extends Constraint {
      * @see AllDifferent
      */
 	public AtLeastNValue(CPIntVar [] x, CPIntVar nval) {
-		super(x[0].s(),"AtLeastNValue");
+		super(x[0].store(),"AtLeastNValue");
 		this.x = x;
 		this.nval = nval;
 	}

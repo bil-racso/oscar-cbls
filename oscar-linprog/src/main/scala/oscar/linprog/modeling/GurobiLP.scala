@@ -14,24 +14,6 @@
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  * ****************************************************************************
  */
-/**
- * *****************************************************************************
- * This file is part of OscaR (Scala in OR).
- *
- * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 2.1 of the License, or
- * (at your option) any later version.
- *
- * OscaR is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/gpl-3.0.html
- * ****************************************************************************
- */
 
 package oscar.linprog.modeling
 
@@ -76,8 +58,9 @@ class GurobiLP extends AbstractLP {
   }
 
   def setVarName(colId: Int, name: String) {
-    // TODO implement
+    model.getVar(colId).set(GRB.StringAttr.VarName, name)
   }
+  
   def addConstraint(coef: Array[Double], col: Array[Int], rhs: Double, sign: String, name: String) {
     nbRows += 1
     var ntot = new GRBLinExpr()
@@ -91,6 +74,7 @@ class GurobiLP extends AbstractLP {
         model.addConstr(ntot, GRB.EQUAL, rhs, name)
     }
   }
+  
   def addConstraintGreaterEqual(coef: Array[Double], col: Array[Int], rhs: Double, name: String) {
     addConstraint(coef, col, rhs, ">=", name)
   }
@@ -102,6 +86,11 @@ class GurobiLP extends AbstractLP {
     addConstraint(coef, col, rhs, "==", name)
   }
 
+  override def addConstraintSOS1(col: Array[Int], coef: Array[Double] = null,  name: String) {
+    nbRows += 1
+    model.addSOS(col.map(model.getVar(_)), coef, GRB.SOS_TYPE1)
+  }
+  
   def addObjective(coef: Array[Double], col: Array[Int], minMode: Boolean = true) {
 
     val ntot = toGRBLinExpr(coef, col, model.getVars)
@@ -132,7 +121,6 @@ class GurobiLP extends AbstractLP {
 
   def updateLowerBound(colId: Int, lb: Double) {
     model.getVar(colId).set(GRB.DoubleAttr.LB, lb)
-
   }
 
   def updateUpperBound(colId: Int, ub: Double) {
@@ -172,7 +160,6 @@ class GurobiLP extends AbstractLP {
 
   def getValue(colId: Int): Double = {
     sol(colId)
-
   }
 
   def getObjectiveValue(): Double = {
@@ -180,12 +167,24 @@ class GurobiLP extends AbstractLP {
   }
 
   def setInteger(colId: Int) {
-    model.getVar(colId).set(GRB.CharAttr.VType, 'I')
-
+    model.getVar(colId).set(GRB.CharAttr.VType, GRB.INTEGER)
+  }
+  
+  def setBinary(colId: Int) {
+    model.getVar(colId).set(GRB.CharAttr.VType, GRB.BINARY)
+  }
+  
+  override def setTimeout(t: Int) {
+    require(0 <= t)
+    model.getEnv().set(GRB.DoubleParam.TimeLimit, t.toDouble)
+  }
+  
+  override def setName(name: String) {
+    model.set(GRB.StringAttr.ModelName, name)
   }
 
   def setFloat(colId: Int) {
-
+    model.getVar(colId).set(GRB.CharAttr.VType, GRB.CONTINUOUS)
   }
 
   def setBounds(colId: Int, low: Double, up: Double) {
@@ -195,7 +194,7 @@ class GurobiLP extends AbstractLP {
   }
 
   def setUnboundUpperBound(colId: Int) {
-
+    model.getVar(colId).set(GRB.DoubleAttr.UB, GRB.INFINITY)
   }
 
   def setUnboundLowerBound(colId: Int) {
@@ -223,15 +222,23 @@ class GurobiLP extends AbstractLP {
   def deleteVariable(colId: Int) {
     model.remove(model.getVar(colId))
   }
+  
   /** release the memory associated to the model and the environment as well as the gurobi license*/
   def release() {
     model.dispose
     env.release
     env.dispose
   }
-
-  def exportModel(fileName: String) {
-    model.write(fileName)
+  
+  /** Gurobi's export file handling is a little different. The format is defined by the fileName
+  * passed to model.write for the LP format it's .lp and for MPS it's .mps
+  */ 
+  def exportModel(fileName: String, format: LPExportFormat.Value) {
+    format match {
+        case LPExportFormat.MPS => model.write(fileName + ".mps")
+        case LPExportFormat.LP => model.write(fileName + ".lp")
+        case _ => model.write(fileName) // User specified file format
+    }
   }
 
   override def addAllConstraints(cons: scala.collection.Map[Int, LPConstraint]) = {
@@ -268,6 +275,7 @@ class GurobiLP extends AbstractLP {
     ntot.addTerms(coef, col map (vars(_)))
     ntot
   }
+  
   private def toSenses(sign: ConstraintType.Value) = {
     sign match {
       case ConstraintType.LQ => GRB.LESS_EQUAL

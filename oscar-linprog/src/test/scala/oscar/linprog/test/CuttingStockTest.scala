@@ -33,7 +33,6 @@ class CuttingStockTest extends FunSuite with ShouldMatchers {
 	  def number() : Int = Math.ceil(x.value.get).toInt
   }
 
-  
   test("CuttingStock") {
 	for (lib <- solvers) {	  
 	  val rollStock = 110	  
@@ -42,6 +41,7 @@ class CuttingStockTest extends FunSuite with ShouldMatchers {
 	  val Rolls = 0 until roll.size
 	  
 	  implicit val lp = LPSolver(lib)
+	  lp.name = "Cutting Stock"
 	  var C : Array[Column] = Array()
 	  for (r <- Rolls) {
 	 	  val config = Array.tabulate(roll.size)(_ => 0)
@@ -57,9 +57,7 @@ class CuttingStockTest extends FunSuite with ShouldMatchers {
         constraints = constraints :+ add(sum(C)(c => c.x * c.pattern(r)) >= demand(r))
       }
       start()
-	 
-	  println("master obj:" + objectiveValue)
-	  
+	
 	  // Pricing Problem
 	  var mip : MIPSolver = null
 	  do {
@@ -76,24 +74,23 @@ class CuttingStockTest extends FunSuite with ShouldMatchers {
 		  
 		  C = C :+ new Column(x, newPattern.map(_.value.get.toInt))		
 		  
-		  println("master obj:" + lp.objectiveValue)
 		  mip.status should equal (LPStatus.OPTIMAL)
 
 	  } while(mip.objectiveValue.get < 0)
 
-	  	  
+	  /* 	  
 	  println("\n"+roll.mkString("\t"))
 	  println("-----------------------------------")
 	  C.foreach(c => println(c+" * "+c.number))
 	  println("-----------------------------------")
 	  println("total #boards:" + C.map(_.number).sum)
 	  
-	  
+	  */
 	  
 	  lp.status should equal (LPStatus.OPTIMAL)
 	  C.map(_.number).sum should equal(48) // should have 45 boards at the end
-	  
+	  lp.release()
+	  mip.release()
 	}
   }
-  
 }

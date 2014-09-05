@@ -62,7 +62,7 @@ trait Branchings extends BranchingUtils {
    * set times heuristic: 
    * see: Time- versus-capacity compromises in project scheduling. (Le Pape et al.). 1994. 
    */  
-  def setTimes(starts: IndexedSeq[CPIntVar], durations: IndexedSeq[CPIntVar], ends: IndexedSeq[CPIntVar]) = new SetTimesBranching(starts,durations, ends) 
+  def setTimes(starts: IndexedSeq[CPIntVar], durations: IndexedSeq[CPIntVar], ends: IndexedSeq[CPIntVar], tieBreaker: Int => Int = (i: Int) => i) = new SetTimesBranching(starts,durations, ends, tieBreaker) 
   
   /**
    * Binary Search on the set variable

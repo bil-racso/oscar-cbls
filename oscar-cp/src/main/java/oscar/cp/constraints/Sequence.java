@@ -44,7 +44,7 @@ public class Sequence extends Constraint {
 	 * @param max the maximal occurrences of values from set within a sequence.
 	 */
 	public Sequence(CPIntVar [] x, SetIndexedArray values, int l, int min, int max) {
-		super(x[0].s(),"Sequence");
+		super(x[0].store(),"Sequence");
 		assert (!(values.getSize() == 0));
 		assert(l < x.length);
         assert(l > 0);

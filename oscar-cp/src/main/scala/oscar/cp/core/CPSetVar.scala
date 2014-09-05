@@ -3,15 +3,16 @@ package oscar.cp.core
 import oscar.algo.reversible.ReversibleQueue
 import oscar.algo.reversible.ReversiblePointer
 import oscar.cp.core.CPOutcome._
-import oscar.cp.constraints.Requires
-import oscar.cp.constraints.Excludes
+import oscar.cp.constraints.sets.Requires
+import oscar.cp.constraints.sets.Excludes
 import oscar.cp.constraints.SetCard
+import oscar.cp.core.domains.SetDomain
 
 /**
  * @author Pierre Schaus pschaus@gmail.com
  * @author Renaud Hartert ren.hartert@gmail.com
  */
-class CPSetVar(val store: CPStore, min: Int, max: Int, val name: String = "") extends CPVar {
+class CPSetVar(override val store: CPStore, min: Int, max: Int, override val name: String = "") extends CPVar {
 
   private val dom = new SetDomain(store, min, max)
 
@@ -200,6 +201,22 @@ class CPSetVar(val store: CPStore, min: Int, max: Int, val name: String = "") ex
   }
 
   // ------ delta methods to be called in propagate -------
+  
+
+  def changed(c: Constraint): Boolean = changed(c.snapshotsVarSet(this))
+
+  def possibleChanged(c: Constraint): Boolean = possibleChanged(c.snapshotsVarSet(this))
+
+  def requiredChanged(c: Constraint): Boolean = requiredChanged(c.snapshotsVarSet(this))
+
+  def deltaPossibleSize(c: Constraint): Int = deltaPossibleSize(c.snapshotsVarSet(this))
+
+  def deltaRequiredSize(c: Constraint): Int = deltaRequiredSize(c.snapshotsVarSet(this))
+
+  def deltaPossible(c: Constraint): Iterator[Int] = deltaPossible(c.snapshotsVarSet(this))
+  
+  def deltaRequired(c: Constraint): Iterator[Int] = deltaRequired(c.snapshotsVarSet(this))
+  
 
   def changed(sn: SnapshotVarSet): Boolean = possibleChanged(sn) || requiredChanged(sn)
 

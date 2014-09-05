@@ -27,17 +27,14 @@ class TestVarView extends FunSuite with ShouldMatchers  {
 
 
   test("Table Var View 1") {
-    val cp = CPSolver()
-    var x = CPIntVar(-2 to 4)(cp)
+
     
-    class ViewCons(val X: CPIntVar) extends Constraint(X.s, "TestView") {
+    class ViewCons(val X: CPIntVar) extends Constraint(X.store, "TestView") {
 
     	var valRemove = true
       
     	override def setup(l: CPPropagStrength): CPOutcome = { 
     	    X.callValRemoveWhenValueIsRemoved(this)
-    		X.callUpdateMinWhenMinChanges(this)
-    		X.callUpdateMaxWhenMaxChanges(this)
     		X.callValBindWhenBind(this)
     		X.callUpdateBoundsWhenBoundsChange(this)
     		return CPOutcome.Suspend
@@ -59,22 +56,7 @@ class TestVarView extends FunSuite with ShouldMatchers  {
           x.value should be(-2)  
           return CPOutcome.Suspend
         }
- 
-        override def updateMin(x: CPIntVar, oldmin: Int): CPOutcome = {
-    	  val eq: Boolean = x==X
-    	  eq should  equal(true)
-          oldmin should be(-3)
-          x.min should be(-2)  
-          return CPOutcome.Suspend
-        }
-        
-        override def updateMax(x: CPIntVar, oldmax: Int): CPOutcome = {
-    	  val eq: Boolean = x==X
-    	  eq should  equal(true)
-          oldmax should be(3)
-          x.max should be(-2)
-          return CPOutcome.Suspend
-        }
+
         
         override def updateBounds(x: CPIntVar): CPOutcome = {
     	  val eq: Boolean = x==X
@@ -83,7 +65,8 @@ class TestVarView extends FunSuite with ShouldMatchers  {
         }
 
     }
-    
+    val cp = CPSolver()
+    var x = CPIntVar(-2 to 4)(cp)
     val y = x+5+2-3-5 // y = x-1 so its domain should be -3..3
     cp.add(new ViewCons(y))
     cp.add(y != 0)
@@ -100,14 +83,12 @@ class TestVarView extends FunSuite with ShouldMatchers  {
     val cp = CPSolver()
     var x = CPIntVar(-2 to 4)(cp)
     
-    class ViewCons(val X: CPIntVar) extends Constraint(X.s, "TestView") {
+    class ViewCons(val X: CPIntVar) extends Constraint(X.store, "TestView") {
 
     	var valRemove = true
       
     	override def setup(l: CPPropagStrength): CPOutcome = { 
     	    X.callValRemoveIdxWhenValueIsRemoved(this,-1)
-    		X.callUpdateMinIdxWhenMinChanges(this,-1)
-    		X.callUpdateMaxIdxWhenMaxChanges(this,-1)
     		X.callValBindIdxWhenBind(this,-1)
     		X.callUpdateBoundsIdxWhenBoundsChange(this,-1)
     		return CPOutcome.Suspend
@@ -129,22 +110,6 @@ class TestVarView extends FunSuite with ShouldMatchers  {
           x.value should be(-2)  
           return CPOutcome.Suspend
         }
- 
-        override def updateMinIdx(x: CPIntVar,idx: Int, oldmin: Int): CPOutcome = {
-    	  val eq: Boolean = x==X
-    	  eq should  equal(true)
-          oldmin should be(-3)
-          x.min should be(-2)  
-          return CPOutcome.Suspend
-        }
-        
-        override def updateMaxIdx(x: CPIntVar,idx: Int,  oldmax: Int): CPOutcome = {
-    	  val eq: Boolean = x==X
-    	  eq should  equal(true)
-          oldmax should be(3)
-          x.max should be(-2)
-          return CPOutcome.Suspend
-        }
         
         override def updateBoundsIdx(x: CPIntVar,idx: Int): CPOutcome = {
     	  val eq: Boolean = x==X
@@ -162,6 +127,25 @@ class TestVarView extends FunSuite with ShouldMatchers  {
     y.min should be(-2)
     cp.add(y <= -2) // now it's bind to -2
     y.value should be(-2)
+  }
+  
+  
+  test("Table Var View 3") {
+    val cp = CPSolver()
+    val x = CPIntVar(0 to 3)(cp)
+    val minusx = -x
+    minusx.min should be(-3)
+    minusx.max should be(0)
+    minusx.removeValue(-1)
+    x.hasValue(1) should be(false)
+    minusx.valueBefore(-1) should be(-2)
+    minusx.valueAfter(-3) should be(-2)
+    minusx.updateMin(-2)
+    minusx.min should be(-2)
+    x.max should be(2)
+    minusx.hasValue(0) should be(true)
+    minusx.updateMax(-1)
+    minusx.hasValue(0) should be(false)
   }
   
    

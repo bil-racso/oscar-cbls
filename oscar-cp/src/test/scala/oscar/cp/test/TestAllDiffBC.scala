@@ -30,9 +30,40 @@ class TestAllDiffBC extends FunSuite with ShouldMatchers  {
 	  val cp = CPSolver()
 	  val x = Array(CPIntVar(3 to 4)(cp),CPIntVar(2 to 4)(cp),CPIntVar(3 to 4)(cp),CPIntVar(2 to 5)(cp),CPIntVar(1 to 6)(cp))
 	  cp.add(new AllDiffBC(x))
-	  
-	  //println(x.mkString(","))
-  }  
+  }
+  
+  val rand = new scala.util.Random(0)
+  
+  def randomDom(size: Int) = {
+    //Array.fill(size)(rand.nextInt(size)).toSet
+    val min = rand.nextInt(size)
+    val max = (min + rand.nextInt(3)) max(size-1)
+    (min to max).toSet
+  }
+
+  test("AllDiffBC") {
+    for (i <- 0 until 200) {
+      val cp = CPSolver()
+      val n = 6
+      val x = Array.tabulate(n)(i => CPIntVar(randomDom(n+1))(cp))
+
+      cp.pushState()
+
+      cp.search(binaryStatic(x))
+
+      val stat1 = cp.startSubjectTo() {
+        cp.add(allDifferent(x), Strong)
+      }
+      val stat2 = cp.startSubjectTo() {
+        cp.add(new AllDiffBC(x))
+      }
+      stat1.nSols should be(stat2.nSols)
+    }
+
+    
+    
+    
+  }
 
   
 

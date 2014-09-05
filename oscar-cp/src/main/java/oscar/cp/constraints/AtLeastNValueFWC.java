@@ -41,7 +41,7 @@ public class AtLeastNValueFWC extends Constraint {
 	
 	
 	public AtLeastNValueFWC(CPIntVar [] x, CPIntVar nval) {
-		super(x[0].s(),"AtLeastNValueFWC");
+		super(x[0].store(),"AtLeastNValueFWC");
 		this.x = x;
 		this.nValueVar = nval;
 	}
@@ -57,9 +57,9 @@ public class AtLeastNValueFWC extends Constraint {
 	    	 isValueUsed[v] = new ReversibleBool(s());
 	    	 isValueUsed[v].setValue(false);
 	     }
-	     nbValueUsed = new ReversibleInt(s());
+	     nbValueUsed = new ReversibleInt(s(), 0);
 	     nbValueUsed.setValue(0);
-	     nbBound = new ReversibleInt(s());
+	     nbBound = new ReversibleInt(s(), 0);
 	     nbBound.setValue(0);
 	     	    
 	     for (int k = 0; k < x.length; k++) {

@@ -21,14 +21,15 @@ package oscar.cbls.modeling
  *     Contributed to by Florent Ghilain
  ******************************************************************************/
 
-import oscar.cbls.constraints.lib.basic._
+import oscar.cbls.constraints.lib.basic.{EQ, G, GE, L, LE, NE}
 import oscar.cbls.invariants.core.computation._
-import oscar.cbls.invariants.lib.set.{Interval, Inter, Diff, Union}
-import collection.immutable.SortedSet
-import oscar.cbls.invariants.lib.logic.{SetElement, Elements, IntElement}
-import oscar.cbls.invariants.lib.numeric._
-import collection.Iterator
-import language.implicitConversions
+import oscar.cbls.invariants.lib.logic.{Elements, IntElement, SetElement}
+import oscar.cbls.invariants.lib.numeric.{Div, Minus, Mod, Prod, Sum2}
+import oscar.cbls.invariants.lib.set._
+import oscar.cbls.search.algo.InstrumentedRange
+
+import scala.collection.immutable.SortedSet
+import scala.language.implicitConversions
 
 /**Include this object whenever you want to use concise notation
  * It provides the following infix operators for IntVars: plus minus times, div, ==: !=: <<: >>: >=: <=:
@@ -38,54 +39,9 @@ object Algebra extends AlgebraTrait{
 }
 
 trait AlgebraTrait{
-  class ShiftedRange(override val start:Int, override val end:Int, val startBy:Int, override val step:Int = 1)
-    extends Range(start,end,step) {
-    if(!(this.contains(startBy))) throw new Exception("ShiftedRange must contain startBy value " + this)
-    if(step != 1) throw new Exception("only step of 1 is supported in ShirtedRange")
-
-    //include the at Value
-    private def unfold(at:Int):List[Int] = {
-      if(at == end){
-        unfold (start)
-      }else if(getNextValue(at) == startBy){
-        List(at)
-      }else{
-        at :: unfold(at+1)
-      }
-    }
-    
-    def getNextValue(a:Int) = {
-      if(a == end) start
-      else a+1
-    }
-
-    override def toIterator: Iterator[Int] = new ShiftedRangeIterator(this)
-
-    override def toList: List[Int] = unfold(startBy)
-
-    override def toArray[B >: Int](implicit evidence$1: scala.reflect.ClassTag[B]): Array[B] = toList.toArray
-
-    override def toString(): String = "ShiftedRange(" + toList + ")"
-  }
-
-  class ShiftedRangeIterator(val s:ShiftedRange) extends Iterator[Int]{
-    var currentValue = s.startBy
-
-    def hasNext: Boolean = (s.getNextValue(currentValue) != s.startBy)
-
-    def next(): Int = {
-      val tmp = currentValue
-      currentValue = s.getNextValue(currentValue)
-      tmp
-    }
-  }
 
   // implicit conversion of Range towards a RangeHotRestart
   implicit def instrumentRange(r:Range):InstrumentedRange = new InstrumentedRange(r)
-
-  class InstrumentedRange(r:Range){
-    def startBy (start:Int)  =  new ShiftedRange(r.start, r.end,start:Int, r.step)
-  }
 
   implicit def InstrumentIntVar(v: CBLSIntVar): InstrumentedIntVar = new InstrumentedIntVar(v)
 
@@ -126,7 +82,7 @@ trait AlgebraTrait{
 
   implicit def InstrumentIntSetVar(v: CBLSSetVar): InstrumentedIntSetVar = new InstrumentedIntSetVar(v)
 
-  implicit def InstrumentIntSetInvariant(i: SetInvariant): InstrumentedIntSetVar = InstrumentIntSetVar(i.toIntSetVar)
+  implicit def InstrumentIntSetInvariant(i: SetInvariant): InstrumentedIntSetVar = InstrumentIntSetVar(i.toSetVar)
 
   implicit def InstrumentIntSet(a: SortedSet[Int]): InstrumentedIntSetVar = InstrumentIntSetVar(CBLSSetConst(a))
 
@@ -136,7 +92,10 @@ trait AlgebraTrait{
     def inter(v: CBLSSetVar): SetInvariant = Inter(x, v)
 
     def minus(v: CBLSSetVar): SetInvariant = Diff(x, v)
-  }
+
+    def map(fun:Int=>Int, myMin:Int = Int.MinValue, myMax:Int = Int.MaxValue) = SetMap(x,fun,myMin,myMax)
+
+    }
 
   implicit def InstrumentArrayOfIntVar(inputarray: Array[CBLSIntVar]): InstrumentedArrayOfIntVar
   = new InstrumentedArrayOfIntVar(inputarray)
@@ -154,6 +113,7 @@ trait AlgebraTrait{
     def apply(index: CBLSIntVar): CBLSSetVar = SetElement(index, inputarray)
   }
 
-
+  implicit def arrayOfIntTOArrayOfIntConst(a:Array[Int]):Array[CBLSIntVar] = a.map(CBLSIntConst(_))
+  implicit def arrayOfIntInvariantArrayOfIntVar(a:Array[IntInvariant]):Array[CBLSIntVar] = a.map(_.toIntVar)
 }
 

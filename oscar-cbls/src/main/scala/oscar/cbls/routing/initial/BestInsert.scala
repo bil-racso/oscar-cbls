@@ -24,6 +24,7 @@
 
 package oscar.cbls.routing.initial
 
+import oscar.cbls.routing.model.ClosestNeighbors
 import oscar.cbls.routing.model.MoveDescription
 import oscar.cbls.routing.model.PositionInRouteAndRouteNr
 import oscar.cbls.routing.model.RoutedAndUnrouted
@@ -31,7 +32,6 @@ import oscar.cbls.routing.model.VRP
 import oscar.cbls.routing.model.VRPObjective
 import oscar.cbls.routing.neighborhood.InsertPoint
 import oscar.cbls.routing.neighborhood.SearchZone
-import oscar.cbls.routing.model.ClosestNeighbors
 
 /**
  * Constructs an initial solution by repeatedly inserting points into the circuits.
@@ -51,7 +51,6 @@ object BestInsert {
                      with PositionInRouteAndRouteNr with MoveDescription
                      with ClosestNeighbors) {
     // format: ON
-    println("Applying best insert heuristic (all)...")
     apply(vrp, (n: Int) => vrp.routed.value)
   }
   
@@ -62,7 +61,6 @@ object BestInsert {
     // format: ON
     if (k == 0) apply(vrp)
     else {
-      println("Applying best insert heuristic (" + k + ")...")
       val relevantNeighbors = vrp.getKNearest(k)_
       apply(vrp, (n: Int) => relevantNeighbors(n).filter(vrp.isRouted))
     }
@@ -85,6 +83,5 @@ object BestInsert {
           case None => return
         }
     }
-    println(" done.")
   }
 }

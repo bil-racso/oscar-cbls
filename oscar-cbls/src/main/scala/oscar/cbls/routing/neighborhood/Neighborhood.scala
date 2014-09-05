@@ -51,6 +51,8 @@ abstract class Neighborhood() {
    * @return
    */
   final def climbAll(s: SearchZone, moveAcceptor: (Int) => (Int) => Boolean = (oldVal) => (newVal) => newVal < oldVal): Int = {
+    require(s.vrp.m.isClosed, "cannot run neighborhood if store is not closed")
+
     var toreturn = 0;
 
     while (doSearch(s, moveAcceptor, false).found && !s.abort()) {
@@ -66,6 +68,7 @@ abstract class Neighborhood() {
    * @return true if a move vans discovered, false otherwise
    */
   final def climbFirst(s: SearchZone, moveAcceptor: (Int) => (Int) => Boolean = (oldVal) => (newVal) => newVal < oldVal): Boolean = {
+    require(s.vrp.m.isClosed, "cannot run neighborhood if store is not closed")
     s.vrp.cleanRecordedMoves()
     doSearch(s, moveAcceptor, false).found
   }
@@ -77,9 +80,10 @@ abstract class Neighborhood() {
    * @return true if a move vans discovered, false otherwise
    */
   final def climbBest(s: SearchZone, moveAcceptor: (Int) => (Int) => Boolean = (oldVal) => (newVal) => newVal < oldVal): Boolean = {
+    require(s.vrp.m.isClosed, "cannot run neighborhood if store is not closed")
     bestImprovingMove(s, moveAcceptor) match {
       case Some(m) =>
-        m.doMove; true
+        m.doMove(); true
       case None => false
     }
   }
@@ -90,6 +94,7 @@ abstract class Neighborhood() {
    * @return
    */
   final def firstImprovingMove(s: SearchZone, moveAcceptor: (Int) => (Int) => Boolean = (oldVal) => (newVal) => newVal < oldVal): Option[Move] = {
+    require(s.vrp.m.isClosed, "cannot run neighborhood if store is not closed")
     s.vrp.cleanRecordedMoves()
     doSearch(s, moveAcceptor, true) match {
       case MoveFound(move) => Some(move)
@@ -101,12 +106,15 @@ abstract class Neighborhood() {
     s: SearchZone,
     moveAcceptor: (Int) => (Int) => Boolean = (oldVal) => (newVal) => newVal < oldVal): Option[Move] = {
 
+    require(s.vrp.m.isClosed, "cannot run neighborhood if store is not closed")
+
     var bestMove: Option[Move] = None
     var bestObj = Int.MaxValue
     while (true) {
+      //println("VRP before trying next move: " + s.vrp)
       firstImprovingMove(s, moveAcceptor) match {
         case None => return bestMove
-        case Some(move) if (move.objAfter < bestObj) =>
+        case Some(move) if move.objAfter < bestObj =>
           bestMove = Some(move)
           bestObj = move.objAfter
         case _ => ()
@@ -126,9 +134,9 @@ abstract class Neighborhood() {
 
 
   /**
-   * this method evaluates the result of moveAcceptor(objectiveFunction) after having comited the encoded move
+   * this method evaluates the result of moveAcceptor(objectiveFunction) after having committed the encoded move
    * it return the result of this evaluation
-   * it restores the state as it was before the move was comited (and records the move again)
+   * it restores the state as it was before the move was committed (and records the move again)
    * except if StayIfImprove is set to true. In this case, it does not restore the state if  moveAcceptor(objectiveFunction) return true
    * Besides, it wipes out the move description
    * @param moveAcceptor says if the move is accepted or not
@@ -164,7 +172,7 @@ case class SearchZone(relevantNeighbors: (Int => Iterable[Int]),
                       primaryNodeIterator: Iterator[Int],
                       vrp: VRP with VRPObjective with PositionInRouteAndRouteNr
                                with MoveDescription,
-                      abort: Unit => Boolean = (_ => false))
+                      abort: () => Boolean = {() => false})
 // format: ON
 
 abstract class SearchResult {

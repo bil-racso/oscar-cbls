@@ -37,7 +37,7 @@ import oscar.algo.reversible.ReversibleSetIndexedArray
  *
  * @author Pierre Schaus - pschaus@gmail.com
  */
-class ElementVarBC(val y: Array[CPIntVar], val x: CPIntVar, val z: CPIntVar) extends Constraint(y(0).s, "BCElementVar") {
+class ElementVarBC(val y: Array[CPIntVar], val x: CPIntVar, val z: CPIntVar) extends Constraint(y(0).store, "BCElementVar") {
     
   private val xRange = max(0, x.min) to min(x.max, y.size)
   private val zRange = (z.min max (y.map(_.min).min)) to (z.max min (y.map(_.max).max))

@@ -28,11 +28,9 @@ class SearchStatistics(
   override val toString: String = s"nNodes: $nNodes\nnFails: $nFails\ntime(ms): $time\ncompleted: $completed\ntimeInTrail: $timeInTrail\nnSols: $nSols\n"
 }
 
-
-
 /**
  * DFS and Bounded Dicrepancy DFS 
- * @author: Pierre Schaus pschaus@gmail.com
+ * @author Pierre Schaus pschaus@gmail.com
  */
 class Search(node: SearchNode, branching: Branching) {
   type SolutionAction = () => Unit

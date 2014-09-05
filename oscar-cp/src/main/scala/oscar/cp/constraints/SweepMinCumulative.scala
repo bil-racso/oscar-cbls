@@ -27,7 +27,7 @@ import oscar.cp.modeling.CPSolver
 import oscar.algo.SortUtils.stableSort
 
 /**
- * @author: Renaud Hartert
+ * @author Renaud Hartert
  */
 class SweepMinCumulative(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], demands: Array[CPIntVar], resources: Array[CPIntVar], capacity: CPIntVar, id: Int) extends Constraint(starts.head.store, "MinSweepCumulative") {
 

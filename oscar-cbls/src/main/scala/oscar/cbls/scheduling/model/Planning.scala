@@ -1,4 +1,5 @@
-/*******************************************************************************
+/**
+ * *****************************************************************************
  * OscaR is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
@@ -11,27 +12,32 @@
  *
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
- ******************************************************************************/
+ * ****************************************************************************
+ */
 package oscar.cbls.scheduling.model
 
-/*******************************************************************************
+/**
+ * *****************************************************************************
  * Contributors:
  *     This code has been initially developed by CETIC www.cetic.be
  *         by Renaud De Landtsheer
- ******************************************************************************/
+ *            Yoann Guyot
+ * ****************************************************************************
+ */
 
-import oscar.cbls.invariants.core.computation.{CBLSSetVar, CBLSIntVar, Store}
-import oscar.cbls.invariants.lib.minmax.{ArgMinArray, ArgMaxArray}
-import oscar.cbls.invariants.lib.logic.{Filter, DenseRef}
+import oscar.cbls.invariants.core.computation.{ CBLSSetVar, CBLSIntVar, Store }
+import oscar.cbls.invariants.lib.minmax.{ ArgMinArray, ArgMaxArray }
+import oscar.cbls.invariants.lib.logic.{ Filter, DenseRef }
+import oscar.visual.VisualFrame
+import oscar.visual.plot.PlotLine
 import oscar.cbls.modeling.Algebra._
-
 
 /**
  * @param model
- * @param maxduration
+ * @param maxDuration is the full duration considered here. The engine will crash if it needs to put an activity after this date
  * @author renaud.delandtsheer@cetic.be
  */
-class Planning(val model: Store, val maxduration: Int) {
+class Planning(val model: Store, val maxDuration: Int) {
 
   var isClosed = false
 
@@ -45,66 +51,69 @@ class Planning(val model: Store, val maxduration: Int) {
   }
 
   var superActivity = false
-  var Activities: List[Activity] = List.empty
+  var activities: List[Activity] = List.empty
   var activityCount: Int = 0
   /**called by activities registers it in the planning, returns an ID, which is the one of the activity*/
-  def AddActivity(j: Activity): Int = {
-    Activities = j :: Activities
+  def addActivity(j: Activity): Int = {
+    activities = j :: activities
     activityCount += 1
     activityCount - 1
   }
 
-  var EarliestStartDates: Array[CBLSIntVar] = null
-  var EarliestEndDates: Array[CBLSIntVar] = null
-  var LatestStartDates: Array[CBLSIntVar] = null
+  var earliestStartDates: Array[CBLSIntVar] = null
+  var earliestEndDates: Array[CBLSIntVar] = null
+  var latestStartDates: Array[CBLSIntVar] = null
 
-  val MakeSpan: CBLSIntVar = CBLSIntVar(model, 0, maxduration, 0, "MakeSpan")
-  var EarliestOvershotResources: CBLSSetVar = null
-  var WorseOvershotResource: CBLSSetVar = null
+  val makeSpan: CBLSIntVar = CBLSIntVar(model, 0, maxDuration, 0, "makeSpan")
+  var earliestOvershotResources: CBLSSetVar = null
+  var worseOvershotResource: CBLSSetVar = null
 
-  var ResourceArray: Array[Resource] = null
-  var ActivityArray: Array[Activity] = null
+  var resourceArray: Array[Resource] = null
+  var activityArray: Array[Activity] = null
 
-  var SentinelActivity: Activity = null //a task that is added after all activities, to simplify algorithm construction
+  var sentinelActivity: Activity = null //a task that is added after all activities, to simplify algorithm construction
 
-  model.addToCallBeforeClose(_=>this.close())
+  model.addToCallBeforeClose(() => this.close())
 
-  /** this is to close the planning when you are done with declaring tasks, precedence  and resource
-    * notice that you do not need to explicitely call this, as the model will call it automatically on close.
-    */
+  /**
+   * this is to close the planning when you are done with declaring tasks, precedence  and resource
+   * notice that you do not need to explicitely call this, as the model will call it automatically on close.
+   */
   def close() {
-    if(isClosed) return
+    if (isClosed) return
     isClosed = true
-    val ActivitiesNoSentinel = Activities
-    SentinelActivity = new Activity(0, this, "SentinelActivity")
-    SentinelActivity.LatestEndDate := maxduration
+    val activitiesNoSentinel = activities
+    sentinelActivity = new Activity(0, this, "sentinelActivity")
+    sentinelActivity.latestEndDate := maxDuration
 
-    for (a <- ActivitiesNoSentinel) {
-      SentinelActivity.addStaticPredecessor(a)
+    for (a <- activitiesNoSentinel) {
+      if (a.isTakenInSentinel && ! a.hasSuccessor){
+        sentinelActivity.addStaticPredecessor(a)
+      }
     }
 
-    ActivityArray = new Array[Activity](activityCount)
-    EarliestEndDates = new Array[CBLSIntVar](activityCount)
-    EarliestStartDates = new Array[CBLSIntVar](activityCount)
-    LatestStartDates = new Array[CBLSIntVar](activityCount)
-  
-    for (j <- Activities) {
-      ActivityArray(j.ID) = j
-      EarliestStartDates(j.ID) = j.EarliestStartDate
-      EarliestEndDates(j.ID) = j.EarliestEndDate
-      LatestStartDates(j.ID) = j.LatestStartDate
+    activityArray = new Array[Activity](activityCount)
+    earliestEndDates = new Array[CBLSIntVar](activityCount)
+    earliestStartDates = new Array[CBLSIntVar](activityCount)
+    latestStartDates = new Array[CBLSIntVar](activityCount)
+
+    for (j <- activities) {
+      activityArray(j.ID) = j
+      earliestStartDates(j.ID) = j.earliestStartDate
+      earliestEndDates(j.ID) = j.earliestEndDate
+      latestStartDates(j.ID) = j.latestStartDate
       if (j.isInstanceOf[SuperActivity]) superActivity = true
     }
 
-    for (j <- Activities) {j.close()}
+    for (j <- activities) { j.close() }
 
-    DenseRef(ActivityArray.map(job => job.AllPrecedingActivities), ActivityArray.map(job => job.AllSucceedingActivities))
+    DenseRef(activityArray.map(job => job.allPrecedingActivities), activityArray.map(job => job.allSucceedingActivities))
 
-    MakeSpan <== SentinelActivity.EarliestStartDate
+    makeSpan <== sentinelActivity.earliestStartDate
 
-    ResourceArray = new Array[Resource](resourceCount)
+    resourceArray = new Array[Resource](resourceCount)
     for (r <- resources) {
-      ResourceArray(r.ResourceID) = r; r.close()
+      resourceArray(r.ResourceID) = r; r.close()
     }
 
     val WorseOvershootArray: Array[CBLSIntVar] = new Array[CBLSIntVar](resourceCount)
@@ -114,7 +123,7 @@ class Planning(val model: Store, val maxduration: Int) {
 
     val ResourceWithOvershoot: CBLSSetVar = Filter(WorseOvershootArray)
 
-    WorseOvershotResource = ArgMaxArray(WorseOvershootArray, ResourceWithOvershoot)
+    worseOvershotResource = ArgMaxArray(WorseOvershootArray, ResourceWithOvershoot)
   }
 
   override def toString: String = toAsciiArt
@@ -122,32 +131,31 @@ class Planning(val model: Store, val maxduration: Int) {
   def toAsciiArt: String = {
     def nStrings(N: Int, C: String): String = (if (N <= 0) "" else "" + C + nStrings(N - 1, C))
     def padToLength(s: String, l: Int) = (s + nStrings(l, " ")).substring(0, l)
-    val activityList = Activities.filter(_!=SentinelActivity).sortWith((a, b) => a.EarliestStartDate.value < b.EarliestStartDate.value)
-    val activityStrings = activityList.map(activity =>
-    "" + padToLength(activity.name, 20) + ":" + "[" +
-      padToLength("" + activity.EarliestStartDate.value, 4) + ";" + padToLength("" + activity.EarliestEndDate.value, 4) + "] " +
-      (if (activity.duration.value == 1) nStrings(activity.EarliestStartDate.value, " ") + "#\n"
-      else nStrings(activity.EarliestStartDate.value, " ") + "#" + nStrings(activity.duration.value - 2, "=") + "#\n"))
+    val activityList =
+      activities.filter(_ != sentinelActivity).sortWith((a, b) =>
+        a.earliestStartDate.value < b.earliestStartDate.value)
+    val activityStrings = activityList.map(_.toAsciiArt)
 
-    activityStrings.mkString + MakeSpan + "\n"
+    activityStrings.mkString + makeSpan + "\n"
   }
 
   def dependencies: String = {
-    var toreturn: String = ""
-    for (activity <- Activities.sortBy(t => t.EarliestStartDate.value)){
-      for (t2 <- activity.AllSucceedingActivities.value if t2 != activity.ID && t2 != SentinelActivity.ID){
-        val activity2 = ActivityArray(t2)
-        if (activity2.AdditionalPredecessors.value.contains(activity.ID)){
-          toreturn += activity.name + " -> " + activity2.name + "\n"
-        }else{
-          toreturn += activity.name + " ->> " + activity2.name + "\n"
+    var toreturnAdditional:String = ""
+    var toreturnInitial:String = ""
+    for (activity <- activities.sortBy(t => t.earliestStartDate.value)) {
+      for (t2 <- activity.allSucceedingActivities.value if t2 != activity.ID && t2 != sentinelActivity.ID) {
+        val activity2 = activityArray(t2)
+        if (activity2.additionalPredecessors.value.contains(activity.ID)) {
+          toreturnAdditional += activity.name + " -> " + activity2.name + "\n"
+        } else {
+          toreturnInitial += activity.name + " ->> " + activity2.name + "\n"
         }
       }
     }
-    toreturn
+    toreturnInitial + toreturnAdditional
   }
 
-  def resourceUsage:String = {
+  def resourceUsage: String = {
     resources.map(_.toAsciiArt(20)).mkString
   }
   /**
@@ -157,44 +165,46 @@ class Planning(val model: Store, val maxduration: Int) {
    * @param to
    * @return true if a dependence can be add, false otherwise.
    */
-  def canAddPrecedenceAssumingResourceConflict(from:Activity, to:Activity):Boolean = {
+  def canAddPrecedenceAssumingResourceConflict(from: Activity, to: Activity): Boolean = {
     //this is not straightforward since there can be some SuperTasks.
-    (from != to) && to.canAddPrecedence && ((!superActivity) || !isThereDependency(to,from))
+    (from != to) && to.canAddPrecedence && ((!superActivity) || !isThereDependency(to, from))
   }
 
-  /**Checks if there is a path leading from one activity to another one
+  /**
+   * Checks if there is a path leading from one activity to another one
    * @param from
    * @param to
    * @return true if there is a path from 'from' to 'to', false otherwise
    */
-  def isThereDependency(from:Activity, to:Activity):Boolean = {
+  def isThereDependency(from: Activity, to: Activity): Boolean = {
     val target = to.getEndActivity
 
-    var Reached:List[Activity] = List.empty
+    var Reached: List[Activity] = List.empty
 
     /**PRE: from is a ground activity. */
-    def Search(from:Activity):Boolean = {
+    def Search(from: Activity): Boolean = {
       if (from == target) return true
-      if (from.EarliestEndDate.value > target.EarliestStartDate.value){
+      if (from.earliestEndDate.value > target.earliestStartDate.value) {
         return false
       }
 
-      if(from.Mark){return false}
-      from.Mark = true
+      if (from.mark) { return false }
+      from.mark = true
       Reached = from :: Reached
-      for(next <- from.getStartActivity.AllSucceedingActivities.value){
-        val activity:Activity = ActivityArray(next)
+      for (next <- from.getStartActivity.allSucceedingActivities.value) {
+        val activity: Activity = activityArray(next)
         if (Search(activity)) return true
       }
       false
     }
 
     val toreturn = Search(from.getStartActivity)
-    for (activity <- Reached) activity.Mark = false
+    for (activity <- Reached) activity.mark = false
     toreturn
   }
 
-  /**returns a list of pair of activity; precedences to kill
+  /**
+   * returns a list of pair of activity; precedences to kill
    * to add the new dependency newFrom -> newTo
    * without introducing a cycle involving newFrom -> newTo
    *
@@ -203,56 +213,58 @@ class Planning(val model: Store, val maxduration: Int) {
    * @param newTo
    * @return
    */
-  def getDependencyToKillToAvoidCycle(newFrom:Activity, newTo:Activity):PrecedenceCleaner = {
+  def getDependencyToKillToAvoidCycle(newFrom: Activity, newTo: Activity): PrecedenceCleaner = {
     val from = newTo
     val to = newFrom
-    if(from == to) return HardPrecedence()
+    if (from == to) return HardPrecedence()
 
-    var MarkedActivities:List[Activity] = List.empty
-    var DependenciesToKill:List[(Activity, Activity)] = List.empty
-    /**marks all activities on the path linking From to To
+    var markedActivities: List[Activity] = List.empty
+    var dependenciesToKill: List[(Activity, Activity)] = List.empty
+    /**
+     * marks all activities on the path linking From to To
      * all market activities are also added to MarkedActivities
-      * return true if a path exist*/
-    def MarkPathes(from:Activity, to:Activity):Boolean = {
-      if(from.Mark) return true
+     * return true if a path exist
+     */
+    def markPathes(from: Activity, to: Activity): Boolean = {
+      if (from.mark) return true
       //TODO: we might explore the same node several times if it does not lead to to
-      if (from == to){
-        if (!from.Mark){
-          from.Mark = true
-          MarkedActivities = from :: MarkedActivities
+      if (from == to) {
+        if (!from.mark) {
+          from.mark = true
+          markedActivities = from :: markedActivities
         }
         return true
       }
-      if (from.EarliestEndDate.value > to.EarliestStartDate.value){
+      if (from.earliestEndDate.value > to.earliestStartDate.value) {
         return false
       }
 
-      for(next <- from.getStartActivity.AllSucceedingActivities.value){
-        val nextActivity:Activity = ActivityArray(next)
-        if (MarkPathes(nextActivity, to)) from.Mark = true
+      for (next <- from.getStartActivity.allSucceedingActivities.value) {
+        val nextActivity: Activity = activityArray(next)
+        if (markPathes(nextActivity, to)) from.mark = true
       }
-      if (from.Mark){
-        MarkedActivities = from :: MarkedActivities
+      if (from.mark) {
+        markedActivities = from :: markedActivities
       }
-      from.Mark
+      from.mark
     }
 
     /**returns false if hard rock dependency, true if can be killed*/
-    def FindDependenciesToKill(from:Activity, to:Activity) :Boolean = {
+    def findDependenciesToKill(from: Activity, to: Activity): Boolean = {
       if (from == to) return false
-      if(!to.Mark){return true}
-      for(prev <- to.getStartActivity.AdditionalPredecessors.value){
-        val prevActivity:Activity = ActivityArray(prev)
-        if (prevActivity.Mark){
-          DependenciesToKill = (prevActivity,to) :: DependenciesToKill
-          prevActivity.Mark = false
+      if (!to.mark) { return true }
+      for (prev <- to.getStartActivity.additionalPredecessors.value) {
+        val prevActivity: Activity = activityArray(prev)
+        if (prevActivity.mark) {
+          dependenciesToKill = (prevActivity, to) :: dependenciesToKill
+          prevActivity.mark = false
         }
       }
-      for(prevActivity <- to.getStartActivity.StaticPredecessors){
-        if (prevActivity.Mark){
-          if (FindDependenciesToKill(from, prevActivity)){
-            prevActivity.Mark = false
-          }else{
+      for (prevActivity <- to.getStartActivity.staticPredecessors) {
+        if (prevActivity.mark) {
+          if (findDependenciesToKill(from, prevActivity)) {
+            prevActivity.mark = false
+          } else {
             return false
           }
         }
@@ -260,39 +272,98 @@ class Planning(val model: Store, val maxduration: Int) {
       true
     }
 
-    MarkPathes(from.getStartActivity, to.getEndActivity)
-    if(!FindDependenciesToKill(from.getStartActivity, to.getEndActivity)){
-      for (t <- MarkedActivities) t.Mark = false
+    markPathes(from.getStartActivity, to.getEndActivity)
+    if (!findDependenciesToKill(from.getStartActivity, to.getEndActivity)) {
+      for (t <- markedActivities) t.mark = false
       HardPrecedence()
-    }else{
-      for (t <- MarkedActivities) t.Mark = false
-      PrecedencesCanBeKilled(DependenciesToKill)
+    } else {
+      for (t <- markedActivities) t.mark = false
+      PrecedencesCanBeKilled(dependenciesToKill)
     }
   }
 
-  /** removes all additional Activity precedences that are not tight
-    */
-  def clean(){
-    for(t:Activity <- ActivityArray){
+  /**
+   * removes all additional Activity precedences that are not tight
+   */
+  def clean() {
+    for (t: Activity <- activityArray) {
       t.removeNonTightAdditionalPredecessors()
     }
   }
 }
 
-abstract class PrecedenceCleaner(val canBeKilled:Boolean){
-  def killDependencies(Verbose:Boolean = false){throw new Exception("cannot kill dependencies")}
+abstract class PrecedenceCleaner(val canBeKilled: Boolean) {
+  def killDependencies(Verbose: Boolean = false) { throw new Exception("cannot kill dependencies") }
 }
 case class HardPrecedence() extends PrecedenceCleaner(false)
 
-case class PrecedencesCanBeKilled(val d:List[(Activity, Activity)]) extends PrecedenceCleaner(true){
-  override def killDependencies(Verbose:Boolean = false){
-    for ((a,b) <- d){
-      b.removeDynamicPredecessor(a,Verbose)
+case class PrecedencesCanBeKilled(val d: List[(Activity, Activity)]) extends PrecedenceCleaner(true) {
+  override def killDependencies(Verbose: Boolean = false) {
+    for ((a, b) <- d) {
+      b.removeDynamicPredecessor(a, Verbose)
     }
   }
-  def restoreDependencies(){
-    for ((a,b) <- d){
+  def restoreDependencies() {
+    for ((a, b) <- d) {
       b.addDynamicPredecessor(a)
     }
+  }
+}
+
+/**
+ * This trait lets one post an earliest start date for a given task.
+ *
+ * @author yoann.guyot@cetic.be
+ */
+trait EarliestStartDate extends Planning {
+  /**
+   * Technically, it creates a task which ends at the wanted earliest start date,
+   * and posts it as a static predecessor of the given task.
+   *
+   * Note: It seems that using an Activity (instead of a NonMoveableActivity)
+   * saves scheduling engine performances.
+   */
+  def addEarliestStartDate(task: Activity, earliestStartDate: Int,
+                           nameOfOwner: String = "") {
+    if (earliestStartDate > 0) {
+      val esdTaskName = "ESD_task_of_" + nameOfOwner
+      val esdTask = new Activity(earliestStartDate, this, esdTaskName)
+      task.addStaticPredecessor(esdTask)
+    }
+  }
+}
+
+/**
+ * This trait lets one post variable resources.
+ * Typically: resources which vary with week days.
+ *
+ * Technically, variable resources are cumulative resources,
+ * of which we restrict the availability (at time t)
+ * using non-movable activities.
+ * @author yoann.guyot@cetic.be
+ */
+trait VariableResources extends Planning {
+  /**
+   * This array contains the list of restricting activities,
+   * indexed by the scheduler's unit.
+   */
+  val resourceRestrictionTasks: Array[List[NonMoveableActivity]] =
+    Array.fill(maxDuration + 1)(List())
+
+  /**
+   * One should use this function to add a variable resource
+   * to his scheduling model.
+   *
+   * Availabilities(t) = amount of the resource available at time t
+   * If the size of availabilities is less than the horizon, it will be
+   * used modulo this size:
+   *    let t be such that: availabilities.size <= t <= horizon
+   *    the amount of resource at time t will be:
+   *    availabilities(t % availabilities.size)
+   * @author yoann.guyot@cetic.be
+   */
+  def postVariableResource(availabilities: Array[Int],
+                           name: String = null): VariableResource = {
+    VariableResource(this, availabilities, name)
   }
 }

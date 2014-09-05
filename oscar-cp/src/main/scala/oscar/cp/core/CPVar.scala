@@ -16,10 +16,12 @@
 
 package oscar.cp.core
 
-
 /**
- * @author Pierre Schaus
+ * @author Renaud Hartert ren.hartert@gmail.com
+ * @author Pierre Schaus pschaus@gmail.com
  */
-class CPVar {
-
+abstract class CPVar {
+  def store: CPStore
+  def isBound: Boolean
+  def name: String
 }

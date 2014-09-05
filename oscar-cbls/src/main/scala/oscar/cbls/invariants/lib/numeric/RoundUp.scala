@@ -98,7 +98,9 @@ object TestRoundUpModulo extends App {
 /**
  * Maintains output to the smallest value such that
  * output >= from
- * the interval [output ; output + length] does not overlap with the intervals given in FobiddenZones
+ * the interval [output ; output + length] does not overlap with the intervals
+ * given in ForbiddenZones.
+ * A forbidden zone (start, end) defines the forbidden interval [start, end].
  *
  * Warning: the duration should never be zero.
  *
@@ -283,11 +285,11 @@ case class PreEmption(startTime: CBLSIntVar, duration: CBLSIntVar,
         }
       }
       newDuration
-    }, duration.minVal,  (if (resume) {
-          duration.maxVal + preEmptDuration
-        } else {
-          (preEmptStartTime - startTime.minVal) + preEmptDuration
-        })) {
+    }, duration.minVal, (if (resume) {
+      duration.maxVal + preEmptDuration
+    } else {
+      (preEmptStartTime - startTime.minVal) + preEmptDuration
+    })) {
 }
 
 // replace with a so-called test

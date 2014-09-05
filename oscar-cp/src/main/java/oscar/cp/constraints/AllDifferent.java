@@ -34,7 +34,7 @@ public class AllDifferent extends Constraint {
      * @param x
      */
 	public AllDifferent(CPIntVar ...x) {
-		super(x[0].s(),"AllDifferent");
+		super(x[0].store(),"AllDifferent");
 		this.x = x;
 	}
 

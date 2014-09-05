@@ -44,6 +44,13 @@ class MIPFloatVar(mip: MIPSolver, name : String, lbound: Double = 0.0, ubound: D
 			this.integer = true
 		}		
 		
+		/**
+		 * Set the variable as a binary one
+		 */
+		def setBinary() {
+			this.binary = true
+		}
+		
 }
 
 object MIPFloatVar { 
@@ -58,6 +65,7 @@ object MIPFloatVar {
 
 class MIPIntVar(mip : MIPSolver, name : String,  domain : Range) extends MIPFloatVar(mip,name,domain.min,domain.max) {
 		this.integer = true
+		this.binary = (domain.min == 0 && domain.max == 1)
 }
 
 object MIPIntVar { 
@@ -78,8 +86,12 @@ class MIPSolver(solverLib: LPSolverLib.Value = LPSolverLib.lp_solve) extends Abs
 
     override def setVarProperties() = {
       super.setVarProperties();
-      for (x <- vars; if (x._2.isInteger)) {
-        solver.setInteger(x._2.index)
+      for (x <- vars) {
+        if(x._2.isBinary) {
+          solver.setBinary(x._2.index)
+        } else if(x._2.isInteger) {
+        	solver.setInteger(x._2.index)
+      	}
       }
     }
 
@@ -94,7 +106,7 @@ class MIPSolver(solverLib: LPSolverLib.Value = LPSolverLib.lp_solve) extends Abs
     private def linpwf(limits:IndexedSeq[Double],rates:IndexedSeq[Double],Q: LinearExpression, name:String): MIPFloatVar = {
       println("***** Piecewise linear function : LINEAR ***********")
       val Z = MIPFloatVar(this,"Z_"+name,0,Double.PositiveInfinity)
-      add(Z == rates(0)*Q,Some("Z_"+name))
+      add(Z == rates(0) * Q, s"Z_${name}")
       Z
     }
         
@@ -107,9 +119,9 @@ class MIPSolver(solverLib: LPSolverLib.Value = LPSolverLib.lp_solve) extends Abs
        * =======================================
        */
       val X = createVarMap(0 until num)(n => MIPFloatVar(this,"X_"+name+n,0,{if(n==0) limits(n) else (limits(n) - limits(n-1))}))
-      for(n<-0 until num) this.add(X(n) <= {if(n==0) limits(n) else limits(n)-limits(n-1)},Some("Forcing constraint - "+name+n))
-      this.add(sum(0 until num)(n => X(n)) == Q,Some(name+"_convex_Somme des X == Q"))
-      this.add(sum(0 until num)(n => rates(n)*X(n)) == Z,Some(name+"_convex_Z must stick to curve"))
+      for(n<-0 until num) this.add(X(n) <= {if(n==0) limits(n) else limits(n)-limits(n-1)}, s"Forcing constraint - ${name}${n}")
+      this.add(sum(0 until num)(n => X(n)) == Q, s"${name}_convex_Somme des X == Q")
+      this.add(sum(0 until num)(n => rates(n)*X(n)) == Z, s"${name}_convex_Z must stick to curve")
       
       /* Alternative way (equivalent) : less var
        * =======================================
@@ -152,18 +164,18 @@ class MIPSolver(solverLib: LPSolverLib.Value = LPSolverLib.lp_solve) extends Abs
       for (i<-0 until num) {
         if (i==0) {
           c(i)  = 0.0
-          add(0 <= X(i),Some(name+"_nc_lowboundX_"+i))
-          add(X(i) <= limits(i)*Y(i),Some(name+"_nc_upboundX_"+i))
+          add(0 <= X(i), s"${name}_nc_lowboundX_${i}")
+          add(X(i) <= limits(i)*Y(i), "${name}_nc_upboundX_${i}")
         }
         else {
           c(i) = c(i-1) + limits(i-1)*rates(i-1) - limits(i-1)*rates(i)
-          add(limits(i-1)*Y(i) <= X(i),Some(name+"_nc_lowboundX_"+i))
-          add({ if (limits(i)==Double.PositiveInfinity) 1000000.0*Y(i) else limits(i)*Y(i) } >= X(i),Some(name+"_nc_upboundX_"+i))  
+          add(limits(i-1)*Y(i) <= X(i), s"${name}_nc_lowboundX_${i}")
+          add({ if (limits(i)==Double.PositiveInfinity) 1000000.0*Y(i) else limits(i)*Y(i) } >= X(i), s"${name}_nc_upboundX_${i}")  
         }
       }
             
       // Binary constraints, sum of the X, and fitting to the curve
-      add(sum(0 until num)(i=>X(i)) == Q,name+"_nc_sommeX=Q")
+      add(sum(0 until num)(i=>X(i)) == Q, name+"_nc_sommeX=Q")
       add(sum(0 until num)(i=>Y(i)) == 1)// ,name+"_nc_sommeY=1"
       add(sum(0 until num)(i=>(rates(i)*X(i) + c(i) * Y(i))) <= Z,name+"_nc_coller a la courbe")
       Z
@@ -171,7 +183,7 @@ class MIPSolver(solverLib: LPSolverLib.Value = LPSolverLib.lp_solve) extends Abs
     
     /**
      * Piecewise linear function
-     * @author: Pierre-Yves Gousenbourger
+     * @author Pierre-Yves Gousenbourger
      */
     def pwf(limits:IndexedSeq[Double],rates:IndexedSeq[Double],Q: LinearExpression, name: String): MIPFloatVar = {
         if(limits.size != rates.size){
@@ -193,10 +205,6 @@ class MIPSolver(solverLib: LPSolverLib.Value = LPSolverLib.lp_solve) extends Abs
           ncpwf(limits,rates,Q,name)
         }
      }        
-
-    
-
-
 }
 	
 object MIPSolver { 

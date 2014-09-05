@@ -65,10 +65,12 @@ import oscar.cbls.constraints.lib.basic.NE
 import oscar.cbls.constraints.lib.basic.EQ
 import oscar.cbls.test.invariants.bench.{InvGen, InvBench, InvariantChecker}
 
+
 /**
  * @author yoann.guyot@cetic.be
  */
 class InvariantTests extends FunSuite with Checkers {
+
 
   {
   var assertActivated = false
@@ -179,7 +181,7 @@ class InvariantTests extends FunSuite with Checkers {
     val bench = new InvBench(verbose)
     new Elements(
       bench.genIntSetVar(3, 0 to 4),
-      bench.genIntVarsArray(5, 0 to 10)).toIntSetVar
+      bench.genIntVarsArray(5, 0 to 10)).toSetVar
     bench.run
   }
 
@@ -187,7 +189,7 @@ class InvariantTests extends FunSuite with Checkers {
     val bench = new InvBench(verbose)
     new SetElement(
       bench.genIntVar(0 to 19),
-      bench.genIntSetVars(20, 10, 0 to 100)).toIntSetVar
+      bench.genIntSetVars(20, 10, 0 to 100)).toSetVar
     bench.run
   }
 
@@ -227,7 +229,7 @@ class InvariantTests extends FunSuite with Checkers {
     val bench = new InvBench(verbose)
     new Filter(
       bench.genIntVarsArray(4, 0 to 5),
-      (i: Int) => (i % 2) == 0).toIntSetVar
+      (i: Int) => (i % 2) == 0).toSetVar
     bench.run
   }
 
@@ -235,7 +237,7 @@ class InvariantTests extends FunSuite with Checkers {
     val bench = new InvBench(verbose)
     new SelectLEHeapHeap(
       bench.genIntVarsArray(4, 0 to 5),
-      bench.genIntVar(3 to 10)).toIntSetVar
+      bench.genIntVar(3 to 10)).toSetVar
     bench.run
   }
 
@@ -263,14 +265,14 @@ class InvariantTests extends FunSuite with Checkers {
   // TODO test also with the other parameters of ArgMinArray
   test("ArgMinArray maintains the set of min variables of the array") {
     val bench = new InvBench(verbose)
-    new ArgMinArray(bench.genIntVarsArray(20, 0 to 30)).toIntSetVar
+    new ArgMinArray(bench.genIntVarsArray(20, 0 to 30)).toSetVar
     bench.run
   }
 
   // TODO test also with the other parameters of ArgMaxArray
   test("ArgMaxArray maintains the set of max variables of the array") {
     val bench = new InvBench(verbose)
-    new ArgMaxArray(bench.genIntVarsArray(20, 0 to 30)).toIntSetVar
+    new ArgMaxArray(bench.genIntVarsArray(20, 0 to 30)).toSetVar
     bench.run
   }
 
@@ -285,7 +287,7 @@ class InvariantTests extends FunSuite with Checkers {
     new MinLin(bench.genSortedIntVars(6, 0 to 10)).toIntVar
     bench.run
   }
-
+/*
   test("Min") {
     val bench = new InvBench(verbose)
     new Min(bench.genSortedIntVars(5, -10 to 10)).toIntVar
@@ -297,7 +299,7 @@ class InvariantTests extends FunSuite with Checkers {
     new Max(bench.genSortedIntVars(5, -10 to 10)).toIntVar
     bench.run
   }
-
+*/
   test("Min2") {
     val bench = new InvBench(verbose)
     new Min2(bench.genIntVar(-10 to 10), bench.genIntVar(-10 to 10)).toIntVar
@@ -428,19 +430,19 @@ class InvariantTests extends FunSuite with Checkers {
 
   test("Union maintains the union of two sets.") {
     val bench = new InvBench(verbose)
-    new Union(bench.genIntSetVar(), bench.genIntSetVar()).toIntSetVar
+    new Union(bench.genIntSetVar(), bench.genIntSetVar()).toSetVar
     bench.run
   }
 
   test("Inter maintains the intersection of two sets.") {
     val bench = new InvBench(verbose)
-    new Inter(bench.genIntSetVar(), bench.genIntSetVar()).toIntSetVar
+    new Inter(bench.genIntSetVar(), bench.genIntSetVar()).toSetVar
     bench.run
   }
 
   test("Diff maintains the difference between two sets.") {
     val bench = new InvBench(verbose)
-    new Diff(bench.genIntSetVar(), bench.genIntSetVar()).toIntSetVar
+    new Diff(bench.genIntSetVar(), bench.genIntSetVar()).toSetVar
     bench.run
   }
 
@@ -452,7 +454,7 @@ class InvariantTests extends FunSuite with Checkers {
 
   test("MakeSet maintains an IntSetVar given a set of IntVar.") {
     val bench = new InvBench(verbose)
-    new MakeSet(bench.genSortedIntVars(10, 0 to 10)).toIntSetVar
+    new MakeSet(bench.genSortedIntVars(10, 0 to 10)).toSetVar
     bench.run
   }
 
@@ -460,7 +462,7 @@ class InvariantTests extends FunSuite with Checkers {
     val bench = new InvBench(verbose)
     new Interval(
       bench.genIntVar(-100 to 100),
-      bench.genIntVar(-100 to 100)).toIntSetVar
+      bench.genIntVar(-100 to 100)).toSetVar
     bench.run
   }
 
@@ -493,7 +495,7 @@ class InvariantTests extends FunSuite with Checkers {
 
   test("IdentityIntSet maintains the identity of a set of integers).") {
     val bench = new InvBench(verbose)
-    new IdentitySet(bench.genIntSetVar()).toIntSetVar
+    new IdentitySet(bench.genIntSetVar()).toSetVar
     bench.run
   }
 }

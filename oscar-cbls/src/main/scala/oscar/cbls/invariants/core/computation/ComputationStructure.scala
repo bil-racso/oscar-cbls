@@ -26,22 +26,31 @@ import oscar.cbls.invariants.core.propagation._
 import language.implicitConversions
 
 /**This class contains the invariants and variables
-  * They are all modelled as propagation Elements, which are handled by the inherited [[oscar.cbls.invariants.core.propagation.PropagationStructure]] class.
+  * They are all modelled as propagation Elements, which are handled by the inherited
+  * [[oscar.cbls.invariants.core.propagation.PropagationStructure]] class.
   *
-  * @param verbose requires that the propagation structure prints a trace of what it is doing. all prints are preceded by ''PropagationStruture''
-  * @param checker specifies that once propagation is finished, it must call the checkInternals method on all propagation elements.
-  * @param noCycle is to be set to true only if the static dependency graph between propagation elements has no cycles. If unsure, set to false, the engine will discover it by itself. See also method isAcyclic to query a propagation structure.
+  * @param verbose requires that the propagation structure prints a trace of what it is doing.
+  *                All prints are preceded by ''PropagationStruture''
+  * @param checker specifies that once propagation is finished,
+  *                it must call the checkInternals method on all propagation elements.
+  * @param noCycle is to be set to true only if the static dependency graph between propagation elements has no cycles.
+  *                If unsure, set to false, the engine will discover it by itself.
+  *                See also method isAcyclic to query a propagation structure.
   * @param topologicalSort set to true if you want to use topological sort, to false for layered sort (layered is faster)
-  * @param propagateOnToString set to true if a toString triggers a propagation, to false otherwise. Set to false only for deep debugging
-  *
+  * @param propagateOnToString set to true if a toString triggers a propagation, to false otherwise.
+  *                            Set to false only for deep debugging
+  * @param sortScc true if SCC should be sorted, false otherwise. Set to true, unless you know what your are doing.
+  *                Setting to false might provide a speedup (eg in routing problems),
+  *                but propagation will not be single pass on SCC anymore
   */
 case class Store(override val verbose:Boolean = false,
                  override val checker:Option[Checker] = None,
                  override val noCycle:Boolean = true,
                  override val topologicalSort:Boolean = false,
-                 val propagateOnToString:Boolean = true)
-  extends PropagationStructure(verbose,checker,noCycle,topologicalSort)
-  with Bulker{
+                 val propagateOnToString:Boolean = true,
+                 override val sortScc:Boolean = true)
+  extends PropagationStructure(verbose,checker,noCycle,topologicalSort, sortScc)
+  with Bulker with StorageUtilityManager{
 
   assert({println("You are using a CBLS store with asserts activated. It makes the engine slower. Recompile it with -Xdisable-assertions"); true})
 
@@ -52,17 +61,34 @@ case class Store(override val verbose:Boolean = false,
 
   def isClosed = Closed
 
+  private var privateInputVariables:List[Variable] = null;
+
+  def inputVariables():List[Variable] = {
+    if(privateInputVariables == null){
+      privateInputVariables  = List.empty
+      for (v:Variable <- Variables if v.getDefiningInvariant == null){
+        privateInputVariables = v :: privateInputVariables
+      }
+    }
+    privateInputVariables
+  }
   /**To save the current value of the variables registered in the model
-    * @param OnlyPrimitive if set to true (as by default) the solution will only contain the variables that are not derived through an invariant
+    * @param inputOnly if set to true (as by default) the solution will only contain the variables that are not derived through an invariant
     */
-  def solution(OnlyPrimitive:Boolean = true):Solution = {
+  def solution(inputOnly:Boolean = true):Solution = {
     var assignationInt:SortedMap[CBLSIntVar,Int] = SortedMap.empty
     var assignationIntSet:SortedMap[CBLSSetVar,SortedSet[Int]] = SortedMap.empty
-    for (v:Variable <- Variables if !OnlyPrimitive || v.getDefiningInvariant == null){
-      if(v.isInstanceOf[CBLSIntVar]){
-        assignationInt += ((v.asInstanceOf[CBLSIntVar], v.asInstanceOf[CBLSIntVar].value))
-      }else if(v.isInstanceOf[CBLSSetVar]){
-        assignationIntSet += ((v.asInstanceOf[CBLSSetVar], v.asInstanceOf[CBLSSetVar].value))
+
+    val VariablesToSave = if(inputOnly) {
+      inputVariables()
+    }else Variables
+
+    for (v:Variable <- VariablesToSave){
+      v match {
+        case i:CBLSIntVar =>
+          assignationInt += ((i, i.value))
+        case s:CBLSSetVar =>
+          assignationIntSet += ((s, s.value))
       }
     }
     Solution(assignationInt,assignationIntSet,this)
@@ -141,19 +167,26 @@ case class Store(override val verbose:Boolean = false,
     PropagationElements
   }
 
-  var toCallBeforeClose:List[(Unit=>Unit)] = List.empty
+  var toCallBeforeClose:List[(()=>Unit)] = List.empty
 
-  def addToCallBeforeClose(toCallBeforeCloseProc : (Unit=>Unit)){
+  def addToCallBeforeClose(toCallBeforeCloseProc : (()=>Unit)){
     toCallBeforeClose = (toCallBeforeCloseProc) :: toCallBeforeClose
   }
 
+
+  protected def performCallsBeforeClose() {
+    for (p <- toCallBeforeClose) p()
+    toCallBeforeClose = List.empty
+  }
+
   /**calls this when you have declared all your invariants and variables.
-    * This must be called before any query and update can be made on the model, and after all the invariants and variables have been declared.
-    */
+    * This must be called before any query and update can be made on the model,
+    * and after all the invariants and variables have been declared.
+   * @param DropStaticGraph true if you want to drop the static propagation graph to free memory. It takes little time
+   */
   def close(DropStaticGraph: Boolean = true){
     assert(!Closed, "cannot close a model twice")
-    for(p <- toCallBeforeClose) p()
-    toCallBeforeClose = List.empty
+    performCallsBeforeClose()
     setupPropagationStructure(DropStaticGraph)
     Closed=true
   }
@@ -293,8 +326,6 @@ trait Invariant extends PropagationElement{
       UniqueID = -1
     }
   }
-
-  //TODO: these methods should be in PropagationElement, not in Invariants!!!
 
   /**Call this from within the invariant to notify that you will statically listen to this variable.
     * You CANNOT register a variable twice. It is undetected, but will lead to unexpected behavior.
@@ -463,7 +494,7 @@ object InvariantHelper{
   * Variables have an associated model, to which they register as soon as they are created. Variables also have a name,
   * which is used solely for printing models.
   */
-abstract class Variable(val model:Store, n:String = null) extends PropagationElement{
+abstract class Variable(val model:Store, n:String = null) extends PropagationElement with DistributedStorageUtility{
   UniqueID = if (model == null) -1 else model.registerVariable(this)
   val name = Option(n) getOrElse (s"Var_$UniqueID")
   def getPropagationStructure = this.model
@@ -480,6 +511,7 @@ abstract class Variable(val model:Store, n:String = null) extends PropagationEle
       throw new Exception("variable [" + name + "] cannot have more than one controling invariant, already has " + DefiningInvariant)
     }
   }
+
   def getDefiningInvariant:Invariant = DefiningInvariant
 
   /**this method s to be called by any method that internally modifies the value of the variable
@@ -523,7 +555,7 @@ object Event{
   def apply(v:Variable,
             action: =>Unit):Event = {
     val toreturn = new Event(v,null,null)
-    toreturn.setAction((_:Unit) => action)
+    toreturn.setAction(() => action)
     //    if (intaction != null) toreturn.setIntAction(intaction)
     //   if (intsetaction != null) toreturn.setIntSetAction(intsetaction)
     toreturn
@@ -533,7 +565,7 @@ object Event{
             action: =>Unit,
             ModifiedVars:Iterable[Variable]):Event = {
     val toreturn = new Event(v,null,ModifiedVars)
-    toreturn.setAction((_:Unit) => action)
+    toreturn.setAction(() => action)
     //    if (intaction != null) toreturn.setIntAction(intaction)
     //   if (intsetaction != null) toreturn.setIntSetAction(intsetaction)
     toreturn
@@ -606,7 +638,7 @@ object Event{
 class Event(v:Variable, w:Variable, ModifiedVars:Iterable[Variable]) extends Invariant{
   //unfortunately, it is not possible to pass a type "=>Unit" as parameter to a case class.
 
-  private var action: (Unit=>Unit)=null
+  private var action: (()=>Unit)=null
   private var actionIntParam: (Int=>Unit) = null
   private var actionIntSetParam: (SortedSet[Int] => Unit) = null
 
@@ -620,7 +652,7 @@ class Event(v:Variable, w:Variable, ModifiedVars:Iterable[Variable]) extends Inv
   private var intsetintaction:((SortedSet[Int],Int) => Unit) = null
   private var intintsetaction:((Int,SortedSet[Int]) => Unit) = null
 
-  def setAction(action: Unit=>Unit){
+  def setAction(action: ()=>Unit){
     this.action = action
   }
   def setIntAction(action: Int=>Unit){
@@ -841,7 +873,7 @@ object CBLSIntVar{
     new CBLSIntVar(model, domain, value, name)
   }
 
-  def apply(model: Store, value:Int = 0, name:String) = {
+  def apply(model: Store, value:Int = 0, name:String = "") = {
     val domain = Int.MinValue to Int.MaxValue
     new CBLSIntVar(model, domain, value, name)
   }
@@ -911,8 +943,10 @@ class CBLSSetVar(override val model:Store,
       "internal error: " + "Value: " + Value + " OldValue: " + OldValue)
   }
 
-  override def toString:String = name + ":={" + (if(model.propagateOnToString) value else Value).foldLeft("")(
-    (acc,intval) => if(acc.equalsIgnoreCase("")) ""+intval else acc+","+intval) + "}"
+  override def toString:String = name + ":={" + (if(model.propagateOnToString) value else Value).mkString(",") + "}"
+
+  def valueString:String = "{" + value.mkString(",") + "}"
+
 
   /** this method is a toString that does not trigger a propagation.
     * use this when debugguing your software.
@@ -1034,6 +1068,7 @@ class CBLSSetVar(override val model:Store,
 
   /**Use this to specify that the IntSetVar is the output of the IntSetInvariant*/
   def <==(i:SetInvariant){i.setOutputVar(this)}
+  def <==(i: CBLSSetVar) {this <== IdentitySet(i)}
 
   /**We suppose that the new value is not the same as the actual value.
     * otherwise, there is a huge waste of time.
@@ -1050,8 +1085,8 @@ class CBLSSetVar(override val model:Store,
 object CBLSSetVar{
   //this conversion is forbidden because we inserted the new grammar.
   //implicit def toIntSet(v:IntSetVar):SortedSet[Int] = v.value
-  
-  def apply(r:Range, v:Iterable[Int], name:String="")(implicit s:Store) = {
+
+  def apply(r:Range = Int.MinValue to Int.MaxValue, v:Iterable[Int] = List.empty, name:String="")(implicit s:Store) = {
     val emptySet:SortedSet[Int] = SortedSet.empty
     new CBLSSetVar(s, r.start, r.end,name, emptySet ++ v)
   }
@@ -1075,8 +1110,7 @@ case class CBLSSetConst(ConstValue:SortedSet[Int],override val model:Store = nul
     ,if(ConstValue.isEmpty) Int.MaxValue else ConstValue.max
     ,toString,ConstValue){
   override def getValue(NewValue:Boolean=false):SortedSet[Int] = ConstValue //pour pas avoir de propagation
-  override def toString:String = "IntSetConst{" + ConstValue.foldLeft("")(
-      (acc,intval) => if(acc.equalsIgnoreCase("")) ""+intval else acc+","+intval) + "}"
+  override def toString:String = "IntSetConst{" + ConstValue.mkString(",") + "}"
 }
 
 /** this is a special case of invariant that has a single output variable, that is an IntVar
@@ -1090,6 +1124,13 @@ abstract class IntInvariant extends Invariant{
     a <== this //ca invoque setOutputVar en fait.
     a
   }
+
+  def toIntVar(name:String):CBLSIntVar = {
+    val a = new CBLSIntVar(model, (myMin to myMax), 0, name)
+    a <== this //ca invoque setOutputVar en fait.
+    a
+  }
+
 
   /**this method is called by the output variable
     * basically, the invariant does not know what is its output variable at creation time.
@@ -1111,11 +1152,20 @@ object IntInvariant{
 abstract class SetInvariant extends Invariant{
   def myMin:Int
   def myMax:Int
-  implicit def toIntSetVar:CBLSSetVar = {
+  implicit def toSetVar:CBLSSetVar = {
     val a = new CBLSSetVar(model,myMin,myMax,this.getClass.getSimpleName,SortedSet.empty)
+    a <== this //the variable calls setOutputVar
+    a
+  }
+
+  def toSetVar(name:String):CBLSSetVar = {
+    val a = new CBLSSetVar(model,myMin,myMax,name,SortedSet.empty)
     a <== this //the variable calls setoutputVar
     a
   }
+
+  @deprecated("use toSetVar instead", "1.1")
+  def toIntSetVar:CBLSSetVar = toSetVar
 
   /**this method is called by the output variable
     * basically, the invariant does not know what is its output variable at creation time.
@@ -1128,7 +1178,7 @@ abstract class SetInvariant extends Invariant{
 }
 
 object SetInvariant{
-  implicit def toIntSetVar(i:SetInvariant):CBLSSetVar = i.toIntSetVar
+  implicit def toIntSetVar(i:SetInvariant):CBLSSetVar = i.toSetVar
 }
 
 /** an invariant that is the identity function

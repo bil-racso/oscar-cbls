@@ -16,26 +16,36 @@ package oscar.des.engine
 
 
 import scala.collection.mutable._
-import scala.util.continuations._
 import oscar.invariants._
+
+import scala.collection.mutable._
+
 
 /**
  * Capacitated resource where waiting customers are served in FIFO order
- * @author Pierre Schaus, Sebastien Mouthuy
+ * @author pschaus
  */
-
 class Resource(m : Model, capacity: Int) {
 	
-	private val n = new VarInt(0)
+	private var n = 0
+	private var pendings = new DoubleLinkedList ()
 	
-	def request(): Unit @suspendable = {
-	  waitFor( n.filter( _ < capacity ))	 	  
-	  n :+= 1
+	def request(block: => Unit) {
+		if (n < capacity) {
+	         n += 1
+	         block
+	    } else {
+	         pendings :+ block;
+	    }
 	}
-	  
-	 	
+	
 	def release() {
-	  n :-= 1
+		n -= 1
+		if (pendings.nonEmpty) {
+			val block = pendings.head
+			pendings = pendings.drop(1)
+			block
+		}
 	}
 	
 }

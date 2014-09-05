@@ -51,7 +51,7 @@ public class ElementCst extends Constraint {
      * @see  Element#get(int[], cp.core.CPIntVar)
      */
 	public ElementCst(final int [] y, CPIntVar x, CPIntVar z) {
-		super(x.s(),"ElementCst");
+		super(x.store(),"ElementCst");
 		this.y = y;
 		this.x = x;
 		this.z = z;
@@ -65,9 +65,9 @@ public class ElementCst extends Constraint {
 			public int compare(Integer i1, Integer i2) {
 				return (y[i1]-y[i2]);
 			}});
-		minIndSupp = new ReversibleInt(s());
+		minIndSupp = new ReversibleInt(s(), 0);
 		minIndSupp.setValue(0);
-		maxIndSupp = new ReversibleInt(s());
+		maxIndSupp = new ReversibleInt(s(), 0);
 		maxIndSupp.setValue(y.length-1);
 		
 	}

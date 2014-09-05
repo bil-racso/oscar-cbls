@@ -41,7 +41,7 @@ case class ConstraintSystem(val _model:Store) extends Constraint with ObjectiveT
 
   finishInitialization(_model)
 
-  model.addToCallBeforeClose(_ => this.close())
+  model.addToCallBeforeClose(() => this.close())
 
   class GlobalViolationDescriptor(val Violation:CBLSIntVar){
     var AggregatedViolation:List[CBLSIntVar] = List.empty
@@ -138,8 +138,7 @@ case class ConstraintSystem(val _model:Store) extends Constraint with ObjectiveT
    * no constraint can be added after his method has been called.
    * this method must also be called before closing the model.
    */
-  @deprecated("you do not need to call close on a ConstraintSystem, it is closed by the Model when the model is closed.","1.0")
-  def close(){
+  protected[cbls] def close(){
     if(!isClosed){
       isClosed = true
       Violation <== Sum(PostedConstraints.map((constraintANDintvar) => {
@@ -182,10 +181,10 @@ case class ConstraintSystem(val _model:Store) extends Constraint with ObjectiveT
       if (model.isClosed) throw new Exception("cannot create new violation after model is closed.")
       //not registered yet
       VarsWatchedForViolation = v :: VarsWatchedForViolation
-      val violationvariable = CBLSIntVar(model,0,Int.MaxValue,0,"global violation of " + v.name)
-      v.storeAt(IndexForGlobalViolationINSU,new GlobalViolationDescriptor(violationvariable))
+      val violationVariable = CBLSIntVar(model,0,Int.MaxValue,0,"global violation of " + v.name)
+      v.storeAt(IndexForGlobalViolationINSU,new GlobalViolationDescriptor(violationVariable))
       registerConstrainedVariable(v)
-      violationvariable
+      violationVariable
     }else{
       //already registered
       CPStoredRecord.Violation
@@ -209,3 +208,4 @@ case class ConstraintSystem(val _model:Store) extends Constraint with ObjectiveT
     */
   override def checkInternals(c: Checker): Unit = {}
 }
+

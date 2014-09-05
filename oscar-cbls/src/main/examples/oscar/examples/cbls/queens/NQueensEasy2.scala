@@ -20,8 +20,9 @@
 
 package oscar.examples.cbls.queens
 
+import oscar.cbls.invariants.core.computation.{CBLSIntVar, CBLSSetVar}
 import oscar.cbls.modeling.CBLSModel
-import oscar.cbls.invariants.core.computation.{CBLSSetVar, CBLSIntVar}
+
 import scala.language.postfixOps
 
 /**
@@ -69,9 +70,9 @@ object NQueensEasy2 extends CBLSModel with App{
         queens(q1) :=: queens(q2)
         tabu(q1) := it.value + tabulength
         tabu(q2) := it.value + tabulength
+      },()=>println("Warning: Tabu it too big compared to queens count"))},
+      ()=>println("Warning: Tabu it too big compared to queens count"))
 
-      },()=>{})},
-      ()=>{})
 
     it ++
 

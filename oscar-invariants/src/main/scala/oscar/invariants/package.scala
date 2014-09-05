@@ -15,13 +15,14 @@
 package oscar
 
 import scala.collection.mutable._
-import scala.util.continuations._
 
 package object invariants {
+  
+  /*
   def cpsunit: Unit @cps[Unit] = ()
   def cpsfalse: Boolean @cps[Unit] = false
   def cpstrue: Boolean @cps[Unit] = true
-  
+  */
   @inline def when[A](d: Occuring[A])(f: A => Boolean): Reaction[A] = {
     d.foreach(f)
   }
@@ -48,13 +49,14 @@ package object invariants {
       false
     }
   }
+  /*
   @inline def waitFor[A](d: Occuring[A]) = {
     shift { k: (A => Unit) =>
       val a = once(d) { msg: A =>
         k(msg)
       }
     }
-  }
+  }*/
   
   implicit def Var2Val[A](v: Var[A]) = {v()}
   implicit def array2ElementArray[A](at: scala.collection.immutable.IndexedSeq[Var[A]]) = {

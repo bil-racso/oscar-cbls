@@ -69,7 +69,7 @@ public class BinaryKnapsack extends Constraint {
      * @see  CPPropagStrength
      */
 	public BinaryKnapsack(CPBoolVar [] b, final int [] weights, CPIntVar load) {
-		super(b[0].s(),"BinaryKnapsack");
+		super(b[0].store(),"BinaryKnapsack");
         assert(b.length == weights.length);
 		priorityL2_$eq(CPStore.MAXPRIORL2()-2);
 		Integer [] perm = new Integer [weights.length];
@@ -104,7 +104,7 @@ public class BinaryKnapsack extends Constraint {
      * @see  CPPropagStrength
      */
     public BinaryKnapsack(CPBoolVar [] b, final int [] weights, int load) {
-         this(b,weights,CPIntVar.apply(b[0].s(),load,load));
+         this(b,weights,CPIntVar.apply(b[0].store(),load,load));
     }
 
 	@Override
@@ -343,7 +343,7 @@ class LightBinaryKnapsack extends Constraint {
 	ReversibleInt  rsum;     // required cap: sum of weight of required items with x=1 (packed for sure in the knapsack)
 
 	public LightBinaryKnapsack(CPBoolVar [] b, final int [] weights, CPIntVar load) {
-		super(b[0].s(),"LightBinaryKnapsack");
+		super(b[0].store(),"LightBinaryKnapsack");
 		
 		Integer [] perm = new Integer [weights.length];
 		for (int i = 0; i < perm.length; i++) {
@@ -378,9 +378,9 @@ class LightBinaryKnapsack extends Constraint {
 			candidate[i].setValue(true);
 		}
 		
-		rsum = new ReversibleInt(s());
+		rsum = new ReversibleInt(s(), 0);
 		rsum.setValue(0);
-		psum = new ReversibleInt(s());
+		psum = new ReversibleInt(s(), 0);
 		psum.setValue(0);
 		
 		for (int i = 0; i < w.length; i++) {
@@ -473,7 +473,7 @@ class BinaryKnapsackWithCardinality extends Constraint {
     ReversibleInt nPacked;
 
 	public BinaryKnapsackWithCardinality(CPBoolVar [] b, final int [] weights, CPIntVar load, int nbItems) {
-		super(b[0].s(),"BinaryKnapsackWithCardinality");
+		super(b[0].store(),"BinaryKnapsackWithCardinality");
 
 		Integer [] perm = new Integer [weights.length];
 		for (int i = 0; i < perm.length; i++) {

@@ -15,13 +15,13 @@
 package oscar.cbls.test
 
 import org.scalatest.matchers.ShouldMatchers
-import org.scalatest.FunSuite
+import org.scalatest.{Matchers, FunSuite}
 import oscar.cbls.modeling._
 import oscar.cbls.invariants.core.computation.CBLSIntVar
 import scala.language.postfixOps
 import oscar.cbls.invariants.core.computation.Store
 
-class TestIntVar extends FunSuite with ShouldMatchers {
+class TestIntVar extends FunSuite with Matchers {
   
   test("test create IntVar 1..10"){
     val solver = new Store
@@ -42,13 +42,15 @@ class TestIntVar extends FunSuite with ShouldMatchers {
   
   test("test create IntVar using invalid ranges"){
 	  val solver = new Store
-	  evaluating {
-		  val x = CBLSIntVar(solver, (0 to -1), 0, "x")
-	  } should produce [IllegalArgumentException]
-	  
-	  evaluating {
-	     val x = CBLSIntVar(solver, (0 until 0), 0, "x") // until makes an empty range
-	  } should produce [IllegalArgumentException]
+
+    an [IllegalArgumentException] should be thrownBy {
+      val x = CBLSIntVar(solver, (0 to -1), 0, "x")
+    }
+
+    an [IllegalArgumentException] should be thrownBy {
+      val x = CBLSIntVar(solver, (0 until 0), 0, "x") // until makes an empty range
+    }
+
   }
   
   test("test inDomain of IntVar 1..10"){

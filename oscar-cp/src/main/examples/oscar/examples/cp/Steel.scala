@@ -15,7 +15,7 @@ import oscar.visual.plot.PlotLine
 /**
  * Model for the steel mill slab problem:
  * Steel is produced by casting molten iron into slabs.
- * A steel mill can produce a finite number, σ, of slab sizes.
+ * A steel mill can produce a finite number, sigma, of slab sizes.
  * An order has two properties, a color corresponding to the route required through the steel mill and a weight.
  * Given d input orders, the problem is to assign the orders to slabs,
  * the number and size of which are also to be determined,
@@ -30,7 +30,7 @@ import oscar.visual.plot.PlotLine
 object Steel extends CPModel with App {
 
   def readData(): (Array[Int], Array[Int], Array[Int]) = {
-    val lines = Source.fromFile("data/steelMillSlabOrig.txt").getLines.reduceLeft(_ + " " + _)
+    val lines = Source.fromFile("data/steelMillSlab.txt").getLines.reduceLeft(_ + " " + _)
     var vals = lines.split("[ ,\t]").toList.filterNot(_ == "").map(_.toInt)
     val nbCapa = vals.head
     vals = vals.drop(1)
@@ -100,7 +100,7 @@ object Steel extends CPModel with App {
 
   add(binPacking(x, weight, l), Strong)
   for (s <- Slabs) {
-    def colPresent(c: Int) = or((for (o <- colorOrders(c)) yield x(o) === s) toArray) //return a CPBoolVar telling whether color c is present is slab s
+    def colPresent(c: Int) = isOr((for (o <- colorOrders(c)) yield x(o) === s)) //return a CPBoolVar telling whether color c is present is slab s
     add(sum(Cols)(c => colPresent(c)) <= 2) //at most two colors present in each slab
   }
 

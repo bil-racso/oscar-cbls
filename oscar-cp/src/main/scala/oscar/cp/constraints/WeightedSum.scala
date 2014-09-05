@@ -22,7 +22,7 @@ import oscar.cp.core.CPOutcome._
  * Implementation of Sum Constraint:
  * @author Pierre Schaus pschaus@gmail.com
  */
-class WeightedSum(val W: Array[Int], val X: Array[CPIntVar], val y: CPIntVar) extends Constraint(y.s, "WeightedSum2") {
+class WeightedSum(val W: Array[Int], val X: Array[CPIntVar], val y: CPIntVar) extends Constraint(y.store, "WeightedSum2") {
 
   val x = X.map(i => i)
   val w = W.map(i => i)
@@ -31,7 +31,7 @@ class WeightedSum(val W: Array[Int], val X: Array[CPIntVar], val y: CPIntVar) ex
   
   
   override def setup(l: CPPropagStrength): CPOutcome = {
-    priorityL2 = CPStore.MAXPRIORL2-1
+    //priorityL2 = CPStore.MAXPRIORL2-1
     X.foreach(_.callPropagateWhenBoundsChange(this, false))
     y.callPropagateWhenBoundsChange(this, false)
     val oc = propagate()

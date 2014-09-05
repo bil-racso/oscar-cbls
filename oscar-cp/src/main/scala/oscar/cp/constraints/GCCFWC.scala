@@ -32,7 +32,7 @@ import oscar.cp.modeling._
  *
  * @author Pierre Schaus pschaus@gmail.com and Bertrand Cornelusse bcr@n-side.com
  */
-class GCCFWC(val X: Array[CPIntVar], val minVal: Int, val low: Array[Int], val up: Array[Int]) extends Constraint(X(0).s, "GCCFWC") {
+class GCCFWC(val X: Array[CPIntVar], val minVal: Int, val low: Array[Int], val up: Array[Int]) extends Constraint(X(0).store, "GCCFWC") {
 
   val nbBound = Array.tabulate(low.size)(i => new ReversibleInt(s, 0))
   val nbVarWithValue = Array.tabulate(low.size)(i => new ReversibleInt(s, 0))

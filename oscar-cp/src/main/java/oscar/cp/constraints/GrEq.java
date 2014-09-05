@@ -36,13 +36,13 @@ public class GrEq extends Constraint {
      * @see GrEqVarReif
      */
 	public GrEq(CPIntVar x, CPIntVar y) {
-		super(x.s(),"GrEq");
+		super(x.store(),"GrEq");
 		this.x = x;
 		this.y = y;
 	}
 	
 	public GrEq(CPIntVar x, int v) {
-		this(x, CPIntVar.apply(x.s(),v,v));
+		this(x, CPIntVar.apply(x.store(),v,v));
 	}
 	
 	@Override
@@ -50,8 +50,8 @@ public class GrEq extends Constraint {
 		priorityL2_$eq(CPStore.MAXPRIORL2());
 		CPOutcome oc = propagate();
 		if(oc == CPOutcome.Suspend){
-			if (!y.isBound()) y.callPropagateWhenMinChanges(this,false);
-			if (!x.isBound()) x.callPropagateWhenMaxChanges(this,false);
+			if (!y.isBound()) y.callPropagateWhenBoundsChange(this,false);
+			if (!x.isBound()) x.callPropagateWhenBoundsChange(this,false);
 		}
 		return oc;
 	}

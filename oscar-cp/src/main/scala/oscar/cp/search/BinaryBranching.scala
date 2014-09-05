@@ -27,7 +27,7 @@ import oscar.cp.core.CPSetVar
  * author: Pierre Schaus pschaus@gmail.com
  */
 class BinaryBranching(vars: Array[_ <: CPIntVar], varHeuris: (CPIntVar => Int), valHeuris: (CPIntVar => Int) = minVal) extends Branching {
-  val cp = vars(0).s
+  val cp = vars(0).store
   val x_ = vars.asInstanceOf[Array[CPIntVar]].zipWithIndex
   val nbBounds = new ReversibleInt(cp, 0)
   def bound(i: Int) {
@@ -85,7 +85,7 @@ class BinaryBranching(vars: Array[_ <: CPIntVar], varHeuris: (CPIntVar => Int), 
 
 class BinaryStaticOrderBranching(vars: Array[_ <: CPIntVar], valHeuris: (CPIntVar => Int) = minVal) extends Branching {
 
-  val cp = vars(0).s
+  val cp = vars(0).store
   var y = vars.asInstanceOf[Array[CPIntVar]]
   var i = new ReversibleInt(cp, 0)
 

@@ -20,11 +20,10 @@
 
 package oscar.cbls
 
-import scheduling.algo.IFlatIRelax
+import oscar.cbls.scheduling.solver.IFlatIRelax
 import scheduling.model.{Planning, SuperActivity, Activity, CumulativeResource}
 
 /**
- * THIS PACKAGE IS EXPERIMENTAL
  *
  *  This package is a scheduling library.
  * it supports
@@ -34,7 +33,7 @@ import scheduling.model.{Planning, SuperActivity, Activity, CumulativeResource}
  *   This is useful to model that a resource is not released between tasks.
  *
  * In this package, Tasks are grouped into [[oscar.cbls.scheduling.model.Planning]] that keeps references to all tasks and resources.
- * This package features the [[oscar.cbls.scheduling.algo.IFlatIRelax]] search heuristics with various tunings
+ * This package features the [[IFlatIRelax]] search heuristics with various tunings
   * @author renaud.delandtsheer@cetic.be
  * */
 package object scheduling{

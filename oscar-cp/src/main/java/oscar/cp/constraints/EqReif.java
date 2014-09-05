@@ -18,6 +18,7 @@ import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
 import oscar.cp.core.CPBoolVar;
 import oscar.cp.core.CPIntVar;
+import oscar.cp.core.CPStore;
 import oscar.cp.core.Constraint;
 
 /**
@@ -39,11 +40,11 @@ public class EqReif extends Constraint {
      * @see DiffReif
      */
 	public EqReif(CPIntVar x, int v, CPBoolVar b) {
-		super(x.s(),"EqReif");
+		super(x.store(),"EqReif");
 		this.x = x;
 		this.v = v;
 		this.b = b;
-		
+		idempotent_$eq(true);
 		//priorityBindL1_$eq(CPStore.MAXPRIORL1());
 		//priorityL2_$eq(CPStore.MAXPRIORL2());
 	}
@@ -57,9 +58,13 @@ public class EqReif extends Constraint {
 		else {
 			x.callValBindWhenBind(this);
 			b.callValBindWhenBind(this);
+			
 			//x.addAC5Bounds(this);
 			//x.callValRemoveWhenValueIsRemoved(this);
+			
 			x.callPropagateWhenDomainChanges(this,false);
+			//x.callPropagateWhenBind(this,false);
+			//b.callPropagateWhenBind(this,false);
 			return propagate();
 		}
 	}
@@ -77,6 +82,9 @@ public class EqReif extends Constraint {
 	
 	@Override
 	public CPOutcome propagate() {
+		//if (x.isBound()) return valBind(x);
+		//if (b.isBound()) return valBind(b);
+		
 		if (!x.hasValue(v)) {
 			if (b.assign(0) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
@@ -87,8 +95,8 @@ public class EqReif extends Constraint {
 	}
 	
 	@Override
-	public CPOutcome valRemove(CPIntVar x, int val) {
-		if (val == v) {
+	public CPOutcome valRemove(CPIntVar variable, int val) {		
+		if (variable == x && val == v) {
 			if (b.assign(0) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
 			}
@@ -100,7 +108,8 @@ public class EqReif extends Constraint {
 
 	@Override
 	public CPOutcome valBind(CPIntVar var) {
-		if (b.isBound()) {
+		deactivate();
+		if (var == b) {	
 			if (b.isFalse()) {
 				//x != v
 				if (x.removeValue(v) == CPOutcome.Failure) {
@@ -114,8 +123,7 @@ public class EqReif extends Constraint {
 			}
 			return CPOutcome.Success;
 		}
-		
-		if (x.isBound()) {
+		else {
 			if (x.getValue() == v) {
 				if (b.assign(1) == CPOutcome.Failure) {
 					return CPOutcome.Failure;
@@ -128,8 +136,6 @@ public class EqReif extends Constraint {
 			}
 			return CPOutcome.Success;
 		}
-		
-		return CPOutcome.Suspend;
 	}
 
 }

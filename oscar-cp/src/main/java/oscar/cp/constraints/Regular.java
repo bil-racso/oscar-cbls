@@ -42,7 +42,7 @@ public class Regular extends Constraint {
      * @param automaton
      */
 	public Regular(CPIntVar [] x, Automaton automaton) {
-		super(x[0].s(),"Regular");
+		super(x[0].store(),"Regular");
 		this.x = x;
 
 	    automaton.setPosted();//ensure that the automaton is not modified anymore

@@ -23,7 +23,6 @@ import oscar.dfo.visual.PlotDFOPareto2D
 import oscar.visual.VisualFrame
 import oscar.dfo.multiobjective.mogen.MOGENTriplet
 
-import scala.util.continuations._
 import oscar.dfo.multiobjective.mogen.algos.DirectionalDirectSearch
 
 /**

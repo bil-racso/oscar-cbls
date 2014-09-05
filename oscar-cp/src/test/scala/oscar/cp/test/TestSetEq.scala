@@ -23,7 +23,7 @@ import oscar.cp.core._
 import oscar.cp.modeling._
 
 /**
- * @author Léonard Debroux leonard.debroux@gmail.com
+ * @author Leonard Debroux leonard.debroux@gmail.com
  */
 class TestSetEq extends FunSuite with ShouldMatchers  {
 
