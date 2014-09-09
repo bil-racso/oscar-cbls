@@ -15,6 +15,7 @@
 package oscar.cbls.search.combinators
 
 import oscar.cbls.invariants.core.computation.{CBLSSetVar, CBLSIntVar, Solution, Store}
+import oscar.cbls.search.core.NoMoveFound
 import oscar.cbls.search.core._
 import oscar.cbls.search.move.{CompositeMove, InstrumentedMove, Move}
 
@@ -40,27 +41,29 @@ abstract class NeighborhoodCombinator(a:Neighborhood*) extends Neighborhood{
   override def toString: String = this.getClass.getSimpleName + "(" + a.mkString(",") + ")"
 }
 
-class ProtectBest(a:Neighborhood, i:CBLSIntVar) extends NeighborhoodCombinator(a){
 
-  protected val s:Store = i.model
 
-  protected var bestObj = if(currentSolutionCanBeSaved) i.value else Int.MaxValue
-  protected var best:Solution = if(currentSolutionCanBeSaved) s.solution() else null
+class BasicProtectBest(a:Neighborhood, i:CBLSIntVar) extends NeighborhoodCombinator(a) {
 
-  override def getImprovingMove(acceptanceCriteria:(Int,Int) => Boolean): SearchResult = {
+  protected val s: Store = i.model
+
+  protected var bestObj = if (currentSolutionCanBeSaved) i.value else Int.MaxValue
+  protected var best: Solution = if (currentSolutionCanBeSaved) s.solution() else null
+
+  override def getImprovingMove(acceptanceCriteria: (Int, Int) => Boolean): SearchResult = {
 
     //we record the obj before move to prevent an additional useless propagation
     val objBeforeMove = i.value
 
-    a.getImprovingMove(acceptanceCriteria) match{
+    a.getImprovingMove(acceptanceCriteria) match {
       case NoMoveFound => NoMoveFound
       case MoveFound(m) =>
-        if(m.objAfter > objBeforeMove && objBeforeMove < bestObj && currentSolutionCanBeSaved){
+        if (m.objAfter > objBeforeMove && objBeforeMove < bestObj && currentSolutionCanBeSaved) {
           //solution degrades, and we were better than the best recorded
           //so we save
           best = s.solution(true)
           bestObj = objBeforeMove
-          if(verbose >= 2) println("saving best solution before degradation (obj:" + bestObj + ")")
+          if (verbose >= 2) println("saving best solution before degradation (obj:" + bestObj + ")")
         }
         MoveFound(m)
     }
@@ -68,16 +71,16 @@ class ProtectBest(a:Neighborhood, i:CBLSIntVar) extends NeighborhoodCombinator(a
 
   protected def currentSolutionCanBeSaved = true
 
-  def restoreBest(){
-    if(best == null) {
+  def restoreBest() {
+    if (best == null) {
       if (verbose >= 1) println("no single acceptable solution seen")
-    }else if (i.value > bestObj){
+    } else if (i.value > bestObj) {
       s.restoreSolution(best)
-      if(verbose >= 1) println("restoring best solution (obj:" + bestObj + ")")
-    }else if(verbose >= 1) println("no better solution to restore")
+      if (verbose >= 1) println("restoring best solution (obj:" + bestObj + ")")
+    } else if (verbose >= 1) println("no better solution to restore")
   }
 
-  /**same as doAllImprovingMoves and calling restoreBest after.
+  /** same as doAllImprovingMoves and calling restoreBest after.
     * @param shouldStop a function that takes the iteration number and returns true if search should be stopped
     *                   eg if the problem is considered as solved
     *                   you can evaluate some objective function there such as a violation degree
@@ -85,34 +88,34 @@ class ProtectBest(a:Neighborhood, i:CBLSIntVar) extends NeighborhoodCombinator(a
     *                            by default, we only accept strictly improving moves
     * @return the number of moves performed
     */
-  def doAllMovesAndRestoreBest(shouldStop:Int => Boolean, acceptanceCriterion:(Int,Int) => Boolean = (oldObj,newObj) => oldObj > newObj):Int = {
+  def doAllMovesAndRestoreBest(shouldStop: Int => Boolean, acceptanceCriterion: (Int, Int) => Boolean = (oldObj, newObj) => oldObj > newObj): Int = {
     val toReturn = doAllMoves(shouldStop, acceptanceCriterion)
     restoreBest()
     toReturn
   }
 
-  def restoreBestOnExhaust():RestoreBestOnExhaust = new RestoreBestOnExhaust(this)
-
-  def whenEmpty(violation:CBLSSetVar) = new protectBestWhenEmpty(a, i, violation)
-  def whenZero(violation:CBLSIntVar) = new protectBestWhenZero(a, i, violation)
+  def restoreBestOnExhaust(): RestoreBestOnExhaust = new RestoreBestOnExhaust(this)
 }
 
-class protectBestWhenZero(a:Neighborhood, i:CBLSIntVar, violation:CBLSIntVar) extends ProtectBest(a, i){
-  override protected def currentSolutionCanBeSaved: Boolean = violation.value == 0
+class ProtectBest(a:Neighborhood, i:CBLSIntVar) extends BasicProtectBest(a:Neighborhood, i:CBLSIntVar){
 
-  override def whenEmpty(violation:CBLSSetVar) = throw new Error("only one condition supported for conditional protectBest")
-  override def whenZero(violation:CBLSIntVar) = throw new Error("only one condition supported for conditional protectBest")
+  def whenEmpty(violation:CBLSSetVar) = new protectBestWhen(a, i, () => violation.value.isEmpty)
+  def whenZero(violation:CBLSIntVar) = new protectBestWhen(a, i, () => violation.value == 0)
+
+  /**
+   * this method restricts the save operation to only the situation where "shouldSave" returns true
+   * notice that this is an override of the "when" method found in neighborhood.
+   * @param shouldSave
+   * @return
+   */
+  override def when(shouldSave:()=>Boolean) = new protectBestWhen(a, i, shouldSave)
 }
 
-class protectBestWhenEmpty(a:Neighborhood, i:CBLSIntVar, violation:CBLSSetVar) extends ProtectBest(a, i){
-  override protected def currentSolutionCanBeSaved: Boolean = violation.value.isEmpty
-
-  override def whenEmpty(violation:CBLSSetVar) = throw new Error("only one condition supported for conditional protectBest")
-  override def whenZero(violation:CBLSIntVar) = throw new Error("only one condition supported for conditional protectBest")
+class protectBestWhen(a:Neighborhood, i:CBLSIntVar, shouldSave:()=>Boolean) extends BasicProtectBest(a, i){
+  override protected def currentSolutionCanBeSaved: Boolean = shouldSave()
 }
 
-
-class RestoreBestOnExhaust(a:ProtectBest) extends NeighborhoodCombinator(a){
+class RestoreBestOnExhaust(a:BasicProtectBest) extends NeighborhoodCombinator(a){
 
   def restoreBest(): Unit ={
     a.restoreBest()
@@ -163,7 +166,11 @@ class DoOnQuery(a:Neighborhood, proc: () =>Unit) extends NeighborhoodCombinator(
   * @param procAfterMove a procedure to execute after the move is taken
   * @param procAfterMoveOnMove a procedure to execute after the move is taken, with the move as input parameter
   */
-case class DoOnMove(a:Neighborhood, proc: ()=>Unit, procOnMove:Move => Unit = null, procAfterMove:()=>Unit = null, procAfterMoveOnMove:Move=>Unit = null) extends NeighborhoodCombinator(a){
+case class DoOnMove(a:Neighborhood,
+                    proc: ()=>Unit,
+                    procOnMove:Move => Unit = null,
+                    procAfterMove:()=>Unit = null,
+                    procAfterMoveOnMove:Move=>Unit = null) extends NeighborhoodCombinator(a){
   override def getImprovingMove(acceptanceCriteria:(Int,Int) => Boolean): SearchResult = {
     a.getImprovingMove(acceptanceCriteria) match {
       case m:MoveFound =>
@@ -747,3 +754,40 @@ class WithAcceptanceCriterion(a:Neighborhood, overridingAcceptanceCriterion:(Int
   override def getImprovingMove(acceptanceCriterion: (Int, Int) => Boolean): SearchResult = a.getImprovingMove(overridingAcceptanceCriterion)
 }
 
+/**
+ * this combinator injects a metropolis acceptation function.
+ * the criterion accepts all improving moves, and for worsening moves, it applies the metropolis criterion:
+ * accept if math.random(0.0; 1.0) < math.exp(-gain / temperatureValue)
+ * @param a
+ * @param temperature a function that inputs the number of moves taken, and outputs a temperature, for use in the criterion
+ *                    the number of steps is reset to zero when the combinator is reset
+ */
+class Metropolis(a:Neighborhood, temperature:Int => Float = _ => 100) extends NeighborhoodCombinator(a){
+
+  var moveCount = 0
+  var temperatureValue:Float = temperature(moveCount)
+  override def getImprovingMove(acceptanceCriterion: (Int, Int) => Boolean): SearchResult =
+    a.getImprovingMove(acceptation) match{
+      case NoMoveFound => NoMoveFound
+      case MoveFound(m) => InstrumentedMove(m, notifyMoveTaken)
+    }
+
+  def acceptation(oldObj:Int, newObj:Int):Boolean = {
+    val gain = oldObj - newObj
+    if(gain > 0) return true
+    // metropolis criterion
+    return math.random < math.exp(-gain / temperatureValue)
+  }
+
+  def notifyMoveTaken(){
+    moveCount += 1
+    temperatureValue = temperature(moveCount)
+  }
+
+  //this resets the internal state of the move combinators
+  override def reset(){
+    super.reset()
+    moveCount = 0
+    temperatureValue = temperature(moveCount)
+  }
+}

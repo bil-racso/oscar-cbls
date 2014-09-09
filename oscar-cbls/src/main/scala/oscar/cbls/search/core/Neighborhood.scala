@@ -345,6 +345,13 @@ abstract class Neighborhood{
     * */
   def untilImprovement(obj:CBLSIntVar, minMoves:Int = 0, maxMove:Int = Int.MaxValue) = new UntilImprovement(this, obj, minMoves, maxMove)
 
+  /**
+   * this combinator injects a simulated annealing acceptation function
+   * the criterion is:
+   * math.random < math.exp(-gain / temperatureValue)
+   * @param temperature a function tht inputs the number of moves taken, and outputs a temperature, for use in the criterion
+   */
+  def metropolis(temperature:Int => Float = _ => 100) = new Metropolis(this, temperature)
 }
 
 abstract class StatelessNeighborhood extends Neighborhood{
