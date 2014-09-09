@@ -89,6 +89,7 @@ case class FlattenWorseFirst(p:Planning, maxIterations:Int,
  * */
 case class Relax(p:Planning, pKill: Int,
                  doRelax:(Activity, Activity, Boolean) => Unit = (from: Activity, to: Activity, verbose:Boolean) => to.removeDynamicPredecessor(from, verbose))
+//                (activitiestoRelax:()=>Iterable[Int] = p.sentinelActivity.staticPredecessorsID) TODO: add the possibility to search from given terminating tasks
   extends JumpNeighborhoodParam[List[(Activity, Activity)]] with SearchEngineTrait {
 
   override def doIt(potentiallyKilledPrecedences: List[(Activity, Activity)]){
@@ -135,8 +136,9 @@ case class RelaxNoConflict(p:Planning) extends JumpNeighborhood with SearchEngin
       for (t: Activity <- p.activityArray) {
         for (iD: Int <- t.additionalPredecessors.value) {
           val testedPredecessor = p.activityArray(iD)
+          val wasCriticalDependency = t.potentiallyKilledPredecessors.value.contains(iD)
           t.removeDynamicPredecessor(testedPredecessor, false)
-          if (!t.potentiallyKilledPredecessors.value.contains(iD) || p.worseOvershotResource.value.isEmpty) {
+          if (!wasCriticalDependency || p.worseOvershotResource.value.isEmpty) {
             relaxCount += 1
             improved = true
           }else{
@@ -200,5 +202,3 @@ object SchedulingStrategies{
       protectBest objective whenEmpty p.worseOvershotResource)
   }
 }
-
-
