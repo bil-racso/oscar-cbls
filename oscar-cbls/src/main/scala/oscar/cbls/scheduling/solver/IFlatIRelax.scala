@@ -245,60 +245,10 @@ class IFlatIRelax(p: Planning,
     }
   }
 
-
   /**implements the standard flatten procedure
     * except that it prefers to add a priority to a moveable activity. */
   def flattenWorseFirst2() {
-    var iterations = 0
-    while (!p.worseOvershotResource.value.isEmpty) {
-      if (iterations > maxIterations)
-        throw new IllegalStateException("FlattenWorseFirst() will not terminate. Check there is no conflict between non moveable activities.")
-      iterations += 1
-
-      // the most violated resource
-      val r: Resource = p.resourceArray(selectFrom(p.worseOvershotResource.value))
-
-      // the first violation of the resource in time
-      val t: Int = r.worseOverShootTime
-
-      val conflictActivities = r.conflictingActivities(t)
-      val baseForEjection = r.baseActivityForEjection(t)
-
-      selectMin2[Activity, Activity](baseForEjection, conflictActivities,
-        (from:Activity,to:Activity) =>
-          2*estimateMakespanExpansionForNewDependency(from,to)
-            + (if (from.isInstanceOf[NonMoveableActivity]) 1 else 0),
-        p.canAddPrecedenceAssumingResourceConflict)
-      match {
-        case (a, b) =>
-          b.addDynamicPredecessor(a, verbose)
-          return
-        case null => ;
-      }
-
-      //no precedence can be added because some additional precedence must be killed to allow that
-      //this happens when superTasks are used, and when dependencies have been added around the start and end tasks of a superTask
-      //we search which dependency can be killed in the conflict set,
-      val conflictActivityArray = conflictActivities.toArray
-      val baseForEjectionArray = baseForEjection.toArray
-
-      val dependencyKillers: Array[Array[PrecedenceCleaner]] =
-        Array.tabulate(baseForEjection.size)(
-          t1 => Array.tabulate(conflictActivityArray.size)(
-            t2 => p.getDependencyToKillToAvoidCycle(baseForEjectionArray(t1), conflictActivityArray(t2))))
-
-      selectMin2(baseForEjectionArray.indices, conflictActivityArray.indices,
-        (a: Int, b: Int) => estimateMakespanExpansionForNewDependency(baseForEjectionArray(a), conflictActivityArray(b)),
-        (a: Int, b: Int) => dependencyKillers(a)(b).canBeKilled) match {
-        case (a, b) => {
-          if (verbose) println("need to kill dependencies to complete flattening")
-          dependencyKillers(a)(b).killDependencies(verbose)
-
-          conflictActivityArray(b).addDynamicPredecessor(baseForEjectionArray(a), verbose)
-        }
-        case null => throw new Error("cannot flatten at time " + t + " activities: " + conflictActivities)
-      }
-    }
+    FlattenWorseFirst(p, maxIterations, estimateMakespanExpansionForNewDependency, true, true).doIt()
   }
 
   /**
