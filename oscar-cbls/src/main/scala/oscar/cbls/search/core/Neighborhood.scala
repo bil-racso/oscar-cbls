@@ -80,7 +80,9 @@ abstract class Neighborhood{
   def getImprovingMove(acceptanceCriterion:(Int,Int) => Boolean):SearchResult
 
   //this resets the internal state of the Neighborhood
-  def reset()
+  def reset(){}
+
+  override def toString: String = this.getClass.getSimpleName
 
   /** verbosity: 0: none
     * 1: combinators
@@ -354,16 +356,9 @@ abstract class Neighborhood{
   def metropolis(temperature:Int => Float = _ => 100) = new Metropolis(this, temperature)
 }
 
-abstract class StatelessNeighborhood extends Neighborhood{
-  //this resets the internal state of the move combinators
-  final override def reset(){}
-
-  override def toString: String = this.getClass.getSimpleName
-}
-
 /** a neighborhood that never finds any move (quite useless, actually)
   */
-case class NoMoveNeighborhood() extends StatelessNeighborhood{
+case class NoMoveNeighborhood() extends Neighborhood{
   override def getImprovingMove(acceptanceCriterion:(Int,Int) => Boolean): SearchResult = NoMoveFound
 }
 

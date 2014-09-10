@@ -204,7 +204,7 @@ case class RandomizeNeighborhood(vars:Array[CBLSIntVar],
                                  degree:Int = 1,
                                  name:String = "RandomizeNeighborhood",
                                  searchZone:CBLSSetVar = null)
-  extends StatelessNeighborhood with AlgebraTrait with SearchEngineTrait{
+  extends Neighborhood with AlgebraTrait with SearchEngineTrait{
 
   override def getImprovingMove(acceptanceCriteria:(Int,Int) => Boolean = null): SearchResult = {
     if(amIVerbose) println("applying " + name)
@@ -243,7 +243,7 @@ case class RandomSwapNeighborhood(vars:Array[CBLSIntVar],
                                   degree:Int = 1,
                                   name:String = "RandomSwapNeighborhood",
                                   searchZone:CBLSSetVar = null)
-  extends StatelessNeighborhood with AlgebraTrait with SearchEngineTrait{
+  extends Neighborhood with AlgebraTrait with SearchEngineTrait{
 
   override def getImprovingMove(acceptanceCriteria:(Int,Int) => Boolean = null): SearchResult = {
     if(amIVerbose) println("applying " + name)
@@ -277,7 +277,9 @@ case class RandomSwapNeighborhood(vars:Array[CBLSIntVar],
  * @param variables the array of variable that define the search space of this neighborhood
  * @param best true: the new value is the best one, false, the new value is the first found one that improves
  */
-class ConflictAssignNeighborhood(c:ConstraintSystem, variables:List[CBLSIntVar], best:Boolean = false) extends StatelessNeighborhood with SearchEngineTrait{
+class ConflictAssignNeighborhood(c:ConstraintSystem, variables:List[CBLSIntVar], best:Boolean = false)
+  extends Neighborhood with SearchEngineTrait{
+
   var varArray = variables.toArray
   val violations:Array[CBLSIntVar] = varArray.clone().map(c.violation(_))
   override def getImprovingMove(acceptanceCriteria:(Int,Int) => Boolean = (oldObj,newObj) => oldObj > newObj): SearchResult = {
