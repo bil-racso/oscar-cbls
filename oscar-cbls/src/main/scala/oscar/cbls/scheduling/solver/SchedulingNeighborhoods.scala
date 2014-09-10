@@ -2,7 +2,7 @@ package oscar.cbls.scheduling.solver
 
 import oscar.cbls.invariants.core.computation.CBLSIntVar
 import oscar.cbls.scheduling.algo.CriticalPathFinder
-import oscar.cbls.scheduling.model.{Activity, Planning, PrecedenceCleaner, Resource}
+import oscar.cbls.scheduling.model._
 import oscar.cbls.search.SearchEngineTrait
 import oscar.cbls.search.core._
 
@@ -20,7 +20,7 @@ import oscar.cbls.search.core._
 case class FlattenWorseFirst(p:Planning,
                              maxIterations:Int,
                              estimateMakespanExpansionForNewDependency:(Activity,Activity) => Int = (from: Activity, to: Activity) => from.earliestEndDate.value - to.latestStartDate.value,
-                             supportForSuperTasks:Boolean = false)
+                             supportForSuperTasks:Boolean = false, priorityToPrecedenceToMovableActivities:Boolean = true)
   extends JumpNeighborhood with SearchEngineTrait{
 
   override def shortDescription(): String = "Flattening worse first"
@@ -46,41 +46,57 @@ case class FlattenWorseFirst(p:Planning,
       val conflictActivities = r.conflictingActivities(t)
       val baseForEjection = r.baseActivityForEjection(t)
 
-      selectMin2(baseForEjection, conflictActivities,
-        estimateMakespanExpansionForNewDependency,
-        p.canAddPrecedenceAssumingResourceConflict) match {
-        case (a, b) =>
-          b.addDynamicPredecessor(a, amIVerbose)
-        case null =>
+      if(priorityToPrecedenceToMovableActivities) {
+        selectMin2[Activity, Activity](baseForEjection, conflictActivities,
+          (from:Activity,to:Activity) =>
+            2*estimateMakespanExpansionForNewDependency(from,to)
+              + (if (from.isInstanceOf[NonMoveableActivity]) 1 else 0),
+          p.canAddPrecedenceAssumingResourceConflict)
+        match {
+          case (a, b) =>
+            b.addDynamicPredecessor(a, amIVerbose)
+            return
+          case null => ;
+        }
 
-          if(!supportForSuperTasks)
-            throw new Error("cannot flatten until conflict resolution, maybe your model has superTasks?" +
-              " if yes set supportForSuperTasks, otherwise, problem with non-movable activities")
-
-          //no precedence can be added because some additional precedence must be killed to allow that
-          //this happens when superTasks are used, and when dependencies have been added around the start and end tasks of a superTask
-          //we search which dependency can be killed in the conflict set,
-          val conflictActivityArray = conflictActivities.toArray
-          val baseForEjectionArray = baseForEjection.toArray
-
-          val dependencyKillers: Array[Array[PrecedenceCleaner]] =
-            Array.tabulate(baseForEjection.size)(
-              t1 => Array.tabulate(conflictActivityArray.size)(
-                t2 => p.getDependencyToKillToAvoidCycle(baseForEjectionArray(t1), conflictActivityArray(t2))))
-
-          selectMin2(baseForEjectionArray.indices, conflictActivityArray.indices,
-            (a: Int, b: Int) => estimateMakespanExpansionForNewDependency(baseForEjectionArray(a), conflictActivityArray(b)),
-            (a: Int, b: Int) => dependencyKillers(a)(b).canBeKilled) match {
-            case (a, b) =>
-              if (amIVerbose) println("need to kill dependencies to complete flattening")
-              dependencyKillers(a)(b).killDependencies(amIVerbose)
-
-              conflictActivityArray(b).addDynamicPredecessor(baseForEjectionArray(a), amIVerbose)
-
-            case null => throw new Error("cannot flatten at time " + t + " activities: " + conflictActivities)
-          }
-
+      }else{
+        selectMin2[Activity, Activity](baseForEjection, conflictActivities,
+          estimateMakespanExpansionForNewDependency,p.canAddPrecedenceAssumingResourceConflict)
+        match {
+          case (a, b) =>
+            b.addDynamicPredecessor(a, amIVerbose)
+            return
+          case null => ;
+        }
       }
+
+      if(!supportForSuperTasks)
+        throw new Error("cannot flatten until conflict resolution, maybe your model has superTasks?" +
+          " if yes set supportForSuperTasks, otherwise, problem with non-movable activities")
+
+      //no precedence can be added because some additional precedence must be killed to allow that
+      //this happens when superTasks are used, and when dependencies have been added around the start and end tasks of a superTask
+      //we search which dependency can be killed in the conflict set,
+      val conflictActivityArray = conflictActivities.toArray
+      val baseForEjectionArray = baseForEjection.toArray
+
+      val dependencyKillers: Array[Array[PrecedenceCleaner]] =
+        Array.tabulate(baseForEjection.size)(
+          t1 => Array.tabulate(conflictActivityArray.size)(
+            t2 => p.getDependencyToKillToAvoidCycle(baseForEjectionArray(t1), conflictActivityArray(t2))))
+
+      selectMin2(baseForEjectionArray.indices, conflictActivityArray.indices,
+        (a: Int, b: Int) => estimateMakespanExpansionForNewDependency(baseForEjectionArray(a), conflictActivityArray(b)),
+        (a: Int, b: Int) => dependencyKillers(a)(b).canBeKilled) match {
+        case (a, b) =>
+          if (amIVerbose) println("need to kill dependencies to complete flattening")
+          dependencyKillers(a)(b).killDependencies(amIVerbose)
+
+          conflictActivityArray(b).addDynamicPredecessor(baseForEjectionArray(a), amIVerbose)
+
+        case null => throw new Error("cannot flatten at time " + t + " activities: " + conflictActivities)
+      }
+
     }
   }
 }
