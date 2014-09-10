@@ -54,7 +54,7 @@ abstract class JumpNeighborhood extends Neighborhood{
 
 abstract class JumpNeighborhoodParam[T] extends Neighborhood{
 
-  final def doIt{
+  final def doIt(){
     doIt(getParam)
   }
 
@@ -360,6 +360,14 @@ abstract class Neighborhood{
   */
 case class NoMoveNeighborhood() extends Neighborhood{
   override def getImprovingMove(acceptanceCriterion:(Int,Int) => Boolean): SearchResult = NoMoveFound
+}
+
+/**
+ * This neighborhood always returns the same move, given in the constructor
+ * @param m the move to return when the neighborhood is queried for a move
+ */
+case class ConstantMoveNeighborhood(m:Move) extends Neighborhood{
+  override def getImprovingMove(acceptanceCriterion:(Int,Int) => Boolean): SearchResult = m
 }
 
 /**
