@@ -7,6 +7,7 @@ import oscar.cp.core.CPOutcome
 import oscar.cp.core.CPOutcome._
 import oscar.cp.core.CPPropagStrength._
 import oscar.cp.scheduling.constraints.EFKameugne11WithResources
+import oscar.cp.scheduling.constraints.IQuad
 
 class MaxCumulative(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], demands: Array[CPIntVar], resources: Array[CPIntVar], capacity: CPIntVar, id: Int = 1)
 extends Constraint(starts.head.store, "Max Cumulative") {
@@ -21,7 +22,8 @@ extends Constraint(starts.head.store, "Max Cumulative") {
         
       case Medium =>
         if (s.post(SweepMaxCumulative(starts,durations,ends,demands,resources,capacity,id)) == Failure) return Failure
-        if (s.post(EFKameugne11WithResources(starts,durations,ends,demands,resources,capacity,id)) == Failure) return Failure
+        if (s.post(IQuad(starts,durations,ends,demands,resources,capacity,id)) == Failure) return Failure
+//        if (s.post(EFKameugne11WithResources(starts,durations,ends,demands,resources,capacity,id)) == Failure) return Failure
 //        if (s.post(new EnergeticChecker(starts,durations,ends,demands,resources,capacity,id)) == Failure) return Failure
         
       case Strong =>
