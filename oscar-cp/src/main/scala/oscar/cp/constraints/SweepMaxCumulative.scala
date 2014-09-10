@@ -19,6 +19,7 @@ import scala.math.min
 import oscar.cp.core.CPStore
 import oscar.cp.core.CPIntVar
 import oscar.cp.core.CPOutcome
+import oscar.cp.core.CPOutcome._
 import oscar.cp.core.Constraint
 import oscar.cp.core.CPPropagStrength
 import oscar.cp.modeling.CPSolver
@@ -27,8 +28,25 @@ import oscar.algo.SortUtils._
 /**
  * @author Renaud Hartert ren.hartert@gmail.com
  */
-class SweepMaxCumulative(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], demands: Array[CPIntVar], resources: Array[CPIntVar], capacity: CPIntVar, id: Int) extends Constraint(starts.head.store, "MaxSweepCumulative") {
+class SweepMaxCumulative(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], demands: Array[CPIntVar], resources: Array[CPIntVar], capacity: CPIntVar, id: Int) extends Constraint(starts.head.store, "SweepMaxCumulative") {
+  val sweepLR = new SweepMaxCumulativeLR(starts,        durations,            ends, demands, resources, capacity, id) 
+  val sweepRL = new SweepMaxCumulativeLR(ends map {-_}, durations, starts map {-_}, demands, resources, capacity, id)
+    
+  def setup(str: CPPropagStrength): CPOutcome = {
+    val S = capacity.store
+      
+    if (S.post(sweepLR) == Failure || S.post(sweepRL) == Failure) Failure
+    else Suspend
+  }
+  
+  override def propagate() = {
+    if (sweepLR.propagate() == Failure || sweepRL.propagate() == Failure) Failure
+    else Suspend
+  }
+  
+}
 
+class SweepMaxCumulativeLR(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], demands: Array[CPIntVar], resources: Array[CPIntVar], capacity: CPIntVar, id: Int) extends Constraint(starts.head.store, "SweepMaxCumulative") {
   private val nTasks = starts.size
   private val Tasks = 0 until nTasks
 
@@ -103,7 +121,7 @@ class SweepMaxCumulative(starts: Array[CPIntVar], durations: Array[CPIntVar], en
 
     val oc = propagate()
 
-    if (oc == CPOutcome.Suspend) {
+    if (oc == Suspend) {
       capacity.callPropagateWhenBoundsChange(this)
       for (i <- Tasks) {
         if (!starts(i).isBound) starts(i).callPropagateWhenBoundsChange(this)
@@ -121,13 +139,13 @@ class SweepMaxCumulative(starts: Array[CPIntVar], durations: Array[CPIntVar], en
 
     // Generates events
     if (!generateEventPointSeries())
-      return CPOutcome.Suspend
+      return Suspend
 
     // Performs a sweep on the events
-    if (sweepAlgorithm() == CPOutcome.Failure)
-      return CPOutcome.Failure
+    if (sweepAlgorithm() == Failure)
+      return Failure
 
-    return CPOutcome.Suspend
+    return Suspend
   }
 
   private def generateEventPointSeries(): Boolean = {
@@ -216,11 +234,11 @@ class SweepMaxCumulative(starts: Array[CPIntVar], durations: Array[CPIntVar], en
 
           // Consistency check
           if (consistencyCheck)
-            return CPOutcome.Failure
+            return Failure
 
           // Pruning (this could reduce the size of stackPrune)
-          if (prune(delta, event.date - 1) == CPOutcome.Failure)
-            return CPOutcome.Failure
+          if (prune(delta, event.date - 1) == Failure)
+            return Failure
 
           // Moves the sweep line
           delta = event.date
@@ -251,13 +269,13 @@ class SweepMaxCumulative(starts: Array[CPIntVar], durations: Array[CPIntVar], en
 
     // Checks consistency
     if (consistencyCheck)
-      return CPOutcome.Failure
+      return Failure
 
     // Final pruning
-    if (prune(delta, delta) == CPOutcome.Failure)
-      return CPOutcome.Failure
+    if (prune(delta, delta) == Failure)
+      return Failure
 
-    return CPOutcome.Suspend
+    return Suspend
   }
 
   private def prune(low: Int, up: Int): CPOutcome = {
@@ -271,16 +289,16 @@ class SweepMaxCumulative(starts: Array[CPIntVar], durations: Array[CPIntVar], en
       val t = stackPrune(i)
 
       // Pruning on tasks that must be discarded to respect consistency
-      if (pruneForbiden(t, id, low, up) == CPOutcome.Failure)
-        return CPOutcome.Failure
+      if (pruneForbiden(t, id, low, up) == Failure)
+        return Failure
 
       // Pruning on tasks that are mandatory to respect consistency
-      if (pruneMandatory(t, id, low, up) == CPOutcome.Failure)
-        return CPOutcome.Failure
+      if (pruneMandatory(t, id, low, up) == Failure)
+        return Failure
 
       // Adjusts the height's consumption of the tasks
-      if (pruneConsumption(t, id, low, up) == CPOutcome.Failure)
-        return CPOutcome.Failure
+      if (pruneConsumption(t, id, low, up) == Failure)
+        return Failure
 
       // If the task is still in conflict, we keep it
       if (!(ends(t).max <= up + 1)) {
@@ -294,40 +312,40 @@ class SweepMaxCumulative(starts: Array[CPIntVar], durations: Array[CPIntVar], en
     // Adjusting stackPrune
     nTasksToPrune = nRemainingTasksToPrune
 
-    return CPOutcome.Suspend
+    return Suspend
   }
 
   private def pruneMandatory(t: Int, r: Int, low: Int, up: Int): CPOutcome = {
 
     // Checks if the task is mandatory to respect consistency
     if (!mandatoryCheck(t))
-      return CPOutcome.Suspend
+      return Suspend
 
     // Fix the activity to the resource r
-    if (resources(t).assign(r) == CPOutcome.Failure)
-      return CPOutcome.Failure
+    if (resources(t).assign(r) == Failure)
+      return Failure
 
     // Adjust the EST of the activity
-    if (starts(t).updateMin(up - durations(t).max + 1) == CPOutcome.Failure)
-      return CPOutcome.Failure
+    if (starts(t).updateMin(up - durations(t).max + 1) == Failure)
+      return Failure
 
     // Adjust the LST of the activity
-    if (starts(t).updateMax(low) == CPOutcome.Failure)
-      return CPOutcome.Failure
+    if (starts(t).updateMax(low) == Failure)
+      return Failure
 
     // Adjust the LCT of the activity
-    if (ends(t).updateMax(low + durations(t).max) == CPOutcome.Failure)
-      return CPOutcome.Failure
+    if (ends(t).updateMax(low + durations(t).max) == Failure)
+      return Failure
 
     // Adjust the ECT of the activity
-    if (ends(t).updateMin(up + 1) == CPOutcome.Failure)
-      return CPOutcome.Failure
+    if (ends(t).updateMin(up + 1) == Failure)
+      return Failure
 
     // Adjust the minimal duration of the activity
-    if (durations(t).updateMin(min(up - starts(t).max + 1, ends(t).min - low)) == CPOutcome.Failure)
-      return CPOutcome.Failure
+    if (durations(t).updateMin(min(up - starts(t).max + 1, ends(t).min - low)) == Failure)
+      return Failure
 
-    return CPOutcome.Suspend
+    return Suspend
   }
 
   private def pruneForbiden(t: Int, r: Int, low: Int, up: Int): CPOutcome = {
@@ -337,44 +355,44 @@ class SweepMaxCumulative(starts: Array[CPIntVar], durations: Array[CPIntVar], en
 
       if (ends(t).min > low && starts(t).max <= up && durations(t).min > 0) {
 
-        if (resources(t).removeValue(r) == CPOutcome.Failure)
-          return CPOutcome.Failure
+        if (resources(t).removeValue(r) == Failure)
+          return Failure
 
       } else if (resources(t).isBoundTo(r)) {
 
         if (durations(t).min > 0) {
 
-          if (pruneInterval(low - durations(t).min + 1, up, starts(t)) == CPOutcome.Failure)
-            return CPOutcome.Failure
+          if (pruneInterval(low - durations(t).min + 1, up, starts(t)) == Failure)
+            return Failure
         }
 
         if (!durations(t).isBound) {
 
           if (durations(t).min > 0) {
-            if (pruneInterval(low + 1, up + durations(t).min, ends(t)) == CPOutcome.Failure)
-              return CPOutcome.Failure
+            if (pruneInterval(low + 1, up + durations(t).min, ends(t)) == Failure)
+              return Failure
           }
 
           val maxD = max(max(low - starts(t).min, ends(t).max - up - 1), 0)
 
-          if (durations(t).updateMax(maxD) == CPOutcome.Failure)
-            return CPOutcome.Failure
+          if (durations(t).updateMax(maxD) == Failure)
+            return Failure
         }
       }
     }
 
-    return CPOutcome.Suspend
+    return Suspend
   }
 
   private def pruneConsumption(t: Int, r: Int, low: Int, up: Int): CPOutcome = {
 
     if (resources(t).isBoundTo(r) && ends(t).min > low && starts(t).max <= up && durations(t).min > 0) {
 
-      if (demands(t).updateMax(capacity.max - (capaSumHeight - capaContrib(t))) == CPOutcome.Failure)
-        return CPOutcome.Failure
+      if (demands(t).updateMax(capacity.max - (capaSumHeight - capaContrib(t))) == Failure)
+        return Failure
     }
 
-    return CPOutcome.Suspend
+    return Suspend
   }
 
   private def pruneInterval(low: Int, up: Int, v: CPIntVar): CPOutcome = {
@@ -384,9 +402,9 @@ class SweepMaxCumulative(starts: Array[CPIntVar], durations: Array[CPIntVar], en
       v.updateMin(up + 1)
     } else if (up >= v.max && low >= v.min) {
       v.updateMax(low - 1)
-    } else CPOutcome.Suspend
+    } else Suspend
 
-    return CPOutcome.Suspend
+    return Suspend
   }
 
   private object EventType {
