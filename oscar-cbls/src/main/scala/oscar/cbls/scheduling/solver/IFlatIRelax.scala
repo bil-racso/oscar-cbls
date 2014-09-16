@@ -2,7 +2,7 @@ package oscar.cbls.scheduling.solver
 
 import oscar.cbls.invariants.core.computation.{Solution, Store}
 import oscar.cbls.scheduling.algo.CriticalPathFinder
-import oscar.cbls.scheduling.model.{Activity, Planning, PrecedenceCleaner, Resource}
+import oscar.cbls.scheduling.model._
 import oscar.cbls.search.SearchEngine
 
 /**
@@ -30,40 +30,6 @@ import oscar.cbls.search.SearchEngine
  * ****************************************************************************
  */
 
-/*
-abstract class StopCriterion(){
-
-  //This method is called by the iFlatRelax at each step where the model is feasible
-  def shouldStop(it:Int,p:Planning):Boolean
-}
-
-case class plateauMaxItStopCriterion(maxIt: Int, stable: Int, verbose:Boolean)
-  extends StopCriterion{
-
-  var plateauLength = 0
-  var bestMakeSpan = Int.MaxValue
-
-  def shouldStop(it:Int,p:Planning):Boolean = {
-    if (p.makeSpan.value < bestMakeSpan) {
-      bestMakeSpan = p.makeSpan.value
-      plateauLength = 0
-      if (verbose) println("Better MakeSpan found: " + bestMakeSpan)
-    } else {
-      plateauLength += 1
-    }
-
-    if (it >= maxIt){
-      if (verbose) println("STOP criterion: maximum iteration number reached.")
-      return true
-    }
-    if (plateauLength >= stable){
-      if (verbose) println("STOP criterion: " + stable + " iterations without improvement.")
-      return true
-    }
-    return false
-  }
-}
-*/
 
 /**
  * @param p
@@ -248,35 +214,41 @@ class IFlatIRelax(p: Planning,
       selectMin2(baseForEjection, conflictActivities,
         estimateMakespanExpansionForNewDependency,
         p.canAddPrecedenceAssumingResourceConflict) match {
-          case (a, b) =>
-            b.addDynamicPredecessor(a, verbose)
-          case null =>
+        case (a, b) =>
+          b.addDynamicPredecessor(a, verbose)
+        case null =>
 
-            //no precedence can be added because some additional precedence must be killed to allow that
-            //this happens when superTasks are used, and when dependencies have been added around the start and end tasks of a superTask
-            //we search which dependency can be killed in the conflict set,
-            val conflictActivityArray = conflictActivities.toArray
-            val baseForEjectionArray = baseForEjection.toArray
+          //no precedence can be added because some additional precedence must be killed to allow that
+          //this happens when superTasks are used, and when dependencies have been added around the start and end tasks of a superTask
+          //we search which dependency can be killed in the conflict set,
+          val conflictActivityArray = conflictActivities.toArray
+          val baseForEjectionArray = baseForEjection.toArray
 
-            val dependencyKillers: Array[Array[PrecedenceCleaner]] =
-              Array.tabulate(baseForEjection.size)(
-                t1 => Array.tabulate(conflictActivityArray.size)(
-                  t2 => p.getDependencyToKillToAvoidCycle(baseForEjectionArray(t1), conflictActivityArray(t2))))
+          val dependencyKillers: Array[Array[PrecedenceCleaner]] =
+            Array.tabulate(baseForEjection.size)(
+              t1 => Array.tabulate(conflictActivityArray.size)(
+                t2 => p.getDependencyToKillToAvoidCycle(baseForEjectionArray(t1), conflictActivityArray(t2))))
 
-            selectMin2(baseForEjectionArray.indices, conflictActivityArray.indices,
-              (a: Int, b: Int) => estimateMakespanExpansionForNewDependency(baseForEjectionArray(a), conflictActivityArray(b)),
-              (a: Int, b: Int) => dependencyKillers(a)(b).canBeKilled) match {
-                case (a, b) => {
-                  if (verbose) println("need to kill dependencies to complete flattening")
-                  dependencyKillers(a)(b).killDependencies(verbose)
+          selectMin2(baseForEjectionArray.indices, conflictActivityArray.indices,
+            (a: Int, b: Int) => estimateMakespanExpansionForNewDependency(baseForEjectionArray(a), conflictActivityArray(b)),
+            (a: Int, b: Int) => dependencyKillers(a)(b).canBeKilled) match {
+            case (a, b) => {
+              if (verbose) println("need to kill dependencies to complete flattening")
+              dependencyKillers(a)(b).killDependencies(verbose)
 
-                  conflictActivityArray(b).addDynamicPredecessor(baseForEjectionArray(a), verbose)
-                }
-                case null => throw new Error("cannot flatten at time " + t + " activities: " + conflictActivities)
-              }
+              conflictActivityArray(b).addDynamicPredecessor(baseForEjectionArray(a), verbose)
+            }
+            case null => throw new Error("cannot flatten at time " + t + " activities: " + conflictActivities)
+          }
 
-        }
+      }
     }
+  }
+
+  /**implements the standard flatten procedure
+    * except that it prefers to add a priority to a moveable activity. */
+  def flattenWorseFirst2() {
+    FlattenWorseFirst(p, maxIterations, estimateMakespanExpansionForNewDependency, true, true).doIt()
   }
 
   /**

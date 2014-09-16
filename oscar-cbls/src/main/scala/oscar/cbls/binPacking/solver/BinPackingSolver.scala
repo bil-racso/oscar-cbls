@@ -18,7 +18,7 @@ package oscar.cbls.binPacking.solver
 //TODO: tabu
 
 import oscar.cbls.search.algo.IdenticalAggregator
-import oscar.cbls.search.core.{StatelessNeighborhood, NoMoveFound, SearchResult}
+import oscar.cbls.search.core.{Neighborhood, NoMoveFound, SearchResult}
 import oscar.cbls.search.SearchEngineTrait
 import oscar.cbls.binPacking.model.{BinPackingProblem, Bin, Item}
 import oscar.cbls.search.move.{CompositeMove, SwapMove, AssignMove}
@@ -61,7 +61,7 @@ case class MoveItem(p:BinPackingProblem,
                     best:Boolean = false,
                     areItemsIdentical: (Item,Item) => Boolean = null,
                     areBinsIdentical: (Bin,Bin) => Boolean = null)
-  extends StatelessNeighborhood with SearchEngineTrait{
+  extends Neighborhood with SearchEngineTrait{
 
   val binList:List[Bin] = p.bins.toList.map(_._2)
 
@@ -124,7 +124,7 @@ case class MoveItem(p:BinPackingProblem,
 case class SwapItems(p:BinPackingProblem,
                      best:Boolean = false,
                      areItemsIdentical: (Item,Item) => Boolean = null)
-  extends StatelessNeighborhood with SearchEngineTrait{
+  extends Neighborhood with SearchEngineTrait{
 
   val itemList:List[Item] = p.items.toList.map(_._2)
   val binList:List[Bin] = p.bins.toList.map(_._2)
@@ -189,7 +189,7 @@ case class SwapItems(p:BinPackingProblem,
   * @author renaud.delandtsheer@cetic.be
   * */
 case class JumpSwapItems(p:BinPackingProblem)
-  extends StatelessNeighborhood with SearchEngineTrait {
+  extends Neighborhood with SearchEngineTrait {
 
   val itemList: List[Item] = p.items.toList.map(_._2)
   val binList: List[Bin] = p.bins.toList.map(_._2)
@@ -226,7 +226,7 @@ case class JumpSwapItems(p:BinPackingProblem)
   * @author renaud.delandtsheer@cetic.be
   */
 case class EmptyMostViolatedBin(p:BinPackingProblem)
-  extends StatelessNeighborhood with SearchEngineTrait {
+  extends Neighborhood with SearchEngineTrait {
 
   val itemList: List[Item] = p.items.toList.map(_._2)
   val binList: List[Bin] = p.bins.toList.map(_._2)
@@ -249,5 +249,3 @@ case class EmptyMostViolatedBin(p:BinPackingProblem)
     )
   }
 }
-
-

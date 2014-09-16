@@ -1,15 +1,13 @@
 package oscar.examples.cbls
 
 import oscar.cbls.invariants.core.computation.{CBLSIntVar, Store}
-import oscar.cbls.invariants.lib.logic.{SelectLESetQueue, Filter}
+import oscar.cbls.invariants.lib.logic.{Filter, SelectLESetQueue}
 import oscar.cbls.invariants.lib.minmax.MinArray
 import oscar.cbls.invariants.lib.numeric.Sum
-import oscar.cbls.invariants.lib.set.{Interval, MakeSet}
 import oscar.cbls.modeling.AlgebraTrait
 import oscar.cbls.objective.Objective
-import oscar.cbls.search.move.{AssignMove, Move}
-import oscar.cbls.search.{AssignNeighborhood, RandomizeNeighborhood, SwapsNeighborhood}
-
+import oscar.cbls.search.AssignNeighborhood
+import oscar.cbls.search.move.Move
 
 /**
  * this is a WarehouseLocation problem with a Tabu.
@@ -57,7 +55,8 @@ object WarehouseLocationTabu extends App with AlgebraTrait{
 
   val m = Store()
 
-  //We store in each warehouse variable its warehouse ID, using the [[oscar.cbls.invariants.core.computation.DistributedStorageUtility]] mechanism
+  //We store in each warehouse variable its warehouse ID, using the
+  // [[oscar.cbls.invariants.core.computation.DistributedStorageUtility]] mechanism
   //so we first ask a storageKey to the model
   val warehouseKey = m.getStorageKey()
 
@@ -92,13 +91,12 @@ object WarehouseLocationTabu extends App with AlgebraTrait{
     for (v <- mo.touchedVariables) {
       TabuArray(v.getStorageAt[Int](warehouseKey)) := It.value + tabuTenure
     }
-    It :+= 1
-  }) maxMoves W withoutImprovementOver obj protectBest obj)
+    It :+= 1 }) withAcceptanceCriterion ((_,_) => true) maxMoves W withoutImprovementOver obj protectBest obj)
 
   switchWithTabuNeighborhood.verbose = 1
 
   //all moves are accepted because the neighborhood returns the best found move, and tabu might degrade obj.
-  switchWithTabuNeighborhood.doAllMovesAndRestoreBest(_ >= W+D,(oldObj,newObj) => true)
+  switchWithTabuNeighborhood.doAllMovesAndRestoreBest(_ >= W+D)
 
   println(openWarehouses)
 }

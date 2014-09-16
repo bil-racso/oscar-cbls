@@ -36,16 +36,17 @@ abstract class Move(val objAfter:Int = Int.MaxValue, val neighborhoodName:String
    * to get the list of variables that are modified by the move.
    * use this to update a Tabu for instance
    * notice that is a variable is touched twice by the move, it will appear twice in this list
-   * This can happen with a set where we add two elements in two distinct moves that are aggregated into a [[CompositeMove]]
+   * This can happen with a set where we add two elements in two distinct moves that are aggregated into a [[oscar.cbls.search.move.CompositeMove]]
    * @return the list of touched variables.
    */
-  def touchedVariables:List[Variable]
+  def touchedVariables:List[Variable] = throw new Exception(this.getClass().getSimpleName + "cannot provide touched variables")
 
   /**
-   *
    * @return a readable string of the objective after wit ha space before, or an empty string
    */
   def objToString:String = if(objAfter == Int.MaxValue) "" else " objAfter:" +objAfter
+
+  def neighborhoodNameToString:String = if (neighborhoodName != null) neighborhoodName + ": " else ""
 
   /** this performs the move, evaluates he objective function, and backtracks the move
     *notice that the objAfter is supposed to carry the proper value, so you generally do not need to call this
@@ -67,19 +68,17 @@ abstract class Move(val objAfter:Int = Int.MaxValue, val neighborhoodName:String
 object Move{
   def apply(neighborhoodName:String = null, objAfter:Int = 0)(code: =>Unit):EasyMove = new EasyMove(objAfter, neighborhoodName, code)
 }
+/**
+ * this class does not provide an implementation for touchedVariables,
+ * since we are only inputting source code for executing the move
+ * */
 class EasyMove(override val objAfter:Int, override val neighborhoodName:String = null, code: => Unit)
   extends Move(objAfter, neighborhoodName){
 
   override def commit() {code}
 
-  override def toString: String = if (neighborhoodName != null) neighborhoodName else "EasyMove"
+  override def toString: String = neighborhoodNameToString + "EasyMove"
 
-  /**
-   * this class does not provide an implementation for touchedVariables,
-   * since we are only inputting source code for executing the move
-   * @return the list of touched variables.
-   */
-  override def touchedVariables: List[Variable] = throw new Exception("EasyMove cannot provide touched variables")
 }
 
 /** standard move that assigns an int value to a CBLSIntVar
@@ -96,8 +95,7 @@ case class AssignMove(i:CBLSIntVar,v:Int, override val objAfter:Int, override va
   override def commit() {i := v}
 
   override def toString: String = {
-    (if (neighborhoodName != null) neighborhoodName + ": " else "") +
-      "AssignMove(" + i + " set to " + v + objToString + ")"
+    neighborhoodNameToString + "AssignMove(" + i + " set to " + v + objToString + ")"
   }
 
   override def touchedVariables: List[Variable] = List(i)
@@ -117,8 +115,7 @@ case class SwapMove(i:CBLSIntVar,j:CBLSIntVar, override val objAfter:Int, overri
   override def commit() {i :=: j}
 
   override def toString: String  = {
-    (if (neighborhoodName != null) neighborhoodName + ": " else "") +
-      "SwapMove(" + i + " swapped with " + j + objToString + ")"
+    neighborhoodNameToString + "SwapMove(" + i + " swapped with " + j + objToString + ")"
   }
 
   override def touchedVariables: List[Variable] = List(i,j)
@@ -138,8 +135,7 @@ case class AddToSetMove(s:CBLSSetVar,v:Int, override val objAfter:Int, override 
   override def commit() {s :+= v}
 
   override def toString: String = {
-    (if (neighborhoodName != null) neighborhoodName + ": " else "") +
-      "AddToSetMove(" + s + " :+= " + v + objToString + ")"
+    neighborhoodNameToString + "AddToSetMove(" + s + " :+= " + v + objToString + ")"
   }
 
   override def touchedVariables: List[Variable] = List(s)
@@ -159,8 +155,7 @@ case class RemoveFromSetMove(s:CBLSSetVar,v:Int, override val objAfter:Int, over
   override def commit() {s :-= v}
 
   override def toString: String = {
-    (if (neighborhoodName != null) neighborhoodName + ": " else "") +
-      "RemoveFromSetMove(" + s + " :-= " + v + objToString + ")"
+    neighborhoodNameToString + "RemoveFromSetMove(" + s + " :-= " + v + objToString + ")"
   }
 
   override def touchedVariables: List[Variable] = List(s)
@@ -185,8 +180,7 @@ case class CompositeMove(ml:List[Move], override val objAfter:Int, override val 
   }
 
   override def toString: String  = {
-    (if (neighborhoodName != null) neighborhoodName + ": " else "") +
-    "CompositeMove(" + ml.mkString(" and ") + objToString + ")"
+    neighborhoodNameToString + "CompositeMove(" + ml.mkString(" and ") + objToString + ")"
   }
 
   override def touchedVariables: List[Variable] = ml.flatMap(_.touchedVariables)
@@ -199,7 +193,7 @@ case class CompositeMove(ml:List[Move], override val objAfter:Int, override val 
   * @param callBack the method to invoke before the actual move is taken
   * @author renaud.delandtsheer@cetic.be
   */
-case class CallBackMove(initialMove:Move, callBack: () => Unit, afterMove: () => Unit = null) extends Move(initialMove.objAfter, initialMove.neighborhoodName){
+case class InstrumentedMove(initialMove:Move, callBack: () => Unit, afterMove: () => Unit = null) extends Move(initialMove.objAfter, initialMove.neighborhoodName){
   def commit(){
     if(callBack != null) callBack()
     initialMove.commit()
@@ -209,4 +203,17 @@ case class CallBackMove(initialMove:Move, callBack: () => Unit, afterMove: () =>
   override def toString: String = initialMove.toString
 
   override def touchedVariables: List[Variable] = initialMove.touchedVariables
+}
+
+object CallBackMove{
+  def apply(callBack: () => Unit, objAfter:Int, neighborhoodName:String, shortDescription:() => String)=
+    new CallBackMove[Unit](_ => {callBack()}, objAfter, neighborhoodName, shortDescription)
+}
+
+case class CallBackMove[T](callBack: T => Unit, override val objAfter:Int, override val neighborhoodName:String, shortDescription:() => String, param:T = null) extends Move{
+  def commit(){
+    callBack(param)
+  }
+
+  override def toString: String = neighborhoodNameToString + "CallBackMove" + (if (shortDescription != null) "(" + shortDescription() + ")" else "")
 }

@@ -14,10 +14,10 @@
   ******************************************************************************/
 package oscar.cbls.search.combinators
 
-import oscar.cbls.invariants.core.computation.{CBLSIntVar, Solution, Store}
-import oscar.cbls.objective.Objective
+import oscar.cbls.invariants.core.computation.{CBLSSetVar, CBLSIntVar, Solution, Store}
+import oscar.cbls.search.core.NoMoveFound
 import oscar.cbls.search.core._
-import oscar.cbls.search.move.{CompositeMove, CallBackMove, Move}
+import oscar.cbls.search.move.{CompositeMove, InstrumentedMove, Move}
 
 import scala.language.implicitConversions
 
@@ -41,51 +41,107 @@ abstract class NeighborhoodCombinator(a:Neighborhood*) extends Neighborhood{
   override def toString: String = this.getClass.getSimpleName + "(" + a.mkString(",") + ")"
 }
 
-class ProtectBest(a:Neighborhood, i:CBLSIntVar) extends NeighborhoodCombinator(a){
 
-  var bestObj = i.value
-  val s:Store = i.model
-  var best:Solution = s.solution()
-  override def getImprovingMove(acceptanceCriteria:(Int,Int) => Boolean): SearchResult = {
+
+class BasicProtectBest(a:Neighborhood, i:CBLSIntVar) extends NeighborhoodCombinator(a) {
+
+  protected val s: Store = i.model
+
+  protected var bestObj = if (currentSolutionCanBeSaved) i.value else Int.MaxValue
+  protected var best: Solution = if (currentSolutionCanBeSaved) s.solution() else null
+
+  override def getImprovingMove(acceptanceCriteria: (Int, Int) => Boolean): SearchResult = {
 
     //we record the obj before move to prevent an additional useless propagation
     val objBeforeMove = i.value
 
-    a.getImprovingMove(acceptanceCriteria) match{
+    a.getImprovingMove(acceptanceCriteria) match {
       case NoMoveFound => NoMoveFound
-      case MoveFound(m) => {
-        if(m.objAfter > objBeforeMove && objBeforeMove < bestObj){
+      case MoveFound(m) =>
+        if (m.objAfter > objBeforeMove && objBeforeMove < bestObj && currentSolutionCanBeSaved) {
           //solution degrades, and we were better than the best recorded
           //so we save
           best = s.solution(true)
           bestObj = objBeforeMove
-          if(verbose >= 2) println("saving best solution befopre degradation (obj:" + bestObj + ")")
+          if (verbose >= 2) println("saving best solution before degradation (obj:" + bestObj + ")")
         }
         MoveFound(m)
-      }
     }
   }
 
-  def restoreBest(){
-    if (best != null && i.value > bestObj){
+  protected def currentSolutionCanBeSaved = true
+
+  def restoreBest() {
+    if (best == null) {
+      if (verbose >= 1) println("no single acceptable solution seen")
+    } else if (i.value > bestObj) {
       s.restoreSolution(best)
-      if(verbose >= 1) println("restoring best solution (obj:" + bestObj + ")")
-    }else if(verbose >= 1) println("no better solution to restore")
+      if (verbose >= 1) println("restoring best solution (obj:" + bestObj + ")")
+    } else if (verbose >= 1) println("no better solution to restore")
   }
 
-  /**same as doAllImprovingMoves and calling restoreBest after.
-   * @param shouldStop a function that takes the iteration number and returns true if search should be stopped
-   *                   eg if the problem is considered as solved
-   *                   you can evaluate some objective function there such as a violation degree
-   * @param acceptanceCriterion a criterion for accepting a move
-   *                            by default, we only accept strictly improving moves
-   * @return the number of moves performed
-   */
-  def doAllMovesAndRestoreBest(shouldStop:Int => Boolean, acceptanceCriterion:(Int,Int) => Boolean = (oldObj,newObj) => oldObj > newObj):Int = {
+  /** same as doAllImprovingMoves and calling restoreBest after.
+    * @param shouldStop a function that takes the iteration number and returns true if search should be stopped
+    *                   eg if the problem is considered as solved
+    *                   you can evaluate some objective function there such as a violation degree
+    * @param acceptanceCriterion a criterion for accepting a move
+    *                            by default, we only accept strictly improving moves
+    * @return the number of moves performed
+    */
+  def doAllMovesAndRestoreBest(shouldStop: Int => Boolean, acceptanceCriterion: (Int, Int) => Boolean = (oldObj, newObj) => oldObj > newObj): Int = {
     val toReturn = doAllMoves(shouldStop, acceptanceCriterion)
     restoreBest()
     toReturn
   }
+
+  def restoreBestOnExhaust(): RestoreBestOnExhaust = new RestoreBestOnExhaust(this)
+}
+
+class ProtectBest(a:Neighborhood, i:CBLSIntVar) extends BasicProtectBest(a:Neighborhood, i:CBLSIntVar){
+
+  def whenEmpty(violation:CBLSSetVar) = new protectBestWhen(a, i, () => violation.value.isEmpty)
+  def whenZero(violation:CBLSIntVar) = new protectBestWhen(a, i, () => violation.value == 0)
+
+  /**
+   * this method restricts the save operation to only the situation where "shouldSave" returns true
+   * notice that this is an override of the "when" method found in neighborhood.
+   * @param shouldSave
+   * @return
+   */
+  override def when(shouldSave:()=>Boolean) = new protectBestWhen(a, i, shouldSave)
+}
+
+class protectBestWhen(a:Neighborhood, i:CBLSIntVar, shouldSave:()=>Boolean) extends BasicProtectBest(a, i){
+  override protected def currentSolutionCanBeSaved: Boolean = shouldSave()
+}
+
+class RestoreBestOnExhaust(a:BasicProtectBest) extends NeighborhoodCombinator(a){
+
+  def restoreBest(): Unit ={
+    a.restoreBest()
+  }
+
+  /**same as doAllImprovingMoves and calling restoreBest after.
+    * @param shouldStop a function that takes the iteration number and returns true if search should be stopped
+    *                   eg if the problem is considered as solved
+    *                   you can evaluate some objective function there such as a violation degree
+    * @param acceptanceCriterion a criterion for accepting a move
+    *                            by default, we only accept strictly improving moves
+    * @return the number of moves performed
+    */
+  def doAllMovesAndRestoreBest(shouldStop:Int => Boolean, acceptanceCriterion:(Int,Int) => Boolean = (oldObj,newObj) => oldObj > newObj):Int = {
+    a. doAllMovesAndRestoreBest(shouldStop, acceptanceCriterion)
+  }
+
+  override def getImprovingMove(acceptanceCriteria:(Int,Int) => Boolean): SearchResult = {
+    a.getImprovingMove(acceptanceCriteria) match{
+      case m:MoveFound => m
+      case x =>
+        restoreBest()
+        x
+    }
+  }
+
 }
 
 /** this combinator attaches a custom code to a given neighborhood.
@@ -107,15 +163,19 @@ class DoOnQuery(a:Neighborhood, proc: () =>Unit) extends NeighborhoodCombinator(
   * @param proc the procedure to execute when the move is taken
   * @param procOnMove a procedure that inputs the move that is applied;
   *                   use this to update a Tabu for instance
- * @param procAfterMove a procedure to execute after the move is taken
- * @param procAfterMoveOnMove a procedure to execute after the move is taken, with the move as input parameter
- */
-class DoOnMove(a:Neighborhood, proc: ()=>Unit, procOnMove:Move => Unit = null, procAfterMove:()=>Unit = null, procAfterMoveOnMove:Move=>Unit = null) extends NeighborhoodCombinator(a){
+  * @param procAfterMove a procedure to execute after the move is taken
+  * @param procAfterMoveOnMove a procedure to execute after the move is taken, with the move as input parameter
+  */
+case class DoOnMove(a:Neighborhood,
+                    proc: ()=>Unit,
+                    procOnMove:Move => Unit = null,
+                    procAfterMove:()=>Unit = null,
+                    procAfterMoveOnMove:Move=>Unit = null) extends NeighborhoodCombinator(a){
   override def getImprovingMove(acceptanceCriteria:(Int,Int) => Boolean): SearchResult = {
     a.getImprovingMove(acceptanceCriteria) match {
-     case m:MoveFound =>
-       CallBackMove(m.m, callBackBeforeMove(m.m), callBackAfterMove(m.m))
-     case x => x
+      case m:MoveFound =>
+        InstrumentedMove(m.m, callBackBeforeMove(m.m), callBackAfterMove(m.m))
+      case x => x
     }
   }
 
@@ -141,7 +201,7 @@ class DoOnFirstMove(a:Neighborhood, proc: ()=>Unit) extends NeighborhoodCombinat
   override def getImprovingMove(acceptanceCriteria:(Int,Int) => Boolean): SearchResult = {
     if (isFirstMove) {
       a.getImprovingMove(acceptanceCriteria) match {
-        case m: MoveFound => CallBackMove(m.m, notifyMoveTaken)
+        case m: MoveFound => InstrumentedMove(m.m, notifyMoveTaken)
         case x => x
       }
     }else{
@@ -399,7 +459,7 @@ class MaxMoves(a:Neighborhood, val maxMove:Int) extends NeighborhoodCombinator(a
   override def getImprovingMove(acceptanceCriteria:(Int,Int) => Boolean): SearchResult = {
     if (remainingMoves > 0) {
       a.getImprovingMove(acceptanceCriteria) match{
-        case m:MoveFound => CallBackMove(m.m,notifyMoveTaken)
+        case m:MoveFound => InstrumentedMove(m.m,notifyMoveTaken)
         case x => x
       }
     } else{
@@ -450,46 +510,64 @@ class MaxMoves(a:Neighborhood, val maxMove:Int) extends NeighborhoodCombinator(a
   * and swaps neighborhood after "step" invocations
   * @author renaud.delandtsheer@cetic.be
   */
-class RoundRobin(a:Neighborhood, b:Neighborhood, steps:Int = 1) extends NeighborhoodCombinator(a,b){
-  var currentStep:Int = steps
-  override def getImprovingMove(acceptanceCriteria:(Int,Int) => Boolean): SearchResult = {
-    if(currentStep >0){
-      currentStep -= 1
-      if(currentStep == 0) currentStep = -steps
-      a.getImprovingMove(acceptanceCriteria) match{
+class RoundRobin(l:List[Neighborhood], steps:Int = 1) extends NeighborhoodCombinator(l:_*){
+  val robins = l.length
+  var remainingSteps:Int = steps
+  var tail:List[Neighborhood] = l
+  override def getImprovingMove(acceptanceCriteria:(Int,Int) => Boolean): SearchResult =
+    myGetImprovingMove(acceptanceCriteria)
+
+  private def myGetImprovingMove(acceptanceCriteria:(Int,Int) => Boolean, triedRobins:Int = 0): SearchResult = {
+    if (triedRobins >= robins){
+      NoMoveFound
+    }else if(remainingSteps > 0){
+      //no need to change neighborhood yet
+      remainingSteps -= 1
+      tail.head.getImprovingMove(acceptanceCriteria) match{
         case NoMoveFound =>
-          currentStep = - steps
-          b.reset()
-          b.getImprovingMove(acceptanceCriteria)
+          moveToNextRobin()
+          myGetImprovingMove(acceptanceCriteria, triedRobins +1)
         case x:MoveFound => x
       }
-    }else{
-      currentStep += 1
-      if(currentStep == 0) currentStep = steps
-      b.getImprovingMove(acceptanceCriteria) match{
-        case NoMoveFound =>
-          currentStep = steps
-          a.reset()
-          a.getImprovingMove(acceptanceCriteria)
-        case x:MoveFound => x
-      }
+    }else {
+      //move to next robin
+      remainingSteps = steps
+      moveToNextRobin()
+      myGetImprovingMove(acceptanceCriteria, triedRobins + 1)
     }
+  }
+
+  private def moveToNextRobin(){
+    if(tail.tail.isEmpty){
+      tail = l
+    }else{
+      tail = tail.tail
+    }
+    remainingSteps = steps
   }
 
   //this resets the internal state of the move combinators
   override def reset(){
-    currentStep = steps
+    remainingSteps = steps
     super.reset()
   }
+
+  /**
+   * proposes a round-robin with that.
+   * notice that you can chain steps; this will build a round-robin on the whole sequence (although this operation is not associative)
+   * @param b
+   * @return
+   */
+  override def step(b: Neighborhood): RoundRobin = new RoundRobin(l ::: List(b))
 }
 
-class RoundRobinNoParam(val a:Neighborhood,val b:Neighborhood){
-  def step(s:Int):Neighborhood = new RoundRobin(a,b,s)
+class RoundRobinNoParam(val a:Neighborhood, val b:Neighborhood){
+  def step(s:Int):Neighborhood = new RoundRobin(List(a,b),s)
 }
 
 object RoundRobinNoParam{
   implicit def toNeighBorHood(rr:RoundRobinNoParam):Neighborhood = {
-    val toReturn = new RoundRobin(rr.a,rr.b,1)
+    val toReturn = new RoundRobin(List(rr.a,rr.b),1)
     toReturn.verbose = rr.a.verbose
     toReturn
   }
@@ -516,10 +594,17 @@ object RoundRobinNoParam{
   * @param b given that the move returned by the first neighborhood is committed, we explore the globally improving moves of this one
   * @param maxFirstStep the maximal number of moves to consider to the first neighborhood
   * @param maximalIntermediaryDegradation the maximal degradation that is admitted for the intermediary step; the higher, the more moves will be considered
+  * @param stopAfterFirstIfEnough stops if an explored first move is enough; in this case the composite move is not explore, only the first move is returned.
   *
   * @author renaud.delandtsheer@cetic.be
- */
-class AndThen(a:Neighborhood, b:Neighborhood, maxFirstStep:Int = 10, maximalIntermediaryDegradation:Int = Int.MaxValue) extends NeighborhoodCombinator(a,b){
+  */
+class AndThen(a:Neighborhood, b:Neighborhood, maxFirstStep:Int = 10, maximalIntermediaryDegradation:Int = Int.MaxValue, stopAfterFirstIfEnough:Boolean = false) extends NeighborhoodCombinator(a,b){
+
+  /** this method is called by AndThen to notify the first step, and that it is now exploring successors of this step.
+    * this method is called before the step is actually taken.
+    * @param m
+    */
+  def notifyFirstStep(m:Move){}
 
   override def getImprovingMove(acceptanceCriteria:(Int,Int) => Boolean): SearchResult = {
 
@@ -529,7 +614,7 @@ class AndThen(a:Neighborhood, b:Neighborhood, maxFirstStep:Int = 10, maximalInte
 
     var oldObj:Int = 0
     def instrumentedIntermediaryAcceptanceCriteria(stolenOldObj:Int,intermediaryObj:Int):Boolean = {
-      oldObj = stolenOldObj;
+      oldObj = stolenOldObj
       intermediaryObj - stolenOldObj <=  maximalIntermediaryDegradation
     }
 
@@ -537,26 +622,32 @@ class AndThen(a:Neighborhood, b:Neighborhood, maxFirstStep:Int = 10, maximalInte
       remainingFirstSteps -= 1
       a.getImprovingMove(instrumentedIntermediaryAcceptanceCriteria) match{
         case NoMoveFound => return NoMoveFound
-        case MoveFound(firstMove) => {
+        case MoveFound(firstMove) =>
+
+          if(stopAfterFirstIfEnough){
+            if(acceptanceCriteria(oldObj, firstMove.objAfter)){
+              return firstMove
+            }
+          }
+
           val touchedVars = firstMove.touchedVariables
           val model = touchedVars.head.model
           val snapshot = model.saveValues(touchedVars:_*)
+          notifyFirstStep(firstMove)
           firstMove.commit()
           if(amIVerbose) println("AndThen: trying first move " + firstMove)
           def globalAcceptanceCriteria:(Int,Int) => Boolean = (_,newObj) => acceptanceCriteria(oldObj,newObj)
           b.getImprovingMove(globalAcceptanceCriteria) match{
             case NoMoveFound => model.restoreSnapshot(snapshot)
-            case MoveFound(secondMove) =>{
+            case MoveFound(secondMove) =>
               model.restoreSnapshot(snapshot)
               return CompositeMove(List(firstMove,secondMove),
                 secondMove.objAfter,
                 firstMove.neighborhoodName + "_AndThen_" + secondMove.neighborhoodName)
-            }
           }
-        }
       }
     }
-   NoMoveFound
+    NoMoveFound
   }
 }
 
@@ -569,33 +660,64 @@ class MaxMovesWithoutImprovement(a:Neighborhood, val maxMovesWithoutImprovement:
   var stepsSinceLastImprovement = 0
   var bestObj = Int.MaxValue
 
-    override def getImprovingMove(acceptanceCriteria:(Int,Int) => Boolean): SearchResult = {
-      if (stepsSinceLastImprovement <= maxMovesWithoutImprovement) {
-        a.getImprovingMove(acceptanceCriteria) match{
-          case m:MoveFound => CallBackMove(m.m,callBack = null, afterMove = notifyMoveTaken)
-          case x => x
-        }
-      } else{
-        if (verbose >= 1) println("MaxStepsWithoutImprovement: reached " + maxMovesWithoutImprovement + " moves without improvement")
-        NoMoveFound
+  override def getImprovingMove(acceptanceCriteria:(Int,Int) => Boolean): SearchResult = {
+    if (stepsSinceLastImprovement <= maxMovesWithoutImprovement) {
+      a.getImprovingMove(acceptanceCriteria) match{
+        case m:MoveFound => InstrumentedMove(m.m,callBack = null, afterMove = notifyMoveTaken)
+        case x => x
       }
+    } else{
+      if (verbose >= 1) println("MaxStepsWithoutImprovement: reached " + maxMovesWithoutImprovement + " moves without improvement")
+      NoMoveFound
     }
+  }
 
-    //this resets the internal state of the move combinators
-    override def reset(){
+  //this resets the internal state of the move combinators
+  override def reset(){
+    stepsSinceLastImprovement = 0
+    super.reset()
+  }
+
+  def notifyMoveTaken(){
+    val newObj = obj.value
+    if(newObj < bestObj){
+      bestObj = newObj
       stepsSinceLastImprovement = 0
-      super.reset()
+    }else{
+      stepsSinceLastImprovement += 1
     }
+  }
+}
 
-    def notifyMoveTaken(){
-      val newObj = obj.value
-      if(newObj < bestObj){
-        bestObj = newObj
-        stepsSinceLastImprovement = 0
-      }else{
-        stepsSinceLastImprovement += 1
-      }
-    }
+/**calls the neighborhood until an improvement over obj is achieved
+  * the improvement is "since the last reset"
+  * @param a
+  * @param minMoves the min number of queries that will be forwarded to a (priority over the improvement)
+  * @param maxMove the max number of queries that will be forwarded to a (priority over the improvement)
+  * @param obj the obj that is looked for improvement
+  * @author renaud.delandtsheer@cetic.be
+  * */
+class UntilImprovement(a:Neighborhood, obj:CBLSIntVar, val minMoves:Int = 0, val maxMove:Int = Int.MaxValue)
+  extends NeighborhoodCombinator(a){
+
+  //TODO: pas sûr que cela fonctionne du premier coup; peut-être faut-il faire un reset au début de toute descente.
+  var oldObjOnReset = obj.value
+  var movesQueriedSinceReset = 0
+
+  override def getImprovingMove(acceptanceCriterion:(Int,Int) => Boolean): SearchResult = {
+    movesQueriedSinceReset += 1
+    if(movesQueriedSinceReset < maxMove
+      && (movesQueriedSinceReset < minMoves || obj.value >= oldObjOnReset))
+      a.getImprovingMove(acceptanceCriterion)
+    else NoMoveFound
+  }
+
+  //this resets the internal state of the move combinators
+  override def reset(){
+    oldObjOnReset = obj.value
+    movesQueriedSinceReset = 0
+    super.reset()
+  }
 }
 
 /** the purpose of this combinator is to change the name of the neighborhood it is given as parameter.
@@ -632,3 +754,40 @@ class WithAcceptanceCriterion(a:Neighborhood, overridingAcceptanceCriterion:(Int
   override def getImprovingMove(acceptanceCriterion: (Int, Int) => Boolean): SearchResult = a.getImprovingMove(overridingAcceptanceCriterion)
 }
 
+/**
+ * this combinator injects a metropolis acceptation function.
+ * the criterion accepts all improving moves, and for worsening moves, it applies the metropolis criterion:
+ * accept if math.random(0.0; 1.0) < math.exp(-gain / temperatureValue)
+ * @param a
+ * @param temperature a function that inputs the number of moves taken, and outputs a temperature, for use in the criterion
+ *                    the number of steps is reset to zero when the combinator is reset
+ */
+class Metropolis(a:Neighborhood, temperature:Int => Float = _ => 100) extends NeighborhoodCombinator(a){
+
+  var moveCount = 0
+  var temperatureValue:Float = temperature(moveCount)
+  override def getImprovingMove(acceptanceCriterion: (Int, Int) => Boolean): SearchResult =
+    a.getImprovingMove(acceptation) match{
+      case NoMoveFound => NoMoveFound
+      case MoveFound(m) => InstrumentedMove(m, notifyMoveTaken)
+    }
+
+  def acceptation(oldObj:Int, newObj:Int):Boolean = {
+    val gain = oldObj - newObj
+    if(gain > 0) return true
+    // metropolis criterion
+    return math.random < math.exp(-gain / temperatureValue)
+  }
+
+  def notifyMoveTaken(){
+    moveCount += 1
+    temperatureValue = temperature(moveCount)
+  }
+
+  //this resets the internal state of the move combinators
+  override def reset(){
+    super.reset()
+    moveCount = 0
+    temperatureValue = temperature(moveCount)
+  }
+}
