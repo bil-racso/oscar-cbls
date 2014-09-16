@@ -44,11 +44,23 @@ case class FlattenWorseFirst(p:Planning,
       // the worse violation of the resource in time
       val t: Int = r.worseOverShootTime
 
-      flattenOne(r, t)
+      if (!flattenOne(r, t)) {
+
+        if (!supportForSuperTasks)
+          throw new Error("cannot flatten until conflict resolution, maybe your model has superTasks?" +
+            " if yes set supportForSuperTasks, otherwise, problem with non-movable activities")
+
+        flattenOneWithSuperTaskHandling(r, t)
+      }
     }
   }
 
-  def flattenOne(r: Resource, t: Int): Unit = {
+  /**
+    * @param r
+    * @param t
+    * @return true if flattening was performed, false otherwise.
+    */
+  def flattenOne(r: Resource, t: Int):Boolean = {
     val conflictActivities = r.conflictingActivities(t)
     val baseForEjection = r.baseActivityForEjection(t)
 
@@ -64,15 +76,9 @@ case class FlattenWorseFirst(p:Planning,
     match {
       case (a, b) =>
         b.addDynamicPredecessor(a, amIVerbose)
-        return
-      case null => ;
+        return true
+      case null => return false;
     }
-
-    if (!supportForSuperTasks)
-      throw new Error("cannot flatten until conflict resolution, maybe your model has superTasks?" +
-        " if yes set supportForSuperTasks, otherwise, problem with non-movable activities")
-
-    flattenOneWithSuperTaskHandling(r, t)
   }
 
   def flattenOneWithSuperTaskHandling(r: Resource, t: Int): Unit = {
@@ -153,6 +159,8 @@ case class Relax(p:Planning, pKill: Int,
 case class RelaxNoConflict(p:Planning, twoPhaseCheck:Boolean = false) extends JumpNeighborhood with SearchEngineTrait {
 
   override def doIt(): Unit ={
+    require(p.worseOvershotResource.value.isEmpty)
+
     var relaxCount = 0
     var improved = true
     while (improved) {
@@ -161,9 +169,9 @@ case class RelaxNoConflict(p:Planning, twoPhaseCheck:Boolean = false) extends Ju
       for (t: Activity <- p.activityArray) {
         for (iD: Int <- t.additionalPredecessors.value) {
           val testedPredecessor = p.activityArray(iD)
-          val wasCriticalDependency = if (twoPhaseCheck) t.potentiallyKilledPredecessors.value.contains(iD) else true
+          val dependencyCanBeKilledWithoutMoreCheck = if (twoPhaseCheck) !t.potentiallyKilledPredecessors.value.contains(iD) else false
           t.removeDynamicPredecessor(testedPredecessor, false)
-          if (!wasCriticalDependency || p.worseOvershotResource.value.isEmpty) {
+          if (dependencyCanBeKilledWithoutMoreCheck || p.worseOvershotResource.value.isEmpty) {
             relaxCount += 1
             improved = true
           }else{
