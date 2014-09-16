@@ -5,6 +5,7 @@ import oscar.cbls.scheduling.algo.CriticalPathFinder
 import oscar.cbls.scheduling.model._
 import oscar.cbls.search.SearchEngineTrait
 import oscar.cbls.search.core._
+import oscar.cbls.search.combinators.BasicProtectBest
 
 /**
  * @param p the planning to flatten
@@ -218,7 +219,7 @@ object SchedulingStrategies{
                  nbRelax: Int = 4,
                  pKillPerRelax: Int = 50,
                  stable: Int,
-                 objective:CBLSIntVar):Neighborhood = {
+                 objective:CBLSIntVar):BasicProtectBest = {
     require(p.model.isClosed, "model should be closed before iFlatRelax algo can be instantiated")
     val maxIterationsForFlatten = (p.activityCount * (p.activityCount - 1)) / 2
 

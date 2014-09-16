@@ -66,7 +66,7 @@ abstract class Move(val objAfter:Int = Int.MaxValue, val neighborhoodName:String
 }
 
 object Move{
-  def apply(neighborhoodName:String = null, objAfter:Int = 0)(code: =>Unit):EasyMove = new EasyMove(objAfter, neighborhoodName, code)
+  def apply(objAfter:Int = 0, neighborhoodName:String = null)(code: =>Unit):EasyMove = new EasyMove(objAfter, neighborhoodName, code)
 }
 /**
  * this class does not provide an implementation for touchedVariables,

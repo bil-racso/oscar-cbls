@@ -40,12 +40,12 @@ abstract class JumpNeighborhood extends Neighborhood{
   def doIt()
   def shortDescription():String
 
-  override def getImprovingMove(acceptanceCriterion: (Int, Int) => Boolean): SearchResult = {
+  override def getMove(acceptanceCriterion: (Int, Int) => Boolean = (oldObj,newObj) => oldObj > newObj): SearchResult = {
     CallBackMove(() => doIt,valueAfter, this.getClass.getSimpleName, shortDescription)
   }
 
   /** returns the value after the move
-    * called by getImprovingMove, by default, this is Int.MaxValue, which is the correct value for a jump
+    * called by getMove, by default, this is Int.MaxValue, which is the correct value for a jump
     * in case your jump does not modify the obj function and you want to include this in the move description, override this method
     * @return
     */
@@ -64,7 +64,7 @@ abstract class JumpNeighborhoodParam[T] extends Neighborhood{
   def getParam:T
   def getShortDescription(param:T):String
 
-  override def getImprovingMove(acceptanceCriterion: (Int, Int) => Boolean): SearchResult = {
+  override def getMove(acceptanceCriterion: (Int, Int) => Boolean): SearchResult = {
     val param:T = getParam
     if(param == null) NoMoveFound
     else CallBackMove((param:T) => doIt(param), Int.MaxValue, this.getClass.getSimpleName, () => getShortDescription(param),param)
@@ -77,7 +77,7 @@ abstract class JumpNeighborhoodParam[T] extends Neighborhood{
 abstract class Neighborhood{
 
 
-  def getImprovingMove(acceptanceCriterion:(Int,Int) => Boolean):SearchResult
+  def getMove(acceptanceCriterion:(Int,Int) => Boolean = (oldObj,newObj) => oldObj > newObj):SearchResult
 
   //this resets the internal state of the Neighborhood
   def reset(){}
@@ -120,7 +120,7 @@ abstract class Neighborhood{
     var toReturn = 0
     var moveCount = 0
     while(!shouldStop(moveCount)){
-      getImprovingMove(acceptanceCriterion) match {
+      getMove(acceptanceCriterion) match {
         case NoMoveFound =>
           if (verbose >= 1) println("no more move found after " + toReturn + " it")
           return toReturn;
@@ -358,8 +358,8 @@ abstract class Neighborhood{
 
 /** a neighborhood that never finds any move (quite useless, actually)
   */
-case class NoMoveNeighborhood() extends Neighborhood{
-  override def getImprovingMove(acceptanceCriterion:(Int,Int) => Boolean): SearchResult = NoMoveFound
+case object NoMoveNeighborhood extends Neighborhood{
+  override def getMove(acceptanceCriterion:(Int,Int) => Boolean): SearchResult = NoMoveFound
 }
 
 /**
@@ -367,7 +367,7 @@ case class NoMoveNeighborhood() extends Neighborhood{
  * @param m the move to return when the neighborhood is queried for a move
  */
 case class ConstantMoveNeighborhood(m:Move) extends Neighborhood{
-  override def getImprovingMove(acceptanceCriterion:(Int,Int) => Boolean): SearchResult = m
+  override def getMove(acceptanceCriterion:(Int,Int) => Boolean): SearchResult = m
 }
 
 /**
@@ -409,7 +409,7 @@ abstract class EasyNeighborhood(best:Boolean = false, obj:()=>Int, neighborhoodN
   private var toReturnMove:Move = null
   private var bestNewObj:Int = Int.MaxValue
 
-  override final def getImprovingMove(acceptanceCriterion:(Int,Int) => Boolean):SearchResult = {
+  override final def getMove(acceptanceCriterion:(Int,Int) => Boolean):SearchResult = {
     oldObj = obj()
     this.acceptanceCriterion = acceptanceCriterion
     toReturnMove = null

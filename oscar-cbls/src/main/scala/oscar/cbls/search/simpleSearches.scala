@@ -206,7 +206,7 @@ case class RandomizeNeighborhood(vars:Array[CBLSIntVar],
                                  searchZone:CBLSSetVar = null)
   extends Neighborhood with AlgebraTrait with SearchEngineTrait{
 
-  override def getImprovingMove(acceptanceCriteria:(Int,Int) => Boolean = null): SearchResult = {
+  override def getMove(acceptanceCriteria:(Int,Int) => Boolean = null): SearchResult = {
     if(amIVerbose) println("applying " + name)
 
     var toReturn:List[Move] = List.empty
@@ -245,7 +245,7 @@ case class RandomSwapNeighborhood(vars:Array[CBLSIntVar],
                                   searchZone:CBLSSetVar = null)
   extends Neighborhood with AlgebraTrait with SearchEngineTrait{
 
-  override def getImprovingMove(acceptanceCriteria:(Int,Int) => Boolean = null): SearchResult = {
+  override def getMove(acceptanceCriteria:(Int,Int) => Boolean = null): SearchResult = {
     if(amIVerbose) println("applying " + name)
 
     var toReturn:List[Move] = List.empty
@@ -282,7 +282,7 @@ class ConflictAssignNeighborhood(c:ConstraintSystem, variables:List[CBLSIntVar],
 
   var varArray = variables.toArray
   val violations:Array[CBLSIntVar] = varArray.clone().map(c.violation(_))
-  override def getImprovingMove(acceptanceCriteria:(Int,Int) => Boolean = (oldObj,newObj) => oldObj > newObj): SearchResult = {
+  override def getMove(acceptanceCriteria:(Int,Int) => Boolean = (oldObj,newObj) => oldObj > newObj): SearchResult = {
     val oldObj = c.violation.value
     val MaxViolVarID = selectMax(varArray.indices,violations(_:Int).value)
 
