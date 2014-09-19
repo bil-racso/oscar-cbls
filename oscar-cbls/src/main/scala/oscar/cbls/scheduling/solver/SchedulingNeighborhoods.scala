@@ -4,6 +4,7 @@ import oscar.cbls.invariants.core.computation.CBLSIntVar
 import oscar.cbls.scheduling.algo.CriticalPathFinder
 import oscar.cbls.scheduling.model._
 import oscar.cbls.search.SearchEngineTrait
+import oscar.cbls.search.combinators.{BasicProtectBest, ProtectBest}
 import oscar.cbls.search.core._
 import oscar.cbls.search.combinators.BasicProtectBest
 
@@ -54,6 +55,7 @@ case class FlattenWorseFirst(p:Planning,
         flattenOneWithSuperTaskHandling(r, t)
       }
     }
+//    print(p.toAsciiArt)
   }
 
   /**

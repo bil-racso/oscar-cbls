@@ -47,8 +47,16 @@ class BasicProtectBest(a: Neighborhood, i: CBLSIntVar) extends NeighborhoodCombi
 
   protected val s: Store = i.model
 
-  protected var bestObj = if (currentSolutionCanBeSaved) i.value else Int.MaxValue
-  protected var best: Solution = if (currentSolutionCanBeSaved) s.solution() else null
+  protected var bestObj = if (currentSolutionIsAcceptable) i.value else Int.MaxValue
+  protected var best: Solution = if (currentSolutionIsAcceptable) s.solution() else null
+
+
+  //this resets the internal state of the move combinators
+  override def reset(){
+    super.reset()
+    bestObj = Int.MaxValue
+    best = null
+  }
 
   override def getMove(acceptanceCriteria: (Int, Int) => Boolean): SearchResult = {
 
@@ -58,7 +66,7 @@ class BasicProtectBest(a: Neighborhood, i: CBLSIntVar) extends NeighborhoodCombi
     a.getMove(acceptanceCriteria) match {
       case NoMoveFound => NoMoveFound
       case MoveFound(m) =>
-        if (m.objAfter > objBeforeMove && objBeforeMove < bestObj && currentSolutionCanBeSaved) {
+        if (m.objAfter > objBeforeMove && objBeforeMove < bestObj && currentSolutionIsAcceptable) {
           //solution degrades, and we were better than the best recorded
           //so we save
           best = s.solution(true)
@@ -69,12 +77,12 @@ class BasicProtectBest(a: Neighborhood, i: CBLSIntVar) extends NeighborhoodCombi
     }
   }
 
-  protected def currentSolutionCanBeSaved = true
+  protected def currentSolutionIsAcceptable = true
 
   def restoreBest() {
     if (best == null) {
       if (verbose >= 1) println("no single acceptable solution seen")
-    } else if (i.value > bestObj) {
+    } else if (i.value > bestObj || !currentSolutionIsAcceptable) {
       s.restoreSolution(best)
       if (verbose >= 1) println("restoring best solution (obj:" + bestObj + ")")
     } else if (verbose >= 1) println("no better solution to restore")
@@ -113,7 +121,7 @@ class ProtectBest(a: Neighborhood, i: CBLSIntVar) extends BasicProtectBest(a: Ne
 }
 
 class ProtectBestWhen(a: Neighborhood, i: CBLSIntVar, shouldSave: () => Boolean) extends BasicProtectBest(a, i) {
-  override protected def currentSolutionCanBeSaved: Boolean = shouldSave()
+  override protected def currentSolutionIsAcceptable: Boolean = shouldSave()
 }
 
 class RestoreBestOnExhaust(a: BasicProtectBest) extends NeighborhoodCombinator(a) {
