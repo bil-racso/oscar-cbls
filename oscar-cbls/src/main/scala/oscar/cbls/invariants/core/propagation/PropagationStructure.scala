@@ -111,7 +111,7 @@ abstract class PropagationStructure(val verbose: Boolean, val checker:Option[Che
       println("PropagationStructure: end propagations structure includes; size=" + getPropagationElements.size)
     }
 
-    val StrognlyConnectedComponents: List[List[PropagationElement]] =
+    val StronglyConnectedComponents: List[List[PropagationElement]] =
       if (noCycle) {
         if (verbose) {
           println("PropagationStructure: IsAcyclic flag; assuming acyclic static dependency graph ")
@@ -126,13 +126,13 @@ abstract class PropagationStructure(val verbose: Boolean, val checker:Option[Che
           p => p.getStaticallyListeningElements)
       }
 
-    assert(getPropagationElements.size == StrognlyConnectedComponents.foldLeft(0)
+    assert(getPropagationElements.size == StronglyConnectedComponents.foldLeft(0)
       ((acc, component) => acc + component.size))
 
     //tri topologique sur les composantes fortement connexes
     acyclic = true
     StronglyConnexComponentsList = List.empty
-    val ClusteredPropagationComponents: List[PropagationElement] = StrognlyConnectedComponents.map(a => {
+    val ClusteredPropagationComponents: List[PropagationElement] = StronglyConnectedComponents.map(a => {
       if (a.tail.isEmpty) {
         a.head
       } else {

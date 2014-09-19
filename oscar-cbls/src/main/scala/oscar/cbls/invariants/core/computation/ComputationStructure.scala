@@ -1135,7 +1135,7 @@ abstract class IntInvariant extends Invariant{
   /**this method is called by the output variable
     * basically, the invariant does not know what is its output variable at creation time.
     * if this is an issue, you can always create an output variable internally,
-    * and implement this method with en identity invariant.
+    * and implement this method with an identity invariant.
     * see [[oscar.cbls.invariants.core.computation.IdentityInt]] and [[oscar.cbls.invariants.core.computation.IdentitySet]]
     * @param v the variable that is the output variable of the invariant.
     */
