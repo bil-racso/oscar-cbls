@@ -235,7 +235,7 @@ class DoOnFirstMove(a: Neighborhood, proc: () => Unit) extends NeighborhoodCombi
 }
 
 /**
- * this composer randomly tries one neighborhood.
+ * this combinator randomly tries one neighborhood.
  * it trie the other if the first did not find any move
  * @param a a neighborhood
  * @param b another neighborhood
@@ -257,7 +257,7 @@ class Random(a: Neighborhood, b: Neighborhood) extends NeighborhoodCombinator(a,
 }
 
 /**
- * this composer sequentially tries all neighborhoods until one move is found
+ * this combinator sequentially tries all neighborhoods until one move is found
  * between calls, it will roll back to the first neighborhood
  * it tries a first, and if no move it found, tries b
  * a is reset if it did not find anything.
@@ -277,7 +277,7 @@ class OrElse(a: Neighborhood, b: Neighborhood) extends NeighborhoodCombinator(a,
 }
 
 /**
- * this composer always selects the best move between the two parameters
+ * this combinator always selects the best move between the two parameters
  * notice that this combinator makes more sense
  * if the two neighborhood return their best found move,
  * and not their first found move, as usually done.
@@ -296,7 +296,7 @@ class Best(a: Neighborhood, b: Neighborhood) extends NeighborhoodCombinator(a, b
 }
 
 /**
- * this composer is stateful.
+ * this combinator is stateful.
  * it returns the result of the first Neighborhood until it returns NoMoveFound.
  * It then switches to the other Neighborhood.
  * it does not come back to the first one after the second one is exhausted
@@ -356,7 +356,7 @@ class NoReset(a: Neighborhood) extends NeighborhoodCombinator(a) {
   override def reset() {}
 }
 /**
- * this composer is stateful.
+ * this combinator is stateful.
  * it returns the result of one Neighborhood until it returns NoMoveFound.
  * It then switches to the other Neighborhood.
  * it starts with Neighborhood a
@@ -406,7 +406,7 @@ class ResetOnExhausted(a: Neighborhood) extends NeighborhoodCombinator(a) {
 }
 
 /**
- * this composer is stateful.
+ * this combinator is stateful.
  * it returns the result of the first Neighborhood until it returns NoMoveFound.
  * It then switches to the other Neighborhood,
  * but only if a move was found by the first neighborhood
@@ -443,7 +443,7 @@ class ExhaustAndContinueIfMovesFound(a: Neighborhood, b: Neighborhood) extends N
 }
 
 /**
- * this composer is stateless, it checks the condition on every invocation. If the condition is false,
+ * this combinator is stateless, it checks the condition on every invocation. If the condition is false,
  * it does not try the Neighborhood and finds no move.
  * @author renaud.delandtsheer@cetic.be
  */
