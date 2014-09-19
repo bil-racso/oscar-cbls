@@ -4,6 +4,7 @@ import oscar.cbls.invariants.core.computation.CBLSIntVar
 import oscar.cbls.scheduling.algo.CriticalPathFinder
 import oscar.cbls.scheduling.model._
 import oscar.cbls.search.SearchEngineTrait
+import oscar.cbls.search.combinators.{BasicProtectBest, ProtectBest}
 import oscar.cbls.search.core._
 
 /**
@@ -53,6 +54,7 @@ case class FlattenWorseFirst(p:Planning,
         flattenOneWithSuperTaskHandling(r, t)
       }
     }
+//    print(p.toAsciiArt)
   }
 
   /**
@@ -218,7 +220,7 @@ object SchedulingStrategies{
                  nbRelax: Int = 4,
                  pKillPerRelax: Int = 50,
                  stable: Int,
-                 objective:CBLSIntVar):Neighborhood = {
+                 objective:CBLSIntVar):BasicProtectBest = {
     require(p.model.isClosed, "model should be closed before iFlatRelax algo can be instantiated")
     val maxIterationsForFlatten = (p.activityCount * (p.activityCount - 1)) / 2
 
