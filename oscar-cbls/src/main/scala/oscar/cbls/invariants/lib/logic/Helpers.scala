@@ -75,6 +75,8 @@ class IntInt2Int(a:CBLSIntVar, b:CBLSIntVar, fun:((Int, Int) => Int), override v
   finishInitialization()
 
   override def setOutputVar(v:CBLSIntVar){
+    v.minVal = myMin;
+    v.maxVal = myMax;
     output = v
     output.setDefiningInvariant(this)
     output := fun(a.value,b.value)

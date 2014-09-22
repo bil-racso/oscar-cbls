@@ -49,18 +49,29 @@ object SortUtils {
 	    }
 	}
 	
-	// sort elements according to their keys value
+	/* Sorts the elements e in nondecreasing order according to their keys[e].
+	 * This is a stable sort.
+	 * @param elements have to be in [0, keys.length)
+	 */
 	final def mergeSort(elements: Array[Int], keys: Array[Int]): Unit = {
 	  mergeSort(elements, keys, 0, elements.length)
-	} 
+	}
 	
+	
+	/* Sorts the elements e in nondecreasing order according to their keys[e],
+	 * but only those in [base, topExcluded) 
+	 * This is a stable sort.
+	 * @param elements whose index are in [base, topExcluded) have to be in [0, keys.length)
+	 */
 	final def mergeSort(elements: Array[Int], keys: Array[Int], base: Int, topExcluded: Int): Unit = {
 	  val n = elements.length
 	  
 	  assert(base >= 0)
 	  assert(topExcluded <= n)
+	  assert(elements slice(base, topExcluded) forall { e => e >= 0 && e < keys.length },
+	         "mergeSort input error: elements whose index are in [base, topExcluded) have to be in [0, keys.length)")
 	  
-	  val runs = new Array[Int](n)
+	  val runs = new Array[Int](n+1)
 	  
 	  if (topExcluded - base > 1) {
   	  // runs holds the size of successive increasing runs, initialize it
@@ -85,7 +96,7 @@ object SortUtils {
 	    if (rP > 1) {
 	      val aux = new Array[Int](n)
 	      val whichArray = mergeSort1(elements, aux, keys, runs, rP + 1, base, 0)
-	      if (whichArray == 1) System.arraycopy(aux, base, elements, 0, topExcluded - base)
+	      if (whichArray == 1) System.arraycopy(aux, base, elements, base, topExcluded - base)
 	    }
 	  }
 	}
@@ -151,6 +162,13 @@ object SortUtils {
 		val bi = b.indices.toArray
 		mergeSort(bi, b)
 		println(bi.map(b).mkString(","))
-		println(bi.mkString(","))
+		// println(bi.mkString(","))
+		
+	  val c = Array(5,6,2,9,6,8,3,1,5,4,9,7,9,21,2,56,9,4,8,2,8,4,9,5,4,8,4,1,89,1,47,9,2,4,8,5,1,8)
+		val ci = b.indices.toArray
+		mergeSort(ci, c, 4, 10)
+		println(ci.map(c).mkString(","))
+		// println(ci.mkString(","))
+
 	}
 }

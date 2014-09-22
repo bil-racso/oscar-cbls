@@ -110,6 +110,8 @@ case class IntElement(index: CBLSIntVar, inputarray: Array[CBLSIntVar])
   }
 
   override def setOutputVar(v: CBLSIntVar) {
+    v.minVal = myMin;
+    v.maxVal = myMax;
     output = v
     output.setDefiningInvariant(this)
     output := inputarray.apply(index.value).value
