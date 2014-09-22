@@ -761,10 +761,10 @@ class CBLSIntVar(model: Store, val domain: Range, private var Value: Int, n: Str
 
   private var OldValue = Value
 
-  def inDomain(v: Int) = domain.contains(v)
-  def minVal = domain.start
+  def inDomain(v: Int) = v >= minVal && v <= maxVal //domain.contains(v)
+  var minVal = domain.start
   // if the range was specified using until max should be max -1
-  def maxVal = if(domain.isInclusive) domain.end else domain.end - 1
+  var maxVal = if(domain.isInclusive) domain.end else domain.end - 1
 
   override def toString = if(model.propagateOnToString) s"$name:=$value" else s"$name:=$Value"
   override def toStringNoPropagate = s"$name:=$Value" //value
@@ -776,9 +776,9 @@ class CBLSIntVar(model: Store, val domain: Range, private var Value: Int, n: Str
       // or comment this assert and use it only to throw unit test while domain bugs.
       /*
       assert(inDomain(v),print("Assertion False : variable ["+this+"] is not in his domain \n" +
-          "domain : ["+MinVal+ ";"+MaxVal+"]\n" +
-           "new value :"+ v +"\n" ))
-           */
+          "domain : ["+minVal+ ";"+maxVal+"]\n" +
+           "new value :"+ v +"\n" ))*/
+           
       Value = v
       notifyChanged()
     }
