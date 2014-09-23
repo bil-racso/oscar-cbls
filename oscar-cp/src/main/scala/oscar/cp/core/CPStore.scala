@@ -96,7 +96,7 @@ class CPStore(val propagStrength: CPPropagStrength) extends SearchNode {
   }
 
   // Adds the constraint in the L2 queue
-  @inline private def addQueueL2(c: Constraint): Unit = {
+  @inline protected def addQueueL2(c: Constraint): Unit = {
     if (c.isActive && !c.isInQueue && (!c.inPropagate || !c.idempotent)) {
       c.setInQueue()
       val priority = c.priorityL2
@@ -121,7 +121,7 @@ class CPStore(val propagStrength: CPPropagStrength) extends SearchNode {
     }
   }
 
-  @inline private def addQueueL1(c: Constraint, prior: Int, evt: => CPOutcome): Unit = {
+  @inline protected def addQueueL1(c: Constraint, prior: Int, evt: => CPOutcome): Unit = {
     propagQueueL1(prior).addLast(() =>
       if (c.isActive) {
         lastConstraint = c // last constraint called
