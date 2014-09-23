@@ -50,7 +50,6 @@ class MinCircuit(val succ: Array[CPIntVar], val distMatrix: Array[Array[Int]], o
 
     if (l == CPPropagStrength.Medium || l == CPPropagStrength.Strong) {
       if (s.post(minAssignment(succ, distMatrixSucc, obj)) == Failure) {
-        println("failure min assignment")
         return Failure
       }
     }

@@ -116,8 +116,8 @@ object OscarBuild extends Build {
                Seq (/*resolvers := sbtResolvers,*/ libraryDependencies ++= commonDeps) ++ 
                sbtassembly.Plugin.assemblySettings ++ 
                commonTasks,
-    aggregate = Seq(oscarVisual,oscarCp,oscarCbls,oscarLinprog,oscarDes,oscarDfo),
-    dependencies = Seq(oscarCp,oscarCbls,oscarDes,oscarDfo,oscarLinprog)) dependsOnSource("lib")    
+    aggregate = Seq(oscarVisual,oscarCp,oscarCbls,oscarFzn,oscarLinprog,oscarDes,oscarDfo),
+    dependencies = Seq(oscarCp,oscarCbls,oscarFzn,oscarDes,oscarDfo,oscarLinprog)) dependsOnSource("lib")    
     
   lazy val oscarCbls = Project(
     id = "oscar-cbls",
@@ -133,7 +133,16 @@ object OscarBuild extends Build {
     settings = buildSettings ++ jacoco_settings ++ Seq(libraryDependencies ++= commonDeps) ++
     		   sbtassembly.Plugin.assemblySettings ++ 
     		   commonTasks,
-    dependencies = Seq(oscarAlgo,oscarVisual)) dependsOnSource("lib") 
+    dependencies = Seq(oscarAlgo,oscarVisual)) dependsOnSource("lib")
+    
+    
+  lazy val oscarFzn = Project(
+    id = "oscar-fzn",
+    base = file("oscar-fzn"),
+    settings = buildSettings ++ jacoco_settings ++ Seq(libraryDependencies ++= commonDeps) ++
+    		   sbtassembly.Plugin.assemblySettings ++ 
+    		   commonTasks,
+    dependencies = Seq(oscarCbls)) dependsOnSource("lib")     
     
   lazy val oscarDes = Project(
     id = "oscar-des",

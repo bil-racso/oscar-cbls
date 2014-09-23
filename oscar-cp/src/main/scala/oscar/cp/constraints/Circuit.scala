@@ -37,6 +37,7 @@ class Circuit(val succ: Array[CPIntVar], addPredModel: Boolean = true) extends C
   val dest = Array.tabulate(n)(i => new ReversibleInt(s,i))
   val orig = Array.tabulate(n)(i => new ReversibleInt(s,i))
   val lengthToDest = Array.fill(n)(new ReversibleInt(s,0))
+  
 
   override def setup(l: CPPropagStrength): CPOutcome = {
 
@@ -88,5 +89,3 @@ class Circuit(val succ: Array[CPIntVar], addPredModel: Boolean = true) extends C
 	}  
 
 }
-
-
