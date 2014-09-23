@@ -135,7 +135,7 @@ case class ConstraintSystem(val _model:Store) extends Constraint with ObjectiveT
 
   var isClosed = false
   /**Must be invoked before the violation can be queried.
-   * no constraint can be added after his method has been called.
+   * no constraint can be added after this method has been called.
    * this method must also be called before closing the model.
    */
   protected[cbls] def close(){

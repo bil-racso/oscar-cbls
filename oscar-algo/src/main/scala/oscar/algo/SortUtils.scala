@@ -71,7 +71,7 @@ object SortUtils {
 	  assert(elements slice(base, topExcluded) forall { e => e >= 0 && e < keys.length },
 	         "mergeSort input error: elements whose index are in [base, topExcluded) have to be in [0, keys.length)")
 	  
-	  val runs = new Array[Int](n)
+	  val runs = new Array[Int](n+1)
 	  
 	  if (topExcluded - base > 1) {
   	  // runs holds the size of successive increasing runs, initialize it
