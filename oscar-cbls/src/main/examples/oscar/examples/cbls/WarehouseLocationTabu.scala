@@ -87,7 +87,7 @@ object WarehouseLocationTabu extends App with AlgebraTrait{
   // *the protection of the objectiveFunction
   val switchWithTabuNeighborhood = (AssignNeighborhood(warehouseOpenArray, obj, "SwitchWarehouseTabu",
     searchZone = nonTabuWarehouses, best = true)
-    onMove((mo:Move) => {
+    beforeMove((mo:Move) => {
     for (v <- mo.touchedVariables) {
       TabuArray(v.getStorageAt[Int](warehouseKey)) := It.value + tabuTenure
     }

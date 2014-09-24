@@ -215,5 +215,7 @@ case class CallBackMove[T](callBack: T => Unit, override val objAfter:Int, overr
     callBack(param)
   }
 
-  override def toString: String = neighborhoodNameToString + "CallBackMove" + (if (shortDescription != null) "(" + shortDescription() + ")" else "")
+  override def toString: String = {
+    neighborhoodNameToString + (if (shortDescription != null) shortDescription() else "")
+  }
 }

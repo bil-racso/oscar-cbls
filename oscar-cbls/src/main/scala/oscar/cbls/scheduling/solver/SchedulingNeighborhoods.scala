@@ -144,7 +144,8 @@ case class Relax(p:Planning, pKill: Int,
     }
   }
 
-  override def getShortDescription(param: List[(Activity, Activity)]): String = "Relax critical Path " + param
+  override def getShortDescription(param: List[(Activity, Activity)]): String =
+    "Relax critical Path " + param.map{case (a,b) => a + "->" + b}.mkString(", ")
 
   //this resets the internal state of the Neighborhood
   override def reset(){}
@@ -159,7 +160,8 @@ case class Relax(p:Planning, pKill: Int,
  *                      so you need to experiment on this option.
  *                      it has no influence on the result, only on the speed of this neighborhood.
  */
-case class RelaxNoConflict(p:Planning, twoPhaseCheck:Boolean = false) extends JumpNeighborhood with SearchEngineTrait {
+case class RelaxNoConflict(p:Planning, twoPhaseCheck:Boolean = false)
+  extends JumpNeighborhood with SearchEngineTrait {
 
   override def doIt(): Unit ={
     require(p.worseOvershotResource.value.isEmpty)
@@ -171,8 +173,11 @@ case class RelaxNoConflict(p:Planning, twoPhaseCheck:Boolean = false) extends Ju
 
       for (t: Activity <- p.activityArray) {
         for (iD: Int <- t.additionalPredecessors.value) {
+
           val testedPredecessor = p.activityArray(iD)
-          val dependencyCanBeKilledWithoutMoreCheck = if (twoPhaseCheck) !t.potentiallyKilledPredecessors.value.contains(iD) else false
+          val dependencyCanBeKilledWithoutMoreCheck =
+            if (twoPhaseCheck) !t.potentiallyKilledPredecessors.value.contains(iD) else false
+
           t.removeDynamicPredecessor(testedPredecessor, false)
           if (dependencyCanBeKilledWithoutMoreCheck || p.worseOvershotResource.value.isEmpty) {
             relaxCount += 1
@@ -204,7 +209,8 @@ case class CleanPrecedences(p:Planning) extends JumpNeighborhood with SearchEngi
     }
   }
 
-  override def shortDescription(): String = "removes all additional Activity precedences that are not tight"
+  override def shortDescription(): String =
+    "removes all additional Activity precedences that are not tight"
 }
 
 object SchedulingStrategies{
@@ -221,13 +227,15 @@ object SchedulingStrategies{
                  nbRelax: Int = 4,
                  pKillPerRelax: Int = 50,
                  stable: Int,
-                 objective:CBLSIntVar):BasicProtectBest = {
+                 objective:CBLSIntVar,
+                 displayPlanning:Boolean = false):BasicProtectBest = {
     require(p.model.isClosed, "model should be closed before iFlatRelax algo can be instantiated")
     val maxIterationsForFlatten = (p.activityCount * (p.activityCount - 1)) / 2
 
-    val searchLoop = FlattenWorseFirst(p,maxIterationsForFlatten) maxMoves 1 exhaustBack
+    val searchLoop = FlattenWorseFirst(p,maxIterationsForFlatten) maxMoves 1 afterMove {if (displayPlanning) println(p.toAsciiArt)} exhaustBack
       Relax(p, pKillPerRelax) untilImprovement(p.makeSpan, nbRelax, maxIterationsForFlatten)
 
+    //TODO: should stop after a flatten!
     (searchLoop maxMoves stable withoutImprovementOver objective
       protectBest objective whenEmpty p.worseOvershotResource)
   }

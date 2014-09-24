@@ -80,7 +80,7 @@ class Planning(val model: Store, val maxDuration: Int) {
 
   /**
    * this is to close the planning when you are done with declaring tasks, precedence  and resource
-   * notice that you do not need to explicitely call this, as the model will call it automatically on close.
+   * notice that you do not need to explicitly call this, as the model will call it automatically on close.
    */
   def close() {
     if (isClosed) return

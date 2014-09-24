@@ -172,17 +172,13 @@ class DoOnQuery(a: Neighborhood, proc: () => Unit) extends NeighborhoodCombinato
  * the code is called whenever a move from this neighborhood is taken
  * The callBack is performed before the move is actually taken.
  * @param a a neighborhood
- * @param proc the procedure to execute when the move is taken
- * @param procOnMove a procedure that inputs the move that is applied;
+ * @param procBeforeMove the procedure to execute when the move is taken, , with the move as input parameter
  *                   use this to update a Tabu for instance
- * @param procAfterMove a procedure to execute after the move is taken
- * @param procAfterMoveOnMove a procedure to execute after the move is taken, with the move as input parameter
+ * @param procAfterMove a procedure to execute after the move is taken, with the move as input parameter
  */
 case class DoOnMove(a: Neighborhood,
-                    proc: () => Unit,
-                    procOnMove: Move => Unit = null,
-                    procAfterMove: () => Unit = null,
-                    procAfterMoveOnMove: Move => Unit = null) extends NeighborhoodCombinator(a) {
+                    procBeforeMove: Move => Unit = null,
+                    procAfterMove: Move => Unit = null) extends NeighborhoodCombinator(a) {
   override def getMove(acceptanceCriteria: (Int, Int) => Boolean): SearchResult = {
     a.getMove(acceptanceCriteria) match {
       case m: MoveFound =>
@@ -192,13 +188,11 @@ case class DoOnMove(a: Neighborhood,
   }
 
   def callBackBeforeMove(m: Move)() {
-    if (proc != null) proc()
-    if (procOnMove != null) procOnMove(m)
+    if (procBeforeMove != null) procBeforeMove(m)
   }
 
   def callBackAfterMove(m: Move)() {
-    if (procAfterMove != null) procAfterMove()
-    if (procAfterMoveOnMove != null) procAfterMoveOnMove(m)
+    if (procAfterMove != null) procAfterMove(m)
   }
 }
 
@@ -349,7 +343,7 @@ class Retry(a: Neighborhood, n: Int = 1) extends NeighborhoodCombinator(a) {
   }
 }
 
-class NoReset(a: Neighborhood) extends NeighborhoodCombinator(a) {
+case class NoReset(a: Neighborhood) extends NeighborhoodCombinator(a) {
   override def getMove(acceptanceCriteria: (Int, Int) => Boolean) = a.getMove(acceptanceCriteria)
 
   //this resets the internal state of the move combinators
@@ -455,7 +449,7 @@ class Conditional(c: () => Boolean, b: Neighborhood) extends NeighborhoodCombina
 }
 
 /**
- * this one bounds the number of time the search is actually performed
+ * this combinator bounds the number of time the search is actually performed
  * @author renaud.delandtsheer@cetic.be
  */
 class BoundSearches(a: Neighborhood, val maxMove: Int) extends NeighborhoodCombinator(a) {
@@ -475,7 +469,7 @@ class BoundSearches(a: Neighborhood, val maxMove: Int) extends NeighborhoodCombi
 }
 
 /**
- * this one bounds the number of moves done with this neighborhood
+ * this combinator bounds the number of moves done with this neighborhood
  * notice that the count is reset by the reset operation
  * @author renaud.delandtsheer@cetic.be
  */
@@ -488,7 +482,8 @@ class MaxMoves(a: Neighborhood, val maxMove: Int) extends NeighborhoodCombinator
         case x => x
       }
     } else {
-      if (verbose >= 1) println("MaxMoves: reached " + maxMove + " moves")
+      if (verbose >= 1)
+        println("MaxMoves: reached " + (if(maxMove == 1) "1 move "else maxMove + " moves"))
       NoMoveFound
     }
   }
