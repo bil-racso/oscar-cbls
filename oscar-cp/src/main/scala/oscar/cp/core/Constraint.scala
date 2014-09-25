@@ -18,6 +18,7 @@ package oscar.cp.core
 import oscar.algo.reversible.ReversibleBool
 import oscar.cp.constraints.Garded
 import scala.collection.mutable.ArrayBuffer
+import oscar.algo.reversible.MagicBoolean
 
 
 abstract class Snapshot {
@@ -50,8 +51,8 @@ class SnapshotVarSet(x: CPSetVar) extends Snapshot {
  */
 abstract class Constraint(val s: CPStore, val name: String = "cons") {
 
-  val active = new ReversibleBool(s,true)
-  val inQueue = new ReversibleBool(s,false)
+  private final val active = new ReversibleBool(s,true)
+  private final val inQueue = new MagicBoolean(s, false)
 
   val snapshotsVarInt = scala.collection.mutable.Map[CPIntVar, SnapshotVarInt]() 
   val snapshotsVarSet = scala.collection.mutable.Map[CPSetVar, SnapshotVarSet]()
@@ -184,12 +185,12 @@ abstract class Constraint(val s: CPStore, val name: String = "cons") {
   /**
    * @return true if the constraint is still active
    */
-  def isActive() = active.value
+  final def isActive = active.value
 
   /**
    * @return true if the constraint is still in the propagation queue, false otherwise
    */
-  def isInQueue() = inQueue.value
+  final def isInQueue = inQueue.value
 
   /**
    * Disable the constraint such that it is not propagated any more (will not enter into the propagation queue).
