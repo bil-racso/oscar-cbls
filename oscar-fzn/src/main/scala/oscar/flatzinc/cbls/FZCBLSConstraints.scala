@@ -46,8 +46,29 @@ import scala.collection.immutable.TreeSet
 import oscar.flatzinc.cbls.support.CBLSIntVarDom
 import oscar.flatzinc.cbls.support.CBLSIntConstDom
 
-trait FZCBLSConstraints {
-  implicit val m: Store = new Store(false, None, false)//setting the last Boolean to true would avoid calling the SCC algorithm but we have to make sure that there are no SCCs in the Graph. Is it the case in the way we build it?
+class ValueTracker(v: CBLSIntVarDom, c:ConstraintSystem) {
+    val initialMin = v.minVal;
+    val initialMax = v.maxVal;
+    val weight = CBLSIntConst(10,c._model);//why 10?
+    def update(force: Boolean  = false) = {
+      //TODO: Maybe we should post this in all cases because not all invariants properly modify the domain of the output var.
+      //Todo:Take into account non-range domains.
+      if (force || v.minVal < initialMin) {
+       // println("%% Needed to constrain the output domain of an invariant");
+       // println(v + " " +v.getDomain() + " " + v.domain + " m " + initialMin)
+        c.add(GE(v, initialMin),weight)
+      }
+      if (force || v.maxVal > initialMax) {
+       // println("%% Needed to constrain the output domain of an invariant");
+       // println(v + " " +v.getDomain()+ " " + v.domain + " M " + initialMax+" " + v.maxVal)
+        c.add(LE(v, initialMax),weight)
+      }
+    }
+  }
+
+
+class FZCBLSConstraintPoster(val c: ConstraintSystem ,implicit val getCBLSVar: Variable => CBLSIntVarDom) {
+  val m: Store = c._model 
   
   //TODO: Not really tested
   def Weight(c: CBLSConstraint,w:Int):CBLSConstraint = {
@@ -65,39 +86,11 @@ trait FZCBLSConstraints {
     override implicit def toIntVar:CBLSIntVar = c.toIntVar
     override def setOutputVar(v:CBLSIntVar) = c.setOutputVar(v)
   }*/
-  class ValueTracker(v: CBLSIntVarDom)(implicit c: ConstraintSystem) {
-    val initialMin = v.minVal;
-    val initialMax = v.maxVal;
-    val weight = CBLSIntConst(10,m);//why 10?
-    def update(force: Boolean  = false) = {
-      //TODO: Maybe we should post this in all cases because not all invariants properly modify the domain of the output var.
-      //Todo:Take into account non-range domains.
-      if (force || v.minVal < initialMin) {
-       // println("%% Needed to constrain the output domain of an invariant");
-       // println(v + " " +v.getDomain() + " " + v.domain + " m " + initialMin)
-        c.add(GE(v, initialMin),weight)
-      }
-      if (force || v.maxVal > initialMax) {
-       // println("%% Needed to constrain the output domain of an invariant");
-       // println(v + " " +v.getDomain()+ " " + v.domain + " M " + initialMax+" " + v.maxVal)
-        c.add(LE(v, initialMax),weight)
-      }
-    }
-  }
-  object ValueTracker {
-    def apply(v: CBLSIntVarDom)(implicit c: ConstraintSystem) = {
-      new ValueTracker(v)
-    }
-  }
-  object EnsureDomain{
-     def apply(v: CBLSIntVarDom)(implicit c: ConstraintSystem) = {
-      val t = new ValueTracker(v)
-      t.update(true)
-    }
-  }
+  
+  
   object InvariantEnsureDomain{
-    def apply(v: CBLSIntVarDom, i:IntInvariant)(implicit c: ConstraintSystem) = {
-      val t = new ValueTracker(v)
+    def apply(v: CBLSIntVarDom, i:IntInvariant) = {
+      val t = new ValueTracker(v,c)
       
      // println("INV2 "+i+ "\t"+i.myMin+".."+i.myMax)
       v <== i
@@ -106,22 +99,7 @@ trait FZCBLSConstraints {
     }
   }
   
-  implicit def getCBLSVar(v: Variable)(implicit cblsIntMap: MMap[String, CBLSIntVarDom]) = {
-    v match {
-      case ConcreteConstant(_, value, _) =>
-        //All constants need to have a store, otherwise they won't have a UniqueID (from PropagationElement) and constraints will start throwing exceptions
-        cblsIntMap.get(value + "") match {
-          case None =>
-            val c = CBLSIntConstDom(value, m);
-            cblsIntMap += value + "" -> c;
-            c;
-          case Some(c) => c;
-        }
-
-      case ConcreteVariable(id, _, _) =>
-        cblsIntMap.get(id).get;
-    }
-  }
+ 
   /*
   implicit def getVar(v: String)(implicit cblsIntMap: MMap[String, CBLSIntVarDom]) = {
     cblsIntMap.get(v).get;
@@ -137,10 +115,11 @@ trait FZCBLSConstraints {
   }*/
   
   
-  def get_alldifferent(xs: Array[Variable], ann: List[Annotation])(implicit c: ConstraintSystem, cblsIntMap: MMap[String, CBLSIntVarDom]) = {
+  def get_alldifferent(xs: Array[Variable], ann: List[Annotation]) = {
     AllDiff(xs.map(getCBLSVar(_)))
   }
-  def get_cumulative(s: Array[Variable], d: Array[Variable],r: Array[Variable],b: Variable, ann: List[Annotation])(implicit c: ConstraintSystem, cblsIntMap: MMap[String, CBLSIntVarDom]) = {
+  
+  def get_cumulative(s: Array[Variable], d: Array[Variable],r: Array[Variable],b: Variable, ann: List[Annotation]) = {
     val indices = s.indices.toArray[Int]
     //assumes the planning starts at zero!
     val start = s.foldLeft(Int.MaxValue)((acc,v) => if (v.minVal < acc) v.minVal else acc)
@@ -149,8 +128,8 @@ trait FZCBLSConstraints {
     val a = new Array[CBLSSetVar](horizon-start+1)
     val ns = new Array[CBLSIntVar](s.length)
     for(i <- 0 to horizon-start){
-      p(i) = CBLSIntVar(c.model,0 to r.foldLeft(0)((s,r) => s + r.max),0,"Profile("+i+")")
-      a(i) = new CBLSSetVar(c.model,0,s.length-1,"Active("+i+")")
+      p(i) = CBLSIntVar(m,0 to r.foldLeft(0)((s,r) => s + r.max),0,"Profile("+i+")")
+      a(i) = new CBLSSetVar(m,0,s.length-1,"Active("+i+")")
     }
     val offset = new CBLSIntConst(-start,c.model)
     for(i <- 0 to s.length-1){
@@ -169,35 +148,35 @@ trait FZCBLSConstraints {
   
   
   
-  def get_array_bool_and_inv(as: Array[Variable], r: Variable, defId: String, ann: List[Annotation])(implicit c: ConstraintSystem, cblsIntMap: MMap[String, CBLSIntVarDom]) = {
+  def get_array_bool_and_inv(as: Array[Variable], r: Variable, defId: String, ann: List[Annotation]) = {
     EQ(Prod(as.map(getCBLSVar(_))), 1)
   }
   
-  def get_array_int_element_inv(b: Variable, as: Array[Variable], r: Variable, defId: String, ann: List[Annotation])(implicit c: ConstraintSystem, cblsIntMap: MMap[String, CBLSIntVarDom]) = {
+  def get_array_int_element_inv(b: Variable, as: Array[Variable], r: Variable, defId: String, ann: List[Annotation]) = {
    // println(getCBLSVar(b) + " "+b.getDomain())
    // println(b.cstrs )
     IntElement(Sum2(b,-1), as.map(getCBLSVar(_)))
   }
   
-  def get_array_bool_or_inv(as: Array[Variable], r: Variable, defId: String, ann: List[Annotation])(implicit c: ConstraintSystem, cblsIntMap: MMap[String, CBLSIntVarDom]) = {
+  def get_array_bool_or_inv(as: Array[Variable], r: Variable, defId: String, ann: List[Annotation]) = {
     GE(Sum(as.map(getCBLSVar(_))), 1)
   }
-  def get_array_bool_xor(as: Array[Variable], ann: List[Annotation])(implicit c: ConstraintSystem, cblsIntMap: MMap[String, CBLSIntVarDom]) = {
+  def get_array_bool_xor(as: Array[Variable], ann: List[Annotation]) = {
     EQ(Mod(Sum(as.map(getCBLSVar(_))), 2), 1)
   }
-  def get_array_bool_xor_inv(as: Array[Variable], defId: String, ann: List[Annotation])(implicit c: ConstraintSystem, cblsIntMap: MMap[String, CBLSIntVarDom]) = {
+  def get_array_bool_xor_inv(as: Array[Variable], defId: String, ann: List[Annotation]) = {
     val index = as.indexWhere(p => p.id == defId);
     val defVar = as(index);
     val vars2 = (as.take(index) ++ as.drop(index + 1)).map(getCBLSVar(_));
     EQ(Mod(Sum2(Sum(vars2), 1), 2), 1)
   }
 
-  def get_bool_clause(as: Array[Variable], bs: Array[Variable], ann: List[Annotation])(implicit c: ConstraintSystem, cblsIntMap: MMap[String, CBLSIntVarDom]) = {
+  def get_bool_clause(as: Array[Variable], bs: Array[Variable], ann: List[Annotation]) = {
     //TODO: This can also be expressed with the element constraint, maybe that is faster?
     NE(Sum2(GE(Sum(as.map(getCBLSVar(_))), 1), EQ(Prod(bs.map(getCBLSVar(_))), 0)), 0)
   }
 
-  def get_bool_not_inv(a: Variable, b: Variable, defId: String, ann: List[Annotation])(implicit c: ConstraintSystem, cblsIntMap: MMap[String, CBLSIntVarDom]) = {
+  def get_bool_not_inv(a: Variable, b: Variable, defId: String, ann: List[Annotation]) = {
     if (a.id == defId) {
       EQ(b, 0)
     } else {
@@ -205,22 +184,22 @@ trait FZCBLSConstraints {
     }
   }
 
-  def get_bool_or_inv(a: Variable, b: Variable, r: Variable, defId: String, ann: List[Annotation])(implicit c: ConstraintSystem, cblsIntMap: MMap[String, CBLSIntVarDom]) = {
+  def get_bool_or_inv(a: Variable, b: Variable, r: Variable, defId: String, ann: List[Annotation]) = {
     G(Sum2(a, b), 0)
   }
 
   
-  def get_int_abs_inv(a: Variable, b: Variable, defId: String, ann: List[Annotation])(implicit cs: ConstraintSystem, cblsIntMap: MMap[String, CBLSIntVarDom]) = {
+  def get_int_abs_inv(a: Variable, b: Variable, defId: String, ann: List[Annotation]) = {
     Abs(a)
   }
 
   
-  def get_int_div_inv(a: Variable, b: Variable, c: Variable, defId: String, ann: List[Annotation])(implicit cs: ConstraintSystem, cblsIntMap: MMap[String, CBLSIntVarDom]) = {
+  def get_int_div_inv(a: Variable, b: Variable, c: Variable, defId: String, ann: List[Annotation]) = {
     //TODO: can this also define a and b? NO
     Div(a, b)
   }
 
-  def get_int_eq_inv(x: Variable, y: Variable, defId: String, ann: List[Annotation])(implicit c: ConstraintSystem, cblsIntMap: MMap[String, CBLSIntVarDom]) = {
+  def get_int_eq_inv(x: Variable, y: Variable, defId: String, ann: List[Annotation]) = {
     if (x.id == defId) {
       y.getClone
     } else {
@@ -229,17 +208,17 @@ trait FZCBLSConstraints {
   }
 
 
-  def get_int_le(x: Variable, y: Variable, ann: List[Annotation])(implicit c: ConstraintSystem, cblsIntMap: MMap[String, CBLSIntVarDom]) = {
+  def get_int_le(x: Variable, y: Variable, ann: List[Annotation]) = {
     LE(x, y)
   }
 
-  def get_int_lin_eq(params: Array[Variable], vars: Array[Variable], sum: Variable, ann: List[Annotation])(implicit c: ConstraintSystem, cblsIntMap: MMap[String, CBLSIntVarDom]) = {
+  def get_int_lin_eq(params: Array[Variable], vars: Array[Variable], sum: Variable, ann: List[Annotation]) = {
     val prodArray = Array.tabulate(vars.length)(n => Prod2(params(n), vars(n)).toIntVar);
     EQ(Sum(prodArray).toIntVar, sum)
   }
   
   //TODO: Why is params an array of _Variable_ and not _Parameters_?
-  def get_int_lin_eq_inv(params: Array[Variable], vars: Array[Variable], sum: Variable, defId: String, ann: List[Annotation])(implicit c: ConstraintSystem, cblsIntMap: MMap[String, CBLSIntVarDom]) = {
+  def get_int_lin_eq_inv(params: Array[Variable], vars: Array[Variable], sum: Variable, defId: String, ann: List[Annotation]) = {
     val index = vars.indexWhere(p => p.id == defId);
     val defParam = params(index);
     val defVar = vars(index);
@@ -258,25 +237,25 @@ trait FZCBLSConstraints {
     }
   }
 
-  def get_int_lin_le(params: Array[Variable], vars: Array[Variable], sum: Variable, ann: List[Annotation])(implicit c: ConstraintSystem, cblsIntMap: MMap[String, CBLSIntVarDom]) = {
+  def get_int_lin_le(params: Array[Variable], vars: Array[Variable], sum: Variable, ann: List[Annotation]) = {
     val prodArray = Array.tabulate(vars.length)(n => Prod2(params(n), vars(n)).toIntVar);
     LE(Sum(prodArray).toIntVar, sum)
   }
 
-  def get_int_lin_ne(params: Array[Variable], vars: Array[Variable], sum: Variable, ann: List[Annotation])(implicit c: ConstraintSystem, cblsIntMap: MMap[String, CBLSIntVarDom]) = {
+  def get_int_lin_ne(params: Array[Variable], vars: Array[Variable], sum: Variable, ann: List[Annotation]) = {
     //TODO: can this define vars? NO
     val prodArray = Array.tabulate(vars.length)(n => Prod2(params(n), vars(n)).toIntVar);
     NE(Sum(prodArray).toIntVar, sum)
   }
 
-  def get_int_lt(a: Variable, b: Variable, ann: List[Annotation])(implicit cs: ConstraintSystem, cblsIntMap: MMap[String, CBLSIntVarDom]) = {
+  def get_int_lt(a: Variable, b: Variable, ann: List[Annotation]) = {
     L(a, b)
   }
 
-  def get_int_max(a: Variable, b: Variable, c: Variable, ann: List[Annotation])(implicit cs: ConstraintSystem, cblsIntMap: MMap[String, CBLSIntVarDom]) = {
+  def get_int_max(a: Variable, b: Variable, c: Variable, ann: List[Annotation]) = {
     EQ(Max2(a, b), c)
   }
-  def get_int_max_inv(a: Variable, b: Variable, c: Variable, defId: String, ann: List[Annotation])(implicit cs: ConstraintSystem, cblsIntMap: MMap[String, CBLSIntVarDom]) = {
+  def get_int_max_inv(a: Variable, b: Variable, c: Variable, defId: String, ann: List[Annotation]) = {
     if (defId == c.id) {
       Max2(a, b)
     } else if (defId == a.id) { // This is superweird but it happened in a model...
@@ -286,10 +265,10 @@ trait FZCBLSConstraints {
     }
   }
 
-  def get_int_min(a: Variable, b: Variable, c: Variable, ann: List[Annotation])(implicit cs: ConstraintSystem, cblsIntMap: MMap[String, CBLSIntVarDom]) = {
+  def get_int_min(a: Variable, b: Variable, c: Variable, ann: List[Annotation]) = {
     EQ(Min2(a, b), c)
   }
-  def get_int_min_inv(a: Variable, b: Variable, c: Variable, defId: String, ann: List[Annotation])(implicit cs: ConstraintSystem, cblsIntMap: MMap[String, CBLSIntVarDom]) = {
+  def get_int_min_inv(a: Variable, b: Variable, c: Variable, defId: String, ann: List[Annotation]) = {
     if (defId == c.id) {
       Min2(a, b)
     } else if (defId == a.id) { // This is superweird but it happened in a model...
@@ -299,18 +278,18 @@ trait FZCBLSConstraints {
     }
   }
 
-  def get_int_mod_inv(a: Variable, b: Variable, c: Variable, defId: String, ann: List[Annotation])(implicit cs: ConstraintSystem, cblsIntMap: MMap[String, CBLSIntVarDom]) = {
+  def get_int_mod_inv(a: Variable, b: Variable, c: Variable, defId: String, ann: List[Annotation]) = {
     Mod(a, b)
   }
 
-  def get_int_ne(x: Variable, y: Variable, ann: List[Annotation])(implicit c: ConstraintSystem, cblsIntMap: MMap[String, CBLSIntVarDom]) = {
+  def get_int_ne(x: Variable, y: Variable, ann: List[Annotation]) = {
     NE(x, y)
   }
 
-  def get_int_plus(x: Variable, y: Variable, z: Variable, ann: List[Annotation])(implicit c: ConstraintSystem, cblsIntMap: MMap[String, CBLSIntVarDom]) = {
+  def get_int_plus(x: Variable, y: Variable, z: Variable, ann: List[Annotation]) = {
     EQ(Sum2(x, y), z)
   }
-  def get_int_plus_inv(x: Variable, y: Variable, z: Variable, defId: String, ann: List[Annotation])(implicit c: ConstraintSystem, cblsIntMap: MMap[String, CBLSIntVarDom]) = {
+  def get_int_plus_inv(x: Variable, y: Variable, z: Variable, defId: String, ann: List[Annotation]) = {
     if (x.id == defId) {
       Minus(z, y)
     } else if (y.id == defId) {
@@ -320,13 +299,13 @@ trait FZCBLSConstraints {
     }
   }
 
-  def get_int_times_inv(x: Variable, y: Variable, z: Variable, defId: String, ann: List[Annotation])(implicit c: ConstraintSystem, cblsIntMap: MMap[String, CBLSIntVarDom]) = {
+  def get_int_times_inv(x: Variable, y: Variable, z: Variable, defId: String, ann: List[Annotation]) = {
     //TODO: Can times define x and y? NO
     assert(defId.equals(z.id));
     Prod2(x, y)
   }
   
-  def get_set_in(x: Variable, s: Domain, ann: List[Annotation])(implicit c: ConstraintSystem, cblsIntMap: MMap[String, CBLSIntVarDom]) = {
+  def get_set_in(x: Variable, s: Domain, ann: List[Annotation]) = {
     var sset = s match {
       case DomainRange(mi,ma) => SortedSet[Int]() ++ (mi to ma)
       case DomainSet(vals) => SortedSet[Int]() ++ vals
@@ -335,20 +314,20 @@ trait FZCBLSConstraints {
     BelongsTo(x, setVar)
   }
   
-  def get_maximum_inv(x: Array[Variable], ann: List[Annotation])(implicit cs: ConstraintSystem, cblsIntMap: MMap[String, CBLSIntVarDom]) = {
+  def get_maximum_inv(x: Array[Variable], ann: List[Annotation]) = {
     MaxArray(x.map(getCBLSVar(_)))
   }
-  def get_minimum_inv(x: Array[Variable], ann: List[Annotation])(implicit cs: ConstraintSystem, cblsIntMap: MMap[String, CBLSIntVarDom]) = {
+  def get_minimum_inv(x: Array[Variable], ann: List[Annotation]) = {
     MinArray(x.map(getCBLSVar(_)))
   }
   
-  def get_inverse(xs: Array[Variable], ys:Array[Variable])(implicit cs: ConstraintSystem, cblsIntMap: MMap[String, CBLSIntVarDom]) = {
+  def get_inverse(xs: Array[Variable], ys:Array[Variable]) = {
     //TODO: Add alldiff as redundant constraint?
     //TODO: check the index_sets? Assumes it starts at 1
     xs.zipWithIndex.map{case (xi,i) => EQ(i,Sum2(IntElement(Sum2(xi,-1),ys.map(getCBLSVar(_))),-1))}.toList
   }
   
-  def get_count_eq_inv(xs:Array[Variable], y: Variable, cnt:Variable, defined: String, ann: List[Annotation])(implicit c: ConstraintSystem, cblsIntMap: MMap[String, CBLSIntVarDom]) = {
+  def get_count_eq_inv(xs:Array[Variable], y: Variable, cnt:Variable, defined: String, ann: List[Annotation]) = {
     //TODO: DenseCount might be quite expensive...
     //xs domain goes from i to j but cnts will be from 0 to i-j
     val dc = DenseCount.makeDenseCount(xs.map(getCBLSVar(_)));
@@ -356,29 +335,29 @@ trait FZCBLSConstraints {
     IntElement(Sum2(y,dc.offset),cnts);
   }
   
-  def get_at_least_int(n:Variable,xs: Array[Variable], v:Variable, ann: List[Annotation])(implicit c: ConstraintSystem, cblsIntMap: MMap[String, CBLSIntVarDom]) = {
+  def get_at_least_int(n:Variable,xs: Array[Variable], v:Variable, ann: List[Annotation]) = {
     AtLeast(xs.map(getCBLSVar(_)),SortedMap((v.min,n)));
   }
-  def get_at_most_int(n:Variable,xs: Array[Variable], v:Variable, ann: List[Annotation])(implicit c: ConstraintSystem, cblsIntMap: MMap[String, CBLSIntVarDom]) = {
+  def get_at_most_int(n:Variable,xs: Array[Variable], v:Variable, ann: List[Annotation]) = {
     AtMost(xs.map(getCBLSVar(_)),SortedMap((v.min,n.min)));
   }
-  def get_exactly_int(n:Variable,xs: Array[Variable], v:Variable, ann: List[Annotation])(implicit c: ConstraintSystem, cblsIntMap: MMap[String, CBLSIntVarDom]) = {
+  def get_exactly_int(n:Variable,xs: Array[Variable], v:Variable, ann: List[Annotation]) = {
     List(AtMost(xs.map(getCBLSVar(_)),SortedMap((v.min,n.min))),AtLeast(xs.map(getCBLSVar(_)),SortedMap((v.min,n))));
   }
   /*def get_among_inv(n:Variable,xs: Array[Variable], v:Variable, ann: List[Annotation])(implicit c: ConstraintSystem, cblsIntMap: MMap[String, CBLSIntVarDom]) = {
     List(AtMost(xs.map(getCBLSVar(_)),SortedMap((v.min,n.min))),AtLeast(xs.map(getCBLSVar(_)),SortedMap((v.min,n))));
   }*/
   //constrains all variables in xs to take their value in dom
-  def domains(xs: Array[Variable], dom: Array[Int])(implicit c: ConstraintSystem, cblsIntMap: MMap[String, CBLSIntVarDom]) = {
-    val setVar = new CBLSSetConst(dom.to[SortedSet],c._model)
+  def domains(xs: Array[Variable], dom: Array[Int]) = {
+    val setVar = new CBLSSetConst(dom.to[SortedSet],m)
     xs.toList.map(x => Weight(BelongsTo(getCBLSVar(x),setVar),100))
   }
-  def get_global_cardinality_low_up(closed: Boolean, xs: Array[Variable],vs: Array[Variable],lows: Array[Int],ups:Array[Int])(implicit c: ConstraintSystem, cblsIntMap: MMap[String, CBLSIntVarDom]) = {
+  def get_global_cardinality_low_up(closed: Boolean, xs: Array[Variable],vs: Array[Variable],lows: Array[Int],ups:Array[Int]) = {
     val atleast = AtLeast(xs.map(getCBLSVar(_)),SortedMap(vs.zip(lows).map(vl => (vl._1.min,new CBLSIntConst(vl._2,m))): _*))
     val atmost = AtMost(xs.map(getCBLSVar(_)),SortedMap(vs.zip(ups).map(vl => (vl._1.min,vl._2)): _*))
     List(atleast,atmost) ++ (if(closed) domains(xs,vs.map(_.min)) else List())
   }
-  def get_global_cardinality(closed: Boolean, xs: Array[Variable],vs: Array[Variable],cnts: Array[Variable])(implicit c: ConstraintSystem, cblsIntMap: MMap[String, CBLSIntVarDom]) = {
+  def get_global_cardinality(closed: Boolean, xs: Array[Variable],vs: Array[Variable],cnts: Array[Variable]) = {
      if(cnts.forall(c => c.min==c.max)){//fixed counts
        get_global_cardinality_low_up(closed,xs,vs,cnts.map(_.min),cnts.map(_.max))
      }else{
@@ -389,6 +368,7 @@ trait FZCBLSConstraints {
        if(closed) domains(xs,vs.map(_.min)) ++ eqs else eqs
      }
   }
+  
   implicit def cstrListToCstr(cstrs: List[CBLSConstraint]): CBLSConstraint = {
     val cs = new ConstraintSystem(m)
     for(cstr <- cstrs){
@@ -397,7 +377,7 @@ trait FZCBLSConstraints {
     cs
   }
   
-  def constructCBLSConstraint(constraint: Constraint)(implicit c: ConstraintSystem, cblsIntMap: MMap[String, CBLSIntVarDom]):CBLSConstraint = {
+  def constructCBLSConstraint(constraint: Constraint):CBLSConstraint = {
     constraint match {
       case reif(cstr,r) => EQ(r,constructCBLSConstraint(cstr))
       
@@ -454,7 +434,7 @@ trait FZCBLSConstraints {
       case notimplemented                             => throw new NoSuchConstraintException(notimplemented.toString(),"CBLS Solver");
     }
   }
-  def constructCBLSIntInvariant(constraint: Constraint,id:String)(implicit c: ConstraintSystem, cblsIntMap: MMap[String, CBLSIntVarDom]): IntInvariant = {
+  def constructCBLSIntInvariant(constraint: Constraint,id:String): IntInvariant = {
     constraint match {
       case reif(cstr,r) => constructCBLSConstraint(cstr)//.asInstanceOf[Invariant]
       
@@ -491,7 +471,10 @@ trait FZCBLSConstraints {
       case notimplemented                             => throw new NoSuchConstraintException(notimplemented.toString(),"CBLS Solver");
     }
   }
-  def add_constraint(constraint: Constraint)(implicit c: ConstraintSystem, cblsIntMap: MMap[String, CBLSIntVarDom]) = {
+  
+  
+  //TODO: differentiate those methods
+  def add_constraint(constraint: Constraint) = {
     constraint.definedVar match {
       case None =>
         c.add(constructCBLSConstraint(constraint))

@@ -51,9 +51,27 @@ class Log(opts:Options){
   }
 }
 
-
-class FZCBLSSolver extends SearchEngine with FZCBLSConstraints with StopWatch {
-  
+class FZCBLSModel(val model: FZProblem, val c: ConstraintSystem, val objective: CBLSObjective, val m: Store, val vars: List[CBLSIntVarDom], val log:Log, val getWatch: () => Long,val cblsIntMap: MMap[String, CBLSIntVarDom]) {
+  def handleSolution() = {
+    println("% time from start: "+getWatch)
+    model.solution.handleSolution(
+      (s: String) => cblsIntMap.get(s) match {
+        case Some(intVar) =>
+          intVar.value + "";
+        case _ => throw new Exception("Unhappy")
+      });
+  }
+  def getSolution():String = {
+    model.solution.getSolution(
+      (s: String) => cblsIntMap.get(s) match {
+        case Some(intVar) =>
+          intVar.value + "";
+        case _ => throw new Exception("Unhappy")
+      });
+  }
+}
+class FZCBLSSolver extends SearchEngine with StopWatch {
+  val m: Store = new Store(false, None, false)//setting the last Boolean to true would avoid calling the SCC algorithm but we have to make sure that there are no SCCs in the Graph. Is it the case in the way we build it?
   def solve(opts: Options): List[(Long, Int, Int, String)] = {
     startWatch()
     val log = new Log(opts);
@@ -108,7 +126,22 @@ class FZCBLSSolver extends SearchEngine with FZCBLSConstraints with StopWatch {
     //m = new Store(false, None, false)//This is already created in FZBCLSConstraint...
     implicit val cblsIntMap: MMap[String, CBLSIntVarDom] = MMap.empty[String, CBLSIntVarDom]
     //cblsIntMap = MMap.empty[String, CBLSIntVar]
+   implicit def getCBLSVar(v: Variable) = {
+    v match {
+      case ConcreteConstant(_, value, _) =>
+        //All constants need to have a store, otherwise they won't have a UniqueID (from PropagationElement) and constraints will start throwing exceptions
+        cblsIntMap.get(value + "") match {
+          case None =>
+            val c = CBLSIntConstDom(value, m);
+            cblsIntMap += value + "" -> c;
+            c;
+          case Some(c) => c;
+        }
 
+      case ConcreteVariable(id, _, _) =>
+        cblsIntMap.get(id).get;
+    }
+  }
     // Model
 
     var searchVariables: List[CBLSIntVarDom] = createVariables()
@@ -135,6 +168,12 @@ class FZCBLSSolver extends SearchEngine with FZCBLSConstraints with StopWatch {
     val implicitConstants = searchVariables.filter(_.domainSize==1);
     searchVariables = searchVariables.filterNot(_.domainSize==1);
     
+    object EnsureDomain{
+      def apply(v: CBLSIntVarDom) = {
+        val t = new ValueTracker(v,c)
+        t.update(true)
+      }
+    }
     
     def tryAllDiff(xs: Array[Variable]):Boolean = {
       if (!xs.foldLeft(false)((acc: Boolean, x: Variable) => acc || x.isDefined || (!searchVariables.exists((v: CBLSIntVar) => v.name == x.id) && !implicitConstants.contains(getCBLSVar(x))))){
@@ -262,15 +301,18 @@ class FZCBLSSolver extends SearchEngine with FZCBLSConstraints with StopWatch {
     softConstraints = constraints.filterNot(_.definedVar.isDefined) /*++ removed*/;
     //println(searchVariables)
     // println(softConstraints.length)
+    
+    val poster: FZCBLSConstraintPoster = new FZCBLSConstraintPoster(c,getCBLSVar);
+    
     for (invariant <- invariants){
       //log("Posting as Invariant "+invariant)
-      add_constraint(invariant);//TODO Separate the two methods
+      poster.add_constraint(invariant);//TODO Separate the two methods
     }
     log("Posted "+invariants.length+" Invariants")
     //println(cblsIntMap.values.map(v => v+"\t"+v.value+ " in " + v.minVal +".."+v.maxVal ).mkString("\n"))
     for (constraint <- softConstraints) {
      // log("Posting "+constraint)
-      add_constraint(constraint);
+      poster.add_constraint(constraint);
     }
     log("Posted "+softConstraints.length+" Soft Constraints")
     //println(implicitConstraints.length + " implicit constraints");
@@ -292,13 +334,14 @@ class FZCBLSSolver extends SearchEngine with FZCBLSConstraints with StopWatch {
     /*for(v<-searchVariables){
       log("search var: "+v.name+" dom size:"+v.domain.length+" ")
     }*/
+    val cblsmodel = new FZCBLSModel(model,c,objective,m,searchVariables,log,() => getWatch,cblsIntMap)
     val search =  new Chain(
-        new SimpleLocalSearch(c,searchVariables,CBLSObjective(c.violation)/* objective*/,m,handleSolution,timeout,() => getWatch,log),
+        new SimpleLocalSearch(cblsmodel,CBLSObjective(c.violation)/* objective*/,timeout),
         //new FakeSearch(),
         model.search.obj match {
-          case Objective.SATISFY => new NeighbourhoodSearchSAT(searchNeighbourhood, c, objective, violationWeight, objectiveWeight, timeout, m, getSolution, handleSolution, () => getWatch,log);
-          case Objective.MAXIMIZE => new NeighbourhoodSearchOPT(searchNeighbourhood, c, objective,model.search.variable.get, - model.search.variable.get.max, violationWeight, objectiveWeight, timeout, m, getSolution, handleSolution, () => getWatch,log);
-          case Objective.MINIMIZE => new NeighbourhoodSearchOPT(searchNeighbourhood, c, objective,model.search.variable.get, model.search.variable.get.min, violationWeight, objectiveWeight, timeout, m, getSolution, handleSolution, () => getWatch,log);
+          case Objective.SATISFY => new NeighbourhoodSearchSAT(cblsmodel,searchNeighbourhood, violationWeight, objectiveWeight, timeout);
+          case Objective.MAXIMIZE => new NeighbourhoodSearchOPT(cblsmodel,searchNeighbourhood, model.search.variable.get, - model.search.variable.get.max, violationWeight, objectiveWeight, timeout);
+          case Objective.MINIMIZE => new NeighbourhoodSearchOPT(cblsmodel,searchNeighbourhood, model.search.variable.get, model.search.variable.get.min, violationWeight, objectiveWeight, timeout);
         });
     
     
@@ -402,21 +445,5 @@ class FZCBLSSolver extends SearchEngine with FZCBLSConstraints with StopWatch {
   }
   
 
-  def handleSolution()(implicit model: FZProblem, cblsIntMap: MMap[String, CBLSIntVarDom]) = {
-    println("% time from start: "+getWatch)
-    model.solution.handleSolution(
-      (s: String) => cblsIntMap.get(s) match {
-        case Some(intVar) =>
-          intVar.value + "";
-        case _ => throw new Exception("Unhappy")
-      });
-  }
-  def getSolution()(implicit model: FZProblem, cblsIntMap: MMap[String, CBLSIntVarDom]):String = {
-    model.solution.getSolution(
-      (s: String) => cblsIntMap.get(s) match {
-        case Some(intVar) =>
-          intVar.value + "";
-        case _ => throw new Exception("Unhappy")
-      });
-  }
+  
 }
