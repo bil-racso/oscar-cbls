@@ -64,7 +64,7 @@ case class AtLeast(variables: Iterable[CBLSIntVar], bounds: SortedMap[Int, CBLSI
   //the violation of each input variable
   private val Violations:SortedMap[CBLSIntVar,CBLSIntVar] = variables.foldLeft(SortedMap.empty[CBLSIntVar,CBLSIntVar])((acc,intvar)
   => {
-    val newVar = new CBLSIntVar(model,(0 to 1),1,"Violation_AtLeast_"+intvar.name)
+    val newVar = new CBLSIntVar(model,(0 to variables.size),1,"Violation_AtLeast_"+intvar.name)
     newVar <== violationByVal.element(intvar + offset)
     acc + ((intvar,newVar))
   })

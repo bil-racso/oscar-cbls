@@ -766,6 +766,7 @@ class CBLSIntVar(model: Store, val domain: Range, private var Value: Int, n: Str
   // if the range was specified using until max should be max -1
   var maxVal = if(domain.isInclusive) domain.end else domain.end - 1
 
+  if(!inDomain(Value)) throw new Exception(Value+ " is not in the domain of "+this+"("+minVal+".."+maxVal+")")
   override def toString = if(model.propagateOnToString) s"$name:=$value" else s"$name:=$Value"
   override def toStringNoPropagate = s"$name:=$Value" //value
 
@@ -778,7 +779,10 @@ class CBLSIntVar(model: Store, val domain: Range, private var Value: Int, n: Str
       assert(inDomain(v),print("Assertion False : variable ["+this+"] is not in his domain \n" +
           "domain : ["+minVal+ ";"+maxVal+"]\n" +
            "new value :"+ v +"\n" ))*/
-           
+      if(!inDomain(v)){
+        throw new Exception(v+ " is not in the domain of "+this+"("+minVal+".."+maxVal+"). This might indicate an integer overflow.")
+      } 
+      if(!inDomain(v)) System.err.println(v+ " is not in the domain of "+this+"("+minVal+".."+maxVal+")")
       Value = v
       notifyChanged()
     }
@@ -1120,13 +1124,14 @@ abstract class IntInvariant extends Invariant{
   def myMin:Int
   def myMax:Int
   implicit def toIntVar:CBLSIntVar = {
-    val a = new CBLSIntVar(model, (myMin to myMax), 0, this.getClass.getSimpleName)
+    //println("INV "+this+ "\t"+myMin+".."+myMax)
+    val a = new CBLSIntVar(model, (myMin to myMax), myMin, this.getClass.getSimpleName)
     a <== this //ca invoque setOutputVar en fait.
     a
   }
 
   def toIntVar(name:String):CBLSIntVar = {
-    val a = new CBLSIntVar(model, (myMin to myMax), 0, name)
+    val a = new CBLSIntVar(model, (myMin to myMax), myMin, name)
     a <== this //ca invoque setOutputVar en fait.
     a
   }

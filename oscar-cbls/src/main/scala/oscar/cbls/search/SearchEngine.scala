@@ -136,9 +136,9 @@ trait SearchEngineTrait{
 
   /**return a couple (r,s) that is allowed: filter(r,s) is true, and minimizing f(r,s) among the allowed couples
    * this selector is randomized; in case of tie breaks the returned one is chosen randomly
-   * @param s is optional and set to true if not specified
+   * @param filter is optional and set to true if not specified
    */  
-  def selectMin[R,S](r: Iterable[R] , s: Iterable[S]) (f: (R,S) => Int, filter: ((R,S) => Boolean)): (R,S) = {
+  def selectMin[R,S](r: Iterable[R] , s: Iterable[S]) (f: (R,S) => Int, filter: ((R,S) => Boolean)/* = ((r:R,s:S) => true)*/): (R,S) = {
      val flattened:List[(R,S)] = for (rr <- r.toList; ss <- s.toList) yield (rr,ss)
     selectMin[(R,S)](flattened)((rands:(R,S)) => f(rands._1,rands._2), (rands:(R,S)) => filter(rands._1,rands._2))
   }

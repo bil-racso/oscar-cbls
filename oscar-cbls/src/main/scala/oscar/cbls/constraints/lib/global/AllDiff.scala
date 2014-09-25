@@ -57,12 +57,12 @@ case class AllDiff(variables: Iterable[CBLSIntVar]) extends Constraint {
   private val Violations: SortedMap[CBLSIntVar, CBLSIntVar] = variables.foldLeft(
     SortedMap.empty[CBLSIntVar, CBLSIntVar])(
       (acc, intvar) => {
-        val newvar = new CBLSIntVar(model, (0 to 1), 1, "Violation_AllDiff_" + intvar.name)
+        val newvar = new CBLSIntVar(model, (0 to variables.size-1), 1, "Violation_AllDiff_" + intvar.name)
         acc + ((intvar, newvar))
       })
 
   private val ValueCount: Array[CBLSIntVar] = Array.tabulate[CBLSIntVar](N + 1)((i: Int) => {
-    val tmp = new CBLSIntVar(model, (0 to 1), 0, "alldiff_count_of_value_" + (i - offset))
+    val tmp = new CBLSIntVar(model, (0 to variables.size), 0, "alldiff_count_of_value_" + (i - offset))
     tmp.setDefiningInvariant(this)
     tmp
   })
