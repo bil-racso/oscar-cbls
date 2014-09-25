@@ -36,7 +36,8 @@ object FznOscarCbls extends App {
       System.err.println("If this should be an accepted constraint, please report to "+mail)
     }
     case e: Exception => {//catch-all clause...
-      System.err.println(e.getMessage())
+      //System.err.println(e.getMessage())
+      e.printStackTrace()
       System.err.println("Please report the error to "+mail+" with all relevant info and data.")
     }
   }

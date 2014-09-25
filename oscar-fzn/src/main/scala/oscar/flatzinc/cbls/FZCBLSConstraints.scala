@@ -98,7 +98,10 @@ trait FZCBLSConstraints {
   object InvariantEnsureDomain{
     def apply(v: CBLSIntVarDom, i:IntInvariant)(implicit c: ConstraintSystem) = {
       val t = new ValueTracker(v)
+      
+     // println("INV2 "+i+ "\t"+i.myMin+".."+i.myMax)
       v <== i
+      if(v.value < i.myMin || v.value > i.myMax) v := i.myMin//this is to make sure that the value is in the range.
       t.update()
     }
   }
@@ -146,7 +149,7 @@ trait FZCBLSConstraints {
     val a = new Array[CBLSSetVar](horizon-start+1)
     val ns = new Array[CBLSIntVar](s.length)
     for(i <- 0 to horizon-start){
-      p(i) = CBLSIntVar(c.model,0 to b.max,0,"Profile("+i+")")
+      p(i) = CBLSIntVar(c.model,0 to r.foldLeft(0)((s,r) => s + r.max),0,"Profile("+i+")")
       a(i) = new CBLSSetVar(c.model,0,s.length-1,"Active("+i+")")
     }
     val offset = new CBLSIntConst(-start,c.model)
@@ -171,6 +174,8 @@ trait FZCBLSConstraints {
   }
   
   def get_array_int_element_inv(b: Variable, as: Array[Variable], r: Variable, defId: String, ann: List[Annotation])(implicit c: ConstraintSystem, cblsIntMap: MMap[String, CBLSIntVarDom]) = {
+   // println(getCBLSVar(b) + " "+b.getDomain())
+   // println(b.cstrs )
     IntElement(Sum2(b,-1), as.map(getCBLSVar(_)))
   }
   

@@ -41,29 +41,23 @@ object FZModelTransfo {
     
           
     //Find all constraints which do not already define a variable and can define a variable (be turned into an invariant)
-    def freeC(cstrs: List[Constraint]): List[Constraint] = {
-      cstrs.filter((c: Constraint) => c.definedVar == None && c.canDefineVar)
-    }
+    
+   
+    
     //For all free variables
     for (v <- freeVariables.sortWith((x: Variable, y: Variable) => x.max - x.min > y.max - y.min)) {
-      breakable { //Select the first suitable constraint
-        if(freeC(v.cstrs).filter(c=>c.getCandidateDefVars().contains(v) && ! dependsOn(c,v,false)).length > 1){
-          println("%!! Found a variable that could be defined by more than one invariant:"+v+" "+(freeC(v.cstrs).filter(c=>c.getCandidateDefVars().contains(v) && ! dependsOn(c,v,false)).toString))
-        }
-        for (c <- freeC(v.cstrs)) {//In any order...//TODO: Is there any interesting order?
-          if (c.getCandidateDefVars().contains(v)) {
-            if (!dependsOn(c,v,false)) {
-              v.isDefined = true;
-              c.definedVar = Some(v);
-              break;
-            }
-          }
-        }
+      val cand = v.cstrs.filter((c: Constraint) => c.definedVar.isEmpty && c.canDefineVar && c.getCandidateDefVars().contains(v))
+      val cand2 = cand//.filter(c => ! dependsOn(c,v,false))
+      if(cand2.length > 1){
+        println("%!! Found a variable that could be defined by more than one invariant:"+v+" "+cand2.toString)
       }
+      //Select the first suitable constraint
+      if(!cand2.isEmpty) cand2.head.setDefinedVar(v)
+      
     }
   }
   def dependsOn(c: Constraint, v: Variable,test: Boolean = true): Boolean = {
-    c.getVariables().exists(w => if (w.isDefined) c.definedVar!= Some(w) && dependsOn(w.cstrs.find(c=> c.definedVar == Some(w)).get,v) 
+    c.getVariables().exists(w => if (w.isDefined) c.definedVar!= Some(w) && dependsOn(w.definingConstraint.get,v) 
                                  else test && w == v)
   }
 
@@ -74,7 +68,7 @@ object FZModelTransfo {
   def propagateDomainBounds(model: FZProblem) = {
     //TODO: Also reduce the domains from GCC_closed and other such constraints. Or do it from the minizinc to flatzinc level
     //TODO: Do more than just the bounds, then handle the in_set constraint here.
-    model.constraints = model.constraints.filter(c => 
+     val (cstrs,retract)= model.constraints.partition(c => 
       c match {
         case int_le(x:ConcreteConstant, y:ConcreteVariable, _) => y.dom.geq(x.value); false
         case int_le(x:ConcreteVariable, y:ConcreteConstant, _) => x.dom.leq(y.value); false
@@ -100,5 +94,9 @@ object FZModelTransfo {
         case bool_eq(x:ConcreteVariable, y:ConcreteVariable, _ ) => y.dom.geq(x.min); y.dom.leq(x.max); x.dom.geq(y.min); x.dom.leq(y.max); true
         case _ => true 
       })
+      model.constraints = cstrs
+      for(c <- retract){
+        c.retract()
+      }
   }
 }

@@ -81,7 +81,7 @@ abstract class SearchProcedure extends SearchEngine {
 class Chain(val a: SearchProcedure, val b: SearchProcedure) extends SearchProcedure {
   def run(): List[(Long, Int, Int, String)] = {
     val sols = a.run()
-    sols ++ b.run()
+    b.run() ++ sols
   }
 }
 
@@ -127,6 +127,7 @@ class SimpleLocalSearch(val c: ConstraintSystem, val vars: List[CBLSIntVarDom], 
     if(c.violation.value==0){
       handleSolution()
       log("Found Solution in "+getWatch());
+      solutionList +:= (getWatch(), 0, 0, "SOL")
     }
     log("Done Simple Local Search")
     log("Ending Violation: "+objective.value)
@@ -204,8 +205,11 @@ class NeighbourhoodSearchOPT(neighbourhoods: Array[Neighbourhood], c: Constraint
           log("%%% NO MOVE "+(-bestNeighbour.value))
         }*/
      // log("Move: "+bestNeighbour.toStringMove(it.value))
-        bestNeighbour.commit();
-      val modifiedVars = bestNeighbour.getModified
+        if(bestNeighbour!=null)
+          bestNeighbour.commit();
+        else
+          log("No move exists!");
+      val modifiedVars = if(bestNeighbour!=null) bestNeighbour.getModified else Set.empty[CBLSIntVar]
       for (v <- modifiedVars) {
         val index = variableMap(v);
         //This could be it.value + tenure + random(tenureIncrement) to introduce more randomness
@@ -335,7 +339,7 @@ class NeighbourhoodSearchOPT(neighbourhoods: Array[Neighbourhood], c: Constraint
           if (tenure == MaxTenure) {
             //Wait will be long enough to clear the tabu list.
             if (getWatch() - timeOfBest > MaxTimeMilli / 4) {
-              println("% Reset");
+              //println("% Reset");
               timeOfBest = getWatch();
               for (n <- neighbourhoods)
                 n.reset();
@@ -405,8 +409,11 @@ class NeighbourhoodSearchSAT(neighbourhoods: Array[Neighbourhood], c: Constraint
         } else {
           n.getMinObjective(it.value, nonTabuSet)
         }))(_.value)
-      bestNeighbour.commit()
-      val modifiedVars = bestNeighbour.getModified;
+      if(bestNeighbour!=null)
+          bestNeighbour.commit();
+        else
+          log("No move exists!");
+      val modifiedVars = if(bestNeighbour!=null) bestNeighbour.getModified else Set.empty[CBLSIntVar]
       for (v <- modifiedVars) {
         val index = variableMap(v);
         //This could be it.value + tenure + random(tenureIncrement) to introduce more randomness
@@ -450,16 +457,16 @@ class NeighbourhoodSearchSAT(neighbourhoods: Array[Neighbourhood], c: Constraint
           bestViolation = Int.MaxValue
           tenure = MinTenure;
           roundsWithoutSat += 1;
-          println("% "+roundsWithoutSat)
+         // println("% "+roundsWithoutSat)
           if (roundsWithoutSat >= maxRounds) {
-            println("% ------------------------------------------------")
+           // println("% ------------------------------------------------")
             //val maxViolating = selectMax(neighbourhoods, (n: Neighbourhood) => n.violation())
             //maxViolating.reset();
             for (n <- neighbourhoods)
               n.reset();
             roundsWithoutSat = 0;
             bestViolation = c.violation.value
-            println("% "+bestViolation);
+            //println("% "+bestViolation);
           }
         }
       }

@@ -86,17 +86,25 @@ class FZCBLSSolver extends SearchEngine with FZCBLSConstraints with StopWatch {
 //    }
     //model.fixDomains();
     //Turn all free variables into defined variables where possible
+    model.cstrsByName.map{ case (n:String,l:List[Constraint]) => l.length +"\t"+n}.toList.sorted.foreach(log(_))
+//    println(model.constraints.size)
     log("Parsed")
     FZModelTransfo.propagateDomainBounds(model);
     //FZModelTransfo.propagateDomainBounds(model2);
     log("Reduced Domains")
-    if(!opts.opts.contains("no-find-inv")){
+//    println(model.constraints.size)
+    if(!opts.is("no-find-inv")){
       FZModelTransfo.findInvariants(model);
       log("Found Invariants")
     }else{
       log("Did not search for new invariants")
     }
-    
+    if(opts.is("no-post-inv")){
+      for(c <- model.constraints ){
+        if(c.definedVar.isDefined)c.unsetDefinedVar(c.definedVar.get)
+      }
+    }
+//    println(model.constraints.size)
     //m = new Store(false, None, false)//This is already created in FZBCLSConstraint...
     implicit val cblsIntMap: MMap[String, CBLSIntVarDom] = MMap.empty[String, CBLSIntVarDom]
     //cblsIntMap = MMap.empty[String, CBLSIntVar]
@@ -106,7 +114,7 @@ class FZCBLSSolver extends SearchEngine with FZCBLSConstraints with StopWatch {
     var searchVariables: List[CBLSIntVarDom] = createVariables()
     // constraint system
     implicit val c = ConstraintSystem(m)
-
+//println(model.constraints.size)
     //Objective
     val objectiveWeight = CBLSIntVar(m, 0 to 10000, 1, "objective_weight")
     val violationWeight = CBLSIntVar(m, 0 to 10000, 1, "violation_weight")
@@ -117,38 +125,19 @@ class FZCBLSSolver extends SearchEngine with FZCBLSConstraints with StopWatch {
         case Objective.MINIMIZE => Sum2(Prod2(c.violation, violationWeight), Prod2(model.search.variable.get, objectiveWeight))
       })
     log("Created Objective")
+    
     //TODO: Most of those should be List instead of Array
     var constraints = model.constraints.toArray[Constraint];
-    var remainingConstraints = Array.empty[Constraint];
+    //var remainingConstraints = Array.empty[Constraint];
     var implicitConstraints = Array.empty[Neighbourhood]
     var softConstraints = Array.empty[Constraint];
     
-    var implicitConstants = searchVariables.filter(_.domainSize==1);
+    val implicitConstants = searchVariables.filter(_.domainSize==1);
     searchVariables = searchVariables.filterNot(_.domainSize==1);
-    //println(searchVariables)
-    //Replaced the following piece of code by a simplification of the FZModel above
-    /*def tryMap(v: ConcreteVariable, c: ConcreteConstant): Boolean = {
-      if (!v.isDefined && searchVariables.contains(getVar(v))) {
-        cblsIntMap(v.id) <== CBLSIntConst(c.value, m);
-        implicitConstants :+= cblsIntMap(v.id);
-        searchVariables = searchVariables.filterNot(_.name == v.id);
-        return true
-      }
-      return false
-    }
-    constraints = constraints.filterNot((constraint: Constraint) =>
-      constraint match {
-        case int_eq(x: ConcreteConstant, y: ConcreteVariable, ann) => tryMap(y, x)
-        case int_eq(x: ConcreteVariable, y: ConcreteConstant, ann) => tryMap(x, y)
-        case bool_eq(x: ConcreteConstant, y: ConcreteVariable, ann) => tryMap(y, x)
-        case bool_eq(x: ConcreteVariable, y: ConcreteConstant, ann) => tryMap(x, y)
-        case _ => false
-      })
-    log("Removed Constant Variables from Search")
-    *
-    */
+    
+    
     def tryAllDiff(xs: Array[Variable]):Boolean = {
-      if (!xs.foldLeft(false)((acc: Boolean, x: Variable) => acc || x.isDefined || x.isIntroduced || (!searchVariables.exists((v: CBLSIntVar) => v.name == x.id) && !implicitConstants.contains(getCBLSVar(x))))){
+      if (!xs.foldLeft(false)((acc: Boolean, x: Variable) => acc || x.isDefined || (!searchVariables.exists((v: CBLSIntVar) => v.name == x.id) && !implicitConstants.contains(getCBLSVar(x))))){
         val nonConstants = xs.filterNot(x => implicitConstants.contains(getCBLSVar(x)))
         val domMin = nonConstants(0).min;
         val domMax = nonConstants(0).max;
@@ -227,10 +216,22 @@ class FZCBLSSolver extends SearchEngine with FZCBLSConstraints with StopWatch {
         false
       }
     }
+    def trySum(xs: Array[Variable], coeffs: Array[Variable],sum:Variable): Boolean = {
+      if (xs.forall(x => ! x.isDefined) && coeffs.forall(x => x.min == 1 || x.min == -1)) {
+        implicitConstraints :+= new SumNeighborhood(xs.map(getCBLSVar(_)),coeffs.map(_.min),sum.min,objective,c)
+        for (x <- xs)
+            searchVariables = searchVariables.filterNot(_.name == x.id);
+        true
+      }else{
+        false
+      }
+    }
     //println(implicitConstants.mkString(", "))
-    if(!opts.opts.contains("no-impl-cstr")){
+    //println(constraints.size)
+    if(!opts.is("no-impl-cstr")){
       //TODO: DO not like the filtering here.
       //TODO: Why is constraints an Array. Could be a List?
+      //TODO: Actually, we might want to keep the original constraints to make sure that nothing is violated during search.
       constraints = constraints.filterNot((constraint: Constraint) =>
         constraint match {
           //TODO: this line of simplification should come somewhere else, actually
@@ -243,18 +244,22 @@ class FZCBLSSolver extends SearchEngine with FZCBLSConstraints with StopWatch {
           case global_cardinality(xs,vals,cnts,ann) => tryGCC(xs,vals,cnts,false)
           case global_cardinality_low_up_closed(xs,vals,low,up,ann) => tryGCClu(xs,vals,low,up,true)
           case global_cardinality_low_up(xs,vals,low,up,ann) => tryGCClu(xs,vals,low,up,false)
-          
+          case int_lin_eq(coeffs,vars,sum,ann) => trySum(vars,coeffs,sum)
+          case bool_lin_eq(coeffs,vars,sum,ann) => trySum(vars,coeffs,sum)
           case _ => false;
         })
         
      
       log("Found "+implicitConstraints.length+" Implicit Constraints")
+      log(implicitConstraints.mkString("\n"))
     }else{
       log("Did not try to find implicit constraints")
     }
-    var invariants = getSortedInvariants(constraints.filter(_.definedVar.isDefined))
+    //println(constraints.size)
+    log("Possibly "+constraints.filter(_.definedVar.isDefined).length+" invariants.")
+    var (invariants,removed) = getSortedInvariants(constraints.filter(_.definedVar.isDefined))
     log("Sorted "+invariants.length+" Invariants")
-    softConstraints = constraints.filterNot(_.definedVar.isDefined);
+    softConstraints = constraints.filterNot(_.definedVar.isDefined) /*++ removed*/;
     //println(searchVariables)
     // println(softConstraints.length)
     for (invariant <- invariants){
@@ -262,8 +267,9 @@ class FZCBLSSolver extends SearchEngine with FZCBLSConstraints with StopWatch {
       add_constraint(invariant);//TODO Separate the two methods
     }
     log("Posted "+invariants.length+" Invariants")
+    //println(cblsIntMap.values.map(v => v+"\t"+v.value+ " in " + v.minVal +".."+v.maxVal ).mkString("\n"))
     for (constraint <- softConstraints) {
-      //log("Posting "+constraint)
+     // log("Posting "+constraint)
       add_constraint(constraint);
     }
     log("Posted "+softConstraints.length+" Soft Constraints")
@@ -279,11 +285,13 @@ class FZCBLSSolver extends SearchEngine with FZCBLSConstraints with StopWatch {
     log("Using "+searchVariables.length+" Search Variables")
     log("Created all Neighborhoods")
     //println(searchNeighbourhood.length + " searchNeighbourhood");
-    val timeout = (if(opts.timeOut>0) {println("% time(s) "+opts.timeOut); opts.timeOut} else 5 * 60) * 1000
+    val timeout = (if(opts.timeOut>0) {opts.timeOut} else 5 * 60) * 1000
+    log("Timeout is set to "+timeout+" milliseconds"); 
     log("Starting Search at "+getWatchString)
-    for(v<-searchVariables){
+    //log("Search vars :" + searchVariables.length)
+    /*for(v<-searchVariables){
       log("search var: "+v.name+" dom size:"+v.domain.length+" ")
-    }
+    }*/
     val search =  new Chain(
         new SimpleLocalSearch(c,searchVariables,CBLSObjective(c.violation)/* objective*/,m,handleSolution,timeout,() => getWatch,log),
         //new FakeSearch(),
@@ -303,8 +311,16 @@ class FZCBLSSolver extends SearchEngine with FZCBLSConstraints with StopWatch {
     pw.close();
     */
     log("Model closed");
+    if(opts.is("no-run")){
+      log("Not running the search...")
+      return null;
+    } 
     val solutions = search.run();
     log("Done at "+getWatchString)
+    if(solutions.length<=1){
+      println("% Did not find any solution.")
+      println("% Final violation: "+c.violation.value)
+    }
     return solutions;
   }
 
@@ -333,32 +349,61 @@ class FZCBLSSolver extends SearchEngine with FZCBLSConstraints with StopWatch {
     }
     searchVariables;
   }
-  def getSortedInvariants(inv: Array[Constraint]): Array[Constraint] = {
-    var invariants = inv.toArray;
+  def getSortedInvariants(inv: Array[Constraint]): (Array[Constraint],List[Constraint]) = {
+    val invariants = inv.toArray;
     var sorted = List.empty[Constraint];
-    var mapping = MMap.empty[Constraint, Int];
+    val mapping = MMap.empty[Constraint, Int];
     var heads = List.empty[Constraint]
+    var removed = List.empty[Constraint]
     for (i <- invariants) {
-      mapping += i -> i.getVariables.filter((v) => v.isDefined && (v != i.definedVar.get)).length;
-      if(mapping(i)==0)heads = i :: heads;
+      mapping += i -> i.getVariables.filter((v) => v.isDefined && (v.definingConstraint.get != i)).length;
+      if(mapping(i)==0){
+        heads = i :: heads;
+        mapping.remove(i)
+      }
     }
-    while (!heads.isEmpty) {
-      val k = heads.head
-      heads = heads.tail
-      sorted = k::sorted
-      
-      for(j <- k.definedVar.get.cstrs){
-        if(mapping.contains(j) ){
-          mapping(j) = mapping(j)-1
-          if(mapping(j)==0)heads = j :: heads;
+    def explore() = {
+      while (!heads.isEmpty) {
+        val k = heads.head
+        heads = heads.tail
+        sorted = k::sorted
+        for(j <- k.definedVar.get.cstrs){
+          if(mapping.contains(j) ){
+            mapping(j) = mapping(j)-1
+            if(mapping(j)==0){
+              heads = j :: heads;
+              mapping.remove(j)
+            }
+          }
         }
       }
     }
-    return sorted.reverse.toArray;
+    explore()
+    if(!mapping.isEmpty)println("% There is a cycle in the set of invariants.!"+mapping.size)
+    while(!mapping.isEmpty){
+      val (remc,value) = mapping.keys.foldLeft((null.asInstanceOf[Constraint],0))((best,cur) => {val curval = mapping(cur)/*cur.definedVar.get.cstrs.filter(c => c!=cur && mapping.contains(c) && mapping(c)==1).length*/; if(curval > best._2) (cur,curval) else best;});
+      mapping.remove(remc)
+      
+      removed = remc :: removed
+      for(j <- remc.definedVar.get.cstrs){
+        if(mapping.contains(j) ){
+          mapping(j) = mapping(j) -1
+          if(mapping(j)==0){
+            heads = j :: heads;
+            mapping.remove(j)
+          }
+        }
+      }
+      remc.unsetDefinedVar(remc.definedVar.get)
+      explore()
+     // println(mapping.map{case (c,i) => (c,i,c.getVariables.filter(v => {val cc = v.definingConstraint.getOrElse(c); /*mapping.contains(cc) &&*/ cc!=c}).toList.map(v => v.definingConstraint.get )) }.mkString("\n"))      
+    }
+    return (sorted.reverse.toArray,removed);
   }
   
 
   def handleSolution()(implicit model: FZProblem, cblsIntMap: MMap[String, CBLSIntVarDom]) = {
+    println("% time from start: "+getWatch)
     model.solution.handleSolution(
       (s: String) => cblsIntMap.get(s) match {
         case Some(intVar) =>

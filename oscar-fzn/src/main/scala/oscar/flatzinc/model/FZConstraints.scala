@@ -35,16 +35,34 @@ abstract class Constraint(val variables: Array[Variable],val annotations: List[A
   //The variable the constraint functionally defines
   //TODO: generalize to arrays of defined variables (e.g. in sort/bin-packing)
   def setDefinedVar(v: Variable) = {
-    definedVar match {
-      case None => v.isDefined = true;
-                    definedVar = Some(v);
-      case Some(vv) => throw new Exception("Not yet supported yet.")
+    definedVars match {
+      case None => v.definingConstraint = Some(this);
+                    definedVars = Some(v);
+      case Some(vv) => throw new Exception("Not supported yet.")
     }
   }
-  var definedVar = Option.empty[Variable]
+  def unsetDefinedVar(v: Variable) = {
+    definedVars = definedVars match {
+      case Some(vv) if v==vv => {
+        v.definingConstraint = None
+        None  
+      }
+      case _ => throw new Exception(v+" was not defined by "+this)
+    }
+  }
+  private var definedVars = Option.empty[Variable]
+  def definedVar = definedVars
   
   //True if the constraints annotations says that it defines x
   //def definesVar(x: Variable):Boolean = {annotations.foldLeft(false)((acc,y)=> (y.name == "defines_var" && y.args(0).asInstanceOf[ConcreteVariable].id == x.id ) || acc)}
+  
+  //this must be called when a constraint is removed from the model to remove references from variables. 
+  def retract(){
+    //todo remove the defined var if any
+    for(v <- variables){
+      v.removeConstraint(this)
+    }
+  }
 }
 
 abstract class SimpleDefiningConstraint(variables: Array[Variable], val maybeDefinedVar: Variable, ann:List[Annotation])
@@ -56,7 +74,9 @@ abstract class ReifiedConstraint(variables: Array[Variable], r: Variable, ann:Li
 
 }
 
-case class reif(val c: Constraint,r: Variable) extends ReifiedConstraint(c.variables,r,c.annotations)
+case class reif(val c: Constraint,r: Variable) extends ReifiedConstraint(c.variables,r,c.annotations){
+  c.retract()
+}
 
 abstract class AllDefiningConstraint(variables: Array[Variable], ann:List[Annotation])
   extends Constraint(variables, ann){

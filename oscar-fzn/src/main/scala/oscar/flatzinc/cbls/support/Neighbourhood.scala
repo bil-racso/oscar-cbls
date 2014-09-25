@@ -24,6 +24,7 @@ import oscar.cbls.invariants.lib.logic.Cluster
 import oscar.cbls.invariants.lib.set.Cardinality
 import oscar.cbls.objective.{Objective => CBLSObjective}
 import oscar.cbls.search.SearchEngine
+import scala.collection.mutable.{Map => MMap}
 
 
 
@@ -47,7 +48,7 @@ class SwapMove(x: CBLSIntVar,y:CBLSIntVar,value:Int) extends Move(value){
   def getModified=Set(x,y)
   override def toString() = x + " swapped with " +y
 }
-class NoMove(value:Int) extends Move(value){
+class NoMove(value:Int = Int.MaxValue) extends Move(value){
   def commit(){}
   def getModified = Set.empty[CBLSIntVar]
   override def toString() = "No-Op"
@@ -80,6 +81,72 @@ abstract class Neighbourhood(val searchVariables: Array[CBLSIntVarDom]) extends 
   def violation(): Int;//TODO used in only one place. Useful?
 }
 
+//assumes that all variables have a range domain!
+class SumNeighborhood(val variables: Array[CBLSIntVarDom],val coeffs:Array[Int], val sum:Int, objective: CBLSObjective, cs: ConstraintSystem) extends Neighbourhood(variables){
+  val variableViolation: Array[CBLSIntVar] = variables.map(cs.violation(_)).toArray
+  def violation() = { variableViolation.foldLeft(0)((acc, x) => acc + x.value) };
+  
+  reset();
+  def reset(){
+    var s = 0
+    val vals = new Array[Int](variables.length)
+    for(i <- 0 until variables.length){
+      vals(i) = variables(i).minVal  
+      s += coeffs(i) * vals(i)
+    }
+    //TODO: Improve this stupid code!
+    while(s != sum){
+      val i = RandomGenerator.nextInt(variables.length)
+      if(s < sum && coeffs(i) > 0 && vals(i) < variables(i).maxVal){
+        vals(i) += 1
+        s += coeffs(i) * 1
+      }else if(s > sum && coeffs(i) < 0 && vals(i) < variables(i).maxVal){
+        vals(i) += 1
+        s += coeffs(i) * 1
+      }
+    }
+    for(i <- 0 until variables.length){
+      if(variables(i).minVal > vals(i) || variables(i).maxVal < vals(i))throw new Exception("Problem")
+      variables(i) := vals(i)
+    }
+  }
+  
+  def getMove(idx1:Int,diff:Int,idx2:Int): Move = {
+    val mv = List((variables(idx1),variables(idx1).value+diff),(variables(idx2),variables(idx2).value-coeffs(idx1)*coeffs(idx2)*diff))
+    new AssignsMove(mv,objective.assignVal(mv))
+  }
+  
+  def randomMove(it:Int):Move = {
+    new NoMove()
+  }
+  def getMinObjective(it: Int, nonTabu: Set[CBLSIntVar]): Move = {
+    getExtendedMinObjective(it,nonTabu)
+  }
+  def getExtendedMinObjective(it: Int, nonTabu: Set[CBLSIntVar]): Move = {
+    val rng = (0 until variables.length).toList.filter(i => nonTabu.contains(variables(i)));
+    val part1 = selectMinImb(rng,(i:Int) => variables(i).minVal to variables(i).maxVal,(i:Int,v:Int) => objective.assignVal(variables(i),v))
+    part1 match{ 
+      case (i1,v1) => 
+        val diff = v1 - variables(i1).value
+        val part2 = selectMin(List(0),rng)((k:Int,i2:Int) => getMove(i1,diff,i2).value, (k:Int,i2:Int) => {val nv = variables(i2).value-coeffs(i1)*coeffs(i2)*diff; i1!=i2 && nv >= variables(i2).minVal && nv <= variables(i2).maxVal})
+        part2 match{
+          case (0,i2) =>
+	        if(diff==0) new NoMove()
+	        else getMove(i1,diff,i2)
+          case _ => new NoMove()
+        }
+      case _ => new NoMove()
+    }
+  }
+  
+  def selectMinImb[R,S](r: Iterable[R] , s: R => Iterable[S],f: (R,S) => Int, st: ((R,S) => Boolean) = ((r:R, s:S) => true), stop: (R,S,Int) => Boolean = (_:R,_:S,_:Int) => false): (R,S) = {
+	val flattened:List[(R,S)] = for (rr <- r.toList; ss <- s(rr).toList) yield (rr,ss)
+	selectMin[(R,S)](flattened)((rands:(R,S)) => f(rands._1,rands._2), (rands:(R,S)) => st(rands._1,rands._2))
+  }
+}
+
+
+
 class GCCNeighborhood(val variables: Array[CBLSIntVarDom],val vals:Array[Int],val low:Array[Int],val up:Array[Int], val closed:Boolean, objective: CBLSObjective, cs: ConstraintSystem)extends Neighbourhood(variables){
   val variableViolation: Array[CBLSIntVar] = variables.map(cs.violation(_)).toArray
 
@@ -91,15 +158,62 @@ class GCCNeighborhood(val variables: Array[CBLSIntVarDom],val vals:Array[Int],va
   val alldoms = variables.foldLeft((Int.MaxValue,Int.MinValue))((set,v) => (math.min(set._1,v.dom.min),math.max(set._2,v.dom.max)))
   reset();
   //TODO: reset() should only be called after the model is closed, in case it makes use of invariants!
-  def reset(){
+  def reset() = {
     //TODO: This reset does not respect the domains of the variables!
+    var cur = variables.map(_.value)
+    var cnts = cur.foldLeft(MMap.empty[Int,Int])((map,v) => map + (v -> (map.getOrElse(v, 0) + 1)))
+    def cand():List[Int] = {
+      List.tabulate(cur.length)(i=>i).filter(i => cnts(cur(i)) > lows.getOrElse(cur(i),0))
+    }
+    var cands = cand()
+    //reaching the lowerbounds
+    for(v <- vals){
+      while(cnts.getOrElse(v,0) < lows(v)){
+        if(cands.isEmpty)throw new Exception("GCC cannot be satisfied")
+        val curvar = cands.head
+        cands = cands.tail
+        if(variables(curvar).inDomain(v) && cnts(cur(curvar))>lows.getOrElse(cur(curvar),0)){
+          cnts(cur(curvar)) = cnts(cur(curvar)) - 1
+          cnts(v) = cnts.getOrElse(v, 0) + 1
+          cur(curvar) = v
+        }
+      }
+      cands = cand()
+    }
+    //reaching the upperbounds
+    for(v <- vals){
+      var cands = List.tabulate(cur.length)(i=>i).filter(i => cur(i) == v)
+      while(cnts.getOrElse(v,0) > ups(v)){
+        if(cands.isEmpty)throw new Exception("GCC cannot be satisfied")
+        val curvar = cands.head
+        cands = cands.tail
+        val candval = variables(curvar).getDomain().find(k => if(ups.contains(k)) cur(k) < ups(v) else !closed )
+        if(candval.isDefined){
+          val k = candval.get 
+          cnts(v) = cnts(v)-1
+          cnts(k) = cnts.getOrElse(k,0) +1
+          cur(curvar) = k 
+        }
+      }
+    }
+    //updating the variables
+    for(i <- 0 until variables.length){
+      if(variables(i).minVal > cur(i) || variables(i).maxVal < cur(i))throw new Exception("Problem")
+      variables(i) := cur(i)
+    }
+    /*
     var v = vals(0)
     var i = 0;
+    var untouched = Set.empty[Int]
     for(v <- 0 until vals.length){
       var c = 0;
       while(c < low(v)){
-        variables(i) := vals(v)
-        c += 1
+        if(variables(i).inDomain(vals(v))){
+          variables(i) := vals(v)
+          c += 1
+        }else{
+          untouched += i
+        }
         i += 1
       }
     }
@@ -128,7 +242,7 @@ class GCCNeighborhood(val variables: Array[CBLSIntVarDom],val vals:Array[Int],va
           }
         }
       }
-    }
+    }*/
   }
   def getSwapMove(idx1:Int,idx2:Int): Move = {
     //Swap will always respect the constraint is it was already satisfied
@@ -172,6 +286,7 @@ class GCCNeighborhood(val variables: Array[CBLSIntVarDom],val vals:Array[Int],va
   }
   def violation() = { variableViolation.foldLeft(0)((acc, x) => acc + x.value) };
 }
+
 //TODO: Take into account fixed variables!
 class ThreeOpt(variables: Array[CBLSIntVarDom], objective: CBLSObjective, cs: ConstraintSystem, val offset: Int) extends Neighbourhood(variables){
   
@@ -181,6 +296,7 @@ class ThreeOpt(variables: Array[CBLSIntVarDom], objective: CBLSObjective, cs: Co
   
   def reset(){
     //TODO: Add some randomization
+    //TODO: Ensure that the domains are respected!
     for(i <- rng){
       vars(i) := (i)%variables.length+offset 
     }
@@ -216,7 +332,7 @@ class ThreeOpt(variables: Array[CBLSIntVarDom], objective: CBLSObjective, cs: Co
     
     //println(variables.map(v => v.value).mkString(","))
     //this one removes a node and reinsert it somewhere else
-    if(nonTabu.isEmpty)println("%EMPTY NON TABU")
+    //if(nonTabu.isEmpty)println("%EMPTY NON TABU")
     val rng2 = rng.toList.filter(i => nonTabu.contains(vars(i)));
     val res = selectMin2(rng2, rng2, (idx:Int,next:Int) => getMove(idx,next).value)
     //println(res +  " "+ (getMove _).tupled(res))//)._1,res._2))

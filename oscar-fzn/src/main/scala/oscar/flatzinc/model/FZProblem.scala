@@ -20,6 +20,7 @@
 package oscar.flatzinc.model
 
 import scala.Array.canBuildFrom
+import scala.collection.mutable.{Map => MMap}
 import scala.collection.immutable.Range
 import oscar.flatzinc.UnsatException
 
@@ -28,7 +29,7 @@ class FZProblem {
   var map: Map[String,Variable] = Map.empty[String,Variable]
   
   var constraints: Set[Constraint] = Set.empty[Constraint]//TODO: might as well replace it by a list...
-  
+  var cstrsByName: MMap[String,List[Constraint]] = MMap.empty[String,List[Constraint]]
   val solution:FZSolution = new FZSolution();
   
   val search = new Search();
@@ -62,19 +63,19 @@ class FZProblem {
     variable
   }
 
-  
+  /*
   //TODO: I don't like that we are multiplying the variables (and this is not done for arrays of variables... strange...)
   //And the original domain is lost...
   def addVariable(id: String, v:ConcreteVariable, annotations: List[Annotation]): Variable = {
     println("% mapping: "+ id +" to "+v)
     val variable = addVariable(id,v.dom,annotations);
-    variable.isDefined = true;
+    variable.definingConstraint = true;
     val constrain_eq = int_eq(variable,v);
     constrain_eq.definedVar = Some(variable);
     addConstraint(constrain_eq);
     v
   }
-  
+  */
   def addVariable(id: String, v: Boolean, annotations: List[Annotation]): Variable = {
     addVariable(id,if (v) 1 else 0, annotations)
   }
@@ -111,6 +112,14 @@ class FZProblem {
   
   def addConstraint(c: Constraint) {
     constraints += c
+    //the following code adds constraints by name
+    val names = c.getClass().getName().split("\\.")
+    var name = names(names.length-1)
+    if(name=="reif"){
+      val n2 = c.asInstanceOf[reif].c.getClass().getName().split("\\.")
+      name += "_"+n2(n2.length-1)
+    }
+    cstrsByName(name) = List(c) ++ cstrsByName.getOrElse(name, List.empty[Constraint])
   }
   
   
@@ -186,8 +195,11 @@ case class DomainSet(var values: Set[Int]) extends Domain {
 //TODO: differentiate between Int and Bool
 //TODO: Add set variables
 abstract class Variable(val id: String, val annotations: List[Annotation] = List.empty[Annotation]) {
-  val isIntroduced = annotations.foldLeft(false)((acc,x) => x.name=="var_is_introduced" || acc)
-  var isDefined = annotations.foldLeft(false)((acc,x) => x.name=="is_defined_var" || acc)
+  //val isIntroduced = annotations.foldLeft(false)((acc,x) => x.name=="var_is_introduced" || acc)//not interesting for us, as far as I know
+  def isDefined: Boolean = {
+    definingConstraint.isDefined//annotations.foldLeft(false)((acc,x) => x.name=="is_defined_var" || acc)
+  }
+  var definingConstraint: Option[Constraint] = Option.empty[Constraint]
   def min: Int
   def max: Int
   def is01: Boolean = min >= 0 && max <= 1
@@ -197,6 +209,12 @@ abstract class Variable(val id: String, val annotations: List[Annotation] = List
   var cstrs:List[Constraint] = List.empty[Constraint]
   def addConstraint(c:Constraint) = {
     cstrs = c :: cstrs
+  }
+  def removeConstraint(c:Constraint) = {
+    //println("B"+cstrs)
+    //println(c)
+    cstrs = cstrs.filter(c != _)//might be made more efficient if cstrs was a set.
+   //println("A"+cstrs)
   }
 }
 

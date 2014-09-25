@@ -36,7 +36,15 @@ class Options(cbls: Boolean, args: Array[String]) {
   var timeOut = 0
   var nSols = 1
   var help = false;
-  val opts = Map.empty[String,String]
+  private val opts = Map.empty[String,String]
+  def is(s: String): Boolean = {
+    //println("% checking option: "+s)
+    opts.contains(s) && opts(s)=="true"
+  }
+  def get(s: String): Option[String] = {
+    //println("% checking option: "+s)
+    opts.get(s)
+  }
   
   if (args.length == 0) {
     System.out.println(progName+": no model file specified");
