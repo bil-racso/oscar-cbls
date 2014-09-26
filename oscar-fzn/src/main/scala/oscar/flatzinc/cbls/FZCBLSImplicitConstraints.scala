@@ -17,12 +17,124 @@
  */
 package oscar.flatzinc.cbls
 
-import oscar.flatzinc.model.Constraint
-import oscar.flatzinc.model.Variable
-import oscar.flatzinc.cbls.support.CBLSIntVarDom
 import oscar.cbls.invariants.core.computation.CBLSIntVar
+import oscar.flatzinc.cbls.support._
+import oscar.flatzinc.model._
 
-object FZCBLSImplicitConstraints {
 
+    
+class FZCBLSImplicitConstraints(val cblsmodel:FZCBLSModel) {
   
+  def findAndPostImplicit(constraints: Array[Constraint]) = {
+  
+      //TODO: DO not like the filtering here.
+      //TODO: Why is constraints an Array. Could be a List?
+      //TODO: Actually, we might want to keep the original constraints to make sure that nothing is violated during search.
+      constraints.partition((constraint: Constraint) =>
+        constraint match {
+          //TODO: this line of simplification should come somewhere else, actually
+          case all_different_int(xs, ann) if xs.length == 1 => true //flattening can generate alldiffs with only one variable... lets ignore those.
+          case all_different_int(xs, ann) => tryAllDiff(xs)
+          case circuit(xs, ann) => tryCircuit(xs)
+          case subcircuit(xs, ann) => trySubCircuit(xs)
+          case global_cardinality_closed(xs,vals,cnts,ann) => tryGCC(xs,vals,cnts,true)
+          //TODO: detect when a GCC is closed even if not declared as such (should come much earlier)
+          case global_cardinality(xs,vals,cnts,ann) => tryGCC(xs,vals,cnts,false)
+          case global_cardinality_low_up_closed(xs,vals,low,up,ann) => tryGCClu(xs,vals,low,up,true)
+          case global_cardinality_low_up(xs,vals,low,up,ann) => tryGCClu(xs,vals,low,up,false)
+          case int_lin_eq(coeffs,vars,sum,ann) => trySum(vars,coeffs,sum)
+          case bool_lin_eq(coeffs,vars,sum,ann) => trySum(vars,coeffs,sum)
+          case _ => false;
+        })
+  
+  }
+  
+  object EnsureDomain{
+      def apply(v: CBLSIntVarDom) = {
+        val t = new ValueTracker(v,cblsmodel.c)
+        t.update(true)
+      }
+    }
+    object EnsureDomainRelax{
+      def apply(v: CBLSIntVarDom,newMin:Int,newMax:Int) = {
+        val t = new ValueTracker(v,cblsmodel.c )
+        v.minVal = newMin
+        v.maxVal = newMax
+        t.update()
+      }
+    }
+    
+  def tryAllDiff(xs: Array[Variable]):Boolean = {
+     /* if (!xs.foldLeft(false)((acc: Boolean, x: Variable) => acc || x.isDefined || (!searchVariables.exists((v: CBLSIntVar) => v.name == x.id) && !implicitConstants.contains(getCBLSVar(x))))){
+        val nonConstants = xs.filterNot(x => implicitConstants.contains(cblsmodel.getCBLSVar(x)))
+        val domMin = nonConstants(0).min;
+        val domMax = nonConstants(0).max;
+        if (nonConstants.foldLeft(true)((acc: Boolean, x: Variable) => acc && (x.min == domMin && x.max == domMax))) {
+          cblsmodel.addNeighbourhood(new AllDifferentEqDom(xs.map(cblsmodel.getCBLSVar(_)), implicitConstants, cblsmodel.objective(), cblsmodel.c))
+          true
+        } else {
+          false
+        }
+      }else{ 
+        false
+      }*/
+      println("% Need to redo the AllDiff Neighbourhood")
+      false
+    }
+    def tryCircuit(xs: Array[Variable]):Boolean = {
+      if (allOK(xs)){
+        //TODO: remove some of the defined if it is better to use the Circuit implicit constraint
+        //TODO: We assume that the offset is 1. Is it always the case?
+        
+        for(i <- 0 until xs.length){
+          EnsureDomainRelax(cblsmodel.getCBLSVar(xs(i)),1,xs.length)
+        }
+        cblsmodel.addNeighbourhood(new ThreeOpt(xs.map(cblsmodel.getCBLSVar(_)),cblsmodel.objective(), cblsmodel.c,1))
+        true
+      }else{
+        false
+      }
+    }
+    def trySubCircuit(xs: Array[Variable]):Boolean = {
+      if (allOK(xs)){
+        //TODO: We assume that the offset is 1. Is it always the case?
+        //TODO: remove some of the defined if it is better to use the Circuit implicit constraint
+        for(i <- 0 until xs.length){
+          EnsureDomainRelax(cblsmodel.getCBLSVar(xs(i)),1,xs.length)
+        }
+        cblsmodel.addNeighbourhood(new ThreeOptSub(xs.map(cblsmodel.getCBLSVar(_)),cblsmodel.objective(), cblsmodel.c,1))
+        true
+      }else{
+        false
+      }
+    }
+    
+    def tryGCC(xs: Array[Variable],vals: Array[Variable], cnts: Array[Variable],closed: Boolean):Boolean ={
+      if (allOK(xs) && cnts.forall(c => c.min==c.max)){//Only for fixed count variables for now
+        cblsmodel.addNeighbourhood(new GCCNeighborhood(xs.map(cblsmodel.getCBLSVar(_)),vals.map(_.min),cnts.map(_.min),cnts.map(_.max),closed,cblsmodel.objective(),cblsmodel.c))
+        true
+      }else{
+        false
+      }
+    }
+    def tryGCClu(xs: Array[Variable],vals: Array[Variable], low: Array[Variable],up: Array[Variable],closed: Boolean):Boolean ={
+      if (allOK(xs)){
+        cblsmodel.addNeighbourhood(new GCCNeighborhood(xs.map(cblsmodel.getCBLSVar(_)),vals.map(_.min),low.map(_.min),up.map(_.max),closed,cblsmodel.objective(),cblsmodel.c))
+        true
+      }else{
+        false
+      }
+    }
+  def trySum(xs: Array[Variable], coeffs: Array[Variable],sum:Variable): Boolean = {
+      if (allOK(xs) && coeffs.forall(x => x.min == 1 || x.min == -1)) {
+        cblsmodel.addNeighbourhood(new SumNeighborhood(xs.map(cblsmodel.getCBLSVar(_)),coeffs.map(_.min),sum.min,cblsmodel.objective(),cblsmodel.c))
+        true
+      }else{
+        false
+      }
+    }
+  
+  def allOK(xs: Array[Variable]):Boolean = {
+    xs.forall(x => ! x.isDefined && cblsmodel.vars.contains(x))
+  }
 }

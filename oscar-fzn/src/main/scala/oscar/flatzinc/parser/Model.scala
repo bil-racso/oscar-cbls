@@ -103,10 +103,13 @@ class Model {
   def addAliasVariable(t: Type, de: Element, name: String, e:Element, anns: java.util.List[Annotation])={
     //TODO: When can de be null?
     val d = if(de!=null)de.value.asInstanceOf[Domain]else null
-    if(!name.equals(e.name)) System.out.println("% Not the same name: "+e.name+" vs "+name);
+    //if(!name.equals(e.name)) System.out.println("% Not the same name: "+e.name+" vs "+name);
     if(!t.equals(e.typ)) System.out.println("% Not the same type: "+e.typ+" vs "+t);
-    if(d!=null && !d.equals(e.domain)) System.out.println("% Not the same domain: "+e.domain+" vs "+d);
-    if(!anns.equals(e.annotations)) System.out.println("% Not the same annotations: "+e.annotations+" vs "+anns);
+    if(d!=null && !d.equals(e.domain)){
+      //System.out.println("% Not the same domain: "+e.domain+" vs "+d);
+      e.domain.inter(d)
+    }
+    //if(!anns.equals(e.annotations)) System.out.println("% Not the same annotations: "+e.annotations+" vs "+anns);
     addId(name,e);
     handleVarAnnotations(name, e, anns.asScala.toList)
   }

@@ -20,20 +20,23 @@ package oscar.flatzinc.transfo
 
 import scala.util.control.Breaks._
 import oscar.flatzinc.model._
+import oscar.flatzinc.cbls.Log
+import scala.collection.mutable.{ Map => MMap, Set => MSet }
 
 object FZModelTransfo {
-  def findInvariants(implicit model: FZProblem) = {
+  def findInvariants(implicit model: FZProblem, log:Log) = {
     //Find all free variables of the model.
     var freeVariables: List[Variable] =
-      model.map.filterKeys((id: String) =>
-        model.map(id).id == id  //to take each variable only once (as there may be aliases)
-        && !model.map(id).isDefined //to remove the ones already defined
-        && model.map(id).min != model.map(id).max //to remove de facto constants
+      model.variables.filter((variable: Variable) =>
+        //model.map(id).id == id  //to take each variable only once (as there may be aliases)
+        //&&
+        !variable.isDefined //to remove the ones already defined
+        && variable.min != variable.max //to remove de facto constants
           //JNM: Removed the following because the CP search variables are maybe not the CBLS search variables. 
           //This makes a huge difference for the BACP for instance.
           //&&
           //!model.search.heuristics.exists((h) => h._1.exists((v: Variable) => v == model.map(id) && (v.max - v.min) < 1000)) // I am not sure if this is needed...
-          ).values.toList
+          )
     
           
     //Remove free variables which are defined by a eq constraint with a constant argument. 
@@ -49,7 +52,7 @@ object FZModelTransfo {
       val cand = v.cstrs.filter((c: Constraint) => c.definedVar.isEmpty && c.canDefineVar && c.getCandidateDefVars().contains(v))
       val cand2 = cand//.filter(c => ! dependsOn(c,v,false))
       if(cand2.length > 1){
-        println("%!! Found a variable that could be defined by more than one invariant:"+v+" "+cand2.toString)
+        log("%!! Found a variable that could be defined by more than one invariant:"+v+" "+cand2.toString)
       }
       //Select the first suitable constraint
       if(!cand2.isEmpty) cand2.head.setDefinedVar(v)
@@ -98,5 +101,58 @@ object FZModelTransfo {
       for(c <- retract){
         c.retract()
       }
+  }
+  
+  
+  
+  def getSortedInvariants(inv: Array[Constraint]): (Array[Constraint],List[Constraint]) = {
+    val invariants = inv.toArray;
+    var sorted = List.empty[Constraint];
+    val mapping = MMap.empty[Constraint, Int];
+    var heads = List.empty[Constraint]
+    var removed = List.empty[Constraint]
+    for (i <- invariants) {
+      mapping += i -> i.getVariables.filter((v) => v.isDefined && (v.definingConstraint.get != i)).length;
+      if(mapping(i)==0){
+        heads = i :: heads;
+        mapping.remove(i)
+      }
+    }
+    def explore() = {
+      while (!heads.isEmpty) {
+        val k = heads.head
+        heads = heads.tail
+        sorted = k::sorted
+        for(j <- k.definedVar.get.cstrs){
+          if(mapping.contains(j) ){
+            mapping(j) = mapping(j)-1
+            if(mapping(j)==0){
+              heads = j :: heads;
+              mapping.remove(j)
+            }
+          }
+        }
+      }
+    }
+    explore()
+    if(!mapping.isEmpty)println("% There is a cycle in the set of invariants.!"+mapping.size)
+    while(!mapping.isEmpty){
+      val (remc,value) = mapping.keys.foldLeft((null.asInstanceOf[Constraint],0))((best,cur) => {val curval = mapping(cur)/*cur.definedVar.get.cstrs.filter(c => c!=cur && mapping.contains(c) && mapping(c)==1).length*/; if(curval > best._2) (cur,curval) else best;});
+      mapping.remove(remc)
+      for(j <- remc.definedVar.get.cstrs){
+        if(mapping.contains(j) ){
+          mapping(j) = mapping(j) -1
+          if(mapping(j)==0){
+            heads = j :: heads;
+            mapping.remove(j)
+          }
+        }
+      }
+      removed = remc :: removed
+      remc.unsetDefinedVar(remc.definedVar.get)
+      explore()
+     // println(mapping.map{case (c,i) => (c,i,c.getVariables.filter(v => {val cc = v.definingConstraint.getOrElse(c); /*mapping.contains(cc) &&*/ cc!=c}).toList.map(v => v.definingConstraint.get )) }.mkString("\n"))      
+    }
+    return (sorted.reverse.toArray,removed);
   }
 }

@@ -135,8 +135,9 @@ class SimpleLocalSearch(val m:FZCBLSModel,val objective: CBLSObjective, val MaxT
     solutionList
   }
 }
-class NeighbourhoodSearchOPT(val m:FZCBLSModel,neighbourhoods: Array[Neighbourhood], realObj: CBLSIntVar, objLB:Int,
-    violationWeight: CBLSIntVar, objectiveWeight: CBLSIntVar, MaxTimeMilli: Int) extends SearchProcedure {
+class NeighbourhoodSearchOPT(val m:FZCBLSModel, objLB:Int,
+    MaxTimeMilli: Int) extends SearchProcedure {
+    val neighbourhoods: List[Neighbourhood] = m.neighbourhoods 
   //def apply = {
     var solutionList: List[(Long, Int, Int, String)] = List.empty[(Long, Int, Int, String)]
     val searchVariables = neighbourhoods.foldLeft(Set.empty[CBLSIntVar])((acc: Set[CBLSIntVar], x: Neighbourhood) => acc ++ x.getVariables()).toArray
@@ -176,17 +177,15 @@ class NeighbourhoodSearchOPT(val m:FZCBLSModel,neighbourhoods: Array[Neighbourho
     var minObjectiveSinceBest = Int.MaxValue;
     var lastMinObjective = Int.MinValue;
     var hasWaited = false;
-    objectiveWeight := 0;
+    m.objective.objectiveWeight := 0;
 
     var wait = 0;
     val waitDec = 1;
-    def getObjectiveValue(): Int = {
-      return m.c.violation.value + ((m.objective.objective.value - (m.c.violation.value * violationWeight.value)) / objectiveWeight.value);
-    }
+  
 
-    while (!(m.c.violation.value==0 && realObj.value==objLB) && m.getWatch() < MaxTimeMilli) {
+    while (!(m.c.violation.value==0 && m.objective.objectiveVar.value==objLB) && m.getWatch() < MaxTimeMilli) {
       if(it.value%10==0){
-        log("it: "+it.value+" violation: "+m.c.violation.value+" objective: "+realObj.value)
+        log("it: "+it.value+" violation: "+m.c.violation.value+" objective: "+m.objective.objectiveVar.value)
        // log("viol:" + c.violatedConstraints.mkString("\n"))
       }
       //
@@ -231,8 +230,8 @@ class NeighbourhoodSearchOPT(val m:FZCBLSModel,neighbourhoods: Array[Neighbourho
           bestViolation = m.c.violation.value
           roundsWithoutSat = 0;
           if (m.c.violation.value == 0) {
-            objectiveWeight := 1;
-            violationWeight := 1;
+            m.objective.objectiveWeight := 1;
+            m.objective.violationWeight := 1;
             itOfBalance = it.value
             hasBeenSatisfied = true;
             bestNow = m.objective.objective.value;
@@ -279,9 +278,9 @@ class NeighbourhoodSearchOPT(val m:FZCBLSModel,neighbourhoods: Array[Neighbourho
         //
         // There is of course also the problem of the dynamic tenure behaving badly but that is waaaaay harder to detect and do something about.
         minViolationSinceBest = Math.min(minViolationSinceBest, m.c.violation.value)
-        minObjectiveSinceBest = Math.min(minObjectiveSinceBest, getObjectiveValue())
-        if (getObjectiveValue() < bestNow || (m.c.violation.value == 0 && getObjectiveValue() < best)) {
-          bestNow = getObjectiveValue()
+        minObjectiveSinceBest = Math.min(minObjectiveSinceBest, m.objective.getObjectiveValue())
+        if (m.objective.getObjectiveValue() < bestNow || (m.c.violation.value == 0 && m.objective.getObjectiveValue() < best)) {
+          bestNow = m.objective.getObjectiveValue()
           tenure = Math.max(MinTenure, tenure - 1)
           if (m.c.violation.value == 0 && bestNow < best) {
             best = bestNow;
@@ -299,30 +298,11 @@ class NeighbourhoodSearchOPT(val m:FZCBLSModel,neighbourhoods: Array[Neighbourho
         }
         //println(it.value - itOfBalance + " " + objectiveWeight.value + " " + violationWeight.value)
         if (it.value - itOfBalance > baseSearchSize * 2 && wait == 0) {
-          var changed = false;
           if (minViolationSinceBest > 0) { // 1)
-            if (objectiveWeight.value > 1) {
-              objectiveWeight := objectiveWeight.value / 2;
-            } else {
-              violationWeight := (violationWeight.value + Math.max(10, Math.abs(minObjectiveSinceBest / 2))).toInt
-            }
-            changed = true;
+            m.objective.increaseViolationWeight(minViolationSinceBest)
+            hasWaited = false
           } else if (bestNow <= lastMinObjective) { // 2)
-            if (violationWeight.value > 1) {
-              violationWeight := violationWeight.value / 2;
-            } else {
-              objectiveWeight := (objectiveWeight.value + Math.max(10, Math.abs(minObjectiveSinceBest / 2))).toInt
-            }
-            changed = true;
-          }
-          if (changed) {
-            val minWeight = Math.min(objectiveWeight.value, violationWeight.value)
-            objectiveWeight := objectiveWeight.value / minWeight;
-            violationWeight := violationWeight.value / minWeight;
-            objectiveWeight := Math.min(objectiveWeight.value,
-                10000000/Math.max(1,Math.abs(minObjectiveSinceBest)))
-            violationWeight := Math.min(violationWeight.value,
-                10000000/Math.max(1,Math.abs(minViolationSinceBest))) 
+            m.objective.increaseObjectiveWeight(minObjectiveSinceBest)
             hasWaited = false
           }
           lastMinObjective = bestNow;
@@ -345,7 +325,7 @@ class NeighbourhoodSearchOPT(val m:FZCBLSModel,neighbourhoods: Array[Neighbourho
             }
             wait = tenure + baseSearchSize;
             tenure = MinTenure;
-            bestNow = getObjectiveValue()
+            bestNow = m.objective.getObjectiveValue()
           }
         }
       }
@@ -356,9 +336,8 @@ class NeighbourhoodSearchOPT(val m:FZCBLSModel,neighbourhoods: Array[Neighbourho
   }
 }
 
-class NeighbourhoodSearchSAT(val m:FZCBLSModel,neighbourhoods: Array[Neighbourhood],
-  violationWeight: CBLSIntVar, objectiveWeight: CBLSIntVar, MaxTimeMilli: Int) extends SearchProcedure {
-
+class NeighbourhoodSearchSAT(val m:FZCBLSModel, MaxTimeMilli: Int) extends SearchProcedure {
+  val neighbourhoods: List[Neighbourhood] = m.neighbourhoods 
   var solutionList: List[(Long, Int, Int, String)] = List.empty[(Long, Int, Int, String)]
   val searchVariables = neighbourhoods.foldLeft(Set.empty[CBLSIntVar])((acc: Set[CBLSIntVar], x: Neighbourhood) => acc ++ x.getVariables().filterNot(_.isInstanceOf[CBLSIntConstDom])).toArray
   val variableMap = (0 until searchVariables.length).foldLeft(Map.empty[CBLSIntVar, Int])((acc, x) => acc + (searchVariables(x) -> x));
@@ -393,9 +372,6 @@ class NeighbourhoodSearchSAT(val m:FZCBLSModel,neighbourhoods: Array[Neighbourho
     val searchFactor = 20;
     var wait = 0;
     val waitDec = 1;
-    def getObjectiveValue(): Int = {
-      return m.c.violation.value + ((m.objective.objective.value - (m.c.violation.value * violationWeight.value)) / objectiveWeight.value);
-    }
     while (m.c.violation.value != 0 && m.getWatch() < MaxTimeMilli) {
       if(it.value%10==0){
         log("it: "+it.value+" violation: "+m.c.violation.value)

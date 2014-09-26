@@ -473,14 +473,15 @@ class FZCBLSConstraintPoster(val c: ConstraintSystem ,implicit val getCBLSVar: V
   }
   
   
-  //TODO: differentiate those methods
   def add_constraint(constraint: Constraint) = {
+    c.add(constructCBLSConstraint(constraint))
+  }
+  def add_invariant(constraint: Constraint) = {
     constraint.definedVar match {
       case None =>
-        c.add(constructCBLSConstraint(constraint))
+        throw new Exception("Constraint "+constraint+" is not supposed to be an invariant.")
       case Some(v) =>
-        val id = v.id
-        InvariantEnsureDomain(v,constructCBLSIntInvariant(constraint,id))
+        InvariantEnsureDomain(v,constructCBLSIntInvariant(constraint,v.id))
     }
   }
 }

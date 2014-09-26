@@ -26,7 +26,7 @@ import oscar.flatzinc.UnsatException
 
 class FZProblem {
 
-  var map: Map[String,Variable] = Map.empty[String,Variable]
+  var variables: List[Variable] = List.empty[Variable]
   
   var constraints: Set[Constraint] = Set.empty[Constraint]//TODO: might as well replace it by a list...
   var cstrsByName: MMap[String,List[Constraint]] = MMap.empty[String,List[Constraint]]
@@ -54,12 +54,15 @@ class FZProblem {
   def addVariable(id: String, dom: Domain, annotations: List[Annotation] = List.empty[Annotation]): Variable = {
    // println("% added var: "+id+ " with dom "+dom)
     val variable: Variable =
-      if (dom.min == dom.max) {
-        new ConcreteConstant(id,dom.min,annotations)
-      } else {
-        map += id -> new ConcreteVariable(id, dom,annotations)
-        map(id)
-      }    
+          new ConcreteVariable(id, dom,annotations)
+//      if (dom.min == dom.max) {//why here?
+//        new ConcreteConstant(id,dom.min,annotations)
+//      } else {
+//    //    map += id -> 
+//    
+//     //   map(id)
+//      }
+    variables = variable :: variables
     variable
   }
 
@@ -76,6 +79,7 @@ class FZProblem {
     v
   }
   */
+  /*
   def addVariable(id: String, v: Boolean, annotations: List[Annotation]): Variable = {
     addVariable(id,if (v) 1 else 0, annotations)
   }
@@ -104,11 +108,11 @@ class FZProblem {
   def addBoolVariable(id: String, annotations: List[Annotation]): Variable = {
     addVariable(id,DomainRange(0,1), annotations)
   } 
-  
-  def setVariable(id: String, x: Variable) {
-    assert(id == x.id)
-    map += id -> x
-  }
+  */
+//  def setVariable(id: String, x: Variable) {
+//    assert(id == x.id)
+//    map += id -> x
+//  }
   
   def addConstraint(c: Constraint) {
     constraints += c
@@ -167,6 +171,17 @@ abstract class Domain {
   def boundTo(v: Int) = min == v && max == v
   def geq(v:Int);
   def leq(v:Int);
+  def inter(d:Domain):Unit = {
+    if(d.isInstanceOf[DomainRange])inter(d.asInstanceOf[DomainRange])
+    else inter(d.asInstanceOf[DomainSet])
+  }
+  def inter(d:DomainRange):Unit = {
+    geq(d.min);
+    leq(d.max);
+  }
+  def inter(d:DomainSet):Unit = {
+    throw new UnsupportedOperationException("Inter of a Set")
+  }
   def checkEmpty() = {
     if (min > max) throw new UnsatException("Empty Domain");
   }
@@ -180,6 +195,7 @@ case class DomainRange(var mi: Int, var ma: Int) extends Domain {
   def geq(v:Int) = { mi = math.max(v,mi); checkEmpty() }
   def leq(v:Int) = { ma = math.min(v,ma); checkEmpty() }
   def toRange = mi to ma
+  
 }
 
 case class DomainSet(var values: Set[Int]) extends Domain {
@@ -189,6 +205,7 @@ case class DomainSet(var values: Set[Int]) extends Domain {
   def contains(v:Int): Boolean = values.contains(v)
   def geq(v:Int) = {values = values.filter(x => x>=v); checkEmpty() }
   def leq(v:Int) = {values = values.filter(x => x<=v); checkEmpty() }
+  override def inter(d:DomainSet) = {values = values.intersect(d.values); checkEmpty() }
 }
 
 
