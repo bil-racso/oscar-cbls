@@ -34,23 +34,6 @@ class FZProblem {
   
   val search = new Search();
   
-  /*def addOutputVariable(obj:FZObject) = {
-    solution.outputObjects = solution.outputObjects :+ obj
-  }*/
-  //Removed and replaced by the code in FZTransformations
-  /*def fixDomains() = {
-    for(constraint <- constraints){
-      constraint match{
-        case int_le(a: ConcreteVariable, b: ConcreteConstant, ann ) =>
-          a.dom = DomainRange(a.min,b.value)
-          constraints -= constraint;
-        case int_le(b: ConcreteConstant, a: ConcreteVariable, ann ) =>
-          a.dom = DomainRange(b.value,a.max)
-          constraints -= constraint;
-        case c => ()
-      }
-    }
-  }*/
   def addVariable(id: String, dom: Domain, annotations: List[Annotation] = List.empty[Annotation]): Variable = {
    // println("% added var: "+id+ " with dom "+dom)
     val variable: Variable =
@@ -65,54 +48,6 @@ class FZProblem {
     variables = variable :: variables
     variable
   }
-
-  /*
-  //TODO: I don't like that we are multiplying the variables (and this is not done for arrays of variables... strange...)
-  //And the original domain is lost...
-  def addVariable(id: String, v:ConcreteVariable, annotations: List[Annotation]): Variable = {
-    println("% mapping: "+ id +" to "+v)
-    val variable = addVariable(id,v.dom,annotations);
-    variable.definingConstraint = true;
-    val constrain_eq = int_eq(variable,v);
-    constrain_eq.definedVar = Some(variable);
-    addConstraint(constrain_eq);
-    v
-  }
-  */
-  /*
-  def addVariable(id: String, v: Boolean, annotations: List[Annotation]): Variable = {
-    addVariable(id,if (v) 1 else 0, annotations)
-  }
-  
-  def addVariable(v: Boolean, annotations: List[Annotation]): Variable = {
-    if (v) addVariable("1",v, annotations)
-    else addVariable("0",v, annotations)
-  }
-  
-  def addVariable(v: Int, annotations: List[Annotation]): Variable = {
-    addVariable(v.toString,v, annotations)
-  }    
-  
-  def addVariable(id: String, v: Int, annotations: List[Annotation]): Variable = {
-    addVariable(id,v,v, annotations)
-  }    
-  
-  def addVariable(id: String, min: Int,max: Int, annotations: List[Annotation]): Variable = {
-    addVariable(id,DomainRange(min,max), annotations)
-  }
-  
-  def addVariable(id: String, values: Set[Int], annotations: List[Annotation]): Variable = {
-    addVariable(id,DomainSet(values), annotations)
-  }
-  
-  def addBoolVariable(id: String, annotations: List[Annotation]): Variable = {
-    addVariable(id,DomainRange(0,1), annotations)
-  } 
-  */
-//  def setVariable(id: String, x: Variable) {
-//    assert(id == x.id)
-//    map += id -> x
-//  }
   
   def addConstraint(c: Constraint) {
     constraints += c
@@ -149,19 +84,7 @@ class FZProblem {
   def nSols(n: Int) {
     search.nSols = n
   }
-  //better to put it separately
-  /*
-  def simplify() {
-    constraints.foreach(_.simplify(this))
-  }*/
-
-  
-
 }
-
-//abstract class Annotat
-
-//case class DefinesVar(id: String) extends Annotat
 
 abstract class Domain {
   def min: Int

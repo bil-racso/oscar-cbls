@@ -39,8 +39,9 @@ object Benchmark extends App{
       pw.println("Run " + i)
       val opts = new Options(true,file)
       opts.timeOut = timeOut;
-      val solutions = new FZCBLSSolver().solve(opts)
 
+      val solutions = new FZCBLSSolver().solve(opts)
+/*
       for ((runtime, objective, iteration, solution) <- solutions) {
         pw.println("Runtime: " + runtime + " Objective: " + objective + " Iterations: " + iteration)
         pw.println(solution);
@@ -52,7 +53,7 @@ object Benchmark extends App{
         runtimes +:= best._1;
         objectives +:= best._2;
         iterations +:= best._3;
-      }
+      }*/
       pw.println("####################")
       pw.flush();
     }

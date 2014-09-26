@@ -780,6 +780,9 @@ class CBLSIntVar(model: Store, val domain: Range, private var Value: Int, n: Str
           "domain : ["+minVal+ ";"+maxVal+"]\n" +
            "new value :"+ v +"\n" ))*/
       if(!inDomain(v)){
+        if(this.DefiningInvariant!=null){
+          println("% => "+DefiningInvariant)
+        }
         throw new Exception(v+ " is not in the domain of "+this+"("+minVal+".."+maxVal+"). This might indicate an integer overflow.")
       } 
       if(!inDomain(v)) System.err.println(v+ " is not in the domain of "+this+"("+minVal+".."+maxVal+")")

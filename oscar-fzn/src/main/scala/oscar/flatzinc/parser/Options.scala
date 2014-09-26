@@ -31,7 +31,7 @@ class Options(cbls: Boolean, args: Array[String]) {
   //var file: FileReader = null
   var fileName: String = null
   var all = false
-  var verbose = false
+  var verbose = 0
   var statistics = false
   var timeOut = 0
   var nSols = 1
@@ -74,7 +74,10 @@ class Options(cbls: Boolean, args: Array[String]) {
         nSols = args(i+1).toInt
         i += 1
       } else if (oneOf("-v", "--verbose")) {
-        verbose = true;
+        verbose = 1;
+      } else if (oneOf("-vl", "--verbose-level")) {
+        verbose = args(i+1).toInt
+        i += 1
       } else if (args(i).startsWith("-X")){
         val parts = args(i).substring(2).split("=", 2)
         opts(parts(0)) = if(parts.length==1) "true" else parts(1)

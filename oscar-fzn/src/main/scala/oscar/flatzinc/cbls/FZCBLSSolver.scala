@@ -47,11 +47,14 @@ import oscar.flatzinc.parser.FZParser
 //TODO: Add the possibility to print to file or something else
 class Log(opts:Options){
   def apply(s:String) = {
-    if (opts.verbose) Console.err.println("% "+s)
+    if (opts.verbose > 0) Console.err.println("% "+s)
+  }
+  def apply(i:Int, s:String) = {
+    if(i <= opts.verbose) Console.err.println(("%"*math.max(1,i))+" "+s)
   }
 }
 
-class FZCBLSObjective(opt: Objective.Value, val objectiveVar: CBLSIntVarDom,c:ConstraintSystem){
+class FZCBLSObjective(opt: Objective.Value, private val objectiveVar: CBLSIntVarDom,c:ConstraintSystem){
   val violationWeight = CBLSIntVar(c._model, 0 to Int.MaxValue , 1, "violation_weight")
   val objectiveWeight = CBLSIntVar(c._model, 0 to Int.MaxValue , 1, "objective_weight")
   val violation = c.violation;
@@ -63,7 +66,11 @@ class FZCBLSObjective(opt: Objective.Value, val objectiveVar: CBLSIntVarDom,c:Co
       })
   def apply() = objective
   def getObjectiveValue(): Int = {
-    return objectiveVar.value;
+   opt match {
+        case Objective.SATISFY => 0
+        case Objective.MAXIMIZE => -objectiveVar.value
+        case Objective.MINIMIZE => objectiveVar.value
+      }
   }
   def increaseViolationWeight(minViolationSinceBest: Int){
     if (objectiveWeight.value > 1) {
@@ -170,7 +177,7 @@ class FZCBLSModel(val model: FZProblem, val c: ConstraintSystem, val m: Store, v
 }
 class FZCBLSSolver extends SearchEngine with StopWatch {
   
-  def solve(opts: Options): List[(Long, Int, Int, String)] = {
+  def solve(opts: Options) {
     startWatch()
     val log = new Log(opts);
     log("start")
@@ -219,7 +226,7 @@ class FZCBLSSolver extends SearchEngine with StopWatch {
       val (implcstr,softcstr) = implicitPoster.findAndPostImplicit(constraints);
       constraints = softcstr
       log("Found "+cblsmodel.neighbourhoods .length+" Implicit Constraints")
-      log(cblsmodel.neighbourhoods.mkString("\n"))
+      cblsmodel.neighbourhoods.foreach(n => log(2,"Created Neighbourhood "+ n+ " over "+n.searchVariables.length+" variables"))
     }else{
       log("Did not try to find implicit constraints")
     }
@@ -228,17 +235,17 @@ class FZCBLSSolver extends SearchEngine with StopWatch {
     val poster: FZCBLSConstraintPoster = new FZCBLSConstraintPoster(cs,cblsmodel.getCBLSVar);
     
     log("Possibly "+constraints.filter(_.definedVar.isDefined).length+" invariants.")
-    var (invariants,removed) = FZModelTransfo.getSortedInvariants(constraints.filter(_.definedVar.isDefined))
+    var (invariants,removed) = FZModelTransfo.getSortedInvariants(constraints.filter(_.definedVar.isDefined))(cblsmodel.log)
     log("Sorted "+invariants.length+" Invariants")
     for (invariant <- invariants){
-      //log("Posting as Invariant "+invariant)
+      log(2,"Posting as Invariant "+invariant)
       poster.add_invariant(invariant);
     }
     log("Posted "+invariants.length+" Invariants")
     
     val softConstraints = constraints.filterNot(_.definedVar.isDefined) /*++ removed*/;//removed is handled because the definedVar is undefined in getSortedInvariants.
     for (constraint <- softConstraints) {
-     // log("Posting "+constraint)
+      log(2,"Posting "+constraint)
       poster.add_constraint(constraint);
     }
     log("Posted "+softConstraints.length+" Soft Constraints")
@@ -249,18 +256,26 @@ class FZCBLSSolver extends SearchEngine with StopWatch {
     cblsmodel.addDefaultNeighbourhouds()
     
     log("Using "+cblsmodel.vars.length+" Search Variables in default neighbourhoods")
+    cblsmodel.vars.foreach(v => log(2,"Search with "+v))
     log("Created all Neighborhoods")
     
     //Search
     val timeout = (if(opts.timeOut>0) {opts.timeOut} else 5 * 60) * 1000
     log("Timeout is set to "+timeout+" milliseconds"); 
+    val sc : SearchControl =  model.search.obj match {
+          case Objective.SATISFY => new SearchControl(cblsmodel,0,timeout,true);
+          case Objective.MAXIMIZE => new SearchControl(cblsmodel,-model.search.variable.get.max, timeout,false);
+          case Objective.MINIMIZE => new SearchControl(cblsmodel,model.search.variable.get.min, timeout,false);
+        }
     val search =  new Chain(
-        new SimpleLocalSearch(cblsmodel,CBLSObjective(cs.violation)/* objective*/,timeout),
-        //new FakeSearch(),
+        new ActionSearch(() => {sc.cancelObjective()}),
+        new SimpleLocalSearch(cblsmodel,sc),
+        new NeighbourhoodSearchSAT(cblsmodel,sc),
+        new ActionSearch(() => {sc.restoreObjective()}),
         model.search.obj match {
-          case Objective.SATISFY => new NeighbourhoodSearchSAT(cblsmodel, timeout);
-          case Objective.MAXIMIZE => new NeighbourhoodSearchOPT(cblsmodel, - model.search.variable.get.max, timeout);
-          case Objective.MINIMIZE => new NeighbourhoodSearchOPT(cblsmodel, model.search.variable.get.min, timeout);
+          case Objective.SATISFY => new ActionSearch(() => {}) 
+          case Objective.MAXIMIZE => new NeighbourhoodSearchOPT(cblsmodel,sc);
+          case Objective.MINIMIZE => new NeighbourhoodSearchOPT(cblsmodel,sc);
         });
     
     log("Search created")
@@ -268,16 +283,14 @@ class FZCBLSSolver extends SearchEngine with StopWatch {
     log("Model closed");
     if(opts.is("no-run")){
       log("Not running the search...")
-      return null;
     }else{
       log("Starting Search at "+getWatchString)
-      val solutions = search.run();
+      search.run();
       log("Done at "+getWatchString)
-      if(solutions.length<=1){
+      if(sc.bestKnownViolation > 0){
         println("% Did not find any solution.")
-        println("% Final violation: "+cs.violation.value)
+        println("% Smallest violation: "+sc.bestKnownViolation )
       }
-      return solutions;
     }
   }
 

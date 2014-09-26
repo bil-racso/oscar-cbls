@@ -29,7 +29,6 @@ class FZCBLSImplicitConstraints(val cblsmodel:FZCBLSModel) {
   
       //TODO: DO not like the filtering here.
       //TODO: Why is constraints an Array. Could be a List?
-      //TODO: Actually, we might want to keep the original constraints to make sure that nothing is violated during search.
       constraints.partition((constraint: Constraint) =>
         constraint match {
           //TODO: this line of simplification should come somewhere else, actually
@@ -65,21 +64,10 @@ class FZCBLSImplicitConstraints(val cblsmodel:FZCBLSModel) {
     }
     
   def tryAllDiff(xs: Array[Variable]):Boolean = {
-     /* if (!xs.foldLeft(false)((acc: Boolean, x: Variable) => acc || x.isDefined || (!searchVariables.exists((v: CBLSIntVar) => v.name == x.id) && !implicitConstants.contains(getCBLSVar(x))))){
-        val nonConstants = xs.filterNot(x => implicitConstants.contains(cblsmodel.getCBLSVar(x)))
-        val domMin = nonConstants(0).min;
-        val domMax = nonConstants(0).max;
-        if (nonConstants.foldLeft(true)((acc: Boolean, x: Variable) => acc && (x.min == domMin && x.max == domMax))) {
-          cblsmodel.addNeighbourhood(new AllDifferentEqDom(xs.map(cblsmodel.getCBLSVar(_)), implicitConstants, cblsmodel.objective(), cblsmodel.c))
-          true
-        } else {
-          false
-        }
-      }else{ 
-        false
-      }*/
-      println("% Need to redo the AllDiff Neighbourhood")
-      false
+      if(allOK(xs)){
+        cblsmodel.addNeighbourhood(new AllDifferent(xs.map(cblsmodel.getCBLSVar(_)), cblsmodel.objective(), cblsmodel.c))
+        true
+      }else false
     }
     def tryCircuit(xs: Array[Variable]):Boolean = {
       if (allOK(xs)){
@@ -105,6 +93,9 @@ class FZCBLSImplicitConstraints(val cblsmodel:FZCBLSModel) {
         cblsmodel.addNeighbourhood(new ThreeOptSub(xs.map(cblsmodel.getCBLSVar(_)),cblsmodel.objective(), cblsmodel.c,1))
         true
       }else{
+        println("BOF")
+        xs.foreach(x => println(x+ " " +cblsmodel.vars.contains(cblsmodel.getCBLSVar(x))))
+        println(cblsmodel.vars)
         false
       }
     }
@@ -135,6 +126,6 @@ class FZCBLSImplicitConstraints(val cblsmodel:FZCBLSModel) {
     }
   
   def allOK(xs: Array[Variable]):Boolean = {
-    xs.forall(x => ! x.isDefined && cblsmodel.vars.contains(x))
+    xs.forall(x => ! x.isDefined && cblsmodel.vars.contains(cblsmodel.getCBLSVar(x)))
   }
 }

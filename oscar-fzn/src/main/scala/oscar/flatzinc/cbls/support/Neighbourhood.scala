@@ -490,113 +490,74 @@ class MaxViolatingSwap(searchVariables: Array[CBLSIntVarDom], objective: CBLSObj
 
 
 //This neighborhood is not totally "holes in the domain"-proof!
-class AllDifferentEqDom(searchVariables: Array[CBLSIntVarDom], implicitConstants: List[CBLSIntVar], objective: CBLSObjective, constraintSystem: ConstraintSystem) extends Neighbourhood(searchVariables.filterNot((x) => implicitConstants.contains(x))) {
+class AllDifferent(searchVariables: Array[CBLSIntVarDom], objective: CBLSObjective, constraintSystem: ConstraintSystem) extends Neighbourhood(searchVariables) {
   /**/
-  var swapMove: Boolean = true;//TODO: put this variable in the functions
   
-  val constants: Array[CBLSIntVarDom] = searchVariables.filter((x) => implicitConstants.contains(x))
-  val variables: Array[CBLSIntVarDom] = searchVariables.filterNot((x) => implicitConstants.contains(x))
+  
+  val (constants,variables) = searchVariables.partition((x) => x.minVal==x.maxVal)
   val indexRange: Range =0 until variables.length;
   val variableViolation: Array[CBLSIntVar] = variables.map(constraintSystem.violation(_)).toArray
   var freeValues: Set[Int] = Set.empty[Int]
+  val (minVal,maxVal) = variables.foldLeft((Int.MaxValue ,Int.MinValue))((acc,v) => (math.min(acc._1,v.minVal),math.max(acc._2,v.maxVal)))
   reset();
   
   def reset() = {
     freeValues = Set.empty[Int]
-    for (i <- variables(0).minVal to variables(0).maxVal) {//assumes all variables have the same domain
+    for (i <- minVal to maxVal) {
       freeValues += i;
     }
     for (c <- constants) {
       freeValues -= c.value;
     }
     for (v <- variables) {
-      val value = (if (RandomGenerator.nextBoolean()) { freeValues.head } else { freeValues.last });
-      v.setValue(value);
+      var value = v.getRandValue();
+      while(!freeValues.contains(value)) value = v.getRandValue()
+      v := value;
       freeValues -= value;
     }
   }
   
+  def getSwapMove(idx1: Int,idx2: Int) = {
+    val v1 = searchVariables(idx1).value
+    val v2 = searchVariables(idx2).value
+    if(searchVariables(idx1).dom.contains(v2) && searchVariables(idx2).dom.contains(v1))
+      new SwapMove(searchVariables(idx1), searchVariables(idx2),objective.swapVal(searchVariables(idx1), searchVariables(idx2)));
+    else new NoMove()
+  }
+  
+  def getAssignMove(idx: Int, v: Int) = {
+    if(searchVariables(idx).dom.contains(v) && freeValues.contains(v))
+      new BeforeMove(new AssignMove(searchVariables(idx), v,objective.assignVal(searchVariables(idx), v)),
+                     () => {freeValues -= v; freeValues += variables(idx).value});
+    else new NoMove()
+  }
   def randomMove(it: Int): Move = {
-    if (freeValues.size > 0) {
-      swapMove = RandomGenerator.nextBoolean()
-    }
-    if (swapMove) {
+    if (freeValues.size == 0  || RandomGenerator.nextBoolean()) {
       val selectedIndex1 = indexRange(RandomGenerator.nextInt(indexRange.length))
       val selectedIndex2 = indexRange(RandomGenerator.nextInt(indexRange.length))
-      val minObjective = objective.swapVal(searchVariables(selectedIndex1), searchVariables(selectedIndex2))
-      return new SwapMove(searchVariables(selectedIndex1), searchVariables(selectedIndex2),minObjective);
+      getSwapMove(selectedIndex1,selectedIndex2)
     } else {
-      val selectedIndex1 = indexRange(RandomGenerator.nextInt(indexRange.length))
-      val selectedValue = variables(selectedIndex1).getRandValue()
-      val minObjective = objective.assignVal(searchVariables(selectedIndex1), selectedValue)
-      return new AssignMove(searchVariables(selectedIndex1), selectedValue,minObjective);
+      val selectedIndex = indexRange(RandomGenerator.nextInt(indexRange.length))
+      val selectedValue = variables(selectedIndex).getRandValue()
+      getAssignMove(selectedIndex,selectedValue)
     }
   }
-  def getMinObjective(it: Int, nonTabu: Set[CBLSIntVar]): Move = {
-    //Change the max violating nontabu variable
-    //TODO: Only takes into account the violation for the first selection
-    val selectedIndex1 = selectMax(indexRange, (i: Int) => variableViolation(i).value, (i: Int) => nonTabu.contains(variables(i)));
-    //Find the best swap move
-    val selectedIndex2 = selectMin(indexRange)((i: Int) => objective.swapVal(variables(selectedIndex1), variables(i)), (i) => i != selectedIndex1)
-    //Kepp the resulting objective
-    val swapObjective = objective.swapVal(variables(selectedIndex1), variables(selectedIndex2))
-    var minObjective = swapObjective;
-    var selectedValue = 0;
-    if (freeValues.size > 0) {
-      //Find the best reassign move from the free values
-      val selectedVIndex = selectedIndex1;
-      selectedValue = selectMin(freeValues)((i: Int) => objective.assignVal(variables(selectedVIndex), i))
-      swapMove = objective.assignVal(variables(selectedVIndex), selectedValue) > swapObjective;
-      minObjective = Math.min(objective.assignVal(variables(selectedVIndex), selectedValue), swapObjective)
-      
-    }
-    if(swapMove){
-      return new SwapMove(searchVariables(selectedIndex1), searchVariables(selectedIndex2),minObjective);
-    }else{ 
-      return new AssignMove(searchVariables(selectedIndex1), selectedValue,minObjective);
-    }
-  }
-
-  def getExtendedMinObjective(it: Int, nonTabu: Set[CBLSIntVar]/*, minSoFar: Int*/): Move = {
-    var selectedIndex1: Int = 0;
-    var selectedIndex2: Int = 0;
   
-    var selectedVIndex: Int = 0;
-    var selectedValue: Int = 0;
-    //Find the best swap move
-    var swapObjective = 0;
-    selectMin(indexRange, indexRange)((i: Int, j: Int) => objective.swapVal(variables(i), variables(j)),
-      (i: Int, j: Int) => i < j &&
-        (nonTabu.contains(variables(i)) || nonTabu.contains(variables(j) ) )) match {
-        case (index1, index2) =>
-          selectedIndex1 = index1;
-          selectedIndex2 = index2;
-          //Kepp the resulting objective
-          swapObjective = objective.swapVal(variables(selectedIndex1), variables(selectedIndex2))
-        case null =>
-          swapObjective = Int.MaxValue
-      }
-
-    var minObjective = swapObjective;
-    if (freeValues.size > 0) {
-      selectMin(indexRange, freeValues)((i: Int, j: Int) => objective.assignVal(variables(i), j),
-        (i: Int, j: Int) => nonTabu.contains(variables(i))) match {
-          case (index, value) =>
-            selectedVIndex = index;
-            selectedValue = value;
-            swapMove = swapObjective < objective.assignVal(variables(selectedVIndex), selectedValue)
-            minObjective = Math.min(objective.assignVal(variables(selectedVIndex), selectedValue), swapObjective)
-          case null =>
-            //println("Failed to find move")
-        }
-    }
-    //println(swapMove+" : " + minObjective + " " + freeValues.size)
-    if(swapMove){
-      return new SwapMove(searchVariables(selectedIndex1), searchVariables(selectedIndex2),minObjective);
-    }else{ 
-      return new BeforeMove(new AssignMove(searchVariables(selectedIndex1), selectedValue,minObjective),
-                  () => {freeValues -= selectedValue; freeValues += variables(selectedVIndex).value});
-    }
+  def getMinObjective(it: Int, nonTabu: Set[CBLSIntVar]): Move = {
+    val rng2 = (0 until variables.length).toList.filter(i => nonTabu.contains(variables(i)));
+    val idx = selectMax(rng2, (i: Int) => variableViolation(i).value);
+    getBest(List(idx),rng2)
+  }
+  def getExtendedMinObjective(it: Int, nonTabu: Set[CBLSIntVar]): Move = {
+    val rng2 = (0 until variables.length).toList.filter(i => nonTabu.contains(variables(i)));
+    getBest(rng2,rng2)
+  }
+  def getBest(rng1:Iterable[Int],rng2:Iterable[Int]): Move = {
+    val bestSwap = selectMin2(rng1, rng2, (idx:Int,next:Int) => getSwapMove(idx,next).value,(idx:Int,v:Int) => variables(idx).dom.contains(variables(v).value) && variables(v).dom.contains(variables(idx).value) )
+    val swap = bestSwap match { case (i1,i2) => getSwapMove(i1,i2) case _ => new NoMove(Int.MaxValue)}
+    val bestMove = selectMin2(rng1,freeValues,(idx:Int,v:Int) => getAssignMove(idx,v).value,(idx:Int,v:Int) => variables(idx).dom.contains(v))
+    val move = bestMove match {case (i1,i2) => getAssignMove(i1,i2) case _ => new NoMove(Int.MaxValue)}
+    if(swap.value < move.value) swap else move
   }
   def violation() = { variableViolation.foldLeft(0)((acc, x) => acc + x.value) };
 }

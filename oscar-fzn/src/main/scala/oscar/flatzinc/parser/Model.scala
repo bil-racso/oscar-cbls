@@ -107,7 +107,8 @@ class Model {
     if(!t.equals(e.typ)) System.out.println("% Not the same type: "+e.typ+" vs "+t);
     if(d!=null && !d.equals(e.domain)){
       //System.out.println("% Not the same domain: "+e.domain+" vs "+d);
-      e.domain.inter(d)
+      if(e.domain==null)e.domain = d
+      else e.domain.inter(d)
     }
     //if(!anns.equals(e.annotations)) System.out.println("% Not the same annotations: "+e.annotations+" vs "+anns);
     addId(name,e);

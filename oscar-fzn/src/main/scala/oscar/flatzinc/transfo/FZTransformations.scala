@@ -22,9 +22,45 @@ import scala.util.control.Breaks._
 import oscar.flatzinc.model._
 import oscar.flatzinc.cbls.Log
 import scala.collection.mutable.{ Map => MMap, Set => MSet }
+import scala.collection.mutable.ListBuffer
 
 object FZModelTransfo {
-  def findInvariants(implicit model: FZProblem, log:Log) = {
+  
+  def findInvariantsFromObjective(model: FZProblem, log: Log): Unit = {
+    val visited = MSet.empty[Variable] 
+    val front: ListBuffer[(Variable,Constraint,Objective.Value)] = ListBuffer.empty[(Variable,Constraint,Objective.Value)]//Not sure the Constraint is useful
+    model.search.variable.foreach(v => front.append((v,null,model.search.obj)))//add only if there is such a variable.
+    var cnt = 0;
+    while(!front.isEmpty){
+      val (v,c,obj) = front.head
+      front.trimStart(1)
+      visited.add(v)
+      if(!v.isDefined){
+        val cand = v.cstrs.filter((c: Constraint) => c.definedVar.isEmpty && c.canDefineVar && c.getCandidateDefVars().contains(v))
+        val cand2 = cand//.filter(c => ! dependsOn(c,v,false))
+        if(cand2.length > 1){
+          log(2,"! Found a variable that could be defined by more than one invariant (from Objective):"+v+" "+cand2.toString)
+        }
+        //Select the first suitable constraint
+        if(!cand2.isEmpty){
+          val cc = cand2.head
+          cc.setDefinedVar(v)
+          cnt+=1
+        }
+      }
+      if(v.isDefined){
+        v.definingConstraint.get.getVariables().foreach(vv => if(!visited.contains(vv)) front.append((vv,v.definingConstraint.get,Objective.SATISFY)))
+      }
+    }
+    log(0,"Found "+cnt+" invariants from the objective.")
+  }
+  
+  def findInvariants(model: FZProblem, log:Log):Unit = {
+    findInvariantsFromObjective(model,log)//Start from the objective and reach as far as possible.
+    findInvariants(model,log,0)//First only variables that are directional by nature
+    findInvariants(model,log,1)//Then all of them
+  }
+  def findInvariants(model: FZProblem, log:Log,step:Int) = {
     //Find all free variables of the model.
     var freeVariables: List[Variable] =
       model.variables.filter((variable: Variable) =>
@@ -45,14 +81,16 @@ object FZModelTransfo {
           
     //Find all constraints which do not already define a variable and can define a variable (be turned into an invariant)
     
-   
+    def heuristicAccept(c: Constraint): Boolean = {
+      step > 0 || c.isInstanceOf[SimpleDefiningConstraint]
+    }
     
     //For all free variables
     for (v <- freeVariables.sortWith((x: Variable, y: Variable) => x.max - x.min > y.max - y.min)) {
-      val cand = v.cstrs.filter((c: Constraint) => c.definedVar.isEmpty && c.canDefineVar && c.getCandidateDefVars().contains(v))
+      val cand = v.cstrs.filter((c: Constraint) => heuristicAccept(c) && c.definedVar.isEmpty && c.canDefineVar && c.getCandidateDefVars().contains(v))
       val cand2 = cand//.filter(c => ! dependsOn(c,v,false))
       if(cand2.length > 1){
-        log("%!! Found a variable that could be defined by more than one invariant:"+v+" "+cand2.toString)
+        log(2,"! Found a variable that could be defined by more than one invariant:"+v+" "+cand2.toString)
       }
       //Select the first suitable constraint
       if(!cand2.isEmpty) cand2.head.setDefinedVar(v)
@@ -105,7 +143,7 @@ object FZModelTransfo {
   
   
   
-  def getSortedInvariants(inv: Array[Constraint]): (Array[Constraint],List[Constraint]) = {
+  def getSortedInvariants(inv: Array[Constraint])(implicit log: Log): (Array[Constraint],List[Constraint]) = {
     val invariants = inv.toArray;
     var sorted = List.empty[Constraint];
     val mapping = MMap.empty[Constraint, Int];
@@ -135,7 +173,7 @@ object FZModelTransfo {
       }
     }
     explore()
-    if(!mapping.isEmpty)println("% There is a cycle in the set of invariants.!"+mapping.size)
+    if(!mapping.isEmpty)log("There is a cycle in the set of invariants.!"+mapping.size)
     while(!mapping.isEmpty){
       val (remc,value) = mapping.keys.foldLeft((null.asInstanceOf[Constraint],0))((best,cur) => {val curval = mapping(cur)/*cur.definedVar.get.cstrs.filter(c => c!=cur && mapping.contains(c) && mapping(c)==1).length*/; if(curval > best._2) (cur,curval) else best;});
       mapping.remove(remc)
