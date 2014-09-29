@@ -19,28 +19,31 @@ package oscar.flatzinc.parser;
 
 import java.io.FileInputStream;
 import java.io.IOException;
+
 import oscar.flatzinc.ParsingException;
+import oscar.flatzinc.cbls.Log;
+
 import org.antlr.v4.runtime.*;
 
 
 public class FZParser {
-	public static Model readFlatZincModelFromFile(String fname){
+	public static Model readFlatZincModelFromFile(String fname,Log log){
 		try{
 		ANTLRInputStream input = new ANTLRInputStream(new FileInputStream(fname));
 		//UnbufferedCharStream input = new UnbufferedCharStream(new FileInputStream(fname));
-		return readFlatZincModel(input);
+		return readFlatZincModel(input,log);
 		}catch(IOException e){
 	        System.err.println("File " + fname + " not found. Aborting.");
 			System.exit(1);
 		}
 		return null;
 	}
-	public static Model readFlatZincModelFromString(String content){
+	public static Model readFlatZincModelFromString(String content,Log log){
 		ANTLRInputStream input = new ANTLRInputStream(content);
-		return readFlatZincModel(input);
+		return readFlatZincModel(input,log);
 	}
-	public static Model readFlatZincModel(CharStream input){
-		Model m = new Model();
+	public static Model readFlatZincModel(CharStream input,Log log){
+		Model m = new Model(log);
 		try{
 	        FlatzincLexer lex = new FlatzincLexer(input);
 			CommonTokenStream tokens = new CommonTokenStream(lex);

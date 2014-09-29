@@ -28,14 +28,12 @@ import oscar.flatzinc.model._
 import oscar.flatzinc.NoSuchConstraintException
 import java.lang.reflect.Constructor
 import oscar.flatzinc.ParsingException
+import oscar.flatzinc.cbls.Log
 
 
 class VarRef(val v: Variable) extends Element()
 
-class Model {
-  //TODO: Get rid of those arbitrary values!
-  val UNDEFINED_VARINT_RANGE_MAX = 10000000
-  val UNDEFINED_VARINT_RANGE_MIN = -10000000
+class Model(val log: Log) {
   
   val problem: FZProblem = new FZProblem()
   val dico: Map[String,Element] = Map.empty[String,Element]
@@ -55,7 +53,7 @@ class Model {
   def createDomain(e: Domain,t: String): Domain  = {
     if(e==null){
       if(t.equals("bool")) new DomainRange(0,1)
-      else new DomainRange(UNDEFINED_VARINT_RANGE_MIN, UNDEFINED_VARINT_RANGE_MAX)
+      else new DomainRange(Int.MinValue, Int.MaxValue)//TODO: This is dangerous!
     }else e;      
   }
   def copy(d: Domain): Domain = {
@@ -104,7 +102,7 @@ class Model {
     //TODO: When can de be null?
     val d = if(de!=null)de.value.asInstanceOf[Domain]else null
     //if(!name.equals(e.name)) System.out.println("% Not the same name: "+e.name+" vs "+name);
-    if(!t.equals(e.typ)) System.out.println("% Not the same type: "+e.typ+" vs "+t);
+    if(!t.equals(e.typ)) log(0,"Not the same type: "+e.typ+" vs "+t);
     if(d!=null && !d.equals(e.domain)){
       //System.out.println("% Not the same domain: "+e.domain+" vs "+d);
       if(e.domain==null)e.domain = d
@@ -146,17 +144,17 @@ class Model {
   def setSATObjective(anns: java.util.List[Annotation])= {
     problem.satisfy()
     //TODO: Search annotations are ignored for now
-    if(anns.size() > 0)println("% ignoring search annotations")
+    if(anns.size() > 0)log(0,"ignoring search annotations")
   }
   def setMINObjective(e: Element, anns: java.util.List[Annotation])= {
     problem.minimize(getIntVar(e))
     //TODO: Search annotations are ignored for now
-    if(anns.size() > 0)println("% ignoring search annotations")
+    if(anns.size() > 0)log(0,"ignoring search annotations")
   }
   def setMAXObjective(e: Element, anns: java.util.List[Annotation])= {
     problem.maximize(getIntVar(e))
     //TODO: Search annotations are ignored for now
-    if(anns.size() > 0)println("% ignoring search annotations")
+    if(anns.size() > 0)log(0,"ignoring search annotations")
   }
   def getIntVar(e: Element): Variable = {
     if(e.isInstanceOf[VarRef])e.asInstanceOf[VarRef].v;
@@ -200,7 +198,7 @@ class Model {
     else
       cstr match {
         case "oscar_alldiff" =>
-          println("% deprecated: oscar_alldiff")
+          log(0,"deprecated: oscar_alldiff")
           val a = getIntVarArray(varList(0));
           all_different_int(a, ann)
         case other =>

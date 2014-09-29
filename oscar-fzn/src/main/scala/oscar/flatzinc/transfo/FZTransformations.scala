@@ -123,13 +123,14 @@ object FZModelTransfo {
         case bool_eq(x: ConcreteConstant, y: ConcreteVariable, ann) => y.dom.geq(x.value); y.dom.leq(x.value); false
         case bool_eq(x: ConcreteVariable, y: ConcreteConstant, ann) => x.dom.geq(y.value); x.dom.leq(y.value); false
         //The cstrs below might need to be iterated until fixpoint...
-        case int_le(x:ConcreteVariable, y:ConcreteVariable, _ ) => y.dom.geq(x.min); x.dom.leq(y.max); true
+        // Removed the following to avoid some problem in "train.mzn"
+        /* case int_le(x:ConcreteVariable, y:ConcreteVariable, _ ) => y.dom.geq(x.min); x.dom.leq(y.max); true
         case int_lt(x:ConcreteVariable, y:ConcreteVariable, _ ) =>{
           //println(x+x.dom.toString()+"\t"+y+y.dom);
           y.dom.geq(x.min+1); x.dom.leq(y.max-1); 
           //println(x+x.dom.toString()+"\t"+y+y.dom);
           true
-        } 
+        } */
         case int_eq(x:ConcreteVariable, y:ConcreteVariable, _ ) => y.dom.geq(x.min); y.dom.leq(x.max); x.dom.geq(y.min); x.dom.leq(y.max); true
         case bool_eq(x:ConcreteVariable, y:ConcreteVariable, _ ) => y.dom.geq(x.min); y.dom.leq(x.max); x.dom.geq(y.min); x.dom.leq(y.max); true
         case _ => true 

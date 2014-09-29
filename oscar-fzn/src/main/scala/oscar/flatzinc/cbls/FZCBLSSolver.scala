@@ -182,9 +182,8 @@ class FZCBLSSolver extends SearchEngine with StopWatch {
     startWatch()
     val log = new Log(opts);
     log("start")
-    val m: Store = new Store(false, None, false)//setting the last Boolean to true would avoid calling the SCC algorithm but we have to make sure that there are no SCCs in the Graph. Is it the case in the way we build it?
     
-    val model = FZParser.readFlatZincModelFromFile(opts.fileName).problem;
+    val model = FZParser.readFlatZincModelFromFile(opts.fileName,log).problem;
     model.cstrsByName.map{ case (n:String,l:List[Constraint]) => l.length +"\t"+n}.toList.sorted.foreach(log(_))
     log("Parsed. Parsing took "+getWatch+" ms")
     
@@ -204,10 +203,8 @@ class FZCBLSSolver extends SearchEngine with StopWatch {
     
     
     
-    
-    
     // Model
-
+    val m: Store = new Store(false, None, false)//setting the last Boolean to true would avoid calling the SCC algorithm but we have to make sure that there are no SCCs in the Graph. Is it the case in the way we build it?
     // constraint system
     val cs = ConstraintSystem(m)
     val cblsmodel = new FZCBLSModel(model,cs,m,log,() => getWatch)
@@ -286,8 +283,10 @@ class FZCBLSSolver extends SearchEngine with StopWatch {
       search.run();
       log("Done at "+getWatchString)
       if(sc.bestKnownViolation > 0){
-        println("% Did not find any solution.")
-        println("% Smallest violation: "+sc.bestKnownViolation )
+        log(0,"Did not find any solution.")
+        log(0,"Smallest violation: "+sc.bestKnownViolation )
+      }else{
+        log(0,"Best Overall Solution: "+sc.bestKnownObjective )
       }
     }
   }
