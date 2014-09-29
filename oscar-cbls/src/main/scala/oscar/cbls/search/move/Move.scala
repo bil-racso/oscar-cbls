@@ -46,7 +46,7 @@ abstract class Move(val objAfter:Int = Int.MaxValue, val neighborhoodName:String
    */
   def objToString:String = if(objAfter == Int.MaxValue) "" else " objAfter:" +objAfter
 
-  def neighborhoodNameToString:String = if (neighborhoodName != null) neighborhoodName + ": " else ""
+  protected def neighborhoodNameToString:String = if (neighborhoodName != null) neighborhoodName + ": " else ""
 
   /** this performs the move, evaluates he objective function, and backtracks the move
     *notice that the objAfter is supposed to carry the proper value, so you generally do not need to call this
@@ -193,7 +193,7 @@ case class CompositeMove(ml:List[Move], override val objAfter:Int, override val 
   * @param callBack the method to invoke before the actual move is taken
   * @author renaud.delandtsheer@cetic.be
   */
-case class InstrumentedMove(initialMove:Move, callBack: () => Unit, afterMove: () => Unit = null) extends Move(initialMove.objAfter, initialMove.neighborhoodName){
+case class InstrumentedMove(initialMove:Move, callBack: () => Unit = null, afterMove: () => Unit = null) extends Move(initialMove.objAfter, initialMove.neighborhoodName){
   def commit(){
     if(callBack != null) callBack()
     initialMove.commit()

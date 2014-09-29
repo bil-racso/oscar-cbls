@@ -80,9 +80,10 @@ class BasicProtectBest(a: Neighborhood, i: CBLSIntVar) extends NeighborhoodCombi
   protected def currentSolutionIsAcceptable = true
 
   def restoreBest() {
-    if (best == null) {
+    val isCurrentAccepteable = currentSolutionIsAcceptable
+    if (best == null && !isCurrentAccepteable) {
       if (verbose >= 1) println("no single acceptable solution seen")
-    } else if (i.value > bestObj || !currentSolutionIsAcceptable) {
+    } else if (i.value > bestObj || !isCurrentAccepteable) {
       s.restoreSolution(best)
       if (verbose >= 1) println("restoring best solution (obj:" + bestObj + ")")
     } else if (verbose >= 1) println("no better solution to restore")
@@ -93,6 +94,8 @@ class BasicProtectBest(a: Neighborhood, i: CBLSIntVar) extends NeighborhoodCombi
    * @param shouldStop a function that takes the iteration number and returns true if search should be stopped
    *                   eg if the problem is considered as solved
    *                   you can evaluate some objective function there such as a violation degree
+   *                   notice that although you can use it to stop your algorithm, the primary purpose is to avoid blow-up.
+   *                   Smarter stop criterion cen be made using combinators, and this stop should be considered only as a protection againt blow up.
    * @param acceptanceCriterion a criterion for accepting a move
    *                            by default, we only accept strictly improving moves
    * @return the number of moves performed
@@ -103,7 +106,7 @@ class BasicProtectBest(a: Neighborhood, i: CBLSIntVar) extends NeighborhoodCombi
     toReturn
   }
 
-  def restoreBestOnExhaust(): RestoreBestOnExhaust = new RestoreBestOnExhaust(this)
+  def restoreBestOnExhaust: RestoreBestOnExhaust = new RestoreBestOnExhaust(this)
 }
 
 class ProtectBest(a: Neighborhood, i: CBLSIntVar) extends BasicProtectBest(a: Neighborhood, i: CBLSIntVar) {
@@ -473,12 +476,12 @@ class BoundSearches(a: Neighborhood, val maxMove: Int) extends NeighborhoodCombi
  * notice that the count is reset by the reset operation
  * @author renaud.delandtsheer@cetic.be
  */
-class MaxMoves(a: Neighborhood, val maxMove: Int) extends NeighborhoodCombinator(a) {
+class MaxMoves(a: Neighborhood, val maxMove: Int, cond:Move => Boolean = null) extends NeighborhoodCombinator(a) {
   var remainingMoves = maxMove
   override def getMove(acceptanceCriteria: (Int, Int) => Boolean): SearchResult = {
     if (remainingMoves > 0) {
       a.getMove(acceptanceCriteria) match {
-        case m: MoveFound => InstrumentedMove(m.m, notifyMoveTaken)
+        case m: MoveFound => InstrumentedMove(m.m, () => notifyMoveTaken(m.m))
         case x => x
       }
     } else {
@@ -494,8 +497,8 @@ class MaxMoves(a: Neighborhood, val maxMove: Int) extends NeighborhoodCombinator
     super.reset()
   }
 
-  def notifyMoveTaken() {
-    remainingMoves -= 1
+  def notifyMoveTaken(m:Move) {
+    if(cond == null || cond(m)) remainingMoves -= 1
   }
 
   /**
@@ -525,7 +528,9 @@ class MaxMoves(a: Neighborhood, val maxMove: Int) extends NeighborhoodCombinator
    * this will modify the effect of the maxMoves by transforming it into a [[MaxMovesWithoutImprovement]]
    * the initial maxMoves is deleted by this method, and the integer bound is passed to [[MaxMovesWithoutImprovement]]
    */
-  def withoutImprovementOver(obj: CBLSIntVar) = new MaxMovesWithoutImprovement(a, maxMove, obj)
+  def withoutImprovementOver(obj: CBLSIntVar) = new MaxMovesWithoutImprovement(a, cond, maxMove, obj)
+
+  def suchThat(cond:Move => Boolean) = new MaxMoves(a, maxMove, if (this.cond == null) cond else (m:Move) => this.cond(m) && cond(m))
 }
 
 /**
@@ -582,6 +587,11 @@ class RoundRobin(l: List[Neighborhood], steps: Int = 1) extends NeighborhoodComb
    * @return
    */
   override def step(b: Neighborhood): RoundRobin = new RoundRobin(l ::: List(b))
+
+  def repeat(i:Int):RoundRobin = {
+    val last = l.last
+    new RoundRobin(l ::: List.fill(i-1)(last))
+  }
 }
 
 class RoundRobinNoParam(val a: Neighborhood, val b: Neighborhood) {
@@ -681,15 +691,15 @@ class AndThen(a: Neighborhood, b: Neighborhood, maxFirstStep: Int = 10, maximalI
  * the count is reset by the reset action.
  * @author renaud.delandtsheer@cetic.be
  */
-class MaxMovesWithoutImprovement(a: Neighborhood, val maxMovesWithoutImprovement: Int, obj: CBLSIntVar) extends NeighborhoodCombinator(a) {
+class MaxMovesWithoutImprovement(a: Neighborhood, val cond:Move => Boolean, val maxMovesWithoutImprovement: Int, obj: CBLSIntVar) extends NeighborhoodCombinator(a) {
 
   var stepsSinceLastImprovement = 0
   var bestObj = Int.MaxValue
 
   override def getMove(acceptanceCriteria: (Int, Int) => Boolean): SearchResult = {
-    if (stepsSinceLastImprovement <= maxMovesWithoutImprovement) {
+    if (stepsSinceLastImprovement < maxMovesWithoutImprovement) {
       a.getMove(acceptanceCriteria) match {
-        case m: MoveFound => InstrumentedMove(m.m, callBack = null, afterMove = notifyMoveTaken)
+        case m: MoveFound => InstrumentedMove(m.m, afterMove = () => notifyMoveTaken(m.m))
         case x => x
       }
     } else {
@@ -704,13 +714,15 @@ class MaxMovesWithoutImprovement(a: Neighborhood, val maxMovesWithoutImprovement
     super.reset()
   }
 
-  def notifyMoveTaken() {
-    val newObj = obj.value
-    if (newObj < bestObj) {
-      bestObj = newObj
-      stepsSinceLastImprovement = 0
-    } else {
-      stepsSinceLastImprovement += 1
+  def notifyMoveTaken(m:Move) {
+    if (cond == null || cond(m)) {
+      val newObj = obj.value
+      if (newObj < bestObj) {
+        bestObj = newObj
+        stepsSinceLastImprovement = 0
+      } else {
+        stepsSinceLastImprovement += 1
+      }
     }
   }
 }

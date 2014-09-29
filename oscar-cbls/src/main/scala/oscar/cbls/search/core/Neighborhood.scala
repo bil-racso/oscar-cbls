@@ -21,6 +21,7 @@ import oscar.cbls.search.combinators._
 import oscar.cbls.search.move.{CallBackMove, Move}
 
 import scala.language.implicitConversions
+import scala.language.postfixOps
 
 abstract sealed class SearchResult
 case object NoMoveFound extends SearchResult
@@ -114,7 +115,7 @@ abstract class Neighborhood{
    *                            because their purpose is to randomize the current solution.
    * @return the number of moves performed
    */
-  def doAllMoves(shouldStop:Int => Boolean, acceptanceCriterion:(Int,Int) => Boolean = (oldObj,newObj) => oldObj > newObj):Int = {
+  def doAllMoves(shouldStop:Int => Boolean = _ => false, acceptanceCriterion:(Int,Int) => Boolean = (oldObj,newObj) => oldObj > newObj):Int = {
     var bestObj = Int.MaxValue
     var prevObj = Int.MaxValue
     var toReturn = 0
@@ -176,6 +177,13 @@ abstract class Neighborhood{
     */
   def orElse(b:Neighborhood):Neighborhood = new OrElse(this,b)
 
+  /** alias for this maxMoves1 exhaust b
+    *
+    * @param b
+    * @return
+    */
+  def sequence(b:Neighborhood):Neighborhood = this maxMoves 1 exhaust b
+
   /**this composer always selects the best move between the two parameters
     * notice that this combinator makes more sense
     * if the two neighborhood return their best found move,
@@ -227,11 +235,17 @@ abstract class Neighborhood{
     */
   def maxMoves(maxMove:Int) = new MaxMoves(this, maxMove)
 
+
+  /** this is an alias for maxMoves 1
+    * @return
+    */
+  def once = new MaxMoves(this, 1)
+
   /**bounds the number of tolerated moves without improvements over the best value
     * the count is reset by the reset action.
     * @author renaud.delandtsheer@cetic.be
     */
-  def maxMovesWithoutImprovement(maxMove:Int, obj:Objective) = new MaxMovesWithoutImprovement(this, maxMove, obj)
+  def maxMovesWithoutImprovement(maxMove:Int, obj:Objective) = new MaxMovesWithoutImprovement(this, null, maxMove, obj)
 
   /**makes a round robin on the neighborhood. it swaps as soon as one does not find a move
     * and swaps neighborhood after "step" invocations

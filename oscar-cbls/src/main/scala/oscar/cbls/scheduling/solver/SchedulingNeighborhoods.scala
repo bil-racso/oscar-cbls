@@ -4,9 +4,8 @@ import oscar.cbls.invariants.core.computation.CBLSIntVar
 import oscar.cbls.scheduling.algo.CriticalPathFinder
 import oscar.cbls.scheduling.model._
 import oscar.cbls.search.SearchEngineTrait
-import oscar.cbls.search.combinators.{BasicProtectBest, ProtectBest}
+import oscar.cbls.search.combinators.{Retry, BasicProtectBest, ProtectBest}
 import oscar.cbls.search.core._
-import oscar.cbls.search.combinators.BasicProtectBest
 
 /**
  * @param p the planning to flatten
@@ -23,9 +22,11 @@ case class FlattenWorseFirst(p:Planning,
                              maxIterations:Int,
                              estimateMakespanExpansionForNewDependency:(Activity,Activity) => Int =
                              (from: Activity, to: Activity) => from.earliestEndDate.value - to.latestStartDate.value,
-                             supportForSuperTasks:Boolean = false, priorityToPrecedenceToMovableActivities:Boolean = true)
+                             priorityToPrecedenceToMovableActivities:Boolean = true
+                              )(supportForSuperActivities:Boolean = p.isThereAnySuperActitity)
   extends JumpNeighborhood with SearchEngineTrait {
 
+  require(p.isClosed)
   override def shortDescription(): String = "Flattening worse first"
 
   //this resets the internal state of the Neighborhood
@@ -48,9 +49,9 @@ case class FlattenWorseFirst(p:Planning,
 
       if (!flattenOne(r, t)) {
 
-        if (!supportForSuperTasks)
-          throw new Error("cannot flatten until conflict resolution, maybe your model has superTasks?" +
-            " if yes set supportForSuperTasks, otherwise, problem with non-movable activities")
+        if (!supportForSuperActivities)
+          throw new Error("cannot flatten until conflict resolution, maybe your model has superActivities?" +
+            " if yes set supportForSuperActivities. ")
 
         flattenOneWithSuperTaskHandling(r, t)
       }
@@ -217,7 +218,6 @@ object SchedulingStrategies{
 
   /**
    * @param p the planning
-   * @param nbRelax the minimal number of relax to perform (actually, we relax until makespan reduced, with an upper bound just in case
    * @param pKillPerRelax the probability of killing a precedence for each precedence on the critical path considered during a relax
    * @param stable the number of no successive no improve that will cause the search to stop
    * @param objective: the objective, typically the makespan, but you could try something else
@@ -227,16 +227,58 @@ object SchedulingStrategies{
                  nbRelax: Int = 4,
                  pKillPerRelax: Int = 50,
                  stable: Int,
+                 displayPlanning:Boolean = false)(objective:CBLSIntVar = p.makeSpan):Neighborhood = {
+    require(p.model.isClosed, "model should be closed before iFlatRelax algo can be instantiated")
+    val maxIterationsForFlatten = (p.activityCount * (p.activityCount - 1)) / 2
+
+    val flatten = FlattenWorseFirst(p,maxIterationsForFlatten)() afterMove {
+      if (displayPlanning) println(p.toAsciiArt)
+      println(objective)
+    }
+    val relax = Relax(p, pKillPerRelax)
+
+    //search Loop is a round Robin
+    val searchLoop = flatten step relax repeat nbRelax
+
+    (searchLoop maxMoves stable*4 withoutImprovementOver objective
+      protectBest objective whenEmpty p.worseOvershotResource restoreBestOnExhaust) exhaust (CleanPrecedences(p) once)
+  }
+
+  def iFlatRelaxUntilMakeSpanReduced(p: Planning,
+                 nbRelax: Int = 4,
+                 pKillPerRelax: Int = 50,
+                 stable: Int,
                  objective:CBLSIntVar,
                  displayPlanning:Boolean = false):BasicProtectBest = {
     require(p.model.isClosed, "model should be closed before iFlatRelax algo can be instantiated")
     val maxIterationsForFlatten = (p.activityCount * (p.activityCount - 1)) / 2
 
-    val searchLoop = FlattenWorseFirst(p,maxIterationsForFlatten) maxMoves 1 afterMove {if (displayPlanning) println(p.toAsciiArt)} exhaustBack
-      Relax(p, pKillPerRelax) untilImprovement(p.makeSpan, nbRelax, maxIterationsForFlatten)
+    val flatten = FlattenWorseFirst(p,maxIterationsForFlatten)() afterMove {
+      if (displayPlanning) println(p.toAsciiArt)
+      println(objective)
+    }
+    val relax = Relax(p, pKillPerRelax) untilImprovement(p.makeSpan, nbRelax, maxIterationsForFlatten)
 
-    //TODO: should stop after a flatten!
-    (searchLoop maxMoves stable withoutImprovementOver objective
+    //search Loop is a round Robin
+    val searchLoop = flatten maxMoves 1 exhaustBack relax
+
+    (searchLoop maxMoves stable*4 withoutImprovementOver objective
       protectBest objective whenEmpty p.worseOvershotResource)
   }
+
+//  val searchLoop = FlattenWorseFirst(p,maxIterationsForFlatten) maxMoves 1 afterMove {if (displayPlanning) println(p.toAsciiArt)} exhaustBack
+//    Relax(p, pKillPerRelax) untilImprovement(p.makeSpan, nbRelax, maxIterationsForFlatten)
+
+  //TODO: should stop after a flatten!
+
+  /*
+      //TODO: moves should have reference to their originating neighborhoods
+      //TODO instrumented moves should just inherit from the original move
+      val flatten = FlattenWorseFirst(p,maxIterationsForFlatten) name "flatten" afterMove {if (displayPlanning) println(p.toAsciiArt)}
+      val relaxes = Relax(p, pKillPerRelax) untilImprovement(p.makeSpan, nbRelax, maxIterationsForFlatten)
+
+      val searchLoop2 = flatten sequence (relaxes orElse (flatten maxMoves stable suchThat (_.neighborhoodName.equals("flatten")) withoutImprovementOver objective) exhaust (flatten maxMoves 1)
+
+      searchLoop2 protectBest objective whenEmpty p.worseOvershotResource restoreBestOnExhaust()
+      */
 }

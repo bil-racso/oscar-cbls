@@ -54,6 +54,7 @@ class Planning(val model: Store, val maxDuration: Int) {
   }
 
   var superActivity = false
+  def isThereAnySuperActitity = superActivity
   var activities: List[Activity] = List.empty
   var activityCount: Int = 0
   /**called by activities registers it in the planning, returns an ID, which is the one of the activity*/
