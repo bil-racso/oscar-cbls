@@ -158,24 +158,34 @@ class SearchControl(val m: FZCBLSModel, val objLB:Int, val MaxTimeMilli: Int,val
   def restoreObjective() = {
     m.objective.objectiveWeight := 1;
   }
+  def weightedBest = bestKnownViolation * m.objective.violationWeight.value + bestKnownObjective * m.objective.objectiveWeight.value
 }
+
+
 abstract class NeighbourhoodSearch(val m: FZCBLSModel,val sc: SearchControl) extends SearchProcedure {
   val log = m.log
   val neighbourhoods: List[Neighbourhood] = m.neighbourhoods 
   val searchVariables = neighbourhoods.foldLeft(Set.empty[CBLSIntVar])((acc: Set[CBLSIntVar], x: Neighbourhood) => acc ++ x.getVariables().filterNot(_.isInstanceOf[CBLSIntConstDom])).toArray
   val variableMap = (0 until searchVariables.length).foldLeft(Map.empty[CBLSIntVar, Int])((acc, x) => acc + (searchVariables(x) -> x));
   val violationArray: Array[CBLSIntVar] = searchVariables.map(m.c.violation(_)).toArray;
+  
 }
 
 abstract class NeighbourhoodTabuSearch(m: FZCBLSModel, sc: SearchControl) extends NeighbourhoodSearch(m,sc){
-  val tabu: Array[CBLSIntVar] = searchVariables.map(v => CBLSIntVar(m.m, 0, Int.MaxValue, 0, "Tabu_" + v.name)).toArray;
+  
+  
+  
   val it = CBLSIntVar(m.m, 0, Int.MaxValue, 1, "it");
+  val tabu: Array[CBLSIntVar] = searchVariables.map(v => CBLSIntVar(sc.m.m, 0, Int.MaxValue, 0, "Tabu_" + v.name)).toArray;
   val nonTabuVariables: CBLSSetVar = SelectLEHeapHeap(tabu, it);
-
   val MaxTenure = (searchVariables.length * 0.6).toInt;
   val MinTenure = 2 + 0 * (searchVariables.length * 0.1).toInt;
   val tenureIncrement = Math.max(1, (MaxTenure - MinTenure) / 10);
-  var tenure = MinTenure 
+  var tenure = MinTenure
+  
+  def acceptMove(best: Int,nonTabuSet: Set[CBLSIntVar])(m:Move): Boolean = {
+    m.getModified.forall(nonTabuSet.contains(_)) || (m.value < best && {log("Aspiration"); true}) 
+  }
   
   def makeMove(extendedSearch: Boolean){
     if(it.value%10==0){
@@ -184,13 +194,18 @@ abstract class NeighbourhoodTabuSearch(m: FZCBLSModel, sc: SearchControl) extend
     //
       //showViolatedConstraints(c);
     //}
+//    println(nonTabuVariables.value.size)
     val nonTabuSet = nonTabuVariables.value.map(searchVariables(_));
+    val bestValue = sc.weightedBest
     val bestNeighbour = selectMin(neighbourhoods.map((n: Neighbourhood) =>
       if (extendedSearch) {
-        n.getExtendedMinObjective(it.value, nonTabuSet/*, bestNow*/)
+//        println("E"+n)
+        n.getExtendedMinObjective(it.value, acceptMove(bestValue,nonTabuSet)/*, bestNow*/)
       } else {
-        n.getMinObjective(it.value, nonTabuSet)
+//        println("S")
+        n.getMinObjective(it.value, acceptMove(bestValue,nonTabuSet))
       }))(_.value)
+//      println("X")
     if(bestNeighbour!=null)
         bestNeighbour.commit();
       else

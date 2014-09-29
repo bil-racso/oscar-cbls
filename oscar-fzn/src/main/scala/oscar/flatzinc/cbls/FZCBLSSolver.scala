@@ -112,7 +112,7 @@ class FZCBLSModel(val model: FZProblem, val c: ConstraintSystem, val m: Store, v
     if (vars.length > 0) {
       addNeighbourhood(new MaxViolating(vars.toArray, objective(), c),false)
       val boolVars = vars.filter((v: CBLSIntVar) => v.minVal == 0 && v.maxVal == 1)
-      if (boolVars.length > 0)
+      if (boolVars.length > 1)
         addNeighbourhood(new MaxViolatingSwap(boolVars.toArray, objective(), c),false) 
     }
   }
@@ -251,7 +251,7 @@ class FZCBLSSolver extends SearchEngine with StopWatch {
     cblsmodel.vars = cblsmodel.vars.filterNot(v => v.domainSize==1 || v.getDefiningInvariant!=null);
     cblsmodel.addDefaultNeighbourhouds()
     log("Using "+cblsmodel.vars.length+" Search Variables in default neighbourhoods")
-    cblsmodel.vars.foreach(v => log(2,"Search with "+v))
+    cblsmodel.vars.foreach(v => log(2,"Search with "+v+" dom: "+v.minVal +".."+v.maxVal))
     log("Created all Neighborhoods")
     if(cblsmodel.neighbourhoods.length==0){
       log(0,"No neighbourhood has been created. Aborting!")

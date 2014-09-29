@@ -28,7 +28,7 @@ object FZModelTransfo {
   def findInvariantsFromObjective(model: FZProblem, log: Log): Unit = {
     val visited = MSet.empty[Variable] 
     val front: Queue[(Variable,Constraint,Objective.Value)] = Queue.empty[(Variable,Constraint,Objective.Value)]//Not sure the Constraint is useful
-    model.search.variable.foreach(v => front.enqueue((v,null,model.search.obj)))//add only if there is such a variable.
+    model.search.variable.foreach(v => front.enqueue((v,null,model.search.obj)))//foreach on Option adds only if there is such a variable.
     var cnt = 0;
     while(!front.isEmpty){
      // println(front.size + " "+ visited.size+ " " +model.variables.length)

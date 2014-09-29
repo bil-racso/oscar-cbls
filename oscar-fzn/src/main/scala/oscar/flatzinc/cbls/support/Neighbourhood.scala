@@ -72,13 +72,23 @@ abstract class Neighbourhood(val searchVariables: Array[CBLSIntVarDom]) extends 
   //var minObjective: Int = Int.MaxValue;
   def getVariables(): Array[CBLSIntVarDom] = searchVariables
   
-  def getMinObjective(it: Int, nonTabu: Set[CBLSIntVar]): Move;
-  def getExtendedMinObjective(it: Int, nonTabu: Set[CBLSIntVar]): Move;
+  def getMinObjective(it: Int, accept: Move => Boolean): Move;
+  def getExtendedMinObjective(it: Int, accept: Move => Boolean): Move;
   def randomMove(it: Int): Move;
   
  // def init(): Unit;
   def reset(): Unit;
   def violation(): Int;//TODO used in only one place. Useful?
+  
+  def acceptOr(m:Move, accept: Move => Boolean) = {
+    if(accept(m)) m
+    else new NoMove()
+  }
+  
+  def selectMinImb[R,S](r: Iterable[R] , s: R => Iterable[S],f: (R,S) => Int, st: ((R,S) => Boolean) = ((r:R, s:S) => true), stop: (R,S,Int) => Boolean = (_:R,_:S,_:Int) => false): (R,S) = {
+    val flattened:List[(R,S)] = for (rr <- r.toList; ss <- s(rr).toList) yield (rr,ss)
+    selectMin[(R,S)](flattened)((rands:(R,S)) => f(rands._1,rands._2), (rands:(R,S)) => st(rands._1,rands._2))
+  }
 }
 
 //assumes that all variables have a range domain!
@@ -111,38 +121,37 @@ class SumNeighborhood(val variables: Array[CBLSIntVarDom],val coeffs:Array[Int],
     }
   }
   
-  def getMove(idx1:Int,diff:Int,idx2:Int): Move = {
+  def getMove(idx1:Int,diff:Int,idx2:Int, accept: Move => Boolean): Move = {
     val mv = List((variables(idx1),variables(idx1).value+diff),(variables(idx2),variables(idx2).value-coeffs(idx1)*coeffs(idx2)*diff))
-    new AssignsMove(mv,objective.assignVal(mv))
+    val move = new AssignsMove(mv,objective.assignVal(mv))
+    if(accept(move))move
+    else new NoMove()
   }
   
   def randomMove(it:Int):Move = {
     new NoMove()
   }
-  def getMinObjective(it: Int, nonTabu: Set[CBLSIntVar]): Move = {
-    getExtendedMinObjective(it,nonTabu)
+  def getMinObjective(it: Int, accept: Move => Boolean): Move = {
+    getExtendedMinObjective(it,accept)
   }
-  def getExtendedMinObjective(it: Int, nonTabu: Set[CBLSIntVar]): Move = {
-    val rng = (0 until variables.length).toList.filter(i => nonTabu.contains(variables(i)));
+  def getExtendedMinObjective(it: Int, accept: Move => Boolean): Move = {
+    val rng = 0 until variables.length;
     val part1 = selectMinImb(rng,(i:Int) => variables(i).minVal to variables(i).maxVal,(i:Int,v:Int) => objective.assignVal(variables(i),v))
     part1 match{ 
       case (i1,v1) => 
         val diff = v1 - variables(i1).value
-        val part2 = selectMin(List(0),rng)((k:Int,i2:Int) => getMove(i1,diff,i2).value, (k:Int,i2:Int) => {val nv = variables(i2).value-coeffs(i1)*coeffs(i2)*diff; i1!=i2 && nv >= variables(i2).minVal && nv <= variables(i2).maxVal})
+        val part2 = selectMin(List(0),rng)((k:Int,i2:Int) => getMove(i1,diff,i2,accept).value, (k:Int,i2:Int) => {val nv = variables(i2).value-coeffs(i1)*coeffs(i2)*diff; i1!=i2 && nv >= variables(i2).minVal && nv <= variables(i2).maxVal})
         part2 match{
           case (0,i2) =>
 	        if(diff==0) new NoMove()
-	        else getMove(i1,diff,i2)
+	        else getMove(i1,diff,i2,accept)
           case _ => new NoMove()
         }
       case _ => new NoMove()
     }
   }
   
-  def selectMinImb[R,S](r: Iterable[R] , s: R => Iterable[S],f: (R,S) => Int, st: ((R,S) => Boolean) = ((r:R, s:S) => true), stop: (R,S,Int) => Boolean = (_:R,_:S,_:Int) => false): (R,S) = {
-	val flattened:List[(R,S)] = for (rr <- r.toList; ss <- s(rr).toList) yield (rr,ss)
-	selectMin[(R,S)](flattened)((rands:(R,S)) => f(rands._1,rands._2), (rands:(R,S)) => st(rands._1,rands._2))
-  }
+
 }
 
 
@@ -244,44 +253,45 @@ class GCCNeighborhood(val variables: Array[CBLSIntVarDom],val vals:Array[Int],va
       }
     }*/
   }
-  def getSwapMove(idx1:Int,idx2:Int): Move = {
+  def getSwapMove(idx1:Int,idx2:Int,accept: Move => Boolean): Move = {
     //Swap will always respect the constraint is it was already satisfied
-    new SwapMove(variables(idx1),variables(idx2),objective.swapVal(variables(idx1),variables(idx2)))
+    acceptOr(new SwapMove(variables(idx1),variables(idx2),objective.swapVal(variables(idx1),variables(idx2))),accept)
+    
   }
-  def getAssignMove(idx1:Int,v:Int): Move = {
+  def getAssignMove(idx1:Int,v:Int,accept: Move => Boolean): Move = {
     val cur = variables(idx1).value
     val cnt = counts.get(cur) match {case None => 1 case Some(x) => x.value}
     val lb = lows.getOrElse(cur,0)
-    if(cnt <= lb) return new NoMove(Int.MaxValue);//using <= to protect from potential errors?
+    if(cnt <= lb) return new NoMove();//using <= to protect from potential errors?
     val cnt2 = counts.get(cur) match {case None => 0 case Some(x) => x.value}
     val ub = ups.getOrElse(cur,1)
-    if(cnt2 >= ub) return new NoMove(Int.MaxValue);//using >= to protect from potential errors?
-    return new AssignMove(variables(idx1),v,objective.assignVal(variables(idx1), v));
+    if(cnt2 >= ub) return new NoMove();//using >= to protect from potential errors?
+    acceptOr(new AssignMove(variables(idx1),v,objective.assignVal(variables(idx1), v)),accept)
   }
   
   def randomMove(it:Int):Move = {
     //TODO: respect the domains
-    return getSwapMove(RandomGenerator.nextInt(variables.length),RandomGenerator.nextInt(variables.length))
+    return getSwapMove(RandomGenerator.nextInt(variables.length),RandomGenerator.nextInt(variables.length),_ => true)
   }
   
-  def getMinObjective(it: Int, nonTabu: Set[CBLSIntVar]): Move = {
-    val rng2 = (0 until variables.length).toList.filter(i => nonTabu.contains(variables(i)));
+  def getMinObjective(it: Int, accept: Move => Boolean): Move = {
+    val rng2 = 0 until variables.length;
     val idx = selectMax(rng2, (i: Int) => variableViolation(i).value);
-    getBest(List(idx),rng2)
+    getBest(List(idx),rng2, accept)
   }
-  def getExtendedMinObjective(it: Int, nonTabu: Set[CBLSIntVar]): Move = {
-    val rng2 = (0 until variables.length).toList.filter(i => nonTabu.contains(variables(i)));
-    getBest(rng2,rng2)
+  def getExtendedMinObjective(it: Int, accept: Move => Boolean): Move = {
+    val rng2 = 0 until variables.length
+    getBest(rng2,rng2,accept)
   }
-  def getBest(rng1:Iterable[Int],rng2:Iterable[Int]): Move = {
-    val bestSwap = selectMin2(rng1, rng2, (idx:Int,next:Int) => getSwapMove(idx,next).value,(idx:Int,v:Int) => variables(idx).dom.contains(variables(v).value) && variables(v).dom.contains(variables(idx).value) )
-    val swap = bestSwap match { case (i1,i2) => getSwapMove(i1,i2) case _ => new NoMove(Int.MaxValue)}
+  def getBest(rng1:Iterable[Int],rng2:Iterable[Int],accept: Move => Boolean): Move = {
+    val bestSwap = selectMin2(rng1, rng2, (idx:Int,next:Int) => getSwapMove(idx,next,accept).value,(idx:Int,v:Int) => variables(idx).dom.contains(variables(v).value) && variables(v).dom.contains(variables(idx).value) )
+    val swap = bestSwap match { case (i1,i2) => getSwapMove(i1,i2,accept) case _ => new NoMove(Int.MaxValue)}
     val bestMove = if(!closed){
-      selectMin2(rng1,alldoms._1 to alldoms._2,(idx:Int,v:Int) => getAssignMove(idx,v).value,(idx:Int,v:Int) => variables(idx).dom.contains(v))
+      selectMin2(rng1,alldoms._1 to alldoms._2,(idx:Int,v:Int) => getAssignMove(idx,v,accept).value,(idx:Int,v:Int) => variables(idx).dom.contains(v))
     }else{
-      selectMin2(rng1,vals,(idx:Int,v:Int) => getAssignMove(idx,v).value,(idx:Int,v:Int) => variables(idx).dom.contains(v))
+      selectMin2(rng1,vals,(idx:Int,v:Int) => getAssignMove(idx,v,accept).value,(idx:Int,v:Int) => variables(idx).dom.contains(v))
     }
-    val move = bestMove match {case (i1,i2) => getAssignMove(i1,i2) case _ => new NoMove(Int.MaxValue)}
+    val move = bestMove match {case (i1,i2) => getAssignMove(i1,i2,accept) case _ => new NoMove(Int.MaxValue)}
     if(swap.value < move.value) swap else move
   }
   def violation() = { variableViolation.foldLeft(0)((acc, x) => acc + x.value) };
@@ -308,37 +318,37 @@ class ThreeOpt(variables: Array[CBLSIntVarDom], objective: CBLSObjective, cs: Co
   def randomMove(it:Int):Move = {
     val idx = rng(RandomGenerator.nextInt(variables.length))
     val next = rng(RandomGenerator.nextInt(variables.length))
-    getMove(idx,next)
+    getMove(idx,next, _ => true)
   }
   
-  def getMove(idx: Int, nextnext: Int):Move = {
-    if(idx==nextnext)return new NoMove(Int.MaxValue)//would break the chain
+  def getMove(idx: Int, nextnext: Int,accept: Move => Boolean):Move = {
+    if(idx==nextnext)return new NoMove()//would break the chain
     val next = vars(idx).value
-    if(next==nextnext)return new NoMove(Int.MaxValue)//would break the chain
+    if(next==nextnext)return new NoMove()//would break the chain
     val k = vars(next).value
     val last = vars(nextnext).value
     val list = List((vars(idx),k),(vars(next),last),(vars(nextnext),next))
     val obj = objective.assignVal(list)
-    return new AssignsMove(list,obj);
+    acceptOr(new AssignsMove(list,obj),accept)
   }
-  def getMinObjective(it: Int, nonTabu: Set[CBLSIntVar]): Move = {
-    val idx = selectMax(rng, (i: Int) => variableViolation(i-offset).value, (i: Int) => nonTabu.contains(vars(i)));
-    val next = selectMin(rng.toList.filter(i => nonTabu.contains(vars(i))))(next =>getMove(idx,next).value)
+  def getMinObjective(it: Int, accept: Move => Boolean): Move = {
+    val idx = selectMax(rng, (i: Int) => variableViolation(i-offset).value);
+    val next = selectMin(rng)(next =>getMove(idx,next,accept).value)
    // println(idx +  " "+ getMove(idx,vars(idx).value))
-    getMove(idx,next)
+    getMove(idx,next,accept)
     
   }
-  def getExtendedMinObjective(it: Int, nonTabu: Set[CBLSIntVar]): Move = {
+  def getExtendedMinObjective(it: Int, accept: Move => Boolean): Move = {
     
     //println(variables.map(v => v.value).mkString(","))
     //this one removes a node and reinsert it somewhere else
     //if(nonTabu.isEmpty)println("%EMPTY NON TABU")
-    val rng2 = rng.toList.filter(i => nonTabu.contains(vars(i)));
-    val res = selectMin2(rng2, rng2, (idx:Int,next:Int) => getMove(idx,next).value)
+    val rng2 = rng;
+    val res = selectMin2(rng2, rng2, (idx:Int,next:Int) => getMove(idx,next,accept).value)
     //println(res +  " "+ (getMove _).tupled(res))//)._1,res._2))
     res match {
-      case (idx,next) => getMove(idx,next)
-      case _ => new NoMove(Int.MaxValue) //res is null when the NON TABU list is empty
+      case (idx,next) => getMove(idx,next,accept)
+      case _ => new NoMove(Int.MaxValue) //res is null when the NON TABU list is empty //Should not happen anymore now
     }
   }
   
@@ -352,50 +362,50 @@ class ThreeOptSub(variables: Array[CBLSIntVarDom], objective: CBLSObjective, cs:
     super.reset();
     allloop = false;
   }
-  override def getMove(idx: Int, nextnext: Int):Move = {
+  override def getMove(idx: Int, nextnext: Int, accept: Move => Boolean):Move = {
     val next = vars(idx).value
     val k = vars(next).value
     val last = vars(nextnext).value
     
     if(idx==next&&last==nextnext&& !allloop){
       //println("oops")
-      return new NoMove(Int.MaxValue)//cannot join two selfloops unless there are only selfloops
+      return new NoMove()//cannot join two selfloops unless there are only selfloops
     } 
     if(idx==nextnext&&idx==next){
-      return new NoMove(Int.MaxValue)//cannot insert a selfloop into itself
+      return new NoMove()//cannot insert a selfloop into itself
     }
     //println("yep")
     if(idx==next&&idx!=nextnext){//idx is not in the chain, this should be an inclusion of idx after nextnext
       
       val list = List((vars(idx),last),(vars(nextnext),idx))
-      return new BeforeMove(new AssignsMove(list,objective.assignVal(list)),
-                          () => allloop = false);
+      return acceptOr(new BeforeMove(new AssignsMove(list,objective.assignVal(list)),
+                          () => allloop = false),accept);
     }
     if(last==nextnext&&idx!=nextnext){//nextnext is not in the chain, this should be an inclusion of nextnext after idx
       val list = List((vars(idx),nextnext),(vars(nextnext),next))
-      return new BeforeMove(new AssignsMove(list,objective.assignVal(list)),
-                          () => allloop = false);
+      return acceptOr(new BeforeMove(new AssignsMove(list,objective.assignVal(list)),
+                          () => allloop = false),accept);
     }
     if(idx==nextnext&&idx!=next){//assumes this is a removal of next
       val list = List((vars(idx),k),(vars(next),next))
-      return new BeforeMove(new AssignsMove(list,objective.assignVal(list)),
+      return acceptOr(new BeforeMove(new AssignsMove(list,objective.assignVal(list)),
                           () => if(idx==k){
        // println(allloop)
         allloop = true
         //println(variables.map(v => v.value).mkString(","))
-      });
+      }),accept);
     }
     if(next==nextnext&&idx!=next){//assumes this is a removal of next
       val list = List((vars(idx),k),(vars(next),next))
-      return new BeforeMove(new AssignsMove(list,objective.assignVal(list)),
+      return acceptOr(new BeforeMove(new AssignsMove(list,objective.assignVal(list)),
                           () => if(idx==k){
         //println(allloop)
         allloop = true
         //println(variables.map(v => v.value).mkString(","))
-      });
+      }),accept);
     }
     val list = List((vars(idx),k),(vars(next),last),(vars(nextnext),next))
-    return new AssignsMove(list,objective.assignVal(list));
+    return acceptOr(new AssignsMove(list,objective.assignVal(list)),accept);
   }
 }
 
@@ -416,37 +426,18 @@ class MaxViolating(searchVariables: Array[CBLSIntVarDom], objective: CBLSObjecti
     val minObjective = objective.assignVal(searchVariables(bestIndex), bestValue); 
     return new AssignMove(searchVariables(bestIndex),bestValue,minObjective)
   }
-  def getMinObjective(it: Int, nonTabu: Set[CBLSIntVar]): Move = {
+  def getMinObjective(it: Int, accept: Move => Boolean): Move = {
     //TODO: Only takes into account the violation!
-    val bestIndex = selectMax(indexRange, (i: Int) => variableViolation(i).value, (i: Int) => nonTabu.contains(searchVariables(i)));
-    val bestValue = selectMin(searchVariables(bestIndex).getDomain())((i: Int) => objective.assignVal(searchVariables(bestIndex), i), _ != searchVariables(bestIndex).value)
-    val minObjective = objective.assignVal(searchVariables(bestIndex), bestValue); 
-    return new AssignMove(searchVariables(bestIndex),bestValue,minObjective)
+    val bestIndex = selectMax(indexRange, (i: Int) => variableViolation(i).value);
+    val bestValue = selectMin(searchVariables(bestIndex).getDomain())((i: Int) => acceptOr(new AssignMove(searchVariables(bestIndex),i,objective.assignVal(searchVariables(bestIndex), i)),accept).value, _ != searchVariables(bestIndex).value)
+    return acceptOr(new AssignMove(searchVariables(bestIndex),bestValue,objective.assignVal(searchVariables(bestIndex), bestValue)),accept)
   }
-  def getExtendedMinObjective(it: Int, nonTabu: Set[CBLSIntVar]): Move = {
-    var minSoFar = Int.MaxValue;
-    var bestPair = List.empty[(Int, Int)]
-    for (violVar <- indexRange if nonTabu.contains(searchVariables(violVar)) && searchVariables(violVar).domainSize < 10000000) {
-      for ((valueInDomain: Int) <- searchVariables(violVar).getDomain()) {
-        if (searchVariables(violVar).value != valueInDomain) {
-          val viol = objective.assignVal(searchVariables(violVar), valueInDomain)
-          if (viol < minSoFar || bestPair.isEmpty) {
-            bestPair = List((violVar, valueInDomain))
-            minSoFar = viol
-          } else if (!bestPair.isEmpty && viol == minSoFar) {
-            bestPair = (violVar, valueInDomain) :: bestPair
-          }
-        }
-      }
-    }
-    if (!bestPair.isEmpty) {
-      val (selectedVar, selectedVal) = bestPair.apply(RandomGenerator.nextInt(bestPair.length))
-      val bestIndex = selectedVar
-      val bestValue = selectedVal
-      val minObjective = objective.assignVal(searchVariables(bestIndex), bestValue); ;
-      return new AssignMove(searchVariables(bestIndex),bestValue,minObjective)
-    } else {
-      return new NoMove(Int.MaxValue);
+  def getExtendedMinObjective(it: Int, accept: Move => Boolean): Move = {
+    val bestPair = selectMinImb(indexRange.filter(searchVariables(_).domainSize < 10000000), (i:Int) => searchVariables(i).getDomain(), 
+        (v:Int,i:Int) => acceptOr(new AssignMove(searchVariables(v),i,objective.assignVal(searchVariables(v),i)),accept).value)
+    bestPair match{
+      case (v,i)  => new AssignMove(searchVariables(v),i,objective.assignVal(searchVariables(v),i))
+      case _ => new NoMove()
     }
   }
   
@@ -468,20 +459,21 @@ class MaxViolatingSwap(searchVariables: Array[CBLSIntVarDom], objective: CBLSObj
     val minObjective = objective.swapVal(searchVariables(bestIndex1), searchVariables(bestIndex2))
     return new SwapMove(searchVariables(bestIndex1), searchVariables(bestIndex2),minObjective);
   }
-  def getMinObjective(it: Int, nonTabu: Set[CBLSIntVar]): Move = {
+  def getMinObjective(it: Int, accept: Move =>Boolean): Move = {
+    
     //TODO: Only takes into account the violation for the first
-    val bestIndex1 = selectMax(indexRange, (i: Int) => variableViolation(i).value, (i: Int) => nonTabu.contains(searchVariables(i)));
-    val bestIndex2 = selectMin(indexRange)((i) => objective.swapVal(searchVariables(bestIndex1), searchVariables(i)), (i: Int) => searchVariables(i).value != searchVariables(bestIndex1).value && i != bestIndex1);
-    if (!(nonTabu.contains(searchVariables(bestIndex1))) ||
-      bestIndex1 == bestIndex2 || searchVariables(bestIndex2).value == searchVariables(bestIndex1).value) {
-      return new NoMove(Int.MaxValue);
-    } else {
-      val minObjective = objective.swapVal(searchVariables(bestIndex1), searchVariables(bestIndex2))
-      return new SwapMove(searchVariables(bestIndex1), searchVariables(bestIndex2),minObjective);
-    }
+    val bestIndex1 = selectMax(indexRange, (i: Int) => variableViolation(i).value);
+    val bestIndex2 = selectMin(indexRange)((i:Int) => acceptOr(new SwapMove(searchVariables(bestIndex1),searchVariables(i),objective.swapVal(searchVariables(bestIndex1),searchVariables(i))),accept).value, (i: Int) => searchVariables(i).value != searchVariables(bestIndex1).value && i != bestIndex1);
+    return acceptOr(new SwapMove(searchVariables(bestIndex1),searchVariables(bestIndex2),objective.swapVal(searchVariables(bestIndex1),searchVariables(bestIndex2))),accept)
   }
-  def getExtendedMinObjective(it: Int, nonTabu: Set[CBLSIntVar]): Move = {
-    getMinObjective(it, nonTabu);
+  def getExtendedMinObjective(it: Int, accept: Move =>Boolean): Move = {
+    getMinObjective(it,accept)
+    //Seems too costly
+//    val bestPair = selectMin2(indexRange, indexRange, (v:Int,i:Int) => acceptOr(new SwapMove(searchVariables(v),searchVariables(i),objective.swapVal(searchVariables(v),searchVariables(i))),accept).value)
+//    bestPair match{
+//      case (v,i)  => new SwapMove(searchVariables(v),searchVariables(i),objective.swapVal(searchVariables(v),searchVariables(i)))
+//      case _ => new NoMove()
+//    }
   }
   
   def violation() = { variableViolation.foldLeft(0)((acc, x) => acc + x.value) };
@@ -517,46 +509,46 @@ class AllDifferent(searchVariables: Array[CBLSIntVarDom], objective: CBLSObjecti
     }
   }
   
-  def getSwapMove(idx1: Int,idx2: Int) = {
+  def getSwapMove(idx1: Int,idx2: Int,accept: Move => Boolean) = {
     val v1 = searchVariables(idx1).value
     val v2 = searchVariables(idx2).value
     if(searchVariables(idx1).dom.contains(v2) && searchVariables(idx2).dom.contains(v1))
-      new SwapMove(searchVariables(idx1), searchVariables(idx2),objective.swapVal(searchVariables(idx1), searchVariables(idx2)));
+      acceptOr(new SwapMove(searchVariables(idx1), searchVariables(idx2),objective.swapVal(searchVariables(idx1), searchVariables(idx2))),accept);
     else new NoMove()
   }
   
-  def getAssignMove(idx: Int, v: Int) = {
+  def getAssignMove(idx: Int, v: Int,accept: Move => Boolean) = {
     if(searchVariables(idx).dom.contains(v) && freeValues.contains(v))
-      new BeforeMove(new AssignMove(searchVariables(idx), v,objective.assignVal(searchVariables(idx), v)),
-                     () => {freeValues -= v; freeValues += variables(idx).value});
+      acceptOr(new BeforeMove(new AssignMove(searchVariables(idx), v,objective.assignVal(searchVariables(idx), v)),
+                     () => {freeValues -= v; freeValues += variables(idx).value}),accept);
     else new NoMove()
   }
   def randomMove(it: Int): Move = {
     if (freeValues.size == 0  || RandomGenerator.nextBoolean()) {
       val selectedIndex1 = indexRange(RandomGenerator.nextInt(indexRange.length))
       val selectedIndex2 = indexRange(RandomGenerator.nextInt(indexRange.length))
-      getSwapMove(selectedIndex1,selectedIndex2)
+      getSwapMove(selectedIndex1,selectedIndex2,_ => true)
     } else {
       val selectedIndex = indexRange(RandomGenerator.nextInt(indexRange.length))
       val selectedValue = variables(selectedIndex).getRandValue()
-      getAssignMove(selectedIndex,selectedValue)
+      getAssignMove(selectedIndex,selectedValue,_ => true)
     }
   }
   
-  def getMinObjective(it: Int, nonTabu: Set[CBLSIntVar]): Move = {
-    val rng2 = (0 until variables.length).toList.filter(i => nonTabu.contains(variables(i)));
+  def getMinObjective(it: Int,accept: Move => Boolean): Move = {
+    val rng2 = (0 until variables.length);
     val idx = selectMax(rng2, (i: Int) => variableViolation(i).value);
-    getBest(List(idx),rng2)
+    getBest(List(idx),rng2,accept)
   }
-  def getExtendedMinObjective(it: Int, nonTabu: Set[CBLSIntVar]): Move = {
-    val rng2 = (0 until variables.length).toList.filter(i => nonTabu.contains(variables(i)));
-    getBest(rng2,rng2)
+  def getExtendedMinObjective(it: Int,accept: Move => Boolean): Move = {
+    val rng2 = (0 until variables.length);
+    getBest(rng2,rng2,accept)
   }
-  def getBest(rng1:Iterable[Int],rng2:Iterable[Int]): Move = {
-    val bestSwap = selectMin2(rng1, rng2, (idx:Int,next:Int) => getSwapMove(idx,next).value,(idx:Int,v:Int) => variables(idx).dom.contains(variables(v).value) && variables(v).dom.contains(variables(idx).value) )
-    val swap = bestSwap match { case (i1,i2) => getSwapMove(i1,i2) case _ => new NoMove(Int.MaxValue)}
-    val bestMove = selectMin2(rng1,freeValues,(idx:Int,v:Int) => getAssignMove(idx,v).value,(idx:Int,v:Int) => variables(idx).dom.contains(v))
-    val move = bestMove match {case (i1,i2) => getAssignMove(i1,i2) case _ => new NoMove(Int.MaxValue)}
+  def getBest(rng1:Iterable[Int],rng2:Iterable[Int],accept: Move => Boolean): Move = {
+    val bestSwap = selectMin2(rng1, rng2, (idx:Int,next:Int) => getSwapMove(idx,next,accept).value,(idx:Int,v:Int) => variables(idx).dom.contains(variables(v).value) && variables(v).dom.contains(variables(idx).value) )
+    val swap = bestSwap match { case (i1,i2) => getSwapMove(i1,i2,accept) case _ => new NoMove(Int.MaxValue)}
+    val bestMove = selectMin2(rng1,freeValues,(idx:Int,v:Int) => getAssignMove(idx,v,accept).value,(idx:Int,v:Int) => variables(idx).dom.contains(v))
+    val move = bestMove match {case (i1,i2) => getAssignMove(i1,i2,accept) case _ => new NoMove(Int.MaxValue)}
     if(swap.value < move.value) swap else move
   }
   def violation() = { variableViolation.foldLeft(0)((acc, x) => acc + x.value) };
