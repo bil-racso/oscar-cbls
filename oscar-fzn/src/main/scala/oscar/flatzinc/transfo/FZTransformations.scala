@@ -149,6 +149,7 @@ object FZModelTransfo {
     val mapping = MMap.empty[Constraint, Int];
     var heads = List.empty[Constraint]
     var removed = List.empty[Constraint]
+    var sortedend = List.empty[Constraint];
     for (i <- invariants) {
       mapping += i -> i.getVariables.filter((v) => v.isDefined && (v.definingConstraint.get != i)).length;
       if(mapping(i)==0){
@@ -172,8 +173,36 @@ object FZModelTransfo {
         }
       }
     }
+    def exploreBackward() = {
+      val mappingB = MMap.empty[Constraint, Int];
+      var tails = List.empty[Constraint]
+      for(i <- mapping.keys){
+        mappingB += i -> i.definedVar.get.cstrs.filter((c) => c!=i && c.definedVar.isDefined && mapping.contains(c)).length
+        if(mappingB(i)==0){
+          tails = i :: tails;
+          mappingB.remove(i);
+        }
+      }
+      while(!tails.isEmpty){
+        val k = tails.head
+        tails = tails.tail
+        sortedend = k::sortedend
+        mapping.remove(k)//to avoid searching it again
+        for(j <- k.getVariables.filter(v => v.isDefined && (v.definingConstraint.get != k)).map(v => v.definingConstraint.get)){
+          mappingB(j) = mappingB(j)-1
+          if(mappingB(j)==0){
+            tails = j:: tails
+            mappingB.remove(j)
+          }
+        }
+      }
+    }
     explore()
-    if(!mapping.isEmpty)log("There is a cycle in the set of invariants.!"+mapping.size)
+    exploreBackward()
+    if(!mapping.isEmpty){
+      log("There is a cycle in the set of invariants.!"+mapping.size)
+      print(mapping.mkString("\n"))
+    }
     while(!mapping.isEmpty){
       val (remc,value) = mapping.keys.foldLeft((null.asInstanceOf[Constraint],0))((best,cur) => {val curval = mapping(cur)/*cur.definedVar.get.cstrs.filter(c => c!=cur && mapping.contains(c) && mapping(c)==1).length*/; if(curval > best._2) (cur,curval) else best;});
       mapping.remove(remc)
@@ -189,8 +218,9 @@ object FZModelTransfo {
       removed = remc :: removed
       remc.unsetDefinedVar(remc.definedVar.get)
       explore()
+      exploreBackward()
      // println(mapping.map{case (c,i) => (c,i,c.getVariables.filter(v => {val cc = v.definingConstraint.getOrElse(c); /*mapping.contains(cc) &&*/ cc!=c}).toList.map(v => v.definingConstraint.get )) }.mkString("\n"))      
     }
-    return (sorted.reverse.toArray,removed);
+    return (sorted.reverse.toArray++sortedend,removed);
   }
 }

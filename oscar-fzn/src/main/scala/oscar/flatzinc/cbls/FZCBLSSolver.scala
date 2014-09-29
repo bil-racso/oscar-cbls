@@ -117,7 +117,7 @@ class FZCBLSModel(val model: FZProblem, val c: ConstraintSystem, val m: Store, v
     }
   }
   def createVariables() = {
-    var searchVariables: List[CBLSIntVarDom] = List.empty[CBLSIntVarDom];
+    var variables: List[CBLSIntVarDom] = List.empty[CBLSIntVarDom];
     for (parsedVariable <- model.variables) {
       parsedVariable match {
         case ConcreteVariable(id, dom, annotation) =>
@@ -133,13 +133,14 @@ class FZCBLSModel(val model: FZProblem, val c: ConstraintSystem, val m: Store, v
           val cblsVariable = CBLSIntVarDom(m, dom, initialValue, id);
           //TODO: handle constant variables here.
           cblsIntMap += id -> cblsVariable;
-          if (!parsedVariable.isDefined) {
-            searchVariables = cblsVariable :: searchVariables;
-          }
+          //Removed this test and filtered for search variables only later
+          //if (!parsedVariable.isDefined) {
+            variables = cblsVariable :: variables;
+          //}
         case _ => ()//TODO: DO something for the concrete constants?
       }
     }
-    searchVariables;
+    variables;
   }
     implicit def getCBLSVar(v: Variable) = {
       v match {
@@ -210,9 +211,9 @@ class FZCBLSSolver extends SearchEngine with StopWatch {
     // constraint system
     val cs = ConstraintSystem(m)
     val cblsmodel = new FZCBLSModel(model,cs,m,log,() => getWatch)
-    
+    println("X "+cblsmodel.vars.length)
 
-    log("Created Model (Variables and Objective")
+    log("Created Model (Variables and Objective)")
     
     //TODO: Most of those should be List instead of Array
     var constraints = model.constraints.toArray[Constraint];
@@ -230,6 +231,7 @@ class FZCBLSSolver extends SearchEngine with StopWatch {
     }else{
       log("Did not try to find implicit constraints")
     }
+    println("X "+cblsmodel.vars.length)
     //println(constraints.size)
     
     val poster: FZCBLSConstraintPoster = new FZCBLSConstraintPoster(cs,cblsmodel.getCBLSVar);
@@ -242,6 +244,7 @@ class FZCBLSSolver extends SearchEngine with StopWatch {
       poster.add_invariant(invariant);
     }
     log("Posted "+invariants.length+" Invariants")
+    println("X "+cblsmodel.vars.length)
     
     val softConstraints = constraints.filterNot(_.definedVar.isDefined) /*++ removed*/;//removed is handled because the definedVar is undefined in getSortedInvariants.
     for (constraint <- softConstraints) {
@@ -250,15 +253,19 @@ class FZCBLSSolver extends SearchEngine with StopWatch {
     }
     log("Posted "+softConstraints.length+" Soft Constraints")
     //println(implicitConstraints.length + " implicit constraints");
-    
+    println("X "+cblsmodel.vars.length)
     //Do not want to search on such variables!
-    cblsmodel.vars = cblsmodel.vars.filterNot(_.domainSize==1);
+    cblsmodel.vars = cblsmodel.vars.filterNot(v => v.domainSize==1 || v.getDefiningInvariant!=null);
+    println("X "+cblsmodel.vars.length)
     cblsmodel.addDefaultNeighbourhouds()
-    
+    println("X "+cblsmodel.vars.length)
     log("Using "+cblsmodel.vars.length+" Search Variables in default neighbourhoods")
-    cblsmodel.vars.foreach(v => log(2,"Search with "+v))
+    cblsmodel.vars.foreach(v => log(1,"Search with "+v))
     log("Created all Neighborhoods")
-    
+    if(cblsmodel.neighbourhoods.length==0){
+      log(0,"No neighbourhood has been created. Aborting!")
+      return;
+    }
     //Search
     val timeout = (if(opts.timeOut>0) {opts.timeOut} else 5 * 60) * 1000
     log("Timeout is set to "+timeout+" milliseconds"); 

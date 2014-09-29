@@ -93,7 +93,9 @@ case class array_bool_element(b: Variable, as: Array[Variable], c: Variable, ann
   extends SimpleDefiningConstraint(Array(b,c),c,ann);
   
 case class array_bool_or(as: Array[Variable], r: Variable, ann: List[Annotation] = List.empty[Annotation]) 
-  extends SimpleDefiningConstraint(as++Array(r),r,ann);
+  extends SimpleDefiningConstraint(as++Array(r),r,ann){
+  //override def toString() ={"array_bool_or("+as.mkString("[", ",", "]")+","+r+","+ann+")"}
+}
 
 case class array_bool_xor(as: Array[Variable], ann: List[Annotation] = List.empty[Annotation]) 
   extends AllDefiningConstraint(as,ann)
