@@ -85,9 +85,10 @@ abstract class Neighbourhood(val searchVariables: Array[CBLSIntVarDom]) extends 
     else new NoMove()
   }
   
-  def selectMinImb[R,S](r: Iterable[R] , s: R => Iterable[S],f: (R,S) => Int, st: ((R,S) => Boolean) = ((r:R, s:S) => true), stop: (R,S,Int) => Boolean = (_:R,_:S,_:Int) => false): (R,S) = {
+  def selectMinImb[R,S](r: Iterable[R] , s: R => Iterable[S],f: (R,S) => Int, st: ((R,S) => Boolean) = ((r:R, s:S) => true)): (R,S) = {
     val flattened:List[(R,S)] = for (rr <- r.toList; ss <- s(rr).toList) yield (rr,ss)
-    selectMin[(R,S)](flattened)((rands:(R,S)) => f(rands._1,rands._2), (rands:(R,S)) => st(rands._1,rands._2))
+   // Console.err.println(flattened.length)
+    selectMin[(R,S)](flattened)((rands:(R,S)) => {/*Console.err.println(rands);*/ f(rands._1,rands._2)}, (rands:(R,S)) => st(rands._1,rands._2))
   }
 }
 

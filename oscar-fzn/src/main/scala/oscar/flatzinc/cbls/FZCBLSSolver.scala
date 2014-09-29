@@ -267,7 +267,7 @@ class FZCBLSSolver extends SearchEngine with StopWatch {
         }
     val search =  new Chain(
         new ActionSearch(() => {sc.cancelObjective()}),
-        new SimpleLocalSearch(cblsmodel,sc),
+        if(!opts.is("no-sls"))new SimpleLocalSearch(cblsmodel,sc) else new ActionSearch(() =>{}),
         new NeighbourhoodSearchSAT(cblsmodel,sc),
         new ActionSearch(() => {sc.restoreObjective()}),
         model.search.obj match {

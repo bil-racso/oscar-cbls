@@ -103,14 +103,15 @@ class SimpleLocalSearch(val m:FZCBLSModel,val cs: SearchControl) extends SearchP
     log("Starting Simple Local Search")
     log("Starting Violation: "+m.objective.violation.value)
     if(m.vars.length>0){
+      cs.handlePossibleSolution();
       while(improving > 0 && !cs.stop()){
-        cs.handlePossibleSolution();
         val currentVar = m.vars(i);
         if(violation(i).value > 0){
           val k = selectMin(currentVar.getDomain())(k=> m.objective.objective.assignVal(currentVar,k))
           if(k!=currentVar.value){
             val obj = m.objective.objective.value
             currentVar := k;
+            cs.handlePossibleSolution();
             it+=1;
             if(m.objective.objective.value < obj){
               lastImproved = i;
@@ -126,7 +127,6 @@ class SimpleLocalSearch(val m:FZCBLSModel,val cs: SearchControl) extends SearchP
         if(i==lastImproved)improving -= 1;
       }
     }
-    cs.handlePossibleSolution();
     log("Done Simple Local Search")
     log("Ending Violation: "+m.objective.violation.value)
     log("Nb Moves: "+it)
@@ -191,18 +191,19 @@ abstract class NeighbourhoodTabuSearch(m: FZCBLSModel, sc: SearchControl) extend
     if(it.value%10==0){
         log(2,"it: "+it.value+" violation: "+m.c.violation.value+" objective: "+m.objective.getObjectiveValue())
       }
+    log(3,"it: "+it.value+" violation: "+m.c.violation.value+" objective: "+m.objective.getObjectiveValue())
     //
       //showViolatedConstraints(c);
     //}
-//    println(nonTabuVariables.value.size)
+    log(3,"Non tabu variables: "+nonTabuVariables.value.size)
     val nonTabuSet = nonTabuVariables.value.map(searchVariables(_));
     val bestValue = sc.weightedBest
     val bestNeighbour = selectMin(neighbourhoods.map((n: Neighbourhood) =>
       if (extendedSearch) {
-//        println("E"+n)
+        log(3,"E "+n)
         n.getExtendedMinObjective(it.value, acceptMove(bestValue,nonTabuSet)/*, bestNow*/)
       } else {
-//        println("S")
+        log(3,"S "+n)
         n.getMinObjective(it.value, acceptMove(bestValue,nonTabuSet))
       }))(_.value)
 //      println("X")
@@ -224,6 +225,7 @@ class NeighbourhoodSearchOPT(m:FZCBLSModel, sc: SearchControl) extends Neighbour
   val baseSearchSize = 100;
   val searchFactor = 20;
   override def run()= {
+    log("Starting Optimization Search")
     var extendedSearch = true;
     var roundsWithoutSat = 0;
     val maxRounds = 2;
@@ -250,7 +252,6 @@ class NeighbourhoodSearchOPT(m:FZCBLSModel, sc: SearchControl) extends Neighbour
 
     m.objective.objectiveWeight := 0;
     while (!sc.stop()) {
-      println("ICI")
       makeMove(extendedSearch)
       it ++;
       sc.handlePossibleSolution()
@@ -367,7 +368,7 @@ class NeighbourhoodSearchSAT(m:FZCBLSModel, sc: SearchControl) extends Neighbour
 
   
   override def run()= {
-
+    log("Starting Satisfaction Search")
     var extendedSearch = true;
     var roundsWithoutSat = 0;
     val maxRounds = 5;
@@ -380,7 +381,7 @@ class NeighbourhoodSearchSAT(m:FZCBLSModel, sc: SearchControl) extends Neighbour
     var wait = 0;
     val waitDec = 1;
     
-    while (!sc.stop()) {
+    while (m.objective.violation.value > 0  && !sc.stop()) {
       makeMove(extendedSearch)
       sc.handlePossibleSolution()
       it ++;

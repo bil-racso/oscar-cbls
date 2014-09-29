@@ -41,7 +41,6 @@ import scala.collection.mutable.{Map => MMap}
 import scala.collection.immutable.SortedMap
 import oscar.flatzinc.NoSuchConstraintException
 import oscar.cbls.modeling.Invariants
-import oscar.cbls.invariants.lib.logic.Cumulative
 import scala.collection.immutable.TreeSet
 import oscar.flatzinc.cbls.support.CBLSIntVarDom
 import oscar.flatzinc.cbls.support.CBLSIntConstDom
@@ -125,11 +124,9 @@ class FZCBLSConstraintPoster(val c: ConstraintSystem ,implicit val getCBLSVar: V
     val start = s.foldLeft(Int.MaxValue)((acc,v) => if (v.minVal < acc) v.minVal else acc)
     val horizon = s.foldLeft(Int.MinValue)((acc,v) => if (v.maxVal > acc) v.maxVal else acc)
     val p = new Array[CBLSIntVar](horizon-start+1)
-    val a = new Array[CBLSSetVar](horizon-start+1)
     val ns = new Array[CBLSIntVar](s.length)
     for(i <- 0 to horizon-start){
       p(i) = CBLSIntVar(m,0 to r.foldLeft(0)((s,r) => s + r.max),0,"Profile("+i+")")
-      a(i) = new CBLSSetVar(m,0,s.length-1,"Active("+i+")")
     }
     val offset = new CBLSIntConst(-start,c.model)
     for(i <- 0 to s.length-1){
@@ -139,7 +136,7 @@ class FZCBLSConstraintPoster(val c: ConstraintSystem ,implicit val getCBLSVar: V
     //println(offset)
     //println(ns.map(v=>v.minVal).mkString(","))
     //println(ns.map(v=>v.value).mkString(","))
-    val cumul = Cumulative(indices,ns,d.map(getCBLSVar(_)),r.map(getCBLSVar(_)),p,a);
+    val cumul = CumulativeNoSet(indices,ns,d.map(getCBLSVar(_)),r.map(getCBLSVar(_)),p);
     /*for(i <- 0 to horizon-start){
       c.add(GE(b,p(i)));
     }*/

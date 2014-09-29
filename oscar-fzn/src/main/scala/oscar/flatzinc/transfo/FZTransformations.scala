@@ -51,7 +51,7 @@ object FZModelTransfo {
         v.definingConstraint.get.getVariables().foreach(vv => if(!visited.contains(vv)) {visited.add(vv); front.enqueue((vv,v.definingConstraint.get,Objective.SATISFY))})
       }
     }
-    log(0,"Found "+cnt+" invariants from the objective.")
+    log(1,"Found "+cnt+" invariants from the objective.")
   }
   
   def findInvariants(model: FZProblem, log:Log):Unit = {
@@ -188,11 +188,15 @@ object FZModelTransfo {
         sortedend = k::sortedend
         mapping.remove(k)//to avoid searching it again
         for(j <- k.getVariables.filter(v => v.isDefined && (v.definingConstraint.get != k)).map(v => v.definingConstraint.get)){
-          mappingB(j) = mappingB(j)-1
-          if(mappingB(j)==0){
-            tails = j:: tails
-            mappingB.remove(j)
-          }
+          if(mappingB.contains(j)){
+            mappingB(j) = mappingB(j)-1
+            if(mappingB(j)==0){
+              tails = j:: tails
+              mappingB.remove(j)
+            }
+          }/*else{
+            println(j.definedVar+ " ")
+          }*/
         }
       }
     }
@@ -200,7 +204,7 @@ object FZModelTransfo {
     exploreBackward()
     if(!mapping.isEmpty){
       log("There is a cycle in the set of invariants.!"+mapping.size)
-      print(mapping.mkString("\n"))
+      //print(mapping.mkString("\n"))
     }
     while(!mapping.isEmpty){
       val (remc,value) = mapping.keys.foldLeft((null.asInstanceOf[Constraint],0))((best,cur) => {val curval = mapping(cur)/*cur.definedVar.get.cstrs.filter(c => c!=cur && mapping.contains(c) && mapping(c)==1).length*/; if(curval > best._2) (cur,curval) else best;});
@@ -220,6 +224,7 @@ object FZModelTransfo {
       exploreBackward()
      // println(mapping.map{case (c,i) => (c,i,c.getVariables.filter(v => {val cc = v.definingConstraint.getOrElse(c); /*mapping.contains(cc) &&*/ cc!=c}).toList.map(v => v.definingConstraint.get )) }.mkString("\n"))      
     }
+    log("Add to remove "+removed.length+" invariants to be acyclic.")
     return (sorted.reverse.toArray++sortedend,removed);
   }
 }
