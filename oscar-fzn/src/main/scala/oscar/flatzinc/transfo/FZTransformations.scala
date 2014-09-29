@@ -18,23 +18,22 @@
  */
 package oscar.flatzinc.transfo
 
-import scala.util.control.Breaks._
 import oscar.flatzinc.model._
 import oscar.flatzinc.cbls.Log
 import scala.collection.mutable.{ Map => MMap, Set => MSet }
-import scala.collection.mutable.ListBuffer
+import scala.collection.mutable.Queue
 
 object FZModelTransfo {
   
   def findInvariantsFromObjective(model: FZProblem, log: Log): Unit = {
     val visited = MSet.empty[Variable] 
-    val front: ListBuffer[(Variable,Constraint,Objective.Value)] = ListBuffer.empty[(Variable,Constraint,Objective.Value)]//Not sure the Constraint is useful
-    model.search.variable.foreach(v => front.append((v,null,model.search.obj)))//add only if there is such a variable.
+    val front: Queue[(Variable,Constraint,Objective.Value)] = Queue.empty[(Variable,Constraint,Objective.Value)]//Not sure the Constraint is useful
+    model.search.variable.foreach(v => front.enqueue((v,null,model.search.obj)))//add only if there is such a variable.
     var cnt = 0;
     while(!front.isEmpty){
-      val (v,c,obj) = front.head
-      front.trimStart(1)
-      visited.add(v)
+     // println(front.size + " "+ visited.size+ " " +model.variables.length)
+      val (v,c,obj) = front.dequeue()
+     // visited.add(v)
       if(!v.isDefined){
         val cand = v.cstrs.filter((c: Constraint) => c.definedVar.isEmpty && c.canDefineVar && c.getCandidateDefVars().contains(v))
         val cand2 = cand//.filter(c => ! dependsOn(c,v,false))
@@ -49,7 +48,7 @@ object FZModelTransfo {
         }
       }
       if(v.isDefined){
-        v.definingConstraint.get.getVariables().foreach(vv => if(!visited.contains(vv)) front.append((vv,v.definingConstraint.get,Objective.SATISFY)))
+        v.definingConstraint.get.getVariables().foreach(vv => if(!visited.contains(vv)) {visited.add(vv); front.enqueue((vv,v.definingConstraint.get,Objective.SATISFY))})
       }
     }
     log(0,"Found "+cnt+" invariants from the objective.")

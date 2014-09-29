@@ -211,15 +211,11 @@ class FZCBLSSolver extends SearchEngine with StopWatch {
     // constraint system
     val cs = ConstraintSystem(m)
     val cblsmodel = new FZCBLSModel(model,cs,m,log,() => getWatch)
-    println("X "+cblsmodel.vars.length)
-
     log("Created Model (Variables and Objective)")
+    
     
     //TODO: Most of those should be List instead of Array
     var constraints = model.constraints.toArray[Constraint];
-    
-    
-    
     
     
     if(!opts.is("no-impl-cstr")){
@@ -231,7 +227,6 @@ class FZCBLSSolver extends SearchEngine with StopWatch {
     }else{
       log("Did not try to find implicit constraints")
     }
-    println("X "+cblsmodel.vars.length)
     //println(constraints.size)
     
     val poster: FZCBLSConstraintPoster = new FZCBLSConstraintPoster(cs,cblsmodel.getCBLSVar);
@@ -244,7 +239,6 @@ class FZCBLSSolver extends SearchEngine with StopWatch {
       poster.add_invariant(invariant);
     }
     log("Posted "+invariants.length+" Invariants")
-    println("X "+cblsmodel.vars.length)
     
     val softConstraints = constraints.filterNot(_.definedVar.isDefined) /*++ removed*/;//removed is handled because the definedVar is undefined in getSortedInvariants.
     for (constraint <- softConstraints) {
@@ -253,14 +247,11 @@ class FZCBLSSolver extends SearchEngine with StopWatch {
     }
     log("Posted "+softConstraints.length+" Soft Constraints")
     //println(implicitConstraints.length + " implicit constraints");
-    println("X "+cblsmodel.vars.length)
     //Do not want to search on such variables!
     cblsmodel.vars = cblsmodel.vars.filterNot(v => v.domainSize==1 || v.getDefiningInvariant!=null);
-    println("X "+cblsmodel.vars.length)
     cblsmodel.addDefaultNeighbourhouds()
-    println("X "+cblsmodel.vars.length)
     log("Using "+cblsmodel.vars.length+" Search Variables in default neighbourhoods")
-    cblsmodel.vars.foreach(v => log(1,"Search with "+v))
+    cblsmodel.vars.foreach(v => log(2,"Search with "+v))
     log("Created all Neighborhoods")
     if(cblsmodel.neighbourhoods.length==0){
       log(0,"No neighbourhood has been created. Aborting!")
