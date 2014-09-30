@@ -2,7 +2,6 @@ package oscar.cp.scheduling.constraints
 
 import oscar.cp.core._
 import oscar.cp.core.CPOutcome._
-import scala.util.Sorting
 
 // @author Steven Gay steven.gay@uclouvain.be
 
@@ -40,7 +39,8 @@ extends Constraint(capacity.store, "EFKameugne11WithResources") {
   }
   
   
-  val order = Array.tabulate(n)(i => i)
+  val byEndMax = Array.tabulate(n)(i => i)
+  val byStartMin =  Array.tabulate(n)(i => i)
   
   val r = starts   .map(i => i)
   val p = durations.map(i => i)
@@ -71,19 +71,33 @@ extends Constraint(capacity.store, "EFKameugne11WithResources") {
       i += 1
     }
     
-    val byEndMax = order.sortBy(endsmax)
-    val reorder  = order.sortBy(startsmin)
+    // sort by start min and end max ; if permutations already order activities, no need to sort. This happens often enough to check.
+    var beg = 0
+    while (beg + 1 < n && startsmin(byStartMin(beg)) <= startsmin(byStartMin(beg + 1))) beg += 1
+    if (beg < n - 1) 
+      scala.util.Sorting.stableSort(byStartMin, startsmin)
+      // oscar.algo.SortUtils.stableSort(byStartMin, 0, n, (a: Int, b: Int) => startsmin(a) < startsmin(b))
+    
+    beg = 0
+    while (beg + 1 < n && endsmax(byEndMax(beg)) <= endsmax(byEndMax(beg + 1))) beg += 1
+    if (beg < n - 1)
+      scala.util.Sorting.stableSort(byEndMax, endsmax)
+      // oscar.algo.SortUtils.stableSort(byEndMax,  0, n, (a: Int, b: Int) => endsmax(a)   < endsmax(b))
+      
+    
+    
+    
     val C = capacity.max
     
     i = 0
     while (i < n) {
-      r(i) = starts(   reorder(i))
-      p(i) = durations(reorder(i))
-      d(i) = ends(     reorder(i))
-      c(i) = demands(  reorder(i))
+      r(i) = starts(   byStartMin(i))
+      p(i) = durations(byStartMin(i))
+      d(i) = ends(     byStartMin(i))
+      c(i) = demands(  byStartMin(i))
 
-      mandatory(i) = resources(reorder(i)).isBoundTo(id)
-      optional(i) = !mandatory(i) && resources(reorder(i)).hasValue(id)
+      mandatory(i) = resources(byStartMin(i)).isBoundTo(id)
+      optional(i) = !mandatory(i) && resources(byStartMin(i)).hasValue(id)
 
       rmin(i) = r(i).min
       dmax(i) = d(i).max
@@ -100,12 +114,25 @@ extends Constraint(capacity.store, "EFKameugne11WithResources") {
      *  Edge Finding tries to find a task interval \Omega and a task i
      *  s.t. \Omega << i, i.e. all tasks of \Omega finish before the end of i.
      *  Then it updates the est of i using a task interval \Theta \subseteq \Omega.
-     *  Kameugne11 is does not try to get the tightest possible \Theta,
+     *  Kameugne11 does not try to get the tightest possible \Theta,
      *  instead it relies on two heuristics at once :
      *  _ take the \Theta with smallest slack, rho
      *  _ take the \Theta with highest density, tau
      *  This actually converges to the same fixpoint as classic EF with optimal \Theta. 
      */
+    
+    /* 
+    // this is an attempt to save on useless iterations,
+    // something tells me that most bound activities at the extremities can be ignored,
+    // only the boundaries matter  
+    val kBeg_ = byEndMax indexWhere { i => !d(i).isBound }
+    val kEnd = n - 1 - byEndMax.reverse.indexWhere { i => !d(i).isBound }
+    val kBeg =  if (kBeg_ < 0) n else kBeg_
+    
+    var k = kBeg
+    while(k < kEnd) {
+    * 
+    */
     
     var k = 0
     while(k < n) {
@@ -131,12 +158,27 @@ extends Constraint(capacity.store, "EFKameugne11WithResources") {
           if (rest > 0) {                                                                                      // We do density updates only for \Theta \subseteq est_i, lct_i 
             Dupd(i) = math.max(Dupd(i), r_rho + ceiling_div(rest, cmin(i))) 
           }
-        }
-        else if (optional(i) && !mandatory(i) && dmax(i) <= du) {                   // if an activity that could be in this resource
-          if (Energy + pmin(i) * cmin(i) > C * (du - rmin(i)) &&   // would make it overload
-              resources(i).removeValue(id) == Failure)             // remove it from this resource
+          
+          // additional detection of the journal version
+          if (mandatory(i) &&
+              r_rho > Int.MinValue &&
+              maxEnergy + cmin(i) * (rmin(i) + pmin(i) - r_rho) > C * (du - r_rho) &&
+              Dupd(i) > rmin(i) &&
+              r(i).updateMin(Dupd(i)) == Failure)
             return Failure
         }
+        
+        if (optional(i) && dmax(i) <= du) {                        // if an activity that could be in this resource
+          if (Energy + pmin(i) * cmin(i) > C * (du - rmin(i))) {   // would make it overload
+            optional(i) = false
+            if (resources(byStartMin(i)).removeValue(id) == Failure)   // remove it from this resource
+              return Failure
+          }
+        }
+         
+        
+         
+        
         
         E(i) = Energy
         i -= 1
@@ -161,7 +203,9 @@ extends Constraint(capacity.store, "EFKameugne11WithResources") {
             if (newlbpi > rmin(i)) {
               // println(s"* EF Updating ${r(i)} with $newlbpi")
               if (mandatory(i) && r(i).updateMin(newlbpi) == Failure) return Failure
-              if (optional(i) && newlbpi > r(i).max && resources(reorder(i)).removeValue(id) == Failure) return Failure
+              if (optional(i) && newlbpi > r(i).max) {
+                if (resources(byStartMin(i)).removeValue(id) == Failure) return Failure
+              }
             }
           }
         }

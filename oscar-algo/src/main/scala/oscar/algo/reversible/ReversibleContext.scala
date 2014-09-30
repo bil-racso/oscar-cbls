@@ -43,13 +43,13 @@ class ReversibleContext {
   private val popListeners = new ArrayBuffer[() => Unit]()
 
   /** Returns the magic number of the context */
-  def magic: Long = magicNumber
+  final def magic: Long = magicNumber
 
   /** Returns the maximal size of the trailing stack */
-  def maxSize: Int = maxTrailSize
+  final def maxSize: Int = maxTrailSize
 
   /** Returns the time spent to pop states */
-  def time: Long = trailTime
+  final def time: Long = trailTime
 
   /** Adds an action to execute when the `pop` function is called */
   def onPop(action: => Unit): Unit = popListeners.append(() => action)

@@ -11,3 +11,8 @@ lib/scalatest-1.6.1.jar
 .cache
 .worksheet/src/test.scala
 oscar.eml
+
+syntax: regexp
+\.jardesc$
+syntax: regexp
+^MANIFEST\.MF$

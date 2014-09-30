@@ -53,6 +53,9 @@ class CPStore(val propagStrength: CPPropagStrength) extends SearchNode {
 
   // True if the store is in the fix point algorithm
   private var inPropagate = false
+  
+  // Reference to the last constraint called
+  private var lastConstraint: Constraint = null
 
   // Use for fast access to priority queue
   private var highestPriorL1 = 0
@@ -60,9 +63,6 @@ class CPStore(val propagStrength: CPPropagStrength) extends SearchNode {
 
   // True if the L1 queue is empty
   private var isL1QueueEmpty = true
-
-  // Reference the last constraint called
-  private var lastConstraint: Constraint = null
 
   /**
    *  Returns the last constraint called in the propagate algorithm.
@@ -96,7 +96,7 @@ class CPStore(val propagStrength: CPPropagStrength) extends SearchNode {
   }
 
   // Adds the constraint in the L2 queue
-  @inline private def addQueueL2(c: Constraint): Unit = {
+  @inline protected def addQueueL2(c: Constraint): Unit = {
     if (c.isActive && !c.isInQueue && (!c.inPropagate || !c.idempotent)) {
       c.setInQueue()
       val priority = c.priorityL2
@@ -121,7 +121,7 @@ class CPStore(val propagStrength: CPPropagStrength) extends SearchNode {
     }
   }
 
-  @inline private def addQueueL1(c: Constraint, prior: Int, evt: => CPOutcome): Unit = {
+  @inline protected def addQueueL1(c: Constraint, prior: Int, evt: => CPOutcome): Unit = {
     propagQueueL1(prior).addLast(() =>
       if (c.isActive) {
         lastConstraint = c // last constraint called
@@ -138,7 +138,7 @@ class CPStore(val propagStrength: CPPropagStrength) extends SearchNode {
     while (q != null) {
       val c = q.cons
       val x = q.x
-      if (c.isActive()) {
+      if (c.isActive) {
         addQueueL1(c, c.priorityRemoveL1, c.valRemove(x, x.transform(v)));
       }
       q = q.next
@@ -151,7 +151,7 @@ class CPStore(val propagStrength: CPPropagStrength) extends SearchNode {
       val c = q.cons
       val x = q.x
       val idx = q.idx
-      if (c.isActive()) {
+      if (c.isActive) {
         addQueueL1(c, c.priorityRemoveL1, c.valRemoveIdx(x, idx, x.transform(v)))
       }
       q = q.next
@@ -163,7 +163,7 @@ class CPStore(val propagStrength: CPPropagStrength) extends SearchNode {
     while (q != null) {
       val c = q.cons
       val x = q.x
-      if (c.isActive()) {
+      if (c.isActive) {
         addQueueL1(c, c.priorityBoundsL1, c.updateBounds(x))
       }
       q = q.next;
@@ -176,7 +176,7 @@ class CPStore(val propagStrength: CPPropagStrength) extends SearchNode {
       val c = q.cons
       val x = q.x
       val idx = q.idx
-      if (c.isActive()) {
+      if (c.isActive) {
         addQueueL1(c, c.priorityBoundsL1, c.updateBoundsIdx(x, idx))
       }
       q = q.next;
@@ -188,7 +188,7 @@ class CPStore(val propagStrength: CPPropagStrength) extends SearchNode {
     while (q != null) {
       val c = q.cons
       val x = q.x
-      if (c.isActive()) {
+      if (c.isActive) {
         addQueueL1(c, c.priorityBindL1, c.valBind(x))
       }
       q = q.next
@@ -201,7 +201,7 @@ class CPStore(val propagStrength: CPPropagStrength) extends SearchNode {
       val c = q.cons
       val x = q.x
       val idx = q.idx
-      if (c.isActive()) {
+      if (c.isActive) {
         addQueueL1(c, c.priorityBindL1, c.valBindIdx(x, idx))
       }
       q = q.next
@@ -216,7 +216,7 @@ class CPStore(val propagStrength: CPPropagStrength) extends SearchNode {
       val c = q.cons
       val x = q.x
       val idx = q.idx
-      if (c.isActive()) {
+      if (c.isActive) {
         addQueueL1(c, c.priorityBindL1, c.valRequired(x, v))
       }
       q = q.next
@@ -229,7 +229,7 @@ class CPStore(val propagStrength: CPPropagStrength) extends SearchNode {
       val c = q.cons
       val x = q.x
       val idx = q.idx
-      if (c.isActive()) {
+      if (c.isActive) {
         addQueueL1(c, c.priorityBindL1, c.valRequiredIdx(x, idx, v))
       }
       q = q.next
@@ -242,7 +242,7 @@ class CPStore(val propagStrength: CPPropagStrength) extends SearchNode {
       val c = q.cons
       val x = q.x
       val idx = q.idx
-      if (c.isActive()) {
+      if (c.isActive) {
         addQueueL1(c, c.priorityBindL1, c.valExcluded(x, v))
       }
       q = q.next
@@ -255,7 +255,7 @@ class CPStore(val propagStrength: CPPropagStrength) extends SearchNode {
       val c = q.cons
       val x = q.x
       val idx = q.idx
-      if (c.isActive()) {
+      if (c.isActive) {
         addQueueL1(c, c.priorityBindL1, c.valExcludedIdx(x, idx, v))
       }
       q = q.next

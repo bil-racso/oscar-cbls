@@ -16,7 +16,6 @@ import oscar.cp.core._
  * If T = 7 and the letter O represents an even number, what is the only possible value for W
  *
  * @author Pierre Schaus pschaus@gmail.com
- * @author Renaud Hartert ren.hartert@gmail.com
  */
 object GardnerTwoPlusTwo extends CPModel with App {
 
@@ -26,12 +25,14 @@ object GardnerTwoPlusTwo extends CPModel with App {
   val F = CPIntVar(0 to 9)
   val U = CPIntVar(0 to 9)
   val R = CPIntVar(0 to 9)
+  
+  val variables = Seq(T, W, O, F, U, R)
 
-  add((T * 100 + W * 10 + O) * 2 == F * 1000 + O * 100 + U + 10 + R)
-  add(allDifferent(Array(T, W, O, F, U, R)), Strong)
+  add((T * 100 + W * 10 + O) * 2 == F * 1000 + O * 100 + U * 10 + R)
+  add(allDifferent(variables), Strong)
 
   search {
-    binaryFirstFail(Seq(T, W, O, F, U, R))
+    binaryFirstFail(variables)
   }
 
   onSolution {

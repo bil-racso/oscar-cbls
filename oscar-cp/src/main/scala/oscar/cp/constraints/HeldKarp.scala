@@ -97,7 +97,7 @@ class HeldKarp(val edges: CPSetVar,val edgeData: Array[(Int,Int,Int)], val cost:
     for (metaiter <- 0 until nMetaIter) {
       iter = 0
       while (iter < nSteps) {
-        
+        println("iter---")
         iter += 1
         improvement = false
         
@@ -130,14 +130,14 @@ class HeldKarp(val edges: CPSetVar,val edgeData: Array[(Int,Int,Int)], val cost:
           }
           edgeUsed(idx) = true
           if (incident(i) > 2 || incident(j) > 2) {
-            //println("failure h&k nadjecent exluced > 2")
+            //println("failure h&k nadjecent excluded > 2")
             return Failure
           }
           weight += edgeWeight(idx)
         }
         // check if out degree is not more than 2
         if (nAdjacentToExcluded > 2) {
-          //println("failure h&k nadjecent exluced > 2")
+          //println("failure h&k nadjecent excluded > 2")
           return Failure
         }
         var heaviestWeightAdjacentToExcluded = Double.MaxValue 
@@ -155,6 +155,7 @@ class HeldKarp(val edges: CPSetVar,val edgeData: Array[(Int,Int,Int)], val cost:
               component.union(i, j, t)   
               edgeUsed(idx) = true
               weight += edgeWeight(idx)
+              //println("add edge "+i+"->"+j+" w:"+w+ "ecluded:"+excluded)
             }
           } else {
             if (nAdjacentToExcluded < 2) {
@@ -164,10 +165,13 @@ class HeldKarp(val edges: CPSetVar,val edgeData: Array[(Int,Int,Int)], val cost:
               heaviestWeightAdjacentToExcluded = edgeWeight(idx)
               nAdjacentToExcluded += 1
               edgeUsed(idx) = true
+              //println("add 1-tree edge"+i+"->"+j+" w:"+w)
+
             }
           }
         }
         val oneTreeLBf = ((2 * y.map(_ + 0.0).sum + weight)-epsilon)
+        println("=>"+oneTreeLBf+" " +y.mkString(","))
         val oneTreeLB = oneTreeLBf.ceil.toInt
         if (lb < oneTreeLB) {
           improvement = true
@@ -283,6 +287,7 @@ class CCTree(n: Int) {
   def singleRoot = rooted
 
   def merge(left: CCTreeNode, right: CCTreeNode, value: Int): CCTreeNode = {
+    //println("left index:"+left.index+" right index:"+right.index +" index:"+index)
     assert(left.index < index && right.index < index)
     val parent = nodes(index)
     parent.left = left.index
