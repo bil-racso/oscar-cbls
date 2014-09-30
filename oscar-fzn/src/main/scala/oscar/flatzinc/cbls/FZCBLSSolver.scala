@@ -19,7 +19,7 @@
 package oscar.flatzinc.cbls
 
 import scala.util.Random
-import scala.collection.mutable.{ Map => MMap, Set => MSet }
+import scala.collection.mutable.{ Map => MMap}
 import oscar.cbls.search._
 import oscar.cbls.objective.{ Objective => CBLSObjective }
 import oscar.cbls.constraints.core._
@@ -215,50 +215,57 @@ class FZCBLSSolver extends SearchEngine with StopWatch {
     log("Created Model (Variables and Objective)")
     
     
-    //TODO: Most of those should be List instead of Array
-    var constraints = model.constraints.toArray[Constraint];
+    val allcstrs:List[Constraint] = model.constraints;
     
     
+    val notimplcstrs = 
     if(!opts.is("no-impl-cstr")){
       val implicitPoster = new FZCBLSImplicitConstraints(cblsmodel)
-      val (implcstr,softcstr) = implicitPoster.findAndPostImplicit(constraints);
-      constraints = softcstr
-      log("Found "+cblsmodel.neighbourhoods .length+" Implicit Constraints")
+      val (implcstrs,othercstrs) = implicitPoster.findAndPostImplicit(allcstrs);
+      //TODO: Add the implcstrs to some system to ensure that they are at all time respected.
+      log("Found "+cblsmodel.neighbourhoods.length+" Implicit Constraints")
       cblsmodel.neighbourhoods.foreach(n => log(2,"Created Neighbourhood "+ n+ " over "+n.searchVariables.length+" variables"))
+      othercstrs
     }else{
       log("Did not try to find implicit constraints")
+      allcstrs
     }
     //println(constraints.size)
     
     val poster: FZCBLSConstraintPoster = new FZCBLSConstraintPoster(cs,cblsmodel.getCBLSVar);
     
-    log("Possibly "+constraints.filter(_.definedVar.isDefined).length+" invariants.")
-    var (invariants,removed) = FZModelTransfo.getSortedInvariants(constraints.filter(_.definedVar.isDefined))(cblsmodel.log)
+    val (maybedircstrs,surelysoftcstrs) = notimplcstrs.partition(_.definedVar.isDefined)
+    log("Possibly "+maybedircstrs.length+" invariants.")
+    val (invariants,removed) = FZModelTransfo.getSortedInvariants(maybedircstrs)(cblsmodel.log)
     log("Sorted "+invariants.length+" Invariants")
+    val softConstraints = surelysoftcstrs ++ removed;
+    
     for (invariant <- invariants){
       log(2,"Posting as Invariant "+invariant)
       poster.add_invariant(invariant);
     }
     log("Posted "+invariants.length+" Invariants")
-    cblsmodel.objective.updateObjective()
     
-    val softConstraints = constraints.filterNot(_.definedVar.isDefined) /*++ removed*/;//removed is handled because the definedVar is undefined in getSortedInvariants.
     for (constraint <- softConstraints) {
-      log(2,"Posting "+constraint)
+      log(2,"Posting as Soft "+constraint)
       poster.add_constraint(constraint);
     }
     log("Posted "+softConstraints.length+" Soft Constraints")
+    
+    
     //println(implicitConstraints.length + " implicit constraints");
     //Do not want to search on such variables!
     cblsmodel.vars = cblsmodel.vars.filterNot(v => v.domainSize==1 || v.getDefiningInvariant!=null);
     cblsmodel.addDefaultNeighbourhouds()
-    log("Using "+cblsmodel.vars.length+" Search Variables in default neighbourhoods")
-    cblsmodel.vars.foreach(v => log(2,"Search with "+v+" dom: "+v.minVal +".."+v.maxVal))
-    log("Created all Neighborhoods")
     if(cblsmodel.neighbourhoods.length==0){
       log(0,"No neighbourhood has been created. Aborting!")
       return;
     }
+    log("Using "+cblsmodel.vars.length+" Search Variables in default neighbourhoods")
+    cblsmodel.vars.foreach(v => log(2,"Search with "+v+" dom: "+v.minVal +".."+v.maxVal))
+    log("Created all Neighborhoods")
+    cblsmodel.objective.updateObjective()
+    
     //Search
     val timeout = (if(opts.timeOut>0) {opts.timeOut} else 5 * 60) * 1000
     log("Timeout is set to "+timeout+" milliseconds"); 

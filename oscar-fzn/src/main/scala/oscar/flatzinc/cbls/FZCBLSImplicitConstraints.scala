@@ -20,13 +20,13 @@ package oscar.flatzinc.cbls
 import oscar.cbls.invariants.core.computation.CBLSIntVar
 import oscar.flatzinc.cbls.support._
 import oscar.flatzinc.model._
+import scala.collection.mutable.ArrayOps
 
 
     
 class FZCBLSImplicitConstraints(val cblsmodel:FZCBLSModel) {
   
-  def findAndPostImplicit(constraints: Array[Constraint]) = {
-  
+  def findAndPostImplicit(constraints: List[Constraint]) = {
       //TODO: DO not like the filtering here.
       //TODO: Why is constraints an Array. Could be a List?
       constraints.partition((constraint: Constraint) =>

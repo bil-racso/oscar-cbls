@@ -25,6 +25,18 @@ import scala.collection.mutable.Queue
 
 object FZModelTransfo {
   
+  def areAllIneq(cstrs: List[Constraint]): Boolean = {
+    cstrs.forall{ 
+      case bool_le(x,y,_) => true
+      case bool_lin_le(x,y,z,_) => true
+      case bool_lt(x,y,_) => true
+      case int_le(x,y,_) => true
+      case int_lin_le(x,y,z,_) => true
+      case int_lt(x,y,_) => true
+      case _ => false
+    }
+  }
+  
   def findInvariantsFromObjective(model: FZProblem, log: Log): Unit = {
     val visited = MSet.empty[Variable] 
     val front: Queue[(Variable,Constraint,Objective.Value)] = Queue.empty[(Variable,Constraint,Objective.Value)]//Not sure the Constraint is useful
@@ -45,6 +57,11 @@ object FZModelTransfo {
           val cc = cand2.head
           cc.setDefinedVar(v)
           cnt+=1
+        }else{
+          if(areAllIneq(v.cstrs)){
+            log(0,"Found a possibility to make a min/max constraint for "+v);
+            v.cstrs.foreach(println(_))
+          } 
         }
       }
       if(v.isDefined){
@@ -143,7 +160,7 @@ object FZModelTransfo {
   
   
   
-  def getSortedInvariants(inv: Array[Constraint])(implicit log: Log): (Array[Constraint],List[Constraint]) = {
+  def getSortedInvariants(inv: List[Constraint])(implicit log: Log): (List[Constraint],List[Constraint]) = {
     val invariants = inv.toArray;
     var sorted = List.empty[Constraint];
     val mapping = MMap.empty[Constraint, Int];
@@ -226,6 +243,6 @@ object FZModelTransfo {
      // println(mapping.map{case (c,i) => (c,i,c.getVariables.filter(v => {val cc = v.definingConstraint.getOrElse(c); /*mapping.contains(cc) &&*/ cc!=c}).toList.map(v => v.definingConstraint.get )) }.mkString("\n"))      
     }
     log("Had to remove "+removed.length+" invariants to be acyclic.")
-    return (sorted.reverse.toArray++sortedend,removed);
+    return (sorted.reverse++sortedend,removed);
   }
 }

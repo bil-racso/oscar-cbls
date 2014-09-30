@@ -28,7 +28,7 @@ class FZProblem {
 
   var variables: List[Variable] = List.empty[Variable]
   
-  var constraints: Set[Constraint] = Set.empty[Constraint]//TODO: might as well replace it by a list...
+  var constraints: List[Constraint] = List.empty[Constraint]//TODO: might as well replace it by a list...
   var cstrsByName: MMap[String,List[Constraint]] = MMap.empty[String,List[Constraint]]
   val solution:FZSolution = new FZSolution();
   
@@ -50,7 +50,7 @@ class FZProblem {
   }
   
   def addConstraint(c: Constraint) {
-    constraints += c
+    constraints = c :: constraints
     //the following code adds constraints by name
     val names = c.getClass().getName().split("\\.")
     var name = names(names.length-1)

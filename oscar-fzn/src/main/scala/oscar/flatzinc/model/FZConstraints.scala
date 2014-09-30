@@ -85,6 +85,7 @@ abstract class AllDefiningConstraint(variables: Array[Variable], ann:List[Annota
 }
 
 // ----------------------------------
+
 case class array_bool_and(as: Array[Variable], r: Variable, ann: List[Annotation] = List.empty[Annotation]) 
   extends SimpleDefiningConstraint(as++Array(r),r,ann);
 
@@ -96,10 +97,6 @@ case class array_bool_or(as: Array[Variable], r: Variable, ann: List[Annotation]
   extends SimpleDefiningConstraint(as++Array(r),r,ann){
   //override def toString() ={"array_bool_or("+as.mkString("[", ",", "]")+","+r+","+ann+")"}
 }
-
-case class array_bool_xor(as: Array[Variable], ann: List[Annotation] = List.empty[Annotation]) 
-  extends AllDefiningConstraint(as,ann)
-
 case class array_int_element(b: Variable, as: Array[Variable], c: Variable, ann: List[Annotation] = List.empty[Annotation]) 
   extends SimpleDefiningConstraint(Array(b,c),c,ann);
 
@@ -108,6 +105,10 @@ case class array_var_bool_element(b: Variable, as: Array[Variable], c: Variable,
 
 case class array_var_int_element(b: Variable, as: Array[Variable], c: Variable, ann: List[Annotation] = List.empty[Annotation]) 
   extends SimpleDefiningConstraint(as++Array(b,c),c,ann);
+
+
+case class array_bool_xor(as: Array[Variable], ann: List[Annotation] = List.empty[Annotation]) 
+  extends AllDefiningConstraint(as,ann)
 
 case class bool2int(b: Variable, x: Variable, ann: List[Annotation] = List.empty[Annotation]) 
   extends AllDefiningConstraint(Array(b,x),ann)
@@ -125,7 +126,10 @@ case class bool_le(a: Variable, b: Variable, ann: List[Annotation] = List.empty[
   extends Constraint(Array(a,b),ann)
 
 case class bool_lin_eq(params:Array[Variable],vars:Array[Variable], sum:Variable, ann: List[Annotation] = List.empty[Annotation]) 
-  extends AllDefiningConstraint(vars,ann)
+  extends Constraint(vars,ann)
+  //TODO: This should only define variables that have a unit coeff, and with a small domain. 
+  //Removed this because that is often wrong.
+  //extends AllDefiningConstraint(vars,ann)
 
 case class bool_lin_le(params:Array[Variable],vars:Array[Variable], sum:Variable, ann: List[Annotation] = List.empty[Annotation]) 
   extends Constraint(vars,ann)
