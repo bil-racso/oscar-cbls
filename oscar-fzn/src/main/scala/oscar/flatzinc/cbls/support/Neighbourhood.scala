@@ -86,9 +86,9 @@ abstract class Neighbourhood(val searchVariables: Array[CBLSIntVarDom]) extends 
   }
   
   def selectMinImb[R,S](r: Iterable[R] , s: R => Iterable[S],f: (R,S) => Int, st: ((R,S) => Boolean) = ((r:R, s:S) => true)): (R,S) = {
-    val flattened:List[(R,S)] = for (rr <- r.toList; ss <- s(rr).toList) yield (rr,ss)
-   // Console.err.println(flattened.length)
-    selectMin[(R,S)](flattened)((rands:(R,S)) => {/*Console.err.println(rands);*/ f(rands._1,rands._2)}, (rands:(R,S)) => st(rands._1,rands._2))
+    //TODO: check that it is fine
+    val flattened:Iterator[(R,S)] = for (rr <- r.toIterator; ss <- s(rr).toIterator) yield (rr,ss)
+    selectMin[(R,S)](flattened.toIterable)((rands:(R,S)) => {/*Console.err.println(rands);*/ f(rands._1,rands._2)}, (rands:(R,S)) => st(rands._1,rands._2))
   }
 }
 

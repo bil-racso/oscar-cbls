@@ -137,7 +137,7 @@ class Prod(vars: Iterable[CBLSIntVar]) extends IntInvariant {
  * @author renaud.delandtsheer@cetic.be
  * */
 case class Minus(left: CBLSIntVar, right: CBLSIntVar)
-  extends IntInt2Int(left, right, ((l: Int, r: Int) => l - r), DomainHelper.safeSub(left.minVal, right.maxVal), DomainHelper.safeSub(left.maxVal, right.minVal)) {
+  extends IntInt2Int(left, right, ((l: Int, r: Int) => DomainHelper.safeSub(l,r)), DomainHelper.safeSub(left.minVal, right.maxVal), DomainHelper.safeSub(left.maxVal, right.minVal)) {
   assert(left != right)
 }
 
@@ -147,7 +147,7 @@ case class Minus(left: CBLSIntVar, right: CBLSIntVar)
  * @author renaud.delandtsheer@cetic.be
  * */
 case class Sum2(left: CBLSIntVar, right: CBLSIntVar)
-  extends IntInt2Int(left, right, ((l: Int, r: Int) => l + r), DomainHelper.safeAdd(left.minVal, right.minVal), DomainHelper.safeAdd(left.maxVal, right.maxVal)) {
+  extends IntInt2Int(left, right, ((l: Int, r: Int) => DomainHelper.safeAdd(l,r)), DomainHelper.safeAdd(left.minVal, right.minVal), DomainHelper.safeAdd(left.maxVal, right.maxVal)) {
 }
 
 /**
@@ -156,7 +156,7 @@ case class Sum2(left: CBLSIntVar, right: CBLSIntVar)
  * @author renaud.delandtsheer@cetic.be
  * */
 case class Prod2(left: CBLSIntVar, right: CBLSIntVar)
-  extends IntInt2Int(left, right, ((l: Int, r: Int) => l * r), DomainHelper.getMinProd2(left, right), DomainHelper.getMaxProd2(left, right))
+  extends IntInt2Int(left, right, ((l: Int, r: Int) => DomainHelper.safeMult(l,r)), DomainHelper.getMinProd2(left, right), DomainHelper.getMaxProd2(left, right))
 
 /**
  * left / right

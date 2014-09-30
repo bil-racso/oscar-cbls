@@ -46,24 +46,30 @@ import oscar.flatzinc.parser.FZParser
 //TODO: Add several levels of logging
 //TODO: Add the possibility to print to file or something else
 class Log(opts:Options){
+  val level = opts.verbose
   def apply(s:String) = {
-    if (opts.verbose > 0) Console.err.println("% "+s)
+    if (level > 0) Console.err.println("% "+s)
   }
   def apply(i:Int, s:String) = {
-    if(i <= opts.verbose) Console.err.println(("%"*math.max(1,i))+" "+s)
+    if(i <= level) Console.err.println(("%"*math.max(1,i))+" "+s)
   }
 }
 
 class FZCBLSObjective(opt: Objective.Value, private val objectiveVar: CBLSIntVarDom,c:ConstraintSystem){
-  val violationWeight = CBLSIntVar(c._model, 0 to Int.MaxValue , 1, "violation_weight")
-  val objectiveWeight = CBLSIntVar(c._model, 0 to Int.MaxValue , 1, "objective_weight")
+  val violationWeight = CBLSIntVar(c._model, 0 to 1 , 1, "violation_weight")
+  val objectiveWeight = CBLSIntVar(c._model, 0 to 1 , 1, "objective_weight")
   val violation = c.violation;
-  val objective: CBLSObjective = new CBLSObjective(
-      opt match {
-        case Objective.SATISFY => c.violation
+  val objective: CBLSObjective = new CBLSObjective(new CBLSIntVar(c._model,0 to 1, 0, "weighted_objective"))
+  //This is a ugly hack to correct the bounds of the variables defined by invariants.
+  def updateObjective(){
+    if(objectiveVar!=null)objectiveWeight.maxVal = math.max(1,Int.MaxValue/objectiveVar.maxVal/2)
+    violationWeight.maxVal = math.max(1,Int.MaxValue/violation.maxVal/2)
+    objective.objective <== (opt match {
+        case Objective.SATISFY => IdentityInt(c.violation)
         case Objective.MAXIMIZE => Minus(Prod2(c.violation, violationWeight), Prod2(objectiveVar, objectiveWeight))
         case Objective.MINIMIZE => Sum2(Prod2(c.violation, violationWeight), Prod2(objectiveVar, objectiveWeight))
       })
+  }
   def apply() = objective
   def getObjectiveValue(): Int = {
    opt match {
@@ -87,11 +93,9 @@ class FZCBLSObjective(opt: Objective.Value, private val objectiveVar: CBLSIntVar
     }
   }
   def correctWeights(newObjW: Int,newVioW: Int){
-    val objWub = Int.MaxValue/objectiveVar.maxVal/2
-    val vioWub = Int.MaxValue/violation.maxVal/2 
     val minWeight = math.min(newObjW, newVioW)
-    objectiveWeight := math.min(newObjW/minWeight,objWub)
-    violationWeight := math.min(newVioW/ minWeight,vioWub) 
+    objectiveWeight := math.min(newObjW/minWeight,objectiveWeight.maxVal)
+    violationWeight := math.min(newVioW/ minWeight,violationWeight.maxVal ) 
   }
 }
 
@@ -236,6 +240,7 @@ class FZCBLSSolver extends SearchEngine with StopWatch {
       poster.add_invariant(invariant);
     }
     log("Posted "+invariants.length+" Invariants")
+    cblsmodel.objective.updateObjective()
     
     val softConstraints = constraints.filterNot(_.definedVar.isDefined) /*++ removed*/;//removed is handled because the definedVar is undefined in getSortedInvariants.
     for (constraint <- softConstraints) {
@@ -286,7 +291,7 @@ class FZCBLSSolver extends SearchEngine with StopWatch {
         log(0,"Did not find any solution.")
         log(0,"Smallest violation: "+sc.bestKnownViolation )
       }else{
-        log(0,"Best Overall Solution: "+sc.bestKnownObjective )
+        log(0,"Best Overall Solution: "+sc.bestKnownObjective * (if(model.search.obj==Objective.MAXIMIZE) -1 else 1))
       }
     }
   }

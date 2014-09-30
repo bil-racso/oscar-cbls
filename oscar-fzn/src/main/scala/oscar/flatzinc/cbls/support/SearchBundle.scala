@@ -184,7 +184,7 @@ abstract class NeighbourhoodTabuSearch(m: FZCBLSModel, sc: SearchControl) extend
   var tenure = MinTenure
   
   def acceptMove(best: Int,nonTabuSet: Set[CBLSIntVar])(m:Move): Boolean = {
-    m.getModified.forall(nonTabuSet.contains(_)) || (m.value < best && {log("Aspiration"); true}) 
+    m.getModified.forall(nonTabuSet.contains(_)) || m.value < best 
   }
   
   def makeMove(extendedSearch: Boolean){
@@ -207,10 +207,12 @@ abstract class NeighbourhoodTabuSearch(m: FZCBLSModel, sc: SearchControl) extend
         n.getMinObjective(it.value, acceptMove(bestValue,nonTabuSet))
       }))(_.value)
 //      println("X")
-    if(bestNeighbour!=null)
-        bestNeighbour.commit();
-      else
-        log("No move exists!");
+    if(bestNeighbour!=null){
+      if(log.level > 0 && bestNeighbour.getModified.exists(!nonTabuSet.contains(_)))log("Aspiration");
+      bestNeighbour.commit();
+      sc.handlePossibleSolution()
+    }else
+      log("No move exists!");
     val modifiedVars = if(bestNeighbour!=null) bestNeighbour.getModified else Set.empty[CBLSIntVar]
     for (v <- modifiedVars) {
       val index = variableMap(v);
@@ -222,10 +224,12 @@ abstract class NeighbourhoodTabuSearch(m: FZCBLSModel, sc: SearchControl) extend
 }
 
 class NeighbourhoodSearchOPT(m:FZCBLSModel, sc: SearchControl) extends NeighbourhoodTabuSearch(m,sc) {
-  val baseSearchSize = 100;
-  val searchFactor = 20;
+  
   override def run()= {
     log("Starting Optimization Search")
+    val baseSearchSize = 100;
+    val searchFactor = 20;
+    
     var extendedSearch = true;
     var roundsWithoutSat = 0;
     val maxRounds = 2;
@@ -234,7 +238,7 @@ class NeighbourhoodSearchOPT(m:FZCBLSModel, sc: SearchControl) extends Neighbour
     var best = bestNow;
     var itSinceBest = 0;
     var numOfMaxTenure = 0;
-    var hasBeenSatisfied = false;
+    var hasBeenSatisfied = m.c.violation.value==0;
     var bestViolation = Int.MaxValue;
 
     var timeOfBest = m.getWatch();
@@ -254,7 +258,6 @@ class NeighbourhoodSearchOPT(m:FZCBLSModel, sc: SearchControl) extends Neighbour
     while (!sc.stop()) {
       makeMove(extendedSearch)
       it ++;
-      sc.handlePossibleSolution()
 
       if (wait > 0) {
         wait -= waitDec;
@@ -263,7 +266,7 @@ class NeighbourhoodSearchOPT(m:FZCBLSModel, sc: SearchControl) extends Neighbour
       }
       if (!hasBeenSatisfied) {
         //The first priority is to satisfy the problem, then minimize it.
-
+        log(0,"THIS IS STILL USEFUL")
         if (m.c.violation.value < bestViolation) {
           bestViolation = m.c.violation.value
           roundsWithoutSat = 0;
@@ -359,14 +362,12 @@ class NeighbourhoodSearchOPT(m:FZCBLSModel, sc: SearchControl) extends Neighbour
           }
         }
       }
-
     }
+    log("Completed Optimization Search at "+m.getWatch())
   }
 }
 
 class NeighbourhoodSearchSAT(m:FZCBLSModel, sc: SearchControl) extends NeighbourhoodTabuSearch(m,sc) {
-
-  
   override def run()= {
     log("Starting Satisfaction Search")
     var extendedSearch = true;
@@ -383,7 +384,6 @@ class NeighbourhoodSearchSAT(m:FZCBLSModel, sc: SearchControl) extends Neighbour
     
     while (m.objective.violation.value > 0  && !sc.stop()) {
       makeMove(extendedSearch)
-      sc.handlePossibleSolution()
       it ++;
       
       if (wait > 0) {
@@ -421,5 +421,6 @@ class NeighbourhoodSearchSAT(m:FZCBLSModel, sc: SearchControl) extends Neighbour
         }
       }
     }
+    log("Completed Satisfaction Search at "+m.getWatch())
   }
 }

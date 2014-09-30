@@ -781,7 +781,7 @@ class CBLSIntVar(model: Store, val domain: Range, private var Value: Int, n: Str
            "new value :"+ v +"\n" ))*/
       if(!inDomain(v)){
         if(this.DefiningInvariant!=null){
-          println("% => "+DefiningInvariant)
+          Console.err.println("% => "+DefiningInvariant)
         }
         throw new Exception(v+ " is not in the domain of "+this+"("+minVal+".."+maxVal+"). This might indicate an integer overflow.")
       } 
@@ -1206,6 +1206,8 @@ case class IdentityInt(v:CBLSIntVar) extends IntInvariant {
   }
 
   override def setOutputVar(vv:CBLSIntVar){
+    vv.minVal = myMin
+    vv.maxVal = myMax
     output = vv
     output.setDefiningInvariant(this)
     output := v.value
