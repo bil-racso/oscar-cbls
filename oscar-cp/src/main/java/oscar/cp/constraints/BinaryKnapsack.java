@@ -23,6 +23,7 @@ import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
 import oscar.cp.core.CPBoolVar;
 import oscar.cp.core.CPIntVar;
+import oscar.cp.core.CPIntervalVar;
 import oscar.cp.core.Constraint;
 import oscar.cp.core.CPStore;
 
@@ -167,7 +168,7 @@ public class BinaryKnapsack extends Constraint {
 	
 
 	@Override
-	public CPOutcome valBindIdx(CPIntVar var, int idx) {
+	public CPOutcome valBindIdx(CPIntervalVar var, int idx) {
 		if (var.getValue() == 1)
 			return bind(idx);
 		else
@@ -228,7 +229,7 @@ public class BinaryKnapsack extends Constraint {
 		boolean pruneMore = true;
 		if (nb.getValue() <= 2)
 			return CPOutcome.Suspend;
-		if (noSumPossible(c.getMin() - rcap.getValue(),c.getMax() - rcap.getValue()))
+		if (noSumPossible(c.min() - rcap.value(),c.getMax() - rcap.getValue()))
 			return CPOutcome.Failure;
 		if (pruneMore) {
 			int lastsize = -1;
@@ -416,7 +417,7 @@ class LightBinaryKnapsack extends Constraint {
 	}
 	
 	@Override
-	public CPOutcome valBindIdx(CPIntVar var, int idx) {
+	public CPOutcome valBindIdx(CPIntervalVar var, int idx) {
 		candidate[idx].setValue(false);
 		psum.setValue(psum.getValue()-w[idx]);
 		if (var.getValue() == 1) {
@@ -519,7 +520,7 @@ class BinaryKnapsackWithCardinality extends Constraint {
 	}
 
 	@Override
-	public CPOutcome valBindIdx(CPIntVar var, int idx) {
+	public CPOutcome valBindIdx(CPIntervalVar var, int idx) {
         if (var.getValue() == 1) {
             nPacked.incr();
             packed.setValue(packed.getValue() + w[idx]);

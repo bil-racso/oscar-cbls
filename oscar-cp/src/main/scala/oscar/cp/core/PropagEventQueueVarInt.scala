@@ -23,9 +23,9 @@ package oscar.cp.core
  *  - a variable
  *  @author Pierre Schaus pschaus@gmail.com
  */
-class PropagEventQueueVarInt(val next: PropagEventQueueVarInt, val cons: Constraint, val x: CPIntVar, val idx: Int) {
+class PropagEventQueueVarInt[A <: CPIntervalVar](val next: PropagEventQueueVarInt[A], val cons: Constraint, val x: A, val idx: Int) {
 
-  def this(next: PropagEventQueueVarInt, cons: Constraint, x: CPIntVar) = {
+  def this(next: PropagEventQueueVarInt[A], cons: Constraint, x: A) = {
     this(next, cons, x, 0)
   }
 

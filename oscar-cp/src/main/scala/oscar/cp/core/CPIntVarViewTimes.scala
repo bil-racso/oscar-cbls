@@ -87,12 +87,12 @@ class CPIntVarViewTimes(v: CPIntVar, val a: Int) extends CPIntVar(v.store) {
   override final def callPropagateWhenDomainChanges(c: Constraint, trackDelta: Boolean = false) = v.callPropagateWhenDomainChanges(c, trackDelta)
 
   // this method is useful when you have a view defined on a view
-  override final def callValBindWhenBind(c: Constraint, variable: CPIntVar) = v.callValBindWhenBind(c, variable)
+  override final def callValBindWhenBind(c: Constraint, variable: CPIntervalVar) = v.callValBindWhenBind(c, variable)
 
   override final def callValBindWhenBind(c: Constraint) = v.callValBindWhenBind(c, this)
 
   // this method is useful when you have a view defined on a view
-  override final def callUpdateBoundsWhenBoundsChange(c: Constraint, variable: CPIntVar) = v.callUpdateBoundsWhenBoundsChange(c, variable)
+  override final def callUpdateBoundsWhenBoundsChange(c: Constraint, variable: CPIntervalVar) = v.callUpdateBoundsWhenBoundsChange(c, variable)
 
   override final def callUpdateBoundsWhenBoundsChange(c: Constraint) = v.callUpdateBoundsWhenBoundsChange(c, this)
 
@@ -102,12 +102,12 @@ class CPIntVarViewTimes(v: CPIntVar, val a: Int) extends CPIntVar(v.store) {
   override final def callValRemoveWhenValueIsRemoved(c: Constraint) = v.callValRemoveWhenValueIsRemoved(c, this)
 
   // this method is useful when you have a view defined on a view
-  override final def callValBindIdxWhenBind(c: Constraint, variable: CPIntVar, idx: Int) = v.callValBindIdxWhenBind(c, variable, idx)
+  override final def callValBindIdxWhenBind(c: Constraint, variable: CPIntervalVar, idx: Int) = v.callValBindIdxWhenBind(c, variable, idx)
 
   override final def callValBindIdxWhenBind(c: Constraint, idx: Int) = v.callValBindIdxWhenBind(c, this, idx)
 
   // this method is useful when you have a view defined on a view
-  override final def callUpdateBoundsIdxWhenBoundsChange(c: Constraint, variable: CPIntVar, idx: Int) = v.callUpdateBoundsIdxWhenBoundsChange(c, variable, idx);
+  override final def callUpdateBoundsIdxWhenBoundsChange(c: Constraint, variable: CPIntervalVar, idx: Int) = v.callUpdateBoundsIdxWhenBoundsChange(c, variable, idx);
 
   override final def callUpdateBoundsIdxWhenBoundsChange(c: Constraint, idx: Int) = v.callUpdateBoundsIdxWhenBoundsChange(c, this, idx)
 

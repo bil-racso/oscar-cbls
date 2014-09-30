@@ -90,7 +90,7 @@ public class MemberReif extends Constraint {
     }
 
     @Override
-    public CPOutcome valBind(CPIntVar var) {
+    public CPOutcome valBind(CPIntervalVar var) {
         assert(var.isBound());
 		if (var == x) {
              if (set.hasValue(x.getValue())) {

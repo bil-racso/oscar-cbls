@@ -25,7 +25,7 @@ abstract class Snapshot {
   def update()
 }
 
-class SnapshotVarInt(x: CPIntVar) extends Snapshot {
+class SnapshotVarInt(x: CPIntervalVar) extends Snapshot {
   var oldMin: Int = x.min 
   var oldMax: Int = x.max
   var oldSize: Int = x.size
@@ -54,12 +54,12 @@ abstract class Constraint(val s: CPStore, val name: String = "cons") {
   private final val active = new ReversibleBool(s,true)
   private final val inQueue = new MagicBoolean(s, false)
 
-  val snapshotsVarInt = scala.collection.mutable.Map[CPIntVar, SnapshotVarInt]() 
+  val snapshotsVarInt = scala.collection.mutable.Map[CPIntervalVar, SnapshotVarInt]() 
   val snapshotsVarSet = scala.collection.mutable.Map[CPSetVar, SnapshotVarSet]()
 
   private var _mustSnapshot = false
 
-  def addSnapshot(x: CPIntVar): Unit = {
+  def addSnapshot(x: CPIntervalVar): Unit = {
     snapshotsVarInt(x) = new SnapshotVarInt(x)
     snapshotsVarInt(x).update()
     if (!_mustSnapshot) {
@@ -226,7 +226,7 @@ abstract class Constraint(val s: CPStore, val name: String = "cons") {
    * @param x has a new minimum and/or maximum value in its domain since last call
    * @return the outcome i.e. Failure, Success or Suspend
    */
-  def updateBounds(x: CPIntVar) = CPOutcome.Suspend
+  def updateBounds(x: CPIntervalVar) = CPOutcome.Suspend
 
   /**
    * Propagation method of Level L1 that is called if variable x has asked to do so
@@ -236,7 +236,7 @@ abstract class Constraint(val s: CPStore, val name: String = "cons") {
    *        This is typically used to retrieve the index of x in an array of variables in constant time
    * @return the outcome i.e. Failure, Success or Suspend
    */
-  def updateBoundsIdx(x: CPIntVar, idx: Int) = CPOutcome.Suspend
+  def updateBoundsIdx(x: CPIntervalVar, idx: Int) = CPOutcome.Suspend
 
   /**
    * Propagation method of Level L1 that is called if variable x has asked to do so
@@ -244,7 +244,7 @@ abstract class Constraint(val s: CPStore, val name: String = "cons") {
    * @param x is bind
    * @return the outcome i.e. Failure, Success or Suspend
    */
-  def valBind(x: CPIntVar) = CPOutcome.Suspend
+  def valBind(x: CPIntervalVar) = CPOutcome.Suspend
 
   /**
    * Propagation method of Level L1 that is called if variable x has asked to do so
@@ -254,7 +254,7 @@ abstract class Constraint(val s: CPStore, val name: String = "cons") {
    *        This is typically used to retrieve the index of x in an array of variables in constant time
    * @return the outcome i.e. Failure, Success or Suspend
    */
-  def valBindIdx(x: CPIntVar, idx: Int) = CPOutcome.Suspend
+  def valBindIdx(x: CPIntervalVar, idx: Int) = CPOutcome.Suspend
 
   /**
    * Propagation method of Level L1 that is called if variable x has asked to do so
@@ -332,7 +332,7 @@ abstract class Constraint(val s: CPStore, val name: String = "cons") {
 }
 
 
-abstract class DeltaVarInt(x: CPIntVar,filter: DeltaVarInt => CPOutcome) extends Constraint(x.store, "DeltaVarInt") {
+abstract class DeltaVarInt(x: CPIntervalVar,filter: DeltaVarInt => CPOutcome) extends Constraint(x.store, "DeltaVarInt") {
   
   val sn = new SnapshotVarInt(x)
   s.onPop {

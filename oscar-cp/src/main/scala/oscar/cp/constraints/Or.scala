@@ -59,7 +59,7 @@ class Or(val x: Array[CPBoolVar]) extends Constraint(x(0).store, "Or") {
     Suspend
   }
 
-  override def valBindIdx(y: CPIntVar, idx: Int): CPOutcome = {
+  override def valBindIdx(y: CPIntervalVar, idx: Int): CPOutcome = {
     if (y.isBoundTo(1)) return Success
     if (down >= n || up < 0 || x(down).isBound || x(up).isBound || (down >= up)) {
       i = 0

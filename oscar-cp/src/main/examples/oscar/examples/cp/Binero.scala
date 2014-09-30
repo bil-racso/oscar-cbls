@@ -110,7 +110,7 @@ class TabNotEqual(val tab1: Array[CPIntVar], val tab2: Array[CPIntVar], val len:
     CPOutcome.Suspend
   }
 
-  override def valBindIdx(x: CPIntVar, i: Int): CPOutcome = {
+  override def valBindIdx(x: CPIntervalVar, i: Int): CPOutcome = {
     valuesBin(i / len).value += x.min * intPow(2, i % len)
     numBound(i / len).incr()
     if (numBound(0).value == len && numBound(1).value == len) {

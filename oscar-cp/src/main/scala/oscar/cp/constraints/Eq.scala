@@ -1,6 +1,7 @@
 package oscar.cp.constraints
 
 import oscar.cp.core.CPIntVar
+import oscar.cp.core.CPIntervalVar
 import oscar.cp.core.Constraint
 import oscar.cp.core.CPPropagStrength
 import oscar.cp.core.CPPropagStrength._
@@ -77,7 +78,7 @@ class Eq(x: CPIntVar, y: CPIntVar) extends Constraint(x.store, "Equality") {
     }
   }
 
-  @inline final override def valBind(intVar: CPIntVar): CPOutcome = {
+  @inline final override def valBind(intVar: CPIntervalVar): CPOutcome = {
     if (intVar == x) {
       if (y.assign(x.value) == Failure) Failure
       else Success
@@ -87,7 +88,7 @@ class Eq(x: CPIntVar, y: CPIntVar) extends Constraint(x.store, "Equality") {
     } else sys.error("unknown variable")
   }
 
-  @inline final override def updateBounds(intVar: CPIntVar): CPOutcome = {
+  @inline final override def updateBounds(intVar: CPIntervalVar): CPOutcome = {
     if (intVar == y) {
       if (x.updateMax(y.max) == Failure) Failure
       else if (x.updateMin(y.min) == Failure) Failure

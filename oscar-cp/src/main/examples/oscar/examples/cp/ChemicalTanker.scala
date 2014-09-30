@@ -86,7 +86,7 @@ object ChemicalTanker extends CPModel with App {
       CPOutcome.Suspend
     }
 
-    override def valBindIdx(x: CPIntVar, tank: Int) = {
+    override def valBindIdx(x: CPIntervalVar, tank: Int) = {
       if (x.getValue == cargo.id) {
         curCapa.setValue(curCapa.getValue + tanks(tank).capa)
         if (curCapa.getValue >= cargo.volume) {

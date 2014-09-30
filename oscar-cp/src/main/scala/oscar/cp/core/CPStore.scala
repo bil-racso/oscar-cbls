@@ -133,7 +133,7 @@ class CPStore(val propagStrength: CPPropagStrength) extends SearchNode {
     highestPriorL1 = Math.max(highestPriorL1, prior);
   }
 
-  def notifRemoveL1(constraints: PropagEventQueueVarInt, x: CPIntVar, v: Int) {
+  def notifRemoveL1(constraints: PropagEventQueueVarInt[CPIntVar], x: CPIntVar, v: Int) {
     var q = constraints;
     while (q != null) {
       val c = q.cons
@@ -145,7 +145,7 @@ class CPStore(val propagStrength: CPPropagStrength) extends SearchNode {
     }
   }
 
-  def notifyRemoveIdxL1(constraints: PropagEventQueueVarInt, x: CPIntVar, v: Int) {
+  def notifyRemoveIdxL1(constraints: PropagEventQueueVarInt[CPIntVar], x: CPIntVar, v: Int) {
     var q = constraints;
     while (q != null) {
       val c = q.cons
@@ -158,7 +158,7 @@ class CPStore(val propagStrength: CPPropagStrength) extends SearchNode {
     }
   }
 
-  def notifyUpdateBoundsL1(constraints: PropagEventQueueVarInt, x: CPIntVar) {
+  def notifyUpdateBoundsL1(constraints: PropagEventQueueVarInt[CPIntervalVar], x: CPIntervalVar) {
     var q = constraints;
     while (q != null) {
       val c = q.cons
@@ -170,7 +170,7 @@ class CPStore(val propagStrength: CPPropagStrength) extends SearchNode {
     }
   }
 
-  def notifyUpdateBoundsIdxL1(constraints: PropagEventQueueVarInt, x: CPIntVar) {
+  def notifyUpdateBoundsIdxL1(constraints: PropagEventQueueVarInt[CPIntervalVar], x: CPIntervalVar) {
     var q = constraints;
     while (q != null) {
       val c = q.cons
@@ -183,7 +183,7 @@ class CPStore(val propagStrength: CPPropagStrength) extends SearchNode {
     }
   }
 
-  def notifyBindL1(constraints: PropagEventQueueVarInt, x: CPIntVar) {
+  def notifyBindL1(constraints: PropagEventQueueVarInt[CPIntervalVar], x: CPIntervalVar) {
     var q = constraints;
     while (q != null) {
       val c = q.cons
@@ -195,7 +195,7 @@ class CPStore(val propagStrength: CPPropagStrength) extends SearchNode {
     }
   }
 
-  def notifyBindIdxL1(constraints: PropagEventQueueVarInt, x: CPIntVar) {
+  def notifyBindIdxL1(constraints: PropagEventQueueVarInt[CPIntervalVar], x: CPIntervalVar) {
     var q = constraints;
     while (q != null) {
       val c = q.cons

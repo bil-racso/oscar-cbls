@@ -66,7 +66,7 @@ class GCCFWC(val X: Array[CPIntVar], val minVal: Int, val low: Array[Int], val u
     outcome
   }
   
-  override def valBind(x:CPIntVar): CPOutcome = {
+  override def valBind(x:CPIntervalVar): CPOutcome = {
     val idx = x.min - minVal
     if (idx >= 0 && idx < low.size) {
       nbBound(idx).incr()
