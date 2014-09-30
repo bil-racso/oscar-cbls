@@ -27,6 +27,7 @@ class EnergeticReasoning(starts: Array[CPIntVar], durations: Array[CPIntVar], en
   val durmin = Array.fill(numTasks)(-1)
   
   var cmin = -1
+  var cmax = -1
   
   val tasksId = 0 until starts.length toArray 
   
@@ -62,6 +63,7 @@ class EnergeticReasoning(starts: Array[CPIntVar], durations: Array[CPIntVar], en
     }
     
     cmin = capacity.min
+    cmax = capacity.max
 
     //keep only the tasks that we know are assigned to the resource id considered by this constraint 
     val tasks = tasksId filter (task => resources(task).isBound && resources(task).value == id && durmin(task) > 0 && demmin(task) > 0)
@@ -74,8 +76,9 @@ class EnergeticReasoning(starts: Array[CPIntVar], durations: Array[CPIntVar], en
     for ((t1, t2) <- intervals) {
       
       val currentIntervalEnergy = energyForInterval(t1, t2, tasks)
-      val currentMaxIntervalEnergy = cmin * (t2 - t1)
-      if (currentIntervalEnergy > currentMaxIntervalEnergy) {
+      val currentMinIntervalEnergy = cmin * (t2 - t1)
+      val currentMaxIntervalEnergy = cmax * (t2 - t1)
+      if (currentIntervalEnergy > currentMinIntervalEnergy) {
         if (capacity.updateMin(ceil(currentIntervalEnergy.toDouble / (t2 - t1)).toInt) == Failure) {
           return Failure
         } else
@@ -147,7 +150,7 @@ class EnergeticReasoning(starts: Array[CPIntVar], durations: Array[CPIntVar], en
 		  o2 += emin(task) //ect
 		  o2 += emax(task) //lct
 
-		  ot += ((t: Int) => emin(task) + emax(task) - t) //est + lct - t
+		  ot += ((t: Int) => smin(task) + emax(task) - t) //est + lct - t
 		  
 	  }
 	  (o1, o2, ot)
