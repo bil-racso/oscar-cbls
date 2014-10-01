@@ -32,6 +32,7 @@ import oscar.cp.constraints.EqCons
 /**
  * Constraint Programming CPStore
  * @author Pierre Schaus pschaus@gmail.com
+ * @author Renaud Hartert ren.hartert@gmail.com
  */
 class CPStore(val propagStrength: CPPropagStrength) extends SearchNode {
 
@@ -58,11 +59,9 @@ class CPStore(val propagStrength: CPPropagStrength) extends SearchNode {
   private var lastConstraint: Constraint = null
 
   // Use for fast access to priority queue
-  private var highestPriorL1 = 0
-  private var highestPriorL2 = 0;
+  private var highestPriorL1 = -1
+  private var highestPriorL2 = -1
 
-  // True if the L1 queue is empty
-  private var isL1QueueEmpty = true
 
   /**
    *  Returns the last constraint called in the propagate algorithm.
@@ -81,6 +80,8 @@ class CPStore(val propagStrength: CPPropagStrength) extends SearchNode {
 
   // Cleans the propagation queues
   @inline private def cleanQueues(): Unit = {
+    highestPriorL1 = -1
+    highestPriorL2 = -1
     var i = 0
     // Clean queue L1
     while (i < propagQueueL1.length) {
@@ -128,8 +129,7 @@ class CPStore(val propagStrength: CPPropagStrength) extends SearchNode {
         val oc = evt
         if (oc == Success) c.deactivate()
         oc
-      } else Suspend);
-    isL1QueueEmpty = false
+      } else Suspend)
     highestPriorL1 = Math.max(highestPriorL1, prior);
   }
 
@@ -279,65 +279,36 @@ class CPStore(val propagStrength: CPPropagStrength) extends SearchNode {
   }
 
   protected def propagate(): CPOutcome = {
-    if (status.value == Failure) throw new RuntimeException("propagate on a failed store")
+    if (status.value == Failure) throw new RuntimeException("the store is failed")
     else {
       val t0 = System.currentTimeMillis()
 
       // Adds the cut constraints
-      cutConstraints.foreach(c => {
-        if (c.isActive) {
-          c.setInQueue()
-          propagQueueL2(c.priorityL2).addLast(c)
-        }
-      })
+      cutConstraints.foreach(c => addQueueL2(c))
 
-      // Initializes the fix-point algorithm
-      var ok = Suspend
-      var fixed = false
+      var isFailed = false
       inPropagate = true
-      highestPriorL1 = CPStore.MaxPriorityL1
-      highestPriorL2 = CPStore.MaxPriorityL2
 
-      while (ok != Failure && !fixed) {
+      while (!isFailed && (highestPriorL1 >= 0 || highestPriorL2 >= 0)) {
 
-        var p = highestPriorL1
-
-        // Propagate queue L1
-        while (!isL1QueueEmpty && ok != Failure) {
-
-          p = highestPriorL1
-
-          // Adjust the L1 priority
-          while (p >= 0 && propagQueueL1(p).isEmpty) p -= 1
-
-          if (p < 0) isL1QueueEmpty = true
+        // Propagate L1
+        while (highestPriorL1 >= 0 && !isFailed) {
+          val queue = propagQueueL1(highestPriorL1)
+          if (queue.isEmpty) highestPriorL1 -= 1
           else {
-            highestPriorL1 = p
-            while (highestPriorL1 <= p && !propagQueueL1(p).isEmpty && ok != Failure) {
-              val event = propagQueueL1(p).removeFirst()
-
-              isL1QueueEmpty = (p == 0 && propagQueueL1(p).isEmpty)
-              highestPriorL1 = p
-              // Execute the event
-              ok = event()
-            }
+            val event = queue.removeFirst()
+            isFailed = event() == Failure     
           }
         }
-
-        p = CPStore.MaxPriorityL2 
-
-        // Adjust the L2 priority
-        while (p >= 0 && propagQueueL2(p).isEmpty) p -= 1
-
-        if (p < 0) fixed = true
-        else {
-          highestPriorL2 = p
-          while (highestPriorL2 <= p && isL1QueueEmpty && !propagQueueL2(p).isEmpty && ok != Failure) {
-            val c = propagQueueL2(p).removeFirst()
-            lastConstraint = c
-            highestPriorL2 = p
-            nbPropag += 1
-            ok = c.execute()
+        
+        // Propagate L2 if no constraint in L1
+        while (highestPriorL1 < 0 && highestPriorL2 >= 0 && !isFailed) {
+          val queue = propagQueueL2(highestPriorL2)
+          if (queue.isEmpty) highestPriorL2 -= 1
+          else {
+            val constraint = queue.removeFirst()
+            lastConstraint = constraint
+            isFailed = constraint.execute() == Failure
           }
         }
       }
@@ -345,7 +316,7 @@ class CPStore(val propagStrength: CPPropagStrength) extends SearchNode {
       inPropagate = false
       timeInFixPoint += System.currentTimeMillis() - t0
 
-      if (ok != Failure) Suspend
+      if (!isFailed) Suspend
       else {
         cleanQueues() // May be not empty
         status.value = Failure
