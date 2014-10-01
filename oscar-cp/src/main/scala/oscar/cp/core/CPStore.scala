@@ -324,7 +324,7 @@ class CPStore(val propagStrength: CPPropagStrength) extends SearchNode {
           }
         }
 
-        p = highestPriorL2
+        p = CPStore.MaxPriorityL2 
 
         // Adjust the L2 priority
         while (p >= 0 && propagQueueL2(p).isEmpty) p -= 1
