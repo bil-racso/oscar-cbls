@@ -37,7 +37,7 @@ import oscar.cp.constraints.EqCons
 class CPStore(val propagStrength: CPPropagStrength) extends SearchNode {
 
   def this() = this(CPPropagStrength.Weak)
-  
+
   import oscar.algo.ArrayQueue // custom array-based double ended queue
   private val propagQueueL1 = Array.fill(CPStore.MaxPriorityL1 + 1)(new ArrayQueue[() => CPOutcome](1000))
   private val propagQueueL2 = Array.fill(CPStore.MaxPriorityL2 + 1)(new ArrayQueue[Constraint](100))
@@ -48,20 +48,19 @@ class CPStore(val propagStrength: CPPropagStrength) extends SearchNode {
 
   // Number of calls to propagate method in any constraints
   private var nbPropag = 0
-  
+
   // Total time spent in the fix point algorithm
   private var timeInFixPoint: Long = 0
 
   // True if the store is in the fix point algorithm
   private var inPropagate = false
-  
+
   // Reference to the last constraint called
   private var lastConstraint: Constraint = null
 
   // Use for fast access to priority queue
   private var highestPriorL1 = -1
   private var highestPriorL2 = -1
-
 
   /**
    *  Returns the last constraint called in the propagate algorithm.
@@ -264,9 +263,9 @@ class CPStore(val propagStrength: CPPropagStrength) extends SearchNode {
 
   /**
    *  Call the propagate function of the constraints and trigger the fix point algorithm
-   *  
+   *
    *  Note that the constraints are not added to the model
-
+   *
    *  @param constraints a sequence of constraints
    */
   def propagate(constraints: Constraint*): CPOutcome = {
@@ -279,50 +278,63 @@ class CPStore(val propagStrength: CPPropagStrength) extends SearchNode {
   }
 
   protected def propagate(): CPOutcome = {
-    if (status.value == Failure) throw new RuntimeException("the store is failed")
+    if (status.value == Failure) throw Inconsistency("the store is already inconsistent")
     else {
-      val t0 = System.currentTimeMillis()
-
-      // Adds the cut constraints
-      cutConstraints.foreach(c => addQueueL2(c))
-
-      var isFailed = false
+      val t = System.currentTimeMillis()
       inPropagate = true
-
-      while (!isFailed && (highestPriorL1 >= 0 || highestPriorL2 >= 0)) {
-
-        // Propagate L1
-        while (highestPriorL1 >= 0 && !isFailed) {
-          val queue = propagQueueL1(highestPriorL1)
-          if (queue.isEmpty) highestPriorL1 -= 1
-          else {
-            val event = queue.removeFirst()
-            isFailed = event() == Failure     
-          }
+      try {
+        val outcome = fixedPoint() 
+        if (outcome == Failure) {
+          cleanQueues() // may be not empty
+          status.value = Failure
         }
-        
-        // Propagate L2 if no constraint in L1
-        while (highestPriorL1 < 0 && highestPriorL2 >= 0 && !isFailed) {
-          val queue = propagQueueL2(highestPriorL2)
-          if (queue.isEmpty) highestPriorL2 -= 1
-          else {
-            val constraint = queue.removeFirst()
-            lastConstraint = constraint
-            isFailed = constraint.execute() == Failure
-          }
+        outcome
+      } catch {
+        case i: Inconsistency => {
+          cleanQueues() // may be not empty
+          status.value = Failure
+          Failure
         }
       }
-
-      inPropagate = false
-      timeInFixPoint += System.currentTimeMillis() - t0
-
-      if (!isFailed) Suspend
-      else {
-        cleanQueues() // May be not empty
-        status.value = Failure
-        Failure
+      finally {      
+        timeInFixPoint += System.currentTimeMillis() - t
+        inPropagate = false
       }
     }
+  }
+  
+  @inline private def fixedPoint(): CPOutcome = {    
+    
+    // Adds the cut constraints
+    cutConstraints.foreach(c => addQueueL2(c))
+    
+    var isFailed = false
+    while (!isFailed && (highestPriorL1 >= 0 || highestPriorL2 >= 0)) {
+      
+      // Propagate L1
+      while (highestPriorL1 >= 0 && !isFailed) {
+        val queue = propagQueueL1(highestPriorL1)
+        if (queue.isEmpty) highestPriorL1 -= 1
+        else {
+          val event = queue.removeFirst()
+          isFailed = event() == Failure
+        }
+      }
+      
+      // Propagate L2 if no constraint in L1
+      while (highestPriorL1 < 0 && highestPriorL2 >= 0 && !isFailed) {
+        val queue = propagQueueL2(highestPriorL2)
+        if (queue.isEmpty) highestPriorL2 -= 1
+        else {
+          val constraint = queue.removeFirst()
+          lastConstraint = constraint
+          isFailed = constraint.execute() == Failure
+        }
+      }
+    }
+    
+    if (isFailed) Failure
+    else Suspend
   }
 
   def printQueues(): Unit = {
@@ -435,13 +447,12 @@ class CPStore(val propagStrength: CPPropagStrength) extends SearchNode {
     status.value = oc
     return status.value
   }
-  
+
   def add(c: Constraint, st: CPPropagStrength): CPOutcome = post(c, st)
 
   def add(c: Constraint): CPOutcome = add(c, propagStrength)
 
   def add(b: CPBoolVar): CPOutcome = post(new EqCons(b, 1))
-
 
   /**
    * Add a set of constraints to the store in a reversible way and trigger the fix-point algorithm afterwards.
