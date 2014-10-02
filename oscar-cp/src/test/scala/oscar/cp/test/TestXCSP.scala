@@ -1,5 +1,5 @@
 package oscar.cp.test
-
+/*
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
 import oscar.cp.xcsp.modeling.DefaultConstraints
@@ -651,4 +651,4 @@ class TestXCSP extends FunSuite with ShouldMatchers  {
   }
 
 }
-
+*/

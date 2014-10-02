@@ -22,6 +22,7 @@ import oscar.cp.core.CPOutcome
 import oscar.cp.core.CPOutcome._
 import oscar.cp.core.Constraint
 import oscar.cp.core.CPPropagStrength
+import oscar.cp.modeling._
 import oscar.cp.modeling.CPSolver
 import oscar.algo.SortUtils._
 

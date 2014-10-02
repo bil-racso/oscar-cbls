@@ -73,14 +73,14 @@ public class Sequence extends Constraint {
         cumulatedCounters = new CPIntVar[x.length]; // cumulatedCounters[i] = x[0]+x[1]+...+x[i]
         cumulatedCounters[0] = x[0];
         for (int i = 1; i < x.length; i++) {
-            cumulatedCounters[i] = cumulatedCounters[i-1].plus(x[i]);
+            cumulatedCounters[i] = oscar.cp.modeling.constraint.plus(cumulatedCounters[i-1],x[i]);
         }
         P = new CPIntVar[x.length][x.length];
         for (int i = 0; i < x.length; i++) {
             P[i][i] = x[i];
             for (int j = i+1; j < Math.min(x.length, i+len); j++) {
                 if (i > 0)
-                    P[i][j] = cumulatedCounters[j].minus(cumulatedCounters[i-1]);
+                    P[i][j] = oscar.cp.modeling.constraint.minus(cumulatedCounters[j],cumulatedCounters[i-1]);
                 else
                     P[i][j] = cumulatedCounters[j];
             }

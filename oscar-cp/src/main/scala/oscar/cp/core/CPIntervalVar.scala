@@ -1,19 +1,17 @@
-/**
- * *****************************************************************************
+/*******************************************************************************
  * OscaR is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- *
+ *   
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License  for more details.
- *
+ *   
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
- * ****************************************************************************
- */
+ ******************************************************************************/
 
 package oscar.cp.core
 
@@ -319,55 +317,7 @@ abstract class CPIntervalVar(override val store: CPStore, override val name: Str
 
   // ------------------------ some useful methods for java -------------------------
 
-  /**
-   * @return a variable in the same store representing: - x
-   */
-//  def opposite() = {
-//    new CPIntVarViewMinus(this)
-//  }
 
-  /**
-   * @param d
-   * @return  a variable in the same store representing: x - d
-   */
-//  def minus(d: Int) = {
-//    if (d == 0) this
-//    else new CPIntVarViewOffset(this, -d)
-//  }
-
-  /**
-   * @param y a variable in the same store as x
-   * @return a variable in the same store representing: x - y
-   */
-//  def minus(y: CPIntVar) = {
-//    val c = CPIntVarImpl(store, min - y.max, max - y.min);
-//    store.post(new oscar.cp.constraints.Minus(this, y, c));
-//    c;
-//  }
-
-  /**
-   * @param d
-   * @return  a variable in the same store representing: x + d
-   */
-//  def plus(d: Int) = {
-//    if (d == 0) this;
-//    else new CPIntVarViewOffset(this, d);
-//  }
-
-  /**
-   * @param y
-   * @return a variable in the same store representing: x + y
-   */
-//  def plus(y: CPIntVar): CPIntVar = {
-//    if (y.isBound) {
-//      this.plus(y.value)
-//    } else {
-//      val c = CPIntVarImpl(store, min + y.min, max + y.max);
-//      val ok = store.post(new oscar.cp.constraints.BinarySum(this, y, c));
-//      assert(ok != CPOutcome.Failure);
-//      c
-//    }
-//  }
 
   /**
    * @param c

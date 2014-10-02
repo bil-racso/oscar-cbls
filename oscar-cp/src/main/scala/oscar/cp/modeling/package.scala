@@ -118,6 +118,50 @@ package object modeling extends Constraints with Branchings {
     }
   }
 
+  implicit class RichCPIntVar(x: CPIntVar) {
+
+	
+    /**
+     * -x
+     */
+    def unary_-() = new CPIntVarViewMinus(x)
+    /**
+     * x+y
+     */
+    def +(y: CPIntVar) = plus(x,y)
+    /**
+     * x-y
+     */
+    def -(y: CPIntVar) = minus(x,y)
+    /**
+     * x+y
+     */
+    def +(y: Int) = plus(x,y)
+    /**
+     * x-y
+     */
+    def -(y: Int) = minus(x,y)
+
+    def +(s: String) = s"$x$s"    
+    
+    /**
+     * x*y
+     */
+    def *(y: CPIntVar): CPIntVar = {
+      if (y.isBound) x * (y.value)
+      else mul(x,y)
+    }
+    /**
+     * x*y
+     */
+    def *(y: Int): CPIntVar = mul(x,y)
+    
+    def abs = oscar.cp.modeling.absolute(x)
+
+  }
+  
+
+
   //helper functions
 
   /**

@@ -15,6 +15,7 @@
 package oscar.cp.constraints
 
 import oscar.cp.core._
+import oscar.cp.modeling._
 import oscar.algo.reversible._
 import oscar.cp.core.CPOutcome._
 

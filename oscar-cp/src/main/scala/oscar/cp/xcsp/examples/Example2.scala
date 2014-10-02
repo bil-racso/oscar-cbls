@@ -1,5 +1,5 @@
 package oscar.cp.xcsp.examples
-
+/*
 import oscar.cp.modeling._
 import oscar.cp.core.CPIntVar
 import oscar.cp.core.Constraint
@@ -50,3 +50,4 @@ object Example2 extends App {
   println(cp.start())
  
 }
+*/

@@ -1,6 +1,7 @@
 package oscar.cp.core
 
 import scala.util.Random
+import oscar.cp.modeling._
 
 /**
  * Boolean variable: it is nothing else than a 0-1 integer variable. <br>
@@ -143,7 +144,7 @@ class CPBoolVar(val x: CPIntVar, name: String = "") extends CPIntVar(x.store, na
 
   /** Logical and */
   def and(y: CPBoolVar): CPBoolVar = {
-    val res = this.plus(y)
+    val res = plus(this,y)
     res.isEq(2)
   }
 

@@ -93,10 +93,10 @@ object MyModulo {
     cp.add( x*r >= 0)
 
     // -abs(y) < r
-    cp.add(-y.abs() < r)
+    cp.add(-y.abs < r)
 
     // r < abs(y)
-    cp.add(r < y.abs())
+    cp.add(r < y.abs)
 
     // min_x <= d, i.e. d > min_x
     cp.add(d > min_x)

@@ -71,6 +71,98 @@ import oscar.cp.constraints.TableSTR2
 import oscar.cp.constraints.MinCircuit
 
 trait Constraints {
+  
+    /**
+     * @return a variable in the same store representing: - x
+     */
+    def opposite(x: CPIntVar): CPIntVar = {
+      new CPIntVarViewMinus(x)
+    }
+
+    /**
+     * @param d
+     * @return  a variable in the same store representing: x - d
+     */
+    def minus(x: CPIntVar, d: Int): CPIntVar = {
+      if (d == 0) x
+      else new CPIntVarViewOffset(x, -d)
+    }
+
+    /**
+     * @param y a variable in the same store as x
+     * @return a variable in the same store representing: x - y
+     */
+    def minus(x: CPIntVar, y: CPIntVar): CPIntVar = {
+      val c = CPIntVarImpl(x.store, x.min - y.max, x.max - y.min)
+      x.store.post(new oscar.cp.constraints.Minus(x, y, c))
+      c
+    }
+
+    /**
+     * @param d
+     * @return  a variable in the same store representing: x + d
+     */
+    def plus(x: CPIntVar, d: Int): CPIntVar = {
+      if (d == 0) x
+      else new CPIntVarViewOffset(x, d)
+    }
+
+    /**
+     * @param y
+     * @return a variable in the same store representing: x + y
+     */
+    def plus(x: CPIntVar, y: CPIntVar): CPIntVar = {
+      if (y.isBound) {
+        plus(x,y.value)
+      } else {
+        val c = CPIntVarImpl(x.store, x.min + y.min, x.max + y.max)
+        val ok = x.store.post(new oscar.cp.constraints.BinarySum(x, y, c))
+        assert(ok != CPOutcome.Failure)
+        c
+      }
+    }
+
+    /**
+     * @param c
+     * @return a variable in the same store representing: x * c
+     */
+    def mul(x: CPIntVar, y: Int): CPIntVar = {
+      if (y == 0) CPIntVar(0)(x.store)
+      else if (y == 1) x
+      else if (y > 0) new CPIntVarViewTimes(x, y)
+      else {
+        new CPIntVarViewMinus(mul(x,-y))
+      }
+    }
+
+    /**
+     * @param y a variable in the same store as x
+     * @return a variable in the same store representing: x * y
+     */
+    def mul(x: CPIntVar, y: CPIntVar): CPIntVar = {
+      val a = x.min
+      val b = x.max
+      val c = y.min
+      val d = y.max
+      import oscar.cp.util.NumberUtils
+      val t = Array(NumberUtils.safeMul(a, c), NumberUtils.safeMul(a, d), NumberUtils.safeMul(b, c), NumberUtils.safeMul(b, d));
+      val z = CPIntVarImpl(x.store, t.min, t.max)
+      val ok = x.store.post(new oscar.cp.constraints.MulVar(x, y, z))
+      assert(ok != CPOutcome.Failure);
+      z
+    }
+
+    /**
+     * @return a variable in the same store representing: |x|
+     */
+    def absolute(x: CPIntVar): CPIntVar = {
+      val c = CPIntVarImpl(x.store, 0, Math.max(Math.abs(x.min), Math.abs(x.max)));
+      val ok = x.store.post(new oscar.cp.constraints.Abs(x, c));
+      assert(ok != CPOutcome.Failure);
+      return c
+    }  
+  
+  
 
   /**
    * Bin-Packing Constraint linking the placement variables of sized items into bins with

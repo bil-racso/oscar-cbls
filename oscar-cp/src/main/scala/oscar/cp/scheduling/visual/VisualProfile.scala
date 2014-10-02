@@ -17,6 +17,7 @@
 package oscar.cp.scheduling.visual
 import java.awt.Color
 import oscar.cp.core.CPIntVar
+import oscar.cp.modeling._
 import oscar.visual.shapes.VisualPolygon
 import oscar.visual.shapes.VisualLine
 import oscar.visual.VisualDrawing

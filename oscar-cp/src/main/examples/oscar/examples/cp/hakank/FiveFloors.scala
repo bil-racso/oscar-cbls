@@ -81,10 +81,10 @@ object FiveFloors {
        cp.add(miller > cooper)
 
        // Smith does not live on a floor adjacent to Fletcher'. 
-       cp.add((smith-fletcher).abs() > 1)
+       cp.add((smith-fletcher).abs > 1)
 
        // Fletcher does not live on a floor adjacent to Cooper's.
-       cp.add((fletcher-cooper).abs() > 1)
+       cp.add((fletcher-cooper).abs > 1)
 
 
      } search {

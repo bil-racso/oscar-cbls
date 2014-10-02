@@ -1,9 +1,25 @@
+/*******************************************************************************
+ * OscaR is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 2.1 of the License, or
+ * (at your option) any later version.
+ *
+ * OscaR is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License  for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
+ * *****************************************************************************/
+
 package oscar.cp.test
 
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
 import oscar.cp.core.CPStore
 import oscar.cp.core.CPIntVar
+import oscar.cp.modeling._
 import oscar.cp.constraints.WeightedSum
 import oscar.cp.constraints.MulCte
 import oscar.cp.constraints.Eq
@@ -17,7 +33,7 @@ class TestMul extends FunSuite with ShouldMatchers {
   test("test Mul 1") {
     implicit val s = new CPStore()
     val x = CPIntVar(0, 5)
-    val y = x.mul(-2)
+    val y = mul(x,-2)
     s.post(new Gr(y, -10))
     assert(x.max == 4)
   }
@@ -223,7 +239,7 @@ class TestMul extends FunSuite with ShouldMatchers {
     implicit val s = new CPStore()
     val x = CPIntVar(-5, 5)
     val y = CPIntVar(-5, 16)
-    s.post(new Eq(x.mul(x), y)) // should detect it is a square constraint
+    s.post(new Eq(mul(x,x), y)) // should detect it is a square constraint
     assert(!s.isFailed())
     assert(x.min == -4)
     assert(x.max == 4)
@@ -236,7 +252,7 @@ class TestMul extends FunSuite with ShouldMatchers {
     val x = CPIntVar(6, 43986624)
     val y = CPIntVar(4, 355)
     var z = CPIntVar(711, 711)
-    z = x.mul(y)
+    z = mul(x,y)
     s.post(new Eq(z, CPIntVar(711))) // should detect it is a square constraint
     assert(!s.isFailed())
 
