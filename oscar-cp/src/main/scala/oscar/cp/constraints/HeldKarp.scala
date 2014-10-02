@@ -97,7 +97,7 @@ class HeldKarp(val edges: CPSetVar,val edgeData: Array[(Int,Int,Int)], val cost:
     for (metaiter <- 0 until nMetaIter) {
       iter = 0
       while (iter < nSteps) {
-        println("iter---")
+        //println("iter---")
         iter += 1
         improvement = false
         
@@ -171,7 +171,7 @@ class HeldKarp(val edges: CPSetVar,val edgeData: Array[(Int,Int,Int)], val cost:
           }
         }
         val oneTreeLBf = ((2 * y.map(_ + 0.0).sum + weight)-epsilon)
-        println("=>"+oneTreeLBf+" " +y.mkString(","))
+        //println("=>"+oneTreeLBf+" " +y.mkString(","))
         val oneTreeLB = oneTreeLBf.ceil.toInt
         if (lb < oneTreeLB) {
           improvement = true
