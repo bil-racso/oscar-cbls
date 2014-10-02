@@ -118,7 +118,7 @@ class TestHeldKarp extends FunSuite with ShouldMatchers  {
       val s1 = stat(distMatrix, b + 1, true, false)
       val s2 = stat(distMatrix, b + 1, true, true)
       if (s1.nSols != s2.nSols) {
-        distMatrix.foreach(a => println(a.mkString("\t")))
+        //distMatrix.foreach(a => println(a.mkString("\t")))
       }
       //println(s1.nSols + " " + s2.nSols)
       s1.nSols should be(s2.nSols)
@@ -161,8 +161,8 @@ class TestHeldKarp extends FunSuite with ShouldMatchers  {
     
     inorder.map(_.value).filter(_ > 0) should be(Array(6,9,7,10,8))
     
-    println("inorder:"+inorder.map(_.value).mkString(","))
-    println("inorder heights:"+inorder.map(_.height).mkString(","))
+    //println("inorder:"+inorder.map(_.value).mkString(","))
+    //println("inorder heights:"+inorder.map(_.height).mkString(","))
     
     val pos = Array.fill(11)(0)
     for (i <- 0 until 10) {
