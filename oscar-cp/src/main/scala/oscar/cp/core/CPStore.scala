@@ -455,6 +455,12 @@ class CPStore( final val propagStrength: CPPropagStrength) extends SearchNode {
 
   def post(constraints: Collection[Constraint]): CPOutcome = post(constraints.map(x => x.asInstanceOf[Constraint]), propagStrength)
 
+  // Should only be used with Exception based constraints
+  def doAndPropagate(action: => Unit): Unit = {
+    try { action; propagate() }
+    catch { case i: Inconsistency => status.value = Failure }
+  }
+
   def assign(x: CPIntVar, v: Int): CPOutcome = {
     if (status.value == Failure) Failure
     else try {
