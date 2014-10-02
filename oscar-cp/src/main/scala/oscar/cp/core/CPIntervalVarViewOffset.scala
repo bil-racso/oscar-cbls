@@ -20,7 +20,7 @@ import scala.util.Random
  * Represents a view on variable applying an offset on it.
  * @author Pierre Schaus pschaus@gmail.com
  */
-class CPInteralVarViewOffset(v: CPIntVar,val b: Int) extends CPIntervalVar(v.store) {
+class CPIntervalVarViewOffset(v: CPIntervalVar,val b: Int) extends CPIntervalVar(v.store) {
     
     
     def transform(v: Int) = b + this.v.transform(v)    
@@ -49,7 +49,6 @@ class CPInteralVarViewOffset(v: CPIntVar,val b: Int) extends CPIntervalVar(v.sto
 
 	def updateMax(value: Int) = v.updateMax(value-b)
 	
-	def removeValue(value: Int) = v.removeValue(value-b)
 	
 	def min = v.min + b
 	
@@ -64,9 +63,7 @@ class CPInteralVarViewOffset(v: CPIntVar,val b: Int) extends CPIntervalVar(v.sto
 	def callPropagateWhenBind(c: Constraint, trackDelta: Boolean = false) = v.callPropagateWhenBind(c)
 	
 	def callPropagateWhenBoundsChange(c: Constraint, trackDelta: Boolean = false) = v.callPropagateWhenBoundsChange(c,trackDelta)
-	
-	def callPropagateWhenDomainChanges(c: Constraint, trackDelta: Boolean = false) = v.callPropagateWhenDomainChanges(c,trackDelta)
-	
+		
 	// this method is useful when you have a view defined on a view
 	def callValBindWhenBind(c: Constraint, variable: CPIntervalVar) = v.callValBindWhenBind(c, variable)
 	

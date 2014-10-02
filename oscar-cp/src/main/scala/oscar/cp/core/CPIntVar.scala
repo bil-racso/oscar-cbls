@@ -188,23 +188,11 @@ abstract class CPIntVar(override val store: CPStore, override val name: String =
    * @param v
    * @return  a boolean variable b in the same store linked to x by the relation x == v <=> b == true
    */
-  def isEq(v: Int): CPBoolVar = {
+  override def isEq(v: Int): CPBoolVar = {
     val b = new CPBoolVar(store);
     val ok = store.post(new oscar.cp.constraints.EqReif(this, v, b));
     assert(ok != CPOutcome.Failure);
     return b;
-  }
-
-  /**
-   * Reified constraint
-   * @param y a variable
-   * @return a boolean variable b in the same store linked to x by the relation x == y <=> b == true
-   */
-  def isEq(y: CPIntVar): CPBoolVar = {
-    val b = new CPBoolVar(store);
-    val ok = store.post(new oscar.cp.constraints.EqReifVar(this, y, b));
-    assert(ok != CPOutcome.Failure);
-    b
   }
 
   /**
@@ -231,42 +219,6 @@ abstract class CPIntVar(override val store: CPStore, override val name: String =
     return b;
   }
 
-  /**
-   * Reified constraint
-   * @param v
-   * @return  a boolean variable b in the same store linked to x by the relation x >= v <=> b == true
-   */
-  def isGrEq(v: Int): CPBoolVar = {
-    val b = new CPBoolVar(store);
-    val ok = store.post(new oscar.cp.constraints.GrEqCteReif(this, v, b));
-    assert(ok != CPOutcome.Failure);
-    return b;
-  }
-
-  /**
-   * Reified constraint
-   * @param v
-   * @return  a boolean variable b in the same store linked to x by the relation x <= v <=> b == true
-   */
-  def isLeEq(v: Int): CPBoolVar = {
-    val b = new CPBoolVar(store);
-    val ok = store.post(new oscar.cp.constraints.LeEqCteReif(this, v, b));
-    assert(ok != CPOutcome.Failure);
-    return b;
-  }
-
-  /**
-   * Reified constraint
-   * @param y a variable in the same store as x
-   * @return  a boolean variable b in the same store linked to x by the relation x >= y <=> b == true
-   */
-  def isGrEq(y: CPIntVar): CPBoolVar = {
-    val b = new CPBoolVar(store);
-    val ok = store.post(new oscar.cp.constraints.GrEqVarReif(this, y, b));
-    assert(ok != CPOutcome.Failure);
-    return b;
-  }
-
 
   /**
    * x must take a value from set
@@ -287,39 +239,7 @@ abstract class CPIntVar(override val store: CPStore, override val name: String =
   /**
    * x==y
    */
-  def ==(y: Int) = new oscar.cp.constraints.EqVal(this, y)
-  /**
-   * x<y
-   */
-  def <(y: CPIntVar) = new oscar.cp.constraints.Le(this, y)
-  /**
-   * x<y
-   */
-  def <(y: Int) = new oscar.cp.constraints.Le(this, y)
-  /**
-   * x>y
-   */
-  def >(y: CPIntVar) = new oscar.cp.constraints.Gr(this, y)
-  /**
-   * x>y
-   */
-  def >(y: Int) = new oscar.cp.constraints.Gr(this, y)
-  /**
-   * x<=y
-   */
-  def <=(y: CPIntVar) = new oscar.cp.constraints.LeEq(this, y)
-  /**
-   * x<=y
-   */
-  def <=(y: Int) = new oscar.cp.constraints.LeEq(this, y)
-  /**
-   * x>=y
-   */
-  def >=(y: CPIntVar) = new oscar.cp.constraints.GrEq(this, y)
-  /**
-   * x>=y
-   */
-  def >=(y: Int) = new oscar.cp.constraints.GrEq(this, y)
+  override def ==(y: Int) = new oscar.cp.constraints.EqVal(this, y)
   /**
    * b <=> x == v
    */

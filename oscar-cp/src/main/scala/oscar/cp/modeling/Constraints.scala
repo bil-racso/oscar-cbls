@@ -69,6 +69,7 @@ import oscar.cp.core.Constraint
 import oscar.cp.core._
 import oscar.cp.constraints.TableSTR2
 import oscar.cp.constraints.MinCircuit
+import oscar.cp.constraints.AllDiffBC
 
 trait Constraints {
   
@@ -87,6 +88,15 @@ trait Constraints {
       if (d == 0) x
       else new CPIntVarViewOffset(x, -d)
     }
+    
+    /**
+     * @param d
+     * @return  a variable in the same store representing: x - d
+     */
+    def minus(x: CPIntervalVar, d: Int): CPIntervalVar = {
+      if (d == 0) x
+      else new CPIntervalVarViewOffset(x, -d)
+    }    
 
     /**
      * @param y a variable in the same store as x
@@ -97,6 +107,16 @@ trait Constraints {
       x.store.post(new oscar.cp.constraints.Minus(x, y, c))
       c
     }
+    
+    /**
+     * @param y a variable in the same store as x
+     * @return a variable in the same store representing: x - y
+     */
+    def minus(x: CPIntervalVar, y: CPIntervalVar): CPIntervalVar = {
+      val c = CPIntervalVarImpl(x.store, x.min - y.max, x.max - y.min)
+      x.store.post(new oscar.cp.constraints.Minus(x, y, c))
+      c
+    }    
 
     /**
      * @param d
@@ -106,6 +126,15 @@ trait Constraints {
       if (d == 0) x
       else new CPIntVarViewOffset(x, d)
     }
+    
+    /**
+     * @param d
+     * @return  a variable in the same store representing: x + d
+     */
+    def plus(x: CPIntervalVar, d: Int): CPIntervalVar = {
+      if (d == 0) x
+      else new CPIntervalVarViewOffset(x, d)
+    }    
 
     /**
      * @param y
@@ -121,6 +150,21 @@ trait Constraints {
         c
       }
     }
+    
+    /**
+     * @param y
+     * @return a variable in the same store representing: x + y
+     */
+    def plus(x: CPIntervalVar, y: CPIntervalVar): CPIntervalVar = {
+      if (y.isBound) {
+        plus(x,y.value)
+      } else {
+        val c = CPIntervalVarImpl(x.store, x.min + y.min, x.max + y.max)
+        val ok = x.store.post(new oscar.cp.constraints.BinarySum(x, y, c))
+        assert(ok != CPOutcome.Failure)
+        c
+      }
+    }    
 
     /**
      * @param c
@@ -237,7 +281,7 @@ trait Constraints {
   }  
 
   /**
-   * allDifferent Constraint (Available Filtering: Weak, Strong)
+   * allDifferent Constraint (Available Filtering: Weak, , Medium, Strong)
    * @param vars an non empty array of variables
    * @return a constraint ensure that no value occurs more than once in vars
    */
@@ -248,6 +292,20 @@ trait Constraints {
   def allDifferent(vars: Iterable[CPIntVar]): Constraint = {
     return allDifferent(vars.toArray: _*)
   }
+  
+  
+  /**
+   * allDifferent Constraint
+   * @param vars an non empty array of variables
+   * @return a constraint ensure that no value occurs more than once in vars
+   */
+  //def allDifferent(vars: CPIntervalVar*): Constraint = {
+  //  return allDifferent(vars: _*)
+  //}
+
+  //def allDifferent(vars: Iterable[CPIntervalVar]): Constraint = {
+  //  return new AllDiffBC(vars.toArray)
+  //}  
   
   /**
    * minAssignment Constraint (Available Filtering: Medium)
@@ -435,22 +493,20 @@ trait Constraints {
    * @return a constraint enforcing vars(0)+vars(1)+...+vars(n) = s
    */
   def sum(vars: Array[CPIntVar], s: CPIntVar): Constraint = {
-    /*
-    var x = vars
-    while (x.size > 2) {
-      //System.err.println("sum"+x.size)
-      val y = x.sliding(2, 2).toArray
-      x = y.map{ arg =>
-      	if (arg.size == 2) arg(0)+arg(1)
-      	else arg(0)
-      }.reverse
-    }
-    if (x.size == 2) new BinarySum(x(0),x(1),s)
-    else x(0) == s
-    */
+    if (vars.size == 2) new BinarySum(vars(0),vars(1),s) 
+    else new oscar.cp.constraints.Sum(vars.map(_.asInstanceOf[CPIntervalVar]), s)
+  }
+  
+  /**
+   * Sum Constraint
+   * @param vars a non empty array of n variables
+   * @param s a variable representing the sum of vars
+   * @return a constraint enforcing vars(0)+vars(1)+...+vars(n) = s
+   */
+  def sum(vars: Array[CPIntervalVar], s: CPIntVar): Constraint = {
     if (vars.size == 2) new BinarySum(vars(0),vars(1),s) 
     else new oscar.cp.constraints.Sum(vars, s)
-  }
+  }  
 
   /**
    * Sum Constraint
@@ -529,7 +585,7 @@ trait Constraints {
    * @return y == sum(i)(w_i * x_i)
    */
   def weightedSum(w: Array[Int], x: Array[CPIntVar], y: CPIntVar): Constraint = {
-    new WeightedSum(w,x,y)
+    new WeightedSum(w,x.map(_.asInstanceOf[CPIntervalVar]),y)
   }
   
   /**

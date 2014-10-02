@@ -120,7 +120,6 @@ package object modeling extends Constraints with Branchings {
 
   implicit class RichCPIntVar(x: CPIntVar) {
 
-	
     /**
      * -x
      */
@@ -158,7 +157,73 @@ package object modeling extends Constraints with Branchings {
     
     def abs = oscar.cp.modeling.absolute(x)
 
+    /**
+     * Reified constraint
+     * @param y a variable
+     * @return a boolean variable b in the same store linked to x by the relation x == y <=> b == true
+     */
+    def isEq(y: CPIntVar): CPBoolVar = {
+      val b = new CPBoolVar(x.store);
+      val ok = x.store.post(new oscar.cp.constraints.EqReifVar(x, y, b));
+      assert(ok != CPOutcome.Failure);
+      b
+    }
+    
+
   }
+  
+  implicit class RichCPIntervalVar(x: CPIntervalVar) {
+
+    /**
+     * -x
+     */
+    def unary_-() = new CPIntervalVarViewMinus(x)
+    /**
+     * x+y
+     */
+    def +(y: CPIntVar) = plus(x,y)
+    /**
+     * x-y
+     */
+    def -(y: CPIntVar) = minus(x,y)
+    /**
+     * x+y
+     */
+    def +(y: Int) = plus(x,y)
+    /**
+     * x-y
+     */
+    def -(y: Int) = minus(x,y)
+
+    def +(s: String) = s"$x$s"
+
+    /**
+     * x*y
+     */
+    //def *(y: CPIntVar): CPIntVar = {
+    //if (y.isBound) x * (y.value)
+    //else mul(x,y)
+    //}
+    /**
+     * x*y
+     */
+    //def *(y: Int): CPIntVar = mul(x,y)
+
+    //def abs = oscar.cp.modeling.absolute(x)
+
+    /**
+     * Reified constraint
+     * @param y a variable
+     * @return a boolean variable b in the same store linked to x by the relation x == y <=> b == true
+     */
+    def isEq(y: CPIntervalVar): CPBoolVar = {
+      val b = new CPBoolVar(x.store);
+      val ok = x.store.post(new oscar.cp.constraints.EqReifIntervalVar(x, y, b));
+      assert(ok != CPOutcome.Failure);
+      b
+    }    
+
+  }  
   
 
 

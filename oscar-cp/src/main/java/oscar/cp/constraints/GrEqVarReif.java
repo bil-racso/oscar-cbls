@@ -17,7 +17,7 @@ package oscar.cp.constraints;
 import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
 import oscar.cp.core.CPBoolVar;
-import oscar.cp.core.CPIntVar;
+import oscar.cp.core.CPIntervalVar;
 import oscar.cp.core.CPIntervalVar;
 import oscar.cp.core.Constraint;
 import oscar.cp.core.CPStore;
@@ -28,7 +28,7 @@ import oscar.cp.core.CPStore;
  */
 public class GrEqVarReif extends Constraint {
 
-	CPIntVar x, y;
+	CPIntervalVar x, y;
 	CPBoolVar b;
 
     /**
@@ -38,7 +38,7 @@ public class GrEqVarReif extends Constraint {
      * @param y
      * @param b
      */
-	public GrEqVarReif(CPIntVar x, CPIntVar y, CPBoolVar b) {
+	public GrEqVarReif(CPIntervalVar x, CPIntervalVar y, CPBoolVar b) {
 		super(x.store(),"GrEqVarReif");
 		this.x = x;
 		this.y = y;

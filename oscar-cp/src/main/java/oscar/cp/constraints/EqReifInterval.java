@@ -16,58 +16,73 @@ package oscar.cp.constraints;
 
 import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
-import oscar.cp.core.CPStore;
+import oscar.cp.core.CPBoolVar;
 import oscar.cp.core.CPIntervalVar;
 import oscar.cp.core.Constraint;
 
 /**
- * Greater or Equal Constraint
+ * Reified Equality Constraint
  * @author Pierre Schaus pschaus@gmail.com
  */
-public class GrEq extends Constraint {
+public class EqReifInterval extends Constraint {
 
-	CPIntervalVar x, y;
+	CPIntervalVar x;
+	int v;
+	CPBoolVar b;
 
     /**
-     * Constraint x >= y
+     * x is equal to v if and only if b is true i.e.
+     * links x,v and b by the relation (x == v) <=> b
      * @param x
-     * @param y
-     * @see GrEqCteReif
-     * @see GrEqVarReif
+     * @param v
+     * @param b
+     * @see DiffReif
      */
-	public GrEq(CPIntervalVar x, CPIntervalVar y) {
-		super(x.store(),"GrEq");
+	public EqReifInterval(CPIntervalVar x, int v, CPBoolVar b) {
+		super(x.store(),"EqReif");
 		this.x = x;
-		this.y = y;
-	}
-	
-	public GrEq(CPIntervalVar x, int v) {
-		this(x, CPIntervalVar.apply(x.store(),v,v));
+		this.v = v;
+		this.b = b;
+		idempotent_$eq(true);
+		//priorityBindL1_$eq(CPStore.MAXPRIORL1());
+		//priorityL2_$eq(CPStore.MAXPRIORL2());
 	}
 	
 	@Override
 	public CPOutcome setup(CPPropagStrength l) {
-		priorityL2_$eq(CPStore.MAXPRIORL2());
-		CPOutcome oc = propagate();
-		if(oc == CPOutcome.Suspend){
-			if (!y.isBound()) y.callPropagateWhenBoundsChange(this,false);
-			if (!x.isBound()) x.callPropagateWhenBoundsChange(this,false);
-		}
-		return oc;
+		b.callPropagateWhenBind(this, false);
+		x.callPropagateWhenBoundsChange(this, false);
+		return propagate();
 	}
+	
+
 	
 	@Override
 	public CPOutcome propagate() {
-		if (x.getMin() >= y.getMax()) {
+		if (b.isFalse()) {
+			//x != v
+			if (x.getMax() == v) {
+				if (x.updateMax(v-1) == CPOutcome.Failure) return CPOutcome.Failure;
+				else return CPOutcome.Success;
+			}
+			else if (x.getMin() == v) {
+				if (x.updateMin(v+1) == CPOutcome.Failure) return CPOutcome.Failure;
+				else return CPOutcome.Success;
+			}
+			else return CPOutcome.Suspend;
+		}
+		if (b.isTrue()) {
+			if (x.assign(v) == CPOutcome.Failure) return CPOutcome.Failure;
+		}
+		if (x.getMax() < v || x.getMin() > v) {
+			b.assign(0);
 			return CPOutcome.Success;
 		}
-		if (x.updateMin(y.getMin()) == CPOutcome.Failure) {
-			return CPOutcome.Failure;
-		}
-		if (y.updateMax(x.getMax()) == CPOutcome.Failure) {
-			return CPOutcome.Failure;
+		if (x.isBoundTo(v)) {
+			b.assign(1);
 		}
 		return CPOutcome.Suspend;
 	}
 
 }
+

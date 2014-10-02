@@ -24,11 +24,11 @@ import oscar.cp.core.CPOutcome._
  * @author Steven Gay steven.gay@uclouvain.be
  * 
  */
-class BinarySum(val x: CPIntVar, val y: CPIntVar, val z: CPIntVar) extends Constraint(x.store, "BinarySum") {
+class BinarySum(val x: CPIntervalVar, val y: CPIntervalVar, val z: CPIntervalVar) extends Constraint(x.store, "BinarySum") {
 
   idempotent = true
   override def setup(l: CPPropagStrength): CPOutcome = {
-    priorityL2 = CPStore.MAXPRIORL2 - 1
+    priorityL2 = CPStore.MaxPriorityL2 - 1
     if (!x.isBound) x.callPropagateWhenBoundsChange(this)
     if (!y.isBound) y.callPropagateWhenBoundsChange(this)
     if (!z.isBound) z.callPropagateWhenBoundsChange(this)

@@ -317,70 +317,19 @@ abstract class CPIntervalVar(override val store: CPStore, override val name: Str
 
   // ------------------------ some useful methods for java -------------------------
 
-
-
-  /**
-   * @param c
-   * @return a variable in the same store representing: x * c
-   */
-//  def mul(y: Int): CPIntVar = {
-//    if (y == 0) CPIntVar(0)(this.store)
-//    else if (y == 1) this
-//    else if (y > 0) new CPIntVarViewTimes(this, y)
-//    else this.mul(-y).opposite
-//  }
-
-
-  /**
-   * @param y a variable in the same store as x
-   * @return a variable in the same store representing: x * y
-   */
-//  def mul(y: CPIntVar): CPIntVar = {
-//    val a = min
-//    val b = max
-//    val c = y.min
-//    val d = y.max
-//    import oscar.cp.util.NumberUtils
-//    val t = Array(NumberUtils.safeMul(a, c), NumberUtils.safeMul(a, d), NumberUtils.safeMul(b, c), NumberUtils.safeMul(b, d));
-//    val z = CPIntVarImpl(store, t.min, t.max)
-//    val ok = store.post(new oscar.cp.constraints.MulVar(this, y, z))
-//    assert(ok != CPOutcome.Failure);
-//    z
-//  }
-
-  /**
-   * @return a variable in the same store representing: |x|
-   */
-//  def abs(): CPIntVar = {
-//    val c = CPIntVarImpl(store, 0, Math.max(Math.abs(min), Math.abs(max)));
-//    val ok = store.post(new oscar.cp.constraints.Abs(this, c));
-//    assert(ok != CPOutcome.Failure);
-//    return c
-//  }
-
   /**
    * Reified constraint
    * @param v
    * @return  a boolean variable b in the same store linked to x by the relation x == v <=> b == true
    */
-//  def isEq(v: Int): CPBoolVar = {
-//    val b = new CPBoolVar(store);
-//    val ok = store.post(new oscar.cp.constraints.EqReif(this, v, b));
-//    assert(ok != CPOutcome.Failure);
-//    return b;
-//  }
+  def isEq(v: Int): CPBoolVar = {
+    val b = new CPBoolVar(store);
+    val ok = store.post(new oscar.cp.constraints.EqReifInterval(this, v, b));
+    assert(ok != CPOutcome.Failure);
+    return b;
+  }
 
-  /**
-   * Reified constraint
-   * @param y a variable
-   * @return a boolean variable b in the same store linked to x by the relation x == y <=> b == true
-   */
-//  def isEq(y: CPIntervalVar): CPBoolVar = {
-//    val b = new CPBoolVar(store);
-//    val ok = store.post(new oscar.cp.constraints.EqReifVar(this, y, b));
-//    assert(ok != CPOutcome.Failure);
-//    b
-//  }
+
 
   /**
    * Reified constraint
@@ -401,7 +350,7 @@ abstract class CPIntervalVar(override val store: CPStore, override val name: Str
    */
 //  def isDiff(y: CPIntervalVar): CPBoolVar = {
 //    val b = new CPBoolVar(store);
-//    val ok = store.post(new oscar.cp.constraints.DiffReifVar(this, y, b));
+//    val ok = store.post(new oscar.cp.constraints.DiffReifIntervalVar(this, y, b));
 //    assert(ok != CPOutcome.Failure)
 //    return b;
 //  }
@@ -411,78 +360,41 @@ abstract class CPIntervalVar(override val store: CPStore, override val name: Str
    * @param v
    * @return  a boolean variable b in the same store linked to x by the relation x >= v <=> b == true
    */
-//  def isGrEq(v: Int): CPBoolVar = {
-//    val b = new CPBoolVar(store);
-//    val ok = store.post(new oscar.cp.constraints.GrEqCteReif(this, v, b));
-//    assert(ok != CPOutcome.Failure);
-//    return b;
-//  }
+  def isGrEq(v: Int): CPBoolVar = {
+    val b = new CPBoolVar(store);
+    val ok = store.post(new oscar.cp.constraints.GrEqCteReif(this, v, b));
+    assert(ok != CPOutcome.Failure);
+    return b;
+  }
 
   /**
    * Reified constraint
    * @param v
    * @return  a boolean variable b in the same store linked to x by the relation x <= v <=> b == true
    */
-//  def isLeEq(v: Int): CPBoolVar = {
-//    val b = new CPBoolVar(store);
-//    val ok = store.post(new oscar.cp.constraints.LeEqCteReif(this, v, b));
-//    assert(ok != CPOutcome.Failure);
-//    return b;
-//  }
+  def isLeEq(v: Int): CPBoolVar = {
+    val b = new CPBoolVar(store);
+    val ok = store.post(new oscar.cp.constraints.LeEqCteReif(this, v, b));
+    assert(ok != CPOutcome.Failure);
+    return b;
+  }
 
   /**
    * Reified constraint
    * @param y a variable in the same store as x
    * @return  a boolean variable b in the same store linked to x by the relation x >= y <=> b == true
    */
-//  def isGrEq(y: CPIntVar): CPBoolVar = {
-//    val b = new CPBoolVar(store);
-//    val ok = store.post(new oscar.cp.constraints.GrEqVarReif(this, y, b));
-//    assert(ok != CPOutcome.Failure);
-//    return b;
-//  }
+  def isGrEq(y: CPIntervalVar): CPBoolVar = {
+    val b = new CPBoolVar(store);
+    val ok = store.post(new oscar.cp.constraints.GrEqVarReif(this, y, b));
+    assert(ok != CPOutcome.Failure);
+    return b;
+  }
 
   def isRange: Boolean = (max - min + 1) == size
 
-  /**
-   * x must take a value from set
-   */
-//  def in(set: Set[Int]): Constraint = new InSet(this, set)
 
-  /**
-   * -x
-   */
-//  def unary_-() = this.opposite()
-  /**
-   * x+y
-   */
-//  def +(y: CPIntVar) = this.plus(y)
-  /**
-   * x-y
-   */
-//  def -(y: CPIntVar) = this.minus(y)
-  /**
-   * x+y
-   */
-//  def +(y: Int) = this.plus(y)
-  /**
-   * x-y
-   */
-//  def -(y: Int) = this.minus(y)
-  /**
-   * x*y
-   */
-//  def *(y: CPIntVar): CPIntVar = {
-//    if (y.isBound) this * (y.value)
-//    else this.mul(y)
-//  }
-  /**
-   * x*y
-   */
-//  def *(y: Int): CPIntVar = this.mul(y)
-  /**
-   * x!=y
-   */
+
 //  def !=(y: CPIntVar) = new oscar.cp.constraints.DiffVar(this, y)
   /**
    * x!=y
@@ -491,47 +403,47 @@ abstract class CPIntervalVar(override val store: CPStore, override val name: Str
   /**
    * x==y
    */
-//  def ==(y: CPIntVar) = new oscar.cp.constraints.Eq(this, y)
+  def ==(y: CPIntervalVar) = new oscar.cp.constraints.EqInterval(this, y)
   /**
    * x==y
    */
-//  def ==(y: Int) = new oscar.cp.constraints.EqVal(this, y)
+   def ==(y: Int) = new oscar.cp.constraints.EqVal(this, y)
   /**
    * x<y
    */
-//  def <(y: CPIntVar) = new oscar.cp.constraints.Le(this, y)
+  def <(y: CPIntVar) = new oscar.cp.constraints.Le(this, y)
   /**
    * x<y
    */
-//  def <(y: Int) = new oscar.cp.constraints.Le(this, y)
+  def <(y: Int) = new oscar.cp.constraints.Le(this, y)
   /**
    * x>y
    */
-//  def >(y: CPIntVar) = new oscar.cp.constraints.Gr(this, y)
+  def >(y: CPIntVar) = new oscar.cp.constraints.Gr(this, y)
   /**
    * x>y
    */
-//  def >(y: Int) = new oscar.cp.constraints.Gr(this, y)
+  def >(y: Int) = new oscar.cp.constraints.Gr(this, y)
   /**
    * x<=y
    */
-//  def <=(y: CPIntVar) = new oscar.cp.constraints.LeEq(this, y)
+  def <=(y: CPIntVar) = new oscar.cp.constraints.LeEq(this, y)
   /**
    * x<=y
    */
-//  def <=(y: Int) = new oscar.cp.constraints.LeEq(this, y)
+  def <=(y: Int) = new oscar.cp.constraints.LeEq(this, y)
   /**
    * x>=y
    */
-//  def >=(y: CPIntVar) = new oscar.cp.constraints.GrEq(this, y)
+  def >=(y: CPIntVar) = new oscar.cp.constraints.GrEq(this, y)
   /**
    * x>=y
    */
-//  def >=(y: Int) = new oscar.cp.constraints.GrEq(this, y)
+  def >=(y: Int) = new oscar.cp.constraints.GrEq(this, y)
   /**
    * b <=> x == v
    */
-//  def ===(v: Int) = this.isEq(v)
+  //def ===(v: Int) = this.isEqInterval(v)
   /**
    * b <=> x == y
    */

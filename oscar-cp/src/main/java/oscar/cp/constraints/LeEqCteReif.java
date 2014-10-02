@@ -17,7 +17,6 @@ package oscar.cp.constraints;
 import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
 import oscar.cp.core.CPBoolVar;
-import oscar.cp.core.CPIntVar;
 import oscar.cp.core.CPIntervalVar;
 import oscar.cp.core.Constraint;
 import oscar.cp.core.CPStore;
@@ -28,7 +27,7 @@ import oscar.cp.core.CPStore;
  */
 public class LeEqCteReif extends Constraint {
 
-	CPIntVar x;
+	CPIntervalVar x;
 	int v;
 	CPBoolVar b;
 
@@ -39,7 +38,7 @@ public class LeEqCteReif extends Constraint {
      * @param v
      * @param b
      */
-	public LeEqCteReif(CPIntVar x, int v, CPBoolVar b) {
+	public LeEqCteReif(CPIntervalVar x, int v, CPBoolVar b) {
 		super(x.store(),"GrEqCteReif");
 		this.x = x;
 		this.v = v;
