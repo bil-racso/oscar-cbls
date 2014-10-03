@@ -47,7 +47,7 @@ class And(val X: Array[CPBoolVar], val b: CPBoolVar) extends Constraint(b.store,
     propagate()
   }
   
-  override def valBindIdx(x: CPIntVar, idx: Int): CPOutcome = {
+  override def valBindIdx(x: CPIntervalVar, idx: Int): CPOutcome = {
     if (x.isBoundTo(0)) {
       if (b.assign(0) == Failure) Failure
       else Success

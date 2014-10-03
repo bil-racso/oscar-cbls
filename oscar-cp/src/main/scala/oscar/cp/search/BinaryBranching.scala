@@ -20,15 +20,16 @@ import oscar.cp.core.CPIntVar
 import oscar.algo.reversible._
 import oscar.algo.search.Branching
 import oscar.cp.core.CPSetVar
+import oscar.cp.core.CPIntervalVar
 
 /**
- * Binary Branching: 
- * You can specify your variable/value heuristics
+ * Abstract Binary Branching: 
+ * You can specify your variable heuristics
  * author: Pierre Schaus pschaus@gmail.com
  */
-class BinaryBranching(vars: Array[_ <: CPIntVar], varHeuris: (CPIntVar => Int), valHeuris: (CPIntVar => Int) = minVal) extends Branching {
+abstract class AbstractBinaryBranching[X <: CPIntervalVar](vars: Array[X], varHeuris: (X => Int)) extends Branching {
   val cp = vars(0).store
-  val x_ = vars.asInstanceOf[Array[CPIntVar]].zipWithIndex
+  val x_ = vars.asInstanceOf[Array[X]].zipWithIndex
   val nbBounds = new ReversibleInt(cp, 0)
   def bound(i: Int) {
     val ind = nbBounds.value
@@ -49,7 +50,7 @@ class BinaryBranching(vars: Array[_ <: CPIntVar], varHeuris: (CPIntVar => Int), 
     true
   }
 
-  def nextVar(): CPIntVar = {
+  def nextVar(): X = {
     var i = nbBounds.value
     var (x, ind) = x_(i)
     var fbest = varHeuris(x)
@@ -71,6 +72,16 @@ class BinaryBranching(vars: Array[_ <: CPIntVar], varHeuris: (CPIntVar => Int), 
     x
   }
 
+  def alternatives(): Seq[Alternative]
+}
+/**
+ * Binary Branching: 
+ * You can specify your variable/value heuristics
+ * author: Pierre Schaus pschaus@gmail.com
+ */
+class BinaryBranching[X <: CPIntVar](vars: Array[X], varHeuris: (CPIntVar => Int), valHeuris: (CPIntVar => Int) = minVal) extends AbstractBinaryBranching(vars,varHeuris) {
+
+
   def alternatives(): Seq[Alternative] = {
     allBounds() match {
       case true => noAlternative
@@ -82,6 +93,10 @@ class BinaryBranching(vars: Array[_ <: CPIntVar], varHeuris: (CPIntVar => Int), 
     }
   }
 }
+
+
+
+
 
 class BinaryStaticOrderBranching(vars: Array[_ <: CPIntVar], valHeuris: (CPIntVar => Int) = minVal) extends Branching {
 
@@ -128,7 +143,7 @@ class BinaryMaxDegreeBranching(x: Array[CPIntVar]) extends BinaryBranching(x, va
 /**
  * Binary search on the decision variables vars, splitting the domain at the selected value (left : <= value, right : > value)
  */
-class BinaryDomainSplitBranching(x: Array[CPIntVar], varHeuris: (CPIntVar => Int) = minVar, valHeuris: (CPIntVar => Int) = (x: CPIntVar) => (x.min + x.max) / 2) extends BinaryBranching(x,varHeuris,minVal) {
+class BinaryDomainSplitBranching[X <: CPIntervalVar](x: Array[X], varHeuris: (X => Int), valHeuris: (X => Int) = (x: X) => (x.min + x.max) / 2) extends AbstractBinaryBranching(x,varHeuris) {
 
   override def alternatives(): Seq[Alternative] = {
     allBounds() match {

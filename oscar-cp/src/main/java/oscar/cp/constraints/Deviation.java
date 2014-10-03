@@ -18,6 +18,7 @@ import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
 import oscar.cp.core.CPIntVar;
 import oscar.cp.core.Constraint;
+import oscar.cp.modeling.constraint.*;
 
 /**
  * Deviation Constraint, a constraint for the average absolute deviation to the mean. <br>
@@ -71,7 +72,7 @@ public class Deviation extends Constraint {
     	// post the decomposition
     	CPIntVar [] devVar = new CPIntVar[n];
     	for (int i = 0; i < x.length; i++) {
-    		devVar[i] = x[i].$times(n).$minus(s).abs();
+    		devVar[i] = oscar.cp.modeling.constraint.absolute(oscar.cp.modeling.constraint.minus(oscar.cp.modeling.constraint.mul(x[i],n),s));
     	}
     	if (s().post(new Sum(devVar,nd)) == CPOutcome.Failure) {
     		return CPOutcome.Failure;

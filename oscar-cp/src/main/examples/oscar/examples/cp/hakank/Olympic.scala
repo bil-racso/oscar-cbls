@@ -65,7 +65,7 @@ object Olympic {
   def abs_minus(x: CPIntVar,
              y: CPIntVar,
              z: CPIntVar) : Constraint = 
-    z == (x-y).abs()
+    z == (x-y).abs
 
 
   def main(args: Array[String]) {

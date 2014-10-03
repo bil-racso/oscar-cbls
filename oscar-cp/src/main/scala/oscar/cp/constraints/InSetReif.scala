@@ -75,7 +75,7 @@ class InSetReif(val x: CPIntVar, val set: Set[Int], val b: CPBoolVar) extends Co
     }
   }  
   
-  override def valBind(variable: CPIntVar): CPOutcome = {
+  override def valBind(variable: CPIntervalVar): CPOutcome = {
     if (b.isTrue) {
       for (v <- x.toSet if !set.contains(v)) {
         if (x.removeValue(v) == Failure) {

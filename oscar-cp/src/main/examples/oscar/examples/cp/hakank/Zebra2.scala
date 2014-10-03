@@ -113,11 +113,11 @@ object Zebra2 {
        cp.add(kools == yellow)
        cp.add(milk == 3)
        cp.add(norwegian == 1)
-       cp.add((fox - chesterfields).abs() == 1)
-       cp.add((horse - kools).abs() == 1)
+       cp.add((fox - chesterfields).abs == 1)
+       cp.add((horse - kools).abs == 1)
        cp.add(lucky_strike == fruit_juice)
        cp.add(japanese == parliaments)
-       cp.add((norwegian - blue).abs() == 1)
+       cp.add((norwegian - blue).abs == 1)
 
 
 

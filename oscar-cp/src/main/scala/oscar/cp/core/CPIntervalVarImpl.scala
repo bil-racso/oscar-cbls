@@ -28,19 +28,16 @@ import oscar.cp.core.CPOutcome._
 /**
  * @author Pierre Schaus pschaus@gmail.com
  */
-class CPIntVarImpl(store: CPStore, private val domain: IntDomain, name: String = "") extends CPIntVar(store, name) {
+class CPIntervalVarImpl(store: CPStore, private val domain: IntDomain, name: String = "") extends CPIntervalVar(store, name) {
 
   val onBoundsL2 = new ReversiblePointer[ConstraintQueue](store, null)
   val onBindL2 = new ReversiblePointer[ConstraintQueue](store, null)
-  val onDomainL2 = new ReversiblePointer[ConstraintQueue](store, null)
 
   val onBoundsL1 = new ReversiblePointer[PropagEventQueueVarInt[CPIntervalVar]](store, null)
   val onBindL1 = new ReversiblePointer[PropagEventQueueVarInt[CPIntervalVar]](store, null)
-  val onDomainL1 = new ReversiblePointer[PropagEventQueueVarInt[CPIntVar]](store, null)
 
   val onBoundsIdxL1 = new ReversiblePointer[PropagEventQueueVarInt[CPIntervalVar]](store, null)
   val onBindIdxL1 = new ReversiblePointer[PropagEventQueueVarInt[CPIntervalVar]](store, null)
-  val onDomainIdxL1 = new ReversiblePointer[PropagEventQueueVarInt[CPIntVar]](store, null)
 
   def transform(v: Int) = v
 
@@ -54,15 +51,12 @@ class CPIntVarImpl(store: CPStore, private val domain: IntDomain, name: String =
     var tot = 0
     if (onBoundsL2.hasValue()) tot += onBoundsL2.value.size
     if (onBindL2.hasValue()) tot += onBindL2.value.size
-    if (onDomainL2.hasValue()) tot += onDomainL2.value.size
 
     if (onBoundsL1.hasValue()) tot += onBoundsL1.value.size
     if (onBindL1.hasValue()) tot += onBindL1.value.size
-    if (onDomainL1.hasValue()) tot += onDomainL1.value.size
 
     if (onBoundsIdxL1.hasValue()) tot += onBoundsIdxL1.value.size
     if (onBindIdxL1.hasValue()) tot += onBindIdxL1.value.size
-    if (onDomainIdxL1.hasValue()) tot += onDomainIdxL1.value.size
     tot
   }
 
@@ -178,17 +172,6 @@ class CPIntVarImpl(store: CPStore, private val domain: IntDomain, name: String =
   }
 
   /**
-   * Level 2 registration: ask that the propagate() method of the constraint c is called whenever
-   * one of the value is removed from the domain
-   * @param c
-   * @see oscar.cp.core.Constraint#propagate()
-   */
-  def callPropagateWhenDomainChanges(c: Constraint, trackDelta: Boolean = false) {
-    onDomainL2.setValue(new ConstraintQueue(onDomainL2.value, c))
-    if (trackDelta) c.addSnapshot(this)
-  }
-
-  /**
    * Level 1 registration: ask that the valBind(CPIntVar) method of the constraint c is called whenever
    * the domain of the variable is a singleton (i.e. isBound).
    * @param c
@@ -214,35 +197,6 @@ class CPIntVarImpl(store: CPStore, private val domain: IntDomain, name: String =
 
   def callUpdateBoundsWhenBoundsChange(c: Constraint, variable: CPIntervalVar) {
     onBoundsL1.setValue(new PropagEventQueueVarInt(onBoundsL1.value, c, variable))
-  }
-
-  /**
-   * Level 1 registration: ask that the valRemove(CPIntVar, int) method of the constraint c is called for each
-   * value deletion from the domain
-   * @param c
-   * @see oscar.cp.core.Constraint#valRemove(CPIntVar, int)
-   */
-  def callValRemoveWhenValueIsRemoved(c: Constraint) {
-    callValRemoveWhenValueIsRemoved(c, this)
-  }
-
-  def callValRemoveWhenValueIsRemoved(c: Constraint, variable: CPIntVar) {
-    onDomainL1.setValue(new PropagEventQueueVarInt(onDomainL1.value, c, variable))
-  }
-
-  /**
-   * Level 1 registration: ask that the valRemoveIdx(CPIntVar, int, int) method of the constraint c is called for each
-   * value deletion from the domain
-   * @param c
-   * @param idx, an index that will be given as parameter to valRemoveIdx(CPIntVar, int, int)
-   * @see Constraint#valRemoveIdx(CPIntVar, int, int)
-   */
-  def callValRemoveIdxWhenValueIsRemoved(c: Constraint, idx: Int) {
-    callValRemoveIdxWhenValueIsRemoved(c, this, idx)
-  }
-
-  def callValRemoveIdxWhenValueIsRemoved(c: Constraint, variable: CPIntVar, idx: Int) {
-    onDomainIdxL1.setValue(new PropagEventQueueVarInt(onDomainIdxL1.value, c, variable, idx))
   }
 
   /**
@@ -290,28 +244,12 @@ class CPIntVarImpl(store: CPStore, private val domain: IntDomain, name: String =
       // -------- AC3 notifications ------------
       //println(this+" notifyL2 onBounds "+onBoundsL2.value)
       store.notifyL2(onBoundsL2.value)
-      store.notifyL2(onDomainL2.value)
       store.notifyL2(onBindL2.value)
       // --------- AC5 notifications ------------
       store.notifyBindL1(onBindL1.value, this)
       store.notifyBindIdxL1(onBindIdxL1.value, this)
       store.notifyUpdateBoundsL1(onBoundsL1.value, this)
       store.notifyUpdateBoundsIdxL1(onBoundsIdxL1.value, this)
-      // must notify AC5 event before the actual removal
-      if (onDomainL1.hasValue() || onDomainIdxL1.hasValue()) {
-        var i = dom.min
-        while (i <= dom.max) {
-          if (i != value && dom.hasValue(i)) {
-            if (onDomainL1.hasValue()) {
-              store.notifRemoveL1(onDomainL1.value, this, i)
-            }
-            if (onDomainIdxL1.hasValue()) {
-              store.notifyRemoveIdxL1(onDomainIdxL1.value, this, i)
-            }
-          }
-          i += 1
-        }
-      }
       // finally do the assignment
       dom.assign(value)
     }
@@ -332,20 +270,6 @@ class CPIntVarImpl(store: CPStore, private val domain: IntDomain, name: String =
 
     if (value <= omin) return CPOutcome.Suspend
 
-    //must notif AC5 event with the removed values before the actual removal
-    if (onDomainL1.hasValue() || onDomainIdxL1.hasValue()) {
-      var i = omin
-      while (i < value) {
-        if (dom.hasValue(i)) {
-          if (onDomainL1.hasValue())
-            store.notifRemoveL1(onDomainL1.value, this, i)
-          if (onDomainIdxL1.hasValue())
-            store.notifyRemoveIdxL1(onDomainIdxL1.value, this, i)
-        }
-        i += 1
-      }
-    }
-
     val ok = dom.updateMin(value)
     assert(ok != CPOutcome.Failure)
 
@@ -357,7 +281,6 @@ class CPIntVarImpl(store: CPStore, private val domain: IntDomain, name: String =
     store.notifyUpdateBoundsL1(onBoundsL1.value, this)
     store.notifyUpdateBoundsIdxL1(onBoundsIdxL1.value, this)
     store.notifyL2(onBoundsL2.value)
-    store.notifyL2(onDomainL2.value)
     return CPOutcome.Suspend
   }
 
@@ -376,19 +299,6 @@ class CPIntVarImpl(store: CPStore, private val domain: IntDomain, name: String =
 
     if (value >= omax) return CPOutcome.Suspend
 
-    //must notifyAC3 the removed value before the actual removal
-    if (onDomainL1.hasValue() || onDomainIdxL1.hasValue()) {
-      var i = omax
-      while (i > value) {
-        if (dom.hasValue(i)) {
-          if (onDomainL1.hasValue())
-            store.notifRemoveL1(onDomainL1.value, this, i)
-          if (onDomainIdxL1.hasValue())
-            store.notifyRemoveIdxL1(onDomainIdxL1.value, this, i)
-        }
-        i -= 1
-      }
-    }
 
     val ok = dom.updateMax(value)
 
@@ -400,57 +310,7 @@ class CPIntVarImpl(store: CPStore, private val domain: IntDomain, name: String =
     store.notifyUpdateBoundsL1(onBoundsL1.value, this)
     store.notifyUpdateBoundsIdxL1(onBoundsIdxL1.value, this)
     store.notifyL2(onBoundsL2.value)
-    store.notifyL2(onDomainL2.value)
     return CPOutcome.Suspend
-  }
-
-  /**
-   * Remove val from the domain, and notify appropriately all the propagators registered to this variable
-   * @param val
-   * @return  Suspend if the domain is not equal to the singleton {val}, Failure otherwise
-   */
-  def removeValue(value: Int): CPOutcome = {
-
-    val inDomain = domain.hasValue(value)
-
-    if (!inDomain) Suspend
-    else {
-      
-      // Checks if the bounds has changed if necessary
-      var boundsChanged = false
-      val checkBounds = onBoundsL1.hasValue || onBoundsIdxL1.hasValue || onBoundsL2.hasValue
-      if (checkBounds) {
-        boundsChanged = domain.min == value || domain.max == value
-      }
-
-      // Removes the value
-      val ok = domain.removeValue(value)
-      if (ok == Failure) Failure
-      else {
-        
-        // Notifies bounds watchers if some
-        if (boundsChanged) {
-          store.notifyUpdateBoundsL1(onBoundsL1.value, this)
-          store.notifyUpdateBoundsIdxL1(onBoundsIdxL1.value, this)
-          store.notifyL2(onBoundsL2.value)
-        }
-        
-        // Notifies domain watchers if some
-        if (inDomain) {
-          store.notifRemoveL1(onDomainL1.value, this, value)
-          store.notifyRemoveIdxL1(onDomainIdxL1.value, this, value)
-          store.notifyL2(onDomainL2.value)
-        }
-        
-        // Notifies bind watchers if some
-        if (domain.isBound) {
-          store.notifyBindL1(onBindL1.value, this)
-          store.notifyBindIdxL1(onBindIdxL1.value, this)
-          store.notifyL2(onBindL2.value)
-        }
-        ok
-      }
-    }
   }
 
   // ----------------------------------
@@ -481,9 +341,9 @@ class CPIntVarImpl(store: CPStore, private val domain: IntDomain, name: String =
   }
 }
 
-object CPIntVarImpl {
-  def apply(store: CPStore, minimum: Int, maximum: Int, name: String = ""): CPIntVarImpl = {
+object CPIntervalVarImpl {
+  def apply(store: CPStore, minimum: Int, maximum: Int, name: String = ""): CPIntervalVarImpl = {
     val domain = new AdaptableIntDomain(store, minimum, maximum)
-    new CPIntVarImpl(store, domain, name)
+    new CPIntervalVarImpl(store, domain, name)
   }
 }

@@ -18,6 +18,7 @@ import oscar.algo.reversible.ReversibleInt;
 import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
 import oscar.cp.core.CPIntVar;
+import oscar.cp.core.CPIntervalVar;
 import oscar.cp.core.Constraint;
 import oscar.cp.util.ArrayUtils;
 
@@ -83,7 +84,7 @@ public class BinPackingFlow extends Constraint {
 	}
 	
 	@Override
-	public CPOutcome valBindIdx(CPIntVar x, int idx) {
+	public CPOutcome valBindIdx(CPIntervalVar x, int idx) {
 		int j = x.getValue();
 		int size = sizes[idx];
 		l_t[j].setValue(l_t[j].getValue() + size);

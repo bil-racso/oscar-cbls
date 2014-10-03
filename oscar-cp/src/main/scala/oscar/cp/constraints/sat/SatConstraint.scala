@@ -5,6 +5,7 @@ import oscar.cp.core.CPPropagStrength
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.CPOutcome._
 import oscar.cp.core.CPIntVar
+import oscar.cp.core.CPIntervalVar
 import scala.collection.mutable.ArrayStack
 import scala.collection.immutable.Map
 import oscar.cp.core.CPBoolVar
@@ -98,7 +99,7 @@ class SatConstraint(lit: Array[Literal], val clauses: Array[(Literal, Literal)])
     Suspend
   }
 
-  override def valBindIdx(boolvar: CPIntVar, index: Int): CPOutcome = {
+  override def valBindIdx(boolvar: CPIntervalVar, index: Int): CPOutcome = {
     deactivate() // Do not register this constraint in L1
     val outcome = propagation(index)
     activate() // The constraint can be registered in L1

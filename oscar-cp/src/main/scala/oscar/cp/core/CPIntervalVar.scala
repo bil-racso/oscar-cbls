@@ -20,25 +20,107 @@ import oscar.cp.constraints.InSetReif
 import oscar.cp.constraints.ModuloLHS
 import scala.util.Random
 import oscar.cp.core.domains.SparseSetDomain
-import oscar.cp.modeling._
 
-trait DomainIterator extends Iterator[Int] {
-  def removeValue: CPOutcome
-  def execute()
-}
+//trait DomainIterator extends Iterator[Int] {
+//  def removeValue: CPOutcome
+//  def execute()
+//}
 
 /**
  * @author Pierre Schaus pschaus@gmail.com
  */
-abstract class CPIntVar(override val store: CPStore, override val name: String = "") extends CPIntervalVar(store,name) with Iterable[Int] {
+abstract class CPIntervalVar(override val store: CPStore, override val name: String = "") extends CPVar with Iterable[Int] {
 
+  def transform(v: Int): Int
+
+  def constraintDegree(): Int
+
+  /**
+   * @return difference between second smallest and smallest value in the domain, Int.MaxInt if variable is bound
+   */
+  def regret: Int = if (isBound) Int.MaxValue else valueAfter(min) - min
+
+  /**
+   * @return true if the domain of the variable has exactly one value, false if the domain has more than one value
+   */
+  def isBound: Boolean
+
+  /**
+   *
+   * @param v
+   * @return true if the variable is bound to value v, false if variable is not bound or bound to another value than v
+   */
+  def isBoundTo(v: Int): Boolean
+
+  /**
+   * Test if a value is in the domain
+   * @param val
+   * @return  true if the domain contains the value val, false otherwise
+   */
+  def hasValue(value: Int): Boolean
+
+  /**
+   * @return the unique value in the domain, None if variable is not bound
+   */
+  def value: Int = {
+    if (isBound) min
+    else throw new NoSuchElementException("the variable is not bound")
+  }
+
+  def getValue: Int = {
+    if (isBound) min
+    else throw new NoSuchElementException("the variable is not bound")
+  }
+
+  /**
+   * @param val
+   * @return the smallest value > val in the domain, None if there is not value > val in the domain
+   */
+  def valueAfter(value: Int): Int
+
+  /**
+   * @param val
+   * @return the largest value < val in the domain, None if there is not value < val in the domain
+   */
+  def valueBefore(value: Int): Int
+
+  /**
+   * @return A random value in the domain of the variable (uniform distribution)
+   */
+  def randomValue(rand: Random): Int
+
+  /**
+   * @return A random value in the domain of the variable (uniform distribution)
+   */
+  def randomValue: Int = randomValue(store.getRandom)
+
+  /**
+   * @return The median value of the domain of the variable
+   */
+  def median: Int = {
+
+    val vals = this.toArray.sortBy(i => i)
+    return vals(vals.size / 2)
+  }
+
+  /**
+   * @return  the size of the domain
+   */
+  def size: Int
+
+  def getSize = size
+
+  /**
+   * @return true is the domain is full
+   */
+  def isFull = (max - min + 1) == size
 
   /**
    * Number of values in common in both domains
    * @param other
    * @return Number of values in common in both domains
    */
-  def intersectionSize(other: CPIntVar): Int = {
+  def intersectionSize(other: CPIntervalVar): Int = {
     if (other.min > max) return 0
     if (other.max < min) return 0
     var res = 0
@@ -62,63 +144,47 @@ abstract class CPIntVar(override val store: CPStore, override val name: String =
    */
   def min: Int
 
+  def getMin = min
 
   /**
    * @return  the maximum value in the domain
    */
   def max: Int
 
-
-  def domainIterator: DomainIterator = {
-    new DomainIterator {
-      private val it = iterator
-      private var ok = false
-      private var v = Int.MinValue
-      private var collect: List[Int] = Nil
-      private var maxRemove = CPIntVar.this.size
-
-      def next(): Int = {
-        v = it.next()
-        ok = true
-        v
-      }
-      def hasNext: Boolean = {
-        it.hasNext
-      }
-
-      def removeValue(): CPOutcome = {
-        assert(ok == true)
-        ok = false
-        collect = v :: collect
-        maxRemove -= 1
-        if (maxRemove <= 0)
-          CPOutcome.Failure
-        else
-          CPOutcome.Suspend
-      }
-
-      def execute() = {
-        for (v <- collect) CPIntVar.this.removeValue(v)
-      }
-    }
-  }
-
-
+  def getMax = max
 
   /**
    * Level 2 registration: ask that the propagate() method of the constraint c is called whenever
-   * one of the value is removed from the domain
+   * the domain of the variable is a singleton (i.e. isBound).
    * @param c
    * @see oscar.cp.core.Constraint#propagate()
    */
-  def callPropagateWhenDomainChanges(c: Constraint, trackDelta: Boolean = false): Unit
+  def callPropagateWhenBind(c: Constraint, trackDelta: Boolean = false): Unit
+
+  /**
+   * Level 2 registration: ask that the propagate() method of the constraint c is called whenever
+   * the maximum or the minimum value of the domain changes
+   * @param c
+   * @see oscar.cp.core.Constraint#propagate()
+   */
+  def callPropagateWhenBoundsChange(c: Constraint, trackDelta: Boolean = false): Unit
 
 
-  def filterWhenDomainChanges(filter: DeltaVarInt => CPOutcome) {
+  def filterWhenBind(filter: DeltaVarInt => CPOutcome) {
     store.post(
       new DeltaVarInt(this, filter) {
         def setup(l: CPPropagStrength) = {
-          callPropagateWhenDomainChanges(this)
+          callPropagateWhenBind(this)
+          CPOutcome.Suspend
+        }
+      }) // should not fail
+  }
+
+  def filterWhenBoundsChanges(filter: DeltaVarInt => CPOutcome) {
+    store.post(
+      new DeltaVarInt(this, filter) {
+        def setup(l: CPPropagStrength) = {
+          callPropagateWhenBoundsChange(this)
           CPOutcome.Suspend
         }
       }) // should not fail
@@ -126,36 +192,106 @@ abstract class CPIntVar(override val store: CPStore, override val name: String =
 
 
   /**
-   * Level 1 registration: ask that the valRemove(CPIntVar, int) method of the constraint c is called for each
-   * value deletion from the domain
+   * Level 1 registration: ask that the valBind(CPIntVar) method of the constraint c is called whenever
+   * the domain of the variable is a singleton (i.e. isBound).
    * @param c
-   * @see oscar.cp.core.Constraint#valRemove(CPIntVar, int)
+   * @see oscar.cp.core.Constraint#valBind(CPIntVar)
    */
-  def callValRemoveWhenValueIsRemoved(c: Constraint): Unit
+  def callValBindWhenBind(c: Constraint): Unit
 
-  def callValRemoveWhenValueIsRemoved(c: Constraint, variable: CPIntVar): Unit
+  def callValBindWhenBind(c: Constraint, variable: CPIntervalVar): Unit
 
   /**
-   * Level 1 registration: ask that the valRemoveIdx(CPIntVar, int, int) method of the constraint c is called for each
-   * value deletion from the domain
+   * Level 1 registration: ask that the updateBounds(CPIntVar) method of the constraint c is called whenever
+   * the minimum or maximum value of the domain changes.
    * @param c
-   * @param idx, an index that will be given as parameter to valRemoveIdx(CPIntVar, int, int)
-   * @see Constraint#valRemoveIdx(CPIntVar, int, int)
+   * @see oscar.cp.core.Constraint#updateBounds(CPIntVar)
    */
-  def callValRemoveIdxWhenValueIsRemoved(c: Constraint, idx: Int): Unit
+  def callUpdateBoundsWhenBoundsChange(c: Constraint): Unit
 
-  def callValRemoveIdxWhenValueIsRemoved(c: Constraint, variable: CPIntVar, idx: Int): Unit
-
+  def callUpdateBoundsWhenBoundsChange(c: Constraint, variable: CPIntervalVar): Unit
 
   /**
-   * Remove val from the domain, and notify appropriately all the propagators registered to this variable
+   * Level 1 registration: ask that the updateBoundsIdx(CPIntVar, int) method of the constraint c is called whenever
+   * the minimum or maximum value of the domain changes
+   * @param c
+   * @param idx, an index that will be given as parameter to updateBoundsIdx(CPIntVar, int)
+   * @see Constraint#updateBoundsIdx(CPIntVar, int)
+   */
+  def callUpdateBoundsIdxWhenBoundsChange(c: Constraint, idx: Int): Unit
+
+  def callUpdateBoundsIdxWhenBoundsChange(c: Constraint, variable: CPIntervalVar, idx: Int): Unit
+
+  /**
+   * Level 1 registration: ask that the valBindIdx(CPIntVar, int) method of the constraint c is called whenever
+   * the domain of the variable is a singleton (i.e. isBound).
+   * @param c
+   * @param idx, an index that will be given as parameter to valBindIdx(CPIntVar, int)
+   * @see Constraint#valBindIdx(CPIntVar, int)
+   */
+  def callValBindIdxWhenBind(c: Constraint, idx: Int): Unit
+
+  def callValBindIdxWhenBind(c: Constraint, variable: CPIntervalVar, idx: Int): Unit
+
+  /**
+   * Reduce the domain to the singleton {val}, and notify appropriately all the propagators registered to this variable
    * @param val
-   * @return  Suspend if the domain is not equal to the singleton {val}, Failure otherwise
+   * @return  Suspend if val was in the domain, Failure otherwise
    */
-  def removeValue(value: Int): CPOutcome
+  def assign(value: Int): CPOutcome
+
+  /**
+   * Remove from the domain all values < val, and notify appropriately all the propagators registered to this variable
+   * @param val
+   * @return  Suspend if there is at least one value >= val in the domain, Failure otherwise
+   */
+  def updateMin(value: Int): CPOutcome
+
+  /**
+   * Remove from the domain all values > val, and notify appropriately all the propagators registered to this variable
+   * @param val
+   * @return  Suspend if there is at least one value <= val in the domain, Failure otherwise
+   */
+  def updateMax(value: Int): CPOutcome
 
   // ------ delta methods to be called in propagate -------
 
+  def changed(sn: SnapshotVarInt): Boolean = {
+    sn.oldSize != size
+  }
+
+  def minChanged(sn: SnapshotVarInt): Boolean = {
+    assert(sn.oldMin <= min)
+    sn.oldMin < min
+  }
+
+  def maxChanged(sn: SnapshotVarInt): Boolean = {
+    assert(sn.oldMax >= max)
+    sn.oldMax > max
+  }
+
+  def boundsChanged(sn: SnapshotVarInt): Boolean = {
+    sn.oldMax == max
+  }
+
+  def oldMin(sn: SnapshotVarInt): Int = {
+    assert(sn.oldMin <= min)
+    sn.oldMin
+  }
+
+  def oldMax(sn: SnapshotVarInt): Int = {
+    assert(sn.oldMax >= max)
+    sn.oldMax
+  }
+
+  def oldSize(sn: SnapshotVarInt): Int = {
+    assert(sn.oldSize >= size)
+    sn.oldSize
+  }
+
+  def deltaSize(sn: SnapshotVarInt): Int = {
+    sn.oldSize - size
+  }
 
   def delta(oldMin: Int, oldMax: Int, oldSize: Int): Iterator[Int]
 
@@ -181,16 +317,52 @@ abstract class CPIntVar(override val store: CPStore, override val name: String =
 
   // ------------------------ some useful methods for java -------------------------
 
-
-
   /**
    * Reified constraint
    * @param v
    * @return  a boolean variable b in the same store linked to x by the relation x == v <=> b == true
    */
-  override def isEq(v: Int): CPBoolVar = {
+  def isEq(v: Int): CPBoolVar = {
     val b = new CPBoolVar(store);
-    val ok = store.post(new oscar.cp.constraints.EqReif(this, v, b));
+    val ok = store.post(new oscar.cp.constraints.EqReifInterval(this, v, b));
+    assert(ok != CPOutcome.Failure);
+    return b;
+  }
+
+
+
+  /**
+   * Reified constraint
+   * @param v
+   * @return  a boolean variable b in the same store linked to x by the relation x != v <=> b == true
+   */
+//  def isDiff(v: Int): CPBoolVar = {
+//    val b = new CPBoolVar(store);
+//    val ok = store.post(new oscar.cp.constraints.DiffReif(this, v, b));
+//    assert(ok != CPOutcome.Failure)
+//    return b;
+//  }
+
+  /**
+   * Reified constraint
+   * @param y
+   * @return  a boolean variable b in the same store linked to x by the relation x != y <=> b == true
+   */
+//  def isDiff(y: CPIntervalVar): CPBoolVar = {
+//    val b = new CPBoolVar(store);
+//    val ok = store.post(new oscar.cp.constraints.DiffReifIntervalVar(this, y, b));
+//    assert(ok != CPOutcome.Failure)
+//    return b;
+//  }
+
+  /**
+   * Reified constraint
+   * @param v
+   * @return  a boolean variable b in the same store linked to x by the relation x >= v <=> b == true
+   */
+  def isGrEq(v: Int): CPBoolVar = {
+    val b = new CPBoolVar(store);
+    val ok = store.post(new oscar.cp.constraints.GrEqCteReif(this, v, b));
     assert(ok != CPOutcome.Failure);
     return b;
   }
@@ -198,114 +370,139 @@ abstract class CPIntVar(override val store: CPStore, override val name: String =
   /**
    * Reified constraint
    * @param v
-   * @return  a boolean variable b in the same store linked to x by the relation x != v <=> b == true
+   * @return  a boolean variable b in the same store linked to x by the relation x <= v <=> b == true
    */
-  def isDiff(v: Int): CPBoolVar = {
+  def isLeEq(v: Int): CPBoolVar = {
     val b = new CPBoolVar(store);
-    val ok = store.post(new oscar.cp.constraints.DiffReif(this, v, b));
-    assert(ok != CPOutcome.Failure)
+    val ok = store.post(new oscar.cp.constraints.LeEqCteReif(this, v, b));
+    assert(ok != CPOutcome.Failure);
     return b;
   }
 
   /**
    * Reified constraint
-   * @param y
-   * @return  a boolean variable b in the same store linked to x by the relation x != y <=> b == true
+   * @param y a variable in the same store as x
+   * @return  a boolean variable b in the same store linked to x by the relation x >= y <=> b == true
    */
-  def isDiff(y: CPIntVar): CPBoolVar = {
+  def isGrEq(y: CPIntervalVar): CPBoolVar = {
     val b = new CPBoolVar(store);
-    val ok = store.post(new oscar.cp.constraints.DiffReifVar(this, y, b));
-    assert(ok != CPOutcome.Failure)
+    val ok = store.post(new oscar.cp.constraints.GrEqVarReif(this, y, b));
+    assert(ok != CPOutcome.Failure);
     return b;
   }
 
+  def isRange: Boolean = (max - min + 1) == size
 
-  /**
-   * x must take a value from set
-   */
-  def in(set: Set[Int]): Constraint = new InSet(this, set)
-  /**
-   * x!=y
-   */
-  def !=(y: CPIntVar) = new oscar.cp.constraints.DiffVar(this, y)
+
+
+//  def !=(y: CPIntVar) = new oscar.cp.constraints.DiffVar(this, y)
   /**
    * x!=y
    */
-  def !=(y: Int) = new oscar.cp.constraints.DiffVal(this, y)
+//  def !=(y: Int) = new oscar.cp.constraints.DiffVal(this, y)
   /**
    * x==y
    */
-  def ==(y: CPIntVar) = new oscar.cp.constraints.Eq(this, y)
+  def ==(y: CPIntervalVar) = new oscar.cp.constraints.EqInterval(this, y)
   /**
    * x==y
    */
-  override def ==(y: Int) = new oscar.cp.constraints.EqVal(this, y)
+   def ==(y: Int) = new oscar.cp.constraints.EqVal(this, y)
+  /**
+   * x<y
+   */
+  def <(y: CPIntVar) = new oscar.cp.constraints.Le(this, y)
+  /**
+   * x<y
+   */
+  def <(y: Int) = new oscar.cp.constraints.Le(this, y)
+  /**
+   * x>y
+   */
+  def >(y: CPIntVar) = new oscar.cp.constraints.Gr(this, y)
+  /**
+   * x>y
+   */
+  def >(y: Int) = new oscar.cp.constraints.Gr(this, y)
+  /**
+   * x<=y
+   */
+  def <=(y: CPIntVar) = new oscar.cp.constraints.LeEq(this, y)
+  /**
+   * x<=y
+   */
+  def <=(y: Int) = new oscar.cp.constraints.LeEq(this, y)
+  /**
+   * x>=y
+   */
+  def >=(y: CPIntVar) = new oscar.cp.constraints.GrEq(this, y)
+  /**
+   * x>=y
+   */
+  def >=(y: Int) = new oscar.cp.constraints.GrEq(this, y)
   /**
    * b <=> x == v
    */
-  def ===(v: Int) = this.isEq(v)
+  //def ===(v: Int) = this.isEqInterval(v)
   /**
    * b <=> x == y
    */
-  def ===(y: CPIntVar) = this.isEq(y)
+//  def ===(y: CPIntVar) = this.isEq(y)
   /**
    * b <=> x!= y
    */
-  def !==(y: CPIntVar) = this.isDiff(y)
+//  def !==(y: CPIntVar) = this.isDiff(y)
   /**
    * b <=> x!= y
    */
-  def !==(y: Int) = this.isDiff(y)
+//  def !==(y: Int) = this.isDiff(y)
   /**
    * b <=> x >= y
    */
-  def >==(y: Int) = this.isGrEq(y)
+//  def >==(y: Int) = this.isGrEq(y)
   /**
    * b <=> x >= y
    */
-  def >==(y: CPIntVar) = this.isGrEq(y)
+//  def >==(y: CPIntVar) = this.isGrEq(y)
   /**
    * b <=> x > y
    */
-  def >>=(y: Int) = this.isGrEq(y + 1)
+//  def >>=(y: Int) = this.isGrEq(y + 1)
   /**
    * b <=> x > y
    */
-  def >>=(y: CPIntVar) = {
-    val z = y + 1
-    this.isGrEq(z)
-  }
+//  def >>=(y: CPIntVar) = this.isGrEq(y + 1)
   /**
    * b <=> x >= y
    */
-  def <==(y: Int) = this.isLeEq(y)
+//  def <==(y: Int) = this.isLeEq(y)
   /**
    * b <=> x >= y
    */
-  def <==(y: CPIntVar) = y >== this
+//  def <==(y: CPIntVar) = y >== this
   /**
    * b <=> x > y
    */
-  def <<=(y: Int) = this <== (y - 1)
+//  def <<=(y: Int) = this <== (y - 1)
   /**
    * b <=> x > y
    */
-  def <<=(y: CPIntVar) = this <== (y - 1)
+//  def <<=(y: CPIntVar) = this <== (y - 1)
 
   /**
    * b <=> x belongs to set
    */
-  def isIn(set: Set[Int]): CPBoolVar = {
-    val b = CPBoolVar()(store)
-    store.post(new InSetReif(this, set, b))
-    b
-  }
+//  def isIn(set: Set[Int]): CPBoolVar = {
+//    val b = CPBoolVar()(store)
+//    store.post(new InSetReif(this, set, b))
+//    b
+//  }
 
-  def %(y: Int) = ModuloLHS(this, y)
+  //def %(y: Int) = ModuloLHS(this, y)
 
 }
 
-object CPIntVar {
+object CPIntervalVar {
 
   /**
    * Creates a new CP Integer Variable with an iterable as initial domain
@@ -323,31 +520,16 @@ object CPIntVar {
     }
   }
 
-  def sparse(values: Iterable[Int], name: String)(implicit store: CPStore): CPIntVar = {
-    val min = values.min
-    val max = values.max
-    val domain = new SparseSetDomain(store, min, max)
-    if (max - min + 1 > values.size) {
-      val set = values.toSet
-      var v = min + 1
-      while (v < max) {
-        if (!set.contains(v)) {
-          domain.removeValue(v)
-        }
-        v += 1
-      }
-    }
-    new CPIntVarImpl(store, domain, name)
-  }
 
-  def sparse(values: Iterable[Int])(implicit store: CPStore): CPIntVar = sparse(values, "")(store)
 
+//  def sparse(values: Iterable[Int])(implicit store: CPStore): CPIntVar = sparse(values, "")(store)
+/*
   def sparse(minValue: Int, maxValue: Int, name: String)(implicit store: CPStore): CPIntVar = {
     val domain = new SparseSetDomain(store, minValue, maxValue)
     new CPIntVarImpl(store, domain, name)
   }
-
-  def sparse(minValue: Int, maxValue: Int)(implicit store: CPStore): CPIntVar = sparse(minValue, maxValue, "")(store)
+*/
+//  def sparse(minValue: Int, maxValue: Int)(implicit store: CPStore): CPIntVar = sparse(minValue, maxValue, "")(store)
 
   /**
    * Creates a new CP Integer Variable with an iterable as initial domain

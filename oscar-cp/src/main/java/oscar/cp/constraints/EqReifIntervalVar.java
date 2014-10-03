@@ -17,7 +17,7 @@ package oscar.cp.constraints;
 import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
 import oscar.cp.core.CPBoolVar;
-import oscar.cp.core.CPIntVar;
+import oscar.cp.core.CPIntervalVar;
 import oscar.cp.core.CPIntervalVar;
 import oscar.cp.core.Constraint;
 
@@ -25,10 +25,10 @@ import oscar.cp.core.Constraint;
  * Reified constraint.
  * @author Pierre Schaus pschaus@gmail.com
  */
-public class EqReifVar extends Constraint {
+public class EqReifIntervalVar extends Constraint {
 
-	CPIntVar x;
-	CPIntVar y;
+	CPIntervalVar x;
+	CPIntervalVar y;
 	CPBoolVar b;
 	
 
@@ -38,8 +38,8 @@ public class EqReifVar extends Constraint {
      * @param x
      * @param y
      */
-	public EqReifVar(CPIntVar x, CPIntVar y, CPBoolVar b) {
-		super(x.store(),"EqReifVar");
+	public EqReifIntervalVar(CPIntervalVar x, CPIntervalVar y, CPBoolVar b) {
+		super(x.store(),"EqReifIntervalVar");
 		this.x = x;
 		this.y = y;
 		this.b = b;
@@ -57,8 +57,8 @@ public class EqReifVar extends Constraint {
 			return valBind(y);
 		}
 		else {
-			x.callPropagateWhenDomainChanges(this,false);
-			y.callPropagateWhenDomainChanges(this,false);	
+			x.callPropagateWhenBoundsChange(this,false);
+			y.callPropagateWhenBoundsChange(this,false);
 			b.callValBindWhenBind(this);
 			x.callValBindWhenBind(this);
 			y.callValBindWhenBind(this);
@@ -72,12 +72,12 @@ public class EqReifVar extends Constraint {
 			deactivate();
 			if (b.getValue() == 1) {
 				// x == y
-				if (s().post(new Eq(x,y)) == CPOutcome.Failure) {
+				if (s().post(new EqInterval(x,y)) == CPOutcome.Failure) {
 					return CPOutcome.Failure;
 				}
 			} else {
 				//x != y
-				if (s().post(new DiffVar(x,y))  == CPOutcome.Failure) {
+				if (s().post(new DiffVarInterval(x,y))  == CPOutcome.Failure) {
 					return CPOutcome.Failure;
 				}
 			}
@@ -85,14 +85,14 @@ public class EqReifVar extends Constraint {
 		}	
 		else if (x.isBound()) {
 			deactivate();
-			if (s().post(new EqReif(y,x.getValue(),b)) == CPOutcome.Failure) {
+			if (s().post(new EqReifInterval(y,x.getValue(),b)) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
 			}
 			return CPOutcome.Success;
 		}
 		else { // y.isBound()
 			deactivate();
-			if (s().post(new EqReif(x,y.getValue(),b)) == CPOutcome.Failure) {
+			if (s().post(new EqReifInterval(x,y.getValue(),b)) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
 			}
 			return CPOutcome.Success;
@@ -118,23 +118,6 @@ public class EqReifVar extends Constraint {
 		}
 		else {
 			// there is an overlap between the domain ranges
-			// if no values in this overlapping range are common, set b to false
-			int start = Math.max(x.getMin(), y.getMin());
-			int end = Math.min(x.getMax(), y.getMax());
-			boolean commonValues = false;
-			if (x.isRange() || y.isRange()) return CPOutcome.Suspend;
-			for (int i = start; i <= end; i++) {
- 				if (x.hasValue(i) && y.hasValue(i)) {
-					commonValues = true;
-					break;
-				}
-			}
-			if (!commonValues) {
-				if (b.assign(0) == CPOutcome.Failure) {
-					return CPOutcome.Failure;
-				}
-				return CPOutcome.Success;
-			}
 			return CPOutcome.Suspend;
 		}	
 	}

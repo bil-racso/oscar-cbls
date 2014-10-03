@@ -19,7 +19,7 @@ import oscar.algo.reversible._
 import oscar.cp.core.CPOutcome._
 
 /**
- * Implementation of Sum Constraint:
+ * Implementation of AllDifferent
  * @author Pierre Schaus pschaus@gmail.com
  */
 class AllDiffFWC(val X: Array[CPIntVar]) extends Constraint(X(0).store, "AllDiffFWC") {
@@ -28,7 +28,7 @@ class AllDiffFWC(val X: Array[CPIntVar]) extends Constraint(X(0).store, "AllDiff
   val nBounds = new ReversibleInt(s, 0)
 
   override def setup(l: CPPropagStrength): CPOutcome = {
-    priorityL2 = CPStore.MAXPRIORL2 - 1
+    priorityL2 = CPStore.MaxPriorityL2 - 1
     X.foreach(_.callPropagateWhenBind(this, false))
     val oc = propagate()
     oc

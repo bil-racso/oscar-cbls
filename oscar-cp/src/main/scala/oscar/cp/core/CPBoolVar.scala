@@ -1,6 +1,7 @@
 package oscar.cp.core
 
 import scala.util.Random
+import oscar.cp.modeling._
 
 /**
  * Boolean variable: it is nothing else than a 0-1 integer variable. <br>
@@ -59,12 +60,12 @@ class CPBoolVar(val x: CPIntVar, name: String = "") extends CPIntVar(x.store, na
   def callPropagateWhenDomainChanges(c: Constraint, trackDelta: Boolean = false) = x.callPropagateWhenDomainChanges(c, trackDelta)
 
   // this method is useful when you have a view defined on a view
-  def callValBindWhenBind(c: Constraint, variable: CPIntVar) = x.callValBindWhenBind(c, variable)
+  def callValBindWhenBind(c: Constraint, variable: CPIntervalVar) = x.callValBindWhenBind(c, variable)
 
   def callValBindWhenBind(c: Constraint) = x.callValBindWhenBind(c, this)
 
   // this method is useful when you have a view defined on a view
-  def callUpdateBoundsWhenBoundsChange(c: Constraint, variable: CPIntVar) = x.callUpdateBoundsWhenBoundsChange(c, variable)
+  def callUpdateBoundsWhenBoundsChange(c: Constraint, variable: CPIntervalVar) = x.callUpdateBoundsWhenBoundsChange(c, variable)
 
   def callUpdateBoundsWhenBoundsChange(c: Constraint) = x.callUpdateBoundsWhenBoundsChange(c, this)
 
@@ -74,12 +75,12 @@ class CPBoolVar(val x: CPIntVar, name: String = "") extends CPIntVar(x.store, na
   def callValRemoveWhenValueIsRemoved(c: Constraint) = x.callValRemoveWhenValueIsRemoved(c, this)
 
   // this method is useful when you have a view defined on a view
-  def callValBindIdxWhenBind(c: Constraint, variable: CPIntVar, idx: Int) = x.callValBindIdxWhenBind(c, variable, idx)
+  def callValBindIdxWhenBind(c: Constraint, variable: CPIntervalVar, idx: Int) = x.callValBindIdxWhenBind(c, variable, idx)
 
   def callValBindIdxWhenBind(c: Constraint, idx: Int) = x.callValBindIdxWhenBind(c, this, idx)
 
   // this method is useful when you have a view defined on a view
-  def callUpdateBoundsIdxWhenBoundsChange(c: Constraint, variable: CPIntVar, idx: Int) = x.callUpdateBoundsIdxWhenBoundsChange(c, variable, idx);
+  def callUpdateBoundsIdxWhenBoundsChange(c: Constraint, variable: CPIntervalVar, idx: Int) = x.callUpdateBoundsIdxWhenBoundsChange(c, variable, idx);
 
   def callUpdateBoundsIdxWhenBoundsChange(c: Constraint, idx: Int) = x.callUpdateBoundsIdxWhenBoundsChange(c, this, idx)
 
@@ -143,7 +144,7 @@ class CPBoolVar(val x: CPIntVar, name: String = "") extends CPIntVar(x.store, na
 
   /** Logical and */
   def and(y: CPBoolVar): CPBoolVar = {
-    val res = this.plus(y)
+    val res = plus(this,y)
     res.isEq(2)
   }
 

@@ -1,7 +1,7 @@
 package oscar.cp.constraints
 
 import oscar.cp.core._
-import oscar.cp.modeling.sum
+import oscar.cp.modeling._
 
 
 /**

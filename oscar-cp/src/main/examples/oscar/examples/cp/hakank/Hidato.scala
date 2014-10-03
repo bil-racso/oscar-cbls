@@ -161,7 +161,7 @@ object Hidato {
         cp.add(j+b <  n)
 
         // must be a move
-        cp.add(a.abs()+b.abs() > 0)
+        cp.add(a.abs+b.abs > 0)
 
         // find the indices of this k
         // x(i)(j) #= k

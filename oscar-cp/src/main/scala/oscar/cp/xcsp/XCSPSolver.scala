@@ -1,3 +1,18 @@
+/*******************************************************************************
+ * OscaR is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 2.1 of the License, or
+ * (at your option) any later version.
+ *
+ * OscaR is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License  for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
+ * *****************************************************************************/
+/*
 package oscar.cp.xcsp
 
 import oscar.cp.core.CPBoolVar
@@ -27,7 +42,7 @@ import oscar.cp.xcsp.ast.EffectiveParameter
 
 abstract class XCSPSolver {
  
-  /******************** abstract global constraints***************************************/
+  //----------------------------- abstract global constraints-------------------------------------
   
  def table(x: Array[CPIntVar], tuples: Array[Array[Int]]) : Constraint  
  def allDifferent(vars: Iterable[CPIntVar]) : Constraint
@@ -41,7 +56,7 @@ abstract class XCSPSolver {
  def globalCardinality(x: Array[CPIntVar], valueOccurrence: Array[(Int,CPIntVar)]) : Constraint
  def minimumWeightAllDifferent(x: Array[CPIntVar], weights: Array[Array[Int]], cost: CPIntVar) : Constraint
 
- /****************************************************************************************/
+ //-----------------------------------------------------------------
  
  def model(file : File) : (CPSolver,Array[CPIntVar]) = {
   val (domains, variables, relations, predicates, constraints) = XCSPParser.parse(file)
@@ -97,7 +112,7 @@ abstract class XCSPSolver {
   (cp, decisionVariables.values toArray)
  }
  
- /******************** constraint in intension helper functions***************************************/
+ // -------------------- constraint in intension helper functions----------------------------
  
  private def formalToEffectiveParametersMap(formalParameters : Array[String], parameters : Array[String]) = formalParameters.zip(parameters).toMap
  
@@ -144,7 +159,7 @@ abstract class XCSPSolver {
  }
  
  
- /******************** global constraints helper functions***************************************/
+ //------------------------ global constraints helper functions---------------------------
  
  private implicit def effectiveParameterToCPIntVar(parameter : EffectiveParameter)(implicit cp : CPSolver, decisionVariables : Map[String,CPIntVar]) = {
    parameter match {
@@ -274,11 +289,11 @@ abstract class XCSPSolver {
      matrixArray(i.value-1)(j.value-1)=c.value //matrices indices begin at 1, not 0
    post(minimumWeightAllDifferent(variables.map(v => decisionVariables(v.name)).toArray,matrixArray,cost))
  }
- /***********************************************************************************************/
+ // ------------------------------------------------------------------------------------------
  
 }
 
 object XCSPSolverDefault {
   def apply() = new XCSPSolver() with DefaultConstraints
 }
-
+*/

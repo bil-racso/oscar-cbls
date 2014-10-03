@@ -17,13 +17,13 @@ package oscar.cp.core;
 import scala.util.Random
 
 /**
- * Represents a view on variable applying an offset on it.
+ * Represents a view -x on variable x 
  * @author Pierre Schaus pschaus@gmail.com
  */
-class CPIntVarViewOffset(v: CPIntVar,val b: Int) extends CPIntVar(v.store) {
+class CPIntervalVarViewMinus(v: CPIntervalVar) extends CPIntervalVar(v.store) {
     
     
-    def transform(v: Int) = b + this.v.transform(v)    
+    def transform(v: Int) = -this.v.transform(v)    
 	
 	def isBound = v.isBound
 	
@@ -33,40 +33,36 @@ class CPIntVarViewOffset(v: CPIntVar,val b: Int) extends CPIntVar(v.store) {
 	
 	def constraintDegree = v.constraintDegree()
 	
-	def isBoundTo(value: Int): Boolean = v.isBoundTo(value-b)
+	def isBoundTo(value: Int): Boolean = v.isBoundTo(-value)
 	
-	def hasValue(value: Int): Boolean = v.hasValue(value-b)
+	def hasValue(value: Int): Boolean = v.hasValue(-value)
 	
-	def valueAfter(value: Int): Int = v.valueAfter(value-b) + b
+	def valueAfter(value: Int): Int = -v.valueBefore(-value)
 	
-	def valueBefore(value: Int): Int = v.valueBefore(value-b) + b
+	def valueBefore(value: Int): Int = -v.valueAfter(-value)
 	
-	def randomValue(rand: Random): Int = v.randomValue(rand) + b
+	def randomValue(rand: Random): Int = -v.randomValue(rand)
 	
-	def updateMin(value: Int) = v.updateMin(value-b)
+	def updateMin(value: Int) = v.updateMax(-value)
 	
-	def assign(value: Int) = v.assign(value-b)
+	def assign(value: Int) = v.assign(-value)
 
-	def updateMax(value: Int) = v.updateMax(value-b)
+	def updateMax(value: Int) = v.updateMin(-value)
+		
+	def min = -v.max
 	
-	def removeValue(value: Int) = v.removeValue(value-b)
-	
-	def min = v.min + b
-	
-	def max = v.max + b
+	def max = -v.min
 	
 	def iterator = {
-		v.iterator.map(_ + b)
+		v.iterator.map(-_)
 	}
 	
-	override def toString() = "view with shift "+b+" on ("+v+")";
+	override def toString() = "-("+v+")";
 		
 	def callPropagateWhenBind(c: Constraint, trackDelta: Boolean = false) = v.callPropagateWhenBind(c)
 	
 	def callPropagateWhenBoundsChange(c: Constraint, trackDelta: Boolean = false) = v.callPropagateWhenBoundsChange(c,trackDelta)
-	
-	def callPropagateWhenDomainChanges(c: Constraint, trackDelta: Boolean = false) = v.callPropagateWhenDomainChanges(c,trackDelta)
-	
+		
 	// this method is useful when you have a view defined on a view
 	def callValBindWhenBind(c: Constraint, variable: CPIntervalVar) = v.callValBindWhenBind(c, variable)
 	
@@ -77,12 +73,7 @@ class CPIntVarViewOffset(v: CPIntVar,val b: Int) extends CPIntVar(v.store) {
 	def callUpdateBoundsWhenBoundsChange(c: Constraint, variable: CPIntervalVar) = v.callUpdateBoundsWhenBoundsChange(c, variable)
 	
 	def callUpdateBoundsWhenBoundsChange(c: Constraint) = v.callUpdateBoundsWhenBoundsChange(c,this)
-	
-	// this method is useful when you have a view defined on a view
-	def callValRemoveWhenValueIsRemoved(c: Constraint, variable: CPIntVar) = v.callValRemoveWhenValueIsRemoved(c,variable)
 		
-	def callValRemoveWhenValueIsRemoved(c: Constraint) = v.callValRemoveWhenValueIsRemoved(c,this)
-	
 	// this method is useful when you have a view defined on a view
 	def callValBindIdxWhenBind(c: Constraint, variable: CPIntervalVar,idx: Int) = v.callValBindIdxWhenBind(c, variable,idx)
 	
@@ -93,35 +84,28 @@ class CPIntVarViewOffset(v: CPIntVar,val b: Int) extends CPIntVar(v.store) {
 		
 	def callUpdateBoundsIdxWhenBoundsChange(c: Constraint, idx: Int) = v.callUpdateBoundsIdxWhenBoundsChange(c,this,idx)
 	
-
-	
-	// this method is useful when you have a view defined on a view
-	def callValRemoveIdxWhenValueIsRemoved(c: Constraint, variable: CPIntVar, idx: Int) = v.callValRemoveIdxWhenValueIsRemoved(c,variable,idx)
-	
-	def callValRemoveIdxWhenValueIsRemoved(c: Constraint, idx: Int) = v.callValRemoveIdxWhenValueIsRemoved(c,this,idx)
-
 	// ----------------------------------
 	
-	def delta(oldMin: Int, oldMax: Int, oldSize: Int): Iterator[Int] = v.delta(oldMin-b,oldMax-b,oldSize).map(_ + b)
+	def delta(oldMin: Int, oldMax: Int, oldSize: Int): Iterator[Int] = v.delta(-oldMax,-oldMin,oldSize).map(-_)
 	
 	def changed(c: Constraint): Boolean = v.changed(c)
 	
-	def minChanged(c: Constraint): Boolean = v.minChanged(c)
+	def minChanged(c: Constraint): Boolean = v.maxChanged(c)
 	
-	def maxChanged(c: Constraint): Boolean = v.maxChanged(c)
+	def maxChanged(c: Constraint): Boolean = v.minChanged(c)
 	
 	def boundsChanged(c: Constraint): Boolean = v.boundsChanged(c)
 	
-	def oldMin(c: Constraint): Int = v.oldMin(c) + b
+	def oldMin(c: Constraint): Int = -v.oldMax(c)
 	
-	def oldMax(c: Constraint): Int = v.oldMax(c) + b
+	def oldMax(c: Constraint): Int = -v.oldMin(c)
 	
 	def oldSize(c: Constraint): Int = v.oldSize(c)
 	
 	def deltaSize(c: Constraint): Int = v.deltaSize(c)
 	
 	def delta(c: Constraint): Iterator[Int] = {
-	  v.delta(c).map(_ + b)
+	  v.delta(c).map(-_)
 	}
 	
 }

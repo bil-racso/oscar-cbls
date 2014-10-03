@@ -15,6 +15,7 @@
 package oscar.cp.constraints
 
 import oscar.cp.core._
+import oscar.cp.modeling._
 import oscar.cp.core.Constraint
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.CPPropagStrength
