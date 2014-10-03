@@ -9,7 +9,7 @@ import java.io.File
 object XCSPParser {
 
   val globalPrefix = "global:".r
-  val operators = Seq("<eq/>","ne","ge","gt","le","lt")
+  val operators = Seq("<eq/>","<ge/>","<ne/>","<gt/>","<le/>","<lt/>")
  
   def parse(file : File) = {
     val instance = XML.loadFile(file)
