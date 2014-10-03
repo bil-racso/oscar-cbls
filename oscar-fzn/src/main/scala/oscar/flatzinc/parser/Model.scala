@@ -158,8 +158,8 @@ class Model(val log: Log) {
   }
   def getIntVar(e: Element): Variable = {
     if(e.isInstanceOf[VarRef])e.asInstanceOf[VarRef].v;
-    else if(e.value.isInstanceOf[Integer])new ConcreteConstant(e.value.toString(),Int.unbox(e.value))
-    else if(e.value.isInstanceOf[Boolean])new ConcreteConstant(e.value.toString(),if (Boolean.unbox(e.value)) 1 else 0)//Ho I don't like that!
+    else if(e.value.isInstanceOf[Integer])new ConcreteVariable(e.value.toString(),Int.unbox(e.value))
+    else if(e.value.isInstanceOf[Boolean])new ConcreteVariable(e.value.toString(),if (Boolean.unbox(e.value)) 1 else 0)//Ho I don't like that!
     else{
       throw new ParsingException("Expected a var int but got: "+e)
       //null.asInstanceOf[Variable]
@@ -167,7 +167,7 @@ class Model(val log: Log) {
   }
   def getBoolVar(e: Element): Variable = { 
     if(e.isInstanceOf[VarRef])e.asInstanceOf[VarRef].v;
-    else if(e.value.isInstanceOf[Boolean])new ConcreteConstant(e.value.toString(),if (Boolean.unbox(e.value)) 1 else 0)
+    else if(e.value.isInstanceOf[Boolean])new ConcreteVariable(e.value.toString(),if (Boolean.unbox(e.value)) 1 else 0)
     else{
       throw new ParsingException("Expected a var bool but got: "+e)
       //null.asInstanceOf[Variable]
@@ -194,6 +194,10 @@ class Model(val log: Log) {
     e.value.asInstanceOf[Domain]
   }
   def constructConstraint(cstr: String, varList: List[Element], ann:List[Annotation]): Constraint = {
+    //special case
+    if(cstr=="bool_eq_reif" && !varList(1).typ.isVar && !varList(1).value.asInstanceOf[Boolean]){
+      return constructConstraint("bool_not",varList.head :: varList.tail.tail,ann)
+    }
     if(cstr.endsWith("_reif"))reif(constructConstraint(cstr.substring(0,cstr.length-5),varList.dropRight(1),ann),getBoolVar(varList.last))
     else
       cstr match {

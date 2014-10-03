@@ -106,7 +106,7 @@ class SimpleLocalSearch(val m:FZCBLSModel,val cs: SearchControl) extends SearchP
       cs.handlePossibleSolution();
       while(improving > 0 && !cs.stop()){
         val currentVar = m.vars(i);
-        if(violation(i).value > 0){
+        if(violation(i).value > 0){//TODO??
           val k = selectMin(currentVar.getDomain())(k=> m.objective.objective.assignVal(currentVar,k))
           if(k!=currentVar.value){
             val obj = m.objective.objective.value
@@ -255,7 +255,7 @@ class NeighbourhoodSearchOPT(m:FZCBLSModel, sc: SearchControl) extends Neighbour
     val waitDec = 1;
   
 
-    m.objective.objectiveWeight := 0;
+    //m.objective.objectiveWeight := 0;//TODO: What is this??? Remove it?
     while (!sc.stop()) {
       makeMove(extendedSearch)
       it ++;

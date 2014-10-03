@@ -43,7 +43,6 @@ import oscar.flatzinc.parser.FZParser
 
 
 //TODO: Move this class somewhere else...
-//TODO: Add several levels of logging
 //TODO: Add the possibility to print to file or something else
 class Log(opts:Options){
   val level = opts.verbose
@@ -148,7 +147,7 @@ class FZCBLSModel(val model: FZProblem, val c: ConstraintSystem, val m: Store, v
   }
     implicit def getCBLSVar(v: Variable) = {
       v match {
-        case ConcreteConstant(_, value, _) =>
+      /*  case ConcreteConstant(_, value, _) =>
           //All constants need to have a store, otherwise they won't have a UniqueID (from PropagationElement) and constraints will start throwing exceptions
         cblsIntMap.get(value + "") match {
           case None =>
@@ -157,9 +156,15 @@ class FZCBLSModel(val model: FZProblem, val c: ConstraintSystem, val m: Store, v
             c;
           case Some(c) => c;
         }
-    
+    */
       case ConcreteVariable(id, _, _) =>
-        cblsIntMap.get(id).get;
+        cblsIntMap.get(id) match {
+          case None if v.isBound =>
+            val c = CBLSIntConstDom(v.value, m);
+            cblsIntMap += id -> c;
+            c;
+          case Some(c) => c;
+        }
       }
     }
   def handleSolution() = {
@@ -193,6 +198,11 @@ class FZCBLSSolver extends SearchEngine with StopWatch {
     
     FZModelTransfo.propagateDomainBounds(model);
     log("Reduced Domains")
+    model.constraints.foreach(c => if(c.getVariables().length <=1) log(0,"Remaining Unary Constraint "+c)
+    else if(c.getVariables().filter(v => v.min != v.max).length <= 1) log(0,"De facto Unary Constraint "+c))
+    
+    
+    
     if(!opts.is("no-find-inv")){
       FZModelTransfo.findInvariants(model,log);
       log("Found Invariants")
@@ -251,7 +261,8 @@ class FZCBLSSolver extends SearchEngine with StopWatch {
       poster.add_constraint(constraint);
     }
     log("Posted "+softConstraints.length+" Soft Constraints")
-    
+    log(softConstraints.filter(c => c.getVariables().forall(v => !v.isDefined)).size+" are only on search variables.")
+    log(softConstraints.filter(c => c.getVariables().forall(v => v.isDefined)).size+" are only on defined variables.")
     
     //println(implicitConstraints.length + " implicit constraints");
     //Do not want to search on such variables!
@@ -261,7 +272,8 @@ class FZCBLSSolver extends SearchEngine with StopWatch {
       log(0,"No neighbourhood has been created. Aborting!")
       return;
     }
-    log("Using "+cblsmodel.vars.length+" Search Variables in default neighbourhoods")
+    log("Using "+cblsmodel.vars.length+" Search Variables in default assign neighbourhood")
+    log("Using "+cblsmodel.vars.filter(v => v.minVal ==0 && v.maxVal==1).length+" Search Variables in default flip neighbourhood")
     cblsmodel.vars.foreach(v => log(2,"Search with "+v+" dom: "+v.minVal +".."+v.maxVal))
     log("Created all Neighborhoods")
     cblsmodel.objective.updateObjective()
@@ -297,6 +309,7 @@ class FZCBLSSolver extends SearchEngine with StopWatch {
       if(sc.bestKnownViolation > 0){
         log(0,"Did not find any solution.")
         log(0,"Smallest violation: "+sc.bestKnownViolation )
+        log(1,cblsmodel.c.violatedConstraints.length+" violated constraints")
       }else{
         log(0,"Best Overall Solution: "+sc.bestKnownObjective * (if(model.search.obj==Objective.MAXIMIZE) -1 else 1))
       }

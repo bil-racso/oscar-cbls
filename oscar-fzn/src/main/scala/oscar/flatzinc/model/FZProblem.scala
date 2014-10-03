@@ -145,6 +145,7 @@ abstract class Variable(val id: String, val annotations: List[Annotation] = List
   def is01: Boolean = min >= 0 && max <= 1
   def isTrue: Boolean = this.is01 && min == 1
   def isFalse: Boolean = this.is01 && max == 0 
+  def isBound: Boolean = min == max
   override def toString = this.id
   var cstrs:List[Constraint] = List.empty[Constraint]
   def addConstraint(c:Constraint) = {
@@ -156,18 +157,33 @@ abstract class Variable(val id: String, val annotations: List[Annotation] = List
     cstrs = cstrs.filter(c != _)//might be made more efficient if cstrs was a set.
    //println("A"+cstrs)
   }
+  def geq(v:Int);
+  def leq(v:Int);
+  def inter(d:Domain);
+  def bind(v: Int) = {geq(v); leq(v);}
+  def value:Int = {if(isBound) min else throw new Exception("Asking for the value of an unbound variable")}
 }
 
-case class ConcreteVariable(i: String,val dom: Domain, anno: List[Annotation] = List.empty[Annotation]) extends Variable(i,anno) {  
+case class ConcreteVariable(i: String,private var dom: Domain, anno: List[Annotation] = List.empty[Annotation]) extends Variable(i,anno) {
+  def this(i: String, v: Int) = this(i,DomainRange(v,v),List.empty[Annotation]);
+  def domain = dom
   def min = dom.min
   def max = dom.max
+  def geq(v:Int) = dom.geq(v)
+  def leq(v:Int) = dom.leq(v)
+  def inter(d:Domain) = (dom,d) match {
+    case (DomainRange(_,_),DomainRange(_,_)) => dom.inter(d)
+    case (DomainSet(_),DomainRange(_,_)) => dom.inter(d)
+    case (DomainSet(_),DomainSet(_)) => dom.inter(d)
+    case (DomainRange(l,u),DomainSet(values)) => dom = DomainSet(values.filter(v => v>=l && v <= u)); dom.checkEmpty()
+  }
 }
-
+/*
 case class ConcreteConstant(i: String,val value:Int, anno: List[Annotation] = List.empty[Annotation]) extends Variable(i,anno){
   def min = value;
   def max = value;
 }
-
+*/
 
 //TODO: should go to the CP specific part
 object VariableHeuristic extends Enumeration {

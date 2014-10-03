@@ -450,7 +450,7 @@ class MaxViolating(searchVariables: Array[CBLSIntVarDom], objective: CBLSObjecti
 class MaxViolatingSwap(searchVariables: Array[CBLSIntVarDom], objective: CBLSObjective, constraintSystem: ConstraintSystem) extends Neighbourhood(searchVariables) {
   val indexRange = 0 until searchVariables.length;
   val variableViolation: Array[CBLSIntVar] = searchVariables.map(constraintSystem.violation(_)).toArray
-  
+  //TODO: Might be made more efficient by maintaining the two sets of variables, the ones assigned to true and the ones assigned to false.
   def reset() = {
 
   }
@@ -502,11 +502,38 @@ class AllDifferent(searchVariables: Array[CBLSIntVarDom], objective: CBLSObjecti
     for (c <- constants) {
       freeValues -= c.value;
     }
+    val cur = variables.map(_.value)
+    val cnt = MMap.empty[Int,Int]
+    var nbprob = 0;
+    for (i <- indexRange) {
+      cur(i) = variables(i).getRandValue()
+      cnt(cur(i)) = cnt.getOrElse(cur(i), 0) + 1
+      if(cnt(cur(i))>1)nbprob +=1
+    }
+    var i = 0
+    while(nbprob > 0){
+       if(cnt(cur(i))>1){
+         cnt(cur(i)) -= 1
+         nbprob -=1
+         cur(i) = variables(i).getRandValue()
+         cnt(cur(i)) = cnt.getOrElse(cur(i),0) + 1
+         if(cnt(cur(i))>1)nbprob +=1
+       }
+       i = (i+1)%variables.length
+    }
+    /*
     for (v <- variables) {
       var value = v.getRandValue();
-      while(!freeValues.contains(value)) value = v.getRandValue()
+      while(!freeValues.contains(value)){
+        value = v.getRandValue()
+        println(v+" "+v.dom +" "+ freeValues)
+      }
       v := value;
       freeValues -= value;
+    }*/
+    
+    for (i <- indexRange) {
+      variables(i) := cur(i) 
     }
   }
   

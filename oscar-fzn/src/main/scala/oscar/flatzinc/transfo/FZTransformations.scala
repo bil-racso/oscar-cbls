@@ -60,7 +60,7 @@ object FZModelTransfo {
         }else{
           if(areAllIneq(v.cstrs)){
             log(0,"Found a possibility to make a min/max constraint for "+v);
-            v.cstrs.foreach(println(_))
+            //v.cstrs.foreach(println(_))
           } 
         }
       }
@@ -127,29 +127,35 @@ object FZModelTransfo {
     //TODO: Do more than just the bounds, then handle the in_set constraint here.
      val (cstrs,retract)= model.constraints.partition(c => 
       c match {
-        case int_le(x:ConcreteConstant, y:ConcreteVariable, _) => y.dom.geq(x.value); false
-        case int_le(x:ConcreteVariable, y:ConcreteConstant, _) => x.dom.leq(y.value); false
-        case int_lt(x:ConcreteConstant, y:ConcreteVariable, _) => y.dom.geq(x.value+1); false
-        case int_lt(x:ConcreteVariable, y:ConcreteConstant, _) => x.dom.leq(y.value-1); false
-        case bool_le(x:ConcreteConstant, y:ConcreteVariable, _) => y.dom.geq(x.value); false
-        case bool_le(x:ConcreteVariable, y:ConcreteConstant, _) => x.dom.leq(y.value); false
-        case bool_lt(x:ConcreteConstant, y:ConcreteVariable, _) => y.dom.geq(x.value+1); false
-        case bool_lt(x:ConcreteVariable, y:ConcreteConstant, _) => x.dom.leq(y.value-1); false
-        case int_eq(x: ConcreteConstant, y: ConcreteVariable, ann) => y.dom.geq(x.value); y.dom.leq(x.value); false
-        case int_eq(x: ConcreteVariable, y: ConcreteConstant, ann) => x.dom.geq(y.value); x.dom.leq(y.value); false
-        case bool_eq(x: ConcreteConstant, y: ConcreteVariable, ann) => y.dom.geq(x.value); y.dom.leq(x.value); false
-        case bool_eq(x: ConcreteVariable, y: ConcreteConstant, ann) => x.dom.geq(y.value); x.dom.leq(y.value); false
+        case int_le(x, y, _) if x.isBound => y.geq(x.value); false
+        case int_le(x, y, _) if y.isBound => x.leq(y.value); false
+        case int_lt(x, y, _) if x.isBound=> y.geq(x.value+1); false
+        case int_lt(x, y, _) if y.isBound=> x.leq(y.value-1); false
+        case bool_le(x, y, _) if x.isBound => y.geq(x.value); false
+        case bool_le(x, y, _) if y.isBound => x.leq(y.value); false
+        case bool_lt(x, y, _) if x.isBound => y.geq(x.value+1); false
+        case bool_lt(x, y, _) if y.isBound => x.leq(y.value-1); false
+        case int_eq(x, y, _) if x.isBound => y.bind(x.value); false
+        case int_eq(x, y, _) if y.isBound => x.bind(y.value); false
+        case bool_eq(x, y, _) if x.isBound => y.bind(x.value); false
+        case bool_eq(x, y, _) if y.isBound => x.bind(y.value); false
+        case set_in(x,d,_) => x.inter(d); false
+        case int_lin_eq(c,x,v,_) if x.length==1 && math.abs(c(0).value) == 1 => x(0).bind(v.value/c(0).value); false
+        case int_lin_le(c,x,v,_) if x.length==1 && c(0).value == 1 => x(0).leq(v.value); false
+        case int_abs(a,b,_) if a.isBound => b.bind(math.abs(a.value)); false
+        case int_abs(a,b,_) if b.isBound => a.inter(DomainSet(Set(b.value,-b.value))); false
+        case array_int_element(x,y,z,_) if x.isBound => z.bind(y(x.value-1).value); false
+        case array_int_element(x,y,z,_) if z.isBound => x.inter(DomainSet(y.zipWithIndex.filter{case (v,i) => v.value == z.value}.map{case(v,i) => i+1}.toSet)); false
         //The cstrs below might need to be iterated until fixpoint...
-        // Removed the following to avoid some problem in "train.mzn"
-        case int_le(x:ConcreteVariable, y:ConcreteVariable, _ ) => y.dom.geq(x.min); x.dom.leq(y.max); true
-        case int_lt(x:ConcreteVariable, y:ConcreteVariable, _ ) =>{
+        case int_le(x, y, _ ) => y.geq(x.min); x.leq(y.max); true
+        case int_lt(x, y, _ ) =>{
           //println(x+x.dom.toString()+"\t"+y+y.dom);
-          y.dom.geq(x.min+1); x.dom.leq(y.max-1); 
+          y.geq(x.min+1); x.leq(y.max-1); 
           //println(x+x.dom.toString()+"\t"+y+y.dom);
           true
         } 
-        case int_eq(x:ConcreteVariable, y:ConcreteVariable, _ ) => y.dom.geq(x.min); y.dom.leq(x.max); x.dom.geq(y.min); x.dom.leq(y.max); true
-        case bool_eq(x:ConcreteVariable, y:ConcreteVariable, _ ) => y.dom.geq(x.min); y.dom.leq(x.max); x.dom.geq(y.min); x.dom.leq(y.max); true
+        case int_eq(x, y, _ ) => y.geq(x.min); y.leq(x.max); x.geq(y.min); x.leq(y.max); true
+        case bool_eq(x, y, _ ) => y.geq(x.min); y.leq(x.max); x.geq(y.min); x.leq(y.max); true
         case _ => true 
       })
       model.constraints = cstrs
