@@ -15,6 +15,7 @@
 package oscar.cp.constraints;
 
 import oscar.algo.reversible.ReversibleInt;
+import oscar.cp.core.CPIntervalVar;
 import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
 import oscar.cp.core.CPIntVar;
@@ -97,8 +98,8 @@ public class LexLeq extends Constraint {
 		}
 	}
 	
-	
-	public CPOutcome updateBoundsIdx(CPIntVar var, int idx) {
+	@Override
+	public CPOutcome updateBoundsIdx(CPIntervalVar var, int idx) {
 		i = idx;
 		if (i == q.getValue()) return state1();
 		else if (i == r.getValue()) return state2();
