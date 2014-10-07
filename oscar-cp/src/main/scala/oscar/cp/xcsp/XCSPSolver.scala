@@ -12,7 +12,7 @@
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  * *****************************************************************************/
-/*
+
 package oscar.cp.xcsp
 
 import oscar.cp.core.CPBoolVar
@@ -249,9 +249,9 @@ abstract class XCSPSolver {
    val variables = taskList.map { task =>
      val (start,duration,end,demand) = task
      (start,duration,end) match {
-     	case (s : Nil, d : EffectiveParameter, e : EffectiveParameter) => (e - d : CPIntVar,d : CPIntVar ,e : CPIntVar,demand : CPIntVar)
-     	case (s : EffectiveParameter, d : Nil, e : EffectiveParameter) => (s : CPIntVar,e-s : CPIntVar ,e: CPIntVar ,demand : CPIntVar)
-     	case (s : EffectiveParameter, d : EffectiveParameter, e : Nil) => (s : CPIntVar,d : CPIntVar,s+d : CPIntVar,demand : CPIntVar)
+     	case (s : Nil, d : EffectiveParameter, e : EffectiveParameter) => (effectiveParameterToCPIntVar(e) - effectiveParameterToCPIntVar(d) : CPIntVar,d : CPIntVar ,e : CPIntVar,demand : CPIntVar)
+     	case (s : EffectiveParameter, d : Nil, e : EffectiveParameter) => (s : CPIntVar,effectiveParameterToCPIntVar(e)-effectiveParameterToCPIntVar(s) : CPIntVar ,e: CPIntVar ,demand : CPIntVar)
+     	case (s : EffectiveParameter, d : EffectiveParameter, e : Nil) => (s : CPIntVar,d : CPIntVar,effectiveParameterToCPIntVar(s)+effectiveParameterToCPIntVar(d) : CPIntVar,demand : CPIntVar)
      	case (s : EffectiveParameter, d : EffectiveParameter, e : EffectiveParameter) => (s: CPIntVar,d: CPIntVar,e: CPIntVar,demand: CPIntVar)
      	case (_,_,_) => throw new RuntimeException("One or less undefined parameter (<nil/>) is allowed.")
      }	
@@ -272,7 +272,7 @@ abstract class XCSPSolver {
    val parser = new ParameterParser(scope)
    val (index , table, value ) = parser.parseAll(parser.elementParameters,parameters).get
    //index -1 is mandatory as index is going from 1 to |table| and not from 0 to |table| - 1
-   post(element(table.toIndexedSeq,index - 1,value))
+   post(element(table.toIndexedSeq, effectiveParameterToCPIntVar(index) - 1,value))
  }
  
  private def globalCardinalityHelper(scope : Array[String], parameters : String)(implicit cp : CPSolver, decisionVariables : Map[String,CPIntVar]) : Unit = {
@@ -296,4 +296,3 @@ abstract class XCSPSolver {
 object XCSPSolverDefault {
   def apply() = new XCSPSolver() with DefaultConstraints
 }
-*/
