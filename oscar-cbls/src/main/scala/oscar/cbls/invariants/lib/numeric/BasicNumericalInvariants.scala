@@ -233,7 +233,13 @@ object DomainHelper {
   }
   //Safe subtaction
   def safeSub(x: Int, y: Int): Int = {
-    safeAdd(x, -y)
+    if (x.toLong - y.toLong > Int.MaxValue) {
+      Int.MaxValue
+    } else if (x.toLong - y.toLong < Int.MinValue) {
+      Int.MinValue
+    } else {
+      x - y
+    }
   }
   //Safe multiplication
   def safeMult(x: Int, y: Int): Int = {

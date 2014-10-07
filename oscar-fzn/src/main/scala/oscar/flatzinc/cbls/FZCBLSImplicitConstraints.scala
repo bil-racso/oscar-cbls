@@ -28,11 +28,8 @@ class FZCBLSImplicitConstraints(val cblsmodel:FZCBLSModel) {
   
   def findAndPostImplicit(constraints: List[Constraint]) = {
       //TODO: DO not like the filtering here.
-      //TODO: Why is constraints an Array. Could be a List?
       constraints.partition((constraint: Constraint) =>
         constraint match {
-          //TODO: this line of simplification should come somewhere else, actually
-          case all_different_int(xs, ann) if xs.length == 1 => true //flattening can generate alldiffs with only one variable... lets ignore those.
           case all_different_int(xs, ann) => tryAllDiff(xs)
           case circuit(xs, ann) => tryCircuit(xs)
           case subcircuit(xs, ann) => trySubCircuit(xs)

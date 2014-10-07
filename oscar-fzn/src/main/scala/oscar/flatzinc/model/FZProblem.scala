@@ -29,7 +29,7 @@ class FZProblem {
   var variables: List[Variable] = List.empty[Variable]
   
   var constraints: List[Constraint] = List.empty[Constraint]//TODO: might as well replace it by a list...
-  var cstrsByName: MMap[String,List[Constraint]] = MMap.empty[String,List[Constraint]]
+ // var cstrsByName: MMap[String,List[Constraint]] = MMap.empty[String,List[Constraint]]
   val solution:FZSolution = new FZSolution();
   
   val search = new Search();
@@ -52,13 +52,8 @@ class FZProblem {
   def addConstraint(c: Constraint) {
     constraints = c :: constraints
     //the following code adds constraints by name
-    val names = c.getClass().getName().split("\\.")
-    var name = names(names.length-1)
-    if(name=="reif"){
-      val n2 = c.asInstanceOf[reif].c.getClass().getName().split("\\.")
-      name += "_"+n2(n2.length-1)
-    }
-    cstrsByName(name) = List(c) ++ cstrsByName.getOrElse(name, List.empty[Constraint])
+    
+   // cstrsByName(name) = List(c) ++ cstrsByName.getOrElse(name, List.empty[Constraint])
   }
   
   
@@ -111,10 +106,11 @@ abstract class Domain {
 }
 
 case class DomainRange(var mi: Int, var ma: Int) extends Domain {
+  //
   def min = mi
   def max = ma
   def contains(v:Int): Boolean = mi <= v && ma >= v
-  def size = ma-mi+1
+  def size = if(ma==Int.MaxValue && mi==Int.MinValue) Int.MaxValue else ma-mi+1
   def geq(v:Int) = { mi = math.max(v,mi); checkEmpty() }
   def leq(v:Int) = { ma = math.min(v,ma); checkEmpty() }
   def toRange = mi to ma
@@ -122,6 +118,9 @@ case class DomainRange(var mi: Int, var ma: Int) extends Domain {
 }
 
 case class DomainSet(var values: Set[Int]) extends Domain {
+  override def checkEmpty() = {
+    if (values.isEmpty) throw new UnsatException("Empty Domain");
+  }
   def min = values.min
   def max = values.max
   def size = values.size
@@ -131,7 +130,7 @@ case class DomainSet(var values: Set[Int]) extends Domain {
   override def inter(d:DomainSet) = {values = values.intersect(d.values); checkEmpty() }
 }
 
-
+//TODO: CheckEmpty should go to the variables, as the domains are also used for normal sets that can be empty.
 //TODO: differentiate between Int and Bool
 //TODO: Add set variables
 abstract class Variable(val id: String, val annotations: List[Annotation] = List.empty[Annotation]) {
@@ -142,11 +141,12 @@ abstract class Variable(val id: String, val annotations: List[Annotation] = List
   var definingConstraint: Option[Constraint] = Option.empty[Constraint]
   def min: Int
   def max: Int
+  def domainSize: Int
   def is01: Boolean = min >= 0 && max <= 1
   def isTrue: Boolean = this.is01 && min == 1
   def isFalse: Boolean = this.is01 && max == 0 
   def isBound: Boolean = min == max
-  override def toString = this.id
+  override def toString = {this.id + (if(isBound) "="+value else "");}
   var cstrs:List[Constraint] = List.empty[Constraint]
   def addConstraint(c:Constraint) = {
     cstrs = c :: cstrs
@@ -154,19 +154,21 @@ abstract class Variable(val id: String, val annotations: List[Annotation] = List
   def removeConstraint(c:Constraint) = {
     //println("B"+cstrs)
     //println(c)
-    cstrs = cstrs.filter(c != _)//might be made more efficient if cstrs was a set.
+    cstrs = cstrs.filterNot(c.eq(_))//might be made more efficient if cstrs was a set.
    //println("A"+cstrs)
   }
   def geq(v:Int);
   def leq(v:Int);
   def inter(d:Domain);
   def bind(v: Int) = {geq(v); leq(v);}
+  def neq(v:Int);
   def value:Int = {if(isBound) min else throw new Exception("Asking for the value of an unbound variable")}
 }
 
 case class ConcreteVariable(i: String,private var dom: Domain, anno: List[Annotation] = List.empty[Annotation]) extends Variable(i,anno) {
   def this(i: String, v: Int) = this(i,DomainRange(v,v),List.empty[Annotation]);
   def domain = dom
+  def domainSize = dom.size
   def min = dom.min
   def max = dom.max
   def geq(v:Int) = dom.geq(v)
@@ -175,7 +177,17 @@ case class ConcreteVariable(i: String,private var dom: Domain, anno: List[Annota
     case (DomainRange(_,_),DomainRange(_,_)) => dom.inter(d)
     case (DomainSet(_),DomainRange(_,_)) => dom.inter(d)
     case (DomainSet(_),DomainSet(_)) => dom.inter(d)
-    case (DomainRange(l,u),DomainSet(values)) => dom = DomainSet(values.filter(v => v>=l && v <= u)); dom.checkEmpty()
+    case (DomainRange(l,u),DomainSet(values)) => dom = DomainSet(values.filter(v => v>=l && v <= u)); dom.checkEmpty();
+  }
+  def neq(v:Int) = {
+    if(v==min) geq(v+1) 
+    else if(v==max) leq(v-1) 
+    else if(v >min && v < max){
+     dom match {
+       case DomainSet(values) => dom = DomainSet(values - v); dom.checkEmpty();
+       case DomainRange(l,u) => dom = DomainSet((l to u).toSet - v); dom.checkEmpty();
+     }
+    }
   }
 }
 /*

@@ -100,16 +100,21 @@ object FZModelTransfo {
     def heuristicAccept(c: Constraint): Boolean = {
       step > 0 || c.isInstanceOf[SimpleDefiningConstraint]
     }
-    
+    //log(freeVariables.toString)
     //For all free variables
-    for (v <- freeVariables.sortWith((x: Variable, y: Variable) => x.max - x.min > y.max - y.min)) {
+    for (v <- freeVariables.sortBy((x:Variable) => -x.domainSize)){//With((x: Variable, y: Variable) => x.max.toLong - x.min.toLong > y.max.toLong - y.min.toLong)) {
+      //println(v)
+      //println(v.cstrs)
       val cand = v.cstrs.filter((c: Constraint) => heuristicAccept(c) && c.definedVar.isEmpty && c.canDefineVar && c.getCandidateDefVars().contains(v))
       val cand2 = cand//.filter(c => ! dependsOn(c,v,false))
       if(cand2.length > 1){
         log(2,"! Found a variable that could be defined by more than one invariant:"+v+" "+cand2.toString)
       }
-      //Select the first suitable constraint
-      if(!cand2.isEmpty) cand2.head.setDefinedVar(v)
+      //Select the first suitable constraint with smallest number of variables (heuristic for Costas Array, might not work for others, actually a proxy for the smallest resulting output domain)
+      if(!cand2.isEmpty){
+        //log(cand2.toString)
+        cand2.minBy(c => c.getVariables().length).setDefinedVar(v)
+      }
       
     }
   }
@@ -122,11 +127,11 @@ object FZModelTransfo {
   
   
   
-  def propagateDomainBounds(model: FZProblem) = {
+  def propagateDomainBounds(model: FZProblem)(implicit log: Log) = {
     //TODO: Also reduce the domains from GCC_closed and other such constraints. Or do it from the minizinc to flatzinc level
-    //TODO: Do more than just the bounds, then handle the in_set constraint here.
-     val (cstrs,retract)= model.constraints.partition(c => 
-      c match {
+     //TODO: Use a proper CP solver to do this bit!
+     def prop() = model.constraints.partition(c => {
+      val ret = c match {
         case int_le(x, y, _) if x.isBound => y.geq(x.value); false
         case int_le(x, y, _) if y.isBound => x.leq(y.value); false
         case int_lt(x, y, _) if x.isBound=> y.geq(x.value+1); false
@@ -139,9 +144,27 @@ object FZModelTransfo {
         case int_eq(x, y, _) if y.isBound => x.bind(y.value); false
         case bool_eq(x, y, _) if x.isBound => y.bind(x.value); false
         case bool_eq(x, y, _) if y.isBound => x.bind(y.value); false
+        case bool_not(x, y, _) if x.isBound => y.bind(1-x.value); false
+        case bool_not(x, y, _) if y.isBound => x.bind(1-y.value); false
+        case bool2int(x, y, _) if x.isBound => y.bind(x.value); false
+        case bool2int(x, y, _) if y.isBound => x.bind(y.value); false
+        case reif(c2,b) => c2 match {
+          case int_eq(x,y,_) if x.isBound && y.isBound => if(x.value ==y.value) b.bind(1);else b.bind(0); false
+          case int_ne(x,y,_) if x.isBound && y.isBound => if(x.value !=y.value) b.bind(1);else b.bind(0); false
+          case int_lt(x,y,_) if x.isBound && y.isBound => if(x.value < y.value) b.bind(1);else b.bind(0); false
+          case int_le(x,y,_) if x.isBound && y.isBound => if(x.value <= y.value) b.bind(1);else b.bind(0); false
+          case int_lin_eq(c,x,y,_) if x.forall(_.isBound) => b.bind(if(c.zip(x).foldLeft(0)((acc,cur) => acc + cur._1.value*cur._2.value)==y.value) 1 else 0); false
+          case int_lin_le(c,x,y,_) if x.forall(_.isBound) => b.bind(if(c.zip(x).foldLeft(0)((acc,cur) => acc + cur._1.value*cur._2.value)<=y.value) 1 else 0); false
+          case _ => true;
+        }
+        case array_bool_and(x,y,_) if x.forall(_.isBound) => y.bind(if(x.forall(v => v.value==1))1 else 0); false
+        case array_bool_or(x,y,_) if x.forall(_.isBound) => y.bind(if(x.exists(v => v.value==1))1 else 0); false
+        case int_ne(x,y,_) if y.isBound => x.neq(y.value); false
+        case int_ne(x,y,_) if x.isBound => y.neq(x.value); false
         case set_in(x,d,_) => x.inter(d); false
         case int_lin_eq(c,x,v,_) if x.length==1 && math.abs(c(0).value) == 1 => x(0).bind(v.value/c(0).value); false
         case int_lin_le(c,x,v,_) if x.length==1 && c(0).value == 1 => x(0).leq(v.value); false
+        case all_different_int(x,_) if x.length==1 => false
         case int_abs(a,b,_) if a.isBound => b.bind(math.abs(a.value)); false
         case int_abs(a,b,_) if b.isBound => a.inter(DomainSet(Set(b.value,-b.value))); false
         case array_int_element(x,y,z,_) if x.isBound => z.bind(y(x.value-1).value); false
@@ -157,10 +180,52 @@ object FZModelTransfo {
         case int_eq(x, y, _ ) => y.geq(x.min); y.leq(x.max); x.geq(y.min); x.leq(y.max); true
         case bool_eq(x, y, _ ) => y.geq(x.min); y.leq(x.max); x.geq(y.min); x.leq(y.max); true
         case _ => true 
-      })
-      model.constraints = cstrs
-      for(c <- retract){
-        c.retract()
+      };
+      if(!ret)log(3,"Simplified "+c)
+      ret});
+      var (cstrs,retract)= prop()
+      while(!retract.isEmpty){
+        log(0,"Looping")
+        model.constraints = cstrs
+        for(c <- retract){
+          c.retract()
+        }
+        val (c2,r2) = model.constraints.partition{
+          case reif(c,b) if b.isBound => false
+          case _ => true
+        }
+        model.constraints = c2;
+        for(c<-r2){
+          c match {
+            case reif(c2,b) =>{
+              var c3 = c2;
+              if(b.value==0){
+                c3 = c2 match {
+                  case int_eq(x,y,a) => int_ne(x,y,a)
+                  case int_ne(x,y,a) => int_eq(x,y,a)
+                  case int_lt(x,y,a) => int_le(y,x,a)
+                  case int_le(x,y,a) => int_lt(y,x,a)
+                  case _ => null
+                }
+              }
+              if(c3!=null){
+                model.constraints = c3 :: model.constraints
+                log(3,"Rewrote "+c+ " => "+c3)
+                for(v <- c3.getVariables()){
+                  v.addConstraint(c3);
+                }
+                c.retract()
+              }else{
+                model.constraints ::= c
+              }
+            } 
+          }
+          
+        }
+        val (c,r) = prop()
+        cstrs = c;
+        retract = r;
+       // retract = List.empty
       }
   }
   
@@ -231,7 +296,7 @@ object FZModelTransfo {
       //print(mapping.mkString("\n"))
     }
     while(!mapping.isEmpty){
-      val (remc,value) = mapping.keys.foldLeft((null.asInstanceOf[Constraint],0))((best,cur) => {val curval = mapping(cur)/*cur.definedVar.get.cstrs.filter(c => c!=cur && mapping.contains(c) && mapping(c)==1).length*/; if(curval > best._2) (cur,curval) else best;});
+      val (remc,value) = mapping.keys.foldLeft((null.asInstanceOf[Constraint],Int.MinValue))((best,cur) => {val curval = - cur.definedVar.get.domainSize/*mapping(cur)*//*cur.definedVar.get.cstrs.filter(c => c!=cur && mapping.contains(c) && mapping(c)==1).length*/; if(curval > best._2) (cur,curval) else best;});
       mapping.remove(remc)
       for(j <- remc.definedVar.get.cstrs){
         if(mapping.contains(j) ){
@@ -242,6 +307,7 @@ object FZModelTransfo {
           }
         }
       }
+      log(2,"Removed "+remc+ " for "+remc.definedVar.get)
       removed = remc :: removed
       remc.unsetDefinedVar(remc.definedVar.get)
       explore()

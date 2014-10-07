@@ -164,6 +164,7 @@ case class int_lin_eq(params:Array[Variable],vars:Array[Variable], sum:Variable,
   override def getCandidateDefVars():Array[Variable]  = {
     return vars.zip(params).filter((t) => Math.abs(t._2.min) == 1).map(_._1)
   }
+  override def toString() ={"int_lin_eq("+params.mkString("[", ",", "]")+","+vars.mkString("[", ",", "]")+","+sum+","+ann+")"}
 }
 
 case class int_lin_le(params:Array[Variable],vars:Array[Variable], sum:Variable, ann: List[Annotation] = List.empty[Annotation]) 

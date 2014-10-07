@@ -41,7 +41,7 @@ case class AllDiff(variables: Iterable[CBLSIntVar]) extends Constraint {
 
   //le degre global de violation est la somme des tailles -1 des ensembles de var ayant meme value
   // et on ne prend que les ensembles de cardinalite > 1
-  private val Violation: CBLSIntVar = new CBLSIntVar(model, (0 to Int.MaxValue), 0, "ViolationsOfAllDiff")
+  private val Violation: CBLSIntVar = new CBLSIntVar(model, (0 to variables.size), 0, "ViolationsOfAllDiff")
   Violation.setDefiningInvariant(this)
 
   private val N0: Int = variables.foldLeft(0)(
@@ -49,7 +49,6 @@ case class AllDiff(variables: Iterable[CBLSIntVar]) extends Constraint {
 
   private val offset: Int = -variables.foldLeft(0)(
     (acc: Int, intvar: CBLSIntVar) => (if (intvar.minVal < acc) intvar.minVal else acc))
-
   private val N = N0 + offset
   private val range = 0 to N
 

@@ -30,7 +30,6 @@ import oscar.cbls.invariants.lib.minmax._
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.lib.numeric._
 import oscar.cbls.invariants.core.computation.IntInvariant.toIntVar
-//import oscar.flatzinc.parser.NewParser
 import oscar.flatzinc.parser.Options
 import oscar.flatzinc.model._
 import oscar.flatzinc.model.Constraint
@@ -40,6 +39,7 @@ import oscar.cbls.invariants.lib.numeric.Sum2
 import oscar.flatzinc.transfo.FZModelTransfo
 import java.io.PrintWriter
 import oscar.flatzinc.parser.FZParser
+import oscar.util.RandomGenerator
 
 
 //TODO: Move this class somewhere else...
@@ -54,7 +54,7 @@ class Log(opts:Options){
   }
 }
 
-class FZCBLSObjective(opt: Objective.Value, private val objectiveVar: CBLSIntVarDom,c:ConstraintSystem){
+class FZCBLSObjective(opt: Objective.Value, private val objectiveVar: CBLSIntVarDom,c:ConstraintSystem,log:Log){
   val violationWeight = CBLSIntVar(c._model, 0 to 1 , 1, "violation_weight")
   val objectiveWeight = CBLSIntVar(c._model, 0 to 1 , 1, "objective_weight")
   val violation = c.violation;
@@ -69,6 +69,9 @@ class FZCBLSObjective(opt: Objective.Value, private val objectiveVar: CBLSIntVar
         case Objective.MINIMIZE => Sum2(Prod2(c.violation, violationWeight), Prod2(objectiveVar, objectiveWeight))
       })
   }
+  def close(){
+    violationWeight.maxVal = math.max(1,Int.MaxValue/violation.maxVal/2)
+  }
   def apply() = objective
   def getObjectiveValue(): Int = {
    opt match {
@@ -81,20 +84,24 @@ class FZCBLSObjective(opt: Objective.Value, private val objectiveVar: CBLSIntVar
     if (objectiveWeight.value > 1) {
       correctWeights(objectiveWeight.value / 2,violationWeight.value)
     } else {
-      correctWeights(objectiveWeight.value,(violationWeight.value + Math.max(10, Math.abs(minViolationSinceBest / 2))).toInt)
+      correctWeights(objectiveWeight.value,violationWeight.value + Math.max(10, Math.abs(minViolationSinceBest / 2)))
     }
   }
   def increaseObjectiveWeight(minObjectiveSinceBest: Int){
     if (violationWeight.value > 1) {
       correctWeights(objectiveWeight.value,violationWeight.value / 2)
     } else {
-      correctWeights((objectiveWeight.value + Math.max(10, Math.abs(minObjectiveSinceBest / 2))).toInt,violationWeight.value)
+      correctWeights(objectiveWeight.value + Math.max(10, Math.abs(minObjectiveSinceBest / 2)),violationWeight.value)
     }
   }
   def correctWeights(newObjW: Int,newVioW: Int){
     val minWeight = math.min(newObjW, newVioW)
     objectiveWeight := math.min(newObjW/minWeight,objectiveWeight.maxVal)
-    violationWeight := math.min(newVioW/ minWeight,violationWeight.maxVal ) 
+    violationWeight := math.min(newVioW/ minWeight,violationWeight.maxVal)
+    //violationWeight := 1000 + RandomGenerator.nextInt(10)
+    log("Changed Violation Weight to "+violationWeight.value+(if(violationWeight.value==violationWeight.maxVal)"(max)"else ""))
+    log("    And Objective Weight to "+objectiveWeight.value+(if(objective.value==objectiveWeight.maxVal)"(max)"else ""))
+
   }
 }
 
@@ -102,7 +109,7 @@ class FZCBLSObjective(opt: Objective.Value, private val objectiveVar: CBLSIntVar
 class FZCBLSModel(val model: FZProblem, val c: ConstraintSystem, val m: Store, val log:Log, val getWatch: () => Long) {
   val cblsIntMap: MMap[String, CBLSIntVarDom] = MMap.empty[String, CBLSIntVarDom]
   var vars: List[CBLSIntVarDom] = createVariables();
-  val objective = new FZCBLSObjective(model.search.obj,model.search.variable.map(getCBLSVar(_)).getOrElse(null) ,c)
+  val objective = new FZCBLSObjective(model.search.obj,model.search.variable.map(getCBLSVar(_)).getOrElse(null) ,c,log)
   var neighbourhoods: List[Neighbourhood] = List.empty[Neighbourhood];
   
   def addNeighbourhood(n: Neighbourhood,removeVars: Boolean  = true){
@@ -126,9 +133,11 @@ class FZCBLSModel(val model: FZProblem, val c: ConstraintSystem, val m: Store, v
         case ConcreteVariable(id, dom, annotation) =>
           val initialValue = (dom match {
             case DomainRange(min, max) =>
-              val range = (min to max);
-//              println(range.length+ "\t"+range+"\t"+varName+ "\t"+ parsedVariable)
-              range(Random.nextInt(range.length))
+              if(max.toLong - min.toLong > Int.MaxValue) Random.nextInt()
+              else{
+                val range = (min to max);
+                range(Random.nextInt(range.length))
+              }
             case DomainSet(values) =>
               val v = values.toArray;
               v(Random.nextInt(v.length))
@@ -186,6 +195,17 @@ class FZCBLSModel(val model: FZProblem, val c: ConstraintSystem, val m: Store, v
   }
 }
 class FZCBLSSolver extends SearchEngine with StopWatch {
+  def getCstrsByName(cstrs: List[Constraint]): MMap[String,List[Constraint]] = {
+    cstrs.foldLeft(MMap.empty[String,List[Constraint]])((acc,c) => { 
+      val names = c.getClass().getName().split("\\.")
+      var name = names(names.length-1)
+      if(name=="reif"){
+        val n2 = c.asInstanceOf[reif].c.getClass().getName().split("\\.")
+        name += "_"+n2(n2.length-1)
+      }
+      acc(name) = c :: acc.getOrElse(name,List.empty[Constraint]); 
+      acc})
+  }
   
   def solve(opts: Options) {
     startWatch()
@@ -193,14 +213,21 @@ class FZCBLSSolver extends SearchEngine with StopWatch {
     log("start")
     
     val model = FZParser.readFlatZincModelFromFile(opts.fileName,log).problem;
-    model.cstrsByName.map{ case (n:String,l:List[Constraint]) => l.length +"\t"+n}.toList.sorted.foreach(log(_))
+     
+    getCstrsByName(model.constraints).map{ case (n:String,l:List[Constraint]) => l.length +"\t"+n}.toList.sorted.foreach(log(_))
     log("Parsed. Parsing took "+getWatch+" ms")
-    
-    FZModelTransfo.propagateDomainBounds(model);
-    log("Reduced Domains")
+    if(!opts.is("no-simpl")){
+      FZModelTransfo.propagateDomainBounds(model)(log);
+      log("Reduced Domains")
+    }else{
+      log("No domain reduction")
+    }
     model.constraints.foreach(c => if(c.getVariables().length <=1) log(0,"Remaining Unary Constraint "+c)
-    else if(c.getVariables().filter(v => v.min != v.max).length <= 1) log(0,"De facto Unary Constraint "+c))
-    
+    else if(c.getVariables().filter(v => v.min != v.max).length <= 1){
+      log(0,"De facto Unary Constraint "+c); ; 
+      log(0,c.getVariables().map(v => v.min+".."+v.max).mkString(" , "))
+    })
+    model.constraints.foreach{ case reif(c,b) => if(b.isBound) log(0,"Fixed reified constraint: "+b.value); case _ => {}}
     
     
     if(!opts.is("no-find-inv")){
@@ -217,6 +244,7 @@ class FZCBLSSolver extends SearchEngine with StopWatch {
     
     
     
+    
     // Model
     val m: Store = new Store(false, None, false)//setting the last Boolean to true would avoid calling the SCC algorithm but we have to make sure that there are no SCCs in the Graph. Is it the case in the way we build it?
     // constraint system
@@ -226,41 +254,54 @@ class FZCBLSSolver extends SearchEngine with StopWatch {
     
     
     val allcstrs:List[Constraint] = model.constraints;
-    
-    
-    val notimplcstrs = 
+    val (maybedircstrs,maybesoftcstrs) = allcstrs.partition(_.definedVar.isDefined)
+    log("Possibly "+maybedircstrs.length+" invariants.")
+    val (invariants,removed) = FZModelTransfo.getSortedInvariants(maybedircstrs)(log)
+    log("Sorted "+invariants.length+" Invariants")
+    val softorimplcstrs = maybesoftcstrs ++ removed
+    val softcstrs = 
     if(!opts.is("no-impl-cstr")){
       val implicitPoster = new FZCBLSImplicitConstraints(cblsmodel)
-      val (implcstrs,othercstrs) = implicitPoster.findAndPostImplicit(allcstrs);
+      val (implcstrs,softcstrs) = implicitPoster.findAndPostImplicit(softorimplcstrs);
       //TODO: Add the implcstrs to some system to ensure that they are at all time respected.
       log("Found "+cblsmodel.neighbourhoods.length+" Implicit Constraints")
+      getCstrsByName(implcstrs).map{ case (n:String,l:List[Constraint]) => l.length +"\t"+n}.toList.sorted.foreach(s => log(" "+s))
       cblsmodel.neighbourhoods.foreach(n => log(2,"Created Neighbourhood "+ n+ " over "+n.searchVariables.length+" variables"))
-      othercstrs
+      
+      val hardCS = ConstraintSystem(m)
+      val hardPoster: FZCBLSConstraintPoster = new FZCBLSConstraintPoster(hardCS,cblsmodel.getCBLSVar);
+      for(c <- implcstrs){
+        hardPoster.add_constraint(c)
+      }
+      Event(hardCS.violation, Unit => {if(hardCS.violation.value > 0){
+        log(0,"PROBLEM: Some implicit Constraint is not satisfied during search.")
+        cblsmodel.neighbourhoods .foreach(n => log(0,n.getClass().toString()+" "+n.getVariables().mkString("[",",","]")))
+        throw new Exception()
+      }});
+      //Event(cs.violation, Unit => {log(cs.violation.toString);})
+      //
+       
+      softcstrs
     }else{
       log("Did not try to find implicit constraints")
-      allcstrs
+      softorimplcstrs
     }
-    //println(constraints.size)
+    
     
     val poster: FZCBLSConstraintPoster = new FZCBLSConstraintPoster(cs,cblsmodel.getCBLSVar);
-    
-    val (maybedircstrs,surelysoftcstrs) = notimplcstrs.partition(_.definedVar.isDefined)
-    log("Possibly "+maybedircstrs.length+" invariants.")
-    val (invariants,removed) = FZModelTransfo.getSortedInvariants(maybedircstrs)(cblsmodel.log)
-    log("Sorted "+invariants.length+" Invariants")
-    val softConstraints = surelysoftcstrs ++ removed;
-    
+    val softConstraints = softcstrs;
     for (invariant <- invariants){
       log(2,"Posting as Invariant "+invariant)
       poster.add_invariant(invariant);
     }
     log("Posted "+invariants.length+" Invariants")
-    
+    getCstrsByName(invariants).map{ case (n:String,l:List[Constraint]) => l.length +"\t"+n}.toList.sorted.foreach(s => log(" "+s))
     for (constraint <- softConstraints) {
       log(2,"Posting as Soft "+constraint)
       poster.add_constraint(constraint);
     }
     log("Posted "+softConstraints.length+" Soft Constraints")
+    getCstrsByName(softConstraints).map{ case (n:String,l:List[Constraint]) => l.length +"\t"+n}.toList.sorted.foreach(s => log(" "+s))
     log(softConstraints.filter(c => c.getVariables().forall(v => !v.isDefined)).size+" are only on search variables.")
     log(softConstraints.filter(c => c.getVariables().forall(v => v.isDefined)).size+" are only on defined variables.")
     
@@ -286,11 +327,17 @@ class FZCBLSSolver extends SearchEngine with StopWatch {
           case Objective.MAXIMIZE => new SearchControl(cblsmodel,-model.search.variable.get.max, timeout,false);
           case Objective.MINIMIZE => new SearchControl(cblsmodel,model.search.variable.get.min, timeout,false);
         }
-    val search =  new Chain(
+    val search = new Chain(
         new ActionSearch(() => {sc.cancelObjective()}),
         if(!opts.is("no-sls"))new SimpleLocalSearch(cblsmodel,sc) else new ActionSearch(() =>{}),
+        //new GreedySearch(1,cblsmodel,sc),
+        //new GreedySearch(2,cblsmodel,sc),
+        if(opts.is("use-cb"))new NeighbourhoodCBSearch(cblsmodel,sc) else //new ActionSearch(() =>{}),
+        //new GreedySearch(3,cblsmodel,sc),
         new NeighbourhoodSearchSAT(cblsmodel,sc),
-        new ActionSearch(() => {sc.restoreObjective()}),
+        new ActionSearch(() => {sc.restoreObjective(); /*cblsmodel.objective.violationWeight :=1500*/}),
+        //new NeighbourhoodCBSearch(cblsmodel,sc),
+        //new NeighbourhoodCBSearch(cblsmodel,sc),
         model.search.obj match {
           case Objective.SATISFY => new ActionSearch(() => {}) 
           case Objective.MAXIMIZE => new NeighbourhoodSearchOPT(cblsmodel,sc);
@@ -299,6 +346,7 @@ class FZCBLSSolver extends SearchEngine with StopWatch {
     
     log("Search created")
     m.close();
+    cblsmodel.objective.close()//This line is necessary to update the max violation value after the CS is closed.
     log("Model closed");
     if(opts.is("no-run")){
       log("Not running the search...")

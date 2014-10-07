@@ -5,20 +5,21 @@
 
 predicate global_cardinality_closed(array[int] of var int: x,
                                     array[int] of int: cover,
-                                    array[int] of var int: counts); 
-                                    
-predicate global_cardinality_closed_decomp(array[int] of var int: x,
-                                    array[int] of int: cover,
-                                    array[int] of var int: counts) =
+                                    array[int] of var int: counts)
+                                    %;                                   
+%predicate global_cardinality_closed_decomp(array[int] of var int: x,
+ %                                   array[int] of int: cover,
+  %                                  array[int] of var int: counts) 
+  =
     assert(index_set(cover) = index_set(counts),
         "global_cardinality_closed: " ++
         "cover and counts must have identical index sets",
     forall(i in index_set(x))( x[i] in { d | d in cover } )
     /\
     global_cardinality(x, cover, counts)
-    /\
+    %/\
     % Implied constraint
-    length(x) = sum(counts)
+    %length(x) = sum(counts)
     );
 
 

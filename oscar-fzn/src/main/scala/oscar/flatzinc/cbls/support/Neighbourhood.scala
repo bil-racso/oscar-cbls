@@ -33,27 +33,27 @@ abstract class Move(val value:Int){
   def commit():Unit
   def getModified: Set[CBLSIntVar]
 }
-class AssignMove(x: CBLSIntVar,k:Int,value:Int) extends Move(value){
+case class AssignMove(x: CBLSIntVar,k:Int,override val value:Int) extends Move(value){
   def commit(){x := k}
   def getModified=Set(x)
   override def toString() = x + " assigned to " +k
 }
-class AssignsMove(xk: List[(CBLSIntVar,Int)],value:Int) extends Move(value){
+case class AssignsMove(xk: List[(CBLSIntVar,Int)],override val  value:Int) extends Move(value){
   def commit(){xk.foreach(x => x._1 := x._2)}
   def getModified = xk.map(_._1).toSet
   override def toString() = xk.foldLeft("")((acc,x) => acc+x._1+ " assigned to " +x._2 +"; ")
 }
-class SwapMove(x: CBLSIntVar,y:CBLSIntVar,value:Int) extends Move(value){
+case class SwapMove(x: CBLSIntVar,y:CBLSIntVar,override val value:Int) extends Move(value){
   def commit(){x :=: y}
   def getModified=Set(x,y)
   override def toString() = x + " swapped with " +y
 }
-class NoMove(value:Int = Int.MaxValue) extends Move(value){
+case class NoMove(override val value:Int = Int.MaxValue) extends Move(value){
   def commit(){}
   def getModified = Set.empty[CBLSIntVar]
   override def toString() = "No-Op"
 }
-class BeforeMove(m: Move,act:()=>Unit) extends Move(m.value) {
+case class BeforeMove(m: Move,act:()=>Unit) extends Move(m.value) {
   def commit(){
     act()
     m.commit()
@@ -435,7 +435,7 @@ class MaxViolating(searchVariables: Array[CBLSIntVarDom], objective: CBLSObjecti
   }
   def getExtendedMinObjective(it: Int, accept: Move => Boolean): Move = {
     val bestPair = selectMinImb(indexRange.filter(searchVariables(_).domainSize < 10000000), (i:Int) => searchVariables(i).getDomain(), 
-        (v:Int,i:Int) => acceptOr(new AssignMove(searchVariables(v),i,objective.assignVal(searchVariables(v),i)),accept).value)
+        (v:Int,i:Int) => acceptOr(new AssignMove(searchVariables(v),i,objective.assignVal(searchVariables(v),i)),accept).value,(v:Int,i:Int) => searchVariables(v).value!=i)
     bestPair match{
       case (v,i)  => new AssignMove(searchVariables(v),i,objective.assignVal(searchVariables(v),i))
       case _ => new NoMove()
@@ -499,12 +499,17 @@ class AllDifferent(searchVariables: Array[CBLSIntVarDom], objective: CBLSObjecti
     for (i <- minVal to maxVal) {
       freeValues += i;
     }
-    for (c <- constants) {
-      freeValues -= c.value;
-    }
     val cur = variables.map(_.value)
     val cnt = MMap.empty[Int,Int]
     var nbprob = 0;
+    for (c <- constants) {
+      freeValues -= c.value;
+      cnt(c.value) = cnt.getOrElse(c.value, 0) + 1
+      if(cnt(c.value)>1){
+        throw new Exception("Unsat all_different");
+      }
+    }
+    
     for (i <- indexRange) {
       cur(i) = variables(i).getRandValue()
       cnt(cur(i)) = cnt.getOrElse(cur(i), 0) + 1
@@ -521,20 +526,13 @@ class AllDifferent(searchVariables: Array[CBLSIntVarDom], objective: CBLSObjecti
        }
        i = (i+1)%variables.length
     }
-    /*
-    for (v <- variables) {
-      var value = v.getRandValue();
-      while(!freeValues.contains(value)){
-        value = v.getRandValue()
-        println(v+" "+v.dom +" "+ freeValues)
-      }
-      v := value;
-      freeValues -= value;
-    }*/
     
     for (i <- indexRange) {
-      variables(i) := cur(i) 
+      variables(i) := cur(i)
+    //  println(variables(i))
+      freeValues -= cur(i);
     }
+  //  println(freeValues)
   }
   
   def getSwapMove(idx1: Int,idx2: Int,accept: Move => Boolean) = {
@@ -548,7 +546,7 @@ class AllDifferent(searchVariables: Array[CBLSIntVarDom], objective: CBLSObjecti
   def getAssignMove(idx: Int, v: Int,accept: Move => Boolean) = {
     if(searchVariables(idx).dom.contains(v) && freeValues.contains(v))
       acceptOr(new BeforeMove(new AssignMove(searchVariables(idx), v,objective.assignVal(searchVariables(idx), v)),
-                     () => {freeValues -= v; freeValues += variables(idx).value}),accept);
+                     () => {freeValues += variables(idx).value; freeValues -= v;}),accept);
     else new NoMove()
   }
   def randomMove(it: Int): Move = {
@@ -573,7 +571,7 @@ class AllDifferent(searchVariables: Array[CBLSIntVarDom], objective: CBLSObjecti
     getBest(rng2,rng2,accept)
   }
   def getBest(rng1:Iterable[Int],rng2:Iterable[Int],accept: Move => Boolean): Move = {
-    val bestSwap = selectMin2(rng1, rng2, (idx:Int,next:Int) => getSwapMove(idx,next,accept).value,(idx:Int,v:Int) => variables(idx).dom.contains(variables(v).value) && variables(v).dom.contains(variables(idx).value) )
+    val bestSwap = selectMin2(rng1, rng2, (idx:Int,next:Int) => getSwapMove(idx,next,accept).value,(idx:Int,v:Int) => idx != v && variables(idx).dom.contains(variables(v).value) && variables(v).dom.contains(variables(idx).value) )
     val swap = bestSwap match { case (i1,i2) => getSwapMove(i1,i2,accept) case _ => new NoMove(Int.MaxValue)}
     val bestMove = selectMin2(rng1,freeValues,(idx:Int,v:Int) => getAssignMove(idx,v,accept).value,(idx:Int,v:Int) => variables(idx).dom.contains(v))
     val move = bestMove match {case (i1,i2) => getAssignMove(i1,i2,accept) case _ => new NoMove(Int.MaxValue)}
