@@ -163,7 +163,27 @@ object FZModelTransfo {
         case int_ne(x,y,_) if x.isBound => y.neq(x.value); false
         case set_in(x,d,_) => x.inter(d); false
         case int_lin_eq(c,x,v,_) if x.length==1 && math.abs(c(0).value) == 1 => x(0).bind(v.value/c(0).value); false
+        case int_lin_eq(c,x,v,_) if x.filterNot(_.isBound).length == 1 =>{
+          val (rest,one) = x.zip(c).partition(_._1.isBound);
+          if(math.abs(one(0)._2.value)==1){
+            val sumrest = rest.foldLeft(0)((acc,xc) => acc + xc._1.value*xc._2.value)
+            one(0)._1.bind((v.value - sumrest)/one(0)._2.value);
+            false
+          }else true
+        }
         case int_lin_le(c,x,v,_) if x.length==1 && c(0).value == 1 => x(0).leq(v.value); false
+        case int_lin_le(c,x,v,_) if x.filterNot(_.isBound).length == 1 =>{
+          val (rest,one) = x.zip(c).partition(_._1.isBound);
+          if(one(0)._2.value==1){
+            val sumrest = rest.foldLeft(0)((acc,xc) => acc + xc._1.value*xc._2.value)
+            one(0)._1.leq((v.value - sumrest));
+            false
+          }else if(one(0)._2.value== -1){
+            val sumrest = rest.foldLeft(0)((acc,xc) => acc + xc._1.value*xc._2.value)
+            one(0)._1.geq((v.value - sumrest));
+            false
+          }else true
+        }
         case all_different_int(x,_) if x.length==1 => false
         case int_abs(a,b,_) if a.isBound => b.bind(math.abs(a.value)); false
         case int_abs(a,b,_) if b.isBound => a.inter(DomainSet(Set(b.value,-b.value))); false
