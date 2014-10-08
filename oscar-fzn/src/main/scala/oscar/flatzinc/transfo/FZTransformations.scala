@@ -190,6 +190,7 @@ object FZModelTransfo {
         for(c <- retract){
           c.retract()
         }
+        //TODO: This step is only done if some constraint was retracted... Should move it!
         val (c2,r2) = model.constraints.partition{
           case reif(c,b) if b.isBound => false
           case _ => true

@@ -216,7 +216,8 @@ class NeighbourhoodCBSearch(m: FZCBLSModel, sc: SearchControl) extends Neighbour
                    acc ++ m.m.getSourceVariables(v)).intersect(searchVariables.toSet[Variable]).map(v => v.asInstanceOf[CBLSIntVarDom])))
   val cstrs = m.c.getPostedConstraints.map(_._1).toArray
   val viols = cstrs.map(_.violation)
-  viols.foreach(v => m.m.registerForPartialPropagation(v))
+  //Do not register for partial propagation as it leads to to much memory for large problems
+  //viols.foreach(v => m.m.registerForPartialPropagation(v))
   val violatedConstraints:CBLSSetVar = Filter(viols)
   val tabuC: Array[CBLSIntVar] = cstrs.map(c => CBLSIntVar(sc.m.m, 0, Int.MaxValue, 0, "Tabu_" + c.name)).toArray;
   val nonTabuConstraints: CBLSSetVar = SelectLEHeapHeap(tabuC, it);

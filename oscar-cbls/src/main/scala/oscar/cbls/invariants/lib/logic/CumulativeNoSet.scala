@@ -28,15 +28,13 @@ import collection.immutable.SortedSet
 
 /**
  * Maintains a resource usage profile.
- * @param indices the indices of tasks
  * @param start the start time of tasks
  * @param duration the duration of tasks
  * @param amount the amount that tasks use of this resource
  * @param profile the usage profile of the resource maintained to profile(time) <== sum(task.amount | task.start <= time <= t.start+t.duration)
  * @author renaud.delandtsheer@cetic.be
  */
-case class CumulativeNoSet(indices: Array[Int],
-                      start: Array[CBLSIntVar],
+case class CumulativeNoSet(start: Array[CBLSIntVar],
                       duration: Array[CBLSIntVar],
                       amount: Array[CBLSIntVar],
                       profile: Array[CBLSIntVar]) extends Invariant {

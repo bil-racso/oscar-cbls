@@ -119,28 +119,33 @@ class FZCBLSConstraintPoster(val c: ConstraintSystem ,implicit val getCBLSVar: V
   }
   
   def get_cumulative(s: Array[Variable], d: Array[Variable],r: Array[Variable],b: Variable, ann: List[Annotation]) = {
-    val indices = s.indices.toArray[Int]
-    //assumes the planning starts at zero!
-    val start = s.foldLeft(Int.MaxValue)((acc,v) => if (v.minVal < acc) v.minVal else acc)
-    val horizon = s.foldLeft(Int.MinValue)((acc,v) => if (v.maxVal > acc) v.maxVal else acc)
-    val p = new Array[CBLSIntVar](horizon-start+1)
-    val ns = new Array[CBLSIntVar](s.length)
-    for(i <- 0 to horizon-start){
-      p(i) = CBLSIntVar(m,0 to r.foldLeft(0)((s,r) => s + r.max),0,"Profile("+i+")")
+    val disjunctive = r.forall(v => 2*v.min > b.max) 
+    val fixedduration = d.forall(v => v.isBound)
+    val unitduration = d.forall(v => v.isBound && v.value==1)
+    if(disjunctive && unitduration){
+      AllDiff(s.map(getCBLSVar(_)))
+    }else if(disjunctive && fixedduration){
+      Disjunctive(s.map(getCBLSVar(_)),d.map(_.value))
+    }else{
+      val start = s.foldLeft(Int.MaxValue)((acc,v) => if (v.minVal < acc) v.minVal else acc)
+      val horizon = s.foldLeft(Int.MinValue)((acc,v) => if (v.maxVal > acc) v.maxVal else acc)
+      val p = new Array[CBLSIntVar](horizon-start+1)
+      val ns = new Array[CBLSIntVar](s.length)
+      val maxprofile = r.foldLeft(0)((s,r) => s + r.max)
+      for(i <- 0 to horizon-start){
+        p(i) = CBLSIntVar(m,0 to maxprofile,0,"Profile("+i+")")
+      }
+      val offset = new CBLSIntConst(-start,c.model)
+      for(i <- 0 to s.length-1){
+        ns(i) = CBLSIntVar(c.model,0, horizon-start,0,"OffsetStart("+i+")")
+        ns(i) <== Sum2(s(i),offset)
+      }
+      val cumul = CumulativeNoSet(ns,d.map(getCBLSVar(_)),r.map(getCBLSVar(_)),p);
+      /*for(i <- 0 to horizon-start){
+        c.add(GE(b,p(i)));
+      }*/
+      GE(b,MaxArray(p));
     }
-    val offset = new CBLSIntConst(-start,c.model)
-    for(i <- 0 to s.length-1){
-      ns(i) = CBLSIntVar(c.model,0, horizon-start,0,"OffsetStart("+i+")")
-      ns(i) <== Sum2(s(i),offset)
-    }
-    //println(offset)
-    //println(ns.map(v=>v.minVal).mkString(","))
-    //println(ns.map(v=>v.value).mkString(","))
-    val cumul = CumulativeNoSet(indices,ns,d.map(getCBLSVar(_)),r.map(getCBLSVar(_)),p);
-    /*for(i <- 0 to horizon-start){
-      c.add(GE(b,p(i)));
-    }*/
-    GE(b,MaxArray(p));
   }
   
   

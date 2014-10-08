@@ -40,6 +40,7 @@ import oscar.flatzinc.transfo.FZModelTransfo
 import java.io.PrintWriter
 import oscar.flatzinc.parser.FZParser
 import oscar.util.RandomGenerator
+import oscar.flatzinc.NoSuchConstraintException
 
 
 //TODO: Move this class somewhere else...
@@ -230,6 +231,12 @@ class FZCBLSSolver extends SearchEngine with StopWatch {
     model.constraints.foreach{ case reif(c,b) => if(b.isBound) log(0,"Fixed reified constraint: "+b.value); case _ => {}}
     
     
+    //added this loop to remove invariants targeting a bound variable.
+    for(c <- model.constraints ){
+      if(c.definedVar.isDefined && c.definedVar.get.isBound)c.unsetDefinedVar(c.definedVar.get)
+    }
+    
+    
     if(!opts.is("no-find-inv")){
       FZModelTransfo.findInvariants(model,log);
       log("Found Invariants")
@@ -271,7 +278,11 @@ class FZCBLSSolver extends SearchEngine with StopWatch {
       val hardCS = ConstraintSystem(m)
       val hardPoster: FZCBLSConstraintPoster = new FZCBLSConstraintPoster(hardCS,cblsmodel.getCBLSVar);
       for(c <- implcstrs){
+        try{
         hardPoster.add_constraint(c)
+        } catch {
+          case e: NoSuchConstraintException => log("Warning: Do not check that "+c+" is always respected.")
+        }
       }
       Event(hardCS.violation, Unit => {if(hardCS.violation.value > 0){
         log(0,"PROBLEM: Some implicit Constraint is not satisfied during search.")
