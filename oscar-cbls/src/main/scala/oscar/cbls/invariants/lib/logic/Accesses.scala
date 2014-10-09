@@ -147,6 +147,56 @@ case class IntElement(index: CBLSIntVar, inputarray: Array[CBLSIntVar])
 }
 
 /**
+ * inputarray[index]
+ * @param inputarray is an array of Int
+ * @param index is the index accessing the array (its value must be always inside the array range)
+ * @author renaud.delandtsheer@cetic.be
+ * @author jean-noel.monette@it.uu.se
+ * */
+case class IntElementNoVar(index: CBLSIntVar, inputarray: Array[Int])
+  extends IntInvariant {
+
+  var output: CBLSIntVar = null
+
+  registerStaticDependency(index)
+  registerDeterminingDependency(index)
+
+  val myMin = inputarray.min
+  val myMax = inputarray.max
+
+
+  finishInitialization()
+
+  override def setOutputVar(v: CBLSIntVar) {
+    v.minVal = myMin;
+    v.maxVal = myMax;
+    output = v
+    output.setDefiningInvariant(this)
+    output := inputarray(index.value)
+  }
+
+  @inline
+  override def notifyIntChanged(v: CBLSIntVar, OldVal: Int, NewVal: Int) {
+    output := inputarray(NewVal)
+  }
+
+  override def checkInternals(c: Checker) {
+    c.check(output.value == inputarray(index.value),
+      Some("output.value (" + output.value + ") == inputarray(index.value ("
+        + index.value + ")) (" + inputarray(index.value) + ")"))
+  }
+
+  override def toString: String = {
+    val inputs = inputarray.toList
+    if(inputs.length > 4){
+      "Array(" +inputs.take(4).map(_.toString).mkString(",") + ", ...)"+ "[" + index.toString + "]"
+    }else{
+      "Array(" +inputs.map(_.toString).mkString(",") + ", ...)"+ "[" + index.toString + "]"
+    }
+  }
+}
+
+/**
  * Union(i in index) (array[i])
  * @param index is an IntSetVar denoting the set of positions in the array to consider
  * @param inputarray is the array of intvar that can be selected by the index

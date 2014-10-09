@@ -74,6 +74,44 @@ class Sum(vars: Iterable[CBLSIntVar]) extends IntInvariant {
 }
 
 /**
+ * linear(vars, coeffs)
+ * @param vars is an iterable of IntVars
+ * @param coeffs is an Indexed Sequence of Int
+ * @author renaud.delandtsheer@cetic.be
+ * @author jean-noel.monette@it.uu.se
+ * */
+class Linear(vars: Iterable[CBLSIntVar], coeffs: IndexedSeq[Int]) extends IntInvariant {
+  //coeffs needs to be indexed as we need to access it be index from the index of vars (as given in notifyIntChanged)
+  
+  vars.zipWithIndex.foreach(vi => registerStaticAndDynamicDependency(vi._1,vi._2))
+  finishInitialization()
+
+  //TODO: There is still the risk of adding plus and minus "infinity" and get absurds results. But at least we avoid overflows...
+  def myMin = vars.zip(coeffs).foldLeft(0)((acc, intvar) => DomainHelper.safeAdd(acc, DomainHelper.getMinProd(intvar._1.minVal,intvar._1.maxVal,intvar._2,intvar._2)))
+  def myMax = vars.zip(coeffs).foldLeft(0)((acc, intvar) => DomainHelper.safeAdd(acc, DomainHelper.getMaxProd(intvar._1.minVal,intvar._1.maxVal,intvar._2,intvar._2)))
+
+  var output: CBLSIntVar = null
+
+  override def setOutputVar(v: CBLSIntVar) {
+    v.minVal = myMin
+    v.maxVal = myMax
+    output = v
+    output.setDefiningInvariant(this)
+    output := vars.zip(coeffs).foldLeft(0)((a, bc) => a + bc._1.value*bc._2)
+  }
+
+  @inline
+  override def notifyIntChanged(v: CBLSIntVar, idx: Int, OldVal: Int, NewVal: Int) {
+    output :+= (NewVal - OldVal) * coeffs(idx)
+  }
+
+  override def checkInternals(c: Checker) {
+    c.check(output.value == vars.zip(coeffs).foldLeft(0)((acc, intvar) => acc + intvar._1.value*intvar._2),
+      Some("output.value == vars.zip(coeff).foldLeft(0)((acc, intvar) => acc + intvar._1.value*intvar._2)"))
+  }
+}
+
+/**
  * prod(vars)
  * @param vars is a set of IntVars
  * @author renaud.delandtsheer@cetic.be
@@ -217,9 +255,15 @@ object DomainHelper {
   def getMinProd2(left: CBLSIntVar, right: CBLSIntVar) = {
     Math.min(safeMult(left.minVal, right.minVal), Math.min(safeMult(left.minVal, right.maxVal), Math.min(safeMult(left.maxVal, right.minVal), safeMult(left.maxVal, right.maxVal))))
   }
+  def getMinProd(lm:Int,lM:Int,rm:Int,rM:Int) = {
+    Math.min(safeMult(lm, rm), Math.min(safeMult(lm, rM), Math.min(safeMult(lM,rm), safeMult(lM,rM))))
+  }
 
   def getMaxProd2(left: CBLSIntVar, right: CBLSIntVar) = {
     Math.max(safeMult(left.minVal, right.minVal), Math.max(safeMult(left.minVal, right.maxVal), Math.max(safeMult(left.maxVal, right.minVal), safeMult(left.maxVal, right.maxVal))))
+  }
+  def getMaxProd(lm:Int,lM:Int,rm:Int,rM:Int) = {
+    Math.max(safeMult(lm, rm), Math.max(safeMult(lm, rM), Math.max(safeMult(lM,rm), safeMult(lM,rM))))
   }
   //Safe addition
   def safeAdd(x: Int, y: Int): Int = {

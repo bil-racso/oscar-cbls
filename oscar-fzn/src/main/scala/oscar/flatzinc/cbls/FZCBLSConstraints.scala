@@ -155,9 +155,8 @@ class FZCBLSConstraintPoster(val c: ConstraintSystem ,implicit val getCBLSVar: V
   }
   
   def get_array_int_element_inv(b: Variable, as: Array[Variable], r: Variable, defId: String, ann: List[Annotation]) = {
-   // println(getCBLSVar(b) + " "+b.getDomain())
-   // println(b.cstrs )
-    IntElement(Sum2(b,-1), as.map(getCBLSVar(_)))
+    if(as.forall(_.isBound)) IntElementNoVar(Sum2(b,-1), as.map(_.value))
+    else IntElement(Sum2(b,-1), as.map(getCBLSVar(_)))
   }
   
   def get_array_bool_or_inv(as: Array[Variable], r: Variable, defId: String, ann: List[Annotation]) = {
@@ -215,8 +214,7 @@ class FZCBLSConstraintPoster(val c: ConstraintSystem ,implicit val getCBLSVar: V
   }
 
   def get_int_lin_eq(params: Array[Variable], vars: Array[Variable], sum: Variable, ann: List[Annotation]) = {
-    val prodArray = Array.tabulate(vars.length)(n => Prod2(params(n), vars(n)).toIntVar);
-    EQ(Sum(prodArray).toIntVar, sum)
+    EQ(new Linear(vars.map(getCBLSVar(_)),params.map(_.value)).toIntVar, sum)
   }
   
   //TODO: Why is params an array of _Variable_ and not _Parameters_?
@@ -227,27 +225,25 @@ class FZCBLSConstraintPoster(val c: ConstraintSystem ,implicit val getCBLSVar: V
     val params2 = params.take(index) ++ params.drop(index + 1)
     val vars2 = vars.take(index) ++ vars.drop(index + 1)
     val prodArray = Array.tabulate(vars2.length)(n => Prod2(params2(n), vars2(n)).toIntVar);
+    val linear = new Linear(vars2.map(getCBLSVar(_)),params2.map(_.value))
     if (defParam.min == 1) {
      // println("%post "+sum+ " - sum("+prodArray.mkString(", ")+")")
-      Minus(sum, Sum(prodArray))
+      Minus(sum, linear)
     } else if (defParam.min == -1) {
      // println("%post - "+sum+ " + sum("+prodArray.mkString(", ")+")")
-      Minus(Sum(prodArray), sum)
+      Minus(linear, sum)
     } else {
-      println("% Defining var with a scalar that isn't +-1, this can cause serious problems")
-      Div(Minus(sum, Sum(prodArray)), defParam)
+      Console.err.println("% Defining var with a scalar that isn't +-1, this can cause serious problems")
+      Div(Minus(sum, linear), defParam)
     }
   }
 
   def get_int_lin_le(params: Array[Variable], vars: Array[Variable], sum: Variable, ann: List[Annotation]) = {
-    val prodArray = Array.tabulate(vars.length)(n => Prod2(params(n), vars(n)).toIntVar);
-    LE(Sum(prodArray).toIntVar, sum)
+    LE(new Linear(vars.map(getCBLSVar(_)),params.map(_.value)).toIntVar, sum)
   }
 
   def get_int_lin_ne(params: Array[Variable], vars: Array[Variable], sum: Variable, ann: List[Annotation]) = {
-    //TODO: can this define vars? NO
-    val prodArray = Array.tabulate(vars.length)(n => Prod2(params(n), vars(n)).toIntVar);
-    NE(Sum(prodArray).toIntVar, sum)
+    NE(new Linear(vars.map(getCBLSVar(_)),params.map(_.value)).toIntVar, sum)
   }
 
   def get_int_lt(a: Variable, b: Variable, ann: List[Annotation]) = {

@@ -18,7 +18,7 @@
 package oscar.flatzinc.parser
 
 import oscar.flatzinc.model.FZProblem
-import scala.collection.mutable.Map
+import scala.collection.mutable.{Map, Set => MSet}
 import oscar.flatzinc.parser.intermediatemodel._
 import oscar.flatzinc.model.Annotation
 import scala.collection.JavaConverters._
@@ -29,6 +29,7 @@ import oscar.flatzinc.NoSuchConstraintException
 import java.lang.reflect.Constructor
 import oscar.flatzinc.ParsingException
 import oscar.flatzinc.cbls.Log
+import scala.collection.mutable.WrappedArray
 
 
 class VarRef(val v: Variable) extends Element()
@@ -159,7 +160,7 @@ class Model(val log: Log) {
   def getIntVar(e: Element): Variable = {
     if(e.isInstanceOf[VarRef])e.asInstanceOf[VarRef].v;
     else if(e.value.isInstanceOf[Integer])new ConcreteVariable(e.value.toString(),Int.unbox(e.value))
-    else if(e.value.isInstanceOf[Boolean])new ConcreteVariable(e.value.toString(),if (Boolean.unbox(e.value)) 1 else 0)//Ho I don't like that!
+    else if(e.value.isInstanceOf[Boolean])new ConcreteVariable(e.value.toString(),if (Boolean.unbox(e.value)) 1 else 0)//Ho I don't like that! Booleans and Integers are not the same
     else{
       throw new ParsingException("Expected a var int but got: "+e)
       //null.asInstanceOf[Variable]
@@ -181,10 +182,21 @@ class Model(val log: Log) {
       throw new ParsingException("Expected a array of var bool but got: "+e)
     }
   }
+
+  //TODO: Check if this actually reduces the memory footprint and does not increase parsing time too much...
+  var knownarrays = Map.empty[WrappedArray[Variable],Array[Variable]]
+  
   def getIntVarArray(e: Element): Array[Variable] = { 
     if(e.isInstanceOf[ArrayOfElement]){
-      val a = e.asInstanceOf[ArrayOfElement]
-      a.elements.asScala.toArray.map(v => getIntVar(v))
+      val array = e.asInstanceOf[ArrayOfElement].elements.asScala.toArray.map(v => getIntVar(v))
+      val wrap = genericWrapArray(array)
+      if(knownarrays.contains(wrap)){
+        println("% reuse "+knownarrays.size)
+        knownarrays(wrap)
+      }else{
+        knownarrays(wrap) = array
+        array
+      }
     }else{
       throw new ParsingException("Expected a array of var int but got: "+e)
     }

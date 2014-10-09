@@ -253,7 +253,7 @@ class FZCBLSSolver extends SearchEngine with StopWatch {
     
     
     // Model
-    val m: Store = new Store(false, None, false)//setting the last Boolean to true would avoid calling the SCC algorithm but we have to make sure that there are no SCCs in the Graph. Is it the case in the way we build it?
+    val m: Store = new Store(false, None, true)//setting the last Boolean to true would avoid calling the SCC algorithm but we have to make sure that there are no SCCs in the Graph. Is it the case in the way we build it?
     // constraint system
     val cs = ConstraintSystem(m)
     val cblsmodel = new FZCBLSModel(model,cs,m,log,() => getWatch)
