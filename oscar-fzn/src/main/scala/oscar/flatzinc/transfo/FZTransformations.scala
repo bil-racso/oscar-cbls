@@ -266,11 +266,18 @@ object FZModelTransfo {
         mapping.remove(i)
       }
     }
+    val mappingB = MMap.empty[Constraint, Int];
+    var tails = List.empty[Constraint]
+    for(i <- mapping.keys){
+      mappingB += i -> i.definedVar.get.cstrs.filter((c) => c!=i && c.definedVar.isDefined && mapping.contains(c)).length
+      
+    }
     def explore() = {
       while (!heads.isEmpty) {
         val k = heads.head
         heads = heads.tail
         sorted = k::sorted
+        mappingB.remove(k)
         for(j <- k.definedVar.get.cstrs){
           if(mapping.contains(j) ){
             mapping(j) = mapping(j)-1
@@ -283,10 +290,7 @@ object FZModelTransfo {
       }
     }
     def exploreBackward() = {
-      val mappingB = MMap.empty[Constraint, Int];
-      var tails = List.empty[Constraint]
-      for(i <- mapping.keys){
-        mappingB += i -> i.definedVar.get.cstrs.filter((c) => c!=i && c.definedVar.isDefined && mapping.contains(c)).length
+      for(i <- mappingB.keys){
         if(mappingB(i)==0){
           tails = i :: tails;
           mappingB.remove(i);
@@ -317,8 +321,9 @@ object FZModelTransfo {
       //print(mapping.mkString("\n"))
     }
     while(!mapping.isEmpty){
-      val (remc,value) = mapping.keys.foldLeft((null.asInstanceOf[Constraint],Int.MinValue))((best,cur) => {val curval = - cur.definedVar.get.domainSize/*mapping(cur)*//*cur.definedVar.get.cstrs.filter(c => c!=cur && mapping.contains(c) && mapping(c)==1).length*/; if(curval > best._2) (cur,curval) else best;});
+      val remc = mapping.keys.minBy(c => (c.definedVar.get.domainSize,-mapping(c),-mappingB(c)))//foldLeft((null.asInstanceOf[Constraint],Int.MinValue))((best,cur) => {val curval = - cur.definedVar.get.domainSize/*mapping(cur)*//*cur.definedVar.get.cstrs.filter(c => c!=cur && mapping.contains(c) && mapping(c)==1).length*/; if(curval > best._2) (cur,curval) else best;});
       mapping.remove(remc)
+      mappingB.remove(remc)
       for(j <- remc.definedVar.get.cstrs){
         if(mapping.contains(j) ){
           mapping(j) = mapping(j) -1
@@ -326,6 +331,11 @@ object FZModelTransfo {
             heads = j :: heads;
             mapping.remove(j)
           }
+        }
+      }
+      for(j <- remc.getVariables.filter(v => v.isDefined && (v.definingConstraint.get != remc)).map(v => v.definingConstraint.get)){
+        if(mappingB.contains(j)){
+          mappingB(j) = mappingB(j) -1
         }
       }
       log(2,"Removed "+remc+ " for "+remc.definedVar.get)

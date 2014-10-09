@@ -40,6 +40,7 @@ class Model(val log: Log) {
   val dico: Map[String,Element] = Map.empty[String,Element]
   
   def addId(id: String, e: Element)={
+    //Console.err.println("% added" + id)
     dico(id) = e
   }
   def findId(id: String): Element = {
@@ -191,7 +192,7 @@ class Model(val log: Log) {
       val array = e.asInstanceOf[ArrayOfElement].elements.asScala.toArray.map(v => getIntVar(v))
       val wrap = genericWrapArray(array)
       if(knownarrays.contains(wrap)){
-        println("% reuse "+knownarrays.size)
+       // Console.err.println("% reuse "+knownarrays.size)
         knownarrays(wrap)
       }else{
         knownarrays(wrap) = array

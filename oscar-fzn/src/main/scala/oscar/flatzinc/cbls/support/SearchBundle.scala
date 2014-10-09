@@ -352,9 +352,6 @@ class NeighbourhoodSearchOPT(m:FZCBLSModel, sc: SearchControl) extends Neighbour
     val baseSearchSize = 100;
     val searchFactor = 20;
     
-    var roundsWithoutSat = 0;
-    val maxRounds = 2;
-
     var bestNow = Int.MaxValue;
     var best = bestNow;
     var itSinceBest = 0;
