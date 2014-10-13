@@ -62,11 +62,19 @@ class ValueTracker(v: CBLSIntVarDom, c:ConstraintSystem) {
        // println(v + " " +v.getDomain()+ " " + v.domain + " M " + initialMax+" " + v.maxVal)
         c.add(LE(v, initialMax),weight)
       }
+      if(force || v.dom.isInstanceOf[DomainSet]){
+        var sset = v.dom match {
+          case DomainRange(mi,ma) => SortedSet[Int]() ++ (mi to ma)
+          case DomainSet(vals) => SortedSet[Int]() ++ vals
+        }
+        val setVar = new CBLSSetConst(sset,c._model);
+        c.add(BelongsTo(v,setVar));
+      }
     }
   }
 
 
-class FZCBLSConstraintPoster(val c: ConstraintSystem ,implicit val getCBLSVar: Variable => CBLSIntVarDom) {
+class FZCBLSConstraintPoster(val c: ConstraintSystem, implicit val getCBLSVar: Variable => CBLSIntVarDom) {
   val m: Store = c._model 
   
   //TODO: Not really tested
@@ -334,13 +342,23 @@ class FZCBLSConstraintPoster(val c: ConstraintSystem ,implicit val getCBLSVar: V
   }
   
   def get_at_least_int(n:Variable,xs: Array[Variable], v:Variable, ann: List[Annotation]) = {
-    AtLeast(xs.map(getCBLSVar(_)),SortedMap((v.min,n)));
+    val cnt = new CBLSIntVar(m,0 to xs.length,0,"Count("+v.value+")")
+    val sc = SparseCount(xs.map(getCBLSVar(_)),Map((v.value,cnt)))
+    LE(n.value,cnt)
+    //AtLeast(xs.map(getCBLSVar(_)),SortedMap((v.min,n)));
   }
   def get_at_most_int(n:Variable,xs: Array[Variable], v:Variable, ann: List[Annotation]) = {
-    AtMost(xs.map(getCBLSVar(_)),SortedMap((v.min,n.min)));
+    val cnt = new CBLSIntVar(m,0 to xs.length,0,"Count("+v.value+")")
+    val sc = SparseCount(xs.map(getCBLSVar(_)),Map((v.value,cnt)))
+    GE(n.value,cnt)
+    //AtMost(xs.map(getCBLSVar(_)),SortedMap((v.min,n.min)));
   }
   def get_exactly_int(n:Variable,xs: Array[Variable], v:Variable, ann: List[Annotation]) = {
-    List(AtMost(xs.map(getCBLSVar(_)),SortedMap((v.min,n.min))),AtLeast(xs.map(getCBLSVar(_)),SortedMap((v.min,n))));
+    //TODO: Implement lightweight version of this and the two above ones.
+    //List(AtMost(xs.map(getCBLSVar(_)),SortedMap((v.min,n.min))),AtLeast(xs.map(getCBLSVar(_)),SortedMap((v.min,n))));
+    val cnt = new CBLSIntVar(m,0 to xs.length,0,"Count("+v.value+")")
+    val sc = SparseCount(xs.map(getCBLSVar(_)),Map((v.value,cnt)))
+    EQ(n.value,cnt)
   }
   /*def get_among_inv(n:Variable,xs: Array[Variable], v:Variable, ann: List[Annotation])(implicit c: ConstraintSystem, cblsIntMap: MMap[String, CBLSIntVarDom]) = {
     List(AtMost(xs.map(getCBLSVar(_)),SortedMap((v.min,n.min))),AtLeast(xs.map(getCBLSVar(_)),SortedMap((v.min,n))));

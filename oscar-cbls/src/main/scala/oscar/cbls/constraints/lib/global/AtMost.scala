@@ -52,7 +52,7 @@ case class AtMost(variables:Iterable[CBLSIntVar], bounds:SortedMap[Int, Int]) ex
   private val violationByVal=Array.tabulate(valueCount.length)(_ => noViolation)
 
   for((value,bound) <- bounds){
-    violationByVal(value) = Max2(noViolation,valueCount(value) - bound).toIntVar
+    violationByVal(value+offset) = Max2(noViolation,valueCount(value+offset) - bound).toIntVar
   }
 
   //the violation of each input variable
@@ -64,7 +64,7 @@ case class AtMost(variables:Iterable[CBLSIntVar], bounds:SortedMap[Int, Int]) ex
   })
 
   private val Violation:CBLSIntVar = new CBLSIntVar(model,(0 to Int.MaxValue), 0,"ViolationsOfAtMost")
-  Violation <== Sum(bounds.keys.map(bound => violationByVal(bound)))
+  Violation <== Sum(bounds.keys.map(bound => violationByVal(bound+offset)))
 
   /**The violation of the constraint is the sum on all bound of the number of variable that are in excess.
     * the number of variable in excess is the max between zero and

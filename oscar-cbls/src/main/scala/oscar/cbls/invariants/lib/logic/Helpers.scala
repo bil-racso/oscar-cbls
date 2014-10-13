@@ -43,6 +43,8 @@ class Int2Int(a:CBLSIntVar, fun:Int => Int, override val myMin:Int = Int.MinValu
   //Example: MyVar <== my_IntInvariant
   override def setOutputVar(v:CBLSIntVar){
     output = v
+    output.minVal = myMin
+    output.maxVal = myMax
     output.setDefiningInvariant(this)
     output := fun(a.value)
   }
@@ -75,9 +77,9 @@ class IntInt2Int(a:CBLSIntVar, b:CBLSIntVar, fun:((Int, Int) => Int), override v
   finishInitialization()
 
   override def setOutputVar(v:CBLSIntVar){
+    output = v
     v.minVal = myMin;
     v.maxVal = myMax;
-    output = v
     output.setDefiningInvariant(this)
     output := fun(a.value,b.value)
   }
@@ -110,6 +112,8 @@ class LazyIntInt2Int(a:CBLSIntVar, b:CBLSIntVar, fun:((Int, Int) => Int), overri
 
   override def setOutputVar(v:CBLSIntVar){
     output = v
+    output.minVal = myMin
+    output.maxVal = myMax
     output.setDefiningInvariant(this)
     output := fun(a.value,b.value)
   }

@@ -53,7 +53,7 @@ case class AtLeast(variables: Iterable[CBLSIntVar], bounds: SortedMap[Int, CBLSI
   private val Violation: CBLSIntVar = new CBLSIntVar(model, (0 to Int.MaxValue), 0, "ViolationsOfAtLeast")
   private val noViolation:CBLSIntVar = 0
 
-  Violation <== Sum(bounds.toList.map((value_bound) => Max2(noViolation,value_bound._2 - valueCount(value_bound._1)).toIntVar))
+  Violation <== Sum(bounds.toList.map((value_bound) => Max2(noViolation,value_bound._2 - valueCount(value_bound._1+offset)).toIntVar))
 
   private val violationByVal=Array.tabulate(valueCount.length)(value => {
     if(bounds.contains(value + offset))

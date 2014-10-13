@@ -137,6 +137,8 @@ abstract class Miax(vars: SortedSet[CBLSIntVar]) extends IntInvariant {
 
   override def setOutputVar(v: CBLSIntVar) {
     output = v
+    output.minVal = myMin
+    output.maxVal = myMax
     output.setDefiningInvariant(this)
     output := h.getFirst.value
   }

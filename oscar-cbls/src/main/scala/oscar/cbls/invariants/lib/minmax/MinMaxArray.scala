@@ -44,6 +44,12 @@ case class MaxArray(varss: Array[CBLSIntVar], ccond: CBLSSetVar = null, default:
 
   override def ExtremumName: String = "Max"
 
+  //More precise bounds
+  override def performBulkComputation(bulkedVar: Array[CBLSIntVar]) = {
+    (bulkedVar.foldLeft(Int.MinValue)((acc, intvar) => if (intvar.minVal > acc) intvar.minVal else acc),
+      bulkedVar.foldLeft(Int.MinValue)((acc, intvar) => if (intvar.maxVal > acc) intvar.maxVal else acc))
+  }
+  
   override def checkInternals(c: Checker) {
     for (v <- this.varss) {
       c.check(output.value >= v.value,
@@ -68,6 +74,12 @@ case class MinArray(varss: Array[CBLSIntVar], ccond: CBLSSetVar = null, default:
 
   override def ExtremumName: String = "Min"
 
+  //More precise bounds 
+  override def performBulkComputation(bulkedVar: Array[CBLSIntVar]) = {
+    (bulkedVar.foldLeft(Int.MaxValue)((acc, intvar) => if (intvar.minVal < acc) intvar.minVal else acc),
+      bulkedVar.foldLeft(Int.MaxValue)((acc, intvar) => if (intvar.maxVal < acc) intvar.maxVal else acc))
+  }
+  
   override def checkInternals(c: Checker) {
     for (v <- this.varss) {
       c.check(output.value <= v.value,
@@ -80,7 +92,7 @@ case class MinArray(varss: Array[CBLSIntVar], ccond: CBLSSetVar = null, default:
  * Maintains Miax(Var(i) | i in cond)
  * Exact ordering is specified by implementing abstract methods of the class.
  * @param vars is an array of IntVar, which can be bulked
- * @param cond is the condition, cannot be null
+ * @param cond is the condition, can be null
  * update is O(log(n))
  * @author renaud.delandtsheer@cetic.be
  * */
@@ -111,6 +123,7 @@ abstract class MiaxArray(vars: Array[CBLSIntVar], cond: CBLSSetVar, default: Int
 
   finishInitialization()
 
+ 
   override def performBulkComputation(bulkedVar: Array[CBLSIntVar]) = {
     (bulkedVar.foldLeft(Int.MaxValue)((acc, intvar) => if (intvar.minVal < acc) intvar.minVal else acc),
       bulkedVar.foldLeft(Int.MinValue)((acc, intvar) => if (intvar.maxVal > acc) intvar.maxVal else acc))
@@ -122,6 +135,8 @@ abstract class MiaxArray(vars: Array[CBLSIntVar], cond: CBLSSetVar, default: Int
 
   override def setOutputVar(v: CBLSIntVar) {
     output = v
+    output.minVal = myMin;
+    output.maxVal = myMax;
     output.setDefiningInvariant(this)
     if (h.isEmpty) {
       output := default
