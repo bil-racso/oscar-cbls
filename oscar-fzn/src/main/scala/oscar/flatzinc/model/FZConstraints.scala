@@ -30,7 +30,16 @@ abstract class Constraint(val variables: Array[Variable],val annotations: List[A
   
   //The variables of the constraint which it can functionally define 
   //TODO generalize to arrays of defined variables (e.g. in sort/bin-packing)
-  def getCandidateDefVars():Array[Variable] = Array.empty[Variable]
+  var candidates:Array[Variable] = null
+  def getCandidateDefVars(): Array[Variable] = {
+    if(candidates == null)createCandidates()
+    candidates
+  }
+  //we filter out the variables that appear more than once in the constraint.
+  private def createCandidates()={
+    candidates = getMaybeCandidateDefVars().filter(v => variables.count(vv => v==vv)==1)
+  }
+  def getMaybeCandidateDefVars():Array[Variable] = Array.empty[Variable]
   //def simplify(p: FZProblem){}
   //The variable the constraint functionally defines
   //TODO: generalize to arrays of defined variables (e.g. in sort/bin-packing)
@@ -68,7 +77,7 @@ abstract class Constraint(val variables: Array[Variable],val annotations: List[A
 abstract class SimpleDefiningConstraint(variables: Array[Variable], val maybeDefinedVar: Variable, ann:List[Annotation])
   extends Constraint(variables, ann){
   override def canDefineVar = true
-  override def getCandidateDefVars() = Array(maybeDefinedVar)
+  override def getMaybeCandidateDefVars() = Array(maybeDefinedVar)
 }
 abstract class ReifiedConstraint(variables: Array[Variable], r: Variable, ann:List[Annotation]) extends SimpleDefiningConstraint(variables++Array(r),r,ann) {
 
@@ -81,7 +90,7 @@ case class reif(val c: Constraint,r: Variable) extends ReifiedConstraint(c.varia
 abstract class AllDefiningConstraint(variables: Array[Variable], ann:List[Annotation])
   extends Constraint(variables, ann){
   override def canDefineVar = true
-  override def getCandidateDefVars() = variables
+  override def getMaybeCandidateDefVars() = variables
 }
 
 // ----------------------------------
@@ -104,8 +113,9 @@ case class array_var_bool_element(b: Variable, as: Array[Variable], c: Variable,
   extends SimpleDefiningConstraint(as++Array(b,c),c,ann);
 
 case class array_var_int_element(b: Variable, as: Array[Variable], c: Variable, ann: List[Annotation] = List.empty[Annotation]) 
-  extends SimpleDefiningConstraint(as++Array(b,c),c,ann);
-
+  extends SimpleDefiningConstraint(as++Array(b,c),c,ann){
+  override def toString() ={"array_var_int_element("+b+","+as.mkString("[", ",", "]")+","+c+","+ann+")"}
+}
 
 case class array_bool_xor(as: Array[Variable], ann: List[Annotation] = List.empty[Annotation]) 
   extends AllDefiningConstraint(as,ann)
@@ -161,7 +171,7 @@ case class int_le(a: Variable, b: Variable, ann: List[Annotation] = List.empty[A
 case class int_lin_eq(params:Array[Variable],vars:Array[Variable], sum:Variable, ann: List[Annotation] = List.empty[Annotation]) 
   extends Constraint(vars,ann){
   override def canDefineVar = true
-  override def getCandidateDefVars():Array[Variable]  = {
+  override def getMaybeCandidateDefVars():Array[Variable]  = {
     return vars.zip(params).filter((t) => Math.abs(t._2.min) == 1).map(_._1)
   }
   override def toString() ={"int_lin_eq("+params.mkString("[", ",", "]")+","+vars.mkString("[", ",", "]")+","+sum+","+ann+")"}
