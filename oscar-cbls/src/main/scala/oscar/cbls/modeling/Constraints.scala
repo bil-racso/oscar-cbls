@@ -55,7 +55,7 @@ trait Constraints {
    * @param variables the variables that should be bounded
    * @param bounds map(value,bound) the bounds on the variables. We use a map to ensure that there is no two bounds on the same value.
    */
-  def atMost(variables:Iterable[CBLSIntVar], bounds:SortedMap[Int, Int]) = AtMost(variables, bounds)
+  def atMost(variables:Iterable[CBLSIntVar], bounds:SortedMap[Int, CBLSIntVar]) = AtMost(variables, bounds)
 
 
   /**This is the standard bin packing constraint

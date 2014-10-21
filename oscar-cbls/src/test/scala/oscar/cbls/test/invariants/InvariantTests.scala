@@ -137,7 +137,8 @@ class InvariantTests extends FunSuite with Checkers {
 
   test("AtMost") {
     val bench = new InvBench(verbose)
-    new AtMost(bench.genIntVars(10), InvGen.randomIntSortedMap(10, 0 to 30, 0 to 30)).toIntVar
+    val constantMap = InvGen.randomIntSortedMap(10, 0 to 30, 0 to 30)
+    new AtMost(bench.genIntVars(10),constantMap.mapValues(_ => bench.genIntVar(0 to 30))).toIntVar
     bench.run
   }
 

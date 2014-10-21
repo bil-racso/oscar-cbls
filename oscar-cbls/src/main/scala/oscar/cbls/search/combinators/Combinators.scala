@@ -471,6 +471,40 @@ class BoundSearches(a: Neighborhood, val maxMove: Int) extends NeighborhoodCombi
   }
 }
 
+/**This combinators queries a once avery n time it is queried.
+  * the other times, it returns NoMovesFound.
+  * if n finds no moves, depending on retryOnNoMoveFound,
+  * it will either keep on querying n until a move is found, or continue its sequence of one out of n
+ * @param a the initial neighborhood
+ * @param n the size of teh sequence
+ * @param retryOnNoMoveFound if true, keeps on querying n on NoMoveFound, otherwise, continues the sequence
+ */
+class OnceEvery(a: Neighborhood, n:Int, retryOnNoMoveFound:Boolean = false) extends NeighborhoodCombinator(a) {
+  var remainingMoves = n -1
+
+  override def getMove(acceptanceCriteria: (Int, Int) => Boolean): SearchResult = {
+    if (remainingMoves > 0) {
+      remainingMoves -= 1
+      NoMoveFound
+    }else{
+      a.getMove(acceptanceCriteria) match{
+        case NoMoveFound =>
+          if(!retryOnNoMoveFound) remainingMoves = n -1
+          NoMoveFound
+        case x =>
+          remainingMoves = n -1
+          x
+      }
+    }
+  }
+
+  //this resets the internal state of the move combinators
+  override def reset() {
+    remainingMoves = n -1
+    super.reset()
+  }
+}
+
 /**
  * this combinator bounds the number of moves done with this neighborhood
  * notice that the count is reset by the reset operation
@@ -531,6 +565,23 @@ class MaxMoves(a: Neighborhood, val maxMove: Int, cond:Move => Boolean = null) e
   def withoutImprovementOver(obj: CBLSIntVar) = new MaxMovesWithoutImprovement(a, cond, maxMove, obj)
 
   def suchThat(cond:Move => Boolean) = new MaxMoves(a, maxMove, if (this.cond == null) cond else (m:Move) => this.cond(m) && cond(m))
+}
+
+/**
+ * this combinator finds no move if cond evaluates to false, otherwise ,it forwards the search request to a
+ * @param a a neighborhood
+ * @param cond a stop criterion
+ * @author renaud.delandtsheer@cetic.be
+ */
+class StopWhen(a: Neighborhood, cond:()=> Boolean) extends NeighborhoodCombinator(a) {
+  override def getMove(acceptanceCriterion: (Int, Int) => Boolean): SearchResult = {
+    if(cond()) NoMoveFound
+    else a.getMove(acceptanceCriterion)
+  }
+}
+
+object RoundRobin{
+  implicit def NeighborhoodToRoundRobin(n:Neighborhood):RoundRobin = new RoundRobin(List(n),1)
 }
 
 /**
@@ -797,12 +848,15 @@ class WithAcceptanceCriterion(a: Neighborhood, overridingAcceptanceCriterion: (I
 /**
  * this combinator injects a metropolis acceptation function.
  * the criterion accepts all improving moves, and for worsening moves, it applies the metropolis criterion:
- * accept if math.random(0.0; 1.0) < math.exp(-gain / temperatureValue)
- * @param a
- * @param temperature a function that inputs the number of moves taken, and outputs a temperature, for use in the criterion
+ * accept if math.random(0.0; 1.0) < base exponent (-gain / temperatureValue)
+ * @param a the original neighborhood
+ * @param temperature a function that inputs the number of moves of a that have been actually taken,
+ *                    and outputs a temperature, for use in the criterion
  *                    the number of steps is reset to zero when the combinator is reset
- */
-class Metropolis(a: Neighborhood, temperature: Int => Float = _ => 100) extends NeighborhoodCombinator(a) {
+ *                    by default, it is the constant function returning 100
+ * @param base the base for the exponent calculation. default is 2
+ * */
+class Metropolis(a: Neighborhood, temperature: Int => Float = _ => 100, base:Float = 2) extends NeighborhoodCombinator(a) {
 
   var moveCount = 0
   var temperatureValue: Float = temperature(moveCount)
@@ -816,7 +870,7 @@ class Metropolis(a: Neighborhood, temperature: Int => Float = _ => 100) extends 
     val gain = oldObj - newObj
     if (gain > 0) return true
     // metropolis criterion
-    return math.random < math.exp(-gain / temperatureValue)
+    return math.random < math.pow(base,-gain / temperatureValue)
   }
 
   def notifyMoveTaken() {

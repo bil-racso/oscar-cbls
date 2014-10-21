@@ -37,7 +37,7 @@ import oscar.cbls.invariants.lib.numeric.Sum
   * @param bounds map(value,bound) the bounds on the variables. We use a map to ensure that there is no two bounds on the same value.
   * @author renaud.delandtsheer@cetic.be
   */
-case class AtMost(variables:Iterable[CBLSIntVar], bounds:SortedMap[Int, Int]) extends Constraint {
+case class AtMost(variables:Iterable[CBLSIntVar], bounds:SortedMap[Int, CBLSIntVar]) extends Constraint {
   assert(variables.size < Int.MaxValue)
 
   model = InvariantHelper.findModel(variables)
@@ -90,7 +90,7 @@ case class AtMost(variables:Iterable[CBLSIntVar], bounds:SortedMap[Int, Int]) ex
         */
       val violationOfV = violation(v)
       val expectedViolation =
-        if (checkBounds.isDefinedAt(v.value)) 0.max(checkBounds(v.value) - bounds(v.value))
+        if (checkBounds.isDefinedAt(v.value)) 0.max(checkBounds(v.value) - bounds(v.value).value)
         else 0
       c.check(violationOfV.value == expectedViolation, Some("" + violationOfV + "== expectedViolation" + expectedViolation))
     }
@@ -100,7 +100,7 @@ case class AtMost(variables:Iterable[CBLSIntVar], bounds:SortedMap[Int, Int]) ex
       * (the number of variable that have the value of the bound minus the bound).*/
     var summedViolation = 0;
     for(i <- bounds.keys){
-      if (checkBounds(i) > bounds(i)) summedViolation += (checkBounds(i) - bounds(i))
+      if (checkBounds(i) > bounds(i)) summedViolation += (checkBounds(i) - bounds(i).value)
     }
     c.check(summedViolation == violation.value, Some("summedViolation ("+summedViolation+") == violation.value ("+violation.value+")"))
   }

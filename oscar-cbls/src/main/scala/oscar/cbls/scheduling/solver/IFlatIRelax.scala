@@ -248,7 +248,7 @@ class IFlatIRelax(p: Planning,
   /**implements the standard flatten procedure
     * except that it prefers to add a priority to a moveable activity. */
   def flattenWorseFirst2() {
-    FlattenWorseFirst(p, maxIterations, estimateMakespanExpansionForNewDependency, true, true).doIt()
+    FlattenWorseFirst(p, maxIterations, estimateMakespanExpansionForNewDependency, true)().doIt()
   }
 
   /**

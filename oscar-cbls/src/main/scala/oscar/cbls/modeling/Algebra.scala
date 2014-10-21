@@ -21,10 +21,11 @@ package oscar.cbls.modeling
  *     Contributed to by Florent Ghilain
  ******************************************************************************/
 
+import oscar.cbls.constraints.core.ConstraintSystem
 import oscar.cbls.constraints.lib.basic.{EQ, G, GE, L, LE, NE}
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.lib.logic.{Elements, IntElement, SetElement}
-import oscar.cbls.invariants.lib.numeric.{Div, Minus, Mod, Prod, Sum2}
+import oscar.cbls.invariants.lib.numeric._
 import oscar.cbls.invariants.lib.set._
 import oscar.cbls.search.algo.InstrumentedRange
 import scala.collection.immutable.SortedSet
@@ -80,6 +81,43 @@ trait AlgebraTrait{
       * @return
       */
     def TO (v:CBLSIntVar) = new Interval(x,v)
+
+    /**
+     * if you write:
+     * v <=s c:ConstraintSystem s= Expression
+     *
+     * and v has a domain that has bee ndeclared too small for the values that Expresson can produce
+     * this will introduce a [[Bound]] to trim the values of Expression before assigning to v, and post constraints on Expression
+     * into the constraintSystem c
+     * @param c
+     * @return
+     */
+    def `<=s`(c: ConstraintSystem) = new SafeAssignment(x,c)
+  }
+
+  class SafeAssignment(v:CBLSIntVar, c:ConstraintSystem){
+    def `s=`(i:IntInvariant){
+      val iMax = i.myMax
+      val iMin = i.myMin
+      if(iMax <= v.maxVal && iMin >= v.minVal){
+        v <== i
+      }else{
+        val iv:CBLSIntVar = i
+        v <== Bound(iv, v.minVal, v.maxVal)
+        c.add(iv >== v.minVal)
+        c.add(v.maxVal >== iv)
+      }
+    }
+
+    def `s=`(w:CBLSIntVar){
+      if(w.maxVal<= v.maxVal && w.minVal >= v.minVal){
+        v <== w
+      }else{
+        v <== Bound(w, v.minVal, v.maxVal)
+        c.add(w >== v.minVal)
+        c.add(v.maxVal >== w)
+      }
+    }
   }
 
   implicit def InstrumentIntSetVar(v: CBLSSetVar): InstrumentedIntSetVar = new InstrumentedIntSetVar(v)

@@ -130,6 +130,7 @@ abstract class Neighborhood{
 
             def nStrings(n: Int, s: String): String = if (n <= 0) "" else s + nStrings(n - 1, s)
             def padToLength(s: String, l: Int) = (s + nStrings(l, " ")).substring(0, l)
+            def trimToLength(s: String, l: Int) = if (s.length >= l) s.substring(0, l) else s
 
             if(m.objAfter != Int.MaxValue) {
               val firstPostfix = if (m.objAfter < prevObj) "-"
@@ -147,7 +148,7 @@ abstract class Neighborhood{
               println(padToLength(m.toString(), paddingLength) + " " + firstPostfix + secondPostfix)
             }else{
               prevObj = m.objAfter
-              println(padToLength(m.toString(), paddingLength))
+              println(trimToLength(m.toString(), paddingLength))
             }
           }
 
@@ -161,14 +162,14 @@ abstract class Neighborhood{
     toReturn
   }
 
-  /** this composer randomly tries one neighborhood.
+  /** this combinator randomly tries one neighborhood.
     * it tries the other if the first did not find any move
     * @param b another neighborhood
     * @author renaud.delandtsheer@cetic.be
     */
   def random(b:Neighborhood):Neighborhood = new Random(this,b)
 
-  /** this composer sequentially tries all neighborhoods until one move is found
+  /** this combinator sequentially tries all neighborhoods until one move is found
     * between calls, it will roll back to the first neighborhood
     * it tries a first, and if no move it found, tries b
     * a is reset if it did not find anything.
@@ -184,7 +185,7 @@ abstract class Neighborhood{
     */
   def sequence(b:Neighborhood):Neighborhood = this maxMoves 1 exhaust b
 
-  /**this composer always selects the best move between the two parameters
+  /**this combinator always selects the best move between the two parameters
     * notice that this combinator makes more sense
     * if the two neighborhood return their best found move,
     * and not their first found move, as usually done.
@@ -192,7 +193,7 @@ abstract class Neighborhood{
     */
   def best(b:Neighborhood):Neighborhood = new Best(this,b)
 
-  /**this composer is stateful.
+  /**this combinator is stateful.
     * it returns the result of the first Neighborhood until it returns NoMoveFound.
     * It then switches to the other Neighborhood.
     * it does not come back to the first one after the second one is exhausted
@@ -200,7 +201,7 @@ abstract class Neighborhood{
     */
   def exhaust(b:Neighborhood):Neighborhood = new Exhaust(this,b)
 
-  /**this composer is stateful.
+  /**this combinator is stateful.
     * it returns the result of one Neighborhood until it returns NoMoveFound.
     * It then switches to the other Neighborhood.
     * it starts with Neighborhood a
@@ -208,7 +209,7 @@ abstract class Neighborhood{
     */
   def exhaustBack(b:Neighborhood):Neighborhood = new ExhaustBack(this,b)
 
-  /**this composer is stateful.
+  /**this combinator is stateful.
     * it returns the result of the first Neighborhood until it returns NoMoveFound.
     * It then switches to the other Neighborhood,
     * but only if a move was found by the first neighborhood
@@ -217,7 +218,7 @@ abstract class Neighborhood{
     */
   def exhaustAndContinueIfMovesFound(b:Neighborhood) = new ExhaustAndContinueIfMovesFound(this, b)
 
-  /**this composer is stateless, it checks the condition on every invocation. If the condition is false,
+  /**this combinator is stateless, it checks the condition on every invocation. If the condition is false,
     * it does not try the Neighborhood and finds no move.
     * @author renaud.delandtsheer@cetic.be
     */
@@ -235,13 +236,27 @@ abstract class Neighborhood{
     */
   def maxMoves(maxMove:Int) = new MaxMoves(this, maxMove)
 
+  /**
+   * no move if cond evaluates to false, otherwise ,it forwards the search request to a
+   * @param cond a stop criterion
+   */
+  def stopWhen(cond:()=> Boolean) = new StopWhen(this,cond)
 
   /** this is an alias for maxMoves 1
     * @return
     */
   def once = new MaxMoves(this, 1)
 
-  /**bounds the number of tolerated moves without improvements over the best value
+  /**This combinators queries a once avery n time it is queried.
+    * the other times, it returns NoMovesFound.
+    * if n finds no moves, depending on retryOnNoMoveFound,
+    * it will either keep on querying n until a move is found, or continue its sequence of one out of n
+    * @param n the size of teh sequence
+    * @param retryOnNoMoveFound if true, keeps on querying n on NoMoveFound, otherwise, continues the sequence
+    */
+  def onceEvery(n:Int, retryOnNoMoveFound:Boolean = false) = new OnceEvery(this, n, retryOnNoMoveFound)
+
+    /**bounds the number of tolerated moves without improvements over the best value
     * the count is reset by the reset action.
     * @author renaud.delandtsheer@cetic.be
     */
@@ -290,7 +305,6 @@ abstract class Neighborhood{
     *                   use this to update a Tabu for instance
     */
   def afterMove(procOnMove:Move => Unit) = new DoOnMove(this,procAfterMove = procOnMove)
-
 
   /** this combinator attaches a custom code to a given neighborhood.
     * the code is called whenever a move from this neighborhood is taken for the first time.
@@ -362,7 +376,7 @@ abstract class Neighborhood{
   /**
    * this combinator overrides accepts all moves (this is the withAcceptanceCriteria, given the fully acceptant criterion
    */
-  def acceptAll = new WithAcceptanceCriterion(this,(_:Int,_:Int) => true)
+  def acceptAll() = new WithAcceptanceCriterion(this,(_:Int,_:Int) => true)
 
   /**
    * proposes a round-robin with that.
@@ -383,12 +397,14 @@ abstract class Neighborhood{
   def untilImprovement(obj:CBLSIntVar, minMoves:Int = 0, maxMove:Int = Int.MaxValue) = new UntilImprovement(this, obj, minMoves, maxMove)
 
   /**
-   * this combinator injects a simulated annealing acceptation function
-   * the criterion is:
-   * math.random < math.exp(-gain / temperatureValue)
-   * @param temperature a function tht inputs the number of moves taken, and outputs a temperature, for use in the criterion
+   * this combinator injects a metropolis acceptation function.
+   * the criterion accepts all improving moves, and for worsening moves, it applies the metropolis criterion:
+   * accept if math.random(0.0; 1.0) < base exponent (-gain / temperatureValue)
+   * @param temperature a function that inputs the number of moves taken, and outputs a temperature, for use in the criterion
+   *                    the number of steps is reset to zero when the combinator is reset
+   * @param base the base for the exponent calculation. default is 2
    */
-  def metropolis(temperature:Int => Float = _ => 100) = new Metropolis(this, temperature)
+  def metropolis(temperature:Int => Float = _ => 100, base:Float = 2) = new Metropolis(this, temperature, base)
 }
 
 /** a neighborhood that never finds any move (quite useless, actually)

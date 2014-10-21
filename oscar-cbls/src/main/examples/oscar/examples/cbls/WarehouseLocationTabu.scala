@@ -91,7 +91,7 @@ object WarehouseLocationTabu extends App with AlgebraTrait{
     for (v <- mo.touchedVariables) {
       TabuArray(v.getStorageAt[Int](warehouseKey)) := It.value + tabuTenure
     }
-    It :+= 1 }) withAcceptanceCriterion ((_,_) => true) maxMoves W withoutImprovementOver obj protectBest obj)
+    It :+= 1 }) acceptAll() maxMoves W withoutImprovementOver obj protectBest obj)
 
   switchWithTabuNeighborhood.verbose = 1
 

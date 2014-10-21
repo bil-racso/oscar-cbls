@@ -6,6 +6,7 @@ import oscar.cbls.scheduling.model._
 import oscar.cbls.search.SearchEngineTrait
 import oscar.cbls.search.combinators.{Retry, BasicProtectBest, ProtectBest}
 import oscar.cbls.search.core._
+import scala.language.postfixOps
 
 /**
  * @param p the planning to flatten
@@ -257,19 +258,17 @@ object SchedulingStrategies{
       if (displayPlanning) println(p.toAsciiArt)
       println(objective)
     }
-    val relax = Relax(p, pKillPerRelax) untilImprovement(p.makeSpan, nbRelax, maxIterationsForFlatten)
+    val relax = Relax(p, pKillPerRelax)
 
-    //search Loop is a round Robin
-    val searchLoop = flatten maxMoves 1 exhaustBack relax
+    val searchLoop = flatten maxMoves 1 exhaustBack (relax untilImprovement(p.makeSpan, nbRelax, maxIterationsForFlatten))
 
+    //TODO: should stop after a flatten!
     (searchLoop maxMoves stable*4 withoutImprovementOver objective
       protectBest objective whenEmpty p.worseOvershotResource)
   }
 
 //  val searchLoop = FlattenWorseFirst(p,maxIterationsForFlatten) maxMoves 1 afterMove {if (displayPlanning) println(p.toAsciiArt)} exhaustBack
 //    Relax(p, pKillPerRelax) untilImprovement(p.makeSpan, nbRelax, maxIterationsForFlatten)
-
-  //TODO: should stop after a flatten!
 
   /*
       //TODO: moves should have reference to their originating neighborhoods
