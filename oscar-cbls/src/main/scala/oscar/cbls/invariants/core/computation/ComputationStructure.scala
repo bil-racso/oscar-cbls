@@ -1212,6 +1212,8 @@ case class IdentityInt(v:CBLSIntVar) extends IntInvariant {
     //ici, on propage tout de suite, c'est les variables qui font le stop and go.
     output := NewVal
   }
+
+
 }
 
 /** an invariant that is the identity function

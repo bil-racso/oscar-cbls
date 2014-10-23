@@ -136,9 +136,15 @@ class InvariantTests extends FunSuite with Checkers {
   }
 
   test("AtMost") {
-    val bench = new InvBench(verbose)
+
+    def myMapValues[B,C](s:SortedMap[Int,B],f:B=>C):SortedMap[Int,C] =
+      s.foldLeft[SortedMap[Int,C]](SortedMap.empty)((acc,couple) => acc+((couple._1,f(couple._2))))
+
+    val bench = new InvBench(verbose = 3)
     val constantMap = InvGen.randomIntSortedMap(10, 0 to 30, 0 to 30)
-    new AtMost(bench.genIntVars(10),constantMap.mapValues(_ => bench.genIntVar(0 to 30))).toIntVar
+    val atmost = new AtMost(bench.genIntVars(10, range = 0 to 30),myMapValues(constantMap, (_:Int) => bench.genIntVar(0 to 30)))
+    println(atmost)
+    atmost.toIntVar
     bench.run
   }
 

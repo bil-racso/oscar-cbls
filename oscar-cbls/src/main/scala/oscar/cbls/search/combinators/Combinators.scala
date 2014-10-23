@@ -477,7 +477,7 @@ class BoundSearches(a: Neighborhood, val maxMove: Int) extends NeighborhoodCombi
   * it will either keep on querying n until a move is found, or continue its sequence of one out of n
  * @param a the initial neighborhood
  * @param n the size of teh sequence
- * @param retryOnNoMoveFound if true, keeps on querying n on NoMoveFound, otherwise, continues the sequence
+ * @param retryOnNoMoveFound if true, keeps on querying a on NoMoveFound, otherwise, continues the sequence
  */
 class OnceEvery(a: Neighborhood, n:Int, retryOnNoMoveFound:Boolean = false) extends NeighborhoodCombinator(a) {
   var remainingMoves = n -1
