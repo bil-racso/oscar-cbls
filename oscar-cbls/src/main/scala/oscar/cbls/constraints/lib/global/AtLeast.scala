@@ -23,8 +23,8 @@ package oscar.cbls.constraints.lib.global
 
 import collection.immutable.SortedMap
 import oscar.cbls.constraints.core.Constraint
-import oscar.cbls.invariants.core.computation.{InvariantHelper, Variable, CBLSIntVar}
-import oscar.cbls.invariants.lib.logic.{DenseCount, IntElement, IntITE}
+import oscar.cbls.invariants.core.computation.{IdentityInt, InvariantHelper, Variable, CBLSIntVar}
+import oscar.cbls.invariants.lib.logic.{DenseCount, IntITE}
 import oscar.cbls.modeling.Algebra._
 import oscar.cbls.invariants.core.propagation.Checker
 import oscar.cbls.invariants.lib.minmax.Max2
@@ -45,6 +45,11 @@ import oscar.cbls.invariants.lib.numeric.Sum
  */
 case class AtLeast(variables: Iterable[CBLSIntVar], bounds: SortedMap[Int, CBLSIntVar]) extends Constraint {
 
+  def myMapValues[B,C](s:SortedMap[Int,B],f:B=>C):SortedMap[Int,C] =
+    s.foldLeft[SortedMap[Int,C]](SortedMap.empty)((acc,couple) => acc+((couple._1,f(couple._2))))
+
+  val mbounds:SortedMap[Int, CBLSIntVar] = myMapValues(bounds, (v:CBLSIntVar) => IdentityInt(v).toIntVar(v.name))
+
   model = InvariantHelper.findModel(variables)
   registerConstrainedVariables(variables)
   finishInitialization()
@@ -54,17 +59,18 @@ case class AtLeast(variables: Iterable[CBLSIntVar], bounds: SortedMap[Int, CBLSI
   private val valueCount = countInvariant.counts //v => #occurrence of v+offset in variables
 
   private val Violation =
-    Sum(bounds.toList.map((value_bound) => Max2(noViolation,value_bound._2 - valueCount(value_bound._1)).toIntVar))
+    Sum(mbounds.toList.map((value_bound) => Max2(noViolation,value_bound._2 - valueCount(value_bound._1)).toIntVar))
     .toIntVar("ViolationsOfAtLeast")
 
   private val noViolation:CBLSIntVar = 0
 
   private val violationByVal=Array.tabulate(valueCount.length)(value => {
-    if(bounds.contains(value + offset))
-      IntITE(valueCount(value + offset) - bounds(value + offset), Violation, noViolation).toIntVar
+    if(mbounds.contains(value + offset))
+      IntITE(valueCount(value + offset) - mbounds(value + offset), Violation, noViolation).toIntVar
     else Violation
     })
 
+  //TODO: also add violation to bound variables!!
   //the violation of each input variable
   private val Violations:SortedMap[CBLSIntVar,CBLSIntVar] = variables.foldLeft(SortedMap.empty[CBLSIntVar,CBLSIntVar])(
     (acc,intvar) => acc + ((intvar,violationByVal.element(intvar + offset).toIntVar("Violation_AtLeast_"+intvar.name))))
@@ -101,14 +107,14 @@ case class AtLeast(variables: Iterable[CBLSIntVar], bounds: SortedMap[Int, CBLSI
     }
 
     var MyViol: Int = 0
-    for (v <- bounds.keys) {
-      MyViol += 0.max(bounds(v).value - MyValueCount.getOrElse(v + offset,0))
+    for (v <- mbounds.keys) {
+      MyViol += 0.max(mbounds(v).value - MyValueCount.getOrElse(v + offset,0))
     }
     c.check(Violation.value == MyViol,
       Some("Violation.value (" + Violation.value + ") == MyViol (" + MyViol + ")"))
 
     for (v <- variables) {
-      if (bounds.contains(v.value) && (MyValueCount(v.value + offset) <= bounds(v.value).value)) {
+      if (mbounds.contains(v.value) && (MyValueCount(v.value + offset) <= mbounds(v.value).value)) {
         c.check(violation(v).value == 0,
             Some("violation(" + v.name + ").value (" + violation(v).value + ") == 0"))
       } else {

@@ -43,13 +43,6 @@ import oscar.cbls.invariants.lib.numeric.Sum
   */
 case class AtMost(variables:Iterable[CBLSIntVar], bounds:SortedMap[Int, CBLSIntVar]) extends Constraint {
 
-  println("bounds1: " + bounds)
-  println("bounds2: " + bounds)
-  println("bounds3: " + bounds)
-  println("bounds4: " + bounds)
-  println("bounds5: " + bounds)
-  println("bounds6: " + bounds)
-
   def myMapValues[B,C](s:SortedMap[Int,B],f:B=>C):SortedMap[Int,C] =
     s.foldLeft[SortedMap[Int,C]](SortedMap.empty)((acc,couple) => acc+((couple._1,f(couple._2))))
 
@@ -114,7 +107,7 @@ case class AtMost(variables:Iterable[CBLSIntVar], bounds:SortedMap[Int, CBLSIntV
       val expectedViolation =
         if (checkBounds.isDefinedAt(v.value)) 0.max(checkBounds(v.value) - mbounds(v.value).value)
         else 0
-      c.check(violationOfV.value == expectedViolation, Some("" + violationOfV + " == expectedViolation (" + expectedViolation + ")" + (if (checkBounds.isDefinedAt(v.value)) "[checkBounds(v.value) " + checkBounds(v.value)+ " mbounds(v.value)" + mbounds(v.value) + "]" else "")))
+      c.check(violationOfV.value == expectedViolation, Some("" + violationOfV + " == expectedViolation (" + expectedViolation + ")"))
     }
 
     /*The violation of the constraint is the sum on all bound of the number of variable that are in excess.
