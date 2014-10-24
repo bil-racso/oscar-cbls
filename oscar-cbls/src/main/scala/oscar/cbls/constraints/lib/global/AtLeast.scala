@@ -38,21 +38,13 @@ import oscar.cbls.invariants.lib.numeric.Sum
  * @param variables the variable whose values are constrained
  * @param bounds map(value,minbound) specifying the minimal number of occurrence of ''value'' among the variables.
  *                We use a map to ensure that there is no two bounds on the same value.
- *                also, the variables specifying the size of the bound is cloned inside this constraint,
- *                so you cannot query its violation directly.
- *                You must call it though the constraint system, which is what you should be doing anyway.
  * @author renaud.delandtsheer@cetic.be
  */
 case class AtLeast(variables: Iterable[CBLSIntVar], bounds: SortedMap[Int, CBLSIntVar]) extends Constraint {
 
-  def myMapValues[B,C](s:SortedMap[Int,B],f:B=>C):SortedMap[Int,C] =
-    s.foldLeft[SortedMap[Int,C]](SortedMap.empty)((acc,couple) => acc+((couple._1,f(couple._2))))
-
-  val mbounds:SortedMap[Int, CBLSIntVar] = myMapValues(bounds, (v:CBLSIntVar) => IdentityInt(v).toIntVar(v.name))
-
   model = InvariantHelper.findModel(variables)
   registerConstrainedVariables(variables)
-  registerConstrainedVariables(mbounds.values)
+  registerConstrainedVariables(bounds.values)
   finishInitialization()
 
   private val countInvariant = DenseCount.makeDenseCount(variables.toArray)
@@ -62,24 +54,30 @@ case class AtLeast(variables: Iterable[CBLSIntVar], bounds: SortedMap[Int, CBLSI
   private val noViolation:CBLSIntVar = 0
 
   private val Violation =
-    Sum(mbounds.toList.map((value_bound) => Max2(noViolation,value_bound._2 - valueCount(value_bound._1)).toIntVar))
+    Sum(bounds.toList.map((value_bound) => Max2(noViolation,value_bound._2 - valueCount(value_bound._1)).toIntVar))
     .toIntVar("ViolationsOfAtLeast")
 
   private val violationByVal=Array.tabulate(valueCount.length)(value => {
-    if(mbounds.contains(value + offset))
-      IntITE(valueCount(value + offset) - mbounds(value + offset), Violation, noViolation).toIntVar
+    if(bounds.contains(value + offset))
+      IntITE(valueCount(value + offset) - bounds(value + offset), Violation, noViolation).toIntVar
     else Violation
     })
 
   //the violation of each input variable
   private val Violations:SortedMap[CBLSIntVar,CBLSIntVar] = {
-    val violationForArray = variables.foldLeft(SortedMap.empty[CBLSIntVar, CBLSIntVar])(
-      (acc, intvar) => acc + ((intvar, violationByVal.element(intvar + offset).toIntVar("Violation_AtLeast_" + intvar.name))))
+    def accumulate(acc:SortedMap[CBLSIntVar,CBLSIntVar], variable:CBLSIntVar, violation:CBLSIntVar):SortedMap[CBLSIntVar,CBLSIntVar] =
+      acc + (acc.get(variable) match{
+        case Some(oldViolation) => ((variable,(violation + oldViolation).toIntVar(violation.name)))
+        case None => ((variable,violation))})
 
-    mbounds.foldLeft(violationForArray)(
+
+    val violationForArray = variables.foldLeft(SortedMap.empty[CBLSIntVar, CBLSIntVar])(
+      (acc, intvar) => accumulate(acc, intvar, violationByVal.element(intvar + offset).toIntVar("Violation_AtLeast_" + intvar.name)))
+
+    bounds.foldLeft(violationForArray)(
       (acc,boundAndVariable) => {
-        val viol = Max2(noViolation,boundAndVariable._2 - valueCount(boundAndVariable._1)).toIntVar
-          acc + ((boundAndVariable._2, viol))
+        val viol = Max2(noViolation,boundAndVariable._2 - valueCount(boundAndVariable._1)).toIntVar("Violation_AtLeast_" + boundAndVariable._2.name)
+        accumulate(acc, boundAndVariable._2, viol)
       })
   }
   /**
@@ -114,14 +112,14 @@ case class AtLeast(variables: Iterable[CBLSIntVar], bounds: SortedMap[Int, CBLSI
     }
 
     var MyViol: Int = 0
-    for (v <- mbounds.keys) {
-      MyViol += 0.max(mbounds(v).value - MyValueCount.getOrElse(v + offset,0))
+    for (v <- bounds.keys) {
+      MyViol += 0.max(bounds(v).value - MyValueCount.getOrElse(v + offset,0))
     }
     c.check(Violation.value == MyViol,
       Some("Violation.value (" + Violation.value + ") == MyViol (" + MyViol + ")"))
 
     for (v <- variables) {
-      if (mbounds.contains(v.value) && (MyValueCount(v.value + offset) <= mbounds(v.value).value)) {
+      if (bounds.contains(v.value) && (MyValueCount(v.value + offset) <= bounds(v.value).value)) {
         c.check(violation(v).value == 0,
             Some("violation(" + v.name + ").value (" + violation(v).value + ") == 0"))
       } else {

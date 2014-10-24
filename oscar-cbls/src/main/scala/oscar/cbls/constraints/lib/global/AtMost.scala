@@ -36,22 +36,15 @@ import oscar.cbls.invariants.lib.numeric.Sum
   * @param variables the variables that should be bounded, only one occurrence of each variable is tolerated
   * @param bounds map(value,bound) the bounds on the variables.
   *               We use a map to ensure that there is no two bounds on the same value.
-  *               also, the variables specifying the size of the bound is cloned inside this constraint,
-  *               so you cannot query its violation directly.
-  *               You must call it though the constraint system, which is what you should be doing anyway.
   * @author renaud.delandtsheer@cetic.be
   */
 case class AtMost(variables:Iterable[CBLSIntVar], bounds:SortedMap[Int, CBLSIntVar]) extends Constraint {
 
-  def myMapValues[B,C](s:SortedMap[Int,B],f:B=>C):SortedMap[Int,C] =
-    s.foldLeft[SortedMap[Int,C]](SortedMap.empty)((acc,couple) => acc+((couple._1,f(couple._2))))
-
-  val mbounds:SortedMap[Int, CBLSIntVar] = myMapValues(bounds, (v:CBLSIntVar) => IdentityInt(v).toIntVar(v.name))
-  assert(variables.size < Int.MaxValue)
+   assert(variables.size < Int.MaxValue)
 
   model = InvariantHelper.findModel(variables)
   registerConstrainedVariables(variables)
-  registerConstrainedVariables(mbounds.values)
+  registerConstrainedVariables(bounds.values)
   finishInitialization()
 
   private val countInvariant = DenseCount.makeDenseCount(variables.toArray)
@@ -61,24 +54,29 @@ case class AtMost(variables:Iterable[CBLSIntVar], bounds:SortedMap[Int, CBLSIntV
   private val noViolation:CBLSIntVar = 0
   private val violationByVal=Array.tabulate(valueCount.length)(_ => noViolation)
 
-  for((value,bound) <- mbounds){
+  for((value,bound) <- bounds){
     violationByVal(value) = Max2(noViolation,valueCount(value) - bound).toIntVar
   }
 
   //the violation of each input variable
   private val Violations:SortedMap[CBLSIntVar,CBLSIntVar] = {
+    def accumulate(acc:SortedMap[CBLSIntVar,CBLSIntVar], variable:CBLSIntVar, violation:CBLSIntVar):SortedMap[CBLSIntVar,CBLSIntVar] =
+      acc + (acc.get(variable) match{
+            case Some(oldViolation) => ((variable,(violation + oldViolation).toIntVar(violation.name)))
+            case None => ((variable,violation))})
+
     val violationForArray = variables.foldLeft(SortedMap.empty[CBLSIntVar,CBLSIntVar])(
-      (acc,intvar) => acc + ((intvar,violationByVal.element(intvar + offset).toIntVar("Violation_AtMost_"+intvar.name)))
+      (acc,intvar) => accumulate(acc,intvar, violationByVal.element(intvar + offset).toIntVar("Violation_AtMost_"+intvar.name))
     )
-    mbounds.foldLeft(violationForArray)(
+    bounds.foldLeft(violationForArray)(
       (acc,boundAndVariable) => {
         val viol = violationByVal.element(boundAndVariable._1).toIntVar("Violation_AtMost_"+bounds(boundAndVariable._1).name)
-        acc + ((boundAndVariable._2, viol))
+        accumulate(acc,boundAndVariable._2, viol)
       })
   }
 
   private val Violation:CBLSIntVar = new CBLSIntVar(model,(0 to Int.MaxValue), 0,"ViolationsOfAtMost")
-  Violation <== Sum(mbounds.keys.map(violationByVal))
+  Violation <== Sum(bounds.keys.map(violationByVal))
 
   /**The violation of the constraint is the sum on all bound of the number of variable that are in excess.
     * the number of variable in excess is the max between zero and
@@ -95,7 +93,7 @@ case class AtMost(variables:Iterable[CBLSIntVar], bounds:SortedMap[Int, CBLSIntV
 
   override def checkInternals(c: Checker) {
     var checkBounds:SortedMap[Int, Int] = SortedMap.empty
-    for(i <- mbounds.keys) checkBounds += ((i,0))
+    for(i <- bounds.keys) checkBounds += ((i,0))
     for (v <- variables) if (checkBounds.isDefinedAt(v.value)) checkBounds += ((v.value,checkBounds(v.value) +1))
 
     for (v <- variables){
@@ -104,7 +102,7 @@ case class AtMost(variables:Iterable[CBLSIntVar], bounds:SortedMap[Int, CBLSIntV
         */
       val violationOfV = violation(v)
       val expectedViolation =
-        if (checkBounds.isDefinedAt(v.value)) 0.max(checkBounds(v.value) - mbounds(v.value).value)
+        if (checkBounds.isDefinedAt(v.value)) 0.max(checkBounds(v.value) - bounds(v.value).value)
         else 0
       c.check(violationOfV.value == expectedViolation, Some("" + violationOfV + " == expectedViolation (" + expectedViolation + ")"))
     }
@@ -113,8 +111,8 @@ case class AtMost(variables:Iterable[CBLSIntVar], bounds:SortedMap[Int, CBLSIntV
       * the number of variable in excess is the max between zero and
       * (the number of variable that have the value of the bound minus the bound).*/
     var summedViolation = 0
-    for(i <- mbounds.keys){
-      if (checkBounds(i) > mbounds(i).value) summedViolation += (checkBounds(i) - mbounds(i).value)
+    for(i <- bounds.keys){
+      if (checkBounds(i) > bounds(i).value) summedViolation += (checkBounds(i) - bounds(i).value)
     }
     c.check(summedViolation == violation.value, Some("summedViolation ("+summedViolation+") == violation.value ("+violation.value+")"))
   }
