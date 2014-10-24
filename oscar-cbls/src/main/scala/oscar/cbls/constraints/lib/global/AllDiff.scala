@@ -54,12 +54,19 @@ case class AllDiff(variables: Iterable[CBLSIntVar]) extends Constraint {
   private val range = 0 to N
 
   /**the degree of violation of a variable is the number of other variables that have the same value as it. */
-  private val Violations: SortedMap[CBLSIntVar, CBLSIntVar] = variables.foldLeft(
-    SortedMap.empty[CBLSIntVar, CBLSIntVar])(
-      (acc, intvar) => {
-        val newvar = new CBLSIntVar(model, (0 to 1), 1, "Violation_AllDiff_" + intvar.name)
-        acc + ((intvar, newvar))
-      })
+  private val Violations: SortedMap[CBLSIntVar, CBLSIntVar] = {
+    def accumulate(acc:SortedMap[CBLSIntVar,CBLSIntVar], variable:CBLSIntVar, violation:CBLSIntVar):SortedMap[CBLSIntVar,CBLSIntVar] =
+      acc + (acc.get(variable) match{
+        case Some(oldViolation) => ((variable,(violation + oldViolation).toIntVar(violation.name)))
+        case None => ((variable,violation))})
+
+    variables.foldLeft(
+      SortedMap.empty[CBLSIntVar, CBLSIntVar])(
+        (acc, intvar) => {
+          val newvar = new CBLSIntVar(model, (0 to 1), 1, "Violation_AllDiff_" + intvar.name)
+          accumulate(acc , intvar, newvar)
+        })
+  }
 
   private val ValueCount: Array[CBLSIntVar] = Array.tabulate[CBLSIntVar](N + 1)((i: Int) => {
     val tmp = new CBLSIntVar(model, (0 to 1), 0, "alldiff_count_of_value_" + (i - offset))
@@ -68,8 +75,7 @@ case class AllDiff(variables: Iterable[CBLSIntVar]) extends Constraint {
   })
 
   for (v <- variables) {
-    val varval = v.value
-    ValueCount(varval + offset) :+= 1
+    ValueCount(v.value + offset) :+= 1
   }
 
   for (v <- variables) {
