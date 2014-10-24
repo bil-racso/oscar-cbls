@@ -94,7 +94,6 @@ case class AtMost(variables:Iterable[CBLSIntVar], bounds:SortedMap[Int, CBLSIntV
   }
 
   override def checkInternals(c: Checker) {
-    println(this)
     var checkBounds:SortedMap[Int, Int] = SortedMap.empty
     for(i <- mbounds.keys) checkBounds += ((i,0))
     for (v <- variables) if (checkBounds.isDefinedAt(v.value)) checkBounds += ((v.value,checkBounds(v.value) +1))
