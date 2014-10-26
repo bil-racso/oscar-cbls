@@ -31,8 +31,8 @@ final class DiffVarInterval(x: CPIntervalVar, y: CPIntervalVar) extends Constrai
   final override def setup(l: CPPropagStrength): CPOutcome = {
     if (propagate() == Failure) Failure
     else {
-      x.callPropagateWhenBoundsChange(this, false)
-      y.callPropagateWhenBoundsChange(this, false)
+      x.callPropagateWhenBoundsChange(this)
+      y.callPropagateWhenBoundsChange(this)
       Suspend
     }
   }

@@ -57,8 +57,8 @@ public class EqReifIntervalVar extends Constraint {
 			return valBind(y);
 		}
 		else {
-			x.callPropagateWhenBoundsChange(this,false);
-			y.callPropagateWhenBoundsChange(this,false);
+			x.callPropagateWhenBoundsChange(this);
+			y.callPropagateWhenBoundsChange(this);
 			b.callValBindWhenBind(this);
 			x.callValBindWhenBind(this);
 			y.callValBindWhenBind(this);

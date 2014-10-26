@@ -12,6 +12,7 @@
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
+
 package oscar.cp.core;
 
 import scala.util.Random
@@ -59,9 +60,9 @@ class CPIntervalVarViewMinus(v: CPIntervalVar) extends CPIntervalVar(v.store) {
 	
 	override def toString() = "-("+v+")";
 		
-	def callPropagateWhenBind(c: Constraint, trackDelta: Boolean = false) = v.callPropagateWhenBind(c)
+	def callPropagateWhenBind(c: Constraint) = v.callPropagateWhenBind(c)
 	
-	def callPropagateWhenBoundsChange(c: Constraint, trackDelta: Boolean = false) = v.callPropagateWhenBoundsChange(c,trackDelta)
+	def callPropagateWhenBoundsChange(c: Constraint) = v.callPropagateWhenBoundsChange(c)
 		
 	// this method is useful when you have a view defined on a view
 	def callValBindWhenBind(c: Constraint, variable: CPIntervalVar) = v.callValBindWhenBind(c, variable)
@@ -85,28 +86,6 @@ class CPIntervalVarViewMinus(v: CPIntervalVar) extends CPIntervalVar(v.store) {
 	def callUpdateBoundsIdxWhenBoundsChange(c: Constraint, idx: Int) = v.callUpdateBoundsIdxWhenBoundsChange(c,this,idx)
 	
 	// ----------------------------------
-	
-	def delta(oldMin: Int, oldMax: Int, oldSize: Int): Iterator[Int] = v.delta(-oldMax,-oldMin,oldSize).map(-_)
-	
-	def changed(c: Constraint): Boolean = v.changed(c)
-	
-	def minChanged(c: Constraint): Boolean = v.maxChanged(c)
-	
-	def maxChanged(c: Constraint): Boolean = v.minChanged(c)
-	
-	def boundsChanged(c: Constraint): Boolean = v.boundsChanged(c)
-	
-	def oldMin(c: Constraint): Int = -v.oldMax(c)
-	
-	def oldMax(c: Constraint): Int = -v.oldMin(c)
-	
-	def oldSize(c: Constraint): Int = v.oldSize(c)
-	
-	def deltaSize(c: Constraint): Int = v.deltaSize(c)
-	
-	def delta(c: Constraint): Iterator[Int] = {
-	  v.delta(c).map(-_)
-	}
 	
 }
   

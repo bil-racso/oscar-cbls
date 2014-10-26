@@ -50,11 +50,11 @@ public class Abs extends Constraint {
 			return CPOutcome.Failure;
 		}
 		if (!x.isBound()) {
-			x.callPropagateWhenBoundsChange(this,false);
+			x.callPropagateWhenBoundsChange(this);
 			x.callValBindWhenBind(this);
 		}
 		if (!y.isBound()) {
-			y.callPropagateWhenBoundsChange(this,false);
+			y.callPropagateWhenBoundsChange(this);
 			y.callValBindWhenBind(this);
 		}
 		//we can do more propagation with val remove

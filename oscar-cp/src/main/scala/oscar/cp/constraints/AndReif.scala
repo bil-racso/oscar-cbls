@@ -43,7 +43,7 @@ class And(val X: Array[CPBoolVar], val b: CPBoolVar) extends Constraint(b.store,
       }
       else x.callValBindIdxWhenBind(this,i)
     }
-    b.callPropagateWhenBind(this,false)
+    b.callPropagateWhenBind(this)
     propagate()
   }
   

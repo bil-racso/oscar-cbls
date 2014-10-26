@@ -159,9 +159,8 @@ class CPIntVarImpl(store: CPStore, private val domain: IntDomain, name: String =
    * @param c
    * @see oscar.cp.core.Constraint#propagate()
    */
-  def callPropagateWhenBind(c: Constraint, trackDelta: Boolean = false) {
+  def callPropagateWhenBind(c: Constraint) {
     onBindL2.setValue(new ConstraintQueue(onBindL2.value, c))
-    if (trackDelta) c.addSnapshot(this)
   }
 
   /**
@@ -170,9 +169,8 @@ class CPIntVarImpl(store: CPStore, private val domain: IntDomain, name: String =
    * @param c
    * @see oscar.cp.core.Constraint#propagate()
    */
-  def callPropagateWhenBoundsChange(c: Constraint, trackDelta: Boolean = false) {
+  def callPropagateWhenBoundsChange(c: Constraint) {
     onBoundsL2.setValue(new ConstraintQueue(onBoundsL2.value, c))
-    if (trackDelta) c.addSnapshot(this)
   }
 
   /**
@@ -450,7 +448,7 @@ class CPIntVarImpl(store: CPStore, private val domain: IntDomain, name: String =
       }
     }
   }
-
+  
   // ----------------------------------
 
   def delta(oldMin: Int, oldMax: Int, oldSize: Int): Iterator[Int] = {
@@ -476,7 +474,8 @@ class CPIntVarImpl(store: CPStore, private val domain: IntDomain, name: String =
   def delta(c: Constraint): Iterator[Int] = {
     val sn = c.snapshotsVarInt(this)
     delta(sn.oldMin, sn.oldMax, sn.oldSize)
-  }
+  }  
+  
 }
 
 object CPIntVarImpl {

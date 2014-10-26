@@ -1,19 +1,19 @@
-/**
- * *****************************************************************************
+/*******************************************************************************
  * OscaR is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- *
+ *   
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License  for more details.
- *
+ *   
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
- * ****************************************************************************
- */
+ ******************************************************************************/
+
+
 package oscar.cp.core
 
 import oscar.algo.reversible.ReversibleQueue
@@ -155,9 +155,8 @@ class CPIntervalVarImpl(store: CPStore, private val domain: IntDomain, name: Str
    * @param c
    * @see oscar.cp.core.Constraint#propagate()
    */
-  def callPropagateWhenBind(c: Constraint, trackDelta: Boolean = false) {
+  def callPropagateWhenBind(c: Constraint) {
     onBindL2.setValue(new ConstraintQueue(onBindL2.value, c))
-    if (trackDelta) c.addSnapshot(this)
   }
 
   /**
@@ -166,9 +165,8 @@ class CPIntervalVarImpl(store: CPStore, private val domain: IntDomain, name: Str
    * @param c
    * @see oscar.cp.core.Constraint#propagate()
    */
-  def callPropagateWhenBoundsChange(c: Constraint, trackDelta: Boolean = false) {
+  def callPropagateWhenBoundsChange(c: Constraint) {
     onBoundsL2.setValue(new ConstraintQueue(onBoundsL2.value, c))
-    if (trackDelta) c.addSnapshot(this)
   }
 
   /**
@@ -312,33 +310,9 @@ class CPIntervalVarImpl(store: CPStore, private val domain: IntDomain, name: Str
     store.notifyL2(onBoundsL2.value)
     return CPOutcome.Suspend
   }
+  
+  
 
-  // ----------------------------------
-
-  def delta(oldMin: Int, oldMax: Int, oldSize: Int): Iterator[Int] = {
-    domain.delta(oldMin, oldMax, oldSize)
-  }
-
-  def changed(c: Constraint): Boolean = changed(c.snapshotsVarInt(this))
-
-  def minChanged(c: Constraint): Boolean = minChanged(c.snapshotsVarInt(this))
-
-  def maxChanged(c: Constraint): Boolean = maxChanged(c.snapshotsVarInt(this))
-
-  def boundsChanged(c: Constraint): Boolean = boundsChanged(c.snapshotsVarInt(this))
-
-  def oldMin(c: Constraint): Int = oldMin(c.snapshotsVarInt(this))
-
-  def oldMax(c: Constraint): Int = oldMax(c.snapshotsVarInt(this))
-
-  def oldSize(c: Constraint): Int = oldSize(c.snapshotsVarInt(this))
-
-  def deltaSize(c: Constraint): Int = deltaSize(c.snapshotsVarInt(this))
-
-  def delta(c: Constraint): Iterator[Int] = {
-    val sn = c.snapshotsVarInt(this)
-    delta(sn.oldMin, sn.oldMax, sn.oldSize)
-  }
 }
 
 object CPIntervalVarImpl {

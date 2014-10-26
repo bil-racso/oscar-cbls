@@ -25,7 +25,7 @@ extends Constraint(capacity.store, "EFKameugne11WithResources") {
   def setup(strength: CPPropagStrength): CPOutcome = {
     priorityL2 = priority
     
-    def sdeCB(v: CPIntVar) =  { v.callPropagateWhenBoundsChange(this, false) }
+    def sdeCB(v: CPIntVar) =  { v.callPropagateWhenBoundsChange(this) }
     def resCB(v:CPIntVar)     = { v.callPropagateWhenBind(this) }
     
     starts    foreach sdeCB

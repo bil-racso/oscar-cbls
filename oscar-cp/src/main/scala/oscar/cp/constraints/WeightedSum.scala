@@ -32,8 +32,8 @@ class WeightedSum(val W: Array[Int], val X: Array[_ <: CPIntervalVar], val y: CP
   
   override def setup(l: CPPropagStrength): CPOutcome = {
     //priorityL2 = CPStore.MAXPRIORL2-1
-    X.foreach(_.callPropagateWhenBoundsChange(this, false))
-    y.callPropagateWhenBoundsChange(this, false)
+    X.foreach(_.callPropagateWhenBoundsChange(this))
+    y.callPropagateWhenBoundsChange(this)
     val oc = propagate()
     oc
   }

@@ -117,7 +117,7 @@ public class AtLeastNValueAC extends Constraint {
 		}
 
 		if (!nValueVar.isBound()) {
-			nValueVar.callPropagateWhenBoundsChange(this,false);
+			nValueVar.callPropagateWhenBoundsChange(this);
 		}
 
 		return CPOutcome.Suspend;

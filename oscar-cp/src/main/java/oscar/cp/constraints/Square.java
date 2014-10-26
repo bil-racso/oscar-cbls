@@ -49,10 +49,10 @@ public class Square extends Constraint {
 			return ok;
 		}
 		if (!x.isBound()) {
-			x.callPropagateWhenBoundsChange(this,false);
+			x.callPropagateWhenBoundsChange(this);
 		}
 		if (!y.isBound()) {
-			y.callPropagateWhenBoundsChange(this,false);
+			y.callPropagateWhenBoundsChange(this);
 		}
 		return CPOutcome.Suspend;
 	}
