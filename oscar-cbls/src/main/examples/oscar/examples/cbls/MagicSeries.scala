@@ -26,25 +26,24 @@ import oscar.cbls.invariants.lib.logic.SelectLESetQueue
 import oscar.cbls.invariants.lib.numeric.Sum
 import oscar.cbls.modeling.{CBLSModel, AlgebraTrait}
 import oscar.cbls.constraints.lib.global.Exactly
+import oscar.cbls.search.StopWatch
 
 import scala.collection.immutable.SortedMap
 
-object MagicSeries extends CBLSModel with App with AlgebraTrait{
-
-  val debug = true
+object MagicSeries extends CBLSModel with App with AlgebraTrait with StopWatch{
 
   //The size of the serie
-  val size:Int = 4
+  val size:Int = 7
 
   val range: Range = Range(0, size)
 
   val magicSeries = Array.tabulate(size)(w => CBLSIntVar(s, 0 until size, 0, " n° of " + w ))
 
   //exactly constraint
-  val constraints = SortedMap[Int, CBLSIntVar]((for(v <- range) yield v -> magicSeries(v)):_*)
-  c.post(Exactly(magicSeries, constraints))
+  val bounds = SortedMap[Int, CBLSIntVar]((for(v <- range) yield v -> magicSeries(v)):_*)
+  c.post(Exactly(magicSeries, bounds))
 
-  //redundant constraint
+  //redundant constraint, to fasten the search procedure
   c.post(EQ(Sum(for(i <- range) yield (i * magicSeries(i)).toIntVar), size))
 
   var it: CBLSIntVar = CBLSIntVar(s, 0, "it")
@@ -63,7 +62,9 @@ object MagicSeries extends CBLSModel with App with AlgebraTrait{
 
   val restartFreq = 300
 
-  //Research process
+  startWatch()
+
+  //Search Procedure
   while(violation.value > 0)
   {
     var index = maxVal.value.firstKey
@@ -77,6 +78,5 @@ object MagicSeries extends CBLSModel with App with AlgebraTrait{
 
   print("Solution found : \n(")
   for(i <- range) yield print(magicSeries(i).value + ", ")
-  print(")\nin " + it.value + " iterations")
-  //println("Solution found : \n" + magicSeries.mkString(","))
+  print(")\nin " + it.value + " iterations and " + getWatch + " ms")
 }

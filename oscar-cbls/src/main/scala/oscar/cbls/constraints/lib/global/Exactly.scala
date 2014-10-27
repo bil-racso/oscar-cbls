@@ -44,12 +44,17 @@ case class Exactly(variables:Iterable[CBLSIntVar], bounds:SortedMap[Int, CBLSInt
   private val least = AtLeast(variables, bounds)
   private val most = AtMost(variables, bounds)
 
+  private val violationsByVal =
+    Map[CBLSIntVar, CBLSIntVar]() ++
+      (for(v <- variables) yield v -> Sum2(least.violation(v), most.violation(v)).toIntVar)
+
+
   /** returns the violation associated with variable v in this constraint
     * all variables that are declared as constraint should have an associated violation degree. */
-  override def violation(v: Variable): CBLSIntVar = Sum2(least.violation(v), most.violation(v))
+  override def violation(v: Variable): CBLSIntVar = violationsByVal(v.asInstanceOf[CBLSIntVar])
 
   /** returns the degree of violation of the constraint */
-  override def violation: CBLSIntVar =  Sum2(least.violation, most.violation)
+  override val violation: CBLSIntVar =  Sum2(least.violation, most.violation)
 
   override def checkInternals(c: Checker) { least.checkInternals(c); most.checkInternals(c)}
 }
