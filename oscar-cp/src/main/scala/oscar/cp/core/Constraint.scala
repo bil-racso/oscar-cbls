@@ -25,7 +25,7 @@ abstract class Snapshot {
   def update()
 }
 
-class SnapshotVarInt(x: CPIntervalVar) extends Snapshot {
+class SnapshotVarInt(x: CPIntVar) extends Snapshot {
   var oldMin: Int = x.min 
   var oldMax: Int = x.max
   var oldSize: Int = x.size
@@ -54,12 +54,12 @@ abstract class Constraint(val s: CPStore, val name: String = "cons") {
   private final val active = new ReversibleBool(s,true)
   private final val inQueue = new MagicBoolean(s, false)
 
-  val snapshotsVarInt = scala.collection.mutable.Map[CPIntervalVar, SnapshotVarInt]() 
+  val snapshotsVarInt = scala.collection.mutable.Map[CPIntVar, SnapshotVarInt]() 
   val snapshotsVarSet = scala.collection.mutable.Map[CPSetVar, SnapshotVarSet]()
 
   private var _mustSnapshot = false
 
-  def addSnapshot(x: CPIntervalVar): Unit = {
+  def addSnapshot(x: CPIntVar): Unit = {
     snapshotsVarInt(x) = new SnapshotVarInt(x)
     snapshotsVarInt(x).update()
     if (!_mustSnapshot) {
@@ -332,7 +332,8 @@ abstract class Constraint(val s: CPStore, val name: String = "cons") {
 }
 
 
-abstract class DeltaVarInt(x: CPIntervalVar,filter: DeltaVarInt => CPOutcome) extends Constraint(x.store, "DeltaVarInt") {
+
+abstract class DeltaVarInt(x: CPIntVar,filter: DeltaVarInt => CPOutcome) extends Constraint(x.store, "DeltaVarInt") {
   
   val sn = new SnapshotVarInt(x)
   s.onPop {

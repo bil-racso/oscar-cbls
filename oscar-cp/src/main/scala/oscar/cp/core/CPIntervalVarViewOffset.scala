@@ -60,9 +60,9 @@ class CPIntervalVarViewOffset(v: CPIntervalVar,val b: Int) extends CPIntervalVar
 	
 	override def toString() = "view with shift "+b+" on ("+v+")";
 		
-	def callPropagateWhenBind(c: Constraint, trackDelta: Boolean = false) = v.callPropagateWhenBind(c)
+	def callPropagateWhenBind(c: Constraint) = v.callPropagateWhenBind(c)
 	
-	def callPropagateWhenBoundsChange(c: Constraint, trackDelta: Boolean = false) = v.callPropagateWhenBoundsChange(c,trackDelta)
+	def callPropagateWhenBoundsChange(c: Constraint) = v.callPropagateWhenBoundsChange(c)
 		
 	// this method is useful when you have a view defined on a view
 	def callValBindWhenBind(c: Constraint, variable: CPIntervalVar) = v.callValBindWhenBind(c, variable)
@@ -85,29 +85,6 @@ class CPIntervalVarViewOffset(v: CPIntervalVar,val b: Int) extends CPIntervalVar
 		
 	def callUpdateBoundsIdxWhenBoundsChange(c: Constraint, idx: Int) = v.callUpdateBoundsIdxWhenBoundsChange(c,this,idx)
 	
-	// ----------------------------------
-	
-	def delta(oldMin: Int, oldMax: Int, oldSize: Int): Iterator[Int] = v.delta(oldMin-b,oldMax-b,oldSize).map(_ + b)
-	
-	def changed(c: Constraint): Boolean = v.changed(c)
-	
-	def minChanged(c: Constraint): Boolean = v.minChanged(c)
-	
-	def maxChanged(c: Constraint): Boolean = v.maxChanged(c)
-	
-	def boundsChanged(c: Constraint): Boolean = v.boundsChanged(c)
-	
-	def oldMin(c: Constraint): Int = v.oldMin(c) + b
-	
-	def oldMax(c: Constraint): Int = v.oldMax(c) + b
-	
-	def oldSize(c: Constraint): Int = v.oldSize(c)
-	
-	def deltaSize(c: Constraint): Int = v.deltaSize(c)
-	
-	def delta(c: Constraint): Iterator[Int] = {
-	  v.delta(c).map(_ + b)
-	}
-	
+
 }
   

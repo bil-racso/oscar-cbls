@@ -80,9 +80,9 @@ class CPIntVarViewTimes(v: CPIntVar, val a: Int) extends CPIntVar(v.store) {
 
   override def toString() = "view with multiplicator " + a + " on (" + v + ")";
 
-  override final def callPropagateWhenBind(c: Constraint, trackDelta: Boolean = false) = v.callPropagateWhenBind(c)
+  override final def callPropagateWhenBind(c: Constraint) = v.callPropagateWhenBind(c)
 
-  override final def callPropagateWhenBoundsChange(c: Constraint, trackDelta: Boolean = false) = v.callPropagateWhenBoundsChange(c, trackDelta)
+  override final def callPropagateWhenBoundsChange(c: Constraint) = v.callPropagateWhenBoundsChange(c)
 
   override final def callPropagateWhenDomainChanges(c: Constraint, trackDelta: Boolean = false) = v.callPropagateWhenDomainChanges(c, trackDelta)
 

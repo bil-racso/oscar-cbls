@@ -159,7 +159,7 @@ abstract class CPIntervalVar(override val store: CPStore, override val name: Str
    * @param c
    * @see oscar.cp.core.Constraint#propagate()
    */
-  def callPropagateWhenBind(c: Constraint, trackDelta: Boolean = false): Unit
+  def callPropagateWhenBind(c: Constraint): Unit
 
   /**
    * Level 2 registration: ask that the propagate() method of the constraint c is called whenever
@@ -167,28 +167,7 @@ abstract class CPIntervalVar(override val store: CPStore, override val name: Str
    * @param c
    * @see oscar.cp.core.Constraint#propagate()
    */
-  def callPropagateWhenBoundsChange(c: Constraint, trackDelta: Boolean = false): Unit
-
-
-  def filterWhenBind(filter: DeltaVarInt => CPOutcome) {
-    store.post(
-      new DeltaVarInt(this, filter) {
-        def setup(l: CPPropagStrength) = {
-          callPropagateWhenBind(this)
-          CPOutcome.Suspend
-        }
-      }) // should not fail
-  }
-
-  def filterWhenBoundsChanges(filter: DeltaVarInt => CPOutcome) {
-    store.post(
-      new DeltaVarInt(this, filter) {
-        def setup(l: CPPropagStrength) = {
-          callPropagateWhenBoundsChange(this)
-          CPOutcome.Suspend
-        }
-      }) // should not fail
-  }
+  def callPropagateWhenBoundsChange(c: Constraint): Unit
 
 
   /**
@@ -233,6 +212,30 @@ abstract class CPIntervalVar(override val store: CPStore, override val name: Str
 
   def callValBindIdxWhenBind(c: Constraint, variable: CPIntervalVar, idx: Int): Unit
 
+  
+  def filterWhenBoundsChange(filter: => CPOutcome) {
+    store.post(
+      new Constraint(this.store, "filterWhenBoundsChange on  "+this) {
+        def setup(l: CPPropagStrength) = {
+          callPropagateWhenBoundsChange(this)
+          CPOutcome.Suspend
+        }
+        override def propagate() = filter
+      })
+  }
+  
+  def filterWhenBind(filter: => CPOutcome) {
+    store.post(
+      new Constraint(this.store, "filterWhenBind on  "+this) {
+        def setup(l: CPPropagStrength) = {
+          callPropagateWhenBind(this)
+          CPOutcome.Suspend
+        }
+        override def propagate() = filter
+      })
+  }   
+  
+  
   /**
    * Reduce the domain to the singleton {val}, and notify appropriately all the propagators registered to this variable
    * @param val
@@ -254,66 +257,7 @@ abstract class CPIntervalVar(override val store: CPStore, override val name: Str
    */
   def updateMax(value: Int): CPOutcome
 
-  // ------ delta methods to be called in propagate -------
 
-  def changed(sn: SnapshotVarInt): Boolean = {
-    sn.oldSize != size
-  }
-
-  def minChanged(sn: SnapshotVarInt): Boolean = {
-    assert(sn.oldMin <= min)
-    sn.oldMin < min
-  }
-
-  def maxChanged(sn: SnapshotVarInt): Boolean = {
-    assert(sn.oldMax >= max)
-    sn.oldMax > max
-  }
-
-  def boundsChanged(sn: SnapshotVarInt): Boolean = {
-    sn.oldMax == max
-  }
-
-  def oldMin(sn: SnapshotVarInt): Int = {
-    assert(sn.oldMin <= min)
-    sn.oldMin
-  }
-
-  def oldMax(sn: SnapshotVarInt): Int = {
-    assert(sn.oldMax >= max)
-    sn.oldMax
-  }
-
-  def oldSize(sn: SnapshotVarInt): Int = {
-    assert(sn.oldSize >= size)
-    sn.oldSize
-  }
-
-  def deltaSize(sn: SnapshotVarInt): Int = {
-    sn.oldSize - size
-  }
-
-  def delta(oldMin: Int, oldMax: Int, oldSize: Int): Iterator[Int]
-
-  // --------------------------------------------
-
-  def changed(c: Constraint): Boolean
-
-  def minChanged(c: Constraint): Boolean
-
-  def maxChanged(c: Constraint): Boolean
-
-  def boundsChanged(c: Constraint): Boolean
-
-  def oldMin(c: Constraint): Int
-
-  def oldMax(c: Constraint): Int
-
-  def oldSize(c: Constraint): Int
-
-  def deltaSize(c: Constraint): Int
-
-  def delta(c: Constraint): Iterator[Int]
 
   // ------------------------ some useful methods for java -------------------------
 

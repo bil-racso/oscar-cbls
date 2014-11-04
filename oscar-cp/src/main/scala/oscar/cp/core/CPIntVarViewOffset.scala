@@ -61,9 +61,9 @@ class CPIntVarViewOffset(v: CPIntVar,val b: Int) extends CPIntVar(v.store) {
 	
 	override def toString() = "view with shift "+b+" on ("+v+")";
 		
-	def callPropagateWhenBind(c: Constraint, trackDelta: Boolean = false) = v.callPropagateWhenBind(c)
+	def callPropagateWhenBind(c: Constraint) = v.callPropagateWhenBind(c)
 	
-	def callPropagateWhenBoundsChange(c: Constraint, trackDelta: Boolean = false) = v.callPropagateWhenBoundsChange(c,trackDelta)
+	def callPropagateWhenBoundsChange(c: Constraint) = v.callPropagateWhenBoundsChange(c)
 	
 	def callPropagateWhenDomainChanges(c: Constraint, trackDelta: Boolean = false) = v.callPropagateWhenDomainChanges(c,trackDelta)
 	

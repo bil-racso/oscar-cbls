@@ -159,7 +159,7 @@ public class SoftGCC extends Constraint{
 			if (!x[k].isBound())
 				x[k].callPropagateWhenDomainChanges(this,false);
 		}
-		if (!viol.isBound()) viol.callPropagateWhenBoundsChange(this,false);
+		if (!viol.isBound()) viol.callPropagateWhenBoundsChange(this);
 		return CPOutcome.Suspend;
 	}
 	

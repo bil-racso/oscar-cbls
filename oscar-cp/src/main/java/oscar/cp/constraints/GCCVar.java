@@ -120,7 +120,7 @@ public class GCCVar extends Constraint {
 			}
 		}
 		for (int i = 0; i < o.length; i++) {
-			o[i].callPropagateWhenBoundsChange(this,false);
+			o[i].callPropagateWhenBoundsChange(this);
 		}
 		return CPOutcome.Suspend;
 	}

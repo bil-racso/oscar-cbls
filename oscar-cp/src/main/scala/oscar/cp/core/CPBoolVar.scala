@@ -53,11 +53,11 @@ class CPBoolVar(val x: CPIntVar, name: String = "") extends CPIntVar(x.store, na
     x.iterator
   }
 
-  def callPropagateWhenBind(c: Constraint, trackDelta: Boolean = false) = x.callPropagateWhenBind(c)
+  def callPropagateWhenBind(c: Constraint) = x.callPropagateWhenBind(c)
 
-  def callPropagateWhenBoundsChange(c: Constraint, trackDelta: Boolean = false) = x.callPropagateWhenBoundsChange(c, trackDelta)
+  def callPropagateWhenBoundsChange(c: Constraint) = x.callPropagateWhenBoundsChange(c)
 
-  def callPropagateWhenDomainChanges(c: Constraint, trackDelta: Boolean = false) = x.callPropagateWhenDomainChanges(c, trackDelta)
+  def callPropagateWhenDomainChanges(c: Constraint,trackDelta: Boolean = false) = x.callPropagateWhenDomainChanges(c,trackDelta)
 
   // this method is useful when you have a view defined on a view
   def callValBindWhenBind(c: Constraint, variable: CPIntervalVar) = x.callValBindWhenBind(c, variable)

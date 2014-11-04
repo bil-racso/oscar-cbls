@@ -63,8 +63,8 @@ public class GrEqVarReif extends Constraint {
 		CPOutcome oc = propagate();
 		if (oc == CPOutcome.Suspend){
 			if (!b.isBound()) b.callValBindWhenBind(this);
-			if (!x.isBound()) x.callPropagateWhenBoundsChange(this,false);
-			if (!y.isBound()) y.callPropagateWhenBoundsChange(this,false);
+			if (!x.isBound()) x.callPropagateWhenBoundsChange(this);
+			if (!y.isBound()) y.callPropagateWhenBoundsChange(this);
 			if (b.isBound()) {
 				oc = valBind(b);
 			}

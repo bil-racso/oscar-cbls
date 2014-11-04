@@ -50,8 +50,8 @@ class CountSimple(val N: CPIntVar, val X: Array[CPIntVar], val Y: CPIntVar) exte
 
   override def setup(l: CPPropagStrength): CPOutcome = {
     X.foreach(_.callPropagateWhenDomainChanges(this,false))
-    Y.callPropagateWhenBind(this,false)
-    N.callPropagateWhenBoundsChange(this, false)
+    Y.callPropagateWhenBind(this)
+    N.callPropagateWhenBoundsChange(this)
     CPOutcome.Suspend
   }
   

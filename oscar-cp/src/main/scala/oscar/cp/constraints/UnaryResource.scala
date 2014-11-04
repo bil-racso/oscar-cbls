@@ -71,10 +71,10 @@ class UnaryResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: A
     // to do, link start, end, dur
 
     for (i <- 0 until n) {
-      starts(i).callPropagateWhenBoundsChange(this, false)
-      ends(i).callPropagateWhenBoundsChange(this, false)
+      starts(i).callPropagateWhenBoundsChange(this)
+      ends(i).callPropagateWhenBoundsChange(this)
       if (!required(i).isBound) {
-        required(i).callPropagateWhenBind(this, false)
+        required(i).callPropagateWhenBind(this)
       }
     }
 

@@ -111,8 +111,7 @@ abstract class CPIntVar(override val store: CPStore, override val name: String =
    * @param c
    * @see oscar.cp.core.Constraint#propagate()
    */
-  def callPropagateWhenDomainChanges(c: Constraint, trackDelta: Boolean = false): Unit
-
+  def callPropagateWhenDomainChanges(c: Constraint, trackDelta: Boolean = false): Unit 
 
   def filterWhenDomainChanges(filter: DeltaVarInt => CPOutcome) {
     store.post(
@@ -122,6 +121,17 @@ abstract class CPIntVar(override val store: CPStore, override val name: String =
           CPOutcome.Suspend
         }
       }) // should not fail
+  }
+  
+  def filterWhenDomainChanges(filter: => CPOutcome) {
+    store.post(
+      new Constraint(this.store, "filterWhenDomainChanges on  "+this) {
+        def setup(l: CPPropagStrength) = {
+          callPropagateWhenDomainChanges(this)
+          CPOutcome.Suspend
+        }
+        override def propagate() = filter
+      })
   }
 
 
@@ -155,7 +165,43 @@ abstract class CPIntVar(override val store: CPStore, override val name: String =
   def removeValue(value: Int): CPOutcome
 
   // ------ delta methods to be called in propagate -------
+  
+  def changed(sn: SnapshotVarInt): Boolean = {
+    sn.oldSize != size
+  }
 
+  def minChanged(sn: SnapshotVarInt): Boolean = {
+    assert(sn.oldMin <= min)
+    sn.oldMin < min
+  }
+
+  def maxChanged(sn: SnapshotVarInt): Boolean = {
+    assert(sn.oldMax >= max)
+    sn.oldMax > max
+  }
+
+  def boundsChanged(sn: SnapshotVarInt): Boolean = {
+    sn.oldMax == max
+  }
+
+  def oldMin(sn: SnapshotVarInt): Int = {
+    assert(sn.oldMin <= min)
+    sn.oldMin
+  }
+
+  def oldMax(sn: SnapshotVarInt): Int = {
+    assert(sn.oldMax >= max)
+    sn.oldMax
+  }
+
+  def oldSize(sn: SnapshotVarInt): Int = {
+    assert(sn.oldSize >= size)
+    sn.oldSize
+  }
+
+  def deltaSize(sn: SnapshotVarInt): Int = {
+    sn.oldSize - size
+  }
 
   def delta(oldMin: Int, oldMax: Int, oldSize: Int): Iterator[Int]
 
@@ -177,7 +223,8 @@ abstract class CPIntVar(override val store: CPStore, override val name: String =
 
   def deltaSize(c: Constraint): Int
 
-  def delta(c: Constraint): Iterator[Int]
+  def delta(c: Constraint): Iterator[Int]  
+
 
   // ------------------------ some useful methods for java -------------------------
 

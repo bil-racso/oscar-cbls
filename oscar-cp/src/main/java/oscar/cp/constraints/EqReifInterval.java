@@ -50,8 +50,8 @@ public class EqReifInterval extends Constraint {
 	
 	@Override
 	public CPOutcome setup(CPPropagStrength l) {
-		b.callPropagateWhenBind(this, false);
-		x.callPropagateWhenBoundsChange(this, false);
+		b.callPropagateWhenBind(this);
+		x.callPropagateWhenBoundsChange(this);
 		return propagate();
 	}
 	

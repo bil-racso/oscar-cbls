@@ -116,8 +116,8 @@ class Or(val x: Array[CPBoolVar]) extends Constraint(x(0).store, "Or") {
       assert(down != up)
       assert(x(down).isBound == false)
       assert(x(up).isBound == false)
-      x(down).callPropagateWhenBind(this,false)
-      x(up).callPropagateWhenBind(this,false)
+      x(down).callPropagateWhenBind(this)
+      x(up).callPropagateWhenBind(this)
     }
     Suspend
   }  

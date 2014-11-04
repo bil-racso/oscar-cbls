@@ -49,13 +49,13 @@ public class Minus extends Constraint {
 			return CPOutcome.Failure;
 		}
 		if (!x.isBound()) {
-			x.callPropagateWhenBoundsChange(this,false);
+			x.callPropagateWhenBoundsChange(this);
 		}
 		if (!y.isBound()) {
-			y.callPropagateWhenBoundsChange(this,false);
+			y.callPropagateWhenBoundsChange(this);
 		}
 		if (!z.isBound()) {
-			z.callPropagateWhenBoundsChange(this,false);
+			z.callPropagateWhenBoundsChange(this);
 		}
 		return CPOutcome.Suspend;
 	}

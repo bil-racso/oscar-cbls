@@ -83,9 +83,9 @@ public class Deviation extends Constraint {
     	
         for (int i = 0; i < x.length; i++) {
             if (!x[i].isBound())
-                x[i].callPropagateWhenBoundsChange(this,false);
+                x[i].callPropagateWhenBoundsChange(this);
         }
-        nd.callPropagateWhenBoundsChange(this,false);
+        nd.callPropagateWhenBoundsChange(this);
         return propagate();
     }
 

@@ -64,9 +64,9 @@ extends Constraint(capacity.store, "IQuadL2R") {
   def setup(strength: CPPropagStrength): CPOutcome = {
     priorityL2 = 2
     
-    def boundsCB(v: CPIntVar)  = { if (!v.isBound) v.callPropagateWhenBoundsChange(this, false) }
+    def boundsCB(v: CPIntVar)  = { if (!v.isBound) v.callPropagateWhenBoundsChange(this) }
     
-    def resourceCB(v: CPIntVar) = { if (!v.isBound) v.callPropagateWhenBind(this, false) }
+    def resourceCB(v: CPIntVar) = { if (!v.isBound) v.callPropagateWhenBind(this) }
     
     starts    foreach boundsCB
     durations foreach boundsCB

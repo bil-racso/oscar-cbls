@@ -29,7 +29,7 @@ class AllDiffFWC(val X: Array[CPIntVar]) extends Constraint(X(0).store, "AllDiff
 
   override def setup(l: CPPropagStrength): CPOutcome = {
     priorityL2 = CPStore.MaxPriorityL2 - 1
-    X.foreach(_.callPropagateWhenBind(this, false))
+    X.foreach(_.callPropagateWhenBind(this))
     val oc = propagate()
     oc
   }

@@ -53,7 +53,7 @@ public class GrEqCteReif extends Constraint {
 		CPOutcome oc = propagate();
 		if(oc == CPOutcome.Suspend){
 			b.callValBindWhenBind(this);
-			x.callPropagateWhenBoundsChange(this,false);
+			x.callPropagateWhenBoundsChange(this);
 			if (b.isBound()) {
 				oc = valBind(b);
 			}
