@@ -232,12 +232,12 @@ class FZCBLSConstraintPoster(val c: ConstraintSystem, implicit val getCBLSVar: V
     val defVar = vars(index);
     val params2 = params.take(index) ++ params.drop(index + 1)
     val vars2 = vars.take(index) ++ vars.drop(index + 1)
-    val prodArray = Array.tabulate(vars2.length)(n => Prod2(params2(n), vars2(n)).toIntVar);
+    //val prodArray = Array.tabulate(vars2.length)(n => Prod2(params2(n), vars2(n)).toIntVar);
     val linear = new Linear(vars2.map(getCBLSVar(_)),params2.map(_.value))
-    if (defParam.min == 1) {
+    if (defParam.value == 1) {
      // println("%post "+sum+ " - sum("+prodArray.mkString(", ")+")")
       Minus(sum, linear)
-    } else if (defParam.min == -1) {
+    } else if (defParam.value == -1) {
      // println("%post - "+sum+ " + sum("+prodArray.mkString(", ")+")")
       Minus(linear, sum)
     } else {

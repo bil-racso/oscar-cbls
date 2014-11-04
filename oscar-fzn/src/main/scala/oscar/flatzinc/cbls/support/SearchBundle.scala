@@ -299,6 +299,8 @@ abstract class NeighbourhoodTabuSearch(m: FZCBLSModel, sc: SearchControl) extend
   var tenure = MinTenure
   var ecnt = 0;
   var bcnt = 0;
+  val baseSearchSize = 100;
+  val searchFactor = 20;
   
   def acceptMove(best: Int,nonTabuSet: Set[CBLSIntVar])(m:Move): Boolean = {
     //changed forall to exists after a suggestion of Gustav.
@@ -349,8 +351,6 @@ class NeighbourhoodSearchOPT(m:FZCBLSModel, sc: SearchControl) extends Neighbour
   
   override def run()= {
     log("Starting Optimization Search")
-    val baseSearchSize = 100;
-    val searchFactor = 20;
     
     var bestNow = Int.MaxValue;
     var best = bestNow;
@@ -450,8 +450,7 @@ class NeighbourhoodSearchSAT(m:FZCBLSModel, sc: SearchControl) extends Neighbour
     var itSinceBest = 0;
     var bestViolation = Int.MaxValue
 
-    val baseSearchSize = 100;
-    val searchFactor = 20;
+
     var wait = 0;
     val waitDec = 1;
     

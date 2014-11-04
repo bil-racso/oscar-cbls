@@ -44,29 +44,44 @@ public class FZParser {
 	}
 	public static Model readFlatZincModel(CharStream input,Log log){
 		Model m = new Model(log);
-		try{
+		//try{
 	        FlatzincLexer lex = new FlatzincLexer(input);
 			CommonTokenStream tokens = new CommonTokenStream(lex);
 			FlatzincParser p = new FlatzincParser(tokens, m);
 			p.setBuildParseTree(false);//in order to get acceptable performance on large files
+			//might also need to implement this: https://theantlrguy.atlassian.net/wiki/pages/viewpage.action?pageId=1900591
+			//System.out.println(p.getErrorListeners());
+			p.removeErrorListeners();
+			//Handling errors
+			//p.addErrorListener(new DiagnosticErrorListener());
+			p.addErrorListener(new BaseErrorListener() {
+              public void syntaxError(Recognizer<?, ?> recon, Object offendingSymbol, int line,
+                  int positionInLine, String message, RecognitionException e) { 
+                throw new ParsingException("line "+line+":"+positionInLine+" "+message);
+              }
+            });
 	        p.flatzinc_model();
 	        if(p.getNumberOfSyntaxErrors()>0){
-	        	System.err.println("Syntax error. Aborting.");
-	            System.err.println("If the flatzinc file is correct, please report to the developers.");
-	        	System.exit(1);
+	          
+	          throw new ParsingException("Parsing Error Somewhere");
+	          /*System.err.println("Syntax error. Aborting.");
+	          System.err.println("If the flatzinc file is correct, please report to the developers.");
+	          System.exit(1);*/
 	        }
 			return m;
-		}catch(RecognitionException e){
+		/*}catch(RecognitionException e){
 			e.printStackTrace();//TODO: report more friendly messages
 			System.err.println("Syntax error. Aborting.");
 	          System.err.println("If the flatzinc file is correct, please report to the developers.");
 			System.exit(1);
 		}catch(ParsingException e){
-		  e.printStackTrace();//TODO: report more friendly messages
+		  System.err.println(e.getMessage());
+		  //e.printStackTrace();
+		  //TODO: report more friendly and complete messages
           System.err.println("Syntax error. Aborting.");
           System.err.println("If the flatzinc file is correct, please report to the developers.");
           System.exit(1);
-		}
-		return null;
+		}*/
+		//return null;
 	}
 }

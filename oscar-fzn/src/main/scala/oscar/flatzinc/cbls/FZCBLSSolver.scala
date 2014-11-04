@@ -150,7 +150,7 @@ class FZCBLSModel(val model: FZProblem, val c: ConstraintSystem, val m: Store, v
           //if (!parsedVariable.isDefined) {
             variables = cblsVariable :: variables;
           //}
-        case _ => ()//TODO: DO something for the concrete constants?
+       // case _ => ()//TODO: DO something for the concrete constants?
       }
     }
     variables;
@@ -225,13 +225,14 @@ class FZCBLSSolver extends SearchEngine with StopWatch {
     }
     model.constraints.foreach(c => if(c.getVariables().length <=1) log(0,"Remaining Unary Constraint "+c)
     else if(c.getVariables().filter(v => v.min != v.max).length <= 1){
-      log(0,"De facto Unary Constraint "+c); ; 
-      log(0,c.getVariables().map(v => v.min+".."+v.max).mkString(" , "))
+      log("De facto Unary Constraint "+c); ; 
+      log(2,c.getVariables().map(v => v.min+".."+v.max).mkString(" , "))
     })
     model.constraints.foreach{ case reif(c,b) => if(b.isBound) log(0,"Fixed reified constraint: "+b.value); case _ => {}}
     
     
     //added this loop to remove invariants targeting a bound variable.
+    //But this creates problems for the nonogram, where it creates another invariant that targets the input of an element and makes an out-of-bound exception
     for(c <- model.constraints ){
       if(c.definedVar.isDefined && c.definedVar.get.isBound)c.unsetDefinedVar(c.definedVar.get)
     }

@@ -24,6 +24,7 @@ import oscar.flatzinc.model.Annotation;
 import oscar.flatzinc.model.Domain;
 
 public class Element {
+    public String  location;
 	static int nextid = 0;
 	public String name;
 	int id;
