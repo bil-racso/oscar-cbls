@@ -15,19 +15,15 @@
 
 package oscar.cp.core
 
-import java.util.Collection
-import java.util.LinkedList
-import scala.collection.JavaConversions.asJavaCollection
-import scala.collection.JavaConversions.collectionAsScalaIterable
+import java.util.{Collection, LinkedList}
+
 import oscar.algo.ArrayQueue
 import oscar.algo.reversible.ReversiblePointer
 import oscar.algo.search.SearchNode
-import oscar.cp.constraints.Eq
-import oscar.cp.core.CPOutcome.Failure
-import oscar.cp.core.CPOutcome.Success
-import oscar.cp.core.CPOutcome.Suspend
 import oscar.cp.constraints.EqCons
-import oscar.algo.ArrayQueue
+import oscar.cp.core.CPOutcome.{Failure, Success, Suspend}
+
+import scala.collection.JavaConversions.{asJavaCollection, collectionAsScalaIterable}
 
 /**
  * Constraint Programming CPStore
@@ -466,7 +462,7 @@ class CPStore( final val propagStrength: CPPropagStrength) extends SearchNode {
       val outcome = x.assign(v)
       if (outcome != Failure) propagate()
       else {
-        status.value == Failure
+        status.value = Failure
         Failure
       }
     } catch {
@@ -483,7 +479,7 @@ class CPStore( final val propagStrength: CPPropagStrength) extends SearchNode {
       val outcome = x.removeValue(v)
       if (outcome != Failure) propagate()
       else {
-        status.value == Failure
+        status.value = Failure
         Failure
       }
     } catch {
