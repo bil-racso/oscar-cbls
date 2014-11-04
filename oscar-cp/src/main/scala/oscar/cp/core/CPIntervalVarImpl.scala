@@ -173,7 +173,7 @@ class CPIntervalVarImpl(store: CPStore, initialMin: Int, initialMax: Int, name: 
   @inline final def assign(value: Int): CPOutcome = {
     val min = revMin.value
     val max = revMax.value
-    if (value < min || max < value) Failure
+    if (value < min || max < value) throw Inconsistency
     else if (min == max) Suspend
     else {
       revMin.value = value
@@ -196,7 +196,7 @@ class CPIntervalVarImpl(store: CPStore, initialMin: Int, initialMax: Int, name: 
    */
   @inline final def updateMin(value: Int): CPOutcome = {
     val max = revMax.value
-    if (value > max) Failure
+    if (value > max) throw Inconsistency
     else {
       val oldMin = revMin.value
       if (value <= oldMin) Suspend
@@ -223,7 +223,7 @@ class CPIntervalVarImpl(store: CPStore, initialMin: Int, initialMax: Int, name: 
    */
   @inline final def updateMax(value: Int): CPOutcome = {
     val min = revMin.value
-    if (value < min) Failure
+    if (value < min) throw Inconsistency
     else {
       val oldMax = revMax.value
       if (value >= oldMax) Suspend
