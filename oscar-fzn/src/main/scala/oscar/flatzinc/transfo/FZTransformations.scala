@@ -39,9 +39,12 @@ object FZModelTransfo {
   
   def findInvariantsFromObjective(model: FZProblem, log: Log): Unit = {
     val visited = MSet.empty[Variable] 
-    val front: Queue[(Variable,Constraint,Objective.Value)] = Queue.empty[(Variable,Constraint,Objective.Value)]//Not sure the Constraint is useful
+    var front: Queue[(Variable,Constraint,Objective.Value)] = Queue.empty[(Variable,Constraint,Objective.Value)]//Not sure the Constraint is useful
+    var front2: Queue[(Variable,Constraint,Objective.Value)] = Queue.empty[(Variable,Constraint,Objective.Value)]
     model.search.variable.foreach(v => front.enqueue((v,null,model.search.obj)))//foreach on Option adds only if there is such a variable.
     var cnt = 0;
+    
+    //TODO: Avoid defining variables that are bound to some value!
     while(!front.isEmpty){
      // println(front.size + " "+ visited.size+ " " +model.variables.length)
       val (v,c,obj) = front.dequeue()
@@ -51,12 +54,19 @@ object FZModelTransfo {
         val cand2 = cand//.filter(c => ! dependsOn(c,v,false))
         if(cand2.length > 1){
           log(2,"! Found a variable that could be defined by more than one invariant (from Objective):"+v+" "+cand2.toString)
+          
+        }else{
+          log(2,"!!Otherwise "+v+" "+cand2.toString)
         }
         //Select the first suitable constraint
         if(!cand2.isEmpty){
-          val cc = cand2.head
-          cc.setDefinedVar(v)
-          cnt+=1
+          if(cand2.length==1){
+            val cc = cand2.head
+            cc.setDefinedVar(v)
+            cnt+=1
+          }else{
+            front2.enqueue((v,c,obj))
+          }
         }else{
           if(areAllIneq(v.cstrs)){
             log(0,"Found a possibility to make a min/max constraint for "+v);
@@ -66,6 +76,10 @@ object FZModelTransfo {
       }
       if(v.isDefined){
         v.definingConstraint.get.getVariables().foreach(vv => if(!visited.contains(vv)) {visited.add(vv); front.enqueue((vv,v.definingConstraint.get,Objective.SATISFY))})
+      }
+      if(front.isEmpty && !front2.isEmpty){
+        front = front2
+        front2 = Queue.empty[(Variable,Constraint,Objective.Value)]
       }
     }
     log(1,"Found "+cnt+" invariants from the objective.")
@@ -205,7 +219,7 @@ object FZModelTransfo {
       ret});
       var (cstrs,retract)= prop()
       while(!retract.isEmpty){
-        log(0,"Looping")
+        log(1,"Looping")
         model.constraints = cstrs
         for(c <- retract){
           c.retract()
