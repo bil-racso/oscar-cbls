@@ -2,8 +2,6 @@ package oscar.cp.testUtils
 
 import org.scalatest.FunSuite
 import org.scalatest.Matchers
+import org.scalatest.Assertions
 
-abstract class TestSuite extends FunSuite with Matchers {
-  
-  
-}
+abstract class TestSuite extends FunSuite with Matchers with Assertions
