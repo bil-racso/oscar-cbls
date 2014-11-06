@@ -810,8 +810,6 @@ trait PropagationElement extends DAGNode with TarjanNode{
 
   var DynamicallyListeningElementsFromSameComponent: PermaFilteredDoublyLinkedList[PropagationElement] = null
 
-
-
   /**through this method, the PropagationElement must declare which PropagationElement it is listening to
     * in the static dependency graph. The result must be stable after the call to setupPropagationStructure.
     * to override*/
