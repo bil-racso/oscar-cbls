@@ -83,12 +83,10 @@ class DelayedPermaFilter[T, F <: AnyRef](mFilter:(T,()=>Unit, ()=> Boolean) => U
   * */
 class PermaFilteredDoublyLinkedList[T <: AnyRef] extends Iterable[T]{
 
-
+  //TODO: could we use the same fantom for start and end, to spare some space?
   private val headfantom:PFDLLStorageElement[T] = new PFDLLStorageElement[T](null.asInstanceOf[T])
   private val endfantom:PFDLLStorageElement[T] = new PFDLLStorageElement[T](null.asInstanceOf[T])
   headfantom.setNext(endfantom)
-
-
 
   /** this function is called on insert. It takes
     * -the inserted element,
@@ -98,9 +96,9 @@ class PermaFilteredDoublyLinkedList[T <: AnyRef] extends Iterable[T]{
   private var permaFilter:AbstractPermaFilter[T] = null
 
   /**returns the size of the PermaFilteredDLL*/
-  override def size = msize
-
-  private var msize:Int = 0
+  override def size ={
+    throw new Error("this data structure needs to have a small memory footprint, so size is not kept, and we do not want to disappoint you with a O(n) method")
+  }
 
   /**adds an a item in the PermaFilteredDLL, and if accepted by the filter, adds it in the slave PermaFilteredDLL.
     * returns a reference that should be used to remove the item from all those structures at once.
@@ -109,7 +107,6 @@ class PermaFilteredDoublyLinkedList[T <: AnyRef] extends Iterable[T]{
     val d = new PFDLLStorageElement[T](elem)
     d.setNext(headfantom.next)
     headfantom.setNext(d)
-    msize +=1
 
     //TODO: could be faster if we generate a dedicated PFDLL when PF is activated
     if(permaFilter != null) permaFilter.notifyInsert(d)
@@ -128,8 +125,7 @@ class PermaFilteredDoublyLinkedList[T <: AnyRef] extends Iterable[T]{
     */
   def deleteElem(elemkey:PFDLLStorageElement[T]):T = {
     elemkey.prev.setNext(elemkey.next)
-    elemkey.prev = null
-    msize -=1
+    //elemkey.prev = null this was intended for debug purpose
 
     //TODO: could be faster if we generate a dedicated PFDLL when PF is activated
     if (permaFilter != null) permaFilter.notifyDelete(elemkey)
@@ -137,7 +133,7 @@ class PermaFilteredDoublyLinkedList[T <: AnyRef] extends Iterable[T]{
     elemkey.elem
   }
 
-  override def isEmpty:Boolean = size == 0
+  override def isEmpty:Boolean = headfantom.next == endfantom
 
   override def iterator = new PFDLLIterator[T](headfantom,endfantom)
 
