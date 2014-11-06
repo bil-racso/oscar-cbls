@@ -43,7 +43,7 @@ object MagicSeries extends CBLSModel with App with AlgebraTrait with StopWatch{
   val bounds = SortedMap[Int, CBLSIntVar]((for(v <- range) yield v -> magicSeries(v)):_*)
   c.post(Exactly(magicSeries, bounds))
 
-  //redundant constraint, to fasten the search procedure
+  //redundant constraint, to make the search procedure faster
   c.post(EQ(Sum(for(i <- range) yield (i * magicSeries(i)).toIntVar), size))
 
   var it: CBLSIntVar = CBLSIntVar(s, 0, "it")
