@@ -25,6 +25,9 @@ import oscar.cbls.objective.ObjectiveTrait
 import collection.immutable.{SortedSet, SortedMap}
 import oscar.cbls.invariants.lib.numeric.{Prod2, Prod, Sum}
 import oscar.cbls.invariants.core.propagation.Checker
+import oscar.cbls.invariants.core.computation.IntInvariant
+import oscar.cbls.invariants.lib.minmax.MinArray
+import oscar.cbls.invariants.lib.minmax.MaxArray
 
 /** A constraint system is a composition of constraints.
  * It is itself a constraint, offering the same features, namely, a global violation and a violation specific to each variable.
@@ -34,7 +37,21 @@ import oscar.cbls.invariants.core.propagation.Checker
  * @param _model is the model in which all the variables referenced by the constraints are declared.
   * @author renaud.delandtsheer@cetic.be
   * */
-case class ConstraintSystem(val _model:Store) extends Constraint with ObjectiveTrait{
+
+case class ConstraintSystem(override val _model:Store) extends AbstractConstraintSystem(_model, Sum.apply) with ObjectiveTrait{
+  override protected[cbls] def close(){
+    if(!isClosed){
+      super.close()
+      setObjectiveVar(Violation)
+    }
+  }
+}
+
+case class Disjunction(override val _model:Store) extends AbstractConstraintSystem(_model, v => MinArray(v.toArray));
+
+case class Conjunction(override val _model:Store) extends AbstractConstraintSystem(_model, v => MaxArray(v.toArray));
+
+class AbstractConstraintSystem(val _model:Store, Aggregate: (Iterable[CBLSIntVar] => IntInvariant)) extends Constraint {
   //ConstraintSystems do not act as invariant because everything is subcontracted.
 
   model = _model
@@ -50,7 +67,7 @@ case class ConstraintSystem(val _model:Store) extends Constraint with ObjectiveT
   val IndexForLocalViolationINSU = model.getStorageIndex
   val IndexForGlobalViolationINSU = model.getStorageIndex
 
-  private val Violation:CBLSIntVar = CBLSIntVar(this.model,0,Int.MaxValue,0,"Violation")
+  protected val Violation:CBLSIntVar = CBLSIntVar(this.model,0,Int.MaxValue,0,"Violation")
 
   private var PostedConstraints:List[(Constraint,CBLSIntVar)] = List.empty
   //private var AllVars:SortedMap[Variable,List[(Constraint,IntVar)]]=SortedMap.empty
@@ -109,7 +126,7 @@ case class ConstraintSystem(val _model:Store) extends Constraint with ObjectiveT
         else (Prod2(constr.violation(variable),weight)).toIntVar
       })
       val LocalViolation = (if (!product.isEmpty && product.tail.isEmpty) product.head
-                            else Sum(product).toIntVar)
+                            else Aggregate(product).toIntVar)
       variable.storeAt(IndexForLocalViolationINSU,LocalViolation)
     }
   }
@@ -128,12 +145,13 @@ case class ConstraintSystem(val _model:Store) extends Constraint with ObjectiveT
   private def aggregateGlobalViolations(){
     for (variable <- VarsWatchedForViolation){
       val ElementsAndViol:GlobalViolationDescriptor = variable.getStorageAt(IndexForGlobalViolationINSU)
-      ElementsAndViol.Violation <== Sum(ElementsAndViol.AggregatedViolation)
+      ElementsAndViol.Violation <== Aggregate(ElementsAndViol.AggregatedViolation)
       ElementsAndViol.AggregatedViolation = null
     }
   }
 
   var isClosed = false
+  
   /**Must be invoked before the violation can be queried.
    * no constraint can be added after this method has been called.
    * this method must also be called before closing the model.
@@ -141,12 +159,12 @@ case class ConstraintSystem(val _model:Store) extends Constraint with ObjectiveT
   protected[cbls] def close(){
     if(!isClosed){
       isClosed = true
-      Violation <== Sum(PostedConstraints.map((constraintANDintvar) => {
+      Violation <== Aggregate(PostedConstraints.map((constraintANDintvar) => {
         if(constraintANDintvar._2 == null) constraintANDintvar._1.violation
-        else Prod(SortedSet(constraintANDintvar._1.violation,constraintANDintvar._2)).toIntVar
+        else Prod2(constraintANDintvar._1.violation,constraintANDintvar._2).toIntVar
       }))
 
-      setObjectiveVar(Violation)
+     // setObjectiveVar(Violation)
 
       aggregateLocalViolations()
       PropagateLocalToGlobalViolations()
@@ -208,4 +226,5 @@ case class ConstraintSystem(val _model:Store) extends Constraint with ObjectiveT
     */
   override def checkInternals(c: Checker): Unit = {}
 }
+
 

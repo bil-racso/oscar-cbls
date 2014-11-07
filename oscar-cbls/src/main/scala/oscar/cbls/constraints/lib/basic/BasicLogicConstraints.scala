@@ -28,7 +28,7 @@ import oscar.cbls.modeling.Algebra._
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.lib.minmax._
 import oscar.cbls.constraints.core._
-import oscar.cbls.invariants.lib.numeric.{ Abs, Minus }
+import oscar.cbls.invariants.lib.numeric.{ Abs, Minus, Dist }
 import oscar.cbls.invariants.core.propagation.Checker
 import scala.math.abs
 
@@ -158,7 +158,7 @@ case class EQ(left: CBLSIntVar, right: CBLSIntVar) extends Constraint {
   registerConstrainedVariables(left, right)
   finishInitialization()
 
-  val Violation: CBLSIntVar = Abs(Minus(left, right))
+  val Violation: CBLSIntVar = Dist(left, right)
 
   override def violation: CBLSIntVar = Violation
   override def violation(v: Variable): CBLSIntVar = { if (left == v || right == v) Violation else 0 }

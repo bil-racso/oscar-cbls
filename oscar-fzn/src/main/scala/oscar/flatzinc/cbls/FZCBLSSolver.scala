@@ -71,7 +71,8 @@ class FZCBLSObjective(opt: Objective.Value, private val objectiveVar: CBLSIntVar
       })
   }
   def close(){
-    violationWeight.maxVal = math.max(1,Int.MaxValue/violation.maxVal/2)
+    if(violation.maxVal!=0)//violation.maxVal can be 0 in case the Constraint System has no constraint at all.
+      violationWeight.maxVal = math.max(1,Int.MaxValue/violation.maxVal/2)
   }
   def apply() = objective
   def getObjectiveValue(): Int = {
@@ -158,7 +159,7 @@ class FZCBLSModel(val model: FZProblem, val c: ConstraintSystem, val m: Store, v
     implicit def getCBLSVar(v: Variable) = {
       v match {
       /*  case ConcreteConstant(_, value, _) =>
-          //All constants need to have a store, otherwise they won't have a UniqueID (from PropagationElement) and constraints will start throwing exceptions
+          
         cblsIntMap.get(value + "") match {
           case None =>
             val c = CBLSIntConstDom(value, m);
@@ -170,7 +171,10 @@ class FZCBLSModel(val model: FZProblem, val c: ConstraintSystem, val m: Store, v
       case ConcreteVariable(id, _, _) =>
         cblsIntMap.get(id) match {
           case None if v.isBound =>
-            val c = CBLSIntConstDom(v.value, m);
+            //From Gustav: All constants need to have a store, otherwise they won't have a UniqueID (from PropagationElement) and constraints will start throwing exceptions
+            //JNM: I removed ",m " to avoid introducing a lot of useless "variables" in the model in the hope of making it more efficient.
+            val c = CBLSIntConstDom(v.value);
+
             cblsIntMap += id -> c;
             c;
           case Some(c) => c;
@@ -231,11 +235,7 @@ class FZCBLSSolver extends SearchEngine with StopWatch {
     model.constraints.foreach{ case reif(c,b) => if(b.isBound) log(0,"Fixed reified constraint: "+b.value); case _ => {}}
     
     
-    //added this loop to remove invariants targeting a bound variable.
-    //But this creates problems for the nonogram, where it creates another invariant that targets the input of an element and makes an out-of-bound exception
-    for(c <- model.constraints ){
-      if(c.definedVar.isDefined && c.definedVar.get.isBound)c.unsetDefinedVar(c.definedVar.get)
-    }
+    
     
     
     if(!opts.is("no-find-inv")){
@@ -244,6 +244,15 @@ class FZCBLSSolver extends SearchEngine with StopWatch {
     }else{
       log("Did not search for new invariants")
     }
+    
+    //
+    //added this loop to remove invariants targeting a bound variable.
+    //Moved this line after invariant discovery to avoid problem in Nonogram but then it is maybe useless? What was the initial purpose?
+    //But this creates problems for the nonogram, where it creates another invariant that targets the input of an element and makes an out-of-bound exception
+    for(c <- model.constraints ){
+      if(c.definedVar.isDefined && c.definedVar.get.isBound)c.unsetDefinedVar(c.definedVar.get)
+    }
+    
     if(opts.is("no-post-inv")){
       for(c <- model.constraints ){
         if(c.definedVar.isDefined)c.unsetDefinedVar(c.definedVar.get)

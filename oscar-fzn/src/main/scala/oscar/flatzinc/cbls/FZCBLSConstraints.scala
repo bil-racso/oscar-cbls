@@ -187,9 +187,11 @@ class FZCBLSConstraintPoster(val c: ConstraintSystem, implicit val getCBLSVar: V
 
   def get_bool_not_inv(a: Variable, b: Variable, defId: String, ann: List[Annotation]) = {
     if (a.id == defId) {
-      EQ(b, 0)
+      //EQ(b, 0)
+      Minus(1,b)
     } else {
-      EQ(a, 0)
+      //EQ(a, 0)
+      Minus(1,a)
     }
   }
 
@@ -405,10 +407,10 @@ class FZCBLSConstraintPoster(val c: ConstraintSystem, implicit val getCBLSVar: V
       case array_var_bool_element(b, as, r, ann)      => EQ(r,get_array_int_element_inv(b, as, r,r.id, ann))
       case array_var_int_element(b, as, r, ann)       => EQ(r,get_array_int_element_inv(b, as, r,r.id, ann))
 
-      case bool2int(x, y, ann)                        => EQ(x,get_int_eq_inv(x, y,x.id, ann))
+      case bool2int(x, y, ann)                        => EQ(x,y)
       case bool_and(a, b, r, ann)                     => EQ(r,get_int_times_inv(a, b, r,r.id, ann))
       case bool_clause(a, b, ann)                     => get_bool_clause(a, b, ann)
-      case bool_eq(a, b, ann)                         => EQ(a,get_int_eq_inv(a, b,a.id, ann))
+      case bool_eq(a, b, ann)                         => EQ(a,b)
       case bool_le(a, b, ann)                         => get_int_le(a, b, ann)
       case bool_lin_eq(params, vars, sum, ann)        => get_int_lin_eq(params, vars, sum, ann)
       case bool_lin_le(params, vars, sum, ann)        => get_int_lin_le(params, vars, sum, ann)
@@ -419,7 +421,7 @@ class FZCBLSConstraintPoster(val c: ConstraintSystem, implicit val getCBLSVar: V
 
       case int_abs(x, y, ann)                         => EQ(y,get_int_abs_inv(x, y, y.id,ann))
       case int_div(x, y, z, ann)                      => EQ(z,get_int_div_inv(x, y, z,z.id, ann))
-      case int_eq(x, y, ann)                          => EQ(x,get_int_eq_inv(x, y,x.id, ann))
+      case int_eq(x, y, ann)                          => EQ(x,y)
       case int_le(x, y, ann)                          => get_int_le(x, y, ann)
       case int_lin_eq(params, vars, sum, ann)         => get_int_lin_eq(params, vars, sum, ann)
       case int_lin_le(params, vars, sum, ann)         => get_int_lin_le(params, vars, sum, ann)

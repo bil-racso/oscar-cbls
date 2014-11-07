@@ -24,6 +24,7 @@ package oscar.cbls.invariants.core.computation
 import collection.immutable.{SortedSet, SortedMap}
 import oscar.cbls.invariants.core.propagation._
 import language.implicitConversions
+import collection.mutable.Map
 
 /**This class contains the invariants and variables
   * They are all modelled as propagation Elements, which are handled by the inherited
@@ -811,7 +812,7 @@ class CBLSIntVar(model: Store, val domain: Range, private var Value: Int, n: Str
       val old=OldValue
       OldValue=Value
       for (e:((PropagationElement,Any)) <- getDynamicallyListeningElements){ //TODO: here should come some postponed stuff as well
-      val inv:Invariant = e._1.asInstanceOf[Invariant]
+        val inv:Invariant = e._1.asInstanceOf[Invariant]
         assert({this.model.NotifiedInvariant=inv; true})
         inv.notifyIntChangedAny(this,e._2,old,Value)
         assert({this.model.NotifiedInvariant=null; true})
@@ -891,7 +892,15 @@ object CBLSIntVar{
 
   def intVarToIntSetVar(i:CBLSIntVar):Singleton = Singleton(i)
 
-  implicit def int2IntVar(a:Int):CBLSIntVar = CBLSIntConst(a)
+  val constMap = Map.empty[Int,CBLSIntConst]
+  implicit def int2IntVar(a:Int):CBLSIntVar = {
+    if(constMap.contains(a))constMap(a)
+    else{
+      val res = CBLSIntConst(a)
+      constMap(a) = res
+      res
+    }
+  }
 }
 
 /**

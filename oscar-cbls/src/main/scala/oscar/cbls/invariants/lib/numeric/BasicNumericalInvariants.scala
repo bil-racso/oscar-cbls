@@ -86,7 +86,7 @@ class Linear(vars: Iterable[CBLSIntVar], coeffs: IndexedSeq[Int]) extends IntInv
   vars.zipWithIndex.foreach(vi => registerStaticAndDynamicDependency(vi._1,vi._2))
   finishInitialization()
 
-  //TODO: There is still the risk of adding plus and minus "infinity" and get absurds results. But at least we avoid overflows...
+  //TODO: There is still the risk of adding plus and minus "infinity" and get absurd results. But at least we avoid overflows...
   def myMin = vars.zip(coeffs).foldLeft(0)((acc, intvar) => DomainHelper.safeAdd(acc, DomainHelper.getMinProd(intvar._1.minVal,intvar._1.maxVal,intvar._2,intvar._2)))
   def myMax = vars.zip(coeffs).foldLeft(0)((acc, intvar) => DomainHelper.safeAdd(acc, DomainHelper.getMaxProd(intvar._1.minVal,intvar._1.maxVal,intvar._2,intvar._2)))
 
@@ -176,6 +176,19 @@ class Prod(vars: Iterable[CBLSIntVar]) extends IntInvariant {
  * */
 case class Minus(left: CBLSIntVar, right: CBLSIntVar)
   extends IntInt2Int(left, right, ((l: Int, r: Int) => DomainHelper.safeSub(l,r)), DomainHelper.safeSub(left.minVal, right.maxVal), DomainHelper.safeSub(left.maxVal, right.minVal)) {
+  assert(left != right)
+}
+
+/**
+ * abs(left - right)
+ * where left, right, and output are IntVar
+ * @author jean-noel.monette@it.uu.se
+ * */
+case class Dist(left: CBLSIntVar, right: CBLSIntVar)
+  extends IntInt2Int(left, right, 
+      ((l: Int, r: Int) => DomainHelper.safeSub(l,r).abs), 
+      {val v = DomainHelper.safeSub(left.minVal, right.maxVal); (if (v <= 0) 0 else v)}, 
+      DomainHelper.safeSub(left.maxVal, right.minVal).max(DomainHelper.safeSub(right.maxVal,left.minVal))) {
   assert(left != right)
 }
 

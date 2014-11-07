@@ -43,8 +43,7 @@ object FZModelTransfo {
     var front2: Queue[(Variable,Constraint,Objective.Value)] = Queue.empty[(Variable,Constraint,Objective.Value)]
     model.search.variable.foreach(v => front.enqueue((v,null,model.search.obj)))//foreach on Option adds only if there is such a variable.
     var cnt = 0;
-    
-    //TODO: Avoid defining variables that are bound to some value!
+    var first = true
     while(!front.isEmpty){
      // println(front.size + " "+ visited.size+ " " +model.variables.length)
       val (v,c,obj) = front.dequeue()
@@ -60,7 +59,7 @@ object FZModelTransfo {
         }
         //Select the first suitable constraint
         if(!cand2.isEmpty){
-          if(cand2.length==1){
+          if(cand2.length==1 || !first){
             val cc = cand2.head
             cc.setDefinedVar(v)
             cnt+=1
@@ -75,14 +74,15 @@ object FZModelTransfo {
         }
       }
       if(v.isDefined){
-        v.definingConstraint.get.getVariables().foreach(vv => if(!visited.contains(vv)) {visited.add(vv); front.enqueue((vv,v.definingConstraint.get,Objective.SATISFY))})
+        v.definingConstraint.get.getVariables().foreach(vv => if(!visited.contains(vv) && vv.domainSize>1) {visited.add(vv); front.enqueue((vv,v.definingConstraint.get,Objective.SATISFY))})
       }
       if(front.isEmpty && !front2.isEmpty){
+        first = false
         front = front2
         front2 = Queue.empty[(Variable,Constraint,Objective.Value)]
       }
     }
-    log(1,"Found "+cnt+" invariants from the objective.")
+    log(1,"Found "+cnt+" new invariants from the objective.")
   }
   
   def findInvariants(model: FZProblem, log:Log):Unit = {
