@@ -22,6 +22,8 @@ package oscar.cbls.invariants.core.algo.dag
 
 import oscar.cbls.invariants.core.algo.heap.BinomialHeap
 
+import scala.collection.immutable.SortedSet
+
 
 /** a DAG node with some abstract methods
   * @author renaud.delandtsheer@cetic.be
@@ -33,7 +35,6 @@ trait DAGNode extends Ordered[DAGNode]{
 
   /**supposed to be false between each pass of the algorithm*/
   var visited: Boolean = false
-  var visited2:Boolean = false
 
   /**it gives the unique ID of the PropagationElement.
     * those uniqueID are expected to start at 0 and to increase continuously
@@ -169,20 +170,22 @@ trait DAG {
     //on marque visite quand on poppe de la DFS ou quand on est retombe sur le debut du cycle
     var ExploredStack:List[DAGNode] = List.empty //upside down
 
+    var visited2:SortedSet[Int] = SortedSet.empty
+
     def DFS(n:DAGNode):Boolean = { //return true si on a trouve un cycle
       if(n.visited) return false
-      if(n.visited2){  //found a cycle
+      if(visited2.contains(n.UniqueID)){  //found a cycle
         ExploredStack = (n :: ExploredStack).reverse
         n.visited=true
         while(!ExploredStack.head.visited){ExploredStack = ExploredStack.tail}
-        nodes.foreach(p => {p.visited = false; p.visited2 = false})
+        nodes.foreach(p => {p.visited = false; visited2 -= p.UniqueID})
         true
       }else{ //not yet
-        n.visited2 = true
+        visited2 += n.UniqueID
         ExploredStack = n :: ExploredStack
         n.getDAGSucceedingNodes.foreach(p => {if(DFS(p)){return true}})
         n.visited=true
-        n.visited2 = false
+        visited2 -= n.UniqueID
         ExploredStack = ExploredStack.tail
         false
       }
@@ -195,7 +198,7 @@ trait DAG {
       if (!n.visited)
         if (DFS(n)){return ExploredStack}
     })
-    nodes.foreach(p => {p.visited = false; p.visited2 = false})
+    nodes.foreach(p => {p.visited = false})
     null
   }
 

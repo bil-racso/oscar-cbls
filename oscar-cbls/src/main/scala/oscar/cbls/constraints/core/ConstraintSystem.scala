@@ -33,10 +33,9 @@ import oscar.cbls.invariants.lib.minmax.MaxArray
  * It is itself a constraint, offering the same features, namely, a global violation and a violation specific to each variable.
  * monitoring the violation of a variable requires that the ConstraintSystem has been notified that the variable should have an associated violation degree.
  * This is achieved by calling the method registerForViolation(v:Variable).
- * @author  Renaud De Landtsheer rdl@cetic.be
  * @param _model is the model in which all the variables referenced by the constraints are declared.
-  * @author renaud.delandtsheer@cetic.be
-  * */
+ * @author renaud.delandtsheer@cetic.be
+ */
 
 case class ConstraintSystem(override val _model:Store) extends AbstractConstraintSystem(_model, Sum.apply) with ObjectiveTrait{
   override protected[cbls] def close(){
@@ -64,8 +63,8 @@ class AbstractConstraintSystem(val _model:Store, Aggregate: (Iterable[CBLSIntVar
     var AggregatedViolation:List[CBLSIntVar] = List.empty
   }
 
-  val IndexForLocalViolationINSU = model.getStorageIndex
-  val IndexForGlobalViolationINSU = model.getStorageIndex
+  val IndexForLocalViolationINSU = model.getStorageKey
+  val IndexForGlobalViolationINSU = model.getStorageKey
 
   protected val Violation:CBLSIntVar = CBLSIntVar(this.model,0,Int.MaxValue,0,"Violation")
 

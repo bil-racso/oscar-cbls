@@ -3,39 +3,26 @@
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- *   
+ *
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License  for more details.
- *   
+ *
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
+package oscar.cbls.routing
+
 /*******************************************************************************
  * Contributors:
- *     This code has been initially developed by CETIC www.cetic.be
- *         by Renaud De Landtsheer
+ *     This code has been initially developed by Ghilain Florent.
  ******************************************************************************/
 
-package oscar.cbls
-
-import oscar.cbls.scheduling.solver.IFlatIRelax
-import scheduling.model.{Planning, SuperActivity, Activity, CumulativeResource}
+//TODO: a segment exchange neighbor that exchange two segments of two route (or from the same route) heavily relying on the k-nearest and route invariant of course
 
 /**
- *
- *  This package is a scheduling library.
- * it supports
- - [[oscar.cbls.scheduling.model.CumulativeResource]]
- - [[oscar.cbls.scheduling.model.Activity]] with varying durations and precedence constraints
- - [[oscar.cbls.scheduling.model.SuperActivity]] that align their start and end to other tasks.
- *   This is useful to model that a resource is not released between tasks.
- *
- * In this package, Tasks are grouped into [[oscar.cbls.scheduling.model.Planning]] that keeps references to all tasks and resources.
- * This package features the [[oscar.cbls.scheduling.solver.IFlatIRelax]] search heuristics with various tunings
-  * @author renaud.delandtsheer@cetic.be
- * */
-package object scheduling{
-}
-
+ * Contains all neighborhoods, like three-opt, two-opt, 1-0 exchange, etc..
+ * all these neighborhood implement the [[oscar.cbls.search.core.Neighborhood]] so they can be used with [[oscar.cbls.search.combinators]]
+ */
+package object neighborhood2 {}

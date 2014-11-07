@@ -59,7 +59,7 @@ case class MultiKnapsack(items: Array[CBLSIntVar], itemsizes: Array[CBLSIntVar],
     for (binid <- binsizes.indices)
     yield (binfilling(binid) le binsizes(binid)).violation).toArray
 
-  private val itemviolations:Array[CBLSIntVar] = items.map(itemval =>  binviolations.element(itemval))
+  private val itemviolations:Array[CBLSIntVar] = items.map(itemval =>  binviolations.element(itemval).toIntVar)
 
   private val Violation:CBLSIntVar = Sum(binviolations).toIntVar
 

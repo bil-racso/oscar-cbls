@@ -121,9 +121,12 @@ abstract class PropagationStructure(val verbose: Boolean, val checker:Option[Che
         toreturn
       } else {
         //identification des composantes connexes
-        TarjanWithBigNodes.getStronlyConnexComponents[PropagationElement](
+        val storageForTarjan = this.getNodeStorage[TarjanNodeData]
+        storageForTarjan.initialize(() => new TarjanNodeData)
+        TarjanWithExternalStorage.getStronlyConnexComponents[PropagationElement](
           getPropagationElements,
-          p => p.getStaticallyListeningElements)
+          p => p.getStaticallyListeningElements,
+          storageForTarjan.get)
       }
 
     assert(getPropagationElements.size == StronglyConnectedComponents.foldLeft(0)
@@ -530,7 +533,7 @@ class NodeDictionary[T](val MaxNodeID:Int)(implicit val X:Manifest[T]){
 
   def get(elem:PropagationElement):T = storage(elem.UniqueID)
 
-  def initialize(value:T){for (i <- storage.indices) storage(i) = value}
+  def initialize(value:() => T){for (i <- storage.indices) storage(i) = value()}
 }
 
 abstract class StronglyConnectedComponent(val Elements: Iterable[PropagationElement],
@@ -620,7 +623,7 @@ class StronglyConnectedComponentTopologicalSort(override val Elements: Iterable[
   }
 
   def InitiateDynamicGraphFromSameComponent(e:PropagationElement){
-    assert(component != null)
+    assert(e.component == this)
 
     def filterForListened(listened:PropagationElement,injector:(()=>Unit), isStillValid:(()=> Boolean)):Unit = {
       if(this == listened.component)
@@ -753,7 +756,7 @@ case class KeyForElementRemoval(element: PropagationElement
  - a dynamic graph whose edge can change dynamically, but are all included in the static propagation graph
   * @author renaud.delandtsheer@cetic.be
   * */
-trait PropagationElement extends DAGNode with TarjanNode{
+trait PropagationElement extends DAGNode{
 
   final def compare(that: DAGNode): Int = {
     assert(this.UniqueID != -1, "cannot compare non-registered PropagationElements this: [" + this + "] that: [" + that + "]")
@@ -761,6 +764,7 @@ trait PropagationElement extends DAGNode with TarjanNode{
     this.UniqueID - that.UniqueID
   }
 
+  //for cycle managing; maybe should we unify with model?
   /**this refers to the propagationComponent that contains the PropagationElement.
     * it is managed by the propagation structure
     */
@@ -771,6 +775,7 @@ trait PropagationElement extends DAGNode with TarjanNode{
     */
   var isScheduled: Boolean = false
 
+  //for cycle managing
   /**set to true if the PropagationElement is one that can break
     * or make dependency cycles in the dynamic dependency graph
     * managed by the PropagationComponent
@@ -806,11 +811,11 @@ trait PropagationElement extends DAGNode with TarjanNode{
   val DynamicallyListeningElements: PermaFilteredDoublyLinkedList[(PropagationElement, Any)]
   = new PermaFilteredDoublyLinkedList[(PropagationElement, Any)]
 
+  //for cycle managing
   var DynamicallyListenedElementsFromSameComponent: PermaFilteredDoublyLinkedList[PropagationElement] = null
 
+  //for cycle managing
   var DynamicallyListeningElementsFromSameComponent: PermaFilteredDoublyLinkedList[PropagationElement] = null
-
-
 
   /**through this method, the PropagationElement must declare which PropagationElement it is listening to
     * in the static dependency graph. The result must be stable after the call to setupPropagationStructure.

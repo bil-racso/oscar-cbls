@@ -890,8 +890,6 @@ object CBLSIntVar{
     def compare(o1: CBLSIntVar, o2: CBLSIntVar) = o1.compare(o2)
   }
 
-  def intVarToIntSetVar(i:CBLSIntVar):Singleton = Singleton(i)
-
   val constMap = Map.empty[Int,CBLSIntConst]
   implicit def int2IntVar(a:Int):CBLSIntVar = {
     if(constMap.contains(a))constMap(a)
@@ -901,6 +899,10 @@ object CBLSIntVar{
       res
     }
   }
+  
+  implicit def toFunction(i:CBLSIntVar):()=>Int = () => i.value
+
+  implicit def namedIntConst(valAndName:(Int,String)):CBLSIntVar = CBLSIntConst(valAndName._1, null, valAndName._2)
 }
 
 /**
@@ -909,10 +911,10 @@ object CBLSIntVar{
  * @param ConstValue: the value of the constant
  * @author renaud.delandtsheer@cetic.be
  */
-case class CBLSIntConst(ConstValue:Int, override val model:Store = null)
+case class CBLSIntConst(ConstValue:Int, override val model:Store = null, override val name: String = null)
   extends CBLSIntVar(model, (ConstValue to ConstValue), ConstValue, toString){
   override def getValue(NewValue:Boolean=false):Int = ConstValue //pour pas avoir de propagation
-  override def toString:String = "IntConst("+ ConstValue + ")"
+  override def toString:String = if (name == null) "IntConst("+ ConstValue + ")" else name + ":=" + ConstValue
 }
 
 /**An IntSetVar is a variable managed by the [[oscar.cbls.invariants.core.computation.Store]] whose type is set of integer.
@@ -1112,6 +1114,8 @@ object CBLSSetVar{
   }
 
   implicit def intSet2IntSetVar(a:SortedSet[Int]):CBLSSetVar = CBLSSetConst(a)
+
+  implicit def toFunction(s:CBLSSetVar):()=>SortedSet[Int] = () => s.value
 }
 
 /**
@@ -1227,6 +1231,8 @@ case class IdentityInt(v:CBLSIntVar) extends IntInvariant {
     //ici, on propage tout de suite, c'est les variables qui font le stop and go.
     output := NewVal
   }
+
+
 }
 
 /** an invariant that is the identity function
@@ -1264,32 +1270,3 @@ case class IdentitySet(v:CBLSSetVar) extends SetInvariant{
 }
 
 
-/** an invariant that defines a singleton set out of a single int var.
-  * @author renaud.delandtsheer@cetic.be
-  */
-case class Singleton(v: CBLSIntVar) extends SetInvariant  {
-
-  var output:CBLSSetVar = null
-  registerStaticAndDynamicDependency(v)
-  finishInitialization()
-
-  def myMin = v.minVal
-  def myMax = v.maxVal
-
-  override def checkInternals(c:Checker){
-    assert(output.getValue(true).size == 1)
-    assert(output.getValue(true).head == v.value)
-  }
-
-  override def setOutputVar(vv:CBLSSetVar){
-    output = vv
-    output.setValue(SortedSet(v.value))
-  }
-
-  override def notifyIntChanged(v:CBLSIntVar,OldVal:Int,NewVal:Int){
-    assert(v == this.v)
-    //ici, on propage tout de suite, c'est les variables qui font le stop and go.
-    output.deleteValue(OldVal)
-    output.insertValue(NewVal)
-  }
-}

@@ -41,7 +41,7 @@ protected class LEA(val left: CBLSIntVar, val right: CBLSIntVar) extends Constra
 
   registerConstrainedVariables(left, right)
 
-  val Violation: CBLSIntVar = Max2(0, left - right)
+  val Violation: CBLSIntVar = Max2(0, left - right).toIntVar(this.getClass().getSimpleName() + ".violation")
 
   finishInitialization()
 

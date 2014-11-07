@@ -248,6 +248,20 @@ case class Step(x: CBLSIntVar, pivot: Int = 0, thenval: Int = 1, elseval: Int = 
   extends Int2Int(x, (a: Int) => if (a > pivot) thenval else elseval, 0, 1)
 
 /**
+ * This invariant implements the identity function within the min-max range.
+ * values lower tham min result to min
+ * values higher tham max result to max
+ * @author renaud.delandtsheer@cetic.be
+ * @param x
+ * @param min
+ * @param max
+ */
+case class Bound(x: CBLSIntVar, min:Int, max:Int)
+  extends Int2Int(x, (a: Int) => if (a < min) min else if (a > max) max else a,min, max)
+
+
+
+/**
  * @author Gustav Björdal
  */
 object DomainHelper {
@@ -310,3 +324,5 @@ object DomainHelper {
   }
   //Division of integers is always safe.
 }
+
+
