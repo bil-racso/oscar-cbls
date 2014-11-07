@@ -520,12 +520,12 @@ abstract class PropagationStructure(val verbose: Boolean, val checker:Option[Che
   * because the instantiated array will be very large compared to your benefits.
   * This might kill cache and RAM for nothing
   *
-  * @param MaxNodeID the maxial ID of a node to be stored in the dictionary (since it is O(1) it is an array, and we allocate the full necessary size
+  * @param MaxNodeID the maximal ID of a node to be stored in the dictionary (since it is O(1) it is an array, and we allocate the full necessary size
   * @tparam T the type stored in this structure
   * @author renaud.delandtsheer@cetic.be
   */
 class NodeDictionary[T](val MaxNodeID:Int)(implicit val X:Manifest[T]){
-  private val storage:Array[T] = new Array[T](MaxNodeID-1)
+  private val storage:Array[T] = new Array[T](MaxNodeID+1)
 
   def update(elem:PropagationElement,value:T){
     storage(elem.UniqueID)=value
