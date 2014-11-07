@@ -130,7 +130,7 @@ class PermaFilteredDoublyLinkedList[T <: AnyRef] extends Iterable[T]{
     */
   def deleteElem(elemkey:PFDLLStorageElement[T]):T = {
     elemkey.prev.setNext(elemkey.next)
-    //elemkey.prev = null this was intended for debug purpose
+    elemkey.prev = null //this is checked by the delayed perma filter, so DO NOT REMOVE THIS SEEMIGNLY USELESS INSTRUCTION OR YOU ARE DOOMED
 
     if (permaFilter != null) permaFilter.notifyDelete(elemkey)
 
@@ -188,7 +188,6 @@ class PermaFilteredDoublyLinkedList[T <: AnyRef] extends Iterable[T]{
     }
     toReturn
   }
-
 }
 
 /**
@@ -205,12 +204,6 @@ class PFDLLStorageElement[T](val elem:T){
     this.next = d
     d.prev = this
   }
-
-  override def toString():String = {
-    if (next == null) return "endPhantom"
-    if (prev == null) return "headPhantom"
-    return "regular StorageElement"
-  }
 }
 
 class PFDLLIterator[T](var CurrentKey:PFDLLStorageElement[T],
@@ -222,4 +215,3 @@ class PFDLLIterator[T](var CurrentKey:PFDLLStorageElement[T],
 
   def hasNext:Boolean = {CurrentKey.next != fantom}
 }
-
