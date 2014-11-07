@@ -67,7 +67,8 @@ public class TestLexLeq extends TestCase {
     	s.post(new EqCons(y[1],0));
     	s.post(new EqCons(x[2],1));
     	
-    	
+    	System.out.println(x[0]+" "+x[1]+" "+x[2]);
+    	System.out.println(y[0]+" "+y[1]+" "+y[2]);
     	assertTrue(!s.isFailed());
     	assertTrue(x[0].getValue()==0);
     	assertTrue(x[1].getValue()==0);

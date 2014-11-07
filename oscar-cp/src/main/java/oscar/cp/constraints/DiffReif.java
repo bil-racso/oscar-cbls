@@ -18,6 +18,7 @@ import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
 import oscar.cp.core.CPBoolVar;
 import oscar.cp.core.CPIntVar;
+import oscar.cp.core.CPIntervalVar;
 import oscar.cp.core.Constraint;
 import oscar.cp.core.CPStore;
 
@@ -64,7 +65,7 @@ public class DiffReif extends Constraint {
 	}
 	
 	@Override
-	public CPOutcome updateBounds(CPIntVar x) {
+	public CPOutcome updateBounds(CPIntervalVar x) {
 		if (x.getMax() < v || x.getMin() > v) {
 			if (b.assign(1) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
@@ -88,7 +89,7 @@ public class DiffReif extends Constraint {
 	
 
 	@Override
-	public CPOutcome valBind(CPIntVar var) {
+	public CPOutcome valBind(CPIntervalVar var) {
 		if (b.isBound()) {
 			if (b.getValue() == 1) {
 				//x != v

@@ -19,6 +19,8 @@ import oscar.algo.reversible.ReversibleInt;
 import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
 import oscar.cp.core.CPIntVar;
+import oscar.cp.core.CPIntervalVar;
+import oscar.cp.core.CPIntervalVar;
 import oscar.cp.core.Constraint;
 
 /**
@@ -86,10 +88,10 @@ public class AtLeastNValueFWC extends Constraint {
 	     for (int k=0; k < x.length; k++) {
 	       if (!x[k].isBound())
 	         x[k].callValBindIdxWhenBind(this,k);
-	       	 x[k].callPropagateWhenBind(this,false);
+	       	 x[k].callPropagateWhenBind(this);
 	     }
 	     if (!nValueVar.isBound()) {
-	       nValueVar.callPropagateWhenBoundsChange(this,false);
+	       nValueVar.callPropagateWhenBoundsChange(this);
 	     }
 
 	     int ubNbValueUsed = nbValueUsed.getValue() + (x.length -nbBound.getValue());
@@ -101,7 +103,7 @@ public class AtLeastNValueFWC extends Constraint {
 	}
 	
 	@Override
-	public CPOutcome valBindIdx(CPIntVar var, int idx) {
+	public CPOutcome valBindIdx(CPIntervalVar var, int idx) {
 		
 		int val = var.getValue();
 		nbBound.incr();

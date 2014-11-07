@@ -36,7 +36,7 @@ import oscar.algo.reversible.ReversibleSetIndexedArray
  *
  * @author Pierre Schaus - pschaus@gmail.com
  */
-class AllDiffBC(val x: Array[CPIntVar]) extends Constraint(x(0).store, "AllDiffBC") {
+class AllDiffBC(val x: Array[_ <: CPIntervalVar]) extends Constraint(x(0).store, "AllDiffBC") {
 
   class Interval(var min: Int, var max: Int, var minRank: Int, var maxRank: Int) {
     override def toString = "["+min+","+max+"]"
@@ -267,17 +267,12 @@ class AllDiffBC(val x: Array[CPIntVar]) extends Constraint(x(0).store, "AllDiffB
       i += 1
     }
     sortIt()
-    //println(minSorted.size)
-    //println(x.mkString(","))
-    //println(minSorted.mkString(","))
-    //println(maxSorted.mkString(","))
     statusLower = filterlower()
     
-   // println("lower failed? " + (statusLower == INCONSISTENT))
     if (statusLower != INCONSISTENT) {
       statusUpper = filterUpper()
     }
-     //println("upper failed? " + (statusLower == INCONSISTENT))
+
     if ((statusLower == INCONSISTENT) || (statusUpper == INCONSISTENT)) {
       return CPOutcome.Failure
     } else if ((statusLower == CHANGES) || (statusUpper == CHANGES)) {

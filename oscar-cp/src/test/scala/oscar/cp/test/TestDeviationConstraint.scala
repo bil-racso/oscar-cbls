@@ -52,7 +52,7 @@ class TestDeviationConstraint extends FunSuite with ShouldMatchers  {
 
     def deviationDecomp(x: Array[CPIntVar], s: Int, nd: CPIntVar) {
         val cp = x(0).store;
-        val dev: Array[CPIntVar] = Array.tabulate(x.length)(i => x(i).mul(x.length).minus(s).abs())
+        val dev: Array[CPIntVar] = Array.tabulate(x.length)(i => (mul(x(i),x.length)-s).abs)
 		cp.post(new Sum(dev, nd))
         cp.post(new Sum(x, CPIntVar(s)(cp)))
     }

@@ -69,7 +69,7 @@ class Circuit(val succ: Array[CPIntVar], addPredModel: Boolean = true) extends C
   }
   
   
-  override def valBindIdx(x: CPIntVar, i: Int): CPOutcome = {
+  override def valBindIdx(x: CPIntervalVar, i: Int): CPOutcome = {
 		val j = x.value
 		// We have a new assigned path because of new edge i->j:
 		// o *-> i -> j *-> d

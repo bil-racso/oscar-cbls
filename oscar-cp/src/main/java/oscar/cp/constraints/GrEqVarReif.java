@@ -17,7 +17,8 @@ package oscar.cp.constraints;
 import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
 import oscar.cp.core.CPBoolVar;
-import oscar.cp.core.CPIntVar;
+import oscar.cp.core.CPIntervalVar;
+import oscar.cp.core.CPIntervalVar;
 import oscar.cp.core.Constraint;
 import oscar.cp.core.CPStore;
 
@@ -27,7 +28,7 @@ import oscar.cp.core.CPStore;
  */
 public class GrEqVarReif extends Constraint {
 
-	CPIntVar x, y;
+	CPIntervalVar x, y;
 	CPBoolVar b;
 
     /**
@@ -37,7 +38,7 @@ public class GrEqVarReif extends Constraint {
      * @param y
      * @param b
      */
-	public GrEqVarReif(CPIntVar x, CPIntVar y, CPBoolVar b) {
+	public GrEqVarReif(CPIntervalVar x, CPIntervalVar y, CPBoolVar b) {
 		super(x.store(),"GrEqVarReif");
 		this.x = x;
 		this.y = y;
@@ -62,8 +63,8 @@ public class GrEqVarReif extends Constraint {
 		CPOutcome oc = propagate();
 		if (oc == CPOutcome.Suspend){
 			if (!b.isBound()) b.callValBindWhenBind(this);
-			if (!x.isBound()) x.callPropagateWhenBoundsChange(this,false);
-			if (!y.isBound()) y.callPropagateWhenBoundsChange(this,false);
+			if (!x.isBound()) x.callPropagateWhenBoundsChange(this);
+			if (!y.isBound()) y.callPropagateWhenBoundsChange(this);
 			if (b.isBound()) {
 				oc = valBind(b);
 			}
@@ -95,7 +96,7 @@ public class GrEqVarReif extends Constraint {
 	}
 		
 	@Override
-	public CPOutcome valBind(CPIntVar var) {
+	public CPOutcome valBind(CPIntervalVar var) {
 		if (b.getValue() == 0) {
 			//x < y
 			if (s().post(new Le(x,y)) == CPOutcome.Failure) {

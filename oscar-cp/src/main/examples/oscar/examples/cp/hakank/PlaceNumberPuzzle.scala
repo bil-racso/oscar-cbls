@@ -104,7 +104,7 @@ object PlaceNumberPuzzle {
 
       for(i <- 0 until m) {
         // (also make 0-base)
-        cp.add( (x(graph(i)(0)-1)-x(graph(i)(1)-1)).abs() > 1)
+        cp.add( (x(graph(i)(0)-1)-x(graph(i)(1)-1)).abs > 1)
       }
 
       // symmetry breaking

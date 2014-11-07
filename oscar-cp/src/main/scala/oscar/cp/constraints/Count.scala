@@ -173,7 +173,7 @@ class Count(val N: CPIntVar, val X: Array[CPIntVar], val Y: CPIntVar) extends Co
       else Suspend
     }
     
-    Y.filterWhenBind {d =>
+    Y.filterWhenBind {
     	filterYBound()
     }
     

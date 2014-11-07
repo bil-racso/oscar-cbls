@@ -1,19 +1,17 @@
-/**
- * *****************************************************************************
+/*******************************************************************************
  * OscaR is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- *
+ *   
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License  for more details.
- *
+ *   
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
- * ****************************************************************************
- */
+ ******************************************************************************/
 package oscar.cp.core
 
 import oscar.algo.reversible.ReversibleQueue
@@ -34,13 +32,13 @@ class CPIntVarImpl(store: CPStore, private val domain: IntDomain, name: String =
   val onBindL2 = new ReversiblePointer[ConstraintQueue](store, null)
   val onDomainL2 = new ReversiblePointer[ConstraintQueue](store, null)
 
-  val onBoundsL1 = new ReversiblePointer[PropagEventQueueVarInt](store, null)
-  val onBindL1 = new ReversiblePointer[PropagEventQueueVarInt](store, null)
-  val onDomainL1 = new ReversiblePointer[PropagEventQueueVarInt](store, null)
+  val onBoundsL1 = new ReversiblePointer[PropagEventQueueVarInt[CPIntervalVar]](store, null)
+  val onBindL1 = new ReversiblePointer[PropagEventQueueVarInt[CPIntervalVar]](store, null)
+  val onDomainL1 = new ReversiblePointer[PropagEventQueueVarInt[CPIntVar]](store, null)
 
-  val onBoundsIdxL1 = new ReversiblePointer[PropagEventQueueVarInt](store, null)
-  val onBindIdxL1 = new ReversiblePointer[PropagEventQueueVarInt](store, null)
-  val onDomainIdxL1 = new ReversiblePointer[PropagEventQueueVarInt](store, null)
+  val onBoundsIdxL1 = new ReversiblePointer[PropagEventQueueVarInt[CPIntervalVar]](store, null)
+  val onBindIdxL1 = new ReversiblePointer[PropagEventQueueVarInt[CPIntervalVar]](store, null)
+  val onDomainIdxL1 = new ReversiblePointer[PropagEventQueueVarInt[CPIntVar]](store, null)
 
   def transform(v: Int) = v
 
@@ -161,9 +159,8 @@ class CPIntVarImpl(store: CPStore, private val domain: IntDomain, name: String =
    * @param c
    * @see oscar.cp.core.Constraint#propagate()
    */
-  def callPropagateWhenBind(c: Constraint, trackDelta: Boolean = false) {
+  def callPropagateWhenBind(c: Constraint) {
     onBindL2.setValue(new ConstraintQueue(onBindL2.value, c))
-    if (trackDelta) c.addSnapshot(this)
   }
 
   /**
@@ -172,9 +169,8 @@ class CPIntVarImpl(store: CPStore, private val domain: IntDomain, name: String =
    * @param c
    * @see oscar.cp.core.Constraint#propagate()
    */
-  def callPropagateWhenBoundsChange(c: Constraint, trackDelta: Boolean = false) {
+  def callPropagateWhenBoundsChange(c: Constraint) {
     onBoundsL2.setValue(new ConstraintQueue(onBoundsL2.value, c))
-    if (trackDelta) c.addSnapshot(this)
   }
 
   /**
@@ -198,7 +194,7 @@ class CPIntVarImpl(store: CPStore, private val domain: IntDomain, name: String =
     callValBindWhenBind(c, this)
   }
 
-  def callValBindWhenBind(c: Constraint, variable: CPIntVar) {
+  def callValBindWhenBind(c: Constraint, variable: CPIntervalVar) {
     onBindL1.setValue(new PropagEventQueueVarInt(onBindL1.value, c, variable))
   }
 
@@ -212,7 +208,7 @@ class CPIntVarImpl(store: CPStore, private val domain: IntDomain, name: String =
     callUpdateBoundsWhenBoundsChange(c, this)
   }
 
-  def callUpdateBoundsWhenBoundsChange(c: Constraint, variable: CPIntVar) {
+  def callUpdateBoundsWhenBoundsChange(c: Constraint, variable: CPIntervalVar) {
     onBoundsL1.setValue(new PropagEventQueueVarInt(onBoundsL1.value, c, variable))
   }
 
@@ -256,7 +252,7 @@ class CPIntVarImpl(store: CPStore, private val domain: IntDomain, name: String =
     callUpdateBoundsIdxWhenBoundsChange(c, this, idx)
   }
 
-  def callUpdateBoundsIdxWhenBoundsChange(c: Constraint, variable: CPIntVar, idx: Int) {
+  def callUpdateBoundsIdxWhenBoundsChange(c: Constraint, variable: CPIntervalVar, idx: Int) {
     onBoundsIdxL1.setValue(new PropagEventQueueVarInt(onBoundsIdxL1.value, c, variable, idx))
   }
 
@@ -271,7 +267,7 @@ class CPIntVarImpl(store: CPStore, private val domain: IntDomain, name: String =
     callValBindIdxWhenBind(c, this, idx)
   }
 
-  def callValBindIdxWhenBind(c: Constraint, variable: CPIntVar, idx: Int) {
+  def callValBindIdxWhenBind(c: Constraint, variable: CPIntervalVar, idx: Int) {
     onBindIdxL1.setValue(new PropagEventQueueVarInt(onBindIdxL1.value, c, variable, idx))
   }
 
@@ -452,7 +448,7 @@ class CPIntVarImpl(store: CPStore, private val domain: IntDomain, name: String =
       }
     }
   }
-
+  
   // ----------------------------------
 
   def delta(oldMin: Int, oldMax: Int, oldSize: Int): Iterator[Int] = {
@@ -478,7 +474,8 @@ class CPIntVarImpl(store: CPStore, private val domain: IntDomain, name: String =
   def delta(c: Constraint): Iterator[Int] = {
     val sn = c.snapshotsVarInt(this)
     delta(sn.oldMin, sn.oldMax, sn.oldSize)
-  }
+  }  
+  
 }
 
 object CPIntVarImpl {

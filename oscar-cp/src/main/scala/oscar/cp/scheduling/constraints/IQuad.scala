@@ -4,6 +4,7 @@ import oscar.cp.core._
 import oscar.cp.core.CPOutcome._
 import oscar.algo.SortUtils._
 import oscar.algo.reversible.ReversibleInt
+import oscar.cp.modeling._
 
 // @author Steven Gay steven.gay@uclouvain.be
 
@@ -28,8 +29,8 @@ extends Constraint(capacity.store, "IQuad") {
 
   val l2r = new IQuadL2R(starts, durations, ends,  demands, resources, capacity, id)
   
-  val rs = starts.map(_.opposite).asInstanceOf[Array[CPIntVar]]
-  val re = ends  .map(_.opposite).asInstanceOf[Array[CPIntVar]]
+  val rs = starts.map(-_).asInstanceOf[Array[CPIntVar]]
+  val re = ends  .map(-_).asInstanceOf[Array[CPIntVar]]
   val r2l = new IQuadL2R(re, durations, rs,  demands, resources, capacity, id)
   
   
@@ -63,9 +64,9 @@ extends Constraint(capacity.store, "IQuadL2R") {
   def setup(strength: CPPropagStrength): CPOutcome = {
     priorityL2 = 2
     
-    def boundsCB(v: CPIntVar)  = { if (!v.isBound) v.callPropagateWhenBoundsChange(this, false) }
+    def boundsCB(v: CPIntVar)  = { if (!v.isBound) v.callPropagateWhenBoundsChange(this) }
     
-    def resourceCB(v: CPIntVar) = { if (!v.isBound) v.callPropagateWhenBind(this, false) }
+    def resourceCB(v: CPIntVar) = { if (!v.isBound) v.callPropagateWhenBind(this) }
     
     starts    foreach boundsCB
     durations foreach boundsCB

@@ -1,6 +1,22 @@
+/*******************************************************************************
+ * OscaR is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 2.1 of the License, or
+ * (at your option) any later version.
+ *   
+ * OscaR is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License  for more details.
+ *   
+ * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
+ ******************************************************************************/
+
 package oscar.cp.constraints
 
 import oscar.cp.core.CPIntVar
+import oscar.cp.core.CPIntervalVar
 import oscar.cp.core.Constraint
 import oscar.cp.core.CPPropagStrength
 import oscar.cp.core.CPPropagStrength._
@@ -77,7 +93,7 @@ class Eq(x: CPIntVar, y: CPIntVar) extends Constraint(x.store, "Equality") {
     }
   }
 
-  @inline final override def valBind(intVar: CPIntVar): CPOutcome = {
+  @inline final override def valBind(intVar: CPIntervalVar): CPOutcome = {
     if (intVar == x) {
       if (y.assign(x.value) == Failure) Failure
       else Success
@@ -87,7 +103,7 @@ class Eq(x: CPIntVar, y: CPIntVar) extends Constraint(x.store, "Equality") {
     } else sys.error("unknown variable")
   }
 
-  @inline final override def updateBounds(intVar: CPIntVar): CPOutcome = {
+  @inline final override def updateBounds(intVar: CPIntervalVar): CPOutcome = {
     if (intVar == y) {
       if (x.updateMax(y.max) == Failure) Failure
       else if (x.updateMin(y.min) == Failure) Failure

@@ -18,6 +18,7 @@ import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
 import oscar.cp.core.CPBoolVar;
 import oscar.cp.core.CPIntVar;
+import oscar.cp.core.CPIntervalVar;
 import oscar.cp.core.Constraint;
 
 /**
@@ -38,7 +39,7 @@ public class EqReifVar extends Constraint {
      * @param y
      */
 	public EqReifVar(CPIntVar x, CPIntVar y, CPBoolVar b) {
-		super(x.store(),"DiffReif");
+		super(x.store(),"EqReifVar");
 		this.x = x;
 		this.y = y;
 		this.b = b;
@@ -66,7 +67,7 @@ public class EqReifVar extends Constraint {
 	}
 	
 	@Override
-	public CPOutcome valBind(CPIntVar var) {
+	public CPOutcome valBind(CPIntervalVar var) {
 		if (b.isBound()) {
 			deactivate();
 			if (b.getValue() == 1) {
@@ -135,11 +136,8 @@ public class EqReifVar extends Constraint {
 				return CPOutcome.Success;
 			}
 			return CPOutcome.Suspend;
-		}
-		
+		}	
 	}
-	
-
 
 }
 

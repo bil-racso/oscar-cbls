@@ -57,13 +57,13 @@ public class MulVar extends Constraint {
 				x.callPropagateWhenDomainChanges(this,false);
 				y.callPropagateWhenDomainChanges(this,false);
 			} else {
-				x.callPropagateWhenBoundsChange(this,false);
-				y.callPropagateWhenBoundsChange(this,false);
+				x.callPropagateWhenBoundsChange(this);
+				y.callPropagateWhenBoundsChange(this);
 			}
 		} else {
-			x.callPropagateWhenBoundsChange(this,false);
-			y.callPropagateWhenBoundsChange(this,false);
-			z.callPropagateWhenBoundsChange(this,false);
+			x.callPropagateWhenBoundsChange(this);
+			y.callPropagateWhenBoundsChange(this);
+			z.callPropagateWhenBoundsChange(this);
 		}
 		
 		CPOutcome ok = propagate();

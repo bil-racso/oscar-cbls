@@ -17,6 +17,7 @@ package oscar.cp.constraints;
 import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
 import oscar.cp.core.CPIntVar;
+import oscar.cp.core.CPIntervalVar;
 import oscar.cp.core.Constraint;
 
 /**
@@ -49,11 +50,11 @@ public class Abs extends Constraint {
 			return CPOutcome.Failure;
 		}
 		if (!x.isBound()) {
-			x.callPropagateWhenBoundsChange(this,false);
+			x.callPropagateWhenBoundsChange(this);
 			x.callValBindWhenBind(this);
 		}
 		if (!y.isBound()) {
-			y.callPropagateWhenBoundsChange(this,false);
+			y.callPropagateWhenBoundsChange(this);
 			y.callValBindWhenBind(this);
 		}
 		//we can do more propagation with val remove
@@ -111,7 +112,7 @@ public class Abs extends Constraint {
 	}
 	
 	@Override
-	public CPOutcome valBind(CPIntVar var) {
+	public CPOutcome valBind(CPIntervalVar var) {
 		//return CPOutcome.Suspend;
 		
 		if (x.isBound()) {

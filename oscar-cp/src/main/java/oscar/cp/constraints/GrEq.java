@@ -17,7 +17,7 @@ package oscar.cp.constraints;
 import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
 import oscar.cp.core.CPStore;
-import oscar.cp.core.CPIntVar;
+import oscar.cp.core.CPIntervalVar;
 import oscar.cp.core.Constraint;
 
 /**
@@ -26,7 +26,7 @@ import oscar.cp.core.Constraint;
  */
 public class GrEq extends Constraint {
 
-	CPIntVar x, y;
+	CPIntervalVar x, y;
 
     /**
      * Constraint x >= y
@@ -35,14 +35,14 @@ public class GrEq extends Constraint {
      * @see GrEqCteReif
      * @see GrEqVarReif
      */
-	public GrEq(CPIntVar x, CPIntVar y) {
+	public GrEq(CPIntervalVar x, CPIntervalVar y) {
 		super(x.store(),"GrEq");
 		this.x = x;
 		this.y = y;
 	}
 	
-	public GrEq(CPIntVar x, int v) {
-		this(x, CPIntVar.apply(x.store(),v,v));
+	public GrEq(CPIntervalVar x, int v) {
+		this(x, CPIntervalVar.apply(x.store(),v,v));
 	}
 	
 	@Override
@@ -50,8 +50,8 @@ public class GrEq extends Constraint {
 		priorityL2_$eq(CPStore.MAXPRIORL2());
 		CPOutcome oc = propagate();
 		if(oc == CPOutcome.Suspend){
-			if (!y.isBound()) y.callPropagateWhenBoundsChange(this,false);
-			if (!x.isBound()) x.callPropagateWhenBoundsChange(this,false);
+			if (!y.isBound()) y.callPropagateWhenBoundsChange(this);
+			if (!x.isBound()) x.callPropagateWhenBoundsChange(this);
 		}
 		return oc;
 	}

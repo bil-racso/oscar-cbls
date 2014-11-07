@@ -649,6 +649,34 @@ class TestXCSP extends FunSuite with ShouldMatchers  {
 	  
 	  assert((2-1)*4 + 1 === vars(0).value - 1)
   }
+  
+  test("test weightedSum operator different from equality") {
+     val solver = new XCSPSolver with DefaultConstraints
+	  val str : String = """<?xml version="1.0" encoding="UTF-8"?>
+<instance>
+<presentation  maxConstraintArity="10" format="XCSP 2.1" type="CSP"/>
+<domains nbDomains="1">
+<domain name="D10" nbValues="2">0..1</domain>
+</domains>
+<variables nbVariables="4">
+<variable name="V20" domain="D10"/>
+<variable name="V21" domain="D10"/>
+<variable name="V22" domain="D10"/>
+<variable name="V23" domain="D10"/>
+</variables>
+<constraints nbConstraints="1">
+<constraint name="C180" arity="4" scope="V20 V21 V22 V23" reference="global:weightedSum">
+<parameters>[{ 1 V20} {1 V21} {1 V22} { 1 V23}] <ge/> 1 </parameters>
+</constraint>
+</constraints>
+</instance>
+	    """
+	    
+val thrown = intercept[RuntimeException] { solver.model(str)}
+assert(thrown.getMessage === "weightedSum with an operator different from equality is not supported.")	    
+
+	  
+  }
 
 }
 

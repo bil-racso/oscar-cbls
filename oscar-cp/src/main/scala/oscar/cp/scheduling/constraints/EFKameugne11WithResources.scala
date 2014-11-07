@@ -2,6 +2,7 @@ package oscar.cp.scheduling.constraints
 
 import oscar.cp.core._
 import oscar.cp.core.CPOutcome._
+import oscar.cp.modeling._
 
 // @author Steven Gay steven.gay@uclouvain.be
 
@@ -24,7 +25,7 @@ extends Constraint(capacity.store, "EFKameugne11WithResources") {
   def setup(strength: CPPropagStrength): CPOutcome = {
     priorityL2 = priority
     
-    def sdeCB(v: CPIntVar) =  { v.callPropagateWhenBoundsChange(this, false) }
+    def sdeCB(v: CPIntVar) =  { v.callPropagateWhenBoundsChange(this) }
     def resCB(v:CPIntVar)     = { v.callPropagateWhenBind(this) }
     
     starts    foreach sdeCB
@@ -232,8 +233,8 @@ extends Constraint(capacity.store, "EFKameugne11WithResources") {
 
 object EFKameugne11WithResources {
   def apply(s: Array[CPIntVar], d: Array[CPIntVar], e: Array[CPIntVar], dem: Array[CPIntVar], r: Array[CPIntVar], capacity: CPIntVar, id :Int): Array[Constraint] = {
-    val rs = s.map(_.opposite).asInstanceOf[Array[CPIntVar]]
-    val re = e.map(_.opposite).asInstanceOf[Array[CPIntVar]]
+    val rs = s.map(- _).asInstanceOf[Array[CPIntVar]]
+    val re = e.map(- _).asInstanceOf[Array[CPIntVar]]
     val priorityL2R = 1
     val priorityR2L = 1
     Array[Constraint](new EFKameugne11WithResources(s,  d, e,  dem, r, capacity, id, priorityL2R),

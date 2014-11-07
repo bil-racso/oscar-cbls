@@ -75,7 +75,7 @@ object CalculsDEnfer {
     val Array(n,o,p,q,r,s,t,u,v,w,x,y,z) = X slice(13, 26)
 
 
-    val x_max = my_max(for(I <- 0 until N) yield X(I).abs()) // this is faster
+    val x_max = my_max(for(I <- 0 until N) yield X(I).abs) // this is faster
     // val x_max = maximum(for(I <- 0 until N) yield X(I).abs())
 
     //

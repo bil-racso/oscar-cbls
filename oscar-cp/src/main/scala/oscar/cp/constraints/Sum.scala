@@ -24,10 +24,9 @@ import math.max
  * @author Pierre Schaus pschaus@gmail.com
  * @author Steven Gay steven.gay@uclouvain.be
  */
+class Sum(val X: Array[_ <: CPIntervalVar], val y: CPIntervalVar) extends Constraint(y.store, "Sum") {
 
-class Sum(val X: Array[CPIntVar], val y: CPIntVar) extends Constraint(y.store, "Sum") {
-
-  val x = X.map(i => i)
+  val x = X.map(i => i.asInstanceOf[CPIntervalVar])
   val xSize = x.size
   val sumBoundVars = new ReversibleInt(s, 0)
   val nBoundVars = new ReversibleInt(s, 0)
@@ -37,8 +36,8 @@ class Sum(val X: Array[CPIntVar], val y: CPIntVar) extends Constraint(y.store, "
   override def setup(l: CPPropagStrength): CPOutcome = {
     
     priorityL2 = CPStore.MAXPRIORL2 - 1
-    X.foreach(_.callPropagateWhenBoundsChange(this, false))
-    y.callPropagateWhenBoundsChange(this, false)
+    X.foreach(_.callPropagateWhenBoundsChange(this))
+    y.callPropagateWhenBoundsChange(this)
     val oc = propagate()
     //println("oc:"+oc)
     oc
@@ -136,14 +135,6 @@ class Sum(val X: Array[CPIntVar], val y: CPIntVar) extends Constraint(y.store, "
   }
 
 }
-
-
-//          val oc = x(i).updateMax(ximax) // cannot fail
-//          assert(oc != Failure)
-
-          // val oc = x(i).updateMin(ximin) // cannot fail
-          // assert(oc != Failure)
-
 
 
 

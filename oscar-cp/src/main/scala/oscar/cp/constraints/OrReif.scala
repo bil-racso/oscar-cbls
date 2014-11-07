@@ -53,8 +53,8 @@ class OrReif(val X: Array[CPBoolVar], y: CPBoolVar) extends Constraint(y.store, 
 	  val ok = propagate()
 	  if (ok != Suspend) return ok
 	  for (z <- x; if !z.isBound) 
-	    z.callPropagateWhenBind(this, false)
-	  if (!y.isBound) y.callPropagateWhenBind(this, false)
+	    z.callPropagateWhenBind(this)
+	  if (!y.isBound) y.callPropagateWhenBind(this)
 	  Suspend
   }
 

@@ -7,6 +7,7 @@ import oscar.cp.core.CPOutcome._
 import oscar.cp.core.CPBoolVar
 import oscar.cp.core.CPPropagStrength
 import oscar.cp.core.CPIntVar
+import oscar.cp.core.CPIntervalVar
 
 /** 
  *  @author Renaud Hartert ren.hartert@gmail.com
@@ -72,7 +73,7 @@ class RequireElem(set: CPSetVar, elem: Int, b: CPBoolVar) extends Constraint(set
     else Suspend
   }
 
-  override def valBind(cpVar: CPIntVar): CPOutcome = {
+  override def valBind(cpVar: CPIntervalVar): CPOutcome = {
     if (b.isTrue) requires(elem)
     else excludes(elem)
   }

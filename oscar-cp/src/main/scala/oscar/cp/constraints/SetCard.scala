@@ -26,7 +26,7 @@ class SetCard(val x: CPSetVar, val c: CPIntVar) extends Constraint(x.store, "Set
   priorityL2 = CPStore.MAXPRIORL2
   override def setup(l: CPPropagStrength): CPOutcome = {
     x.callPropagateWhenDomainChanges(this, false)
-    c.callPropagateWhenBoundsChange(this, false)
+    c.callPropagateWhenBoundsChange(this)
     propagate()
   }
   

@@ -121,7 +121,7 @@ object PhotoProblem {
                  for{i <- 0 until n
                      j <- 0 until n
                      if preferences(i)(j) == 1
-                 } yield ((positions(i)-positions(j)).abs() === 1)
+                 } yield ((positions(i)-positions(j)).abs === 1)
                  )
       
 

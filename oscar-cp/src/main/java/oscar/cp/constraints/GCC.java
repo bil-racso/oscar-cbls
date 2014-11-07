@@ -44,7 +44,7 @@ public class GCC extends Constraint {
 		this.up = up;
         // super(x,minval,low,up,CPIntVar.apply(x[0].s(),0,0));
     }
-	
+	@Override
 	public CPOutcome setup(CPPropagStrength l) {
 		CPOutcome ok = CPOutcome.Success;
 		if (l == CPPropagStrength.Strong || true) { // desactivate constraint of bertrand because it's buggy

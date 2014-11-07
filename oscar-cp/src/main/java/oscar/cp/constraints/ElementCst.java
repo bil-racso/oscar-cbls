@@ -19,6 +19,7 @@ import java.util.Comparator;
 import java.util.Hashtable;
 
 import oscar.algo.reversible.ReversibleInt;
+import oscar.cp.core.CPIntervalVar;
 import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
 import oscar.cp.core.CPIntVar;
@@ -90,7 +91,7 @@ public class ElementCst extends Constraint {
 			x.callValRemoveWhenValueIsRemoved(this);
 			z.callValRemoveWhenValueIsRemoved(this);
 		}
-		z.callPropagateWhenBoundsChange(this,false);
+		z.callPropagateWhenBoundsChange(this);
 		x.callPropagateWhenDomainChanges(this,false);		
 		x.callValBindWhenBind(this);
 
@@ -163,8 +164,8 @@ public class ElementCst extends Constraint {
 		}
 		return CPOutcome.Suspend;
 	}
-	
-	public CPOutcome valBind(CPIntVar x) {
+	@Override
+	public CPOutcome valBind(CPIntervalVar x) {
 		// x is bound
 		if (z.assign(y[x.getValue()]) == CPOutcome.Failure)
 			return CPOutcome.Failure;

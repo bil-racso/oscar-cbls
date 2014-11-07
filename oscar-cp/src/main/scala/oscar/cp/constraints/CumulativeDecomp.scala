@@ -1,6 +1,7 @@
 package oscar.cp.constraints
 
 import oscar.cp.core.CPIntVar
+import oscar.cp.modeling._
 import oscar.cp.core.Constraint
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.CPOutcome._

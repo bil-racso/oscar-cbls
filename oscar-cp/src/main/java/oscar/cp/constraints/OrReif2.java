@@ -20,6 +20,7 @@ import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
 import oscar.cp.core.CPBoolVar;
 import oscar.cp.core.CPIntVar;
+import oscar.cp.core.CPIntervalVar;
 import oscar.cp.core.Constraint;
 
 /**
@@ -109,7 +110,7 @@ public class OrReif2 extends Constraint {
 	
 	
 	@Override
-	public CPOutcome valBindIdx(CPIntVar var, int idx) {
+	public CPOutcome valBindIdx(CPIntervalVar var, int idx) {
 		if (var.getValue() == 1) {
 			if (y.assign(1) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
@@ -137,7 +138,7 @@ public class OrReif2 extends Constraint {
 	}
 	
 	@Override
-	public CPOutcome valBind(CPIntVar yvar) {
+	public CPOutcome valBind(CPIntervalVar yvar) {
 		if (yvar.getValue() == 0) {
 			for (int i = 0; i < x.length; i++) {
 					if (x[i].assign(0) == CPOutcome.Failure) {

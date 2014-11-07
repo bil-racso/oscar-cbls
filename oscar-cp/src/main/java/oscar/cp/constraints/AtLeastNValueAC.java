@@ -117,7 +117,7 @@ public class AtLeastNValueAC extends Constraint {
 		}
 
 		if (!nValueVar.isBound()) {
-			nValueVar.callPropagateWhenBoundsChange(this,false);
+			nValueVar.callPropagateWhenBoundsChange(this);
 		}
 
 		return CPOutcome.Suspend;
@@ -136,7 +136,7 @@ public class AtLeastNValueAC extends Constraint {
 		return Integer.MIN_VALUE;
 	}
 
-
+	@Override
 	public CPOutcome propagate() {		
 		for (int k = 0; k < x.length; k++) {
 			if (match[k] != NONE) {

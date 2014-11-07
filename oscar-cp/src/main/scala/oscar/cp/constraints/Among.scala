@@ -112,7 +112,7 @@ class Among(val N: CPIntVar, val X: Array[CPIntVar], val S: Set[Int]) extends Co
         else CPOutcome.Suspend
       }
     }
-    N.filterWhenBoundsChanges { d =>
+    N.filterWhenBoundsChange {
       filter()
     }
     filter()
