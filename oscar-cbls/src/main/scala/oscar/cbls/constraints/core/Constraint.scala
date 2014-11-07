@@ -34,6 +34,7 @@ import oscar.cbls.invariants.lib.numeric.Step
   * @author renaud.delandtsheer@cetic.be
  */
 abstract class Constraint extends IntInvariant{
+  //TODO: constraints should not always be invariant, although they should offer the setOutputVar feature
 
   /** returns the violation associated with variable v in this constraint
    * all variables that are declared as constraint should have an associated violation degree.

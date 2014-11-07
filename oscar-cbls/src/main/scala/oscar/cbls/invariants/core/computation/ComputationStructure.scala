@@ -1123,11 +1123,7 @@ case class CBLSSetConst(ConstValue:SortedSet[Int],override val model:Store = nul
 abstract class IntInvariant extends Invariant{
   def myMin:Int
   def myMax:Int
-  implicit def toIntVar:CBLSIntVar = {
-    val a = new CBLSIntVar(model, (myMin to myMax), 0, this.getClass.getSimpleName)
-    a <== this //ca invoque setOutputVar en fait.
-    a
-  }
+  implicit def toIntVar:CBLSIntVar = toIntVar(this.getClass.getSimpleName)
 
   def toIntVar(name:String):CBLSIntVar = {
     val a = new CBLSIntVar(model, (myMin to myMax), 0, name)

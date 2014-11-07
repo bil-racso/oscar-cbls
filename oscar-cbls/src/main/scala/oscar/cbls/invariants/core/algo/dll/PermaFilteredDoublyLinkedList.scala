@@ -82,6 +82,7 @@ class DelayedPermaFilter[T, F <: AnyRef](mFilter:(T,()=>Unit, ()=> Boolean) => U
   * */
 class PermaFilteredDoublyLinkedList[T <: AnyRef] extends Iterable[T]{
 
+  //TODO: we might also consider an implem with no fantom at all
   private val fantom:PFDLLStorageElement[T] = new PFDLLStorageElement[T](null.asInstanceOf[T])
   fantom.setNext(fantom)
 
@@ -123,7 +124,6 @@ class PermaFilteredDoublyLinkedList[T <: AnyRef] extends Iterable[T]{
     elemkey.prev.setNext(elemkey.next)
     //elemkey.prev = null this was intended for debug purpose
 
-    //TODO: could be faster if we generate a dedicated PFDLL when PF is activated
     if (permaFilter != null) permaFilter.notifyDelete(elemkey)
 
     elemkey.elem
