@@ -890,6 +890,8 @@ object CBLSIntVar{
     def compare(o1: CBLSIntVar, o2: CBLSIntVar) = o1.compare(o2)
   }
 
+  def apply(v: Int) = int2IntVar(v)
+  
   val constMap = Map.empty[Int,CBLSIntConst]
   implicit def int2IntVar(a:Int):CBLSIntVar = {
     if(constMap.contains(a))constMap(a)

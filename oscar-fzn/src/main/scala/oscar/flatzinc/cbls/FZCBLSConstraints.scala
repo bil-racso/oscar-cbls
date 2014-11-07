@@ -371,8 +371,8 @@ class FZCBLSConstraintPoster(val c: ConstraintSystem, implicit val getCBLSVar: V
     xs.toList.map(x => Weight(BelongsTo(getCBLSVar(x),setVar),100))
   }
   def get_global_cardinality_low_up(closed: Boolean, xs: Array[Variable],vs: Array[Variable],lows: Array[Int],ups:Array[Int]) = {
-    val atleast = AtLeast(xs.map(getCBLSVar(_)),SortedMap(vs.zip(lows).map(vl => (vl._1.min,new CBLSIntConst(vl._2,m))): _*))
-    val atmost = AtMost(xs.map(getCBLSVar(_)),SortedMap(vs.zip(ups).map(vl => (vl._1.min,vl._2)): _*))
+    val atleast = AtLeast(xs.map(getCBLSVar(_)),SortedMap(vs.zip(lows).map(vl => (vl._1.min,CBLSIntVar(vl._2))): _*))
+    val atmost = AtMost(xs.map(getCBLSVar(_)),SortedMap(vs.zip(ups).map(vl => (vl._1.min,CBLSIntVar(vl._2))): _*))
     List(atleast,atmost) ++ (if(closed) domains(xs,vs.map(_.min)) else List())
   }
   def get_global_cardinality(closed: Boolean, xs: Array[Variable],vs: Array[Variable],cnts: Array[Variable]) = {
