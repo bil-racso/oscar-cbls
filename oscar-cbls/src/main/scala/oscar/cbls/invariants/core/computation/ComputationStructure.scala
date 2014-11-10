@@ -188,6 +188,7 @@ case class Store(override val verbose:Boolean = false,
     assert(!Closed, "cannot close a model twice")
     performCallsBeforeClose()
     setupPropagationStructure(DropStaticGraph)
+    killBulker() //we won't create any new model artifacts, thus we can kill the bulker and free its memory
     Closed=true
   }
 
