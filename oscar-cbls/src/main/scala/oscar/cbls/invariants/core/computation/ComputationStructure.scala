@@ -233,6 +233,7 @@ case class Store(override val verbose:Boolean = false,
             ToExplore = definv :: ToExplore
           }
         }
+        //TODO: keep a set of the explored invariants, to speed up this thing?
       }else if(head.isInstanceOf[Invariant]){
         val i:Invariant = head.asInstanceOf[Invariant]
         for (listened <- i.getStaticallyListenedElements){

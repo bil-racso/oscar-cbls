@@ -105,7 +105,7 @@ case class ConstraintSystem(val _model:Store) extends Constraint with ObjectiveT
         val constr = ConstrAndWeight._1
         val weight = ConstrAndWeight._2
         if(weight == null) constr.violation(variable)
-        else (Prod2(constr.violation(variable),weight)).toIntVar
+        else Prod2(constr.violation(variable),weight).toIntVar
       })
       val LocalViolation = (if (!product.isEmpty && product.tail.isEmpty) product.head
                             else Sum(product).toIntVar)
@@ -115,8 +115,9 @@ case class ConstraintSystem(val _model:Store) extends Constraint with ObjectiveT
 
   private def PropagateLocalToGlobalViolations(){
     for(varWithLocalViol <- VarInConstraints){
-      val localViol:CBLSIntVar = varWithLocalViol.getStorageAt(IndexForLocalViolationINSU)
+      val localViol:CBLSIntVar = varWithLocalViol.getAndFreeStorageAt(IndexForLocalViolationINSU)
       val sources = model.getSourceVariables(varWithLocalViol)
+      //TODO: this seems a bit inefficient
       for(sourcevar <- sources){
         val GlobalViol:GlobalViolationDescriptor = sourcevar.getStorageAt(IndexForGlobalViolationINSU,null)
         if (GlobalViol!=null) GlobalViol.AggregatedViolation = localViol :: GlobalViol.AggregatedViolation
@@ -137,7 +138,7 @@ case class ConstraintSystem(val _model:Store) extends Constraint with ObjectiveT
    * no constraint can be added after his method has been called.
    * this method must also be called before closing the model.
    */
-  protected[cbls] def close(){
+  def close(){
     if(!isClosed){
       isClosed = true
       Violation <== Sum(PostedConstraints.map((constraintANDintvar) => {
