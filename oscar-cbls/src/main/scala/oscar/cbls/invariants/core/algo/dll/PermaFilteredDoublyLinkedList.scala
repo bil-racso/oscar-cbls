@@ -93,9 +93,17 @@ class PermaFilteredDoublyLinkedList[T <: AnyRef] extends Iterable[T]{
     */
   private var permaFilter:AbstractPermaFilter[T] = null
 
-  /**returns the size of the PermaFilteredDLL*/
+  /**returns the size of the PermaFilteredDLL
+    * this is a O(n) method because it is very rarely used.
+    * and in this context, we want to keep the memory footprint as small as possible*/
   override def size ={
-    throw new Error("this data structure needs to have a small memory footprint, so size is not kept, and we do not want to disappoint you with a O(n) method")
+    var toReturn = 0
+    var current = fantom.next
+    while(current != fantom){
+      toReturn += 1
+      current = current.next
+    }
+    toReturn
   }
 
   /**adds an a item in the PermaFilteredDLL, and if accepted by the filter, adds it in the slave PermaFilteredDLL.
@@ -122,7 +130,7 @@ class PermaFilteredDoublyLinkedList[T <: AnyRef] extends Iterable[T]{
     */
   def deleteElem(elemkey:PFDLLStorageElement[T]):T = {
     elemkey.prev.setNext(elemkey.next)
-    //elemkey.prev = null this was intended for debug purpose
+    elemkey.prev = null //this is checked by the delayed perma filter, so DO NOT REMOVE THIS SEEMIGNLY USELESS INSTRUCTION OR YOU ARE DOOMED
 
     if (permaFilter != null) permaFilter.notifyDelete(elemkey)
 
@@ -180,7 +188,6 @@ class PermaFilteredDoublyLinkedList[T <: AnyRef] extends Iterable[T]{
     }
     toReturn
   }
-
 }
 
 /**
@@ -197,12 +204,6 @@ class PFDLLStorageElement[T](val elem:T){
     this.next = d
     d.prev = this
   }
-
-  override def toString():String = {
-    if (next == null) return "endPhantom"
-    if (prev == null) return "headPhantom"
-    return "regular StorageElement"
-  }
 }
 
 class PFDLLIterator[T](var CurrentKey:PFDLLStorageElement[T],
@@ -214,4 +215,3 @@ class PFDLLIterator[T](var CurrentKey:PFDLLStorageElement[T],
 
   def hasNext:Boolean = {CurrentKey.next != fantom}
 }
-
