@@ -122,7 +122,7 @@ case class FlattenWorseFirst(p:Planning,
  * */
 case class Relax(p:Planning, pKill: Int,
                  doRelax:(Activity, Activity, Boolean) => Unit = (from: Activity, to: Activity, verbose:Boolean) => to.removeDynamicPredecessor(from, verbose))
-//                (activitiestoRelax:()=>Iterable[Int] = p.sentinelActivity.staticPredecessorsID) TODO: add the possibility to search from given terminating tasks
+                (activitiesToRelax:()=>Iterable[Int] = p.sentinelActivity.staticPredecessorsID)
   extends JumpNeighborhoodParam[List[(Activity, Activity)]] with SearchEngineTrait {
 
   override def doIt(potentiallyKilledPrecedences: List[(Activity, Activity)]){
@@ -132,7 +132,9 @@ case class Relax(p:Planning, pKill: Int,
   }
 
   override def getParam: List[(Activity, Activity)] = {
-    val potentiallyKilledPrecedences = CriticalPathFinder.nonSolidCriticalPath(p)()
+
+    val activityToRelax = selectMax(activitiesToRelax(), (activityID:Int) => p.activityArray(activityID).earliestEndDate.value)
+    val potentiallyKilledPrecedences = CriticalPathFinder.nonSolidCriticalPath(p)(p.activityArray(activityToRelax))
     if (potentiallyKilledPrecedences.isEmpty) null
     else{
       var toReturn:List[(Activity, Activity)] = List.empty
@@ -236,7 +238,7 @@ object SchedulingStrategies{
       if (displayPlanning) println(p.toAsciiArt)
       println(objective)
     }
-    val relax = Relax(p, pKillPerRelax)
+    val relax = Relax(p, pKillPerRelax)()
 
     //search Loop is a round Robin
     val searchLoop = flatten step relax repeat nbRelax
@@ -258,7 +260,7 @@ object SchedulingStrategies{
       if (displayPlanning) println(p.toAsciiArt)
       println(objective)
     }
-    val relax = Relax(p, pKillPerRelax)
+    val relax = Relax(p, pKillPerRelax)()
 
     val searchLoop = flatten maxMoves 1 exhaustBack (relax untilImprovement(p.makeSpan, nbRelax, maxIterationsForFlatten))
 

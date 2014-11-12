@@ -188,6 +188,7 @@ case class Store(override val verbose:Boolean = false,
     assert(!Closed, "cannot close a model twice")
     performCallsBeforeClose()
     setupPropagationStructure(DropStaticGraph)
+    killBulker() //we won't create any new model artifacts, thus we can kill the bulker and free its memory
     Closed=true
   }
 
@@ -233,6 +234,7 @@ case class Store(override val verbose:Boolean = false,
             ToExplore = definv :: ToExplore
           }
         }
+        //TODO: keep a set of the explored invariants, to speed up this thing?
       }else if(head.isInstanceOf[Invariant]){
         val i:Invariant = head.asInstanceOf[Invariant]
         for (listened <- i.getStaticallyListenedElements){
@@ -1123,11 +1125,7 @@ case class CBLSSetConst(ConstValue:SortedSet[Int],override val model:Store = nul
 abstract class IntInvariant extends Invariant{
   def myMin:Int
   def myMax:Int
-  implicit def toIntVar:CBLSIntVar = {
-    val a = new CBLSIntVar(model, (myMin to myMax), 0, this.getClass.getSimpleName)
-    a <== this //ca invoque setOutputVar en fait.
-    a
-  }
+  implicit def toIntVar:CBLSIntVar = toIntVar(this.getClass.getSimpleName)
 
   def toIntVar(name:String):CBLSIntVar = {
     val a = new CBLSIntVar(model, (myMin to myMax), 0, name)

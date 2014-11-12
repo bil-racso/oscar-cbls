@@ -30,6 +30,8 @@ import oscar.cbls.invariants.core.propagation.Checker
 
 /**
  * Implement the AllDiff constraint on IntVars: all variables must have a different value.
+ * in ase the same variable occurs several times (in case you submit a list of CBLSIntVar) these two occurrences
+ * will be supposed to have different values as expected by the semantics of this constraint
  * @param variables the variable whose values should all be different.
  * @author renaud.delandtsheer@cetic.be
  */
@@ -53,14 +55,6 @@ case class AllDiff(variables: Iterable[CBLSIntVar]) extends Constraint {
   private val N = N0 + offset
   private val range = 0 to N
 
-  /**the degree of violation of a variable is the number of other variables that have the same value as it. */
-  private val Violations: SortedMap[CBLSIntVar, CBLSIntVar] = variables.foldLeft(
-    SortedMap.empty[CBLSIntVar, CBLSIntVar])(
-      (acc, intvar) => {
-        val newvar = new CBLSIntVar(model, (0 to 1), 1, "Violation_AllDiff_" + intvar.name)
-        acc + ((intvar, newvar))
-      })
-
   private val ValueCount: Array[CBLSIntVar] = Array.tabulate[CBLSIntVar](N + 1)((i: Int) => {
     val tmp = new CBLSIntVar(model, (0 to 1), 0, "alldiff_count_of_value_" + (i - offset))
     tmp.setDefiningInvariant(this)
@@ -68,17 +62,27 @@ case class AllDiff(variables: Iterable[CBLSIntVar]) extends Constraint {
   })
 
   for (v <- variables) {
-    val varval = v.value
-    ValueCount(varval + offset) :+= 1
-  }
-
-  for (v <- variables) {
-    Violations(v) <== ValueCount.element((v + offset).toIntVar) - 1
+    ValueCount(v.value + offset) :+= 1
   }
 
   for (i <- range) {
     val tmp = ValueCount(i).getValue(true) - 1
     if (tmp > 0) Violation :+= tmp
+  }
+
+  /**the degree of violation of a variable is the number of other variables that have the same value as it. */
+  private val Violations: SortedMap[CBLSIntVar, CBLSIntVar] = {
+    def accumulate(acc:SortedMap[CBLSIntVar,CBLSIntVar], variable:CBLSIntVar, violation:CBLSIntVar):SortedMap[CBLSIntVar,CBLSIntVar] =
+      acc + (acc.get(variable) match{
+        case Some(oldViolation) => ((variable,(violation + oldViolation).toIntVar(violation.name)))
+        case None => ((variable,violation))})
+
+    variables.foldLeft(
+      SortedMap.empty[CBLSIntVar, CBLSIntVar])(
+        (acc, intvar) => {
+          val newvar = (ValueCount.element((intvar + offset).toIntVar) - 1).toIntVar("Violation_AllDiff_" + intvar.name)
+          accumulate(acc , intvar, newvar)
+        })
   }
 
   @inline
@@ -130,5 +134,3 @@ case class AllDiff(variables: Iterable[CBLSIntVar]) extends Constraint {
         + ") == Violation.value (" + Violation.value + ")"))
   }
 }
-
-

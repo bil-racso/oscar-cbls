@@ -34,15 +34,24 @@ import oscar.cbls.invariants.lib.numeric.Step
   * @author renaud.delandtsheer@cetic.be
  */
 abstract class Constraint extends IntInvariant{
+  //TODO: constraints should not always be invariant, although they should offer the setOutputVar feature
 
   /** returns the violation associated with variable v in this constraint
-   * all variables that are declared as constraint should have an associated violation degree. */
+   * all variables that are declared as constraint should have an associated violation degree.
+    * notice that you cannot create any new invariant or variable in this method
+    * because they can only be created before the model is closed.
+    * */
   def violation(v: Variable): CBLSIntVar
 
-  /**returns the degree of violation of the constraint*/
+  /** returns the degree of violation of the constraint
+    * notice that you cannot create any new invariant or variable in this method
+    * because they can only be created before the model is closed.
+    * @return
+    */
   def violation: CBLSIntVar
 
-  /**facility to check that the constraint is enforced*/
+  /**facility to check that the constraint is enforced
+    * */
   final def isTrue: Boolean = (violation.value == 0)
 
   def myMin = 0

@@ -29,7 +29,8 @@ import oscar.cbls.search.algo.HotRestart
 import oscar.cbls.search.core.EasyNeighborhood
 
 /**
- * Removes two edges of routes, and rebuilds routes from the segments. (with one reverse required)
+ * Removes two edges of routes, and rebuilds routes from the segments.
+ * (with one reverse required)
  *
  * The search complexity is O(n²).
  * @author renaud.delandtsheer@cetic.be
