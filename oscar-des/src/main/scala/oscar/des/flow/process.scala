@@ -19,6 +19,23 @@ import oscar.des.engine.Model
 
 import scala.collection.mutable.ListBuffer
 
+trait HelperForProcess{
+  implicit def floatToConstantFloatFunction(f: Float): (() => Float) = (() => f)
+  implicit def intToConstantFloatFunction(f: Int): (() => Float) = (() => f)
+  implicit def floatToConstantIntFunction(f: Float): (() => Int) = (() => f.toInt)
+  implicit def intToConstantIntFunction(f: Int): (() => Int) = (() => f)
+}
+
+/**
+ * This represents a batch process (see [[SingleBatchProcess]]) with multiple batch running in parallell.
+ * @param m
+ * @param numberOfBatches
+ * @param batchDuration
+ * @param inputs
+ * @param outputs
+ * @param name
+ * @param verbose
+ */
 case class BatchProcess(m:Model, numberOfBatches:Int, batchDuration:() => Float, inputs:List[(Int,Fetcheable)], outputs:List[(Int,Puteable)], name:String, verbose:Boolean = true){
 
   val childProcesses:Iterable[SingleBatchProcess] = (1 to numberOfBatches) map((batchNumber:Int) => SingleBatchProcess(m, batchDuration, inputs, outputs, name + " chain " + batchNumber, verbose))
@@ -264,7 +281,11 @@ class PartSupplier(m:Model, supplierDelay:()=>Int, deliveredPercentage:() => Int
   }
 }
 
-trait Overflow extends Storage{
+case class OverflowStorage(override val size:Int,
+                           initialContent:Int,
+                           override val name:String,
+                           override val verbose:Boolean=true)
+  extends Storage(size,initialContent, name, verbose){
   //TODO: overflow should happen only once per simulation step (or kind of once) since all events are supposed to happen at the same time
   var totalLosByOverflow = 0
   override def flow():Boolean = {

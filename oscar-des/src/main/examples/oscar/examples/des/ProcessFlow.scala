@@ -2,7 +2,7 @@ package oscar.des.flow
 
 import oscar.des.engine.Model
 
-object testBelt extends App {
+object testBelt extends App with HelperForProcess{
 
   val m = new Model
   val verbose = true
@@ -10,16 +10,11 @@ object testBelt extends App {
   //a process that has two inputs, and one output (eg: soldering)
   println("start simulate...")
 
-  implicit def floatToConstantFloatFunction(f: Float): (() => Float) = (() => f)
-  implicit def intToConstantFloatFunction(f: Int): (() => Float) = (() => f)
-  implicit def floatToConstantIntFunction(f: Float): (() => Int) = (() => f.toInt)
-  implicit def intToConstantIntFunction(f: Int): (() => Int) = (() => f)
-
   val input = new Storage(200, 10, "input", verbose)
   val output = new Storage(22, 0, "output", verbose)
   val belt = new ConveyerBeltProcess(m, 5, 1, List((1, input)), List((1, output)), "belt", verbose)
 
-  val slowlyFeedingInput  = new SingleBatchProcess(m, 29, List(), List((5, input)), "slowlyFeedingInput", verbose)
+  val slowlyFeedingInput  = new SingleBatchProcess(m, 29, List(), List((10, input)), "slowlyFeedingInput", verbose)
 
   m.simulate(100, verbose)
 
@@ -28,20 +23,16 @@ object testBelt extends App {
   println(input)
   println(output)
   println(belt)
+  println(slowlyFeedingInput)
 }
 
-object TestProcess extends App{
+object TestProcess extends App with HelperForProcess{
 
   val m = new Model
   val verbose = true
 
   //a process that has two inputs, and one output (eg: soldering)
   println("start simulate...")
-
-  implicit def floatToConstantFloatFunction(f:Float):(()=>Float) = (()=>f)
-  implicit def intToConstantFloatFunction(f:Int):(()=>Float) = (()=>f)
-  implicit def floatToConstantIntFunction(f:Float):(()=>Int) = (()=>f.toInt)
-  implicit def intToConstantIntFunction(f:Int):(()=>Int) = (()=>f)
 
   val stockA = new Storage(200, 100, "stockA", verbose)
   val stockB = new Storage(300, 300, "stockB", verbose)
@@ -50,9 +41,9 @@ object TestProcess extends App{
   OrderOnStockTreshold(stockA, 30, _ => 100, supplierforA, verbose)
 
   val middleStock = new Storage(7, 0, "middleStock", verbose)
-  val trash = new Storage(5, 0, "trash", verbose) with Overflow
+  val trash = new OverflowStorage(5, 0, "trash", verbose)
 
-  val emptyingTrash = new SingleBatchProcess(m, 29, List((2, trash)), List(), "emptyingTrash", verbose)
+  val emptyingTrash = SingleBatchProcess(m, 29, List((2, trash)), List(), "emptyingTrash", verbose)
 
   val soldering = BatchProcess(m, 2, 13, List((1, stockA),(2, stockB)), List((1, middleStock),(1, trash)), "soldering", verbose)
 
@@ -73,6 +64,4 @@ object TestProcess extends App{
   println(soldering)
   println(attaching)
   println(delivering)
-  //continuous process needed (eg: belt-driven assembly line) with probability of interruption
-
 }
