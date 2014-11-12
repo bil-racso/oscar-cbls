@@ -21,6 +21,52 @@ import oscar.invariants._
 
 import scala.collection.mutable._
 
+class ModelWithWeakWait extends Model{
+  protected val weakEventQueue = new PriorityQueue[SimEvent]()
+
+  def weakWait(duration : Double)(block : => Unit) {
+    assert(duration >= 0)
+    addWeakEvent(new WaitEvent(clock + duration, block))
+  }
+
+  def weakWait(duration : Int)(block : => Unit) {
+    weakWait(duration.toDouble)(block)
+  }
+
+  private def addWeakEvent(e : SimEvent) = weakEventQueue += e
+
+  protected def takeFirstEvent():SimEvent = {
+    if(weakEventQueue.isEmpty) {
+      eventQueue.dequeue()
+    }else{
+      val e = eventQueue.head
+      val w = weakEventQueue.head
+      if(w.time<e.time){
+        weakEventQueue.dequeue()
+      }else{
+        eventQueue.dequeue()
+      }
+    }
+  }
+
+  override def simulate(horizon: Int,verbose: Boolean = true) {
+    while (eventQueue.nonEmpty) {
+      val e = takeFirstEvent()
+
+      if(verbose && e.time <= horizon && e.time != currentTime){
+        println("-----------> time: "+  e.time)
+      }
+      currentTime = e.time;
+      if(currentTime <= horizon){
+        e.process
+      }
+      else {
+        currentTime = horizon;
+        return
+      }
+    }
+  }
+}
 /**
  * This is the main engine of the simulation.
  * Every Process in the simulation should wait, require resource ... on an instance of this class.
@@ -28,8 +74,8 @@ import scala.collection.mutable._
  */
 class Model {
    
-	private val eventQueue = new PriorityQueue[SimEvent]()
-	private var currentTime = 0.0
+	protected val eventQueue = new PriorityQueue[SimEvent]()
+	protected var currentTime = 0.0
 	
 	def clock() : Double = currentTime
 	
@@ -57,7 +103,7 @@ class Model {
 		addEvent(new WaitEvent(clock + duration, block))
 	}
 	
-    def wait(duration : Int)(block : => Unit) {
+  def wait(duration : Int)(block : => Unit) {
 		wait(duration.toDouble)(block)
 	}
 	

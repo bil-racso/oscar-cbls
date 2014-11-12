@@ -15,6 +15,8 @@
 
 package oscar.des.flow
 
+import oscar.des.engine.ModelWithWeakWait
+
 import scala.collection.mutable.ListBuffer
 
 /** represents a process fragment where one can put a part
@@ -211,4 +213,22 @@ trait Inputter {
     }
     gate.notifyOne()
   }
+}
+
+trait NotificationTarget{
+  def notifyStockLevel(level:Int)
+}
+
+case class WeakTickProcess(m:ModelWithWeakWait, period:Float, doOnTick:()=>Unit){
+
+  def tick(): Unit ={
+    doOnTick()
+    registerNextTick()
+  }
+
+  def registerNextTick(): Unit ={
+    m.weakWait(period) {tick()}
+  }
+
+  registerNextTick()
 }

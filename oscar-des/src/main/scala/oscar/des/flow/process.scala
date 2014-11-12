@@ -15,7 +15,7 @@
 
 package oscar.des.flow
 
-import oscar.des.engine.Model
+import oscar.des.engine.{ModelWithWeakWait, Model}
 
 import scala.collection.mutable.ListBuffer
 
@@ -28,13 +28,13 @@ trait HelperForProcess{
 
 /**
  * This represents a batch process (see [[SingleBatchProcess]]) with multiple batch running in parallell.
- * @param m
- * @param numberOfBatches
- * @param batchDuration
- * @param inputs
- * @param outputs
- * @param name
- * @param verbose
+ * @param numberOfBatches the number of batches running in parallell.
+ * @param m the simulation model
+ * @param batchDuration the duration of a batch starting from all inputs being inputted, and ending with the beginning of the outputting
+ * @param inputs the set of inputs (number of parts to input, storage)
+ * @param outputs the set of outputs (number of parts, storage)
+ * @param name the name of this process, for pretty printing, bath are named "name chain i" where i is the identifier of the batch process
+ * @param verbose true if you want to see the start input, start batch, end batch start output, end output events on the console
  */
 case class BatchProcess(m:Model, numberOfBatches:Int, batchDuration:() => Float, inputs:List[(Int,Fetcheable)], outputs:List[(Int,Puteable)], name:String, verbose:Boolean = true){
 
@@ -49,7 +49,12 @@ case class BatchProcess(m:Model, numberOfBatches:Int, batchDuration:() => Float,
  * a process inputs some inputs, and produces its outputs at a given rate.
  * notice that inputs and outputs are performed in parallell (thus might cause some deadlocks)
  *
- * @param m
+ * @param m the simulation model
+ * @param batchDuration the duration of a batch starting from all inputs being inputted, and ending with the beginning of the outputting
+ * @param inputs the set of inputs (number of parts to input, storage)
+ * @param outputs the set of outputs (number of parts, storage)
+ * @param name the name of this process, for pretty printing
+ * @param verbose true if you want to see the start input, start batch, end batch start output, end output events on the console
  */
 case class SingleBatchProcess(m:Model,
                               batchDuration:() => Float,
@@ -121,7 +126,6 @@ class ConveyerBeltProcess(m:Model,
   var totalOutputBatches = 0
   var totalBlockedTime:Double = 0.0
   restartInputtingIfNeeded()
-
 
   override def toString: String = {
     name + " content: " + belt.size + " totalInputBatches:" + totalInputBatches + " totalOutputBatches:" + totalOutputBatches + " totalBlockedTime:" + totalBlockedTime
@@ -208,11 +212,14 @@ class ConveyerBeltProcess(m:Model,
 
 
 /**
- * this will put some delay between the incoming and outgoing of goods. suppose a conveyor belt
+ * this will put some delay between the incoming and outgoing of goods.
+ * Suppose a conveyor belt where you can stack things,
+ * and that is not stopped by an overflow at the destination (things accumulate at the output in an ugly way)
+ * also, thius implementation is much less efficient than the one of [[ConveyerBeltProcess]]
  * @param m
  * @param delay
  */
-class Delay(m:Model, delay:Float, inputSlotDuration:Int, inputsPerSlot:Int, destination:Puteable) extends RichPuteable{
+class Delay(m:Model, delay:Float, destination:Puteable) extends RichPuteable{
 
   var blocked = false
   /**
@@ -266,9 +273,34 @@ case class OrderOnStockTreshold(s:Storage, threshold:Int, orderQuantity:Int=>Int
   }
 }
 
-trait NotificationTarget{
-  def notifyStockLevel(level:Int)
+/**
+ * @param s
+ * @param threshold
+ * @param orderQuantity given the actual level of the stock, how much do we order?
+ * @param supplier
+ */
+case class OrderOnStockThresholdWithTick(s:Storage, m:ModelWithWeakWait, threshold:Int, period:Float, orderQuantity:Int=>Int, supplier:PartSupplier, verbose:Boolean = true){
+
+  WeakTickProcess(m, period, checkStockLevel)
+  var lastMeasuredLevel:Int = s.content
+
+  def checkStockLevel(){
+    val level = s.content
+    if(level <= threshold && lastMeasuredLevel > threshold){
+      performOrder()
+    }
+    lastMeasuredLevel = level
+  }
+
+  def performOrder(): Unit ={
+    val orderedQuantity = orderQuantity(s.content)
+    if (verbose) println("threshold (" + threshold + ") reached on " + s.name + ", ordered " + orderedQuantity + " parts to " + supplier.name)
+    supplier.order(orderedQuantity, s)
+  }
 }
+
+
+
 
 class PartSupplier(m:Model, supplierDelay:()=>Int, deliveredPercentage:() => Int, val name:String, verbose:Boolean = true){
   def order(orderQuantity:Int, to:Storage): Unit ={
