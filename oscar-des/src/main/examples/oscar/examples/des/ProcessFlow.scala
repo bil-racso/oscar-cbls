@@ -1,6 +1,6 @@
 package oscar.des.flow
 
-import oscar.des.engine.{ModelWithWeakWait, Model}
+import oscar.des.engine.Model
 
 object testBelt extends App with HelperForProcess{
 
@@ -28,7 +28,7 @@ object testBelt extends App with HelperForProcess{
 
 object TestProcess extends App with HelperForProcess{
 
-  val m = new ModelWithWeakWait
+  val m = new Model
   val verbose = true
 
   //a process that has two inputs, and one output (eg: soldering)
@@ -39,7 +39,7 @@ object TestProcess extends App with HelperForProcess{
 
   val supplierforA = new PartSupplier(m, 50, 50 ,"SupplierForA", verbose)
 //  OrderOnStockTreshold(stockA, 30, _ => 100, supplierforA, verbose)
-  OrderOnStockThresholdWithTick(stockA, m, 30, 100, _ => 100, supplierforA, verbose)
+  val orderPolicy = new OrderOnStockThresholdWithTick(stockA, m, 30, 100, _ => 100, supplierforA, verbose, "order")
 
   val middleStock = new Storage(7, 0, "middleStock", verbose)
   val trash = new OverflowStorage(5, 0, "trash", verbose)
@@ -65,4 +65,6 @@ object TestProcess extends App with HelperForProcess{
   println(soldering)
   println(attaching)
   println(delivering)
+  println(orderPolicy)
+  println(supplierforA)
 }

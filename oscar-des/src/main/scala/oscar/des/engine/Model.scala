@@ -1,58 +1,38 @@
 /*******************************************************************************
- * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 2.1 of the License, or
- * (at your option) any later version.
- *   
- * OscaR is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License  for more details.
- *   
- * You should have received a copy of the GNU Lesser General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
- ******************************************************************************/
+  * OscaR is free software: you can redistribute it and/or modify
+  * it under the terms of the GNU Lesser General Public License as published by
+  * the Free Software Foundation, either version 2.1 of the License, or
+  * (at your option) any later version.
+  *
+  * OscaR is distributed in the hope that it will be useful,
+  * but WITHOUT ANY WARRANTY; without even the implied warranty of
+  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  * GNU Lesser General Public License  for more details.
+  *
+  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
+  ******************************************************************************/
 package oscar.des.engine
 
 import scala.collection.mutable._
-import java.util.LinkedList
-import scala.collection.JavaConversions._
-import oscar.invariants._
 
-import scala.collection.mutable._
+/**
+ * This is the main engine of the simulation.
+ * Every Process in the simulation should wait, require resource ... on an instance of this class.
+ * @author pschaus
+ */
+class Model {
 
-class ModelWithWeakWait extends Model{
-  protected val weakEventQueue = new PriorityQueue[SimEvent]()
+  private val eventQueue = new PriorityQueue[SimEvent]()
+  private var currentTime = 0.0
 
-  def weakWait(duration : Double)(block : => Unit) {
-    assert(duration >= 0)
-    addWeakEvent(new WaitEvent(clock + duration, block))
-  }
+  def clock() : Double = currentTime
 
-  def weakWait(duration : Int)(block : => Unit) {
-    weakWait(duration.toDouble)(block)
-  }
+  private def addEvent(e : SimEvent) = eventQueue += e
 
-  private def addWeakEvent(e : SimEvent) = weakEventQueue += e
-
-  protected def takeFirstEvent():SimEvent = {
-    if(weakEventQueue.isEmpty) {
-      eventQueue.dequeue()
-    }else{
-      val e = eventQueue.head
-      val w = weakEventQueue.head
-      if(w.time<e.time){
-        weakEventQueue.dequeue()
-      }else{
-        eventQueue.dequeue()
-      }
-    }
-  }
-
-  override def simulate(horizon: Int,verbose: Boolean = true) {
+  def simulate(horizon: Int,verbose: Boolean = true) {
     while (eventQueue.nonEmpty) {
-      val e = takeFirstEvent()
-
+      val e = eventQueue.dequeue()
       if(verbose && e.time <= horizon && e.time != currentTime){
         println("-----------> time: "+  e.time)
       }
@@ -66,61 +46,30 @@ class ModelWithWeakWait extends Model{
       }
     }
   }
-}
-/**
- * This is the main engine of the simulation.
- * Every Process in the simulation should wait, require resource ... on an instance of this class.
- * @author pschaus
- */
-class Model {
-   
-	protected val eventQueue = new PriorityQueue[SimEvent]()
-	protected var currentTime = 0.0
-	
-	def clock() : Double = currentTime
-	
-	private def addEvent(e : SimEvent) = eventQueue += e
-	
-	def simulate(horizon: Int,verbose: Boolean = true) {
-		while (eventQueue.nonEmpty) {
-			val e = eventQueue.dequeue()
-			if(verbose && e.time <= horizon && e.time != currentTime){
-				println("-----------> time: "+  e.time)
-			}
-			currentTime = e.time;
-			if(currentTime <= horizon){
-				e.process
-			}
-			else {
-				currentTime = horizon;
-				return
-			}
-		}
-	}
 
-	def wait(duration : Double)(block : => Unit) {
-		assert(duration >= 0)
-		addEvent(new WaitEvent(clock + duration, block))
-	}
-	
+  def wait(duration : Double)(block : => Unit) {
+    assert(duration >= 0)
+    addEvent(new WaitEvent(clock + duration, block))
+  }
+
   def wait(duration : Int)(block : => Unit) {
-		wait(duration.toDouble)(block)
-	}
-	
-	def request(r : Resource)(block : => Unit) {
-		r.request(block)
-	}
+    wait(duration.toDouble)(block)
+  }
 
-	def release(r : Resource) {
-		r.release()
-	}
-	
-	def suspend(proc : Process)(block : => Unit) {
-		proc.suspend(block)
-	}
+  def request(r : Resource)(block : => Unit) {
+    r.request(block)
+  }
 
-	def resume(proc : Process){
-		proc.resume()
-	}
+  def release(r : Resource) {
+    r.release()
+  }
+
+  def suspend(proc : Process)(block : => Unit) {
+    proc.suspend(block)
+  }
+
+  def resume(proc : Process){
+    proc.resume()
+  }
 
 }

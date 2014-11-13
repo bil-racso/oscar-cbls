@@ -15,7 +15,7 @@
 
 package oscar.des.flow
 
-import oscar.des.engine.{ModelWithWeakWait, Model}
+import oscar.des.engine.Model
 
 import scala.collection.mutable.ListBuffer
 
@@ -35,7 +35,8 @@ trait HelperForProcess{
  * @param outputs the set of outputs (number of parts, storage)
  * @param name the name of this process, for pretty printing, bath are named "name chain i" where i is the identifier of the batch process
  * @param verbose true if you want to see the start input, start batch, end batch start output, end output events on the console
- */
+ * @author renaud.delandtsheer@cetic.be
+ * */
 case class BatchProcess(m:Model, numberOfBatches:Int, batchDuration:() => Float, inputs:List[(Int,Fetcheable)], outputs:List[(Int,Puteable)], name:String, verbose:Boolean = true){
 
   val childProcesses:Iterable[SingleBatchProcess] = (1 to numberOfBatches) map((batchNumber:Int) => SingleBatchProcess(m, batchDuration, inputs, outputs, name + " chain " + batchNumber, verbose))
@@ -55,7 +56,8 @@ case class BatchProcess(m:Model, numberOfBatches:Int, batchDuration:() => Float,
  * @param outputs the set of outputs (number of parts, storage)
  * @param name the name of this process, for pretty printing
  * @param verbose true if you want to see the start input, start batch, end batch start output, end output events on the console
- */
+ * @author renaud.delandtsheer@cetic.be
+ * */
 case class SingleBatchProcess(m:Model,
                               batchDuration:() => Float,
                               val inputs:List[(Int,Fetcheable)],
@@ -101,6 +103,15 @@ case class SingleBatchProcess(m:Model,
  * and if the input is blocked, the output still proceeds, (as if we were starting empty batches) there is no catch up for the waited time
  * batch only start when they ave their complete inputs.
  * if the output is blocked, the process stops, thus does not perform new inputs either (we cannot model that croissants will eventually burn in the oven)
+ *
+ * @param m the simulation model
+ * @param processDuration the duration between inputting a batch and outûtting the batch
+ * @param minimalSeparationBetweenBatches the minimal separation between two consecutive batches
+ * @param inputs the set of inputs (number of parts to input, storage)
+ * @param outputs the set of outputs (number of parts, storage)
+ * @param name the name of this process, for pretty printing
+ * @param verbose true if you want to see the start input, start batch, end batch start output, end output events on the console
+ * @author renaud.delandtsheer@cetic.be
  */
 class ConveyerBeltProcess(m:Model,
                           processDuration:Float,
@@ -215,7 +226,7 @@ class ConveyerBeltProcess(m:Model,
  * this will put some delay between the incoming and outgoing of goods.
  * Suppose a conveyor belt where you can stack things,
  * and that is not stopped by an overflow at the destination (things accumulate at the output in an ugly way)
- * also, thius implementation is much less efficient than the one of [[ConveyerBeltProcess]]
+ * also, thus implementation is much less efficient than the one of [[ConveyerBeltProcess]]
  * @param m
  * @param delay
  */
@@ -247,16 +258,23 @@ class Delay(m:Model, delay:Float, destination:Puteable) extends RichPuteable{
   override protected def internalPut(amount: Int): (Int,Int) = (0,0)
 }
 
-
 /**
- * @param s
- * @param threshold
+ *This policy fills in a stock when it is below some threshold by placing an order to a supplier.
+ * The storage will be refurbished when the supplier actually delivers the order
+ *
+ * @param s the storage that is refurbished through this policy
+ * @param threshold the order is placed as soon as the stock gets below this threshold
  * @param orderQuantity given the actual level of the stock, how much do we order?
- * @param supplier
- */
-case class OrderOnStockTreshold(s:Storage, threshold:Int, orderQuantity:Int=>Int, supplier:PartSupplier, verbose:Boolean = true)
+ * @param supplier the supplier at which the order will be placed
+ * @param verbose true to print order placement on the console
+ * @param name a name used for pretty printing
+ * @author renaud.delandtsheer@cetic.be
+ * */
+class OrderOnStockTreshold(s:Storage, threshold:Int, orderQuantity:Int=>Int, supplier:PartSupplier, verbose:Boolean = true, name:String)
   extends NotificationTarget{
   s.registernotificationTarget(this)
+
+  var placedOrders = 0
 
   var lastNotifiedlevel:Int = s.content
   override def notifyStockLevel(level: Int): Unit = {
@@ -266,53 +284,77 @@ case class OrderOnStockTreshold(s:Storage, threshold:Int, orderQuantity:Int=>Int
     lastNotifiedlevel = level
   }
 
-  def performOrder(): Unit ={
+  protected def performOrder(): Unit ={
     val orderedQuantity = orderQuantity(s.content)
-    if (verbose) println("threshold (" + threshold + ") reached on " + s.name + ", ordered " + orderedQuantity + " parts to " + supplier.name)
+    if (verbose) println("threshold (" + threshold + ") reached on " + s.name + " (now:" + s.content + "), ordered " + orderedQuantity + " parts to " + supplier.name)
     supplier.order(orderedQuantity, s)
+    placedOrders += 1
+  }
+
+  override def toString: String = name + " placed " + placedOrders + " orders"
+}
+
+/**
+ *This policy fills in a stock when it is below some threshold by placing an order to a supplier.
+ * The storage will be refurbished when the supplier actually delivers the order
+ * The storage is actually checked every period for its level.
+ * @param s the storage that is refurbished through this policy
+ * @param m the model of the simulation
+ * @param threshold the order is placed as soon as the stock gets below this threshold
+ * @param period the period of time where the stock is checked
+ * @param orderQuantity given the actual level of the stock, how much do we order?
+ * @param supplier the supplier at which the order will be placed
+ * @param verbose true to print order placement on the console
+ * @param name a name used for pretty printing
+ * @author renaud.delandtsheer@cetic.be
+ * */
+class OrderOnStockThresholdWithTick(s:Storage, m:Model, threshold:Int, period:Float, orderQuantity:Int=>Int, supplier:PartSupplier, verbose:Boolean = true, name:String)
+  extends OrderOnStockTreshold(s, threshold, orderQuantity, supplier, verbose, name) {
+
+  override def performOrder(){
+    //the order is placed at a round up period after now
+    m.wait(period - (m.clock() % period)) {super.performOrder()}
   }
 }
 
 /**
- * @param s
- * @param threshold
- * @param orderQuantity given the actual level of the stock, how much do we order?
- * @param supplier
- */
-case class OrderOnStockThresholdWithTick(s:Storage, m:ModelWithWeakWait, threshold:Int, period:Float, orderQuantity:Int=>Int, supplier:PartSupplier, verbose:Boolean = true){
-
-  WeakTickProcess(m, period, checkStockLevel)
-  var lastMeasuredLevel:Int = s.content
-
-  def checkStockLevel(){
-    val level = s.content
-    if(level <= threshold && lastMeasuredLevel > threshold){
-      performOrder()
-    }
-    lastMeasuredLevel = level
-  }
-
-  def performOrder(): Unit ={
-    val orderedQuantity = orderQuantity(s.content)
-    if (verbose) println("threshold (" + threshold + ") reached on " + s.name + ", ordered " + orderedQuantity + " parts to " + supplier.name)
-    supplier.order(orderedQuantity, s)
-  }
-}
-
-
-
-
+ * represents a supplier. the main operation is order
+ * @param m the model of the simulation
+ * @param supplierDelay the delay of the supplier (random function)
+ * @param deliveredPercentage the delivered percentage, when an order is placed
+ * @param name the name of the supplier, for pretty printing purpose
+ * @param verbose true to print order deliveries on the console
+ * @author renaud.delandtsheer@cetic.be
+ * */
 class PartSupplier(m:Model, supplierDelay:()=>Int, deliveredPercentage:() => Int, val name:String, verbose:Boolean = true){
+  var placedOrders = 0
+  var totalOrderedParts = 0
+  var deliveredOrders = 0
+  var totalDeliveredParts = 0
+
   def order(orderQuantity:Int, to:Storage): Unit ={
+    totalOrderedParts += orderQuantity
+    placedOrders += 1
     val willBeDelivered = (deliveredPercentage() * orderQuantity) / 100
     m.wait(supplierDelay()){
       if(verbose) println(name + ": delivered " + willBeDelivered + " parts to stock " + to.name +
         (if (willBeDelivered != orderQuantity) " (ordered: " + orderQuantity + ")" else ""))
-      to.put(willBeDelivered){}
+      to.put(willBeDelivered){totalDeliveredParts += willBeDelivered; deliveredOrders +=1}
     }
   }
+
+  override def toString: String = name + " receivedOrders:" + placedOrders + " totalOrderedParts:" + totalOrderedParts + " deliveredOrders:" + deliveredOrders + " totalDeliveredParts " + totalDeliveredParts
 }
 
+/**
+ * represents a storage point, or a stock as you name it
+ * This storage overflows when it is too much filled in
+ * @param size the maximal content of the stock. attempting to put more items will lead t oan overflow, with loss of stock content
+ * @param initialContent the initial content of the stock
+ * @param name the name of the stock
+ * @param verbose true to print when stock is empty or overfull
+ * @author renaud.delandtsheer@cetic.be
+ * */
 case class OverflowStorage(override val size:Int,
                            initialContent:Int,
                            override val name:String,
@@ -331,9 +373,14 @@ case class OverflowStorage(override val size:Int,
   override def toString: String = super.toString + " totalOverflow:" + totalLosByOverflow
 }
 
-/** connection points have no storage, they are just notified by the process that stuffs them in
-  * they must have an output specified
-  */
+/**
+ * represents a storage point, or a stock as you name it
+ * @param size the maximal content of the stock. attempting to put more items will block the putting operations
+ * @param initialContent the initial content of the stock
+ * @param name the name of the stock
+ * @param verbose true to print when stock is empty or overfull
+ * @author renaud.delandtsheer@cetic.be
+ * */
 class Storage(val size:Int, initialContent:Int, val name:String, val verbose:Boolean=true) extends RichPuteable with RichFetcheable {
   var content:Int = initialContent
 

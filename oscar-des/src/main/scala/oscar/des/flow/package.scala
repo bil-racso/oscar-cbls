@@ -18,7 +18,7 @@ package oscar.des
 /**
  * This package proposes a set of modeling artifacts to represent and simulate workflows.
  * It includes representation of [[oscar.des.flow.Storage]] (as well as [[oscar.des.flow.OverflowStorage]], processes ([[oscar.des.flow.SingleBatchProcess]], [[oscar.des.flow.BatchProcess]], and [[oscar.des.flow.ConveyerBeltProcess]])
- * and ordering policies (such as [[oscar.des.flow.OrderOnStockTreshold]]) and [[oscar.des.flow.PartSupplier]].
+ * and ordering policies (such as [[oscar.des.flow.OrderOnStockTreshold]] and [[oscar.des.flow.OrderOnStockThresholdWithTick]]) and [[oscar.des.flow.PartSupplier]].
  *
  * As many of these model can intake random functions,
  * the trait [[oscar.des.flow.HelperForProcess]] provides a set of implicit methods to convert constants into such functions,
