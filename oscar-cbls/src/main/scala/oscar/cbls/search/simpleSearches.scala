@@ -198,12 +198,14 @@ case class SwapsNeighborhood(vars:Array[CBLSIntVar],
  * @param degree the number of variables to change randomly
  * @param searchZone a subset of the indices of vars to consider.
  *                   If none is provided, all the array will be considered each time
+ * @param valuesToConsider: the set of values to consider for the given variable
  * @param name the name of the neighborhood
  */
 case class RandomizeNeighborhood(vars:Array[CBLSIntVar],
                                  degree:Int = 1,
                                  name:String = "RandomizeNeighborhood",
-                                 searchZone:CBLSSetVar = null)
+                                 searchZone:CBLSSetVar = null,
+                                 valuesToConsider:(CBLSIntVar,Int) => Iterable[Int] = (variable,_) => variable.domain)
   extends Neighborhood with AlgebraTrait with SearchEngineTrait{
 
   override def getMove(acceptanceCriteria:(Int,Int) => Boolean = null): SearchResult = {
@@ -222,7 +224,7 @@ case class RandomizeNeighborhood(vars:Array[CBLSIntVar],
         val i = selectFrom(vars.indices,(j:Int) => (searchZone == null || searchZone.value.contains(j)) && !touchedVars.contains(j))
         touchedVars = touchedVars + i
         val oldVal = vars(i).value
-        toReturn = AssignMove(vars(i),selectFrom(vars(i).domain, (_:Int) != oldVal),Int.MaxValue) :: toReturn
+        toReturn = AssignMove(vars(i),selectFrom(valuesToConsider(vars(i),i), (_:Int) != oldVal),Int.MaxValue) :: toReturn
       }
     }
     if(amIVerbose) println(name + ": move found")
