@@ -3,95 +3,99 @@
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- *   
+ *
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License  for more details.
- *   
+ *
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
- ******************************************************************************/
-
+ * *****************************************************************************/
 
 package oscar.cp.core
 
-import oscar.algo.reversible.ReversibleQueue
 import oscar.algo.reversible.ReversiblePointer
-import scala.collection._
-import scala.collection.generic._
-import scala.util.Random
-import oscar.cp.core.domains.IntDomain
-import oscar.cp.core.domains.AdaptableIntDomain
+import oscar.algo.reversible.ReversibleInt
 import oscar.cp.core.CPOutcome._
+import scala.util.Random
 
 /**
  * @author Pierre Schaus pschaus@gmail.com
+ * @author Renaud Hartert ren.hartert@gmail.com
  */
-class CPIntervalVarImpl(store: CPStore, private val domain: IntDomain, name: String = "") extends CPIntervalVar(store, name) {
+class CPIntervalVarImpl(store: CPStore, initialMin: Int, initialMax: Int, name: String) extends CPIntervalVar(store, name) {
 
-  val onBoundsL2 = new ReversiblePointer[ConstraintQueue](store, null)
-  val onBindL2 = new ReversiblePointer[ConstraintQueue](store, null)
+  // Adjacency list
+  private final val onBoundsL2 = new ReversiblePointer[ConstraintQueue](store, null)
+  private final val onBindL2 = new ReversiblePointer[ConstraintQueue](store, null)
+  private final val onBoundsL1 = new ReversiblePointer[PropagEventQueueVarInt[CPIntervalVar]](store, null)
+  private final val onBindL1 = new ReversiblePointer[PropagEventQueueVarInt[CPIntervalVar]](store, null)
+  private final val onBoundsIdxL1 = new ReversiblePointer[PropagEventQueueVarInt[CPIntervalVar]](store, null)
+  private final val onBindIdxL1 = new ReversiblePointer[PropagEventQueueVarInt[CPIntervalVar]](store, null)
 
-  val onBoundsL1 = new ReversiblePointer[PropagEventQueueVarInt[CPIntervalVar]](store, null)
-  val onBindL1 = new ReversiblePointer[PropagEventQueueVarInt[CPIntervalVar]](store, null)
+  // Domain representation
+  private final val revMin = new ReversibleInt(store, initialMin)
+  private final val revMax = new ReversibleInt(store, initialMax)
 
-  val onBoundsIdxL1 = new ReversiblePointer[PropagEventQueueVarInt[CPIntervalVar]](store, null)
-  val onBindIdxL1 = new ReversiblePointer[PropagEventQueueVarInt[CPIntervalVar]](store, null)
+  final def transform(v: Int) = v
 
-  def transform(v: Int) = v
+  final def iterator: Iterator[Int] = new Iterator[Int] {
+    var i = revMin.value - 1
+    val n = revMax.value
+    override def hasNext: Boolean = i < n
+    override def next(): Int = {
+      i += 1
+      i
+    }
+  }
 
-  def iterator: Iterator[Int] = domain.iterator
-
-  /**
-   *
-   * @return The number of propagation methods of L2 attached to changes of this variables.
-   */
-  def constraintDegree() = {
+  /** @return The number of propagation methods of L2 attached to changes of this variables. */
+  final def constraintDegree: Int = {
     var tot = 0
-    if (onBoundsL2.hasValue()) tot += onBoundsL2.value.size
-    if (onBindL2.hasValue()) tot += onBindL2.value.size
-
-    if (onBoundsL1.hasValue()) tot += onBoundsL1.value.size
-    if (onBindL1.hasValue()) tot += onBindL1.value.size
-
-    if (onBoundsIdxL1.hasValue()) tot += onBoundsIdxL1.value.size
-    if (onBindIdxL1.hasValue()) tot += onBindIdxL1.value.size
+    if (onBoundsL2.hasValue) tot += onBoundsL2.value.size
+    if (onBindL2.hasValue) tot += onBindL2.value.size
+    if (onBoundsL1.hasValue) tot += onBoundsL1.value.size
+    if (onBindL1.hasValue) tot += onBindL1.value.size
+    if (onBoundsIdxL1.hasValue) tot += onBoundsIdxL1.value.size
+    if (onBindIdxL1.hasValue) tot += onBindIdxL1.value.size
     tot
   }
 
-  /**
-   * @return true if the domain of the variable has exactly one value, false if the domain has more than one value
-   */
-  def isBound: Boolean = {
+  /** @return true if the domain of the variable has exactly one value, false if the domain has more than one value */
+  @inline final def isBound: Boolean = {
     assert(!store.isFailed())
-    domain.isBound
+    revMax.value == revMin.value
   }
 
   /**
-   *
    * @param v
    * @return true if the variable is bound to value v, false if variable is not bound or bound to another value than v
    */
-  def isBoundTo(v: Int): Boolean = isBound && value == v
+  @inline final def isBoundTo(v: Int): Boolean = revMax.value == v && revMin.value == v
 
   /**
    * Test if a value is in the domain
    * @param val
    * @return  true if the domain contains the value val, false otherwise
    */
-  def hasValue(value: Int) = domain.hasValue(value)
+  @inline final def hasValue(value: Int): Boolean = revMin.value <= value && value <= revMax.value
 
   /**
    * @param val
    * @return the smallest value > val in the domain, None if there is not value > val in the domain
    */
-  def valueAfter(value: Int): Int = {
-    if (max < value + 1) {
+  final def valueAfter(value: Int): Int = {
+    val max = revMax.value
+    val v = value + 1
+    if (max < v) {
       println("error: no value after " + value + " maximum=" + max)
       value
     } else {
-      domain.nextValue(value + 1)
+      val min = revMin.value
+      if (isEmpty || v > max) value
+      else if (v < min) min
+      else v
     }
   }
 
@@ -99,53 +103,143 @@ class CPIntervalVarImpl(store: CPStore, private val domain: IntDomain, name: Str
    * @param val
    * @return the largest value < val in the domain, None if there is not value < val in the domain
    */
-  def valueBefore(value: Int): Int = {
-    if (min > value - 1) {
+  final def valueBefore(value: Int): Int = {
+    val min = revMin.value
+    val v = value - 1
+    if (min > v) {
       println("error: no value before " + value + " minimum=" + min)
       value
     } else {
-      domain.prevValue(value - 1)
+      val max = revMax.value
+      if (isEmpty || v < min) value
+      else if (v > max) max
+      else v
     }
   }
 
-  /**
-   * @return A random value in the domain of the variable (uniform distribution)
-   */
-  override def randomValue(rand: Random): Int = domain.randomValue(rand)
+  /** @return A random value in the domain of the variable (uniform distribution) */
+  final override def randomValue(rand: Random): Int = {
+    assert(!isEmpty)
+    val min = revMin.value
+    val max = revMax.value
+    min + rand.nextInt(max - min + 1)
+  }
 
   /**
    * @return  the size of the domain
    */
-  override def size = domain.size
+  @inline final override def size = revMax.value - revMin.value + 1
 
   /**
    * @return true if the domain is empty, false otherwise
    */
-  override def isEmpty = domain.isEmpty
+  @inline final override def isEmpty = revMax.value < revMin.value
 
   /**
    * @return  the minimum value in the domain
    */
-  def min = {
-    assert(!domain.isEmpty)
-    domain.min
+  @inline final override def min = {
+    assert(!isEmpty)
+    revMin.value
   }
 
   /**
    * @return  the maximum value in the domain
    */
-  def max = {
-    assert(!domain.isEmpty)
-    domain.max
+  @inline final override def max = {
+    assert(!isEmpty)
+    revMax.value
   }
 
-  override def toString(): String = {
-    if (isBound) {
-      if (name.isEmpty()) value.toString
-      else name + " " + value
+  final override def toString: String = {
+    if (isEmpty) "phi"
+    else if (isBound) {
+      val min = revMin.value
+      if (name.isEmpty) min.toString
+      else name + " " + min
     } else {
-      if (name.isEmpty()) domain.toString
-      else name + " " + domain.toString
+      val min = revMin.value
+      val max = revMax.value
+      if (name.isEmpty) s"$name [$min, $max]"
+      else s"[$min, $max]"
+    }
+  }
+
+  /**
+   * Reduce the domain to the singleton {val}, and notify appropriately all the propagators registered to this variable
+   * @param val
+   * @return  Suspend if val was in the domain, Failure otherwise
+   */
+  @inline final def assign(value: Int): CPOutcome = {
+    val min = revMin.value
+    val max = revMax.value
+    if (value < min || max < value) throw Inconsistency
+    else if (min == max) Suspend
+    else {
+      revMin.value = value
+      revMax.value = value
+      // Notify constraints
+      store.notifyL2(onBindL2.value)
+      store.notifyL2(onBoundsL2.value)
+      store.notifyBindL1(onBindL1.value, this)
+      store.notifyBindIdxL1(onBindIdxL1.value, this)
+      store.notifyUpdateBoundsL1(onBoundsL1.value, this)
+      store.notifyUpdateBoundsIdxL1(onBoundsIdxL1.value, this)
+      Suspend
+    }
+  }
+
+  /**
+   * Remove from the domain all values < val, and notify appropriately all the propagators registered to this variable
+   * @param val
+   * @return  Suspend if there is at least one value >= val in the domain, Failure otherwise
+   */
+  @inline final def updateMin(value: Int): CPOutcome = {
+    val max = revMax.value
+    if (value > max) throw Inconsistency
+    else {
+      val oldMin = revMin.value
+      if (value <= oldMin) Suspend
+      else {
+        revMin.value = value
+        // Notify the constraints
+        store.notifyUpdateBoundsL1(onBoundsL1.value, this)
+        store.notifyUpdateBoundsIdxL1(onBoundsIdxL1.value, this)
+        store.notifyL2(onBoundsL2.value)
+        if (max == value) { // is bound
+          store.notifyBindL1(onBindL1.value, this)
+          store.notifyBindIdxL1(onBindIdxL1.value, this)
+          store.notifyL2(onBindL2.value)
+        }
+        Suspend
+      }
+    }
+  }
+
+  /**
+   * Remove from the domain all values > val, and notify appropriately all the propagators registered to this variable
+   * @param val
+   * @return  Suspend if there is at least one value <= val in the domain, Failure otherwise
+   */
+  @inline final def updateMax(value: Int): CPOutcome = {
+    val min = revMin.value
+    if (value < min) throw Inconsistency
+    else {
+      val oldMax = revMax.value
+      if (value >= oldMax) Suspend
+      else {
+        revMax.value = value
+        // Notify the constraints
+        store.notifyUpdateBoundsL1(onBoundsL1.value, this)
+        store.notifyUpdateBoundsIdxL1(onBoundsIdxL1.value, this)
+        store.notifyL2(onBoundsL2.value)
+        if (value == min) { // is bound
+          store.notifyBindL1(onBindL1.value, this)
+          store.notifyBindIdxL1(onBindIdxL1.value, this)
+          store.notifyL2(onBindL2.value)
+        }
+        Suspend
+      }
     }
   }
 
@@ -226,98 +320,10 @@ class CPIntervalVarImpl(store: CPStore, private val domain: IntDomain, name: Str
   def callValBindIdxWhenBind(c: Constraint, variable: CPIntervalVar, idx: Int) {
     onBindIdxL1.setValue(new PropagEventQueueVarInt(onBindIdxL1.value, c, variable, idx))
   }
-
-  /**
-   * Reduce the domain to the singleton {val}, and notify appropriately all the propagators registered to this variable
-   * @param val
-   * @return  Suspend if val was in the domain, Failure otherwise
-   */
-  def assign(value: Int): CPOutcome = {
-    val dom = domain
-    if (!dom.hasValue(value)) CPOutcome.Failure
-    else if (dom.isBound) CPOutcome.Suspend
-    else { // more than one value
-      val assignToMax = max == value
-      val assignToMin = min == value
-      // -------- AC3 notifications ------------
-      //println(this+" notifyL2 onBounds "+onBoundsL2.value)
-      store.notifyL2(onBoundsL2.value)
-      store.notifyL2(onBindL2.value)
-      // --------- AC5 notifications ------------
-      store.notifyBindL1(onBindL1.value, this)
-      store.notifyBindIdxL1(onBindIdxL1.value, this)
-      store.notifyUpdateBoundsL1(onBoundsL1.value, this)
-      store.notifyUpdateBoundsIdxL1(onBoundsIdxL1.value, this)
-      // finally do the assignment
-      dom.assign(value)
-    }
-  }
-
-  /**
-   * Remove from the domain all values < val, and notify appropriately all the propagators registered to this variable
-   * @param val
-   * @return  Suspend if there is at least one value >= val in the domain, Failure otherwise
-   */
-  def updateMin(value: Int): CPOutcome = {
-
-    val dom = domain
-
-    if (value > dom.max) return CPOutcome.Failure
-
-    val omin = dom.min
-
-    if (value <= omin) return CPOutcome.Suspend
-
-    val ok = dom.updateMin(value)
-    assert(ok != CPOutcome.Failure)
-
-    if (dom.isBound) {
-      store.notifyBindL1(onBindL1.value, this)
-      store.notifyBindIdxL1(onBindIdxL1.value, this)
-      store.notifyL2(onBindL2.value)
-    }
-    store.notifyUpdateBoundsL1(onBoundsL1.value, this)
-    store.notifyUpdateBoundsIdxL1(onBoundsIdxL1.value, this)
-    store.notifyL2(onBoundsL2.value)
-    return CPOutcome.Suspend
-  }
-
-  /**
-   * Remove from the domain all values > val, and notify appropriately all the propagators registered to this variable
-   * @param val
-   * @return  Suspend if there is at least one value <= val in the domain, Failure otherwise
-   */
-  def updateMax(value: Int): CPOutcome = {
-
-    val dom = domain
-
-    if (value < dom.min) return CPOutcome.Failure
-
-    val omax = dom.max
-
-    if (value >= omax) return CPOutcome.Suspend
-
-
-    val ok = dom.updateMax(value)
-
-    if (dom.isBound) {
-      store.notifyBindL1(onBindL1.value, this)
-      store.notifyBindIdxL1(onBindIdxL1.value, this)
-      store.notifyL2(onBindL2.value)
-    }
-    store.notifyUpdateBoundsL1(onBoundsL1.value, this)
-    store.notifyUpdateBoundsIdxL1(onBoundsIdxL1.value, this)
-    store.notifyL2(onBoundsL2.value)
-    return CPOutcome.Suspend
-  }
-  
-  
-
 }
 
 object CPIntervalVarImpl {
   def apply(store: CPStore, minimum: Int, maximum: Int, name: String = ""): CPIntervalVarImpl = {
-    val domain = new AdaptableIntDomain(store, minimum, maximum)
-    new CPIntervalVarImpl(store, domain, name)
+    new CPIntervalVarImpl(store, minimum, maximum, name)
   }
 }

@@ -90,7 +90,7 @@ object SortUtils {
 	    do {
 	      // invariant: there must be a nonempty increasing run: find its size and stack it in runs
 	      el += 1
-	      while(el < topExcluded && keys(elements(el-1)) < keys(elements(el))) {
+	      while(el < topExcluded && keys(elements(el-1)) <= keys(elements(el))) {
 	        rSize += 1
 	        el += 1
 	      }
