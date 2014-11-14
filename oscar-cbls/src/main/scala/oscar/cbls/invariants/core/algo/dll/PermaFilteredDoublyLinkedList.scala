@@ -21,12 +21,12 @@
 package oscar.cbls.invariants.core.algo.dll
 
 
-abstract class AbstractPermaFilter[T]{
+/*abstract class AbstractPermaFilter[T]{
   def notifyInsert(s: PFDLLStorageElement[T])
   def notifyDelete(s: PFDLLStorageElement[T])
-}
+}*/
 
-class PermaFilter[T,F <: AnyRef](mFilter:T => Boolean,
+/*class PermaFilter[T,F <: AnyRef](mFilter:T => Boolean,
                        mMap:T=>F, filtered:PermaFilteredDoublyLinkedList[F])
   extends AbstractPermaFilter[T]{
 
@@ -40,7 +40,7 @@ class PermaFilter[T,F <: AnyRef](mFilter:T => Boolean,
     if(s.filtered != null)
       filtered.deleteElem(s.filtered.asInstanceOf[PFDLLStorageElement[F]])
   }
-}
+}*/
 
 /**
  *
@@ -53,9 +53,10 @@ class PermaFilter[T,F <: AnyRef](mFilter:T => Boolean,
  */
 class DelayedPermaFilter[T, F <: AnyRef](mFilter:(T,()=>Unit, ()=> Boolean) => Unit,
                                mMap:T => F, filtered:PermaFilteredDoublyLinkedList[F])
-  extends AbstractPermaFilter[T]{
+  //extends AbstractPermaFilter[T]
+  {
 
-  override def notifyInsert(inserted: PFDLLStorageElement[T]): Unit = {
+  def notifyInsert(inserted: PFDLLStorageElement[T]): Unit = {
 
     def injector():Unit = {inserted.filtered = filtered.addElem(mMap(inserted.elem))}
     def isStillValid():Boolean = {inserted.prev != null}
@@ -63,10 +64,10 @@ class DelayedPermaFilter[T, F <: AnyRef](mFilter:(T,()=>Unit, ()=> Boolean) => U
 
   }
 
-  def notifyDelete(s: PFDLLStorageElement[T]){
+  /*def notifyDelete(s: PFDLLStorageElement[T]){
     if(s.filtered != null)
       filtered.deleteElem(s.filtered.asInstanceOf[PFDLLStorageElement[F]])
-  }
+  }*/
 }
 
 /**this is a mutable data structure that is able to represent sets through doubly-lined lists, with insert
@@ -91,7 +92,7 @@ class PermaFilteredDoublyLinkedList[T <: AnyRef] extends Iterable[T]{
     * -an insert function that performs the insert,
     * -a query function that can be called to check if the element is still in the list
     */
-  private var permaFilter:AbstractPermaFilter[T] = null
+  private var permaFilter:DelayedPermaFilter[T, _ <: AnyRef] = null //AbstractPermaFilter[T] = null
 
   /**returns the size of the PermaFilteredDLL
     * this is a O(n) method because it is very rarely used.
@@ -129,10 +130,7 @@ class PermaFilteredDoublyLinkedList[T <: AnyRef] extends Iterable[T]{
     * the item is specified through the reference given when it was inserted in the first place.
     */
   def deleteElem(elemkey:PFDLLStorageElement[T]):T = {
-    elemkey.prev.setNext(elemkey.next)
-    elemkey.prev = null //this is checked by the delayed perma filter, so DO NOT REMOVE THIS SEEMIGNLY USELESS INSTRUCTION OR YOU ARE DOOMED
-
-    if (permaFilter != null) permaFilter.notifyDelete(elemkey)
+    elemkey.delete()
 
     elemkey.elem
   }
@@ -149,11 +147,12 @@ class PermaFilteredDoublyLinkedList[T <: AnyRef] extends Iterable[T]{
 
     permaFilter = new DelayedPermaFilter[T, F](filter, mMap, filtered)
 
-    filterElementsForNewFilter
+    filterElementsForNewFilter()
 
     filtered
   }
 
+  /*
   def permaFilter[F <: AnyRef](filter:T => Boolean,
                                mMap:T => F = (t:T) => t.asInstanceOf[F]):PermaFilteredDoublyLinkedList[F] = {
     assert(permaFilter == null,"PermaFilteredDoublyLinkedList can only accept a single filter")
@@ -166,6 +165,7 @@ class PermaFilteredDoublyLinkedList[T <: AnyRef] extends Iterable[T]{
 
     filtered
   }
+  */
 
   private def filterElementsForNewFilter(){
     var currentstorageElement:PFDLLStorageElement[T]=fantom.next
@@ -204,7 +204,17 @@ class PFDLLStorageElement[T](val elem:T){
     this.next = d
     d.prev = this
   }
+
+  def delete(): Unit =
+  {
+    prev.setNext(next)
+    prev = null
+    if(filtered != null) filtered.asInstanceOf[PFDLLStorageElementRevisited[_]].delete()
+  }
+
+
 }
+
 
 class PFDLLIterator[T](var CurrentKey:PFDLLStorageElement[T],
                        val fantom:PFDLLStorageElement[T]) extends Iterator[T]{
