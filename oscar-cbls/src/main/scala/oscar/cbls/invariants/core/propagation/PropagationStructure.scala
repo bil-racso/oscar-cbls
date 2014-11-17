@@ -805,11 +805,11 @@ abstract class PropagationElement extends DAGNode{
 
   var DeterminingElements: List[PropagationElement] = List.empty
 
-  val DynamicallyListenedElements: PermaFilteredDoublyLinkedList[PropagationElement]
-  = new PermaFilteredDoublyLinkedList[PropagationElement]
+  val DynamicallyListenedElements: PermaFilteredDoublyLinkedList[PropagationElement, PropagationElement]
+  = new PermaFilteredDoublyLinkedList[PropagationElement, PropagationElement]
 
-  val DynamicallyListeningElements: PermaFilteredDoublyLinkedList[(PropagationElement, Any)]
-  = new PermaFilteredDoublyLinkedList[(PropagationElement, Any)]
+  val DynamicallyListeningElements: PermaFilteredDoublyLinkedList[(PropagationElement, Any), PropagationElement]
+  = new PermaFilteredDoublyLinkedList[(PropagationElement, Any), PropagationElement]
 
   //for cycle managing
   var DynamicallyListenedElementsFromSameComponent: DoublyLinkedList[PropagationElement] = null

@@ -20,29 +20,6 @@
 
 package oscar.cbls.invariants.core.algo.dll
 
-/**
- *
- * @param mFilter this function is called on insert. It takes
- * -the inserted element,
- * -an insert function that performs the insert,
- * -a query function that can be called to check if the element is still in the list
- * @param mMap
- * @tparam T
- */
-class DelayedPermaFilter[T, F <: AnyRef](mFilter:(T,()=>Unit, ()=> Boolean) => Unit,
-                               mMap:T => F, filtered:DoublyLinkedList[F])
-  //extends AbstractPermaFilter[T]
-  {
-
-  def notifyInsert(inserted: PFDLLStorageElement[T]): Unit = {
-
-    def injector():Unit = {inserted.filtered = filtered.addElem(mMap(inserted.elem))}
-    def isStillValid():Boolean = {inserted.prev != null}
-    mFilter(inserted.elem, injector, isStillValid)
-
-  }
-}
-
 /**this is a mutable data structure that is able to represent sets through doubly-lined lists, with insert
   * and delete in O(1) through reference
   * and to update in parallel another set that is a filter of the first one through a specified function
@@ -54,7 +31,7 @@ class DelayedPermaFilter[T, F <: AnyRef](mFilter:(T,()=>Unit, ()=> Boolean) => U
   * Beware that this is a mutable data structure, hence you should not perform any update on it while iterating on it.
   * @author renaud.delandtsheer@cetic.be
   * */
-class PermaFilteredDoublyLinkedList[T <: AnyRef] extends Iterable[T]{
+class PermaFilteredDoublyLinkedList[T <: AnyRef, F <: AnyRef] extends Iterable[T]{
 
   //TODO: we might also consider an implem with no phantom at all
   private val phantom:PFDLLStorageElement[T] = new PFDLLStorageElement[T](null.asInstanceOf[T])
@@ -65,7 +42,9 @@ class PermaFilteredDoublyLinkedList[T <: AnyRef] extends Iterable[T]{
     * -an insert function that performs the insert,
     * -a query function that can be called to check if the element is still in the list
     */
-  private var permaFilter:DelayedPermaFilter[T, _ <: AnyRef] = null //AbstractPermaFilter[T] = null
+  private var mFilter:(T,()=>Unit, ()=> Boolean) => Unit = null
+  private var mMap:T => F = null
+  private var filtered:DoublyLinkedList[F] = null
 
   /**returns the size of the PermaFilteredDLL
     * this is a O(n) method because it is very rarely used.
@@ -88,7 +67,7 @@ class PermaFilteredDoublyLinkedList[T <: AnyRef] extends Iterable[T]{
     d.setNext(phantom.next)
     phantom.setNext(d)
 
-    if(permaFilter != null) permaFilter.notifyInsert(d)
+    if(mFilter != null) notifyInsert(d)
 
     d
   }
@@ -108,18 +87,25 @@ class PermaFilteredDoublyLinkedList[T <: AnyRef] extends Iterable[T]{
     elemkey.elem
   }
 
+  def notifyInsert(inserted: PFDLLStorageElement[T]): Unit = {
+    def injector():Unit = {inserted.filtered = filtered.addElem(mMap(inserted.elem))}
+    def isStillValid():Boolean = {inserted.prev != null}
+    mFilter(inserted.elem, injector, isStillValid)
+  }
+
   override def isEmpty:Boolean = phantom.next == phantom
 
   override def iterator = new PFDLLIterator[T](phantom,phantom)
 
-  def delayedPermaFilter[F <: AnyRef](filter:(T,()=>Unit, ()=> Boolean) => Unit,
+  def delayedPermaFilter(filter:(T,()=>Unit, ()=> Boolean) => Unit,
                                       mMap:T => F = (t:T) => t.asInstanceOf[F]):DoublyLinkedList[F] = {
-    assert(permaFilter == null,"DelayedPermaFilteredDoublyLinkedList can only accept a single filter")
+    assert(mFilter == null,"DelayedPermaFilteredDoublyLinkedList can only accept a single filter")
 
     val filtered = new DoublyLinkedList[F]
 
-    permaFilter = new DelayedPermaFilter[T, F](filter, mMap, filtered)
-
+    mFilter = filter
+    this.mMap = mMap
+    this.filtered = filtered
     filterElementsForNewFilter()
 
     filtered
@@ -128,7 +114,7 @@ class PermaFilteredDoublyLinkedList[T <: AnyRef] extends Iterable[T]{
   private def filterElementsForNewFilter(){
     var currentstorageElement:PFDLLStorageElement[T]=phantom.next
     while(currentstorageElement!=phantom){
-      permaFilter.notifyInsert(currentstorageElement)
+      notifyInsert(currentstorageElement)
       currentstorageElement = currentstorageElement.next
     }
   }
@@ -146,6 +132,7 @@ class PermaFilteredDoublyLinkedList[T <: AnyRef] extends Iterable[T]{
     }
     toReturn
   }
+
 }
 
 /**
