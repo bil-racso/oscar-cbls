@@ -209,7 +209,7 @@ class PFDLLStorageElement[T](val elem:T){
   {
     prev.setNext(next)
     prev = null
-    if(filtered != null) filtered.asInstanceOf[PFDLLStorageElementRevisited[_]].delete()
+    if(filtered != null) filtered.asInstanceOf[PFDLLStorageElement[_]].delete()
   }
 
 
