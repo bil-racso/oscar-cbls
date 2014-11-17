@@ -68,12 +68,10 @@ class MIPIntVar(mip : MIPSolver, name : String,  domain : Range) extends MIPFloa
 		this.binary = (domain.min == 0 && domain.max == 1)
 		
 	 def branchPriority()(implicit mip: MIPSolverGurobi) = {
-		  //mip.solver.branchPriority()
-		  //var.get(GRB.DoubleAttr.LB)
-		  //BranchPriority
+		  assert(mip == this.mip)
+		  // could avoid this awful (but safe) cast by introducing parameterized solvers
+		  mip.solver.asInstanceOf[GurobiLP].branchPriority(index) 
 	 }
-
-  
 		
 }
 
