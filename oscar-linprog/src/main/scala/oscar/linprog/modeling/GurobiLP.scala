@@ -174,6 +174,11 @@ class GurobiLP extends AbstractLP {
     model.getVar(colId).set(GRB.CharAttr.VType, GRB.BINARY)
   }
   
+  def branchPriority(colId: Int) = {
+    model.getVar(colId).get(GRB.IntAttr.BranchPriority)
+  }
+  
+  
   override def setTimeout(t: Int) {
     require(0 <= t)
     model.getEnv().set(GRB.DoubleParam.TimeLimit, t.toDouble)

@@ -23,6 +23,8 @@ import oscar.linprog.modeling.{LPSolve, LPSolverLib, LPStatus, MIPFloatVar, MIPI
 import lpsolve._
 import oscar.linprog.modeling.LPFloatVar
 import oscar.linprog.modeling.LPSolver
+import oscar.linprog.modeling.MIPSolverLPSolve
+import oscar.linprog.modeling.LPSolverLPSolve
 
 /**
  * Testing OscaR's handling of lp_solve specific settings 
@@ -47,7 +49,7 @@ class LPSolveTest extends FunSuite with ShouldMatchers with BeforeAndAfter {
     
     test("Test lp_solve correctly returns solution when status is LPStatus.SUBOPTIMAL") {
 	  
-        implicit val mip = MIPSolver(LPSolverLib.lp_solve)
+        implicit val mip = MIPSolverLPSolve()
 	
 	val lpSolve = mip.solver match {
 	    case lp: LPSolve => lp
@@ -83,7 +85,7 @@ class LPSolveTest extends FunSuite with ShouldMatchers with BeforeAndAfter {
 	 */
 	test("Test lp_solve's SOS1 constraint handling") {
 	    writer.close() // Not using additional config
-		implicit val mip = MIPSolver(LPSolverLib.lp_solve)
+		implicit val mip = MIPSolverLPSolve()
 		
 		val lpSolve = mip.solver match {
 			case lp: LPSolve => lp
@@ -117,7 +119,7 @@ class LPSolveTest extends FunSuite with ShouldMatchers with BeforeAndAfter {
 	
 	test("Test lp_solve's SOS1 constraint handling (as sum)") {
 		writer.close() // Not using additional config
-	    implicit val mip = MIPSolver(LPSolverLib.lp_solve)
+	    implicit val mip = MIPSolverLPSolve()
 		
 		val lpSolve = mip.solver match {
 			case lp: LPSolve => lp
@@ -152,7 +154,7 @@ class LPSolveTest extends FunSuite with ShouldMatchers with BeforeAndAfter {
 	 */
 	test("Test SOS1 weighting support - warehouse location example") {
 	    writer.close() // Not using additional config
-	    implicit val mip = MIPSolver(LPSolverLib.lp_solve)
+	    implicit val mip = MIPSolverLPSolve()
 		
 		val lpSolve = mip.solver match {
 			case lp: LPSolve => lp.configFile = tmpConfigFile
@@ -189,7 +191,7 @@ class LPSolveTest extends FunSuite with ShouldMatchers with BeforeAndAfter {
 	test("Test OscaR can handle when solver presolve alters model") {
 	    writer.println("presolve=PRESOLVE_ROWS + PRESOLVE_COLS")
 	    writer.close() // Not using additional config
-	    implicit val lp = LPSolver(LPSolverLib.lp_solve)
+	    implicit val lp = LPSolverLPSolve()
 		
 		val lpSolve = lp.solver match {
 			case lp: LPSolve => lp

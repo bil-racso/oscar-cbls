@@ -35,7 +35,7 @@ import oscar.algebra._
  * satisfying the demand of the warehouses and the capacities of the plant
  * @author Pierre Schaus pschaus@gmail.com
  */
-object Warehouse extends MIPModel with App {
+object Warehouse extends MIPModelLPSolve with App {
 
   // ----------- Data of the problem ------------
 

@@ -18,7 +18,7 @@ package oscar.examples.linprog
 import oscar.linprog.modeling._
 import oscar.algebra._
 
-object BasicMIP extends MIPModel with App  {
+object BasicMIP extends MIPModelLPSolve with App  {
 
   val x0 = MIPFloatVar("x0", 0.0, 40.0)
   val x1 = MIPIntVar("x1", 0 to 1000)
