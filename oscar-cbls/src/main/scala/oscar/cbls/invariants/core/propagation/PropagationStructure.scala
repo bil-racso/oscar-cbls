@@ -756,7 +756,7 @@ case class KeyForElementRemoval(element: PropagationElement
  - a dynamic graph whose edge can change dynamically, but are all included in the static propagation graph
   * @author renaud.delandtsheer@cetic.be
   * */
-trait PropagationElement extends DAGNode{
+abstract class PropagationElement extends DAGNode{
 
   final def compare(that: DAGNode): Int = {
     assert(this.UniqueID != -1, "cannot compare non-registered PropagationElements this: [" + this + "] that: [" + that + "]")
@@ -812,10 +812,10 @@ trait PropagationElement extends DAGNode{
   = new PermaFilteredDoublyLinkedList[(PropagationElement, Any)]
 
   //for cycle managing
-  var DynamicallyListenedElementsFromSameComponent: PermaFilteredDoublyLinkedList[PropagationElement] = null
+  var DynamicallyListenedElementsFromSameComponent: DoublyLinkedList[PropagationElement] = null
 
   //for cycle managing
-  var DynamicallyListeningElementsFromSameComponent: PermaFilteredDoublyLinkedList[PropagationElement] = null
+  var DynamicallyListeningElementsFromSameComponent: DoublyLinkedList[PropagationElement] = null
 
   /**through this method, the PropagationElement must declare which PropagationElement it is listening to
     * in the static dependency graph. The result must be stable after the call to setupPropagationStructure.

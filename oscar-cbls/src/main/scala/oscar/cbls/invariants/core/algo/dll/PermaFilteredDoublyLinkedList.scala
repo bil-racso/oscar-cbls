@@ -20,28 +20,6 @@
 
 package oscar.cbls.invariants.core.algo.dll
 
-
-/*abstract class AbstractPermaFilter[T]{
-  def notifyInsert(s: PFDLLStorageElement[T])
-  def notifyDelete(s: PFDLLStorageElement[T])
-}*/
-
-/*class PermaFilter[T,F <: AnyRef](mFilter:T => Boolean,
-                       mMap:T=>F, filtered:PermaFilteredDoublyLinkedList[F])
-  extends AbstractPermaFilter[T]{
-
-  override def notifyInsert(s: PFDLLStorageElement[T]){
-    if (mFilter(s.elem)){
-      s.filtered = filtered.addElem(mMap(s.elem))
-    }
-  }
-
-  def notifyDelete(s: PFDLLStorageElement[T]){
-    if(s.filtered != null)
-      filtered.deleteElem(s.filtered.asInstanceOf[PFDLLStorageElement[F]])
-  }
-}*/
-
 /**
  *
  * @param mFilter this function is called on insert. It takes
@@ -52,7 +30,7 @@ package oscar.cbls.invariants.core.algo.dll
  * @tparam T
  */
 class DelayedPermaFilter[T, F <: AnyRef](mFilter:(T,()=>Unit, ()=> Boolean) => Unit,
-                               mMap:T => F, filtered:PermaFilteredDoublyLinkedList[F])
+                               mMap:T => F, filtered:DoublyLinkedList[F])
   //extends AbstractPermaFilter[T]
   {
 
@@ -63,11 +41,6 @@ class DelayedPermaFilter[T, F <: AnyRef](mFilter:(T,()=>Unit, ()=> Boolean) => U
     mFilter(inserted.elem, injector, isStillValid)
 
   }
-
-  /*def notifyDelete(s: PFDLLStorageElement[T]){
-    if(s.filtered != null)
-      filtered.deleteElem(s.filtered.asInstanceOf[PFDLLStorageElement[F]])
-  }*/
 }
 
 /**this is a mutable data structure that is able to represent sets through doubly-lined lists, with insert
@@ -83,9 +56,9 @@ class DelayedPermaFilter[T, F <: AnyRef](mFilter:(T,()=>Unit, ()=> Boolean) => U
   * */
 class PermaFilteredDoublyLinkedList[T <: AnyRef] extends Iterable[T]{
 
-  //TODO: we might also consider an implem with no fantom at all
-  private val fantom:PFDLLStorageElement[T] = new PFDLLStorageElement[T](null.asInstanceOf[T])
-  fantom.setNext(fantom)
+  //TODO: we might also consider an implem with no phantom at all
+  private val phantom:PFDLLStorageElement[T] = new PFDLLStorageElement[T](null.asInstanceOf[T])
+  phantom.setNext(phantom)
 
   /** this function is called on insert. It takes
     * -the inserted element,
@@ -99,8 +72,8 @@ class PermaFilteredDoublyLinkedList[T <: AnyRef] extends Iterable[T]{
     * and in this context, we want to keep the memory footprint as small as possible*/
   override def size ={
     var toReturn = 0
-    var current = fantom.next
-    while(current != fantom){
+    var current = phantom.next
+    while(current != phantom){
       toReturn += 1
       current = current.next
     }
@@ -112,8 +85,8 @@ class PermaFilteredDoublyLinkedList[T <: AnyRef] extends Iterable[T]{
     */
   def addElem(elem:T):PFDLLStorageElement[T] = {
     val d = new PFDLLStorageElement[T](elem)
-    d.setNext(fantom.next)
-    fantom.setNext(d)
+    d.setNext(phantom.next)
+    phantom.setNext(d)
 
     if(permaFilter != null) permaFilter.notifyInsert(d)
 
@@ -135,15 +108,15 @@ class PermaFilteredDoublyLinkedList[T <: AnyRef] extends Iterable[T]{
     elemkey.elem
   }
 
-  override def isEmpty:Boolean = fantom.next == fantom
+  override def isEmpty:Boolean = phantom.next == phantom
 
-  override def iterator = new PFDLLIterator[T](fantom,fantom)
+  override def iterator = new PFDLLIterator[T](phantom,phantom)
 
   def delayedPermaFilter[F <: AnyRef](filter:(T,()=>Unit, ()=> Boolean) => Unit,
-                                      mMap:T => F = (t:T) => t.asInstanceOf[F]):PermaFilteredDoublyLinkedList[F] = {
+                                      mMap:T => F = (t:T) => t.asInstanceOf[F]):DoublyLinkedList[F] = {
     assert(permaFilter == null,"DelayedPermaFilteredDoublyLinkedList can only accept a single filter")
 
-    val filtered = new PermaFilteredDoublyLinkedList[F]
+    val filtered = new DoublyLinkedList[F]
 
     permaFilter = new DelayedPermaFilter[T, F](filter, mMap, filtered)
 
@@ -152,24 +125,9 @@ class PermaFilteredDoublyLinkedList[T <: AnyRef] extends Iterable[T]{
     filtered
   }
 
-  /*
-  def permaFilter[F <: AnyRef](filter:T => Boolean,
-                               mMap:T => F = (t:T) => t.asInstanceOf[F]):PermaFilteredDoublyLinkedList[F] = {
-    assert(permaFilter == null,"PermaFilteredDoublyLinkedList can only accept a single filter")
-
-    val filtered = new PermaFilteredDoublyLinkedList[F]
-
-    permaFilter = new PermaFilter[T,F](filter,mMap,filtered)
-
-    filterElementsForNewFilter
-
-    filtered
-  }
-  */
-
   private def filterElementsForNewFilter(){
-    var currentstorageElement:PFDLLStorageElement[T]=fantom.next
-    while(currentstorageElement!=fantom){
+    var currentstorageElement:PFDLLStorageElement[T]=phantom.next
+    while(currentstorageElement!=phantom){
       permaFilter.notifyInsert(currentstorageElement)
       currentstorageElement = currentstorageElement.next
     }
@@ -209,19 +167,16 @@ class PFDLLStorageElement[T](val elem:T){
   {
     prev.setNext(next)
     prev = null
-    if(filtered != null) filtered.asInstanceOf[PFDLLStorageElement[_]].delete()
+    if(filtered != null) filtered.asInstanceOf[DLLStorageElement[_]].delete()
   }
-
-
 }
 
-
 class PFDLLIterator[T](var CurrentKey:PFDLLStorageElement[T],
-                       val fantom:PFDLLStorageElement[T]) extends Iterator[T]{
+                       val phantom:PFDLLStorageElement[T]) extends Iterator[T]{
   def next():T = {
     CurrentKey = CurrentKey.next
     CurrentKey.elem
   }
 
-  def hasNext:Boolean = {CurrentKey.next != fantom}
+  def hasNext:Boolean = {CurrentKey.next != phantom}
 }
