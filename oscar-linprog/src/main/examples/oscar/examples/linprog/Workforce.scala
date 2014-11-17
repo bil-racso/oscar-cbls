@@ -26,7 +26,7 @@ import oscar.algebra._
  * @author Pierre Schaus pschaus@gmail.com
  */
 
-object Workforce extends MIPModel(LPSolverLib.glpk) with App {
+object Workforce extends MIPModelGLPK with App {
 
   val Shifts = 0 to 13
   val Workers = 0 to 6

@@ -25,7 +25,7 @@ import oscar.algebra._
  *  to conservation of flow constraints at each node and flow capacities
  *  on each arc.
  */
-object MaxFlow extends LPModel(LPSolverLib.glpk) with App {
+object MaxFlow extends LPModelGLPK with App {
 
   val Lines = 0 to 7
   val Columns = 0 to 8

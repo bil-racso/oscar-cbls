@@ -81,7 +81,7 @@ object StochasticFarmer extends App {
    * By providing a solution for the first stage variables you can will evaluate a first stage solution obtained by another mean.
    */
   def solveDeterministicModel(scenario: String, firstStageSolution: Option[Solution]): Solution = {
-    implicit val detModel = LPSolver()
+    implicit val detModel = LPSolverLPSolve()
 
     // Creating all variables 
     val detVars = Map[String, LPFloatVar]()
@@ -134,7 +134,7 @@ object StochasticFarmer extends App {
   }
 
   def solveStochasticModel(): Solution = {
-    implicit val stoModel = LPSolver(LPSolverLib.lp_solve)
+    implicit val stoModel = LPSolverLPSolve()
     val stoVars = Map[String, LPFloatVar]()
 
     for (varGroup <- firstStage) {

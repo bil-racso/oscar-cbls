@@ -30,7 +30,7 @@ class LPTest extends FunSuite with ShouldMatchers {
 
   test("lp test 1") {
     for (lib <- solvers) {
-      implicit val lp = LPSolver(lib)
+      implicit val lp = instantiateLPSolver(lib)
       val x = new LPFloatVar(lp, "x", 100, 200)
       val y = new LPFloatVar(lp, "y", 80, 170)
 
@@ -49,7 +49,7 @@ class LPTest extends FunSuite with ShouldMatchers {
 
   test("lp test 2") {
     for (lib <- solvers) {
-      implicit val lp = LPSolver(lib)
+      implicit val lp = instantiateLPSolver(lib)
       val x = LPFloatVar(lp, "x", 100, 200)
       val y = LPFloatVar(lp, "y", 80, 170)
 
@@ -68,7 +68,7 @@ class LPTest extends FunSuite with ShouldMatchers {
 
   test("lp test 3") {
     for (lib <- solvers) {
-      implicit val lp = LPSolver(lib)
+      implicit val lp = instantiateLPSolver(lib)
       val x = LPFloatVar("x")
       val y = LPFloatVar("y", 80, 170)
 
@@ -83,7 +83,7 @@ class LPTest extends FunSuite with ShouldMatchers {
 
   test("lp test 4") {
     for (lib <- solvers) {
-      implicit val lp = LPSolver(lib)
+      implicit val lp = instantiateLPSolver(lib)
       val x = LPFloatVar( "x", 100, 200)
       val y = LPFloatVar("y", 80, 170)
       minimize(-2 * x + 5 * y)
@@ -103,7 +103,7 @@ class LPTest extends FunSuite with ShouldMatchers {
 
   test("lp test 5") {
     for (lib <- solvers) {
-      implicit val lp = new LPSolver(lib)
+      implicit val lp = instantiateLPSolver(lib)
       val x = LPFloatVar("x", 100, 200)
       val y = LPFloatVar("y", 80, 170)
       minimize(-2 * x + 5 * y) 
@@ -120,7 +120,7 @@ class LPTest extends FunSuite with ShouldMatchers {
 
   test("lp test 6") {
     for (lib <- solvers) {
-      implicit val lp = new LPSolver(lib)
+      implicit val lp = instantiateLPSolver(lib)
       val x = LPFloatVar("x", 0, 10)
       val y = LPFloatVar("y", 0, 10)
       maximize(x + y) 
@@ -146,7 +146,7 @@ class LPTest extends FunSuite with ShouldMatchers {
 
   test("lp test 7") {
     for (lib <- solvers) {
-      implicit val lp = LPSolver(lib)
+      implicit val lp = instantiateLPSolver(lib)
       val x = new LPFloatVar(lp, "x", 0, 10)
       val y = new LPFloatVar(lp, "y", 0, 10)
 

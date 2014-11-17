@@ -40,7 +40,7 @@ class CuttingStockTest extends FunSuite with ShouldMatchers {
 	  val demand = Array(48, 35, 24, 10,  8)
 	  val Rolls = 0 until roll.size
 	  
-	  implicit val lp = LPSolver(lib)
+	  implicit val lp = instantiateLPSolver(lib)
 	  lp.name = "Cutting Stock"
 	  var C : Array[Column] = Array()
 	  for (r <- Rolls) {
@@ -61,7 +61,7 @@ class CuttingStockTest extends FunSuite with ShouldMatchers {
 	  // Pricing Problem
 	  var mip : MIPSolver = null
 	  do {
-		  mip = MIPSolver(lib)
+		  mip = instantiateMIPSolver(lib)
 		  val newPattern = Array.tabulate(roll.size)(_ => MIPIntVar("use",0 to rollStock)(mip))
 		  val cost = Array.tabulate(roll.size)(constraints(_).dual)
 

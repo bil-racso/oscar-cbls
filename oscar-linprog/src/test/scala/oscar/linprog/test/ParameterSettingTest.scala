@@ -23,6 +23,10 @@ import lpsolve.LpSolve
 import oscar.algebra.{double2const, int2const}
 import oscar.linprog.modeling.{GurobiLP, LPFloatVar, LPSolve, LPSolver, LPSolverLib, LPStatus, MIPFloatVar, MIPIntVar, MIPSolver, add, canInstantiateSolver, checkConstraints, maximize, objectiveValue, release, start, status}
 import lpsolve.LpSolveException
+import oscar.linprog.modeling.LPSolverLPSolve
+import oscar.linprog.modeling.MIPSolverLPSolve
+import oscar.linprog.modeling.MIPSolverLPSolve
+import oscar.linprog.modeling.LPSolverGurobi
 
 /**
  * LPTesting
@@ -40,7 +44,7 @@ class ParameterSettingTest extends FunSuite with ShouldMatchers {
     writer.flush
     writer.close
 
-    implicit val lp = new LPSolver(LPSolverLib.lp_solve)
+    implicit val lp = new LPSolverLPSolve()
 
     lp.solver.configFile = configLP
     val x = LPFloatVar("x", 100, 200)
@@ -78,7 +82,7 @@ class ParameterSettingTest extends FunSuite with ShouldMatchers {
     writer.flush
     writer.close
 
-    implicit val mip = new MIPSolver(LPSolverLib.lp_solve)
+    implicit val mip = new MIPSolverLPSolve
     mip.solver.configFile = configLP
     
     val x0 = MIPFloatVar(mip, "x0", 0, 40)
@@ -109,7 +113,7 @@ class ParameterSettingTest extends FunSuite with ShouldMatchers {
     writer.flush
     writer.close
 
-    implicit val mip = new MIPSolver(LPSolverLib.lp_solve)
+    implicit val mip = new MIPSolverLPSolve
     mip.solver.configFile = configLP
 
     val x0 = MIPFloatVar(mip, "x0", 0, 40)
@@ -135,7 +139,7 @@ class ParameterSettingTest extends FunSuite with ShouldMatchers {
     writer.flush
     writer.close
 
-    implicit val lp = LPSolver(LPSolverLib.gurobi)
+    implicit val lp = LPSolverGurobi()
 
     lp.solver.configFile = configLP
     val x = LPFloatVar("x", 100, 200)

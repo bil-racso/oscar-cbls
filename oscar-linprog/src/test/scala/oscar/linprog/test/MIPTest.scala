@@ -31,7 +31,7 @@ class MIPTest extends FunSuite with ShouldMatchers {
 
   test("mip test 1") {
     for (lib <- solvers) {
-      implicit val mip = MIPSolver(lib)
+      implicit val mip = instantiateMIPSolver(lib)
       mip.name = "Mip Test 1"
       val x = MIPFloatVar("x", 0, 100)
       val y = MIPIntVar("y", 0 to 100)
@@ -50,7 +50,7 @@ class MIPTest extends FunSuite with ShouldMatchers {
 
   test("MIP test 2: Update constraints rhs") {
     for (lib <- solvers) {
-      implicit val mip = MIPSolver(lib)
+      implicit val mip = instantiateMIPSolver(lib)
       mip.name = "MIP Test 2"
       val x = MIPFloatVar("x", 0, 100)
       val y = MIPIntVar("y", 0 to 100)
@@ -91,7 +91,7 @@ class MIPTest extends FunSuite with ShouldMatchers {
   test("MIP Test 3: update coeficient in constraint") {
     for (lib <- solvers) {
 
-      implicit val mip = MIPSolver(lib)
+      implicit val mip = instantiateMIPSolver(lib)
       mip.name = "MIP Test 3"
       val x = MIPFloatVar( "x", 0, 100)
       val y = MIPIntVar("y", 0 to 100)
@@ -130,7 +130,7 @@ class MIPTest extends FunSuite with ShouldMatchers {
   test("MIP Test 4: update coefficient and rhs in constraint") {
     for (lib <- solvers) {
 
-      implicit val mip = MIPSolver(lib)
+      implicit val mip = instantiateMIPSolver(lib)
       mip.name = "MIP Test 4"
       val x = MIPFloatVar("x", 0, 100)
       val y = MIPIntVar("y", 0 to 100)
@@ -158,7 +158,7 @@ class MIPTest extends FunSuite with ShouldMatchers {
   
   test("MIP Test 5: test whether 0-1 variables set as binary") {
     for (lib <- solvers) {
-        implicit val mip = MIPSolver(lib)
+        implicit val mip = instantiateMIPSolver(lib)
         val x = Array.tabulate(6)(j => MIPIntVar(s"x${j}", 0 to 1))
         val z = 3 * x(0) + 5 * x(1) + 6 * x(2) + 9 * x(3) + 10 * x(4) + 10 * x(5)
         minimize(z)

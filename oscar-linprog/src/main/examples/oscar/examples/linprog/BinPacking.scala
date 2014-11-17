@@ -30,7 +30,7 @@ object BinPacking extends App {
   val n = weights.size
   println(weights)
   
-  implicit val lp = LPSolver(LPSolverLib.glpk) 
+  implicit val lp = LPSolverGLPK() 
     
   class Column(val x: LPFloatVar, val pattern: Array[Int]) {
     override def toString(): String = {
@@ -65,7 +65,7 @@ object BinPacking extends App {
   var reducedCost = Double.MinValue
   do {
     
-    implicit val mip = MIPSolver()
+    implicit val mip = MIPSolverLPSolve()
     val newPattern = Array.tabulate(n)(_ => MIPIntVar(mip, "use", 0 to 1))
     val cost = Array.tabulate(n)(constraints(_).dual)
     

@@ -16,6 +16,7 @@ package oscar.linprog.modeling
 
 import oscar.linprog._
 import oscar.algebra._
+import lpsolve.LpSolve
 
 /**
  * Abstract class that must be extended to define a new LP solver
@@ -40,6 +41,7 @@ class LPFloatVar(lp: LPSolver, name_ : String, lbound: Double = 0.0, ubound: Dou
   }
 
   def reducedCost(): Double = lp.getReducedCost(index)
+  
 }
 
 object LPFloatVar {
@@ -51,14 +53,7 @@ object LPFloatVar {
   def apply(lp: LPSolver, name: String,lbound: Double = 0.0, ubound: Double = Double.PositiveInfinity) = new LPFloatVar(lp,name,lbound,ubound)
 }
 
-class LPSolver(solverLib: LPSolverLib.Value = LPSolverLib.lp_solve) extends AbstractLPSolver() {
-
-  val solver = solverLib match {
-    case LPSolverLib.lp_solve => new LPSolve()
-    case LPSolverLib.glpk => new GlpkLP()
-    case LPSolverLib.gurobi => new GurobiLP()
-    case _ => new LPSolve()
-  }
+class LPSolver(val solver: AbstractLP) extends AbstractLPSolver() {
 
   def getReducedCost(varId: Int): Double = solver.getReducedCost(varId)
 
@@ -72,12 +67,17 @@ class LPSolver(solverLib: LPSolverLib.Value = LPSolverLib.lp_solve) extends Abst
 
 }
 
-object LPSolver {
-  def apply(solverLib: LPSolverLib.Value = LPSolverLib.lp_solve): LPSolver = new LPSolver(solverLib)
-}
+case class LPSolverLPSolve() extends LPSolver(new LPSolve())
+case class LPSolverGLPK() extends LPSolver(new GlpkLP())
+case class LPSolverGurobi() extends LPSolver(new GurobiLP())
 
-abstract class LPModel(solverLib: LPSolverLib.Value = LPSolverLib.lp_solve) {
-  implicit val lpsolver = LPSolver(solverLib)
+abstract class LPModelGLPK {
+  implicit val lpsolver = new LPSolverGLPK()
 }
-  
+abstract class LPModelLPSolve {
+  implicit val lpsolver = new LPSolverLPSolve()
+}
+abstract class LPModelGurobi {
+  implicit val lpsolver = new LPSolverGurobi()
+}
 
