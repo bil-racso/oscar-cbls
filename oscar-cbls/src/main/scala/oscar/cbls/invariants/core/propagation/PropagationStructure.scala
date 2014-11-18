@@ -742,8 +742,8 @@ object PropagationElement {
   * @author renaud.delandtsheer@cetic.be
   * */
 case class KeyForElementRemoval(element: PropagationElement
-                                , KeyForListenedElement: PFDLLStorageElement[(PropagationElement, Any)]
-                                , KeyForListeningElement: PFDLLStorageElement[PropagationElement])
+                                , KeyForListenedElement: DPFDLLStorageElement[(PropagationElement, Any)]
+                                , KeyForListeningElement: DPFDLLStorageElement[PropagationElement])
 
 /**this is a propagation element. It mainly defines:
   * it dependencies (static and dynamic), which are notably forwarded to the API of the DAGNode
@@ -756,7 +756,7 @@ case class KeyForElementRemoval(element: PropagationElement
  - a dynamic graph whose edge can change dynamically, but are all included in the static propagation graph
   * @author renaud.delandtsheer@cetic.be
   * */
-trait PropagationElement extends DAGNode{
+abstract class PropagationElement extends DAGNode{
 
   final def compare(that: DAGNode): Int = {
     assert(this.UniqueID != -1, "cannot compare non-registered PropagationElements this: [" + this + "] that: [" + that + "]")
@@ -805,17 +805,17 @@ trait PropagationElement extends DAGNode{
 
   var DeterminingElements: List[PropagationElement] = List.empty
 
-  val DynamicallyListenedElements: PermaFilteredDoublyLinkedList[PropagationElement]
-  = new PermaFilteredDoublyLinkedList[PropagationElement]
+  val DynamicallyListenedElements: DelayedPermaFilteredDoublyLinkedList[PropagationElement, PropagationElement]
+  = new DelayedPermaFilteredDoublyLinkedList[PropagationElement, PropagationElement]
 
-  val DynamicallyListeningElements: PermaFilteredDoublyLinkedList[(PropagationElement, Any)]
-  = new PermaFilteredDoublyLinkedList[(PropagationElement, Any)]
-
-  //for cycle managing
-  var DynamicallyListenedElementsFromSameComponent: PermaFilteredDoublyLinkedList[PropagationElement] = null
+  val DynamicallyListeningElements: DelayedPermaFilteredDoublyLinkedList[(PropagationElement, Any), PropagationElement]
+  = new DelayedPermaFilteredDoublyLinkedList[(PropagationElement, Any), PropagationElement]
 
   //for cycle managing
-  var DynamicallyListeningElementsFromSameComponent: PermaFilteredDoublyLinkedList[PropagationElement] = null
+  var DynamicallyListenedElementsFromSameComponent: DoublyLinkedList[PropagationElement] = null
+
+  //for cycle managing
+  var DynamicallyListeningElementsFromSameComponent: DoublyLinkedList[PropagationElement] = null
 
   /**through this method, the PropagationElement must declare which PropagationElement it is listening to
     * in the static dependency graph. The result must be stable after the call to setupPropagationStructure.
@@ -911,8 +911,8 @@ trait PropagationElement extends DAGNode{
    * @param p the key that was given when the element was registered in the dynamic propagation graph
    */
   protected def unregisterDynamicallyListenedElement(p: KeyForElementRemoval) {
-    DynamicallyListenedElements.deleteElem(p.KeyForListeningElement)
-    p.element.DynamicallyListeningElements.deleteElem(p.KeyForListenedElement)
+    p.KeyForListeningElement.delete()
+    p.KeyForListenedElement.delete()
   }
 
   def dropStaticGraph() {

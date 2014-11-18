@@ -28,7 +28,7 @@ import scala.collection.immutable.SortedSet
 /** a DAG node with some abstract methods
   * @author renaud.delandtsheer@cetic.be
   */
-trait DAGNode extends Ordered[DAGNode]{
+abstract class DAGNode extends Ordered[DAGNode]{
 
   /**the position in the topological sort*/
   var Position: Int = 0

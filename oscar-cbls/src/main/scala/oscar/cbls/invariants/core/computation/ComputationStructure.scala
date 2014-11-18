@@ -298,7 +298,7 @@ object Invariant{
   * Invariants also register to the model, but they identify the model they are associated to by querying the variables they are monitoring.
   *
   */
-trait Invariant extends PropagationElement{
+abstract class Invariant extends PropagationElement{
   var model:Store = null
 
   def getPropagationStructure = this.model
