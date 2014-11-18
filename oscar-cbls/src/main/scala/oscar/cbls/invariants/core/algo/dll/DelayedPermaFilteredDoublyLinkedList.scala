@@ -147,7 +147,7 @@ class DPFDLLStorageElement[T](val elem:T){
   def delete(): Unit =
   {
     prev.setNext(next)
-    prev = null
+    prev = null //this is checked by the delayed perma filter, so DO NOT REMOVE THIS SEEMIGNLY USELESS INSTRUCTION
     if(filtered != null) filtered.asInstanceOf[DLLStorageElement[_]].delete()
   }
 }
