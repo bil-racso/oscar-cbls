@@ -742,8 +742,8 @@ object PropagationElement {
   * @author renaud.delandtsheer@cetic.be
   * */
 case class KeyForElementRemoval(element: PropagationElement
-                                , KeyForListenedElement: PFDLLStorageElement[(PropagationElement, Any)]
-                                , KeyForListeningElement: PFDLLStorageElement[PropagationElement])
+                                , KeyForListenedElement: DPFDLLStorageElement[(PropagationElement, Any)]
+                                , KeyForListeningElement: DPFDLLStorageElement[PropagationElement])
 
 /**this is a propagation element. It mainly defines:
   * it dependencies (static and dynamic), which are notably forwarded to the API of the DAGNode
@@ -805,11 +805,11 @@ abstract class PropagationElement extends DAGNode{
 
   var DeterminingElements: List[PropagationElement] = List.empty
 
-  val DynamicallyListenedElements: PermaFilteredDoublyLinkedList[PropagationElement, PropagationElement]
-  = new PermaFilteredDoublyLinkedList[PropagationElement, PropagationElement]
+  val DynamicallyListenedElements: DelayedPermaFilteredDoublyLinkedList[PropagationElement, PropagationElement]
+  = new DelayedPermaFilteredDoublyLinkedList[PropagationElement, PropagationElement]
 
-  val DynamicallyListeningElements: PermaFilteredDoublyLinkedList[(PropagationElement, Any), PropagationElement]
-  = new PermaFilteredDoublyLinkedList[(PropagationElement, Any), PropagationElement]
+  val DynamicallyListeningElements: DelayedPermaFilteredDoublyLinkedList[(PropagationElement, Any), PropagationElement]
+  = new DelayedPermaFilteredDoublyLinkedList[(PropagationElement, Any), PropagationElement]
 
   //for cycle managing
   var DynamicallyListenedElementsFromSameComponent: DoublyLinkedList[PropagationElement] = null
@@ -911,8 +911,8 @@ abstract class PropagationElement extends DAGNode{
    * @param p the key that was given when the element was registered in the dynamic propagation graph
    */
   protected def unregisterDynamicallyListenedElement(p: KeyForElementRemoval) {
-    DynamicallyListenedElements.deleteElem(p.KeyForListeningElement)
-    p.element.DynamicallyListeningElements.deleteElem(p.KeyForListenedElement)
+    p.KeyForListeningElement.delete()
+    p.KeyForListenedElement.delete()
   }
 
   def dropStaticGraph() {
