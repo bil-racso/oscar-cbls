@@ -17,16 +17,14 @@
 package oscar.linprog.test
 
 import org.scalatest.FunSuite
-import org.scalatest.matchers.ShouldMatchers
 import oscar.linprog.modeling._
-
-
 import oscar.algebra._
+import org.scalatest.Matchers
 
 /**
  * LPTesting
  */
-class LPTest extends FunSuite with ShouldMatchers {
+class LPTest extends FunSuite with Matchers {
 
   test("lp test 1") {
     for (lib <- solvers) {

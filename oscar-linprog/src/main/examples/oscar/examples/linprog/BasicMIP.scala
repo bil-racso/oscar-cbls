@@ -31,9 +31,11 @@ object BasicMIP extends MIPModelGurobi with App  {
   add(x0 - 3.0 * x1 + x2 <= 30)
   add(x1 - 3.5 * x3 == 0)
   
-  x2.branchPriority()
+  
   
   start()
+  
+  // x2.branchPriority()
   
   println("objective: " + objectiveValue)
   println("x0= " + x0.value + " " + x1.value)

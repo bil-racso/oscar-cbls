@@ -34,12 +34,14 @@ package object modeling {
       val solver = s match {
         case LPSolverLib.lp_solve => new LPSolverLPSolve()
         case LPSolverLib.glpk => new LPSolverGLPK()
-        case LPSolverLib.gurobi => new LPSolverGLPK()
+        case LPSolverLib.gurobi => new LPSolverGurobi()
         case _ => new LPSolverLPSolve()
       }
 	  } catch {
-	    case e: UnsatisfiedLinkError => { println(e.getMessage()); return false }
-	    case e: NoClassDefFoundError => { println(e.getMessage()); return false }
+	    case e: UnsatisfiedLinkError => { 
+        System.out.println("PATH : "+ System.getProperty("java.library.path"));
+        System.err.println(e.getMessage()); return false }
+	    case e: NoClassDefFoundError => { System.err.println(e.getMessage()); return false }
 	  }
 	  true
   }
@@ -48,7 +50,7 @@ package object modeling {
 	  s match {
         case LPSolverLib.lp_solve => new LPSolverLPSolve()
         case LPSolverLib.glpk => new LPSolverGLPK()
-        case LPSolverLib.gurobi => new LPSolverGLPK()
+        case LPSolverLib.gurobi => new LPSolverGurobi()
         case _ => new LPSolverLPSolve()
       }
   } 
@@ -57,7 +59,7 @@ package object modeling {
 	  s match {
         case LPSolverLib.lp_solve => new MIPSolverLPSolve()
         case LPSolverLib.glpk => new MIPSolverGLPK()
-        case LPSolverLib.gurobi => new MIPSolverGLPK()
+        case LPSolverLib.gurobi => new MIPSolverGurobi()
         case _ => new MIPSolverLPSolve()
       }
   }  

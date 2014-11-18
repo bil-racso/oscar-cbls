@@ -17,7 +17,6 @@ package oscar.linprog.test
 
 import java.io.{File, FileWriter, PrintWriter}
 import org.scalatest.FunSuite
-import org.scalatest.matchers.ShouldMatchers
 import gurobi.{GRB, GRBModel}
 import lpsolve.LpSolve
 import oscar.algebra.{double2const, int2const}
@@ -27,11 +26,12 @@ import oscar.linprog.modeling.LPSolverLPSolve
 import oscar.linprog.modeling.MIPSolverLPSolve
 import oscar.linprog.modeling.MIPSolverLPSolve
 import oscar.linprog.modeling.LPSolverGurobi
+import org.scalatest.Matchers
 
 /**
  * LPTesting
  */
-class ParameterSettingTest extends FunSuite with ShouldMatchers {
+class ParameterSettingTest extends FunSuite with Matchers {
 
   test("Config file for LPSolve") {
 
@@ -140,7 +140,7 @@ class ParameterSettingTest extends FunSuite with ShouldMatchers {
     writer.close
 
     implicit val lp = LPSolverGurobi()
-
+    
     lp.solver.configFile = configLP
     val x = LPFloatVar("x", 100, 200)
     val y = LPFloatVar("y", 80, 170)
@@ -165,6 +165,8 @@ class ParameterSettingTest extends FunSuite with ShouldMatchers {
 
     release()
     configLP.delete
+    
+    
   }
 }
 
