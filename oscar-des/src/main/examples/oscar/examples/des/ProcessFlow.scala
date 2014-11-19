@@ -1,6 +1,7 @@
 package oscar.des.flow
 
 import oscar.des.engine.Model
+import oscar.des.flow.lib._
 
 object testBelt extends App with HelperForProcess{
 

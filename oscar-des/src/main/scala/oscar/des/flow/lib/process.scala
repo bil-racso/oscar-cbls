@@ -13,9 +13,10 @@
   * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
   ******************************************************************************/
 
-package oscar.des.flow
+package oscar.des.flow.lib
 
 import oscar.des.engine.Model
+import oscar.des.flow.core._
 
 import scala.collection.mutable.ListBuffer
 
