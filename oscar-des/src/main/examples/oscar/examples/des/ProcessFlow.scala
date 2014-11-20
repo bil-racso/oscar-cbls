@@ -14,8 +14,8 @@ object testBelt extends App with HelperForProcess{
 
   val input = new Storage(200, 10, "input", verbose)
   val output = new Storage(22, 0, "output", verbose)
-  val belt = new ConveyerBeltProcess(m, 5, 1, List((1, input)), List((1, output)), "belt", verbose)
 
+  val belt = new ConveyerBeltProcess(m, 5, 1, List((1, input)), List((1, output)), "belt", verbose)
   val slowlyFeedingInput  = new SingleBatchProcess(m, 12, List(), List((13, input)), "slowlyFeedingInput", verbose)
 
   m.simulate(100, verbose)
@@ -49,8 +49,6 @@ object TestFailingProcess extends App with HelperForProcess{
   println(output)
   println(trash)
   println(process)
-
-
 }
 
 object TestProcess extends App with HelperForProcess{

@@ -20,6 +20,10 @@ import oscar.des.flow.core._
 
 import scala.collection.mutable.ListBuffer
 
+/** since many of the classes proposed by this lib support random variables, represented using functions to Floats or Ints,
+  * and ou might not need this dimension in your model,
+  * this trait provides implicit translation eg. from Float to function to Float
+  */
 trait HelperForProcess{
   implicit def floatToConstantFloatFunction(f: Float): (() => Float) = (() => f)
   implicit def intToConstantFloatFunction(f: Int): (() => Float) = (() => f)
