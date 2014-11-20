@@ -27,7 +27,7 @@ trait Puteable{
    * @param amount
    * @param block
    */
-  def put(amount:Int)(block : => Unit)
+  def put(amount:Int)(block : ()=> Unit)
 }
 
 /** represents a process fragment from which one can fetch a part
@@ -40,7 +40,7 @@ trait Fetcheable{
    * @param amount
    * @param block
    */
-  def fetch(amount:Int)(block : => Unit)
+  def fetch(amount:Int)(block : () => Unit)
 }
 
 /** This proposes a standard FIFO model behind the fetch operation,
@@ -61,8 +61,8 @@ trait RichFetcheable extends Fetcheable{
    */
   protected def internalFetch(amount:Int):(Int,Int)
 
-  def appendFetch(amount:Int)(block : => Unit){
-    waitingFetches.append((amount, () => block))
+  def appendFetch(amount:Int)(block : () => Unit){
+    waitingFetches.append((amount, block))
   }
 
   /**
@@ -118,8 +118,8 @@ trait RichPuteable extends Puteable{
    * @param amount
    * @param block
    */
-  protected def appendPut(amount:Int)(block : => Unit): Unit ={
-    waitingPuts.append((amount, () => block))
+  protected def appendPut(amount:Int)(block : ()=> Unit): Unit ={
+    waitingPuts.append((amount, block))
   }
 
   /**
@@ -185,13 +185,12 @@ case class CounterGate(waitedNotification:Int, gate: () => Unit){
   * an output consists is outputting a set of parts to a set of Puteables
   * @author renaud.delandtsheer@cetic.be
   */
-trait Outputter{
-  def outputs:List[(Int,Puteable)]
+class Outputter(outputs:List[(Int,Puteable)]){
   val outputCount = outputs.length
-  protected def performOutput(block: => Unit){
-    val gate = CounterGate(outputCount +1, () => block)
+  def performOutput(block: () => Unit){
+    val gate = CounterGate(outputCount +1, block)
     for((amount,puteable) <- outputs){
-      puteable.put(amount){gate.notifyOne()}
+      puteable.put(amount)(() => gate.notifyOne())
     }
     gate.notifyOne()
   }
@@ -201,13 +200,12 @@ trait Outputter{
   * an input consists in fetching a set of parts from a set of Fetcheables
   * @author renaud.delandtsheer@cetic.be
   */
-trait Inputter {
-  def inputs:List[(Int,Fetcheable)]
+class Inputter(inputs:List[(Int,Fetcheable)]) {
   val inputCount = inputs.length
-  protected def performInput(block : => Unit): Unit = {
-    val gate = CounterGate(inputCount +1, () => block)
+  def performInput(block : ()=> Unit): Unit = {
+    val gate = CounterGate(inputCount +1, block)
     for((amount,fetcheable) <- inputs){
-      fetcheable.fetch(amount){gate.notifyOne()}
+      fetcheable.fetch(amount)(() => gate.notifyOne())
     }
     gate.notifyOne()
   }

@@ -40,7 +40,7 @@ trait HelperForProcess{
  * */
 case class BatchProcess(m:Model, numberOfBatches:Int, batchDuration:() => Float, inputs:List[(Int,Fetcheable)], outputs:List[(Int,Puteable)], name:String, verbose:Boolean = true){
 
-  val childProcesses:Iterable[SingleBatchProcess] = (1 to numberOfBatches) map((batchNumber:Int) => SingleBatchProcess(m, batchDuration, inputs, outputs, name + " chain " + batchNumber, verbose))
+  private val childProcesses:Iterable[SingleBatchProcess] = (1 to numberOfBatches) map((batchNumber:Int) => SingleBatchProcess(m, batchDuration, inputs, outputs, name + " chain " + batchNumber, verbose))
 
   override def toString: String = {
     name + ":" + childProcesses.foldLeft(0)(_ + _.performedBatches) + " totalWaitDuration:" + childProcesses.foldLeft(0.0)(_ + _.totalWaitDuration)
@@ -61,35 +61,45 @@ case class BatchProcess(m:Model, numberOfBatches:Int, batchDuration:() => Float,
  * */
 case class SingleBatchProcess(m:Model,
                               batchDuration:() => Float,
-                              val inputs:List[(Int,Fetcheable)],
-                              val outputs:List[(Int,Puteable)],
+                              inputs:List[(Int,Fetcheable)],
+                              outputs:List[(Int,Puteable)],
                               name:String,
-                              verbose:Boolean = true) extends Inputter with Outputter{
+                              verbose:Boolean = true){
+
+  private val myOutput = new Outputter(outputs)
+  private val myInput = new Inputter(inputs)
 
   var performedBatches = 0
 
-  var totalWaitDuration:Double = 0
-  var startWaitTime:Double = 0
+  private var mTotalWaitDuration:Double = 0
+  private var startWaitTime:Double = 0
+  private var waiting = false
+
+  def totalWaitDuration = (if(waiting) (mTotalWaitDuration + m.clock() - startWaitTime) else mTotalWaitDuration)
 
   startBatches()
 
-  def startBatches(){
+  private def startBatches(){
     if (verbose) println(name + ": start inputting")
     startWaitTime = m.clock()
-    performInput {
+    waiting = true
+    myInput.performInput( ()=> {
       if (verbose) println(name + ": start new batch")
-      totalWaitDuration += (m.clock() - startWaitTime)
+      mTotalWaitDuration += (m.clock() - startWaitTime)
+      waiting = false
       m.wait(batchDuration()){
         if (verbose) println(name + ": finished batch")
         startWaitTime = m.clock()
+        waiting = true
         performedBatches +=1
-        performOutput {
+        myOutput.performOutput (() => {
           if (verbose) println(name + ": finished outputting")
-          totalWaitDuration += (m.clock() - startWaitTime)
+          mTotalWaitDuration += (m.clock() - startWaitTime)
+          waiting = false
           startBatches()
-        }
+        })
       }
-    }
+    })
   }
 
   override def toString: String = {
@@ -97,6 +107,80 @@ case class SingleBatchProcess(m:Model,
   }
 }
 
+/**
+ * a process inputs some inputs, and produces its outputs at a given rate.
+ * notice that inputs and outputs are performed in paralel (thus might cause some deadlocks)
+ * this process might fail. In this case, failure is assessed at the end of the batch duration, and produces the failureOutputs
+ *
+ * @param m the simulation model
+ * @param batchDuration the duration of a batch starting from all inputs being inputted, and ending with the beginning of the outputting
+ * @param inputs the set of inputs (number of parts to input, storage)
+ * @param outputs the set of outputs (number of parts, storage)
+ * @param failureOutputs the set of produced outputs in case of failure
+ * @param success true if the batch succeeds, false otherwise. inputs are then lost, and the failure outputs are produced.
+ * @param name the name of this process, for pretty printing
+ * @param verbose true if you want to see the start input, start batch, end batch start output, end output events on the console
+ * @author renaud.delandtsheer@cetic.be
+ * */
+case class FailingSingleBatchProcess(m:Model,
+                              batchDuration:() => Float,
+                              inputs:List[(Int,Fetcheable)],
+                              outputs:List[(Int,Puteable)],
+                              failureOutputs:List[(Int,Puteable)],
+                              success:()=>Boolean,
+                              name:String,
+                              verbose:Boolean = true) {
+
+  private val myOutput = new Outputter(outputs)
+  private val myInput = new Inputter(inputs)
+  private val myFailedOutput = new Outputter(failureOutputs)
+
+  private var performedBatches = 0
+  private var failedBatches = 0
+
+  private var mTotalWaitDuration: Double = 0
+  private var startWaitTime: Double = 0
+  private var waiting = false
+
+  def totalWaitDuration = (if(waiting) (mTotalWaitDuration + m.clock() - startWaitTime) else mTotalWaitDuration)
+
+  startBatches()
+
+  private def startBatches() {
+    if (verbose) println(name + ": start inputting")
+    startWaitTime = m.clock()
+    waiting = true
+    myInput.performInput (() => {
+      if (verbose) println(name + ": start new batch")
+      mTotalWaitDuration += (m.clock() - startWaitTime)
+      waiting = false
+      m.wait(batchDuration()) {
+        val targetedOutputer =
+          if (success()) {
+            if (verbose) println(name + ": finished batch: success")
+            performedBatches += 1
+            myOutput
+          } else {
+            if (verbose) println(name + ": finished batch: failure")
+            failedBatches += 1
+            myFailedOutput
+          }
+        startWaitTime = m.clock()
+        waiting = true
+        targetedOutputer.performOutput (() => {
+          if (verbose) println(name + ": finished outputting")
+          mTotalWaitDuration += (m.clock() - startWaitTime)
+          waiting = false
+          startBatches()
+        })
+      }
+    })
+  }
+
+  override def toString: String = {
+    name + ":" + performedBatches + " failed batches:" + failedBatches + " totalWaitDuration:" + totalWaitDuration
+  }
+}
 
 /**
  * rolling Process means that if the output is blocked, no new batch is started
@@ -120,30 +204,35 @@ class ConveyerBeltProcess(m:Model,
                           val inputs:List[(Int,Fetcheable)],
                           val outputs:List[(Int,Puteable)],
                           name:String,
-                          verbose:Boolean = true) extends Outputter with Inputter{
+                          verbose:Boolean = true){
+
+  private val myOutput = new Outputter(outputs)
+  private val myInput = new Inputter(inputs)
 
   //the belt contains the delay for the output since the previous element that was input. delay since input if the belt was empty
-  val belt: ListBuffer[Double] = ListBuffer.empty
+  private val belt: ListBuffer[Double] = ListBuffer.empty
 
-  var timeOfLastInput:Double = 0
+  private var timeOfLastInput:Double = 0
 
-  var blocked:Boolean = false
-  var startBlockingTime:Double = 0
-  var outputMustBeRestarted:Boolean = true
-  var inputMustBeRestarted:Boolean = true
+  private var blocked:Boolean = false
+  private var startBlockingTime:Double = 0
+  private var outputMustBeRestarted:Boolean = true
+  private var inputMustBeRestarted:Boolean = true
 
-  var blockedTimeSinceLastInput:Double = 0
+  private var blockedTimeSinceLastInput:Double = 0
 
-  var totalInputBatches = 0
-  var totalOutputBatches = 0
-  var totalBlockedTime:Double = 0.0
+  private var totalInputBatches = 0
+  private var totalOutputBatches = 0
+  private var mTotalBlockedTime:Double = 0.0
   restartInputtingIfNeeded()
+
+  def totalBlockedTime = if(blocked) mTotalBlockedTime + m.clock() - startBlockingTime else mTotalBlockedTime
 
   override def toString: String = {
     name + " content: " + belt.size + " totalInputBatches:" + totalInputBatches + " totalOutputBatches:" + totalOutputBatches + " totalBlockedTime:" + totalBlockedTime
   }
 
-  def restartInputtingIfNeeded(): Unit ={
+  private def restartInputtingIfNeeded(): Unit ={
     if(inputMustBeRestarted) {
       if(verbose) println(name + " restarting belt")
       inputMustBeRestarted = false
@@ -152,7 +241,7 @@ class ConveyerBeltProcess(m:Model,
   }
 
   //on s'assure juste qu'il y aie assez de place depuis le dernier qu'on a mis dedans
-  def startPerformInput() {
+  private def startPerformInput() {
     val timeForNextInput = timeOfLastInput + minimalSeparationBetweenBatches + blockedTimeSinceLastInput
 
     if(blocked){
@@ -162,7 +251,7 @@ class ConveyerBeltProcess(m:Model,
       //we can perform the input
       if(verbose) println(name + " start input")
       startBlockingTime = m.clock()
-      performInput(finishedInputs)
+      myInput.performInput(finishedInputs)
     }else{
       //we cannot do the input; need to sleep a bit because belt was blocked from output
       val durationToNextInput = timeForNextInput - m.clock()
@@ -170,7 +259,7 @@ class ConveyerBeltProcess(m:Model,
     }
   }
 
-  def finishedInputs(): Unit ={
+  private def finishedInputs(): Unit ={
     if(belt.isEmpty){
       belt.prepend(processDuration)
     }else {
@@ -185,7 +274,7 @@ class ConveyerBeltProcess(m:Model,
   }
 
   //called at input time, after belt has been fed again
-  def restartOutputtingIfNeeded(){
+  private def restartOutputtingIfNeeded(){
     if(outputMustBeRestarted) {
       require(belt.nonEmpty)
       outputMustBeRestarted = false
@@ -195,17 +284,17 @@ class ConveyerBeltProcess(m:Model,
     }
   }
 
-  def startPerformOutput() {
+  private def startPerformOutput() {
     blocked = true
     startBlockingTime = m.clock()
     if(verbose) println(name + " start outputting")
-    performOutput(finishedOutputs)
+    myOutput.performOutput(finishedOutputs)
   }
 
   private def finishedOutputs(): Unit = {
     blocked = false
     blockedTimeSinceLastInput = (m.clock() - startBlockingTime)
-    totalBlockedTime += blockedTimeSinceLastInput
+    mTotalBlockedTime += blockedTimeSinceLastInput
     belt.remove(belt.size-1)
     if(verbose) println(name + " output performed")
     totalOutputBatches += 1
@@ -240,14 +329,14 @@ class Delay(m:Model, delay:Float, destination:Puteable) extends RichPuteable{
    * @param amount
    * @param block
    */
-  override def put(amount: Int)(block: => Unit){
-    appendPut(amount)({block; m.wait(delay) {output(amount)}})
+  override def put(amount: Int)(block: () => Unit){
+    appendPut(amount)(() => {block(); m.wait(delay){output(amount)}})
     if(! blocked) processBlockedPuts()
   }
 
   private def output(amount:Int): Unit ={
     blocked = true
-    destination.put(amount){blocked = false; processBlockedPuts()}
+    destination.put(amount)(() => {blocked = false; processBlockedPuts()})
   }
 
   /** there is an unlimited input rate, actually, it is solely blocked if output is blocked
@@ -275,10 +364,10 @@ class OrderOnStockTreshold(s:Storage, threshold:Int, orderQuantity:Int=>Int, sup
   extends NotificationTarget{
   s.registernotificationTarget(this)
 
-  var placedOrders = 0
+  private var placedOrders = 0
 
-  var lastNotifiedlevel:Int = s.content
-  override def notifyStockLevel(level: Int): Unit = {
+  private var lastNotifiedlevel:Int = s.content
+  def notifyStockLevel(level: Int): Unit = {
     if(level <= threshold && lastNotifiedlevel > threshold){
       performOrder()
     }
@@ -312,9 +401,9 @@ class OrderOnStockTreshold(s:Storage, threshold:Int, orderQuantity:Int=>Int, sup
 class OrderOnStockThresholdWithTick(s:Storage, m:Model, threshold:Int, period:Float, orderQuantity:Int=>Int, supplier:PartSupplier, verbose:Boolean = true, name:String)
   extends OrderOnStockTreshold(s, threshold, orderQuantity, supplier, verbose, name) {
 
-  override def performOrder(){
+  protected override def performOrder(){
     //the order is placed at a round up period after now
-    m.wait(period - (m.clock() % period)) {super.performOrder()}
+    m.wait(period - (m.clock() % period)) {if (s.content < threshold) super.performOrder()}
   }
 }
 
@@ -327,11 +416,15 @@ class OrderOnStockThresholdWithTick(s:Storage, m:Model, threshold:Int, period:Fl
  * @param verbose true to print order deliveries on the console
  * @author renaud.delandtsheer@cetic.be
  * */
-class PartSupplier(m:Model, supplierDelay:()=>Int, deliveredPercentage:() => Int, val name:String, verbose:Boolean = true){
-  var placedOrders = 0
-  var totalOrderedParts = 0
-  var deliveredOrders = 0
-  var totalDeliveredParts = 0
+class PartSupplier(m:Model,
+                   supplierDelay:()=>Int,
+                   deliveredPercentage:() => Int,
+                   val name:String,
+                   verbose:Boolean = true){
+  private var placedOrders = 0
+  private var totalOrderedParts = 0
+  private var deliveredOrders = 0
+  private var totalDeliveredParts = 0
 
   def order(orderQuantity:Int, to:Storage): Unit ={
     totalOrderedParts += orderQuantity
@@ -340,11 +433,15 @@ class PartSupplier(m:Model, supplierDelay:()=>Int, deliveredPercentage:() => Int
     m.wait(supplierDelay()){
       if(verbose) println(name + ": delivered " + willBeDelivered + " parts to stock " + to.name +
         (if (willBeDelivered != orderQuantity) " (ordered: " + orderQuantity + ")" else ""))
-      to.put(willBeDelivered){totalDeliveredParts += willBeDelivered; deliveredOrders +=1}
+      to.put(willBeDelivered)(() => {totalDeliveredParts += willBeDelivered; deliveredOrders +=1})
     }
   }
 
-  override def toString: String = name + " receivedOrders:" + placedOrders + " totalOrderedParts:" + totalOrderedParts + " deliveredOrders:" + deliveredOrders + " totalDeliveredParts " + totalDeliveredParts
+  override def toString: String = name +
+    " receivedOrders:" + placedOrders +
+    " totalOrderedParts:" + totalOrderedParts +
+    " deliveredOrders:" + deliveredOrders +
+    " totalDeliveredParts " + totalDeliveredParts
 }
 
 /**
@@ -362,8 +459,8 @@ case class OverflowStorage(override val size:Int,
                            override val verbose:Boolean=true)
   extends Storage(size,initialContent, name, verbose){
   //TODO: overflow should happen only once per simulation step (or kind of once) since all events are supposed to happen at the same time
-  var totalLosByOverflow = 0
-  override def flow():Boolean = {
+  private var totalLosByOverflow = 0
+  override protected def flow():Boolean = {
     val toReturn = super.flow()
     val lostByOverflow = flushBlockedPuts()
     totalLosByOverflow += lostByOverflow
@@ -382,7 +479,9 @@ case class OverflowStorage(override val size:Int,
  * @param verbose true to print when stock is empty or overfull
  * @author renaud.delandtsheer@cetic.be
  * */
-class Storage(val size:Int, initialContent:Int, val name:String, val verbose:Boolean=true) extends RichPuteable with RichFetcheable {
+class Storage(val size:Int, initialContent:Int,
+              val name:String,
+              val verbose:Boolean=true) extends RichPuteable with RichFetcheable {
   var content:Int = initialContent
 
   private var notificationTo:List[NotificationTarget] = List.empty
@@ -416,13 +515,13 @@ class Storage(val size:Int, initialContent:Int, val name:String, val verbose:Boo
     notificationTo = t :: notificationTo
   }
 
-  def fetch(amount:Int)(block : => Unit){
+  def fetch(amount:Int)(block : () => Unit){
     appendFetch(amount)(block)
     flow()
     if(isThereAnyWaitingFetch && verbose) println("Empty storage on " + name)
   }
 
-  def put(amount:Int)(block : => Unit): Unit ={
+  def put(amount:Int)(block : () => Unit): Unit ={
     appendPut(amount)(block)
     flow()
     if(isThereAnyWaitingPut && verbose) println("Full storage on " + name)
