@@ -70,7 +70,7 @@ class MIPIntVar(mip : MIPSolver, name : String,  domain : Range) extends MIPFloa
 	 def branchPriority()(implicit mip: MIPSolverGurobi) = {
 		  assert(mip == this.mip)
 		  // could avoid this awful (but safe) cast by introducing parameterized solvers
-		  mip.solver.asInstanceOf[GurobiLP].branchPriority(index) 
+		  mip.solver.branchPriority(index) 
 	 }
 		
 }
@@ -82,15 +82,10 @@ object MIPIntVar {
 }
 
 
-class MIPSolver(val solver: AbstractLP) extends AbstractLPSolver() {
-/*
-    val solver = solverLib match {
-      case LPSolverLib.lp_solve => new LPSolve()
-      case LPSolverLib.glpk => new GlpkMIP()
-      case LPSolverLib.gurobi => new GurobiLP()
-      case _ => new LPSolve()
-    }
-*/
+abstract class MIPSolver() extends AbstractLPSolver() {
+  
+    val solver: AbstractLP
+
     override def setVarProperties() = {
       super.setVarProperties();
       for (x <- vars) {
@@ -144,7 +139,7 @@ class MIPSolver(val solver: AbstractLP) extends AbstractLPSolver() {
        *       theSolver.add(Z >= rates(i)*Q + c)
        *     }
        *   }
-	   */
+	     */
        Z
     } 
     
@@ -214,9 +209,15 @@ class MIPSolver(val solver: AbstractLP) extends AbstractLPSolver() {
      }        
 }
 
-case class MIPSolverLPSolve() extends MIPSolver(new LPSolve())
-case class MIPSolverGLPK() extends MIPSolver(new GlpkMIP())
-case class MIPSolverGurobi() extends MIPSolver(new GurobiLP())
+case class MIPSolverLPSolve() extends MIPSolver {
+ val solver = new LPSolve()
+}
+case class MIPSolverGLPK() extends MIPSolver {
+ val solver = new GlpkMIP()
+}
+case class MIPSolverGurobi() extends MIPSolver{
+ val solver = new GurobiLP() 
+}
 	
 abstract class MIPModelGLPK {
   implicit val mipsolver = new MIPSolverGLPK()

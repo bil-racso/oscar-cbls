@@ -17,6 +17,7 @@ package oscar.linprog.modeling
 import oscar.linprog._
 import oscar.algebra._
 import lpsolve.LpSolve
+import org.gnu.glpk.GLPK
 
 /**
  * Abstract class that must be extended to define a new LP solver
@@ -53,8 +54,8 @@ object LPFloatVar {
   def apply(lp: LPSolver, name: String,lbound: Double = 0.0, ubound: Double = Double.PositiveInfinity) = new LPFloatVar(lp,name,lbound,ubound)
 }
 
-class LPSolver(val solver: AbstractLP) extends AbstractLPSolver() {
-
+abstract class LPSolver extends AbstractLPSolver() {
+  val solver: AbstractLP
   def getReducedCost(varId: Int): Double = solver.getReducedCost(varId)
 
   def addColumn(objCoef: Double, constraints: IndexedSeq[LPConstraint], lhsConstraintCoefs: Array[Double]): LPFloatVar = {
@@ -67,9 +68,17 @@ class LPSolver(val solver: AbstractLP) extends AbstractLPSolver() {
 
 }
 
-case class LPSolverLPSolve() extends LPSolver(new LPSolve())
-case class LPSolverGLPK() extends LPSolver(new GlpkLP())
-case class LPSolverGurobi() extends LPSolver(new GurobiLP())
+case class LPSolverLPSolve() extends LPSolver {
+  val solver: LPSolve = new LPSolve()
+}
+
+case class LPSolverGLPK() extends LPSolver {
+  val solver: GlpkLP = new GlpkLP()
+}
+
+case class LPSolverGurobi() extends LPSolver {
+  val solver: GurobiLP = new GurobiLP()
+}
 
 abstract class LPModelGLPK {
   implicit val lpsolver = new LPSolverGLPK()

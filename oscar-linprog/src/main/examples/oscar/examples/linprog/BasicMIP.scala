@@ -35,7 +35,7 @@ object BasicMIP extends MIPModelGurobi with App  {
   
   start()
   
-  // x2.branchPriority()
+  x2.branchPriority()
   
   println("objective: " + objectiveValue)
   println("x0= " + x0.value + " " + x1.value)
