@@ -38,10 +38,10 @@ import scala.collection.immutable.SortedSet
  *                    if false, consider the exploration range in natural order from the first position.
  */
 case class AssignNeighborhood(vars:Array[CBLSIntVar],
-                              obj:Objective,
+                              obj:()=>Int,
                               name:String = "AssignNeighborhood",
                               best:Boolean = false,
-                              searchZone:CBLSSetVar = null,
+                              searchZone:() => Iterable[Int] = null,
                               symmetryClassOfVariables:Option[Int => Int] = None,
                               symmetryClassOfValues:Option[Int => Int => Int] = None,
                               domain:(CBLSIntVar,Int) => Iterable[Int] = (v,i) => v.domain,
@@ -60,8 +60,8 @@ case class AssignNeighborhood(vars:Array[CBLSIntVar],
           if (startIndice >= vars.size) startIndice = 0
           vars.indices startBy startIndice
         }else vars.indices
-      }else if (hotRestart && !best) HotRestart(searchZone.value, startIndice)
-      else searchZone.value
+      }else if (hotRestart && !best) HotRestart(searchZone(), startIndice)
+      else searchZone()
 
     val iterationScheme = symmetryClassOfVariables match {
       case None => iterationSchemeOnZone
@@ -78,7 +78,10 @@ case class AssignNeighborhood(vars:Array[CBLSIntVar],
       }
 
       for (newVal <- domainIterationScheme if newVal != oldVal) {
-        val newObj = obj.assignVal(currentVar, newVal)
+        val oldVal = currentVar.value
+        currentVar := newVal
+        val newObj = obj()
+        currentVar := oldVal
 
         if (moveRequested(newObj) && submitFoundMove(AssignMove(currentVar, newVal, newObj, name))){
           startIndice = i + 1
@@ -122,10 +125,10 @@ case class AssignNeighborhood(vars:Array[CBLSIntVar],
  *                    if false, consider the exploration range in natural order from the first position.
  **/
 case class SwapsNeighborhood(vars:Array[CBLSIntVar],
-                             obj:Objective,
+                             obj:()=>Int,
                              name:String = "SwapsNeighborhood",
-                             searchZone1:CBLSSetVar = null,
-                             searchZone2:CBLSSetVar = null,
+                             searchZone1:()=>Iterable[Int] = null,
+                             searchZone2:()=>Iterable[Int] = null,
                              symmetryCanBeBrokenOnIndices:Boolean = true,
                              symmetryCanBeBrokenOnValue:Boolean = false,
                              best:Boolean = false,
@@ -147,14 +150,14 @@ case class SwapsNeighborhood(vars:Array[CBLSIntVar],
           if (startIndice >= vars.size) startIndice = 0
           vars.indices startBy startIndice
         } else vars.indices
-      } else if (hotRestart && !best) HotRestart(searchZone1.value, startIndice) else searchZone1.value
+      } else if (hotRestart && !best) HotRestart(searchZone1(), startIndice) else searchZone1()
 
     val firstIterationScheme = symmetryClassOfVariables match {
       case None => firstIterationSchemeZone
       case Some(s) => IdenticalAggregator.removeIdenticalClassesLazily(firstIterationSchemeZone, s)
     }
 
-    val secondIterationSchemeZone = if (searchZone2 == null) vars.indices else searchZone2.value
+    val secondIterationSchemeZone = if (searchZone2 == null) vars.indices else searchZone2()
 
     val secondIterationScheme = symmetryClassOfVariables match {
       case None => secondIterationSchemeZone
@@ -175,7 +178,9 @@ case class SwapsNeighborhood(vars:Array[CBLSIntVar],
              && secondVar.domain.contains(oldValOfFirstVar)
              && firstVar.domain.contains(oldValOfSecondVar)) {
 
-        val newObj = obj.swapVal(firstVar, secondVar)
+        firstVar :=: secondVar
+        val newObj = obj()
+        firstVar :=: secondVar
 
         if (moveRequested(newObj) && submitFoundMove(SwapMove(firstVar, secondVar, newObj, name))) {
           startIndice = i + 1
