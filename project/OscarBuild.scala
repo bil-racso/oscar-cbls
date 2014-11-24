@@ -81,7 +81,7 @@ object OscarBuild extends Build {
   import Dependencies._
   import Resolvers._
 
-  val commonDeps = Seq(/*scalatest,*/junit,scalaswing)
+  val commonDeps = Seq(/*scalatest,scalaswing,*/junit)
   
  
   TaskKey[Unit]("zipsrc") <<= baseDirectory map { bd => println(bd); IO.zip(Path.allSubpaths(new File(bd + "/src/main/scala")),new File(bd +"/oscar-src.zip"))  }
