@@ -191,6 +191,11 @@ case class ConstraintSystem(val _model:Store) extends Constraint with ObjectiveT
     }
   }
 
+  def violations[V<:Variable](vs:Array[V]):Array[CBLSIntVar] = {
+    vs.map(violation(_))
+  }
+
+
   /**Returns the global violation of the constraint system, that is the weighted sum of the violation of the posted constraints
    *close() should have been called prior to calling this method.
    */
