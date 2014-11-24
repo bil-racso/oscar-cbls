@@ -55,7 +55,7 @@ object OscarBuild extends Build {
 
     //val scalatest = "org.scalatest" %% "scalatest" % "2.0.M5b"
     val junit = "junit" % "junit" % "4.8.1" % "test"
-    val scalaswing = "org.scala-lang" % "scala-swing" % "2.11.0-M7"
+    //val scalaswing = "org.scala-lang" % "scala-swing" % "2.11.0-M7"
 
     // DSL for adding source dependencies ot projects.
     def dependsOnSource(dir: String): Seq[Setting[_]] = {
