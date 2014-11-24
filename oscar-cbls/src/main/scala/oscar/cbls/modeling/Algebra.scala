@@ -155,5 +155,7 @@ trait AlgebraTrait{
 
   implicit def arrayOfIntTOArrayOfIntConst(a:Array[Int]):Array[CBLSIntVar] = a.map(CBLSIntConst(_))
   implicit def arrayOfIntInvariantArrayOfIntVar(a:Array[IntInvariant]):Array[CBLSIntVar] = a.map(_.toIntVar)
+  implicit def listOfIntInvariantToListOfIntVar(a:IndexedSeq[IntInvariant]):Iterable[CBLSIntVar] = a.map(_.toIntVar)
+
 }
 

@@ -108,7 +108,7 @@ case class AssignNeighborhood(vars:Array[CBLSIntVar],
  *                   If none is provided, all the array will be considered each time
  * @param symmetryCanBeBrokenOnIndices if set to true, the neighborhood will break symmetries on indices of swapped vars
  *                            that is: thee first variable will always have an indice strictly smaller than the second swapped variable
- *                            typically, you always want it except if you have specified the two searchZones, and they are different
+ *                            typically, you always want it except if you have specified one or two searchZones, and they are different
  * @param symmetryCanBeBrokenOnValue if set to true, the neighborhood will break symmetries on values of swapped vars
  *                            that is: thee first variable will always have a value strictly smaller than the value of second swapped variable
  *                            you do not want to have both symmetryCanBeBrokenOnIndices and symmetryCanBeBrokenOnValue
