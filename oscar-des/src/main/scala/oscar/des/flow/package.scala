@@ -21,7 +21,7 @@ package oscar.des
  * This package proposes a set of modeling artifacts to represent and simulate workflows.
  * It includes representation of
  - storages: [[oscar.des.flow.lib.Storage]], and [[oscar.des.flow.lib.OverflowStorage]]
- - processes: [[oscar.des.flow.lib.SingleBatchProcess]], [[oscar.des.flow.lib.FailingSingleBatchProcess]], [[oscar.des.flow.lib.BatchProcess]], and [[oscar.des.flow.lib.ConveyerBeltProcess]]
+ - processes: [[oscar.des.flow.lib.SingleBatchProcess]], [[oscar.des.flow.lib.FailingSingleBatchProcess]], [[oscar.des.flow.lib.FailingBatchProcess]], [[oscar.des.flow.lib.BatchProcess]], and [[oscar.des.flow.lib.ConveyerBeltProcess]]
  - ordering policies: [[oscar.des.flow.lib.OrderOnStockTreshold]] and [[oscar.des.flow.lib.OrderOnStockThresholdWithTick]]
  - suppliers: [[oscar.des.flow.lib.PartSupplier]].
  *

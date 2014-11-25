@@ -28,23 +28,32 @@ class Model {
 
   def clock() : Double = currentTime
 
-  private def addEvent(e : SimEvent) = eventQueue += e
+  private def addEvent(e:SimEvent) = eventQueue += e
 
-  def simulate(horizon: Int,verbose: Boolean = true) {
+  def simulate(horizon:Float, verbose:Boolean = true) {
     while (eventQueue.nonEmpty) {
       val e = eventQueue.dequeue()
-      if(verbose && e.time <= horizon && e.time != currentTime){
-        println("-----------> time: "+  e.time)
-      }
-      currentTime = e.time;
-      if(currentTime <= horizon){
+      require(e.time >= currentTime)
+      if(e.time <= horizon){
+        if(verbose && e.time != currentTime){
+          println("-----------> time: "+  e.time)
+        }
+        currentTime = e.time
         e.process
-      }
-      else {
-        currentTime = horizon;
+      }else{
+        //we are after the horizon, so event is pushed back into queue, and simu stops
+        eventQueue.enqueue(e)
+        if(verbose && horizon != currentTime)
+          println("-----------> time: "+  horizon)
+        currentTime = horizon
         return
       }
     }
+
+    //no more event to process, but time runs to the horizon
+    if(verbose && horizon != currentTime)
+      println("-----------> time: "+  horizon)
+    currentTime = horizon
   }
 
   def wait(duration : Double)(block : => Unit) {

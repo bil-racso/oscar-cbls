@@ -29,6 +29,8 @@ trait HelperForProcess{
   implicit def intToConstantFloatFunction(f: Int): (() => Float) = (() => f)
   implicit def floatToConstantIntFunction(f: Float): (() => Int) = (() => f.toInt)
   implicit def intToConstantIntFunction(f: Int): (() => Int) = (() => f)
+  implicit def constantFetcheableToFunctionFetcheable(l: List[(Int,Fetcheable)]): List[(()=>Int,Fetcheable)] = l.map(v => (()=>v._1,v._2))
+  implicit def constantPuteableToFunctionPuteable(l: List[(Int,Puteable)]): List[(()=>Int,Puteable)] = l.map(v => (()=>v._1,v._2))
 }
 
 /**
@@ -42,12 +44,14 @@ trait HelperForProcess{
  * @param verbose true if you want to see the start input, start batch, end batch start output, end output events on the console
  * @author renaud.delandtsheer@cetic.be
  * */
-case class BatchProcess(m:Model, numberOfBatches:Int, batchDuration:() => Float, inputs:List[(Int,Fetcheable)], outputs:List[(Int,Puteable)], name:String, verbose:Boolean = true){
+case class BatchProcess(m:Model, numberOfBatches:Int, batchDuration:() => Float, inputs:List[(() => Int,Fetcheable)], outputs:List[(() => Int,Puteable)], name:String, verbose:Boolean = true){
 
   private val childProcesses:Iterable[SingleBatchProcess] = (1 to numberOfBatches) map((batchNumber:Int) => SingleBatchProcess(m, batchDuration, inputs, outputs, name + " chain " + batchNumber, verbose))
 
   override def toString: String = {
-    name + ":" + childProcesses.foldLeft(0)(_ + _.performedBatches) + " totalWaitDuration:" + childProcesses.foldLeft(0.0)(_ + _.totalWaitDuration)
+    name + " " + this.getClass.getSimpleName + ":: lines:" + numberOfBatches +" performedBatches:" + childProcesses.foldLeft(0)(_ + _.performedBatches) +
+      " totalWaitDuration:" + childProcesses.foldLeft(0.0)(_ + _.totalWaitDuration) +
+      " waitingLines:" + childProcesses.foldLeft(0)((waitings:Int,p:SingleBatchProcess) => waitings + (if (p.isWaiting) 1 else 0))
   }
 }
 
@@ -65,8 +69,8 @@ case class BatchProcess(m:Model, numberOfBatches:Int, batchDuration:() => Float,
  * */
 case class SingleBatchProcess(m:Model,
                               batchDuration:() => Float,
-                              inputs:List[(Int,Fetcheable)],
-                              outputs:List[(Int,Puteable)],
+                              inputs:List[(() => Int,Fetcheable)],
+                              outputs:List[(() => Int,Puteable)],
                               name:String,
                               verbose:Boolean = true){
 
@@ -78,6 +82,8 @@ case class SingleBatchProcess(m:Model,
   private var mTotalWaitDuration:Double = 0
   private var startWaitTime:Double = 0
   private var waiting = false
+
+  def isWaiting = waiting
 
   def totalWaitDuration = (if(waiting) (mTotalWaitDuration + m.clock() - startWaitTime) else mTotalWaitDuration)
 
@@ -107,7 +113,40 @@ case class SingleBatchProcess(m:Model,
   }
 
   override def toString: String = {
-    name + ":" + performedBatches + " totalWaitDuration:" + totalWaitDuration
+    name + " " + this.getClass.getSimpleName + ":: performedBatches:" + performedBatches + " totalWaitDuration:" + totalWaitDuration + (if (waiting) " waiting" else " running")
+  }
+}
+
+/**
+ * This represents a failing batch process (see [[FailingSingleBatchProcess]]) with multiple batch running in parallell.
+ * @param m the simulation model
+ * @param numberOfBatches the number of batches running in parallell.
+ * @param batchDuration the duration of a batch starting from all inputs being inputted, and ending with the beginning of the outputting
+ * @param inputs the set of inputs (number of parts to input, storage)
+ * @param outputs the set of outputs (number of parts, storage)
+ * @param failureOutputs the set of produced outputs in case of failure
+ * @param success true if the batch succeeds, false otherwise. inputs are then lost, and the failure outputs are produced.
+ * @param name the name of this process, for pretty printing
+ * @param verbose true if you want to see the start input, start batch, end batch start output, end output events on the console
+ * @author renaud.delandtsheer@cetic.be
+ * */
+case class FailingBatchProcess(m:Model,
+                               numberOfBatches:Int,
+                               batchDuration:() => Float,
+                               inputs:List[(() => Int,Fetcheable)],
+                               outputs:List[(() => Int,Puteable)],
+                               failureOutputs:List[(() => Int,Puteable)],
+                               success:()=>Boolean,
+                               name:String,
+                               verbose:Boolean = true){
+
+  private val childProcesses:Iterable[FailingSingleBatchProcess] = (1 to numberOfBatches) map((batchNumber:Int)
+  => FailingSingleBatchProcess(m, batchDuration, inputs, outputs, failureOutputs, success, name + " chain " + batchNumber, verbose))
+
+  override def toString: String = {
+    name + ":: lines:" + numberOfBatches + " performedBatches: " + childProcesses.foldLeft(0)(_ + _.performedBatches) +
+      " totalWaitDuration:" + childProcesses.foldLeft(0.0)(_ + _.totalWaitDuration) +
+      " waitingLines:" + childProcesses.foldLeft(0)((waitings:Int,p:FailingSingleBatchProcess) => waitings + (if (p.isWaiting) 1 else 0))
   }
 }
 
@@ -128,9 +167,9 @@ case class SingleBatchProcess(m:Model,
  * */
 case class FailingSingleBatchProcess(m:Model,
                               batchDuration:() => Float,
-                              inputs:List[(Int,Fetcheable)],
-                              outputs:List[(Int,Puteable)],
-                              failureOutputs:List[(Int,Puteable)],
+                              inputs:List[(() => Int,Fetcheable)],
+                              outputs:List[(() => Int,Puteable)],
+                              failureOutputs:List[(() => Int,Puteable)],
                               success:()=>Boolean,
                               name:String,
                               verbose:Boolean = true) {
@@ -139,12 +178,14 @@ case class FailingSingleBatchProcess(m:Model,
   private val myInput = new Inputter(inputs)
   private val myFailedOutput = new Outputter(failureOutputs)
 
-  private var performedBatches = 0
+  var performedBatches = 0
   private var failedBatches = 0
 
   private var mTotalWaitDuration: Double = 0
   private var startWaitTime: Double = 0
-  private var waiting = false
+  private var waiting = false //waiting at an input or output
+
+  def isWaiting = waiting
 
   def totalWaitDuration = (if(waiting) (mTotalWaitDuration + m.clock() - startWaitTime) else mTotalWaitDuration)
 
@@ -182,7 +223,7 @@ case class FailingSingleBatchProcess(m:Model,
   }
 
   override def toString: String = {
-    name + ":" + performedBatches + " failed batches:" + failedBatches + " totalWaitDuration:" + totalWaitDuration
+    name + " " + this.getClass.getSimpleName + ":: performedBatches:" + performedBatches + " failedBatches:" + failedBatches + " totalWaitDuration:" + totalWaitDuration + (if (waiting) " waiting" else " running")
   }
 }
 
@@ -205,8 +246,8 @@ case class FailingSingleBatchProcess(m:Model,
 class ConveyerBeltProcess(m:Model,
                           processDuration:Float,
                           minimalSeparationBetweenBatches:Float,
-                          val inputs:List[(Int,Fetcheable)],
-                          val outputs:List[(Int,Puteable)],
+                          val inputs:List[(() => Int,Fetcheable)],
+                          val outputs:List[(() => Int,Puteable)],
                           name:String,
                           verbose:Boolean = true){
 
@@ -233,7 +274,7 @@ class ConveyerBeltProcess(m:Model,
   def totalBlockedTime = if(blocked) mTotalBlockedTime + m.clock() - startBlockingTime else mTotalBlockedTime
 
   override def toString: String = {
-    name + " content: " + belt.size + " totalInputBatches:" + totalInputBatches + " totalOutputBatches:" + totalOutputBatches + " totalBlockedTime:" + totalBlockedTime
+    name + ":: content: " + belt.size + " totalInputBatches:" + totalInputBatches + " totalOutputBatches:" + totalOutputBatches + " totalBlockedTime:" + totalBlockedTime + (if (blocked) " blocked" else " running")
   }
 
   private def restartInputtingIfNeeded(): Unit ={
@@ -385,7 +426,7 @@ class OrderOnStockTreshold(s:Storage, threshold:Int, orderQuantity:Int=>Int, sup
     placedOrders += 1
   }
 
-  override def toString: String = name + " placed " + placedOrders + " orders"
+  override def toString: String = name + " " + this.getClass.getSimpleName + ":: placedOrders:" + placedOrders
 }
 
 /**
@@ -441,11 +482,11 @@ class PartSupplier(m:Model,
     }
   }
 
-  override def toString: String = name +
-    " receivedOrders:" + placedOrders +
+  override def toString: String = name + " " + this.getClass.getSimpleName +
+    ":: receivedOrders:" + placedOrders +
     " totalOrderedParts:" + totalOrderedParts +
     " deliveredOrders:" + deliveredOrders +
-    " totalDeliveredParts " + totalDeliveredParts
+    " totalDeliveredParts:" + totalDeliveredParts
 }
 
 /**
@@ -491,7 +532,7 @@ class Storage(val size:Int, initialContent:Int,
   private var notificationTo:List[NotificationTarget] = List.empty
 
   override def toString: String = {
-    name + " content:" + content + " (max:" + size + ") totalPut:" + totalPut + " totalFetch:" + totalFetch
+    name + " " + this.getClass.getSimpleName + ":: content:" + content + " max:" + size + " totalPut:" + totalPut + " totalFetch:" + totalFetch
   }
 
   protected def flow() :Boolean = {

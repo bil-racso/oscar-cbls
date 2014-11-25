@@ -185,12 +185,12 @@ case class CounterGate(waitedNotification:Int, gate: () => Unit){
   * an output consists is outputting a set of parts to a set of Puteables
   * @author renaud.delandtsheer@cetic.be
   */
-class Outputter(outputs:List[(Int,Puteable)]){
+class Outputter(outputs:List[(() => Int,Puteable)]){
   val outputCount = outputs.length
   def performOutput(block: () => Unit){
     val gate = CounterGate(outputCount +1, block)
     for((amount,puteable) <- outputs){
-      puteable.put(amount)(() => gate.notifyOne())
+      puteable.put(amount())(() => gate.notifyOne())
     }
     gate.notifyOne()
   }
@@ -200,12 +200,12 @@ class Outputter(outputs:List[(Int,Puteable)]){
   * an input consists in fetching a set of parts from a set of Fetcheables
   * @author renaud.delandtsheer@cetic.be
   */
-class Inputter(inputs:List[(Int,Fetcheable)]) {
+class Inputter(inputs:List[(() => Int,Fetcheable)]) {
   val inputCount = inputs.length
   def performInput(block : ()=> Unit): Unit = {
     val gate = CounterGate(inputCount +1, block)
     for((amount,fetcheable) <- inputs){
-      fetcheable.fetch(amount)(() => gate.notifyOne())
+      fetcheable.fetch(amount())(() => gate.notifyOne())
     }
     gate.notifyOne()
   }
