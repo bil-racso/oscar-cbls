@@ -15,13 +15,13 @@
 package oscar.cp.test
 
 import org.scalatest.FunSuite
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 
 import oscar.cp.core._
 import oscar.cp.modeling._
 
-class TestCPIntVar extends FunSuite with ShouldMatchers {
-	
+class TestCPIntVar extends FunSuite with Matchers {
+	/*
 	test("Test1 : Median") {
 
 		val cp = CPSolver()
@@ -38,8 +38,7 @@ class TestCPIntVar extends FunSuite with ShouldMatchers {
 		a.removeValue(4)
 		
 		a.median should be(2)
-		
-		
+	
 	}
 	
 
@@ -202,6 +201,41 @@ class TestCPIntVar extends FunSuite with ShouldMatchers {
     }
     d.execute
     x.toSet should be(Set(1,5))
-  }    
+  }
+  */
+  
+  test("test propagate call") {
+    var propagCalled = 0
+    var valBindCalled = 0
+    var i = 0
+    class MyCons(val X: CPIntVar) extends Constraint(X.store, "TestDelta") {
+
+      override def setup(l: CPPropagStrength): CPOutcome = {
+        X.callPropagateWhenBind(this)
+        X.callValBindWhenBind(this)
+        CPOutcome.Suspend
+      }
+      
+      override def propagate(): CPOutcome = {
+        i += 1
+        propagCalled = i
+        CPOutcome.Suspend
+      }
+      
+      override def valBind(x: CPIntervalVar): CPOutcome = {
+        i += 1
+        valBindCalled = i
+        CPOutcome.Suspend
+      }
+    }
+
+    val cp = CPSolver()
+    val x = CPIntVar(Array(1, 3, 5, 7))(cp)
+    cp.add(new MyCons(x))
+    cp.add(x == 3)
+    valBindCalled should be(1)
+    propagCalled should be(2)
+    
+  }  
 
 }

@@ -21,7 +21,6 @@ import oscar.algo.reversible._
 import oscar.algo.search.Branching
 
 /**
- * Binary Branching:
  * Set Times Branching
  * author: Pierre Schaus pschaus@gmail.com
  */

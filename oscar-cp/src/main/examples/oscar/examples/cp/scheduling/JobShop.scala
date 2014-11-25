@@ -19,13 +19,13 @@ package oscar.examples.cp.scheduling
 
 import oscar.cp.modeling._
 import oscar.cp.core._
-import oscar.algo.search._
 import oscar.cp.scheduling._
 import oscar.visual._
+import oscar.util._
 import scala.io.Source
 import oscar.cp.scheduling.visual.VisualGanttChart
 import oscar.cp.search._
-import oscar.cp.search.BinaryFirstFailBranching
+
 
 /**
  * Job-Shop Problem
@@ -41,7 +41,7 @@ import oscar.cp.search.BinaryFirstFailBranching
  */
 object JobShop extends CPModel with App {
 
-  // Parsing		
+  // Parsing    
   // -----------------------------------------------------------------------
 
   var lines = Source.fromFile("data/ft10.txt").getLines.toList
@@ -73,7 +73,7 @@ object JobShop extends CPModel with App {
     lines = lines.drop(1)
   }
 
-  // Modeling	
+  // Modeling 
   // -----------------------------------------------------------------------
 
   val horizon = durations.sum
@@ -114,36 +114,24 @@ object JobShop extends CPModel with App {
     add(endsVar(t - 1) <= startsVar(t))
   }
   // Cumulative
-  for (r <- Resources) {
+  val rankBranchings = for (r <- Resources) yield {
     def filter(x: Array[CPIntVar]) = Activities.filter(resources(_) == r).map(x(_))
-    add(unaryResource(filter(startsVar), filter(durationsVar), filter(endsVar)))
+    val (s,d,e) = (filter(startsVar), filter(durationsVar), filter(endsVar))
+    add(unaryResource(s,d,e))
+    rank(s,d,e)
   }
-  minimize(makespan) search {
-    binaryFirstFail(startsVar)
+  
+  minimize(makespan) 
+  
+
+  import oscar.algo.search._
+  val rankBranching = rankBranchings.reduce{_++_}
+    
+  solver.search {
+    rankBranchings.reduce{_++_} ++ binaryStatic(startsVar)
   }
   println(start())
+  
+  
 }
 
-class JobShopInstance(val nbJobs: Int, val nbActPerJob: Int, val jobMatrix: Array[Array[Int]], val durationMatrix: Array[Array[Int]])
-object JobShopParser {
-  def parse(f: String): JobShopInstance = {
-    var lines = Source.fromFile(f).getLines.toList
-    while (lines.head.trim().startsWith("+++") || lines.head.trim().isEmpty()) {
-      lines = lines.drop(1)
-    }
-    println(lines.head)
-    lines = lines.drop(1)
-    val nJobs = lines.head.trim().split(" ")(0).toInt
-    val nTasksPerJob = lines.head.trim().split(" ")(1).toInt
-    lines = lines.drop(1)
-    val durations: Array[Array[Int]] = Array.fill(nJobs, nTasksPerJob)(0)
-    val machines: Array[Array[Int]] = Array.fill(nJobs, nTasksPerJob)(0)
-    for (i <- 0 until nJobs) {
-      val l = lines.head.trim().split("[ ,\t]+").map(_.toInt).toArray
-      machines(i) = Array.tabulate(nTasksPerJob)(j => l(2 * j))
-      durations(i) = Array.tabulate(nTasksPerJob)(j => l(2 * j + 1))
-      lines = lines.drop(1)
-    }
-    new JobShopInstance(nJobs, nTasksPerJob, machines, durations)
-  }
-}
