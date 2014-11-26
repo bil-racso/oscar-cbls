@@ -39,7 +39,7 @@ object TestFailingProcess extends App with HelperForProcess{
   val input = new Storage(200, 10, "input", verbose)
   val output = new Storage(22, 0, "output", verbose)
   val trash = new OverflowStorage(5, 0, "trash", verbose)
-  val process = FailingSingleBatchProcess(m,5,  List((1, input)), List((1, output)), List((1, trash)), () => math.random>0.5, "failing process", verbose)
+  val process = FailingSingleBatchProcess(m,5,  List((1, input)), List((1, output)), List((() => (3*math.random).toInt, trash)), () => math.random>0.5, "failing process", verbose)
 
   m.simulate(100, verbose)
 
