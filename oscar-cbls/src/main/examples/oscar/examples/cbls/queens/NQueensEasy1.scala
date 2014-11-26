@@ -25,14 +25,11 @@ import oscar.cbls.modeling._
 
 import scala.util.Random
 
-/**
- * Local Search for NQueens
- * Moves are operated by swapping variables, using a standard neighborhood
- *
+/** Local Search for NQueens
+ *  Moves are operated by swapping variables, using a standard neighborhood
  */
 object NQueensEasy1 extends CBLSModel with App{
 
-  startWatch()
   val N = 20
 
   println("NQueenEasy(" + N + ")")
@@ -49,8 +46,6 @@ object NQueensEasy1 extends CBLSModel with App{
 
   close()
 
-  println("time at close: " + getWatchString)
-
   val neighborhood =
     swapsNeighborhood(queens, c.violation, "SwapQueens",
       searchZone2 = maxViolQueens, //much faster than using searchZone1, since hotRestart is on Zone1, and not on zone2, and would be log(n)
@@ -59,6 +54,5 @@ object NQueensEasy1 extends CBLSModel with App{
   val it = neighborhood.doAllMoves(_ >= N || c.violation.value == 0)
 
   println("it: " + it)
-  println("total time: " + getWatchString)
   println(queens.mkString(","))
 }

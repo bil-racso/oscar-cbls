@@ -66,7 +66,7 @@ case class Store(override val verbose:Boolean = false,
   def inputVariables():List[Variable] = {
     if(privateInputVariables == null){
       privateInputVariables  = List.empty
-      for (v:Variable <- Variables if v.getDefiningInvariant == null){
+      for (v:Variable <- Variables if v.isInputVariable){
         privateInputVariables = v :: privateInputVariables
       }
     }
@@ -99,7 +99,7 @@ case class Store(override val verbose:Boolean = false,
   def saveValues(vars:Variable*):Snapshot = {
     var assignationInt:List[(CBLSIntVar,Int)] = List.empty
     var assignationIntSet:List[(CBLSSetVar,SortedSet[Int])] = List.empty
-    for (v:Variable <- vars if v.getDefiningInvariant == null){
+    for (v:Variable <- vars if v.isInputVariable){
       if(v.isInstanceOf[CBLSIntVar]){
         assignationInt = ((v.asInstanceOf[CBLSIntVar], v.asInstanceOf[CBLSIntVar].getValue(true))) :: assignationInt
       }else if(v.isInstanceOf[CBLSSetVar]){
@@ -116,10 +116,10 @@ case class Store(override val verbose:Boolean = false,
     */
   def restoreSolution(s:Solution){
     assert(s.model==this)
-    for((intsetvar,intset) <- s.assignationIntSet if intsetvar.getDefiningInvariant == null){
+    for((intsetvar,intset) <- s.assignationIntSet if intsetvar.isInputVariable){
       intsetvar := intset
     }
-    for((intvar,int) <- s.assignationInt if intvar.getDefiningInvariant == null){
+    for((intvar,int) <- s.assignationInt if intvar.isInputVariable){
       intvar := int
     }
   }
@@ -131,10 +131,10 @@ case class Store(override val verbose:Boolean = false,
     */
   def restoreSnapshot(s:Snapshot){
     assert(s.model==this)
-    for((intsetvar,intset) <- s.assignationIntSet if intsetvar.getDefiningInvariant == null){
+    for((intsetvar,intset) <- s.assignationIntSet if intsetvar.isInputVariable){
       intsetvar := intset
     }
-    for((intvar,int) <- s.assignationInt if intvar.getDefiningInvariant == null){
+    for((intvar,int) <- s.assignationInt if intvar.isInputVariable){
       intvar := int
     }
   }
@@ -214,7 +214,7 @@ case class Store(override val verbose:Boolean = false,
   var NotifiedInvariant:Invariant=null
 
   override def toString:String = Variables.toString()
-  def toStringInputOnly = Variables.filter(v => v.getDefiningInvariant == null).toString()
+  def toStringInputOnly = Variables.filter(v => v.isInputVariable).toString()
 
   //returns the set of source variable that define this one.
   // This exploration procedure explores passed dynamic invariants,
@@ -229,10 +229,8 @@ case class Store(override val verbose:Boolean = false,
         val v:Variable = head.asInstanceOf[Variable]
         if(!SourceVariables.contains(v)){
           SourceVariables += v
-          val definv = v.getDefiningInvariant
-          if (definv != null){
-            ToExplore = definv :: ToExplore
-          }
+          for(listened <- v.getStaticallyListenedElements)
+            ToExplore = listened :: ToExplore
         }
         //TODO: keep a set of the explored invariants, to speed up this thing?
       }else if(head.isInstanceOf[Invariant]){
@@ -323,9 +321,9 @@ abstract class Invariant extends PropagationElement{
   final def finishInitialization(model:Store = null){
     preFinishInitialization(model)
     if (this.model!= null){
-      UniqueID = this.model.registerInvariant(this)
+      uniqueID = this.model.registerInvariant(this)
     }else{
-      UniqueID = -1
+      uniqueID = -1
     }
   }
 
@@ -497,24 +495,25 @@ object InvariantHelper{
   * which is used solely for printing models.
   */
 abstract class Variable(val model:Store, n:String = null) extends PropagationElement with DistributedStorageUtility{
-  UniqueID = if (model == null) -1 else model.registerVariable(this)
-  val name = Option(n) getOrElse (s"Var_$UniqueID")
+  uniqueID = if (model == null) -1 else model.registerVariable(this)
+  val name = Option(n) getOrElse (s"Var_$uniqueID")
   def getPropagationStructure = this.model
 
-  protected var DefiningInvariant:Invariant = null
+  protected var definingInvariant:Invariant = null
 
   def setDefiningInvariant(i:Invariant) {
     assert(i.model == model || i.model == null,"i.model == null:" + (i.model == null) + " i.model == model:" + (i.model == model) + " model == null:" + (model == null))
-    if(DefiningInvariant == null){
-      DefiningInvariant = i
+    if(definingInvariant == null){
+      definingInvariant = i
       registerStaticallyListenedElement(i)
       registerDynamicallyListenedElement(i,0)
     }else{
-      throw new Exception("variable [" + name + "] cannot have more than one controling invariant, already has " + DefiningInvariant)
+      throw new Exception("variable [" + name + "] cannot have more than one controling invariant, already has " + definingInvariant)
     }
   }
 
-  def getDefiningInvariant:Invariant = DefiningInvariant
+  def isControlledVariable:Boolean = definingInvariant != null
+  def isInputVariable:Boolean = definingInvariant == null
 
   /**this method s to be called by any method that internally modifies the value of the variable
     * it schedules the variable for propagation, and performs a basic check of the identify of the executing invariant*/
@@ -523,7 +522,7 @@ abstract class Variable(val model:Store, n:String = null) extends PropagationEle
     if (this.model == null ||(!this.model.isClosed && this.getDynamicallyListeningElements.isEmpty)){
       performPropagation()
     }else{
-      assert(model.checkExecutingInvariantOK(DefiningInvariant),"variable [" + this + "] affected by non-controlling invariant")
+      assert(model.checkExecutingInvariantOK(definingInvariant),"variable [" + this + "] affected by non-controlling invariant")
       scheduleForPropagation()
     }
   }
@@ -790,12 +789,12 @@ class CBLSIntVar(model: Store, val domain: Range, private var Value: Int, n: Str
 
   def getValue(NewValue: Boolean = false): Int = {
     if(NewValue){
-      assert(model.checkExecutingInvariantOK(DefiningInvariant),"variable [" + this
+      assert(model.checkExecutingInvariantOK(definingInvariant),"variable [" + this
         + "] queried for latest val by non-controlling invariant")
       Value
     } else{
       if (model == null) return Value
-      if (DefiningInvariant == null && !model.Propagating) return Value
+      if (definingInvariant == null && !model.Propagating) return Value
       model.propagate(this)
       OldValue
     }
@@ -943,7 +942,7 @@ class CBLSSetVar(override val model:Store,
   }
 
   override def checkInternals(c:Checker){
-    assert(this.DefiningInvariant == null || OldValue.intersect(Value).size == Value.size,
+    assert(this.definingInvariant == null || OldValue.intersect(Value).size == Value.size,
       "internal error: " + "Value: " + Value + " OldValue: " + OldValue)
   }
 
@@ -1058,12 +1057,12 @@ class CBLSSetVar(override val model:Store,
 
   def getValue(NewValue:Boolean=false):SortedSet[Int] = {
     if (NewValue){
-      assert(getModel.checkExecutingInvariantOK(DefiningInvariant),
+      assert(getModel.checkExecutingInvariantOK(definingInvariant),
         "variable [" + this + "] queried for latest val by non-controlling invariant")
       Value
     }else{
       if (model == null) return Value
-      if (DefiningInvariant == null && !model.Propagating) return Value
+      if (definingInvariant == null && !model.Propagating) return Value
       model.propagate(this)
       Perform()
       OldValue
