@@ -484,10 +484,8 @@ object InvariantHelper{
     (MyMin, MyMax)
   }
 
-  def arrayToString[T<:Variable](a:Array[T]):String = {
+  def arrayToString[T<:Variable](a:Array[T]):String =
     "[" + a.toList.mkString(",")+"]"
-  }
-
 }
 
 /**This is the base class for variable. A variable is a propagation element that holds some value.
@@ -508,7 +506,7 @@ abstract class Variable(val model:Store, n:String = null) extends PropagationEle
       registerStaticallyListenedElement(i)
       registerDynamicallyListenedElement(i,0)
     }else{
-      throw new Exception("variable [" + name + "] cannot have more than one controling invariant, already has " + definingInvariant)
+      throw new Exception("variable [" + name + "] cannot have more than one controlling invariant, already has " + definingInvariant)
     }
   }
 
