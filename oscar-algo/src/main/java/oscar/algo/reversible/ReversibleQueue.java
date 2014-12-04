@@ -19,7 +19,7 @@ package oscar.algo.reversible;
  * Class representing a reversible queue pointer
  * @author Pierre Schaus pschaus@gmail.com
  */
-public class ReversibleQueue<T> extends ReversiblePointer<Queue<T>> {
+public class ReversibleQueue<T> extends Reversible<Queue<T>> {
 
 	public ReversibleQueue(ReversibleContext node) {
 		super(node,null);

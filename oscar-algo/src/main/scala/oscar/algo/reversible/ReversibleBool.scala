@@ -18,7 +18,7 @@ package oscar.algo.reversible;
  * Reversible Boolean
  * @author Pierre Schaus pschaus@gmail.com
  */
-class ReversibleBool(node: ReversibleContext, value: Boolean) extends ReversiblePointer[Boolean](node, value) {
+class ReversibleBool(node: ReversibleContext, value: Boolean) extends Reversible[Boolean](node, value) {
 
   /**
    * Creates a reversible Boolean initialized to true

@@ -4,7 +4,7 @@ import oscar.algo.reversible.ReversibleContext
 import oscar.algo.reversible.ReversibleInt
 import oscar.cp.core.CPOutcome._
 import oscar.cp.core.CPOutcome
-import oscar.algo.reversible.ReversiblePointer
+import oscar.algo.reversible.Reversible
 import scala.util.Random
 
 /**
