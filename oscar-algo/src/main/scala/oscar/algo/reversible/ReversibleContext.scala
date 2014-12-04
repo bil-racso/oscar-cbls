@@ -60,6 +60,12 @@ class ReversibleContext {
     val size = trailStack.size
     if (size > maxTrailSize) maxTrailSize = size
   }
+  
+  def trail(entry: TrailEntry): Unit = {
+    trailStack.push(entry)
+    val size = trailStack.size
+    if (size > maxTrailSize) maxTrailSize = size
+  }
 
   /** Stores the current state of the node on a stack */
   def pushState(): Unit = {

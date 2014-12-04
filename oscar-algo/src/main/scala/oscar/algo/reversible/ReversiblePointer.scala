@@ -22,10 +22,21 @@ package oscar.algo.reversible
  * @author Pierre Schaus  pschaus@gmail.com
  * @author Renaud Hartert ren.hartert@gmail.com
  */
-class ReversiblePointer[@specialized T](n: ReversibleContext, v: T) extends Reversible[T](n) {
+class ReversiblePointer[@specialized T](val context: ReversibleContext, initialValue: T) {
+  
+  private var lastMagic: Long = -1L
   
   // Reference on the current value
-  protected var pointer: T = v
+  protected var pointer: T = initialValue
+  
+  @inline final def trail(): Unit = {
+    val contextMagic = context.magic
+    if (lastMagic != contextMagic) {
+      lastMagic = contextMagic
+      val entry = new ReversiblePointerTrailEntry[T](this, pointer)
+      context.trail(entry)
+    }
+  }
 
   @inline final def setValue(value: T): Unit = {
     if (value != pointer) {
@@ -47,7 +58,7 @@ class ReversiblePointer[@specialized T](n: ReversibleContext, v: T) extends Reve
   /**
    * @return current value
    */
-  @inline override final def value = pointer
+  @inline final def value = pointer
 
   /**
    * Check if the pointer is different from null
@@ -60,7 +71,7 @@ class ReversiblePointer[@specialized T](n: ReversibleContext, v: T) extends Reve
    */
   @inline final def getValue(): T = pointer
 
-  @inline override final def restore(value: T): Unit = pointer = value.asInstanceOf[T]
+  @inline final def restore(value: T): Unit = pointer = value
 
   override def toString(): String = if (hasValue) pointer.toString else ""
 }
