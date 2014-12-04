@@ -16,7 +16,7 @@ class Reversible[@specialized T](val context: ReversibleContext, initialValue: T
     val contextMagic = context.magic
     if (lastMagic != contextMagic) {
       lastMagic = contextMagic
-      val entry = new ReversiblePointerTrailEntry[T](this, pointer)
+      val entry = new ReversibleTrailEntry[T](this, pointer)
       context.trail(entry)
     }
   }
