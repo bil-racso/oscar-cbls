@@ -36,10 +36,10 @@ import oscar.cbls.search.core.EasyNeighborhood
  * @author Florent Ghilain (UMONS)
  */
 case class RemovePoint(PredecessorsOfRoutedPointsToRemove:()=>Iterable[Int],
-                       vrp: VRP with MoveDescription with VRPObjective,
+                       vrp: VRP with MoveDescription,
                        neighborhoodName:String = "RemovePoint",
                        best:Boolean = false,
-                       hotRestart:Boolean = true) extends EasyNeighborhood(best,vrp.getObjective) {
+                       hotRestart:Boolean = true) extends EasyNeighborhood(best) {
 
   //the indice to start with for the exploration
   var startIndice: Int = 0
@@ -61,7 +61,7 @@ case class RemovePoint(PredecessorsOfRoutedPointsToRemove:()=>Iterable[Int],
 
       RemovePoint.encode(beforeRemovedPoint, vrp)
       vrp.commit(true)
-      val newObj = vrp.getObjective()
+      val newObj = obj()
       vrp.undo()
 
       if (moveRequested(newObj)

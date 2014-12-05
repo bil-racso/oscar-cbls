@@ -78,7 +78,7 @@ object ReaganCombinators extends App {
   val iFlatRelax = SchedulingStrategies.iFlatRelax(planning, nbRelax= 4,
     pKillPerRelax = 50, stable = 3)()
   iFlatRelax.verbose = 2
-  iFlatRelax.doAllMoves(_ > 100)
+  iFlatRelax.doAllMoves(_ > 100, null)
 
   //val solver = new IFlatIRelax(planning)
 

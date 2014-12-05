@@ -42,7 +42,7 @@ import scala.collection.immutable.SortedSet
  */
 case class SwapInsert(UnroutedNodesToInsert:()=>Iterable[Int],
                       relevantNeighbors:()=>Int=>Iterable[Int],
-                      val vrp: VRP with MoveDescription with VRPObjective with NodesOfVehicle,
+                      val vrp: VRP with MoveDescription with NodesOfVehicle,
                       val neighborhoodName:String = "SwapInsert",
                       val best:Boolean = false,
                       var insertionPoints:SortedSet[Int] = null,
