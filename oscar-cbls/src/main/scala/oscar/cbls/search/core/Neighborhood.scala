@@ -39,10 +39,19 @@ object SearchResult {
 abstract class JumpNeighborhood extends Neighborhood{
 
   def doIt()
+
+  /** this method checks that the jump can actually be performed
+    * override it if your jump might not be applicable
+    * (and do not forget to handle this case in your search strategy)
+    * @return
+    */
+  def canDoIt:Boolean = true
+
   def shortDescription():String
 
   override def getMove(acceptanceCriterion: (Int, Int) => Boolean = (oldObj,newObj) => oldObj > newObj): SearchResult = {
-    CallBackMove(() => doIt,valueAfter, this.getClass.getSimpleName, shortDescription)
+    if (canDoIt) CallBackMove(() => doIt,valueAfter, this.getClass.getSimpleName, shortDescription)
+    else NoMoveFound
   }
 
   /** returns the value after the move

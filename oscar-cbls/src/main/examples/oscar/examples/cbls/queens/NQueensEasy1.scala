@@ -56,3 +56,4 @@ object NQueensEasy1 extends CBLSModel with App{
   println("it: " + it)
   println(queens.mkString(","))
 }
+

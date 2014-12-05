@@ -7,6 +7,7 @@ import oscar.cbls.invariants.lib.numeric.Sum
 import oscar.cbls.modeling.AlgebraTrait
 import oscar.cbls.objective.Objective
 import oscar.cbls.search.{AssignNeighborhood, RandomizeNeighborhood, SwapsNeighborhood}
+import scala.language.postfixOps
 
 object WarehouseLocation extends App with AlgebraTrait{
 
@@ -58,14 +59,14 @@ object WarehouseLocation extends App with AlgebraTrait{
 
   val neighborhood = (AssignNeighborhood(warehouseOpenArray, obj, "SwitchWarehouse")
                       exhaustBack SwapsNeighborhood(warehouseOpenArray, obj, "SwapWarehouses")
-                      orElse (RandomizeNeighborhood(warehouseOpenArray, W/5) maxMoves 2) protectBest obj)
+                      orElse (RandomizeNeighborhood(warehouseOpenArray, W/5) maxMoves 2) protectBest obj restoreBestOnExhaust)
 
   //you can also use the following composite to replace SwapNeighborhood (but it will be slower than the Swap)
   //AssignNeighborhood(warehouseOpenArray, obj, "SwitchFirstWarehouse") maxMoves 5
   // andThen AssignNeighborhood(warehouseOpenArray, obj, "SwitchSecondWarehouse")
 
   neighborhood.verbose = 1
-  neighborhood.doAllMovesAndRestoreBest(_ >= W+D)
+  neighborhood.doAllMoves(_ >= W+D)
 
   println(openWarehouses)
 }
