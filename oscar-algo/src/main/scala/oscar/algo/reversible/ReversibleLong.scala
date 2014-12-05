@@ -3,7 +3,7 @@ package oscar.algo.reversible
 /**
  * @author Renaud Hartert ren.hartert@gmail.com
  */
-class ReversibleLong(node: ReversibleContext, value: Long) extends ReversiblePointer[Long](node, value) {
+class ReversibleLong(node: ReversibleContext, value: Long) extends Reversible[Long](node, value) {
 
   /** Increments the reversible integer by one */
   def incr(): Long = {

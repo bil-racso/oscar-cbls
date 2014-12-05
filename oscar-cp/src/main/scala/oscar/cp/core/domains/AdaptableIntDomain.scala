@@ -1,7 +1,7 @@
 package oscar.cp.core.domains
 
 import oscar.cp.core.CPStore
-import oscar.algo.reversible.ReversiblePointer
+import oscar.algo.reversible.Reversible
 import oscar.algo.reversible.ReversibleContext
 import oscar.cp.core.CPOutcome
 import scala.util.Random
@@ -15,8 +15,8 @@ import scala.util.Random
 class AdaptableIntDomain(override val context: ReversibleContext, val minValue: Int, val maxValue: Int) extends IntDomain {
 
   // Reversible domain representation
-  private val domain: ReversiblePointer[IntervalDomain] = {
-    new ReversiblePointer[IntervalDomain](context, new BoundDomain(context, minValue, maxValue))
+  private val domain: Reversible[IntervalDomain] = {
+    new Reversible[IntervalDomain](context, new BoundDomain(context, minValue, maxValue))
   }
 
   @inline

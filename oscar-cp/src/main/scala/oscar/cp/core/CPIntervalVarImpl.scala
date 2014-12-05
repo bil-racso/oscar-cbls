@@ -15,7 +15,7 @@
 
 package oscar.cp.core
 
-import oscar.algo.reversible.ReversiblePointer
+import oscar.algo.reversible.Reversible
 import oscar.algo.reversible.ReversibleInt
 import oscar.cp.core.CPOutcome._
 import scala.util.Random
@@ -27,12 +27,12 @@ import scala.util.Random
 class CPIntervalVarImpl(store: CPStore, initialMin: Int, initialMax: Int, name: String) extends CPIntervalVar(store, name) {
 
   // Adjacency list
-  private final val onBoundsL2 = new ReversiblePointer[ConstraintQueue](store, null)
-  private final val onBindL2 = new ReversiblePointer[ConstraintQueue](store, null)
-  private final val onBoundsL1 = new ReversiblePointer[PropagEventQueueVarInt[CPIntervalVar]](store, null)
-  private final val onBindL1 = new ReversiblePointer[PropagEventQueueVarInt[CPIntervalVar]](store, null)
-  private final val onBoundsIdxL1 = new ReversiblePointer[PropagEventQueueVarInt[CPIntervalVar]](store, null)
-  private final val onBindIdxL1 = new ReversiblePointer[PropagEventQueueVarInt[CPIntervalVar]](store, null)
+  private final val onBoundsL2 = new Reversible[ConstraintQueue](store, null)
+  private final val onBindL2 = new Reversible[ConstraintQueue](store, null)
+  private final val onBoundsL1 = new Reversible[PropagEventQueueVarInt[CPIntervalVar]](store, null)
+  private final val onBindL1 = new Reversible[PropagEventQueueVarInt[CPIntervalVar]](store, null)
+  private final val onBoundsIdxL1 = new Reversible[PropagEventQueueVarInt[CPIntervalVar]](store, null)
+  private final val onBindIdxL1 = new Reversible[PropagEventQueueVarInt[CPIntervalVar]](store, null)
 
   // Domain representation
   private final val revMin = new ReversibleInt(store, initialMin)

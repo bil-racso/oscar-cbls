@@ -15,7 +15,7 @@
 package oscar.cp.core
 
 import oscar.algo.reversible.ReversibleQueue
-import oscar.algo.reversible.ReversiblePointer
+import oscar.algo.reversible.Reversible
 import scala.collection._
 import scala.collection.generic._
 import scala.util.Random
@@ -28,17 +28,17 @@ import oscar.cp.core.CPOutcome._
  */
 class CPIntVarImpl(store: CPStore, private val domain: IntDomain, name: String = "") extends CPIntVar(store, name) {
 
-  val onBoundsL2 = new ReversiblePointer[ConstraintQueue](store, null)
-  val onBindL2 = new ReversiblePointer[ConstraintQueue](store, null)
-  val onDomainL2 = new ReversiblePointer[ConstraintQueue](store, null)
+  val onBoundsL2 = new Reversible[ConstraintQueue](store, null)
+  val onBindL2 = new Reversible[ConstraintQueue](store, null)
+  val onDomainL2 = new Reversible[ConstraintQueue](store, null)
 
-  val onBoundsL1 = new ReversiblePointer[PropagEventQueueVarInt[CPIntervalVar]](store, null)
-  val onBindL1 = new ReversiblePointer[PropagEventQueueVarInt[CPIntervalVar]](store, null)
-  val onDomainL1 = new ReversiblePointer[PropagEventQueueVarInt[CPIntVar]](store, null)
+  val onBoundsL1 = new Reversible[PropagEventQueueVarInt[CPIntervalVar]](store, null)
+  val onBindL1 = new Reversible[PropagEventQueueVarInt[CPIntervalVar]](store, null)
+  val onDomainL1 = new Reversible[PropagEventQueueVarInt[CPIntVar]](store, null)
 
-  val onBoundsIdxL1 = new ReversiblePointer[PropagEventQueueVarInt[CPIntervalVar]](store, null)
-  val onBindIdxL1 = new ReversiblePointer[PropagEventQueueVarInt[CPIntervalVar]](store, null)
-  val onDomainIdxL1 = new ReversiblePointer[PropagEventQueueVarInt[CPIntVar]](store, null)
+  val onBoundsIdxL1 = new Reversible[PropagEventQueueVarInt[CPIntervalVar]](store, null)
+  val onBindIdxL1 = new Reversible[PropagEventQueueVarInt[CPIntervalVar]](store, null)
+  val onDomainIdxL1 = new Reversible[PropagEventQueueVarInt[CPIntVar]](store, null)
 
   def transform(v: Int) = v
 

@@ -1,25 +1,58 @@
 package oscar.algo.reversible
 
 /**
- * Generic Reversible inside a reversible node
+ * Creates a generic reversible pointer
  * @author Pierre Schaus  pschaus@gmail.com
  * @author Renaud Hartert ren.hartert@gmail.com
  */
-abstract class Reversible[T](val context: ReversibleContext) {
+class Reversible[@specialized T](val context: ReversibleContext, initialValue: T) {
   
   private var lastMagic: Long = -1L
-
-  @inline protected final def trail(): Unit = {
+  
+  // Reference on the current value
+  protected var pointer: T = initialValue
+  
+  @inline final def trail(): Unit = {
     val contextMagic = context.magic
-    if (lastMagic != contextMagic) {   
+    if (lastMagic != contextMagic) {
       lastMagic = contextMagic
-      context.pushOnTrail(this, value)
+      val entry = new ReversibleTrailEntry[T](this, pointer)
+      context.trail(entry)
     }
   }
+
+  @inline final def setValue(value: T): Unit = {
+    if (value != pointer) {
+      trail()
+      this.pointer = value
+    }
+  }
+
+  /** @param value to assign */
+  @inline final def value_= (value: T): Unit = setValue(value)
   
-  /** Return the current value of the reversible */
-  def value: T
+  /** @param value to assign */
+  final def := (value: T): Unit = setValue(value)
   
-  /** Restores the state of the object */
-  def restore(value: T): Unit  
+  /** @return current value */
+  @inline final def value = pointer
+
+  /**
+   * Check if the pointer is different from null
+   * @return true if the pointer is != null, false otherwise
+   */
+  @inline final def hasValue(): Boolean = pointer != null
+
+  /** @return the current pointer */
+  @inline final def getValue(): T = pointer
+
+  @inline final def restore(value: T): Unit = pointer = value
+
+  override def toString(): String = if (hasValue) pointer.toString else ""
+}
+
+object Reversible {
+  def apply[T](node: ReversibleContext, value: T): Reversible[T] = {
+    new Reversible[T](node, value)
+  }
 }
