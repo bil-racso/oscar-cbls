@@ -36,7 +36,6 @@ trait Search {
    *                    if false, consider the exploration range in natural order from the first position.
    */
   def assignNeighborhood(vars:Array[CBLSIntVar],
-                         obj:()=>Int,
                          name:String = "AssignNeighborhood",
                          best:Boolean = false,
                          searchZone:() => Iterable[Int] = null,
@@ -44,7 +43,7 @@ trait Search {
                          symmetryClassOfValues:Option[Int => Int => Int] = None,
                          domain:(CBLSIntVar,Int) => Iterable[Int] = (v,i) => v.domain,
                          hotRestart:Boolean = true)
-  = AssignNeighborhood(vars,obj,name,best,searchZone,symmetryClassOfVariables,symmetryClassOfValues,domain,hotRestart)
+  = AssignNeighborhood(vars,name,best,searchZone,symmetryClassOfVariables,symmetryClassOfValues,domain,hotRestart)
 
 
   /**
@@ -83,7 +82,6 @@ trait Search {
    * will iteratively swap the value of two different variables in the array
    *
    * @param vars an array of [[oscar.cbls.invariants.core.computation.CBLSIntVar]] defining the search space
-   * @param obj te objective function to improve
    * @param searchZone1 a subset of the indices of vars to consider for the first moved point
    *                   If none is provided, all the array will be considered each time
    * @param searchZone2 a subset of the indices of vars to consider for the second moved point
@@ -107,7 +105,6 @@ trait Search {
    *                    if false, consider the exploration range in natural order from the first position.
    **/
   def swapsNeighborhood(vars:Array[CBLSIntVar],
-                        obj:()=>Int,
                         name:String = "SwapsNeighborhood",
                         searchZone1:()=>Iterable[Int] = null,
                         searchZone2:()=>Iterable[Int] = null,
@@ -116,7 +113,7 @@ trait Search {
                         best:Boolean = false,
                         symmetryClassOfVariables:Option[Int => Int] = None,
                         hotRestart:Boolean = true)
-  = SwapsNeighborhood(vars,obj,name,searchZone1,searchZone2,
+  = SwapsNeighborhood(vars,name,searchZone1,searchZone2,
     symmetryCanBeBrokenOnIndices,symmetryCanBeBrokenOnValue,
     best,symmetryClassOfVariables,hotRestart)
 }

@@ -47,13 +47,12 @@ object NQueensEasy1 extends CBLSModel with App{
   close()
 
   val neighborhood =
-    swapsNeighborhood(queens, c.violation, "SwapQueens",
+    swapsNeighborhood(queens, "SwapQueens",
       searchZone2 = maxViolQueens, //much faster than using searchZone1, since hotRestart is on Zone1, and not on zone2, and would be log(n)
       symmetryCanBeBrokenOnIndices = false) //since one search zone has been specified, and the other is the full range
 
-  val it = neighborhood.doAllMoves(_ >= N || c.violation.value == 0)
+  val it = neighborhood.doAllMoves(_ >= N || c.violation.value == 0, c.violation)
 
   println("it: " + it)
   println(queens.mkString(","))
 }
-

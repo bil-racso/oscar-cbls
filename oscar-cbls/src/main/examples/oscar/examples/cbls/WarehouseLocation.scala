@@ -57,8 +57,8 @@ object WarehouseLocation extends App with AlgebraTrait{
 
   m.close()
 
-  val neighborhood = (AssignNeighborhood(warehouseOpenArray, obj, "SwitchWarehouse")
-                      exhaustBack SwapsNeighborhood(warehouseOpenArray, obj, "SwapWarehouses")
+  val neighborhood = (AssignNeighborhood(warehouseOpenArray, "SwitchWarehouse")
+                      exhaustBack SwapsNeighborhood(warehouseOpenArray, "SwapWarehouses")
                       orElse (RandomizeNeighborhood(warehouseOpenArray, W/5) maxMoves 2) protectBest obj restoreBestOnExhaust)
 
   //you can also use the following composite to replace SwapNeighborhood (but it will be slower than the Swap)
@@ -66,9 +66,7 @@ object WarehouseLocation extends App with AlgebraTrait{
   // andThen AssignNeighborhood(warehouseOpenArray, obj, "SwitchSecondWarehouse")
 
   neighborhood.verbose = 1
-  neighborhood.doAllMoves(_ >= W+D)
+  neighborhood.doAllMoves(_ >= W+D, obj)
 
   println(openWarehouses)
 }
-
-

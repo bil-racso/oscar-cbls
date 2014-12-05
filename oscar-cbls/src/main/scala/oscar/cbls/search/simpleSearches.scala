@@ -14,7 +14,6 @@ import scala.collection.immutable.SortedSet
  * will find a variable in the array, and find a value from its range that improves the objective function
  *
  * @param vars an array of [[oscar.cbls.invariants.core.computation.CBLSIntVar]] defining the search space
- * @param obj te objective function to improve
  * @param name the name of the neighborhood
  * @param best true for the best move, false for the first move, default false
  * @param searchZone a subset of the indices of vars to consider.
@@ -38,7 +37,6 @@ import scala.collection.immutable.SortedSet
  *                    if false, consider the exploration range in natural order from the first position.
  */
 case class AssignNeighborhood(vars:Array[CBLSIntVar],
-                              obj:()=>Int,
                               name:String = "AssignNeighborhood",
                               best:Boolean = false,
                               searchZone:() => Iterable[Int] = null,
@@ -46,7 +44,7 @@ case class AssignNeighborhood(vars:Array[CBLSIntVar],
                               symmetryClassOfValues:Option[Int => Int => Int] = None,
                               domain:(CBLSIntVar,Int) => Iterable[Int] = (v,i) => v.domain,
                               hotRestart:Boolean = true)
-  extends EasyNeighborhood(best,obj,name) with AlgebraTrait{
+  extends EasyNeighborhood(best,name) with AlgebraTrait{
   //the indice to start with for the exploration
   var startIndice:Int = 0
 
@@ -101,7 +99,6 @@ case class AssignNeighborhood(vars:Array[CBLSIntVar],
  * will iteratively swap the value of two different variables in the array
  *
  * @param vars an array of [[oscar.cbls.invariants.core.computation.CBLSIntVar]] defining the search space
- * @param obj te objective function to improve
  * @param searchZone1 a subset of the indices of vars to consider for the first moved point
  *                   If none is provided, all the array will be considered each time
  * @param searchZone2 a subset of the indices of vars to consider for the second moved point
@@ -125,7 +122,6 @@ case class AssignNeighborhood(vars:Array[CBLSIntVar],
  *                    if false, consider the exploration range in natural order from the first position.
  **/
 case class SwapsNeighborhood(vars:Array[CBLSIntVar],
-                             obj:()=>Int,
                              name:String = "SwapsNeighborhood",
                              searchZone1:()=>Iterable[Int] = null,
                              searchZone2:()=>Iterable[Int] = null,
@@ -134,7 +130,7 @@ case class SwapsNeighborhood(vars:Array[CBLSIntVar],
                              best:Boolean = false,
                              symmetryClassOfVariables:Option[Int => Int] = None,
                              hotRestart:Boolean = true)
-  extends EasyNeighborhood(best,obj,name) with AlgebraTrait{
+  extends EasyNeighborhood(best,name) with AlgebraTrait{
   //the indice to start with for the exploration
   var startIndice:Int = 0
   override def exploreNeighborhood(){
@@ -213,7 +209,7 @@ case class RandomizeNeighborhood(vars:Array[CBLSIntVar],
                                  valuesToConsider:(CBLSIntVar,Int) => Iterable[Int] = (variable,_) => variable.domain)
   extends Neighborhood with AlgebraTrait with SearchEngineTrait{
 
-  override def getMove(acceptanceCriteria:(Int,Int) => Boolean = null): SearchResult = {
+  override def getMove(obj:()=>Int, acceptanceCriteria:(Int,Int) => Boolean = null): SearchResult = {
     if(amIVerbose) println("applying " + name)
 
     var toReturn:List[Move] = List.empty
@@ -252,7 +248,7 @@ case class RandomSwapNeighborhood(vars:Array[CBLSIntVar],
                                   searchZone:CBLSSetVar = null)
   extends Neighborhood with AlgebraTrait with SearchEngineTrait{
 
-  override def getMove(acceptanceCriteria:(Int,Int) => Boolean = null): SearchResult = {
+  override def getMove(obj:()=>Int, acceptanceCriteria:(Int,Int) => Boolean = null): SearchResult = {
     if(amIVerbose) println("applying " + name)
 
     var toReturn:List[Move] = List.empty
@@ -289,7 +285,7 @@ class ConflictAssignNeighborhood(c:ConstraintSystem, variables:List[CBLSIntVar],
 
   var varArray = variables.toArray
   val violations:Array[CBLSIntVar] = varArray.clone().map(c.violation(_))
-  override def getMove(acceptanceCriteria:(Int,Int) => Boolean = (oldObj,newObj) => oldObj > newObj): SearchResult = {
+  override def getMove(obj:()=>Int, acceptanceCriteria:(Int,Int) => Boolean = (oldObj,newObj) => oldObj > newObj): SearchResult = {
     val oldObj = c.violation.value
     val MaxViolVarID = selectMax(varArray.indices,violations(_:Int).value)
 

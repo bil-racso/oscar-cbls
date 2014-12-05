@@ -85,7 +85,7 @@ object WarehouseLocationTabu extends App with AlgebraTrait{
   // *the update of the tabu and iteration count
   // *the stop criterion based on maxMoves since last improvement over obj
   // *the protection of the objectiveFunction
-  val switchWithTabuNeighborhood = (AssignNeighborhood(warehouseOpenArray, obj, "SwitchWarehouseTabu",
+  val switchWithTabuNeighborhood = (AssignNeighborhood(warehouseOpenArray, "SwitchWarehouseTabu",
     searchZone = nonTabuWarehouses, best = true)
     beforeMove((mo:Move) => {
     for (v <- mo.touchedVariables) {
@@ -96,7 +96,7 @@ object WarehouseLocationTabu extends App with AlgebraTrait{
   switchWithTabuNeighborhood.verbose = 1
 
   //all moves are accepted because the neighborhood returns the best found move, and tabu might degrade obj.
-  switchWithTabuNeighborhood.doAllMovesAndRestoreBest(_ >= W+D)
+  switchWithTabuNeighborhood.doAllMovesAndRestoreBest(_ >= W+D, obj)
 
   println(openWarehouses)
 }
