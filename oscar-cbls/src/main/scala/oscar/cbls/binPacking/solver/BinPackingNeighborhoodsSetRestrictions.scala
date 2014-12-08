@@ -34,7 +34,6 @@ import scala.util.Random
  * Neighborhood that aims to move an item from the given set of items to one of the given bins.
  * @param problem the problem
  * @param best true if you want the best move false if you want the first acceptable move
- * @param obj the objective function. notice that it is actually a function. if you have an [[oscar.cbls.objective.Objective]] there is an implicit conversion available
  * @param areItemsIdentical only one if identical items will be considered for moves; this speeds up thing.
  *                          supposed to be an equivalence relation.
  *                          Identical items must be of the same size, but this does not need to be tested,
@@ -51,12 +50,11 @@ import scala.util.Random
  */
 case class MoveItemSetRestrictions(problem: BinPackingProblem,
                   best:Boolean = false,
-                  obj:() => Int,
                   areItemsIdentical: (Item,Item) => Boolean = null,
                   areBinsIdentical: (Bin,Bin) => Boolean = null,
                   var from: CBLSSetVar = null,
                   var to: CBLSSetVar = null)
-    extends EasyNeighborhood(best, obj, "ItemMove") {
+    extends EasyNeighborhood(best, "ItemMove") {
   private var startIndex = 0
   private val rand = new Random()
   private val hasFromBeenSet = if (from == null) false else true
@@ -117,7 +115,6 @@ case class MoveItemSetRestrictions(problem: BinPackingProblem,
  * Neighborhood that aims to swap two items from the given sets.
  * @param problem the problem
  * @param best true if you want the best move false if you want the first acceptable move
- * @param obj the objective function. notice that it is actually a function. if you have an [[oscar.cbls.objective.Objective]] there is an implicit conversion available
  * @param areItemsIdentical only one if identical items will be considered for moves; this speeds up thing.
  *                          supposed to be an equivalence relation.
  *                          Identical items must be of the same size, but this does not need to be tested,
@@ -129,11 +126,10 @@ case class MoveItemSetRestrictions(problem: BinPackingProblem,
  */
 case class SwapItemsSetRestrictions(problem: BinPackingProblem,
                    best:Boolean = false,
-                   obj:() => Int,
                    areItemsIdentical: (Item,Item) => Boolean = null,
                    var from: CBLSSetVar = null,
                    var to: CBLSSetVar = null)
-  extends EasyNeighborhood(best, obj, "Swap") {
+  extends EasyNeighborhood(best, "Swap") {
 
   private var startIndex = 0
   private val rand = new Random()
@@ -212,20 +208,22 @@ case class JumpSwapItemsSetRestrictions(problem: BinPackingProblem,
 
   private val rand = new Random()
   private val hasFromBeenSet = if (from == null) false else true
-  private var _canDoIt = true
-  override def canDoIt = _canDoIt
+  private var idItemToSwap1:Int = -1
+  private var idItemToSwap2:Int = -1
+  override def canDoIt:Boolean = {
+    if (! hasFromBeenSet ) from = problem.bins(selectAny(problem.mostViolatedBins.value.toIndexedSeq)).items
+
+    if  (from.value.size == 0)  return false
+      if  (to != null && to.value.size == 0)  return false
+
+    idItemToSwap1 = selectAny(from.value.toIndexedSeq)
+    idItemToSwap2 = selectAny(if(to!=null) to.value.toIndexedSeq else 0 until problem.itemCount)
+    if(idItemToSwap1 == idItemToSwap2 && from.value.size == 1 && to.value.size == 1)  return false
+    return true
+  }
 
 
   override def doIt(): Unit = {
-    if (! hasFromBeenSet ) from = problem.bins(selectAny(problem.mostViolatedBins.value.toIndexedSeq)).items
-
-    if  (from.value.size == 0)  {_canDoIt = false; return}
-    if  (to != null && to.value.size == 0)    {_canDoIt = false; return}
-
-    var idItemToSwap1 = selectAny(from.value.toIndexedSeq)
-    var idItemToSwap2 = selectAny(if(to!=null) to.value.toIndexedSeq else 0 until problem.itemCount)
-    if(idItemToSwap1 == idItemToSwap2 && from.value.size == 1 && to.value.size == 1) {_canDoIt = false; return}
-    _canDoIt = true
     while (idItemToSwap1 == idItemToSwap2)  {
       idItemToSwap1 = selectAny(from.value.toIndexedSeq)
       idItemToSwap2 = selectAny(if(to!=null) to.value.toIndexedSeq else 0 until problem.itemCount)
@@ -266,21 +264,24 @@ case class EmptyBinSetRestrictions(problem: BinPackingProblem,
 
   private val rand = new Random()
   private val hasFromBeenSet = if (from == null) false else true
-  private var _canDoIt = true
-  override def canDoIt = _canDoIt
-
-  override def doIt(): Unit = {
+  private var idBinToEmpty:Int = -1
+  private var idBinToTransfer:Int = -1
+  override def canDoIt:Boolean = {
     val numberOfPossibilities1 = if (! hasFromBeenSet ) problem.mostViolatedBins.value.size else from.value.size
 
-    if  (numberOfPossibilities1 == 0)  {_canDoIt = false; return}
-    if  (destination.value.size == 0)    {_canDoIt = false; return}
+    if  (numberOfPossibilities1 == 0) return false
+    if  (destination.value.size == 0) return false
 
-    var idBinToEmpty = if (! hasFromBeenSet ) problem.bins(selectAny(problem.mostViolatedBins.value.toIndexedSeq)).number
-      else selectAny(from.value.toIndexedSeq)
-    var idBinToTransfer = selectAny(if(destination!=null) destination.value.toIndexedSeq else 0 until problem.binCount)
+    idBinToEmpty = if (! hasFromBeenSet ) problem.bins(selectAny(problem.mostViolatedBins.value.toIndexedSeq)).number
+    else selectAny(from.value.toIndexedSeq)
+    idBinToTransfer = selectAny(if(destination!=null) destination.value.toIndexedSeq else 0 until problem.binCount)
 
-    if(idBinToEmpty == idBinToTransfer && numberOfPossibilities1 == 1 && destination.value.size == 1) {_canDoIt = false; return}
-    _canDoIt = true
+    if(idBinToEmpty == idBinToTransfer && numberOfPossibilities1 == 1 && destination.value.size == 1) return false
+    return true
+  }
+
+  override def doIt(): Unit = {
+
     while (idBinToEmpty == idBinToTransfer)  {
       idBinToEmpty = if (! hasFromBeenSet ) problem.bins(selectAny(problem.mostViolatedBins.value.toIndexedSeq)).number
       else selectAny(from.value.toIndexedSeq)
