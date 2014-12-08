@@ -1,3 +1,18 @@
+/*******************************************************************************
+ * OscaR is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 2.1 of the License, or
+ * (at your option) any later version.
+ *   
+ * OscaR is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License  for more details.
+ *   
+ * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
+ ******************************************************************************/
+
 package oscar.examples.cp.scheduling
 
 import oscar.cp.constraints.UnaryResource
@@ -17,9 +32,8 @@ import oscar.visual.{VisualUtil, VisualFrame}
 
 object TrolleyProblem extends CPModel with App {
 
-  /**************************************************************************
-    ******************************     DATA     ******************************
-    **************************************************************************/
+  // ----------------    DATA     ----------------------
+  
   val tasks = Array("loadA", "unload1", "process1", "load1", "unload2", "process2", "load2", "unloadS")
   val process1Index = tasks.indexOf("process1")
   val process2Index = tasks.indexOf("process2")
@@ -85,16 +99,15 @@ object TrolleyProblem extends CPModel with App {
     ))
 
 
-  /**************************************************************************
-    ******************************     MODEL     *****************************
-    **************************************************************************/
+  // ----------------    MODEL     ----------------------
+    
   val durationVars = Array.tabulate(jobs.length)(j => Array.tabulate(tasks.length)(t => CPIntVar(duration(j)(t))))
   val durationVarsFlat = durationVars.flatten
   val stateDurVars = Array.tabulate(jobs.length)(j => stateActivityIndexes.map(t => durationVars(j)(t))).flatten
   val startVars = Array.tabulate(jobs.length)(j => Array.tabulate(tasks.length)(t => CPIntVar(0 until horizon - durationVars(j)(t).min)))
   val startVarsFlat = startVars.flatten
   val stateStartVars = Array.tabulate(jobs.length)(j => stateActivityIndexes.map(t => startVars(j)(t))).flatten
-  val endVars = Array.tabulate(jobs.length)(j => Array.tabulate(tasks.length)(t => CPIntVar(durationVars(j)(t).min until horizon)))
+  val endVars = Array.tabulate(jobs.length)(j => Array.tabulate(tasks.length)(t => startVars(j)(t)+duration(j)(t)))
   val endVarsFlat = endVars.flatten
   val stateEndVars = Array.tabulate(jobs.length)(j => stateActivityIndexes.map(t => endVars(j)(t))).flatten
   val makespan = maximum(endVarsFlat)
@@ -106,26 +119,25 @@ object TrolleyProblem extends CPModel with App {
     }
   }
 
-  for (i <- 0 until durationVarsFlat.length) {
-    add(startVarsFlat(i) + durationVarsFlat(i) == endVarsFlat(i))
-  }
 
   //UnaryResources
   for (machine <- Seq("m1", "m2", "m3")) {
-    add(new UnaryResource(startVarsFlat, durationVarsFlat, endVarsFlat,
-      Array.tabulate(jobs.length)(j =>
-        Array.tabulate(tasks.length)(t => CPBoolVar(
-          (job(j)._1 == machine && t == process1Index) || (job(j)._3 == machine && t == process2Index)
-        ))).flatten))
+    val activities =
+      (for {
+        j <- 0 until jobs.size;
+        t <- 0 until tasks.length;
+        if (job(j)._1 == machine && t == process1Index) ||
+          (job(j)._3 == machine && t == process2Index)
+      } yield {
+        (startVars(j)(t), durationVars(j)(t), endVars(j)(t))
+      }).toArray
+     add(unaryResource(activities.map(_._1), activities.map(_._2), activities.map(_._3)))
   }
 
   //State resource constraints
   stateResource(stateStartVars, stateDurVars, stateEndVars, stateNeeded.flatten.filter(s => s >= 0), tt)
 
-  /**************************************************************************
-    *************************     VISUALISATION     **************************
-    **************************************************************************/
-
+  // ----------------    VISUALISATION     ----------------------
 
   val frame = new VisualFrame("Trolley Problem", 2, 1)
   val stateColors = VisualUtil.getRandomColors(locations.length + 1, pastel=true)
@@ -144,17 +156,17 @@ object TrolleyProblem extends CPModel with App {
     gantt.update(1, 20)
     states.update(1, 20)
   }
+  
+  onSolutionWithStats { s => println(s) }
 
   frame.createFrame("Gantt Chart").add(gantt)
   frame.createFrame("Trolley Location").add(states)
   frame.pack()
 
-  /**************************************************************************
-    ***************************     RESOLUTION     ***************************
-    **************************************************************************/
+  // ----------------    SEARCH     ----------------------
 
   minimize(makespan) search {
-    setTimes(startVarsFlat, durationVarsFlat, endVarsFlat)
+    setTimes(startVarsFlat, durationVarsFlat, endVarsFlat,i => -endVarsFlat(i).min)
   }
 
   val stat = start()
