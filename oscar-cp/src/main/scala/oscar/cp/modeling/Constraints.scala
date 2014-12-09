@@ -1245,7 +1245,46 @@ trait Constraints {
     val cp = starts(0).store
 	new UnaryResource(starts,durations,ends,starts.map(s => CPBoolVar(true)(cp)))
   }
-  
+
+  /**
+   * Unary Resource constraint (also called disjunctive resource): at any time, no two tasks can overlap in time
+   * @param starts the variables representing the start time of the tasks
+   * @param durations the variables representing the duration of the tasks
+   * @param ends the variables representing the completion time of the tasks, it is your responsibility to link starts, durations and ends such that start(i) + durations(i) = ends(i)
+   * @param types the integers representing the type of each activity that will be used as entry in the transition times matrix
+   * @param transitionTimes matrix of the transition times between the different activities according to their respective type
+   */
+  def unaryResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], types: Array[Int], transitionTimes: Array[Array[Int]]) = {
+    val cp = starts(0).store
+    for {
+      i <- 0 until starts.length
+      j <- i + 1 until starts.length
+    }{
+      cp.add((ends(j) + transitionTimes(types(j))(types(i)) <== starts(i)) || (ends(i) + transitionTimes(types(i))(types(j)) <== starts(j)))
+    }
+    new UnaryResource(starts,durations,ends,starts.map(s => CPBoolVar(true)(cp)))
+  }
+
+  /**
+   * State Resource constraint: at any time, no two tasks needing different states can overlap in time
+   * @param starts the variables representing the start time of the tasks
+   * @param durations the variables representing the duration of the tasks
+   * @param ends the variables representing the completion time of the tasks, it is your responsibility to link starts, durations and ends such that start(i) + durations(i) = ends(i)
+   * @param states the integers representing the states of each activity that will be used as entry in the transition times matrix
+   * @param transitionTimes matrix of the transition times between the different activities according to their respective states
+   */
+  def stateResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], states: Array[Int], transitionTimes: Array[Array[Int]]) = {
+    val cp = starts(0).store
+    for {
+      i <- 0 until starts.length
+      j <- i + 1 until starts.length
+    }{
+      if(states(i) != states(j)) {
+        new UnaryResource(Array(starts(i), starts(j)), Array(durations(i), durations(j)), Array(ends(i), ends(j)), Array(CPBoolVar(true)(cp), CPBoolVar(true)(cp)))
+        cp.add((ends(j) + transitionTimes(states(j))(states(i)) <== starts(i)) || (ends(i) + transitionTimes(states(i))(states(j)) <== starts(j)))
+      }
+    }
+  }
 
   /**
    * Discrete Resource constraint with maximum capacity: at any time, the cumulative demands of the tasks executing on the resource id, must be <= than the capacity
@@ -1301,7 +1340,7 @@ trait Constraints {
     val cp = starts(0).store
     val resources = Array.fill(starts.size)(CPIntVar(0)(cp))
     minCumulativeResource(starts,durations,ends,demands,resources,capacity,0)
-  }    
+  }
   
 
   

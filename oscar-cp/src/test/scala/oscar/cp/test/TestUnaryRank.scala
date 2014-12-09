@@ -63,7 +63,24 @@ class TestUnaryRank extends FunSuite with Matchers  {
     val stat = cp.start()
     stat.nSols should be(120)
     
-  }    
+  }
+  
+  test("UnaryRank3") {
+      
+    val cp = CPSolver()
+    val n = 5
+    val starts = Array.fill(n)(CPIntVar(0 to 10)(cp))
+    val durs = Array.fill(n)(CPIntVar(1)(cp))
+    val ends = starts.zip(durs).map{ case(s,d) => s+d }
+    cp.add(unaryResource(starts, durs, ends))
+
+    cp.search {
+      rank(starts,durs,ends,i => (ends(i).max,starts(i).max))
+    }
+    val stat = cp.start()
+    stat.nSols should be(120)
+    
+  }   
   
 
   
