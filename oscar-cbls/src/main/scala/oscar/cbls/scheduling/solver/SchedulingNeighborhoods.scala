@@ -4,7 +4,7 @@ import oscar.cbls.invariants.core.computation.CBLSIntVar
 import oscar.cbls.scheduling.algo.CriticalPathFinder
 import oscar.cbls.scheduling.model._
 import oscar.cbls.search.SearchEngineTrait
-import oscar.cbls.search.combinators.{Retry, BasicProtectBest, ProtectBest}
+import oscar.cbls.search.combinators.{Atomic, Retry, BasicProtectBest, ProtectBest}
 import oscar.cbls.search.core._
 import scala.language.postfixOps
 
@@ -262,10 +262,9 @@ object SchedulingStrategies{
     }
     val relax = Relax(p, pKillPerRelax)()
 
-    val searchLoop = flatten maxMoves 1 exhaustBack (relax untilImprovement(p.makeSpan, nbRelax, maxIterationsForFlatten))
+    val searchStep = (relax untilImprovement(p.makeSpan, nbRelax, maxIterationsForFlatten)) exhaust (flatten maxMoves 1)
 
-    //TODO: should stop after a flatten!
-    (searchLoop maxMoves stable*4 withoutImprovementOver objective
+    (flatten sequence (searchStep atomic()) maxMoves stable withoutImprovementOver objective
       protectBest objective whenEmpty p.worseOvershotResource)
   }
 

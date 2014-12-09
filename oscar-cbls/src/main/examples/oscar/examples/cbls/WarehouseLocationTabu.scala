@@ -55,18 +55,14 @@ object WarehouseLocationTabu extends App with AlgebraTrait{
 
   val m = Store()
 
+  val warehouseOpenArray = Array.tabulate(W)(w => CBLSIntVar(m, 0 to 1, 0, "warehouse_" + w + "_open"))
+
   //We store in each warehouse variable its warehouse ID, using the
   // [[oscar.cbls.invariants.core.computation.DistributedStorageUtility]] mechanism
   //so we first ask a storageKey to the model
   val warehouseKey = m.getStorageKey()
+  m.storeIndexesAt(warehouseOpenArray, warehouseKey)
 
-  val warehouseOpenArray = Array.tabulate(W)(w => {
-    val wVar = CBLSIntVar(m, 0 to 1, 0, "warehouse_" + w + "_open")
-    wVar.storeAt(warehouseKey,new Integer(w))
-    wVar
-  })
-
-  //by default, Filter selects the indices of each position where the variable is not zero
   val openWarehouses = Filter(warehouseOpenArray).toSetVar("openWarehouses")
 
   val distanceToNearestOpenWarehouse = Array.tabulate(D)(d =>
@@ -74,6 +70,8 @@ object WarehouseLocationTabu extends App with AlgebraTrait{
 
   val obj = Objective(Sum(distanceToNearestOpenWarehouse) + Sum(costForOpeningWarehouse, openWarehouses))
 
+  // we handle the tabu through invariants.
+  // notice that they are completely dissociated from the rest of the model in this case.
   val TabuArray = Array.tabulate(W)(w => CBLSIntVar(m))
   val It = CBLSIntVar(m)
   val nonTabuWarehouses = SelectLESetQueue(TabuArray,It).toSetVar("non tabu warehouses")
@@ -91,12 +89,12 @@ object WarehouseLocationTabu extends App with AlgebraTrait{
     for (v <- mo.touchedVariables) {
       TabuArray(v.getStorageAt[Int](warehouseKey)) := It.value + tabuTenure
     }
-    It :+= 1 }) acceptAll() maxMoves W withoutImprovementOver obj protectBest obj)
+    It :+= 1 }) acceptAll() maxMoves W withoutImprovementOver obj maxMoves W+D protectBest obj restoreBestOnExhaust)
 
   switchWithTabuNeighborhood.verbose = 1
 
   //all moves are accepted because the neighborhood returns the best found move, and tabu might degrade obj.
-  switchWithTabuNeighborhood.doAllMovesAndRestoreBest(_ >= W+D, obj)
+  switchWithTabuNeighborhood.doAllMoves(obj=obj)
 
   println(openWarehouses)
 }

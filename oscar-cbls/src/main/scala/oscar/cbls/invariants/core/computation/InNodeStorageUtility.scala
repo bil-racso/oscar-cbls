@@ -22,14 +22,14 @@ import collection.immutable.SortedMap
  */
 trait DistributedStorageUtility {
 
-  var storage: SortedMap[Int, AnyRef] = null
+  var storage: SortedMap[Int, Any] = null
 
   /**returns null if nothing was stored*/
   final def getStorageAt[T](key: Int, default: T = null.asInstanceOf[T]) =
     if(storage == null) default
     else storage.getOrElse(key, default).asInstanceOf[T]
 
-  final def storeAt(key: Int, value: AnyRef) {
+  final def storeAt(key: Int, value: Any) {
     if(storage == null) storage = SortedMap.empty
     storage = storage + ((key, value))
   }
@@ -65,5 +65,19 @@ trait StorageUtilityManager {
     val toreturn = nextStoragePlace
     nextStoragePlace += 1
     toreturn
+  }
+
+  /**
+   * This method stores for each item of the array, its index in the array.
+   * We suppose that an item only appears once in the array
+   * @param storagePlaces the array
+   * @param storageKey the storageKey where the index will be saved
+   * @param offsetIndex if not zero, the value stored is actually index+offsetIndex. DEfault value is zero
+   * @tparam T the actual type of the storage places
+   */
+  def storeIndexesAt[T <: DistributedStorageUtility] (storagePlaces:Array[T], storageKey:Int, offsetIndex:Int = 0){
+    for(i <- storagePlaces.indices) {
+      storagePlaces(i).storeAt(storageKey, i + offsetIndex)
+    }
   }
 }
