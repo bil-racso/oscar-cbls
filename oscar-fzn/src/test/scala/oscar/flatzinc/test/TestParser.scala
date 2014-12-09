@@ -55,4 +55,16 @@ class TestParser extends FunSuite with Matchers{
         "constraint my_constraint_does_not_exist(x,y);");
     }
   }
+  
+  test("test 2.0"){
+    
+/*var 1..8: X_INTRODUCED_0;
+var 1..8: X_INTRODUCED_1;
+var 1..8: X_INTRODUCED_2;
+array[1..3] of var 1..8: q:: output_array([1..8]) = [X_INTRODUCED_0,X_INTRODUCED_1,X_INTRODUCED_2];*/
+    val problem = getSATModel("""
+        array[1..3] of var 1..8: q :: output_array([1..8]);
+        array[1..1] of int: x = [1,-1];
+""")
+  }
 }

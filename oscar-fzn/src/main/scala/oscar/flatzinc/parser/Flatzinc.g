@@ -51,7 +51,9 @@ import java.util.HashSet;
 	}
 }
 
-flatzinc_model : preddecl* paramdecl* vardecl* constraint* solvegoal;
+//flatzinc_model : preddecl* paramdecl* vardecl* constraint* solvegoal;
+//changed to accomodate Mzn 2.0
+flatzinc_model : preddecl* (paramdecl|vardecl)* constraint* solvegoal;
 
 //Nothing is done for the predicate declarations
 preddecl : 'predicate' PREDANNID '(' predparam ( ',' predparam)* ')' ';' ;
