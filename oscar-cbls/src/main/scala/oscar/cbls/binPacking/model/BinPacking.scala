@@ -68,8 +68,8 @@ class Bin(val number:Int,
  */
 case class BinPackingProblem(items:Map[Int,Item],
                              bins: Map[Int,Bin],
-                             overallViolation:Objective,
-                             mostViolatedBins:CBLSSetVar){
+                             var overallViolation:Objective,
+                             var mostViolatedBins:CBLSSetVar){
   override def toString: String =
     "BinPackingProblem(\n\titems:{" + items.values.mkString(",") +"}\n" +
       "\tbins:{" +bins.values.mkString(",") + "}\n" +

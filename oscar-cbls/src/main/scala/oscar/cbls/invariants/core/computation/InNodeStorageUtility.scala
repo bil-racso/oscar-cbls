@@ -22,15 +22,31 @@ import collection.immutable.SortedMap
  */
 trait DistributedStorageUtility {
 
-  var storage: SortedMap[Int, AnyRef] = SortedMap.empty
+  var storage: SortedMap[Int, AnyRef] = null
 
   /**returns null if nothing was stored*/
   final def getStorageAt[T](key: Int, default: T = null.asInstanceOf[T]) =
-    storage.getOrElse(key, default).asInstanceOf[T]
+    if(storage == null) default
+    else storage.getOrElse(key, default).asInstanceOf[T]
 
   final def storeAt(key: Int, value: AnyRef) {
+    if(storage == null) storage = SortedMap.empty
     storage = storage + ((key, value))
   }
+
+  final def freeStorageAt(key: Int): Unit ={
+    storage = storage - key
+    if(storage.isEmpty) storage = null
+  }
+
+  final def getAndFreeStorageAt[T](key: Int, default: T = null.asInstanceOf[T]) =
+    if(storage == null) default
+    else{
+      val toReturn = storage.getOrElse(key, default).asInstanceOf[T]
+      storage = storage - key
+      if(storage.isEmpty) storage = null
+      toReturn
+    }
 }
 
 /**

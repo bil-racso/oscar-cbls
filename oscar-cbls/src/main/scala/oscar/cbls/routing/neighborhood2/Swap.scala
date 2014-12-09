@@ -37,10 +37,10 @@ import oscar.cbls.search.core.EasyNeighborhood
  */
 class Swap(NodesPrecedingNodesToMove:()=>Iterable[Int],
            relevantNeighbors:()=>Int=>Iterable[Int],
-           val vrp: VRP with MoveDescription with VRPObjective with PositionInRouteAndRouteNr,
+           val vrp: VRP with MoveDescription with PositionInRouteAndRouteNr,
            val neighborhoodName:String = "SwapNeighborhood",
            val best:Boolean = false,
-           val hotRestart:Boolean = true) extends EasyNeighborhood(best,vrp.getObjective) {
+           val hotRestart:Boolean = true) extends EasyNeighborhood(best) {
 
   //the indice to start with for the exploration
   var startIndice:Int = 0
@@ -73,7 +73,7 @@ class Swap(NodesPrecedingNodesToMove:()=>Iterable[Int],
 
         Swap.encode(beforeMovedPoint, insertionPoint, vrp)
         vrp.commit(true)
-        val newObj = vrp.getObjective()
+        val newObj = obj()
         vrp.undo()
 
         if (moveRequested(newObj)

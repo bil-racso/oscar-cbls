@@ -95,7 +95,7 @@ class Bulk(m: Store, val bulkedVars: Array[Variable], val bulkedComputationResul
   */
 trait Bulker {
 
-  var Bulked: SortedMap[String, List[Bulk]] = SortedMap.empty
+  private var Bulked: SortedMap[String, List[Bulk]] = SortedMap.empty
 
   def getBulk(identifyingName: String, bulkedVars: Array[Variable]): Bulk = {
     val bulks = Bulked.getOrElse(identifyingName, null)
@@ -113,5 +113,9 @@ trait Bulker {
   def registerBulk(identifyingName: String, bulk: Bulk) {
     val knownbulk = Bulked.getOrElse(identifyingName, List.empty)
     Bulked += ((identifyingName, bulk :: knownbulk))
+  }
+
+  protected def killBulker(): Unit ={
+    Bulked = null
   }
 }

@@ -43,11 +43,11 @@ import oscar.cbls.search.core.EasyNeighborhood
  */
 case class ThreeOpt(potentialInsertionPoints:()=>Iterable[Int],
                     relevantNeighbors:()=>Int=>Iterable[Int],
-                    vrp: VRP with MoveDescription with VRPObjective with PositionInRouteAndRouteNr,
+                    vrp: VRP with MoveDescription with PositionInRouteAndRouteNr,
                     neighborhoodName:String = "ThreeOptNeighborhood",
                     best:Boolean = false,
                     hotRestart:Boolean = true,
-                    KKIterationScheme:Boolean = true) extends EasyNeighborhood(best,vrp.getObjective) {
+                    KKIterationScheme:Boolean = true) extends EasyNeighborhood(best) {
 
   val REVERSE = true // this is a constant used for readability
 
@@ -184,7 +184,7 @@ def exploreNeighborhoodRouteExtension(){
      */
     ThreeOpt.encodeMove(beforeStart, segEndPoint, insertionPoint, !REVERSE, vrp)
     vrp.commit(false)
-    val objAfterFirstMove = vrp.getObjective()
+    val objAfterFirstMove = obj()
 
     /**
      * SECOND, we reverse the moved segment, in place,
@@ -192,7 +192,7 @@ def exploreNeighborhoodRouteExtension(){
      */
     vrp.reverseSegmentInPlace(insertionPoint, segEndPoint) // REVERSE
     vrp.commit(true)
-    val objAfterSecondMove = vrp.getObjective()
+    val objAfterSecondMove = obj()
 
     val FirstMoveIsBestMove = objAfterFirstMove < objAfterSecondMove
     val bestObjAfter = if(FirstMoveIsBestMove) objAfterFirstMove else objAfterSecondMove

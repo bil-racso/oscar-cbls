@@ -58,12 +58,12 @@ class BasicProtectBest(a: Neighborhood, i: CBLSIntVar) extends NeighborhoodCombi
     best = null
   }
 
-  override def getMove(acceptanceCriteria: (Int, Int) => Boolean): SearchResult = {
+  override def getMove(obj:()=>Int, acceptanceCriteria: (Int, Int) => Boolean): SearchResult = {
 
     //we record the obj before move to prevent an additional useless propagation
     val objBeforeMove = i.value
 
-    a.getMove(acceptanceCriteria) match {
+    a.getMove(obj, acceptanceCriteria) match {
       case NoMoveFound => NoMoveFound
       case MoveFound(m) =>
         if (m.objAfter > objBeforeMove && objBeforeMove < bestObj && currentSolutionIsAcceptable) {
@@ -100,8 +100,8 @@ class BasicProtectBest(a: Neighborhood, i: CBLSIntVar) extends NeighborhoodCombi
    *                            by default, we only accept strictly improving moves
    * @return the number of moves performed
    */
-  def doAllMovesAndRestoreBest(shouldStop: Int => Boolean, acceptanceCriterion: (Int, Int) => Boolean = (oldObj, newObj) => oldObj > newObj): Int = {
-    val toReturn = doAllMoves(shouldStop, acceptanceCriterion)
+  def doAllMovesAndRestoreBest(shouldStop: Int => Boolean, obj:()=>Int, acceptanceCriterion: (Int, Int) => Boolean = (oldObj, newObj) => oldObj > newObj): Int = {
+    val toReturn = doAllMoves(shouldStop, obj:()=>Int, acceptanceCriterion)
     restoreBest()
     toReturn
   }
@@ -142,12 +142,12 @@ class RestoreBestOnExhaust(a: BasicProtectBest) extends NeighborhoodCombinator(a
    *                            by default, we only accept strictly improving moves
    * @return the number of moves performed
    */
-  def doAllMovesAndRestoreBest(shouldStop: Int => Boolean, acceptanceCriterion: (Int, Int) => Boolean = (oldObj, newObj) => oldObj > newObj): Int = {
-    a.doAllMovesAndRestoreBest(shouldStop, acceptanceCriterion)
+  def doAllMovesAndRestoreBest(shouldStop: Int => Boolean, obj:()=>Int, acceptanceCriterion: (Int, Int) => Boolean = (oldObj, newObj) => oldObj > newObj): Int = {
+    a.doAllMovesAndRestoreBest(shouldStop, obj, acceptanceCriterion)
   }
 
-  override def getMove(acceptanceCriteria: (Int, Int) => Boolean): SearchResult = {
-    a.getMove(acceptanceCriteria) match {
+  override def getMove(obj:()=>Int, acceptanceCriteria: (Int, Int) => Boolean): SearchResult = {
+    a.getMove(obj, acceptanceCriteria) match {
       case m: MoveFound => m
       case x =>
         restoreBest()
@@ -164,9 +164,9 @@ class RestoreBestOnExhaust(a: BasicProtectBest) extends NeighborhoodCombinator(a
  * @param proc the procedure to execute before the neighborhood is queried
  */
 class DoOnQuery(a: Neighborhood, proc: () => Unit) extends NeighborhoodCombinator(a) {
-  override def getMove(acceptanceCriteria: (Int, Int) => Boolean): SearchResult = {
+  override def getMove(obj:()=>Int, acceptanceCriteria: (Int, Int) => Boolean): SearchResult = {
     proc()
-    a.getMove(acceptanceCriteria)
+    a.getMove(obj, acceptanceCriteria)
   }
 }
 
@@ -182,8 +182,8 @@ class DoOnQuery(a: Neighborhood, proc: () => Unit) extends NeighborhoodCombinato
 case class DoOnMove(a: Neighborhood,
                     procBeforeMove: Move => Unit = null,
                     procAfterMove: Move => Unit = null) extends NeighborhoodCombinator(a) {
-  override def getMove(acceptanceCriteria: (Int, Int) => Boolean): SearchResult = {
-    a.getMove(acceptanceCriteria) match {
+  override def getMove(obj:()=>Int, acceptanceCriteria: (Int, Int) => Boolean): SearchResult = {
+    a.getMove(obj, acceptanceCriteria) match {
       case m: MoveFound =>
         InstrumentedMove(m.m, callBackBeforeMove(m.m), callBackAfterMove(m.m))
       case x => x
@@ -208,14 +208,14 @@ case class DoOnMove(a: Neighborhood,
  */
 class DoOnFirstMove(a: Neighborhood, proc: () => Unit) extends NeighborhoodCombinator(a) {
   var isFirstMove = true
-  override def getMove(acceptanceCriteria: (Int, Int) => Boolean): SearchResult = {
+  override def getMove(obj:()=>Int, acceptanceCriteria: (Int, Int) => Boolean): SearchResult = {
     if (isFirstMove) {
-      a.getMove(acceptanceCriteria) match {
+      a.getMove(obj, acceptanceCriteria) match {
         case m: MoveFound => InstrumentedMove(m.m, notifyMoveTaken)
         case x => x
       }
     } else {
-      a.getMove(acceptanceCriteria)
+      a.getMove(obj, acceptanceCriteria)
     }
   }
 
@@ -239,11 +239,11 @@ class DoOnFirstMove(a: Neighborhood, proc: () => Unit) extends NeighborhoodCombi
  * @author renaud.delandtsheer@cetic.be
  */
 class Random(a: Neighborhood, b: Neighborhood) extends NeighborhoodCombinator(a, b) {
-  override def getMove(acceptanceCriteria: (Int, Int) => Boolean): SearchResult = {
+  override def getMove(obj:()=>Int, acceptanceCriteria: (Int, Int) => Boolean): SearchResult = {
     var currentIsA: Boolean = math.random > 0.5
     def search(canDoMore: Boolean): SearchResult = {
       val current = if (currentIsA) a else b
-      current.getMove(acceptanceCriteria) match {
+      current.getMove(obj, acceptanceCriteria) match {
         case NoMoveFound =>
           currentIsA = !currentIsA; if (canDoMore) search(false) else NoMoveFound
         case x: MoveFound => x
@@ -263,11 +263,11 @@ class Random(a: Neighborhood, b: Neighborhood) extends NeighborhoodCombinator(a,
  * @author renaud.delandtsheer@cetic.be
  */
 class OrElse(a: Neighborhood, b: Neighborhood) extends NeighborhoodCombinator(a, b) {
-  override def getMove(acceptanceCriteria: (Int, Int) => Boolean): SearchResult = {
-    a.getMove(acceptanceCriteria) match {
+  override def getMove(obj:()=>Int, acceptanceCriteria: (Int, Int) => Boolean): SearchResult = {
+    a.getMove(obj, acceptanceCriteria) match {
       case NoMoveFound =>
         a.reset()
-        b.getMove(acceptanceCriteria)
+        b.getMove(obj, acceptanceCriteria)
       case x => x
     }
   }
@@ -282,8 +282,8 @@ class OrElse(a: Neighborhood, b: Neighborhood) extends NeighborhoodCombinator(a,
  */
 class Best(a: Neighborhood, b: Neighborhood) extends NeighborhoodCombinator(a, b) {
 
-  override def getMove(acceptanceCriteria: (Int, Int) => Boolean): SearchResult = {
-    (a.getMove(acceptanceCriteria), b.getMove(acceptanceCriteria)) match {
+  override def getMove(obj:()=>Int, acceptanceCriteria: (Int, Int) => Boolean): SearchResult = {
+    (a.getMove(obj, acceptanceCriteria), b.getMove(obj, acceptanceCriteria)) match {
       case (NoMoveFound, x) => x
       case (x, NoMoveFound) => x
       case (x: MoveFound, y: MoveFound) => if (x.objAfter < y.objAfter) x else y
@@ -301,10 +301,10 @@ class Best(a: Neighborhood, b: Neighborhood) extends NeighborhoodCombinator(a, b
  */
 class Exhaust(a: Neighborhood, b: Neighborhood) extends NeighborhoodCombinator(a, b) {
   var currentIsA = true
-  override def getMove(acceptanceCriteria: (Int, Int) => Boolean): SearchResult = {
+  override def getMove(obj:()=>Int, acceptanceCriteria: (Int, Int) => Boolean): SearchResult = {
     def search(): SearchResult = {
       val current = if (currentIsA) a else b
-      current.getMove(acceptanceCriteria) match {
+      current.getMove(obj, acceptanceCriteria) match {
         case NoMoveFound => if (currentIsA) { currentIsA = false; search() } else NoMoveFound
         case x: MoveFound => x
       }
@@ -327,12 +327,12 @@ class Exhaust(a: Neighborhood, b: Neighborhood) extends NeighborhoodCombinator(a
  */
 class Retry(a: Neighborhood, n: Int = 1) extends NeighborhoodCombinator(a) {
   var remainingTries = n
-  override def getMove(acceptanceCriteria: (Int, Int) => Boolean): SearchResult = {
-    a.getMove(acceptanceCriteria) match {
+  override def getMove(obj:()=>Int, acceptanceCriteria: (Int, Int) => Boolean): SearchResult = {
+    a.getMove(obj, acceptanceCriteria) match {
       case NoMoveFound =>
         remainingTries -= 1
         if (remainingTries == 0) NoMoveFound
-        else this.getMove(acceptanceCriteria)
+        else this.getMove(obj, acceptanceCriteria)
       case x =>
         remainingTries = n
         x
@@ -347,7 +347,7 @@ class Retry(a: Neighborhood, n: Int = 1) extends NeighborhoodCombinator(a) {
 }
 
 case class NoReset(a: Neighborhood) extends NeighborhoodCombinator(a) {
-  override def getMove(acceptanceCriteria: (Int, Int) => Boolean) = a.getMove(acceptanceCriteria)
+  override def getMove(obj:()=>Int, acceptanceCriteria: (Int, Int) => Boolean) = a.getMove(obj, acceptanceCriteria)
 
   //this resets the internal state of the move combinators
   override def reset() {}
@@ -361,19 +361,19 @@ case class NoReset(a: Neighborhood) extends NeighborhoodCombinator(a) {
  */
 class ExhaustBack(a: Neighborhood, b: Neighborhood) extends NeighborhoodCombinator(a, b) {
   var currentIsA = true
-  override def getMove(acceptanceCriteria: (Int, Int) => Boolean): SearchResult = {
+  override def getMove(obj:()=>Int, acceptanceCriteria: (Int, Int) => Boolean): SearchResult = {
     def search(): SearchResult = {
       val current = if (currentIsA) a else b
-      current.getMove(acceptanceCriteria) match {
+      current.getMove(obj, acceptanceCriteria) match {
         case NoMoveFound =>
           if (currentIsA) {
             currentIsA = false
             b.reset()
-            b.getMove(acceptanceCriteria)
+            b.getMove(obj, acceptanceCriteria)
           } else {
             currentIsA = true
             a.reset()
-            a.getMove(acceptanceCriteria)
+            a.getMove(obj, acceptanceCriteria)
           }
         case x: MoveFound => x
       }
@@ -392,11 +392,11 @@ class ExhaustBack(a: Neighborhood, b: Neighborhood) extends NeighborhoodCombinat
  * @author renaud.delandtsheer@cetic.be
  */
 class ResetOnExhausted(a: Neighborhood) extends NeighborhoodCombinator(a) {
-  override def getMove(acceptanceCriteria: (Int, Int) => Boolean): SearchResult = {
-    a.getMove(acceptanceCriteria) match {
+  override def getMove(obj:()=>Int, acceptanceCriteria: (Int, Int) => Boolean): SearchResult = {
+    a.getMove(obj, acceptanceCriteria) match {
       case NoMoveFound =>
         a.reset()
-        a.getMove(acceptanceCriteria)
+        a.getMove(obj, acceptanceCriteria)
       case m: MoveFound => m
     }
   }
@@ -413,10 +413,10 @@ class ResetOnExhausted(a: Neighborhood) extends NeighborhoodCombinator(a) {
 class ExhaustAndContinueIfMovesFound(a: Neighborhood, b: Neighborhood) extends NeighborhoodCombinator(a, b) {
   var currentIsA = true
   var movesFoundWithCurrent = false
-  override def getMove(acceptanceCriteria: (Int, Int) => Boolean): SearchResult = {
+  override def getMove(obj:()=>Int, acceptanceCriteria: (Int, Int) => Boolean): SearchResult = {
     def search(): SearchResult = {
       val current = if (currentIsA) a else b
-      current.getMove(acceptanceCriteria) match {
+      current.getMove(obj, acceptanceCriteria) match {
         case NoMoveFound =>
           if (currentIsA) {
             currentIsA = false
@@ -445,8 +445,8 @@ class ExhaustAndContinueIfMovesFound(a: Neighborhood, b: Neighborhood) extends N
  * @author renaud.delandtsheer@cetic.be
  */
 class Conditional(c: () => Boolean, b: Neighborhood) extends NeighborhoodCombinator(b) {
-  override def getMove(acceptanceCriteria: (Int, Int) => Boolean): SearchResult = {
-    if (c()) b.getMove(acceptanceCriteria)
+  override def getMove(obj:()=>Int, acceptanceCriteria: (Int, Int) => Boolean): SearchResult = {
+    if (c()) b.getMove(obj, acceptanceCriteria)
     else NoMoveFound
   }
 }
@@ -457,10 +457,10 @@ class Conditional(c: () => Boolean, b: Neighborhood) extends NeighborhoodCombina
  */
 class BoundSearches(a: Neighborhood, val maxMove: Int) extends NeighborhoodCombinator(a) {
   var remainingMoves = maxMove
-  override def getMove(acceptanceCriteria: (Int, Int) => Boolean): SearchResult = {
+  override def getMove(obj:()=>Int, acceptanceCriteria: (Int, Int) => Boolean): SearchResult = {
     if (remainingMoves > 0) {
       remainingMoves -= 1
-      a.getMove(acceptanceCriteria)
+      a.getMove(obj, acceptanceCriteria)
     } else NoMoveFound
   }
 
@@ -482,12 +482,12 @@ class BoundSearches(a: Neighborhood, val maxMove: Int) extends NeighborhoodCombi
 class OnceEvery(a: Neighborhood, n:Int, retryOnNoMoveFound:Boolean = false) extends NeighborhoodCombinator(a) {
   var remainingMoves = n -1
 
-  override def getMove(acceptanceCriteria: (Int, Int) => Boolean): SearchResult = {
+  override def getMove(obj:()=>Int, acceptanceCriteria: (Int, Int) => Boolean): SearchResult = {
     if (remainingMoves > 0) {
       remainingMoves -= 1
       NoMoveFound
     }else{
-      a.getMove(acceptanceCriteria) match{
+      a.getMove(obj, acceptanceCriteria) match{
         case NoMoveFound =>
           if(!retryOnNoMoveFound) remainingMoves = n -1
           NoMoveFound
@@ -512,9 +512,9 @@ class OnceEvery(a: Neighborhood, n:Int, retryOnNoMoveFound:Boolean = false) exte
  */
 class MaxMoves(a: Neighborhood, val maxMove: Int, cond:Move => Boolean = null) extends NeighborhoodCombinator(a) {
   var remainingMoves = maxMove
-  override def getMove(acceptanceCriteria: (Int, Int) => Boolean): SearchResult = {
+  override def getMove(obj:()=>Int, acceptanceCriteria: (Int, Int) => Boolean): SearchResult = {
     if (remainingMoves > 0) {
-      a.getMove(acceptanceCriteria) match {
+      a.getMove(obj, acceptanceCriteria) match {
         case m: MoveFound => InstrumentedMove(m.m, () => notifyMoveTaken(m.m))
         case x => x
       }
@@ -574,9 +574,9 @@ class MaxMoves(a: Neighborhood, val maxMove: Int, cond:Move => Boolean = null) e
  * @author renaud.delandtsheer@cetic.be
  */
 class StopWhen(a: Neighborhood, cond:()=> Boolean) extends NeighborhoodCombinator(a) {
-  override def getMove(acceptanceCriterion: (Int, Int) => Boolean): SearchResult = {
+  override def getMove(obj:()=>Int, acceptanceCriterion: (Int, Int) => Boolean): SearchResult = {
     if(cond()) NoMoveFound
-    else a.getMove(acceptanceCriterion)
+    else a.getMove(obj, acceptanceCriterion)
   }
 }
 
@@ -593,26 +593,26 @@ class RoundRobin(l: List[Neighborhood], steps: Int = 1) extends NeighborhoodComb
   val robins = l.length
   var remainingSteps: Int = steps
   var tail: List[Neighborhood] = l
-  override def getMove(acceptanceCriteria: (Int, Int) => Boolean): SearchResult =
-    myGetImprovingMove(acceptanceCriteria)
+  override def getMove(obj:()=>Int, acceptanceCriteria: (Int, Int) => Boolean): SearchResult =
+    myGetImprovingMove(obj, acceptanceCriteria)
 
-  private def myGetImprovingMove(acceptanceCriteria: (Int, Int) => Boolean, triedRobins: Int = 0): SearchResult = {
+  private def myGetImprovingMove(obj:()=>Int, acceptanceCriteria: (Int, Int) => Boolean, triedRobins: Int = 0): SearchResult = {
     if (triedRobins >= robins) {
       NoMoveFound
     } else if (remainingSteps > 0) {
       //no need to change neighborhood yet
       remainingSteps -= 1
-      tail.head.getMove(acceptanceCriteria) match {
+      tail.head.getMove(obj, acceptanceCriteria) match {
         case NoMoveFound =>
           moveToNextRobin()
-          myGetImprovingMove(acceptanceCriteria, triedRobins + 1)
+          myGetImprovingMove(obj, acceptanceCriteria, triedRobins + 1)
         case x: MoveFound => x
       }
     } else {
       //move to next robin
       remainingSteps = steps
       moveToNextRobin()
-      myGetImprovingMove(acceptanceCriteria, triedRobins + 1)
+      myGetImprovingMove(obj, acceptanceCriteria, triedRobins + 1)
     }
   }
 
@@ -692,7 +692,7 @@ class AndThen(a: Neighborhood, b: Neighborhood, maxFirstStep: Int = 10, maximalI
    */
   def notifyFirstStep(m: Move) {}
 
-  override def getMove(acceptanceCriteria: (Int, Int) => Boolean): SearchResult = {
+  override def getMove(obj:()=>Int, acceptanceCriteria: (Int, Int) => Boolean): SearchResult = {
 
     a.reset()
 
@@ -706,7 +706,7 @@ class AndThen(a: Neighborhood, b: Neighborhood, maxFirstStep: Int = 10, maximalI
 
     while (remainingFirstSteps > 0) {
       remainingFirstSteps -= 1
-      a.getMove(instrumentedIntermediaryAcceptanceCriteria) match {
+      a.getMove(obj, instrumentedIntermediaryAcceptanceCriteria) match {
         case NoMoveFound => return NoMoveFound
         case MoveFound(firstMove) =>
 
@@ -723,7 +723,7 @@ class AndThen(a: Neighborhood, b: Neighborhood, maxFirstStep: Int = 10, maximalI
           firstMove.commit()
           if (amIVerbose) println("AndThen: trying first move " + firstMove)
           def globalAcceptanceCriteria: (Int, Int) => Boolean = (_, newObj) => acceptanceCriteria(oldObj, newObj)
-          b.getMove(globalAcceptanceCriteria) match {
+          b.getMove(obj, globalAcceptanceCriteria) match {
             case NoMoveFound => model.restoreSnapshot(snapshot)
             case MoveFound(secondMove) =>
               model.restoreSnapshot(snapshot)
@@ -747,9 +747,9 @@ class MaxMovesWithoutImprovement(a: Neighborhood, val cond:Move => Boolean, val 
   var stepsSinceLastImprovement = 0
   var bestObj = Int.MaxValue
 
-  override def getMove(acceptanceCriteria: (Int, Int) => Boolean): SearchResult = {
+  override def getMove(obj:()=>Int, acceptanceCriteria: (Int, Int) => Boolean): SearchResult = {
     if (stepsSinceLastImprovement < maxMovesWithoutImprovement) {
-      a.getMove(acceptanceCriteria) match {
+      a.getMove(obj, acceptanceCriteria) match {
         case m: MoveFound => InstrumentedMove(m.m, afterMove = () => notifyMoveTaken(m.m))
         case x => x
       }
@@ -784,27 +784,27 @@ class MaxMovesWithoutImprovement(a: Neighborhood, val cond:Move => Boolean, val 
  * @param a
  * @param minMoves the min number of queries that will be forwarded to a (priority over the improvement)
  * @param maxMove the max number of queries that will be forwarded to a (priority over the improvement)
- * @param obj the obj that is looked for improvement
+ * @param over the obj that is looked for improvement
  * @author renaud.delandtsheer@cetic.be
  */
-class UntilImprovement(a: Neighborhood, obj: CBLSIntVar, val minMoves: Int = 0, val maxMove: Int = Int.MaxValue)
+class UntilImprovement(a: Neighborhood, over:() => Int, val minMoves: Int = 0, val maxMove: Int = Int.MaxValue)
   extends NeighborhoodCombinator(a) {
 
   //TODO: pas sûr que cela fonctionne du premier coup; peut-être faut-il faire un reset au début de toute descente.
-  var oldObjOnReset = obj.value
+  var oldObjOnReset = over()
   var movesQueriedSinceReset = 0
 
-  override def getMove(acceptanceCriterion: (Int, Int) => Boolean): SearchResult = {
+  override def getMove(obj:()=>Int, acceptanceCriterion: (Int, Int) => Boolean): SearchResult = {
     movesQueriedSinceReset += 1
     if (movesQueriedSinceReset < maxMove
-      && (movesQueriedSinceReset < minMoves || obj.value >= oldObjOnReset))
-      a.getMove(acceptanceCriterion)
+      && (movesQueriedSinceReset < minMoves || over() >= oldObjOnReset))
+      a.getMove(obj, acceptanceCriterion)
     else NoMoveFound
   }
 
   //this resets the internal state of the move combinators
   override def reset() {
-    oldObjOnReset = obj.value
+    oldObjOnReset = over()
     movesQueriedSinceReset = 0
     super.reset()
   }
@@ -823,8 +823,8 @@ class Name(a: Neighborhood, val name: String) extends NeighborhoodCombinator(a) 
    *                            beware that a changing criteria might interact unexpectedly with stateful neighborhood combinators
    * @return an improving move
    */
-  override def getMove(acceptanceCriterion: (Int, Int) => Boolean): SearchResult = {
-    a.getMove(acceptanceCriterion) match {
+  override def getMove(obj:()=>Int, acceptanceCriterion: (Int, Int) => Boolean): SearchResult = {
+    a.getMove(obj, acceptanceCriterion) match {
       case NoMoveFound => NoMoveFound
       case MoveFound(m) => CompositeMove(List(m), m.objAfter, name)
     }
@@ -842,7 +842,7 @@ class WithAcceptanceCriterion(a: Neighborhood, overridingAcceptanceCriterion: (I
    * @param acceptanceCriterion this criterion is not considered by this combinator.
    * @return an improving move
    */
-  override def getMove(acceptanceCriterion: (Int, Int) => Boolean): SearchResult = a.getMove(overridingAcceptanceCriterion)
+  override def getMove(obj:()=>Int, acceptanceCriterion: (Int, Int) => Boolean): SearchResult = a.getMove(obj, overridingAcceptanceCriterion)
 }
 
 /**
@@ -860,8 +860,8 @@ class Metropolis(a: Neighborhood, temperature: Int => Float = _ => 100, base:Flo
 
   var moveCount = 0
   var temperatureValue: Float = temperature(moveCount)
-  override def getMove(acceptanceCriterion: (Int, Int) => Boolean): SearchResult =
-    a.getMove(acceptation) match {
+  override def getMove(obj:()=>Int, acceptanceCriterion: (Int, Int) => Boolean): SearchResult =
+    a.getMove(obj, acceptation) match {
       case NoMoveFound => NoMoveFound
       case MoveFound(m) => InstrumentedMove(m, notifyMoveTaken)
     }

@@ -122,7 +122,7 @@ class AbstractConstraintSystem(val _model:Store, Aggregate: (Iterable[CBLSIntVar
         val constr = ConstrAndWeight._1
         val weight = ConstrAndWeight._2
         if(weight == null) constr.violation(variable)
-        else (Prod2(constr.violation(variable),weight)).toIntVar
+        else Prod2(constr.violation(variable),weight).toIntVar
       })
       val LocalViolation = (if (!product.isEmpty && product.tail.isEmpty) product.head
                             else Aggregate(product).toIntVar)
@@ -132,8 +132,9 @@ class AbstractConstraintSystem(val _model:Store, Aggregate: (Iterable[CBLSIntVar
 
   private def PropagateLocalToGlobalViolations(){
     for(varWithLocalViol <- VarInConstraints){
-      val localViol:CBLSIntVar = varWithLocalViol.getStorageAt(IndexForLocalViolationINSU)
+      val localViol:CBLSIntVar = varWithLocalViol.getAndFreeStorageAt(IndexForLocalViolationINSU)
       val sources = model.getSourceVariables(varWithLocalViol)
+      //TODO: this seems a bit inefficient
       for(sourcevar <- sources){
         val GlobalViol:GlobalViolationDescriptor = sourcevar.getStorageAt(IndexForGlobalViolationINSU,null)
         if (GlobalViol!=null) GlobalViol.AggregatedViolation = localViol :: GlobalViol.AggregatedViolation
@@ -155,7 +156,7 @@ class AbstractConstraintSystem(val _model:Store, Aggregate: (Iterable[CBLSIntVar
    * no constraint can be added after this method has been called.
    * this method must also be called before closing the model.
    */
-  protected[cbls] def close(){
+  def close(){
     if(!isClosed){
       isClosed = true
       Violation <== Aggregate(PostedConstraints.map((constraintANDintvar) => {
@@ -207,6 +208,11 @@ class AbstractConstraintSystem(val _model:Store, Aggregate: (Iterable[CBLSIntVar
       CPStoredRecord.Violation
     }
   }
+
+  def violations[V<:Variable](vs:Array[V]):Array[CBLSIntVar] = {
+    vs.map(violation(_))
+  }
+
 
   /**Returns the global violation of the constraint system, that is the weighted sum of the violation of the posted constraints
    *close() should have been called prior to calling this method.

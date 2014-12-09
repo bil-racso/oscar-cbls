@@ -29,7 +29,8 @@ import oscar.cbls.search.algo.HotRestart
 import oscar.cbls.search.core.EasyNeighborhood
 
 /**
- * Removes two edges of routes, and rebuilds routes from the segments. (with one reverse required)
+ * Removes two edges of routes, and rebuilds routes from the segments.
+ * (with one reverse required)
  *
  * The search complexity is O(n²).
  * @author renaud.delandtsheer@cetic.be
@@ -38,10 +39,10 @@ import oscar.cbls.search.core.EasyNeighborhood
  * */
 case class TwoOpt(PredecesorOfFirstMovedPoint:()=>Iterable[Int],
                   relevantNeighbors:()=>Int=>Iterable[Int],
-                  vrp: VRP with MoveDescription with VRPObjective with PositionInRouteAndRouteNr,
+                  vrp: VRP with MoveDescription with PositionInRouteAndRouteNr,
                   neighborhoodName:String = "TwoOptNeighborhood",
                   best:Boolean = false,
-                  hotRestart:Boolean = true) extends EasyNeighborhood(best,vrp.getObjective) {
+                  hotRestart:Boolean = true) extends EasyNeighborhood(best) {
 
   //the indice to start with for the exploration
   var startIndice: Int = 0
@@ -75,7 +76,7 @@ case class TwoOpt(PredecesorOfFirstMovedPoint:()=>Iterable[Int],
         TwoOpt.encode(fstPred, sndPred, vrp)
 
         vrp.commit(true)
-        val newObj = vrp.getObjective()
+        val newObj = obj()
         vrp.undo()
 
         if (moveRequested(newObj)

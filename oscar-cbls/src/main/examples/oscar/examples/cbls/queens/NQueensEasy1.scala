@@ -23,53 +23,36 @@ package oscar.examples.cbls.queens
 import oscar.cbls.invariants.core.computation.CBLSIntVar
 import oscar.cbls.modeling._
 
-/**
- * Local Search for NQueens
- * Moves are operated by swapping variables
- *
+import scala.util.Random
+
+/** Local Search for NQueens
+ *  Moves are operated by swapping variables, using a standard neighborhood
  */
 object NQueensEasy1 extends CBLSModel with App{
-  startWatch()
 
   val N = 20
-  val range = 0 to N-1
-  println("NQueens(" + N + ")")
 
-  val rand = new scala.util.Random()
+  println("NQueenEasy(" + N + ")")
+  val range:Range = Range(0,N)
 
-  // initial solution
-  val init = rand.shuffle((0 to N-1).toList).toArray
+  val init = Random.shuffle(range.toList).iterator
+  val queens = Array.tabulate(N)((q:Int) => CBLSIntVar(0 to N-1,init.next(), "queen" + q))
 
-  val queens = Array.tabulate(N)(q => CBLSIntVar(0 to N-1,init(q),"queen" + q))
+  //c.post(AllDiff(Queens)) //enforced because we swap queens and they are always allDiff
+  post(allDiff(for (q <- range) yield (queens(q) + q).toIntVar))
+  post(allDiff(for (q <- range) yield (q - queens(q)).toIntVar))
 
-  //alldiff on rows in enforced because we swap queens initially different
-  add(allDifferent(Array.tabulate(N)(q => (queens(q) + q).toIntVar)))
-  add(allDifferent(Array.tabulate(N)(q => (q - queens(q)).toIntVar)))
+  val maxViolQueens = argMax(violations(queens)).toSetVar("most violated queens")
 
   close()
 
-  //this tabu search is a bit simplistic: does not use the invariants for maintaining Tabu...
-  //and max violated queens might be all tabu
+  val neighborhood =
+    swapsNeighborhood(queens, "SwapQueens",
+      searchZone2 = maxViolQueens, //much faster than using searchZone1, since hotRestart is on Zone1, and not on zone2, and would be log(n)
+      symmetryCanBeBrokenOnIndices = false) //since one search zone has been specified, and the other is the full range
 
-  var it = 0
-  val tabu = Array.fill(N)(0)
-  val tenure = 3
+  val it = neighborhood.doAllMoves(_ >= N || c.violation.value == 0, c.violation)
 
-  while(violation.value > 0){
-    selectMin(range,range)(
-      (p,q) => swapVal(queens(p),queens(q)),
-      (p,q) => tabu(p) < it && tabu(q) < it && p < q)
-    match{
-      case (q1,q2) =>
-        queens(q1) :=: queens(q2)
-        tabu(q1)= it + tenure
-        tabu(q2) = it + tenure
-      case _ => ;
-    }
-    it += 1
-  }
-
-  println(getWatchString)
-  println(it)
+  println("it: " + it)
   println(queens.mkString(","))
 }
