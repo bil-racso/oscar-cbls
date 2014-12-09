@@ -14,7 +14,7 @@
  ******************************************************************************/
 package oscar.cp.constraints;
 
-import oscar.algo.reversible.ReversibleBool;
+import oscar.algo.reversible.ReversibleBoolean;
 import oscar.algo.reversible.ReversibleInt;
 import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
@@ -32,7 +32,7 @@ public class AtLeastNValueFWC extends Constraint {
 	
 	private CPIntVar nValueVar;
 	
-	private ReversibleBool [] isValueUsed; //for each value if it is used or not
+	private ReversibleBoolean [] isValueUsed; //for each value if it is used or not
 	private ReversibleInt nbValueUsed; //number of value used
 	private ReversibleInt nbBound; //number of bound variables
 
@@ -54,9 +54,9 @@ public class AtLeastNValueFWC extends Constraint {
 	     findValueRange();
 
 	     //initialize trails and counters
-	     isValueUsed   = new ReversibleBool[valSize];
+	     isValueUsed   = new ReversibleBoolean[valSize];
 	     for (int v = 0; v < valSize; v++) {
-	    	 isValueUsed[v] = new ReversibleBool(s());
+	    	 isValueUsed[v] = new ReversibleBoolean(s());
 	    	 isValueUsed[v].setValue(false);
 	     }
 	     nbValueUsed = new ReversibleInt(s(), 0);

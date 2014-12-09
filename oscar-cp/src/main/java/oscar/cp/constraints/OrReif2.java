@@ -14,7 +14,7 @@
  ******************************************************************************/
 package oscar.cp.constraints;
 
-import oscar.algo.reversible.ReversibleBool;
+import oscar.algo.reversible.ReversibleBoolean;
 import oscar.algo.reversible.ReversibleInt;
 import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
@@ -33,7 +33,7 @@ public class OrReif2 extends Constraint {
 	private CPBoolVar y;
 	
 	ReversibleInt nbBound;
-	ReversibleBool ytrue;
+	ReversibleBoolean ytrue;
 	
 
 
@@ -56,7 +56,7 @@ public class OrReif2 extends Constraint {
 	        else return CPOutcome.Success;
 	    }
 		nbBound = new ReversibleInt(s(),0); // number of values assigned to false
-		ytrue = new ReversibleBool(s(),false);
+		ytrue = new ReversibleBoolean(s(),false);
 		for (int i = 0; i < x.length; i++) {
 			if (x[i].isTrue()) {
 				if (y.assign(1) == CPOutcome.Failure) {

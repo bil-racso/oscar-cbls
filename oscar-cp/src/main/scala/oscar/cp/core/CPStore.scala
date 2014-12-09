@@ -16,14 +16,13 @@
 package oscar.cp.core
 
 import java.util.{Collection, LinkedList}
-
 import oscar.algo.ArrayQueue
 import oscar.algo.reversible.Reversible
 import oscar.algo.search.SearchNode
 import oscar.cp.constraints.EqCons
 import oscar.cp.core.CPOutcome.{Failure, Success, Suspend}
-
 import scala.collection.JavaConversions.{asJavaCollection, collectionAsScalaIterable}
+import oscar.algo.reversible.ReversiblePointer
 
 /**
  * Constraint Programming CPStore
@@ -45,7 +44,7 @@ class CPStore( final val propagStrength: CPPropagStrength) extends SearchNode {
   private val cutConstraints = new ArrayQueue[Constraint](1) // usually empty
 
   // Status of the store (should be replaced by the failed reversible boolean of SearchNode)
-  private val status: Reversible[CPOutcome] = new Reversible[CPOutcome](this, Suspend)
+  private val status: ReversiblePointer[CPOutcome] = new ReversiblePointer[CPOutcome](this, Suspend)
 
   // Total time spent in the fixed point algorithm
   private var timeInFixedPoint: Long = 0

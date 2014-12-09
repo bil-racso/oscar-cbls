@@ -19,7 +19,7 @@ import oscar.cp.core._
 import oscar.cp.modeling._
 import java.util.{Arrays => JArrays}
 import oscar.algo.reversible.ReversibleInt
-import oscar.algo.reversible.ReversibleBool
+import oscar.algo.reversible.ReversibleBoolean
 import oscar.algo.SortUtils
 import org.scalatest.tagobjects.CPU
 
@@ -33,7 +33,7 @@ class UnaryRank(val starts: Array[CPIntVar], val durations: Array[CPIntVar], val
   val ranks = Array.fill(n)(CPIntVar(0 until n)(s))
   
   val rank = new ReversibleInt(s,0)
-  val isRanked = new ReversibleBool(s,false)
+  val isRanked = new ReversibleBoolean(s,false)
   // for each rank, the index of the activity in that rank
   val rankIndex = Array.fill(n)(new ReversibleInt(s,-1))
   

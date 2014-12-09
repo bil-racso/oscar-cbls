@@ -7,6 +7,7 @@ import oscar.cp.constraints.sets.Requires
 import oscar.cp.constraints.sets.Excludes
 import oscar.cp.constraints.SetCard
 import oscar.cp.core.domains.SetDomain
+import oscar.algo.reversible.ReversiblePointer
 
 /**
  * @author Pierre Schaus pschaus@gmail.com
@@ -16,12 +17,12 @@ class CPSetVar(override val store: CPStore, min: Int, max: Int, override val nam
 
   private val dom = new SetDomain(store, min, max)
 
-  val onDomainL2 = new Reversible[ConstraintQueue](store, null)
+  val onDomainL2 = new ReversiblePointer[ConstraintQueue](store, null)
 
-  val onRequiredL1 = new Reversible[PropagEventQueueVarSet](store, null)
-  val onExcludedL1 = new Reversible[PropagEventQueueVarSet](store, null)
-  val onRequiredIdxL1 = new Reversible[PropagEventQueueVarSet](store, null)
-  val onExcludedIdxL1 = new Reversible[PropagEventQueueVarSet](store, null)
+  val onRequiredL1 = new ReversiblePointer[PropagEventQueueVarSet](store, null)
+  val onExcludedL1 = new ReversiblePointer[PropagEventQueueVarSet](store, null)
+  val onRequiredIdxL1 = new ReversiblePointer[PropagEventQueueVarSet](store, null)
+  val onExcludedIdxL1 = new ReversiblePointer[PropagEventQueueVarSet](store, null)
 
   // cardinality variable
   val card = CPIntVar(0, max - min + 1)(store)
