@@ -1,25 +1,27 @@
 package oscar.algo.reversible
 
 /**
- * Generic Reversible inside a reversible node
+ * Abstract class for reversible data structure
  * @author Pierre Schaus  pschaus@gmail.com
  * @author Renaud Hartert ren.hartert@gmail.com
  */
-abstract class Reversible[T](val context: ReversibleContext) {
+abstract class Reversible {
   
-  private var lastMagic: Long = -1L
-
-  @inline protected final def trail(): Unit = {
+  private final var lastMagic: Long = -1L
+  
+  @inline final protected def trail(): Unit = {
     val contextMagic = context.magic
-    if (lastMagic != contextMagic) {   
+    if (lastMagic != contextMagic) {
       lastMagic = contextMagic
-      context.pushOnTrail(this, value)
+      context.trail(trailEntry)
     }
   }
   
-  /** Return the current value of the reversible */
-  def value: T
+  def context: ReversibleContext
   
-  /** Restores the state of the object */
-  def restore(value: T): Unit  
+  def trailEntry: TrailEntry
+}
+
+abstract class TrailEntry { 
+  def restore(): Unit
 }

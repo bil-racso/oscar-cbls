@@ -39,5 +39,4 @@ class ReversibleDouble(node: ReversibleContext, value: Double) extends Reversibl
 
 object ReversibleDouble {
   def apply(value: Double)(implicit context: ReversibleContext) = new ReversibleDouble(context, value)
-  implicit def reversibleDouble2Double(rd: ReversibleDouble): Double = rd.getValue
 }

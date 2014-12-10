@@ -23,37 +23,40 @@ import oscar.des.engine._
  * @author pschaus
  */
 class Machine1(m : Model, name: String) extends Process(m,name) {
-	
-	val liveDur = new scala.util.Random(0)
-	val breakDur = new scala.util.Random(0)
-	
-	def beAlive() {
-		println(name+" is alive");
-		m.wait (liveDur.nextInt(10).max(0).toDouble) {
-			beBroken()
-		}
-	}
-	
-	def beBroken() {
-		println(name+" is broken");
-		m.wait(breakDur.nextInt(2).max(0).toDouble) {
-			beAlive()
-		}
-	}
-	
-	def run() {
-		beAlive()
-	}
-	
+  
+  val liveDur = new scala.util.Random()
+  val breakDur = new scala.util.Random()
+  
+  def beAlive() {
+    println(name+" is alive")
+    val aliveDur = 5+liveDur.nextInt(5)
+    m.wait (aliveDur.toDouble) {
+      beBroken()
+    }
+  }
+  
+  def beBroken() {
+    println(name+" is broken at time "+m.clock())
+    val repairDur = 5+breakDur.nextInt(10)
+    m.wait(repairDur.toDouble) {
+      beAlive()
+    }
+  }
+  
+  def run() {
+    beAlive()
+  }
+  
 }
 
 object Machine1 {
-	def main(args: Array[String]) {
-  		val mod = new Model()
-		val m1 = new Machine1(mod,"machine1")
-		m1.run()
-		val m2 = new Machine1(mod,"machine2")
-		m2.run()
-		mod.simulate(100,true);
-	}
+  def main(args: Array[String]) {
+    val mod = new Model()
+    val m1 = new Machine1(mod,"machine1")
+    m1.run()
+    val m2 = new Machine1(mod,"machine2")
+    m2.run()
+    println("simulate---")
+    mod.simulate(100,true);
+  }
 }

@@ -23,47 +23,51 @@ import oscar.des.engine._
  * so one of the machines must wait if the two machines are broken at the same time
  *  @author pschaus
  */
-class Machine2(m : Model, name: String) extends Process(m,name) {
-	
-	val liveDur = new scala.util.Random(0)
-	val repairDur = new scala.util.Random(0)
-	val repairPerson = new UnaryResource(m)
-	
-	def beAlive() {
-		println(name+" is alive")
-		m.wait (liveDur.nextInt(10).max(0)) {
-			beBroken()
-		}
-	}
-	
-	def beBroken() {
-		println(name+" is broken waiting to be repaired")
-		m.request(repairPerson) {
-			beRepaired()
-		}
-	}
-	
-	def beRepaired() {
-		println(name+" being repaired")
-		m.wait(repairDur.nextInt(3).max(0)) {
-			m.release(repairPerson)
-			beAlive()
-		}
-	}		
-	
-	def run() {
-		beAlive()
-	}
-	
+class Machine2(m : Model, name: String, val repairPerson: UnaryResource) extends Process(m,name) {
+  
+  val liveDur = new scala.util.Random()
+  val repairDur = new scala.util.Random()
+  
+  def beAlive() {
+    println(name+" is alive")
+    val aliveDur = 5+liveDur.nextInt(20)
+    m.wait (aliveDur) {
+      beBroken()
+    }
+  }
+  
+  def beBroken() {
+    println(name+" is broken waiting to be repaired at time "+m.clock())
+    
+    m.request(repairPerson) {
+      beRepaired()
+    }
+  }
+  
+  def beRepaired() {
+    val brokenDur = 2+repairDur.nextInt(5)
+    println(name+" reparation starts at time "+m.clock()+" duration of reparation="+brokenDur)
+    m.wait(brokenDur) {
+      println(name+" releases the machine at time "+m.clock())
+      m.release(repairPerson)
+      beAlive()
+    }
+  }   
+  
+  def run() {
+    beAlive()
+  }
+  
 }
 
 object Machine2 {
-	def main(args: Array[String]) {
-  		val mod = new Model()
-		val m1 = new Machine2(mod,"machine1")
-		m1.run()
-		val m2 = new Machine2(mod,"machine2")
-		m2.run()
-		mod.simulate(100,true)
-	}
+  def main(args: Array[String]) {
+    val mod = new Model()
+    val repairPerson = new UnaryResource(mod)
+    val m1 = new Machine2(mod,"machine1",repairPerson)
+    m1.run()
+    val m2 = new Machine2(mod,"machine2",repairPerson)
+    m2.run()
+    mod.simulate(1000,true)
+  }
 }

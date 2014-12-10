@@ -1,12 +1,13 @@
 package oscar.cp.core
 
 import oscar.algo.reversible.ReversibleQueue
-import oscar.algo.reversible.ReversiblePointer
+import oscar.algo.reversible.Reversible
 import oscar.cp.core.CPOutcome._
 import oscar.cp.constraints.sets.Requires
 import oscar.cp.constraints.sets.Excludes
 import oscar.cp.constraints.SetCard
 import oscar.cp.core.domains.SetDomain
+import oscar.algo.reversible.ReversiblePointer
 
 /**
  * @author Pierre Schaus pschaus@gmail.com

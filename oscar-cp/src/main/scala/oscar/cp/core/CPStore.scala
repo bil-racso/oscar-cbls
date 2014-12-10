@@ -16,14 +16,13 @@
 package oscar.cp.core
 
 import java.util.{Collection, LinkedList}
-
 import oscar.algo.ArrayQueue
-import oscar.algo.reversible.ReversiblePointer
+import oscar.algo.reversible.Reversible
 import oscar.algo.search.SearchNode
 import oscar.cp.constraints.EqCons
 import oscar.cp.core.CPOutcome.{Failure, Success, Suspend}
-
 import scala.collection.JavaConversions.{asJavaCollection, collectionAsScalaIterable}
+import oscar.algo.reversible.ReversiblePointer
 
 /**
  * Constraint Programming CPStore
