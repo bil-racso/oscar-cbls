@@ -917,7 +917,7 @@ case class Atomic(a:Neighborhood, name:String = "Atomic", bound:Int = Int.MaxVal
  */
 class GeneralizedLocalSearch(a:Neighborhood, objectives:List[CBLSIntVar], resetOnExhaust:Boolean) extends Neighborhood {
 
-  var currentObjective:CBLSIntVar = null
+  var currentObjective:()=>Int = null
   var tailObjectives:List[CBLSIntVar] = objectives
   var currentSun:Neighborhood = null
 
@@ -926,7 +926,7 @@ class GeneralizedLocalSearch(a:Neighborhood, objectives:List[CBLSIntVar], resetO
       case h::t =>
         currentObjective = h
         tailObjectives = t
-        currentSun = if(resetOnExhaust) new ProtectBest(a,currentObjective) else a
+        currentSun = if(resetOnExhaust) new ProtectBest(a,h) else a
         true
       case _ =>
         currentObjective = null
@@ -938,7 +938,7 @@ class GeneralizedLocalSearch(a:Neighborhood, objectives:List[CBLSIntVar], resetO
 
   switchToNext()
 
-    /**
+  /**
    * the method that returns a move from the neighborhood.
    * The returned move should typically be accepted by the acceptance criterion over the objective function.
    * Some neighborhoods are actually jumps, so that they might violate this basic rule however.
