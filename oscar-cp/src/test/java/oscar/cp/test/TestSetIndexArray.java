@@ -60,7 +60,7 @@ public class TestSetIndexArray extends TestCase {
 
     
     public void test1(){
-    	SetIndexedArray set = new SetIndexedArray(0,10,true);
+    	SparseSet set = new SparseSet(0,10,true);
         assertTrue(set.getSize() == 0);
         for (int v: set) {
             assertTrue(false);

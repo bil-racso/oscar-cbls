@@ -50,7 +50,7 @@ public class TestMemberReif extends TestCase {
     }
 
     public void test0(){
-        SetIndexedArray set = new SetIndexedArray(0,10,true);
+        SparseSet set = new SparseSet(0,10,true);
         set.insert(1);
         set.insert(2);
         set.insert(4);
@@ -67,7 +67,7 @@ public class TestMemberReif extends TestCase {
     }
 
     public void test1(){
-        SetIndexedArray set = new SetIndexedArray(0,10,true);
+        SparseSet set = new SparseSet(0,10,true);
         set.insert(1);
         set.insert(2);
         set.insert(4);
@@ -84,7 +84,7 @@ public class TestMemberReif extends TestCase {
     }
 
     public void test2(){
-        SetIndexedArray set = new SetIndexedArray(0,10,true);
+        SparseSet set = new SparseSet(0,10,true);
         set.insert(1);
         set.insert(2);
         set.insert(4);
@@ -101,7 +101,7 @@ public class TestMemberReif extends TestCase {
     }
 
     public void test3(){
-        SetIndexedArray set = new SetIndexedArray(0,10,true);
+        SparseSet set = new SparseSet(0,10,true);
         set.insert(1);
         set.insert(2);
         set.insert(4);
@@ -118,7 +118,7 @@ public class TestMemberReif extends TestCase {
     }
 
     public void test4(){
-        SetIndexedArray set = new SetIndexedArray(0,10,true);
+        SparseSet set = new SparseSet(0,10,true);
         set.insert(1);
         set.insert(2);
         set.insert(3);
@@ -134,7 +134,7 @@ public class TestMemberReif extends TestCase {
     }
 
     public void test5(){
-        SetIndexedArray set = new SetIndexedArray(0,10,true);
+        SparseSet set = new SparseSet(0,10,true);
         set.insert(1);
         set.insert(2);
         set.insert(3);
@@ -150,7 +150,7 @@ public class TestMemberReif extends TestCase {
     }
 
     public void test6(){
-        SetIndexedArray set = new SetIndexedArray(0,10,true);
+        SparseSet set = new SparseSet(0,10,true);
         set.insert(1);
         set.insert(2);
         set.insert(3);
@@ -166,7 +166,7 @@ public class TestMemberReif extends TestCase {
     }
 
     public void test7(){
-        SetIndexedArray set = new SetIndexedArray(0,10,true);
+        SparseSet set = new SparseSet(0,10,true);
         set.insert(1);
         set.insert(2);
         set.insert(3);
