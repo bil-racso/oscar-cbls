@@ -443,13 +443,13 @@ abstract class Neighborhood{
   def overrideObjective(a:Neighborhood, overridingObjective:()=>Int) = new OverrideObjective(a, overridingObjective)
 
     /**
-     * This represents a generalized local search where a series of objective criterion are optimized one after the other
+     * This represents a guided local search where a series of objective criterion are optimized one after the other
      * the switching is performed on exhaustion, and a is reset on switching.
      * Notice that if you want to use different neighborhoods depending on the objective function, you should rather use a series of neighborhood with the objectiveFucntion combinator
      * @param objectives the list of objective to consider
      * @param resetOnExhaust  on exhaustion of the current objective, restores the best value for this objective before switching to the next objective
      */
-    def generalizedLocalSearch(a:Neighborhood, objectives:List[CBLSIntVar], resetOnExhaust:Boolean) = new GeneralizedLocalSearch(a, objectives, resetOnExhaust)
+    def guidedLocalSearch(a:Neighborhood, objectives:List[CBLSIntVar], resetOnExhaust:Boolean) = new GuidedLocalSearch(a, objectives, resetOnExhaust)
   }
 
 /** a neighborhood that never finds any move (quite useless, actually)

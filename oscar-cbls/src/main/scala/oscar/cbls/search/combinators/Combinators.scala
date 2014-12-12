@@ -908,14 +908,14 @@ case class Atomic(a:Neighborhood, name:String = "Atomic", bound:Int = Int.MaxVal
 }
 
 /**
- * This represents a generalized local search where a series of objective criterion are optimized one after the other
+ * This represents a guided local search where a series of objective criterion are optimized one after the other
  * the switching is performed on exhaustion, and a is reset on switching.
  * Notice that if you want to use different neighborhoods depending on the objective function, you should rather use a series of neighborhood with the objectiveFucntion combinator
  * @param a the neighborhood to consider
  * @param objectives the list of objective to consider
  * @param resetOnExhaust  on exhaustion of the current objective, restores the best value for this objective before switching to the next objective
  */
-class GeneralizedLocalSearch(a:Neighborhood, objectives:List[CBLSIntVar], resetOnExhaust:Boolean) extends Neighborhood {
+class GuidedLocalSearch(a:Neighborhood, objectives:List[CBLSIntVar], resetOnExhaust:Boolean) extends Neighborhood {
 
   var currentObjective:()=>Int = null
   var tailObjectives:List[CBLSIntVar] = objectives
