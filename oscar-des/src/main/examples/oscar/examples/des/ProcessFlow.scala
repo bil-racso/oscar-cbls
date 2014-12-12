@@ -93,3 +93,42 @@ object TestProcess extends App with HelperForProcess{
   println(orderPolicy)
   println(supplierforA)
 }
+
+
+object SimpleFactory extends App with HelperForProcess{
+
+  val m = new Model
+  val verbose = true
+
+  //a process that has two inputs, and one output (eg: soldering)
+  println("start simulate...")
+
+  val stockA = new Storage(100, 100, "stockA", verbose)
+  val stockB = new Storage(300, 300, "stockB", verbose)
+
+  val middleStock = new Storage(7, 0, "middleStock", verbose)
+
+  val trash = new OverflowStorage(5, 0, "trash", verbose)
+
+  val emptyingTrash = SingleBatchProcess(m, 23, List((3, trash)), List(), "emptyingTrash", verbose)
+
+  val soldering = BatchProcess(m, 2, 13, List((1, stockA),(2, stockB)), List((1, middleStock),(1, trash)), "soldering", verbose)
+
+  val outputStock = new Storage(50, 0, "outputStock", verbose)
+
+  val attaching = SingleBatchProcess(m, 11, List((3, middleStock),(1, stockA)), List((1, outputStock)), "attaching", verbose)
+
+  val delivering = SingleBatchProcess(m, 11, List((20, outputStock)), List(), "delivering", verbose)
+
+  m.simulate(10000, verbose)
+
+  println("done.")
+  println()
+  println(stockA)
+  println(stockB)
+  println(outputStock)
+  println(trash)
+  println(soldering)
+  println(attaching)
+  println(delivering)
+}
