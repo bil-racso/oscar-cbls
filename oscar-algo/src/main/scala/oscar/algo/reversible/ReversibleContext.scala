@@ -53,12 +53,21 @@ class ReversibleContext {
 
   /** Adds an action to execute when the `pop` function is called */
   def onPop(action: => Unit): Unit = popListeners.append(() => action)
-
-  def pushOnTrail[T](reversible: Reversible[T], value: T): Unit = {
-    val entry = new TrailEntryImpl[T](reversible, value)
+  
+  /** trail the entry such that its restore method is called on corresponding pop */
+  def trail(entry: TrailEntry): Unit = {
     trailStack.push(entry)
     val size = trailStack.size
     if (size > maxTrailSize) maxTrailSize = size
+  }
+  
+  /** trail the closure such that it is called on corresponding pop */
+  def trail(closure: => Any): Unit = {
+    trail(new TrailEntry {
+      def restore() {
+        closure
+      }
+    })
   }
 
   /** Stores the current state of the node on a stack */

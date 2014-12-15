@@ -30,7 +30,7 @@ import scala.io.Source
  *
  * @author Bertrand Cornelusse
  */
-object LandingLocation extends MIPModel with App {
+object LandingLocation extends MIPModelLPSolve with App {
 
   // ---------- Data of the Problem ----------
 

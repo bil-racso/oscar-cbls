@@ -20,6 +20,8 @@ import oscar.cp.search._
 import oscar.cp.scheduling.search.SetTimesBranching
 import oscar.algo.search.BranchingUtils
 import oscar.cp.core.CPSetVar
+import oscar.cp.scheduling.search.RankBranching
+import oscar.algo.search.Branching
 
 /**
  * @author Pierre Schaus pschaus@gmail.com
@@ -57,13 +59,6 @@ trait Branchings extends BranchingUtils {
    */
   def binarySplit(x: Seq[CPIntVar], varHeuris: (CPIntVar => Int) = minVar, valHeuris: (CPIntVar => Int) = (x: CPIntVar) => (x.min + x.max) / 2) = new BinaryDomainSplitBranching(x.toArray, varHeuris, valHeuris)
   
-
-  /**
-   * set times heuristic: 
-   * see: Time- versus-capacity compromises in project scheduling. (Le Pape et al.). 1994. 
-   */  
-  def setTimes(starts: IndexedSeq[CPIntVar], durations: IndexedSeq[CPIntVar], ends: IndexedSeq[CPIntVar], tieBreaker: Int => Int = (i: Int) => i) = new SetTimesBranching(starts,durations, ends, tieBreaker) 
-  
   /**
    * Binary Search on the set variable
    * forcing an arbitrary on the left, and removing it on the right until the variable is bound
@@ -71,6 +66,23 @@ trait Branchings extends BranchingUtils {
   def binary(x: CPSetVar) = {
     new BinarySetBranching(x)
   }
+  
+  /**
+   * set times heuristic (for discrete resources) 
+   * see: Time- versus-capacity compromises in project scheduling. (Le Pape et al.). 1994. 
+   */  
+  def setTimes(starts: IndexedSeq[CPIntVar], durations: IndexedSeq[CPIntVar], ends: IndexedSeq[CPIntVar], tieBreaker: Int => Int = (i: Int) => i) = new SetTimesBranching(starts,durations, ends, tieBreaker) 
+  
+  /**
+   * rank heuristic (for unary resources)
+   */  
+  def rank[T](starts: IndexedSeq[CPIntVar], durations: IndexedSeq[CPIntVar], ends: IndexedSeq[CPIntVar], by: Int => T)(implicit orderer: T => Ordered[T]): Branching = new RankBranching(starts,durations, ends, by) 
+  
+  def rank[T](starts: IndexedSeq[CPIntVar], durations: IndexedSeq[CPIntVar], ends: IndexedSeq[CPIntVar]): Branching = {
+    rank(starts,durations,ends,(i: Int) => ends(i).max)
+  }
+  
+
   
   
 

@@ -24,7 +24,7 @@ import oscar.algebra._
  *  to the same constant. A normal magic square contains the integers
  *  from 1 to n^2.
  */
-object MagicSquare extends MIPModel(LPSolverLib.glpk) with App {
+object MagicSquare extends MIPModelGLPK with App {
 
   val n = 4
 

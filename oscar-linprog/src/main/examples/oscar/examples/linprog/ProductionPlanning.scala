@@ -27,7 +27,7 @@ import oscar.algebra._
  * The objective is to maximize the total profit, while satisfying capacity constraints.
  * @author pschaus@gmail.com
  */
-object ProductionPlanning extends LPModel with App {
+object ProductionPlanning extends LPModelLPSolve with App {
 
   val b = Array(18209, 7692, 1333, 924, 26638, 61188, 13360) // Dimensions
   val c = Array(96, 76, 56, 11, 86, 10, 66, 86, 83, 12, 9, 81) // Products

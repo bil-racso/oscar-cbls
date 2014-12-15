@@ -24,7 +24,7 @@ import oscar.algebra._
  * fixed capacity in a way that minimizes the number of bins used.
  * @author gme
  */
-object BinPacking1D extends MIPModel(LPSolverLib.glpk) with App {
+object BinPacking1D extends MIPModelGLPK with App {
 
   // maximal number of available bins
   val nBins = 50

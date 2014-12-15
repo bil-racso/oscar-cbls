@@ -15,18 +15,26 @@
 package oscar.algo.reversible;
 
 /**
- * Reversible Boolean
+ * Reversible Set
  * @author Pierre Schaus pschaus@gmail.com
  */
-class ReversibleBool(node: ReversibleContext, value: Boolean) extends ReversiblePointer[Boolean](node, value) {
+class ReversibleSet(context: ReversibleContext) extends Iterable[Int] {
+  
+  private val set = scala.collection.mutable.Set[Int]()
 
-  /**
-   * Creates a reversible Boolean initialized to true
-   * @param node
-   */
-  def this(node: ReversibleContext) = this(node, true)
-}
-
-object ReversibleBool {
-  implicit def revBool2Bool(rb: ReversibleBool): Boolean = rb.getValue
+  def add(v: Int) = {
+    context.trail {
+     set.remove(v) 
+    }
+    set.add(v)
+  }
+  
+  def remove(v: Int) = {
+    context.trail {
+     set.add(v) 
+    }
+    set.remove(v)
+  }  
+  
+  def iterator: Iterator[Int] = set.iterator
 }

@@ -25,7 +25,7 @@ import java.awt.Color
  * http://orbythebeach.wordpress.com/2011/02/04/transporting-flowers-with-love/
  * @author Alastair Andrew alastair.andrew@gmail.com
  */
-object Valentines extends LPModel with App {
+object Valentines extends LPModelLPSolve with App {
 	
   // The Problem Data
   val Florists = 8 // No. of Flower Shops

@@ -16,14 +16,13 @@
 package oscar.cp.core
 
 import java.util.{Collection, LinkedList}
-
 import oscar.algo.ArrayQueue
-import oscar.algo.reversible.ReversiblePointer
+import oscar.algo.reversible.Reversible
 import oscar.algo.search.SearchNode
 import oscar.cp.constraints.EqCons
 import oscar.cp.core.CPOutcome.{Failure, Success, Suspend}
-
 import scala.collection.JavaConversions.{asJavaCollection, collectionAsScalaIterable}
+import oscar.algo.reversible.ReversiblePointer
 
 /**
  * Constraint Programming CPStore
@@ -449,12 +448,6 @@ class CPStore( final val propagStrength: CPPropagStrength) extends SearchNode {
   def post(constraints: Collection[Constraint], st: CPPropagStrength): CPOutcome = post(constraints.map(x => x.asInstanceOf[Constraint]).toArray, st)
 
   def post(constraints: Collection[Constraint]): CPOutcome = post(constraints.map(x => x.asInstanceOf[Constraint]), propagStrength)
-
-  // Should only be used with Exception based constraints
-  def doAndPropagate(action: => Unit): Unit = {
-    try { action; propagate() }
-    catch { case i: Inconsistency => status.value = Failure }
-  }
 
   def assign(x: CPIntVar, v: Int): CPOutcome = {
     if (status.value == Failure) Failure

@@ -17,7 +17,7 @@ package oscar.cp.constraints;
 import java.util.Arrays;
 import java.util.Comparator;
 
-import oscar.algo.reversible.ReversibleBool;
+import oscar.algo.reversible.ReversibleBoolean;
 import oscar.algo.reversible.ReversibleInt;
 import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
@@ -339,7 +339,7 @@ class LightBinaryKnapsack extends Constraint {
 	int [] w;
 	CPIntVar c;
 
-	ReversibleBool []  candidate; // index of items 0-1 (we dont't know if they are packed)
+	ReversibleBoolean []  candidate; // index of items 0-1 (we dont't know if they are packed)
 	ReversibleInt  psum;     // possible sum: sum of weight of items with dom x = {0,1}
 	ReversibleInt  rsum;     // required cap: sum of weight of required items with x=1 (packed for sure in the knapsack)
 
@@ -373,9 +373,9 @@ class LightBinaryKnapsack extends Constraint {
 	@Override
 	public CPOutcome setup(CPPropagStrength l) {
 		
-		candidate = new ReversibleBool[x.length];
+		candidate = new ReversibleBoolean[x.length];
 		for (int i = 0; i < candidate.length; i++) {
-			candidate[i] = new ReversibleBool(s());
+			candidate[i] = new ReversibleBoolean(s());
 			candidate[i].setValue(true);
 		}
 		

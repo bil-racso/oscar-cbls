@@ -65,14 +65,22 @@ object SortUtils {
 	 */
 	final def mergeSort(elements: Array[Int], keys: Array[Int], base: Int, topExcluded: Int): Unit = {
 	  val n = elements.length
+	  val runs = new Array[Int](n+1)
+    val aux = new Array[Int](n)
+    
+	  mergeSort(elements, keys, base, topExcluded, runs, aux)
+	}
+
 	  
+	final def mergeSort(elements: Array[Int], keys: Array[Int], base: Int, topExcluded: Int, runs: Array[Int], aux: Array[Int]): Unit = {
+	  val n = elements.length
 	  assert(base >= 0)
 	  assert(topExcluded <= n)
 	  assert(elements slice(base, topExcluded) forall { e => e >= 0 && e < keys.length },
 	         "mergeSort input error: elements whose index are in [base, topExcluded) have to be in [0, keys.length)")
-	  
-	  val runs = new Array[Int](n+1)
-	  
+	  assert(runs.length >= n + 1)
+	  assert(aux.length >= n)
+	         
 	  if (topExcluded - base > 1) {
   	  // runs holds the size of successive increasing runs, initialize it
 	    var el = base
@@ -82,7 +90,7 @@ object SortUtils {
 	    do {
 	      // invariant: there must be a nonempty increasing run: find its size and stack it in runs
 	      el += 1
-	      while(el < topExcluded && keys(elements(el-1)) < keys(elements(el))) {
+	      while(el < topExcluded && keys(elements(el-1)) <= keys(elements(el))) {
 	        rSize += 1
 	        el += 1
 	      }
@@ -90,11 +98,11 @@ object SortUtils {
 	      rSize = 1
 	      rP += 1
 	    } while(el < topExcluded)
+	    runs(rP) = 0
 	      
 	    // println(runs.mkString(", "))
 	    
 	    if (rP > 1) {
-	      val aux = new Array[Int](n)
 	      val whichArray = mergeSort1(elements, aux, keys, runs, rP + 1, base, 0)
 	      if (whichArray == 1) System.arraycopy(aux, base, elements, base, topExcluded - base)
 	    }

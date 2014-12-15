@@ -1,4 +1,5 @@
-/*******************************************************************************
+/**
+ * *****************************************************************************
  * OscaR is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
@@ -11,7 +12,8 @@
  *
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
- *******************************************************************************/
+ * *****************************************************************************
+ */
 package oscar.cp
 
 import scala.collection.IterableLike
@@ -92,7 +94,6 @@ package object modeling extends Constraints with Branchings {
 
   //implicit def convertSeqVars2ArrayVars[T <: CPIntVar](x: scala.collection.immutable.IndexedSeq[T]) : Array[T]= x.toArray
 
-
   implicit def arrayVar2IterableVarOps(s: Array[CPIntVar]) = new IterableVarOps(s)
   implicit class IterableVarOps(val seq: Iterable[CPIntVar]) extends AnyVal {
 
@@ -104,7 +105,7 @@ package object modeling extends Constraints with Branchings {
       val res: Option[(CPIntVar, Int)] = selectMin(seq.zipWithIndex)(x => !x._1.isBound)(y => (y._1.size, y._2))
       res match {
         case Some((x, i)) => x
-        case None => throw new java.util.NoSuchElementException("no unbound var")
+        case None         => throw new java.util.NoSuchElementException("no unbound var")
       }
     }
 
@@ -113,48 +114,39 @@ package object modeling extends Constraints with Branchings {
       val res: Option[CPIntVar] = selectMin(seq)(_.isBound)(-_.value)
       res match {
         case Some(x) => x.value
-        case None => v
+        case None    => v
       }
     }
   }
 
   implicit class RichCPIntVar(x: CPIntVar) {
 
-    /**
-     * -x
-     */
+    /** -x */
     def unary_-() = new CPIntVarViewMinus(x)
-    /**
-     * x+y
-     */
-    def +(y: CPIntVar) = plus(x,y)
-    /**
-     * x-y
-     */
-    def -(y: CPIntVar) = minus(x,y)
-    /**
-     * x+y
-     */
-    def +(y: Int) = plus(x,y)
-    /**
-     * x-y
-     */
-    def -(y: Int) = minus(x,y)
 
-    def +(s: String) = s"$x$s"    
-    
-    /**
-     * x*y
-     */
+    /** x+y */
+    def +(y: CPIntVar) = plus(x, y)
+
+    /** x-y */
+    def -(y: CPIntVar) = minus(x, y)
+
+    /** x+y */
+    def +(y: Int) = plus(x, y)
+
+    /** x-y */
+    def -(y: Int) = minus(x, y)
+
+    def +(s: String) = s"$x$s"
+
+    /** x*y */
     def *(y: CPIntVar): CPIntVar = {
       if (y.isBound) x * (y.value)
-      else mul(x,y)
+      else mul(x, y)
     }
-    /**
-     * x*y
-     */
-    def *(y: Int): CPIntVar = mul(x,y)
-    
+
+    /** x*y */
+    def *(y: Int): CPIntVar = mul(x, y)
+
     def abs = oscar.cp.modeling.absolute(x)
 
     /**
@@ -168,10 +160,8 @@ package object modeling extends Constraints with Branchings {
       assert(ok != CPOutcome.Failure);
       b
     }
-    
-
   }
-  
+
   implicit class RichCPIntervalVar(x: CPIntervalVar) {
 
     /**
@@ -181,35 +171,21 @@ package object modeling extends Constraints with Branchings {
     /**
      * x+y
      */
-    def +(y: CPIntVar) = plus(x,y)
+    def +(y: CPIntVar) = plus(x, y)
     /**
      * x-y
      */
-    def -(y: CPIntVar) = minus(x,y)
+    def -(y: CPIntVar) = minus(x, y)
     /**
      * x+y
      */
-    def +(y: Int) = plus(x,y)
+    def +(y: Int) = plus(x, y)
     /**
      * x-y
      */
-    def -(y: Int) = minus(x,y)
+    def -(y: Int) = minus(x, y)
 
     def +(s: String) = s"$x$s"
-
-    /**
-     * x*y
-     */
-    //def *(y: CPIntVar): CPIntVar = {
-    //if (y.isBound) x * (y.value)
-    //else mul(x,y)
-    //}
-    /**
-     * x*y
-     */
-    //def *(y: Int): CPIntVar = mul(x,y)
-
-    //def abs = oscar.cp.modeling.absolute(x)
 
     /**
      * Reified constraint
@@ -221,11 +197,8 @@ package object modeling extends Constraints with Branchings {
       val ok = x.store.post(new oscar.cp.constraints.EqReifIntervalVar(x, y, b));
       assert(ok != CPOutcome.Failure);
       b
-    }    
-
-  }  
-  
-
+    }
+  }
 
   //helper functions
 
@@ -252,36 +225,35 @@ package object modeling extends Constraints with Branchings {
   def minVal(x: CPIntVar): Int = x.min
   def maxVal(x: CPIntVar): Int = x.max
   def minValminVal(x: CPIntVar): (Int, Int) = (x.min, x.min)
-  
+
   def branchAssign(variable: CPIntVar, value: Int)(implicit solver: CPSolver): Seq[Alternative] = {
     branch { solver.post(variable == value) } { solver.post(variable != value) }
   }
 
   // helper functions to model with an implicit CPSolver
   def add(constraints: Iterable[_ <: Constraint])(implicit cp: CPSolver): Unit = cp.add(constraints)
-  
+
   def add(c: Constraint, propagStrengh: CPPropagStrength)(implicit cp: CPSolver): Unit = cp.add(c, propagStrengh)
   def add(c: Constraint)(implicit cp: CPSolver): Unit = cp.add(c)
-  
+
   def add(c: CPBoolVar)(implicit cp: CPSolver): Unit = cp.add(c)
-  
+
   def post(c: Constraint, propagStrengh: CPPropagStrength = Weak)(implicit cp: CPSolver): Unit = cp.post(c, propagStrengh)
   def post(c: Constraint)(implicit cp: CPSolver): Unit = cp.post(c)
-  
+
   def search(branching: Branching)(implicit cp: CPSolver): SearchNode = cp.search(branching)
   def search(block: => Seq[Alternative])(implicit cp: CPSolver): SearchNode = cp.search(block)
-  
+
   def minimize(obj: CPIntVar)(implicit cp: CPSolver): CPSolver = cp.minimize(obj)
   def maximize(obj: CPIntVar)(implicit cp: CPSolver): CPSolver = cp.maximize(obj)
-  
+
   def onSolution(block: => Unit)(implicit cp: CPSolver): SearchNode = cp.onSolution(block)
   def onSolutionWithStats(block: SearchStatistics => Unit)(implicit cp: CPSolver): SearchNode = cp.onSolutionWithStats(block)
-  
-  
+
   def start(nSols: Int = Int.MaxValue, failureLimit: Int = Int.MaxValue, timeLimit: Int = Int.MaxValue, maxDiscrepancy: Int = Int.MaxValue)(implicit cp: CPSolver): SearchStatistics = {
     cp.start(nSols, failureLimit, timeLimit, maxDiscrepancy)
   }
-  
+
   def startSubjectTo(nSols: Int = Int.MaxValue, failureLimit: Int = Int.MaxValue, timeLimit: Int = Int.MaxValue, maxDiscrepancy: Int = Int.MaxValue)(reversibleBlock: => Unit = {})(implicit cp: CPSolver): SearchStatistics = {
     cp.startSubjectTo(nSols, failureLimit, timeLimit, maxDiscrepancy)(reversibleBlock)
   }

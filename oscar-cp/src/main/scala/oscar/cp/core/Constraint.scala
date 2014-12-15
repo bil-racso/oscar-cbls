@@ -15,7 +15,7 @@
 
 package oscar.cp.core
 
-import oscar.algo.reversible.ReversibleBool
+import oscar.algo.reversible.ReversibleBoolean
 import oscar.cp.constraints.Garded
 import scala.collection.mutable.ArrayBuffer
 import oscar.algo.reversible.MagicBoolean
@@ -51,7 +51,7 @@ class SnapshotVarSet(x: CPSetVar) extends Snapshot {
  */
 abstract class Constraint(val s: CPStore, val name: String = "cons") {
 
-  private final val active = new ReversibleBool(s,true)
+  private final val active = new ReversibleBoolean(s,true)
   private final val inQueue = new MagicBoolean(s, false)
 
   val snapshotsVarInt = scala.collection.mutable.Map[CPIntVar, SnapshotVarInt]() 

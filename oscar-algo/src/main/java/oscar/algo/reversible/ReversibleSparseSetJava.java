@@ -22,7 +22,7 @@ import java.util.Arrays;
 /**
  * @author Pierre Schaus pschaus@gmail.com
  */
-public class ReversibleSetIndexedArray extends AbstractSetIndexedArray implements ReversibleSet {
+public class ReversibleSparseSetJava extends AbstractSparseSet {
 	
 
 	private ReversibleInt size;
@@ -37,7 +37,7 @@ public class ReversibleSetIndexedArray extends AbstractSetIndexedArray implement
 	 * @param min
 	 * @param max >= min
 	 */
-	public ReversibleSetIndexedArray(ReversibleContext s, int min, int max) {
+	public ReversibleSparseSetJava(ReversibleContext s, int min, int max) {
 		this(s,min,max,false);
 	}
 	
@@ -47,7 +47,7 @@ public class ReversibleSetIndexedArray extends AbstractSetIndexedArray implement
 	 * @param min
 	 * @param max >= min
 	 */
-	public ReversibleSetIndexedArray(ReversibleContext s, int min, int max, boolean empty) {
+	public ReversibleSparseSetJava(ReversibleContext s, int min, int max, boolean empty) {
 		this.s = s;
 		initIndexes(min, max, empty);
 	}

@@ -12,37 +12,58 @@
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
-package oscar.examples.linprog
+package oscar.algo.reversible;
 
+public class SparseSet extends AbstractSparseSet {
 
-import oscar.linprog.modeling._
-import oscar.algebra._
+	public SparseSet(int min, int max) {
+		this(min, max, false);
+	}
+	
+	public SparseSet(int min, int max, boolean empty) {
+		initIndexes(min, max, empty);
+	}
 
-object BasicMIP extends MIPModelGurobi with App  {
-
-  val x0 = MIPFloatVar("x0", 0.0, 40.0)
-  val x1 = MIPIntVar("x1", 0 to 1000)
-  val x2 = MIPIntVar("x2", 0 until 18)
-  val x3 = MIPFloatVar("x3", 2.0, 3.0)
-
-  maximize(x0 + 2 * x1 + 3 * x2 + x3)
-
-  add(-1 * x0 + x1 + x2 + 10 * x3 <= 20)
-  add(x0 - 3.0 * x1 + x2 <= 30)
-  add(x1 - 3.5 * x3 == 0)
-  
-  
-  
-  start()
-  
-  x2.branchPriority()
-  
-  println("objective: " + objectiveValue)
-  println("x0= " + x0.value + " " + x1.value)
-  println("x1= " + x1.value)
-  println("x2= " + x2.value)
-  println("x3= " + x3.value)
-
-  release()
-
+	private int size;
+	private int maxV;
+	private int minV;
+	
+	@Override
+	protected void createSizeMinMax() {
+		size = 0;
+		maxV = 0;
+		minV = 0;	
+	}
+	
+	@Override
+	protected void setSize(int size) {
+		this.size = size;
+		
+	}
+	
+	@Override
+	protected void setMin(int min) {
+		this.minV = min;
+	}
+	
+	@Override
+	protected void setMax(int max) {
+		this.maxV = max;
+	}
+	
+	@Override
+	public int getSize() {
+		return size;
+	}
+	
+	@Override
+	public int getMin() {
+		return minV;
+	}
+	
+	@Override
+	public int getMax() {
+		return maxV;
+	}
+	
 }

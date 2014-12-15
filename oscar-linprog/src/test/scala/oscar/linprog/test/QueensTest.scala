@@ -32,7 +32,7 @@ class QueensTest extends FunSuite with ShouldMatchers {
       val n = 8
       val Lines = 0 until n
       val Columns = 0 until n
-      implicit val mip = MIPSolver(lib)
+      implicit val mip = instantiateMIPSolver(lib)
       
       mip.name = "Queens Test"
       

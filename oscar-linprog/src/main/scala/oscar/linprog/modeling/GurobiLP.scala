@@ -174,6 +174,11 @@ class GurobiLP extends AbstractLP {
     model.getVar(colId).set(GRB.CharAttr.VType, GRB.BINARY)
   }
   
+  def branchPriority(colId: Int) = {
+    model.getVar(colId).get(GRB.IntAttr.BranchPriority)
+  }
+  
+  
   override def setTimeout(t: Int) {
     require(0 <= t)
     model.getEnv().set(GRB.DoubleParam.TimeLimit, t.toDouble)
@@ -241,11 +246,11 @@ class GurobiLP extends AbstractLP {
     }
   }
 
-  override def addAllConstraints(cons: scala.collection.Map[Int, LPConstraint]) = {
+  override def addAllConstraints(cons: Seq[LPConstraint]) = {
 
     val vars = model.getVars
-    val allCons = cons.values.toArray.sortWith(_.index < _.index)
-
+    //val allCons = cons.values.toArray.sortWith(_.index < _.index)
+    val allCons = cons.toArray
     model.addConstrs(
       allCons map (c => toGRBLinExpr(c.coef, c.varIds, vars)),
       allCons map (c => toSenses(c.cstr.consType)),
@@ -260,10 +265,8 @@ class GurobiLP extends AbstractLP {
     val orderedVars: Array[GRBVar] = vars map (x => varsGrb(x.index))
     val ub = vars map (_.ub)
     val lb = vars map (_.lb)
-
     model.set(GRB.DoubleAttr.UB, orderedVars, ub)
     model.set(GRB.DoubleAttr.LB, orderedVars, lb)
-
     // surprisingly this does not work 
     // model.set(GRB.CharAttr.VType, orderedVars, vars map (x => if(x.isInteger)'I' else 'C'))
     // or this   model.set(GRB.CharAttr.VType, orderedVars, vars map (x => if(x.isInteger)GRB.INTEGER else GRB.CONTINUOUS))

@@ -12,58 +12,46 @@
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
-package oscar.algo.reversible;
+package oscar.algo.reversible.test
 
-public class SetIndexedArray extends AbstractSetIndexedArray {
 
-	public SetIndexedArray(int min, int max) {
-		this(min, max, false);
-	}
-	
-	public SetIndexedArray(int min, int max, boolean empty) {
-		initIndexes(min, max, empty);
-	}
+import org.scalatest.FunSuite
+import oscar.algo.search._
+import oscar.algo.reversible._
+import scala.collection.JavaConversions._
 
-	private int size;
-	private int maxV;
-	private int minV;
-	
-	@Override
-	protected void createSizeMinMax() {
-		size = 0;
-		maxV = 0;
-		minV = 0;	
-	}
-	
-	@Override
-	protected void setSize(int size) {
-		this.size = size;
-		
-	}
-	
-	@Override
-	protected void setMin(int min) {
-		this.minV = min;
-	}
-	
-	@Override
-	protected void setMax(int max) {
-		this.maxV = max;
-	}
-	
-	@Override
-	public int getSize() {
-		return size;
-	}
-	
-	@Override
-	public int getMin() {
-		return minV;
-	}
-	
-	@Override
-	public int getMax() {
-		return maxV;
-	}
-	
+/**
+ * @author Pierre Schaus pschaus@gmail.com
+ */
+class ReversibleSetTest extends FunSuite {
+
+  test("test reversible set 1") {
+
+    val rc = new ReversibleContext()
+
+    val s = new ReversibleSet(rc)
+    s.add(5)
+    s.add(6)
+    s.add(7)
+    // {5,6,7}
+    assert(s.toSet == Set(5, 6, 7))
+    rc.pushState()
+    s.add(8)
+    s.remove(5)
+    s.remove(5)
+    s.add(8)
+    s.add(9)
+    s.add(10)
+    s.remove(9)
+    s.remove(9)
+    // {6,7,8,10}
+    assert(s.toSet == Set(6, 7, 8, 10))
+    rc.pop()
+    // {5,6,7}
+    assert(s.toSet == Set(5, 6, 7))
+
+  }
+  
+
 }
+
