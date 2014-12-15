@@ -449,7 +449,7 @@ abstract class Neighborhood{
      * @param objectives the list of objective to consider
      * @param resetOnExhaust  on exhaustion of the current objective, restores the best value for this objective before switching to the next objective
      */
-    def guidedLocalSearch(a:Neighborhood, objectives:List[CBLSIntVar], resetOnExhaust:Boolean) = new GuidedLocalSearch(a, objectives, resetOnExhaust)
+    def guidedLocalSearch(a:Neighborhood, objectives:List[Objective], resetOnExhaust:Boolean) = new GuidedLocalSearch(a, objectives, resetOnExhaust)
   }
 
 /** a neighborhood that never finds any move (quite useless, actually)
@@ -471,7 +471,8 @@ case class ConstantMoveNeighborhood(m:Move) extends Neighborhood{
  * and the management of the acceptingCriterion.
  *
  * to implement a neighborhood, you must implement the method searchImprovingMoveEasy
- * in this method, you evaluate moves, and to notify that a move has been explored you have two possibilities:
+ * in this method, you evaluate moves, and to notify that a move has been
+ * explored you have two possibilities:
  *
  * either you do
  * {{{

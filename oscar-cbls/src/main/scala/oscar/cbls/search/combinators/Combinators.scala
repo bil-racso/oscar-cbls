@@ -17,6 +17,7 @@
 package oscar.cbls.search.combinators
 
 import oscar.cbls.invariants.core.computation.{ CBLSSetVar, CBLSIntVar, Solution, Store }
+import oscar.cbls.objective.Objective
 import oscar.cbls.search.core.NoMoveFound
 import oscar.cbls.search.core._
 import oscar.cbls.search.move.{CallBackMove, CompositeMove, InstrumentedMove, Move}
@@ -915,10 +916,10 @@ case class Atomic(a:Neighborhood, name:String = "Atomic", bound:Int = Int.MaxVal
  * @param objectives the list of objective to consider
  * @param resetOnExhaust  on exhaustion of the current objective, restores the best value for this objective before switching to the next objective
  */
-class GuidedLocalSearch(a:Neighborhood, objectives:List[CBLSIntVar], resetOnExhaust:Boolean) extends Neighborhood {
+class GuidedLocalSearch(a:Neighborhood, objectives:List[Objective], resetOnExhaust:Boolean) extends Neighborhood {
 
   var currentObjective:()=>Int = null
-  var tailObjectives:List[CBLSIntVar] = objectives
+  var tailObjectives:List[Objective] = objectives
   var currentSun:Neighborhood = null
 
   def switchToNext():Boolean = {
