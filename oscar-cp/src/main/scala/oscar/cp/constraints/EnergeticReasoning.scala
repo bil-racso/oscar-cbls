@@ -49,6 +49,9 @@ class EnergeticReasoning(starts: Array[CPIntVar], durations: Array[CPIntVar], en
   }
 
   override def propagate: CPOutcome = {
+
+    if(s.isFailed)
+      return Failure
     
     //cache
     var i = 0

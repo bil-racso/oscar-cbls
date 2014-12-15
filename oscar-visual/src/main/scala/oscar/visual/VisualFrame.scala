@@ -19,8 +19,6 @@ package oscar.visual;
 import java.awt.Dimension
 import java.awt.event._
 import javax.swing._
-import scala.swing.BoxPanel
-import scala.swing.Orientation
 import java.awt.Color
 import java.awt.Toolkit
 import java.awt.BorderLayout
