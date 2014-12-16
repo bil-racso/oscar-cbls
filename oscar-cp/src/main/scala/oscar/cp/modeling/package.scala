@@ -119,7 +119,17 @@ package object modeling extends Constraints with Branchings {
     }
   }
 
-  implicit class RichCPIntVar(x: CPIntVar) {
+  implicit class CPIntVarOps(val x: CPIntVar) extends AnyVal {
+
+    /**
+     * @return the unique value in the domain, None if variable is not bound
+     */
+    def value: Int = {
+      if (x.isBound) x.min
+      else throw new NoSuchElementException("the variable is not bound")
+    }
+
+    def getValue: Int = value
 
     /** -x */
     def unary_-() = new CPIntVarViewMinus(x)
@@ -150,42 +160,97 @@ package object modeling extends Constraints with Branchings {
     def abs = oscar.cp.modeling.absolute(x)
 
     /**
-     * Reified constraint
-     * @param y a variable
-     * @return a boolean variable b in the same store linked to x by the relation x == y <=> b == true
+     * b <=> x == v
      */
-    def isEq(y: CPIntVar): CPBoolVar = {
-      val b = new CPBoolVar(x.store);
-      val ok = x.store.post(new oscar.cp.constraints.EqReifVar(x, y, b));
-      assert(ok != CPOutcome.Failure);
-      b
+    def ===(v: Int) = x.isEq(v)
+    /**
+     * b <=> x == y
+     */
+    def ===(y: CPIntVar) = x.isEq(y)
+    /**
+     * b <=> x!= y
+     */
+    def !==(y: CPIntVar) = x.isDiff(y)
+    /**
+     * b <=> x!= y
+     */
+    def !==(y: Int) = x.isDiff(y)
+    /**
+     * b <=> x >= y
+     */
+    def >==(y: Int) = x.isGrEq(y)
+    /**
+     * b <=> x >= y
+     */
+    def >==(y: CPIntVar) = x.isGrEq(y)
+    /**
+     * b <=> x > y
+     */
+    def >>=(y: Int) = x.isGrEq(y + 1)
+    /**
+     * b <=> x > y
+     */
+    def >>=(y: CPIntVar) = {
+      val z = y + 1
+      x.isGrEq(z)
+    }
+    /**
+     * b <=> x >= y
+     */
+    def <==(y: Int) = x.isLeEq(y)
+    /**
+     * b <=> x >= y
+     */
+    def <==(y: CPIntVar) = y >== x
+    /**
+     * b <=> x > y
+     */
+    def <<=(y: Int) = x <== (y - 1)
+    /**
+     * b <=> x > y
+     */
+    def <<=(y: CPIntVar) = x <== (y - 1)
+
+    def median: Int = {
+      val vals = x.toArray.sorted
+      return vals(vals.length / 2)
     }
   }
 
-  implicit class RichCPIntervalVar(x: CPIntervalVar) {
+  implicit class CPIntervalVarOps(val variable: CPIntervalVar) extends AnyVal {
+
+    /**
+     * @return the unique value in the domain, None if variable is not bound
+     */
+    def value: Int = {
+      if (variable.isBound) variable.min
+      else throw new NoSuchElementException("the variable is not bound")
+    }
+
+    def getValue: Int = value
 
     /**
      * -x
      */
-    def unary_-() = new CPIntervalVarViewMinus(x)
+    def unary_-() = new CPIntervalVarViewMinus(variable)
     /**
      * x+y
      */
-    def +(y: CPIntVar) = plus(x, y)
+    def +(that: CPIntervalVar) = plus(variable, that)
     /**
      * x-y
      */
-    def -(y: CPIntVar) = minus(x, y)
+    def -(that: CPIntervalVar) = minus(variable, that)
     /**
      * x+y
      */
-    def +(y: Int) = plus(x, y)
+    def +(that: Int) = plus(variable, that)
     /**
      * x-y
      */
-    def -(y: Int) = minus(x, y)
+    def -(that: Int) = minus(variable, that)
 
-    def +(s: String) = s"$x$s"
+    def +(s: String) = s"$variable$s"
 
     /**
      * Reified constraint
@@ -193,11 +258,116 @@ package object modeling extends Constraints with Branchings {
      * @return a boolean variable b in the same store linked to x by the relation x == y <=> b == true
      */
     def isEq(y: CPIntervalVar): CPBoolVar = {
-      val b = new CPBoolVar(x.store);
-      val ok = x.store.post(new oscar.cp.constraints.EqReifIntervalVar(x, y, b));
+      val b = new CPBoolVar(variable.store);
+      val ok = variable.store.post(new oscar.cp.constraints.EqReifIntervalVar(variable, y, b));
       assert(ok != CPOutcome.Failure);
       b
     }
+
+    //  def !=(y: CPIntVar) = new oscar.cp.constraints.DiffVar(this, y)
+    /**
+     * x!=y
+     */
+    //  def !=(y: Int) = new oscar.cp.constraints.DiffVal(this, y)
+    /**
+     * x==y
+     */
+    def ==(y: CPIntervalVar) = new oscar.cp.constraints.EqInterval(variable, y)
+    /**
+     * x==y
+     */
+    def ==(y: Int) = new oscar.cp.constraints.EqVal(variable, y)
+    /**
+     * x<y
+     */
+    def <(y: CPIntVar) = new oscar.cp.constraints.Le(variable, y)
+    /**
+     * x<y
+     */
+    def <(y: Int) = new oscar.cp.constraints.Le(variable, y)
+    /**
+     * x>y
+     */
+    def >(y: CPIntVar) = new oscar.cp.constraints.Gr(variable, y)
+    /**
+     * x>y
+     */
+    def >(y: Int) = new oscar.cp.constraints.Gr(variable, y)
+    /**
+     * x<=y
+     */
+    def <=(y: CPIntervalVar) = new oscar.cp.constraints.LeEq(variable, y)
+    /**
+     * x<=y
+     */
+    def <=(y: Int) = new oscar.cp.constraints.LeEq(variable, y)
+    /**
+     * x>=y
+     */
+    def >=(y: CPIntVar) = new oscar.cp.constraints.GrEq(variable, y)
+    /**
+     * x>=y
+     */
+    def >=(y: Int) = new oscar.cp.constraints.GrEq(variable, y)
+    /**
+     * b <=> x == v
+     */
+    //def ===(v: Int) = this.isEqInterval(v)
+    /**
+     * b <=> x == y
+     */
+    //  def ===(y: CPIntVar) = this.isEq(y)
+    /**
+     * b <=> x!= y
+     */
+    //  def !==(y: CPIntVar) = this.isDiff(y)
+    /**
+     * b <=> x!= y
+     */
+    //  def !==(y: Int) = this.isDiff(y)
+    /**
+     * b <=> x >= y
+     */
+    //  def >==(y: Int) = this.isGrEq(y)
+    /**
+     * b <=> x >= y
+     */
+    //  def >==(y: CPIntVar) = this.isGrEq(y)
+    /**
+     * b <=> x > y
+     */
+    //  def >>=(y: Int) = this.isGrEq(y + 1)
+    /**
+     * b <=> x > y
+     */
+    //  def >>=(y: CPIntVar) = this.isGrEq(y + 1)
+    /**
+     * b <=> x >= y
+     */
+    //  def <==(y: Int) = this.isLeEq(y)
+    /**
+     * b <=> x >= y
+     */
+    //  def <==(y: CPIntVar) = y >== this
+    /**
+     * b <=> x > y
+     */
+    //  def <<=(y: Int) = this <== (y - 1)
+    /**
+     * b <=> x > y
+     */
+    //  def <<=(y: CPIntVar) = this <== (y - 1)
+
+    /**
+     * b <=> x belongs to set
+     */
+    //  def isIn(set: Set[Int]): CPBoolVar = {
+    //    val b = CPBoolVar()(store)
+    //    store.post(new InSetReif(this, set, b))
+    //    b
+    //  }
+
+    //def %(y: Int) = ModuloLHS(this, y)
   }
 
   //helper functions

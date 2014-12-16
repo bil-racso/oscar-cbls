@@ -108,7 +108,7 @@ public class Minimum extends Constraint {
 				return CPOutcome.Failure;
 			}
 		}
-		if (x.isBound() && x.getValue() == minval.getValue()) {
+		if (x.isBound() && x.getMin() == minval.getValue()) {
 			if (y.assign(minval.getValue()) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
 			}

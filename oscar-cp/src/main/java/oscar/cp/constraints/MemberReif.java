@@ -93,7 +93,7 @@ public class MemberReif extends Constraint {
     public CPOutcome valBind(CPIntervalVar var) {
         assert(var.isBound());
 		if (var == x) {
-             if (set.hasValue(x.getValue())) {
+             if (set.hasValue(x.getMin())) {
                  if (b.assign(1) == CPOutcome.Failure) {
                      return CPOutcome.Failure;
                  }
@@ -105,7 +105,7 @@ public class MemberReif extends Constraint {
              return CPOutcome.Success;
         } else {
             assert(var == b);
-            if (b.getValue() == 1) { // x must be a member of the set
+            if (b.getMin() == 1) { // x must be a member of the set
                 return removeValues(false); // remove all non member values of x and return success if no failure
             } else { // x cannot be a member of the set
                 return removeValues(true); // remove all member values of x and return success if no failure

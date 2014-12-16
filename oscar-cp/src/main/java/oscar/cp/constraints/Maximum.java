@@ -108,7 +108,7 @@ public class Maximum extends Constraint {
 				return CPOutcome.Failure;
 			}
 		}
-		if (x.isBound() && x.getValue() == maxval.getValue()) {
+		if (x.isBound() && x.getMin() == maxval.getValue()) {
 			if (y.assign(maxval.getValue()) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
 			}

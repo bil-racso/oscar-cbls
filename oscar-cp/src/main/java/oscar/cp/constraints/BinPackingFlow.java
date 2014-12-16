@@ -71,7 +71,7 @@ public class BinPackingFlow extends Constraint {
 		}
 		for (int i = 0; i < sizes.length; i++) {
 			if (x[i].isBound()) {
-				int j = x[i].getValue();
+				int j = x[i].getMin();
 				l_t[j].setValue(l_t[j].getValue() + sizes[i]);
 				c_t[j].incr();
 			}
@@ -85,7 +85,7 @@ public class BinPackingFlow extends Constraint {
 	
 	@Override
 	public CPOutcome valBindIdx(CPIntervalVar x, int idx) {
-		int j = x.getValue();
+		int j = x.getMin();
 		int size = sizes[idx];
 		l_t[j].setValue(l_t[j].getValue() + size);
 		c_t[j].incr();

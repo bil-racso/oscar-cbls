@@ -84,7 +84,7 @@ class Among(val N: CPIntVar, val X: Array[CPIntVar], val S: Set[Int]) extends Co
     for (i <- 0 until X.size; if interSize(i).value < X(i).size && interSize(i).value > 0) {
       X(i).filterWhenDomainChanges { d =>
         if (X(i).isBound) {
-          val v = X(i).value
+          val v = X(i).min
           if (S.contains(v)) {
             interSize(i).value = 1
           } else {

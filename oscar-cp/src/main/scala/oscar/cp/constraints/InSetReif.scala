@@ -89,7 +89,7 @@ class InSetReif(val x: CPIntVar, val set: Set[Int], val b: CPBoolVar) extends Co
         }
       }
     } else if (x.isBound) {
-      val value = if (set.contains(x.value)) 1 else 0
+      val value = if (set.contains(x.min)) 1 else 0
       if (b.assign(value) == Failure) {
         return Failure
       }

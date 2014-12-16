@@ -82,12 +82,12 @@ public class MulCteRes extends Constraint {
 			}
 		}
 		if (x.isBound()) {
-			if (s().post(new MulCte(y,x.value(),CPIntVar.apply(s(), c,c))) == CPOutcome.Failure) {
+			if (s().post(new MulCte(y,x.getMin(),CPIntVar.apply(s(), c,c))) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
 			}
 			return CPOutcome.Success;
 		} else if (y.isBound()) {
-			if (s().post(new MulCte(x,y.value(),CPIntVar.apply(s(), c,c))) == CPOutcome.Failure) {
+			if (s().post(new MulCte(x,y.getMin(),CPIntVar.apply(s(), c,c))) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
 			}
 			return CPOutcome.Success;

@@ -98,7 +98,7 @@ class Count(val N: CPIntVar, val X: Array[CPIntVar], val Y: CPIntVar) extends Co
     
     def filterYBound(): CPOutcome = {
       assert(Y.isBound)
-      val v = Y.value
+      val v = Y.min
       val mincount = X.count(_.isBoundTo(v))
       val maxcount = X.count(_.hasValue(v))
       if (N.updateMin(mincount) == Failure) {
@@ -185,7 +185,7 @@ class Count(val N: CPIntVar, val X: Array[CPIntVar], val Y: CPIntVar) extends Co
         }
         if (x.isBound) {
           //println("is now bound")
-          updateBindValue(x.value)
+          updateBindValue(x.min)
         }
         if (updateN() == Failure) Failure
         else if (Y.isBound) filterYBound()
@@ -204,7 +204,7 @@ class Count(val N: CPIntVar, val X: Array[CPIntVar], val Y: CPIntVar) extends Co
     if (updateN() == Failure) return Failure
     if (N.isBound) return Success
     if (Y.isBound) return filterYBound()
-    if (s.post(new Sum(X.map((_ === Y)), N)) == Failure) return Failure
+    if (s.post(new Sum(X.map((_.isEq(Y))), N)) == Failure) return Failure
     Success
   }
 

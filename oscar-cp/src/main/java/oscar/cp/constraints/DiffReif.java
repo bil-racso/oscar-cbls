@@ -91,7 +91,7 @@ public class DiffReif extends Constraint {
 	@Override
 	public CPOutcome valBind(CPIntervalVar var) {
 		if (b.isBound()) {
-			if (b.getValue() == 1) {
+			if (b.getMin() == 1) {
 				//x != v
 				if (x.removeValue(v) == CPOutcome.Failure) {
 					return CPOutcome.Failure;
@@ -106,7 +106,7 @@ public class DiffReif extends Constraint {
 		}
 		
 		if (x.isBound()) {
-			if (x.getValue() == v) {
+			if (x.getMin() == v) {
 				if (b.assign(0) == CPOutcome.Failure) {
 					return CPOutcome.Failure;
 				}

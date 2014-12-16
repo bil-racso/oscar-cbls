@@ -46,7 +46,7 @@ class TestVariable extends FunSuite with ShouldMatchers {
   test("test b") {
     new StoreAndVariables {
       b.assign(0)
-      assert(b.isBound && b.value == 0)
+      assert(b.isBound && b.min == 0)
     }
   }
 

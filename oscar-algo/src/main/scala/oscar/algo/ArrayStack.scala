@@ -68,7 +68,20 @@ class ArrayStack[T](initialSize: Int = 100) {
     stack(index).asInstanceOf[T]
   }
   
+  /** 
+   *  Remove all the entries in the stack without removing references 
+   *  in the internal structure. This means that object cannot be 
+   *  garbage collected until references are overriden.
+   */
   @inline final def clear(): Unit = index = 0
+  
+  /** Remove all the entries in the stack */
+  @inline final def clearRefs(): Unit = {
+    while (index > 0) {    
+      index -= 1
+      stack(index) = null
+    } 
+  }
   
   // Double the size of the stack
   @inline private def growStack(): Unit = {

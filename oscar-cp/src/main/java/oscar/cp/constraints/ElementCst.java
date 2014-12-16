@@ -167,7 +167,7 @@ public class ElementCst extends Constraint {
 	@Override
 	public CPOutcome valBind(CPIntervalVar x) {
 		// x is bound
-		if (z.assign(y[x.getValue()]) == CPOutcome.Failure)
+		if (z.assign(y[x.getMin()]) == CPOutcome.Failure)
 			return CPOutcome.Failure;
 		return CPOutcome.Success;
 	}

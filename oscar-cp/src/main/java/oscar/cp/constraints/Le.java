@@ -45,7 +45,7 @@ public class Le extends Constraint {
 	@Override
 	public CPOutcome setup(CPPropagStrength l) {
 		if (y.isBound()) {
-			if (x.updateMax(y.value()-1) == CPOutcome.Failure){
+			if (x.updateMax(y.getMin()-1) == CPOutcome.Failure){
 				return CPOutcome.Failure;
 			}
 			return CPOutcome.Success;

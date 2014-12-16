@@ -80,7 +80,7 @@ public class LeEqCteReif extends Constraint {
 		
 	@Override
 	public CPOutcome valBind(CPIntervalVar var) {
-		if (b.getValue() == 0) {
+		if (b.getMin() == 0) {
 			//x > v
 			if (x.updateMin(v+1) == CPOutcome.Failure) {
 				return CPOutcome.Failure;

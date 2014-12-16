@@ -1,17 +1,19 @@
-/*******************************************************************************
+/**
+ * *****************************************************************************
  * OscaR is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- *   
+ *
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License  for more details.
- *   
+ *
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
- ******************************************************************************/
+ * ****************************************************************************
+ */
 
 package oscar.cp.core
 
@@ -30,8 +32,7 @@ trait DomainIterator extends Iterator[Int] {
 /**
  * @author Pierre Schaus pschaus@gmail.com
  */
-abstract class CPIntVar(override val store: CPStore, override val name: String = "") extends CPIntervalVar(store,name) with Iterable[Int] {
-
+abstract class CPIntVar(override val store: CPStore, override val name: String = "") extends CPIntervalVar(store, name) with Iterable[Int] {
 
   /**
    * Number of values in common in both domains
@@ -51,23 +52,8 @@ abstract class CPIntVar(override val store: CPStore, override val name: String =
     }
     res
   }
-
-  /**
-   * @return true if the domain is empty, false otherwise
-   */
-  def isEmpty: Boolean
-
-  /**
-   * @return  the minimum value in the domain
-   */
-  def min: Int
-
-
-  /**
-   * @return  the maximum value in the domain
-   */
-  def max: Int
-
+  
+  def isFull: Boolean = max - min + 1 == size
 
   def domainIterator: DomainIterator = {
     new DomainIterator {
@@ -103,15 +89,13 @@ abstract class CPIntVar(override val store: CPStore, override val name: String =
     }
   }
 
-
-
   /**
    * Level 2 registration: ask that the propagate() method of the constraint c is called whenever
    * one of the value is removed from the domain
    * @param c
    * @see oscar.cp.core.Constraint#propagate()
    */
-  def callPropagateWhenDomainChanges(c: Constraint, trackDelta: Boolean = false): Unit 
+  def callPropagateWhenDomainChanges(c: Constraint, trackDelta: Boolean = false): Unit
 
   def filterWhenDomainChanges(filter: DeltaVarInt => CPOutcome) {
     store.post(
@@ -122,10 +106,10 @@ abstract class CPIntVar(override val store: CPStore, override val name: String =
         }
       }) // should not fail
   }
-  
+
   def filterWhenDomainChanges(filter: => CPOutcome) {
     store.post(
-      new Constraint(this.store, "filterWhenDomainChanges on  "+this) {
+      new Constraint(this.store, "filterWhenDomainChanges on  " + this) {
         def setup(l: CPPropagStrength) = {
           callPropagateWhenDomainChanges(this)
           CPOutcome.Suspend
@@ -133,7 +117,6 @@ abstract class CPIntVar(override val store: CPStore, override val name: String =
         override def propagate() = filter
       })
   }
-
 
   /**
    * Level 1 registration: ask that the valRemove(CPIntVar, int) method of the constraint c is called for each
@@ -156,7 +139,6 @@ abstract class CPIntVar(override val store: CPStore, override val name: String =
 
   def callValRemoveIdxWhenValueIsRemoved(c: Constraint, variable: CPIntVar, idx: Int): Unit
 
-
   /**
    * Remove val from the domain, and notify appropriately all the propagators registered to this variable
    * @param val
@@ -165,7 +147,7 @@ abstract class CPIntVar(override val store: CPStore, override val name: String =
   def removeValue(value: Int): CPOutcome
 
   // ------ delta methods to be called in propagate -------
-  
+
   def changed(sn: SnapshotVarInt): Boolean = {
     sn.oldSize != size
   }
@@ -223,12 +205,9 @@ abstract class CPIntVar(override val store: CPStore, override val name: String =
 
   def deltaSize(c: Constraint): Int
 
-  def delta(c: Constraint): Iterator[Int]  
-
+  def delta(c: Constraint): Iterator[Int]
 
   // ------------------------ some useful methods for java -------------------------
-
-
 
   /**
    * Reified constraint
@@ -240,6 +219,18 @@ abstract class CPIntVar(override val store: CPStore, override val name: String =
     val ok = store.post(new oscar.cp.constraints.EqReif(this, v, b));
     assert(ok != CPOutcome.Failure);
     return b;
+  }
+
+  /**
+   * Reified constraint
+   * @param y a variable
+   * @return a boolean variable b in the same store linked to x by the relation x == y <=> b == true
+   */
+  def isEq(y: CPIntVar): CPBoolVar = {
+    val b = new CPBoolVar(this.store);
+    val ok = this.store.post(new oscar.cp.constraints.EqReifVar(this, y, b));
+    assert(ok != CPOutcome.Failure);
+    b
   }
 
   /**
@@ -266,7 +257,6 @@ abstract class CPIntVar(override val store: CPStore, override val name: String =
     return b;
   }
 
-
   /**
    * x must take a value from set
    */
@@ -287,57 +277,6 @@ abstract class CPIntVar(override val store: CPStore, override val name: String =
    * x==y
    */
   override def ==(y: Int) = new oscar.cp.constraints.EqVal(this, y)
-  /**
-   * b <=> x == v
-   */
-  def ===(v: Int) = this.isEq(v)
-  /**
-   * b <=> x == y
-   */
-  def ===(y: CPIntVar) = this.isEq(y)
-  /**
-   * b <=> x!= y
-   */
-  def !==(y: CPIntVar) = this.isDiff(y)
-  /**
-   * b <=> x!= y
-   */
-  def !==(y: Int) = this.isDiff(y)
-  /**
-   * b <=> x >= y
-   */
-  def >==(y: Int) = this.isGrEq(y)
-  /**
-   * b <=> x >= y
-   */
-  def >==(y: CPIntVar) = this.isGrEq(y)
-  /**
-   * b <=> x > y
-   */
-  def >>=(y: Int) = this.isGrEq(y + 1)
-  /**
-   * b <=> x > y
-   */
-  def >>=(y: CPIntVar) = {
-    val z = y + 1
-    this.isGrEq(z)
-  }
-  /**
-   * b <=> x >= y
-   */
-  def <==(y: Int) = this.isLeEq(y)
-  /**
-   * b <=> x >= y
-   */
-  def <==(y: CPIntVar) = y >== this
-  /**
-   * b <=> x > y
-   */
-  def <<=(y: Int) = this <== (y - 1)
-  /**
-   * b <=> x > y
-   */
-  def <<=(y: CPIntVar) = this <== (y - 1)
 
   /**
    * b <=> x belongs to set
@@ -364,9 +303,9 @@ object CPIntVar {
    */
   def apply(values: Iterable[Int], name: String)(implicit store: CPStore): CPIntVar = {
     values match {
-      case range: Range => rangeDomain(range, name, store)
+      case range: Range  => rangeDomain(range, name, store)
       case set: Set[Int] => setDomain(set, name, store)
-      case iterable => iterableDomain(iterable, name, store)
+      case iterable      => iterableDomain(iterable, name, store)
     }
   }
 

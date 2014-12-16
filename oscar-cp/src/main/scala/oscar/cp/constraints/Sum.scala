@@ -44,7 +44,7 @@ class Sum(val X: Array[_ <: CPIntervalVar], val y: CPIntervalVar) extends Constr
   }
 
   private def setBound(i: Int) {
-    sumBoundVars.value = sumBoundVars.value + x(i).value
+    sumBoundVars.value = sumBoundVars.value + x(i).min
     val tmp = x(nBoundVars.value)
     x(nBoundVars.value) = x(i)
     x(i) = tmp

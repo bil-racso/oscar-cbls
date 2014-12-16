@@ -97,6 +97,15 @@ class ReversibleContext {
     magicNumber += 1
   }
 
+  /**
+   *  
+   * 
+   */
+  def clear(): Unit = {
+    trailStack.clearRefs()
+    pointerStack.clearRefs()
+  }
+  
   def resetStats(): Unit = {
     trailTime = 0
     maxTrailSize = 0
