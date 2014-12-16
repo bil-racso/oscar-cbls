@@ -17,7 +17,11 @@ package oscar.cp.core
 /**
  * @author Pierre Schaus pschaus@gmail.com
  */
-class CPSol(x: Set[CPIntVar]) {
-	val dict = x.map(y => (y,y.value)).toMap
-	def apply(y: CPIntVar): Int = dict(y)
+class CPSol(xs: Set[CPIntervalVar]) {
+  assert(xs forall { x => x.min == x.max })
+	val dict = xs.map(y => (y,y.min)).toMap
+	def apply(y: CPIntervalVar): Int = {
+	  assert(y.min == y.max)
+	  dict(y)
+	}
 }

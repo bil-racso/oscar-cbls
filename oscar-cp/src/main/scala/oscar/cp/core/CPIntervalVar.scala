@@ -514,8 +514,8 @@ object CPIntervalVar {
    * @return a fresh CPIntVar defined in the CPStore store with all the values contained in (minValue to maxValue)
    * as initial domain.
    */
-  def apply(minValue: Int, maxValue: Int, name: String)(implicit store: CPStore): CPIntVar = {
-    CPIntVarImpl(store, minValue, maxValue, name)
+  def apply(minValue: Int, maxValue: Int, name: String)(implicit store: CPStore): CPIntervalVar = {
+    CPIntervalVarImpl(store, minValue, maxValue, name)
   }
 
   /**
@@ -526,7 +526,7 @@ object CPIntervalVar {
    * @return a fresh CPIntVar defined in the CPStore store with all the values contained in (minValue to maxValue)
    * as initial domain.
    */
-  def apply(minValue: Int, maxValue: Int)(implicit store: CPStore): CPIntVar = apply(minValue, maxValue, "")(store)
+  def apply(minValue: Int, maxValue: Int)(implicit store: CPStore): CPIntervalVar = apply(minValue, maxValue, "")(store)
 
   /**
    * Creates a new CP Integer Variable assigned to value
@@ -543,7 +543,7 @@ object CPIntervalVar {
    * @param store the CPStore in which the variable is created
    * @return a fresh CPIntVar defined in the CPStore store with a single value as initial domain.
    */
-  def apply(value: Int)(implicit store: CPStore): CPIntVar = CPIntVarImpl(store, value, value, "")
+  def apply(value: Int)(implicit store: CPStore): CPIntervalVar = CPIntervalVarImpl(store, value, value, "")
 
   @deprecated("use apply(values: Iterable[Int], name: String)(implicit store: CPStore) instead", "1.0")
   def apply(store: CPStore, values: Iterable[Int], name: String): CPIntVar = apply(values, name)(store)
@@ -558,10 +558,10 @@ object CPIntervalVar {
   def apply(store: CPStore, values: Array[Int]): CPIntVar = apply(store, values, "")
 
   @deprecated("use apply(minValue: Int, maxValue: Int, name: String)(implicit store: CPStore) instead", "1.0")
-  def apply(store: CPStore, minValue: Int, maxValue: Int, name: String): CPIntVar = apply(minValue, maxValue, name)(store)
+  def apply(store: CPStore, minValue: Int, maxValue: Int, name: String): CPIntervalVar = apply(minValue, maxValue, name)(store)
 
   @deprecated("use apply(minValue: Int, maxValue: Int)(implicit store: CPStore) instead", "1.0")
-  def apply(store: CPStore, minValue: Int, maxValue: Int): CPIntVar = apply(minValue, maxValue, "")(store)
+  def apply(store: CPStore, minValue: Int, maxValue: Int): CPIntervalVar = apply(minValue, maxValue, "")(store)
 
   @deprecated("use apply(value: Int, name: String)(implicit store: CPStore) instead", "1.0")
   def apply(store: CPStore, value: Int, name: String): CPIntVar = apply(value, name)(store)

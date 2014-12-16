@@ -271,8 +271,8 @@ package object modeling extends Constraints with Branchings {
   def search(branching: Branching)(implicit cp: CPSolver): SearchNode = cp.search(branching)
   def search(block: => Seq[Alternative])(implicit cp: CPSolver): SearchNode = cp.search(block)
   
-  def minimize(obj: CPIntVar)(implicit cp: CPSolver): CPSolver = cp.minimize(obj)
-  def maximize(obj: CPIntVar)(implicit cp: CPSolver): CPSolver = cp.maximize(obj)
+  def minimize(obj: CPIntervalVar)(implicit cp: CPSolver): CPSolver = cp.minimize(obj)
+  def maximize(obj: CPIntervalVar)(implicit cp: CPSolver): CPSolver = cp.maximize(obj)
   
   def onSolution(block: => Unit)(implicit cp: CPSolver): SearchNode = cp.onSolution(block)
   def onSolutionWithStats(block: SearchStatistics => Unit)(implicit cp: CPSolver): SearchNode = cp.onSolutionWithStats(block)

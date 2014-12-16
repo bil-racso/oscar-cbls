@@ -20,6 +20,7 @@ import scala.math.max
 import scala.math.min
 import oscar.cp.core.CPStore
 import oscar.cp.core.CPIntVar
+import oscar.cp.core.CPIntervalVar
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.Constraint
 import oscar.cp.core.CPPropagStrength
@@ -29,7 +30,7 @@ import oscar.algo.SortUtils.stableSort
 /**
  * @author Renaud Hartert
  */
-class SweepMinCumulative(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], demands: Array[CPIntVar], resources: Array[CPIntVar], capacity: CPIntVar, id: Int) extends Constraint(starts.head.store, "MinSweepCumulative") {
+class SweepMinCumulative(starts: Array[_ <: CPIntervalVar], durations: Array[_ <: CPIntervalVar], ends: Array[_ <: CPIntervalVar], demands: Array[_ <: CPIntervalVar], resources: Array[CPIntVar], capacity: CPIntervalVar, id: Int) extends Constraint(starts.head.store, "MinSweepCumulative") {
 
   private val nTasks = starts.size
   private val Tasks = 0 until nTasks
@@ -377,7 +378,7 @@ class SweepMinCumulative(starts: Array[CPIntVar], durations: Array[CPIntVar], en
     return CPOutcome.Suspend
   }
 
-  private def pruneInterval(low: Int, up: Int, v: CPIntVar): CPOutcome = {
+  private def pruneInterval(low: Int, up: Int, v: CPIntervalVar): CPOutcome = {
 
     assert(low <= up)
     if (low <= v.min && up <= v.max) {
@@ -489,7 +490,7 @@ class SweepMinCumulative(starts: Array[CPIntVar], durations: Array[CPIntVar], en
 }
 
 object SweepMinCumulative {
-  def apply(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], demands: Array[CPIntVar], resources: Array[CPIntVar], capacity: CPIntVar, id: Int): SweepMinCumulative = {
+  def apply(starts: Array[_ <: CPIntervalVar], durations: Array[_ <: CPIntervalVar], ends: Array[_ <: CPIntervalVar], demands: Array[_ <: CPIntervalVar], resources: Array[CPIntVar], capacity: CPIntervalVar, id: Int): SweepMinCumulative = {
     val nTasks = starts.size
     if (nTasks == 0) throw new Exception("no tasks")
     else if (ends.size != nTasks) throw new Exception("the number of end variables should be " + nTasks)

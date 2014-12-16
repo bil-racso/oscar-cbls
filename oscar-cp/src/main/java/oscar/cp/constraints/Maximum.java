@@ -17,7 +17,6 @@ package oscar.cp.constraints;
 import oscar.algo.reversible.ReversibleInt;
 import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
-import oscar.cp.core.CPIntVar;
 import oscar.cp.core.CPIntervalVar;
 import oscar.cp.core.Constraint;
 
@@ -27,8 +26,8 @@ import oscar.cp.core.Constraint;
 public class Maximum extends Constraint {
 	
 	
-	private CPIntVar [] x;
-	private CPIntVar y;
+	private CPIntervalVar [] x;
+	private CPIntervalVar y;
 	private ReversibleInt maxval;
 	private ReversibleInt maxvalsupport;
 	
@@ -40,7 +39,7 @@ public class Maximum extends Constraint {
 	 * @param x
 	 * @param y
 	 */
-	public Maximum(CPIntVar [] x, CPIntVar y) {
+	public Maximum(CPIntervalVar [] x, CPIntervalVar y) {
 		super(x[0].store(),"Maximum");
 		this.x = x;
 		this.y = y;

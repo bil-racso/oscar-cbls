@@ -16,6 +16,7 @@
 package oscar.cp.modeling
 
 import oscar.cp.core.CPIntVar
+import oscar.cp.core.CPIntervalVar
 import oscar.cp.search._
 import oscar.cp.scheduling.search.SetTimesBranching
 import oscar.algo.search.BranchingUtils
@@ -62,7 +63,7 @@ trait Branchings extends BranchingUtils {
    * set times heuristic: 
    * see: Time- versus-capacity compromises in project scheduling. (Le Pape et al.). 1994. 
    */  
-  def setTimes(starts: IndexedSeq[CPIntVar], durations: IndexedSeq[CPIntVar], ends: IndexedSeq[CPIntVar], tieBreaker: Int => Int = (i: Int) => i) = new SetTimesBranching(starts,durations, ends, tieBreaker) 
+  def setTimes(starts: IndexedSeq[_ <: CPIntervalVar], durations: IndexedSeq[_ <: CPIntervalVar], ends: IndexedSeq[_ <: CPIntervalVar], tieBreaker: Int => Int = (i: Int) => i) = new SetTimesBranching(starts, durations, ends, tieBreaker) 
   
   /**
    * Binary Search on the set variable

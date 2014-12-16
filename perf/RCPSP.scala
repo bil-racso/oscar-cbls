@@ -14,6 +14,7 @@
  ******************************************************************************/
 
 import oscar.cp.modeling._
+import oscar.cp.modeling.Constraints
 import oscar.cp.core._
 
 /**
@@ -36,13 +37,13 @@ object RCPSP {
     implicit val cp = CPSolver()
     cp.silent = true
 
-    val durations = Array.tabulate(nTasks)(t => CPIntVar(durationsData(t)))
-    val starts = Array.tabulate(nTasks)(t => CPIntVar(0 to horizon - durations(t).min))
-    val ends = Array.tabulate(nTasks)(t => starts(t) + durations(t))
-    val demands = Array.tabulate(nTasks)(t => CPIntVar(demandsData))
+    val durations = Array.tabulate(nTasks)(t => CPIntervalVar(durationsData(t)))
+    val starts = Array.tabulate(nTasks)(t => CPIntervalVar(0, horizon - durations(t).min))
+    val ends = Array.tabulate(nTasks)(t => CPIntervalVarViewOffset(starts(t), durationsData(t)))
+    val demands = Array.tabulate(nTasks)(t => CPIntervalVar(demandsData))
 
     val makespan = maximum(ends)
-    add(maxCumulativeResource(starts, durations, ends,demands, CPIntVar(capa)))
+    add(maxCumulativeResource(starts, durations, ends,demands, CPIntervalVar(capa)))
     
     minimize(makespan) search {
       setTimes(starts, durations,ends)
