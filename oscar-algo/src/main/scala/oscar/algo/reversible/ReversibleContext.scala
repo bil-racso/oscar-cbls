@@ -28,20 +28,20 @@ import scala.collection.mutable.ArrayBuffer
  */
 class ReversibleContext {
 
-  private[this] final var maxTrailSize: Int = 0
-  private[this] final var trailTime: Long = 0
-  private[this] final var magicNumber: Long = 0
+  private[this] var maxTrailSize: Int = 0
+  private[this] var trailTime: Long = 0
+  private[this] var magicNumber: Long = 0
 
   import oscar.algo.ArrayStack // custom version of ArrayStack
-  private final val trailStack: ArrayStack[TrailEntry] = new ArrayStack(1000)
-  private final val pointerStack: ArrayStack[TrailEntry] = new ArrayStack(100)
-
-  // Used to reference the initial state
-  trailStack.push(null)
-
+  private[this] val trailStack: ArrayStack[TrailEntry] = new ArrayStack(1000)
+  private[this] val pointerStack: ArrayStack[TrailEntry] = new ArrayStack(100)
+  
   // Actions to execute when a pop occurs 
   private[this] val popListeners = new ArrayStack[() => Unit](4)
 
+  // Used to reference the initial state
+  trailStack.push(null)
+  
   /** Returns the magic number of the context */
   final def magic: Long = magicNumber
 

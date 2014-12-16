@@ -8,8 +8,8 @@ package oscar.algo
  */
 class ArrayStack[T](initialSize: Int = 100) {
 
-  private[this] final var stack: Array[AnyRef] = Array.ofDim[AnyRef](initialSize)
-  private[this] final var index: Int = 0
+  private[this] var stack: Array[AnyRef] = Array.ofDim[AnyRef](initialSize)
+  private[this] var index: Int = 0
 
   /**
    *  Return the size of the stack
@@ -90,7 +90,17 @@ class ArrayStack[T](initialSize: Int = 100) {
       f(stack(i).asInstanceOf[T])
     }
   }
+  
+  @inline def apply(idx: Int): T = {
+    if (idx >= index) throw new IndexOutOfBoundsException
+    else stack(idx).asInstanceOf[T]
+  }
 
+  @inline def update(idx: Int, entry: T): Unit = {
+    if (idx >= index) throw new IndexOutOfBoundsException
+    else stack(idx) = entry.asInstanceOf[AnyRef]
+  }
+  
   // Double the size of the stack
   @inline private def growStack(): Unit = {
     val newStack = Array.ofDim[AnyRef](stack.length * 2)
