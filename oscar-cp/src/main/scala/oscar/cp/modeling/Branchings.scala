@@ -21,6 +21,8 @@ import oscar.cp.search._
 import oscar.cp.scheduling.search.SetTimesBranching
 import oscar.algo.search.BranchingUtils
 import oscar.cp.core.CPSetVar
+import oscar.cp.scheduling.search.RankBranching
+import oscar.algo.search.Branching
 
 /**
  * @author Pierre Schaus pschaus@gmail.com
