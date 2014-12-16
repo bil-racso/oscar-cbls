@@ -23,7 +23,7 @@ import oscar.algebra._
  */
 object CuttingStock extends App {
 
-  implicit val lp = LPSolver() 
+  implicit val lp = LPSolverLPSolve() 
     
   class Column(val x: LPFloatVar, val pattern: Array[Int]) {
     override def toString(): String = {
@@ -63,7 +63,7 @@ object CuttingStock extends App {
   var objective = Double.MinValue
   do {
     
-    implicit val mip = MIPSolver()
+    implicit val mip = MIPSolverLPSolve()
     val newPattern = Array.tabulate(roll.size)(_ => MIPIntVar(mip, "use", 0 to rollStock))
     val cost = Array.tabulate(roll.size)(constraints(_).dual)
     mip.add(sum(Rolls)(r => roll(r) * newPattern(r)) <= rollStock)

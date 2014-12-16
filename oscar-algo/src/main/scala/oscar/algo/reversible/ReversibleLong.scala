@@ -36,5 +36,4 @@ class ReversibleLong(node: ReversibleContext, value: Long) extends ReversiblePoi
 
 object ReversibleLong {
   def apply(value: Long)(implicit context: ReversibleContext) = new ReversibleLong(context, value)
-  implicit def reversibleLong2Long(ri: ReversibleLong): Long = ri.getValue
 }

@@ -21,7 +21,6 @@ import oscar.algo.reversible._
 import oscar.algo.search.Branching
 
 /**
- * Binary Branching:
  * Set Times Branching
  * author: Pierre Schaus pschaus@gmail.com
  */
@@ -31,9 +30,9 @@ class SetTimesBranching(starts: IndexedSeq[_ <: CPIntervalVar], durations: Index
   val n = starts.size
   val Activities = 0 until n
 
-  val selectable = Array.fill(n)(new ReversibleBool(cp, true))
+  val selectable = Array.fill(n)(new ReversibleBoolean(cp, true))
   // non fixed activities (by setTimes)
-  val bound = Array.fill(n)(new ReversibleBool(cp, false))
+  val bound = Array.fill(n)(new ReversibleBoolean(cp, false))
 
   val oldEST = Array.fill(n)(new ReversibleInt(cp, -1))
 

@@ -17,6 +17,7 @@ package oscar.examples.linprog
 import oscar.linprog.modeling._
 import oscar.algebra._
 import scala.io.Source
+import oscar.linprog.modeling.LPSolverLPSolve
 
 /**
  *
@@ -77,7 +78,7 @@ object Steel {
     val loss = (0 to capa.max).map(c => capa.filter(_ >= c).min - c)
     val colorOrders = Cols.map(c => (Slabs).filter(s => col(s) == c))
 
-    implicit val lp = LPSolver(LPSolverLib.lp_solve)
+    implicit val lp = LPSolverLPSolve()
 
     var C: Array[Column] = Array()
 
@@ -103,7 +104,7 @@ object Steel {
     for (CAPA <- capa) {
       do {
         added = false
-        val mip = MIPSolver(LPSolverLib.lp_solve)
+        val mip = MIPSolverLPSolve()
 
         val use = Array.tabulate(nbSlab)(_ => MIPIntVar(mip, "use", 0 to 1))
         val v = Array.tabulate(nbCol)(_ => MIPIntVar(mip, "v", 0 to 1))

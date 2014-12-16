@@ -53,5 +53,4 @@ class ReversibleInt(node: ReversibleContext, value: Int) extends ReversiblePoint
 
 object ReversibleInt {
   def apply(value: Int)(implicit context: ReversibleContext) = new ReversibleInt(context, value)
-  implicit def reversibleInt2Int(ri: ReversibleInt): Int = ri.getValue
 }

@@ -36,7 +36,7 @@ import java.util.Iterator;
  * 
  * @author Pierre Schaus pschaus@gmail.com
  */
-public abstract class AbstractSetIndexedArray implements Iterable<Integer> {
+public abstract class AbstractSparseSet implements Iterable<Integer> {
 	
 	private int _min;
 	private int [] values;

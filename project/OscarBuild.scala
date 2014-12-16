@@ -19,26 +19,32 @@ object OscarBuild extends Build {
     val buildSbtVersion= "0.13.0"
 
     val osNativeLibDir = (sys.props("os.name"), sys.props("os.arch")) match {
-    case (os, arch) if os.contains("Mac") && arch.endsWith("64") => "macos64"
-    case (os, arch) if os.contains("Linux") && arch.endsWith("64") => "linux64"
-    case (os, arch) if os.contains("Windows") && arch.endsWith("32") => "windows32"
-    case (os, arch) if os.contains("Windows") && arch.endsWith("64") => "windows64"
-    case (os, arch) => sys.error("Unsupported OS [${os}] Architecture [${arch}] combo, OscaR currently supports macos64, linux64, windows32, windows64")
-}
+      case (os, arch) if os.contains("Mac") && arch.endsWith("64") => "macos64"
+      case (os, arch) if os.contains("Linux") && arch.endsWith("64") => "linux64"
+      case (os, arch) if os.contains("Windows") && arch.endsWith("32") => "windows32"
+      case (os, arch) if os.contains("Windows") && arch.endsWith("64") => "windows64"
+      case (os, arch) => sys.error("Unsupported OS [${os}] Architecture [${arch}] combo, OscaR currently supports macos64, linux64, windows32, windows64")
+    }
 
     val buildSettings = Defaults.defaultSettings ++ Seq(
       organization := buildOrganization,
       version := buildVersion,
-      scalacOptions in Compile ++= Seq("-encoding", "UTF-8", "-deprecation", "-feature", "-unchecked", "-Xdisable-assertions"),
+      scalacOptions in Compile ++= Seq("-encoding", "UTF-8", "-deprecation", "-feature", "-unchecked"/*, "-Xdisable-assertions"*/),
+      scalacOptions in Test := Seq("-optimise"),
       testOptions in Test <+= (target in Test) map {
-          t => Tests.Argument(TestFrameworks.ScalaTest, "junitxml(directory=\"%s\")" format (t / "test-reports")) },
+          t => Tests.Argument(TestFrameworks.ScalaTest, "junitxml(directory=\"%s\")" format (t / "test-reports") ) },
       parallelExecution in Test := false,
       fork in Test := true,
       javaOptions in Test += "-Djava.library.path=../lib:../lib/" + osNativeLibDir,
       unmanagedBase <<= baseDirectory { base => base / "../lib/" }, // unfortunately does not work
       unmanagedClasspath in Compile <+= (baseDirectory) map { bd => Attributed.blank(bd / "../lib/") },
-      scalaVersion := buildScalaVersion)
+      scalaVersion := buildScalaVersion,
+      publishTo := Some(Resolver.url("sbt-release-local", new URL("http://localhost:8081/artifactory/libs-release-local")))
+    )
   }
+  
+  
+
 
   object Resolvers {
     val typesafe = "Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases/"
@@ -50,7 +56,7 @@ object OscarBuild extends Build {
 
     //val scalatest = "org.scalatest" %% "scalatest" % "2.0.M5b"
     val junit = "junit" % "junit" % "4.8.1" % "test"
-    val scalaswing = "org.scala-lang" % "scala-swing" % "2.11.0-M7"
+    //val scalaswing = "org.scala-lang" % "scala-swing" % "2.11.0-M7"
 
     // DSL for adding source dependencies ot projects.
     def dependsOnSource(dir: String): Seq[Setting[_]] = {
@@ -76,7 +82,7 @@ object OscarBuild extends Build {
   import Dependencies._
   import Resolvers._
 
-  val commonDeps = Seq(/*scalatest,*/junit,scalaswing)
+  val commonDeps = Seq(/*scalatest,scalaswing,*/junit)
   
  
   TaskKey[Unit]("zipsrc") <<= baseDirectory map { bd => println(bd); IO.zip(Path.allSubpaths(new File(bd + "/src/main/scala")),new File(bd +"/oscar-src.zip"))  }

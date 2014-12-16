@@ -28,20 +28,20 @@ import scala.collection.mutable.ArrayBuffer
  */
 class ReversibleContext {
 
-  private var maxTrailSize: Int = 0
-  private var trailTime: Long = 0
-  private var magicNumber: Long = 0
+  private[this] var maxTrailSize: Int = 0
+  private[this] var trailTime: Long = 0
+  private[this] var magicNumber: Long = 0
 
   import oscar.algo.ArrayStack // custom version of ArrayStack
-  private val trailStack: ArrayStack[TrailEntry] = new ArrayStack(1000)
-  private val pointerStack: ArrayStack[TrailEntry] = new ArrayStack(100)
+  private[this] val trailStack: ArrayStack[TrailEntry] = new ArrayStack(1000)
+  private[this] val pointerStack: ArrayStack[TrailEntry] = new ArrayStack(100)
+  
+  // Actions to execute when a pop occurs 
+  private[this] val popListeners = new ArrayStack[() => Unit](4)
 
   // Used to reference the initial state
   trailStack.push(null)
-
-  // Actions to execute when a pop occurs 
-  private val popListeners = new ArrayBuffer[() => Unit]()
-
+  
   /** Returns the magic number of the context */
   final def magic: Long = magicNumber
 
@@ -52,13 +52,18 @@ class ReversibleContext {
   final def time: Long = trailTime
 
   /** Adds an action to execute when the `pop` function is called */
-  def onPop(action: => Unit): Unit = popListeners.append(() => action)
-
-  def pushOnTrail[T](reversible: Reversible[T], value: T): Unit = {
-    val entry = new TrailEntryImpl[T](reversible, value)
+  def onPop(action: => Unit): Unit = popListeners.push(() => action)
+  
+  /** Trail the entry such that its restore method is called on corresponding pop */
+  @inline final def trail(entry: TrailEntry): Unit = {
     trailStack.push(entry)
     val size = trailStack.size
     if (size > maxTrailSize) maxTrailSize = size
+  }
+  
+  /** Trail the closure such that it is called on corresponding pop */
+  final def trail[@specialized T](closure: => T): Unit = {
+    trail(new TrailEntry { final override def restore(): Unit = closure })
   }
 
   /** Stores the current state of the node on a stack */
@@ -72,12 +77,12 @@ class ReversibleContext {
     // Restores the state of each reversible
     restoreUntil(pointerStack.pop())
     // Executes onPop actions
-    popListeners.foreach(_())
+    popListeners.foreach(action => action())
     // Increments the magic because we want to trail again
     magicNumber += 1
   }
 
-  @inline private def restoreUntil(until: TrailEntry): Unit = {
+  @inline private final def restoreUntil(until: TrailEntry): Unit = {
     val t0 = System.currentTimeMillis()
     while (trailStack.top != until) {
       val entry = trailStack.pop()
@@ -96,6 +101,12 @@ class ReversibleContext {
     }
     // Increments the magic because we want to trail again
     magicNumber += 1
+  }
+  
+  /** Empty the trailing queue without restoring trailed objects */
+  final def clear(): Unit = {
+    trailStack.clear()   // does not remove references
+    pointerStack.clear() // does not remove references
   }
 
   def resetStats(): Unit = {

@@ -37,6 +37,9 @@ class NewSearch(node: SearchNode) {
 
   // Number of nodes explored in the previous search
   private var nbNodes: Int = 0
+  
+  // True if the previous search was exhaustive
+  private var completed: Boolean = false
 
   // Actions to execute in case of solution node
   private var solutionActions = List.empty[() => Unit]
@@ -52,6 +55,9 @@ class NewSearch(node: SearchNode) {
 
   /** Returns the number nodes explored in the previous search */
   final def nNodes: Int = nbNodes
+  
+  /** Returns true if the previous search was exhaustive */
+  final def isCompleted: Boolean = completed
 
   /** Adds an action to execute when a failed node is found */
   final def onFailure(action: => Unit): Unit = failureActions = (() => action) :: failureActions
@@ -118,14 +124,15 @@ class NewSearch(node: SearchNode) {
       } else {
         failureActions.foreach(_())
         nbBkts += 1
-        node.pop
+        node.pop()
       }
     }
     
     // Pop the remaining nodes 
     var i = alternativesStack.size
-    while (i != 0) {
-      node.pop
+    if (i == 0) completed = true
+    else while (i != 0) {
+      node.pop()
       i -= 1
     }
     node.pop()

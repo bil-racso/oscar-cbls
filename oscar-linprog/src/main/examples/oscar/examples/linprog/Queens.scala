@@ -27,7 +27,7 @@ import oscar.algebra._
  *  this problem.
  *  @author Pierre Schaus pschaus@gmail.com
  */
-object Queens extends MIPModel with App {
+object Queens extends MIPModelLPSolve with App {
 
   val n = 8
   val Lines = 0 until n

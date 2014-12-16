@@ -7,7 +7,7 @@ import oscar.cp.core.CPOutcome._
 import oscar.cp.core.CPPropagStrength
 import oscar.algo.reversible.ReversibleInt
 import scala.collection.mutable.HashSet
-import oscar.algo.reversible.ReversibleBool
+import oscar.algo.reversible.ReversibleBoolean
 
 class TableSTR(val X: Array[CPIntVar], table: Array[Array[Int]]) extends Constraint(X(0).store, "TableSTR"){
   
@@ -16,7 +16,7 @@ class TableSTR(val X: Array[CPIntVar], table: Array[Array[Int]]) extends Constra
   
   val arity = X.length
   val variablesIndexes = 0 until X.length
-  val isBoundAndChecked = Array.fill(arity)(new ReversibleBool(s,false))
+  val isBoundAndChecked = Array.fill(arity)(new ReversibleBoolean(s,false))
   val notGACValues = Array.fill(arity)(HashSet[Int]())
   
   override def setup(l: CPPropagStrength): CPOutcome = {

@@ -68,7 +68,7 @@ abstract class XCSPSolver {
   model(domains, variables, relations, predicates, constraints)
  }
  
- private def model(domains : Map[String,Set[Int]], variables : Map[String,String], 
+ protected def model(domains : Map[String,Set[Int]], variables : Map[String,String],
      relations : Option[Map[String,(String,Array[Array[Int]])]], predicates : Option[Map[String,(Array[(String,String)],Option[FunctionalPredicateParser#ParseResult[BooleanExpr]])]],
      constraints : Map[String,(Array[String],String,Option[String])]) : (CPSolver,Array[CPIntVar]) = {  
   
@@ -113,10 +113,10 @@ abstract class XCSPSolver {
  }
  
  // -------------------- constraint in intension helper functions----------------------------
- 
- private def formalToEffectiveParametersMap(formalParameters : Array[String], parameters : Array[String]) = formalParameters.zip(parameters).toMap
- 
- private def integerExpression(value : IntegerExpr)(implicit cp : CPSolver, formalToEffective : Map[String,String], decisionVariables : Map[String,CPIntVar]) : CPIntVar = value match { 
+
+  protected def formalToEffectiveParametersMap(formalParameters : Array[String], parameters : Array[String]) = formalParameters.zip(parameters).toMap
+
+  protected def integerExpression(value : IntegerExpr)(implicit cp : CPSolver, formalToEffective : Map[String,String], decisionVariables : Map[String,CPIntVar]) : CPIntVar = value match {
   case IntegerValue(v) => CPIntVar(v)
   case IntegerFormalParameter(p) => {
    val effectiveParam = formalToEffective(p)
@@ -138,8 +138,8 @@ abstract class XCSPSolver {
   }
   case AlternativeOperator(condition,consequence,alternative) => throw new RuntimeException("if operator does not exist for now.") 
  }
- 
- private def booleanExpression(value : BooleanExpr)(implicit cp : CPSolver, formalToEffective : Map[String,String], decisionVariables : Map[String,CPIntVar]) : CPBoolVar = value match {
+
+  protected def booleanExpression(value : BooleanExpr)(implicit cp : CPSolver, formalToEffective : Map[String,String], decisionVariables : Map[String,CPIntVar]) : CPBoolVar = value match {
   case BooleanValue(v) => CPBoolVar(v)
   case Not(operand) => !booleanExpression(operand)
   case BooleanBinaryOperator(name,left,right) => name match {
@@ -160,31 +160,31 @@ abstract class XCSPSolver {
  
  
  //------------------------ global constraints helper functions---------------------------
- 
- private implicit def effectiveParameterToCPIntVar(parameter : EffectiveParameter)(implicit cp : CPSolver, decisionVariables : Map[String,CPIntVar]) = {
+
+  protected implicit def effectiveParameterToCPIntVar(parameter : EffectiveParameter)(implicit cp : CPSolver, decisionVariables : Map[String,CPIntVar]) = {
    parameter match {
      case p : IntegerVariable => decisionVariables(p.name)
      case p : EffectiveIntegerValue => CPIntVar(p.value)
    }
  }
- 
- private implicit def iterableEffectiveParametersToIterableCPIntVar(parameters : Iterable[EffectiveParameter])(implicit cp : CPSolver, decisionVariables : Map[String,CPIntVar]) = {
+
+  protected implicit def iterableEffectiveParametersToIterableCPIntVar(parameters : Iterable[EffectiveParameter])(implicit cp : CPSolver, decisionVariables : Map[String,CPIntVar]) = {
    parameters map(effectiveParameterToCPIntVar(_))
  }
- 
- private implicit def effectiveParametersArrayToCPIntVarArray(parameters : Array[EffectiveParameter])(implicit cp : CPSolver, decisionVariables : Map[String,CPIntVar]) = {
+
+  protected implicit def effectiveParametersArrayToCPIntVarArray(parameters : Array[EffectiveParameter])(implicit cp : CPSolver, decisionVariables : Map[String,CPIntVar]) = {
    parameters map(effectiveParameterToCPIntVar(_))
  }
- 
- private implicit def effectiveParametersIndexedSeqToCPIntVarIndexedSeq(parameters : IndexedSeq[EffectiveParameter])(implicit cp : CPSolver, decisionVariables : Map[String,CPIntVar]) = {
+
+  protected implicit def effectiveParametersIndexedSeqToCPIntVarIndexedSeq(parameters : IndexedSeq[EffectiveParameter])(implicit cp : CPSolver, decisionVariables : Map[String,CPIntVar]) = {
    parameters map(effectiveParameterToCPIntVar(_))
  }
- 
- private implicit def effectiveParametersListToCPIntVarList(parameters : List[EffectiveParameter])(implicit cp : CPSolver, decisionVariables : Map[String,CPIntVar]) = {
+
+  protected implicit def effectiveParametersListToCPIntVarList(parameters : List[EffectiveParameter])(implicit cp : CPSolver, decisionVariables : Map[String,CPIntVar]) = {
    parameters map(effectiveParameterToCPIntVar(_))
  }
- 
- private def imposeGlobalConstraint(constraintName : String, scope : Array[String], parameters : String)(implicit cp : CPSolver, decisionVariables : Map[String,CPIntVar]) = {
+
+  protected def imposeGlobalConstraint(constraintName : String, scope : Array[String], parameters : String)(implicit cp : CPSolver, decisionVariables : Map[String,CPIntVar]) = {
    (constraintName.replaceFirst(XCSPParser.globalPrefix.regex,"")) match {
      case "weightedSum" => weightedSumHelper(scope,parameters)
      case "allDifferent" => allDifferentHelper(scope,parameters)
@@ -199,13 +199,13 @@ abstract class XCSPSolver {
      case name : String => throw new RuntimeException("Global constraint " + name + "is not allowed.")
    }
  }
- 
- private def allDifferentHelper(scope : Array[String], parameters : String)(implicit cp : CPSolver, decisionVariables : Map[String,CPIntVar]) : Unit = {
+
+  protected def allDifferentHelper(scope : Array[String], parameters : String)(implicit cp : CPSolver, decisionVariables : Map[String,CPIntVar]) : Unit = {
    val parser = new ParameterParser(scope)
    post(allDifferent(parser.parseAll(parser.parameterList,parameters).get))
  }
- 
- private def weightedSumHelper(scope : Array[String], parameters : String)(implicit cp : CPSolver, decisionVariables : Map[String,CPIntVar]) : Unit = {
+
+  protected def weightedSumHelper(scope : Array[String], parameters : String)(implicit cp : CPSolver, decisionVariables : Map[String,CPIntVar]) : Unit = {
    val parser = new ParameterParser(scope)
    val (dic,op,v) = parser.parseAll(parser.weightedSumParameters,parameters).get
    if(op != "<eq/>")
@@ -215,8 +215,8 @@ abstract class XCSPSolver {
    val y = v.value
    post(weightedSum(w,x,y))
  }
- 
- private def amongHelper(scope : Array[String], parameters : String)(implicit cp : CPSolver, decisionVariables : Map[String,CPIntVar]) : Unit = {
+
+  protected def amongHelper(scope : Array[String], parameters : String)(implicit cp : CPSolver, decisionVariables : Map[String,CPIntVar]) : Unit = {
    val parser = new ParameterParser(scope)
    val (v,vL,iL) = parser.parseAll(parser.amongParameters,parameters).get
    val n = decisionVariables(v.name)
@@ -224,8 +224,8 @@ abstract class XCSPSolver {
    val y = iL.map(i=>i.value).toSet
    post(among(n,x,y))
  }
- 
- private def atleastHelper(scope : Array[String], parameters : String)(implicit cp : CPSolver, decisionVariables : Map[String,CPIntVar]) : Unit = {
+
+  protected def atleastHelper(scope : Array[String], parameters : String)(implicit cp : CPSolver, decisionVariables : Map[String,CPIntVar]) : Unit = {
    val parser = new ParameterParser(scope)
    val (i1,vL,i2) = parser.parseAll(parser.atLeastParameters,parameters).get
    val n = i1.value 
@@ -233,8 +233,8 @@ abstract class XCSPSolver {
    val v = i2.value 
    post(atLeast(n,x,v))
  }
- 
- private def atmostHelper(scope : Array[String], parameters : String)(implicit cp : CPSolver, decisionVariables : Map[String,CPIntVar]) : Unit = {
+
+  protected def atmostHelper(scope : Array[String], parameters : String)(implicit cp : CPSolver, decisionVariables : Map[String,CPIntVar]) : Unit = {
    val parser = new ParameterParser(scope)
    val (i1,vL,i2) = parser.parseAll(parser.atMostParameters,parameters).get
    val n = i1.value 
@@ -242,8 +242,8 @@ abstract class XCSPSolver {
    val v = i2.value 
    post(atMost(n,x,v))
  }
- 
- private def cumulativeHelper(scope : Array[String], parameters : String)(implicit cp : CPSolver, decisionVariables : Map[String,CPIntVar]) : Unit = {
+
+  protected def cumulativeHelper(scope : Array[String], parameters : String)(implicit cp : CPSolver, decisionVariables : Map[String,CPIntVar]) : Unit = {
    val parser = new ParameterParser(scope)
    val (taskList,height) = parser.parseAll(parser.cumulativeParameters,parameters).get
    val variables = taskList.map { task =>
@@ -258,30 +258,30 @@ abstract class XCSPSolver {
    }
    post(cumulative(variables.map(_._1).toArray,variables.map(_._2).toArray,variables.map(_._3).toArray,variables.map(_._4).toArray,CPIntVar(height.value)))
  }
- 
- private def disjunctiveHelper(scope : Array[String], parameters : String)(implicit cp : CPSolver, decisionVariables : Map[String,CPIntVar]) : Unit = {
+
+  protected def disjunctiveHelper(scope : Array[String], parameters : String)(implicit cp : CPSolver, decisionVariables : Map[String,CPIntVar]) : Unit = {
    val parser = new ParameterParser(scope)
    val taskList = parser.parseAll(parser.disjunctiveParameters,parameters).get
    val starts = taskList.map(_._1).toArray
    val durations = taskList.map(_._2).toArray
    post(disjunctive(starts,durations))
  }
- 
- 
- private def elementHelper(scope : Array[String], parameters : String)(implicit cp : CPSolver, decisionVariables : Map[String,CPIntVar]) : Unit = {
+
+
+  protected def elementHelper(scope : Array[String], parameters : String)(implicit cp : CPSolver, decisionVariables : Map[String,CPIntVar]) : Unit = {
    val parser = new ParameterParser(scope)
    val (index , table, value ) = parser.parseAll(parser.elementParameters,parameters).get
    //index -1 is mandatory as index is going from 1 to |table| and not from 0 to |table| - 1
    post(element(table.toIndexedSeq, effectiveParameterToCPIntVar(index) - 1,value))
  }
  
- private def globalCardinalityHelper(scope : Array[String], parameters : String)(implicit cp : CPSolver, decisionVariables : Map[String,CPIntVar]) : Unit = {
+ protected def globalCardinalityHelper(scope : Array[String], parameters : String)(implicit cp : CPSolver, decisionVariables : Map[String,CPIntVar]) : Unit = {
    val parser = new ParameterParser(scope)
    val (variables , values ) = parser.parseAll(parser.globalCardinalityParameters,parameters).get
    post(globalCardinality(variables.map(v => decisionVariables(v.name)).toArray, values.map(e => (e._1.value , decisionVariables(e._2.name))).toArray))
  }
  
- private def miminumWeightAllDifferentHelper(scope : Array[String], parameters : String)(implicit cp : CPSolver, decisionVariables : Map[String,CPIntVar]) : Unit = {
+ protected def miminumWeightAllDifferentHelper(scope : Array[String], parameters : String)(implicit cp : CPSolver, decisionVariables : Map[String,CPIntVar]) : Unit = {
    val parser = new ParameterParser(scope)
    val (variables , matrix, cost) = parser.parseAll(parser.minimumWeightAllDifferentParameters,parameters).get
    val matrixArray = Array.fill(variables.length)(Array.fill(variables.length)(0))
