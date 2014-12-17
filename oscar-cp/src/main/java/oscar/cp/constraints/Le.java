@@ -39,7 +39,7 @@ public class Le extends Constraint {
 	}
 	
 	public Le(CPIntervalVar x, int v) {
-		this(x, CPIntervalVar.apply(x.store(),v,v));
+		this(x, CPIntervalVar.apply(v, v, x.store()));
 	}
 	
 	@Override

@@ -40,7 +40,7 @@ public class Gr extends Constraint {
 	}
 	
 	public Gr(CPIntervalVar x, int v) {
-		this(x, CPIntervalVar.apply(x.store(),v,v));
+		this(x, CPIntervalVar.apply(v,v, x.store()));
 	}
 	
 	@Override

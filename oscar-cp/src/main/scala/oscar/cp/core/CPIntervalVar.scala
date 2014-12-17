@@ -21,11 +21,6 @@ import oscar.cp.constraints.ModuloLHS
 import scala.util.Random
 import oscar.cp.core.domains.SparseSetDomain
 
-//trait DomainIterator extends Iterator[Int] {
-//  def removeValue: CPOutcome
-//  def execute()
-//}
-
 /**
  * @author Pierre Schaus pschaus@gmail.com
  */
@@ -449,147 +444,46 @@ abstract class CPIntervalVar(override val store: CPStore, override val name: Str
 object CPIntervalVar {
 
   /**
-   * Creates a new CP Integer Variable with an iterable as initial domain
-   * @param values the iterable defining the possible values for the variable
-   * @param name the name of the variable
-   * @param store the CPStore in which the variable is created
-   * @return a fresh CPIntVar defined in the CPStore store with values as initial domain.
-   * The domain of the variable does not contains a given value more than once.
-   */
-  def apply(values: Iterable[Int], name: String)(implicit store: CPStore): CPIntVar = {
-    values match {
-      case range: Range => rangeDomain(range, name, store)
-      case set: Set[Int] => setDomain(set, name, store)
-      case iterable => iterableDomain(iterable, name, store)
-    }
-  }
-
-
-
-//  def sparse(values: Iterable[Int])(implicit store: CPStore): CPIntVar = sparse(values, "")(store)
-/*
-  def sparse(minValue: Int, maxValue: Int, name: String)(implicit store: CPStore): CPIntVar = {
-    val domain = new SparseSetDomain(store, minValue, maxValue)
-    new CPIntVarImpl(store, domain, name)
-  }
-*/
-//  def sparse(minValue: Int, maxValue: Int)(implicit store: CPStore): CPIntVar = sparse(minValue, maxValue, "")(store)
-
-  /**
-   * Creates a new CP Integer Variable with an iterable as initial domain
-   * @param values the iterable defining the possible values for the variable
-   * @param store the CPStore in which the variable is created
-   * @return a fresh CPIntVar defined in the CPStore store with values as initial domain.
-   * The domain of the variable does not contains a given value more than once.
-   */
-  def apply(values: Iterable[Int])(implicit store: CPStore): CPIntVar = apply(values, "")(store)
-
-  /**
-   * Creates a new CP Integer Variable with an array as initial domain
-   * @param values the array defining the possible values for the variable
-   * @param name the name of the variable
-   * @param store the CPStore in which the variable is created
-   * @return a fresh CPIntVar defined in the CPStore store with values as initial domain.
-   * The domain of the variable does not contains a given value more than once.
-   */
-  def apply(values: Array[Int], name: String)(implicit store: CPStore): CPIntVar = {
-    iterableDomain(values, name, store)
-  }
-
-  /**
-   * Creates a new CP Integer Variable with an array as initial domain
-   * @param values the array defining the possible values for the variable
-   * @param store the CPStore in which the variable is created
-   * @return a fresh CPIntVar defined in the CPStore store with values as initial domain.
-   * The domain of the variable does not contains a given value more than once.
-   */
-  def apply(values: Array[Int])(implicit store: CPStore): CPIntVar = apply(values, "")(store)
-
-  /**
-   * Creates a new CP Integer Variable with all the values contained in (minValue to maxValue) as initial domain
+   * Creates a new CP integer Interval Variable with all the values contained in [minValue, maxValue] as initial domain
    * @param minValue the minimal value of the domain
    * @param maxValue the maximal value of the domain
    * @param name the name of the variable
-   * @param store the CPStore in which the variable is created
-   * @return a fresh CPIntVar defined in the CPStore store with all the values contained in (minValue to maxValue)
+   * @param store the `CPStore` in which the variable is created
+   * @return a fresh `CPIntervalVar` defined in the `CPStore` store with all the values contained in [minValue, maxValue]
    * as initial domain.
    */
-  def apply(minValue: Int, maxValue: Int, name: String)(implicit store: CPStore): CPIntVar = {
-    CPIntVarImpl(store, minValue, maxValue, name)
+  def apply(minValue: Int, maxValue: Int, name: String)(implicit store: CPStore): CPIntervalVar = {
+    new CPIntervalVarImpl(store, minValue, maxValue, name)
   }
 
   /**
-   * Creates a new CP Integer Variable with all the values contained in (minValue to maxValue) as initial domain
+   * Creates a new CP integer Interval Variable with all the values contained in [minValue, maxValue] as initial domain
    * @param minValue the minimal value of the domain
    * @param maxValue the maximal value of the domain
-   * @param store the CPStore in which the variable is created
-   * @return a fresh CPIntVar defined in the CPStore store with all the values contained in (minValue to maxValue)
+   * @param store the `CPStore` in which the variable is created
+   * @return a fresh `CPIntervalVar` defined in the `CPStore` store with all the values contained in [minValue, maxValue]
    * as initial domain.
    */
-  def apply(minValue: Int, maxValue: Int)(implicit store: CPStore): CPIntVar = apply(minValue, maxValue, "")(store)
+  def apply(minValue: Int, maxValue: Int)(implicit store: CPStore): CPIntervalVar = {
+    new CPIntervalVarImpl(store, minValue, maxValue, "")
+  }
 
   /**
-   * Creates a new CP Integer Variable assigned to value
+   * Creates a new CP integer Interval Variable assigned to value
    * @param value the single value contained in the domain
    * @param name the name of the variable
-   * @param store the CPStore in which the variable is created
-   * @return a fresh CPIntVar defined in the CPStore store with a single value as initial domain.
+   * @param store the `CPStore` in which the variable is created
+   * @return a fresh `CPIntervalVar` defined in the `CPStore` store with a single value as initial domain.
    */
   def apply(value: Int, name: String)(implicit store: CPStore): CPIntVar = CPIntVarImpl(store, value, value, name)
 
   /**
-   * Creates a new CP Integer Variable assigned to value
+   * Creates a new CP integer Interval Variable assigned to value
    * @param value the single value contained in the domain
-   * @param store the CPStore in which the variable is created
-   * @return a fresh CPIntVar defined in the CPStore store with a single value as initial domain.
+   * @param store the `CPStore` in which the variable is created
+   * @return a fresh `CPIntervalVar` defined in the `CPStore` store with a single value as initial domain.
    */
   def apply(value: Int)(implicit store: CPStore): CPIntVar = CPIntVarImpl(store, value, value, "")
-
-  @deprecated("use apply(values: Iterable[Int], name: String)(implicit store: CPStore) instead", "1.0")
-  def apply(store: CPStore, values: Iterable[Int], name: String): CPIntVar = apply(values, name)(store)
-
-  @deprecated("use apply(values: Iterable[Int])(implicit store: CPStore) instead", "1.0")
-  def apply(store: CPStore, values: Iterable[Int]): CPIntVar = apply(store, values, "")
-
-  @deprecated("use apply(values: Array[Int], name: String)(implicit store: CPStore) instead", "1.0")
-  def apply(store: CPStore, values: Array[Int], name: String): CPIntVar = apply(values, name)(store)
-
-  @deprecated("use apply(values: Array[Int])(implicit store: CPStore) instead", "1.0")
-  def apply(store: CPStore, values: Array[Int]): CPIntVar = apply(store, values, "")
-
-  @deprecated("use apply(minValue: Int, maxValue: Int, name: String)(implicit store: CPStore) instead", "1.0")
-  def apply(store: CPStore, minValue: Int, maxValue: Int, name: String): CPIntVar = apply(minValue, maxValue, name)(store)
-
-  @deprecated("use apply(minValue: Int, maxValue: Int)(implicit store: CPStore) instead", "1.0")
-  def apply(store: CPStore, minValue: Int, maxValue: Int): CPIntVar = apply(minValue, maxValue, "")(store)
-
-  @deprecated("use apply(value: Int, name: String)(implicit store: CPStore) instead", "1.0")
-  def apply(store: CPStore, value: Int, name: String): CPIntVar = apply(value, name)(store)
-
-  @deprecated("use apply(value: Int)(implicit store: CPStore) instead", "1.0")
-  def apply(store: CPStore, value: Int): CPIntVar = apply(value, "")(store)
-
-  /** Builds a CPIntVar from a range */
-  private def rangeDomain(domain: Range, name: String, store: CPStore): CPIntVar = {
-    if (domain.max - domain.min < domain.size - 1) iterableDomain(domain, name, store)
-    else CPIntVarImpl(store, domain.min, domain.max, name)
-  }
-
-  /** Builds a CPIntVar from an iterable */
-  private def iterableDomain(domain: Iterable[Int], name: String, store: CPStore): CPIntVar = setDomain(domain.toSet, name, store)
-
-  /** Builds a CPIntVar from a set */
-  private def setDomain(domain: Set[Int], name: String, store: CPStore): CPIntVar = {
-    val min = domain.min
-    val max = domain.max
-    val x = CPIntVarImpl(store, min, max, name)
-    if (max - min + 1 > domain.size) {
-      for (v <- min to max if !domain.contains(v)) {
-        x.removeValue(v)
-      }
-    }
-    x
-  }
 }
 
   
