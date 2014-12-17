@@ -16,7 +16,7 @@
 package oscar.cp.core
 
 import oscar.algo.reversible.ReversiblePointer
-import oscar.algo.reversible.ReversibleInt
+import oscar.algo.reversible.TrailEntry
 import oscar.cp.core.CPOutcome._
 import scala.util.Random
 
@@ -24,25 +24,51 @@ import scala.util.Random
  * @author Pierre Schaus pschaus@gmail.com
  * @author Renaud Hartert ren.hartert@gmail.com
  */
+
+class IntervalVarTrailEntry(variable: CPIntervalVarImpl, min: Int, max: Int) extends TrailEntry {
+  @inline final override def restore(): Unit = {
+    variable.min = min
+    variable.max = max
+  }
+}
+
 class CPIntervalVarImpl(store: CPStore, initialMin: Int, initialMax: Int, name: String) extends CPIntervalVar(store, name) {
 
+  private[this] var lastMagic: Long = -1L
+
+  @inline final protected def trail(): Unit = {
+    val contextMagic = store.magic
+    if (lastMagic != contextMagic) {
+      lastMagic = contextMagic
+      store.trail(new IntervalVarTrailEntry(this, min, max))
+    }
+  }
+
   // Adjacency list
-  private final val onBoundsL2 = new ReversiblePointer[ConstraintQueue](store, null)
-  private final val onBindL2 = new ReversiblePointer[ConstraintQueue](store, null)
-  private final val onBoundsL1 = new ReversiblePointer[PropagEventQueueVarInt[CPIntervalVar]](store, null)
-  private final val onBindL1 = new ReversiblePointer[PropagEventQueueVarInt[CPIntervalVar]](store, null)
-  private final val onBoundsIdxL1 = new ReversiblePointer[PropagEventQueueVarInt[CPIntervalVar]](store, null)
-  private final val onBindIdxL1 = new ReversiblePointer[PropagEventQueueVarInt[CPIntervalVar]](store, null)
+  private[this] val onBoundsL2 = new ReversiblePointer[ConstraintQueue](store, null)
+  private[this] val onBindL2 = new ReversiblePointer[ConstraintQueue](store, null)
+  private[this] val onBoundsL1 = new ReversiblePointer[PropagEventQueueVarInt[CPIntervalVar]](store, null)
+  private[this] val onBindL1 = new ReversiblePointer[PropagEventQueueVarInt[CPIntervalVar]](store, null)
+  private[this] val onBoundsIdxL1 = new ReversiblePointer[PropagEventQueueVarInt[CPIntervalVar]](store, null)
+  private[this] val onBindIdxL1 = new ReversiblePointer[PropagEventQueueVarInt[CPIntervalVar]](store, null)
 
   // Domain representation
-  private final val revMin = new ReversibleInt(store, initialMin)
-  private final val revMax = new ReversibleInt(store, initialMax)
+  private[this] var _min: Int = initialMin // private[this] is used for more efficient bytecode
+  private[this] var _max: Int = initialMax // private[this] is used for more efficient bytecode
+  
+  @inline final override def min: Int = _min
+  
+  @inline final override def max: Int = _max
+  
+  @inline final def min_=(newMin: Int): Unit = _min = newMin
+  
+  @inline final def max_=(newMax: Int): Unit = _max = newMax
 
   final def transform(v: Int) = v
 
   final def iterator: Iterator[Int] = new Iterator[Int] {
-    var i = revMin.value - 1
-    val n = revMax.value
+    var i = _min - 1
+    val n = _max
     override def hasNext: Boolean = i < n
     override def next(): Int = {
       i += 1
@@ -65,38 +91,34 @@ class CPIntervalVarImpl(store: CPStore, initialMin: Int, initialMax: Int, name: 
   /** @return true if the domain of the variable has exactly one value, false if the domain has more than one value */
   @inline final def isBound: Boolean = {
     assert(!store.isFailed())
-    revMax.value == revMin.value
+    _max == _min
   }
 
   /**
    * @param v
    * @return true if the variable is bound to value v, false if variable is not bound or bound to another value than v
    */
-  @inline final def isBoundTo(v: Int): Boolean = revMax.value == v && revMin.value == v
+  @inline final def isBoundTo(v: Int): Boolean = _max == v && _min == v
 
   /**
    * Test if a value is in the domain
    * @param val
    * @return  true if the domain contains the value val, false otherwise
    */
-  @inline final def hasValue(value: Int): Boolean = revMin.value <= value && value <= revMax.value
+  @inline final def hasValue(value: Int): Boolean = _min <= value && value <= _max
 
   /**
    * @param val
    * @return the smallest value > val in the domain, None if there is not value > val in the domain
    */
   final def valueAfter(value: Int): Int = {
-    val max = revMax.value
     val v = value + 1
-    if (max < v) {
-      println("error: no value after " + value + " maximum=" + max)
+    if (_max < v) {
+      println("error: no value after " + value + " maximum=" + _max)
       value
-    } else {
-      val min = revMin.value
-      if (isEmpty || v > max) value
-      else if (v < min) min
-      else v
-    }
+    } else if (isEmpty || v > _max) value
+    else if (v < _min) _min
+    else v
   }
 
   /**
@@ -104,64 +126,40 @@ class CPIntervalVarImpl(store: CPStore, initialMin: Int, initialMax: Int, name: 
    * @return the largest value < val in the domain, None if there is not value < val in the domain
    */
   final def valueBefore(value: Int): Int = {
-    val min = revMin.value
     val v = value - 1
-    if (min > v) {
-      println("error: no value before " + value + " minimum=" + min)
+    if (_min > v) {
+      println("error: no value before " + value + " minimum=" + _min)
       value
-    } else {
-      val max = revMax.value
-      if (isEmpty || v < min) value
-      else if (v > max) max
-      else v
-    }
+    } else if (isEmpty || v < _min) value
+    else if (v > _max) _max
+    else v
+
   }
 
   /** @return A random value in the domain of the variable (uniform distribution) */
   final override def randomValue(rand: Random): Int = {
     assert(!isEmpty)
-    val min = revMin.value
-    val max = revMax.value
-    min + rand.nextInt(max - min + 1)
+    _min + rand.nextInt(_max - _min + 1)
   }
 
   /**
    * @return  the size of the domain
    */
-  @inline final override def size = revMax.value - revMin.value + 1
+  @inline final override def size = _max - _min + 1
 
   /**
    * @return true if the domain is empty, false otherwise
    */
-  @inline final override def isEmpty = revMax.value < revMin.value
-
-  /**
-   * @return  the minimum value in the domain
-   */
-  @inline final override def min = {
-    assert(!isEmpty)
-    revMin.value
-  }
-
-  /**
-   * @return  the maximum value in the domain
-   */
-  @inline final override def max = {
-    assert(!isEmpty)
-    revMax.value
-  }
+  @inline final override def isEmpty = _max < _min
 
   final override def toString: String = {
     if (isEmpty) "phi"
     else if (isBound) {
-      val min = revMin.value
-      if (name.isEmpty) min.toString
-      else name + " " + min
+      if (name.isEmpty) _min.toString
+      else name + " " + _min
     } else {
-      val min = revMin.value
-      val max = revMax.value
-      if (name.isEmpty) s"$name [$min, $max]"
-      else s"[$min, $max]"
+      if (name.isEmpty) s"$name [${_min}, ${_max}]"
+      else s"[${_min}, ${_max}]"
     }
   }
 
@@ -171,13 +169,12 @@ class CPIntervalVarImpl(store: CPStore, initialMin: Int, initialMax: Int, name: 
    * @return  Suspend if val was in the domain, Failure otherwise
    */
   @inline final def assign(value: Int): CPOutcome = {
-    val min = revMin.value
-    val max = revMax.value
-    if (value < min || max < value) throw Inconsistency
-    else if (min == max) Suspend
+    if (value < _min || _max < value) throw Inconsistency
+    else if (_min == _max) Suspend
     else {
-      revMin.value = value
-      revMax.value = value
+      trail()
+      _min = value
+      _max = value
       // Notify constraints
       store.notifyL2(onBindL2.value)
       store.notifyL2(onBoundsL2.value)
@@ -195,24 +192,21 @@ class CPIntervalVarImpl(store: CPStore, initialMin: Int, initialMax: Int, name: 
    * @return  Suspend if there is at least one value >= val in the domain, Failure otherwise
    */
   @inline final def updateMin(value: Int): CPOutcome = {
-    val max = revMax.value
-    if (value > max) throw Inconsistency
+    if (value > _max) throw Inconsistency
+    else if (value <= _min) Suspend
     else {
-      val oldMin = revMin.value
-      if (value <= oldMin) Suspend
-      else {
-        revMin.value = value
-        // Notify the constraints
-        store.notifyUpdateBoundsL1(onBoundsL1.value, this)
-        store.notifyUpdateBoundsIdxL1(onBoundsIdxL1.value, this)
-        store.notifyL2(onBoundsL2.value)
-        if (max == value) { // is bound
-          store.notifyBindL1(onBindL1.value, this)
-          store.notifyBindIdxL1(onBindIdxL1.value, this)
-          store.notifyL2(onBindL2.value)
-        }
-        Suspend
+      trail()
+      _min = value
+      // Notify the constraints
+      store.notifyUpdateBoundsL1(onBoundsL1.value, this)
+      store.notifyUpdateBoundsIdxL1(onBoundsIdxL1.value, this)
+      store.notifyL2(onBoundsL2.value)
+      if (_max == value) { // is bound
+        store.notifyBindL1(onBindL1.value, this)
+        store.notifyBindIdxL1(onBindIdxL1.value, this)
+        store.notifyL2(onBindL2.value)
       }
+      Suspend
     }
   }
 
@@ -222,24 +216,21 @@ class CPIntervalVarImpl(store: CPStore, initialMin: Int, initialMax: Int, name: 
    * @return  Suspend if there is at least one value <= val in the domain, Failure otherwise
    */
   @inline final def updateMax(value: Int): CPOutcome = {
-    val min = revMin.value
-    if (value < min) throw Inconsistency
+    if (value < _min) throw Inconsistency
+    else if (value >= _max) Suspend
     else {
-      val oldMax = revMax.value
-      if (value >= oldMax) Suspend
-      else {
-        revMax.value = value
-        // Notify the constraints
-        store.notifyUpdateBoundsL1(onBoundsL1.value, this)
-        store.notifyUpdateBoundsIdxL1(onBoundsIdxL1.value, this)
-        store.notifyL2(onBoundsL2.value)
-        if (value == min) { // is bound
-          store.notifyBindL1(onBindL1.value, this)
-          store.notifyBindIdxL1(onBindIdxL1.value, this)
-          store.notifyL2(onBindL2.value)
-        }
-        Suspend
+      trail()
+      _max = value
+      // Notify the constraints
+      store.notifyUpdateBoundsL1(onBoundsL1.value, this)
+      store.notifyUpdateBoundsIdxL1(onBoundsIdxL1.value, this)
+      store.notifyL2(onBoundsL2.value)
+      if (value == _min) { // is bound
+        store.notifyBindL1(onBindL1.value, this)
+        store.notifyBindIdxL1(onBindIdxL1.value, this)
+        store.notifyL2(onBindL2.value)
       }
+      Suspend
     }
   }
 

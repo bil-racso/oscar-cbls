@@ -1,18 +1,19 @@
-/*******************************************************************************
+/**
+ * *****************************************************************************
  * OscaR is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- *   
+ *
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License  for more details.
- *   
+ *
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
- ******************************************************************************/
-
+ * ****************************************************************************
+ */
 
 import oscar.cp.modeling._
 
@@ -50,56 +51,36 @@ import scala.math._
   http://www.hakank.org/oscar/
  
 */
-object AllIntervals {
+object AllIntervals extends App {
 
-  def main(args: Array[String]) {
+  implicit val solver = CPSolver()
 
-    val cp = CPSolver()
+  val n = 14
+  val x = Array.fill(n)(CPIntVar(0, n - 1))
+  val diffs = Array.fill(n)(CPIntVar(1, n - 1))
 
-    //
-    // data
-    //
-    val n = 14
+  var nSols = 0
 
-    println("n: " + n)
+  add(allDifferent(diffs), Strong)
+  add(allDifferent(x), Strong)
 
-    //
-    // variables
-    //
-
-    val x = Array.fill(n)(CPIntVar(cp, 0 to n - 1))
-    val diffs = Array.fill(n - 1)(CPIntVar(cp, 1 to n - 1))
-
-    //
-    // constraints
-    //
-    var numSols = 0
-    cp.solve subjectTo {
-
-      cp.add(allDifferent(diffs), Strong)
-      cp.add(allDifferent(x), Strong)
-
-      for (k <- 0 until n - 1) {
-        cp.add(diffs(k) == (x(k + 1) - (x(k))).abs)
-      }
-
-      // symmetry breaking
-      cp.add(x(0) < x(n - 1))
-      cp.add(diffs(0) < diffs(1))
-
-    } search {
-
-      binaryStatic(x)
-    } onSolution {
-      print("x:" + x.mkString(""))
-      print("  diffs:" + diffs.mkString(""))
-      println()
-
-      numSols += 1
-
-    } 
-    println(cp.start(1))
-
+  for (k <- 0 until n - 1) {
+    add(diffs(k) == (x(k + 1) - (x(k))).abs)
   }
 
+  // symmetry breaking
+  add(x(0) < x(n - 1))
+  add(diffs(0) < diffs(1))
+
+  search { binaryStatic(x) }
+
+  onSolution {
+    print("x:" + x.mkString(""))
+    print("  diffs:" + diffs.mkString(""))
+    println()
+    nSols += 1
+  }
+
+  val stats = solver.start(nSols = 1)
+  println(stats)
 }
