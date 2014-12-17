@@ -16,7 +16,7 @@
 package oscar.cp.scheduling.search
 
 import oscar.cp.modeling._
-import oscar.cp.core.CPIntVar
+import oscar.cp.core.CPIntervalVar
 import oscar.algo.reversible._
 import oscar.algo.search.Branching
 
@@ -24,7 +24,7 @@ import oscar.algo.search.Branching
  * Set Times Branching
  * author: Pierre Schaus pschaus@gmail.com
  */
-class SetTimesBranching(starts: IndexedSeq[CPIntVar], durations: IndexedSeq[CPIntVar], ends: IndexedSeq[CPIntVar], tieBreaker: Int => Int = (i: Int) => i) extends Branching {
+class SetTimesBranching(starts: IndexedSeq[_ <: CPIntervalVar], durations: IndexedSeq[_ <: CPIntervalVar], ends: IndexedSeq[_ <: CPIntervalVar], tieBreaker: Int => Int = (i: Int) => i) extends Branching {
 
   val cp = starts.head.store
   val n = starts.size

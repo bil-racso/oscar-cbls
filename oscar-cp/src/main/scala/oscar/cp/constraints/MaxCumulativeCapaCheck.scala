@@ -18,6 +18,7 @@ import scala.math.max
 import scala.math.min
 import oscar.cp.core.CPStore
 import oscar.cp.core.CPIntVar
+import oscar.cp.core.CPIntervalVar
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.Constraint
 import oscar.cp.core.CPPropagStrength
@@ -27,7 +28,7 @@ import oscar.algo.SortUtils.stableSort
 /**
  * @author Pierre Schaus pschaus@gmail.com
  */
-class MaxCumulativeCapaCheck(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], demands: Array[CPIntVar], resources: Array[CPIntVar], capacity: CPIntVar, id: Int) extends Constraint(starts.head.store, "MaxSweepCumulative") {
+class MaxCumulativeCapaCheck(starts: Array[_ <: CPIntervalVar], durations: Array[_ <: CPIntervalVar], ends: Array[_ <: CPIntervalVar], demands: Array[_ <: CPIntervalVar], resources: Array[CPIntVar], capacity: CPIntervalVar, id: Int) extends Constraint(capacity.store, "MaxSweepCumulative") {
 
   private val nTasks = starts.size
   private val Tasks = 0 until nTasks

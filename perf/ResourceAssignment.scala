@@ -66,7 +66,7 @@ object ResourceAssignment extends App {
     val load = Array.fill(nbBins)(CPIntVar(cp,0 to binCapa))
 
     cp.solve() subjectTo {
-      cp.add(maximum(0 until nbBins)(load(_)) <= 6)
+      cp.add(maximum((0 until nbBins).map(load(_))) <= 6)
       cp.add(binPacking(x,taskWeight.map(_._2),load))
       
     } search {
