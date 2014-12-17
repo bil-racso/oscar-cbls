@@ -1016,7 +1016,7 @@ trait Constraints {
    * @param f function mapping each element from indexes to a variable
    * @return a fresh variable z linked to vars by a constraint such that z is the maximum of all variables f(A) for all A in indexes
    */
-  // def maximum[A](indexes: Iterable[A])(f: A => CPIntervalVar): CPIntervalVar = maximum(indexes map f)
+  def maximum[A](indexes: Iterable[A])(f: A => CPIntervalVar): CPIntervalVar = maximum(indexes map f)
 
   /**
    * Maximum Constraint
@@ -1027,6 +1027,30 @@ trait Constraints {
   def maximum(vars: Array[_ <: CPIntervalVar], m: CPIntervalVar): Constraint = {
     new Maximum(vars.asInstanceOf[Array[CPIntervalVar]], m)
   }
+  
+  /**
+   * Maximum Constraint
+   * @param vars an non empty array of variables
+   * @return a fresh variable z linked to vars by a constraint such that z is the maximum of all variables in vars
+   */
+  def maximum(vars: Array[CPIntervalVar]): CPIntervalVar = {
+    val cp = vars(0).store
+    val m = CPIntervalVar(vars.map(_.min).max, vars.map(_.max).max)(cp)
+    cp.add(maximum(vars, m))
+    m
+  }  
+  
+  /**
+   * Maximum Constraint
+   * @param vars an non empty array of variables
+   * @return a fresh variable z linked to vars by a constraint such that z is the maximum of all variables in vars
+   */
+  def maximum(vars: Array[CPIntVar]): CPIntVar = {
+    val cp = vars(0).store
+    val m = CPIntVar(vars.map(_.min).max, vars.map(_.max).max)(cp)
+    cp.add(maximum(vars, m))
+    m
+  }  
 
   /**
    * Maximum Constraint
