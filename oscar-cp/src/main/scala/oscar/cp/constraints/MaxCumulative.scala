@@ -18,16 +18,26 @@ extends Constraint(starts.head.store, "Max Cumulative") {
 
     l match {
       case Weak => 
-        if (s.post(SweepMaxCumulative(starts,durations,ends,demands,resources,capacity,id)) == Failure) return Failure
+//        if (s.post(SweepMaxCumulative(starts,durations,ends,demands,resources,capacity,id)) == Failure) return Failure
+        if (s.post(TTPerTask(starts,durations,ends,demands,resources,capacity,id)) == Failure) return Failure
+        if (s.post(OverloadCheckerExtended(starts,durations,ends,demands,resources,capacity,id)) == Failure) return Failure
+        
         
       case Medium =>
-        if (s.post(SweepMaxCumulative(starts,durations,ends,demands,resources,capacity,id)) == Failure) return Failure
-        // if (s.post(IQuad(starts,durations,ends,demands,resources,capacity,id)) == Failure) return Failure
-//        if (s.post(EFKameugne11WithResources(starts,durations,ends,demands,resources,capacity,id)) == Failure) return Failure
+        if (s.post(TTPerTask(starts,durations,ends,demands,resources,capacity,id)) == Failure) return Failure
+        if (s.post(OverloadCheckerExtended(starts,durations,ends,demands,resources,capacity,id)) == Failure) return Failure
+        if (s.post(IQuad(starts,durations,ends,demands,resources,capacity,id)) == Failure) return Failure
+        
+//        if (s.post(SweepMaxCumulative(starts,durations,ends,demands,resources,capacity,id)) == Failure) return Failure
 //        if (s.post(new EnergeticChecker(starts,durations,ends,demands,resources,capacity,id)) == Failure) return Failure
         
       case Strong =>
-        if (s.post(SweepMaxCumulative(starts,durations,ends,demands,resources,capacity,id)) == Failure) return Failure
+        if (s.post(TTPerTask(starts,durations,ends,demands,resources,capacity,id)) == Failure) return Failure
+        if (s.post(OverloadCheckerExtended(starts,durations,ends,demands,resources,capacity,id)) == Failure) return Failure
+        if (s.post(IQuad(starts,durations,ends,demands,resources,capacity,id)) == Failure) return Failure
+        if (s.post(new EnergeticReasoning(starts,durations,ends,demands,resources,capacity,id)) == Failure) return Failure
+        
+        //if (s.post(SweepMaxCumulative(starts,durations,ends,demands,resources,capacity,id)) == Failure) return Failure
         // if (s.post(EFKameugne11WithResources(starts,durations,ends,demands,resources,capacity,id)) == Failure) return Failure
         // if (s.post(new EnergeticChecker(starts,durations,ends,demands,resources,capacity,id)) == Failure) return Failure
         // if (s.post(new EnergeticReasoning(starts,durations,ends,demands,resources,capacity,id)) == Failure) return Failure
