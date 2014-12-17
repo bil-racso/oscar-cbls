@@ -19,6 +19,7 @@ import oscar.algo.reversible.ReversiblePointer
 import oscar.algo.reversible.TrailEntry
 import oscar.cp.core.CPOutcome._
 import scala.util.Random
+import oscar.algo.reversible.ReversibleInt
 
 /**
  * @author Pierre Schaus pschaus@gmail.com
@@ -44,13 +45,16 @@ class CPIntervalVarImpl(store: CPStore, initialMin: Int, initialMax: Int, name: 
     }
   }
 
-  // Adjacency list
+  // Registered constraints
   private[this] val onBoundsL2 = new ReversiblePointer[ConstraintQueue](store, null)
   private[this] val onBindL2 = new ReversiblePointer[ConstraintQueue](store, null)
   private[this] val onBoundsL1 = new ReversiblePointer[PropagEventQueueVarInt[CPIntervalVar]](store, null)
   private[this] val onBindL1 = new ReversiblePointer[PropagEventQueueVarInt[CPIntervalVar]](store, null)
   private[this] val onBoundsIdxL1 = new ReversiblePointer[PropagEventQueueVarInt[CPIntervalVar]](store, null)
   private[this] val onBindIdxL1 = new ReversiblePointer[PropagEventQueueVarInt[CPIntervalVar]](store, null)
+  
+  // Number of constraints registered on the variable
+  private[this] val degree = new ReversibleInt(store, 0) // should not change often
 
   // Domain representation
   private[this] var _min: Int = initialMin // private[this] is used for more efficient bytecode
@@ -76,17 +80,8 @@ class CPIntervalVarImpl(store: CPStore, initialMin: Int, initialMax: Int, name: 
     }
   }
 
-  /** @return The number of propagation methods of L2 attached to changes of this variables. */
-  final def constraintDegree: Int = {
-    var tot = 0
-    if (onBoundsL2.hasValue) tot += onBoundsL2.value.size
-    if (onBindL2.hasValue) tot += onBindL2.value.size
-    if (onBoundsL1.hasValue) tot += onBoundsL1.value.size
-    if (onBindL1.hasValue) tot += onBindL1.value.size
-    if (onBoundsIdxL1.hasValue) tot += onBoundsIdxL1.value.size
-    if (onBindIdxL1.hasValue) tot += onBindIdxL1.value.size
-    tot
-  }
+  /** @return The number of propagators registered on this variables. */
+  final def constraintDegree: Int = degree.value
 
   /** @return true if the domain of the variable has exactly one value, false if the domain has more than one value */
   @inline final def isBound: Boolean = {
@@ -240,7 +235,8 @@ class CPIntervalVarImpl(store: CPStore, initialMin: Int, initialMax: Int, name: 
    * @param c
    * @see oscar.cp.core.Constraint#propagate()
    */
-  def callPropagateWhenBind(c: Constraint) {
+  def callPropagateWhenBind(c: Constraint): Unit = {
+    degree.incr()
     onBindL2.setValue(new ConstraintQueue(onBindL2.value, c))
   }
 
@@ -250,7 +246,8 @@ class CPIntervalVarImpl(store: CPStore, initialMin: Int, initialMax: Int, name: 
    * @param c
    * @see oscar.cp.core.Constraint#propagate()
    */
-  def callPropagateWhenBoundsChange(c: Constraint) {
+  def callPropagateWhenBoundsChange(c: Constraint): Unit = {
+    degree.incr()
     onBoundsL2.setValue(new ConstraintQueue(onBoundsL2.value, c))
   }
 
@@ -260,11 +257,12 @@ class CPIntervalVarImpl(store: CPStore, initialMin: Int, initialMax: Int, name: 
    * @param c
    * @see oscar.cp.core.Constraint#valBind(CPIntVar)
    */
-  def callValBindWhenBind(c: Constraint) {
+  def callValBindWhenBind(c: Constraint): Unit = {
     callValBindWhenBind(c, this)
   }
 
-  def callValBindWhenBind(c: Constraint, variable: CPIntervalVar) {
+  def callValBindWhenBind(c: Constraint, variable: CPIntervalVar): Unit = {
+    degree.incr()
     onBindL1.setValue(new PropagEventQueueVarInt(onBindL1.value, c, variable))
   }
 
@@ -274,11 +272,12 @@ class CPIntervalVarImpl(store: CPStore, initialMin: Int, initialMax: Int, name: 
    * @param c
    * @see oscar.cp.core.Constraint#updateBounds(CPIntVar)
    */
-  def callUpdateBoundsWhenBoundsChange(c: Constraint) {
+  def callUpdateBoundsWhenBoundsChange(c: Constraint): Unit = {
     callUpdateBoundsWhenBoundsChange(c, this)
   }
 
-  def callUpdateBoundsWhenBoundsChange(c: Constraint, variable: CPIntervalVar) {
+  def callUpdateBoundsWhenBoundsChange(c: Constraint, variable: CPIntervalVar): Unit = {
+    degree.incr()
     onBoundsL1.setValue(new PropagEventQueueVarInt(onBoundsL1.value, c, variable))
   }
 
@@ -289,11 +288,12 @@ class CPIntervalVarImpl(store: CPStore, initialMin: Int, initialMax: Int, name: 
    * @param idx, an index that will be given as parameter to updateBoundsIdx(CPIntVar, int)
    * @see Constraint#updateBoundsIdx(CPIntVar, int)
    */
-  def callUpdateBoundsIdxWhenBoundsChange(c: Constraint, idx: Int) {
+  def callUpdateBoundsIdxWhenBoundsChange(c: Constraint, idx: Int): Unit = {
     callUpdateBoundsIdxWhenBoundsChange(c, this, idx)
   }
 
-  def callUpdateBoundsIdxWhenBoundsChange(c: Constraint, variable: CPIntervalVar, idx: Int) {
+  def callUpdateBoundsIdxWhenBoundsChange(c: Constraint, variable: CPIntervalVar, idx: Int): Unit = {
+    degree.incr()
     onBoundsIdxL1.setValue(new PropagEventQueueVarInt(onBoundsIdxL1.value, c, variable, idx))
   }
 
@@ -304,11 +304,12 @@ class CPIntervalVarImpl(store: CPStore, initialMin: Int, initialMax: Int, name: 
    * @param idx, an index that will be given as parameter to valBindIdx(CPIntVar, int)
    * @see Constraint#valBindIdx(CPIntVar, int)
    */
-  def callValBindIdxWhenBind(c: Constraint, idx: Int) {
+  def callValBindIdxWhenBind(c: Constraint, idx: Int): Unit = {
     callValBindIdxWhenBind(c, this, idx)
   }
 
-  def callValBindIdxWhenBind(c: Constraint, variable: CPIntervalVar, idx: Int) {
+  def callValBindIdxWhenBind(c: Constraint, variable: CPIntervalVar, idx: Int): Unit = {
+    degree.incr()
     onBindIdxL1.setValue(new PropagEventQueueVarInt(onBindIdxL1.value, c, variable, idx))
   }
 }
