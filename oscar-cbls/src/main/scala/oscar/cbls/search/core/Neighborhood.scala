@@ -275,7 +275,7 @@ abstract class Neighborhood{
     * the count is reset by the reset action.
     * @author renaud.delandtsheer@cetic.be
     */
-  def maxMovesWithoutImprovement(maxMove:Int, obj:Objective) = new MaxMovesWithoutImprovement(this, null, maxMove, obj)
+  def maxMovesWithoutImprovement(maxMove:Int, obj:()=>Int) = new MaxMovesWithoutImprovement(this, null, maxMove, obj)
 
   /**makes a round robin on the neighborhood. it swaps as soon as one does not find a move
     * and swaps neighborhood after "step" invocations
@@ -409,7 +409,7 @@ abstract class Neighborhood{
     * @param obj the obj that is looked for improvement
     * @author renaud.delandtsheer@cetic.be
     * */
-  def untilImprovement(obj:CBLSIntVar, minMoves:Int = 0, maxMove:Int = Int.MaxValue) = new UntilImprovement(this, obj, minMoves, maxMove)
+  def untilImprovement(obj:()=>Int, minMoves:Int = 0, maxMove:Int = Int.MaxValue) = new UntilImprovement(this, obj, minMoves, maxMove)
 
   /**
    * this combinator injects a metropolis acceptation function.

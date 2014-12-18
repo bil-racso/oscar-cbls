@@ -562,7 +562,7 @@ class MaxMoves(a: Neighborhood, val maxMove: Int, cond:Move => Boolean = null) e
    * this will modify the effect of the maxMoves by transforming it into a [[MaxMovesWithoutImprovement]]
    * the initial maxMoves is deleted by this method, and the integer bound is passed to [[MaxMovesWithoutImprovement]]
    */
-  def withoutImprovementOver(obj: CBLSIntVar) = new MaxMovesWithoutImprovement(a, cond, maxMove, obj)
+  def withoutImprovementOver(obj:()=>Int) = new MaxMovesWithoutImprovement(a, cond, maxMove, obj)
 
   def suchThat(cond:Move => Boolean) = new MaxMoves(a, maxMove, if (this.cond == null) cond else (m:Move) => this.cond(m) && cond(m))
 }
@@ -742,7 +742,7 @@ class AndThen(a: Neighborhood, b: Neighborhood, maxFirstStep: Int = 10, maximalI
  * the count is reset by the reset action.
  * @author renaud.delandtsheer@cetic.be
  */
-class MaxMovesWithoutImprovement(a: Neighborhood, val cond:Move => Boolean, val maxMovesWithoutImprovement: Int, obj: CBLSIntVar) extends NeighborhoodCombinator(a) {
+class MaxMovesWithoutImprovement(a: Neighborhood, val cond:Move => Boolean, val maxMovesWithoutImprovement: Int, obj:()=>Int) extends NeighborhoodCombinator(a) {
 
   var stepsSinceLastImprovement = 0
   var bestObj = Int.MaxValue
@@ -767,7 +767,7 @@ class MaxMovesWithoutImprovement(a: Neighborhood, val cond:Move => Boolean, val 
 
   def notifyMoveTaken(m:Move) {
     if (cond == null || cond(m)) {
-      val newObj = obj.value
+      val newObj = obj()
       if (newObj < bestObj) {
         bestObj = newObj
         stepsSinceLastImprovement = 0
