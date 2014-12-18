@@ -29,6 +29,8 @@ import oscar.algo.SortUtils._
 /**
  * @author Renaud Hartert ren.hartert@gmail.com
  */
+/* // left-right sweeping is sufficient, but left-right and right-left might be more efficient
+ * 
 class SweepMaxCumulative(starts: Array[_ <: CPIntervalVar], durations: Array[_ <: CPIntervalVar], ends: Array[_ <: CPIntervalVar], demands: Array[_ <: CPIntervalVar], resources: Array[CPIntVar], capacity: CPIntervalVar, id: Int) extends Constraint(starts.head.store, "SweepMaxCumulative") {
   val sweepLR = new SweepMaxCumulativeLR(starts,        durations,            ends, demands, resources, capacity, id) 
   val sweepRL = new SweepMaxCumulativeLR(ends map {-_}, durations, starts map {-_}, demands, resources, capacity, id)
@@ -46,8 +48,9 @@ class SweepMaxCumulative(starts: Array[_ <: CPIntervalVar], durations: Array[_ <
   }
   
 }
+*/
 
-class SweepMaxCumulativeLR(starts: Array[_ <: CPIntervalVar], durations: Array[_ <: CPIntervalVar], ends: Array[_ <: CPIntervalVar], demands: Array[_ <: CPIntervalVar], resources: Array[CPIntVar], capacity: CPIntervalVar, id: Int) extends Constraint(starts.head.store, "SweepMaxCumulative") {
+class SweepMaxCumulative(starts: Array[_ <: CPIntervalVar], durations: Array[_ <: CPIntervalVar], ends: Array[_ <: CPIntervalVar], demands: Array[_ <: CPIntervalVar], resources: Array[CPIntVar], capacity: CPIntervalVar, id: Int) extends Constraint(starts.head.store, "SweepMaxCumulative") {
   private val nTasks = starts.size
   private val Tasks = 0 until nTasks
 
