@@ -38,9 +38,15 @@ object SearchResult {
 
 abstract class JumpNeighborhood extends Neighborhood{
 
+  /** the method that actually performs the move
+    * notice that this method is called when the move is committed,
+    * which happens after the neighborhood returns the move.
+    */
   def doIt()
 
   /** this method checks that the jump can actually be performed
+    * it is called before the neighborhood returns either MoveFound or NoMoveFound
+    * notice that the doIt method is called only if canDoIt returned true.
     * override it if your jump might not be applicable
     * (and do not forget to handle this case in your search strategy)
     * @return
@@ -85,11 +91,11 @@ abstract class JumpNeighborhoodParam[T] extends Neighborhood{
  * @author renaud.delandtsheer@cetic.be
  */
 abstract class Neighborhood{
-
-
   /**
-   *
-  @param obj the objective function. notice that it is actually a function. if you have an [[oscar.cbls.objective.Objective]] there is an implicit conversion available
+   * the method that returns a move from the neighborhood.
+   * The returned move should typically be accepted by the acceptance criterion over the objective function.
+   * Some neighborhoods are actually jumps, so that they might violate this basic rule however.
+   * @param obj the objective function. notice that it is actually a function. if you have an [[oscar.cbls.objective.Objective]] there is an implicit conversion available
    * @param acceptanceCriterion
    * @return
    */
@@ -420,7 +426,31 @@ abstract class Neighborhood{
    * @param base the base for the exponent calculation. default is 2
    */
   def metropolis(temperature:Int => Float = _ => 100, base:Float = 2) = new Metropolis(this, temperature, base)
-}
+
+  /**
+   * This is an atomic combinator, it represent that the neighborhood below should be considered as a single piece.
+   * When you commit a move from this neighborhood, "a" is reset, and exhausted in a single move from Atomic(a)
+   * Also, Atomic is a jump neighborhood as it cannot evaluate any objective function before the move is committed.
+   * @param name a name for the atomic move
+   */
+  def atomic(name:String = "Atomic", bound:Int = Int.MaxValue)  = new Atomic(this, name, bound)
+
+  /**
+   * Forces the use of a given objetive function.
+   * this overrides the one that you might pass in the higher level
+   * @param overridingObjective the objective to use instead of the given one
+   */
+  def overrideObjective(a:Neighborhood, overridingObjective:()=>Int) = new OverrideObjective(a, overridingObjective)
+
+    /**
+     * This represents a guided local search where a series of objective criterion are optimized one after the other
+     * the switching is performed on exhaustion, and a is reset on switching.
+     * Notice that if you want to use different neighborhoods depending on the objective function, you should rather use a series of neighborhood with the objectiveFucntion combinator
+     * @param objectives the list of objective to consider
+     * @param resetOnExhaust  on exhaustion of the current objective, restores the best value for this objective before switching to the next objective
+     */
+    def guidedLocalSearch(a:Neighborhood, objectives:List[CBLSIntVar], resetOnExhaust:Boolean) = new GuidedLocalSearch(a, objectives, resetOnExhaust)
+  }
 
 /** a neighborhood that never finds any move (quite useless, actually)
   */

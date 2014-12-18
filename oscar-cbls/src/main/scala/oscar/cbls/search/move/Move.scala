@@ -26,8 +26,10 @@ import oscar.cbls.objective.Objective
   *                 we did not use an option there because there would anyway be a need
   *                 for arithmetic on this option in combinators suh as [[oscar.cbls.search.combinators.Best]]
   *                 Many combinators actually rely on this value to take decisions (eg: [[oscar.cbls.search.combinators.ProtectBest]] and [[oscar.cbls.search.combinators.Best]]
+  * @param neighborhoodName the name of the neighborhood that generated this move, used for pretty printing purpose.
+  *                         Notice that the name is not the type of the neighborhood.
   * @author renaud.delandtsheer@cetic.be
-  */
+ */
 abstract class Move(val objAfter:Int = Int.MaxValue, val neighborhoodName:String = null){
   /**to actually take the move*/
   def commit()
@@ -210,6 +212,21 @@ object CallBackMove{
     new CallBackMove[Unit](_ => {callBack()}, objAfter, neighborhoodName, shortDescription)
 }
 
+/** a callBackMove when committed calls some method
+  * this is how it takes its move
+  * @param callBack the method that is called when the move is committed it takes a parameter of type T, which is given in param
+  * @param objAfter the objective after this assignation will be performed
+  *                 in case you degrade the objective because you make a jump, and you do not want to compute it,
+  *                 you must set it to Int.MaxValue or just do not specify it, as it is the default value
+  *                 we did not use an option there because there would anyway be a need
+  *                 for arithmetic on this option in combinators suh as [[oscar.cbls.search.combinators.Best]]
+  *                 Many combinators actually rely on this value to take decisions (eg: [[oscar.cbls.search.combinators.ProtectBest]] and [[oscar.cbls.search.combinators.Best]]
+  * @param neighborhoodName the name of the neighborhood that generated this move, used for pretty printing purpose.
+  *                         Notice that the name is not the type of the neighborhood.
+  * @param shortDescription a description of whet the move does (since it cannot be inferred from the name of the neighborhood as for [[AssignMove]] for instance)
+  * @param param the parameter that is passed to the callBack method when the move is committed
+  * @tparam T
+  */
 case class CallBackMove[T](callBack: T => Unit, override val objAfter:Int, override val neighborhoodName:String, shortDescription:() => String, param:T = null) extends Move{
   def commit(){
     callBack(param)
