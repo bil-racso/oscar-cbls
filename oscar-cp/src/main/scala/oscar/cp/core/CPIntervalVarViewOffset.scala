@@ -21,9 +21,7 @@ import scala.util.Random
  * @author Pierre Schaus pschaus@gmail.com
  */
 class CPIntervalVarViewOffset(v: CPIntervalVar,val b: Int) extends CPIntervalVar(v.store) {
-    
-    
-    def transform(v: Int) = b + this.v.transform(v)    
+  def transform(v: Int) = b + this.v.transform(v)    
 	
 	def isBound = v.isBound
 	
@@ -84,7 +82,12 @@ class CPIntervalVarViewOffset(v: CPIntervalVar,val b: Int) extends CPIntervalVar
 	def callUpdateBoundsIdxWhenBoundsChange(c: Constraint, variable: CPIntervalVar, idx: Int) = v.callUpdateBoundsIdxWhenBoundsChange(c, variable, idx);
 		
 	def callUpdateBoundsIdxWhenBoundsChange(c: Constraint, idx: Int) = v.callUpdateBoundsIdxWhenBoundsChange(c,this,idx)
-	
-
 }
+
+object CPIntervalVarViewOffset {
+  def apply(v: CPIntervalVar, b: Int): CPIntervalVar = {
+    new CPIntervalVarViewOffset(v, b)
+  }
+}
+
   

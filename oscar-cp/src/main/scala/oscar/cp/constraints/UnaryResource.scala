@@ -21,12 +21,12 @@ import java.util.{Arrays => JArrays}
 /**
  * @author Pierre Schaus pschaus@gmail.com
  */
-class UnaryResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], required: Array[CPBoolVar]) extends Constraint(starts(0).store) {
+class UnaryResource(starts: Array[_ <: CPIntervalVar], durations: Array[_ <: CPIntervalVar], ends: Array[_ <: CPIntervalVar], required: Array[CPBoolVar]) extends Constraint(starts(0).store) {
   
   idempotent = true
-  def this(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], resources: Array[CPIntVar], id: Int) = this(starts,durations,ends,resources.map(_.isEq(id)))
+  def this(starts: Array[_ <: CPIntervalVar], durations: Array[_ <: CPIntervalVar], ends: Array[_ <: CPIntervalVar], resources: Array[CPIntVar], id: Int) = this(starts,durations,ends,resources.map(_.isEq(id)))
   
-  def this(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar]) = {
+  def this(starts: Array[_ <: CPIntervalVar], durations: Array[_ <: CPIntervalVar], ends: Array[_ <: CPIntervalVar]) = {
     this (starts,durations,ends,Array.fill(starts.size)(CPBoolVar(starts(0).store,true)))
   }
 
@@ -533,7 +533,7 @@ class UnaryResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: A
  * This object is used internally by UnaryResource, it is not intended to be used in modeling
  * @author Pierre Schaus pschaus@gmail.com
  */
-class ActivityUnary(val cp: CPStore, startVar: CPIntVar, durVar: CPIntVar, endVar: CPIntVar, requiredVar: CPBoolVar, val index: Int) {
+class ActivityUnary(val cp: CPStore, startVar: CPIntervalVar, durVar: CPIntervalVar, endVar: CPIntervalVar, requiredVar: CPBoolVar, val index: Int) {
 
   var estPos = -1
 
@@ -623,8 +623,8 @@ class ActivityUnary(val cp: CPStore, startVar: CPIntVar, durVar: CPIntVar, endVa
 
 class MirrorActivityUnary(val act: ActivityUnary) extends ActivityUnary(act.cp, act.start, act.dur, act.end, act.required, act.index) {
 
-  override def start: CPIntVar = throw new UninitializedFieldError("not available")
-  override def end: CPIntVar = throw new UninitializedFieldError("not available")
+  override def start: CPIntervalVar = throw new UninitializedFieldError("not available")
+  override def end: CPIntervalVar = throw new UninitializedFieldError("not available")
 
   // Earliest starting time
   override def est = -act.lct

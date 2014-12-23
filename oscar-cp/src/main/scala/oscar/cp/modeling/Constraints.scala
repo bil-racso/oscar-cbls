@@ -62,6 +62,7 @@ import oscar.cp.constraints.WeightedSum
 import oscar.cp.constraints.stockingCost.StockingCost
 import oscar.cp.core.CPBoolVar
 import oscar.cp.core.CPIntVar
+import oscar.cp.core.CPIntervalVar
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.CPPropagStrength
 import oscar.cp.core.CPSetVar
@@ -1015,7 +1016,7 @@ trait Constraints {
    * @param f function mapping each element from indexes to a variable
    * @return a fresh variable z linked to vars by a constraint such that z is the maximum of all variables f(A) for all A in indexes
    */
-  def maximum[A](indexes: Iterable[A])(f: A => CPIntVar): CPIntVar = maximum(indexes map f)
+  def maximum[A](indexes: Iterable[A])(f: A => CPIntervalVar): CPIntervalVar = maximum(indexes map f)
 
   /**
    * Maximum Constraint
@@ -1023,19 +1024,43 @@ trait Constraints {
    * @param m a variables representing the maximum of vars
    * @return a constraint ensuring that m is the maximum of variables in vars
    */
-  def maximum(vars: Array[CPIntVar], m: CPIntVar): Constraint = {
-    new Maximum(vars, m)
+  def maximum(vars: Array[_ <: CPIntervalVar], m: CPIntervalVar): Constraint = {
+    new Maximum(vars.asInstanceOf[Array[CPIntervalVar]], m)
   }
+  
+  /**
+   * Maximum Constraint
+   * @param vars an non empty array of variables
+   * @return a fresh variable z linked to vars by a constraint such that z is the maximum of all variables in vars
+   */
+  def maximum(vars: Array[CPIntervalVar]): CPIntervalVar = {
+    val cp = vars(0).store
+    val m = CPIntervalVar(vars.map(_.min).max, vars.map(_.max).max)(cp)
+    cp.add(maximum(vars, m))
+    m
+  }  
+  
+  /**
+   * Maximum Constraint
+   * @param vars an non empty array of variables
+   * @return a fresh variable z linked to vars by a constraint such that z is the maximum of all variables in vars
+   */
+  def maximum(vars: Array[CPIntVar]): CPIntVar = {
+    val cp = vars(0).store
+    val m = CPIntVar(vars.map(_.min).max, vars.map(_.max).max)(cp)
+    cp.add(maximum(vars, m))
+    m
+  }  
 
   /**
    * Maximum Constraint
    * @param vars an non empty array of variables
    * @return a fresh variable z linked to vars by a constraint such that z is the maximum of all variables in vars
    */
-  def maximum(vars: Iterable[CPIntVar]): CPIntVar = {
+  def maximum(vars: Iterable[_ <: CPIntervalVar]): CPIntervalVar = {
     val x = vars.toArray
     val cp = x(0).store
-    val m = CPIntVar(vars.map(_.min).max, vars.map(_.max).max)(cp)
+    val m = CPIntervalVar(vars.map(_.min).max, vars.map(_.max).max)(cp)
     cp.add(maximum(x, m))
     m
   }
@@ -1188,8 +1213,10 @@ trait Constraints {
   def diffn(x: Array[CPIntVar], dx: Array[CPIntVar], y: Array[CPIntVar], dy: Array[CPIntVar]): Iterable[Constraint] = {
     val endx = Array.tabulate(x.size)(i => x(i) + dx(i))
     val endy = Array.tabulate(y.size)(i => y(i) + dy(i))
-    val capay = maximum(endy) - minimum(y)
-    val capax = maximum(endx) - minimum(x)
+    val maxX: CPIntervalVar = maximum(endx)
+    val maxY: CPIntervalVar = maximum(endy)
+    val capax = maxX - minimum(x)
+    val capay = maxY - minimum(y)
     var cons = Vector[Constraint]()
     for (i <- 0 until x.length; j <- i + 1 until x.length) {
       cons = cons :+ (new Or(Array(x(i) + dx(i) <== x(j),
@@ -1218,7 +1245,7 @@ trait Constraints {
    * @param ends the variables representing the completion time of the tasks, it is your responsibility to link starts, durations and ends such that start(i) + durations(i) = ends(i)
    * @param required tells if a task is scheduled on this resource or not, if not this task is not constrained
    */  
-  def unaryResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], required: Array[CPBoolVar]): UnaryResource = {
+  def unaryResource(starts: Array[_ <: CPIntervalVar], durations: Array[_ <: CPIntervalVar], ends: Array[_ <: CPIntervalVar], required: Array[CPBoolVar]): UnaryResource = {
 	new UnaryResource(starts,durations,ends,required)
   }
   
@@ -1231,7 +1258,7 @@ trait Constraints {
    * @param resources the variables representing the resource where the task is scheduled
    * @param id, the resource on which we want to constraint, tasks i such that resources(i) != id are not considered
    */  
-  def unaryResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], resources: Array[CPIntVar], id: Int) = {
+  def unaryResource(starts: Array[_ <: CPIntervalVar], durations: Array[_ <: CPIntervalVar], ends: Array[_ <: CPIntervalVar], resources: Array[CPIntVar], id: Int) = {
 	new UnaryResource(starts,durations,ends,resources,id)
   }
 
@@ -1241,7 +1268,7 @@ trait Constraints {
    * @param durations the variables representing the duration of the tasks
    * @param ends the variables representing the completion time of the tasks, it is your responsibility to link starts, durations and ends such that start(i) + durations(i) = ends(i)
    */    
-  def unaryResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar]) = {
+  def unaryResource(starts: Array[_ <: CPIntervalVar], durations: Array[_ <: CPIntervalVar], ends: Array[_ <: CPIntervalVar]) = {
     val cp = starts(0).store
 	new UnaryResource(starts,durations,ends,starts.map(s => CPBoolVar(true)(cp)))
   }
@@ -1296,7 +1323,7 @@ trait Constraints {
    * @param capacity the capacity of the resource
    * @param id, the resource on which we want to constraint the capacity (only tasks i with resources(i) = id are taken into account)
    */ 
-  def maxCumulativeResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], demands: Array[CPIntVar], resources: Array[CPIntVar], capacity: CPIntVar, id: Int): Constraint = {
+  def maxCumulativeResource(starts: Array[_ <: CPIntervalVar], durations: Array[_ <: CPIntervalVar], ends: Array[_ <: CPIntervalVar], demands: Array[_ <: CPIntervalVar], resources: Array[CPIntVar], capacity: CPIntervalVar, id: Int): Constraint = {
     MaxCumulative(starts,durations,ends,demands,resources,capacity,id)
   }
   
@@ -1308,7 +1335,7 @@ trait Constraints {
    * @param demands the variables representing how much each task consume of the resource
    * @param capacity the capacity of the resource
    */ 
-  def maxCumulativeResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], demands: Array[CPIntVar], capacity: CPIntVar): Constraint = {
+  def maxCumulativeResource(starts: Array[_ <: CPIntervalVar], durations: Array[_ <: CPIntervalVar], ends: Array[_ <: CPIntervalVar], demands: Array[_ <: CPIntervalVar], capacity: CPIntervalVar): Constraint = {
     val cp = starts(0).store
     val resources = Array.fill(starts.size)(CPIntVar(0)(cp))
     maxCumulativeResource(starts,durations,ends,demands,resources,capacity,0)
@@ -1324,8 +1351,8 @@ trait Constraints {
    * @param capacity the capacity of the resource
    * @param id, the resource on which we want to constraint the capacity (only tasks i with resources(i) = id are taken into account)
    */ 
-  def minCumulativeResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], demands: Array[CPIntVar], resources: Array[CPIntVar], capacity: CPIntVar, id: Int): Constraint = {
-    new SweepMinCumulative(starts: Array[CPIntVar],durations: Array[CPIntVar], ends: Array[CPIntVar], demands: Array[CPIntVar], resources: Array[CPIntVar], capacity: CPIntVar, id: Int)
+  def minCumulativeResource(starts: Array[_ <: CPIntervalVar], durations: Array[_ <: CPIntervalVar], ends: Array[_ <: CPIntervalVar], demands: Array[_ <: CPIntervalVar], resources: Array[CPIntVar], capacity: CPIntervalVar, id: Int): Constraint = {
+    new SweepMinCumulative(starts, durations, ends, demands, resources, capacity, id)
   }
   
   /**
@@ -1336,7 +1363,7 @@ trait Constraints {
    * @param demands the variables representing how much each task consume of the resource
    * @param capacity the capacity of the resource
    */ 
-  def minCumulativeResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], demands: Array[CPIntVar], capacity: CPIntVar): Constraint = {
+  def minCumulativeResource(starts: Array[_ <: CPIntervalVar], durations: Array[_ <: CPIntervalVar], ends: Array[_ <: CPIntervalVar], demands: Array[_ <: CPIntervalVar], capacity: CPIntervalVar): Constraint = {
     val cp = starts(0).store
     val resources = Array.fill(starts.size)(CPIntVar(0)(cp))
     minCumulativeResource(starts,durations,ends,demands,resources,capacity,0)

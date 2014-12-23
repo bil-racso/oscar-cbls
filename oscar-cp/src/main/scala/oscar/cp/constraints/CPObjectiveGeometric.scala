@@ -1,12 +1,12 @@
 package oscar.cp.constraints
 
-import oscar.cp.core.CPIntVar
+import oscar.cp.core.CPIntervalVar
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.CPOutcome._
 import oscar.cp.modeling.TightenType
 import oscar.cp.modeling.TightenType._
 
-abstract class CPObjectiveGeometric(objVar: CPIntVar, name: String, ratio: Double)
+abstract class CPObjectiveGeometric(objVar: CPIntervalVar, name: String, ratio: Double)
 extends CPObjectiveUnit(objVar, name) {
   require(0 < ratio && ratio < 1)
   
@@ -18,7 +18,7 @@ extends CPObjectiveUnit(objVar, name) {
 /** Best  : smallest value
  *  Worst : largest value
  */
-class CPObjectiveGeometricMinimize(objVar: CPIntVar, name: String = "", ratio: Double = 0.001)
+class CPObjectiveGeometricMinimize(objVar: CPIntervalVar, name: String = "", ratio: Double = 0.001)
 extends CPObjectiveGeometric(objVar, name, ratio) {
   def domBest: Int = objVar.min
   def domWorst: Int = objVar.max 
@@ -41,7 +41,7 @@ extends CPObjectiveGeometric(objVar, name, ratio) {
 /** Best  : largest value
  *  Worst : smallest value
  */
-class CPObjectiveGeometricMaximize(objVar: CPIntVar, name: String = "", ratio: Double = 0.001)
+class CPObjectiveGeometricMaximize(objVar: CPIntervalVar, name: String = "", ratio: Double = 0.001)
 extends CPObjectiveGeometric(objVar, name, ratio) {
 
   def domBest: Int = objVar.max

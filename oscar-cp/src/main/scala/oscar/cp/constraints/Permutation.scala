@@ -28,7 +28,6 @@ import oscar.cp.core._
 import oscar.cp.core.CPOutcome._
 import oscar.cp.modeling.CPSolver
 import oscar.algo.reversible.ReversibleInt
-import oscar.algo.reversible.ReversibleSetIndexedArray
 import java.security.InvalidParameterException
 
 

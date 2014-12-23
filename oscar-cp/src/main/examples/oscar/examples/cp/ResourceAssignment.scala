@@ -52,8 +52,10 @@ object ResourceAssignment extends CPModel with App {
   val load = Array.fill(nbBins)(CPIntVar(0 to binCapa))
 
   add(binPacking(x, taskWeight.map(_._2), load))
+  
+  val objective = maximum(0 until nbBins)(load(_))
 
-  minimize(maximum(0 until nbBins)(load(_))) search {
+  minimize(objective) search {
     binaryFirstFail(x)
   }
 

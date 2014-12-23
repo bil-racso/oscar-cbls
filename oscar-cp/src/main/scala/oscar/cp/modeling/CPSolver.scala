@@ -35,13 +35,13 @@ class CPSolver(propagStrength: CPPropagStrength) extends CPOptimizer(propagStren
 
   def this() = this(CPPropagStrength.Weak)
 
-  private val decVariables = scala.collection.mutable.Set[CPIntVar]()
+  private val decVariables = scala.collection.mutable.Set[CPIntervalVar]()
 
-  var lastSol = new CPSol(Set[CPIntVar]())
+  var lastSol = new CPSol(Set[CPIntervalVar]())
 
-  def addDecisionVariables(x: Iterable[CPIntVar]): Unit = x.foreach(decVariables += _)
+  def addDecisionVariables(x: Iterable[_ <: CPIntervalVar]): Unit = x.foreach(decVariables += _)
 
-  def addDecisionVariables(x: CPIntVar*): Unit = x.foreach(decVariables += _)
+  def addDecisionVariables(x: CPIntervalVar*): Unit = x.foreach(decVariables += _)
 
   private def recordSol(): Unit = {
     lastSol = new CPSol(decVariables.toSet)
@@ -57,7 +57,7 @@ class CPSolver(propagStrength: CPPropagStrength) extends CPOptimizer(propagStren
   /**
    * return true if every variable is bound
    */
-  def allBounds(vars: IndexedSeq[CPIntVar]): Boolean = {
+  def allBounds(vars: IndexedSeq[_ <: CPIntervalVar]): Boolean = {
     var i = 0
     val s = vars.size
     while (i < s) {
@@ -67,17 +67,17 @@ class CPSolver(propagStrength: CPPropagStrength) extends CPOptimizer(propagStren
     true
   }
 
-  override def minimize(objective: CPIntVar): CPSolver = {
+  override def minimize(objective: CPIntervalVar): CPSolver = {
     super.minimize(Seq(objective): _*)
     this
   }
   
-  override def minimize(objective: CPIntVar, ratio: Double): CPSolver = {
+  override def minimize(objective: CPIntervalVar, ratio: Double): CPSolver = {
     super.minimize(objective, ratio)
     this
   }
 
-  override def maximize(objective: CPIntVar): CPSolver = {
+  override def maximize(objective: CPIntervalVar): CPSolver = {
     super.maximize(Seq(objective): _*)
     this
   }

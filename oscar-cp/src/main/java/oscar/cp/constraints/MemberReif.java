@@ -15,7 +15,7 @@
 package oscar.cp.constraints;
 
 import oscar.algo.reversible.ReversibleInt;
-import oscar.algo.reversible.SetIndexedArray;
+import oscar.algo.reversible.SparseSet;
 import oscar.cp.core.*;
 
 
@@ -25,7 +25,7 @@ import oscar.cp.core.*;
 public class MemberReif extends Constraint {
 
 	private CPIntVar x;
-	private SetIndexedArray set;
+	private SparseSet set;
 	private CPBoolVar b;
 	private ReversibleInt inter;  // size of the intersection of D(x) and set
     private ReversibleInt xsize; // size of x
@@ -36,7 +36,7 @@ public class MemberReif extends Constraint {
 	 * @param set, should not be modified externally after posting the constraint
 	 * @param b
 	 */
-	public MemberReif(CPIntVar x, SetIndexedArray set, CPBoolVar b) {
+	public MemberReif(CPIntVar x, SparseSet set, CPBoolVar b) {
 		super(x.store(),"MemberReif");
 		this.x = x;
 		this.set = set;

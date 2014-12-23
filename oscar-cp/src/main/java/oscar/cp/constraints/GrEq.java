@@ -42,7 +42,7 @@ public class GrEq extends Constraint {
 	}
 	
 	public GrEq(CPIntervalVar x, int v) {
-		this(x, CPIntervalVar.apply(x.store(),v,v));
+		this(x, CPIntervalVar.apply(v, v, x.store()));
 	}
 	
 	@Override

@@ -12,31 +12,58 @@
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
+package oscar.algo.reversible;
 
-package oscar.algo.reversible
+public class SparseSet extends AbstractSparseSet {
 
-/**
- * Abstract class for reversible data structure
- * @author Pierre Schaus  pschaus@gmail.com
- * @author Renaud Hartert ren.hartert@gmail.com
- */
-abstract class Reversible {
-  
-  private final var lastMagic: Long = -1L
-  
-  @inline final protected def trail(): Unit = {
-    val contextMagic = context.magic
-    if (lastMagic != contextMagic) {
-      lastMagic = contextMagic
-      context.trail(trailEntry)
-    }
-  }
-  
-  def context: ReversibleContext
-  
-  def trailEntry: TrailEntry
-}
+	public SparseSet(int min, int max) {
+		this(min, max, false);
+	}
+	
+	public SparseSet(int min, int max, boolean empty) {
+		initIndexes(min, max, empty);
+	}
 
-abstract class TrailEntry { 
-  def restore(): Unit
+	private int size;
+	private int maxV;
+	private int minV;
+	
+	@Override
+	protected void createSizeMinMax() {
+		size = 0;
+		maxV = 0;
+		minV = 0;	
+	}
+	
+	@Override
+	protected void setSize(int size) {
+		this.size = size;
+		
+	}
+	
+	@Override
+	protected void setMin(int min) {
+		this.minV = min;
+	}
+	
+	@Override
+	protected void setMax(int max) {
+		this.maxV = max;
+	}
+	
+	@Override
+	public int getSize() {
+		return size;
+	}
+	
+	@Override
+	public int getMin() {
+		return minV;
+	}
+	
+	@Override
+	public int getMax() {
+		return maxV;
+	}
+	
 }

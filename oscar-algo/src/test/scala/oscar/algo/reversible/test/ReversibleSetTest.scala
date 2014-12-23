@@ -12,50 +12,46 @@
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
-package oscar.cp.constraints;
+package oscar.algo.reversible.test
 
-import oscar.cp.core.CPOutcome;
-import oscar.cp.core.CPPropagStrength;
-import oscar.cp.core.CPIntervalVar;
-import oscar.cp.core.Constraint;
+
+import org.scalatest.FunSuite
+import oscar.algo.search._
+import oscar.algo.reversible._
+import scala.collection.JavaConversions._
 
 /**
- * Less Than Constraint ( x < y)
  * @author Pierre Schaus pschaus@gmail.com
  */
-public class Le extends Constraint {
+class ReversibleSetTest extends FunSuite {
 
-	private CPIntervalVar x, y;
+  test("test reversible set 1") {
 
-    /**
-     * x < y
-     * @param x
-     * @param y
-     */
-	public Le(CPIntervalVar x, CPIntervalVar y) {
-		super(x.store()," < ");
-		this.x = x;
-		this.y = y;
-	}
-	
-	public Le(CPIntervalVar x, int v) {
-		this(x, CPIntervalVar.apply(v, v, x.store()));
-	}
-	
-	@Override
-	public CPOutcome setup(CPPropagStrength l) {
-		if (y.isBound()) {
-			if (x.updateMax(y.getMin()-1) == CPOutcome.Failure){
-				return CPOutcome.Failure;
-			}
-			return CPOutcome.Success;
-		}
-		
-		// y > x
-		if(s().post(new Gr(y,x)) == CPOutcome.Failure) {
-			return CPOutcome.Failure;
-		}
-		return CPOutcome.Success;
-	}
-	
+    val rc = new ReversibleContext()
+
+    val s = new ReversibleSet(rc)
+    s.add(5)
+    s.add(6)
+    s.add(7)
+    // {5,6,7}
+    assert(s.toSet == Set(5, 6, 7))
+    rc.pushState()
+    s.add(8)
+    s.remove(5)
+    s.remove(5)
+    s.add(8)
+    s.add(9)
+    s.add(10)
+    s.remove(9)
+    s.remove(9)
+    // {6,7,8,10}
+    assert(s.toSet == Set(6, 7, 8, 10))
+    rc.pop()
+    // {5,6,7}
+    assert(s.toSet == Set(5, 6, 7))
+
+  }
+  
+
 }
+

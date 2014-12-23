@@ -17,7 +17,7 @@ package oscar.cp.constraints
 
 import oscar.cp.modeling.TightenType
 import oscar.cp.modeling.TightenType._
-import oscar.cp.core.CPIntVar
+import oscar.cp.core.CPIntervalVar
 import oscar.cp.core.Constraint
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.CPOutcome._
@@ -28,7 +28,7 @@ import oscar.cp.core.CPPropagStrength
  * @author Pierre Schaus  pschaus@gmail.com
  * @author Renaud Hartert ren.hartert@gmail.com
  */
-abstract class CPObjectiveUnit(val objVar: CPIntVar, val n: String = "") extends Objective {
+abstract class CPObjectiveUnit(val objVar: CPIntervalVar, val n: String = "") extends Objective {
   
   // Upper bound of the objective
   protected val lb = objVar.min - 1 // Avoids to remove the min value in the first propagate
@@ -106,7 +106,7 @@ abstract class CPObjectiveUnit(val objVar: CPIntVar, val n: String = "") extends
 /** Best  : smallest value
  *  Worst : largest value
  */
-class CPObjectiveUnitMinimize(objVar: CPIntVar, n: String = "") extends CPObjectiveUnit(objVar, n) {
+class CPObjectiveUnitMinimize(objVar: CPIntervalVar, n: String = "") extends CPObjectiveUnit(objVar, n) {
 
   def domBest: Int = objVar.min
   def domWorst: Int = objVar.max 
@@ -126,7 +126,7 @@ class CPObjectiveUnitMinimize(objVar: CPIntVar, n: String = "") extends CPObject
 /** Best  : largest value
  *  Worst : smallest value
  */
-class CPObjectiveUnitMaximize(objVar: CPIntVar, n: String = "") extends CPObjectiveUnit(objVar, n) {
+class CPObjectiveUnitMaximize(objVar: CPIntervalVar, n: String = "") extends CPObjectiveUnit(objVar, n) {
 
   def domBest: Int = objVar.max
   def domWorst: Int = objVar.min 

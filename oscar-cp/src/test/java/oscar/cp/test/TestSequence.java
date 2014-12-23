@@ -53,7 +53,7 @@ public class TestSequence extends TestCase {
     	for (int i = 0; i < x.length; i++) {
 			x[i] = CPIntVar.apply(s,0,1);
 		}
-        SetIndexedArray set = new SetIndexedArray(1,1);
+        SparseSet set = new SparseSet(1,1);
     
         s.add(new EqCons(x[2], 0));
         s.add(new Sequence(x, set, 2, 1, 2));
@@ -70,7 +70,7 @@ public class TestSequence extends TestCase {
     	for (int i = 0; i < x.length; i++) {
 			x[i] = CPIntVar.apply(s,1,5);
 		}
-        SetIndexedArray set = new SetIndexedArray(3,3);
+        SparseSet set = new SparseSet(3,3);
 
         s.add(new EqCons(x[2], 2));
         s.add(new Sequence(x, set, 2, 1, 2));
@@ -87,7 +87,7 @@ public class TestSequence extends TestCase {
     	for (int i = 0; i < x.length; i++) {
 			x[i] = CPIntVar.apply(s,1,5);
 		}
-        SetIndexedArray set = new SetIndexedArray(2,3);
+        SparseSet set = new SparseSet(2,3);
 
         s.add(new EqCons(x[2], 1));
         s.add(new Sequence(x, set, 2, 1, 2));
@@ -102,7 +102,7 @@ public class TestSequence extends TestCase {
     	for (int i = 0; i < x.length; i++) {
 			x[i] = CPIntVar.apply(s,1,5);
 		}
-        SetIndexedArray set = new SetIndexedArray(4,4);
+        SparseSet set = new SparseSet(4,4);
 
         s.add(new EqCons(x[2], 1));
         s.post(new Sequence(x, set, 1, 1, 1));

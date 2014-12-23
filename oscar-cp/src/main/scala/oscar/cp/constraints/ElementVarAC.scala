@@ -19,17 +19,15 @@ import oscar.cp.core.CPOutcome
 import oscar.cp.core.CPPropagStrength
 import oscar.cp.core.CPIntVar
 import oscar.cp.core.Constraint
-import oscar.cp.util.ArrayUtils;
+import oscar.cp.util.ArrayUtils
 import oscar.algo.reversible.ReversibleInt
-
 import scala.math.min
 import scala.math.max
-
 import oscar.cp.core._
 import oscar.cp.core.CPOutcome._
 import oscar.cp.modeling.CPSolver
 import oscar.algo.reversible.ReversibleInt
-import oscar.algo.reversible.ReversibleSetIndexedArray
+import oscar.algo.reversible.ReversibleSparseSet
 
 
 /**
@@ -46,7 +44,7 @@ class ElementVarAC(y: Array[CPIntVar], x: CPIntVar, z: CPIntVar) extends Constra
   // Number of supports for the value v i.e number of indices i such that v is in y(i)
   private val _nSupports = Array.fill(zRange.size)(new ReversibleInt(s, 0))
   // For all indices i in x: intersect(i) is the size of the intersection between y(i) and z
-  private val _intersect = Array.fill(xRange.size)(new ReversibleSetIndexedArray(s, z.min, z.max, true))
+  private val _intersect = Array.fill(xRange.size)(new ReversibleSparseSet(s, z.min, z.max))
   
   // Mapping functions used to limit the size of both previous structures
   private def nSupports(i: Int) = _nSupports(i-zRange.min)
@@ -74,18 +72,22 @@ class ElementVarAC(y: Array[CPIntVar], x: CPIntVar, z: CPIntVar) extends Constra
   }
 
   def propagateInitial(): CPOutcome = {
-    resetData() // Mandatory if propagate is called after the initial call
+    //resetData() // Mandatory if propagate is called after the initial call
     initData()
 
     for (i <- x.min to x.max; if x hasValue i) {
-      if (intersect(i).getSize == 0) {
-        if (x.removeValue(i) == Failure) return Failure
+      if (intersect(i).size == 0) {
+        if (x.removeValue(i) == Failure) {
+          return Failure
+        }
       }
     }
     if (x.isBound) return bindX()
     for (v <- z.min to z.max; if z hasValue v) {
       if (nSupports(v).value == 0) {
-        if (z.removeValue(v) == Failure) return Failure
+        if (z.removeValue(v) == Failure) {
+          return Failure
+        }
       }
     }
     Suspend
@@ -102,12 +104,16 @@ class ElementVarAC(y: Array[CPIntVar], x: CPIntVar, z: CPIntVar) extends Constra
 
   // Initializes data structures
   private def initData() {
-    for (i <- x)
-      for (v <- y(i))
-        if (z.hasValue(v)) {
-        	nSupports(v).incr()
-        	intersect(i).insert(v)
-        }
+    for (i <- x) {
+      val keep =
+        (for (v <- y(i); if (z.hasValue(v))) yield {
+          nSupports(v).incr()
+          v 
+        }).toSet
+      for (v <- intersect(i).min to intersect(i).max; if !(keep.contains(v))) {
+        intersect(i).removeValue(v)
+      }
+    }
   }
   
   // Reset the content of both data structures
@@ -129,7 +135,7 @@ class ElementVarAC(y: Array[CPIntVar], x: CPIntVar, z: CPIntVar) extends Constra
   // Removes the value v from the intersection between y(i) and z
   private def reduceIntersect(i: Int, v: Int): CPOutcome = {
     intersect(i).removeValue(v)
-    if (intersect(i).isEmpty()) {
+    if (intersect(i).isEmpty) {
       x.removeValue(i) 
     }
     else Suspend
