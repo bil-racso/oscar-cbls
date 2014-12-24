@@ -172,7 +172,7 @@ class ElementVarAC(y: Array[CPIntVar], x: CPIntVar, z: CPIntVar) extends Constra
 
   // Replaces this constraint by an Equality constraint
   private def bindX(): CPOutcome = {
-    if (s.post(new Eq(y(x.value), z)) == Failure) Failure
+    if (s.post(new Eq(y(x.min), z)) == Failure) Failure
     else Success
   }
 

@@ -45,7 +45,7 @@ public class Garded extends Constraint {
 			b.callPropagateWhenBind(this);
 			return CPOutcome.Suspend;
 		} else {
-			if ((b.getValue() == 1 && onTrue) || (b.getValue() == 0 && !onTrue)) {
+			if ((b.min() == 1 && onTrue) || (b.min() == 0 && !onTrue)) {
 				if (s().post(c) == CPOutcome.Failure) {
 					return CPOutcome.Failure;
 				}
@@ -56,7 +56,7 @@ public class Garded extends Constraint {
 	
 	@Override
 	public CPOutcome propagate() {
-		if ((b.getValue() == 1 && onTrue) || (b.getValue() == 0 && !onTrue)) {
+		if ((b.min() == 1 && onTrue) || (b.min() == 0 && !onTrue)) {
 			if (s().post(c) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
 			}

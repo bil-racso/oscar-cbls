@@ -23,20 +23,20 @@ final class DiffVar(x: CPIntVar, y: CPIntVar) extends Constraint(x.store, "DiffV
 
   @inline final override def valBind(intVar: CPIntervalVar): CPOutcome = {
     if (intVar == x) {
-      if (y.removeValue(x.value) == Failure) Failure
+      if (y.removeValue(x.min) == Failure) Failure
       else Success
     } else if (intVar == y) {
-      if (x.removeValue(y.value) == Failure) Failure
+      if (x.removeValue(y.min) == Failure) Failure
       else Success
     } else sys.error("unknown variable")
   }
 
   @inline final override def propagate(): CPOutcome = {
     if (x.isBound) {
-      if (y.removeValue(x.value) == Failure) Failure
+      if (y.removeValue(x.min) == Failure) Failure
       else Success
     } else if (y.isBound) {
-      if (x.removeValue(y.value) == Failure) Failure
+      if (x.removeValue(y.min) == Failure) Failure
       else Success
     } else Suspend
   }

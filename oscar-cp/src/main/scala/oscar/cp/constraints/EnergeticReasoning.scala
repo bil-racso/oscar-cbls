@@ -70,7 +70,7 @@ class EnergeticReasoning(starts: Array[_ <: CPIntervalVar], durations: Array[_ <
     cmax = capacity.max
 
     //keep only the tasks that we know are assigned to the resource id considered by this constraint 
-    val tasks = tasksId filter (task => resources(task).isBound && resources(task).value == id && durmin(task) > 0 && demmin(task) > 0)
+    val tasks = tasksId filter (task => resources(task).isBound && resources(task).min == id && durmin(task) > 0 && demmin(task) > 0)
 
     val newEets = emin map ( v => v)
     val newLsts = smax map (v => v)

@@ -49,12 +49,12 @@ public class GrEqVarReif extends Constraint {
 	public CPOutcome setup(CPPropagStrength l) {
 		
 		if (x.isBound()) {
-			if (s().post(new LeEqCteReif(y, x.value(), b)) == CPOutcome.Failure) {
+			if (s().post(new LeEqCteReif(y, x.min(), b)) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
 			}
 			return CPOutcome.Success;
 		} else if (y.isBound()) {
-			if (s().post(new GrEqCteReif(x, y.value(), b)) == CPOutcome.Failure) {
+			if (s().post(new GrEqCteReif(x, y.min(), b)) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
 			}
 			return CPOutcome.Success;
@@ -97,7 +97,7 @@ public class GrEqVarReif extends Constraint {
 		
 	@Override
 	public CPOutcome valBind(CPIntervalVar var) {
-		if (b.getValue() == 0) {
+		if (b.min() == 0) {
 			//x < y
 			if (s().post(new Le(x,y)) == CPOutcome.Failure) {
 				return CPOutcome.Failure;

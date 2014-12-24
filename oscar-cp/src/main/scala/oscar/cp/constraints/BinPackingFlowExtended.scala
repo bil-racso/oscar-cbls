@@ -46,7 +46,7 @@ class BinPackingFlowExtended(val x: Array[CPIntVar], val sizes: Array[Int], val 
         lt.callPropagateWhenBoundsChange(this);
       for ((xt, i) <- x.zipWithIndex) {
         if (xt.isBound) {
-          val j = xt.getValue
+          val j = xt.min
           l_t(j).setValue(l_t(j).value + sizes(i))
           c_t(j).incr
         } else {
@@ -75,7 +75,7 @@ class BinPackingFlowExtended(val x: Array[CPIntVar], val sizes: Array[Int], val 
 
 
   override def valBindIdx(x: CPIntervalVar, idx: Int): CPOutcome = {
-    val j = x.value;
+    val j = x.min;
     val wj = sizes(idx);
     l_t(j).setValue(l_t(j).value + wj);
     c_t(j).incr();

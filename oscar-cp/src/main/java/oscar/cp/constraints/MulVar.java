@@ -53,7 +53,7 @@ public class MulVar extends Constraint {
 			return CPOutcome.Success;
 		}
 		if (z.isBound()) {
-			if (z.getValue() == 0 && x.hasValue(0) && y.hasValue(0)) {
+			if (z.min() == 0 && x.hasValue(0) && y.hasValue(0)) {
 				x.callPropagateWhenDomainChanges(this,false);
 				y.callPropagateWhenDomainChanges(this,false);
 			} else {
@@ -86,17 +86,17 @@ public class MulVar extends Constraint {
 			}
 		} 
 		if (x.isBound()) { // y * c = z
-			if (s().post(new MulCte(y,x.getValue(),z)) == CPOutcome.Failure) {
+			if (s().post(new MulCte(y,x.min(),z)) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
 			}
 			return CPOutcome.Success;
 		} else if (y.isBound()) { // x *c = z
-			if (s().post(new MulCte(x,y.getValue(),z)) == CPOutcome.Failure) {
+			if (s().post(new MulCte(x,y.min(),z)) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
 			}
 			return CPOutcome.Success;
 		} else if (z.isBound()) { // x * y = c
-			if (s().post(new MulCteRes(x,y,z.getValue())) == CPOutcome.Failure) {
+			if (s().post(new MulCteRes(x,y,z.min())) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
 			}
 			return CPOutcome.Success;

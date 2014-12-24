@@ -59,7 +59,7 @@ public class TestDeviation extends TestCase {
     	cp.post(new Deviation(x,0,nd));
         assertTrue(!cp.isFailed());
         for (int i = 0; i < x.length; i++) {
-            assertTrue(x[i].isBound() && x[i].getValue() == 0);
+            assertTrue(x[i].isBound() && x[i].min() == 0);
         }
     }
 

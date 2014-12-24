@@ -30,7 +30,7 @@ class TestImplication extends FunSuite with ShouldMatchers {
     cp.search {
       binaryStatic(Array(A, B))
     } onSolution {
-      val entry = (A.getValue, B.getValue, res.getValue)
+      val entry = (A.value, B.value, res.value)
       values.contains(entry) should be(true)
     }
     cp.start().nSols should be(4)
@@ -45,7 +45,7 @@ class TestImplication extends FunSuite with ShouldMatchers {
     cp.search {
       binaryStatic(Array(A, B))
     } onSolution {
-      val entry = (A.getValue, B.getValue, res.getValue)
+      val entry = (A.value, B.value, res.value)
       values.contains(entry) should be(true)
     }
     cp.start().nSols should be(4)
@@ -61,7 +61,7 @@ class TestImplication extends FunSuite with ShouldMatchers {
     cp.search {
       binaryStatic(Array(B, A))
     } onSolution {
-      val entry = (A.getValue, B.getValue, res.getValue)
+      val entry = (A.value, B.value, res.value)
       values.contains(entry) should be(true)
     }
     cp.start().nSols should be(4)
@@ -76,7 +76,7 @@ class TestImplication extends FunSuite with ShouldMatchers {
     cp.search {
       binaryStatic(Array(B, A))
     } onSolution {
-      val entry = (A.getValue, B.getValue, res.getValue)
+      val entry = (A.value, B.value, res.value)
       values.contains(entry) should be(true)
     }
     cp.start().nSols should be(4)

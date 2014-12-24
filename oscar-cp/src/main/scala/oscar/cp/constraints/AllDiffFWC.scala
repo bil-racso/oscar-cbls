@@ -48,7 +48,7 @@ class AllDiffFWC(val X: Array[CPIntVar]) extends Constraint(X(0).store, "AllDiff
     var i = nBounds.value
     while (i < x.size) {
       if (x(i).isBound) {
-        val v = x(i).value
+        val v = x(i).min
         var j = nBounds.value
         while (j < x.size) {
           if (j != i && x(j).removeValue(v) == Failure) return Failure

@@ -39,7 +39,7 @@ class WeightedSum(val W: Array[Int], val X: Array[_ <: CPIntervalVar], val y: CP
   }
   
   private def setBound(i: Int) {
-    sumBounds.value = sumBounds.value + w(i)*x(i).value
+    sumBounds.value = sumBounds.value + w(i)*x(i).min
     val tmp = x(nBounds.value)
     val tmpw = w(nBounds.value)
     x(nBounds.value) = x(i)

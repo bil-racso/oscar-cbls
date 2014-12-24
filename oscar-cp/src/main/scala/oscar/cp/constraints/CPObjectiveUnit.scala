@@ -70,7 +70,7 @@ abstract class CPObjectiveUnit(val objVar: CPIntervalVar, val n: String = "") ex
       if (tightenType != NoTighten) throw new RuntimeException("objective"+n+" not bound:" + objVar)
     }
     else {
-      best = objVar.value // Sets new best value
+      best = objVar.min // Sets new best value
       if (!objVar.store.silent && tightenType != NoTighten) {
         println("objective"+n+" tightened to " + best + " lb:"+  lb)
       }

@@ -70,7 +70,7 @@ public class EqReifVar extends Constraint {
 	public CPOutcome valBind(CPIntervalVar var) {
 		if (b.isBound()) {
 			deactivate();
-			if (b.getValue() == 1) {
+			if (b.min() == 1) {
 				// x == y
 				if (s().post(new Eq(x,y)) == CPOutcome.Failure) {
 					return CPOutcome.Failure;
@@ -85,14 +85,14 @@ public class EqReifVar extends Constraint {
 		}	
 		else if (x.isBound()) {
 			deactivate();
-			if (s().post(new EqReif(y,x.getValue(),b)) == CPOutcome.Failure) {
+			if (s().post(new EqReif(y,x.min(),b)) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
 			}
 			return CPOutcome.Success;
 		}
 		else { // y.isBound()
 			deactivate();
-			if (s().post(new EqReif(x,y.getValue(),b)) == CPOutcome.Failure) {
+			if (s().post(new EqReif(x,y.min(),b)) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
 			}
 			return CPOutcome.Success;

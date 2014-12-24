@@ -124,7 +124,7 @@ public class EqReif extends Constraint {
 			return CPOutcome.Success;
 		}
 		else {
-			if (x.getValue() == v) {
+			if (x.min() == v) {
 				if (b.assign(1) == CPOutcome.Failure) {
 					return CPOutcome.Failure;
 				}

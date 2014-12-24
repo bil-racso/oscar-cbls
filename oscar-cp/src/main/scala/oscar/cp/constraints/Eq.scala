@@ -41,10 +41,10 @@ class Eq(x: CPIntVar, y: CPIntVar) extends Constraint(x.store, "Equality") {
 
     // Assigned variables
     if (y.isBound) {
-      if (x.assign(y.value) == Failure) Failure
+      if (x.assign(y.min) == Failure) Failure
       else Success
     } else if (x.isBound) {
-      if (y.assign(x.value) == Failure) Failure
+      if (y.assign(x.min) == Failure) Failure
       else Success
     } 
     
@@ -95,10 +95,10 @@ class Eq(x: CPIntVar, y: CPIntVar) extends Constraint(x.store, "Equality") {
 
   @inline final override def valBind(intVar: CPIntervalVar): CPOutcome = {
     if (intVar == x) {
-      if (y.assign(x.value) == Failure) Failure
+      if (y.assign(x.min) == Failure) Failure
       else Success
     } else if (intVar == y) {
-      if (x.assign(y.value) == Failure) Failure
+      if (x.assign(y.min) == Failure) Failure
       else Success
     } else sys.error("unknown variable")
   }

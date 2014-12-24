@@ -169,7 +169,7 @@ public class BinaryKnapsack extends Constraint {
 
 	@Override
 	public CPOutcome valBindIdx(CPIntervalVar var, int idx) {
-		if (var.getValue() == 1)
+		if (var.getMin() == 1)
 			return bind(idx);
 		else
 			return remove(idx);
@@ -387,7 +387,7 @@ class LightBinaryKnapsack extends Constraint {
 		for (int i = 0; i < w.length; i++) {
 			if (x[i].isBound()) {
 				candidate[i].setValue(false);
-				if (x[i].getValue() == 1) {
+				if (x[i].getMin() == 1) {
 					rsum.setValue(rsum.getValue()+w[i]);
 				}
 			} else {
@@ -420,7 +420,7 @@ class LightBinaryKnapsack extends Constraint {
 	public CPOutcome valBindIdx(CPIntervalVar var, int idx) {
 		candidate[idx].setValue(false);
 		psum.setValue(psum.getValue()-w[idx]);
-		if (var.getValue() == 1) {
+		if (var.getMin() == 1) {
 			rsum.setValue(rsum.getValue()+w[idx]);
 		}
 
@@ -521,7 +521,7 @@ class BinaryKnapsackWithCardinality extends Constraint {
 
 	@Override
 	public CPOutcome valBindIdx(CPIntervalVar var, int idx) {
-        if (var.getValue() == 1) {
+        if (var.getMin() == 1) {
             nPacked.incr();
             packed.setValue(packed.getValue() + w[idx]);
         }

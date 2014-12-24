@@ -72,8 +72,8 @@ class StableMarriage extends FunSuite with ShouldMatchers  {
      } search {
        binaryStatic(wife)
      } onSolution {
-       wife.map(_.getValue) should be(Array(0,2,1,4,3))
-       husband.map(_.getValue) should be(Array(0,2,1,4,3))
+       wife.map(_.value) should be(Array(0,2,1,4,3))
+       husband.map(_.value) should be(Array(0,2,1,4,3))
      } 
      cp.start().nSols should be(1)
     

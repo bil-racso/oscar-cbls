@@ -130,10 +130,10 @@ class CPBoolVar(val x: CPIntVar, name: String = "") extends CPIntVar(x.store, na
   def constraintFalse(): Constraint = new oscar.cp.constraints.EqCons(x, 0)
 
   /** @return true if the variable is bound and bound to value 1 */
-  def isTrue: Boolean = isBound && value == 1
+  def isTrue: Boolean = isBound && min == 1
 
   /** @return true if the variable is bound and bound to value 0 */
-  def isFalse: Boolean = isBound && value == 0
+  def isFalse: Boolean = isBound && min == 0
 
   /** Logical or */
   def or(y: CPBoolVar): CPBoolVar = {

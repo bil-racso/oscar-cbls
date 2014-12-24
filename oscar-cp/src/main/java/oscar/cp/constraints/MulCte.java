@@ -69,7 +69,7 @@ public class MulCte extends Constraint {
 	public CPOutcome propagate() {
 		if (x.isBound()) {
 			
-			if (z.assign(NumberUtils.safeMul(c , x.getValue())) == CPOutcome.Failure) {
+			if (z.assign(NumberUtils.safeMul(c , x.min())) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
 			}
 			return CPOutcome.Success;

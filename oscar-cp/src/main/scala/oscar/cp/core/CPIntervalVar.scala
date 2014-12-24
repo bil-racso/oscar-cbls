@@ -55,19 +55,6 @@ abstract class CPIntervalVar(override val store: CPStore, override val name: Str
   def hasValue(value: Int): Boolean
 
   /**
-   * @return the unique value in the domain, None if variable is not bound
-   */
-  def value: Int = {
-    if (isBound) min
-    else throw new NoSuchElementException("the variable is not bound")
-  }
-
-  def getValue: Int = {
-    if (isBound) min
-    else throw new NoSuchElementException("the variable is not bound")
-  }
-
-  /**
    * @param val
    * @return the smallest value > val in the domain, None if there is not value > val in the domain
    */

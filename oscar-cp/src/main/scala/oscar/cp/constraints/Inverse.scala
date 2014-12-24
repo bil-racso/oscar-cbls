@@ -99,8 +99,8 @@ class Inverse(prev: Array[CPIntVar], next: Array[CPIntVar]) extends Constraint(p
   }
   
   override def valBindIdx(intVar: CPIntervalVar, id: Int): CPOutcome = {
-    if (intVar == next(id)) prev(next(id).value).assign(id)
-    else next(prev(id).value).assign(id)
+    if (intVar == next(id)) prev(next(id).min).assign(id)
+    else next(prev(id).min).assign(id)
   }
 }
 
