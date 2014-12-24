@@ -17,7 +17,6 @@ package oscar.cp
 import scala.collection.IterableLike
 import scala.collection.SeqLike
 import scala.collection.generic.CanBuildFrom
-
 import oscar.algo.search._
 import oscar.cp.constraints._
 import oscar.cp.core.CPIntVar
@@ -25,6 +24,7 @@ import oscar.cp.core.CPBoolVar
 import oscar.cp.modeling._
 import oscar.cp.core._
 import oscar.util._
+import oscar.cp.core.CPSolver
 
 /**
  * @author Pierre Schaus pschaus@gmail.com
@@ -44,9 +44,16 @@ package object modeling extends Constraints with Branchings {
   
   type CPSetVar = oscar.cp.core.CPSetVar
   final val CPSetVar = oscar.cp.core.CPSetVar
+  
+  type CPGraphVar = oscar.cp.core.CPGraphVar
+  final val CPGraphVar = oscar.cp.core.CPGraphVar
 
   type CPStore = oscar.cp.core.CPStore
   final val CPStore = oscar.cp.core.CPStore
+  
+  type CPSolver = oscar.cp.core.CPSolver
+  final val CPSolver = oscar.cp.core.CPSolver
+  
 
   type Constraint = oscar.cp.core.Constraint
   

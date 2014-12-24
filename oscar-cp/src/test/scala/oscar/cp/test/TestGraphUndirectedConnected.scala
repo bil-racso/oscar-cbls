@@ -16,12 +16,10 @@ package oscar.cp.test
 
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
-
-import oscar.cp.constraints._
-import oscar.cp.core._
 import oscar.cp.core.CPOutcome._
-
 import oscar.cp.modeling._
+import oscar.cp.constraints.GraphUndirected
+import oscar.cp.constraints.GraphUndirectedConnected
 
 /**
  * @author Andrew Lambert andrew.lambert@student.uclouvain.be
