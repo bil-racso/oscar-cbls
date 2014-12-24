@@ -16,8 +16,6 @@ package oscar.examples.cp.hakank
 
 import oscar.cp.modeling._
 
-import oscar.cp.core._
-
 /**
  *
  * SEND+MOST=MONEY problem in Oscar.

@@ -15,8 +15,6 @@
 
 package oscar.cp.modeling
 
-import oscar.cp.core.CPIntVar
-import oscar.cp.core.CPIntervalVar
 import oscar.cp.search._
 import oscar.cp.scheduling.search.SetTimesBranching
 import oscar.algo.search.BranchingUtils

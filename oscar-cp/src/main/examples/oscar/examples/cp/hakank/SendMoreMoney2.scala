@@ -16,8 +16,6 @@ package oscar.examples.cp.hakank
 
 import oscar.cp.modeling._
 
-import oscar.cp.core._
-
 /**
  *
  * SEND+MORE MONEY problem in Oscar.

@@ -20,7 +20,6 @@ import org.scalatest.matchers.ShouldMatchers
 
 import oscar.cp.modeling._
 import oscar.algo.search._
-import oscar.cp.core._
 import oscar.cp.scheduling._
 import oscar.cp.constraints._
 

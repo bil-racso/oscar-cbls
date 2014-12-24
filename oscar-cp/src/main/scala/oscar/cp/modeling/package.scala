@@ -1,5 +1,4 @@
-/**
- * *****************************************************************************
+/*******************************************************************************
  * OscaR is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
@@ -12,8 +11,7 @@
  *
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
- * ****************************************************************************
- */
+ *****************************************************************************/
 package oscar.cp
 
 import scala.collection.IterableLike
@@ -33,6 +31,26 @@ import oscar.util._
  * @author Renaud Hartert ren.hartert@gmail.com
  */
 package object modeling extends Constraints with Branchings {
+
+  // Alias to useful classes and companion objects
+  type CPIntVar = oscar.cp.core.CPIntVar
+  final val CPIntVar = oscar.cp.core.CPIntVar
+
+  type CPIntervalVar = oscar.cp.core.CPIntervalVar
+  final val CPIntevalVar = oscar.cp.core.CPIntervalVar
+
+  type CPBoolVar = oscar.cp.core.CPBoolVar
+  final val CPBoolVar = oscar.cp.core.CPBoolVar
+  
+  type CPSetVar = oscar.cp.core.CPSetVar
+  final val CPSetVar = oscar.cp.core.CPSetVar
+
+  type CPStore = oscar.cp.core.CPStore
+  final val CPStore = oscar.cp.core.CPStore
+
+  type Constraint = oscar.cp.core.Constraint
+  
+  type NoSolutionException = oscar.cp.core.NoSolutionException
 
   /**
    * Filtering power can be specified for some of the constraints.
@@ -221,7 +239,7 @@ package object modeling extends Constraints with Branchings {
         x.valueAfter(min) - min
       }
     }
-    
+
     /**
      * @return The median value of the domain of the variable
      */

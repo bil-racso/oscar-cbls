@@ -16,7 +16,6 @@
 package oscar.examples.cp.scheduling
 
 import oscar.cp.modeling._
-import oscar.cp.core._
 import oscar.cp.scheduling._
 import oscar.visual._
 import oscar.util._

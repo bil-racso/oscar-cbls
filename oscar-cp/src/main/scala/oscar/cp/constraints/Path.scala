@@ -18,7 +18,7 @@ import oscar.algo.reversible._
 import oscar.cp.core.CPOutcome
 import oscar.cp.modeling._
 import scala.collection.JavaConversions._
-import oscar.cp.core._
+import oscar.cp.core.CPPropagStrength
 
 /**
  * Implementation of Path Constraint decomposition as described in 

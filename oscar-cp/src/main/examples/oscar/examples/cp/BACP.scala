@@ -1,7 +1,6 @@
 package oscar.examples.cp
 
 import oscar.cp.modeling._
-import oscar.cp.core._
 
 import scala.io.Source
 import oscar.util._

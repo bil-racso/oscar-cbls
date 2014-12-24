@@ -17,16 +17,16 @@
 
 package oscar.cp.constraints
 
-import oscar.cp.core.CPSetVar
 import oscar.algo.reversible.ReversibleDouble
 import oscar.cp.modeling._
-import oscar.cp.core._
 import scala.io.Source
 import oscar.algo.reversible.ReversibleInt
 import oscar.algo.DisjointSets
-import CPOutcome._
 import scala.collection.mutable.ArrayBuffer
 import oscar.algo.RangeMinQuery
+import oscar.cp.core.CPPropagStrength
+import oscar.cp.core.CPOutcome
+import oscar.cp.core.CPOutcome._
 
 /**
  * @author Pierre Schaus pschaus@gmail.com

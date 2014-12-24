@@ -2,7 +2,6 @@ package oscar.examples.cp
 
 import scala.math
 import oscar.cp.modeling._
-import oscar.cp.core._
 
 /**
  * Martin Garner Problem:

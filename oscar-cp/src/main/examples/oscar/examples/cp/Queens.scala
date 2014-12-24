@@ -1,7 +1,6 @@
 package oscar.examples.cp
 
 import oscar.cp.modeling._
-import oscar.cp.core._
 
 /**
  * n-queens model: place n-queens on a chess-board such that they don't attack each other.

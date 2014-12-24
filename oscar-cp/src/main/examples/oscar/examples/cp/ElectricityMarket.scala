@@ -17,7 +17,6 @@ package oscar.examples.cp
 
 import oscar.cp.modeling._
 import oscar.visual._
-import oscar.cp.core._
 import scala.io.Source
 import scala.collection.mutable.Map
 import oscar.visual.plot.PlotLine

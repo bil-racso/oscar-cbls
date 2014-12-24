@@ -275,7 +275,7 @@ class CPStore( final val propagStrength: CPPropagStrength) extends SearchNode {
   }
 
   protected def propagate(): CPOutcome = {
-    if (status.value == Failure) throw Inconsistency("the store is already inconsistent")
+    if (status.value == Failure) throw Inconsistency
     else {
       val t = System.currentTimeMillis()
       inFixedPoint = true

@@ -14,13 +14,17 @@
  ******************************************************************************/
 package oscar.cp.test
 
+import java.util.LinkedList
+
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
-import oscar.cp.constraints._
-import oscar.cp.core._
-import oscar.cp.modeling._
-import collection.immutable.SortedSet
-import java.util.LinkedList
+
+import oscar.cp.core.CPOutcome
+import oscar.cp.core.CPPropagStrength
+import oscar.cp.modeling.CPSetVar
+import oscar.cp.modeling.CPSolver
+import oscar.cp.modeling.CPStore
+import oscar.cp.modeling.Constraint
 
 
 /**

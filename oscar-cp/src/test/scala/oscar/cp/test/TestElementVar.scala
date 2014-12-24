@@ -16,7 +16,6 @@
 package oscar.cp.test
 
 import org.scalatest.FunSuite
-import oscar.cp.core._
 import oscar.cp.modeling._
 import oscar.cp.constraints.ElementCst2D
 import org.scalatest.Matchers

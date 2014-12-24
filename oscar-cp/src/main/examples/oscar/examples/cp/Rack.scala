@@ -1,7 +1,6 @@
 package oscar.examples.cp
 
 import oscar.cp.modeling._
-import oscar.cp.core._
 
 /**
  * The problem consist of plugging a set of electronic cards into racks with electric connectors.

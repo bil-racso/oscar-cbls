@@ -15,7 +15,6 @@
 
 package oscar.examples.cp.scheduling
 
-import oscar.cp.core._
 import oscar.cp.modeling._
 
 object OptionalTasks extends CPModel with App {

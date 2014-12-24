@@ -17,7 +17,6 @@ package oscar.cp.test
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
 import oscar.cp.constraints._
-import oscar.cp.core._
 import oscar.cp.modeling._
 import org.junit.runner.RunWith
 import org.scalatest.junit.JUnitRunner

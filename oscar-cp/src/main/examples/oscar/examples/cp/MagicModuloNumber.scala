@@ -1,7 +1,6 @@
 package oscar.examples.cp
 
 import oscar.cp.modeling._
-import oscar.cp.core._
 
 /**
  * A number with an interesting property:

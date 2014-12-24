@@ -17,7 +17,6 @@
 package oscar.examples.cp
 
 import oscar.cp.modeling._
-import oscar.cp.core._
 import oscar.visual.shapes.VisualRectangle
 import oscar.visual.VisualDrawing
 import oscar.visual.shapes.VisualLine
