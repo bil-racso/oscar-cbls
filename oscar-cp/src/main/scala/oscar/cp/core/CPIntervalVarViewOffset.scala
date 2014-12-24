@@ -29,7 +29,7 @@ class CPIntervalVarViewOffset(v: CPIntervalVar,val b: Int) extends CPIntervalVar
 	
 	override def isEmpty = v.isEmpty
 	
-	def constraintDegree = v.constraintDegree()
+	def constraintDegree = v.constraintDegree
 	
 	def isBoundTo(value: Int): Boolean = v.isBoundTo(value-b)
 	

@@ -35,7 +35,7 @@ class CPIntVarViewTimes(v: CPIntVar, val a: Int) extends CPIntVar(v.store) {
 
   override def isEmpty = v.isEmpty
 
-  override def constraintDegree = v.constraintDegree()
+  override def constraintDegree = v.constraintDegree
 
   override def isBoundTo(value: Int): Boolean = if (value % a != 0) false else v.isBoundTo(value / a)
   

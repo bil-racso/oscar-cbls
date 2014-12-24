@@ -32,7 +32,7 @@ class CPIntervalVarViewMinus(v: CPIntervalVar) extends CPIntervalVar(v.store) {
 	
 	override def isEmpty = v.isEmpty
 	
-	def constraintDegree = v.constraintDegree()
+	def constraintDegree = v.constraintDegree
 	
 	def isBoundTo(value: Int): Boolean = v.isBoundTo(-value)
 	

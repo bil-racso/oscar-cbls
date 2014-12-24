@@ -31,7 +31,7 @@ class CPIntVarViewOffset(v: CPIntVar,val b: Int) extends CPIntVar(v.store) {
 	
 	override def isEmpty = v.isEmpty
 	
-	def constraintDegree = v.constraintDegree()
+	def constraintDegree = v.constraintDegree
 	
 	def isBoundTo(value: Int): Boolean = v.isBoundTo(value-b)
 	

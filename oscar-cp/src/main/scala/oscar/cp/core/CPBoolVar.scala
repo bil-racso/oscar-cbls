@@ -25,7 +25,7 @@ class CPBoolVar(val x: CPIntVar, name: String = "") extends CPIntVar(x.store, na
 
   override def isEmpty = x.isEmpty
 
-  def constraintDegree = x.constraintDegree()
+  def constraintDegree = x.constraintDegree
 
   def isBoundTo(value: Int): Boolean = x.isBoundTo(value)
 

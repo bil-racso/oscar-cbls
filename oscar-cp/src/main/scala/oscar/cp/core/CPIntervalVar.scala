@@ -28,12 +28,7 @@ abstract class CPIntervalVar(override val store: CPStore, override val name: Str
 
   def transform(v: Int): Int
 
-  def constraintDegree(): Int
-
-  /**
-   * @return difference between second smallest and smallest value in the domain, Int.MaxInt if variable is bound
-   */
-  def regret: Int = if (isBound) Int.MaxValue else valueAfter(min) - min
+  def constraintDegree: Int
 
   /**
    * @return true if the domain of the variable has exactly one value, false if the domain has more than one value
@@ -75,15 +70,6 @@ abstract class CPIntervalVar(override val store: CPStore, override val name: Str
    * @return A random value in the domain of the variable (uniform distribution)
    */
   def randomValue: Int = randomValue(store.getRandom)
-
-  /**
-   * @return The median value of the domain of the variable
-   */
-  def median: Int = {
-
-    val vals = this.toArray.sortBy(i => i)
-    return vals(vals.size / 2)
-  }
 
   /**
    * @return  the size of the domain

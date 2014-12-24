@@ -12,7 +12,7 @@
  *
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
- * *****************************************************************************
+ * ****************************************************************************
  */
 package oscar.cp
 
@@ -131,6 +131,25 @@ package object modeling extends Constraints with Branchings {
     }
 
     /**
+     * @return difference between second smallest and smallest value in the domain, Int.MaxInt if variable is bound
+     */
+    def regret: Int = {
+      if (x.isBound) Int.MaxValue
+      else {
+        val min = x.min
+        x.valueAfter(min) - min
+      }
+    }
+
+    /**
+     * @return The median value of the domain of the variable
+     */
+    def median: Int = {
+      val vals = x.toArray.sortBy(i => i)
+      vals(vals.length / 2)
+    }
+
+    /**
      * -x
      */
     def unary_-() = new CPIntVarViewMinus(x)
@@ -190,6 +209,26 @@ package object modeling extends Constraints with Branchings {
     def value: Int = {
       if (x.isBound) x.min
       else throw new NoSuchElementException("the variable is not bound")
+    }
+
+    /**
+     * @return difference between second smallest and smallest value in the domain, Int.MaxInt if variable is bound
+     */
+    def regret: Int = {
+      if (x.isBound) Int.MaxValue
+      else {
+        val min = x.min
+        x.valueAfter(min) - min
+      }
+    }
+    
+    /**
+     * @return The median value of the domain of the variable
+     */
+    def median: Int = {
+      val min = x.min
+      val max = x.max
+      min + ((max - min) / 2)
     }
 
     /**
