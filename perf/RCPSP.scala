@@ -43,7 +43,7 @@ object RCPSP {
     val demands = Array.tabulate(nTasks)(t => CPIntervalVar(demandsData(t)))
 
     val makespan = maximum(ends)
-    add(maxCumulativeResource(starts, durations, ends, demands, CPIntervalVar(capa)))
+    add(maxCumulativeResource(starts, durations, ends, demands, CPIntervalVar(capa)),Weak)
     
     minimize(makespan) search {
       setTimes(starts, durations,ends)
