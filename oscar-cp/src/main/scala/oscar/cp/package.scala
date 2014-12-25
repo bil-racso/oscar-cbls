@@ -36,7 +36,7 @@ package object cp extends Constraints with Branchings {
   final val CPIntVar = oscar.cp.core.CPIntVar
 
   type CPIntervalVar = oscar.cp.core.CPIntervalVar
-  final val CPIntevalVar = oscar.cp.core.CPIntervalVar
+  final val CPIntervalVar = oscar.cp.core.CPIntervalVar
 
   type CPBoolVar = oscar.cp.core.CPBoolVar
   final val CPBoolVar = oscar.cp.core.CPBoolVar
