@@ -13,7 +13,7 @@
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
 
-package oscar.cp.search
+package oscar.cp.searches
 
 import oscar.cp.modeling._
 import oscar.cp.core.CPIntVar

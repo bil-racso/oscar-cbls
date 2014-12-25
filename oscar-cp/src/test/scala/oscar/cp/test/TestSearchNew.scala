@@ -4,7 +4,7 @@ import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
 
 import oscar.cp.constraints._
-import oscar.cp.search._
+import oscar.cp.searches._
 import oscar.cp.modeling._
 
 class TestSearchNew extends FunSuite with ShouldMatchers {

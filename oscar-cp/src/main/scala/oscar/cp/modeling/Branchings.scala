@@ -15,15 +15,16 @@
 
 package oscar.cp.modeling
 
+import oscar.algo.search.Branching
 import oscar.algo.search.BranchingUtils
 import oscar.cp.scheduling.search.SetTimesBranching
 import oscar.cp.scheduling.search.RankBranching
-import oscar.cp.search.BinaryDomainSplitBranching
-import oscar.cp.search.BinarySetBranching
-import oscar.cp.search.BinaryMaxDegreeBranching
-import oscar.cp.search.BinaryBranching
-import oscar.cp.search.BinaryStaticOrderBranching
-import oscar.cp.search.BinaryFirstFailBranching
+import oscar.cp.searches.BinaryDomainSplitBranching
+import oscar.cp.searches.BinarySetBranching
+import oscar.cp.searches.BinaryMaxDegreeBranching
+import oscar.cp.searches.BinaryBranching
+import oscar.cp.searches.BinaryStaticOrderBranching
+import oscar.cp.searches.BinaryFirstFailBranching
 
 /**
  * @author Pierre Schaus pschaus@gmail.com

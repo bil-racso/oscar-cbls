@@ -23,6 +23,7 @@ import oscar.cp.core.CPPropagStrength
 import oscar.cp.core.CPSol
 import oscar.cp.modeling.Branchings
 import oscar.cp.modeling.Constraints
+import oscar.algo.search.Branching
 import oscar.algo.search.SearchNode
 import oscar.algo.search.SearchStatistics
 import oscar.util.selectMin
@@ -32,7 +33,6 @@ import oscar.util.selectMin
  * @author Renaud Hartert ren.hartert@gmail.com
  */
 package object modeling extends Constraints with Branchings {
-  
   // Alias to useful classes and companion objects
   type CPIntVar = oscar.cp.core.CPIntVar
   final val CPIntVar = oscar.cp.core.CPIntVar
@@ -58,8 +58,6 @@ package object modeling extends Constraints with Branchings {
   type Constraint = oscar.cp.core.Constraint
 
   type NoSolutionException = oscar.cp.core.NoSolutionException
-
-  type Branching = oscar.algo.search.Branching
 
   trait CPModel { implicit val solver: CPSolver = CPSolver() }
 
@@ -369,4 +367,5 @@ package object modeling extends Constraints with Branchings {
   def startSubjectTo(nSols: Int = Int.MaxValue, failureLimit: Int = Int.MaxValue, timeLimit: Int = Int.MaxValue, maxDiscrepancy: Int = Int.MaxValue)(reversibleBlock: => Unit = {})(implicit cp: CPSolver): SearchStatistics = {
     cp.startSubjectTo(nSols, failureLimit, timeLimit, maxDiscrepancy)(reversibleBlock)
   }
+  
 }

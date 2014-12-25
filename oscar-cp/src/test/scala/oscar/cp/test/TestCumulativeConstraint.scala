@@ -7,7 +7,7 @@ import org.scalatest.matchers.ShouldMatchers
 import oscar.cp.modeling._
 import oscar.cp.core.CPIntVar
 import oscar.cp.constraints.CumulativeDecomp
-import oscar.cp.search.BinaryStaticOrderBranching
+import oscar.cp.searches.BinaryStaticOrderBranching
 import oscar.cp.constraints.EnergeticReasoning
 
 abstract class TestCumulativeConstraint(val cumulativeName: String, val nTests: Int = 100) extends FunSuite with ShouldMatchers {

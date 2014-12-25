@@ -5,7 +5,7 @@ import oscar.algo.search.Branching
 import oscar.cp.core.CPIntVar
 import oscar.cp.linearizedDFS.{Assign, Remove}
 import oscar.cp.modeling._
-import oscar.cp.search.AbstractBinaryBranching
+import oscar.cp.searches.AbstractBinaryBranching
 
 /**
  * Created by saschavancauwelaert on 09/12/14.
