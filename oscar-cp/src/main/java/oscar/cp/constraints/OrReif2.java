@@ -19,7 +19,6 @@ import oscar.algo.reversible.ReversibleInt;
 import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
 import oscar.cp.core.CPBoolVar;
-import oscar.cp.core.CPIntVar;
 import oscar.cp.core.CPIntervalVar;
 import oscar.cp.core.Constraint;
 

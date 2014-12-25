@@ -20,7 +20,7 @@ package oscar.algo.search
  */
 trait BranchingUtils {
   
-  type Alternative = () => Unit
+  type Alternative = Function0[Unit]
   
   def branch(left: => Unit)(right: => Unit): Seq[Alternative] = Seq(() => left,() => right)
   

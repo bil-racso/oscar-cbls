@@ -15,20 +15,22 @@
 
 package oscar.cp.modeling
 
-import oscar.cp.search._
-import oscar.cp.scheduling.search.SetTimesBranching
 import oscar.algo.search.BranchingUtils
-import oscar.cp.core.CPSetVar
+import oscar.cp.scheduling.search.SetTimesBranching
 import oscar.cp.scheduling.search.RankBranching
-import oscar.algo.search.Branching
+import oscar.cp.search.BinaryDomainSplitBranching
+import oscar.cp.search.BinarySetBranching
+import oscar.cp.search.BinaryMaxDegreeBranching
+import oscar.cp.search.BinaryBranching
+import oscar.cp.search.BinaryStaticOrderBranching
+import oscar.cp.search.BinaryFirstFailBranching
 
 /**
  * @author Pierre Schaus pschaus@gmail.com
  */
 trait Branchings extends BranchingUtils {
   
-  
-  def binary(vars: Seq[_ <: CPIntVar], varHeuris: (CPIntVar => Int), valHeuris: (CPIntVar => Int) = minVal) = {
+  def binary(vars: Seq[_ <: CPIntVar], varHeuris: (CPIntVar => Int), valHeuris: (CPIntVar => Int) = minVal): Branching = {
     new BinaryBranching(vars.toArray,varHeuris,valHeuris)
   }
  
@@ -38,31 +40,31 @@ trait Branchings extends BranchingUtils {
    * @param vars: the array of variables to assign during the search
    * @param valHeuris: gives the value v to try on left branch for the chosen variable, this value is removed on the right branch
    */  
-  def binaryStatic(vars: Seq[_ <: CPIntVar], valHeuris: (CPIntVar => Int) = minVal) = new BinaryStaticOrderBranching(vars.toArray,valHeuris)
+  def binaryStatic(vars: Seq[_ <: CPIntVar], valHeuris: (CPIntVar => Int) = minVal): Branching = new BinaryStaticOrderBranching(vars.toArray,valHeuris)
 
   /**
    * Binary First Fail (min dom size) on the decision variables vars.
    * @param vars: the array of variables to assign during the search
    * @param valHeuris: gives the value v to try on left branch for the chosen variable, this value is removed on the right branch
    */
-  def binaryFirstFail(x: Seq[CPIntVar], valHeuris: (CPIntVar => Int) = minVal) = new BinaryFirstFailBranching(x.toArray, valHeuris)
+  def binaryFirstFail(x: Seq[CPIntVar], valHeuris: (CPIntVar => Int) = minVal): Branching = new BinaryFirstFailBranching(x.toArray, valHeuris)
 
   /**
    * Binary search on the decision variables vars, selecting first the variables having the max number of propagation methods attached to it.
    */
-  def binaryMaxDegree(x: Seq[_ <: CPIntVar]) = new  BinaryMaxDegreeBranching(x.toArray)
+  def binaryMaxDegree(x: Seq[_ <: CPIntVar]): Branching = new  BinaryMaxDegreeBranching(x.toArray)
 
   /**
    * Binary search on the decision variables vars, splitting the domain of the selected variable on the
    * median of the values (left : <= median, right : > median)
    */
-  def binarySplit(x: Seq[CPIntVar], varHeuris: (CPIntVar => Int) = minVar, valHeuris: (CPIntVar => Int) = (x: CPIntVar) => (x.min + x.max) / 2) = new BinaryDomainSplitBranching(x.toArray, varHeuris, valHeuris)
+  def binarySplit(x: Seq[CPIntVar], varHeuris: (CPIntVar => Int) = minVar, valHeuris: (CPIntVar => Int) = (x: CPIntVar) => (x.min + x.max) / 2): Branching = new BinaryDomainSplitBranching(x.toArray, varHeuris, valHeuris)
   
   /**
    * Binary Search on the set variable
    * forcing an arbitrary on the left, and removing it on the right until the variable is bound
    */   
-  def binary(x: CPSetVar) = {
+  def binary(x: CPSetVar): Branching = {
     new BinarySetBranching(x)
   }
   
@@ -70,7 +72,7 @@ trait Branchings extends BranchingUtils {
    * set times heuristic (for discrete resources) 
    * see: Time- versus-capacity compromises in project scheduling. (Le Pape et al.). 1994. 
    */  
-  def setTimes(starts: IndexedSeq[_ <: CPIntervalVar], durations: IndexedSeq[_ <: CPIntervalVar], ends: IndexedSeq[_ <: CPIntervalVar], tieBreaker: Int => Int = (i: Int) => i) = new SetTimesBranching(starts, durations, ends, tieBreaker) 
+  def setTimes(starts: IndexedSeq[_ <: CPIntervalVar], durations: IndexedSeq[_ <: CPIntervalVar], ends: IndexedSeq[_ <: CPIntervalVar], tieBreaker: Int => Int = (i: Int) => i): Branching = new SetTimesBranching(starts, durations, ends, tieBreaker) 
   
   /**
    * rank heuristic (for unary resources)

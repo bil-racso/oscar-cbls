@@ -1,6 +1,5 @@
 package oscar.cp.core
 
-import oscar.cp.modeling.CPSolver
 import oscar.cp.constraints.CPObjectiveUnit
 import oscar.cp.constraints.ParetoConstraint
 import oscar.cp.multiobjective.Pareto

@@ -1,4 +1,5 @@
-/*******************************************************************************
+/**
+ * *****************************************************************************
  * OscaR is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
@@ -11,27 +12,27 @@
  *
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
- *****************************************************************************/
+ * ***************************************************************************
+ */
 package oscar.cp
 
-import scala.collection.IterableLike
-import scala.collection.SeqLike
-import scala.collection.generic.CanBuildFrom
-import oscar.algo.search._
-import oscar.cp.constraints._
-import oscar.cp.core.CPIntVar
-import oscar.cp.core.CPBoolVar
-import oscar.cp.modeling._
-import oscar.cp.core._
-import oscar.util._
-import oscar.cp.core.CPSolver
+import oscar.cp.core.CPIntVarViewMinus
+import oscar.cp.core.CPIntervalVarViewMinus
+import oscar.cp.core.CPOutcome
+import oscar.cp.core.CPPropagStrength
+import oscar.cp.core.CPSol
+import oscar.cp.modeling.Branchings
+import oscar.cp.modeling.Constraints
+import oscar.algo.search.SearchNode
+import oscar.algo.search.SearchStatistics
+import oscar.util.selectMin
 
 /**
  * @author Pierre Schaus pschaus@gmail.com
  * @author Renaud Hartert ren.hartert@gmail.com
  */
 package object modeling extends Constraints with Branchings {
-
+  
   // Alias to useful classes and companion objects
   type CPIntVar = oscar.cp.core.CPIntVar
   final val CPIntVar = oscar.cp.core.CPIntVar
@@ -41,23 +42,26 @@ package object modeling extends Constraints with Branchings {
 
   type CPBoolVar = oscar.cp.core.CPBoolVar
   final val CPBoolVar = oscar.cp.core.CPBoolVar
-  
+
   type CPSetVar = oscar.cp.core.CPSetVar
   final val CPSetVar = oscar.cp.core.CPSetVar
-  
+
   type CPGraphVar = oscar.cp.core.CPGraphVar
   final val CPGraphVar = oscar.cp.core.CPGraphVar
 
   type CPStore = oscar.cp.core.CPStore
   final val CPStore = oscar.cp.core.CPStore
-  
+
   type CPSolver = oscar.cp.core.CPSolver
   final val CPSolver = oscar.cp.core.CPSolver
-  
 
   type Constraint = oscar.cp.core.Constraint
-  
+
   type NoSolutionException = oscar.cp.core.NoSolutionException
+
+  type Branching = oscar.algo.search.Branching
+
+  trait CPModel { implicit val solver: CPSolver = CPSolver() }
 
   /**
    * Filtering power can be specified for some of the constraints.
@@ -209,7 +213,7 @@ package object modeling extends Constraints with Branchings {
      */
     def *(y: Int): CPIntVar = mul(x, y)
 
-    def abs = oscar.cp.modeling.absolute(x)
+    def abs = absolute(x)
 
     /**
      * Reified constraint
@@ -349,6 +353,7 @@ package object modeling extends Constraints with Branchings {
   def post(c: Constraint)(implicit cp: CPSolver): Unit = cp.post(c)
 
   def search(branching: Branching)(implicit cp: CPSolver): SearchNode = cp.search(branching)
+
   def search(block: => Seq[Alternative])(implicit cp: CPSolver): SearchNode = cp.search(block)
 
   def minimize(obj: CPIntervalVar)(implicit cp: CPSolver): CPSolver = cp.minimize(obj)
