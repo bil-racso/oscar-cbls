@@ -15,8 +15,6 @@
 
 
 import oscar.cp._
-import oscar.cp.constraints._
-import oscar.cp.core._
 
 import scala.io.Source
 

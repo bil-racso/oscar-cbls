@@ -14,7 +14,6 @@
  ******************************************************************************/
 
 import oscar.cp._
-import oscar.cp.core._
 
 import scala.io.Source
 import java.lang._

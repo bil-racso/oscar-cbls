@@ -17,7 +17,6 @@
 
 import oscar.cp._
 import oscar.algo.search._
-import oscar.cp.core._
 import scala.io.Source
 import scala.io.Source
 import oscar.util._

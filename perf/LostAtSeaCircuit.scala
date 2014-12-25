@@ -15,8 +15,6 @@
 
 
 import oscar.cp._
-import oscar.algo.search._
-import oscar.cp.core._
 
 
 /**

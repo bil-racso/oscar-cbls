@@ -16,7 +16,6 @@
 
 import oscar.cp._
 
-import oscar.cp.core._
 import scala.io.Source._
 import scala.math._
 
