@@ -1,6 +1,6 @@
 package oscar.examples.cp
 
-import oscar.cp.modeling._
+import oscar.cp._
 import oscar.algo.search._
 import oscar.visual._
 import java.awt.Color

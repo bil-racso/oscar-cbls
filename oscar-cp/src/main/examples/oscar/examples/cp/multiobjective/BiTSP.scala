@@ -14,7 +14,7 @@
  ******************************************************************************/
 package oscar.examples.cp.multiobjective
 
-import oscar.cp.modeling._
+import oscar.cp._
 import oscar.cp.constraints.Inverse
 import oscar.cp.multiobjective.Pareto
 import scala.collection.mutable.Queue

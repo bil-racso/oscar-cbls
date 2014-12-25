@@ -1,6 +1,6 @@
 package oscar.examples.cp
 
-import oscar.cp.modeling._
+import oscar.cp._
 
 /**
  * Frequency Allocation Problem:

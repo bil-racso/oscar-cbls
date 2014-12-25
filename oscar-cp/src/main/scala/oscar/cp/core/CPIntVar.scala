@@ -20,7 +20,7 @@ import oscar.cp.constraints.InSetReif
 import oscar.cp.constraints.ModuloLHS
 import scala.util.Random
 import oscar.cp.core.domains.SparseSetDomain
-import oscar.cp.modeling._
+import oscar.cp._
 
 trait DomainIterator extends Iterator[Int] {
   def removeValue: CPOutcome

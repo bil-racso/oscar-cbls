@@ -1,6 +1,6 @@
 package oscar.examples.cp
 
-import oscar.cp.modeling._
+import oscar.cp._
 
 /**
  * I know a 5 digit number having a property that With a 1 after it,

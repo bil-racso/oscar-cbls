@@ -15,7 +15,7 @@
 
 package oscar.examples.cp.scheduling
 
-import oscar.cp.modeling._
+import oscar.cp._
 
 import oscar.visual._
 import scala.math

@@ -17,7 +17,7 @@ package oscar.cp.test
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
 import oscar.cp.core.CPOutcome._
-import oscar.cp.modeling._
+import oscar.cp._
 import oscar.cp.constraints.GraphUndirected
 import oscar.cp.constraints.GraphUndirectedConnected
 

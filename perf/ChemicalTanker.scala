@@ -14,7 +14,7 @@
  ******************************************************************************/
 
 
-import oscar.cp.modeling._
+import oscar.cp._
 import oscar.cp.core._
 import oscar.algo.reversible._
 import oscar.visual._

@@ -3,7 +3,7 @@ package oscar.cp.test
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
 
-import oscar.cp.modeling._
+import oscar.cp._
 
 class TestWeightedSum extends FunSuite with ShouldMatchers {
 

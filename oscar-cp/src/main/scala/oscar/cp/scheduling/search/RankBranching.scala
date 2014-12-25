@@ -15,7 +15,7 @@
 
 package oscar.cp.scheduling.search
 
-import oscar.cp.modeling._
+import oscar.cp._
 import oscar.util._
 import oscar.cp.core.CPIntVar
 import oscar.algo.reversible._

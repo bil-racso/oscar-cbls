@@ -14,7 +14,7 @@
  ******************************************************************************/
 
 
-import oscar.cp.modeling._
+import oscar.cp._
 import oscar.cp.constraints._
 import oscar.cp.core._
 

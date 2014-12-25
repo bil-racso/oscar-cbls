@@ -14,15 +14,13 @@
  ******************************************************************************/
 
 
-import oscar.cp.modeling._
+import oscar.cp._
 import oscar.cp.core._
 import oscar.algo.search._
 import oscar.cp.scheduling._
 import oscar.visual._
 import scala.io.Source
 import oscar.cp.scheduling.visual.VisualGanttChart
-import oscar.cp.search._
-import oscar.cp.search.BinaryFirstFailBranching
 
 
 

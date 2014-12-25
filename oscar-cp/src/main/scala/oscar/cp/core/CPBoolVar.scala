@@ -1,7 +1,7 @@
 package oscar.cp.core
 
 import scala.util.Random
-import oscar.cp.modeling._
+import oscar.cp._
 
 /**
  * Boolean variable: it is nothing else than a 0-1 integer variable. <br>

@@ -3,7 +3,7 @@ package oscar.cp.linearizedDFS
 import java.io.{FileWriter, PrintWriter}
 
 import oscar.algo.search._
-import oscar.cp.modeling.CPSolver
+import oscar.cp.core.CPSolver
 
 /**
  * Created by saschavancauwelaert on 28/11/14.

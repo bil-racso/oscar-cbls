@@ -21,10 +21,7 @@ import org.scalatest.matchers.ShouldMatchers
 
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.CPPropagStrength
-import oscar.cp.modeling.CPSetVar
-import oscar.cp.modeling.CPSolver
-import oscar.cp.modeling.CPStore
-import oscar.cp.modeling.Constraint
+import oscar.cp._
 
 
 /**

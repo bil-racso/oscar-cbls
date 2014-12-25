@@ -15,12 +15,9 @@
 
 package oscar.cp.searches
 
-import oscar.cp.modeling._
-import oscar.cp.core.CPIntVar
+import oscar.cp._
 import oscar.algo.reversible._
 import oscar.algo.search.Branching
-import oscar.cp.core.CPSetVar
-import oscar.cp.core.CPIntervalVar
 
 /**
  * Abstract Binary Branching: 

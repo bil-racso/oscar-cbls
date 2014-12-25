@@ -32,7 +32,7 @@ import oscar.util.selectMin
  * @author Pierre Schaus pschaus@gmail.com
  * @author Renaud Hartert ren.hartert@gmail.com
  */
-package object modeling extends Constraints with Branchings {
+package object modeling/* extends Constraints with Branchings {
   // Alias to useful classes and companion objects
   type CPIntVar = oscar.cp.core.CPIntVar
   final val CPIntVar = oscar.cp.core.CPIntVar
@@ -368,4 +368,4 @@ package object modeling extends Constraints with Branchings {
     cp.startSubjectTo(nSols, failureLimit, timeLimit, maxDiscrepancy)(reversibleBlock)
   }
   
-}
+}*/

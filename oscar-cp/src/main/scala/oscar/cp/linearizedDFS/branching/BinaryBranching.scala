@@ -4,7 +4,7 @@ import oscar.algo.reversible.ReversibleInt
 import oscar.algo.search.Branching
 import oscar.cp.core.CPIntVar
 import oscar.cp.linearizedDFS.{Assign, Remove}
-import oscar.cp.modeling._
+import oscar.cp._
 import oscar.cp.searches.AbstractBinaryBranching
 
 /**

@@ -15,6 +15,7 @@
 
 package oscar.cp.modeling
 
+import oscar.cp._
 import oscar.algo.search.Branching
 import oscar.algo.search.BranchingUtils
 import oscar.cp.scheduling.search.SetTimesBranching
@@ -53,7 +54,7 @@ trait Branchings extends BranchingUtils {
   /**
    * Binary search on the decision variables vars, selecting first the variables having the max number of propagation methods attached to it.
    */
-  def binaryMaxDegree(x: Seq[_ <: CPIntVar]): Branching = new  BinaryMaxDegreeBranching(x.toArray)
+  def binaryMaxDegree(x: Seq[_ <: CPIntVar]): Branching = new BinaryMaxDegreeBranching(x.toArray)
 
   /**
    * Binary search on the decision variables vars, splitting the domain of the selected variable on the

@@ -2,7 +2,7 @@ package oscar.cp.constraints
 
 import oscar.cp.testUtils.TestSuite
 import oscar.cp.core.CPIntVar
-import oscar.cp.modeling.CPSolver
+import oscar.cp.core.CPSolver
 
 /** @author Renaud Hartert ren.hartert@gmail.com */
 class InverseSuite extends TestSuite {

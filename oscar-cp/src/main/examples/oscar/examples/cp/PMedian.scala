@@ -4,7 +4,7 @@ import java.awt.Color
 
 import scala.io.Source
 
-import oscar.cp.modeling._
+import oscar.cp._
 import oscar.visual.VisualDrawing
 import oscar.visual.VisualFrame
 import oscar.visual.shapes.VisualCircle

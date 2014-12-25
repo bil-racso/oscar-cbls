@@ -1,10 +1,9 @@
 package oscar.examples.cp
 
-import oscar.cp.modeling._
+import oscar.cp._
 import oscar.algo.search._
 import collection.immutable.SortedSet
 import oscar.cp.constraints.ElementVarAC
-import oscar.cp.search.BinaryFirstFailBranching
 
 /**
  * Problem statement :

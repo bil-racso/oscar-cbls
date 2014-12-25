@@ -17,15 +17,7 @@ package oscar.cp.test
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
 
-import oscar.cp.modeling.CPBoolVar
-import oscar.cp.modeling.CPSolver
-import oscar.cp.modeling.NoSolutionException
-import oscar.cp.modeling.add
-import oscar.cp.modeling.binaryFirstFail
-import oscar.cp.modeling.or
-import oscar.cp.modeling.search
-import oscar.cp.modeling.startSubjectTo
-import oscar.cp.modeling.sum
+import oscar.cp._
 
 
 class TestOr extends FunSuite with ShouldMatchers  {

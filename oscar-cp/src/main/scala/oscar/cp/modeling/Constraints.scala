@@ -58,13 +58,20 @@ import oscar.cp.constraints.SweepMinCumulative
 import oscar.cp.constraints.TableData
 import oscar.cp.constraints.UnaryResource
 import oscar.cp.constraints.WeightedSum
-import oscar.cp.constraints.stockingCost.StockingCost
-import oscar.cp.core.CPOutcome
-import oscar.cp.core.CPPropagStrength
-import oscar.cp.core._
+import oscar.cp.constraints.StockingCost
 import oscar.cp.constraints.TableSTR2
 import oscar.cp.constraints.MinCircuit
 import oscar.cp.constraints.AllDiffBC
+import oscar.cp.core.CPOutcome
+import oscar.cp.core.CPPropagStrength
+import oscar.cp.core.CPIntVarViewOffset
+import oscar.cp.core.CPIntVarViewTimes
+import oscar.cp.core.CPIntVarImpl
+import oscar.cp.core.CPIntVarViewMinus
+import oscar.cp.core.CPIntervalVarImpl
+import oscar.cp.core.CPIntervalVarViewOffset
+import oscar.cp.core.CPIntervalVar
+import oscar.cp._
 
 trait Constraints {
 

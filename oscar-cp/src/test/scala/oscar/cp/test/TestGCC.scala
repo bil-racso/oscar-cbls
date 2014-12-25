@@ -5,7 +5,7 @@ import org.scalatest.matchers.ShouldMatchers
 
 import oscar.cp.constraints._
 
-import oscar.cp.modeling._
+import oscar.cp._
 
 class TestGCC extends FunSuite with ShouldMatchers {
   val rand = new scala.util.Random(0)

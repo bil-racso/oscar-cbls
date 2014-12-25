@@ -1,10 +1,9 @@
 package oscar.cp.constraints.sat
 
 import scala.util.Random
-import oscar.cp.core.CPBoolVar
-import oscar.cp.modeling._
-import oscar.cp.search.BinaryStaticOrderBranching
+
 import oscar.algo.search.SearchStatistics
+import oscar.cp._
 
 object Test2SAT extends App {
   

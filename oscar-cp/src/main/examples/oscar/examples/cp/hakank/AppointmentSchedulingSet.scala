@@ -1,6 +1,6 @@
 package oscar.examples.cp.hakank
 
-import oscar.cp.modeling._
+import oscar.cp._
 
 import scala.io.Source._
 import scala.math._
