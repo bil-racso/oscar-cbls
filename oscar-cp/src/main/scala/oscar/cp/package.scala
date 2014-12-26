@@ -18,13 +18,18 @@ import oscar.util.selectMin
  *
  * === Commonly Used Types ===
  * This package provides type aliases for types which are commonly used,
- * such as the solver and the variables.
+ * such as `CPSolver`, `CPIntVar`, or `CPIntervalVar`.
  *
  * === Implicit Conversions ===
  * A number of commonly applied implicit conversions are also defined here.
  * Implicit conversions provide additional higher-order function to core classes
  * such as `CPIntVar`, `CPIntervalVar`, or `CPSolver`. Implicit conversion also provide
  * simple and natural modeling functionnalities for sum and element constraints.
+ * 
+ * === CPModel ===
+ * The `CPModel` trait is also defined in this package and provides users with an 
+ * implicit `CPSolver` named solver. Using `CPModel` allows users to model problems
+ * without considering the underlying solver.
  *
  * @author Pierre Schaus pschaus@gmail.com
  * @author Renaud Hartert ren.hartert@gmail.com

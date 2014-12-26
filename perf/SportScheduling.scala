@@ -47,11 +47,11 @@ object SportScheduling {
     def printSol() {
       println("---------games---------")
       Periods.foreach {
-        p => println(Weeks.map(w => game(p)(w).getValue).mkString("\t"))
+        p => println(Weeks.map(w => game(p)(w).value).mkString("\t"))
       }
       println("---------teams---------")
       Periods.foreach {
-        p => println(Weeks.map(w => (team(p)(w)(0).getValue, team(p)(w)(1).getValue)).mkString("\t"))
+        p => println(Weeks.map(w => (team(p)(w)(0).value, team(p)(w)(1).value)).mkString("\t"))
       }
       println("\n")
     }
