@@ -89,7 +89,7 @@ object ChemicalTanker  {
       }
 
       override def valBindIdx(x: CPIntervalVar, tank: Int) = {
-        if (x.getValue == cargo.id) {
+        if (x.value == cargo.id) {
             curCapa.setValue(curCapa.getValue+tanks(tank).capa)
             if (curCapa.getValue >= cargo.volume) { 
                 // the volume is reached for the cargo so we prevent any other tank to take this cargo
@@ -147,7 +147,7 @@ object ChemicalTanker  {
     val nbFreeTanks = card(0) 
 
     // tanks allocated to cargo c in current partial solution
-    def tanksAllocated(c: Int) = (0 until tanks.size).filter(t => (cargo(t).isBound && cargo(t).getValue == c))                                      
+    def tanksAllocated(c: Int) = (0 until tanks.size).filter(t => (cargo(t).isBound && cargo(t).value == c))                                      
     // volume allocated to cargo c in current partial solution
     def volumeAllocated(c: Int) = tanksAllocated(c).map(tanks(_).capa).sum                                      
                                       
