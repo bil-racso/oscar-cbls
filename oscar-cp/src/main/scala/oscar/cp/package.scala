@@ -11,6 +11,7 @@ import oscar.algo.search.Branching
 import oscar.algo.search.SearchNode
 import oscar.algo.search.SearchStatistics
 import oscar.util.selectMin
+import oscar.cp.core.CPBoolVarWrapper
 
 /**
  * The `cp` package provides useful functionnalities to model problem using
@@ -25,9 +26,9 @@ import oscar.util.selectMin
  * Implicit conversions provide additional higher-order function to core classes
  * such as `CPIntVar`, `CPIntervalVar`, or `CPSolver`. Implicit conversion also provide
  * simple and natural modeling functionnalities for sum and element constraints.
- * 
+ *
  * === CPModel ===
- * The `CPModel` trait is also defined in this package and provides users with an 
+ * The `CPModel` trait is also defined in this package and provides users with an
  * implicit `CPSolver` named solver. Using `CPModel` allows users to model problems
  * without considering the underlying solver.
  *
@@ -228,6 +229,46 @@ package object cp extends Constraints with Branchings {
       b
     }
 
+  }
+
+  implicit class CPBoolVarOps(val variable: CPBoolVar) extends AnyVal {
+
+    /** Logical or */
+    def or(y: CPBoolVar): CPBoolVar = {
+      val b = new CPBoolVarWrapper(CPIntVar(variable.store, 0 to 1))
+      variable.store.post(new oscar.cp.constraints.OrReif2(Array(variable, y), b))
+      b
+    }
+
+    /** Logical and */
+    def and(y: CPBoolVar): CPBoolVar = {
+      val res = plus(variable, y)
+      res.isEq(2)
+    }
+
+    def implies(y: CPBoolVar) = {
+      val v = new CPBoolVarWrapper(CPIntVar(variable.store, 0 to 1))
+      variable.store.post(new oscar.cp.constraints.Implication(variable, y, v))
+      v
+    }
+
+    /** !b */
+    def unary_!(): CPBoolVar = variable.not
+    
+    /** x | y */
+    def |(y: CPBoolVar) = or(y)
+    
+    /** x || y */
+    def ||(y: CPBoolVar) = or(y)
+    
+    /** x & y */
+    def &(y: CPBoolVar) = and(y)
+    
+    /** x && y */
+    def &&(y: CPBoolVar) = and(y)
+    
+    /** x ==> y */
+    def ==>(y: CPBoolVar) = implies(y)
   }
 
   implicit class CPIntervalVarOps(x: CPIntervalVar) {

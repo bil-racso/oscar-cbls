@@ -8,14 +8,15 @@ import oscar.cp._
  * 1 is used for true, 0 for false.
  *
  * @author Pierre Schaus pschaus@gmail.com
+ * @author Renaud Hartert ren.hartert@gmail.com
  */
 abstract class CPBoolVar extends CPIntVar {
 
   /** @return a constraint setting the boolean variable to true (1) */
-  def constraintTrue(): Constraint
+  def constraintTrue: Constraint
 
   /** @return a constraint setting the boolean variable to false (0) */
-  def constraintFalse(): Constraint
+  def constraintFalse: Constraint
 
   /** @return true if the variable is bound and bound to value 1 */
   def isTrue: Boolean
@@ -23,27 +24,23 @@ abstract class CPBoolVar extends CPIntVar {
   /** @return true if the variable is bound and bound to value 0 */
   def isFalse: Boolean
 
-  /** Logical or */
-  def or(y: CPBoolVar): CPBoolVar
+  /** Assigns the variable to true. */
+  def assignTrue(): CPOutcome
 
-  /** Logical and */
-  def and(y: CPBoolVar): CPBoolVar
+  /** Assigns the variable to false. */
+  def assignFalse(): CPOutcome
 
-  def not(): CPBoolVar
+  /** Returns `true` if the domain contains 1. */
+  def containsTrue: Boolean
 
-  def implies(y: CPBoolVar): CPBoolVar
+  /** Returns `true` if the domain contains 0. */
+  def containsFalse: Boolean
 
-  def unary_!(): CPBoolVar 
-  
-  def |(y: CPBoolVar): CPBoolVar
-
-  def ||(y: CPBoolVar): CPBoolVar
-
-  def &(y: CPBoolVar): CPBoolVar
-
-  def &&(y: CPBoolVar): CPBoolVar
-
-  def ==>(y: CPBoolVar): CPBoolVar
+  /**
+   *  Returns an unique boolean variable corresponding to the opposite
+   *  of this variable.
+   */
+  def not: CPBoolVar
 }
 
 object CPBoolVar {

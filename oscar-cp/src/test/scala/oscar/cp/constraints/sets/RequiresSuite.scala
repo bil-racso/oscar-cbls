@@ -54,7 +54,7 @@ class RequiresSuite extends TestSuite {
     cp.post(Requires(set, 1, b))
     assert(!b.isBound)
     assert(!set.isRequired(1))
-    cp.post(b.constraintFalse())
+    cp.post(b.constraintFalse)
     assert(!set.isPossible(1))
     assert(!cp.isFailed)
   }
@@ -65,7 +65,7 @@ class RequiresSuite extends TestSuite {
     cp.post(Requires(set, 1, b))
     assert(!b.isBound)
     assert(!set.isRequired(1))
-    cp.post(b.constraintTrue())
+    cp.post(b.constraintTrue)
     assert(set.isRequired(1))
     assert(!cp.isFailed)
   }
