@@ -235,7 +235,7 @@ abstract class CPIntervalVar extends CPVar with Iterable[Int] {
    * @return  a boolean variable b in the same store linked to x by the relation x == v <=> b == true
    */
   def isEq(v: Int): CPBoolVar = {
-    val b = new CPBoolVar(store);
+    val b = CPBoolVar()(store);
     val ok = store.post(new oscar.cp.constraints.EqReifInterval(this, v, b));
     assert(ok != CPOutcome.Failure);
     return b;
@@ -273,7 +273,7 @@ abstract class CPIntervalVar extends CPVar with Iterable[Int] {
    * @return  a boolean variable b in the same store linked to x by the relation x >= v <=> b == true
    */
   def isGrEq(v: Int): CPBoolVar = {
-    val b = new CPBoolVar(store);
+    val b = CPBoolVar()(store);
     val ok = store.post(new oscar.cp.constraints.GrEqCteReif(this, v, b));
     assert(ok != CPOutcome.Failure);
     return b;
@@ -285,7 +285,7 @@ abstract class CPIntervalVar extends CPVar with Iterable[Int] {
    * @return  a boolean variable b in the same store linked to x by the relation x <= v <=> b == true
    */
   def isLeEq(v: Int): CPBoolVar = {
-    val b = new CPBoolVar(store);
+    val b = CPBoolVar()(store);
     val ok = store.post(new oscar.cp.constraints.LeEqCteReif(this, v, b));
     assert(ok != CPOutcome.Failure);
     return b;
@@ -297,7 +297,7 @@ abstract class CPIntervalVar extends CPVar with Iterable[Int] {
    * @return  a boolean variable b in the same store linked to x by the relation x >= y <=> b == true
    */
   def isGrEq(y: CPIntervalVar): CPBoolVar = {
-    val b = new CPBoolVar(store);
+    val b = CPBoolVar()(store);
     val ok = store.post(new oscar.cp.constraints.GrEqVarReif(this, y, b));
     assert(ok != CPOutcome.Failure);
     return b;

@@ -649,7 +649,7 @@ trait Constraints {
    * @return result of the or over vars
    */
   def isOr(vars: Iterable[CPBoolVar]): CPBoolVar = {
-    val z = new CPBoolVar(vars.head.store)
+    val z = CPBoolVar()(vars.head.store)
     vars.head.store.add(or(vars, z))
     z
   }
@@ -660,7 +660,7 @@ trait Constraints {
    */
   def isOr[A](indexes: Iterable[A])(f: A => CPBoolVar): CPBoolVar = {
     val x = (for (i <- indexes) yield f(i)).toArray
-    val z = new CPBoolVar(x(0).store)
+    val z = CPBoolVar()(x(0).store)
     x(0).store.add(or(x, z))
     z
   }

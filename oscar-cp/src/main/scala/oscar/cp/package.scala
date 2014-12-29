@@ -222,7 +222,7 @@ package object cp extends Constraints with Branchings {
      * @return a boolean variable b in the same store linked to x by the relation x == y <=> b == true
      */
     def isEq(y: CPIntVar): CPBoolVar = {
-      val b = new CPBoolVar(x.store);
+      val b = CPBoolVar()(x.store);
       val ok = x.store.post(new oscar.cp.constraints.EqReifVar(x, y, b));
       assert(ok != CPOutcome.Failure);
       b
@@ -304,7 +304,7 @@ package object cp extends Constraints with Branchings {
      * @return a boolean variable b in the same store linked to x by the relation x == y <=> b == true
      */
     def isEq(y: CPIntervalVar): CPBoolVar = {
-      val b = new CPBoolVar(x.store);
+      val b = CPBoolVar()(x.store);
       val ok = x.store.post(new oscar.cp.constraints.EqReifIntervalVar(x, y, b));
       assert(ok != CPOutcome.Failure);
       b

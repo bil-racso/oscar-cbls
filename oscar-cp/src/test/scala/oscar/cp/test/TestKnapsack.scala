@@ -34,7 +34,7 @@ class TestKnapsack extends FunSuite with ShouldMatchers {
     val cp = CPSolver()
     val P = CPIntVar(0 to 1000000)(cp)
     val W = CPIntVar(0 to (n / 2 * u / 2))(cp)
-    val X = Array.fill(profit.size)(new CPBoolVar(cp))
+    val X = Array.fill(profit.size)(CPBoolVar()(cp))
     var obj = 0
     //println("W:"+W)
     //println("weight:"+weight.mkString(","))

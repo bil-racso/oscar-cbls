@@ -52,7 +52,7 @@ public class TestView extends TestCase {
     	CPIntVar y = CPIntVar.apply(s,1,5);
         System.out.println(x);
 
-        CPBoolVar b = new CPBoolVar(s);
+        CPBoolVar b = CPBoolVar.apply(s);
 
 
     	CPIntVar x1 = oscar.cp.modeling.constraint.plus(x,0);

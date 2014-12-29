@@ -219,7 +219,7 @@ abstract class CPIntVar extends CPIntervalVar with Iterable[Int] {
    * @return  a boolean variable b in the same store linked to x by the relation x == v <=> b == true
    */
   override def isEq(v: Int): CPBoolVar = {
-    val b = new CPBoolVar(store);
+    val b = CPBoolVar()(store);
     val ok = store.post(new oscar.cp.constraints.EqReif(this, v, b));
     assert(ok != CPOutcome.Failure);
     return b;
@@ -231,7 +231,7 @@ abstract class CPIntVar extends CPIntervalVar with Iterable[Int] {
    * @return  a boolean variable b in the same store linked to x by the relation x != v <=> b == true
    */
   def isDiff(v: Int): CPBoolVar = {
-    val b = new CPBoolVar(store);
+    val b = CPBoolVar()(store);
     val ok = store.post(new oscar.cp.constraints.DiffReif(this, v, b));
     assert(ok != CPOutcome.Failure)
     return b;
@@ -243,7 +243,7 @@ abstract class CPIntVar extends CPIntervalVar with Iterable[Int] {
    * @return  a boolean variable b in the same store linked to x by the relation x != y <=> b == true
    */
   def isDiff(y: CPIntVar): CPBoolVar = {
-    val b = new CPBoolVar(store);
+    val b = CPBoolVar()(store);
     val ok = store.post(new oscar.cp.constraints.DiffReifVar(this, y, b));
     assert(ok != CPOutcome.Failure)
     return b;
