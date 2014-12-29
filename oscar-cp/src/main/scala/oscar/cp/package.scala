@@ -264,7 +264,7 @@ package object cp extends Constraints with Branchings {
     /**
      * -x
      */
-    def unary_-() = new CPIntervalVarViewMinus(x)
+    def unary_-(): CPIntervalVar = new CPIntervalVarViewMinus(x)
     /**
      * x+y
      */

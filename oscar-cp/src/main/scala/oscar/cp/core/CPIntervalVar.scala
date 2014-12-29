@@ -24,7 +24,7 @@ import oscar.cp.core.domains.SparseSetDomain
 /**
  * @author Pierre Schaus pschaus@gmail.com
  */
-abstract class CPIntervalVar(override val store: CPStore, override val name: String = "") extends CPVar with Iterable[Int] {
+abstract class CPIntervalVar extends CPVar with Iterable[Int] {
 
   def transform(v: Int): Int
 

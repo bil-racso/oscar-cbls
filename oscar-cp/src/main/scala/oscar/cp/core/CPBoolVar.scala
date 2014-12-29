@@ -9,7 +9,9 @@ import oscar.cp._
  *
  * @author Pierre Schaus pschaus@gmail.com
  */
-class CPBoolVar(val x: CPIntVar, name: String = "") extends CPIntVar(x.store, name) {
+class CPBoolVar(val x: CPIntVar, override val name: String = "") extends CPIntVar {
+  
+  override val store: CPStore = x.store
   
   def this(store: CPStore) = this(CPIntVar(0 to 1)(store))
 

@@ -33,7 +33,7 @@ class IntervalVarTrailEntry(variable: CPIntervalVarImpl, min: Int, max: Int) ext
   }
 }
 
-class CPIntervalVarImpl(store: CPStore, initialMin: Int, initialMax: Int, name: String) extends CPIntervalVar(store, name) {
+class CPIntervalVarImpl(final override val store: CPStore, initialMin: Int, initialMax: Int, final override val name: String) extends CPIntervalVar {
 
   private[this] var lastMagic: Long = -1L
 

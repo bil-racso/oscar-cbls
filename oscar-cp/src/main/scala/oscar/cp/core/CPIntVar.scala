@@ -30,7 +30,7 @@ trait DomainIterator extends Iterator[Int] {
 /**
  * @author Pierre Schaus pschaus@gmail.com
  */
-abstract class CPIntVar(override val store: CPStore, override val name: String = "") extends CPIntervalVar(store,name) with Iterable[Int] {
+abstract class CPIntVar extends CPIntervalVar with Iterable[Int] {
 
 
   /**
@@ -51,23 +51,6 @@ abstract class CPIntVar(override val store: CPStore, override val name: String =
     }
     res
   }
-
-  /**
-   * @return true if the domain is empty, false otherwise
-   */
-  def isEmpty: Boolean
-
-  /**
-   * @return  the minimum value in the domain
-   */
-  def min: Int
-
-
-  /**
-   * @return  the maximum value in the domain
-   */
-  def max: Int
-
 
   def domainIterator: DomainIterator = {
     new DomainIterator {
