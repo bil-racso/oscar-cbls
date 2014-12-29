@@ -69,7 +69,7 @@ class CPBoolVarWrapper(x: CPIntVar, final override val name: String = "") extend
 
   final override def constraintFalse: Constraint = new oscar.cp.constraints.EqCons(x, 0)
   
-  final override lazy val not: CPBoolVar = new CPBoolVarWrapper((new CPIntVarViewMinus(this)) + 1)
+  final override lazy val not: CPBoolVar = new CPBoolVarNot(this)//CPBoolVarWrapper((new CPIntVarViewMinus(this)) + 1)
   
   final override def toString: String = {
     if (isTrue) "1"
