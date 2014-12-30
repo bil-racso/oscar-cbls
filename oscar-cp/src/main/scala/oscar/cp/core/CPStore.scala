@@ -258,6 +258,11 @@ class CPStore( final val propagStrength: CPPropagStrength) extends SearchNode {
     }
   }
 
+  final def doAndPropagate(action: => Unit): Unit = {
+    action
+    propagate()
+  }
+  
   /**
    *  Call the propagate function of the constraints and trigger the fix point algorithm
    *
