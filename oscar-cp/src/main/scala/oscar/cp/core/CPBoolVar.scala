@@ -46,7 +46,7 @@ abstract class CPBoolVar extends CPIntVar {
 object CPBoolVar {
 
   /** Creates a new CP Boolean Variable */
-  def apply(name: String)(implicit store: CPStore): CPBoolVar = new CPBoolVarWrapper(CPIntVar(0 to 1)(store), name)
+  def apply(name: String)(implicit store: CPStore): CPBoolVar = new CPBoolVarImpl(store, name)//CPBoolVarWrapper(CPIntVar(0 to 1)(store), name)
 
   /** Creates a new CP Boolean Variable */
   def apply()(implicit store: CPStore): CPBoolVar = apply("")(store)

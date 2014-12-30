@@ -190,6 +190,7 @@ class CPBoolVarImpl( final override val store: CPStore, final override val name:
 
   final override def constraintFalse(): Constraint = new oscar.cp.constraints.EqCons(this, 0)
 
+  // An unique 
   final override lazy val not: CPBoolVar = new CPBoolVarNot(this)
 
   final override def toString: String = {
