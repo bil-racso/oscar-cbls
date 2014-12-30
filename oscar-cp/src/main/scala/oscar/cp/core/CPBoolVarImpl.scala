@@ -10,8 +10,8 @@ import oscar.cp.core.CPOutcome._
  * @author Renaud Hartert ren.hartert@gmail.com
  */
 
-class CPBoolVarImpl( final override val store: CPStore, final override val name: String = "") extends CPBoolVar {
-
+class CPBoolVarImpl private(final override val store: CPStore, initDomain: Int, final override val name: String = "") extends CPBoolVar {
+  
   // Registered constraints
   private[this] val onBoundsL2 = new ReversiblePointer[ConstraintQueue](store, null)
   private[this] val onBindL2 = new ReversiblePointer[ConstraintQueue](store, null)
@@ -35,75 +35,77 @@ class CPBoolVarImpl( final override val store: CPStore, final override val name:
   // 10 : Unassigned
   // 01 : Empty
   
-  private[this] var domain: Int = 2 // unassigned
+  import CPBoolVarImpl._
+  
+  private[this] var domain: Int = initDomain
 
-  // Boolean variables only need one pre-instantiated trail entry
-  private[this] val trailEntry = new TrailEntry { final override def restore(): Unit = domain = 2 }
+  // A Boolean variable only needs one pre-instantiated trail entry
+  private[this] val trailEntry = new TrailEntry { final override def restore(): Unit = domain = UNASSIGNED }
 
   // Used to trail changes
   @inline final def trail(): Unit = store.trail(trailEntry)
 
   final override def transform(v: Int) = v
 
-  final override def isBound = domain != 2
+  final override def isBound = domain != UNASSIGNED
 
   final override def size = {
-    if (domain == 2) 2
-    else if (domain == 1) 0
+    if (domain == UNASSIGNED) 2
+    else if (domain == EMPTY) 0
     else 1
   }
 
-  final override def isEmpty = domain == 1
+  final override def isEmpty = domain == EMPTY
   
   final override def min: Int = domain & 1 // min is faster than max
 
   final override def max: Int = (domain & 2) >> 1
   
-  final override def isTrue: Boolean = domain == 3
+  final override def isTrue: Boolean = domain == TRUE
 
-  final override def isFalse: Boolean = domain == 0
+  final override def isFalse: Boolean = domain == FALSE
 
   final override def isBoundTo(value: Int): Boolean = {
-    if (value == 0) domain == 0
-    else if (value == 1) domain == 3
+    if (value == 0) domain == FALSE
+    else if (value == 1) domain == TRUE
     else false
   }
   
   final override def containsTrue: Boolean = {
-    if (domain == 1) false
-    else domain >= 2
+    if (domain == EMPTY) false
+    else domain >= UNASSIGNED 
   }
   
   final override def containsFalse: Boolean = {
-    if (domain == 1) false
+    if (domain == EMPTY) false
     else domain <= 2
   }
 
   final override def hasValue(value: Int): Boolean = {
-    if (domain == 1) false
-    else if (value == 0) domain <= 2
-    else if (value == 1) domain >= 2
+    if (domain == EMPTY) false
+    else if (value == 0) domain <= UNASSIGNED
+    else if (value == 1) domain >= UNASSIGNED
     else false
   }
 
   final override def valueAfter(value: Int): Int = {
-    if (value <= 0) if (domain <= 2) 0 else 1
+    if (value <= 0) if (domain <= UNASSIGNED) 0 else 1
     else value
   }
 
   final override def valueBefore(value: Int): Int = {
-    if (value >= 1) if (domain >= 2) 1 else 0
+    if (value >= 1) if (domain >= UNASSIGNED) 1 else 0
     else value
   }
 
   final override def randomValue(rand: Random): Int = {
-    if (domain == 2) rand.nextInt(2)
+    if (domain == UNASSIGNED) rand.nextInt(2)
     else domain & 1 // min value
   }
 
   final override def updateMin(value: Int): CPOutcome = {
     if (value == 1) {
-      if (domain == 2) setDomainTrue()
+      if (domain == UNASSIGNED) setDomainTrue()
       else Suspend
     } else if (value <= 0) Suspend
     else setDomainEmpty
@@ -111,21 +113,21 @@ class CPBoolVarImpl( final override val store: CPStore, final override val name:
 
   final override def updateMax(value: Int): CPOutcome = {
     if (value == 0) {
-      if (domain == 2) setDomainFalse()
+      if (domain == UNASSIGNED) setDomainFalse()
       else Suspend
     } else if (value >= 1) Suspend
     else setDomainEmpty
   }
   
   final override def assignTrue(): CPOutcome = {
-    if (domain == 2) setDomainTrue()
-    else if (domain == 3) Suspend
+    if (domain == UNASSIGNED) setDomainTrue()
+    else if (domain == TRUE) Suspend
     else setDomainEmpty()
   }
 
   final override def assignFalse(): CPOutcome = {
-    if (domain == 2) setDomainFalse()
-    else if (domain == 0) Suspend
+    if (domain == UNASSIGNED) setDomainFalse()
+    else if (domain == FALSE) Suspend
     else setDomainEmpty()
   }
     
@@ -143,7 +145,7 @@ class CPBoolVarImpl( final override val store: CPStore, final override val name:
 
   @inline private def setDomainTrue(): CPOutcome = {
     trail()
-    domain = 3 // assign to true
+    domain = TRUE
     // Notify constraints
     store.notifRemoveL1(onDomainL1.value, this, 0)
     store.notifyRemoveIdxL1(onDomainIdxL1.value, this, 0)
@@ -159,7 +161,7 @@ class CPBoolVarImpl( final override val store: CPStore, final override val name:
 
   @inline private def setDomainFalse(): CPOutcome = {
     trail()
-    domain = 0 // assign to false
+    domain = FALSE
     // Notify constraints
     store.notifRemoveL1(onDomainL1.value, this, 1)
     store.notifyRemoveIdxL1(onDomainIdxL1.value, this, 1)
@@ -175,14 +177,14 @@ class CPBoolVarImpl( final override val store: CPStore, final override val name:
 
   @inline private def setDomainEmpty(): CPOutcome = {
     trail()
-    domain = 1 // empty
+    domain = EMPTY
     Failure
   }
 
   final override def iterator = {
-    if (domain == 2) Iterator(0, 1)
-    else if (domain == 0) Iterator(0)
-    else if (domain == 3) Iterator(1)
+    if (domain == UNASSIGNED) Iterator(0, 1)
+    else if (domain == FALSE) Iterator(0)
+    else if (domain == TRUE) Iterator(1)
     else Iterator.empty
   }
     
@@ -190,13 +192,16 @@ class CPBoolVarImpl( final override val store: CPStore, final override val name:
 
   final override def constraintFalse(): Constraint = new oscar.cp.constraints.EqCons(this, 0)
 
-  // An unique 
   final override lazy val not: CPBoolVar = new CPBoolVarNot(this)
 
   final override def toString: String = {
-    if (isTrue) "1"
-    else if (isFalse) "0"
-    else "{0,1}"
+    domain match { // tableswitch
+      case FALSE => "0"
+      case EMPTY => "empty"
+      case UNASSIGNED => "{0, 1}"
+      case TRUE => "1"
+      case _ => sys.error("unknown domain")
+    }
   }
   
   final override def constraintDegree: Int = degree.value
@@ -292,4 +297,26 @@ class CPBoolVarImpl( final override val store: CPStore, final override val name:
   final override def deltaSize(c: Constraint): Int = ???
 
   final override def delta(c: Constraint): Iterator[Int] = ???
+}
+
+object CPBoolVarImpl {
+  
+  // Use final for faster bytecode 
+  private final val FALSE = 0
+  private final val TRUE = 3
+  private final val UNASSIGNED = 2
+  private final val EMPTY = 1
+  
+  def apply(store: CPStore, assignedValue: Boolean, name: String): CPBoolVar = {
+    if (assignedValue) new CPBoolVarImpl(store, TRUE, name)
+    else new CPBoolVarImpl(store, FALSE, name)
+  }
+  
+  def apply(store: CPStore, assignedValue: Int, name: String): CPBoolVar = {
+    if (assignedValue == 0) new CPBoolVarImpl(store, FALSE, name)
+    else if (assignedValue == 1) new CPBoolVarImpl(store, TRUE, name)
+    else sys.error("assignedValue needs to be 0 or 1.")
+  }
+  
+  def apply(store: CPStore, name: String): CPBoolVar = new CPBoolVarImpl(store, UNASSIGNED, name)
 }

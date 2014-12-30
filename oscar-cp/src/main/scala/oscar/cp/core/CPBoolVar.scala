@@ -1,7 +1,6 @@
 package oscar.cp.core
 
 import scala.util.Random
-import oscar.cp._
 
 /**
  * Boolean variable: it is nothing else than a 0-1 integer variable. <br>
@@ -38,7 +37,7 @@ abstract class CPBoolVar extends CPIntVar {
 
   /**
    *  Returns an unique boolean variable corresponding to the opposite
-   *  of this variable.
+   *  of this variable such that x.not.not == x. 
    */
   def not: CPBoolVar
 }
@@ -46,16 +45,16 @@ abstract class CPBoolVar extends CPIntVar {
 object CPBoolVar {
 
   /** Creates a new CP Boolean Variable */
-  def apply(name: String)(implicit store: CPStore): CPBoolVar = new CPBoolVarImpl(store, name)//CPBoolVarWrapper(CPIntVar(0 to 1)(store), name)
+  def apply(name: String)(implicit store: CPStore): CPBoolVar = CPBoolVarImpl(store, name)
 
   /** Creates a new CP Boolean Variable */
-  def apply()(implicit store: CPStore): CPBoolVar = apply("")(store)
+  def apply()(implicit store: CPStore): CPBoolVar = CPBoolVarImpl(store, "")
 
   /** Creates a new CP Boolean Variable assigned to b */
-  def apply(b: Boolean, name: String)(implicit store: CPStore): CPBoolVar = new CPBoolVarWrapper(CPIntVar(if (b) 1 else 0)(store), name)
+  def apply(b: Boolean, name: String)(implicit store: CPStore): CPBoolVar = CPBoolVarImpl(store, b, name)
 
   /** Creates a new CP Boolean Variable assigned to b */
-  def apply(b: Boolean)(implicit store: CPStore): CPBoolVar = apply(b, "")(store)
+  def apply(b: Boolean)(implicit store: CPStore): CPBoolVar = CPBoolVarImpl(store, b, "")
 
   @deprecated("use apply(b: Boolean)(implicit store: CPStore) instead", "1.0")
   def apply(cp: CPStore, b: Boolean): CPBoolVar = new CPBoolVarWrapper(CPIntVar(if (b) 1 else 0)(cp))

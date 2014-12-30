@@ -55,7 +55,12 @@ class CPBoolVarNot(final override val not: CPBoolVar) extends CPBoolVar {
 
   final override def removeValue(value: Int) = not.removeValue(1 - value)
 
-  final override def iterator = not.iterator.map(1 - _) // not efficient
+  final override def iterator: Iterator[Int] = {
+    val size = not.size
+    if (size == 2) Iterator(0, 1)
+    else if (size == 1) Iterator(1 - not.min)
+    else Iterator.empty
+  }
   
   final override def constraintDegree: Int = not.constraintDegree
 
@@ -114,8 +119,9 @@ class CPBoolVarNot(final override val not: CPBoolVar) extends CPBoolVar {
   final override def constraintFalse(): Constraint = not.constraintTrue
 
   final override def toString: String = {
-    if (isTrue) "1"
-    else if (isFalse) "0"
-    else "{0,1}"
+    if (not.isEmpty) "empty"
+    else if (not.isTrue) "0"
+    else if (not.isFalse) "1"
+    else "{0, 1}"
   }
 }

@@ -12,6 +12,7 @@ import oscar.algo.search.SearchNode
 import oscar.algo.search.SearchStatistics
 import oscar.util.selectMin
 import oscar.cp.core.CPBoolVarWrapper
+import oscar.cp.core.CPBoolVarImpl
 
 /**
  * The `cp` package provides useful functionnalities to model problem using
@@ -23,7 +24,7 @@ import oscar.cp.core.CPBoolVarWrapper
  *
  * === Implicit Conversions ===
  * A number of commonly applied implicit conversions are also defined here.
- * Implicit conversions provide additional higher-order function to core classes
+ * Implicit conversions provide additional higher-order functions to core classes
  * such as `CPIntVar`, `CPIntervalVar`, or `CPSolver`. Implicit conversion also provide
  * simple and natural modeling functionnalities for sum and element constraints.
  *
@@ -153,15 +154,6 @@ package object cp extends Constraints with Branchings {
   implicit class CPIntVarOps(x: CPIntVar) {
 
     /**
-     *  Returns the value assigned to the variable.
-     *  Throws an Exception if the variable is not assigned.
-     */
-    def value: Int = {
-      if (x.isBound) x.min
-      else throw new NoSuchElementException("the variable is not bound")
-    }
-
-    /**
      * @return difference between second smallest and smallest value in the domain, Int.MaxInt if variable is bound
      */
     def regret: Int = {
@@ -235,7 +227,7 @@ package object cp extends Constraints with Branchings {
 
     /** Logical or */
     def or(y: CPBoolVar): CPBoolVar = {
-      val b = new CPBoolVarWrapper(CPIntVar(variable.store, 0 to 1))
+      val b = CPBoolVarImpl(variable.store, "")
       variable.store.post(new oscar.cp.constraints.OrReif2(Array(variable, y), b))
       b
     }
@@ -247,9 +239,9 @@ package object cp extends Constraints with Branchings {
     }
 
     def implies(y: CPBoolVar) = {
-      val v = new CPBoolVarWrapper(CPIntVar(variable.store, 0 to 1))
-      variable.store.post(new oscar.cp.constraints.Implication(variable, y, v))
-      v
+      val b = CPBoolVarImpl(variable.store, "")
+      variable.store.post(new oscar.cp.constraints.Implication(variable, y, b))
+      b
     }
 
     /** !b */
