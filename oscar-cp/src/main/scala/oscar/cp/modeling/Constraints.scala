@@ -72,6 +72,7 @@ import oscar.cp.core.CPIntervalVarImpl
 import oscar.cp.core.CPIntervalVarViewOffset
 import oscar.cp.core.CPIntervalVar
 import oscar.cp._
+import oscar.cp.constraints.BinaryClause
 
 trait Constraints {
 
@@ -511,18 +512,29 @@ trait Constraints {
    * @param vars a non empty array of n variables
    * @return a variable representing vars(0)+vars(1)+...+vars(n)
    */
-  def sum(vars: Iterable[CPIntVar]): CPIntVar = {
-    if (vars.size == 1) return vars.head
-    val x = vars.toArray
-    val minVal = (0 /: vars) {
-      (sum, v) => sum + v.getMin
+  def sum(vars: Iterable[CPIntVar]): CPIntVar = sum(vars.toArray)  
+  
+  /**
+   * Sum Constraint
+   * @param vars a non empty array of n variables
+   * @return a variable representing vars(0)+vars(1)+...+vars(n)
+   */
+  def sum(vars: Array[CPIntVar]): CPIntVar = {
+    if (vars.length == 0) sys.error("no variables")
+    if (vars.length == 1) vars(0)
+    else {
+      var min = 0
+      var max = 0
+      var i = vars.length
+      while(i > 0) {
+        i -= 1
+        min += vars(i).min
+        max += vars(i).max
+      }
+      val s = CPIntVar(min, max)(vars(0).store)
+      vars(0).store.post(sum(vars, s))
+      s
     }
-    val maxVal = (0 /: vars) {
-      (sum, v) => sum + v.getMax
-    }
-    val s = CPIntVar(minVal, maxVal)(x(0).store)
-    x(0).store.post(sum(x, s))
-    s
   }
 
   /**
@@ -631,8 +643,17 @@ trait Constraints {
    * Or (logical) Constraint
    * @return a constraint such that at least one variables in vars must be true
    */
-  def or(vars: Iterable[CPBoolVar]): Constraint = {
-    new Or(vars.toArray)
+  def or(vars: Iterable[CPBoolVar]): Constraint = or(vars.toArray)
+  
+  /**
+   * Or (logical) Constraint
+   * @return a constraint such that at least one variables in vars must be true
+   */
+  def or(vars: Array[CPBoolVar]): Constraint = {
+    val nVariables = vars.length
+    if (nVariables == 1) vars(0).constraintTrue
+    if (nVariables == 2) new BinaryClause(vars(0), vars(1), "")
+    else new Or(vars)
   }
 
   /**

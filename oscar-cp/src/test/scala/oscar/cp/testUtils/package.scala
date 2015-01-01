@@ -46,5 +46,10 @@ package object testUtils {
 
     /** Asserts that each values in `values` is not contained in `intVar` */
     def shouldNotContain(values: Array[Int]): Unit = values.foreach(shouldNotContain)
+    
+    /** Asserts that the variable is assigned to `value` */
+    def shouldBeAssignedTo(value: Int): Unit = {
+      assert(variable.isBoundTo(value))
+    }
   }
 }
