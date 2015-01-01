@@ -40,10 +40,9 @@ class CPBoolVarImpl private(final override val store: CPStore, initDomain: Int, 
   private[this] var domain: Int = initDomain
 
   // A Boolean variable only needs one pre-instantiated trail entry
-  private[this] val trailEntry = new TrailEntry { final override def restore(): Unit = domain = UNASSIGNED }
-  
-  // Used to trail changes
-  @inline final def trail(): Unit = store.trail(trailEntry)
+  private[this] val trailEntry = new TrailEntry { 
+    final override def restore(): Unit = domain = UNASSIGNED 
+  }
 
   final override def transform(v: Int) = v
 
@@ -144,7 +143,7 @@ class CPBoolVarImpl private(final override val store: CPStore, initDomain: Int, 
   }
 
   @inline private def setDomainTrue(): CPOutcome = {
-    trail()
+    store.trail(trailEntry)
     domain = TRUE
     // Notify constraints
     store.notifRemoveL1(onDomainL1.value, this, 0)
@@ -160,7 +159,7 @@ class CPBoolVarImpl private(final override val store: CPStore, initDomain: Int, 
   }
 
   @inline private def setDomainFalse(): CPOutcome = {
-    trail()
+    store.trail(trailEntry)
     domain = FALSE
     // Notify constraints
     store.notifRemoveL1(onDomainL1.value, this, 1)
@@ -176,6 +175,7 @@ class CPBoolVarImpl private(final override val store: CPStore, initDomain: Int, 
   }
 
   @inline private def setDomainEmpty(): CPOutcome = {
+    // FIXME
     val value = domain
     store.trail(new TrailEntry { final override def restore(): Unit = domain = value })
     domain = EMPTY

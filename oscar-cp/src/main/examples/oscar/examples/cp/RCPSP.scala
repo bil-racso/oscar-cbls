@@ -1,8 +1,6 @@
 package oscar.examples.cp
 
 import oscar.cp._
-import oscar.cp.constraints.scheduling.LinearTT
-import oscar.cp.scheduling.constraints.TTPerTask
 
 object RCPSP extends CPModel with App {
   
