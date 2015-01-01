@@ -176,9 +176,9 @@ class CPBoolVarImpl private(final override val store: CPStore, initDomain: Int, 
   }
 
   @inline private def setDomainEmpty(): CPOutcome = {
-    // FIXME
-    //trail()
-    //domain = EMPTY
+    val value = domain
+    store.trail(new TrailEntry { final override def restore(): Unit = domain = value })
+    domain = EMPTY
     Failure
   }
 
