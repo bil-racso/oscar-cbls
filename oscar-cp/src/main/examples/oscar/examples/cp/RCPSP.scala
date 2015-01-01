@@ -23,26 +23,11 @@ object RCPSP extends CPModel with App {
   val demands = Array.tabulate(nTasks)(t => CPIntervalVar(demandsData(t)))
   val makespan = maximum(ends)
   
-  val mirStarts = ends.map(-_)
-  val mirEnds = starts.map(-_)
-  
-  add(new LinearTT(starts, durationsData, ends, demandsData, capa))
-  add(new LinearTT(mirStarts, durationsData, mirEnds, demandsData, capa))
-  //add(new TTPerTask(starts, durations, ends, demands, Array.fill(nTasks)(CPIntervalVar(1)), CPIntervalVar(capa), 1))
-  
-  //add(maxCumulativeResource(starts, durations, ends, demands, CPIntervalVar(capa)),Weak)
+  add(maxCumulativeResource(starts, durations, ends, demands, CPIntervalVar(capa)),Weak)
   
   minimize(makespan) 
   
   search {
-    /*val sorted = starts//.sortBy(_.min)
-    val x = sorted.find(!_.isBound)
-    if (!x.isDefined) noAlternative
-    else {
-      val variable = x.get
-      val v = variable.min
-      branch(post(variable == v))(post(variable > v))
-    }*/
     setTimes(starts, durations, ends)
   }
   
