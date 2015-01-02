@@ -70,27 +70,27 @@ class CPBoolVarNot(final override val not: CPBoolVar) extends CPBoolVar {
 
   final override def callPropagateWhenDomainChanges(c: Constraint, trackDelta: Boolean = false): Unit = not.callPropagateWhenDomainChanges(c, trackDelta)
 
-  final override def callValBindWhenBind(c: Constraint): Unit = not.callValBindWhenBind(c) 
+  final override def callValBindWhenBind(c: Constraint): Unit = not.callValBindWhenBind(c, this) 
   
   final override def callValBindWhenBind(c: Constraint, variable: CPIntervalVar): Unit = not.callValBindWhenBind(c, variable)
   
-  final override def callUpdateBoundsWhenBoundsChange(c: Constraint): Unit = not.callUpdateBoundsWhenBoundsChange(c: Constraint)
+  final override def callUpdateBoundsWhenBoundsChange(c: Constraint): Unit = not.callUpdateBoundsWhenBoundsChange(c: Constraint, this)
 
   final override def callUpdateBoundsWhenBoundsChange(c: Constraint, variable: CPIntervalVar): Unit = not.callUpdateBoundsWhenBoundsChange(c: Constraint, variable: CPIntervalVar)
 
-  final override def callValRemoveWhenValueIsRemoved(c: Constraint): Unit = not.callValRemoveWhenValueIsRemoved(c: Constraint)
+  final override def callValRemoveWhenValueIsRemoved(c: Constraint): Unit = not.callValRemoveWhenValueIsRemoved(c: Constraint, this)
 
   final override def callValRemoveWhenValueIsRemoved(c: Constraint, variable: CPIntVar): Unit = not.callValRemoveWhenValueIsRemoved(c: Constraint, variable: CPIntVar)
 
-  final override def callValRemoveIdxWhenValueIsRemoved(c: Constraint, idx: Int): Unit = not.callValRemoveIdxWhenValueIsRemoved(c: Constraint, idx: Int)
+  final override def callValRemoveIdxWhenValueIsRemoved(c: Constraint, idx: Int): Unit = not.callValRemoveIdxWhenValueIsRemoved(c: Constraint, this, idx: Int)
 
   final override def callValRemoveIdxWhenValueIsRemoved(c: Constraint, variable: CPIntVar, idx: Int): Unit = not.callValRemoveIdxWhenValueIsRemoved(c: Constraint, variable: CPIntVar, idx: Int)
 
-  final override def callUpdateBoundsIdxWhenBoundsChange(c: Constraint, idx: Int): Unit = not.callUpdateBoundsIdxWhenBoundsChange(c: Constraint, idx: Int)
+  final override def callUpdateBoundsIdxWhenBoundsChange(c: Constraint, idx: Int): Unit = not.callUpdateBoundsIdxWhenBoundsChange(c: Constraint, this, idx: Int)
 
   final override def callUpdateBoundsIdxWhenBoundsChange(c: Constraint, variable: CPIntervalVar, idx: Int): Unit = not.callUpdateBoundsIdxWhenBoundsChange(c: Constraint, variable: CPIntervalVar, idx: Int)
 
-  final override def callValBindIdxWhenBind(c: Constraint, idx: Int): Unit = not.callValBindIdxWhenBind(c: Constraint, idx: Int)
+  final override def callValBindIdxWhenBind(c: Constraint, idx: Int): Unit = not.callValBindIdxWhenBind(c: Constraint, this, idx: Int)
 
   final override def callValBindIdxWhenBind(c: Constraint, variable: CPIntervalVar, idx: Int): Unit = not.callValBindIdxWhenBind(c: Constraint, variable: CPIntervalVar, idx: Int)
 
