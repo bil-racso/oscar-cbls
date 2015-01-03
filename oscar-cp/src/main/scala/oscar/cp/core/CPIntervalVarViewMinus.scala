@@ -80,7 +80,7 @@ class CPIntervalVarViewMinus(v: CPIntervalVar) extends CPIntervalVar {
 	// this method is useful when you have a view defined on a view
 	final override def callValBindIdxWhenBind(c: Constraint, variable: CPIntervalVar,idx: Int): Unit = v.callValBindIdxWhenBind(c, variable,idx)
 	
-	final override def callValBindIdxWhenBind(c: Constraint, idx: Int): Unit = v.callValBindIdxWhenBind(c,this,idx)
+	final override def callValBindIdxWhenBind(c: Constraint, idx: Int): Unit = v.callValBindIdxWhenBind(c, this, idx)
 	
 	// this method is useful when you have a view defined on a view
 	final override def callUpdateBoundsIdxWhenBoundsChange(c: Constraint, variable: CPIntervalVar, idx: Int): Unit = v.callUpdateBoundsIdxWhenBoundsChange(c, variable, idx);

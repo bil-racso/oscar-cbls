@@ -305,13 +305,6 @@ abstract class CPIntervalVar extends CPVar with Iterable[Int] {
 
   def isRange: Boolean = (max - min + 1) == size
 
-
-
-//  def !=(y: CPIntVar) = new oscar.cp.constraints.DiffVar(this, y)
-  /**
-   * x!=y
-   */
-//  def !=(y: Int) = new oscar.cp.constraints.DiffVal(this, y)
   /**
    * x==y
    */
@@ -352,66 +345,6 @@ abstract class CPIntervalVar extends CPVar with Iterable[Int] {
    * x>=y
    */
   def >=(y: Int) = new oscar.cp.constraints.GrEq(this, y)
-  /**
-   * b <=> x == v
-   */
-  //def ===(v: Int) = this.isEqInterval(v)
-  /**
-   * b <=> x == y
-   */
-//  def ===(y: CPIntVar) = this.isEq(y)
-  /**
-   * b <=> x!= y
-   */
-//  def !==(y: CPIntVar) = this.isDiff(y)
-  /**
-   * b <=> x!= y
-   */
-//  def !==(y: Int) = this.isDiff(y)
-  /**
-   * b <=> x >= y
-   */
-//  def >==(y: Int) = this.isGrEq(y)
-  /**
-   * b <=> x >= y
-   */
-//  def >==(y: CPIntVar) = this.isGrEq(y)
-  /**
-   * b <=> x > y
-   */
-//  def >>=(y: Int) = this.isGrEq(y + 1)
-  /**
-   * b <=> x > y
-   */
-//  def >>=(y: CPIntVar) = this.isGrEq(y + 1)
-  /**
-   * b <=> x >= y
-   */
-//  def <==(y: Int) = this.isLeEq(y)
-  /**
-   * b <=> x >= y
-   */
-//  def <==(y: CPIntVar) = y >== this
-  /**
-   * b <=> x > y
-   */
-//  def <<=(y: Int) = this <== (y - 1)
-  /**
-   * b <=> x > y
-   */
-//  def <<=(y: CPIntVar) = this <== (y - 1)
-
-  /**
-   * b <=> x belongs to set
-   */
-//  def isIn(set: Set[Int]): CPBoolVar = {
-//    val b = CPBoolVar()(store)
-//    store.post(new InSetReif(this, set, b))
-//    b
-//  }
-
-  //def %(y: Int) = ModuloLHS(this, y)
-
 }
 
 object CPIntervalVar {

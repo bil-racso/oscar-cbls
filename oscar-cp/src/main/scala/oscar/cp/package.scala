@@ -30,8 +30,8 @@ import oscar.cp.core.CPBoolVarImpl
  *
  * === CPModel ===
  * The `CPModel` trait is also defined in this package and provides users with an
- * implicit `CPSolver` named solver. Using `CPModel` allows users to model problems
- * without considering the underlying solver.
+ * implicit `CPSolver` named solver. The use of `CPModel` allows users to model 
+ * problems without considering the underlying solver.
  *
  * @author Pierre Schaus pschaus@gmail.com
  * @author Renaud Hartert ren.hartert@gmail.com
@@ -316,21 +316,7 @@ package object cp extends Constraints with Branchings {
     def -(y: Int) = minus(x, y)
 
     def +(s: String) = s"$x$s"
-
-    /**
-     * x*y
-     */
-    //def *(y: CPIntVar): CPIntVar = {
-    //if (y.isBound) x * (y.value)
-    //else mul(x,y)
-    //}
-    /**
-     * x*y
-     */
-    //def *(y: Int): CPIntVar = mul(x,y)
-
-    //def abs = oscar.cp.modeling.absolute(x)
-
+    
     /**
      * Reified constraint
      * @param y a variable
@@ -344,8 +330,6 @@ package object cp extends Constraints with Branchings {
     }
 
   }
-
-  //helper functions
 
   /**
    * relax randomly k variables in x, others are assigned to the values they have in sol

@@ -66,23 +66,22 @@ class CPIntervalVarViewOffset(v: CPIntervalVar, offset: Int) extends CPIntervalV
 	
 	final override def callPropagateWhenBoundsChange(c: Constraint): Unit = v.callPropagateWhenBoundsChange(c)
 		
-	// this method is useful when you have a view final override defined on a view
+  // this method is useful when you have a view defined on a view
 	final override def callValBindWhenBind(c: Constraint, variable: CPIntervalVar): Unit = v.callValBindWhenBind(c, variable)
 	
 	final override def callValBindWhenBind(c: Constraint): Unit = v.callValBindWhenBind(c,this)
 	
-	
-	// this method is useful when you have a view final override defined on a view
+  // this method is useful when you have a view defined on a view
 	final override def callUpdateBoundsWhenBoundsChange(c: Constraint, variable: CPIntervalVar): Unit = v.callUpdateBoundsWhenBoundsChange(c, variable)
 	
 	final override def callUpdateBoundsWhenBoundsChange(c: Constraint): Unit = v.callUpdateBoundsWhenBoundsChange(c,this)
 		
-	// this method is useful when you have a view final override defined on a view
+  // this method is useful when you have a view defined on a view
 	final override def callValBindIdxWhenBind(c: Constraint, variable: CPIntervalVar,idx: Int): Unit = v.callValBindIdxWhenBind(c, variable,idx)
 	
 	final override def callValBindIdxWhenBind(c: Constraint, idx: Int): Unit = v.callValBindIdxWhenBind(c,this,idx)
 	
-	// this method is useful when you have a view final override defined on a view
+  // this method is useful when you have a view defined on a view
 	final override def callUpdateBoundsIdxWhenBoundsChange(c: Constraint, variable: CPIntervalVar, idx: Int): Unit = v.callUpdateBoundsIdxWhenBoundsChange(c, variable, idx);
 		
 	final override def callUpdateBoundsIdxWhenBoundsChange(c: Constraint, idx: Int): Unit = v.callUpdateBoundsIdxWhenBoundsChange(c,this,idx)
