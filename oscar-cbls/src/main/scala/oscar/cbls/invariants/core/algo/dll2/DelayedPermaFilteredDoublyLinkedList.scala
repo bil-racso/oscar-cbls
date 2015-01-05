@@ -47,8 +47,8 @@ class DelayedPermaFilteredDoublyLinkedList[T <: AnyRef, F <: AnyRef] extends Dou
   /**adds an a item in the PermaFilteredDLL, and if accepted by the filter, adds it in the slave PermaFilteredDLL.
     * returns a reference that should be used to remove the item from all those structures at once.
     */
-  override def addElem(elem:T):DPFDLLStorageElement[T] = {
-    val d = new DPFDLLStorageElement[T](elem)
+  override def addElem(elem:T):DPFDLLStorageElement2[T,F] = {
+    val d = new DPFDLLStorageElement2[T,F](elem)
     d.setNext(phantom.next)
     phantom.setNext(d)
     if(mFilter != null) notifyInsert(d)
@@ -56,7 +56,7 @@ class DelayedPermaFilteredDoublyLinkedList[T <: AnyRef, F <: AnyRef] extends Dou
   }
 
   @inline
-  private def notifyInsert(inserted: DPFDLLStorageElement[T]): Unit = {
+  private def notifyInsert(inserted: DPFDLLStorageElement2[T,F]): Unit = {
     def injector():Unit = {inserted.filtered = filtered.addElem(mMap(inserted.elem))}
     def isStillValid():Boolean = {inserted.prev != null}
     mFilter(inserted.elem, injector, isStillValid)
@@ -77,10 +77,10 @@ class DelayedPermaFilteredDoublyLinkedList[T <: AnyRef, F <: AnyRef] extends Dou
   }
 
   private def filterElementsForNewFilter(){
-    var currentstorageElement:DLLStorageElement[T]=phantom.next
-    while(currentstorageElement!=phantom){
-      notifyInsert(currentstorageElement.asInstanceOf[DPFDLLStorageElement[T]])
-      currentstorageElement = currentstorageElement.next
+    var currentStorageElement:DLLStorageElement2[T]=phantom.next
+    while(currentStorageElement!=phantom){
+      notifyInsert(currentStorageElement.asInstanceOf[DPFDLLStorageElement2[T,F]])
+      currentStorageElement = currentStorageElement.next
     }
   }
 }
@@ -90,12 +90,12 @@ class DelayedPermaFilteredDoublyLinkedList[T <: AnyRef, F <: AnyRef] extends Dou
  * @param elem
  * @tparam T
  */
-class DPFDLLStorageElement[T](elem:T) extends DLLStorageElement[T](elem){
-  var filtered: AnyRef = null
+class DPFDLLStorageElement2[T,F](elem:T) extends DLLStorageElement2[T](elem){
+  var filtered: DLLStorageElement2[F] = null
 
   override def delete(){
     super.delete()
     prev = null //this is checked by the delayed perma filter, so DO NOT REMOVE THIS SEEMIGNLY USELESS INSTRUCTION
-    if(filtered != null) filtered.asInstanceOf[DLLStorageElement[_]].delete()
+    if(filtered != null) filtered.asInstanceOf[DLLStorageElement2[_]].delete()
   }
 }

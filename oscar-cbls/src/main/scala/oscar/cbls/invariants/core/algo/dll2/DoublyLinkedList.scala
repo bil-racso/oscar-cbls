@@ -27,7 +27,7 @@ package oscar.cbls.invariants.core.algo.dll2
   */
 class DoublyLinkedList[T] extends Iterable[T]{
 
-  val phantom:DLLStorageElement[T] = new DLLStorageElement[T](null.asInstanceOf[T])
+  val phantom:DLLStorageElement2[T] = new DLLStorageElement2[T](null.asInstanceOf[T])
 
   phantom.setNext(phantom)
 
@@ -44,8 +44,8 @@ class DoublyLinkedList[T] extends Iterable[T]{
     toReturn
   }
 
-  def addElem(elem:T):DLLStorageElement[T] = {
-    val d = new DLLStorageElement[T](elem)
+  def addElem(elem:T):DLLStorageElement2[T] = {
+    val d = new DLLStorageElement2[T](elem)
     d.setNext(phantom.next)
     phantom.setNext(d)
     d
@@ -82,11 +82,11 @@ class DoublyLinkedList[T] extends Iterable[T]{
  * @param elem
  * @tparam T
  */
-class DLLStorageElement[T](val elem:T){
-  var next:DLLStorageElement[T] = null
-  var prev:DLLStorageElement[T] = null
+class DLLStorageElement2[T](val elem:T){
+  var next:DLLStorageElement2[T] = null
+  var prev:DLLStorageElement2[T] = null
 
-  def setNext(d:DLLStorageElement[T]){
+  def setNext(d:DLLStorageElement2[T]){
     this.next = d
     d.prev = this
   }
@@ -102,7 +102,7 @@ class DLLStorageElement[T](val elem:T){
  * @param phantom
  * @tparam T
  */
-class DLLIterator[T](var CurrentKey:DLLStorageElement[T], val phantom:DLLStorageElement[T]) extends Iterator[T]{
+class DLLIterator[T](var CurrentKey:DLLStorageElement2[T], val phantom:DLLStorageElement2[T]) extends Iterator[T]{
   def next():T = {
     CurrentKey = CurrentKey.next
     CurrentKey.elem
