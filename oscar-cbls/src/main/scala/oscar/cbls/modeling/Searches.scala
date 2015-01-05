@@ -12,7 +12,6 @@ trait Search {
    * will find a variable in the array, and find a value from its range that improves the objective function
    *
    * @param vars an array of [[oscar.cbls.invariants.core.computation.CBLSIntVar]] defining the search space
-   * @param obj te objective function to improve
    * @param name the name of the neighborhood
    * @param best true for the best move, false for the first move, default false
    * @param searchZone a subset of the indices of vars to consider.
@@ -93,8 +92,13 @@ trait Search {
    *                            that is: thee first variable will always have a value strictly smaller than the value of second swapped variable
    *                            you do not want to have both symmetryCanBeBrokenOnIndices and symmetryCanBeBrokenOnValue
    * @param name the name of the neighborhood
-   * @param symmetryClassOfVariables a function that input the ID of a variable and returns a symmetry class;
-   *                      for each role of the move, ony one of the variable in each class will be considered
+   * @param symmetryClassOfVariables1 a function that input the ID of a variable and returns a symmetry class;
+   *                      for each role of the move, ony one of the variable in each class will be considered for the vars in searchZone1
+   *                      this makes search faster
+   *                      Int.MinValue is considered different to itself
+   *                      if you set to None this will not be used at all
+   * @param symmetryClassOfVariables2 a function that input the ID of a variable and returns a symmetry class;
+   *                      for each role of the move, ony one of the variable in each class will be considered for the vars in searchZone2
    *                      this makes search faster
    *                      Int.MinValue is considered different to itself
    *                      if you set to None this will not be used at all
@@ -111,10 +115,11 @@ trait Search {
                         symmetryCanBeBrokenOnIndices:Boolean = true,
                         symmetryCanBeBrokenOnValue:Boolean = false,
                         best:Boolean = false,
-                        symmetryClassOfVariables:Option[Int => Int] = None,
+                        symmetryClassOfVariables1:Option[Int => Int] = None,
+                        symmetryClassOfVariables2:Option[Int => Int] = None,
                         hotRestart:Boolean = true)
   = SwapsNeighborhood(vars,name,searchZone1,searchZone2,
     symmetryCanBeBrokenOnIndices,symmetryCanBeBrokenOnValue,
-    best,symmetryClassOfVariables,hotRestart)
+    best,symmetryClassOfVariables1,symmetryClassOfVariables2,hotRestart)
 }
 
