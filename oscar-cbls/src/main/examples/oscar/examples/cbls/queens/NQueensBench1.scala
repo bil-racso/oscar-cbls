@@ -1,22 +1,22 @@
 /*******************************************************************************
- * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 2.1 of the License, or
- * (at your option) any later version.
- *
- * OscaR is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License  for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
- ******************************************************************************/
+  * OscaR is free software: you can redistribute it and/or modify
+  * it under the terms of the GNU Lesser General Public License as published by
+  * the Free Software Foundation, either version 2.1 of the License, or
+  * (at your option) any later version.
+  *
+  * OscaR is distributed in the hope that it will be useful,
+  * but WITHOUT ANY WARRANTY; without even the implied warranty of
+  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  * GNU Lesser General Public License  for more details.
+  *
+  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
+  ******************************************************************************/
 /*******************************************************************************
- * Contributors:
- *     This code has been initially developed by CETIC www.cetic.be
- *         by Renaud De Landtsheer
- ******************************************************************************/
+  * Contributors:
+  *     This code has been initially developed by CETIC www.cetic.be
+  *         by Renaud De Landtsheer
+  ******************************************************************************/
 
 package oscar.examples.cbls.queens
 
@@ -24,7 +24,7 @@ import oscar.cbls.constraints.core._
 import oscar.cbls.constraints.lib.global.AllDiff
 import oscar.cbls.invariants.core.computation.CBLSIntVar.int2IntVar
 import oscar.cbls.invariants.core.computation._
-import oscar.cbls.invariants.lib.logic.SelectLESetQueue
+import oscar.cbls.invariants.lib.logic.{Int2Int, SelectLESetQueue}
 import oscar.cbls.invariants.lib.minmax._
 import oscar.cbls.modeling.Algebra._
 import oscar.cbls.search._
@@ -35,7 +35,7 @@ import scala.util.Random
 //Beware: this requires a lot of memory, so I use to put this in the command line.
 //-Xms1000M -Xmx1000M
 
-/** 
+/**
  * NQueen for larger problems : 
  * - queens are always on different rows 
  * - neightboorhood is queen swap
@@ -43,10 +43,10 @@ import scala.util.Random
  * - second is first one leading to a decrease in violation 
  * when swap is performed tabu on moved queens.
  * - jump away through random swap if plateau
- * 
+ *
  * The program accepts an argument which is the problem size
  * Otherwise it performs a benchmarking over a range of sizes (this takes time)
-*/
+ */
 object NQueensBench1 extends SearchEngine(true) with StopWatch{
 
   def nStrings(N: Int, C: String): String = (if (N <= 0) "" else "" + C + nStrings(N - 1, C))
@@ -58,24 +58,25 @@ object NQueensBench1 extends SearchEngine(true) with StopWatch{
       println("Benchmarking NQueen - this takes time")
       println("advise: put -Xms1000M -Xmx1000M")
       println(padToLength("N", 15) + padToLength("tClose[ms]", 15) + padToLength("tTotal[ms]", 15) + "it")
-    
+
       // first run could have some overhead so ignoring it
       SolveNQueen(1000)
 
       // multiple runs
       for (n <- 1000 to 10000 by 1000){
-    	  SolveNQueen(n)
-    	  System.gc()
+        SolveNQueen(n)
+        System.gc()
       }
     } else {
-      	val N:Int=args(0).toInt
-        println("Runing NQueen - this takes time depending on N")
-        println(padToLength("N", 15) + padToLength("tClose[ms]", 15) + padToLength("tTotal[ms]", 15) + "it")
-        SolveNQueen(1000)
-      	SolveNQueen(N)
+      val N:Int=args(0).toInt
+      println("Runing NQueen - this takes time depending on N")
+      println(padToLength("N", 15) + padToLength("tClose[ms]", 15) + padToLength("tTotal[ms]", 15) + "it")
+      SolveNQueen(1000)
+      for(i <- 1 to 5)
+        SolveNQueen(N)
     }
   }
-  
+
   def SolveNQueen(N:Int){
     print(padToLength("" + N, 15))
 

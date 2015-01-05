@@ -54,19 +54,19 @@ case class Store(override val verbose:Boolean = false,
 
   assert({println("You are using a CBLS store with asserts activated. It makes the engine slower. Recompile it with -Xdisable-assertions"); true})
 
-  private var Variables:List[Variable] = List.empty
-  private var Invariants:List[Invariant] = List.empty
-  private var PropagationElements:List[PropagationElement] = List.empty
-  private var Closed:Boolean=false
+  private var variables:List[Variable] = List.empty
+  private var invariants:List[Invariant] = List.empty
+  private var propagationElements:List[PropagationElement] = List.empty
+  private var closed:Boolean=false
 
-  def isClosed = Closed
+  def isClosed = closed
 
   private var privateInputVariables:List[Variable] = null;
 
   def inputVariables():List[Variable] = {
     if(privateInputVariables == null){
       privateInputVariables  = List.empty
-      for (v:Variable <- Variables if v.isInputVariable){
+      for (v:Variable <- variables if v.isInputVariable){
         privateInputVariables = v :: privateInputVariables
       }
     }
@@ -81,7 +81,7 @@ case class Store(override val verbose:Boolean = false,
 
     val VariablesToSave = if(inputOnly) {
       inputVariables()
-    }else Variables
+    }else variables
 
     for (v:Variable <- VariablesToSave){
       v match {
@@ -144,11 +144,11 @@ case class Store(override val verbose:Boolean = false,
     * @return a unique identifier that will be used to distinguish variables. basically, variables use this value to set up an arbitrary ordering for use in dictionnaries.
     */
   def registerVariable(v:Variable):Int = {
-    assert(!Closed,"model is closed, cannot add variables")
+    assert(!closed,"model is closed, cannot add variables")
     //ici on utilise des listes parce-que on ne peut pas utiliser des dictionnaires
     // vu que les variables n'ont pas encore recu leur unique ID.
-    Variables = v :: Variables
-    PropagationElements =  v :: PropagationElements
+    variables = v :: variables
+    propagationElements =  v :: propagationElements
     GetNextID()
   }
 
@@ -157,14 +157,14 @@ case class Store(override val verbose:Boolean = false,
     * @return a unique identifier that will be used to distinguish invariants. basically, invariants use this value to set up an arbitrary ordering for use in dictionnaries.
     */
   def registerInvariant(i:Invariant):Int = {
-    assert(!Closed,"model is closed, cannot add invariant")
-    Invariants = i :: Invariants
-    PropagationElements = i :: PropagationElements
+    assert(!closed,"model is closed, cannot add invariant")
+    invariants = i :: invariants
+    propagationElements = i :: propagationElements
     GetNextID()
   }
 
   override def getPropagationElements:Iterable[PropagationElement] = {
-    PropagationElements
+    propagationElements
   }
 
   var toCallBeforeClose:List[(()=>Unit)] = List.empty
@@ -185,11 +185,11 @@ case class Store(override val verbose:Boolean = false,
    * @param DropStaticGraph true if you want to drop the static propagation graph to free memory. It takes little time
    */
   def close(DropStaticGraph: Boolean = true){
-    assert(!Closed, "cannot close a model twice")
+    assert(!closed, "cannot close a model twice")
     performCallsBeforeClose()
     setupPropagationStructure(DropStaticGraph)
     killBulker() //we won't create any new model artifacts, thus we can kill the bulker and free its memory
-    Closed=true
+    closed=true
   }
 
   /**this checks that invariant i is one that is supposed to do something now
@@ -213,8 +213,8 @@ case class Store(override val verbose:Boolean = false,
 
   var NotifiedInvariant:Invariant=null
 
-  override def toString:String = Variables.toString()
-  def toStringInputOnly = Variables.filter(v => v.isInputVariable).toString()
+  override def toString:String = variables.toString()
+  def toStringInputOnly = variables.filter(v => v.isInputVariable).toString()
 
   //returns the set of source variable that define this one.
   // This exploration procedure explores passed dynamic invariants,
@@ -243,6 +243,20 @@ case class Store(override val verbose:Boolean = false,
       }else{assert(false,"propagation element that is not a variable, and not an invariant??")}
     }
     SourceVariables
+  }
+
+  /** returns some info on the Store
+    * call this after closing
+    * @return
+    */
+  override def stats:String = {
+    require(isClosed, "store must be closed to get some stats")
+    super.stats + "\n" +
+      "Store(" + "\n" +
+      "  variableCount:" + variables.size + "\n" +
+      "  invariantCount:" + invariants.size + "\n" +
+      "  inputVariableCount" + inputVariables.size + "\n" +
+      ")"
   }
 }
 
@@ -885,17 +899,27 @@ object CBLSIntVar{
 
   implicit def toFunction(i:CBLSIntVar):()=>Int = () => i.value
 
-  implicit def namedIntConst(valAndName:(Int,String)):CBLSIntVar = CBLSIntConst(valAndName._1, null, valAndName._2)
+  implicit def namedIntConst(valAndName:(Int,String)):CBLSIntVar = CBLSIntConst(valAndName._1, valAndName._2)
+}
+
+
+object CBLSIntConst{
+//I'v experimented with memoïzation in this class.
+  //this is however not a so good idea because the memory itself takes some room, and tome time
+  def apply(constValue:Int, name: String = null):CBLSIntConst = {
+    new CBLSIntConst(constValue, name)
+  }
 }
 
 /**
  * An IntConst is an [[oscar.cbls.invariants.core.computation.CBLSIntVar]] that has a constant value.
  * It has no associated model, as there is no need to incorporate it into any propagation process.
+ * notice that you should not attempt to create a CBLSIntConst directly; use the companion object for an efficient memoïzation
  * @param ConstValue: the value of the constant
  * @author renaud.delandtsheer@cetic.be
  */
-case class CBLSIntConst(ConstValue:Int, override val model:Store = null, override val name: String = null)
-  extends CBLSIntVar(model, (ConstValue to ConstValue), ConstValue, toString){
+class CBLSIntConst(ConstValue:Int, override val name: String = null)
+  extends CBLSIntVar(null, (ConstValue to ConstValue), ConstValue, toString){
   override def getValue(NewValue:Boolean=false):Int = ConstValue //pour pas avoir de propagation
   override def toString:String = if (name == null) "IntConst("+ ConstValue + ")" else name + ":=" + ConstValue
 }

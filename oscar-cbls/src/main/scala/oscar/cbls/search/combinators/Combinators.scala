@@ -916,7 +916,7 @@ case class Atomic(a:Neighborhood, name:String = "Atomic", bound:Int = Int.MaxVal
  * @param objectives the list of objective to consider
  * @param resetOnExhaust  on exhaustion of the current objective, restores the best value for this objective before switching to the next objective
  */
-class GuidedLocalSearch(a:Neighborhood, objectives:List[Objective], resetOnExhaust:Boolean) extends Neighborhood {
+class GuidedLocalSearch(a:Neighborhood, objectives:List[Objective], resetOnExhaust:Boolean) extends NeighborhoodCombinator(a) {
 
   var currentObjective:()=>Int = null
   var tailObjectives:List[Objective] = objectives
@@ -966,6 +966,42 @@ class GuidedLocalSearch(a:Neighborhood, objectives:List[Objective], resetOnExhau
     tailObjectives = objectives
     switchToNext()
     if(currentSun != null) currentSun.reset()
+    else super.reset()
+  }
+}
+
+/**
+ * This represents an accumulatingSearch: it searches on a given objective until this objective gets to zero,
+ * then it switches to the second one, and rejects all update that would actually decrease the first objective
+ * it will use the acceptance criterion, but extend it in the second phase
+ * @param a the neighborhood
+ * @param firstObjective the first objective function
+ * @param secondObjective the second objective function
+ */
+class AccumulatingSearch(a:Neighborhood, firstObjective:Objective, secondObjective:Objective) extends NeighborhoodCombinator(a) {
+
+  private def fullSecondObjective():Int = {
+    if(firstObjective() == 0){
+      secondObjective()
+    }else{
+      Int.MaxValue
+    }
+  }
+
+  /**
+   * the method that returns a move from the neighborhood.
+   * The returned move should typically be accepted by the acceptance criterion over the objective function.
+   * Some neighborhoods are actually jumps, so that they might violate this basic rule however.
+   * @param obj the objective function. notice that it is actually a function. if you have an [[oscar.cbls.objective.Objective]] there is an implicit conversion available
+   * @param acceptanceCriterion
+   * @return
+   */
+  override def getMove(obj: () => Int, acceptanceCriterion: (Int, Int) => Boolean): SearchResult = {
+    if (firstObjective() != 0) {
+      a.getMove(firstObjective, acceptanceCriterion)
+    } else {
+      a.getMove(fullSecondObjective, acceptanceCriterion)
+    }
   }
 }
 

@@ -67,6 +67,7 @@ import oscar.cbls.invariants.core.computation.StorageUtilityManager
  * @author renaud.delandtsheer@cetic.be
  */
 abstract class PropagationStructure(val verbose: Boolean, val checker:Option[Checker] = None, val noCycle: Boolean, val topologicalSort:Boolean, val sortScc:Boolean = true){
+
   //priority queue is ordered, first on propagation planning list, second on DAG.
 
   /**This method is to be overridden and is expected to return the propagation elements
@@ -266,18 +267,20 @@ abstract class PropagationStructure(val verbose: Boolean, val checker:Option[Che
 
   private var ScheduledElements: List[PropagationElement] = List.empty
   private var ExecutionQueue: AbstractHeap[PropagationElement] = null
+
+  //I'v been thinking about using a BitArray here, but although this would slightly decrease memory
+  // (think, relative to all the rest of the stored data), it would increase runtime
   private var FastPropagationTracks: SortedMap[PropagationElement, Array[Boolean]] =
     SortedMap.empty[PropagationElement, Array[Boolean]]
 
   /**to call before setupPropagationStructure to specify PropagationElements
-    * on which one will invoque partial propagation
+    * on which one need partial propagation
     */
   def registerForPartialPropagation(p: PropagationElement) {
     FastPropagationTracks += ((p, null))
   }
 
   private var PreviousPropagationTarget: PropagationElement = null
-
 
   def isPropagating:Boolean = Propagating
 
@@ -511,6 +514,21 @@ abstract class PropagationStructure(val verbose: Boolean, val checker:Option[Che
     * @return a dictionary over the PE that are registered in the propagation structure.
     */
   def getNodeStorage[T](implicit X:Manifest[T]):NodeDictionary[T] = new NodeDictionary[T](this.MaxID)
+
+  /** returns some info on the Propgation structure
+    * call this after closing
+    * @return
+    */
+  def stats:String = {
+    "PropagationStructure(" + "\n" +
+    "  declaredAcyclic: " + noCycle + "\n" +
+    "  topologicalSort:" + topologicalSort + "\n" +
+    "  sortScc:" + sortScc + "\n" +
+    "  actuallyAcyclic:" + acyclic + "\n" +
+    "  propagationElementCount:" + getPropagationElements.size + "\n" +
+    "  StronglyConnectedComponentsCount:" + StronglyConnexComponentsList.size + "\n" +
+    ")"
+  }
 }
 
 /**This is a O(1) dictionary for propagation elements.
@@ -649,7 +667,7 @@ class StronglyConnectedComponentTopologicalSort(override val Elements: Iterable[
                                var inject2:(()=>Unit) = null,
                                var isStillValid:(()=>Boolean) = null)
 
-  def injectNewDependencies(autoSort:Boolean){
+  def injectWaitingNewDependencies(autoSort:Boolean){
     for(d:WaitingDependency <- newDependenciesToInject){
       if(d.isStillValid()){
           d.inject1()
@@ -708,7 +726,7 @@ class StronglyConnectedComponentTopologicalSort(override val Elements: Iterable[
     //setting autosort to true will not perform any operation unless it was set to false. This happens in two cases:
     //at the initial propagation, and when a stall just occurred. In these case, a non-incremental sort takes place
 
-    injectNewDependencies(autoSort)
+    injectWaitingNewDependencies(autoSort)
     autoSort = true
 
     for (e <- ScheduledElements) {
@@ -763,7 +781,7 @@ abstract class PropagationElement extends DAGNode{
     this.uniqueID - that.uniqueID
   }
 
-  //for cycle managing; maybe should we unify with model?
+  //TODO maybe should we unify with model?
   /**this refers to the propagationComponent that contains the PropagationElement.
     * it is managed by the propagation structure
     */
@@ -871,6 +889,7 @@ abstract class PropagationElement extends DAGNode{
     assert(isStaticPropagationGraphOrBulked(p, 1),
       "dependency to element " + p + " must be registered in static propagation graph before dynamic one")
 
+    //TODO: we should remove isBoundary; thisis the only place where it is read; maybe combining this with the merging of component and store?
     //We need to check for boundary here Because other elements might indeed change their dependencies,
     // but since they are not boundary, this would require resorting the SCC during the propagation
     if (isBoundary && p.component == this.component) {

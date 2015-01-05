@@ -450,7 +450,16 @@ abstract class Neighborhood{
      * @param resetOnExhaust  on exhaustion of the current objective, restores the best value for this objective before switching to the next objective
      */
     def guidedLocalSearch(a:Neighborhood, objectives:List[Objective], resetOnExhaust:Boolean) = new GuidedLocalSearch(a, objectives, resetOnExhaust)
-  }
+
+  /**
+   * This represents an accumulatingSearch: it searches on a given objective until this objective gets to zero,
+   * then it switches to the second one, and rejects all update that would actually decrease the first objective
+   * it will use the acceptance criterion, but extend it in the second phase
+   * @param firstObjective the first objective function
+   * @param secondObjective the second objective function
+   */
+  def accumulatingSearch(a:Neighborhood, firstObjective:Objective, secondObjective:Objective) = new AccumulatingSearch(a, firstObjective, secondObjective)
+}
 
 /** a neighborhood that never finds any move (quite useless, actually)
   */

@@ -156,6 +156,14 @@ case class Prod2(left: CBLSIntVar, right: CBLSIntVar)
   extends IntInt2Int(left, right, ((l: Int, r: Int) => l * r), Int.MinValue, Int.MaxValue)
 
 /**
+ * Abs(Left - Right)
+ * where left, right, and output are IntVar
+ * @author renaud.delandtsheer@cetic.be
+ * */
+case class Dist(left: CBLSIntVar, right: CBLSIntVar)
+  extends IntInt2Int(left, right, ((l: Int, r: Int) => (l - r).abs), Int.MinValue, Int.MaxValue)
+
+/**
  * left / right
  * where left, right, and output are IntVar
  * do not set right to zero, as usual...
@@ -205,4 +213,3 @@ case class Step(x: CBLSIntVar, pivot: Int = 0, thenval: Int = 1, elseval: Int = 
  */
 case class Bound(x: CBLSIntVar, min:Int, max:Int)
   extends Int2Int(x, (a: Int) => if (a < min) min else if (a > max) max else a,min, max)
-

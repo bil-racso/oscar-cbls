@@ -96,6 +96,7 @@ trait AlgebraTrait{
   }
 
   class SafeAssignment(v:CBLSIntVar, c:ConstraintSystem){
+    //TODO: trouver un vrais nom de méthode
     def `s=`(i:IntInvariant){
       val iMax = i.myMax
       val iMin = i.myMin
