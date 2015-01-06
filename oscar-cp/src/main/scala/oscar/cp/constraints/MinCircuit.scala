@@ -18,7 +18,7 @@ import oscar.algo.reversible.ReversibleSparseSet
 import oscar.cp.core.CPPropagStrength
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.CPOutcome._
-import oscar.cp.modeling._
+import oscar.cp._
 
 /**
  * Ensures that succ represents a valid circuit. <br>

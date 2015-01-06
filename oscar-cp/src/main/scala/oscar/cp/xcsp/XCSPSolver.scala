@@ -29,8 +29,7 @@ import oscar.cp.xcsp.ast.IntegerExpr
 import oscar.cp.xcsp.ast.IntegerFormalParameter
 import oscar.cp.xcsp.ast.IntegerValue
 import oscar.cp.xcsp.ast.Not
-import oscar.cp.modeling.CPSolver
-import oscar.cp.modeling._
+import oscar.cp._
 import oscar.cp.xcsp.modeling.DefaultConstraints
 import java.io.File
 import oscar.cp.xcsp.ast.FunctionalPredicateParser

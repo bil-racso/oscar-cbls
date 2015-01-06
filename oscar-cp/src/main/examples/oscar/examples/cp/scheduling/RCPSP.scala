@@ -15,7 +15,7 @@
 
 package oscar.examples.cp.scheduling
 
-import oscar.cp.modeling._
+import oscar.cp._
 import oscar.algo.search._
 import oscar.cp.scheduling._
 import oscar.cp.constraints._

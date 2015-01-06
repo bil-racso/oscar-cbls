@@ -2,8 +2,7 @@ package oscar.cp.minizinc
 
 import scala.util.parsing.combinator._
 import FZType._
-import oscar.cp.modeling.CPSolver
-import oscar.cp.modeling._
+import oscar.cp._
 import java.io.FileReader
 import scala.Equals
 import oscar.cp.constraints.EqReifVar

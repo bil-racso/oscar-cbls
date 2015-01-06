@@ -19,10 +19,7 @@ import org.scalatest.Matchers
 
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.CPPropagStrength
-import oscar.cp.modeling.CPIntVar
-import oscar.cp.modeling.CPIntervalVar
-import oscar.cp.modeling.CPSolver
-import oscar.cp.modeling.Constraint
+import oscar.cp._
 
 class TestCPIntVar extends FunSuite with Matchers {
 	/*

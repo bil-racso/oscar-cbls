@@ -5,7 +5,7 @@ import org.scalatest.matchers.ShouldMatchers
 
 import oscar.cp.constraints._
 
-import oscar.cp.modeling._
+import oscar.cp._
 
 class TestLogicalConstraints extends FunSuite with ShouldMatchers {
 
@@ -101,7 +101,7 @@ class TestLogicalConstraints extends FunSuite with ShouldMatchers {
     cp.add(z >>= y)
     z.min should be(2)
 
-    cp.add((z >>= 3).constraintFalse()) // it means z <= 3
+    cp.add((z >>= 3).constraintFalse) // it means z <= 3
     z.max should be(3)
 
   }
@@ -158,7 +158,7 @@ class TestLogicalConstraints extends FunSuite with ShouldMatchers {
     val y = CPIntVar(Set(1, 5, 9))(cp)
     val z = CPIntVar(Set(5, 10, 13))(cp)
     val b = z === y
-    cp.add(b.constraintFalse())
+    cp.add(b.constraintFalse)
     cp.add(z == 5)
     y.hasValue(5) should be(false)
 

@@ -16,7 +16,7 @@ package oscar.cp.constraints
 
 import oscar.algo.reversible._
 import oscar.cp.core.CPOutcome
-import oscar.cp.modeling._
+import oscar.cp._
 import scala.collection.JavaConversions._
 import oscar.cp.core.CPPropagStrength
 

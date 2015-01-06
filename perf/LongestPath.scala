@@ -13,8 +13,7 @@
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
 
-import oscar.cp.modeling._
-import oscar.cp.core._
+import oscar.cp._
 
 import scala.io.Source
 import java.lang._

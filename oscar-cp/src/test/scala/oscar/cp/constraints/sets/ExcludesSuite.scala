@@ -2,7 +2,7 @@ package oscar.cp.constraints.sets
 
 import oscar.cp.testUtils.TestSuite
 import oscar.cp.core.CPSetVar
-import oscar.cp.modeling.CPSolver
+import oscar.cp.core.CPSolver
 import oscar.cp.core.CPBoolVar
 
 import org.scalatest.Assertions._
@@ -54,7 +54,7 @@ class ExcludesSuite extends TestSuite {
     cp.post(Excludes(set, 1, b))
     assert(!b.isBound)
     assert(!set.isRequired(1))
-    cp.post(b.constraintFalse())
+    cp.post(b.constraintFalse)
     assert(set.isRequired(1))
     assert(!cp.isFailed)
   }
@@ -65,7 +65,7 @@ class ExcludesSuite extends TestSuite {
     cp.post(Excludes(set, 1, b))
     assert(!b.isBound)
     assert(!set.isRequired(1))
-    cp.post(b.constraintTrue())
+    cp.post(b.constraintTrue)
     assert(!set.isPossible(1))
     assert(!cp.isFailed)
   }

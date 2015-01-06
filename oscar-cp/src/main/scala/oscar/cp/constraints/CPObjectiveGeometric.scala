@@ -3,8 +3,7 @@ package oscar.cp.constraints
 import oscar.cp.core.CPIntervalVar
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.CPOutcome._
-import oscar.cp.modeling.TightenType
-import oscar.cp.modeling.TightenType._
+import oscar.cp._
 
 abstract class CPObjectiveGeometric(objVar: CPIntervalVar, name: String, ratio: Double)
 extends CPObjectiveUnit(objVar, name) {

@@ -18,7 +18,7 @@
 package oscar.cp.constraints
 
 import oscar.algo.reversible.ReversibleDouble
-import oscar.cp.modeling._
+import oscar.cp._
 import scala.io.Source
 import oscar.algo.reversible.ReversibleInt
 import oscar.algo.DisjointSets

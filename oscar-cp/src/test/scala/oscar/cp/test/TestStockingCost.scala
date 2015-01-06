@@ -2,7 +2,7 @@ package oscar.cp.test
 
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
-import oscar.cp.modeling._
+import oscar.cp._
 import oscar.cp.core.CPPropagStrength
 
 class TestStockingCost extends FunSuite with ShouldMatchers {

@@ -20,7 +20,7 @@ import oscar.cp.constraints.InSetReif
 import oscar.cp.constraints.ModuloLHS
 import scala.util.Random
 import oscar.cp.core.domains.SparseSetDomain
-import oscar.cp.modeling._
+import oscar.cp._
 
 trait DomainIterator extends Iterator[Int] {
   def removeValue: CPOutcome
@@ -30,7 +30,7 @@ trait DomainIterator extends Iterator[Int] {
 /**
  * @author Pierre Schaus pschaus@gmail.com
  */
-abstract class CPIntVar(override val store: CPStore, override val name: String = "") extends CPIntervalVar(store,name) with Iterable[Int] {
+abstract class CPIntVar extends CPIntervalVar with Iterable[Int] {
 
 
   /**
@@ -51,23 +51,6 @@ abstract class CPIntVar(override val store: CPStore, override val name: String =
     }
     res
   }
-
-  /**
-   * @return true if the domain is empty, false otherwise
-   */
-  def isEmpty: Boolean
-
-  /**
-   * @return  the minimum value in the domain
-   */
-  def min: Int
-
-
-  /**
-   * @return  the maximum value in the domain
-   */
-  def max: Int
-
 
   def domainIterator: DomainIterator = {
     new DomainIterator {
@@ -236,7 +219,7 @@ abstract class CPIntVar(override val store: CPStore, override val name: String =
    * @return  a boolean variable b in the same store linked to x by the relation x == v <=> b == true
    */
   override def isEq(v: Int): CPBoolVar = {
-    val b = new CPBoolVar(store);
+    val b = CPBoolVar()(store);
     val ok = store.post(new oscar.cp.constraints.EqReif(this, v, b));
     assert(ok != CPOutcome.Failure);
     return b;
@@ -248,7 +231,7 @@ abstract class CPIntVar(override val store: CPStore, override val name: String =
    * @return  a boolean variable b in the same store linked to x by the relation x != v <=> b == true
    */
   def isDiff(v: Int): CPBoolVar = {
-    val b = new CPBoolVar(store);
+    val b = CPBoolVar()(store);
     val ok = store.post(new oscar.cp.constraints.DiffReif(this, v, b));
     assert(ok != CPOutcome.Failure)
     return b;
@@ -260,7 +243,7 @@ abstract class CPIntVar(override val store: CPStore, override val name: String =
    * @return  a boolean variable b in the same store linked to x by the relation x != y <=> b == true
    */
   def isDiff(y: CPIntVar): CPBoolVar = {
-    val b = new CPBoolVar(store);
+    val b = CPBoolVar()(store);
     val ok = store.post(new oscar.cp.constraints.DiffReifVar(this, y, b));
     assert(ok != CPOutcome.Failure)
     return b;

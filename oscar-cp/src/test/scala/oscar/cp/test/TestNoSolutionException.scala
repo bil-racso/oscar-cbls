@@ -20,7 +20,7 @@ import org.scalatest.FunSuite
 import org.scalatest.events.Formatter
 import org.scalatest.ShouldMatchers
 
-import oscar.cp.modeling._
+import oscar.cp._
 
 class TestNoSolutionException extends FunSuite with ShouldMatchers {
 	

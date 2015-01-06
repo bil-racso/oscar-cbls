@@ -15,7 +15,7 @@
 
 package oscar.examples.cp.scheduling
 
-import oscar.cp.modeling._
+import oscar.cp._
 
 object VariableCapacity extends CPModel with App {
 

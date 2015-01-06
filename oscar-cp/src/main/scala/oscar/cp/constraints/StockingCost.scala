@@ -1,10 +1,7 @@
 package oscar.cp.constraints
 
-package stockingCost
-
 import oscar.cp.core._
 import oscar.cp.core.CPOutcome._
-import oscar.cp.constraints.AllDiffBC
 import scala.collection.mutable.PriorityQueue
 
 /**

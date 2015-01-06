@@ -17,7 +17,7 @@ package oscar.examples.cp.scheduling
 
 import oscar.cp.constraints.UnaryResource
 import oscar.cp.core.{CPBoolVar, CPIntVar}
-import oscar.cp.modeling._
+import oscar.cp._
 import oscar.cp.scheduling.visual.{VisualStateResource, VisualGanttChart}
 import oscar.visual.{VisualUtil, VisualFrame}
 

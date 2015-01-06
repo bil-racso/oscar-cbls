@@ -1,7 +1,7 @@
 package oscar.cp.constraints
 
 import oscar.cp.core._
-import oscar.cp.modeling._
+import oscar.cp._
 
 
 /**

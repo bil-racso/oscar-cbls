@@ -17,7 +17,7 @@ package oscar.cp.constraints
 
 import oscar.algo.search._
 import oscar.cp.core._
-import oscar.cp.modeling._
+import oscar.cp._
 import oscar.algo.search.Objective
 
 /**

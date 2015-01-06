@@ -1,7 +1,7 @@
 package oscar.cp.constraints
 
 import oscar.cp.testUtils._
-import oscar.cp.modeling.CPSolver
+import oscar.cp.core.CPSolver
 import oscar.cp.core.CPIntVar
 
 

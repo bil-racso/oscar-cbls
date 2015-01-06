@@ -24,7 +24,7 @@ import oscar.cp.core.CPIntervalVar
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.Constraint
 import oscar.cp.core.CPPropagStrength
-import oscar.cp.modeling.CPSolver
+import oscar.cp.core.CPSolver
 import oscar.algo.SortUtils.stableSort
 
 /**

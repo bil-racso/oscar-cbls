@@ -5,7 +5,7 @@ import java.lang.management.ManagementFactory
 
 import oscar.cp.core.CPIntVar
 import oscar.cp.linearizedDFS.utils.DecisionReader
-import oscar.cp.modeling.CPSolver
+import oscar.cp.core.CPSolver
 
 /**
  * Created by saschavancauwelaert on 01/12/14.

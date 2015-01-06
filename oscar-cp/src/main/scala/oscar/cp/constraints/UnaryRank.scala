@@ -15,7 +15,7 @@
 
 package oscar.cp.constraints
 
-import oscar.cp.modeling._
+import oscar.cp._
 import java.util.{Arrays => JArrays}
 import oscar.algo.reversible.ReversibleInt
 import oscar.algo.reversible.ReversibleBoolean

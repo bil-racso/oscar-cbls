@@ -12,8 +12,8 @@
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
-import oscar.cp.modeling._
-import oscar.cp.core._
+
+import oscar.cp._
 
 
 /**
@@ -47,11 +47,11 @@ object SportScheduling {
     def printSol() {
       println("---------games---------")
       Periods.foreach {
-        p => println(Weeks.map(w => game(p)(w).getValue).mkString("\t"))
+        p => println(Weeks.map(w => game(p)(w).value).mkString("\t"))
       }
       println("---------teams---------")
       Periods.foreach {
-        p => println(Weeks.map(w => (team(p)(w)(0).getValue, team(p)(w)(1).getValue)).mkString("\t"))
+        p => println(Weeks.map(w => (team(p)(w)(0).value, team(p)(w)(1).value)).mkString("\t"))
       }
       println("\n")
     }

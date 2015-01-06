@@ -1,6 +1,6 @@
 package oscar.examples.cp
 
-import oscar.cp.modeling._
+import oscar.cp._
 import oscar.util._
 import oscar.visual.VisualFrame
 import oscar.algo.search.VisualSearchTree

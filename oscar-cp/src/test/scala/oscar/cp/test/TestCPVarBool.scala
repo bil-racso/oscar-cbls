@@ -16,7 +16,7 @@ package oscar.cp.test
 
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
-import oscar.cp.modeling._
+import oscar.cp._
 import oscar.cp.core.CPOutcome
 
 class TestCPBoolVar extends FunSuite with ShouldMatchers {

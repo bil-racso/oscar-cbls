@@ -15,10 +15,11 @@
  * ****************************************************************************
  */
 package oscar.cp.constraints
+
 import oscar.cp.core._
 import oscar.algo.reversible._
 import oscar.cp.core.CPOutcome
-import oscar.cp.modeling._
+import oscar.cp._
 
 /**
  * Implementation of the table algorithm described in :

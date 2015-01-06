@@ -26,7 +26,7 @@ import oscar.cp.core.CPOutcome._
 /**
  * @author Pierre Schaus pschaus@gmail.com
  */
-class CPIntVarImpl(store: CPStore, private val domain: IntDomain, name: String = "") extends CPIntVar(store, name) {
+class CPIntVarImpl(final override val store: CPStore, private val domain: IntDomain, final override val name: String = "") extends CPIntVar {
 
   val onBoundsL2 = new ReversiblePointer[ConstraintQueue](store, null)
   val onBindL2 = new ReversiblePointer[ConstraintQueue](store, null)

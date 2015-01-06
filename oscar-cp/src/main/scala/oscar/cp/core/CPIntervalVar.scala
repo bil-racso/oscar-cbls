@@ -24,7 +24,7 @@ import oscar.cp.core.domains.SparseSetDomain
 /**
  * @author Pierre Schaus pschaus@gmail.com
  */
-abstract class CPIntervalVar(override val store: CPStore, override val name: String = "") extends CPVar with Iterable[Int] {
+abstract class CPIntervalVar extends CPVar with Iterable[Int] {
 
   def transform(v: Int): Int
 
@@ -235,7 +235,7 @@ abstract class CPIntervalVar(override val store: CPStore, override val name: Str
    * @return  a boolean variable b in the same store linked to x by the relation x == v <=> b == true
    */
   def isEq(v: Int): CPBoolVar = {
-    val b = new CPBoolVar(store);
+    val b = CPBoolVar()(store);
     val ok = store.post(new oscar.cp.constraints.EqReifInterval(this, v, b));
     assert(ok != CPOutcome.Failure);
     return b;
@@ -273,7 +273,7 @@ abstract class CPIntervalVar(override val store: CPStore, override val name: Str
    * @return  a boolean variable b in the same store linked to x by the relation x >= v <=> b == true
    */
   def isGrEq(v: Int): CPBoolVar = {
-    val b = new CPBoolVar(store);
+    val b = CPBoolVar()(store);
     val ok = store.post(new oscar.cp.constraints.GrEqCteReif(this, v, b));
     assert(ok != CPOutcome.Failure);
     return b;
@@ -285,7 +285,7 @@ abstract class CPIntervalVar(override val store: CPStore, override val name: Str
    * @return  a boolean variable b in the same store linked to x by the relation x <= v <=> b == true
    */
   def isLeEq(v: Int): CPBoolVar = {
-    val b = new CPBoolVar(store);
+    val b = CPBoolVar()(store);
     val ok = store.post(new oscar.cp.constraints.LeEqCteReif(this, v, b));
     assert(ok != CPOutcome.Failure);
     return b;
@@ -297,7 +297,7 @@ abstract class CPIntervalVar(override val store: CPStore, override val name: Str
    * @return  a boolean variable b in the same store linked to x by the relation x >= y <=> b == true
    */
   def isGrEq(y: CPIntervalVar): CPBoolVar = {
-    val b = new CPBoolVar(store);
+    val b = CPBoolVar()(store);
     val ok = store.post(new oscar.cp.constraints.GrEqVarReif(this, y, b));
     assert(ok != CPOutcome.Failure);
     return b;
@@ -305,13 +305,6 @@ abstract class CPIntervalVar(override val store: CPStore, override val name: Str
 
   def isRange: Boolean = (max - min + 1) == size
 
-
-
-//  def !=(y: CPIntVar) = new oscar.cp.constraints.DiffVar(this, y)
-  /**
-   * x!=y
-   */
-//  def !=(y: Int) = new oscar.cp.constraints.DiffVal(this, y)
   /**
    * x==y
    */
@@ -352,66 +345,6 @@ abstract class CPIntervalVar(override val store: CPStore, override val name: Str
    * x>=y
    */
   def >=(y: Int) = new oscar.cp.constraints.GrEq(this, y)
-  /**
-   * b <=> x == v
-   */
-  //def ===(v: Int) = this.isEqInterval(v)
-  /**
-   * b <=> x == y
-   */
-//  def ===(y: CPIntVar) = this.isEq(y)
-  /**
-   * b <=> x!= y
-   */
-//  def !==(y: CPIntVar) = this.isDiff(y)
-  /**
-   * b <=> x!= y
-   */
-//  def !==(y: Int) = this.isDiff(y)
-  /**
-   * b <=> x >= y
-   */
-//  def >==(y: Int) = this.isGrEq(y)
-  /**
-   * b <=> x >= y
-   */
-//  def >==(y: CPIntVar) = this.isGrEq(y)
-  /**
-   * b <=> x > y
-   */
-//  def >>=(y: Int) = this.isGrEq(y + 1)
-  /**
-   * b <=> x > y
-   */
-//  def >>=(y: CPIntVar) = this.isGrEq(y + 1)
-  /**
-   * b <=> x >= y
-   */
-//  def <==(y: Int) = this.isLeEq(y)
-  /**
-   * b <=> x >= y
-   */
-//  def <==(y: CPIntVar) = y >== this
-  /**
-   * b <=> x > y
-   */
-//  def <<=(y: Int) = this <== (y - 1)
-  /**
-   * b <=> x > y
-   */
-//  def <<=(y: CPIntVar) = this <== (y - 1)
-
-  /**
-   * b <=> x belongs to set
-   */
-//  def isIn(set: Set[Int]): CPBoolVar = {
-//    val b = CPBoolVar()(store)
-//    store.post(new InSetReif(this, set, b))
-//    b
-//  }
-
-  //def %(y: Int) = ModuloLHS(this, y)
-
 }
 
 object CPIntervalVar {

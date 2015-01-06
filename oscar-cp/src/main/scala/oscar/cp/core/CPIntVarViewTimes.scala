@@ -23,23 +23,27 @@ import scala.util.Random
  * @author Cyrille Dejemeppe Cyrille.Dejemeppe@gmail.com
  * @author Steven Gay steven.gay@uclouvain.be
  */
-class CPIntVarViewTimes(v: CPIntVar, val a: Int) extends CPIntVar(v.store) {
+class CPIntVarViewTimes(v: CPIntVar, val a: Int) extends CPIntVar {
   
   require(a != 0, "a should be different than 0")
-
-  override def transform(v: Int) = a * this.v.transform(v)
-
-  override def isBound = v.isBound
-
-  override def size = v.size
-
-  override def isEmpty = v.isEmpty
-
-  override def constraintDegree = v.constraintDegree
-
-  override def isBoundTo(value: Int): Boolean = if (value % a != 0) false else v.isBoundTo(value / a)
   
-  override def hasValue(value: Int): Boolean = if (value % a != 0) false else v.hasValue(value / a)
+  final override val store: CPStore = v.store
+  
+  final override val name: String = s"${v.name} * $a"
+
+  final override def transform(v: Int) = a * this.v.transform(v)
+
+  final override def isBound = v.isBound
+
+  final override def size = v.size
+
+  final override def isEmpty = v.isEmpty
+
+  final override def constraintDegree = v.constraintDegree
+
+  final override def isBoundTo(value: Int): Boolean = if (value % a != 0) false else v.isBoundTo(value / a)
+  
+  final override def hasValue(value: Int): Boolean = if (value % a != 0) false else v.hasValue(value / a)
 
   // Scala's division always rounds to the integer closest to zero, but we need flooring/ceiling versions.
   // The following divisions are just a little faster than using the modulo version,
@@ -78,7 +82,7 @@ class CPIntVarViewTimes(v: CPIntVar, val a: Int) extends CPIntVar(v.store) {
 
   override final def iterator: Iterator[Int] = v.iterator.map(_ * a)
 
-  override def toString() = "view with multiplicator " + a + " on (" + v + ")";
+  final override def toString() = "view with multiplicator " + a + " on (" + v + ")";
 
   override final def callPropagateWhenBind(c: Constraint) = v.callPropagateWhenBind(c)
 

@@ -1,10 +1,9 @@
 package oscar.examples.cp
 
-import oscar.cp.modeling._
+import oscar.cp._
 import oscar.algo.search._
 import oscar.algo.reversible._
 import scala.io.Source
-import oscar.cp.search.BinaryFirstFailBranching
 import oscar.cp.core.CPPropagStrength
 import oscar.cp.core.CPOutcome
 

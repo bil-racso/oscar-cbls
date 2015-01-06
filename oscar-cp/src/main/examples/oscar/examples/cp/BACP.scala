@@ -1,11 +1,10 @@
 package oscar.examples.cp
 
-import oscar.cp.modeling._
+import oscar.cp._
 
 import scala.io.Source
 import oscar.util._
 import oscar.visual._
-import oscar.cp.search.BinaryFirstFailBranching
 
 /**
  * Balanced Academic Curriculum Problem

@@ -33,7 +33,7 @@ class IntervalVarTrailEntry(variable: CPIntervalVarImpl, min: Int, max: Int) ext
   }
 }
 
-class CPIntervalVarImpl(store: CPStore, initialMin: Int, initialMax: Int, name: String) extends CPIntervalVar(store, name) {
+class CPIntervalVarImpl(final override val store: CPStore, initialMin: Int, initialMax: Int, final override val name: String) extends CPIntervalVar {
 
   private[this] var lastMagic: Long = -1L
 
@@ -140,12 +140,12 @@ class CPIntervalVarImpl(store: CPStore, initialMin: Int, initialMax: Int, name: 
   /**
    * @return  the size of the domain
    */
-  @inline final override def size = _max - _min + 1
+  @inline final override def size: Int = _max - _min + 1
 
   /**
    * @return true if the domain is empty, false otherwise
    */
-  @inline final override def isEmpty = _max < _min
+  @inline final override def isEmpty: Boolean = _max < _min
 
   final override def toString: String = {
     if (isEmpty) "phi"

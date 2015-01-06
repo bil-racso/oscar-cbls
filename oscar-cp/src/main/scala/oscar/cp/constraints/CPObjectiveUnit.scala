@@ -15,8 +15,8 @@
 
 package oscar.cp.constraints
 
-import oscar.cp.modeling.TightenType
-import oscar.cp.modeling.TightenType._
+import oscar.cp.TightenType
+import oscar.cp.TightenType._
 import oscar.cp.core.CPIntervalVar
 import oscar.cp.core.Constraint
 import oscar.cp.core.CPOutcome
