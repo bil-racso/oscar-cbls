@@ -73,6 +73,8 @@ import oscar.cp.core.CPIntVarImpl
 import oscar.cp.core.CPIntVarViewMinus
 import oscar.cp.core.CPIntervalVarImpl
 import oscar.cp.core.CPIntervalVarViewOffset
+import oscar.cp.core.CPIntervalVarViewMinus
+import oscar.cp.core.CPIntervalVarViewTimes
 import oscar.cp.core.CPIntervalVar
 import oscar.cp._
 import oscar.cp.constraints.BinaryClause
@@ -202,6 +204,22 @@ trait Constraints {
     z
   }
 
+  /**
+   * @param c
+   * @return a variable in the same store representing: x * c
+   */
+  def mul(x: CPIntervalVar, y: Int): CPIntervalVar = {
+    if (y == 0) CPIntervalVar(0)(x.store)
+    else if (y == 1) x
+    else if (y > 0) new CPIntervalVarViewTimes(x, y) 
+    else {
+      new CPIntervalVarViewMinus(mul(x, -y))
+    }
+  }
+
+
+  // TODO: general case for multiplication by CPIntervalVar
+  
   /**
    * @return a variable in the same store representing: |x|
    */

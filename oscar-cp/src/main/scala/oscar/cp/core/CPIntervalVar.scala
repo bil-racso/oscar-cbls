@@ -139,42 +139,42 @@ abstract class CPIntervalVar extends CPVar with Iterable[Int] {
 
 
   /**
-   * Level 1 registration: ask that the valBind(CPIntVar) method of the constraint c is called whenever
+   * Level 1 registration: ask that the valBind(CPIntervalVar) method of the constraint c is called whenever
    * the domain of the variable is a singleton (i.e. isBound).
    * @param c
-   * @see oscar.cp.core.Constraint#valBind(CPIntVar)
+   * @see oscar.cp.core.Constraint#valBind(CPIntervalVar)
    */
   def callValBindWhenBind(c: Constraint): Unit
 
   def callValBindWhenBind(c: Constraint, variable: CPIntervalVar): Unit
 
   /**
-   * Level 1 registration: ask that the updateBounds(CPIntVar) method of the constraint c is called whenever
+   * Level 1 registration: ask that the updateBounds(CPIntervalVar) method of the constraint c is called whenever
    * the minimum or maximum value of the domain changes.
    * @param c
-   * @see oscar.cp.core.Constraint#updateBounds(CPIntVar)
+   * @see oscar.cp.core.Constraint#updateBounds(CPIntervalVar)
    */
   def callUpdateBoundsWhenBoundsChange(c: Constraint): Unit
 
   def callUpdateBoundsWhenBoundsChange(c: Constraint, variable: CPIntervalVar): Unit
 
   /**
-   * Level 1 registration: ask that the updateBoundsIdx(CPIntVar, int) method of the constraint c is called whenever
+   * Level 1 registration: ask that the updateBoundsIdx(CPIntervalVar, int) method of the constraint c is called whenever
    * the minimum or maximum value of the domain changes
    * @param c
-   * @param idx, an index that will be given as parameter to updateBoundsIdx(CPIntVar, int)
-   * @see Constraint#updateBoundsIdx(CPIntVar, int)
+   * @param idx, an index that will be given as parameter to updateBoundsIdx(CPIntervalVar, int)
+   * @see Constraint#updateBoundsIdx(CPIntervalVar, int)
    */
   def callUpdateBoundsIdxWhenBoundsChange(c: Constraint, idx: Int): Unit
 
   def callUpdateBoundsIdxWhenBoundsChange(c: Constraint, variable: CPIntervalVar, idx: Int): Unit
 
   /**
-   * Level 1 registration: ask that the valBindIdx(CPIntVar, int) method of the constraint c is called whenever
+   * Level 1 registration: ask that the valBindIdx(CPIntervalVar, int) method of the constraint c is called whenever
    * the domain of the variable is a singleton (i.e. isBound).
    * @param c
-   * @param idx, an index that will be given as parameter to valBindIdx(CPIntVar, int)
-   * @see Constraint#valBindIdx(CPIntVar, int)
+   * @param idx, an index that will be given as parameter to valBindIdx(CPIntervalVar, int)
+   * @see Constraint#valBindIdx(CPIntervalVar, int)
    */
   def callValBindIdxWhenBind(c: Constraint, idx: Int): Unit
 
@@ -316,7 +316,7 @@ abstract class CPIntervalVar extends CPVar with Iterable[Int] {
   /**
    * x<y
    */
-  def <(y: CPIntVar) = new oscar.cp.constraints.Le(this, y)
+  def <(y: CPIntervalVar) = new oscar.cp.constraints.Le(this, y)
   /**
    * x<y
    */
@@ -324,7 +324,7 @@ abstract class CPIntervalVar extends CPVar with Iterable[Int] {
   /**
    * x>y
    */
-  def >(y: CPIntVar) = new oscar.cp.constraints.Gr(this, y)
+  def >(y: CPIntervalVar) = new oscar.cp.constraints.Gr(this, y)
   /**
    * x>y
    */
@@ -332,7 +332,7 @@ abstract class CPIntervalVar extends CPVar with Iterable[Int] {
   /**
    * x<=y
    */
-  def <=(y: CPIntVar) = new oscar.cp.constraints.LeEq(this, y)
+  def <=(y: CPIntervalVar) = new oscar.cp.constraints.LeEq(this, y)
   /**
    * x<=y
    */
@@ -340,7 +340,7 @@ abstract class CPIntervalVar extends CPVar with Iterable[Int] {
   /**
    * x>=y
    */
-  def >=(y: CPIntVar) = new oscar.cp.constraints.GrEq(this, y)
+  def >=(y: CPIntervalVar) = new oscar.cp.constraints.GrEq(this, y)
   /**
    * x>=y
    */
@@ -381,7 +381,7 @@ object CPIntervalVar {
    * @param store the `CPStore` in which the variable is created
    * @return a fresh `CPIntervalVar` defined in the `CPStore` store with a single value as initial domain.
    */
-  def apply(value: Int, name: String)(implicit store: CPStore): CPIntVar = CPIntVarImpl(store, value, value, name)
+  def apply(value: Int, name: String)(implicit store: CPStore): CPIntervalVar = CPIntervalVarImpl(store, value, value, name)
 
   /**
    * Creates a new CP integer Interval Variable assigned to value
@@ -389,7 +389,7 @@ object CPIntervalVar {
    * @param store the `CPStore` in which the variable is created
    * @return a fresh `CPIntervalVar` defined in the `CPStore` store with a single value as initial domain.
    */
-  def apply(value: Int)(implicit store: CPStore): CPIntVar = CPIntVarImpl(store, value, value, "")
+  def apply(value: Int)(implicit store: CPStore): CPIntervalVar = CPIntervalVarImpl(store, value, value, "")
 }
 
   

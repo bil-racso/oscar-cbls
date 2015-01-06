@@ -301,11 +301,11 @@ package object cp extends Constraints with Branchings {
     /**
      * x+y
      */
-    def +(y: CPIntVar) = plus(x, y)
+    def +(y: CPIntervalVar) = plus(x, y)
     /**
      * x-y
      */
-    def -(y: CPIntVar) = minus(x, y)
+    def -(y: CPIntervalVar) = minus(x, y)
     /**
      * x+y
      */
@@ -316,6 +316,22 @@ package object cp extends Constraints with Branchings {
     def -(y: Int) = minus(x, y)
 
     def +(s: String) = s"$x$s"
+    
+    /* TODO general multiplication of interval vars
+    /**
+     * x*y
+     */
+    def *(y: CPIntervalVar): CPIntervalVar = {
+      if (y.isBound) x * (y.value)
+      else mul(x, y)
+    }
+    * 
+    */
+    
+    /**
+     * x*y
+     */
+    def *(y: Int): CPIntervalVar = mul(x, y)
     
     /**
      * Reified constraint
