@@ -34,7 +34,7 @@ class CombinatorsTestSuite extends FunSuite {
   import CombinatorGenerator._
 
   val VERBOSE = false
-
+/*
   test("'a orElse b' returns a's move when a finds a move.") {
     val a = ConstantMoveNeighborhood(oneObjMove)
     val result = (a orElse NoMoveNeighborhood).getMove()
@@ -90,6 +90,7 @@ class CombinatorsTestSuite extends FunSuite {
     val result = (NoMoveNeighborhood best NoMoveNeighborhood).getMove()
     assert(result === NoMoveFound)
   }
+  */
 }
 
 object CombinatorGenerator {

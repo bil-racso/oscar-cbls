@@ -47,7 +47,7 @@ object test extends SearchEngine {
     d <== (5 + c + 5 + (b * (4 - 3)))
     c <== a + b //Sum(SortedSet(a, b))
     e <== Inter(MakeSet(SortedSet(a, b)), MakeSet(SortedSet(b, c)))
-    val Const5 = CBLSIntConst(5,m)
+    val Const5 = CBLSIntConst(5)
     val f:CBLSIntVar = MaxArray(SortedSet(a,b,c,d).toArray) + MinLin(SortedSet(Abs(a),b,Const5,d))
     val g:CBLSIntVar = MaxLin(SortedSet(a,b,c,d))
 
