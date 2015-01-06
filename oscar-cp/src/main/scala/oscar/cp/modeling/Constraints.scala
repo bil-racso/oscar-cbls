@@ -1,17 +1,19 @@
-/*******************************************************************************
+/**
+ * *****************************************************************************
  * OscaR is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- *   
+ *
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License  for more details.
- *   
+ *
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
- ******************************************************************************/
+ * ****************************************************************************
+ */
 
 package oscar.cp.modeling
 
@@ -53,6 +55,7 @@ import oscar.cp.constraints.Permutation
 import oscar.cp.constraints.Regular
 import oscar.cp.constraints.SoftGCC
 import oscar.cp.constraints.Spread
+import oscar.cp.constraints.Sum
 import oscar.cp.constraints.Stretch
 import oscar.cp.constraints.SweepMinCumulative
 import oscar.cp.constraints.TableData
@@ -491,10 +494,7 @@ trait Constraints {
    * @param s a variable representing the sum of vars
    * @return a constraint enforcing vars(0)+vars(1)+...+vars(n) = s
    */
-  def sum(vars: Array[CPIntVar], s: CPIntVar): Constraint = {
-    if (vars.size == 2) new BinarySum(vars(0), vars(1), s)
-    else new oscar.cp.constraints.Sum(vars.map(_.asInstanceOf[CPIntervalVar]), s)
-  }
+  def sum(vars: Array[CPIntVar], s: CPIntVar): Constraint = sum(vars.asInstanceOf[Array[CPIntervalVar]], s)
 
   /**
    * Sum Constraint
@@ -502,9 +502,9 @@ trait Constraints {
    * @param s a variable representing the sum of vars
    * @return a constraint enforcing vars(0)+vars(1)+...+vars(n) = s
    */
-  def sum(vars: Array[CPIntervalVar], s: CPIntVar): Constraint = {
-    if (vars.size == 2) new BinarySum(vars(0), vars(1), s)
-    else new oscar.cp.constraints.Sum(vars, s)
+  def sum(vars: Array[CPIntervalVar], s: CPIntervalVar): Constraint = {
+    if (vars.length == 2) new BinarySum(vars(0), vars(1), s)
+    else new Sum(vars, s)
   }
 
   /**
@@ -512,8 +512,15 @@ trait Constraints {
    * @param vars a non empty array of n variables
    * @return a variable representing vars(0)+vars(1)+...+vars(n)
    */
-  def sum(vars: Iterable[CPIntVar]): CPIntVar = sum(vars.toArray)  
-  
+  def sum(vars: Iterable[CPIntVar]): CPIntVar = sum(vars.toArray)
+
+  /**
+   * Sum Constraint
+   * @param vars a non empty array of n variables
+   * @return a variable representing vars(0)+vars(1)+...+vars(n)
+   */
+  def sum(vars: Iterable[CPIntervalVar]): CPIntervalVar = sum(vars.toArray)
+
   /**
    * Sum Constraint
    * @param vars a non empty array of n variables
@@ -526,7 +533,7 @@ trait Constraints {
       var min = 0
       var max = 0
       var i = vars.length
-      while(i > 0) {
+      while (i > 0) {
         i -= 1
         min += vars(i).min
         max += vars(i).max
@@ -536,7 +543,25 @@ trait Constraints {
       s
     }
   }
-
+  
+  def sum(vars: Array[CPIntervalVar]): CPIntervalVar = {
+    if (vars.length == 0) sys.error("no variables")
+    if (vars.length == 1) vars(0)
+    else {
+      var min = 0
+      var max = 0
+      var i = vars.length
+      while (i > 0) {
+        i -= 1
+        min += vars(i).min
+        max += vars(i).max
+      }
+      val s = CPIntervalVar(min, max)(vars(0).store)
+      vars(0).store.post(sum(vars, s))
+      s
+    }
+  }
+  
   /**
    * Sum Constraint
    * @param indexes
@@ -644,7 +669,7 @@ trait Constraints {
    * @return a constraint such that at least one variables in vars must be true
    */
   def or(vars: Iterable[CPBoolVar]): Constraint = or(vars.toArray)
-  
+
   /**
    * Or (logical) Constraint
    * @return a constraint such that at least one variables in vars must be true
