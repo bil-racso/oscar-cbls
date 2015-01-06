@@ -353,10 +353,6 @@ abstract class Invariant extends PropagationElement{
     for (vv <- v)registerStaticDependency(vv)
   }
 
-  def registerStaticDependencyAll(v:Iterable[Variable]){
-    for (vv <- v)registerStaticDependency(vv)
-  }
-
   /**register to determining element. It must be in the static dependency graph*/
   def registerDeterminingDependency(v:Variable,i:Any = -1){
     registerDeterminingElement(v,i)
@@ -374,13 +370,6 @@ abstract class Invariant extends PropagationElement{
   }
 
   def registerStaticAndDynamicDependencies(v:((Variable,Any))*){
-    for (varint <- v){
-      registerStaticDependency(varint._1)
-      registerDynamicDependency(varint._1,varint._2)
-    }
-  }
-
-  def registerStaticAndDynamicDependencyAll(v:Iterable[((Variable,Any))]){
     for (varint <- v){
       registerStaticDependency(varint._1)
       registerDynamicDependency(varint._1,varint._2)

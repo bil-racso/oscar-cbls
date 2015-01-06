@@ -145,7 +145,7 @@ class ChangeRecorder(s:Store) extends Invariant{
   def active:Boolean = myActive
 
   def close() {
-    registerStaticDependencyAll(s.inputVariables())
+    registerStaticDependencies(s.inputVariables():_*)
   }
 
   def varHasChanged(variable:Variable, varId:Int){

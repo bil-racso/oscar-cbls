@@ -40,14 +40,14 @@ trait Bulked[VarType <: Variable, BulkedComputationResult] extends Invariant {
   final def bulkRegister(bulkedVars: Array[VarType], id: Int = 0, noBulk: Boolean = false): BulkedComputationResult = {
 
     if (noBulk) {
-      this.registerStaticDependencyAll(bulkedVars)
+      this.registerStaticDependencies(bulkedVars:_*)
       return performBulkComputation(bulkedVars)
     }
 
     val m = this.preFinishInitialization(bulkedVars(0).model)
     if (m == null) {
       //no bulking possible
-      this.registerStaticDependencyAll(bulkedVars)
+      this.registerStaticDependencies(bulkedVars:_*)
       performBulkComputationID(bulkedVars, id)
     } else {
       //check for existing bulk
