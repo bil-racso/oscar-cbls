@@ -60,7 +60,10 @@ trait Branchings extends BranchingUtils {
    * Binary search on the decision variables vars, splitting the domain of the selected variable on the
    * median of the values (left : <= median, right : > median)
    */
-  def binarySplit(x: Seq[CPIntVar], varHeuris: (CPIntVar => Int) = minVar, valHeuris: (CPIntVar => Int) = (x: CPIntVar) => (x.min + x.max) / 2): Branching = new BinaryDomainSplitBranching(x.toArray, varHeuris, valHeuris)
+  def binarySplit(x: Seq[_ <: CPIntervalVar], varHeuris: (CPIntervalVar => Int) = minVar, valHeuris: (CPIntervalVar => Int) = (x: CPIntervalVar) => (x.min + x.max) / 2): Branching = {
+    val xa = x.toArray
+    new BinaryDomainSplitBranching(xa, varHeuris, valHeuris)
+  }
   
   /**
    * Binary Search on the set variable

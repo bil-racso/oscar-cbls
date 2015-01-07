@@ -187,7 +187,7 @@ class CPIntervalVarImpl(final override val store: CPStore, initialMin: Int, init
    * @return  Suspend if there is at least one value >= val in the domain, Failure otherwise
    */
   @inline final def updateMin(value: Int): CPOutcome = {
-    if (value > _max) throw Inconsistency
+    if (value > _max) Failure // throw Inconsistency
     else if (value <= _min) Suspend
     else {
       trail()
@@ -211,7 +211,7 @@ class CPIntervalVarImpl(final override val store: CPStore, initialMin: Int, init
    * @return  Suspend if there is at least one value <= val in the domain, Failure otherwise
    */
   @inline final def updateMax(value: Int): CPOutcome = {
-    if (value < _min) throw Inconsistency
+    if (value < _min) Failure // throw Inconsistency
     else if (value >= _max) Suspend
     else {
       trail()

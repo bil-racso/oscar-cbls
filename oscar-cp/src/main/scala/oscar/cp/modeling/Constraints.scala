@@ -1114,7 +1114,7 @@ trait Constraints {
    * @param vars an non empty array of variables
    * @return a fresh variable z linked to vars by a constraint such that z is the maximum of all variables in vars
    */
-  def maximum(vars: Iterable[_ <: CPIntervalVar]): CPIntervalVar = {
+  def maximum(vars: Iterable[CPIntervalVar]): CPIntervalVar = {
     val x = vars.toArray
     val cp = x(0).store
     val m = CPIntervalVar(vars.map(_.min).max, vars.map(_.max).max)(cp)

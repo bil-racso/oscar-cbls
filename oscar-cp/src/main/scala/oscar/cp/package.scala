@@ -361,15 +361,15 @@ package object cp extends Constraints with Branchings {
 
   // helper functions to define searches
 
-  def minDom(x: CPIntVar): Int = x.size
-  def minRegret(x: CPIntVar): Int = x.max - x.min
-  def minDomMaxDegree(x: CPIntVar): (Int, Int) = (x.size, -x.constraintDegree)
-  def minVar(x: CPIntVar): Int = 1
-  def maxDegree(x: CPIntVar): Int = -x.constraintDegree
+  def minDom(x: CPIntervalVar): Int = x.size
+  def minRegret(x: CPIntervalVar): Int = x.max - x.min
+  def minDomMaxDegree(x: CPIntervalVar): (Int, Int) = (x.size, -x.constraintDegree)
+  def minVar(x: CPIntervalVar): Int = 1
+  def maxDegree(x: CPIntervalVar): Int = -x.constraintDegree
 
-  def minVal(x: CPIntVar): Int = x.min
-  def maxVal(x: CPIntVar): Int = x.max
-  def minValminVal(x: CPIntVar): (Int, Int) = (x.min, x.min)
+  def minVal(x: CPIntervalVar): Int = x.min
+  def maxVal(x: CPIntervalVar): Int = x.max
+  def minValminVal(x: CPIntervalVar): (Int, Int) = (x.min, x.min)
 
   def branchAssign(variable: CPIntVar, value: Int)(implicit solver: CPSolver): Seq[Alternative] = {
     branch { solver.post(variable == value) } { solver.post(variable != value) }

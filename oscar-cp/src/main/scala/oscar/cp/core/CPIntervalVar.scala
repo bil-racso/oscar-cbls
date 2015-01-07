@@ -303,6 +303,18 @@ abstract class CPIntervalVar extends CPVar with Iterable[Int] {
     return b;
   }
 
+  /**
+   * Reified constraint
+   * @param v
+   * @return  a boolean variable b in the same store linked to x by the relation x <= v <=> b == true
+   */
+  def isLeEq(v: CPIntervalVar): CPBoolVar = {
+    val b = CPBoolVar()(store);
+    val ok = store.post(new oscar.cp.constraints.GrEqVarReif(v, this, b));
+    assert(ok != CPOutcome.Failure);
+    return b;
+  }
+
   def isRange: Boolean = (max - min + 1) == size
 
   /**
