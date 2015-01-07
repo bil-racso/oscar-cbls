@@ -37,7 +37,7 @@ class CPIntervalVarImpl(final override val store: CPStore, initialMin: Int, init
 
   private[this] var lastMagic: Long = -1L
 
-  @inline final protected def trail(): Unit = {
+  @inline private def trail(): Unit = {
     val contextMagic = store.magic
     if (lastMagic != contextMagic) {
       lastMagic = contextMagic
@@ -128,7 +128,6 @@ class CPIntervalVarImpl(final override val store: CPStore, initialMin: Int, init
     } else if (isEmpty || v < _min) value
     else if (v > _max) _max
     else v
-
   }
 
   /** @return A random value in the domain of the variable (uniform distribution) */
@@ -164,7 +163,7 @@ class CPIntervalVarImpl(final override val store: CPStore, initialMin: Int, init
    * @return  Suspend if val was in the domain, Failure otherwise
    */
   @inline final def assign(value: Int): CPOutcome = {
-    if (value < _min || _max < value) throw Inconsistency
+    if (value < _min || _max < value) Failure //throw Inconsistency
     else if (_min == _max) Suspend
     else {
       trail()
