@@ -439,7 +439,9 @@ object CPIntVar {
    * @param store the CPStore in which the variable is created
    * @return a fresh CPIntVar defined in the CPStore store with a single value as initial domain.
    */
-  def apply(value: Int, name: String)(implicit store: CPStore): CPIntVar = CPIntVarImpl(store, value, value, name)
+  def apply(value: Int, name: String)(implicit store: CPStore): CPIntVar = {
+    new CPIntVarSingleton(store, value, name) // CPIntVarImpl(store, value, value, name)
+  }
 
   /**
    * Creates a new CP Integer Variable assigned to value
@@ -447,7 +449,9 @@ object CPIntVar {
    * @param store the CPStore in which the variable is created
    * @return a fresh CPIntVar defined in the CPStore store with a single value as initial domain.
    */
-  def apply(value: Int)(implicit store: CPStore): CPIntVar = CPIntVarImpl(store, value, value, "")
+  def apply(value: Int)(implicit store: CPStore): CPIntVar = {
+    new CPIntVarSingleton(store, value, "") // CPIntVarImpl(store, value, value, name)
+  }
 
   @deprecated("use apply(values: Iterable[Int], name: String)(implicit store: CPStore) instead", "1.0")
   def apply(store: CPStore, values: Iterable[Int], name: String): CPIntVar = apply(values, name)(store)

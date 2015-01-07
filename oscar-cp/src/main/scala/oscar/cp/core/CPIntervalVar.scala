@@ -393,7 +393,9 @@ object CPIntervalVar {
    * @param store the `CPStore` in which the variable is created
    * @return a fresh `CPIntervalVar` defined in the `CPStore` store with a single value as initial domain.
    */
-  def apply(value: Int, name: String)(implicit store: CPStore): CPIntervalVar = CPIntervalVarImpl(store, value, value, name)
+  def apply(value: Int, name: String)(implicit store: CPStore): CPIntervalVar = {
+    new CPIntVarSingleton(store, value, name)
+  }
 
   /**
    * Creates a new CP integer Interval Variable assigned to value
@@ -401,7 +403,9 @@ object CPIntervalVar {
    * @param store the `CPStore` in which the variable is created
    * @return a fresh `CPIntervalVar` defined in the `CPStore` store with a single value as initial domain.
    */
-  def apply(value: Int)(implicit store: CPStore): CPIntervalVar = CPIntervalVarImpl(store, value, value, "")
+  def apply(value: Int)(implicit store: CPStore): CPIntervalVar = {
+    new CPIntVarSingleton(store, value, "")
+  }
 }
 
   
