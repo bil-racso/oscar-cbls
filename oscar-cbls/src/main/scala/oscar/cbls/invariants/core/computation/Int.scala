@@ -54,13 +54,12 @@ abstract class ChangingIntValue(initialDomain:Domain, initialValue:Int)
 
   def domain:Domain = privatedomain
 
-  override def toString = if(model.propagateOnToString) s"$name:=$value" else defaultName
-  override def toStringNoPropagate = s"$name:=$Value"
-
-  def restrictDomain(d:Domain): Unit ={
+  protected def restrictDomain(d:Domain): Unit ={
     privatedomain = privatedomain.restrict(d)
   }
 
+  override def toString = if(model.propagateOnToString) s"$name:=$value" else defaultName
+  override def toStringNoPropagate = s"$name:=$Value"
 
   def setValue(v:Int){
     if (v != Value){
@@ -92,7 +91,9 @@ abstract class ChangingIntValue(initialDomain:Domain, initialValue:Int)
     }
   }
 
-  override def performPropagation(){
+  override def performPropagation(){performIntPropagation()}
+
+  final protected def performIntPropagation(){
     if(OldValue!=Value){
       val old=OldValue
       OldValue=Value
@@ -151,6 +152,8 @@ object ChangingIntValue{
   */
 class CBLSIntVar(givenModel: Store, initialDomain:Domain, initialValue: Int, n: String = null)
   extends ChangingIntValue(initialDomain,initialValue) with Variable{
+
+  override def restrictDomain(d:Domain) = super.restrictDomain(d)
 
   model = givenModel
 
@@ -240,6 +243,11 @@ abstract class IntInvariant(initialDomain:Domain = FullRange, initialValue:Int =
 
   //TODO: this is wrong, there is an unlimited recusion here
   override def name: String = if(customName == null) toString else customName
+
+  override final def performPropagation(){
+    performInvariantPropagation()
+    performIntPropagation()
+  }
 }
 
 object IdentityInt{

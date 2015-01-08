@@ -305,7 +305,7 @@ object Invariant{
 
 trait VaryingDependenciesInvariant extends VaryingDependencies{
   /**register to determining element. It must be in the static dependency graph*/
-  def registerDeterminingDependency(v:Variable,i:Any = -1){
+  def registerDeterminingDependency(v:Value,i:Any = -1){
     registerDeterminingElement(v,i)
   }
 }
@@ -319,7 +319,6 @@ trait Invariant extends PropagationElement{
   def model:Store = schedulingHandler.asInstanceOf[Store]
 
   def hasModel:Boolean = schedulingHandler != null
-
 
   final def preFinishInitialization(model:Store = null):Store = {
     if (schedulingHandler == null){
@@ -450,6 +449,16 @@ trait Invariant extends PropagationElement{
   override def checkInternals(c:Checker){c.check(false, Some("DEFAULT EMPTY CHECK " + this.toString() + ".checkInternals"))}
 
   def getDotNode = "[label = \"" + this.getClass.getSimpleName + "\" shape = box]"
+
+  /** this is the propagation method that should be overridden by propagation elements.
+    * notice that it is only called in a propagation wave if:
+    * 1: it has been registered for propagation since the last time it was propagated
+    * 2: it is included in the propagation wave: partial propagation wave do not propagate all propagation elements;
+    * it only propagates the ones that come in the predecessors of the targeted propagation element
+    * overriding this method is optional, so an empty body is provided by default */
+  override final def performPropagation(){performInvariantPropagation()}
+
+  def performInvariantPropagation(){}
 }
 
 object InvariantHelper{
@@ -482,23 +491,23 @@ object InvariantHelper{
     null
   }
 
-  def getMinMaxBounds(variables:Iterable[CBLSIntVar]):(Int,Int) = {
+  def getMinMaxBounds(variables:Iterable[IntValue]):Range = {
     var MyMax = Int.MinValue
     var MyMin = Int.MaxValue
     for (v <- variables) {
       if (MyMax < v.max) MyMax = v.max
       if (MyMin > v.min) MyMin = v.min
     }
-    (MyMin, MyMax)
+    MyMin to MyMax
   }
-  def getMinMaxBoundsIntSetVar(variables:Iterable[CBLSSetVar]):(Int,Int) = {
+  def getMinMaxBoundsIntSetVar(variables:Iterable[SetValue]):Range = {
     var MyMax = Int.MinValue
     var MyMin = Int.MaxValue
     for (v <- variables) {
       if (MyMax < v.max) MyMax = v.max
       if (MyMin > v.min) MyMin = v.min
     }
-    (MyMin, MyMax)
+    MyMin to MyMax
   }
 
   def arrayToString[T<:Variable](a:Array[T]):String =

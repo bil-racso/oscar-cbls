@@ -63,7 +63,7 @@ object WarehouseLocationTabu extends App with AlgebraTrait{
   val warehouseKey = m.newStorageKey()
   m.storeIndexesAt(warehouseOpenArray, warehouseKey)
 
-  val openWarehouses = Filter(warehouseOpenArray).toSetVar("openWarehouses")
+  val openWarehouses = Filter(warehouseOpenArray).setName("openWarehouses")
 
   val distanceToNearestOpenWarehouse = Array.tabulate(D)(d =>
     MinArray(distanceCost(d), openWarehouses, defaultCostForNoOpenWarehouse).toIntVar("distance_for_delivery_" + d))

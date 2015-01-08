@@ -59,7 +59,7 @@ case class MaxArray(varss: Array[CBLSIntVar], ccond: CBLSSetVar = null, default:
  * update is O(log(n))
  * @author renaud.delandtsheer@cetic.be
  * */
-case class MinArray(varss: Array[CBLSIntVar], ccond: CBLSSetVar = null, default: Int = Int.MaxValue)
+case class MinArray(varss: Array[IntValue], ccond: SetValue = null, default: Int = Int.MaxValue)
   extends MiaxArray(varss, if(ccond == null) CBLSSetConst(SortedSet.empty[Int] ++ varss.indices) else ccond, default) {
 
   override def name: String = "MinArray"

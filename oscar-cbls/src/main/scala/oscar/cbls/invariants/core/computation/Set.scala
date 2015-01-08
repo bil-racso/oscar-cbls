@@ -39,12 +39,18 @@ object SetValue{
 }
 
 abstract class ChangingSetValue(initialDomain:Domain, initialValue:SortedSet[Int])
-extends AbstractVariable with SetValue{
+  extends AbstractVariable with SetValue{
   private var privatedomain:Domain = initialDomain
   private var Value: SortedSet[Int] = initialValue
   private var OldValue:SortedSet[Int] = Value
 
   def domain:Domain = privatedomain
+
+  /**this must be protected because invariants might rework this after isntanciation
+    * for CBLSVars, no problems*/
+  protected def restrictDomain(d:Domain): Unit ={
+    privatedomain = privatedomain.restrict(d)
+  }
 
   private var ToPerform: List[(Int,Boolean)] = List.empty
 
@@ -107,7 +113,9 @@ extends AbstractVariable with SetValue{
     notifyChanged()
   }
 
-  override def performPropagation(){
+  override def performPropagation(){performSetPropagation()}
+
+  final protected def performSetPropagation(){
     if(getDynamicallyListeningElements.isEmpty){
       //no need to do it gradually
       OldValue=Value
@@ -218,6 +226,8 @@ class CBLSSetVar(givenModel: Store, initialDomain:Domain, initialValue: SortedSe
 
   model = givenModel
 
+  override def restrictDomain(d:Domain) = super.restrictDomain(d)
+
   override def name: String = if (n == null) defaultName else n
 
   override def :=(v:SortedSet[Int]) {setValue(v)}
@@ -276,6 +286,11 @@ abstract class SetInvariant(initialDomain:Domain = FullRange, initialValue:Sorte
 
   //TODO: this is wrong, there is an unlimited recusion here
   override def name: String = if(customName == null) toString else customName
+
+  override final def performPropagation(){
+    performInvariantPropagation()
+    performSetPropagation()
+  }
 }
 
 object IdentitySet{

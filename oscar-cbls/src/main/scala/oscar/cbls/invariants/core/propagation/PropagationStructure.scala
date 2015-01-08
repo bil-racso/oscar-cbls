@@ -792,12 +792,15 @@ trait VaryingDependencies extends PropagationElement{
     * @param i an additional value that is stored in this element together with the reference to this,
     * can be use for notification purposes
     */
-  protected final def registerDeterminingElement(p: PropagationElement, i: Any) {
-    assert(this.getStaticallyListenedElements.exists(e => e == p),
-      "dependency to determining element " + p + " must be registered in static propagation graph")
-    assert(determiningElement == null, "only one determining element is authorized")
-    registerDynamicallyListenedElement(p, i)
-    determiningElement = p
+  protected final def registerDeterminingElement(p: DummyPropagationElement, i: Any) {
+    p match {
+      case pe: PropagationElement =>
+        assert(this.getStaticallyListenedElements.exists(e => e == pe),
+          "dependency to determining element " + p + " must be registered in static propagation graph")
+        assert(determiningElement == null, "only one determining element is authorized")
+        registerDynamicallyListenedElement(pe, i)
+        determiningElement = pe
+    }
   }
 }
 

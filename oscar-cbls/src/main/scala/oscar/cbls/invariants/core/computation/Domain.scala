@@ -51,6 +51,8 @@ sealed abstract class Domain {
   def values:Iterable[Int]
   def randomValue:Int
   def restrict(d:Domain):Domain
+
+  def ++(d:Domain):Domain
 }
 
 /**this is an inclusive domain*/
