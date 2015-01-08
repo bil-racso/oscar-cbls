@@ -64,7 +64,7 @@ case class Store(override val verbose:Boolean = false,
   def decisionVariables():List[Variable] = {
     if(privateDecisionVariables == null){
       privateDecisionVariables  = List.empty
-      for (v:AbstractVariable <- variables if v.isInputVariable){
+      for (v:AbstractVariable <- variables if v.isDecisionVariable){
         privateDecisionVariables = v.asInstanceOf[Variable] :: privateDecisionVariables
       }
     }
@@ -75,7 +75,7 @@ case class Store(override val verbose:Boolean = false,
     */
   def solution(inputOnly:Boolean = true):Solution = {
     var assignationInt:SortedMap[ChangingIntValue,Int] = SortedMap.empty
-    var assignationIntSet:SortedMap[CBLSSetVar,SortedSet[Int]] = SortedMap.empty
+    var assignationIntSet:SortedMap[ChangingSetValue,SortedSet[Int]] = SortedMap.empty
 
     val VariablesToSave = if(inputOnly) {
       decisionVariables()
@@ -97,7 +97,7 @@ case class Store(override val verbose:Boolean = false,
   def saveValues(vars:Variable*):Snapshot = {
     var assignationInt:List[(CBLSIntVar,Int)] = List.empty
     var assignationIntSet:List[(CBLSSetVar,SortedSet[Int])] = List.empty
-    for (v:Variable <- vars if v.isInputVariable){
+    for (v:Variable <- vars if v.isDecisionVariable){
       if(v.isInstanceOf[CBLSIntVar]){
         assignationInt = ((v.asInstanceOf[CBLSIntVar], v.asInstanceOf[CBLSIntVar].getValue(true))) :: assignationInt
       }else if(v.isInstanceOf[CBLSSetVar]){
@@ -114,11 +114,11 @@ case class Store(override val verbose:Boolean = false,
     */
   def restoreSolution(s:Solution){
     assert(s.model==this)
-    for((intsetvar,intset) <- s.assignationIntSet if intsetvar.isInputVariable){
-      intsetvar := intset
+    for((intvar,int) <- s.assignationInt if intvar.isDecisionVariable){
+      intvar.asInstanceOf[CBLSIntVar] := int
     }
-    for((intvar,int) <- s.assignationInt if intvar.isInputVariable){
-      intvar := int
+    for((intsetvar,intset) <- s.assignationIntSet if intsetvar.isDecisionVariable){
+      intsetvar.asInstanceOf[CBLSSetVar]:= intset
     }
   }
 
@@ -129,10 +129,10 @@ case class Store(override val verbose:Boolean = false,
     */
   def restoreSnapshot(s:Snapshot){
     assert(s.model==this)
-    for((intsetvar,intset) <- s.assignationIntSet if intsetvar.isInputVariable){
+    for((intsetvar,intset) <- s.assignationIntSet if intsetvar.isDecisionVariable){
       intsetvar := intset
     }
-    for((intvar,int) <- s.assignationInt if intvar.isInputVariable){
+    for((intvar,int) <- s.assignationInt if intvar.isDecisionVariable){
       intvar := int
     }
   }
@@ -211,7 +211,7 @@ case class Store(override val verbose:Boolean = false,
   var NotifiedInvariant:Invariant=null
 
   override def toString:String = variables.toString()
-  def toStringInputOnly = variables.filter(v => v.isInputVariable).toString()
+  def toStringInputOnly = variables.filter(v => v.isDecisionVariable).toString()
 
   //returns the set of source variable that define this one.
   // This exploration procedure explores passed dynamic invariants,
@@ -222,6 +222,7 @@ case class Store(override val verbose:Boolean = false,
     while(!ToExplore.isEmpty){
       val head = ToExplore.head
       ToExplore = ToExplore.tail
+      //TODO: we can have both var and invar in the same class now.
       if(head.isInstanceOf[Variable]){
         val v:Variable = head.asInstanceOf[Variable]
         if(!SourceVariables.contains(v)){
@@ -430,17 +431,17 @@ trait Invariant extends PropagationElement{
 
   def notifyIntChanged(v:ChangingIntValue,OldVal:Int,NewVal:Int){}
 
-  def notifyInsertOnAny(v:CBLSSetVar,i:Any,value:Int){notifyInsertOn(v,i.asInstanceOf[Int],value)}
+  def notifyInsertOnAny(v:ChangingSetValue,i:Any,value:Int){notifyInsertOn(v,i.asInstanceOf[Int],value)}
 
-  def notifyInsertOn(v:CBLSSetVar,i:Int,value:Int){notifyInsertOn(v,value)}
+  def notifyInsertOn(v:ChangingSetValue,i:Int,value:Int){notifyInsertOn(v,value)}
 
-  def notifyInsertOn(v:CBLSSetVar,value:Int){}
+  def notifyInsertOn(v:ChangingSetValue,value:Int){}
 
-  def notifyDeleteOnAny(v:CBLSSetVar,i:Any,value:Int){notifyDeleteOn(v,i.asInstanceOf[Int],value)}
+  def notifyDeleteOnAny(v:ChangingSetValue,i:Any,value:Int){notifyDeleteOn(v,i.asInstanceOf[Int],value)}
 
-  def notifyDeleteOn(v:CBLSSetVar,i:Int,value:Int){notifyDeleteOn(v,value)}
+  def notifyDeleteOn(v:ChangingSetValue,i:Int,value:Int){notifyDeleteOn(v,value)}
 
-  def notifyDeleteOn(v:CBLSSetVar,value:Int){}
+  def notifyDeleteOn(v:ChangingSetValue,value:Int){}
 
   /**To override whenever possible to spot errors in invariants.
     * this will be called for each invariant after propagation is performed.
@@ -494,8 +495,8 @@ object InvariantHelper{
     var MyMax = Int.MinValue
     var MyMin = Int.MaxValue
     for (v <- variables) {
-      if (MyMax < v.getMaxVal) MyMax = v.getMaxVal
-      if (MyMin > v.getMinVal) MyMin = v.getMinVal
+      if (MyMax < v.max) MyMax = v.max
+      if (MyMin > v.min) MyMin = v.min
     }
     (MyMin, MyMax)
   }
@@ -520,7 +521,11 @@ trait Variable extends AbstractVariable{
   }
 }
 
-
+object Variable{
+  implicit val ord:Ordering[Variable] = new Ordering[Variable]{
+    def compare(o1: Variable, o2: Variable) = o1.compare(o2)
+  }
+}
 
 /**This is the base class for variable. A variable is a propagation element that holds some value.
   * Variables have an associated model, to which they register as soon as they are created. Variables also have a name,
@@ -542,7 +547,7 @@ trait AbstractVariable
   def definingInvariant:Invariant
 
   def isControlledVariable:Boolean = definingInvariant != null
-  def isInputVariable:Boolean = definingInvariant == null
+  def isDecisionVariable:Boolean = definingInvariant == null
 
   /**this method s to be called by any method that internally modifies the value of the variable
     * it schedules the variable for propagation, and performs a basic check of the identify of the executing invariant*/

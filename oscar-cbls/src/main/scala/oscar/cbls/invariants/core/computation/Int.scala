@@ -22,6 +22,7 @@
 package oscar.cbls.invariants.core.computation
 
 import oscar.cbls.invariants.core.propagation.{DummyPropagationElement, Checker, PropagationElement}
+import scala.language.implicitConversions
 
 /** this is something that has an integer value.
   * this value can be queried, and invariants can be posted on it,
@@ -32,6 +33,11 @@ trait IntValue extends Value{
   def domain:Domain
   def min = domain.min
   def max = domain.max
+}
+
+object IntValue{
+  implicit def int2IntValue(a:Int):IntValue = CBLSIntConst(a)
+  implicit def toFunction(i:IntValue):()=>Int = () => i.value
 }
 
 /**An IntVar is a variable managed by the [[oscar.cbls.invariants.core.computation.Store]] whose type is integer.
@@ -140,7 +146,7 @@ object ChangingIntValue{
   *
   * @param givenModel is the model in s-which the variable is declared, can be null if the variable is actually a constant, see [[oscar.cbls.invariants.core.computation.CBLSIntConst]]
   * @param initialDomain is the domain value of the variable. Some invariants exploit this value to declare fixed size arrays
-  * @param initialValue is the value of the variable
+  * @param initialValue is the initial value of the variable
   * @param n is the name of the variable, used for pretty printing only. if not set, a default will be used, based on the variable number
   */
 class CBLSIntVar(givenModel: Store, initialDomain:Domain, initialValue: Int, n: String = null)
@@ -189,31 +195,15 @@ class CBLSIntVar(givenModel: Store, initialDomain:Domain, initialValue: Int, n: 
 
 object CBLSIntVar{
 
-  def apply(r:Range, v:Int, name:String)(implicit s:Store) = new CBLSIntVar(s,r,v,name)
-  def apply(r:Range, v:Int)(implicit s:Store) = new CBLSIntVar(s,r,v,"")
+  def apply(d:Domain, v:Int, name:String)(implicit s:Store) = new CBLSIntVar(s,d,v,name)
+  def apply(d:Domain, v:Int)(implicit s:Store) = new CBLSIntVar(s,d,v,"")
 
-  def apply(model: Store, minVal:Int, maxVal:Int, value:Int , name:String) = {
-    require(minVal <= maxVal, "the minVal must be less than or equal to the maxVal of the domain minVal:" + minVal + " maxVal:" + maxVal)
-    new CBLSIntVar(model,(minVal to maxVal), value, name)
-  }
-
-  def apply(model: Store, domain: Range, value:Int, name:String) = {
-    require(!domain.isEmpty, "the domain supplied must be a valid increasing interval")
-    new CBLSIntVar(model, domain, value, name)
-  }
-
-  def apply(model: Store, value:Int = 0, name:String = "") = {
-    val domain = Int.MinValue to Int.MaxValue
-    new CBLSIntVar(model, domain, value, name)
-  }
+  def apply(model: Store, d:Domain = FullRange, value:Int , name:String) =
+    new CBLSIntVar(model, d, value, name)
 
   implicit val ord:Ordering[CBLSIntVar] = new Ordering[CBLSIntVar]{
     def compare(o1: CBLSIntVar, o2: CBLSIntVar) = o1.compare(o2)
   }
-
-  implicit def int2IntValue(a:Int):IntValue = CBLSIntConst(a)
-
-  implicit def toFunction(i:CBLSIntVar):()=>Int = () => i.value
 }
 
 /**
@@ -223,7 +213,7 @@ object CBLSIntVar{
  * @param value: the value of the constant
  * @author renaud.delandtsheer@cetic.be
  */
-class CBLSIntConst(override val value:Int)
+case class CBLSIntConst(override val value:Int)
   extends IntValue{
   override def toString:String = "" + value
   override def domain: SingleValueDomain = new SingleValueDomain(value)
@@ -231,35 +221,37 @@ class CBLSIntConst(override val value:Int)
   override def max: Int = value
 }
 
-object CBLSIntConst{
-  //I'v experimented with memoïzation in this class.
-  //this is however not a so good idea because the memory itself takes some room, and tome time
-  def apply(value:Int):CBLSIntConst = {
-    new CBLSIntConst(value)
-  }
-}
-
 /** this is a special case of invariant that has a single output variable, that is an IntVar
   * @author renaud.delandtsheer@cetic.be
   */
 abstract class IntInvariant(initialDomain:Domain = FullRange, initialValue:Int = 0)
-  extends ChangingIntValue(initialDomain:Domain, initialValue:Int) with Invariant{
+  extends ChangingIntValue(initialDomain, initialValue) with Invariant{
 
   override def definingInvariant: Invariant = this
+  override def isControlledVariable:Boolean = true
+  override def isDecisionVariable:Boolean = false
 
-  override def name: String = toString
+  private var customName:String = null
+  /**use this if you want to give a particular name to this concept, to be used in toString*/
+  def setName(n:String):IntInvariant = {
+    customName = n
+    this
+  }
+
+  //TODO: this is wrong, there is an unlimited recusion here
+  override def name: String = if(customName == null) toString else customName
 }
-
 
 object IdentityInt{
   def apply(v:IntValue):IntInvariant = new FullIdentityInt(v)
   def apply(toValue:CBLSIntVar, fromValue:IntValue){
     fromValue match{
       case c:CBLSIntConst => toValue := c.value
-      case c:ChangingIntValue => IdentityInt(toValue, c)
+      case c:ChangingIntValue => new IdentityInt(toValue, c)
     }
   }
 }
+
 /** an invariant that is the identity function
   * @author renaud.delandtsheer@cetic.be
   * @param v

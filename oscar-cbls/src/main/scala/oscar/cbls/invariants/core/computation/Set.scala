@@ -24,35 +24,29 @@ package oscar.cbls.invariants.core.computation
 import oscar.cbls.invariants.core.propagation.{PropagationElement, Checker}
 
 import scala.collection.immutable.SortedSet
+import scala.language.implicitConversions
 
+trait SetValue extends Value{
+  def value: SortedSet[Int]
+  def domain:Domain
+  def min = domain.min
+  def max = domain.max
+}
 
+object SetValue{
+  implicit def intSet2IntSetVar(a:SortedSet[Int]):SetValue = CBLSSetConst(a)
+  implicit def toFunction(i:SetValue):()=>SortedSet[Int] = () => i.value
+}
 
-/**An IntSetVar is a variable managed by the [[oscar.cbls.invariants.core.computation.Store]] whose type is set of integer.
-  * @param model is the model in s-which the variable is declared, can be null if the variable is actually a constant, see [[oscar.cbls.invariants.core.computation.CBLSSetConst]]
-  * @param MinVal is the minimum value of integers included in this set. Some invariants exploit this value to declare fixed size arrays
-  * @param MaxVal is the maximum value of integers included in this set. Some invariants exploit this value to declare fixed size arrays.
-  * @param Value is the value of the variable
-  * @param name is the name of the variable, used for pretty printing only
-  * @author renaud.delandtsheer@cetic.be
-  * */
-class CBLSSetVar(override val model:Store,
-                 private val MinVal:Int,
-                 private val MaxVal:Int,
-                 override val name:String,
-                 private var Value:SortedSet[Int]=SortedSet.empty)
-  extends Variable(model,name){
+abstract class ChangingSetValue(initialDomain:Domain, initialValue:SortedSet[Int])
+extends AbstractVariable with SetValue{
+  private var privatedomain:Domain = initialDomain
+  private var Value: SortedSet[Int] = initialValue
+  private var OldValue:SortedSet[Int] = Value
 
-  //bulk assign starts all
-  //then, value -> add/delete
-  //basically the bulk assign is the main issue here.
-  //maybe invariants should specify to the var the kind of update they are interested in??
-
-  def getMinVal:Int = MinVal
-  def getMaxVal:Int = MaxVal
-  def getModel = model
+  def domain:Domain = privatedomain
 
   private var ToPerform: List[(Int,Boolean)] = List.empty
-  private var OldValue:SortedSet[Int] = Value
 
   private def Perform(){
     def Update(l:List[(Int,Boolean)]){
@@ -66,11 +60,7 @@ class CBLSSetVar(override val model:Store,
     ToPerform = List.empty
   }
 
-  override def checkInternals(c:Checker){
-    assert(this.definingInvariant == null || OldValue.intersect(Value).size == Value.size,
-      "internal error: " + "Value: " + Value + " OldValue: " + OldValue)
-  }
-
+  //TODO: this is wrong.
   override def toString:String = name + ":={" + (if(model.propagateOnToString) value else Value).mkString(",") + "}"
 
   def valueString:String = "{" + value.mkString(",") + "}"
@@ -128,9 +118,9 @@ class CBLSSetVar(override val model:Store,
           OldValue -=v
           for (e:((PropagationElement,Any)) <- getDynamicallyListeningElements){
             val inv:Invariant = e._1.asInstanceOf[Invariant]
-            assert({this.getModel.NotifiedInvariant=inv; true})
+            assert({this.model.NotifiedInvariant=inv; true})
             inv.notifyDeleteOnAny(this,e._2,v)
-            assert({this.getModel.NotifiedInvariant=null; true})
+            assert({this.model.NotifiedInvariant=null; true})
           }
         })
         //puis on fait partir tous les insert
@@ -138,9 +128,9 @@ class CBLSSetVar(override val model:Store,
           OldValue += v
           for (e:((PropagationElement,Any)) <- getDynamicallyListeningElements){
             val inv:Invariant = e._1.asInstanceOf[Invariant]
-            assert({this.getModel.NotifiedInvariant=inv; true})
+            assert({this.model.NotifiedInvariant=inv; true})
             inv.notifyInsertOnAny(this,e._2,v)
-            assert({this.getModel.NotifiedInvariant=null; true})
+            assert({this.model.NotifiedInvariant=null; true})
           }
         })
         //puis, on fait une affectation en plus, pour garbage collecter l'ancienne structure de donnees.
@@ -156,18 +146,18 @@ class CBLSSetVar(override val model:Store,
             ToPerform = (v, inserted) :: ToPerform
             for (e:((PropagationElement,Any)) <- getDynamicallyListeningElements){
               val inv:Invariant = e._1.asInstanceOf[Invariant]
-              assert({this.getModel.NotifiedInvariant=inv;true})
+              assert({this.model.NotifiedInvariant=inv;true})
               inv.notifyInsertOnAny(this,e._2,v)
-              assert({this.getModel.NotifiedInvariant=null;true})
+              assert({this.model.NotifiedInvariant=null;true})
             }
           }else{
             //deleted
             ToPerform = (v, inserted) :: ToPerform
             for (e:((PropagationElement,Any)) <- getDynamicallyListeningElements){
               val inv:Invariant = e._1.asInstanceOf[Invariant]
-              assert({this.getModel.NotifiedInvariant=inv;true})
+              assert({this.model.NotifiedInvariant=inv;true})
               inv.notifyDeleteOnAny(this,e._2,v)
-              assert({this.getModel.NotifiedInvariant=null;true})
+              assert({this.model.NotifiedInvariant=null;true})
             }
           }
         }
@@ -182,7 +172,7 @@ class CBLSSetVar(override val model:Store,
 
   def getValue(NewValue:Boolean=false):SortedSet[Int] = {
     if (NewValue){
-      assert(getModel.checkExecutingInvariantOK(definingInvariant),
+      assert(model.checkExecutingInvariantOK(definingInvariant),
         "variable [" + this + "] queried for latest val by non-controlling invariant")
       Value
     }else{
@@ -194,123 +184,152 @@ class CBLSSetVar(override val model:Store,
     }
   }
 
-  /**Use this to specify that the IntSetVar is the output of the IntSetInvariant*/
-  def <==(i:SetInvariant){i.setOutputVar(this)}
-  def <==(i: CBLSSetVar) {this <== IdentitySet(i)}
-
   /**We suppose that the new value is not the same as the actual value.
     * otherwise, there is a huge waste of time.
     * @param v the new value to set to the variable
     */
-  def :=(v:SortedSet[Int]) {setValue(v)}
+  protected def :=(v:SortedSet[Int]) {setValue(v)}
 
-  def :+=(i:Int) {this.insertValue(i)}
-  def :-=(i:Int) {this.deleteValue(i)}
+  protected def :+=(i:Int) {this.insertValue(i)}
+  protected def :-=(i:Int) {this.deleteValue(i)}
 
   def getDotNode = "[label = \"IntSetVar(" + name + ")\" shape = oval color = " + getDotColor + "]"
+
+  override def checkInternals(c:Checker){
+    assert(this.definingInvariant == null || OldValue.intersect(Value).size == Value.size,
+      "internal error: " + "Value: " + Value + " OldValue: " + OldValue)
+  }
+}
+
+object ChangingSetValue{
+  implicit val ord:Ordering[ChangingSetValue] = new Ordering[ChangingSetValue]{
+    def compare(o1: ChangingSetValue, o2: ChangingSetValue) = o1.compare(o2)
+  }
+}
+
+/**An IntSetVar is a variable managed by the [[oscar.cbls.invariants.core.computation.Store]] whose type is set of integer.
+  * @param givenModel is the model in s-which the variable is declared, can be null if the variable is actually a constant, see [[oscar.cbls.invariants.core.computation.CBLSSetConst]]
+  * @param initialDomain is the domain value of the variable. Some invariants exploit this value to declare fixed size arrays
+  * @param initialValue is the initial value of the variable
+  * @param n is the name of the variable, used for pretty printing only. if not set, a default will be used, based on the variable number
+  * */
+class CBLSSetVar(givenModel: Store, initialDomain:Domain, initialValue: SortedSet[Int], n: String = null)
+  extends ChangingSetValue(initialDomain,initialValue) with Variable{
+
+  model = givenModel
+
+  override def name: String = if (n == null) defaultName else n
+
+  override def :=(v:SortedSet[Int]) {setValue(v)}
+
+  override def :+=(i:Int) {this.insertValue(i)}
+  override def :-=(i:Int) {this.deleteValue(i)}
+
+  def <==(i: SetValue) {IdentitySet(this,i)}
 }
 
 object CBLSSetVar{
   //this conversion is forbidden because we inserted the new grammar.
   //implicit def toIntSet(v:IntSetVar):SortedSet[Int] = v.value
 
-  def apply(r:Range = Int.MinValue to Int.MaxValue, v:Iterable[Int] = List.empty, name:String="")(implicit s:Store) = {
+  def apply(d:Domain=FullRange, v:Iterable[Int] = List.empty, name:String="")(implicit s:Store) = {
     val emptySet:SortedSet[Int] = SortedSet.empty
-    new CBLSSetVar(s, r.start, r.end,name, emptySet ++ v)
+    new CBLSSetVar(s, d, emptySet ++ v, name)
   }
 
   implicit val ord:Ordering[CBLSSetVar] = new Ordering[CBLSSetVar]{
     def compare(o1: CBLSSetVar, o2: CBLSSetVar) = o1.compare(o2)
   }
-
-  implicit def intSet2IntSetVar(a:SortedSet[Int]):CBLSSetVar = CBLSSetConst(a)
-
-  implicit def toFunction(s:CBLSSetVar):()=>SortedSet[Int] = () => s.value
 }
 
 /**
  * An IntSetConst is an IntSetVar that has a constant value, defined by a set of integer.
  * It has no associated model, as there is no need to incorporate it into any propagation process.
- * @param ConstValue: the value of the constant
+ * @param value: the value of the constant
  * @author renaud.delandtsheer@cetic.be
  * */
-case class CBLSSetConst(ConstValue:SortedSet[Int],override val model:Store = null)
-  extends CBLSSetVar(model
-    ,if(ConstValue.isEmpty) Int.MinValue else ConstValue.min
-    ,if(ConstValue.isEmpty) Int.MaxValue else ConstValue.max
-    ,toString,ConstValue){
-  override def getValue(NewValue:Boolean=false):SortedSet[Int] = ConstValue //pour pas avoir de propagation
-  override def toString:String = "IntSetConst{" + ConstValue.mkString(",") + "}"
-}
-
-/** an invariant that is the identity function
-  * @author renaud.delandtsheer@cetic.be
-  * @param v
-  */
-case class IdentitySet(v:CBLSSetVar) extends SetInvariant{
-
-  var output:CBLSSetVar = null
-  registerStaticAndDynamicDependency(v)
-  finishInitialization()
-
-  val myMin = v.getMinVal
-  val myMax = v.getMaxVal
-
-  override def checkInternals(c:Checker){
-    c.check(output.getValue(true).intersect(v.value).size == v.value.size)
-  }
-
-  override def setOutputVar(vv:CBLSSetVar){
-    output = vv
-    output.setDefiningInvariant(this)
-    output := v.value
-  }
-
-  override def notifyInsertOn(v:CBLSSetVar,value:Int){
-    assert(v == this.v)
-    output.insertValue(value)
-  }
-
-  override def notifyDeleteOn(v:CBLSSetVar,value:Int){
-    assert(v == this.v)
-    output.deleteValue(value)
-  }
+case class CBLSSetConst(override val value:SortedSet[Int])
+  extends SetValue{
+  override def toString:String = "Set{" + value.mkString(",") + "}"
+  override def domain:Domain = DomainSet(value)
+  override val min: Int = value.min
+  override val max: Int = value.max
 }
 
 
 /*
 * @author renaud.delandtsheer@cetic.be
  */
-abstract class SetInvariant extends Invariant{
-  def myMin:Int
-  def myMax:Int
-  implicit def toSetVar:CBLSSetVar = {
-    val a = new CBLSSetVar(model,myMin,myMax,this.getClass.getSimpleName,SortedSet.empty)
-    a <== this //the variable calls setOutputVar
-    a
+abstract class SetInvariant(initialDomain:Domain = FullRange, initialValue:SortedSet[Int] = SortedSet.empty)
+  extends ChangingSetValue(initialDomain, initialValue) with Invariant{
+
+  override def definingInvariant: Invariant = this
+  override def isControlledVariable:Boolean = true
+  override def isDecisionVariable:Boolean = false
+
+  private var customName:String = null
+  /**use this if you want to give a particular name to this concept, to be used in toString*/
+  def setName(n:String):SetInvariant = {
+    customName = n
+    this
   }
 
-  def toSetVar(name:String):CBLSSetVar = {
-    val a = new CBLSSetVar(model,myMin,myMax,name,SortedSet.empty)
-    a <== this //the variable calls setoutputVar
-    a
+  //TODO: this is wrong, there is an unlimited recusion here
+  override def name: String = if(customName == null) toString else customName
+}
+
+object IdentitySet{
+  def apply(v:SetValue):SetInvariant = new FullIdentitySet(v)
+  def apply(toValue:CBLSSetVar, fromValue:SetValue){
+    fromValue match{
+      case c:CBLSSetConst => toValue := c.value
+      case c:ChangingSetValue => new IdentitySet(toValue, c)
+    }
+  }
+}
+
+/** an invariant that is the identity function
+  * @author renaud.delandtsheer@cetic.be
+  */
+class IdentitySet(toValue:CBLSSetVar, fromValue:ChangingSetValue) extends Invariant{
+  registerStaticAndDynamicDependency(fromValue)
+  toValue.setDefiningInvariant(this)
+  finishInitialization()
+
+  override def notifyInsertOn(v:ChangingSetValue,value:Int){
+    assert(v == this.fromValue)
+    toValue.insertValue(value)
   }
 
-  @deprecated("use toSetVar instead", "1.1")
-  def toIntSetVar:CBLSSetVar = toSetVar
+  override def notifyDeleteOn(v:ChangingSetValue,value:Int){
+    assert(v == this.fromValue)
+    toValue.deleteValue(value)
+  }
 
-  /**this method is called by the output variable
-    * basically, the invariant does not know what is its output variable at creation time.
-    * if this is an issue, you can always create an output variable internally,
-    * and implement this method with en identity invariant.
-    * see [[oscar.cbls.invariants.core.computation.IdentityInt]] and [[oscar.cbls.invariants.core.computation.IdentitySet]]
-    * @param v the variable that is the output variable of the invariant.
-    */
-  def setOutputVar(v:CBLSSetVar)
+  override def checkInternals(c:Checker){
+    c.check(toValue.getValue(true) == fromValue.value)
+  }
 }
 
-object SetInvariant{
-  implicit def toIntSetVar(i:SetInvariant):CBLSSetVar = i.toSetVar
+/** an invariant that is the identity function
+  * @author renaud.delandtsheer@cetic.be
+  * @param v
+  */
+class FullIdentitySet(v:SetValue) extends SetInvariant(v.domain,v.value){
+  registerStaticAndDynamicDependency(v)
+  finishInitialization()
+
+  override def notifyInsertOn(v:ChangingSetValue,value:Int){
+    assert(v == this.v)
+    this.insertValue(value)
+  }
+
+  override def notifyDeleteOn(v:ChangingSetValue,value:Int){
+    assert(v == this.v)
+    this.deleteValue(value)
+  }
+
+  override def checkInternals(c:Checker){
+    c.check(this.getValue(true).intersect(v.value).size == v.value.size)
+  }
 }
-
-

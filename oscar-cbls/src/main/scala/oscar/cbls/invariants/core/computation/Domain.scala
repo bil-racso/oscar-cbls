@@ -19,6 +19,7 @@
   ******************************************************************************/
 package oscar.cbls.invariants.core.computation
 
+import scala.collection.immutable.SortedSet
 import scala.util.Random
 import scala.language.implicitConversions
 
@@ -27,7 +28,18 @@ object Domain{
     if (r.step == 1) DomainRange(r.head,r.last)
     else DomainSet(r.toSet)
   }
-  implicit def setToDomain(s:Set[Int]):Domain = DomainSet(s)
+
+  implicit def setToDomain(s:Set[Int]):Domain = {
+    if (s.size == 1) SingleValueDomain(s.head)
+    else DomainSet(s)
+  }
+
+  def apply(v:Iterable[Int]):Domain =
+  v match{
+    case s:Set[Int] => s
+    case r:Range => r
+    case i:Iterable[Int] => SortedSet.empty[Int] ++ i
+  }
 }
 
 sealed abstract class Domain {

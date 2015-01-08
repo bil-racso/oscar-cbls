@@ -140,7 +140,7 @@ case class ConstraintSystem(model:Store) extends Constraint with ObjectiveTrait{
       Violation = new Sum(PostedConstraints.map((constraintANDintvar) => {
         if(constraintANDintvar._2 == null) constraintANDintvar._1.violation
         else Prod(List(constraintANDintvar._1.violation,constraintANDintvar._2))
-      })) with CustomName{val customName = "violation"}
+      })).setName("violation")
 
       aggregateLocalViolations()
       PropagateLocalToGlobalViolations()
@@ -175,7 +175,7 @@ case class ConstraintSystem(model:Store) extends Constraint with ObjectiveTrait{
       if (model.isClosed) throw new Exception("cannot create new violation after model is closed.")
       //not registered yet
       VarsWatchedForViolation = v :: VarsWatchedForViolation
-      val violationVariable = CBLSIntVar(model,0,Int.MaxValue,0,"global violation of " + v.name)
+      val violationVariable = CBLSIntVar(model,0 to Int.MaxValue,0,"global violation of " + v.name)
       v.storeAt(IndexForGlobalViolationINSU,new GlobalViolationDescriptor(violationVariable))
       registerConstrainedVariable(v)
       violationVariable

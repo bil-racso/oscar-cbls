@@ -20,7 +20,6 @@
 
 package oscar.cbls.invariants.core.computation
 
-import oscar.cbls.invariants.core.computation.{CBLSSetVar, CBLSIntVar}
 import oscar.cbls.invariants.core.propagation.Checker
 
 import scala.collection.immutable.SortedSet
@@ -170,9 +169,9 @@ class Event(v:Variable, w:Variable, ModifiedVars:Iterable[Variable]) extends Inv
   if (ModifiedVars != null)
     for(variable <- ModifiedVars){variable.setDefiningInvariant(this)}
 
-  override def notifyIntChanged(v:CBLSIntVar,i:Int,OldVal:Int,NewVal:Int){scheduleForPropagation()}
-  override def notifyInsertOn(v:CBLSSetVar,i:Int,value:Int){scheduleForPropagation()}
-  override def notifyDeleteOn(v:CBLSSetVar,i:Int,value:Int){scheduleForPropagation()}
+  override def notifyIntChanged(v:ChangingIntValue,i:Int,OldVal:Int,NewVal:Int){scheduleForPropagation()}
+  override def notifyInsertOn(v:ChangingSetValue,i:Int,value:Int){scheduleForPropagation()}
+  override def notifyDeleteOn(v:ChangingSetValue,i:Int,value:Int){scheduleForPropagation()}
 
   override def performPropagation(){
     if (action != null) action()
