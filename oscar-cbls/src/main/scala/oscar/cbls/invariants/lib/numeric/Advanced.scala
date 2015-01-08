@@ -28,7 +28,7 @@ import oscar.cbls.invariants.core.propagation._
  * @param cond is the condition for selecting variables in the array of summed ones, cannot be null
   * @author renaud.delandtsheer@cetic.be
   * */
-case class SumElements(vars: Array[CBLSIntVar], cond: CBLSSetVar) extends IntInvariant with Bulked[CBLSIntVar, Unit]{
+case class SumElements(vars: Array[IntValue], cond: CBLSSetVar) extends IntInvariant with Bulked[CBLSIntVar, Unit] with VaryingDependenciesInvariant{
   assert(vars.size > 0, "Invariant SumElements declared with zero vars to max")
   assert(cond != null, "cond cannot be null for SumElements")
 
@@ -94,7 +94,7 @@ case class SumElements(vars: Array[CBLSIntVar], cond: CBLSSetVar) extends IntInv
  * @param cond is the condition for selecting variables in the set of summed ones.
   * @author renaud.delandtsheer@cetic.be
   * */
-case class ProdElements(vars: Array[CBLSIntVar], cond: CBLSSetVar) extends IntInvariant with Bulked[CBLSIntVar, Unit]{
+case class ProdElements(vars: Array[CBLSIntVar], cond: CBLSSetVar) extends IntInvariant with Bulked[CBLSIntVar, Unit] with VaryingDependenciesInvariant{
   assert(cond != null, "cond cannot be null for ProdElements")
 
   def myMin = Int.MinValue

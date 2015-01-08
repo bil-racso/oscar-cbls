@@ -37,7 +37,7 @@ import scala.math.abs
  * @author renaud.delandtsheer@cetic.be
  */
 protected class LEA(val left: CBLSIntVar, val right: CBLSIntVar) extends Constraint {
-  model = InvariantHelper.findModel(List(left,right))
+  model = InvariantHelper.findModel(left,right)
 
   registerConstrainedVariables(left, right)
 
@@ -81,11 +81,11 @@ case class GE(l: CBLSIntVar, r: CBLSIntVar) extends LEA(r, l)
  * @author renaud.delandtsheer@cetic.be
  */
 protected class LA(val left: CBLSIntVar, val right: CBLSIntVar) extends Constraint {
-  model = InvariantHelper.findModel(List(left,right))
+  model = InvariantHelper.findModel(left,right)
   registerConstrainedVariables(left, right)
 
   val Violation: CBLSIntVar = Max2(0, left - right + 1)
-  finishInitialization(Violation.getPropagationStructure)
+  finishInitialization(Violation.propagationStructure)
 
   /**
    * the violation is Max(0,left - right + 1)
@@ -154,7 +154,7 @@ case class NE(left: CBLSIntVar, right: CBLSIntVar) extends Constraint {
  * @author renaud.delandtsheer@cetic.be
  */
 case class EQ(left: CBLSIntVar, right: CBLSIntVar) extends Constraint {
-  model = InvariantHelper.findModel(List(left,right))
+  model = InvariantHelper.findModel(left,right)
   registerConstrainedVariables(left, right)
   finishInitialization()
 

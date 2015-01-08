@@ -27,13 +27,13 @@ import oscar.cbls.invariants.lib.logic._
 import oscar.cbls.invariants.core.propagation.Checker;
 
 object Sum{
-  def apply(vars: Iterable[CBLSIntVar]):Sum = new Sum(vars)
-  def apply(vars: Array[CBLSIntVar], cond: CBLSSetVar):SumElements = SumElements(vars, cond)
+  def apply(vars: Iterable[IntValue]):Sum = new Sum(vars)
+  def apply(vars: Array[IntValue], cond: CBLSSetVar):SumElements = SumElements(vars, cond)
 }
 
 
 object Prod{
-  def apply(vars: Iterable[CBLSIntVar]):Prod = new Prod(vars)
+  def apply(vars: Iterable[IntValue]):Prod = new Prod(vars)
   def apply(vars: Array[CBLSIntVar], cond: CBLSSetVar):ProdElements = ProdElements(vars, cond)
 }
 
@@ -42,31 +42,19 @@ object Prod{
  * @param vars is an iterable of IntVars
  * @author renaud.delandtsheer@cetic.be
  * */
-class Sum(vars: Iterable[CBLSIntVar]) extends IntInvariant {
-//actually, it works fine with zero vars.
-//  assert(vars.size > 0, "Invariant + declared with zero vars to sum up")
+class Sum(vars: Iterable[IntValue]) extends IntInvariant(
+  vars.foldLeft(0)((acc, intvar) => acc + intvar.min) to vars.foldLeft(0)((acc, intvar) => acc + intvar.max),
+  vars.foldLeft(0)((a, b) => a + b.value)) {
 
   for (v <- vars) registerStaticAndDynamicDependency(v)
   finishInitialization()
 
-  def myMin = vars.foldLeft(0)((acc, intvar) => acc + intvar.minVal)
-  def myMax = vars.foldLeft(0)((acc, intvar) => acc + intvar.maxVal)
-
-  var output: CBLSIntVar = null
-
-  override def setOutputVar(v: CBLSIntVar) {
-    output = v
-    output.setDefiningInvariant(this)
-    output := vars.foldLeft(0)((a, b) => a + b.value)
-  }
-
-  @inline
-  override def notifyIntChanged(v: CBLSIntVar, OldVal: Int, NewVal: Int) {
-    output :+= NewVal - OldVal
+  override def notifyIntChanged(v: ChangingIntValue, OldVal: Int, NewVal: Int) {
+    this :+= NewVal - OldVal
   }
 
   override def checkInternals(c: Checker) {
-    c.check(output.value == vars.foldLeft(0)((acc, intvar) => acc + intvar.value),
+    c.check(this.value == vars.foldLeft(0)((acc, intvar) => acc + intvar.value),
       Some("output.value == vars.foldLeft(0)((acc,intvar) => acc+intvar.value)"))
   }
 }
@@ -76,7 +64,7 @@ class Sum(vars: Iterable[CBLSIntVar]) extends IntInvariant {
  * @param vars is a set of IntVars
  * @author renaud.delandtsheer@cetic.be
  * */
-class Prod(vars: Iterable[CBLSIntVar]) extends IntInvariant {
+class Prod(vars: Iterable[IntValue]) extends IntInvariant {
   assert(vars.size > 0, "Invariant prod declared with zero vars to multiply")
 
   for (v <- vars) registerStaticAndDynamicDependency(v)
@@ -85,24 +73,19 @@ class Prod(vars: Iterable[CBLSIntVar]) extends IntInvariant {
   var NullVarCount: Int = vars.count(v => v.value == 0)
   var NonNullProd: Int = vars.foldLeft(1)((acc, intvar) => if (intvar.value == 0) { acc } else { acc * intvar.value })
 
-  var output: CBLSIntVar = null
-
-  //TODO: find better bound, this is far too much
-  def myMax = vars.foldLeft(1)((acc, intvar) => acc * (if (math.abs(intvar.maxVal) > math.abs(intvar.minVal)) math.abs(intvar.maxVal) else math.abs(intvar.minVal)))
-  def myMin = -myMax
-
-  override def setOutputVar(v: CBLSIntVar) {
-    output = v
-    output.setDefiningInvariant(this)
-    if (NullVarCount != 0) {
-      output := 0
-    } else {
-      output := NonNullProd
-    }
+  if (NullVarCount != 0) {
+    this := 0
+  } else {
+    this := NonNullProd
   }
 
+  //TODO: find better bound, this is far too much
+  restrictDomain({
+    val myMax = vars.foldLeft(1)((acc, intvar) => acc * (if (math.abs(intvar.max) > math.abs(intvar.min)) math.abs(intvar.max) else math.abs(intvar.min)))
+    -myMax to myMax})
+
   @inline
-  override def notifyIntChanged(v: CBLSIntVar, OldVal: Int, NewVal: Int) {
+  override def notifyIntChanged(v: ChangingIntValue, OldVal: Int, NewVal: Int) {
     assert(OldVal != NewVal)
     if (OldVal == 0 && NewVal != 0) {
       NullVarCount -= 1
@@ -115,17 +98,17 @@ class Prod(vars: Iterable[CBLSIntVar]) extends IntInvariant {
       NonNullProd = NonNullProd * NewVal
     }
     if (NullVarCount == 0) {
-      output := NonNullProd
+      this := NonNullProd
     } else {
-      output := 0
+      this := 0
     }
   }
 
   override def checkInternals(c: Checker){
     var prod = 1
     for (v <- vars) prod *= v.value
-    c.check(output.value == prod,
-      Some("output.value (" + output.value + ") == prod (" + prod + ")"))
+    c.check(this.value == prod,
+      Some("output.value (" + this.value + ") == prod (" + prod + ")"))
   }
 }
 
@@ -135,7 +118,7 @@ class Prod(vars: Iterable[CBLSIntVar]) extends IntInvariant {
  * @author renaud.delandtsheer@cetic.be
  * */
 case class Minus(left: CBLSIntVar, right: CBLSIntVar)
-  extends IntInt2Int(left, right, ((l: Int, r: Int) => l - r), left.minVal - right.maxVal, left.maxVal - right.minVal) {
+  extends IntInt2Int(left, right, ((l: Int, r: Int) => l - r), left.min - right.max to left.max - right.min) {
   assert(left != right)
 }
 
@@ -145,15 +128,15 @@ case class Minus(left: CBLSIntVar, right: CBLSIntVar)
  * @author renaud.delandtsheer@cetic.be
  * */
 case class Sum2(left: CBLSIntVar, right: CBLSIntVar)
-  extends IntInt2Int(left, right, ((l: Int, r: Int) => l + r), left.minVal + right.minVal, left.maxVal + right.maxVal)
+  extends IntInt2Int(left, right, ((l: Int, r: Int) => l + r), left.min + right.min to left.max + right.max)
 
 /**
  * left * right
  * where left, right, and output are IntVar
  * @author renaud.delandtsheer@cetic.be
  * */
-case class Prod2(left: CBLSIntVar, right: CBLSIntVar)
-  extends IntInt2Int(left, right, ((l: Int, r: Int) => l * r), Int.MinValue, Int.MaxValue)
+case class Prod2(left: IntValue, right: IntValue)
+  extends IntInt2Int(left, right, ((l: Int, r: Int) => l * r))
 
 /**
  * Abs(Left - Right)
@@ -161,7 +144,7 @@ case class Prod2(left: CBLSIntVar, right: CBLSIntVar)
  * @author renaud.delandtsheer@cetic.be
  * */
 case class Dist(left: CBLSIntVar, right: CBLSIntVar)
-  extends IntInt2Int(left, right, ((l: Int, r: Int) => (l - r).abs), Int.MinValue, Int.MaxValue)
+  extends IntInt2Int(left, right, ((l: Int, r: Int) => (l - r).abs), 0 to Int.MaxValue)
 
 /**
  * left / right
@@ -186,8 +169,8 @@ case class Mod(left: CBLSIntVar, right: CBLSIntVar)
  * where output and v are IntVar
  * @author renaud.delandtsheer@cetic.be
  * */
-case class Abs(v: CBLSIntVar)
-  extends Int2Int(v, ((x: Int) => x.abs), (if (v.minVal <= 0) 0 else v.minVal), v.maxVal.max(-v.minVal))
+case class Abs(v: IntValue)
+  extends Int2Int(v, ((x: Int) => x.abs), (if (v.min <= 0) 0 else v.min) to v.max.max(-v.min))
 
 /**
  * This invariant implements a step function. Values higher than pivot are mapped to ifval
@@ -199,8 +182,8 @@ case class Abs(v: CBLSIntVar)
  * @param thenval the value returned when x > pivot
  * @param elseval the value returned when x <= pivot
  */
-case class Step(x: CBLSIntVar, pivot: Int = 0, thenval: Int = 1, elseval: Int = 0)
-  extends Int2Int(x, (a: Int) => if (a > pivot) thenval else elseval, 0, 1)
+case class Step(x: IntValue, pivot: Int = 0, thenval: Int = 1, elseval: Int = 0)
+  extends Int2Int(x, (a: Int) => if (a > pivot) thenval else elseval, 0 to 1)
 
 /**
  * This invariant implements the identity function within the min-max range.
@@ -208,8 +191,8 @@ case class Step(x: CBLSIntVar, pivot: Int = 0, thenval: Int = 1, elseval: Int = 
  * values higher tham max result to max
  * @author renaud.delandtsheer@cetic.be
  * @param x
- * @param min
- * @param max
+ * @param minBound
+ * @param maxBound
  */
-case class Bound(x: CBLSIntVar, min:Int, max:Int)
-  extends Int2Int(x, (a: Int) => if (a < min) min else if (a > max) max else a,min, max)
+case class Bound(x: IntValue, minBound:Int, maxBound:Int)
+  extends Int2Int(x, (a: Int) => if (a < minBound) minBound else if (a > maxBound) maxBound else a, math.max(minBound,x.min) to math.min(maxBound,x.max))

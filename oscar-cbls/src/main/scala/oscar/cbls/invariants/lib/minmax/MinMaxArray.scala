@@ -84,7 +84,7 @@ case class MinArray(varss: Array[CBLSIntVar], ccond: CBLSSetVar = null, default:
  * update is O(log(n))
  * @author renaud.delandtsheer@cetic.be
  * */
-abstract class MiaxArray(vars: Array[CBLSIntVar], cond: CBLSSetVar, default: Int) extends IntInvariant with Bulked[CBLSIntVar, (Int, Int)] {
+abstract class MiaxArray(vars: Array[CBLSIntVar], cond: CBLSSetVar, default: Int) extends IntInvariant with Bulked[CBLSIntVar, (Int, Int)] with VaryingDependenciesInvariant {
 
   var keyForRemoval: Array[KeyForElementRemoval] = new Array(vars.size)
   var h: BinomialHeapWithMoveExtMem[Int] = new BinomialHeapWithMoveExtMem[Int](i => Ord(vars(i)), vars.size, new ArrayMap(vars.size))

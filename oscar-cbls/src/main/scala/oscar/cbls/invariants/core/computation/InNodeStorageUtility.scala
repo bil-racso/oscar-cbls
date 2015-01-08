@@ -61,7 +61,7 @@ trait StorageUtilityManager {
     * bound to this StorageUtilityManager
     * @return
     */
-  def getStorageKey(): Int = {
+  def newStorageKey(): Int = {
     val toreturn = nextStoragePlace
     nextStoragePlace += 1
     toreturn

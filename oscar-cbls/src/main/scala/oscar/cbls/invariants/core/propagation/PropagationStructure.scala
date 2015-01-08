@@ -30,6 +30,25 @@ import oscar.cbls.invariants.core.computation.StorageUtilityManager
 ;
 
 /**
+ * a schedulingHandler handles the scheduling for a set of PE.
+ *
+ */
+trait SchedulingHandler{
+  /**
+   * when a PE needs propagation, it schedules itself to his SH through this method
+   * notice that a PE canno schedule itself for propagation if it has already been, and has not been propagated since
+   * PE should ensure this by themselves, EG through an internal boolean variable
+   * @param e
+   */
+  def scheduleForPropagation(e:PropagationElement)
+
+  /**
+    * @return the propagation structure that contains this, itself if it is a PS
+    */
+  def propagationStructure:PropagationStructure
+}
+
+/**
  * This class manages propagation among propagation elements.
  *
  * This class is intended to be extended, and the overriding class must implement
@@ -66,7 +85,8 @@ import oscar.cbls.invariants.core.computation.StorageUtilityManager
  * @param sortScc true if SCC should be sorted, false otherwise. Set to true, unless you know what your are doing. Setting to false might provide a speedup, but propagation will not be single pass on SCC anymore
  * @author renaud.delandtsheer@cetic.be
  */
-abstract class PropagationStructure(val verbose: Boolean, val checker:Option[Checker] = None, val noCycle: Boolean, val topologicalSort:Boolean, val sortScc:Boolean = true){
+abstract class PropagationStructure(val verbose: Boolean, val checker:Option[Checker] = None, val noCycle: Boolean, val topologicalSort:Boolean, val sortScc:Boolean = true)
+  extends SchedulingHandler{
 
   //priority queue is ordered, first on propagation planning list, second on DAG.
 
@@ -75,6 +95,12 @@ abstract class PropagationStructure(val verbose: Boolean, val checker:Option[Che
     * The method is expected to return consistent result once the setupPropagationStructure method is called
     */
   def getPropagationElements: Iterable[PropagationElement]
+
+  /**
+   * @return the propagation structure that contains this, itself if it is a PS
+   */
+  override def propagationStructure: PropagationStructure = this
+
 
   /**This method is to be overridden and is expected to return the maximal value of the UniqueID
     * of the propagation elements
@@ -446,7 +472,7 @@ abstract class PropagationStructure(val verbose: Boolean, val checker:Option[Che
     if(!StaticGraph && !DynamicGraph)
       throw new Exception("you want to dump to dot, but none of the static and dynamic graphs")
 
-    for (e <- getPropagationElements if e.component == null) {
+    for (e <- getPropagationElements if e.schedulingHandler == this) {
       if (! (!StaticGraph && e.isInstanceOf[BulkPropagator]))
         ToReturn += "   " + nodeName(e) + e.getDotNode + "\n"
     }
@@ -529,6 +555,8 @@ abstract class PropagationStructure(val verbose: Boolean, val checker:Option[Che
     "  StronglyConnectedComponentsCount:" + StronglyConnexComponentsList.size + "\n" +
     ")"
   }
+
+
 }
 
 /**This is a O(1) dictionary for propagation elements.
@@ -555,14 +583,15 @@ class NodeDictionary[T](val MaxNodeID:Int)(implicit val X:Manifest[T]){
 }
 
 abstract class StronglyConnectedComponent(val Elements: Iterable[PropagationElement],
-                                                val core: PropagationStructure, val _UniqueID: Int) extends PropagationElement {
+                                                val core: PropagationStructure, val _UniqueID: Int) extends PropagationElement with SchedulingHandler{
+  schedulingHandler = core
   uniqueID = _UniqueID
 
-  for (e <- Elements) {e.component = this}
+  for (e <- Elements) {e.schedulingHandler = this}
 
   def size: Int = Elements.size
 
-  override def getPropagationStructure: PropagationStructure = core
+  override def propagationStructure: PropagationStructure = core
 
   /** This returns the dot node to display on the DOT output for the node. Only the argument of the nodes
     * example: "[label= \"toto\" shape=diamond color=red]"
@@ -570,16 +599,6 @@ abstract class StronglyConnectedComponent(val Elements: Iterable[PropagationElem
   def getDotNode: String = {
     throw new Exception("StrognlyConnectedComponent are handled as subgraph in dot files")
     ""
-  }
-
-  def addDependency(from:PropagationElement, to:PropagationElement);
-
-  def dependencyAdded();
-
-  override def determineBoundary() {
-    for (e <- Elements) {
-      e.determineBoundary()
-    }
   }
 
   var ScheduledElements: List[PropagationElement] = List.empty
@@ -613,9 +632,6 @@ abstract class StronglyConnectedComponent(val Elements: Iterable[PropagationElem
 class StronglyConnectedComponentNoSort(Elements: Iterable[PropagationElement],
                                        core: PropagationStructure, _UniqueID: Int) extends StronglyConnectedComponent(Elements,core,_UniqueID) {
 
-  override def dependencyAdded(): Unit = {}
-  override def addDependency(from: PropagationElement, to: PropagationElement): Unit = {}
-
   override def performPropagation() {
     //TODO: this is performing a stack-based prioritization: maybe a queue would perform better? actually.
     while (!ScheduledElements.isEmpty) {
@@ -633,7 +649,9 @@ class StronglyConnectedComponentTopologicalSort(override val Elements: Iterable[
   override def nodes = Elements.asInstanceOf[Iterable[DAGNode]]
 
   override def determineBoundary() {
-    super.determineBoundary()
+    for (e <- Elements) {
+      e.determineBoundary()
+    }
     for (e <- Elements) {
       InitiateDynamicGraphFromSameComponent(e)
       //TODO: uniquement ceux qui sont boundary? les autres, on pourrait se contenter du graphe statique.
@@ -641,17 +659,17 @@ class StronglyConnectedComponentTopologicalSort(override val Elements: Iterable[
   }
 
   def InitiateDynamicGraphFromSameComponent(e:PropagationElement){
-    assert(e.component == this)
+    assert(e.schedulingHandler == this)
 
     def filterForListened(listened:PropagationElement,injector:(()=>Unit), isStillValid:(()=> Boolean)):Unit = {
-      if(this == listened.component)
+      if(this == listened.schedulingHandler)
         registerListenedWaitingDependency(injector, isStillValid)
     }
     e.dynamicallyListenedElementsFromSameComponent
       = e.dynamicallyListenedElements.delayedPermaFilter(filterForListened)
 
     def filterForListening(listeningAndPayload:(PropagationElement,Any),injector:(()=>Unit), isStillValid:(()=> Boolean)){
-      if(this == listeningAndPayload._1.component)
+      if(this == listeningAndPayload._1.schedulingHandler)
         registerListeningWaitingDependency(injector)
     }
 
@@ -759,8 +777,31 @@ object PropagationElement {
 /**This class is used in as a handle to register and unregister dynamically to variables
   * @author renaud.delandtsheer@cetic.be
   * */
-case class KeyForElementRemoval(keyForListenedElement: DPFDLLStorageElement[(PropagationElement, Any)]
-                                , keyForListeningElement: DPFDLLStorageElement[PropagationElement])
+class KeyForElementRemoval(val keyForListenedElement: DPFDLLStorageElement[(PropagationElement, Any)]
+                                , val keyForListeningElement: DPFDLLStorageElement[PropagationElement])
+
+case object DummyKeyForElementRemoval extends KeyForElementRemoval(null,null)
+
+trait VaryingDependencies extends PropagationElement{
+  var determiningElement: PropagationElement = null
+  override def getDeterminingElement = determiningElement
+
+  /**must belong to the statically listened elements.
+    * cannot be added to the dynamically listened ones (it is added through this method, so you cannot remove it)
+    * @param p the element that determines the dynamic dependencies of the propagation element
+    * @param i an additional value that is stored in this element together with the reference to this,
+    * can be use for notification purposes
+    */
+  protected final def registerDeterminingElement(p: PropagationElement, i: Any) {
+    assert(this.getStaticallyListenedElements.exists(e => e == p),
+      "dependency to determining element " + p + " must be registered in static propagation graph")
+    assert(determiningElement == null, "only one determining element is authorized")
+    registerDynamicallyListenedElement(p, i)
+    determiningElement = p
+  }
+}
+
+trait DummyPropagationElement
 
 /**this is a propagation element. It mainly defines:
   * it dependencies (static and dynamic), which are notably forwarded to the API of the DAGNode
@@ -773,19 +814,20 @@ case class KeyForElementRemoval(keyForListenedElement: DPFDLLStorageElement[(Pro
  - a dynamic graph whose edge can change dynamically, but are all included in the static propagation graph
   * @author renaud.delandtsheer@cetic.be
   * */
-abstract class PropagationElement extends DAGNode{
+trait PropagationElement extends DAGNode with DummyPropagationElement{
+
+  /** the thing to which we schedult ourselves for propagation
+    * can be a SCC or a PS
+    */
+  var schedulingHandler:SchedulingHandler = null
+
+  def propagationStructure:PropagationStructure = schedulingHandler.propagationStructure
 
   final def compare(that: DAGNode): Int = {
     assert(this.uniqueID != -1, "cannot compare non-registered PropagationElements this: [" + this + "] that: [" + that + "]")
     assert(that.uniqueID != -1, "cannot compare non-registered PropagationElements this: [" + this + "] that: [" + that + "]")
     this.uniqueID - that.uniqueID
   }
-
-  //TODO maybe should we unify with model?
-  /**this refers to the propagationComponent that contains the PropagationElement.
-    * it is managed by the propagation structure
-    */
-  var component: StronglyConnectedComponent = null
 
   /**set to true if the PropagationElement is scheduled for propagation, false otherwise.
     * this is managed by the PropagationElement
@@ -803,23 +845,20 @@ abstract class PropagationElement extends DAGNode{
   /**this sets the value of IsBoundary according to the definition of this variable
     * @return the value of IsBoundary*/
   def determineBoundary() {
-    if (component == null) {
-      isBoundary = false
-    } else {
-      val a = getDeterminingElement
-      if (a == null) {
-        isBoundary = false
-      } else {
-        isBoundary = a.component != this.component
-      }
+    isBoundary = schedulingHandler match{
+      case null => false
+      case scc:StronglyConnectedComponentTopologicalSort =>
+        getDeterminingElement match{
+          case null => false
+          case a => a.schedulingHandler != schedulingHandler
+        }
+      case _ => false
     }
   }
 
   var staticallyListenedElements: List[PropagationElement] = List.empty
 
   var staticallyListeningElements: List[PropagationElement] = List.empty
-
-  var determiningElement: PropagationElement = null
 
   val dynamicallyListenedElements: DelayedPermaFilteredDoublyLinkedList[PropagationElement, PropagationElement]
   = new DelayedPermaFilteredDoublyLinkedList[PropagationElement, PropagationElement]
@@ -851,32 +890,22 @@ abstract class PropagationElement extends DAGNode{
 
   final def getDAGSucceedingNodes: Iterable[DAGNode] = dynamicallyListeningElementsFromSameComponent
 
+  /**the variable that influence on the dependencies of the propagation element
+    * these are propagated first to constitute the dynamic propagation graph*/
+  def getDeterminingElement: PropagationElement = null
+
   /**registers an element in the static dependency graph.
     * Beware that you also need to register elements in the dynamic propagation graph for something to happen.
     * @param p the element that we register to
     **/
-  protected final def registerStaticallyListenedElement(p: PropagationElement) {
-    staticallyListenedElements = p :: staticallyListenedElements
-    p.staticallyListeningElements = this :: p.staticallyListeningElements
+  protected final def registerStaticallyListenedElement(p: DummyPropagationElement) {
+    p match{
+      case pe:PropagationElement =>
+        staticallyListenedElements = pe :: staticallyListenedElements
+        pe.staticallyListeningElements = this :: pe.staticallyListeningElements
+      case _ => ;
+    }
   }
-
-  /**must belong to the statically listened elements.
-    * cannot be added to the dynamically listened ones (it is added through this method, so you cannot remove it)
-    * @param p the element that determines the dynamic dependencies of the propagation element
-    * @param i an additional value that is stored in this element together with the reference to this,
-    * can be use for notification purposes
-    */
-  protected final def registerDeterminingElement(p: PropagationElement, i: Any) {
-    assert(this.getStaticallyListenedElements.exists(e => e == p),
-      "dependency to determining element " + p + " must be registered in static propagation graph")
-    assert(determiningElement == null, "only one determining element is authorized")
-    registerDynamicallyListenedElement(p, i)
-    determiningElement = p
-  }
-
-  /**the variable that influence on the dependencies of the propagation element
-    * these are propagated first to constitute the dynamic propagation graph*/
-  def getDeterminingElement: PropagationElement = determiningElement
 
   /**this registers to the element in the dynamic propagation graph.
     * this element must have been registered o the static propagation graph before, or be accessible through a bulk
@@ -885,25 +914,43 @@ abstract class PropagationElement extends DAGNode{
     *            if other type is used, the invariant should override a dedicated notification method.
     * @return a key that is needed to unregister the element in the dynamic propagation graph
     */
-  protected def registerDynamicallyListenedElement(p: PropagationElement, i: Any): KeyForElementRemoval = {
-    assert(isStaticPropagationGraphOrBulked(p, 1),
-      "dependency to element " + p + " must be registered in static propagation graph before dynamic one")
+  protected def registerDynamicallyListenedElement(p: DummyPropagationElement, i: Any): KeyForElementRemoval = {
+    p match{
+      case pe:PropagationElement =>
+        assert(isStaticPropagationGraphOrBulked(pe, 1),
+          "dependency to element " + pe + " must be registered in static propagation graph before dynamic one")
 
-    //TODO: we should remove isBoundary; thisis the only place where it is read; maybe combining this with the merging of component and store?
-    //We need to check for boundary here Because other elements might indeed change their dependencies,
-    // but since they are not boundary, this would require resorting the SCC during the propagation
-    if (isBoundary && p.component == this.component) {
-      //this is only called once the component is established, so no worries.
-      //we must call this before performing hte injection to create the waitingDependency in the SCC
-      component.addDependency(p, this)
-      val keyForListeningElement = dynamicallyListenedElements.addElem(p)
-      val keyForListenedElement = p.dynamicallyListeningElements.addElem((this, i))
-      component.dependencyAdded()
-      KeyForElementRemoval(keyForListenedElement, keyForListeningElement)
-    }else{
-      val keyForListeningElement = dynamicallyListenedElements.addElem(p)
-      val keyForListenedElement = p.dynamicallyListeningElements.addElem((this, i))
-      KeyForElementRemoval(keyForListenedElement, keyForListeningElement)
+        //TODO: we should remove isBoundary; this is the only place where it is read; maybe combining this with the merging of component and store?
+        //We need to check for boundary here Because other elements might indeed change their dependencies,
+        // but since they are not boundary, this would require resorting the SCC during the propagation
+
+        if (isBoundary && pe.schedulingHandler == this.schedulingHandler) {
+          //this is only called once the component is established, so no worries.
+          //we must call this before performing hte injection to create the waitingDependency in the SCC
+          val scc = schedulingHandler.asInstanceOf[StronglyConnectedComponentTopologicalSort]
+          scc.addDependency(pe, this)
+          val keyForListeningElement = dynamicallyListenedElements.addElem(pe)
+          val keyForListenedElement = pe.dynamicallyListeningElements.addElem((this, i))
+          scc.dependencyAdded()
+          new KeyForElementRemoval(keyForListenedElement, keyForListeningElement)
+        }else{
+          val keyForListeningElement = dynamicallyListenedElements.addElem(pe)
+          val keyForListenedElement = pe.dynamicallyListeningElements.addElem((this, i))
+          new KeyForElementRemoval(keyForListenedElement, keyForListeningElement)
+        }
+      case _ => DummyKeyForElementRemoval
+    }
+  }
+
+  /**
+   * unregisters an element in the dynamic propagation graph.
+   * @param p the key that was given when the element was registered in the dynamic propagation graph
+   */
+  protected def unregisterDynamicallyListenedElement(p: KeyForElementRemoval) {
+    val keyForListenedElement = p.keyForListenedElement
+    if (keyForListenedElement != null) {
+      p.keyForListeningElement.delete()
+      keyForListenedElement.delete()
     }
   }
 
@@ -924,15 +971,6 @@ abstract class PropagationElement extends DAGNode{
     false
   }
 
-  /**
-   * unregisters an element in the dynamic propagation graph.
-   * @param p the key that was given when the element was registered in the dynamic propagation graph
-   */
-  protected def unregisterDynamicallyListenedElement(p: KeyForElementRemoval) {
-    p.keyForListeningElement.delete()
-    p.keyForListenedElement.delete()
-  }
-
   def dropStaticGraph() {
     staticallyListenedElements = null
     staticallyListeningElements = null
@@ -941,7 +979,7 @@ abstract class PropagationElement extends DAGNode{
   def decrementSucceedingAndAccumulateFront(acc: List[PropagationElement]): List[PropagationElement] = {
     var toreturn = acc
     for (succeeding <- getStaticallyListeningElements){
-      if (succeeding.component == null || succeeding.component != this.component) {
+      if (succeeding.schedulingHandler == schedulingHandler.propagationStructure || succeeding.schedulingHandler != this.schedulingHandler) {
         //not in the same SCC as us
         toreturn = succeeding.decrementAndAccumulateFront(toreturn)
       }
@@ -953,10 +991,10 @@ abstract class PropagationElement extends DAGNode{
     position -= 1
     if (position == 0) {
       //faut pusher qqchose
-      if (component != null) {
-        component.decrementAndAccumulateFront(acc)
-      } else {
-        this :: acc
+      schedulingHandler match{
+        case scc:StronglyConnectedComponent =>
+          scc.decrementAndAccumulateFront(acc)
+        case s:PropagationStructure => this :: acc
       }
     } else {
       acc
@@ -969,40 +1007,28 @@ abstract class PropagationElement extends DAGNode{
     */
   def setCounterToPrecedingCount(): Boolean = {
     //le compteur est mis au nombre de noeud precedent qui ne sont pas dans la meme composante connexe
-    if (this.component == null) {
-      position = this.getStaticallyListenedElements.count(p => p.getPropagationStructure != null)
-    } else {
-      //it is in a SCC.
-      position = this.getStaticallyListenedElements.count(p => (p.component != this.component && p.getPropagationStructure != null))
+    schedulingHandler match{
+      case scc:StronglyConnectedComponent =>
+        position = this.getStaticallyListenedElements.count(p => (p.schedulingHandler != scc && p.schedulingHandler != null))
+      case ps:PropagationStructure =>
+        position = this.getStaticallyListenedElements.count(p => p.schedulingHandler != null)
     }
     position != 0
   }
 
-  /**returns a reference to the propagationStructure where the PropagationElement is registered*/
-  def getPropagationStructure: PropagationStructure
-
   /**to invoque to force inclusion of the propagation element in the current or next propagation wave. */
   final def scheduleForPropagation() {
-    assert(getPropagationStructure != null, "cannot schedule or propagate element out of propagation structure")
+    assert(schedulingHandler != null, "cannot schedule or propagate element out of propagation structure")
     if (!isScheduled) {
-      //if (this.getPropagationStructure.verbose) println("PropagationStruture: scheduled [" + this + "]")
       isScheduled = true
-      if (component == null) {
-        getPropagationStructure.scheduleForPropagation(this)
-      } else {
-        component.scheduleForPropagation(this)
-      }
+      schedulingHandler.scheduleForPropagation(this)
     }
   }
 
   private[core] def rescheduleIfNeeded() {
     if (isScheduled) {
-      if (this.getPropagationStructure.verbose) println("PropagationStruture: re-scheduled [" + this.getClass + "]")
-      if (component == null) {
-        getPropagationStructure.scheduleForPropagation(this)
-      } else {
-        component.scheduleForPropagation(this)
-      }
+      if (this.propagationStructure.verbose) println("PropagationStruture: re-scheduled [" + this.getClass + "]")
+      schedulingHandler.scheduleForPropagation(this)
     }
   }
 
@@ -1010,12 +1036,12 @@ abstract class PropagationElement extends DAGNode{
     */
   final def propagate() {
     assert(isScheduled) //could not be scheduled actually, if was propagated, but not purged from postponed (in case select propagation for input is implemented)
-    assert(getPropagationStructure != null, "cannot schedule or propagate element out of propagation structure")
-    assert({getPropagationStructure.PropagatingElement = this; true})
-    if (getPropagationStructure.verbose) println("PropagationStruture: propagating [" + this + "]")
+    assert(propagationStructure != null, "cannot schedule or propagate element out of propagation structure")
+    assert({propagationStructure.PropagatingElement = this; true})
+    if (propagationStructure.verbose) println("PropagationStruture: propagating [" + this + "]")
     performPropagation()
     isScheduled = false //to avoid registering SCC to the propagation structure every time...
-    assert({getPropagationStructure.PropagatingElement = null; true})
+    assert({propagationStructure.PropagatingElement = null; true})
   }
 
   /**this is the propagation method that should be overridden by propagation elements.

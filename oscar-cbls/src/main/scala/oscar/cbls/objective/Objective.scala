@@ -24,7 +24,7 @@ import oscar.cbls.invariants.core.computation._
 import scala.language.implicitConversions
 
 object Objective{
-  implicit def objToCBLSIntVar(o:Objective):CBLSIntVar = o.objective
+  implicit def objToChangingIntValue(o:Objective):ChangingIntValue = o.objective
   def apply(objective:CBLSIntVar) = new Objective(objective)
   implicit def objToFun(o:Objective):()=>Int = ()=>o.value
 }
@@ -49,17 +49,54 @@ object Objective{
  *
  * @author renaud.delandtsheer@cetic.be
  */
-class Objective(val objective: CBLSIntVar) extends ObjectiveTrait {
-  setObjectiveVar(objective)
+class Objective(val objective: ChangingIntValue) extends ObjectiveTrait {
+
+  model.registerForPartialPropagation(objective)
+
+  /**
+   * This method returns the actual objective value.
+   * It is easy to override it, and perform a smarter propagation if needed.
+   * @return the actual objective value.
+   */
+  protected def computeObjective = objective.value
+
+  def model:Store = objective.model
 }
 
-trait ObjectiveTrait {
-  protected var ObjectiveVar: CBLSIntVar = null
+/**
+ * if (objective1.value > 0) Int.MaxValue
+ *   else objective2.value
+ *
+ *   this is computed partially both for objective and mustBeZeroObjective
+ * @param mustBeZeroObjective
+ * @param objective
+ */
+class CascadingObjective(val mustBeZeroObjective: ChangingIntValue, objective:ChangingIntValue) extends Objective(objective) {
 
-   protected def setObjectiveVar(v: CBLSIntVar) {
-    ObjectiveVar = v
-    ObjectiveVar.getPropagationStructure.registerForPartialPropagation(ObjectiveVar)
+  model.registerForPartialPropagation(mustBeZeroObjective)
+
+  /**
+   * This method returns the actual objective value.
+   * It is easy to override it, and perform a smarter propagation if needed.
+   * @return the actual objective value.
+   */
+  protected override def computeObjective = {
+    if (mustBeZeroObjective.value > 0) Int.MaxValue
+    else objective.value
   }
+}
+
+
+trait ObjectiveTrait {
+
+  def model:Store
+
+  /**
+   * This method returns the actual objective value.
+   * It is easy to override it, and perform a smarter propagation if needed.
+   * @return the actual objective value.
+   */
+  protected def computeObjective:Int
 
   /**returns the value of the objective variable if the two variables a and b were swapped values.
    * This proceeds through explicit state change and restore.
@@ -68,7 +105,7 @@ trait ObjectiveTrait {
    */
   def swapVal(a: CBLSIntVar, b: CBLSIntVar): Int = {
     a :=: b
-    val NewVal = propagateObjective
+    val NewVal = computeObjective
     a :=: b
     NewVal
   }
@@ -92,17 +129,10 @@ trait ObjectiveTrait {
     //excurse
     for (assign <- a)
       assign._1 := assign._2
-    val newObj = propagateObjective
+    val newObj = computeObjective
     //undo
     for (assign <- oldvals)
       assign._1 := assign._2
     newObj
   }
-
-  /**
-   * This method returns the actual objective value.
-   * It is easy to override it, and perform a smarter propagation if needed.
-   * @return the actual objective value.
-   */
-  protected def propagateObjective = ObjectiveVar.value
 }

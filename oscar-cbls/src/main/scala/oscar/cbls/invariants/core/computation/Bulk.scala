@@ -25,10 +25,12 @@ import oscar.cbls.invariants.core.propagation.BulkPropagator
 import collection.immutable.SortedMap
 import oscar.cbls.invariants.core.propagation.Checker
 
+//TODO: we cannot have constants in bulked arrays, actually.
 /**Invariants over arrays can implement this trait to make it possible to bulk load their dependencies
+  *
   * @author renaud.delandtsheer@cetic.be
   * */
-trait Bulked[VarType <: Variable, BulkedComputationResult] extends Invariant {
+trait Bulked[VarType <: AbstractVariable, BulkedComputationResult] extends Invariant {
 
   /**
    * registers a static dependency to all variables mentioned in the bulkedVars.

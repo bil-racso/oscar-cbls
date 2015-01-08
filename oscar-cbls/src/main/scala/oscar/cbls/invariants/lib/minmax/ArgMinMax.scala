@@ -85,7 +85,7 @@ case class ArgMinArray(vars: Array[CBLSIntVar], cond: CBLSSetVar = null, default
  * update is O(log(n))
  * @author renaud.delandtsheer@cetic.be
  * */
-abstract class ArgMiaxArray(vars: Array[CBLSIntVar], cond: CBLSSetVar, default: Int) extends SetInvariant with Bulked[CBLSIntVar, (Int, Int)] {
+abstract class ArgMiaxArray(vars: Array[CBLSIntVar], cond: CBLSSetVar, default: Int) extends SetInvariant with Bulked[CBLSIntVar, (Int, Int)] with VaryingDependenciesInvariant {
 
   override def toString:String = {
     name + "(" + InvariantHelper.arrayToString(vars) + "," + cond + "," + default + ")"

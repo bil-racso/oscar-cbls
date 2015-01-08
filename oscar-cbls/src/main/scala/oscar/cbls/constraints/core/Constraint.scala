@@ -21,7 +21,8 @@
 
 package oscar.cbls.constraints.core
 
-import oscar.cbls.invariants.core.computation.{Variable, CBLSIntVar, IntInvariant}
+import oscar.cbls.invariants.core.computation._
+import oscar.cbls.invariants.core.propagation.Checker
 import oscar.cbls.invariants.lib.numeric.Step
 
 /**A constraint is a function that computes a degree of violation that is managed as any invariant.
@@ -33,8 +34,7 @@ import oscar.cbls.invariants.lib.numeric.Step
  * and managed as invariants.
   * @author renaud.delandtsheer@cetic.be
  */
-abstract class Constraint extends IntInvariant{
-  //TODO: constraints should not always be invariant, although they should offer the setOutputVar feature
+abstract class Constraint{
 
   /** returns the violation associated with variable v in this constraint
    * all variables that are declared as constraint should have an associated violation degree.
@@ -48,17 +48,13 @@ abstract class Constraint extends IntInvariant{
     * because they can only be created before the model is closed.
     * @return
     */
-  def violation: CBLSIntVar
+  def violation: ChangingIntValue
 
   /**facility to check that the constraint is enforced
     * */
   final def isTrue: Boolean = (violation.value == 0)
 
-  def myMin = 0
-  def myMax = 1
-
-  /**the output var of a constraint is whether the constraint is true or not; it is not the violation degree*/
-  override def setOutputVar(v: CBLSIntVar) {v <== Step(violation,0,0,1)}
+  final def truthValue:IntValue = Step(violation,0,0,1)
 
   /**the variables that are constrained by the constraint.
    * This should be read only. If you want to declare more constrained variables,
@@ -87,4 +83,6 @@ abstract class Constraint extends IntInvariant{
   def registerConstrainedVariables(v: Iterable[Variable]){
     for (vv <- v){registerConstrainedVariable(vv)}
   }
+
+  def checkInternals(c: Checker) {}
 }

@@ -60,7 +60,7 @@ object WarehouseLocationTabu extends App with AlgebraTrait{
   //We store in each warehouse variable its warehouse ID, using the
   // [[oscar.cbls.invariants.core.computation.DistributedStorageUtility]] mechanism
   //so we first ask a storageKey to the model
-  val warehouseKey = m.getStorageKey()
+  val warehouseKey = m.newStorageKey()
   m.storeIndexesAt(warehouseOpenArray, warehouseKey)
 
   val openWarehouses = Filter(warehouseOpenArray).toSetVar("openWarehouses")

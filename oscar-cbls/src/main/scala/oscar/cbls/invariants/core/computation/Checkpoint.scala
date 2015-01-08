@@ -123,10 +123,10 @@ class ChangeRecorder(s:Store) extends Invariant{
     if(a && !myActive){
       //on active l'enregistrement, qui était désactivé
 
-      keys = Array.tabulate(s.inputVariables.length)(null)
+      keys = Array.tabulate(s.decisionVariables.length)(null)
 
       var varId = 0;
-      for(v <- s.inputVariables){
+      for(v <- s.decisionVariables){
         keys(varId) = registerDynamicDependency(v,varId)
         varId +=1
       }
@@ -145,7 +145,7 @@ class ChangeRecorder(s:Store) extends Invariant{
   def active:Boolean = myActive
 
   def close() {
-    registerStaticDependencies(s.inputVariables():_*)
+    registerStaticDependencies(s.decisionVariables():_*)
   }
 
   def varHasChanged(variable:Variable, varId:Int){

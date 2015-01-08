@@ -42,10 +42,8 @@ import oscar.cbls.invariants.lib.numeric.Sum
  */
 case class AtLeast(variables: Iterable[CBLSIntVar], bounds: SortedMap[Int, CBLSIntVar]) extends Constraint {
 
-  model = InvariantHelper.findModel(variables)
   registerConstrainedVariables(variables)
   registerConstrainedVariables(bounds.values)
-  finishInitialization()
 
   private val countInvariant = DenseCount.makeDenseCount(variables.toArray)
   private val offset:Int = countInvariant.offset

@@ -34,7 +34,7 @@ import scala.collection.immutable.Set
  * @param elseVar the returned value if ifVar <= 0
  * @author renaud.delandtsheer@cetic.be
  * */
-case class IntITE(ifVar: CBLSIntVar, thenVar: CBLSIntVar, elseVar: CBLSIntVar) extends IntInvariant {
+case class IntITE(ifVar: CBLSIntVar, thenVar: CBLSIntVar, elseVar: CBLSIntVar) extends IntInvariant with VaryingDependenciesInvariant {
 
   var output: CBLSIntVar = null
   var KeyToCurrentVar: KeyForElementRemoval = null
@@ -91,7 +91,7 @@ case class IntITE(ifVar: CBLSIntVar, thenVar: CBLSIntVar, elseVar: CBLSIntVar) e
  * @author renaud.delandtsheer@cetic.be
  * */
 case class IntElement(index: CBLSIntVar, inputarray: Array[CBLSIntVar])
-  extends IntInvariant with Bulked[CBLSIntVar, ((Int, Int))] {
+  extends IntInvariant with Bulked[CBLSIntVar, ((Int, Int))] with VaryingDependenciesInvariant {
 
   var output: CBLSIntVar = null
   var KeyToCurrentVar: KeyForElementRemoval = null
@@ -151,7 +151,7 @@ case class IntElement(index: CBLSIntVar, inputarray: Array[CBLSIntVar])
  * @author renaud.delandtsheer@cetic.be
  * */
 case class Elements(index: CBLSSetVar, inputarray: Array[CBLSIntVar])
-  extends SetInvariant with Bulked[CBLSIntVar, ((Int, Int))] {
+  extends SetInvariant with Bulked[CBLSIntVar, ((Int, Int))] with VaryingDependenciesInvariant {
 
   var output: CBLSSetVar = null
   val KeysToInputArray: Array[KeyForElementRemoval] = new Array(inputarray.size)
@@ -258,7 +258,7 @@ case class Elements(index: CBLSSetVar, inputarray: Array[CBLSIntVar])
  * @author renaud.delandtsheer@cetic.be
  * */
 case class SetElement(index: CBLSIntVar, inputarray: Array[CBLSSetVar])
-  extends SetInvariant with Bulked[CBLSSetVar, ((Int, Int))] {
+  extends SetInvariant with Bulked[CBLSSetVar, ((Int, Int))] with VaryingDependenciesInvariant {
 
   var output: CBLSSetVar = null
   var KeyToCurrentVar: KeyForElementRemoval = null
