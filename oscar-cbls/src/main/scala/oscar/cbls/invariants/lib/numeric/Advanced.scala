@@ -28,13 +28,10 @@ import oscar.cbls.invariants.core.propagation._
  * @param cond is the condition for selecting variables in the array of summed ones, cannot be null
   * @author renaud.delandtsheer@cetic.be
   * */
-case class SumElements(vars: Array[IntValue], cond: CBLSSetVar) extends IntInvariant with Bulked[CBLSIntVar, Unit] with VaryingDependenciesInvariant{
+case class SumElements(vars: Array[IntValue], cond: SetValue)
+  extends IntInvariant(initialValue=cond.value.foldLeft(0)((acc, i) => acc + vars(i).value)) with Bulked[IntValue, Unit] with VaryingDependenciesInvariant{
   assert(vars.size > 0, "Invariant SumElements declared with zero vars to max")
   assert(cond != null, "cond cannot be null for SumElements")
-
-  def myMin = Int.MinValue
-  def myMax = Int.MaxValue
-  var output: CBLSIntVar = null
 
   val keyForRemoval: Array[KeyForElementRemoval] =  Array.fill(vars.indices.end) {null}
 
@@ -48,42 +45,35 @@ case class SumElements(vars: Array[IntValue], cond: CBLSSetVar) extends IntInvar
   }
   finishInitialization()
 
-  override def setOutputVar(v: CBLSIntVar) {
-      output = v
-      //collecter les counts et le max
-      output.setDefiningInvariant(this)
-      output := cond.value.foldLeft(0)((acc, i) => acc + vars(i).value)
-  }
-
   @inline
-  override def notifyIntChanged(v: CBLSIntVar, index:Int, OldVal: Int, NewVal: Int) {
+  override def notifyIntChanged(v: ChangingIntValue, index:Int, OldVal: Int, NewVal: Int) {
     //it is always a listened one, but we could check this here
     assert(vars(index)==v)
     assert(keyForRemoval(index)!=null)
-    output :+= (NewVal - OldVal)
+    this :+= (NewVal - OldVal)
   }
 
   @inline
-  override def notifyInsertOn(v: CBLSSetVar, value: Int) {
+  override def notifyInsertOn(v: ChangingSetValue, value: Int) {
     assert(v == cond)
     assert(keyForRemoval(value) == null)
     keyForRemoval(value) = registerDynamicDependency(vars(value),value)
 
-    output :+= vars(value).value
+    this :+= vars(value).value
   }
 
   @inline
-  override def notifyDeleteOn(v: CBLSSetVar, value: Int) {
+  override def notifyDeleteOn(v: ChangingSetValue, value: Int) {
     assert(v == cond)
     assert(keyForRemoval(value) != null)
     unregisterDynamicDependency(keyForRemoval(value))
     keyForRemoval(value) = null
 
-    output :-= vars(value).value
+    this :-= vars(value).value
   }
 
   override def checkInternals(c:Checker) {
-    c.check(output.value == cond.value.foldLeft(0)((acc, i) => acc + vars(i).value),
+    c.check(this.value == cond.value.foldLeft(0)((acc, i) => acc + vars(i).value),
         Some("output.value == cond.value.foldLeft(0)((acc, i) => acc + vars(i).value)"))
   }
 }
@@ -94,12 +84,9 @@ case class SumElements(vars: Array[IntValue], cond: CBLSSetVar) extends IntInvar
  * @param cond is the condition for selecting variables in the set of summed ones.
   * @author renaud.delandtsheer@cetic.be
   * */
-case class ProdElements(vars: Array[CBLSIntVar], cond: CBLSSetVar) extends IntInvariant with Bulked[CBLSIntVar, Unit] with VaryingDependenciesInvariant{
+case class ProdElements(vars: Array[IntValue], cond: SetValue)
+  extends IntInvariant with Bulked[IntValue, Unit] with VaryingDependenciesInvariant{
   assert(cond != null, "cond cannot be null for ProdElements")
-
-  def myMin = Int.MinValue
-  def myMax = Int.MaxValue
-  var output: CBLSIntVar = null
 
   val keyForRemoval: Array[KeyForElementRemoval] =  Array.fill(vars.length) {null}
 
@@ -114,28 +101,21 @@ case class ProdElements(vars: Array[CBLSIntVar], cond: CBLSSetVar) extends IntIn
 
   finishInitialization()
 
-  var NullVarCount:Int = 0
-  var NonNullProd:Int = 1
+  var NullVarCount = cond.value.count(i => vars(i).value == 0)
+  var NonNullProd = cond.value.foldLeft(1)((acc,i) => if(vars(i).value == 0){acc}else{acc*vars(i).value})
+  affectOutput()
 
   @inline
   private def affectOutput(){
     if (NullVarCount == 0){
-      output := NonNullProd
+      this := NonNullProd
     }else{
-      output := 0
+      this := 0
     }
   }
 
-  override def setOutputVar(v: CBLSIntVar) {
-    output = v
-    output.setDefiningInvariant(this)
-    NullVarCount = cond.value.count(i => vars(i).value == 0)
-    NonNullProd = cond.value.foldLeft(1)((acc,i) => if(vars(i).value == 0){acc}else{acc*vars(i).value})
-    affectOutput()
-  }
-
   @inline
-  override def notifyIntChanged(v: CBLSIntVar, index:Int, OldVal: Int, NewVal: Int) {
+  override def notifyIntChanged(v: ChangingIntValue, index:Int, OldVal: Int, NewVal: Int) {
     //it is always a listened one, but we could check this here
     assert(vars(index) == v)
     assert(keyForRemoval(index)!=null)
@@ -153,7 +133,7 @@ case class ProdElements(vars: Array[CBLSIntVar], cond: CBLSSetVar) extends IntIn
   }
 
   @inline
-  override def notifyInsertOn(v: CBLSSetVar, value: Int) {
+  override def notifyInsertOn(v: ChangingSetValue, value: Int) {
     assert(v == cond)
     assert(keyForRemoval(value) == null)
     keyForRemoval(value) = registerDynamicDependency(vars(value),value)
@@ -167,7 +147,7 @@ case class ProdElements(vars: Array[CBLSIntVar], cond: CBLSSetVar) extends IntIn
   }
 
   @inline
-  override def notifyDeleteOn(v: CBLSSetVar, value: Int) {
+  override def notifyDeleteOn(v: ChangingSetValue, value: Int) {
     assert(v == cond)
     assert(keyForRemoval(value) != null)
 
@@ -183,8 +163,8 @@ case class ProdElements(vars: Array[CBLSIntVar], cond: CBLSSetVar) extends IntIn
   }
 
   override def checkInternals(c:Checker) {
-    c.check(output.value == cond.value.foldLeft(1)((acc, i) => acc * vars(i).value),
-        Some("output.value (" + output.value
+    c.check(this.value == cond.value.foldLeft(1)((acc, i) => acc * vars(i).value),
+        Some("output.value (" + this.value
             + ") == cond.value.foldLeft(1)((acc, i) => acc * vars(i).value) ("
             + cond.value.foldLeft(1)((acc, i) => acc * vars(i).value) + ")"))
   }

@@ -33,6 +33,7 @@ trait IntValue extends Value{
   def domain:Domain
   def min = domain.min
   def max = domain.max
+  def name:String
 }
 
 object IntValue{
@@ -198,8 +199,7 @@ class CBLSIntVar(givenModel: Store, initialDomain:Domain, initialValue: Int, n: 
 
 object CBLSIntVar{
 
-  def apply(d:Domain, v:Int, name:String)(implicit s:Store) = new CBLSIntVar(s,d,v,name)
-  def apply(d:Domain, v:Int)(implicit s:Store) = new CBLSIntVar(s,d,v,"")
+  def apply(d:Domain = FullRange, value:Int = 0, name:String = null)(implicit s:Store) = new CBLSIntVar(s,d,value,name)
 
   def apply(model: Store, d:Domain = FullRange, value:Int , name:String) =
     new CBLSIntVar(model, d, value, name)
@@ -222,6 +222,7 @@ case class CBLSIntConst(override val value:Int)
   override def domain: SingleValueDomain = new SingleValueDomain(value)
   override def min: Int = value
   override def max: Int = value
+  override def name = "" + value
 }
 
 /** this is a special case of invariant that has a single output variable, that is an IntVar

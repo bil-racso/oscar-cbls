@@ -66,13 +66,14 @@ object WarehouseLocationTabu extends App with AlgebraTrait{
   val openWarehouses = Filter(warehouseOpenArray).setName("openWarehouses")
 
   val distanceToNearestOpenWarehouse = Array.tabulate(D)(d =>
-    MinArray(distanceCost(d), openWarehouses, defaultCostForNoOpenWarehouse).toIntVar("distance_for_delivery_" + d))
+    MinArray(distanceCost(d), openWarehouses, defaultCostForNoOpenWarehouse).setName("distance_for_delivery_" + d))
 
-  val obj = Objective(Sum(distanceToNearestOpenWarehouse) + Sum(costForOpeningWarehouse, openWarehouses))
+  val obj = Objective(Sum(distanceToNearestOpenWarehouse)
+    + Sum(costForOpeningWarehouse, openWarehouses))
 
   // we handle the tabu through invariants.
   // notice that they are completely dissociated from the rest of the model in this case.
-  val TabuArray = Array.tabulate(W)(w => CBLSIntVar(m))
+  val TabuArray = Array.tabulate(W)(w => CBLSIntVar(m,0))
   val It = CBLSIntVar(m)
   val nonTabuWarehouses = SelectLESetQueue(TabuArray,It).toSetVar("non tabu warehouses")
 

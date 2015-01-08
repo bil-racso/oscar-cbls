@@ -230,7 +230,7 @@ case class Elements(index: SetValue, inputarray: Array[IntValue])
  * @param index is the index of the array access
  * @author renaud.delandtsheer@cetic.be
  * */
-case class SetElement(index: CBLSIntVar, inputarray: Array[SetValue])
+case class SetElement(index: IntValue, inputarray: Array[SetValue])
   extends SetInvariant(inputarray.apply(index.value).value) with Bulked[SetValue, Domain] with VaryingDependenciesInvariant {
 
   var KeyToCurrentVar: KeyForElementRemoval = null

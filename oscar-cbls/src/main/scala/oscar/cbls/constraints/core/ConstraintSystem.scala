@@ -51,8 +51,8 @@ case class ConstraintSystem(model:Store) extends Constraint with ObjectiveTrait{
   private var PostedConstraints:List[(Constraint,IntValue)] = List.empty
   //private var AllVars:SortedMap[Variable,List[(Constraint,IntVar)]]=SortedMap.empty
 
-  private var VarInConstraints:List[Variable] = List.empty
-  private var VarsWatchedForViolation:List[Variable] = List.empty
+  private var VarInConstraints:List[AbstractVariable] = List.empty
+  private var VarsWatchedForViolation:List[AbstractVariable] = List.empty
 
   override def toString = {
     val constraints = PostedConstraints.map(_._1)
@@ -86,7 +86,7 @@ case class ConstraintSystem(model:Store) extends Constraint with ObjectiveTrait{
 
     PostedConstraints = (c,weight) :: PostedConstraints
 
-    for(variable <- c.constrainedVariables){
+    for(variable:AbstractVariable <- c.constrainedVariables){
       val oldConstrAndWeightList:List[(Constraint,IntValue)] = variable.getStorageAt(IndexForLocalViolationINSU,List.empty)
       if (oldConstrAndWeightList.isEmpty) VarInConstraints = variable :: VarInConstraints
       variable.storeAt(IndexForLocalViolationINSU,(c,weight)::oldConstrAndWeightList)
@@ -169,7 +169,7 @@ case class ConstraintSystem(model:Store) extends Constraint with ObjectiveTrait{
    * The constraint system must have been closed prior to calling this method.
    * @param v must have been previously declared through the registerForViolation(v:Variable) method
    */
-  override def violation(v:Variable):CBLSIntVar = {
+  override def violation(v:AbstractVariable):CBLSIntVar = {
     val CPStoredRecord:GlobalViolationDescriptor = v.getStorageAt(IndexForGlobalViolationINSU,null)
     if (CPStoredRecord == null){
       if (model.isClosed) throw new Exception("cannot create new violation after model is closed.")

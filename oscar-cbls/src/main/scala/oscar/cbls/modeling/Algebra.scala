@@ -44,36 +44,34 @@ trait AlgebraTrait{
   // implicit conversion of Range towards a RangeHotRestart
   implicit def instrumentRange(r:Range):InstrumentedRange = new InstrumentedRange(r)
 
-  implicit def InstrumentIntVar(v: CBLSIntVar): InstrumentedIntVar = new InstrumentedIntVar(v)
-
-  implicit def InstrumentIntInvariant(i: IntInvariant): InstrumentedIntVar = InstrumentIntVar(i.toIntVar)
+  implicit def InstrumentIntVar(v: IntValue): InstrumentedIntVar = new InstrumentedIntVar(v)
 
   implicit def InstrumentInt(a: Int): InstrumentedIntVar = InstrumentIntVar(CBLSIntConst(a))
 
-  class InstrumentedIntVar(x: CBLSIntVar) {
-    def +(v: CBLSIntVar): IntInvariant = Sum2(x, v)
+  class InstrumentedIntVar(x: IntValue) {
+    def +(v: IntValue): IntInvariant = Sum2(x, v)
 
-    def -(v: CBLSIntVar): IntInvariant = Minus(x, v)
+    def -(v: IntValue): IntInvariant = Minus(x, v)
 
-    def *(v: CBLSIntVar): IntInvariant = Prod(List(x, v))
+    def *(v: IntValue): IntInvariant = Prod(List(x, v))
 
-    def /(v: CBLSIntVar): IntInvariant = Div(x, v)
+    def /(v: IntValue): IntInvariant = Div(x, v)
 
-    def %(v: CBLSIntVar): IntInvariant = Mod(x, v)
+    def %(v: IntValue): IntInvariant = Mod(x, v)
 
-    def ===(v: CBLSIntVar) = new EQ(x, v)
+    def ===(v: IntValue) = new EQ(x, v)
 
-    def !==(v: CBLSIntVar) = new NE(x, v)
+    def !==(v: IntValue) = new NE(x, v)
 
-    def >>=(v: CBLSIntVar) = new G(x, v)
+    def >>=(v: IntValue) = new G(x, v)
 
-    def <<=(v: CBLSIntVar) = new L(x, v)
+    def <<=(v: IntValue) = new L(x, v)
 
-    def >==(v: CBLSIntVar) = new GE(x, v)
+    def >==(v: IntValue) = new GE(x, v)
 
-    def le(v: CBLSIntVar) = new LE(x, v)
+    def le(v: IntValue) = new LE(x, v)
     
-    def belongsTo(v: CBLSSetVar) = new BelongsTo(x, v)
+    def belongsTo(v: SetValue) = new BelongsTo(x, v)
 
     /** creates a IntSEt maintained as the inclusive interval between te two variable
       * see [[oscar.cbls.invariants.lib.set.Interval]]
@@ -98,65 +96,59 @@ trait AlgebraTrait{
   class SafeAssignment(v:CBLSIntVar, c:ConstraintSystem){
     //TODO: trouver un vrais nom de méthode
     def `s=`(i:IntInvariant){
-      val iMax = i.myMax
-      val iMin = i.myMin
-      if(iMax <= v.maxVal && iMin >= v.minVal){
+      val iMax = i.max
+      val iMin = i.min
+      if(iMax <= v.max && iMin >= v.min){
         v <== i
       }else{
-        val iv:CBLSIntVar = i
-        v <== Bound(iv, v.minVal, v.maxVal)
-        c.add(iv >== v.minVal)
-        c.add(v.maxVal >== iv)
+        v <== Bound(i, v.min, v.max)
+        c.add(i >== v.min)
+        c.add(v.max >== i)
       }
     }
 
     def `s=`(w:CBLSIntVar){
-      if(w.maxVal<= v.maxVal && w.minVal >= v.minVal){
+      if(w.max<= v.max && w.min >= v.min){
         v <== w
       }else{
-        v <== Bound(w, v.minVal, v.maxVal)
-        c.add(w >== v.minVal)
-        c.add(v.maxVal >== w)
+        v <== Bound(w, v.min, v.max)
+        c.add(w >== v.min)
+        c.add(v.max >== w)
       }
     }
   }
 
-  implicit def InstrumentIntSetVar(v: CBLSSetVar): InstrumentedIntSetVar = new InstrumentedIntSetVar(v)
-
-  implicit def InstrumentIntSetInvariant(i: SetInvariant): InstrumentedIntSetVar = InstrumentIntSetVar(i.toSetVar)
+  implicit def InstrumentIntSetVar(v: SetValue): InstrumentedIntSetVar = new InstrumentedIntSetVar(v)
 
   implicit def InstrumentIntSet(a: SortedSet[Int]): InstrumentedIntSetVar = InstrumentIntSetVar(CBLSSetConst(a))
 
-  class InstrumentedIntSetVar(x: CBLSSetVar) {
-    def union(v: CBLSSetVar): SetInvariant = Union(x, v)
+  class InstrumentedIntSetVar(x: SetValue) {
+    def union(v: SetValue): SetInvariant = Union(x, v)
 
-    def inter(v: CBLSSetVar): SetInvariant = Inter(x, v)
+    def inter(v: SetValue): SetInvariant = Inter(x, v)
 
-    def minus(v: CBLSSetVar): SetInvariant = Diff(x, v)
+    def minus(v: SetValue): SetInvariant = Diff(x, v)
 
     def map(fun:Int=>Int, myMin:Int = Int.MinValue, myMax:Int = Int.MaxValue) = SetMap(x,fun,myMin,myMax)
 
     }
 
-  implicit def InstrumentArrayOfIntVar(inputarray: Array[CBLSIntVar]): InstrumentedArrayOfIntVar
+  implicit def InstrumentArrayOfIntVar(inputarray: Array[IntValue]): InstrumentedArrayOfIntVar
   = new InstrumentedArrayOfIntVar(inputarray)
 
-  class InstrumentedArrayOfIntVar(inputarray: Array[CBLSIntVar]) {
+  class InstrumentedArrayOfIntVar(inputarray: Array[IntValue]) {
     def element(index: CBLSIntVar) = IntElement(index, inputarray)
 
     def elements(index: CBLSSetVar) = Elements(index, inputarray)
   }
 
-  implicit def InstrumentArrayOfIntSetVar(inputarray: Array[CBLSSetVar]): InstrumentedArrayOfIntSetVar
+  implicit def InstrumentArrayOfIntSetVar(inputarray: Array[SetValue]): InstrumentedArrayOfIntSetVar
   = new InstrumentedArrayOfIntSetVar(inputarray)
 
-  class InstrumentedArrayOfIntSetVar(inputarray: Array[CBLSSetVar]) {
-    def apply(index: CBLSIntVar): CBLSSetVar = SetElement(index, inputarray)
+  class InstrumentedArrayOfIntSetVar(inputarray: Array[SetValue]) {
+    def apply(index: IntValue): SetInvariant = SetElement(index, inputarray)
   }
 
-  implicit def arrayOfIntTOArrayOfIntConst(a:Array[Int]):Array[CBLSIntVar] = a.map(CBLSIntConst(_))
-  implicit def arrayOfIntInvariantArrayOfIntVar(a:Array[IntInvariant]):Array[CBLSIntVar] = a.map(_.toIntVar)
-  implicit def listOfIntInvariantToListOfIntVar(a:IndexedSeq[IntInvariant]):Iterable[CBLSIntVar] = a.map(_.toIntVar)
-
+  implicit def arrayOfInt2ArrayOfIntValue(a:Array[Int]):Array[IntValue] = a.map(CBLSIntConst)
 }
 

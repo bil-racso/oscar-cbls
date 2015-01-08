@@ -216,7 +216,7 @@ case class Store(override val verbose:Boolean = false,
   //returns the set of source variable that define this one.
   // This exploration procedure explores passed dynamic invariants,
   // but it over-estimates the set of source variables over dynamic invariants, as it uses the static graph.
-  def getSourceVariables(v:Variable):SortedSet[Variable] = {
+  def getSourceVariables(v:AbstractVariable):SortedSet[Variable] = {
     var ToExplore: List[PropagationElement] = List(v)
     var SourceVariables:SortedSet[Variable] = SortedSet.empty
     while(!ToExplore.isEmpty){

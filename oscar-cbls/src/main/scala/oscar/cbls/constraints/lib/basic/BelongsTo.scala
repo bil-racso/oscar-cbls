@@ -1,6 +1,6 @@
 package oscar.cbls.constraints.lib.basic
 
-import oscar.cbls.invariants.core.computation.{ CBLSSetVar, Variable, CBLSIntVar }
+import oscar.cbls.invariants.core.computation._
 import oscar.cbls.constraints.core.Constraint
 import oscar.cbls.invariants.core.propagation.Checker
 
@@ -8,34 +8,34 @@ import oscar.cbls.invariants.core.propagation.Checker
  * implements v \in set
  * @author renaud.delandtsheer@cetic.be
  */
-case class BelongsTo(v: CBLSIntVar, set: CBLSSetVar) extends Constraint {
+case class BelongsTo(v: IntValue, set: SetValue) extends Constraint with Invariant {
   registerConstrainedVariables(v, set)
   registerStaticAndDynamicDependenciesNoID(v, set)
   finishInitialization()
 
-  val Violation: CBLSIntVar = CBLSIntVar(model, 0, 1, (if (set.value.contains(v.value)) 0 else 1), "belongsTo(" + v.name + "," + set.name + ")")
+  val Violation: CBLSIntVar = CBLSIntVar(model, 0 to 1, (if (set.value.contains(v.value)) 0 else 1), "belongsTo(" + v.name + "," + set.name + ")")
 
   Violation.setDefiningInvariant(this)
 
   @inline
-  override def notifyIntChanged(v: CBLSIntVar, OldVal: Int, NewVal: Int) {
+  override def notifyIntChanged(v: ChangingIntValue, OldVal: Int, NewVal: Int) {
     Violation := (if (set.value.contains(v.value)) 0 else 1)
   }
 
   @inline
-  override def notifyInsertOn(v: CBLSSetVar, value: Int) {
+  override def notifyInsertOn(v: ChangingSetValue, value: Int) {
     if (this.v.value == value) Violation := 0
   }
 
   @inline
-  override def notifyDeleteOn(v: CBLSSetVar, value: Int) {
+  override def notifyDeleteOn(v: ChangingSetValue, value: Int) {
     if (this.v.value == value) Violation := 1
   }
 
   /** the violation is 1 if v is not in set, 0 otherwise*/
   override def violation = Violation
   /** the violation is 1 v is not is set, 0 otherwise*/
-  override def violation(v: Variable): CBLSIntVar = { if (this.v == v || this.set == v) Violation else 0 }
+  override def violation(v: AbstractVariable): IntValue = { if (this.v == v || this.set == v) Violation else 0 }
 
   /**
    * To override whenever possible to spot errors in invariants.

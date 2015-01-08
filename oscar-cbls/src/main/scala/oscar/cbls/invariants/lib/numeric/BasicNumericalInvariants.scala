@@ -28,13 +28,13 @@ import oscar.cbls.invariants.core.propagation.Checker;
 
 object Sum{
   def apply(vars: Iterable[IntValue]):Sum = new Sum(vars)
-  def apply(vars: Array[IntValue], cond: CBLSSetVar):SumElements = SumElements(vars, cond)
+  def apply(vars: Array[IntValue], cond: SetValue):SumElements = SumElements(vars, cond)
 }
 
 
 object Prod{
   def apply(vars: Iterable[IntValue]):Prod = new Prod(vars)
-  def apply(vars: Array[CBLSIntVar], cond: CBLSSetVar):ProdElements = ProdElements(vars, cond)
+  def apply(vars: Array[IntValue], cond: SetValue):ProdElements = ProdElements(vars, cond)
 }
 
 /**
@@ -117,7 +117,7 @@ class Prod(vars: Iterable[IntValue]) extends IntInvariant {
  * where left, right, and output are IntVar
  * @author renaud.delandtsheer@cetic.be
  * */
-case class Minus(left: CBLSIntVar, right: CBLSIntVar)
+case class Minus(left: IntValue, right: IntValue)
   extends IntInt2Int(left, right, ((l: Int, r: Int) => l - r), left.min - right.max to left.max - right.min) {
   assert(left != right)
 }
@@ -127,7 +127,7 @@ case class Minus(left: CBLSIntVar, right: CBLSIntVar)
  * where left, right, and output are IntVar
  * @author renaud.delandtsheer@cetic.be
  * */
-case class Sum2(left: CBLSIntVar, right: CBLSIntVar)
+case class Sum2(left: IntValue, right: IntValue)
   extends IntInt2Int(left, right, ((l: Int, r: Int) => l + r), left.min + right.min to left.max + right.max)
 
 /**
@@ -143,7 +143,7 @@ case class Prod2(left: IntValue, right: IntValue)
  * where left, right, and output are IntVar
  * @author renaud.delandtsheer@cetic.be
  * */
-case class Dist(left: CBLSIntVar, right: CBLSIntVar)
+case class Dist(left: SetValue, right: SetValue)
   extends IntInt2Int(left, right, ((l: Int, r: Int) => (l - r).abs), 0 to Int.MaxValue)
 
 /**
@@ -152,7 +152,7 @@ case class Dist(left: CBLSIntVar, right: CBLSIntVar)
  * do not set right to zero, as usual...
  * @author renaud.delandtsheer@cetic.be
  * */
-case class Div(left: CBLSIntVar, right: CBLSIntVar)
+case class Div(left: IntValue, right: IntValue)
   extends IntInt2Int(left, right, (l: Int, r: Int) => l / r)
 
 /**
@@ -161,7 +161,7 @@ case class Div(left: CBLSIntVar, right: CBLSIntVar)
  * do not set right to zero, as usual...
  * @author renaud.delandtsheer@cetic.be
  * */
-case class Mod(left: CBLSIntVar, right: CBLSIntVar)
+case class Mod(left: IntValue, right: IntValue)
   extends IntInt2Int(left, right, (l: Int, r: Int) => l - r * (l / r))
 
 /**

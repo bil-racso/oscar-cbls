@@ -31,6 +31,7 @@ trait SetValue extends Value{
   def domain:Domain
   def min = domain.min
   def max = domain.max
+  def name:String
 }
 
 object SetValue{
@@ -264,6 +265,7 @@ case class CBLSSetConst(override val value:SortedSet[Int])
   override def domain:Domain = DomainSet(value)
   override val min: Int = value.min
   override val max: Int = value.max
+  override def name: String = toString
 }
 
 

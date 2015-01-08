@@ -67,21 +67,20 @@ protected class LEA(val left: CBLSIntVar, val right: CBLSIntVar) extends Constra
  * implements left <= right
  * @author  Renaud De Landtsheer rdl@cetic.be
  */
-case class LE(l: CBLSIntVar, r: CBLSIntVar) extends LEA(l, r)
+case class LE(l: IntValue, r: IntValue) extends LEA(l, r)
 
 /**
  * implements left >= right
  * it is just a parameter swap of [[oscar.cbls.constraints.lib.basic.LE]]
  * @author renaud.delandtsheer@cetic.be
  */
-case class GE(l: CBLSIntVar, r: CBLSIntVar) extends LEA(r, l)
+case class GE(l: IntValue, r: IntValue) extends LEA(r, l)
 
 /**
  * implements left < right
  * @author renaud.delandtsheer@cetic.be
  */
-protected class LA(val left: CBLSIntVar, val right: CBLSIntVar) extends Constraint {
-  model = InvariantHelper.findModel(left,right)
+protected class LA(val left: IntValue, val right: IntValue) extends Constraint {
   registerConstrainedVariables(left, right)
 
   val Violation: CBLSIntVar = Max2(0, left - right + 1)
@@ -109,19 +108,19 @@ protected class LA(val left: CBLSIntVar, val right: CBLSIntVar) extends Constrai
  * it is just a parameter swap of [[oscar.cbls.constraints.lib.basic.L]]
  * @author renaud.delandtsheer@cetic.be
  */
-case class L(l: CBLSIntVar, r: CBLSIntVar) extends LA(l, r)
+case class L(l: IntValue, r: IntValue) extends LA(l, r)
 
 /**
  * implements left > right
  * @author  Renaud De Landtsheer rdl@cetic.be
  */
-case class G(l: CBLSIntVar, r: CBLSIntVar) extends LA(r, l)
+case class G(l: IntValue, r: IntValue) extends LA(r, l)
 
 /**
  * implements left != right
  * @author renaud.delandtsheer@cetic.be
  */
-case class NE(left: CBLSIntVar, right: CBLSIntVar) extends Constraint {
+case class NE(left: IntValue, right: IntValue) extends Constraint {
   registerConstrainedVariables(left, right)
   registerStaticAndDynamicDependenciesNoID(left, right)
   finishInitialization()
@@ -153,7 +152,7 @@ case class NE(left: CBLSIntVar, right: CBLSIntVar) extends Constraint {
  * class, so that it is part of the core instead of the library
  * @author renaud.delandtsheer@cetic.be
  */
-case class EQ(left: CBLSIntVar, right: CBLSIntVar) extends Constraint {
+case class EQ(left: IntValue, right: IntValue) extends Constraint {
   model = InvariantHelper.findModel(left,right)
   registerConstrainedVariables(left, right)
   finishInitialization()
