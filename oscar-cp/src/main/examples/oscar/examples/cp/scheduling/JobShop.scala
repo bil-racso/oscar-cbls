@@ -42,7 +42,7 @@ object JobShop extends CPModel with App {
   // Parsing    
   // -----------------------------------------------------------------------
 
-  var lines = Source.fromFile("data/ft10.txt").getLines.toList
+  var lines = Source.fromFile("data/ft07.txt").getLines.toList
 
   val nJobs = lines.head.trim().split(" ")(0).toInt
   val nTasksPerJob = lines.head.trim().split(" ")(1).toInt
