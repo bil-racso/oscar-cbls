@@ -50,7 +50,7 @@ abstract class MiaxSet(v: CBLSSetVar) extends IntInvariant{
   var wasEmpty:Boolean = v.value.isEmpty
 
   @inline
-  override def notifyInsertOn(v: CBLSSetVar, value: Int) {
+  override def notifyInsertOn(v: ChangingSetValue, value: Int) {
     if (wasEmpty){
       output := value
     }else if(!this.isScheduled && Better(value,output.getValue(true))){
@@ -60,7 +60,7 @@ abstract class MiaxSet(v: CBLSSetVar) extends IntInvariant{
   }
 
   @inline
-  override def notifyDeleteOn(v: CBLSSetVar, value: Int) {
+  override def notifyDeleteOn(v: ChangingSetValue, value: Int) {
     if (v.value.isEmpty){ //TODO: avoid querying this directly on the intsetvar!
       wasEmpty = true
       output := Default

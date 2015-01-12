@@ -126,7 +126,7 @@ case class RoundUpCustom(from: CBLSIntVar, duration: CBLSIntVar, forbiddenZones:
   }
 
   @inline
-  override def notifyIntChanged(v: CBLSIntVar, OldVal: Int, NewVal: Int) {
+  override def notifyIntChanged(v: ChangingIntValue, OldVal: Int, NewVal: Int) {
     scheduleForPropagation()
   }
 

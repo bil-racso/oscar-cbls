@@ -39,7 +39,7 @@ class Int2Int(a:IntValue, fun:Int => Int, domain:Domain = FullRange) extends Int
   finishInitialization()
 
   @inline
-  override def notifyIntChanged(v:ChangingIntValue,OldVal:Int,NewVal:Int){
+  override def notifyIntChanged(v: ChangingIntValue, OldVal: Int, NewVal: Int) {
     assert(v == a)
     output := fun(NewVal)
   }
@@ -65,7 +65,7 @@ class IntInt2Int(a:IntValue, b:IntValue, fun:((Int, Int) => Int), domain:Domain 
   finishInitialization()
 
   @inline
-  override def notifyIntChanged(v:ChangingIntValue,OldVal:Int,NewVal:Int){
+  override def notifyIntChanged(v: ChangingIntValue, OldVal: Int, NewVal: Int) {
     output := fun(a.value,b.value)
   }
 
@@ -89,7 +89,7 @@ class LazyIntInt2Int(a:IntValue, b:IntValue, fun:((Int, Int) => Int), domain:Dom
   finishInitialization()
 
   @inline
-  override def notifyIntChanged(v:ChangingIntValue,OldVal:Int,NewVal:Int){
+  override def notifyIntChanged(v: ChangingIntValue, OldVal: Int, NewVal: Int) {
     scheduleForPropagation()
   }
 

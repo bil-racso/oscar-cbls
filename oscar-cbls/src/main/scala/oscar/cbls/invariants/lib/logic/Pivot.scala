@@ -84,7 +84,7 @@ case class SelectLEHeapHeap(values: Array[CBLSIntVar], boundary: CBLSIntVar) ext
   }
 
   @inline
-  override def notifyIntChanged(v: CBLSIntVar, i: Int, OldVal: Int, NewVal: Int) {
+  override def notifyIntChanged(v: ChangingIntValue, i: Int, OldVal: Int, NewVal: Int) {
     if (v == boundary) {
       //c'est le boundary
       if (NewVal > OldVal) {
@@ -162,7 +162,7 @@ case class SelectLESetQueue(values: Array[CBLSIntVar], boundary: CBLSIntVar) ext
   }
 
   @inline
-  override def notifyIntChanged(v: CBLSIntVar, index: Int, OldVal: Int, NewVal: Int) {
+  override def notifyIntChanged(v: ChangingIntValue, index: Int, OldVal: Int, NewVal: Int) {
     if (v == boundary) {
       //c'est le boundary
       assert(NewVal > OldVal, "SelectLESetQueue does not allow boundary to decrease")

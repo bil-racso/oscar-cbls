@@ -46,7 +46,7 @@ case class SumElements(vars: Array[IntValue], cond: SetValue)
   finishInitialization()
 
   @inline
-  override def notifyIntChanged(v: ChangingIntValue, index:Int, OldVal: Int, NewVal: Int) {
+  override def notifyIntChanged(v: ChangingIntValue, index: Int, OldVal: Int, NewVal: Int) {
     //it is always a listened one, but we could check this here
     assert(vars(index)==v)
     assert(keyForRemoval(index)!=null)
@@ -115,7 +115,7 @@ case class ProdElements(vars: Array[IntValue], cond: SetValue)
   }
 
   @inline
-  override def notifyIntChanged(v: ChangingIntValue, index:Int, OldVal: Int, NewVal: Int) {
+  override def notifyIntChanged(v: ChangingIntValue, index: Int, OldVal: Int, NewVal: Int) {
     //it is always a listened one, but we could check this here
     assert(vars(index) == v)
     assert(keyForRemoval(index)!=null)

@@ -99,7 +99,7 @@ case class Routes(V: Int,
   var ToUpdate: List[Int] = List.empty
   var ToUpdateCount: Int = 0
 
-  override def notifyIntChanged(v: CBLSIntVar, i: Int, OldVal: Int, NewVal: Int) {
+  override def notifyIntChanged(v: ChangingIntValue, i: Int, OldVal: Int, NewVal: Int) {
     unregisterDynamicallyListenedElement(arrayOfUnregisterKeys(i))
     arrayOfUnregisterKeys(i) = null
     ToUpdate = i :: ToUpdate

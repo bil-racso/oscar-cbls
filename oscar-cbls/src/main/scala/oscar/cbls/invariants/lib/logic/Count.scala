@@ -49,7 +49,7 @@ case class DenseCount(values: Array[CBLSIntVar], counts: Array[CBLSIntVar], offs
   for (c <- counts) { c.setDefiningInvariant(this) }
 
   @inline
-  override def notifyIntChanged(v: CBLSIntVar, index: Int, OldVal: Int, NewVal: Int) {
+  override def notifyIntChanged(v: ChangingIntValue, index: Int, OldVal: Int, NewVal: Int) {
     assert(values(index) == v)
     counts(OldVal + offset) :-= 1
     counts(NewVal + offset) :+= 1

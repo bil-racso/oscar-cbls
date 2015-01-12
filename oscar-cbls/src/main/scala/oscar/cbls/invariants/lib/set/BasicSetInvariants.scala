@@ -50,13 +50,13 @@ case class Union(left: CBLSSetVar, right: CBLSSetVar) extends SetInvariant {
   }
 
   @inline
-  override def notifyInsertOn(v: CBLSSetVar, value: Int) {
+  override def notifyInsertOn(v: ChangingSetValue, value: Int) {
     assert(left == v || right == v)
     output.insertValue(value)
   }
 
   @inline
-  override def notifyDeleteOn(v: CBLSSetVar, value: Int) {
+  override def notifyDeleteOn(v: ChangingSetValue, value: Int) {
     assert(left == v || right == v)
     if (v == left) {
       if (!right.value.contains(value)) {
@@ -101,7 +101,7 @@ case class Inter(left: CBLSSetVar, right: CBLSSetVar) extends SetInvariant {
   }
 
   @inline
-  override def notifyInsertOn(v: CBLSSetVar, value: Int) {
+  override def notifyInsertOn(v: ChangingSetValue, value: Int) {
     if (v == left) {
       if (right.value.contains(value)) {
         output.insertValue(value)
@@ -116,7 +116,7 @@ case class Inter(left: CBLSSetVar, right: CBLSSetVar) extends SetInvariant {
   }
 
   @inline
-  override def notifyDeleteOn(v: CBLSSetVar, value: Int) {
+  override def notifyDeleteOn(v: ChangingSetValue, value: Int) {
     assert(left == v || right == v)
     output.deleteValue(value)
   }
@@ -155,7 +155,7 @@ case class SetMap(a: CBLSSetVar, fun: Int=>Int,
   }
 
   @inline
-  override def notifyInsertOn(v: CBLSSetVar, value: Int) {
+  override def notifyInsertOn(v: ChangingSetValue, value: Int) {
     val mappedV = fun(value)
     val oldCount = outputCount.getOrElse(mappedV,0)
     if(oldCount == 0){
@@ -165,7 +165,7 @@ case class SetMap(a: CBLSSetVar, fun: Int=>Int,
   }
 
   @inline
-  override def notifyDeleteOn(v: CBLSSetVar, value: Int) {
+  override def notifyDeleteOn(v: ChangingSetValue, value: Int) {
     val mappedV = fun(value)
     val oldCount = outputCount.getOrElse(mappedV,0)
     if(oldCount == 1){
@@ -203,7 +203,7 @@ case class Diff(left: CBLSSetVar, right: CBLSSetVar) extends SetInvariant {
   }
 
   @inline
-  override def notifyInsertOn(v: CBLSSetVar, value: Int) {
+  override def notifyInsertOn(v: ChangingSetValue, value: Int) {
     if (v == left) {
       if (!right.value.contains(value)) {
         output.insertValue(value)
@@ -218,7 +218,7 @@ case class Diff(left: CBLSSetVar, right: CBLSSetVar) extends SetInvariant {
   }
 
   @inline
-  override def notifyDeleteOn(v: CBLSSetVar, value: Int) {
+  override def notifyDeleteOn(v: ChangingSetValue, value: Int) {
     if (v == left) {
       if (!right.value.contains(value)) {
         output.deleteValue(value)
@@ -260,13 +260,13 @@ case class Cardinality(v: CBLSSetVar) extends IntInvariant {
   }
 
   @inline
-  override def notifyInsertOn(v: CBLSSetVar, value: Int) {
+  override def notifyInsertOn(v: ChangingSetValue, value: Int) {
     assert(v == this.v)
     output :+= 1
   }
 
   @inline
-  override def notifyDeleteOn(v: CBLSSetVar, value: Int) {
+  override def notifyDeleteOn(v: ChangingSetValue, value: Int) {
     assert(v == this.v)
     output :-= 1
   }
@@ -299,7 +299,7 @@ case class MakeSet(on: SortedSet[CBLSIntVar]) extends SetInvariant {
   }
 
   @inline
-  override def notifyIntChanged(v: CBLSIntVar, OldVal: Int, NewVal: Int) {
+  override def notifyIntChanged(v: ChangingIntValue, OldVal: Int, NewVal: Int) {
     assert(on.contains(v), "MakeSet notified for non interesting var :" + on.toList.exists(_==v) + " " + on.toList)
 
     assert(OldVal != NewVal)
@@ -363,7 +363,7 @@ case class Interval(lb: CBLSIntVar, ub: CBLSIntVar) extends SetInvariant {
   }
 
   @inline
-  override def notifyIntChanged(v: CBLSIntVar, OldVal: Int, NewVal: Int) {
+  override def notifyIntChanged(v: ChangingIntValue, OldVal: Int, NewVal: Int) {
     if (v == lb) {
       if (OldVal < NewVal) {
         //intervale reduit
@@ -430,14 +430,14 @@ case class TakeAny(from: CBLSSetVar, default: Int) extends IntInvariant {
     }
   }
 
-  override def notifyInsertOn(v: CBLSSetVar, value: Int) {
+  override def notifyInsertOn(v: ChangingSetValue, value: Int) {
     if (wasEmpty) {
       output := value
       wasEmpty = false
     }
   }
 
-  override def notifyDeleteOn(v: CBLSSetVar, value: Int) {
+  override def notifyDeleteOn(v: ChangingSetValue, value: Int) {
     if (value == output.getValue(true)) {
       if (v.value.isEmpty) {
         output := default
@@ -518,14 +518,14 @@ case class TakeAnyToSet(from: CBLSSetVar) extends SetInvariant {
     }
   }
 
-  override def notifyInsertOn(v: CBLSSetVar, value: Int) {
+  override def notifyInsertOn(v: ChangingSetValue, value: Int) {
     if (wasEmpty) {
       output :+= from.value.head
       wasEmpty = false
     }
   }
 
-  override def notifyDeleteOn(v: CBLSSetVar, value: Int) {
+  override def notifyDeleteOn(v: ChangingSetValue, value: Int) {
     if (value == output.getValue(true).head){
       if (v.value.isEmpty) {
         output := SortedSet.empty

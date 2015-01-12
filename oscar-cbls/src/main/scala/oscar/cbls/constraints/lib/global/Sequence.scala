@@ -90,7 +90,7 @@ case class Sequence(variables: Array[CBLSIntVar], length:Int, Max:Int, predicate
   }
 
   @inline
-  override def notifyIntChanged(v: CBLSIntVar, i: Int, OldVal: Int, NewVal: Int){
+  override def notifyIntChanged(v: ChangingIntValue, i: Int, OldVal: Int, NewVal: Int){
     if (predicate(OldVal)){
       if(!predicate(NewVal)){
         //decrease the count

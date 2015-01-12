@@ -61,7 +61,7 @@ case class Sort(var values:Array[CBLSIntVar], ReversePerm:Array[CBLSIntVar]) ext
   def GetForwardPerm(): Array[CBLSIntVar] = ForwardPerm
 
   @inline
-  override def notifyIntChanged(v: CBLSIntVar, index: Int, OldVal: Int, NewVal: Int) {
+  override def notifyIntChanged(v: ChangingIntValue, index: Int, OldVal: Int, NewVal: Int) {
     if (NewVal > OldVal) BubbleUp(v, index)
     else BubbleDown(v, index)
   }

@@ -179,8 +179,8 @@ case class Store(override val verbose:Boolean = false,
   /**calls this when you have declared all your invariants and variables.
     * This must be called before any query and update can be made on the model,
     * and after all the invariants and variables have been declared.
-   * @param DropStaticGraph true if you want to drop the static propagation graph to free memory. It takes little time
-   */
+    * @param DropStaticGraph true if you want to drop the static propagation graph to free memory. It takes little time
+    */
   def close(DropStaticGraph: Boolean = true){
     assert(!closed, "cannot close a model twice")
     performCallsBeforeClose()
@@ -303,10 +303,34 @@ object Invariant{
   }
 }
 
-trait VaryingDependenciesInvariant extends VaryingDependencies{
+trait VaryingDependenciesInvariant extends Invariant with VaryingDependencies{
   /**register to determining element. It must be in the static dependency graph*/
   def registerDeterminingDependency(v:Value,i:Any = -1){
     registerDeterminingElement(v,i)
+  }
+
+  /**Call this from within the invariant to notify that you will listen to this variable.
+    * The variable must be registered in the static propagation graph.
+    * You CANNOT register a variable twice. It is undetected, but will lead to unexpected behavior.
+    * @param v the variable that you want to listen to (and be notified about change)
+    * @param i: an integer value that will be passed when updates on this variable are notified to the invariant
+    * @return a handle that is required to remove the listened var from the dynamically listened ones
+    */
+  override def registerDynamicDependency(v:Value,i:Any = -1):KeyForElementRemoval = {
+    registerDynamicallyListenedElement(v,i)
+  }
+
+  /**
+   * registers static and dynamic dependency to all items in the array
+   * let be i, a position in the array, the index used for dynamic dependency registration is i+offset
+   * @param v the variable that are registered
+   * @param offset and offset applied to the position in the array when registering the dynamic dependency
+   */
+  override def registerStaticAndDynamicDependencyArrayIndex[T <: Value](v:Array[T],offset:Int = 0):Array[KeyForElementRemoval] = {
+    Array.tabulate(v.size)((i:Int) => {
+      registerStaticDependency(v(i))
+      registerDynamicDependency(v(i),i + offset)
+    })
   }
 }
 
@@ -383,12 +407,13 @@ trait Invariant extends PropagationElement{
    * @param v the variable that are registered
    * @param offset and offset applied to the position in the array when registering the dynamic dependency
    */
-  def registerStaticAndDynamicDependencyArrayIndex[T <: Value](v:Array[T],offset:Int = 0):Array[KeyForElementRemoval] = {
-    Array.tabulate(v.size)((i:Int) => {
+  def registerStaticAndDynamicDependencyArrayIndex[T <: Value](v:Array[T],offset:Int = 0) {
+    for (i <- 0 to v.size) {
       registerStaticDependency(v(i))
-      registerDynamicDependency(v(i),i + offset)
-    })
+      registerDynamicDependency(v(i), i + offset)
+    }
   }
+
 
   def registerStaticAndDynamicDependenciesNoID(v:Value*){
     for (varint <- v){
@@ -404,6 +429,8 @@ trait Invariant extends PropagationElement{
     }
   }
 
+  //TODO: les méthodes d'enregistrement doivent être recopiées dans les varyingDependenciesInvariants
+
   /**Call this from within the invariant to notify that you will listen to this variable.
     * The variable must be registered in the static propagation graph.
     * You CANNOT register a variable twice. It is undetected, but will lead to unexpected behavior.
@@ -411,36 +438,28 @@ trait Invariant extends PropagationElement{
     * @param i: an integer value that will be passed when updates on this variable are notified to the invariant
     * @return a handle that is required to remove the listened var from the dynamically listened ones
     */
-  def registerDynamicDependency(v:Value,i:Any = -1):KeyForElementRemoval = {
+  def registerDynamicDependency(v:Value,i:Any = -1){
     registerDynamicallyListenedElement(v,i)
   }
 
-  /**Call this from within the invariant to notify that you stop listen to this variable.
-    * The variable must have been be registered in the static propagation graph.
-    * @param k the handle that was returned when the variable added to the dynamic graph
-    */
-  def unregisterDynamicDependency(k:KeyForElementRemoval){
-    unregisterDynamicallyListenedElement(k)
-  }
-
   //we are only notified for the variable we really want to listen (cfr. mGetReallyListenedElements, registerDynamicDependency, unregisterDynamicDependency)
-  def notifyIntChangedAny(v:ChangingIntValue,i:Any,OldVal:Int,NewVal:Int){notifyIntChanged(v,i.asInstanceOf[Int], OldVal,NewVal)}
+  def notifyIntChangedAny(v: ChangingIntValue, i: Any, OldVal: Int, NewVal: Int) {notifyIntChanged(v, i.asInstanceOf[Int], OldVal, NewVal)}
 
-  def notifyIntChanged(v:ChangingIntValue,i:Int,OldVal:Int,NewVal:Int){notifyIntChanged(v,OldVal,NewVal)}
+  def notifyIntChanged(v: ChangingIntValue, i: Int, OldVal: Int, NewVal: Int) {notifyIntChanged(v, OldVal, NewVal)}
 
-  def notifyIntChanged(v:ChangingIntValue,OldVal:Int,NewVal:Int){}
+  def notifyIntChanged(v: ChangingIntValue, OldVal: Int, NewVal: Int) {}
 
-  def notifyInsertOnAny(v:ChangingSetValue,i:Any,value:Int){notifyInsertOn(v,i.asInstanceOf[Int],value)}
+  def notifyInsertOnAny(v: ChangingSetValue,i:Any,value:Int){notifyInsertOn(v,i.asInstanceOf[Int],value)}
 
-  def notifyInsertOn(v:ChangingSetValue,i:Int,value:Int){notifyInsertOn(v,value)}
+  def notifyInsertOn(v: ChangingSetValue,i:Int,value:Int){notifyInsertOn(v,value)}
 
-  def notifyInsertOn(v:ChangingSetValue,value:Int){}
+  def notifyInsertOn(v: ChangingSetValue,value:Int){}
 
   def notifyDeleteOnAny(v:ChangingSetValue,i:Any,value:Int){notifyDeleteOn(v,i.asInstanceOf[Int],value)}
 
-  def notifyDeleteOn(v:ChangingSetValue,i:Int,value:Int){notifyDeleteOn(v,value)}
+  def notifyDeleteOn(v: ChangingSetValue,i:Int,value:Int){notifyDeleteOn(v,value)}
 
-  def notifyDeleteOn(v:ChangingSetValue,value:Int){}
+  def notifyDeleteOn(v: ChangingSetValue,value:Int){}
 
   /**To override whenever possible to spot errors in invariants.
     * this will be called for each invariant after propagation is performed.
@@ -514,7 +533,7 @@ object InvariantHelper{
     "[" + a.toList.mkString(",")+"]"
 }
 
-trait Value extends DummyPropagationElement
+trait Value extends BasicPropagationElement
 
 trait Variable extends AbstractVariable{
   protected var definingInvariant:Invariant = null
@@ -592,10 +611,4 @@ object AbstractVariable{
   implicit val ord:Ordering[AbstractVariable] = new Ordering[AbstractVariable]{
     def compare(o1: AbstractVariable, o2: AbstractVariable) = o1.compare(o2)
   }
-}
-
-/**add this to your invariant when you instantiate them if ylou want the variable to have a custom name*/
-trait CustomName extends AbstractVariable{
-  override def name = customName
-  def customName:String
 }

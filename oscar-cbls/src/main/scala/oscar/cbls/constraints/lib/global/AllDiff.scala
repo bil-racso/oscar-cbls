@@ -86,7 +86,7 @@ case class AllDiff(variables: Iterable[CBLSIntVar]) extends Constraint {
   }
 
   @inline
-  override def notifyIntChanged(v: CBLSIntVar, OldVal: Int, NewVal: Int) {
+  override def notifyIntChanged(v: ChangingIntValue, OldVal: Int, NewVal: Int) {
     ValueCount(OldVal + offset) :-= 1
     ValueCount(NewVal + offset) :+= 1
 

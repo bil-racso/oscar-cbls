@@ -21,7 +21,7 @@
 
 package oscar.cbls.invariants.core.computation
 
-import oscar.cbls.invariants.core.propagation.{DummyPropagationElement, Checker, PropagationElement}
+import oscar.cbls.invariants.core.propagation.{BasicPropagationElement, Checker, PropagationElement}
 import scala.language.implicitConversions
 
 /** this is something that has an integer value.
@@ -269,7 +269,7 @@ class FullIdentityInt(v:IntValue) extends IntInvariant(v.domain,v.value) {
   registerStaticAndDynamicDependency(v)
   finishInitialization()
 
-  override def notifyIntChanged(v:ChangingIntValue,i:Int,OldVal:Int,NewVal:Int){
+  override def notifyIntChanged(v: ChangingIntValue, i: Int, OldVal: Int, NewVal: Int) {
     assert(v == this.v)
     this := NewVal
   }
@@ -287,7 +287,7 @@ class IdentityInt(toValue:CBLSIntVar, fromValue:ChangingIntValue) extends Invari
   toValue.setDefiningInvariant(this)
   finishInitialization()
 
-  override def notifyIntChanged(v:ChangingIntValue,OldVal:Int,NewVal:Int){
+  override def notifyIntChanged(v: ChangingIntValue, OldVal: Int, NewVal: Int) {
     toValue := NewVal
   }
 

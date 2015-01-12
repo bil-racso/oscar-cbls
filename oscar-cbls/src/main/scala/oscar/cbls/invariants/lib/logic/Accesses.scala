@@ -48,12 +48,12 @@ case class IntITE(ifVar: IntValue, thenVar: IntValue, elseVar: IntValue)
     if (v == ifVar) {
       if (NewVal > 0 && OldVal <= 0) {
         //modifier le graphe de dependances
-        unregisterDynamicDependency(KeyToCurrentVar)
+        KeyToCurrentVar.performRemove()
         KeyToCurrentVar = registerDynamicDependency(thenVar)
         this := thenVar.value
       } else if (NewVal <= 0 && OldVal > 0) {
         //modifier le graphe de dependances
-        unregisterDynamicDependency(KeyToCurrentVar)
+        KeyToCurrentVar.performRemove()
         KeyToCurrentVar = registerDynamicDependency(elseVar)
         this := elseVar.value
       }
@@ -81,7 +81,9 @@ case class IntITE(ifVar: IntValue, thenVar: IntValue, elseVar: IntValue)
  * @author renaud.delandtsheer@cetic.be
  * */
 case class IntElement(index: IntValue, inputarray: Array[IntValue])
-  extends IntInvariant(initialValue = inputarray(index.value).value) with Bulked[IntValue, Domain] with VaryingDependenciesInvariant {
+  extends IntInvariant(initialValue = inputarray(index.value).value)
+  with Bulked[IntValue, Domain]
+  with VaryingDependenciesInvariant {
 
   registerStaticDependency(index)
   registerDeterminingDependency(index)
@@ -100,7 +102,7 @@ case class IntElement(index: IntValue, inputarray: Array[IntValue])
   override def notifyIntChanged(v: ChangingIntValue, OldVal: Int, NewVal: Int) {
     if (v == index) {
       //modifier le graphe de dependances
-      unregisterDynamicDependency(KeyToCurrentVar)
+      KeyToCurrentVar.performRemove()
       KeyToCurrentVar = registerDynamicDependency(inputarray(NewVal))
       this := inputarray(NewVal).value
     } else { //si c'est justement celui qui est affiche.
@@ -157,7 +159,7 @@ case class Elements(index: SetValue, inputarray: Array[IntValue])
     InvariantHelper.getMinMaxBounds(bulkedVar)
 
   @inline
-  override def notifyIntChanged(v:ChangingIntValue,OldVal:Int,NewVal:Int){
+  override def notifyIntChanged(v: ChangingIntValue, OldVal: Int, NewVal: Int) {
     internalDelete(OldVal)
     internalInsert(NewVal)
   }
@@ -176,7 +178,7 @@ case class Elements(index: SetValue, inputarray: Array[IntValue])
     assert(index == v)
     assert(KeysToInputArray(value) != null)
 
-    unregisterDynamicDependency(KeysToInputArray(value))
+    KeysToInputArray(value).performRemove()
     KeysToInputArray(value) = null
 
     val OldVal:Int = inputarray(value).value
@@ -251,7 +253,7 @@ case class SetElement(index: IntValue, inputarray: Array[SetValue])
   override def notifyIntChanged(v: ChangingIntValue, OldVal: Int, NewVal: Int) {
     assert(v == index)
     //modifier le graphe de dependances
-    unregisterDynamicDependency(KeyToCurrentVar)
+    KeyToCurrentVar.performRemove()
     KeyToCurrentVar = registerDynamicDependency(inputarray(NewVal))
     this := inputarray(NewVal).value
   }

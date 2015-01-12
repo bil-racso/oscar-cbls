@@ -131,14 +131,14 @@ abstract class MiaxArray(vars: Array[CBLSIntVar], cond: CBLSSetVar, default: Int
   }
 
   @inline
-  override def notifyIntChanged(v: CBLSIntVar, index: Int, OldVal: Int, NewVal: Int) {
+  override def notifyIntChanged(v: ChangingIntValue, index: Int, OldVal: Int, NewVal: Int) {
     //mettre a jour le heap
     h.notifyChange(index)
     output := vars(h.getFirst).value
   }
 
   @inline
-  override def notifyInsertOn(v: CBLSSetVar, value: Int) {
+  override def notifyInsertOn(v: ChangingSetValue, value: Int) {
     assert(v == cond)
     keyForRemoval(value) = registerDynamicDependency(vars(value), value)
 
@@ -148,7 +148,7 @@ abstract class MiaxArray(vars: Array[CBLSIntVar], cond: CBLSSetVar, default: Int
   }
 
   @inline
-  override def notifyDeleteOn(v: CBLSSetVar, value: Int) {
+  override def notifyDeleteOn(v: ChangingSetValue, value: Int) {
     assert(v == cond)
 
     unregisterDynamicDependency(keyForRemoval(value))

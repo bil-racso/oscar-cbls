@@ -25,7 +25,7 @@
 
 package oscar.cbls.invariants.lib.set
 
-import oscar.cbls.invariants.core.computation.{ CBLSIntVar, IntInvariant, CBLSSetVar }
+import oscar.cbls.invariants.core.computation.{ChangingSetValue, CBLSIntVar, IntInvariant, CBLSSetVar}
 import oscar.cbls.invariants.core.propagation.Checker
 
 /**
@@ -50,13 +50,13 @@ case class SetSum(on: CBLSSetVar, fun: (Int => Int) = ((a: Int) => a)) extends I
   }
 
   @inline
-  override def notifyInsertOn(v: CBLSSetVar, value: Int) {
+  override def notifyInsertOn(v: ChangingSetValue, value: Int) {
     assert(v == on)
     output :+= fun(value)
   }
 
   @inline
-  override def notifyDeleteOn(v: CBLSSetVar, value: Int) {
+  override def notifyDeleteOn(v: ChangingSetValue, value: Int) {
     assert(v == on)
     output :-= fun(value)
   }
@@ -98,7 +98,7 @@ case class SetProd(on: CBLSSetVar, fun: (Int => Int) = ((a: Int) => a)) extends 
   }
 
   @inline
-  override def notifyInsertOn(v: CBLSSetVar, value: Int) {
+  override def notifyInsertOn(v: ChangingSetValue, value: Int) {
     assert(v == on)
     if (value != 0) {
       NonZeroProduct *= fun(value)
@@ -111,7 +111,7 @@ case class SetProd(on: CBLSSetVar, fun: (Int => Int) = ((a: Int) => a)) extends 
   }
 
   @inline
-  override def notifyDeleteOn(v: CBLSSetVar, value: Int) {
+  override def notifyDeleteOn(v: ChangingSetValue, value: Int) {
     assert(v == on, "The given set (IntSetVar) should be SetProd.on.")
     if (value != 0) {
       NonZeroProduct /= fun(value)

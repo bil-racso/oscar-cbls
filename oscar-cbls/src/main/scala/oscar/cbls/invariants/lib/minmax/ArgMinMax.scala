@@ -146,7 +146,7 @@ abstract class ArgMiaxArray(vars: Array[CBLSIntVar], cond: CBLSSetVar, default: 
   }
 
   @inline
-  override def notifyIntChanged(v: CBLSIntVar, index: Int, OldVal: Int, NewVal: Int) {
+  override def notifyIntChanged(v: ChangingIntValue, index: Int, OldVal: Int, NewVal: Int) {
     cost = cost - System.currentTimeMillis()
     //mettre a jour le heap
     h.notifyChange(index)
@@ -171,7 +171,7 @@ abstract class ArgMiaxArray(vars: Array[CBLSIntVar], cond: CBLSSetVar, default: 
   }
 
   @inline
-  override def notifyInsertOn(v: CBLSSetVar, value: Int) {
+  override def notifyInsertOn(v: ChangingSetValue, value: Int) {
     cost = cost - System.currentTimeMillis()
     assert(v == cond && cond != null)
     keyForRemoval(value) = registerDynamicDependency(vars(value), value)
@@ -190,7 +190,7 @@ abstract class ArgMiaxArray(vars: Array[CBLSIntVar], cond: CBLSSetVar, default: 
   }
 
   @inline
-  override def notifyDeleteOn(v: CBLSSetVar, value: Int) {
+  override def notifyDeleteOn(v: ChangingSetValue, value: Int) {
     cost = cost - System.currentTimeMillis()
     assert(v == cond && cond != null)
 

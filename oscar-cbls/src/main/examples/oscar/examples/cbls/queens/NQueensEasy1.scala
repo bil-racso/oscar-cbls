@@ -39,7 +39,7 @@ object NQueensEasy1 extends CBLSModel with App{
   val queens = Array.tabulate(N)((q:Int) => CBLSIntVar(0 to N-1,init.next(), "queen" + q))
 
   //c.post(AllDiff(Queens)) //enforced because we swap queens and they are always allDiff
-  post(allDiff(for (q <- range) yield (queens(q) + q).toIntVar))
+  post(allDiff(for (q <- range) yield (queens(q) + q)))
   post(allDiff(for (q <- range) yield (q - queens(q)).toIntVar))
 
   val maxViolQueens = argMax(violations(queens)).toSetVar("most violated queens")

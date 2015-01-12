@@ -82,7 +82,7 @@ case class Cumulative(indices: Array[Int],
   }
 
   @inline
-  override def notifyIntChanged(v: CBLSIntVar, index: Int, OldVal: Int, NewVal: Int) {
+  override def notifyIntChanged(v: ChangingIntValue, index: Int, OldVal: Int, NewVal: Int) {
     if (start(index) == v) {
       //start
       remove(OldVal, duration(index).value, amount(index).value, index)

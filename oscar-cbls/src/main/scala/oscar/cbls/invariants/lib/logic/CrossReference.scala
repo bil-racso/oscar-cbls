@@ -43,12 +43,12 @@ case class DenseRef(references:Array[CBLSSetVar], referencing:Array[CBLSSetVar])
   }
 
   @inline
-  override def notifyInsertOn(v: CBLSSetVar, i: Int, value: Int){
+  override def notifyInsertOn(v: ChangingSetValue, i: Int, value: Int){
     referencing(value).insertValue(i)
   }
 
   @inline
-  override def notifyDeleteOn(v: CBLSSetVar, i: Int, value: Int){
+  override def notifyDeleteOn(v: ChangingSetValue, i: Int, value: Int){
     referencing(value).deleteValue(i)
   }
 

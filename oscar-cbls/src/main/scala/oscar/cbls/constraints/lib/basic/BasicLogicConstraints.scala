@@ -130,7 +130,7 @@ case class NE(left: IntValue, right: IntValue) extends Constraint {
   Violation.setDefiningInvariant(this)
 
   @inline
-  override def notifyIntChanged(v: CBLSIntVar, OldVal: Int, NewVal: Int) {
+  override def notifyIntChanged(v: ChangingIntValue, OldVal: Int, NewVal: Int) {
     Violation := (if (left.value == right.value) 1 else 0)
   }
 

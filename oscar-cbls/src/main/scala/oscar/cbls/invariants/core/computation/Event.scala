@@ -169,7 +169,7 @@ class Event(v:Variable, w:Variable, ModifiedVars:Iterable[Variable]) extends Inv
   if (ModifiedVars != null)
     for(variable <- ModifiedVars){variable.setDefiningInvariant(this)}
 
-  override def notifyIntChanged(v:ChangingIntValue,i:Int,OldVal:Int,NewVal:Int){scheduleForPropagation()}
+  override def notifyIntChanged(v: ChangingIntValue, i: Int, OldVal: Int, NewVal: Int) {scheduleForPropagation()}
   override def notifyInsertOn(v:ChangingSetValue,i:Int,value:Int){scheduleForPropagation()}
   override def notifyDeleteOn(v:ChangingSetValue,i:Int,value:Int){scheduleForPropagation()}
 

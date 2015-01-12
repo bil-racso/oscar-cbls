@@ -111,7 +111,7 @@ trait Checkpointing extends Store{
   }
 }
 
-class ChangeRecorder(s:Store) extends Invariant{
+class ChangeRecorder(s:Store) extends VaryingDependenciesInvariant{
 
   var keys : Array[KeyForElementRemoval] = null
 
@@ -134,7 +134,7 @@ class ChangeRecorder(s:Store) extends Invariant{
     }else if (!a && myActive){
       //on désactive l'enregistrement
       for(k <- keys) {
-        if(k != null) unregisterDynamicDependency(k)
+        if(k != null) k.performRemove()
       }
       keys = null
     }
@@ -149,7 +149,7 @@ class ChangeRecorder(s:Store) extends Invariant{
   }
 
   def varHasChanged(variable:Variable, varId:Int){
-    unregisterDynamicDependency(keys(varId))
+    keys(varId).performRemove()
     keys(varId) = null
     changesVariables = (variable,varId) :: changesVariables
   }
@@ -161,23 +161,26 @@ class ChangeRecorder(s:Store) extends Invariant{
     changesVariables = List.empty
   }
 
-  override def notifyIntChanged(v: CBLSIntVar, i: Int, OldVal: Int, NewVal: Int) {
-    val moveForUndo:(Unit=>Unit) = (_ => v := OldVal)
-    varHasChanged(v, i)
+  override def notifyIntChanged(v: ChangingIntValue, i: Int, OldVal: Int, NewVal: Int) {
+    val vAsIntVar = v.asInstanceOf[CBLSIntVar]
+    val moveForUndo:(Unit=>Unit) = (_ => vAsIntVar := OldVal)
+    varHasChanged(vAsIntVar, i)
     recordingCheckpoint.addUndo(moveForUndo)
   }
 
-  override def notifyInsertOn(v: CBLSSetVar, i: Int, value: Int){
-    val savedValue = (v.value - i)
-    val moveForUndo:(Unit=>Unit) = (_ => v := savedValue)
-    varHasChanged(v, i)
+  override def notifyInsertOn(v: ChangingSetValue, i: Int, value: Int){
+    val vAsSetVar = v.asInstanceOf[CBLSSetVar]
+    val savedValue = (vAsSetVar.value - i)
+    val moveForUndo:(Unit=>Unit) = (_ => vAsSetVar := savedValue)
+    varHasChanged(vAsSetVar, i)
     recordingCheckpoint.addUndo(moveForUndo)
   }
 
-  override def notifyDeleteOn(v: CBLSSetVar, i: Int, value: Int){
+  override def notifyDeleteOn(v: ChangingSetValue, i: Int, value: Int){
+    val vAsSetVar = v.asInstanceOf[CBLSSetVar]
     val savedValue = (v.value + i)
-    val moveForUndo:(Unit=>Unit) = (_ => v := savedValue)
-    varHasChanged(v, i)
+    val moveForUndo:(Unit=>Unit) = (_ => vAsSetVar := savedValue)
+    varHasChanged(vAsSetVar, i)
     recordingCheckpoint.addUndo(moveForUndo)
   }
 }
