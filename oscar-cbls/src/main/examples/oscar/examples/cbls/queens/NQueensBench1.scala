@@ -91,12 +91,12 @@ object NQueensBench1 extends SearchEngine(true) with StopWatch{
     val c = ConstraintSystem(m)
 
     //c.post(AllDiff(Queens)) //enforced because we swap queens and they are always alldiff
-    c.post(AllDiff(for ( q <- range) yield (queens(q) + q).toIntVar))
-    c.post(AllDiff(for ( q <- range) yield (q - queens(q)).toIntVar))
+    c.post(AllDiff(for ( q <- range) yield (queens(q) + q)))
+    c.post(AllDiff(for ( q <- range) yield (q - queens(q))))
 
     val tabu = Array.tabulate(N)(q => CBLSIntVar(m, 0, Int.MaxValue, 0, "Tabu_queen" + q))
     val it = CBLSIntVar(m,0,Int.MaxValue,1,"it")
-    val nonTabuQueens = SelectLESetQueue(tabu, it).toSetVar("non tabu queens")
+    val nonTabuQueens = SelectLESetQueue(tabu, it).setName("non tabu queens")
     val nonTabuMaxViolQueens:CBLSSetVar = ArgMaxArray(c.violations(queens), nonTabuQueens)
 
     m.close()

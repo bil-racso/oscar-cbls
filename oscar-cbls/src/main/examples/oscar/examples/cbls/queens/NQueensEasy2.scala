@@ -44,8 +44,8 @@ object NQueensEasy2 extends CBLSModel with App{
   val queens = Array.tabulate(N)(q => CBLSIntVar(0 to N-1,init(q),"queen_" + q))
 
   //alldiff on rows in enforced because we swap queens initially different
-  add(allDifferent(Array.tabulate(N)(q => (queens(q) + q).toIntVar)))
-  add(allDifferent(Array.tabulate(N)(q => (q - queens(q)).toIntVar)))
+  add(allDifferent(Array.tabulate(N)(q => (queens(q) + q))))
+  add(allDifferent(Array.tabulate(N)(q => (q - queens(q)))))
 
   val violationArray:Array[CBLSIntVar] = Array.tabulate(N)(q => c.violation(queens(q))).toArray
 

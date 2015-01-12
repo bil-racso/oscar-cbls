@@ -22,7 +22,7 @@
 package oscar.cbls.invariants.lib.logic
 
 import collection.immutable.SortedSet
-import oscar.cbls.invariants.core.computation.{Store, InvariantHelper, Invariant, CBLSSetVar}
+import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.core.propagation.Checker
 
 /**maintains the reverse references. Referencing(i) = {j | Reference(j) includes i}
@@ -70,10 +70,10 @@ case class DenseRef(references:Array[CBLSSetVar], referencing:Array[CBLSSetVar])
 
 object DenseRef{
   def makeDenseRef(references:Array[CBLSSetVar]):DenseRef = {
-    val (minMin,maxMax) = InvariantHelper.getMinMaxBoundsIntSetVar(references)
+    val (minMin,maxMax) = InvariantHelper.getMinMaxBoundsSet(references)
     val m:Store = InvariantHelper.findModel(references)
     assert(minMin == 0)
-    val referencing = Array.tabulate(maxMax + 1)(i => new CBLSSetVar(m,0,references.length - 1, "referencing_" + i))
+    val referencing = Array.tabulate(maxMax + 1)(i => new CBLSSetVar(m,SortedSet.empty, 0 to references.length - 1, "referencing_" + i))
     DenseRef(references,referencing)
   }
 }

@@ -45,7 +45,7 @@ case class BinPackingStandardized(itemSizes:Array[Int], binSizes:Array[Int], ini
   val binAssignments = DenseCluster(itemAssignments, Array.tabulate(binsCount)(x => CBLSSetVar(itemsRange, name = "Contents of bin %d".format(x))(s))).clusters
 
   /**Amount of space used for each bin*/
-  val contentsByBin = (for (i <- binsRange) yield SetSum(binAssignments(i), itemSizes(_)).toIntVar).toArray
+  val contentsByBin = (for (i <- binsRange) yield SetSum(binAssignments(i), itemSizes(_))).toArray
 
   /**
    * Posts the binPacking Constraint

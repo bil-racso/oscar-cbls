@@ -23,7 +23,7 @@
 
 package oscar.cbls.invariants.lib.logic
 
-import oscar.cbls.invariants.core.computation.{ Invariant, CBLSSetVar, CBLSIntVar }
+import oscar.cbls.invariants.core.computation.{ChangingIntValue, Invariant, CBLSSetVar, CBLSIntVar}
 import collection.immutable.SortedSet
 
 /**

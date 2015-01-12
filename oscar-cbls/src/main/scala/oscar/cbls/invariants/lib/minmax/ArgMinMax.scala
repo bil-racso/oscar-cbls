@@ -36,12 +36,12 @@ import oscar.cbls.invariants.core.computation._
  * update is O(log(n))
  * @author renaud.delandtsheer@cetic.be
  * */
-case class ArgMaxArray(vars: Array[CBLSIntVar], cond: CBLSSetVar = null, default: Int = Int.MinValue)
+case class ArgMaxArray(vars: Array[IntValue], cond: SetValue = null, default: Int = Int.MinValue)
   extends ArgMiaxArray(vars, cond, default) {
 
   override def name: String = "ArgMaxArray"
 
-  override def Ord(v: CBLSIntVar): Int = -v.value
+  override def Ord(v: IntValue): Int = -v.value
 
   override def ExtremumName: String = "Max of ArgMax"
 
@@ -60,12 +60,12 @@ case class ArgMaxArray(vars: Array[CBLSIntVar], cond: CBLSSetVar = null, default
  * update is O(log(n))
  * @author renaud.delandtsheer@cetic.be
  * */
-case class ArgMinArray(vars: Array[CBLSIntVar], cond: CBLSSetVar = null, default: Int = Int.MaxValue)
+case class ArgMinArray(vars: Array[IntValue], cond: SetValue = null, default: Int = Int.MaxValue)
   extends ArgMiaxArray(vars, cond, default) {
 
   override def name: String = "ArgMinArray"
 
-  override def Ord(v: CBLSIntVar): Int = v.value
+  override def Ord(v: IntValue): Int = v.value
 
   override def ExtremumName: String = "Min of ArgMin"
 
@@ -85,7 +85,8 @@ case class ArgMinArray(vars: Array[CBLSIntVar], cond: CBLSSetVar = null, default
  * update is O(log(n))
  * @author renaud.delandtsheer@cetic.be
  * */
-abstract class ArgMiaxArray(vars: Array[CBLSIntVar], cond: CBLSSetVar, default: Int) extends SetInvariant with Bulked[CBLSIntVar, (Int, Int)] with VaryingDependenciesInvariant {
+abstract class ArgMiaxArray(vars: Array[IntValue], cond: SetValue, default: Int)
+  extends SetInvariant with Bulked[IntValue, (Int, Int)] with VaryingDependenciesInvariant {
 
   override def toString:String = {
     name + "(" + InvariantHelper.arrayToString(vars) + "," + cond + "," + default + ")"
@@ -93,7 +94,7 @@ abstract class ArgMiaxArray(vars: Array[CBLSIntVar], cond: CBLSSetVar, default: 
 
   var keyForRemoval: Array[KeyForElementRemoval] = new Array(vars.size)
   var h: BinomialHeapWithMoveExtMem[Int] = new BinomialHeapWithMoveExtMem[Int](i => Ord(vars(i)), vars.size, new ArrayMap(vars.size))
-  var output: CBLSSetVar = null
+
   var Miax: CBLSIntVar = null
 
   if (cond != null) {
@@ -102,6 +103,8 @@ abstract class ArgMiaxArray(vars: Array[CBLSIntVar], cond: CBLSSetVar, default: 
   }
 
   val (minOfMiax, maxOfMiax) = bulkRegister(vars)
+
+  restrictDomain((minOfMiax,maxOfMiax))
 
   finishInitialization()
 
@@ -117,33 +120,29 @@ abstract class ArgMiaxArray(vars: Array[CBLSIntVar], cond: CBLSSetVar, default: 
     }
   }
 
-  Miax = new CBLSIntVar(model, (minOfMiax to maxOfMiax),
-    if (cond != null && cond.value.isEmpty) default else vars(h.getFirst).value, ExtremumName)
+  Miax = new CBLSIntVar(model, if (cond != null && cond.value.isEmpty) default else vars(h.getFirst).value,
+    minOfMiax to maxOfMiax, ExtremumName)
 
   Miax.setDefiningInvariant(this)
 
-  override def performBulkComputation(bulkedVar: Array[CBLSIntVar]) = {
-    (bulkedVar.foldLeft(Int.MaxValue)((acc, intvar) => if (intvar.minVal < acc) intvar.minVal else acc),
-      bulkedVar.foldLeft(Int.MinValue)((acc, intvar) => if (intvar.maxVal > acc) intvar.maxVal else acc))
+  override def performBulkComputation(bulkedVar: Array[IntValue]) = {
+    (bulkedVar.foldLeft(Int.MaxValue)((acc, intvar) => if (intvar.min < acc) intvar.min else acc),
+      bulkedVar.foldLeft(Int.MinValue)((acc, intvar) => if (intvar.max > acc) intvar.max else acc))
   }
 
   def name: String
   def ExtremumName: String
-  def Ord(v: CBLSIntVar): Int
+  def Ord(v: IntValue): Int
 
   def myMin = vars.indices.start
   def myMax = vars.indices.end
 
   var cost:Long = 0
 
-  override def setOutputVar(v: CBLSSetVar) {
-    output = v
-    //collecter les counts et le max
-    output.setDefiningInvariant(this)
-    val firsts = h.getFirsts
-    output := firsts.foldLeft(SortedSet.empty[Int])((acc, index) => acc + index)
-    Miax := (if (firsts.isEmpty) default else vars(h.getFirst).value)
-  }
+  val firsts = h.getFirsts
+  this := firsts.foldLeft(SortedSet.empty[Int])((acc, index) => acc + index)
+  Miax := (if (firsts.isEmpty) default else vars(h.getFirst).value)
+
 
   @inline
   override def notifyIntChanged(v: ChangingIntValue, index: Int, OldVal: Int, NewVal: Int) {
@@ -153,19 +152,19 @@ abstract class ArgMiaxArray(vars: Array[CBLSIntVar], cond: CBLSSetVar, default: 
 
     if (vars(h.getFirst).value != Miax.getValue(true)) {
       Miax := vars(h.getFirst).value
-      output := h.getFirsts.foldLeft(SortedSet.empty[Int])((acc, index) => acc + index)
+      this := h.getFirsts.foldLeft(SortedSet.empty[Int])((acc, index) => acc + index)
     } else if (OldVal == Miax.getValue(true)) {
-      output.deleteValue(index)
-      if (output.getValue(true).isEmpty) {
-        output := h.getFirsts.foldLeft(SortedSet.empty[Int])((acc, index) => acc + index)
-        if (output.getValue(true).isEmpty) {
+      this.deleteValue(index)
+      if (this.getValue(true).isEmpty) {
+        this := h.getFirsts.foldLeft(SortedSet.empty[Int])((acc, index) => acc + index)
+        if (this.getValue(true).isEmpty) {
           Miax := default
         } else {
           Miax := vars(h.getFirst).value
         }
       }
     } else if (NewVal == Miax.getValue(true)) {
-      output.insertValue(index)
+      this.insertValue(index)
     }
     cost = cost + System.currentTimeMillis()
   }
@@ -181,9 +180,9 @@ abstract class ArgMiaxArray(vars: Array[CBLSIntVar], cond: CBLSSetVar, default: 
 
     if (vars(h.getFirst).value != Miax.getValue(true)) {
       Miax := vars(h.getFirst).value
-      output := h.getFirsts.foldLeft(SortedSet.empty[Int])((acc, index) => acc + index)
+      this := h.getFirsts.foldLeft(SortedSet.empty[Int])((acc, index) => acc + index)
     } else if (vars(value).value == Miax.getValue(true)) {
-      output.insertValue(value)
+      this.insertValue(value)
       Miax := vars(h.getFirst).value
     }
     cost = cost + System.currentTimeMillis()
@@ -194,7 +193,7 @@ abstract class ArgMiaxArray(vars: Array[CBLSIntVar], cond: CBLSSetVar, default: 
     cost = cost - System.currentTimeMillis()
     assert(v == cond && cond != null)
 
-    unregisterDynamicDependency(keyForRemoval(value))
+    keyForRemoval(value).performRemove()
     keyForRemoval(value) = null
 
     //mettre a jour le heap
@@ -202,14 +201,14 @@ abstract class ArgMiaxArray(vars: Array[CBLSIntVar], cond: CBLSSetVar, default: 
 
     if (h.isEmpty) {
       Miax := default
-      output := SortedSet.empty[Int]
+      this := SortedSet.empty[Int]
     } else if (vars(h.getFirst).value != Miax.getValue(true)) {
       Miax := vars(h.getFirst).value
-      output := h.getFirsts.foldLeft(SortedSet.empty[Int])((acc, index) => acc + index)
+      this := h.getFirsts.foldLeft(SortedSet.empty[Int])((acc, index) => acc + index)
     } else if (vars(value).value == Miax.getValue(true)) {
-      output.deleteValue(value)
-      if (output.getValue(true).isEmpty) {
-        output := h.getFirsts.foldLeft(SortedSet.empty[Int])((acc, index) => acc + index)
+      this.deleteValue(value)
+      if (this.getValue(true).isEmpty) {
+        this := h.getFirsts.foldLeft(SortedSet.empty[Int])((acc, index) => acc + index)
         Miax := vars(h.getFirst).value
       }
     }
@@ -221,8 +220,8 @@ abstract class ArgMiaxArray(vars: Array[CBLSIntVar], cond: CBLSSetVar, default: 
     for (i <- vars.indices) {
       if (cond == null || (cond != null && cond.value.contains(i))) {
         if (vars(i).value == this.Miax.value) {
-          c.check(output.value.contains(i),
-            Some("output.value.contains(" + i + ")"))
+          c.check(this.value.contains(i),
+            Some("this.value.contains(" + i + ")"))
           count += 1
         } else {
           c.check(Ord(Miax.value) < Ord(vars(i).value),
@@ -231,10 +230,10 @@ abstract class ArgMiaxArray(vars: Array[CBLSIntVar], cond: CBLSSetVar, default: 
         }
       }
     }
-    c.check(output.value.size == count, Some("output.value.size == count"))
+    c.check(this.value.size == count, Some("this.value.size == count"))
     h.checkInternals(c: Checker)
-    c.check(h.getFirsts.length == output.value.size, Some("h.getFirsts.length == output.value.size"))
+    c.check(h.getFirsts.length == this.value.size, Some("h.getFirsts.length == this.value.size"))
     if (cond != null)
-      c.check(output.getValue(true).subsetOf(cond.getValue(true)), Some("output.getValue(true).subsetOf(cond.getValue(true))"))
+      c.check(this.getValue(true).subsetOf(cond.value), Some("this.getValue(true).subsetOf(cond.getValue(true))"))
   }
 }

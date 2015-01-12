@@ -42,8 +42,8 @@ case class MultiKnapsack(items: Array[CBLSIntVar], itemsizes: Array[CBLSIntVar],
 
   model = InvariantHelper.findModel(items)
 
-  assert(items.map(_.minVal).min == 0, "bin 0 must be included in possible bins of items")
-  assert(items.map(_.minVal).max <= binsizes.length-1, "the range of item bins should be not bigger than the available bins")
+  assert(items.map(_.min).min == 0, "bin 0 must be included in possible bins of items")
+  assert(items.map(_.min).max <= binsizes.length-1, "the range of item bins should be not bigger than the available bins")
   assert(items.length == itemsizes.length)
 
   registerConstrainedVariables(items)
@@ -53,15 +53,15 @@ case class MultiKnapsack(items: Array[CBLSIntVar], itemsizes: Array[CBLSIntVar],
   finishInitialization()
 
   private val bincontents:Array[CBLSSetVar] = Cluster.MakeDense(items).clusters
-  private val binfilling:Array[CBLSIntVar] = bincontents.map(bincontent => Sum(itemsizes,bincontent).toIntVar)
+  private val binfilling:Array[CBLSIntVar] = bincontents.map(bincontent => Sum(itemsizes,bincontent))
 
   private val binviolations:Array[CBLSIntVar] = (
     for (binid <- binsizes.indices)
     yield (binfilling(binid) le binsizes(binid)).violation).toArray
 
-  private val itemviolations:Array[CBLSIntVar] = items.map(itemval =>  binviolations.element(itemval).toIntVar)
+  private val itemviolations:Array[CBLSIntVar] = items.map(itemval =>  binviolations.element(itemval))
 
-  private val Violation:CBLSIntVar = Sum(binviolations).toIntVar
+  private val Violation:CBLSIntVar = Sum(binviolations)
 
   val Violations:SortedMap[CBLSIntVar,CBLSIntVar] = {
     var acc = SortedMap.empty[CBLSIntVar,CBLSIntVar]

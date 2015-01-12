@@ -38,8 +38,8 @@ case class Predecessor(next:Array[CBLSIntVar],V:Int) extends Invariant{
   val N = next.length
   registerStaticAndDynamicDependencyArrayIndex(next)
   finishInitialization()
-  val preds:Array[CBLSIntVar] = Array.tabulate(N)(i => if (i<V) CBLSIntVar(model, 0, N, i, "preds" + i)
-    else CBLSIntVar(model, 0, N, N, "preds" + i))
+  val preds:Array[CBLSIntVar] = Array.tabulate(N)(i => if (i<V) CBLSIntVar(model, i, 0 to N, "preds" + i)
+    else CBLSIntVar(model, N, 0 to N, "preds" + i))
 
   for(p <- preds) p.setDefiningInvariant(this)
 

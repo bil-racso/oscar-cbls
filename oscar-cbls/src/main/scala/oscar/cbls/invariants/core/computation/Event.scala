@@ -173,7 +173,7 @@ class Event(v:Variable, w:Variable, ModifiedVars:Iterable[Variable]) extends Inv
   override def notifyInsertOn(v:ChangingSetValue,i:Int,value:Int){scheduleForPropagation()}
   override def notifyDeleteOn(v:ChangingSetValue,i:Int,value:Int){scheduleForPropagation()}
 
-  override def performPropagation(){
+  override def performInvariantPropagation(){
     if (action != null) action()
 
     if (actionIntParam!= null){

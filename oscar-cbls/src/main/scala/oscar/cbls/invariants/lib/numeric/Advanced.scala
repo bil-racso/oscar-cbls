@@ -66,7 +66,7 @@ case class SumElements(vars: Array[IntValue], cond: SetValue)
   override def notifyDeleteOn(v: ChangingSetValue, value: Int) {
     assert(v == cond)
     assert(keyForRemoval(value) != null)
-    unregisterDynamicDependency(keyForRemoval(value))
+    keyForRemoval(value).performRemove()
     keyForRemoval(value) = null
 
     this :-= vars(value).value
@@ -151,7 +151,7 @@ case class ProdElements(vars: Array[IntValue], cond: SetValue)
     assert(v == cond)
     assert(keyForRemoval(value) != null)
 
-    unregisterDynamicDependency(keyForRemoval(value))
+    keyForRemoval(value).performRemove()
     keyForRemoval(value) = null
 
     if(vars(value).value == 0){

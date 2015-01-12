@@ -43,10 +43,10 @@ class NonMoveableActivity(startDate: Int, duration: CBLSIntVar, planning: Planni
 
   override val isTakenInSentinel = false
 
-  if (startDate + duration.minVal > maxDuration)
+  if (startDate + duration.min > maxDuration)
     sys.error("Cannot post non moveable activity " + name +
       " because it exceeds the scheduler horizon (startDate + duration.minVal = " +
-      (startDate + duration.minVal) + ").")
+      (startDate + duration.min) + ").")
 
   override def canAddPrecedence: Boolean = false
   override def close() {

@@ -48,10 +48,10 @@ object WarehouseLocation extends App with AlgebraTrait{
   val m = Store()
 
   val warehouseOpenArray = Array.tabulate(W)(l => CBLSIntVar(m, 0 to 1, 0, "warehouse_" + l + "_open"))
-  val openWarehouses = Filter(warehouseOpenArray).toSetVar("openWarehouses")
+  val openWarehouses = Filter(warehouseOpenArray).setName("openWarehouses")
 
   val distanceToNearestOpenWarehouse = Array.tabulate(D)(d =>
-    MinArray(distanceCost(d), openWarehouses, defaultCostForNoOpenWarehouse).toIntVar("distance_for_delivery_" + d))
+    MinArray(distanceCost(d), openWarehouses, defaultCostForNoOpenWarehouse).setName("distance_for_delivery_" + d))
 
   val obj = Objective(Sum(distanceToNearestOpenWarehouse) + Sum(costForOpeningWarehouse, openWarehouses))
 

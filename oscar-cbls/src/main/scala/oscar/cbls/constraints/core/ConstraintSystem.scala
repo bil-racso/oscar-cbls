@@ -175,7 +175,7 @@ case class ConstraintSystem(model:Store) extends Constraint with ObjectiveTrait{
       if (model.isClosed) throw new Exception("cannot create new violation after model is closed.")
       //not registered yet
       VarsWatchedForViolation = v :: VarsWatchedForViolation
-      val violationVariable = CBLSIntVar(model,0 to Int.MaxValue,0,"global violation of " + v.name)
+      val violationVariable = CBLSIntVar(model,0, 0 to Int.MaxValue,"global violation of " + v.name)
       v.storeAt(IndexForGlobalViolationINSU,new GlobalViolationDescriptor(violationVariable))
       registerConstrainedVariable(v)
       violationVariable

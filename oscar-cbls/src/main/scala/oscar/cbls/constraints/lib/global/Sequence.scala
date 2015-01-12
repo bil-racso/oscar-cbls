@@ -58,7 +58,7 @@ case class Sequence(variables: Array[CBLSIntVar], length:Int, Max:Int, predicate
   var Violations = SortedMap.empty[Variable, CBLSIntVar]
 
   for(i <- 0 to variables.length - length){
-    Violations = Violations + ((variables(i),Sum(sequencesInvolving(i).map(violated(_))).toIntVar))
+    Violations = Violations + ((variables(i),Sum(sequencesInvolving(i).map(violated(_)))))
   }
 
   val Violation = CBLSIntVar(model,0, variables.length * length, 0 ,"sequence_violations")

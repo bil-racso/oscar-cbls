@@ -851,7 +851,7 @@ trait PropagationElement extends BasicPropagationElement with DAGNode{
   /**set to true if the PropagationElement is scheduled for propagation, false otherwise.
     * this is managed by the PropagationElement
     */
-  private var isScheduled: Boolean = false
+  protected var isScheduled: Boolean = false
 
   private[propagation] var staticallyListenedElements: List[PropagationElement] = List.empty
   private[propagation] var staticallyListeningElements: List[PropagationElement] = List.empty
@@ -929,7 +929,7 @@ trait PropagationElement extends BasicPropagationElement with DAGNode{
   def setInSortingSCC(){}
 
 
-  final def compare(that: DAGNode): Int = {
+  def compare(that: DAGNode): Int = {
     assert(this.uniqueID != -1, "cannot compare non-registered PropagationElements this: [" + this + "] that: [" + that + "]")
     assert(that.uniqueID != -1, "cannot compare non-registered PropagationElements this: [" + this + "] that: [" + that + "]")
     this.uniqueID - that.uniqueID

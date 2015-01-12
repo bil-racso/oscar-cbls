@@ -147,8 +147,8 @@ object NQueensWithUI extends SimpleSwingApplication with SearchEngineTrait {
 
     val c = ConstraintSystem(m)
     //c.post(AllDiff(Queens)) handled trough permutations
-    c.post(AllDiff(for (q <- range) yield (q + Queens(q)).toIntVar))
-    c.post(AllDiff(for (q <- range) yield (q - Queens(q)).toIntVar))
+    c.post(AllDiff(for (q <- range) yield (q + Queens(q))))
+    c.post(AllDiff(for (q <- range) yield (q - Queens(q))))
 
     for (q <- range) {
       c.violation(Queens(q))

@@ -21,6 +21,7 @@
 
 package oscar.cbls.invariants.core.computation
 
+import oscar.cbls.invariants.core.algo.dag.DAGNode
 import oscar.cbls.invariants.core.propagation.{BasicPropagationElement, Checker, PropagationElement}
 import scala.language.implicitConversions
 
@@ -33,12 +34,25 @@ trait IntValue extends Value{
   def domain:Domain
   def min = domain.min
   def max = domain.max
+
   def name:String
 }
 
-object IntValue{
-  implicit def int2IntValue(a:Int):IntValue = CBLSIntConst(a)
-  implicit def toFunction(i:IntValue):()=>Int = () => i.value
+object IntValue {
+  implicit def int2IntValue(a: Int): IntValue = CBLSIntConst(a)
+
+  implicit def toFunction(i: IntValue): () => Int = () => i.value
+
+  implicit val ord: Ordering[IntValue] = new Ordering[IntValue] {
+    def compare(o1: IntValue, o2: IntValue) = {
+      (o1, o2) match {
+        case (a: CBLSIntConst, b: CBLSIntConst) => a.value compare b.value
+        case (a: ChangingIntValue, b: ChangingIntValue) => a.uniqueID - b.uniqueID
+        case (CBLSIntConst(_), _:ChangingIntValue) => -1
+        case (_:ChangingIntValue, CBLSIntConst(_)) => 1
+      }
+    }
+  }
 }
 
 /**An IntVar is a variable managed by the [[oscar.cbls.invariants.core.computation.Store]] whose type is integer.
@@ -46,7 +60,7 @@ object IntValue{
   * @param initialDomain is the domain value of the variable. Some invariants exploit this value to declare fixed size arrays
   * @param initialValue is the value of the variable
   */
-abstract class ChangingIntValue(initialDomain:Domain, initialValue:Int)
+abstract class ChangingIntValue(initialValue:Int, initialDomain:Domain)
   extends AbstractVariable with IntValue{
 
   private var privatedomain:Domain = initialDomain
@@ -134,6 +148,12 @@ abstract class ChangingIntValue(initialDomain:Domain, initialValue:Int)
   }
 
   def getDotNode = "[label = \"IntVar(" + name + ")\" shape = oval color = " + getDotColor + "]"
+
+  def compare(that: ChangingIntValue): Int = {
+    assert(this.uniqueID != -1, "cannot compare non-registered PropagationElements this: [" + this + "] that: [" + that + "]")
+    assert(that.uniqueID != -1, "cannot compare non-registered PropagationElements this: [" + this + "] that: [" + that + "]")
+    this.uniqueID - that.uniqueID
+  }
 }
 
 object ChangingIntValue{
@@ -151,9 +171,9 @@ object ChangingIntValue{
   * @param initialValue is the initial value of the variable
   * @param n is the name of the variable, used for pretty printing only. if not set, a default will be used, based on the variable number
   */
-class CBLSIntVar(givenModel: Store, initialDomain:Domain, initialValue: Int, n: String = null)
-  extends ChangingIntValue(initialDomain,initialValue) with Variable{
-
+class CBLSIntVar(givenModel: Store, initialValue: Int, initialDomain:Domain, n: String = null)
+  extends ChangingIntValue(initialValue,initialDomain) with Variable{
+  
   override def restrictDomain(d:Domain) = super.restrictDomain(d)
 
   model = givenModel
@@ -199,10 +219,10 @@ class CBLSIntVar(givenModel: Store, initialDomain:Domain, initialValue: Int, n: 
 
 object CBLSIntVar{
 
-  def apply(d:Domain = FullRange, value:Int = 0, name:String = null)(implicit s:Store) = new CBLSIntVar(s,d,value,name)
+//  def apply(value:Int = 0, d:Domain = FullRange, name:String = null)(implicit s:Store) = new CBLSIntVar(s,value, d,name)
 
-  def apply(model: Store, d:Domain = FullRange, value:Int , name:String) =
-    new CBLSIntVar(model, d, value, name)
+  def apply(model: Store, value:Int = 0, d:Domain = FullRange, name:String = null) =
+    new CBLSIntVar(model, value, d, name)
 
   implicit val ord:Ordering[CBLSIntVar] = new Ordering[CBLSIntVar]{
     def compare(o1: CBLSIntVar, o2: CBLSIntVar) = o1.compare(o2)
@@ -228,8 +248,9 @@ case class CBLSIntConst(override val value:Int)
 /** this is a special case of invariant that has a single output variable, that is an IntVar
   * @author renaud.delandtsheer@cetic.be
   */
-abstract class IntInvariant(initialDomain:Domain = FullRange, initialValue:Int = 0)
-  extends ChangingIntValue(initialDomain, initialValue) with Invariant{
+abstract class IntInvariant(initialValue:Int = 0, initialDomain:Domain = FullRange)
+  extends ChangingIntValue(initialValue, initialDomain)
+  with Invariant{
 
   override def definingInvariant: Invariant = this
   override def isControlledVariable:Boolean = true
@@ -243,7 +264,7 @@ abstract class IntInvariant(initialDomain:Domain = FullRange, initialValue:Int =
   }
 
   //TODO: this is wrong, there is an unlimited recusion here
-  override def name: String = if(customName == null) toString else customName
+  override final def name: String = if(customName == null) toString else customName
 
   override final def performPropagation(){
     performInvariantPropagation()
@@ -265,7 +286,7 @@ object IdentityInt{
   * @author renaud.delandtsheer@cetic.be
   * @param v
   */
-class FullIdentityInt(v:IntValue) extends IntInvariant(v.domain,v.value) {
+class FullIdentityInt(v:IntValue) extends IntInvariant(v.value, v.domain) {
   registerStaticAndDynamicDependency(v)
   finishInitialization()
 

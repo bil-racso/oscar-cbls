@@ -33,7 +33,7 @@ import oscar.cbls.invariants.core.propagation.{Checker, KeyForElementRemoval}
  * @author renaud.delandtsheer@cetic.be
  * */
 case class IntITE(ifVar: IntValue, thenVar: IntValue, elseVar: IntValue)
-  extends IntInvariant(thenVar.domain ++ elseVar.domain, if(ifVar.value >0) thenVar.value else elseVar.value)
+  extends IntInvariant(if(ifVar.value >0) thenVar.value else elseVar.value, thenVar.domain union elseVar.domain)
   with VaryingDependenciesInvariant {
 
   var KeyToCurrentVar: KeyForElementRemoval = null
@@ -95,7 +95,7 @@ case class IntElement(index: IntValue, inputarray: Array[IntValue])
   finishInitialization()
 
   override def performBulkComputation(bulkedVar: Array[IntValue]): Domain = {
-    InvariantHelper.getMinMaxBounds(bulkedVar)
+    InvariantHelper.getMinMaxRange(bulkedVar)
   }
 
   @inline
@@ -156,7 +156,7 @@ case class Elements(index: SetValue, inputarray: Array[IntValue])
   }
 
   override def performBulkComputation(bulkedVar: Array[IntValue]): Domain =
-    InvariantHelper.getMinMaxBounds(bulkedVar)
+    InvariantHelper.getMinMaxRange(bulkedVar)
 
   @inline
   override def notifyIntChanged(v: ChangingIntValue, OldVal: Int, NewVal: Int) {
@@ -247,7 +247,7 @@ case class SetElement(index: IntValue, inputarray: Array[SetValue])
   finishInitialization()
 
   override def performBulkComputation(bulkedVar: Array[SetValue]): Domain =
-    InvariantHelper.getMinMaxBoundsIntSetVar(bulkedVar)
+    InvariantHelper.getMinMaxBoundsSet(bulkedVar)
 
   @inline
   override def notifyIntChanged(v: ChangingIntValue, OldVal: Int, NewVal: Int) {

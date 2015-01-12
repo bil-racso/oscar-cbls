@@ -40,9 +40,9 @@ object NQueensEasy1 extends CBLSModel with App{
 
   //c.post(AllDiff(Queens)) //enforced because we swap queens and they are always allDiff
   post(allDiff(for (q <- range) yield (queens(q) + q)))
-  post(allDiff(for (q <- range) yield (q - queens(q)).toIntVar))
+  post(allDiff(for (q <- range) yield (q - queens(q))))
 
-  val maxViolQueens = argMax(violations(queens)).toSetVar("most violated queens")
+  val maxViolQueens = argMax(violations(queens)).setName("most violated queens")
 
   close()
 

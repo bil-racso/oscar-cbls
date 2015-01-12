@@ -771,7 +771,7 @@ trait PenaltyForEmptyRouteWithException extends VRP with NodesOfVehicle {
    * (that is: routes containing no other node than the vehicle node)
    */
   val emptyRoutes: CBLSSetVar = Filter(nodesOfRealVehicles.map(
-    (vehicleNodes: CBLSSetVar) => Cardinality(vehicleNodes minus exceptionNodes).toIntVar), _ == 1)
+    (vehicleNodes: CBLSSetVar) => Cardinality(vehicleNodes minus exceptionNodes)), _ == 1)
     
   /**
    * The variable which maintains the sum of route penalties,

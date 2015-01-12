@@ -156,8 +156,8 @@ class NQueensApplet extends Applet {
 
       val c = ConstraintSystem(m)
       //c.post(AllDiff(Queens)) handled trough permutations
-      c.post(AllDiff(for (q <- range) yield (q + Queens(q)).toIntVar))
-      c.post(AllDiff(for (q <- range) yield (q - Queens(q)).toIntVar))
+      c.post(AllDiff(for (q <- range) yield (q + Queens(q))))
+      c.post(AllDiff(for (q <- range) yield (q - Queens(q))))
 
       val viol: Array[CBLSIntVar] = (for (q <- range) yield c.violation(Queens(q))).toArray
 

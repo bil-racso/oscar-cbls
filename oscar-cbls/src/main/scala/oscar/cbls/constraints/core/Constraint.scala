@@ -41,14 +41,14 @@ abstract class Constraint{
     * notice that you cannot create any new invariant or variable in this method
     * because they can only be created before the model is closed.
     * */
-  def violation(v: AbstractVariable): IntValue
+  def violation(v: Value): IntValue
 
   /** returns the degree of violation of the constraint
     * notice that you cannot create any new invariant or variable in this method
     * because they can only be created before the model is closed.
     * @return
     */
-  def violation: ChangingIntValue
+  def violation: IntValue
 
   /**facility to check that the constraint is enforced
     * */

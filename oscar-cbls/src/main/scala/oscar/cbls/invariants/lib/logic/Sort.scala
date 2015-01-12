@@ -38,7 +38,7 @@ case class Sort(var values:Array[CBLSIntVar], ReversePerm:Array[CBLSIntVar]) ext
   finishInitialization()
 
   //position in initial array -> position in sort
-  val ForwardPerm:Array[CBLSIntVar]=ReversePerm.map(i => CBLSIntVar(this.model,0,values.size,0,"ForwardPerm"))
+  val ForwardPerm:Array[CBLSIntVar]=ReversePerm.map(i => CBLSIntVar(this.model,0,0 to values.size,"ForwardPerm"))
 
   //reverse perm: position in sort -> position in initial array
 
@@ -67,7 +67,7 @@ case class Sort(var values:Array[CBLSIntVar], ReversePerm:Array[CBLSIntVar]) ext
   }
 
   @inline
-  private def BubbleUp(v: CBLSIntVar, PositionInInitialArray: Int) {
+  private def BubbleUp(v: ChangingIntValue, PositionInInitialArray: Int) {
     while (true) {
       val PositionInSorting: Int = ForwardPerm(PositionInInitialArray).getValue(true)
       if (PositionInSorting == values.indices.last) return //last position
@@ -78,7 +78,7 @@ case class Sort(var values:Array[CBLSIntVar], ReversePerm:Array[CBLSIntVar]) ext
   }
 
   @inline
-  private def BubbleDown(v: CBLSIntVar, PositionInInitialArray: Int) {
+  private def BubbleDown(v: ChangingIntValue, PositionInInitialArray: Int) {
     while (true) {
       val PositionInSorting: Int = ForwardPerm(PositionInInitialArray).getValue(true)
       if (PositionInSorting == 0) return //first position
@@ -130,7 +130,7 @@ object Sort {
    */
   def MakeSort(values: Array[CBLSIntVar]): Sort = {
     val m: Store = InvariantHelper.findModel(values)
-    val ReversePerm: Array[CBLSIntVar] = values.map(v => CBLSIntVar(m, values.indices.start, values.indices.end, 0, "reverse_perm"))
+    val ReversePerm: Array[CBLSIntVar] = values.map(v => CBLSIntVar(m, 0, values.indices.start to values.indices.end, "reverse_perm"))
     Sort(values, ReversePerm)
   }
 }

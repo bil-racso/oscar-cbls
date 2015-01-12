@@ -32,7 +32,7 @@ import oscar.cbls.invariants.core.propagation.Checker
   * @param domain the expected domain of the output
   * @author renaud.delandtsheer@cetic.be
   * */
-class Int2Int(a:IntValue, fun:Int => Int, domain:Domain = FullRange) extends IntInvariant(domain, fun(a.value)) {
+class Int2Int(a:IntValue, fun:Int => Int, domain:Domain = FullRange) extends IntInvariant(fun(a.value),domain) {
   var output:CBLSIntVar=null
 
   registerStaticAndDynamicDependency(a)
@@ -58,7 +58,7 @@ class Int2Int(a:IntValue, fun:Int => Int, domain:Domain = FullRange) extends Int
   * @param domain the expected domain of the output
   * @author renaud.delandtsheer@cetic.be
   * */
-class IntInt2Int(a:IntValue, b:IntValue, fun:((Int, Int) => Int), domain:Domain = FullRange) extends IntInvariant(domain,fun(a.value,b.value)) {
+class IntInt2Int(a:IntValue, b:IntValue, fun:((Int, Int) => Int), domain:Domain = FullRange) extends IntInvariant(fun(a.value,b.value),domain) {
 
   var output:CBLSIntVar=null
   registerStaticAndDynamicDependenciesNoID(a,b)
@@ -83,7 +83,7 @@ class IntInt2Int(a:IntValue, b:IntValue, fun:((Int, Int) => Int), domain:Domain 
   * @param domain the expected domain of the output
   * @author renaud.delandtsheer@cetic.be
   * */
-class LazyIntInt2Int(a:IntValue, b:IntValue, fun:((Int, Int) => Int), domain:Domain = FullRange) extends IntInvariant(domain,fun(a.value,b.value)) {
+class LazyIntInt2Int(a:IntValue, b:IntValue, fun:((Int, Int) => Int), domain:Domain = FullRange) extends IntInvariant(fun(a.value,b.value),domain) {
 
   registerStaticAndDynamicDependenciesNoID(a,b)
   finishInitialization()
@@ -93,7 +93,7 @@ class LazyIntInt2Int(a:IntValue, b:IntValue, fun:((Int, Int) => Int), domain:Dom
     scheduleForPropagation()
   }
 
-  override def performPropagation(){
+  override def performInvariantPropagation(){
     this := fun(a.value,b.value)
   }
 

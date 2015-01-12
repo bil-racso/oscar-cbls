@@ -55,22 +55,22 @@ case class AtMost(variables:Iterable[CBLSIntVar], bounds:SortedMap[Int, CBLSIntV
   private val violationByVal=Array.tabulate(valueCount.length)(_ => noViolation)
 
   for((value,bound) <- bounds){
-    violationByVal(value) = Max2(noViolation,valueCount(value) - bound).toIntVar
+    violationByVal(value) = Max2(noViolation,valueCount(value) - bound)
   }
 
   //the violation of each input variable
   private val Violations:SortedMap[CBLSIntVar,CBLSIntVar] = {
     def accumulate(acc:SortedMap[CBLSIntVar,CBLSIntVar], variable:CBLSIntVar, violation:CBLSIntVar):SortedMap[CBLSIntVar,CBLSIntVar] =
       acc + (acc.get(variable) match{
-            case Some(oldViolation) => ((variable,(violation + oldViolation).toIntVar(violation.name)))
+            case Some(oldViolation) => ((variable,(violation + oldViolation).setName(violation.name)))
             case None => ((variable,violation))})
 
     val violationForArray = variables.foldLeft(SortedMap.empty[CBLSIntVar,CBLSIntVar])(
-      (acc,intvar) => accumulate(acc,intvar, violationByVal.element(intvar + offset).toIntVar("Violation_AtMost_"+intvar.name))
+      (acc,intvar) => accumulate(acc,intvar, violationByVal.element(intvar + offset).setName("Violation_AtMost_"+intvar.name))
     )
     bounds.foldLeft(violationForArray)(
       (acc,boundAndVariable) => {
-        val viol = violationByVal.element(boundAndVariable._1).toIntVar("Violation_AtMost_"+bounds(boundAndVariable._1).name)
+        val viol = violationByVal.element(boundAndVariable._1).setName("Violation_AtMost_"+bounds(boundAndVariable._1).name)
         accumulate(acc,boundAndVariable._2, viol)
       })
   }

@@ -52,12 +52,12 @@ case class AtLeast(variables: Iterable[CBLSIntVar], bounds: SortedMap[Int, CBLSI
   private val noViolation:CBLSIntVar = 0
 
   private val Violation =
-    Sum(bounds.toList.map((value_bound) => Max2(noViolation,value_bound._2 - valueCount(value_bound._1)).toIntVar))
-    .toIntVar("ViolationsOfAtLeast")
+    Sum(bounds.toList.map((value_bound) => Max2(noViolation,value_bound._2 - valueCount(value_bound._1))))
+    .setName("ViolationsOfAtLeast")
 
   private val violationByVal=Array.tabulate(valueCount.length)(value => {
     if(bounds.contains(value + offset))
-      IntITE(valueCount(value + offset) - bounds(value + offset), Violation, noViolation).toIntVar
+      IntITE(valueCount(value + offset) - bounds(value + offset), Violation, noViolation)
     else Violation
     })
 
@@ -65,16 +65,16 @@ case class AtLeast(variables: Iterable[CBLSIntVar], bounds: SortedMap[Int, CBLSI
   private val Violations:SortedMap[CBLSIntVar,CBLSIntVar] = {
     def accumulate(acc:SortedMap[CBLSIntVar,CBLSIntVar], variable:CBLSIntVar, violation:CBLSIntVar):SortedMap[CBLSIntVar,CBLSIntVar] =
       acc + (acc.get(variable) match{
-        case Some(oldViolation) => ((variable,(violation + oldViolation).toIntVar(violation.name)))
+        case Some(oldViolation) => ((variable,(violation + oldViolation).setName(violation.name)))
         case None => ((variable,violation))})
 
 
     val violationForArray = variables.foldLeft(SortedMap.empty[CBLSIntVar, CBLSIntVar])(
-      (acc, intvar) => accumulate(acc, intvar, violationByVal.element(intvar + offset).toIntVar("Violation_AtLeast_" + intvar.name)))
+      (acc, intvar) => accumulate(acc, intvar, violationByVal.element(intvar + offset).setName("Violation_AtLeast_" + intvar.name)))
 
     bounds.foldLeft(violationForArray)(
       (acc,boundAndVariable) => {
-        val viol = Max2(noViolation,boundAndVariable._2 - valueCount(boundAndVariable._1)).toIntVar("Violation_AtLeast_" + boundAndVariable._2.name)
+        val viol = Max2(noViolation,boundAndVariable._2 - valueCount(boundAndVariable._1)).setName("Violation_AtLeast_" + boundAndVariable._2.name)
         accumulate(acc, boundAndVariable._2, viol)
       })
   }

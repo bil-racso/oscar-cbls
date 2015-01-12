@@ -46,7 +46,7 @@ case class Exactly(variables:Iterable[CBLSIntVar], bounds:SortedMap[Int, CBLSInt
 
   private val violationsByVal =
     Map[CBLSIntVar, CBLSIntVar]() ++
-      (for(v <- variables) yield v -> Sum2(least.violation(v), most.violation(v)).toIntVar)
+      (for(v <- variables) yield v -> Sum2(least.violation(v), most.violation(v)))
 
 
   /** returns the violation associated with variable v in this constraint

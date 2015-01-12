@@ -61,7 +61,7 @@ trait Time extends VRP with Predecessors {
   val arrivalTimeToNext = Array.tabulate(N + 1) {
     (i: Int) =>
       if (i == N) defaultArrivalTime
-      else (travelOutDuration(i) + leaveTime(i)).toIntVar
+      else (travelOutDuration(i) + leaveTime(i))
   }
 
   def setNodeDuration(node: Int, duration: CBLSIntVar) {

@@ -35,19 +35,19 @@ import oscar.cbls.invariants.core.propagation.Checker
  * update is O(log(n))
  * @author renaud.delandtsheer@cetic.be
  * */
-case class MaxArray(varss: Array[CBLSIntVar], ccond: CBLSSetVar = null, default: Int = Int.MinValue)
+case class MaxArray(varss: Array[IntValue], ccond: SetValue = null, default: Int = Int.MinValue)
   extends MiaxArray(varss, if(ccond == null) CBLSSetConst(SortedSet.empty[Int] ++ varss.indices) else ccond, default) {
 
   override def name: String = "MaxArray"
 
-  override def Ord(v: CBLSIntVar): Int = -v.value
+  override def Ord(v: IntValue): Int = -v.value
 
   override def ExtremumName: String = "Max"
 
   override def checkInternals(c: Checker) {
     for (v <- this.varss) {
-      c.check(output.value >= v.value,
-        Some("output.value (" + output.value + ") >= " + v.name + ".value (" + v.value + ")"))
+      c.check(this.value >= v.value,
+        Some("output.value (" + this.value + ") >= " + v.name + ".value (" + v.value + ")"))
     }
   }
 }
@@ -64,14 +64,14 @@ case class MinArray(varss: Array[IntValue], ccond: SetValue = null, default: Int
 
   override def name: String = "MinArray"
 
-  override def Ord(v: CBLSIntVar): Int = v.value
+  override def Ord(v: IntValue): Int = v.value
 
   override def ExtremumName: String = "Min"
 
   override def checkInternals(c: Checker) {
     for (v <- this.varss) {
-      c.check(output.value <= v.value,
-        Some("output.value (" + output.value + ") <= " + v.name + ".value (" + v.value + ")"))
+      c.check(this.value <= v.value,
+        Some("this.value (" + this.value + ") <= " + v.name + ".value (" + v.value + ")"))
     }
   }
 }
@@ -84,18 +84,17 @@ case class MinArray(varss: Array[IntValue], ccond: SetValue = null, default: Int
  * update is O(log(n))
  * @author renaud.delandtsheer@cetic.be
  * */
-abstract class MiaxArray(vars: Array[CBLSIntVar], cond: CBLSSetVar, default: Int) extends IntInvariant with Bulked[CBLSIntVar, (Int, Int)] with VaryingDependenciesInvariant {
+abstract class MiaxArray(vars: Array[IntValue], cond: SetValue, default: Int) extends IntInvariant with Bulked[IntValue, Domain] with VaryingDependenciesInvariant {
 
   var keyForRemoval: Array[KeyForElementRemoval] = new Array(vars.size)
   var h: BinomialHeapWithMoveExtMem[Int] = new BinomialHeapWithMoveExtMem[Int](i => Ord(vars(i)), vars.size, new ArrayMap(vars.size))
-  var output: CBLSIntVar = null
 
   if (cond != null) {
     registerStaticDependency(cond)
     registerDeterminingDependency(cond)
   }
 
-  val (myMin, myMax) = bulkRegister(vars)
+  restrictDomain(bulkRegister(vars))
 
   if (cond != null) {
     for (i <- cond.value) {
@@ -111,30 +110,27 @@ abstract class MiaxArray(vars: Array[CBLSIntVar], cond: CBLSSetVar, default: Int
 
   finishInitialization()
 
-  override def performBulkComputation(bulkedVar: Array[CBLSIntVar]) = {
-    (bulkedVar.foldLeft(Int.MaxValue)((acc, intvar) => if (intvar.minVal < acc) intvar.minVal else acc),
-      bulkedVar.foldLeft(Int.MinValue)((acc, intvar) => if (intvar.maxVal > acc) intvar.maxVal else acc))
+  //TODO: single pass please!
+  override def performBulkComputation(bulkedVar: Array[IntValue]) = {
+    (bulkedVar.foldLeft(Int.MaxValue)((acc, intvar) => if (intvar.min < acc) intvar.min else acc),
+      bulkedVar.foldLeft(Int.MinValue)((acc, intvar) => if (intvar.max > acc) intvar.max else acc))
   }
 
   def name: String
   def ExtremumName: String
-  def Ord(v: CBLSIntVar): Int
+  def Ord(v: IntValue): Int
 
-  override def setOutputVar(v: CBLSIntVar) {
-    output = v
-    output.setDefiningInvariant(this)
-    if (h.isEmpty) {
-      output := default
-    } else {
-      output := vars(h.getFirst).value
-    }
+  if (h.isEmpty) {
+    this := default
+  } else {
+    this := vars(h.getFirst).value
   }
 
   @inline
   override def notifyIntChanged(v: ChangingIntValue, index: Int, OldVal: Int, NewVal: Int) {
     //mettre a jour le heap
     h.notifyChange(index)
-    output := vars(h.getFirst).value
+    this := vars(h.getFirst).value
   }
 
   @inline
@@ -144,22 +140,22 @@ abstract class MiaxArray(vars: Array[CBLSIntVar], cond: CBLSSetVar, default: Int
 
     //mettre a jour le heap
     h.insert(value)
-    output := vars(h.getFirst).value
+    this := vars(h.getFirst).value
   }
 
   @inline
   override def notifyDeleteOn(v: ChangingSetValue, value: Int) {
     assert(v == cond)
 
-    unregisterDynamicDependency(keyForRemoval(value))
+    keyForRemoval(value).performRemove()
     keyForRemoval(value) = null
 
     //mettre a jour le heap
     h.delete(value)
     if (h.isEmpty) {
-      output := default
+      this := default
     } else {
-      output := vars(h.getFirst).value
+      this := vars(h.getFirst).value
     }
   }
 }

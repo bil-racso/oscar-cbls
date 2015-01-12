@@ -29,10 +29,16 @@ object Domain{
     else DomainSet(r.toSet)
   }
 
+  implicit def coupleToDomain(i:(Int,Int)):Domain = {
+    if(i._1 == i._2) SingleValueDomain(i._1)
+      else DomainRange(i._1,i._2)
+  }
+
   implicit def setToDomain(s:Set[Int]):Domain = {
     if (s.size == 1) SingleValueDomain(s.head)
     else DomainSet(s)
   }
+
 
   def apply(v:Iterable[Int]):Domain =
   v match{
@@ -52,7 +58,8 @@ sealed abstract class Domain {
   def randomValue:Int
   def restrict(d:Domain):Domain
 
-  def ++(d:Domain):Domain
+  def union(d:Domain):Domain
+  def inter(d:Domain):Domain
 }
 
 /**this is an inclusive domain*/

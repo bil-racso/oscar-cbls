@@ -42,9 +42,9 @@ object Prod{
  * @param vars is an iterable of IntVars
  * @author renaud.delandtsheer@cetic.be
  * */
-class Sum(vars: Iterable[IntValue]) extends IntInvariant(
-  vars.foldLeft(0)((acc, intvar) => acc + intvar.min) to vars.foldLeft(0)((acc, intvar) => acc + intvar.max),
-  vars.foldLeft(0)((a, b) => a + b.value)) {
+class Sum(vars: Iterable[IntValue])
+  extends IntInvariant(
+    vars.foldLeft(0)((a:Int, b:IntValue) => a + b.value), vars.foldLeft(0)((acc, intvar) => acc + intvar.min) to vars.foldLeft(0)((acc, intvar) => acc + intvar.max)){
 
   for (v <- vars) registerStaticAndDynamicDependency(v)
   finishInitialization()
@@ -118,7 +118,7 @@ class Prod(vars: Iterable[IntValue]) extends IntInvariant {
  * @author renaud.delandtsheer@cetic.be
  * */
 case class Minus(left: IntValue, right: IntValue)
-  extends IntInt2Int(left, right, ((l: Int, r: Int) => l - r), left.min - right.max to left.max - right.min) {
+  extends IntInt2Int(left, right, (l: Int, r: Int) => l - r, left.min - right.max to left.max - right.min) {
   assert(left != right)
 }
 
@@ -143,7 +143,7 @@ case class Prod2(left: IntValue, right: IntValue)
  * where left, right, and output are IntVar
  * @author renaud.delandtsheer@cetic.be
  * */
-case class Dist(left: SetValue, right: SetValue)
+case class Dist(left: IntValue, right: IntValue)
   extends IntInt2Int(left, right, ((l: Int, r: Int) => (l - r).abs), 0 to Int.MaxValue)
 
 /**

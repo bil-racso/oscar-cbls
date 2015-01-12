@@ -304,6 +304,9 @@ object Invariant{
 }
 
 trait VaryingDependenciesInvariant extends Invariant with VaryingDependencies{
+
+
+
   /**register to determining element. It must be in the static dependency graph*/
   def registerDeterminingDependency(v:Value,i:Any = -1){
     registerDeterminingElement(v,i)
@@ -406,12 +409,14 @@ trait Invariant extends PropagationElement{
    * let be i, a position in the array, the index used for dynamic dependency registration is i+offset
    * @param v the variable that are registered
    * @param offset and offset applied to the position in the array when registering the dynamic dependency
+   * @return null
    */
-  def registerStaticAndDynamicDependencyArrayIndex[T <: Value](v:Array[T],offset:Int = 0) {
+  def registerStaticAndDynamicDependencyArrayIndex[T <: Value](v:Array[T],offset:Int = 0):Array[KeyForElementRemoval] =  {
     for (i <- 0 to v.size) {
       registerStaticDependency(v(i))
       registerDynamicDependency(v(i), i + offset)
     }
+    null
   }
 
 
@@ -436,10 +441,11 @@ trait Invariant extends PropagationElement{
     * You CANNOT register a variable twice. It is undetected, but will lead to unexpected behavior.
     * @param v the variable that you want to listen to (and be notified about change)
     * @param i: an integer value that will be passed when updates on this variable are notified to the invariant
-    * @return a handle that is required to remove the listened var from the dynamically listened ones
+    * @return null
     */
-  def registerDynamicDependency(v:Value,i:Any = -1){
+  def registerDynamicDependency(v:Value,i:Any = -1):KeyForElementRemoval = {
     registerDynamicallyListenedElement(v,i)
+    null
   }
 
   //we are only notified for the variable we really want to listen (cfr. mGetReallyListenedElements, registerDynamicDependency, unregisterDynamicDependency)
@@ -475,7 +481,7 @@ trait Invariant extends PropagationElement{
     * 2: it is included in the propagation wave: partial propagation wave do not propagate all propagation elements;
     * it only propagates the ones that come in the predecessors of the targeted propagation element
     * overriding this method is optional, so an empty body is provided by default */
-  override final def performPropagation(){performInvariantPropagation()}
+  override def performPropagation(){performInvariantPropagation()}
 
   def performInvariantPropagation(){}
 }
@@ -486,7 +492,7 @@ object InvariantHelper{
     * @param i some propagation elements, typically, variables listened by some invariants
     * @return the model that the invariant belongs to
     */
-  def findModel(i:Iterable[PropagationElement]):Store={
+  def findModel(i:Iterable[BasicPropagationElement]):Store={
     i.foreach(e => {
       if (e.isInstanceOf[Variable]){
         val m = e.asInstanceOf[Variable].model
@@ -498,7 +504,7 @@ object InvariantHelper{
     null
   }
 
-  def findModel(i:PropagationElement*):Store={
+  def findModel(i:BasicPropagationElement*):Store={
     i.foreach(e => {
       if (e.isInstanceOf[Variable]){
         val m = e.asInstanceOf[Variable].model
@@ -510,26 +516,37 @@ object InvariantHelper{
     null
   }
 
-  def getMinMaxBounds(variables:Iterable[IntValue]):Range = {
+  def getMinMaxBounds(variables:Iterable[IntValue]):(Int,Int) = {
     var MyMax = Int.MinValue
     var MyMin = Int.MaxValue
     for (v <- variables) {
       if (MyMax < v.max) MyMax = v.max
       if (MyMin > v.min) MyMin = v.min
     }
-    MyMin to MyMax
-  }
-  def getMinMaxBoundsIntSetVar(variables:Iterable[SetValue]):Range = {
-    var MyMax = Int.MinValue
-    var MyMin = Int.MaxValue
-    for (v <- variables) {
-      if (MyMax < v.max) MyMax = v.max
-      if (MyMin > v.min) MyMin = v.min
-    }
-    MyMin to MyMax
+    (MyMin, MyMax)
   }
 
-  def arrayToString[T<:Variable](a:Array[T]):String =
+  def getMinMaxRange(variables:Iterable[IntValue]):Range = {
+    val (min,max) = getMinMaxBounds(variables)
+    min to max
+  }
+
+  def getMinMaxBoundsSet(variables:Iterable[SetValue]):(Int,Int) = {
+    var MyMax = Int.MinValue
+    var MyMin = Int.MaxValue
+    for (v <- variables) {
+      if (MyMax < v.max) MyMax = v.max
+      if (MyMin > v.min) MyMin = v.min
+    }
+    (MyMin, MyMax)
+  }
+
+  def getMinMaxRangeSet(variables:Iterable[SetValue]):Range = {
+    val (min,max) = getMinMaxBoundsSet(variables)
+    min to max
+  }
+
+  def arrayToString[T](a:Array[T]):String =
     "[" + a.toList.mkString(",")+"]"
 }
 
@@ -572,7 +589,7 @@ trait AbstractVariable
 
   def defaultName = s"Var_$uniqueID"
 
-  def definingInvariant:Invariant
+  protected def definingInvariant:Invariant
 
   def isControlledVariable:Boolean = definingInvariant != null
   def isDecisionVariable:Boolean = definingInvariant == null

@@ -39,7 +39,7 @@ object SetValue{
   implicit def toFunction(i:SetValue):()=>SortedSet[Int] = () => i.value
 }
 
-abstract class ChangingSetValue(initialDomain:Domain, initialValue:SortedSet[Int])
+abstract class ChangingSetValue(initialValue:SortedSet[Int], initialDomain:Domain)
   extends AbstractVariable with SetValue{
   private var privatedomain:Domain = initialDomain
   private var Value: SortedSet[Int] = initialValue
@@ -222,9 +222,9 @@ object ChangingSetValue{
   * @param initialValue is the initial value of the variable
   * @param n is the name of the variable, used for pretty printing only. if not set, a default will be used, based on the variable number
   * */
-class CBLSSetVar(givenModel: Store, initialDomain:Domain, initialValue: SortedSet[Int], n: String = null)
-  extends ChangingSetValue(initialDomain,initialValue) with Variable{
-
+class CBLSSetVar(givenModel: Store, initialValue: SortedSet[Int], initialDomain:Domain, n: String = null)
+  extends ChangingSetValue(initialValue, initialDomain) with Variable{
+  
   model = givenModel
 
   override def restrictDomain(d:Domain) = super.restrictDomain(d)
@@ -245,7 +245,7 @@ object CBLSSetVar{
 
   def apply(d:Domain=FullRange, v:Iterable[Int] = List.empty, name:String="")(implicit s:Store) = {
     val emptySet:SortedSet[Int] = SortedSet.empty
-    new CBLSSetVar(s, d, emptySet ++ v, name)
+    new CBLSSetVar(s, emptySet ++ v, d, name)
   }
 
   implicit val ord:Ordering[CBLSSetVar] = new Ordering[CBLSSetVar]{
@@ -272,8 +272,9 @@ case class CBLSSetConst(override val value:SortedSet[Int])
 /*
 * @author renaud.delandtsheer@cetic.be
  */
-abstract class SetInvariant(initialDomain:Domain = FullRange, initialValue:SortedSet[Int] = SortedSet.empty)
-  extends ChangingSetValue(initialDomain, initialValue) with Invariant{
+abstract class SetInvariant(initialValue:SortedSet[Int] = SortedSet.empty,
+                            initialDomain:Domain = FullRange)
+  extends ChangingSetValue(initialValue, initialDomain) with Invariant{
 
   override def definingInvariant: Invariant = this
   override def isControlledVariable:Boolean = true
@@ -332,7 +333,7 @@ class IdentitySet(toValue:CBLSSetVar, fromValue:ChangingSetValue) extends Invari
   * @author renaud.delandtsheer@cetic.be
   * @param v
   */
-class FullIdentitySet(v:SetValue) extends SetInvariant(v.domain,v.value){
+class FullIdentitySet(v:SetValue) extends SetInvariant(v.value, v.domain){
   registerStaticAndDynamicDependency(v)
   finishInitialization()
 

@@ -80,7 +80,7 @@ trait AlgebraTrait{
       */
     def TO (v:CBLSIntVar) = new Interval(x,v)
 
-    /**
+    /*
      * if you write:
      * v <=s c:ConstraintSystem s= Expression
      *
@@ -90,10 +90,10 @@ trait AlgebraTrait{
      * @param c
      * @return
      */
-    def `<=s`(c: ConstraintSystem) = new SafeAssignment(x,c)
+    //def `<=s`(c: ConstraintSystem) = new SafeAssignment(x,c)
   }
 
-  class SafeAssignment(v:CBLSIntVar, c:ConstraintSystem){
+/*  class SafeAssignment(v:CBLSIntVar, c:ConstraintSystem){
     //TODO: trouver un vrais nom de méthode
     def `s=`(i:IntInvariant){
       val iMax = i.max
@@ -117,7 +117,7 @@ trait AlgebraTrait{
       }
     }
   }
-
+*/
   implicit def InstrumentIntSetVar(v: SetValue): InstrumentedIntSetVar = new InstrumentedIntSetVar(v)
 
   implicit def InstrumentIntSet(a: SortedSet[Int]): InstrumentedIntSetVar = InstrumentIntSetVar(CBLSSetConst(a))
@@ -129,17 +129,20 @@ trait AlgebraTrait{
 
     def minus(v: SetValue): SetInvariant = Diff(x, v)
 
-    def map(fun:Int=>Int, myMin:Int = Int.MinValue, myMax:Int = Int.MaxValue) = SetMap(x,fun,myMin,myMax)
+    def map(fun:Int=>Int, myMin:Int = Int.MinValue, myMax:Int = Int.MaxValue) = SetMap(x,fun,myMin to myMax)
 
     }
 
   implicit def InstrumentArrayOfIntVar(inputarray: Array[IntValue]): InstrumentedArrayOfIntVar
   = new InstrumentedArrayOfIntVar(inputarray)
+  implicit def InstrumentArrayOfIntVar(inputarray: Array[CBLSIntVar]): InstrumentedArrayOfIntVar
+  = new InstrumentedArrayOfIntVar(inputarray.asInstanceOf[Array[IntValue]])
+
 
   class InstrumentedArrayOfIntVar(inputarray: Array[IntValue]) {
-    def element(index: CBLSIntVar) = IntElement(index, inputarray)
+    def element(index: IntValue) = IntElement(index, inputarray)
 
-    def elements(index: CBLSSetVar) = Elements(index, inputarray)
+    def elements(index: SetValue) = Elements(index, inputarray)
   }
 
   implicit def InstrumentArrayOfIntSetVar(inputarray: Array[SetValue]): InstrumentedArrayOfIntSetVar

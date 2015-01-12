@@ -55,7 +55,7 @@ object WarehouseLocationTabu extends App with AlgebraTrait{
 
   val m = Store()
 
-  val warehouseOpenArray = Array.tabulate(W)(w => CBLSIntVar(m, 0 to 1, 0, "warehouse_" + w + "_open"))
+  val warehouseOpenArray = Array.tabulate(W)(w => CBLSIntVar(m, 0, 0 to 1, "warehouse_" + w + "_open"))
 
   //We store in each warehouse variable its warehouse ID, using the
   // [[oscar.cbls.invariants.core.computation.DistributedStorageUtility]] mechanism
@@ -75,7 +75,7 @@ object WarehouseLocationTabu extends App with AlgebraTrait{
   // notice that they are completely dissociated from the rest of the model in this case.
   val TabuArray = Array.tabulate(W)(w => CBLSIntVar(m,0))
   val It = CBLSIntVar(m)
-  val nonTabuWarehouses = SelectLESetQueue(TabuArray,It).toSetVar("non tabu warehouses")
+  val nonTabuWarehouses = SelectLESetQueue(TabuArray,It).setName("non tabu warehouses")
 
   m.close()
 
