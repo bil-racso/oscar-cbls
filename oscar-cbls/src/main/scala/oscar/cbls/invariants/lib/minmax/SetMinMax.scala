@@ -73,7 +73,6 @@ abstract class MiaxSet(v: CBLSSetVar)
   * @author renaud.delandtsheer@cetic.be
   */
 case class MinSet(v: CBLSSetVar, Default: Int = Int.MaxValue) extends MiaxSet(v) {
-  override def name = "MinSet"
 
   override def Better(a:Int,b:Int):Boolean = a < b
 
@@ -104,7 +103,6 @@ case class MinSet(v: CBLSSetVar, Default: Int = Int.MaxValue) extends MiaxSet(v)
   * @author renaud.delandtsheer@cetic.be
   * */
 case class MaxSet(v: CBLSSetVar, Default: Int = Int.MinValue) extends MiaxSet(v) {
-  override def name = "MaxSet"
 
   override def Better(a:Int,b:Int):Boolean = a > b
 

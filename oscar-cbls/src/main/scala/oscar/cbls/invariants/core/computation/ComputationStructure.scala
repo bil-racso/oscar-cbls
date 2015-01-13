@@ -494,11 +494,8 @@ object InvariantHelper{
     */
   def findModel(i:Iterable[BasicPropagationElement]):Store={
     i.foreach(e => {
-      if (e.isInstanceOf[Variable]){
-        val m = e.asInstanceOf[Variable].model
-        if (m != null){
-          return m
-        }
+      e match{
+        case pe:AbstractVariable if pe.model != null => return pe.model
       }
     })
     null
@@ -583,7 +580,7 @@ trait AbstractVariable
     schedulingHandler = s
     uniqueID = if (s == null) -1 else s.registerVariable(this)
   }
-  final def model = propagationStructure.asInstanceOf[Store]
+  def model = propagationStructure.asInstanceOf[Store]
 
   def name:String
 

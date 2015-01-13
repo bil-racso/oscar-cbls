@@ -256,6 +256,8 @@ abstract class IntInvariant(initialValue:Int = 0, initialDomain:Domain = FullRan
   override def isControlledVariable:Boolean = true
   override def isDecisionVariable:Boolean = false
 
+  override def model = propagationStructure.asInstanceOf[Store]
+
   private var customName:String = null
   /**use this if you want to give a particular name to this concept, to be used in toString*/
   def setName(n:String):IntInvariant = {
@@ -270,6 +272,8 @@ abstract class IntInvariant(initialValue:Int = 0, initialDomain:Domain = FullRan
     performInvariantPropagation()
     performIntPropagation()
   }
+
+  override def getDotNode:String = throw new Error("not implemented")
 }
 
 object IdentityInt{

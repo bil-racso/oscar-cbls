@@ -25,7 +25,7 @@
 
 package oscar.cbls.invariants.lib.set
 
-import oscar.cbls.invariants.core.computation.{ChangingSetValue, CBLSIntVar, IntInvariant, CBLSSetVar}
+import oscar.cbls.invariants.core.computation.{SetValue, ChangingSetValue, IntInvariant}
 import oscar.cbls.invariants.core.propagation.Checker
 
 /**
@@ -34,37 +34,28 @@ import oscar.cbls.invariants.core.propagation.Checker
  * @param fun is an optional function Int -> Int to apply before summing elements. It is expected not to rely on any variable of the model.
  * @author renaud.delandtsheer@cetic.be
  * */
-case class SetSum(on: CBLSSetVar, fun: (Int => Int) = ((a: Int) => a)) extends IntInvariant {
+case class SetSum(on: SetValue, fun: (Int => Int) = (a: Int) => a)
+  extends IntInvariant(on.value.foldLeft(0)((a, b) => a + fun(b))) {
 
-  var output: CBLSIntVar = null
-
-  def myMax = Int.MaxValue
-  def myMin = Int.MinValue
   registerStaticAndDynamicDependency(on)
   finishInitialization()
-
-  override def setOutputVar(v: CBLSIntVar) {
-    output = v
-    output.setDefiningInvariant(this)
-    output := on.value.foldLeft(0)((a, b) => a + fun(b))
-  }
 
   @inline
   override def notifyInsertOn(v: ChangingSetValue, value: Int) {
     assert(v == on)
-    output :+= fun(value)
+    this :+= fun(value)
   }
 
   @inline
   override def notifyDeleteOn(v: ChangingSetValue, value: Int) {
     assert(v == on)
-    output :-= fun(value)
+    this :-= fun(value)
   }
 
   override def checkInternals(c: Checker) {
     var count = 0
     for (v <- on.value) count += fun(v)
-    c.check(output.value == count, Some("output.value == count"))
+    c.check(this.value == count, Some("this.value == count"))
   }
 }
 
@@ -74,27 +65,19 @@ case class SetSum(on: CBLSSetVar, fun: (Int => Int) = ((a: Int) => a)) extends I
  * @param fun is an optional function Int -> Int to apply before multiplying elements. It is expected not to rely on any variable of the model.
  * @author renaud.delandtsheer@cetic.be
  * */
-case class SetProd(on: CBLSSetVar, fun: (Int => Int) = ((a: Int) => a)) extends IntInvariant {
+case class SetProd(on: SetValue, fun: (Int => Int) = (a: Int) => a) extends IntInvariant {
 
-  var output: CBLSIntVar = null
   var NonZeroProduct: Int = 0
 
   registerStaticAndDynamicDependency(on)
   finishInitialization()
 
-  def myMax = Int.MaxValue
-  def myMin = Int.MinValue
-
-  override def setOutputVar(v: CBLSIntVar) {
-    output = v
-    output.setDefiningInvariant(this)
-    NonZeroProduct = on.value.foldLeft(1)(
-      (acc, value) => if (value == 0) { acc } else { acc * fun(value) })
-    if (on.value.contains(0)) {
-      output := 0
-    } else {
-      output := NonZeroProduct
-    }
+  NonZeroProduct = on.value.foldLeft(1)(
+    (acc, value) => if (value == 0) { acc } else { acc * fun(value) })
+  if (on.value.contains(0)) {
+    this := 0
+  } else {
+    this := NonZeroProduct
   }
 
   @inline
@@ -104,9 +87,9 @@ case class SetProd(on: CBLSSetVar, fun: (Int => Int) = ((a: Int) => a)) extends 
       NonZeroProduct *= fun(value)
     }
     if (on.value.contains(0)) {
-      output := 0
+      this := 0
     } else {
-      output := NonZeroProduct
+      this := NonZeroProduct
     }
   }
 
@@ -118,18 +101,18 @@ case class SetProd(on: CBLSSetVar, fun: (Int => Int) = ((a: Int) => a)) extends 
     }
     if (on.value.contains(0)) {
       /**
-       * Nothing to do since 0 is already in output
+       * Nothing to do since 0 is already in this
        * or it will be added when its insertion in the set will be notified.
        */
     } else {
-      output := NonZeroProduct
+      this := NonZeroProduct
     }
   }
 
   override def checkInternals(c: Checker) {
     var count = 1
     for (v <- on.value) count *= v
-    c.check(output.value == count,
-      Some("output.value (" + output.value + ") == count (" + count + ")"))
+    c.check(this.value == count,
+      Some("this.value (" + this.value + ") == count (" + count + ")"))
   }
 }

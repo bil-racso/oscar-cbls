@@ -30,7 +30,7 @@ import oscar.cbls.invariants.core.propagation.Checker
   *
   * @author renaud.delandtsheer@cetic.be
   * */
-trait Bulked[VarType <: AbstractVariable, BulkedComputationResult] extends Invariant {
+trait Bulked[VarType <: Value, BulkedComputationResult] extends Invariant {
 
   /**
    * registers a static dependency to all variables mentioned in the bulkedVars.
@@ -46,7 +46,7 @@ trait Bulked[VarType <: AbstractVariable, BulkedComputationResult] extends Invar
       return performBulkComputation(bulkedVars)
     }
 
-    val m = this.preFinishInitialization(bulkedVars(0).model)
+    val m = this.preFinishInitialization()
     if (m == null) {
       //no bulking possible
       this.registerStaticDependencies(bulkedVars:_*)

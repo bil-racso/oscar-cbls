@@ -58,8 +58,8 @@ sealed abstract class Domain {
   def randomValue:Int
   def restrict(d:Domain):Domain
 
-  def union(d:Domain):Domain
-  def inter(d:Domain):Domain
+  def union(d:Domain):Domain = throw new Error("not implemented")
+  def inter(d:Domain):Domain = throw new Error("not implemented")
 }
 
 /**this is an inclusive domain*/

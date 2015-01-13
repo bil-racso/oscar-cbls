@@ -796,7 +796,7 @@ trait BasicPropagationElement{
                                                                  dynamicallyListenedElementDLLOfListening:DelayedPermaFilteredDoublyLinkedList[PropagationElement,PropagationElement]):
   KeyForElementRemoval = DummyKeyForElementRemoval
 
-  def schedulingHandler = null
+  def schedulingHandler:SchedulingHandler = null
 }
 
 /**
@@ -844,7 +844,9 @@ trait PropagationElement extends BasicPropagationElement with DAGNode{
   /** the thing to which we schedult ourselves for propagation
     * can be a SCC or a PS
     */
-  override var schedulingHandler:SchedulingHandler = null
+  override def schedulingHandler:SchedulingHandler = mySchedulingHandler
+  def schedulingHandler_=(s:SchedulingHandler){mySchedulingHandler = s}
+  private var mySchedulingHandler:SchedulingHandler = null
 
   def propagationStructure:PropagationStructure = schedulingHandler.propagationStructure
 
@@ -884,8 +886,9 @@ trait PropagationElement extends BasicPropagationElement with DAGNode{
   }
 
   /**this will not return a key because we do not have varying dependencies*/
-  protected def registerDynamicallyListenedElement(b:BasicPropagationElement, i: Any){
+  protected def registerDynamicallyListenedElement(b:BasicPropagationElement, i: Any):KeyForElementRemoval = {
     b.registerDynamicallyListeningElementNoKey(this,i)
+    null
   }
 
   /**
@@ -1069,7 +1072,7 @@ trait VaryingDependencies extends PropagationElement{
   private[propagation] val dynamicallyListenedElements: DelayedPermaFilteredDoublyLinkedList[PropagationElement, PropagationElement]
   = new DelayedPermaFilteredDoublyLinkedList[PropagationElement, PropagationElement]
 
-  override private[propagation] def getDynamicallyListenedElements: Iterable[PropagationElement] = dynamicallyListenedElements
+  override protected[core] def getDynamicallyListenedElements: Iterable[PropagationElement] = dynamicallyListenedElements
 
   override protected def registerDynamicallyListenedElement(b:BasicPropagationElement,i:Any):KeyForElementRemoval =
     b.registerDynamicallyListeningElement(

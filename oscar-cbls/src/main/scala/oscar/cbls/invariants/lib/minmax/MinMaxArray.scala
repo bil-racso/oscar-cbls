@@ -38,8 +38,6 @@ import oscar.cbls.invariants.core.propagation.Checker
 case class MaxArray(varss: Array[IntValue], ccond: SetValue = null, default: Int = Int.MinValue)
   extends MiaxArray(varss, if(ccond == null) CBLSSetConst(SortedSet.empty[Int] ++ varss.indices) else ccond, default) {
 
-  override def name: String = "MaxArray"
-
   override def Ord(v: IntValue): Int = -v.value
 
   override def ExtremumName: String = "Max"
@@ -61,8 +59,6 @@ case class MaxArray(varss: Array[IntValue], ccond: SetValue = null, default: Int
  * */
 case class MinArray(varss: Array[IntValue], ccond: SetValue = null, default: Int = Int.MaxValue)
   extends MiaxArray(varss, if(ccond == null) CBLSSetConst(SortedSet.empty[Int] ++ varss.indices) else ccond, default) {
-
-  override def name: String = "MinArray"
 
   override def Ord(v: IntValue): Int = v.value
 
@@ -116,7 +112,6 @@ abstract class MiaxArray(vars: Array[IntValue], cond: SetValue, default: Int) ex
       bulkedVar.foldLeft(Int.MinValue)((acc, intvar) => if (intvar.max > acc) intvar.max else acc))
   }
 
-  def name: String
   def ExtremumName: String
   def Ord(v: IntValue): Int
 

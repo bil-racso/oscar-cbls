@@ -33,7 +33,7 @@ import oscar.cbls.invariants.core.propagation.Checker
 
 abstract class MiaxLin(vars: SortedSet[IntValue])
   extends IntInvariant(initialValue = 0) {
-  require(vars.size > 0, "Invariant " + name + " declared with zero vars to max")
+  require(vars.size > 0, "Invariant " + this + " declared with zero vars to max")
 
   for (v <- vars) registerStaticAndDynamicDependency(v)
   finishInitialization()
@@ -61,7 +61,7 @@ abstract class MiaxLin(vars: SortedSet[IntValue])
   }
 
   override def notifyIntChanged(v: ChangingIntValue, OldVal: Int, NewVal: Int) {
-    assert(vars.contains(v), name + " notified for not interesting var")
+    assert(vars.contains(v), this + " notified for not interesting var")
     val MiaxVal = this.getValue(true)
     if (OldVal == MiaxVal && better(MiaxVal, NewVal)) {
       MiaxCount -= 1
@@ -90,7 +90,6 @@ abstract class MiaxLin(vars: SortedSet[IntValue])
  * @author renaud.delandtsheer@cetic.be
  * */
 case class MaxLin(vars: SortedSet[IntValue]) extends MiaxLin(vars) {
-  override def name = "MaxLin"
 
   override def better(a: Int, b: Int): Boolean = a > b
 }
@@ -104,7 +103,6 @@ case class MaxLin(vars: SortedSet[IntValue]) extends MiaxLin(vars) {
  * @author renaud.delandtsheer@cetic.be
  * */
 case class MinLin(vars: SortedSet[IntValue]) extends MiaxLin(vars) {
-  override def name = "MinLin"
 
   override def better(a: Int, b: Int): Boolean = a < b
 }
@@ -154,8 +152,6 @@ abstract class Miax(vars: SortedSet[IntValue])
 case class Min(vars: SortedSet[IntValue]) extends Miax(vars) {
   assert(vars.size > 0, "Invariant Min declared with zero vars to min")
 
-  override def name = "Min"
-
   override def ord(v: IntValue): Int = v.value
 
   override def better(a: Int, b: Int): Boolean = a < b
@@ -172,7 +168,6 @@ case class Min(vars: SortedSet[IntValue]) extends Miax(vars) {
 @deprecated("use the MaxArray instead", "always")
 case class Max(vars: SortedSet[IntValue]) extends Miax(vars) {
   assert(vars.size > 0, "Invariant Max declared with zero vars to max")
-  override def name = "Max"
 
   override def ord(v: IntValue): Int = -v.value
 

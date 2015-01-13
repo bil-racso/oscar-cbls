@@ -280,6 +280,8 @@ abstract class SetInvariant(initialValue:SortedSet[Int] = SortedSet.empty,
   override def isControlledVariable:Boolean = true
   override def isDecisionVariable:Boolean = false
 
+  override def model = propagationStructure.asInstanceOf[Store]
+
   private var customName:String = null
   /**use this if you want to give a particular name to this concept, to be used in toString*/
   def setName(n:String):SetInvariant = {
@@ -294,6 +296,8 @@ abstract class SetInvariant(initialValue:SortedSet[Int] = SortedSet.empty,
     performInvariantPropagation()
     performSetPropagation()
   }
+
+  override def getDotNode:String = throw new Error("not implemented")
 }
 
 object IdentitySet{
