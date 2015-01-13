@@ -328,7 +328,7 @@ class FZCBLSSolver extends SearchEngine with StopWatch {
     
     //println(implicitConstraints.length + " implicit constraints");
     //Do not want to search on such variables!
-    cblsmodel.vars = cblsmodel.vars.filterNot(v => v.domainSize==1 || v.getDefiningInvariant!=null);
+    cblsmodel.vars = cblsmodel.vars.filterNot(v => v.domainSize==1 || v.isControlledVariable);
     cblsmodel.addDefaultNeighbourhouds()
     if(cblsmodel.neighbourhoods.length==0){
       log(0,"No neighbourhood has been created. Aborting!")

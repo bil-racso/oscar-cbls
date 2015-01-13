@@ -38,7 +38,7 @@ import oscar.cbls.invariants.lib.minmax.MaxArray
  */
 
 case class ConstraintSystem(override val _model:Store) extends AbstractConstraintSystem(_model, Sum.apply) with ObjectiveTrait{
-  override protected[cbls] def close(){
+  override def close(){
     if(!isClosed){
       super.close()
       setObjectiveVar(Violation)
