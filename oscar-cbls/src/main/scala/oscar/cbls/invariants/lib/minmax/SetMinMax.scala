@@ -21,11 +21,11 @@
 
 package oscar.cbls.invariants.lib.minmax
 
-import oscar.cbls.invariants.core.computation.{ChangingSetValue, CBLSIntVar, IntInvariant, CBLSSetVar}
+import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.core.propagation.Checker
 
 //Log
-abstract class MiaxSet(v: CBLSSetVar)
+abstract class MiaxSet(v: SetValue)
   extends IntInvariant(initialDomain = v.min to v.max){
 
   registerStaticAndDynamicDependency(v)
@@ -72,7 +72,7 @@ abstract class MiaxSet(v: CBLSSetVar)
  * update is O(log(n))
   * @author renaud.delandtsheer@cetic.be
   */
-case class MinSet(v: CBLSSetVar, Default: Int = Int.MaxValue) extends MiaxSet(v) {
+case class MinSet(v: SetValue, Default: Int = Int.MaxValue) extends MiaxSet(v) {
 
   override def Better(a:Int,b:Int):Boolean = a < b
 
@@ -102,7 +102,7 @@ case class MinSet(v: CBLSSetVar, Default: Int = Int.MaxValue) extends MiaxSet(v)
  * update is O(log(n))
   * @author renaud.delandtsheer@cetic.be
   * */
-case class MaxSet(v: CBLSSetVar, Default: Int = Int.MinValue) extends MiaxSet(v) {
+case class MaxSet(v: SetValue, Default: Int = Int.MinValue) extends MiaxSet(v) {
 
   override def Better(a:Int,b:Int):Boolean = a > b
 

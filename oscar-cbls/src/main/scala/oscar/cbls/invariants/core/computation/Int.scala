@@ -36,6 +36,7 @@ trait IntValue extends Value{
   def max = domain.max
 
   def name:String
+  override def valueString: String = "" + value
 }
 
 object IntValue {

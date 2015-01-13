@@ -28,7 +28,7 @@ import oscar.cbls.invariants.core.propagation.Checker
 /**maintains the reverse references. Referencing(i) = {j | Reference(j) includes i}
   * @author renaud.delandtsheer@cetic.be
   * */
-case class DenseRef(references:Array[CBLSSetVar], referencing:Array[CBLSSetVar]) extends Invariant {
+case class DenseRef[T<:SetValue](references:Array[T], referencing:Array[CBLSSetVar]) extends Invariant {
 
   for (v <- references.indices) registerStaticAndDynamicDependency(references(v),v)
 
@@ -69,7 +69,7 @@ case class DenseRef(references:Array[CBLSSetVar], referencing:Array[CBLSSetVar])
 }
 
 object DenseRef{
-  def makeDenseRef(references:Array[CBLSSetVar]):DenseRef = {
+  def makeDenseRef(references:Array[CBLSSetVar]) = {
     val (minMin,maxMax) = InvariantHelper.getMinMaxBoundsSet(references)
     val m:Store = InvariantHelper.findModel(references)
     assert(minMin == 0)

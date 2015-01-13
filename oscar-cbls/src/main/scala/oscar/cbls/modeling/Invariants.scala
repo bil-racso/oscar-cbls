@@ -23,9 +23,7 @@ import oscar.cbls.invariants.lib.numeric._
 import collection.immutable.{SortedSet, SortedMap}
 import oscar.cbls.invariants.lib.set._
 
-//TODO: reset this
 trait Invariants
-  /*
   extends ClusterInvariants
 with ComplexLogicInvariants
 with ElementInvariants
@@ -40,30 +38,30 @@ with SetInvariants
 */
 trait ClusterInvariants{
 
-  def makeSparseCluster(values:Array[IntValue], clusters: Iterable[Int]):SparseCluster = Cluster.MakeSparse(values, clusters)
+  def makeSparseCluster[T<:IntValue](values:Array[T], clusters: Iterable[Int]) = Cluster.MakeSparse(values, clusters)
 
-  def makeDenseCluster(values:Array[IntValue]):DenseCluster = Cluster.MakeDense(values)
+  def makeDenseCluster[T<:IntValue](values:Array[T]) = Cluster.MakeDense(values)
 
-  def makeDenseClusterAssumingMinMax(values:Array[IntValue],themin:Int,themax:Int):DenseCluster = Cluster.MakeDenseAssumingMinMax(values,themin,themax)
+  def makeDenseClusterAssumingMinMax[T<:IntValue](values:Array[T],themin:Int,themax:Int) = Cluster.MakeDenseAssumingMinMax(values,themin,themax)
 
   /**maintains a cluster of the indexes of array:  cluster(j) = {i in index of values | values[i] == j}
    * This is considered as a sparse cluster because Cluster is a map and must not cover all possibles values of the values in the array ''values''
    * */
-  def sparseCluster(values:Array[IntValue], Clusters:SortedMap[Int,SetValue]) = SparseCluster(values:Array[IntValue], Clusters:SortedMap[Int,SetValue])
+  def sparseCluster[T<:IntValue](values:Array[T], Clusters:SortedMap[Int,CBLSSetVar]) = SparseCluster(values, Clusters)
 
   /**Maintains a cluster of the indexes of array: cluster(j) = {i in index of values | values[i] == j}
    * This is considered as a dense cluster because Cluster is an array and must cover all the possibles values of the values in the array ''values''
    * */
-  def denseCluster(values:Array[IntValue], clusters:Array[SetValue]) = DenseCluster(values:Array[IntValue], clusters:Array[SetValue])
+  def denseCluster[T<:IntValue](values:Array[T], clusters:Array[CBLSSetVar]) = DenseCluster(values, clusters)
 
   /**Maintains a count of the indexes of array: count(j) = #{i in index of values | values[i] == j}
    * This is considered as a dense count because counts is an array and must cover all the possibles values of the values in the array ''values''
    * */
-  def denseCount(values:Array[IntValue], counts:Array[IntValue]) = DenseCount(values:Array[IntValue], counts:Array[IntValue])
+  def denseCount(values:Array[IntValue], counts:Array[CBLSIntVar]) = DenseCount(values, counts)
 
   /**maintains the reverse references. Referencing(i) = {j | Reference(j) includes i}
    * */
-  def denseRef(references:Array[SetValue], referencing:Array[SetValue]) = DenseRef(references:Array[SetValue], referencing:Array[SetValue])
+  def denseRef[T<:SetValue](references:Array[T], referencing:Array[CBLSSetVar]) = DenseRef(references, referencing)
 
   /**
    * Maintains a resource usage profile.
@@ -74,8 +72,8 @@ trait ClusterInvariants{
    * @param profile the usage profile of the resource maintained to profile(time) <== sum(task.amount | task.start <= time <= t.start+t.duration)
    * @param active the tasks that are active maintained to active(time) <== (task.indices | task.start <= time <= t.start+t.duration)
    */
-  def cumulative(indices:Array[Int], start:Array[IntValue], duration:Array[IntValue], amount:Array[IntValue], profile:Array[IntValue], active:Array[SetValue])  =
-    Cumulative(indices:Array[Int], start:Array[IntValue], duration:Array[IntValue], amount:Array[IntValue], profile:Array[IntValue], active:Array[SetValue])
+  def cumulative(indices:Array[Int], start:Array[IntValue], duration:Array[IntValue], amount:Array[IntValue], profile:Array[CBLSIntVar], active:Array[CBLSSetVar])  =
+    Cumulative(indices:Array[Int], start, duration, amount, profile, active)
 
 
   /** { i in index(values) | cond(values[i] }
@@ -125,12 +123,12 @@ trait ComplexLogicInvariants{
    * @param ReversePerm   i < j => values(ReversePerm(i)) < values(ReversePerm(j))
    * see method GetForwardPerm() for the forward permutation: ReversePerm(ForwardPerm(i)) == i
    * */
-  def sort(values:Array[IntValue], ReversePerm:Array[IntValue]) = Sort(values:Array[IntValue], ReversePerm:Array[IntValue])
+  def sort[T<:IntValue](values:Array[T], ReversePerm:Array[CBLSIntVar]) = new Sort(values, ReversePerm)
 
   /**returns the ForwardPerm for a given array
    * It instantiates an array of the appropriate size and populates it with IntVar.
    */
-  def makeSort(values:Array[IntValue]):Sort = Sort.MakeSort(values:Array[IntValue])
+  def makeSort[T<:IntValue](values:Array[T]) = Sort.MakeSort(values)
 }
 
 
@@ -406,4 +404,3 @@ trait SetInvariants{
    * */
   def setProd(on:SetValue, fun:(Int => Int) = ((a:Int) => a)) = SetProd(on, fun)
 }
-*/

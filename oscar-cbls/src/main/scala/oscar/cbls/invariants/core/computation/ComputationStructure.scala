@@ -547,7 +547,9 @@ object InvariantHelper{
     "[" + a.toList.mkString(",")+"]"
 }
 
-trait Value extends BasicPropagationElement
+trait Value extends BasicPropagationElement{
+  def valueString:String
+}
 
 trait Variable extends AbstractVariable{
   protected var definingInvariant:Invariant = null

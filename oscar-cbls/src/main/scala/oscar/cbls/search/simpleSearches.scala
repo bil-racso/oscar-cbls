@@ -1,7 +1,7 @@
 package oscar.cbls.search
 
 import oscar.cbls.constraints.core.ConstraintSystem
-import oscar.cbls.invariants.core.computation.{CBLSIntVar, CBLSSetVar}
+import oscar.cbls.invariants.core.computation.{IntValue, CBLSIntVar, CBLSSetVar}
 import oscar.cbls.modeling.AlgebraTrait
 import oscar.cbls.search.algo.{HotRestart, IdenticalAggregator}
 import oscar.cbls.search.core._
@@ -291,7 +291,7 @@ class ConflictAssignNeighborhood(c:ConstraintSystem, variables:List[CBLSIntVar],
   extends Neighborhood with SearchEngineTrait{
 
   var varArray = variables.toArray
-  val violations:Array[CBLSIntVar] = varArray.clone().map(c.violation(_))
+  val violations:Array[IntValue] = varArray.clone().map(c.violation(_))
   override def getMove(obj:()=>Int, acceptanceCriteria:(Int,Int) => Boolean = (oldObj,newObj) => oldObj > newObj): SearchResult = {
     val oldObj = c.violation.value
     val MaxViolVarID = selectMax(varArray.indices,violations(_:Int).value)

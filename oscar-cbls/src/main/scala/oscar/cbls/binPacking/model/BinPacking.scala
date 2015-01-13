@@ -57,7 +57,7 @@ object Bin{
  */
 class Bin(val number:Int,
                val size:Int,
-               var items:SetValue = null,
+               var items:CBLSSetVar = null,
                var violation:IntValue = null,
                var content:IntValue = null){
   override def toString: String = "Bin(nr:" + number + " size:" + size + " content:" + content.value + " items:" + items.valueString + " viol:" + violation.value +")"
@@ -66,10 +66,10 @@ class Bin(val number:Int,
 /**
  * @author renaud.delandtsheer@cetic.be
  */
-case class BinPackingProblem(items:Map[Int,Item],
-                             bins: Map[Int,Bin],
-                             var overallViolation:Objective,
-                             var mostViolatedBins:CBLSSetVar){
+class BinPackingProblem(val items:Map[Int,Item],
+                        val  bins: Map[Int,Bin],
+                        var overallViolation:Objective,
+                        var mostViolatedBins:SetValue){
   override def toString: String =
     "BinPackingProblem(\n\titems:{" + items.values.mkString(",") +"}\n" +
       "\tbins:{" +bins.values.mkString(",") + "}\n" +
@@ -108,9 +108,7 @@ object BinPackingProblem{
   def apply(items:Array[Item],
             bins:Array[Bin],
             overallViolation:Objective,
-            mostViolatedBins:CBLSSetVar):BinPackingProblem = {
-
-
+            mostViolatedBins:SetValue)= {
     new BinPackingProblem(arrayToIndexElementList(items),
       arrayToIndexElementList(bins),
       overallViolation,
@@ -120,6 +118,12 @@ object BinPackingProblem{
   def apply(itemSize:Iterable[Int], binSizes:Iterable[Int], s:Store, c:ConstraintSystem, initialBin:Int):BinPackingProblem = {
     apply(itemSize.toArray, binSizes.toArray, s, c, initialBin)
   }
+
+  def apply(items: Map[Int,Item],
+            bins: Map[Int,Bin],
+            overallViolation:Objective,
+            mostViolatedBins:SetValue) =
+    new BinPackingProblem(items, bins,overallViolation,mostViolatedBins)
 
   /** this method also posts the constraints and invariants involved in the BinPackingProblem
     *

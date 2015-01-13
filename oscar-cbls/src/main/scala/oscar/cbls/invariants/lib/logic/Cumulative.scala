@@ -23,7 +23,7 @@
 
 package oscar.cbls.invariants.lib.logic
 
-import oscar.cbls.invariants.core.computation.{ChangingIntValue, Invariant, CBLSSetVar, CBLSIntVar}
+import oscar.cbls.invariants.core.computation._
 import collection.immutable.SortedSet
 
 /**
@@ -37,9 +37,9 @@ import collection.immutable.SortedSet
  * @author renaud.delandtsheer@cetic.be
  */
 case class Cumulative(indices: Array[Int],
-                      start: Array[CBLSIntVar],
-                      duration: Array[CBLSIntVar],
-                      amount: Array[CBLSIntVar],
+                      start: Array[IntValue],
+                      duration: Array[IntValue],
+                      amount: Array[IntValue],
                       profile: Array[CBLSIntVar],
                       active: Array[CBLSSetVar]) extends Invariant {
 

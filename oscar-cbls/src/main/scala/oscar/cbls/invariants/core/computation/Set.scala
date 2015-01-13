@@ -32,6 +32,7 @@ trait SetValue extends Value{
   def min = domain.min
   def max = domain.max
   def name:String
+  override final def valueString: String = "{" + value.mkString(",") + "}"
 }
 
 object SetValue{
@@ -69,9 +70,6 @@ abstract class ChangingSetValue(initialValue:SortedSet[Int], initialDomain:Domai
 
   //TODO: this is wrong.
   override def toString:String = name + ":={" + (if(model.propagateOnToString) value else Value).mkString(",") + "}"
-
-  def valueString:String = "{" + value.mkString(",") + "}"
-
 
   /** this method is a toString that does not trigger a propagation.
     * use this when debugguing your software.

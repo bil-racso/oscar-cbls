@@ -40,7 +40,7 @@ import oscar.cbls.invariants.lib.numeric.Sum
  *                We use a map to ensure that there is no two bounds on the same value.
  * @author renaud.delandtsheer@cetic.be
  */
-case class AtLeast(variables: Iterable[CBLSIntVar], bounds: SortedMap[Int, CBLSIntVar]) extends Constraint {
+case class AtLeast(variables: Iterable[IntValue], bounds: SortedMap[Int, IntValue]) extends Constraint {
 
   registerConstrainedVariables(variables)
   registerConstrainedVariables(bounds.values)
@@ -63,10 +63,10 @@ case class AtLeast(variables: Iterable[CBLSIntVar], bounds: SortedMap[Int, CBLSI
 
   //the violation of each input variable
   private val Violations:SortedMap[IntValue,IntValue] = {
-    def accumulate(acc:SortedMap[IntValue,IntValue], variable:CBLSIntVar, violation:IntValue):SortedMap[IntValue,IntValue] =
+    def accumulate(acc:SortedMap[IntValue,IntValue], variable:IntValue, violation:IntValue):SortedMap[IntValue,IntValue] =
       acc + (acc.get(variable) match{
-        case Some(oldViolation) => ((variable,(violation + oldViolation).setName(violation.name)))
-        case None => ((variable,violation))})
+        case Some(oldViolation) => (variable,(violation + oldViolation).setName(violation.name))
+        case None => (variable,violation)})
 
 
     val violationForArray = variables.foldLeft(SortedMap.empty[IntValue,IntValue])(
@@ -87,7 +87,7 @@ case class AtLeast(variables: Iterable[CBLSIntVar], bounds: SortedMap[Int, CBLSI
    * The violation of a variable is zero if the value of the variable is the one of a bound that is not reached,
    * otherwise, it is equal to the global violation degree.
    */
-  override def violation(v: Variable) = Violations(v.asInstanceOf[CBLSIntVar])
+  override def violation(v: Value) = Violations(v.asInstanceOf[IntValue])
 
   override def checkInternals(c: Checker) {
     val (minMin,maxMax) = InvariantHelper.getMinMaxBounds(variables)

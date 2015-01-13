@@ -42,12 +42,12 @@ import oscar.cbls.invariants.core.propagation.Checker
  * @param lastInRoute the last point in each route.
  * @author renaud.delandtsheer@cetic.be
  * */
-case class Routes(V: Int,
-  next: Array[CBLSIntVar],
-  positionInRoute: Array[CBLSIntVar],
-  routeNr: Array[CBLSIntVar],
-  routeLength: Array[CBLSIntVar],
-  lastInRoute: Array[CBLSIntVar]) extends VaryingDependenciesInvariant {
+class Routes[T<:IntValue](V: Int,
+  val next: Array[T],
+  val positionInRoute: Array[CBLSIntVar],
+  val routeNr: Array[CBLSIntVar],
+  val routeLength: Array[CBLSIntVar],
+  val lastInRoute: Array[CBLSIntVar]) extends VaryingDependenciesInvariant {
   val UNROUTED = next.length
   val arrayOfUnregisterKeys = registerStaticAndDynamicDependencyArrayIndex(next)
   finishInitialization()
@@ -183,7 +183,7 @@ case class Routes(V: Int,
 
 
 object Routes {
-  def buildRoutes(next: Array[CBLSIntVar], V: Int): Routes = {
+  def buildRoutes[T<:IntValue](next: Array[T], V: Int) = {
     val m: Store = InvariantHelper.findModel(next)
 
     val positionInRoute = Array.tabulate(next.length)(i => CBLSIntVar(m, next.length, 0 to next.length, "PositionInRouteOfPt" + i))
@@ -191,6 +191,6 @@ object Routes {
     val routeLength = Array.tabulate(V)(i => CBLSIntVar(m, 0, 0 to next.length, "Route " + i + "-Lenght"))
     val lastInRoute = Array.tabulate(V)(i => CBLSIntVar(m, i, 0 to next.length, "LastInRoute " + i))
 
-    Routes(V, next, positionInRoute, routeNr, routeLength, lastInRoute)
+    new Routes(V, next, positionInRoute, routeNr, routeLength, lastInRoute)
   }
 }

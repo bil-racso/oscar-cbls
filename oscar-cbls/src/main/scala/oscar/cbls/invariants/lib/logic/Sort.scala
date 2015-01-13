@@ -32,7 +32,7 @@ import oscar.cbls.invariants.core.propagation.Checker
  * see method GetForwardPerm() for the forward permutation: ReversePerm(ForwardPerm(i)) == i
  * @author renaud.delandtsheer@cetic.be
  * */
-case class Sort(var values:Array[CBLSIntVar], ReversePerm:Array[CBLSIntVar]) extends Invariant {
+class Sort[T<:IntValue](var values:Array[T], ReversePerm:Array[CBLSIntVar]) extends Invariant {
   for (v <- values.indices) registerStaticAndDynamicDependency(values(v),v)
 
   finishInitialization()
@@ -128,9 +128,11 @@ object Sort {
    * returns the ForwardPerm for a given array
    * It instantiates an array of the appropriate size and populates it with IntVar.
    */
-  def MakeSort(values: Array[CBLSIntVar]): Sort = {
+  def MakeSort[T <:IntValue](values: Array[T])  = {
     val m: Store = InvariantHelper.findModel(values)
     val ReversePerm: Array[CBLSIntVar] = values.map(v => CBLSIntVar(m, 0, values.indices.start to values.indices.end, "reverse_perm"))
-    Sort(values, ReversePerm)
+    new Sort(values, ReversePerm)
   }
+
+  def apply[T<:IntValue](values:Array[T], reversePerm:Array[CBLSIntVar]) = new Sort(values,reversePerm)
 }

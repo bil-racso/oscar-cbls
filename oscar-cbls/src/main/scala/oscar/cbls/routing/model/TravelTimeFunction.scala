@@ -21,14 +21,13 @@
 
 package oscar.cbls.routing.model
 
-import oscar.cbls.invariants.core.computation.CBLSIntVar
+import oscar.cbls.invariants.core.computation.{IntValue, CBLSIntVar, CBLSIntConst}
 import oscar.cbls.invariants.lib.logic.IntInt2Int
 import oscar.cbls.modeling.Algebra._
 import oscar.cbls.invariants.lib.minmax.Max2
 import oscar.cbls.constraints.lib.basic.GE
 import oscar.cbls.constraints.lib.basic.LE
 import oscar.cbls.invariants.lib.numeric.Sum
-import oscar.cbls.invariants.core.computation.CBLSIntConst
 
 /** an abstract class representing a travel time function
   * @author renaud.delandtsheer@cetic.be
@@ -49,14 +48,15 @@ abstract class TravelTimeFunction {
  */
 trait Time extends VRP with Predecessors {
   val defaultArrivalTime = new CBLSIntConst(0)
+  //TODO: on peut améliorer le codate en enlevant des variables.
   val arrivalTime = Array.tabulate(N) {
-    (i: Int) => CBLSIntVar(m, 0, Int.MaxValue / N, 0, "arrivalTimeAtNode" + i)
+    (i: Int) => CBLSIntVar(m, 0, 0 to Int.MaxValue / N, "arrivalTimeAtNode" + i)
   }
   val leaveTime = Array.tabulate(N) {
-    (i: Int) => CBLSIntVar(m, 0, Int.MaxValue / N, 0, "leaveTimeAtNode" + i)
+    (i: Int) => CBLSIntVar(m, 0, 0 to Int.MaxValue / N, "leaveTimeAtNode" + i)
   }
   val travelOutDuration = Array.tabulate(N) {
-    (i: Int) => CBLSIntVar(m, 0, Int.MaxValue / N, 0, "travelDurationToLeave" + i)
+    (i: Int) => CBLSIntVar(m, 0, 0 to Int.MaxValue / N, "travelDurationToLeave" + i)
   }
   val arrivalTimeToNext = Array.tabulate(N + 1) {
     (i: Int) =>
@@ -64,7 +64,7 @@ trait Time extends VRP with Predecessors {
       else (travelOutDuration(i) + leaveTime(i))
   }
 
-  def setNodeDuration(node: Int, duration: CBLSIntVar) {
+  def setNodeDuration(node: Int, duration: IntValue) {
     assert(node >= V)
     leaveTime(node) <== arrivalTime(node) + duration
   }
@@ -124,7 +124,7 @@ trait TimeWindow extends Time with StrongConstraints {
   */
 trait WaitingDuration extends TimeWindow {
   val waitingDuration = Array.tabulate(N) {
-    (i: Int) => CBLSIntVar(m, 0, Int.MaxValue / N, 0, "WaitingDurationBefore" + i)
+    (i: Int) => CBLSIntVar(m, 0, 0 to Int.MaxValue / N, "WaitingDurationBefore" + i)
   }
 
   def setNodeDurationAndWaitingTime(node: Int, durationWithoutWait: CBLSIntVar, waitingDuration:CBLSIntVar) {

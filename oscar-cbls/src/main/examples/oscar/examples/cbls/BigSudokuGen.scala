@@ -120,7 +120,7 @@ object BigSudokuGen extends SimpleSwingApplication with SearchEngineTrait with S
       for(ps <- Indexes) {
         val v=Square(ns)(ps)
         val vinit=perm.next()+1
-        grid(v)= CBLSIntVar(m, 1, N, vinit, "v_"+v)
+        grid(v)= CBLSIntVar(m, vinit, 1 to N, "v_"+v)
         tab(v/N)(v%N).text=vinit+""
       }
     }

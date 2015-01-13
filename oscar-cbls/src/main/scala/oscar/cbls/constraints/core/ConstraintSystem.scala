@@ -169,30 +169,34 @@ case class ConstraintSystem(model:Store) extends Constraint with Objective{
    * The constraint system must have been closed prior to calling this method.
    * @param v must have been previously declared through the registerForViolation(v:Variable) method
    */
-  override def violation(v:AbstractVariable):CBLSIntVar = {
-    val CPStoredRecord:GlobalViolationDescriptor = v.getStorageAt(IndexForGlobalViolationINSU,null)
-    if (CPStoredRecord == null){
-      if (model.isClosed) throw new Exception("cannot create new violation after model is closed.")
-      //not registered yet
-      VarsWatchedForViolation = v :: VarsWatchedForViolation
-      val violationVariable = CBLSIntVar(model,0, 0 to Int.MaxValue,"global violation of " + v.name)
-      v.storeAt(IndexForGlobalViolationINSU,new GlobalViolationDescriptor(violationVariable))
-      registerConstrainedVariable(v)
-      violationVariable
-    }else{
-      //already registered
-      CPStoredRecord.Violation
+  override def violation(v:Value):IntValue= {
+    v match {
+      case a: AbstractVariable =>
+        val CPStoredRecord: GlobalViolationDescriptor = a.getStorageAt(IndexForGlobalViolationINSU, null)
+        if (CPStoredRecord == null) {
+          if (model.isClosed) throw new Exception("cannot create new violation after model is closed.")
+          //not registered yet
+          VarsWatchedForViolation = a :: VarsWatchedForViolation
+          val violationVariable = CBLSIntVar(model, 0, 0 to Int.MaxValue, "global violation of " + a.name)
+          a.storeAt(IndexForGlobalViolationINSU, new GlobalViolationDescriptor(violationVariable))
+          registerConstrainedVariable(v)
+          violationVariable
+        } else {
+          //already registered
+          CPStoredRecord.Violation
+        }
+      case _ => 0
     }
   }
 
-  def violations[V<:Variable](vs:Array[V]):Array[CBLSIntVar] = {
+  def violations[V<:Value](vs:Array[V]):Array[IntValue] = {
     vs.map(violation(_))
   }
 
   /**Returns the global violation of the constraint system, that is the weighted sum of the violation of the posted constraints
    *close() should have been called prior to calling this method.
    */
-  override def violation:ChangingIntValue = Violation
+  override def violation:IntValue = Violation
 
   /** to get the violated constraints, for debugging purpose
     * @return the constraints that are violated, and whose ponderation factor is not zero
@@ -211,6 +215,6 @@ case class ConstraintSystem(model:Store) extends Constraint with Objective{
    * It is easy to override it, and perform a smarter propagation if needed.
    * @return the actual objective value.
    */
-  override protected def value: Int = Violation.value
+  override def value: Int = Violation.value
 }
 
