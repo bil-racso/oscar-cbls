@@ -334,7 +334,7 @@ abstract class Neighborhood{
     */
   def onFirstMove(proc: => Unit) = new  DoOnFirstMove(this,() => proc)
 
-  def protectBest(i:CBLSIntVar) = new ProtectBest(this, i)
+  def protectBest(o: Objective) = new ProtectBest(this, o)
 
   /** retries n times the move before concluding to noMove can be found
     * resets o nhe first found move, or on reset

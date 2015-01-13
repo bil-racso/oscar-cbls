@@ -16,7 +16,7 @@ package oscar.cbls.binPacking.model
 
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.core.computation.CBLSIntConst
-import oscar.cbls.objective.Objective
+import oscar.cbls.objective.{Objective, IntVarObjective}
 import oscar.cbls.constraints.lib.global.MultiKnapsack
 import oscar.cbls.invariants.core.computation.Store
 import oscar.cbls.constraints.core.ConstraintSystem
@@ -57,9 +57,9 @@ object Bin{
  */
 class Bin(val number:Int,
                val size:Int,
-               var items:CBLSSetVar = null,
-               var violation:CBLSIntVar = null,
-               var content:CBLSIntVar = null){
+               var items:SetValue = null,
+               var violation:IntValue = null,
+               var content:IntValue = null){
   override def toString: String = "Bin(nr:" + number + " size:" + size + " content:" + content.value + " items:" + items.valueString + " viol:" + violation.value +")"
 }
 
@@ -73,13 +73,13 @@ case class BinPackingProblem(items:Map[Int,Item],
   override def toString: String =
     "BinPackingProblem(\n\titems:{" + items.values.mkString(",") +"}\n" +
       "\tbins:{" +bins.values.mkString(",") + "}\n" +
-      "\toverallViolation:" + overallViolation.objective.value + "\n" +
+      "\toverallViolation:" + overallViolation.value + "\n" +
       "\tmostViolatedBins:" + mostViolatedBins.valueString+")"
 
   def itemCount = items.size
   def binCount = bins.size
 
-  def store = overallViolation.objective.model
+  def store = overallViolation.model
 }
 
 /**
@@ -115,9 +115,7 @@ object BinPackingProblem{
       arrayToIndexElementList(bins),
       overallViolation,
       mostViolatedBins)
-
   }
-
 
   def apply(itemSize:Iterable[Int], binSizes:Iterable[Int], s:Store, c:ConstraintSystem, initialBin:Int):BinPackingProblem = {
     apply(itemSize.toArray, binSizes.toArray, s, c, initialBin)
@@ -140,7 +138,7 @@ object BinPackingProblem{
     val itemArray = Array.tabulate(itemSizeArray.size)(
       itemNumber => Item(itemNumber,
         itemSizeArray(itemNumber),
-        CBLSIntVar(s, 0 to (binArray.size-1), initialBin, "bin of item " + itemNumber)))
+        CBLSIntVar(s, initialBin, 0 to (binArray.size-1), "bin of item " + itemNumber)))
 
     val mkp = MultiKnapsack(itemArray.map(_.bin),
       itemSizeArray.map(itemSize => CBLSIntConst(itemSize)),

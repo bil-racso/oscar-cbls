@@ -16,7 +16,7 @@
 package oscar.cbls.search.move
 
 import oscar.cbls.invariants.core.computation.{CBLSIntVar, CBLSSetVar, Variable}
-import oscar.cbls.objective.Objective
+import oscar.cbls.objective.{Objective, IntVarObjective$}
 
 /** standard move template
   *
@@ -58,7 +58,7 @@ abstract class Move(val objAfter:Int = Int.MaxValue, val neighborhoodName:String
     * @return the value of the objective function if the move were taken
     */
   def evaluate(obj:Objective):Int = {
-    val model = obj.objective.model
+    val model = obj.model
     val snapshot = model.saveValues(touchedVariables:_*)
     commit()
     val toReturn = obj.value

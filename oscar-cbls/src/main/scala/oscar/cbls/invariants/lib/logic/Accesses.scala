@@ -80,9 +80,9 @@ case class IntITE(ifVar: IntValue, thenVar: IntValue, elseVar: IntValue)
  * @param index is the index accessing the array
  * @author renaud.delandtsheer@cetic.be
  * */
-case class IntElement(index: IntValue, inputarray: Array[IntValue])
+case class IntElement[T <:IntValue](index: IntValue, inputarray: Array[T])
   extends IntInvariant(initialValue = inputarray(index.value).value)
-  with Bulked[IntValue, Domain]
+  with Bulked[T, Domain]
   with VaryingDependenciesInvariant {
 
   registerStaticDependency(index)
@@ -94,7 +94,7 @@ case class IntElement(index: IntValue, inputarray: Array[IntValue])
 
   finishInitialization()
 
-  override def performBulkComputation(bulkedVar: Array[IntValue]): Domain = {
+  override def performBulkComputation(bulkedVar: Array[T]): Domain = {
     InvariantHelper.getMinMaxRange(bulkedVar)
   }
 
@@ -133,8 +133,8 @@ case class IntElement(index: IntValue, inputarray: Array[IntValue])
  * @param inputarray is the array of intvar that can be selected by the index
  * @author renaud.delandtsheer@cetic.be
  * */
-case class Elements(index: SetValue, inputarray: Array[IntValue])
-  extends SetInvariant with Bulked[IntValue, Domain] with VaryingDependenciesInvariant {
+case class Elements[T <:IntValue](index: SetValue, inputarray: Array[T])
+  extends SetInvariant with Bulked[T, Domain] with VaryingDependenciesInvariant {
 
   val KeysToInputArray: Array[KeyForElementRemoval] = new Array(inputarray.size)
 
@@ -155,7 +155,7 @@ case class Elements(index: SetValue, inputarray: Array[IntValue])
     internalInsert(value)
   }
 
-  override def performBulkComputation(bulkedVar: Array[IntValue]): Domain =
+  override def performBulkComputation(bulkedVar: Array[T]): Domain =
     InvariantHelper.getMinMaxRange(bulkedVar)
 
   @inline
@@ -232,8 +232,8 @@ case class Elements(index: SetValue, inputarray: Array[IntValue])
  * @param index is the index of the array access
  * @author renaud.delandtsheer@cetic.be
  * */
-case class SetElement(index: IntValue, inputarray: Array[SetValue])
-  extends SetInvariant(inputarray.apply(index.value).value) with Bulked[SetValue, Domain] with VaryingDependenciesInvariant {
+case class SetElement[T<:SetValue](index: IntValue, inputarray: Array[T])
+  extends SetInvariant(inputarray.apply(index.value).value) with Bulked[T, Domain] with VaryingDependenciesInvariant {
 
   var KeyToCurrentVar: KeyForElementRemoval = null
 
@@ -246,7 +246,7 @@ case class SetElement(index: IntValue, inputarray: Array[SetValue])
 
   finishInitialization()
 
-  override def performBulkComputation(bulkedVar: Array[SetValue]): Domain =
+  override def performBulkComputation(bulkedVar: Array[T]): Domain =
     InvariantHelper.getMinMaxBoundsSet(bulkedVar)
 
   @inline

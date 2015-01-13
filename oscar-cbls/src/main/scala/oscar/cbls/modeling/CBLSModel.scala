@@ -5,7 +5,7 @@ import oscar.cbls.invariants.core.propagation.Checker
 import oscar.cbls.search.{StopWatch, SearchEngineTrait}
 import oscar.cbls.modeling._
 import oscar.cbls.constraints.core.{ConstraintSystem, Constraint}
-import oscar.cbls.objective.ObjectiveTrait
+import oscar.cbls.objective.Objective
 import scala.collection.immutable.SortedSet
 
 
@@ -50,6 +50,6 @@ class CBLSModel(val verbose:Boolean = false,
 
   def solution()(implicit s:Store) = s.solution()
 
-  def swapVal(a:CBLSIntVar, b:CBLSIntVar)(implicit o:ObjectiveTrait) = o.swapVal(a,b)
-  def assignVal(a: CBLSIntVar, v: Int)(implicit o:ObjectiveTrait) = o.assignVal(a, v)
+  def swapVal(a:CBLSIntVar, b:CBLSIntVar)(implicit o:Objective) = o.swapVal(a,b)
+  def assignVal(a: CBLSIntVar, v: Int)(implicit o:Objective) = o.assignVal(a, v)
 }

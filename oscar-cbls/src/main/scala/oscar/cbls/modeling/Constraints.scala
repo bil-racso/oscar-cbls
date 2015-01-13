@@ -14,7 +14,7 @@
  ******************************************************************************/
 package oscar.cbls.modeling
 
-import oscar.cbls.invariants.core.computation.{CBLSSetVar, CBLSIntVar}
+import oscar.cbls.invariants.core.computation.{IntValue, CBLSSetVar, CBLSIntVar}
 import collection.immutable.SortedMap
 import oscar.cbls.constraints.lib.global.{MultiKnapsack, AtMost, AtLeast, AllDiff, Sequence}
 import oscar.cbls.constraints.core.Constraint
@@ -67,7 +67,7 @@ trait Constraints {
    * @param itemsizes the size of the items
    * @param binsizes the max size of the available bins
    */
-  def multiKnapsack(items: Array[CBLSIntVar], itemsizes: Array[CBLSIntVar], binsizes:Array[CBLSIntVar]) = MultiKnapsack(items, itemsizes, binsizes)
+  def multiKnapsack(items: Array[CBLSIntVar], itemsizes: Array[IntValue], binsizes:Array[IntValue]) = MultiKnapsack(items, itemsizes, binsizes)
 
 
   /**implements the sequence constraint:

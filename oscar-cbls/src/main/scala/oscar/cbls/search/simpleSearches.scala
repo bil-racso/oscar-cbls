@@ -3,7 +3,6 @@ package oscar.cbls.search
 import oscar.cbls.constraints.core.ConstraintSystem
 import oscar.cbls.invariants.core.computation.{CBLSIntVar, CBLSSetVar}
 import oscar.cbls.modeling.AlgebraTrait
-import oscar.cbls.objective.Objective
 import oscar.cbls.search.algo.{HotRestart, IdenticalAggregator}
 import oscar.cbls.search.core._
 import oscar.cbls.search.move.{AssignMove, CompositeMove, Move, SwapMove}

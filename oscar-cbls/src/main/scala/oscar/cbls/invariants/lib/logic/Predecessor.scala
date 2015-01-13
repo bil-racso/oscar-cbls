@@ -33,7 +33,7 @@ import oscar.cbls.invariants.core.propagation.Checker
  * @param V the number of vehicles.
  * @author renaud.delandtsheer@cetic.be
  * */
-case class Predecessor(next:Array[IntValue],V:Int) extends Invariant{
+case class Predecessor[T <:IntValue](next:Array[T],V:Int) extends Invariant{
 
   val N = next.length
   registerStaticAndDynamicDependencyArrayIndex(next)

@@ -23,7 +23,7 @@ package oscar.cbls.constraints.core
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.core.propagation.Checker
 import oscar.cbls.invariants.lib.numeric.{Prod, Prod2, Sum}
-import oscar.cbls.objective.ObjectiveTrait
+import oscar.cbls.objective.Objective
 
 import scala.collection.immutable.SortedSet
 
@@ -34,7 +34,7 @@ import scala.collection.immutable.SortedSet
  * @param model is the model in which all the variables referenced by the constraints are declared.
  * @author renaud.delandtsheer@cetic.be
  */
-case class ConstraintSystem(model:Store) extends Constraint with ObjectiveTrait{
+case class ConstraintSystem(model:Store) extends Constraint with Objective{
   //ConstraintSystems do not act as invariant because everything is subcontracted
 
   model.addToCallBeforeClose(() => this.close())
@@ -211,6 +211,6 @@ case class ConstraintSystem(model:Store) extends Constraint with ObjectiveTrait{
    * It is easy to override it, and perform a smarter propagation if needed.
    * @return the actual objective value.
    */
-  override protected def computeObjective: Int = Violation.value
+  override protected def value: Int = Violation.value
 }
 

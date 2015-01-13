@@ -27,7 +27,7 @@ package oscar.cbls.scheduling.model
 
 import collection.immutable.SortedSet
 import oscar.cbls.invariants.core.computation.CBLSIntVar._
-import oscar.cbls.invariants.core.computation.{CBLSSetConst, CBLSSetVar, CBLSIntVar}
+import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.lib.set.{ Inter, Union }
 import oscar.cbls.modeling.Algebra._
 import oscar.cbls.invariants.lib.minmax.{ MinArray, ArgMaxArray }
@@ -49,8 +49,8 @@ object Activity {
  * @param shifter a function that builds a shifter. A shifter is a function: start,duration => shifted start, that postpones a starting date to avoid some impossibilities
  * @author renaud.delandtsheer@cetic.be
  */
-class Activity(val duration: CBLSIntVar, val planning: Planning, val name: String = "",
-               shifter: (CBLSIntVar, CBLSIntVar) => CBLSIntVar = (a: CBLSIntVar, _) => a) {
+class Activity(val duration: IntValue, val planning: Planning, val name: String = "",
+               shifter: (IntValue, IntValue) => IntValue = (a: IntValue, _) => a) {
   val ID: Int = planning.addActivity(this)
 
   val isTakenInSentinel = true
@@ -135,13 +135,13 @@ class Activity(val duration: CBLSIntVar, val planning: Planning, val name: Strin
   var staticPredecessorsID:CBLSSetConst = null
 
   val latestStartDate: CBLSIntVar = latestEndDate - duration
-  var allSucceedingActivities: CBLSSetVar = null
+  var allSucceedingActivities: SetValue = null
 
-  var additionalPredecessors: CBLSSetVar = null
-  var allPrecedingActivities: CBLSSetVar = null
+  var additionalPredecessors: SetValue = null
+  var allPrecedingActivities: SetValue = null
 
-  var definingPredecessors: CBLSSetVar = null
-  var potentiallyKilledPredecessors: CBLSSetVar = null
+  var definingPredecessors: SetValue = null
+  var potentiallyKilledPredecessors: SetValue = null
 
   def addDynamicPredecessor(t: Activity, verbose: Boolean = false) {
     if (verbose) println("added " + t + "->" + this)

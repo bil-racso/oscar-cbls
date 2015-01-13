@@ -5,7 +5,7 @@ import oscar.cbls.invariants.lib.logic.{Filter, SelectLESetQueue}
 import oscar.cbls.invariants.lib.minmax.MinArray
 import oscar.cbls.invariants.lib.numeric.Sum
 import oscar.cbls.modeling.AlgebraTrait
-import oscar.cbls.objective.Objective
+import oscar.cbls.objective.IntVarObjective$
 import oscar.cbls.search.AssignNeighborhood
 import oscar.cbls.search.move.Move
 
@@ -68,7 +68,7 @@ object WarehouseLocationTabu extends App with AlgebraTrait{
   val distanceToNearestOpenWarehouse = Array.tabulate(D)(d =>
     MinArray(distanceCost(d), openWarehouses, defaultCostForNoOpenWarehouse).setName("distance_for_delivery_" + d))
 
-  val obj = Objective(Sum(distanceToNearestOpenWarehouse)
+  val obj = IntVarObjective(Sum(distanceToNearestOpenWarehouse)
     + Sum(costForOpeningWarehouse, openWarehouses))
 
   // we handle the tabu through invariants.

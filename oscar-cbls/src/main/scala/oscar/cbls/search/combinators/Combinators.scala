@@ -44,11 +44,11 @@ abstract class NeighborhoodCombinator(a: Neighborhood*) extends Neighborhood {
   override def toString: String = this.getClass.getSimpleName + "(" + a.mkString(",") + ")"
 }
 
-class BasicProtectBest(a: Neighborhood, i: CBLSIntVar) extends NeighborhoodCombinator(a) {
+class BasicProtectBest(a: Neighborhood, o: Objective) extends NeighborhoodCombinator(a) {
 
-  protected val s: Store = i.model
+  protected val s: Store = o.model
 
-  protected var bestObj = if (currentSolutionIsAcceptable) i.value else Int.MaxValue
+  protected var bestObj = if (currentSolutionIsAcceptable) o.value else Int.MaxValue
   protected var best: Solution = if (currentSolutionIsAcceptable) s.solution() else null
 
 
@@ -62,7 +62,7 @@ class BasicProtectBest(a: Neighborhood, i: CBLSIntVar) extends NeighborhoodCombi
   override def getMove(obj:()=>Int, acceptanceCriteria: (Int, Int) => Boolean): SearchResult = {
 
     //we record the obj before move to prevent an additional useless propagation
-    val objBeforeMove = i.value
+    val objBeforeMove = o.value
 
     a.getMove(obj, acceptanceCriteria) match {
       case NoMoveFound => NoMoveFound
@@ -84,7 +84,7 @@ class BasicProtectBest(a: Neighborhood, i: CBLSIntVar) extends NeighborhoodCombi
     val isCurrentAccepteable = currentSolutionIsAcceptable
     if (best == null && !isCurrentAccepteable) {
       if (verbose >= 1) println("no single acceptable solution seen")
-    } else if (i.value > bestObj || !isCurrentAccepteable) {
+    } else if (o.value > bestObj || !isCurrentAccepteable) {
       s.restoreSolution(best)
       if (verbose >= 1) println("restoring best solution (obj:" + bestObj + ")")
     } else if (verbose >= 1) println("no better solution to restore")
@@ -110,10 +110,10 @@ class BasicProtectBest(a: Neighborhood, i: CBLSIntVar) extends NeighborhoodCombi
   def restoreBestOnExhaust: RestoreBestOnExhaust = new RestoreBestOnExhaust(this)
 }
 
-class ProtectBest(a: Neighborhood, i: CBLSIntVar) extends BasicProtectBest(a: Neighborhood, i: CBLSIntVar) {
+class ProtectBest(a: Neighborhood, o: Objective) extends BasicProtectBest(a: Neighborhood, o: Objective) {
 
-  def whenEmpty(violation: CBLSSetVar) = new ProtectBestWhen(a, i, () => violation.value.isEmpty)
-  def whenZero(violation: CBLSIntVar) = new ProtectBestWhen(a, i, () => violation.value == 0)
+  def whenEmpty(violation: CBLSSetVar) = new ProtectBestWhen(a, o, () => violation.value.isEmpty)
+  def whenZero(violation: CBLSIntVar) = new ProtectBestWhen(a, o, () => violation.value == 0)
 
   /**
    * this method restricts the save operation to only the situation where "shouldSave" returns true
@@ -121,10 +121,10 @@ class ProtectBest(a: Neighborhood, i: CBLSIntVar) extends BasicProtectBest(a: Ne
    * @param shouldSave
    * @return
    */
-  override def when(shouldSave: () => Boolean) = new ProtectBestWhen(a, i, shouldSave)
+  override def when(shouldSave: () => Boolean) = new ProtectBestWhen(a, o, shouldSave)
 }
 
-class ProtectBestWhen(a: Neighborhood, i: CBLSIntVar, shouldSave: () => Boolean) extends BasicProtectBest(a, i) {
+class ProtectBestWhen(a: Neighborhood, o:Objective, shouldSave: () => Boolean) extends BasicProtectBest(a, o) {
   override protected def currentSolutionIsAcceptable: Boolean = shouldSave()
 }
 

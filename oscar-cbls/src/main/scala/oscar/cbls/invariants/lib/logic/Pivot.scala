@@ -35,7 +35,7 @@ import oscar.cbls.invariants.core.propagation.Checker
  * @param boundary the boundary for comparison
  * @author renaud.delandtsheer@cetic.be
  * */
-case class SelectLEHeapHeap(values: Array[IntValue], boundary: IntValue)
+case class SelectLEHeapHeap[T <:IntValue](values: Array[T], boundary: IntValue)
   extends SetInvariant(SortedSet.empty[Int], values.indices.start to values.indices.end) {
 
   for (v <- values.indices) registerStaticAndDynamicDependency(values(v), v)
@@ -124,7 +124,7 @@ case class SelectLEHeapHeap(values: Array[IntValue], boundary: IntValue)
  * @param boundary: the boundary for comparison
  * @author renaud.delandtsheer@cetic.be
  * */
-case class SelectLESetQueue(values: Array[IntValue], boundary: IntValue)
+case class SelectLESetQueue[T <:IntValue](values: Array[T], boundary: IntValue)
   extends SetInvariant(initialDomain = values.indices.start to values.indices.end) {
 
   for (v <- values.indices) registerStaticAndDynamicDependency(values(v), v)

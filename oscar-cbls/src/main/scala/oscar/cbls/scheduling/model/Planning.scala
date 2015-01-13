@@ -25,7 +25,7 @@ package oscar.cbls.scheduling.model
  * ****************************************************************************
  */
 
-import oscar.cbls.invariants.core.computation.{ CBLSSetVar, CBLSIntVar, Store }
+import oscar.cbls.invariants.core.computation.{SetValue, CBLSSetVar, CBLSIntVar, Store}
 import oscar.cbls.invariants.lib.minmax.{ ArgMinArray, ArgMaxArray }
 import oscar.cbls.invariants.lib.logic.{ Filter, DenseRef }
 import oscar.visual.VisualFrame
@@ -68,7 +68,7 @@ class Planning(val model: Store, val maxDuration: Int) {
   var earliestEndDates: Array[CBLSIntVar] = null
   var latestStartDates: Array[CBLSIntVar] = null
 
-  val makeSpan: CBLSIntVar = CBLSIntVar(model, 0, maxDuration, 0, "makeSpan")
+  val makeSpan = CBLSIntVar(model, 0, 0 to maxDuration, "makeSpan")
   var earliestOvershotResources: CBLSSetVar = null
   var worseOvershotResource: CBLSSetVar = null
 
@@ -125,7 +125,7 @@ class Planning(val model: Store, val maxDuration: Int) {
       overshootArray(r.ResourceID) = r.overShoot
     }
 
-    val ResourceWithOvershoot: CBLSSetVar = Filter(overshootArray)
+    val ResourceWithOvershoot: SetValue = Filter(overshootArray)
 
     worseOvershotResource = ArgMaxArray(overshootArray, ResourceWithOvershoot)
   }

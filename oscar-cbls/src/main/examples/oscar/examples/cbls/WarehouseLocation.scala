@@ -5,7 +5,7 @@ import oscar.cbls.invariants.lib.logic.Filter
 import oscar.cbls.invariants.lib.minmax.MinArray
 import oscar.cbls.invariants.lib.numeric.Sum
 import oscar.cbls.modeling.AlgebraTrait
-import oscar.cbls.objective.Objective
+import oscar.cbls.objective.IntVarObjective$
 import oscar.cbls.search.{AssignNeighborhood, RandomizeNeighborhood, SwapsNeighborhood}
 import scala.language.postfixOps
 
@@ -53,7 +53,7 @@ object WarehouseLocation extends App with AlgebraTrait{
   val distanceToNearestOpenWarehouse = Array.tabulate(D)(d =>
     MinArray(distanceCost(d), openWarehouses, defaultCostForNoOpenWarehouse).setName("distance_for_delivery_" + d))
 
-  val obj = Objective(Sum(distanceToNearestOpenWarehouse) + Sum(costForOpeningWarehouse, openWarehouses))
+  val obj = IntVarObjective(Sum(distanceToNearestOpenWarehouse) + Sum(costForOpeningWarehouse, openWarehouses))
 
   m.close()
 

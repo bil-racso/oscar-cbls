@@ -381,10 +381,10 @@ trait VRPObjective extends VRP {
   val objectiveFunction = CBLSIntVar(m, Int.MinValue, Int.MaxValue, 0, "objective of VRP")
   m.registerForPartialPropagation(objectiveFunction)
 
-  var objectiveFunctionTerms: List[CBLSIntVar] = List.empty
+  var objectiveFunctionTerms: List[IntValue] = List.empty
 
   /** adds a term top the objective function*/
-  def addObjectiveTerm(o: CBLSIntVar) {
+  def addObjectiveTerm(o: IntValue) {
     objectiveFunctionTerms = o :: objectiveFunctionTerms
   }
 
@@ -416,13 +416,13 @@ abstract trait RoutedAndUnrouted extends VRP {
   /**
    * the data structure set which maintains the routed nodes.
    */
-  val routed: CBLSSetVar = Filter(next, _ < N)
+  val routed = Filter(next, _ < N)
   m.registerForPartialPropagation(routed)
 
   /**
    * the data structure set which maintains the unrouted nodes.
    */
-  def unrouted: CBLSSetVar
+  def unrouted: SetValue
 }
 
 /**
@@ -436,7 +436,7 @@ trait UnroutedImpl extends VRP with RoutedAndUnrouted {
   /**
    * the data structure set which maintains the unrouted nodes.
    */
-  final override val unrouted: CBLSSetVar = Filter(next, _ == N)
+  final override val unrouted = Filter(next, _ == N)
   m.registerForPartialPropagation(unrouted)
 }
 
@@ -452,12 +452,12 @@ abstract trait PenaltyForUnrouted extends VRP with RoutedAndUnrouted {
   /**
    * the data structure array which maintains penalty of nodes.
    */
-  val weightUnroutedPenalty: Array[CBLSIntVar] = Array.tabulate(N)(i => CBLSIntVar(m, Int.MinValue, Int.MaxValue, 0,
+  val weightUnroutedPenalty = Array.tabulate(N)(i => CBLSIntVar(m, Int.MinValue, Int.MaxValue, 0,
     "penality of node " + i))
   /**
    * the variable which maintains the sum of penalty of unrouted nodes, thanks to invariant SumElements.
    */
-  val unroutedPenalty: CBLSIntVar = Sum(weightUnroutedPenalty, unrouted)
+  val unroutedPenalty = Sum(weightUnroutedPenalty, unrouted)
 
   /**
    * It allows you to set the penalty of a given point.
@@ -566,7 +566,7 @@ trait HopDistance extends VRP {
   /**
    * maintains the total distance of all vehicle, linked on the actual next hop of each node.
    */
-  val overallDistance: CBLSIntVar = Sum(hopDistance)
+  val overallDistance = Sum(hopDistance)
 
   /**
    * the function which defines the distance between two points of the VRP.
@@ -728,13 +728,13 @@ trait PenaltyForEmptyRoute extends VRP with PositionInRouteAndRouteNr {
    * The variable which maintains the set of empty routes.
    * (that is: routes containing no other node than the vehicle node)
    */
-  val emptyRoutes: CBLSSetVar = Filter(routeLength, _ <= (1))
+  val emptyRoutes = Filter(routeLength, _ <= (1))
 
   /**
    * The variable which maintains the sum of route penalties,
    * thanks to SumElements invariant.
    */
-  val emptyRoutePenalty: CBLSIntVar = Sum(emptyRoutePenaltyWeight, emptyRoutes)
+  val emptyRoutePenalty = Sum(emptyRoutePenaltyWeight, emptyRoutes)
 
   /**
    * Allows client to set the penalty of a given vehicle route.
@@ -770,14 +770,14 @@ trait PenaltyForEmptyRouteWithException extends VRP with NodesOfVehicle {
    * The variable which maintains the set of empty routes.
    * (that is: routes containing no other node than the vehicle node)
    */
-  val emptyRoutes: CBLSSetVar = Filter(nodesOfRealVehicles.map(
+  val emptyRoutes = Filter(nodesOfRealVehicles.map(
     (vehicleNodes: CBLSSetVar) => Cardinality(vehicleNodes minus exceptionNodes)), _ == 1)
     
   /**
    * The variable which maintains the sum of route penalties,
    * thanks to SumElements invariant.
    */
-  val emptyRoutePenalty: CBLSIntVar = Sum(emptyRoutePenaltyWeight, emptyRoutes)
+  val emptyRoutePenalty = Sum(emptyRoutePenaltyWeight, emptyRoutes)
 
   /**
    * Allows client to set the penalty of a given vehicle route.

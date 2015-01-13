@@ -36,7 +36,7 @@ import oscar.cbls.invariants.core.computation._
  * update is O(log(n))
  * @author renaud.delandtsheer@cetic.be
  * */
-case class ArgMaxArray(vars: Array[IntValue], cond: SetValue = null, default: Int = Int.MinValue)
+case class ArgMaxArray[T <:IntValue](vars: Array[T], cond: SetValue = null, default: Int = Int.MinValue)
   extends ArgMiaxArray(vars, cond, default) {
 
   override def name: String = "ArgMaxArray"
@@ -60,7 +60,7 @@ case class ArgMaxArray(vars: Array[IntValue], cond: SetValue = null, default: In
  * update is O(log(n))
  * @author renaud.delandtsheer@cetic.be
  * */
-case class ArgMinArray(vars: Array[IntValue], cond: SetValue = null, default: Int = Int.MaxValue)
+case class ArgMinArray[T <:IntValue](vars: Array[T], cond: SetValue = null, default: Int = Int.MaxValue)
   extends ArgMiaxArray(vars, cond, default) {
 
   override def name: String = "ArgMinArray"
@@ -85,8 +85,8 @@ case class ArgMinArray(vars: Array[IntValue], cond: SetValue = null, default: In
  * update is O(log(n))
  * @author renaud.delandtsheer@cetic.be
  * */
-abstract class ArgMiaxArray(vars: Array[IntValue], cond: SetValue, default: Int)
-  extends SetInvariant with Bulked[IntValue, (Int, Int)] with VaryingDependenciesInvariant {
+abstract class ArgMiaxArray[T <:IntValue](vars: Array[T], cond: SetValue, default: Int)
+  extends SetInvariant with Bulked[T, (Int, Int)] with VaryingDependenciesInvariant {
 
   override def toString:String = {
     name + "(" + InvariantHelper.arrayToString(vars) + "," + cond + "," + default + ")"
@@ -125,7 +125,7 @@ abstract class ArgMiaxArray(vars: Array[IntValue], cond: SetValue, default: Int)
 
   Miax.setDefiningInvariant(this)
 
-  override def performBulkComputation(bulkedVar: Array[IntValue]) = {
+  override def performBulkComputation(bulkedVar: Array[T]) = {
     (bulkedVar.foldLeft(Int.MaxValue)((acc, intvar) => if (intvar.min < acc) intvar.min else acc),
       bulkedVar.foldLeft(Int.MinValue)((acc, intvar) => if (intvar.max > acc) intvar.max else acc))
   }

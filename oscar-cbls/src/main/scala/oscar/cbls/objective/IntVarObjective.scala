@@ -24,9 +24,11 @@ import oscar.cbls.invariants.core.computation._
 import scala.language.implicitConversions
 
 object Objective{
-  implicit def objToChangingIntValue(o:Objective):ChangingIntValue = o.objective
-  def apply(objective:ChangingIntValue) = new Objective(objective)
+  implicit def objToChangingIntValue(o:IntVarObjective):ChangingIntValue = o.objective
   implicit def objToFun(o:Objective):()=>Int = ()=>o.value
+
+  implicit def apply(f:()=>Int,model:Store = null) = new FunctionObjective(f,model)
+  implicit def apply(objective:ChangingIntValue) = new IntVarObjective(objective)
 }
 
 /**
@@ -49,7 +51,7 @@ object Objective{
  *
  * @author renaud.delandtsheer@cetic.be
  */
-class Objective(val objective: ChangingIntValue) extends ObjectiveTrait {
+class IntVarObjective(val objective: ChangingIntValue) extends Objective {
 
   model.registerForPartialPropagation(objective)
 
@@ -58,7 +60,7 @@ class Objective(val objective: ChangingIntValue) extends ObjectiveTrait {
    * It is easy to override it, and perform a smarter propagation if needed.
    * @return the actual objective value.
    */
-  protected def computeObjective = objective.value
+  def value = objective.value
 
   def model:Store = objective.model
 }
@@ -71,7 +73,7 @@ class Objective(val objective: ChangingIntValue) extends ObjectiveTrait {
  * @param mustBeZeroObjective
  * @param objective
  */
-class CascadingObjective(val mustBeZeroObjective: ChangingIntValue, objective:ChangingIntValue) extends Objective(objective) {
+class CascadingObjective(val mustBeZeroObjective: ChangingIntValue, objective:ChangingIntValue) extends IntVarObjective(objective) {
 
   model.registerForPartialPropagation(mustBeZeroObjective)
 
@@ -80,15 +82,25 @@ class CascadingObjective(val mustBeZeroObjective: ChangingIntValue, objective:Ch
    * It is easy to override it, and perform a smarter propagation if needed.
    * @return the actual objective value.
    */
-  protected override def computeObjective = {
+  override def value = {
     if (mustBeZeroObjective.value > 0) Int.MaxValue
     else objective.value
   }
 }
 
+class FunctionObjective(f:()=>Int, m:Store = null) extends Objective{
+  override def model: Store = m
 
-trait ObjectiveTrait {
+  /**
+   * This method returns the actual objective value.
+   * It is easy to override it, and perform a smarter propagation if needed.
+   * @return the actual objective value.
+   */
+  override def value: Int = f()
+}
 
+trait Objective {
+  
   def model:Store
 
   /**
@@ -96,7 +108,7 @@ trait ObjectiveTrait {
    * It is easy to override it, and perform a smarter propagation if needed.
    * @return the actual objective value.
    */
-  protected def computeObjective:Int
+  def value:Int
 
   /**returns the value of the objective variable if the two variables a and b were swapped values.
    * This proceeds through explicit state change and restore.
@@ -105,7 +117,7 @@ trait ObjectiveTrait {
    */
   def swapVal(a: CBLSIntVar, b: CBLSIntVar): Int = {
     a :=: b
-    val NewVal = computeObjective
+    val NewVal = value
     a :=: b
     NewVal
   }
@@ -129,7 +141,7 @@ trait ObjectiveTrait {
     //excurse
     for (assign <- a)
       assign._1 := assign._2
-    val newObj = computeObjective
+    val newObj = value
     //undo
     for (assign <- oldvals)
       assign._1 := assign._2

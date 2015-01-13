@@ -48,7 +48,7 @@ object Domain{
   }
 }
 
-sealed abstract class Domain {
+sealed abstract class Domain extends Iterable[Int]{
   def min: Int
   def max: Int
   def size: Int
@@ -60,13 +60,15 @@ sealed abstract class Domain {
 
   def union(d:Domain):Domain = throw new Error("not implemented")
   def inter(d:Domain):Domain = throw new Error("not implemented")
+
+  override def iterator: Iterator[Int] = values.iterator
 }
 
 /**this is an inclusive domain*/
 case class DomainRange(override val min: Int, override val max: Int) extends Domain {
   if (min > max) throw new EmptyDomainException
   def contains(v:Int): Boolean = min <= v && max >= v
-  def size = if(max==Int.MaxValue && min==Int.MinValue) Int.MaxValue else math.max(max-min+1,0)
+  override def size = if(max==Int.MaxValue && min==Int.MinValue) Int.MaxValue else math.max(max-min+1,0)
   override def values: Iterable[Int] = min to max
   override def randomValue: Int = (min to max)(Random.nextInt(max-min+1))
   override def restrict(d: Domain): Domain = {
@@ -83,7 +85,7 @@ case class DomainSet(values: Set[Int]) extends Domain {
   if (values.isEmpty) throw new EmptyDomainException
   def min = values.min
   def max = values.max
-  def size = values.size
+  override def size = values.size
   def contains(v:Int): Boolean = values.contains(v)
   override def randomValue: Int = values.toIndexedSeq(Random.nextInt(values.size))
   override def restrict(d: Domain): Domain = d.restrict(this)

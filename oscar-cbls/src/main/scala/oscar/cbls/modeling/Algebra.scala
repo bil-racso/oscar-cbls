@@ -133,22 +133,19 @@ trait AlgebraTrait{
 
     }
 
-  implicit def InstrumentArrayOfIntVar(inputarray: Array[IntValue]): InstrumentedArrayOfIntVar
+  implicit def InstrumentArrayOfIntVar[T<:IntValue](inputarray: Array[T])
   = new InstrumentedArrayOfIntVar(inputarray)
-  implicit def InstrumentArrayOfIntVar(inputarray: Array[CBLSIntVar]): InstrumentedArrayOfIntVar
-  = new InstrumentedArrayOfIntVar(inputarray.asInstanceOf[Array[IntValue]])
 
-
-  class InstrumentedArrayOfIntVar(inputarray: Array[IntValue]) {
+  class InstrumentedArrayOfIntVar[T<:IntValue](inputarray: Array[T]) {
     def element(index: IntValue) = IntElement(index, inputarray)
 
     def elements(index: SetValue) = Elements(index, inputarray)
   }
 
-  implicit def InstrumentArrayOfIntSetVar(inputarray: Array[SetValue]): InstrumentedArrayOfIntSetVar
+  implicit def InstrumentArrayOfIntSetVar[T <:SetValue](inputarray: Array[T])
   = new InstrumentedArrayOfIntSetVar(inputarray)
 
-  class InstrumentedArrayOfIntSetVar(inputarray: Array[SetValue]) {
+  class InstrumentedArrayOfIntSetVar[T <:SetValue](inputarray: Array[T]) {
     def apply(index: IntValue): SetInvariant = SetElement(index, inputarray)
   }
 
