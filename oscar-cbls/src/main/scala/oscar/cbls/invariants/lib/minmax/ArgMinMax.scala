@@ -22,11 +22,12 @@
 
 package oscar.cbls.invariants.lib.minmax
 
-import collection.immutable.SortedSet
-import oscar.cbls.invariants.core.algo.heap.{ ArrayMap, BinomialHeapWithMoveExtMem }
+import oscar.cbls.invariants.core.algo.heap.{ArrayMap, BinomialHeapWithMoveExtMem}
 import oscar.cbls.invariants.core.computation.Invariant._
-import oscar.cbls.invariants.core.propagation.{ Checker, KeyForElementRemoval }
 import oscar.cbls.invariants.core.computation._
+import oscar.cbls.invariants.core.propagation.{Checker, KeyForElementRemoval}
+
+import scala.collection.immutable.SortedSet
 
 /**
  * Maintains {i in indices of (vars Inter cond) | vars[i] == max(vars(i in indices of (vars Inter cond))}

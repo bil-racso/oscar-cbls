@@ -16,7 +16,7 @@
 package oscar.cbls.search.move
 
 import oscar.cbls.invariants.core.computation.{CBLSIntVar, CBLSSetVar, Variable}
-import oscar.cbls.objective.{Objective, IntVarObjective$}
+import oscar.cbls.objective.Objective
 
 /** standard move template
   *

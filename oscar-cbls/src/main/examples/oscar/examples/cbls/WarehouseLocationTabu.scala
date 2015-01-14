@@ -1,13 +1,14 @@
 package oscar.examples.cbls
 
-import oscar.cbls.invariants.core.computation.{CBLSIntVar, Store}
+import oscar.cbls.invariants.core.computation.{CBLSIntVar, IntValue, Store}
 import oscar.cbls.invariants.lib.logic.{Filter, SelectLESetQueue}
 import oscar.cbls.invariants.lib.minmax.MinArray
 import oscar.cbls.invariants.lib.numeric.Sum
 import oscar.cbls.modeling.AlgebraTrait
-import oscar.cbls.objective.IntVarObjective$
+import oscar.cbls.objective.Objective
 import oscar.cbls.search.AssignNeighborhood
 import oscar.cbls.search.move.Move
+import scala.language.postfixOps
 
 /**
  * this is a WarehouseLocation problem with a Tabu.
@@ -66,10 +67,10 @@ object WarehouseLocationTabu extends App with AlgebraTrait{
   val openWarehouses = Filter(warehouseOpenArray).setName("openWarehouses")
 
   val distanceToNearestOpenWarehouse = Array.tabulate(D)(d =>
-    MinArray(distanceCost(d), openWarehouses, defaultCostForNoOpenWarehouse).setName("distance_for_delivery_" + d))
+    MinArray[IntValue](distanceCost(d), openWarehouses, defaultCostForNoOpenWarehouse).setName("distance_for_delivery_" + d))
 
-  val obj = IntVarObjective(Sum(distanceToNearestOpenWarehouse)
-    + Sum(costForOpeningWarehouse, openWarehouses))
+  val obj = Objective(Sum(distanceToNearestOpenWarehouse)
+    + Sum[IntValue](costForOpeningWarehouse, openWarehouses))
 
   // we handle the tabu through invariants.
   // notice that they are completely dissociated from the rest of the model in this case.

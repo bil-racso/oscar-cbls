@@ -21,9 +21,10 @@
 
 package oscar.cbls.invariants.lib.logic
 
-import collection.immutable.SortedSet
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.core.propagation.Checker
+
+import scala.collection.immutable.SortedSet
 
 /**maintains the reverse references. Referencing(i) = {j | Reference(j) includes i}
   * @author renaud.delandtsheer@cetic.be

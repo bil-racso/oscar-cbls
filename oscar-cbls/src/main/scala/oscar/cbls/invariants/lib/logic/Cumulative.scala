@@ -24,7 +24,8 @@
 package oscar.cbls.invariants.lib.logic
 
 import oscar.cbls.invariants.core.computation._
-import collection.immutable.SortedSet
+
+import scala.collection.immutable.SortedSet
 
 /**
  * Maintains a resource usage profile.

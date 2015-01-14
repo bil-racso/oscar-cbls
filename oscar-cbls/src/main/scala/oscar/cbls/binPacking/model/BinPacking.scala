@@ -14,13 +14,12 @@
   ******************************************************************************/
 package oscar.cbls.binPacking.model
 
-import oscar.cbls.invariants.core.computation._
-import oscar.cbls.invariants.core.computation.CBLSIntConst
-import oscar.cbls.objective.{Objective, IntVarObjective}
-import oscar.cbls.constraints.lib.global.MultiKnapsack
-import oscar.cbls.invariants.core.computation.Store
 import oscar.cbls.constraints.core.ConstraintSystem
+import oscar.cbls.constraints.lib.global.MultiKnapsack
+import oscar.cbls.invariants.core.computation.{CBLSIntConst, Store, _}
 import oscar.cbls.invariants.lib.minmax.ArgMaxArray
+import oscar.cbls.objective.Objective
+
 import scala.collection.immutable.SortedMap
 
 /**

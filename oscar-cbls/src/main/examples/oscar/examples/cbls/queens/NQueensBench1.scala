@@ -22,9 +22,8 @@ package oscar.examples.cbls.queens
 
 import oscar.cbls.constraints.core._
 import oscar.cbls.constraints.lib.global.AllDiff
-import oscar.cbls.invariants.core.computation.CBLSIntVar.int2IntVar
 import oscar.cbls.invariants.core.computation._
-import oscar.cbls.invariants.lib.logic.{Int2Int, SelectLESetQueue}
+import oscar.cbls.invariants.lib.logic.SelectLESetQueue
 import oscar.cbls.invariants.lib.minmax._
 import oscar.cbls.modeling.Algebra._
 import oscar.cbls.search._

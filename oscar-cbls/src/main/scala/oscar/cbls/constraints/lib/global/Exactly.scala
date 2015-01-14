@@ -20,11 +20,12 @@
 
 package oscar.cbls.constraints.lib.global
 
-import collection.immutable.SortedMap
 import oscar.cbls.constraints.core.Constraint
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.core.propagation.Checker
 import oscar.cbls.invariants.lib.numeric.Sum2
+
+import scala.collection.immutable.SortedMap
 
 /**Implements the Exactly constraint on IntVar.
   * There is a set of bounds, defined in the parameter bound as pair (value,bound).

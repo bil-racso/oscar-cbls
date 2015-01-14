@@ -25,8 +25,6 @@ import oscar.cbls.invariants.core.propagation.Checker
 import oscar.cbls.invariants.lib.numeric.{Prod, Prod2, Sum}
 import oscar.cbls.objective.Objective
 
-import scala.collection.immutable.SortedSet
-
 /** A constraint system is a composition of constraints.
  * It is itself a constraint, offering the same features, namely, a global violation and a violation specific to each variable.
  * monitoring the violation of a variable requires that the ConstraintSystem has been notified that the variable should have an associated violation degree.

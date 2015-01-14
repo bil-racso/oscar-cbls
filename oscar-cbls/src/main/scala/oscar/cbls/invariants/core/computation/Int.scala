@@ -21,8 +21,8 @@
 
 package oscar.cbls.invariants.core.computation
 
-import oscar.cbls.invariants.core.algo.dag.DAGNode
-import oscar.cbls.invariants.core.propagation.{BasicPropagationElement, Checker, PropagationElement}
+import oscar.cbls.invariants.core.propagation.{Checker, PropagationElement}
+
 import scala.language.implicitConversions
 
 /** this is something that has an integer value.
@@ -222,7 +222,7 @@ class CBLSIntVar(givenModel: Store, initialValue: Int, initialDomain:Domain, n: 
 
 object CBLSIntVar{
 
-//  def apply(value:Int = 0, d:Domain = FullRange, name:String = null)(implicit s:Store) = new CBLSIntVar(s,value, d,name)
+  def apply(value:Int = 0, d:Domain = FullRange, name:String = null)(implicit s:Store) = new CBLSIntVar(s,value, d,name)
 
   def apply(model: Store, value:Int = 0, d:Domain = FullRange, name:String = null) =
     new CBLSIntVar(model, value, d, name)

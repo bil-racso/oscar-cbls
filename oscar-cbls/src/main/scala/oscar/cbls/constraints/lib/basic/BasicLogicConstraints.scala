@@ -24,12 +24,13 @@
 
 package oscar.cbls.constraints.lib.basic
 
-import oscar.cbls.modeling.Algebra._
-import oscar.cbls.invariants.core.computation._
-import oscar.cbls.invariants.lib.minmax._
 import oscar.cbls.constraints.core._
-import oscar.cbls.invariants.lib.numeric.{Dist, Abs, Minus}
+import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.core.propagation.Checker
+import oscar.cbls.invariants.lib.minmax._
+import oscar.cbls.invariants.lib.numeric.Dist
+import oscar.cbls.modeling.Algebra._
+
 import scala.math.abs
 
 /**

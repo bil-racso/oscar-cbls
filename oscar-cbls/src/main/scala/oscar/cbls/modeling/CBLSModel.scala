@@ -1,12 +1,10 @@
 package oscar.cbls.modeling
 
+import oscar.cbls.constraints.core.{Constraint, ConstraintSystem}
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.core.propagation.Checker
-import oscar.cbls.search.{StopWatch, SearchEngineTrait}
-import oscar.cbls.modeling._
-import oscar.cbls.constraints.core.{ConstraintSystem, Constraint}
 import oscar.cbls.objective.Objective
-import scala.collection.immutable.SortedSet
+import oscar.cbls.search.{SearchEngineTrait, StopWatch}
 
 
 /** this is a helper object that you can extend to implement your solver with the minimal syntactic overhead.

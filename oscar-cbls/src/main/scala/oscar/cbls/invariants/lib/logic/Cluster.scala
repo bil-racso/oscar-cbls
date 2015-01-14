@@ -22,12 +22,11 @@
 package oscar.cbls.invariants.lib.logic
 /**This package proposes a set of logic invariants, which are used to define the structure of the problem*/
 
-import collection.immutable.SortedSet
-import collection.immutable.SortedMap
 import oscar.cbls.invariants.core.computation.CBLSIntVar._
-
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.core.propagation.Checker
+
+import scala.collection.immutable.{SortedMap, SortedSet}
 ;
 
 /**maintains a cluster of the indexes of array:  cluster(j) = {i in index of values | values[i] == j}

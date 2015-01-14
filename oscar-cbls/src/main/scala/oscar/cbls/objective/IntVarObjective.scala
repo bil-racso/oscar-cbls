@@ -21,6 +21,7 @@ package oscar.cbls.objective
  ******************************************************************************/
 
 import oscar.cbls.invariants.core.computation._
+
 import scala.language.implicitConversions
 
 object Objective{

@@ -20,9 +20,10 @@
 
 package oscar.cbls.invariants.core.computation
 
-import collection.immutable.{SortedSet, SortedMap}
 import oscar.cbls.invariants.core.propagation._
-import language.implicitConversions
+
+import scala.collection.immutable.{SortedMap, SortedSet}
+import scala.language.implicitConversions
 
 /**This class contains the invariants and variables
   * They are all modelled as propagation Elements, which are handled by the inherited

@@ -25,7 +25,7 @@
 
 package oscar.cbls.scheduling.model
 
-import oscar.cbls.invariants.core.computation.{FullRange, IntValue, CBLSIntVar, IntInvariant}
+import oscar.cbls.invariants.core.computation.{CBLSIntVar, FullRange, IntValue}
 import oscar.cbls.invariants.lib.minmax.Max2
 import oscar.cbls.modeling.Algebra.InstrumentIntVar
 

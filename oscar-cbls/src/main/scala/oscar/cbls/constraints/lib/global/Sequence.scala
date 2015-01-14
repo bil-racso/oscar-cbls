@@ -21,11 +21,12 @@
 
 package oscar.cbls.constraints.lib.global
 
-import collection.immutable.SortedMap
 import oscar.cbls.constraints.core.Constraint
-import oscar.cbls.invariants.lib.numeric.Sum
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.core.propagation.Checker
+import oscar.cbls.invariants.lib.numeric.Sum
+
+import scala.collection.immutable.SortedMap
 ;
 
 /**implments the sequence constraint:

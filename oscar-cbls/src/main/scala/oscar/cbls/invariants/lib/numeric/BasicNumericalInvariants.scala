@@ -22,9 +22,8 @@
 package oscar.cbls.invariants.lib.numeric
 
 import oscar.cbls.invariants.core.computation._
-
-import oscar.cbls.invariants.lib.logic._
-import oscar.cbls.invariants.core.propagation.Checker;
+import oscar.cbls.invariants.core.propagation.Checker
+import oscar.cbls.invariants.lib.logic._;
 
 object Sum{
   def apply[T <:IntValue](vars: Array[T], cond: SetValue):SumElements[T] = SumElements(vars, cond)

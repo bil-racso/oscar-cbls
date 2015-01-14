@@ -26,13 +26,8 @@ package oscar.cbls.scheduling.model
  */
 
 import oscar.cbls.invariants.core.computation._
-import oscar.cbls.invariants.lib.minmax.{ ArgMinArray, ArgMaxArray }
-import oscar.cbls.invariants.lib.logic.{ Filter, DenseRef }
-import oscar.visual.VisualFrame
-import oscar.visual.plot.PlotLine
-import oscar.cbls.modeling.Algebra._
-import oscar.cbls.invariants.lib.logic.Sort
-import oscar.cbls.invariants.lib.numeric.SumElements
+import oscar.cbls.invariants.lib.logic.{DenseRef, Filter}
+import oscar.cbls.invariants.lib.minmax.ArgMaxArray
 import oscar.cbls.invariants.lib.numeric.Sum
 
 /**

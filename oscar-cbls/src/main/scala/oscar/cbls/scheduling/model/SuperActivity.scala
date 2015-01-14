@@ -25,7 +25,7 @@
 
 package oscar.cbls.scheduling.model
 
-import oscar.cbls.invariants.core.computation.{ CBLSSetVar, CBLSIntVar }
+import oscar.cbls.invariants.core.computation.{CBLSIntVar, CBLSSetVar}
 import oscar.cbls.modeling.Algebra._
 
 import scala.collection.immutable.SortedSet

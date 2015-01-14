@@ -14,8 +14,7 @@
   ******************************************************************************/
 package oscar.cbls.invariants.core.algo.heap
 
-import collection.Iterator
-import oscar.cbls.invariants.core.propagation.PropagationElement
+import scala.collection.Iterator
 
 /*******************************************************************************
  * Contributors:

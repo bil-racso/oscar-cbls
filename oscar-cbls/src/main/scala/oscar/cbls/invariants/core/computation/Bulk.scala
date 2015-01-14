@@ -21,9 +21,9 @@
 
 package oscar.cbls.invariants.core.computation
 
-import oscar.cbls.invariants.core.propagation.BulkPropagator
-import collection.immutable.SortedMap
-import oscar.cbls.invariants.core.propagation.Checker
+import oscar.cbls.invariants.core.propagation.{BulkPropagator, Checker}
+
+import scala.collection.immutable.SortedMap
 
 //TODO: we cannot have constants in bulked arrays, actually.
 /**Invariants over arrays can implement this trait to make it possible to bulk load their dependencies

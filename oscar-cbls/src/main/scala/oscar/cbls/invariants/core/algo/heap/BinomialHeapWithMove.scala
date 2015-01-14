@@ -20,9 +20,10 @@
 
 package oscar.cbls.invariants.core.algo.heap
 
-import collection.immutable.SortedMap
-import collection.Iterator
 import oscar.cbls.invariants.core.propagation.Checker
+
+import scala.collection.Iterator
+import scala.collection.immutable.SortedMap
 
 /**
  * This is a binary heap that is efficient; all operations are in O(log(n))

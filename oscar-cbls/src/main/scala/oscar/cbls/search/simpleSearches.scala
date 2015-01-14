@@ -1,7 +1,7 @@
 package oscar.cbls.search
 
 import oscar.cbls.constraints.core.ConstraintSystem
-import oscar.cbls.invariants.core.computation.{IntValue, CBLSIntVar, CBLSSetVar}
+import oscar.cbls.invariants.core.computation.{CBLSIntVar, CBLSSetVar, IntValue}
 import oscar.cbls.modeling.AlgebraTrait
 import oscar.cbls.search.algo.{HotRestart, IdenticalAggregator}
 import oscar.cbls.search.core._

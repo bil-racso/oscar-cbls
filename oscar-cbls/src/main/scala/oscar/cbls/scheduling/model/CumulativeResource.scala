@@ -25,15 +25,14 @@ package oscar.cbls.scheduling.model
  * ****************************************************************************
  */
 
-import oscar.cbls.invariants.core.computation.{IntValue, CBLSIntVar, CBLSSetVar}
-import scala.Array
-import oscar.cbls.invariants.lib.logic.{ Cumulative, Filter }
-import oscar.cbls.invariants.lib.minmax.{ ArgMaxArray, MinSet }
-import oscar.cbls.invariants.lib.numeric.Step
+import oscar.cbls.invariants.core.computation.{CBLSIntVar, IntValue}
+import oscar.cbls.invariants.lib.logic.Cumulative
+import oscar.cbls.invariants.lib.minmax.ArgMaxArray
+import oscar.cbls.modeling.Algebra._
 import oscar.cbls.scheduling.algo.ConflictSearch
 import oscar.cbls.search.SearchEngineTrait
-import oscar.cbls.modeling.Algebra._
-import collection.SortedMap
+
+import scala.collection.SortedMap
 
 /**
  * Maintains the resource usage at all time

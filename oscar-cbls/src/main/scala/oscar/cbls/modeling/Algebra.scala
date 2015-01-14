@@ -21,16 +21,15 @@ package oscar.cbls.modeling
  *     Contributed to by Florent Ghilain
  ******************************************************************************/
 
-import oscar.cbls.constraints.core.ConstraintSystem
-import oscar.cbls.constraints.lib.basic.{EQ, G, GE, L, LE, NE}
+import oscar.cbls.constraints.lib.basic.{BelongsTo, EQ, G, GE, L, LE, NE}
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.lib.logic.{Elements, IntElement, SetElement}
 import oscar.cbls.invariants.lib.numeric._
 import oscar.cbls.invariants.lib.set._
 import oscar.cbls.search.algo.InstrumentedRange
+
 import scala.collection.immutable.SortedSet
 import scala.language.implicitConversions
-import oscar.cbls.constraints.lib.basic.BelongsTo
 
 /**Include this object whenever you want to use concise notation
  * It provides the following infix operators for IntVars: plus minus times, div, ==: !=: <<: >>: >=: <=:

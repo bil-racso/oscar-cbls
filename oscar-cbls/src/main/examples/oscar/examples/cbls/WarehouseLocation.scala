@@ -1,11 +1,11 @@
 package oscar.examples.cbls
 
-import oscar.cbls.invariants.core.computation.{CBLSIntVar, Store}
+import oscar.cbls.invariants.core.computation.{IntValue, CBLSIntVar, Store}
 import oscar.cbls.invariants.lib.logic.Filter
 import oscar.cbls.invariants.lib.minmax.MinArray
 import oscar.cbls.invariants.lib.numeric.Sum
 import oscar.cbls.modeling.AlgebraTrait
-import oscar.cbls.objective.{Objective, IntVarObjective$}
+import oscar.cbls.objective.{Objective}
 import oscar.cbls.search.{AssignNeighborhood, RandomizeNeighborhood, SwapsNeighborhood}
 import scala.language.postfixOps
 
@@ -51,9 +51,9 @@ object WarehouseLocation extends App with AlgebraTrait{
   val openWarehouses = Filter(warehouseOpenArray).setName("openWarehouses")
 
   val distanceToNearestOpenWarehouse = Array.tabulate(D)(d =>
-    MinArray(distanceCost(d), openWarehouses, defaultCostForNoOpenWarehouse).setName("distance_for_delivery_" + d))
-//TODO: il faut identifier T et appliquer un implicit
-  val obj = Objective(Sum(distanceToNearestOpenWarehouse) + Sum(costForOpeningWarehouse, openWarehouses))
+    MinArray[IntValue](distanceCost(d), openWarehouses, defaultCostForNoOpenWarehouse).setName("distance_for_delivery_" + d))
+
+  val obj = Objective(Sum(distanceToNearestOpenWarehouse) + Sum[IntValue](costForOpeningWarehouse, openWarehouses))
 
   m.close()
 

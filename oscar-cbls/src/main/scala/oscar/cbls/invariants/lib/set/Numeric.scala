@@ -25,7 +25,7 @@
 
 package oscar.cbls.invariants.lib.set
 
-import oscar.cbls.invariants.core.computation.{SetValue, ChangingSetValue, IntInvariant}
+import oscar.cbls.invariants.core.computation.{ChangingSetValue, IntInvariant, SetValue}
 import oscar.cbls.invariants.core.propagation.Checker
 
 /**

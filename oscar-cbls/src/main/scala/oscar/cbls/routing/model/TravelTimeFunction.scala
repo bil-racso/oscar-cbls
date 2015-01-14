@@ -21,13 +21,12 @@
 
 package oscar.cbls.routing.model
 
-import oscar.cbls.invariants.core.computation.{IntValue, CBLSIntVar, CBLSIntConst}
+import oscar.cbls.constraints.lib.basic.{GE, LE}
+import oscar.cbls.invariants.core.computation.{CBLSIntConst, CBLSIntVar, IntValue}
 import oscar.cbls.invariants.lib.logic.IntInt2Int
-import oscar.cbls.modeling.Algebra._
 import oscar.cbls.invariants.lib.minmax.Max2
-import oscar.cbls.constraints.lib.basic.GE
-import oscar.cbls.constraints.lib.basic.LE
 import oscar.cbls.invariants.lib.numeric.Sum
+import oscar.cbls.modeling.Algebra._
 
 /** an abstract class representing a travel time function
   * @author renaud.delandtsheer@cetic.be

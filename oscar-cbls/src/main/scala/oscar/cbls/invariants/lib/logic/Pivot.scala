@@ -22,11 +22,12 @@
 
 package oscar.cbls.invariants.lib.logic
 
-import collection.immutable.SortedSet
-import collection.mutable.Queue
+import oscar.cbls.invariants.core.algo.heap.{BinomialHeap, BinomialHeapWithMove}
 import oscar.cbls.invariants.core.computation._
-import oscar.cbls.invariants.core.algo.heap.{ BinomialHeap, BinomialHeapWithMove }
 import oscar.cbls.invariants.core.propagation.Checker
+
+import scala.collection.immutable.SortedSet
+import scala.collection.mutable.Queue
 
 /**
  * {i in index of values | values[i] <= boundary}

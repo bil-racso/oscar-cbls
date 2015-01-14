@@ -14,11 +14,11 @@
  ******************************************************************************/
 package oscar.cbls.modeling
 
-import oscar.cbls.invariants.core.computation.{SetValue, IntValue, CBLSSetVar, CBLSIntVar}
-import collection.immutable.SortedMap
-import oscar.cbls.constraints.lib.global.{MultiKnapsack, AtMost, AtLeast, AllDiff, Sequence}
-import oscar.cbls.constraints.core.Constraint
 import oscar.cbls.constraints.lib.basic.BelongsTo
+import oscar.cbls.constraints.lib.global.{AllDiff, AtLeast, AtMost, MultiKnapsack, Sequence}
+import oscar.cbls.invariants.core.computation.{CBLSIntVar, IntValue, SetValue}
+
+import scala.collection.immutable.SortedMap
 
 /** modeling interface for all the constraints
 * @author renaud.delandtsheer@cetic.be

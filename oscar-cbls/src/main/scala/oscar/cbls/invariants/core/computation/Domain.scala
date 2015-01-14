@@ -20,8 +20,8 @@
 package oscar.cbls.invariants.core.computation
 
 import scala.collection.immutable.SortedSet
-import scala.util.Random
 import scala.language.implicitConversions
+import scala.util.Random
 
 object Domain{
   implicit def rangeToDomain(r:Range):Domain = {

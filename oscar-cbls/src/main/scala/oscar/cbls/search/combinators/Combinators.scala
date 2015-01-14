@@ -18,8 +18,7 @@ package oscar.cbls.search.combinators
 
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.objective.Objective
-import oscar.cbls.search.core.NoMoveFound
-import oscar.cbls.search.core._
+import oscar.cbls.search.core.{NoMoveFound, _}
 import oscar.cbls.search.move.{CallBackMove, CompositeMove, InstrumentedMove, Move}
 
 import scala.language.implicitConversions

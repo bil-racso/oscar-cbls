@@ -23,10 +23,6 @@
 
 package oscar.cbls.routing.model
 
-import scala.collection.immutable.{SortedSet, SortedMap}
-import scala.collection.mutable
-import scala.math.min
-
 import oscar.cbls.constraints.core.ConstraintSystem
 import oscar.cbls.invariants.core.algo.heap.BinomialHeap
 import oscar.cbls.invariants.core.computation._
@@ -34,6 +30,9 @@ import oscar.cbls.invariants.lib.logic._
 import oscar.cbls.invariants.lib.numeric.Sum
 import oscar.cbls.invariants.lib.set.Cardinality
 import oscar.cbls.modeling.Algebra.InstrumentIntSetVar
+
+import scala.collection.immutable.{SortedMap, SortedSet}
+import scala.math.min
 
 /**
  * The class constructor models a VRP problem with N points (deposits and customers)

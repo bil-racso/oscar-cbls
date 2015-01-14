@@ -19,7 +19,7 @@
 
 package oscar.cbls.invariants.lib.logic
 
-import oscar.cbls.invariants.core.computation.{IntValue, ChangingIntValue, Invariant, CBLSIntVar}
+import oscar.cbls.invariants.core.computation.{CBLSIntVar, ChangingIntValue, IntValue, Invariant}
 import oscar.cbls.invariants.core.propagation.Checker
 
 /**

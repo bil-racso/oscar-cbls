@@ -21,12 +21,12 @@
 package oscar.cbls.invariants.core.propagation
 
 import oscar.cbls.invariants.core.algo.dag._
-import oscar.cbls.invariants.core.algo.tarjan._
 import oscar.cbls.invariants.core.algo.dll._
-import collection.immutable.SortedMap
-import collection.mutable.Queue
-import oscar.cbls.invariants.core.algo.heap.{AggregatedBinomialHeap, AbstractHeap, BinomialHeap}
-import oscar.cbls.invariants.core.computation.StorageUtilityManager
+import oscar.cbls.invariants.core.algo.heap.{AbstractHeap, AggregatedBinomialHeap, BinomialHeap}
+import oscar.cbls.invariants.core.algo.tarjan._
+
+import scala.collection.immutable.SortedMap
+import scala.collection.mutable.Queue
 ;
 
 /**

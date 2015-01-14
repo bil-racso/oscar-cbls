@@ -21,7 +21,7 @@
 
 package oscar.cbls.invariants.core.computation
 
-import oscar.cbls.invariants.core.propagation.{PropagationElement, Checker}
+import oscar.cbls.invariants.core.propagation.{Checker, PropagationElement}
 
 import scala.collection.immutable.SortedSet
 import scala.language.implicitConversions

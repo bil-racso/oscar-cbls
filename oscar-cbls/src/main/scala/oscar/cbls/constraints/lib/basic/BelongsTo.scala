@@ -1,7 +1,7 @@
 package oscar.cbls.constraints.lib.basic
 
-import oscar.cbls.invariants.core.computation._
 import oscar.cbls.constraints.core.Constraint
+import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.core.propagation.Checker
 
 /**

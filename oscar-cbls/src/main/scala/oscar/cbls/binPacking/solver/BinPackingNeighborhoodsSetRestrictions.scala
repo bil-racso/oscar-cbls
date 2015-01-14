@@ -22,11 +22,11 @@
 
 package oscar.cbls.binPacking.solver
 
-import oscar.cbls.binPacking.model.{Bin, Item, BinPackingProblem}
+import oscar.cbls.binPacking.model.{Bin, BinPackingProblem, Item}
 import oscar.cbls.invariants.core.computation.CBLSSetVar
 import oscar.cbls.search.algo.{HotRestart, IdenticalAggregator}
-import oscar.cbls.search.core.{JumpNeighborhood, EasyNeighborhood}
-import oscar.cbls.search.move.{SwapMove, AssignMove}
+import oscar.cbls.search.core.{EasyNeighborhood, JumpNeighborhood}
+import oscar.cbls.search.move.{AssignMove, SwapMove}
 
 import scala.util.Random
 

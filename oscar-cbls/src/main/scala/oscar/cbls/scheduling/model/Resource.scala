@@ -1,8 +1,6 @@
 package oscar.cbls.scheduling.model
 
-import oscar.cbls.invariants.core.computation.{IntValue, CBLSSetVar, CBLSIntVar}
-import scala.collection.SortedMap
-import oscar.cbls.modeling.Algebra._
+import oscar.cbls.invariants.core.computation.{CBLSSetVar, IntValue}
 
 import scala.collection.immutable.SortedSet
 

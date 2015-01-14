@@ -25,12 +25,13 @@
 
 package oscar.cbls.scheduling.model
 
-import collection.immutable.SortedSet
 import oscar.cbls.invariants.core.computation.CBLSIntVar._
 import oscar.cbls.invariants.core.computation._
-import oscar.cbls.invariants.lib.set.{ Inter, Union }
+import oscar.cbls.invariants.lib.minmax.{ArgMaxArray, MinArray}
+import oscar.cbls.invariants.lib.set.{Inter, Union}
 import oscar.cbls.modeling.Algebra._
-import oscar.cbls.invariants.lib.minmax.{ MinArray, ArgMaxArray }
+
+import scala.collection.immutable.SortedSet
 
 object Activity {
   def apply(duration: IntValue, planning: Planning, name: String = "",

@@ -22,7 +22,7 @@ package oscar.cbls.binPacking.model
 
 import oscar.cbls.constraints.core.{Constraint, ConstraintSystem}
 import oscar.cbls.constraints.lib.basic.LE
-import oscar.cbls.invariants.core.computation.{IntValue, Store, CBLSSetVar, CBLSIntVar}
+import oscar.cbls.invariants.core.computation.{CBLSIntVar, CBLSSetVar, IntValue, Store}
 import oscar.cbls.invariants.lib.logic.DenseCluster
 import oscar.cbls.invariants.lib.set.SetSum
 

@@ -24,14 +24,8 @@
 
 package oscar.cbls.routing.initial
 
-import oscar.cbls.routing.model.ClosestNeighbors
-import oscar.cbls.routing.model.MoveDescription
-import oscar.cbls.routing.model.PositionInRouteAndRouteNr
-import oscar.cbls.routing.model.RoutedAndUnrouted
-import oscar.cbls.routing.model.VRP
-import oscar.cbls.routing.model.VRPObjective
-import oscar.cbls.routing.neighborhood.InsertPoint
-import oscar.cbls.routing.neighborhood.SearchZone
+import oscar.cbls.routing.model.{ClosestNeighbors, MoveDescription, PositionInRouteAndRouteNr, RoutedAndUnrouted, VRP, VRPObjective}
+import oscar.cbls.routing.neighborhood.{InsertPoint, SearchZone}
 
 /**
  * Constructs an initial solution by repeatedly inserting points into the circuits.

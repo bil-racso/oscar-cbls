@@ -22,9 +22,9 @@
 package oscar.cbls.invariants.lib.set
 
 import oscar.cbls.invariants.core.computation._
-import collection.immutable.SortedSet
-import collection.immutable.SortedMap
-import oscar.cbls.invariants.core.propagation.Checker;
+import oscar.cbls.invariants.core.propagation.Checker
+
+import scala.collection.immutable.{SortedMap, SortedSet};
 
 /**
  * left UNION right

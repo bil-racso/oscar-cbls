@@ -150,7 +150,7 @@ class NQueensApplet extends Applet {
       println("NQueens(" + N + ")")
       val Queens: Array[CBLSIntVar] = new Array[CBLSIntVar](N)
       for (q <- range) {
-        Queens(q) = CBLSIntVar(m, min, max, q, "queen" + q)
+        Queens(q) = CBLSIntVar(m, q, min to max, "queen" + q)
         tab(q)(q).icon = CONFLICT
       }
 
@@ -159,7 +159,7 @@ class NQueensApplet extends Applet {
       c.post(AllDiff(for (q <- range) yield (q + Queens(q))))
       c.post(AllDiff(for (q <- range) yield (q - Queens(q))))
 
-      val viol: Array[CBLSIntVar] = (for (q <- range) yield c.violation(Queens(q))).toArray
+      val viol = (for (q <- range) yield c.violation(Queens(q))).toArray
 
       m.close()
 

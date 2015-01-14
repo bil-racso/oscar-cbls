@@ -23,9 +23,10 @@ package oscar.cbls.invariants.lib.logic
 /**This package proposes a set of logic invariants, which are used to define the structure of the problem*/
 
 
-import collection.immutable.SortedSet
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.core.propagation.Checker
+
+import scala.collection.immutable.SortedSet
 
 /** { i in index(values) | cond(values[i] }
  * @param values is an array of IntVar

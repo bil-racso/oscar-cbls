@@ -16,12 +16,13 @@
 
 package oscar.cbls.modeling
 
-import oscar.cbls.invariants.lib.logic._
 import oscar.cbls.invariants.core.computation._
+import oscar.cbls.invariants.lib.logic._
 import oscar.cbls.invariants.lib.minmax._
 import oscar.cbls.invariants.lib.numeric._
-import collection.immutable.{SortedSet, SortedMap}
 import oscar.cbls.invariants.lib.set._
+
+import scala.collection.immutable.{SortedMap, SortedSet}
 
 trait Invariants
   extends ClusterInvariants

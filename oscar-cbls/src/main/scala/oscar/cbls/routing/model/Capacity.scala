@@ -23,7 +23,7 @@
 
 package oscar.cbls.routing.model
 
-import oscar.cbls.invariants.core.computation.{IntValue, CBLSIntVar}
+import oscar.cbls.invariants.core.computation.{CBLSIntVar, IntValue}
 import oscar.cbls.invariants.lib.minmax.Min2
 import oscar.cbls.invariants.lib.numeric.Sum
 import oscar.cbls.modeling.Algebra._

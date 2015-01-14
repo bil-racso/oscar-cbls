@@ -17,12 +17,11 @@ package oscar.cbls.binPacking.solver
 
 //TODO: tabu
 
+import oscar.cbls.binPacking.model.{Bin, BinPackingProblem, Item}
+import oscar.cbls.search.SearchEngineTrait
 import oscar.cbls.search.algo.IdenticalAggregator
 import oscar.cbls.search.core.{Neighborhood, NoMoveFound, SearchResult}
-import oscar.cbls.search.SearchEngineTrait
-import oscar.cbls.binPacking.model.{BinPackingProblem, Bin, Item}
-import oscar.cbls.search.move.{CompositeMove, SwapMove, AssignMove}
-import scala.collection.immutable.SortedSet
+import oscar.cbls.search.move.{AssignMove, CompositeMove, SwapMove}
 
 /**
  * this is a standard solver for a binPacking. 

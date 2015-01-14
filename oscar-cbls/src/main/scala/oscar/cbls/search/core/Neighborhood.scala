@@ -15,13 +15,11 @@
 
 package oscar.cbls.search.core
 
-import oscar.cbls.invariants.core.computation.CBLSIntVar
 import oscar.cbls.objective.Objective
 import oscar.cbls.search.combinators._
 import oscar.cbls.search.move.{CallBackMove, Move}
 
-import scala.language.implicitConversions
-import scala.language.postfixOps
+import scala.language.{implicitConversions, postfixOps}
 
 abstract sealed class SearchResult
 case object NoMoveFound extends SearchResult
