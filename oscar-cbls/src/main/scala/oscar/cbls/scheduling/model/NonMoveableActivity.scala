@@ -25,7 +25,7 @@
 
 package oscar.cbls.scheduling.model
 
-import oscar.cbls.invariants.core.computation.{ CBLSSetVar, CBLSIntVar }
+import oscar.cbls.invariants.core.computation.{IntValue, CBLSSetVar, CBLSIntVar}
 import oscar.cbls.invariants.lib.minmax.MinArray
 import scala.collection.immutable.SortedSet
 
@@ -37,9 +37,9 @@ import scala.collection.immutable.SortedSet
  * @author renaud.delandtsheer@cetic.be
  * THIS IS EXPERIMENTAL
  */
-class NonMoveableActivity(startDate: Int, duration: CBLSIntVar, planning: Planning,
+class NonMoveableActivity(startDate: Int, duration: IntValue, planning: Planning,
                           name: String = "")
-  extends Activity(duration: CBLSIntVar, planning: Planning, name) {
+  extends Activity(duration, planning, name) {
 
   override val isTakenInSentinel = false
 
@@ -51,13 +51,13 @@ class NonMoveableActivity(startDate: Int, duration: CBLSIntVar, planning: Planni
   override def canAddPrecedence: Boolean = false
   override def close() {
 
-    additionalPredecessors = SortedSet.empty[Int]
+    additionalPredecessors := SortedSet.empty[Int]
     allPrecedingActivities = SortedSet.empty[Int]
     earliestStartDate := startDate
     definingPredecessors = SortedSet.empty[Int]
     potentiallyKilledPredecessors = SortedSet.empty[Int]
 
-    allSucceedingActivities = new CBLSSetVar(planning.model, 0, planning.activityCount - 1,
+    allSucceedingActivities = new CBLSSetVar(planning.model, SortedSet.empty, 0 to planning.activityCount - 1,
       "succeeding_activities_of_" + name)
 
     //This is not correct. but since no task can be put before this one, this is not an issue.

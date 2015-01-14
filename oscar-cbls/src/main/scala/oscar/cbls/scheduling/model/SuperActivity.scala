@@ -28,6 +28,8 @@ package oscar.cbls.scheduling.model
 import oscar.cbls.invariants.core.computation.{ CBLSSetVar, CBLSIntVar }
 import oscar.cbls.modeling.Algebra._
 
+import scala.collection.immutable.SortedSet
+
 /**
  *
  * @param start
@@ -36,8 +38,8 @@ import oscar.cbls.modeling.Algebra._
  * @author renaud.delandtsheer@cetic.be
  */
 class SuperActivity(start: Activity, end: Activity, override val name: String = "")
-  extends Activity(CBLSIntVar(start.planning.model, 0, start.planning.maxDuration,
-    start.duration.value, "duration of " + name), start.planning, name) {
+  extends Activity(CBLSIntVar(start.planning.model, start.duration.value, 0 to start.planning.maxDuration
+    , "duration of " + name), start.planning, name) {
 
   require(end.canAddPrecedence, "end task of SuperActivity must support precedence constraints (eg: cannot be a NonMoveableActivity")
   //as a consequence, SuperActivities are taken in the sentinel.
@@ -63,11 +65,11 @@ class SuperActivity(start: Activity, end: Activity, override val name: String = 
 
     potentiallyKilledPredecessors = start.potentiallyKilledPredecessors
 
-    allSucceedingActivities = new CBLSSetVar(planning.model, 0, planning.activityCount - 1, "succeeding_jobs")
+    allSucceedingActivities = new CBLSSetVar(planning.model, SortedSet.empty, 0 to planning.activityCount - 1, "succeeding_jobs")
 
     latestEndDate <== end.latestEndDate
 
-    this.duration <== end.earliestEndDate - start.earliestStartDate
+    this.duration = end.earliestEndDate - start.earliestStartDate
 
     //ParasiticPrecedences = SortedSet.empty[Int]
   }

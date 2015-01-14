@@ -16,7 +16,7 @@
  */
 package oscar.cbls.search.combinators
 
-import oscar.cbls.invariants.core.computation.{ CBLSSetVar, CBLSIntVar, Solution, Store }
+import oscar.cbls.invariants.core.computation._
 import oscar.cbls.objective.Objective
 import oscar.cbls.search.core.NoMoveFound
 import oscar.cbls.search.core._
@@ -112,8 +112,8 @@ class BasicProtectBest(a: Neighborhood, o: Objective) extends NeighborhoodCombin
 
 class ProtectBest(a: Neighborhood, o: Objective) extends BasicProtectBest(a: Neighborhood, o: Objective) {
 
-  def whenEmpty(violation: CBLSSetVar) = new ProtectBestWhen(a, o, () => violation.value.isEmpty)
-  def whenZero(violation: CBLSIntVar) = new ProtectBestWhen(a, o, () => violation.value == 0)
+  def whenEmpty(violation: SetValue) = new ProtectBestWhen(a, o, () => violation.value.isEmpty)
+  def whenZero(violation: IntValue) = new ProtectBestWhen(a, o, () => violation.value == 0)
 
   /**
    * this method restricts the save operation to only the situation where "shouldSave" returns true

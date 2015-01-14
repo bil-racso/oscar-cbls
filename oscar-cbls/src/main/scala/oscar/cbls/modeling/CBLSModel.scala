@@ -27,12 +27,12 @@ class CBLSModel(val verbose:Boolean = false,
   extends SearchEngineTrait
   with AlgebraTrait
   with Constraints
-/*  with ClusterInvariants
+  with ClusterInvariants
   with ComplexLogicInvariants
   with ElementInvariants
   with MinMaxInvariants
   with NumericInvariants
-  with SetInvariants*/
+  with SetInvariants
   with StopWatch
   with Search{
 

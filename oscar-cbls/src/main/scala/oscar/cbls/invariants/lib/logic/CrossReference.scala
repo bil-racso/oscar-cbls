@@ -74,6 +74,6 @@ object DenseRef{
     val m:Store = InvariantHelper.findModel(references)
     assert(minMin == 0)
     val referencing = Array.tabulate(maxMax + 1)(i => new CBLSSetVar(m,SortedSet.empty, 0 to references.length - 1, "referencing_" + i))
-    DenseRef(references,referencing)
+    new DenseRef(references,referencing)
   }
 }

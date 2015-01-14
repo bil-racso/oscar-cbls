@@ -27,8 +27,8 @@ import oscar.cbls.invariants.lib.logic._
 import oscar.cbls.invariants.core.propagation.Checker;
 
 object Sum{
-  def apply(vars: Iterable[IntValue]):Sum = new Sum(vars)
   def apply[T <:IntValue](vars: Array[T], cond: SetValue):SumElements[T] = SumElements(vars, cond)
+  def apply(vars: Iterable[IntValue]):Sum = new Sum(vars)
 }
 
 

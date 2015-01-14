@@ -25,7 +25,7 @@ package oscar.cbls.scheduling.model
  * ****************************************************************************
  */
 
-import oscar.cbls.invariants.core.computation.{SetValue, CBLSSetVar, CBLSIntVar, Store}
+import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.lib.minmax.{ ArgMinArray, ArgMaxArray }
 import oscar.cbls.invariants.lib.logic.{ Filter, DenseRef }
 import oscar.visual.VisualFrame
@@ -66,11 +66,11 @@ class Planning(val model: Store, val maxDuration: Int) {
 
   var earliestStartDates: Array[CBLSIntVar] = null
   var earliestEndDates: Array[CBLSIntVar] = null
-  var latestStartDates: Array[CBLSIntVar] = null
+  var latestStartDates: Array[IntValue] = null
 
   val makeSpan = CBLSIntVar(model, 0, 0 to maxDuration, "makeSpan")
   var earliestOvershotResources: CBLSSetVar = null
-  var worseOvershotResource: CBLSSetVar = null
+  var worseOvershotResource: SetValue = null
 
   var resourceArray: Array[Resource] = null
   var activityArray: Array[Activity] = null
@@ -99,7 +99,7 @@ class Planning(val model: Store, val maxDuration: Int) {
     activityArray = new Array[Activity](activityCount)
     earliestEndDates = new Array[CBLSIntVar](activityCount)
     earliestStartDates = new Array[CBLSIntVar](activityCount)
-    latestStartDates = new Array[CBLSIntVar](activityCount)
+    latestStartDates = new Array[IntValue](activityCount)
 
     for (j <- activities) {
       activityArray(j.ID) = j
@@ -120,7 +120,7 @@ class Planning(val model: Store, val maxDuration: Int) {
       resourceArray(r.ResourceID) = r; r.close()
     }
 
-    val overshootArray: Array[CBLSIntVar] = new Array[CBLSIntVar](resourceCount)
+    val overshootArray: Array[IntValue] = new Array[IntValue](resourceCount)
     for (r <- resources) {
       overshootArray(r.ResourceID) = r.overShoot
     }
@@ -344,7 +344,7 @@ trait EarliestStartDate extends Planning {
  */
 trait Deadlines extends Planning {
   var activitiesWithDeadlines: List[ActivityWithDeadline] = List.empty
-  val totalTardiness = CBLSIntVar(model, Int.MinValue, Int.MaxValue, 0, "Total tardiness")
+  val totalTardiness = CBLSIntVar(model, 0, name = "Total tardiness")
 
   model.addToCallBeforeClose(() => closeDeadlines())
 
@@ -402,7 +402,7 @@ trait TotalResourcesOvershootEvaluation extends Planning {
   model.addToCallBeforeClose(() => setTotalOvershoot())
 
   private def setTotalOvershoot() = {
-    val overshootArray: Array[CBLSIntVar] = new Array[CBLSIntVar](resourceCount)
+    val overshootArray: Array[IntValue] = new Array[IntValue](resourceCount)
     for (r <- resources) {
       overshootArray(r.ResourceID) = r.overShoot
     }

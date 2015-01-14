@@ -859,7 +859,7 @@ trait PropagationElement extends BasicPropagationElement with DAGNode{
   private[propagation] var staticallyListeningElements: List[PropagationElement] = List.empty
 
 
-  private val dynamicallyListeningElements: DelayedPermaFilteredDoublyLinkedList[(PropagationElement, Any), PropagationElement]
+  private final val dynamicallyListeningElements: DelayedPermaFilteredDoublyLinkedList[(PropagationElement, Any), PropagationElement]
   = new DelayedPermaFilteredDoublyLinkedList[(PropagationElement, Any), PropagationElement]
 
   /**through this method, the PropagationElement must declare which PropagationElement it is listening to
@@ -1069,7 +1069,7 @@ trait VaryingDependencies extends PropagationElement{
     }
   }
 
-  private[propagation] val dynamicallyListenedElements: DelayedPermaFilteredDoublyLinkedList[PropagationElement, PropagationElement]
+  private[propagation] final val dynamicallyListenedElements: DelayedPermaFilteredDoublyLinkedList[PropagationElement, PropagationElement]
   = new DelayedPermaFilteredDoublyLinkedList[PropagationElement, PropagationElement]
 
   override protected[core] def getDynamicallyListenedElements: Iterable[PropagationElement] = dynamicallyListenedElements

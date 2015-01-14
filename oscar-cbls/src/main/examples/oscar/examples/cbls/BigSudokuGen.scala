@@ -137,7 +137,7 @@ object BigSudokuGen extends SimpleSwingApplication with SearchEngineTrait with S
     for (i <- LinearIndexes) { c.violation(grid(i)) }
 
     // working variables
-    val Tabu:Array[CBLSIntVar] = (for (i <- LinearIndexes) yield CBLSIntVar(m, 0, Int.MaxValue, 0, "Tabu_"+i)).toArray
+    val Tabu:Array[CBLSIntVar] = (for (i <- LinearIndexes) yield CBLSIntVar(m, 0, 0 to Int.MaxValue, "Tabu_"+i)).toArray
     
     // closing model
     m.close()

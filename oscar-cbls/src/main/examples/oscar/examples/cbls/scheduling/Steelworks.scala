@@ -14,7 +14,6 @@
  ******************************************************************************/
 package oscar.examples.cbls.scheduling
 
-import oscar.cbls.invariants.core.computation.CBLSIntVar.int2IntVar
 import oscar.cbls.invariants.core.computation.Store
 import oscar.cbls.scheduling.model.Activity
 import oscar.cbls.scheduling.model.Planning

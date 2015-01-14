@@ -42,6 +42,8 @@ trait IntValue extends Value{
 object IntValue {
   implicit def int2IntValue(a: Int): IntValue = CBLSIntConst(a)
 
+  implicit def intArray2IntValueArray(a: Array[Int]): Array[CBLSIntConst] = a.map(CBLSIntConst(_))
+
   implicit def toFunction(i: IntValue): () => Int = () => i.value
 
   implicit val ord: Ordering[IntValue] = new Ordering[IntValue] {

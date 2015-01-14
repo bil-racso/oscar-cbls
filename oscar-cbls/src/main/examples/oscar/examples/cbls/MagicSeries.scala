@@ -21,7 +21,7 @@
 package oscar.examples.cbls
 
 import oscar.cbls.constraints.lib.basic.EQ
-import oscar.cbls.invariants.core.computation.CBLSIntVar
+import oscar.cbls.invariants.core.computation.{FullRange, CBLSIntVar}
 import oscar.cbls.invariants.lib.logic.SelectLESetQueue
 import oscar.cbls.invariants.lib.numeric.Sum
 import oscar.cbls.modeling.{CBLSModel, AlgebraTrait}
@@ -46,9 +46,9 @@ object MagicSeries extends CBLSModel with App with AlgebraTrait with StopWatch{
   //redundant constraint, to make the search procedure faster
   c.post(EQ(Sum(for(i <- range) yield (i * magicSeries(i))), size))
 
-  var it: CBLSIntVar = CBLSIntVar(s, 0, "it")
+  var it: CBLSIntVar = CBLSIntVar(s, 0, FullRange, "it")
 
-  val tabuArray: Array[CBLSIntVar] = Array.tabulate(size)(w => CBLSIntVar(s, -1, "tabu_of_" + w + " "))
+  val tabuArray: Array[CBLSIntVar] = Array.tabulate(size)(w => CBLSIntVar(s, -1, FullRange, "tabu_of_" + w + " "))
 
   val nonTabuPositions = SelectLESetQueue(tabuArray, it).setName("non tabu positions")
 
