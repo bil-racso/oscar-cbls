@@ -100,7 +100,7 @@ trait ClusterInvariants{
    * @param values: an array of intvar
    * @param boundary: the boundary for comparison
    */
-  def selectLESetQueue(values:Array[IntValue], boundary: IntValue) = SelectLESetQueue(values:Array[IntValue], boundary: IntValue)
+  def selectLESetQueue[T<:IntValue](values:Array[T], boundary: IntValue) = SelectLESetQueue(values, boundary)
 
 }
 

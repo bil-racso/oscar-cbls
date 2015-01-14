@@ -72,6 +72,6 @@ class NonMoveableActivity(startDate: Int, duration: IntValue, planning: Planning
 }
 
 object NonMoveableActivity {
-  def apply(startDate: Int, duration: CBLSIntVar, planning: Planning, name: String = "") =
+  def apply(startDate: Int, duration: IntValue, planning: Planning, name: String = "") =
     new NonMoveableActivity(startDate, duration, planning, name)
 }

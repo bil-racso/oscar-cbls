@@ -141,7 +141,7 @@ object NQueensWithUI extends SimpleSwingApplication with SearchEngineTrait {
     println("NQueens(" + N + ")")
     val Queens: Array[CBLSIntVar] = new Array[CBLSIntVar](N)
     for (q <- range) {
-      Queens(q) = CBLSIntVar(m, min, max, q, "queen" + q)
+      Queens(q) = CBLSIntVar(m, q, min to max, "queen" + q)
       tab(q)(q).icon = CONFLICT
     }
 
@@ -154,7 +154,7 @@ object NQueensWithUI extends SimpleSwingApplication with SearchEngineTrait {
       c.violation(Queens(q))
     }
 
-    val viol: Array[CBLSIntVar] = (for (q <- range) yield c.violation(Queens(q))).toArray
+    val viol = (for (q <- range) yield c.violation(Queens(q))).toArray
 
     for (q <- range) {
       Event(Queens(q), viol(q), (oldqueenposition: Int) => {

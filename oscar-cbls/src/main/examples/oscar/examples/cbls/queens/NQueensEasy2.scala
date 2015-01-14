@@ -41,18 +41,18 @@ object NQueensEasy2 extends CBLSModel with App{
   // initial solution
   val init = rand.shuffle((0 to N-1).toList).toArray
 
-  val queens = Array.tabulate(N)(q => CBLSIntVar(0 to N-1,init(q),"queen_" + q))
+  val queens = Array.tabulate(N)(q => CBLSIntVar(init(q), 0 to N-1,"queen_" + q))
 
   //alldiff on rows in enforced because we swap queens initially different
   add(allDifferent(Array.tabulate(N)(q => (queens(q) + q))))
   add(allDifferent(Array.tabulate(N)(q => (q - queens(q)))))
 
-  val violationArray:Array[CBLSIntVar] = Array.tabulate(N)(q => c.violation(queens(q))).toArray
+  val violationArray = Array.tabulate(N)(q => c.violation(queens(q))).toArray
 
-  val tabu:Array[CBLSIntVar] = Array.tabulate(N)(q => CBLSIntVar(0 to Int.MaxValue, 0, "tabu_queen" + q))
-  val it:CBLSIntVar = CBLSIntVar(0 to Int.MaxValue,1,"it")
-  val nonTabuQueens:CBLSSetVar = selectLESetQueue(tabu, it)
-  val nonTabuMaxViolQueens:CBLSSetVar = argMax(violationArray, nonTabuQueens)
+  val tabu = Array.tabulate(N)(q => CBLSIntVar(0, 0 to Int.MaxValue, "tabu_queen" + q))
+  val it:CBLSIntVar = CBLSIntVar(1,0 to Int.MaxValue,"it")
+  val nonTabuQueens = selectLESetQueue(tabu, it)
+  val nonTabuMaxViolQueens = argMax(violationArray, nonTabuQueens)
 
   close()
 

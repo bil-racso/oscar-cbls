@@ -50,4 +50,6 @@ class CBLSModel(val verbose:Boolean = false,
 
   def swapVal(a:CBLSIntVar, b:CBLSIntVar)(implicit o:Objective) = o.swapVal(a,b)
   def assignVal(a: CBLSIntVar, v: Int)(implicit o:Objective) = o.assignVal(a, v)
+
+  def CBLSIntVar(value:Int = 0, d:Domain = FullRange, name:String = null)(implicit s:Store) = new CBLSIntVar(s,value, d,name)
 }

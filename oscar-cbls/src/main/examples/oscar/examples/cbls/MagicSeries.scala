@@ -37,7 +37,7 @@ object MagicSeries extends CBLSModel with App with AlgebraTrait with StopWatch{
 
   val range: Range = Range(0, size)
 
-  val magicSeries = Array.tabulate(size)(w => CBLSIntVar(s, 0, 0 until size, " n° of " + w ))
+  val magicSeries = Array.tabulate(size)(w => CBLSIntVar(0, 0 until size, " n° of " + w ))
 
   //exactly constraint
   val bounds = SortedMap[Int, CBLSIntVar]((for(v <- range) yield v -> magicSeries(v)):_*)
@@ -46,9 +46,9 @@ object MagicSeries extends CBLSModel with App with AlgebraTrait with StopWatch{
   //redundant constraint, to make the search procedure faster
   c.post(EQ(Sum(for(i <- range) yield (i * magicSeries(i))), size))
 
-  var it: CBLSIntVar = CBLSIntVar(s, 0, FullRange, "it")
+  var it: CBLSIntVar = CBLSIntVar(0, FullRange, "it")
 
-  val tabuArray: Array[CBLSIntVar] = Array.tabulate(size)(w => CBLSIntVar(s, -1, FullRange, "tabu_of_" + w + " "))
+  val tabuArray: Array[CBLSIntVar] = Array.tabulate(size)(w => CBLSIntVar(-1, FullRange, "tabu_of_" + w + " "))
 
   val nonTabuPositions = SelectLESetQueue(tabuArray, it).setName("non tabu positions")
 

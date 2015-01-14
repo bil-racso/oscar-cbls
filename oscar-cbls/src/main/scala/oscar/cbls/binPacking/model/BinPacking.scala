@@ -18,7 +18,7 @@ import oscar.cbls.constraints.core.ConstraintSystem
 import oscar.cbls.constraints.lib.global.MultiKnapsack
 import oscar.cbls.invariants.core.computation.{CBLSIntConst, Store, _}
 import oscar.cbls.invariants.lib.minmax.ArgMaxArray
-import oscar.cbls.objective.Objective
+import oscar.cbls.objective.{IntVarObjective, Objective}
 
 import scala.collection.immutable.SortedMap
 
@@ -67,7 +67,7 @@ class Bin(val number:Int,
  */
 class BinPackingProblem(val items:Map[Int,Item],
                         val  bins: Map[Int,Bin],
-                        var overallViolation:Objective,
+                        var overallViolation:IntVarObjective,
                         var mostViolatedBins:SetValue){
   override def toString: String =
     "BinPackingProblem(\n\titems:{" + items.values.mkString(",") +"}\n" +
@@ -106,7 +106,7 @@ object BinPackingProblem{
 
   def apply(items:Array[Item],
             bins:Array[Bin],
-            overallViolation:Objective,
+            overallViolation:IntVarObjective,
             mostViolatedBins:SetValue)= {
     new BinPackingProblem(arrayToIndexElementList(items),
       arrayToIndexElementList(bins),
@@ -120,7 +120,7 @@ object BinPackingProblem{
 
   def apply(items: Map[Int,Item],
             bins: Map[Int,Bin],
-            overallViolation:Objective,
+            overallViolation:IntVarObjective,
             mostViolatedBins:SetValue) =
     new BinPackingProblem(items, bins,overallViolation,mostViolatedBins)
 
