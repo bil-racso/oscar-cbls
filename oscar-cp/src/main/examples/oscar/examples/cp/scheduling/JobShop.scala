@@ -15,14 +15,13 @@
 
 package oscar.examples.cp.scheduling
 
-import oscar.cp.modeling._
-import oscar.cp.core._
-import oscar.cp.scheduling._
+import oscar.cp._
+
 import oscar.visual._
 import oscar.util._
 import scala.io.Source
 import oscar.cp.scheduling.visual.VisualGanttChart
-import oscar.cp.search._
+
 
 
 /**
