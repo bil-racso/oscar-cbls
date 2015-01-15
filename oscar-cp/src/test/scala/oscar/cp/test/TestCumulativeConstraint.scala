@@ -4,13 +4,13 @@ import oscar.cp.core.Constraint
 import oscar.cp.constraints.SweepMaxCumulative
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
-import oscar.cp.modeling._
+import oscar.cp._
 import oscar.cp.core.CPIntVar
 import oscar.cp.constraints.CumulativeDecomp
-import oscar.cp.search.BinaryStaticOrderBranching
+import oscar.cp.searches.BinaryStaticOrderBranching
 import oscar.cp.constraints.EnergeticReasoning
 
-abstract class TestCumulativeConstraint(val cumulativeName: String, val nTests: Int = 100) extends FunSuite with ShouldMatchers {
+abstract class TestCumulativeConstraint(val cumulativeName: String, val nTests: Int = 100, val minDuration: Int = 0, val k: Int = 5) extends FunSuite with ShouldMatchers {
 
   type Sol = List[Int]
 
@@ -44,7 +44,7 @@ abstract class TestCumulativeConstraint(val cumulativeName: String, val nTests: 
 
   def generateRandomSchedulingProblem(nTasks: Int): SchedulingInstance = {
     val rand = new scala.util.Random()
-    val durations = Array.fill(nTasks)(rand.nextInt(4))
+    val durations = Array.fill(nTasks)(rand.nextInt(4) + minDuration)
     val demands = Array.fill(nTasks)(rand.nextInt(4))
     val capacity = Array(rand.nextInt(4) + 1)
     val resources = Array.fill(nTasks)(0)
@@ -82,7 +82,7 @@ abstract class TestCumulativeConstraint(val cumulativeName: String, val nTests: 
   test("test solveAll " + cumulativeName) {
     (1 to nTests).forall(i => {
       //print("test " + cumulativeName + " instance " + i + ": ")
-      val instance = generateRandomSchedulingProblem(5)
+      val instance = generateRandomSchedulingProblem(k)
       val cpDecomp = new CPSched(instance)
       val cpCumul = new CPSched(instance)
       val allSolsDecomp = solveAll(cpDecomp, instance.capacity, true)

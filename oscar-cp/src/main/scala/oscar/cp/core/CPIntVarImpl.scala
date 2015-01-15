@@ -26,7 +26,7 @@ import oscar.cp.core.CPOutcome._
 /**
  * @author Pierre Schaus pschaus@gmail.com
  */
-class CPIntVarImpl(store: CPStore, private val domain: IntDomain, name: String = "") extends CPIntVar(store, name) {
+class CPIntVarImpl(final override val store: CPStore, private val domain: IntDomain, final override val name: String = "") extends CPIntVar {
 
   val onBoundsL2 = new ReversiblePointer[ConstraintQueue](store, null)
   val onBindL2 = new ReversiblePointer[ConstraintQueue](store, null)
@@ -77,7 +77,7 @@ class CPIntVarImpl(store: CPStore, private val domain: IntDomain, name: String =
    * @param v
    * @return true if the variable is bound to value v, false if variable is not bound or bound to another value than v
    */
-  def isBoundTo(v: Int): Boolean = isBound && value == v
+  def isBoundTo(v: Int): Boolean = isBound && min == v
 
   /**
    * Test if a value is in the domain
@@ -145,8 +145,8 @@ class CPIntVarImpl(store: CPStore, private val domain: IntDomain, name: String =
 
   override def toString(): String = {
     if (isBound) {
-      if (name.isEmpty()) value.toString
-      else name + " " + value
+      if (name.isEmpty()) min.toString
+      else name + " " + min
     } else {
       if (name.isEmpty()) domain.toString
       else name + " " + domain.toString

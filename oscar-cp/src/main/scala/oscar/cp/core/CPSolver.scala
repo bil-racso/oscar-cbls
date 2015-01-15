@@ -15,7 +15,7 @@
  * ****************************************************************************
  */
 
-package oscar.cp.modeling
+package oscar.cp.core
 
 import oscar.algo.search._
 import oscar.cp._
@@ -88,8 +88,8 @@ class CPSolver(propagStrength: CPPropagStrength) extends CPOptimizer(propagStren
     super.solFound()
     lastSol = new CPSol(decVariables.toSet)
     if (recordNonDominatedSolutions) {
-      if (!silent) println("new solution:" + objective.objs.map(_.objVar.value).toArray.mkString(","))
-      paretoSet.insert(lastSol, objective.objs.map(_.objVar.value): _*)
+      if (!silent) println("new solution:" + objective.objs.map(_.objVar.min).toArray.mkString(","))
+      paretoSet.insert(lastSol, objective.objs.map(_.objVar.min): _*)
     }
     objective.tighten()
   }

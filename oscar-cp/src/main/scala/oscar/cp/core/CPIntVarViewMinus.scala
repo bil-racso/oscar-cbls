@@ -20,10 +20,13 @@ import scala.util.Random
  * Represents a view -x on variable x 
  * @author Pierre Schaus pschaus@gmail.com
  */
-class CPIntVarViewMinus(v: CPIntVar) extends CPIntVar(v.store) {
+class CPIntVarViewMinus(v: CPIntVar) extends CPIntVar {
     
+  final override val store: CPStore = v.store
+  
+  final override val name: String = s"-${v.name}"
     
-    def transform(v: Int) = -this.v.transform(v)    
+  def transform(v: Int) = -this.v.transform(v)    
 	
 	def isBound = v.isBound
 	
@@ -31,7 +34,7 @@ class CPIntVarViewMinus(v: CPIntVar) extends CPIntVar(v.store) {
 	
 	override def isEmpty = v.isEmpty
 	
-	def constraintDegree = v.constraintDegree()
+	def constraintDegree = v.constraintDegree
 	
 	def isBoundTo(value: Int): Boolean = v.isBoundTo(-value)
 	

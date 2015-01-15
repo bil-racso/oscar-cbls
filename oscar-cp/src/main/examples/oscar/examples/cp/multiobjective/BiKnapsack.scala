@@ -15,8 +15,7 @@
 
 package oscar.examples.cp.multiobjective
 
-import oscar.cp.modeling._
-import oscar.cp.core._
+import oscar.cp._
 import oscar.visual.VisualFrame
 import oscar.cp.multiobjective.visual._
 

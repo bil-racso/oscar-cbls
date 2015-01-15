@@ -17,8 +17,9 @@ package oscar.cp.test
 import org.scalatest.FunSuite
 import org.scalatest.Matchers
 
-import oscar.cp.core._
-import oscar.cp.modeling._
+import oscar.cp.core.CPOutcome
+import oscar.cp.core.CPPropagStrength
+import oscar.cp._
 
 class TestCPIntVar extends FunSuite with Matchers {
 	/*

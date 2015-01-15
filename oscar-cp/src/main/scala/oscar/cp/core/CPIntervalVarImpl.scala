@@ -33,11 +33,11 @@ class IntervalVarTrailEntry(variable: CPIntervalVarImpl, min: Int, max: Int) ext
   }
 }
 
-class CPIntervalVarImpl(store: CPStore, initialMin: Int, initialMax: Int, name: String) extends CPIntervalVar(store, name) {
+class CPIntervalVarImpl(final override val store: CPStore, initialMin: Int, initialMax: Int, final override val name: String) extends CPIntervalVar {
 
   private[this] var lastMagic: Long = -1L
 
-  @inline final protected def trail(): Unit = {
+  @inline private def trail(): Unit = {
     val contextMagic = store.magic
     if (lastMagic != contextMagic) {
       lastMagic = contextMagic
@@ -128,7 +128,6 @@ class CPIntervalVarImpl(store: CPStore, initialMin: Int, initialMax: Int, name: 
     } else if (isEmpty || v < _min) value
     else if (v > _max) _max
     else v
-
   }
 
   /** @return A random value in the domain of the variable (uniform distribution) */
@@ -140,12 +139,12 @@ class CPIntervalVarImpl(store: CPStore, initialMin: Int, initialMax: Int, name: 
   /**
    * @return  the size of the domain
    */
-  @inline final override def size = _max - _min + 1
+  @inline final override def size: Int = _max - _min + 1
 
   /**
    * @return true if the domain is empty, false otherwise
    */
-  @inline final override def isEmpty = _max < _min
+  @inline final override def isEmpty: Boolean = _max < _min
 
   final override def toString: String = {
     if (isEmpty) "phi"
@@ -164,7 +163,7 @@ class CPIntervalVarImpl(store: CPStore, initialMin: Int, initialMax: Int, name: 
    * @return  Suspend if val was in the domain, Failure otherwise
    */
   @inline final def assign(value: Int): CPOutcome = {
-    if (value < _min || _max < value) throw Inconsistency
+    if (value < _min || _max < value) Failure //throw Inconsistency
     else if (_min == _max) Suspend
     else {
       trail()
@@ -187,7 +186,7 @@ class CPIntervalVarImpl(store: CPStore, initialMin: Int, initialMax: Int, name: 
    * @return  Suspend if there is at least one value >= val in the domain, Failure otherwise
    */
   @inline final def updateMin(value: Int): CPOutcome = {
-    if (value > _max) throw Inconsistency
+    if (value > _max) Failure // throw Inconsistency
     else if (value <= _min) Suspend
     else {
       trail()
@@ -211,7 +210,7 @@ class CPIntervalVarImpl(store: CPStore, initialMin: Int, initialMax: Int, name: 
    * @return  Suspend if there is at least one value <= val in the domain, Failure otherwise
    */
   @inline final def updateMax(value: Int): CPOutcome = {
-    if (value < _min) throw Inconsistency
+    if (value < _min) Failure // throw Inconsistency
     else if (value >= _max) Suspend
     else {
       trail()

@@ -4,9 +4,8 @@ import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
 
 import oscar.cp.constraints._
-import oscar.cp.core._
 
-import oscar.cp.modeling._
+import oscar.cp._
 
 class TestImplication extends FunSuite with ShouldMatchers {
 
@@ -30,7 +29,7 @@ class TestImplication extends FunSuite with ShouldMatchers {
     cp.search {
       binaryStatic(Array(A, B))
     } onSolution {
-      val entry = (A.getValue, B.getValue, res.getValue)
+      val entry = (A.value, B.value, res.value)
       values.contains(entry) should be(true)
     }
     cp.start().nSols should be(4)
@@ -45,7 +44,7 @@ class TestImplication extends FunSuite with ShouldMatchers {
     cp.search {
       binaryStatic(Array(A, B))
     } onSolution {
-      val entry = (A.getValue, B.getValue, res.getValue)
+      val entry = (A.value, B.value, res.value)
       values.contains(entry) should be(true)
     }
     cp.start().nSols should be(4)
@@ -61,7 +60,7 @@ class TestImplication extends FunSuite with ShouldMatchers {
     cp.search {
       binaryStatic(Array(B, A))
     } onSolution {
-      val entry = (A.getValue, B.getValue, res.getValue)
+      val entry = (A.value, B.value, res.value)
       values.contains(entry) should be(true)
     }
     cp.start().nSols should be(4)
@@ -76,7 +75,7 @@ class TestImplication extends FunSuite with ShouldMatchers {
     cp.search {
       binaryStatic(Array(B, A))
     } onSolution {
-      val entry = (A.getValue, B.getValue, res.getValue)
+      val entry = (A.value, B.value, res.value)
       values.contains(entry) should be(true)
     }
     cp.start().nSols should be(4)

@@ -27,7 +27,7 @@ import scala.math.max
 
 import oscar.cp.core._
 import oscar.cp.core.CPOutcome._
-import oscar.cp.modeling.CPSolver
+import oscar.cp.core.CPSolver
 import oscar.algo.reversible.ReversibleInt
 
 
@@ -98,7 +98,7 @@ class ElementVarBC(val y: Array[CPIntVar], val x: CPIntVar, val z: CPIntVar) ext
   
   override def valBind(cpvar: CPIntervalVar): CPOutcome = {
     // x is bind
-    val i = x.value
+    val i = x.min
     zminSup.setValue(i)
     zmaxSup.setValue(i)
     if (y(i).updateMax(z.max) == Failure) Failure

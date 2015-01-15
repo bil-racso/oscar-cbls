@@ -15,8 +15,7 @@
 
 package oscar.examples.cp.scheduling
 
-import oscar.cp.core._
-import oscar.cp.modeling._
+import oscar.cp._
 import scala.io.Source
 
 object BiRCPSP extends CPModel with App {

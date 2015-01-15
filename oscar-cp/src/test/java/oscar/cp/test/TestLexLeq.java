@@ -70,9 +70,9 @@ public class TestLexLeq extends TestCase {
     	System.out.println(x[0]+" "+x[1]+" "+x[2]);
     	System.out.println(y[0]+" "+y[1]+" "+y[2]);
     	assertTrue(!s.isFailed());
-    	assertTrue(x[0].getValue()==0);
-    	assertTrue(x[1].getValue()==0);
-    	assertTrue(y[2].getValue()==1);
+    	assertTrue(x[0].min()==0);
+    	assertTrue(x[1].min()==0);
+    	assertTrue(y[2].min()==1);
     }
     
     

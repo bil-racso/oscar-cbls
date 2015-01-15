@@ -3,8 +3,7 @@ package oscar.cp.linearizedDFS.branching
 import oscar.cp.linearizedDFS.{SetTimesRightBranch, SetTimesLeftBranch}
 import oscar.algo.reversible.{ReversibleInt, ReversibleBoolean}
 import oscar.algo.search.Branching
-import oscar.cp.core.CPIntVar
-import oscar.cp.modeling._
+import oscar.cp._
 
 /**
  * Created by saschavancauwelaert on 09/12/14.

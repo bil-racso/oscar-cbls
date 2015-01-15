@@ -2,7 +2,7 @@ package oscar.cp.scheduling.constraints
 
 import oscar.cp.core._
 import oscar.cp.core.CPOutcome._
-import oscar.cp.modeling._
+import oscar.cp._
 
 // @author Steven Gay steven.gay@uclouvain.be
 

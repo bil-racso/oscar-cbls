@@ -20,108 +20,111 @@ import scala.util.Random
  * Represents a view on variable applying an offset on it.
  * @author Pierre Schaus pschaus@gmail.com
  */
-class CPIntVarViewOffset(v: CPIntVar,val b: Int) extends CPIntVar(v.store) {
+class CPIntVarViewOffset(v: CPIntVar, offset: Int) extends CPIntVar {
     
+  override val store: CPStore = v.store
+  
+  override val name: String = s"${v.name} + $offset"
     
-    def transform(v: Int) = b + this.v.transform(v)    
+  final override def transform(v: Int) = offset + this.v.transform(v)    
 	
-	def isBound = v.isBound
+	final override def isBound = v.isBound
 	
-	override def size = v.size
+  final override def size = v.size
 	
-	override def isEmpty = v.isEmpty
+  final override def isEmpty = v.isEmpty
 	
-	def constraintDegree = v.constraintDegree()
+	final override def constraintDegree = v.constraintDegree
 	
-	def isBoundTo(value: Int): Boolean = v.isBoundTo(value-b)
+	final override def isBoundTo(value: Int): Boolean = v.isBoundTo(value - offset)
 	
-	def hasValue(value: Int): Boolean = v.hasValue(value-b)
+	final override def hasValue(value: Int): Boolean = v.hasValue(value - offset)
 	
-	def valueAfter(value: Int): Int = v.valueAfter(value-b) + b
+	final override def valueAfter(value: Int): Int = v.valueAfter(value - offset) + offset
 	
-	def valueBefore(value: Int): Int = v.valueBefore(value-b) + b
+	final override def valueBefore(value: Int): Int = v.valueBefore(value - offset) + offset
 	
-	def randomValue(rand: Random): Int = v.randomValue(rand) + b
+	final override def randomValue(rand: Random): Int = v.randomValue(rand) + offset
 	
-	def updateMin(value: Int) = v.updateMin(value-b)
+	final override def updateMin(value: Int) = v.updateMin(value - offset)
 	
-	def assign(value: Int) = v.assign(value-b)
+	final override def assign(value: Int) = v.assign(value - offset)
 
-	def updateMax(value: Int) = v.updateMax(value-b)
+	final override def updateMax(value: Int) = v.updateMax(value - offset)
 	
-	def removeValue(value: Int) = v.removeValue(value-b)
+	final override def removeValue(value: Int) = v.removeValue(value - offset)
 	
-	def min = v.min + b
+	final override def min = v.min + offset
 	
-	def max = v.max + b
+	final override def max = v.max + offset
 	
-	def iterator = {
-		v.iterator.map(_ + b)
+	final override def iterator = {
+		v.iterator.map(_ + offset)
 	}
 	
-	override def toString() = "view with shift "+b+" on ("+v+")";
+	final override def toString() = s"view with shift $offset on ($v)";
 		
-	def callPropagateWhenBind(c: Constraint) = v.callPropagateWhenBind(c)
+	final override def callPropagateWhenBind(c: Constraint) = v.callPropagateWhenBind(c)
 	
-	def callPropagateWhenBoundsChange(c: Constraint) = v.callPropagateWhenBoundsChange(c)
+	final override def callPropagateWhenBoundsChange(c: Constraint) = v.callPropagateWhenBoundsChange(c)
 	
-	def callPropagateWhenDomainChanges(c: Constraint, trackDelta: Boolean = false) = v.callPropagateWhenDomainChanges(c,trackDelta)
+	final override def callPropagateWhenDomainChanges(c: Constraint, trackDelta: Boolean = false) = v.callPropagateWhenDomainChanges(c,trackDelta)
 	
-	// this method is useful when you have a view defined on a view
-	def callValBindWhenBind(c: Constraint, variable: CPIntervalVar) = v.callValBindWhenBind(c, variable)
+	// this method is useful when you have a view final override defined on a view
+	final override def callValBindWhenBind(c: Constraint, variable: CPIntervalVar) = v.callValBindWhenBind(c, variable)
 	
-	def callValBindWhenBind(c: Constraint) = v.callValBindWhenBind(c,this)
+	final override def callValBindWhenBind(c: Constraint) = v.callValBindWhenBind(c,this)
 	
 	
-	// this method is useful when you have a view defined on a view
-	def callUpdateBoundsWhenBoundsChange(c: Constraint, variable: CPIntervalVar) = v.callUpdateBoundsWhenBoundsChange(c, variable)
+	// this method is useful when you have a view final override defined on a view
+	final override def callUpdateBoundsWhenBoundsChange(c: Constraint, variable: CPIntervalVar) = v.callUpdateBoundsWhenBoundsChange(c, variable)
 	
-	def callUpdateBoundsWhenBoundsChange(c: Constraint) = v.callUpdateBoundsWhenBoundsChange(c,this)
+	final override def callUpdateBoundsWhenBoundsChange(c: Constraint) = v.callUpdateBoundsWhenBoundsChange(c,this)
 	
-	// this method is useful when you have a view defined on a view
-	def callValRemoveWhenValueIsRemoved(c: Constraint, variable: CPIntVar) = v.callValRemoveWhenValueIsRemoved(c,variable)
+	// this method is useful when you have a view final override defined on a view
+	final override def callValRemoveWhenValueIsRemoved(c: Constraint, variable: CPIntVar) = v.callValRemoveWhenValueIsRemoved(c,variable)
 		
-	def callValRemoveWhenValueIsRemoved(c: Constraint) = v.callValRemoveWhenValueIsRemoved(c,this)
+	final override def callValRemoveWhenValueIsRemoved(c: Constraint) = v.callValRemoveWhenValueIsRemoved(c,this)
 	
-	// this method is useful when you have a view defined on a view
-	def callValBindIdxWhenBind(c: Constraint, variable: CPIntervalVar,idx: Int) = v.callValBindIdxWhenBind(c, variable,idx)
+	// this method is useful when you have a view final override defined on a view
+	final override def callValBindIdxWhenBind(c: Constraint, variable: CPIntervalVar,idx: Int) = v.callValBindIdxWhenBind(c, variable,idx)
 	
-	def callValBindIdxWhenBind(c: Constraint, idx: Int) = v.callValBindIdxWhenBind(c,this,idx)
+	final override def callValBindIdxWhenBind(c: Constraint, idx: Int) = v.callValBindIdxWhenBind(c,this,idx)
 	
-	// this method is useful when you have a view defined on a view
-	def callUpdateBoundsIdxWhenBoundsChange(c: Constraint, variable: CPIntervalVar, idx: Int) = v.callUpdateBoundsIdxWhenBoundsChange(c, variable, idx);
+	// this method is useful when you have a view final override defined on a view
+	final override def callUpdateBoundsIdxWhenBoundsChange(c: Constraint, variable: CPIntervalVar, idx: Int) = v.callUpdateBoundsIdxWhenBoundsChange(c, variable, idx);
 		
-	def callUpdateBoundsIdxWhenBoundsChange(c: Constraint, idx: Int) = v.callUpdateBoundsIdxWhenBoundsChange(c,this,idx)
+	final override def callUpdateBoundsIdxWhenBoundsChange(c: Constraint, idx: Int) = v.callUpdateBoundsIdxWhenBoundsChange(c,this,idx)
 	
 
 	
-	// this method is useful when you have a view defined on a view
-	def callValRemoveIdxWhenValueIsRemoved(c: Constraint, variable: CPIntVar, idx: Int) = v.callValRemoveIdxWhenValueIsRemoved(c,variable,idx)
+	// this method is useful when you have a view final override defined on a view
+	final override def callValRemoveIdxWhenValueIsRemoved(c: Constraint, variable: CPIntVar, idx: Int) = v.callValRemoveIdxWhenValueIsRemoved(c,variable,idx)
 	
-	def callValRemoveIdxWhenValueIsRemoved(c: Constraint, idx: Int) = v.callValRemoveIdxWhenValueIsRemoved(c,this,idx)
+	final override def callValRemoveIdxWhenValueIsRemoved(c: Constraint, idx: Int) = v.callValRemoveIdxWhenValueIsRemoved(c,this,idx)
 
 	// ----------------------------------
 	
-	def delta(oldMin: Int, oldMax: Int, oldSize: Int): Iterator[Int] = v.delta(oldMin-b,oldMax-b,oldSize).map(_ + b)
+	final override def delta(oldMin: Int, oldMax: Int, oldSize: Int): Iterator[Int] = v.delta(oldMin - offset,oldMax - offset,oldSize).map(_ + offset)
 	
-	def changed(c: Constraint): Boolean = v.changed(c)
+	final override def changed(c: Constraint): Boolean = v.changed(c)
 	
-	def minChanged(c: Constraint): Boolean = v.minChanged(c)
+	final override def minChanged(c: Constraint): Boolean = v.minChanged(c)
 	
-	def maxChanged(c: Constraint): Boolean = v.maxChanged(c)
+	final override def maxChanged(c: Constraint): Boolean = v.maxChanged(c)
 	
-	def boundsChanged(c: Constraint): Boolean = v.boundsChanged(c)
+	final override def boundsChanged(c: Constraint): Boolean = v.boundsChanged(c)
 	
-	def oldMin(c: Constraint): Int = v.oldMin(c) + b
+	final override def oldMin(c: Constraint): Int = v.oldMin(c) + offset
 	
-	def oldMax(c: Constraint): Int = v.oldMax(c) + b
+	final override def oldMax(c: Constraint): Int = v.oldMax(c) + offset
 	
-	def oldSize(c: Constraint): Int = v.oldSize(c)
+	final override def oldSize(c: Constraint): Int = v.oldSize(c)
 	
-	def deltaSize(c: Constraint): Int = v.deltaSize(c)
+	final override def deltaSize(c: Constraint): Int = v.deltaSize(c)
 	
-	def delta(c: Constraint): Iterator[Int] = {
-	  v.delta(c).map(_ + b)
+	final override def delta(c: Constraint): Iterator[Int] = {
+	  v.delta(c).map(_ + offset)
 	}
 	
 }

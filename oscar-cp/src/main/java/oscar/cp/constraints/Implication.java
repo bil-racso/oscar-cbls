@@ -103,7 +103,7 @@ public class Implication extends Constraint {
 			}
 		}	
 		if (V.isBound()) {
-			if (V.getValue() == 0) {
+			if (V.min() == 0) {
 				// only way to get A => B <-> F is to have T => F
 				if (A.assign(1) == CPOutcome.Failure) return CPOutcome.Failure;
 				if (B.assign(0) == CPOutcome.Failure) return CPOutcome.Failure;

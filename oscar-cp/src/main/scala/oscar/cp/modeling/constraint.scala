@@ -13,9 +13,6 @@
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
 
-
 package oscar.cp.modeling
 
-object constraint extends Constraints {
-
-}
+object constraint extends Constraints

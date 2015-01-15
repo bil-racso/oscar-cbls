@@ -18,9 +18,8 @@ import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
 
 import oscar.cp.constraints._
-import oscar.cp.core._
 
-import oscar.cp.modeling._
+import oscar.cp._
 
 
 
@@ -72,8 +71,8 @@ class StableMarriage extends FunSuite with ShouldMatchers  {
      } search {
        binaryStatic(wife)
      } onSolution {
-       wife.map(_.getValue) should be(Array(0,2,1,4,3))
-       husband.map(_.getValue) should be(Array(0,2,1,4,3))
+       wife.map(_.value) should be(Array(0,2,1,4,3))
+       husband.map(_.value) should be(Array(0,2,1,4,3))
      } 
      cp.start().nSols should be(1)
     

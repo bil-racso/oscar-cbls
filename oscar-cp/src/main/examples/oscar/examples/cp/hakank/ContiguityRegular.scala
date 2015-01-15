@@ -14,9 +14,7 @@
  ******************************************************************************/
 package oscar.examples.cp.hakank
 
-import oscar.cp.modeling._
-
-import oscar.cp.core._
+import oscar.cp._
 import oscar.cp.constraints._
 import collection.mutable._
 import scala.collection.JavaConversions._

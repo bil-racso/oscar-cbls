@@ -60,8 +60,8 @@ public class TestSequence extends TestCase {
 
         assertTrue(x[3].isBound());
         assertTrue(x[1].isBound());
-        assertEquals(x[1].getValue(),1);
-        assertEquals(x[3].getValue(),1);
+        assertEquals(x[1].min(),1);
+        assertEquals(x[3].min(),1);
         assertFalse(s.isFailed());
     }
 
@@ -77,8 +77,8 @@ public class TestSequence extends TestCase {
 
         assertTrue(x[3].isBound());
         assertTrue(x[1].isBound());
-        assertEquals(x[1].getValue(),3);
-        assertEquals(x[3].getValue(),3);
+        assertEquals(x[1].min(),3);
+        assertEquals(x[3].min(),3);
         assertFalse(s.isFailed());
     }
 

@@ -14,9 +14,7 @@
  ******************************************************************************/
 
 
-import oscar.cp.modeling._
-import oscar.algo.search._
-import oscar.cp.core._
+import oscar.cp._
 import collection.immutable.SortedSet
 import oscar.cp.constraints.ElementVarAC
 

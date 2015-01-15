@@ -1,7 +1,6 @@
 package oscar.examples.cp.hakank
 
-import oscar.cp.modeling._
-import oscar.cp.core._
+import oscar.cp._
 
 /**
  * Decomposition of the global constraint allDifferent_except_0 in in Oscar.

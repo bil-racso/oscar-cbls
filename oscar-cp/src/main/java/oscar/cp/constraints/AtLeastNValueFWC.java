@@ -66,7 +66,7 @@ public class AtLeastNValueFWC extends Constraint {
 	     	    
 	     for (int k = 0; k < x.length; k++) {
 	       if (x[k].isBound()) {
-	    	 int v = x[k].getValue();
+	    	 int v = x[k].min();
 	         nbBound.incr();
 	         if (!isValueUsed[v-min].getValue()) {
 	           nbValueUsed.incr();
@@ -105,7 +105,7 @@ public class AtLeastNValueFWC extends Constraint {
 	@Override
 	public CPOutcome valBindIdx(CPIntervalVar var, int idx) {
 		
-		int val = var.getValue();
+		int val = var.min();
 		nbBound.incr();
 		if(!isValueUsed[val-min].getValue()){
 			nbValueUsed.incr();
@@ -144,7 +144,7 @@ public class AtLeastNValueFWC extends Constraint {
 		  int nb = 0;
 		  for (int k = 0; k < x.length; k++) {
 		    if (x[k].isBound()) {
-		      values[nb] = x[k].getValue();
+		      values[nb] = x[k].min();
 		      nb++;
 		    }
 		  }

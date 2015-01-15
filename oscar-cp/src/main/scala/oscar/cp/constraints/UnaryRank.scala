@@ -15,13 +15,13 @@
 
 package oscar.cp.constraints
 
-import oscar.cp.core._
-import oscar.cp.modeling._
+import oscar.cp._
 import java.util.{Arrays => JArrays}
 import oscar.algo.reversible.ReversibleInt
 import oscar.algo.reversible.ReversibleBoolean
 import oscar.algo.SortUtils
-import org.scalatest.tagobjects.CPU
+import oscar.cp.core.CPPropagStrength
+import oscar.cp.core.CPOutcome
 
 /**
  * @author Pierre Schaus pschaus@gmail.com

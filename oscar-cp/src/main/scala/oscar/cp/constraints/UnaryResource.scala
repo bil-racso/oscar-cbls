@@ -228,7 +228,7 @@ class UnaryResource(starts: Array[_ <: CPIntervalVar], durations: Array[_ <: CPI
           lambdaThetaTree.insert(awi, awi.estPos)
         }
         if (ectThetaLessi > awi.lct && j > 0) {
-          newLct(awi.index) = Math.min(newLct(awi.index), lst(j - 1).lct)
+          newLct(awi.index) = Math.min(newLct(awi.index), lst(j - 1).lst)
         }
       }
     }
@@ -263,7 +263,7 @@ class UnaryResource(starts: Array[_ <: CPIntervalVar], durations: Array[_ <: CPI
           lambdaThetaTree.insert(awi, awi.estPos)
         }
         if (mectThetaLessi > awi.lct && j > 0) {
-          newEst(awi.index) = Math.max(newEst(awi.index), -mlst(j - 1).lct)
+          newEst(awi.index) = Math.max(newEst(awi.index), -mlst(j - 1).lst)
         }
       }
     }

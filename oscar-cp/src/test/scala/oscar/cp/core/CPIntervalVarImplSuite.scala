@@ -83,7 +83,8 @@ class CPIntervalVarImplSuite extends TestSuite {
   test("UpdateMin greater than max should fail") {
     val store = new CPStore()
     val variable = CPIntervalVarImpl(store, 5, 15)
-    intercept[Inconsistency](variable.updateMin(20))
+    assert(variable.updateMin(20) == Failure)
+    //intercept[Inconsistency](variable.updateMin(20))
   }
   
   test("UpdateMax should adjust the maximum value and the size") {
@@ -127,7 +128,8 @@ class CPIntervalVarImplSuite extends TestSuite {
   test("UpdateMax lesser than min should fail") {
     val store = new CPStore()
     val variable = CPIntervalVarImpl(store, 5, 15)
-    intercept[Inconsistency](variable.updateMax(0))
+    assert(variable.updateMax(0) == Failure)
+    //intercept[Inconsistency](variable.updateMax(0))
   }
   
   test("Bounds should be restored when a backtrack occurs") {
@@ -183,7 +185,8 @@ class CPIntervalVarImplSuite extends TestSuite {
   test("Assign an out of bounds value should fail") {
     val store = new CPStore()
     val variable = CPIntervalVarImpl(store, 5, 15)
-    intercept[Inconsistency](variable.assign(20))
+    assert(variable.assign(20) == Failure)
+    //intercept[Inconsistency](variable.assign(20))
   }
   
   test("Random values should be contained in the domain") {

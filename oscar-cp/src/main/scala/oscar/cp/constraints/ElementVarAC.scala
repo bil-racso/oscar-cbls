@@ -25,7 +25,7 @@ import scala.math.min
 import scala.math.max
 import oscar.cp.core._
 import oscar.cp.core.CPOutcome._
-import oscar.cp.modeling.CPSolver
+import oscar.cp.core.CPSolver
 import oscar.algo.reversible.ReversibleInt
 import oscar.algo.reversible.ReversibleSparseSet
 
@@ -172,7 +172,7 @@ class ElementVarAC(y: Array[CPIntVar], x: CPIntVar, z: CPIntVar) extends Constra
 
   // Replaces this constraint by an Equality constraint
   private def bindX(): CPOutcome = {
-    if (s.post(new Eq(y(x.value), z)) == Failure) Failure
+    if (s.post(new Eq(y(x.min), z)) == Failure) Failure
     else Success
   }
 

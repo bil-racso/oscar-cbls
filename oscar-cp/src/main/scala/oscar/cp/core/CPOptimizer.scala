@@ -1,6 +1,5 @@
 package oscar.cp.core
 
-import oscar.cp.modeling.CPSolver
 import oscar.cp.constraints.CPObjectiveUnit
 import oscar.cp.constraints.ParetoConstraint
 import oscar.cp.multiobjective.Pareto
@@ -8,7 +7,7 @@ import oscar.cp.multiobjective.ListPareto
 import oscar.cp.constraints.CPObjectiveUnitMaximize
 import oscar.cp.constraints.CPObjective
 import oscar.cp.constraints.CPObjectiveUnitMinimize
-import oscar.cp.modeling.TightenType
+import oscar.cp.TightenType
 import oscar.cp.constraints.CPObjectiveGeometricMinimize
 import oscar.cp.constraints.CPObjectiveUnit
 import oscar.cp.constraints.CPObjectiveUnit

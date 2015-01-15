@@ -17,13 +17,13 @@
 package oscar.cp.scheduling.visual
 import java.awt.Color
 import oscar.cp.core.CPIntVar
-import oscar.cp.modeling._
+import oscar.cp._
 import oscar.visual.shapes.VisualPolygon
 import oscar.visual.shapes.VisualLine
 import oscar.visual.VisualDrawing
 import scala.Array.canBuildFrom
 import oscar.algo.HeightProfile
-import oscar.cp.modeling.CPSolver
+import oscar.cp.core.CPSolver
 import oscar.visual.VisualFrame
 
 

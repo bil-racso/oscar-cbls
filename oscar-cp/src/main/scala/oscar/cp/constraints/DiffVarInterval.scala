@@ -13,6 +13,7 @@
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
 
+
 package oscar.cp.constraints
 
 import oscar.cp.core.CPPropagStrength
@@ -26,7 +27,6 @@ import oscar.cp.core.CPOutcome._
  * @author Pierre Schaus pschaus@gmail.com
  */
 final class DiffVarInterval(x: CPIntervalVar, y: CPIntervalVar) extends Constraint(x.store, "DiffVar") {
-  
 
   final override def setup(l: CPPropagStrength): CPOutcome = {
     if (propagate() == Failure) Failure
@@ -39,25 +39,21 @@ final class DiffVarInterval(x: CPIntervalVar, y: CPIntervalVar) extends Constrai
 
   @inline final override def propagate(): CPOutcome = {
     if (x.isBound) {
-      if (y.min == x.value) {
-        if (y.updateMin(x.value+1) == Failure) Failure
+      if (y.min == x.min) {
+        if (y.updateMin(x.min + 1) == Failure) Failure
         else Success
-      }
-      else if (y.max == x.value) {
-        if (y.updateMax(x.value-1) == Failure) Failure
+      } else if (y.max == x.min) {
+        if (y.updateMax(x.min - 1) == Failure) Failure
         else Success
-      }
-      else CPOutcome.Suspend
+      } else Suspend
     } else if (y.isBound) {
-      if (x.min == y.value) {
-        if (x.updateMin(y.value+1) == Failure) Failure
+      if (x.min == y.min) {
+        if (x.updateMin(y.min + 1) == Failure) Failure
         else Success
-      }
-      else if (x.max == y.value) {
-        if (x.updateMax(y.value-1) == Failure) Failure
+      } else if (x.max == y.min) {
+        if (x.updateMax(y.min - 1) == Failure) Failure
         else Success
-      }      
-      else Suspend
+      } else Suspend
     } else Suspend
   }
 }

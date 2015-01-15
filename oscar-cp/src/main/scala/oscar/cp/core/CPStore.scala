@@ -258,6 +258,11 @@ class CPStore( final val propagStrength: CPPropagStrength) extends SearchNode {
     }
   }
 
+  final def doAndPropagate(action: => Unit): Unit = {
+    action
+    propagate()
+  }
+  
   /**
    *  Call the propagate function of the constraints and trigger the fix point algorithm
    *
@@ -275,7 +280,7 @@ class CPStore( final val propagStrength: CPPropagStrength) extends SearchNode {
   }
 
   protected def propagate(): CPOutcome = {
-    if (status.value == Failure) throw Inconsistency("the store is already inconsistent")
+    if (status.value == Failure) throw Inconsistency
     else {
       val t = System.currentTimeMillis()
       inFixedPoint = true

@@ -1,18 +1,19 @@
-/*******************************************************************************
+/**
+ * *****************************************************************************
  * OscaR is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- *   
+ *
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License  for more details.
- *   
+ *
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
- ******************************************************************************/
-
+ * ****************************************************************************
+ */
 
 package oscar.cp.modeling
 
@@ -54,160 +55,180 @@ import oscar.cp.constraints.Permutation
 import oscar.cp.constraints.Regular
 import oscar.cp.constraints.SoftGCC
 import oscar.cp.constraints.Spread
+import oscar.cp.constraints.Sum
 import oscar.cp.constraints.Stretch
 import oscar.cp.constraints.SweepMinCumulative
 import oscar.cp.constraints.TableData
 import oscar.cp.constraints.UnaryResource
 import oscar.cp.constraints.WeightedSum
-import oscar.cp.constraints.stockingCost.StockingCost
-import oscar.cp.core.CPBoolVar
-import oscar.cp.core.CPIntVar
-import oscar.cp.core.CPIntervalVar
-import oscar.cp.core.CPOutcome
-import oscar.cp.core.CPPropagStrength
-import oscar.cp.core.CPSetVar
-import oscar.cp.core.Constraint
-import oscar.cp.core._
+import oscar.cp.constraints.StockingCost
 import oscar.cp.constraints.TableSTR2
 import oscar.cp.constraints.MinCircuit
 import oscar.cp.constraints.AllDiffBC
+import oscar.cp.core.CPOutcome
+import oscar.cp.core.CPPropagStrength
+import oscar.cp.core.CPIntVarViewOffset
+import oscar.cp.core.CPIntVarViewTimes
+import oscar.cp.core.CPIntVarImpl
+import oscar.cp.core.CPIntVarViewMinus
+import oscar.cp.core.CPIntervalVarImpl
+import oscar.cp.core.CPIntervalVarViewOffset
+import oscar.cp.core.CPIntervalVarViewMinus
+import oscar.cp.core.CPIntervalVarViewTimes
+import oscar.cp.core.CPIntervalVar
+import oscar.cp._
+import oscar.cp.constraints.BinaryClause
 
 trait Constraints {
-  
-    /**
-     * @return a variable in the same store representing: - x
-     */
-    def opposite(x: CPIntVar): CPIntVar = {
-      new CPIntVarViewMinus(x)
-    }
 
-    /**
-     * @param d
-     * @return  a variable in the same store representing: x - d
-     */
-    def minus(x: CPIntVar, d: Int): CPIntVar = {
-      if (d == 0) x
-      else new CPIntVarViewOffset(x, -d)
-    }
-    
-    /**
-     * @param d
-     * @return  a variable in the same store representing: x - d
-     */
-    def minus(x: CPIntervalVar, d: Int): CPIntervalVar = {
-      if (d == 0) x
-      else new CPIntervalVarViewOffset(x, -d)
-    }    
+  /**
+   * @return a variable in the same store representing: - x
+   */
+  def opposite(x: CPIntVar): CPIntVar = {
+    new CPIntVarViewMinus(x)
+  }
 
-    /**
-     * @param y a variable in the same store as x
-     * @return a variable in the same store representing: x - y
-     */
-    def minus(x: CPIntVar, y: CPIntVar): CPIntVar = {
-      val c = CPIntVarImpl(x.store, x.min - y.max, x.max - y.min)
-      x.store.post(new oscar.cp.constraints.Minus(x, y, c))
+  /**
+   * @param d
+   * @return  a variable in the same store representing: x - d
+   */
+  def minus(x: CPIntVar, d: Int): CPIntVar = {
+    if (d == 0) x
+    else new CPIntVarViewOffset(x, -d)
+  }
+
+  /**
+   * @param d
+   * @return  a variable in the same store representing: x - d
+   */
+  def minus(x: CPIntervalVar, d: Int): CPIntervalVar = {
+    if (d == 0) x
+    else new CPIntervalVarViewOffset(x, -d)
+  }
+
+  /**
+   * @param y a variable in the same store as x
+   * @return a variable in the same store representing: x - y
+   */
+  def minus(x: CPIntVar, y: CPIntVar): CPIntVar = {
+    val c = CPIntVarImpl(x.store, x.min - y.max, x.max - y.min)
+    x.store.post(new oscar.cp.constraints.Minus(x, y, c))
+    c
+  }
+
+  /**
+   * @param y a variable in the same store as x
+   * @return a variable in the same store representing: x - y
+   */
+  def minus(x: CPIntervalVar, y: CPIntervalVar): CPIntervalVar = {
+    val c = CPIntervalVarImpl(x.store, x.min - y.max, x.max - y.min)
+    x.store.post(new oscar.cp.constraints.Minus(x, y, c))
+    c
+  }
+
+  /**
+   * @param d
+   * @return  a variable in the same store representing: x + d
+   */
+  def plus(x: CPIntVar, d: Int): CPIntVar = {
+    if (d == 0) x
+    else new CPIntVarViewOffset(x, d)
+  }
+
+  /**
+   * @param d
+   * @return  a variable in the same store representing: x + d
+   */
+  def plus(x: CPIntervalVar, d: Int): CPIntervalVar = {
+    if (d == 0) x
+    else new CPIntervalVarViewOffset(x, d)
+  }
+
+  /**
+   * @param y
+   * @return a variable in the same store representing: x + y
+   */
+  def plus(x: CPIntVar, y: CPIntVar): CPIntVar = {
+    if (y.isBound) {
+      plus(x, y.value)
+    } else {
+      val c = CPIntVarImpl(x.store, x.min + y.min, x.max + y.max)
+      val ok = x.store.post(new oscar.cp.constraints.BinarySum(x, y, c))
+      assert(ok != CPOutcome.Failure)
       c
     }
-    
-    /**
-     * @param y a variable in the same store as x
-     * @return a variable in the same store representing: x - y
-     */
-    def minus(x: CPIntervalVar, y: CPIntervalVar): CPIntervalVar = {
-      val c = CPIntervalVarImpl(x.store, x.min - y.max, x.max - y.min)
-      x.store.post(new oscar.cp.constraints.Minus(x, y, c))
+  }
+
+  /**
+   * @param y
+   * @return a variable in the same store representing: x + y
+   */
+  def plus(x: CPIntervalVar, y: CPIntervalVar): CPIntervalVar = {
+    if (y.isBound) {
+      plus(x, y.value)
+    } else {
+      val c = CPIntervalVarImpl(x.store, x.min + y.min, x.max + y.max)
+      val ok = x.store.post(new oscar.cp.constraints.BinarySum(x, y, c))
+      assert(ok != CPOutcome.Failure)
       c
-    }    
-
-    /**
-     * @param d
-     * @return  a variable in the same store representing: x + d
-     */
-    def plus(x: CPIntVar, d: Int): CPIntVar = {
-      if (d == 0) x
-      else new CPIntVarViewOffset(x, d)
     }
-    
-    /**
-     * @param d
-     * @return  a variable in the same store representing: x + d
-     */
-    def plus(x: CPIntervalVar, d: Int): CPIntervalVar = {
-      if (d == 0) x
-      else new CPIntervalVarViewOffset(x, d)
-    }    
+  }
 
-    /**
-     * @param y
-     * @return a variable in the same store representing: x + y
-     */
-    def plus(x: CPIntVar, y: CPIntVar): CPIntVar = {
-      if (y.isBound) {
-        plus(x,y.value)
-      } else {
-        val c = CPIntVarImpl(x.store, x.min + y.min, x.max + y.max)
-        val ok = x.store.post(new oscar.cp.constraints.BinarySum(x, y, c))
-        assert(ok != CPOutcome.Failure)
-        c
-      }
+  /**
+   * @param c
+   * @return a variable in the same store representing: x * c
+   */
+  def mul(x: CPIntVar, y: Int): CPIntVar = {
+    if (y == 0) CPIntVar(0)(x.store)
+    else if (y == 1) x
+    else if (y > 0) new CPIntVarViewTimes(x, y)
+    else {
+      new CPIntVarViewMinus(mul(x, -y))
     }
-    
-    /**
-     * @param y
-     * @return a variable in the same store representing: x + y
-     */
-    def plus(x: CPIntervalVar, y: CPIntervalVar): CPIntervalVar = {
-      if (y.isBound) {
-        plus(x,y.value)
-      } else {
-        val c = CPIntervalVarImpl(x.store, x.min + y.min, x.max + y.max)
-        val ok = x.store.post(new oscar.cp.constraints.BinarySum(x, y, c))
-        assert(ok != CPOutcome.Failure)
-        c
-      }
-    }    
+  }
 
-    /**
-     * @param c
-     * @return a variable in the same store representing: x * c
-     */
-    def mul(x: CPIntVar, y: Int): CPIntVar = {
-      if (y == 0) CPIntVar(0)(x.store)
-      else if (y == 1) x
-      else if (y > 0) new CPIntVarViewTimes(x, y)
-      else {
-        new CPIntVarViewMinus(mul(x,-y))
-      }
+  /**
+   * @param y a variable in the same store as x
+   * @return a variable in the same store representing: x * y
+   */
+  def mul(x: CPIntVar, y: CPIntVar): CPIntVar = {
+    val a = x.min
+    val b = x.max
+    val c = y.min
+    val d = y.max
+    import oscar.cp.util.NumberUtils
+    val t = Array(NumberUtils.safeMul(a, c), NumberUtils.safeMul(a, d), NumberUtils.safeMul(b, c), NumberUtils.safeMul(b, d));
+    val z = CPIntVarImpl(x.store, t.min, t.max)
+    val ok = x.store.post(new oscar.cp.constraints.MulVar(x, y, z))
+    assert(ok != CPOutcome.Failure);
+    z
+  }
+
+  /**
+   * @param c
+   * @return a variable in the same store representing: x * c
+   */
+  def mul(x: CPIntervalVar, y: Int): CPIntervalVar = {
+    if (y == 0) CPIntervalVar(0)(x.store)
+    else if (y == 1) x
+    else if (y > 0) new CPIntervalVarViewTimes(x, y) 
+    else {
+      new CPIntervalVarViewMinus(mul(x, -y))
     }
+  }
 
-    /**
-     * @param y a variable in the same store as x
-     * @return a variable in the same store representing: x * y
-     */
-    def mul(x: CPIntVar, y: CPIntVar): CPIntVar = {
-      val a = x.min
-      val b = x.max
-      val c = y.min
-      val d = y.max
-      import oscar.cp.util.NumberUtils
-      val t = Array(NumberUtils.safeMul(a, c), NumberUtils.safeMul(a, d), NumberUtils.safeMul(b, c), NumberUtils.safeMul(b, d));
-      val z = CPIntVarImpl(x.store, t.min, t.max)
-      val ok = x.store.post(new oscar.cp.constraints.MulVar(x, y, z))
-      assert(ok != CPOutcome.Failure);
-      z
-    }
 
-    /**
-     * @return a variable in the same store representing: |x|
-     */
-    def absolute(x: CPIntVar): CPIntVar = {
-      val c = CPIntVarImpl(x.store, 0, Math.max(Math.abs(x.min), Math.abs(x.max)));
-      val ok = x.store.post(new oscar.cp.constraints.Abs(x, c));
-      assert(ok != CPOutcome.Failure);
-      return c
-    }  
+  // TODO: general case for multiplication by CPIntervalVar
   
-  
+  /**
+   * @return a variable in the same store representing: |x|
+   */
+  def absolute(x: CPIntVar): CPIntVar = {
+    val c = CPIntVarImpl(x.store, 0, Math.max(Math.abs(x.min), Math.abs(x.max)));
+    val ok = x.store.post(new oscar.cp.constraints.Abs(x, c));
+    assert(ok != CPOutcome.Failure);
+    return c
+  }
 
   /**
    * Bin-Packing Constraint linking the placement variables of sized items into bins with
@@ -271,15 +292,15 @@ trait Constraints {
   def binaryKnapsack(x: IndexedSeq[CPBoolVar], p: IndexedSeq[Int], w: IndexedSeq[Int], P: CPIntVar, W: CPIntVar): Knapsack = {
     return new Knapsack(x.toArray, p.toArray, w.toArray, P, W)
   }
-  
+
   /**
    * atLeastNValue Constraint (Available Filtering: Weak, Strong)
    * @param vars an non empty array of variables
    * @return a constraint ensuring that nValue is the number of different valuesin vars
    */
   def atLeastNValue(vars: Iterable[CPIntVar], nValue: CPIntVar): Constraint = {
-    return new AtLeastNValue(vars.toArray,nValue)
-  }  
+    return new AtLeastNValue(vars.toArray, nValue)
+  }
 
   /**
    * allDifferent Constraint (Available Filtering: Weak, , Medium, Strong)
@@ -293,8 +314,7 @@ trait Constraints {
   def allDifferent(vars: Iterable[CPIntVar]): Constraint = {
     return allDifferent(vars.toArray: _*)
   }
-  
-  
+
   /**
    * allDifferent Constraint
    * @param vars an non empty array of variables
@@ -307,15 +327,15 @@ trait Constraints {
   //def allDifferent(vars: Iterable[CPIntervalVar]): Constraint = {
   //  return new AllDiffBC(vars.toArray)
   //}  
-  
+
   /**
    * minAssignment Constraint (Available Filtering: Medium)
    * @param vars an non empty array of variables, weights a n x n array (n = vars.size-1).
-   * @return a constraint ensure that allDifferent(x) and sum(i) weights(i)(x(i)) <= cost 
-   */  
+   * @return a constraint ensure that allDifferent(x) and sum(i) weights(i)(x(i)) <= cost
+   */
   def minAssignment(x: Array[CPIntVar], weights: Array[Array[Int]], cost: CPIntVar): MinAssignment = {
-    return new MinAssignment(x,weights,cost)
-  } 
+    return new MinAssignment(x, weights, cost)
+  }
 
   /**
    * @param succ[i] is the successor of node i (also place i inside the domain of succ[i] if you want to allow it not to be part of the path
@@ -336,7 +356,7 @@ trait Constraints {
 
   /**
    * Circuit Constraint (Available Filtering: Weak, Strong)
-   * @param succ an array of n variable with domains defined on (0..n-1), where succ[i] represents the city visited after city i. 
+   * @param succ an array of n variable with domains defined on (0..n-1), where succ[i] represents the city visited after city i.
    * @param addPredModel should be set to true (default) to have a redundant model on predecessor array, false otherwise.
    * @return a constraint enforcing a circuit representation where succ(i) represents
    *         the city visited after city i (no city is visited twice and there is no sub-tours).
@@ -345,28 +365,27 @@ trait Constraints {
   def circuit(succ: Array[CPIntVar], addPredModel: Boolean = true): Constraint = {
     return new Circuit(succ, addPredModel)
   }
-  
 
-/**
- * 
- * Ensures that succ represents a valid Hamiltonian circuit (only one tour) of length "cost" <br>
- * Available propagation strengths are Weak, Medium and Strong.
- * Weak = elements + circuit + alldiff (AC)
- * Medium = Weak + minAssignment
- * Strong = Medium + Held&Karp Lower-Bounds
- * @param succ an array of n variable with domains defined on (0..n-1), where succ[i] represents the city visited after city i. 
- * @param distMatrixSucc a distance matrix where distMatrix[i][j] is the distance for going from i to j
- * @param addPredModel should be set to true (default) to have a redundant model on predecessor array, false otherwise.
- * @return a constraint enforcing a circuit representation where succ(i) represents
- *         the city visited after city i (no city is visited twice and there is no sub-tours).
- *         cost = sum_i distMatrix[i][succ[i]]
- * @param
- * @see CPPropagStrength
- * @author Pierre Schaus pschaus@gmail.com
- */  
-  def minCircuit(succ: Array[CPIntVar], distMatrixSucc: Array[Array[Int]], cost: CPIntVar,addPredModel: Boolean = true): Constraint = {
-    return new MinCircuit(succ,distMatrixSucc,cost,addPredModel)
-  }  
+  /**
+   *
+   * Ensures that succ represents a valid Hamiltonian circuit (only one tour) of length "cost" <br>
+   * Available propagation strengths are Weak, Medium and Strong.
+   * Weak = elements + circuit + alldiff (AC)
+   * Medium = Weak + minAssignment
+   * Strong = Medium + Held&Karp Lower-Bounds
+   * @param succ an array of n variable with domains defined on (0..n-1), where succ[i] represents the city visited after city i.
+   * @param distMatrixSucc a distance matrix where distMatrix[i][j] is the distance for going from i to j
+   * @param addPredModel should be set to true (default) to have a redundant model on predecessor array, false otherwise.
+   * @return a constraint enforcing a circuit representation where succ(i) represents
+   *         the city visited after city i (no city is visited twice and there is no sub-tours).
+   *         cost = sum_i distMatrix[i][succ[i]]
+   * @param
+   * @see CPPropagStrength
+   * @author Pierre Schaus pschaus@gmail.com
+   */
+  def minCircuit(succ: Array[CPIntVar], distMatrixSucc: Array[Array[Int]], cost: CPIntVar, addPredModel: Boolean = true): Constraint = {
+    return new MinCircuit(succ, distMatrixSucc, cost, addPredModel)
+  }
 
   /**
    * Lexicographically Less or Equal Constraint
@@ -476,11 +495,11 @@ trait Constraints {
     val z_ = CPBoolVar(z)(x.store)
     new ElementVar(tab.map(_.asInstanceOf[CPIntVar]).toArray, x, z_)
   }
-  
+
   /**
    * Inverse constraint
    * @param prev an array of `n` integer variables
-   * @param next an array of `n` integer variables 
+   * @param next an array of `n` integer variables
    * @return a constraint enforcing for all `i` in `0 until n`:
    *         1. `next(prev(i)) == i`
    *         2. `prev(next(i)) == i`
@@ -493,41 +512,74 @@ trait Constraints {
    * @param s a variable representing the sum of vars
    * @return a constraint enforcing vars(0)+vars(1)+...+vars(n) = s
    */
-  def sum(vars: Array[CPIntVar], s: CPIntVar): Constraint = {
-    if (vars.size == 2) new BinarySum(vars(0),vars(1),s) 
-    else new oscar.cp.constraints.Sum(vars.map(_.asInstanceOf[CPIntervalVar]), s)
-  }
-  
+  def sum(vars: Array[CPIntVar], s: CPIntVar): Constraint = sum(vars.asInstanceOf[Array[CPIntervalVar]], s)
+
   /**
    * Sum Constraint
    * @param vars a non empty array of n variables
    * @param s a variable representing the sum of vars
    * @return a constraint enforcing vars(0)+vars(1)+...+vars(n) = s
    */
-  def sum(vars: Array[CPIntervalVar], s: CPIntVar): Constraint = {
-    if (vars.size == 2) new BinarySum(vars(0),vars(1),s) 
-    else new oscar.cp.constraints.Sum(vars, s)
-  }  
+  def sum(vars: Array[CPIntervalVar], s: CPIntervalVar): Constraint = {
+    if (vars.length == 2) new BinarySum(vars(0), vars(1), s)
+    else new Sum(vars, s)
+  }
 
   /**
    * Sum Constraint
    * @param vars a non empty array of n variables
    * @return a variable representing vars(0)+vars(1)+...+vars(n)
    */
-  def sum(vars: Iterable[CPIntVar]): CPIntVar = {
-    if (vars.size == 1) return vars.head
-    val x = vars.toArray
-    val minVal = (0 /: vars) {
-      (sum, v) => sum + v.getMin
-    }
-    val maxVal = (0 /: vars) {
-      (sum, v) => sum + v.getMax
-    }
-    val s = CPIntVar(minVal, maxVal)(x(0).store)
-    x(0).store.post(sum(x, s))
-    s
-  }
+  def sum(vars: Iterable[CPIntVar]): CPIntVar = sum(vars.toArray)
 
+  /**
+   * Sum Constraint
+   * @param vars a non empty array of n variables
+   * @return a variable representing vars(0)+vars(1)+...+vars(n)
+   */
+  def sum(vars: Iterable[CPIntervalVar]): CPIntervalVar = sum(vars.toArray)
+
+  /**
+   * Sum Constraint
+   * @param vars a non empty array of n variables
+   * @return a variable representing vars(0)+vars(1)+...+vars(n)
+   */
+  def sum(vars: Array[CPIntVar]): CPIntVar = {
+    if (vars.length == 0) sys.error("no variables")
+    if (vars.length == 1) vars(0)
+    else {
+      var min = 0
+      var max = 0
+      var i = vars.length
+      while (i > 0) {
+        i -= 1
+        min += vars(i).min
+        max += vars(i).max
+      }
+      val s = CPIntVar(min, max)(vars(0).store)
+      vars(0).store.post(sum(vars, s))
+      s
+    }
+  }
+  
+  def sum(vars: Array[CPIntervalVar]): CPIntervalVar = {
+    if (vars.length == 0) sys.error("no variables")
+    if (vars.length == 1) vars(0)
+    else {
+      var min = 0
+      var max = 0
+      var i = vars.length
+      while (i > 0) {
+        i -= 1
+        min += vars(i).min
+        max += vars(i).max
+      }
+      val s = CPIntervalVar(min, max)(vars(0).store)
+      vars(0).store.post(sum(vars, s))
+      s
+    }
+  }
+  
   /**
    * Sum Constraint
    * @param indexes
@@ -565,8 +617,8 @@ trait Constraints {
    * @return a variable S linked with the relation S = sum(i in indexes) (w_i * x_i)
    */
   def weightedSum[A](indexes: Iterable[A])(f: A => (Int, CPIntVar)): CPIntVar = {
-    val (w,x) = (for (i <- indexes) yield f(i)).unzip
-    weightedSum(w.toArray,x.toArray)
+    val (w, x) = (for (i <- indexes) yield f(i)).unzip
+    weightedSum(w.toArray, x.toArray)
   }
 
   /**
@@ -577,25 +629,25 @@ trait Constraints {
    * @return a variable S linked with the relation S = sum(i in indexes1,j in indexes2) (w_ij * x_ij)
    */
   def weightedSum[A, B](indexes1: Iterable[A], indexes2: Iterable[B])(f: (A, B) => (Int, CPIntVar)): CPIntVar = {
-    val (w,x) = (for (i <- indexes1; j <- indexes2) yield f(i,j)).unzip
-    weightedSum(w.toArray,x.toArray)
+    val (w, x) = (for (i <- indexes1; j <- indexes2) yield f(i, j)).unzip
+    weightedSum(w.toArray, x.toArray)
   }
-  
+
   /**
    * Weighted Sum Constraint
    * @return y == sum(i)(w_i * x_i)
    */
   def weightedSum(w: Array[Int], x: Array[CPIntVar], y: CPIntVar): Constraint = {
-    new WeightedSum(w,x.map(_.asInstanceOf[CPIntervalVar]),y)
+    new WeightedSum(w, x.map(_.asInstanceOf[CPIntervalVar]), y)
   }
-  
+
   /**
    * Weighted Sum Constraint
    * @return y==sum(i)(w_i * x_i)
    */
   def weightedSum(w: Array[Int], x: Array[CPIntVar], y: Int): Constraint = {
-    weightedSum(w,x,CPIntVar(y)(x(0).store))
-  }  
+    weightedSum(w, x, CPIntVar(y)(x(0).store))
+  }
 
   /**
    * Weighted Sum Constraint
@@ -603,10 +655,10 @@ trait Constraints {
    */
   def weightedSum(w: Array[Int], x: Array[CPIntVar]): CPIntVar = {
     val cp = x(0).store
-    val m = w.zip(x).map{case(wi,xi) => if (wi < 0) wi*xi.max else wi*xi.min}.sum
-    val M = w.zip(x).map{case(wi,xi) => if (wi < 0) wi*xi.min else wi*xi.max}.sum
+    val m = w.zip(x).map { case (wi, xi) => if (wi < 0) wi * xi.max else wi * xi.min }.sum
+    val M = w.zip(x).map { case (wi, xi) => if (wi < 0) wi * xi.min else wi * xi.max }.sum
     val y = CPIntVar(m to M)(cp)
-    cp.post(weightedSum(w,x,y))
+    cp.post(weightedSum(w, x, y))
     y
   }
 
@@ -615,7 +667,7 @@ trait Constraints {
    * @return sum(ij)(w_ij * x_ij)
    */
   def weightedSum(w: Array[Array[Int]], x: Array[Array[CPIntVar]]): CPIntVar = {
-    weightedSum(w.flatten,x.flatten)
+    weightedSum(w.flatten, x.flatten)
   }
 
   /**
@@ -623,19 +675,28 @@ trait Constraints {
    * @param vars a non empty array of n variables
    * @param z the result of the or over vars
    * @return an or constraint
-   */  
-  def or(vars: Iterable[CPBoolVar], z:CPBoolVar): Constraint = {
+   */
+  def or(vars: Iterable[CPBoolVar], z: CPBoolVar): Constraint = {
     if (z.isTrue) or(vars)
     else new OrReif(vars.toArray, z)
     //new OrReif2(vars, z)
   }
-  
+
   /**
    * Or (logical) Constraint
    * @return a constraint such that at least one variables in vars must be true
    */
-  def or(vars: Iterable[CPBoolVar]): Constraint = {
-    new Or(vars.toArray)
+  def or(vars: Iterable[CPBoolVar]): Constraint = or(vars.toArray)
+
+  /**
+   * Or (logical) Constraint
+   * @return a constraint such that at least one variables in vars must be true
+   */
+  def or(vars: Array[CPBoolVar]): Constraint = {
+    val nVariables = vars.length
+    if (nVariables == 1) vars(0).constraintTrue
+    if (nVariables == 2) new BinaryClause(vars(0), vars(1), "")
+    else new Or(vars)
   }
 
   /**
@@ -652,7 +713,7 @@ trait Constraints {
    * @return result of the or over vars
    */
   def isOr(vars: Iterable[CPBoolVar]): CPBoolVar = {
-    val z = new CPBoolVar(vars.head.store)
+    val z = CPBoolVar()(vars.head.store)
     vars.head.store.add(or(vars, z))
     z
   }
@@ -660,24 +721,22 @@ trait Constraints {
   /**
    * Or (logical) Constraint
    * @return z the result of the or over or(f(i))
-   */  
+   */
   def isOr[A](indexes: Iterable[A])(f: A => CPBoolVar): CPBoolVar = {
     val x = (for (i <- indexes) yield f(i)).toArray
-    val z = new CPBoolVar(x(0).store)
-    x(0).store.add(or(x,z))
+    val z = CPBoolVar()(x(0).store)
+    x(0).store.add(or(x, z))
     z
-  }  
-  
-
+  }
 
   def table(x: Array[CPIntVar], tuples: Array[Array[Int]]): Constraint = {
     //new TableSTR2(x,tuples)
-    
+
     import oscar.cp.constraints.TableAC5TCRecomp
     val data = new TableData(x.size)
     tuples.foreach(t => data.add(t: _*))
     new oscar.cp.constraints.TableAC5TCRecomp(data, x: _*)
-    
+
     /*
     val tab = new TableJava(x:_*)
     tuples.foreach(t => tab.addTupple(t:_*))
@@ -751,28 +810,27 @@ trait Constraints {
   def modulo(x: CPIntVar, v: Int, y: Int): Constraint = {
     return new Modulo(x, v, CPIntVar(y)(x.store))
   }
-  
- 
+
   /**
    * Among Constraint: n is the number of variables from x in set s.
    * @param n counter variable
    * @param x array of variables
    * @param s set of values
    * @return a constraint enforcing that n = #{ i | x(i) in s }
-   */  
+   */
   def among(n: CPIntVar, x: IndexedSeq[CPIntVar], s: Set[Int]) = {
-    new Among(n,x,s)
+    new Among(n, x, s)
   }
-  
+
   /**
    * AtLeast Constraint: at least n variables take their value in s
    * @param n counter variable
    * @param x array of variables
    * @param s set of values
    * @return a constraint enforcing that  #{ i | x(i) in s } >= n
-   */  
+   */
   def atLeast(n: Int, x: IndexedSeq[CPIntVar], s: Set[Int]) = {
-    among(CPIntVar(n, x.size)(x(0).store),x,s)
+    among(CPIntVar(n, x.size)(x(0).store), x, s)
   }
 
   /**
@@ -781,18 +839,18 @@ trait Constraints {
    * @param x array of variables
    * @param v a value
    * @return a constraint enforcing that  #{ i | x(i) = v } >= n
-   */  
-  def atLeast(n: Int, x: IndexedSeq[CPIntVar], v: Int): Constraint = atLeast(n,x,Set(v)) 
-  
+   */
+  def atLeast(n: Int, x: IndexedSeq[CPIntVar], v: Int): Constraint = atLeast(n, x, Set(v))
+
   /**
    * AtMost Constraint: at most n variables take their value in s
    * @param n counter variable
    * @param x array of variables
    * @param s set of values
    * @return a constraint enforcing that  #{ i | x(i) in s } <= n
-   */  
+   */
   def atMost(n: Int, x: IndexedSeq[CPIntVar], s: Set[Int]) = {
-    among(CPIntVar(0, n)(x(0).store),x,s)
+    among(CPIntVar(0, n)(x(0).store), x, s)
   }
 
   /**
@@ -801,95 +859,95 @@ trait Constraints {
    * @param x array of variables
    * @param v a value
    * @return a constraint enforcing that  #{ i | x(i) = v } <= n
-   */  
-  def atMost(n: Int, x: IndexedSeq[CPIntVar], v: Int): Constraint = atMost(n,x,Set(v))
-  
+   */
+  def atMost(n: Int, x: IndexedSeq[CPIntVar], v: Int): Constraint = atMost(n, x, Set(v))
+
   /**
    * Count Constraint: n is the number of variables from x equal to y.
    * @param n is a counter variable
    * @param x is an array of variables
    * @param y is a variable
    * @return a constraint enforcing that n = #{ i | x(i) = y }
-   */  
+   */
   def countEq(n: CPIntVar, x: IndexedSeq[CPIntVar], y: CPIntVar): Constraint = {
-    if (y.isBound) countEq(n,x,y.value)
-    else new CountSimple(n,x,y)
+    if (y.isBound) countEq(n, x, y.value)
+    else new CountSimple(n, x, y)
   }
-  
+
   def countEq(n: CPIntVar, x: IndexedSeq[CPIntVar], v: Int) = {
-    new CountCst(n,x,v)
-  }  
-  
+    new CountCst(n, x, v)
+  }
+
   /**
    * Count Constraint: n is greater or equal to the number of variables from x equal to y.
    * @param n is a counter variable
    * @param x is an array of variables
    * @param y is a variable
    * @return a constraint enforcing that n >= #{ i | x(i) = y }
-   */  
+   */
   def countGeq(n: CPIntVar, x: IndexedSeq[CPIntVar], y: CPIntVar) = {
     val c = CPIntVar(0 to x.size)(n.store)
     val ok = n.store.post(n >= c)
     assert(ok != CPOutcome.Failure)
-    new Count(c,x,y)
+    new Count(c, x, y)
   }
-  
+
   /**
    * Count Constraint: n is greater than the number of variables from x equal to y.
    * @param n is a counter variable
    * @param x is an array of variables
    * @param y is a variable
    * @return a constraint enforcing that n > #{ i | x(i) = y }
-   */  
+   */
   def countGt(n: CPIntVar, x: IndexedSeq[CPIntVar], y: CPIntVar) = {
     val c = CPIntVar(0 to x.size)(n.store)
     val ok = n.store.post(n > c)
     assert(ok != CPOutcome.Failure)
-    new Count(c,x,y)
+    new Count(c, x, y)
   }
-  
+
   /**
    * Count Constraint: n is less or equal to the number of variables from x equal to y.
    * @param n is a counter variable
    * @param x is an array of variables
    * @param y is a variable
    * @return a constraint enforcing that n <= #{ i | x(i) = y }
-   */  
+   */
   def countLeq(n: CPIntVar, x: IndexedSeq[CPIntVar], y: CPIntVar) = {
     val c = CPIntVar(0 to x.size)(n.store)
     val ok = n.store.post(n <= c)
     assert(ok != CPOutcome.Failure)
-    new Count(c,x,y)
+    new Count(c, x, y)
   }
-  
+
   /**
    * Count Constraint: n is less than the number of variables from x equal to y.
    * @param n is a counter variable
    * @param x is an array of variables
    * @param y is a variable
    * @return a constraint enforcing that n <= #{ i | x(i) = y }
-   */  
+   */
   def countLt(n: CPIntVar, x: IndexedSeq[CPIntVar], y: CPIntVar) = {
     val c = CPIntVar(0 to x.size)(n.store)
     val ok = n.store.post(n < c)
     assert(ok != CPOutcome.Failure)
-    new Count(c,x,y)
-  }  
-  
+    new Count(c, x, y)
+  }
+
   /**
    * Count Constraint: n is different to the number of variables from x equal to y.
    * @param n is a counter variable
    * @param x is an array of variables
    * @param y is a variable
    * @return a constraint enforcing that n != #{ i | x(i) = y }
-   */  
+   */
   def countNeq(n: CPIntVar, x: IndexedSeq[CPIntVar], y: CPIntVar) = {
     val c = CPIntVar(0 to x.size)(n.store)
     val ok = n.store.post(n != c)
     assert(ok != CPOutcome.Failure)
-    new Count(c,x,y)
-  }   
-  
+    new Count(c, x, y)
+  }
+
   /**
    * Global Cardinality Constraint: every value occurs at least min and at most max
    * @param x an non empty array of variables
@@ -929,15 +987,15 @@ trait Constraints {
    *        where o is variable representing the number of occurrences of value v
    * @return a constraint such that for each (o,v) in valueOccurrence, o is the number of times the value v appears in x
    */
-  def gcc(x: IndexedSeq[CPIntVar], valueOccurrence: Iterable[(Int,CPIntVar)]): Constraint = {
+  def gcc(x: IndexedSeq[CPIntVar], valueOccurrence: Iterable[(Int, CPIntVar)]): Constraint = {
     def freshCard(): CPIntVar = CPIntVar(0, x.size - 1)(x.head.store)
     val sortedValOcc = valueOccurrence.toArray.sortWith((a, b) => a._1 <= b._1)
-    val (v0,x0) = sortedValOcc(0)
+    val (v0, x0) = sortedValOcc(0)
     var values = Array(v0)
     var cardinalities = Array(x0)
     for (i <- 1 until sortedValOcc.length) {
-      val (vi_1,xi_1) = sortedValOcc(i - 1)
-      val (vi,xi) = sortedValOcc(i)
+      val (vi_1, xi_1) = sortedValOcc(i - 1)
+      val (vi, xi) = sortedValOcc(i)
       for (v <- (vi_1 + 1) until vi) {
         values = values :+ v
         cardinalities = cardinalities :+ freshCard()
@@ -948,8 +1006,7 @@ trait Constraints {
     new GCCVar(x.toArray, values(0), cardinalities)
   }
 
-  
-  def gcc(x: Array[CPIntVar], valueOccurrence: Array[(Int,CPIntVar)]): Constraint = {
+  def gcc(x: Array[CPIntVar], valueOccurrence: Array[(Int, CPIntVar)]): Constraint = {
     gcc(x.toIndexedSeq, valueOccurrence.toIterable)
   }
 
@@ -1027,7 +1084,7 @@ trait Constraints {
   def maximum(vars: Array[_ <: CPIntervalVar], m: CPIntervalVar): Constraint = {
     new Maximum(vars.asInstanceOf[Array[CPIntervalVar]], m)
   }
-  
+
   /**
    * Maximum Constraint
    * @param vars an non empty array of variables
@@ -1038,8 +1095,8 @@ trait Constraints {
     val m = CPIntervalVar(vars.map(_.min).max, vars.map(_.max).max)(cp)
     cp.add(maximum(vars, m))
     m
-  }  
-  
+  }
+
   /**
    * Maximum Constraint
    * @param vars an non empty array of variables
@@ -1050,14 +1107,14 @@ trait Constraints {
     val m = CPIntVar(vars.map(_.min).max, vars.map(_.max).max)(cp)
     cp.add(maximum(vars, m))
     m
-  }  
+  }
 
   /**
    * Maximum Constraint
    * @param vars an non empty array of variables
    * @return a fresh variable z linked to vars by a constraint such that z is the maximum of all variables in vars
    */
-  def maximum(vars: Iterable[_ <: CPIntervalVar]): CPIntervalVar = {
+  def maximum(vars: Iterable[CPIntervalVar]): CPIntervalVar = {
     val x = vars.toArray
     val cp = x(0).store
     val m = CPIntervalVar(vars.map(_.min).max, vars.map(_.max).max)(cp)
@@ -1131,31 +1188,31 @@ trait Constraints {
     new Permutation(x, y)
   }
 
-  def sortedness(x: IndexedSeq[CPIntVar], s: IndexedSeq[CPIntVar], p: IndexedSeq[CPIntVar],strictly: Boolean = false): LinkedList[Constraint] = {
+  def sortedness(x: IndexedSeq[CPIntVar], s: IndexedSeq[CPIntVar], p: IndexedSeq[CPIntVar], strictly: Boolean = false): LinkedList[Constraint] = {
     val cp = x(0).store
     val n = x.size
     val cons = new LinkedList[Constraint]
     for (i <- 0 until n - 1) {
-      cons.add(elementVar(x, p(i),Strong) <= elementVar(x, p(i + 1),Strong))
+      cons.add(elementVar(x, p(i), Strong) <= elementVar(x, p(i + 1), Strong))
       if (strictly) {
         cons.add(s(i) < s(i + 1))
       } else {
         cons.add(s(i) <= s(i + 1))
       }
-      
+
     }
     val minx = x.map(_.min).min
     val maxx = x.map(_.max).max
     val mins = s.map(_.min).min
     val maxs = s.map(_.max).max
-    
-    for( i <- 0 until x.size) {
+
+    for (i <- 0 until x.size) {
       cons.add(p(i) >= 0)
       cons.add(p(i) <= n)
-      
+
       cons.add(s(i) <= maxx)
       cons.add(s(i) >= minx)
-      
+
       cons.add(x(i) <= maxs)
       cons.add(x(i) >= mins)
     }
@@ -1189,10 +1246,10 @@ trait Constraints {
    * its due date ($X_i <= d_i$), at most one item is produced at any time
    * on the machine (all the $X_i$ are distinct), and $H$
    * is an upper bound on the total stocking cost ($sum_i(d_i - X_i) <= H$).
-   * 
+   *
    * This constraint is useful for modeling
    * Production Planning Problem such as Lot Sizing Problems
-   * 
+   *
    * @param X, the variable $X_i$ is the date of production of item $i$ on the machine
    * @param d, the integer $d_i$ is the due-date for item $i$
    * @param H, the variable $H$ is an upper bound on the total number of slots all the items are need in stock.
@@ -1201,15 +1258,14 @@ trait Constraints {
     new StockingCost(X, d, H, 1)
   }
 
-
   /**
-   * Non overlapping between 2D rectangles 
+   * Non overlapping between 2D rectangles
    * @param x is the x coordinates of the bottom left corner of rectangles
    * @param dx is the length in direction of x of each rectangle
    * @param y is the y coordinates of the bottom left corner of rectangles
    * @param dy is the length in direction y of each rectangle
    * @return a set of constraints such that posting all of them enforces the non overlapping of rectangles
-   */   
+   */
   def diffn(x: Array[CPIntVar], dx: Array[CPIntVar], y: Array[CPIntVar], dy: Array[CPIntVar]): Iterable[Constraint] = {
     val endx = Array.tabulate(x.size)(i => x(i) + dx(i))
     val endy = Array.tabulate(y.size)(i => y(i) + dy(i))
@@ -1232,34 +1288,30 @@ trait Constraints {
     cons = cons :+ (maxCumulativeResource(y, dy, endy, dx, capax))
     return cons
   }
-  
 
-  
   // scheduling constraints
 
-
   /**
-   * Unary Resource constraint (also called disjunctive resource): at any time, no two tasks (with required(i) = true) can overlap in time 
+   * Unary Resource constraint (also called disjunctive resource): at any time, no two tasks (with required(i) = true) can overlap in time
    * @param starts the variables representing the start time of the tasks
    * @param durations the variables representing the duration of the tasks
    * @param ends the variables representing the completion time of the tasks, it is your responsibility to link starts, durations and ends such that start(i) + durations(i) = ends(i)
    * @param required tells if a task is scheduled on this resource or not, if not this task is not constrained
-   */  
+   */
   def unaryResource(starts: Array[_ <: CPIntervalVar], durations: Array[_ <: CPIntervalVar], ends: Array[_ <: CPIntervalVar], required: Array[CPBoolVar]): UnaryResource = {
-	new UnaryResource(starts,durations,ends,required)
+    new UnaryResource(starts, durations, ends, required)
   }
-  
 
   /**
-   * Unary Resource constraint (also called disjunctive resource): at any time, no two tasks (with resources(i) = id) can overlap in time 
+   * Unary Resource constraint (also called disjunctive resource): at any time, no two tasks (with resources(i) = id) can overlap in time
    * @param starts the variables representing the start time of the tasks
    * @param durations the variables representing the duration of the tasks
    * @param ends the variables representing the completion time of the tasks, it is your responsibility to link starts, durations and ends such that start(i) + durations(i) = ends(i)
    * @param resources the variables representing the resource where the task is scheduled
    * @param id, the resource on which we want to constraint, tasks i such that resources(i) != id are not considered
-   */  
+   */
   def unaryResource(starts: Array[_ <: CPIntervalVar], durations: Array[_ <: CPIntervalVar], ends: Array[_ <: CPIntervalVar], resources: Array[CPIntVar], id: Int) = {
-	new UnaryResource(starts,durations,ends,resources,id)
+    new UnaryResource(starts, durations, ends, resources, id)
   }
 
   /**
@@ -1267,10 +1319,10 @@ trait Constraints {
    * @param starts the variables representing the start time of the tasks
    * @param durations the variables representing the duration of the tasks
    * @param ends the variables representing the completion time of the tasks, it is your responsibility to link starts, durations and ends such that start(i) + durations(i) = ends(i)
-   */    
+   */
   def unaryResource(starts: Array[_ <: CPIntervalVar], durations: Array[_ <: CPIntervalVar], ends: Array[_ <: CPIntervalVar]) = {
     val cp = starts(0).store
-	new UnaryResource(starts,durations,ends,starts.map(s => CPBoolVar(true)(cp)))
+    new UnaryResource(starts, durations, ends, starts.map(s => CPBoolVar(true)(cp)))
   }
 
   /**
@@ -1286,10 +1338,10 @@ trait Constraints {
     for {
       i <- 0 until starts.length
       j <- i + 1 until starts.length
-    }{
+    } {
       cp.add((ends(j) + transitionTimes(types(j))(types(i)) <== starts(i)) || (ends(i) + transitionTimes(types(i))(types(j)) <== starts(j)))
     }
-    new UnaryResource(starts,durations,ends,starts.map(s => CPBoolVar(true)(cp)))
+    new UnaryResource(starts, durations, ends, starts.map(s => CPBoolVar(true)(cp)))
   }
 
   /**
@@ -1305,8 +1357,8 @@ trait Constraints {
     for {
       i <- 0 until starts.length
       j <- i + 1 until starts.length
-    }{
-      if(states(i) != states(j)) {
+    } {
+      if (states(i) != states(j)) {
         new UnaryResource(Array(starts(i), starts(j)), Array(durations(i), durations(j)), Array(ends(i), ends(j)), Array(CPBoolVar(true)(cp), CPBoolVar(true)(cp)))
         cp.add((ends(j) + transitionTimes(states(j))(states(i)) <== starts(i)) || (ends(i) + transitionTimes(states(i))(states(j)) <== starts(j)))
       }
@@ -1322,11 +1374,11 @@ trait Constraints {
    * @param resources the variables representing the resource where the task is scheduled
    * @param capacity the capacity of the resource
    * @param id, the resource on which we want to constraint the capacity (only tasks i with resources(i) = id are taken into account)
-   */ 
+   */
   def maxCumulativeResource(starts: Array[_ <: CPIntervalVar], durations: Array[_ <: CPIntervalVar], ends: Array[_ <: CPIntervalVar], demands: Array[_ <: CPIntervalVar], resources: Array[CPIntVar], capacity: CPIntervalVar, id: Int): Constraint = {
-    MaxCumulative(starts,durations,ends,demands,resources,capacity,id)
+    MaxCumulative(starts, durations, ends, demands, resources, capacity, id)
   }
-  
+
   /**
    * Discrete Resource constraint with maximum capacity: at any time, the cumulative demands of the tasks must be <= than the capacity
    * @param starts the variables representing the start time of the tasks
@@ -1334,13 +1386,13 @@ trait Constraints {
    * @param ends the variables representing the completion time of the tasks, it is your responsibility to link starts, durations and ends such that start(i) + durations(i) = ends(i)
    * @param demands the variables representing how much each task consume of the resource
    * @param capacity the capacity of the resource
-   */ 
+   */
   def maxCumulativeResource(starts: Array[_ <: CPIntervalVar], durations: Array[_ <: CPIntervalVar], ends: Array[_ <: CPIntervalVar], demands: Array[_ <: CPIntervalVar], capacity: CPIntervalVar): Constraint = {
     val cp = starts(0).store
     val resources = Array.fill(starts.size)(CPIntVar(0)(cp))
-    maxCumulativeResource(starts,durations,ends,demands,resources,capacity,0)
-  }   
-  
+    maxCumulativeResource(starts, durations, ends, demands, resources, capacity, 0)
+  }
+
   /**
    * Discrete Resource constraint with minimum capacity: at any time where at least one tasks overlaps, the cumulative demands of the tasks executing on the resource id, must be >= than the capacity
    * @param starts the variables representing the start time of the tasks
@@ -1350,11 +1402,11 @@ trait Constraints {
    * @param resources the variables representing the resource where the task is scheduled
    * @param capacity the capacity of the resource
    * @param id, the resource on which we want to constraint the capacity (only tasks i with resources(i) = id are taken into account)
-   */ 
+   */
   def minCumulativeResource(starts: Array[_ <: CPIntervalVar], durations: Array[_ <: CPIntervalVar], ends: Array[_ <: CPIntervalVar], demands: Array[_ <: CPIntervalVar], resources: Array[CPIntVar], capacity: CPIntervalVar, id: Int): Constraint = {
     new SweepMinCumulative(starts, durations, ends, demands, resources, capacity, id)
   }
-  
+
   /**
    * Discrete Resource constraint with maximum capacity: at any time where at least one tasks overlaps, the cumulative demands of the tasks must be >= than the capacity
    * @param starts the variables representing the start time of the tasks
@@ -1362,19 +1414,17 @@ trait Constraints {
    * @param ends the variables representing the completion time of the tasks, it is your responsibility to link starts, durations and ends such that start(i) + durations(i) = ends(i)
    * @param demands the variables representing how much each task consume of the resource
    * @param capacity the capacity of the resource
-   */ 
+   */
   def minCumulativeResource(starts: Array[_ <: CPIntervalVar], durations: Array[_ <: CPIntervalVar], ends: Array[_ <: CPIntervalVar], demands: Array[_ <: CPIntervalVar], capacity: CPIntervalVar): Constraint = {
     val cp = starts(0).store
     val resources = Array.fill(starts.size)(CPIntVar(0)(cp))
-    minCumulativeResource(starts,durations,ends,demands,resources,capacity,0)
+    minCumulativeResource(starts, durations, ends, demands, resources, capacity, 0)
   }
-  
 
-  
   /**
    * Constraint x and y to be disjoint (no common values)
    * @param x:
    * @param y:
    */
-  def disjoint(x: CPSetVar, y: CPSetVar): Constraint = new Disjoint(x,y)
+  def disjoint(x: CPSetVar, y: CPSetVar): Constraint = new Disjoint(x, y)
 }

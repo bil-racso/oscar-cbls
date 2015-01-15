@@ -18,7 +18,6 @@ import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
 import oscar.cp.core.CPIntVar;
 import oscar.cp.core.Constraint;
-import oscar.cp.modeling.constraint.*;
 
 /**
  * Deviation Constraint, a constraint for the average absolute deviation to the mean. <br>

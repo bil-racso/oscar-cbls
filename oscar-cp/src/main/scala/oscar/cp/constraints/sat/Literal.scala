@@ -3,11 +3,11 @@ package oscar.cp.constraints.sat
 import oscar.cp.core.CPBoolVar
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.CPStore
-import oscar.cp.modeling.CPSolver
+import oscar.cp.core.CPSolver
 import oscar.cp.core.Constraint
 
-import oscar.cp.modeling.CPModel
-import oscar.cp.search.BinaryStaticOrderBranching
+import oscar.cp.CPModel
+import oscar.cp.searches.BinaryStaticOrderBranching
 
 abstract class Literal(val boolean: CPBoolVar) {
   val id: Int

@@ -86,7 +86,7 @@ public class GrEqCteReif extends Constraint {
 		
 	@Override
 	public CPOutcome valBind(CPIntervalVar var) {
-		if (b.getValue() == 0) {
+		if (b.min() == 0) {
 			//x < v
 			if (x.updateMax(v-1) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
