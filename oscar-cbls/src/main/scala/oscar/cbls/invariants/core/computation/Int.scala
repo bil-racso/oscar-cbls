@@ -76,7 +76,9 @@ abstract class ChangingIntValue(initialValue:Int, initialDomain:Domain)
     privatedomain = privatedomain.restrict(d)
   }
 
-  override def toString = if(model.propagateOnToString) s"$name:=$value" else defaultName
+  override def toString = {
+    if(model.propagateOnToString) s"$name:=$value" else s"$name:=$Value"
+  }
   override def toStringNoPropagate = s"$name:=$Value"
 
   def setValue(v:Int){
@@ -267,7 +269,7 @@ abstract class IntInvariant(initialValue:Int = 0, initialDomain:Domain = FullRan
   }
 
   //TODO: this is wrong, there is an unlimited recusion here
-  override final def name: String = if(customName == null) toString else customName
+  override final def name: String = if(customName == null) this.getClass.getSimpleName else customName
 
   override final def performPropagation(){
     performInvariantPropagation()
@@ -312,6 +314,9 @@ class IdentityInt(toValue:CBLSIntVar, fromValue:ChangingIntValue) extends Invari
   registerStaticAndDynamicDependency(fromValue)
   toValue.setDefiningInvariant(this)
   finishInitialization()
+
+
+  toValue := fromValue.value
 
   override def notifyIntChanged(v: ChangingIntValue, OldVal: Int, NewVal: Int) {
     toValue := NewVal

@@ -29,8 +29,6 @@ import oscar.cbls.modeling.Algebra._
 
 import scala.collection.immutable.SortedMap
 
-//TODO: what if we have a constant int value in the parameters of the constraint?? we should have a sort on all IntValues.
-
 /**
  * Implement the AllDiff constraint on IntVars: all variables must have a different value.
  * in ase the same variable occurs several times (in case you submit a list of CBLSIntVar) these two occurrences
@@ -43,17 +41,17 @@ case class AllDiff(variables: Iterable[IntValue]) extends Constraint with Invari
   registerStaticAndDynamicDependencyAllNoID(variables)
   registerConstrainedVariables(variables)
   finishInitialization()
+  val (minValueOfVars,maxValueOfVars) = InvariantHelper.getMinMaxBounds(variables)
 
   //le degre global de violation est la somme des tailles -1 des ensembles de var ayant meme value
   // et on ne prend que les ensembles de cardinalite > 1
   private val Violation: CBLSIntVar = new CBLSIntVar(model, 0, (0 to Int.MaxValue), "ViolationsOfAllDiff")
   Violation.setDefiningInvariant(this)
 
-  private val N0: Int = variables.foldLeft(0)(
-    (acc: Int, intvar: IntValue) => (if (intvar.max > acc) intvar.max else acc))
 
-  private val offset: Int = -variables.foldLeft(0)(
-    (acc: Int, intvar: IntValue) => (if (intvar.min < acc) intvar.min else acc))
+  private val N0: Int = maxValueOfVars
+
+  private val offset: Int = -minValueOfVars
 
   private val N = N0 + offset
   private val range = 0 to N

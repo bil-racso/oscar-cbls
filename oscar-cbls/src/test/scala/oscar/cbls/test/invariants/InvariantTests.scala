@@ -24,14 +24,14 @@ import scala.Some
 import oscar.cbls.invariants.lib.set.Interval
 import oscar.cbls.invariants.lib.minmax.MinArray
 import oscar.cbls.invariants.lib.set.SetProd
-import oscar.cbls.invariants.lib.minmax.ArgMinArray
+import oscar.cbls.invariants.lib.minmax.ArgMin
 import oscar.cbls.invariants.lib.minmax.MaxLin
 import oscar.cbls.invariants.lib.numeric.ProdElements
 import oscar.cbls.invariants.lib.minmax.Min2
 import oscar.cbls.invariants.lib.numeric.Prod2
 import oscar.cbls.invariants.lib.numeric.SumElements
 import oscar.cbls.invariants.lib.logic.SelectLEHeapHeap
-import oscar.cbls.invariants.lib.minmax.ArgMaxArray
+import oscar.cbls.invariants.lib.minmax.ArgMax
 import oscar.cbls.invariants.lib.numeric.Sum
 import oscar.cbls.invariants.lib.numeric.Minus
 import oscar.cbls.constraints.lib.global.MultiKnapsack
@@ -276,14 +276,14 @@ class InvariantTests extends FunSuite with Checkers {
   // TODO test also with the other parameters of ArgMinArray
   test("ArgMinArray maintains the set of min variables of the array") {
     val bench = new InvBench(verbose)
-    new ArgMinArray(bench.genIntVarsArray(20, 0 to 30)).setName
+    new ArgMin(bench.genIntVarsArray(20, 0 to 30)).setName
     bench.run
   }
 
   // TODO test also with the other parameters of ArgMaxArray
   test("ArgMaxArray maintains the set of max variables of the array") {
     val bench = new InvBench(verbose)
-    new ArgMaxArray(bench.genIntVarsArray(20, 0 to 30)).setName
+    new ArgMax(bench.genIntVarsArray(20, 0 to 30)).setName
     bench.run
   }
 

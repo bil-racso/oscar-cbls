@@ -556,6 +556,7 @@ trait Variable extends AbstractVariable{
   protected var definingInvariant:Invariant = null
   def setDefiningInvariant(i:Invariant){
     assert(i.model == model || i.model == null,"i.model == null:" + (i.model == null) + " i.model == model:" + (i.model == model) + " model == null:" + (model == null))
+    assert(! i.isInstanceOf[Variable])
     if(definingInvariant == null){
       definingInvariant = i
       registerStaticallyListenedElement(i)

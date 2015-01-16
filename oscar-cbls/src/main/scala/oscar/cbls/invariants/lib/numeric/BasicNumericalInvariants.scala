@@ -43,7 +43,7 @@ object Prod{
  * */
 class Sum(vars: Iterable[IntValue])
   extends IntInvariant(
-    vars.foldLeft(0)((a:Int, b:IntValue) => a + b.value), vars.foldLeft(0)((acc, intvar) => acc + intvar.min) to vars.foldLeft(0)((acc, intvar) => acc + intvar.max)){
+    vars.foldLeft(0)((a:Int, b:IntValue) => a + b.value), vars.foldLeft(0)((acc, intvar) => DomainHelper.safeAddMin(acc,intvar.min)) to vars.foldLeft(0)((acc, intvar) => DomainHelper.safeAddMax(acc,intvar.max))){
 
   for (v <- vars) registerStaticAndDynamicDependency(v)
   finishInitialization()

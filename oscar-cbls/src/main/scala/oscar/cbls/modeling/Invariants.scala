@@ -175,7 +175,7 @@ trait MinMaxInvariants{
    * @param default is the value returned when cond is empty
    * update is O(log(n))
    * */
-  def argMax(vars: Array[IntValue], cond: SetValue = null,default:Int = Int.MinValue) = ArgMaxArray(vars, cond,default)
+  def argMax(vars: Array[IntValue], cond: SetValue = null,default:Int = Int.MinValue) = ArgMax(vars, cond,default)
 
 
   /** Maintains {i in indices of (varss Inter cond) | varss[i] == min(varss(i in indices of (varss Inter cond))}
@@ -184,7 +184,7 @@ trait MinMaxInvariants{
    * @param default is the value returned when cond is empty
    * update is O(log(n))
    * */
-  def argMin(varss: Array[IntValue], ccond: SetValue = null, default:Int = Int.MaxValue) = ArgMinArray(varss, ccond, default)
+  def argMin(varss: Array[IntValue], ccond: SetValue = null, default:Int = Int.MaxValue) = ArgMin(varss, ccond, default)
 
   /** maintains output = Max(a,b)
    * where output, a, and b are an IntVar

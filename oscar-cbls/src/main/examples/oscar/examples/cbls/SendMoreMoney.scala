@@ -98,7 +98,7 @@ object SendMoreMoney extends SearchEngine with StopWatch {
     val Tabu = (for (i <- Letter.list) yield CBLSIntVar(m, 0, 0 to Int.MaxValue, "Tabu_" + i)).toArray
     val It = CBLSIntVar(m,0, 0 to Int.MaxValue,"it")
     val NonTabuLetter = SelectLESetQueue(Tabu, It)
-    val NonTabuMaxViolLetter = new ArgMaxArray(ViolationArray, NonTabuLetter)
+    val NonTabuMaxViolLetter = new ArgMax(ViolationArray, NonTabuLetter)
     
     // closing model
     m.close()

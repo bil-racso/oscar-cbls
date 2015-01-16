@@ -27,7 +27,7 @@ package oscar.cbls.scheduling.model
 
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.lib.logic.{DenseRef, Filter}
-import oscar.cbls.invariants.lib.minmax.ArgMaxArray
+import oscar.cbls.invariants.lib.minmax.ArgMax
 import oscar.cbls.invariants.lib.numeric.Sum
 
 /**
@@ -122,7 +122,7 @@ class Planning(val model: Store, val maxDuration: Int) {
 
     val ResourceWithOvershoot: SetValue = Filter(overshootArray)
 
-    worseOvershotResource = ArgMaxArray(overshootArray, ResourceWithOvershoot)
+    worseOvershotResource = ArgMax(overshootArray, ResourceWithOvershoot)
   }
 
   override def toString: String = toAsciiArt

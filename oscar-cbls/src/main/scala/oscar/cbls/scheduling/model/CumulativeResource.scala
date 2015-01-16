@@ -27,7 +27,7 @@ package oscar.cbls.scheduling.model
 
 import oscar.cbls.invariants.core.computation.{CBLSIntVar, IntValue}
 import oscar.cbls.invariants.lib.logic.Cumulative
-import oscar.cbls.invariants.lib.minmax.ArgMaxArray
+import oscar.cbls.invariants.lib.minmax.{Max, ArgMax}
 import oscar.cbls.modeling.Algebra._
 import oscar.cbls.scheduling.algo.ConflictSearch
 import oscar.cbls.search.SearchEngineTrait
@@ -50,9 +50,8 @@ class CumulativeResource(planning: Planning, val maxAmount: Int = 1, name: Strin
   val useAmount = Array.tabulate(maxDuration + 1)(t => CBLSIntVar(model, 0, 0 to Int.MaxValue, s"use_amount_${name}_at_time_$t"))
   var activitiesAndUse: SortedMap[Activity, IntValue] = SortedMap.empty
 
-  val HighestUseTracker = ArgMaxArray(useAmount)
-  val HighestUsePositions = HighestUseTracker
-  val HighestUse = HighestUseTracker.getMax
+  val HighestUsePositions = ArgMax(useAmount)
+  val HighestUse = Max(useAmount)
 
   val overShoot = HighestUse - maxAmount
   def worseOverShootTime: Int = HighestUsePositions.value.firstKey

@@ -55,12 +55,12 @@ trait Bulked[VarType <: Value, BulkedComputationResult] extends Invariant {
       //check for existing bulk
       val identifyingString = this.getClass.getName + "/" + id
 
-      val incredibleBulk = m.getBulk(identifyingString, bulkedVars.asInstanceOf[Array[Variable]])
+      val incredibleBulk = m.getBulk(identifyingString, bulkedVars.asInstanceOf[Array[Value]])
 
       if (incredibleBulk == null) {
         //create a new bulk
         val bcr = performBulkComputation(bulkedVars)
-        val newBulk = new Bulk(m, bulkedVars.asInstanceOf[Array[Variable]], bcr)
+        val newBulk = new Bulk(m, bulkedVars.asInstanceOf[Array[Value]], bcr)
         this.registerStaticallyListenedElement(newBulk)
         m.registerBulk(identifyingString, newBulk)
         bcr
@@ -82,7 +82,7 @@ trait Bulked[VarType <: Value, BulkedComputationResult] extends Invariant {
  * used by BulkLoad only
  * @author renaud.delandtsheer@cetic.be
  */
-class Bulk(m: Store, val bulkedVars: Array[Variable], val bulkedComputationResult: Any)
+class Bulk(m: Store, val bulkedVars: Array[Value], val bulkedComputationResult: Any)
   extends Invariant with BulkPropagator {
 
   for (dd <- bulkedVars) registerStaticallyListenedElement(dd)
@@ -99,7 +99,7 @@ trait Bulker {
 
   private var Bulked: SortedMap[String, List[Bulk]] = SortedMap.empty
 
-  def getBulk(identifyingName: String, bulkedVars: Array[Variable]): Bulk = {
+  def getBulk(identifyingName: String, bulkedVars: Array[Value]): Bulk = {
     val bulks = Bulked.getOrElse(identifyingName, null)
 
     if (bulks == null) return null

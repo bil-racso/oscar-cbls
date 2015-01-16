@@ -140,6 +140,8 @@ case class ConstraintSystem(model:Store) extends Constraint with Objective{
         else Prod(List(constraintANDintvar._1.violation,constraintANDintvar._2))
       })).setName("violation")
 
+      model.registerForPartialPropagation(Violation)
+
       aggregateLocalViolations()
       PropagateLocalToGlobalViolations()
       aggregateGlobalViolations()

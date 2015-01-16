@@ -27,7 +27,7 @@ package oscar.cbls.scheduling.model
 
 import oscar.cbls.invariants.core.computation.CBLSIntVar._
 import oscar.cbls.invariants.core.computation._
-import oscar.cbls.invariants.lib.minmax.{ArgMaxArray, MinArray}
+import oscar.cbls.invariants.lib.minmax.{MaxArray, Max, ArgMax, MinArray}
 import oscar.cbls.invariants.lib.set.{Inter, Union}
 import oscar.cbls.modeling.Algebra._
 
@@ -169,10 +169,9 @@ class Activity(var duration: IntValue, val planning: Planning, val name: String 
 
       allPrecedingActivities = Union(staticPredecessorsID, additionalPredecessors)
 
-      val argMax = ArgMaxArray(planning.earliestEndDates, allPrecedingActivities, -1)
-      earliestStartDate <== shifter(argMax.getMax + 1, duration)
+      earliestStartDate <== shifter(Max(planning.earliestEndDates, allPrecedingActivities, -1) + 1, duration)
 
-      definingPredecessors = argMax
+      definingPredecessors = ArgMax(planning.earliestEndDates, allPrecedingActivities, -1)
 
       potentiallyKilledPredecessors = Inter(definingPredecessors, additionalPredecessors)
 

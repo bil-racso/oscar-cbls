@@ -134,6 +134,7 @@ abstract class ChangingSetValue(initialValue:SortedSet[Int], initialDomain:Domai
         Value.diff(OldValue).foreach(v => {
           OldValue += v
           for (e:((PropagationElement,Any)) <- getDynamicallyListeningElements){
+            println("notifying " + e)
             val inv:Invariant = e._1.asInstanceOf[Invariant]
             assert({this.model.NotifiedInvariant=inv; true})
             inv.notifyInsertOnAny(this,e._2,v)
@@ -299,7 +300,6 @@ abstract class SetInvariant(initialValue:SortedSet[Int] = SortedSet.empty,
 }
 
 object IdentitySet{
-  def apply(v:SetValue):SetInvariant = new FullIdentitySet(v)
   def apply(toValue:CBLSSetVar, fromValue:SetValue){
     fromValue match{
       case c:CBLSSetConst => toValue := c.value
@@ -316,6 +316,8 @@ class IdentitySet(toValue:CBLSSetVar, fromValue:ChangingSetValue) extends Invari
   toValue.setDefiningInvariant(this)
   finishInitialization()
 
+  toValue := fromValue.value
+
   override def notifyInsertOn(v:ChangingSetValue,value:Int){
     assert(v == this.fromValue)
     toValue.insertValue(value)
@@ -328,28 +330,5 @@ class IdentitySet(toValue:CBLSSetVar, fromValue:ChangingSetValue) extends Invari
 
   override def checkInternals(c:Checker){
     c.check(toValue.getValue(true) == fromValue.value)
-  }
-}
-
-/** an invariant that is the identity function
-  * @author renaud.delandtsheer@cetic.be
-  * @param v
-  */
-class FullIdentitySet(v:SetValue) extends SetInvariant(v.value, v.domain){
-  registerStaticAndDynamicDependency(v)
-  finishInitialization()
-
-  override def notifyInsertOn(v:ChangingSetValue,value:Int){
-    assert(v == this.v)
-    this.insertValue(value)
-  }
-
-  override def notifyDeleteOn(v:ChangingSetValue,value:Int){
-    assert(v == this.v)
-    this.deleteValue(value)
-  }
-
-  override def checkInternals(c:Checker){
-    c.check(this.getValue(true).intersect(v.value).size == v.value.size)
   }
 }

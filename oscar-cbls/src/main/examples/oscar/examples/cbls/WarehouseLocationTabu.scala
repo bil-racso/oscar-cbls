@@ -2,7 +2,7 @@ package oscar.examples.cbls
 
 import oscar.cbls.invariants.core.computation.{CBLSIntVar, IntValue, Store}
 import oscar.cbls.invariants.lib.logic.{Filter, SelectLESetQueue}
-import oscar.cbls.invariants.lib.minmax.MinArray
+import oscar.cbls.invariants.lib.minmax.{Min, MinArray}
 import oscar.cbls.invariants.lib.numeric.Sum
 import oscar.cbls.modeling.AlgebraTrait
 import oscar.cbls.objective.Objective
@@ -67,7 +67,7 @@ object WarehouseLocationTabu extends App with AlgebraTrait{
   val openWarehouses = Filter(warehouseOpenArray).setName("openWarehouses")
 
   val distanceToNearestOpenWarehouse = Array.tabulate(D)(d =>
-    MinArray[IntValue](distanceCost(d), openWarehouses, defaultCostForNoOpenWarehouse).setName("distance_for_delivery_" + d))
+    Min[IntValue](distanceCost(d), openWarehouses, defaultCostForNoOpenWarehouse).setName("distance_for_delivery_" + d))
 
   val obj = Objective(Sum(distanceToNearestOpenWarehouse)
     + Sum[IntValue](costForOpeningWarehouse, openWarehouses))

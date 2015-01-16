@@ -155,7 +155,8 @@ object NQueensWithUI extends SimpleSwingApplication with SearchEngineTrait {
     }
 
     val viol = (for (q <- range) yield c.violation(Queens(q))).toArray
-
+    //TODO: reset this
+/*
     for (q <- range) {
       Event(Queens(q), viol(q), (oldqueenposition: Int) => {
         tab(q)(oldqueenposition).icon = EMPTY
@@ -166,7 +167,7 @@ object NQueensWithUI extends SimpleSwingApplication with SearchEngineTrait {
         }
       })
     }
-
+*/
     m.close()
 
     var it: Int = 0

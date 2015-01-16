@@ -17,7 +17,7 @@ package oscar.cbls.binPacking.model
 import oscar.cbls.constraints.core.ConstraintSystem
 import oscar.cbls.constraints.lib.global.MultiKnapsack
 import oscar.cbls.invariants.core.computation.{CBLSIntConst, Store, _}
-import oscar.cbls.invariants.lib.minmax.ArgMaxArray
+import oscar.cbls.invariants.lib.minmax.ArgMax
 import oscar.cbls.objective.{IntVarObjective, Objective}
 
 import scala.collection.immutable.SortedMap
@@ -158,6 +158,6 @@ object BinPackingProblem{
     BinPackingProblem(itemArray,
       binArray,
       Objective(mkp.violation),
-      ArgMaxArray(binArray.map(_.violation)))
+      ArgMax(binArray.map(_.violation)))
   }
 }

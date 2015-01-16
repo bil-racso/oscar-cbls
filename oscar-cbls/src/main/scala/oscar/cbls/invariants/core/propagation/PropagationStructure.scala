@@ -398,8 +398,13 @@ abstract class PropagationStructure(val verbose: Boolean, val checker:Option[Che
     }
     ScheduledElements = List.empty
 
+    var previousLayer = 0 //ExecutionQueue.head.position
+
     while (!ExecutionQueue.isEmpty) {
-      ExecutionQueue.popFirst().propagate()
+      val first = ExecutionQueue.popFirst()
+      first.propagate()
+      assert(first.position >= previousLayer, "single wave not enforced")
+      assert({previousLayer = first.position; true})
       for (e <- ScheduledElements) {
         if (Track == null || Track(e.uniqueID)) {
           ExecutionQueue.insert(e)
@@ -848,7 +853,7 @@ trait PropagationElement extends BasicPropagationElement with DAGNode{
   def schedulingHandler_=(s:SchedulingHandler){mySchedulingHandler = s}
   private var mySchedulingHandler:SchedulingHandler = null
 
-  def propagationStructure:PropagationStructure = schedulingHandler.propagationStructure
+  def propagationStructure:PropagationStructure = if(schedulingHandler == null) null else schedulingHandler.propagationStructure
 
   /**set to true if the PropagationElement is scheduled for propagation, false otherwise.
     * this is managed by the PropagationElement
@@ -877,12 +882,13 @@ trait PropagationElement extends BasicPropagationElement with DAGNode{
   protected[core] def getDynamicallyListenedElements: Iterable[PropagationElement] = staticallyListenedElements
 
   protected def registerStaticallyListenedElement(b: BasicPropagationElement){
+    assert(b != this)
     b.registerStaticallyListeningElement(this)
   }
 
   override protected[propagation] def registerStaticallyListeningElement(listening: PropagationElement){
-    listening.staticallyListenedElements = listening :: listening.staticallyListenedElements
-    staticallyListeningElements = this :: staticallyListeningElements
+    listening.staticallyListenedElements = this :: listening.staticallyListenedElements
+    staticallyListeningElements = listening :: staticallyListeningElements
   }
 
   /**this will not return a key because we do not have varying dependencies*/

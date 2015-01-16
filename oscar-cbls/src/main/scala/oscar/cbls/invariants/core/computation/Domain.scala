@@ -79,6 +79,8 @@ case class DomainRange(override val min: Int, override val max: Int) extends Dom
       case d:SingleValueDomain => d.restrict(this)
     }
   }
+
+  override def toString(): String = "DomainRange(min:" + min + ", max:" +  max + ")"
 }
 
 case class DomainSet(values: Set[Int]) extends Domain {
@@ -89,6 +91,7 @@ case class DomainSet(values: Set[Int]) extends Domain {
   def contains(v:Int): Boolean = values.contains(v)
   override def randomValue: Int = values.toIndexedSeq(Random.nextInt(values.size))
   override def restrict(d: Domain): Domain = d.restrict(this)
+  override def toString(): String = "DomainSet(values:" + values + ")"
 }
 
 case object FullRange extends Domain{
@@ -99,6 +102,7 @@ case object FullRange extends Domain{
   override def contains(v: Int): Boolean = true
   override def values: Iterable[Int] =  min to max
   override def restrict(d: Domain): Domain = d
+  override def toString(): String = "FullRange"
 }
 
 case class SingleValueDomain(value:Int) extends Domain{
@@ -112,6 +116,37 @@ case class SingleValueDomain(value:Int) extends Domain{
   override def restrict(d: Domain): Domain =
     if (d.contains(value)) this else throw new EmptyDomainException
   override def values: Iterable[Int] = List(value)
+
+  override def toString(): String = "SingleValueDomain(" + value + ")"
 }
 
 class EmptyDomainException extends Exception("domain is empty")
+
+object DomainHelper{
+
+  def safeAddMax(a:Int,b:Int):Int = {
+    val tmp = a.toLong + b.toLong
+    if(tmp > Int.MaxValue) Int.MaxValue
+    else tmp.toInt
+  }
+
+  def safeAddMin(a:Int,b:Int):Int = {
+    val tmp = a.toLong + b.toLong
+    if(tmp < Int.MinValue) Int.MinValue
+    else tmp.toInt
+  }
+
+  def safeMulMax(a:Int,b:Int):Int = {
+    val tmp = a.toLong * b.toLong
+    if(tmp > Int.MaxValue) Int.MaxValue
+    else tmp.toInt
+  }
+
+  def safeMulMin(a:Int,b:Int):Int = {
+    val tmp = a.toLong * b.toLong
+    if(tmp < Int.MinValue) Int.MaxValue
+    else tmp.toInt
+  }
+
+
+}

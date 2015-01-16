@@ -158,6 +158,10 @@ case class Min(vars: SortedSet[IntValue]) extends Miax(vars) {
   override def better(a: Int, b: Int): Boolean = a < b
 }
 
+object Min{
+  def apply[T <:IntValue](varss: Array[T], ccond: SetValue = null, default: Int = Int.MinValue) = MinArray[T](varss, ccond, default)
+}
+
 /**
  * maintains output = Max(vars)
  * deprecated use MaxArray
@@ -173,6 +177,10 @@ case class Max(vars: SortedSet[IntValue]) extends Miax(vars) {
   override def ord(v: IntValue): Int = -v.value
 
   override def better(a: Int, b: Int): Boolean = a > b
+}
+
+object Max{
+  def apply[T <:IntValue](varss: Array[T], ccond: SetValue = null, default: Int = Int.MaxValue) = MaxArray[T](varss, ccond, default)
 }
 
 /**
