@@ -16,11 +16,12 @@
 package oscar.examples.cp.scheduling
 
 import oscar.cp._
-import oscar.cp.scheduling._
+
 import oscar.visual._
 import oscar.util._
 import scala.io.Source
 import oscar.cp.scheduling.visual.VisualGanttChart
+
 
 
 /**
@@ -40,7 +41,7 @@ object JobShop extends CPModel with App {
   // Parsing    
   // -----------------------------------------------------------------------
 
-  var lines = Source.fromFile("data/ft10.txt").getLines.toList
+  var lines = Source.fromFile("data/ft07.txt").getLines.toList
 
   val nJobs = lines.head.trim().split(" ")(0).toInt
   val nTasksPerJob = lines.head.trim().split(" ")(1).toInt
