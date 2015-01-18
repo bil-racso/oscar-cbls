@@ -2,7 +2,7 @@ package oscar.cp.lcg.core
 
 import oscar.algo.ArrayStack
 
-class Clause(solver: CDCLSolver, literals: Array[Literal], learnt: Boolean) {
+class Clause(store: LCGStore, literals: Array[Literal], learnt: Boolean) {
 
   private[this] var _activity: Double = 0
   private[this] var _activate: Boolean = true
@@ -14,7 +14,7 @@ class Clause(solver: CDCLSolver, literals: Array[Literal], learnt: Boolean) {
   final def activity_=(a: Double): Unit = _activity = a
   
   // UNKNOWN
-  def locked: Boolean = solver.assignReason(literals(0).varId) == this
+  def locked: Boolean = store.assignReason(literals(0).varId) == this
 
   // UNKNOWN
   def remove(): Unit = Unit
@@ -34,7 +34,7 @@ class Clause(solver: CDCLSolver, literals: Array[Literal], learnt: Boolean) {
       outReason.append(literals(i).opposite)
       i += 1
     }
-    if (learnt) solver.claBumpActivity(this)
+    if (learnt) store.claBumpActivity(this)
   }
   
   final def explainAll(outReason: ArrayStack[Literal]): Unit = {
@@ -43,7 +43,7 @@ class Clause(solver: CDCLSolver, literals: Array[Literal], learnt: Boolean) {
       outReason.append(literals(i).opposite)
       i += 1
     }
-    if (learnt) solver.claBumpActivity(this)
+    if (learnt) store.claBumpActivity(this)
   }
 
   final def propagate(literal: Literal): Boolean = {
@@ -54,26 +54,26 @@ class Clause(solver: CDCLSolver, literals: Array[Literal], learnt: Boolean) {
     }
 
     // If 0th watch is true, then clause is already satisfied
-    if (solver.value(literals(0)) == True) {
-      solver.watch(this, literal)
+    if (store.value(literals(0)) == True) {
+      store.watch(this, literal)
       return true
     }
 
     // Look for a new literal to watch
     var i = 2
     while (i < literals.length) {
-      if (solver.value(literals(i)) != False) {
+      if (store.value(literals(i)) != False) {
         literals(1) = literals(i)
         literals(i) = literal.opposite
-        solver.watch(this, literals(1).opposite)
+        store.watch(this, literals(1).opposite)
         return true
       }
       i += 1
     }
     
     // Clause is unit under assignment
-    solver.watch(this, literal)
-    solver.enqueue(literals(0), this)
+    store.watch(this, literal)
+    store.enqueue(literals(0), this)
   }
   
   final override def toString: String = literals.mkString("(", " ", ")")

@@ -5,7 +5,7 @@ import oscar.algo.ArrayStack
 import oscar.algo.reversible.ReversibleContext
 import oscar.algo.reversible.TrailEntry
 
-class CDCLSolver {
+class LCGStore {
 
   // Inconsistency
   private[this] var inconsistent: Boolean = false
@@ -35,17 +35,22 @@ class CDCLSolver {
   private[this] val watchers: ArrayStack[ArrayQueue[Clause]] = new ArrayStack(128)
 
   // Trailing queue  
-  private[this] val trail: ArrayStack[Literal] = new ArrayStack(100)
-  private[this] val trailLevels: ArrayStack[Int] = new ArrayStack(100) // FIXME boxing
+  private[this] val trailVar: ArrayStack[Literal] = new ArrayStack(100)
+  private[this] val trailVarLevels: ArrayStack[Int] = new ArrayStack(100) // FIXME boxing
+  private[this] val trailExplain: ArrayStack[Clause] = new ArrayStack(100)
+  private[this] val trailExplainLevels: ArrayStack[Int] = new ArrayStack(100) // FIXME boxing
 
   // Propagation queue
   private[this] val queue: ArrayQueue[Literal] = new ArrayQueue(128)
 
   /** Return a literal that is always true. */
-  @inline def trueLit: Literal = ???
+  @inline final def trueLit: Literal = ???
 
   /** Return a literal that is always false. */
-  @inline def falseLit: Literal = ???
+  @inline final def falseLit: Literal = ???
+  
+  /** Return true if the store in inconsistent. */
+  @inline final def isInconsistent: Boolean = inconsistent
 
   /** Return true if the variable is assigned to true. */
   @inline final def isTrue(literal: Literal): Boolean = values(literal.varId) == True
@@ -150,6 +155,18 @@ class CDCLSolver {
         true
       }
     }
+    
+    // Notify domains
+  }
+  
+  private def prePropagate(): Boolean = {
+    if (!inconsistent) true
+    else if (decisionLevel > inconsistentLevel) false
+    else {
+      // Post buffered conflict clause
+      inconsistent = false
+      true
+    }
   }
 
   /**
@@ -186,9 +203,9 @@ class CDCLSolver {
       // new fact to store
       if (literal.signed) values(varId) = False
       else values(varId) = True
-      levels(varId) = trailLevels.size
+      levels(varId) = trailVarLevels.size
       reasons(varId) = from
-      trail.push(literal)
+      trailVar.push(literal)
       queue.addLast(literal)
       true
     }
@@ -234,7 +251,7 @@ class CDCLSolver {
     }
   }
 
-  final def nAssigns(): Int = trail.size
+  final def nAssigns(): Int = trailVar.size
   final def nVars(): Int = values.size
 
   final def varDecayActivity(): Unit = variableStep *= variableDecay
@@ -296,7 +313,7 @@ class CDCLSolver {
 
       // Select next literal to look at
       do {
-        p = trail.top
+        p = trailVar.top
         conflict = reasons(p.varId)
         undoOne()
       } while (!seen(p.varId))
@@ -314,7 +331,7 @@ class CDCLSolver {
     enqueue(literals(0), clause)
   }
 
-  final def decisionLevel: Int = trailLevels.size
+  final def decisionLevel: Int = trailVarLevels.size
 
   // Trailing queue
   // --------------
@@ -328,13 +345,13 @@ class CDCLSolver {
   @inline final def popState(): Unit = ???
 
   @inline private def assume(literal: Literal): Boolean = {
-    trailLevels.push(trail.size)
+    trailVarLevels.push(trailVar.size)
     enqueue(literal, null)
   }
 
   @inline private def undoOne(): Unit = {
-    assert(trail.size > 0)
-    val literal = trail.pop()
+    assert(trailVar.size > 0)
+    val literal = trailVar.pop()
     val varId = literal.varId
     values(varId) = Unassigned
     reasons(varId) = null
@@ -342,7 +359,7 @@ class CDCLSolver {
   }
 
   @inline private def cancel(): Unit = {
-    var nLevels = trail.size - trailLevels.pop()
+    var nLevels = trailVar.size - trailVarLevels.pop()
     while (nLevels > 0) {
       nLevels -= 1
       undoOne()
@@ -350,6 +367,6 @@ class CDCLSolver {
   }
 
   @inline private def cancelUntil(level: Int): Unit = {
-    while (trailLevels.size > level) cancel()
+    while (trailVarLevels.size > level) cancel()
   }
 }

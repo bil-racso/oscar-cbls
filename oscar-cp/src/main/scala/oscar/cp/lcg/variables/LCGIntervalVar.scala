@@ -1,14 +1,14 @@
 package oscar.cp.lcg.variables
 
-import oscar.cp.lcg.core.CDCLSolver
 import oscar.cp.core.CPIntervalVar
 import oscar.cp.core.CPStore
-import oscar.cp.lcg.core.Literal
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.Constraint
+import oscar.cp.lcg.core.LCGStore
+import oscar.cp.lcg.core.Literal
 import scala.util.Random
 
-class LCGIntervalVar(lcgStore: CDCLSolver, final override val store: CPStore, varId: Int, initMin: Int, initMax: Int, final override val name: String) extends CPIntervalVar {
+class LCGIntervalVar(lcgStore: LCGStore, final override val store: CPStore, varId: Int, initMin: Int, initMax: Int, final override val name: String) extends CPIntervalVar {
   
   // Domain representation with literals
   private[this] val nLiterals = initMax - initMin
@@ -148,7 +148,7 @@ object LCGIntervalVar {
     val i = id; id += 1; i
   }
   
-  def apply(initMin: Int, initMax: Int, name: String = "")(implicit lcgStore: CDCLSolver, store: CPStore): LCGIntervalVar = {
+  def apply(initMin: Int, initMax: Int, name: String = "")(implicit lcgStore: LCGStore, store: CPStore): LCGIntervalVar = {
     new LCGIntervalVar(lcgStore, store, nextId(), initMin, initMax, name)
   }
 }
