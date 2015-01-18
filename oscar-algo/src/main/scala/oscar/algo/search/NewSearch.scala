@@ -27,25 +27,25 @@ import oscar.algo.reversible._
 class NewSearch(node: SearchNode) {
 
   import oscar.algo.ArrayStack // custom array-based stack
-  private val alternativesStack = new ArrayStack[Iterator[Alternative]](100)
+  private[this] val alternativesStack = new ArrayStack[Iterator[Alternative]](100)
 
   // Number of backtracks of the previous search
-  private var nbBkts: Int = 0
+  private[this] var nbBkts: Int = 0
 
   // Number of solutions of the previous search
-  private var nbSols: Int = 0
+  private[this] var nbSols: Int = 0
 
   // Number of nodes explored in the previous search
-  private var nbNodes: Int = 0
+  private[this] var nbNodes: Int = 0
   
   // True if the previous search was exhaustive
-  private var completed: Boolean = false
+  private[this] var completed: Boolean = false
 
   // Actions to execute in case of solution node
-  private var solutionActions = List.empty[() => Unit]
+  private[this] var solutionActions = List.empty[() => Unit]
 
   // Actions to execute in case of failed node
-  private var failureActions = List.empty[() => Unit]
+  private[this] var failureActions = List.empty[() => Unit]
 
   /** Returns the number of backtracks in the previous search */
   final def nBacktracks: Int = nbBkts
