@@ -40,11 +40,7 @@ import scala.collection.immutable.SortedSet
 case class ArgMax(vars: Array[IntValue], cond: SetValue = null, default: Int = Int.MinValue)
   extends ArgMiax(vars, cond, default) {
 
-  override def name: String = "ArgMaxArray"
-
   override def Ord(v: IntValue): Int = -v.value
-
-  override def ExtremumName: String = "Max of ArgMax"
 }
 
 /**
@@ -58,11 +54,7 @@ case class ArgMax(vars: Array[IntValue], cond: SetValue = null, default: Int = I
 case class ArgMin(vars: Array[IntValue], cond: SetValue = null, default: Int = Int.MaxValue)
   extends ArgMiax(vars, cond, default) {
 
-  override def name: String = "ArgMinArray"
-
   override def Ord(v: IntValue): Int = v.value
-
-  override def ExtremumName: String = "Min of ArgMin"
 }
 
 /**
@@ -104,8 +96,6 @@ abstract class ArgMiax(vars: Array[IntValue], cond: SetValue, default: Int)
     }
   }
 
-  def name: String
-  def ExtremumName: String
   def Ord(v: IntValue): Int
 
   var cost:Long = 0

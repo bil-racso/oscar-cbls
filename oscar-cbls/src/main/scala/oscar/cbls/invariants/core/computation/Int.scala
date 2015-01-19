@@ -275,7 +275,6 @@ abstract class IntInvariant(initialValue:Int = 0, initialDomain:Domain = FullRan
     this
   }
 
-  //TODO: this is wrong, there is an unlimited recusion here
   override final def name: String = if(customName == null) this.getClass.getSimpleName else customName
 
   override final def performPropagation(){

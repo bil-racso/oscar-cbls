@@ -141,10 +141,10 @@ trait AlgebraTrait{
     def elements(index: SetValue) = Elements(index, inputarray)
   }
 
-  implicit def InstrumentArrayOfIntSetVar(inputarray: Array[SetValue]):InstrumentedArrayOfIntSetVar
-  = new InstrumentedArrayOfIntSetVar(inputarray)
+  implicit def instrumentArrayOfSetValue(inputarray: Array[SetValue]):InstrumentedArrayOfSetValue
+  = new InstrumentedArrayOfSetValue(inputarray)
 
-  class InstrumentedArrayOfIntSetVar(inputarray: Array[SetValue]) {
+  class InstrumentedArrayOfSetValue(inputarray: Array[SetValue]) {
     def apply(index: IntValue): SetInvariant = SetElement(index, inputarray)
   }
 
@@ -154,11 +154,17 @@ trait AlgebraTrait{
   implicit def arrayOfIntVar2ArrayOfIntValue(a:Array[CBLSIntVar]):Array[IntValue] = a.asInstanceOf[Array[IntValue]]
   implicit def arrayOfIntVar2ArrayOfInstrumentedIntValue(a:Array[CBLSIntVar]):InstrumentedArrayOfIntValue = new InstrumentedArrayOfIntValue(a.asInstanceOf[Array[IntValue]])
 
+  implicit def arrayOfSetVar2ArrayOfSetValue(a:Array[CBLSSetVar]):Array[SetValue] = a.asInstanceOf[Array[SetValue]]
+  implicit def arrayOfSetVar2ArrayOfInstrumentedSetValue(a:Array[CBLSSetVar]):InstrumentedArrayOfSetValue = new InstrumentedArrayOfSetValue(a.asInstanceOf[Array[SetValue]])
+
+
   implicit def arrayOfIntInvariant2ArrayOfIntValue(a:Array[IntInvariant]):Array[IntValue] = a.asInstanceOf[Array[IntValue]]
   implicit def arrayOfIntInvariant2ArrayOfInstrumentedIntValue(a:Array[IntInvariant]):InstrumentedArrayOfIntValue = new InstrumentedArrayOfIntValue(a.asInstanceOf[Array[IntValue]])
 
   implicit def arrayOfIntConst2ArrayOfIntValue(a:Array[CBLSIntConst]):Array[IntValue] = a.asInstanceOf[Array[IntValue]]
   implicit def arrayOfIntconst2ArrayOfInstrumentedIntValue(a:Array[CBLSIntConst]):InstrumentedArrayOfIntValue = new InstrumentedArrayOfIntValue(a.asInstanceOf[Array[IntValue]])
 
+  implicit def sortedSetConstToIntValue(a:SortedSet[CBLSIntConst]):SortedSet[IntValue] = a.asInstanceOf[SortedSet[IntValue]]
+  implicit def sortedSetVarToIntValue(a:SortedSet[CBLSIntVar]):SortedSet[IntValue] = a.asInstanceOf[SortedSet[IntValue]]
 }
 

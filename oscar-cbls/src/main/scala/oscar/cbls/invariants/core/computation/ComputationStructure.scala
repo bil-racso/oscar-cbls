@@ -413,7 +413,7 @@ trait Invariant extends PropagationElement{
    * @return null
    */
   def registerStaticAndDynamicDependencyArrayIndex[T <: Value](v:Array[T],offset:Int = 0):Array[KeyForElementRemoval] =  {
-    for (i <- 0 to v.size) {
+    for (i <- 0 until v.size) {
       registerStaticDependency(v(i))
       registerDynamicDependency(v(i), i + offset)
     }

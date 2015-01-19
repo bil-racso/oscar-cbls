@@ -62,7 +62,7 @@ object InvGen {
       v <- Gen.choose(range.min, range.max) suchThat (constraint(_))
       c <- Gen.alphaChar
     } yield new RandomIntVar(
-      new CBLSIntVar(model, range, v, c.toString.toLowerCase), constraint)
+      new CBLSIntVar(model, v, range, c.toString.toLowerCase), constraint)
 
   /**
    * Method to generate a list of nbVars random IntVar. Uses randomIntVar
@@ -84,8 +84,7 @@ object InvGen {
     c <- Gen.alphaChar
     v <- Gen.containerOfN[List, Int](nbVars, Gen.choose(range.min, range.max))
   } yield new RandomIntSetVar(
-      new CBLSSetVar(model, range.min, range.max, c.toString.toUpperCase,
-        SortedSet(v: _*)))
+      new CBLSSetVar(model, SortedSet(v: _*), range, c.toString.toUpperCase))
 
   /**
    * Method to generate a random IntSetVar of size less or equal to the given
@@ -95,8 +94,8 @@ object InvGen {
     c <- Gen.alphaChar
     s <- Gen.choose(1, upToSize)
     v <- Gen.containerOfN[List, Int](s, Gen.choose(range.min, range.max))
-  } yield new RandomIntSetVar(new CBLSSetVar(model, range.min, range.max,
-      c.toString.toUpperCase, SortedSet(v: _*)))
+  } yield new RandomIntSetVar(new CBLSSetVar(model, SortedSet(v: _*), range,
+      c.toString.toUpperCase))
 
   /**
    * Method to generate a list of IntSetVars. Uses randomIntSetVar.

@@ -55,18 +55,18 @@ class TestIntVar extends FunSuite with Matchers {
     val solver = new Store
     val x = CBLSIntVar(solver, 1, (1 to 10), "x")
    // solver.close()
-    (1 to 10).foreach(x.inDomain(_) should be(true))
-    x.inDomain(0) should be(false)
-    x.inDomain(11) should be(false)
-    x.inDomain(Int.MaxValue) should be(false)
-    x.inDomain(Int.MinValue) should be(false)
+    (1 to 10).foreach(x.domain.contains(_) should be(true))
+    x.domain.contains(0) should be(false)
+    x.domain.contains(11) should be(false)
+    x.domain.contains(Int.MaxValue) should be(false)
+    x.domain.contains(Int.MinValue) should be(false)
   }
   
   test("test domain of IntVar"){
     val solver = new Store
     val domain = (1 to 10)
-    val x = CBLSIntVar(solver, domain, 1, "x")
-    val y = CBLSIntVar(solver, 1, 10, 1, "y")
+    val x = CBLSIntVar(solver, 1, domain, "x")
+    val y = CBLSIntVar(solver, 1, 1 to 10, "y")
     
     x.domain should be(domain)
     y.domain should be(domain)

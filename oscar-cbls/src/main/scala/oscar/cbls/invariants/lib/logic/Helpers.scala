@@ -33,19 +33,19 @@ import oscar.cbls.invariants.core.propagation.Checker
   * @author renaud.delandtsheer@cetic.be
   * */
 class Int2Int(a:IntValue, fun:Int => Int, domain:Domain = FullRange) extends IntInvariant(fun(a.value),domain) {
-  var output:CBLSIntVar=null
 
   registerStaticAndDynamicDependency(a)
   finishInitialization()
+  this := fun(a.value)
 
   @inline
   override def notifyIntChanged(v: ChangingIntValue, OldVal: Int, NewVal: Int) {
     assert(v == a)
-    output := fun(NewVal)
+    this := fun(NewVal)
   }
 
   override def checkInternals(c:Checker){
-    c.check(output.value == fun(a.value), Some("output.value == fun(a.value)"))
+    c.check(this.value == fun(a.value), Some("output.value == fun(a.value)"))
   }
 }
 

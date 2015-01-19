@@ -261,7 +261,7 @@ object CBLSSetVar{
 case class CBLSSetConst(override val value:SortedSet[Int])
   extends SetValue{
   override def toString:String = "Set{" + value.mkString(",") + "}"
-  override def domain:Domain = DomainSet(value)
+  override def domain:Domain = DomainRange(value.min,value.max)
   override val min: Int = value.min
   override val max: Int = value.max
   override def name: String = toString
@@ -288,8 +288,7 @@ abstract class SetInvariant(initialValue:SortedSet[Int] = SortedSet.empty,
     this
   }
 
-  //TODO: this is wrong, there is an unlimited recusion here
-  override def name: String = if(customName == null) toString else customName
+  override final def name: String = if(customName == null) this.getClass.getSimpleName else customName
 
   override final def performPropagation(){
     performInvariantPropagation()

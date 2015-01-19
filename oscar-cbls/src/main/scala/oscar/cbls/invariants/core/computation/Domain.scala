@@ -25,27 +25,19 @@ import scala.util.Random
 
 object Domain{
   implicit def rangeToDomain(r:Range):Domain = {
-    if (r.step == 1) DomainRange(r.head,r.last)
-    else DomainSet(r.toSet)
+    DomainRange(r.head,r.last)
   }
 
   implicit def coupleToDomain(i:(Int,Int)):Domain = {
     if(i._1 == i._2) SingleValueDomain(i._1)
-      else DomainRange(i._1,i._2)
-  }
-
-  implicit def setToDomain(s:Set[Int]):Domain = {
-    if (s.size == 1) SingleValueDomain(s.head)
-    else DomainSet(s)
+    else DomainRange(i._1,i._2)
   }
 
 
   def apply(v:Iterable[Int]):Domain =
-  v match{
-    case s:Set[Int] => s
-    case r:Range => r
-    case i:Iterable[Int] => SortedSet.empty[Int] ++ i
-  }
+    v match{
+      case r:Range => r
+    }
 }
 
 sealed abstract class Domain extends Iterable[Int]{
@@ -53,13 +45,14 @@ sealed abstract class Domain extends Iterable[Int]{
   def max: Int
   def size: Int
   def contains(v:Int): Boolean
-//  def restrict(d:Domain):Domain
+  //  def restrict(d:Domain):Domain
   def values:Iterable[Int]
   def randomValue:Int
   def restrict(d:Domain):Domain
 
-  def union(d:Domain):Domain = throw new Error("not implemented")
-  def inter(d:Domain):Domain = throw new Error("not implemented")
+  def union(d:Domain) =
+    DomainRange(if(d.min < this.min) d.min else this.min,
+      if(d.max > this.max) d.max else this.max)
 
   override def iterator: Iterator[Int] = values.iterator
 }
@@ -74,24 +67,12 @@ case class DomainRange(override val min: Int, override val max: Int) extends Dom
   override def restrict(d: Domain): Domain = {
     d match{
       case r:DomainRange => math.max(r.min,min) to math.min(r.max,max)
-      case s:DomainSet => s.values.--(values)
       case FullRange => d
       case d:SingleValueDomain => d.restrict(this)
     }
   }
 
   override def toString(): String = "DomainRange(min:" + min + ", max:" +  max + ")"
-}
-
-case class DomainSet(values: Set[Int]) extends Domain {
-  if (values.isEmpty) throw new EmptyDomainException
-  def min = values.min
-  def max = values.max
-  override def size = values.size
-  def contains(v:Int): Boolean = values.contains(v)
-  override def randomValue: Int = values.toIndexedSeq(Random.nextInt(values.size))
-  override def restrict(d: Domain): Domain = d.restrict(this)
-  override def toString(): String = "DomainSet(values:" + values + ")"
 }
 
 case object FullRange extends Domain{
