@@ -1,12 +1,13 @@
 package oscar.examples.cbls
 
-import oscar.cbls.invariants.core.computation.{IntValue, CBLSIntVar, Store}
+import oscar.cbls.invariants.core.computation.{CBLSIntConst, CBLSIntVar, IntValue, Store}
 import oscar.cbls.invariants.lib.logic.Filter
 import oscar.cbls.invariants.lib.minmax.MinArray
 import oscar.cbls.invariants.lib.numeric.Sum
 import oscar.cbls.modeling.AlgebraTrait
-import oscar.cbls.objective.{Objective}
+import oscar.cbls.objective.Objective
 import oscar.cbls.search.{AssignNeighborhood, RandomizeNeighborhood, SwapsNeighborhood}
+
 import scala.language.postfixOps
 
 object WarehouseLocation extends App with AlgebraTrait{
@@ -41,8 +42,8 @@ object WarehouseLocation extends App with AlgebraTrait{
     math.sqrt(math.pow(from._1 - to._1,2) + math.pow(from._2 - to._2,2)).toInt
 
   //for each delivery point, the distance to each warehouse
-  val distanceCost:Array[Array[Int]] = Array.tabulate(D)(
-    d => Array.tabulate(W)(
+  val distanceCost = Array.tabulate(D)(
+    d => Array.tabulate[CBLSIntConst](W)(
       w => distance(warehousePositions(w), deliveryPositions(d))))
 
   val m = Store()
@@ -51,9 +52,9 @@ object WarehouseLocation extends App with AlgebraTrait{
   val openWarehouses = Filter(warehouseOpenArray).setName("openWarehouses")
 
   val distanceToNearestOpenWarehouse = Array.tabulate(D)(d =>
-    MinArray[IntValue](distanceCost(d), openWarehouses, defaultCostForNoOpenWarehouse).setName("distance_for_delivery_" + d))
+    MinArray(distanceCost(d), openWarehouses, defaultCostForNoOpenWarehouse).setName("distance_for_delivery_" + d))
 
-  val obj = Objective(Sum(distanceToNearestOpenWarehouse) + Sum[IntValue](costForOpeningWarehouse, openWarehouses))
+  val obj = Objective(Sum(distanceToNearestOpenWarehouse) + Sum(costForOpeningWarehouse, openWarehouses))
 
   m.close()
 

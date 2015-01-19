@@ -34,7 +34,7 @@ import oscar.cbls.invariants.core.propagation.Checker
  * it is expected that the values are always >= 0
  * @author renaud.delandtsheer@cetic.be
  * */
-case class DenseCount[T<:IntValue](values: Array[T], counts: Array[CBLSIntVar], offset:Int = 0) extends Invariant {
+case class DenseCount(values: Array[IntValue], counts: Array[CBLSIntVar], offset:Int = 0) extends Invariant {
 
   for (v <- values.indices) registerStaticAndDynamicDependency(values(v), v)
 
@@ -78,7 +78,7 @@ case class DenseCount[T<:IntValue](values: Array[T], counts: Array[CBLSIntVar], 
 }
 
 object DenseCount{
-  def makeDenseCount[T<:IntValue](vars: Array[T]):DenseCount[T] = {
+  def makeDenseCount(vars: Array[IntValue]):DenseCount = {
     val ((minMin,maxMax)) = InvariantHelper.getMinMaxBounds(vars)
     val mbValues = maxMax - minMin + 1
     val m:Store = InvariantHelper.findModel(vars)

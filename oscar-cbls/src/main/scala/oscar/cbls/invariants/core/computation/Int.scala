@@ -51,8 +51,8 @@ object IntValue {
       (o1, o2) match {
         case (a: CBLSIntConst, b: CBLSIntConst) => a.value compare b.value
         case (a: ChangingIntValue, b: ChangingIntValue) => a.uniqueID - b.uniqueID
-        case (CBLSIntConst(_), _:ChangingIntValue) => -1
-        case (_:ChangingIntValue, CBLSIntConst(_)) => 1
+        case (_:CBLSIntConst, _:ChangingIntValue) => -1
+        case (_:ChangingIntValue, _:CBLSIntConst) => 1
       }
     }
   }
@@ -239,13 +239,20 @@ object CBLSIntVar{
  * @param value: the value of the constant
  * @author renaud.delandtsheer@cetic.be
  */
-case class CBLSIntConst(override val value:Int)
+class CBLSIntConst(override val value:Int)
   extends IntValue{
   override def toString:String = "" + value
   override def domain: SingleValueDomain = new SingleValueDomain(value)
   override def min: Int = value
   override def max: Int = value
   override def name = "" + value
+}
+
+
+object CBLSIntConst{
+  implicit def int2IntValue(a: Int): IntValue = new CBLSIntConst(a)
+  implicit def int2IntConst(a: Int): CBLSIntConst = new CBLSIntConst(a)
+  def apply(a:Int) = new CBLSIntConst(a)
 }
 
 /** this is a special case of invariant that has a single output variable, that is an IntVar
@@ -280,7 +287,6 @@ abstract class IntInvariant(initialValue:Int = 0, initialDomain:Domain = FullRan
 }
 
 object IdentityInt{
-  def apply(v:IntValue):IntInvariant = new FullIdentityInt(v)
   def apply(toValue:CBLSIntVar, fromValue:IntValue){
     fromValue match{
       case c:CBLSIntConst => toValue := c.value
@@ -291,26 +297,8 @@ object IdentityInt{
 
 /** an invariant that is the identity function
   * @author renaud.delandtsheer@cetic.be
-  * @param v
   */
-class FullIdentityInt(v:IntValue) extends IntInvariant(v.value, v.domain) {
-  registerStaticAndDynamicDependency(v)
-  finishInitialization()
-
-  override def notifyIntChanged(v: ChangingIntValue, i: Int, OldVal: Int, NewVal: Int) {
-    assert(v == this.v)
-    this := NewVal
-  }
-
-  override def checkInternals(c:Checker){
-    c.check(getValue(true) == v.value)
-  }
-}
-
-/** an invariant that is the identity function
-  * @author renaud.delandtsheer@cetic.be
-  */
-class IdentityInt(toValue:CBLSIntVar, fromValue:ChangingIntValue) extends Invariant{
+class IdentityInt(toValue:CBLSIntVar, fromValue:IntValue) extends Invariant{
   registerStaticAndDynamicDependency(fromValue)
   toValue.setDefiningInvariant(this)
   finishInitialization()

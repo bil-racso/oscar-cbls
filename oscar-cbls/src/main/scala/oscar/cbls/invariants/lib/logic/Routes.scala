@@ -42,8 +42,8 @@ import oscar.cbls.invariants.core.propagation.Checker
  * @param lastInRoute the last point in each route.
  * @author renaud.delandtsheer@cetic.be
  * */
-class Routes[T<:IntValue](V: Int,
-  val next: Array[T],
+class Routes(V: Int,
+  val next: Array[IntValue],
   val positionInRoute: Array[CBLSIntVar],
   val routeNr: Array[CBLSIntVar],
   val routeLength: Array[CBLSIntVar],
@@ -183,7 +183,7 @@ class Routes[T<:IntValue](V: Int,
 
 
 object Routes {
-  def buildRoutes[T<:IntValue](next: Array[T], V: Int) = {
+  def buildRoutes(next: Array[IntValue], V: Int) = {
     val m: Store = InvariantHelper.findModel(next)
 
     val positionInRoute = Array.tabulate(next.length)(i => CBLSIntVar(m, next.length, 0 to next.length, "PositionInRouteOfPt" + i))

@@ -26,14 +26,14 @@ import oscar.cbls.invariants.core.propagation.Checker
 import oscar.cbls.invariants.lib.logic._;
 
 object Sum{
-  def apply[T <:IntValue](vars: Array[T], cond: SetValue):SumElements[T] = SumElements(vars, cond)
+  def apply(vars: Array[IntValue], cond: SetValue):SumElements = SumElements(vars, cond)
   def apply(vars: Iterable[IntValue]):Sum = new Sum(vars)
 }
 
 
 object Prod{
   def apply(vars: Iterable[IntValue]):Prod = new Prod(vars)
-  def apply[T <:IntValue](vars: Array[T], cond: SetValue):ProdElements[T] = ProdElements(vars, cond)
+  def apply(vars: Array[IntValue], cond: SetValue):ProdElements = ProdElements(vars, cond)
 }
 
 /**

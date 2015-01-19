@@ -28,8 +28,8 @@ import oscar.cbls.invariants.core.propagation._
  * @param cond is the condition for selecting variables in the array of summed ones, cannot be null
   * @author renaud.delandtsheer@cetic.be
   * */
-case class SumElements[T <:IntValue](vars: Array[T], cond: SetValue)
-  extends IntInvariant(initialValue=cond.value.foldLeft(0)((acc, i) => acc + vars(i).value)) with Bulked[T, Unit] with VaryingDependenciesInvariant{
+case class SumElements(vars: Array[IntValue], cond: SetValue)
+  extends IntInvariant(initialValue=cond.value.foldLeft(0)((acc, i) => acc + vars(i).value)) with Bulked[IntValue, Unit] with VaryingDependenciesInvariant{
   assert(vars.size > 0, "Invariant SumElements declared with zero vars to max")
   assert(cond != null, "cond cannot be null for SumElements")
 
@@ -84,8 +84,8 @@ case class SumElements[T <:IntValue](vars: Array[T], cond: SetValue)
  * @param cond is the condition for selecting variables in the set of summed ones.
   * @author renaud.delandtsheer@cetic.be
   * */
-case class ProdElements[T <:IntValue](vars: Array[T], cond: SetValue)
-  extends IntInvariant with Bulked[T, Unit] with VaryingDependenciesInvariant{
+case class ProdElements(vars: Array[IntValue], cond: SetValue)
+  extends IntInvariant with Bulked[IntValue, Unit] with VaryingDependenciesInvariant{
   assert(cond != null, "cond cannot be null for ProdElements")
 
   val keyForRemoval: Array[KeyForElementRemoval] =  Array.fill(vars.length) {null}

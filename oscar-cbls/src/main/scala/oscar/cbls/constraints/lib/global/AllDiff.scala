@@ -75,13 +75,13 @@ case class AllDiff(variables: Iterable[IntValue]) extends Constraint with Invari
   private val Violations: SortedMap[IntValue, IntValue] = {
     def accumulate(acc:SortedMap[IntValue,IntValue], variable:IntValue, violation:IntValue):SortedMap[IntValue,IntValue] =
       acc + (acc.get(variable) match{
-        case Some(oldViolation) => ((variable,(violation + oldViolation).setName(violation.name)))
-        case None => ((variable,violation))})
+        case Some(oldViolation) => (variable,violation + oldViolation)
+        case None => (variable,violation)})
 
     variables.foldLeft(
       SortedMap.empty[IntValue, IntValue])(
         (acc, intvar) => {
-          val newvar = (ValueCount.element((intvar + offset)) - 1).setName("Violation_AllDiff_" + intvar.name)
+          val newvar = ValueCount.element((intvar + offset)) - 1
           accumulate(acc , intvar, newvar)
         })
   }

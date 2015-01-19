@@ -36,7 +36,7 @@ import scala.collection.mutable.Queue
  * @param boundary the boundary for comparison
  * @author renaud.delandtsheer@cetic.be
  * */
-case class SelectLEHeapHeap[T <:IntValue](values: Array[T], boundary: IntValue)
+case class SelectLEHeapHeap(values: Array[IntValue], boundary: IntValue)
   extends SetInvariant(SortedSet.empty[Int], values.indices.start to values.indices.end) {
 
   for (v <- values.indices) registerStaticAndDynamicDependency(values(v), v)
@@ -125,7 +125,7 @@ case class SelectLEHeapHeap[T <:IntValue](values: Array[T], boundary: IntValue)
  * @param boundary: the boundary for comparison
  * @author renaud.delandtsheer@cetic.be
  * */
-case class SelectLESetQueue[T <:IntValue](values: Array[T], boundary: IntValue)
+case class SelectLESetQueue(values: Array[IntValue], boundary: IntValue)
   extends SetInvariant(initialDomain = values.indices.start to values.indices.end) {
 
   for (v <- values.indices) registerStaticAndDynamicDependency(values(v), v)

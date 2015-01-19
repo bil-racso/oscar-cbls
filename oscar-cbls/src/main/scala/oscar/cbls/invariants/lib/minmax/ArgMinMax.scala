@@ -37,7 +37,7 @@ import scala.collection.immutable.SortedSet
  * update is O(log(n))
  * @author renaud.delandtsheer@cetic.be
  * */
-case class ArgMax[T <:IntValue](vars: Array[T], cond: SetValue = null, default: Int = Int.MinValue)
+case class ArgMax(vars: Array[IntValue], cond: SetValue = null, default: Int = Int.MinValue)
   extends ArgMiax(vars, cond, default) {
 
   override def name: String = "ArgMaxArray"
@@ -55,7 +55,7 @@ case class ArgMax[T <:IntValue](vars: Array[T], cond: SetValue = null, default: 
  * update is O(log(n))
  * @author renaud.delandtsheer@cetic.be
  * */
-case class ArgMin[T <:IntValue](vars: Array[T], cond: SetValue = null, default: Int = Int.MaxValue)
+case class ArgMin(vars: Array[IntValue], cond: SetValue = null, default: Int = Int.MaxValue)
   extends ArgMiax(vars, cond, default) {
 
   override def name: String = "ArgMinArray"
@@ -73,8 +73,8 @@ case class ArgMin[T <:IntValue](vars: Array[T], cond: SetValue = null, default: 
  * update is O(log(n))
  * @author renaud.delandtsheer@cetic.be
  * */
-abstract class ArgMiax[T <:IntValue](vars: Array[T], cond: SetValue, default: Int)
-  extends SetInvariant(initialDomain = vars.indices.start to vars.indices.last) with Bulked[T, Unit] with VaryingDependenciesInvariant {
+abstract class ArgMiax(vars: Array[IntValue], cond: SetValue, default: Int)
+  extends SetInvariant(initialDomain = vars.indices.start to vars.indices.last) with Bulked[IntValue, Unit] with VaryingDependenciesInvariant {
 
   override def toString:String = {
     name + "(" + InvariantHelper.arrayToString(vars) + "," + cond + "," + default + ")"

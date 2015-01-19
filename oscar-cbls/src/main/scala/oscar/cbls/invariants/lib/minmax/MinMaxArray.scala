@@ -35,7 +35,7 @@ import scala.collection.immutable.SortedSet
  * update is O(log(n))
  * @author renaud.delandtsheer@cetic.be
  * */
-case class MaxArray[T <:IntValue](varss: Array[T], ccond: SetValue = null, default: Int = Int.MinValue)
+case class MaxArray(varss: Array[IntValue], ccond: SetValue = null, default: Int = Int.MinValue)
   extends MiaxArray(varss, if(ccond == null) CBLSSetConst(SortedSet.empty[Int] ++ varss.indices) else ccond, default) {
 
   override def Ord(v: IntValue): Int = -v.value
@@ -57,7 +57,7 @@ case class MaxArray[T <:IntValue](varss: Array[T], ccond: SetValue = null, defau
  * update is O(log(n))
  * @author renaud.delandtsheer@cetic.be
  * */
-case class MinArray[T <:IntValue](varss: Array[T], ccond: SetValue = null, default: Int = Int.MaxValue)
+case class MinArray(varss: Array[IntValue], ccond: SetValue = null, default: Int = Int.MaxValue)
   extends MiaxArray(varss, if(ccond == null) CBLSSetConst(SortedSet.empty[Int] ++ varss.indices) else ccond, default) {
 
   override def Ord(v: IntValue): Int = v.value
@@ -80,8 +80,8 @@ case class MinArray[T <:IntValue](varss: Array[T], ccond: SetValue = null, defau
  * update is O(log(n))
  * @author renaud.delandtsheer@cetic.be
  * */
-abstract class MiaxArray[T <:IntValue](vars: Array[T], cond: SetValue, default: Int)
-  extends IntInvariant with Bulked[T, Domain] with VaryingDependenciesInvariant {
+abstract class MiaxArray(vars: Array[IntValue], cond: SetValue, default: Int)
+  extends IntInvariant with Bulked[IntValue, Domain] with VaryingDependenciesInvariant {
 
   var keyForRemoval: Array[KeyForElementRemoval] = new Array(vars.size)
   var h: BinomialHeapWithMoveExtMem[Int] = new BinomialHeapWithMoveExtMem[Int](i => Ord(vars(i)), vars.size, new ArrayMap(vars.size))
@@ -108,7 +108,7 @@ abstract class MiaxArray[T <:IntValue](vars: Array[T], cond: SetValue, default: 
   finishInitialization()
 
   //TODO: single pass please!
-  override def performBulkComputation(bulkedVar: Array[T]) = {
+  override def performBulkComputation(bulkedVar: Array[IntValue]) = {
     (bulkedVar.foldLeft(Int.MaxValue)((acc, intvar) => if (intvar.min < acc) intvar.min else acc),
       bulkedVar.foldLeft(Int.MinValue)((acc, intvar) => if (intvar.max > acc) intvar.max else acc))
   }

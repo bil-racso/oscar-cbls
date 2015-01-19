@@ -1072,6 +1072,7 @@ trait VaryingDependencies extends PropagationElement{
         assert(determiningElement == null, "only one determining element is authorized")
         registerDynamicallyListenedElement(pe, i)
         determiningElement = pe
+      case _ => ;
     }
   }
 

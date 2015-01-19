@@ -29,7 +29,7 @@ import scala.collection.immutable.SortedSet
 /**maintains the reverse references. Referencing(i) = {j | Reference(j) includes i}
   * @author renaud.delandtsheer@cetic.be
   * */
-case class DenseRef[T<:SetValue](references:Array[T], referencing:Array[CBLSSetVar]) extends Invariant {
+case class DenseRef(references:Array[SetValue], referencing:Array[CBLSSetVar]) extends Invariant {
 
   for (v <- references.indices) registerStaticAndDynamicDependency(references(v),v)
 
@@ -70,7 +70,7 @@ case class DenseRef[T<:SetValue](references:Array[T], referencing:Array[CBLSSetV
 }
 
 object DenseRef{
-  def makeDenseRef(references:Array[CBLSSetVar]) = {
+  def makeDenseRef(references:Array[SetValue]) = {
     val (minMin,maxMax) = InvariantHelper.getMinMaxBoundsSet(references)
     val m:Store = InvariantHelper.findModel(references)
     assert(minMin == 0)

@@ -132,22 +132,33 @@ trait AlgebraTrait{
 
     }
 
-  implicit def InstrumentArrayOfIntVar[T<:IntValue](inputarray: Array[T])
-  = new InstrumentedArrayOfIntVar(inputarray)
+  implicit def InstrumentArrayOfIntValue(inputarray: Array[IntValue]):InstrumentedArrayOfIntValue
+  = new InstrumentedArrayOfIntValue(inputarray)
 
-  class InstrumentedArrayOfIntVar[T<:IntValue](inputarray: Array[T]) {
+  class InstrumentedArrayOfIntValue(inputarray: Array[IntValue]) {
     def element(index: IntValue) = IntElement(index, inputarray)
 
     def elements(index: SetValue) = Elements(index, inputarray)
   }
 
-  implicit def InstrumentArrayOfIntSetVar[T <:SetValue](inputarray: Array[T])
+  implicit def InstrumentArrayOfIntSetVar(inputarray: Array[SetValue]):InstrumentedArrayOfIntSetVar
   = new InstrumentedArrayOfIntSetVar(inputarray)
 
-  class InstrumentedArrayOfIntSetVar[T <:SetValue](inputarray: Array[T]) {
+  class InstrumentedArrayOfIntSetVar(inputarray: Array[SetValue]) {
     def apply(index: IntValue): SetInvariant = SetElement(index, inputarray)
   }
 
-  implicit def arrayOfInt2ArrayOfIntValue(a:Array[Int]):Array[IntValue] = a.map(CBLSIntConst)
+  @deprecated("You are implicitly converting Array[Int] to Array[CBLSIntconst]. This is OK, but prevents Bulking. You should create an array of CBLSIntConst straight, and use this array everywhere you need it","always")
+  implicit def arrayOfInt2ArrayOfIntValue(a:Array[Int]):Array[IntValue] = a.map(CBLSIntConst.apply)
+
+  implicit def arrayOfIntVar2ArrayOfIntValue(a:Array[CBLSIntVar]):Array[IntValue] = a.asInstanceOf[Array[IntValue]]
+  implicit def arrayOfIntVar2ArrayOfInstrumentedIntValue(a:Array[CBLSIntVar]):InstrumentedArrayOfIntValue = new InstrumentedArrayOfIntValue(a.asInstanceOf[Array[IntValue]])
+
+  implicit def arrayOfIntInvariant2ArrayOfIntValue(a:Array[IntInvariant]):Array[IntValue] = a.asInstanceOf[Array[IntValue]]
+  implicit def arrayOfIntInvariant2ArrayOfInstrumentedIntValue(a:Array[IntInvariant]):InstrumentedArrayOfIntValue = new InstrumentedArrayOfIntValue(a.asInstanceOf[Array[IntValue]])
+
+  implicit def arrayOfIntConst2ArrayOfIntValue(a:Array[CBLSIntConst]):Array[IntValue] = a.asInstanceOf[Array[IntValue]]
+  implicit def arrayOfIntconst2ArrayOfInstrumentedIntValue(a:Array[CBLSIntConst]):InstrumentedArrayOfIntValue = new InstrumentedArrayOfIntValue(a.asInstanceOf[Array[IntValue]])
+
 }
 

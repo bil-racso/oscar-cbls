@@ -159,7 +159,7 @@ case class Min(vars: SortedSet[IntValue]) extends Miax(vars) {
 }
 
 object Min{
-  def apply[T <:IntValue](varss: Array[T], ccond: SetValue = null, default: Int = Int.MinValue) = MinArray[T](varss, ccond, default)
+  def apply(varss: Array[IntValue], ccond: SetValue = null, default: Int = Int.MinValue) = MinArray(varss, ccond, default)
 }
 
 /**
@@ -180,7 +180,7 @@ case class Max(vars: SortedSet[IntValue]) extends Miax(vars) {
 }
 
 object Max{
-  def apply[T <:IntValue](varss: Array[T], ccond: SetValue = null, default: Int = Int.MaxValue) = MaxArray[T](varss, ccond, default)
+  def apply(varss: Array[IntValue], ccond: SetValue = null, default: Int = Int.MaxValue) = MaxArray(varss, ccond, default)
 }
 
 /**

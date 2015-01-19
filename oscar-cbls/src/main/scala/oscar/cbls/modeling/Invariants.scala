@@ -62,7 +62,7 @@ trait ClusterInvariants{
 
   /**maintains the reverse references. Referencing(i) = {j | Reference(j) includes i}
    * */
-  def denseRef[T<:SetValue](references:Array[T], referencing:Array[CBLSSetVar]) = DenseRef(references, referencing)
+  def denseRef(references:Array[SetValue], referencing:Array[CBLSSetVar]) = DenseRef(references, referencing)
 
   /**
    * Maintains a resource usage profile.
@@ -100,7 +100,7 @@ trait ClusterInvariants{
    * @param values: an array of intvar
    * @param boundary: the boundary for comparison
    */
-  def selectLESetQueue[T<:IntValue](values:Array[T], boundary: IntValue) = SelectLESetQueue(values, boundary)
+  def selectLESetQueue(values:Array[IntValue], boundary: IntValue) = SelectLESetQueue(values, boundary)
 
 }
 
@@ -124,12 +124,12 @@ trait ComplexLogicInvariants{
    * @param ReversePerm   i < j => values(ReversePerm(i)) < values(ReversePerm(j))
    * see method GetForwardPerm() for the forward permutation: ReversePerm(ForwardPerm(i)) == i
    * */
-  def sort[T<:IntValue](values:Array[T], ReversePerm:Array[CBLSIntVar]) = new Sort(values, ReversePerm)
+  def sort(values:Array[IntValue], ReversePerm:Array[CBLSIntVar]) = new Sort(values, ReversePerm)
 
   /**returns the ForwardPerm for a given array
    * It instantiates an array of the appropriate size and populates it with IntVar.
    */
-  def makeSort[T<:IntValue](values:Array[T]) = Sort.MakeSort(values)
+  def makeSort(values:Array[IntValue]) = Sort.MakeSort(values)
 }
 
 

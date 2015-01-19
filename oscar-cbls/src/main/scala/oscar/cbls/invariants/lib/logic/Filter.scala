@@ -36,7 +36,7 @@ import scala.collection.immutable.SortedSet
   *             By default, cond is "_ > 0"
   * @author renaud.delandtsheer@cetic.be
   * */
-case class Filter[T <:IntValue](values:Array[T], cond:(Int=>Boolean)=_>0)
+case class Filter(values:Array[IntValue], cond:(Int=>Boolean)=_>0)
   extends SetInvariant(values.indices.foldLeft(SortedSet.empty[Int])((acc:SortedSet[Int],indice:Int) => if(cond(values(indice).value)){acc+indice}else acc),
     values.indices.start to values.indices.end) {
 

@@ -29,7 +29,7 @@ import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.lib.logic._
 import oscar.cbls.invariants.lib.numeric.Sum
 import oscar.cbls.invariants.lib.set.Cardinality
-import oscar.cbls.modeling.Algebra.InstrumentIntSetVar
+import oscar.cbls.modeling.Algebra._
 
 import scala.collection.immutable.{SortedMap, SortedSet}
 import scala.math.min
