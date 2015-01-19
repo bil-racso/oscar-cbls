@@ -4,8 +4,10 @@ import oscar.algo.ArrayQueue
 import oscar.algo.ArrayStack
 import oscar.algo.reversible.ReversibleContext
 import oscar.algo.reversible.TrailEntry
+import oscar.cp.core.CPStore
+import oscar.cp.lcg.core.clauses.Clause
 
-class LCGStore {
+class LCGStore(store: CPStore) {
 
   // Inconsistency
   private[this] var inconsistent: Boolean = false
@@ -35,22 +37,28 @@ class LCGStore {
   private[this] val watchers: ArrayStack[ArrayQueue[Clause]] = new ArrayStack(128)
 
   // Trailing queue  
-  private[this] val trailVar: ArrayStack[Literal] = new ArrayStack(100)
-  private[this] val trailVarLevels: ArrayStack[Int] = new ArrayStack(100) // FIXME boxing
-  private[this] val trailExplain: ArrayStack[Clause] = new ArrayStack(100)
-  private[this] val trailExplainLevels: ArrayStack[Int] = new ArrayStack(100) // FIXME boxing
+  private[this] val trailVar: ArrayStack[Literal] = new ArrayStack(128)
+  private[this] val trailVarLevels: ArrayStack[Int] = new ArrayStack(128) // FIXME boxing
+  private[this] val trailExplain: ArrayStack[Clause] = new ArrayStack(128)
+  private[this] val trailExplainLevels: ArrayStack[Int] = new ArrayStack(128) // FIXME boxing
 
   // Propagation queue
   private[this] val queue: ArrayQueue[Literal] = new ArrayQueue(128)
+  
+  // Clause to propagate before fixed-point
+  private[this] val toPropagate: ArrayStack[Clause] = new ArrayStack(16)
 
   /** Return a literal that is always true. */
   @inline final def trueLit: Literal = ???
 
   /** Return a literal that is always false. */
   @inline final def falseLit: Literal = ???
-  
+
   /** Return true if the store in inconsistent. */
   @inline final def isInconsistent: Boolean = inconsistent
+  
+  /** Return the current decision level. */  
+  @inline final def decisionLevel: Int = trailVarLevels.size
 
   /** Return true if the variable is assigned to true. */
   @inline final def isTrue(literal: Literal): Boolean = values(literal.varId) == True
@@ -91,18 +99,31 @@ class LCGStore {
   /** Add a backtrable clause to the store. */
   final def addExplanationClause(literals: Array[Literal]): Boolean = ???
 
-  /** */
-  final def newClause(literals: Array[Literal], learnt: Boolean): Boolean = {
+  @inline private def newProblemClause(literals: Array[Literal]): Boolean = {
+
+    assert(trailVarLevels.size == 0)
+
+    // TODO Check for initial satisfiability
+
+    val clause = Clause(this, literals, false)
+    problemClauses.append(clause)
+    watchers(literals(0).opposite.id).addLast(clause)
+    watchers(literals(1).opposite.id).addLast(clause)
+    true
+  }
+
+  // Build a new clause
+  @inline private def newClause(literals: Array[Literal], learnt: Boolean): Boolean = {
 
     if (!learnt) {
       // check for initial satisfiability
     }
 
     if (literals.length == 0) true
-    else if (literals.length == 1) enqueue(literals(0), null) // Unit fact
+    else if (literals.length == 1) enqueue(literals(0), null) // FIXME Need a clause object here
     else {
       // Allocate clause
-      val clause = new Clause(this, literals, learnt)
+      val clause = Clause(this, literals, learnt)
       if (learnt) {
         // Add clause to learnt
         learntClauses.append(clause)
@@ -142,39 +163,56 @@ class LCGStore {
    *  Propagate and conflict analysis
    */
   final def propagate(): Boolean = {
-    if (inconsistent) false
+    
+    // New level to register
+    newLevel()
+
+    // Init propagate
+    var canPropagate = true
+    if (inconsistent) {
+      if (decisionLevel > inconsistentLevel) canPropagate = false
+      else {
+        // Post buffered conflict clause
+        inconsistent = false
+        inconsistentLevel = -1
+      }
+    }
+
+    if (!canPropagate) false
     else {
       val conflict = fixedPoint()
       if (conflict == null) true
-      else if (decisionLevel == 0) false
       else {
-        analyze(conflict)
-        cancelUntil(outBacktsLevel)
-        record(outLearnt.toArray)
-        updateActivities()
-        true
+        // Handle conflict
+        inconsistentLevel = decisionLevel - 1
+        inconsistent = true
+        false
+        //analyze(conflict)
+        //cancelUntil(outBacktsLevel)
+        //record(outLearnt.toArray)
+        //updateActivities()
+        //true
       }
     }
-    
-    // Notify domains
-  }
-  
-  private def prePropagate(): Boolean = {
-    if (!inconsistent) true
-    else if (decisionLevel > inconsistentLevel) false
-    else {
-      // Post buffered conflict clause
-      inconsistent = false
-      true
-    }
+
+    // TODO Notify domains
   }
 
   /**
    *  Empty the propagation queue
    *  Return the first inconsistent clause if any
    */
-  @inline private def fixedPoint(): Clause = {
-    var failReason: Clause = null
+  @inline private def fixedPoint(): Clause = {    
+    var failReason: Clause = null  
+    
+    // New clauses to propagate
+    while (!toPropagate.isEmpty && failReason == null) {
+      val clause = toPropagate.pop()
+      val consistent = clause.setup()
+      if (!consistent) failReason = clause
+    }    
+    
+    // Empty propagation queue
     while (!queue.isEmpty && failReason == null) {
       val literal = queue.removeFirst
       val clauses = watchers(literal.id)
@@ -269,18 +307,8 @@ class LCGStore {
   private[this] val pReason: ArrayStack[Literal] = new ArrayStack[Literal](16)
 
   private[this] final var outBacktsLevel: Int = -1
-  
-  private def conflitAnalysis(initConflict: Clause): Unit = {
-    val seen: Array[Boolean] = new Array(values.size) // FIXME
-    var counter = 0
-    var p: Literal = null
-    var conflict: Clause = initConflict
-    
-    outLearnt.clear()
-    outLearnt.append(null) // leave a romm for the asserted literal
-  }
 
-  private def analyze(initConflict: Clause): Unit = {
+  /*private def analyze(initConflict: Clause): Unit = {
 
     val seen: Array[Boolean] = new Array(values.size) // FIXME
     var counter = 0
@@ -315,7 +343,7 @@ class LCGStore {
       do {
         p = trailVar.top
         conflict = reasons(p.varId)
-        undoOne()
+        undoAssignment()()
       } while (!seen(p.varId))
 
       counter -= 1
@@ -329,27 +357,31 @@ class LCGStore {
     newClause(literals, true)
     val clause = learntClauses.last
     enqueue(literals(0), clause)
-  }
-
-  final def decisionLevel: Int = trailVarLevels.size
+  }*/
 
   // Trailing queue
   // --------------
-
-  @inline final def pushState(externalTrail: ReversibleContext): Unit = {
-    // push in my structure
-    // push in external structure
-    externalTrail.trail(new TrailEntry { final override def restore(): Unit = popState() })
+  
+  // Used for efficient trailing
+  private[this] var lastMagic: Long = -1
+  
+  class TrailUnit(level: Int) extends TrailEntry {
+    @inline final override def restore(): Unit = cancelUntil(level)
   }
-
-  @inline final def popState(): Unit = ???
-
-  @inline private def assume(literal: Literal): Boolean = {
-    trailVarLevels.push(trailVar.size)
-    enqueue(literal, null)
+  
+  @inline private def newLevel(): Unit = {
+    // External trail
+    val contextMagic = store.magic
+    if (lastMagic != contextMagic) {
+      lastMagic = contextMagic
+      store.trail(new TrailUnit(decisionLevel))
+    }
+    // Inner trail
+    trailVarLevels.push(trailVar.size) // assignments
+    trailExplainLevels.push(trailExplain.size) // explanations
   }
-
-  @inline private def undoOne(): Unit = {
+  
+  @inline private def undoAssignment(): Unit = {
     assert(trailVar.size > 0)
     val literal = trailVar.pop()
     val varId = literal.varId
@@ -357,16 +389,23 @@ class LCGStore {
     reasons(varId) = null
     levels(varId) = -1
   }
-
-  @inline private def cancel(): Unit = {
+  
+  @inline private def undoExplanation(): Unit = {
+    assert(trailExplain.size > 0)
+    val explanation = trailExplain.pop()
+    explanation.deactive()
+  }
+  
+  @inline private def undo(): Unit = {
     var nLevels = trailVar.size - trailVarLevels.pop()
     while (nLevels > 0) {
       nLevels -= 1
-      undoOne()
+      undoAssignment()
+      undoExplanation()
     }
   }
 
   @inline private def cancelUntil(level: Int): Unit = {
-    while (trailVarLevels.size > level) cancel()
+    while (trailVarLevels.size > level) undo()
   }
 }

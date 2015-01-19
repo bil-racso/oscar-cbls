@@ -1,34 +1,14 @@
-package oscar.cp.lcg.core
+package oscar.cp.lcg.core.clauses
 
+import oscar.cp.lcg.core.LCGStore
 import oscar.algo.ArrayStack
+import oscar.cp.lcg.core.Literal
+import oscar.cp.lcg.core.True
+import oscar.cp.lcg.core.False
 
-class Clause(store: LCGStore, literals: Array[Literal], learnt: Boolean) {
-
-  private[this] var _activity: Double = 0
-  private[this] var _activate: Boolean = true
+class NaryClause(store: LCGStore, literals: Array[Literal], learnt: Boolean) extends Clause {
   
-  /** Return the activity of the clause. */
-  @inline final def activity: Double = _activity
-  
-  /** Change the activity of the clause. */
-  final def activity_=(a: Double): Unit = _activity = a
-  
-  // UNKNOWN
-  def locked: Boolean = store.assignReason(literals(0).varId) == this
-
-  // UNKNOWN
-  def remove(): Unit = Unit
-
-  // UNKNOWN
-  def simplify(): Boolean = true
-  
-  /** Return true if the clause is active. */
-  @inline final def isActive: Boolean = _activate
-  
-  /** Kills the clause. */
-  final def deactive(): Unit = _activate = false
-  
-  final def explain(outReason: ArrayStack[Literal]): Unit = {
+  final override def explainUnit(outReason: ArrayStack[Literal]): Unit = {
     var i = 1
     while (i < literals.length) {
       outReason.append(literals(i).opposite)
@@ -37,16 +17,42 @@ class Clause(store: LCGStore, literals: Array[Literal], learnt: Boolean) {
     if (learnt) store.claBumpActivity(this)
   }
   
-  final def explainAll(outReason: ArrayStack[Literal]): Unit = {
-        var i = 0
+  final override def explainFail(outReason: ArrayStack[Literal]): Unit = {
+    var i = 0
     while (i < literals.length) {
       outReason.append(literals(i).opposite)
       i += 1
     }
     if (learnt) store.claBumpActivity(this)
   }
+  
+  final override def setup(): Boolean = {
+    
+    var unit = false
+    
+    // Search first literals
 
-  final def propagate(literal: Literal): Boolean = {
+    // Swap first 
+    
+    // Search second literals
+    
+    // Search for two literals to watch
+
+    // If entailed return true
+    
+    // If asserting on literal
+    // literal becomes 0
+    // store.enqueue(literals(0), this)
+    
+    // Register the clause
+    store.watch(this, literals(0))   
+    store.watch(this, literals(1))
+    
+    if (unit) store.enqueue(literals(0), this)
+    else true
+  }
+
+  final override def propagate(literal: Literal): Boolean = {
     // Make sure the false literal is literals(1)
     if (literals(0) == literal.opposite) {
       literals(0) = literals(1)

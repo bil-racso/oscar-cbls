@@ -56,6 +56,11 @@ class LCGIntervalVar(lcgStore: LCGStore, final override val store: CPStore, varI
     else literals(id)
   }
   
+  final def updateAndNotify(): Unit = {
+    // Check if the bounds have changed (need a reversible int)
+    // if so, notify the corresponding constraints
+  }
+  
   final override def toString: String = {
     var i = initMin - 1
     literals.map(l => {
