@@ -12,13 +12,9 @@ class LCGStore(store: CPStore) {
   // Inconsistency
   private[this] var inconsistent: Boolean = false
   private[this] var inconsistentLevel: Int = -1
-
-  // Activity and Decay
-  private final val scaleLimit: Double = 100000000
-  private[this] var activityStep: Double = 0.5
-  private[this] var activityDecay: Double = 0.5
-  private[this] var variableStep: Double = 0.5
-  private[this] var variableDecay: Double = 0.5
+  
+  // Level in which the store was consistent
+  private[this] var backtrackLevel: Int = -1
 
   // Clauses
   private[this] val problemClauses: ArrayStack[Clause] = new ArrayStack(128)
@@ -42,22 +38,26 @@ class LCGStore(store: CPStore) {
   private[this] val trailExplain: ArrayStack[Clause] = new ArrayStack(128)
   private[this] val trailExplainLevels: ArrayStack[Int] = new ArrayStack(128) // FIXME boxing
 
+  // True variable
+  private[this] val trueVariable = newVariable(-1, "TRUE_VAR")
+  values(trueVariable.varId) = True // should not be trailed
+
   // Propagation queue
   private[this] val queue: ArrayQueue[Literal] = new ArrayQueue(128)
-  
+
   // Clause to propagate before fixed-point
   private[this] val toPropagate: ArrayStack[Clause] = new ArrayStack(16)
 
   /** Return a literal that is always true. */
-  @inline final def trueLit: Literal = ???
+  @inline final val trueLit: Literal = trueVariable
 
   /** Return a literal that is always false. */
-  @inline final def falseLit: Literal = ???
+  @inline final val falseLit: Literal = trueVariable.opposite
 
-  /** Return true if the store in inconsistent. */
+  /** Return true if the store is inconsistent. */
   @inline final def isInconsistent: Boolean = inconsistent
-  
-  /** Return the current decision level. */  
+
+  /** Return the current decision level. */
   @inline final def decisionLevel: Int = trailVarLevels.size
 
   /** Return true if the variable is assigned to true. */
@@ -96,7 +96,10 @@ class LCGStore(store: CPStore) {
   /** Add a permanent clause to the store. */
   final def addProblemClause(literals: Array[Literal]): Boolean = newClause(literals, false)
 
-  /** Add a backtrable clause to the store. */
+  /** 
+   *  Add a backtrable clause to the store. 
+   *  Entailed clauses are discarded.  
+   */
   final def addExplanationClause(literals: Array[Literal]): Boolean = ???
 
   @inline private def newProblemClause(literals: Array[Literal]): Boolean = {
@@ -143,13 +146,6 @@ class LCGStore(store: CPStore) {
         literals(1) = literals(maxLit)
         literals(maxLit) = tmp
 
-        // Bumping
-        claBumpActivity(clause)
-        var i = 0
-        while (i < literals.length) {
-          varBumpActivity(literals(i))
-          i += 1
-        }
       } else {
         problemClauses.append(clause)
       }
@@ -163,29 +159,16 @@ class LCGStore(store: CPStore) {
    *  Propagate and conflict analysis
    */
   final def propagate(): Boolean = {
-    
-    // New level to register
-    newLevel()
-
-    // Init propagate
-    var canPropagate = true
-    if (inconsistent) {
-      if (decisionLevel > inconsistentLevel) canPropagate = false
-      else {
-        // Post buffered conflict clause
-        inconsistent = false
-        inconsistentLevel = -1
-      }
-    }
-
-    if (!canPropagate) false
+    if (decisionLevel > inconsistentLevel) false
     else {
+      // Trail if necessary
+      trail()
+      // Call the fixed-point algorithm
       val conflict = fixedPoint()
       if (conflict == null) true
       else {
-        // Handle conflict
+        // Backtrack
         inconsistentLevel = decisionLevel - 1
-        inconsistent = true
         false
         //analyze(conflict)
         //cancelUntil(outBacktsLevel)
@@ -193,26 +176,24 @@ class LCGStore(store: CPStore) {
         //updateActivities()
         //true
       }
+      // TODO Notify changes in domains
     }
-
-    // TODO Notify domains
   }
 
   /**
    *  Empty the propagation queue
    *  Return the first inconsistent clause if any
    */
-  @inline private def fixedPoint(): Clause = {    
-    var failReason: Clause = null  
-    
+  @inline private def fixedPoint(): Clause = {
+    // Clause responsible of the conflict
+    var failReason: Clause = null
     // New clauses to propagate
     while (!toPropagate.isEmpty && failReason == null) {
       val clause = toPropagate.pop()
       val consistent = clause.setup()
       if (!consistent) failReason = clause
-    }    
-    
-    // Empty propagation queue
+    }
+    // Empty the propagation queue
     while (!queue.isEmpty && failReason == null) {
       val literal = queue.removeFirst
       val clauses = watchers(literal.id)
@@ -254,49 +235,6 @@ class LCGStore(store: CPStore) {
     if (assigned == Unassigned) Unassigned
     else if (literal.signed) assigned.opposite
     else assigned
-  }
-
-  final def claBumpActivity(clause: Clause): Unit = {
-    clause.activity += activityStep
-    if (clause.activity >= scaleLimit) {
-      varRescaleActivity()
-    }
-  }
-
-  final def claRescaleActivity(): Unit = {
-    var i = 0
-    while (i < learntClauses.length) {
-      learntClauses(i).activity /= scaleLimit
-      i += 1
-    }
-  }
-
-  final def claDecayActivity(): Unit = activityStep *= activityDecay
-
-  final def varBumpActivity(literal: Literal): Unit = {
-    val varId = literal.varId
-    activities(varId) += variableStep
-    if (activities(varId) >= scaleLimit) {
-      varRescaleActivity()
-    }
-  }
-
-  final def varRescaleActivity(): Unit = {
-    var i = 0
-    while (i < activities.length) {
-      activities(i) /= scaleLimit
-      i += 1
-    }
-  }
-
-  final def nAssigns(): Int = trailVar.size
-  final def nVars(): Int = values.size
-
-  final def varDecayActivity(): Unit = variableStep *= variableDecay
-
-  final def updateActivities(): Unit = {
-    varDecayActivity()
-    claDecayActivity()
   }
 
   // Conflict-Analysis
@@ -343,7 +281,7 @@ class LCGStore(store: CPStore) {
       do {
         p = trailVar.top
         conflict = reasons(p.varId)
-        undoAssignment()()
+        undoAssignment()
       } while (!seen(p.varId))
 
       counter -= 1
@@ -361,26 +299,26 @@ class LCGStore(store: CPStore) {
 
   // Trailing queue
   // --------------
-  
+
   // Used for efficient trailing
   private[this] var lastMagic: Long = -1
-  
+
   class TrailUnit(level: Int) extends TrailEntry {
     @inline final override def restore(): Unit = cancelUntil(level)
   }
-  
-  @inline private def newLevel(): Unit = {
-    // External trail
+
+  @inline private def trail(): Unit = {
     val contextMagic = store.magic
     if (lastMagic != contextMagic) {
+      // External trail
       lastMagic = contextMagic
       store.trail(new TrailUnit(decisionLevel))
+      // Inner trail
+      trailVarLevels.push(trailVar.size) // assignments
+      trailExplainLevels.push(trailExplain.size) // explanations
     }
-    // Inner trail
-    trailVarLevels.push(trailVar.size) // assignments
-    trailExplainLevels.push(trailExplain.size) // explanations
   }
-  
+
   @inline private def undoAssignment(): Unit = {
     assert(trailVar.size > 0)
     val literal = trailVar.pop()
@@ -389,13 +327,13 @@ class LCGStore(store: CPStore) {
     reasons(varId) = null
     levels(varId) = -1
   }
-  
+
   @inline private def undoExplanation(): Unit = {
     assert(trailExplain.size > 0)
     val explanation = trailExplain.pop()
     explanation.deactive()
   }
-  
+
   @inline private def undo(): Unit = {
     var nLevels = trailVar.size - trailVarLevels.pop()
     while (nLevels > 0) {

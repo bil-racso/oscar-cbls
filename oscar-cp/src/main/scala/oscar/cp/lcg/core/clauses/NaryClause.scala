@@ -14,7 +14,6 @@ class NaryClause(store: LCGStore, literals: Array[Literal], learnt: Boolean) ext
       outReason.append(literals(i).opposite)
       i += 1
     }
-    if (learnt) store.claBumpActivity(this)
   }
   
   final override def explainFail(outReason: ArrayStack[Literal]): Unit = {
@@ -23,7 +22,6 @@ class NaryClause(store: LCGStore, literals: Array[Literal], learnt: Boolean) ext
       outReason.append(literals(i).opposite)
       i += 1
     }
-    if (learnt) store.claBumpActivity(this)
   }
   
   final override def setup(): Boolean = {

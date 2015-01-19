@@ -14,13 +14,11 @@ class BinaryClause(store: LCGStore, firstLiteral: Literal, secondLiteral: Litera
   final override def explainUnit(outReason: ArrayStack[Literal]): Unit = {
     if (firstAssigned) outReason.append(secondLiteral.opposite)
     else outReason.append(firstLiteral.opposite)
-    if (learnt) store.claBumpActivity(this)
   }
 
   final override def explainFail(outReason: ArrayStack[Literal]): Unit = {
     outReason.append(firstLiteral.opposite)
     outReason.append(secondLiteral.opposite)
-    if (learnt) store.claBumpActivity(this)
   }
 
   final override def propagate(literal: Literal): Boolean = {

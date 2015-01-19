@@ -7,13 +7,10 @@ import oscar.cp.lcg.core.False
 
 class UnaryClause(store: LCGStore, literal: Literal, learnt: Boolean) extends Clause {
 
-  final override def explainUnit(outReason: ArrayStack[Literal]): Unit = {
-    if (learnt) store.claBumpActivity(this)
-  }
+  final override def explainUnit(outReason: ArrayStack[Literal]): Unit = {}
 
   final override def explainFail(outReason: ArrayStack[Literal]): Unit = {
     outReason.append(literal.opposite)
-    if (learnt) store.claBumpActivity(this)
   }
 
   final override def propagate(opposite: Literal): Boolean = {
