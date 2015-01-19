@@ -2,9 +2,9 @@ package oscar.cp.test
 
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
-
 import oscar.cp.constraints.DiffVal
-import oscar.cp.core.{CPIntVar, CPStore}
+import oscar.cp.core.variables.CPIntVar
+import oscar.cp.core.CPStore
 
 class TestModulo extends FunSuite with ShouldMatchers {
 

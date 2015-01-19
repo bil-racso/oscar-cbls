@@ -14,6 +14,8 @@
  ******************************************************************************/
 package oscar.cp.core
 
+import oscar.cp.core.variables.CPIntervalVar
+
 /**
  * @author Pierre Schaus pschaus@gmail.com
  */

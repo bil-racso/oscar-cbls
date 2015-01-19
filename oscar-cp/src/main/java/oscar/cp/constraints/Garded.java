@@ -16,7 +16,7 @@ package oscar.cp.constraints;
 
 import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
-import oscar.cp.core.CPBoolVar;
+import oscar.cp.core.variables.CPBoolVar;
 import oscar.cp.core.Constraint;
 
 public class Garded extends Constraint {

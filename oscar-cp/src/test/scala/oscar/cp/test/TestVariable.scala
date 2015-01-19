@@ -3,7 +3,7 @@ package oscar.cp.test
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
 import oscar.cp.core.CPStore
-import oscar.cp.core.CPIntVar
+import oscar.cp.core.variables.CPIntVar
 
 class TestVariable extends FunSuite with ShouldMatchers {
 

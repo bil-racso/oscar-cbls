@@ -18,6 +18,11 @@ package oscar.cp.constraints
 import oscar.cp.core._
 import java.util.{Arrays => JArrays}
 
+import java.util.Comparator
+import oscar.cp.core.variables.CPIntVar
+import oscar.cp.core.variables.CPBoolVar
+import oscar.cp.core.variables.CPIntervalVar
+
 /**
  * @author Pierre Schaus pschaus@gmail.com
  */
@@ -842,8 +847,6 @@ class LambdaThetaTreee2(private val size: Int) {
   }
 
 }
-
-import java.util.Comparator
 
 class ESTComparator2 extends Comparator[ActivityUnary] {
   def compare(act0: ActivityUnary, act1: ActivityUnary): Int = {

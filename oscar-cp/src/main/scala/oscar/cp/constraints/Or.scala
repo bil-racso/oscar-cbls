@@ -18,6 +18,8 @@ import oscar.cp.core._
 import oscar.algo.reversible._
 import oscar.cp.core.CPOutcome._
 import oscar.algo.reversible.ReversibleSparseSet
+import oscar.cp.core.variables.CPBoolVar
+import oscar.cp.core.variables.CPIntervalVar
 
 /**
  * or x_i = true

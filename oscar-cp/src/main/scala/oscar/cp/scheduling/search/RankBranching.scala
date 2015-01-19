@@ -17,7 +17,7 @@ package oscar.cp.scheduling.search
 
 import oscar.cp._
 import oscar.util._
-import oscar.cp.core.CPIntVar
+import oscar.cp.core.variables.CPIntVar
 import oscar.algo.reversible._
 import oscar.algo.search.Branching
 import oscar.cp.constraints.UnaryRank

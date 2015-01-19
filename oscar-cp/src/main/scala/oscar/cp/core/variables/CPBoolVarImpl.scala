@@ -1,10 +1,18 @@
-package oscar.cp.core
+package oscar.cp.core.variables
 
-import oscar.algo.reversible.ReversiblePointer
-import oscar.algo.reversible.ReversibleInt
-import oscar.algo.reversible.TrailEntry
+import scala.Iterator
 import scala.util.Random
-import oscar.cp.core.CPOutcome._
+
+import oscar.algo.reversible.ReversibleInt
+import oscar.algo.reversible.ReversiblePointer
+import oscar.algo.reversible.TrailEntry
+import oscar.cp.core.CPOutcome
+import oscar.cp.core.CPOutcome.Failure
+import oscar.cp.core.CPOutcome.Suspend
+import oscar.cp.core.CPStore
+import oscar.cp.core.Constraint
+import oscar.cp.core.ConstraintQueue
+import oscar.cp.core.PropagEventQueueVarInt
 
 /**
  * @author Renaud Hartert ren.hartert@gmail.com

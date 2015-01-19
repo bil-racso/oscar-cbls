@@ -19,7 +19,7 @@ import org.scalatest.matchers.ShouldMatchers
 import oscar.cp.constraints._
 import oscar.cp.core.CPOutcome._
 import oscar.cp._
-import oscar.cp.core.CPGraphVar
+import oscar.cp.core.variables.CPGraphVar
 
 /**
  * @author Andrew Lambert andrew.lambert@student.uclouvain.be

@@ -13,13 +13,17 @@
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
 
-package oscar.cp.core
+package oscar.cp.core.variables
 
 import oscar.cp.constraints.InSet
 import oscar.cp.constraints.InSetReif
 import oscar.cp.constraints.ModuloLHS
 import scala.util.Random
 import oscar.cp.core.domains.SparseSetDomain
+import oscar.cp.core.CPPropagStrength
+import oscar.cp.core.CPOutcome
+import oscar.cp.core.CPStore
+import oscar.cp.core.Constraint
 
 /**
  * @author Pierre Schaus pschaus@gmail.com

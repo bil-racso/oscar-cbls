@@ -19,7 +19,6 @@ import oscar.cp._
 import oscar.cp.scheduling._
 import oscar.visual._
 import scala.io.Source
-import oscar.cp.core.CPIntVar
 import oscar.cp.scheduling.visual.VisualGanttChart
 import oscar.cp.scheduling.search.SetTimesBranching
 import oscar.cp.scheduling.visual.VisualProfile

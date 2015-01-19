@@ -11,6 +11,8 @@ import oscar.cp.TightenType
 import oscar.cp.constraints.CPObjectiveGeometricMinimize
 import oscar.cp.constraints.CPObjectiveUnit
 import oscar.cp.constraints.CPObjectiveUnit
+import oscar.cp.core.variables.CPIntervalVar
+import oscar.cp.core.variables.CPIntVar
 
 class CPOptimizer(propagStrength: CPPropagStrength) extends CPStore(propagStrength) {
   

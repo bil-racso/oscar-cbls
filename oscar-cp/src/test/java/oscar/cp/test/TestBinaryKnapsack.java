@@ -15,8 +15,8 @@
 package oscar.cp.test;
 import oscar.cp.constraints.BinaryKnapsack;
 import oscar.cp.core.CPPropagStrength;
-import oscar.cp.core.CPBoolVar;
-import oscar.cp.core.CPIntVar;
+import oscar.cp.core.variables.CPBoolVar;
+import oscar.cp.core.variables.CPIntVar;
 import oscar.cp.core.CPStore;
 import oscar.cp.util.ArrayUtils;
 

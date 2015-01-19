@@ -1,6 +1,6 @@
 package oscar.cp.constraints
 
-import oscar.cp.core.CPIntervalVar
+import oscar.cp.core.variables.CPIntervalVar
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.CPOutcome._
 import oscar.cp._

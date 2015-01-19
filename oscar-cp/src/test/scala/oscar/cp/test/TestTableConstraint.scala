@@ -4,7 +4,6 @@ import oscar.cp.core.Constraint
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
 import oscar.cp._
-import oscar.cp.core.CPIntVar
 import oscar.cp.constraints.TableDecomp
 import oscar.cp.constraints.TableSTR2
 import oscar.cp.constraints.TableData

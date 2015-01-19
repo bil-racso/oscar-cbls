@@ -18,6 +18,8 @@
 package oscar.cp.constraints
 
 import oscar.cp.core._
+import oscar.cp.core.variables.CPIntVar
+import oscar.cp.core.variables.CPSetVar
 
 /**
  * @author Pierre Schaus pschaus@gmail.com

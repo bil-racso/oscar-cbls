@@ -12,7 +12,7 @@
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
-package oscar.cp.core
+package oscar.cp.core.variables
 
 import oscar.algo.reversible.ReversibleQueue
 import oscar.algo.reversible.ReversiblePointer
@@ -22,6 +22,11 @@ import scala.util.Random
 import oscar.cp.core.domains.IntDomain
 import oscar.cp.core.domains.AdaptableIntDomain
 import oscar.cp.core.CPOutcome._
+import oscar.cp.core.PropagEventQueueVarInt
+import oscar.cp.core.ConstraintQueue
+import oscar.cp.core.CPOutcome
+import oscar.cp.core.Constraint
+import oscar.cp.core.CPStore
 
 /**
  * @author Pierre Schaus pschaus@gmail.com

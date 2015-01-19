@@ -1,6 +1,6 @@
 package oscar.cp.scheduling.util
 
-import oscar.cp.core.CPIntVar
+import oscar.cp.core.variables.CPIntVar
 import oscar.cp.core.CPStore
 import oscar.algo.reversible.ReversibleInt
 
