@@ -23,6 +23,9 @@ import scala.collection.immutable.SortedSet
 import scala.language.implicitConversions
 import scala.util.Random
 
+
+//TODO: remplacer çà par Option(Int,Int)
+
 object Domain{
   implicit def rangeToDomain(r:Range):Domain = {
     DomainRange(r.head,r.last)

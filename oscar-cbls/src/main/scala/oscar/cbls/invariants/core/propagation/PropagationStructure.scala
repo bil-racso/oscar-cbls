@@ -38,7 +38,7 @@ trait SchedulingHandler{
    * when a PE needs propagation, it schedules itself to his SH through this method
    * notice that a PE canno schedule itself for propagation if it has already been, and has not been propagated since
    * PE should ensure this by themselves, EG through an internal boolean variable
-   * @param e
+   * @param e the PE that is to be scheduled
    */
   def scheduleForPropagation(e:PropagationElement)
 
@@ -87,6 +87,10 @@ trait SchedulingHandler{
  */
 abstract class PropagationStructure(val verbose: Boolean, val checker:Option[Checker] = None, val noCycle: Boolean, val topologicalSort:Boolean, val sortScc:Boolean = true)
   extends SchedulingHandler{
+
+  protected var closed:Boolean=false
+
+  def isClosed = closed
 
   //priority queue is ordered, first on propagation planning list, second on DAG.
 
@@ -290,6 +294,7 @@ abstract class PropagationStructure(val verbose: Boolean, val checker:Option[Che
     * on which one need partial propagation
     */
   def registerForPartialPropagation(p: PropagationElement) {
+    require(!this.closed, "cannot register variables for partial propagation aftger model has been closed")
     FastPropagationTracks += ((p, null))
   }
 
@@ -610,7 +615,7 @@ abstract class StronglyConnectedComponent(val propagationElements: Iterable[Prop
 
   override def setCounterToPrecedingCount(): Boolean = {
     position = propagationElements.count(p => p.setCounterToPrecedingCount())
-    (position != 0)
+    position != 0
   }
 
   override private[core] def rescheduleIfNeeded() {}
@@ -636,7 +641,9 @@ class StronglyConnectedComponentNoSort(Elements: Iterable[PropagationElement],
 
 class StronglyConnectedComponentTopologicalSort(
                                                  override val propagationElements: Iterable[PropagationElement],
-                                 override val core: PropagationStructure, _UniqueID: Int) extends StronglyConnectedComponent(propagationElements,core,_UniqueID) with DAG {
+                                                 override val core: PropagationStructure,
+                                                 _UniqueID: Int)
+  extends StronglyConnectedComponent(propagationElements,core,_UniqueID) with DAG {
 
   for (e <- propagationElements) {
     e.setInSortingSCC()
@@ -1108,7 +1115,14 @@ trait VaryingDependencies extends PropagationElement{
 /**This is the node type to be used for bulking
   * @author renaud.delandtsheer@cetic.be
   * **/
-trait BulkPropagator extends PropagationElement
+trait BulkPropagator extends PropagationElement {
+  override protected def initiateDynamicGraphFromSameComponentListened(stronglyConnectedComponentTopologicalSort: StronglyConnectedComponentTopologicalSort) {
+    assert(stronglyConnectedComponentTopologicalSort == schedulingHandler)
+    //filters the list of staticallyListenedElements
+
+    dynamicallyListenedElementsFromSameComponent = List.empty
+  }
+}
 
 /**
  * @author renaud.delandtsheer@cetic.be

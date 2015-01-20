@@ -26,14 +26,16 @@ import oscar.cbls.invariants.core.propagation.Checker
 import oscar.cbls.invariants.lib.logic._;
 
 object Sum{
-  def apply(vars: Array[IntValue], cond: SetValue):SumElements = SumElements(vars, cond)
-  def apply(vars: Iterable[IntValue]):Sum = new Sum(vars)
+  def apply(vars: Array[IntValue], cond: SetValue) = SumElements(vars, cond)
+  def apply(vars: Iterable[IntValue]) = new Sum(vars)
+  def apply(vars:Array[Int], cond:SetValue) = SumConstants(vars,cond)
 }
 
 
 object Prod{
-  def apply(vars: Iterable[IntValue]):Prod = new Prod(vars)
-  def apply(vars: Array[IntValue], cond: SetValue):ProdElements = ProdElements(vars, cond)
+  def apply(vars: Iterable[IntValue]) = new Prod(vars)
+  def apply(vars: Array[IntValue], cond: SetValue) = ProdElements(vars, cond)
+  def apply(vars: Array[Int], cond: SetValue) = ProdConstants(vars, cond)
 }
 
 /**
@@ -127,7 +129,7 @@ case class Minus(left: IntValue, right: IntValue)
  * @author renaud.delandtsheer@cetic.be
  * */
 case class Sum2(left: IntValue, right: IntValue)
-  extends IntInt2Int(left, right, ((l: Int, r: Int) => l + r), left.min + right.min to left.max + right.max)
+  extends IntInt2Int(left, right, ((l: Int, r: Int) => l + r), DomainHelper.safeAddMin(left.min,right.min) to DomainHelper.safeAddMax(left.max,right.max))
 
 /**
  * left * right

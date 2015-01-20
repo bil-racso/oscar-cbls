@@ -561,13 +561,16 @@ trait HopDistance extends VRP {
    * Info : the domain max is (Int.MaxValue / N) to avoid problem with domain. (allow us to use sum invariant without
    * throw over flow exception to save the distance of all vehicle).
    */
-  var hopDistance:Array[IntValue] = null
+  var hopDistance:Array[IntValue] = new Array[IntValue](N)
 
   /**
    * maintains the total distance of all vehicle, linked on the actual next hop of each node.
    */
-  val overallDistance = Sum(hopDistance)
+  val overallDistance = CBLSIntVar(m, name = "overall distance")
 
+  def assignOverallDistance(){
+    overallDistance <== Sum(hopDistance)
+  }
   /**
    * the function which defines the distance between two points of the VRP.
    */
@@ -582,6 +585,7 @@ trait HopDistance extends VRP {
   def installCostMatrix(DistanceMatrix: Array[Array[Int]]) {
     distanceFunction = (i: Int, j: Int) => DistanceMatrix(i)(j)
     for (i <- 0 until N) hopDistance(i) = new Int2Int(next(i), j => { if (j != N) DistanceMatrix(i)(j) else 0 })
+    assignOverallDistance()
   }
 
   /**
@@ -592,10 +596,12 @@ trait HopDistance extends VRP {
   def installCostFunction(fun: (Int, Int) => Int) {
     distanceFunction = fun
     for (i <- 0 until N) hopDistance(i) = new Int2Int(next(i), j => fun(i, j))
+    assignOverallDistance()
   }
 
   def installhopDistance(d:Domain = 0 to Int.MaxValue/N){
     hopDistance = Array.tabulate(N) { (i: Int) => CBLSIntVar(m, 0, 0 to Int.MaxValue / N, "hopDistanceForLeaving" + i) }
+    assignOverallDistance()
   }
   /**
    * Returns the distance from a given node (start node) to another given node (end node) of the VRP.

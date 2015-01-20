@@ -68,7 +68,6 @@ abstract class ChangingSetValue(initialValue:SortedSet[Int], initialDomain:Domai
     ToPerform = List.empty
   }
 
-  //TODO: this is wrong.
   override def toString:String = name + ":={" + (if(model.propagateOnToString) value else Value).mkString(",") + "}"
 
   /** this method is a toString that does not trigger a propagation.
@@ -78,8 +77,6 @@ abstract class ChangingSetValue(initialValue:SortedSet[Int], initialDomain:Domai
     */
   def toStringNoPropagate: String = name + ":={" + Value.foldLeft("")(
     (acc,intval) => if(acc.equalsIgnoreCase("")) ""+intval else acc+","+intval) + "}"
-
-
 
   /**The values that have bee impacted since last propagation was performed.
     * null if set was assigned
@@ -134,7 +131,6 @@ abstract class ChangingSetValue(initialValue:SortedSet[Int], initialDomain:Domai
         Value.diff(OldValue).foreach(v => {
           OldValue += v
           for (e:((PropagationElement,Any)) <- getDynamicallyListeningElements){
-            println("notifying " + e)
             val inv:Invariant = e._1.asInstanceOf[Invariant]
             assert({this.model.NotifiedInvariant=inv; true})
             inv.notifyInsertOnAny(this,e._2,v)
@@ -262,8 +258,8 @@ case class CBLSSetConst(override val value:SortedSet[Int])
   extends SetValue{
   override def toString:String = "Set{" + value.mkString(",") + "}"
   override def domain:Domain = DomainRange(value.min,value.max)
-  override val min: Int = value.min
-  override val max: Int = value.max
+  override val min: Int = if (value.isEmpty) Int.MaxValue else value.min
+  override val max: Int = if(value.isEmpty) Int.MinValue else value.max
   override def name: String = toString
 }
 
@@ -328,6 +324,6 @@ class IdentitySet(toValue:CBLSSetVar, fromValue:ChangingSetValue) extends Invari
   }
 
   override def checkInternals(c:Checker){
-    c.check(toValue.getValue(true) == fromValue.value)
+    c.check(toValue.value equals fromValue.value)
   }
 }

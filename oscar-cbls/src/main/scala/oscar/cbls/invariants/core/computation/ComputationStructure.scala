@@ -56,9 +56,6 @@ case class Store(override val verbose:Boolean = false,
 
   private var variables:List[AbstractVariable] = List.empty
   private var propagationElements:List[PropagationElement] = List.empty
-  private var closed:Boolean=false
-
-  def isClosed = closed
 
   private var privateDecisionVariables:List[Variable] = null;
 
@@ -526,6 +523,21 @@ object InvariantHelper{
 
   def getMinMaxRange(variables:Iterable[IntValue]):Range = {
     val (min,max) = getMinMaxBounds(variables)
+    min to max
+  }
+
+  def getMinMaxBoundsInt(variables:Iterable[Int]):(Int,Int) = {
+    var MyMax = Int.MinValue
+    var MyMin = Int.MaxValue
+    for (v <- variables) {
+      if (MyMax < v) MyMax = v
+      if (MyMin > v) MyMin = v
+    }
+    (MyMin, MyMax)
+  }
+
+  def getMinMaxRangeInt(variables:Iterable[Int]):Range = {
+    val (min,max) = getMinMaxBoundsInt(variables)
     min to max
   }
 

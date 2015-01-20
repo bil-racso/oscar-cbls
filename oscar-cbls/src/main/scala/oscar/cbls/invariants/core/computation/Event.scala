@@ -24,6 +24,7 @@ import oscar.cbls.invariants.core.propagation.Checker
 
 import scala.collection.immutable.SortedSet
 
+//TODO: porter à la nouvelle architecture.
 
 object Event{
 

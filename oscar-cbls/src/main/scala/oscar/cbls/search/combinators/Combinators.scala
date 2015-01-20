@@ -16,7 +16,7 @@
  */
 package oscar.cbls.search.combinators
 
-import oscar.cbls.invariants.core.computation._
+import oscar.cbls.invariants.core.computation.{IntValue, SetValue}
 import oscar.cbls.objective.Objective
 import oscar.cbls.search.core.{NoMoveFound, _}
 import oscar.cbls.search.move.{CallBackMove, CompositeMove, InstrumentedMove, Move}
@@ -45,10 +45,13 @@ abstract class NeighborhoodCombinator(a: Neighborhood*) extends Neighborhood {
 
 class BasicProtectBest(a: Neighborhood, o: Objective) extends NeighborhoodCombinator(a) {
 
-  protected val s: Store = o.model
+  protected val s = o.model
+
+  require(s!= null, "you are using an objective function that has no attached model, so "
+    + this.getClass.getSimpleName + " cannot save the model; pass it explicitely to the Objective creation to solve this issue")
 
   protected var bestObj = if (currentSolutionIsAcceptable) o.value else Int.MaxValue
-  protected var best: Solution = if (currentSolutionIsAcceptable) s.solution() else null
+  protected var best = if (currentSolutionIsAcceptable) s.solution() else null
 
 
   //this resets the internal state of the move combinators

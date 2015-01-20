@@ -74,6 +74,9 @@ case class IntITE(ifVar: IntValue, thenVar: IntValue, elseVar: IntValue)
   }
 }
 
+case class ConstantIntElement(index: IntValue, inputArray: Array[Int])
+  extends Int2Int(index, inputArray(_), InvariantHelper.getMinMaxRangeInt(inputArray))
+
 /**
  * inputarray[index]
  * @param inputarray is an array of IntVar

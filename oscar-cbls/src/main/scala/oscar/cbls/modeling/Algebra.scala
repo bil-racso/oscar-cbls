@@ -23,7 +23,7 @@ package oscar.cbls.modeling
 
 import oscar.cbls.constraints.lib.basic.{BelongsTo, EQ, G, GE, L, LE, NE}
 import oscar.cbls.invariants.core.computation._
-import oscar.cbls.invariants.lib.logic.{Elements, IntElement, SetElement}
+import oscar.cbls.invariants.lib.logic.{ConstantIntElement, Elements, IntElement, SetElement}
 import oscar.cbls.invariants.lib.numeric._
 import oscar.cbls.invariants.lib.set._
 import oscar.cbls.search.algo.InstrumentedRange
@@ -146,6 +146,15 @@ trait AlgebraTrait{
 
   class InstrumentedArrayOfSetValue(inputarray: Array[SetValue]) {
     def apply(index: IntValue): SetInvariant = SetElement(index, inputarray)
+  }
+
+  implicit def InstrumentArrayOfIntConstants(inputarray: Array[Int]):InstrumentedArrayOfIntConstants
+  = new InstrumentedArrayOfIntConstants(inputarray)
+
+  class InstrumentedArrayOfIntConstants(inputarray: Array[Int]) {
+    def element(index: IntValue) = ConstantIntElement(index, inputarray)
+
+    def elements(index: SetValue) = Elements(index, inputarray.map(CBLSIntConst.apply))
   }
 
   @deprecated("You are implicitly converting Array[Int] to Array[CBLSIntconst]. This is OK, but prevents Bulking. You should create an array of CBLSIntConst straight, and use this array everywhere you need it","always")

@@ -23,6 +23,36 @@ package oscar.cbls.invariants.lib.numeric
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.core.propagation._
 
+
+/** sum(i in cond) vars(i)
+  * @param vars is an array of IntVars
+  * @param cond is the condition for selecting variables in the array of summed ones, cannot be null
+  * @author renaud.delandtsheer@cetic.be
+  * */
+case class SumConstants(vars: Array[Int], cond: SetValue)
+  extends IntInvariant(cond.value.foldLeft(0)((acc, i) => acc + vars(i))) {
+
+  registerStaticAndDynamicDependency(cond)
+  finishInitialization()
+
+  override def notifyInsertOn(v: ChangingSetValue, value: Int){
+    this :+= vars(value)
+  }
+
+  override def notifyDeleteOn(v: ChangingSetValue, value: Int){
+    this :-= vars(value)
+  }
+
+  /** To override whenever possible to spot errors in invariants.
+    * this will be called for each invariant after propagation is performed.
+    * It requires that the Model is instantiated with the variable debug set to true.
+    */
+  override def checkInternals(c: Checker){
+    c.check(this.value == cond.value.foldLeft(0)((acc, i) => acc + vars(i)),
+      Some("output.value == cond.value.foldLeft(0)((acc, i) => acc + vars(i).value)"))
+  }
+}
+
 /** sum(i in cond) vars(i)
  * @param vars is an array of IntVars
  * @param cond is the condition for selecting variables in the array of summed ones, cannot be null
@@ -77,6 +107,63 @@ case class SumElements(vars: Array[IntValue], cond: SetValue)
         Some("output.value == cond.value.foldLeft(0)((acc, i) => acc + vars(i).value)"))
   }
 }
+
+
+/** sum(i in cond) vars(i)
+  * @param vars is an array of IntVars
+  * @param cond is the condition for selecting variables in the array of summed ones, cannot be null
+  * @author renaud.delandtsheer@cetic.be
+  * */
+case class ProdConstants(vars: Array[Int], cond: SetValue)
+  extends IntInvariant() {
+
+  registerStaticAndDynamicDependency(cond)
+  finishInitialization()
+
+  var NullVarCount = cond.value.count(i => vars(i) == 0)
+  var NonNullProd = cond.value.foldLeft(1)((acc,i) => if(vars(i) == 0){acc}else{acc*vars(i)})
+  affectOutput()
+
+  @inline
+  private def affectOutput(){
+    if (NullVarCount == 0){
+      this := NonNullProd
+    }else{
+      this := 0
+    }
+  }
+
+  @inline
+  override def notifyInsertOn(v: ChangingSetValue, value: Int) {
+    assert(v == cond)
+
+    if(vars(value) == 0){
+      NullVarCount += 1
+    }else{
+      NonNullProd *= vars(value)
+    }
+    affectOutput()
+  }
+
+  @inline
+  override def notifyDeleteOn(v: ChangingSetValue, value: Int) {
+
+    if(vars(value) == 0){
+      NullVarCount -= 1
+    }else{
+      NonNullProd = NonNullProd / vars(value)
+    }
+    affectOutput()
+  }
+
+  override def checkInternals(c:Checker) {
+    c.check(this.value == cond.value.foldLeft(1)((acc, i) => acc * vars(i)),
+      Some("output.value (" + this.value
+        + ") == cond.value.foldLeft(1)((acc, i) => acc * vars(i).value) ("
+        + cond.value.foldLeft(1)((acc, i) => acc * vars(i)) + ")"))
+  }
+}
+
 
 /** prod(i in cond) vars(i)
  * This invariant might modify vars array by cloning some variables to ensure that each variable only appears once.

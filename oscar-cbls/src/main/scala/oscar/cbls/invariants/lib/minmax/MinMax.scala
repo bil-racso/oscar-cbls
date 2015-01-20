@@ -62,7 +62,7 @@ abstract class MiaxLin(vars: SortedSet[IntValue])
   }
 
   LoadNewMiax()
-  
+
   override def notifyIntChanged(v: ChangingIntValue, OldVal: Int, NewVal: Int) {
     assert(vars.contains(v), this + " notified for not interesting var")
     val MiaxVal = this.getValue(true)
@@ -161,7 +161,7 @@ case class Min(vars: SortedSet[IntValue]) extends Miax(vars) {
 }
 
 object Min{
-  def apply(varss: Array[IntValue], ccond: SetValue = null, default: Int = Int.MinValue) = MinArray(varss, ccond, default)
+  def apply(varss: Array[IntValue], ccond: SetValue, default: Int = Int.MaxValue) = MinArray(varss, ccond, default)
 }
 
 /**
@@ -182,7 +182,7 @@ case class Max(vars: SortedSet[IntValue]) extends Miax(vars) {
 }
 
 object Max{
-  def apply(varss: Array[IntValue], ccond: SetValue = null, default: Int = Int.MaxValue) = MaxArray(varss, ccond, default)
+  def apply(varss: Array[IntValue], ccond: SetValue = null, default: Int = Int.MinValue) = MaxArray(varss, ccond, default)
 }
 
 /**

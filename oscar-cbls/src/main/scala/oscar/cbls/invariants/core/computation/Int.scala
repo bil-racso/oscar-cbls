@@ -302,7 +302,6 @@ class IdentityInt(toValue:CBLSIntVar, fromValue:IntValue) extends Invariant{
   toValue.setDefiningInvariant(this)
   finishInitialization()
 
-
   toValue := fromValue.value
 
   override def notifyIntChanged(v: ChangingIntValue, OldVal: Int, NewVal: Int) {
@@ -310,6 +309,6 @@ class IdentityInt(toValue:CBLSIntVar, fromValue:IntValue) extends Invariant{
   }
 
   override def checkInternals(c:Checker){
-    c.check(toValue.getValue(true) == fromValue.value)
+    c.check(toValue.value == fromValue.value)
   }
 }

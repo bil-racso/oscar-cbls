@@ -155,3 +155,99 @@ abstract class MiaxArray(vars: Array[IntValue], cond: SetValue, default: Int)
     }
   }
 }
+
+
+/**
+ * Maintains Min(Var(i) | i in cond)
+ * @param varss is an array of Int
+ * @param ccond is the condition, supposed fully acceptant if not specified (must be specified if varss is bulked)
+ * update is O(log(n))
+ * @author renaud.delandtsheer@cetic.be
+ * */
+case class MinConstArray(varss: Array[Int], ccond: SetValue, default: Int = Int.MaxValue)
+  extends MiaxConstArray(varss, ccond, default) {
+
+  override def Ord(v: IntValue): Int = v.value
+
+  override def checkInternals(c: Checker) {
+    for (v <- this.varss) {
+      c.check(this.value <= v,
+        Some("this.value (" + this.value + ") <= " + v + ".value (" + v + ")"))
+    }
+  }
+}
+
+
+/**
+ * Maintains Max(Var(i) | i in cond)
+ * @param varss is an array of IntVar, which can be bulked
+ * @param ccond is the condition, supposed fully acceptant if not specified (must be specified if varss is bulked)
+ * update is O(log(n))
+ * @author renaud.delandtsheer@cetic.be
+ * */
+case class MaxConstArray(varss: Array[Int], ccond: SetValue, default: Int = Int.MinValue)
+  extends MiaxConstArray(varss, ccond, default) {
+
+  override def Ord(v: IntValue): Int = -v.value
+
+  override def checkInternals(c: Checker) {
+    for (v <- this.varss) {
+      c.check(this.value >= v,
+        Some("output.value (" + this.value + ") >= " + v + ".value (" + v + ")"))
+    }
+  }
+}
+
+
+/**
+ * Maintains Miax(Var(i) | i in cond)
+ * Exact ordering is specified by implementing abstract methods of the class.
+ * @param vars is an array of IntVar, which can be bulked
+ * @param cond is the condition, cannot be null
+ * update is O(log(n))
+ * @author renaud.delandtsheer@cetic.be
+ * */
+abstract class MiaxConstArray(vars: Array[Int], cond: SetValue, default: Int)
+  extends IntInvariant{
+
+  var h: BinomialHeapWithMoveExtMem[Int] = new BinomialHeapWithMoveExtMem[Int](i => Ord(vars(i)), vars.size, new ArrayMap(vars.size))
+
+  registerStaticAndDynamicDependency(cond)
+  finishInitialization()
+
+  //TODO: restrict domain
+
+    for (i <- cond.value) {
+      h.insert(i)
+    }
+
+  def Ord(v: IntValue): Int
+
+  if (h.isEmpty) {
+    this := default
+  } else {
+    this := vars(h.getFirst)
+  }
+
+  @inline
+  override def notifyInsertOn(v: ChangingSetValue, value: Int) {
+    assert(v == cond)
+
+    //mettre a jour le heap
+    h.insert(value)
+    this := vars(h.getFirst)
+  }
+
+  @inline
+  override def notifyDeleteOn(v: ChangingSetValue, value: Int) {
+    assert(v == cond)
+
+    //mettre a jour le heap
+    h.delete(value)
+    if (h.isEmpty) {
+      this := default
+    } else {
+      this := vars(h.getFirst)
+    }
+  }
+}
