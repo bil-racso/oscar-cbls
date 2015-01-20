@@ -47,7 +47,7 @@ class NEQ(a:Entier,b:Entier) extends Proposition
 //To estimate over different runs
 //how to find names that are obviously statistics over different runs
 class Statistics
-class Average(s:Stream) extends Statistics
+//class Average(s:Stream) extends Statistics
 
 /*class Model(){
   val durationSinceLastTick:Entier
