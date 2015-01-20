@@ -1,6 +1,8 @@
 package oscar.des.flow.lib
 
-/*class Variable[T]
+//This file is about thing we want to measure on the factory process
+
+class Variable[T]
 class Proposition extends Variable[Boolean]
 class Entier extends Variable[Int]
 class IntConstant() extends Variable[Int]
@@ -30,10 +32,10 @@ class Changes(p:Proposition) extends Proposition
 
 //variables always have a value.
 class Duration(start:Proposition, end:Proposition) extends Entier
-class Sum(s:Variable) extends Entier
-class Mult(a:Variable,b:Variable) extends Entier
-class Plus(a:Variable,b:Variable) extends Entier
-class PonderateWithDuration(s:Variable) extends Entier
+class Sum(s:Entier) extends Entier
+class Mult(a:Entier,b:Entier) extends Entier
+class Plus(a:Entier,b:Entier) extends Entier
+class PonderateWithDuration(s:Entier) extends Entier
 
 //relational operators to get back to Propositions
 class G(a:Entier,b:Entier) extends Proposition
@@ -47,8 +49,7 @@ class NEQ(a:Entier,b:Entier) extends Proposition
 class Statistics
 class Average(s:Stream) extends Statistics
 
-class Model(){
+/*class Model(){
   val durationSinceLastTick:Entier
   val currentTime:Entier
-}
-*/
+}*/
