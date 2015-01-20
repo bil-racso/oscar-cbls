@@ -1,6 +1,5 @@
 package oscar.cp.lcg.variables
 
-import oscar.cp.core.CPIntervalVar
 import oscar.cp.core.CPStore
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.Constraint
