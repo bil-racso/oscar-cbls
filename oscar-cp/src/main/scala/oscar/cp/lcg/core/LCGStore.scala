@@ -185,14 +185,17 @@ class LCGStore(store: CPStore) {
    *  Return the first inconsistent clause if any
    */
   @inline private def fixedPoint(): Clause = {
+    
     // Clause responsible of the conflict
     var failReason: Clause = null
+    
     // New clauses to propagate
     while (!toPropagate.isEmpty && failReason == null) {
       val clause = toPropagate.pop()
       val consistent = clause.setup()
       if (!consistent) failReason = clause
     }
+    
     // Empty the propagation queue
     while (!queue.isEmpty && failReason == null) {
       val literal = queue.removeFirst
