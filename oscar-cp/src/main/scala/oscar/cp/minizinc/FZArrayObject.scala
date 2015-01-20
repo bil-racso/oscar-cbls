@@ -1,6 +1,7 @@
 package oscar.cp.minizinc
 
-import oscar.cp.core.CPVar
+import oscar.cp.core.variables.CPVar
+
 
 abstract class FZArrayObject ( 
     val value: Set[Int],

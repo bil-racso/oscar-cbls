@@ -67,15 +67,15 @@ import oscar.cp.constraints.MinCircuit
 import oscar.cp.constraints.AllDiffBC
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.CPPropagStrength
-import oscar.cp.core.CPIntVarViewOffset
-import oscar.cp.core.CPIntVarViewTimes
-import oscar.cp.core.CPIntVarImpl
-import oscar.cp.core.CPIntVarViewMinus
-import oscar.cp.core.CPIntervalVarImpl
-import oscar.cp.core.CPIntervalVarViewOffset
-import oscar.cp.core.CPIntervalVarViewMinus
-import oscar.cp.core.CPIntervalVarViewTimes
-import oscar.cp.core.CPIntervalVar
+import oscar.cp.core.variables.CPIntVarViewOffset
+import oscar.cp.core.variables.CPIntVarViewTimes
+import oscar.cp.core.variables.CPIntVarImpl
+import oscar.cp.core.variables.CPIntVarViewMinus
+import oscar.cp.core.variables.CPIntervalVarImpl
+import oscar.cp.core.variables.CPIntervalVarViewOffset
+import oscar.cp.core.variables.CPIntervalVarViewMinus
+import oscar.cp.core.variables.CPIntervalVarViewTimes
+import oscar.cp.core.variables.CPIntervalVar
 import oscar.cp._
 import oscar.cp.constraints.BinaryClause
 

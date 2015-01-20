@@ -1,10 +1,9 @@
 package oscar.cp.linearizedDFS.utils
 
 import oscar.cp.linearizedDFS._
-import oscar.cp.core.CPIntVar
 import oscar.cp.linearizedDFS.{Pop, Push, Decision}
-
 import scala.io.Source
+import oscar.cp.core.variables.CPIntVar
 
 /**
  * Created by saschavancauwelaert on 12/12/14.

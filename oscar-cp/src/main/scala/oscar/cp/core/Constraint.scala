@@ -19,6 +19,10 @@ import oscar.algo.reversible.ReversibleBoolean
 import oscar.cp.constraints.Garded
 import scala.collection.mutable.ArrayBuffer
 import oscar.algo.reversible.MagicBoolean
+import oscar.cp.core.variables.CPSetVar
+import oscar.cp.core.variables.CPBoolVar
+import oscar.cp.core.variables.CPIntervalVar
+import oscar.cp.core.variables.CPIntVar
 
 
 abstract class Snapshot {

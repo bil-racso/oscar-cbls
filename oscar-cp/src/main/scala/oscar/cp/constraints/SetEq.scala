@@ -19,6 +19,7 @@ package oscar.cp.constraints
 
 import oscar.cp.core._
 import oscar.cp.core.CPOutcome._
+import oscar.cp.core.variables.CPSetVar
 
 /**
  * Implementation of Equality constraint for CPSetVar

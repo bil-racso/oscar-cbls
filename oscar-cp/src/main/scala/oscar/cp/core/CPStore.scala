@@ -23,6 +23,10 @@ import oscar.cp.constraints.EqCons
 import oscar.cp.core.CPOutcome.{Failure, Success, Suspend}
 import scala.collection.JavaConversions.{asJavaCollection, collectionAsScalaIterable}
 import oscar.algo.reversible.ReversiblePointer
+import oscar.cp.core.variables.CPIntVar
+import oscar.cp.core.variables.CPBoolVar
+import oscar.cp.core.variables.CPSetVar
+import oscar.cp.core.variables.CPIntervalVar
 
 /**
  * Constraint Programming CPStore

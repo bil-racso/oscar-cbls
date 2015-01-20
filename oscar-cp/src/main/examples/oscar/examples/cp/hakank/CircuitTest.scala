@@ -15,8 +15,6 @@
 package oscar.examples.cp.hakank
 
 import oscar.cp._
-
-import oscar.cp.core.CPIntVar
 import scala.io.Source._
 import scala.math._
 

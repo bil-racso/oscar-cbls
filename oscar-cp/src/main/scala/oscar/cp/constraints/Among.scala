@@ -18,6 +18,7 @@ import oscar.cp.core._
 import oscar.algo.reversible._
 import oscar.cp.core.CPOutcome
 import oscar.algo.reversible.ReversibleSparseSet
+import oscar.cp.core.variables.CPIntVar
 
 /**
  * Implementation of Among Constraint:

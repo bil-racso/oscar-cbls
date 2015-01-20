@@ -21,6 +21,7 @@ import oscar.cp.core.CPOutcome._
 import scala.collection.mutable.PriorityQueue
 import oscar.algo.reversible.ReversibleBoolean
 import oscar.algo.reversible.ReversibleInt
+import oscar.cp.core.variables.CPGraphVar
 
 /**
  * @author Andrew Lambert andrew.lambert@student.uclouvain.be

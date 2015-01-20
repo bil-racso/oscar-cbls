@@ -17,6 +17,9 @@ package oscar.cp.constraints
 import oscar.cp.core._
 import oscar.algo.reversible._
 import oscar.cp.core.CPOutcome._
+import oscar.cp.core.variables.CPIntVar
+import oscar.cp.core.variables.CPBoolVar
+import oscar.cp.core.variables.CPIntervalVar
 
 /**
  * x must be a value of the set

@@ -1,11 +1,15 @@
 package oscar.cp.scheduling.constraints
 
-import oscar.cp.core._
 import oscar.cp.core.CPOutcome._
 import oscar.algo.SortUtils._
 import oscar.algo.reversible.ReversibleInt
 import oscar.cp.scheduling.util.OpenSparseSet
 import Math._
+import oscar.cp.core.CPPropagStrength
+import oscar.cp.core.CPOutcome
+import oscar.cp.core.variables.CPIntVar
+import oscar.cp.core.variables.CPIntervalVar
+import oscar.cp.core.Constraint
 
 // @author Steven Gay steven.gay@uclouvain.be
 

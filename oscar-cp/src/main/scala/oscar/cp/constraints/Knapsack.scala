@@ -19,6 +19,9 @@ import oscar.cp.core._
 import oscar.algo.reversible._
 import oscar.cp.core.CPOutcome
 import scala.collection.JavaConversions._
+import oscar.cp.core.variables.CPIntVar
+import oscar.cp.core.variables.CPBoolVar
+import oscar.cp.core.variables.CPIntervalVar
 
 
 /**

@@ -1,6 +1,6 @@
 package oscar.cp.minizinc
 
-import oscar.cp.core.CPBoolVar
+import oscar.cp.core.variables.CPBoolVar
 
 class VarBool (
     //var value: Boolean, 

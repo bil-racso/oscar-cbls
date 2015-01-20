@@ -1,6 +1,9 @@
-package oscar.cp.core
+package oscar.cp.core.variables
 
 import scala.util.Random
+import oscar.cp.core.CPOutcome
+import oscar.cp.core.Constraint
+import oscar.cp.core.CPStore
 
 /** 
  *  A not view on a boolean variable. 

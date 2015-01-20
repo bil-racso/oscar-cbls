@@ -1,6 +1,6 @@
 package oscar.cp.constraints
 
-import oscar.cp.core.CPGraphVar
+import oscar.cp.core.variables.CPGraphVar
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.CPPropagStrength
 import oscar.cp.core.Constraint

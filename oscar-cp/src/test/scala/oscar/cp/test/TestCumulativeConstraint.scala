@@ -5,7 +5,6 @@ import oscar.cp.constraints.SweepMaxCumulative
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
 import oscar.cp._
-import oscar.cp.core.CPIntVar
 import oscar.cp.constraints.CumulativeDecomp
 import oscar.cp.searches.BinaryStaticOrderBranching
 import oscar.cp.constraints.EnergeticReasoning

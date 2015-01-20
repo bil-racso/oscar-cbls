@@ -20,8 +20,8 @@ import oscar.cp.core.CPOutcome._
 import oscar.cp.constraints._
 import oscar.cp.modeling._
 import oscar.algo.DisjointSets
-
 import scala.collection.mutable.ArrayBuffer
+import oscar.cp.core.variables.CPIntVar
 
 /**
  * Based on algorithm desbcribed in Qimper and al. paper, "An efficient Bounds

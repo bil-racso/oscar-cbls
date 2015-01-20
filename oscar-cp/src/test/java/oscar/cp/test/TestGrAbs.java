@@ -16,8 +16,10 @@ package oscar.cp.test;
 
 
 import junit.framework.TestCase;
-import oscar.cp.constraints.*;
-import oscar.cp.core.*;
+import oscar.cp.constraints.EqCons;
+import oscar.cp.constraints.GrEq;
+import oscar.cp.core.CPStore;
+import oscar.cp.core.variables.CPIntVar;
 
 
 /**

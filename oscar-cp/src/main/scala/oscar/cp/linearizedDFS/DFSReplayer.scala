@@ -2,10 +2,9 @@ package oscar.cp.linearizedDFS
 
 import java.io.File
 import java.lang.management.ManagementFactory
-
-import oscar.cp.core.CPIntVar
 import oscar.cp.linearizedDFS.utils.DecisionReader
 import oscar.cp.core.CPSolver
+import oscar.cp.core.variables.CPIntVar
 
 /**
  * Created by saschavancauwelaert on 01/12/14.

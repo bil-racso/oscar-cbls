@@ -15,7 +15,7 @@
 
 package oscar.cp.xcsp.modeling
 
-import oscar.cp.core.CPIntVar
+import oscar.cp.core.variables.CPIntVar
 import oscar.cp.core.Constraint
 
 trait ConstraintDefiner {

@@ -1,7 +1,7 @@
 package oscar
 
-import oscar.cp.core.CPIntVarViewMinus
-import oscar.cp.core.CPIntervalVarViewMinus
+import oscar.cp.core.variables.CPIntVarViewMinus
+import oscar.cp.core.variables.CPIntervalVarViewMinus
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.CPPropagStrength
 import oscar.cp.core.CPSol
@@ -11,8 +11,8 @@ import oscar.algo.search.Branching
 import oscar.algo.search.SearchNode
 import oscar.algo.search.SearchStatistics
 import oscar.util.selectMin
-import oscar.cp.core.CPBoolVarWrapper
-import oscar.cp.core.CPBoolVarImpl
+import oscar.cp.core.variables.CPBoolVarWrapper
+import oscar.cp.core.variables.CPBoolVarImpl
 
 /**
  * The `cp` package provides useful functionnalities to model problem using
@@ -39,20 +39,20 @@ import oscar.cp.core.CPBoolVarImpl
 package object cp extends Constraints with Branchings {
 
   // Alias to useful classes and companion objects
-  type CPIntVar = oscar.cp.core.CPIntVar
-  final val CPIntVar = oscar.cp.core.CPIntVar
+  type CPIntVar = oscar.cp.core.variables.CPIntVar
+  final val CPIntVar = oscar.cp.core.variables.CPIntVar
 
-  type CPIntervalVar = oscar.cp.core.CPIntervalVar
-  final val CPIntervalVar = oscar.cp.core.CPIntervalVar
+  type CPIntervalVar = oscar.cp.core.variables.CPIntervalVar
+  final val CPIntervalVar = oscar.cp.core.variables.CPIntervalVar
 
-  type CPBoolVar = oscar.cp.core.CPBoolVar
-  final val CPBoolVar = oscar.cp.core.CPBoolVar
+  type CPBoolVar = oscar.cp.core.variables.CPBoolVar
+  final val CPBoolVar = oscar.cp.core.variables.CPBoolVar
 
-  type CPSetVar = oscar.cp.core.CPSetVar
-  final val CPSetVar = oscar.cp.core.CPSetVar
+  type CPSetVar = oscar.cp.core.variables.CPSetVar
+  final val CPSetVar = oscar.cp.core.variables.CPSetVar
 
-  type CPGraphVar = oscar.cp.core.CPGraphVar
-  final val CPGraphVar = oscar.cp.core.CPGraphVar
+  type CPGraphVar = oscar.cp.core.variables.CPGraphVar
+  final val CPGraphVar = oscar.cp.core.variables.CPGraphVar
 
   type CPStore = oscar.cp.core.CPStore
   final val CPStore = oscar.cp.core.CPStore

@@ -1,6 +1,6 @@
 package oscar.cp.scheduling.constraints
 
-import oscar.cp.core.CPIntVar
+import oscar.cp.core.variables.CPIntVar
 import oscar.algo.SortUtils
 import oscar.cp.scheduling.util.OpenSparseSet
 import Math.min

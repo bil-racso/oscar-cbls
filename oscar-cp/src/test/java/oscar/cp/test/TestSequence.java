@@ -16,9 +16,11 @@ package oscar.cp.test;
 
 
 import junit.framework.TestCase;
-import oscar.algo.reversible.*;
-import oscar.cp.constraints.*;
-import oscar.cp.core.*;
+import oscar.algo.reversible.SparseSet;
+import oscar.cp.constraints.EqCons;
+import oscar.cp.constraints.Sequence;
+import oscar.cp.core.CPStore;
+import oscar.cp.core.variables.CPIntVar;
 
 
 /**

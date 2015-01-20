@@ -1,11 +1,9 @@
-package oscar.cp.core
+package oscar.cp.core.variables
 
-import oscar.cp.minizinc.test
-import oscar.algo.reversible.ReversibleContext
-import oscar.cp.core.domains.IntervalDomain
 import scala.util.Random
 import oscar.cp.testUtils.TestSuite
 import oscar.cp.core.CPOutcome._
+import oscar.cp.core.CPStore
 
 class CPIntervalVarImplSuite extends TestSuite {
   

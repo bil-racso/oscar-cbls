@@ -1,9 +1,9 @@
 package oscar.cp.constraints.sets
 
 import oscar.cp.testUtils.TestSuite
-import oscar.cp.core.CPSetVar
+import oscar.cp.core.variables.CPSetVar
 import oscar.cp.core.CPSolver
-import oscar.cp.core.CPBoolVar
+import oscar.cp.core.variables.CPBoolVar
 
 import org.scalatest.Assertions._
 

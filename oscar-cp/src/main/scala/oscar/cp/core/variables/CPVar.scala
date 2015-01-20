@@ -14,7 +14,9 @@
  * *****************************************************************************/
 
 
-package oscar.cp.core
+package oscar.cp.core.variables
+
+import oscar.cp.core.CPStore
 
 /**
  * @author Renaud Hartert ren.hartert@gmail.com

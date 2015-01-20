@@ -1,10 +1,10 @@
 package oscar.cp.constraints
 
-import oscar.cp.core.CPIntVar
 import oscar.cp.core.Constraint
 import oscar.cp.core.CPPropagStrength
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.CPOutcome._
+import oscar.cp.core.variables.CPIntVar
 
 /** 
  *  Integer Division with Arc-Consistency

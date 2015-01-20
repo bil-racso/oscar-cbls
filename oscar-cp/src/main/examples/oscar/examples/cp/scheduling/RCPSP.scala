@@ -19,7 +19,6 @@ import oscar.cp._
 import oscar.algo.search._
 import oscar.cp.scheduling._
 import oscar.cp.constraints._
-import oscar.cp.core.CPIntVar
 
 /**
  *  @authors: Pierre Schaus  pschaus@gmail.com

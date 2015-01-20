@@ -16,7 +16,11 @@ package oscar.cp.constraints;
 
 
 import oscar.algo.reversible.SparseSet;
-import oscar.cp.core.*;
+import oscar.cp.core.CPOutcome;
+import oscar.cp.core.CPPropagStrength;
+import oscar.cp.core.Constraint;
+import oscar.cp.core.variables.CPBoolVar;
+import oscar.cp.core.variables.CPIntVar;
 
 
 /**
