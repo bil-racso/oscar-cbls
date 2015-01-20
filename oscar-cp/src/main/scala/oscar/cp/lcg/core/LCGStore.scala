@@ -8,13 +8,9 @@ import oscar.cp.core.CPStore
 import oscar.cp.lcg.core.clauses.Clause
 
 class LCGStore(store: CPStore) {
-
-  // Inconsistency
-  private[this] var inconsistent: Boolean = false
-  private[this] var inconsistentLevel: Int = -1
   
   // Level in which the store was consistent
-  private[this] var backtrackLevel: Int = -1
+  private[this] var backtrackLevel: Int = Int.MaxValue
 
   // Clauses
   private[this] val problemClauses: ArrayStack[Clause] = new ArrayStack(128)
@@ -46,7 +42,7 @@ class LCGStore(store: CPStore) {
   private[this] val queue: ArrayQueue[Literal] = new ArrayQueue(128)
 
   // Clause to propagate before fixed-point
-  private[this] val toPropagate: ArrayStack[Clause] = new ArrayStack(16)
+  private[this] val toPropagate: ArrayStack[Array[Literal]] = new ArrayStack(16)
 
   /** Return a literal that is always true. */
   @inline final val trueLit: Literal = trueVariable
@@ -55,7 +51,7 @@ class LCGStore(store: CPStore) {
   @inline final val falseLit: Literal = trueVariable.opposite
 
   /** Return true if the store is inconsistent. */
-  @inline final def isInconsistent: Boolean = inconsistent
+  @inline final def isInconsistent: Boolean = decisionLevel >= backtrackLevel
 
   /** Return the current decision level. */
   @inline final def decisionLevel: Int = trailVarLevels.size
@@ -92,27 +88,96 @@ class LCGStore(store: CPStore) {
   @inline final def watch(clause: Clause, literal: Literal): Unit = {
     watchers(literal.id).addLast(clause)
   }
+  
+  /** Return the value of the literal. */
+  final def value(literal: Literal): LiftedBoolean = {
+    val assigned = values(literal.varId)
+    if (assigned == Unassigned) Unassigned
+    else if (literal.signed) assigned.opposite
+    else assigned
+  }
 
   /** Add a permanent clause to the store. */
-  final def addProblemClause(literals: Array[Literal]): Boolean = newClause(literals, false)
+  final def addProblemClause(literals: Array[Literal]): Boolean = {
+    
+    // assert decision level is root
+    newClause(literals, false)
+  }
+  
+  /** Add a new decision to the store. */
+  final def addDecision(literal: Literal): Boolean = {
+    val noConflict = enqueue(literal, null)
+    if (!noConflict) sys.error("inconsistent decision")
+    noConflict
+  }
 
   /** 
    *  Add a backtrable clause to the store. 
    *  Entailed clauses are discarded.  
    */
-  final def addExplanationClause(literals: Array[Literal]): Boolean = ???
-
-  @inline private def newProblemClause(literals: Array[Literal]): Boolean = {
-
-    assert(trailVarLevels.size == 0)
-
-    // TODO Check for initial satisfiability
-
-    val clause = Clause(this, literals, false)
-    problemClauses.append(clause)
-    watchers(literals(0).opposite.id).addLast(clause)
-    watchers(literals(1).opposite.id).addLast(clause)
-    true
+  final def addExplanationClause(literals: Array[Literal]): Boolean = {
+       
+    var watched1 = -1
+    var watched2 = -1
+    
+    var i = 0
+    while (i < literals.length) {
+      val lit = literals(i)
+      val v = value(lit)
+      if (v == True) sys.error("entained explanation")
+      else if (v == Unassigned) {
+        if (watched1 == -1) watched1 = i
+        else watched2 = i
+      }
+      if (v == Unassigned) watched1 = i
+      else if (v == True) sys.error("entailed explanation")
+      i += 1
+    }
+    
+    if (watched1 == -1) {} // falsified
+    else if (watched2 == -1) {} // assertive
+    
+    
+    
+    // First, try to see if the clause is falsified, 
+    // if so backtrack to the deepest assignation.
+    // Else, if the clause is assertive, assert it and register
+    
+    
+    
+    ???
+  }
+  
+  private def handleExplanation(literals: Array[Literal]): Boolean = {
+    
+    var watched1 = -1
+    var watched2 = -1
+    
+    var i = 0
+    while (i < literals.length) {
+      val lit = literals(i)
+      val v = value(lit)
+      if (v == True) sys.error("entained explanation")
+      else if (v == Unassigned) {
+        if (watched1 == -1) watched1 = i
+        else watched2 = i
+      }
+      if (v == Unassigned) watched1 = i
+      else if (v == True) sys.error("entailed explanation")
+      i += 1
+    }
+    
+    if (watched1 == -1) {
+      // falsified
+      backtrackLevel = decisionLevel - 1
+      false
+    } 
+    else if (watched2 == -1) {
+      // assertive
+      sys.error("should not happen right now")
+      true
+    }
+    else sys.error("entailed or non-assertive clause.")
   }
 
   // Build a new clause
@@ -154,21 +219,21 @@ class LCGStore(store: CPStore) {
       true
     }
   }
+  
+  private var conflictingClause: Clause = null
 
   /**
    *  Propagate and conflict analysis
    */
   final def propagate(): Boolean = {
-    if (decisionLevel > inconsistentLevel) false
+    if (decisionLevel > backtrackLevel) false
     else {
       // Trail if necessary
       trail()
       // Call the fixed-point algorithm
-      val conflict = fixedPoint()
-      if (conflict == null) true
+      val noConflict  = fixedPoint()
+      if (noConflict) true
       else {
-        // Backtrack
-        inconsistentLevel = decisionLevel - 1
         false
         //analyze(conflict)
         //cancelUntil(outBacktsLevel)
@@ -182,37 +247,37 @@ class LCGStore(store: CPStore) {
 
   /**
    *  Empty the propagation queue
-   *  Return the first inconsistent clause if any
+   *  Return true if no conflict occurs
    */
-  @inline private def fixedPoint(): Clause = {
+  @inline private def fixedPoint(): Boolean = {
     
-    // Clause responsible of the conflict
-    var failReason: Clause = null
-    
-    // New clauses to propagate
-    while (!toPropagate.isEmpty && failReason == null) {
-      val clause = toPropagate.pop()
-      val consistent = clause.setup()
-      if (!consistent) failReason = clause
+    // False if a conflict occurs
+    var noConflict = true
+   
+    // New explanation to handle
+    while (!toPropagate.isEmpty && noConflict) {
+      val literals = toPropagate.pop()
+      noConflict = handleExplanation(literals)
     }
     
     // Empty the propagation queue
-    while (!queue.isEmpty && failReason == null) {
+    while (!queue.isEmpty && noConflict) {
       val literal = queue.removeFirst
       val clauses = watchers(literal.id)
       val nClauses = clauses.size
       var i = clauses.size
-      while (i > 0 && failReason == null) {
+      while (i > 0 && noConflict) {
         i -= 1
         val clause = clauses.removeFirst()
         if (clause.isActive) { // remove the clause if not active
-          val consistent = clause.propagate(literal)
-          if (!consistent) failReason = clause
+          noConflict = clause.propagate(literal)
+          if (!noConflict) conflictingClause = clause
         }
       }
     }
-    queue.clear()
-    failReason
+    
+    queue.clear() // possibly not empty
+    noConflict
   }
 
   final def enqueue(literal: Literal, from: Clause): Boolean = {
@@ -232,76 +297,6 @@ class LCGStore(store: CPStore) {
       true
     }
   }
-
-  final def value(literal: Literal): LiftedBoolean = {
-    val assigned = values(literal.varId)
-    if (assigned == Unassigned) Unassigned
-    else if (literal.signed) assigned.opposite
-    else assigned
-  }
-
-  // Conflict-Analysis
-  // -----------------
-
-  // These structures are used to build the nogood returned by a conflict analysis.
-  private[this] val outLearnt: ArrayStack[Literal] = new ArrayStack[Literal](16)
-  private[this] val pReason: ArrayStack[Literal] = new ArrayStack[Literal](16)
-
-  private[this] final var outBacktsLevel: Int = -1
-
-  /*private def analyze(initConflict: Clause): Unit = {
-
-    val seen: Array[Boolean] = new Array(values.size) // FIXME
-    var counter = 0
-    var p: Literal = null
-    var conflict: Clause = initConflict
-
-    outLearnt.clear()
-    outLearnt.append(null) // leave a room for the asserting literal
-    outBacktsLevel = 0
-
-    do {
-
-      pReason.clear
-      if (p == null) conflict.explainAll(pReason)
-      else conflict.explain(pReason)
-
-      // Trace reason for p
-      for (literal <- pReason) { // FIXME 
-        val varId = literal.varId
-        if (!seen(varId)) {
-          seen(varId) = true
-          val level = levels(varId)
-          if (level == decisionLevel) counter += 1
-          else if (level > 0) {
-            outLearnt.append(literal.opposite)
-            if (level > outBacktsLevel) outBacktsLevel = level
-          }
-        }
-      }
-
-      // Select next literal to look at
-      do {
-        p = trailVar.top
-        conflict = reasons(p.varId)
-        undoAssignment()
-      } while (!seen(p.varId))
-
-      counter -= 1
-
-    } while (counter > 0)
-
-    outLearnt(0) = p.opposite
-  }
-
-  final def record(literals: Array[Literal]): Unit = {
-    newClause(literals, true)
-    val clause = learntClauses.last
-    enqueue(literals(0), clause)
-  }*/
-
-  // Trailing queue
-  // --------------
 
   // Used for efficient trailing
   private[this] var lastMagic: Long = -1
