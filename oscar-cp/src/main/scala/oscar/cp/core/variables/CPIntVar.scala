@@ -36,6 +36,7 @@ trait DomainIterator extends Iterator[Int] {
  */
 abstract class CPIntVar extends CPIntervalVar with Iterable[Int] {
 
+  def isComplete: Boolean = size == (max - min + 1)
 
   /**
    * Number of values in common in both domains

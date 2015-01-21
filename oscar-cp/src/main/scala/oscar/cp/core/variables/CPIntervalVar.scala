@@ -83,11 +83,6 @@ abstract class CPIntervalVar extends CPVar with Iterable[Int] {
   def getSize = size
 
   /**
-   * @return true is the domain is full
-   */
-  def isFull = (max - min + 1) == size
-
-  /**
    * Number of values in common in both domains
    * @param other
    * @return Number of values in common in both domains
@@ -245,32 +240,6 @@ abstract class CPIntervalVar extends CPVar with Iterable[Int] {
     return b;
   }
 
-
-
-  /**
-   * Reified constraint
-   * @param v
-   * @return  a boolean variable b in the same store linked to x by the relation x != v <=> b == true
-   */
-//  def isDiff(v: Int): CPBoolVar = {
-//    val b = new CPBoolVar(store);
-//    val ok = store.post(new oscar.cp.constraints.DiffReif(this, v, b));
-//    assert(ok != CPOutcome.Failure)
-//    return b;
-//  }
-
-  /**
-   * Reified constraint
-   * @param y
-   * @return  a boolean variable b in the same store linked to x by the relation x != y <=> b == true
-   */
-//  def isDiff(y: CPIntervalVar): CPBoolVar = {
-//    val b = new CPBoolVar(store);
-//    val ok = store.post(new oscar.cp.constraints.DiffReifIntervalVar(this, y, b));
-//    assert(ok != CPOutcome.Failure)
-//    return b;
-//  }
-
   /**
    * Reified constraint
    * @param v
@@ -319,8 +288,6 @@ abstract class CPIntervalVar extends CPVar with Iterable[Int] {
     return b;
   }
 
-  def isRange: Boolean = (max - min + 1) == size
-
   /**
    * x==y
    */
@@ -329,38 +296,6 @@ abstract class CPIntervalVar extends CPVar with Iterable[Int] {
    * x==y
    */
    def ==(y: Int) = new oscar.cp.constraints.EqVal(this, y)
-  /**
-   * x<y
-   */
-  def <(y: CPIntervalVar) = new oscar.cp.constraints.Le(this, y)
-  /**
-   * x<y
-   */
-  def <(y: Int) = new oscar.cp.constraints.Le(this, y)
-  /**
-   * x>y
-   */
-  def >(y: CPIntervalVar) = new oscar.cp.constraints.Gr(this, y)
-  /**
-   * x>y
-   */
-  def >(y: Int) = new oscar.cp.constraints.Gr(this, y)
-  /**
-   * x<=y
-   */
-  def <=(y: CPIntervalVar) = new oscar.cp.constraints.LeEq(this, y)
-  /**
-   * x<=y
-   */
-  def <=(y: Int) = new oscar.cp.constraints.LeEq(this, y)
-  /**
-   * x>=y
-   */
-  def >=(y: CPIntervalVar) = new oscar.cp.constraints.GrEq(this, y)
-  /**
-   * x>=y
-   */
-  def >=(y: Int) = new oscar.cp.constraints.GrEq(this, y)
 }
 
 object CPIntervalVar {

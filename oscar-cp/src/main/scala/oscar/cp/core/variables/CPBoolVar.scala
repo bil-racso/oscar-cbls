@@ -13,6 +13,8 @@ import oscar.cp.core.Constraint
  * @author Renaud Hartert ren.hartert@gmail.com
  */
 abstract class CPBoolVar extends CPIntVar {
+  
+  final override def isComplete: Boolean = true
 
   /** @return a constraint setting the boolean variable to true (1) */
   def constraintTrue: Constraint
