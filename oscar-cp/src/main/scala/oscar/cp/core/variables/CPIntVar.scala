@@ -34,7 +34,7 @@ trait DomainIterator extends Iterator[Int] {
 /**
  * @author Pierre Schaus pschaus@gmail.com
  */
-abstract class CPIntVar extends CPIntervalVar with Iterable[Int] {
+abstract class CPIntVar extends CPIntervalVar {
 
   def isComplete: Boolean = size == (max - min + 1)
 

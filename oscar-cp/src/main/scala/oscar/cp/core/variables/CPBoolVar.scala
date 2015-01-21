@@ -42,7 +42,7 @@ abstract class CPBoolVar extends CPIntVar {
 
   /**
    *  Returns an unique boolean variable corresponding to the opposite
-   *  of this variable such that x.not.not == x. 
+   *  of this variable such that this.not.not == this. 
    */
   def not: CPBoolVar
 }
