@@ -68,7 +68,6 @@ case class TwoOpt(PredecesorOfFirstMovedPoint:()=>Iterable[Int],
       for (
         sndPred <- relevantNeighborsNow(fstPred) if (vrp.isRouted(sndPred)
         && sndPred != fstPred
-        && sndPred != fstPred
         && fstPred != vrp.next(sndPred).value
         && vrp.onTheSameRoute(fstPred, sndPred))
       ) {

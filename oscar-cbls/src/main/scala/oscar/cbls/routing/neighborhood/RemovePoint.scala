@@ -23,11 +23,8 @@
  */
 
 package oscar.cbls.routing.neighborhood
-import oscar.cbls.search.SearchEngine
-import oscar.cbls.modeling.Algebra._
-import scala.util.Random
+import oscar.cbls.routing.model.{MoveDescription, VRP}
 import oscar.cbls.search.SearchEngineTrait
-import oscar.cbls.routing.model.{ MoveDescription, VRP }
 
 /**
  * Removes a point of route.

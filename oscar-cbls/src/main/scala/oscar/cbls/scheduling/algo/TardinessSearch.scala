@@ -1,23 +1,9 @@
 package oscar.cbls.scheduling.algo
 
-import oscar.cbls.invariants.core.computation.Solution
-import oscar.cbls.invariants.core.computation.Store
-import oscar.cbls.scheduling.model.Activity
-import oscar.cbls.scheduling.model.Planning
-import oscar.cbls.scheduling.model.PrecedenceCleaner
-import oscar.cbls.scheduling.model.Resource
+import oscar.cbls.invariants.core.computation.{Snapshot, Solution, Store}
+import oscar.cbls.scheduling.algo.CriticalPathFinder.nonSolidCriticalPath
+import oscar.cbls.scheduling.model.{Activity, Deadlines, Planning, TotalResourcesOvershootEvaluation, VariableResources}
 import oscar.cbls.search.SearchEngine
-import oscar.cbls.scheduling.model.Deadlines
-import scala.util.control.Breaks.break
-import oscar.cbls.scheduling.model.ActivityWithDeadline
-import CriticalPathFinder.nonSolidCriticalPath
-import oscar.cbls.scheduling.model.TotalResourcesOvershootEvaluation
-import oscar.cbls.scheduling.model.ActivityWithDeadline
-import oscar.cbls.scheduling.model.NonMoveableActivity
-import oscar.cbls.routing.model.TotalTimeSpentByVehiclesOutOfDepotAsObjectiveTerm
-import oscar.cbls.scheduling.model.ActivityWithDeadline
-import oscar.cbls.scheduling.model.VariableResources
-import oscar.cbls.invariants.core.computation.Snapshot
 
 /**
  * *****************************************************************************

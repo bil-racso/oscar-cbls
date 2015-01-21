@@ -24,10 +24,8 @@
 
 package oscar.cbls.routing.neighborhood
 
-import oscar.cbls.search.SearchEngineTrait
-import oscar.cbls.search.SearchEngine
-import oscar.cbls.modeling.Algebra._
 import oscar.cbls.routing.model._
+import oscar.cbls.search.SearchEngineTrait
 
 /**
  * Swaps two points of the same or different routes.

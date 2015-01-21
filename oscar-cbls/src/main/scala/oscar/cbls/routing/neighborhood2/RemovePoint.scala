@@ -24,7 +24,7 @@
 
 package oscar.cbls.routing.neighborhood2
 
-import oscar.cbls.routing.model.{VRPObjective, MoveDescription, VRP}
+import oscar.cbls.routing.model.{MoveDescription, VRP}
 import oscar.cbls.search.algo.HotRestart
 import oscar.cbls.search.core.EasyNeighborhood
 

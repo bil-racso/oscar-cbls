@@ -28,7 +28,7 @@ import scala.collection.immutable.SortedSet
 /** a DAG node with some abstract methods
   * @author renaud.delandtsheer@cetic.be
   */
-abstract class DAGNode extends Ordered[DAGNode]{
+trait DAGNode extends Ordered[DAGNode]{
 
   /**the position in the topological sort*/
   var position: Int = 0
@@ -186,13 +186,14 @@ trait DAG {
 
     if(Start != null){
       if(DFS(Start)){ return ExploredStack }
+      else return List(Start)
     }
     nodes.foreach(n => {
       if (!n.visited)
         if (DFS(n)){return ExploredStack}
     })
     nodes.foreach(p => {p.visited = false})
-    null
+    List.empty
   }
 
   /**sorts DAG nodes according to dependencies.
@@ -201,8 +202,8 @@ trait DAG {
     */
   def doDAGSort() {
     //on utilise les positions pour stocker le nombre de noeuds predecesseurs non visites, puis on met l'autre valeur apres.
-    nodes.foreach(n => n.position = n.getDAGPrecedingNodes.size)
-    var Front: List[DAGNode] = nodes.toList.filter(n => (n.position == 0))
+    nodes.foreach(n => n.position = - n.getDAGPrecedingNodes.size)
+    var Front: List[DAGNode] = nodes.toList.filter(n => n.position == 0)
     var Position = 0 //la position du prochain noeud place.
     while (!Front.isEmpty) {
       val n = Front.head
@@ -210,8 +211,8 @@ trait DAG {
       n.position = Position
       Position += 1
       n.getDAGSucceedingNodes.foreach(p => {
-        p.position -=1
-        if (p.position == 0) Front = (p::Front) //une stack, en fait, mais c'est insensitif, puis c'est plus rapide. 
+        p.position +=1
+        if (p.position == 0) Front = p::Front //une stack, en fait, mais c'est insensitif, puis c'est plus rapide.
       })
     }
     if (Position != nodes.size) {
@@ -219,6 +220,7 @@ trait DAG {
     }
   }
 
+  /*
   private def findForwardRegion(n: DAGNode, ub: Int): List[DAGNode] = {
     def dfsF(n: DAGNode, acc: List[DAGNode]): List[DAGNode] = {
       n.visited = true
@@ -236,7 +238,7 @@ trait DAG {
     }
     dfsF(n, List.empty)
   }
-
+*/
   val HeapForRegionDiscovery:BinomialHeap[DAGNode] = new BinomialHeap((n:DAGNode) => n.position,nodes.size)
 
   /**@return forward region, sorted by increasing position*/
@@ -244,7 +246,7 @@ trait DAG {
 
     val h:BinomialHeap[DAGNode] = HeapForRegionDiscovery
     h.dropAll()
-    h.keyGetter = ((n:DAGNode) => n.position)
+    h.keyGetter = (n:DAGNode) => n.position
 
     var toreturn:List[DAGNode] = List.empty
 
@@ -269,6 +271,7 @@ trait DAG {
     toreturn.reverse
   }
 
+  /*
   private def findBackwardsRegion(n: DAGNode, lb: Int): List[DAGNode] = {
     def dfsB(n: DAGNode, acc: List[DAGNode]): List[DAGNode] = {
       n.visited = true
@@ -282,13 +285,13 @@ trait DAG {
     }
     dfsB(n, List.empty)
   }
-
+*/
   /**@return forward region, sorted by increasing position*/
   private def findSortedBackwardRegion(n: DAGNode, lb: Int): List[DAGNode] = {
 
     val h:BinomialHeap[DAGNode] = HeapForRegionDiscovery
     h.dropAll()
-    h.keyGetter = ((n:DAGNode) => -n.position)
+    h.keyGetter = (n:DAGNode) => -n.position
 
     var toreturn:List[DAGNode] = List.empty
 

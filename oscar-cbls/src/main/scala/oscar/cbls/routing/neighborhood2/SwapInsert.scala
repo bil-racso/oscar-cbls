@@ -25,9 +25,7 @@
 package oscar.cbls.routing.neighborhood2
 
 import oscar.cbls.routing.model._
-import oscar.cbls.search.SearchEngineTrait
 import oscar.cbls.search.combinators.AndThen
-import oscar.cbls.search.core.EasyNeighborhood
 import oscar.cbls.search.move.Move
 
 import scala.collection.immutable.SortedSet

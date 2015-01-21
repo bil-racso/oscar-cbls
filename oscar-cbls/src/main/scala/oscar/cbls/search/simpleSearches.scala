@@ -1,9 +1,8 @@
 package oscar.cbls.search
 
 import oscar.cbls.constraints.core.ConstraintSystem
-import oscar.cbls.invariants.core.computation.{CBLSIntVar, CBLSSetVar}
+import oscar.cbls.invariants.core.computation.{CBLSIntVar, CBLSSetVar, IntValue}
 import oscar.cbls.modeling.AlgebraTrait
-import oscar.cbls.objective.Objective
 import oscar.cbls.search.algo.{HotRestart, IdenticalAggregator}
 import oscar.cbls.search.core._
 import oscar.cbls.search.move.{AssignMove, CompositeMove, Move, SwapMove}
@@ -110,8 +109,13 @@ case class AssignNeighborhood(vars:Array[CBLSIntVar],
  *                            that is: thee first variable will always have a value strictly smaller than the value of second swapped variable
  *                            you do not want to have both symmetryCanBeBrokenOnIndices and symmetryCanBeBrokenOnValue
  * @param name the name of the neighborhood
- * @param symmetryClassOfVariables a function that input the ID of a variable and returns a symmetry class;
- *                      for each role of the move, ony one of the variable in each class will be considered
+ * @param symmetryClassOfVariables1 a function that input the ID of a variable and returns a symmetry class;
+ *                      for each role of the move, ony one of the variable in each class will be considered for the vars in searchZone1
+ *                      this makes search faster
+ *                      Int.MinValue is considered different to itself
+ *                      if you set to None this will not be used at all
+ * @param symmetryClassOfVariables2 a function that input the ID of a variable and returns a symmetry class;
+ *                      for each role of the move, ony one of the variable in each class will be considered for the vars in searchZone2
  *                      this makes search faster
  *                      Int.MinValue is considered different to itself
  *                      if you set to None this will not be used at all
@@ -128,7 +132,8 @@ case class SwapsNeighborhood(vars:Array[CBLSIntVar],
                              symmetryCanBeBrokenOnIndices:Boolean = true,
                              symmetryCanBeBrokenOnValue:Boolean = false,
                              best:Boolean = false,
-                             symmetryClassOfVariables:Option[Int => Int] = None,
+                             symmetryClassOfVariables1:Option[Int => Int] = None,
+                             symmetryClassOfVariables2:Option[Int => Int] = None,
                              hotRestart:Boolean = true)
   extends EasyNeighborhood(best,name) with AlgebraTrait{
   //the indice to start with for the exploration
@@ -148,18 +153,20 @@ case class SwapsNeighborhood(vars:Array[CBLSIntVar],
         } else vars.indices
       } else if (hotRestart && !best) HotRestart(searchZone1(), startIndice) else searchZone1()
 
-    val firstIterationScheme = symmetryClassOfVariables match {
+    val firstIterationScheme = symmetryClassOfVariables1 match {
       case None => firstIterationSchemeZone
       case Some(s) => IdenticalAggregator.removeIdenticalClassesLazily(firstIterationSchemeZone, s)
     }
 
     val secondIterationSchemeZone = if (searchZone2 == null) vars.indices else searchZone2()
 
-    val secondIterationScheme = symmetryClassOfVariables match {
+    val secondIterationScheme = symmetryClassOfVariables2 match {
       case None => secondIterationSchemeZone
       case Some(s) => IdenticalAggregator.removeIdenticalClassesLazily(secondIterationSchemeZone, s)
     }
 
+
+    //TODO : check if two different values are considered as asymmetrical
     for (i: Int <- firstIterationScheme) {
       val firstVar = vars(i)
       val oldValOfFirstVar = firstVar.value
@@ -274,7 +281,7 @@ case class RandomSwapNeighborhood(vars:Array[CBLSIntVar],
  *  the new value can be either the best one or the first one that improves according to parameter "best"
  *
  *  notice that the search of variable is performed linearly, as for the search of new value.
- *  For a smarter search, one should use [[oscar.cbls.search.AssignNeighborhood]] and a searchZone set with [[oscar.cbls.invariants.lib.minmax.ArgMaxArray]]
+ *  For a smarter search, one should use [[oscar.cbls.search.AssignNeighborhood]] and a searchZone set with [[oscar.cbls.invariants.lib.minmax.ArgMax]]
  *
  * @param c the constraint system
  * @param variables the array of variable that define the search space of this neighborhood
@@ -284,7 +291,7 @@ class ConflictAssignNeighborhood(c:ConstraintSystem, variables:List[CBLSIntVar],
   extends Neighborhood with SearchEngineTrait{
 
   var varArray = variables.toArray
-  val violations:Array[CBLSIntVar] = varArray.clone().map(c.violation(_))
+  val violations:Array[IntValue] = varArray.clone().map(c.violation(_))
   override def getMove(obj:()=>Int, acceptanceCriteria:(Int,Int) => Boolean = (oldObj,newObj) => oldObj > newObj): SearchResult = {
     val oldObj = c.violation.value
     val MaxViolVarID = selectMax(varArray.indices,violations(_:Int).value)

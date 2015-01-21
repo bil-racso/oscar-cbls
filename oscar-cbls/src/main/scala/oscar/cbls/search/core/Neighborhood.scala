@@ -15,13 +15,11 @@
 
 package oscar.cbls.search.core
 
-import oscar.cbls.invariants.core.computation.CBLSIntVar
 import oscar.cbls.objective.Objective
 import oscar.cbls.search.combinators._
 import oscar.cbls.search.move.{CallBackMove, Move}
 
-import scala.language.implicitConversions
-import scala.language.postfixOps
+import scala.language.{implicitConversions, postfixOps}
 
 abstract sealed class SearchResult
 case object NoMoveFound extends SearchResult
@@ -38,9 +36,15 @@ object SearchResult {
 
 abstract class JumpNeighborhood extends Neighborhood{
 
+  /** the method that actually performs the move
+    * notice that this method is called when the move is committed,
+    * which happens after the neighborhood returns the move.
+    */
   def doIt()
 
   /** this method checks that the jump can actually be performed
+    * it is called before the neighborhood returns either MoveFound or NoMoveFound
+    * notice that the doIt method is called only if canDoIt returned true.
     * override it if your jump might not be applicable
     * (and do not forget to handle this case in your search strategy)
     * @return
@@ -85,11 +89,11 @@ abstract class JumpNeighborhoodParam[T] extends Neighborhood{
  * @author renaud.delandtsheer@cetic.be
  */
 abstract class Neighborhood{
-
-
   /**
-   *
-  @param obj the objective function. notice that it is actually a function. if you have an [[oscar.cbls.objective.Objective]] there is an implicit conversion available
+   * the method that returns a move from the neighborhood.
+   * The returned move should typically be accepted by the acceptance criterion over the objective function.
+   * Some neighborhoods are actually jumps, so that they might violate this basic rule however.
+   * @param obj the objective function. notice that it is actually a function. if you have an [[oscar.cbls.objective.Objective]] there is an implicit conversion available
    * @param acceptanceCriterion
    * @return
    */
@@ -275,7 +279,7 @@ abstract class Neighborhood{
     * the count is reset by the reset action.
     * @author renaud.delandtsheer@cetic.be
     */
-  def maxMovesWithoutImprovement(maxMove:Int, obj:Objective) = new MaxMovesWithoutImprovement(this, null, maxMove, obj)
+  def maxMovesWithoutImprovement(maxMove:Int, obj:()=>Int) = new MaxMovesWithoutImprovement(this, null, maxMove, obj)
 
   /**makes a round robin on the neighborhood. it swaps as soon as one does not find a move
     * and swaps neighborhood after "step" invocations
@@ -328,7 +332,7 @@ abstract class Neighborhood{
     */
   def onFirstMove(proc: => Unit) = new  DoOnFirstMove(this,() => proc)
 
-  def protectBest(i:CBLSIntVar) = new ProtectBest(this, i)
+  def protectBest(o: Objective) = new ProtectBest(this, o)
 
   /** retries n times the move before concluding to noMove can be found
     * resets o nhe first found move, or on reset
@@ -409,7 +413,7 @@ abstract class Neighborhood{
     * @param obj the obj that is looked for improvement
     * @author renaud.delandtsheer@cetic.be
     * */
-  def untilImprovement(obj:CBLSIntVar, minMoves:Int = 0, maxMove:Int = Int.MaxValue) = new UntilImprovement(this, obj, minMoves, maxMove)
+  def untilImprovement(obj:()=>Int, minMoves:Int = 0, maxMove:Int = Int.MaxValue) = new UntilImprovement(this, obj, minMoves, maxMove)
 
   /**
    * this combinator injects a metropolis acceptation function.
@@ -420,6 +424,39 @@ abstract class Neighborhood{
    * @param base the base for the exponent calculation. default is 2
    */
   def metropolis(temperature:Int => Float = _ => 100, base:Float = 2) = new Metropolis(this, temperature, base)
+
+  /**
+   * This is an atomic combinator, it represent that the neighborhood below should be considered as a single piece.
+   * When you commit a move from this neighborhood, "a" is reset, and exhausted in a single move from Atomic(a)
+   * Also, Atomic is a jump neighborhood as it cannot evaluate any objective function before the move is committed.
+   * @param name a name for the atomic move
+   */
+  def atomic(name:String = "Atomic", bound:Int = Int.MaxValue)  = new Atomic(this, name, bound)
+
+  /**
+   * Forces the use of a given objetive function.
+   * this overrides the one that you might pass in the higher level
+   * @param overridingObjective the objective to use instead of the given one
+   */
+  def overrideObjective(a:Neighborhood, overridingObjective:()=>Int) = new OverrideObjective(a, overridingObjective)
+
+    /**
+     * This represents a guided local search where a series of objective criterion are optimized one after the other
+     * the switching is performed on exhaustion, and a is reset on switching.
+     * Notice that if you want to use different neighborhoods depending on the objective function, you should rather use a series of neighborhood with the objectiveFucntion combinator
+     * @param objectives the list of objective to consider
+     * @param resetOnExhaust  on exhaustion of the current objective, restores the best value for this objective before switching to the next objective
+     */
+    def guidedLocalSearch(a:Neighborhood, objectives:List[Objective], resetOnExhaust:Boolean) = new GuidedLocalSearch(a, objectives, resetOnExhaust)
+
+  /**
+   * This represents an accumulatingSearch: it searches on a given objective until this objective gets to zero,
+   * then it switches to the second one, and rejects all update that would actually decrease the first objective
+   * it will use the acceptance criterion, but extend it in the second phase
+   * @param firstObjective the first objective function
+   * @param secondObjective the second objective function
+   */
+  def accumulatingSearch(a:Neighborhood, firstObjective:Objective, secondObjective:Objective) = new AccumulatingSearch(a, firstObjective, secondObjective)
 }
 
 /** a neighborhood that never finds any move (quite useless, actually)
@@ -441,7 +478,8 @@ case class ConstantMoveNeighborhood(m:Move) extends Neighborhood{
  * and the management of the acceptingCriterion.
  *
  * to implement a neighborhood, you must implement the method searchImprovingMoveEasy
- * in this method, you evaluate moves, and to notify that a move has been explored you have two possibilities:
+ * in this method, you evaluate moves, and to notify that a move has been
+ * explored you have two possibilities:
  *
  * either you do
  * {{{

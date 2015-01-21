@@ -21,7 +21,8 @@
 
 package oscar.cbls.constraints.core
 
-import oscar.cbls.invariants.core.computation.{Variable, CBLSIntVar, IntInvariant}
+import oscar.cbls.invariants.core.computation._
+import oscar.cbls.invariants.core.propagation.Checker
 import oscar.cbls.invariants.lib.numeric.Step
 
 /**A constraint is a function that computes a degree of violation that is managed as any invariant.
@@ -33,37 +34,32 @@ import oscar.cbls.invariants.lib.numeric.Step
  * and managed as invariants.
   * @author renaud.delandtsheer@cetic.be
  */
-abstract class Constraint extends IntInvariant{
-  //TODO: constraints should not always be invariant, although they should offer the setOutputVar feature
+abstract class Constraint{
 
   /** returns the violation associated with variable v in this constraint
    * all variables that are declared as constraint should have an associated violation degree.
     * notice that you cannot create any new invariant or variable in this method
     * because they can only be created before the model is closed.
     * */
-  def violation(v: Variable): CBLSIntVar
+  def violation(v: Value): IntValue
 
   /** returns the degree of violation of the constraint
     * notice that you cannot create any new invariant or variable in this method
     * because they can only be created before the model is closed.
     * @return
     */
-  def violation: CBLSIntVar
+  def violation: IntValue
 
   /**facility to check that the constraint is enforced
     * */
   final def isTrue: Boolean = (violation.value == 0)
 
-  def myMin = 0
-  def myMax = 1
-
-  /**the output var of a constraint is whether the constraint is true or not; it is not the violation degree*/
-  override def setOutputVar(v: CBLSIntVar) {v <== Step(violation,0,0,1)}
+  final def truthValue:IntValue = Step(violation,0,0,1)
 
   /**the variables that are constrained by the constraint.
    * This should be read only. If you want to declare more constrained variables,
    * use the registerConstrainedVariable method. */
-  private var _constrainedVariables:List[Variable] = List.empty
+  private var _constrainedVariables:List[AbstractVariable] = List.empty
   def constrainedVariables = _constrainedVariables
   
   /**This should be called by the constraint to declare the set of constrained variables.
@@ -74,17 +70,24 @@ abstract class Constraint extends IntInvariant{
    * but subcontract the computation and implementation of the constraint to invariants.
    * Notice that all variables sent here which are actually constants are not kept, as they are not variables, actually.
    * This is tested by looking that the variable has a model associated.
+    *
+    * notice that constants will simply not be registered, so they will never have a violation degree stored anywhere.
+    *
    * @param v the variable that is declared as constrained by the constraint
    */
-  def registerConstrainedVariable(v: Variable){
-    if (v.model != null) _constrainedVariables = v :: constrainedVariables
+  def registerConstrainedVariable(v: Value){
+    v match{
+      case c:AbstractVariable if (c.model != null) => _constrainedVariables = c :: constrainedVariables
+    }   //TODO unsure if constraints can handle constraints as input parameter...
   }
 
-  def registerConstrainedVariables(v: Variable*){
+  def registerConstrainedVariables(v: Value*){
     registerConstrainedVariables(v.toSeq)
   }
 
-  def registerConstrainedVariables(v: Iterable[Variable]){
+  def registerConstrainedVariables(v: Iterable[Value]){
     for (vv <- v){registerConstrainedVariable(vv)}
   }
+
+  def checkInternals(c: Checker) {}
 }

@@ -1,13 +1,14 @@
 package oscar.examples.cbls
 
-import oscar.cbls.invariants.core.computation.{CBLSIntVar, Store}
+import oscar.cbls.invariants.core.computation.{CBLSIntConst, CBLSIntVar, IntValue, Store}
 import oscar.cbls.invariants.lib.logic.{Filter, SelectLESetQueue}
-import oscar.cbls.invariants.lib.minmax.MinArray
+import oscar.cbls.invariants.lib.minmax.{MinConstArray, Min, MinArray}
 import oscar.cbls.invariants.lib.numeric.Sum
 import oscar.cbls.modeling.AlgebraTrait
 import oscar.cbls.objective.Objective
 import oscar.cbls.search.AssignNeighborhood
 import oscar.cbls.search.move.Move
+import scala.language.postfixOps
 
 /**
  * this is a WarehouseLocation problem with a Tabu.
@@ -37,7 +38,7 @@ object WarehouseLocationTabu extends App with AlgebraTrait{
 
   val weightingForOpeningWarehouseCost = 3
 
-  val costForOpeningWarehouse:Array[Int] = Array.tabulate(W)(
+  val costForOpeningWarehouse:Array[CBLSIntConst] = Array.tabulate(W)(
     w => (math.random * side * weightingForOpeningWarehouseCost).toInt)
 
   //we generate te cost distance matrix
@@ -49,34 +50,33 @@ object WarehouseLocationTabu extends App with AlgebraTrait{
     math.sqrt(math.pow(from._1 - to._1,2) + math.pow(from._2 - to._2,2)).toInt
 
   //for each delivery point, the distance to each warehouse
-  val distanceCost:Array[Array[Int]] = Array.tabulate(D)(
+  val distanceCost = Array.tabulate(D)(
     d => Array.tabulate(W)(
       w => distance(warehousePositions(w), deliveryPositions(d))))
 
   val m = Store()
 
+  val warehouseOpenArray = Array.tabulate(W)(w => CBLSIntVar(m, 0, 0 to 1, "warehouse_" + w + "_open"))
+
   //We store in each warehouse variable its warehouse ID, using the
   // [[oscar.cbls.invariants.core.computation.DistributedStorageUtility]] mechanism
   //so we first ask a storageKey to the model
-  val warehouseKey = m.getStorageKey()
+  val warehouseKey = m.newStorageKey()
+  m.storeIndexesAt(warehouseOpenArray, warehouseKey)
 
-  val warehouseOpenArray = Array.tabulate(W)(w => {
-    val wVar = CBLSIntVar(m, 0 to 1, 0, "warehouse_" + w + "_open")
-    wVar.storeAt(warehouseKey,new Integer(w))
-    wVar
-  })
-
-  //by default, Filter selects the indices of each position where the variable is not zero
-  val openWarehouses = Filter(warehouseOpenArray).toSetVar("openWarehouses")
+  val openWarehouses = Filter(warehouseOpenArray).setName("openWarehouses")
 
   val distanceToNearestOpenWarehouse = Array.tabulate(D)(d =>
-    MinArray(distanceCost(d), openWarehouses, defaultCostForNoOpenWarehouse).toIntVar("distance_for_delivery_" + d))
+    MinConstArray(distanceCost(d), openWarehouses, defaultCostForNoOpenWarehouse).setName("distance_for_delivery_" + d))
 
-  val obj = Objective(Sum(distanceToNearestOpenWarehouse) + Sum(costForOpeningWarehouse, openWarehouses))
+  val obj = Objective(Sum(distanceToNearestOpenWarehouse)
+    + Sum(costForOpeningWarehouse, openWarehouses))
 
-  val TabuArray = Array.tabulate(W)(w => CBLSIntVar(m))
+  // we handle the tabu through invariants.
+  // notice that they are completely dissociated from the rest of the model in this case.
+  val TabuArray = Array.tabulate(W)(w => CBLSIntVar(m,0))
   val It = CBLSIntVar(m)
-  val nonTabuWarehouses = SelectLESetQueue(TabuArray,It).toSetVar("non tabu warehouses")
+  val nonTabuWarehouses = SelectLESetQueue(TabuArray,It).setName("non tabu warehouses")
 
   m.close()
 
@@ -91,12 +91,12 @@ object WarehouseLocationTabu extends App with AlgebraTrait{
     for (v <- mo.touchedVariables) {
       TabuArray(v.getStorageAt[Int](warehouseKey)) := It.value + tabuTenure
     }
-    It :+= 1 }) acceptAll() maxMoves W withoutImprovementOver obj protectBest obj)
+    It :+= 1 }) acceptAll() maxMoves W withoutImprovementOver obj protectBest obj restoreBestOnExhaust)
 
   switchWithTabuNeighborhood.verbose = 1
 
   //all moves are accepted because the neighborhood returns the best found move, and tabu might degrade obj.
-  switchWithTabuNeighborhood.doAllMovesAndRestoreBest(_ >= W+D, obj)
+  switchWithTabuNeighborhood.doAllMoves(obj=obj)
 
   println(openWarehouses)
 }

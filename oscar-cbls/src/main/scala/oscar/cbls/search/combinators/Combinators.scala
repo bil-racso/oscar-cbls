@@ -16,10 +16,10 @@
  */
 package oscar.cbls.search.combinators
 
-import oscar.cbls.invariants.core.computation.{ CBLSSetVar, CBLSIntVar, Solution, Store }
-import oscar.cbls.search.core.NoMoveFound
-import oscar.cbls.search.core._
-import oscar.cbls.search.move.{ CompositeMove, InstrumentedMove, Move }
+import oscar.cbls.invariants.core.computation.{IntValue, SetValue}
+import oscar.cbls.objective.Objective
+import oscar.cbls.search.core.{NoMoveFound, _}
+import oscar.cbls.search.move.{CallBackMove, CompositeMove, InstrumentedMove, Move}
 
 import scala.language.implicitConversions
 
@@ -43,12 +43,15 @@ abstract class NeighborhoodCombinator(a: Neighborhood*) extends Neighborhood {
   override def toString: String = this.getClass.getSimpleName + "(" + a.mkString(",") + ")"
 }
 
-class BasicProtectBest(a: Neighborhood, i: CBLSIntVar) extends NeighborhoodCombinator(a) {
+class BasicProtectBest(a: Neighborhood, o: Objective) extends NeighborhoodCombinator(a) {
 
-  protected val s: Store = i.model
+  protected val s = o.model
 
-  protected var bestObj = if (currentSolutionIsAcceptable) i.value else Int.MaxValue
-  protected var best: Solution = if (currentSolutionIsAcceptable) s.solution() else null
+  require(s!= null, "you are using an objective function that has no attached model, so "
+    + this.getClass.getSimpleName + " cannot save the model; pass it explicitely to the Objective creation to solve this issue")
+
+  protected var bestObj = if (currentSolutionIsAcceptable) o.value else Int.MaxValue
+  protected var best = if (currentSolutionIsAcceptable) s.solution() else null
 
 
   //this resets the internal state of the move combinators
@@ -61,7 +64,7 @@ class BasicProtectBest(a: Neighborhood, i: CBLSIntVar) extends NeighborhoodCombi
   override def getMove(obj:()=>Int, acceptanceCriteria: (Int, Int) => Boolean): SearchResult = {
 
     //we record the obj before move to prevent an additional useless propagation
-    val objBeforeMove = i.value
+    val objBeforeMove = o.value
 
     a.getMove(obj, acceptanceCriteria) match {
       case NoMoveFound => NoMoveFound
@@ -83,7 +86,7 @@ class BasicProtectBest(a: Neighborhood, i: CBLSIntVar) extends NeighborhoodCombi
     val isCurrentAccepteable = currentSolutionIsAcceptable
     if (best == null && !isCurrentAccepteable) {
       if (verbose >= 1) println("no single acceptable solution seen")
-    } else if (i.value > bestObj || !isCurrentAccepteable) {
+    } else if (o.value > bestObj || !isCurrentAccepteable) {
       s.restoreSolution(best)
       if (verbose >= 1) println("restoring best solution (obj:" + bestObj + ")")
     } else if (verbose >= 1) println("no better solution to restore")
@@ -100,7 +103,7 @@ class BasicProtectBest(a: Neighborhood, i: CBLSIntVar) extends NeighborhoodCombi
    *                            by default, we only accept strictly improving moves
    * @return the number of moves performed
    */
-  def doAllMovesAndRestoreBest(shouldStop: Int => Boolean, obj:()=>Int, acceptanceCriterion: (Int, Int) => Boolean = (oldObj, newObj) => oldObj > newObj): Int = {
+  def doAllMovesAndRestoreBest(shouldStop: Int => Boolean = _ => false, obj:()=>Int, acceptanceCriterion: (Int, Int) => Boolean = (oldObj, newObj) => oldObj > newObj): Int = {
     val toReturn = doAllMoves(shouldStop, obj:()=>Int, acceptanceCriterion)
     restoreBest()
     toReturn
@@ -109,10 +112,10 @@ class BasicProtectBest(a: Neighborhood, i: CBLSIntVar) extends NeighborhoodCombi
   def restoreBestOnExhaust: RestoreBestOnExhaust = new RestoreBestOnExhaust(this)
 }
 
-class ProtectBest(a: Neighborhood, i: CBLSIntVar) extends BasicProtectBest(a: Neighborhood, i: CBLSIntVar) {
+class ProtectBest(a: Neighborhood, o: Objective) extends BasicProtectBest(a: Neighborhood, o: Objective) {
 
-  def whenEmpty(violation: CBLSSetVar) = new ProtectBestWhen(a, i, () => violation.value.isEmpty)
-  def whenZero(violation: CBLSIntVar) = new ProtectBestWhen(a, i, () => violation.value == 0)
+  def whenEmpty(violation: SetValue) = new ProtectBestWhen(a, o, () => violation.value.isEmpty)
+  def whenZero(violation: IntValue) = new ProtectBestWhen(a, o, () => violation.value == 0)
 
   /**
    * this method restricts the save operation to only the situation where "shouldSave" returns true
@@ -120,10 +123,10 @@ class ProtectBest(a: Neighborhood, i: CBLSIntVar) extends BasicProtectBest(a: Ne
    * @param shouldSave
    * @return
    */
-  override def when(shouldSave: () => Boolean) = new ProtectBestWhen(a, i, shouldSave)
+  override def when(shouldSave: () => Boolean) = new ProtectBestWhen(a, o, shouldSave)
 }
 
-class ProtectBestWhen(a: Neighborhood, i: CBLSIntVar, shouldSave: () => Boolean) extends BasicProtectBest(a, i) {
+class ProtectBestWhen(a: Neighborhood, o:Objective, shouldSave: () => Boolean) extends BasicProtectBest(a, o) {
   override protected def currentSolutionIsAcceptable: Boolean = shouldSave()
 }
 
@@ -154,7 +157,6 @@ class RestoreBestOnExhaust(a: BasicProtectBest) extends NeighborhoodCombinator(a
         x
     }
   }
-
 }
 
 /**
@@ -562,21 +564,30 @@ class MaxMoves(a: Neighborhood, val maxMove: Int, cond:Move => Boolean = null) e
    * this will modify the effect of the maxMoves by transforming it into a [[MaxMovesWithoutImprovement]]
    * the initial maxMoves is deleted by this method, and the integer bound is passed to [[MaxMovesWithoutImprovement]]
    */
-  def withoutImprovementOver(obj: CBLSIntVar) = new MaxMovesWithoutImprovement(a, cond, maxMove, obj)
+  def withoutImprovementOver(obj:()=>Int) = new MaxMovesWithoutImprovement(a, cond, maxMove, obj)
 
   def suchThat(cond:Move => Boolean) = new MaxMoves(a, maxMove, if (this.cond == null) cond else (m:Move) => this.cond(m) && cond(m))
 }
 
 /**
- * this combinator finds no move if cond evaluates to false, otherwise ,it forwards the search request to a
+ * This combinator finds no move starting from the point where cond evaluates to false,
+ * otherwise, it forwards the search request to "a"
+ * this combinator is reset on reset
  * @param a a neighborhood
  * @param cond a stop criterion
  * @author renaud.delandtsheer@cetic.be
  */
 class StopWhen(a: Neighborhood, cond:()=> Boolean) extends NeighborhoodCombinator(a) {
+  var isStopped:Boolean = false
   override def getMove(obj:()=>Int, acceptanceCriterion: (Int, Int) => Boolean): SearchResult = {
-    if(cond()) NoMoveFound
+    if(isStopped || cond()) { isStopped=true; NoMoveFound}
     else a.getMove(obj, acceptanceCriterion)
+  }
+
+  //this resets the internal state of the move combinators
+  override def reset(){
+    isStopped = false
+    super.reset()
   }
 }
 
@@ -742,7 +753,7 @@ class AndThen(a: Neighborhood, b: Neighborhood, maxFirstStep: Int = 10, maximalI
  * the count is reset by the reset action.
  * @author renaud.delandtsheer@cetic.be
  */
-class MaxMovesWithoutImprovement(a: Neighborhood, val cond:Move => Boolean, val maxMovesWithoutImprovement: Int, obj: CBLSIntVar) extends NeighborhoodCombinator(a) {
+class MaxMovesWithoutImprovement(a: Neighborhood, val cond:Move => Boolean, val maxMovesWithoutImprovement: Int, obj:()=>Int) extends NeighborhoodCombinator(a) {
 
   var stepsSinceLastImprovement = 0
   var bestObj = Int.MaxValue
@@ -767,7 +778,7 @@ class MaxMovesWithoutImprovement(a: Neighborhood, val cond:Move => Boolean, val 
 
   def notifyMoveTaken(m:Move) {
     if (cond == null || cond(m)) {
-      val newObj = obj.value
+      val newObj = obj()
       if (newObj < bestObj) {
         bestObj = newObj
         stepsSinceLastImprovement = 0
@@ -884,4 +895,132 @@ class Metropolis(a: Neighborhood, temperature: Int => Float = _ => 100, base:Flo
     moveCount = 0
     temperatureValue = temperature(moveCount)
   }
+}
+
+/**
+ * This is an atomic combinator, it represent that the neighborhood below should be considered as a single piece.
+ * When you commit a move from this neighborhood, "a" is reset, and exhausted in a single move from Atomic(a)
+ * Also, Atomic is a jump neighborhood as it cannot evaluate any objective function before the move is committed.
+ * @param a
+ * @param name
+ */
+case class Atomic(a:Neighborhood, name:String = "Atomic", bound:Int = Int.MaxValue) extends Neighborhood {
+  override def getMove(obj:()=>Int, acceptanceCriterion: (Int, Int) => Boolean = (oldObj,newObj) => oldObj > newObj): SearchResult = {
+    CallBackMove(() => a.doAllMoves(_ > bound, obj, acceptanceCriterion), Int.MaxValue, this.getClass.getSimpleName, () => ("Atomic(" + a + ")"))
+  }
+}
+
+/**
+ * This represents a guided local search where a series of objective criterion are optimized one after the other
+ * the switching is performed on exhaustion, and a is reset on switching.
+ * Notice that if you want to use different neighborhoods depending on the objective function, you should rather use a series of neighborhood with the objectiveFucntion combinator
+ * @param a the neighborhood to consider
+ * @param objectives the list of objective to consider
+ * @param resetOnExhaust  on exhaustion of the current objective, restores the best value for this objective before switching to the next objective
+ */
+class GuidedLocalSearch(a:Neighborhood, objectives:List[Objective], resetOnExhaust:Boolean) extends NeighborhoodCombinator(a) {
+
+  var currentObjective:()=>Int = null
+  var tailObjectives:List[Objective] = objectives
+  var currentSun:Neighborhood = null
+
+  def switchToNext():Boolean = {
+    tailObjectives match{
+      case h::t =>
+        currentObjective = h
+        tailObjectives = t
+        currentSun = if(resetOnExhaust) new ProtectBest(a,h) else a
+        true
+      case _ =>
+        currentObjective = null
+        tailObjectives = null
+        currentSun = null
+        false
+    }
+  }
+
+  switchToNext()
+
+  /**
+   * the method that returns a move from the neighborhood.
+   * The returned move should typically be accepted by the acceptance criterion over the objective function.
+   * Some neighborhoods are actually jumps, so that they might violate this basic rule however.
+   * @param obj the objective function. notice that it is actually a function. if you have an [[oscar.cbls.objective.Objective]] there is an implicit conversion available
+   * @param acceptanceCriterion
+   * @return
+   */
+  override def getMove(obj: () => Int, acceptanceCriterion: (Int, Int) => Boolean): SearchResult = {
+    if(currentSun == null){
+      NoMoveFound
+    }else{
+      currentSun.getMove(currentObjective,acceptanceCriterion) match{
+        case NoMoveFound =>
+          if(resetOnExhaust) currentSun.asInstanceOf[ProtectBest].restoreBest()
+          switchToNext()
+          getMove(obj, acceptanceCriterion)
+        case m:MoveFound => m
+      }
+    }
+  }
+
+  //this resets the internal state of the Neighborhood
+  override def reset(){
+    tailObjectives = objectives
+    switchToNext()
+    if(currentSun != null) currentSun.reset()
+    else super.reset()
+  }
+}
+
+/**
+ * This represents an accumulatingSearch: it searches on a given objective until this objective gets to zero,
+ * then it switches to the second one, and rejects all update that would actually decrease the first objective
+ * it will use the acceptance criterion, but extend it in the second phase
+ * @param a the neighborhood
+ * @param firstObjective the first objective function
+ * @param secondObjective the second objective function
+ */
+class AccumulatingSearch(a:Neighborhood, firstObjective:Objective, secondObjective:Objective) extends NeighborhoodCombinator(a) {
+
+  private def fullSecondObjective():Int = {
+    if(firstObjective() == 0){
+      secondObjective()
+    }else{
+      Int.MaxValue
+    }
+  }
+
+  /**
+   * the method that returns a move from the neighborhood.
+   * The returned move should typically be accepted by the acceptance criterion over the objective function.
+   * Some neighborhoods are actually jumps, so that they might violate this basic rule however.
+   * @param obj the objective function. notice that it is actually a function. if you have an [[oscar.cbls.objective.Objective]] there is an implicit conversion available
+   * @param acceptanceCriterion
+   * @return
+   */
+  override def getMove(obj: () => Int, acceptanceCriterion: (Int, Int) => Boolean): SearchResult = {
+    if (firstObjective() != 0) {
+      a.getMove(firstObjective, acceptanceCriterion)
+    } else {
+      a.getMove(fullSecondObjective, acceptanceCriterion)
+    }
+  }
+}
+
+/**
+ * Forces the use of a given objetive function.
+ * this overrides the one that you might pass in the higher level
+ * @param a the combined neighborhood
+ * @param overridingObjective the objective to use instead of the given one
+ */
+class OverrideObjective(a:Neighborhood, overridingObjective:()=>Int) extends NeighborhoodCombinator(a) {
+  /**
+   * the method that returns a move from the neighborhood.
+   * The returned move should typically be accepted by the acceptance criterion over the objective function.
+   * Some neighborhoods are actually jumps, so that they might violate this basic rule however.
+   * @param obj the objective function. notice that it is actually a function. if you have an [[oscar.cbls.objective.Objective]] there is an implicit conversion available
+   * @param acceptanceCriterion
+   * @return
+   */
+  override def getMove(obj: () => Int, acceptanceCriterion: (Int, Int) => Boolean): SearchResult = getMove(overridingObjective, acceptanceCriterion)
 }

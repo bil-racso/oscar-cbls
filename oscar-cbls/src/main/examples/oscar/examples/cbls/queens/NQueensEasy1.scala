@@ -36,13 +36,13 @@ object NQueensEasy1 extends CBLSModel with App{
   val range:Range = Range(0,N)
 
   val init = Random.shuffle(range.toList).iterator
-  val queens = Array.tabulate(N)((q:Int) => CBLSIntVar(0 to N-1,init.next(), "queen" + q))
+  val queens = Array.tabulate(N)((q:Int) => CBLSIntVar(init.next(),0 to N-1, "queen" + q))
 
   //c.post(AllDiff(Queens)) //enforced because we swap queens and they are always allDiff
-  post(allDiff(for (q <- range) yield (queens(q) + q).toIntVar))
-  post(allDiff(for (q <- range) yield (q - queens(q)).toIntVar))
+  post(allDiff(for (q <- range) yield (queens(q) + q)))
+  post(allDiff(for (q <- range) yield (q - queens(q))))
 
-  val maxViolQueens = argMax(violations(queens)).toSetVar("most violated queens")
+  val maxViolQueens = argMax(violations(queens)).setName("most violated queens")
 
   close()
 
@@ -55,4 +55,6 @@ object NQueensEasy1 extends CBLSModel with App{
 
   println("it: " + it)
   println(queens.mkString(","))
+
+  println(s.stats)
 }

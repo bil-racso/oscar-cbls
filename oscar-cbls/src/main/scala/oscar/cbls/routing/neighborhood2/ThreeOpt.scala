@@ -118,7 +118,7 @@ case class ThreeOpt(potentialInsertionPoints:()=>Iterable[Int],
     }
   }
 
-def exploreNeighborhoodRouteExtension(){
+  def exploreNeighborhoodRouteExtension(){
     val iterationSchemeOnZone =
       if (hotRestart && !best) HotRestart(potentialInsertionPoints(), startIndice)
       else potentialInsertionPoints()

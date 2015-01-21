@@ -25,15 +25,14 @@ package oscar.cbls.scheduling.model
  * ****************************************************************************
  */
 
-import oscar.cbls.invariants.core.computation.{ CBLSIntVar, CBLSSetVar }
-import scala.Array
-import oscar.cbls.invariants.lib.logic.{ Cumulative, Filter }
-import oscar.cbls.invariants.lib.minmax.{ ArgMaxArray, MinSet }
-import oscar.cbls.invariants.lib.numeric.Step
+import oscar.cbls.invariants.core.computation.{CBLSIntVar, IntValue}
+import oscar.cbls.invariants.lib.logic.Cumulative
+import oscar.cbls.invariants.lib.minmax.{Max, ArgMax}
+import oscar.cbls.modeling.Algebra._
 import oscar.cbls.scheduling.algo.ConflictSearch
 import oscar.cbls.search.SearchEngineTrait
-import oscar.cbls.modeling.Algebra._
-import collection.SortedMap
+
+import scala.collection.SortedMap
 
 /**
  * Maintains the resource usage at all time
@@ -48,18 +47,17 @@ class CumulativeResource(planning: Planning, val maxAmount: Int = 1, name: Strin
   extends Resource(planning: Planning, name) with SearchEngineTrait {
   require(maxAmount >= 0) // The IntVar that store the useAmount would break if their domain of lb > ub.
 
-  val useAmount = Array.tabulate(maxDuration + 1)(t => CBLSIntVar(model, 0, Int.MaxValue, 0, s"use_amount_${name}_at_time_$t"))
-  var activitiesAndUse: SortedMap[Activity, CBLSIntVar] = SortedMap.empty
+  val useAmount = Array.tabulate(maxDuration + 1)(t => CBLSIntVar(model, 0, 0 to Int.MaxValue, s"use_amount_${name}_at_time_$t"))
+  var activitiesAndUse: SortedMap[Activity, IntValue] = SortedMap.empty
 
-  val HighestUseTracker = ArgMaxArray(useAmount)
-  val HighestUsePositions: CBLSSetVar = HighestUseTracker
-  val HighestUse = HighestUseTracker.getMax
+  val HighestUsePositions = ArgMax(useAmount)
+  val HighestUse = Max(useAmount)
 
-  val overShoot: CBLSIntVar = HighestUse - maxAmount
+  val overShoot = HighestUse - maxAmount
   def worseOverShootTime: Int = HighestUsePositions.value.firstKey
 
   /**called by activities to register itself to the resource*/
-  def notifyUsedBy(j: Activity, amount: CBLSIntVar) {
+  def notifyUsedBy(j: Activity, amount: IntValue) {
     if (activitiesAndUse.isDefinedAt(j)) {
       activitiesAndUse += ((j, activitiesAndUse.get(j).get + amount))
     } else {
@@ -67,7 +65,7 @@ class CumulativeResource(planning: Planning, val maxAmount: Int = 1, name: Strin
     }
   }
 
-  def activitiesAndUse(t: Int): List[(Activity, CBLSIntVar)] = {
+  def activitiesAndUse(t: Int): List[(Activity, IntValue)] = {
     use(t).value.toList.map((a: Int) => {
       val activity: Activity = planning.activityArray(a);
       (activity, activitiesAndUse(activity))
@@ -81,11 +79,11 @@ class CumulativeResource(planning: Planning, val maxAmount: Int = 1, name: Strin
 
   /** you need to eject one of these to solve the conflict */
   def conflictingActivities(t: Int): List[Activity] = {
-    val conflictSet: List[(Activity, CBLSIntVar)] = ConflictSearch(
+    val conflictSet: List[(Activity, IntValue)] = ConflictSearch(
       0,
       activitiesAndUse(t),
-      (use: Int, ActivityAndamount: (Activity, CBLSIntVar)) => use + ActivityAndamount._2.value,
-      (use: Int, ActivityAndamount: (Activity, CBLSIntVar)) => use - ActivityAndamount._2.value,
+      (use: Int, ActivityAndamount: (Activity, IntValue)) => use + ActivityAndamount._2.value,
+      (use: Int, ActivityAndamount: (Activity, IntValue)) => use - ActivityAndamount._2.value,
       (use: Int) => use > maxAmount)
 
     conflictSet.map(_._1)

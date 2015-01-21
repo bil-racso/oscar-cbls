@@ -23,10 +23,7 @@
  */
 package oscar.cbls.routing.neighborhood
 
-import oscar.cbls.routing.model.MoveDescription
-import oscar.cbls.routing.model.PositionInRouteAndRouteNr
-import oscar.cbls.routing.model.VRP
-import oscar.cbls.routing.model.VRPObjective
+import oscar.cbls.routing.model.{MoveDescription, PositionInRouteAndRouteNr, VRP, VRPObjective}
 
 /**
 * @author renaud.delandtsheer@cetic.be

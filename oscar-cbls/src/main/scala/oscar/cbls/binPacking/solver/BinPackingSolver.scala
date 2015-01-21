@@ -17,12 +17,11 @@ package oscar.cbls.binPacking.solver
 
 //TODO: tabu
 
+import oscar.cbls.binPacking.model.{Bin, BinPackingProblem, Item}
+import oscar.cbls.search.SearchEngineTrait
 import oscar.cbls.search.algo.IdenticalAggregator
 import oscar.cbls.search.core.{Neighborhood, NoMoveFound, SearchResult}
-import oscar.cbls.search.SearchEngineTrait
-import oscar.cbls.binPacking.model.{BinPackingProblem, Bin, Item}
-import oscar.cbls.search.move.{CompositeMove, SwapMove, AssignMove}
-import scala.collection.immutable.SortedSet
+import oscar.cbls.search.move.{AssignMove, CompositeMove, SwapMove}
 
 /**
  * this is a standard solver for a binPacking. 
@@ -34,7 +33,7 @@ object BinPackingSolver extends SearchEngineTrait {
 
     val x = ((MoveItem(p) exhaustBack SwapItems(p))
               orElse (JumpSwapItems(p) maxMoves 3)
-              orElse EmptyMostViolatedBin(p)) protectBest p.overallViolation.objective
+              orElse EmptyMostViolatedBin(p)) protectBest p.overallViolation
 
     x.doAllMoves(_ >= maxStep || p.overallViolation.value == 0, p.overallViolation)
     x.restoreBest()
@@ -132,7 +131,7 @@ case class SwapItems(p:BinPackingProblem,
   override def getMove(obj:()=>Int, acceptanceCriteria:(Int,Int) => Boolean = (oldObj,newObj) => oldObj > newObj): SearchResult = {
     require(!p.mostViolatedBins.value.isEmpty)
 
-    val oldViolation:Int = p.overallViolation.objective.value
+    val oldViolation:Int = p.overallViolation.value
     val bin1 = p.bins(selectFrom(p.mostViolatedBins.value))
 
     if(bin1.violation.value == 0){

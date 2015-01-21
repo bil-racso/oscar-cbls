@@ -22,19 +22,20 @@
 package oscar.cbls.invariants.lib.numeric
 
 import oscar.cbls.invariants.core.computation._
-
-import oscar.cbls.invariants.lib.logic._
-import oscar.cbls.invariants.core.propagation.Checker;
+import oscar.cbls.invariants.core.propagation.Checker
+import oscar.cbls.invariants.lib.logic._;
 
 object Sum{
-  def apply(vars: Iterable[CBLSIntVar]):Sum = new Sum(vars)
-  def apply(vars: Array[CBLSIntVar], cond: CBLSSetVar):SumElements = SumElements(vars, cond)
+  def apply(vars: Array[IntValue], cond: SetValue) = SumElements(vars, cond)
+  def apply(vars: Iterable[IntValue]) = new Sum(vars)
+  def apply(vars:Array[Int], cond:SetValue) = SumConstants(vars,cond)
 }
 
 
 object Prod{
-  def apply(vars: Iterable[CBLSIntVar]):Prod = new Prod(vars)
-  def apply(vars: Array[CBLSIntVar], cond: CBLSSetVar):ProdElements = ProdElements(vars, cond)
+  def apply(vars: Iterable[IntValue]) = new Prod(vars)
+  def apply(vars: Array[IntValue], cond: SetValue) = ProdElements(vars, cond)
+  def apply(vars: Array[Int], cond: SetValue) = ProdConstants(vars, cond)
 }
 
 /**
@@ -42,33 +43,20 @@ object Prod{
  * @param vars is an iterable of IntVars
  * @author renaud.delandtsheer@cetic.be
  * */
-class Sum(vars: Iterable[CBLSIntVar]) extends IntInvariant {
-//actually, it works fine with zero vars.
-//  assert(vars.size > 0, "Invariant + declared with zero vars to sum up")
+class Sum(vars: Iterable[IntValue])
+  extends IntInvariant(
+    vars.foldLeft(0)((a:Int, b:IntValue) => a + b.value), 
+    vars.foldLeft(0)((acc, intvar) => DomainHelper.safeAddMin(acc,intvar.min)) to vars.foldLeft(0)((acc, intvar) => DomainHelper.safeAddMax(acc,intvar.max))){
 
   for (v <- vars) registerStaticAndDynamicDependency(v)
   finishInitialization()
 
-  def myMin = vars.foldLeft(0)((acc, intvar) => DomainHelper.safeAdd(acc, intvar.minVal))
-  def myMax = vars.foldLeft(0)((acc, intvar) => DomainHelper.safeAdd(acc, intvar.maxVal))
-
-  var output: CBLSIntVar = null
-
-  override def setOutputVar(v: CBLSIntVar) {
-    v.minVal = myMin
-    v.maxVal = myMax
-    output = v
-    output.setDefiningInvariant(this)
-    output := vars.foldLeft(0)((a, b) => a + b.value)
-  }
-
-  @inline
-  override def notifyIntChanged(v: CBLSIntVar, OldVal: Int, NewVal: Int) {
-    output :+= NewVal - OldVal
+  override def notifyIntChanged(v: ChangingIntValue, OldVal: Int, NewVal: Int) {
+    this :+= NewVal - OldVal
   }
 
   override def checkInternals(c: Checker) {
-    c.check(output.value == vars.foldLeft(0)((acc, intvar) => acc + intvar.value),
+    c.check(this.value == vars.foldLeft(0)((acc, intvar) => acc + intvar.value),
       Some("output.value == vars.foldLeft(0)((acc,intvar) => acc+intvar.value)"))
   }
 }
@@ -80,33 +68,24 @@ class Sum(vars: Iterable[CBLSIntVar]) extends IntInvariant {
  * @author renaud.delandtsheer@cetic.be
  * @author jean-noel.monette@it.uu.se
  * */
-class Linear(vars: Iterable[CBLSIntVar], coeffs: IndexedSeq[Int]) extends IntInvariant {
+class Linear(vars: Iterable[IntValue], coeffs: IndexedSeq[Int]) 
+  extends IntInvariant(
+		  vars.zip(coeffs).foldLeft(0)((a, bc) => a + bc._1.value*bc._2), 
+		  vars.zip(coeffs).foldLeft(0)((acc, intvar) => DomainHelper.safeAddMin(acc,DomainHelper.getMinProd(intvar._1.minVal,intvar._1.maxVal,intvar._2,intvar._2))) to 
+		  vars.zip(coeffs).foldLeft(0)((acc, intvar) => DomainHelper.safeAddMax(acc,DomainHelper.getMaxProd(intvar._1.minVal,intvar._1.maxVal,intvar._2,intvar._2)))){
   //coeffs needs to be indexed as we need to access it be index from the index of vars (as given in notifyIntChanged)
-  
+			  //TODO: There is still the risk of adding plus and minus "infinity" and get absurd results. But at least we avoid overflows...
+			   
   vars.zipWithIndex.foreach(vi => registerStaticAndDynamicDependency(vi._1,vi._2))
   finishInitialization()
+ 
 
-  //TODO: There is still the risk of adding plus and minus "infinity" and get absurd results. But at least we avoid overflows...
-  def myMin = vars.zip(coeffs).foldLeft(0)((acc, intvar) => DomainHelper.safeAdd(acc, DomainHelper.getMinProd(intvar._1.minVal,intvar._1.maxVal,intvar._2,intvar._2)))
-  def myMax = vars.zip(coeffs).foldLeft(0)((acc, intvar) => DomainHelper.safeAdd(acc, DomainHelper.getMaxProd(intvar._1.minVal,intvar._1.maxVal,intvar._2,intvar._2)))
-
-  var output: CBLSIntVar = null
-
-  override def setOutputVar(v: CBLSIntVar) {
-    v.minVal = myMin
-    v.maxVal = myMax
-    output = v
-    output.setDefiningInvariant(this)
-    output := vars.zip(coeffs).foldLeft(0)((a, bc) => a + bc._1.value*bc._2)
-  }
-
-  @inline
   override def notifyIntChanged(v: CBLSIntVar, idx: Int, OldVal: Int, NewVal: Int) {
-    output :+= (NewVal - OldVal) * coeffs(idx)
+    this :+= (NewVal - OldVal) * coeffs(idx)
   }
 
   override def checkInternals(c: Checker) {
-    c.check(output.value == vars.zip(coeffs).foldLeft(0)((acc, intvar) => acc + intvar._1.value*intvar._2),
+    c.check(this.value == vars.zip(coeffs).foldLeft(0)((acc, intvar) => acc + intvar._1.value*intvar._2),
       Some("output.value == vars.zip(coeff).foldLeft(0)((acc, intvar) => acc + intvar._1.value*intvar._2)"))
   }
 }
@@ -116,7 +95,7 @@ class Linear(vars: Iterable[CBLSIntVar], coeffs: IndexedSeq[Int]) extends IntInv
  * @param vars is a set of IntVars
  * @author renaud.delandtsheer@cetic.be
  * */
-class Prod(vars: Iterable[CBLSIntVar]) extends IntInvariant {
+class Prod(vars: Iterable[IntValue]) extends IntInvariant {
   assert(vars.size > 0, "Invariant prod declared with zero vars to multiply")
 
   for (v <- vars) registerStaticAndDynamicDependency(v)
@@ -125,24 +104,19 @@ class Prod(vars: Iterable[CBLSIntVar]) extends IntInvariant {
   var NullVarCount: Int = vars.count(v => v.value == 0)
   var NonNullProd: Int = vars.foldLeft(1)((acc, intvar) => if (intvar.value == 0) { acc } else { acc * intvar.value })
 
-  var output: CBLSIntVar = null
-
-  //TODO: find better bound, this is far too much
-  def myMax = vars.foldLeft(1)((acc, intvar) => DomainHelper.safeMult(acc, (if (math.abs(intvar.maxVal) > math.abs(intvar.minVal)) math.abs(intvar.maxVal) else math.abs(intvar.minVal))))
-  def myMin = -myMax
-
-  override def setOutputVar(v: CBLSIntVar) {
-    output = v
-    output.setDefiningInvariant(this)
-    if (NullVarCount != 0) {
-      output := 0
-    } else {
-      output := NonNullProd
-    }
+  if (NullVarCount != 0) {
+    this := 0
+  } else {
+    this := NonNullProd
   }
 
+  //TODO: find better bound, this is far too much
+  restrictDomain({
+    val myMax = vars.foldLeft(1)((acc, intvar) => acc * (if (math.abs(intvar.max) > math.abs(intvar.min)) math.abs(intvar.max) else math.abs(intvar.min)))
+    -myMax to myMax})
+
   @inline
-  override def notifyIntChanged(v: CBLSIntVar, OldVal: Int, NewVal: Int) {
+  override def notifyIntChanged(v: ChangingIntValue, OldVal: Int, NewVal: Int) {
     assert(OldVal != NewVal)
     if (OldVal == 0 && NewVal != 0) {
       NullVarCount -= 1
@@ -155,17 +129,17 @@ class Prod(vars: Iterable[CBLSIntVar]) extends IntInvariant {
       NonNullProd = NonNullProd * NewVal
     }
     if (NullVarCount == 0) {
-      output := NonNullProd
+      this := NonNullProd
     } else {
-      output := 0
+      this := 0
     }
   }
 
   override def checkInternals(c: Checker){
     var prod = 1
     for (v <- vars) prod *= v.value
-    c.check(output.value == prod,
-      Some("output.value (" + output.value + ") == prod (" + prod + ")"))
+    c.check(this.value == prod,
+      Some("output.value (" + this.value + ") == prod (" + prod + ")"))
   }
 }
 
@@ -174,8 +148,8 @@ class Prod(vars: Iterable[CBLSIntVar]) extends IntInvariant {
  * where left, right, and output are IntVar
  * @author renaud.delandtsheer@cetic.be
  * */
-case class Minus(left: CBLSIntVar, right: CBLSIntVar)
-  extends IntInt2Int(left, right, ((l: Int, r: Int) => DomainHelper.safeSub(l,r)), DomainHelper.safeSub(left.minVal, right.maxVal), DomainHelper.safeSub(left.maxVal, right.minVal)) {
+case class Minus(left: IntValue, right: IntValue)
+  extends IntInt2Int(left, right, (l: Int, r: Int) => DomainHelper.safeSub(l,r), DomainHelper.safeSub(left.min, right.max) to DomainHelper.safeSub(left.max, right.min)) {
   assert(left != right)
 }
 
@@ -184,11 +158,11 @@ case class Minus(left: CBLSIntVar, right: CBLSIntVar)
  * where left, right, and output are IntVar
  * @author jean-noel.monette@it.uu.se
  * */
-case class Dist(left: CBLSIntVar, right: CBLSIntVar)
+case class Dist(left: IntValue, right: IntValue)
   extends IntInt2Int(left, right, 
       ((l: Int, r: Int) => DomainHelper.safeSub(l,r).abs), 
-      {val v = DomainHelper.safeSub(left.minVal, right.maxVal); (if (v <= 0) 0 else v)}, 
-      DomainHelper.safeSub(left.maxVal, right.minVal).max(DomainHelper.safeSub(right.maxVal,left.minVal))) {
+      {val v = DomainHelper.safeSub(left.min, right.max); (if (v <= 0) 0 else v)} to 
+      DomainHelper.safeSub(left.max, right.min).max(DomainHelper.safeSub(right.max,left.min))) {
   assert(left != right)
 }
 
@@ -197,16 +171,15 @@ case class Dist(left: CBLSIntVar, right: CBLSIntVar)
  * where left, right, and output are IntVar
  * @author renaud.delandtsheer@cetic.be
  * */
-case class Sum2(left: CBLSIntVar, right: CBLSIntVar)
-  extends IntInt2Int(left, right, ((l: Int, r: Int) => DomainHelper.safeAdd(l,r)), DomainHelper.safeAdd(left.minVal, right.minVal), DomainHelper.safeAdd(left.maxVal, right.maxVal)) {
-}
+case class Sum2(left: IntValue, right: IntValue)
+  extends IntInt2Int(left, right, ((l: Int, r: Int) => DomainHelper.safeAdd(l,r)), DomainHelper.safeAddMin(left.min, right.min) to DomainHelper.safeAddMax(left.max, right.max))
 
 /**
  * left * right
  * where left, right, and output are IntVar
  * @author renaud.delandtsheer@cetic.be
  * */
-case class Prod2(left: CBLSIntVar, right: CBLSIntVar)
+case class Prod2(left: IntValue, right: IntValue)
   extends IntInt2Int(left, right, ((l: Int, r: Int) => DomainHelper.safeMult(l,r)), DomainHelper.getMinProd2(left, right), DomainHelper.getMaxProd2(left, right))
 
 /**
@@ -215,7 +188,7 @@ case class Prod2(left: CBLSIntVar, right: CBLSIntVar)
  * do not set right to zero, as usual...
  * @author renaud.delandtsheer@cetic.be
  * */
-case class Div(left: CBLSIntVar, right: CBLSIntVar)
+case class Div(left: IntValue, right: IntValue)
   extends IntInt2Int(left, right, (l: Int, r: Int) => l / r, DomainHelper.getMinDiv(left, right), DomainHelper.getMaxDiv(left, right))
 /**
  * left / right
@@ -223,16 +196,16 @@ case class Div(left: CBLSIntVar, right: CBLSIntVar)
  * do not set right to zero, as usual...
  * @author renaud.delandtsheer@cetic.be
  * */
-case class Mod(left: CBLSIntVar, right: CBLSIntVar)
-  extends IntInt2Int(left, right, (l: Int, r: Int) => l - r * (l / r), 0, Math.min(left.maxVal, right.maxVal))
+case class Mod(left: IntValue, right: IntValue)
+  extends IntInt2Int(left, right, (l: Int, r: Int) => l - r * (l / r), 0, Math.min(left.max, right.max))
 
 /**
  * abs(v) (absolute value)
  * where output and v are IntVar
  * @author renaud.delandtsheer@cetic.be
  * */
-case class Abs(v: CBLSIntVar)
-  extends Int2Int(v, ((x: Int) => x.abs), (if (v.minVal <= 0) 0 else v.minVal), v.maxVal.max(-v.minVal))
+case class Abs(v: IntValue)
+  extends Int2Int(v, ((x: Int) => x.abs), (if (v.min <= 0) 0 else v.min) to v.max.max(-v.min))
 
 /**
  * This invariant implements a step function. Values higher than pivot are mapped to ifval
@@ -244,8 +217,8 @@ case class Abs(v: CBLSIntVar)
  * @param thenval the value returned when x > pivot
  * @param elseval the value returned when x <= pivot
  */
-case class Step(x: CBLSIntVar, pivot: Int = 0, thenval: Int = 1, elseval: Int = 0)
-  extends Int2Int(x, (a: Int) => if (a > pivot) thenval else elseval, 0, 1)
+case class Step(x: IntValue, pivot: Int = 0, thenval: Int = 1, elseval: Int = 0)
+  extends Int2Int(x, (a: Int) => if (a > pivot) thenval else elseval, 0 to 1)
 
 /**
  * This invariant implements the identity function within the min-max range.
@@ -253,12 +226,11 @@ case class Step(x: CBLSIntVar, pivot: Int = 0, thenval: Int = 1, elseval: Int = 
  * values higher tham max result to max
  * @author renaud.delandtsheer@cetic.be
  * @param x
- * @param min
- * @param max
+ * @param minBound
+ * @param maxBound
  */
-case class Bound(x: CBLSIntVar, min:Int, max:Int)
-  extends Int2Int(x, (a: Int) => if (a < min) min else if (a > max) max else a,min, max)
-
+case class Bound(x: IntValue, minBound:Int, maxBound:Int)
+  extends Int2Int(x, (a: Int) => if (a < minBound) minBound else if (a > maxBound) maxBound else a, math.max(minBound,x.min) to math.min(maxBound,x.max))
 
 
 /**
@@ -324,5 +296,4 @@ object DomainHelper {
   }
   //Division of integers is always safe.
 }
-
 

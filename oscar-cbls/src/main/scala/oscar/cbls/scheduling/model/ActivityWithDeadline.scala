@@ -25,11 +25,8 @@
 
 package oscar.cbls.scheduling.model
 
-import oscar.cbls.invariants.core.computation.CBLSIntVar
-import oscar.cbls.invariants.core.computation.CBLSIntVar.int2IntVar
-import oscar.cbls.invariants.core.computation.IntInvariant.toIntVar
+import oscar.cbls.invariants.core.computation.{CBLSIntVar, FullRange, IntValue}
 import oscar.cbls.invariants.lib.minmax.Max2
-import oscar.cbls.modeling.Algebra.InstrumentIntInvariant
 import oscar.cbls.modeling.Algebra.InstrumentIntVar
 
 /**
@@ -40,10 +37,10 @@ class ActivityWithDeadline(
   duration: CBLSIntVar,
   planning: Planning with Deadlines,
   name: String = "",
-  shifter: (CBLSIntVar, CBLSIntVar) => CBLSIntVar = (a: CBLSIntVar, _) => a)
+  shifter: (IntValue, IntValue) => IntValue= (a: IntValue, _) => a)
   extends Activity(duration, planning, name, shifter) {
 
-  val tardiness = CBLSIntVar(planning.model, Int.MinValue, Int.MaxValue, 0, name + "_tardiness")
+  val tardiness = CBLSIntVar(planning.model, 0, FullRange, name + "_tardiness")
 
   planning.addActivityWithDeadline(this)
 

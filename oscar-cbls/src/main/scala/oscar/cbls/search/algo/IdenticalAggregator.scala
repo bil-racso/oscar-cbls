@@ -81,13 +81,12 @@ object IdenticalAggregator{
     //this is the element to return next
     var theNextOne:Option[T] = advanceToNextOne
 
-    override def hasNext: Boolean = advanceToNextOne match{ case Some(s) => true; case _ => false}
+    override def hasNext: Boolean = theNextOne match{ case Some(s) => true; case _ => false}
 
     override def next(): T =
-      advanceToNextOne match{
-        case Some(s) => advanceToNextOne; s
+      theNextOne match{
+        case Some(s) => theNextOne = advanceToNextOne; s
         case _ => it.next() //to crash moreless transparently
       }
   }
-
 }

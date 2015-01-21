@@ -25,9 +25,8 @@
 
 package oscar.cbls.routing.neighborhood
 
+import oscar.cbls.routing.model.{MoveDescription, VRP}
 import oscar.cbls.search.SearchEngineTrait
-import oscar.cbls.modeling.Algebra._
-import oscar.cbls.routing.model.{ MoveDescription, VRP }
 
 /**
  * Moves a point of a route to another place in the same or in an other route.
