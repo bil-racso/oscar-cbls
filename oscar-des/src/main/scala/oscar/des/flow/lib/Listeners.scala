@@ -2,16 +2,16 @@ package oscar.des.flow.lib
 
 //This file is about thing we want to measure on the factory process
 
+//Variables have values evey time something is happening.
 class Variable[T]
 class Proposition extends Variable[Boolean]
 class Entier extends Variable[Int]
 class IntConstant() extends Variable[Int]
 class TruthValue() extends Variable[Boolean]
 
-//basic properties on simulation elements
+//probe on simulation elements
 class Empty(s:Storage) extends Proposition
-class NonProductive(p:Process) extends Proposition
-case class Productivity(p:Process) extends Entier
+class Productive(p:Process) extends Proposition
 
 //logical properties
 //we only consider temporal operators of the past, easy to evaluate
@@ -31,7 +31,7 @@ class BF(p:Proposition) extends Proposition
 class Changes(p:Proposition) extends Proposition
 
 //variables always have a value.
-class Duration(start:Proposition, end:Proposition) extends Entier
+class CumulatedDuration(start:Proposition, end:Proposition) extends Entier
 class Sum(s:Entier) extends Entier
 class Mult(a:Entier,b:Entier) extends Entier
 class Plus(a:Entier,b:Entier) extends Entier
@@ -46,8 +46,12 @@ class NEQ(a:Entier,b:Entier) extends Proposition
 
 //To estimate over different runs
 //how to find names that are obviously statistics over different runs
+
 class Statistics
-//class Average(s:Stream) extends Statistics
+//this only considers the latest valuee of e; at the end of the simulation run, and performs an average over several runs
+class Mean(e:Entier) extends Statistics
+class Variance(e:Entier) extends Statistics
+
 
 /*class Model(){
   val durationSinceLastTick:Entier
