@@ -811,6 +811,41 @@ trait BasicPropagationElement{
   def schedulingHandler:SchedulingHandler = null
 }
 
+
+trait IndirectPropagationElement extends BasicPropagationElement{
+
+  protected def indirectPE:PropagationElement
+  override protected[propagation] def registerStaticallyListeningElement(listening: PropagationElement){
+    indirectPE.registerStaticallyListeningElement(listening)
+  }
+
+  /**
+   * only if the listening is not varying its dependencies
+   *
+   * there is not scc because if someone call this, he is not dynamic PE, hence is not a boundary
+   * it also has no dynamicallyListened stuff to update (only static stuff)
+   * can only be called before model closing
+   * @param listening the dynamically listening element
+   * @param i: the payload that will be given for the notification, according to what the PE is supposed to do
+   */
+  override protected[propagation] def registerDynamicallyListeningElementNoKey(listening: PropagationElement, i: Any){
+    indirectPE.registerDynamicallyListeningElementNoKey(listening, i)
+  }
+
+  /**
+   * @param listening the listening element
+   * @param sccOfListening the SCC in case listening is on he boundary, null otherwise
+   * @param dynamicallyListenedElementDLLOfListening the PFDLL
+   * @return a key for dependency removal
+   */
+  override protected[propagation]
+  def registerDynamicallyListeningElement(listening: PropagationElement,
+                                          i: Any,
+                                          sccOfListening: StronglyConnectedComponentTopologicalSort,
+                                          dynamicallyListenedElementDLLOfListening: DelayedPermaFilteredDoublyLinkedList[PropagationElement, PropagationElement]): KeyForElementRemoval =
+    indirectPE.registerDynamicallyListeningElement(listening, i, sccOfListening, dynamicallyListenedElementDLLOfListening)
+}
+
 /**
  * it does not changes it listened elements
  * however, its listening elements might change, and a proper list must therefore be kept.

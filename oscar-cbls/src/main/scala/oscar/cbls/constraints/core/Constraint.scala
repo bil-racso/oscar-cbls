@@ -21,8 +21,9 @@
 
 package oscar.cbls.constraints.core
 
+import oscar.cbls.invariants.core.algo.dll.DelayedPermaFilteredDoublyLinkedList
 import oscar.cbls.invariants.core.computation._
-import oscar.cbls.invariants.core.propagation.Checker
+import oscar.cbls.invariants.core.propagation._
 import oscar.cbls.invariants.lib.numeric.Step
 
 /**A constraint is a function that computes a degree of violation that is managed as any invariant.
@@ -34,7 +35,19 @@ import oscar.cbls.invariants.lib.numeric.Step
  * and managed as invariants.
   * @author renaud.delandtsheer@cetic.be
  */
-abstract class Constraint{
+abstract class Constraint extends IntValue with IndirectPropagationElement{
+
+  /** the value of a constraint is its truthValue, not its violation
+    * notice that you cal also use Constraint in an invariant-based expression
+    * @return
+    */
+  override def value: Int = if(isTrue) 1 else 0
+
+  override def domain: Domain = 0 to 1
+
+  override def name: String = this.getClass.getSimpleName
+
+  override protected def indirectPE: PropagationElement = truthValue
 
   /** returns the violation associated with variable v in this constraint
    * all variables that are declared as constraint should have an associated violation degree.
@@ -54,7 +67,7 @@ abstract class Constraint{
     * */
   final def isTrue: Boolean = (violation.value == 0)
 
-  final def truthValue:IntValue = Step(violation,0,0,1)
+  final val truthValue = Step(violation,0,0,1)
 
   /**the variables that are constrained by the constraint.
    * This should be read only. If you want to declare more constrained variables,
