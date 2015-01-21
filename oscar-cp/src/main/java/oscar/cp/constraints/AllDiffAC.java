@@ -27,19 +27,18 @@ public class AllDiffAC extends Constraint {
 	private CPIntVar[] x;
 
 	public AllDiffAC(CPIntVar[] x) {
-		super(x[0].store(),"Alldifferent AC");
+		super(x[0].store(), "Alldifferent AC");
 		this.x = x;
 	}
 
 	@Override
 	public CPOutcome setup(CPPropagStrength l) {
-		CPIntVar nvalues = CPIntVar.apply(s(),x.length,x.length);
-		CPOutcome ok = s().post(new AtLeastNValueAC(x,nvalues));
+		CPIntVar nvalues = CPIntVar.apply(s(), x.length);
+		CPOutcome ok = s().post(new AtLeastNValueAC(x, nvalues));
 		if (ok == CPOutcome.Failure) {
 			return CPOutcome.Failure;
 		} else {
 			return CPOutcome.Success;
 		}
 	}
-
 }
