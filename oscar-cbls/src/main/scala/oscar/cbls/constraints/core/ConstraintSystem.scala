@@ -209,12 +209,5 @@ case class ConstraintSystem(model:Store) extends Constraint with Objective{
     * It requires that the Model is instantiated with the variable debug set to true.
     */
   override def checkInternals(c: Checker): Unit = {}
-
-  /**
-   * This method returns the actual objective value.
-   * It is easy to override it, and perform a smarter propagation if needed.
-   * @return the actual objective value.
-   */
-  override def value: Int = Violation.value
 }
 

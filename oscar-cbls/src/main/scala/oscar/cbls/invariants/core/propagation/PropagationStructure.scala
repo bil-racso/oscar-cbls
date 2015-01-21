@@ -814,7 +814,7 @@ trait BasicPropagationElement{
 
 trait IndirectPropagationElement extends BasicPropagationElement{
 
-  protected def indirectPE:PropagationElement
+  protected def indirectPE:BasicPropagationElement
   override protected[propagation] def registerStaticallyListeningElement(listening: PropagationElement){
     indirectPE.registerStaticallyListeningElement(listening)
   }
