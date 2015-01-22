@@ -20,8 +20,15 @@ package oscar.algo.reversible;
  * @author Pierre Schaus  pschaus@gmail.com
  * @author Renaud Hartert ren.hartert@gmail.com
  */
+
+class ReversibleIntTrailEntry(reversible: ReversibleInt, value: Int) extends TrailEntry {
+  @inline override final def restore(): Unit = reversible.restore(value)
+}
+
 class ReversibleInt(node: ReversibleContext, value: Int) extends ReversiblePointer[Int](node, value) {
 
+  @inline final override def trailEntry = new ReversibleIntTrailEntry(this, pointer)
+  
   /** Increments the reversible integer by one */
   @inline final def incr(): Int = {
     trail()
