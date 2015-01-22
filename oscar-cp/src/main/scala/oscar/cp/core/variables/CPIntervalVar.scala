@@ -57,13 +57,13 @@ abstract class CPIntervalVar extends CPVar with Iterable[Int] {
    * @param val
    * @return the smallest value > val in the domain, None if there is not value > val in the domain
    */
-  def valueAfter(value: Int): Int
+  @deprecated def valueAfter(value: Int): Int
 
   /**
    * @param val
    * @return the largest value < val in the domain, None if there is not value < val in the domain
    */
-  def valueBefore(value: Int): Int
+  @deprecated def valueBefore(value: Int): Int
 
   /**
    * @return A random value in the domain of the variable (uniform distribution)

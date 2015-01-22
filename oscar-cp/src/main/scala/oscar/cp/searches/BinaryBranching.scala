@@ -78,15 +78,13 @@ abstract class AbstractBinaryBranching[X <: CPIntervalVar](vars: Array[X], varHe
  */
 class BinaryBranching[X <: CPIntVar](vars: Array[X], varHeuris: (CPIntVar => Int), valHeuris: (CPIntVar => Int) = minVal) extends AbstractBinaryBranching(vars,varHeuris) {
 
-
   def alternatives(): Seq[Alternative] = {
-    allBounds() match {
-      case true => noAlternative
-      case false => { 
-        val y = nextVar()
-        val v = valHeuris(y)
-        branch(cp.assign(y, v))(cp.remove(y, v)) // right alternative
-      }
+    val stop = allBounds()
+    if (stop) noAlternative
+    else {
+      val variable = nextVar()
+      val value = valHeuris(variable)
+      branch(cp.assign(variable, value))(cp.remove(variable, value))
     }
   }
 }
@@ -127,8 +125,8 @@ class BinaryStaticOrderBranching(vars: Array[_ <: CPIntVar], valHeuris: (CPIntVa
  * @param vars: the array of variables to assign during the search
  * @param valHeuris: gives the value v to try on left branch for the chosen variable, this value is removed on the right branch
  */
-class BinaryFirstFailBranching(x: Array[CPIntVar], valHeuris: (CPIntVar => Int) = minVal) extends BinaryBranching(x, _.size, valHeuris) {
-  def this(x: CPIntVar*) = this(x.toArray)
+class BinaryFirstFailBranching(x: Array[CPIntVar], valHeuris: (CPIntVar => Int) = minVal) extends BinaryBranching(x, _.size, valHeuris) { 
+  def this(x: CPIntVar*) = this(x.toArray)  
 }
 
 /**
