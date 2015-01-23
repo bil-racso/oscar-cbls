@@ -20,9 +20,9 @@ import scala.collection.mutable.ListBuffer
 /** represents a process fragment where one can put a part
   * @author renaud.delandtsheer@cetic.be
   */
-trait Puteable{
+trait Putable {
   /**
-   * put the amount of goods into the puteable.
+   * put the amount of goods into the putable.
    * This is potentially blocking
    * @param amount
    * @param block
@@ -33,9 +33,9 @@ trait Puteable{
 /** represents a process fragment from which one can fetch a part
   * @author renaud.delandtsheer@cetic.be
   * */
-trait Fetcheable{
+trait Fetchable {
   /**
-   * fetch the amount of goods from the puteable.
+   * fetch the amount of goods from the putable.
    * This is potentially blocking
    * @param amount
    * @param block
@@ -48,7 +48,7 @@ trait Fetcheable{
   * and must wait eg. for some refurbishment to proceed
  * @author renaud.delandtsheer@cetic.be
  */
-trait RichFetcheable extends Fetcheable{
+trait RichFetchable extends Fetchable {
   private val waitingFetches:ListBuffer[(Int, () => Unit)] = ListBuffer.empty
   protected var totalFetch = 0
 
@@ -61,7 +61,7 @@ trait RichFetcheable extends Fetcheable{
    */
   protected def internalFetch(amount:Int):(Int,Int)
 
-  def appendFetch(amount:Int)(block : () => Unit){
+  def appendFetch(amount:Int)(block : () => Unit) {
     waitingFetches.append((amount, block))
   }
 
@@ -71,9 +71,9 @@ trait RichFetcheable extends Fetcheable{
   protected def processBlockedFetches():Boolean = {
     var somethingDone = false
     var finished = false
-    while(! finished) {
+    while (! finished) {
       finished = true
-      if(waitingFetches.nonEmpty){
+      if (waitingFetches.nonEmpty) {
         val (toFetch, block) = waitingFetches.remove(0)
         val (remainingToFetch,fetched) = internalFetch(toFetch)
         totalFetch += fetched
@@ -86,7 +86,7 @@ trait RichFetcheable extends Fetcheable{
           waitingFetches.prepend((remainingToFetch, block))
           finished = true
         }
-      }else{
+      } else {
         finished = true
       }
     }
@@ -99,7 +99,7 @@ trait RichFetcheable extends Fetcheable{
   * and must wait eg. for some space to be freed
   * @author renaud.delandtsheer@cetic.be
   */
-trait RichPuteable extends Puteable{
+trait RichPutable extends Putable {
 
   protected val waitingPuts:ListBuffer[(Int, () => Unit)] = ListBuffer.empty
   protected var totalPut = 0
@@ -113,7 +113,7 @@ trait RichPuteable extends Puteable{
   protected def internalPut(amount:Int):(Int,Int)
 
   /**
-   * put the amount of goods into the puteable.
+   * put the amount of goods into the putable.
    * This is potentially blocking
    * @param amount
    * @param block
@@ -128,9 +128,9 @@ trait RichPuteable extends Puteable{
   protected def processBlockedPuts(): Boolean ={
     var somethingDone = false
     var finished = false
-    while(! finished) {
+    while (! finished) {
       finished = true
-      if(waitingPuts.nonEmpty) {
+      if (waitingPuts.nonEmpty) {
         val (toPut, block) = waitingPuts.remove(0)
         val (remainingToPut,put) = internalPut(toPut)
         totalPut += put
@@ -143,7 +143,7 @@ trait RichPuteable extends Puteable{
           waitingPuts.prepend((remainingToPut, block))
           finished = true
         }
-      }else{
+      } else {
         finished = true
       }
     }
@@ -152,7 +152,7 @@ trait RichPuteable extends Puteable{
 
   /** flushes the blocked puts
     * the blocked method is called for each flushed put
-    * @return the number of unnits that were flushed, zero if nothing was flushed
+    * @return the number of units that were flushed, zero if nothing was flushed
     */
   protected def flushBlockedPuts(): Int = {
     var flushedUnits = 0
@@ -173,8 +173,8 @@ trait RichPuteable extends Puteable{
  * @param waitedNotification the number of waited notifications
  * @param gate the method to call once the method notifyOne has been called waitedNotification times
  */
-case class CounterGate(waitedNotification:Int, gate: () => Unit){
-  private var remaining=waitedNotification
+case class CounterGate(waitedNotification:Int, gate: () => Unit) {
+  private var remaining = waitedNotification
   def notifyOne(): Unit ={
     remaining -=1
     if(remaining == 0) gate()
@@ -182,30 +182,30 @@ case class CounterGate(waitedNotification:Int, gate: () => Unit){
 }
 
 /** This trait proposes a standard method to perform an output
-  * an output consists is outputting a set of parts to a set of Puteables
+  * an output consists is outputting a set of parts to a set of Putables
   * @author renaud.delandtsheer@cetic.be
   */
-class Outputter(outputs:List[(() => Int,Puteable)]){
+class Outputter(outputs:List[(() => Int,Putable)]) {
   val outputCount = outputs.length
   def performOutput(block: () => Unit){
     val gate = CounterGate(outputCount +1, block)
-    for((amount,puteable) <- outputs){
-      puteable.put(amount())(() => gate.notifyOne())
+    for((amount,putable) <- outputs){
+      putable.put(amount())(() => gate.notifyOne())
     }
     gate.notifyOne()
   }
 }
 
 /** This trait proposes a standard method to perform an input
-  * an input consists in fetching a set of parts from a set of Fetcheables
+  * an input consists in fetching a set of parts from a set of Fetchables
   * @author renaud.delandtsheer@cetic.be
   */
-class Inputter(inputs:List[(() => Int,Fetcheable)]) {
+class Inputter(inputs:List[(() => Int,Fetchable)]) {
   val inputCount = inputs.length
   def performInput(block : ()=> Unit): Unit = {
     val gate = CounterGate(inputCount +1, block)
-    for((amount,fetcheable) <- inputs){
-      fetcheable.fetch(amount())(() => gate.notifyOne())
+    for((amount,fetchable) <- inputs){
+      fetchable.fetch(amount())(() => gate.notifyOne())
     }
     gate.notifyOne()
   }

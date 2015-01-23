@@ -1,7 +1,7 @@
 package oscar.des.flow
 
 import oscar.des.engine.Model
-import oscar.des.flow.core.{Puteable, Fetcheable}
+import oscar.des.flow.core.{Putable, Fetchable}
 import oscar.des.flow.lib._
 
 object testBelt extends App with HelperForProcess{
@@ -15,7 +15,7 @@ object testBelt extends App with HelperForProcess{
   val input = new Storage(200, 10, "input", verbose)
   val output = new Storage(22, 0, "output", verbose)
 
-  val belt = new ConveyerBeltProcess(m, 5, 1, List((1, input)), List((1, output)), "belt", verbose)
+  val belt = new ConveyorBeltProcess(m, 5, 1, List((1, input)), List((1, output)), "belt", verbose)
   val slowlyFeedingInput  = new SingleBatchProcess(m, 12, List(), List((13, input)), "slowlyFeedingInput", verbose)
 
   m.simulate(100, verbose)

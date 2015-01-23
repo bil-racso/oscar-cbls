@@ -41,14 +41,14 @@ object TestCE1 {
     Math.exp(-(xm2*xm2)) + 0.8*Math.exp(-(xp2*xp2))
   }
 
-  // For printing an array
+  // Printing an array of double numbers
   def strDbArr(name : String, arr : Array[Double]): Unit = {
     for (i <- 0 until arr.length) {
       println(s" $name($i) = ${arr(i)}")
     }
   }
 
-  // Given an array of tuples, get an arrray of all first elements
+  // Given an array of tuples, get an array of all first elements
   // of each tuple
   def projX(tups : Array[(Double, Double)]) : Array[Double] = {
     val retArr = new Array[Double](tups.length)
@@ -80,6 +80,7 @@ object TestCE1 {
         Xs(i) = (rvariate, objFuncS(rvariate))
       }
       val sortedXs = projX(Xs.sortWith((x, y) => x._2 > y._2))
+      // Updating probability distribution parameters (mu, sigma2)
       mu = mean(sortedXs, Ne)
       sigma2 = variance(sortedXs, mu, Ne)
       t += 1
@@ -113,7 +114,7 @@ object TestCE2 {
   // Variable for debug only
   var i = 0
 
-  // Establish the initial probability for each bit to be 1
+  // Establish the initial probability of being 1 for each bit.
   // That probability is 0.5
   def initialProbList : List[Float] = {
     def initialProbList(i : Int, lsAcc : List[Float]) : List[Float] = {
@@ -126,13 +127,12 @@ object TestCE2 {
     initialProbList(0, Nil)
   }
 
-  // Get an initial random sample of n-bits
+  // Get the "hidden n-bits value", randomly.
   def initialY : List[Float] = {
     def initialY(i : Int, rdV : DoubleRandomVar, lsAcc : List[Float]) : List[Float] = {
       if (i == n)
         lsAcc
       else {
-        rdV.setValue()
         initialY(i+1, rdV, Math.round(rdV.getValue) :: lsAcc)
       }
     }
@@ -142,7 +142,7 @@ object TestCE2 {
   }
 
   // Generate N random samples of n-bits with their "evaluation". The evaluation
-  // mesure is how many bits don't correspond with the hidden value
+  // measure is how many bits in the sample don't correspond with bits in the hidden value.
   // The algorithm is tail recursive with accumulators
   def generateSamplesWithS(lsY : List[Float], probVector : List[Float]) : List[(List[Float], Float)] = {
     def generateSamplesWithS(lsY : List[Float],
@@ -158,7 +158,9 @@ object TestCE2 {
           val rdVar = new DoubleRandomVar("DRdV", new BinomialDistribution(2, p))
           val rdVal = rdVar.getValue.toFloat
           generateSampleWithS(ys, ps, lsAcc :+ rdVal, sAcc + Math.abs(rdVal - y))
-        case _ => (lsAcc, n-sAcc)  // unreachable case : better to throw an exception instead ?
+        // unreachable case, because probVector and lsY must have the same length.
+        // should it be better to throw an exception instead ?
+        case _ => (lsAcc, n-sAcc)
       }
 
       if (i == N)
@@ -171,7 +173,7 @@ object TestCE2 {
     generateSamplesWithS(lsY, probVector, 0, Nil)
   }
 
-  // Determine the arr-quantile sample
+  // Determine the arr-quantile sample in list
   def arrQuantile(lsS : List[(List[Float], Float)]) : (List[Float], Float) = {
     val qtile = Math.ceil((1-arr)*N).toInt
 
@@ -206,10 +208,9 @@ object TestCE2 {
         false
   }
 
-  // Main CE loop : notice this version is tail recursive with
-  // accumulators
+  // Main CE loop : notice this version is tail recursive with accumulators
   def crossEntropyLoop(probList : List[Float], y : List[Float]) : List[Float] = {
-    // Auxiliary tail recursive function: performs an iteration
+    // Auxiliary tail recursive function: an iteration is already performed
     def crossEntropyLoopAcc(probList : List[Float],
                             y : List[Float],
                             approxY : List[Float]) : List[Float] = {
@@ -287,7 +288,8 @@ object TestCE3 {
   /**
    * Main Cross-Entropy loop, implemented as a (tail) recursive function
    *
-   * @param probList the list of probabilities for a Node to be in the cut vector
+   * @param probList the list of probabilities for a Node to be in the same
+   *                 partition of node 1 (i.e. to be 1 in the cut vector)
    * @return the optimum cut vector
    */
   def crossEntropyLoop(probList : List[Float]) : List[Int] = {
@@ -319,7 +321,8 @@ object TestCE3 {
     /**
      * Main Cross-Entropy loop, with a first iteration already done
      *
-     * @param probList the list of probabilities for a Node to be in the cut vector
+     * @param probList the list of probabilities for a Node to be in the same
+     *                 partition of first node (i.e. to be 1 in the cut vector)
      * @param bestFound the candidate cut vector found in last iteration
      * @return the optimum cut vector
      */
@@ -331,7 +334,7 @@ object TestCE3 {
         val sortedLs = removeDup(generateSamplesWithS(probList).sortBy(tup => tup._2))
         val posQtile = rhoQuantile(sortedLs)
         val newProbList = computeNewProbList(sortedLs, posQtile._2)
-        // Debug info
+        /////////// Debug info ///////////
         i += 1
         println(s"Iteration : $i")
         println("----------")
@@ -341,7 +344,7 @@ object TestCE3 {
         println("----------")
         println(s"New Prob List = $newProbList")
         println("----------")
-        // End of debug info
+        //////////////////////////////////
         if (bestFound._2 > posQtile._2)
           crossEntropyLoopAcc(newProbList, bestFound)
         else
@@ -352,7 +355,7 @@ object TestCE3 {
     val sortedLs = removeDup(generateSamplesWithS(probList).sortBy(tup => tup._2))
     val posQtile = rhoQuantile(sortedLs)
     val newProbList = computeNewProbList(sortedLs, posQtile._2)
-    // Debug info
+    /////////// Debug info ///////////
     i += 1
     println(s"Iteration : $i")
     println("----------")
@@ -362,16 +365,16 @@ object TestCE3 {
     println("----------")
     println(s"New Prob List = $newProbList")
     println("----------")
-    // End of debug info
+    //////////////////////////////////
     crossEntropyLoopAcc(newProbList, posQtile)
   }
 
   /**
-   * Compute the new probability vector
+   * Compute the new probability parameters
    *
    * @param sLs a sorted list of tuples "cut vector - performance"
    * @param perfQtile performance of the rho-quantile sample
-   * @return the list of probabilities vector
+   * @return the list of updated probability parameters
    */
   def computeNewProbList(sLs : List[(List[Int], Float)], perfQtile : Float) : List[Float] = {
     def computeProbAcc(i : Int, j : Int, accSumPonderate : Float, accSumHigherPerfs : Float) : Float = {
@@ -407,7 +410,7 @@ object TestCE3 {
 
   /**
    * Computes the initial probability parameters for each node
-   * to be in the cut vector
+   * to be in the same partition of first node (i.e. to be 1 in the cut vector)
    * @return a list beginning with 1 (first node is always in a cut
    *         vector) followed by 0.5s
    */
@@ -425,7 +428,7 @@ object TestCE3 {
   /**
    * Generates a random sample cut vector
    * @param probVector list of probability parameters for a node
-   *                   to be in the same partition as node 1
+   *                   to be in the same partition as first node
    * @return the random cut vector according to the probability
    *         distribution
    */
@@ -487,10 +490,10 @@ object TestCE3 {
 
   /**
    * Computes the cost of a partition specified by a cut vector
-   * @param cutVector a list of 1-0 numbers. 1 indicates that the
-   *                  node is in the same partition of node 1
+   * @param cutVector a list of 1-0 numbers. cutVector(i) == 1 indicates that the
+   *                  i-th node is in the same partition of first node.
    * @return the cost : that means the sum of cost of edges of nodes in
-   *         partition 1 to nodes in partition 2
+   *         partition 1 to nodes in partition 2 (note: cost matrix is symmetric)
    */
   def costCut(cutVector : List[Int]) : Float = {
     var accCost = 0F
