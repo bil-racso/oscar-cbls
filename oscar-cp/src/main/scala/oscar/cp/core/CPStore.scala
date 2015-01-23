@@ -94,7 +94,7 @@ class CPStore( final val propagStrength: CPPropagStrength) extends SearchNode {
 
   // Adds the constraint in the L2 queue
   @inline final def enqueueL2(c: Constraint): Unit = {
-    if (c.isActive && !c.isInQueue && (!c.inPropagate || !c.idempotent)) {
+    if (c.isEnqueuable) {
       c.setInQueue()
       val priority = c.priorityL2
       propagQueueL2(priority).addLast(c)
