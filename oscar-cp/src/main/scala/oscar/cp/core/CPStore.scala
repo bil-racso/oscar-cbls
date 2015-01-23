@@ -51,6 +51,21 @@ class CPStore( final val propagStrength: CPPropagStrength) extends SearchNode {
 
   // True if the store is executing the fixed point algorithm
   private var inFixedPoint = false
+  
+  // number of times an L1 filtering is called during the fix point
+  private var nCallsL1 = 0L  
+  
+  // number of times an L1 filtering is called during the fix point
+  private var nCallsL2 = 0L   
+  
+  def resetStatistics() {
+    timeInFixedPoint = 0
+    nCallsL1 = 0
+    nCallsL2 = 0
+  }
+  
+  def statistics = new SolverStatistics(nCallsL1,nCallsL2,timeInFixedPoint)
+  
 
   // Reference to the last constraint called
   private var lastConstraint: Constraint = null
@@ -317,6 +332,7 @@ class CPStore( final val propagStrength: CPPropagStrength) extends SearchNode {
         val queue = propagQueueL1(highestPriorL1)
         if (queue.isEmpty) highestPriorL1 -= 1
         else {
+          nCallsL1 += 1
           val event = queue.removeFirst()
           isFailed = event() == Failure
         }
@@ -327,6 +343,7 @@ class CPStore( final val propagStrength: CPPropagStrength) extends SearchNode {
         val queue = propagQueueL2(highestPriorL2)
         if (queue.isEmpty) highestPriorL2 -= 1
         else {
+          nCallsL2 += 1
           val constraint = queue.removeFirst()
           lastConstraint = constraint
           isFailed = constraint.execute() == Failure
@@ -538,4 +555,11 @@ object CPStore {
 
   /** The lowest priority for an Level 2 filtering method */
   val MinPriorityL2 = 0
+}
+
+class SolverStatistics(
+  val nCallsL1: Long,
+  val nCallsL2: Long,
+  val timeInFixPoint: Long) {
+  override val toString: String = s"nCallsL1: $nCallsL1\nnCallsL2: $nCallsL2\ntimeInFixedPoint(ms): $timeInFixPoint"
 }
