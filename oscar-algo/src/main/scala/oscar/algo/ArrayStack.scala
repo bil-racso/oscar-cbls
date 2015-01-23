@@ -17,6 +17,13 @@ class ArrayStack[T](initialSize: Int = 100) {
    *  @return The size of the stack
    */
   @inline final def size: Int = index
+  
+  /**
+   *  Return the size of the stack
+   *
+   *  @return The size of the stack
+   */
+  @inline final def length: Int = index
 
   /**
    *  Test if the stack is empty or not
@@ -56,6 +63,13 @@ class ArrayStack[T](initialSize: Int = 100) {
     stack(index) = entry.asInstanceOf[AnyRef] // boxing in case of primitive type
     index += 1
   }
+  
+  /**
+   *  Push an element onto the stack.
+   *
+   *  @param entry The element to push
+   */
+  @inline final def append(entry: T): Unit = push(entry)
 
   /**
    *  Pop the element on top of the stack
@@ -106,5 +120,13 @@ class ArrayStack[T](initialSize: Int = 100) {
     val newStack = new Array[AnyRef](stack.length * 2)
     System.arraycopy(stack, 0, newStack, 0, stack.length)
     stack = newStack
+  }
+  
+  
+  import scala.reflect.ClassTag
+  @inline final def toArray[T : ClassTag]: Array[T] = {
+    val array = new Array[T](index)
+    System.arraycopy(stack, 0, array, 0, index)
+    array
   }
 }

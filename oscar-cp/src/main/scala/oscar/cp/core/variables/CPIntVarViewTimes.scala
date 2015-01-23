@@ -14,9 +14,12 @@
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  * ****************************************************************************
  */
-package oscar.cp.core;
+package oscar.cp.core.variables
 
 import scala.util.Random
+import oscar.cp.core.CPOutcome
+import oscar.cp.core.Constraint
+import oscar.cp.core.CPStore
 
 /**
  * Represents a view on variable applying an offset on it.

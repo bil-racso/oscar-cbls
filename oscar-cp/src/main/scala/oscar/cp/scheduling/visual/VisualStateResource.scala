@@ -1,7 +1,7 @@
 package oscar.cp.scheduling.visual
 
 import oscar.visual._
-import oscar.cp.core.CPIntVar
+import oscar.cp.core.variables.CPIntVar
 import java.awt.Color
 import oscar.visual.shapes.VisualRoundRectangle
 

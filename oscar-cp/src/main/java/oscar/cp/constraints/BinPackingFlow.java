@@ -17,8 +17,8 @@ package oscar.cp.constraints;
 import oscar.algo.reversible.ReversibleInt;
 import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
-import oscar.cp.core.CPIntVar;
-import oscar.cp.core.CPIntervalVar;
+import oscar.cp.core.variables.CPIntVar;
+import oscar.cp.core.variables.CPIntervalVar;
 import oscar.cp.core.Constraint;
 import oscar.cp.util.ArrayUtils;
 

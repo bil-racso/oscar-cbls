@@ -1,8 +1,10 @@
 package oscar.cp.linearizedDFS
 
 import java.lang.management.ManagementFactory
+import oscar.cp.core.CPOutcome
+import oscar.cp.core.variables.CPIntVar
+import oscar.cp.core.Constraint
 
-import oscar.cp.core.{CPIntVar, CPOutcome, Constraint}
 
 /**
  * Created by saschavancauwelaert on 14/11/14.

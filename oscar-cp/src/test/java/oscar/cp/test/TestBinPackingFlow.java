@@ -16,7 +16,7 @@ package oscar.cp.test;
 import junit.framework.TestCase;
 import oscar.cp.constraints.BinPackingFlow;
 import oscar.cp.constraints.EqCons;
-import oscar.cp.core.CPIntVar;
+import oscar.cp.core.variables.CPIntVar;
 import oscar.cp.core.CPStore;
 
 /**

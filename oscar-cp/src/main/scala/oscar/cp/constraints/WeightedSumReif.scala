@@ -17,6 +17,8 @@ package oscar.cp.constraints
 import oscar.cp.core._
 import oscar.algo.reversible._
 import oscar.cp.core.CPOutcome._
+import oscar.cp.core.variables.CPIntVar
+import oscar.cp.core.variables.CPBoolVar
 
 /**
  * Implementation of sum_i a(i).x(i) == c <--> b

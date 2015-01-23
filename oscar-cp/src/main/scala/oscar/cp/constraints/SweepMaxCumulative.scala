@@ -17,8 +17,8 @@ package oscar.cp.constraints
 import scala.math.max
 import scala.math.min
 import oscar.cp.core.CPStore
-import oscar.cp.core.CPIntVar
-import oscar.cp.core.CPIntervalVar
+import oscar.cp.core.variables.CPIntVar
+import oscar.cp.core.variables.CPIntervalVar
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.CPOutcome._
 import oscar.cp.core.Constraint

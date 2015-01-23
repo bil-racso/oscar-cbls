@@ -23,9 +23,9 @@ import java.util.Collection
 import oscar.algo.search.Branching
 import oscar.cp.constraints.MulCte
 import oscar.cp.constraints.SubCircuit
-import oscar.cp.core.CPVar
+import oscar.cp.core.variables.CPVar
 import oscar.cp.core.NoSolutionException
-import oscar.cp.core.CPSetVar
+import oscar.cp.core.variables.CPSetVar
 import oscar.cp.core.CPPropagStrength
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.Constraint

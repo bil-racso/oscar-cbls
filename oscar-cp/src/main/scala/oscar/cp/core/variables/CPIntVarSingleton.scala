@@ -1,9 +1,12 @@
-package oscar.cp.core
+package oscar.cp.core.variables
 
 import scala.util.Random
 import oscar.algo.reversible.ReversibleInt
 import oscar.algo.reversible.TrailEntry
 import oscar.cp.core.CPOutcome._
+import oscar.cp.core.CPOutcome
+import oscar.cp.core.Constraint
+import oscar.cp.core.CPStore
 
 final class CPIntVarSingleton(final override val store: CPStore, initValue: Int, final override val name: String = "") extends CPIntVar {
   

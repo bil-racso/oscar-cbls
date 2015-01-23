@@ -135,17 +135,17 @@ final class SparseSetDomain(override val context: ReversibleContext, val minValu
   }
 
   @inline
-  override final def removeValue(v: Int): CPOutcome = {
-    if (!hasValue(v)) Suspend
+  override final def removeValue(value : Int): CPOutcome = {
+    if (!hasValue(value)) Suspend
     else {
       val s = _size.value - 1
       // Swaps the values
-      val v1 = v - minValue
+      val v1 = value - minValue
       val v2 = values(s) - minValue
       val i1 = indexes(v1)
       val i2 = indexes(v2)
       values(i1) = values(s)
-      values(i2) = v
+      values(i2) = value
       indexes(v1) = i2
       indexes(v2) = i1
       // Adjusts the size accordingly
@@ -194,19 +194,19 @@ final class SparseSetDomain(override val context: ReversibleContext, val minValu
   }
 
   @inline
-  override final def assign(v: Int): CPOutcome = {
-    if (!hasValue(v)) {
+  override final def assign(value: Int): CPOutcome = {
+    if (!hasValue(value)) {
       _size.value = 0
       Failure
     } else {
-      val value = values(0)
-      val index = indexes(v - minValue)
-      indexes(v - minValue) = 0
-      values(0) = v
-      indexes(value - minValue) = index
-      values(index) = value
-      _min.value = v
-      _max.value = v
+      val v = values(0)
+      val index = indexes(value - minValue)
+      indexes(value - minValue) = 0
+      values(0) = value
+      indexes(v - minValue) = index
+      values(index) = v
+      _min.value = value
+      _max.value = value
       _size.value = 1
       Suspend
     }

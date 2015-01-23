@@ -1,6 +1,9 @@
-package oscar.cp.core
+package oscar.cp.core.variables
 
 import scala.util.Random
+import oscar.cp.core.CPOutcome
+import oscar.cp.core.CPStore
+import oscar.cp.core.Constraint
 
 /**
  * Boolean variable: it is nothing else than a 0-1 integer variable. <br>
@@ -10,6 +13,8 @@ import scala.util.Random
  * @author Renaud Hartert ren.hartert@gmail.com
  */
 abstract class CPBoolVar extends CPIntVar {
+  
+  final override def isComplete: Boolean = true
 
   /** @return a constraint setting the boolean variable to true (1) */
   def constraintTrue: Constraint
@@ -37,7 +42,7 @@ abstract class CPBoolVar extends CPIntVar {
 
   /**
    *  Returns an unique boolean variable corresponding to the opposite
-   *  of this variable such that x.not.not == x. 
+   *  of this variable such that this.not.not == this. 
    */
   def not: CPBoolVar
 }

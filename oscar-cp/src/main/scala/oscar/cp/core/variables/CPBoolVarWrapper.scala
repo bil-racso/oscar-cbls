@@ -1,6 +1,9 @@
-package oscar.cp.core
+package oscar.cp.core.variables
 
 import scala.util.Random
+import oscar.cp.core.CPOutcome
+import oscar.cp.core.Constraint
+import oscar.cp.core.CPStore
 
 /**
  * Boolean variable: it is nothing else than a 0-1 integer variable. <br>

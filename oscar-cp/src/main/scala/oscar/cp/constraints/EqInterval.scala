@@ -15,8 +15,7 @@
 
 package oscar.cp.constraints
 
-import oscar.cp.core.CPIntervalVar
-import oscar.cp.core.CPIntervalVar
+import oscar.cp.core.variables.CPIntervalVar
 import oscar.cp.core.Constraint
 import oscar.cp.core.CPPropagStrength
 import oscar.cp.core.CPPropagStrength._

@@ -16,9 +16,9 @@ package oscar.cp.constraints;
 
 import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
-import oscar.cp.core.CPBoolVar;
-import oscar.cp.core.CPIntVar;
-import oscar.cp.core.CPIntervalVar;
+import oscar.cp.core.variables.CPBoolVar;
+import oscar.cp.core.variables.CPIntVar;
+import oscar.cp.core.variables.CPIntervalVar;
 import oscar.cp.core.Constraint;
 
 /**
@@ -122,7 +122,7 @@ public class EqReifVar extends Constraint {
 			int start = Math.max(x.getMin(), y.getMin());
 			int end = Math.min(x.getMax(), y.getMax());
 			boolean commonValues = false;
-			if (x.isRange() || y.isRange()) return CPOutcome.Suspend;
+			if (x.isComplete() || y.isComplete()) return CPOutcome.Suspend;
 			for (int i = start; i <= end; i++) {
  				if (x.hasValue(i) && y.hasValue(i)) {
 					commonValues = true;

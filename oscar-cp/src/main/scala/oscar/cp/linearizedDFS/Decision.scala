@@ -7,7 +7,8 @@ package oscar.cp.linearizedDFS
 import oscar.algo.reversible.{ReversibleBoolean, ReversibleInt}
 import oscar.algo.search._
 import oscar.cp.core.CPOutcome._
-import oscar.cp.core.{CPIntVar, CPStore}
+import oscar.cp.core.variables.CPIntVar
+import oscar.cp.core.CPStore
 
 sealed trait Decision extends Alternative {
   def name : String

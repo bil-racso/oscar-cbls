@@ -1,7 +1,7 @@
 package oscar
 
-import oscar.cp.core.CPIntVarViewMinus
-import oscar.cp.core.CPIntervalVarViewMinus
+import oscar.cp.core.variables.CPIntVarViewMinus
+import oscar.cp.core.variables.CPIntervalVarViewMinus
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.CPPropagStrength
 import oscar.cp.core.CPSol
@@ -11,8 +11,9 @@ import oscar.algo.search.Branching
 import oscar.algo.search.SearchNode
 import oscar.algo.search.SearchStatistics
 import oscar.util.selectMin
-import oscar.cp.core.CPBoolVarWrapper
-import oscar.cp.core.CPBoolVarImpl
+import oscar.cp.core.variables.CPBoolVarWrapper
+import oscar.cp.core.variables.CPBoolVarImpl
+import oscar.cp.modeling.ElementBuilder
 
 /**
  * The `cp` package provides useful functionnalities to model problem using
@@ -30,29 +31,29 @@ import oscar.cp.core.CPBoolVarImpl
  *
  * === CPModel ===
  * The `CPModel` trait is also defined in this package and provides users with an
- * implicit `CPSolver` named solver. The use of `CPModel` allows users to model 
+ * implicit `CPSolver` named solver. The use of `CPModel` allows users to model
  * problems without considering the underlying solver.
  *
  * @author Pierre Schaus pschaus@gmail.com
  * @author Renaud Hartert ren.hartert@gmail.com
  */
-package object cp extends Constraints with Branchings {
+package object cp extends Constraints with Branchings with ElementBuilder {
 
   // Alias to useful classes and companion objects
-  type CPIntVar = oscar.cp.core.CPIntVar
-  final val CPIntVar = oscar.cp.core.CPIntVar
+  type CPIntVar = oscar.cp.core.variables.CPIntVar
+  final val CPIntVar = oscar.cp.core.variables.CPIntVar
 
-  type CPIntervalVar = oscar.cp.core.CPIntervalVar
-  final val CPIntervalVar = oscar.cp.core.CPIntervalVar
+  type CPIntervalVar = oscar.cp.core.variables.CPIntervalVar
+  final val CPIntervalVar = oscar.cp.core.variables.CPIntervalVar
 
-  type CPBoolVar = oscar.cp.core.CPBoolVar
-  final val CPBoolVar = oscar.cp.core.CPBoolVar
+  type CPBoolVar = oscar.cp.core.variables.CPBoolVar
+  final val CPBoolVar = oscar.cp.core.variables.CPBoolVar
 
-  type CPSetVar = oscar.cp.core.CPSetVar
-  final val CPSetVar = oscar.cp.core.CPSetVar
+  type CPSetVar = oscar.cp.core.variables.CPSetVar
+  final val CPSetVar = oscar.cp.core.variables.CPSetVar
 
-  type CPGraphVar = oscar.cp.core.CPGraphVar
-  final val CPGraphVar = oscar.cp.core.CPGraphVar
+  type CPGraphVar = oscar.cp.core.variables.CPGraphVar
+  final val CPGraphVar = oscar.cp.core.variables.CPGraphVar
 
   type CPStore = oscar.cp.core.CPStore
   final val CPStore = oscar.cp.core.CPStore
@@ -82,50 +83,14 @@ package object cp extends Constraints with Branchings {
   }
   import TightenType._
 
-  /** Element */
-
-  implicit class ArrayIntElementConstraintBuilder(val a: Array[Int]) extends AnyVal {
-    def apply(i: CPIntVar): CPIntVar = element(a, i, Weak)
-  }
-
-  implicit class ArrayCPIntVarElementConstraintBuilder(val a: Array[CPIntVar]) extends AnyVal {
-    def apply(i: CPIntVar): CPIntVar = elementVar(a, i, Weak)
-  }
-
-  implicit class ArrayCPBoolVarElementConstraintBuilder(val a: Array[CPBoolVar]) extends AnyVal {
-    def apply(i: CPIntVar): CPIntVar = elementVar(a, i, Weak)
-  }
-
-  implicit class IdSeqIntElementConstraintBuilder(val s: IndexedSeq[Int]) extends AnyVal {
-    def apply(i: CPIntVar): CPIntVar = element(s, i, Weak)
-  }
-
-  implicit class IdSeqCPIntVarElementConstraintBuilder(val s: IndexedSeq[CPIntVar]) extends AnyVal {
-    def apply(i: CPIntVar): CPIntVar = elementVar(s, i, Weak)
-  }
-
-  implicit class IdSeqCPBoolVarElementConstraintBuilder(val s: IndexedSeq[CPBoolVar]) extends AnyVal {
-    def apply(i: CPIntVar): CPIntVar = elementVar(s, i, Weak)
-  }
-
-  implicit class ElementIntMatrixConstraintBuilderLine(val a: Array[Array[Int]]) extends AnyVal {
-    def apply(i: CPIntVar) = new ElementIntMatrixConstraintBuilderCol(i, a)
-  }
-
-  class ElementIntMatrixConstraintBuilderCol(i: CPIntVar, a: Array[Array[Int]]) {
-    def apply(j: CPIntVar): CPIntVar = element(a, i, j)
-  }
-
+  // TODO Dangerous implicits
   implicit def convert2(vals: IndexedSeq[Int]) = vals.toArray[Int]
-
   implicit def indexed2Array(x: IndexedSeq[CPIntVar]) = x.toArray[CPIntVar]
   implicit def args2Array(x: CPIntVar*) = x.toArray[CPIntVar]
-
   implicit def indexed2ArrayBool(x: IndexedSeq[CPBoolVar]) = x.toArray[CPBoolVar]
   implicit def args2ArrayBool(x: CPBoolVar*) = x.toArray[CPBoolVar]
 
-  //implicit def convertSeqVars2ArrayVars[T <: CPIntVar](x: scala.collection.immutable.IndexedSeq[T]) : Array[T]= x.toArray
-
+  // TODO Should move to oscar.cp.util
   implicit def arrayVar2IterableVarOps(s: Array[CPIntVar]) = new IterableVarOps(s)
   implicit class IterableVarOps(val seq: Iterable[CPIntVar]) extends AnyVal {
 
@@ -246,19 +211,19 @@ package object cp extends Constraints with Branchings {
 
     /** !b */
     def unary_!(): CPBoolVar = variable.not
-    
+
     /** x | y */
     def |(y: CPBoolVar) = or(y)
-    
+
     /** x || y */
     def ||(y: CPBoolVar) = or(y)
-    
+
     /** x & y */
     def &(y: CPBoolVar) = and(y)
-    
+
     /** x && y */
     def &&(y: CPBoolVar) = and(y)
-    
+
     /** x ==> y */
     def ==>(y: CPBoolVar) = implies(y)
   }
@@ -316,7 +281,7 @@ package object cp extends Constraints with Branchings {
     def -(y: Int) = minus(x, y)
 
     def +(s: String) = s"$x$s"
-    
+
     /* TODO general multiplication of interval vars
     /**
      * x*y
@@ -327,12 +292,12 @@ package object cp extends Constraints with Branchings {
     }
     * 
     */
-    
+
     /**
      * x*y
      */
     def *(y: Int): CPIntervalVar = mul(x, y)
-    
+
     /**
      * Reified constraint
      * @param y a variable
@@ -344,6 +309,39 @@ package object cp extends Constraints with Branchings {
       assert(ok != CPOutcome.Failure);
       b
     }
+
+    /**
+     * x<y
+     */
+    def <(y: CPIntervalVar) = new oscar.cp.constraints.Le(x, y)
+    /**
+     * x<y
+     */
+    def <(y: Int) = new oscar.cp.constraints.Le(x, y)
+    /**
+     * x>y
+     */
+    def >(y: CPIntervalVar) = new oscar.cp.constraints.Gr(x, y)
+    /**
+     * x>y
+     */
+    def >(y: Int) = new oscar.cp.constraints.Gr(x, y)
+    /**
+     * x<=y
+     */
+    def <=(y: CPIntervalVar) = new oscar.cp.constraints.LeEq(x, y)
+    /**
+     * x<=y
+     */
+    def <=(y: Int) = new oscar.cp.constraints.LeEq(x, y)
+    /**
+     * x>=y
+     */
+    def >=(y: CPIntervalVar) = new oscar.cp.constraints.GrEq(x, y)
+    /**
+     * x>=y
+     */
+    def >=(y: Int) = new oscar.cp.constraints.GrEq(x, y)
 
   }
 

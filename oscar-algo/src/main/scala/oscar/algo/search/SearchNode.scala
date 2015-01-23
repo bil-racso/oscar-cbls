@@ -15,7 +15,7 @@
 
 package oscar.algo.search
 
-import java.util.Random
+import scala.util.Random
 import oscar.algo.reversible.ReversibleContext
 import oscar.algo.reversible.ReversibleBoolean
 

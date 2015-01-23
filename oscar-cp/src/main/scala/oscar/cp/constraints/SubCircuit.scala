@@ -15,9 +15,9 @@
 
 package oscar.cp.constraints
 
-import oscar.cp.core.CPIntVar
+import oscar.cp.core.variables.CPIntVar
 import oscar.cp.modeling._
-import oscar.cp.core.CPIntervalVar
+import oscar.cp.core.variables.CPIntervalVar
 import oscar.cp.core.Constraint
 import oscar.algo.reversible.ReversibleInt
 import oscar.cp.core.CPPropagStrength

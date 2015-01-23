@@ -8,8 +8,8 @@ import scala.math.ceil
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.CPOutcome._
 import oscar.cp.core.CPPropagStrength
-import oscar.cp.core.CPIntVar
-import oscar.cp.core.CPIntervalVar
+import oscar.cp.core.variables.CPIntVar
+import oscar.cp.core.variables.CPIntervalVar
 import oscar.cp.core.Constraint
 
 class EnergeticReasoning(starts: Array[_ <: CPIntervalVar], durations: Array[_ <: CPIntervalVar], ends: Array[_ <: CPIntervalVar], demands: Array[_ <: CPIntervalVar], resources: Array[CPIntVar], capacity: CPIntervalVar, id: Int = 1) extends Constraint(capacity.store, "Energetic Reasoning") {

@@ -23,6 +23,10 @@ import oscar.cp.constraints.EqCons
 import oscar.cp.core.CPOutcome.{Failure, Success, Suspend}
 import scala.collection.JavaConversions.{asJavaCollection, collectionAsScalaIterable}
 import oscar.algo.reversible.ReversiblePointer
+import oscar.cp.core.variables.CPIntVar
+import oscar.cp.core.variables.CPBoolVar
+import oscar.cp.core.variables.CPSetVar
+import oscar.cp.core.variables.CPIntervalVar
 
 /**
  * Constraint Programming CPStore
@@ -104,8 +108,8 @@ class CPStore( final val propagStrength: CPPropagStrength) extends SearchNode {
   }
 
   // Adds the constraint in the L2 queue
-  @inline protected def enqueueL2(c: Constraint): Unit = {
-    if (c.isActive && !c.isInQueue && (!c.inPropagate || !c.idempotent)) {
+  @inline final def enqueueL2(c: Constraint): Unit = {
+    if (c.isEnqueuable) {
       c.setInQueue()
       val priority = c.priorityL2
       propagQueueL2(priority).addLast(c)

@@ -1,11 +1,14 @@
 package oscar.cp.scheduling.constraints
 
-import oscar.cp.core._
 import oscar.cp.core.CPOutcome._
 import oscar.algo.reversible.ReversibleInt
-import oscar.algo.SortUtils.mergeSort 
+import oscar.algo.SortUtils.mergeSort
 import scala.annotation.tailrec
 import java.lang.Math.max
+import oscar.cp.core.CPOutcome
+import oscar.cp.core.variables.CPIntVar
+import oscar.cp.core.variables.CPIntervalVar
+import oscar.cp.core.Inconsistency
 
 /*
  *  Wolf & Schrader's overload checker, INAP 2005.

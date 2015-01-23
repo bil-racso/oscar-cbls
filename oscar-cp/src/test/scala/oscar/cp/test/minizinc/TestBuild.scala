@@ -15,7 +15,7 @@ import java.io.FileReader
 import java.io.File
 import scala.io.Source
 import oscar.cp.core.CPSolver
-import oscar.cp.core.CPIntVar
+import oscar.cp.core.variables.CPIntVar
 
 class TestBuild extends FunSuite with ShouldMatchers {
   

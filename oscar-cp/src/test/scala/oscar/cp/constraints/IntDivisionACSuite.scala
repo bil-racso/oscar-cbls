@@ -2,7 +2,7 @@ package oscar.cp.constraints
 
 import oscar.cp.testUtils._
 import oscar.cp.core.CPSolver
-import oscar.cp.core.CPIntVar
+import oscar.cp.core.variables.CPIntVar
 
 
 class IntDivisionACSuite extends TestSuite {

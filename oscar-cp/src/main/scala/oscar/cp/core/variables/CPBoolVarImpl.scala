@@ -1,10 +1,18 @@
-package oscar.cp.core
+package oscar.cp.core.variables
 
-import oscar.algo.reversible.ReversiblePointer
-import oscar.algo.reversible.ReversibleInt
-import oscar.algo.reversible.TrailEntry
+import scala.Iterator
 import scala.util.Random
-import oscar.cp.core.CPOutcome._
+import oscar.algo.reversible.ReversibleInt
+import oscar.algo.reversible.ReversiblePointer
+import oscar.algo.reversible.TrailEntry
+import oscar.cp.core.CPOutcome
+import oscar.cp.core.CPOutcome.Failure
+import oscar.cp.core.CPOutcome.Suspend
+import oscar.cp.core.CPStore
+import oscar.cp.core.Constraint
+import oscar.cp.core.ConstraintQueue
+import oscar.cp.core.PropagEventQueueVarInt
+import oscar.cp.core.watcher.WatcherListL2
 
 /**
  * @author Renaud Hartert ren.hartert@gmail.com
@@ -13,9 +21,9 @@ import oscar.cp.core.CPOutcome._
 class CPBoolVarImpl private(final override val store: CPStore, initDomain: Int, final override val name: String = "") extends CPBoolVar {
   
   // Registered constraints
-  private[this] val onBoundsL2 = new ReversiblePointer[ConstraintQueue](store, null)
-  private[this] val onBindL2 = new ReversiblePointer[ConstraintQueue](store, null)
-  private[this] val onDomainL2 = new ReversiblePointer[ConstraintQueue](store, null)
+  private[this] val onBoundsL2 = new WatcherListL2(store)
+  private[this] val onBindL2 = new WatcherListL2(store)
+  private[this] val onDomainL2 = new WatcherListL2(store)
   private[this] val onBoundsL1 = new ReversiblePointer[PropagEventQueueVarInt[CPIntervalVar]](store, null)
   private[this] val onBindL1 = new ReversiblePointer[PropagEventQueueVarInt[CPIntervalVar]](store, null)
   private[this] val onDomainL1 = new ReversiblePointer[PropagEventQueueVarInt[CPIntVar]](store, null)
@@ -150,11 +158,11 @@ class CPBoolVarImpl private(final override val store: CPStore, initDomain: Int, 
     store.notifyRemoveIdxL1(onDomainIdxL1.value, this, 0)
     store.notifyBindL1(onBindL1.value, this)
     store.notifyBindIdxL1(onBindIdxL1.value, this)
-    store.notifyL2(onBindL2.value)
     store.notifyUpdateBoundsL1(onBoundsL1.value, this)
     store.notifyUpdateBoundsIdxL1(onBoundsIdxL1.value, this)
-    store.notifyL2(onBoundsL2.value)
-    store.notifyL2(onDomainL2.value)
+    onBoundsL2.enqueue()
+    onDomainL2.enqueue()
+    onBindL2.enqueue()
     Suspend
   }
 
@@ -166,11 +174,11 @@ class CPBoolVarImpl private(final override val store: CPStore, initDomain: Int, 
     store.notifyRemoveIdxL1(onDomainIdxL1.value, this, 1)
     store.notifyBindL1(onBindL1.value, this)
     store.notifyBindIdxL1(onBindIdxL1.value, this)
-    store.notifyL2(onBindL2.value)
     store.notifyUpdateBoundsL1(onBoundsL1.value, this)
     store.notifyUpdateBoundsIdxL1(onBoundsIdxL1.value, this)
-    store.notifyL2(onBoundsL2.value)
-    store.notifyL2(onDomainL2.value)
+    onBoundsL2.enqueue()
+    onDomainL2.enqueue()
+    onBindL2.enqueue()
     Suspend
   }
 
@@ -209,17 +217,17 @@ class CPBoolVarImpl private(final override val store: CPStore, initDomain: Int, 
 
   final override def callPropagateWhenBind(c: Constraint) {
     degree.incr()
-    onBindL2.setValue(new ConstraintQueue(onBindL2.value, c))
+    onBindL2.register(c)
   }
 
   final override def callPropagateWhenBoundsChange(c: Constraint) {
     degree.incr()
-    onBoundsL2.setValue(new ConstraintQueue(onBoundsL2.value, c))
+    onBoundsL2.register(c)
   }
 
   final override def callPropagateWhenDomainChanges(c: Constraint, trackDelta: Boolean = false) {
     degree.incr()
-    onDomainL2.setValue(new ConstraintQueue(onDomainL2.value, c))
+    onDomainL2.register(c)
     if (trackDelta) c.addSnapshot(this)
   }
 

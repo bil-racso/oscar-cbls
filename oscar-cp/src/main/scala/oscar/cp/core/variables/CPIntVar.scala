@@ -13,7 +13,7 @@
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
 
-package oscar.cp.core
+package oscar.cp.core.variables
 
 import oscar.cp.constraints.InSet
 import oscar.cp.constraints.InSetReif
@@ -21,6 +21,10 @@ import oscar.cp.constraints.ModuloLHS
 import scala.util.Random
 import oscar.cp.core.domains.SparseSetDomain
 import oscar.cp._
+import oscar.cp.core.CPPropagStrength
+import oscar.cp.core.SnapshotVarInt
+import oscar.cp.core.DeltaVarInt
+import oscar.cp.core.CPOutcome
 
 trait DomainIterator extends Iterator[Int] {
   def removeValue: CPOutcome
@@ -30,8 +34,9 @@ trait DomainIterator extends Iterator[Int] {
 /**
  * @author Pierre Schaus pschaus@gmail.com
  */
-abstract class CPIntVar extends CPIntervalVar with Iterable[Int] {
+abstract class CPIntVar extends CPIntervalVar {
 
+  def isComplete: Boolean = size == (max - min + 1)
 
   /**
    * Number of values in common in both domains

@@ -19,6 +19,10 @@ import oscar.algo.reversible.ReversibleBoolean
 import oscar.cp.constraints.Garded
 import scala.collection.mutable.ArrayBuffer
 import oscar.algo.reversible.MagicBoolean
+import oscar.cp.core.variables.CPSetVar
+import oscar.cp.core.variables.CPBoolVar
+import oscar.cp.core.variables.CPIntervalVar
+import oscar.cp.core.variables.CPIntVar
 
 
 abstract class Snapshot {
@@ -51,8 +55,8 @@ class SnapshotVarSet(x: CPSetVar) extends Snapshot {
  */
 abstract class Constraint(val s: CPStore, val name: String = "cons") {
 
-  private final val active = new ReversibleBoolean(s,true)
-  private final val inQueue = new MagicBoolean(s, false)
+  private[this] val active = new ReversibleBoolean(s,true)
+  private[this] val inQueue = new MagicBoolean(s, false)
 
   val snapshotsVarInt = scala.collection.mutable.Map[CPIntVar, SnapshotVarInt]() 
   val snapshotsVarSet = scala.collection.mutable.Map[CPSetVar, SnapshotVarSet]()
@@ -104,18 +108,27 @@ abstract class Constraint(val s: CPStore, val name: String = "cons") {
   /**
    * Set to true when it is currently executing the propagate method
    */
-  var executingPropagate = false
+  private[this] var _inPropagate = false
 
   /**
    * True if the constraint is idempotent i.e. calling two times propagate is useless if no other changes occurred
    * sigma(store) = sigma(sigma(store))
    */
-  var idempotent = false
+  private[this] var _idempotent = false
+  @inline final def idempotent: Boolean = _idempotent
+  final def idempotent_=(b: Boolean): Unit = _idempotent = b
 
   /**
    * @return true if it is currently executing the propagate method.
    */
-  def inPropagate() = executingPropagate
+  @inline final def inPropagate() = _inPropagate
+  
+  
+  
+  @inline final def isEnqueuable: Boolean = {
+    active.value && !inQueue.value && (!_inPropagate || !_idempotent)
+  }
+  
 
   /**
    * @param b
@@ -312,13 +325,13 @@ abstract class Constraint(val s: CPStore, val name: String = "cons") {
 
   def execute(): CPOutcome = {
     inQueue.value = false
-    executingPropagate = true
+    _inPropagate = true
     val oc = propagate()
     if (oc != CPOutcome.Failure) {
       snapshotVarInt()
       snapshotVarSet()
     }
-    executingPropagate = false
+    _inPropagate = false
     if (oc == CPOutcome.Success) {
       deactivate()
     }

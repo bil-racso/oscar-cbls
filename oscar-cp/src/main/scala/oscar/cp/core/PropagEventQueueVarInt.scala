@@ -15,6 +15,8 @@
 
 package oscar.cp.core
 
+import oscar.cp.core.variables.CPIntervalVar
+
 /**
  * Trailable Queue of AC5 events
  * Each entry of the queue stores:

@@ -3,97 +3,96 @@
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- *   
+ *
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License  for more details.
- *   
+ *
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
- ******************************************************************************/
+ * *****************************************************************************/
 
 package oscar.cp.searches
 
 import oscar.cp._
-import oscar.algo.reversible._
 import oscar.algo.search.Branching
+import oscar.algo.reversible.ReversibleInt
 
 /**
- * Abstract Binary Branching: 
+ * Abstract Binary Branching:
  * You can specify your variable heuristics
- * author: Pierre Schaus pschaus@gmail.com
+ * @author Pierre Schaus pschaus@gmail.com
+ * @author Renaud Hartert ren.hartert@gmail.com
  */
-abstract class AbstractBinaryBranching[X <: CPIntervalVar](vars: Array[X], varHeuris: (X => Int)) extends Branching {
-  val cp = vars(0).store
-  val x_ = vars.asInstanceOf[Array[X]].zipWithIndex
-  val nbBounds = new ReversibleInt(cp, 0)
-  def bound(i: Int) {
-    val ind = nbBounds.value
-    val tmp = x_(ind)
-    x_(ind) = x_(i)
-    x_(i) = tmp
-    nbBounds.incr()
-  }
-  val size = x_.size
+abstract class AbstractBinaryBranching[X <: CPIntervalVar](variables: Array[X], varHeuris: (X => Int)) extends Branching {
 
-  def allBounds(): Boolean = {
-    var i = nbBounds.value
-    while (i < size) {
-      if (!x_(i)._1.isBound) return false
-      else bound(i)
+  val cp = variables(0).store
+
+  private[this] val nVariables = variables.length
+  private[this] val indexes = Array.tabulate(nVariables)(i => i)
+  private[this] val nBounds = new ReversibleInt(cp, 0)
+
+  @inline private def bound(i: Int): Unit = {
+    val id = nBounds.incr() - 1
+    val tmp = indexes(id)
+    indexes(id) = indexes(i)
+    indexes(i) = tmp
+  }
+
+  protected def allBounds(): Boolean = {
+    var i = nBounds.value
+    while (i < nVariables) {
+      val varId = indexes(i)
+      val variable = variables(varId)
+      if (variable.isBound) bound(i)
+      else return false
       i += 1
     }
     true
   }
 
-  def nextVar(): X = {
-    var i = nbBounds.value
-    var (x, ind) = x_(i)
-    var fbest = varHeuris(x)
+  protected def nextVar(): X = {
+    var i = nBounds.value
+    var bestId = indexes(i)
+    var bestVariable = variables(bestId)
+    var bestH = varHeuris(bestVariable)
     i += 1
-    while (i < size) {
-      if (!x_(i)._1.isBound) {
-        val (y, indy) = x_(i)
-        val h = varHeuris(y)
-        if (h < fbest || (h == fbest && indy < ind)) {
-          x = y
-          fbest = h
-          ind = indy
+    while (i < nVariables) {
+      val varId = indexes(i)
+      val variable = variables(varId)
+      if (variable.isBound) bound(i)
+      else {
+        val h = varHeuris(variable)
+        if (h < bestH || (h == bestH && varId < bestId)) {
+          bestVariable = variable
+          bestId = varId
+          bestH = h
         }
-      } else {
-        bound(i)
       }
       i += 1
     }
-    x
+    bestVariable
   }
 
   def alternatives(): Seq[Alternative]
 }
 /**
- * Binary Branching: 
+ * Binary Branching:
  * You can specify your variable/value heuristics
  * author: Pierre Schaus pschaus@gmail.com
  */
-class BinaryBranching[X <: CPIntVar](vars: Array[X], varHeuris: (CPIntVar => Int), valHeuris: (CPIntVar => Int) = minVal) extends AbstractBinaryBranching(vars,varHeuris) {
-
-
-  def alternatives(): Seq[Alternative] = {
-    allBounds() match {
-      case true => noAlternative
-      case false => { 
-        val y = nextVar()
-        val v = valHeuris(y)
-        branch(cp.assign(y, v))(cp.remove(y, v)) // right alternative
-      }
+class BinaryBranching[X <: CPIntVar](vars: Array[X], varHeuris: (CPIntVar => Int), valHeuris: (CPIntVar => Int) = minVal) extends AbstractBinaryBranching(vars, varHeuris) {
+  final override def alternatives(): Seq[Alternative] = {
+    val stop = allBounds()
+    if (stop) noAlternative
+    else {
+      val variable = nextVar()
+      val value = valHeuris(variable)
+      branch(cp.assign(variable, value))(cp.remove(variable, value))
     }
   }
 }
-
-
-
-
 
 class BinaryStaticOrderBranching(vars: Array[_ <: CPIntVar], valHeuris: (CPIntVar => Int) = minVal) extends Branching {
 
@@ -101,10 +100,10 @@ class BinaryStaticOrderBranching(vars: Array[_ <: CPIntVar], valHeuris: (CPIntVa
   var y = vars.asInstanceOf[Array[CPIntVar]]
   var i = new ReversibleInt(cp, 0)
 
-  override def alternatives(): Seq[Alternative] = {
-    
+  final override def alternatives(): Seq[Alternative] = {
+
     while (i.value < y.size && y(i.value).isBound) { i.incr() }
-    
+
     if (i.value < y.size) {
 
       val x: CPIntVar = y(i.value)
@@ -120,7 +119,6 @@ class BinaryStaticOrderBranching(vars: Array[_ <: CPIntVar], valHeuris: (CPIntVa
     }
   }
 }
-
 
 /**
  * Binary First Fail (min dom size) on the decision variables vars.
@@ -140,7 +138,7 @@ class BinaryMaxDegreeBranching(x: Array[CPIntVar]) extends BinaryBranching(x, va
 /**
  * Binary search on the decision variables vars, splitting the domain at the selected value (left : <= value, right : > value)
  */
-class BinaryDomainSplitBranching[X <: CPIntervalVar](x: Array[X], varHeuris: (X => Int), valHeuris: (X => Int) = (x: X) => (x.min + x.max) / 2) extends AbstractBinaryBranching(x,varHeuris) {
+class BinaryDomainSplitBranching[X <: CPIntervalVar](x: Array[X], varHeuris: (X => Int), valHeuris: (X => Int) = (x: X) => (x.min + x.max) / 2) extends AbstractBinaryBranching(x, varHeuris) {
 
   override def alternatives(): Seq[Alternative] = {
     allBounds() match {

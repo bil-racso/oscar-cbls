@@ -12,7 +12,7 @@
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
-package oscar.cp.core
+package oscar.cp.core.variables
 
 import oscar.algo.reversible.ReversibleQueue
 import oscar.algo.reversible.ReversiblePointer
@@ -22,6 +22,11 @@ import scala.util.Random
 import oscar.cp.core.domains.IntDomain
 import oscar.cp.core.domains.AdaptableIntDomain
 import oscar.cp.core.CPOutcome._
+import oscar.cp.core.PropagEventQueueVarInt
+import oscar.cp.core.ConstraintQueue
+import oscar.cp.core.CPOutcome
+import oscar.cp.core.Constraint
+import oscar.cp.core.CPStore
 
 /**
  * @author Pierre Schaus pschaus@gmail.com
@@ -50,17 +55,17 @@ class CPIntVarImpl(final override val store: CPStore, private val domain: IntDom
    */
   def constraintDegree() = {
     var tot = 0
-    if (onBoundsL2.hasValue()) tot += onBoundsL2.value.size
-    if (onBindL2.hasValue()) tot += onBindL2.value.size
-    if (onDomainL2.hasValue()) tot += onDomainL2.value.size
+    if (onBoundsL2.hasValue) tot += onBoundsL2.value.size
+    if (onBindL2.hasValue) tot += onBindL2.value.size
+    if (onDomainL2.hasValue) tot += onDomainL2.value.size
 
-    if (onBoundsL1.hasValue()) tot += onBoundsL1.value.size
-    if (onBindL1.hasValue()) tot += onBindL1.value.size
-    if (onDomainL1.hasValue()) tot += onDomainL1.value.size
+    if (onBoundsL1.hasValue) tot += onBoundsL1.value.size
+    if (onBindL1.hasValue) tot += onBindL1.value.size
+    if (onDomainL1.hasValue) tot += onDomainL1.value.size
 
-    if (onBoundsIdxL1.hasValue()) tot += onBoundsIdxL1.value.size
-    if (onBindIdxL1.hasValue()) tot += onBindIdxL1.value.size
-    if (onDomainIdxL1.hasValue()) tot += onDomainIdxL1.value.size
+    if (onBoundsIdxL1.hasValue) tot += onBoundsIdxL1.value.size
+    if (onBindIdxL1.hasValue) tot += onBindIdxL1.value.size
+    if (onDomainIdxL1.hasValue) tot += onDomainIdxL1.value.size
     tot
   }
 
@@ -294,14 +299,14 @@ class CPIntVarImpl(final override val store: CPStore, private val domain: IntDom
       store.notifyUpdateBoundsL1(onBoundsL1.value, this)
       store.notifyUpdateBoundsIdxL1(onBoundsIdxL1.value, this)
       // must notify AC5 event before the actual removal
-      if (onDomainL1.hasValue() || onDomainIdxL1.hasValue()) {
+      if (onDomainL1.hasValue || onDomainIdxL1.hasValue) {
         var i = dom.min
         while (i <= dom.max) {
           if (i != value && dom.hasValue(i)) {
-            if (onDomainL1.hasValue()) {
+            if (onDomainL1.hasValue) {
               store.notifRemoveL1(onDomainL1.value, this, i)
             }
-            if (onDomainIdxL1.hasValue()) {
+            if (onDomainIdxL1.hasValue) {
               store.notifyRemoveIdxL1(onDomainIdxL1.value, this, i)
             }
           }
@@ -329,13 +334,13 @@ class CPIntVarImpl(final override val store: CPStore, private val domain: IntDom
     if (value <= omin) return CPOutcome.Suspend
 
     //must notif AC5 event with the removed values before the actual removal
-    if (onDomainL1.hasValue() || onDomainIdxL1.hasValue()) {
+    if (onDomainL1.hasValue || onDomainIdxL1.hasValue) {
       var i = omin
       while (i < value) {
         if (dom.hasValue(i)) {
-          if (onDomainL1.hasValue())
+          if (onDomainL1.hasValue)
             store.notifRemoveL1(onDomainL1.value, this, i)
-          if (onDomainIdxL1.hasValue())
+          if (onDomainIdxL1.hasValue)
             store.notifyRemoveIdxL1(onDomainIdxL1.value, this, i)
         }
         i += 1
@@ -373,13 +378,13 @@ class CPIntVarImpl(final override val store: CPStore, private val domain: IntDom
     if (value >= omax) return CPOutcome.Suspend
 
     //must notifyAC3 the removed value before the actual removal
-    if (onDomainL1.hasValue() || onDomainIdxL1.hasValue()) {
+    if (onDomainL1.hasValue || onDomainIdxL1.hasValue) {
       var i = omax
       while (i > value) {
         if (dom.hasValue(i)) {
-          if (onDomainL1.hasValue())
+          if (onDomainL1.hasValue)
             store.notifRemoveL1(onDomainL1.value, this, i)
-          if (onDomainIdxL1.hasValue())
+          if (onDomainIdxL1.hasValue)
             store.notifyRemoveIdxL1(onDomainIdxL1.value, this, i)
         }
         i -= 1

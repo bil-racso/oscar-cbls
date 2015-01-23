@@ -2,8 +2,8 @@ package oscar.algo.reversible
 
 class MagicBoolean(context: ReversibleContext, default: Boolean) {
 
-  private final var magic: Long = -1
-  private final var b: Boolean = default
+  private[this] var magic: Long = -1
+  private[this] var b: Boolean = default
   
   @inline final def value_=(b: Boolean): Unit = {
     magic = context.magic

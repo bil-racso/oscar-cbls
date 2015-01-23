@@ -18,11 +18,17 @@ package oscar.algo.reversible;
  * Reversible Boolean
  * @author Pierre Schaus pschaus@gmail.com
  */
-class ReversibleBoolean(node: ReversibleContext, value: Boolean) extends ReversiblePointer[Boolean](node, value) {
 
+class ReversibleBooleanTrailEntry(reversible: ReversibleBoolean, value: Boolean) extends TrailEntry {
+  @inline override final def restore(): Unit = reversible.restore(value)
+}
+
+class ReversibleBoolean(node: ReversibleContext, value: Boolean) extends ReversiblePointer[Boolean](node, value) {
   /**
    * Creates a reversible Boolean initialized to true
    * @param node
    */
   def this(node: ReversibleContext) = this(node, true)
+   
+  @inline final override def trailEntry = new ReversibleBooleanTrailEntry(this, pointer) 
 }

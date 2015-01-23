@@ -15,8 +15,8 @@
 
 package oscar.cp.xcsp
 
-import oscar.cp.core.CPBoolVar
-import oscar.cp.core.CPIntVar
+import oscar.cp.core.variables.CPBoolVar
+import oscar.cp.core.variables.CPIntVar
 import oscar.cp.core.Constraint
 import oscar.cp.xcsp.ast.AlternativeOperator
 import oscar.cp.xcsp.ast.BooleanBinaryOperator

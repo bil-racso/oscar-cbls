@@ -2,10 +2,10 @@ package oscar.cp.linearizedDFS.branching
 
 import oscar.algo.reversible.ReversibleInt
 import oscar.algo.search.Branching
-import oscar.cp.core.CPIntVar
 import oscar.cp.linearizedDFS.{Assign, Remove}
 import oscar.cp._
 import oscar.cp.searches.AbstractBinaryBranching
+import oscar.algo.search.Alternative
 
 /**
  * Created by saschavancauwelaert on 09/12/14.
