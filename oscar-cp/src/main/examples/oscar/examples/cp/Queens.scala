@@ -19,34 +19,17 @@ object Queens extends CPModel with App {
   val Queens = 0 until nQueens
 
   // Variables
-  //val queens = Array.fill(nQueens)(CPIntVar.sparse(0, nQueens - 1))
-  val queens = Array.fill(nQueens)(CPIntVar.mySparse(0, nQueens - 1))
-  val rQueens = Array.tabulate(nQueens)(i => queens(i) + i)
-  val fQueens = Array.tabulate(nQueens)(i => queens(i) - i)
+  val queens = Array.fill(nQueens)(CPIntVar.sparse(0, nQueens - 1))
 
-  for (i <- Queens; j <- Queens; if j < i) {
-    add(queens(i) != queens(j))
-    add(rQueens(i) != rQueens(j))
-    add(fQueens(i) != fQueens(j))
-  }
-
-  val t0 = System.currentTimeMillis()
-  val search = new NewSearch(solver)
-  val heuristic = binaryFirstFail(queens)
-  search.start(heuristic, _.nSolutions == 1)
-  val time = System.currentTimeMillis() - t0
-  println("time " + time)
-  
   // Constraints
-  //add(allDifferent(queens))
-  //add(allDifferent(Queens.map(i => queens(i) + i)))
-  //add(allDifferent(Queens.map(i => queens(i) - i)))
-
-
+  add(allDifferent(queens))
+  add(allDifferent(Queens.map(i => queens(i) + i)))
+  add(allDifferent(Queens.map(i => queens(i) - i)))
+  
   // Search heuristic
-  /*search(binaryFirstFail(queens))
+  search(binaryFirstFail(queens))
 
   // Execution
   val stats = start(nSols = 1)
-  println(stats)*/
+  println(stats)
 }

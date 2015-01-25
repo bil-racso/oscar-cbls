@@ -38,29 +38,29 @@ class CPStore( final val propagStrength: CPPropagStrength) extends SearchNode {
   def this() = this(CPPropagStrength.Weak)
 
   // Propagation queue L1 (AC5)
-  private val propagQueueL1 = Array.fill(CPStore.MaxPriorityL1 + 1)(new ArrayQueue[() => CPOutcome](1000))
-  private var highestPriorL1 = -1
+  private[this] val propagQueueL1 = Array.fill(CPStore.MaxPriorityL1 + 1)(new ArrayQueue[() => CPOutcome](1000))
+  private[this] var highestPriorL1 = -1
 
   // Propagation queue L2 (AC3)
-  private val propagQueueL2 = Array.fill(CPStore.MaxPriorityL2 + 1)(new ArrayQueue[Constraint](100))
-  private var highestPriorL2 = -1
+  private[this] val propagQueueL2 = Array.fill(CPStore.MaxPriorityL2 + 1)(new ArrayQueue[Constraint](100))
+  private[this] var highestPriorL2 = -1
 
-  private val cutConstraints = new ArrayQueue[Constraint](1) // usually empty
+  private[this] val cutConstraints = new ArrayQueue[Constraint](1) // usually empty
 
   // Status of the store (should be replaced by the failed reversible boolean of SearchNode)
-  private val status: ReversiblePointer[CPOutcome] = new ReversiblePointer[CPOutcome](this, Suspend)
+  private[this] val status: ReversiblePointer[CPOutcome] = new ReversiblePointer[CPOutcome](this, Suspend)
 
   // Total time spent in the fixed point algorithm
-  private var timeInFixedPoint: Long = 0
+  private[this] var timeInFixedPoint: Long = 0
 
   // True if the store is executing the fixed point algorithm
-  private var inFixedPoint = false
+  private[this] var inFixedPoint = false
   
-  // number of times an L1 filtering is called during the fix point
-  private var nCallsL1 = 0L  
+  // Number of times an L1 filtering is called during the fix point
+  private[this] var nCallsL1 = 0L  
   
-  // number of times an L1 filtering is called during the fix point
-  private var nCallsL2 = 0L   
+  // Number of times an L1 filtering is called during the fix point
+  private[this] var nCallsL2 = 0L   
   
   def resetStatistics() {
     timeInFixedPoint = 0
@@ -72,7 +72,7 @@ class CPStore( final val propagStrength: CPPropagStrength) extends SearchNode {
   
 
   // Reference to the last constraint called
-  private var lastConstraint: Constraint = null
+  private[this] var lastConstraint: Constraint = null
 
   /**
    *  Returns the last constraint called in the propagate algorithm.

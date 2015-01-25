@@ -503,10 +503,6 @@ object CPIntVar {
     }
     x
   }
-  
-  def mySparse(minValue: Int, maxValue: Int, name: String = "")(implicit store: CPStore): CPIntVar = {
-    new CPIntVarBits(store, minValue, maxValue, name)
-  }
 }
 
   
