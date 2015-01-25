@@ -8,17 +8,21 @@ import oscar.cp.core.CPOutcome
 import oscar.cp.core.CPOutcome._
 
 final class DiffVar(x: CPIntVar, y: CPIntVar) extends Constraint(x.store, "DiffVar") {
+  
+  idempotent = true
 
   final override def setup(l: CPPropagStrength): CPOutcome = {
-    if (propagate == Failure) Failure
+    val outcome = init()
+    if (outcome == Failure) Failure
+    else if (outcome == Success) Suspend // no need to success
     else {
       x.callPropagateWhenBind(this)
       y.callPropagateWhenBind(this)
       Suspend
     }
   }
-
-  @inline final override def propagate(): CPOutcome = {
+  
+  @inline private def init(): CPOutcome = {
     if (x.isBound) {
       if (y.removeValue(x.min) == Failure) Failure
       else Success
@@ -26,5 +30,13 @@ final class DiffVar(x: CPIntVar, y: CPIntVar) extends Constraint(x.store, "DiffV
       if (x.removeValue(y.min) == Failure) Failure
       else Success
     } else Suspend
+  }
+
+  @inline final override def propagate(): CPOutcome = {
+    if (x.isBound) {
+      if (y.removeValue(x.min) == Failure) Failure
+      else Success
+    } else if (x.removeValue(y.min) == Failure) Failure
+    else Success
   }
 }
