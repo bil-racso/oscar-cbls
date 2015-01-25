@@ -20,7 +20,8 @@ import oscar.algo.search.Branching
  * n-queens model: place n-queens on a chess-board such that they don't attack each other.
  * @author Pierre Schaus pschaus@gmail.com
  */
-object QueensJC {
+object QueensJCDecomp {
+  
   def main(args: Array[String]) {
 
     val cp = CPSolver()
@@ -33,17 +34,25 @@ object QueensJC {
     var nbsol = 0
 
     val cl = Weak
-    cp.add(allDifferent(queens), Weak)
-    cp.add(allDifferent(for (i <- Queens) yield queens(i) + i), Weak)
-    cp.add(allDifferent(for (i <- Queens) yield queens(i) - i), Weak)
+    for (i <- 0 until n; j <- 0 until i) {
+      cp.add(queens(i) != queens(j))
+      cp.add(queens(i)+i != queens(j)+j)
+      cp.add(queens(i)-i != queens(j)-j)
+    }
     
     cp.search {
       binaryFirstFail(queens)
     }
     
+    cp.onSolution {
+      println(queens.mkString(","))
+    }
+    
     println(cp.start(nSols=1))
+    println(cp.statistics)
 
-  }
+  }  
+ 
 }
 
 
