@@ -34,8 +34,7 @@ class WatcherListL2(store: CPStore) {
       store.enqueueL2(constraint)
     }
   }
-
-  
+ 
   @inline private def trail(): Unit = {
     val contextMagic = store.magic
     if (lastMagic != contextMagic) {

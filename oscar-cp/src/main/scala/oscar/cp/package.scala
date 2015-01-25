@@ -14,6 +14,8 @@ import oscar.util.selectMin
 import oscar.cp.core.variables.CPBoolVarWrapper
 import oscar.cp.core.variables.CPBoolVarImpl
 import oscar.cp.modeling.ElementBuilder
+import oscar.cp.modeling.CPSolverUtils
+import oscar.cp.modeling.LNSRelaxations
 
 /**
  * The `cp` package provides useful functionnalities to model problem using
@@ -37,7 +39,7 @@ import oscar.cp.modeling.ElementBuilder
  * @author Pierre Schaus pschaus@gmail.com
  * @author Renaud Hartert ren.hartert@gmail.com
  */
-package object cp extends Constraints with Branchings with ElementBuilder {
+package object cp extends Constraints with Branchings with ElementBuilder with CPSolverUtils with LNSRelaxations {
 
   // Alias to useful classes and companion objects
   type CPIntVar = oscar.cp.core.variables.CPIntVar
@@ -345,16 +347,6 @@ package object cp extends Constraints with Branchings with ElementBuilder {
 
   }
 
-  /**
-   * relax randomly k variables in x, others are assigned to the values they have in sol
-   */
-  def relaxRandomly(x: IndexedSeq[_ <: CPIntVar], sol: CPSol, k: Int): CPOutcome = {
-    val cp = x.head.store
-    val n = x.size
-    val fixed = (0 until n).toSet -- (for (i <- 1 to k) yield scala.util.Random.nextInt(n)).toSet
-    cp.post(fixed.map(i => x(i) == sol(x(i))).toArray[Constraint])
-  }
-
   def allBounds(vars: Iterable[_ <: CPIntVar]) = vars.asInstanceOf[Iterable[CPIntVar]].forall(_.isBound)
 
   // helper functions to define searches
@@ -368,37 +360,4 @@ package object cp extends Constraints with Branchings with ElementBuilder {
   def minVal(x: CPIntervalVar): Int = x.min
   def maxVal(x: CPIntervalVar): Int = x.max
   def minValminVal(x: CPIntervalVar): (Int, Int) = (x.min, x.min)
-
-  def branchAssign(variable: CPIntVar, value: Int)(implicit solver: CPSolver): Seq[Alternative] = {
-    branch { solver.post(variable == value) } { solver.post(variable != value) }
-  }
-
-  // helper functions to model with an implicit CPSolver
-  def add(constraints: Iterable[_ <: Constraint])(implicit cp: CPSolver): Unit = cp.add(constraints)
-
-  def add(c: Constraint, propagStrengh: CPPropagStrength)(implicit cp: CPSolver): Unit = cp.add(c, propagStrengh)
-  def add(c: Constraint)(implicit cp: CPSolver): Unit = cp.add(c)
-
-  def add(c: CPBoolVar)(implicit cp: CPSolver): Unit = cp.add(c)
-
-  def post(c: Constraint, propagStrengh: CPPropagStrength = Weak)(implicit cp: CPSolver): Unit = cp.post(c, propagStrengh)
-  def post(c: Constraint)(implicit cp: CPSolver): Unit = cp.post(c)
-
-  def search(branching: Branching)(implicit cp: CPSolver): SearchNode = cp.search(branching)
-
-  def search(block: => Seq[Alternative])(implicit cp: CPSolver): SearchNode = cp.search(block)
-
-  def minimize(obj: CPIntervalVar)(implicit cp: CPSolver): CPSolver = cp.minimize(obj)
-  def maximize(obj: CPIntervalVar)(implicit cp: CPSolver): CPSolver = cp.maximize(obj)
-
-  def onSolution(block: => Unit)(implicit cp: CPSolver): SearchNode = cp.onSolution(block)
-  def onSolutionWithStats(block: SearchStatistics => Unit)(implicit cp: CPSolver): SearchNode = cp.onSolutionWithStats(block)
-
-  def start(nSols: Int = Int.MaxValue, failureLimit: Int = Int.MaxValue, timeLimit: Int = Int.MaxValue, maxDiscrepancy: Int = Int.MaxValue)(implicit cp: CPSolver): SearchStatistics = {
-    cp.start(nSols, failureLimit, timeLimit, maxDiscrepancy)
-  }
-
-  def startSubjectTo(nSols: Int = Int.MaxValue, failureLimit: Int = Int.MaxValue, timeLimit: Int = Int.MaxValue, maxDiscrepancy: Int = Int.MaxValue)(reversibleBlock: => Unit = {})(implicit cp: CPSolver): SearchStatistics = {
-    cp.startSubjectTo(nSols, failureLimit, timeLimit, maxDiscrepancy)(reversibleBlock)
-  }
 }

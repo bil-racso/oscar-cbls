@@ -48,8 +48,6 @@ class SearchNode extends ReversibleContext {
 
   def solFound(): Unit = {}
 
-  override def toString(): String = super.toString
-
   /**
    * executed just before the actual branch action
    */
