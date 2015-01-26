@@ -16,18 +16,24 @@
 
 package oscar.algo.reversible;
 
-/**
- * @author Pierre Schaus  pschaus@gmail.com
- * @author Renaud Hartert ren.hartert@gmail.com
- */
 
-class ReversibleIntTrailEntry(reversible: ReversibleInt, value: Int) extends TrailEntry {
+class ReversibleIntWithCacheTrailEntry(reversible: ReversibleIntWithCache, value: Int) extends TrailEntry {
   @inline override final def restore(): Unit = reversible.restore(value)
 }
 
-class ReversibleInt(node: ReversibleContext, value: Int) extends ReversiblePointer[Int](node, value) {
+/**
+ * Similar as ReversibleInt except that the TrailEntry's 
+ * from 0 to maxSize such that they don't need 
+ * to be created more than once (avoid garbage collection).
+ * 
+ * @author Pierre Schaus  pschaus@gmail.com
+ * @author Renaud Hartert ren.hartert@gmail.com
+ */
+class ReversibleIntWithCache(node: ReversibleContext, value: Int, maxSize: Int) extends ReversiblePointer[Int](node, value) {
 
-  @inline final override def trailEntry = new ReversibleIntTrailEntry(this, pointer)
+  private[this] val cachedEntries = Array.tabulate(maxSize)(i => new ReversibleIntWithCacheTrailEntry(this, i))
+  
+  @inline final override def trailEntry = cachedEntries(pointer)
   
   /** Increments the reversible integer by one */
   @inline final def incr(): Int = {
@@ -58,6 +64,6 @@ class ReversibleInt(node: ReversibleContext, value: Int) extends ReversiblePoint
   }
 }
 
-object ReversibleInt {
-  def apply(value: Int)(implicit context: ReversibleContext) = new ReversibleInt(context, value)
+object ReversibleIntWithCache {
+  def apply(value: Int, n: Int)(implicit context: ReversibleContext) = new ReversibleIntWithCache(context, value, n)
 }

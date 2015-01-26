@@ -18,6 +18,7 @@ package oscar.cp.searches
 import oscar.cp._
 import oscar.algo.search.Branching
 import oscar.algo.reversible.ReversibleInt
+import oscar.algo.reversible.ReversibleIntWithCache
 
 /**
  * Abstract Binary Branching:
@@ -98,7 +99,7 @@ class BinaryStaticOrderBranching(vars: Array[_ <: CPIntVar], valHeuris: (CPIntVa
 
   val cp = vars(0).store
   var y = vars.asInstanceOf[Array[CPIntVar]]
-  var i = new ReversibleInt(cp, 0)
+  var i = new ReversibleIntWithCache(cp,0,vars.size+1)
 
   final override def alternatives(): Seq[Alternative] = {
 
