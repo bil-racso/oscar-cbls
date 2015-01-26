@@ -38,6 +38,7 @@ class Model(val log: Log) {
   
   val problem: FZProblem = new FZProblem()
   val dico: Map[String,Element] = Map.empty[String,Element]
+  val dicoAnnot: Map[String, List[Annotation]] = Map.empty[String,List[Annotation]]
   
   def addId(id: String, e: Element)={
     //Console.err.println("% added" + id)
@@ -78,7 +79,7 @@ class Model(val log: Log) {
         a.annotations = anns0;
         for(i <- 0 to t.size-1){
             val n = name+"["+(i+1)+"]"
-            val v = problem.addVariable(n,copy(d),anns);
+            val v = problem.addVariable(n,copy(d));
             val vr = new VarRef(v);
             a.elements.add(vr);
             vr.typ = new Type(t);
@@ -90,7 +91,7 @@ class Model(val log: Log) {
         addId(name,a);
         handleVarAnnotations(name, a, anns)
       }else{
-        val v = problem.addVariable(name,d,anns)
+        val v = problem.addVariable(name,d)
         val vr = new VarRef(v);
         if(d!=null)vr.domain = d;
         vr.name = name;
@@ -121,8 +122,18 @@ class Model(val log: Log) {
     handleVarAnnotations(name, e, anns.asScala.toList)
   }
   
+  def isIntroducedVar(id: String): Boolean = {
+    dicoAnnot(id).exists(_.name == "var_is_introduced");
+  }
+  def isDefinedVar(id: String): Boolean = {
+    dicoAnnot(id).exists(_.name == "is_defined_var");
+  }
+  def isOutputVar(id: String): Boolean = {
+    dicoAnnot(id).exists(_.name == "output_var")
+  }
+  
   private def handleVarAnnotations(name: String, e: Element, anns: List[oscar.flatzinc.model.Annotation]): Any = {
-    
+    dicoAnnot(name) = anns;
     if(e.typ.isArray){
       if (anns.exists((a: Annotation) => a.name == "output_array")) {
         
@@ -131,8 +142,10 @@ class Model(val log: Log) {
             problem.solution.addOutputArrayVarInt(name,a.elements.asScala.toArray.map(_.asInstanceOf[VarRef].v.id),
                            anns.find((p:Annotation) => p.name == "output_array").get.args(0).asInstanceOf[ArrayOfElement].elements.asScala.toList.map(e=>e.value.asInstanceOf[DomainRange].toRange))
           }
-          if(e.typ.typ.equals("bool")) problem.solution.addOutputArrayVarBool(name,a.elements.asScala.toArray.map(_.asInstanceOf[VarRef].v.id),
+          if(e.typ.typ.equals("bool")){
+            problem.solution.addOutputArrayVarBool(name,a.elements.asScala.toArray.map(_.asInstanceOf[VarRef].v.id),
                            anns.find((p:Annotation) => p.name == "output_array").get.args(0).asInstanceOf[ArrayOfElement].elements.asScala.toList.map(e=>e.value.asInstanceOf[DomainRange].toRange))
+          }
         }
     }else{
       if(anns.exists((a: Annotation) => a.name == "output_var")) {
@@ -254,7 +267,7 @@ class Model(val log: Log) {
                     case "v" => getIntVar(args(i))
       }*/
       arg(i) = if (p(i).equals(classOf[Array[Variable]])) getIntVarArray(args(i))
-                else if (p(i).equals(classOf[Variable])) getIntVar(args(i))//TODO: differentiate booleans...
+                else if (p(i).equals(classOf[Variable])) getIntVar(args(i))//TODO: differentiate booleans... and par vs var
                 else if(p(i).equals(classOf[Domain])) getIntSet(args(i))
                 else throw new Exception("Case not handled: "+p(i));
     }
@@ -262,7 +275,6 @@ class Model(val log: Log) {
     //println(arg.length)
     val x = arg;//new AsJava(arg)
     val h = new Help()
-    //TODO: This call can generated a lot of awfull exceptions. Not handled?
     h.buildConstraint(cc.asInstanceOf[Constructor[Constraint]],x/*.asJava*/)
     //cc.newInstance(x).asInstanceOf[Constraint]
     //.tupled(arg)

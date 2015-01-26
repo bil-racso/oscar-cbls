@@ -37,6 +37,10 @@ public class Element {
 		nextid++;
 		annotations = new ArrayList<Annotation>();
 	}
+	public Element(Object val){
+		this();
+		value = val;
+	}
 	@Override
 	public String toString() {
 		return "Element [name=" + name + ", value=" + value + ", domain=" + domain + ", type=" + typ

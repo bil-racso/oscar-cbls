@@ -46,6 +46,7 @@ import oscar.flatzinc.cbls.support.CBLSIntVarDom
 import oscar.flatzinc.cbls.support.CBLSIntConstDom
 
 class ValueTracker(v: CBLSIntVarDom, c:ConstraintSystem) {
+  //TODO: Replace by SafeAssignment (Modelling/Algebra)
     val initialMin = v.minVal;
     val initialMax = v.maxVal;
     val weight = CBLSIntConst(10,c._model);//why 10?
