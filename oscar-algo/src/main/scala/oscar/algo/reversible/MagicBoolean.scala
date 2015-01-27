@@ -33,5 +33,4 @@ class MagicBoolean(context: ReversibleContext, default: Boolean) {
     if (magic == context.magic) b
     else default
   }
-   
 }
