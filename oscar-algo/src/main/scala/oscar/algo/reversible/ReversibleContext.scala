@@ -38,6 +38,9 @@ class ReversibleContext {
   
   // Actions to execute when a pop occurs 
   private[this] val popListeners = new ArrayStack[() => Unit](4)
+  
+  // Actions to execute when a pop occurs 
+  private[this] val pushListeners = new ArrayStack[() => Unit](4)  
 
   // Used to reference the initial state
   trailStack.push(null)
@@ -53,6 +56,9 @@ class ReversibleContext {
 
   /** Adds an action to execute when the `pop` function is called */
   def onPop(action: => Unit): Unit = popListeners.push(() => action)
+  
+  /** Adds an action to execute when the `push` function is called */
+  def onPush(action: => Unit): Unit = pushListeners.push(() => action)  
   
   /** Trail the entry such that its restore method is called on corresponding pop */
   @inline final def trail(entry: TrailEntry): Unit = {
@@ -76,10 +82,10 @@ class ReversibleContext {
   def pop(): Unit = {
     // Restores the state of each reversible
     restoreUntil(pointerStack.pop())
-    // Executes onPop actions
-    popListeners.foreach(action => action())
     // Increments the magic because we want to trail again
     magicNumber += 1
+    // Executes onPop actions
+    popListeners.foreach(action => action())
   }
 
   @inline private final def restoreUntil(until: TrailEntry): Unit = {
