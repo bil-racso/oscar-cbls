@@ -381,6 +381,10 @@ object CPIntVar {
     val domain = new SparseSetDomain(store, minValue, maxValue)
     new CPIntVarImpl(store, domain, name)
   }
+  
+  def mySparse(minValue: Int, maxValue: Int)(implicit store: CPStore): CPIntVar = {
+    new CPIntVarSparse(store, minValue, maxValue, "")
+  }
 
   def sparse(minValue: Int, maxValue: Int)(implicit store: CPStore): CPIntVar = sparse(minValue, maxValue, "")(store)
 

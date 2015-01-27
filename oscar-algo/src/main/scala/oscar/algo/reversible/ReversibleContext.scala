@@ -1,19 +1,17 @@
-/**
- * *****************************************************************************
- * " * OscaR is free software: you can redistribute it and/or modify
+/*******************************************************************************
+ * OscaR is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- *
+ *   
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License  for more details.
- *
+ *   
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
- * ****************************************************************************
- */
+ ******************************************************************************/
 
 package oscar.algo.reversible
 
@@ -38,6 +36,9 @@ class ReversibleContext {
   
   // Actions to execute when a pop occurs 
   private[this] val popListeners = new ArrayStack[() => Unit](4)
+  
+  // Actions to execute when a pop occurs 
+  private[this] val pushListeners = new ArrayStack[() => Unit](4)  
 
   // Used to reference the initial state
   trailStack.push(null)
@@ -53,6 +54,9 @@ class ReversibleContext {
 
   /** Adds an action to execute when the `pop` function is called */
   def onPop(action: => Unit): Unit = popListeners.push(() => action)
+  
+  /** Adds an action to execute when the `push` function is called */
+  def onPush(action: => Unit): Unit = pushListeners.push(() => action)  
   
   /** Trail the entry such that its restore method is called on corresponding pop */
   @inline final def trail(entry: TrailEntry): Unit = {
@@ -70,16 +74,18 @@ class ReversibleContext {
   def pushState(): Unit = {
     magicNumber += 1
     pointerStack.push(trailStack.top)
+    // Executes onPpush actions
+    pushListeners.foreach(action => action())
   }
 
   /** Restores state on top of the stack of states and remove it from the stack */
   def pop(): Unit = {
     // Restores the state of each reversible
     restoreUntil(pointerStack.pop())
-    // Executes onPop actions
-    popListeners.foreach(action => action())
     // Increments the magic because we want to trail again
     magicNumber += 1
+    // Executes onPop actions
+    popListeners.foreach(action => action())
   }
 
   @inline private final def restoreUntil(until: TrailEntry): Unit = {
