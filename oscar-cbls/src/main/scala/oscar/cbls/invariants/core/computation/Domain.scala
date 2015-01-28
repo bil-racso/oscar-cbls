@@ -19,7 +19,6 @@
   ******************************************************************************/
 package oscar.cbls.invariants.core.computation
 
-import scala.collection.immutable.SortedSet
 import scala.language.implicitConversions
 import scala.util.Random
 

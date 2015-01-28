@@ -18,11 +18,10 @@
  *         by Renaud De Landtsheer
  ******************************************************************************/
 
-
 package oscar.cbls.constraints.core
 
 import oscar.cbls.invariants.core.computation._
-import oscar.cbls.invariants.core.propagation.Checker
+import oscar.cbls.invariants.core.propagation._
 import oscar.cbls.invariants.lib.numeric.Step
 
 /**A constraint is a function that computes a degree of violation that is managed as any invariant.
@@ -54,7 +53,7 @@ abstract class Constraint{
     * */
   final def isTrue: Boolean = (violation.value == 0)
 
-  final def truthValue:IntValue = Step(violation,0,0,1)
+  final def truthValue = Step(violation,0,0,1)
 
   /**the variables that are constrained by the constraint.
    * This should be read only. If you want to declare more constrained variables,
