@@ -34,16 +34,6 @@ class AdaptableIntDomain(override val context: ReversibleContext, val minValue: 
   private val domain: ReversiblePointer[IntervalDomain] = {
     new ReversiblePointer[IntervalDomain](context, new BoundDomain(context, minValue, maxValue))
   }
-  /*
-  context.onPop {
-    val dom = domain.value
-    if (withHoles && !dom.isInstanceOf[IntDomain]) {
-      val sparse = new SparseSetDomain(context, dom.min, dom.max)
-      domain.value = sparse
-    }
-  }*/
-  
-  private[this] var withHoles = false
 
   @inline
   override final def size: Int = domain.value.size
@@ -71,9 +61,6 @@ class AdaptableIntDomain(override val context: ReversibleContext, val minValue: 
   @inline
   override final def removeValue(value: Int): CPOutcome = {
     val dom = domain.value
-    
-
-
     // If sparse representation, remove
     if (dom.isInstanceOf[IntDomain]) {
       dom.asInstanceOf[IntDomain].removeValue(value)
@@ -90,9 +77,6 @@ class AdaptableIntDomain(override val context: ReversibleContext, val minValue: 
           // - Use a bit vector for a small and dense domain (not yet available)
           // - Otherwise, use a sparse set
           //if (maxValue - minValue >= 32) {
-            withHoles = true
-            cpt += 1
-            println("create holes"+cpt)
             val sparse = new SparseSetDomain(domain.context, minValue, maxValue)
             domain.value = sparse
             sparse.removeValue(value)
