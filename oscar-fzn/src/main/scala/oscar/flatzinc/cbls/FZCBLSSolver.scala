@@ -127,7 +127,7 @@ class FZCBLSModel(val model: FZProblem, val c: ConstraintSystem, val m: Store, v
      //Only create variables that are not fixed by an invariant.
     for (parsedVariable <- model.variables if !parsedVariable.isDefined) {
       parsedVariable match {
-        case ConcreteVariable(id, dom, annotation) =>
+        case ConcreteVariable(id, dom) =>
           //TODO: Put this in a method! or make it deterministic as the neighbourhoods should take care of the assignments!
           val initialValue = (dom match {
             case oscar.flatzinc.model.DomainRange(min, max) =>
@@ -167,7 +167,7 @@ class FZCBLSModel(val model: FZProblem, val c: ConstraintSystem, val m: Store, v
           case Some(c) => c;
         }
     */
-      case ConcreteVariable(id, _, _) =>
+      case ConcreteVariable(id, _) =>
         cblsIntMap.get(id) match {
           case None if v.isBound =>
             //From Gustav: All constants need to have a store, otherwise they won't have a UniqueID (from PropagationElement) and constraints will start throwing exceptions
@@ -185,10 +185,17 @@ class FZCBLSModel(val model: FZProblem, val c: ConstraintSystem, val m: Store, v
     model.solution.handleSolution(
       (s: String) => cblsIntMap.get(s) match {
         case Some(intVar) =>
-          intVar.value + "";
-        case _ => throw new Exception("Unhappy")
-      });
+          intVar.value + ""
+        case _ => try{
+          s.toInt.toString()
+        }catch{
+          case e: NumberFormatException => {
+            throw new Exception("Unhappy")
+          }
+        }
+     });
   }
+  /*
   def getSolution():String = {
     model.solution.getSolution(
       (s: String) => cblsIntMap.get(s) match {
@@ -196,7 +203,7 @@ class FZCBLSModel(val model: FZProblem, val c: ConstraintSystem, val m: Store, v
           intVar.value + "";
         case _ => throw new Exception("Unhappy")
       });
-  }
+  }*/
 }
 class FZCBLSSolver extends SearchEngine with StopWatch {
   def getCstrsByName(cstrs: List[Constraint]): MMap[String,List[Constraint]] = {

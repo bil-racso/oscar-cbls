@@ -35,10 +35,10 @@ class FZProblem {
   
   val search = new Search();
   
-  def addVariable(id: String, dom: Domain, annotations: List[Annotation] = List.empty[Annotation]): Variable = {
+  def addVariable(id: String, dom: Domain): Variable = {
    // println("% added var: "+id+ " with dom "+dom)
     val variable: Variable =
-          new ConcreteVariable(id, dom,annotations)
+          new ConcreteVariable(id, dom)
 //      if (dom.min == dom.max) {//why here?
 //        new ConcreteConstant(id,dom.min,annotations)
 //      } else {
@@ -136,7 +136,7 @@ case class DomainSet(var values: Set[Int]) extends Domain {
 //TODO: CheckEmpty should go to the variables, as the domains are also used for normal sets that can be empty.
 //TODO: differentiate between Int and Bool
 //TODO: Add set variables
-abstract class Variable(val id: String, val annotations: List[Annotation] = List.empty[Annotation]) {
+abstract class Variable(val id: String) {
   //val isIntroduced = annotations.foldLeft(false)((acc,x) => x.name=="var_is_introduced" || acc)//not interesting for us, as far as I know
   def isDefined: Boolean = {
     definingConstraint.isDefined//annotations.foldLeft(false)((acc,x) => x.name=="is_defined_var" || acc)
@@ -168,8 +168,8 @@ abstract class Variable(val id: String, val annotations: List[Annotation] = List
   def value:Int = {if(isBound) min else throw new Exception("Asking for the value of an unbound variable")}
 }
 
-case class ConcreteVariable(i: String,private var dom: Domain, anno: List[Annotation] = List.empty[Annotation]) extends Variable(i,anno) {
-  def this(i: String, v: Int) = this(i,DomainRange(v,v),List.empty[Annotation]);
+case class ConcreteVariable(i: String, private var dom: Domain) extends Variable(i) {
+  def this(i: String, v: Int) = this(i,DomainRange(v,v));
   def domain = dom
   def domainSize = dom.size
   def min = dom.min
@@ -193,12 +193,7 @@ case class ConcreteVariable(i: String,private var dom: Domain, anno: List[Annota
     }
   }
 }
-/*
-case class ConcreteConstant(i: String,val value:Int, anno: List[Annotation] = List.empty[Annotation]) extends Variable(i,anno){
-  def min = value;
-  def max = value;
-}
-*/
+
 
 //TODO: should go to the CP specific part
 object VariableHeuristic extends Enumeration {
