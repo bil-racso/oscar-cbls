@@ -146,13 +146,12 @@ case class IntElement(index: IntValue, inputarray: Array[IntValue])
  * @author renaud.delandtsheer@cetic.be
  * @author jean-noel.monette@it.uu.se
  * */
-case class IntElementNoVar(index: CBLSIntVar, inputarray: Array[Int])
+case class IntElementNoVar(index: IntValue, inputarray: Array[Int])
   extends IntInvariant {
 
   var output: CBLSIntVar = null
 
   registerStaticDependency(index)
-  registerDeterminingDependency(index)
 
   val myMin = inputarray.min
   val myMax = inputarray.max
@@ -169,7 +168,7 @@ case class IntElementNoVar(index: CBLSIntVar, inputarray: Array[Int])
   }*/
 
   @inline
-  override def notifyIntChanged(v: CBLSIntVar, OldVal: Int, NewVal: Int) {
+  override def notifyIntChanged(v: ChangingIntValue, OldVal: Int, NewVal: Int) {
     output := inputarray(NewVal)
   }
 

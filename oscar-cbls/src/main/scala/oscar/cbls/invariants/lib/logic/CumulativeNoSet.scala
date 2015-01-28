@@ -25,6 +25,8 @@ package oscar.cbls.invariants.lib.logic
 
 import oscar.cbls.invariants.core.computation.{ Invariant, CBLSSetVar, CBLSIntVar }
 import collection.immutable.SortedSet
+import oscar.cbls.invariants.core.computation.IntValue
+import oscar.cbls.invariants.core.computation.ChangingIntValue
 
 /**
  * Maintains a resource usage profile.
@@ -33,10 +35,11 @@ import collection.immutable.SortedSet
  * @param amount the amount that tasks use of this resource
  * @param profile the usage profile of the resource maintained to profile(time) <== sum(task.amount | task.start <= time <= t.start+t.duration)
  * @author renaud.delandtsheer@cetic.be
+ * @author Jean-Noel Monette
  */
-case class CumulativeNoSet(start: Array[CBLSIntVar],
-                      duration: Array[CBLSIntVar],
-                      amount: Array[CBLSIntVar],
+case class CumulativeNoSet(start: Array[IntValue],
+                      duration: Array[IntValue],
+                      amount: Array[IntValue],
                       profile: Array[CBLSIntVar]) extends Invariant {
 
   //horizon is the uppermost indice of the profile, which is supposed to be the same as active
@@ -73,7 +76,7 @@ case class CumulativeNoSet(start: Array[CBLSIntVar],
   }
 
   @inline
-  override def notifyIntChanged(v: CBLSIntVar, index: Int, OldVal: Int, NewVal: Int) {
+  override def notifyIntChanged(v: ChangingIntValue, index: Int, OldVal: Int, NewVal: Int) {
     if (start(index) == v) {
       //start
       remove(OldVal, duration(index).value, amount(index).value, index)

@@ -75,6 +75,11 @@ abstract class ChangingIntValue(initialValue:Int, initialDomain:Domain)
   protected def restrictDomain(d:Domain): Unit ={
     privatedomain = privatedomain.restrict(d)
   }
+  protected def relaxDomain(d: Domain): Domain = {
+    val olddom = privatedomain
+    privatedomain = d
+    olddom
+  }
 
   override def toString = {
     if(model.propagateOnToString) s"$name:=$value" else s"$name:=$Value"
@@ -91,6 +96,9 @@ abstract class ChangingIntValue(initialValue:Int, initialDomain:Domain)
           "domain : ["+MinVal+ ";"+MaxVal+"]\n" +
            "new value :"+ v +"\n" ))
            */
+      if(!domain.contains(v)){
+        throw new Exception(v+ " is not in the domain of "+this+"("+min+".."+max+"). This might indicate an integer overflow.")
+      } 
       Value = v
       notifyChanged()
     }
@@ -180,6 +188,7 @@ class CBLSIntVar(givenModel: Store, initialValue: Int, initialDomain:Domain, n: 
   extends ChangingIntValue(initialValue,initialDomain) with Variable{
   
   override def restrictDomain(d:Domain) = super.restrictDomain(d)
+  override def relaxDomain(d:Domain) = super.relaxDomain(d)
 
   model = givenModel
 

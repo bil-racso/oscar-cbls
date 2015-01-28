@@ -27,7 +27,10 @@ package oscar.cbls.invariants.lib.logic
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.core.propagation.Checker
 
-case class SparseCount(values: Array[CBLSIntVar], counts: Map[Int,CBLSIntVar]) extends Invariant {
+/**
+ * Author: Jean-Noël Monette
+ */
+case class SparseCount(values: Array[IntValue], counts: Map[Int,CBLSIntVar]) extends Invariant {
   for (v <- values.indices) registerStaticAndDynamicDependency(values(v), v)
   
   finishInitialization()
@@ -38,7 +41,7 @@ case class SparseCount(values: Array[CBLSIntVar], counts: Map[Int,CBLSIntVar]) e
   for(c <- counts.values) c.setDefiningInvariant(this)
     
    @inline
-  override def notifyIntChanged(v: CBLSIntVar, index: Int, OldVal: Int, NewVal: Int) {
+  override def notifyIntChanged(v: ChangingIntValue, index: Int, OldVal: Int, NewVal: Int) {
     assert(values(index) == v)
     counts.get(OldVal).foreach(c => c :-= 1)
     counts.get(NewVal).foreach(c => c :+= 1)

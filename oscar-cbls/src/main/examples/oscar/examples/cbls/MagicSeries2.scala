@@ -23,8 +23,6 @@ import oscar.cbls.constraints.core._
 import oscar.cbls.constraints.lib.basic._
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.lib.numeric._
-import oscar.cbls.invariants.core.computation.IntInvariant.toIntVar
-import oscar.cbls.invariants.core.computation.CBLSIntVar.int2IntVar
 import oscar.flatzinc.model.exactly_int
 import oscar.cbls.invariants.lib.logic.DenseCount
 
@@ -73,17 +71,17 @@ run time: 255719
     
     // model
     val m: Store = new Store()
-    val s = Size.map(i => CBLSIntVar(m,Size,0,"s_"+i)).toArray
+    val s = Size.map(i => CBLSIntVar(m,0,Size,"s_"+i)).toArray
     val c = ConstraintSystem(m)
     //
     if(gcc){
-      val dc = DenseCount.makeDenseCount(s);
+      val dc = DenseCount.makeDenseCount(s.asInstanceOf[Array[IntValue]]);
       val counts = dc.counts
       for(v <- Size) c.post(EQ(s(v),counts(v)));
     }else{
-      for(v <- Size) c.post(EQ(s(v),Sum(Size.map(i => EQ(s(i),v).toIntVar))))//TODO: atleast+atmost
+      for(v <- Size) c.post(EQ(s(v),Sum(Size.map(i => EQ(s(i),v).truthValue))))//TODO: atleast+atmost
     }
-    if(red)c.post(EQ(Sum(Size.map(i => Prod2(s(i),i).toIntVar)), N)) 
+    if(red)c.post(EQ(Sum(Size.map(i => Prod2(s(i),i))), N)) 
     
     
     val violations = s.map(si => c.violation(si)) 

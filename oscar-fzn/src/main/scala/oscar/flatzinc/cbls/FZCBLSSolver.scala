@@ -29,7 +29,6 @@ import oscar.cbls.invariants.lib.logic._
 import oscar.cbls.invariants.lib.minmax._
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.lib.numeric._
-import oscar.cbls.invariants.core.computation.IntInvariant.toIntVar
 import oscar.flatzinc.parser.Options
 import oscar.flatzinc.model._
 import oscar.flatzinc.model.Constraint
@@ -41,6 +40,7 @@ import java.io.PrintWriter
 import oscar.flatzinc.parser.FZParser
 import oscar.util.RandomGenerator
 import oscar.flatzinc.NoSuchConstraintException
+import oscar.cbls.objective.IntVarObjective
 
 
 //TODO: Move this class somewhere else...
@@ -55,25 +55,18 @@ class Log(opts:Options){
   }
 }
 
-class FZCBLSObjective(opt: Objective.Value, private val objectiveVar: CBLSIntVarDom,c:ConstraintSystem,log:Log){
-  val violationWeight = CBLSIntVar(c._model, 0 to 1 , 1, "violation_weight")
-  val objectiveWeight = CBLSIntVar(c._model, 0 to 1 , 1, "objective_weight")
-  val violation = c.violation;
-  val objective: CBLSObjective = new CBLSObjective(new CBLSIntVar(c._model,0 to 1, 0, "weighted_objective"))
-  //This is a ugly hack to correct the bounds of the variables defined by invariants.
-  def updateObjective(){
-    if(objectiveVar!=null)objectiveWeight.maxVal = math.max(1,Int.MaxValue/objectiveVar.maxVal/2)
-    violationWeight.maxVal = math.max(1,Int.MaxValue/violation.maxVal/2)
-    objective.objective <== (opt match {
-        case Objective.SATISFY => IdentityInt(c.violation)
-        case Objective.MAXIMIZE => Minus(Prod2(c.violation, violationWeight), Prod2(objectiveVar, objectiveWeight))
-        case Objective.MINIMIZE => Sum2(Prod2(c.violation, violationWeight), Prod2(objectiveVar, objectiveWeight))
-      })
-  }
-  def close(){
-    if(violation.maxVal!=0)//violation.maxVal can be 0 in case the Constraint System has no constraint at all.
-      violationWeight.maxVal = math.max(1,Int.MaxValue/violation.maxVal/2)
-  }
+class FZCBLSObjective(cblsmodel:FZCBLSModel,log:Log){
+  private val opt = cblsmodel.model.search.obj
+  private val objectiveVar = cblsmodel.model.search.variable.map(cblsmodel.getCBLSVar(_)).getOrElse(null)
+  val violation = cblsmodel.c.violation;
+  val violationWeight = CBLSIntVar(cblsmodel.c.model, 1, 0 to (if(violation.max!=0)math.max(1,Int.MaxValue/violation.max/2) else 1) , "violation_weight")
+  val objectiveWeight = CBLSIntVar(cblsmodel.c.model, 1, 0 to (if(objectiveVar!=null)math.max(1,Int.MaxValue/objectiveVar.max/2) else 1) , "objective_weight")
+  private val objective2 = opt match {
+        case Objective.SATISFY => violation
+        case Objective.MAXIMIZE => Minus(Prod2(violation, violationWeight), Prod2(objectiveVar, objectiveWeight))
+        case Objective.MINIMIZE => Sum2(Prod2(violation, violationWeight), Prod2(objectiveVar, objectiveWeight))
+      }
+  val objective: CBLSObjective = new IntVarObjective(objective2.asInstanceOf[ChangingIntValue])
   def apply() = objective
   def getObjectiveValue(): Int = {
    opt match {
@@ -98,20 +91,20 @@ class FZCBLSObjective(opt: Objective.Value, private val objectiveVar: CBLSIntVar
   }
   def correctWeights(newObjW: Int,newVioW: Int){
     val minWeight = math.min(newObjW, newVioW)
-    objectiveWeight := math.min(newObjW/minWeight,objectiveWeight.maxVal)
-    violationWeight := math.min(newVioW/ minWeight,violationWeight.maxVal)
+    objectiveWeight := math.min(newObjW/minWeight,objectiveWeight.max)
+    violationWeight := math.min(newVioW/ minWeight,violationWeight.max)
     //violationWeight := 1000 + RandomGenerator.nextInt(10)
-    log("Changed Violation Weight to "+violationWeight.value+(if(violationWeight.value==violationWeight.maxVal)"(max)"else ""))
-    log("    And Objective Weight to "+objectiveWeight.value+(if(objective.value==objectiveWeight.maxVal)"(max)"else ""))
+    log("Changed Violation Weight to "+violationWeight.value+(if(violationWeight.value==violationWeight.max)"(max)"else ""))
+    log("    And Objective Weight to "+objectiveWeight.value+(if(objective.value==objectiveWeight.max)"(max)"else ""))
 
   }
 }
 
 
 class FZCBLSModel(val model: FZProblem, val c: ConstraintSystem, val m: Store, val log:Log, val getWatch: () => Long) {
-  val cblsIntMap: MMap[String, CBLSIntVarDom] = MMap.empty[String, CBLSIntVarDom]
+  val cblsIntMap: MMap[String, IntValue] = MMap.empty[String, IntValue]
   var vars: List[CBLSIntVarDom] = createVariables();
-  val objective = new FZCBLSObjective(model.search.obj,model.search.variable.map(getCBLSVar(_)).getOrElse(null) ,c,log)
+  var objective = null.asInstanceOf[FZCBLSObjective]
   var neighbourhoods: List[Neighbourhood] = List.empty[Neighbourhood];
   
   def addNeighbourhood(n: Neighbourhood,removeVars: Boolean  = true){
@@ -123,18 +116,21 @@ class FZCBLSModel(val model: FZProblem, val c: ConstraintSystem, val m: Store, v
   def addDefaultNeighbourhouds(){
     if (vars.length > 0) {
       addNeighbourhood(new MaxViolating(vars.toArray, objective(), c),false)
-      val boolVars = vars.filter((v: CBLSIntVar) => v.minVal == 0 && v.maxVal == 1)
+      val boolVars = vars.filter((v: CBLSIntVar) => v.min == 0 && v.max == 1)
       if (boolVars.length > 1)
         addNeighbourhood(new MaxViolatingSwap(boolVars.toArray, objective(), c),false) 
     }
   }
+ 
   def createVariables() = {
     var variables: List[CBLSIntVarDom] = List.empty[CBLSIntVarDom];
-    for (parsedVariable <- model.variables) {
+     //Only create variables that are not fixed by an invariant.
+    for (parsedVariable <- model.variables if !parsedVariable.isDefined) {
       parsedVariable match {
         case ConcreteVariable(id, dom, annotation) =>
+          //TODO: Put this in a method! or make it deterministic as the neighbourhoods should take care of the assignments!
           val initialValue = (dom match {
-            case DomainRange(min, max) =>
+            case oscar.flatzinc.model.DomainRange(min, max) =>
               if(max.toLong - min.toLong > Int.MaxValue) Random.nextInt()
               else{
                 val range = (min to max);
@@ -144,7 +140,7 @@ class FZCBLSModel(val model: FZProblem, val c: ConstraintSystem, val m: Store, v
               val v = values.toArray;
               v(Random.nextInt(v.length))
           });
-          val cblsVariable = CBLSIntVarDom(m, dom, initialValue, id);
+          val cblsVariable = CBLSIntVarDom(m, initialValue, dom,  id);
           //TODO: handle constant variables here.
           cblsIntMap += id -> cblsVariable;
           //Removed this test and filtered for search variables only later
@@ -155,6 +151,9 @@ class FZCBLSModel(val model: FZProblem, val c: ConstraintSystem, val m: Store, v
       }
     }
     variables;
+  }
+  def getCBLSVarDom(v: Variable) = {
+    getCBLSVar(v).asInstanceOf[CBLSIntVarDom]
   }
     implicit def getCBLSVar(v: Variable) = {
       v match {
@@ -173,7 +172,7 @@ class FZCBLSModel(val model: FZProblem, val c: ConstraintSystem, val m: Store, v
           case None if v.isBound =>
             //From Gustav: All constants need to have a store, otherwise they won't have a UniqueID (from PropagationElement) and constraints will start throwing exceptions
             //JNM: I removed ",m " to avoid introducing a lot of useless "variables" in the model in the hope of making it more efficient.
-            val c = CBLSIntConstDom(v.value);
+            val c = new CBLSIntConstDom(v.value);
 
             cblsIntMap += id -> c;
             c;
@@ -313,7 +312,7 @@ class FZCBLSSolver extends SearchEngine with StopWatch {
     val softConstraints = softcstrs;
     for (invariant <- invariants){
       log(2,"Posting as Invariant "+invariant)
-      poster.add_invariant(invariant);
+      cblsmodel.cblsIntMap += invariant.definedVar.get.id -> poster.add_invariant(invariant);
     }
     log("Posted "+invariants.length+" Invariants")
     getCstrsByName(invariants).map{ case (n:String,l:List[Constraint]) => l.length +"\t"+n}.toList.sorted.foreach(s => log(" "+s))
@@ -335,10 +334,12 @@ class FZCBLSSolver extends SearchEngine with StopWatch {
       return;
     }
     log("Using "+cblsmodel.vars.length+" Search Variables in default assign neighbourhood")
-    log("Using "+cblsmodel.vars.filter(v => v.minVal ==0 && v.maxVal==1).length+" Search Variables in default flip neighbourhood")
-    cblsmodel.vars.foreach(v => log(2,"Search with "+v+" dom: "+v.minVal +".."+v.maxVal))
+    log("Using "+cblsmodel.vars.filter(v => v.min ==0 && v.max==1).length+" Search Variables in default flip neighbourhood")
+    cblsmodel.vars.foreach(v => log(2,"Search with "+v+" dom: "+v.min +".."+v.max))
     log("Created all Neighborhoods")
-    cblsmodel.objective.updateObjective()
+    
+    cblsmodel.c.close()//The objective depends on the violation of the CS, so it must be first closed before creating the Objective.
+    cblsmodel.objective = new FZCBLSObjective(cblsmodel,log)
     
     //Search
     val timeout = (if(opts.timeOut>0) {opts.timeOut} else 5 * 60) * 1000
@@ -367,7 +368,6 @@ class FZCBLSSolver extends SearchEngine with StopWatch {
     
     log("Search created")
     m.close();
-    cblsmodel.objective.close()//This line is necessary to update the max violation value after the CS is closed.
     log("Model closed");
     if(opts.is("no-run")){
       log("Not running the search...")

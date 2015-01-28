@@ -81,7 +81,7 @@ object Event{
     toreturn
   }
 
-  def apply(v:Variable,
+  def apply(v:IntValue,
             intaction:Int=>Unit):Event = {
     val toreturn = new Event(v,null,null)
     if (intaction != null) toreturn.setIntAction(intaction)
@@ -111,7 +111,7 @@ object Event{
 }
 
 /**Use the apply method in the companion object for building this*/
-class Event(v:Variable, w:Variable, ModifiedVars:Iterable[Variable]) extends Invariant{
+class Event(v:Value, w:Variable, ModifiedVars:Iterable[Variable]) extends Invariant{
   //unfortunately, it is not possible to pass a type "=>Unit" as parameter to a case class.
 
   private var action: (()=>Unit)=null

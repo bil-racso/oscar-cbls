@@ -25,6 +25,7 @@ import oscar.cbls.invariants.lib.set.Cardinality
 import oscar.cbls.objective.{Objective => CBLSObjective}
 import oscar.cbls.search.SearchEngine
 import scala.collection.mutable.{Map => MMap}
+import oscar.cbls.invariants.core.computation.IntValue
 
 
 
@@ -94,7 +95,7 @@ abstract class Neighbourhood(val searchVariables: Array[CBLSIntVarDom]) extends 
 
 //assumes that all variables have a range domain!
 class SumNeighborhood(val variables: Array[CBLSIntVarDom],val coeffs:Array[Int], val sum:Int, objective: CBLSObjective, cs: ConstraintSystem) extends Neighbourhood(variables){
-  val variableViolation: Array[CBLSIntVar] = variables.map(cs.violation(_)).toArray
+  val variableViolation: Array[IntValue] = variables.map(cs.violation(_)).toArray
   def violation() = { variableViolation.foldLeft(0)((acc, x) => acc + x.value) };
   
   reset();
@@ -102,22 +103,22 @@ class SumNeighborhood(val variables: Array[CBLSIntVarDom],val coeffs:Array[Int],
     var s = 0
     val vals = new Array[Int](variables.length)
     for(i <- 0 until variables.length){
-      vals(i) = variables(i).minVal  
+      vals(i) = variables(i).min 
       s += coeffs(i) * vals(i)
     }
     //TODO: Improve this stupid code!
     while(s != sum){
       val i = RandomGenerator.nextInt(variables.length)
-      if(s < sum && coeffs(i) > 0 && vals(i) < variables(i).maxVal){
+      if(s < sum && coeffs(i) > 0 && vals(i) < variables(i).max){
         vals(i) += 1
         s += coeffs(i) * 1
-      }else if(s > sum && coeffs(i) < 0 && vals(i) < variables(i).maxVal){
+      }else if(s > sum && coeffs(i) < 0 && vals(i) < variables(i).max){
         vals(i) += 1
         s += coeffs(i) * 1
       }
     }
     for(i <- 0 until variables.length){
-      if(variables(i).minVal > vals(i) || variables(i).maxVal < vals(i))throw new Exception("Problem")
+      if(variables(i).min > vals(i) || variables(i).max < vals(i))throw new Exception("Problem")
       variables(i) := vals(i)
     }
   }
@@ -137,11 +138,11 @@ class SumNeighborhood(val variables: Array[CBLSIntVarDom],val coeffs:Array[Int],
   }
   def getExtendedMinObjective(it: Int, accept: Move => Boolean): Move = {
     val rng = 0 until variables.length;
-    val part1 = selectMinImb(rng,(i:Int) => variables(i).minVal to variables(i).maxVal,(i:Int,v:Int) => objective.assignVal(variables(i),v))
+    val part1 = selectMinImb(rng,(i:Int) => variables(i).min to variables(i).max,(i:Int,v:Int) => objective.assignVal(variables(i),v))
     part1 match{ 
       case (i1,v1) => 
         val diff = v1 - variables(i1).value
-        val part2 = selectMin(List(0),rng)((k:Int,i2:Int) => getMove(i1,diff,i2,accept).value, (k:Int,i2:Int) => {val nv = variables(i2).value-coeffs(i1)*coeffs(i2)*diff; i1!=i2 && nv >= variables(i2).minVal && nv <= variables(i2).maxVal})
+        val part2 = selectMin(List(0),rng)((k:Int,i2:Int) => getMove(i1,diff,i2,accept).value, (k:Int,i2:Int) => {val nv = variables(i2).value-coeffs(i1)*coeffs(i2)*diff; i1!=i2 && nv >= variables(i2).min && nv <= variables(i2).max})
         part2 match{
           case (0,i2) =>
 	        if(diff==0) new NoMove()
@@ -158,9 +159,9 @@ class SumNeighborhood(val variables: Array[CBLSIntVarDom],val coeffs:Array[Int],
 
 
 class GCCNeighborhood(val variables: Array[CBLSIntVarDom],val vals:Array[Int],val low:Array[Int],val up:Array[Int], val closed:Boolean, objective: CBLSObjective, cs: ConstraintSystem)extends Neighbourhood(variables){
-  val variableViolation: Array[CBLSIntVar] = variables.map(cs.violation(_)).toArray
+  val variableViolation: Array[IntValue] = variables.map(cs.violation(_)).toArray
 
-  val counts = vals.foldLeft(Map.empty[Int,CBLSIntVar])((map,ic) => map + (ic -> new CBLSIntVar(cs._model,0 to variables.length,0,"count"+ic)))
+  val counts = vals.foldLeft(Map.empty[Int,CBLSIntVar])((map,ic) => map + (ic -> new CBLSIntVar(cs.model,0,0 to variables.length,"count"+ic)))
   Cluster.MakeSparse(variables.map(c => c), vals).Clusters.foreach(ic => counts(ic._1) <== Cardinality(ic._2))
   //foldLeft(Map.empty[Int,CBLSIntVar])((map,ic) => map + (ic._1 -> Cardinality(ic._2).output))
   val lows = vals.toList.zip(low).foldLeft(Map.empty[Int,Int])((map,vl) => map + (vl._1 -> vl._2))
@@ -208,7 +209,7 @@ class GCCNeighborhood(val variables: Array[CBLSIntVarDom],val vals:Array[Int],va
     }
     //updating the variables
     for(i <- 0 until variables.length){
-      if(variables(i).minVal > cur(i) || variables(i).maxVal < cur(i))throw new Exception("Problem")
+      if(variables(i).min > cur(i) || variables(i).max < cur(i))throw new Exception("Problem")
       variables(i) := cur(i)
     }
     /*
@@ -301,7 +302,7 @@ class GCCNeighborhood(val variables: Array[CBLSIntVarDom],val vals:Array[Int],va
 //TODO: Take into account fixed variables!
 class ThreeOpt(variables: Array[CBLSIntVarDom], objective: CBLSObjective, cs: ConstraintSystem, val offset: Int) extends Neighbourhood(variables){
   
-  val variableViolation: Array[CBLSIntVar] = variables.map(cs.violation(_)).toArray
+  val variableViolation: Array[IntValue] = variables.map(cs.violation(_)).toArray
   val rng = offset until (offset+variables.length)
   reset();
   
@@ -414,12 +415,12 @@ class ThreeOptSub(variables: Array[CBLSIntVarDom], objective: CBLSObjective, cs:
 class MaxViolating(searchVariables: Array[CBLSIntVarDom], objective: CBLSObjective, constraintSystem: ConstraintSystem) extends Neighbourhood(searchVariables) {
   
   val indexRange = 0 until searchVariables.length;
-  val variableViolation: Array[CBLSIntVar] = searchVariables.map(constraintSystem.violation(_)).toArray
+  val variableViolation: Array[IntValue] = searchVariables.map(constraintSystem.violation(_)).toArray
   
   
   def reset() = {
-    for (v: CBLSIntVar <- searchVariables)
-      v.setValue(v.domain(RandomGenerator.nextInt(v.domain.length)))
+    for (v: CBLSIntVarDom <- searchVariables)
+      v.setValue(v.getRandValue())
   }
   def randomMove(it: Int): Move = {
     val bestIndex = indexRange(RandomGenerator.nextInt(indexRange.length))
@@ -449,7 +450,7 @@ class MaxViolating(searchVariables: Array[CBLSIntVarDom], objective: CBLSObjecti
 //This neighborhood assumes that all variables have the same domain
 class MaxViolatingSwap(searchVariables: Array[CBLSIntVarDom], objective: CBLSObjective, constraintSystem: ConstraintSystem) extends Neighbourhood(searchVariables) {
   val indexRange = 0 until searchVariables.length;
-  val variableViolation: Array[CBLSIntVar] = searchVariables.map(constraintSystem.violation(_)).toArray
+  val variableViolation: Array[IntValue] = searchVariables.map(constraintSystem.violation(_)).toArray
   //TODO: Might be made more efficient by maintaining the two sets of variables, the ones assigned to true and the ones assigned to false.
   def reset() = {
 
@@ -487,11 +488,11 @@ class AllDifferent(searchVariables: Array[CBLSIntVarDom], objective: CBLSObjecti
   /**/
   
   
-  val (constants,variables) = searchVariables.partition((x) => x.minVal==x.maxVal)
+  val (constants,variables) = searchVariables.partition((x) => x.min==x.max)
   val indexRange: Range =0 until variables.length;
-  val variableViolation: Array[CBLSIntVar] = variables.map(constraintSystem.violation(_)).toArray
+  val variableViolation: Array[IntValue] = variables.map(constraintSystem.violation(_)).toArray
   var freeValues: Set[Int] = Set.empty[Int]
-  val (minVal,maxVal) = variables.foldLeft((Int.MaxValue ,Int.MinValue))((acc,v) => (math.min(acc._1,v.minVal),math.max(acc._2,v.maxVal)))
+  val (minVal,maxVal) = variables.foldLeft((Int.MaxValue ,Int.MinValue))((acc,v) => (math.min(acc._1,v.min),math.max(acc._2,v.max)))
   reset();
   
   def reset() = {

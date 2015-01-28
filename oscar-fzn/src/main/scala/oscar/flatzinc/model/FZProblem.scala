@@ -23,6 +23,7 @@ import scala.Array.canBuildFrom
 import scala.collection.mutable.{Map => MMap}
 import scala.collection.immutable.Range
 import oscar.flatzinc.UnsatException
+import scala.collection.immutable.SortedSet
 
 class FZProblem {
 
@@ -103,6 +104,7 @@ abstract class Domain {
   def checkEmpty() = {
     if (min > max) throw new UnsatException("Empty Domain");
   }
+  def toSortedSet: SortedSet[Int]
 }
 
 case class DomainRange(var mi: Int, var ma: Int) extends Domain {
@@ -114,7 +116,7 @@ case class DomainRange(var mi: Int, var ma: Int) extends Domain {
   def geq(v:Int) = { mi = math.max(v,mi); checkEmpty() }
   def leq(v:Int) = { ma = math.min(v,ma); checkEmpty() }
   def toRange = mi to ma
-  
+  def toSortedSet: SortedSet[Int] = SortedSet[Int]() ++ (mi to ma)
 }
 
 case class DomainSet(var values: Set[Int]) extends Domain {
@@ -128,6 +130,7 @@ case class DomainSet(var values: Set[Int]) extends Domain {
   def geq(v:Int) = {values = values.filter(x => x>=v); checkEmpty() }
   def leq(v:Int) = {values = values.filter(x => x<=v); checkEmpty() }
   override def inter(d:DomainSet) = {values = values.intersect(d.values); checkEmpty() }
+  def toSortedSet: SortedSet[Int] = SortedSet[Int]() ++ values
 }
 
 //TODO: CheckEmpty should go to the variables, as the domains are also used for normal sets that can be empty.

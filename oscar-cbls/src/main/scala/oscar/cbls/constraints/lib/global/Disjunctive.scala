@@ -28,6 +28,10 @@ import oscar.cbls.invariants.core.computation.{ Variable, CBLSIntVar }
 import oscar.cbls.invariants.core.computation.CBLSIntVar._
 import oscar.cbls.invariants.core.propagation.Checker
 import oscar.cbls.invariants.lib.logic.Sort
+import oscar.cbls.invariants.core.computation.Invariant
+import oscar.cbls.invariants.core.computation.IntValue
+import oscar.cbls.invariants.core.computation.ChangingIntValue
+import oscar.cbls.invariants.core.computation.Value
 
 /**
  * Implement the Disjunctive constraint.
@@ -35,8 +39,8 @@ import oscar.cbls.invariants.lib.logic.Sort
  * @param duration: the duration of each task
  * @author Jean-Noël Monette 
  */
-case class Disjunctive(start: Array[CBLSIntVar],
-                      duration: Array[Int]) extends Constraint {
+case class Disjunctive(start: Array[IntValue],
+                      duration: Array[Int]) extends Constraint with Invariant{
 //TODO: Make duration also a var
   
   registerStaticAndDynamicDependencyArrayIndex(start)
@@ -45,15 +49,15 @@ case class Disjunctive(start: Array[CBLSIntVar],
   
   private val sumdur = duration.foldLeft(0)((acc,v) => acc + v);
   
-  private val Violation: CBLSIntVar = new CBLSIntVar(model, (0 to sumdur*start.length), 0, "ViolationOfDisjunctive")
+  private val Violation: CBLSIntVar = new CBLSIntVar(model, 0, (0 to sumdur*start.length), "ViolationOfDisjunctive")
   Violation.setDefiningInvariant(this)
 
 
   //the degree of violation of a task is the sum of the sizes of its overlap with other tasks.
-  private val Violations: SortedMap[CBLSIntVar, CBLSIntVar] = start.foldLeft(
-    SortedMap.empty[CBLSIntVar, CBLSIntVar])(
+  private val Violations: SortedMap[IntValue, CBLSIntVar] = start.foldLeft(
+    SortedMap.empty[IntValue, CBLSIntVar])(
       (acc, intvar) => {
-        val newvar = new CBLSIntVar(model, (0 to sumdur), 0, "Violation_Disjunctive_" + intvar.name)
+        val newvar = new CBLSIntVar(model, 0, (0 to sumdur), "Violation_Disjunctive_" + intvar.name)
         acc + ((intvar, newvar))
       })
   
@@ -76,7 +80,7 @@ case class Disjunctive(start: Array[CBLSIntVar],
   private val oldstarts = start.map(v => v.value)
   
   @inline
-  override def notifyIntChanged(v: CBLSIntVar, index: Int, oldstart: Int, newstart: Int) {
+  override def notifyIntChanged(v: ChangingIntValue, index: Int, oldstart: Int, newstart: Int) {
     //TODO: This is not completely incremental (but still linear instead of quadratic)!
     val dur = duration(index)
     val oldend = oldstart + dur
@@ -99,11 +103,13 @@ case class Disjunctive(start: Array[CBLSIntVar],
 
   override def violation = Violation
 
-  override def violation(v: Variable): CBLSIntVar = {
-    Violations(v.asInstanceOf[CBLSIntVar])
+  override def violation(v: Value): IntValue = {
+    Violations(v.asInstanceOf[IntValue])
   }
 
-  //TODO: Check internals
+  override def checkInternals(c: Checker) {
+    //TODO
+  }
 }
 
 

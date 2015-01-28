@@ -43,9 +43,9 @@ case class MaxArray(varss: Array[IntValue], ccond: SetValue = null, default: Int
   override def ExtremumName: String = "Max"
 
   //More precise bounds
-  override def performBulkComputation(bulkedVar: Array[CBLSIntVar]) = {
-    (bulkedVar.foldLeft(Int.MinValue)((acc, intvar) => if (intvar.minVal > acc) intvar.minVal else acc),
-      bulkedVar.foldLeft(Int.MinValue)((acc, intvar) => if (intvar.maxVal > acc) intvar.maxVal else acc))
+  override def performBulkComputation(bulkedVar: Array[IntValue]) = {
+    (bulkedVar.foldLeft(Int.MinValue)((acc, intvar) => if (intvar.min > acc) intvar.min else acc),
+      bulkedVar.foldLeft(Int.MinValue)((acc, intvar) => if (intvar.max > acc) intvar.max else acc))
   }
   
   override def checkInternals(c: Checker) {
@@ -71,9 +71,9 @@ case class MinArray(varss: Array[IntValue], ccond: SetValue = null, default: Int
   override def ExtremumName: String = "Min"
 
   //More precise bounds 
-  override def performBulkComputation(bulkedVar: Array[CBLSIntVar]) = {
-    (bulkedVar.foldLeft(Int.MaxValue)((acc, intvar) => if (intvar.minVal < acc) intvar.minVal else acc),
-      bulkedVar.foldLeft(Int.MaxValue)((acc, intvar) => if (intvar.maxVal < acc) intvar.maxVal else acc))
+  override def performBulkComputation(bulkedVar: Array[IntValue]) = {
+    (bulkedVar.foldLeft(Int.MaxValue)((acc, intvar) => if (intvar.min < acc) intvar.min else acc),
+      bulkedVar.foldLeft(Int.MaxValue)((acc, intvar) => if (intvar.max < acc) intvar.max else acc))
   }
   
   override def checkInternals(c: Checker) {

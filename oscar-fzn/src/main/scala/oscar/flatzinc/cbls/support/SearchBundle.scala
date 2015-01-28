@@ -18,14 +18,12 @@
  */
 package oscar.flatzinc.cbls.support
 
-import scala.util.Random
 import oscar.cbls.invariants.core.computation.CBLSIntVar
 import oscar.cbls.invariants.core.computation.CBLSIntConst
 import oscar.cbls.invariants.core.computation.CBLSSetVar
 import oscar.cbls.invariants.lib.logic._
 import oscar.cbls.invariants.lib.minmax._
 import oscar.cbls.invariants.core.computation.Store
-import oscar.cbls.invariants.core.computation.SetInvariant.toIntSetVar
 import oscar.cbls.constraints.core.ConstraintSystem
 import oscar.cbls.objective.{Objective => CBLSObjective}
 import oscar.cbls.search.SearchEngine
@@ -37,38 +35,11 @@ import oscar.flatzinc.cbls.FZCBLSModel
 import oscar.cbls.constraints.core.Constraint
 import oscar.cbls.invariants.core.computation.Variable
 import oscar.cbls.invariants.lib.set.Inter
+import oscar.cbls.invariants.core.computation.IntValue
+import oscar.cbls.invariants.core.computation.SetValue
 
 
-class CBLSIntVarDom(model: Store, val dom: Domain, private var Value: Int, n: String = null)
-  extends CBLSIntVar(model, dom.min to dom.max, Value, n) {
-  def getDomain():Iterable[Int] = {
-    dom match {
-      case DomainRange(min, max) => min to max
-      case DomainSet(values) => values
-    }
-  }
-  def getRandValue():Int = {
-    dom match {
-      case DomainRange(min, max) => (min to max)(Random.nextInt(max-min+1))
-      case DomainSet(values) => values.toIndexedSeq(Random.nextInt(values.size))
-    }
-  }
-  def domainSize = dom match {
-    case DomainRange(min, max) => math.max(max-min+1,0)
-    case DomainSet(values) => values.size
-  }
-}
-case class CBLSIntConstDom(ConstValue:Int, override val model:Store = null)
-  extends CBLSIntVarDom(model, new DomainRange(ConstValue,ConstValue), ConstValue, "IntConst("+ ConstValue + ")"){
-  override def getValue(NewValue:Boolean=false):Int = ConstValue //pour pas avoir de propagation
-  override def toString:String = "IntConst("+ ConstValue + ")"
-}
 
-object CBLSIntVarDom {
-  def apply(model: Store, domain: Domain, value: Int, name: String) = {
-    new CBLSIntVarDom(model, domain, value, name)
-  }
-}
 
 abstract class SearchProcedure extends SearchEngine {
   
@@ -132,7 +103,7 @@ class GreedySearch(val level: Int = 1, val m: FZCBLSModel,val sc: SearchControl)
   }
 }
 class SimpleLocalSearch(val m:FZCBLSModel,val sc: SearchControl) extends SearchProcedure {
-  val violation: Array[CBLSIntVar] = m.vars.map(m.c.violation(_)).toArray;
+  val violation: Array[IntValue] = m.vars.map(m.c.violation(_)).toArray;
   val log = m.log
   def run(){
     var improving = 3;
@@ -218,11 +189,10 @@ class NeighbourhoodCBSearch(m: FZCBLSModel, sc: SearchControl) extends Neighbour
   val viols = cstrs.map(_.violation)
   //Do not register for partial propagation as it leads to to much memory for large problems
   //viols.foreach(v => m.m.registerForPartialPropagation(v))
-  val violatedConstraints:CBLSSetVar = Filter(viols)
-  val tabuC: Array[CBLSIntVar] = cstrs.map(c => CBLSIntVar(sc.m.m, 0, Int.MaxValue, 0, "Tabu_" + c.name)).toArray;
-  val nonTabuConstraints: CBLSSetVar = SelectLEHeapHeap(tabuC, it);
-  val nonTabuAndViolated = CBLSSetVar()(m.m);
-  nonTabuAndViolated <== Inter(nonTabuConstraints,violatedConstraints);
+  val violatedConstraints:SetValue = Filter(viols) 
+  val tabuC: Array[CBLSIntVar] = cstrs.map(c => CBLSIntVar(sc.m.m, 0, 0 to Int.MaxValue, "Tabu_" + c.toString())).toArray;
+  val nonTabuConstraints: SetValue = SelectLEHeapHeap(tabuC.asInstanceOf[Array[IntValue]], it);
+  val nonTabuAndViolated = Inter(nonTabuConstraints,violatedConstraints);
   var tenureC = 2
   val maxTenureC = cstrs.length/2
   //println(varsOfCstr)
@@ -290,9 +260,9 @@ abstract class NeighbourhoodTabuSearch(m: FZCBLSModel, sc: SearchControl) extend
   
   val variableMap = (0 until searchVariables.length).foldLeft(Map.empty[CBLSIntVar, Int])((acc, x) => acc + (searchVariables(x) -> x));  
   
-  val it = CBLSIntVar(m.m, 0, Int.MaxValue, 1, "it");
-  val tabu: Array[CBLSIntVar] = searchVariables.map(v => CBLSIntVar(sc.m.m, 0, Int.MaxValue, 0, "Tabu_" + v.name)).toArray;
-  val nonTabuVariables: CBLSSetVar = SelectLEHeapHeap(tabu, it);
+  val it = CBLSIntVar(m.m, 1, 0 to Int.MaxValue, "it");
+  val tabu: Array[CBLSIntVar] = searchVariables.map(v => CBLSIntVar(sc.m.m, 0, 0 to Int.MaxValue,  "Tabu_" + v.name)).toArray;
+  val nonTabuVariables = SelectLEHeapHeap(tabu.asInstanceOf[Array[IntValue]], it);
   val MaxTenure = (searchVariables.length * 0.6).toInt;
   val MinTenure = 2 + 0 * (searchVariables.length * 0.1).toInt;
   val tenureIncrement = Math.max(1, (MaxTenure - MinTenure) / 10);

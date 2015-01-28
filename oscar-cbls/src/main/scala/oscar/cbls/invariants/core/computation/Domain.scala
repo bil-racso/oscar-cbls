@@ -15,7 +15,7 @@
 /*******************************************************************************
   * Contributors:
   *     This code has been initially developed by
-  *         by Jean Noël Monette
+  *         by Jean Noël Monette, Gustav Björdal
   ******************************************************************************/
 package oscar.cbls.invariants.core.computation
 
