@@ -14,7 +14,7 @@ import oscar.cp.core.Constraint
  */
 abstract class CPBoolVar extends CPIntVar {
   
-  final override def isComplete: Boolean = true
+  final override def isContinuous: Boolean = true
 
   /** @return a constraint setting the boolean variable to true (1) */
   def constraintTrue: Constraint

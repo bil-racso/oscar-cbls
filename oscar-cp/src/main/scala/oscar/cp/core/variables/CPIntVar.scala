@@ -36,7 +36,7 @@ trait DomainIterator extends Iterator[Int] {
  */
 abstract class CPIntVar extends CPIntervalVar {
 
-  def isComplete: Boolean = size == (max - min + 1)
+  def isContinuous: Boolean = size == (max - min + 1)
 
   /**
    * Number of values in common in both domains
@@ -383,7 +383,8 @@ object CPIntVar {
   }
   
   def mySparse(minValue: Int, maxValue: Int)(implicit store: CPStore): CPIntVar = {
-    new CPIntVarSparse(store, minValue, maxValue, "")
+    //new CPIntVarSparse(store, minValue, maxValue, "")
+    new CPIntVarAdaptable(store, minValue, maxValue, false, "")
   }
 
   def sparse(minValue: Int, maxValue: Int)(implicit store: CPStore): CPIntVar = sparse(minValue, maxValue, "")(store)
