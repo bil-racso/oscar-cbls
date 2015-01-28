@@ -11,7 +11,7 @@ import oscar.cp.core.CPOutcome.Failure
 import oscar.cp.core.CPOutcome.Suspend
 import oscar.cp.core.CPStore
 import oscar.cp.core.Constraint
-import oscar.cp.core.PropagEventQueueVarInt
+import oscar.cp.core.watcher.PropagEventQueueVarInt
 import oscar.cp.core.watcher.WatcherListL2
 
 /**
@@ -109,7 +109,7 @@ class CPIntVarAdaptable(final override val store: CPStore, minValue: Int, maxVal
     else values(r)
   }
 
-  final override def transform(v: Int) = v
+  final override def transform(v: Int): Int = v
 
   final override def iterator: Iterator[Int] = {
     if (_continuous) iteratorContinuous

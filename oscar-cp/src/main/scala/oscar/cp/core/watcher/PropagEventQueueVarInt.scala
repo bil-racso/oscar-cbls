@@ -13,36 +13,36 @@
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
 
-package oscar.cp.core
+package oscar.cp.core.watcher
 
-import oscar.cp.core.variables.CPSetVar
+import oscar.cp.core.variables.CPIntervalVar
+import oscar.cp.core.Constraint
 
 /**
  * Trailable Queue of AC5 events
  * Each entry of the queue stores:
+ *  - a delta
  *  - a index
  *  - a variable
  *  @author Pierre Schaus pschaus@gmail.com
  */
-class PropagEventQueueVarSet(val next: PropagEventQueueVarSet, val cons: Constraint, val x: CPSetVar, val idx: Int) {
-	
-    def this(next: PropagEventQueueVarSet, cons: Constraint, x: CPSetVar) = {
-      this(next,cons,x,0)
+class PropagEventQueueVarInt[A <: CPIntervalVar](val next: PropagEventQueueVarInt[A], val cons: Constraint, val x: A, val idx: Int) {
+
+  def this(next: PropagEventQueueVarInt[A], cons: Constraint, x: A) = {
+    this(next, cons, x, 0)
+  }
+
+  def hasNext(): Boolean = next != null
+
+  override def toString(): String = "PropagEventQueueVarInt constraint:" + cons + " var:" + x + " idx:" + idx;
+
+  def size() = {
+    var s = 0;
+    var q = this;
+    while (q != null) {
+      s += 1
+      q = q.next
     }
-    
-    def hasNext() = next != null
-
-	override def toString(): String = "PropagEventQueueVarSet constraint:"+cons+" var:"+x+" idx:"+idx;
-	
-	
-	def size() = {
-		var s = 0;
-		var q = this;
-		while (q != null) {
-			s += 1
-			q = q.next
-		}
-		s
-	}
-
+    s
+  }
 }

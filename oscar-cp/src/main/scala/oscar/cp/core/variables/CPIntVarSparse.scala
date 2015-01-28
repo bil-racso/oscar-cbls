@@ -11,8 +11,8 @@ import oscar.cp.core.CPOutcome.Failure
 import oscar.cp.core.CPOutcome.Suspend
 import oscar.cp.core.CPStore
 import oscar.cp.core.Constraint
-import oscar.cp.core.PropagEventQueueVarInt
 import oscar.cp.core.watcher.WatcherListL2
+import oscar.cp.core.watcher.PropagEventQueueVarInt
 
 /**
  *  @author Renaud Hartert ren.hartert@gmail.com

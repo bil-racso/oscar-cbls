@@ -22,11 +22,11 @@ import scala.util.Random
 import oscar.cp.core.domains.IntDomain
 import oscar.cp.core.domains.AdaptableIntDomain
 import oscar.cp.core.CPOutcome._
-import oscar.cp.core.PropagEventQueueVarInt
 import oscar.cp.core.ConstraintQueue
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.Constraint
 import oscar.cp.core.CPStore
+import oscar.cp.core.watcher.PropagEventQueueVarInt
 
 /**
  * @author Pierre Schaus pschaus@gmail.com

@@ -15,18 +15,25 @@
 
 package oscar.cp.core
 
-import java.util.{Collection, LinkedList}
+import java.util.Collection
+import java.util.LinkedList
+
+import scala.collection.JavaConversions.asJavaCollection
+import scala.collection.JavaConversions.collectionAsScalaIterable
+
 import oscar.algo.ArrayQueue
-import oscar.algo.reversible.Reversible
+import oscar.algo.reversible.ReversiblePointer
 import oscar.algo.search.SearchNode
 import oscar.cp.constraints.EqCons
-import oscar.cp.core.CPOutcome.{Failure, Success, Suspend}
-import scala.collection.JavaConversions.{asJavaCollection, collectionAsScalaIterable}
-import oscar.algo.reversible.ReversiblePointer
-import oscar.cp.core.variables.CPIntVar
+import oscar.cp.core.CPOutcome.Failure
+import oscar.cp.core.CPOutcome.Success
+import oscar.cp.core.CPOutcome.Suspend
 import oscar.cp.core.variables.CPBoolVar
-import oscar.cp.core.variables.CPSetVar
+import oscar.cp.core.variables.CPIntVar
 import oscar.cp.core.variables.CPIntervalVar
+import oscar.cp.core.variables.CPSetVar
+import oscar.cp.core.watcher.PropagEventQueueVarSet
+import oscar.cp.core.watcher.PropagEventQueueVarInt
 
 /**
  * Constraint Programming CPStore
@@ -120,7 +127,7 @@ class CPStore( final val propagStrength: CPPropagStrength) extends SearchNode {
   }
 
   // Adds the constraint in the L1 queue
-  @inline protected def enqueueL1(c: Constraint, priority: Int, evt: => CPOutcome): Unit = {
+  @inline final def enqueueL1(c: Constraint, priority: Int, evt: => CPOutcome): Unit = {
     propagQueueL1(priority).addLast(() => {
       if (c.isActive) {
         lastConstraint = c // last constraint called

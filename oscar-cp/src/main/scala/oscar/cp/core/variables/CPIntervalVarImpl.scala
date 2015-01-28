@@ -21,12 +21,12 @@ import oscar.algo.reversible.TrailEntry
 import oscar.cp.core.CPOutcome._
 import scala.util.Random
 import oscar.algo.reversible.ReversibleInt
-import oscar.cp.core.PropagEventQueueVarInt
 import oscar.cp.core.ConstraintQueue
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.Constraint
 import oscar.cp.core.CPStore
 import oscar.cp.core.watcher.WatcherListL2
+import oscar.cp.core.watcher.PropagEventQueueVarInt
 
 /**
  * @author Pierre Schaus pschaus@gmail.com
