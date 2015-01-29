@@ -37,46 +37,53 @@ object LostAtSeaCircuit  {
 		
       // input data with the probabilities
       
-      val proba = Array(Array(3,0,0,3,2,4,2,3),
-                        Array(3,3,3,1,2,4,1,4),
-                        Array(0,4,0,1,2,3,4,0),
-                        Array(1,1,0,3,4,1,1,0),
-                        Array(1,1,3,3,1,2,2,4),
-                        Array(0,2,3,3,3,0,2,4),
-                        Array(2,3,2,4,2,4,1,1),
-                        Array(2,1,2,2,2,4,1,3))
-       def getLineCol(i: Int) = (i/8,i%8)
-                        
-       def neighbors(i: Int) = {
-        val (l,c) = getLineCol(i)
-        def toInt(lc: (Int,Int)) = lc._1*8 + lc._2
-        Set((l+1,c),(l-1,c),(l,c+1),(l,c-1)).filter{ case(l,c) => (l >= 0 && l < 8 && c >= 0 && c < 8)}.map(toInt(_))
-       } 
-       
-       // --------------- model -------------------
-       
-       val cp = CPSolver()
-       cp.silent = true
-       val succ = Array.tabulate(64)(i => CPIntVar(cp,neighbors(i)))
-       
-       val path = Array.fill(10)(CPIntVar(cp,0 until 64)) // represent the path of length ten which is the solution
-       
-       val sol = Array.fill(10)(0) 
-       val prob = proba.flatten
+    val proba = Array(Array(3,0,0,3,2,2,2,3),
+                        Array(3,3,3,1,2,2,1,2),
+                        Array(0,2,0,1,2,3,2,0),
+                        Array(1,1,0,3,2,1,1,0),
+                        Array(1,1,3,3,1,2,2,2),
+                        Array(0,2,3,3,3,0,2,3),
+                        Array(2,3,2,2,2,2,1,1),
+                        Array(2,1,2,2,2,2,1,3))
+    def getLineCol(i: Int) = (i / 8, i % 8)
 
-       cp.maximize(sum(0 until 10)(i => element(prob,path(i)))) subjectTo {
-                
-    	  		for (i <- 0 until 9) {
-                  cp.add(elementVar(succ,path(i),path(i+1)),Strong) 
-                }
-                cp.add(circuit(succ),Strong)
-       } search {
-         binaryStatic(path)
-       } onSolution {
-         println(path.mkString(","))
-         (0 until 10).foreach(i => sol(i) = path(i).value) // record the best solution
-       } 
-       println(cp.start())
+    def neighbors(i: Int) = {
+      val (l, c) = getLineCol(i)
+      def toInt(lc: (Int, Int)) = lc._1 * 8 + lc._2
+      Set((l + 1, c), (l - 1, c), (l, c + 1), (l, c - 1)).filter { case (l, c) => (l >= 0 && l < 8 && c >= 0 && c < 8) }.map(toInt(_))
+    }
+
+    // --------------- model -------------------
+
+    val cp = CPSolver()
+    //cp.silent = true
+    val succ = Array.tabulate(64)(i => CPIntVar(cp, neighbors(i)))
+
+    val path = Array.fill(10)(CPIntVar(cp, 0 until 64)) // represent the path of length ten which is the solution
+
+    val sol = Array.fill(10)(0)
+    val prob = proba.flatten
+    
+    val obj = sum(0 until 10)(i => element(prob, path(i)))
+    
+    cp.add(obj >= 20)
+
+    //cp.maximize(sum(0 until 10)(i => element(prob, path(i))))
+
+    for (i <- 0 until 9) {
+      cp.add(elementVar(succ, path(i), path(i + 1)), Strong)
+    }
+    cp.add(circuit(succ), Strong)
+    
+    
+    
+    cp.search {
+      binaryStatic(path)
+    } onSolution {
+      //println(path.mkString(","))
+      //(0 until 10).foreach(i => sol(i) = path(i).value) // record the best solution
+    }
+    println(cp.start())
 
       
       

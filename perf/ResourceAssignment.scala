@@ -38,37 +38,55 @@ import oscar.cp.constraints.ElementVarAC
  */
 object ResourceAssignment extends App {
 
-    val cp = CPSolver()
-    cp.silent = true
-    val binCapa = 20
-    val partition = Array(Set(2,3,7),Set(0,4),Set(5,6),Set(1,8))
-    
-    val taskWeight = Array((0,3),(0,3),(0,3),(0,2),(0,2),(0,2),
-                           (1,3),(1,3),(1,2),(1,2),
-                           (2,2),(2,2),(2,3),(2,2),(2,1),
-                           (3,3),(3,2),(3,2),(3,2),(3,1),
-                           (4,3),(4,2),(4,1)) // for each subtask: (super task, weight)
-    val nbBins = partition.flatten.max + 1
-    val nbTasks = taskWeight.map(_._1).max +1
-    
-    // p(t) is the partition chosen for task i
-    var p = Array.fill(nbTasks)(CPIntVar(cp,0 until partition.size))
-    
-    // x(i) is the bin chosen for subtask i
-    val x: Array[CPIntVar] = for ((i,j) <- taskWeight) yield {
-      var possbin = Array.tabulate(partition.size)(i => CPIntVar(cp,partition(i)))
-      var xij = CPIntVar(cp,0 until nbBins)
-      possbin(p(i))
-    }
-    
-    val load = Array.fill(nbBins)(CPIntVar(cp,0 to binCapa))
+  val cp = CPSolver()
+  cp.silent = true
+  val binCapa = 20
+  val partition = Array(Set(2, 3, 7), Set(0, 4), Set(5, 6), Set(1, 8))
 
-    cp.solve() subjectTo {
-      cp.add(maximum((0 until nbBins).map(load(_))) <= 6)
-      cp.add(binPacking(x,taskWeight.map(_._2),load))
-      
-    } search {
-      binaryStatic(x)
-    } start(100000)
+  val taskWeight = Array((0, 3), (0, 3), (0, 3), (0, 2), (0, 2), (0, 2),
+    (1, 3), (1, 3), (1, 2), (1, 2),
+    (2, 2), (2, 2), (2, 3), (2, 2), (2, 1),
+    (3, 3), (3, 2), (3, 2), (3, 2), (3, 1),
+    (4, 3), (4, 2), (4, 1)) // for each subtask: (super task, weight)
+  val nbBins = partition.flatten.max + 1
+  val nbTasks = taskWeight.map(_._1).max + 1
+
+  // p(t) is the partition chosen for task i
+  var p = Array.fill(nbTasks)(CPIntVar(cp, 0 until partition.size))
+
+  // x(i) is the bin chosen for subtask i
+  val x: Array[CPIntVar] = for ((i, j) <- taskWeight) yield {
+    var possbin = Array.tabulate(partition.size)(i => CPIntVar(cp, partition(i)))
+    var xij = CPIntVar(cp, 0 until nbBins)
+    possbin(p(i))
+  }
+
+  val load = Array.fill(nbBins)(CPIntVar(cp, 0 to binCapa))
+
+  cp.add(maximum((0 until nbBins).map(load(_))) <= 6)
+  cp.add(binPacking(x, taskWeight.map(_._2), load))
+
+  // some stupid constraints to make it tractable
+  for(i <- 1 until 9) {
+    cp.add(x(i-1) <= x(i))
+  }
+  cp.add(gcc(x,0 to 8,2,3))
+
+  
+  /*
+  cp.onSolution {
+    println(load.mkString(","))
+    println(x.mkString(","))
+  }*/
+
+  //cp.add(load(7) == 3)
+  //cp.add(x(0) == 1)
+ 
+  
+  cp.search {
+    binaryFirstFail(x, _.min)
+  }
+
+  println(cp.start())
 
 }
