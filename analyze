@@ -49,4 +49,6 @@ val a =
   </body>
 </html>
 
-scala.xml.XML.saveFull("report.html", a, "UTF-8", true, null)
+
+scala.xml.XML.save("report.html", a)
+
