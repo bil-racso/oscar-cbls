@@ -641,7 +641,7 @@ object CPIntVar {
   /** Builds a CPIntVar from a range */
   private def rangeDomain(domain: Range, name: String, store: CPStore): CPIntVar = {
     if (domain.max - domain.min < domain.size - 1) iterableDomain(domain, name, store)
-    else CPIntVarImpl(store, domain.min, domain.max, name)
+    else new CPIntVarAdaptable(store, domain.min, domain.max, true, name)
   }
 
   /** Builds a CPIntVar from an iterable */
@@ -651,13 +651,14 @@ object CPIntVar {
   private def setDomain(domain: Set[Int], name: String, store: CPStore): CPIntVar = {
     val min = domain.min
     val max = domain.max
-    val x = CPIntVarImpl(store, min, max, name)
-    if (max - min + 1 > domain.size) {
+    if (max - min + 1 == domain.size) new CPIntVarAdaptable(store, domain.min, domain.max, true, name)
+    else {
+      val x = new CPIntVarAdaptable(store, domain.min, domain.max, false, name)
       for (v <- min to max if !domain.contains(v)) {
         x.removeValue(v)
       }
+      x
     }
-    x
   }
 }
 
