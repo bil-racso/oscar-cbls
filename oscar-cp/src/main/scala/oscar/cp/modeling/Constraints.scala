@@ -102,7 +102,7 @@ trait Constraints {
    * @return a variable in the same store representing: x - y
    */
   def minus(x: CPIntVar, y: CPIntVar): CPIntVar = {
-    val c = CPIntVarImpl(x.store, x.min - y.max, x.max - y.min)
+    val c = CPIntVar(x.min - y.max, x.max - y.min)(x.store)
     x.store.post(new oscar.cp.constraints.Minus(x, y, c))
     c
   }
@@ -123,7 +123,7 @@ trait Constraints {
   def plus(x: CPIntVar, y: CPIntVar): CPIntVar = {
     if (y.isBound) plus(x, y.value)
     else {
-      val c = CPIntVarImpl(x.store, x.min + y.min, x.max + y.max)
+      val c = CPIntVar(x.min + y.min, x.max + y.max)(x.store)
       val ok = x.store.post(new oscar.cp.constraints.BinarySum(x, y, c))
       assert(ok != CPOutcome.Failure)
       c
@@ -152,7 +152,7 @@ trait Constraints {
     val d = y.max
     import oscar.cp.util.NumberUtils
     val t = Array(NumberUtils.safeMul(a, c), NumberUtils.safeMul(a, d), NumberUtils.safeMul(b, c), NumberUtils.safeMul(b, d));
-    val z = CPIntVarImpl(x.store, t.min, t.max)
+    val z = CPIntVar(t.min, t.max)(x.store)
     val ok = x.store.post(new oscar.cp.constraints.MulVar(x, y, z))
     assert(ok != CPOutcome.Failure);
     z
@@ -164,7 +164,7 @@ trait Constraints {
    * @return a variable in the same store representing: |x|
    */
   def absolute(x: CPIntVar): CPIntVar = {
-    val c = CPIntVarImpl(x.store, 0, Math.max(Math.abs(x.min), Math.abs(x.max)));
+    val c = CPIntVar(0, Math.max(Math.abs(x.min), Math.abs(x.max)))(x.store)
     val ok = x.store.post(new oscar.cp.constraints.Abs(x, c));
     assert(ok != CPOutcome.Failure);
     return c

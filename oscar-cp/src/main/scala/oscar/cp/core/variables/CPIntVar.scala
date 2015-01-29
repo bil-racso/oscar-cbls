@@ -67,13 +67,13 @@ abstract class CPIntVar extends CPVar with Iterable[Int] {
    * @param val
    * @return the smallest value > val in the domain, None if there is not value > val in the domain
    */
-  @deprecated def valueAfter(value: Int): Int
+  def valueAfter(value: Int): Int
 
   /**
    * @param val
    * @return the largest value < val in the domain, None if there is not value < val in the domain
    */
-  @deprecated def valueBefore(value: Int): Int
+  def valueBefore(value: Int): Int
 
   /**
    * @return A random value in the domain of the variable (uniform distribution)
@@ -518,30 +518,24 @@ object CPIntVar {
   def sparse(values: Iterable[Int], name: String)(implicit store: CPStore): CPIntVar = {
     val min = values.min
     val max = values.max
-    val domain = new SparseSetDomain(store, min, max)
+    val variable = new CPIntVarAdaptable(store, min, max, false, name)
     if (max - min + 1 > values.size) {
       val set = values.toSet
       var v = min + 1
       while (v < max) {
         if (!set.contains(v)) {
-          domain.removeValue(v)
+          variable.removeValue(v)
         }
         v += 1
       }
     }
-    new CPIntVarImpl(store, domain, name)
+    variable
   }
 
   def sparse(values: Iterable[Int])(implicit store: CPStore): CPIntVar = sparse(values, "")(store)
 
   def sparse(minValue: Int, maxValue: Int, name: String)(implicit store: CPStore): CPIntVar = {
-    val domain = new SparseSetDomain(store, minValue, maxValue)
-    new CPIntVarImpl(store, domain, name)
-  }
-
-  def mySparse(minValue: Int, maxValue: Int)(implicit store: CPStore): CPIntVar = {
-    //new CPIntVarSparse(store, minValue, maxValue, "")
-    new CPIntVarAdaptable(store, minValue, maxValue, false, "")
+    new CPIntVarAdaptable(store, minValue, maxValue, false, name)
   }
 
   def sparse(minValue: Int, maxValue: Int)(implicit store: CPStore): CPIntVar = sparse(minValue, maxValue, "")(store)
@@ -586,7 +580,7 @@ object CPIntVar {
    * as initial domain.
    */
   def apply(minValue: Int, maxValue: Int, name: String)(implicit store: CPStore): CPIntVar = {
-    CPIntVarImpl(store, minValue, maxValue, name)
+    new CPIntVarAdaptable(store, minValue, maxValue, true, name)
   }
 
   /**

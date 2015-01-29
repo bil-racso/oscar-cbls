@@ -189,10 +189,9 @@ class CPIntVarAdaptable(final override val store: CPStore, minValue: Int, maxVal
       val removedIdx = onDomainIdxL1.hasValue
       var i = _min
       while (i <= _max) {
-        val v = values(i)
-        if (v != value) {
-          if (removed) store.notifRemoveL1(onDomainL1.value, this, v)
-          if (removedIdx) store.notifyRemoveIdxL1(onDomainIdxL1.value, this, v)
+        if (i != value) {
+          if (removed) store.notifRemoveL1(onDomainL1.value, this, i)
+          if (removedIdx) store.notifyRemoveIdxL1(onDomainIdxL1.value, this, i)
         }
         i += 1
       }
@@ -641,19 +640,76 @@ class CPIntVarAdaptable(final override val store: CPStore, minValue: Int, maxVal
     onBindIdxL1.setValue(new PropagEventQueueVarInt(onBindIdxL1.value, c, variable, idx))
   }
 
-  final override def isEmpty: Boolean = ???
+  final override def isEmpty: Boolean = _size == 0
 
-  final override def valueAfter(value: Int): Int = ???
-  final override def valueBefore(value: Int): Int = ???
+  final override def valueAfter(value: Int): Int = {
+    if (value >= _max) value
+    else if (value < _min) _min
+    else if (_continuous) value + 1
+    else {
+      var i = value - offset + 1
+      while (positions(i) >= _size) i += 1
+      offset + i
+    }
+  }
+  
+  
+  final override def valueBefore(value: Int): Int = {
+    if (value <= _min) value
+    else if (value > _max) _max
+    else if (_continuous) value - 1
+    else {
+      var i = value - offset - 1
+      while (positions(i) >= _size) i -= 1
+      offset + i
+    }
+  }
+  
+  final def delta(oldMin: Int, oldMax: Int, oldSize: Int): Iterator[Int] = {
+    if (_continuous) deltaContinuous(oldMin, oldMax, oldSize)
+    else deltaSparse(oldMin, oldMax, oldSize)
+  }
 
-  def delta(oldMin: Int, oldMax: Int, oldSize: Int): Iterator[Int] = ???
-  def changed(c: Constraint): Boolean = ???
-  def minChanged(c: Constraint): Boolean = ???
-  def maxChanged(c: Constraint): Boolean = ???
-  def boundsChanged(c: Constraint): Boolean = ???
-  def oldMin(c: Constraint): Int = ???
-  def oldMax(c: Constraint): Int = ???
-  def oldSize(c: Constraint): Int = ???
-  def deltaSize(c: Constraint): Int = ???
-  def delta(c: Constraint): Iterator[Int] = ???
+  final def changed(c: Constraint): Boolean = changed(c.snapshotsVarInt(this))
+
+  final def minChanged(c: Constraint): Boolean = minChanged(c.snapshotsVarInt(this))
+
+  final def maxChanged(c: Constraint): Boolean = maxChanged(c.snapshotsVarInt(this))
+
+  final def boundsChanged(c: Constraint): Boolean = boundsChanged(c.snapshotsVarInt(this))
+
+  final def oldMin(c: Constraint): Int = oldMin(c.snapshotsVarInt(this))
+
+  final def oldMax(c: Constraint): Int = oldMax(c.snapshotsVarInt(this))
+
+  final def oldSize(c: Constraint): Int = oldSize(c.snapshotsVarInt(this))
+
+  final def deltaSize(c: Constraint): Int = deltaSize(c.snapshotsVarInt(this))
+
+  final def delta(c: Constraint): Iterator[Int] = {
+    val sn = c.snapshotsVarInt(this)
+    delta(sn.oldMin, sn.oldMax, sn.oldSize)
+  }  
+  
+  @inline private def deltaContinuous(oldMin: Int, oldMax: Int, oldSize: Int): Iterator[Int] = {
+    (oldMin to _min - 1).iterator ++ (_max + 1 to oldMax).iterator
+  }
+  
+  @inline private def deltaSparse(oldMin: Int, oldMax: Int, oldSize: Int): Iterator[Int] = {
+    (oldMin until minValue).iterator ++ deltaSparse(oldSize) ++ (maxValue + 1 to oldMax).iterator
+  }
+
+  @inline private def deltaSparse(oldSize: Int): Iterator[Int] = {
+    var ind = size
+    new Iterator[Int] {
+      override def next(): Int = {
+        val v = values(ind)
+        ind += 1
+        v
+      }
+      override def hasNext: Boolean = {
+        ind < oldSize && ind < values.size
+      }
+    }
+  }
 }
