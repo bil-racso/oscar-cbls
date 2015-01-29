@@ -29,8 +29,6 @@ import collection.immutable.SortedSet
  */
 object CookieMonster extends CPModel with App {
 
-  val numCubes = 4
-  val numFaces = 6
 
   val jars = Array(15, 13, 12, 4, 2, 1)
   val maxMove = 6

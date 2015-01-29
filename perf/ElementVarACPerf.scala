@@ -26,35 +26,34 @@ import oscar.cp.constraints.ElementVarAC
 
 object ElementVarACPerf {
 	def main(args: Array[String]) {
-	  
-		def solve1(seed: Int) = { 
-		    val n = 100
-		    val prob = 10
-			val rand = new scala.util.Random(seed)
-			def randDom(maxVal: Int,prob: Int) = (0 to maxVal).filter(i => rand.nextInt(100) < prob) 
-			val cp = new CPSolver()
-			val y = Array.fill(n)(CPIntVar(cp,randDom(n,prob)))
-			val x = CPIntVar(cp,randDom(n,prob*2))
-			val z = CPIntVar(cp,randDom(n,prob*2))
-			var nbsol = 0
-			cp.solve subjectTo {
-			  cp.add(new ElementVarAC(y,x,z))
-			  for (i <- 0 until y.size-4 by 3; if rand.nextInt(100) < 30) {
-			    cp.add(y(i) + y(i+1) == y(i+2))
-			    cp.add(y(i) != y(i+1))
-			  }
-			} search {
-			  binaryFirstFail(y ++ Array(x,z),_.median)
-			} start(1000)
-			
 
-			
-		}
+    def solve1(seed: Int) = {
+      val n = 51
+      val prob = 30
+      val rand = new scala.util.Random(seed)
+      def randDom(maxVal: Int, prob: Int) = (0 to maxVal).filter(i => rand.nextInt(100) < prob)
+      val cp = new CPSolver()
+      val y = Array.fill(n)(CPIntVar(cp, randDom(n, prob)))
+      val x = CPIntVar(cp, randDom(n, prob * 2))
+      val z = CPIntVar(cp, randDom(n, prob * 2))
+      var nbsol = 0
+
+      cp.add(new ElementVarAC(y, x, z))
+      for (i <- 0 until y.size - 4 by 3; if rand.nextInt(100) < 30) {
+        cp.add(y(i) + y(i + 1) == y(i + 2))
+        cp.add(y(i) != y(i + 1))
+      }
+      cp.add(allDifferent(y.take(n/10)),Medium)
+      cp.search {
+        binaryFirstFail(y ++ Array(x, z),_.min)
+      } start (nSols = 1)
+
+    }
 		
 		val t = time {
 		  for (i <- 0 until 50) {
 		    println("seed:"+i)
-			solve1(i)
+			  solve1(i)
 		  }
 		}
 		println("total time:"+t)

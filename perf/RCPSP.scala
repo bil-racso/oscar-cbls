@@ -18,10 +18,10 @@ import oscar.cp._
 object RCPSP extends CPModel with App {
   
   // (duration, consumption)
-  val instance = Array((50, 1), (30, 1), (90, 3), (10, 2), (20, 2), (80, 1), (30, 2), (20, 2), (20, 1), (10, 1), (10, 2), (20, 2), (80, 1))
+  val instance = Array((50, 1), (30, 1), (90, 3), (10, 2), (9, 3), (20, 2),(20, 1), (80, 1), (30, 2),(30, 1), (20, 2), (20, 1), (10, 1), (10, 2))
   val durationsData = instance.map(_._1)
   val demandsData = instance.map(_._2)
-  val capa = 4
+  val capa = 5
   val horizon = instance.map(_._1).sum
   val Times = 0 to horizon
   val nTasks = instance.size
@@ -35,6 +35,7 @@ object RCPSP extends CPModel with App {
   val makespan = maximum(ends)
   
   add(maxCumulativeResource(starts, durations, ends, demands, CPIntervalVar(capa)),Weak)
+  
   
   minimize(makespan) 
   

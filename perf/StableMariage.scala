@@ -29,30 +29,32 @@ object StableMariage {
 
   def main(args: Array[String]) {
 
-    val n = 8
+    val n = 9
     
     val Women = 0 until n
     val Men = 0 until n
 
     // for each man, what is his ranking for the women (higher is better)
-    val rankWomen = Array(Array(1,7,6,2,4,3,5,0),
-    					  Array(1,3,6,2,7,5,0,4),
-    					  Array(5,0,4,1,6,3,7,2),
+    val rankWomen = Array(Array(1,7,6,2,4,8,3,5,0),
+    					  Array(1,3,6,2,7,5,0,4,8),
+    					  Array(5,0,4,1,8,6,3,7,2),
     					  Array(4,2,7,1,6,5,3,0),
-    					  Array(0,4,5,7,6,3,2,1),
-    					  Array(3,2,1,0,7,5,4,6),
-    					  Array(5,3,0,4,6,7,2,1),
-    					  Array(5,0,4,1,6,3,7,2))
+    					  Array(0,4,5,7,6,8,3,2,1),
+                Array(5,1,6,3,7,0,4,2),
+    					  Array(3,2,1,0,7,5,4,8,6),
+    					  Array(8,5,3,0,4,6,7,2,1),
+    					  Array(5,8,0,4,1,6,3,7,2))
 
     // for each woman, what is her ranking for the men (higher is better)			
-    val rankMen =   Array(Array(0,1,3,5,6,2,7,4),
-    					  Array(2,3,6,0,4,5,7,1),
-    					  Array(3,2,5,7,4,1,6,0),
+    val rankMen =   Array(Array(0,1,3,5,6,2,7,8,4),
+    					  Array(2,3,6,0,4,8,5,7,1),
+    					  Array(3,2,5,8,7,4,1,6,0),
     					  Array(5,0,7,4,1,6,3,2),
-    					  Array(4,1,2,5,0,7,3,6),
-    					  Array(3,2,0,7,4,1,6,5),
-    					  Array(3,2,0,4,1,7,5,6),
-    					  Array(4,2,1,7,6,5,3,0))
+    					  Array(4,1,2,5,0,7,8,3,6),
+    					  Array(3,2,0,8,7,4,1,6,5),
+                Array(3,7,4,2,8,0,1,6,5),
+    					  Array(3,2,0,4,1,8,7,5,6),
+    					  Array(4,2,8,1,7,6,5,3,0))
 
     val cp = CPSolver()
 
@@ -73,7 +75,7 @@ object StableMariage {
           val pref_w = element(rankWomen(w),husband(w),Weak) // preference of w for her husband     
       }
      } search {
-       binaryStatic(wife)
+       binaryFirstFail(wife)
      } 
      println(cp.start())
 

@@ -31,7 +31,7 @@ object TSP {
 
   def main(args: Array[String]) {
 
-    val n = 20
+    val n = 58
     val Cities = 0 until n
     val lines = Source.fromFile("../data/tsp.txt").getLines.toList
 
@@ -44,10 +44,14 @@ object TSP {
     //total distance
     val dist = CPIntVar(cp, 0 to distMatrix.flatten.sum)
 
-    cp.minimize(dist) subjectTo {
-      cp.add(circuit(succ), Strong) //ask to have a strong filtering
-      cp.add(sum(Cities)(i => element(distMatrix(i), succ(i))) == dist)
-    } search {
+    
+    // Constraints
+    cp.add(minCircuit(succ, distMatrix, dist),Strong)
+
+
+    cp.minimize(dist) 
+    
+    cp.search {
       // Select the not yet bound city with the smallest number of possible successors
       selectMin(Cities)(!succ(_).isBound)(succ(_).size) match {
         case None => noAlternative
