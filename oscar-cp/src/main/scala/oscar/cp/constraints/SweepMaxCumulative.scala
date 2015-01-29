@@ -18,7 +18,6 @@ import scala.math.max
 import scala.math.min
 import oscar.cp.core.CPStore
 import oscar.cp.core.variables.CPIntVar
-import oscar.cp.core.variables.CPIntervalVar
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.CPOutcome._
 import oscar.cp.core.Constraint
@@ -31,7 +30,7 @@ import oscar.algo.SortUtils._
  */
 /* // left-right sweeping is sufficient, but left-right and right-left might be more efficient
  * 
-class SweepMaxCumulative(starts: Array[_ <: CPIntervalVar], durations: Array[_ <: CPIntervalVar], ends: Array[_ <: CPIntervalVar], demands: Array[_ <: CPIntervalVar], resources: Array[CPIntVar], capacity: CPIntervalVar, id: Int) extends Constraint(starts.head.store, "SweepMaxCumulative") {
+class SweepMaxCumulative(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], demands: Array[CPIntVar], resources: Array[CPIntVar], capacity: CPIntervalVar, id: Int) extends Constraint(starts.head.store, "SweepMaxCumulative") {
   val sweepLR = new SweepMaxCumulativeLR(starts,        durations,            ends, demands, resources, capacity, id) 
   val sweepRL = new SweepMaxCumulativeLR(ends map {-_}, durations, starts map {-_}, demands, resources, capacity, id)
     
@@ -50,7 +49,7 @@ class SweepMaxCumulative(starts: Array[_ <: CPIntervalVar], durations: Array[_ <
 }
 */
 
-class SweepMaxCumulative(starts: Array[_ <: CPIntervalVar], durations: Array[_ <: CPIntervalVar], ends: Array[_ <: CPIntervalVar], demands: Array[_ <: CPIntervalVar], resources: Array[CPIntVar], capacity: CPIntervalVar, id: Int) extends Constraint(starts.head.store, "SweepMaxCumulative") {
+class SweepMaxCumulative(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], demands: Array[CPIntVar], resources: Array[CPIntVar], capacity: CPIntVar, id: Int) extends Constraint(starts.head.store, "SweepMaxCumulative") {
   private val nTasks = starts.size
   private val Tasks = 0 until nTasks
 
@@ -399,7 +398,7 @@ class SweepMaxCumulative(starts: Array[_ <: CPIntervalVar], durations: Array[_ <
     return Suspend
   }
 
-  private def pruneInterval(low: Int, up: Int, v: CPIntervalVar): CPOutcome = {
+  private def pruneInterval(low: Int, up: Int, v: CPIntVar): CPOutcome = {
 
     assert(low <= up)
     if (low <= v.min && up <= v.max) {
@@ -504,7 +503,7 @@ class SweepMaxCumulative(starts: Array[_ <: CPIntervalVar], durations: Array[_ <
 }
 
 object SweepMaxCumulative {
-  def apply(starts: Array[_ <: CPIntervalVar], durations: Array[_ <: CPIntervalVar], ends: Array[_ <: CPIntervalVar], demands: Array[_ <: CPIntervalVar], resources: Array[CPIntVar], capacity: CPIntervalVar, id: Int): SweepMaxCumulative = {
+  def apply(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], demands: Array[CPIntVar], resources: Array[CPIntVar], capacity: CPIntVar, id: Int): SweepMaxCumulative = {
     val nTasks = starts.size
     if (nTasks == 0) throw new Exception("no tasks")
     else if (ends.size != nTasks) throw new Exception("the number of end variables should be " + nTasks)

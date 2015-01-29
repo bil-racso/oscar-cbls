@@ -18,7 +18,6 @@ import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
 import oscar.cp.core.variables.CPBoolVar;
 import oscar.cp.core.variables.CPIntVar;
-import oscar.cp.core.variables.CPIntervalVar;
 import oscar.cp.core.Constraint;
 
 /**
@@ -70,7 +69,7 @@ public class EqReif extends Constraint {
 	}
 	
 	@Override
-	public CPOutcome updateBounds(CPIntervalVar x) {
+	public CPOutcome updateBounds(CPIntVar x) {
 		if (x.getMax() < v || x.getMin() > v) {
 			if (b.assign(0) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
@@ -107,7 +106,7 @@ public class EqReif extends Constraint {
 	
 
 	@Override
-	public CPOutcome valBind(CPIntervalVar var) {
+	public CPOutcome valBind(CPIntVar var) {
 		deactivate();
 		if (var == b) {	
 			if (b.isFalse()) {

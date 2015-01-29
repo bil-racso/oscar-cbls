@@ -8,14 +8,14 @@ import Math._
 import oscar.cp.core.CPPropagStrength
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.variables.CPIntVar
-import oscar.cp.core.variables.CPIntervalVar
+import oscar.cp.core.variables.CPIntVar
 import oscar.cp.core.Constraint
 
 // @author Steven Gay steven.gay@uclouvain.be
 
 
-class CumulativeTemplate(starts: Array[_ <: CPIntervalVar], durations: Array[_ <: CPIntervalVar], ends: Array[_ <: CPIntervalVar],
-                         heights: Array[_ <: CPIntervalVar], resources: Array[CPIntVar], capacity: CPIntervalVar, id: Int, name: String = "Cumulative")
+class CumulativeTemplate(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar],
+                         heights: Array[CPIntVar], resources: Array[CPIntVar], capacity: CPIntVar, id: Int, name: String = "Cumulative")
 extends Constraint(capacity.store, name) {
   val n = starts.length
   require(n == durations.length)

@@ -60,7 +60,7 @@ trait Branchings extends BranchingUtils {
    * Binary search on the decision variables vars, splitting the domain of the selected variable on the
    * median of the values (left : <= median, right : > median)
    */
-  def binarySplit(x: Seq[_ <: CPIntervalVar], varHeuris: (CPIntervalVar => Int) = minVar, valHeuris: (CPIntervalVar => Int) = (x: CPIntervalVar) => (x.min + x.max) / 2): Branching = {
+  def binarySplit(x: Seq[_ <: CPIntVar], varHeuris: (CPIntVar => Int) = minVar, valHeuris: (CPIntVar => Int) = (x: CPIntVar) => (x.min + x.max) / 2): Branching = {
     val xa = x.toArray
     new BinaryDomainSplitBranching(xa, varHeuris, valHeuris)
   }
@@ -77,7 +77,7 @@ trait Branchings extends BranchingUtils {
    * set times heuristic (for discrete resources) 
    * see: Time- versus-capacity compromises in project scheduling. (Le Pape et al.). 1994. 
    */  
-  def setTimes(starts: IndexedSeq[_ <: CPIntervalVar], durations: IndexedSeq[_ <: CPIntervalVar], ends: IndexedSeq[_ <: CPIntervalVar], tieBreaker: Int => Int = (i: Int) => i): Branching = new SetTimesBranching(starts, durations, ends, tieBreaker) 
+  def setTimes(starts: IndexedSeq[_ <: CPIntVar], durations: IndexedSeq[_ <: CPIntVar], ends: IndexedSeq[_ <: CPIntVar], tieBreaker: Int => Int = (i: Int) => i): Branching = new SetTimesBranching(starts, durations, ends, tieBreaker) 
   
   /**
    * rank heuristic (for unary resources)

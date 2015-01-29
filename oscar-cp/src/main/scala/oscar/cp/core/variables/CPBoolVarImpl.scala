@@ -24,12 +24,12 @@ class CPBoolVarImpl private(final override val store: CPStore, initDomain: Int, 
   private[this] val onBoundsL2 = new WatcherListL2(store)
   private[this] val onBindL2 = new WatcherListL2(store)
   private[this] val onDomainL2 = new WatcherListL2(store)
-  private[this] val onBoundsL1 = new ReversiblePointer[PropagEventQueueVarInt[CPIntervalVar]](store, null)
-  private[this] val onBindL1 = new ReversiblePointer[PropagEventQueueVarInt[CPIntervalVar]](store, null)
-  private[this] val onDomainL1 = new ReversiblePointer[PropagEventQueueVarInt[CPIntVar]](store, null)
-  private[this] val onBoundsIdxL1 = new ReversiblePointer[PropagEventQueueVarInt[CPIntervalVar]](store, null)
-  private[this] val onBindIdxL1 = new ReversiblePointer[PropagEventQueueVarInt[CPIntervalVar]](store, null)
-  private[this] val onDomainIdxL1 = new ReversiblePointer[PropagEventQueueVarInt[CPIntVar]](store, null)
+  private[this] val onBoundsL1 = new ReversiblePointer[PropagEventQueueVarInt](store, null)
+  private[this] val onBindL1 = new ReversiblePointer[PropagEventQueueVarInt](store, null)
+  private[this] val onDomainL1 = new ReversiblePointer[PropagEventQueueVarInt](store, null)
+  private[this] val onBoundsIdxL1 = new ReversiblePointer[PropagEventQueueVarInt](store, null)
+  private[this] val onBindIdxL1 = new ReversiblePointer[PropagEventQueueVarInt](store, null)
+  private[this] val onDomainIdxL1 = new ReversiblePointer[PropagEventQueueVarInt](store, null)
   
   // Number of constraints registered on the variable
   private[this] val degree = new ReversibleInt(store, 0) // should not change often
@@ -235,7 +235,7 @@ class CPBoolVarImpl private(final override val store: CPStore, initDomain: Int, 
     callValBindWhenBind(c, this)
   }
 
-  final override def callValBindWhenBind(c: Constraint, variable: CPIntervalVar) {
+  final override def callValBindWhenBind(c: Constraint, variable: CPIntVar) {
     degree.incr()
     onBindL1.setValue(new PropagEventQueueVarInt(onBindL1.value, c, variable))
   }
@@ -244,7 +244,7 @@ class CPBoolVarImpl private(final override val store: CPStore, initDomain: Int, 
     callUpdateBoundsWhenBoundsChange(c, this)
   }
 
-  final override def callUpdateBoundsWhenBoundsChange(c: Constraint, variable: CPIntervalVar) {
+  final override def callUpdateBoundsWhenBoundsChange(c: Constraint, variable: CPIntVar) {
     degree.incr()
     onBoundsL1.setValue(new PropagEventQueueVarInt(onBoundsL1.value, c, variable))
   }
@@ -271,7 +271,7 @@ class CPBoolVarImpl private(final override val store: CPStore, initDomain: Int, 
     callUpdateBoundsIdxWhenBoundsChange(c, this, idx)
   }
 
-  final override def callUpdateBoundsIdxWhenBoundsChange(c: Constraint, variable: CPIntervalVar, idx: Int) {
+  final override def callUpdateBoundsIdxWhenBoundsChange(c: Constraint, variable: CPIntVar, idx: Int) {
     degree.incr()
     onBoundsIdxL1.setValue(new PropagEventQueueVarInt(onBoundsIdxL1.value, c, variable, idx))
   }
@@ -280,7 +280,7 @@ class CPBoolVarImpl private(final override val store: CPStore, initDomain: Int, 
     callValBindIdxWhenBind(c, this, idx)
   }
 
-  final override def callValBindIdxWhenBind(c: Constraint, variable: CPIntervalVar, idx: Int) {
+  final override def callValBindIdxWhenBind(c: Constraint, variable: CPIntVar, idx: Int) {
     degree.incr()
     onBindIdxL1.setValue(new PropagEventQueueVarInt(onBindIdxL1.value, c, variable, idx))
   }

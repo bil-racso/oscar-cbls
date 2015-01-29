@@ -18,7 +18,7 @@ package oscar.cp.constraints
 
 import oscar.algo.reversible.ReversibleInt
 import oscar.cp.core.CPPropagStrength
-import oscar.cp.core.variables.CPIntervalVar
+import oscar.cp.core.variables.CPIntVar
 import oscar.cp.core.Constraint
 import oscar.cp.core.CPStore
 import oscar.cp.core.CPOutcome
@@ -30,14 +30,14 @@ import oscar.cp.core.CPOutcome._
  * @author Steven Gay steven.gay@uclouvain.be
  * @author Renaud Hartert ren.hartert@gmail.com
  */
-class Sum(x: Array[_ <: CPIntervalVar], constant: Int, sum: CPIntervalVar) extends Constraint(sum.store, "Sum") {
+class Sum(x: Array[CPIntVar], constant: Int, sum: CPIntVar) extends Constraint(sum.store, "Sum") {
 
   // Alternative constructor
-  def this(x: Array[_ <: CPIntervalVar], sum: CPIntervalVar) = this(x, 0, sum)
+  def this(x: Array[CPIntVar], sum: CPIntVar) = this(x, 0, sum)
 
   // Internal structure
   private[this] val nVariables = x.length
-  private[this] val variables = Array.tabulate(nVariables)(i => x(i).asInstanceOf[CPIntervalVar])
+  private[this] val variables = Array.tabulate(nVariables)(i => x(i).asInstanceOf[CPIntVar])
   private[this] val fixedValue = new ReversibleInt(s, constant)
   private[this] val nFixed = new ReversibleInt(s, 0)
 

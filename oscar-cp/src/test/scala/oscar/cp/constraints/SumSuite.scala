@@ -4,17 +4,17 @@ import oscar.cp._
 import oscar.cp.testUtils._
 import oscar.cp.core.CPOutcome._
 
-// Test the sum constraint on CPIntervalVar
+// Test the sum constraint on CPIntVar
 class SumSuite extends TestSuite {
 
   test("sum0") {
 
     val s = CPSolver()
 
-    val x0 = CPIntervalVar(0, 1)(s)
-    val x1 = CPIntervalVar(0, 2)(s)
-    val x2 = CPIntervalVar(0, 2)(s)
-    val x3 = CPIntervalVar(0, 3)(s)
+    val x0 = CPIntVar(0, 1)(s)
+    val x1 = CPIntVar(0, 2)(s)
+    val x2 = CPIntVar(0, 2)(s)
+    val x3 = CPIntVar(0, 3)(s)
 
     val cumulatedCounters = Array(x0, x1, x2, x3)
     val n = cumulatedCounters.size
@@ -37,8 +37,8 @@ class SumSuite extends TestSuite {
 
   test("sum1") {
     val cp = CPSolver()
-    val x = Array(CPIntervalVar(0, 5)(cp), CPIntervalVar(1, 5)(cp), CPIntervalVar(0, 5)(cp))
-    val y = CPIntervalVar(0, 100)(cp)
+    val x = Array(CPIntVar(0, 5)(cp), CPIntVar(1, 5)(cp), CPIntVar(0, 5)(cp))
+    val y = CPIntVar(0, 100)(cp)
     cp.add(sum(x, y))
     y.min should be(1)
     y.max should be(15)
@@ -46,8 +46,8 @@ class SumSuite extends TestSuite {
 
   test("sum2") {
     val cp = CPSolver()
-    val x = Array(CPIntervalVar(-5, 5)(cp), CPIntervalVar(1, 2)(cp), CPIntervalVar(0, 1)(cp))
-    val y = CPIntervalVar(0, 100)(cp)
+    val x = Array(CPIntVar(-5, 5)(cp), CPIntVar(1, 2)(cp), CPIntVar(0, 1)(cp))
+    val y = CPIntVar(0, 100)(cp)
     cp.add(sum(x, y))
     x(0).min should be(-3)
     y.min should be(0)
@@ -56,8 +56,8 @@ class SumSuite extends TestSuite {
 
   test("sum3") {
     val cp = CPSolver()
-    val x = Array(CPIntervalVar(0, 5)(cp), CPIntervalVar(0, 5)(cp), CPIntervalVar(0, 5)(cp))
-    val y = CPIntervalVar(5)(cp)
+    val x = Array(CPIntVar(0, 5)(cp), CPIntVar(0, 5)(cp), CPIntVar(0, 5)(cp))
+    val y = CPIntVar(5)(cp)
     cp.add(sum(x, y))
     cp.add(x(1) == 0)
     cp.add(x(0) >= 1)
@@ -69,7 +69,7 @@ class SumSuite extends TestSuite {
   
   private val rand = new scala.util.Random(0)
   
-  private def solve(x: Array[CPIntervalVar], y: CPIntervalVar, decomp: Boolean = false): Int = {   
+  private def solve(x: Array[CPIntVar], y: CPIntVar, decomp: Boolean = false): Int = {   
     val solver = y.store
     if (decomp) solver.add(new Sum(x, y))
     else solver.add(sum(x, y))    
@@ -93,22 +93,22 @@ class SumSuite extends TestSuite {
   test("sum4") {
 
     val cp = CPSolver()
-    val x = Array(CPIntervalVar(-2, 5, "x0")(cp), CPIntervalVar(-4, 5, "x1")(cp), CPIntervalVar(3, 5, "x2")(cp))
-    val y = CPIntervalVar(4, 5, "y")(cp)
+    val x = Array(CPIntVar(-2, 5, "x0")(cp), CPIntVar(-4, 5, "x1")(cp), CPIntVar(3, 5, "x2")(cp))
+    val y = CPIntVar(4, 5, "y")(cp)
     solve(x, y, false) should be(solve(x, y, true))
   }
 
   test("sum5") {
     val cp = CPSolver()
-    val x = Array(CPIntVar(Set(-5, -3, 2, 8))(cp), CPIntVar(Set(-10, 8))(cp), CPIntervalVar(3, 5)(cp))
-    val y = CPIntervalVar(3, 8)(cp)
+    val x = Array(CPIntVar(Set(-5, -3, 2, 8))(cp), CPIntVar(Set(-10, 8))(cp), CPIntVar(3, 5)(cp))
+    val y = CPIntVar(3, 8)(cp)
     solve(x, y, false) should be(solve(x, y, true))
   }
 
   test("sum6") {
     val cp = CPSolver()
-    val x = Array(CPIntVar(Set(-5, -3, 2, 8))(cp), CPIntVar(Set(-10, 8))(cp), CPIntervalVar(3, 5)(cp), CPIntervalVar(-10, -5)(cp))
-    val y = CPIntervalVar(3, 8)(cp)
+    val x = Array(CPIntVar(Set(-5, -3, 2, 8))(cp), CPIntVar(Set(-10, 8))(cp), CPIntVar(3, 5)(cp), CPIntVar(-10, -5)(cp))
+    val y = CPIntVar(3, 8)(cp)
     solve(x, y, false) should be(solve(x, y, true))
   }
 

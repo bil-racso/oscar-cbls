@@ -116,7 +116,7 @@ class UnaryRank(val starts: Array[CPIntVar], val durations: Array[CPIntVar], val
     return CPOutcome.Suspend 
   }
   
-  override def valBindIdx(x: CPIntervalVar,idx: Int): CPOutcome = {
+  override def valBindIdx(x: CPIntVar,idx: Int): CPOutcome = {
     var rankedValue = x.value
     rankIndex(rankedValue).value = idx
     

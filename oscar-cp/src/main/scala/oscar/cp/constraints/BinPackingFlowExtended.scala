@@ -18,7 +18,6 @@ package oscar.cp.constraints;
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.CPPropagStrength
 import oscar.cp.core.variables.CPIntVar
-import oscar.cp.core.variables.CPIntervalVar
 import oscar.cp.core.Constraint
 import oscar.cp.util.ArrayUtils
 import oscar.algo.reversible.ReversibleInt;
@@ -74,7 +73,7 @@ class BinPackingFlowExtended(val x: Array[CPIntVar], val sizes: Array[Int], val 
   }
 
 
-  override def valBindIdx(x: CPIntervalVar, idx: Int): CPOutcome = {
+  override def valBindIdx(x: CPIntVar, idx: Int): CPOutcome = {
     val j = x.min;
     val wj = sizes(idx);
     l_t(j).setValue(l_t(j).value + wj);

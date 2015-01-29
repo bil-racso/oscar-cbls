@@ -27,7 +27,6 @@ import oscar.cp.core._
 import oscar.cp.core.CPOutcome._
 import oscar.cp.core.CPSolver
 import oscar.algo.reversible.ReversibleInt
-import oscar.cp.core.variables.CPIntervalVar
 
 
 /**
@@ -88,14 +87,14 @@ class ElementVarBC(val y: Array[CPIntVar], val x: CPIntVar, val z: CPIntVar) ext
 	Suspend
   }  
   
-  override def updateBounds(cpvar: CPIntervalVar): CPOutcome = {
+  override def updateBounds(cpvar: CPIntVar): CPOutcome = {
     // bounds of z changed
     if (filterX() == Failure) Failure
     else if (x.isBound) valBind(x)
     else Suspend
   }
   
-  override def valBind(cpvar: CPIntervalVar): CPOutcome = {
+  override def valBind(cpvar: CPIntVar): CPOutcome = {
     // x is bind
     val i = x.min
     zminSup.setValue(i)
@@ -105,7 +104,7 @@ class ElementVarBC(val y: Array[CPIntVar], val x: CPIntVar, val z: CPIntVar) ext
     else filterZ()
   }
 
-  override def updateBoundsIdx(cpvar: CPIntervalVar, i: Int): CPOutcome = {
+  override def updateBoundsIdx(cpvar: CPIntVar, i: Int): CPOutcome = {
     // bound of y(i) changed
     if (y(i).max < z.min || y(i).min > z.max) {
       if (x.removeValue(i) == Failure) return Failure

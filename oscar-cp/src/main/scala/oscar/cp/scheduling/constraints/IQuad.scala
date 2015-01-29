@@ -16,8 +16,8 @@ import oscar.algo.reversible.ReversibleInt
 
 
 
-class IQuad(starts: Array[_ <: CPIntervalVar], durations: Array[_ <: CPIntervalVar], ends: Array[_ <: CPIntervalVar],
-            demands: Array[_ <: CPIntervalVar], resources: Array[CPIntVar], capacity: CPIntervalVar, id: Int)
+class IQuad(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar],
+            demands: Array[CPIntVar], resources: Array[CPIntVar], capacity: CPIntVar, id: Int)
 extends Constraint(capacity.store, "IQuad") {
   val n = starts.size
   require(n == durations.size)
@@ -29,8 +29,8 @@ extends Constraint(capacity.store, "IQuad") {
 
   val l2r = new IQuadL2R(starts, durations, ends,  demands, resources, capacity, id)
   
-  val rs = starts.map(-_).asInstanceOf[Array[_ <: CPIntervalVar]]
-  val re = ends  .map(-_).asInstanceOf[Array[_ <: CPIntervalVar]]
+  val rs = starts.map(-_).asInstanceOf[Array[CPIntVar]]
+  val re = ends  .map(-_).asInstanceOf[Array[CPIntVar]]
   val r2l = new IQuadL2R(re, durations, rs,  demands, resources, capacity, id)
   
   
@@ -48,8 +48,8 @@ extends Constraint(capacity.store, "IQuad") {
 }
 
 
-class IQuadL2R(starts: Array[_ <: CPIntervalVar], durations: Array[_ <: CPIntervalVar], ends: Array[_ <: CPIntervalVar],
-            demands: Array[_ <: CPIntervalVar], resources: Array[CPIntVar], capacity: CPIntervalVar, id: Int)
+class IQuadL2R(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar],
+            demands: Array[CPIntVar], resources: Array[CPIntVar], capacity: CPIntVar, id: Int)
 extends Constraint(capacity.store, "IQuadL2R") {
   val n = starts.size
   require(n == durations.size)
@@ -64,7 +64,7 @@ extends Constraint(capacity.store, "IQuadL2R") {
   def setup(strength: CPPropagStrength): CPOutcome = {
     priorityL2 = 2
     
-    def boundsCB(v: CPIntervalVar)  = { if (!v.isBound) v.callPropagateWhenBoundsChange(this) }
+    def boundsCB(v: CPIntVar)  = { if (!v.isBound) v.callPropagateWhenBoundsChange(this) }
     
     def resourceCB(v: CPIntVar) = { if (!v.isBound) v.callPropagateWhenBind(this) }
     
@@ -324,7 +324,7 @@ extends Constraint(capacity.store, "IQuadL2R") {
 
 
 object IQuad {
-  def apply(s: Array[_ <: CPIntervalVar], d: Array[_ <: CPIntervalVar], e: Array[_ <: CPIntervalVar], dem: Array[_ <: CPIntervalVar], r: Array[CPIntVar], capacity: CPIntervalVar, id :Int): Constraint = {
+  def apply(s: Array[CPIntVar], d: Array[CPIntVar], e: Array[CPIntVar], dem: Array[CPIntVar], r: Array[CPIntVar], capacity: CPIntVar, id :Int): Constraint = {
     new IQuad(s, d, e, dem, r, capacity, id)
   }
 }

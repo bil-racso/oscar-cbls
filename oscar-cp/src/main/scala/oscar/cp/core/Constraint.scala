@@ -21,7 +21,6 @@ import scala.collection.mutable.ArrayBuffer
 import oscar.algo.reversible.MagicBoolean
 import oscar.cp.core.variables.CPSetVar
 import oscar.cp.core.variables.CPBoolVar
-import oscar.cp.core.variables.CPIntervalVar
 import oscar.cp.core.variables.CPIntVar
 
 
@@ -239,7 +238,7 @@ abstract class Constraint(val s: CPStore, val name: String = "cons") {
    * @param x has a new minimum and/or maximum value in its domain since last call
    * @return the outcome i.e. Failure, Success or Suspend
    */
-  def updateBounds(x: CPIntervalVar) = CPOutcome.Suspend
+  def updateBounds(x: CPIntVar) = CPOutcome.Suspend
 
   /**
    * Propagation method of Level L1 that is called if variable x has asked to do so
@@ -249,7 +248,7 @@ abstract class Constraint(val s: CPStore, val name: String = "cons") {
    *        This is typically used to retrieve the index of x in an array of variables in constant time
    * @return the outcome i.e. Failure, Success or Suspend
    */
-  def updateBoundsIdx(x: CPIntervalVar, idx: Int) = CPOutcome.Suspend
+  def updateBoundsIdx(x: CPIntVar, idx: Int) = CPOutcome.Suspend
 
   /**
    * Propagation method of Level L1 that is called if variable x has asked to do so
@@ -257,7 +256,7 @@ abstract class Constraint(val s: CPStore, val name: String = "cons") {
    * @param x is bind
    * @return the outcome i.e. Failure, Success or Suspend
    */
-  def valBind(x: CPIntervalVar) = CPOutcome.Suspend
+  def valBind(x: CPIntVar) = CPOutcome.Suspend
 
   /**
    * Propagation method of Level L1 that is called if variable x has asked to do so
@@ -267,7 +266,7 @@ abstract class Constraint(val s: CPStore, val name: String = "cons") {
    *        This is typically used to retrieve the index of x in an array of variables in constant time
    * @return the outcome i.e. Failure, Success or Suspend
    */
-  def valBindIdx(x: CPIntervalVar, idx: Int) = CPOutcome.Suspend
+  def valBindIdx(x: CPIntVar, idx: Int) = CPOutcome.Suspend
 
   /**
    * Propagation method of Level L1 that is called if variable x has asked to do so

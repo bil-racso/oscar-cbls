@@ -71,11 +71,11 @@ import oscar.cp.core.variables.CPIntVarViewOffset
 import oscar.cp.core.variables.CPIntVarViewTimes
 import oscar.cp.core.variables.CPIntVarImpl
 import oscar.cp.core.variables.CPIntVarViewMinus
-import oscar.cp.core.variables.CPIntervalVarImpl
-import oscar.cp.core.variables.CPIntervalVarViewOffset
-import oscar.cp.core.variables.CPIntervalVarViewMinus
-import oscar.cp.core.variables.CPIntervalVarViewTimes
-import oscar.cp.core.variables.CPIntervalVar
+import oscar.cp.core.variables.CPIntVarImpl
+import oscar.cp.core.variables.CPIntVarViewOffset
+import oscar.cp.core.variables.CPIntVarViewMinus
+import oscar.cp.core.variables.CPIntVarViewTimes
+import oscar.cp.core.variables.CPIntVar
 import oscar.cp._
 import oscar.cp.constraints.BinaryClause
 
@@ -98,30 +98,11 @@ trait Constraints {
   }
 
   /**
-   * @param d
-   * @return  a variable in the same store representing: x - d
-   */
-  def minus(x: CPIntervalVar, d: Int): CPIntervalVar = {
-    if (d == 0) x
-    else new CPIntervalVarViewOffset(x, -d)
-  }
-
-  /**
    * @param y a variable in the same store as x
    * @return a variable in the same store representing: x - y
    */
   def minus(x: CPIntVar, y: CPIntVar): CPIntVar = {
-    val c = CPIntVarImpl(x.store, x.min - y.max, x.max - y.min)
-    x.store.post(new oscar.cp.constraints.Minus(x, y, c))
-    c
-  }
-
-  /**
-   * @param y a variable in the same store as x
-   * @return a variable in the same store representing: x - y
-   */
-  def minus(x: CPIntervalVar, y: CPIntervalVar): CPIntervalVar = {
-    val c = CPIntervalVarImpl(x.store, x.min - y.max, x.max - y.min)
+    val c = CPIntVar(x.min - y.max, x.max - y.min)(x.store)
     x.store.post(new oscar.cp.constraints.Minus(x, y, c))
     c
   }
@@ -136,38 +117,13 @@ trait Constraints {
   }
 
   /**
-   * @param d
-   * @return  a variable in the same store representing: x + d
-   */
-  def plus(x: CPIntervalVar, d: Int): CPIntervalVar = {
-    if (d == 0) x
-    else new CPIntervalVarViewOffset(x, d)
-  }
-
-  /**
    * @param y
    * @return a variable in the same store representing: x + y
    */
   def plus(x: CPIntVar, y: CPIntVar): CPIntVar = {
-    if (y.isBound) {
-      plus(x, y.value)
-    } else {
-      val c = CPIntVarImpl(x.store, x.min + y.min, x.max + y.max)
-      val ok = x.store.post(new oscar.cp.constraints.BinarySum(x, y, c))
-      assert(ok != CPOutcome.Failure)
-      c
-    }
-  }
-
-  /**
-   * @param y
-   * @return a variable in the same store representing: x + y
-   */
-  def plus(x: CPIntervalVar, y: CPIntervalVar): CPIntervalVar = {
-    if (y.isBound) {
-      plus(x, y.value)
-    } else {
-      val c = CPIntervalVarImpl(x.store, x.min + y.min, x.max + y.max)
+    if (y.isBound) plus(x, y.value)
+    else {
+      val c = CPIntVar(x.min + y.min, x.max + y.max)(x.store)
       val ok = x.store.post(new oscar.cp.constraints.BinarySum(x, y, c))
       assert(ok != CPOutcome.Failure)
       c
@@ -182,9 +138,7 @@ trait Constraints {
     if (y == 0) CPIntVar(0)(x.store)
     else if (y == 1) x
     else if (y > 0) new CPIntVarViewTimes(x, y)
-    else {
-      new CPIntVarViewMinus(mul(x, -y))
-    }
+    else new CPIntVarViewMinus(mul(x, -y))
   }
 
   /**
@@ -198,33 +152,19 @@ trait Constraints {
     val d = y.max
     import oscar.cp.util.NumberUtils
     val t = Array(NumberUtils.safeMul(a, c), NumberUtils.safeMul(a, d), NumberUtils.safeMul(b, c), NumberUtils.safeMul(b, d));
-    val z = CPIntVarImpl(x.store, t.min, t.max)
+    val z = CPIntVar(t.min, t.max)(x.store)
     val ok = x.store.post(new oscar.cp.constraints.MulVar(x, y, z))
     assert(ok != CPOutcome.Failure);
     z
   }
 
-  /**
-   * @param c
-   * @return a variable in the same store representing: x * c
-   */
-  def mul(x: CPIntervalVar, y: Int): CPIntervalVar = {
-    if (y == 0) CPIntervalVar(0)(x.store)
-    else if (y == 1) x
-    else if (y > 0) new CPIntervalVarViewTimes(x, y) 
-    else {
-      new CPIntervalVarViewMinus(mul(x, -y))
-    }
-  }
-
-
-  // TODO: general case for multiplication by CPIntervalVar
+  // TODO: general case for multiplication by CPIntVar
   
   /**
    * @return a variable in the same store representing: |x|
    */
   def absolute(x: CPIntVar): CPIntVar = {
-    val c = CPIntVarImpl(x.store, 0, Math.max(Math.abs(x.min), Math.abs(x.max)));
+    val c = CPIntVar(0, Math.max(Math.abs(x.min), Math.abs(x.max)))(x.store)
     val ok = x.store.post(new oscar.cp.constraints.Abs(x, c));
     assert(ok != CPOutcome.Failure);
     return c
@@ -320,11 +260,11 @@ trait Constraints {
    * @param vars an non empty array of variables
    * @return a constraint ensure that no value occurs more than once in vars
    */
-  //def allDifferent(vars: CPIntervalVar*): Constraint = {
+  //def allDifferent(vars: CPIntVar*): Constraint = {
   //  return allDifferent(vars: _*)
   //}
 
-  //def allDifferent(vars: Iterable[CPIntervalVar]): Constraint = {
+  //def allDifferent(vars: Iterable[CPIntVar]): Constraint = {
   //  return new AllDiffBC(vars.toArray)
   //}  
 
@@ -512,15 +452,7 @@ trait Constraints {
    * @param s a variable representing the sum of vars
    * @return a constraint enforcing vars(0)+vars(1)+...+vars(n) = s
    */
-  def sum(vars: Array[CPIntVar], s: CPIntVar): Constraint = sum(vars.asInstanceOf[Array[CPIntervalVar]], s)
-
-  /**
-   * Sum Constraint
-   * @param vars a non empty array of n variables
-   * @param s a variable representing the sum of vars
-   * @return a constraint enforcing vars(0)+vars(1)+...+vars(n) = s
-   */
-  def sum(vars: Array[CPIntervalVar], s: CPIntervalVar): Constraint = {
+  def sum(vars: Array[CPIntVar], s: CPIntVar): Constraint = {
     if (vars.length == 2) new BinarySum(vars(0), vars(1), s)
     else new Sum(vars, s)
   }
@@ -531,13 +463,6 @@ trait Constraints {
    * @return a variable representing vars(0)+vars(1)+...+vars(n)
    */
   def sum(vars: Iterable[CPIntVar]): CPIntVar = sum(vars.toArray)
-
-  /**
-   * Sum Constraint
-   * @param vars a non empty array of n variables
-   * @return a variable representing vars(0)+vars(1)+...+vars(n)
-   */
-  def sum(vars: Iterable[CPIntervalVar]): CPIntervalVar = sum(vars.toArray)
 
   /**
    * Sum Constraint
@@ -557,24 +482,6 @@ trait Constraints {
         max += vars(i).max
       }
       val s = CPIntVar(min, max)(vars(0).store)
-      vars(0).store.post(sum(vars, s))
-      s
-    }
-  }
-  
-  def sum(vars: Array[CPIntervalVar]): CPIntervalVar = {
-    if (vars.length == 0) sys.error("no variables")
-    if (vars.length == 1) vars(0)
-    else {
-      var min = 0
-      var max = 0
-      var i = vars.length
-      while (i > 0) {
-        i -= 1
-        min += vars(i).min
-        max += vars(i).max
-      }
-      val s = CPIntervalVar(min, max)(vars(0).store)
       vars(0).store.post(sum(vars, s))
       s
     }
@@ -638,7 +545,7 @@ trait Constraints {
    * @return y == sum(i)(w_i * x_i)
    */
   def weightedSum(w: Array[Int], x: Array[CPIntVar], y: CPIntVar): Constraint = {
-    new WeightedSum(w, x.map(_.asInstanceOf[CPIntervalVar]), y)
+    new WeightedSum(w, x.map(_.asInstanceOf[CPIntVar]), y)
   }
 
   /**
@@ -1073,7 +980,7 @@ trait Constraints {
    * @param f function mapping each element from indexes to a variable
    * @return a fresh variable z linked to vars by a constraint such that z is the maximum of all variables f(A) for all A in indexes
    */
-  def maximum[A](indexes: Iterable[A])(f: A => CPIntervalVar): CPIntervalVar = maximum(indexes map f)
+  def maximum[A](indexes: Iterable[A])(f: A => CPIntVar): CPIntVar = maximum(indexes map f)
 
   /**
    * Maximum Constraint
@@ -1081,20 +988,8 @@ trait Constraints {
    * @param m a variables representing the maximum of vars
    * @return a constraint ensuring that m is the maximum of variables in vars
    */
-  def maximum(vars: Array[_ <: CPIntervalVar], m: CPIntervalVar): Constraint = {
-    new Maximum(vars.asInstanceOf[Array[CPIntervalVar]], m)
-  }
-
-  /**
-   * Maximum Constraint
-   * @param vars an non empty array of variables
-   * @return a fresh variable z linked to vars by a constraint such that z is the maximum of all variables in vars
-   */
-  def maximum(vars: Array[CPIntervalVar]): CPIntervalVar = {
-    val cp = vars(0).store
-    val m = CPIntervalVar(vars.map(_.min).max, vars.map(_.max).max)(cp)
-    cp.add(maximum(vars, m))
-    m
+  def maximum(vars: Array[CPIntVar], m: CPIntVar): Constraint = {
+    new Maximum(vars.asInstanceOf[Array[CPIntVar]], m)
   }
 
   /**
@@ -1114,10 +1009,10 @@ trait Constraints {
    * @param vars an non empty array of variables
    * @return a fresh variable z linked to vars by a constraint such that z is the maximum of all variables in vars
    */
-  def maximum(vars: Iterable[CPIntervalVar]): CPIntervalVar = {
+  def maximum(vars: Iterable[CPIntVar]): CPIntVar = {
     val x = vars.toArray
     val cp = x(0).store
-    val m = CPIntervalVar(vars.map(_.min).max, vars.map(_.max).max)(cp)
+    val m = CPIntVar(vars.map(_.min).max, vars.map(_.max).max)(cp)
     cp.add(maximum(x, m))
     m
   }
@@ -1269,8 +1164,8 @@ trait Constraints {
   def diffn(x: Array[CPIntVar], dx: Array[CPIntVar], y: Array[CPIntVar], dy: Array[CPIntVar]): Iterable[Constraint] = {
     val endx = Array.tabulate(x.size)(i => x(i) + dx(i))
     val endy = Array.tabulate(y.size)(i => y(i) + dy(i))
-    val maxX: CPIntervalVar = maximum(endx)
-    val maxY: CPIntervalVar = maximum(endy)
+    val maxX: CPIntVar = maximum(endx)
+    val maxY: CPIntVar = maximum(endy)
     val capax = maxX - minimum(x)
     val capay = maxY - minimum(y)
     var cons = Vector[Constraint]()
@@ -1298,7 +1193,7 @@ trait Constraints {
    * @param ends the variables representing the completion time of the tasks, it is your responsibility to link starts, durations and ends such that start(i) + durations(i) = ends(i)
    * @param required tells if a task is scheduled on this resource or not, if not this task is not constrained
    */
-  def unaryResource(starts: Array[_ <: CPIntervalVar], durations: Array[_ <: CPIntervalVar], ends: Array[_ <: CPIntervalVar], required: Array[CPBoolVar]): UnaryResource = {
+  def unaryResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], required: Array[CPBoolVar]): UnaryResource = {
     new UnaryResource(starts, durations, ends, required)
   }
 
@@ -1310,7 +1205,7 @@ trait Constraints {
    * @param resources the variables representing the resource where the task is scheduled
    * @param id, the resource on which we want to constraint, tasks i such that resources(i) != id are not considered
    */
-  def unaryResource(starts: Array[_ <: CPIntervalVar], durations: Array[_ <: CPIntervalVar], ends: Array[_ <: CPIntervalVar], resources: Array[CPIntVar], id: Int) = {
+  def unaryResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], resources: Array[CPIntVar], id: Int) = {
     new UnaryResource(starts, durations, ends, resources, id)
   }
 
@@ -1320,7 +1215,7 @@ trait Constraints {
    * @param durations the variables representing the duration of the tasks
    * @param ends the variables representing the completion time of the tasks, it is your responsibility to link starts, durations and ends such that start(i) + durations(i) = ends(i)
    */
-  def unaryResource(starts: Array[_ <: CPIntervalVar], durations: Array[_ <: CPIntervalVar], ends: Array[_ <: CPIntervalVar]) = {
+  def unaryResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar]) = {
     val cp = starts(0).store
     new UnaryResource(starts, durations, ends, starts.map(s => CPBoolVar(true)(cp)))
   }
@@ -1375,7 +1270,7 @@ trait Constraints {
    * @param capacity the capacity of the resource
    * @param id, the resource on which we want to constraint the capacity (only tasks i with resources(i) = id are taken into account)
    */
-  def maxCumulativeResource(starts: Array[_ <: CPIntervalVar], durations: Array[_ <: CPIntervalVar], ends: Array[_ <: CPIntervalVar], demands: Array[_ <: CPIntervalVar], resources: Array[CPIntVar], capacity: CPIntervalVar, id: Int): Constraint = {
+  def maxCumulativeResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], demands: Array[CPIntVar], resources: Array[CPIntVar], capacity: CPIntVar, id: Int): Constraint = {
     MaxCumulative(starts, durations, ends, demands, resources, capacity, id)
   }
 
@@ -1387,7 +1282,7 @@ trait Constraints {
    * @param demands the variables representing how much each task consume of the resource
    * @param capacity the capacity of the resource
    */
-  def maxCumulativeResource(starts: Array[_ <: CPIntervalVar], durations: Array[_ <: CPIntervalVar], ends: Array[_ <: CPIntervalVar], demands: Array[_ <: CPIntervalVar], capacity: CPIntervalVar): Constraint = {
+  def maxCumulativeResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], demands: Array[CPIntVar], capacity: CPIntVar): Constraint = {
     val cp = starts(0).store
     val resources = Array.fill(starts.size)(CPIntVar(0)(cp))
     maxCumulativeResource(starts, durations, ends, demands, resources, capacity, 0)
@@ -1403,7 +1298,7 @@ trait Constraints {
    * @param capacity the capacity of the resource
    * @param id, the resource on which we want to constraint the capacity (only tasks i with resources(i) = id are taken into account)
    */
-  def minCumulativeResource(starts: Array[_ <: CPIntervalVar], durations: Array[_ <: CPIntervalVar], ends: Array[_ <: CPIntervalVar], demands: Array[_ <: CPIntervalVar], resources: Array[CPIntVar], capacity: CPIntervalVar, id: Int): Constraint = {
+  def minCumulativeResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], demands: Array[CPIntVar], resources: Array[CPIntVar], capacity: CPIntVar, id: Int): Constraint = {
     new SweepMinCumulative(starts, durations, ends, demands, resources, capacity, id)
   }
 
@@ -1415,7 +1310,7 @@ trait Constraints {
    * @param demands the variables representing how much each task consume of the resource
    * @param capacity the capacity of the resource
    */
-  def minCumulativeResource(starts: Array[_ <: CPIntervalVar], durations: Array[_ <: CPIntervalVar], ends: Array[_ <: CPIntervalVar], demands: Array[_ <: CPIntervalVar], capacity: CPIntervalVar): Constraint = {
+  def minCumulativeResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], demands: Array[CPIntVar], capacity: CPIntVar): Constraint = {
     val cp = starts(0).store
     val resources = Array.fill(starts.size)(CPIntVar(0)(cp))
     minCumulativeResource(starts, durations, ends, demands, resources, capacity, 0)

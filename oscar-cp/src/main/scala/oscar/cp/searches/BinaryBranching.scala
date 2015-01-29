@@ -26,7 +26,7 @@ import oscar.algo.reversible.ReversibleIntWithCache
  * @author Pierre Schaus pschaus@gmail.com
  * @author Renaud Hartert ren.hartert@gmail.com
  */
-abstract class AbstractBinaryBranching[X <: CPIntervalVar](variables: Array[X], varHeuris: (X => Int)) extends Branching {
+abstract class AbstractBinaryBranching(variables: Array[CPIntVar], varHeuris: (CPIntVar => Int)) extends Branching {
 
   val cp = variables(0).store
 
@@ -53,7 +53,7 @@ abstract class AbstractBinaryBranching[X <: CPIntervalVar](variables: Array[X], 
     true
   }
 
-  protected def nextVar(): X = {
+  protected def nextVar(): CPIntVar = {
     var i = nBounds.value
     var bestId = indexes(i)
     var bestVariable = variables(bestId)
@@ -83,7 +83,7 @@ abstract class AbstractBinaryBranching[X <: CPIntervalVar](variables: Array[X], 
  * You can specify your variable/value heuristics
  * author: Pierre Schaus pschaus@gmail.com
  */
-class BinaryBranching[X <: CPIntVar](vars: Array[X], varHeuris: (CPIntVar => Int), valHeuris: (CPIntVar => Int) = minVal) extends AbstractBinaryBranching(vars, varHeuris) {
+class BinaryBranching(vars: Array[CPIntVar], varHeuris: (CPIntVar => Int), valHeuris: (CPIntVar => Int) = minVal) extends AbstractBinaryBranching(vars, varHeuris) {
   final override def alternatives(): Seq[Alternative] = {
     val stop = allBounds()
     if (stop) noAlternative
@@ -139,7 +139,7 @@ class BinaryMaxDegreeBranching(x: Array[CPIntVar]) extends BinaryBranching(x, va
 /**
  * Binary search on the decision variables vars, splitting the domain at the selected value (left : <= value, right : > value)
  */
-class BinaryDomainSplitBranching[X <: CPIntervalVar](x: Array[X], varHeuris: (X => Int), valHeuris: (X => Int) = (x: X) => (x.min + x.max) / 2) extends AbstractBinaryBranching(x, varHeuris) {
+class BinaryDomainSplitBranching(x: Array[CPIntVar], varHeuris: (CPIntVar => Int), valHeuris: (CPIntVar => Int) = (x: CPIntVar) => (x.min + x.max) / 2) extends AbstractBinaryBranching(x, varHeuris) {
 
   override def alternatives(): Seq[Alternative] = {
     allBounds() match {

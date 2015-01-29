@@ -7,7 +7,6 @@ import scala.annotation.tailrec
 import java.lang.Math.max
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.variables.CPIntVar
-import oscar.cp.core.variables.CPIntervalVar
 import oscar.cp.core.Inconsistency
 
 /*
@@ -43,8 +42,8 @@ import oscar.cp.core.Inconsistency
  *  
  */
 
-final class OverloadCheckerExtended(starts: Array[_ <: CPIntervalVar], durations: Array[_ <: CPIntervalVar], ends: Array[_ <: CPIntervalVar],
-                         heights: Array[_ <: CPIntervalVar], resources: Array[CPIntVar], capacity: CPIntervalVar, id: Int)
+final class OverloadCheckerExtended(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar],
+                         heights: Array[CPIntVar], resources: Array[CPIntVar], capacity: CPIntVar, id: Int)
 extends CumulativeTemplate(starts, durations, ends, heights, resources, capacity, id, "OverloadCheckerExtended")
 {  
   priorityL2 = 2  
@@ -263,8 +262,8 @@ extends CumulativeTemplate(starts, durations, ends, heights, resources, capacity
 
 
 object OverloadCheckerExtended {
-  def apply(s: Array[_ <: CPIntervalVar], d: Array[_ <: CPIntervalVar], e: Array[_ <: CPIntervalVar],
-            h: Array[_ <: CPIntervalVar], r: Array[CPIntVar], capacity: CPIntervalVar, id: Int) = {
+  def apply(s: Array[CPIntVar], d: Array[CPIntVar], e: Array[CPIntVar],
+            h: Array[CPIntVar], r: Array[CPIntVar], capacity: CPIntVar, id: Int) = {
     new OverloadCheckerExtended(s, d, e, h, r, capacity, id)
   }
 }

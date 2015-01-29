@@ -60,8 +60,5 @@ object CPBoolVar {
 
   /** Creates a new CP Boolean Variable assigned to b */
   def apply(b: Boolean)(implicit store: CPStore): CPBoolVar = CPBoolVarImpl(store, b, "")
-
-  @deprecated("use apply(b: Boolean)(implicit store: CPStore) instead", "1.0")
-  def apply(cp: CPStore, b: Boolean): CPBoolVar = new CPBoolVarWrapper(CPIntVar(if (b) 1 else 0)(cp))
 }  
   

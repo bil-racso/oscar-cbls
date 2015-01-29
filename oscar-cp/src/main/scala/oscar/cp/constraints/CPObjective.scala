@@ -53,7 +53,7 @@ class CPObjective(val st: CPStore, val objs: CPObjectiveUnit*) extends Constrain
 
   /** The objective unit corresponding to objVar is set to the StrongTighten mode. All others 
    *  objective objects are set in the WeakTighten mode. */
-  def intensify(sol: CPSol, objVar: CPIntervalVar) {
+  def intensify(sol: CPSol, objVar: CPIntVar) {
     for (o <- objs) {
       o.best = sol(o.objVar)
       o.tightenMode = if (o.objVar == objVar) TightenType.StrongTighten else TightenType.WeakTighten

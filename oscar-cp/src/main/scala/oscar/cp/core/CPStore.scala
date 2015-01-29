@@ -30,7 +30,7 @@ import oscar.cp.core.CPOutcome.Success
 import oscar.cp.core.CPOutcome.Suspend
 import oscar.cp.core.variables.CPBoolVar
 import oscar.cp.core.variables.CPIntVar
-import oscar.cp.core.variables.CPIntervalVar
+import oscar.cp.core.variables.CPIntVar
 import oscar.cp.core.variables.CPSetVar
 import oscar.cp.core.watcher.PropagEventQueueVarSet
 import oscar.cp.core.watcher.PropagEventQueueVarInt
@@ -155,7 +155,7 @@ class CPStore( final val propagStrength: CPPropagStrength) extends SearchNode {
     }
   }
 
-  def notifRemoveL1(constraints: PropagEventQueueVarInt[CPIntVar], x: CPIntVar, v: Int) {
+  def notifRemoveL1(constraints: PropagEventQueueVarInt, x: CPIntVar, v: Int) {
     var q = constraints;
     while (q != null) {
       val c = q.cons
@@ -167,7 +167,7 @@ class CPStore( final val propagStrength: CPPropagStrength) extends SearchNode {
     }
   }
 
-  def notifyRemoveIdxL1(constraints: PropagEventQueueVarInt[CPIntVar], x: CPIntVar, v: Int) {
+  def notifyRemoveIdxL1(constraints: PropagEventQueueVarInt, x: CPIntVar, v: Int) {
     var q = constraints;
     while (q != null) {
       val c = q.cons
@@ -180,7 +180,7 @@ class CPStore( final val propagStrength: CPPropagStrength) extends SearchNode {
     }
   }
 
-  def notifyUpdateBoundsL1(constraints: PropagEventQueueVarInt[CPIntervalVar], x: CPIntervalVar) {
+  def notifyUpdateBoundsL1(constraints: PropagEventQueueVarInt, x: CPIntVar) {
     var q = constraints;
     while (q != null) {
       val c = q.cons
@@ -192,7 +192,7 @@ class CPStore( final val propagStrength: CPPropagStrength) extends SearchNode {
     }
   }
 
-  def notifyUpdateBoundsIdxL1(constraints: PropagEventQueueVarInt[CPIntervalVar], x: CPIntervalVar) {
+  def notifyUpdateBoundsIdxL1(constraints: PropagEventQueueVarInt, x: CPIntVar) {
     var q = constraints;
     while (q != null) {
       val c = q.cons
@@ -205,7 +205,7 @@ class CPStore( final val propagStrength: CPPropagStrength) extends SearchNode {
     }
   }
 
-  def notifyBindL1(constraints: PropagEventQueueVarInt[CPIntervalVar], x: CPIntervalVar) {
+  def notifyBindL1(constraints: PropagEventQueueVarInt, x: CPIntVar) {
     var q = constraints;
     while (q != null) {
       val c = q.cons
@@ -217,7 +217,7 @@ class CPStore( final val propagStrength: CPPropagStrength) extends SearchNode {
     }
   }
 
-  def notifyBindIdxL1(constraints: PropagEventQueueVarInt[CPIntervalVar], x: CPIntervalVar) {
+  def notifyBindIdxL1(constraints: PropagEventQueueVarInt, x: CPIntVar) {
     var q = constraints;
     while (q != null) {
       val c = q.cons

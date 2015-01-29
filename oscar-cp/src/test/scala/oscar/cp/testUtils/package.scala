@@ -17,7 +17,7 @@ package object testUtils {
   }
 
   /** An implicit class to provide test functionalities to CPIntVar */
-  implicit class CPIntervalVarTestOps(val variable: CPIntervalVar) extends AnyVal {
+  implicit class CPIntVarTestOps(val variable: CPIntVar) extends AnyVal {
 
     /** Asserts that `value` is contained in `intVar` */
     def shouldContain(value: Int): Unit = {
