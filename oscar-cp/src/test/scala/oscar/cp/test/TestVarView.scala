@@ -49,7 +49,7 @@ class TestVarView extends FunSuite with ShouldMatchers  {
           return CPOutcome.Suspend
         }
  
-        override def valBind(x: CPIntervalVar): CPOutcome = {
+        override def valBind(x: CPIntVar): CPOutcome = {
     	  val eq: Boolean = x==X
     	  eq should  equal(true)
           x.value should be(-2)  
@@ -57,7 +57,7 @@ class TestVarView extends FunSuite with ShouldMatchers  {
         }
 
         
-        override def updateBounds(x: CPIntervalVar): CPOutcome = {
+        override def updateBounds(x: CPIntVar): CPOutcome = {
     	  val eq: Boolean = x==X
     	  eq should  equal(true)
           return CPOutcome.Suspend
@@ -103,14 +103,14 @@ class TestVarView extends FunSuite with ShouldMatchers  {
           return CPOutcome.Suspend
         }
  
-        override def valBindIdx(x: CPIntervalVar,idx: Int): CPOutcome = {
+        override def valBindIdx(x: CPIntVar,idx: Int): CPOutcome = {
     	  val eq: Boolean = x==X
     	  eq should  equal(true)
           x.value should be(-2)  
           return CPOutcome.Suspend
         }
         
-        override def updateBoundsIdx(x: CPIntervalVar,idx: Int): CPOutcome = {
+        override def updateBoundsIdx(x: CPIntVar,idx: Int): CPOutcome = {
     	  val eq: Boolean = x==X
     	  eq should  equal(true)
           return CPOutcome.Suspend

@@ -98,7 +98,7 @@ class TestParetoConstraint extends FunSuite with ShouldMatchers  {
     
     val cp = CPSolver()
     val succ = Array.fill(nCities)(CPIntVar(Cities)(cp))
-    val totDists = for (o <- Objs) yield CPIntervalVar(0, distMatrices(o).flatten.sum)(cp)
+    val totDists = for (o <- Objs) yield CPIntVar(0, distMatrices(o).flatten.sum)(cp)
     
     cp.solve() subjectTo {
       cp.post(circuit(succ), Strong)

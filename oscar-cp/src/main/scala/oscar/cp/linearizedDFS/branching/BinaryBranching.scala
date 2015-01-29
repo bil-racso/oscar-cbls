@@ -10,7 +10,7 @@ import oscar.algo.search.Alternative
 /**
  * Created by saschavancauwelaert on 09/12/14.
  */
-class BinaryBranching[X <: CPIntVar](vars: Array[X], varHeuris: (CPIntVar => Int), valHeuris: (CPIntVar => Int) = minVal) extends AbstractBinaryBranching(vars,varHeuris) {
+class BinaryBranching(vars: Array[CPIntVar], varHeuris: (CPIntVar => Int), valHeuris: (CPIntVar => Int) = minVal) extends AbstractBinaryBranching(vars,varHeuris) {
 
   def alternatives(): Seq[Alternative] = {
     allBounds() match {

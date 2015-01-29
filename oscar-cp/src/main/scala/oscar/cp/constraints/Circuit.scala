@@ -20,7 +20,6 @@ import oscar.algo.reversible.ReversibleInt
 import oscar.cp.core.CPPropagStrength
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.variables.CPIntVar
-import oscar.cp.core.variables.CPIntervalVar
 import oscar.cp.core.Constraint
 
 
@@ -72,7 +71,7 @@ class Circuit(val succ: Array[CPIntVar], addPredModel: Boolean = true) extends C
   }
   
   
-  override def valBindIdx(x: CPIntervalVar, i: Int): CPOutcome = {
+  override def valBindIdx(x: CPIntVar, i: Int): CPOutcome = {
 		val j = x.min
 		// We have a new assigned path because of new edge i->j:
 		// o *-> i -> j *-> d

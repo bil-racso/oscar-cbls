@@ -19,7 +19,6 @@ import oscar.cp.core._
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.Constraint
 import oscar.cp.core.variables.CPIntVar
-import oscar.cp.core.variables.CPIntervalVar
 
 /**
  * Global Cardinality Constraint
@@ -68,7 +67,7 @@ class GCCFWC(val X: Array[CPIntVar], val minVal: Int, val low: Array[Int], val u
     outcome
   }
   
-  override def valBind(x:CPIntervalVar): CPOutcome = {
+  override def valBind(x:CPIntVar): CPOutcome = {
     val idx = x.min - minVal
     if (idx >= 0 && idx < low.size) {
       nbBound(idx).incr()

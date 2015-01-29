@@ -10,8 +10,6 @@ import oscar.cp.constraints.CPObjectiveUnitMinimize
 import oscar.cp.TightenType
 import oscar.cp.constraints.CPObjectiveGeometricMinimize
 import oscar.cp.constraints.CPObjectiveUnit
-import oscar.cp.constraints.CPObjectiveUnit
-import oscar.cp.core.variables.CPIntervalVar
 import oscar.cp.core.variables.CPIntVar
 
 class CPOptimizer(propagStrength: CPPropagStrength) extends CPStore(propagStrength) {
@@ -36,19 +34,19 @@ class CPOptimizer(propagStrength: CPPropagStrength) extends CPStore(propagStreng
     this
   }
 
-  def minimize(objective: CPIntervalVar): CPOptimizer = minimize(Seq(objective): _*)
+  def minimize(objective: CPIntVar): CPOptimizer = minimize(Seq(objective): _*)
   
-  def minimize(objectives: CPIntervalVar*): CPOptimizer = 
+  def minimize(objectives: CPIntVar*): CPOptimizer = 
     optimize(new CPObjective(this, objectives.map(new CPObjectiveUnitMinimize(_)): _*))
   
-  def minimize(objective: CPIntervalVar, ratio: Double): CPOptimizer = {
+  def minimize(objective: CPIntVar, ratio: Double): CPOptimizer = {
     val o = new CPObjectiveGeometricMinimize(objective, "GeometricMinimize", ratio): CPObjectiveUnit
     optimize(new CPObjective(this, Array(o)))
   }
   
-  def maximize(objective: CPIntervalVar): CPOptimizer = maximize(Seq(objective): _*)
+  def maximize(objective: CPIntVar): CPOptimizer = maximize(Seq(objective): _*)
 
-  def maximize(objectives: CPIntervalVar*): CPOptimizer = 
+  def maximize(objectives: CPIntVar*): CPOptimizer = 
     optimize(new CPObjective(this, objectives.map(new CPObjectiveUnitMaximize(_)): _*))
   
   def paretoMinimize(objective: CPIntVar): CPOptimizer = paretoOptimize((objective, false))  

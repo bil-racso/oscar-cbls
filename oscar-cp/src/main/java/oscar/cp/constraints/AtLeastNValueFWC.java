@@ -19,7 +19,6 @@ import oscar.algo.reversible.ReversibleInt;
 import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
 import oscar.cp.core.variables.CPIntVar;
-import oscar.cp.core.variables.CPIntervalVar;
 import oscar.cp.core.Constraint;
 
 /**
@@ -102,7 +101,7 @@ public class AtLeastNValueFWC extends Constraint {
 	}
 	
 	@Override
-	public CPOutcome valBindIdx(CPIntervalVar var, int idx) {
+	public CPOutcome valBindIdx(CPIntVar var, int idx) {
 		
 		int val = var.min();
 		nbBound.incr();

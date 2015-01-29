@@ -20,9 +20,8 @@ import oscar.cp.core.CPOutcome._
 import oscar.cp.core.Constraint
 import oscar.cp.core.CPPropagStrength
 import oscar.cp.multiobjective.Pareto
-import oscar.cp.core.variables.CPIntervalVar
 
-class ParetoConstraint[Sol](pareto: Pareto[Sol], isMax: Array[Boolean], objVars: Array[CPIntervalVar]) extends Constraint(objVars.head.store, "Gavanelli02 Dominance") {
+class ParetoConstraint[Sol](pareto: Pareto[Sol], isMax: Array[Boolean], objVars: Array[CPIntVar]) extends Constraint(objVars.head.store, "Gavanelli02 Dominance") {
 
   // Simplifies code understanding
   type Point = IndexedSeq[Int]
@@ -99,5 +98,5 @@ class ParetoConstraint[Sol](pareto: Pareto[Sol], isMax: Array[Boolean], objVars:
 }
 
 object ParetoConstraint {  
-  def apply[Sol](pareto: Pareto[Sol], isMax: Array[Boolean], objs: Array[CPIntervalVar]): ParetoConstraint[Sol] = new ParetoConstraint(pareto, isMax, objs)
+  def apply[Sol](pareto: Pareto[Sol], isMax: Array[Boolean], objs: Array[CPIntVar]): ParetoConstraint[Sol] = new ParetoConstraint(pareto, isMax, objs)
 }

@@ -14,13 +14,13 @@ object RCPSP extends CPModel with App {
 
   solver.silent = true
 
-  val durations = Array.tabulate(nTasks)(t => CPIntervalVar(durationsData(t)))
-  val starts = Array.tabulate(nTasks)(t => CPIntervalVar(0, horizon - durations(t).min))
+  val durations = Array.tabulate(nTasks)(t => CPIntVar(durationsData(t)))
+  val starts = Array.tabulate(nTasks)(t => CPIntVar(0, horizon - durations(t).min))
   val ends = Array.tabulate(nTasks)(t => starts(t) + durationsData(t))
-  val demands = Array.tabulate(nTasks)(t => CPIntervalVar(demandsData(t)))
+  val demands = Array.tabulate(nTasks)(t => CPIntVar(demandsData(t)))
   val makespan = maximum(ends)
   
-  add(maxCumulativeResource(starts, durations, ends, demands, CPIntervalVar(capa)), Weak)
+  add(maxCumulativeResource(starts, durations, ends, demands, CPIntVar(capa)), Weak)
   
   minimize(makespan) 
   

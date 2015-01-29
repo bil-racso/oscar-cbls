@@ -1,22 +1,23 @@
-/*******************************************************************************
+/**
+ * *****************************************************************************
  * OscaR is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- *   
+ *
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License  for more details.
- *   
+ *
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
- ******************************************************************************/
+ * ****************************************************************************
+ */
 
 package oscar
 
 import oscar.cp.core.variables.CPIntVarViewMinus
-import oscar.cp.core.variables.CPIntervalVarViewMinus
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.CPPropagStrength
 import oscar.cp.core.CPSol
@@ -26,11 +27,12 @@ import oscar.algo.search.Branching
 import oscar.algo.search.SearchNode
 import oscar.algo.search.SearchStatistics
 import oscar.util.selectMin
-import oscar.cp.core.variables.CPBoolVarWrapper
 import oscar.cp.core.variables.CPBoolVarImpl
 import oscar.cp.modeling.ElementBuilder
 import oscar.cp.modeling.CPSolverUtils
 import oscar.cp.modeling.LNSRelaxations
+import oscar.cp.constraints.InSet
+import oscar.cp.constraints.ModuloLHS
 
 /**
  * The `cp` package provides useful functionnalities to model problem using
@@ -60,8 +62,8 @@ package object cp extends Constraints with Branchings with ElementBuilder with C
   type CPIntVar = oscar.cp.core.variables.CPIntVar
   final val CPIntVar = oscar.cp.core.variables.CPIntVar
 
-  type CPIntervalVar = oscar.cp.core.variables.CPIntervalVar
-  final val CPIntervalVar = oscar.cp.core.variables.CPIntervalVar
+  //type CPIntervalVar = oscar.cp.core.variables.CPIntervalVar
+  //final val CPIntervalVar = oscar.cp.core.variables.CPIntervalVar
 
   type CPBoolVar = oscar.cp.core.variables.CPBoolVar
   final val CPBoolVar = oscar.cp.core.variables.CPBoolVar
@@ -155,6 +157,15 @@ package object cp extends Constraints with Branchings with ElementBuilder with C
     }
 
     /**
+     *  Returns the value assigned to the variable.
+     *  Throws an Exception if the variable is not assigned.
+     */
+    def value: Int = {
+      if (x.isBound) x.min
+      else throw new NoSuchElementException("the variable is not bound")
+    }
+
+    /**
      * -x
      */
     def unary_-() = new CPIntVarViewMinus(x)
@@ -203,6 +214,108 @@ package object cp extends Constraints with Branchings with ElementBuilder with C
       b
     }
 
+    /**
+     * x must take a value from set
+     */
+    def in(set: Set[Int]): Constraint = new InSet(x, set)
+
+    /**
+     * x<y
+     */
+    def <(y: CPIntVar) = new oscar.cp.constraints.Le(x, y)
+    /**
+     * x<y
+     */
+    def <(y: Int) = new oscar.cp.constraints.Le(x, y)
+    /**
+     * x>y
+     */
+    def >(y: CPIntVar) = new oscar.cp.constraints.Gr(x, y)
+    /**
+     * x>y
+     */
+    def >(y: Int) = new oscar.cp.constraints.Gr(x, y)
+    /**
+     * x<=y
+     */
+    def <=(y: CPIntVar) = new oscar.cp.constraints.LeEq(x, y)
+    /**
+     * x<=y
+     */
+    def <=(y: Int) = new oscar.cp.constraints.LeEq(x, y)
+    /**
+     * x>=y
+     */
+    def >=(y: CPIntVar) = new oscar.cp.constraints.GrEq(x, y)
+    /**
+     * x>=y
+     */
+    def >=(y: Int) = new oscar.cp.constraints.GrEq(x, y)
+
+    /**
+     * b <=> x == v
+     */
+    def ===(v: Int) = x.isEq(v)
+
+    /**
+     * b <=> x == y
+     */
+    def ===(y: CPIntVar) = x.isEq(y)
+
+    /**
+     * b <=> x!= y
+     */
+    def !==(y: CPIntVar) = x.isDiff(y)
+
+    /**
+     * b <=> x!= y
+     */
+    def !==(y: Int) = x.isDiff(y)
+
+    /**
+     * b <=> x >= y
+     */
+    def >==(y: Int) = x.isGrEq(y)
+
+    /**
+     * b <=> x >= y
+     */
+    def >==(y: CPIntVar) = x.isGrEq(y)
+
+    /**
+     * b <=> x > y
+     */
+    def >>=(y: Int) = x.isGrEq(y + 1)
+
+    /**
+     * b <=> x > y
+     */
+    def >>=(y: CPIntVar) = {
+      val z = y + 1
+      x.isGrEq(z)
+    }
+
+    /**
+     * b <=> x >= y
+     */
+    def <==(y: Int) = x.isLeEq(y)
+
+    /**
+     * b <=> x >= y
+     */
+    def <==(y: CPIntVar) = y >== x
+
+    /**
+     * b <=> x > y
+     */
+    def <<=(y: Int) = x <== (y - 1)
+
+    /**
+     * b <=> x > y
+     */
+    def <<=(y: CPIntVar) = x <== (y - 1)
+
+    def %(y: Int) = ModuloLHS(x, y)
   }
 
   implicit class CPBoolVarOps(val variable: CPBoolVar) extends AnyVal {
@@ -245,7 +358,7 @@ package object cp extends Constraints with Branchings with ElementBuilder with C
     def ==>(y: CPBoolVar) = implies(y)
   }
 
-  implicit class CPIntervalVarOps(x: CPIntervalVar) {
+  /*implicit class CPIntervalVarOps(x: CPIntervalVar) {
 
     /**
      *  Returns the value assigned to the variable.
@@ -360,19 +473,18 @@ package object cp extends Constraints with Branchings with ElementBuilder with C
      */
     def >=(y: Int) = new oscar.cp.constraints.GrEq(x, y)
 
-  }
+  }*/
 
   def allBounds(vars: Iterable[_ <: CPIntVar]) = vars.asInstanceOf[Iterable[CPIntVar]].forall(_.isBound)
 
   // helper functions to define searches
 
-  def minDom(x: CPIntervalVar): Int = x.size
-  def minRegret(x: CPIntervalVar): Int = x.max - x.min
-  def minDomMaxDegree(x: CPIntervalVar): (Int, Int) = (x.size, -x.constraintDegree)
-  def minVar(x: CPIntervalVar): Int = 1
-  def maxDegree(x: CPIntervalVar): Int = -x.constraintDegree
-
-  def minVal(x: CPIntervalVar): Int = x.min
-  def maxVal(x: CPIntervalVar): Int = x.max
-  def minValminVal(x: CPIntervalVar): (Int, Int) = (x.min, x.min)
+  def minDom(x: CPIntVar): Int = x.size
+  def minRegret(x: CPIntVar): Int = x.max - x.min
+  def minDomMaxDegree(x: CPIntVar): (Int, Int) = (x.size, -x.constraintDegree)
+  def minVar(x: CPIntVar): Int = 1
+  def maxDegree(x: CPIntVar): Int = -x.constraintDegree
+  def minVal(x: CPIntVar): Int = x.min
+  def maxVal(x: CPIntVar): Int = x.max
+  def minValminVal(x: CPIntVar): (Int, Int) = (x.min, x.min)
 }

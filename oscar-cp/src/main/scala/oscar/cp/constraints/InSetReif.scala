@@ -19,7 +19,6 @@ import oscar.algo.reversible._
 import oscar.cp.core.CPOutcome._
 import oscar.cp.core.variables.CPIntVar
 import oscar.cp.core.variables.CPBoolVar
-import oscar.cp.core.variables.CPIntervalVar
 
 /**
  * x must be a value of the set
@@ -78,7 +77,7 @@ class InSetReif(val x: CPIntVar, val set: Set[Int], val b: CPBoolVar) extends Co
     }
   }  
   
-  override def valBind(variable: CPIntervalVar): CPOutcome = {
+  override def valBind(variable: CPIntVar): CPOutcome = {
     if (b.isTrue) {
       for (v <- x.toSet if !set.contains(v)) {
         if (x.removeValue(v) == Failure) {

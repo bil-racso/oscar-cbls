@@ -8,7 +8,7 @@ import oscar.cp.core.CPStore
 class CPIntVarAdaptableSuite extends TestSuite {
 
   // Returns true if the domain contains all the values between min and max
-  private def containsAll(variable: CPIntervalVar): Boolean = {
+  private def containsAll(variable: CPIntVar): Boolean = {
     val min = variable.min
     val max = variable.max
     (min to max).forall(variable.hasValue)
