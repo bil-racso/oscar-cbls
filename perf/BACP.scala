@@ -43,7 +43,7 @@ import oscar.visual._
 object BACP {
   def main(args: Array[String]) {
   
-    val lines = Source.fromFile("../data/bacp/instances12/inst3.txt").getLines.reduceLeft(_ + " " + _)
+    val lines = Source.fromFile("../data/bacp/instances12/inst4.txt").getLines.reduceLeft(_ + " " + _)
     val vals = lines.split("[ ,\t]").toList.filterNot(_ == "").map(_.toInt)
     var index = 0
     def next() = {
@@ -62,22 +62,23 @@ object BACP {
     val prerequisites = Array.fill(nbPre)((next(), next()))
 
     val cp = CPSolver()
-    var x = Array.fill(nbCourses)(CPIntVar(cp,periods))
-    val l = Array.fill(nbPeriods)(CPIntVar(cp,0 to credits.sum))
-    val vari = CPIntVar(cp,0 to 10000000)
+    cp.silent = true
+    var x = Array.fill(nbCourses)(CPIntVar(cp, periods))
+    val l = Array.fill(nbPeriods)(CPIntVar(cp, 0 to credits.sum))
+    val vari = CPIntVar(cp, 0 to 10000000)
 
+    cp.add(spread(l, credits.sum, vari))
+    cp.add(binPacking(x, credits, l), Strong)
+    for ((i, j) <- prerequisites) {
+      cp.add(x(i) < x(j)) // precedence constraint
+    }
+    cp.add(gcc(x, periods, 5, 6), Strong)
 
-
-    cp.minimize(maximum(l)) subjectTo {
-        cp.add(spread(l,credits.sum, vari))
-        cp.add(binPacking(x, credits, l),Strong)
-        for ((i,j) <- prerequisites) {
-          cp.add(x(i) < x(j)) // precedence constraint
-        }
-        cp.add(gcc(x,periods,5,7),Strong)
-    } search {
-        binaryFirstFail(x,x => selectMin(periods)(x.hasValue(_))(l(_).min).get)
-    } start()
+    cp.minimize(maximum(l))
+    cp.search {
+      binaryFirstFail(x, x => selectMin(periods)(x.hasValue(_))(l(_).min).get)
+    }
+    println(cp.start())
     
   }
 
