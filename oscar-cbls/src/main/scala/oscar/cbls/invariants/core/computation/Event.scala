@@ -133,7 +133,7 @@ class Event(v:Value, w:Variable, ModifiedVars:Iterable[Variable]) extends Invari
   }
   def setIntAction(action: Int=>Unit){
     this.actionIntParam = action
-    oldIntv = v.asInstanceOf[CBLSIntVar].value
+    oldIntv = v.asInstanceOf[IntValue].value
   }
   def setIntSetAction(action: SortedSet[Int] => Unit){
     this.actionIntSetParam = action
@@ -199,7 +199,7 @@ class Event(v:Value, w:Variable, ModifiedVars:Iterable[Variable]) extends Invari
     //updating internal vars
 
     if (actionIntParam!= null){
-      oldIntv = v.asInstanceOf[CBLSIntVar].value
+      oldIntv = v.asInstanceOf[IntValue].value
     }
     if (actionIntSetParam != null){
       oldIntSetv = v.asInstanceOf[CBLSSetVar].value

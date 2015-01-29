@@ -22,7 +22,7 @@
 package oscar.cbls.invariants.core.computation
 
 import oscar.cbls.invariants.core.propagation.{Checker, PropagationElement}
-
+import scala.collection.mutable.{Map => MMap}
 import scala.language.implicitConversions
 
 /** this is something that has an integer value.
@@ -257,9 +257,18 @@ class CBLSIntConst(override val value:Int)
 
 
 object CBLSIntConst{
-  implicit def int2IntValue(a: Int): IntValue = new CBLSIntConst(a)
-  implicit def int2IntConst(a: Int): CBLSIntConst = new CBLSIntConst(a)
-  def apply(a:Int) = new CBLSIntConst(a)
+  implicit def int2IntValue(a: Int): IntValue = apply(a)
+  implicit def int2IntConst(a: Int): CBLSIntConst = apply(a)
+  //def apply(a:Int) = new CBLSIntConst(a)
+  val constMap = MMap.empty[Int,CBLSIntConst]
+  def apply(a:Int) = {
+    if(constMap.contains(a))constMap(a)
+    else{
+      val res = new CBLSIntConst(a)
+      constMap(a) = res
+      res
+    }
+  }
 }
 
 /** this is a special case of invariant that has a single output variable, that is an IntVar

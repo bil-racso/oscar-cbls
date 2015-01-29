@@ -495,6 +495,7 @@ object InvariantHelper{
     i.foreach(e => {
       e match{
         case pe:AbstractVariable if pe.model != null => return pe.model
+        //case _ => //otherwise skip to the next
       }
     })
     null

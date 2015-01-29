@@ -49,7 +49,8 @@ class FZCBLSImplicitConstraints(val cblsmodel:FZCBLSModel) {
     
   def tryAllDiff(xs: Array[Variable]):Boolean = {
       if(allOK(xs)){
-        cblsmodel.addNeighbourhood(new AllDifferent(xs.map(cblsmodel.getCBLSVarDom(_)), cblsmodel.objective(), cblsmodel.c))
+        val vars = xs.map(cblsmodel.getCBLSVarDom(_))
+        cblsmodel.addNeighbourhood((o,c) => new AllDifferent(vars, o,c),vars)
         true
       }else false
     }
@@ -61,7 +62,8 @@ class FZCBLSImplicitConstraints(val cblsmodel:FZCBLSModel) {
         for(i <- 0 until xs.length){
           RelaxAndEnsureDomain(cblsmodel.getCBLSVarDom(xs(i)),1,xs.length,cblsmodel.c)
         }
-        cblsmodel.addNeighbourhood(new ThreeOpt(xs.map(cblsmodel.getCBLSVarDom(_)),cblsmodel.objective(), cblsmodel.c,1))
+        val vars = xs.map(cblsmodel.getCBLSVarDom(_))
+        cblsmodel.addNeighbourhood((o,c) => new ThreeOpt(vars,o,c,1),vars)
         true
       }else{
         false
@@ -74,7 +76,8 @@ class FZCBLSImplicitConstraints(val cblsmodel:FZCBLSModel) {
         for(i <- 0 until xs.length){
           RelaxAndEnsureDomain(cblsmodel.getCBLSVarDom(xs(i)),1,xs.length,cblsmodel.c)
         }
-        cblsmodel.addNeighbourhood(new ThreeOptSub(xs.map(cblsmodel.getCBLSVarDom(_)),cblsmodel.objective(), cblsmodel.c,1))
+        val vars = xs.map(cblsmodel.getCBLSVarDom(_))
+        cblsmodel.addNeighbourhood((o,c) => new ThreeOptSub(vars,o,c,1),vars)
         true
       }else{
         println("BOF")
@@ -86,7 +89,8 @@ class FZCBLSImplicitConstraints(val cblsmodel:FZCBLSModel) {
     
     def tryGCC(xs: Array[Variable],vals: Array[Variable], cnts: Array[Variable],closed: Boolean):Boolean ={
       if (allOK(xs) && cnts.forall(c => c.min==c.max)){//Only for fixed count variables for now
-        cblsmodel.addNeighbourhood(new GCCNeighborhood(xs.map(cblsmodel.getCBLSVarDom(_)),vals.map(_.min),cnts.map(_.min),cnts.map(_.max),closed,cblsmodel.objective(),cblsmodel.c))
+        val vars = xs.map(cblsmodel.getCBLSVarDom(_))
+        cblsmodel.addNeighbourhood((o,c) => new GCCNeighborhood(vars,vals.map(_.min),cnts.map(_.min),cnts.map(_.max),closed,o,c),vars)
         true
       }else{
         false
@@ -94,7 +98,8 @@ class FZCBLSImplicitConstraints(val cblsmodel:FZCBLSModel) {
     }
     def tryGCClu(xs: Array[Variable],vals: Array[Variable], low: Array[Variable],up: Array[Variable],closed: Boolean):Boolean ={
       if (allOK(xs)){
-        cblsmodel.addNeighbourhood(new GCCNeighborhood(xs.map(cblsmodel.getCBLSVarDom(_)),vals.map(_.min),low.map(_.min),up.map(_.max),closed,cblsmodel.objective(),cblsmodel.c))
+        val vars = xs.map(cblsmodel.getCBLSVarDom(_))
+        cblsmodel.addNeighbourhood((o,c) => new GCCNeighborhood(vars,vals.map(_.min),low.map(_.min),up.map(_.max),closed,o,c),vars)
         true
       }else{
         false
@@ -102,7 +107,8 @@ class FZCBLSImplicitConstraints(val cblsmodel:FZCBLSModel) {
     }
   def trySum(xs: Array[Variable], coeffs: Array[Variable],sum:Variable): Boolean = {
       if (allOK(xs) && coeffs.forall(x => x.min == 1 || x.min == -1)) {
-        cblsmodel.addNeighbourhood(new SumNeighborhood(xs.map(cblsmodel.getCBLSVarDom(_)),coeffs.map(_.min),sum.min,cblsmodel.objective(),cblsmodel.c))
+        val vars = xs.map(cblsmodel.getCBLSVarDom(_))
+        cblsmodel.addNeighbourhood((o,c) => new SumNeighborhood(vars,coeffs.map(_.min),sum.min,o,c),vars)
         true
       }else{
         false

@@ -46,9 +46,9 @@ case class ConstraintSystem(val model:Store) extends AbstractConstraintSystem(mo
   override def value: Int = Violation.value
 }
 
-case class Disjunction(_model:Store) extends AbstractConstraintSystem(_model, v => MinArray(v.toArray));
+case class Disjunction(model:Store) extends AbstractConstraintSystem(model, v => MinArray(v.toArray));
 
-case class Conjunction(_model:Store) extends AbstractConstraintSystem(_model, v => MaxArray(v.toArray));
+case class Conjunction(model:Store) extends AbstractConstraintSystem(model, v => MaxArray(v.toArray));
 
 class AbstractConstraintSystem(model:Store, Aggregate: (Iterable[IntValue] => IntInvariant)) extends Constraint {
   //ConstraintSystems do not act as invariant because everything is subcontracted.
@@ -157,7 +157,10 @@ class AbstractConstraintSystem(model:Store, Aggregate: (Iterable[IntValue] => In
         if(constraintANDintvar._2 == null) constraintANDintvar._1.violation
         else Prod(List(constraintANDintvar._1.violation,constraintANDintvar._2))
       })).setName("violation")
-
+      if(Violation.model==null){
+        assert(PostedConstraints.size==0,"Null model but has constraints")
+        Violation.model = model
+      }
       model.registerForPartialPropagation(Violation)
 
       aggregateLocalViolations()

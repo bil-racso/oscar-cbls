@@ -147,43 +147,29 @@ case class IntElement(index: IntValue, inputarray: Array[IntValue])
  * @author jean-noel.monette@it.uu.se
  * */
 case class IntElementNoVar(index: IntValue, inputarray: Array[Int])
-  extends IntInvariant {
+  extends IntInvariant(initialValue = inputarray(index.value),DomainRange(inputarray.min,inputarray.max)) {
 
-  var output: CBLSIntVar = null
-
-  registerStaticDependency(index)
-
-  val myMin = inputarray.min
-  val myMax = inputarray.max
-
-
+  registerStaticAndDynamicDependency(index)
   finishInitialization()
-
-  /*override def setOutputVar(v: CBLSIntVar) {
-    v.minVal = myMin;
-    v.maxVal = myMax;
-    output = v
-    output.setDefiningInvariant(this)
-    output := inputarray(index.value)
-  }*/
 
   @inline
   override def notifyIntChanged(v: ChangingIntValue, OldVal: Int, NewVal: Int) {
-    output := inputarray(NewVal)
+   // println(OldVal + " "+ NewVal)
+    this := inputarray(NewVal)
   }
 
   override def checkInternals(c: Checker) {
-    c.check(output.value == inputarray(index.value),
-      Some("output.value (" + output.value + ") == inputarray(index.value ("
+    c.check(this.value == inputarray(index.value),
+      Some("output.value (" + this.value + ") == inputarray(index.value ("
         + index.value + ")) (" + inputarray(index.value) + ")"))
   }
 
   override def toString: String = {
     val inputs = inputarray.toList
     if(inputs.length > 4){
-      "Array(" +inputs.take(4).map(_.toString).mkString(",") + ", ...)"+ "[" + index.toString + "]"
+      "Array(" +inputs.take(4).map(_.toString).mkString(",") + ", ...)"+ "[" + index.toString + "] = " + this.value
     }else{
-      "Array(" +inputs.map(_.toString).mkString(",") + ", ...)"+ "[" + index.toString + "]"
+      "Array(" +inputs.map(_.toString).mkString(",") + ", ...)"+ "[" + index.toString + "] = " + this.value
     }
   }
 }

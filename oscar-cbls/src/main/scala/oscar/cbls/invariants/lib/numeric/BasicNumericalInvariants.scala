@@ -110,9 +110,10 @@ class Prod(vars: Iterable[IntValue]) extends IntInvariant {
     this := NonNullProd
   }
 
-  //TODO: find better bound, this is far too much
+  //TODO: find better bound, this is far too much??
   restrictDomain({
-    val myMax = vars.foldLeft(1)((acc, intvar) => acc * (if (math.abs(intvar.max) > math.abs(intvar.min)) math.abs(intvar.max) else math.abs(intvar.min)))
+    val (myMin,myMax) = vars.foldLeft((1,1))((acc, intvar) => (DomainHelper2.getMinProd(acc._1, acc._2, intvar.min, intvar.max),
+                                                               DomainHelper2.getMaxProd(acc._1, acc._2, intvar.min, intvar.max)))
     -myMax to myMax})
 
   @inline

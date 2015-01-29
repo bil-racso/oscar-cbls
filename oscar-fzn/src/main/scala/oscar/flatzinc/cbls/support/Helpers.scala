@@ -78,7 +78,8 @@ class CBLSIntVarDom(model: Store,Value: Int,  val dom: Domain, n: String = null)
 
 
 //TODO: Should not extend it anymore!
-class CBLSIntConstDom(value:Int) extends CBLSIntVarDom(null,value,DomainRange(value,value),value.toString())
+//Need the store while it extends CBLSIntVar, as sometimes it is requested (e.g., to find the Model in some invariants)
+class CBLSIntConstDom(model:Store,value:Int) extends CBLSIntVarDom(model,value,DomainRange(value,value),value.toString())
 /*  extends CBLSIntConst(value) with IntValueDom{
   override def inDomain(v:Int): Boolean = v==value 
   override def getDomain():Iterable[Int] = List(value)
@@ -93,32 +94,6 @@ object CBLSIntVarDom {
   }
 }
 
-
-
-//TODO: Move the ValueTracker somewhere else and reuse what Renaud did.
-class ValueTracker(v: CBLSIntVarDom, c:ConstraintSystem) {
-    val initialMin = v.min;
-    val initialMax = v.max;
-    val weight = CBLSIntConst(10);//why 10?
-    def update(force: Boolean  = false) = {
-      //TODO: Maybe we should post this in all cases because not all invariants properly modify the domain of the output var.
-      //Todo:Take into account non-range domains.
-      if (force || v.min < initialMin) {
-       // println("%% Needed to constrain the output domain of an invariant");
-       // println(v + " " +v.getDomain() + " " + v.domain + " m " + initialMin)
-        c.add(GE(v, initialMin),weight)
-      }
-      if (force || v.max > initialMax) {
-       // println("%% Needed to constrain the output domain of an invariant");
-       // println(v + " " +v.getDomain()+ " " + v.domain + " M " + initialMax+" " + v.maxVal)
-        c.add(LE(v, initialMax),weight)
-      }
-      if(force || v.dom.isInstanceOf[DomainSet]){
-        val setVar = CBLSSetConst(v.dom.toSortedSet);
-        c.add(BelongsTo(v,setVar));
-      }
-    }
-  }
 object EnsureDomain{
   val weight = CBLSIntConst(10);
   def apply(i:IntValue,d: Domain,c: ConstraintSystem) = {

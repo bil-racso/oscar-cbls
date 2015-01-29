@@ -77,6 +77,7 @@ abstract class Constraint{
   def registerConstrainedVariable(v: Value){
     v match{
       case c:AbstractVariable if (c.model != null) => _constrainedVariables = c :: constrainedVariables
+      case _ => //nothing to do otherwise 
     }   //TODO unsure if constraints can handle constraints as input parameter...
   }
 

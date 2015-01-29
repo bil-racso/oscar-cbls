@@ -65,6 +65,7 @@ class IntInt2Int(a:IntValue, b:IntValue, fun:((Int, Int) => Int), domain:Domain 
 
   @inline
   override def notifyIntChanged(v: ChangingIntValue, OldVal: Int, NewVal: Int) {
+    //println(v+ " <- "+ OldVal)
     this := fun(a.value,b.value)
   }
 
