@@ -304,8 +304,6 @@ object Invariant{
 
 trait VaryingDependenciesInvariant extends Invariant with VaryingDependencies{
 
-
-
   /**register to determining element. It must be in the static dependency graph*/
   def registerDeterminingDependency(v:Value,i:Any = -1){
     registerDeterminingElement(v,i)
@@ -361,7 +359,7 @@ trait Invariant extends PropagationElement{
   /**Must be called by all invariant after they complete their initialization
     * that is: before they get their output variable.
     * This performs some registration to the model, which is discovered by exploring the variables that are statically registered to the model
-    * no more variable can be registered statically after this method has been called.
+    * no more variable can be registered statically after this method has been called unless you provide the model in the parameter.
     * @param model; if specified, it only checks that the model is coherent, and registers to it for the ordering
     */
   final def finishInitialization(model:Store = null){

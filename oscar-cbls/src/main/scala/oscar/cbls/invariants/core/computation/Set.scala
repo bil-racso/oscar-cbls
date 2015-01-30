@@ -26,7 +26,7 @@ import oscar.cbls.invariants.core.propagation.{Checker, PropagationElement}
 import scala.collection.immutable.SortedSet
 import scala.language.implicitConversions
 
-trait SetValue extends Value{
+sealed trait SetValue extends Value{
   def value: SortedSet[Int]
   def domain:Domain
   def min = domain.min

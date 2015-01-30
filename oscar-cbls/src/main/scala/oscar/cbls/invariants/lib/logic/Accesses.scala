@@ -101,15 +101,6 @@ case class IntElement(index: IntValue, inputarray: Array[IntValue])
     InvariantHelper.getMinMaxRange(bulkedVar)
   }
 
-  /*
-  override def setOutputVar(v: CBLSIntVar) {
-    v.minVal = myMin;
-    v.maxVal = myMax;
-    output = v
-    output.setDefiningInvariant(this)
-    output := inputarray.apply(index.value).value
-  }*/
-
   @inline
   override def notifyIntChanged(v: ChangingIntValue, OldVal: Int, NewVal: Int) {
     if (v == index) {

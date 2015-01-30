@@ -29,7 +29,11 @@ object Objective{
   implicit def objToFun(o:Objective):()=>Int = ()=>o.value
 
   implicit def apply(f:()=>Int,model:Store = null) = new FunctionObjective(f,model)
-  implicit def apply(objective:ChangingIntValue) = new IntVarObjective(objective)
+  implicit def apply(objective:IntValue) =
+    objective match {
+      case c: ChangingIntValue => new IntVarObjective(c)
+      case c: CBLSIntConst => throw new Error("you do not want to have an objective that is actually a constant value!")
+    }
 }
 
 /**

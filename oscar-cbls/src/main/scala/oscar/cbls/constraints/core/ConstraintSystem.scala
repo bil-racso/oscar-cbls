@@ -25,7 +25,7 @@ import oscar.cbls.invariants.core.propagation.Checker
 import oscar.cbls.invariants.core.computation.IntInvariant
 import oscar.cbls.invariants.lib.minmax.MinArray
 import oscar.cbls.invariants.lib.minmax.MaxArray
-import oscar.cbls.invariants.lib.numeric.{Prod, Prod2, Sum}
+import oscar.cbls.invariants.lib.numeric.{ExtendableSum, Prod, Prod2, Sum}
 import oscar.cbls.objective.Objective
 import oscar.cbls.invariants.lib.minmax.MinArray
 
@@ -36,26 +36,26 @@ import oscar.cbls.invariants.lib.minmax.MinArray
  * @param model is the model in which all the variables referenced by the constraints are declared.
  * @author renaud.delandtsheer@cetic.be
  */
-
-case class ConstraintSystem(val model:Store) extends AbstractConstraintSystem(model, Sum.apply) with Objective{
-    /**
-   * This method returns the actual objective value.
-   * It is easy to override it, and perform a smarter propagation if needed.
-   * @return the actual objective value.
-   */
-  override def value: Int = Violation.value
-}
-
-case class Disjunction(model:Store) extends AbstractConstraintSystem(model, v => MinArray(v.toArray));
-
-case class Conjunction(model:Store) extends AbstractConstraintSystem(model, v => MaxArray(v.toArray));
-
-class AbstractConstraintSystem(model:Store, Aggregate: (Iterable[IntValue] => IntInvariant)) extends Constraint {
+case class ConstraintSystem(model:Store) extends Constraint with Objective{
+//case class ConstraintSystem(val model:Store) extends AbstractConstraintSystem(model, Sum.apply) with Objective{
+//    /**
+//   * This method returns the actual objective value.
+//   * It is easy to override it, and perform a smarter propagation if needed.
+//   * @return the actual objective value.
+//   */
+//  override def value: Int = Violation.value
+//}
+//
+//case class Disjunction(model:Store) extends AbstractConstraintSystem(model, v => MinArray(v.toArray));
+//
+//case class Conjunction(model:Store) extends AbstractConstraintSystem(model, v => MaxArray(v.toArray));
+//
+//class AbstractConstraintSystem(model:Store, Aggregate: (Iterable[IntValue] => IntInvariant)) extends Constraint {
   //ConstraintSystems do not act as invariant because everything is subcontracted.
 
   model.addToCallBeforeClose(() => this.close())
 
-  class GlobalViolationDescriptor(val Violation:CBLSIntVar){
+  class GlobalViolationDescriptor(val Violation:ExtendableSum){
     var AggregatedViolation:List[IntValue] = List.empty
   }
 
@@ -119,8 +119,8 @@ class AbstractConstraintSystem(model:Store, Aggregate: (Iterable[IntValue] => In
         if(weight == null) constr.violation(variable)
         else Prod2(constr.violation(variable),weight)
       })
-      val LocalViolation = (if (!product.isEmpty && product.tail.isEmpty) product.head
-                            else Aggregate(product))
+      val LocalViolation = if (!product.isEmpty && product.tail.isEmpty) product.head
+                            else Sum(product)
       variable.storeAt(IndexForLocalViolationINSU,LocalViolation)
     }
   }
@@ -140,7 +140,7 @@ class AbstractConstraintSystem(model:Store, Aggregate: (Iterable[IntValue] => In
   private def aggregateGlobalViolations(){
     for (variable <- VarsWatchedForViolation){
       val ElementsAndViol:GlobalViolationDescriptor = variable.getStorageAt(IndexForGlobalViolationINSU)
-      ElementsAndViol.Violation <== Aggregate(ElementsAndViol.AggregatedViolation)
+      ElementsAndViol.Violation.addTerms(ElementsAndViol.AggregatedViolation)
       ElementsAndViol.AggregatedViolation = null
     }
   }
@@ -153,7 +153,7 @@ class AbstractConstraintSystem(model:Store, Aggregate: (Iterable[IntValue] => In
   def close(){
     if(!isClosed){
       isClosed = true
-      Violation = Aggregate(PostedConstraints.map((constraintANDintvar) => {
+      Violation = new Sum(PostedConstraints.map((constraintANDintvar) => {
         if(constraintANDintvar._2 == null) constraintANDintvar._1.violation
         else Prod(List(constraintANDintvar._1.violation,constraintANDintvar._2))
       })).setName("violation")
@@ -198,7 +198,8 @@ class AbstractConstraintSystem(model:Store, Aggregate: (Iterable[IntValue] => In
           if (model.isClosed) throw new Exception("cannot create new violation after model is closed.")
           //not registered yet
           VarsWatchedForViolation = a :: VarsWatchedForViolation
-          val violationVariable = CBLSIntVar(model, 0, 0 to Int.MaxValue, "global violation of " + a.name)
+          val violationVariable = new ExtendableSum(model, 0 to Int.MaxValue)
+          violationVariable.setName("global violation of " + a.name)
           a.storeAt(IndexForGlobalViolationINSU, new GlobalViolationDescriptor(violationVariable))
           registerConstrainedVariable(v)
           violationVariable
@@ -230,5 +231,12 @@ class AbstractConstraintSystem(model:Store, Aggregate: (Iterable[IntValue] => In
     * It requires that the Model is instantiated with the variable debug set to true.
     */
   override def checkInternals(c: Checker): Unit = {}
+
+  /**
+   * This method returns the actual objective value.
+   * It is easy to override it, and perform a smarter propagation if needed.
+   * @return the actual objective value.
+   */
+  override def value: Int = Violation.value
 }
 

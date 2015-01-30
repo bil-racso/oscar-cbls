@@ -57,7 +57,7 @@ class Log(opts:Options){
 
 class FZCBLSObjective(cblsmodel:FZCBLSModel,log:Log){
   private val opt = cblsmodel.model.search.obj
-  val objectiveVar = cblsmodel.model.search.variable.map(cblsmodel.getCBLSVar(_)).getOrElse(null)
+  private val objectiveVar = cblsmodel.model.search.variable.map(cblsmodel.getCBLSVar(_)).getOrElse(null)
   val violation = cblsmodel.c.violation;
   val violationWeight = CBLSIntVar(cblsmodel.c.model, 1, 0 to (if(violation.max!=0)math.max(1,Int.MaxValue/violation.max/2) else 1) , "violation_weight")
   val objectiveWeight = CBLSIntVar(cblsmodel.c.model, 1, 0 to (if(objectiveVar!=null)math.max(1,Int.MaxValue/objectiveVar.max/2) else 1) , "objective_weight")
@@ -383,7 +383,6 @@ class FZCBLSSolver extends SearchEngine with StopWatch {
     
     log("Search created")
     m.close();
-    cblsmodel.handleSolution()
     log("Model closed");
     if(opts.is("no-run")){
       log("Not running the search...")
