@@ -61,6 +61,37 @@ class Sum(vars: Iterable[IntValue])
 }
 
 /**
+ * sum(vars) where vars is vars that have been added to the sum through addTerm
+ * @param model the store
+ * @author renaud.delandtsheer@cetic.be
+ * */
+class ExtendableSum(model:Store,domain:Domain)
+  extends IntInvariant(initialDomain=domain){
+
+  finishInitialization(model)
+
+  def addTerm(i:IntValue){
+    registerStaticAndDynamicDependency(i)
+    this :+= i.value
+  }
+
+  def addTerms(is:Iterable[IntValue]){
+    for(i <- is){
+      addTerm(i)
+    }
+  }
+  
+  override def notifyIntChanged(v: ChangingIntValue, OldVal: Int, NewVal: Int) {
+    this :+= NewVal - OldVal
+  }
+
+  override def checkInternals(c: Checker) {
+    c.check(this.value == this.getStaticallyListenedElements.foldLeft(0)((acc, intvar) => acc + intvar.asInstanceOf[IntValue].value),
+      Some("output.value == vars.foldLeft(0)((acc,intvar) => acc+intvar.value)"))
+  }
+}
+
+/**
  * prod(vars)
  * @param vars is a set of IntVars
  * @author renaud.delandtsheer@cetic.be

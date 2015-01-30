@@ -22,7 +22,7 @@ package oscar.cbls.constraints.core
 
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.core.propagation.Checker
-import oscar.cbls.invariants.lib.numeric.{Prod, Prod2, Sum}
+import oscar.cbls.invariants.lib.numeric.{ExtendableSum, Prod, Prod2, Sum}
 import oscar.cbls.objective.Objective
 
 /** A constraint system is a composition of constraints.
@@ -37,7 +37,7 @@ case class ConstraintSystem(model:Store) extends Constraint with Objective{
 
   model.addToCallBeforeClose(() => this.close())
 
-  class GlobalViolationDescriptor(val Violation:CBLSIntVar){
+  class GlobalViolationDescriptor(val Violation:ExtendableSum){
     var AggregatedViolation:List[IntValue] = List.empty
   }
 
@@ -122,7 +122,7 @@ case class ConstraintSystem(model:Store) extends Constraint with Objective{
   private def aggregateGlobalViolations(){
     for (variable <- VarsWatchedForViolation){
       val ElementsAndViol:GlobalViolationDescriptor = variable.getStorageAt(IndexForGlobalViolationINSU)
-      ElementsAndViol.Violation <== Sum(ElementsAndViol.AggregatedViolation)
+      ElementsAndViol.Violation.addTerms(ElementsAndViol.AggregatedViolation)
       ElementsAndViol.AggregatedViolation = null
     }
   }
@@ -177,7 +177,8 @@ case class ConstraintSystem(model:Store) extends Constraint with Objective{
           if (model.isClosed) throw new Exception("cannot create new violation after model is closed.")
           //not registered yet
           VarsWatchedForViolation = a :: VarsWatchedForViolation
-          val violationVariable = CBLSIntVar(model, 0, 0 to Int.MaxValue, "global violation of " + a.name)
+          val violationVariable = new ExtendableSum(model, 0 to Int.MaxValue)
+          violationVariable.setName("global violation of " + a.name)
           a.storeAt(IndexForGlobalViolationINSU, new GlobalViolationDescriptor(violationVariable))
           registerConstrainedVariable(v)
           violationVariable

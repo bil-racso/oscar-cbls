@@ -877,12 +877,12 @@ trait PropagationElement extends BasicPropagationElement with DAGNode{
   /**through this method, the PropagationElement must declare which PropagationElement it is listening to
     * in the static dependency graph. The result must be stable after the call to setupPropagationStructure.
     * to override*/
-  private[core] final def getStaticallyListenedElements: Iterable[PropagationElement] = staticallyListenedElements
+  protected[core] final def getStaticallyListenedElements: Iterable[PropagationElement] = staticallyListenedElements
 
   /**through this method, the PropagationElement must declare which PropagationElement listen to it
     * in the static dependency graph. The result must be stable after the call to setupPropagationStructure.
     * to override*/
-  private[core] final def getStaticallyListeningElements: Iterable[PropagationElement] = staticallyListeningElements
+  protected[core] final def getStaticallyListeningElements: Iterable[PropagationElement] = staticallyListeningElements
 
   private[core] final def getDynamicallyListeningElements: Iterable[(PropagationElement, Any)] = dynamicallyListeningElements
 
@@ -929,7 +929,7 @@ trait PropagationElement extends BasicPropagationElement with DAGNode{
   : KeyForElementRemoval = {
     if(sccOfListening != null && sccOfListening == this.schedulingHandler){
       //this is only called once the component is established, so no worries.
-      //we must call this before performing hte injection to create the waitingDependency in the SCC
+      //we must call this before performing the injection to create the waitingDependency in the SCC
       sccOfListening.addDependency(this,listening)
       val keyForListenedElement = dynamicallyListeningElements.addElem((listening, i))
       val keyForListeningElement = dynamicallyListenedElementDLLOfListening.addElem(this)

@@ -29,7 +29,7 @@ import scala.language.implicitConversions
   * this value can be queried, and invariants can be posted on it,
   * and it can be used on the righ hand of <== operator
   */
-trait IntValue extends Value{
+sealed trait IntValue extends Value{
   def value: Int
   def domain:Domain
   def min = domain.min
