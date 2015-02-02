@@ -39,7 +39,7 @@ class TestUnaryRank extends FunSuite with Matchers  {
     val ranker = new Ranker(starts,durs,ends)
     
     cp.search {
-      if (ranker.isRanked) noAlternative
+      if (ranker.isRanked.value) noAlternative
       else ranker.rankNext(i => ends(i).max)
     }
     val stat = cp.start()

@@ -1,23 +1,22 @@
-/**
- * *****************************************************************************
- * " * OscaR is free software: you can redistribute it and/or modify
+/*******************************************************************************
+ * OscaR is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- *
+ *   
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License  for more details.
- *
+ *   
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
- * ****************************************************************************
- */
+ ******************************************************************************/
 
 package oscar.algo.reversible
 
 import scala.collection.mutable.ArrayBuffer
+import oscar.algo.array.ArrayStackInt
 
 /**
  * Class representing a reversible node, that is a node able to restore all
@@ -33,14 +32,14 @@ class ReversibleContext {
   private[this] var magicNumber: Long = 0
 
   import oscar.algo.ArrayStack // custom version of ArrayStack
-  private[this] val trailStack: ArrayStack[TrailEntry] = new ArrayStack(1000)
-  private[this] val pointerStack: ArrayStack[TrailEntry] = new ArrayStack(100)
+  private[this] val trailStack: ArrayStack[TrailEntry] = new ArrayStack(1024)
+  private[this] val levelStack: ArrayStackInt = new ArrayStackInt(128)
   
   // Actions to execute when a pop occurs 
   private[this] val popListeners = new ArrayStack[() => Unit](4)
-
-  // Used to reference the initial state
-  trailStack.push(null)
+  
+  // Actions to execute when a pop occurs 
+  private[this] val pushListeners = new ArrayStack[() => Unit](4)  
   
   /** Returns the magic number of the context */
   final def magic: Long = magicNumber
@@ -53,6 +52,9 @@ class ReversibleContext {
 
   /** Adds an action to execute when the `pop` function is called */
   def onPop(action: => Unit): Unit = popListeners.push(() => action)
+  
+  /** Adds an action to execute when the `push` function is called */
+  def onPush(action: => Unit): Unit = pushListeners.push(() => action)  
   
   /** Trail the entry such that its restore method is called on corresponding pop */
   @inline final def trail(entry: TrailEntry): Unit = {
@@ -69,22 +71,24 @@ class ReversibleContext {
   /** Stores the current state of the node on a stack */
   def pushState(): Unit = {
     magicNumber += 1
-    pointerStack.push(trailStack.top)
+    levelStack.push(trailStack.length)
+    // Executes onPpush actions
+    pushListeners.foreach(action => action())
   }
 
   /** Restores state on top of the stack of states and remove it from the stack */
   def pop(): Unit = {
     // Restores the state of each reversible
-    restoreUntil(pointerStack.pop())
-    // Executes onPop actions
-    popListeners.foreach(action => action())
+    restoreUntil(levelStack.pop())
     // Increments the magic because we want to trail again
     magicNumber += 1
+    // Executes onPop actions
+    popListeners.foreach(action => action())
   }
 
-  @inline private final def restoreUntil(until: TrailEntry): Unit = {
+  @inline private final def restoreUntil(until: Int): Unit = {
     val t0 = System.currentTimeMillis()
-    while (trailStack.top != until) {
+    while (trailStack.length > until) {
       val entry = trailStack.pop()
       entry.restore()
     }
@@ -96,8 +100,9 @@ class ReversibleContext {
    *  Note: does not execute the on pop actions
    */
   def popAll(): Unit = {
-    if (!pointerStack.isEmpty) {
-      restoreUntil(pointerStack.last)
+    if (!levelStack.isEmpty) {
+      restoreUntil(0)
+      levelStack.clear()
     }
     // Increments the magic because we want to trail again
     magicNumber += 1
@@ -106,7 +111,7 @@ class ReversibleContext {
   /** Empty the trailing queue without restoring trailed objects */
   final def clear(): Unit = {
     trailStack.clear()   // does not remove references
-    pointerStack.clear() // does not remove references
+    levelStack.clear() // does not remove references
   }
 
   def resetStats(): Unit = {
@@ -114,5 +119,5 @@ class ReversibleContext {
     maxTrailSize = 0
   }
 
-  override def toString: String = "SearchNode nPushed: " + pointerStack.size + " currentTrailSize: " + trailStack.size
+  override def toString: String = "SearchNode nPushed: " + levelStack.length + " currentTrailSize: " + trailStack.length
 }

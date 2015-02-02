@@ -13,36 +13,37 @@
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
 
-package oscar.cp.core
-
-import oscar.cp.core.variables.CPSetVar
+import oscar.cp._
+import oscar.algo.search.Branching
 
 /**
- * Trailable Queue of AC5 events
- * Each entry of the queue stores:
- *  - a index
- *  - a variable
- *  @author Pierre Schaus pschaus@gmail.com
+ * n-queens model: place n-queens on a chess-board such that they don't attack each other.
+ * @author Pierre Schaus pschaus@gmail.com
  */
-class PropagEventQueueVarSet(val next: PropagEventQueueVarSet, val cons: Constraint, val x: CPSetVar, val idx: Int) {
-	
-    def this(next: PropagEventQueueVarSet, cons: Constraint, x: CPSetVar) = {
-      this(next,cons,x,0)
+object QueensJCBC {
+  def main(args: Array[String]) {
+
+    val cp = CPSolver()
+    cp.silent = true
+    val n = 88 //number of queens
+    val Queens = 0 until n
+    //variables
+    val queens = for (i <- Queens) yield CPIntVar.sparse(0, n-1)(cp)
+
+    var nbsol = 0
+
+    val cl = Medium
+    cp.add(allDifferent(queens), cl)
+    cp.add(allDifferent(for (i <- Queens) yield queens(i) + i), cl)
+    cp.add(allDifferent(for (i <- Queens) yield queens(i) - i), cl)
+    
+    cp.search {
+      binaryFirstFail(queens)
     }
     
-    def hasNext() = next != null
+    println(cp.start(nSols=1))
 
-	override def toString(): String = "PropagEventQueueVarSet constraint:"+cons+" var:"+x+" idx:"+idx;
-	
-	
-	def size() = {
-		var s = 0;
-		var q = this;
-		while (q != null) {
-			s += 1
-			q = q.next
-		}
-		s
-	}
-
+  }
 }
+
+

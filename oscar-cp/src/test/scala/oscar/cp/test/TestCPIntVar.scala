@@ -223,7 +223,7 @@ class TestCPIntVar extends FunSuite with Matchers {
         CPOutcome.Suspend
       }
       
-      override def valBind(x: CPIntervalVar): CPOutcome = {
+      override def valBind(x: CPIntVar): CPOutcome = {
         i += 1
         valBindCalled = i
         CPOutcome.Suspend

@@ -1,7 +1,6 @@
 package oscar.cp.scheduling.constraints
 
 import oscar.cp.core.variables.CPIntVar
-import oscar.cp.core.variables.CPIntervalVar
 import oscar.cp.core.Constraint
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.CPOutcome._
@@ -17,7 +16,7 @@ import java.lang.Math._
  * It is generalized to variable durations and optional activities.
  */
 
-class TTPerTask(starts: Array[_ <: CPIntervalVar], durations: Array[_ <: CPIntervalVar], ends: Array[_ <: CPIntervalVar], heights: Array[_ <: CPIntervalVar], resources: Array[CPIntVar], capacity: CPIntervalVar, id: Int)
+class TTPerTask(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], heights: Array[CPIntVar], resources: Array[CPIntVar], capacity: CPIntVar, id: Int)
 extends CumulativeTemplate(starts, durations, ends, heights, resources, capacity, id, "TTPerTask")
 {
   priorityL2 = 4
@@ -146,6 +145,6 @@ extends CumulativeTemplate(starts, durations, ends, heights, resources, capacity
 
 
 object TTPerTask {
-  def apply(starts: Array[_ <: CPIntervalVar], durations: Array[_ <: CPIntervalVar], ends: Array[_ <: CPIntervalVar], heights: Array[_ <: CPIntervalVar], resources: Array[CPIntVar], capacity: CPIntervalVar, id: Int): Constraint =
+  def apply(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], heights: Array[CPIntVar], resources: Array[CPIntVar], capacity: CPIntVar, id: Int): Constraint =
     new TTPerTask(starts, durations, ends, heights, resources, capacity, id)
 }

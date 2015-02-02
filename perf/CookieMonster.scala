@@ -47,11 +47,10 @@ object CookieMonster {
 
     implicit val cp = CPSolver()
     cp.silent = true
-    val numCubes = 4
-    val numFaces = 6
 
-    val jars = Array(15, 13, 12, 4, 2, 1)
-    val maxMove = 6
+
+    val jars = Array(20, 16, 13, 5, 2, 1)
+    val maxMove = 7
 
     val x = Array.fill(maxMove)(CPIntVar(cp, 0 to jars.max))
     val b = Array.fill(maxMove, jars.size)(CPBoolVar())
@@ -64,27 +63,29 @@ object CookieMonster {
       }
     }
 
-    cp.solve subjectTo {
-      for (j <- 0 until jars.size) {
-        cp.add(sum(0 until maxMove)(m => bx(m)(j)) == jars(j))
-      }
-      // break symmetry
-      for (m <- 0 until maxMove - 1) {
-        cp.add(lexLeq(bx(m + 1), bx(m)))
-      }
+    for (j <- 0 until jars.size) {
+      cp.add(sum(0 until maxMove)(m => bx(m)(j)) == jars(j))
     }
-    search {
-      binaryStatic(x) ++ binaryStatic(b.flatten.toSeq)
+    // break symmetry
+    for (m <- 0 until maxMove - 1) {
+      cp.add(lexLeq(bx(m + 1), bx(m)))
     }
 
-    for (i <- 0 until maxMove; if nbSol == 0) {
-      startSubjectTo(nSols = 100000) {
-        for (m <- i + 1 until maxMove) {
-          if (m > i) post(x(m) == 0)
-          else post(x(m) > 0)
-        }
-      }
+ 
+    
+    search {
+      binaryStatic(x,_.min) ++ binaryStatic(b.flatten.toSeq,_.min)
     }
+    
+    onSolution {
+      nbSol = 1
+      //println("sol found"+x.mkString(","))
+    }
+
+    println(start())
+  
+
+
 
   }
 

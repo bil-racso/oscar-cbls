@@ -1,6 +1,7 @@
 package oscar.examples.cp
 
 import oscar.cp._
+import oscar.util._
 
 /**
  * Traveling Salesman Problem with Visualization
@@ -14,18 +15,36 @@ import oscar.cp._
 object TSPVisu extends CPModel with App {
 
   // Data
-  val nCities = 20
+  val nCities = 40
   val Cities = 0 until nCities
   val (distMatrix, coordinates) = TSPGenerator.randomInstance(nCities)
 
   // Variables
   val succ = Array.fill(nCities)(CPIntVar(Cities)) 
   val totDist = CPIntVar(0 to distMatrix.flatten.sum)
+  
+  
+  for (i <- 0 until nCities; j <- 0 until nCities) {
+    println(distMatrix(i)(j))
+  }
 
   // Constraints
   add(minCircuit(succ, distMatrix, totDist),Strong)
   // Search heuristic
-  minimize(totDist) search binaryFirstFail(succ)
+  minimize(totDist)
+
+  search {
+    // Select the not yet bound city with the smallest number of possible successors
+    selectMin(Cities)(!succ(_).isBound)(succ(_).size) match {
+      case None => noAlternative
+      case Some(x) => {
+        // Select the closest successors of the city x
+        val v = selectMin(Cities)(succ(x).hasValue(_))(distMatrix(x)(_)).get
+        branch(add(succ(x) == v))(add(succ(x) != v))
+      }
+    }
+  }  
+  
 
   // Visual Component
   val visual = new VisualTSP(coordinates, succ)

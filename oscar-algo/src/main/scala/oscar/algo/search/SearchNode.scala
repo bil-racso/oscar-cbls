@@ -15,7 +15,7 @@
 
 package oscar.algo.search
 
-import java.util.Random
+import scala.util.Random
 import oscar.algo.reversible.ReversibleContext
 import oscar.algo.reversible.ReversibleBoolean
 
@@ -47,8 +47,6 @@ class SearchNode extends ReversibleContext {
   def fail(): Unit = failed.setValue(true)
 
   def solFound(): Unit = {}
-
-  override def toString(): String = super.toString
 
   /**
    * executed just before the actual branch action

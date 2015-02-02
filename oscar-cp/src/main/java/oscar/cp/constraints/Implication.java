@@ -18,7 +18,7 @@ import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
 import oscar.cp.core.variables.CPBoolVar;
 import oscar.cp.core.variables.CPIntVar;
-import oscar.cp.core.variables.CPIntervalVar;
+import oscar.cp.core.variables.CPIntVar;
 import oscar.cp.core.Constraint;
 import oscar.cp.core.CPStore;
 
@@ -74,7 +74,7 @@ public class Implication extends Constraint {
 
 
 	@Override
-	public CPOutcome valBind(CPIntervalVar var) {
+	public CPOutcome valBind(CPIntVar var) {
 		if (A.isBound()) {
 			if (A.isBoundTo(0)) {
 				// F => X is always true

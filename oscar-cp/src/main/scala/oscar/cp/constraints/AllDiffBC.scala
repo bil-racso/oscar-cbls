@@ -20,7 +20,6 @@ import oscar.cp.core.CPPropagStrength
 import oscar.cp.core.variables.CPIntVar
 import oscar.cp.core.Constraint
 import oscar.cp.core.CPSolver
-import oscar.cp.core.variables.CPIntervalVar
 import oscar.cp.util.ArrayUtils
 import oscar.algo.reversible.ReversibleInt
 
@@ -35,30 +34,30 @@ import oscar.algo.reversible.ReversibleInt
  *
  * @author Pierre Schaus - pschaus@gmail.com
  */
-class AllDiffBC(val x: Array[_ <: CPIntervalVar]) extends Constraint(x(0).store, "AllDiffBC") {
+class AllDiffBC(val x: Array[CPIntVar]) extends Constraint(x(0).store, "AllDiffBC") {
 
-  class Interval(var min: Int, var max: Int, var minRank: Int, var maxRank: Int) {
+  protected[AllDiffBC] class Interval(var min: Int, var max: Int, var minRank: Int, var maxRank: Int) {
     override def toString = "["+min+","+max+"]"
   }
 
-  val n = x.size
-  var nb = 0
-  val currentLevel = new ReversibleInt(s, 1)
-  var lastLevel = -1;
+  private[this] val n = x.size
+  private[this] var nb = 0
+  private[this] var lastLevel = -1;
 
-  val INCONSISTENT = 0;
-  val CHANGES = 1;
-  val NO_CHANGES = 2;
+  private[this] val INCONSISTENT = 0;
+  private[this] val CHANGES = 1;
+  private[this] val NO_CHANGES = 2;
+  
   // bounds[1..nb] hold set of min & max in the niv intervals
   // while bounds[0] and bounds[nb+1] allow sentinels
-  val bounds = Array.fill(2 * n + 2)(0)
-  val iv = Array.fill(n)(new Interval(0, 0, 0, 0))
-  val minSorted = iv.map(i => i)
-  val maxSorted = iv.map(i => i)
+  private[this] val bounds = Array.fill(2 * n + 2)(0)
+  private[this] val iv = Array.fill(n)(new Interval(0, 0, 0, 0))
+  private[this] val minSorted = iv.map(i => i)
+  private[this] val maxSorted = iv.map(i => i)
 
-  val t = Array.fill(2 * n + 2)(0) // tree links
-  val d = Array.fill(2 * n + 2)(0) // diffs between critical capacities
-  val h = Array.fill(2 * n + 2)(0) // hall interval links
+  private[this] val t = Array.fill(2 * n + 2)(0) // tree links
+  private[this] val d = Array.fill(2 * n + 2)(0) // diffs between critical capacities
+  private[this] val h = Array.fill(2 * n + 2)(0) // hall interval links
 
   override def setup(l: CPPropagStrength): CPOutcome = {
 
@@ -151,7 +150,7 @@ class AllDiffBC(val x: Array[_ <: CPIntervalVar]) extends Constraint(x(0).store,
     bounds(nb + 1) = bounds(nb) + 2
   }
 
-  def pathSet(t: Array[Int], start: Int, end: Int, to: Int) {
+  @inline private def pathSet(t: Array[Int], start: Int, end: Int, to: Int) {
     var l = start
     while (l != end) {
       val k = l
@@ -160,7 +159,7 @@ class AllDiffBC(val x: Array[_ <: CPIntervalVar]) extends Constraint(x(0).store,
     }
   }
 
-  def pathMin(t: Array[Int], ind: Int): Int = {
+  @inline private def pathMin(t: Array[Int], ind: Int): Int = {
     var i = ind
     while (t(i) < i) {
       i = t(i)
@@ -168,7 +167,7 @@ class AllDiffBC(val x: Array[_ <: CPIntervalVar]) extends Constraint(x(0).store,
     i
   }
 
-  def pathMax(t: Array[Int], ind: Int): Int = {
+  @inline private def pathMax(t: Array[Int], ind: Int): Int = {
     var i = ind
     while (t(i) > i) {
       i = t(i)

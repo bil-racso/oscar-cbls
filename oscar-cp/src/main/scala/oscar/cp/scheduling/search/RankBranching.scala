@@ -31,7 +31,7 @@ class RankBranching[T](starts: IndexedSeq[CPIntVar], durations: IndexedSeq[CPInt
  val ranker = new Ranker(starts,durations,ends) 
   
  def alternatives(): Seq[Alternative] = {
-   if (ranker.isRanked) noAlternative
+   if (ranker.isRanked.value) noAlternative
    else ranker.rankNext(f)
  }
     

@@ -13,9 +13,10 @@
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
 
-package oscar.cp.core
+package oscar.cp.core.watcher
 
-import oscar.cp.core.variables.CPIntervalVar
+import oscar.cp.core.variables.CPIntVar
+import oscar.cp.core.Constraint
 
 /**
  * Trailable Queue of AC5 events
@@ -25,9 +26,9 @@ import oscar.cp.core.variables.CPIntervalVar
  *  - a variable
  *  @author Pierre Schaus pschaus@gmail.com
  */
-class PropagEventQueueVarInt[A <: CPIntervalVar](val next: PropagEventQueueVarInt[A], val cons: Constraint, val x: A, val idx: Int) {
+class PropagEventQueueVarInt(val next: PropagEventQueueVarInt, val cons: Constraint, val x: CPIntVar, val idx: Int) {
 
-  def this(next: PropagEventQueueVarInt[A], cons: Constraint, x: A) = {
+  def this(next: PropagEventQueueVarInt, cons: Constraint, x: CPIntVar) = {
     this(next, cons, x, 0)
   }
 

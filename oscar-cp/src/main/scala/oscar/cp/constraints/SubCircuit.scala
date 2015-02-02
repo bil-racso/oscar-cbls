@@ -17,7 +17,6 @@ package oscar.cp.constraints
 
 import oscar.cp.core.variables.CPIntVar
 import oscar.cp.modeling._
-import oscar.cp.core.variables.CPIntervalVar
 import oscar.cp.core.Constraint
 import oscar.algo.reversible.ReversibleInt
 import oscar.cp.core.CPPropagStrength
@@ -62,7 +61,7 @@ class SubCircuit(val successors: Array[CPIntVar]) extends Constraint(successors.
     Success // All the variables are bound
   }
 
-  override def valBindIdx(cpvar: CPIntervalVar, u: Int): CPOutcome = {
+  override def valBindIdx(cpvar: CPIntVar, u: Int): CPOutcome = {
     // s ->* u -> v ->* d
     val v = cpvar.value
     if (u == v) Suspend
@@ -89,7 +88,7 @@ class SubCircuit(val successors: Array[CPIntVar]) extends Constraint(successors.
 
 object SubCircuit {
   def apply(successors: Array[CPIntVar], offset: Int = 0): SubCircuit = {
-    val succs = if (offset == 0) successors else successors.map(_-offset)
+    val succs: Array[CPIntVar] = if (offset == 0) successors else successors.map(_-offset)
     new SubCircuit(succs)
   }
 }

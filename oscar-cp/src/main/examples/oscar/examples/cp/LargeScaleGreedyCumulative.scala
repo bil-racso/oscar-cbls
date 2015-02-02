@@ -13,10 +13,10 @@ object LargeScaleGreedyCumulative extends CPModel with App {
   val horizon = 1000000000
   val capa = 100
   
-  val durationsVar = Array.tabulate(nTasks)(t => CPIntervalVar(durations(t)))
-  val startsVar = Array.tabulate(nTasks)(t => CPIntervalVar(0, horizon))
+  val durationsVar = Array.tabulate(nTasks)(t => CPIntVar(durations(t)))
+  val startsVar = Array.tabulate(nTasks)(t => CPIntVar(0, horizon))
   val endsVar = Array.tabulate(nTasks)(t => startsVar(t) + durationsVar(t))
-  val demandsVar = Array.tabulate(nTasks)(t => CPIntervalVar(height(t)))
+  val demandsVar = Array.tabulate(nTasks)(t => CPIntVar(height(t)))
   val capacity = CPIntVar(capa)
 
   add(maxCumulativeResource(startsVar, durationsVar, endsVar, demandsVar, capacity), Weak)

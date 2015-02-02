@@ -17,6 +17,8 @@ final class CPIntVarSingleton(final override val store: CPStore, initValue: Int,
   private[this] val trailEntry = new TrailEntry {
     @inline final override def restore(): Unit = _size = 1
   }
+  
+  final override def isContinuous: Boolean = true
 
   // Domain representation
   private[this] var _size = 1
@@ -172,7 +174,7 @@ final class CPIntVarSingleton(final override val store: CPStore, initValue: Int,
    * @see oscar.cp.core.Constraint#valBind(CPIntVar)
    */
   final override def callValBindWhenBind(c: Constraint): Unit = degree.incr()
-  final override def callValBindWhenBind(c: Constraint, variable: CPIntervalVar): Unit = degree.incr()
+  final override def callValBindWhenBind(c: Constraint, variable: CPIntVar): Unit = degree.incr()
 
   /**
    * Level 1 registration: ask that the updateBounds(CPIntVar) method of the constraint c is called whenever
@@ -181,7 +183,7 @@ final class CPIntVarSingleton(final override val store: CPStore, initValue: Int,
    * @see oscar.cp.core.Constraint#updateBounds(CPIntVar)
    */
   final override def callUpdateBoundsWhenBoundsChange(c: Constraint): Unit = degree.incr()
-  final override def callUpdateBoundsWhenBoundsChange(c: Constraint, variable: CPIntervalVar): Unit = degree.incr()
+  final override def callUpdateBoundsWhenBoundsChange(c: Constraint, variable: CPIntVar): Unit = degree.incr()
 
   /**
    * Level 1 registration: ask that the valRemove(CPIntVar, int) method of the constraint c is called for each
@@ -210,7 +212,7 @@ final class CPIntVarSingleton(final override val store: CPStore, initValue: Int,
    * @see Constraint#updateBoundsIdx(CPIntVar, int)
    */
   final override def callUpdateBoundsIdxWhenBoundsChange(c: Constraint, idx: Int): Unit = degree.incr()
-  final override def callUpdateBoundsIdxWhenBoundsChange(c: Constraint, variable: CPIntervalVar, idx: Int): Unit = degree.incr()
+  final override def callUpdateBoundsIdxWhenBoundsChange(c: Constraint, variable: CPIntVar, idx: Int): Unit = degree.incr()
 
   /**
    * Level 1 registration: ask that the valBindIdx(CPIntVar, int) method of the constraint c is called whenever
@@ -220,6 +222,6 @@ final class CPIntVarSingleton(final override val store: CPStore, initValue: Int,
    * @see Constraint#valBindIdx(CPIntVar, int)
    */
   final override def callValBindIdxWhenBind(c: Constraint, idx: Int): Unit = degree.incr()
-  final override def callValBindIdxWhenBind(c: Constraint, variable: CPIntervalVar, idx: Int): Unit = degree.incr()
+  final override def callValBindIdxWhenBind(c: Constraint, variable: CPIntVar, idx: Int): Unit = degree.incr()
 }
   

@@ -9,13 +9,13 @@ import oscar.cp.constraints.SetCard
 import oscar.cp.core.domains.SetDomain
 import oscar.algo.reversible.ReversiblePointer
 import oscar.cp.core.DeltaVarSet
-import oscar.cp.core.PropagEventQueueVarSet
 import oscar.cp.core.SnapshotVarSet
 import oscar.cp.core.ConstraintQueue
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.Constraint
 import oscar.cp.core.CPStore
 import oscar.cp.core.CPPropagStrength
+import oscar.cp.core.watcher.PropagEventQueueVarSet
 
 /**
  * @author Pierre Schaus pschaus@gmail.com
@@ -156,9 +156,9 @@ class CPSetVar(override val store: CPStore, min: Int, max: Int, override val nam
     // -------- AC3 notifications ------------
     if (possibleSize > requiredSize) store.notifyL2(onDomainL2.value)
     // -------- AC5 notifications ------------
-    if (onRequiredL1.hasValue() || onRequiredIdxL1.hasValue) {
+    if (onRequiredL1.hasValue || onRequiredIdxL1.hasValue) {
       for (v <- dom.possibleNotRequiredValues) {
-        if (onRequiredL1.hasValue()) store.notifyRequired(onRequiredL1.value, this, v)
+        if (onRequiredL1.hasValue) store.notifyRequired(onRequiredL1.value, this, v)
         if (onRequiredIdxL1.hasValue) store.notifyRequiredIdx(onRequiredIdxL1.value, this, v)
       }
     }
@@ -171,9 +171,9 @@ class CPSetVar(override val store: CPStore, min: Int, max: Int, override val nam
     // -------- AC3 notifications ------------
     if (possibleSize > requiredSize) store.notifyL2(onDomainL2.value)
     // -------- AC5 notifications ------------
-    if (onExcludedL1.hasValue() || onExcludedIdxL1.hasValue) {
+    if (onExcludedL1.hasValue || onExcludedIdxL1.hasValue) {
       for (v <- dom.possibleNotRequiredValues) {
-        if (onExcludedL1.hasValue()) store.notifyExcluded(onExcludedL1.value, this, v)
+        if (onExcludedL1.hasValue) store.notifyExcluded(onExcludedL1.value, this, v)
         if (onExcludedIdxL1.hasValue) store.notifyExcludedIdx(onExcludedIdxL1.value, this, v)
       }
     }

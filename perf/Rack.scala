@@ -41,8 +41,8 @@ object Rack {
     val cards = Array(
       new CardType(20, 20),
       new CardType(40, 8),
-      new CardType(50, 4),
-      new CardType(75, 2))
+      new CardType(50, 6),
+      new CardType(75, 7))
 
     val nbRack = 10
     val Racks = 0 until nbRack
@@ -64,33 +64,31 @@ object Rack {
     val counters = Array.tabulate(nbRack, nbCard)((r, c) => CPIntVar(cp, 0 to cards(c).quantity)) //for each rack, how many cards of each type do you plug
     val cost = CPIntVar(cp, 0 to maxCost)
 
-    cp.minimize(cost) subjectTo {
+    for (r <- Racks) {
+      // do not exceed the power capacity
+      cp.add(sum(Cards)(c => counters(r)(c) * cards(c).power) <= element(powers, rack(r)))
+      // do not exceed the connectors capacity
+      cp.add(sum(Cards)(counters(r)(_)) <= element(connectors, rack(r)))
+    }
 
-      for (r <- Racks) {
-        // do not exceed the power capacity
-        cp.add(sum(Cards)(c => counters(r)(c) * cards(c).power) <= element(powers, rack(r)))
-        // do not exceed the connectors capacity
-        cp.add(sum(Cards)(counters(r)(_)) <= element(connectors, rack(r)))
-      }
+    for (c <- Cards) {
+      // all the cards of type c are placed
+      cp.add(sum(Racks)(counters(_)(c)) == cards(c).quantity)
+    }
 
-      for (c <- Cards) {
-        // all the cards of type c are placed
-        cp.add(sum(Racks)(counters(_)(c)) == cards(c).quantity)
-      }
+    cp.add(sum(Racks)(r => element(prices, rack(r))) == cost)
 
-      cp.add(sum(Racks)(r => element(prices, rack(r))) == cost)
+    // symmetry breaking constraints
+    for (r <- 1 until nbRack) {
+      val var_r: Array[CPIntVar] = rack(r) :: (Cards.map(c => counters(r)(c)) toList) toArray
+      val var_r_1: Array[CPIntVar] = rack(r - 1) :: (Cards.map(c => counters(r - 1)(c)) toList) toArray;
+      cp.add(lexLeq(var_r, var_r_1))
+    }
 
-      // symmetry breaking constraints
-      for (r <- 1 until nbRack) {
-        val var_r: Array[CPIntVar] = rack(r) :: (Cards.map(c => counters(r)(c)) toList) toArray
-        val var_r_1: Array[CPIntVar] = rack(r - 1) :: (Cards.map(c => counters(r - 1)(c)) toList) toArray;
-        cp.add(lexLeq(var_r, var_r_1))
-      }
-
-
-    } search {
+    cp.minimize(cost)
+    cp.search {
       binaryFirstFail(rack) ++ binaryFirstFail(counters.flatten.toSeq)
-    } 
+    }
     println(cp.start())
 
 

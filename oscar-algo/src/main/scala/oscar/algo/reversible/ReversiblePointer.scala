@@ -6,8 +6,8 @@ package oscar.algo.reversible
  * @author Renaud Hartert ren.hartert@gmail.com
  */
 
-class ReversibleTrailEntry[@specialized T](reversible: ReversiblePointer[T], value: T) extends TrailEntry {
-  @inline override final def restore(): Unit = reversible.restore(value)
+class ReversibleTrailEntry[T](reversible: ReversiblePointer[T], value: T) extends TrailEntry {
+  override def restore(): Unit = reversible.restore(value)
 }
 
 class ReversiblePointer[@specialized T](final override val context: ReversibleContext, initialValue: T) extends Reversible {
@@ -15,7 +15,9 @@ class ReversiblePointer[@specialized T](final override val context: ReversibleCo
   // Reference on the current value
   protected var pointer: T = initialValue
   
-  @inline final override def trailEntry = new ReversibleTrailEntry[T](this, pointer)
+  @inline override def trailEntry: TrailEntry = {
+    new ReversibleTrailEntry[T](this, pointer)
+  }
 
   @inline final def setValue(value: T): Unit = {
     if (value != pointer) {
@@ -31,13 +33,13 @@ class ReversiblePointer[@specialized T](final override val context: ReversibleCo
   final def := (value: T): Unit = setValue(value)
   
   /** @return current value */
-  @inline final def value = pointer
+  @inline final def value: T = pointer
 
   /**
    * Check if the pointer is different from null
    * @return true if the pointer is != null, false otherwise
    */
-  @inline final def hasValue(): Boolean = pointer != null
+  @inline final def hasValue[T]: Boolean = pointer != null
 
   /** @return the current pointer */
   @inline final def getValue(): T = pointer

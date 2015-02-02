@@ -22,7 +22,7 @@ package oscar.algo.reversible
  */
 abstract class Reversible {
   
-  private final var lastMagic: Long = -1L
+  private[this] var lastMagic: Long = -1L
   
   @inline final protected def trail(): Unit = {
     val contextMagic = context.magic

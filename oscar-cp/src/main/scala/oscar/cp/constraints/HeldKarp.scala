@@ -383,7 +383,7 @@ class ChannelTSP(val succ: Array[CPIntVar],val distMatrix: Array[Array[Int]]) ex
     else CPOutcome.Suspend
   }
   
-  override def valBindIdx(x: CPIntervalVar, idx: Int): CPOutcome = {
+  override def valBindIdx(x: CPIntVar, idx: Int): CPOutcome = {
     edgeVar.requires(edgeIndex(idx)(x.value))
   } 
   

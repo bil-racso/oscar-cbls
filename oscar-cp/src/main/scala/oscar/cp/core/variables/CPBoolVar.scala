@@ -13,6 +13,8 @@ import oscar.cp.core.Constraint
  * @author Renaud Hartert ren.hartert@gmail.com
  */
 abstract class CPBoolVar extends CPIntVar {
+  
+  final override def isContinuous: Boolean = true
 
   /** @return a constraint setting the boolean variable to true (1) */
   def constraintTrue: Constraint
@@ -40,7 +42,7 @@ abstract class CPBoolVar extends CPIntVar {
 
   /**
    *  Returns an unique boolean variable corresponding to the opposite
-   *  of this variable such that x.not.not == x. 
+   *  of this variable such that this.not.not == this. 
    */
   def not: CPBoolVar
 }
@@ -58,8 +60,5 @@ object CPBoolVar {
 
   /** Creates a new CP Boolean Variable assigned to b */
   def apply(b: Boolean)(implicit store: CPStore): CPBoolVar = CPBoolVarImpl(store, b, "")
-
-  @deprecated("use apply(b: Boolean)(implicit store: CPStore) instead", "1.0")
-  def apply(cp: CPStore, b: Boolean): CPBoolVar = new CPBoolVarWrapper(CPIntVar(if (b) 1 else 0)(cp))
 }  
   
