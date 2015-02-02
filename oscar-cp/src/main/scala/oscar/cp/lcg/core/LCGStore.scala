@@ -34,7 +34,7 @@ class LCGStore(store: CPStore) {
   private[this] val watchers: ArrayStack[ArrayQueue[Clause]] = new ArrayStack(128)
 
   // Trailing queue  
-  private[this] var lastMagic = -1L
+  private[this] var lastMagic = store.magic
   private[this] var trail: Array[Literal] = new Array[Literal](128)
   private[this] var trailSize: Int = 0
   private[this] val level: ReversibleInt = new ReversibleInt(store, 0)
@@ -56,7 +56,7 @@ class LCGStore(store: CPStore) {
   @inline final val falseLit: Literal = trueVariable.opposite
 
   /** Return true if the store is inconsistent. */
-  @inline final def isInconsistent: Boolean = decisionLevel >= backtrackLevel
+  @inline final def isInconsistent: Boolean = decisionLevel > backtrackLevel
 
   /** Return the current decision level. */
   @inline final def decisionLevel: Int = level.value
@@ -200,7 +200,7 @@ class LCGStore(store: CPStore) {
    *  Propagate and conflict analysis
    */
   final def propagate(): Boolean = {
-    if (testInconsistant) false
+    if (testInconsistent) false
     else {
       // New propagation level
       increaseLevel()
@@ -219,8 +219,8 @@ class LCGStore(store: CPStore) {
       // TODO Notify changes in domains
     }
   }
-  
-  @inline private def testInconsistant(): Boolean = {
+
+  @inline private def testInconsistent(): Boolean = {
     if (level.value > backtrackLevel) true
     else {
       backtrackLevel = Int.MaxValue
@@ -284,20 +284,23 @@ class LCGStore(store: CPStore) {
     if (lastMagic != magic) {
       lastMagic = magic
       level.incr()
+      println("increase sat level : " + level.value)
     }
   }
 
   class TrailUndoOne extends TrailEntry {
     @inline final override def restore(): Unit = {
-      trailSize -= 1
-      val literal = trail(trailSize)
-      val varId = literal.varId
-      values(varId) = Unassigned
-      reasons(varId) = null
-      levels(varId) = -1
+      if (trailSize > 0) {
+        trailSize -= 1
+        val literal = trail(trailSize)
+        val varId = literal.varId
+        values(varId) = Unassigned
+        reasons(varId) = null
+        levels(varId) = -1
+      }
     }
   }
-  
+
   // Static trail entry
   private[this] val undoTrailEntry = new TrailUndoOne
 

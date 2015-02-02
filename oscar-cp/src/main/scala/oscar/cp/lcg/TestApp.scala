@@ -9,9 +9,11 @@ object TestApp extends LCGModel with App {
     println("propagate results : " + lcgSolver.propagate())
     println(x.name + "[" + x.min + ", " + x.max + "]")
     println(x)
+    println(lcgSolver.decisionLevel)
     while (lcgSolver.isInconsistent) {
-      println("pop state")
+      println("pop state sat level before : " + lcgSolver.decisionLevel)
       cpSolver.pop()
+      println("pop state sat level after : " + lcgSolver.decisionLevel)
     }
   }
 
@@ -47,6 +49,7 @@ object TestApp extends LCGModel with App {
   cpSolver.pushState()
   cpSolver.pushState()
 
+  println("\n start fix point at sat level " + lcgSolver.decisionLevel +" and cp level 5 \n")
   propagate()
   propagate()
   
