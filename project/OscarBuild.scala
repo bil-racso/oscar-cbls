@@ -38,7 +38,7 @@ object OscarBuild extends Build {
       javaOptions in Test += "-Djava.library.path=../lib:../lib/" + osNativeLibDir,
       unmanagedBase <<= baseDirectory { base => base / "../lib/" }, // unfortunately does not work
       unmanagedClasspath in Compile <+= (baseDirectory) map { bd => Attributed.blank(bd / "../lib/") },
-      unmanagedResourceDirectories in Compile <+= baseDirectory( _ / "boboblsrc" ),
+      unmanagedResourceDirectories in Compile <+= baseDirectory( _ / "../oscar-cp/src/" ),
       scalaVersion := buildScalaVersion,
       publishTo := Some(Resolver.url("sbt-release-local", new URL("http://localhost:8081/artifactory/libs-release-local")))
     )
