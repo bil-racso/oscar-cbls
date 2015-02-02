@@ -68,7 +68,7 @@ case class InsertPoint(UnroutedNodesToInsert:()=>Iterable[Int],
 
         InsertPoint.encode(beforeInsertedPoint, insertedPoint, vrp)
         vrp.commit(true)
-        val newObj = obj()
+        val newObj = obj.value
         vrp.undo()
 
         if (moveRequested(newObj)

@@ -73,7 +73,7 @@ class Swap(NodesPrecedingNodesToMove:()=>Iterable[Int],
 
         Swap.encode(beforeMovedPoint, insertionPoint, vrp)
         vrp.commit(true)
-        val newObj = obj()
+        val newObj = obj.value
         vrp.undo()
 
         if (moveRequested(newObj)

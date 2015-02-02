@@ -363,6 +363,7 @@ trait Invariant extends PropagationElement{
     */
   final def finishInitialization(model:Store = null){
     val m:Store = preFinishInitialization(model)
+    assert(uniqueID == -1)
     if (m != null){
       uniqueID = m.registerInvariant(this)
     }else{
@@ -562,6 +563,7 @@ trait Value extends BasicPropagationElement{
   def valueString:String
 }
 
+//TODO: try to remove the double inclusion of AbstractVariable into CBLSIntVar and SetVar
 trait Variable extends AbstractVariable{
   protected var definingInvariant:Invariant = null
   def setDefiningInvariant(i:Invariant){
@@ -592,9 +594,12 @@ trait AbstractVariable
 
   final def model_=(s:Store): Unit ={
     schedulingHandler = s
+    assert(uniqueID == -1)
     uniqueID = if (s == null) -1 else s.registerVariable(this)
   }
   def model = propagationStructure.asInstanceOf[Store]
+
+  def hasModel:Boolean = hasPropagationStructure
 
   def name:String
 

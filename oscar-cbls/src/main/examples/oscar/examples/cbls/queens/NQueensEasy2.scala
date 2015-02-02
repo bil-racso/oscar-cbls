@@ -70,8 +70,8 @@ object NQueensEasy2 extends CBLSModel with App{
         queens(q1) :=: queens(q2)
         tabu(q1) := it.value + tabulength
         tabu(q2) := it.value + tabulength
-      },()=>println("Warning: Tabu it too big compared to queens count"))},
-      ()=>println("Warning: Tabu it too big compared to queens count"))
+      },()=>println("Warning: Tabu it too big compared to queens count1"))},
+      ()=>println("Warning: Tabu it too big compared to queens count2"))
 
 
     it ++

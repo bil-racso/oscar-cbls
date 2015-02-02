@@ -191,7 +191,7 @@ case class ConstraintSystem(model:Store) extends Constraint with Objective{
   }
 
   def violations[V<:Value](vs:Array[V]):Array[IntValue] = {
-    vs.map(violation(_))
+    Array.tabulate(vs.length)(i => violation(vs(i)))
   }
 
   /**Returns the global violation of the constraint system, that is the weighted sum of the violation of the posted constraints

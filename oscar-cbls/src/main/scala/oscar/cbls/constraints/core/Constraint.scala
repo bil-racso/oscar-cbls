@@ -76,12 +76,12 @@ abstract class Constraint{
    */
   def registerConstrainedVariable(v: Value){
     v match{
-      case c:AbstractVariable if (c.model != null) => _constrainedVariables = c :: constrainedVariables
+      case c:AbstractVariable if c.model != null => _constrainedVariables = c :: _constrainedVariables
     }   //TODO unsure if constraints can handle constraints as input parameter...
   }
 
   def registerConstrainedVariables(v: Value*){
-    registerConstrainedVariables(v.toSeq)
+    for (vv <- v){registerConstrainedVariable(vv)}
   }
 
   def registerConstrainedVariables(v: Iterable[Value]){

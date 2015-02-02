@@ -76,11 +76,8 @@ class IntVarObjective(val objective: ChangingIntValue) extends Objective {
  *
  *   this is computed partially both for objective and mustBeZeroObjective
  * @param mustBeZeroObjective
- * @param objective
  */
-class CascadingObjective(val mustBeZeroObjective: ChangingIntValue, objective:ChangingIntValue) extends IntVarObjective(objective) {
-
-  model.registerForPartialPropagation(mustBeZeroObjective)
+class CascadingObjective(mustBeZeroObjective: Objective, secondObjective:Objective) extends Objective {
 
   /**
    * This method returns the actual objective value.
@@ -89,8 +86,10 @@ class CascadingObjective(val mustBeZeroObjective: ChangingIntValue, objective:Ch
    */
   override def value = {
     if (mustBeZeroObjective.value > 0) Int.MaxValue
-    else objective.value
+    else secondObjective.value
   }
+
+  override def model: Store = mustBeZeroObjective.model
 }
 
 class FunctionObjective(f:()=>Int, m:Store = null) extends Objective{
@@ -151,5 +150,46 @@ trait Objective {
     for (assign <- oldvals)
       assign._1 := assign._2
     newObj
+  }
+
+
+  /**returns the value of the objective variable if i is inserted to a
+    * this process is efficiently performed as the objective Variable is registered for partial propagation
+    * @see registerForPartialPropagation() in [[oscar.cbls.invariants.core.computation.Store]]
+    */
+  def insertValAssumeNotAlreadyIn(a: CBLSSetVar, i:Int): Int = {
+    a :+= i
+    val NewVal = value
+    a :-= i
+    NewVal
+  }
+
+  /**returns the value of the objective variable if i is inserted to a
+    * this process is efficiently performed as the objective Variable is registered for partial propagation
+    * @see registerForPartialPropagation() in [[oscar.cbls.invariants.core.computation.Store]]
+    */
+  def insertVal(a: CBLSSetVar, i:Int): Int = {
+    if(a.value.contains(i)) return value
+    insertValAssumeNotAlreadyIn(a, i)
+  }
+
+  /**returns the value of the objective variable if i is removed from a
+    * this process is efficiently performed as the objective Variable is registered for partial propagation
+    * @see registerForPartialPropagation() in [[oscar.cbls.invariants.core.computation.Store]]
+    */
+  def removeValAssumeIn(a: CBLSSetVar, i:Int): Int = {
+    a :-= i
+    val NewVal = value
+    a :+= i
+    NewVal
+  }
+
+  /**returns the value of the objective variable if i is removed from a
+    * this process is efficiently performed as the objective Variable is registered for partial propagation
+    * @see registerForPartialPropagation() in [[oscar.cbls.invariants.core.computation.Store]]
+    */
+  def removeVal(a: CBLSSetVar, i:Int): Int = {
+    if(!a.value.contains(i)) return value
+    removeValAssumeIn(a, i)
   }
 }

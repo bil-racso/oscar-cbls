@@ -61,7 +61,7 @@ case class RemovePoint(PredecessorsOfRoutedPointsToRemove:()=>Iterable[Int],
 
       RemovePoint.encode(beforeRemovedPoint, vrp)
       vrp.commit(true)
-      val newObj = obj()
+      val newObj = obj.value
       vrp.undo()
 
       if (moveRequested(newObj)

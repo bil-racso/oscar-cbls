@@ -30,7 +30,7 @@ import scala.util.Random
  */
 object NQueensEasy1 extends CBLSModel with App{
 
-  val N = 20
+  val N = 1000
 
   println("NQueenEasy(" + N + ")")
   val range:Range = Range(0,N)
@@ -51,7 +51,7 @@ object NQueensEasy1 extends CBLSModel with App{
       searchZone2 = maxViolQueens, //much faster than using searchZone1, since hotRestart is on Zone1, and not on zone2, and would be log(n)
       symmetryCanBeBrokenOnIndices = false) //since one search zone has been specified, and the other is the full range
 
-  val it = neighborhood.doAllMoves(_ >= N || c.violation.value == 0, c.violation)
+  val it = neighborhood.doAllMoves(_ >= N || c.violation.value == 0, c)
 
   println("it: " + it)
   println(queens.mkString(","))

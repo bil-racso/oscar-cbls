@@ -75,7 +75,7 @@ case class TwoOpt(PredecesorOfFirstMovedPoint:()=>Iterable[Int],
         TwoOpt.encode(fstPred, sndPred, vrp)
 
         vrp.commit(true)
-        val newObj = obj()
+        val newObj = obj.value
         vrp.undo()
 
         if (moveRequested(newObj)

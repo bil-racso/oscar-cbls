@@ -86,7 +86,7 @@ class ExtendableSum(model:Store,domain:Domain)
   }
 
   override def checkInternals(c: Checker) {
-    c.check(this.value == this.getStaticallyListenedElements.foldLeft(0)((acc, intvar) => acc + intvar.asInstanceOf[IntValue].value),
+    c.check(this.value == this.getDynamicallyListenedElements.foldLeft(0)((acc, intvar) => acc + intvar.asInstanceOf[IntValue].value),
       Some("output.value == vars.foldLeft(0)((acc,intvar) => acc+intvar.value)"))
   }
 }

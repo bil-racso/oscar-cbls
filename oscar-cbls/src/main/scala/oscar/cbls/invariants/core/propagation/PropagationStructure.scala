@@ -362,6 +362,14 @@ abstract class PropagationStructure(val verbose: Boolean, val checker:Option[Che
     Track
   }
 
+
+  def checkUniqueID(): Unit ={
+    for(p <- getPropagationElements){
+      require(p.uniqueID != -1)
+    }
+  }
+
+
   private var PostponedComponents: List[PropagationElement] = List.empty
 
   /**
@@ -540,7 +548,7 @@ abstract class PropagationStructure(val verbose: Boolean, val checker:Option[Che
     */
   def getNodeStorage[T](implicit X:Manifest[T]):NodeDictionary[T] = new NodeDictionary[T](this.MaxID)
 
-  /** returns some info on the Propgation structure
+  /** returns some info on the PropagationStructure
     * call this after closing
     * @return
     */
@@ -552,6 +560,8 @@ abstract class PropagationStructure(val verbose: Boolean, val checker:Option[Che
       "  actuallyAcyclic:" + acyclic + "\n" +
       "  propagationElementCount:" + getPropagationElements.size + "\n" +
       "  StronglyConnectedComponentsCount:" + StronglyConnexComponentsList.size + "\n" +
+      "  PropagationElemeType{" + "\n    " + getPropagationElements.map(_.getClass.getSimpleName).groupBy((name: String) => name).map(a => a._1 + ":" + a._2.size).mkString("\n    ") + "\n"+
+      "  }\n" +
       ")"
   }
 }
@@ -861,6 +871,7 @@ trait PropagationElement extends BasicPropagationElement with DAGNode{
   private var mySchedulingHandler:SchedulingHandler = null
 
   def propagationStructure:PropagationStructure = if(schedulingHandler == null) null else schedulingHandler.propagationStructure
+  def hasPropagationStructure = schedulingHandler != null
 
   /**set to true if the PropagationElement is scheduled for propagation, false otherwise.
     * this is managed by the PropagationElement
@@ -869,7 +880,6 @@ trait PropagationElement extends BasicPropagationElement with DAGNode{
 
   private[propagation] var staticallyListenedElements: List[PropagationElement] = List.empty
   private[propagation] var staticallyListeningElements: List[PropagationElement] = List.empty
-
 
   private final val dynamicallyListeningElements: DelayedPermaFilteredDoublyLinkedList[(PropagationElement, Any), PropagationElement]
   = new DelayedPermaFilteredDoublyLinkedList[(PropagationElement, Any), PropagationElement]
