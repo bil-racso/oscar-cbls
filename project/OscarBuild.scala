@@ -31,6 +31,7 @@ object OscarBuild extends Build {
       version := buildVersion,
       scalacOptions in Compile ++= Seq("-encoding", "UTF-8", "-deprecation", "-feature", "-unchecked"/*, "-optimise", "-Xdisable-assertions"*/),
       scalacOptions in Test := Seq("-optimise"),
+      javacOptions in Compile ++= Seq("-source"),
       testOptions in Test <+= (target in Test) map {
           t => Tests.Argument(TestFrameworks.ScalaTest, "junitxml(directory=\"%s\")" format (t / "test-reports") ) },
       parallelExecution in Test := false,
@@ -38,7 +39,6 @@ object OscarBuild extends Build {
       javaOptions in Test += "-Djava.library.path=../lib:../lib/" + osNativeLibDir,
       unmanagedBase <<= baseDirectory { base => base / "../lib/" }, // unfortunately does not work
       unmanagedClasspath in Compile <+= (baseDirectory) map { bd => Attributed.blank(bd / "../lib/") }, 
-      unmanagedResourceDirectories in Compile <+= baseDirectory { base => base / "src/" },
       scalaVersion := buildScalaVersion,
       publishTo := Some(Resolver.url("sbt-release-local", new URL("http://localhost:8081/artifactory/libs-release-local")))
     )
