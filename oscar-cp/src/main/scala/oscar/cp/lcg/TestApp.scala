@@ -6,10 +6,10 @@ object TestApp extends LCGModel with App {
 
   def propagate(): Unit = {
     println
-    println("propagate results : " + lcgStore.propagate())
+    println("propagate results : " + lcgSolver.propagate())
     println(x.name + "[" + x.min + ", " + x.max + "]")
     println(x)
-    while (lcgStore.isInconsistent) {
+    while (lcgSolver.isInconsistent) {
       println("pop state")
       cpSolver.pop()
     }
@@ -22,35 +22,35 @@ object TestApp extends LCGModel with App {
   propagate() 
   propagate()
   
-  lcgStore.enqueue(x.minGeq(10), null)
+  lcgSolver.enqueue(x.minGeq(10), null)
 
   propagate()
   propagate()
 
-  lcgStore.addExplanationClause(Array(-x.minGeq(10)))
+  lcgSolver.addExplanationClause(Array(-x.minGeq(10)))
 
   propagate()
   propagate()
 
-  lcgStore.enqueue(x.minGeq(10), null)
-
-  propagate()
-  propagate()
-  
-  cpSolver.pushState()
-  
-  lcgStore.enqueue(x.minGeq(15), null)
-  lcgStore.enqueue(x.maxLeq(20), null)
-  
-  cpSolver.pushState()
-  cpSolver.pushState()
-  cpSolver.pushState()
-  cpSolver.pushState()
+  lcgSolver.enqueue(x.minGeq(10), null)
 
   propagate()
   propagate()
   
-  lcgStore.addExplanationClause(Array(-x.minGeq(10)))
+  cpSolver.pushState()
+  
+  lcgSolver.enqueue(x.minGeq(15), null)
+  lcgSolver.enqueue(x.maxLeq(20), null)
+  
+  cpSolver.pushState()
+  cpSolver.pushState()
+  cpSolver.pushState()
+  cpSolver.pushState()
+
+  propagate()
+  propagate()
+  
+  lcgSolver.addExplanationClause(Array(-x.minGeq(10)))
   
   propagate()
   propagate()
