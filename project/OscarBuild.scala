@@ -9,8 +9,6 @@ import sbtunidoc.Plugin._
 
 
 object OscarBuild extends Build {
-
-  
   
   object BuildSettings {
     val buildOrganization = "oscar"
@@ -38,8 +36,8 @@ object OscarBuild extends Build {
       javaOptions in Test += "-Djava.library.path=../lib:../lib/" + osNativeLibDir,
       unmanagedBase <<= baseDirectory { base => base / "../lib/" }, // unfortunately does not work
       unmanagedClasspath in Compile <+= (baseDirectory) map { bd => Attributed.blank(bd / "../lib/") },
-      unmanagedSourceDirectories in Compile += baseDirectory.value / "src",
       scalaVersion := buildScalaVersion,
+      includeFilter in (Compile, unmanagedSources) := "*.scala" || "*.java",
       publishTo := Some(Resolver.url("sbt-release-local", new URL("http://localhost:8081/artifactory/libs-release-local")))
     )
   }
