@@ -304,7 +304,7 @@ class LCGStore(store: CPStore) {
     if (trail.length == trailSize) growTrail()
     trail(trailSize) = literal
     trailSize += 1
-    //store.trail(undoTrailEntry)
+    store.trail(undoTrailEntry)
   }
 
   @inline private def growTrail(): Unit = {

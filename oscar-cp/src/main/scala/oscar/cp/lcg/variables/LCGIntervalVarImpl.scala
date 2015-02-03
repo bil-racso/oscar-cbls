@@ -46,13 +46,13 @@ class LCGIntervalVarImpl(final override val lcgStore: LCGStore, final override v
   @inline final override def minGeq (value: Int): Literal = {
     val id = value - initMin - 1
     if (id < 0) lcgStore.trueLit
-    else if (id > nLiterals) lcgStore.falseLit
+    else if (id >= nLiterals) lcgStore.falseLit
     else literals(id).opposite
   }
   
   @inline final override def maxLeq(value: Int): Literal = {
     val id = value - initMin
-    if (id > nLiterals) lcgStore.trueLit
+    if (id >= nLiterals) lcgStore.trueLit
     else if (id < 0) lcgStore.falseLit
     else literals(id)
   }
@@ -80,7 +80,7 @@ class LCGIntervalVarImpl(final override val lcgStore: LCGStore, final override v
   // Find the min value in the domain
   @inline private def searchMin: Int = {
     var i = 0
-    while (lcgStore.isFalse(literals(i)) && i < nLiterals) i += 1
+    while (i < nLiterals && lcgStore.isFalse(literals(i))) i += 1
     initMin + i
   }
   
@@ -97,7 +97,7 @@ class LCGIntervalVarImpl(final override val lcgStore: LCGStore, final override v
     val literals = new Array[Literal](nLiterals)
     var i = 0
     while (i < nLiterals) {
-      literals(i) = lcgStore.newVariable(this, "<= " + (i + initMin))
+      literals(i) = lcgStore.newVariable(this, name + " <= " + (i + initMin))
       i += 1
     }
     // Add consistency constraints
