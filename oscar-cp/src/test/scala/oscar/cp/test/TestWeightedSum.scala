@@ -46,16 +46,16 @@ class TestWeightedSum extends FunSuite with ShouldMatchers {
     val x = domx.map(dom => CPIntVar(dom)(cp))
     val y = CPIntVar(ymin to ymax)(cp)
     var n: Int = 0
-    cp.solve subjectTo {
-      if (!decomp)
-        cp.add(weightedSum(w, x, y))
-      else
-        cp.add(sum(w.zip(x).map { case (wi, xi) => xi * wi }) == y)
-    } search {
+
+    if (!decomp)
+      cp.add(weightedSum(w, x, y))
+    else
+      cp.add(sum(w.zip(x).map { case (wi, xi) => xi * wi }) == y)
+    cp.search {
       binaryFirstFail(x)
     } onSolution {
       n += 1
-    } start()
+    } start ()
     n
   }
 

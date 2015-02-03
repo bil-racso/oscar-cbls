@@ -74,9 +74,9 @@ class TestTableSTR extends FunSuite with ShouldMatchers  {
     
     var nbSol = 0
     	
-    cp.solve subjectTo {
+
       cp.add(new TableSTR(x,tuples))
-    } search {
+    cp.search {
       binaryStatic(x)
     } onSolution {
       nbSol += 1

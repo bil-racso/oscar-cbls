@@ -35,21 +35,6 @@ class TestNoSolutionException extends FunSuite with ShouldMatchers {
 	  cp.isFailed() should be(true)
 	}
 	
-	test("test2: using add inside subjectTo shouldn't generate NoSolutionExceptions") {
-	  val cp = CPSolver()
-	  val x = CPIntVar(Array(10, 20, 30))(cp)
-	  
-	  try {
-		  cp.solve subjectTo {
-			  cp.add(x < 10)
-		  }
-	  } catch {
-	    case e: NoSolutionException => fail("The NoSolutionException should be caught by the subjectTo block")
-	  }
-	  
-	  cp.isFailed() should be(true)
-	}
-	
 	test("test3: using post outside subjectTo shouldn't generate NoSolutionExceptions") {
 	  val cp = CPSolver()
 	  val x = CPIntVar(Array(10, 20, 30))(cp)
@@ -67,9 +52,7 @@ class TestNoSolutionException extends FunSuite with ShouldMatchers {
 	  val cp = CPSolver()
 	  val x = CPIntVar(Array(10, 20, 30))(cp)
 	  try {
-		  cp.solve subjectTo {
-			  cp.post(x < 10)
-		  }
+			cp.post(x < 10)
 	  } catch {
 	    case e: NoSolutionException => fail("The NoSolutionException should be caught by the subjectTo block")
 	  }

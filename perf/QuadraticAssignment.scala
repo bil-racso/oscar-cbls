@@ -1,17 +1,19 @@
-/*******************************************************************************
+/**
+ * *****************************************************************************
  * OscaR is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- *   
+ *
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License  for more details.
- *   
+ *
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
- ******************************************************************************/
+ * ****************************************************************************
+ */
 import oscar.cp._
 import oscar.util._
 
@@ -54,9 +56,9 @@ object QuadraticAssignment {
     val x = N map (v => CPIntVar(cp, 0 until n))
     val D = Array.tabulate(n, n)((i, j) => element(d, x(i), x(j))) //matrix of variables representing the distances
 
-    cp.minimize(sum(N, N)((i, j) => D(i)(j) * w(i)(j))) subjectTo {
-      cp.add(allDifferent(x), Strong)
-    } search {
+    cp.minimize(sum(N, N)((i, j) => D(i)(j) * w(i)(j)))
+    cp.add(allDifferent(x), Strong)
+    cp.search {
       selectMin(x)(y => !y.isBound)(y => y.size) match {
         case None => noAlternative
         case Some(y) => {

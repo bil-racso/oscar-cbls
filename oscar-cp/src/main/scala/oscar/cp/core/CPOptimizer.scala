@@ -80,18 +80,5 @@ class CPOptimizer(propagStrength: CPPropagStrength) extends CPStore(propagStreng
     this
   }
   
-  @deprecated("solve is the default behavior of CPSolver and does not need to be specified anymore.", "1.0")
-  def solve(): CPOptimizer = this
-
-  @deprecated("constraints do not need to be stated in the subjectTo block anymore.", "1.0")
-  def subjectTo(constraintsBlock: => Unit): CPOptimizer = {
-    try {
-      constraintsBlock
-    } catch {
-      case ex: NoSolutionException => println("No Solution, inconsistent model")
-    }
-    this
-  }
-  
-  override def update(): Unit = propagate()
+  def update(): Unit = propagate()
 }

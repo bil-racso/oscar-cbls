@@ -63,7 +63,7 @@ object BiQuadraticAssignment extends App {
 
   // Model
   // -----
-  val cp = CPSolver()
+  implicit val cp = CPSolver()
   cp.silent = true
 
   val x: Array[CPIntVar] = Array.fill(n)(CPIntVar(N)(cp))
@@ -83,15 +83,16 @@ object BiQuadraticAssignment extends App {
 
   cp.addDecisionVariables(x)
 
-  cp.paretoMinimize(obj1, obj2) subjectTo {
-    cp.add(allDifferent(x), Strong)
-  } search {
+  cp.paretoMinimize(obj1, obj2) 
+  cp.add(allDifferent(x), Strong)
+  search {
     if (allBounds(x)) noAlternative
     else {
       val (i, v) = heuristic(if (rand.nextBoolean) w1 else w2)
       branch(cp.add(x(i) == v))(cp.add(x(i) != v))
     }
-  } onSolution {
+  } 
+  onSolution {
      paretoPlot.insert(obj1.value, obj2.value)
   }
 
