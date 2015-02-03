@@ -7,6 +7,7 @@ import oscar.cp.lcg.core.LCGStore
 import oscar.cp.lcg.core.Literal
 import scala.util.Random
 import oscar.cp.lcg.constraints.LCGConstraint
+import oscar.cp.lcg.core.LCGSolver
 
 abstract class LCGIntervalVar {
 
@@ -57,7 +58,7 @@ object LCGIntervalVar {
     val i = id; id += 1; i
   }
   
-  def apply(initMin: Int, initMax: Int, name: String = "")(implicit lcgStore: LCGStore, store: CPStore): LCGIntervalVar = {
-    new LCGIntervalVarImpl(lcgStore, store, nextId(), initMin, initMax, name)
+  def apply(initMin: Int, initMax: Int, name: String = "")(implicit lcgStore: LCGSolver, store: CPStore): LCGIntervalVar = {
+    new LCGIntervalVarImpl(lcgStore.lcgStore, store, nextId(), initMin, initMax, name)
   }
 }

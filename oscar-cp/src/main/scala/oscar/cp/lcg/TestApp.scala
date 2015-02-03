@@ -1,60 +1,38 @@
 package oscar.cp.lcg
 
+import oscar.cp._
 import oscar.cp.lcg._
 
 object TestApp extends LCGModel with App {
+  
+  val variables = Array.tabulate(3)(i => LCGIntervalVar(0, 2, "Var_" + i))
 
-  def propagate(): Unit = {
-    println
-    println("propagate results : " + lcgSolver.propagate())
-    println(x.name + "[" + x.min + ", " + x.max + "]")
-    println(x)
-    println(lcgSolver.decisionLevel)
-    while (lcgSolver.isInconsistent) {
-      println("pop state sat level before : " + lcgSolver.decisionLevel)
-      cpSolver.pop()
-      println("pop state sat level after : " + lcgSolver.decisionLevel)
+  search {
+    val variable = variables.find(v => !v.isAssigned)
+    if (variable.isEmpty) noAlternative
+    else {
+      val v = variable.get
+      val value = v.min
+      branch {
+        // Assign
+        println("assign " + value + " to " + v.name)
+        lcgSolver.lcgStore.newDecisionLevel()
+        cpSolver.doAndPropagate {
+          lcgSolver.lcgStore.enqueue(v.minGeq(value), null)
+          lcgSolver.lcgStore.enqueue(v.maxLeq(value), null)
+        }
+      } {
+        // Remove
+        println("remove " + " value " + " to " + v.name)
+        lcgSolver.lcgStore.newDecisionLevel()
+        cpSolver.doAndPropagate {
+          lcgSolver.lcgStore.enqueue(-v.minGeq(value), null)
+        }
+      }
     }
   }
 
-  cpSolver.pushState()
+  onSolution(println("SOLUTION FOUND !"))
 
-  val x = LCGIntervalVar(5, 25, "x")
-
-  propagate() 
-  propagate()
-  
-  lcgSolver.enqueue(x.minGeq(10), null)
-
-  propagate()
-  propagate()
-
-  lcgSolver.addExplanationClause(Array(-x.minGeq(10)))
-
-  propagate()
-  propagate()
-
-  lcgSolver.enqueue(x.minGeq(10), null)
-
-  propagate()
-  propagate()
-  
-  cpSolver.pushState()
-  
-  lcgSolver.enqueue(x.minGeq(15), null)
-  lcgSolver.enqueue(x.maxLeq(20), null)
-  
-  cpSolver.pushState()
-  cpSolver.pushState()
-  cpSolver.pushState()
-  cpSolver.pushState()
-
-  println("\n start fix point at sat level " + lcgSolver.decisionLevel +" and cp level 5 \n")
-  propagate()
-  propagate()
-  
-  lcgSolver.addExplanationClause(Array(-x.minGeq(10)))
-  
-  propagate()
-  propagate()
+  start()
 }

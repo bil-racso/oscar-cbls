@@ -7,6 +7,7 @@ import oscar.algo.reversible.TrailEntry
 import oscar.cp.core.CPStore
 import oscar.cp.lcg.core.clauses.Clause
 import oscar.algo.reversible.ReversibleInt
+import oscar.cp.lcg.variables.LCGIntervalVar
 
 class TrailRemoveExplanation(explanation: Clause) extends TrailEntry {
   final override def restore(): Unit = explanation.deactive()
@@ -24,7 +25,7 @@ class LCGStore(store: CPStore) {
 
   // Variables
   private[this] val variables: ArrayStack[Literal] = new ArrayStack(128)
-  private[this] val intervalRef: ArrayStack[Int] = new ArrayStack(128)
+  private[this] val intervalRef: ArrayStack[LCGIntervalVar] = new ArrayStack(128)
   private[this] val values: ArrayStack[LiftedBoolean] = new ArrayStack(128)
   private[this] val reasons: ArrayStack[Clause] = new ArrayStack(128)
   private[this] val levels: ArrayStack[Int] = new ArrayStack(128) // FIXME boxing
@@ -40,7 +41,7 @@ class LCGStore(store: CPStore) {
   private[this] val level: ReversibleInt = new ReversibleInt(store, 0)
 
   // True variable
-  private[this] val trueVariable = newVariable(-1, "TRUE_VAR")
+  private[this] val trueVariable = newVariable(null, "TRUE_VAR")
   values(trueVariable.varId) = True // should not be trailed
 
   // Propagation queue
@@ -74,11 +75,11 @@ class LCGStore(store: CPStore) {
   @inline final def assignReason(varId: Int): Clause = reasons(varId)
 
   /** Create a new variable and return its unsigned literal. */
-  final def newVariable(ref: Int, name: String): Literal = {
+  final def newVariable(interval: LCGIntervalVar, name: String): Literal = {
     val varId = values.size
     val literal = new Literal(varId, name)
     variables.append(literal)
-    intervalRef.append(ref)
+    intervalRef.append(interval)
     values.append(Unassigned)
     reasons.append(null)
     levels.append(-1)
@@ -138,14 +139,11 @@ class LCGStore(store: CPStore) {
         if (watched1 == -1) watched1 = i
         else watched2 = i
       }
-      if (v == Unassigned) watched1 = i
-      else if (v == True) sys.error("entailed explanation")
       i += 1
     }
 
     if (watched1 == -1) {
       // falsified
-      backtrackLevel = decisionLevel - 1
       false
     } else if (watched2 == -1) {
       // assertive
@@ -202,8 +200,6 @@ class LCGStore(store: CPStore) {
   final def propagate(): Boolean = {
     if (testInconsistent) false
     else {
-      // New propagation level
-      increaseLevel()
       // Call the fixed-point algorithm
       val noConflict = fixedPoint()
       if (noConflict) true
@@ -274,32 +270,32 @@ class LCGStore(store: CPStore) {
       levels(varId) = level.value
       reasons(varId) = from
       trailAssignment(literal) // Increase the trail here
+      // Notify corresponding variable
+      intervalRef(varId).updateAndNotify()
       queue.addLast(literal)
       true
     }
   }
 
-  @inline private def increaseLevel(): Unit = {
-    val magic = store.magic
-    if (lastMagic != magic) {
-      lastMagic = magic
-      level.incr()
-      println("increase sat level : " + level.value)
-    }
-  }
-
   class TrailUndoOne extends TrailEntry {
-    @inline final override def restore(): Unit = {
-      if (trailSize > 0) {
-        trailSize -= 1
-        val literal = trail(trailSize)
-        val varId = literal.varId
-        values(varId) = Unassigned
-        reasons(varId) = null
-        levels(varId) = -1
-      }
+    @inline final override def restore(): Unit = popAssignment()
+  }
+  
+  final def printTrail(): Unit = println("TRAIL = " + trail.take(trailSize).mkString("[", ", ", "]"))
+
+  @inline private def popAssignment(): Unit = {
+    if (trailSize > 0) {
+      printTrail()
+      trailSize -= 1
+      val literal = trail(trailSize)
+      val varId = literal.varId
+      values(varId) = Unassigned
+      reasons(varId) = null
+      levels(varId) = -1
     }
   }
+  
+  @inline final def newDecisionLevel(): Unit = level.incr()
 
   // Static trail entry
   private[this] val undoTrailEntry = new TrailUndoOne
@@ -308,7 +304,7 @@ class LCGStore(store: CPStore) {
     if (trail.length == trailSize) growTrail()
     trail(trailSize) = literal
     trailSize += 1
-    store.trail(undoTrailEntry)
+    //store.trail(undoTrailEntry)
   }
 
   @inline private def growTrail(): Unit = {

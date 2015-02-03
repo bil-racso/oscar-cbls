@@ -1,5 +1,6 @@
 package oscar.cp
 
+import oscar.cp.lcg.core.LCGSolver
 package object lcg {
     
   type LCGIntervalVar = oscar.cp.lcg.variables.LCGIntervalVar
@@ -13,7 +14,8 @@ package object lcg {
   
   trait LCGModel { 
     implicit val cpSolver: CPSolver = CPSolver() 
-    implicit val lcgSolver: LCGStore = new LCGStore(cpSolver)
-    // Add the LCG constraint to the CP solver
+    final val lcgStore: LCGStore = new LCGStore(cpSolver)
+    implicit val lcgSolver: LCGSolver = new LCGSolver(cpSolver, lcgStore)
+    cpSolver.addCut(lcgSolver)
   }
 }

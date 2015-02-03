@@ -7,8 +7,9 @@ import oscar.cp.core.CPPropagStrength
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.CPOutcome._
 import oscar.cp.lcg.core.Literal
+import oscar.cp.lcg.core.LCGSolver
 
-class DecompChecker(starts: Array[LCGIntervalVar], durations: Array[Int], demands: Array[Int], capa: Int, time: Int) extends LCGConstraint(starts(0).lcgStore, starts(0).store, "CheckerLCG") {
+class DecompChecker(lcgSolver: LCGSolver, starts: Array[LCGIntervalVar], durations: Array[Int], demands: Array[Int], capa: Int, time: Int) extends LCGConstraint(lcgSolver, starts(0).store, "CheckerLCG") {
 
   private[this] val nTasks = starts.length
   private[this] val overlaps = new Array[Int](nTasks)
@@ -50,7 +51,7 @@ class DecompChecker(starts: Array[LCGIntervalVar], durations: Array[Int], demand
         i += 1
       }
 
-      lcgStore.addExplanationClause(literals)
+      lcgStore.addExplanation(literals)
     }
   }
 }

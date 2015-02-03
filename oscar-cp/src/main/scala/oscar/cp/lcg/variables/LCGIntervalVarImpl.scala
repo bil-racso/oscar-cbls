@@ -7,8 +7,13 @@ import oscar.cp.lcg.core.LCGStore
 import oscar.cp.lcg.core.Literal
 import scala.util.Random
 import oscar.cp.lcg.constraints.LCGConstraint
+import oscar.cp.core.watcher.WatcherListL2
 
 class LCGIntervalVarImpl(final override val lcgStore: LCGStore, final override val store: CPStore, varId: Int, initMin: Int, initMax: Int, final override val name: String) extends LCGIntervalVar {
+  
+  // Watchers
+  private[this] val boundWatchers = new WatcherListL2(store)
+  private[this] val bindWatchers = new WatcherListL2(store)
   
   // Domain representation with literals
   private[this] val nLiterals = initMax - initMin
@@ -53,12 +58,13 @@ class LCGIntervalVarImpl(final override val lcgStore: LCGStore, final override v
   }
   
   final override def updateAndNotify(): Unit = {
+    boundWatchers.enqueue()
     // Check if the bounds have changed (need a reversible int)
     // if so, notify the corresponding constraints
   }
   
   final override def callWhenBoundsChange(constraint: LCGConstraint): Unit = {
-    
+    boundWatchers.register(constraint)
   }
   
   final override def toString: String = {
@@ -80,9 +86,9 @@ class LCGIntervalVarImpl(final override val lcgStore: LCGStore, final override v
   
   // Find the max value in the domain
   @inline private def searchMax: Int = {
-    var i = nLiterals - 1
-    while (lcgStore.isTrue(literals(i)) && i > 0) i -= 1
-    initMin + i + 1
+    var i = 0
+    while (i < nLiterals && !lcgStore.isTrue(literals(i))) i += 1
+    initMin + i
   }
   
   // Build the domain with literals
@@ -91,7 +97,7 @@ class LCGIntervalVarImpl(final override val lcgStore: LCGStore, final override v
     val literals = new Array[Literal](nLiterals)
     var i = 0
     while (i < nLiterals) {
-      literals(i) = lcgStore.newVariable(varId, "")
+      literals(i) = lcgStore.newVariable(this, "<= " + (i + initMin))
       i += 1
     }
     // Add consistency constraints
