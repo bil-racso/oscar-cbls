@@ -40,7 +40,7 @@ object BiTSP extends App {
   
   // Model
   // -----
-  val cp = new CPSolver()
+  implicit val cp = new CPSolver()
   cp.silent = true
   
   // Successors & Predecessors
@@ -52,11 +52,11 @@ object BiTSP extends App {
 
   // Constraints
   // -----------
-  cp.paretoMinimize(totDists: _*) subjectTo {
-    for (o <- Objs) {
-      cp.add(minCircuit(succ, distMatrices(o), totDists(o)), Strong)
-    }
-  } search {
+  cp.paretoMinimize(totDists: _*) 
+  for (o <- Objs) {
+    cp.add(minCircuit(succ, distMatrices(o), totDists(o)), Strong)
+  }
+  search {
     binaryFirstFail(succ)
   }  
   

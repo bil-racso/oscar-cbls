@@ -24,21 +24,20 @@ trait CPSolverUtils {
   def post(c: Constraint, propagStrengh: CPPropagStrength = Weak)(implicit cp: CPSolver): Unit = cp.post(c, propagStrengh)
   def post(c: Constraint)(implicit cp: CPSolver): Unit = cp.post(c)
 
-  def search(branching: Branching)(implicit cp: CPSolver): SearchNode = cp.search(branching)
+  def search(branching: Branching)(implicit cp: CPSolver): CPSolver = cp.search(branching)
 
-  def search(block: => Seq[Alternative])(implicit cp: CPSolver): SearchNode = cp.search(block)
+  def search(block: => Seq[Alternative])(implicit cp: CPSolver): CPSolver = cp.search(block)
 
   def minimize(obj: CPIntVar)(implicit cp: CPSolver): CPSolver = cp.minimize(obj)
   def maximize(obj: CPIntVar)(implicit cp: CPSolver): CPSolver = cp.maximize(obj)
 
-  def onSolution(block: => Unit)(implicit cp: CPSolver): SearchNode = cp.onSolution(block)
-  def onSolutionWithStats(block: SearchStatistics => Unit)(implicit cp: CPSolver): SearchNode = cp.onSolutionWithStats(block)
+  def onSolution(block: => Unit)(implicit cp: CPSolver): CPSolver = cp.onSolution(block)
 
-  def start(nSols: Int = Int.MaxValue, failureLimit: Int = Int.MaxValue, timeLimit: Int = Int.MaxValue, maxDiscrepancy: Int = Int.MaxValue)(implicit cp: CPSolver): SearchStatistics = {
-    cp.start(nSols, failureLimit, timeLimit, maxDiscrepancy)
+  def start(nSols: Int = Int.MaxValue, failureLimit: Int = Int.MaxValue, timeLimit: Int = Int.MaxValue)(implicit cp: CPSolver): SearchStatistics = {
+    cp.start(nSols, failureLimit, timeLimit)
   }
 
-  def startSubjectTo(nSols: Int = Int.MaxValue, failureLimit: Int = Int.MaxValue, timeLimit: Int = Int.MaxValue, maxDiscrepancy: Int = Int.MaxValue)(reversibleBlock: => Unit = {})(implicit cp: CPSolver): SearchStatistics = {
-    cp.startSubjectTo(nSols, failureLimit, timeLimit, maxDiscrepancy)(reversibleBlock)
+  def startSubjectTo(nSols: Int = Int.MaxValue, failureLimit: Int = Int.MaxValue, timeLimit: Int = Int.MaxValue)(reversibleBlock: => Unit = {})(implicit cp: CPSolver): SearchStatistics = {
+    cp.startSubjectTo(nSols, failureLimit, timeLimit)(reversibleBlock)
   }
 }

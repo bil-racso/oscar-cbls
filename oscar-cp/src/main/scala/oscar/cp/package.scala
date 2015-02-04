@@ -62,9 +62,6 @@ package object cp extends Constraints with Branchings with ElementBuilder with C
   type CPIntVar = oscar.cp.core.variables.CPIntVar
   final val CPIntVar = oscar.cp.core.variables.CPIntVar
 
-  //type CPIntervalVar = oscar.cp.core.variables.CPIntervalVar
-  //final val CPIntervalVar = oscar.cp.core.variables.CPIntervalVar
-
   type CPBoolVar = oscar.cp.core.variables.CPBoolVar
   final val CPBoolVar = oscar.cp.core.variables.CPBoolVar
 
@@ -134,7 +131,7 @@ package object cp extends Constraints with Branchings with ElementBuilder with C
       }
     }
   }
-
+  
   implicit class CPIntVarOps(x: CPIntVar) {
 
     /**

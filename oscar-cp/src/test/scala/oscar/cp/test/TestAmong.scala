@@ -14,16 +14,15 @@
  ******************************************************************************/
 package oscar.cp.test
 
-import org.scalatest.FunSuite
-import org.scalatest.matchers.ShouldMatchers
-
-import oscar.cp.constraints._
 import oscar.cp._
+import oscar.cp.testUtils._
+import oscar.cp.constraints.Among
 
-
-class TestAmong extends FunSuite with ShouldMatchers  {
+class TestAmong extends TestSuite {
   
   val rand = new scala.util.Random(0)
+  
+  def randomDom: Set[Int] = Array.fill(10)(rand.nextInt(10)).toSet
   
   def amongDecomp(cp: CPSolver, N: CPIntVar, X: Array[CPIntVar], S: Set[Int]) = {
     val counts = Array.fill(S.size)(CPIntVar(0 to X.size)(cp))
@@ -32,55 +31,31 @@ class TestAmong extends FunSuite with ShouldMatchers  {
   }
   
   def nbSol(nmin: Int, nmax: Int, domx: Array[Set[Int]], S: Set[Int], decomp: Boolean = false): Int = {
-	  var nbSol = 0  
-	  val cp = CPSolver()
-	  
-	  val N = CPIntVar(nmin to nmax)(cp)
-	  val X = Array.tabulate(domx.size)(i => CPIntVar(domx(i))(cp))
-	  cp.solve subjectTo {
-	    if (decomp) amongDecomp(cp,N,X,S)
-	    else cp.add(new Among(N,X,S))
-	  } search {
-	    binaryStatic(X :+ N)
-	  }
-	  cp.start().nSols
+	  implicit val cp = CPSolver()
+	  val N = CPIntVar(nmin to nmax)
+	  val X = Array.tabulate(domx.size)(i => CPIntVar(domx(i)))
+	  if (decomp) amongDecomp(cp,N,X,S)
+	  else cp.add(new Among(N,X,S))
+	  search(binaryStatic(X :+ N))
+	  start().nSols
   }
-  
-  def randomDom = Array.fill(10)(rand.nextInt(10)).toSet
-  
-  
+   
   test("among1") { 
-	  val cp = CPSolver()
+	  implicit val cp = CPSolver()
 	  val S = Set(1,2,3)
-	  
-	  val N = CPIntVar(2)(cp)
-	  val X = Array.fill(5)(CPIntVar(0 to 5)(cp))
-	  cp.solve subjectTo {
-	    cp.add(new Among(N,X,S))
-	  } search {
-	    binaryStatic(X)
-	  } onSolution {
-	    X.map(_.value).count(v => S.contains(v)) should equal(N.value)
-	  } start()
-	  
+	  val N = CPIntVar(2)
+	  val X = Array.fill(5)(CPIntVar(0 to 5))
+	  add(new Among(N,X,S))
+	  search { binaryStatic(X) } 
+    onSolution { X.map(_.value).count(v => S.contains(v)) should equal(N.value) } 
+    start() 
   }
-  
   
   test("among2") {
-
     for (i <- 0 to 5) {
-
       val X = Array.fill(6)(randomDom)
       val S = Set(1, 4, 5)
       nbSol(4, 5, X, S, false) should equal(nbSol(4, 5, X, S, true))
     }
-
-	
   }
-  
-  // to do, test extreme cases
-  
- 
-
-
 }

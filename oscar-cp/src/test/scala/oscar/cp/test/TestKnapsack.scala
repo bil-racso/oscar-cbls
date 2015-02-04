@@ -14,48 +14,38 @@
  ******************************************************************************/
 package oscar.cp.test
 
-import org.scalatest.FunSuite
-import org.scalatest.matchers.ShouldMatchers
-
-import oscar.cp.constraints._
-
 import oscar.cp._
+import oscar.cp.testUtils._
+import oscar.cp.constraints.Knapsack
 
 /**
  * author Pierre Schaus pschaus@gmail.com
  */
-class TestKnapsack extends FunSuite with ShouldMatchers {
+class TestKnapsack extends TestSuite {
 
   def solve(n: Int, cons: Boolean, seed: Int = 0): Int = {
     val rand = new scala.util.Random(seed)
     val u = 40
     val profit = Array.fill(n)(1 + rand.nextInt(100))
     val weight = Array.fill(n)(1 + rand.nextInt(u))
-    val cp = CPSolver()
-    val P = CPIntVar(0 to 1000000)(cp)
-    val W = CPIntVar(0 to (n / 2 * u / 2))(cp)
-    val X = Array.fill(profit.size)(CPBoolVar()(cp))
+    implicit val cp = CPSolver()
+    val P = CPIntVar(0 to 1000000)
+    val W = CPIntVar(0 to (n / 2 * u / 2))
+    val X = Array.fill(profit.size)(CPBoolVar())
     var obj = 0
-    //println("W:"+W)
-    //println("weight:"+weight.mkString(","))
-    //println("profit:"+profit.mkString(","))
     cp.silent = true
-    cp.maximize(P) subjectTo {
-      cp.add(binaryKnapsack(X, profit, P))
-      cp.add(binaryKnapsack(X, weight, W))
-      if (cons) {
-        //println("with knapsack")
-        cp.add(new Knapsack(X, profit, weight, P, W, true))
-      }
-    } search {
+    maximize(P) 
+    add(binaryKnapsack(X, profit, P))
+    add(binaryKnapsack(X, weight, W))
+    if (cons) add(new Knapsack(X, profit, weight, P, W, true))
+    search {
       if (allBounds(X)) noAlternative
       else {
         val (x, i) = X.zipWithIndex.filter { case (x, i) => !x.isBound }.maxBy { case (x, i) => weight(i) }
-        branch(cp.post(x == 1))(cp.post(x == 0))
+        branch(post(x == 1))(post(x == 0))
       }
-    } onSolution {
-      obj = P.value
     }
+    onSolution { obj = P.value }
     obj
   }
 

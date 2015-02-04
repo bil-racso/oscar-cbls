@@ -32,11 +32,10 @@ object Queens {
     val queens = for (i <- Queens) yield CPIntVar(cp, 1 to n)
 
     var nbsol = 0
-    cp.solve subjectTo {
       cp.add(allDifferent(queens), Strong)
       cp.add(allDifferent(for (i <- Queens) yield queens(i) + i), Strong)
       cp.add(allDifferent(for (i <- Queens) yield queens(i) - i), Strong)
-    } search {
+    cp.search {
       queens.find(!_.isBound) match {
         case None => noAlternative
         case Some(x) => branchAll(1 to n)(v => cp.add(x == v))

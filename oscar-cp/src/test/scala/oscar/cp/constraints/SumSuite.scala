@@ -69,8 +69,7 @@ class SumSuite extends TestSuite {
   
   private val rand = new scala.util.Random(0)
   
-  private def solve(x: Array[CPIntVar], y: CPIntVar, decomp: Boolean = false): Int = {   
-    val solver = y.store
+  private def solve(solver: CPSolver, x: Array[CPIntVar], y: CPIntVar, decomp: Boolean = false): Int = {   
     if (decomp) solver.add(new Sum(x, y))
     else solver.add(sum(x, y))    
     solver.search { 
@@ -95,21 +94,21 @@ class SumSuite extends TestSuite {
     val cp = CPSolver()
     val x = Array(CPIntVar(-2, 5, "x0")(cp), CPIntVar(-4, 5, "x1")(cp), CPIntVar(3, 5, "x2")(cp))
     val y = CPIntVar(4, 5, "y")(cp)
-    solve(x, y, false) should be(solve(x, y, true))
+    solve(cp, x, y, false) should be(solve(cp, x, y, true))
   }
 
   test("sum5") {
     val cp = CPSolver()
     val x = Array(CPIntVar(Set(-5, -3, 2, 8))(cp), CPIntVar(Set(-10, 8))(cp), CPIntVar(3, 5)(cp))
     val y = CPIntVar(3, 8)(cp)
-    solve(x, y, false) should be(solve(x, y, true))
+    solve(cp, x, y, false) should be(solve(cp, x, y, true))
   }
 
   test("sum6") {
     val cp = CPSolver()
     val x = Array(CPIntVar(Set(-5, -3, 2, 8))(cp), CPIntVar(Set(-10, 8))(cp), CPIntVar(3, 5)(cp), CPIntVar(-10, -5)(cp))
     val y = CPIntVar(3, 8)(cp)
-    solve(x, y, false) should be(solve(x, y, true))
+    solve(cp, x, y, false) should be(solve(cp, x, y, true))
   }
 
 }

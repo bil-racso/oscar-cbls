@@ -155,8 +155,6 @@ object TrolleyProblem extends CPModel with App {
     gantt.update(1, 20)
     states.update(1, 20)
   }
-  
-  onSolutionWithStats { s => println(s) }
 
   frame.createFrame("Gantt Chart").add(gantt)
   frame.createFrame("Trolley Location").add(states)

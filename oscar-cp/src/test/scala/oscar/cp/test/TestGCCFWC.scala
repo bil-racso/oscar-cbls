@@ -14,52 +14,36 @@
  ******************************************************************************/
 package oscar.cp.test
 
-import org.scalatest.FunSuite
-import org.scalatest.matchers.ShouldMatchers
-
-import oscar.cp.constraints._
-
 import oscar.cp._
+import oscar.cp.testUtils._
+import oscar.cp.constraints.GCCFWC
 
-
-class TestGCCFWC extends FunSuite with ShouldMatchers {
-
+class TestGCCFWC extends TestSuite {
 
   test("Test 3: Variation of 2 that should have some solutions") {
-    val cp = new CPSolver()
-    var x1 = CPIntVar(0, 2)(cp)
-    var x2 = CPIntVar(1, 3)(cp)
-    var x3 = CPIntVar(0, 3)(cp)
+    implicit val cp = new CPSolver()
+    val x1 = CPIntVar(0, 2)
+    val x2 = CPIntVar(1, 3)
+    val x3 = CPIntVar(0, 3)
     val x = Array(x1, x2, x3)
-
     val minVal = 0
     val Low = Array(0, 0, 0)
     val Up = Array(2, 0, 0)
-
-    var nbSol = 0;
-    cp.solve subjectTo {
-      cp.add(new GCCFWC(x, minVal, Low, Up))
-    } search {
-      binaryFirstFail(x)
-    }
-
-    cp.start().nSols should be > 0
+    add(new GCCFWC(x, minVal, Low, Up))
+    search { binaryFirstFail(x) }
+    start().nSols should be > 0
   }
   
   test("Test 4: verifying a solution") {
-    val cp = new CPSolver()
-    var x1 = CPIntVar(0, 2)(cp)
-    var x2 = CPIntVar(1, 3)(cp)
-    var x3 = CPIntVar(0, 3)(cp)
+    implicit val cp = new CPSolver()
+    val x1 = CPIntVar(0, 2)
+    val x2 = CPIntVar(1, 3)
+    val x3 = CPIntVar(0, 3)
     val x = Array(x1, x2, x3)
-
-    // T4
     val minVal = 0
     val Low = Array(0, 1, 0, 2)
     val Up = Array(3, 2, 3, 2)
-
-    cp.add(new GCCFWC(x, minVal, Low, Up))
-
+    add(new GCCFWC(x, minVal, Low, Up))
     val sol = Array[Int](1, 3, 3)
     for (i <- 0 until x.length) {
       x(i).value should be(sol(i))
@@ -67,46 +51,31 @@ class TestGCCFWC extends FunSuite with ShouldMatchers {
   }
 
   test("Test 5: counting solutions") {
-    val cp = new CPSolver()
-    var x1 = CPIntVar(0, 2)(cp)
-    var x2 = CPIntVar(1, 3)(cp)
-    var x3 = CPIntVar(0, 3)(cp)
+    implicit val cp = new CPSolver()
+    val x1 = CPIntVar(0, 2)
+    val x2 = CPIntVar(1, 3)
+    val x3 = CPIntVar(0, 3)
     val x = Array(x1, x2, x3)
-
     val minVal = 0
     val Low = Array(0, 0, 0, 2)
     val Up = Array(0, 2, 3, 2)
-
-    var nbSol = 0;
-    cp.solve subjectTo {
-      cp.add(new GCCFWC(x, minVal, Low, Up))
-    } search {
-      binaryFirstFail(x)
-    }
-
+    add(new GCCFWC(x, minVal, Low, Up))
+    search { binaryFirstFail(x) }
     cp.start().nSols should be(2)
   }
 
   test("Test 6: counting solutions") {
-    val cp = new CPSolver()
-    var x1 = CPIntVar(0, 2)(cp)
-    var x2 = CPIntVar(1, 3)(cp)
-    var x3 = CPIntVar(0, 3)(cp)
+    implicit val cp = new CPSolver()
+    val x1 = CPIntVar(0, 2)
+    val x2 = CPIntVar(1, 3)
+    val x3 = CPIntVar(0, 3)
     val x = Array(x1, x2, x3)
-
     val minVal = 0
     val Low = Array(0, 0, 0, 0)
     val Up = Array(1, 1, 1, 1)
-
-    var nbSol = 0;
-    cp.solve subjectTo {
-      cp.add(new GCCFWC(x, minVal, Low, Up))
-    } search {
-      binaryFirstFail(x)
-    }
-
+    add(new GCCFWC(x, minVal, Low, Up))
+    search { binaryFirstFail(x) }
     cp.start().nSols should be(14)
-
   }
 }
 
