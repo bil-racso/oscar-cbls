@@ -10,7 +10,6 @@ import oscar.cp.core.CPOutcome.Failure
 import oscar.cp.core.CPOutcome.Suspend
 import oscar.cp.core.CPStore
 import oscar.cp.core.Constraint
-import oscar.cp.core.watcher.PropagEventQueueVarInt
 import oscar.cp.core.watcher.WatcherListL2
 import oscar.cp.core.watcher.WatcherListL1
 
@@ -19,23 +18,19 @@ import oscar.cp.core.watcher.WatcherListL1
  *  @author Pierre Schaus pschaus@gmail.com
  */
 
-class CPIntVarAdaptableDomainState(variable: CPIntVarAdaptable, min: Int, max: Int, size: Int) extends TrailEntry {
-  final override def restore(): Unit = {
-    variable.min = min
-    variable.max = max
-    variable.size = size
-  }
+class CPIntVarAdaptableDomainState(variable: CPIntVarAdaptable, min: Int, max: Int, size: Int, continuous: Boolean) extends TrailEntry {
+  final override def restore(): Unit = variable.restore(min, max, size, continuous)
 }
 
 class CPIntVarAdaptableDomainType(variable: CPIntVarAdaptable) extends TrailEntry {
-  final override def restore(): Unit = variable.setContinuous()
+  final override def restore(): Unit = Unit//variable.setContinuous()
 }
 
-class CPIntVarAdaptable( final override val store: CPStore, minValue: Int, maxValue: Int, continuous: Boolean, final override val name: String = "") extends CPIntVar {
+class CPIntVarAdaptable(final override val store: CPStore, minValue: Int, maxValue: Int, continuous: Boolean, final override val name: String = "") extends CPIntVar {
 
   // Registered constraints
-  private[this] val onBoundsL2 = new WatcherListL2(store)
   private[this] val onBindL2 = new WatcherListL2(store)
+  private[this] val onBoundsL2 = new WatcherListL2(store)
   private[this] val onDomainL2 = new WatcherListL2(store)
   private[this] val onBindL1 = new WatcherListL1(store)
   private[this] val onBoundsL1 = new WatcherListL1(store)
@@ -53,7 +48,7 @@ class CPIntVarAdaptable( final override val store: CPStore, minValue: Int, maxVa
   private[this] var _max = maxValue
   private[this] var _size = maxValue - minValue + 1
 
-  // True if the domain had to change its representation
+  // True if the domain had to switch its representation
   private[this] var switched = false
 
   // Recreate a sparse domain on backtrack
@@ -72,8 +67,15 @@ class CPIntVarAdaptable( final override val store: CPStore, minValue: Int, maxVa
     val contextMagic = store.magic
     if (lastMagic != contextMagic) {
       lastMagic = contextMagic
-      store.trail(new CPIntVarAdaptableDomainState(this, _min, _max, _size))
+      store.trail(new CPIntVarAdaptableDomainState(this, _min, _max, _size, _continuous))
     }
+  }
+  
+  @inline final def restore(oldMin: Int, oldMax: Int, oldSize: Int, continuous: Boolean): Unit = {
+    _min = oldMin
+    _max = oldMax
+    _size = oldSize
+    _continuous = continuous
   }
 
   @inline final override def size: Int = _size
@@ -83,12 +85,6 @@ class CPIntVarAdaptable( final override val store: CPStore, minValue: Int, maxVa
   @inline final override def max: Int = _max
 
   @inline final override def isContinuous: Boolean = _continuous
-
-  @inline final def min_=(newMin: Int): Unit = _min = newMin
-
-  @inline final def max_=(newMax: Int): Unit = _max = newMax
-
-  @inline final def size_=(newSize: Int): Unit = _size = newSize
 
   @inline final def setContinuous(): Unit = _continuous = true
 
@@ -253,7 +249,7 @@ class CPIntVarAdaptable( final override val store: CPStore, minValue: Int, maxVa
   }
 
   @inline private def buildSparse(): Unit = {
-    store.trail(domainType)
+    //store.trail(domainType)
     val nValues = _max - _min + 1
     offset = _min
     values = Array.tabulate(nValues)(i => i + offset)
