@@ -102,12 +102,25 @@ object EnsureDomain{
   def apply(i:IntValue,d: Domain,c: ConstraintSystem) = {
     d match{
       case DomainRange(min, max) =>{
-        if(i.min < min) c.add(GE(i, min),weight)
-        if(i.max > max) c.add(LE(i, max),weight)
+        if(i.min < min){
+//          Console.err.println("added "+i)
+          c.add(GE(i, min),weight)
+        }
+        if(i.max > max){
+//          Console.err.println("added "+i)
+          c.add(LE(i, max),weight)
+        } 
       } 
       case DomainSet(vals) => {
-        if(i.min < d.min) c.add(GE(i, d.min),weight)
-        if(i.max > d.max) c.add(LE(i, d.max),weight)
+        if(i.min < d.min){
+          c.add(GE(i, d.min),weight)
+//          Console.err.println("added "+i)
+        }
+        if(i.max > d.max){
+          c.add(LE(i, d.max),weight)
+//          Console.err.println("added "+i)
+        }
+//        Console.err.println("addedX "+i)
         c.add(BelongsTo(i,CBLSSetConst(SortedSet[Int]()++vals)))//no weight
       }
     }

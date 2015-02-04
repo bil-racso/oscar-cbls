@@ -561,7 +561,7 @@ object InvariantHelper{
 }
 
 trait Value extends BasicPropagationElement{
-  def valueString:String
+  //def valueString:String
 }
 
 trait Variable extends AbstractVariable{

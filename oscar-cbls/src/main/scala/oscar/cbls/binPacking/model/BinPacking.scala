@@ -59,7 +59,7 @@ class Bin(val number:Int,
                var items:CBLSSetVar = null,
                var violation:IntValue = null,
                var content:IntValue = null){
-  override def toString: String = "Bin(nr:" + number + " size:" + size + " content:" + content.value + " items:" + items.valueString + " viol:" + violation.value +")"
+  override def toString: String = "Bin(nr:" + number + " size:" + size + " content:" + content.value + " items:" + items.value + " viol:" + violation.value +")"
 }
 
 /**
@@ -73,7 +73,7 @@ class BinPackingProblem(val items:Map[Int,Item],
     "BinPackingProblem(\n\titems:{" + items.values.mkString(",") +"}\n" +
       "\tbins:{" +bins.values.mkString(",") + "}\n" +
       "\toverallViolation:" + overallViolation.value + "\n" +
-      "\tmostViolatedBins:" + mostViolatedBins.valueString+")"
+      "\tmostViolatedBins:" + mostViolatedBins.value +")"
 
   def itemCount = items.size
   def binCount = bins.size

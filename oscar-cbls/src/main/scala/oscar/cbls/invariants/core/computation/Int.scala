@@ -36,7 +36,7 @@ sealed trait IntValue extends Value{
   def max = domain.max
 
   def name:String
-  override def valueString: String = "" + value
+  //override def valueString: String = "" + value
 }
 
 object IntValue {
@@ -259,8 +259,8 @@ class CBLSIntConst(override val value:Int)
 object CBLSIntConst{
   implicit def int2IntValue(a: Int): IntValue = apply(a)
   implicit def int2IntConst(a: Int): CBLSIntConst = apply(a)
-  def apply(a:Int) = new CBLSIntConst(a)
-  /*val constMap = MMap.empty[Int,CBLSIntConst]
+  //def apply(a:Int) = new CBLSIntConst(a)
+  val constMap = MMap.empty[Int,CBLSIntConst]
   def apply(a:Int) = {
     if(constMap.contains(a))constMap(a)
     else{
@@ -268,7 +268,7 @@ object CBLSIntConst{
       constMap(a) = res
       res
     }
-  }*/
+  }
 }
 
 /** this is a special case of invariant that has a single output variable, that is an IntVar

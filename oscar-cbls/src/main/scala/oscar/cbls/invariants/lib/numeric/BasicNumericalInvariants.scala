@@ -74,7 +74,7 @@ class Linear(vars: Iterable[IntValue], coeffs: IndexedSeq[Int])
 		  vars.zip(coeffs).foldLeft(0)((acc, intvar) => DomainHelper.safeAddMin(acc,DomainHelper2.getMinProd(intvar._1.min,intvar._1.max,intvar._2,intvar._2))) to 
 		  vars.zip(coeffs).foldLeft(0)((acc, intvar) => DomainHelper.safeAddMax(acc,DomainHelper2.getMaxProd(intvar._1.min,intvar._1.max,intvar._2,intvar._2)))){
   //coeffs needs to be indexed as we need to access it be index from the index of vars (as given in notifyIntChanged)
-			  //TODO: There is still the risk of adding plus and minus "infinity" and get absurd results. But at least we avoid overflows...
+  //TODO: There is still the risk of adding plus and minus "infinity" and get absurd results. But at least we avoid overflows...
 			   
   vars.zipWithIndex.foreach(vi => registerStaticAndDynamicDependency(vi._1,vi._2))
   finishInitialization()
@@ -105,6 +105,10 @@ class ExtendableSum(model:Store,domain:Domain)
     this :+= i.value
   }
 
+  def close(){
+    //TODO: Update the domain of the invariant.
+  }
+  
   def addTerms(is:Iterable[IntValue]){
     for(i <- is){
       addTerm(i)
@@ -181,7 +185,9 @@ class Prod(vars: Iterable[IntValue]) extends IntInvariant {
  * @author renaud.delandtsheer@cetic.be
  * */
 case class Minus(left: IntValue, right: IntValue)
-  extends IntInt2Int(left, right, (l: Int, r: Int) => DomainHelper2.safeSub(l,r), DomainHelper2.safeSub(left.min, right.max) to DomainHelper2.safeSub(left.max, right.min)) {
+  extends IntInt2Int(left, right, (if(DomainHelper2.isSafeSub(left,right))
+                                      (l,r) => l - r
+                                   else ((l: Int, r: Int) => DomainHelper2.safeSub(l,r))), DomainHelper2.safeSub(left.min, right.max) to DomainHelper2.safeSub(left.max, right.min)) {
   assert(left != right)
 }
 
@@ -192,7 +198,9 @@ case class Minus(left: IntValue, right: IntValue)
  * */
 case class Dist(left: IntValue, right: IntValue)
   extends IntInt2Int(left, right, 
-      ((l: Int, r: Int) => DomainHelper2.safeSub(l,r).abs), 
+      (if(DomainHelper2.isSafeSub(left,right))
+                                      (l,r) => (l - r).abs
+                                   else ((l: Int, r: Int) => DomainHelper2.safeSub(l,r).abs)),
       {val v = DomainHelper2.safeSub(left.min, right.max); (if (v <= 0) 0 else v)} to 
       DomainHelper2.safeSub(left.max, right.min).max(DomainHelper2.safeSub(right.max,left.min))) {
   assert(left != right)
@@ -204,7 +212,9 @@ case class Dist(left: IntValue, right: IntValue)
  * @author renaud.delandtsheer@cetic.be
  * */
 case class Sum2(left: IntValue, right: IntValue)
-  extends IntInt2Int(left, right, ((l: Int, r: Int) => DomainHelper2.safeAdd(l,r)), DomainHelper.safeAddMin(left.min, right.min) to DomainHelper.safeAddMax(left.max, right.max))
+  extends IntInt2Int(left, right, (if(DomainHelper2.isSafeAdd(left,right))
+                                      (l,r) => l + r
+                                   else ((l: Int, r: Int) => DomainHelper2.safeAdd(l,r))), DomainHelper.safeAddMin(left.min, right.min) to DomainHelper.safeAddMax(left.max, right.max))
 
 /**
  * left * right
@@ -212,7 +222,9 @@ case class Sum2(left: IntValue, right: IntValue)
  * @author renaud.delandtsheer@cetic.be
  * */
 case class Prod2(left: IntValue, right: IntValue)
-  extends IntInt2Int(left, right, ((l: Int, r: Int) => DomainHelper2.safeMult(l,r)), DomainHelper2.getMinProd2(left, right) to DomainHelper2.getMaxProd2(left, right))
+  extends IntInt2Int(left, right, (if(DomainHelper2.isSafeMult(left,right))
+                                      (l,r) => l * r
+                                   else ((l: Int, r: Int) => DomainHelper2.safeMult(l,r))), DomainHelper2.getMinProd2(left, right) to DomainHelper2.getMaxProd2(left, right))
 
 /**
  * left / right
@@ -250,7 +262,7 @@ case class Abs(v: IntValue)
  * @param elseval the value returned when x <= pivot
  */
 case class Step(x: IntValue, pivot: Int = 0, thenval: Int = 1, elseval: Int = 0)
-  extends Int2Int(x, (a: Int) => if (a > pivot) thenval else elseval, 0 to 1)
+  extends Int2Int(x, (a: Int) => if (a > pivot) thenval else elseval, math.min(thenval,elseval) to math.max(thenval,elseval))
 
 /**
  * This invariant implements the identity function within the min-max range.
@@ -296,6 +308,20 @@ object DomainHelper2 {
   def getMaxProd(lm:Int,lM:Int,rm:Int,rM:Int) = {
     Math.max(safeMult(lm, rm), Math.max(safeMult(lm, rM), Math.max(safeMult(lM,rm), safeMult(lM,rM))))
   }
+  
+  def isSafeAdd(x: IntValue, y:IntValue): Boolean = {
+    x.max.toLong + y.max.toLong <= Int.MaxValue && x.min.toLong + y.min.toLong >= Int.MinValue  
+  } 
+  def isSafeSub(x: IntValue, y:IntValue): Boolean = {
+    x.max.toLong - y.min.toLong <= Int.MaxValue && x.min.toLong - y.max.toLong >= Int.MinValue  
+  } 
+  def isSafeMult(x:IntValue,y:IntValue): Boolean = {
+    val m1 = x.max.toLong * y.max.toLong
+    val m2 = x.max.toLong * y.min.toLong
+    val m3 = x.min.toLong * y.max.toLong
+    val m4 = x.min.toLong * y.min.toLong
+    math.max(math.max(m1,m2), math.max(m3,m4)) <= Int.MaxValue && math.min(math.min(m1,m2), math.min(m3,m4)) >= Int.MinValue
+  }
     //Safe addition
   def safeAdd(x: Int, y: Int): Int = {
     if (x.toLong + y.toLong > Int.MaxValue) {
@@ -306,7 +332,7 @@ object DomainHelper2 {
       x + y
     }
   }
-  //Safe subtaction
+  //Safe substraction
   def safeSub(x: Int, y: Int): Int = {
     if (x.toLong - y.toLong > Int.MaxValue) {
       Int.MaxValue

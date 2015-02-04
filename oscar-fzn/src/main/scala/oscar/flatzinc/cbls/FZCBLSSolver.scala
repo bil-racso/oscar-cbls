@@ -172,12 +172,15 @@ class FZCBLSModel(val model: FZProblem, val c: ConstraintSystem, val m: Store, v
       case ConcreteVariable(id, _) =>
         cblsIntMap.get(id) match {
           case None if v.isBound =>
+            /*cblsIntMap.get(v.min.toString) match {
+              case Some(c) => c;
+              case None => {*/
             //From Gustav: All constants need to have a store, otherwise they won't have a UniqueID (from PropagationElement) and constraints will start throwing exceptions
             //JNM: I removed ",m " to avoid introducing a lot of useless "variables" in the model in the hope of making it more efficient.
             val c = new CBLSIntConstDom(m,v.value);
-
-            cblsIntMap += id -> c;
-            c;
+            //println("ICI "+id + " "+v.min)
+            cblsIntMap += id -> c; //was id -> 
+            c;//}}
           case Some(c) => c;
         }
       }
