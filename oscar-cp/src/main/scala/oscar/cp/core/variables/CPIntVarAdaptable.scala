@@ -1,7 +1,6 @@
 package oscar.cp.core.variables
 
 import scala.util.Random
-
 import oscar.algo.reversible.ReversibleBoolean
 import oscar.algo.reversible.ReversibleInt
 import oscar.algo.reversible.ReversiblePointer
@@ -13,9 +12,11 @@ import oscar.cp.core.CPStore
 import oscar.cp.core.Constraint
 import oscar.cp.core.watcher.PropagEventQueueVarInt
 import oscar.cp.core.watcher.WatcherListL2
+import oscar.cp.core.watcher.WatcherListL1
 
 /**
  *  @author Renaud Hartert ren.hartert@gmail.com
+ *  @author Pierre Schaus pschaus@gmail.com
  */
 
 class CPIntVarAdaptableDomainState(variable: CPIntVarAdaptable, min: Int, max: Int, size: Int) extends TrailEntry {
@@ -30,43 +31,41 @@ class CPIntVarAdaptableDomainType(variable: CPIntVarAdaptable) extends TrailEntr
   final override def restore(): Unit = variable.setContinuous()
 }
 
-class CPIntVarAdaptable(final override val store: CPStore, minValue: Int, maxValue: Int, continuous: Boolean, final override val name: String = "") extends CPIntVar {
-  
+class CPIntVarAdaptable( final override val store: CPStore, minValue: Int, maxValue: Int, continuous: Boolean, final override val name: String = "") extends CPIntVar {
+
   // Registered constraints
   private[this] val onBoundsL2 = new WatcherListL2(store)
   private[this] val onBindL2 = new WatcherListL2(store)
   private[this] val onDomainL2 = new WatcherListL2(store)
-  private[this] val onBoundsL1 = new ReversiblePointer[PropagEventQueueVarInt](store, null)
-  private[this] val onBindL1 = new ReversiblePointer[PropagEventQueueVarInt](store, null)
-  private[this] val onDomainL1 = new ReversiblePointer[PropagEventQueueVarInt](store, null)
-  private[this] val onBoundsIdxL1 = new ReversiblePointer[PropagEventQueueVarInt](store, null)
-  private[this] val onBindIdxL1 = new ReversiblePointer[PropagEventQueueVarInt](store, null)
-  private[this] val onDomainIdxL1 = new ReversiblePointer[PropagEventQueueVarInt](store, null)
+  private[this] val onBindL1 = new WatcherListL1(store)
+  private[this] val onBoundsL1 = new WatcherListL1(store)
+  private[this] val onDomainL1 = new WatcherListL1(store)
 
   // Number of constraints registered on the variable
   private[this] val degree = new ReversibleInt(store, 0) // should not change often
 
-  // True if some constraints are registered on the bounds or removes
-  private[this] val registeredOnBounds = new ReversibleBoolean(store, false) // should not change often
-  private[this] val registeredOnRemoves = new ReversibleBoolean(store, false) // should not change often
-
   // Domain representation
-  private[this] val nValues = maxValue - minValue + 1
   private[this] var values: Array[Int] = null
   private[this] var positions: Array[Int] = null
   private[this] var offset = minValue
   private[this] var _continuous = continuous
   private[this] var _min = minValue
   private[this] var _max = maxValue
-  private[this] var _size = nValues
-  
+  private[this] var _size = maxValue - minValue + 1
+
+  // True if the domain had to change its representation
+  private[this] var switched = false
+
+  // Recreate a sparse domain on backtrack
+  //store.onPop { if (switched && _continuous) buildSparse() }
+
   // Switch to a sparse set if necessacry
   if (!continuous) buildSparse()
 
   // Used to trail changes in the domain
   private[this] var lastMagic: Long = -1L
 
-  // Trail entry for swith of domain representation
+  // Trail entry for switch of domain representation
   private[this] val domainType = new CPIntVarAdaptableDomainType(this)
 
   @inline private def trail(): Unit = {
@@ -131,7 +130,7 @@ class CPIntVarAdaptable(final override val store: CPStore, minValue: Int, maxVal
     final override def hasNext: Boolean = i < _size
   }
 
-  /** 
+  /**
    *  @return an array containing all the values in the domain.
    *          The result array is not sorted.
    */
@@ -140,15 +139,15 @@ class CPIntVarAdaptable(final override val store: CPStore, minValue: Int, maxVal
     copyDomain(array)
     array
   }
-  
-  /** 
+
+  /**
    *  @param array.length >= this.size
-   *  @return Fills the array with the values contained in the domain and 
+   *  @return Fills the array with the values contained in the domain and
    *          returns the number of values (this.size).
    *          The array is not sorted.
    */
   final def fillArray(array: Array[Int]): Int = copyDomain(array)
-  
+
   // Copy the domain in the array and return the size of the domain
   @inline private def copyDomain(array: Array[Int]): Int = {
     if (_continuous) {
@@ -157,11 +156,11 @@ class CPIntVarAdaptable(final override val store: CPStore, minValue: Int, maxVal
     } else System.arraycopy(values, 0, array, 0, _size)
     _size
   }
-  
+
   final override def constraintDegree: Int = degree.value
 
   /**
-   * Reduce the domain to the singleton {val}, and notify appropriately all the propagators registered to this variable
+   * Reduce the domain to the singleton {value}, and notify appropriately all the propagators registered to this variable
    * @param val
    * @return  Suspend if val was in the domain, Failure otherwise
    */
@@ -179,21 +178,13 @@ class CPIntVarAdaptable(final override val store: CPStore, minValue: Int, maxVal
     onDomainL2.enqueue()
     onBindL2.enqueue()
     // Notify AC5
-    store.notifyBindL1(onBindL1.value, this)
-    store.notifyBindIdxL1(onBindIdxL1.value, this)
-    store.notifyUpdateBoundsL1(onBoundsL1.value, this)
-    store.notifyUpdateBoundsIdxL1(onBoundsIdxL1.value, this)
+    onBindL1.enqueueBind()
+    onBoundsL1.enqueueBounds()
     // Notify removed values if necessary
-    val onRemoved = registeredOnRemoves.value
-    if (onRemoved) {
-      val removed = onDomainL1.hasValue
-      val removedIdx = onDomainIdxL1.hasValue
+    if (!onDomainL1.isEmpty) {
       var i = _min
       while (i <= _max) {
-        if (i != value) {
-          if (removed) store.notifRemoveL1(onDomainL1.value, this, i)
-          if (removedIdx) store.notifyRemoveIdxL1(onDomainIdxL1.value, this, i)
-        }
+        if (i != value) onDomainL1.enqueueRemove(i)
         i += 1
       }
     }
@@ -211,21 +202,16 @@ class CPIntVarAdaptable(final override val store: CPStore, minValue: Int, maxVal
     onDomainL2.enqueue()
     onBindL2.enqueue()
     // Notify AC5
-    store.notifyBindL1(onBindL1.value, this)
-    store.notifyBindIdxL1(onBindIdxL1.value, this)
-    store.notifyUpdateBoundsL1(onBoundsL1.value, this)
-    store.notifyUpdateBoundsIdxL1(onBoundsIdxL1.value, this)
+    onBindL1.enqueueBind()
+    onBoundsL1.enqueueBounds()
     // Notify removed values if necessary
-    val removed = onDomainL1.hasValue
-    val removedIdx = onDomainIdxL1.hasValue
-    if (removed || removedIdx) {
+    if (!onDomainL1.isEmpty) {
       var i = _size
       while (i > 0) {
         i -= 1
         val v = values(i)
         if (v != value) {
-          if (removed) store.notifRemoveL1(onDomainL1.value, this, v)
-          if (removedIdx) store.notifyRemoveIdxL1(onDomainIdxL1.value, this, v)
+          onDomainL1.enqueueRemove(v)
         }
       }
     }
@@ -256,26 +242,11 @@ class CPIntVarAdaptable(final override val store: CPStore, minValue: Int, maxVal
     else removeSparse(value)
   }
 
-  
-  // recreate a sparse domain on backtrack
-  // if it was created sparse somewhere below this node
-  
-  private[this] var withHoles = false 
-  
-  store.onPop {
-    if (withHoles && _continuous) {
-      _continuous = false
-      buildSparse() 
-    }
-  }
-
-  var cpt = 0
-  
   @inline private def removeContinuous(value: Int): CPOutcome = {
     if (value == _min) updateMinContinuous(value + 1)
     else if (value == _max) updateMaxContinuous(value - 1)
     else { // Switch the domain representation
-      withHoles = true
+      switched = true
       buildSparse()
       removeSparse(value)
     }
@@ -297,32 +268,24 @@ class CPIntVarAdaptable(final override val store: CPStore, minValue: Int, maxVal
     else {
       trail() // trail before changes 
       // Notify removed watchers
-      store.notifRemoveL1(onDomainL1.value, this, value)
-      store.notifyRemoveIdxL1(onDomainIdxL1.value, this, value)
+      onDomainL1.enqueueRemove(value)
       onDomainL2.enqueue()
       // Assigned variable
       if (_size == 2) {
         // Notify bind watchers
-        store.notifyBindL1(onBindL1.value, this)
-        store.notifyBindIdxL1(onBindIdxL1.value, this)
+        onBindL1.enqueueBind()
         onBindL2.enqueue()
         // Notify bound watchers
-        if (registeredOnBounds.value) {
-          store.notifyUpdateBoundsL1(onBoundsL1.value, this)
-          store.notifyUpdateBoundsIdxL1(onBoundsIdxL1.value, this)
-          onBoundsL2.enqueue()
-        }
+        onBoundsL1.enqueueBounds()
+        onBoundsL2.enqueue()
         // Update min or max
         if (value == _min) _min = _max
         else _max = _min
       } // Min changed
       else if (_min == value) {
         // Notify bound watchers
-        if (registeredOnBounds.value) {
-          store.notifyUpdateBoundsL1(onBoundsL1.value, this)
-          store.notifyUpdateBoundsIdxL1(onBoundsIdxL1.value, this)
-          onBoundsL2.enqueue()
-        }
+        onBoundsL1.enqueueBounds()
+        onBoundsL2.enqueue()
         // Update min
         var i = _min - offset + 1
         while (positions(i) >= _size) i += 1
@@ -330,11 +293,8 @@ class CPIntVarAdaptable(final override val store: CPStore, minValue: Int, maxVal
       } // Max change
       else if (_max == value) {
         // Notify bound watchers
-        if (registeredOnBounds.value) {
-          store.notifyUpdateBoundsL1(onBoundsL1.value, this)
-          store.notifyUpdateBoundsIdxL1(onBoundsIdxL1.value, this)
-          onBoundsL2.enqueue()
-        }
+        onBoundsL1.enqueueBounds()
+        onBoundsL2.enqueue()
         // Update max
         var i = _max - offset - 1
         while (positions(i) >= _size) i -= 1
@@ -370,19 +330,14 @@ class CPIntVarAdaptable(final override val store: CPStore, minValue: Int, maxVal
     if (value == _max) assignContinuous(value)
     else {
       // Notify bounds watchers
-      store.notifyUpdateBoundsL1(onBoundsL1.value, this)
-      store.notifyUpdateBoundsIdxL1(onBoundsIdxL1.value, this)
+      onBoundsL1.enqueueBounds()
       onBoundsL2.enqueue()
       onDomainL2.enqueue()
       // Notify remove watchers if necessary
-      val onRemove = registeredOnRemoves.value
-      if (onRemove) {
-        val removed = onDomainL1.hasValue
-        val removedIdx = onDomainIdxL1.hasValue
+      if (!onDomainL1.isEmpty) {
         var i = _min
         while (i < value) {
-          if (removed) store.notifRemoveL1(onDomainL1.value, this, i)
-          if (removedIdx) store.notifyRemoveIdxL1(onDomainIdxL1.value, this, i)
+          onDomainL1.enqueueRemove(i)
           i += 1
         }
       }
@@ -398,8 +353,6 @@ class CPIntVarAdaptable(final override val store: CPStore, minValue: Int, maxVal
     else {
       trail() // trail before changes  
       // Remove values
-      val removed = onDomainL1.hasValue
-      val removedIdx = onDomainIdxL1.hasValue
       val valueId = value - offset
       var i = _min - offset
       while (i < valueId) {
@@ -415,8 +368,7 @@ class CPIntVarAdaptable(final override val store: CPStore, minValue: Int, maxVal
           values(pos2) = v1
           positions(i) = pos2
           positions(id2) = pos1
-          if (removed) store.notifRemoveL1(onDomainL1.value, this, v1)
-          if (removedIdx) store.notifyRemoveIdxL1(onDomainIdxL1.value, this, v1)
+          onDomainL1.enqueueRemove(v1)
         }
         i += 1
       }
@@ -424,8 +376,7 @@ class CPIntVarAdaptable(final override val store: CPStore, minValue: Int, maxVal
       while (positions(i) >= _size) i += 1
       _min = i + offset
       // Notify bounds events
-      store.notifyUpdateBoundsL1(onBoundsL1.value, this)
-      store.notifyUpdateBoundsIdxL1(onBoundsIdxL1.value, this)
+      onBoundsL1.enqueueBounds()
       onBoundsL2.enqueue()
       onDomainL2.enqueue()
       Suspend
@@ -448,19 +399,14 @@ class CPIntVarAdaptable(final override val store: CPStore, minValue: Int, maxVal
     if (value == _min) assignContinuous(value)
     else {
       // Notify bounds watchers
-      store.notifyUpdateBoundsL1(onBoundsL1.value, this)
-      store.notifyUpdateBoundsIdxL1(onBoundsIdxL1.value, this)
+      onBoundsL1.enqueueBounds()
       onBoundsL2.enqueue()
       onDomainL2.enqueue()
       // Notify remove watchers if necessary
-      val onRemove = registeredOnRemoves.value
-      if (onRemove) {
-        val removed = onDomainL1.hasValue
-        val removedIdx = onDomainIdxL1.hasValue
+      if (!onDomainL1.isEmpty) {
         var i = _max
         while (i > value) {
-          if (removed) store.notifRemoveL1(onDomainL1.value, this, i)
-          if (removedIdx) store.notifyRemoveIdxL1(onDomainIdxL1.value, this, i)
+          onDomainL1.enqueueRemove(i)
           i -= 1
         }
       }
@@ -476,8 +422,6 @@ class CPIntVarAdaptable(final override val store: CPStore, minValue: Int, maxVal
     else {
       trail() // trail before changes  
       // Remove values
-      val removed = onDomainL1.hasValue
-      val removedIdx = onDomainIdxL1.hasValue
       val valueId = value - offset
       var i = _max - offset
       while (i > valueId) {
@@ -493,8 +437,7 @@ class CPIntVarAdaptable(final override val store: CPStore, minValue: Int, maxVal
           values(pos2) = v1
           positions(i) = pos2
           positions(id2) = pos1
-          if (removed) store.notifRemoveL1(onDomainL1.value, this, v1)
-          if (removedIdx) store.notifyRemoveIdxL1(onDomainIdxL1.value, this, v1)
+          onDomainL1.enqueueRemove(v1)
         }
         i -= 1
       }
@@ -502,8 +445,7 @@ class CPIntVarAdaptable(final override val store: CPStore, minValue: Int, maxVal
       while (positions(i) >= _size) i -= 1
       _max = i + offset
       // Notify bounds events
-      store.notifyUpdateBoundsL1(onBoundsL1.value, this)
-      store.notifyUpdateBoundsIdxL1(onBoundsIdxL1.value, this)
+      onBoundsL1.enqueueBounds()
       onBoundsL2.enqueue()
       onDomainL2.enqueue()
       Suspend
@@ -544,7 +486,6 @@ class CPIntVarAdaptable(final override val store: CPStore, minValue: Int, maxVal
    */
   final override def callPropagateWhenBoundsChange(c: Constraint) {
     degree.incr()
-    registeredOnBounds.setTrue()
     onBoundsL2.register(c)
   }
 
@@ -572,8 +513,7 @@ class CPIntVarAdaptable(final override val store: CPStore, minValue: Int, maxVal
 
   final override def callUpdateBoundsWhenBoundsChange(c: Constraint, variable: CPIntVar) {
     degree.incr()
-    registeredOnBounds.setTrue()
-    onBoundsL1.setValue(new PropagEventQueueVarInt(onBoundsL1.value, c, variable))
+    onBoundsL1.register(c, variable)
   }
 
   /**
@@ -588,8 +528,7 @@ class CPIntVarAdaptable(final override val store: CPStore, minValue: Int, maxVal
 
   final override def callValRemoveWhenValueIsRemoved(c: Constraint, variable: CPIntVar) {
     degree.incr()
-    registeredOnRemoves.setTrue()
-    onDomainL1.setValue(new PropagEventQueueVarInt(onDomainL1.value, c, variable))
+    onDomainL1.register(c, variable)
   }
 
   /**
@@ -604,7 +543,7 @@ class CPIntVarAdaptable(final override val store: CPStore, minValue: Int, maxVal
 
   final override def callValBindWhenBind(c: Constraint, variable: CPIntVar) {
     degree.incr()
-    onBindL1.setValue(new PropagEventQueueVarInt(onBindL1.value, c, variable))
+    onBindL1.register(c, variable)
   }
 
   /**
@@ -620,8 +559,7 @@ class CPIntVarAdaptable(final override val store: CPStore, minValue: Int, maxVal
 
   final override def callValRemoveIdxWhenValueIsRemoved(c: Constraint, variable: CPIntVar, idx: Int) {
     degree.incr()
-    registeredOnRemoves.setTrue()
-    onDomainIdxL1.setValue(new PropagEventQueueVarInt(onDomainIdxL1.value, c, variable, idx))
+    onDomainL1.register(c, variable, idx)
   }
 
   /**
@@ -637,8 +575,7 @@ class CPIntVarAdaptable(final override val store: CPStore, minValue: Int, maxVal
 
   final override def callUpdateBoundsIdxWhenBoundsChange(c: Constraint, variable: CPIntVar, idx: Int) {
     degree.incr()
-    registeredOnBounds.setTrue()
-    onBoundsIdxL1.setValue(new PropagEventQueueVarInt(onBoundsIdxL1.value, c, variable, idx))
+    onBoundsL1.register(c, variable, idx)
   }
 
   /**
@@ -654,7 +591,7 @@ class CPIntVarAdaptable(final override val store: CPStore, minValue: Int, maxVal
 
   final override def callValBindIdxWhenBind(c: Constraint, variable: CPIntVar, idx: Int) {
     degree.incr()
-    onBindIdxL1.setValue(new PropagEventQueueVarInt(onBindIdxL1.value, c, variable, idx))
+    onBindL1.register(c, variable, idx)
   }
 
   final override def isEmpty: Boolean = _size == 0
@@ -669,8 +606,7 @@ class CPIntVarAdaptable(final override val store: CPStore, minValue: Int, maxVal
       offset + i
     }
   }
-  
-  
+
   final override def valueBefore(value: Int): Int = {
     if (value <= _min) value
     else if (value > _max) _max
@@ -681,7 +617,7 @@ class CPIntVarAdaptable(final override val store: CPStore, minValue: Int, maxVal
       offset + i
     }
   }
-  
+
   final def delta(oldMin: Int, oldMax: Int, oldSize: Int): Iterator[Int] = {
     if (_continuous) deltaContinuous(oldMin, oldMax, oldSize)
     else deltaSparse(oldMin, oldMax, oldSize)
@@ -706,12 +642,12 @@ class CPIntVarAdaptable(final override val store: CPStore, minValue: Int, maxVal
   final def delta(c: Constraint): Iterator[Int] = {
     val sn = c.snapshotsVarInt(this)
     delta(sn.oldMin, sn.oldMax, sn.oldSize)
-  }  
-  
+  }
+
   @inline private def deltaContinuous(oldMin: Int, oldMax: Int, oldSize: Int): Iterator[Int] = {
     (oldMin to _min - 1).iterator ++ (_max + 1 to oldMax).iterator
   }
-  
+
   @inline private def deltaSparse(oldMin: Int, oldMax: Int, oldSize: Int): Iterator[Int] = {
     (oldMin until minValue).iterator ++ deltaSparse(oldSize) ++ (maxValue + 1 to oldMax).iterator
   }
