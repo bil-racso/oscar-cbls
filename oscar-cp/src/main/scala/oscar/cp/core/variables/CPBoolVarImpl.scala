@@ -21,6 +21,8 @@ import oscar.cp.core.watcher.WatcherListL1
 
 class CPBoolVarImpl private(final override val store: CPStore, initDomain: Int, final override val name: String = "") extends CPBoolVar {
   
+  import CPBoolVarImpl._
+  
   // Registered constraints
   private[this] val onBoundsL2 = new WatcherListL2(store)
   private[this] val onBindL2 = new WatcherListL2(store)
@@ -31,18 +33,11 @@ class CPBoolVarImpl private(final override val store: CPStore, initDomain: Int, 
   
   // Number of constraints registered on the variable
   private[this] val degree = new ReversibleInt(store, 0) // should not change often
-
-  // The first bit corresponds to the min value.
-  // The second bit corresponds to the max value. 
-  // Empty is represented by 1
-  //
+  
   // 00 : False
   // 11 : True
   // 10 : Unassigned
   // 01 : Empty
-  
-  import CPBoolVarImpl._
-  
   private[this] var domain: Int = initDomain
 
   // A Boolean variable only needs one pre-instantiated trail entry
@@ -302,7 +297,14 @@ class CPBoolVarImpl private(final override val store: CPStore, initDomain: Int, 
 
 object CPBoolVarImpl {
   
-  // Use final for faster bytecode 
+  // The first bit corresponds to the min value.
+  // The second bit corresponds to the max value. 
+  // Empty is represented by 1
+  //
+  // 00 : False
+  // 11 : True
+  // 10 : Unassigned
+  // 01 : Empty
   private final val FALSE = 0
   private final val TRUE = 3
   private final val UNASSIGNED = 2
