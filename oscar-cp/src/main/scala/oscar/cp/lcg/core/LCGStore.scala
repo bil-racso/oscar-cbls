@@ -288,7 +288,7 @@ class LCGStore(store: CPStore) {
 
   @inline private def popAssignment(): Unit = {
     if (trailSize > 0) {
-      printTrail() // TODO : remove
+      //printTrail() // TODO : remove
       trailSize -= 1
       val literal = trail(trailSize)
       val varId = literal.varId

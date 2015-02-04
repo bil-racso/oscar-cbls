@@ -13,10 +13,10 @@ object TestApp extends LCGModel with App {
   class DumpConstraint(lcgSolver: LCGSolver, variable: LCGIntervalVar) extends LCGConstraint(lcgSolver, variable.store, "") {
     override def register(): Unit = variable.callWhenBoundsChange(this)
     final override def explain(): Unit = {
-      if (variable.min == 1) {
+      if (variable.min == 2 && variable.max == 2) {
         val explanation = new Array[Literal](2)
-        explanation(0) = -variable.maxLeq(1)
-        explanation(1) = -variable.minGeq(1)
+        explanation(0) = -variable.maxLeq(2)
+        explanation(1) = -variable.minGeq(2)
         lcgStore.addExplanation(explanation)
       }
     }
@@ -33,37 +33,37 @@ object TestApp extends LCGModel with App {
       val literal = v.maxLeq(value)
       branch {
         // Assign
-        println
-        println(variables(0))
-        println(variables(1))
-        println(variables(2))
-        println("assign " + v.name + " to " + value)
+        //println
+        //println(variables(0))
+        //println(variables(1))
+        //println(variables(2))
+        //println("assign " + v.name + " to " + value)
         lcgSolver.lcgStore.newDecisionLevel()
         cpSolver.doAndPropagate {
           lcgSolver.lcgStore.enqueue(literal, null)
         }
-        println(variables(0))
-        println(variables(1))
-        println(variables(2))
+        //println(variables(0))
+        //println(variables(1))
+        //println(variables(2))
       } {
         // Remove
-        println
-        println(variables(0))
-        println(variables(1))
-        println(variables(2))
-        println("remove " + value + " from " + v.name)
+        //println
+        //println(variables(0))
+        //println(variables(1))
+        //println(variables(2))
+        //println("remove " + value + " from " + v.name)
         lcgSolver.lcgStore.newDecisionLevel()
         cpSolver.doAndPropagate {
           lcgSolver.lcgStore.enqueue(-literal, null)
         }
-        println(variables(0))
-        println(variables(1))
-        println(variables(2))
+        //println(variables(0))
+        //println(variables(1))
+        //println(variables(2))
       }
     }
   }
 
-  onSolution(println("SOLUTION FOUND !"))
+  onSolution()//println("SOLUTION FOUND !"))
 
   println(start())
 }
