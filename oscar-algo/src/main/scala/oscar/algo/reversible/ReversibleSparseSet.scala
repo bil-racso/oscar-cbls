@@ -261,6 +261,13 @@ class ReversibleSparseSet(s: ReversibleContext, val minValue: Int, val maxValue:
       }
     }
   }
+  
+  /**
+   * get the i_th value in the sparse-set
+   */
+  @inline final def apply(i: Int) = {
+    values(i) + offset
+  } 
 
   def delta(oldSize: Int): Iterator[Int] = {
     var ind = size

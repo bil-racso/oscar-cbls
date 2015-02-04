@@ -22,11 +22,6 @@ object TSPVisu extends CPModel with App {
   // Variables
   val succ = Array.fill(nCities)(CPIntVar(Cities)) 
   val totDist = CPIntVar(0 to distMatrix.flatten.sum)
-  
-  
-  for (i <- 0 until nCities; j <- 0 until nCities) {
-    println(distMatrix(i)(j))
-  }
 
   // Constraints
   add(minCircuit(succ, distMatrix, totDist),Strong)
