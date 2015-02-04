@@ -29,7 +29,7 @@ object OscarBuild extends Build {
     val buildSettings = Defaults.defaultSettings ++ Seq(
       organization := buildOrganization,
       version := buildVersion,
-      scalacOptions in Compile ++= Seq("-encoding", "UTF-8", "-deprecation", "-feature", "-unchecked", "-optimise"/*, "-Xdisable-assertions"*/),
+      scalacOptions in Compile ++= Seq("-encoding", "UTF-8", "-deprecation", "-feature", "-unchecked", "-Xdisable-assertions"/*"-optimise", "-Xdisable-assertions"*/),
       scalacOptions in Test := Seq("-optimise"),
       testOptions in Test <+= (target in Test) map {
           t => Tests.Argument(TestFrameworks.ScalaTest, "junitxml(directory=\"%s\")" format (t / "test-reports") ) },
