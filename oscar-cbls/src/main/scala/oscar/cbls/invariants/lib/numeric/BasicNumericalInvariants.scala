@@ -191,6 +191,13 @@ case class Minus(left: IntValue, right: IntValue)
   assert(left != right)
 }
 
+case class MinusOffsetPos(left:IntValue, right:IntValue, offset: Int)
+  extends IntInt2Int(left,right, (if(DomainHelper2.isSafeSub(left,right))
+                                      (l,r) => 0.max(l - r + offset)
+                                   else ((l: Int, r: Int) => 0.max(DomainHelper2.safeSub(l,r)+1))), 
+                                 0 to 0.max(DomainHelper2.safeAdd(DomainHelper2.safeSub(left.max, right.min),offset)))
+
+
 /**
  * abs(left - right)
  * where left, right, and output are IntVar

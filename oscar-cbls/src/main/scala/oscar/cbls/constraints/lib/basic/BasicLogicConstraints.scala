@@ -30,8 +30,8 @@ import oscar.cbls.invariants.core.propagation.Checker
 import oscar.cbls.invariants.lib.minmax._
 import oscar.cbls.invariants.lib.numeric.Dist
 import oscar.cbls.modeling.Algebra._
-
 import scala.math.abs
+import oscar.cbls.invariants.lib.numeric.MinusOffsetPos
 
 /**
  * implements left <= right
@@ -45,7 +45,9 @@ protected class LEA(val left: IntValue, val right: IntValue) extends Constraint 
   /**
    * the violation is Max(0,right-left)
    */
-  override val violation = Max2(0, left - right).setName(this.getClass().getSimpleName() + ".violation")
+  override val violation =
+    MinusOffsetPos(left,right,0).setName(this.getClass().getSimpleName() + ".violation")
+    //Max2(0, left - right).setName(this.getClass().getSimpleName() + ".violation")
 
   /**
    * The violation of each variable is equal to the global violation of the constraint
@@ -59,6 +61,7 @@ protected class LEA(val left: IntValue, val right: IntValue) extends Constraint 
         + ") == (if (left.value - right.value (" + diff + ") <= 0) 0 else " + diff + ")"))
   }
 }
+
 
 /**
  * implements left <= right
@@ -83,7 +86,10 @@ protected class LA(val left: IntValue, val right: IntValue) extends Constraint {
   /**
    * the violation is Max(0,left - right + 1)
    */
-  override val violation = Max2(0, left - right + 1)
+  override val violation =
+    MinusOffsetPos(left,right,1).setName(this.getClass().getSimpleName() + ".violation")
+    //TODO: If the constraint is always satisfied, given the domains, should set to a constant invariant. 
+    //Max2(0, left - right + 1)
 
   /**
    * The violation of each variable is equal to the global violation of the constraint
