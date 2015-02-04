@@ -29,9 +29,8 @@ object TestScheduling extends LCGModel with App {
       branch {
         lcgSolver.lcgStore.newDecisionLevel()
         // Assign
-        println("assign " + v.name)
+        //println("assign " + v.name)
         cpSolver.doAndPropagate {
-          lcgSolver.lcgStore.enqueue(v.minGeq(value), null)
           lcgSolver.lcgStore.enqueue(v.maxLeq(value), null)
           lcgSolver.propagate()
         }
@@ -39,16 +38,21 @@ object TestScheduling extends LCGModel with App {
         lcgSolver.lcgStore.newDecisionLevel()
         // Remove
         cpSolver.doAndPropagate {
-          lcgSolver.lcgStore.enqueue(-v.minGeq(value), null)
+          lcgSolver.lcgStore.enqueue(-v.maxLeq(value), null)
           lcgSolver.propagate()
         }
       }
     }
   }
 
-  onSolution(println("SOLUTION FOUND !"))
+  onSolution {
+    println("SOLUTION FOUND !")
+    for (i <- 0 until nTasks) {
+      println("task " + i + "starts at " + starts(i).min)
+    }
+  }
 
-  start(nSols = 1)
+  println(start(nSols = 1))
 
   // 
 
