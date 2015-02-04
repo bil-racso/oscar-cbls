@@ -132,8 +132,8 @@ class CPIntVarAdaptable(final override val store: CPStore, minValue: Int, maxVal
   }
 
   /** 
-   *  Returns an array containing all the values in the domain.
-   *  The array is not sorted.
+   *  @return an array containing all the values in the domain.
+   *          The result array is not sorted.
    */
   final def toArray: Array[Int] = {
     val array = new Array[Int](_size)
@@ -142,11 +142,12 @@ class CPIntVarAdaptable(final override val store: CPStore, minValue: Int, maxVal
   }
   
   /** 
-   *  Fills the array with the values contained in the domain.
-   *  Returns the number of values.
-   *  The array is not sorted.
+   *  @param array.length >= this.size
+   *  @return Fills the array with the values contained in the domain and 
+   *          returns the number of values (this.size).
+   *          The array is not sorted.
    */
-  final def toArray(array: Array[Int]): Int = copyDomain(array)
+  final def fillArray(array: Array[Int]): Int = copyDomain(array)
   
   // Copy the domain in the array and return the size of the domain
   @inline private def copyDomain(array: Array[Int]): Int = {
@@ -255,10 +256,26 @@ class CPIntVarAdaptable(final override val store: CPStore, minValue: Int, maxVal
     else removeSparse(value)
   }
 
+  
+  // recreate a sparse domain on backtrack
+  // if it was created sparse somewhere below this node
+  
+  private[this] var withHoles = false 
+  
+  store.onPop {
+    if (withHoles && _continuous) {
+      _continuous = false
+      buildSparse() 
+    }
+  }
+
+  var cpt = 0
+  
   @inline private def removeContinuous(value: Int): CPOutcome = {
     if (value == _min) updateMinContinuous(value + 1)
     else if (value == _max) updateMaxContinuous(value - 1)
     else { // Switch the domain representation
+      withHoles = true
       buildSparse()
       removeSparse(value)
     }

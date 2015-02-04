@@ -106,5 +106,5 @@ object Hexiom extends CPModel with App {
       binaryStatic(used, _.max)
     } 
     
-    solver.start(2000)
+    println(solver.start(2000))
 }
