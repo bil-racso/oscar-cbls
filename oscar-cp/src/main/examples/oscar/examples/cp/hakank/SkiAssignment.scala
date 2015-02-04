@@ -13,14 +13,9 @@
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
 package oscar.examples.cp.hakank
-
 import oscar.cp._
-
-
 /**
-
   Ski assignment in Oscar
- 
   From  
   Jeffrey Lee Hellrung, Jr.: PIC 60, Fall 2008 - Final Review, December 12, 2008
   http://www.math.ucla.edu/~jhellrun/course_files/Fall%25202008/PIC%252060%2520-%2520Data%2520Structures%2520and%2520Algorithms/final_review.pdf
@@ -39,57 +34,35 @@ import oscar.cp._
   following sample data:
     * Ski heights: 1, 2, 5, 7, 13, 21.
     * Skier heights: 3, 4, 7, 11, 18.
-
   """
-
- 
   @author Hakan Kjellerstrand hakank@gmail.com
   http://www.hakank.org/oscar/
- 
  */
-object SkiAssignment {
-
-
-  def main(args: Array[String]) {
-
-    val cp = CPSolver()
-
+object SkiAssignment extends CPModel with App  {
     // data
     val num_skis   = 6
     val num_skiers = 5;
-
     val ski_heights   = Array(1, 2, 5, 7, 13, 21)
     val skier_heights = Array(3, 4, 7, 11, 18)
-      
     // variables
-    val x = Array.fill(num_skiers)(CPIntVar(1 to num_skis)(cp))
+    val x = Array.fill(num_skiers)(CPIntVar(1 to num_skis))
     // sum of differences between height of assigned skis to the skiers
     val z = sum(Array.tabulate(num_skiers)(i=> (ski_heights(x(i)) - skier_heights(i)).abs))
-
     //
     // constraints
     //
     var numSols = 0
-
-    cp.minimize(z) subjectTo {
-
-      cp.add(allDifferent(x), Strong)
-
-    } search {
-
+   minimize(z) 
+     add(allDifferent(x), Strong)
+    search{
       binaryFirstFail(x.toSeq)
-    } onSolution {
+    }
+onSolution {
       for (s <- 0 until num_skiers) {
         println("skier " + s + " ski: " + x(s))
       }
       println()
-
       numSols += 1
-
     }
-
-    println(cp.start())
-
+    println(start())
   }
-
-}

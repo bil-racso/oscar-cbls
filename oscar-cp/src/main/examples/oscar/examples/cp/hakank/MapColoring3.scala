@@ -13,11 +13,7 @@
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
 package oscar.examples.cp.hakank
-
 import oscar.cp._
-
-
-
 /**
  *
  * Map coloring in Oscar
@@ -27,13 +23,7 @@ import oscar.cp._
  * http://www.hakank.org/oscar/
  *
  */
-object MapColoring3 {
-
-
-  def main(args: Array[String]) {
-
-    val cp = CPSolver()
-
+object MapColoring3 extends CPModel with App  {
     // data
     var Belgium     = 0
     val Denmark     = 1
@@ -41,10 +31,8 @@ object MapColoring3 {
     val Germany     = 3
     val Netherlands = 4
     val Luxembourg  = 5
-
     val n = 6
     val num_colors = 4
-
     val neighbours =  Array(Array(France,     Belgium),
                             Array(France,     Luxembourg),
                             Array(France,     Germany),
@@ -54,39 +42,24 @@ object MapColoring3 {
                             Array(Belgium,    Germany),
                             Array(Germany,    Netherlands),
                             Array(Germany,    Denmark))
-
-      
     // variables
-    val color = Array.fill(n)(CPIntVar(1 to num_colors)(cp))
-
+    val color = Array.fill(n)(CPIntVar(1 to num_colors))
     //
     // constraints
     //
     var numSols = 0
-
-    cp.solve subjectTo {
-
+  
       for(i <- 0 until neighbours.length) {
-        cp.add(color(neighbours(i)(0)) != color(neighbours(i)(1)))
+       add(color(neighbours(i)(0)) != color(neighbours(i)(1)))
       }
-
       // Symmetry breaking: Belgium has color 1
-      cp.add(color(Belgium) == 1)
-
-
-     } search {
-       
+     add(color(Belgium) == 1)
+     search{
        binaryFirstFail(color)
-     
-     } onSolution {
-     
-       println("color:" + color.mkString(" "))
-
-       numSols += 1
-       
      }
-     
-     println(cp.start())
+onSolution {
+       println("color:" + color.mkString(" "))
+       numSols += 1
+     }
+     println(start())
    }
-
-}

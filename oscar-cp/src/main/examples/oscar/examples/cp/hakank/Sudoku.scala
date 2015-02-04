@@ -16,7 +16,6 @@ package oscar.examples.cp.hakank
 
 import oscar.cp._
 import scala.math.pow
-
 /**
  *
  * Sudoku solver in Oscar.
@@ -27,19 +26,13 @@ import scala.math.pow
  * http://www.hakank.org/oscar/
  *
  */
-object Sudoku {
-
-  def main(args: Array[String]) {
-
-    val cp = CPSolver()
-
+object Sudoku extends CPModel with App  {
+  
     // data
     val n = 9
     val reg = 3
-
     val NRANGE = 0 until n
     val RRANGE = 0 until reg
-
     // 
     // data
     //
@@ -56,53 +49,36 @@ object Sudoku {
                         Array(0, 8, 0, 4, 0, 0, 1, 0, 0),
                         Array(0, 6, 3, 0, 0, 0, 0, 8, 0),
                         Array(0, 0, 0, 6, 0, 8, 0, 0, 0))
-
     // variables
-    val x = Array.fill(n,n)(CPIntVar(1 to n)(cp))
+    val x = Array.fill(n,n)(CPIntVar(1 to n))
     val x_t = x.transpose
-
     //
     // constraints
     //
     var numSols = 0
-
-    cp.solve subjectTo {
-
+  
       // fill with the hints
-      NRANGE.foreach(i=>NRANGE.foreach(j=>if (problem(i)(j) > 0) cp.add(x(i)(j) == problem(i)(j))))
-
+      NRANGE.foreach(i=>NRANGE.foreach(j=>if (problem(i)(j) > 0)add(x(i)(j) == problem(i)(j))))
       // rows and columns
-      NRANGE.foreach(i=>cp.add(allDifferent(x(i)), Strong))
-      NRANGE.foreach(j=>cp.add(allDifferent(x_t(j)), Strong))
-      
-
+      NRANGE.foreach(i=>add(allDifferent(x(i)), Strong))
+      NRANGE.foreach(j=>add(allDifferent(x_t(j)), Strong))
       // blocks
       for(i <- RRANGE; 
           j <- RRANGE) {
-        cp.add(allDifferent((for{ r <- i*reg until i*reg+reg;
+       add(allDifferent((for{ r <- i*reg until i*reg+reg;
                                   c <- j*reg until j*reg+reg
               } yield x(r)(c))), Strong)
       }
-
-
-    } search {
-       
+    search{
        binaryFirstFail(x.flatten.toSeq)
-       
-    } onSolution {
-       
+    }
+onSolution {
        println("\nSolution:")
        for(i <- 0 until n) {
          println(x(i).mkString(" "))
        }
        println()
-
        numSols += 1
-       
     }
-
-    println(cp.start())
-
+    println(start())
   }
-
-}

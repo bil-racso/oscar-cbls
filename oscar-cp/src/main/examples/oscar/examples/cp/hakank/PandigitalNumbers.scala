@@ -13,14 +13,10 @@
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
 package oscar.examples.cp.hakank
-
 import oscar.cp._
-
 import scala.io.Source._
 import scala.math._
 import Array._
-
-
 /**
  *
  * Pandigital numbers in OscaR.
@@ -61,88 +57,63 @@ import Array._
  * http://www.hakank.org/oscar/
  *
  */
-object PandigitalNumbers {
-
+object PandigitalNumbers extends CPModel with App  {
   // channeling between IntVar array t <=> IntVar s
   def toNum(t: Array[CPIntVar], base: Int=10) = sum(
       Array.tabulate(t.length)(i=> t(i)*pow(base, t.length-i-1).toInt))
-
   //
-  // solve each sub equation
+  //each sub equation
   //
   def solve(base: Int = 10, start: Int = 1, len1: Int = 1, len2: Int = 2) {
-
-    val cp = CPSolver()
-
     //
     // data
     //
     val max_d   = base-1
     val x_len   = max_d + 1 - start
     val max_num = (pow(base,4)-1).toInt
-
     //
     // variables
     //
-    val num1 = CPIntVar(1 to max_num)(cp)
-    val num2 = CPIntVar(1 to max_num)(cp)
-    val res  = CPIntVar(1 to max_num)(cp)
+    val num1 = CPIntVar(1 to max_num)
+    val num2 = CPIntVar(1 to max_num)
+    val res  = CPIntVar(1 to max_num)
     // the digits
-    val x    = Array.fill(x_len)(CPIntVar(start to max_d)(cp))
-
+    val x    = Array.fill(x_len)(CPIntVar(start to max_d))
     // for labeling    
     val all = x ++ Array(num1, num2, res)
-
     //
     // constraints
     //
     var numSols = 0
-
-    cp.solve subjectTo {
-
-      cp.add(allDifferent(x))
-
-      cp.add(num1 == toNum((for{i <- 0 until len1} yield x(i)), base))
-      cp.add(num2 == toNum((for{i <- len1 until len1+len2} yield x(i)), base))
-      cp.add(res  == toNum((for{i <- (len1+len2) until x_len} yield x(i)), base))
-      cp.add(num1*num2 == res)
-
+  
+     add(allDifferent(x))
+     add(num1 == toNum((for{i <- 0 until len1} yield x(i)), base))
+     add(num2 == toNum((for{i <- len1 until len1+len2} yield x(i)), base))
+     add(res  == toNum((for{i <- (len1+len2) until x_len} yield x(i)), base))
+     add(num1*num2 == res)
       // no number must start with 0
-      cp.add(x(0) > 0)
-      cp.add(x(len1) > 0)
-      cp.add(x(len1+len2) > 0)
-      
+     add(x(0) > 0)
+     add(x(len1) > 0)
+     add(x(len1+len2) > 0)
       // symmetry breaking
-      cp.add(num1 < num2)
-
-
-    } search {
-       
+     add(num1 < num2)
+    search{
       binaryFirstFail(all)
-    } onSolution {
+    }
+onSolution {
       println(num1 + " +" + num2 + " =" + res )
-
       numSols += 1
-
     } start()
-
   }
-
-  def main(args: Array[String]) {
-
     var base = 10
     var start = 1
-
     if(args.length > 0) {
       base = args(0).toInt
     }
-
     if(args.length > 1) {
       start = args(1).toInt
     }
-
     println("base: " + base + " start: " + start)
-
     var x_len = base - 1 + 1-start;
     for(len1 <- 0 to x_len) {
       for(len2 <- 0 to x_len) {
@@ -157,7 +128,4 @@ object PandigitalNumbers {
         }
       }
     }
-
   } // end main
-
-}

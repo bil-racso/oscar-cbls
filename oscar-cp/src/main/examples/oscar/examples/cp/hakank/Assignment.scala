@@ -15,72 +15,53 @@
  * ****************************************************************************
  */
 package oscar.examples.cp.hakank
-
 import oscar.cp._
-
 import scala.io.Source._
 import scala.math._
-
 /*
-
   Simple assignment problem in Oscar.
-
   From Wayne Winston "Operations Research",
   Assignment Problems, page 393f
   (This is a generalized version with an added test column)
-
   @author Hakan Kjellerstrand hakank@gmail.com
   http://www.hakank.org/oscar/
- 
 */
 object Assignment extends CPModel with App {
-
   // Nicer syntax for a CPIntVar matrix 
   implicit class CPIntVarMatrix(val m: Array[Array[CPIntVar]]) {
     def row(r: Int): Array[CPIntVar] = m(r)
     def col(c: Int): Array[CPIntVar] = for { r <- 0 until m.length } yield m(r)(c)
   }
-
   def makeCPIntVarMatrix(rows: Int, cols: Int, range: Range) =
     Array.fill(rows)(Array.fill(cols)((CPIntVar(range))))
-
   //
   // data
   //
-
   // Problem instance
   // hakank: I added the fifth column to make it more
   //         interesting
   val rows = 4
   val cols = 5
-
   val ROWS = 0 until rows
   val COLS = 0 until cols
-
   val cost = Array(Array(14, 5, 8, 7, 15),
     Array(2, 12, 6, 5, 3),
     Array(7, 8, 3, 9, 7),
     Array(2, 4, 6, 10, 1))
-
   //
   // variables
   //
   val x = makeCPIntVarMatrix(rows, cols, 0 to 1)
   val total_cost = weightedSum(cost, x)
-
   //
   // constraints
   //
   var numSols = 0
-
   // Exacly one assignment per row (task),
   ROWS.foreach(i => add(sum(x.row(i)) == 1))
-
   // At most one assignments per column (worker)
   COLS.foreach(j => add(sum(x.col(j)) <= 1))
-
   minimize(total_cost) search { binaryMaxDegree(x.flatten.toSeq) }
-
   onSolution {
     println("total_cost:" + total_cost)
     for (i <- ROWS) {
@@ -92,9 +73,7 @@ object Assignment extends CPModel with App {
         x(i).zipWithIndex.filter(_._1.value == 1).map(_._2).mkString(""))
     }
     println()
-
     numSols += 1
   } start ()
-
   println("\nIt was " + numSols + " solutions.")
 }

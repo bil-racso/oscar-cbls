@@ -13,15 +13,11 @@
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
 package oscar.examples.cp.hakank
-
 import oscar.cp._
 import scala.io.Source._
 import scala.math._
-
 /*
-
   Secret Santa problem II in Oscar.
-
   From Maple Primes: 'Secret Santa Graph Theory'
   http://www.mapleprimes.com/blog/jpmay/secretsantagraphtheory
   """
@@ -37,9 +33,7 @@ import scala.math._
   recent history. This year, not everyone was participating, and so after
   removing names, and limiting the number of exclusions to four per person,
   I had data something like this:
-
   Name: Spouse, Recent Picks
-
   Noah: Ava. Ella, Evan, Ryan, John
   Ava: Noah, Evan, Mia, John, Ryan
   Ryan: Mia, Ella, Ava, Lily, Evan
@@ -49,36 +43,21 @@ import scala.math._
   Lily: Evan, John, Mia, Ava, Ella
   Evan: Lily, Mia, John, Ryan, Noah
   """
-
   Note: I interpret this as the following three constraints:
   1) One cannot be a Secret Santa of one's spouse
   2) One cannot be a Secret Santa for somebody two years in a row
   3) Optimization: maximize the time since the last time
-
-
   This model also handle single persons, something the original
   problem don't mention.
-
-
-
   @author Hakan Kjellerstrand hakank@gmail.com
   http://www.hakank.org/oscar/
- 
 */
-
-object SecretSanta2 {
-
-  def main(args: Array[String]) {
-
-    val cp = CPSolver()
-
+object SecretSanta2 extends CPModel with App  {
     //
     // data
     //
-
     // Change to 1 for using with a single person
     val single = 0   
-
     //
     // The matrix version of earlier rounds.
     // M means that no earlier Santa has been assigned.
@@ -99,7 +78,6 @@ object SecretSanta2 {
                                  Array(1, 4, 3, M, M, 0, 2, M), // John
                                  Array(M, 3, M, 2, 4, 1, 0, M), // Lily
                                  Array(4, M, 3, 1, M, 2, M, 0)) // Evan
-      
     //
     // Rounds with a single person (fake data)
     //
@@ -116,7 +94,6 @@ object SecretSanta2 {
                               Array(M, 3, M, 2, 4, 1, 0, M, M), // Lily
                               Array(4, M, 3, 1, M, 2, M, 0, M), // Evan
                               Array(1, 2, 3, 4, M, 2, M, M, 0)) // Single
-
     val Noah   = 0
     val Ava    = 1
     val Ryan   = 2
@@ -125,18 +102,14 @@ object SecretSanta2 {
     val John   = 5
     val Lily   = 6
     val Evan   = 7
-
     var n = n_no_single
     var rounds = rounds_no_single
-
     if (single == 1) {
       n = n_with_single
       rounds = rounds_single
     }
-
     M = n + 1
     val RANGE = 0 until n
-
     val persons = Array("Noah", "Ava", "Ryan", "Mia", "Ella",
                         "John", "Lily", "Evan", "Single")
     val spouses = Array(
@@ -150,53 +123,41 @@ object SecretSanta2 {
                         Lily, // Evan
                         -1    // Single has no spouse
                         )
-
-
     //
     // variables
     //
-    val santas = Array.fill(n)(CPIntVar(0 to n-1)(cp))
-    val santa_distance = Array.fill(n)(CPIntVar(0 to M)(cp))
-
+    val santas = Array.fill(n)(CPIntVar(0 to n-1))
+    val santa_distance = Array.fill(n)(CPIntVar(0 to M))
     // total of "distance", to maximize
     val z = sum(santa_distance)
-
     //
     // constraints
     //
     var numSols = 0
-
-    cp.maximize(z) subjectTo {
-
-      cp.add(allDifferent(santas), Strong)
-      
+   maximize(z) 
+     add(allDifferent(santas), Strong)
       // Can't be one own"s Secret Santa
       // (i.e. ensure that there are no fix-point in the array.)
       for(i <- RANGE) {
-        cp.add(santas(i) != i)
+       add(santas(i) != i)
       }
-
       // no Santa for a spouses
       for(i <- RANGE if spouses(i) > -1) {
-          cp.add(santas(i) != spouses(i))
+         add(santas(i) != spouses(i))
       }
-
       // optimize "distance" to earlier rounds:
       for(i <- RANGE) {
-        cp.add(santa_distance(i) == rounds(i)(santas(i)))
+       add(santa_distance(i) == rounds(i)(santas(i)))
       }
-
       // cannot be a Secret Santa for the same person
       // two years in a row.
       for(i <- RANGE; j <- RANGE if rounds(i)(j) == 1) {
-            cp.add(santas(i) != j)
+           add(santas(i) != j)
       }
-
-
-    } search {
-       
+    search{
       binaryFirstFail(santas ++ santa_distance)
-    } onSolution {
+    }
+onSolution {
       println("santas: " + santas.mkString(""))
       println("santa_distance: " + santa_distance.mkString(""))
       for(i <- RANGE) {
@@ -205,13 +166,7 @@ object SecretSanta2 {
                 santa_distance(i).value + ")") 
       }
       println()
-
       numSols += 1
-
     }
-
-    println(cp.start())
-
+    println(start())
   }
-
-}

@@ -13,10 +13,7 @@
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
 package oscar.examples.cp.hakank
-
 import oscar.cp._
-
-
 /**
  *
  * Implementing Xkcd knapsack problem in Oscar
@@ -31,43 +28,25 @@ import oscar.cp._
  * http://www.hakank.org/oscar/
  *
  */
-object Xkcd {
-
-
-  def main(args: Array[String]) {
-
-    val cp = CPSolver()
-
+object Xkcd extends CPModel with App  {
     // data
     val price  = Array(215, 275, 335, 355, 420, 580) // in cents
     val num_prices = price.length
     val total = 1505
-
-
     // variables
-    val x = Array.fill(num_prices)(CPIntVar(0 to 10)(cp))
-
+    val x = Array.fill(num_prices)(CPIntVar(0 to 10))
     //
     // constraints
     //
     var numSols = 0
-
-    cp.solve subjectTo {
-
-      cp.add(weightedSum(price, x) == total)
-
-    } search {
-       
+  
+     add(weightedSum(price, x) == total)
+    search{
        binaryFirstFail(x)
-    } onSolution {
+    }
+onSolution {
        println("x:" + x.mkString(" "))
-
        numSols += 1
-       
     } 
-
-    println(cp.start())
-
+    println(start())
   }
-
-}

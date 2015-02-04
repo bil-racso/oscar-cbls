@@ -13,15 +13,11 @@
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
 package oscar.examples.cp.hakank
-
 import oscar.cp._
 import scala.io.Source._
 import scala.math._
-
 /*
-
   Secret Santa problem in Oscar.
-  
   From Ruby Quiz Secret Santa
   http://www.rubyquiz.com/quiz2.html
   """
@@ -47,76 +43,49 @@ import scala.math._
   no longer allow people in the same family to be Santas for each other and your
   script should take this into account.
   """
-
   Comment: This model skips the file input and mail parts. We
            assume that the friends are identified with a number from 1..n,
            and the families is identified with a number 1..num_families.
-
   http://www-128.ibm.com/developerworks/linux/library/l-glpk2/
-
-
   @author Hakan Kjellerstrand hakank@gmail.com
   http://www.hakank.org/oscar/
- 
 */
-
-object SecretSanta {
-
-
-  def main(args: Array[String]) {
-
-    val cp = CPSolver()
-
+object SecretSanta extends CPModel with App  {
     //
     // data
     //
-
     val num_to_show = if (args.length > 0) args(0).toInt else 1;
-
     val family = Array(1,1,1,1, 2, 3,3,3,3,3, 4,4)
     val n = family.length
-
     //
     // variables
     //
-    val x = Array.fill(n)(CPIntVar(0 to n-1)(cp))
-
+    val x = Array.fill(n)(CPIntVar(0 to n-1))
     //
     // constraints
     //
     var numSols = 0
-
-    cp.solve subjectTo {
-
-      cp.add(allDifferent(x), Strong)
-
+  
+     add(allDifferent(x), Strong)
       // Can't be one own's Secret Santa
       // (i.e. ensure that there are no fix-point in x)
       for(i <- 0 until n) {
-        cp.add(x(i) != i)
+       add(x(i) != i)
       }
-
       // No Secret Santa to a person in the same family
       for(i <- 0 until n) {
-        cp.add(family(x(i)) != family(i))
+       add(family(x(i)) != family(i))
       }
-      
-    } search {
-       
+    search{
       binaryStatic(x)
-    } onSolution {
+    }
+onSolution {
       println("\nSolution:")
-
       println("x: " + x.mkString(""))
       for(i <- 0 until n) {
         println("Person " + i + " (family " + family(i) + ") is a Secret Santa of" + x(i) + " (family " + family(x(i).value) + ")")
       }
-
       numSols += 1
-
    } 
-   println(cp.start(nSols = num_to_show))
-
+   println(start(nSols = num_to_show))
   }
-
-}

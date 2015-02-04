@@ -15,30 +15,18 @@
  * ****************************************************************************
  */
 package oscar.examples.cp.hakank
-
 import oscar.cp._
-
 import scala.io.Source._
 import scala.math._
-
 /*
-
   Bus scheduling in Oscar.
-  
   Minimize number of buses in timeslots.
-
   Problem from Taha "Introduction to Operations Research", page 58.
-   
   Note: This is a slightly more general model than Taha's.
- 
-
   @author Hakan Kjellerstrand hakank@gmail.com
   http://www.hakank.org/oscar/
- 
 */
-
 object BusSchedule extends CPModel with App {
-
   //
   // data
   //
@@ -46,40 +34,31 @@ object BusSchedule extends CPModel with App {
   // min number of buses for each time slot
   val demands = Array(8, 10, 7, 12, 4, 4)
   val max_num = demands.sum
-
   //
   // variables
   //
-
   // How many buses start the schedule at time slot t
   val x = Array.fill(time_slots)(CPIntVar(0 to max_num))
   // Total number of buses
   val num_buses = sum(x)
-
   //
   // constraints
   //
-
   minimize(num_buses)
-
   // Meet the demands for this and the next time slot.
   for (i <- 0 until time_slots - 1) {
     add(x(i) + x(i + 1) >= demands(i))
   }
-
   // The demand "around the clock"
   add(x(time_slots - 1) + x(0) - demands(time_slots - 1) == 0)
-
   search {
     binaryStatic(x)
   }
-
   onSolution {
     println("\nSolution:")
     println("x: " + x.mkString(""))
     println("num_buses : " + num_buses)
     println()
   }
-
   println(start())
 }

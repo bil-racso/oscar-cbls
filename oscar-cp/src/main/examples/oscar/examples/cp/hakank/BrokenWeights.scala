@@ -15,88 +15,67 @@
  * ****************************************************************************
  */
 package oscar.examples.cp.hakank
-
 import oscar.cp._
-
 import scala.io.Source._
 import scala.math._
-
 /*
-
   Broken weight problem in Oscar.
-
   From http://www.mathlesstraveled.com/?p=701
   """
   Here's a fantastic problem I recently heard. Apparently it was first 
   posed by Claude Gaspard Bachet de Maziriac in a book of arithmetic problems 
   published in 1612, and can also be found in Heinrich Dorries 100 
   Great Problems of Elementary Mathematics.
-  
       A merchant had a forty pound measuring weight that broke 
       into four pieces as the result of a fall. When the pieces were 
       subsequently weighed, it was found that the weight of each piece 
       was a whole number of pounds and that the four pieces could be 
       used to weigh every integral weight between 1 and 40 pounds. What 
       were the weights of the pieces?
-  
   Note that since this was a 17th-century merchant, he of course used a 
   balance scale to weigh things. So, for example, he could use a 1-pound 
   weight and a 4-pound weight to weigh a 3-pound object, by placing the 
   3-pound object and 1-pound weight on one side of the scale, and 
   the 4-pound weight on the other side.
   """
-
   @author Hakan Kjellerstrand hakank@gmail.com
   http://www.hakank.org/oscar/
- 
 */
-
 object BrokenWeights extends CPModel with App {
-
   //
   // data
   //
   var m = 40
   var n = 4
-
   if (args.length > 0) {
     m = args(0).toInt
   }
-
   if (args.length > 1) {
     n = args(1).toInt
   }
-
   //
   // variables
   //
   val weights = Array.fill(n)(CPIntVar(1 to m))
   val x = Array.fill(m, n)(CPIntVar(-1 to 1))
   val x_flat = x.flatten
-
   //
   // constraints
   //
-
   minimize(weights(n - 1))
-
   // total weight of the pieces
   add(sum(weights) == m)
-
   // ensure that all weighst are handled
   for (i <- 0 until m) {
     add(sum(for (j <- 0 until n) yield x(i)(j) * weights(j)) == i + 1)
   }
-
   // symmetry breaking
   for (j <- 1 until n) {
     add(weights(j - 1) < weights(j))
   }
-
   search {
     binaryMaxDegree(weights ++ x_flat)
   }
-
   onSolution {
     println("\nSolution:")
     println("weights:" + weights.mkString(""))
@@ -108,6 +87,5 @@ object BrokenWeights extends CPModel with App {
       println()
     }
   }
-
   println(start())
 }

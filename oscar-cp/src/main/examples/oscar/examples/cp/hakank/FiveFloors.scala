@@ -13,14 +13,9 @@
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
 package oscar.examples.cp.hakank
-
 import oscar.cp._
-
-
 /**
-
   Five floors problem in Oscar
- 
   From Alexey Radul & Gerald Jay Sussman: 
   "The Art of Propagator", page 34
   """
@@ -32,71 +27,44 @@ import oscar.cp._
   floor adjacent to Fletcher'. Fletcher does not live on a floor
   adjacent to Cooper's.
   """
-
   @author Hakan Kjellerstrand hakank@gmail.com
   http://www.hakank.org/oscar/
- 
  */
-
-object FiveFloors {
-
-
-  def main(args: Array[String]) {
-
-    val cp = CPSolver()
-
+object FiveFloors extends CPModel with App  {
     //
     // data
     //
     var n = 5
-       
     //
     // decision variables
     //
-    val x = Array.fill(n)(CPIntVar(1 to n)(cp))
+    val x = Array.fill(n)(CPIntVar(1 to n))
     val Array(baker, cooper, fletcher, miller, smith) = x
-
     //
     // constraints
     //
     var numSols = 0
-
-    cp.solve subjectTo {
-
-       cp.add(allDifferent(x), Strong)
-
+  
+      add(allDifferent(x), Strong)
        // Baker does not live on the fifth floor.
-       cp.add(baker != 5)
-
+      add(baker != 5)
        // Cooper does not live on the first floor. 
-       cp.add(cooper != 1)
-
+      add(cooper != 1)
        // Fletcher does not live on either the fifth or the first floor. 
-       cp.add(fletcher != 5)
-       cp.add(fletcher != 1)
-
+      add(fletcher != 5)
+      add(fletcher != 1)
        // Miller lives on a higher floor than does Cooper. 
-       cp.add(miller > cooper)
-
+      add(miller > cooper)
        // Smith does not live on a floor adjacent to Fletcher'. 
-       cp.add((smith-fletcher).abs > 1)
-
+      add((smith-fletcher).abs > 1)
        // Fletcher does not live on a floor adjacent to Cooper's.
-       cp.add((fletcher-cooper).abs > 1)
-
-
-     } search {
-       
+      add((fletcher-cooper).abs > 1)
+     search{
        binaryMaxDegree(x)
-     } onSolution {
+     }
+onSolution {
        println(x.mkString(""))
-
        numSols += 1
-       
      } 
-
-     println(cp.start())
-
+     println(start())
    }
-
-}

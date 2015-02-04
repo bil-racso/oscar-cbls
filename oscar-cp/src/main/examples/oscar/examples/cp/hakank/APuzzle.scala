@@ -1,7 +1,5 @@
 package oscar.examples.cp.hakank
-
 import oscar.cp._
-
 /**
  * Number puzzle in Oscar
  *
@@ -72,10 +70,8 @@ import oscar.cp._
  *
  */
 object APuzzle extends CPModel with App {
-
   // data
   val n = 10
-
   // Problem type
   var p = 1 // 1,2,3,4
   if (args.length > 0) {
@@ -85,20 +81,15 @@ object APuzzle extends CPModel with App {
       p = 1
     }
   }
-
   val all = Array.fill(n)(CPIntVar(0 to n - 1))
   val Array(x0, x1, x2, x3, x4, x5, x6, x7, x8, x9) = all
-
   // the unknown, i.e. 2581 = x
   val x = CPIntVar(0 to n - 1)
-
   //
   // constraints
   //
   var numSols = 0
-
   if (p == 1) {
-
     // Problem 1 (basic approach)
     println("Problem 1 (basic approach)")
     add(x8 + x8 + x0 + x9 == 6)
@@ -121,10 +112,8 @@ object APuzzle extends CPModel with App {
     add(x6 + x8 + x5 + x5 == 3)
     add(x9 + x8 + x8 + x1 == 5)
     add(x5 + x5 + x3 + x1 == 0)
-
     // The unknown
     add(x2 + x5 + x8 + x1 == x)
-
   } else if (p == 2) {
     // Problem 1 (alternative approach)
     println("Problem 1 (alternative approach)")
@@ -149,18 +138,13 @@ object APuzzle extends CPModel with App {
       Array(6, 8, 5, 5, 3),
       Array(9, 8, 8, 1, 5),
       Array(5, 5, 3, 1, 0))
-
     for (i <- 0 until problem1.length) {
       add(sum(for (j <- 0 until 4) yield all(problem1(i)(j))) == problem1(i)(4))
     }
-
     add(all(2) + all(5) + all(8) + all(1) == x);
-
   } else if (p == 3) {
-
     // Problem 2 (basic approach)
     println("Problem 2 (basic approach)")
-
     add(x8 + x8 + x0 + x9 == 6)
     add(x7 + x6 + x6 + x2 == 2)
     add(x9 + x3 + x1 + x2 == 1)
@@ -169,12 +153,9 @@ object APuzzle extends CPModel with App {
     add(x7 + x7 + x5 + x6 == 1)
     add(x6 + x8 + x5 + x5 == 3)
     add(x9 + x8 + x8 + x1 == 5)
-
     // The unknown
     add(x2 + x5 + x8 + x1 == x)
-
   } else {
-
     // Problem 2 (alternative approach)
     println("Problem 2 (alternative approach)")
     val problem2 = Array(
@@ -186,21 +167,16 @@ object APuzzle extends CPModel with App {
       Array(7, 7, 5, 6, 1),
       Array(6, 8, 5, 5, 3),
       Array(9, 8, 8, 1, 5))
-
     for (i <- 0 until problem2.length) {
       add(sum(for (j <- 0 until 4) yield all(problem2(i)(j))) == problem2(i)(4))
     }
     add(all(2) + all(5) + all(8) + all(1) == x)
   }
-
   search { binaryStatic(all) }
-
   onSolution {
     println("all:" + all.mkString("") + "  x:" + x)
     numSols += 1
   }
-
   start()
-
   println("\nIt was " + numSols + " solutions.\n")
 }
