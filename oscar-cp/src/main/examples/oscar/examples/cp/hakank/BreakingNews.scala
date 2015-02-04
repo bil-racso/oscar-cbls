@@ -1,17 +1,19 @@
-/*******************************************************************************
+/**
+ * *****************************************************************************
  * OscaR is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- *   
+ *
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License  for more details.
- *   
+ *
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
- ******************************************************************************/
+ * ****************************************************************************
+ */
 package oscar.examples.cp.hakank
 
 import oscar.cp._
@@ -58,122 +60,102 @@ import scala.math._
  
 */
 
-object BreakingNews {
+object BreakingNews extends CPModel with App {
 
-   // 
-   // Decomposition of inverse constraint
-   // 
-   // Channel of positions of x and y:
-   //    j == x(i) <=> y(j) == i
-   // 
-   // Note: This requires the domain 0..n-1
-   //
-   def inverse(cp: CPSolver, x: Array[CPIntVar], y: Array[CPIntVar]) {
-      val len = x.length
-      for(i <- 0 until len;
-          j <- 0 until len) {
-        cp.add( (y(j) === i) == (x(i) === j) )
-      }
-   }
+  // 
+  // Decomposition of inverse constraint
+  // 
+  // Channel of positions of x and y:
+  //    j == x(i) <=> y(j) == i
+  // 
+  // Note: This requires the domain 0..n-1
+  //
+  def inverse(x: Array[CPIntVar], y: Array[CPIntVar]) {
+    val len = x.length
+    for (i <- 0 until len; j <- 0 until len) {
+      add((y(j) === i) == (x(i) === j))
+    }
+  }
 
-   // Convenient function which returns y (for presentation)
-   def inverse2(cp: CPSolver, x: Array[CPIntVar]) : Array[CPIntVar] = {
-     val y = Array.fill(x.length)(CPIntVar(x(0).min to x(0).max)(cp))
-     inverse(cp, x, y)
-     y
-   }
+  // Convenient function which returns y (for presentation)
+  def inverse2(x: Array[CPIntVar]): Array[CPIntVar] = {
+    val y = Array.fill(x.length)(CPIntVar(x(0).min to x(0).max))
+    inverse(x, y)
+    y
+  }
 
+  //
+  // data
+  //
+  val n = 4
 
-  def main(args: Array[String]) {
+  val Array(corey, jimmy, lois, perry) = (0 to n - 1).toArray
+  val names = Array("Corey", "Jimmy", "Lois", "Perry")
 
-    val cp = CPSolver()
+  //
+  // variables
+  //
+  val locations = Array.fill(n)(CPIntVar(0 to n - 1))
+  val Array(bayonne, new_hope, port_charles, south_amboy) = locations
+  // for output
+  val locationsStr = Array("Bayonne", "New Hope", "Port Charles", "South Amboy")
+  val locationsInv = inverse2(locations)
 
-    //
-    // data
-    //
-    val n = 4
+  val events = Array.fill(n)(CPIntVar(0 to n - 1))
+  val Array(baby, blimp, skyscraper, whale) = events
+  // for output
+  val eventsStr = Array("Baby", "Blimp", "Skyscraper", "Whale")
+  val eventsInv = inverse2(events)
 
-    val Array(corey, jimmy, lois, perry) = (0 to n-1).toArray
-    val names = Array("Corey", "Jimmy", "Lois", "Perry")
+  //
+  // constraints
+  //
 
-    //
-    // variables
-    //
-    val locations = Array.fill(n)(CPIntVar(0 to n-1)(cp))
-    val Array(bayonne, new_hope, port_charles, south_amboy) = locations
-    // for output
-    val locationsStr = Array("Bayonne", "New Hope", "Port Charles", "South Amboy")
-    val locationsInv = inverse2(cp, locations)
+  add(allDifferent(locations), Strong)
+  add(allDifferent(events), Strong)
 
-    val events = Array.fill(n)(CPIntVar(0 to n-1)(cp))
-    val Array(baby, blimp, skyscraper, whale) = events
-    // for output
-    val eventsStr = Array("Baby", "Blimp", "Skyscraper", "Whale")
-    val eventsInv = inverse2(cp, events)
+  // 1. The 30-pound baby wasn't born in South Amboy or New Hope.
+  add(baby != south_amboy)
+  add(baby != new_hope)
 
-    //
-    // constraints
-    //
+  //  2. Jimmy didn't go to Port Charles.
+  add(port_charles != jimmy)
 
+  //  3. The blimp launching and the skyscraper dedication were covered, 
+  //     in some order, by Lois and the reporter who was sent to 
+  //     Port Charles.
+  add(
+    (blimp === lois && skyscraper === port_charles)
+      ||
+      (skyscraper === lois && blimp === port_charles)
+  )
 
-    cp.solve subjectTo {
+  //  4. South Amboy was not the site of either the beached whale or the 
+  //     skyscraper  dedication.
+  add(south_amboy != whale)
+  add(south_amboy != skyscraper)
 
-      cp.add(allDifferent(locations), Strong)
-      cp.add(allDifferent(events), Strong)
+  //  5. Bayonne is either the place that Corey went or the place where 
+  //     the whale was beached, or both.
+  add((bayonne === corey) + (bayonne === whale) >= 1)
 
-      // 1. The 30-pound baby wasn't born in South Amboy or New Hope.
-      cp.add(baby != south_amboy)
-      cp.add(baby != new_hope)
- 
-      //  2. Jimmy didn't go to Port Charles.
-      cp.add(port_charles != jimmy)
+  search { binaryStatic(locations ++ events) }
 
-      //  3. The blimp launching and the skyscraper dedication were covered, 
-      //     in some order, by Lois and the reporter who was sent to 
-      //     Port Charles.
-      cp.add(
-             (blimp === lois && skyscraper === port_charles)
-             ||
-             (skyscraper === lois && blimp === port_charles)
-             )
-      
-      //  4. South Amboy was not the site of either the beached whale or the 
-      //     skyscraper  dedication.
-      cp.add(south_amboy != whale)
-      cp.add(south_amboy != skyscraper)
-      
-      //  5. Bayonne is either the place that Corey went or the place where 
-      //     the whale was beached, or both.
-      cp.add(( bayonne === corey) + (bayonne === whale)  >= 1)
-      
+  onSolution {
 
-    } search {
-       
-      binaryStatic(locations ++ events)
-      
-
-
-    } onSolution {
-      
-      println("Names    : " + names.mkString(" "))
-      println("Locations:" + locations.mkString(""))
-      println("Events   :" + events.mkString(""))
-      println()
-      println("Names    : " + names.mkString(", "))
-      println("Locations: " + locationsInv.map(s=>locationsStr(s.value)).mkString(", "))
-      println("Events   : " + eventsInv.map(s=>eventsStr(s.value)).mkString(", "))
-      println()
-      println((0 until n).
-              map(s=>Array(names(s), locationsStr(locationsInv(s).value), eventsStr(eventsInv(s).value)).mkString(", ")).mkString("\n"))
-      println()
- 
-      
-    } 
-    
-    println(cp.start())
-
-
+    println("Names    : " + names.mkString(" "))
+    println("Locations:" + locations.mkString(""))
+    println("Events   :" + events.mkString(""))
+    println()
+    println("Names    : " + names.mkString(", "))
+    println("Locations: " + locationsInv.map(s => locationsStr(s.value)).mkString(", "))
+    println("Events   : " + eventsInv.map(s => eventsStr(s.value)).mkString(", "))
+    println()
+    println((0 until n).
+      map(s => Array(names(s), locationsStr(locationsInv(s).value), eventsStr(eventsInv(s).value)).mkString(", ")).mkString("\n"))
+    println()
 
   }
 
+  println(start())
 }

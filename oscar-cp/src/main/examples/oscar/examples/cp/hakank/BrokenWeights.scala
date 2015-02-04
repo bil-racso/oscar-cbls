@@ -1,17 +1,19 @@
-/*******************************************************************************
+/**
+ * *****************************************************************************
  * OscaR is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- *   
+ *
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License  for more details.
- *   
+ *
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
- ******************************************************************************/
+ * ****************************************************************************
+ */
 package oscar.examples.cp.hakank
 
 import oscar.cp._
@@ -49,74 +51,63 @@ import scala.math._
  
 */
 
-object BrokenWeights {
+object BrokenWeights extends CPModel with App {
 
+  //
+  // data
+  //
+  var m = 40
+  var n = 4
 
-  def main(args: Array[String]) {
-
-    val cp = CPSolver()
-
-    //
-    // data
-    //
-    var m = 40
-    var n = 4
-
-    if (args.length > 0) {
-      m = args(0).toInt
-    }
-
-    if (args.length > 1) {
-      n = args(1).toInt
-    }
-
-
-    //
-    // variables
-    //
-    val weights = Array.fill(n)(CPIntVar(1 to m)(cp))
-    val x   = Array.fill(m, n)(CPIntVar(-1 to 1)(cp))
-    val x_flat = x.flatten
-
-    //
-    // constraints
-    //
-
-    cp.minimize(weights(n-1)) subjectTo {
-
-      // total weight of the pieces
-      cp.add(sum(weights) == m)
-
-      // ensure that all weighst are handled
-      for(i <- 0 until m) {
-        cp.add(sum(for(j <- 0 until n) yield x(i)(j)*weights(j)) == i+1)
-      }
-
-      // symmetry breaking
-      for(j <- 1 until n) {
-        cp.add(weights(j-1) < weights(j))
-      }
-
-      
-    } search {
-       
-      binaryMaxDegree(weights ++ x_flat)
-
-    } onSolution {
-      
-      println("\nSolution:")
-      println("weights:" + weights.mkString(""))
-      for(i <- 0 until m) {
-        print("weight " + "%2s".format(i+1) + ": ")
-        for(j <- 0 until n) {        
-          print("%3s".format(x(i)(j).value) + " ")
-        }
-        println()
-      }
-    }
-    
-    println(cp.start())
-
+  if (args.length > 0) {
+    m = args(0).toInt
   }
 
+  if (args.length > 1) {
+    n = args(1).toInt
+  }
+
+  //
+  // variables
+  //
+  val weights = Array.fill(n)(CPIntVar(1 to m))
+  val x = Array.fill(m, n)(CPIntVar(-1 to 1))
+  val x_flat = x.flatten
+
+  //
+  // constraints
+  //
+
+  minimize(weights(n - 1))
+
+  // total weight of the pieces
+  add(sum(weights) == m)
+
+  // ensure that all weighst are handled
+  for (i <- 0 until m) {
+    add(sum(for (j <- 0 until n) yield x(i)(j) * weights(j)) == i + 1)
+  }
+
+  // symmetry breaking
+  for (j <- 1 until n) {
+    add(weights(j - 1) < weights(j))
+  }
+
+  search {
+    binaryMaxDegree(weights ++ x_flat)
+  }
+
+  onSolution {
+    println("\nSolution:")
+    println("weights:" + weights.mkString(""))
+    for (i <- 0 until m) {
+      print("weight " + "%2s".format(i + 1) + ": ")
+      for (j <- 0 until n) {
+        print("%3s".format(x(i)(j).value) + " ")
+      }
+      println()
+    }
+  }
+
+  println(start())
 }
