@@ -21,6 +21,7 @@ import oscar.cp.core.watcher.WatcherListL1
 class CPIntVarAdaptableDomainContinuous(variable: CPIntVarAdaptable, min: Int, max: Int, size: Int, continuous: Boolean) extends TrailEntry {
   final override def restore(): Unit = variable.restoreContinuous(min, max, size, continuous)
 }
+
 class CPIntVarAdaptableDomainSparse(variable: CPIntVarAdaptable, min: Int, max: Int, size: Int) extends TrailEntry {
   final override def restore(): Unit = variable.restoreSparse(min, max, size)
 }

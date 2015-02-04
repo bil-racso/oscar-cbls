@@ -16,6 +16,7 @@ import oscar.cp.core.Constraint
 import oscar.cp.core.CPStore
 import oscar.cp.core.CPPropagStrength
 import oscar.cp.core.watcher.PropagEventQueueVarSet
+import oscar.cp.core.watcher.WatcherListL2
 
 /**
  * @author Pierre Schaus pschaus@gmail.com
@@ -25,8 +26,7 @@ class CPSetVar(override val store: CPStore, min: Int, max: Int, override val nam
 
   private val dom = new SetDomain(store, min, max)
 
-  val onDomainL2 = new ReversiblePointer[ConstraintQueue](store, null)
-
+  val onDomainL2 = new WatcherListL2(store)
   val onRequiredL1 = new ReversiblePointer[PropagEventQueueVarSet](store, null)
   val onExcludedL1 = new ReversiblePointer[PropagEventQueueVarSet](store, null)
   val onRequiredIdxL1 = new ReversiblePointer[PropagEventQueueVarSet](store, null)
@@ -62,7 +62,7 @@ class CPSetVar(override val store: CPStore, min: Int, max: Int, override val nam
    * @see oscar.cp.core.Constraint#propagate()
    */
   def callPropagateWhenDomainChanges(c: Constraint, trackDelta: Boolean = false) {
-    onDomainL2.setValue(new ConstraintQueue(onDomainL2.value, c));
+    onDomainL2.register(c)
     if (trackDelta) c.addSnapshot(this)
   }
 
@@ -115,7 +115,7 @@ class CPSetVar(override val store: CPStore, min: Int, max: Int, override val nam
   def requires(v: Int): CPOutcome = {
     if (dom.isPossible(v) && !dom.isRequired(v)) {
       // -------- AC3 notifications ------------
-      store.notifyL2(onDomainL2.value)
+      onDomainL2.enqueue()
       // -------- AC5 notifications ------------
       store.notifyRequired(onRequiredL1.value, this, v)
       store.notifyRequiredIdx(onRequiredIdxL1.value, this, v)
@@ -135,7 +135,7 @@ class CPSetVar(override val store: CPStore, min: Int, max: Int, override val nam
   def excludes(v: Int): CPOutcome = {
     if (dom.isPossible(v) && !dom.isRequired(v)) {
       // -------- AC3 notifications ------------
-      store.notifyL2(onDomainL2.value)
+      onDomainL2.enqueue()
       // -------- AC5 notifications ------------
       store.notifyExcluded(onExcludedL1.value, this, v)
       store.notifyExcludedIdx(onExcludedIdxL1.value, this, v)
@@ -154,7 +154,7 @@ class CPSetVar(override val store: CPStore, min: Int, max: Int, override val nam
 
   def requiresAll(): CPOutcome = {
     // -------- AC3 notifications ------------
-    if (possibleSize > requiredSize) store.notifyL2(onDomainL2.value)
+    if (possibleSize > requiredSize) onDomainL2.enqueue()
     // -------- AC5 notifications ------------
     if (onRequiredL1.hasValue || onRequiredIdxL1.hasValue) {
       for (v <- dom.possibleNotRequiredValues) {
@@ -169,7 +169,7 @@ class CPSetVar(override val store: CPStore, min: Int, max: Int, override val nam
 
   def excludesAll(): CPOutcome = {
     // -------- AC3 notifications ------------
-    if (possibleSize > requiredSize) store.notifyL2(onDomainL2.value)
+    if (possibleSize > requiredSize) onDomainL2.enqueue()
     // -------- AC5 notifications ------------
     if (onExcludedL1.hasValue || onExcludedIdxL1.hasValue) {
       for (v <- dom.possibleNotRequiredValues) {
