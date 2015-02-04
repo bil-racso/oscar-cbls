@@ -48,6 +48,7 @@ import scala.collection.immutable.SortedSet
 import oscar.flatzinc.cbls.support.Weight
 import oscar.flatzinc.cbls.support.EnsureDomain
 import oscar.cbls.invariants.core.computation.IdentityInt
+import oscar.cbls.invariants.lib.numeric.Step
 
 
 
@@ -85,10 +86,17 @@ class FZCBLSConstraintPoster(val c: ConstraintSystem, implicit val getCBLSVar: V
       for(i <- 0 to horizon-start){
         p(i) = CBLSIntVar(m,0,0 to maxprofile,"Profile("+i+")")
       }
-      val offset = CBLSIntConst(-start)
-      for(i <- 0 to s.length-1){
-        //ns(i) = CBLSIntVar(c.model,0,0 to horizon-start,"OffsetStart("+i+")")
-        ns(i) = Sum2(s(i),offset)
+      if(start!=0){
+        val offset = CBLSIntConst(-start)
+        for(i <- 0 to s.length-1){
+          //ns(i) = CBLSIntVar(c.model,0,0 to horizon-start,"OffsetStart("+i+")")
+          ns(i) = Sum2(s(i),offset)
+        }
+      }else{
+        for(i <- 0 to s.length-1){
+          //ns(i) = CBLSIntVar(c.model,0,0 to horizon-start,"OffsetStart("+i+")")
+          ns(i) = s(i)
+        }
       }
       val cumul = CumulativeNoSet(ns,d.map(getCBLSVar(_)),r.map(getCBLSVar(_)),p);
       /*for(i <- 0 to horizon-start){
@@ -101,16 +109,17 @@ class FZCBLSConstraintPoster(val c: ConstraintSystem, implicit val getCBLSVar: V
   
   
   def get_array_bool_and_inv(as: Array[Variable], r: Variable, defId: String, ann: List[Annotation]) = {
-    EQ(Prod(as.map(getCBLSVar(_))), 1).truthValue
+    Prod(as.map(getCBLSVar(_)))
   }
   
   def get_array_int_element_inv(b: Variable, as: Array[Variable], r: Variable, defId: String, ann: List[Annotation]) = {
     if(as.forall(_.isBound)) IntElementNoVar(Sum2(b,-1), as.map(_.value))
     else IntElement(Sum2(b,-1), as.map(getCBLSVar(_)))
+    //TODO: Integrate the offset in the invariant?
   }
   
   def get_array_bool_or_inv(as: Array[Variable], r: Variable, defId: String, ann: List[Annotation]) = {
-    GE(Sum(as.map(getCBLSVar(_))), 1).truthValue
+    Step(Sum(as.map(getCBLSVar(_))))//TODO: Do it in one object.
   }
   def get_array_bool_xor(as: Array[Variable], ann: List[Annotation]) = {
     EQ(Mod(Sum(as.map(getCBLSVar(_))), 2), 1)
@@ -119,12 +128,12 @@ class FZCBLSConstraintPoster(val c: ConstraintSystem, implicit val getCBLSVar: V
     val index = as.indexWhere(p => p.id == defId);
     val defVar = as(index);
     val vars2 = (as.take(index) ++ as.drop(index + 1)).map(getCBLSVar(_));
-    EQ(Mod(Sum2(Sum(vars2), 1), 2), 1).truthValue
+    Mod(Sum2(Sum(vars2), 1), 2)
   }
 
   def get_bool_clause(as: Array[Variable], bs: Array[Variable], ann: List[Annotation]) = {
-    //TODO: This can also be expressed with the element constraint, maybe that is faster?
-    NE(Sum2(GE(Sum(as.map(getCBLSVar(_))), 1).truthValue, EQ(Prod(bs.map(getCBLSVar(_))), 0).truthValue), 0)
+    GE(Minus(Sum(as.map(getCBLSVar(_))),Prod(bs.map(getCBLSVar(_)))),0)
+    //NE(Sum2(Step(Sum(as.map(getCBLSVar(_)))), EQ(Prod(bs.map(getCBLSVar(_))), 0).truthValue), 0)
   }
 
   def get_bool_not_inv(a: Variable, b: Variable, defId: String, ann: List[Annotation]) = {
@@ -138,7 +147,7 @@ class FZCBLSConstraintPoster(val c: ConstraintSystem, implicit val getCBLSVar: V
   }
 
   def get_bool_or_inv(a: Variable, b: Variable, r: Variable, defId: String, ann: List[Annotation]) = {
-    G(Sum2(a, b), 0).truthValue
+    Max2(a, b)
   }
 
   
@@ -319,6 +328,7 @@ class FZCBLSConstraintPoster(val c: ConstraintSystem, implicit val getCBLSVar: V
     xs.toList.map(x => Weight(BelongsTo(getCBLSVar(x),setVar),100))//TODO: Why 100?
   }
   def get_global_cardinality_low_up(closed: Boolean, xs: Array[Variable],vs: Array[Variable],lows: Array[Int],ups:Array[Int]) = {
+    //TODO: Use a lighter version!
     val atleast = AtLeast(xs.map(getCBLSVar(_)),SortedMap(vs.zip(lows).map(vl => (vl._1.min,CBLSIntConst(vl._2))): _*))
     val atmost = AtMost(xs.map(getCBLSVar(_)),SortedMap(vs.zip(ups).map(vl => (vl._1.min,CBLSIntConst(vl._2))): _*))
     List(atleast,atmost) ++ (if(closed) domains(xs,vs.map(_.min)) else List())
@@ -346,6 +356,7 @@ class FZCBLSConstraintPoster(val c: ConstraintSystem, implicit val getCBLSVar: V
   def constructCBLSConstraint(constraint: Constraint):CBLSConstraint = {
     constraint match {
       case reif(cstr,r) => EQ(r,constructCBLSConstraint(cstr).truthValue)
+      //TODO: Make a special Reif Constraint for the pattern "EQ(b,X.truthValue)", with a specific invariant.
       
       case array_bool_and(as, r, ann)                 => EQ(r,get_array_bool_and_inv(as, r,r.id, ann))
       case array_bool_element(b, as, r, ann)          => EQ(r,get_array_int_element_inv(b, as, r, r.id, ann))

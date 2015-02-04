@@ -32,6 +32,7 @@ import oscar.cbls.invariants.lib.numeric.Dist
 import oscar.cbls.modeling.Algebra._
 import scala.math.abs
 import oscar.cbls.invariants.lib.numeric.MinusOffsetPos
+import oscar.cbls.invariants.lib.numeric.ReifViol
 
 /**
  * implements left <= right
@@ -148,8 +149,6 @@ case class NE(left: IntValue, right: IntValue) extends Constraint with Invariant
 
 /**
  * constraints left == right
- * this is considered as a primitive constraint and used in the [[oscar.cbls.constraints.core.Constraint]]
- * class, so that it is part of the core instead of the library
  * @author renaud.delandtsheer@cetic.be
  */
 case class EQ(left: IntValue, right: IntValue) extends Constraint {
@@ -167,4 +166,14 @@ case class EQ(left: IntValue, right: IntValue) extends Constraint {
         + ") == (if (left.value (" + left.value + ") == right.value (" + right.value
         + ")) 0 else " + myViolation + ")"))
   }
+}
+/**
+ * constraints b <=> c, i.e., b is true iff c is satisfied.
+ * @author jean-noel.monette@it.uu.se 
+ */
+case class Reif(b: IntValue, c: Constraint) extends Constraint { 
+  registerConstrainedVariables(b, c.violation)
+  override val violation = ReifViol(b,c.violation)
+  override def violation(v: Value) =  { if (b == v || c.violation == v) violation else 0 }
+  //TODO: Check internals
 }

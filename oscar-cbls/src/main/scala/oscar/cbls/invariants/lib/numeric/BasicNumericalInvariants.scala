@@ -191,6 +191,10 @@ case class Minus(left: IntValue, right: IntValue)
   assert(left != right)
 }
 
+/** max(0,left-right+offset)
+ *  Used in LA and LEA constraints.
+ *  @author jean-noel.monette@it.uu.se
+ */
 case class MinusOffsetPos(left:IntValue, right:IntValue, offset: Int)
   extends IntInt2Int(left,right, (if(DomainHelper2.isSafeSub(left,right))
                                       (l,r) => 0.max(l - r + offset)
@@ -214,6 +218,15 @@ case class Dist(left: IntValue, right: IntValue)
 }
 
 /**
+ * Invariant to maintain the violation of a reified constraint.
+ * Assumes b takes values 0 to 1
+ * @author jean-noel.monette@it.uu.se
+ * */
+case class ReifViol(b: IntValue, v:IntValue) extends IntInt2Int(b,v, (b,v) => {if(v!=0) b else 1-b},0 to 1){
+  assert(b.min>=0 && b.max<=1)
+}
+
+/**
  * left + right
  * where left, right, and output are IntVar
  * @author renaud.delandtsheer@cetic.be
@@ -222,6 +235,7 @@ case class Sum2(left: IntValue, right: IntValue)
   extends IntInt2Int(left, right, (if(DomainHelper2.isSafeAdd(left,right))
                                       (l,r) => l + r
                                    else ((l: Int, r: Int) => DomainHelper2.safeAdd(l,r))), DomainHelper.safeAddMin(left.min, right.min) to DomainHelper.safeAddMax(left.max, right.max))
+//TODO: Should return simply left if right is the constant zero. (use a companion object)
 
 /**
  * left * right
