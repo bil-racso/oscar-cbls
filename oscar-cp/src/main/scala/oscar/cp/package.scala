@@ -35,7 +35,7 @@ import oscar.cp.constraints.InSet
 import oscar.cp.constraints.ModuloLHS
 
 /**
- * The `cp` package provides useful functionnalities to model problem using
+ * The `cp` package provides useful functionalities to model problem using
  * the OscaR Constraint Programming Library.
  *
  * === Commonly Used Types ===
@@ -46,7 +46,7 @@ import oscar.cp.constraints.ModuloLHS
  * A number of commonly applied implicit conversions are also defined here.
  * Implicit conversions provide additional higher-order functions to core classes
  * such as `CPIntVar`, `CPIntervalVar`, or `CPSolver`. Implicit conversion also provide
- * simple and natural modeling functionnalities for sum and element constraints.
+ * simple and natural modeling functionalities for sum and element constraints.
  *
  * === CPModel ===
  * The `CPModel` trait is also defined in this package and provides users with an
