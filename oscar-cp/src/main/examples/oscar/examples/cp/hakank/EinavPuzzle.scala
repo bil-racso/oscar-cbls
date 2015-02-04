@@ -13,16 +13,11 @@
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
 package oscar.examples.cp.hakank
-
 import oscar.cp._
-
 import scala.io.Source._
 import scala.math._
-
 /*
-
   A programming puzzle from Einav in Oscar.
-
   From
   "A programming puzzle from Einav"
   http://gcanyon.wordpress.com/2009/10/28/a-programming-puzzle-from-einav/
@@ -32,7 +27,6 @@ import scala.math._
     33   30  -10 -6  18   7  -11 -23   6
     ...
     -25   4  16  30  33 -23  -4   4 -23
-
   You can flip the sign of entire rows and columns, as many of them
   as you like. The goal is to make all the rows and columns sum to positive
   numbers (or zero), and then to find the solution (there are more than one)
@@ -54,31 +48,21 @@ import scala.math._
   All the rows and columns still total positive, and the overall sum is just
   66. So this solution is better (I don't know if it's the best)
   A pure brute force solution would have to try over 30 billion solutions.
-  I wrote code to solve this in J. I'll post that separately.
+  I wrote code tothis in J. I'll post that separately.
   """
-
   @author Hakan Kjellerstrand hakank@gmail.com
   http://www.hakank.org/oscar/
- 
 */
-
-object EinavPuzzle {
-
-  def main(args: Array[String]) {
-
-    val cp = CPSolver()
-
+object EinavPuzzle extends CPModel with App  {
     //
     // data
     //
-
     // Small problem
     // val rows = 3
     // val cols = 3
     // val data = Array(Array( 33,  30, -10),
     //                  Array(-16,  19,   9),
     //                  Array(-17, -12, -14))
-
     // Full problem
     val rows = 27
     val cols = 9
@@ -110,56 +94,41 @@ object EinavPuzzle {
                      Array(-19,9,14,-27,20,15,-5,-27,18),
                      Array(11,-6,24,7,-17,26,20,-31,-25),
                      Array(-25,4,-16,30,33,23,-4,-4,23))
-
-
     val ROWS = 0 until rows
     val COLS = 0 until cols
-
     val sign_domains = Set(-1,1)
-
     //
     // variables
     //
-    val x = Array.fill(rows,cols)(CPIntVar(-100 to 100)(cp))
+    val x = Array.fill(rows,cols)(CPIntVar(-100 to 100))
     val total_sum = sum(x.flatten)
-    
-    val row_signs = Array.fill(rows)(CPIntVar(sign_domains)(cp))
-    val col_signs = Array.fill(cols)(CPIntVar(sign_domains)(cp))
-
+    val row_signs = Array.fill(rows)(CPIntVar(sign_domains))
+    val col_signs = Array.fill(cols)(CPIntVar(sign_domains))
     val row_sums = for(i <- ROWS) yield sum(for(j <- COLS) yield x(i)(j))
     val col_sums = for(j <- COLS) yield sum(for(i <- ROWS) yield x(i)(j))
-      
     //
     // constraints
     //
     var numSols = 0
-
-    cp.minimize(total_sum) subjectTo {
-
+   minimize(total_sum) 
       for(i <- ROWS; j <- COLS) {
-        cp.add(x(i)(j) == row_signs(i)*col_signs(j) * data(i)(j))
+       add(x(i)(j) == row_signs(i)*col_signs(j) * data(i)(j))
       }
-      
       for(i <- ROWS) {
-        cp.add(row_sums(i) >= 0)
+       add(row_sums(i) >= 0)
       }
-      
       for(j <- COLS) {
-        cp.add(col_sums(j) >= 0)
+       add(col_sums(j) >= 0)
       }
-
-
-    } search {
-       
+    search{
       binaryMaxDegree(col_signs ++ row_signs)
-    } onSolution {
-      
+    }
+onSolution {
       println("\nSolution:")
       println("row_sums: " + row_sums.mkString(""))
       println("row_signs: " + row_signs.mkString(""))
       println("col_sums: " + col_sums.mkString(""))
       println("col_signs: " + col_signs.mkString(""))
-      
       for(i <- ROWS) {
         for(j <- COLS) {
           print("%4d".format(x(i)(j).value))
@@ -167,11 +136,6 @@ object EinavPuzzle {
         println()
       }
       println()
-
     } 
-    
-    println(cp.start())
-
+    println(start())
   }
-
-}

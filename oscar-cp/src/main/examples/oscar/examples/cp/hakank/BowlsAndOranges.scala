@@ -15,12 +15,9 @@
  * ****************************************************************************
  */
 package oscar.examples.cp.hakank
-
 import oscar.cp._
-
 /*
   Bowls and Oranges problem in Oscar.
-
   From BitTorrent Developer Challenge
   http://www.bittorrent.com/company/about/developer_challenge
   """
@@ -31,29 +28,22 @@ import oscar.cp._
   equal to the distance between B and C. How many ways can you arrange 
   the oranges in the bowls?.
   """
-  
   Via http://surana.wordpress.com/2011/06/01/constraint-programming-example/
-
   @author Hakan Kjellerstrand hakank@gmail.com
   http://www.hakank.org/oscar/
 */
 object BowlsAndOranges extends CPModel with App {
-
   // Data
   val n = 40
   val m = 9
-
   // Variables
   val x = Array.fill(m)(CPIntVar(1 to n))
-
   // Constraints
   add(allDifferent(x), Strong)
-
   // increasing x
   for (i <- 1 until m) {
     add(x(i - 1) < x(i))
   }
-
   for (i <- 0 until m) {
     for (j <- 0 until i) {
       for (k <- 0 until j) {
@@ -61,10 +51,7 @@ object BowlsAndOranges extends CPModel with App {
       }
     }
   }
-
   search { binaryMaxDegree(x) }
-
   onSolution { println(x.mkString("")) }
-
   println(start())
 }

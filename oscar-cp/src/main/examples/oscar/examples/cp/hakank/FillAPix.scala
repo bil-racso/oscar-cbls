@@ -13,11 +13,8 @@
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
 package oscar.examples.cp.hakank
-
 import oscar.cp._
-
 import scala.io.Source._
-
 /**
  *
  * Fill-a-pix problem in Oscar.
@@ -47,18 +44,11 @@ import scala.io.Source._
  * http://www.hakank.org/oscar/
  *
  */
-object FillAPix {
-
-
-  def main(args: Array[String]) {
-
-    val cp = CPSolver()
-
+object FillAPix extends CPModel with App  {
     // data
     //
     //
     val X = -1
-
     // Default problem.
     // Puzzle 1 from
     // http://www.conceptispuzzles.com/index.aspx?uri=puzzle/fill-a-pix/rules
@@ -73,59 +63,41 @@ object FillAPix {
                               List(X,X,6,6,8,7,8,7,X,5),
                               List(X,4,X,6,6,6,X,6,X,4),
                               List(X,X,X,X,X,X,3,X,X,X))
-    
     // for the actual problem
     var n      = default_n
     var puzzle = default_puzzle
-
-
     // read problem from file
     if (args.length > 0) {
       println("Read from file: " + args(0))
-    
       val lines = fromFile(args(0)).getLines.filter(!_.startsWith("#")).toList
       n = lines(0).toInt
       println("n:" + n)
       puzzle = lines.tail.map(_.split("").tail.toList.map(i=>if (i == ".") X else i.toInt))
     }
-
     //
     // decision variables
     // 
-    val pict = Array.fill(n,n)(CPIntVar(0 to 1)(cp))
+    val pict = Array.fill(n,n)(CPIntVar(0 to 1))
     val pict_flat = pict.flatten
-
     //
     // constraints
     //
-
-    cp.solve subjectTo {
-
+  
       val tmp = List(-1,0,1)
-
       for(i <- 0 until n;
           j <- 0 until n if puzzle(i)(j) >= 0) {            
-            cp.add(sum( for{ a <- tmp; 
+           add(sum( for{ a <- tmp; 
                              b <- tmp 
                              if ( (i+a >= 0) && (j+b >=  0) &&
                                   (i+a < n)  && (j+b < n)) 
                                } yield pict(i+a)(j+b) ) == puzzle(i)(j))
       }
-
-
-    } search {
-       
+    search{
       binaryFirstFail(pict.flatten.toSeq)
-      
-    } onSolution {
-      
+    }
+onSolution {
       println("\nSolution:")
       println(pict.map(i=>i.map(j => if (j.value == 1) "#" else " ").mkString("")).mkString("\n"))
-       
     }
-    
-    println(cp.start())
-    
+    println(start())
    }
-
-}

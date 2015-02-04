@@ -13,9 +13,7 @@
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
 package oscar.examples.cp.hakank
-
 import oscar.cp._
-
 /**
  *
  * SEND+MORE MONEY problem in Oscar.
@@ -26,33 +24,23 @@ import oscar.cp._
  * http://www.hakank.org/oscar/
  *
  */
-object SendMoreMoney2 {
-
-   def main(args: Array[String]) {
-
-      val cp = CPSolver()
-
+object SendMoreMoney2 extends CPModel with App  {
       // variables
-      val all = Array.fill(8)(CPIntVar(0 to 9)(cp))
+      val all = Array.fill(8)(CPIntVar(0 to 9))
       val Array(s,e,n,d,m,o,r,y) = all
-
-      cp.solve subjectTo {
-
+    
         // constraints
-        cp.add(       s*1000 + e*100 + n*10 + d +
+       add(       s*1000 + e*100 + n*10 + d +
                       m*1000 + o*100 + r*10 + e ==
             m*10000 + o*1000 + n*100 + e*10 + y)
-        cp.add(s > 0)
-        cp.add(m > 0)
-        cp.add(allDifferent(all), Strong)
-
-      } search {
+       add(s > 0)
+       add(m > 0)
+       add(allDifferent(all), Strong)
+      search{
          binaryFirstFail(all)
-      } onSolution {
+      }
+onSolution {
          println(all.mkString(""))
       } 
-      println(cp.start())
-      
+      println(start())
   }
-
-}

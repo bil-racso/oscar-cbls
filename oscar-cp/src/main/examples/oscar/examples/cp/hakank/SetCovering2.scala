@@ -13,40 +13,24 @@
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
 package oscar.examples.cp.hakank
-
 import oscar.cp._
 import scala.io.Source._
 import scala.math._
-
 /*
-
   Set covering problem in Oscar.
-
   Minimize the number of security telephones in street
   corners on a campus.
-
   Example 9.1-2, page 354ff, from
   Taha 'Operations Research - An Introduction'
-
-
   @author Hakan Kjellerstrand hakank@gmail.com
   http://www.hakank.org/oscar/
- 
 */
-
-object SetCovering2 {
-
-
-  def main(args: Array[String]) {
-
-    val cp = CPSolver()
-
+object SetCovering2 extends CPModel with App  {
     //
     // data
     //
     val n = 8 // maximum number of corners
     val num_streets = 11 // number of connected streets
-
     // corners of each street
     // Note: 1-based (handled below)
     val corner = Array(Array(1,2),
@@ -60,41 +44,29 @@ object SetCovering2 {
                        Array(2,4),
                        Array(5,8),
                        Array(3,5))
-
     //
     // variables
     //
-    val x = Array.fill(n)(CPIntVar(0 to 1)(cp))
+    val x = Array.fill(n)(CPIntVar(0 to 1))
     // number of telephones, to be minimized
     val z = sum(x)
-
-
     //
     // constraints
     //
     var numSols = 0
-
-    cp.minimize(z) subjectTo {
-
+   minimize(z) 
       // ensure that all cities are covered
       for(i <- 0 until num_streets) {
-        cp.add(x(corner(i)(0)-1) + x(corner(i)(1)-1) >= 1)
+       add(x(corner(i)(0)-1) + x(corner(i)(1)-1) >= 1)
       }
-      
-    } search {
-       
+    search{
       binaryStatic(x)
-    } onSolution {
+    }
+onSolution {
       println("\nSolution:")
       println("x: " + x.mkString(""))
       println("z: " + z)
-
       numSols += 1
-
     }
-
-    println(cp.start())
-
+    println(start())
   }
-
-}

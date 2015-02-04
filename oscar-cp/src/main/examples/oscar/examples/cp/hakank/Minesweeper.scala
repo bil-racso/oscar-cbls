@@ -13,12 +13,8 @@
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
 package oscar.examples.cp.hakank
-
 import oscar.cp._
-
-
 import scala.io.Source._
-
 /**
  *
  * Minesweeper in Oscar.
@@ -58,13 +54,7 @@ import scala.io.Source._
  * http://www.hakank.org/oscar/
  *
  */
-object Minesweeper {
-
-
-  def main(args: Array[String]) {
-
-    val cp = CPSolver()
-
+object Minesweeper extends CPModel with App  {
     // data
     //
     // Oleg German, Evgeny Lakshtanov: "Minesweeper" without a computer
@@ -73,71 +63,50 @@ object Minesweeper {
     var r = 5
     var c = 6
     var X = -1
-      
     var game = List(List(X,1,X,1,X,1),
                     List(2,X,2,X,1,X),
                     List(X,3,X,2,X,1),
                     List(1,X,3,X,2,X),
                     List(X,1,X,2,X,1))
-
     // read from file
     if (args.length > 0) {
       println("Read from file: " + args(0))
-    
       val lines = fromFile(args(0)).getLines.filter(!_.startsWith("#")).toList
       r = lines(0).toInt
       c = lines(1).toInt
       println("r:" + r)
       println("c:" + c)
-
       game = (2 to r+1).map(t=>lines(t).split("").tail.toList.
                             map(i=>if (i == ".") X else i.toInt)).toList
-
     }
-
-
     // variables
-    val mines = Array.fill(r)(Array.fill(c)(CPIntVar(0 to 1)(cp)))
-
+    val mines = Array.fill(r)(Array.fill(c)(CPIntVar(0 to 1)))
     //
     // constraints
     //
     var numSols = 0
-
-    cp.solve subjectTo {
-
+  
       val tmp = List(-1,0,1)
-
       for(i <- 0 until r;
           j <- 0 until c if game(i)(j) >= 0) {
-
-          cp.add(sum( for{ a <- tmp; b <- tmp 
+         add(sum( for{ a <- tmp; b <- tmp 
                       if ( (i+a >= 0) && (j+b  >= 0) &&
                            (i+a <  r)  && (j+b <  c)) 
                         } yield mines(i+a)(j+b)) == game(i)(j))
-            
           // redundant constraint
           if (game(i)(j) > X) {
-            cp.add(mines(i)(j) == 0)
+           add(mines(i)(j) == 0)
           }
       }
-
-
-    } search {
-       
+    search{
       binaryFirstFail(mines.flatten.toSeq)
-    } onSolution {
+    }
+onSolution {
       println("\nSolution:")
       for(i <- 0 until r) {
         println(mines(i).mkString(""))
       }
-
       numSols += 1
-       
     } 
-
-    println(cp.start())
-
+    println(start())
    }
-
-}

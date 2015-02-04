@@ -13,81 +13,54 @@
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
 package oscar.examples.cp.hakank
-
 import oscar.cp._
 import scala.math._
-
 /**
-
   SEND+MORE=MONEY in "any" base in Oscar.
-
   @author Hakan Kjellerstrand hakank@gmail.com
   http://www.hakank.org/oscar/
-
  */
-object SendMoreMoneyAnyBase {
-
- 
-  def main(args: Array[String]) {
-
-    val cp = CPSolver()
-
+object SendMoreMoneyAnyBase extends CPModel with App  {
     var base = 10
-    
     if (args.length > 0) {
       base = args(0).toInt
     }
-
     println("Base: " + base)
-
     val base2 = base - 1
-
     val b1 = base
     val b2 = pow(base, 2).toInt
     val b3 = pow(base, 3).toInt
     val b4 = pow(base, 4).toInt
-
     //
     // variables
     //
-    val S = CPIntVar(0 to base2)(cp)
-    val E = CPIntVar(0 to base2)(cp)
-    val N = CPIntVar(0 to base2)(cp)
-    val D = CPIntVar(0 to base2)(cp)
-    val M = CPIntVar(0 to base2)(cp)
-    val O = CPIntVar(0 to base2)(cp)
-    val R = CPIntVar(0 to base2)(cp)
-    val Y = CPIntVar(0 to base2)(cp)
-
+    val S = CPIntVar(0 to base2)
+    val E = CPIntVar(0 to base2)
+    val N = CPIntVar(0 to base2)
+    val D = CPIntVar(0 to base2)
+    val M = CPIntVar(0 to base2)
+    val O = CPIntVar(0 to base2)
+    val R = CPIntVar(0 to base2)
+    val Y = CPIntVar(0 to base2)
     val all = Array(S,E,N,D,M,O,R,Y)
-
     //
     // constraints
     //
     var numSols = 0
-
-    cp.solve subjectTo {
-
-        cp.add(allDifferent(all), Strong)
-        cp.add(       S*b3 + E*b2 + N*b1 + D +
+  
+       add(allDifferent(all), Strong)
+       add(       S*b3 + E*b2 + N*b1 + D +
                       M*b3 + O*b2 + R*b1 + E ==
                M*b4 + O*b3 + N*b2 + E*b1 + Y
              )
-        cp.add(S > 0)
-        cp.add(M > 0)
-
-
-     } search {
-       
+       add(S > 0)
+       add(M > 0)
+     search{
        binaryFirstFail(all)
-     } onSolution {
+     }
+onSolution {
        println(all.mkString(""))
-
        numSols += 1
-       
      } 
-     println(cp.start())
-
+     println(start())
    }
-
-}

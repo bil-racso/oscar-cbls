@@ -13,11 +13,8 @@
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
 package oscar.examples.cp.hakank
-
 import oscar.cp._
 import scala.math._
-
-
 /**
  *
  * ToNum in Oscar.
@@ -28,42 +25,25 @@ import scala.math._
  * http://www.hakank.org/oscar/
  *
  */
-object ToNum {
-
+object ToNum extends CPModel with App  {
   // channeling between IntVar array t <=> IntVar s
   def toNum(t: Array[CPIntVar], base: Int=10) = sum(
       Array.tabulate(t.length)(i=> t(i)*pow(base, t.length-i-1).toInt))
-
-   def main(args: Array[String]) {
-
-      val cp = CPSolver()
-
       val n = 4
       val base = 10
-
       // variables
-      val x = Array.tabulate(n)(i => CPIntVar(0 to base-1)(cp))
-      val y = CPIntVar(0 to pow(n, base).toInt)(cp)
-
+      val x = Array.tabulate(n)(i => CPIntVar(0 to base-1))
+      val y = CPIntVar(0 to pow(n, base).toInt)
       var numSols = 0
-      cp.solve subjectTo {
-
-        cp.add(y == toNum(x))
-        // cp.add(y == 2143)
-
-      } search {
-
+    
+       add(y == toNum(x))
+        //add(y == 2143)
+      search{
         binaryFirstFail(x)
-        
-      } onSolution {
-
+      }
+onSolution {
         println("x:" + x.mkString("") + "  y:" + y) 
         numSols += 1     
-
       } 
-
-      println(cp.start()) 
-
+      println(start()) 
   }
-
-}
