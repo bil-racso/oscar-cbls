@@ -8,6 +8,7 @@ import oscar.cp.core.CPStore
 import oscar.cp.lcg.core.clauses.Clause
 import oscar.algo.reversible.ReversibleInt
 import oscar.cp.lcg.variables.LCGIntervalVar
+import oscar.algo.array.ArrayStackInt
 
 class TrailRemoveExplanation(explanation: Clause) extends TrailEntry {
   final override def restore(): Unit = explanation.deactive()
@@ -23,13 +24,14 @@ class LCGStore(store: CPStore) {
   private[this] val learntClauses: ArrayStack[Clause] = new ArrayStack(128)
   private[this] val explanationClauses: ArrayStack[Clause] = new ArrayStack(128)
 
-  // Variables
+  // Variables store
   private[this] val variables: ArrayStack[Literal] = new ArrayStack(128)
   private[this] val intervalRef: ArrayStack[LCGIntervalVar] = new ArrayStack(128)
   private[this] val values: ArrayStack[LiftedBoolean] = new ArrayStack(128)
   private[this] val reasons: ArrayStack[Clause] = new ArrayStack(128)
-  private[this] val levels: ArrayStack[Int] = new ArrayStack(128) // FIXME boxing
+  private[this] val levels: ArrayStackInt = new ArrayStackInt(128) 
   private[this] val activities: ArrayStack[Double] = new ArrayStack(128)
+  private[this] var varStoreSize: Int = 0 // not used yet
 
   // Watchers of each literal
   private[this] val watchers: ArrayStack[ArrayQueue[Clause]] = new ArrayStack(128)
@@ -38,8 +40,8 @@ class LCGStore(store: CPStore) {
   private[this] var lastMagic = store.magic
   private[this] var trail: Array[Literal] = new Array[Literal](128)
   private[this] var trailSize: Int = 0
-  private[this] val level: ReversibleInt = new ReversibleInt(store, 0)
-
+  private[this] var currentLevel: Int = 0
+  
   // True variable
   private[this] val trueVariable = newVariable(null, "TRUE_VAR")
   values(trueVariable.varId) = True // should not be trailed
@@ -57,10 +59,10 @@ class LCGStore(store: CPStore) {
   @inline final val falseLit: Literal = trueVariable.opposite
 
   /** Return true if the store is inconsistent. */
-  @inline final def isInconsistent: Boolean = decisionLevel > backtrackLevel
+  @inline final def isInconsistent: Boolean = currentLevel > backtrackLevel
 
   /** Return the current decision level. */
-  @inline final def decisionLevel: Int = level.value
+  @inline final def decisionLevel: Int = currentLevel
 
   /** Return true if the variable is assigned to true. */
   @inline final def isTrue(literal: Literal): Boolean = values(literal.varId) == True
@@ -198,13 +200,13 @@ class LCGStore(store: CPStore) {
    *  Propagate and conflict analysis
    */
   final def propagate(): Boolean = {
-    if (testInconsistent) false
+    if (currentLevel > backtrackLevel) false
     else {
       // Call the fixed-point algorithm
       val noConflict = fixedPoint()
       if (noConflict) true
       else {
-        backtrackLevel = level.value - 1
+        backtrackLevel = currentLevel - 1
         false
         //analyze(conflict)
         //cancelUntil(outBacktsLevel)
@@ -213,14 +215,6 @@ class LCGStore(store: CPStore) {
         //true
       }
       // TODO Notify changes in domains
-    }
-  }
-
-  @inline private def testInconsistent(): Boolean = {
-    if (level.value > backtrackLevel) true
-    else {
-      backtrackLevel = Int.MaxValue
-      false
     }
   }
 
@@ -267,7 +261,7 @@ class LCGStore(store: CPStore) {
       // new fact to store
       if (literal.signed) values(varId) = False
       else values(varId) = True
-      levels(varId) = level.value
+      levels(varId) = currentLevel
       reasons(varId) = from
       trailAssignment(literal) // Increase the trail here
       // Notify corresponding variable
@@ -276,16 +270,25 @@ class LCGStore(store: CPStore) {
       true
     }
   }
+  
+  class TrailBactrackLevel extends TrailEntry {
+    @inline final override def restore(): Unit = {
+      currentLevel -= 1
+      if (currentLevel <= backtrackLevel) {
+        backtrackLevel = Int.MaxValue
+      }
+    }
+  }
 
   class TrailUndoOne extends TrailEntry {
     @inline final override def restore(): Unit = popAssignment()
   }
-  
+
   final def printTrail(): Unit = println("TRAIL = " + trail.take(trailSize).mkString("[", ", ", "]"))
 
   @inline private def popAssignment(): Unit = {
     if (trailSize > 0) {
-      printTrail()
+      printTrail() // TODO : remove
       trailSize -= 1
       val literal = trail(trailSize)
       val varId = literal.varId
@@ -294,11 +297,15 @@ class LCGStore(store: CPStore) {
       levels(varId) = -1
     }
   }
-  
-  @inline final def newDecisionLevel(): Unit = level.incr()
 
-  // Static trail entry
+  @inline final def newDecisionLevel(): Unit = {
+    currentLevel += 1
+    store.trail(levelTrailEntry)
+  }
+
+  // Static trail entries
   private[this] val undoTrailEntry = new TrailUndoOne
+  private[this] val levelTrailEntry = new TrailBactrackLevel
 
   @inline private def trailAssignment(literal: Literal): Unit = {
     if (trail.length == trailSize) growTrail()
@@ -311,5 +318,9 @@ class LCGStore(store: CPStore) {
     val newTrail = new Array[Literal](trail.length * 2)
     System.arraycopy(trail, 0, newTrail, 0, trail.length)
     trail = newTrail
+  }
+  
+  @inline private def growVariableStore(): Unit = {
+    // TODO : implement
   }
 }
