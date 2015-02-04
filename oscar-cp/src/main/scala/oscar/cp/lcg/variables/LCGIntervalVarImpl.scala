@@ -8,6 +8,11 @@ import oscar.cp.lcg.core.Literal
 import scala.util.Random
 import oscar.cp.lcg.constraints.LCGConstraint
 import oscar.cp.core.watcher.WatcherListL2
+import oscar.algo.reversible.TrailEntry
+
+class LCGIntervalTrailEntry(variable: LCGIntervalVarImpl, min: Int, max: Int) extends TrailEntry {
+  @inline final override def restore(): Unit = variable.restore(min, max)
+}
 
 class LCGIntervalVarImpl(final override val lcgStore: LCGStore, final override val store: CPStore, varId: Int, initMin: Int, initMax: Int, final override val name: String) extends LCGIntervalVar {
   
@@ -18,32 +23,45 @@ class LCGIntervalVarImpl(final override val lcgStore: LCGStore, final override v
   // Domain representation with literals
   private[this] val nLiterals = initMax - initMin
   private[this] val literals: Array[Literal] = generateDomain(nLiterals)
+  private[this] var _size: Int = nLiterals + 1
+  private[this] var _min: Int = initMin
+  private[this] var _max: Int = initMax
   
-  @inline final override def min: Int = searchMin
+  // Last trail
+  private[this] var lastMagic: Long = -1L
   
-  @inline final override def max: Int = searchMax
-  
-  @inline final override def size: Int = {
-    searchMin - searchMax + 1
+  // Trail the state of the domain
+  @inline private def trail(): Unit = {
+    val contextMagic = store.magic
+    if (contextMagic != lastMagic) {
+      lastMagic = contextMagic
+      store.trail(new LCGIntervalTrailEntry(this, _min, _max))
+    }
   }
   
-  @inline final override def isAssigned: Boolean = {
-    searchMin == searchMax
+  // Restore a previous state
+  @inline final def restore(oldMin: Int, oldMax: Int): Unit = {
+    _min = oldMin; _max = oldMax
+    _size = oldMax - oldMin + 1
   }
+  
+  @inline final override def min: Int = _min
+  
+  @inline final override def max: Int = _max
+  
+  @inline final override def size: Int = _size
+  
+  @inline final override def isAssigned: Boolean = _min == _max
   
   @inline final override def isAssignedTo(value: Int): Boolean = {
-    val min = searchMin
-    if (min < searchMax) false
-    else min == value
+    _min == value && _max == value
   }
   
   @inline final override def contains(value: Int): Boolean = {
-    val min = searchMin
-    val max = searchMax
-    value >= min && value <= max
+    value >= _min && value <= _max
   }
   
-  @inline final override def minGeq (value: Int): Literal = {
+  @inline final override def minGeq(value: Int): Literal = {
     val id = value - initMin - 1
     if (id < 0) lcgStore.trueLit
     else if (id >= nLiterals) lcgStore.falseLit
@@ -58,9 +76,14 @@ class LCGIntervalVarImpl(final override val lcgStore: LCGStore, final override v
   }
   
   final override def updateAndNotify(): Unit = {
+    trail() // trail before changes 
+    // Update the domain
+    _min = searchMin
+    _max = searchMax
+    _size = _max - _min + 1
+    // Notify
     boundWatchers.enqueue()
-    // Check if the bounds have changed (need a reversible int)
-    // if so, notify the corresponding constraints
+    if (_size == 1) bindWatchers.enqueue()
   }
   
   final override def callWhenBoundsChange(constraint: LCGConstraint): Unit = {
@@ -110,6 +133,5 @@ class LCGIntervalVarImpl(final override val lcgStore: LCGStore, final override v
     }
     // Returns the domain
     literals
-  }
-  
+  } 
 }

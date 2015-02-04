@@ -25,12 +25,11 @@ class LCGStore(store: CPStore) {
   private[this] val explanationClauses: ArrayStack[Clause] = new ArrayStack(128)
 
   // Variables store
-  private[this] val variables: ArrayStack[Literal] = new ArrayStack(128)
-  private[this] val intervalRef: ArrayStack[LCGIntervalVar] = new ArrayStack(128)
-  private[this] val values: ArrayStack[LiftedBoolean] = new ArrayStack(128)
-  private[this] val reasons: ArrayStack[Clause] = new ArrayStack(128)
-  private[this] val levels: ArrayStackInt = new ArrayStackInt(128) 
-  private[this] val activities: ArrayStack[Double] = new ArrayStack(128)
+  private[this] var variables: Array[Literal] = new Array(128)
+  private[this] var intervalRef: Array[LCGIntervalVar] = new Array(128)
+  private[this] var values: Array[LiftedBoolean] = new Array(128)
+  private[this] var reasons: Array[Clause] = new Array(128)
+  private[this] var levels: Array[Int] = new Array(128) 
   private[this] var varStoreSize: Int = 0 // not used yet
 
   // Watchers of each literal
@@ -78,14 +77,15 @@ class LCGStore(store: CPStore) {
 
   /** Create a new variable and return its unsigned literal. */
   final def newVariable(interval: LCGIntervalVar, name: String): Literal = {
-    val varId = values.size
+    if (varStoreSize == values.length) growVariableStore()   
+    val varId = varStoreSize
     val literal = new Literal(varId, name)
-    variables.append(literal)
-    intervalRef.append(interval)
-    values.append(Unassigned)
-    reasons.append(null)
-    levels.append(-1)
-    activities.append(0)
+    variables(varStoreSize) = literal
+    intervalRef(varStoreSize) = interval
+    values(varStoreSize) = Unassigned
+    reasons(varStoreSize) = null
+    levels(varStoreSize) = -1
+    varStoreSize += 1
     // Watchers for both literals
     watchers.append(new ArrayQueue[Clause](16))
     watchers.append(new ArrayQueue[Clause](16))
@@ -214,7 +214,10 @@ class LCGStore(store: CPStore) {
         //updateActivities()
         //true
       }
+      
+      
       // TODO Notify changes in domains
+      
     }
   }
 
@@ -321,6 +324,21 @@ class LCGStore(store: CPStore) {
   }
   
   @inline private def growVariableStore(): Unit = {
-    // TODO : implement
+    val newSize = varStoreSize * 2
+    val newVariables = new Array[Literal](newSize)
+    val newIntervalRef = new Array[LCGIntervalVar](newSize)
+    val newValues = new Array[LiftedBoolean](newSize)
+    val newReasons = new Array[Clause](newSize)
+    val newLevels = new Array[Int](newSize)
+    System.arraycopy(variables, 0, newVariables, 0, varStoreSize)
+    System.arraycopy(intervalRef, 0, newIntervalRef, 0, varStoreSize)
+    System.arraycopy(values, 0, newValues, 0, varStoreSize)
+    System.arraycopy(reasons, 0, newReasons, 0, varStoreSize)
+    System.arraycopy(levels, 0, newLevels, 0, varStoreSize)
+    variables = newVariables
+    intervalRef = newIntervalRef
+    values = newValues
+    reasons = newReasons
+    levels = newLevels
   }
 }
