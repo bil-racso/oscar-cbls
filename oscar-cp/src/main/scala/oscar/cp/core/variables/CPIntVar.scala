@@ -239,6 +239,27 @@ abstract class CPIntVar extends CPVar with Iterable[Int] {
       }
     }
   }
+  
+  /**
+   * @return an (not sorted) array representation of the domain.
+   */
+  def toArray: Array[Int] = domainIterator.toArray
+
+  /**
+   *  @param array.length >= this.size
+   *  @return Fills the array with the domain.
+   *          returns the number of values (this.size).
+   *          The array is not sorted.
+   */
+  def fillArray(array: Array[Int]): Int = {
+    val ite = domainIterator
+    var i = 0
+    while (ite.hasNext) {
+      array(i) = ite.next
+      i += 1
+    }
+    i
+  }  
 
   /**
    * Level 2 registration: ask that the propagate() method of the constraint c is called whenever

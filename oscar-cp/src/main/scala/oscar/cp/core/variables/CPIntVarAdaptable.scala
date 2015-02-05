@@ -129,7 +129,7 @@ class CPIntVarAdaptable(final override val store: CPStore, minValue: Int, maxVal
    *  @return an array containing all the values in the domain.
    *          The result array is not sorted.
    */
-  final def toArray: Array[Int] = {
+  final override def toArray: Array[Int] = {
     val array = new Array[Int](_size)
     copyDomain(array)
     array
@@ -141,7 +141,7 @@ class CPIntVarAdaptable(final override val store: CPStore, minValue: Int, maxVal
    *          returns the number of values (this.size).
    *          The array is not sorted.
    */
-  final def fillArray(array: Array[Int]): Int = copyDomain(array)
+  final override def fillArray(array: Array[Int]): Int = copyDomain(array)
 
   // Copy the domain in the array and return the size of the domain
   @inline private def copyDomain(array: Array[Int]): Int = {

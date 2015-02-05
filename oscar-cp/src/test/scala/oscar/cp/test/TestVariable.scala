@@ -12,6 +12,7 @@ class TestVariable extends FunSuite with ShouldMatchers {
     val a = CPIntVar(1, 6)(store)
     val b = CPIntVar(0, 31)(store)
     val c = CPIntVar(1, 10)(store)
+    val d = CPIntVar(1 to 5)(store)
   }
 
   test("test a") {
@@ -125,4 +126,16 @@ class TestVariable extends FunSuite with ShouldMatchers {
     assert(w.intersectionSize(x) == 0)
     assert(x.intersectionSize(w) == 0)
   }
+  
+  test("test g: toArray and fillArray") {
+    new StoreAndVariables {
+      d.removeValue(3)
+      val values  = d.toArray
+      assert(values.toSet == Set(1,2,4,5))
+      val empty = Array.ofDim[Int](10)
+      val s = d.fillArray(empty)
+      assert(s == 4)
+      assert(d.take(4).toSet == Set(1,2,4,5))
+    }
+  }  
 }
