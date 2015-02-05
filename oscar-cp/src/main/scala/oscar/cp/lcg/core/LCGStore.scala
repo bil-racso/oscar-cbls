@@ -219,6 +219,97 @@ class LCGStore(store: CPStore) {
       
     }
   }
+  
+  @inline private def analyze(): Unit = {
+    val seen = new Array[Boolean](varStoreSize)
+    var counter = 0
+    var p: Literal = null
+    var conflict = conflictingClause
+    
+    val pReason = new ArrayStack[Literal]()
+    val outReason = new ArrayStack[Literal]()
+    backtrackLevel = 0
+    var trailLevel = trailSize - 1
+    
+    do {
+      pReason.clear()
+      
+      if (p == null) conflict.explainFail(pReason)
+      else conflict.explainUnit(pReason)
+      
+      for (literal <- pReason) {
+        val varId = literal.varId
+        if (!seen(varId)) {
+          seen(varId) = true
+          val level = levels(varId)
+          if (level == decisionLevel) counter += 1
+          else {
+            outReason.append(literal.opposite)
+            if (level > backtrackLevel) backtrackLevel = level
+          }
+        }
+      }
+      
+      do {
+        p = trail(trailLevel)
+        trailLevel -= 1
+        conflict = reasons(p.varId)       
+      } while (!(seen(p.varId)))
+        
+      counter -= 1
+    } while (counter > 0)
+      
+    // at this point, p is the UIP
+      
+    backtrackLevel = levels(p.varId) - 1 // is that always true ?
+  }
+  
+  /*
+   * private def analyze(initConflict: Clause): Unit = {
+
+    val seen: Array[Boolean] = new Array(values.size) // FIXME
+    var counter = 0
+    var p: Literal = null
+    var conflict: Clause = initConflict
+
+    outLearnt.clear()
+    outLearnt.append(null) // leave a room for the asserting literal
+    outBacktsLevel = 0
+
+    do {
+
+      pReason.clear
+      if (p == null) conflict.explainAll(pReason)
+      else conflict.explain(pReason)
+
+      // Trace reason for p
+      for (literal <- pReason) { // FIXME 
+        val varId = literal.varId
+        if (!seen(varId)) {
+          seen(varId) = true
+          val level = levels(varId)
+          if (level == decisionLevel) counter += 1
+          else if (level > 0) {
+            outLearnt.append(literal.opposite)
+            if (level > outBacktsLevel) outBacktsLevel = level
+          }
+        }
+      }
+
+      // Select next literal to look at
+      do {
+        p = trail.top
+        conflict = reasons(p.varId)
+        undoOne()
+      } while (!seen(p.varId))
+        
+      counter -= 1
+      
+    } while (counter > 0)
+      
+    outLearnt(0) = p.opposite
+  }
+   */
 
   /**
    *  Empty the propagation queue
