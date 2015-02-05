@@ -7,7 +7,7 @@ import oscar.des.flow.lib._
 object testBelt extends App with HelperForProcess{
 
   val m = new Model
-  val verbose = true
+  val verbose = false
 
   //a process that has two inputs, and one output (eg: soldering)
   println("start simulate...")

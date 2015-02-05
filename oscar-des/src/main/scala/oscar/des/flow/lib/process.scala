@@ -19,6 +19,7 @@ import oscar.des.engine.Model
 import oscar.des.flow.core._
 
 import scala.collection.mutable.ListBuffer
+import scala.language.implicitConversions
 
 /** since many of the classes proposed by this lib support random variables, represented using functions to Floats or Ints,
   * and ou might not need this dimension in your model,
@@ -274,7 +275,7 @@ class ConveyerBeltProcess(m:Model,
   def totalBlockedTime = if(blocked) mTotalBlockedTime + m.clock() - startBlockingTime else mTotalBlockedTime
 
   override def toString: String = {
-    name + ":: content: " + belt.size + " totalInputBatches:" + totalInputBatches + " totalOutputBatches:" + totalOutputBatches + " totalBlockedTime:" + totalBlockedTime + (if (blocked) " blocked" else " running")
+    name + " " + this.getClass.getSimpleName + ":: content:" + belt.size + " totalInputBatches:" + totalInputBatches + " totalOutputBatches:" + totalOutputBatches + " totalBlockedTime:" + totalBlockedTime + (if (blocked) " blocked" else " running")
   }
 
   private def restartInputtingIfNeeded(): Unit ={
