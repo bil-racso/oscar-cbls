@@ -18,7 +18,7 @@ class LCGIntervalVarImpl(final override val lcgStore: LCGStore, final override v
   
   // Watchers
   private[this] val boundWatchers = new WatcherListL2(store)
-  private[this] val bindWatchers = new WatcherListL2(store)
+  private[this] val assignWatchers = new WatcherListL2(store)
   
   // Domain representation with literals
   private[this] val nLiterals = initMax - initMin
@@ -61,14 +61,14 @@ class LCGIntervalVarImpl(final override val lcgStore: LCGStore, final override v
     value >= _min && value <= _max
   }
   
-  @inline final override def minGeq(value: Int): Literal = {
+  @inline final override def greaterEqual(value: Int): Literal = {
     val id = value - initMin - 1
     if (id < 0) lcgStore.trueLit
     else if (id >= nLiterals) lcgStore.falseLit
     else literals(id).opposite
   }
   
-  @inline final override def maxLeq(value: Int): Literal = {
+  @inline final override def lowerEqual(value: Int): Literal = {
     val id = value - initMin
     if (id >= nLiterals) lcgStore.trueLit
     else if (id < 0) lcgStore.falseLit
@@ -83,35 +83,29 @@ class LCGIntervalVarImpl(final override val lcgStore: LCGStore, final override v
     _size = _max - _min + 1
     // Notify
     boundWatchers.enqueue()
-    if (_size == 1) bindWatchers.enqueue()
-  }
-  
-  final override def callWhenBoundsChange(constraint: LCGConstraint): Unit = {
-    boundWatchers.register(constraint)
-  }
-  
-  final override def toString: String = {
-    var i = initMin - 1
-    literals.map(l => {
-      i += 1
-      if (lcgStore.isTrue(l)) s"$i:T"
-      else if (lcgStore.isFalse(l)) s"$i:F"
-      else s"$i:_"
-    }).mkString("[", ", ", s", $initMax:T]")   
+    if (_size == 1) assignWatchers.enqueue()
   }
   
   // Find the min value in the domain
   @inline private def searchMin: Int = {
-    var i = 0
+    var i = _min - initMin
     while (i < nLiterals && lcgStore.isFalse(literals(i))) i += 1
     initMin + i
   }
   
   // Find the max value in the domain
   @inline private def searchMax: Int = {
-    var i = 0
-    while (i < nLiterals && !lcgStore.isTrue(literals(i))) i += 1
-    initMin + i
+    var i = _max - initMin - 1
+    while (i >= 0 && lcgStore.isTrue(literals(i))) i -= 1
+    i + initMin + 1
+  }
+    
+  final override def callWhenBoundsChange(constraint: LCGConstraint): Unit = {
+    boundWatchers.register(constraint)
+  }
+  
+  final override def callWhenAssigned(constraint: LCGConstraint): Unit = {
+    assignWatchers.register(constraint)
   }
   
   // Build the domain with literals
@@ -134,4 +128,14 @@ class LCGIntervalVarImpl(final override val lcgStore: LCGStore, final override v
     // Returns the domain
     literals
   } 
+  
+  final override def toString: String = {
+    var i = initMin - 1
+    literals.map(l => {
+      i += 1
+      if (lcgStore.isTrue(l)) s"$i:T"
+      else if (lcgStore.isFalse(l)) s"$i:F"
+      else s"$i:_"
+    }).mkString("[", ", ", s", $initMax:T]")   
+  }
 }

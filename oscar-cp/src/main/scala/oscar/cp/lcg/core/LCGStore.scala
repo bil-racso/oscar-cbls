@@ -16,7 +16,7 @@ class TrailRemoveExplanation(explanation: Clause) extends TrailEntry {
 
 class LCGStore(store: CPStore) {
 
-  // Level in which the store was consistent
+  // Level in which the store was still consistent
   private[this] var backtrackLevel: Int = Int.MaxValue
 
   // Clauses
@@ -43,7 +43,7 @@ class LCGStore(store: CPStore) {
   
   // True variable
   private[this] val trueVariable = newVariable(null, "TRUE_VAR")
-  values(trueVariable.varId) = True // should not be trailed
+  values(trueVariable.varId) = True // must not be trailed
 
   // Propagation queue
   private[this] val queue: ArrayQueue[Literal] = new ArrayQueue(128)
@@ -107,7 +107,6 @@ class LCGStore(store: CPStore) {
 
   /** Add a permanent clause to the store. */
   final def addProblemClause(literals: Array[Literal]): Boolean = {
-
     // assert decision level is root
     newClause(literals, false)
   }

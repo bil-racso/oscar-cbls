@@ -18,7 +18,7 @@ object TestScheduling extends LCGModel with App {
   val starts = Array.tabulate(nTasks)(t => LCGIntervalVar(0, horizon - durations(t), "Task_" + t))
 
   // LCG Constraints
-  for (time <- 0 to horizon) cpSolver.add(new DecompChecker(lcgSolver, starts, durations, demands, capa, time))
+  cpSolver.add(new DecompChecker(lcgSolver, starts, durations, demands, capa, horizon))
 
   search {
     val variable = starts.find(v => !v.isAssigned)
@@ -31,14 +31,14 @@ object TestScheduling extends LCGModel with App {
         // Assign
         //println("assign " + v.name)
         cpSolver.doAndPropagate {
-          lcgSolver.lcgStore.enqueue(v.maxLeq(value), null)
+          lcgSolver.lcgStore.enqueue(v.lowerEqual(value), null)
           lcgSolver.propagate()
         }
       } {
         lcgSolver.lcgStore.newDecisionLevel()
         // Remove
         cpSolver.doAndPropagate {
-          lcgSolver.lcgStore.enqueue(-v.maxLeq(value), null)
+          lcgSolver.lcgStore.enqueue(-v.lowerEqual(value), null)
           lcgSolver.propagate()
         }
       }

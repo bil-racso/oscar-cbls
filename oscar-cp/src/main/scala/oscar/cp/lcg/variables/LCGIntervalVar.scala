@@ -35,17 +35,20 @@ abstract class LCGIntervalVar {
   /** Return true if the domain contains value.*/
   def contains(value: Int): Boolean
     
-  /** Return the literal `value <= this.min`. */
-  def minGeq(value: Int): Literal
+  /** Return the literal `value <= this`. */
+  def greaterEqual(value: Int): Literal
 
-  /** Return the literal `this.max <= value`. */
-  def maxLeq(value: Int): Literal
+  /** Return the literal `this <= value`. */
+  def lowerEqual(value: Int): Literal
   
   /** Update the domain and notify the constraints. */
   def updateAndNotify(): Unit
   
   /** Register the constraint on bounds changes. */
   def callWhenBoundsChange(constraint: LCGConstraint): Unit
+  
+  /** Register the constraint on assignments. */
+  def callWhenAssigned(constraint: LCGConstraint): Unit
   
   /** Return the name of the variable. */
   def name: String

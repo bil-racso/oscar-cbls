@@ -15,8 +15,8 @@ object TestApp extends LCGModel with App {
     final override def explain(): Unit = {
       if (variable.min == 2 && variable.max == 2) {
         val explanation = new Array[Literal](2)
-        explanation(0) = -variable.maxLeq(2)
-        explanation(1) = -variable.minGeq(2)
+        explanation(0) = -variable.lowerEqual(2)
+        explanation(1) = -variable.greaterEqual(2)
         lcgStore.addExplanation(explanation)
       }
     }
@@ -30,7 +30,7 @@ object TestApp extends LCGModel with App {
     else {
       val v = variable.get
       val value = v.min
-      val literal = v.maxLeq(value)
+      val literal = v.lowerEqual(value)
       branch {
         // Assign
         //println
