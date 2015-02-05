@@ -36,10 +36,10 @@ class ReversibleContext {
   private[this] val levelStack: ArrayStackInt = new ArrayStackInt(128)
   
   // Actions to execute when a pop occurs 
-  private[this] val popListeners = new ArrayStack[() => Unit](4)
+  private[this] val popListeners = new ArrayStack[() => Unit](2)
   
   // Actions to execute when a pop occurs 
-  private[this] val pushListeners = new ArrayStack[() => Unit](4)  
+  private[this] val pushListeners = new ArrayStack[() => Unit](2)  
   
   /** Returns the magic number of the context */
   final def magic: Long = magicNumber
@@ -106,6 +106,11 @@ class ReversibleContext {
     }
     // Increments the magic because we want to trail again
     magicNumber += 1
+  }
+  
+  /** Reset the last state */
+  final def resetLastState(): Unit = {
+    if (!levelStack.isEmpty) levelStack.pop()
   }
   
   /** Empty the trailing queue without restoring trailed objects */
