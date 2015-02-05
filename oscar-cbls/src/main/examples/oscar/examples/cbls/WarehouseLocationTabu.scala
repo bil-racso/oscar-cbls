@@ -8,6 +8,7 @@ import oscar.cbls.modeling.AlgebraTrait
 import oscar.cbls.objective.Objective
 import oscar.cbls.search.AssignNeighborhood
 import oscar.cbls.search.move.Move
+import scala.language.postfixOps
 
 /**
  * this is a WarehouseLocation problem with a Tabu.
