@@ -266,6 +266,8 @@ abstract class IntInvariant(initialValue:Int = 0, initialDomain:Domain = FullRan
 
   override def model = propagationStructure.asInstanceOf[Store]
 
+  override def hasModel:Boolean = schedulingHandler != null
+
   private var customName:String = null
   /**use this if you want to give a particular name to this concept, to be used in toString*/
   def setName(n:String):IntInvariant = {
