@@ -115,7 +115,7 @@ class ReversibleContext {
   
   /** Empty the trailing queue without restoring trailed objects */
   final def clear(): Unit = {
-    trailStack.clear()   // does not remove references
+    trailStack.clear() // does not remove references
     levelStack.clear() // does not remove references
   }
 
@@ -124,5 +124,5 @@ class ReversibleContext {
     maxTrailSize = 0
   }
 
-  override def toString: String = "SearchNode nPushed: " + levelStack.length + " currentTrailSize: " + trailStack.length
+  override def toString: String = "nPushed: " + levelStack.length + " currentTrailSize: " + trailStack.length
 }
