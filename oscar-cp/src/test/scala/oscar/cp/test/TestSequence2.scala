@@ -23,16 +23,13 @@ import oscar.cp._
 
 
 class TestSequence2 extends FunSuite with ShouldMatchers  {
-  
-  
+   
   test("test1") { 
 	  val cp = CPSolver()
-	  val x = Array.fill(5)(CPIntVar(Set(1,4,7))(cp))
-	  cp.solve subjectTo { 
+	  val x = Array.fill(5)(CPIntVar(Set(1,4,7))(cp))	  
 		cp.add(new SequenceDecomposition(x,Set(1,4),l=3,min=2,max=2))
-	  } search {
+	  cp.search {
 	    binaryFirstFail(x)
-
 	  }
 	  cp.start().nSols should be(32)
   }

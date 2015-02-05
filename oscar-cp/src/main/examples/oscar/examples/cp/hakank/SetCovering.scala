@@ -13,61 +13,41 @@
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
 package oscar.examples.cp.hakank
-
 import oscar.cp._
 import scala.io.Source._
 import scala.math._
-
 /*
-
   Set covering problem in Oscar.
-  
   Placing of firestations. 
   From Winston 'Operations Research', page 486.
-
   @author Hakan Kjellerstrand hakank@gmail.com
   http://www.hakank.org/oscar/
- 
 */
-
-object SetCovering {
-
-
-  def main(args: Array[String]) {
-
-    val cp = CPSolver()
-
+object SetCovering extends CPModel with App  {
     //
     // data
     //
     val min_distance = 15
     val num_cities = 6
-
     val distance = Array(Array( 0,10,20,30,30,20),
                          Array(10, 0,25,35,20,10),
                          Array(20,25, 0,15,30,20),
                          Array(30,35,15, 0,15,25),
                          Array(30,20,30,15, 0,14),
                          Array(20,10,20,25,14, 0))
-
     //
     // variables
     //
- 
-    val x = Array.fill(num_cities)(CPIntVar(0 to 1)(cp))
+    val x = Array.fill(num_cities)(CPIntVar(0 to 1))
     val z = sum(x)
-
-
     //
     // constraints
     //
     var numSols = 0
-
-    cp.minimize(z) subjectTo {
-
+   minimize(z) 
       // ensure that all cities are covered
       for(i <- 0 until num_cities) {
-        cp.add(
+       add(
                sum(
                    for{
                      j <- 0 until num_cities
@@ -76,22 +56,14 @@ object SetCovering {
                    ) >= 1
                )
       }
-      
-    } search {
-       
+    search{
       binaryStatic(x)
-    } onSolution {
-      
+    }
+onSolution {
       println("\nSolution:")
       println("x: " + x.mkString(""))
       println("z: " + z)
-
       numSols += 1
-
     }
-
-    println(cp.start())
-
+    println(start())
   }
-
-}

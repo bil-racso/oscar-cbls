@@ -13,10 +13,7 @@
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
 
-
-
 import oscar.cp._
-import collection.immutable.SortedSet
 
 /**
  * Cookie Monster Problem (by Richard Green https://plus.google.com/u/0/101584889282878921052/posts/8qWvSaLJVGD
@@ -42,51 +39,35 @@ import collection.immutable.SortedSet
  *
  * @author Pierre Schaus pschaus@gmail.com
  */
-object CookieMonster {
-  def main(args: Array[String]) {
+object CookieMonster extends CPModel with App {
 
-    implicit val cp = CPSolver()
-    cp.silent = true
+  solver.silent = true
 
+  val jars = Array(20, 16, 13, 5, 2, 1)
+  val maxMove = 7
 
-    val jars = Array(20, 16, 13, 5, 2, 1)
-    val maxMove = 7
+  val x = Array.fill(maxMove)(CPIntVar(0 to jars.max))
+  val b = Array.fill(maxMove, jars.length)(CPBoolVar())
+  val bx = Array.tabulate(maxMove, jars.length) { (m, j) => b(m)(j) * x(m) }
 
-    val x = Array.fill(maxMove)(CPIntVar(cp, 0 to jars.max))
-    val b = Array.fill(maxMove, jars.size)(CPBoolVar())
-    val bx = Array.tabulate(maxMove, jars.size) { case (m, j) => b(m)(j) * x(m) }
-    var nbSol = 0
-
-    def printSol() = {
-      for (i <- 0 until maxMove) {
-        println("move" + i + ":\t" + bx(i).mkString("\t"))
-      }
+  def printSol() = {
+    for (i <- 0 until maxMove) {
+      println("move" + i + ":\t" + bx(i).mkString("\t"))
     }
-
-    for (j <- 0 until jars.size) {
-      cp.add(sum(0 until maxMove)(m => bx(m)(j)) == jars(j))
-    }
-    // break symmetry
-    for (m <- 0 until maxMove - 1) {
-      cp.add(lexLeq(bx(m + 1), bx(m)))
-    }
-
- 
-    
-    search {
-      binaryStatic(x,_.min) ++ binaryStatic(b.flatten.toSeq,_.min)
-    }
-    
-    onSolution {
-      nbSol = 1
-      //println("sol found"+x.mkString(","))
-    }
-
-    println(start())
-  
-
-
-
   }
 
+  for (j <- 0 until jars.size) {
+    add(sum(0 until maxMove)(m => bx(m)(j)) == jars(j))
+  }
+
+  // break symmetries
+  for (m <- 0 until maxMove - 1) {
+    add(lexLeq(bx(m + 1), bx(m)))
+  }
+
+  search {
+    binaryStatic(x, _.min) ++ binaryStatic(b.flatten.toSeq, _.min)
+  }
+
+  println(start())
 }

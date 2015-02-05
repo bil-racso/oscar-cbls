@@ -13,10 +13,7 @@
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
 package oscar.examples.cp.hakank
-
 import oscar.cp._
-
-
 /**
  *
  * Marathon puzzle in Oscar
@@ -46,8 +43,7 @@ import oscar.cp._
  * http://www.hakank.org/oscar/
  *
  */
-object Marathon {
-
+object Marathon extends CPModel with App  {
    // 
    // Decomposition of inverse constraint
    // 
@@ -58,94 +54,69 @@ object Marathon {
    //   x is the position array
    //   y are the placements
    // 
-   def inverse(cp: CPSolver, x: Array[CPIntVar], y: Array[CPIntVar]) {
+   def inverse(x: Array[CPIntVar], y: Array[CPIntVar]) {
       val len = x.length
       for(i <- 0 until len;
           j <- 0 until len) {
-        cp.add( (y(j) === i) == (x(i) === j) )
+       add( (y(j) === i) == (x(i) === j) )
       }
    }
-
    // Same as inverse() but returns the y Array
-   def inverse2(cp: CPSolver, x: Array[CPIntVar]) : Array[CPIntVar] = {
+   def inverse2(x: Array[CPIntVar]) : Array[CPIntVar] = {
       val len = x.length
-      val y = Array.fill(len)(CPIntVar(0 to len-1)(cp))
+      val y = Array.fill(len)(CPIntVar(0 to len-1))
       for(i <- 0 until len;
           j <- 0 until len) {
-        cp.add( (y(j) === i) == (x(i) === j) )
+       add( (y(j) === i) == (x(i) === j) )
       }
       y
    }
-
-
-   def main(args: Array[String]) {
-
-      val cp = CPSolver()
-
       //
       // data
       // 
       val n = 6
       val runners_str = Array("Dominique", "Ignace", "Naren",
                               "Olivier", "Philippe", "Pascal")
-
       //
       // decision variables
       // 
-
       // Note: in order to use inverse(), the runners and places are in the domain 0..n-1
-      val runners = Array.fill(n)(CPIntVar(0 to n-1)(cp))
+      val runners = Array.fill(n)(CPIntVar(0 to n-1))
       val Array(dominique, ignace, naren, olivier, philippe, pascal) = runners
-      val places = inverse2(cp, runners)
-
+      val places = inverse2(runners)
       var numSols = 0
-      cp.solve subjectTo {
-
-    	cp.add(allDifferent(runners), Strong)
-
+    
+    	add(allDifferent(runners), Strong)
         // a: Olivier not last
-        cp.add(olivier != n)
-        
+       add(olivier != n)
         // b: Dominique, Pascal and Ignace before Naren and Olivier
         for(a <- Array(dominique, pascal, ignace);
             b <- Array(naren, olivier)) {
-           cp.add(a < b)
+          add(a < b)
         }
-
         // c: Dominique better than third
-        cp.add(dominique  < 2)
-        
+       add(dominique  < 2)
         // d: Philippe is among the first four
-        cp.add(philippe   <= 3)
-        
+       add(philippe   <= 3)
         // e: Ignace neither second nor third
-        cp.add(ignace     != 1)
-        cp.add(ignace     != 2)
-
+       add(ignace     != 1)
+       add(ignace     != 2)
         // f: Pascal three places earlier than Naren
-        cp.add(pascal + 3 == naren)
-
+       add(pascal + 3 == naren)
         // g: Neither Ignace nor Dominique on fourth position
-        cp.add(ignace     != 3)
-        cp.add(dominique  != 3)
-
-      } search {
-
+       add(ignace     != 3)
+       add(dominique  != 3)
+      search{
         binaryStatic(runners ++ places)
-        
-      } onSolution {
+      }
+onSolution {
         println("Runners: " ++ runners.mkString(""))
         println("Places:")
         for(p <- 0 until n) {
           println("Place " + (p+1) + ": " + runners_str(places(p).value))
         }
         println()
-
         numSols += 1
       }
-
-      println(cp.start())
-
+      println(start())
   }
-
-}

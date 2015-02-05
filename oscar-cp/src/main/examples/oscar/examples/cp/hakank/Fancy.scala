@@ -13,16 +13,11 @@
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
 package oscar.examples.cp.hakank
-
 import oscar.cp._
-
 import scala.io.Source._
 import scala.math._
-
 /*
-
   Mr Greenguest puzzle (fancy dress) in Oscar.
-
   Problem (and LPL) code in
   http://diuflx71.unifr.ch/lpl/GetModel?name=/demo/demo2
   """
@@ -42,75 +37,49 @@ import scala.math._
    * What is the cheapest solution for Mr Greenguest to participate?
    *)
   """
-
-
   @author Hakan Kjellerstrand hakank@gmail.com
   http://www.hakank.org/oscar/
- 
 */
-
-object Fancy {
-
-  def main(args: Array[String]) {
-
-    val cp = CPSolver()
-
+object Fancy extends CPModel with App  {
     //
     // data
     //
     val k = 5
     val z = Array("t","h","r","s","n")
-
     //
     // variables
     //
-
-    val x = Array.fill(k)(CPBoolVar()(cp))
-    val x2 = Array.fill(k)(CPIntVar(0 to 1)(cp))
+    val x = Array.fill(k)(CPBoolVar())
+    val x2 = Array.fill(k)(CPIntVar(0 to 1))
     val Array(t,h,r,s,n) = x
     val Array(t2,h2,r2,s2,n2) = x2
     // This don't work with CPBoolVar
     val cost = weightedSum(Array(10,2,12,11), Array(t2,h2,s2,n2))
-
     //
     // constraints
     //
-
-    cp.minimize(cost) subjectTo {
-    // cp.solveAll subjectTo {
-
+   minimize(cost) 
+    //solveAll 
       // channeling between CPBoolVar and CPIntVar
       for(i <- 0 until k) {
-        cp.add(x(i)==x2(i))
+       add(x(i)==x2(i))
       }
-      
       // This is a straight translation from the LPL code
-
-      cp.add( (t==>r) || n )
-      cp.add( ((s || r) ==> (t || h)) || n )  
-      cp.add( ((r || h || !s) ==> t) || n )
-
+     add( (t==>r) || n )
+     add( ((s || r) ==> (t || h)) || n )  
+     add( ((r || h || !s) ==> t) || n )
       // Using CPIntVar instead (not as nice...)
-      // cp.add( ((t===1) ==> (r===1)) || n===1 )
-      // cp.add( ((s===1 || r===1) ==> (t===1 || h===1)) || n===1 )  
-      // cp.add( ((r===1 || h===1 || s===0) ==> (t===1)) || n===1 )
-
-
-    } search {
-       
+      //add( ((t===1) ==> (r===1)) || n===1 )
+      //add( ((s===1 || r===1) ==> (t===1 || h===1)) || n===1 )  
+      //add( ((r===1 || h===1 || s===0) ==> (t===1)) || n===1 )
+    search{
       binaryStatic(x)
-
-    } onSolution {
-
+    }
+onSolution {
       println("Cost: " + cost)
       println(" " + z.mkString(" "))
       println(x2.mkString(""))
       println()
-
     }
-
-    println(cp.start())
-
+    println(start())
   }
-
-}

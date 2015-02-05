@@ -13,9 +13,7 @@
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
 package oscar.examples.cp.hakank
-
 import oscar.cp._
-
 /**
  *
  * Seseman problem in Oscar.
@@ -54,58 +52,41 @@ import oscar.cp._
  * http://www.hakank.org/oscar/
  *
  */
-object Seseman {
-
-   def main(args: Array[String]) {
-
-     val cp = CPSolver()
-
+object Seseman extends CPModel with App  {
      // data
      val n = if (args.length > 0) args(0).toInt else 3;
      val border_sum = n*n
-
      // variables
-     val x = Array.fill(n,n)(CPIntVar(0 to n*n)(cp))
-     val total_sum = CPIntVar(1 to n*n*n*n)(cp)
-
+     val x = Array.fill(n,n)(CPIntVar(0 to n*n))
+     val total_sum = CPIntVar(1 to n*n*n*n)
      // constraints
      var numSols = 0
-     cp.solve subjectTo {
-
+   
        // 0's in all the middle cells
        for(i <- 1 until n-1;
            j <- 1 until n-1) {
-         cp.add(x(i)(j) == 0)
+        add(x(i)(j) == 0)
        }
-
        // sum the borders
-       cp.add(sum(List.tabulate(n)(i => x(i)(0)))   == border_sum)
-       cp.add(sum(List.tabulate(n)(i => x(i)(n-1))) == border_sum)
-       cp.add(sum(List.tabulate(n)(i => x(0)(i)))   == border_sum)
-       cp.add(sum(List.tabulate(n)(i => x(n-1)(i))) == border_sum)
-  
+      add(sum(List.tabulate(n)(i => x(i)(0)))   == border_sum)
+      add(sum(List.tabulate(n)(i => x(i)(n-1))) == border_sum)
+      add(sum(List.tabulate(n)(i => x(0)(i)))   == border_sum)
+      add(sum(List.tabulate(n)(i => x(n-1)(i))) == border_sum)
        // all borders must be >= 1 (may be changed to 0 or whatever)
        for(i <- 0 until n;
            j <- 0 until n if ((i == 0) || (j == 0) || (i == n-1) || (j == n-1))) {
-             cp.add(x(i)(j) > 0)
+            add(x(i)(j) > 0)
        }
-
-       cp.add(total_sum == sum(x.flatten))
-
-
-     } search {
-       
+      add(total_sum == sum(x.flatten))
+     search{
        binaryFirstFail(x.flatten.toSeq)
-     } onSolution {
+     }
+onSolution {
        for(i <- 0 until n) {
          println(x(i).mkString(""))
        }
        println()
-
        numSols += 1
-       
      } 
-     println(cp.start())
+     println(start())
   }
-
-}

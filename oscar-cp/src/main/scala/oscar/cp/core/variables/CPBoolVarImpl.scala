@@ -12,7 +12,7 @@ import oscar.cp.core.CPStore
 import oscar.cp.core.Constraint
 import oscar.cp.core.ConstraintQueue
 import oscar.cp.core.watcher.WatcherListL2
-import oscar.cp.core.watcher.PropagEventQueueVarInt
+import oscar.cp.core.watcher.WatcherListL1
 
 /**
  * @author Renaud Hartert ren.hartert@gmail.com
@@ -20,31 +20,23 @@ import oscar.cp.core.watcher.PropagEventQueueVarInt
 
 class CPBoolVarImpl private(final override val store: CPStore, initDomain: Int, final override val name: String = "") extends CPBoolVar {
   
+  import CPBoolVarImpl._
+  
   // Registered constraints
   private[this] val onBoundsL2 = new WatcherListL2(store)
   private[this] val onBindL2 = new WatcherListL2(store)
   private[this] val onDomainL2 = new WatcherListL2(store)
-  private[this] val onBoundsL1 = new ReversiblePointer[PropagEventQueueVarInt](store, null)
-  private[this] val onBindL1 = new ReversiblePointer[PropagEventQueueVarInt](store, null)
-  private[this] val onDomainL1 = new ReversiblePointer[PropagEventQueueVarInt](store, null)
-  private[this] val onBoundsIdxL1 = new ReversiblePointer[PropagEventQueueVarInt](store, null)
-  private[this] val onBindIdxL1 = new ReversiblePointer[PropagEventQueueVarInt](store, null)
-  private[this] val onDomainIdxL1 = new ReversiblePointer[PropagEventQueueVarInt](store, null)
+  private[this] val onBoundsL1 = new WatcherListL1(store)
+  private[this] val onBindL1 = new WatcherListL1(store)
+  private[this] val onDomainL1 = new WatcherListL1(store)
   
   // Number of constraints registered on the variable
   private[this] val degree = new ReversibleInt(store, 0) // should not change often
-
-  // The first bit corresponds to the min value.
-  // The second bit corresponds to the max value. 
-  // Empty is represented by 1
-  //
+  
   // 00 : False
   // 11 : True
   // 10 : Unassigned
   // 01 : Empty
-  
-  import CPBoolVarImpl._
-  
   private[this] var domain: Int = initDomain
 
   // A Boolean variable only needs one pre-instantiated trail entry
@@ -154,14 +146,11 @@ class CPBoolVarImpl private(final override val store: CPStore, initDomain: Int, 
     store.trail(trailEntry)
     domain = TRUE
     // Notify constraints
-    store.notifRemoveL1(onDomainL1.value, this, 0)
-    store.notifyRemoveIdxL1(onDomainIdxL1.value, this, 0)
-    store.notifyBindL1(onBindL1.value, this)
-    store.notifyBindIdxL1(onBindIdxL1.value, this)
-    store.notifyUpdateBoundsL1(onBoundsL1.value, this)
-    store.notifyUpdateBoundsIdxL1(onBoundsIdxL1.value, this)
-    onBoundsL2.enqueue()
+    onDomainL1.enqueueRemove(0)
+    onBoundsL1.enqueueBounds()
+    onBindL1.enqueueBind()
     onDomainL2.enqueue()
+    onBoundsL2.enqueue()
     onBindL2.enqueue()
     Suspend
   }
@@ -170,14 +159,11 @@ class CPBoolVarImpl private(final override val store: CPStore, initDomain: Int, 
     store.trail(trailEntry)
     domain = FALSE
     // Notify constraints
-    store.notifRemoveL1(onDomainL1.value, this, 1)
-    store.notifyRemoveIdxL1(onDomainIdxL1.value, this, 1)
-    store.notifyBindL1(onBindL1.value, this)
-    store.notifyBindIdxL1(onBindIdxL1.value, this)
-    store.notifyUpdateBoundsL1(onBoundsL1.value, this)
-    store.notifyUpdateBoundsIdxL1(onBoundsIdxL1.value, this)
-    onBoundsL2.enqueue()
+    onDomainL1.enqueueRemove(1)
+    onBoundsL1.enqueueBounds()
+    onBindL1.enqueueBind()
     onDomainL2.enqueue()
+    onBoundsL2.enqueue()
     onBindL2.enqueue()
     Suspend
   }
@@ -237,7 +223,7 @@ class CPBoolVarImpl private(final override val store: CPStore, initDomain: Int, 
 
   final override def callValBindWhenBind(c: Constraint, variable: CPIntVar) {
     degree.incr()
-    onBindL1.setValue(new PropagEventQueueVarInt(onBindL1.value, c, variable))
+    onBindL1.register(c, variable)
   }
 
   final override def callUpdateBoundsWhenBoundsChange(c: Constraint) {
@@ -246,7 +232,7 @@ class CPBoolVarImpl private(final override val store: CPStore, initDomain: Int, 
 
   final override def callUpdateBoundsWhenBoundsChange(c: Constraint, variable: CPIntVar) {
     degree.incr()
-    onBoundsL1.setValue(new PropagEventQueueVarInt(onBoundsL1.value, c, variable))
+    onBoundsL1.register(c, variable)
   }
 
   final override def callValRemoveWhenValueIsRemoved(c: Constraint) {
@@ -255,7 +241,7 @@ class CPBoolVarImpl private(final override val store: CPStore, initDomain: Int, 
 
   final override def callValRemoveWhenValueIsRemoved(c: Constraint, variable: CPIntVar) {
     degree.incr()
-    onDomainL1.setValue(new PropagEventQueueVarInt(onDomainL1.value, c, variable))
+    onDomainL1.register(c, variable)
   }
 
   final override def callValRemoveIdxWhenValueIsRemoved(c: Constraint, idx: Int) {
@@ -264,7 +250,7 @@ class CPBoolVarImpl private(final override val store: CPStore, initDomain: Int, 
 
   final override def callValRemoveIdxWhenValueIsRemoved(c: Constraint, variable: CPIntVar, idx: Int) {
     degree.incr()
-    onDomainIdxL1.setValue(new PropagEventQueueVarInt(onDomainIdxL1.value, c, variable, idx))
+    onDomainL1.register(c, variable, idx)
   }
 
   final override def callUpdateBoundsIdxWhenBoundsChange(c: Constraint, idx: Int) {
@@ -273,7 +259,7 @@ class CPBoolVarImpl private(final override val store: CPStore, initDomain: Int, 
 
   final override def callUpdateBoundsIdxWhenBoundsChange(c: Constraint, variable: CPIntVar, idx: Int) {
     degree.incr()
-    onBoundsIdxL1.setValue(new PropagEventQueueVarInt(onBoundsIdxL1.value, c, variable, idx))
+    onBoundsL1.register(c, variable, idx)
   }
 
   final override def callValBindIdxWhenBind(c: Constraint, idx: Int) {
@@ -282,7 +268,7 @@ class CPBoolVarImpl private(final override val store: CPStore, initDomain: Int, 
 
   final override def callValBindIdxWhenBind(c: Constraint, variable: CPIntVar, idx: Int) {
     degree.incr()
-    onBindIdxL1.setValue(new PropagEventQueueVarInt(onBindIdxL1.value, c, variable, idx))
+    onBindL1.register(c, variable, idx)
   }
 
   // ----------------------------------
@@ -310,7 +296,14 @@ class CPBoolVarImpl private(final override val store: CPStore, initDomain: Int, 
 
 object CPBoolVarImpl {
   
-  // Use final for faster bytecode 
+  // The first bit corresponds to the min value.
+  // The second bit corresponds to the max value. 
+  // Empty is represented by 1
+  //
+  // 00 : False
+  // 11 : True
+  // 10 : Unassigned
+  // 01 : Empty
   private final val FALSE = 0
   private final val TRUE = 3
   private final val UNASSIGNED = 2

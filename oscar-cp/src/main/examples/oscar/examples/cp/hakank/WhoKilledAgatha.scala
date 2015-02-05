@@ -13,10 +13,7 @@
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
 package oscar.examples.cp.hakank
-
 import oscar.cp._
-
-
 /**
  *
  * Who killed agatha? (The Dreadsbury Mansion Murder Mystery)in Oscar
@@ -46,89 +43,57 @@ import oscar.cp._
  * http://www.hakank.org/oscar/
  *
  */
-object WhoKilledAgatha {
-
-
-  def main(args: Array[String]) {
-
-    val cp = CPSolver()
-
+object WhoKilledAgatha extends CPModel with App  {
     // data
     val n = 3
-
     val NRANGE = 0 until n
-
     val agatha  = 0
     val butler  = 1
     val charles = 2
-
-    val agathacp  = CPIntVar(agatha)(cp)
-
+    val agathacp  = CPIntVar(agatha)
     val names = Array("Agatha", "Butler", "Charles")
-
     // variables
-    val the_killer = CPIntVar(0 to 2)(cp)
-    val hates  = Array.fill(n,n)(CPBoolVar()(cp)) // who is hated by who?
-    val richer = Array.fill(n,n)(CPBoolVar()(cp)) // who is porer than who?
-
+    val the_killer = CPIntVar(0 to 2)
+    val hates  = Array.fill(n,n)(CPBoolVar()) // who is hated by who?
+    val richer = Array.fill(n,n)(CPBoolVar()) // who is porer than who?
     //
     // constraints
     //
     var numSols = 0
-
-    cp.solve subjectTo {
-
-
+  
       //  Agatha, the butler, and Charles live in Dreadsbury Mansion, and
       //  are the only ones to live there.
-
-
       // A killer always hates, and is no richer than his victim.
       // (Seems that transpose must be used.)
       val hates_t = hates.transpose
       val richer_t = richer.transpose
-      
-      cp.add(hates_t(agatha)(the_killer) == 1)
-      cp.add(richer_t(agatha)(the_killer) == 0)
-
-
+     add(hates_t(agatha)(the_killer) == 1)
+     add(richer_t(agatha)(the_killer) == 0)
       //  define the concept of richer: no one is richer than him-/herself
-      NRANGE.foreach(i=>cp.add(!richer(i)(i)))
-
+      NRANGE.foreach(i=>add(!richer(i)(i)))
       //  (contd...) if i is richer than j then j is not richer than i
       for(i <- NRANGE; j <- NRANGE if i != j) {
-          cp.add(richer(i)(j) != richer(j)(i))
+         add(richer(i)(j) != richer(j)(i))
       }
-
       //  Charles hates noone that Agatha hates.
-      NRANGE.foreach(i=>cp.add((hates(agatha)(i)) ==> (!hates(charles)(i))))
-
+      NRANGE.foreach(i=>add((hates(agatha)(i)) ==> (!hates(charles)(i))))
       //  Agatha hates everybody except the butler.
-      cp.add(hates(agatha)(charles))
-      cp.add(hates(agatha)(agatha))
-      cp.add(!hates(agatha)(butler))
-
+     add(hates(agatha)(charles))
+     add(hates(agatha)(agatha))
+     add(!hates(agatha)(butler))
       //  The butler hates everyone not richer than Aunt Agatha.
-      NRANGE.foreach(i=>cp.add(!richer(i)(agatha) ==> hates(butler)(i)))
-
+      NRANGE.foreach(i=>add(!richer(i)(agatha) ==> hates(butler)(i)))
       //  The butler hates everyone whom Agatha hates.
-      NRANGE.foreach(i=> cp.add(hates(agatha)(i) ==> hates(butler)(i)))
-
+      NRANGE.foreach(i=>add(hates(agatha)(i) ==> hates(butler)(i)))
       //  Noone hates everyone.
-      NRANGE.foreach(i=>cp.add(sum(hates(i)) <= 2))
-
+      NRANGE.foreach(i=>add(sum(hates(i)) <= 2))
       // Who killed Agatha?
-
-   } search {
-       
+   search{
       binaryFirstFail(Seq(the_killer))
-   } onSolution {
+   }
+onSolution {
       println("the_killer: " + names(the_killer.value))
-
       numSols += 1
-       
    } 
-
-   println(cp.start())
+   println(start())
  }
-}

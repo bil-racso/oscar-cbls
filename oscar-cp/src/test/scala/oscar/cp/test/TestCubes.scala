@@ -28,7 +28,7 @@ class TestCubes extends FunSuite with ShouldMatchers  {
 
   test("Cubes") {
       
-    val cp = CPSolver()
+    implicit val cp = CPSolver()
     
     val numCubes = 4
     val numFaces = 6
@@ -40,14 +40,15 @@ class TestCubes extends FunSuite with ShouldMatchers  {
     
     val placement = for(i <- 0 until numLetters) yield CPIntVar(0 until numCubes)(cp) // The cube (0 to 3) on which each letter is placed
     var nbSol = 0
-    cp.solve subjectTo
-    {
+
+    
       cp.add(gcc(placement, 0 until numCubes, numFaces, numFaces), Strong) // There must be exactly 6 letters on each cube
       for(word <- words)
         cp.add(allDifferent( // The 4 letters of each word must be placed on different cubes
             for(letter <- word.toCharArray()) yield placement(letterToInt(letter))
         ), Strong)
-    } search { // Each letter will be assigned different cubes during the search
+     
+    search { // Each letter will be assigned different cubes during the search
       binaryFirstFail(placement)
     }
     cp.start().nSols should be(24)

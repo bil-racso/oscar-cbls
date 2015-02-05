@@ -69,9 +69,7 @@ import oscar.cp.core.CPOutcome
 import oscar.cp.core.CPPropagStrength
 import oscar.cp.core.variables.CPIntVarViewOffset
 import oscar.cp.core.variables.CPIntVarViewTimes
-import oscar.cp.core.variables.CPIntVarImpl
 import oscar.cp.core.variables.CPIntVarViewMinus
-import oscar.cp.core.variables.CPIntVarImpl
 import oscar.cp.core.variables.CPIntVarViewOffset
 import oscar.cp.core.variables.CPIntVarViewMinus
 import oscar.cp.core.variables.CPIntVarViewTimes

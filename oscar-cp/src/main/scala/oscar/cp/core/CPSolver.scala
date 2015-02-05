@@ -33,6 +33,77 @@ import java.util.Collection
 
 class CPSolver(propagStrength: CPPropagStrength) extends CPOptimizer(propagStrength) {
 
+  private[this] val searchStrategy = new DFSearch(this)
+
+  private[this] var heuristic: Branching = null
+
+  final def onSolution(action: => Unit): CPSolver = {
+    searchStrategy.onSolution(action); this
+  }
+
+  final def start(nSols: Int = Int.MaxValue, failureLimit: Int = Int.MaxValue, timeLimit: Int = Int.MaxValue): SearchStatistics = {
+    startSubjectTo(nSols, failureLimit, timeLimit)()
+  }
+  
+  final def start(stopCondition: => Boolean): SearchStatistics = {
+    startSubjectTo(stopCondition)(Unit)
+  }
+  
+  final def start(stopCondition: DFSearch => Boolean): SearchStatistics = {
+    startSubjectTo(stopCondition)(Unit)
+  }
+
+  final def startSubjectTo(nSols: Int = Int.MaxValue, failureLimit: Int = Int.MaxValue, timeLimit: Int = Int.MaxValue)(block: => Unit = Unit): SearchStatistics = {
+    val stopCondition = buildStopCondition(nSols, failureLimit, timeLimit)
+    startSubjectTo(stopCondition)(block)
+  }
+
+  final def startSubjectTo(stopCondition: => Boolean)(block: => Unit): SearchStatistics = {
+    startSubjectTo((s: DFSearch) => stopCondition)(block)
+  }
+
+  final def startSubjectTo(stopCondition: DFSearch => Boolean)(block: => Unit): SearchStatistics = {
+    val t0 = System.currentTimeMillis()
+    deactivateNoSolExceptions() // TODO refactor
+    pushState() // Store the current state
+    block // Apply the before search action
+    searchStrategy.start(heuristic, stopCondition)
+    pop() // Restore the current state 
+    // Build the statistic object
+    new SearchStatistics(
+      searchStrategy.nNodes,
+      searchStrategy.nBacktracks,
+      System.currentTimeMillis() - t0,
+      searchStrategy.isCompleted,
+      this.time,
+      this.maxSize,
+      searchStrategy.nSolutions
+    )
+  }
+
+  @inline private def buildStopCondition(nSols: Int, failureLimit: Int, timeLimit: Int): Function1[DFSearch, Boolean] = {
+    // Build the stop condition
+    val checkSol = nSols < Int.MaxValue
+    val checkFailures = failureLimit < Int.MaxValue
+    val checkTime = timeLimit < Int.MaxValue
+    val maxTime = (timeLimit * 1000) + System.currentTimeMillis()
+    (s: DFSearch) => {
+      var stop = false
+      stop |= (checkSol && s.nSolutions >= nSols)
+      stop |= (checkFailures && s.nBacktracks >= failureLimit)
+      stop |= (checkTime && System.currentTimeMillis() >= maxTime)
+      stop
+    }
+  }
+
+  def search(block: => Seq[Alternative]): CPSolver = {
+    heuristic = Branching(block); this
+  }
+
+  def search(branching: Branching): CPSolver = {
+    heuristic = branching; this
+  }
+
   def this() = this(CPPropagStrength.Weak)
 
   private val decVariables = scala.collection.mutable.Set[CPIntVar]()
@@ -52,8 +123,6 @@ class CPSolver(propagStrength: CPPropagStrength) extends CPOptimizer(propagStren
   /** Deactivate the no solution exception when an add is used and an inconsistent model is detected */
   def deactivateNoSolExceptions(): Unit = throwNoSolExceptions = false
 
-  override def beforeStartAction(): Unit = deactivateNoSolExceptions()
-
   /**
    * return true if every variable is bound
    */
@@ -71,7 +140,7 @@ class CPSolver(propagStrength: CPPropagStrength) extends CPOptimizer(propagStren
     super.minimize(Seq(objective): _*)
     this
   }
-  
+
   override def minimize(objective: CPIntVar, ratio: Double): CPSolver = {
     super.minimize(objective, ratio)
     this

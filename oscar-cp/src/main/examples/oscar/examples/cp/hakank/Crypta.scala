@@ -13,12 +13,9 @@
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
 package oscar.examples.cp.hakank
-
 import oscar.cp._
-
 import scala.io.Source._
 import scala.math._
-
 /**
  *
  * Cryptarithmetic puzzle in Oscar.
@@ -43,66 +40,41 @@ import scala.math._
  * http://www.hakank.org/oscar/
  *
  */
-
-object Crypta {
-
-
-  def main(args: Array[String]) {
-
-    val cp = CPSolver()
-
+object Crypta extends CPModel with App  {
     //
     // data
     //
     val n = 10
-
     //
     // variables
     //
-    val x = Array.fill(n)(CPIntVar(0 to 9)(cp))
+    val x = Array.fill(n)(CPIntVar(0 to 9))
     val Array(a,b,c,d,e,f,g,h,i,j) = x
-    val sr1 = CPIntVar(0 to 1)(cp)
-    val sr2 = CPIntVar(0 to 1)(cp)
-
-
+    val sr1 = CPIntVar(0 to 1)
+    val sr2 = CPIntVar(0 to 1)
     //
     // constraints
     //
-    cp.solve subjectTo {
-
-        cp.add(allDifferent(x), Strong)
-        cp.add(b >= 1)
-        cp.add(d >= 1)
-        cp.add(g >= 1)
-
-        cp.add((a + e*10 + j*100 + b*1000 + b*10000 + e*100000 + f*1000000 + 
+  
+       add(allDifferent(x), Strong)
+       add(b >= 1)
+       add(d >= 1)
+       add(g >= 1)
+       add((a + e*10 + j*100 + b*1000 + b*10000 + e*100000 + f*1000000 + 
                 e + j*10 + e*100 + f*1000 + g*10000 + a*100000 + f*1000000) ==
                (f + e*10 + e*100 + h*1000 + i*10000 + f*100000 + b*1000000 + sr1*10000000))
-
-        
-        cp.add((c + f*10 + h*100 + a*1000 + i*10000 + i*100000 + j*1000000 + 
+       add((c + f*10 + h*100 + a*1000 + i*10000 + i*100000 + j*1000000 + 
                 f + i*10 + b*100 + d*1000 + i*10000 + d*100000 + c*1000000 + sr1) ==
                (j + f*10 + a*100 + f*1000 + h*10000 + d*100000 + d*1000000 + sr2*10000000))
-        
-        
-        cp.add((a + j*10 + j*100 + i*1000 + a*10000 + b*100000 + 
+       add((a + j*10 + j*100 + i*1000 + a*10000 + b*100000 + 
                 b + a*10 + g*100 + f*1000 + h*10000 + d*100000 + sr2) ==
                (c + a*10 + g*100 + e*1000 + j*10000 + g*100000))
-
-
-    } search {
-       
+    search{
       binaryFirstFail(x)
-      
-    } onSolution {
-      
+    }
+onSolution {
       println("\nSolution:")
       println("x:" + x.mkString(""))
-
     } 
-    
-    println(cp.start())
-
+    println(start())
   }
-
-}

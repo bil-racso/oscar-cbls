@@ -53,9 +53,10 @@ object QueensVisu extends CPModel with App {
   add(allDifferent(for (i <- Queens) yield queens(i) - i) /*,Strong*/ )
 
   search {
-    select(queens)(x => !x.isBound) match {
+    selectMin(Queens)(i => !queens(i).isBound)(i => i) match {
       case None => noAlternative
-      case Some(x) => {
+      case Some(i) => {
+        val x = queens(i)
         val parent = currNode
         val v = x.min
         branch {

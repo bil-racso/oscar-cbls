@@ -10,16 +10,13 @@ import oscar.cp._
 class TestSearchNew extends FunSuite with ShouldMatchers {
 
   test("ids search, bug #36") {
-    val cp = new CPSolver()
-
+    implicit val cp = new CPSolver()
     var nbSol = 0
     cp.onSolution { nbSol += 1 }
-
     val x = Array(CPIntVar(0)(cp))
     cp.silent = true
-    cp.minimize(x(0)) subjectTo () search {
-      new BinaryFirstFailBranching(x)
-    }
+    cp.minimize(x(0))
+    search { new BinaryFirstFailBranching(x) }
     val stat = cp.start()
     stat.nSols should be(1)
     nbSol should be(1)
@@ -45,13 +42,12 @@ class TestSearchNew extends FunSuite with ShouldMatchers {
   }
 
   test("timelimit") {
-    val cp = CPSolver()
+    implicit val cp = CPSolver()
     val x = Array.fill(40)(CPIntVar(0 to 1)(cp))
 
     var t0 = System.currentTimeMillis()
-    cp.solve subjectTo {} search {
+    search {
       new BinaryStaticOrderBranching(x)
-
     }
 
     val stat = cp.start(timeLimit = 2)
@@ -66,11 +62,9 @@ class TestSearchNew extends FunSuite with ShouldMatchers {
 
     val cp = new CPSolver()
     val x = CPIntVar(Array(1, 5, 9, 10))(cp)
-    cp.minimize(x) subjectTo {}
-
+    cp.minimize(x)
     var best = 0
     cp.onSolution { best = x.value }
-
     cp.search {
       new BinaryStaticOrderBranching(Array(x), _.max)
     }
@@ -99,7 +93,7 @@ class TestSearchNew extends FunSuite with ShouldMatchers {
     nbSol should equal(16)
     stat.nSols should be(16)
   }
-  
+
   test("test 3 split") {
 
     val cp = CPSolver()
@@ -112,13 +106,12 @@ class TestSearchNew extends FunSuite with ShouldMatchers {
 
     cp.search {
       binaryFirstFail(x, _.min)
-    }  
+    }
     val nFails = cp.start().nFails
     cp.search {
       binarySplit(x, _.size)
-    }  
+    }
     cp.start().nFails should be(nFails)
   }
-    
-    
+
 }

@@ -17,10 +17,8 @@ package oscar.cp.core
 
 import java.util.Collection
 import java.util.LinkedList
-
 import scala.collection.JavaConversions.asJavaCollection
 import scala.collection.JavaConversions.collectionAsScalaIterable
-
 import oscar.algo.ArrayQueue
 import oscar.algo.reversible.ReversiblePointer
 import oscar.algo.search.SearchNode
@@ -34,15 +32,20 @@ import oscar.cp.core.variables.CPIntVar
 import oscar.cp.core.variables.CPSetVar
 import oscar.cp.core.watcher.PropagEventQueueVarSet
 import oscar.cp.core.watcher.PropagEventQueueVarInt
+import oscar.algo.search.DFSearchNode
+import scala.util.Random
 
 /**
  * Constraint Programming CPStore
  * @author Pierre Schaus pschaus@gmail.com
  * @author Renaud Hartert ren.hartert@gmail.com
  */
-class CPStore( final val propagStrength: CPPropagStrength) extends SearchNode {
+class CPStore( final val propagStrength: CPPropagStrength) extends DFSearchNode {
 
   def this() = this(CPPropagStrength.Weak)
+  
+  // Random object
+  private[this] val rand = new Random(0)
 
   // Propagation queue L1 (AC5)
   private[this] val propagQueueL1 = Array.fill(CPStore.MaxPriorityL1 + 1)(new ArrayQueue[() => CPOutcome](1000))
@@ -80,6 +83,8 @@ class CPStore( final val propagStrength: CPPropagStrength) extends SearchNode {
 
   // Reference to the last constraint called
   private[this] var lastConstraint: Constraint = null
+  
+  final def getRandom(): Random = rand
 
   /**
    *  Returns the last constraint called in the propagate algorithm.
@@ -138,95 +143,6 @@ class CPStore( final val propagStrength: CPPropagStrength) extends SearchNode {
     })
     if (priority > highestPriorL1) {
       highestPriorL1 = priority
-    }
-  }
-
-  /**
-   * Notify the constraints that is enqueue them in the L2 propagation queue such that their propagate method
-   * is called at some point in the current fix point
-   * @param constraints
-   */
-  def notifyL2(constraints: ConstraintQueue): Unit = {
-    var q = constraints;
-    while (q != null) {
-      val c = q.cons
-      enqueueL2(c)
-      q = q.next
-    }
-  }
-
-  def notifRemoveL1(constraints: PropagEventQueueVarInt, x: CPIntVar, v: Int) {
-    var q = constraints;
-    while (q != null) {
-      val c = q.cons
-      val x = q.x
-      if (c.isActive) {
-        enqueueL1(c, c.priorityRemoveL1, c.valRemove(x, x.transform(v)));
-      }
-      q = q.next
-    }
-  }
-
-  def notifyRemoveIdxL1(constraints: PropagEventQueueVarInt, x: CPIntVar, v: Int) {
-    var q = constraints;
-    while (q != null) {
-      val c = q.cons
-      val x = q.x
-      val idx = q.idx
-      if (c.isActive) {
-        enqueueL1(c, c.priorityRemoveL1, c.valRemoveIdx(x, idx, x.transform(v)))
-      }
-      q = q.next
-    }
-  }
-
-  def notifyUpdateBoundsL1(constraints: PropagEventQueueVarInt, x: CPIntVar) {
-    var q = constraints;
-    while (q != null) {
-      val c = q.cons
-      val x = q.x
-      if (c.isActive) {
-        enqueueL1(c, c.priorityBoundsL1, c.updateBounds(x))
-      }
-      q = q.next;
-    }
-  }
-
-  def notifyUpdateBoundsIdxL1(constraints: PropagEventQueueVarInt, x: CPIntVar) {
-    var q = constraints;
-    while (q != null) {
-      val c = q.cons
-      val x = q.x
-      val idx = q.idx
-      if (c.isActive) {
-        enqueueL1(c, c.priorityBoundsL1, c.updateBoundsIdx(x, idx))
-      }
-      q = q.next;
-    }
-  }
-
-  def notifyBindL1(constraints: PropagEventQueueVarInt, x: CPIntVar) {
-    var q = constraints;
-    while (q != null) {
-      val c = q.cons
-      val x = q.x
-      if (c.isActive) {
-        enqueueL1(c, c.priorityBindL1, c.valBind(x))
-      }
-      q = q.next
-    }
-  }
-
-  def notifyBindIdxL1(constraints: PropagEventQueueVarInt, x: CPIntVar) {
-    var q = constraints;
-    while (q != null) {
-      val c = q.cons
-      val x = q.x
-      val idx = q.idx
-      if (c.isActive) {
-        enqueueL1(c, c.priorityBindL1, c.valBindIdx(x, idx))
-      }
-      q = q.next
     }
   }
 

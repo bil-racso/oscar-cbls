@@ -26,13 +26,13 @@ import scala.collection.Iterable
  */
 class ReversibleSparseSet(s: ReversibleContext, val minValue: Int, val maxValue: Int) extends Iterable[Int] {
 
-  private val offset = minValue
-  private val _min = new ReversibleInt(s, minValue)
-  private val _max = new ReversibleInt(s, maxValue)
-  private val _size = new ReversibleInt(s, maxValue - minValue + 1)
+  private[this] val offset = minValue
+  private[this] val _min = new ReversibleInt(s, minValue)
+  private[this] val _max = new ReversibleInt(s, maxValue)
+  private[this] val _size = new ReversibleInt(s, maxValue - minValue + 1)
 
-  private val values = Array.tabulate(size)(i => i)
-  private val indexes = Array.tabulate(size)(i => i)
+  private[this] val values = Array.tabulate(size)(i => i)
+  private[this] val indexes = Array.tabulate(size)(i => i)
 
   override def size: Int = _size.value
 
@@ -40,7 +40,7 @@ class ReversibleSparseSet(s: ReversibleContext, val minValue: Int, val maxValue:
     if (!hasValue(_min.value)) updateMinValRemoved(_min.value)
     _min.value
   }
-  private def min_=(v: Int) {
+  @inline private def min_=(v: Int) {
     _min.value = v
   }
 
@@ -49,11 +49,11 @@ class ReversibleSparseSet(s: ReversibleContext, val minValue: Int, val maxValue:
     _max.value
   }
 
-  private def max_=(v: Int) {
+  @inline private def max_=(v: Int) {
     _max.value = v
   }
 
-  private def checkVal(v: Int) = {
+  @inline private def checkVal(v: Int) = {
     assert(v >= offset)
     assert(v <= offset + values.size - 1)
     true
@@ -71,7 +71,7 @@ class ReversibleSparseSet(s: ReversibleContext, val minValue: Int, val maxValue:
    */
   def empty(): Unit = _size.value = 0
 
-  private def exchangePositions(val1: Int, val2: Int) {
+  @inline private def exchangePositions(val1: Int, val2: Int) {
     assert(checkVal(val1))
     assert(checkVal(val2))
     val v1 = val1 - offset
@@ -84,12 +84,12 @@ class ReversibleSparseSet(s: ReversibleContext, val minValue: Int, val maxValue:
     indexes(v2) = i1
   }
 
-  private def updateBoundsValRemoved(v: Int) {
+  @inline private def updateBoundsValRemoved(v: Int) {
     updateMaxValRemoved(v)
     updateMinValRemoved(v)
   }
 
-  private def updateMaxValRemoved(v: Int) {
+  @inline private def updateMaxValRemoved(v: Int) {
 
     /*
     if (!isEmpty) {
@@ -119,7 +119,7 @@ class ReversibleSparseSet(s: ReversibleContext, val minValue: Int, val maxValue:
     }
   }
 
-  private def updateMinValRemoved(v: Int) {
+  @inline private def updateMinValRemoved(v: Int) {
 
     /*
     if (!isEmpty) {
@@ -248,19 +248,43 @@ class ReversibleSparseSet(s: ReversibleContext, val minValue: Int, val maxValue:
     }
   }
 
+  /**
+   * @return a safe iterator (ok to remove values while iterating)
+   */
   def iterator: Iterator[Int] = {
-    var iterIndex = 0
-    new Iterator[Int] {
-      def next(): Int = {
-        val i = iterIndex
-        iterIndex += 1
-        values(i) + offset
-      }
-      def hasNext: Boolean = {
-        iterIndex < _size.value
+    this.toArray.iterator
+  }
+  
+  /**
+   * @return an array representation of values present in the set
+   */
+  def toArray: Array[Int] = {
+    val res = Array.ofDim[Int](size)
+    fillArray(res)
+    res
+  }
+  
+  /**
+   * @return set the first values of dest to the ones 
+   *         of the set and return the size of the set
+   */
+  def fillArray(dest: Array[Int]): Int = {
+    System.arraycopy(values, 0, dest, 0, size)
+    if (offset != 0) {
+      var i = 0
+      while (i < size) {
+        dest(i) += offset
       }
     }
-  }
+    size
+  }  
+  
+  /**
+   * get the i_th value in the sparse-set
+   */
+  @inline final def apply(i: Int) = {
+    values(i) + offset
+  } 
 
   def delta(oldSize: Int): Iterator[Int] = {
     var ind = size
