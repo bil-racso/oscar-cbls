@@ -12,7 +12,7 @@
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
-package oscar.examples.cp.hakank
+
 import oscar.cp._
 import scala.io.Source._
 import scala.math._
@@ -32,7 +32,8 @@ object MagicSequence extends CPModel with App {
   //
   // data
   //
-  val n = if (args.length > 0) args(0).toInt else 10;
+  val n = 400
+  
   //
   // variables
   //

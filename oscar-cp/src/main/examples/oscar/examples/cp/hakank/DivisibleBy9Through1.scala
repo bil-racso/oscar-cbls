@@ -41,47 +41,47 @@ import scala.math._
   @author Hakan Kjellerstrand hakank@gmail.com
   http://www.hakank.org/oscar/
 */
-object DivisibleBy9Through1 extends CPModel with App  {
-    //
-    // data
-    //
-    var base = 10
-    if (args.length > 0) {
-      base = args(0).toInt
-      if (base > 10) {
-        println("\nWarning: base > 10 gives overflow. Resets to base = 10");
-        base = 10
-      }
+object DivisibleBy9Through1 extends CPModel with App {
+  //
+  // data
+  //
+  var base = 10
+  if (args.length > 0) {
+    base = args(0).toInt
+    if (base > 10) {
+      println("\nWarning: base > 10 gives overflow. Resets to base = 10");
+      base = 10
     }
-    val n  = base - 1
-    val m  = pow(base, n).toInt -1
-    val m2 = pow(base, n-1).toInt -1
-    val coefs = Array.tabulate(n)(i=>pow(base, n-1-i).toInt)
-    println("base: " + base)
-    //
-    // variables
-    //
-    val digits   = Array.fill(n)(CPIntVar(1 to n))
-    val numbers  = Array.fill(n)(CPIntVar(1 to m))
-    val divisors = Array.fill(n)(CPIntVar(1 to m2))
-    //
-    // constraints
-    //
-  
-     add(allDifferent(digits), Strong)
-      for (i <- 1 to n) {
-       add(sum(0 until i)(j => digits(j) * coefs.drop(n-i)(j)) == numbers(i-1))
-       add(numbers(i-1) == divisors(i-1) * i)
-      }
-    search{
-      binaryFirstFail(digits)
-    }
-onSolution {
-      println("\nSolution:")
-      println("digits:" +  digits.mkString(""))
-      print("number base 10:" +  numbers.last +  " Base " + base + ": " + 
-            digits.map(_.value).mkString(""))
-      println()
-    } 
-    println(start())
   }
+  val n = base - 1
+  val m = pow(base, n).toInt - 1
+  val m2 = pow(base, n - 1).toInt - 1
+  val coefs = Array.tabulate(n)(i => pow(base, n - 1 - i).toInt)
+  println("base: " + base)
+  //
+  // variables
+  //
+  val digits = Array.fill(n)(CPIntVar(1 to n))
+  val numbers = Array.fill(n)(CPIntVar(1 to m))
+  val divisors = Array.fill(n)(CPIntVar(1 to m2))
+  //
+  // constraints
+  //
+
+  add(allDifferent(digits), Strong)
+  for (i <- 1 to n) {
+    add(sum(0 until i)(j => digits(j) * coefs.drop(n - i)(j)) == numbers(i - 1))
+    add(numbers(i - 1) == divisors(i - 1) * i)
+  }
+  search {
+    binaryFirstFail(digits)
+  }
+  onSolution {
+    println("\nSolution:")
+    println("digits:" + digits.mkString(""))
+    print("number base 10:" + numbers.last + " Base " + base + ": " +
+      digits.map(_.value).mkString(""))
+    println()
+  }
+  println(start())
+}

@@ -12,7 +12,7 @@
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
-package oscar.examples.cp.hakank
+
 import oscar.cp._
 import scala.math.pow
 /**
@@ -37,9 +37,9 @@ object DeBruijn extends CPModel with App {
   def toNum(t: Array[CPIntVar], base: Int = 10) = sum(
     Array.tabulate(t.length)(i => t(i) * pow(base, t.length - i - 1).toInt))
   // data
-  val base = if (args.length > 0) args(0).toInt else 3;
-  val n = if (args.length > 1) args(1).toInt else 3;
-  val m = if (args.length > 2) args(2).toInt else pow(base, n).toInt;
+  val base =  3
+  val n =  3
+  val m = pow(base, n).toInt;
   println("base: " + base + " n: " + n + " m: " + m)
   //
   // variables

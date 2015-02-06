@@ -29,36 +29,35 @@ import oscar.cp._
  * Pineapple cheesecake (1 piece) 500           0            4      5
  *
  * This is an alternative version.
- * 
+ *
  * @author Hakan Kjellerstrand hakank@gmail.com
  * http://www.hakank.org/oscar/
  *
  */
-object Diet2 extends CPModel with App  {
-     // data
-     val n = 4
-     val price  = Array( 50, 20, 30, 80) // in cents
-     val limits = Array(500,  6, 10,  8) // requirements for each nutrition type
-     // nutritions for each product
-     val calories  = Array(400, 200, 150, 500)
-     val chocolate = Array(3,2,0,0)
-     val sugar     = Array(2,2,4,4)
-     val fat       = Array(2,4,1,5)
-     val all = Array(calories, chocolate, sugar, fat)
-     // variables
-     val x = Array.fill(n)(CPIntVar(0 to 10))
-     val cost = weightedSum(price, x)
-     // constraints
-    minimize(cost) 
-       // handle the nutrition requirements
-       for(i <- 0 until n) (
-          add(weightedSum(all(i), x) >= limits(i))
-       )
-    search{
-       binaryFirstFail(x)
-    }
-onSolution {
-       println(x.mkString(" "))
-    }
-    println(start())
+object Diet2 extends CPModel with App {
+  // data
+  val n = 4
+  val price = Array(50, 20, 30, 80) // in cents
+  val limits = Array(500, 6, 10, 8) // requirements for each nutrition type
+  // nutritions for each product
+  val calories = Array(400, 200, 150, 500)
+  val chocolate = Array(3, 2, 0, 0)
+  val sugar = Array(2, 2, 4, 4)
+  val fat = Array(2, 4, 1, 5)
+  val all = Array(calories, chocolate, sugar, fat)
+  // variables
+  val x = Array.fill(n)(CPIntVar(0 to 10))
+  val cost = weightedSum(price, x)
+  // constraints
+  minimize(cost)
+  // handle the nutrition requirements
+  for (i <- 0 until n) (
+    add(weightedSum(all(i), x) >= limits(i)))
+  search {
+    binaryFirstFail(x)
   }
+  onSolution {
+    println(x.mkString(" "))
+  }
+  println(start())
+}
