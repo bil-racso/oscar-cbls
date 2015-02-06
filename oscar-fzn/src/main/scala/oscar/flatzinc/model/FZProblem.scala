@@ -58,18 +58,21 @@ class FZProblem {
   }
   
   
-  def satisfy() {
+  def satisfy(anns:List[Annotation]) {
     search.obj = Objective.SATISFY
+    search.anns = anns
   }
   
-  def minimize(obj: Variable) {
+  def minimize(obj: Variable,anns:List[Annotation]) {
     search.obj = Objective.MINIMIZE
     search.variable = Some(obj)
+    search.anns = anns
   }
   
-  def maximize(obj: Variable) {
+  def maximize(obj: Variable,anns:List[Annotation]) {
     search.obj = Objective.MAXIMIZE
     search.variable = Some(obj)
+    search.anns = anns
   }
   
   def addSearch(s: Array[Variable],vrh: VariableHeuristic.Value,vh: ValueHeuristic.Value) {
@@ -82,7 +85,7 @@ class FZProblem {
   }
 }
 
-abstract class Domain {
+sealed abstract class Domain {
   def min: Int
   def max: Int
   def contains(v:Int): Boolean
@@ -232,4 +235,5 @@ class Search() {
   var obj: Objective.Value = Objective.SATISFY
   var variable: Option[Variable] = None
   var heuristics: Vector[(Array[Variable],VariableHeuristic.Value,ValueHeuristic.Value)] = Vector.empty 
+  var anns: List[Annotation] = List.empty[Annotation]
 }

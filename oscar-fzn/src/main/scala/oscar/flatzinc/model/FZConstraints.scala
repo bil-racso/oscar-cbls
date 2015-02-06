@@ -93,6 +93,9 @@ abstract class AllDefiningConstraint(variables: Array[Variable], ann:List[Annota
   override def getMaybeCandidateDefVars() = variables
 }
 
+//TODO: Flatten the args into the array of variables
+case class GeneratedConstraint(name:String, args:List[Any],signature:List[Pattern]) extends Constraint(Array.empty[Variable], List.empty[Annotation])
+  
 // ----------------------------------
 
 case class array_bool_and(as: Array[Variable], r: Variable, ann: List[Annotation] = List.empty[Annotation]) 

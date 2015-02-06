@@ -13,18 +13,26 @@
   * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
   ******************************************************************************/
 /**
- * @author Leonard Debroux
  * @author Jean-Noël Monette
  */
 package oscar.flatzinc.model
 
-class Annotation (
-    val name: String,
-    var args: List[Any]
-	){
-    def this(name: String) = this(name,List.empty[Any]);
-    def add(e: Any){
-      args = args ++ List(e);
-    }
-	override def toString() = name + " " + args
+import scala.collection.mutable.{ Map => MMap}
+
+object Helper {
+  def getCName(c: Constraint): String = {
+    val names = c.getClass().getName().split("\\.")
+    val name = names(names.length-1)
+    if(name=="reif"){
+      val n2 = c.asInstanceOf[reif].c.getClass().getName().split("\\.")
+      n2(n2.length-1)+"_reif"
+    }else name
+  }
+  
+  def getCstrsByName(cstrs: List[Constraint]): MMap[String,List[Constraint]] = {
+    cstrs.foldLeft(MMap.empty[String,List[Constraint]])((acc,c) => { 
+      val name = getCName(c)
+      acc(name) = c :: acc.getOrElse(name,List.empty[Constraint]); 
+      acc})
+  }
 }
