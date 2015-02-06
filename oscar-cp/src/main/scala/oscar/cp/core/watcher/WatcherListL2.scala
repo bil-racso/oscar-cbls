@@ -28,7 +28,7 @@ class WatcherListL2(store: CPStore) {
   
   @inline final def enqueue(): Unit = {
     var i = index
-    while (i > 0) {
+    while (i > 0) { 
       i -= 1
       val constraint = stack(i)
       store.enqueueL2(constraint)

@@ -97,14 +97,13 @@ class WatcherListL1(store: CPStore) {
 
   // Double the size of the stack
   @inline private def growStacks(): Unit = {
-    val oldSize = constraintStack.length
-    val newSize = oldSize * 2
+    val newSize = index * 2
     val newConstraintStack = new Array[Constraint](newSize)
     val newVariablesStack = new Array[CPIntVar](newSize)
     val newIndexStack = new Array[Int](newSize)
-    System.arraycopy(constraintStack, 0, newConstraintStack, 0, oldSize)
-    System.arraycopy(variablesStack, 0, newVariablesStack, 0, oldSize)
-    System.arraycopy(indexStack, 0, newIndexStack, 0, oldSize)
+    System.arraycopy(constraintStack, 0, newConstraintStack, 0, index)
+    System.arraycopy(variablesStack, 0, newVariablesStack, 0, index)
+    System.arraycopy(indexStack, 0, newIndexStack, 0, index)
     constraintStack = newConstraintStack
     variablesStack = newVariablesStack
     indexStack = newIndexStack
