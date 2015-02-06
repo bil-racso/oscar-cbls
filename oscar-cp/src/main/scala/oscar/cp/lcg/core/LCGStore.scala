@@ -221,6 +221,7 @@ class LCGStore(store: CPStore) {
   }
   
   @inline private def analyze(): Unit = {
+    
     val seen = new Array[Boolean](varStoreSize)
     var counter = 0
     var p: Literal = null
