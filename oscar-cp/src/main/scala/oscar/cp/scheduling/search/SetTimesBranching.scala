@@ -38,6 +38,7 @@ class SetTimesBranching(starts: IndexedSeq[CPIntVar], durations: IndexedSeq[CPIn
   // update the new ones becoming available because est has moved
   def updateSelectable() = (Activities).filter(i => oldEST(i).value < starts(i).min || durations(i).max == 0).foreach(selectable(_).value = true)
   def selectableIndices() = (Activities).filter(i => selectable(i).value && !bound(i).value)
+  def notSelectableIndices() = (Activities).filter(i => !selectable(i).value && !bound(i).value)
   def allStartBounds() = bound.forall(i => i.value)
 
   def updateAndCheck() = {
@@ -51,6 +52,14 @@ class SetTimesBranching(starts: IndexedSeq[CPIntVar], durations: IndexedSeq[CPIn
     } else {
       updateSelectable()
       val (est, ect,x) = selectableIndices().map(i => (starts(i).min, tieBreaker(i),i)).min
+      val notSelectable = notSelectableIndices()
+      if (notSelectable.nonEmpty) {
+        val lstNotSelectable = notSelectable.map(i => starts(i).max).min
+        if  (lstNotSelectable <= est) {
+           //println("here")
+           cp.fail()
+        }
+      }
       // Select the activity with the smallest EST, ECT as tie breaker
       branch {
         cp.post(starts(x) == est)
