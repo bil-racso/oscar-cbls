@@ -395,7 +395,10 @@ class CPIntVarAdaptableSuite extends TestSuite {
   test("Copyt domain and to Array") {
     val context = new CPStore()
     val values = Set(10, 11, 15, 16, 17, 20, 21, 25)
-    val domain = new CPIntVarAdaptable(context, 10, 25, true)
+    val domain = new CPIntVarAdaptable(context, 5, 30, true)
+    domain.updateMin(10)
+    domain.updateMax(25)
+    assert(domain.toArray.toSet == (10 to 25).toSet)
     (10 to 25).foreach(v => if (!values.contains(v)) domain.removeValue(v))
     val valuesArray = Array.ofDim[Int](values.size)
     val s = domain.fillArray(valuesArray)

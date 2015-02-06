@@ -147,7 +147,7 @@ class CPIntVarAdaptable(final override val store: CPStore, minValue: Int, maxVal
   @inline private def copyDomain(array: Array[Int]): Int = {
     if (_continuous) {
       var i = _size
-      while (i > 0) { i -= 1; array(i) = i + minValue }
+      while (i > 0) { i -= 1; array(i) = i + _min }
     } else System.arraycopy(values, 0, array, 0, _size)
     _size
   }

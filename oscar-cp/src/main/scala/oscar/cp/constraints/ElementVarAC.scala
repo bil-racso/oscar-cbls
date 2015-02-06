@@ -28,6 +28,7 @@ import oscar.cp.core.CPOutcome._
 import oscar.cp.core.CPSolver
 import oscar.algo.reversible.ReversibleInt
 import oscar.algo.reversible.ReversibleSparseSet
+import oscar.algo.reversible.ReversibleIntWithCache
 
 
 /**
@@ -38,17 +39,20 @@ import oscar.algo.reversible.ReversibleSparseSet
  */
 class ElementVarAC(y: Array[CPIntVar], x: CPIntVar, z: CPIntVar) extends Constraint(y(0).store, "ACElementVar") {
     
-  private val xRange = max(0, x.min) to min(x.max, y.size)
-  private val zRange = (z.min max (y.map(_.min).min)) to (z.max min (y.map(_.max).max))
+  private[this] val xRange = max(0, x.min) to min(x.max, y.size)
+  private[this] val zRange = (z.min max (y.map(_.min).min)) to (z.max min (y.map(_.max).max))
   
   // Number of supports for the value v i.e number of indices i such that v is in y(i)
-  private val _nSupports = Array.fill(zRange.size)(new ReversibleInt(s, 0))
+  private[this] val _nSupports = Array.fill(zRange.size)( new ReversibleIntWithCache(s, 0, y.size+1) ) //// for some reasons, does not work with cache
+  
   // For all indices i in x: intersect(i) is the size of the intersection between y(i) and z
-  private val _intersect = Array.fill(xRange.size)(new ReversibleSparseSet(s, z.min, z.max))
+  private[this] val _intersect = Array.fill(xRange.size)(new ReversibleSparseSet(s, z.min, z.max))
   
   // Mapping functions used to limit the size of both previous structures
-  private def nSupports(i: Int) = _nSupports(i-zRange.min)
-  private def intersect(i: Int) = _intersect(i-xRange.min)
+  private[this] def nSupports(i: Int) = _nSupports(i-zRange.min)
+  private[this] def intersect(i: Int) = _intersect(i-xRange.min)
+  
+  private[this] val values = Array.ofDim[Int](y.map(_.size).max max x.size max z.size)
 
   override def setup(l: CPPropagStrength): CPOutcome = {
     if (z.updateMax((y.map(_.max).max)) == Failure) return Failure
@@ -74,22 +78,31 @@ class ElementVarAC(y: Array[CPIntVar], x: CPIntVar, z: CPIntVar) extends Constra
   def propagateInitial(): CPOutcome = {
     //resetData() // Mandatory if propagate is called after the initial call
     initData()
-
-    for (i <- x.min to x.max; if x hasValue i) {
-      if (intersect(i).size == 0) {
-        if (x.removeValue(i) == Failure) {
+    
+    var i = 0
+    var m = x.fillArray(values)
+    while (i < m) {
+      val v = values(i)
+      if (intersect(v).size == 0) {
+        if (x.removeValue(v) == Failure) {
           return Failure
         }
       }
+      i += 1
     }
+    
     if (x.isBound) return bindX()
-    for (v <- z.min to z.max; if z hasValue v) {
+    i = 0
+    m = z.fillArray(values)
+    while (i < m) {
+      val v = values(i)
       if (nSupports(v).value == 0) {
         if (z.removeValue(v) == Failure) {
           return Failure
         }
-      }
-    }
+      }      
+      i += 1
+    }    
     Suspend
   }
 
@@ -125,15 +138,15 @@ class ElementVarAC(y: Array[CPIntVar], x: CPIntVar, z: CPIntVar) extends Constra
   }
 
   // Reduces the number of supports of the value v
-  private def reduceSupports(v: Int): CPOutcome = {
-    if (zRange.contains(v) && nSupports(v).decr() == 0) {
+  @inline private def reduceSupports(v: Int): CPOutcome = {
+    if (zRange.contains(v) && nSupports(v).value >= 1 && nSupports(v).decr() == 0) {
       z.removeValue(v) 
     }
     else Suspend
   }
 
   // Removes the value v from the intersection between y(i) and z
-  private def reduceIntersect(i: Int, v: Int): CPOutcome = {
+  @inline private def reduceIntersect(i: Int, v: Int): CPOutcome = {
     intersect(i).removeValue(v)
     if (intersect(i).isEmpty) {
       x.removeValue(i) 
@@ -142,28 +155,36 @@ class ElementVarAC(y: Array[CPIntVar], x: CPIntVar, z: CPIntVar) extends Constra
   }
 
   // Removes v from all the intersections
-  private def removeFromZ(v: Int): CPOutcome = {
-    nSupports(v) setValue 0
-    for (i <- x.min to x.max; if x.hasValue(i)) {
-      if (reduceIntersect(i, v) == Failure) return Failure
+  @inline private def removeFromZ(v: Int): CPOutcome = { 
+    nSupports(v).value = 0
+    var i = 0
+    val m = x.fillArray(values)
+    while (i < m) {
+      if (reduceIntersect(values(i), v) == Failure) return Failure
+      i += 1
     }
     Suspend
   }
 
   // If x is bound, this constraint is replaced by an Equality constraint
   // else, the number of supports for all values v in y(i) is reduced by 1
-  private def removeFromX(i: Int): CPOutcome = {
+  @inline private def removeFromX(i: Int): CPOutcome = {
     if (x.isBound) bindX()
     else {
-      for (v <- y(i).min to y(i).max; if y(i).hasValue(v); if v < zRange.max) {
-        if (reduceSupports(v) == Failure) return Failure
+      val m = y(i).fillArray(values)
+      var k = 0
+      while (k < m) {
+        if (values(k) < zRange.max) {
+          if (reduceSupports(values(k)) == Failure) return Failure
+        }
+        k += 1
       }
       Suspend
     }
   }
 
   // If y(i) has an intersection with z, the number of supports of the  value v is reduced by 1
-  private def removeFromY(i: Int, v: Int): CPOutcome = {
+  @inline private def removeFromY(i: Int, v: Int): CPOutcome = {
     // we must check that x has value to avoid reducing twice for the same removal
     // y(i) might loose the value and i is also removed ...
     if (x.hasValue(i) && reduceSupports(v) == Failure) Failure 
@@ -171,13 +192,14 @@ class ElementVarAC(y: Array[CPIntVar], x: CPIntVar, z: CPIntVar) extends Constra
   }
 
   // Replaces this constraint by an Equality constraint
-  private def bindX(): CPOutcome = {
-    if (s.post(new Eq(y(x.min), z)) == Failure) Failure
+  private[this] val eqCons = y.map(new Eq(_,z))
+  @inline private def bindX(): CPOutcome = {
+    if (s.post(eqCons(x.min)) == Failure) Failure
     else Success
   }
 
   // Removes each value i in x that is not a valid id in y
-  private def adjustX(): CPOutcome = {
+  @inline private def adjustX(): CPOutcome = {
     if (x.updateMin(0) == Failure) Failure
     else if (x.updateMax(y.size - 1) == Failure) Failure
     else if (x.isBound) bindX()
