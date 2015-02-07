@@ -129,7 +129,7 @@ class FZCBLSModel(val model: FZProblem, val c: ConstraintSystem, val m: Store, v
      //Only create variables that are not fixed by an invariant.
     for (parsedVariable <- model.variables if !parsedVariable.isDefined) {
       parsedVariable match {
-        case ConcreteVariable(id, dom) =>
+        case IntegerVariable(id, dom) =>
           //TODO: Put this in a method! or make it deterministic as the neighbourhoods should take care of the assignments!
           val initialValue = (dom match {
             case oscar.flatzinc.model.DomainRange(min, max) =>
@@ -149,6 +149,21 @@ class FZCBLSModel(val model: FZProblem, val c: ConstraintSystem, val m: Store, v
           //if (!parsedVariable.isDefined) {
             variables = cblsVariable :: variables;
           //}
+       case bv:BooleanVariable =>
+         val dom = oscar.flatzinc.model.DomainRange(if(bv.isTrue) 1 else 0, if(bv.isFalse) 0 else 1)
+          //TODO: Put this in a method! or make it deterministic as the neighbourhoods should take care of the assignments!
+          val initialValue = {
+                val range = (dom.min to dom.max);
+                range(Random.nextInt(range.length))
+              }
+          val cblsVariable = CBLSIntVarDom(m, initialValue, dom,  bv.id);
+          //TODO: handle constant variables here.
+          cblsIntMap += bv.id -> cblsVariable;
+          //Removed this test and filtered for search variables only later
+          //if (!parsedVariable.isDefined) {
+            variables = cblsVariable :: variables;
+          //}
+       
        // case _ => ()//TODO: DO something for the concrete constants?
       }
     }
@@ -169,17 +184,33 @@ class FZCBLSModel(val model: FZProblem, val c: ConstraintSystem, val m: Store, v
           case Some(c) => c;
         }
     */
-      case ConcreteVariable(id, _) =>
-        cblsIntMap.get(id) match {
+      case v:IntegerVariable =>
+        cblsIntMap.get(v.id) match {
           case None if v.isBound =>
             /*cblsIntMap.get(v.min.toString) match {
               case Some(c) => c;
               case None => {*/
             //From Gustav: All constants need to have a store, otherwise they won't have a UniqueID (from PropagationElement) and constraints will start throwing exceptions
             //JNM: I removed ",m " to avoid introducing a lot of useless "variables" in the model in the hope of making it more efficient.
+            //JNM: restored the "m," as one need it to find the model sometimes.
             val c = new CBLSIntConstDom(m,v.value);
             //println("ICI "+id + " "+v.min)
-            cblsIntMap += id -> c; //was id -> 
+            cblsIntMap += v.id -> c; //was id -> 
+            c;//}}
+          case Some(c) => c;
+        }
+      case v:BooleanVariable =>
+        cblsIntMap.get(v.id) match {
+          case None if v.isBound =>
+            /*cblsIntMap.get(v.min.toString) match {
+              case Some(c) => c;
+              case None => {*/
+            //From Gustav: All constants need to have a store, otherwise they won't have a UniqueID (from PropagationElement) and constraints will start throwing exceptions
+            //JNM: I removed ",m " to avoid introducing a lot of useless "variables" in the model in the hope of making it more efficient.
+            //JNM: restored the "m," as one need it to find the model sometimes.
+            val c = new CBLSIntConstDom(m,v.intValue);
+            //println("ICI "+id + " "+v.min)
+            cblsIntMap += v.id -> c; //was id -> 
             c;//}}
           case Some(c) => c;
         }
@@ -239,11 +270,11 @@ class FZCBLSSolver extends SearchEngine with StopWatch {
       log("No domain reduction")
     }
     model.constraints.foreach(c => if(c.getVariables().length <=1) log(0,"Remaining Unary Constraint "+c)
-    else if(c.getVariables().filter(v => v.min != v.max).length <= 1){
-      log("De facto Unary Constraint "+c); ; 
-      log(2,c.getVariables().map(v => v.min+".."+v.max).mkString(" , "))
+    else if(c.getVariables().filter(v => !v.isBound).length <= 1){
+      log("De facto Unary Constraint "+c); 
+      //log(2,c.getVariables().map(v => v.min+".."+v.max).mkString(" , "))
     })
-    model.constraints.foreach{ case reif(c,b) => if(b.isBound) log(0,"Fixed reified constraint: "+b.value); case _ => {}}
+    model.constraints.foreach{ case reif(c,b) => if(b.isBound) log(0,"Fixed reified constraint: "+b.boolValue); case _ => {}}
     
     
     

@@ -79,7 +79,7 @@ class Model(val log: Log) {
         a.annotations = anns0;
         for(i <- 0 to t.size-1){
             val n = name+"["+(i+1)+"]"
-            val v = problem.addVariable(n,copy(d));
+            val v = problem.addVariable(n,copy(d),t.typ.equals("bool"));
             val vr = new VarRef(v);
             a.elements.add(vr);
             vr.typ = new Type(t);
@@ -91,7 +91,7 @@ class Model(val log: Log) {
         addId(name,a);
         handleVarAnnotations(name, a, anns)
       }else{
-        val v = problem.addVariable(name,d)
+        val v = problem.addVariable(name,d,t.typ.equals("bool"))
         val vr = new VarRef(v);
         if(d!=null)vr.domain = d;
         vr.name = name;
@@ -180,24 +180,26 @@ class Model(val log: Log) {
     //TODO: Search annotations are ignored for now
     if(anns.size() > 0)log(0,"ignoring search annotations")
   }
-  def getIntVar(e: Element): Variable = {
-    if(e.isInstanceOf[VarRef])e.asInstanceOf[VarRef].v;
-    else if(e.value.isInstanceOf[Integer])new ConcreteVariable(e.value.toString(),Int.unbox(e.value))
-    else if(e.value.isInstanceOf[Boolean])new ConcreteVariable(e.value.toString(),if (Boolean.unbox(e.value)) 1 else 0)//Ho I don't like that! Booleans and Integers are not the same
+  def getIntVar(e: Element): IntegerVariable = {
+    if(e.isInstanceOf[VarRef])e.asInstanceOf[VarRef].v.asInstanceOf[IntegerVariable];
+    else if(e.value.isInstanceOf[Integer])new IntegerVariable(e.value.toString(),Int.unbox(e.value))
+    //TODO: This method should only be used when IntegerVariable are used 
+    //else if(e.value.isInstanceOf[Boolean])new BooleanVariable(e.value.toString(),Some(Boolean.unbox(e.value)))
     else{
       throw new ParsingException("Expected a var int but got: "+e)
       //null.asInstanceOf[Variable]
     }
   }
-  def getBoolVar(e: Element): Variable = { 
-    if(e.isInstanceOf[VarRef])e.asInstanceOf[VarRef].v;
-    else if(e.value.isInstanceOf[Boolean])new ConcreteVariable(e.value.toString(),if (Boolean.unbox(e.value)) 1 else 0)
+  def getBoolVar(e: Element): BooleanVariable = { 
+    if(e.isInstanceOf[VarRef])e.asInstanceOf[VarRef].v.asInstanceOf[BooleanVariable];
+    else if(e.value.isInstanceOf[Boolean])new BooleanVariable(e.value.toString(),Some(Boolean.unbox(e.value)))
     else{
       throw new ParsingException("Expected a var bool but got: "+e)
       //null.asInstanceOf[Variable]
     }
   }
-  def getBoolVarArray(e: Element): Array[Variable] = { 
+  def getBoolVarArray(e: Element): Array[BooleanVariable] = { 
+    //TODO: Do the same memoization as for Integer arrays.
     if(e.isInstanceOf[ArrayOfElement]){
       val a = e.asInstanceOf[ArrayOfElement]
       a.elements.asScala.toArray.map(v => getBoolVar(v))
@@ -207,9 +209,9 @@ class Model(val log: Log) {
   }
 
   //TODO: Check if this actually reduces the memory footprint and does not increase parsing time too much...
-  var knownarrays = Map.empty[WrappedArray[Variable],Array[Variable]]
+  var knownarrays = Map.empty[WrappedArray[IntegerVariable],Array[IntegerVariable]]
   
-  def getIntVarArray(e: Element): Array[Variable] = { 
+  def getIntVarArray(e: Element): Array[IntegerVariable] = { 
     if(e.isInstanceOf[ArrayOfElement]){
       val array = e.asInstanceOf[ArrayOfElement].elements.asScala.toArray.map(v => getIntVar(v))
       val wrap = genericWrapArray(array)
@@ -266,8 +268,10 @@ class Model(val log: Log) {
                     case "av" => getIntVarArray(args(i))
                     case "v" => getIntVar(args(i))
       }*/
-      arg(i) = if (p(i).equals(classOf[Array[Variable]])) getIntVarArray(args(i))
-                else if (p(i).equals(classOf[Variable])) getIntVar(args(i))//TODO: differentiate booleans... and par vs var
+      arg(i) = if (p(i).equals(classOf[Array[IntegerVariable]])) getIntVarArray(args(i))
+                else if (p(i).equals(classOf[IntegerVariable])) getIntVar(args(i))//TODO: differentiate par vs var
+                else if (p(i).equals(classOf[Array[BooleanVariable]])) getBoolVarArray(args(i))
+                else if (p(i).equals(classOf[BooleanVariable])) getBoolVar(args(i))//TODO: differentiate par vs var
                 else if(p(i).equals(classOf[Domain])) getIntSet(args(i))
                 else throw new Exception("Case not handled: "+p(i));
     }

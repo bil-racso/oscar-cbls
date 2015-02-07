@@ -29,23 +29,23 @@ class FZProblem {
 
   var variables: List[Variable] = List.empty[Variable]
   
-  var constraints: List[Constraint] = List.empty[Constraint]//TODO: might as well replace it by a list...
+  var constraints: List[Constraint] = List.empty[Constraint]//TODO: might as well replace it by a set for easy access...
  // var cstrsByName: MMap[String,List[Constraint]] = MMap.empty[String,List[Constraint]]
   val solution:FZSolution = new FZSolution();
   
   val search = new Search();
   
-  def addVariable(id: String, dom: Domain): Variable = {
-   // println("% added var: "+id+ " with dom "+dom)
-    val variable: Variable =
-          new ConcreteVariable(id, dom)
-//      if (dom.min == dom.max) {//why here?
-//        new ConcreteConstant(id,dom.min,annotations)
-//      } else {
-//    //    map += id -> 
-//    
-//     //   map(id)
-//      }
+  def addVariable(id: String, dom: Domain, bool: Boolean): Variable = {
+    if(bool) addBooleanVariable(id,dom)
+    else addIntegerVariable(id,dom)
+  }
+  def addIntegerVariable(id: String, dom: Domain): Variable = {
+    val variable: Variable = new IntegerVariable(id, dom)
+    variables = variable :: variables
+    variable
+  }
+  def addBooleanVariable(id: String, dom: Domain): Variable = {
+    val variable: Variable = new BooleanVariable(id, dom)
     variables = variable :: variables
     variable
   }
@@ -63,13 +63,13 @@ class FZProblem {
     search.anns = anns
   }
   
-  def minimize(obj: Variable,anns:List[Annotation]) {
+  def minimize(obj: IntegerVariable,anns:List[Annotation]) {
     search.obj = Objective.MINIMIZE
     search.variable = Some(obj)
     search.anns = anns
   }
   
-  def maximize(obj: Variable,anns:List[Annotation]) {
+  def maximize(obj: IntegerVariable,anns:List[Annotation]) {
     search.obj = Objective.MAXIMIZE
     search.variable = Some(obj)
     search.anns = anns
@@ -140,41 +140,36 @@ case class DomainSet(var values: Set[Int]) extends Domain {
 //TODO: differentiate between Int and Bool
 //TODO: Add set variables
 abstract class Variable(val id: String) {
-  //val isIntroduced = annotations.foldLeft(false)((acc,x) => x.name=="var_is_introduced" || acc)//not interesting for us, as far as I know
   def isDefined: Boolean = {
     definingConstraint.isDefined//annotations.foldLeft(false)((acc,x) => x.name=="is_defined_var" || acc)
   }
   var definingConstraint: Option[Constraint] = Option.empty[Constraint]
-  def min: Int
-  def max: Int
-  def domainSize: Int
-  def is01: Boolean = min >= 0 && max <= 1
-  def isTrue: Boolean = this.is01 && min == 1
-  def isFalse: Boolean = this.is01 && max == 0 
-  def isBound: Boolean = min == max
-  override def toString = {this.id + (if(isBound) "="+value else "");}
   var cstrs:List[Constraint] = List.empty[Constraint]
   def addConstraint(c:Constraint) = {
     cstrs = c :: cstrs
   }
   def removeConstraint(c:Constraint) = {
-    //println("B"+cstrs)
-    //println(c)
     cstrs = cstrs.filterNot(c.eq(_))//might be made more efficient if cstrs was a set.
-   //println("A"+cstrs)
   }
-  def geq(v:Int);
-  def leq(v:Int);
-  def inter(d:Domain);
-  def bind(v: Int) = {geq(v); leq(v);}
-  def neq(v:Int);
-  def value:Int = {if(isBound) min else throw new Exception("Asking for the value of an unbound variable")}
+  def domainSize: Int;
+  def isBound: Boolean;
+}
+case class BooleanVariable(i: String, private var _value: Option[Boolean] = None) extends Variable(i) {
+  def this(s:String, dom: Domain) = this(s, {if (dom.min==dom.max) Some(dom.min==1) else None})
+  def isTrue: Boolean = _value.getOrElse(false)
+  def isFalse: Boolean = !_value.getOrElse(true) 
+  override def isBound: Boolean = _value.isDefined
+  override def domainSize: Int = if(isBound) 1 else 2
+  def bind(v: Boolean) = if(isBound && v!=_value.get) throw new UnsatException("Empty Domain"); else _value = Some(v)
+  def boolValue: Boolean = _value.get
+  def intValue: Int = if(_value.get) 1 else 0
+  override def toString = {this.id + (if(isBound) "="+_value.get else "");}
 }
 
-case class ConcreteVariable(i: String, private var dom: Domain) extends Variable(i) {
+case class IntegerVariable(i: String, private var dom: Domain) extends Variable(i) {
   def this(i: String, v: Int) = this(i,DomainRange(v,v));
   def domain = dom
-  def domainSize = dom.size
+  override def domainSize = dom.size
   def min = dom.min
   def max = dom.max
   def geq(v:Int) = dom.geq(v)
@@ -195,6 +190,13 @@ case class ConcreteVariable(i: String, private var dom: Domain) extends Variable
      }
     }
   }
+  /*def is01: Boolean = min >= 0 && max <= 1
+  def isTrue: Boolean = this.is01 && min == 1
+  def isFalse: Boolean = this.is01 && max == 0 */
+  override def isBound: Boolean = min == max
+  def bind(v: Int) = {geq(v); leq(v);}
+  def value:Int = {if(isBound) min else throw new Exception("Asking for the value of an unbound variable")}
+  override def toString = {this.id + (if(isBound) "="+value else "");}
 }
 
 
@@ -233,7 +235,7 @@ object Objective extends Enumeration {
 class Search() {
   var nSols = 0
   var obj: Objective.Value = Objective.SATISFY
-  var variable: Option[Variable] = None
+  var variable: Option[IntegerVariable] = None
   var heuristics: Vector[(Array[Variable],VariableHeuristic.Value,ValueHeuristic.Value)] = Vector.empty 
   var anns: List[Annotation] = List.empty[Annotation]
 }

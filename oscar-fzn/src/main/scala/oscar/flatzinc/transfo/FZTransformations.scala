@@ -74,7 +74,7 @@ object FZModelTransfo {
         }
       }
       if(v.isDefined){
-        v.definingConstraint.get.getVariables().foreach(vv => if(!visited.contains(vv) && vv.domainSize>1) {visited.add(vv); front.enqueue((vv,v.definingConstraint.get,Objective.SATISFY))})
+        v.definingConstraint.get.getVariables().foreach(vv => if(!visited.contains(vv) && !vv.isBound) {visited.add(vv); front.enqueue((vv,v.definingConstraint.get,Objective.SATISFY))})
       }
       if(front.isEmpty && !front2.isEmpty){
         first = false
@@ -97,7 +97,7 @@ object FZModelTransfo {
         //model.map(id).id == id  //to take each variable only once (as there may be aliases)
         //&&
         !variable.isDefined //to remove the ones already defined
-        && variable.min != variable.max //to remove de facto constants
+        && !variable.isBound //to remove de facto constants
           //JNM: Removed the following because the CP search variables are maybe not the CBLS search variables. 
           //This makes a huge difference for the BACP for instance.
           //&&
@@ -150,29 +150,27 @@ object FZModelTransfo {
         case int_le(x, y, _) if y.isBound => x.leq(y.value); false
         case int_lt(x, y, _) if x.isBound=> y.geq(x.value+1); false
         case int_lt(x, y, _) if y.isBound=> x.leq(y.value-1); false
-        case bool_le(x, y, _) if x.isBound => y.geq(x.value); false
-        case bool_le(x, y, _) if y.isBound => x.leq(y.value); false
-        case bool_lt(x, y, _) if x.isBound => y.geq(x.value+1); false
-        case bool_lt(x, y, _) if y.isBound => x.leq(y.value-1); false
+        case bool_le(x, y, _) if x.isBound => if(x.boolValue) y.bind(true); false
+        case bool_le(x, y, _) if y.isBound => if(!y.boolValue) x.bind(false); false
         case int_eq(x, y, _) if x.isBound => y.bind(x.value); false
         case int_eq(x, y, _) if y.isBound => x.bind(y.value); false
-        case bool_eq(x, y, _) if x.isBound => y.bind(x.value); false
-        case bool_eq(x, y, _) if y.isBound => x.bind(y.value); false
-        case bool_not(x, y, _) if x.isBound => y.bind(1-x.value); false
-        case bool_not(x, y, _) if y.isBound => x.bind(1-y.value); false
-        case bool2int(x, y, _) if x.isBound => y.bind(x.value); false
-        case bool2int(x, y, _) if y.isBound => x.bind(y.value); false
+        case bool_eq(x, y, _) if x.isBound => y.bind(x.boolValue); false
+        case bool_eq(x, y, _) if y.isBound => x.bind(y.boolValue); false
+        case bool_not(x, y, _) if x.isBound => y.bind(!x.boolValue); false
+        case bool_not(x, y, _) if y.isBound => x.bind(!y.boolValue); false
+        case bool2int(x, y, _) if x.isBound => y.bind(x.intValue); false
+        case bool2int(x, y, _) if y.isBound => x.bind(y.value==1); false
         case reif(c2,b) => c2 match {
-          case int_eq(x,y,_) if x.isBound && y.isBound => if(x.value ==y.value) b.bind(1);else b.bind(0); false
-          case int_ne(x,y,_) if x.isBound && y.isBound => if(x.value !=y.value) b.bind(1);else b.bind(0); false
-          case int_lt(x,y,_) if x.isBound && y.isBound => if(x.value < y.value) b.bind(1);else b.bind(0); false
-          case int_le(x,y,_) if x.isBound && y.isBound => if(x.value <= y.value) b.bind(1);else b.bind(0); false
-          case int_lin_eq(c,x,y,_) if x.forall(_.isBound) => b.bind(if(c.zip(x).foldLeft(0)((acc,cur) => acc + cur._1.value*cur._2.value)==y.value) 1 else 0); false
-          case int_lin_le(c,x,y,_) if x.forall(_.isBound) => b.bind(if(c.zip(x).foldLeft(0)((acc,cur) => acc + cur._1.value*cur._2.value)<=y.value) 1 else 0); false
+          case int_eq(x,y,_) if x.isBound && y.isBound => b.bind(x.value ==y.value); false
+          case int_ne(x,y,_) if x.isBound && y.isBound => b.bind(x.value !=y.value); false
+          case int_lt(x,y,_) if x.isBound && y.isBound => b.bind(x.value < y.value); false
+          case int_le(x,y,_) if x.isBound && y.isBound => b.bind(x.value <= y.value); false
+          case int_lin_eq(c,x,y,_) if x.forall(_.isBound) => b.bind(c.zip(x).foldLeft(0)((acc,cur) => acc + cur._1.value*cur._2.value)==y.value); false
+          case int_lin_le(c,x,y,_) if x.forall(_.isBound) => b.bind(c.zip(x).foldLeft(0)((acc,cur) => acc + cur._1.value*cur._2.value)<=y.value); false
           case _ => true;
         }
-        case array_bool_and(x,y,_) if x.forall(_.isBound) => y.bind(if(x.forall(v => v.value==1))1 else 0); false
-        case array_bool_or(x,y,_) if x.forall(_.isBound) => y.bind(if(x.exists(v => v.value==1))1 else 0); false
+        case array_bool_and(x,y,_) if x.forall(_.isBound) => y.bind(x.forall(v => v.boolValue)); false
+        case array_bool_or(x,y,_) if x.forall(_.isBound) => y.bind(x.exists(v => v.boolValue)); false
         case int_ne(x,y,_) if y.isBound => x.neq(y.value); false
         case int_ne(x,y,_) if x.isBound => y.neq(x.value); false
         case set_in(x,d,_) => x.inter(d); false
@@ -203,6 +201,7 @@ object FZModelTransfo {
         case int_abs(a,b,_) if b.isBound => a.inter(DomainSet(Set(b.value,-b.value))); false
         case array_int_element(x,y,z,_) if x.isBound => z.bind(y(x.value-1).value); false
         case array_int_element(x,y,z,_) if z.isBound => x.inter(DomainSet(y.zipWithIndex.filter{case (v,i) => v.value == z.value}.map{case(v,i) => i+1}.toSet)); false
+        case bool_lt(x, y, _) => x.bind(false); y.bind(true); false
         //The cstrs below might need to be iterated until fixpoint...
         case int_le(x, y, _ ) => y.geq(x.min); x.leq(y.max); true
         case int_lt(x, y, _ ) =>{
@@ -212,7 +211,7 @@ object FZModelTransfo {
           true
         } 
         case int_eq(x, y, _ ) => y.geq(x.min); y.leq(x.max); x.geq(y.min); x.leq(y.max); true
-        case bool_eq(x, y, _ ) => y.geq(x.min); y.leq(x.max); x.geq(y.min); x.leq(y.max); true
+        //case bool_eq(x, y, _ ) => y.geq(x.min); y.leq(x.max); x.geq(y.min); x.leq(y.max); true
         case _ => true 
       };
       if(!ret)log(3,"Simplified "+c)
@@ -234,7 +233,7 @@ object FZModelTransfo {
           c match {
             case reif(c2,b) =>{
               var c3 = c2;
-              if(b.value==0){
+              if(!b.boolValue){
                 c3 = c2 match {
                   case int_eq(x,y,a) => int_ne(x,y,a)
                   case int_ne(x,y,a) => int_eq(x,y,a)

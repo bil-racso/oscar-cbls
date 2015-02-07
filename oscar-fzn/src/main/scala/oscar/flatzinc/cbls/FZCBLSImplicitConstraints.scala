@@ -47,14 +47,14 @@ class FZCBLSImplicitConstraints(val cblsmodel:FZCBLSModel) {
   
 
     
-  def tryAllDiff(xs: Array[Variable]):Boolean = {
+  def tryAllDiff(xs: Array[IntegerVariable]):Boolean = {
       if(allOK(xs)){
         val vars = xs.map(cblsmodel.getCBLSVarDom(_))
         cblsmodel.addNeighbourhood((o,c) => new AllDifferent(vars, o,c),vars)
         true
       }else false
     }
-    def tryCircuit(xs: Array[Variable]):Boolean = {
+    def tryCircuit(xs: Array[IntegerVariable]):Boolean = {
       if (allOK(xs)){
         //TODO: remove some of the defined if it is better to use the Circuit implicit constraint
         //TODO: We assume that the offset is 1. Is it always the case?
@@ -69,7 +69,7 @@ class FZCBLSImplicitConstraints(val cblsmodel:FZCBLSModel) {
         false
       }
     }
-    def trySubCircuit(xs: Array[Variable]):Boolean = {
+    def trySubCircuit(xs: Array[IntegerVariable]):Boolean = {
       if (allOK(xs)){
         //TODO: We assume that the offset is 1. Is it always the case?
         //TODO: remove some of the defined if it is better to use the SubCircuit implicit constraint
@@ -87,8 +87,8 @@ class FZCBLSImplicitConstraints(val cblsmodel:FZCBLSModel) {
       }
     }
     
-    def tryGCC(xs: Array[Variable],vals: Array[Variable], cnts: Array[Variable],closed: Boolean):Boolean ={
-      if (allOK(xs) && cnts.forall(c => c.min==c.max)){//Only for fixed count variables for now
+    def tryGCC(xs: Array[IntegerVariable],vals: Array[IntegerVariable], cnts: Array[IntegerVariable],closed: Boolean):Boolean ={
+      if (allOK(xs) && cnts.forall(c => c.isBound)){//Only for fixed count variables for now
         val vars = xs.map(cblsmodel.getCBLSVarDom(_))
         cblsmodel.addNeighbourhood((o,c) => new GCCNeighborhood(vars,vals.map(_.min),cnts.map(_.min),cnts.map(_.max),closed,o,c),vars)
         true
@@ -96,7 +96,7 @@ class FZCBLSImplicitConstraints(val cblsmodel:FZCBLSModel) {
         false
       }
     }
-    def tryGCClu(xs: Array[Variable],vals: Array[Variable], low: Array[Variable],up: Array[Variable],closed: Boolean):Boolean ={
+    def tryGCClu(xs: Array[IntegerVariable],vals: Array[IntegerVariable], low: Array[IntegerVariable],up: Array[IntegerVariable],closed: Boolean):Boolean ={
       if (allOK(xs)){
         val vars = xs.map(cblsmodel.getCBLSVarDom(_))
         cblsmodel.addNeighbourhood((o,c) => new GCCNeighborhood(vars,vals.map(_.min),low.map(_.min),up.map(_.max),closed,o,c),vars)
@@ -105,7 +105,7 @@ class FZCBLSImplicitConstraints(val cblsmodel:FZCBLSModel) {
         false
       }
     }
-  def trySum(xs: Array[Variable], coeffs: Array[Variable],sum:Variable): Boolean = {
+  def trySum(xs: Array[IntegerVariable], coeffs: Array[IntegerVariable],sum:IntegerVariable): Boolean = {
       if (allOK(xs) && coeffs.forall(x => x.min == 1 || x.min == -1)) {
         val vars = xs.map(cblsmodel.getCBLSVarDom(_))
         cblsmodel.addNeighbourhood((o,c) => new SumNeighborhood(vars,coeffs.map(_.min),sum.min,o,c),vars)
@@ -114,8 +114,19 @@ class FZCBLSImplicitConstraints(val cblsmodel:FZCBLSModel) {
         false
       }
     }
-  
-  def allOK(xs: Array[Variable]):Boolean = {
+  def trySum(xs: Array[BooleanVariable], coeffs: Array[IntegerVariable],sum:IntegerVariable): Boolean = {
+   if (allOK(xs) && coeffs.forall(x => x.min == 1 || x.min == -1)) {
+        val vars = xs.map(cblsmodel.getCBLSVarDom(_))
+        cblsmodel.addNeighbourhood((o,c) => new SumNeighborhood(vars,coeffs.map(_.min),sum.min,o,c),vars)
+        true
+      }else{
+        false
+      }
+    }
+  def allOK(xs: Array[IntegerVariable]):Boolean = {
+    xs.forall(x => ! x.isDefined && cblsmodel.vars.contains(cblsmodel.getCBLSVar(x)))
+  }
+  def allOK(xs: Array[BooleanVariable]):Boolean = {
     xs.forall(x => ! x.isDefined && cblsmodel.vars.contains(cblsmodel.getCBLSVar(x)))
   }
 }

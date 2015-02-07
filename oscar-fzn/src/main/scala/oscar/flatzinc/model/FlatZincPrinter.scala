@@ -31,10 +31,13 @@ object FlatZincPrinter {
     //No Parameters (all inlined) TODO
     //Variables
     for((id,e) <- dico.filter(_._2.isInstanceOf[VarRef])){
-      //TODO: Make sure that aliases come after the corresponding variable
-      val v = e.asInstanceOf[VarRef].v.asInstanceOf[ConcreteVariable]
-      
-      out.println("var "+toFZN(v.domain)+": "+ id +" "+toFZNann(model.dicoAnnot(id))+" ;");
+      //TODO: Make sure that aliases come after the corresponding variable... WHICH ALIASES?
+      //TODO: WHERE are the arrays?
+      val v = e.asInstanceOf[VarRef].v//.asInstanceOf[ConcreteVariable]
+      v match{
+        case IntegerVariable(i,d) => out.println("var "+toFZN(d)+": "+ id +" "+toFZNann(model.dicoAnnot(id))+" ;");
+        case BooleanVariable(i,v) => out.println("var bool: "+ id +" "+toFZNann(model.dicoAnnot(id))+{if(v.isDefined) "= "+v.get.toString() else ""}+" ;");
+      }
     }
     for(c <- model.problem.constraints){
       out.println("constraint "+toFZN(c)+";")
@@ -86,7 +89,7 @@ object FlatZincPrinter {
       case anns: List[Annotation] => toFZN(anns)
       case s:String => s
       case c:Constraint => toFZN(c)
-      case v:ConcreteVariable => v.id
+      case v:Variable => v.id
       case es: ArrayOfElement => es.elements.asScala.map(toFZN(_)).mkString("[",", ","]")
       case vs: Array[Variable] => toFZN(vs)
       case e: Element => toFZN(e)
@@ -102,6 +105,7 @@ object FlatZincPrinter {
       case int_lin_eq(x,y,z,ann) => "int_lin_eq("+toFZN(x)+","+toFZN(y)+","+toFZN(z)+")"+toFZNann(ann)
       case int_lin_le(x,y,z,ann) => "int_lin_le("+toFZN(x)+","+toFZN(y)+","+toFZN(z)+")"+toFZNann(ann)
       case int_lin_ne(x,y,z,ann) => "int_lin_ne("+toFZN(x)+","+toFZN(y)+","+toFZN(z)+")"+toFZNann(ann)
+      case array_int_element(x,y,z,ann) => "array_int_element("+toFZN(x)+","+toFZN(y)+","+toFZN(z)+")"+toFZNann(ann)
       case array_bool_and(x,y, ann) => "array_bool_and("+toFZN(x)+","+toFZN(y)+")"+toFZNann(ann)
       case array_bool_or(x,y, ann) => "array_bool_or("+toFZN(x)+","+toFZN(y)+")"+toFZNann(ann)
       case bool_clause(x,y, ann) => "bool_clause("+toFZN(x)+","+toFZN(y)+")"+toFZNann(ann)
