@@ -23,6 +23,7 @@ import oscar.flatzinc.parser.VarRef
 import oscar.flatzinc.parser.intermediatemodel.Element
 import oscar.flatzinc.parser.intermediatemodel.ArrayOfElement
 import scala.collection.JavaConverters._
+import java.util.ArrayList
 
 object FlatZincPrinter {
 
@@ -37,6 +38,14 @@ object FlatZincPrinter {
       v match{
         case IntegerVariable(i,d) => out.println("var "+toFZN(d)+": "+ id +" "+toFZNann(model.dicoAnnot(id))+" ;");
         case BooleanVariable(i,v) => out.println("var bool: "+ id +" "+toFZNann(model.dicoAnnot(id))+{if(v.isDefined) "= "+v.get.toString() else ""}+" ;");
+      }
+    }
+    for((id,e) <- dico.filter(_._2.isInstanceOf[ArrayOfElement])){
+      if(e.typ.isVar){
+        println(id+" "+e)
+        val a = e.asInstanceOf[ArrayOfElement].elements
+        out.println("array[1.."+a.size()+"] of var int: "+id+toFZNann(model.dicoAnnot(id))+"= "+toFZN(a)+";")
+        println("array[1.."+a.size()+"] of var int: "+id+toFZNann(model.dicoAnnot(id))+"= "+toFZN(a)+";")
       }
     }
     for(c <- model.problem.constraints){
@@ -92,8 +101,9 @@ object FlatZincPrinter {
       case v:Variable => v.id
       case es: ArrayOfElement => es.elements.asScala.map(toFZN(_)).mkString("[",", ","]")
       case vs: Array[Variable] => toFZN(vs)
+      case vs: ArrayList[VarRef] => vs.asScala.map(toFZN(_)).mkString("[",", ","]")
       case e: Element => toFZN(e)
-      case x => println(x.getClass()); x.toString()
+      case x => Console.err.println(x.getClass()); x.toString()
       }
   }
   
