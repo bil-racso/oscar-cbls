@@ -29,7 +29,7 @@ object Helper {
     }else name
   }
   
-  def getCstrsByName(cstrs: List[Constraint]): MMap[String,List[Constraint]] = {
+  def getCstrsByName(cstrs: Iterable[Constraint]): MMap[String,List[Constraint]] = {
     cstrs.foldLeft(MMap.empty[String,List[Constraint]])((acc,c) => { 
       val name = getCName(c)
       acc(name) = c :: acc.getOrElse(name,List.empty[Constraint]); 

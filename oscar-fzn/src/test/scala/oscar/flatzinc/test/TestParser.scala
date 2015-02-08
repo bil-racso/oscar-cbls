@@ -28,26 +28,26 @@ class TestParser extends FunSuite with Matchers{
   test("test empty model"){
     val problem = getSATModel("")
     problem.variables.length should be(0)
-    problem.constraints.length should be(0)
+    problem.constraints.size should be(0)
   }
   
   test("test simple model no constraint"){
     val problem = getSATModel("var int: x; ")
     problem.variables.length should be(1)
-    problem.constraints.length should be(0)
+    problem.constraints.size should be(0)
   }
   
   test("test alias"){
     val problem = getSATModel("var int: x; var int: y = x;")
     problem.variables.length should be(1)
-    problem.constraints.length should be(0)
+    problem.constraints.size should be(0)
   }
   
   test("test simple model"){
     val problem = getSATModel("var int: x; var int: y;\n"+ 
         "constraint int_eq(x,y);");
     problem.variables.length should be(2)
-    problem.constraints.length should be(1)
+    problem.constraints.size should be(1)
   }
   test("test no constraint"){
     a [NoSuchConstraintException] should be thrownBy {

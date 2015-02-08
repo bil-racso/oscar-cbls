@@ -243,14 +243,14 @@ object FZModelTransfo {
                 }
               }
               if(c3!=null){
-                model.constraints = c3 :: model.constraints
+                model.constraints += c3
                 log(3,"Rewrote "+c+ " => "+c3)
                 for(v <- c3.getVariables()){
                   v.addConstraint(c3);
                 }
                 c.retract()
               }else{
-                model.constraints ::= c
+                model.constraints += c
               }
             } 
           }

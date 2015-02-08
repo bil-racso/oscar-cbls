@@ -242,17 +242,7 @@ class FZCBLSModel(val model: FZProblem, val c: ConstraintSystem, val m: Store, v
   }*/
 }
 class FZCBLSSolver extends SearchEngine with StopWatch {
-  def getCstrsByName(cstrs: List[Constraint]): MMap[String,List[Constraint]] = {
-    cstrs.foldLeft(MMap.empty[String,List[Constraint]])((acc,c) => { 
-      val names = c.getClass().getName().split("\\.")
-      var name = names(names.length-1)
-      if(name=="reif"){
-        val n2 = c.asInstanceOf[reif].c.getClass().getName().split("\\.")
-        name += "_"+n2(n2.length-1)
-      }
-      acc(name) = c :: acc.getOrElse(name,List.empty[Constraint]); 
-      acc})
-  }
+
   
   def solve(opts: Options) {
     startWatch()
@@ -261,7 +251,7 @@ class FZCBLSSolver extends SearchEngine with StopWatch {
     
     val model = FZParser.readFlatZincModelFromFile(opts.fileName,log).problem;
      
-    getCstrsByName(model.constraints).map{ case (n:String,l:List[Constraint]) => l.length +"\t"+n}.toList.sorted.foreach(log(_))
+    Helper.getCstrsByName(model.constraints).map{ case (n:String,l:List[Constraint]) => l.length +"\t"+n}.toList.sorted.foreach(log(_))
     log("Parsed. Parsing took "+getWatch+" ms")
     if(!opts.is("no-simpl")){
       FZModelTransfo.propagateDomainBounds(model)(log);
@@ -312,7 +302,7 @@ class FZCBLSSolver extends SearchEngine with StopWatch {
     log("Created Model (Variables and Objective)")
     
     
-    val allcstrs:List[Constraint] = model.constraints;
+    val allcstrs:List[Constraint] = model.constraints.toList;
     val (maybedircstrs,maybesoftcstrs) = allcstrs.partition(_.definedVar.isDefined)
     log("Possibly "+maybedircstrs.length+" invariants.")
     val (invariants,removed) = FZModelTransfo.getSortedInvariants(maybedircstrs)(log)
@@ -324,7 +314,7 @@ class FZCBLSSolver extends SearchEngine with StopWatch {
       val (implcstrs,softcstrs) = implicitPoster.findAndPostImplicit(softorimplcstrs);
       //TODO: Add the implcstrs to some system to ensure that they are at all time respected.
       log("Found "+cblsmodel.neighbourhoodGenerator.length+" Implicit Constraints")
-      getCstrsByName(implcstrs).map{ case (n:String,l:List[Constraint]) => l.length +"\t"+n}.toList.sorted.foreach(s => log(" "+s))
+      Helper.getCstrsByName(implcstrs).map{ case (n:String,l:List[Constraint]) => l.length +"\t"+n}.toList.sorted.foreach(s => log(" "+s))
       
       val hardCS = ConstraintSystem(m)
       val hardPoster: FZCBLSConstraintPoster = new FZCBLSConstraintPoster(hardCS,cblsmodel.getCBLSVar);
@@ -359,13 +349,13 @@ class FZCBLSSolver extends SearchEngine with StopWatch {
       cblsmodel.cblsIntMap += invariant.definedVar.get.id -> inv;
     }
     log("Posted "+invariants.length+" Invariants")
-    getCstrsByName(invariants).map{ case (n:String,l:List[Constraint]) => l.length +"\t"+n}.toList.sorted.foreach(s => log(" "+s))
+    Helper.getCstrsByName(invariants).map{ case (n:String,l:List[Constraint]) => l.length +"\t"+n}.toList.sorted.foreach(s => log(" "+s))
     for (constraint <- softConstraints) {
       log(2,"Posting as Soft "+constraint)
       poster.add_constraint(constraint);
     }
     log("Posted "+softConstraints.length+" Soft Constraints")
-    getCstrsByName(softConstraints).map{ case (n:String,l:List[Constraint]) => l.length +"\t"+n}.toList.sorted.foreach(s => log(" "+s))
+    Helper.getCstrsByName(softConstraints).map{ case (n:String,l:List[Constraint]) => l.length +"\t"+n}.toList.sorted.foreach(s => log(" "+s))
     log(softConstraints.filter(c => c.getVariables().forall(v => !v.isDefined)).size+" are only on search variables.")
     log(softConstraints.filter(c => c.getVariables().forall(v => v.isDefined)).size+" are only on defined variables.")
     
