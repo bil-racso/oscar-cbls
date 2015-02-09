@@ -3,6 +3,9 @@ package oscar.cp.lcg.searches
 import oscar.algo.search.DFSearchNode
 import oscar.algo.search.DFSearch
 import oscar.cp.lcg.core.LCGStore
+import oscar.cp.core.CPStore
+import oscar.cp.core.Constraint
+import oscar.cp.core.CPOutcome
 
 /** @author Renaud Hartert ren.hartert@gmail.com */
 class LCGSearch(node: DFSearchNode, lcgStore: LCGStore) {
@@ -101,5 +104,17 @@ class LCGSearch(node: DFSearchNode, lcgStore: LCGStore) {
       node.pop
       depth -= 1
     }
+  }
+  
+  private[this] val cpStore: CPStore = ??? 
+  private[this] val lcgStoreConstraint: Constraint = ???
+  
+  private def propagate(decision: Function0[Unit]): Int = {
+    // Apply decision
+    decision()
+    // Propagate
+    val failed = cpStore.propagate(lcgStoreConstraint)
+    if (failed == CPOutcome.Failure) lcgStore.backtrackLvl
+    else Int.MaxValue
   }
 }

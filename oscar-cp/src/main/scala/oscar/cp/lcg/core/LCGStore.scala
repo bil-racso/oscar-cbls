@@ -201,24 +201,14 @@ class LCGStore(store: CPStore) {
    *  Propagate and conflict analysis
    */
   final def propagate(): Boolean = {
-    if (currentLevel > backtrackLevel) false
-    else {
-      // Call the fixed-point algorithm
-      val noConflict = fixedPoint()
-      if (noConflict) true
-      else {
-        backtrackLevel = currentLevel - 1
-        false
-        //analyze(conflict)
-        //cancelUntil(outBacktsLevel)
-        //record(outLearnt.toArray)
-        //updateActivities()
-        //true
-      }
-      
-      
-      // TODO Notify changes in domains
-      
+    // Call the fixed-point algorithm
+    val noConflict = fixedPoint()
+    if (!noConflict) {
+      analyze()
+      untrailUntil(backtrackLevel)
+      learn()
+    } else {
+      // Notify domains
     }
   }
   
@@ -226,117 +216,52 @@ class LCGStore(store: CPStore) {
   private[this] val litReason = new ArrayStack[Literal](10)
   
   @inline private def analyze(): Unit = {
-    
+
     val seen: Array[Boolean] = new Array(values.length) // FIXME
     var counter = 0
-    var lit: Literal = null
+    var literal: Literal = null
     var conflict: Clause = conflictingClause
+
     outLearnt.clear()
     outLearnt.append(null) // leave a room for the asserting literal
     backtrackLevel = 0
 
     do {
-      
+
       litReason.clear
-      if (lit == null) conflict.explainFail(litReason)
+
+      if (literal == null) conflict.explainFail(litReason)
       else conflict.explainUnit(litReason)
-      
-      // In edges
+
       var i = litReason.length
       while (i > 0) {
         i -= 1
-        val literal = litReason(i)
-        val varId = literal.varId
+        val lit = litReason(i)
+        val varId = lit.varId
         if (!seen(varId)) {
           seen(varId) = true
-          val level = levels(varId)
-          if (level == currentLevel) counter += 1
-          else if (level > 0) {
+          val varLevel = levels(varId)
+          if (varLevel == currentLevel) counter += 1
+          else if (varLevel > 0) {
             outLearnt.append(literal.opposite)
-            if (level > backtrackLevel) backtrackLevel = level
-          }
-        } 
-      }
-      
-      /*// Next node
-      do {
-        lit = trail.top
-      }
-
-      // Trace reason for p
-      for (literal <- pReason) { // FIXME 
-        val varId = literal.varId
-        if (!seen(varId)) {
-          seen(varId) = true
-          val level = levels(varId)
-          if (level == decisionLevel) counter += 1
-          else if (level > 0) {
-            outLearnt.append(literal.opposite)
-            if (level > outBacktsLevel) outBacktsLevel = level
+            if (varLevel > backtrackLevel) backtrackLevel = varLevel
           }
         }
       }
 
       // Select next literal to look at
       do {
-        p = trail.top
-        conflict = reasons(p.varId)
+        literal = trail(trailSize - 1)
+        conflict = reasons(literal.varId)
         undoOne()
-      } while (!seen(p.varId))*/
+      } while (!seen(literal.varId))
         
       counter -= 1
       
     } while (counter > 0)
       
-    //outLearnt(0) = p.opposite
+    outLearnt(0) = literal.opposite
   }
-  
-  /*
-   * private def analyze(initConflict: Clause): Unit = {
-
-    val seen: Array[Boolean] = new Array(values.size) // FIXME
-    var counter = 0
-    var p: Literal = null
-    var conflict: Clause = initConflict
-
-    outLearnt.clear()
-    outLearnt.append(null) // leave a room for the asserting literal
-    outBacktsLevel = 0
-
-    do {
-
-      pReason.clear
-      if (p == null) conflict.explainAll(pReason)
-      else conflict.explain(pReason)
-
-      // Trace reason for p
-      for (literal <- pReason) { // FIXME 
-        val varId = literal.varId
-        if (!seen(varId)) {
-          seen(varId) = true
-          val level = levels(varId)
-          if (level == decisionLevel) counter += 1
-          else if (level > 0) {
-            outLearnt.append(literal.opposite)
-            if (level > outBacktsLevel) outBacktsLevel = level
-          }
-        }
-      }
-
-      // Select next literal to look at
-      do {
-        p = trail.top
-        conflict = reasons(p.varId)
-        undoOne()
-      } while (!seen(p.varId))
-        
-      counter -= 1
-      
-    } while (counter > 0)
-      
-    outLearnt(0) = p.opposite
-  }
-   */
 
   /**
    *  Empty the propagation queue
@@ -390,19 +315,6 @@ class LCGStore(store: CPStore) {
       true
     }
   }
-  
-  class TrailBactrackLevel extends TrailEntry {
-    @inline final override def restore(): Unit = {
-      currentLevel -= 1
-      if (currentLevel <= backtrackLevel) {
-        backtrackLevel = Int.MaxValue
-      }
-    }
-  }
-
-  class TrailUndoOne extends TrailEntry {
-    @inline final override def restore(): Unit = popAssignment()
-  }
 
   final def printTrail(): Unit = println("TRAIL = " + trail.take(trailSize).mkString("[", ", ", "]"))
 
@@ -423,9 +335,6 @@ class LCGStore(store: CPStore) {
     store.trail(levelTrailEntry)
   }
 
-  // Static trail entries
-  private[this] val undoTrailEntry = new TrailUndoOne
-  private[this] val levelTrailEntry = new TrailBactrackLevel
 
   @inline private def trailAssignment(literal: Literal): Unit = {
     if (trail.length == trailSize) growTrail()
