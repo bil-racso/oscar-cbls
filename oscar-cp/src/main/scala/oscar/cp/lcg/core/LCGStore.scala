@@ -74,6 +74,8 @@ class LCGStore(store: CPStore) {
 
   /** Return the clause responsible of the assignment. */
   @inline final def assignReason(varId: Int): Clause = reasons(varId)
+  
+  @inline final def backtrackLvl: Int = backtrackLevel
 
   /** Create a new variable and return its unsigned literal. */
   final def newVariable(interval: LCGIntervalVar, name: String): Literal = {
@@ -220,49 +222,73 @@ class LCGStore(store: CPStore) {
     }
   }
   
+  private[this] val outLearnt = new ArrayStack[Literal](10)
+  private[this] val litReason = new ArrayStack[Literal](10)
+  
   @inline private def analyze(): Unit = {
     
-    val seen = new Array[Boolean](varStoreSize)
+    val seen: Array[Boolean] = new Array(values.length) // FIXME
     var counter = 0
-    var p: Literal = null
-    var conflict = conflictingClause
-    
-    val pReason = new ArrayStack[Literal]()
-    val outReason = new ArrayStack[Literal]()
+    var lit: Literal = null
+    var conflict: Clause = conflictingClause
+    outLearnt.clear()
+    outLearnt.append(null) // leave a room for the asserting literal
     backtrackLevel = 0
-    var trailLevel = trailSize - 1
-    
+
     do {
-      pReason.clear()
       
-      if (p == null) conflict.explainFail(pReason)
-      else conflict.explainUnit(pReason)
+      litReason.clear
+      if (lit == null) conflict.explainFail(litReason)
+      else conflict.explainUnit(litReason)
       
-      for (literal <- pReason) {
+      // In edges
+      var i = litReason.length
+      while (i > 0) {
+        i -= 1
+        val literal = litReason(i)
+        val varId = literal.varId
+        if (!seen(varId)) {
+          seen(varId) = true
+          val level = levels(varId)
+          if (level == currentLevel) counter += 1
+          else if (level > 0) {
+            outLearnt.append(literal.opposite)
+            if (level > backtrackLevel) backtrackLevel = level
+          }
+        } 
+      }
+      
+      /*// Next node
+      do {
+        lit = trail.top
+      }
+
+      // Trace reason for p
+      for (literal <- pReason) { // FIXME 
         val varId = literal.varId
         if (!seen(varId)) {
           seen(varId) = true
           val level = levels(varId)
           if (level == decisionLevel) counter += 1
-          else {
-            outReason.append(literal.opposite)
-            if (level > backtrackLevel) backtrackLevel = level
+          else if (level > 0) {
+            outLearnt.append(literal.opposite)
+            if (level > outBacktsLevel) outBacktsLevel = level
           }
         }
       }
-      
+
+      // Select next literal to look at
       do {
-        p = trail(trailLevel)
-        trailLevel -= 1
-        conflict = reasons(p.varId)       
-      } while (!(seen(p.varId)))
+        p = trail.top
+        conflict = reasons(p.varId)
+        undoOne()
+      } while (!seen(p.varId))*/
         
       counter -= 1
+      
     } while (counter > 0)
       
-    // at this point, p is the UIP
-      
-    backtrackLevel = levels(p.varId) - 1 // is that always true ?
+    //outLearnt(0) = p.opposite
   }
   
   /*

@@ -1,4 +1,4 @@
-package oscar.cp.lcg.search
+package oscar.cp.lcg.searches
 
 import oscar.algo.search.DFSearchNode
 import oscar.algo.search.DFSearch
