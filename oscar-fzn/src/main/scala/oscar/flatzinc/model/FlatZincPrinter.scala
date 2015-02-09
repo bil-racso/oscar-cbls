@@ -42,10 +42,10 @@ object FlatZincPrinter {
     }
     for((id,e) <- dico.filter(_._2.isInstanceOf[ArrayOfElement])){
       if(e.typ.isVar){
-        println(id+" "+e)
+        //println(id+" "+e)
         val a = e.asInstanceOf[ArrayOfElement].elements
         out.println("array[1.."+a.size()+"] of var int: "+id+toFZNann(model.dicoAnnot(id))+"= "+toFZN(a)+";")
-        println("array[1.."+a.size()+"] of var int: "+id+toFZNann(model.dicoAnnot(id))+"= "+toFZN(a)+";")
+        //println("array[1.."+a.size()+"] of var int: "+id+toFZNann(model.dicoAnnot(id))+"= "+toFZN(a)+";")
       }
     }
     for(c <- model.problem.constraints){

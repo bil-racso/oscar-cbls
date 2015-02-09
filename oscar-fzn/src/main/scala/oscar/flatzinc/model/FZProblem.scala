@@ -27,7 +27,7 @@ import scala.collection.immutable.SortedSet
 
 class FZProblem {
 
-  var variables: List[Variable] = List.empty[Variable]
+  var variables: Set[Variable] = Set.empty[Variable]
   
   var constraints: Set[Constraint] = Set.empty[Constraint]//TODO: might as well replace it by a set for easy access...
  // var cstrsByName: MMap[String,List[Constraint]] = MMap.empty[String,List[Constraint]]
@@ -41,12 +41,12 @@ class FZProblem {
   }
   def addIntegerVariable(id: String, dom: Domain): Variable = {
     val variable: Variable = new IntegerVariable(id, dom)
-    variables = variable :: variables
+    variables += variable //:: variables
     variable
   }
   def addBooleanVariable(id: String, dom: Domain): Variable = {
     val variable: Variable = new BooleanVariable(id, dom)
-    variables = variable :: variables
+    variables += variable //:: variables
     variable
   }
   

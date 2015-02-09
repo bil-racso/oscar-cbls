@@ -93,7 +93,7 @@ object FZModelTransfo {
   def findInvariants(model: FZProblem, log:Log,step:Int) = {
     //Find all free variables of the model.
     var freeVariables: List[Variable] =
-      model.variables.filter((variable: Variable) =>
+      model.variables.toList.filter((variable: Variable) =>
         //model.map(id).id == id  //to take each variable only once (as there may be aliases)
         //&&
         !variable.isDefined //to remove the ones already defined
