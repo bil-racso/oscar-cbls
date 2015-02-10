@@ -39,6 +39,9 @@ class SetTimesBranching(starts: Array[CPIntVar], durations: Array[CPIntVar], end
 
   // Old Est of each task
   private[this] val oldEst = Array.fill(nTasks)(new ReversibleInt(cp, Int.MinValue))
+  
+  // Used to avoid objects and to reduce the number of nodes
+  private[this] val dummyAlternative = Seq(() => cp.fail())
 
   final override def alternatives(): Seq[Alternative] = {
     if (nUnassigned.value == 0) noAlternative
@@ -46,12 +49,8 @@ class SetTimesBranching(starts: Array[CPIntVar], durations: Array[CPIntVar], end
       val taskId = selectTask()
       val start = starts(taskId)
       val est = start.min
-      
-      // TODO: this dominance should be tested at the end of each alternative
-      val minLst = minUnselectableLst
-      if (minLst <= est) cp.fail()
-      
-      branch {
+      if (minUnselectableLst <= est) dummyAlternative // TODO: should be done at the end of each alternative
+      else branch {
         val out = cp.assign(start, est)
         assign(taskId) // the task is assigned by setTimes
         if (out != Failure) dominanceCheck()
@@ -63,6 +62,8 @@ class SetTimesBranching(starts: Array[CPIntVar], durations: Array[CPIntVar], end
     }
   }
 
+  // FIXME: selectTask, dominanceCheck and minUnselectableLst should be 
+  //        done in a single pass at the end of each branch
   @inline private def selectTask(): Int = {
     var i = nUnassigned.value
     var minTask = -1
@@ -88,7 +89,9 @@ class SetTimesBranching(starts: Array[CPIntVar], durations: Array[CPIntVar], end
     }
     minTask // -1 = empty
   }
-
+  
+  // FIXME: selectTask, dominanceCheck and minUnselectableLst should be 
+  //        done in a single pass at the end of each branch
   @inline private def minUnselectableLst: Int = {
     var i = nUnassigned.value
     var minLst = Int.MaxValue
@@ -103,6 +106,8 @@ class SetTimesBranching(starts: Array[CPIntVar], durations: Array[CPIntVar], end
     minLst
   }
 
+  // FIXME: selectTask, dominanceCheck and minUnselectableLst should be 
+  //        done in a single pass at the end of each branch
   @inline private def dominanceCheck(): Unit = {
     val n = nUnassigned.value
     if (n > 0) {
