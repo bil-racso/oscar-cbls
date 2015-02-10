@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<jardesc>
+    <jar path="/home/janho/workspace/oscar-fzn.jar"/>
+    <options buildIfNeeded="true" compress="false" descriptionLocation="/oscar/ExportFZN.jardesc" exportErrors="false" exportWarnings="true" includeDirectoryEntries="false" overwrite="false" saveDescription="true" storeRefactorings="false" useSourceFolders="false"/>
+    <storedRefactorings deprecationInfo="true" structuralOnly="false"/>
+    <selectedProjects/>
+    <manifest generateManifest="false" manifestLocation="/oscar/MANIFEST.MF" manifestVersion="1.0" reuseManifest="true" saveManifest="true" usesManifest="true">
+        <sealing sealJar="false">
+            <packagesToSeal/>
+            <packagesToUnSeal/>
+        </sealing>
+    </manifest>
+    <selectedElements exportClassFiles="true" exportJavaFiles="false" exportOutputFolder="false">
+        <javaElement handleIdentifier="=oscar/oscar-cbls\/src\/main\/scala&lt;oscar.cbls.invariants.core.algo.set"/>
+        <javaElement handleIdentifier="=oscar/oscar-cbls\/src\/main\/scala&lt;oscar.cbls.scheduling"/>
+        <javaElement handleIdentifier="=oscar/oscar-cbls\/src\/main\/scala&lt;oscar.cbls.invariants.lib"/>
+        <javaElement handleIdentifier="=oscar/oscar-cbls\/src\/main\/scala&lt;oscar.cbls.routing.initial"/>
+        <javaElement handleIdentifier="=oscar/oscar-cbls\/src\/main\/scala&lt;oscar.cbls.constraints.lib.global"/>
+        <javaElement handleIdentifier="=oscar/oscar-cbls\/src\/main\/scala&lt;oscar.cbls.invariants.core.algo.dll"/>
+        <javaElement handleIdentifier="=oscar/oscar-cbls\/src\/main\/scala&lt;oscar.cbls.constraints.lib.basic"/>
+        <javaElement handleIdentifier="=oscar/oscar-cbls\/src\/main\/scala&lt;oscar.cbls.invariants.core.computation"/>
+        <javaElement handleIdentifier="=oscar/oscar-cbls\/src\/main\/scala&lt;oscar.cbls.search"/>
+        <javaElement handleIdentifier="=oscar/oscar-cbls\/src\/main\/scala&lt;oscar.cbls.search.combinators"/>
+        <javaElement handleIdentifier="=oscar/oscar-cbls\/src\/main\/scala&lt;oscar.cbls.constraints.core"/>
+        <javaElement handleIdentifier="=oscar/oscar-cbls\/src\/main\/scala&lt;oscar.cbls.modeling"/>
+        <javaElement handleIdentifier="=oscar/oscar-cbls\/src\/main\/scala&lt;oscar.cbls.binPacking.solver"/>
+        <javaElement handleIdentifier="=oscar/oscar-cbls\/src\/main\/scala&lt;oscar.cbls.routing.neighborhood2"/>
+        <javaElement handleIdentifier="=oscar/oscar-cbls\/src\/main\/scala&lt;oscar.cbls.search.move"/>
+        <javaElement handleIdentifier="=oscar/oscar-cbls\/src\/main\/scala&lt;oscar.cbls.invariants.lib.numeric"/>
+        <javaElement handleIdentifier="=oscar/oscar-fzn\/src\/main\/scala"/>
+        <javaElement handleIdentifier="=oscar/oscar-cbls\/src\/main\/scala&lt;oscar.cbls.scheduling.model"/>
+        <javaElement handleIdentifier="=oscar/oscar-cbls\/src\/main\/scala&lt;oscar.cbls.invariants.core.algo.dag"/>
+        <javaElement handleIdentifier="=oscar/oscar-cbls\/src\/main\/scala&lt;oscar.cbls.objective"/>
+        <javaElement handleIdentifier="=oscar/oscar-cbls\/src\/main\/scala&lt;oscar.cbls.invariants.lib.set"/>
+        <javaElement handleIdentifier="=oscar/oscar-cbls\/src\/main\/scala&lt;oscar.cbls.scheduling.solver{IFlatIRelax.scala"/>
+        <javaElement handleIdentifier="=oscar/oscar-cbls\/src\/main\/scala&lt;oscar.cbls.routing.model"/>
+        <javaElement handleIdentifier="=oscar/oscar-cbls\/src\/main\/scala&lt;oscar.cbls.search.algo"/>
+        <javaElement handleIdentifier="=oscar/oscar-cbls\/src\/main\/scala&lt;oscar.cbls.binPacking"/>
+        <javaElement handleIdentifier="=oscar/oscar-cbls\/src\/main\/scala&lt;oscar.cbls.binPacking.model"/>
+        <javaElement handleIdentifier="=oscar/oscar-cbls\/src\/main\/scala&lt;oscar.cbls.scheduling.solver{SchedulingNeighborhoods.scala"/>
+        <javaElement handleIdentifier="=oscar/oscar-cbls\/src\/main\/scala&lt;oscar.cbls.search.core"/>
+        <javaElement handleIdentifier="=oscar/oscar-cbls\/src\/main\/scala&lt;oscar.cbls.scheduling.algo"/>
+        <javaElement handleIdentifier="=oscar/oscar-cbls\/src\/main\/scala&lt;oscar.cbls.routing.neighborhood"/>
+        <javaElement handleIdentifier="=oscar/oscar-cbls\/src\/main\/scala&lt;oscar.cbls.invariants.core.propagation"/>
+        <javaElement handleIdentifier="=oscar/oscar-cbls\/src\/main\/scala&lt;oscar.cbls.invariants.core.algo.tarjan"/>
+        <javaElement handleIdentifier="=oscar/oscar-cbls\/src\/main\/scala&lt;oscar.cbls.invariants.core.algo.heap"/>
+        <javaElement handleIdentifier="=oscar/oscar-cbls\/src\/main\/scala&lt;oscar.cbls.invariants.lib.minmax"/>
+        <javaElement handleIdentifier="=oscar/oscar-cbls\/src\/main\/scala&lt;oscar.cbls.routing"/>
+        <javaElement handleIdentifier="=oscar/oscar-cbls\/src\/main\/scala&lt;oscar.cbls.invariants.lib.logic"/>
+    </selectedElements>
+</jardesc>
