@@ -378,7 +378,7 @@ abstract class CPIntVar extends CPVar with Iterable[Int] {
   def deltaSize(sn: SnapshotVarInt): Int = {
     sn.oldSize - size
   }
-
+  
   def delta(oldMin: Int, oldMax: Int, oldSize: Int): Iterator[Int]
 
   // --------------------------------------------
@@ -400,6 +400,16 @@ abstract class CPIntVar extends CPVar with Iterable[Int] {
   def deltaSize(c: Constraint): Int
 
   def delta(c: Constraint): Iterator[Int]
+  
+  def fillDeltaArray(c: Constraint, arr: Array[Int]): Int = {
+    val ite = delta(c)
+    var i = 0
+    while (ite.hasNext) {
+      arr(i) = ite.next()
+      i += 1
+    }
+    i
+  }  
 
   // ------------------------ some useful methods for java -------------------------
 

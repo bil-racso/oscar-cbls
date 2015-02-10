@@ -633,6 +633,30 @@ class CPIntVarAdaptable(final override val store: CPStore, minValue: Int, maxVal
   final def oldSize(c: Constraint): Int = oldSize(c.snapshotsVarInt(this))
 
   final def deltaSize(c: Constraint): Int = deltaSize(c.snapshotsVarInt(this))
+  
+  final override def fillDeltaArray(c: Constraint, arr: Array[Int]): Int = {
+    val sn = c.snapshotsVarInt(this)
+    if (_continuous) {
+      var i = 0
+      var j = sn.oldMin
+      while (j < _min) {
+        arr(i) = j
+        i += 1
+        j += 1
+      }
+      j = _max +1
+      while (j <= sn.oldMax) {
+        arr(i) = j
+        i += 1
+        j += 1        
+      }
+      i
+    }
+    else {
+      System.arraycopy(values, size, arr, 0, sn.oldSize - size)
+      sn.oldSize - size
+    }
+  }
 
   final def delta(c: Constraint): Iterator[Int] = {
     val sn = c.snapshotsVarInt(this)
@@ -648,16 +672,8 @@ class CPIntVarAdaptable(final override val store: CPStore, minValue: Int, maxVal
   }
 
   @inline private def deltaSparse(oldSize: Int): Iterator[Int] = {
-    var ind = size
-    new Iterator[Int] {
-      override def next(): Int = {
-        val v = values(ind)
-        ind += 1
-        v
-      }
-      override def hasNext: Boolean = {
-        ind < oldSize && ind < values.size
-      }
-    }
+    val newarray = new Array[Int](oldSize-size)
+    System.arraycopy(values, size, newarray, 0, oldSize - size)
+    newarray.iterator
   }
 }

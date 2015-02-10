@@ -59,11 +59,24 @@ abstract class Constraint(val s: CPStore, val name: String = "cons") {
 
   val snapshotsVarInt = scala.collection.mutable.Map[CPIntVar, SnapshotVarInt]() 
   val snapshotsVarSet = scala.collection.mutable.Map[CPSetVar, SnapshotVarSet]()
+  private[this] var toSnapShotVarInt = Array.ofDim[SnapshotVarInt](10)
+  private[this] var nSnapshotVarInt = 0
+  private[this] var toSnapShotVarSet = Array.ofDim[SnapshotVarSet](10)
+  private[this] var nSnapshotVarSet = 0
 
   private var _mustSnapshot = false
 
   def addSnapshot(x: CPIntVar): Unit = {
     snapshotsVarInt(x) = new SnapshotVarInt(x)
+    
+    if (nSnapshotVarInt >= toSnapShotVarInt.length) {
+      val toSnapShotVarIntNew = new Array[SnapshotVarInt](nSnapshotVarInt*2)
+      System.arraycopy(toSnapShotVarInt, 0, toSnapShotVarIntNew, 0, nSnapshotVarInt)
+      toSnapShotVarInt = toSnapShotVarIntNew
+    }
+    toSnapShotVarInt(nSnapshotVarInt) = snapshotsVarInt(x)
+    nSnapshotVarInt += 1   
+    
     snapshotsVarInt(x).update()
     if (!_mustSnapshot) {
       s.onPop { snapShot() }
@@ -71,20 +84,31 @@ abstract class Constraint(val s: CPStore, val name: String = "cons") {
     } 
   }
 
-  private def snapShot() {
+  @inline private def snapShot() {
     snapshotVarInt()
     snapshotVarSet()
   }
 
-  protected def snapshotVarInt(): Unit = {
-    if (snapshotsVarInt.size > 0) {
-      snapshotsVarInt.values.foreach(_.update())
+  @inline protected def snapshotVarInt(): Unit = {
+    var i = 0
+    while (i < nSnapshotVarInt) {
+      toSnapShotVarInt(i).update()
+      i += 1
     }
   }
   
 
   def addSnapshot(x: CPSetVar): Unit = {
     snapshotsVarSet(x) = new SnapshotVarSet(x)
+    
+    if (nSnapshotVarSet >= toSnapShotVarSet.length) {
+      val toSnapShotVarSetNew = new Array[SnapshotVarSet](nSnapshotVarSet*2)
+      System.arraycopy(toSnapShotVarSet, 0, toSnapShotVarSetNew, 0, nSnapshotVarSet)
+      toSnapShotVarSet = toSnapShotVarSetNew
+    }
+    toSnapShotVarSet(nSnapshotVarSet) = snapshotsVarSet(x)
+    nSnapshotVarSet += 1  
+    
     snapshotsVarSet(x).update()
     if (!_mustSnapshot) {
       s.onPop { snapShot() }
@@ -92,9 +116,12 @@ abstract class Constraint(val s: CPStore, val name: String = "cons") {
     }    
   }
 
-  protected def snapshotVarSet(): Unit = {
-    if (snapshotsVarSet.size > 0)
-      snapshotsVarSet.values.foreach(_.update())
+  @inline protected def snapshotVarSet(): Unit = {
+    var i = 0
+    while (i < nSnapshotVarSet) {
+      toSnapShotVarSet(i).update()
+      i += 1
+    } 
   }  
 
   private var priorL2 = CPStore.MAXPRIORL2 - 2

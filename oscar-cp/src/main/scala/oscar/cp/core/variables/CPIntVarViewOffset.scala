@@ -63,6 +63,23 @@ class CPIntVarViewOffset(v: CPIntVar, offset: Int) extends CPIntVar {
 	final override def iterator = {
 		v.iterator.map(_ + offset)
 	}
+  
+  final override def fillArray(array: Array[Int]): Int = {
+    val m = v.fillArray(array)
+    var i = 0
+    while (i < m) {
+      array(i) += offset
+      i += 1
+    }
+    m
+  } 
+  
+  final override def toArray: Array[Int] = {
+    val array = new Array[Int](size)
+    fillArray(array)
+    array
+  }
+  
 	
 	final override def toString() = s"view with shift $offset on ($v)";
 		
@@ -128,6 +145,16 @@ class CPIntVarViewOffset(v: CPIntVar, offset: Int) extends CPIntVar {
 	final override def delta(c: Constraint): Iterator[Int] = {
 	  v.delta(c).map(_ + offset)
 	}
+  
+  final override def fillDeltaArray(c: Constraint, arr: Array[Int]): Int = { 
+    val m = v.fillDeltaArray(c,arr)
+    var i = 0
+    while (i < m) {
+      arr(i) += offset
+      i += 1
+    }
+    m
+  }
 	
 }
   

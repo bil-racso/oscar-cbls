@@ -128,6 +128,16 @@ class CPIntVarViewMinus(v: CPIntVar) extends CPIntVar {
 	def delta(c: Constraint): Iterator[Int] = {
 	  v.delta(c).map(-_)
 	}
+  
+  final override def fillDeltaArray(c: Constraint, arr: Array[Int]): Int = { 
+    val m = v.fillDeltaArray(c,arr)
+    var i = 0
+    while (i < m) {
+      arr(i) = -arr(i)
+      i += 1
+    }
+    m
+  }  
 	
 }
   
