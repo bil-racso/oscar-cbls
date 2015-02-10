@@ -1,78 +1,135 @@
-/*******************************************************************************
+/**
+ * *****************************************************************************
  * OscaR is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- *   
+ *
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License  for more details.
- *   
+ *
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
- ******************************************************************************/
+ * ****************************************************************************
+ */
 
 package oscar.cp.scheduling.search
 
 import oscar.cp._
-import oscar.algo.reversible._
+import oscar.cp.core.CPOutcome.Failure
 import oscar.algo.search.Branching
+import oscar.algo.reversible.ReversibleInt
 
 /**
  * Set Times Branching
- * author: Pierre Schaus pschaus@gmail.com
+ * @author Pierre Schaus pschaus@gmail.com
+ * @author Renaud Hartert ren.hartert@gmail.com
  */
-class SetTimesBranching(starts: IndexedSeq[CPIntVar], durations: IndexedSeq[CPIntVar], ends: IndexedSeq[CPIntVar], tieBreaker: Int => Int = (i: Int) => i) extends Branching {
+class SetTimesBranching(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], tieBreaker: Int => Int = (i: Int) => i) extends Branching {
 
-  val cp = starts.head.store
-  val n = starts.size
-  val Activities = 0 until n
+  private[this] val cp = starts(0).store
+  private[this] val nTasks = starts.length
 
-  val selectable = Array.fill(n)(new ReversibleBoolean(cp, true))
-  // non fixed activities (by setTimes)
-  val bound = Array.fill(n)(new ReversibleBoolean(cp, false))
+  // Tasks not assigned by setTimes
+  private[this] val unassigned = Array.tabulate(nTasks)(i => i)
+  private[this] val positions = Array.tabulate(nTasks)(i => i)
+  private[this] val nUnassigned = new ReversibleInt(cp, nTasks)
 
-  val oldEST = Array.fill(n)(new ReversibleInt(cp, -1))
+  // Old Est of each task
+  private[this] val oldEst = Array.fill(nTasks)(new ReversibleInt(cp, Int.MinValue))
+  
+  // Used to avoid objects and to reduce the number of nodes
+  private[this] val dummyAlternative = Seq(() => cp.fail())
 
-  // update the new ones becoming available because est has moved
-  def updateSelectable() = (Activities).filter(i => oldEST(i).value < starts(i).min || durations(i).max == 0).foreach(selectable(_).value = true)
-  def selectableIndices() = (Activities).filter(i => selectable(i).value && !bound(i).value)
-  def notSelectableIndices() = (Activities).filter(i => !selectable(i).value && !bound(i).value)
-  def allStartBounds() = bound.forall(i => i.value)
-
-  def updateAndCheck() = {
-    updateSelectable()
-    if (selectableIndices().isEmpty && !allStartBounds()) cp.fail()
-  }
-
-  def alternatives(): Seq[Alternative] = {
-    if (allStartBounds()) {
-      noAlternative
-    } else {
-      updateSelectable()
-      val (est, ect,x) = selectableIndices().map(i => (starts(i).min, tieBreaker(i),i)).min
-      val notSelectable = notSelectableIndices()
-      if (notSelectable.nonEmpty) {
-        val lstNotSelectable = notSelectable.map(i => starts(i).max).min
-        if  (lstNotSelectable <= est) {
-           //println("here")
-           cp.fail()
-        }
-      }
-      // Select the activity with the smallest EST, ECT as tie breaker
-      branch {
-        cp.post(starts(x) == est)
-        bound(x).value = true
-        if (!cp.isFailed) updateAndCheck()
+  final override def alternatives(): Seq[Alternative] = {
+    if (nUnassigned.value == 0) noAlternative
+    else {
+      val taskId = selectTask()
+      val start = starts(taskId)
+      val est = start.min
+      if (minUnselectableLst <= est) dummyAlternative // TODO: should be done at the end of each alternative
+      else branch {
+        val out = cp.assign(start, est)
+        assign(taskId) // the task is assigned by setTimes
+        if (out != Failure) dominanceCheck()
       } {
         cp.propagate()
-        selectable(x).value = false
-        oldEST(x).value = est
-        updateAndCheck()
+        oldEst(taskId).value = est
+        dominanceCheck()
       }
     }
-    
+  }
+
+  // FIXME: selectTask, dominanceCheck and minUnselectableLst should be 
+  //        done in a single pass at the end of each branch
+  @inline private def selectTask(): Int = {
+    var i = nUnassigned.value
+    var minTask = -1
+    var minEst = Int.MaxValue
+    var minTie = Int.MaxValue
+    while (i > 0) {
+      i -= 1
+      val taskId = unassigned(i)
+      val est = starts(taskId).min
+      if (oldEst(taskId).value < est || durations(i).max == 0) { // TODO not convinced by durations(i).max == 0
+        if (est < minEst) {
+          minTask = taskId
+          minEst = est
+          minTie = tieBreaker(taskId)
+        } else if (est == minEst) {
+          val tie = tieBreaker(taskId)
+          if (tie < minTie) {
+            minTask = taskId
+            minTie = tie
+          }
+        }
+      }
+    }
+    minTask // -1 = empty
+  }
+  
+  // FIXME: selectTask, dominanceCheck and minUnselectableLst should be 
+  //        done in a single pass at the end of each branch
+  @inline private def minUnselectableLst: Int = {
+    var i = nUnassigned.value
+    var minLst = Int.MaxValue
+    while (i > 0) {
+      i -= 1
+      val taskId = unassigned(i)
+      if (oldEst(taskId).value >= starts(taskId).min && durations(taskId).max != 0) {
+        val lst = starts(taskId).max
+        if (lst < minLst) minLst = lst
+      }
+    }
+    minLst
+  }
+
+  // FIXME: selectTask, dominanceCheck and minUnselectableLst should be 
+  //        done in a single pass at the end of each branch
+  @inline private def dominanceCheck(): Unit = {
+    val n = nUnassigned.value
+    if (n > 0) {
+      var failed = true
+      var i = n
+      while (i > 0 && failed) {
+        i -= 1
+        val taskId = unassigned(i)
+        failed = oldEst(taskId).value >= starts(taskId).min && durations(i).max != 0
+      }
+      if (failed) cp.fail()
+    }
+  }
+
+  @inline private def assign(taskId: Int): Unit = {
+    val p1 = positions(taskId)
+    val p2 = nUnassigned.decr()
+    val v2 = unassigned(p2)
+    positions(taskId) = p2
+    positions(v2) = p1
+    unassigned(p1) = v2
+    unassigned(p2) = taskId
   }
 }
 
