@@ -8,7 +8,7 @@ import oscar.cp.lcg.core.Literal
 
 object TestApp extends LCGModel with App {
 
-  val variables = Array.tabulate(3)(i => LCGIntervalVar(0, 4, "Var_" + i))
+  /*val variables = Array.tabulate(3)(i => LCGIntervalVar(0, 4, "Var_" + i))
 
   class DumpConstraint(lcgSolver: LCGSolver, variable: LCGIntervalVar) extends LCGConstraint(lcgSolver, variable.store, "") {
     override def register(): Unit = variable.callWhenBoundsChange(this)
@@ -65,5 +65,5 @@ object TestApp extends LCGModel with App {
 
   onSolution()//println("SOLUTION FOUND !"))
 
-  println(start())
+  println(start())*/
 }

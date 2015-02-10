@@ -9,6 +9,7 @@ import oscar.cp.lcg.core.clauses.Clause
 import oscar.algo.reversible.ReversibleInt
 import oscar.cp.lcg.variables.LCGIntervalVar
 import oscar.algo.array.ArrayStackInt
+import oscar.cp.lcg.core.clauses.FalsifiedClause
 
 class TrailRemoveExplanation(explanation: Clause) extends TrailEntry {
   final override def restore(): Unit = explanation.deactive()
@@ -20,27 +21,28 @@ class LCGStore(store: CPStore) {
   private[this] var backtrackLevel: Int = Int.MaxValue
 
   // Clauses
-  private[this] val problemClauses: ArrayStack[Clause] = new ArrayStack(128)
-  private[this] val learntClauses: ArrayStack[Clause] = new ArrayStack(128)
-  private[this] val explanationClauses: ArrayStack[Clause] = new ArrayStack(128)
+  private[this] val problemClauses: ArrayStack[Clause] = new ArrayStack(512)
+  private[this] val learntClauses: ArrayStack[Clause] = new ArrayStack(512)
+  private[this] val explanationClauses: ArrayStack[Clause] = new ArrayStack(512)
+
+  // Watchers of each literal
+  private[this] val watchers: ArrayStack[ArrayQueue[Clause]] = new ArrayStack(256)
 
   // Variables store
   private[this] var variables: Array[Literal] = new Array(128)
   private[this] var intervalRef: Array[LCGIntervalVar] = new Array(128)
   private[this] var values: Array[LiftedBoolean] = new Array(128)
   private[this] var reasons: Array[Clause] = new Array(128)
-  private[this] var levels: Array[Int] = new Array(128) 
+  private[this] var levels: Array[Int] = new Array(128)
   private[this] var varStoreSize: Int = 0 // not used yet
 
-  // Watchers of each literal
-  private[this] val watchers: ArrayStack[ArrayQueue[Clause]] = new ArrayStack(128)
-
   // Trailing queue  
-  private[this] var lastMagic = store.magic
-  private[this] var trail: Array[Literal] = new Array[Literal](128)
-  private[this] var trailSize: Int = 0
+  private[this] var trailAssigned: Array[Literal] = new Array[Literal](128)
+  private[this] var trailLevels: Array[Int] = new Array[Int](16)
+  private[this] var nTrailAssigned: Int = 0
+  private[this] var nTrailLevels: Int = 0
   private[this] var currentLevel: Int = 0
-  
+
   // True variable
   private[this] val trueVariable = newVariable(null, "TRUE_VAR")
   values(trueVariable.varId) = True // must not be trailed
@@ -51,14 +53,16 @@ class LCGStore(store: CPStore) {
   // Clause to propagate before fixed-point
   private[this] val toPropagate: ArrayStack[Array[Literal]] = new ArrayStack(16)
 
+  // Structure for the conflict analysis procedure
+  private[this] val outLearnt = new ArrayStack[Literal](16)
+  private[this] val litReason = new ArrayStack[Literal](16)
+  private[this] var conflictingClause: Clause = null
+
   /** Return a literal that is always true. */
   @inline final val trueLit: Literal = trueVariable
 
   /** Return a literal that is always false. */
   @inline final val falseLit: Literal = trueVariable.opposite
-
-  /** Return true if the store is inconsistent. */
-  @inline final def isInconsistent: Boolean = currentLevel > backtrackLevel
 
   /** Return the current decision level. */
   @inline final def decisionLevel: Int = currentLevel
@@ -74,12 +78,12 @@ class LCGStore(store: CPStore) {
 
   /** Return the clause responsible of the assignment. */
   @inline final def assignReason(varId: Int): Clause = reasons(varId)
-  
+
   @inline final def backtrackLvl: Int = backtrackLevel
 
   /** Create a new variable and return its unsigned literal. */
   final def newVariable(interval: LCGIntervalVar, name: String): Literal = {
-    if (varStoreSize == values.length) growVariableStore()   
+    if (varStoreSize == values.length) growVariableStore()
     val varId = varStoreSize
     val literal = new Literal(varId, name)
     variables(varStoreSize) = literal
@@ -94,7 +98,7 @@ class LCGStore(store: CPStore) {
     literal
   }
 
-  /** Register the clause as a watcher of literal. */
+  /** Register the clause as a watcher of `literal`. */
   @inline final def watch(clause: Clause, literal: Literal): Unit = {
     watchers(literal.id).addLast(clause)
   }
@@ -113,13 +117,6 @@ class LCGStore(store: CPStore) {
     newClause(literals, false)
   }
 
-  /** Add a new decision to the store. */
-  final def addDecision(literal: Literal): Boolean = {
-    val noConflict = enqueue(literal, null)
-    if (!noConflict) sys.error("inconsistent decision")
-    noConflict
-  }
-
   /**
    *  Add a backtrable clause to the store.
    *  Entailed clauses are discarded.
@@ -128,38 +125,11 @@ class LCGStore(store: CPStore) {
     toPropagate.append(literals)
   }
 
-  private def handleExplanation(literals: Array[Literal]): Boolean = {
-
-    var watched1 = -1
-    var watched2 = -1
-
-    var i = 0
-    while (i < literals.length) {
-      val lit = literals(i)
-      val v = value(lit)
-      if (v == True) sys.error("entained explanation")
-      else if (v == Unassigned) {
-        if (watched1 == -1) watched1 = i
-        else watched2 = i
-      }
-      i += 1
-    }
-
-    if (watched1 == -1) {
-      // falsified
-      false
-    } else if (watched2 == -1) {
-      // assertive
-      sys.error("should not happen right now")
-      true
-    } else sys.error("entailed or non-assertive clause.")
-  }
-
   // Build a new clause
   @inline private def newClause(literals: Array[Literal], learnt: Boolean): Boolean = {
 
     if (!learnt) {
-      // check for initial satisfiability
+      // TODO: check for initial satisfiability
     }
 
     if (literals.length == 0) true
@@ -186,35 +156,35 @@ class LCGStore(store: CPStore) {
         literals(1) = literals(maxLit)
         literals(maxLit) = tmp
 
+        watchers(literals(0).opposite.id).addLast(clause)
+        watchers(literals(1).opposite.id).addLast(clause)
+        learntClauses.append(clause)
+        enqueue(literals(0), clause)
       } else {
         problemClauses.append(clause)
+        watchers(literals(0).opposite.id).addLast(clause)
+        watchers(literals(1).opposite.id).addLast(clause)
+        true
       }
-      watchers(literals(0).opposite.id).addLast(clause)
-      watchers(literals(1).opposite.id).addLast(clause)
-      true
     }
   }
-
-  private var conflictingClause: Clause = null
 
   /**
    *  Propagate and conflict analysis
    */
   final def propagate(): Boolean = {
     // Call the fixed-point algorithm
-    val noConflict = fixedPoint()
-    if (!noConflict) {
-      analyze()
-      untrailUntil(backtrackLevel)
-      learn()
+    if (fixedPoint()) {
+      // TODO: Notify changes
+      true
     } else {
-      // Notify domains
+      analyze()
+      undoLevelsUntil(backtrackLevel)
+      learn(outLearnt.toArray)
+      false
     }
   }
-  
-  private[this] val outLearnt = new ArrayStack[Literal](10)
-  private[this] val litReason = new ArrayStack[Literal](10)
-  
+
   @inline private def analyze(): Unit = {
 
     val seen: Array[Boolean] = new Array(values.length) // FIXME
@@ -243,7 +213,7 @@ class LCGStore(store: CPStore) {
           val varLevel = levels(varId)
           if (varLevel == currentLevel) counter += 1
           else if (varLevel > 0) {
-            outLearnt.append(literal.opposite)
+            outLearnt.append(lit.opposite)
             if (varLevel > backtrackLevel) backtrackLevel = varLevel
           }
         }
@@ -251,15 +221,15 @@ class LCGStore(store: CPStore) {
 
       // Select next literal to look at
       do {
-        literal = trail(trailSize - 1)
+        literal = trailAssigned(nTrailAssigned - 1)
         conflict = reasons(literal.varId)
-        undoOne()
+        undoAssignment()
       } while (!seen(literal.varId))
-        
+
       counter -= 1
-      
+
     } while (counter > 0)
-      
+
     outLearnt(0) = literal.opposite
   }
 
@@ -298,57 +268,114 @@ class LCGStore(store: CPStore) {
     noConflict
   }
 
-  final def enqueue(literal: Literal, from: Clause): Boolean = {
+  @inline private def handleExplanation(literals: Array[Literal]): Boolean = {
+
+    var watched1 = -1
+    var watched2 = -1
+
+    var i = 0
+    while (i < literals.length) {
+      val lit = literals(i)
+      val v = value(lit)
+      if (v == True) sys.error("entailed explanation")
+      else if (v == Unassigned) {
+        if (watched1 == -1) watched1 = i
+        else watched2 = i
+      }
+      i += 1
+    }
+
+    if (watched1 == -1) {
+      // falsified
+      conflictingClause = new FalsifiedClause(literals)
+      false
+    } else if (watched2 == -1) {
+      // assertive
+      sys.error("should not happen right now")
+      true
+    } else sys.error("entailed or non-assertive clause.")
+  }
+
+  @inline private def learn(literals: Array[Literal]): Unit = {
+    println("learnt : " + literals.mkString(" "))
+    newClause(literals, true)
+  }
+
+  final def enqueue(literal: Literal, reason: Clause): Boolean = {
     val varId = literal.varId
-    val lboolean = value(literal)
+    val lboolean = value(literal) // FIXME: performance
     if (lboolean != Unassigned) lboolean != False
     else {
-      // new fact to store
+      // New assignment to store
       if (literal.signed) values(varId) = False
       else values(varId) = True
-      levels(varId) = currentLevel
-      reasons(varId) = from
-      trailAssignment(literal) // Increase the trail here
-      // Notify corresponding variable
+      reasons(varId) = reason
+      levels(varId) = nTrailLevels
+      // Trail the new assignment
+      newAssignment(literal)
+      // Notify LCG variable
       intervalRef(varId).updateAndNotify()
+      // Add the literal to the propagation queue
       queue.addLast(literal)
       true
     }
   }
 
-  final def printTrail(): Unit = println("TRAIL = " + trail.take(trailSize).mkString("[", ", ", "]"))
+  final def printTrail(): Unit = println("TRAIL = " + trailAssigned.take(nTrailAssigned).mkString("[", ", ", "]"))
 
-  @inline private def popAssignment(): Unit = {
-    if (trailSize > 0) {
-      //printTrail() // TODO : remove
-      trailSize -= 1
-      val literal = trail(trailSize)
-      val varId = literal.varId
-      values(varId) = Unassigned
-      reasons(varId) = null
-      levels(varId) = -1
+  @inline final def newLevel(): Unit = {
+    if (trailLevels.length == nTrailLevels) growTrailLevels()
+    trailLevels(nTrailLevels) = nTrailAssigned
+    nTrailLevels += 1
+  }
+
+  @inline private def newAssignment(literal: Literal): Unit = {
+    if (trailAssigned.length == nTrailAssigned) growTrailAssigned()
+    trailAssigned(nTrailAssigned) = literal
+    nTrailAssigned += 1
+  }
+
+  // Unfo the last assignment.
+  @inline private def undoAssignment(): Unit = {
+    assert(nTrailAssigned > 0)
+    nTrailAssigned -= 1
+    val literal = trailAssigned(nTrailAssigned)
+    val varId = literal.varId
+    values(varId) = Unassigned
+    reasons(varId) = null
+    levels(varId) = -1
+  }
+
+  // Undo the last level.
+  @inline private def undoLevel(): Unit = {
+    nTrailLevels -= 1
+    var nUndo = nTrailAssigned - trailLevels(nTrailLevels)
+    while (nUndo > 0) {
+      nUndo -= 1
+      undoAssignment()
     }
   }
 
-  @inline final def newDecisionLevel(): Unit = {
-    currentLevel += 1
-    store.trail(levelTrailEntry)
+  // Undo the last levels until level.
+  @inline private def undoLevelsUntil(level: Int): Unit = {
+    while (nTrailLevels > level) undoLevel()
   }
 
-
-  @inline private def trailAssignment(literal: Literal): Unit = {
-    if (trail.length == trailSize) growTrail()
-    trail(trailSize) = literal
-    trailSize += 1
-    store.trail(undoTrailEntry)
+  // Used to adapt the length of inner structures.
+  @inline private def growTrailAssigned(): Unit = {
+    val newTrail = new Array[Literal](nTrailAssigned << 1)
+    System.arraycopy(trailAssigned, 0, newTrail, 0, nTrailAssigned)
+    trailAssigned = newTrail
   }
 
-  @inline private def growTrail(): Unit = {
-    val newTrail = new Array[Literal](trail.length * 2)
-    System.arraycopy(trail, 0, newTrail, 0, trail.length)
-    trail = newTrail
+  // Used to adapt the length of inner structures.
+  @inline private def growTrailLevels(): Unit = {
+    val newTrail = new Array[Int](nTrailLevels << 1)
+    System.arraycopy(trailLevels, 0, newTrail, 0, nTrailLevels)
+    trailLevels = newTrail
   }
-  
+
+  // Used to adapt the length of inner structures.
   @inline private def growVariableStore(): Unit = {
     val newSize = varStoreSize * 2
     val newVariables = new Array[Literal](newSize)

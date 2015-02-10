@@ -5,11 +5,15 @@ import oscar.algo.search.DFSearch
 import oscar.cp.lcg.core.LCGStore
 import oscar.cp.core.CPStore
 import oscar.cp.core.Constraint
-import oscar.cp.core.CPOutcome
+import oscar.cp.core.CPOutcome.Failure
+import oscar.cp.lcg.core.LCGSolver
 
 /** @author Renaud Hartert ren.hartert@gmail.com */
-class LCGSearch(node: DFSearchNode, lcgStore: LCGStore) {
-  
+class LCGSearch(node: DFSearchNode, cpStore: CPStore, lcgStore: LCGStore) {
+
+  // LCG constraint
+  private[this] val lcgStoreConstraint: Constraint = new LCGSolver(cpStore, lcgStore)
+
   // Current depth level
   private[this] var depth: Int = 0
 
@@ -21,7 +25,7 @@ class LCGSearch(node: DFSearchNode, lcgStore: LCGStore) {
 
   // Number of nodes explored in the previous search
   private[this] var nbNodes: Int = 0
-  
+
   // True if the previous search was exhaustive
   private[this] var completed: Boolean = false
 
@@ -39,7 +43,7 @@ class LCGSearch(node: DFSearchNode, lcgStore: LCGStore) {
 
   /** Returns the number nodes explored in the previous search */
   final def nNodes: Int = nbNodes
-  
+
   /** Returns true if the previous search was exhaustive */
   final def isCompleted: Boolean = completed
 
@@ -48,15 +52,15 @@ class LCGSearch(node: DFSearchNode, lcgStore: LCGStore) {
 
   /** Adds an action to execute when a solution node is found */
   final def onSolution(action: => Unit): Unit = solutionActions = (() => action) :: solutionActions
-  
-  /** Clear all actions executed when a solution node is found */ 
+
+  /** Clear all actions executed when a solution node is found */
   final def clearOnSolution(): Unit = solutionActions = Nil
-  
-  /** Clear all actions executed when a failed node is found */ 
+
+  /** Clear all actions executed when a failed node is found */
   final def clearOnFailure(): Unit = failureActions = Nil
 
   final def search(heuristic: Heuristic, stopCondition: () => Boolean): Unit = {
-    
+
     // Init
     nbSols = 0
     nbBkts = 0
@@ -65,56 +69,45 @@ class LCGSearch(node: DFSearchNode, lcgStore: LCGStore) {
     completed = false
     node.pushState()
 
-    while (depth >= 0 && !stopCondition()) {      
+    while (depth >= 0 && !stopCondition()) {
       // Next decision to apply
       val decision = heuristic.decision
-      if (decision == null) {       
+      if (decision == null) {
         // Solution
         node.solFound()
         solutionActions.foreach(_())
         nbSols += 1
         depth -= 1 // backtrack
-        node.pop()  
+        node.pop()
       } else {
         // Expand
         nbNodes += 1
         depth += 1
         node.pushState()
         // Apply decision
-        lcgStore.newDecisionLevel()
+        lcgStore.newLevel()
         decision()
-        // Handle failure
-        if (node.isFailed) {
+        val failed = cpStore.propagate(lcgStoreConstraint)
+        if (failed == Failure) {
           failureActions.foreach(_())
-          val backtrackLevel: Int = ??? // number of level to backtrack by LCG
-          while (depth > backtrackLevel) {
-            nbBkts += 1
+          val level = lcgStore.backtrackLvl
+          println("backjump from " + depth + " to " + level)
+          nbBkts += 1
+          while (depth > level) {
             depth -= 1 // backtrack
-            node.pop()       
+            node.pop
           }
           // Open the last state
           node.resetLastState()
         }
-      }  
+      }
     }
-      
+
     // Pop the remaining states
     if (depth < 0) completed = true
-    else while (depth >= 0) {
+    else while (depth > 0) {
       node.pop
       depth -= 1
     }
-  }
-  
-  private[this] val cpStore: CPStore = ??? 
-  private[this] val lcgStoreConstraint: Constraint = ???
-  
-  private def propagate(decision: Function0[Unit]): Int = {
-    // Apply decision
-    decision()
-    // Propagate
-    val failed = cpStore.propagate(lcgStoreConstraint)
-    if (failed == CPOutcome.Failure) lcgStore.backtrackLvl
-    else Int.MaxValue
   }
 }

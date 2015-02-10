@@ -5,16 +5,16 @@ abstract sealed class LiftedBoolean {
 }
 
 object False extends LiftedBoolean { 
-  final override val opposite: LiftedBoolean = True 
+  @inline final override val opposite: LiftedBoolean = True 
   final override val toString: String = "False"
 }
 
 object True extends LiftedBoolean { 
-  final override val opposite: LiftedBoolean = False 
+  @inline final override val opposite: LiftedBoolean = False 
   final override val toString: String = "True"
 }
 
 object Unassigned extends LiftedBoolean { 
-  final override val opposite: LiftedBoolean = this
+  @inline final override val opposite: LiftedBoolean = this
   final override val toString: String = "Unassigned"
 }
