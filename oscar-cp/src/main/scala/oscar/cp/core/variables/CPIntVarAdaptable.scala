@@ -672,8 +672,24 @@ class CPIntVarAdaptable(final override val store: CPStore, minValue: Int, maxVal
   }
 
   @inline private def deltaSparse(oldSize: Int): Iterator[Int] = {
+    
+    var ind = size
+    new Iterator[Int] {
+      override def next(): Int = {
+        val v = values(ind)
+        ind += 1
+        v
+      }
+      override def hasNext: Boolean = {
+        ind < oldSize && ind < values.size
+      }
+    }   
+   /*
     val newarray = new Array[Int](oldSize-size)
+    println(oldSize-size+" "+values.size+" "+size+ " "+oldSize);
     System.arraycopy(values, size, newarray, 0, oldSize - size)
     newarray.iterator
+    */
+    
   }
 }
