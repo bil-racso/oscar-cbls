@@ -10,9 +10,13 @@ import oscar.algo.reversible.ReversibleInt
 import oscar.cp.lcg.variables.LCGIntervalVar
 import oscar.algo.array.ArrayStackInt
 import oscar.cp.lcg.core.clauses.FalsifiedClause
+import oscar.cp.lcg.core.clauses.FalsifiedClause
 
 class TrailRemoveExplanation(explanation: Clause) extends TrailEntry {
-  final override def restore(): Unit = explanation.deactive()
+  final override def restore(): Unit = {
+    println("deleted   : " + explanation)
+    explanation.deactive()
+  }
 }
 
 class LCGStore(store: CPStore) {
@@ -41,10 +45,9 @@ class LCGStore(store: CPStore) {
   private[this] var trailLevels: Array[Int] = new Array[Int](16)
   private[this] var nTrailAssigned: Int = 0
   private[this] var nTrailLevels: Int = 0
-  private[this] var currentLevel: Int = 0
 
   // True variable
-  private[this] val trueVariable = newVariable(null, "TRUE_VAR")
+  private[this] val trueVariable = newVariable(null, "TRUE_LIT", "FALSE_LIT")
   values(trueVariable.varId) = True // must not be trailed
 
   // Propagation queue
@@ -65,7 +68,7 @@ class LCGStore(store: CPStore) {
   @inline final val falseLit: Literal = trueVariable.opposite
 
   /** Return the current decision level. */
-  @inline final def decisionLevel: Int = currentLevel
+  @inline final def decisionLevel: Int = nTrailLevels
 
   /** Return true if the variable is assigned to true. */
   @inline final def isTrue(literal: Literal): Boolean = values(literal.varId) == True
@@ -82,10 +85,10 @@ class LCGStore(store: CPStore) {
   @inline final def backtrackLvl: Int = backtrackLevel
 
   /** Create a new variable and return its unsigned literal. */
-  final def newVariable(interval: LCGIntervalVar, name: String): Literal = {
+  final def newVariable(interval: LCGIntervalVar, name: String, nameOpposite: String): Literal = {
     if (varStoreSize == values.length) growVariableStore()
     val varId = varStoreSize
-    val literal = new Literal(varId, name)
+    val literal = new Literal(varId, name, nameOpposite)
     variables(varStoreSize) = literal
     intervalRef(varStoreSize) = interval
     values(varStoreSize) = Unassigned
@@ -138,8 +141,6 @@ class LCGStore(store: CPStore) {
       // Allocate clause
       val clause = Clause(this, literals, learnt)
       if (learnt) {
-        // Add clause to learnt
-        learntClauses.append(clause)
         // Pick a second literal to watch
         var maxLit = 0
         var max = -1
@@ -173,16 +174,15 @@ class LCGStore(store: CPStore) {
    *  Propagate and conflict analysis
    */
   final def propagate(): Boolean = {
-    // Call the fixed-point algorithm
-    if (fixedPoint()) {
-      // TODO: Notify changes
+    if (handleExplanation() && fixedPoint()) {
+      // TODO: Notify domains
       true
-    } else {
+    } else if (nTrailLevels > 0) {
       analyze()
       undoLevelsUntil(backtrackLevel)
       learn(outLearnt.toArray)
       false
-    }
+    } else false
   }
 
   @inline private def analyze(): Unit = {
@@ -211,7 +211,7 @@ class LCGStore(store: CPStore) {
         if (!seen(varId)) {
           seen(varId) = true
           val varLevel = levels(varId)
-          if (varLevel == currentLevel) counter += 1
+          if (varLevel == nTrailLevels) counter += 1
           else if (varLevel > 0) {
             outLearnt.append(lit.opposite)
             if (varLevel > backtrackLevel) backtrackLevel = varLevel
@@ -238,19 +238,14 @@ class LCGStore(store: CPStore) {
    *  Return true if no conflict occurs
    */
   @inline private def fixedPoint(): Boolean = {
-
     // False if a conflict occurs
     var noConflict = true
-
-    // New explanation to handle
-    while (!toPropagate.isEmpty && noConflict) {
-      val literals = toPropagate.pop()
-      noConflict = handleExplanation(literals)
-    }
-
     // Empty the propagation queue
     while (!queue.isEmpty && noConflict) {
       val literal = queue.removeFirst
+
+      intervalRef(literal.varId).updateAndNotify() // FIXME: dirty hack
+
       val clauses = watchers(literal.id)
       val nClauses = clauses.size
       var i = clauses.size
@@ -268,36 +263,32 @@ class LCGStore(store: CPStore) {
     noConflict
   }
 
-  @inline private def handleExplanation(literals: Array[Literal]): Boolean = {
-
-    var watched1 = -1
-    var watched2 = -1
-
-    var i = 0
-    while (i < literals.length) {
-      val lit = literals(i)
-      val v = value(lit)
-      if (v == True) sys.error("entailed explanation")
-      else if (v == Unassigned) {
-        if (watched1 == -1) watched1 = i
-        else watched2 = i
-      }
-      i += 1
+  @inline private def handleExplanation(): Boolean = {
+    // False if a conflict occurs
+    var noConflict = true
+    while (!toPropagate.isEmpty && noConflict) {
+      
+      // Explanation to handle
+      val literals = toPropagate.pop()
+      val sortedLiterals = literals.filter(lit => lit.varId != trueLit.varId).sortBy(lit => levels(lit.varId)) // FIXME: perf
+      
+      val clause = Clause(this, sortedLiterals, false)
+      println("explained : " + clause)
+      watchers(sortedLiterals(0).opposite.id).addLast(clause)
+      watchers(sortedLiterals(1).opposite.id).addLast(clause)
+      explanationClauses.append(clause)
+      intervalRef(sortedLiterals(0).varId).updateAndNotify() // FIXME: dirty hack
+      store.trail(new TrailRemoveExplanation(clause))
+      noConflict = enqueue(sortedLiterals(0), clause)
+      if (!noConflict) conflictingClause = clause
     }
-
-    if (watched1 == -1) {
-      // falsified
-      conflictingClause = new FalsifiedClause(literals)
-      false
-    } else if (watched2 == -1) {
-      // assertive
-      sys.error("should not happen right now")
-      true
-    } else sys.error("entailed or non-assertive clause.")
+    
+    toPropagate.clear()
+    noConflict
   }
 
   @inline private def learn(literals: Array[Literal]): Unit = {
-    println("learnt : " + literals.mkString(" "))
+    println("learnt    : " + literals.mkString("(", " ", ")"))
     newClause(literals, true)
   }
 
@@ -313,8 +304,6 @@ class LCGStore(store: CPStore) {
       levels(varId) = nTrailLevels
       // Trail the new assignment
       newAssignment(literal)
-      // Notify LCG variable
-      intervalRef(varId).updateAndNotify()
       // Add the literal to the propagation queue
       queue.addLast(literal)
       true

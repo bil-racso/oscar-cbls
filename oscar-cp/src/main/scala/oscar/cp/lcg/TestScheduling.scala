@@ -6,14 +6,15 @@ import oscar.cp.lcg.constraints.DecompChecker
 import oscar.cp.lcg.core.LCGSolver
 import oscar.cp.lcg.searches.MinMinHeuristic
 import oscar.cp.lcg.searches.LCGSearch
+import oscar.cp.lcg.constraints.DecompTT
 
 object TestScheduling extends App {
 
   // Data
-  val instance = Array((50, 1), (30, 1), (90, 3), (10, 2), (20, 2), (80, 1), (30, 2), (20, 2), (20, 1), (10, 1), (10, 2), (20, 2), (80, 1))
+  val instance = Array((5, 1), (3, 1), (9, 3), (1, 2), (2, 2), (8, 1), (3, 2), (2, 2), (2, 1), (1, 1), (1, 2), (2, 2), (8, 1))
   val durations = instance.map(_._1)
   val demands = instance.map(_._2)
-  val horizon = durations.sum
+  val horizon = 19//durations.sum
   val nTasks = durations.length
   val capa = 4
   
@@ -22,20 +23,23 @@ object TestScheduling extends App {
   implicit val lcgSolver: LCGSolver = new LCGSolver(cpSolver, lcgStore)
 
   // Decision variables
-  val starts = Array.tabulate(nTasks)(t => LCGIntervalVar(0, horizon - durations(t), "Task_" + t))
+  val starts = Array.tabulate(nTasks)(t => LCGIntervalVar(0, horizon - durations(t), "Task_" + (t + 1)))
 
   // LCG Constraints
-  cpSolver.add(new DecompChecker(lcgSolver, starts, durations, demands, capa, horizon))
+  val constraint = new DecompChecker(lcgSolver, starts, durations, demands, capa, horizon)
+  cpSolver.add(constraint)
 
   val search = new LCGSearch(cpSolver, cpSolver, lcgStore)
   val heuristic = new MinMinHeuristic(starts)
   
-  //search.onFailure(println("backjump"))
-  search.onSolution(println("\nSOLUTION\n" + starts.map(v => v.name + " = " + v.min).mkString("\n")))
+  search.onSolution {
+    println("\nSOLUTION\n" + starts.map(v => v.name + " = " + v.min).mkString("\n"))
+  }
+  
   val t0 = System.currentTimeMillis()
   search.search(heuristic, () => search.nSolutions == 1)
-  println("time (ms)  : " + (System.currentTimeMillis() - t0))
-  println("nBackjumps : " + search.nBacktracks)
+  println("\ntime (ms)  : " + (System.currentTimeMillis() - t0))
+  println("nConflicts : " + search.nConflicts)
   println("nNodes     : " + search.nNodes)
   println("nSolutions : " + search.nSolutions)
 }
