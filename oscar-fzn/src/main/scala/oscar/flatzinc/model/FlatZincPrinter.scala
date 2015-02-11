@@ -99,11 +99,13 @@ object FlatZincPrinter {
       case s:String => s
       case c:Constraint => toFZN(c)
       case v:Variable => v.id
-      case es: ArrayOfElement => es.elements.asScala.map(toFZN(_)).mkString("[",", ","]")
-      case vs: Array[Variable] => toFZN(vs)
-      case vs: ArrayList[VarRef] => vs.asScala.map(toFZN(_)).mkString("[",", ","]")
+      case es: ArrayOfElement => es.elements.asScala.map(toFZN(_)).mkString("[",", ","]") //In annotations
+      case vs: Array[Variable] => toFZN(vs) //arrays of variables.
+      //case vs: ArrayList[VarRef] => println(vs); ""//vs.asScala.map(toFZN(_)).mkString("[",", ","]")
+      case vs: ArrayList[Element] => vs.asScala.map(toFZN(_)).mkString("[",", ","]")
       case e: Element => toFZN(e)
-      case x => Console.err.println(x.getClass()); x.toString()
+      case i: Integer => i.toString()
+      case x => Console.err.println("Match not found:"+x.getClass()); x.toString()
       }
   }
   
@@ -116,6 +118,7 @@ object FlatZincPrinter {
       case int_lin_le(x,y,z,ann) => "int_lin_le("+toFZN(x)+","+toFZN(y)+","+toFZN(z)+")"+toFZNann(ann)
       case int_lin_ne(x,y,z,ann) => "int_lin_ne("+toFZN(x)+","+toFZN(y)+","+toFZN(z)+")"+toFZNann(ann)
       case array_int_element(x,y,z,ann) => "array_int_element("+toFZN(x)+","+toFZN(y)+","+toFZN(z)+")"+toFZNann(ann)
+      case array_var_int_element(x,y,z,ann) => "array_int_element("+toFZN(x)+","+toFZN(y)+","+toFZN(z)+")"+toFZNann(ann)
       case array_bool_and(x,y, ann) => "array_bool_and("+toFZN(x)+","+toFZN(y)+")"+toFZNann(ann)
       case array_bool_or(x,y, ann) => "array_bool_or("+toFZN(x)+","+toFZN(y)+")"+toFZNann(ann)
       case bool_clause(x,y, ann) => "bool_clause("+toFZN(x)+","+toFZN(y)+")"+toFZNann(ann)

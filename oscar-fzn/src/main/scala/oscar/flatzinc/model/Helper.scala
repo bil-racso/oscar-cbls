@@ -21,12 +21,16 @@ import scala.collection.mutable.{ Map => MMap}
 
 object Helper {
   def getCName(c: Constraint): String = {
-    val names = c.getClass().getName().split("\\.")
-    val name = names(names.length-1)
-    if(name=="reif"){
-      val n2 = c.asInstanceOf[reif].c.getClass().getName().split("\\.")
-      n2(n2.length-1)+"_reif"
-    }else name
+    if(c.isInstanceOf[GeneratedConstraint])
+      c.asInstanceOf[GeneratedConstraint].name 
+    else{
+      val names = c.getClass().getName().split("\\.")
+      val name = names(names.length-1)
+      if(name=="reif"){
+        val n2 = c.asInstanceOf[reif].c.getClass().getName().split("\\.")
+        n2(n2.length-1)+"_reif"
+      }else name
+    }
   }
   
   def getCstrsByName(cstrs: Iterable[Constraint]): MMap[String,List[Constraint]] = {

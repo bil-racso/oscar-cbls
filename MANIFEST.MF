@@ -1,0 +1,2 @@
+Manifest-Version: 1.0
+Class-Path: . antlr-4.4-complete.jar antlr-runtime-4.4.jar

@@ -95,8 +95,14 @@ abstract class AllDefiningConstraint(variables: Array[Variable], ann:List[Annota
 }
 
 //TODO: Flatten the args into the array of variables
-case class GeneratedConstraint(name:String, args:List[Any],signature:List[Pattern]) extends Constraint(Array.empty[Variable], List.empty[Annotation])
-  
+case class GeneratedConstraint(name:String, args:List[Any],signature:List[Pattern]) extends Constraint(GC.flatten(args), List.empty[Annotation])
+object GC{
+  def flatten(args: List[Any]): Array[Variable] = {
+    args.flatMap(_ match{
+      case v:Variable => List(v) 
+    }).toArray
+  }
+}
 // ----------------------------------
 
 case class array_bool_and(as: Array[BooleanVariable], r: BooleanVariable, ann: List[Annotation] = List.empty[Annotation]) 
@@ -226,7 +232,9 @@ case class among(n:IntegerVariable,x:Array[IntegerVariable],v:Domain, ann: List[
   extends SimpleDefiningConstraint(x++Array(n),n,ann)
 case class count_eq(xs:Array[IntegerVariable], y:IntegerVariable, cnt:IntegerVariable, ann: List[Annotation] = List.empty[Annotation])
   extends SimpleDefiningConstraint(xs++Array(y,cnt),cnt,ann)
-
+//count == count_eq
+case class count(xs:Array[IntegerVariable], y:IntegerVariable, cnt:IntegerVariable, ann: List[Annotation] = List.empty[Annotation])
+  extends SimpleDefiningConstraint(xs++Array(y,cnt),cnt,ann)
 
 case class circuit(x:Array[IntegerVariable], ann: List[Annotation] = List.empty[Annotation]) 
   extends Constraint(x++Array.empty[Variable],ann)

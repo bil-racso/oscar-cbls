@@ -161,7 +161,8 @@ class Model(val log: Log) {
   def addConstraint(name: String, args: java.util.List[Element], anns: java.util.List[Annotation]) = {
     val (ann_def,ann_other) = anns.asScala.toList.partition(a => a.name == "defines_var")
     val cstr = constructConstraint(name, args.asScala.toList, anns.asScala.toList)
-    ann_def.foreach(a => cstr.setDefinedVar(a.args(0).asInstanceOf[VarRef].v))
+    //Added the test because Mzn 2.0 adds some defined_var(12) with constants.
+    ann_def.foreach(a => if(a.args(0).isInstanceOf[VarRef])cstr.setDefinedVar(a.args(0).asInstanceOf[VarRef].v))
     problem.addConstraint(cstr)
   }
   
