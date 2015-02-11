@@ -18,14 +18,13 @@
  * @author Jean-Noël Monette
  */
 
-package oscar.flatzinc.parser
+package oscar.flatzinc
 
-import java.io.FileReader
 import scala.collection.mutable.Map
 
-class Options(cbls: Boolean, args: Array[String]) {
+class Options(name: String, cbls: Boolean, args: Array[String]) {
   //println("options:"+args.mkString("%"))
-  val progName = "fzn-oscar-" + (if (cbls) "cbls" else "cp")
+  val progName = name
 
   
   //var file: FileReader = null
@@ -45,6 +44,8 @@ class Options(cbls: Boolean, args: Array[String]) {
     //println("% checking option: "+s)
     opts.get(s)
   }
+  
+  def log(): Log = new Log(verbose)
   
   if (args.length == 0) {
     System.out.println(progName+": no model file specified");

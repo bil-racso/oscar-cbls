@@ -27,7 +27,7 @@ import oscar.cbls.invariants.core.computation.Store
 import oscar.cbls.constraints.core.ConstraintSystem
 import oscar.cbls.objective.{Objective => CBLSObjective}
 import oscar.cbls.search.SearchEngine
-import oscar.flatzinc.cbls.Log
+import oscar.flatzinc.Log
 import oscar.flatzinc.model.Domain
 import oscar.flatzinc.model.DomainRange
 import oscar.flatzinc.model.DomainSet

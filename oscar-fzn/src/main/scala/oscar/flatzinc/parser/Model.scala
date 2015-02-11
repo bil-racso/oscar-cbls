@@ -28,7 +28,7 @@ import oscar.flatzinc.model._
 import oscar.flatzinc.NoSuchConstraintException
 import java.lang.reflect.Constructor
 import oscar.flatzinc.ParsingException
-import oscar.flatzinc.cbls.Log
+import oscar.flatzinc.Log
 import scala.collection.mutable.WrappedArray
 
 

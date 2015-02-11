@@ -3,8 +3,8 @@ package oscar.flatzinc.test
 import org.scalatest.FunSuite
 import org.scalatest.Matchers
 import oscar.flatzinc.parser.FZParser
-import oscar.flatzinc.cbls.Log
-import oscar.flatzinc.parser.Options
+import oscar.flatzinc.Log
+import oscar.flatzinc.Options
 import oscar.flatzinc.ParsingException
 import oscar.flatzinc.model.FZProblem
 import oscar.flatzinc.NoSuchConstraintException
@@ -12,14 +12,12 @@ import oscar.flatzinc.NoSuchConstraintException
 class TestParser extends FunSuite with Matchers{
 
   def getSATModel(modelStr: String): FZProblem = {
-    val opts = new Options(false,Array(""))
-    val log = new Log(opts)
+    val log = new Log(0)
     val model = FZParser.readFlatZincModelFromString(modelStr+" solve satisfy;", log)
     model.problem
   }
   test("test no solve"){
-    val opts = new Options(false,Array(""))
-    val log = new Log(opts)
+    val log = new Log(0)
     
     a [ParsingException] should be thrownBy {
       FZParser.readFlatZincModelFromString("var int: x;", log)      

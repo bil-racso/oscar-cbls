@@ -15,14 +15,17 @@
 /**
  * @author Jean-Noël Monette
  */
-package oscar.flatzinc.cbls
 
-import oscar.flatzinc._
+package oscar.flatzinc
 
-object FznOscarCbls extends FznOscarMain {
-  checkAntlr()   
-  withCheck{
-    val opts = options("fzn-oscar-cbls",cbls=true)
-	val solutions = new FZCBLSSolver().solve(opts)
+import java.io.PrintStream
+
+//TODO: Replace with a real solution (e.g., log4j)
+class Log(val level: Int, val out:PrintStream = Console.err, val pre: String= "%"){
+  def apply(s:String) = {
+    if (level > 0) println(pre+" "+s)
+  }
+  def apply(i:Int, s:String) = {
+    if(i <= level) println((pre*math.max(1,i))+" "+s)
   }
 }

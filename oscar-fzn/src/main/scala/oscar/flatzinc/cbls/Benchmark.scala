@@ -19,7 +19,7 @@ package oscar.flatzinc.cbls
 import java.io.File
 import java.io.FileWriter
 import java.io.PrintWriter
-import oscar.flatzinc.parser.Options
+import oscar.flatzinc.Options
 import java.util.Locale
 
 object Benchmark extends App{
@@ -37,7 +37,7 @@ object Benchmark extends App{
     var numOfFailures = 0;
     for (i <- 1 to nbRuns) {
       pw.println("Run " + i)
-      val opts = new Options(true,file)
+      val opts = new Options("",true,file)
       opts.timeOut = timeOut;
 
       val solutions = new FZCBLSSolver().solve(opts)

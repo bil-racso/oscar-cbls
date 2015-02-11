@@ -29,7 +29,7 @@ import oscar.cbls.invariants.lib.logic._
 import oscar.cbls.invariants.lib.minmax._
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.lib.numeric._
-import oscar.flatzinc.parser.Options
+import oscar.flatzinc.Options
 import oscar.flatzinc.model._
 import oscar.flatzinc.model.Constraint
 import oscar.flatzinc.model.Variable
@@ -41,19 +41,10 @@ import oscar.flatzinc.parser.FZParser
 import oscar.util.RandomGenerator
 import oscar.flatzinc.NoSuchConstraintException
 import oscar.cbls.objective.IntVarObjective
+import oscar.flatzinc.Log
 
 
-//TODO: Move this class somewhere else...
-//TODO: Add the possibility to print to file or something else
-class Log(opts:Options){
-  val level = opts.verbose
-  def apply(s:String) = {
-    if (level > 0) Console.err.println("% "+s)
-  }
-  def apply(i:Int, s:String) = {
-    if(i <= level) Console.err.println(("%"*math.max(1,i))+" "+s)
-  }
-}
+
 
 class FZCBLSObjective(cblsmodel:FZCBLSModel,log:Log){
   private val opt = cblsmodel.model.search.obj
@@ -246,7 +237,7 @@ class FZCBLSSolver extends SearchEngine with StopWatch {
   
   def solve(opts: Options) {
     startWatch()
-    val log = new Log(opts);
+    val log = opts.log();
     log("start")
     
     val model = FZParser.readFlatZincModelFromFile(opts.fileName,log).problem;

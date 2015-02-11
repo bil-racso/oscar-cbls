@@ -21,7 +21,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 
 import oscar.flatzinc.ParsingException;
-import oscar.flatzinc.cbls.Log;
+import oscar.flatzinc.Log;
 
 import org.antlr.v4.runtime.*;
 

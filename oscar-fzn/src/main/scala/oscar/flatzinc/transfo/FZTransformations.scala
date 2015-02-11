@@ -19,9 +19,10 @@
 package oscar.flatzinc.transfo
 
 import oscar.flatzinc.model._
-import oscar.flatzinc.cbls.Log
+import oscar.flatzinc.Log
 import scala.collection.mutable.{ Map => MMap, Set => MSet }
 import scala.collection.mutable.Queue
+import oscar.flatzinc.UnsatException
 
 object FZModelTransfo {
   
@@ -182,6 +183,11 @@ object FZModelTransfo {
             one(0)._1.bind((v.value - sumrest)/one(0)._2.value);
             false
           }else true
+        }
+        case int_lin_eq(c,x,v,_) if x.filterNot(_.isBound).length==0 =>{
+          val sum = x.zip(c).foldLeft(0)((acc,xc) => acc + xc._1.value*xc._2.value)
+          if(sum!=v.value) throw new UnsatException(c.toString())
+          false
         }
         case int_lin_le(c,x,v,_) if x.length==1 && c(0).value == 1 => x(0).leq(v.value); false
         case int_lin_le(c,x,v,_) if x.filterNot(_.isBound).length == 1 =>{

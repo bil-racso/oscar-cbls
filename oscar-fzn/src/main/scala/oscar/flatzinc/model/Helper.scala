@@ -39,4 +39,41 @@ object Helper {
       acc(name) = c :: acc.getOrElse(name,List.empty[Constraint]); 
       acc})
   }
+  
+  
+  def getVarDegreeDistribution(vars: Iterable[Variable]):MMap[Int,Int] = {
+    val degs = MMap.empty[Int,Int];
+    for(v<-vars){
+      degs(v.cstrs.size) = degs.getOrElse(v.cstrs.size, 0) + 1
+    }
+    degs
+  }
+  def getVarDomainDistribution(vars: Iterable[Variable]):MMap[Int,Int] = {
+    val degs = MMap.empty[Int,Int];
+    for(v<-vars){
+      degs(v.domainSize) = degs.getOrElse(v.domainSize, 0) + 1
+    }
+    degs
+  }
+  def getConsDegreeDistribution(cs: Iterable[Constraint]):MMap[Int,Int] = {
+    val degs = MMap.empty[Int,Int];
+    for(c<-cs){
+      degs(c.variables.length) = degs.getOrElse(c.variables.length, 0) + 1
+    }
+    degs
+  }
+  def getRealConsDegreeDistribution(cs: Iterable[Constraint]):MMap[Int,Int] = {
+    val degs = MMap.empty[Int,Int];
+    for(c<-cs){
+      degs(c.variables.filter(v => !v.isBound).length) = degs.getOrElse(c.variables.filter(v => !v.isBound).length, 0) + 1
+    }
+    degs
+  }
+  def printDegreeDistribution(vars: Iterable[Variable]){
+    val degs = MMap.empty[Int,Int];
+    for(v<-vars){
+      degs(v.cstrs.size) = degs.getOrElse(v.cstrs.size, 0) + 1
+    }
+    degs.keys.toList.sorted.foreach(d => println(d+" :: "+degs(d)))
+  }
 }
