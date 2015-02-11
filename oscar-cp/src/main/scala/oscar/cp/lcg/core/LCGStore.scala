@@ -83,6 +83,8 @@ class LCGStore(store: CPStore) {
   @inline final def assignReason(varId: Int): Clause = reasons(varId)
 
   @inline final def backtrackLvl: Int = backtrackLevel
+  
+  @inline final def nLeanrt: Int = learntClauses.length
 
   /** Create a new variable and return its unsigned literal. */
   final def newVariable(interval: LCGIntervalVar, name: String, nameOpposite: String): Literal = {
@@ -244,7 +246,7 @@ class LCGStore(store: CPStore) {
     while (!queue.isEmpty && noConflict) {
       val literal = queue.removeFirst
 
-      intervalRef(literal.varId).updateAndNotify() // FIXME: dirty hack
+      if (intervalRef(literal.varId) != null) intervalRef(literal.varId).updateAndNotify() // FIXME: dirty hack
 
       val clauses = watchers(literal.id)
       val nClauses = clauses.size
