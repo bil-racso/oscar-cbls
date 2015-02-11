@@ -1,4 +1,5 @@
-/*******************************************************************************
+/**
+ * *****************************************************************************
  * OscaR is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
@@ -11,7 +12,8 @@
  *
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
- *******************************************************************************/
+ * *****************************************************************************
+ */
 
 package oscar.cp.constraints;
 
@@ -34,9 +36,6 @@ import oscar.cp.core.CPOutcome._
  */
 class ElementVarAC(y: Array[CPIntVar], x: CPIntVar, z: CPIntVar) extends Constraint(x.store, "ACElementVar") {
 
-  // Replaces this constraint by an Equality constraint.
-  private[this] val eqCons = y.map(new Eq(_, z)) // FIXME: All y is overkill
-
   // Range of possible indexes
   private[this] val minId = max(0, x.min)
   private[this] val maxId = min(x.max, y.length - 1)
@@ -55,6 +54,9 @@ class ElementVarAC(y: Array[CPIntVar], x: CPIntVar, z: CPIntVar) extends Constra
 
   // Used to iterate on the domain of the variables
   private[this] val values = new Array[Int](y.map(_.size).max max x.size max z.size)
+  
+  // Replaces this constraint by an Equality constraint.
+  private[this] val equality = new ElementEq(y, x, z, values)
 
   final override def setup(l: CPPropagStrength): CPOutcome = {
     if (z.updateMax((y.map(_.max).max)) == Failure) Failure
@@ -71,7 +73,7 @@ class ElementVarAC(y: Array[CPIntVar], x: CPIntVar, z: CPIntVar) extends Constra
         for (i <- x.min to x.max; if x hasValue i) {
           y(i).callValRemoveIdxWhenValueIsRemoved(this, i)
         }
-        
+
         Suspend
       }
     }
@@ -115,8 +117,8 @@ class ElementVarAC(y: Array[CPIntVar], x: CPIntVar, z: CPIntVar) extends Constra
           nSupports(v - minValue).incr()
           v
         }).toSet
-      for (v <- intersect(i-minId).min to intersect(i-minId).max; if !(keep.contains(v))) {
-        intersect(i-minId).removeValue(v)
+      for (v <- intersect(i - minId).min to intersect(i - minId).max; if !(keep.contains(v))) {
+        intersect(i - minId).removeValue(v)
       }
     }
   }
@@ -148,7 +150,8 @@ class ElementVarAC(y: Array[CPIntVar], x: CPIntVar, z: CPIntVar) extends Constra
     if (value < minValue || value > maxValue) Suspend
     else {
       val v = value - minValue
-      if (nSupports(v).decr() == 0) z.removeValue(value)
+      val nSup = nSupports(v)
+      if (nSup.value > 0 && nSup.decr() == 0) z.removeValue(value)
       else Suspend
     }
   }
@@ -188,7 +191,7 @@ class ElementVarAC(y: Array[CPIntVar], x: CPIntVar, z: CPIntVar) extends Constra
   }
 
   @inline private def bindX(): CPOutcome = {
-    if (s.post(eqCons(x.min)) == Failure) Failure
+    if (s.post(equality) == Failure) Failure
     else Success
   }
 
@@ -200,3 +203,41 @@ class ElementVarAC(y: Array[CPIntVar], x: CPIntVar, z: CPIntVar) extends Constra
     else Suspend
   }
 }
+
+class ElementEq(ys: Array[CPIntVar], x: CPIntVar, z: CPIntVar, values: Array[Int]) extends Constraint(x.store, "ElementEq") {
+  
+  private[this] var y: CPIntVar = null
+  
+  final override def setup(l: CPPropagStrength): CPOutcome = {
+    y = ys(x.min)
+    if (propagate() == Failure) Failure
+    else {
+      y.callValRemoveWhenValueIsRemoved(this)
+      z.callValRemoveWhenValueIsRemoved(this)
+      Suspend
+    }
+  }
+  
+  final override def propagate(): CPOutcome = {
+    var i = y.fillArray(values)
+    while (i > 0) {
+      i -= 1
+      val value = values(i)
+      if (!z.hasValue(value) && y.removeValue(value) == Failure) return Failure
+    }
+    i = z.fillArray(values)
+    while (i > 0) {
+      i -= 1
+      val value = values(i)
+      if (!y.hasValue(value) && z.removeValue(value) == Failure) return Failure
+    }
+    Suspend
+  }
+  
+  // FIXME: should be idempotent (not allowed for L1 events)
+  final override def valRemove(intVar: CPIntVar, value: Int): CPOutcome = {
+    if (intVar == y) z.removeValue(value)
+    else y.removeValue(value)
+  } 
+}
+
