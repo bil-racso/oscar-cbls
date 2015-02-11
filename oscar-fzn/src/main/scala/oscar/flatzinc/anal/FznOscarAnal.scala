@@ -35,14 +35,14 @@ object FznOscarAnal extends FznOscarMain{
     log("Parsed.")
     printInfo(model,log)
     
-    FZModelTransfo.propagateDomainBounds(model.problem)(log);
+    /*FZModelTransfo.propagateDomainBounds(model.problem)(log);
     log("reduction")
-    printInfo(model,log)
+    printInfo(model,log)*/
     log("done")
   }
   
   def printInfo(model: Model, log: Log){
-    val log = new Log(1,Console.out,"");
+    val log = new Log(1);
     log("Variables: "+model.problem.variables.size)
     log("Introduced Variables: "+model.problem.variables.filter(v => model.dicoAnnot.contains(v.id) && model.isIntroducedVar(v.id)).size)
     log("Defined Variables: "+model.problem.variables.filter(v => v.isDefined).size)
