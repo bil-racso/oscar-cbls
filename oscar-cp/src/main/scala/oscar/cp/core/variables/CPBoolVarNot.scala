@@ -97,6 +97,8 @@ class CPBoolVarNot(final override val not: CPBoolVar) extends CPBoolVar {
 
   final override def callValBindIdxWhenBind(c: Constraint, variable: CPIntVar, idx: Int): Unit = not.callValBindIdxWhenBind(c: Constraint, variable: CPIntVar, idx: Int)
 
+  final override def fillDeltaArray(oldMin: Int, oldMax: Int, oldSize: Int, arr: Array[Int]): Int = ???    
+
   final override def delta(oldMin: Int, oldMax: Int, oldSize: Int): Iterator[Int] = ???
 
   final override def changed(c: Constraint): Boolean = ???

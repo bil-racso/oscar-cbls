@@ -17,6 +17,7 @@ import oscar.cp.core.CPStore
 import oscar.cp.core.CPPropagStrength
 import oscar.cp.core.watcher.PropagEventQueueVarSet
 import oscar.cp.core.watcher.WatcherListL2
+import scala.collection.JavaConversions.mapAsScalaMap
 
 /**
  * @author Pierre Schaus pschaus@gmail.com

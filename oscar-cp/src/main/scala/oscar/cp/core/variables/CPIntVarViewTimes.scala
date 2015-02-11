@@ -130,6 +130,16 @@ class CPIntVarViewTimes(v: CPIntVar, val a: Int) extends CPIntVar {
     assert(oldMax % a == 0)
     v.delta(oldMin / a, oldMax / a, oldSize).map(_ * a)
   }
+  
+  def fillDeltaArray(oldMin: Int, oldMax: Int, oldSize: Int, arr: Array[Int]): Int = {
+    val m = v.fillDeltaArray(oldMin / a, oldMax / a, oldSize,arr)
+    var i = 0
+    while (i < m) {
+      arr(i) *= a
+      i += 1
+    }
+    m
+  }    
 
   override final def changed(c: Constraint): Boolean = v.changed(c)
 

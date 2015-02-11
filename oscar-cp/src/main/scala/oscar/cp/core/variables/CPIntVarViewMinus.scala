@@ -108,6 +108,16 @@ class CPIntVarViewMinus(v: CPIntVar) extends CPIntVar {
 	// ----------------------------------
 	
 	def delta(oldMin: Int, oldMax: Int, oldSize: Int): Iterator[Int] = v.delta(-oldMax,-oldMin,oldSize).map(-_)
+  
+  def fillDeltaArray(oldMin: Int, oldMax: Int, oldSize: Int, arr: Array[Int]): Int = {
+    val m = v.fillDeltaArray(-oldMax,-oldMin,oldSize,arr)
+    var i = 0
+    while (i < m) {
+      arr(i) = -arr(i)
+      i += 1
+    }
+    m
+  } 
 	
 	def changed(c: Constraint): Boolean = v.changed(c)
 	

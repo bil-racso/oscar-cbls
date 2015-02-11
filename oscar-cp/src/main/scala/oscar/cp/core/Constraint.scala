@@ -22,6 +22,7 @@ import oscar.algo.reversible.MagicBoolean
 import oscar.cp.core.variables.CPSetVar
 import oscar.cp.core.variables.CPBoolVar
 import oscar.cp.core.variables.CPIntVar
+import scala.collection.JavaConversions.mapAsScalaMap
 
 
 abstract class Snapshot {
@@ -57,8 +58,8 @@ abstract class Constraint(val s: CPStore, val name: String = "cons") {
   private[this] val active = new ReversibleBoolean(s,true)
   private[this] val inQueue = new MagicBoolean(s, false)
 
-  val snapshotsVarInt = scala.collection.mutable.Map[CPIntVar, SnapshotVarInt]() 
-  val snapshotsVarSet = scala.collection.mutable.Map[CPSetVar, SnapshotVarSet]()
+  val snapshotsVarInt = new java.util.HashMap[CPIntVar, SnapshotVarInt] // scala.collection.mutable.Map[CPIntVar, SnapshotVarInt]() 
+  val snapshotsVarSet = new java.util.HashMap[CPSetVar, SnapshotVarSet] // scala.collection.mutable.Map[CPSetVar, SnapshotVarSet]()
   private[this] var toSnapShotVarInt = Array.ofDim[SnapshotVarInt](10)
   private[this] var nSnapshotVarInt = 0
   private[this] var toSnapShotVarSet = Array.ofDim[SnapshotVarSet](10)
@@ -389,6 +390,7 @@ abstract class DeltaVarInt(x: CPIntVar,filter: DeltaVarInt => CPOutcome) extends
   def changed() = x.changed(sn)
   def size() = x.deltaSize(sn)
   def values() = x.delta(sn.oldMin,sn.oldMax,sn.oldSize)
+  def fillArray(arr: Array[Int]): Int = x.fillDeltaArray(sn.oldMin,sn.oldMax,sn.oldSize,arr)
   def minChanged() = x.minChanged(sn)
   def maxChanged() = x.maxChanged(sn)
   def oldMin() = x.oldMin(sn)

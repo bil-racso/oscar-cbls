@@ -239,13 +239,16 @@ class TestDeltaPropagate extends FunSuite with ShouldMatchers {
         for (i <- 0 until x.size) {
 
           val m = x(i).fillDeltaArray(this, delta2(i))
-          val s1 = delta2(i).take(m).toSet
-          val s2 = delta1(i).take(currDim(i)).toSet
-          val s3 = x(i).delta(this).toSet
+          val s1 = delta2(i).take(m)
+          val s2 = delta1(i).take(currDim(i))
+          val s3 = x(i).delta(this).toArray
           assert(m == currDim(i))
           
-          assert(s1 == s2)
-          assert(s1 == s3)
+          assert(s1.length == s2.length)
+          assert(s1.length == s3.length)
+          assert(s1.toSet == s2.toSet)
+          assert(s1.toSet == s3.toSet)          
+          
         }
 
         for (i <- 0 until x.size) {
@@ -280,5 +283,40 @@ class TestDeltaPropagate extends FunSuite with ShouldMatchers {
     println(stats)
 
   }
+  
+  
+  test("test delta 7") {
+    var nPropagates = 0
+    
+    class MyCons(val X: CPIntVar) extends Constraint(X.store, "TestDelta") {
+      priorityL2 = CPStore.MAXPRIORL2-5 
+      override def setup(l: CPPropagStrength): CPOutcome = {
+        X.callPropagateWhenDomainChanges(this, true)
+        // I remove some values such that propagate should be called again
+        X.updateMax(5)
+        X.updateMin(1)
+        X.removeValue(3)
+        CPOutcome.Suspend
+      }
+      override def propagate(): CPOutcome = {
+        nPropagates += 1
+        assert(X.delta(this).toSet == Set(0,3,6,7,8)) 
+        val array = Array.ofDim[Int](6)
+        val m = X.fillDeltaArray(this, array)
+        assert(m == 5)
+        assert(array.take(m).toSet == Set(0,3,6,7,8))
+        CPOutcome.Suspend
+      }
+    }
+    
+  
+
+    val cp = CPSolver()
+    val x = (CPIntVar(0 to 8)(cp) -2 + 2)
+    cp.add(new MyCons(x))
+
+    //println("x dom:"+x.toSet)
+    assert(nPropagates == 1)
+  }  
 
 }
