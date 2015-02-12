@@ -30,7 +30,7 @@ import scala.util.Random
  */
 object NQueensEasy1 extends CBLSModel with App{
 
-  val N = 20
+  val N = 1000
 
   println("NQueenEasy(" + N + ")")
   val range:Range = Range(0,N)
