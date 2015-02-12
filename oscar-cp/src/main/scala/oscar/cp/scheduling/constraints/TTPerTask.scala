@@ -56,7 +56,7 @@ extends CumulativeTemplate(starts, durations, ends, heights, resources, capacity
   
   final def pushAll(maxHeight: Int): Boolean = {
     val minPushable = C - maxHeight
-    var p = toConsider.limit - 1
+    var p = toConsider.limit.value - 1
     while (p >= 0) {
       val i = activitiesToConsider(p)
       if (required(i) && hmin(i) > minPushable) {
@@ -103,7 +103,7 @@ extends CumulativeTemplate(starts, durations, ends, heights, resources, capacity
   // we don't care about having two witnesses.
   // TODO: separate possible from required (in cumulative template?)
   final def filterPossibleActivities(): Boolean = {
-    var p = toConsider.limit - 1
+    var p = toConsider.limit.value - 1
     while (p >= 0) {
       val i = activitiesToConsider(p)
       if (possible(i) && !required(i) && hmin(i) > 0) { // && dmin(i) > 0
