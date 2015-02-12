@@ -83,7 +83,7 @@ class Among(val N: CPIntVar, val X: Array[CPIntVar], val S: Set[Int]) extends Co
 
     // for every variables not yet included and not disjoint from S
     for (i <- 0 until X.size; if interSize(i).value < X(i).size && interSize(i).value > 0) {
-      X(i).filterWhenDomainChanges { d =>
+      X(i).filterWhenDomainChangesWithDelta() { d =>
         if (X(i).isBound) {
           val v = X(i).min
           if (S.contains(v)) {
@@ -113,7 +113,7 @@ class Among(val N: CPIntVar, val X: Array[CPIntVar], val S: Set[Int]) extends Co
         else CPOutcome.Suspend
       }
     }
-    N.filterWhenBoundsChange {
+    N.filterWhenBoundsChange() {
       filter()
     }
     filter()

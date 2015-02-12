@@ -12,6 +12,7 @@ import oscar.cp.core.CPStore
 import oscar.cp.core.Constraint
 import oscar.cp.core.watcher.WatcherListL2
 import oscar.cp.core.watcher.WatcherListL1
+import scala.collection.JavaConversions.mapAsScalaMap
 
 /**
  *  @author Renaud Hartert ren.hartert@gmail.com
@@ -613,9 +614,13 @@ class CPIntVarAdaptable(final override val store: CPStore, minValue: Int, maxVal
     }
   }
 
-  final def delta(oldMin: Int, oldMax: Int, oldSize: Int): Iterator[Int] = {
-    if (_continuous) deltaContinuous(oldMin, oldMax, oldSize)
-    else deltaSparse(oldMin, oldMax, oldSize)
+  @inline final def delta(oldMin: Int, oldMax: Int, oldSize: Int): Iterator[Int] = {
+    if (_continuous) (oldMin to _min - 1).iterator ++ (_max + 1 to oldMax).iterator
+    else {
+      val newarray = new Array[Int](oldSize-_size)
+      fillDeltaArray(oldMin,oldMax,oldSize, newarray)
+      newarray.iterator
+    }
   }
 
   final def changed(c: Constraint): Boolean = changed(c.snapshotsVarInt(this))
@@ -633,31 +638,52 @@ class CPIntVarAdaptable(final override val store: CPStore, minValue: Int, maxVal
   final def oldSize(c: Constraint): Int = oldSize(c.snapshotsVarInt(this))
 
   final def deltaSize(c: Constraint): Int = deltaSize(c.snapshotsVarInt(this))
+  
+  @inline final override def fillDeltaArray(oldMin: Int, oldMax: Int, oldSize: Int, arr: Array[Int]): Int = {
+    var i = 0
+    if (_continuous) {
+      var j = oldMin
+      while (j < _min) {
+        arr(i) = j
+        i += 1
+        j += 1
+      }
+      j = _max + 1
+      while (j <= oldMax) {
+        arr(i) = j
+        i += 1
+        j += 1
+      }      
+      return i
+    } else {
+      val M = math.min(oldSize,values.length) - _size
+      System.arraycopy(values,_size,arr,0,M)
+      i = M
+      var j = oldMin
+      while (j < offset) {
+        arr(i) = j
+        i += 1
+        j += 1
+      }
+      j = offset + values.length
+      while (j <= oldMax) {
+        arr(i) = j
+        i += 1
+        j += 1
+      }          
+    }
+    i
+  }  
+
+  final override def fillDeltaArray(c: Constraint, arr: Array[Int]): Int = {
+    
+    val sn = c.snapshotsVarInt(this)
+    fillDeltaArray(sn.oldMin,sn.oldMax,sn.oldSize,arr)
+  }
 
   final def delta(c: Constraint): Iterator[Int] = {
     val sn = c.snapshotsVarInt(this)
-    delta(sn.oldMin, sn.oldMax, sn.oldSize)
+    delta(sn.oldMin,sn.oldMax,sn.oldSize)
   }
 
-  @inline private def deltaContinuous(oldMin: Int, oldMax: Int, oldSize: Int): Iterator[Int] = {
-    (oldMin to _min - 1).iterator ++ (_max + 1 to oldMax).iterator
-  }
-
-  @inline private def deltaSparse(oldMin: Int, oldMax: Int, oldSize: Int): Iterator[Int] = {
-    (oldMin until minValue).iterator ++ deltaSparse(oldSize) ++ (maxValue + 1 to oldMax).iterator
-  }
-
-  @inline private def deltaSparse(oldSize: Int): Iterator[Int] = {
-    var ind = size
-    new Iterator[Int] {
-      override def next(): Int = {
-        val v = values(ind)
-        ind += 1
-        v
-      }
-      override def hasNext: Boolean = {
-        ind < oldSize && ind < values.size
-      }
-    }
-  }
 }

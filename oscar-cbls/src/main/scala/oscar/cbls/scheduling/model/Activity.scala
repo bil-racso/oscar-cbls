@@ -27,7 +27,7 @@ package oscar.cbls.scheduling.model
 
 import collection.immutable.SortedSet
 import oscar.cbls.invariants.core.computation.CBLSIntVar._
-import oscar.cbls.invariants.core.computation.{ CBLSSetVar, CBLSIntVar }
+import oscar.cbls.invariants.core.computation.{CBLSSetConst, CBLSSetVar, CBLSIntVar}
 import oscar.cbls.invariants.lib.set.{ Inter, Union }
 import oscar.cbls.modeling.Algebra._
 import oscar.cbls.invariants.lib.minmax.{ MinArray, ArgMaxArray }
@@ -98,6 +98,7 @@ class Activity(val duration: CBLSIntVar, val planning: Planning, val name: Strin
     }
   }
 
+  @deprecated("method that perform such intricate operations have been moved as neighborhood", "1.2")
   def removeNonTightAdditionalPredecessors() {
     for (iD: Int <- additionalPredecessors.value) {
       if (!potentiallyKilledPredecessors.value.contains(iD)) {
@@ -131,6 +132,8 @@ class Activity(val duration: CBLSIntVar, val planning: Planning, val name: Strin
   val latestEndDate: CBLSIntVar = CBLSIntVar(planning.model, 0, maxDuration, maxDuration,
     "led(" + name + ")")
 
+  var staticPredecessorsID:CBLSSetConst = null
+
   val latestStartDate: CBLSIntVar = latestEndDate - duration
   var allSucceedingActivities: CBLSSetVar = null
 
@@ -162,7 +165,8 @@ class Activity(val duration: CBLSIntVar, val planning: Planning, val name: Strin
       additionalPredecessors = new CBLSSetVar(planning.model, 0, planning.activities.size,
         "added predecessors of " + name, SortedSet.empty)
 
-      val staticPredecessorsID: SortedSet[Int] = SortedSet.empty[Int] ++ staticPredecessors.map((j: Activity) => j.ID)
+      staticPredecessorsID = CBLSSetConst(SortedSet.empty[Int] ++ staticPredecessors.map((j: Activity) => j.ID))
+
       allPrecedingActivities = Union(staticPredecessorsID, additionalPredecessors)
 
       val argMax = ArgMaxArray(planning.earliestEndDates, allPrecedingActivities, -1)

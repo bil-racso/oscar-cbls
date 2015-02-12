@@ -459,3 +459,94 @@ case class TakeAny(from: CBLSSetVar, default: Int) extends IntInvariant {
     }
   }
 }
+
+/** an invariant that defines a singleton set out of a single int var.
+  * @author renaud.delandtsheer@cetic.be
+  */
+case class Singleton(v: CBLSIntVar) extends SetInvariant  {
+
+  var output:CBLSSetVar = null
+  registerStaticAndDynamicDependency(v)
+  finishInitialization()
+
+  def myMin = v.minVal
+  def myMax = v.maxVal
+
+  override def checkInternals(c:Checker){
+    assert(output.getValue(true).size == 1)
+    assert(output.getValue(true).head == v.value)
+  }
+
+  override def setOutputVar(vv:CBLSSetVar){
+    output = vv
+    output.setValue(SortedSet(v.value))
+  }
+
+  override def notifyIntChanged(v:CBLSIntVar,OldVal:Int,NewVal:Int){
+    assert(v == this.v)
+    //ici, on propage tout de suite, c'est les variables qui font le stop and go.
+    output.deleteValue(OldVal)
+    output.insertValue(NewVal)
+  }
+}
+
+/**
+ * maintains the output as a singleton containing any one of the values of the from Set.
+ * if from is empty,the output set will be empty as well
+ * @param from where we take the value from
+ * @author renaud.delandtsheer@cetic.be
+ * */
+case class TakeAnyToSet(from: CBLSSetVar) extends SetInvariant {
+  def myMin: Int = from.getMinVal
+  def myMax: Int = from.getMaxVal
+
+  var output:CBLSSetVar = null
+  registerStaticAndDynamicDependency(from)
+  finishInitialization()
+
+  var wasEmpty: Boolean = false
+
+  override def setOutputVar(v: CBLSSetVar) {
+    output = v
+    output.setDefiningInvariant(this)
+
+    wasEmpty = from.value.isEmpty
+    if (wasEmpty) {
+      output := SortedSet.empty
+    } else {
+      output := SortedSet(from.value.head)
+    }
+  }
+
+  override def notifyInsertOn(v: CBLSSetVar, value: Int) {
+    if (wasEmpty) {
+      output :+= from.value.head
+      wasEmpty = false
+    }
+  }
+
+  override def notifyDeleteOn(v: CBLSSetVar, value: Int) {
+    if (value == output.getValue(true).head){
+      if (v.value.isEmpty) {
+        output := SortedSet.empty
+        wasEmpty = true
+      } else {
+        output := SortedSet(from.value.head)
+      }
+    }
+  }
+
+  override def checkInternals(c: Checker) {
+    if (from.value.isEmpty) {
+      c.check(output.value.isEmpty,
+        Some("output.value (" + output.value
+          + ") is empty set"))
+    } else {
+      c.check(from.value.contains(output.value.head),
+        Some("from.value.contains(output.value (" + output.value.head + "))"))
+      c.check(output.value.size == 1,
+        Some("output is a singleton"))
+    }
+  }
+}
+

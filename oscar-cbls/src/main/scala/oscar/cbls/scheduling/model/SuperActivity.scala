@@ -44,8 +44,9 @@ class SuperActivity(start: Activity, end: Activity, override val name: String = 
 
   start precedes end
 
-  override def canAddPrecedence: Boolean = start.canAddPrecedence
+  override val isTakenInSentinel = end.isTakenInSentinel
 
+  override def canAddPrecedence: Boolean = start.canAddPrecedence
 
   override def close() {
 
@@ -84,9 +85,6 @@ class SuperActivity(start: Activity, end: Activity, override val name: String = 
   override def addStaticPredecessor(j: Activity) {
     start.addStaticPredecessor(j)
   }
-
-  override def removeNonTightAdditionalPredecessors() {} //nothing to be done here because no such dependencies can exist
-
 }
 
 object SuperActivity {

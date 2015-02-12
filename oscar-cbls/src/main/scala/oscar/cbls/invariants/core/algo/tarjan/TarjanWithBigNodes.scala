@@ -31,7 +31,7 @@ trait TarjanNode{
   * all data are stored in the nodes.
   * @author renaud.delandtsheer@cetic.be
   */
-object TarjanWithBigNodes{
+object TarjanWithBigNodes1{
 
   def getStronlyConnexComponents[T <: TarjanNode](Nodes:Iterable[T], GetSucceedingNodes:(T => Iterable[T])):List[List[T]] = {
     var index:Int=0

@@ -23,19 +23,16 @@
 
 package oscar.cbls.routing.model
 
-import collection.immutable.SortedMap
-import math._
+import scala.collection.immutable.SortedMap
+import scala.math.min
+
 import oscar.cbls.constraints.core.ConstraintSystem
-import oscar.cbls.invariants.core.computation.{ CBLSSetVar, Store, CBLSIntVar }
-import oscar.cbls.invariants.lib.logic._
 import oscar.cbls.invariants.core.algo.heap.BinomialHeap
-import oscar.cbls.invariants.lib.numeric.SumElements
+import oscar.cbls.invariants.core.computation._
+import oscar.cbls.invariants.lib.logic._
 import oscar.cbls.invariants.lib.numeric.Sum
-import oscar.cbls.invariants.lib.logic.Filter
-import oscar.cbls.invariants.lib.logic.Predecessor
-import oscar.cbls.invariants.lib.set.Diff
-import oscar.cbls.invariants.core.computation.StorageUtilityManager
-import oscar.cbls.invariants.core.computation.StorageUtilityManager
+import oscar.cbls.invariants.lib.set.Cardinality
+import oscar.cbls.modeling.Algebra.InstrumentIntSetVar
 
 /**
  * The class constructor models a VRP problem with N points (deposits and customers)
@@ -112,19 +109,34 @@ class VRP(val N: Int, val V: Int, val m: Store) {
   }
 
   /**
+   * @return the list of unrouted nodes as a String.
+   */
+  def unroutedToString: String = {
+    "unrouted: " + nodes.filterNot(isRouted(_)).toList + "\n"
+  }
+
+  /**
+   * @return the route of a vehicle as a String.
+   */
+  def routeToString(vehicle: Int): String = {
+    var toReturn = "Vehicle " + vehicle + ": " + vehicle
+    var current = next(vehicle).value
+    while (current != vehicle) {
+      toReturn += " -> " + current
+      current = next(current).getValue(true)
+    }
+    toReturn
+  }
+
+  /**
    * Redefine the toString method.
    * @return the VRP problem as a String.
    */
   override def toString: String = {
-    var toReturn = "unrouted: " + nodes.filterNot(isRouted(_)).toList + "\n"
+    var toReturn = unroutedToString
 
     for (v <- 0 to V - 1) {
-      toReturn += "Vehicle " + v + ": " + v
-      var current = next(v).value
-      while (current != v) {
-        toReturn += " -> " + current
-        current = next(current).getValue(true)
-      }
+      toReturn += routeToString(v)
       toReturn += "\n"
     }
     toReturn
@@ -198,12 +210,13 @@ trait MoveDescription extends VRP {
     affects = affect :: affects
   }
 
-  protected abstract class Affect {
+  protected abstract class Affect(variableNode:Int) {
     def comit(): Affect
-    def node: Int
+    def node: Int = variableNode
+    def variable =  next(variableNode)
   }
 
-  case class affectFromVariable(variableNode: Int, takeValueFromNode: Int) extends Affect {
+  case class affectFromVariable(variableNode: Int, takeValueFromNode: Int) extends Affect(variableNode) {
     def comit(): Affect = {
       val variable = next(variableNode)
       val takeValueFrom = next(takeValueFromNode)
@@ -213,10 +226,9 @@ trait MoveDescription extends VRP {
       affectFromConst(variableNode, oldValue)
     }
 
-    def node: Int = variableNode
   }
 
-  case class affectFromConst(variableNode: Int, takeValue: Int) extends Affect {
+  case class affectFromConst(variableNode: Int, takeValue: Int) extends Affect(variableNode) {
     def comit(): Affect = {
       val variable = next(variableNode)
       assert(variable.value != N || takeValue != N, "you cannot unroute a node that is already unrouted " + variable)
@@ -224,8 +236,6 @@ trait MoveDescription extends VRP {
       variable := takeValue
       affectFromConst(variableNode, oldValue)
     }
-
-    def node: Int = variableNode
   }
 
   protected case class Segment(start: Int, end: Int)
@@ -261,6 +271,16 @@ trait MoveDescription extends VRP {
     }
     //println("done")
     Segment(s.end, s.start)
+  }
+
+  /**
+   * Reverse a routed segment in its right place.
+   * segments are handled internally, so nothing is returned
+   */
+  def reverseSegmentInPlace(beforeStart: Int, segEndPoint: Int) {
+    val seg = cut(beforeStart, segEndPoint)
+    val revSeg = reverse(seg)
+    insert(revSeg, beforeStart)
   }
 
   def insert(s: Segment, node: Int) {
@@ -335,6 +355,8 @@ trait MoveDescription extends VRP {
     affects = List.empty
     Recording = true
   }
+
+  def touchedVariablesByEncodedMove:List[CBLSIntVar] = affects.map(_.variable)
 }
 
 /**
@@ -446,7 +468,7 @@ abstract trait PenaltyForUnrouted extends VRP with RoutedAndUnrouted {
 
   /**
    * It allows you to set a specific penalty for all points of the VRP.
-   * @param p the penlaty.
+   * @param p the penalty.
    */
   def setUnroutedPenaltyWeight(p: Int) { weightUnroutedPenalty.foreach(penalty => penalty := p) }
 }
@@ -597,8 +619,8 @@ trait HopDistanceAsObjectiveTerm extends VRPObjective with HopDistance {
  * @author renaud.delandtsheer@cetic.be
  */
 trait NodesOfVehicle extends PositionInRouteAndRouteNr with RoutedAndUnrouted {
-  val NodesOfVehicle = Cluster.MakeDense(routeNr).clusters
-  final override val unrouted = NodesOfVehicle(V)
+  val nodesOfVehicle = Cluster.MakeDense(routeNr).clusters
+  final override val unrouted = nodesOfVehicle(V)
 }
 
 /**
@@ -732,6 +754,49 @@ trait PenaltyForEmptyRoute extends VRP with PositionInRouteAndRouteNr {
   }
 }
 
+trait PenaltyForEmptyRouteWithException extends VRP with NodesOfVehicle {
+  /**
+   * The data structure array which maintains route penalty.
+   */
+  private val emptyRoutePenaltyWeight: Array[CBLSIntVar] =
+    Array.tabulate(V)(v =>
+      CBLSIntVar(m, Int.MinValue, Int.MaxValue, 0, "penality of vehicule " + v))
+
+  val exceptionNodes: CBLSSetVar = new CBLSSetVar(m, 0, N - 1, "NodesNotToConsiderForEmptyRoutes")
+
+  private val nodesOfRealVehicles = Array.tabulate(V)(nodesOfVehicle)
+
+  /**
+   * The variable which maintains the set of empty routes.
+   * (that is: routes containing no other node than the vehicle node)
+   */
+  val emptyRoutes: CBLSSetVar = Filter(nodesOfRealVehicles.map(
+    (vehicleNodes: CBLSSetVar) => Cardinality(vehicleNodes minus exceptionNodes).toIntVar), _ == 1)
+    
+  /**
+   * The variable which maintains the sum of route penalties,
+   * thanks to SumElements invariant.
+   */
+  val emptyRoutePenalty: CBLSIntVar = Sum(emptyRoutePenaltyWeight, emptyRoutes)
+
+  /**
+   * Allows client to set the penalty of a given vehicle route.
+   * @param n the node.
+   * @param p the penalty.
+   */
+  def setEmptyRoutePenaltyWeight(n: Int, p: Int) {
+    emptyRoutePenaltyWeight(n) := p
+  }
+
+  /**
+   * Allows client to set a specific penalty for all the VRP routes.
+   * @param p the penalty.
+   */
+  def setEmptyRoutePenaltyWeight(p: Int) {
+    emptyRoutePenaltyWeight.foreach(penalty => penalty := p)
+  }
+}
+
 /**
  * This trait maintains the predecessors of each node of the VRP.
  * It uses the Predecessor invariant.
@@ -762,7 +827,8 @@ trait StrongConstraints extends VRPObjective {
 /**
  * This trait maintains an additional strong constraints system.
  * the e purpose is that this constraint system will be tested first for
- * truth value, and the primary one of the StrongConstraints trait will only be queried for truth value if this additonal constraint system is not violated
+ * truth value, and the primary one of the StrongConstraints trait will only be queried for truth value
+ * if this additonnal constraint system is not violated
  * the proper way to use it in order to get a speedup is to put the constraints
  * that can be checked quickly in the strongConstraintsFast
  * and to keep all the other ones in the strongCon.
@@ -778,7 +844,6 @@ trait StrongConstraintsFast extends StrongConstraints {
   override def getObjective(): Int =
     (if (!strongConstraintsFast.isTrue) Int.MaxValue else super.getObjective())
 }
-
 
 /**
  * This trait maintains weak constraints system.
