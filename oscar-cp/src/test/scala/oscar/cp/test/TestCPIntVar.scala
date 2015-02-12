@@ -22,7 +22,7 @@ import oscar.cp.core.CPPropagStrength
 import oscar.cp._
 
 class TestCPIntVar extends FunSuite with Matchers {
-	/*
+	
 	test("Test1 : Median") {
 
 		val cp = CPSolver()
@@ -43,19 +43,7 @@ class TestCPIntVar extends FunSuite with Matchers {
 	}
 	
 
-	
-	test("Test is full") {
-	  val cp = CPSolver()
-	  val x = CPIntVar(Set(0,1,3,2))(cp)
-	  x.isFull should be(true)
-	  cp.add(x!=3)
-	  x.isFull should be(true)
-	  cp.add(x!=1)
-	  x.isFull should be(false)
-	  val y = CPIntVar(Set(0,1,3))(cp)
-	  x.isFull should be(false)
-	  
-	}
+
 	
 	
 	test("Iterator1") {
@@ -203,7 +191,7 @@ class TestCPIntVar extends FunSuite with Matchers {
     d.execute
     x.toSet should be(Set(1,5))
   }
-  */
+  
   
   test("test propagate call") {
     var propagCalled = 0
