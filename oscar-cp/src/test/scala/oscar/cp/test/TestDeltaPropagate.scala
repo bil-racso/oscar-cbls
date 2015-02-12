@@ -318,5 +318,111 @@ class TestDeltaPropagate extends FunSuite with ShouldMatchers {
     //println("x dom:"+x.toSet)
     assert(nPropagates == 1)
   }  
+ 
+  
+  test("test delta 8 (with views)") {
+    var nPropag = 0
+
+    class MyCons(val X: CPIntVar) extends Constraint(X.store, "TestDelta") {
+      priorityL2 = CPStore.MaxPriorityL2 - 5
+      override def setup(l: CPPropagStrength): CPOutcome = {
+        X.filterWhenDomainChangesWithDelta() { delta =>
+          nPropag += 1
+
+          if (nPropag == 1) {
+            delta.changed() should be(true)
+            delta.size() should be(2)
+            val d = delta.values().toArray
+            d.size should be(2)
+            d.toSet should be(Set(-2, -4))
+            delta.maxChanged() should be(false)
+            delta.minChanged() should be(true)
+            delta.oldMin() should be(-4)
+            delta.oldMax() should be(2)
+          }
+          if (nPropag == 2) {
+            delta.changed() should be(true)
+            delta.size() should be(1)
+            delta.values().toArray should be(Array(0))
+            delta.maxChanged() should be(false)
+            delta.minChanged() should be(true)
+            delta.oldMin() should be(0)
+            delta.oldMax() should be(2)
+          }
+
+          CPOutcome.Suspend
+        }
+        CPOutcome.Suspend
+      }
+    }
+
+    val cp = CPSolver()
+    val x = -(CPIntVar(Array(1, 3, 5, 7))(cp) -2 -3 + 2) // -4,-2,0,2
+    cp.add(new MyCons(x))
+    
+    val cons = new LinkedList[Constraint]()
+    cons.add(x > -4)
+    cons.add(x > -2)
+    cp.add(cons)
+    
+    cp.add(x > 0)
+    
+    //println("x dom:"+x.toSet)
+    nPropag should be(2)
+  }
+   
+  test("test delta 9 (with views) idempotent") {
+    var nPropag = 0
+
+    class MyCons(val X: CPIntVar) extends Constraint(X.store, "TestDelta") {
+      priorityL2 = CPStore.MaxPriorityL2 - 5
+      override def setup(l: CPPropagStrength): CPOutcome = {
+        X.filterWhenDomainChangesWithDelta(idempotent = true) { delta =>
+          nPropag += 1
+
+          if (nPropag == 1) {
+            delta.changed() should be(true)
+            delta.size() should be(2)
+            val d = delta.values().toArray
+            d.size should be(2)
+            d.toSet should be(Set(-2, -4))
+            delta.maxChanged() should be(false)
+            delta.minChanged() should be(true)
+            delta.oldMin() should be(-4)
+            delta.oldMax() should be(2)
+            X.updateMin(1)
+  
+          }
+          if (nPropag == 2) {
+            // should not come here since it is idempotent, don't know what should be the correct delta in this case
+            println("oldMin:"+delta.oldMin+" oldMax:"+delta.oldMax+" size:"+delta.size)
+            delta.changed() should be(true)
+            delta.size() should be(1)
+            delta.values().toArray should be(Array(0))
+            delta.maxChanged() should be(false)
+            delta.minChanged() should be(true)
+            delta.oldMin() should be(0)
+            delta.oldMax() should be(2)
+          }
+
+          CPOutcome.Suspend
+        }
+        CPOutcome.Suspend
+      }
+    }
+
+    val cp = CPSolver()
+    val x = CPIntVar(Array(-4,-2,0,2))(cp) // -4,-2,0,2  //-(CPIntVar(Array(1, 3, 5, 7))(cp) -2 -3 + 2) // -4,-2,0,2
+    cp.add(new MyCons(x))
+    
+    val cons = new LinkedList[Constraint]()
+    cons.add(x > -4)
+    cons.add(x > -2)
+    cp.add(cons)
+    
+    //println("x dom:"+x.toSet)
+    nPropag should be(1)
+  }   
+  
 
 }
