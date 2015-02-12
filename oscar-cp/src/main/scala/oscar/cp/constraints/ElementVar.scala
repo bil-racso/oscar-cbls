@@ -35,8 +35,6 @@ import oscar.cp.core.CPSolver
  * @author Pierre Schaus - pschaus@gmail.com
  */
 class ElementVar(val y: Array[CPIntVar], val x: CPIntVar, val z: CPIntVar) extends Constraint(y(0).store, "ElementVar") {
-    
-
 
   override def setup(l: CPPropagStrength): CPOutcome = {
     if (l == CPPropagStrength.Strong) {

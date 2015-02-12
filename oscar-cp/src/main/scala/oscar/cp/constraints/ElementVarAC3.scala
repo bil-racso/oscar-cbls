@@ -34,6 +34,7 @@ import oscar.algo.reversible.ReversibleIntWithCache
 /**
  * A full Arc-Consistent Element Constraint: y(x) == z based on AC3 only
  * @author Pierre Schaus pschaus@gmail.com
+ * @author Renaud Hartert
  */
 class ElementVarAC3(y: Array[CPIntVar], x: CPIntVar, z: CPIntVar) extends Constraint(y(0).store, "ACElementVar") {
     
@@ -60,10 +61,11 @@ class ElementVarAC3(y: Array[CPIntVar], x: CPIntVar, z: CPIntVar) extends Constr
         return s.post(new Eq(y(x.min),z))
       } else {
         
-        val eqCons = y.map(new Eq(_,z))
+        // Replaces this constraint by an Equality constraint.
+        val equality = new ElementEq(y, x, z)
 
         x.filterWhenBind(true,CPStore.MaxPriorityL2) {
-          if (s.post(eqCons(x.min),CPPropagStrength.Strong) == Failure) Failure
+          if (s.post(equality) == Failure) Failure
           else {
             deactivate()
             Success 
@@ -151,4 +153,50 @@ class ElementVarAC3(y: Array[CPIntVar], x: CPIntVar, z: CPIntVar) extends Constr
     else Suspend
   }
 
+  private class ElementEq(ys: Array[CPIntVar], x: CPIntVar, z: CPIntVar) extends Constraint(x.store, "ElementEq") {
+
+    // Used to iterate on the domain of the variables
+    private[this] val values = new Array[Int](ys.map(_.size).max max x.size max z.size)
+
+    private[this] var y: CPIntVar = null
+
+    final override def setup(l: CPPropagStrength): CPOutcome = {
+      y = ys(x.min)
+      if (propagate() == Failure) Failure
+      else {
+        y.callValRemoveWhenValueIsRemoved(this)
+        z.callValRemoveWhenValueIsRemoved(this)
+        Suspend
+      }
+    }
+
+    final override def propagate(): CPOutcome = {
+      var i = y.fillArray(values)
+      while (i > 0) {
+        i -= 1
+        val value = values(i)
+        if (!z.hasValue(value) && y.removeValue(value) == Failure) return Failure
+      }
+      i = z.fillArray(values)
+      while (i > 0) {
+        i -= 1
+        val value = values(i)
+        if (!y.hasValue(value) && z.removeValue(value) == Failure) return Failure
+      }
+      Suspend
+    }
+
+    // FIXME: should be idempotent (not allowed yet for L1 events)
+    final override def valRemove(intVar: CPIntVar, value: Int): CPOutcome = {
+      if (intVar == y) z.removeValue(value)
+      else y.removeValue(value)
+    }
+  }
+
 }
+
+
+
+
+
+
