@@ -15,11 +15,6 @@
 package oscar.des.engine
 
 import scala.collection.mutable._
-import java.util.LinkedList
-import scala.collection.JavaConversions._
-import oscar.invariants._
-
-import scala.collection.mutable._
 
 /**
  * This is the main engine of the simulation.

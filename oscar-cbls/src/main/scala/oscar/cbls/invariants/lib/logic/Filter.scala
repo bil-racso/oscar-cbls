@@ -30,7 +30,9 @@ import oscar.cbls.invariants.core.propagation.Checker
 /** { i in index(values) | cond(values[i] }
  * @param values is an array of IntVar
  * @param cond is a function that selects values to be includes in the output set.
- * This ''cond'' function cannot depend on any IntVar, as updates to these IntVars will not trigger propagation of this invariant.
+  *             This ''cond'' function cannot depend on any IntVar,
+  *             as updates to these IntVars will not trigger propagation of this invariant.
+  *             By default, cond is "_ > 0"
   * @author renaud.delandtsheer@cetic.be
   * */
 case class Filter(values:Array[CBLSIntVar], cond:(Int=>Boolean)=_>0) extends SetInvariant {

@@ -54,19 +54,19 @@ case class Store(override val verbose:Boolean = false,
 
   assert({println("You are using a CBLS store with asserts activated. It makes the engine slower. Recompile it with -Xdisable-assertions"); true})
 
-  private var Variables:List[Variable] = List.empty
-  private var Invariants:List[Invariant] = List.empty
-  private var PropagationElements:List[PropagationElement] = List.empty
-  private var Closed:Boolean=false
+  private var variables:List[Variable] = List.empty
+  private var invariants:List[Invariant] = List.empty
+  private var propagationElements:List[PropagationElement] = List.empty
+  private var closed:Boolean=false
 
-  def isClosed = Closed
+  def isClosed = closed
 
   private var privateInputVariables:List[Variable] = null;
 
   def inputVariables():List[Variable] = {
     if(privateInputVariables == null){
       privateInputVariables  = List.empty
-      for (v:Variable <- Variables if v.getDefiningInvariant == null){
+      for (v:Variable <- variables if v.isInputVariable){
         privateInputVariables = v :: privateInputVariables
       }
     }
@@ -81,7 +81,7 @@ case class Store(override val verbose:Boolean = false,
 
     val VariablesToSave = if(inputOnly) {
       inputVariables()
-    }else Variables
+    }else variables
 
     for (v:Variable <- VariablesToSave){
       v match {
@@ -99,7 +99,7 @@ case class Store(override val verbose:Boolean = false,
   def saveValues(vars:Variable*):Snapshot = {
     var assignationInt:List[(CBLSIntVar,Int)] = List.empty
     var assignationIntSet:List[(CBLSSetVar,SortedSet[Int])] = List.empty
-    for (v:Variable <- vars if v.getDefiningInvariant == null){
+    for (v:Variable <- vars if v.isInputVariable){
       if(v.isInstanceOf[CBLSIntVar]){
         assignationInt = ((v.asInstanceOf[CBLSIntVar], v.asInstanceOf[CBLSIntVar].getValue(true))) :: assignationInt
       }else if(v.isInstanceOf[CBLSSetVar]){
@@ -116,10 +116,10 @@ case class Store(override val verbose:Boolean = false,
     */
   def restoreSolution(s:Solution){
     assert(s.model==this)
-    for((intsetvar,intset) <- s.assignationIntSet if intsetvar.getDefiningInvariant == null){
+    for((intsetvar,intset) <- s.assignationIntSet if intsetvar.isInputVariable){
       intsetvar := intset
     }
-    for((intvar,int) <- s.assignationInt if intvar.getDefiningInvariant == null){
+    for((intvar,int) <- s.assignationInt if intvar.isInputVariable){
       intvar := int
     }
   }
@@ -131,10 +131,10 @@ case class Store(override val verbose:Boolean = false,
     */
   def restoreSnapshot(s:Snapshot){
     assert(s.model==this)
-    for((intsetvar,intset) <- s.assignationIntSet if intsetvar.getDefiningInvariant == null){
+    for((intsetvar,intset) <- s.assignationIntSet if intsetvar.isInputVariable){
       intsetvar := intset
     }
-    for((intvar,int) <- s.assignationInt if intvar.getDefiningInvariant == null){
+    for((intvar,int) <- s.assignationInt if intvar.isInputVariable){
       intvar := int
     }
   }
@@ -144,11 +144,11 @@ case class Store(override val verbose:Boolean = false,
     * @return a unique identifier that will be used to distinguish variables. basically, variables use this value to set up an arbitrary ordering for use in dictionnaries.
     */
   def registerVariable(v:Variable):Int = {
-    assert(!Closed,"model is closed, cannot add variables")
+    assert(!closed,"model is closed, cannot add variables")
     //ici on utilise des listes parce-que on ne peut pas utiliser des dictionnaires
     // vu que les variables n'ont pas encore recu leur unique ID.
-    Variables = v :: Variables
-    PropagationElements =  v :: PropagationElements
+    variables = v :: variables
+    propagationElements =  v :: propagationElements
     GetNextID()
   }
 
@@ -157,14 +157,14 @@ case class Store(override val verbose:Boolean = false,
     * @return a unique identifier that will be used to distinguish invariants. basically, invariants use this value to set up an arbitrary ordering for use in dictionnaries.
     */
   def registerInvariant(i:Invariant):Int = {
-    assert(!Closed,"model is closed, cannot add invariant")
-    Invariants = i :: Invariants
-    PropagationElements = i :: PropagationElements
+    assert(!closed,"model is closed, cannot add invariant")
+    invariants = i :: invariants
+    propagationElements = i :: propagationElements
     GetNextID()
   }
 
   override def getPropagationElements:Iterable[PropagationElement] = {
-    PropagationElements
+    propagationElements
   }
 
   var toCallBeforeClose:List[(()=>Unit)] = List.empty
@@ -185,10 +185,11 @@ case class Store(override val verbose:Boolean = false,
    * @param DropStaticGraph true if you want to drop the static propagation graph to free memory. It takes little time
    */
   def close(DropStaticGraph: Boolean = true){
-    assert(!Closed, "cannot close a model twice")
+    assert(!closed, "cannot close a model twice")
     performCallsBeforeClose()
     setupPropagationStructure(DropStaticGraph)
-    Closed=true
+    killBulker() //we won't create any new model artifacts, thus we can kill the bulker and free its memory
+    closed=true
   }
 
   /**this checks that invariant i is one that is supposed to do something now
@@ -212,8 +213,8 @@ case class Store(override val verbose:Boolean = false,
 
   var NotifiedInvariant:Invariant=null
 
-  override def toString:String = Variables.toString()
-  def toStringInputOnly = Variables.filter(v => v.getDefiningInvariant == null).toString()
+  override def toString:String = variables.toString()
+  def toStringInputOnly = variables.filter(v => v.isInputVariable).toString()
 
   //returns the set of source variable that define this one.
   // This exploration procedure explores passed dynamic invariants,
@@ -228,11 +229,10 @@ case class Store(override val verbose:Boolean = false,
         val v:Variable = head.asInstanceOf[Variable]
         if(!SourceVariables.contains(v)){
           SourceVariables += v
-          val definv = v.getDefiningInvariant
-          if (definv != null){
-            ToExplore = definv :: ToExplore
-          }
+          for(listened <- v.getStaticallyListenedElements)
+            ToExplore = listened :: ToExplore
         }
+        //TODO: keep a set of the explored invariants, to speed up this thing?
       }else if(head.isInstanceOf[Invariant]){
         val i:Invariant = head.asInstanceOf[Invariant]
         for (listened <- i.getStaticallyListenedElements){
@@ -243,6 +243,20 @@ case class Store(override val verbose:Boolean = false,
       }else{assert(false,"propagation element that is not a variable, and not an invariant??")}
     }
     SourceVariables
+  }
+
+  /** returns some info on the Store
+    * call this after closing
+    * @return
+    */
+  override def stats:String = {
+    require(isClosed, "store must be closed to get some stats")
+    super.stats + "\n" +
+      "Store(" + "\n" +
+      "  variableCount:" + variables.size + "\n" +
+      "  invariantCount:" + invariants.size + "\n" +
+      "  inputVariableCount" + inputVariables.size + "\n" +
+      ")"
   }
 }
 
@@ -296,7 +310,7 @@ object Invariant{
   * Invariants also register to the model, but they identify the model they are associated to by querying the variables they are monitoring.
   *
   */
-trait Invariant extends PropagationElement{
+abstract class Invariant extends PropagationElement{
   var model:Store = null
 
   def getPropagationStructure = this.model
@@ -321,9 +335,9 @@ trait Invariant extends PropagationElement{
   final def finishInitialization(model:Store = null){
     preFinishInitialization(model)
     if (this.model!= null){
-      UniqueID = this.model.registerInvariant(this)
+      uniqueID = this.model.registerInvariant(this)
     }else{
-      UniqueID = -1
+      uniqueID = -1
     }
   }
 
@@ -484,10 +498,8 @@ object InvariantHelper{
     (MyMin, MyMax)
   }
 
-  def arrayToString[T<:Variable](a:Array[T]):String = {
+  def arrayToString[T<:Variable](a:Array[T]):String =
     "[" + a.toList.mkString(",")+"]"
-  }
-
 }
 
 /**This is the base class for variable. A variable is a propagation element that holds some value.
@@ -495,24 +507,25 @@ object InvariantHelper{
   * which is used solely for printing models.
   */
 abstract class Variable(val model:Store, n:String = null) extends PropagationElement with DistributedStorageUtility{
-  UniqueID = if (model == null) -1 else model.registerVariable(this)
-  val name = Option(n) getOrElse (s"Var_$UniqueID")
+  uniqueID = if (model == null) -1 else model.registerVariable(this)
+  val name = Option(n) getOrElse (s"Var_$uniqueID")
   def getPropagationStructure = this.model
 
-  protected var DefiningInvariant:Invariant = null
+  protected var definingInvariant:Invariant = null
 
   def setDefiningInvariant(i:Invariant) {
     assert(i.model == model || i.model == null,"i.model == null:" + (i.model == null) + " i.model == model:" + (i.model == model) + " model == null:" + (model == null))
-    if(DefiningInvariant == null){
-      DefiningInvariant = i
+    if(definingInvariant == null){
+      definingInvariant = i
       registerStaticallyListenedElement(i)
       registerDynamicallyListenedElement(i,0)
     }else{
-      throw new Exception("variable [" + name + "] cannot have more than one controling invariant, already has " + DefiningInvariant)
+      throw new Exception("variable [" + name + "] cannot have more than one controlling invariant, already has " + definingInvariant)
     }
   }
 
-  def getDefiningInvariant:Invariant = DefiningInvariant
+  def isControlledVariable:Boolean = definingInvariant != null
+  def isInputVariable:Boolean = definingInvariant == null
 
   /**this method s to be called by any method that internally modifies the value of the variable
     * it schedules the variable for propagation, and performs a basic check of the identify of the executing invariant*/
@@ -521,7 +534,7 @@ abstract class Variable(val model:Store, n:String = null) extends PropagationEle
     if (this.model == null ||(!this.model.isClosed && this.getDynamicallyListeningElements.isEmpty)){
       performPropagation()
     }else{
-      assert(model.checkExecutingInvariantOK(DefiningInvariant),"variable [" + this + "] affected by non-controlling invariant")
+      assert(model.checkExecutingInvariantOK(definingInvariant),"variable [" + this + "] affected by non-controlling invariant")
       scheduleForPropagation()
     }
   }
@@ -788,12 +801,12 @@ class CBLSIntVar(model: Store, val domain: Range, private var Value: Int, n: Str
 
   def getValue(NewValue: Boolean = false): Int = {
     if(NewValue){
-      assert(model.checkExecutingInvariantOK(DefiningInvariant),"variable [" + this
+      assert(model.checkExecutingInvariantOK(definingInvariant),"variable [" + this
         + "] queried for latest val by non-controlling invariant")
       Value
     } else{
       if (model == null) return Value
-      if (DefiningInvariant == null && !model.Propagating) return Value
+      if (definingInvariant == null && !model.Propagating) return Value
       model.propagate(this)
       OldValue
     }
@@ -882,21 +895,33 @@ object CBLSIntVar{
     def compare(o1: CBLSIntVar, o2: CBLSIntVar) = o1.compare(o2)
   }
 
-  def intVarToIntSetVar(i:CBLSIntVar):Singleton = Singleton(i)
-
   implicit def int2IntVar(a:Int):CBLSIntVar = CBLSIntConst(a)
+
+  implicit def toFunction(i:CBLSIntVar):()=>Int = () => i.value
+
+  implicit def namedIntConst(valAndName:(Int,String)):CBLSIntVar = CBLSIntConst(valAndName._1, valAndName._2)
+}
+
+
+object CBLSIntConst{
+//I'v experimented with memoïzation in this class.
+  //this is however not a so good idea because the memory itself takes some room, and tome time
+  def apply(constValue:Int, name: String = null):CBLSIntConst = {
+    new CBLSIntConst(constValue, name)
+  }
 }
 
 /**
  * An IntConst is an [[oscar.cbls.invariants.core.computation.CBLSIntVar]] that has a constant value.
  * It has no associated model, as there is no need to incorporate it into any propagation process.
+ * notice that you should not attempt to create a CBLSIntConst directly; use the companion object for an efficient memoïzation
  * @param ConstValue: the value of the constant
  * @author renaud.delandtsheer@cetic.be
  */
-case class CBLSIntConst(ConstValue:Int, override val model:Store = null)
-  extends CBLSIntVar(model, (ConstValue to ConstValue), ConstValue, toString){
+class CBLSIntConst(ConstValue:Int, override val name: String = null)
+  extends CBLSIntVar(null, (ConstValue to ConstValue), ConstValue, toString){
   override def getValue(NewValue:Boolean=false):Int = ConstValue //pour pas avoir de propagation
-  override def toString:String = "IntConst("+ ConstValue + ")"
+  override def toString:String = if (name == null) "IntConst("+ ConstValue + ")" else name + ":=" + ConstValue
 }
 
 /**An IntSetVar is a variable managed by the [[oscar.cbls.invariants.core.computation.Store]] whose type is set of integer.
@@ -939,7 +964,7 @@ class CBLSSetVar(override val model:Store,
   }
 
   override def checkInternals(c:Checker){
-    assert(this.DefiningInvariant == null || OldValue.intersect(Value).size == Value.size,
+    assert(this.definingInvariant == null || OldValue.intersect(Value).size == Value.size,
       "internal error: " + "Value: " + Value + " OldValue: " + OldValue)
   }
 
@@ -1054,12 +1079,12 @@ class CBLSSetVar(override val model:Store,
 
   def getValue(NewValue:Boolean=false):SortedSet[Int] = {
     if (NewValue){
-      assert(getModel.checkExecutingInvariantOK(DefiningInvariant),
+      assert(getModel.checkExecutingInvariantOK(definingInvariant),
         "variable [" + this + "] queried for latest val by non-controlling invariant")
       Value
     }else{
       if (model == null) return Value
-      if (DefiningInvariant == null && !model.Propagating) return Value
+      if (definingInvariant == null && !model.Propagating) return Value
       model.propagate(this)
       Perform()
       OldValue
@@ -1096,6 +1121,8 @@ object CBLSSetVar{
   }
 
   implicit def intSet2IntSetVar(a:SortedSet[Int]):CBLSSetVar = CBLSSetConst(a)
+
+  implicit def toFunction(s:CBLSSetVar):()=>SortedSet[Int] = () => s.value
 }
 
 /**
@@ -1119,11 +1146,7 @@ case class CBLSSetConst(ConstValue:SortedSet[Int],override val model:Store = nul
 abstract class IntInvariant extends Invariant{
   def myMin:Int
   def myMax:Int
-  implicit def toIntVar:CBLSIntVar = {
-    val a = new CBLSIntVar(model, (myMin to myMax), 0, this.getClass.getSimpleName)
-    a <== this //ca invoque setOutputVar en fait.
-    a
-  }
+  implicit def toIntVar:CBLSIntVar = toIntVar(this.getClass.getSimpleName)
 
   def toIntVar(name:String):CBLSIntVar = {
     val a = new CBLSIntVar(model, (myMin to myMax), 0, name)
@@ -1208,6 +1231,8 @@ case class IdentityInt(v:CBLSIntVar) extends IntInvariant {
     //ici, on propage tout de suite, c'est les variables qui font le stop and go.
     output := NewVal
   }
+
+
 }
 
 /** an invariant that is the identity function
@@ -1245,32 +1270,3 @@ case class IdentitySet(v:CBLSSetVar) extends SetInvariant{
 }
 
 
-/** an invariant that defines a singleton set out of a single int var.
-  * @author renaud.delandtsheer@cetic.be
-  */
-case class Singleton(v: CBLSIntVar) extends SetInvariant  {
-
-  var output:CBLSSetVar = null
-  registerStaticAndDynamicDependency(v)
-  finishInitialization()
-
-  def myMin = v.minVal
-  def myMax = v.maxVal
-
-  override def checkInternals(c:Checker){
-    assert(output.getValue(true).size == 1)
-    assert(output.getValue(true).head == v.value)
-  }
-
-  override def setOutputVar(vv:CBLSSetVar){
-    output = vv
-    output.setValue(SortedSet(v.value))
-  }
-
-  override def notifyIntChanged(v:CBLSIntVar,OldVal:Int,NewVal:Int){
-    assert(v == this.v)
-    //ici, on propage tout de suite, c'est les variables qui font le stop and go.
-    output.deleteValue(OldVal)
-    output.insertValue(NewVal)
-  }
-}

@@ -33,7 +33,8 @@ class CBLSModel(val verbose:Boolean = false,
   with MinMaxInvariants
   with NumericInvariants
   with SetInvariants
-  with StopWatch{
+  with StopWatch
+  with Search{
 
   implicit val s = new Store(verbose, checker, noCycle, topologicalSort,propagateOnToString)
   implicit val c = new ConstraintSystem(s)
@@ -45,6 +46,8 @@ class CBLSModel(val verbose:Boolean = false,
   def post(c:Constraint)(implicit cs:ConstraintSystem) {cs.post(c)}
 
   def violation()(implicit cs:ConstraintSystem) = cs.violation
+  def violations[V<:Variable](v:Array[V])(implicit cs:ConstraintSystem) = cs.violations(v)
+
   def solution()(implicit s:Store) = s.solution()
 
   def swapVal(a:CBLSIntVar, b:CBLSIntVar)(implicit o:ObjectiveTrait) = o.swapVal(a,b)

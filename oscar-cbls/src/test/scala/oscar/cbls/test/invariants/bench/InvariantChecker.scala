@@ -14,7 +14,8 @@ class InvariantChecker(verbose: Int = 0) extends Checker {
   def check(verity: Boolean, traceOption: Option[String]) = {
     if (traceOption.isDefined) {
       val trace = traceOption.get
-      if (!verity) println("Counter-example found: " + trace + " is false.")
+      if (!verity)
+        println("Counter-example found: " + trace + " is false.")
       else if (verbose > 1) println(trace)
     }
 

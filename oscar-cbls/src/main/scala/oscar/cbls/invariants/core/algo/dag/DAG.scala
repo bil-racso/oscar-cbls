@@ -22,18 +22,19 @@ package oscar.cbls.invariants.core.algo.dag
 
 import oscar.cbls.invariants.core.algo.heap.BinomialHeap
 
+import scala.collection.immutable.SortedSet
+
 
 /** a DAG node with some abstract methods
   * @author renaud.delandtsheer@cetic.be
   */
-trait DAGNode extends Ordered[DAGNode]{
+abstract class DAGNode extends Ordered[DAGNode]{
 
   /**the position in the topological sort*/
-  var Position: Int = 0
+  var position: Int = 0
 
   /**supposed to be false between each pass of the algorithm*/
   var visited: Boolean = false
-  var visited2:Boolean = false
 
   /**it gives the unique ID of the PropagationElement.
     * those uniqueID are expected to start at 0 and to increase continuously
@@ -41,7 +42,7 @@ trait DAGNode extends Ordered[DAGNode]{
     * if the Propagation Element is not mentioned in the propagation structure, such as for constants
     * yet is mentioned in the dependencies of registered propagation elements
     */
-  var UniqueID:Int = -1
+  var uniqueID:Int = -1
 
   def getDAGPrecedingNodes: Iterable[DAGNode]
 
@@ -69,18 +70,16 @@ trait DAG {
 
   def nodes:Iterable[DAGNode]
 
-  var HeapSort = true
-
   /**performs a self-check on the ordering, use for testing*/
   def checkSort(){
     for (to <- nodes){
       for(from <- to.getDAGPrecedingNodes){
-        assert(from.Position < to.Position,"topological sort is wrong at " + from + "->" + to)
+        assert(from.position < to.position,"topological sort is wrong at " + from + "->" + to)
       }
     }
     for (from <- nodes){
       for(to <- from.getDAGSucceedingNodes){
-        assert(from.Position < to.Position,"topological sort is wrong at " + from + "->" + to)
+        assert(from.position < to.position,"topological sort is wrong at " + from + "->" + to)
       }
     }
   }
@@ -137,17 +136,12 @@ trait DAG {
     */
   def notifyAddEdge(from: DAGNode, to: DAGNode) {
 
-    if (AutoSort && (from.Position > to.Position)) {
+    if (AutoSort && (from.position > to.position)) {
       //refaire le sort
       //discovery
 
-      val SortedForwardRegion =
-        (if(HeapSort) findSortedForwardRegion(to, from.Position)
-        else findForwardRegion(to, from.Position).sortWith((p, q) => p.Position < q.Position))
-
-      val SortedBackwardsRegion =
-        (if (HeapSort) findSortedBackwardRegion(from, to.Position)
-        else findBackwardsRegion(from, to.Position).sortWith((p, q) => p.Position < q.Position))
+      val SortedForwardRegion = findSortedForwardRegion(to, from.position)
+      val SortedBackwardsRegion = findSortedBackwardRegion(from, to.position)
 
       //reassignment
 
@@ -169,20 +163,22 @@ trait DAG {
     //on marque visite quand on poppe de la DFS ou quand on est retombe sur le debut du cycle
     var ExploredStack:List[DAGNode] = List.empty //upside down
 
+    var visited2:SortedSet[Int] = SortedSet.empty
+
     def DFS(n:DAGNode):Boolean = { //return true si on a trouve un cycle
       if(n.visited) return false
-      if(n.visited2){  //found a cycle
+      if(visited2.contains(n.uniqueID)){  //found a cycle
         ExploredStack = (n :: ExploredStack).reverse
         n.visited=true
         while(!ExploredStack.head.visited){ExploredStack = ExploredStack.tail}
-        nodes.foreach(p => {p.visited = false; p.visited2 = false})
+        nodes.foreach(p => {p.visited = false; visited2 -= p.uniqueID})
         true
       }else{ //not yet
-        n.visited2 = true
+        visited2 += n.uniqueID
         ExploredStack = n :: ExploredStack
         n.getDAGSucceedingNodes.foreach(p => {if(DFS(p)){return true}})
         n.visited=true
-        n.visited2 = false
+        visited2 -= n.uniqueID
         ExploredStack = ExploredStack.tail
         false
       }
@@ -195,7 +191,7 @@ trait DAG {
       if (!n.visited)
         if (DFS(n)){return ExploredStack}
     })
-    nodes.foreach(p => {p.visited = false; p.visited2 = false})
+    nodes.foreach(p => {p.visited = false})
     null
   }
 
@@ -205,17 +201,17 @@ trait DAG {
     */
   def doDAGSort() {
     //on utilise les positions pour stocker le nombre de noeuds predecesseurs non visites, puis on met l'autre valeur apres.
-    nodes.foreach(n => n.Position = n.getDAGPrecedingNodes.size)
-    var Front: List[DAGNode] = nodes.toList.filter(n => (n.Position == 0))
+    nodes.foreach(n => n.position = n.getDAGPrecedingNodes.size)
+    var Front: List[DAGNode] = nodes.toList.filter(n => (n.position == 0))
     var Position = 0 //la position du prochain noeud place.
     while (!Front.isEmpty) {
       val n = Front.head
       Front = Front.tail
-      n.Position = Position
+      n.position = Position
       Position += 1
       n.getDAGSucceedingNodes.foreach(p => {
-        p.Position -=1
-        if (p.Position == 0) Front = (p::Front) //une stack, en fait, mais c'est insensitif, puis c'est plus rapide. 
+        p.position -=1
+        if (p.position == 0) Front = (p::Front) //une stack, en fait, mais c'est insensitif, puis c'est plus rapide. 
       })
     }
     if (Position != nodes.size) {
@@ -228,11 +224,11 @@ trait DAG {
       n.visited = true
       var newlist = n :: acc
       n.getDAGSucceedingNodes.foreach(p => {
-        if (p.Position == ub) {
+        if (p.position == ub) {
           nodes.foreach(q => q.visited = false)
           throw new CycleException(p)
         }
-        if (!p.visited && p.Position < ub) {
+        if (!p.visited && p.position < ub) {
           newlist = dfsF(p, newlist)
         }
       })
@@ -241,14 +237,14 @@ trait DAG {
     dfsF(n, List.empty)
   }
 
-  val HeapForRegionDiscovery:BinomialHeap[DAGNode] = new BinomialHeap((n:DAGNode) => n.Position,nodes.size)
+  val HeapForRegionDiscovery:BinomialHeap[DAGNode] = new BinomialHeap((n:DAGNode) => n.position,nodes.size)
 
   /**@return forward region, sorted by increasing position*/
   private def findSortedForwardRegion(n: DAGNode, ub: Int): List[DAGNode] = {
 
     val h:BinomialHeap[DAGNode] = HeapForRegionDiscovery
     h.dropAll()
-    h.keyGetter = ((n:DAGNode) => n.Position)
+    h.keyGetter = ((n:DAGNode) => n.position)
 
     var toreturn:List[DAGNode] = List.empty
 
@@ -259,12 +255,12 @@ trait DAG {
       val first:DAGNode = h.popFirst()
       toreturn = first :: toreturn
       first.getDAGSucceedingNodes.foreach((p:DAGNode) => {
-        if (p.Position == ub) {
+        if (p.position == ub) {
           toreturn.foreach(q => q.visited = false)
           h.foreach(q => q.visited = false)
           throw new CycleException(p)
         }
-        if (!p.visited && p.Position < ub) {
+        if (!p.visited && p.position < ub) {
           h.insert(p)
           p.visited = true
         }
@@ -278,7 +274,7 @@ trait DAG {
       n.visited = true
       var newlist = n :: acc
       n.getDAGPrecedingNodes.foreach(p => {
-        if (!p.visited && p.Position > lb) {
+        if (!p.visited && p.position > lb) {
           newlist = dfsB(p, newlist)
         }
       })
@@ -292,7 +288,7 @@ trait DAG {
 
     val h:BinomialHeap[DAGNode] = HeapForRegionDiscovery
     h.dropAll()
-    h.keyGetter = ((n:DAGNode) => -n.Position)
+    h.keyGetter = ((n:DAGNode) => -n.position)
 
     var toreturn:List[DAGNode] = List.empty
 
@@ -304,7 +300,7 @@ trait DAG {
       toreturn = first :: toreturn
 
       first.getDAGPrecedingNodes.foreach(p => {
-        if (!p.visited && p.Position > lb) {
+        if (!p.visited && p.position > lb) {
           h.insert(p)
           p.visited = true
         }
@@ -319,20 +315,20 @@ trait DAG {
     if (a.isEmpty && b.isEmpty){
       List.empty[Int]
     }else if (a.isEmpty) {
-      b.head.Position :: mergeNodeLists(a, b.tail)
+      b.head.position :: mergeNodeLists(a, b.tail)
     } else if (b.isEmpty) {
-      a.head.Position :: mergeNodeLists(a.tail, b)
-    } else if (a.head.Position < b.head.Position) {
-      a.head.Position :: mergeNodeLists(a.tail, b)
+      a.head.position :: mergeNodeLists(a.tail, b)
+    } else if (a.head.position < b.head.position) {
+      a.head.position :: mergeNodeLists(a.tail, b)
     } else {
-      b.head.Position :: mergeNodeLists(a, b.tail)
+      b.head.position :: mergeNodeLists(a, b.tail)
     }
   }
 
   private def realloc(OrderedNodeForReinsertion: List[DAGNode], FreePositionsToDistribute: List[Int]):List[Int] = {
     if (!OrderedNodeForReinsertion.isEmpty) {
       OrderedNodeForReinsertion.head.visited = false
-      OrderedNodeForReinsertion.head.Position = FreePositionsToDistribute.head
+      OrderedNodeForReinsertion.head.position = FreePositionsToDistribute.head
       realloc(OrderedNodeForReinsertion.tail, FreePositionsToDistribute.tail)
     }else{
       FreePositionsToDistribute

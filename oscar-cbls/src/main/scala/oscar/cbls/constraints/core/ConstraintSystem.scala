@@ -30,10 +30,9 @@ import oscar.cbls.invariants.core.propagation.Checker
  * It is itself a constraint, offering the same features, namely, a global violation and a violation specific to each variable.
  * monitoring the violation of a variable requires that the ConstraintSystem has been notified that the variable should have an associated violation degree.
  * This is achieved by calling the method registerForViolation(v:Variable).
- * @author  Renaud De Landtsheer rdl@cetic.be
  * @param _model is the model in which all the variables referenced by the constraints are declared.
-  * @author renaud.delandtsheer@cetic.be
-  * */
+ * @author renaud.delandtsheer@cetic.be
+ */
 case class ConstraintSystem(val _model:Store) extends Constraint with ObjectiveTrait{
   //ConstraintSystems do not act as invariant because everything is subcontracted.
 
@@ -47,8 +46,8 @@ case class ConstraintSystem(val _model:Store) extends Constraint with ObjectiveT
     var AggregatedViolation:List[CBLSIntVar] = List.empty
   }
 
-  val IndexForLocalViolationINSU = model.getStorageIndex
-  val IndexForGlobalViolationINSU = model.getStorageIndex
+  val IndexForLocalViolationINSU = model.getStorageKey
+  val IndexForGlobalViolationINSU = model.getStorageKey
 
   private val Violation:CBLSIntVar = CBLSIntVar(this.model,0,Int.MaxValue,0,"Violation")
 
@@ -106,7 +105,7 @@ case class ConstraintSystem(val _model:Store) extends Constraint with ObjectiveT
         val constr = ConstrAndWeight._1
         val weight = ConstrAndWeight._2
         if(weight == null) constr.violation(variable)
-        else (Prod2(constr.violation(variable),weight)).toIntVar
+        else Prod2(constr.violation(variable),weight).toIntVar
       })
       val LocalViolation = (if (!product.isEmpty && product.tail.isEmpty) product.head
                             else Sum(product).toIntVar)
@@ -116,8 +115,9 @@ case class ConstraintSystem(val _model:Store) extends Constraint with ObjectiveT
 
   private def PropagateLocalToGlobalViolations(){
     for(varWithLocalViol <- VarInConstraints){
-      val localViol:CBLSIntVar = varWithLocalViol.getStorageAt(IndexForLocalViolationINSU)
+      val localViol:CBLSIntVar = varWithLocalViol.getAndFreeStorageAt(IndexForLocalViolationINSU)
       val sources = model.getSourceVariables(varWithLocalViol)
+      //TODO: this seems a bit inefficient
       for(sourcevar <- sources){
         val GlobalViol:GlobalViolationDescriptor = sourcevar.getStorageAt(IndexForGlobalViolationINSU,null)
         if (GlobalViol!=null) GlobalViol.AggregatedViolation = localViol :: GlobalViol.AggregatedViolation
@@ -138,7 +138,7 @@ case class ConstraintSystem(val _model:Store) extends Constraint with ObjectiveT
    * no constraint can be added after this method has been called.
    * this method must also be called before closing the model.
    */
-  protected[cbls] def close(){
+  def close(){
     if(!isClosed){
       isClosed = true
       Violation <== Sum(PostedConstraints.map((constraintANDintvar) => {
@@ -190,6 +190,11 @@ case class ConstraintSystem(val _model:Store) extends Constraint with ObjectiveT
       CPStoredRecord.Violation
     }
   }
+
+  def violations[V<:Variable](vs:Array[V]):Array[CBLSIntVar] = {
+    vs.map(violation(_))
+  }
+
 
   /**Returns the global violation of the constraint system, that is the weighted sum of the violation of the posted constraints
    *close() should have been called prior to calling this method.

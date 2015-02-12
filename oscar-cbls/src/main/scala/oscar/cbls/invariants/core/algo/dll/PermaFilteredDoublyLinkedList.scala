@@ -84,9 +84,8 @@ class DelayedPermaFilter[T, F <: AnyRef](mFilter:(T,()=>Unit, ()=> Boolean) => U
 class PermaFilteredDoublyLinkedList[T <: AnyRef] extends Iterable[T]{
 
 
-  private val headfantom:PFDLLStorageElement[T] = new PFDLLStorageElement[T](null.asInstanceOf[T])
-  private val endfantom:PFDLLStorageElement[T] = new PFDLLStorageElement[T](null.asInstanceOf[T])
-  headfantom.setNext(endfantom)
+  private val phantom:PFDLLStorageElement[T] = new PFDLLStorageElement[T](null.asInstanceOf[T])
+  phantom.setNext(phantom)
 
 
 
@@ -107,8 +106,8 @@ class PermaFilteredDoublyLinkedList[T <: AnyRef] extends Iterable[T]{
     */
   def addElem(elem:T):PFDLLStorageElement[T] = {
     val d = new PFDLLStorageElement[T](elem)
-    d.setNext(headfantom.next)
-    headfantom.setNext(d)
+    d.setNext(phantom.next)
+    phantom.setNext(d)
     msize +=1
 
     //TODO: could be faster if we generate a dedicated PFDLL when PF is activated
@@ -128,7 +127,7 @@ class PermaFilteredDoublyLinkedList[T <: AnyRef] extends Iterable[T]{
     */
   def deleteElem(elemkey:PFDLLStorageElement[T]):T = {
     elemkey.prev.setNext(elemkey.next)
-    elemkey.prev = null
+    elemkey.prev = null //this is checked by the delayed perma filter, so DO NOT REMOVE THIS SEEMIGNLY USELESS INSTRUCTION
     msize -=1
 
     //TODO: could be faster if we generate a dedicated PFDLL when PF is activated
@@ -139,7 +138,7 @@ class PermaFilteredDoublyLinkedList[T <: AnyRef] extends Iterable[T]{
 
   override def isEmpty:Boolean = size == 0
 
-  override def iterator = new PFDLLIterator[T](headfantom,endfantom)
+  override def iterator = new PFDLLIterator[T](phantom, phantom)
 
   def delayedPermaFilter[F <: AnyRef](filter:(T,()=>Unit, ()=> Boolean) => Unit,
                                       mMap:T => F = (t:T) => t.asInstanceOf[F]):PermaFilteredDoublyLinkedList[F] = {
@@ -168,8 +167,8 @@ class PermaFilteredDoublyLinkedList[T <: AnyRef] extends Iterable[T]{
   }
 
   private def filterElementsForNewFilter(){
-    var currentstorageElement:PFDLLStorageElement[T]=headfantom.next
-    while(currentstorageElement!=endfantom){
+    var currentstorageElement:PFDLLStorageElement[T]=phantom.next
+    while(currentstorageElement!=phantom){
       permaFilter.notifyInsert(currentstorageElement)
       currentstorageElement = currentstorageElement.next
     }
@@ -214,12 +213,12 @@ class PFDLLStorageElement[T](val elem:T){
 }
 
 class PFDLLIterator[T](var CurrentKey:PFDLLStorageElement[T],
-                       val endfantom:PFDLLStorageElement[T]) extends Iterator[T]{
+                       val phantom:PFDLLStorageElement[T]) extends Iterator[T]{
   def next():T = {
     CurrentKey = CurrentKey.next
     CurrentKey.elem
   }
 
-  def hasNext:Boolean = {CurrentKey.next != endfantom}
+  def hasNext:Boolean = {CurrentKey.next != phantom}
 }
 
