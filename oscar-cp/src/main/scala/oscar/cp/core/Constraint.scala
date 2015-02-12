@@ -125,12 +125,12 @@ abstract class Constraint(val s: CPStore, val name: String = "cons") {
     } 
   }  
 
-  private var priorL2 = CPStore.MAXPRIORL2 - 2
-  private var priorBindL1 = CPStore.MAXPRIORL1 - 1
-  private var priorBoundsL1 = CPStore.MAXPRIORL1 - 2
-  private var priorRemoveL1 = CPStore.MAXPRIORL1 - 2
-  private var priorRequireL1 = CPStore.MAXPRIORL1 - 1
-  private var priorExcludeL1 = CPStore.MAXPRIORL1 - 2
+  private var priorL2 = CPStore.MaxPriorityL2 - 2
+  private var priorBindL1 = CPStore.MaxPriorityL1 - 1
+  private var priorBoundsL1 = CPStore.MaxPriorityL1 - 2
+  private var priorRemoveL1 = CPStore.MaxPriorityL1 - 2
+  private var priorRequireL1 = CPStore.MaxPriorityL1 - 1
+  private var priorExcludeL1 = CPStore.MaxPriorityL1 - 2
 
   /**
    * Set to true when it is currently executing the propagate method
