@@ -83,6 +83,8 @@ object InsertPoint extends Neighborhood with SearchEngineTrait {
     val s = vrp.segmentFromUnrouted(insertedPoint)
     vrp.insert(s, beforeInsertedPoint)
   }
+
+  override def toString: String = "insertion"
 }
 
 /**
