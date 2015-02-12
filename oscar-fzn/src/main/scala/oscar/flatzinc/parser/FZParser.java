@@ -27,23 +27,23 @@ import org.antlr.v4.runtime.*;
 
 
 public class FZParser {
-	public static Model readFlatZincModelFromFile(String fname,Log log){
+	public static Model readFlatZincModelFromFile(String fname,Log log, boolean acceptAnyCstr){
 		try{
 		ANTLRInputStream input = new ANTLRInputStream(new FileInputStream(fname));
 		//UnbufferedCharStream input = new UnbufferedCharStream(new FileInputStream(fname));
-		return readFlatZincModel(input,log);
+		return readFlatZincModel(input,log, acceptAnyCstr);
 		}catch(IOException e){
 	        System.err.println("File " + fname + " not found. Aborting.");
 			System.exit(1);
 		}
 		return null;
 	}
-	public static Model readFlatZincModelFromString(String content,Log log){
+	public static Model readFlatZincModelFromString(String content,Log log, boolean acceptAnyCstr){
 		ANTLRInputStream input = new ANTLRInputStream(content);
-		return readFlatZincModel(input,log);
+		return readFlatZincModel(input,log, acceptAnyCstr);
 	}
-	public static Model readFlatZincModel(CharStream input,Log log){
-		Model m = new Model(log);
+	public static Model readFlatZincModel(CharStream input,Log log, boolean acceptAnyCstr){
+		Model m = new Model(log, acceptAnyCstr);
 		//try{
 	        FlatzincLexer lex = new FlatzincLexer(input);
 			CommonTokenStream tokens = new CommonTokenStream(lex);

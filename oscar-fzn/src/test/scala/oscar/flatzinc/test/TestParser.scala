@@ -13,14 +13,14 @@ class TestParser extends FunSuite with Matchers{
 
   def getSATModel(modelStr: String): FZProblem = {
     val log = new Log(0)
-    val model = FZParser.readFlatZincModelFromString(modelStr+" solve satisfy;", log)
+    val model = FZParser.readFlatZincModelFromString(modelStr+" solve satisfy;", log, false)
     model.problem
   }
   test("test no solve"){
     val log = new Log(0)
     
     a [ParsingException] should be thrownBy {
-      FZParser.readFlatZincModelFromString("var int: x;", log)      
+      FZParser.readFlatZincModelFromString("var int: x;", log, false)      
     }
   }
   test("test empty model"){

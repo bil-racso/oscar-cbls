@@ -22,7 +22,9 @@ import scala.collection.mutable.{ Map => MMap}
 object Helper {
   def getCName(c: Constraint): String = {
     if(c.isInstanceOf[GeneratedConstraint])
-      c.asInstanceOf[GeneratedConstraint].name 
+      c.asInstanceOf[GeneratedConstraint].name
+    else if(c.isInstanceOf[GenericConstraint])
+      c.asInstanceOf[GenericConstraint].name
     else{
       val names = c.getClass().getName().split("\\.")
       val name = names(names.length-1)

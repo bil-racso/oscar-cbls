@@ -31,7 +31,7 @@ object FznOscarAnal extends FznOscarMain{
     val log = opts.log()
     log("start")
     val fname = opts.fileName
-    val model = FZParser.readFlatZincModelFromFile(opts.fileName,log)
+    val model = FZParser.readFlatZincModelFromFile(opts.fileName,log, true)
     log("Parsed.")
     printInfo(model,log)
     

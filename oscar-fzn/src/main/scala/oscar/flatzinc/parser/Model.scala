@@ -34,7 +34,7 @@ import scala.collection.mutable.WrappedArray
 
 class VarRef(val v: Variable) extends Element()
 
-class Model(val log: Log) {
+class Model(val log: Log, val acceptAnyCstr: Boolean) {
   
   val problem: FZProblem = new FZProblem()
   val dico: Map[String,Element] = Map.empty[String,Element]
@@ -109,7 +109,7 @@ class Model(val log: Log) {
       if(e.typ.typ.equals("null")){
         e.typ.typ = t.typ;
       }else{
-        log(0,"Not the same type: "+e.typ+" vs "+t);
+        log(1,"Not the same type: "+e.typ+" vs "+t);
       }
     }
     if(d!=null && !d.equals(e.domain)){
@@ -139,11 +139,11 @@ class Model(val log: Log) {
         
         val a = e.asInstanceOf[ArrayOfElement]
           if(e.typ.typ.equals("int")){
-            problem.solution.addOutputArrayVarInt(name,a.elements.asScala.toArray.map(_.asInstanceOf[VarRef].v.id),
+            problem.solution.addOutputArrayVarInt(name,a.elements.asScala.toArray.map{case vr: VarRef => vr.v.id; case other => if(other.name==null)other.value.toString() else other.name},
                            anns.find((p:Annotation) => p.name == "output_array").get.args(0).asInstanceOf[ArrayOfElement].elements.asScala.toList.map(e=>e.value.asInstanceOf[DomainRange].toRange))
           }
           if(e.typ.typ.equals("bool")){
-            problem.solution.addOutputArrayVarBool(name,a.elements.asScala.toArray.map(_.asInstanceOf[VarRef].v.id),
+            problem.solution.addOutputArrayVarBool(name,a.elements.asScala.toArray.map{case vr: VarRef => vr.v.id; case other => if(other.name==null)other.value.toString() else other.name},
                            anns.find((p:Annotation) => p.name == "output_array").get.args(0).asInstanceOf[ArrayOfElement].elements.asScala.toList.map(e=>e.value.asInstanceOf[DomainRange].toRange))
           }
         }
@@ -255,10 +255,26 @@ class Model(val log: Log) {
       val cl = Class.forName("oscar.flatzinc.model."+c)
       makeConstraint(cl,args,ann)
     }catch{
-      case e: ClassNotFoundException => throw new NoSuchConstraintException(c,"Intermediate Representation");
+      case e: ClassNotFoundException => 
+        if(acceptAnyCstr)
+          makeGenericConstraint(c,args,ann)
+        else 
+          throw new NoSuchConstraintException(c,"Intermediate Representation");
     }
   }
   
+  def makeGenericConstraint(c: String, args:List[Element], ann:List[Annotation]): Constraint = {
+    val args2 = args.map((a) => 
+      if(a.typ.typ.equals("int"))
+        if(a.typ.isArray) getIntVarArray(a)
+        else getIntVar(a)
+      else if(a.typ.typ.equals("bool"))
+        if(a.typ.isArray) getBoolVarArray(a)
+        else getBoolVar(a)//TODO: differentiate par vs var
+      else if(a.typ.typ.equals("set")) getIntSet(a)
+      else throw new Exception("Case not handled: "+a))
+    GenericConstraint(c,args2)
+  }
   def makeConstraint[A]/* <: Constraint]*/(c:Class[A],args:List[Element], ann:List[Annotation]): Constraint = {
     val cc:Constructor[A] = c.getConstructors()(0).asInstanceOf[Constructor[A]];
     val p = cc.getParameterTypes();

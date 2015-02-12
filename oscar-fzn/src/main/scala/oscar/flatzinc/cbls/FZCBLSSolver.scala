@@ -240,7 +240,7 @@ class FZCBLSSolver extends SearchEngine with StopWatch {
     val log = opts.log();
     log("start")
     
-    val model = FZParser.readFlatZincModelFromFile(opts.fileName,log).problem;
+    val model = FZParser.readFlatZincModelFromFile(opts.fileName,log, false).problem;
      
     Helper.getCstrsByName(model.constraints).map{ case (n:String,l:List[Constraint]) => l.length +"\t"+n}.toList.sorted.foreach(log(_))
     log("Parsed. Parsing took "+getWatch+" ms")

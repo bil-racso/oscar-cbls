@@ -73,7 +73,7 @@ object FlatZincPrinter {
   }
   def toFZN(d: Domain): String = {
     d match{
-      case DomainRange(min,max) => min+".."+max
+      case DomainRange(min,max) => if(min==Integer.MIN_VALUE && max==Integer.MAX_VALUE) "int" else min+".."+max
       case DomainSet(set) => set.mkString("{", ", ", "}")
     }
   }
@@ -113,19 +113,26 @@ object FlatZincPrinter {
     c match{
       case reif(int_eq(x,y,ann),z) => "int_eq_reif("+toFZN(x)+","+toFZN(y)+","+toFZN(z)+")"+toFZNann(ann)
       case reif(int_le(x,y,ann),z) => "int_le_reif("+toFZN(x)+","+toFZN(y)+","+toFZN(z)+")"+toFZNann(ann)
+      case reif(int_ne(x,y,ann),z) => "int_ne_reif("+toFZN(x)+","+toFZN(y)+","+toFZN(z)+")"+toFZNann(ann)
       case reif(set_in(x,y,ann),z) => "set_in_reif("+toFZN(x)+","+toFZN(y)+","+toFZN(z)+")"+toFZNann(ann)
       case int_lin_eq(x,y,z,ann) => "int_lin_eq("+toFZN(x)+","+toFZN(y)+","+toFZN(z)+")"+toFZNann(ann)
       case int_lin_le(x,y,z,ann) => "int_lin_le("+toFZN(x)+","+toFZN(y)+","+toFZN(z)+")"+toFZNann(ann)
       case int_lin_ne(x,y,z,ann) => "int_lin_ne("+toFZN(x)+","+toFZN(y)+","+toFZN(z)+")"+toFZNann(ann)
+      case int_max(x,y,z,ann) => "int_max("+toFZN(x)+","+toFZN(y)+","+toFZN(z)+")"+toFZNann(ann)
+      case int_min(x,y,z,ann) => "int_min("+toFZN(x)+","+toFZN(y)+","+toFZN(z)+")"+toFZNann(ann)
       case array_int_element(x,y,z,ann) => "array_int_element("+toFZN(x)+","+toFZN(y)+","+toFZN(z)+")"+toFZNann(ann)
       case array_var_int_element(x,y,z,ann) => "array_int_element("+toFZN(x)+","+toFZN(y)+","+toFZN(z)+")"+toFZNann(ann)
       case array_bool_and(x,y, ann) => "array_bool_and("+toFZN(x)+","+toFZN(y)+")"+toFZNann(ann)
       case array_bool_or(x,y, ann) => "array_bool_or("+toFZN(x)+","+toFZN(y)+")"+toFZNann(ann)
       case bool_clause(x,y, ann) => "bool_clause("+toFZN(x)+","+toFZN(y)+")"+toFZNann(ann)
+      case bool2int(x,y, ann) => "bool2int("+toFZN(x)+","+toFZN(y)+")"+toFZNann(ann)
+      case count(x,y,z,ann) => "count("+toFZN(x)+","+toFZN(y)+","+toFZN(z)+")"+toFZNann(ann)
+      case count_eq(x,y,z,ann) => "count_eq("+toFZN(x)+","+toFZN(y)+","+toFZN(z)+")"+toFZNann(ann)
       case reif(int_lin_ne(x,y,z,ann),w) => "int_lin_ne_reif("+toFZN(x)+","+toFZN(y)+","+toFZN(z)+","+toFZN(w)+")"+toFZNann(ann)
       case reif(int_lin_le(x,y,z,ann),w) => "int_lin_le_reif("+toFZN(x)+","+toFZN(y)+","+toFZN(z)+","+toFZN(w)+")"+toFZNann(ann)
       case all_different_int(x,ann) => "all_different_int("+toFZN(x)+")"+toFZNann(ann)
       case GeneratedConstraint(name,args,signature) => name+"("+args.map(toFZN(_)).mkString(", ")+")"
+      case GenericConstraint(name,args) => name+"("+args.map(toFZN(_)).mkString(", ")+")"
     }
   }
 }
