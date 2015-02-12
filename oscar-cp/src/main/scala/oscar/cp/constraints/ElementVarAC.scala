@@ -1,5 +1,4 @@
-/**
- * *****************************************************************************
+/*******************************************************************************
  * OscaR is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
@@ -12,8 +11,7 @@
  *
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
- * *****************************************************************************
- */
+ *******************************************************************************/
 
 package oscar.cp.constraints;
 
@@ -234,7 +232,7 @@ class ElementEq(ys: Array[CPIntVar], x: CPIntVar, z: CPIntVar, values: Array[Int
     Suspend
   }
   
-  // FIXME: should be idempotent (not allowed for L1 events)
+  // FIXME: should be idempotent (not allowed yet for L1 events)
   final override def valRemove(intVar: CPIntVar, value: Int): CPOutcome = {
     if (intVar == y) z.removeValue(value)
     else y.removeValue(value)
