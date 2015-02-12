@@ -144,9 +144,9 @@ class TestDeltaPropagate extends FunSuite with ShouldMatchers {
     var propag = false
     
     class MyCons(val X: CPIntVar) extends Constraint(X.store, "TestDelta") {
-      priorityL2 = CPStore.MAXPRIORL2-5 
+      priorityL2 = CPStore.MaxPriorityL2-5 
       override def setup(l: CPPropagStrength): CPOutcome = {
-        X.filterWhenDomainChanges { delta =>
+        X.filterWhenDomainChangesWithDelta() { delta =>
           propag = true
           delta.changed() should be(true)
           delta.size() should be(2)
@@ -177,9 +177,9 @@ class TestDeltaPropagate extends FunSuite with ShouldMatchers {
     var propag = false
     
     class MyCons(val X: CPIntVar) extends Constraint(X.store, "TestDelta") {
-      priorityL2 = CPStore.MAXPRIORL2-5 
+      priorityL2 = CPStore.MaxPriorityL2-5 
       override def setup(l: CPPropagStrength): CPOutcome = {
-        X.filterWhenDomainChanges { delta =>
+        X.filterWhenDomainChangesWithDelta() { delta =>
           propag = true
           delta.changed() should be(true)
           delta.size() should be(2)

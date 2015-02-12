@@ -373,7 +373,10 @@ abstract class Constraint(val s: CPStore, val name: String = "cons") {
 
 
 
-abstract class DeltaVarInt(x: CPIntVar,filter: DeltaVarInt => CPOutcome) extends Constraint(x.store, "DeltaVarInt") {
+abstract class DeltaVarInt(x: CPIntVar,filter: DeltaVarInt => CPOutcome,idempot: Boolean = false, priority: Int) extends Constraint(x.store, "DeltaVarInt") {
+  
+  idempotent = idempot
+  priorityL2 = priority
   
   val sn = new SnapshotVarInt(x)
   s.onPop {
@@ -399,6 +402,8 @@ abstract class DeltaVarInt(x: CPIntVar,filter: DeltaVarInt => CPOutcome) extends
 }
 
 abstract class DeltaVarSet(x: CPSetVar,filter: DeltaVarSet => CPOutcome) extends Constraint(x.store, "DeltaVarSet") {
+  
+  idempotent = true
   
   val sn = new SnapshotVarSet(x)
   s.onPop {

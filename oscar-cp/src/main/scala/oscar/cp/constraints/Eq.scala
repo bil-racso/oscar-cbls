@@ -21,6 +21,7 @@ import oscar.cp.core.CPPropagStrength
 import oscar.cp.core.CPPropagStrength._
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.CPOutcome._
+import oscar.cp.core.CPStore
 
 class EqCons(x: CPIntVar, v: Int) extends Constraint(x.store, "Equality") {
   final override def setup(l: CPPropagStrength): CPOutcome = {
@@ -34,7 +35,7 @@ class EqCons(x: CPIntVar, v: Int) extends Constraint(x.store, "Equality") {
 
 class Eq(x: CPIntVar, y: CPIntVar) extends Constraint(x.store, "Equality") {
 
-  //idempotent = true
+  idempotent = true
   
   final override def setup(l: CPPropagStrength): CPOutcome = {
 
@@ -80,8 +81,38 @@ class Eq(x: CPIntVar, y: CPIntVar) extends Constraint(x.store, "Equality") {
 
       if (x.size > 2 || y.size > 2) {
         if (l == Strong) {
-          x.callValRemoveWhenValueIsRemoved(this)
-          y.callValRemoveWhenValueIsRemoved(this)
+          //x.callValRemoveWhenValueIsRemoved(this)
+          //y.callValRemoveWhenValueIsRemoved(this)
+          
+          val xvalues = Array.ofDim[Int](x.size)
+          val yvalues = Array.ofDim[Int](y.size)
+          x.filterWhenDomainChangesWithDelta(true,CPStore.MaxPriorityL2) { d =>
+            val m = d.fillArray(xvalues)
+            var i = 0
+            while (i < m) {
+              if (y.removeValue(xvalues(i)) == Failure) {
+                return Failure
+              }
+              i += 1
+            }
+            Suspend
+          }
+          y.filterWhenDomainChangesWithDelta(true,CPStore.MaxPriorityL2) { d =>
+            val m = d.fillArray(yvalues)
+            var i = 0
+            while (i < m) {
+              if (x.removeValue(yvalues(i)) == Failure) {
+                return Failure
+              }
+              i += 1
+            }
+            Suspend
+          }          
+          
+          
+          
+          
+          
         } else {
           x.callUpdateBoundsWhenBoundsChange(this)
           y.callUpdateBoundsWhenBoundsChange(this)

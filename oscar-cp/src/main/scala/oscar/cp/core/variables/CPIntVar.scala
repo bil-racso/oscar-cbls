@@ -269,9 +269,10 @@ abstract class CPIntVar extends CPVar with Iterable[Int] {
    */
   def callPropagateWhenDomainChanges(c: Constraint, trackDelta: Boolean = false): Unit
 
-  def filterWhenDomainChanges(filter: DeltaVarInt => CPOutcome) {
+
+  def filterWhenDomainChangesWithDelta(idempotent: Boolean = false, priority: Int = CPStore.MaxPriorityL2-2) (filter: DeltaVarInt => CPOutcome) {
     store.post(
-      new DeltaVarInt(this, filter) {
+      new DeltaVarInt(this,filter,idempotent,priority) {
         def setup(l: CPPropagStrength) = {
           callPropagateWhenDomainChanges(this)
           CPOutcome.Suspend
@@ -279,20 +280,27 @@ abstract class CPIntVar extends CPVar with Iterable[Int] {
       }) // should not fail
   }
 
-  def filterWhenDomainChanges(filter: => CPOutcome) {
+  def filterWhenDomainChanges(idempot: Boolean = true, priority: Int = CPStore.MaxPriorityL2-2) (filter: => CPOutcome) {
     store.post(
       new Constraint(this.store, "filterWhenDomainChanges on  " + this) {
+        idempotent = idempot
+        priorityL2 = priority
+
         def setup(l: CPPropagStrength) = {
           callPropagateWhenDomainChanges(this)
           CPOutcome.Suspend
         }
         override def propagate() = filter
       })
-  }
+  } 
+  
 
-  def filterWhenBoundsChange(filter: => CPOutcome) {
+  def filterWhenBoundsChange(idempot: Boolean = false, priority: Int = CPStore.MaxPriorityL2-2)(filter: => CPOutcome) {
     store.post(
       new Constraint(this.store, "filterWhenBoundsChange on  " + this) {
+        idempotent = idempot
+        priorityL2 = priority
+
         def setup(l: CPPropagStrength) = {
           callPropagateWhenBoundsChange(this)
           CPOutcome.Suspend
@@ -301,9 +309,12 @@ abstract class CPIntVar extends CPVar with Iterable[Int] {
       })
   }
 
-  def filterWhenBind(filter: => CPOutcome) {
+  def filterWhenBind(idempot: Boolean = false, priority: Int = CPStore.MaxPriorityL2-2)(filter: => CPOutcome) {
     store.post(
       new Constraint(this.store, "filterWhenBind on  " + this) {
+        idempotent = idempot
+        priorityL2 = priority        
+        
         def setup(l: CPPropagStrength) = {
           callPropagateWhenBind(this)
           CPOutcome.Suspend

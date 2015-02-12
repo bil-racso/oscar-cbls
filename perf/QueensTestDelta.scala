@@ -119,7 +119,7 @@ object QueensTestDelta {
     
     override def setup(l: CPPropagStrength): CPOutcome = {
       for (i <- 0 until x.size) {
-       x(i).filterWhenDomainChanges { d =>
+       x(i).filterWhenDomainChangesWithDelta(true) { d =>
           val m = d.fillArray(delta(i))
           var j = 0
           while (j < m) {
