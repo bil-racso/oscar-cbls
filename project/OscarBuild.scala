@@ -122,8 +122,8 @@ object OscarBuild extends Build {
                Seq (/*resolvers := sbtResolvers,*/ libraryDependencies ++= commonDeps) ++ 
                sbtassembly.Plugin.assemblySettings ++ 
                commonTasks,
-    aggregate = Seq(oscarVisual,oscarCp,oscarCbls,oscarFzn,oscarLinprog,oscarDes,oscarDfo),
-    dependencies = Seq(oscarCp,oscarCbls,oscarFzn,oscarDes,oscarDfo,oscarLinprog)) dependsOnSource("lib")    
+    aggregate = Seq(oscarVisual,oscarCp,oscarCbls/*,oscarFzn*/,oscarLinprog,oscarDes,oscarDfo),
+    dependencies = Seq(oscarCp,oscarCbls/*,oscarFzn*/,oscarDes,oscarDfo,oscarLinprog)) dependsOnSource("lib")    
     
   lazy val oscarCbls = Project(
     id = "oscar-cbls",
