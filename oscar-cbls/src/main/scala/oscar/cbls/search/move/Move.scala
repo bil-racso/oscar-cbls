@@ -25,7 +25,7 @@ import oscar.cbls.objective.Objective
   *                 you must set it to Int.MaxValue or just do not specify it, as it is the default value
   *                 we did not use an option there because there would anyway be a need
   *                 for arithmetic on this option in combinators suh as [[oscar.cbls.search.combinators.Best]]
-  *                 Many combinators actually rely on this value to take decisions (eg: [[oscar.cbls.search.combinators.ProtectBest]] and [[oscar.cbls.search.combinators.Best]]
+  *                 Many combinators actually rely on this value to take decisions (eg: [[oscar.cbls.search.combinators.SaveBest]] and [[oscar.cbls.search.combinators.Best]]
   * @param neighborhoodName the name of the neighborhood that generated this move, used for pretty printing purpose.
   *                         Notice that the name is not the type of the neighborhood.
   * @author renaud.delandtsheer@cetic.be
@@ -220,7 +220,7 @@ object CallBackMove{
   *                 you must set it to Int.MaxValue or just do not specify it, as it is the default value
   *                 we did not use an option there because there would anyway be a need
   *                 for arithmetic on this option in combinators suh as [[oscar.cbls.search.combinators.Best]]
-  *                 Many combinators actually rely on this value to take decisions (eg: [[oscar.cbls.search.combinators.ProtectBest]] and [[oscar.cbls.search.combinators.Best]]
+  *                 Many combinators actually rely on this value to take decisions (eg: [[oscar.cbls.search.combinators.SaveBest]] and [[oscar.cbls.search.combinators.Best]]
   * @param neighborhoodName the name of the neighborhood that generated this move, used for pretty printing purpose.
   *                         Notice that the name is not the type of the neighborhood.
   * @param shortDescription a description of whet the move does (since it cannot be inferred from the name of the neighborhood as for [[AssignMove]] for instance)

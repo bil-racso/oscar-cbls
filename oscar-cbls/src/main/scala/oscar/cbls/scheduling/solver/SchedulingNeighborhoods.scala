@@ -4,7 +4,7 @@ import oscar.cbls.invariants.core.computation.CBLSIntVar
 import oscar.cbls.scheduling.algo.CriticalPathFinder
 import oscar.cbls.scheduling.model._
 import oscar.cbls.search.SearchEngineTrait
-import oscar.cbls.search.combinators.BasicProtectBest
+import oscar.cbls.search.combinators.BasicSaveBest
 import oscar.cbls.search.core._
 
 import scala.language.postfixOps
@@ -245,7 +245,7 @@ object SchedulingStrategies{
     val searchLoop = flatten step relax repeat nbRelax
 
     (searchLoop maxMoves stable*4 withoutImprovementOver objective
-      protectBest objective whenEmpty p.worseOvershotResource restoreBestOnExhaust) exhaust (CleanPrecedences(p) once)
+      saveBest objective whenEmpty p.worseOvershotResource restoreBestOnExhaust) exhaust (CleanPrecedences(p) once)
   }
 
   def iFlatRelaxUntilMakeSpanReduced(p: Planning,
@@ -253,7 +253,7 @@ object SchedulingStrategies{
                  pKillPerRelax: Int = 50,
                  stable: Int,
                  objective:CBLSIntVar,
-                 displayPlanning:Boolean = false):BasicProtectBest = {
+                 displayPlanning:Boolean = false):BasicSaveBest = {
     require(p.model.isClosed, "model should be closed before iFlatRelax algo can be instantiated")
     val maxIterationsForFlatten = (p.activityCount * (p.activityCount - 1)) / 2
 
@@ -266,7 +266,7 @@ object SchedulingStrategies{
     val searchStep = (relax untilImprovement(p.makeSpan, nbRelax, maxIterationsForFlatten)) exhaust (flatten maxMoves 1)
 
     (flatten sequence (searchStep atomic()) maxMoves stable withoutImprovementOver objective
-      protectBest objective whenEmpty p.worseOvershotResource)
+      saveBest objective whenEmpty p.worseOvershotResource)
   }
 
 //  val searchLoop = FlattenWorseFirst(p,maxIterationsForFlatten) maxMoves 1 afterMove {if (displayPlanning) println(p.toAsciiArt)} exhaustBack

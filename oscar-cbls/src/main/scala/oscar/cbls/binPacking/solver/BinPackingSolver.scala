@@ -34,7 +34,7 @@ object BinPackingSolver extends SearchEngineTrait {
 
     val x = ((MoveItem(p) exhaustBack SwapItems(p))
               orElse (JumpSwapItems(p) maxMoves 3)
-              orElse EmptyMostViolatedBin(p)) protectBest p.overallViolation
+              orElse EmptyMostViolatedBin(p)) saveBest p.overallViolation
 
     x.doAllMoves(_ >= maxStep || p.overallViolation.value == 0, p.overallViolation)
     x.restoreBest()

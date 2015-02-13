@@ -43,7 +43,7 @@ abstract class NeighborhoodCombinator(a: Neighborhood*) extends Neighborhood {
   override def toString: String = this.getClass.getSimpleName + "(" + a.mkString(",") + ")"
 }
 
-class BasicProtectBest(a: Neighborhood, o: Objective) extends NeighborhoodCombinator(a) {
+class BasicSaveBest(a: Neighborhood, o: Objective) extends NeighborhoodCombinator(a) {
 
   protected val s = o.model
 
@@ -112,10 +112,10 @@ class BasicProtectBest(a: Neighborhood, o: Objective) extends NeighborhoodCombin
   def restoreBestOnExhaust: RestoreBestOnExhaust = new RestoreBestOnExhaust(this)
 }
 
-class ProtectBest(a: Neighborhood, o: Objective) extends BasicProtectBest(a: Neighborhood, o: Objective) {
+class SaveBest(a: Neighborhood, o: Objective) extends BasicSaveBest(a: Neighborhood, o: Objective) {
 
-  def whenEmpty(violation: SetValue) = new ProtectBestWhen(a, o, () => violation.value.isEmpty)
-  def whenZero(violation: IntValue) = new ProtectBestWhen(a, o, () => violation.value == 0)
+  def whenEmpty(violation: SetValue) = new SaveBestWhen(a, o, () => violation.value.isEmpty)
+  def whenZero(violation: IntValue) = new SaveBestWhen(a, o, () => violation.value == 0)
 
   /**
    * this method restricts the save operation to only the situation where "shouldSave" returns true
@@ -123,14 +123,14 @@ class ProtectBest(a: Neighborhood, o: Objective) extends BasicProtectBest(a: Nei
    * @param shouldSave
    * @return
    */
-  override def when(shouldSave: () => Boolean) = new ProtectBestWhen(a, o, shouldSave)
+  override def when(shouldSave: () => Boolean) = new SaveBestWhen(a, o, shouldSave)
 }
 
-class ProtectBestWhen(a: Neighborhood, o:Objective, shouldSave: () => Boolean) extends BasicProtectBest(a, o) {
+class SaveBestWhen(a: Neighborhood, o:Objective, shouldSave: () => Boolean) extends BasicSaveBest(a, o) {
   override protected def currentSolutionIsAcceptable: Boolean = shouldSave()
 }
 
-class RestoreBestOnExhaust(a: BasicProtectBest) extends NeighborhoodCombinator(a) {
+class RestoreBestOnExhaust(a: BasicSaveBest) extends NeighborhoodCombinator(a) {
 
   def restoreBest(): Unit = {
     a.restoreBest()
@@ -910,7 +910,7 @@ class GuidedLocalSearch(a:Neighborhood, objectives:List[Objective], resetOnExhau
       case h::t =>
         currentObjective = h
         tailObjectives = t
-        currentSun = if(resetOnExhaust) new ProtectBest(a,h) else a
+        currentSun = if(resetOnExhaust) new SaveBest(a,h) else a
         true
       case _ =>
         currentObjective = null
@@ -936,7 +936,7 @@ class GuidedLocalSearch(a:Neighborhood, objectives:List[Objective], resetOnExhau
     }else{
       currentSun.getMove(currentObjective, acceptanceCriterion) match{
         case NoMoveFound =>
-          if(resetOnExhaust) currentSun.asInstanceOf[ProtectBest].restoreBest()
+          if(resetOnExhaust) currentSun.asInstanceOf[SaveBest].restoreBest()
           switchToNext()
           getMove(obj, acceptanceCriterion)
         case m:MoveFound => m

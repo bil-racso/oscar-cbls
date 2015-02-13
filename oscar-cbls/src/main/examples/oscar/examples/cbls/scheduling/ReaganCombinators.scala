@@ -29,7 +29,7 @@ import oscar.cbls.scheduling.model._
 import oscar.cbls.invariants.core.propagation.Checker
 import oscar.cbls.scheduling.model.CumulativeResource
 import oscar.cbls.scheduling.solver.{SchedulingStrategies, IFlatIRelax}
-import oscar.cbls.search.combinators.BasicProtectBest
+import oscar.cbls.search.combinators.BasicSaveBest
 
 /**a simple model of Reagan president of USA
  * he is partly multitask, can do two things at the same time, except eating, which requires his full attention
