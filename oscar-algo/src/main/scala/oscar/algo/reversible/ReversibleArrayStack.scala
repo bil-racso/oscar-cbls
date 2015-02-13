@@ -14,10 +14,9 @@
  ******************************************************************************/
 
 
-package oscar.algo.revrsible
+package oscar.algo.reversible
 
-import oscar.algo.reversible.ReversibleInt
-import oscar.algo.reversible.ReversibleContext
+
 import oscar.algo.AbstractArrayStack
 
 /**
