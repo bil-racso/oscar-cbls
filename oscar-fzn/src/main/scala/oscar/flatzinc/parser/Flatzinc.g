@@ -148,9 +148,11 @@ varpredparamtype returns [Type t]
 	;
 	
 arraytype returns [int size]:  'array' '[' ( lb=intconst '..' ub=intconst {$size = $ub.i; if($lb.i!=1) throw new ParsingException("Ranges of array must start at 1");} 
-  | 'int' {$size = -1;}) ']' 'of' 
+  | 'int' {$size = -1;}
+  | 'int' ',' 'int' {$size = -1;}) ']' 'of' 
   ;
-// TODO: check: int is only allowed in predicate declarations.
+// TODO: check: "int" and "int,int" are only allowed in predicate declarations.
+ 
 
 
 expr returns [Element e]
@@ -178,8 +180,7 @@ setconst returns [Element e] locals [Set<Integer> s]
 arrayexpr returns [ArrayOfElement a]:
 	'[' {$a = new ArrayOfElement(); ($a).typ = new Type("null"); ($a).typ.isArray = true; $a.typ.size = 0;} 
 		(e=expr {$a.elements.add($e.e); $a.typ.size+=1; if($e.e.typ.isVar)$a.typ.isVar = true; } 
-		(',' e=expr {$a.elements.add($e.e); $a.typ.size+=1; if($e.e.typ.isVar)$a.typ.isVar = true; } )* )? ']' ;
-//TODO: Check that all elements are of the same type.
+		(',' e=expr {$a.elements.add($e.e); $a.typ.size+=1; if($e.e.typ.isVar)$a.typ.isVar = true; } )* )? ']' {$a.close();};
 
 annotations returns [ArrayList<Annotation> anns]
 	: {$anns = new ArrayList<Annotation>();} ( '::' annotation {$anns.add($annotation.ann);} )* ;

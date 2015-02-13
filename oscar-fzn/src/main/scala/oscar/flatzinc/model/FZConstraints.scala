@@ -102,6 +102,7 @@ object GC{
     args.flatMap(_ match{
       case v:Variable => List(v) 
       case vs:Array[Variable] => vs
+      case d:Domain => List.empty[Variable]
     }).toArray
   }
 }

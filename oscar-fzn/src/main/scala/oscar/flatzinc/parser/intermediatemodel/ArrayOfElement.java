@@ -19,6 +19,7 @@ package oscar.flatzinc.parser.intermediatemodel;
 
 import java.util.ArrayList;
 import java.util.List;
+import oscar.flatzinc.ParsingException;
 
 public class ArrayOfElement extends Element{
 
@@ -30,6 +31,15 @@ public class ArrayOfElement extends Element{
 	public String toString() {
 		return "Array [elements=" + elements + ", name=" + name + ", id=" + id
 				+ ", type=" + typ + ", annotations=" + annotations + "]";
+	}
+	public void close() {
+	  if(elements.size()>0){
+	    String typ = elements.get(0).typ.typ;
+	    for(Element e: elements){
+	      if(!typ.equals(e.typ.typ)) throw new ParsingException("Not all same type in array");
+	    }
+	    this.typ.typ = typ;
+	  }
 	}
 	
 }
