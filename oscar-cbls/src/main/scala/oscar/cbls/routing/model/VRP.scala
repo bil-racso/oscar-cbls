@@ -640,6 +640,10 @@ trait NodesOfVehicle extends PositionInRouteAndRouteNr with RoutedAndUnrouted {
  */
 trait PositionInRouteAndRouteNr extends VRP {
 
+  //TODO: this is the reason why routing is slow:
+  //querying this supposedly O(1) data in between neighborh exploration causes a rollback propagation of the state to the state we are trying to leave
+  //so that propagation does not perform in a circle fashion, but in a star fashion!!!
+
   /**
    * the invariant Routes.
    */

@@ -79,7 +79,7 @@ trait SchedulingHandler{
  *  the engine will discover it by itself. See also method isAcyclic to query a propagation structure.
  *
  * @param verbose requires that the propagation structure prints a trace of what it is doing.
- * @param checker: set a Some[Checker] top check all internal properties of invariants after propagation, set to None for regular execution
+ * @param checker set a Some[Checker] top check all internal properties of invariants after propagation, set to None for regular execution
  * @param noCycle is to be set to true only if the static dependency graph is acyclic.
  * @param topologicalSort if true, use topological sort, false, use distance to input, and associated faster heap data structure
  * @param sortScc true if SCC should be sorted, false otherwise. Set to true, unless you know what your are doing. Setting to false might provide a speedup, but propagation will not be single pass on SCC anymore
@@ -88,6 +88,7 @@ trait SchedulingHandler{
 abstract class PropagationStructure(val verbose: Boolean, val checker:Option[Checker] = None, val noCycle: Boolean, val topologicalSort:Boolean, val sortScc:Boolean = true)
   extends SchedulingHandler{
 
+  //TODO: verbove mode is crap; too much info, eseless, just gives the query that triggers propagation and wheter is is partial or total, and the number of propagated elements.
   protected var closed:Boolean=false
 
   def isClosed = closed

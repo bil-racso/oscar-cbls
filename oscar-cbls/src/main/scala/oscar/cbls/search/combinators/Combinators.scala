@@ -16,7 +16,7 @@
  */
 package oscar.cbls.search.combinators
 
-import oscar.cbls.invariants.core.computation.{IntValue, SetValue}
+import oscar.cbls.invariants.core.computation.{Store, IntValue, SetValue}
 import oscar.cbls.objective.{CascadingObjective, Objective}
 import oscar.cbls.search.core.{NoMoveFound, _}
 import oscar.cbls.search.move.{CallBackMove, CompositeMove, InstrumentedMove, Move}
@@ -538,29 +538,6 @@ class MaxMoves(a: Neighborhood, val maxMove: Int, cond:Move => Boolean = null) e
   }
 
   /**
-   * to build a composite neighborhood.
-   * the first neighborhood is used only to provide a round robin exploration on its possible moves
-   * you must ensure that this first neighborhood will perform a hotRestart, so that it will enumerate all its moves
-   * internally, this neighborhood will be called with a fully acceptant acceptanceCriteria,
-   *
-   * the move combinator for every move provided by the first neighborhood, the combinator calls the second one
-   * and we consider the composition of the two moves for the acceptance criteria.
-   * the returned move is the composition of the two found moves
-   *
-   * you must also ensure that the two neighborhood evaluate the same objective function,
-   * since this combinator needs to evaluate the whole composite move, and not only the last part of the composition
-   *
-   * A native composite neighborhood will probably be much faster than this combinator, so use this for prototyping
-   * for instance, this combinator does not allow for some form of symmetry breaking, unless you are really doing it the hard way.
-   *
-   * this move will reset the first neighborhood on every call, since it is probably bounded by the number of moves it can provide
-   *
-   * @param b given that the move returned by the first neighborhood is committed, we explore the globally improving moves of this one
-   *
-   */
-  def andThen(b: Neighborhood) = new AndThen(a, b, maxMove)
-
-  /**
    * this will modify the effect of the maxMoves by transforming it into a [[MaxMovesWithoutImprovement]]
    * the initial maxMoves is deleted by this method, and the integer bound is passed to [[MaxMovesWithoutImprovement]]
    */
@@ -688,13 +665,12 @@ object RoundRobinNoParam {
  *
  * @param a the first neighborhood, all moves delivered by this one will be considered
  * @param b given that the move returned by the first neighborhood is committed, we explore the globally improving moves of this one
- * @param maxFirstStep the maximal number of moves to consider to the first neighborhood
  * @param maximalIntermediaryDegradation the maximal degradation that is admitted for the intermediary step; the higher, the more moves will be considered
- * @param stopAfterFirstIfEnough stops if an explored first move is enough; in this case the composite move is not explore, only the first move is returned.
  *
  * @author renaud.delandtsheer@cetic.be
  */
-class AndThen(a: Neighborhood, b: Neighborhood, maxFirstStep: Int = 10, maximalIntermediaryDegradation: Int = Int.MaxValue, stopAfterFirstIfEnough: Boolean = false) extends NeighborhoodCombinator(a, b) {
+class AndThen(a: Neighborhood, b: Neighborhood, maximalIntermediaryDegradation: Int = Int.MaxValue)
+  extends NeighborhoodCombinator(a, b) {
 
   /**
    * this method is called by AndThen to notify the first step, and that it is now exploring successors of this step.
@@ -703,48 +679,53 @@ class AndThen(a: Neighborhood, b: Neighborhood, maxFirstStep: Int = 10, maximalI
    */
   def notifyFirstStep(m: Move) {}
 
+
   override def getMove(obj: Objective, acceptanceCriteria: (Int, Int) => Boolean): SearchResult = {
 
-    a.reset()
+    var secondMove:Move = null //the move performed by b
+    var oldObj:Int = obj.value
 
-    var remainingFirstSteps = maxFirstStep
-
-    var oldObj: Int = 0
-    def instrumentedIntermediaryAcceptanceCriteria(stolenOldObj: Int, intermediaryObj: Int): Boolean = {
-      oldObj = stolenOldObj
-      intermediaryObj - stolenOldObj <= maximalIntermediaryDegradation
+    //the acceptance criterion is on the diff between the oldObj and the newObj over the two consecutive moves
+    //it is evaluated for the second move
+    //the first move is about accepting all moves that are not maxVal, since the newObj is for the consecutive moves,
+    // and is already accepted by the time it is returned to the first neighrhood
+    def firstAcceptanceCriterion(oldObj:Int,newObj:Int):Boolean = {
+      newObj != Int.MaxValue
     }
 
-    while (remainingFirstSteps > 0) {
-      remainingFirstSteps -= 1
-      a.getMove(obj, instrumentedIntermediaryAcceptanceCriteria) match {
-        case NoMoveFound => return NoMoveFound
-        case MoveFound(firstMove) =>
+    def secondAcceptanceCriteria(intermediaryObj:Int,newObj:Int):Boolean = {
+      //we ignore the intermediaryObj.
+      acceptanceCriteria(oldObj,newObj)
+    }
 
-          if (stopAfterFirstIfEnough) {
-            if (acceptanceCriteria(oldObj, firstMove.objAfter)) {
-              return firstMove
-            }
-          }
+    class InstrumentedObjective() extends Objective {
 
-          val touchedVars = firstMove.touchedVariables
-          val model = touchedVars.head.model
-          val snapshot = model.saveValues(touchedVars: _*)
-          notifyFirstStep(firstMove)
-          firstMove.commit()
-          if (amIVerbose) println("AndThen: trying first move " + firstMove)
-          def globalAcceptanceCriteria: (Int, Int) => Boolean = (_, newObj) => acceptanceCriteria(oldObj, newObj)
-          b.getMove(obj, globalAcceptanceCriteria) match {
-            case NoMoveFound => model.restoreSnapshot(snapshot)
-            case MoveFound(secondMove) =>
-              model.restoreSnapshot(snapshot)
-              return CompositeMove(List(firstMove, secondMove),
-                secondMove.objAfter,
-                firstMove.neighborhoodName + "_AndThen_" + secondMove.neighborhoodName)
-          }
+      override def model = obj.model
+
+      override def value: Int = {
+
+        if (maximalIntermediaryDegradation != Int.MaxValue) {
+          //we need to ensure that intermediary step is admissible
+          val intermediaryVal = obj.value
+          val intermediaryDegradation = intermediaryVal - oldObj
+          if (intermediaryDegradation > maximalIntermediaryDegradation)
+            return Int.MaxValue //we do not consider this first step
+        }
+
+        //now, we need to check the other neighborhood
+        b.getMove(obj, secondAcceptanceCriteria) match {
+          case NoMoveFound => Int.MaxValue
+          case MoveFound(m: Move) =>
+            secondMove = m
+            m.objAfter
+        }
       }
     }
-    NoMoveFound
+
+    a.getMove(new InstrumentedObjective(), firstAcceptanceCriterion) match{
+      case NoMoveFound => NoMoveFound
+      case MoveFound(m:Move) => CompositeMove(List(m,secondMove),m.objAfter, this.toString)
+    }
   }
 }
 
