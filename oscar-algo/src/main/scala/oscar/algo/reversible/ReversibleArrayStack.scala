@@ -14,7 +14,11 @@
  ******************************************************************************/
 
 
-package oscar.algo
+package oscar.algo.revrsible
+
+import oscar.algo.reversible.ReversibleInt
+import oscar.algo.reversible.ReversibleContext
+import oscar.algo.AbstractArrayStack
 
 /**
  *  An array-based stack for objects.
@@ -23,13 +27,13 @@ package oscar.algo
  *  @author Renaud Hartert ren.hartert@gmail.com
  *  @author Pierre Schaus pschaus@gmail.com
  */
-class ArrayStack[T](initialSize: Int = 100) extends AbstractArrayStack[T] {
+class ReversibleArrayStack[T](node: ReversibleContext, initialSize: Int = 100) extends AbstractArrayStack[T] {
 
-  private[this] var _index: Int = 0
+  private[this] val _index = new ReversibleInt(node,0)
 
   @inline final protected def augmentIndex() = _index += 1
   @inline final protected def decreaseIndex() = _index -= 1
-  @inline final protected def resetIndex() = _index = 0
-  @inline final protected def index: Int = _index
+  @inline final protected def resetIndex() = _index.value = 0
+  @inline final protected def index: Int = _index.value
   
 }

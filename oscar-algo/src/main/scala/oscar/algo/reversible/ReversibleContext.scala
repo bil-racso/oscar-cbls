@@ -17,6 +17,7 @@ package oscar.algo.reversible
 
 import scala.collection.mutable.ArrayBuffer
 import oscar.algo.array.ArrayStackInt
+import oscar.algo.revrsible.ReversibleArrayStack
 
 /**
  * Class representing a reversible node, that is a node able to restore all
@@ -36,10 +37,10 @@ class ReversibleContext {
   private[this] val levelStack: ArrayStackInt = new ArrayStackInt(128)
   
   // Actions to execute when a pop occurs 
-  private[this] val popListeners = new ArrayStack[() => Unit](2)
+  private[this] val popListeners = new ReversibleArrayStack[() => Unit](this,2)
   
   // Actions to execute when a pop occurs 
-  private[this] val pushListeners = new ArrayStack[() => Unit](2)  
+  private[this] val pushListeners = new ReversibleArrayStack[() => Unit](this,2) 
   
   /** Returns the magic number of the context */
   final def magic: Long = magicNumber
@@ -50,10 +51,14 @@ class ReversibleContext {
   /** Returns the time spent to pop states */
   final def time: Long = trailTime
 
-  /** Adds an action to execute when the `pop` function is called */
+  /** Adds an action to execute when the `pop` function is called 
+   *  This is added action will be removed on pop of the current context state
+   */
   def onPop(action: => Unit): Unit = popListeners.push(() => action)
   
-  /** Adds an action to execute when the `push` function is called */
+  /** Adds an action to execute when the `push` function is called 
+   *  This is added action will be removed on pop of the current context state
+   */
   def onPush(action: => Unit): Unit = pushListeners.push(() => action)  
   
   /** Trail the entry such that its restore method is called on corresponding pop */
