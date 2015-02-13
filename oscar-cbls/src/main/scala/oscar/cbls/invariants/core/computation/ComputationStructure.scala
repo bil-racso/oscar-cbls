@@ -250,7 +250,7 @@ case class Store(override val verbose:Boolean = false,
     super.stats + "\n" +
       "Store(" + "\n" +
       "  variableCount:" + variables.size + "\n" +
-      "  inputVariableCount" + decisionVariables.size + "\n" +
+      "  inputVariableCount: " + decisionVariables.size + "\n" +
       ")"
   }
 }

@@ -30,12 +30,12 @@ import scala.collection.Iterator
   *
   * @author renaud.delandtsheer@cetic.be
  */
-class AggregatedBinomialHeap[@specialized T](GetKey:T => Int,MaxPosition:Int) extends AbstractHeap[T] {
+class AggregatedBinomialHeap[@specialized T](GetKey:T => Int,val maxPosition:Int) extends AbstractHeap[T] {
 
 
-  val b= new BinomialHeap[Int](a => a, MaxPosition)
+  val b= new BinomialHeap[Int](a => a, maxPosition)
 
-  val a:Array[List[T]] = Array.tabulate (MaxPosition)(_ => List.empty[T])
+  val a:Array[List[T]] = Array.tabulate (maxPosition)(_ => List.empty[T])
 
   private var msize:Int = 0
 

@@ -36,7 +36,7 @@ import scala.collection.immutable.SortedMap
  * @param variables the variable whose values should all be different.
  * @author renaud.delandtsheer@cetic.be
  */
-case class AllDiff(variables: Iterable[IntValue]) extends Constraint with Invariant{
+case class AllDiff(variables: Iterable[IntValue]) extends Invariant with Constraint{
 
   registerStaticAndDynamicDependencyAllNoID(variables)
   registerConstrainedVariables(variables)

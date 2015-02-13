@@ -88,7 +88,6 @@ trait SchedulingHandler{
 abstract class PropagationStructure(val verbose: Boolean, val checker:Option[Checker] = None, val noCycle: Boolean, val topologicalSort:Boolean, val sortScc:Boolean = true)
   extends SchedulingHandler{
 
-  //TODO: verbove mode is crap; too much info, eseless, just gives the query that triggers propagation and wheter is is partial or total, and the number of propagated elements.
   protected var closed:Boolean=false
 
   def isClosed = closed
@@ -137,17 +136,8 @@ abstract class PropagationStructure(val verbose: Boolean, val checker:Option[Che
     */
   protected def setupPropagationStructure(DropStaticGraph: Boolean) {
 
-    if (verbose) {
-      println("PropagationStructure: closing propagation structure. Propagations structure includes: ")
-      getPropagationElements.foreach(p => println("+ " + p))
-      println("PropagationStructure: end propagations structure includes; size=" + getPropagationElements.size)
-    }
-
     val StrognlyConnectedComponents: List[List[PropagationElement]] =
       if (noCycle) {
-        if (verbose) {
-          println("PropagationStructure: IsAcyclic flag; assuming acyclic static dependency graph ")
-        }
         var toreturn: List[List[PropagationElement]] = List.empty
         for (n <- getPropagationElements) toreturn = List(n) :: toreturn
         toreturn
@@ -192,19 +182,19 @@ abstract class PropagationStructure(val verbose: Boolean, val checker:Option[Che
     }
 
     if (topologicalSort){
-      ExecutionQueue = new BinomialHeap[PropagationElement](p => p.position, ClusteredPropagationComponents.size)
+      executionQueue = new BinomialHeap[PropagationElement](p => p.position, ClusteredPropagationComponents.size)
     }else{
-      ExecutionQueue = new AggregatedBinomialHeap[PropagationElement](p => p.position, LayerCount)
+      executionQueue = new AggregatedBinomialHeap[PropagationElement](p => p.position, LayerCount)
     }
 
-    Propagating = false
-    PreviousPropagationTarget = null
+    propagating = false
+    previousPropagationTarget = null
 
     if (DropStaticGraph) dropStaticGraph()
 
     //variables are already able to propagate immediately before model close and if not monitored yet.
 
-    ScheduledElements = List.empty
+    scheduledElements = List.empty
     for (e <- getPropagationElements) {
       e.rescheduleIfNeeded()
     }
@@ -216,7 +206,6 @@ abstract class PropagationStructure(val verbose: Boolean, val checker:Option[Che
 
   /**This computes the position of the clustered PE, that is: the SCC and the PE not belonging to an SCC*/
   private def computePositionsThroughTopologialSort(ClusteredPropagationComponents:List[PropagationElement]){
-    if (verbose) println("PropagationStructure: Positioning through topological sort")
     var front: List[PropagationElement] = ClusteredPropagationComponents.filter(n => {n.setCounterToPrecedingCount(); n.position == 0})
     var position = 0 //la position du prochain noeud place.
     while (!front.isEmpty) {
@@ -239,7 +228,6 @@ abstract class PropagationStructure(val verbose: Boolean, val checker:Option[Che
     * that is: the SCC and the PE not belonging to an SCC
     * @return the max Position, knowing that the first is zero*/
   private def computePositionsThroughDistanceToInput(ClusteredPropagationComponents:List[PropagationElement]):Int = {
-    if (verbose) println("PropagationStructure: Positioning through layered sort")
     val front:Queue[PropagationElement] =  new Queue[PropagationElement]()
     for (pe <- ClusteredPropagationComponents){
       pe.setCounterToPrecedingCount()
@@ -254,7 +242,6 @@ abstract class PropagationStructure(val verbose: Boolean, val checker:Option[Che
       val n = front.dequeue()
       if (n == null){
         if (front.isEmpty){
-          if (verbose) println("PropagationStructure: Layer " + position + " #Elements:" + countInLayer)
           if (count != ClusteredPropagationComponents.size) {
             if (noCycle){
               throw new Exception("cycle detected in propagation graph although NoCycle was set to true")
@@ -264,7 +251,6 @@ abstract class PropagationStructure(val verbose: Boolean, val checker:Option[Che
           }
           return position+1
         }else{
-          if (verbose) println("PropagationStructure: Layer " + position + " #Elements:" + countInLayer)
           countInLayer=0
           position +=1
           front.enqueue(null) //null marker denotes when Position counter must be incremented
@@ -283,12 +269,12 @@ abstract class PropagationStructure(val verbose: Boolean, val checker:Option[Che
     for (p <- getPropagationElements) p.dropStaticGraph()
   }
 
-  private var ScheduledElements: List[PropagationElement] = List.empty
-  private var ExecutionQueue: AbstractHeap[PropagationElement] = null
+  private var scheduledElements: List[PropagationElement] = List.empty
+  private var executionQueue: AbstractHeap[PropagationElement] = null
 
   //I'v been thinking about using a BitArray here, but although this would slightly decrease memory
   // (think, relative to all the rest of the stored data), it would increase runtime
-  private var FastPropagationTracks: SortedMap[PropagationElement, Array[Boolean]] =
+  private var fastPropagationTracks: SortedMap[PropagationElement, Array[Boolean]] =
     SortedMap.empty[PropagationElement, Array[Boolean]]
 
   /**to call before setupPropagationStructure to specify PropagationElements
@@ -296,12 +282,12 @@ abstract class PropagationStructure(val verbose: Boolean, val checker:Option[Che
     */
   def registerForPartialPropagation(p: PropagationElement) {
     require(!this.closed, "cannot register variables for partial propagation aftger model has been closed")
-    FastPropagationTracks += ((p, null))
+    fastPropagationTracks += ((p, null))
   }
 
-  private var PreviousPropagationTarget: PropagationElement = null
+  private var previousPropagationTarget: PropagationElement = null
 
-  def isPropagating:Boolean = Propagating
+  def isPropagating:Boolean = propagating
 
   /**triggers the propagation in the graph.
     * this method will do nothing if called before setupPropagationStructure
@@ -311,27 +297,35 @@ abstract class PropagationStructure(val verbose: Boolean, val checker:Option[Che
     * @param UpTo: the optional target of partial propagation
     */
   final def propagate(UpTo: PropagationElement = null) {
-    if (!Propagating) {
+    if (!propagating) {
       if (UpTo != null) {
-        val Track = FastPropagationTracks.getOrElse(UpTo, null)
-        val SameAsBefore = Track != null && PreviousPropagationTarget == UpTo
+        val Track = fastPropagationTracks.getOrElse(UpTo, null)
+        val SameAsBefore = Track != null && previousPropagationTarget == UpTo
+        propagating = true
+        if (verbose) {
+          println("PropagationStructure: " + (if (Track == null) "total" else "partial" ) + " propagation triggered by " + UpTo)
+        }
         propagateOnTrack(Track, SameAsBefore)
       } else {
+        propagating = true
+        if (verbose) {
+          println("PropagationStructure: total propagation triggered manually")
+        }
         propagateOnTrack(null, false)
       }
-      PreviousPropagationTarget = UpTo
+      previousPropagationTarget = UpTo
     }
   }
 
   /**Builds and stores the partial propagation tracks*/
   private def buildFastPropagationTracks() {
-    if (!FastPropagationTracks.isEmpty) {
+    if (!fastPropagationTracks.isEmpty) {
       //calculer la reacheability sur le graphe statique par algo de Floyd Warshall
       //on prend les listening elements parce-que certains peuvent ne pas etre enregistres dans le modele
       // si ils sont en entree du graphe.
-      val keys = FastPropagationTracks.keys
+      val keys = fastPropagationTracks.keys
       for (n <- keys) {
-        FastPropagationTracks += ((n, BuildFastPropagationtrack(n)))
+        fastPropagationTracks += ((n, BuildFastPropagationtrack(n)))
       }
     }
   }
@@ -371,7 +365,7 @@ abstract class PropagationStructure(val verbose: Boolean, val checker:Option[Che
   }
 
 
-  private var PostponedComponents: List[PropagationElement] = List.empty
+  private var postponedElements: List[PropagationElement] = List.empty
 
   /**
    * performs a propagation on a propagation track
@@ -379,58 +373,66 @@ abstract class PropagationStructure(val verbose: Boolean, val checker:Option[Che
    * @param Track the propagation track, an array indices_of_propagation_element -> should it be propagated now
    * @param SameAsBefore the previous propagation was on the same track, so that the postponed element are still postponed
    */
+  @inline
   private def propagateOnTrack(Track: Array[Boolean], SameAsBefore: Boolean) {
-    if (Propagating) return
-    Propagating = true
 
+    //TODO: we should not have two passes on the postponed elements that are scheduled now.
     if (!SameAsBefore) {
-      var NewPostponed: List[PropagationElement] = List.empty
-      for (e: PropagationElement <- PostponedComponents) {
-        if (Track == null || Track(e.uniqueID)) {
-          ScheduledElements = e :: ScheduledElements
-        } else {
-          NewPostponed = e :: NewPostponed
+      if (Track == null) {
+        while (!postponedElements.isEmpty) {
+          val e = postponedElements.head
+          postponedElements = postponedElements.tail
+          scheduledElements = e :: scheduledElements
         }
-      }
-      PostponedComponents = NewPostponed
-    } //if it is SameAsBefore, we do not check whether the elements are in the track,
-    // as they are postponed, they are not in it anyway
-    //notice that for partial propagation, connex components cannot be partially propagated
-    // because they are strognly connected over the static propagation graph.
-
-    if (verbose) {
-      if (Track == null) println("PropagationStruture: start total propagation")
-      else println("PropagationStruture: start partial propagation")
-    }
-
-    for (e: PropagationElement <- ScheduledElements) {
-      if (Track == null || Track(e.uniqueID)) {
-        ExecutionQueue.insert(e)
+        postponedElements = List.empty
       } else {
-        PostponedComponents = e :: PostponedComponents
+        var newPostponed: List[PropagationElement] = List.empty
+        while (!postponedElements.isEmpty) {
+          val e = postponedElements.head
+          postponedElements = postponedElements.tail
+          if (Track(e.uniqueID)) {
+            scheduledElements = e :: scheduledElements
+          } else {
+            newPostponed = e :: newPostponed
+          }
+        }
+        postponedElements = newPostponed
       }
     }
-    ScheduledElements = List.empty
+    //if it is SameAsBefore, we do not check whether the elements are in the track,
+    // as they are postponed, they are not in it anyway
+    //notice that for partial propagation, conected components cannot be partially propagated
+    // because they are strongly connected over the static propagation graph.
+
+    for (e: PropagationElement <- scheduledElements) {
+      if (Track == null || Track(e.uniqueID)) {
+        executionQueue.insert(e)
+      } else {
+        postponedElements = e :: postponedElements
+      }
+    }
+    scheduledElements = List.empty
 
     var previousLayer = 0 //ExecutionQueue.head.position
 
-    while (!ExecutionQueue.isEmpty) {
-      val first = ExecutionQueue.popFirst()
+    while (!executionQueue.isEmpty) {
+      val first = executionQueue.popFirst()
       first.propagate()
       assert(first.position >= previousLayer, "single wave not enforced")
-      assert({previousLayer = first.position; true})
-      for (e <- ScheduledElements) {
+      assert({
+        previousLayer = first.position; true
+      })
+      while (!scheduledElements.isEmpty) {
+        val e = scheduledElements.head
+        scheduledElements = scheduledElements.tail
         if (Track == null || Track(e.uniqueID)) {
-          ExecutionQueue.insert(e)
+          executionQueue.insert(e)
         } else {
-          PostponedComponents = e :: PostponedComponents
+          postponedElements = e :: postponedElements
         }
       }
-      ScheduledElements = List.empty
     }
-
-    if (verbose) println("PropagationStruture: end propagation")
-
+    
     if (Track == null) {
       checker match {
         case Some(c) =>
@@ -440,19 +442,19 @@ abstract class PropagationStructure(val verbose: Boolean, val checker:Option[Che
         case None =>
       }
     }
-    Propagating = false
+    propagating = false
   }
 
   /**this method is used by propagationComponents to schedule themself for propagation. */
   def scheduleForPropagation(p: PropagationElement) {
-    ScheduledElements = p :: ScheduledElements
+    scheduledElements = p :: scheduledElements
   }
 
   /**this variable controls propagation.
     * initially true to avoid spurious propagation during the construction of the data structure;
     * set to false by setupPropagationStructure
     */
-  var Propagating: Boolean = true
+  var propagating: Boolean = true
 
   /**this variable is set by the propagation element to notify that they are propagating.
     * it is used to ensure that no propagation element perform illegal operation
@@ -556,7 +558,7 @@ abstract class PropagationStructure(val verbose: Boolean, val checker:Option[Che
   def stats:String = {
     "PropagationStructure(" + "\n" +
       "  declaredAcyclic: " + noCycle + "\n" +
-      "  topologicalSort:" + topologicalSort + "\n" +
+      "  topologicalSort:" + topologicalSort + (if(!topologicalSort)  " (layerCount:" + (executionQueue.asInstanceOf[AggregatedBinomialHeap[PropagationElement]].maxPosition) + ")" else "") + "\n" +
       "  sortScc:" + sortScc + "\n" +
       "  actuallyAcyclic:" + acyclic + "\n" +
       "  propagationElementCount:" + getPropagationElements.size + "\n" +
@@ -826,7 +828,7 @@ trait BasicPropagationElement{
  * it does not changes it listened elements
  * however, its listening elements might change, and a proper list must therefore be kept.
  */
-trait PropagationElement extends BasicPropagationElement with DAGNode{
+class PropagationElement extends BasicPropagationElement with DAGNode{
 
   def dropStaticGraph() {
     staticallyListenedElements = null
@@ -1013,7 +1015,6 @@ trait PropagationElement extends BasicPropagationElement with DAGNode{
 
   private[core] def rescheduleIfNeeded() {
     if (isScheduled) {
-      if (this.propagationStructure.verbose) println("PropagationStruture: re-scheduled [" + this.getClass + "]")
       schedulingHandler.scheduleForPropagation(this)
     }
   }
@@ -1024,7 +1025,6 @@ trait PropagationElement extends BasicPropagationElement with DAGNode{
     assert(isScheduled) //could not be scheduled actually, if was propagated, but not purged from postponed (in case select propagation for input is implemented)
     assert(propagationStructure != null, "cannot schedule or propagate element out of propagation structure")
     assert({propagationStructure.PropagatingElement = this; true})
-    if (propagationStructure.verbose) println("PropagationStruture: propagating [" + this + "]")
     performPropagation()
     isScheduled = false //to avoid registering SCC to the propagation structure every time...
     assert({propagationStructure.PropagatingElement = null; true})

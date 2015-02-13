@@ -33,7 +33,7 @@ import oscar.cbls.invariants.lib.numeric.Step
  * and managed as invariants.
   * @author renaud.delandtsheer@cetic.be
  */
-abstract class Constraint{
+trait Constraint{
 
   /** returns the violation associated with variable v in this constraint
    * all variables that are declared as constraint should have an associated violation degree.

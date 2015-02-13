@@ -115,7 +115,7 @@ case class G(l: IntValue, r: IntValue) extends LA(r, l)
  * implements left != right
  * @author renaud.delandtsheer@cetic.be
  */
-case class NE(left: IntValue, right: IntValue) extends Constraint with Invariant{
+case class NE(left: IntValue, right: IntValue) extends Invariant with Constraint{
   registerConstrainedVariables(left, right)
   registerStaticAndDynamicDependenciesNoID(left, right)
   finishInitialization()

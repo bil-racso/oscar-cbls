@@ -147,23 +147,6 @@ case class ConstraintSystem(model:Store) extends Constraint with Objective{
       aggregateGlobalViolations()
     }
   }
-
-  /**Call this method to notify that the variable should have a violation degree computed for the whole constraint system.
-   * it is not compulsory that the variable is directly involved in the constraints. It can be involved indirectly, even through invariants.
-   * The variables registered here are the ones and only ones that are considered as constrained by the constraint system, and returned by the method constrainedVariables
-   * The violation mechanism will be instantiated as many times as the variable is registered for violation. 
-   * @param v the variable that is registered
-   */
-  @deprecated("you can directly ask for a violation, just that you need to to it before constraint system is closed","1.0")
-  def registerForViolation(v:Variable){
-    violation(v:Variable)
-  }
-
-  /**performs the same operation as registerForViolation on the given variables*/
-  @deprecated("you can directly ask for a violation, just that you need to to it before constraint system is closed","1.0")
-  def registerForViolation(vit:Iterable[Variable]){
-    for (v <- vit) registerForViolation(_:Variable)
-  }
   
   /**The degree of violation associated with the variable v.
    * The constraint system must have been closed prior to calling this method.

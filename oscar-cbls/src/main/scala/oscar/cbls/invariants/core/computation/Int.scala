@@ -105,7 +105,7 @@ abstract class ChangingIntValue(initialValue:Int, initialDomain:Domain)
       Value
     } else{
       if (model == null) return Value
-      if (definingInvariant == null && !model.Propagating) return Value
+      if (definingInvariant == null && !model.propagating) return Value
       model.propagate(this)
       OldValue
     }
