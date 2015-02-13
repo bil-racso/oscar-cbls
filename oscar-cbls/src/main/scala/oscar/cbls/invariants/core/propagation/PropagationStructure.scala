@@ -376,42 +376,49 @@ abstract class PropagationStructure(val verbose: Boolean, val checker:Option[Che
   @inline
   private def propagateOnTrack(Track: Array[Boolean], SameAsBefore: Boolean) {
 
-    //TODO: we should not have two passes on the postponed elements that are scheduled now.
-    if (!SameAsBefore) {
-      if (Track == null) {
-        while (!postponedElements.isEmpty) {
-          val e = postponedElements.head
-          postponedElements = postponedElements.tail
-          scheduledElements = e :: scheduledElements
+    if(SameAsBefore){
+      //initialize the heap with the scheduled elements that are on the track
+      for (e: PropagationElement <- scheduledElements) {
+        if (Track(e.uniqueID)) {
+          executionQueue.insert(e)
+        } else {
+          postponedElements = e :: postponedElements
         }
-        postponedElements = List.empty
-      } else {
-        var newPostponed: List[PropagationElement] = List.empty
-        while (!postponedElements.isEmpty) {
-          val e = postponedElements.head
-          postponedElements = postponedElements.tail
-          if (Track(e.uniqueID)) {
-            scheduledElements = e :: scheduledElements
-          } else {
-            newPostponed = e :: newPostponed
-          }
-        }
-        postponedElements = newPostponed
       }
-    }
-    //if it is SameAsBefore, we do not check whether the elements are in the track,
-    // as they are postponed, they are not in it anyway
-    //notice that for partial propagation, conected components cannot be partially propagated
-    // because they are strongly connected over the static propagation graph.
-
-    for (e: PropagationElement <- scheduledElements) {
-      if (Track == null || Track(e.uniqueID)) {
+      scheduledElements = List.empty
+    }else if (Track == null) {
+      //all elements are to be put on the heap, included postponed ones
+      for(e:PropagationElement <- postponedElements) {
         executionQueue.insert(e)
-      } else {
-        postponedElements = e :: postponedElements
       }
+      postponedElements = List.empty
+
+      for (e: PropagationElement <- scheduledElements) {
+        executionQueue.insert(e)
+      }
+      scheduledElements = List.empty
+
+    } else {
+      //there is a track, and we need to check postponed elements because they might be on this track
+      var newPostponed: List[PropagationElement] = List.empty
+      for(e:PropagationElement <- postponedElements) {
+        if (Track(e.uniqueID)) {
+          executionQueue.insert(e)
+        } else {
+          newPostponed = e :: newPostponed
+        }
+      }
+      postponedElements = newPostponed
+
+      for (e: PropagationElement <- scheduledElements) {
+        if (Track(e.uniqueID)) {
+          executionQueue.insert(e)
+        } else {
+          postponedElements = e :: postponedElements
+        }
+      }
+      scheduledElements = List.empty
     }
-    scheduledElements = List.empty
 
     var previousLayer = 0 //ExecutionQueue.head.position
 
