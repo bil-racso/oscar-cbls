@@ -17,7 +17,6 @@ package oscar.algo.reversible
 
 import scala.collection.mutable.ArrayBuffer
 import oscar.algo.array.ArrayStackInt
-import oscar.algo.revrsible.ReversibleArrayStack
 
 /**
  * Class representing a reversible node, that is a node able to restore all

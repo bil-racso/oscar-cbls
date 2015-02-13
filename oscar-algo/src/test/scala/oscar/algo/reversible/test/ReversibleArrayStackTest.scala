@@ -19,7 +19,7 @@ import org.scalatest.FunSuite
 import oscar.algo.search._
 import oscar.algo.reversible._
 import scala.collection.JavaConversions._
-import oscar.algo.revrsible.ReversibleArrayStack
+import oscar.algo.reversible.ReversibleArrayStack
 
 /**
  * @author Pierre Schaus pschaus@gmail.com
