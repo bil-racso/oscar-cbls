@@ -32,8 +32,8 @@ class BinaryClause(store: LCGStore, firstLiteral: Literal, secondLiteral: Litera
     
   final override def setup(): Boolean = {
     // Watch both literal
-    store.watch(this, firstLiteral)
-    store.watch(this, secondLiteral)
+    store.watch(this, firstLiteral.opposite)
+    store.watch(this, secondLiteral.opposite)
     // Check for initial assertion
     val firstValue = store.value(firstLiteral)   
     if (firstValue == Unassigned) {

@@ -26,28 +26,62 @@ class NaryClause(store: LCGStore, literals: Array[Literal], learnt: Boolean) ext
   
   final override def setup(): Boolean = {
     
-    var unit = false
+    var unassigned = 0
+    val nLiterals = literals.length
     
-    // Search first literals
+    // Search a first literals to watch
+    var i = 0
+    var litId = -1
+    var maxLevel = -1
+    while (i < nLiterals) {
+      val lit = literals(i)
+      val level = store.assignedLevel(lit)
+      if (level == -1) {
+        unassigned += 1
+        litId = i
+        i = nLiterals
+      } else if (level > maxLevel) {
+        maxLevel = level
+        litId = i
+      }
+      i += 1
+    }
 
     // Swap first 
+    val tmp1 = literals(0)
+    literals(0) = literals(litId)
+    literals(litId) = tmp1
     
-    // Search second literals
+    // Search a second literals to watch
+    i = 1
+    litId = -1
+    maxLevel = -1
+    while (i < nLiterals) {
+      val lit = literals(i)
+      val level = store.assignedLevel(lit)
+      if (level == -1) {
+        unassigned += 1
+        litId = i
+        i = nLiterals
+      } else if (level > maxLevel) {
+        maxLevel = level
+        litId = i
+      }
+      i += 1
+    }
     
-    // Search for two literals to watch
-
-    // If entailed return true
-    
-    // If asserting on literal
-    // literal becomes 0
-    // store.enqueue(literals(0), this)
+    // Swap second
+    val tmp2 = literals(1)
+    literals(1) = literals(litId)
+    literals(litId) = tmp2
     
     // Register the clause
-    store.watch(this, literals(0))   
-    store.watch(this, literals(1))
+    store.watch(this, literals(0).opposite)   
+    store.watch(this, literals(1).opposite)
     
-    if (unit) store.enqueue(literals(0), this)
-    else true
+    // Propagate if unit
+    if (unassigned > 1) true
+    else store.enqueue(literals(0), this)
   }
 
   final override def propagate(literal: Literal): Boolean = {

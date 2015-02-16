@@ -18,8 +18,8 @@ class LCGSolver(store: CPStore, val lcgStore: LCGStore) extends Constraint(store
     else Failure
   }
   
-  final def addExplanation(literals: Array[Literal]): Unit = {
-    lcgStore.addExplanationClause(literals)
-    store.enqueueL2(this)
+  final def addExplanation(literals: Array[Literal]): CPOutcome = {
+    if (lcgStore.addExplanationClause(literals) == false) Failure
+    else Suspend
   }
 }

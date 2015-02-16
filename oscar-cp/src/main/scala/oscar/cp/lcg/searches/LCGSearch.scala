@@ -60,7 +60,9 @@ class LCGSearch(node: DFSearchNode, cpStore: CPStore, lcgStore: LCGStore) {
     while (!stop) {
 
       // Propagation
-      val outcome = cpStore.propagate(lcgStoreConstraint)
+      var outcome = Suspend
+      if (lcgStore.propagate() == false) outcome = Failure
+      else if (cpStore.propagate() == Failure) outcome = Failure
 
       // Handle conflict
       if (outcome == Failure) {

@@ -114,7 +114,7 @@ class LCGIntervalVarImpl(final override val lcgStore: LCGStore, final override v
     val literals = new Array[Literal](nLiterals)
     var i = 0
     while (i < nLiterals) {
-      literals(i) = lcgStore.newVariable(this, name + " <= " + (i + initMin), name + " > " + (i + initMin))
+      literals(i) = lcgStore.newVariable(this, "[" + name + " <= " + (i + initMin) + "]", "[" + (i + initMin + 1) + " <= " + name + "]")
       i += 1
     }
     // Add consistency constraints

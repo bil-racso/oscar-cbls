@@ -8,24 +8,37 @@ import oscar.cp.core.CPOutcome
 import oscar.cp.core.CPOutcome._
 import oscar.cp.lcg.core.Literal
 import oscar.cp.lcg.core.LCGSolver
+import oscar.cp.lcg.core.True
 
 class DecompTT(lcgSolver: LCGSolver, starts: Array[LCGIntervalVar], durations: Array[Int], demands: Array[Int], capa: Int, horizon: Int) extends LCGConstraint(lcgSolver, starts(0).store, "CheckerLCG") {
 
   private[this] val nTasks = starts.length
   private[this] val overlaps = new Array[Int](nTasks)
   private[this] val mandatory = new Array[Int](nTasks)
+  private[this] val builder = lcgSolver.lcgStore.clauseBuilder
   
   private[this] val taskTime = Array.tabulate(nTasks, horizon + 1)((task, time) => {
-    val start = starts(task)
-    val literal = lcgStore.lcgStore.newVariable(null, start.name + " overlaps " + time, start.name + " not_overlaps " + time)
+    val start = starts(task)   
+    // Literals
+    val literal = lcgStore.lcgStore.newVariable(null, "[" + start.name + " overlaps " + time + "]", "[" + start.name + " not_overlaps " + time + "]")
     val lit1 = start.greaterEqual(time - durations(task) + 1)
-    val lit2 = start.lowerEqual(time)
-    val clause1 = Array(-lit1, -lit2, literal)
-    val clause2 = Array(-literal, lit1)
-    val clause3 = Array(-literal, lit2)
-    lcgStore.lcgStore.addProblemClause(clause1)
-    lcgStore.lcgStore.addProblemClause(clause2)
-    lcgStore.lcgStore.addProblemClause(clause3)
+    val lit2 = start.lowerEqual(time)    
+    // First clause: lit1 and lit2 => literal
+    builder.clear()
+    builder.add(-lit1)
+    builder.add(-lit2)
+    builder.add(literal)  
+    lcgStore.lcgStore.addProblemClause(builder.toArray)    
+    // Second clause: literal => lit1
+    builder.clear()
+    builder.add(-literal)
+    builder.add(lit1)
+    lcgStore.lcgStore.addProblemClause(builder.toArray)    
+    // Third clause: literal => lit2
+    builder.clear()
+    builder.add(-literal)
+    builder.add(lit2)
+    lcgStore.lcgStore.addProblemClause(builder.toArray)
     literal
   })
 
@@ -37,7 +50,7 @@ class DecompTT(lcgSolver: LCGSolver, starts: Array[LCGIntervalVar], durations: A
     }
   }
 
-  final override def explain(): Unit = {
+  final override def explain(): CPOutcome = {
 
     var nOverlaps = 0
     var nMandatory = 0
@@ -58,8 +71,7 @@ class DecompTT(lcgSolver: LCGSolver, starts: Array[LCGIntervalVar], durations: A
         val lst = starts(i).max
         val est = starts(i).min
         val ect = est + durations(i)
-        if (lst <= time && time < ect) {
-          println(lcgStore.lcgStore.value(lit))
+        if (lcgStore.lcgStore.value(lit) == True) {
           mandatory(nMandatory) = i
           nMandatory += 1
           sum += demands(i)
@@ -73,17 +85,15 @@ class DecompTT(lcgSolver: LCGSolver, starts: Array[LCGIntervalVar], durations: A
       // Checker
       if (sum > capa) {
         // Fail
-        val literals = new Array[Literal](nMandatory * 2)
+        builder.clear()
         var i = 0
         while (i < nMandatory) {
           val t = mandatory(i)
-          val litMin = starts(t).greaterEqual(starts(t).min)
-          val litMax = starts(t).lowerEqual(starts(t).max)
-          literals(i * 2) = -litMin
-          literals(i * 2 + 1) = -litMax
+          val lit = taskTime(t)(time)
+          builder.add(-lit)
           i += 1
         }
-        lcgStore.addExplanation(literals)
+        if (lcgStore.addExplanation(builder.toArray) == Failure) return Failure
       } 
       
       // Explain
@@ -93,23 +103,22 @@ class DecompTT(lcgSolver: LCGSolver, starts: Array[LCGIntervalVar], durations: A
           val task = overlaps(nOverlaps)
           val demand = demands(task)
           if (demand + sum > capa) {
-            val literals = new Array[Literal](nMandatory * 2 + 1)
+            builder.clear()
             var i = 0
             while (i < nMandatory) {
               val t = mandatory(i)
-              val litMin = starts(t).greaterEqual(starts(t).min)
-              val litMax = starts(t).lowerEqual(starts(t).max)
-              literals(i * 2) = -litMin
-              literals(i * 2 + 1) = -litMax
+              val lit = taskTime(t)(time)
+              builder.add(-lit)
               i += 1
             }
-            literals(literals.length - 1) = starts(task).greaterEqual(time + 1)
-            lcgStore.addExplanation(literals)
+            builder.add(starts(task).greaterEqual(time + 1))
+            if (lcgStore.addExplanation(builder.toArray) == Failure) return Failure
           }
         }
       }
 
       time += 1
     }
+    CPOutcome.Suspend
   }
 }

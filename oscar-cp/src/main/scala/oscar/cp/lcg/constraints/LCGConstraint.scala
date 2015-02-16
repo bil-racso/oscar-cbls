@@ -11,10 +11,10 @@ abstract class LCGConstraint(val lcgStore: LCGSolver, store: CPStore, name: Stri
 
   def register(): Unit
 
-  def explain(): Unit
+  def explain(): CPOutcome
   
   final override def propagate(): CPOutcome = {
-    explain(); CPOutcome.Suspend
+    explain()
   } 
   
   final override def setup(l: CPPropagStrength): CPOutcome = {

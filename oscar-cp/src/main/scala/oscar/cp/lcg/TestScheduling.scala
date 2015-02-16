@@ -14,9 +14,10 @@ object TestScheduling extends App {
   // Data
   val scale = 1
   val instance = Array((5, 1), (3, 1), (9, 3), (1, 2), (2, 2), (8, 1), (3, 2), (2, 2), (2, 1), (1, 1), (1, 2), (2, 2), (8, 1))
+  //val instance = Array((1, 2), (3, 3), (3, 1), (2, 2), (3, 2))
   val durations = instance.map(_._1 * scale)
   val demands = instance.map(_._2)
-  val horizon = 19 * scale//durations.sum
+  val horizon = 18 * scale//durations.sum
   val nTasks = durations.length
   val capa = 4
   

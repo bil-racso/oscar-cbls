@@ -9,7 +9,7 @@ import scala.util.Random
 import oscar.cp.lcg.constraints.LCGConstraint
 import oscar.cp.lcg.core.LCGSolver
 
-abstract class LCGIntervalVar {
+abstract class LCGIntervalVar extends LCGVar {
 
   /** Return the CP Store. */
   def store: CPStore
@@ -40,9 +40,6 @@ abstract class LCGIntervalVar {
 
   /** Return the literal `this <= value`. */
   def lowerEqual(value: Int): Literal
-  
-  /** Update the domain and notify the constraints. */
-  def updateAndNotify(): Unit
   
   /** Register the constraint on bounds changes. */
   def callWhenBoundsChange(constraint: LCGConstraint): Unit

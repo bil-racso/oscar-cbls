@@ -22,7 +22,7 @@ class DecompChecker(lcgSolver: LCGSolver, starts: Array[LCGIntervalVar], duratio
     }
   }
 
-  final override def explain(): Unit = {
+  final override def explain(): CPOutcome = {
 
     var nOverlaps = 0
     var sum = 0
@@ -60,5 +60,6 @@ class DecompChecker(lcgSolver: LCGSolver, starts: Array[LCGIntervalVar], duratio
 
       lcgStore.addExplanation(literals)
     }
+    Suspend
   }
 }

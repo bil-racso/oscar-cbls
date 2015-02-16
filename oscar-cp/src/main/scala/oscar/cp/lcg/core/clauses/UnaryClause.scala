@@ -20,11 +20,9 @@ class UnaryClause(store: LCGStore, literal: Literal, learnt: Boolean) extends Cl
   }
     
   final override def setup(): Boolean = {
-    // Watch the literal
-    store.watch(this, literal)
-    val value = store.value(literal)
-    if (value == False) false
-    else true
+    // Watch the signed literal
+    store.watch(this, literal.opposite)
+    store.enqueue(literal, this)
   }
   
   final override def toString: String = s"($literal)"
