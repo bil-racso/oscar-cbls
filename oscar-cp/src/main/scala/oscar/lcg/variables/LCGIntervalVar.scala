@@ -1,21 +1,21 @@
-package oscar.cp.lcg.variables
+package oscar.lcg.variables
 
 import oscar.cp.core.CPStore
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.Constraint
-import oscar.cp.lcg.core.LCGStore
-import oscar.cp.lcg.core.Literal
+import oscar.lcg.core.CDCLStore
+import oscar.lcg.core.Literal
+import oscar.lcg.constraints.LCGConstraint
+import oscar.lcg.core.LCGSolver
 import scala.util.Random
-import oscar.cp.lcg.constraints.LCGConstraint
-import oscar.cp.lcg.core.LCGSolver
 
 abstract class LCGIntervalVar extends LCGVar {
 
   /** Return the CP Store. */
-  def store: CPStore
+  def cpStore: CPStore
   
   /** Return the LCG store. */
-  def lcgStore: LCGStore
+  def cdclStore: CDCLStore
   
   /** Return the minimum value in the domain. */
   def min: Int
@@ -58,7 +58,7 @@ object LCGIntervalVar {
     val i = id; id += 1; i
   }
   
-  def apply(initMin: Int, initMax: Int, name: String = "")(implicit lcgStore: LCGSolver, store: CPStore): LCGIntervalVar = {
-    new LCGIntervalVarImpl(lcgStore.lcgStore, store, nextId(), initMin, initMax, name)
+  def apply(initMin: Int, initMax: Int, name: String = "")(implicit cdclStore: CDCLStore, store: CPStore): LCGIntervalVar = {
+    new LCGIntervalVarImpl(cdclStore, store, nextId(), initMin, initMax, name)
   }
 }

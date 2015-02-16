@@ -1,4 +1,4 @@
-package oscar.cp.lcg
+package oscar.lcg.examples
 
 object SolutionChecker {
 

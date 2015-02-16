@@ -1,24 +1,24 @@
-package oscar.cp.lcg.variables
+package oscar.lcg.variables
 
+import scala.util.Random
 import oscar.cp.core.CPStore
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.Constraint
-import oscar.cp.lcg.core.LCGStore
-import oscar.cp.lcg.core.Literal
-import scala.util.Random
-import oscar.cp.lcg.constraints.LCGConstraint
 import oscar.cp.core.watcher.WatcherListL2
 import oscar.algo.reversible.TrailEntry
+import oscar.lcg.constraints.LCGConstraint
+import oscar.lcg.core.CDCLStore
+import oscar.lcg.core.Literal
 
 class LCGIntervalTrailEntry(variable: LCGIntervalVarImpl, min: Int, max: Int) extends TrailEntry {
   @inline final override def restore(): Unit = variable.restore(min, max)
 }
 
-class LCGIntervalVarImpl(final override val lcgStore: LCGStore, final override val store: CPStore, varId: Int, initMin: Int, initMax: Int, final override val name: String) extends LCGIntervalVar {
+class LCGIntervalVarImpl(final override val cdclStore: CDCLStore, final override val cpStore: CPStore, varId: Int, initMin: Int, initMax: Int, final override val name: String) extends LCGIntervalVar {
   
   // Watchers
-  private[this] val boundWatchers = new WatcherListL2(store)
-  private[this] val assignWatchers = new WatcherListL2(store)
+  private[this] val boundWatchers = new WatcherListL2(cpStore)
+  private[this] val assignWatchers = new WatcherListL2(cpStore)
   
   // Domain representation with literals
   private[this] val nLiterals = initMax - initMin
@@ -32,10 +32,10 @@ class LCGIntervalVarImpl(final override val lcgStore: LCGStore, final override v
   
   // Trail the state of the domain
   @inline private def trail(): Unit = {
-    val contextMagic = store.magic
+    val contextMagic = cpStore.magic
     if (contextMagic != lastMagic) {
       lastMagic = contextMagic
-      store.trail(new LCGIntervalTrailEntry(this, _min, _max))
+      cpStore.trail(new LCGIntervalTrailEntry(this, _min, _max))
     }
   }
   
@@ -63,15 +63,15 @@ class LCGIntervalVarImpl(final override val lcgStore: LCGStore, final override v
   
   @inline final override def greaterEqual(value: Int): Literal = {
     val id = value - initMin - 1
-    if (id < 0) lcgStore.trueLit
-    else if (id >= nLiterals) lcgStore.falseLit
+    if (id < 0) cdclStore.trueLit
+    else if (id >= nLiterals) cdclStore.falseLit
     else literals(id).opposite
   }
   
   @inline final override def lowerEqual(value: Int): Literal = {
     val id = value - initMin
-    if (id >= nLiterals) lcgStore.trueLit
-    else if (id < 0) lcgStore.falseLit
+    if (id >= nLiterals) cdclStore.trueLit
+    else if (id < 0) cdclStore.falseLit
     else literals(id)
   }
   
@@ -89,14 +89,14 @@ class LCGIntervalVarImpl(final override val lcgStore: LCGStore, final override v
   // Find the min value in the domain
   @inline private def searchMin: Int = {
     var i = _min - initMin
-    while (i < nLiterals && lcgStore.isFalse(literals(i))) i += 1
+    while (i < nLiterals && cdclStore.isFalse(literals(i))) i += 1
     initMin + i
   }
   
   // Find the max value in the domain
   @inline private def searchMax: Int = {
     var i = _max - initMin - 1
-    while (i >= 0 && lcgStore.isTrue(literals(i))) i -= 1
+    while (i >= 0 && cdclStore.isTrue(literals(i))) i -= 1
     i + initMin + 1
   }
     
@@ -114,7 +114,7 @@ class LCGIntervalVarImpl(final override val lcgStore: LCGStore, final override v
     val literals = new Array[Literal](nLiterals)
     var i = 0
     while (i < nLiterals) {
-      literals(i) = lcgStore.newVariable(this, "[" + name + " <= " + (i + initMin) + "]", "[" + (i + initMin + 1) + " <= " + name + "]")
+      literals(i) = cdclStore.newVariable(this, "[" + name + " <= " + (i + initMin) + "]", "[" + (i + initMin + 1) + " <= " + name + "]")
       i += 1
     }
     // Add consistency constraints
@@ -123,7 +123,7 @@ class LCGIntervalVarImpl(final override val lcgStore: LCGStore, final override v
       i -= 1
       val lit1 = literals(i)
       val lit2 = literals(i + 1)
-      lcgStore.addProblemClause(Array(lit1.opposite, lit2))
+      cdclStore.addProblemClause(Array(lit1.opposite, lit2))
     }
     // Returns the domain
     literals
@@ -133,8 +133,8 @@ class LCGIntervalVarImpl(final override val lcgStore: LCGStore, final override v
     var i = initMin - 1
     literals.map(l => {
       i += 1
-      if (lcgStore.isTrue(l)) s"$i:T"
-      else if (lcgStore.isFalse(l)) s"$i:F"
+      if (cdclStore.isTrue(l)) s"$i:T"
+      else if (cdclStore.isFalse(l)) s"$i:F"
       else s"$i:_"
     }).mkString("[", ", ", s", $initMax:T]")   
   }

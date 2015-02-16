@@ -1,28 +1,25 @@
-package oscar.cp.lcg.core
+package oscar.lcg.core
 
 import oscar.algo.ArrayQueue
 import oscar.algo.ArrayStack
 import oscar.algo.reversible.ReversibleContext
 import oscar.algo.reversible.TrailEntry
 import oscar.cp.core.CPStore
-import oscar.cp.lcg.core.clauses.Clause
+import oscar.lcg.core.clause.Clause
 import oscar.algo.reversible.ReversibleInt
-import oscar.cp.lcg.variables.LCGIntervalVar
+import oscar.lcg.variables.LCGIntervalVar
 import oscar.algo.array.ArrayStackInt
-import oscar.cp.lcg.core.clauses.FalsifiedClause
-import oscar.cp.lcg.core.clauses.FalsifiedClause
-import oscar.cp.lcg.core.clauses.ClauseBuilder
-import oscar.cp.lcg.core.clauses.ClauseBuilder
-import oscar.cp.lcg.variables.LCGVar
+import oscar.lcg.core.clause.ClauseBuilder
+import oscar.lcg.variables.LCGVar
 
 class TrailRemoveExplanation(explanation: Clause) extends TrailEntry {
   final override def restore(): Unit = {
-    println("deleted   : " + explanation)
+    //println("deleted   : " + explanation)
     explanation.deactive()
   }
 }
 
-class LCGStore(store: CPStore) {
+class CDCLStore(store: CPStore) {
 
   // Level in which the store was still consistent
   private[this] var backtrackLevel: Int = Int.MaxValue
@@ -142,7 +139,7 @@ class LCGStore(store: CPStore) {
     // New clause
     val clause = Clause(this, sortedLiterals, false)
 
-    println("explained : " + clause)
+    //println("explained : " + clause)
 
     // Register
     watchers(sortedLiterals(0).opposite.id).addLast(clause)
@@ -217,7 +214,7 @@ class LCGStore(store: CPStore) {
   }
 
   @inline private def analyze(): Unit = {
-
+    
     val seen: Array[Boolean] = new Array(values.length) // FIXME
     var counter = 0
     var literal: Literal = null
@@ -242,10 +239,12 @@ class LCGStore(store: CPStore) {
         if (!seen(varId)) {
           seen(varId) = true
           val varLevel = levels(varId)
-          if (varLevel == nTrailLevels) counter += 1
-          else if (varLevel > 0) {
-            outLearnt.append(lit.opposite)
-            if (varLevel > backtrackLevel) backtrackLevel = varLevel
+          if (varLevel > 0) { // Exclude literals from the root
+            if (varLevel == nTrailLevels) counter += 1
+            else {
+              outLearnt.append(lit.opposite)
+              if (varLevel > backtrackLevel) backtrackLevel = varLevel
+            }
           }
         }
       }
@@ -295,7 +294,7 @@ class LCGStore(store: CPStore) {
   }
 
   @inline private def learn(literals: Array[Literal]): Unit = {
-    println("learnt    : " + literals.mkString("(", " ", ")"))
+    //println("learnt    : " + literals.mkString("(", " ", ")"))
     newClause(literals, true)
   }
 

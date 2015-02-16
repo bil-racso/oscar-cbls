@@ -1,13 +1,13 @@
-package oscar.cp.lcg.core.clauses
+package oscar.lcg.core.clause
 
-import oscar.cp.lcg.core.LCGStore
-import oscar.cp.lcg.core.Literal
-import oscar.cp.lcg.core.True
-import oscar.cp.lcg.core.False
-import oscar.cp.lcg.core.Unassigned
+import oscar.lcg.core.CDCLStore
+import oscar.lcg.core.Literal
+import oscar.lcg.core.True
+import oscar.lcg.core.False
+import oscar.lcg.core.Unassigned
 import oscar.algo.ArrayStack
 
-class BinaryClause(store: LCGStore, firstLiteral: Literal, secondLiteral: Literal, learnt: Boolean) extends Clause {
+class BinaryClause(store: CDCLStore, firstLiteral: Literal, secondLiteral: Literal, learnt: Boolean) extends Clause {
   
   private[this] var firstAssigned = false
 

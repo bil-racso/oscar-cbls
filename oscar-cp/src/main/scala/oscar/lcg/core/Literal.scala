@@ -1,4 +1,4 @@
-package oscar.cp.lcg.core
+package oscar.lcg.core
 
 class Literal(final val varId: Int, final val signed: Boolean, op: Literal, name: String, nameOpposite: String) {
   def this (varId: Int, name: String, nameOpposite: String) = this(varId, false, null, name, nameOpposite)

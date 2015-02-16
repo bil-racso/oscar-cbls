@@ -1,12 +1,12 @@
-package oscar.cp.lcg.core.clauses
+package oscar.lcg.core.clause
 
-import oscar.cp.lcg.core.LCGStore
 import oscar.algo.ArrayStack
-import oscar.cp.lcg.core.Literal
-import oscar.cp.lcg.core.True
-import oscar.cp.lcg.core.False
+import oscar.lcg.core.CDCLStore
+import oscar.lcg.core.Literal
+import oscar.lcg.core.True
+import oscar.lcg.core.False
 
-class NaryClause(store: LCGStore, literals: Array[Literal], learnt: Boolean) extends Clause {
+class NaryClause(store: CDCLStore, literals: Array[Literal], learnt: Boolean) extends Clause {
   
   final override def explainUnit(outReason: ArrayStack[Literal]): Unit = {
     var i = 1

@@ -1,23 +1,15 @@
-package oscar.cp.lcg.searches
+package oscar.lcg.core
 
 import oscar.algo.search.DFSearchNode
 import oscar.algo.search.DFSearch
-import oscar.cp.lcg.core.LCGStore
 import oscar.cp.core.CPStore
 import oscar.cp.core.Constraint
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.CPOutcome._
-import oscar.cp.lcg.core.LCGSolver
-import oscar.cp.lcg.core.LiftedBoolean
-import oscar.cp.lcg.core.Unassigned
-import oscar.cp.lcg.core.False
-import oscar.cp.lcg.core.True
+import oscar.lcg.heuristic.Heuristic
 
 /** @author Renaud Hartert ren.hartert@gmail.com */
-class LCGSearch(node: DFSearchNode, cpStore: CPStore, lcgStore: LCGStore) {
-
-  // LCG constraint
-  private[this] val lcgStoreConstraint: Constraint = new LCGSolver(cpStore, lcgStore)
+class LCGSearch(cpStore: CPStore, lcgStore: CDCLStore) {
 
   private[this] var depth: Int = 0
   private[this] var _nConflicts: Int = 0
@@ -78,7 +70,7 @@ class LCGSearch(node: DFSearchNode, cpStore: CPStore, lcgStore: LCGStore) {
           println("backjump from " + depth + " to " + level)
           while (depth > level) {
             depth -= 1 // backtrack
-            node.pop
+            cpStore.pop
           }
         }
       } // No conflict
@@ -102,7 +94,7 @@ class LCGSearch(node: DFSearchNode, cpStore: CPStore, lcgStore: LCGStore) {
           // Expand
           _nNodes += 1
           depth += 1
-          node.pushState()
+          cpStore.pushState()
           // Apply decision
           lcgStore.newLevel()
           println("\nlevel " + depth)
@@ -113,7 +105,7 @@ class LCGSearch(node: DFSearchNode, cpStore: CPStore, lcgStore: LCGStore) {
 
     // Pop the remaining nodes
     while (depth > 0) {
-      node.pop
+      cpStore.pop
       depth -= 1
     }
     

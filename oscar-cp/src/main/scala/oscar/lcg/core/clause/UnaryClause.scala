@@ -1,11 +1,10 @@
-package oscar.cp.lcg.core.clauses
+package oscar.lcg.core.clause
 
-import oscar.cp.lcg.core.LCGStore
 import oscar.algo.ArrayStack
-import oscar.cp.lcg.core.Literal
-import oscar.cp.lcg.core.False
+import oscar.lcg.core.CDCLStore
+import oscar.lcg.core.Literal
 
-class UnaryClause(store: LCGStore, literal: Literal, learnt: Boolean) extends Clause {
+class UnaryClause(store: CDCLStore, literal: Literal, learnt: Boolean) extends Clause {
 
   final override def explainUnit(outReason: ArrayStack[Literal]): Unit = {}
 

@@ -1,13 +1,13 @@
-package oscar.cp.lcg.core.clauses
+package oscar.lcg.core.clause
 
-import oscar.cp.lcg.core.Literal
-import oscar.cp.lcg.core.LCGStore
-import oscar.cp.lcg.core.LiftedBoolean
-import oscar.cp.lcg.core.Unassigned
-import oscar.cp.lcg.core.False
-import oscar.cp.lcg.core.True
+import oscar.lcg.core.Literal
+import oscar.lcg.core.CDCLStore
+import oscar.lcg.core.LiftedBoolean
+import oscar.lcg.core.Unassigned
+import oscar.lcg.core.False
+import oscar.lcg.core.True
 
-class ClauseBuilder(lcgStore: LCGStore) {
+class ClauseBuilder(lcgStore: CDCLStore) {
 
   private[this] val trueLit: Literal = lcgStore.trueLit
   private[this] val falseLit: Literal = lcgStore.falseLit

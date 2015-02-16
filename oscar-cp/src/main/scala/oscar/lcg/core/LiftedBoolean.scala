@@ -1,4 +1,4 @@
-package oscar.cp.lcg.core
+package oscar.lcg.core
 
 abstract sealed class LiftedBoolean { 
   def opposite: LiftedBoolean 

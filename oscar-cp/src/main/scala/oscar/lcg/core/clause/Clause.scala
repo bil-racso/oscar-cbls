@@ -1,8 +1,8 @@
-package oscar.cp.lcg.core.clauses
+package oscar.lcg.core.clause
 
 import oscar.algo.ArrayStack
-import oscar.cp.lcg.core.Literal
-import oscar.cp.lcg.core.LCGStore
+import oscar.lcg.core.Literal
+import oscar.lcg.core.CDCLStore
 
 abstract class Clause {
   
@@ -38,12 +38,12 @@ abstract class Clause {
 }
 
 object Clause {
-  def apply(store: LCGStore, literals: Array[Literal], learnt: Boolean): Clause = {
+  def apply(store: CDCLStore, literals: Array[Literal], learnt: Boolean): Clause = {
     val length = literals.length
     length match { // tableswitch
       case 0 => sys.error("empty clause")
       case 1 => new UnaryClause(store, literals(0), learnt)
-      case 2 => new BinaryClause(store, literals(0), literals(1), learnt)
+      //case 2 => new BinaryClause(store, literals(0), literals(1), learnt)
       case _ => new NaryClause(store, literals, learnt)
     }
   }
