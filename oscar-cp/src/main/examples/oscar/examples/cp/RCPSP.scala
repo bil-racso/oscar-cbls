@@ -20,7 +20,6 @@ object RCPSP extends CPModel with App {
   val demands = Array.tabulate(nTasks)(t => CPIntVar(demandsData(t)))
   val makespan = maximum(ends)
   
-  add(starts(3) <= 2)
   add(maxCumulativeResource(starts, durations, ends, demands, CPIntVar(capa)), Weak)
   
   
