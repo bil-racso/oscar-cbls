@@ -25,6 +25,7 @@ class Model {
 
   private val eventQueue = new PriorityQueue[SimEvent]()
   private var currentTime = 0.0
+  private var steps:Int = 0
 
   def clock() : Double = currentTime
 
@@ -32,6 +33,7 @@ class Model {
 
   def simulate(horizon:Float, verbose:Boolean = true) {
     while (eventQueue.nonEmpty) {
+      steps +=1
       val e = eventQueue.dequeue()
       require(e.time >= currentTime)
       if(e.time <= horizon){
@@ -41,7 +43,7 @@ class Model {
         currentTime = e.time
         e.process
       }else{
-        //we are after the horizon, so event is pushed back into queue, and simu stops
+        // we are after the horizon, so event is pushed back into queue, and simulation stops
         eventQueue.enqueue(e)
         if(verbose && horizon != currentTime)
           println("-----------> time: "+  horizon)
@@ -81,4 +83,9 @@ class Model {
     proc.resume()
   }
 
+
+  override def toString():String = {
+    "Model:: currentTime:" + currentTime + " " + " step:" + steps +
+    " eventQueue is" + (if (this.eventQueue.isEmpty) " " else " not ") + " empty"
+  }
 }
