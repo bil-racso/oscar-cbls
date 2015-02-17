@@ -48,9 +48,9 @@ object TestCE1 {
     }
   }
 
-  // Given an array of tuples, get an arrray of all first elements
+  // Given an array of tuples, get an array of all first elements
   // of each tuple
-  def projX(tups : Array[(Double, Double)]) : Array[Double] = {
+  def projectXTuple(tups : Array[(Double, Double)]) : Array[Double] = {
     val retArr = new Array[Double](tups.length)
     for (i <- 0 until retArr.length) {
       retArr(i) = tups(i)._1
@@ -60,7 +60,7 @@ object TestCE1 {
   }
 
   def main(args : Array[String]): Unit = {
-    val maxits = 100
+    val maxIters = 100
     val epsilon = 1e-8
     val Ne = 10
     val N = 100
@@ -68,8 +68,8 @@ object TestCE1 {
     var sigma2 = 100D
     var t = 0
 
-    // Notice this CE loop is imperative
-    while ((t < maxits) && (sigma2 > epsilon)) {
+    // Notice that this CE loop is imperative
+    while ((t < maxIters) && (sigma2 > epsilon)) {
       val RVs = new Array[DoubleRandomVar](N)
       val Xs = new Array[(Double, Double)](N)
       val pdf = new NormalDistribution(mu, sigma2)
@@ -79,7 +79,7 @@ object TestCE1 {
         val rvariate = RVs(i).getValue
         Xs(i) = (rvariate, objFuncS(rvariate))
       }
-      val sortedXs = projX(Xs.sortWith((x, y) => x._2 > y._2))
+      val sortedXs = projectXTuple(Xs.sortWith((x, y) => x._2 > y._2))
       mu = mean(sortedXs, Ne)
       sigma2 = variance(sortedXs, mu, Ne)
       t += 1
@@ -132,7 +132,6 @@ object TestCE2 {
       if (i == n)
         lsAcc
       else {
-        rdV.setValue()
         initialY(i+1, rdV, Math.round(rdV.getValue) :: lsAcc)
       }
     }
@@ -142,7 +141,7 @@ object TestCE2 {
   }
 
   // Generate N random samples of n-bits with their "evaluation". The evaluation
-  // mesure is how many bits don't correspond with the hidden value
+  // measure is how many bits don't correspond with the hidden value
   // The algorithm is tail recursive with accumulators
   def generateSamplesWithS(lsY : List[Float], probVector : List[Float]) : List[(List[Float], Float)] = {
     def generateSamplesWithS(lsY : List[Float],
@@ -196,7 +195,7 @@ object TestCE2 {
     seqProb.toList
   }
 
-  // Stop criterion for CE loop : the probability parameters are 0 or 1
+  // Stop criterion for CE loop : all the probability parameters are 0 or 1
   def isDegenerateBinaryList(ls : List[Float]) : Boolean = ls match {
     case Nil => true
     case p :: ps =>
@@ -206,10 +205,10 @@ object TestCE2 {
         false
   }
 
-  // Main CE loop : notice this version is tail recursive with
+  // Main CE loop : notice that this loop is tail recursive with
   // accumulators
   def crossEntropyLoop(probList : List[Float], y : List[Float]) : List[Float] = {
-    // Auxiliary tail recursive function: performs an iteration
+    // Auxiliary tail recursive function: performs one iteration
     def crossEntropyLoopAcc(probList : List[Float],
                             y : List[Float],
                             approxY : List[Float]) : List[Float] = {
@@ -233,7 +232,7 @@ object TestCE2 {
         crossEntropyLoopAcc(newProbList, y, posQtile._1)
       }
     }
-    // Notice that one iteration is performed before calling the auxiliary
+    // Notice that a first iteration is performed before calling the auxiliary
     // function.
     val sortedLs = generateSamplesWithS(y, probList).sortBy(tup => tup._2)
     val posQtile = arrQuantile(sortedLs)
@@ -269,7 +268,7 @@ object TestCE2 {
 }
 
 /**
- * Test of the CE method to solve the "Max Cut" optimization problem.
+ * Test of the CE method to solve the "Max-Cut" optimization problem.
  */
 object TestCE3 {
   // Problem parameters

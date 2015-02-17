@@ -4,7 +4,7 @@ import oscar.des.montecarlo._
 
 object PiApprox {
   val nIters = 100000
-  val varsPerEval = 20000
+  val varsPerEval = 200000
 
   // Approximate the value of PI, using several random variables
   def evalFunc(rvList : List[AnyVal]) : Double = {
@@ -27,9 +27,7 @@ object PiApprox {
 
   // Run simulation based on concurrent futures
   def runFutures(): Unit = {
-    val mcSim = new MonteCarloConcurrent(nIters, varsPerEval)
-    mcSim.setEvaluationFunction(evalFunc)
-    mcSim.setResultFunction(aggrFunc)
+    val mcSim = new MonteCarloConcurrent(nIters, varsPerEval, evaluationFunction = evalFunc, resultFunction = aggrFunc)
     println("Running concurrent futures simulation")
     val t0 = System.nanoTime
     val result = mcSim.runSimulation()
@@ -41,9 +39,7 @@ object PiApprox {
 
   // Run simulation based on recursive sequential algorithm
   def runRecursive(): Unit = {
-    val mcSim = new MonteCarloSequential(nIters, varsPerEval)
-    mcSim.setEvaluationFunction(evalFunc)
-    mcSim.setResultFunction(aggrFunc)
+    val mcSim = new MonteCarlo(nIters, varsPerEval, evaluationFunction = evalFunc, resultFunction = aggrFunc)
     println("Running sequential recursive simulation")
     val t0 = System.nanoTime
     val result = mcSim.runSimulation()
@@ -55,9 +51,7 @@ object PiApprox {
 
   // Run simulation based on sequential streams
   def runStream(): Unit = {
-    val mcSim = new MonteCarloStream(nIters, varsPerEval)
-    mcSim.setEvaluationFunction(evalFunc)
-    mcSim.setResultFunction(aggrFunc)
+    val mcSim = new MonteCarloStream(nIters, varsPerEval, evaluationFunction = evalFunc, resultFunction = aggrFunc)
     println("Running sequential stream simulation")
     val t0 = System.nanoTime
     val result = mcSim.runSimulation()

@@ -28,27 +28,29 @@ import JSci.maths.statistics._
  *
  * @param nIterations The number of iterations of simulation (default : 10000)
  * @param nVariables The number of variables handled by each Evaluator
- * @param probDist The probability distribution associated to random variables (default : Uniform on 0..1)
- * @param typeVars The type of random variables (default : Double)
+ * @param probabilityDistr The probability distribution associated to random variables (default : Uniform on 0..1)
+ * @param typeVariables The type of random variables (default : Double)
+ * @param evaluationFunction the function to evaluate on random variates
+ * @param resultFunction the function to aggregate the results
  * @author gustavo.ospina@cetic.be
  */
-class MonteCarloSequential(nIterations : Long = 10000,
-                           nVariables : Int = 1,
-                           probDist : ProbabilityDistribution = new UniformDistribution(0,1),
-                           typeVars : TypeRdVar = DoubleRdVar) {
-  private var evaluationFunc: List[AnyVal] => Double = (rvl) => 0.0
-  private var resultFunc: Aggregator => Double = (agg) => 0.0
+class MonteCarlo(nIterations : Long = 10000,
+                 nVariables : Int = 1,
+                 probabilityDistr : ProbabilityDistribution = new UniformDistribution(0,1),
+                 typeVariables : TypeRdVar = DoubleRdVar,
+                 evaluationFunction : List[AnyVal] => Double = _ => 0.0,
+                 resultFunction : Aggregator => Double = _ => 0.0) {
   private val aggregator = new Aggregator
-  private val randomVars = new RandomVarList(probDist)
+  private val randomVars = new RandomVarList("RVs", probabilityDistr)
   // Initialization of random variables.
   initRandomVars()
 
   def initRandomVars(): Unit = {
     def initRandomVars(i : Long): Unit = {
       if (i < nVariables) {
-        typeVars match {
-          case IntRdVar => randomVars.addIntRandomVar("IntRdV" + i)
-          case DoubleRdVar => randomVars.addDoubleRandomVar("DoubleRdV" + i)
+        typeVariables match {
+          case IntRdVar => randomVars.addIntRandomVar()
+          case DoubleRdVar => randomVars.addDoubleRandomVar()
         }
         initRandomVars(i+1)
       }
@@ -56,23 +58,14 @@ class MonteCarloSequential(nIterations : Long = 10000,
     initRandomVars(0)
   }
 
-  def setEvaluationFunction(ef : List[AnyVal] => Double): Unit = {
-    evaluationFunc = ef
-  }
-
-  def setResultFunction(rf : Aggregator => Double): Unit = {
-    resultFunc = rf
-  }
-
   def runSimulation(): Double = {
     def runSimulation(i : Long) : Double = {
       if (i < nIterations) {
-        randomVars.setValues()
-        aggregator + evaluationFunc(randomVars.getValues)
+        aggregator + evaluationFunction(randomVars.getValues)
         runSimulation(i+1)
       }
       else {
-        resultFunc(aggregator)
+        resultFunction(aggregator)
       }
     }
     aggregator.reset()
@@ -87,27 +80,29 @@ class MonteCarloSequential(nIterations : Long = 10000,
  *
  * @param nIterations The number of iterations of simulation (default : 10000)
  * @param nVariables The number of variables handled by each Evaluator
- * @param probDist The probability distribution associated to random variables (default : Uniform on 0..1)
- * @param typeVars The type of random variables (default : Double)
+ * @param probabilityDistr The probability distribution associated to random variables (default : Uniform on 0..1)
+ * @param typeVariables The type of random variables (default : Double)
+ * @param evaluationFunction the function to evaluate on random variates
+ * @param resultFunction the function to aggregate the results
  * @author gustavo.ospina@cetic.be
  */
 class MonteCarloConcurrent(nIterations : Long = 10000,
                            nVariables : Int = 1,
-                           probDist : ProbabilityDistribution = new UniformDistribution(0,1),
-                           typeVars : TypeRdVar = DoubleRdVar) {
-  private var evaluationFunc: List[AnyVal] => Double = (rvl) => 0.0
-  private var resultFunc: Aggregator => Double = (agg) => 0.0
+                           probabilityDistr : ProbabilityDistribution = new UniformDistribution(0,1),
+                           typeVariables : TypeRdVar = DoubleRdVar,
+                           evaluationFunction : List[AnyVal] => Double = _ => 0.0,
+                           resultFunction : Aggregator => Double = _ => 0.0) {
   private val aggregator = new Aggregator
-  private val randomVars = new RandomVarList(probDist)
+  private val randomVars = new RandomVarList("RVs", probabilityDistr)
   // Initialization of random variables.
   initRandomVars()
 
   def initRandomVars(): Unit = {
     def initRandomVars(i : Long): Unit = {
       if (i < nVariables) {
-        typeVars match {
-          case IntRdVar => randomVars.addIntRandomVar("IntRdV" + i)
-          case DoubleRdVar => randomVars.addDoubleRandomVar("DoubleRdV" + i)
+        typeVariables match {
+          case IntRdVar => randomVars.addIntRandomVar()
+          case DoubleRdVar => randomVars.addDoubleRandomVar()
         }
         initRandomVars(i+1)
       }
@@ -119,8 +114,7 @@ class MonteCarloConcurrent(nIterations : Long = 10000,
     def futureEvals(i : Long, facc : Future[Boolean]) : Future[Boolean] = {
       if (i < nIterations) {
         val newFacc = facc.map((b) => {
-          randomVars.setValues()
-          aggregator + evaluationFunc(randomVars.getValues)
+          aggregator + evaluationFunction(randomVars.getValues)
           b
         })
         futureEvals(i+1, newFacc)
@@ -130,21 +124,13 @@ class MonteCarloConcurrent(nIterations : Long = 10000,
     futureEvals(0, Future { true })
   }
 
-  def setEvaluationFunction(ef : List[AnyVal] => Double): Unit = {
-    evaluationFunc = ef
-  }
-
-  def setResultFunction(rf : Aggregator => Double): Unit = {
-    resultFunc = rf
-  }
-
   def runSimulation(): Double = {
     val promiseResult = Promise[Double]()
     val futureResult = promiseResult.future
     aggregator.reset()
     futureEvals onSuccess {
       case b =>
-        if (b) { promiseResult success resultFunc(aggregator) }
+        if (b) { promiseResult success resultFunction(aggregator) }
         else { println("Big Error on concurrent simulation") }
     }
     Await.result(futureResult, Duration.Inf)
@@ -161,22 +147,23 @@ class MonteCarloConcurrent(nIterations : Long = 10000,
  *
  * @param nIterations The number of iterations of simulation (default : 10000)
  * @param nVariables The number of variables handled by each Evaluator
- * @param probDist The probability distribution associated to random variables (default : Uniform on 0..1)
- * @param typeVars The type of random variables (default : Double)
+ * @param probabilityDistr The probability distribution associated to random variables (default : Uniform on 0..1)
+ * @param typeVariables The type of random variables (default : Double)
+ * @param evaluationFunction the function to evaluate on random variates
+ * @param resultFunction the function to aggregate the results
  * @author gustavo.ospina@cetic.be
  */
 class MonteCarloStream(nIterations : Long = 10000,
                        nVariables : Int = 1,
-                       probDist : ProbabilityDistribution = new UniformDistribution(0,1),
-                       typeVars : TypeRdVar = DoubleRdVar) {
-  private var evaluationFunc: List[AnyVal] => Double = (rvl) => 0.0
-  private var resultFunc: Aggregator => Double = (agg) => 0.0
+                       probabilityDistr : ProbabilityDistribution = new UniformDistribution(0,1),
+                       typeVariables : TypeRdVar = DoubleRdVar,
+                       evaluationFunction : List[AnyVal] => Double = _ => 0.0,
+                       resultFunction : Aggregator => Double = _ => 0.0) {
   private val aggregator = new Aggregator
-  private val randomVars = new RandomVarList(probDist)
+  private val randomVars = new RandomVarList("Rvs", probabilityDistr)
 
   private def streamEvals : Stream[Double] = {
-    randomVars.setValues()
-    evaluationFunc(randomVars.getValues) #:: streamEvals
+    evaluationFunction(randomVars.getValues) #:: streamEvals
   }
   // Initialization of random variables.
   initRandomVars()
@@ -184,22 +171,14 @@ class MonteCarloStream(nIterations : Long = 10000,
   def initRandomVars(): Unit = {
     def initRandomVars(i : Long): Unit = {
       if (i < nVariables) {
-        typeVars match {
-          case IntRdVar => randomVars.addIntRandomVar("IntRdV" + i)
-          case DoubleRdVar => randomVars.addDoubleRandomVar("DoubleRdV" + i)
+        typeVariables match {
+          case IntRdVar => randomVars.addIntRandomVar()
+          case DoubleRdVar => randomVars.addDoubleRandomVar()
         }
         initRandomVars(i+1)
       }
     }
     initRandomVars(0)
-  }
-
-  def setEvaluationFunction(ef : List[AnyVal] => Double): Unit = {
-    evaluationFunc = ef
-  }
-
-  def setResultFunction(rf : Aggregator => Double): Unit = {
-    resultFunc = rf
   }
 
   def runSimulation(): Double = {
@@ -209,7 +188,7 @@ class MonteCarloStream(nIterations : Long = 10000,
         runSimulation(i+1, strEv.tail)
       }
       else {
-        resultFunc(aggregator)
+        resultFunction(aggregator)
       }
     }
     aggregator.reset()
@@ -218,25 +197,32 @@ class MonteCarloStream(nIterations : Long = 10000,
 }
 
 /**
- * This class represents a very simple statistical aggregator. For the moment,
- * it contains just the aggregated sum and multiplication.
+ * This class represents a very very simple statistical aggregator.
  */
 class Aggregator{
   var sum = 0.0
   var mult = 1.0
-  var size : Long = 1
+  var size = 1L
+  var max = Double.NegativeInfinity
+  var min = Double.PositiveInfinity
 
   def +(x : Double): Unit = {
     sum += x
     mult *= x
     size += 1
+    if (x > max)
+      max = x
+    if (x < min)
+      min = x
   }
 
   def reset(): Unit = {
     sum = 0.0
     mult = 1.0
     size = 0
+    max = Double.NegativeInfinity
+    min = Double.PositiveInfinity
   }
 
-  override def toString = s"Aggregator(sum=$sum, mult=$mult, size=$size"
+  override def toString = s"Aggregator(sum=$sum, mult=$mult, size=$size, max=$max, min=$min)"
 }

@@ -16,15 +16,9 @@
 package oscar.des.montecarlo
 
 import scala.collection.mutable
+import scala.collection.mutable.ListBuffer
 import oscar.des.engine.NumberGenerator
 import JSci.maths.statistics._
-
-/**
- * These classes represent Integer and Double Random Variables which have probability
- * distributions.
- *
- * Created by go on 26/11/2014.
- */
 
 /**
  * Case classes representing the actual type of random variables
@@ -34,147 +28,165 @@ case object IntRdVar extends TypeRdVar
 case object DoubleRdVar extends TypeRdVar
 
 /**
- * Abstract class which encapsulates the behaviour of random variables
- * @param name The name
- * @param numGen The number generator, associated to the probability distribution
- * @author gustavo.ospina@cetic.be
+ * Case classes representing random values
  */
-abstract class RandomVar(name : String, numGen : NumberGenerator) {
+abstract class RandomValue
+case class RandomInt(value : Int) extends RandomValue
+case class RandomDouble(value : Double) extends RandomValue
 
-  def setValue()
-
-  def getValue : AnyVal
-
-  def intRandomFunc : () => Int
-
-  def doubleRandomFunc : () => Double
+object RandomValue {
+  def randomValue(rv : RandomVar[AnyVal]) : RandomValue = rv.typeVar match {
+    case IntRdVar => RandomInt(rv.intRandomFunc())
+    case DoubleRdVar => RandomDouble(rv.doubleRandomFunc())
+  }
 }
 
 /**
- * Integer Random Variable
- * @param name The name
- * @param numGen The number generator, associated to the probability distribution
- * @author gustavo.ospina@cetic.be
+ * Trait for random variables
+ *
+ * @tparam T The type of values (should be any value type)
  */
-class IntRandomVar(name : String, numGen : NumberGenerator) extends RandomVar(name, numGen) {
-  private var value : Option[Int] = None
+trait RandomVar[+T <: AnyVal] {
+  val typeVar : TypeRdVar
+
+  def getValue: T
+
+  def intRandomFunc: () => Int
+
+  def doubleRandomFunc: () => Double
+
+  def apply[U](fn : T => U) : U = fn(getValue)
+
+  def applyInt[U](fn : Int => U) = fn(intRandomFunc())
+
+  def applyDouble[U](fn : Double => U) = fn(doubleRandomFunc())
+}
+
+/**
+ * Integer random variable
+ *
+ * @param name variable name
+ * @param numberGenerator random number generator associated
+ */
+class IntRandomVar(name : String, numberGenerator: NumberGenerator) extends RandomVar[Int] {
   val typeVar = IntRdVar
 
   def this(nm : String, dist : ProbabilityDistribution) = this(nm, new NumberGenerator(dist))
 
-  def setValue(): Unit = {
-    value = Some(numGen.generateNext.toInt)
-  }
-
-  def getValue : Int = value match {
-    case Some(x) => x
-    case None =>
-      val x = numGen.generateNext.toInt
-      value = Some(x)
-      x
-  }
+  def getValue = numberGenerator.generateNext.toInt
 
   def intRandomFunc = () => getValue
 
-  def doubleRandomFunc = () => getValue
+  def doubleRandomFunc = () => getValue.toDouble
 
   override def toString : String = {
-    val strVal = value match {
-      case Some(x) => x.toString
-      case None => "No Value"
-    }
-    "Int Random Variable " + name + " = " + strVal
+    s"Integer Random Variable $name : $getValue"
   }
 }
 
 /**
- * Double Random Variable
- * @param name The name
- * @param numGen The number generator, associated to the probability distribution
- * @author gustavo.ospina@cetic.be
+ * Double random variable
+ *
+ * @param name variable name
+ * @param numberGenerator random number generator associated
  */
-class DoubleRandomVar(name : String, numGen : NumberGenerator) extends RandomVar(name, numGen) {
-  private var value : Option[Double] = None
+class DoubleRandomVar(name : String, numberGenerator: NumberGenerator) extends RandomVar[Double] {
   val typeVar = DoubleRdVar
 
   def this(nm : String, dist : ProbabilityDistribution) = this(nm, new NumberGenerator(dist))
 
-  def setValue(): Unit = {
-    value = Some(numGen.generateNext)
-  }
-
-  def getValue : Double = value match {
-    case Some(x) => x
-    case None =>
-      val x = numGen.generateNext
-      value = Some(x)
-      x
-  }
+  def getValue = numberGenerator.generateNext
 
   def intRandomFunc = () => getValue.toInt
 
   def doubleRandomFunc = () => getValue
 
   override def toString : String = {
-    val strVal = value match {
-      case Some(x) => x.toString
-      case None => "No Value"
-    }
-    "Double Random Variable " + name + " = " + strVal
+    s"Double Random Variable $name : $getValue"
   }
 }
 
 /**
- * This class represents a list of Random Variables which have all the same
- * probability distribution. That means they all share the same number
- * generator (maybe this is not strictly correct)
+ * List of random variables with the same probability distribution
  *
- * @param numGen The number generator associated to all variables
- * @author gustavo.ospina@cetic.be
+ * @param name list name
+ * @param numberGenerator number generator associated to all variables
  */
-class RandomVarList(numGen : NumberGenerator) {
-  private var rvList : List[RandomVar] = List()
+class RandomVarList(name : String, numberGenerator: NumberGenerator) {
+  private var rvList : ListBuffer[RandomVar[AnyVal]] = new ListBuffer[RandomVar[AnyVal]]()
 
-  def this(dist : ProbabilityDistribution) = this(new NumberGenerator(dist))
+  def this(nm : String, dist : ProbabilityDistribution) = this(nm, new NumberGenerator(dist))
 
-  // I prepend, instead of append, like in declarative lists, because it's much
-  // more efficient. If it is important to preserve the order of insertion, we
-  // should consider to reverse the list.
-  def addIntRandomVar(nameVar : String): Unit = {
-    //rvList = rvList ::: List(new IntRandomVar(nameVar, numberGenerator))
-    rvList = new IntRandomVar(nameVar, numGen) :: rvList
-  }
-  def addDoubleRandomVar(nameVar : String): Unit = {
-    //rvList = rvList ::: List(new DoubleRandomVar(nameVar, numberGenerator))
-    rvList = new DoubleRandomVar(nameVar, numGen) :: rvList
+  def addRandomVar(typeVar : TypeRdVar): Unit = typeVar match {
+    case IntRdVar =>
+      addIntRandomVar()
+    case DoubleRdVar =>
+      addDoubleRandomVar()
   }
 
-  def setValues(): Unit = { rvList.foreach(rv => { rv.setValue() }) }
-
-  def getValues : List[AnyVal] = rvList.map(rv => rv.getValue)
-
-  def getRVList : List[RandomVar] = rvList
-
-  override def toString : String = {
-    ("Random Vars :\n" /: rvList) ((s, rv) => s + rv + "\n")
+  def addIntRandomVar(): Unit = {
+    val lg = rvList.length
+    rvList = rvList += new IntRandomVar(name + s"__$lg", numberGenerator)
   }
+
+  def addDoubleRandomVar(): Unit = {
+    val lg = rvList.length
+    rvList = rvList += new DoubleRandomVar(name + s"__$lg", numberGenerator)
+  }
+
+  //def getValues : List[RandomValue] = rvList.map(RandomValue.randomValue).toList
+  def getValues : List[AnyVal] = rvList.map((rv) => rv.getValue).toList
+
+  def getRVList : List[RandomVar[AnyVal]] = rvList.toList
+
+  def map[U](fn : AnyVal => U) : List[U] = {
+    val ls = for (rv <- rvList) yield rv.apply(fn)
+    ls.toList
+  }
+
+  def mapInt[U](fn : Int => U) : List[U] = {
+    val ls = for (rv <- rvList) yield rv.applyInt(fn)
+    ls.toList
+  }
+
+  def mapDouble[U](fn : Double => U) : List[U] = {
+    val ls = for (rv <- rvList) yield rv.applyDouble(fn)
+    ls.toList
+  }
+
+  def fold(z : AnyVal)(op : (AnyVal, AnyVal) => AnyVal) : AnyVal =
+    foldLeft(z)(op)
+
+  def foldLeft[U](z : U)(op : (U, AnyVal) => U) : U =
+    rvList.foldLeft(z)((u:U, rv:RandomVar[AnyVal]) => op(u, rv.getValue))
+
+  def foldRight[U](z : U)(op : (AnyVal, U) => U) : U =
+    rvList.foldRight(z)((rv:RandomVar[AnyVal], u:U) => op(rv.getValue, u))
 }
 
 /**
- * This class represents a set of Random Variables. Notice that variables in the set
- * can have different probability distributions.
+ * Set of random variables (with different distributions)
  *
- * @author gustavo.ospina@cetic.be
+ * @param name set name
  */
-class RandomVarSet {
-  private var rvSet : mutable.Set[RandomVar] = mutable.Set()
+class RandomVarSet(name : String) {
+  private var rvSet : mutable.Set[RandomVar[AnyVal]] = mutable.Set()
 
-  def addIntRandomVar(nameVar : String, dist : ProbabilityDistribution): Unit = {
-    rvSet += new IntRandomVar(nameVar, dist)
+  def addRandomVar(typeVar : TypeRdVar, dist : ProbabilityDistribution): Unit = typeVar match {
+    case IntRdVar =>
+      addIntRandomVar(dist)
+    case DoubleRdVar =>
+      addDoubleRandomVar(dist)
   }
 
-  def addDoubleRandomVar(nameVar : String, dist : ProbabilityDistribution): Unit = {
-    rvSet += new DoubleRandomVar(nameVar, dist)
+  def addIntRandomVar(dist : ProbabilityDistribution): Unit = {
+    val lg = rvSet.size
+    rvSet += new IntRandomVar(name + s"__$lg", dist)
+  }
+
+  def addDoubleRandomVar(dist : ProbabilityDistribution): Unit = {
+    val lg = rvSet.size
+    rvSet += new DoubleRandomVar(name + s"__$lg", dist)
   }
 
   def addRandomVarList(rvLst : RandomVarList): Unit = {
@@ -185,7 +197,5 @@ class RandomVarSet {
     rvSet = rvSet ++ otherSet.rvSet
   }
 
-  def setValues(): Unit = { rvSet.foreach(rv => { rv.setValue() }) }
-
-  def getValues : List[AnyVal] = rvSet.map(rv => rv.getValue).toList
+  def getValues : List[AnyVal] = rvSet.map((rv) => rv.getValue).toList
 }
