@@ -5,6 +5,7 @@ import oscar.cp.core.CPPropagStrength
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.CPOutcome._
 
+/** @author Renaud Hartert ren.hartert@gmail.com */
 class LowerEqual(left: LCGIntervalVar, right: LCGIntervalVar) extends LCGConstraint(left.cpStore, "LowerEqual") {
 
   final override def cdclStore = left.cdclStore
@@ -45,7 +46,7 @@ class LowerEqual(left: LCGIntervalVar, right: LCGIntervalVar) extends LCGConstra
   @inline private def updateMin(): CPOutcome = {
     val leftMin = left.min
     val rightMin = right.min
-    if (rightMin <= leftMin) Suspend
+    if (leftMin <= rightMin) Suspend
     else {
       val lit1 = left.greaterEqual(leftMin)
       val lit2 = right.greaterEqual(leftMin)

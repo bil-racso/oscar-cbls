@@ -6,6 +6,7 @@ import oscar.lcg.core.Literal
 import oscar.lcg.core.True
 import oscar.lcg.core.False
 
+/** @author Renaud Hartert ren.hartert@gmail.com */
 class NaryClause(store: CDCLStore, literals: Array[Literal], learnt: Boolean) extends Clause {
   
   final override def explainUnit(outReason: ArrayStack[Literal]): Unit = {

@@ -2,42 +2,58 @@ package oscar.lcg.examples
 
 import oscar.lcg._
 import oscar.lcg.constraints.DecompTT
-import oscar.lcg.core.LCGSearch
 import oscar.lcg.heuristic.StaticMinHeuristic
+import oscar.lcg.heuristic.MinMinHeuristic
 
 object RCPSP extends LCGModel with App {
+  
+  val instanceFile = "data/rcpsp/j30/j30_1_1.rcp"
+  val instance = BLParser.parse(instanceFile)
 
   // Data
-  val scale = 1
-  val instance = Array((5, 1), (3, 1), (9, 3), (1, 2), (2, 2), (8, 1), (3, 2), (2, 2), (2, 1), (1, 1), (1, 2), (2, 2), (8, 1))
+  val nTasks = instance.nTasks
+  val Tasks = 0 until nTasks
+  val nResources = instance.nResources
+  val Resources = 0 until nResources
   
-  //val instance = Array((3, 1), (3, 2), (3, 3), (2, 2), (1, 2))
-  val durations = instance.map(_._1 * scale)
-  val demands = instance.map(_._2)
-  val horizon = 19 * scale//durations.sum
-  val nTasks = durations.length
-  val capa = 4
+  val scale = 1
+  val durations = instance.durations
+  val demands = instance.demands.transpose
+  val horizon = 43//instance.horizon
+  val capa = instance.capacities
 
   // Decision variables
-  val starts = Array.tabulate(nTasks)(t => LCGIntervalVar(0, horizon - durations(t), "Task_" + (t + 1)))
+  val starts = Array.tabulate(nTasks)(t => LCGIntervalVar(0, horizon - durations(t), s"start_$t"))
+  val ends = Array.tabulate(nTasks)(t => starts(t) + durations(t))
+  
+  // Precedences
+  for ((t1, t2) <- instance.precedences) add(ends(t1) <= starts(t2))
+  
+  // Resources
+  for (r <- Resources) {
+    add(new DecompTT(starts, durations, demands(r), capa(r), horizon))
+  }
 
-  // LCG Constraints
-  val constraint = new DecompTT(starts, durations, demands, capa, horizon)
-  cpSolver.add(constraint)
-
-  val search = new LCGSearch(cpSolver, lcgStore)
+  // Search heuristic
   val heuristic = new StaticMinHeuristic(starts)
   
-  search.onSolution {
+  onSolution {
     println("\nSOLUTION\n" + starts.map(v => v.name + " = " + v.min).mkString("\n"))
-    println("Valid: " + SolutionChecker.check(starts.map(_.min), durations, demands, capa, horizon))
+    println("makespan: " + ends.map(_.max).max)
+    println
+    for (r <- Resources) println(s"Valid on $r: " + SolutionChecker.check(starts.map(_.min), durations, demands(r), capa(r), horizon))
+    val valid = instance.precedences.forall { case (t1, t2) => ends(t1).min <= starts(t2).min }
+    println("check precedence: " + valid)
   }
   
   val t0 = System.currentTimeMillis()
-  search.search(heuristic, () => search.nSolutions == 1)
-  println("\ntime (ms)  : " + (System.currentTimeMillis() - t0))
-  println("nConflicts : " + search.nConflicts)
-  println("nNodes     : " + search.nNodes)
-  println("nLearnt    : " + lcgStore.nLeanrt)
-  println("nSolutions : " + search.nSolutions)
+  
+  solve(heuristic)
+  
+  println()
+  println("time (ms)  : " + (System.currentTimeMillis() - t0))
+  println("nConflicts : " + lcgSolver.search.nConflicts)
+  println("nNodes     : " + lcgSolver.search.nNodes)
+  println("nLearnt    : " + lcgSolver.cdclStore.nLeanrt)
+  println("nSolutions : " + lcgSolver.search.nSolutions)
 }

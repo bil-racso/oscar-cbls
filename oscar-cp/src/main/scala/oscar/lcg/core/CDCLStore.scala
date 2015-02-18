@@ -12,6 +12,7 @@ import oscar.algo.array.ArrayStackInt
 import oscar.lcg.core.clause.ClauseBuilder
 import oscar.lcg.variables.LCGVar
 
+/** @author Renaud Hartert ren.hartert@gmail.com */
 class TrailRemoveExplanation(explanation: Clause) extends TrailEntry {
   final override def restore(): Unit = {
     //println("deleted   : " + explanation)
@@ -139,7 +140,7 @@ class CDCLStore(store: CPStore) {
     // New clause
     val clause = Clause(this, sortedLiterals, false)
 
-    //println("explained : " + clause)
+    println("explained : " + clause)
 
     // Register
     watchers(sortedLiterals(0).opposite.id).addLast(clause)
@@ -294,7 +295,7 @@ class CDCLStore(store: CPStore) {
   }
 
   @inline private def learn(literals: Array[Literal]): Unit = {
-    //println("learnt    : " + literals.mkString("(", " ", ")"))
+    println("learnt    : " + literals.mkString("(", " ", ")"))
     newClause(literals, true)
   }
 

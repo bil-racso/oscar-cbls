@@ -15,7 +15,7 @@ object SolutionChecker {
       while (i < starts.length && sum <= capa) {
         val lst = starts(i)
         val ect = starts(i) + durations(i)
-        if (lst == time && time < ect) sum += demands(i)
+        if (lst <= time && time < ect) sum += demands(i)
         i += 1
       }
       time += 1

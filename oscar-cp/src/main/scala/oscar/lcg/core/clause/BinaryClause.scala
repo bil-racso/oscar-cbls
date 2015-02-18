@@ -7,6 +7,7 @@ import oscar.lcg.core.False
 import oscar.lcg.core.Unassigned
 import oscar.algo.ArrayStack
 
+/** @author Renaud Hartert ren.hartert@gmail.com */
 class BinaryClause(store: CDCLStore, firstLiteral: Literal, secondLiteral: Literal, learnt: Boolean) extends Clause {
   
   private[this] var firstAssigned = false

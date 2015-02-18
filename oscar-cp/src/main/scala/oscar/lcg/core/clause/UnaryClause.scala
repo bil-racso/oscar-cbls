@@ -4,6 +4,7 @@ import oscar.algo.ArrayStack
 import oscar.lcg.core.CDCLStore
 import oscar.lcg.core.Literal
 
+/** @author Renaud Hartert ren.hartert@gmail.com */
 class UnaryClause(store: CDCLStore, literal: Literal, learnt: Boolean) extends Clause {
 
   final override def explainUnit(outReason: ArrayStack[Literal]): Unit = {}

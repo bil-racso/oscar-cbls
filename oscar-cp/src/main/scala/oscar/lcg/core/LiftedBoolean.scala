@@ -1,5 +1,6 @@
 package oscar.lcg.core
 
+/** @author Renaud Hartert ren.hartert@gmail.com */
 abstract sealed class LiftedBoolean { 
   def opposite: LiftedBoolean 
 }

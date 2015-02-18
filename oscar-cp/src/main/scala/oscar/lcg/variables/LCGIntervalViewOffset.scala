@@ -5,6 +5,7 @@ import oscar.lcg.core.CDCLStore
 import oscar.cp.core.CPStore
 import oscar.lcg.core.Literal
 
+/** @author Renaud Hartert ren.hartert@gmail.com */
 class LCGIntervalViewOffset(variable: LCGIntervalVar, offset: Int, final override val name: String) extends LCGIntervalVar {
 
   /** Return the CP Store. */

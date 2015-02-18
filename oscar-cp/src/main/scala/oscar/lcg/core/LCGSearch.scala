@@ -39,7 +39,7 @@ class LCGSearch(cpStore: CPStore, lcgStore: CDCLStore) {
   /** Clear all actions executed when a failed node is found */
   final def clearOnFailure(): Unit = failureActions = Nil
 
-  final def search(heuristic: Heuristic, stopCondition: () => Boolean): Unit = {
+  final def search(heuristic: Heuristic, stopCondition: () => Boolean): LiftedBoolean = {
 
     depth = 0
     _nConflicts = 0

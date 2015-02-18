@@ -10,6 +10,7 @@ import oscar.lcg.core.Literal
 import oscar.lcg.core.LCGSolver
 import oscar.lcg.core.True
 
+/** @author Renaud Hartert ren.hartert@gmail.com */
 class DecompTT(starts: Array[LCGIntervalVar], durations: Array[Int], demands: Array[Int], capa: Int, horizon: Int) extends LCGConstraint(starts(0).cpStore, "DecompTT") {
 
   require(starts.length > 0)
@@ -103,7 +104,7 @@ class DecompTT(starts: Array[LCGIntervalVar], durations: Array[Int], demands: Ar
         }
         if (!cdclStore.addExplanationClause(builder.toArray)) return Failure
       } // Explain
-      else {
+      /*else {
         while (nOverlaps > 0) {
           nOverlaps -= 1
           val task = overlaps(nOverlaps)
@@ -122,7 +123,7 @@ class DecompTT(starts: Array[LCGIntervalVar], durations: Array[Int], demands: Ar
             if (!cdclStore.addExplanationClause(builder.toArray)) return Failure
           }
         }
-      }
+      }*/
 
       time += 1
     }

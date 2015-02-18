@@ -2,6 +2,7 @@ package oscar.lcg.heuristic
 
 import oscar.lcg.variables.LCGIntervalVar
 
+/** @author Renaud Hartert ren.hartert@gmail.com */
 class MinMinHeuristic(variables: Array[LCGIntervalVar]) extends Heuristic {
   
   require(variables.length > 0, "no variable")

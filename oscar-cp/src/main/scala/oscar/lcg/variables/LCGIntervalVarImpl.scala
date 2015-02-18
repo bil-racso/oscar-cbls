@@ -10,6 +10,7 @@ import oscar.lcg.constraints.LCGConstraint
 import oscar.lcg.core.CDCLStore
 import oscar.lcg.core.Literal
 
+/** @author Renaud Hartert ren.hartert@gmail.com */
 class LCGIntervalTrailEntry(variable: LCGIntervalVarImpl, min: Int, max: Int) extends TrailEntry {
   @inline final override def restore(): Unit = variable.restore(min, max)
 }

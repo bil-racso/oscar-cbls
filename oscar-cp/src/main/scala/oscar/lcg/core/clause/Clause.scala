@@ -4,6 +4,7 @@ import oscar.algo.ArrayStack
 import oscar.lcg.core.Literal
 import oscar.lcg.core.CDCLStore
 
+/** @author Renaud Hartert ren.hartert@gmail.com */
 abstract class Clause {
   
   // True if the clause is active

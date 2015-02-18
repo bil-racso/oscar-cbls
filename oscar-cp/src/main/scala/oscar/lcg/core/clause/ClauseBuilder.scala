@@ -7,6 +7,7 @@ import oscar.lcg.core.Unassigned
 import oscar.lcg.core.False
 import oscar.lcg.core.True
 
+/** @author Renaud Hartert ren.hartert@gmail.com */
 class ClauseBuilder(lcgStore: CDCLStore) {
 
   private[this] val trueLit: Literal = lcgStore.trueLit
