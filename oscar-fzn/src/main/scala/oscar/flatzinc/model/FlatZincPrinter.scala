@@ -105,6 +105,7 @@ object FlatZincPrinter {
       case vs: ArrayList[Element] => vs.asScala.map(toFZN(_)).mkString("[",", ","]")
       case e: Element => toFZN(e)
       case i: Integer => i.toString()
+      case b: Boolean => b.toString()
       case x => Console.err.println("Match not found:"+x.getClass()); x.toString()
       }
   }
@@ -134,6 +135,12 @@ object FlatZincPrinter {
       case array_bool_or(x,y, ann) => "array_bool_or("+toFZN(x)+","+toFZN(y)+")"+toFZNann(ann)
       case bool_clause(x,y, ann) => "bool_clause("+toFZN(x)+","+toFZN(y)+")"+toFZNann(ann)
       case bool2int(x,y, ann) => "bool2int("+toFZN(x)+","+toFZN(y)+")"+toFZNann(ann)
+      case bool_eq(x,y, ann) => "bool_eq("+toFZN(x)+","+toFZN(y)+")"+toFZNann(ann)
+      case bool_lt(x,y, ann) => "bool_lt("+toFZN(x)+","+toFZN(y)+")"+toFZNann(ann)
+      case bool_le(x,y, ann) => "bool_le("+toFZN(x)+","+toFZN(y)+")"+toFZNann(ann)
+      case reif(bool_eq(x,y,ann),z) => "bool_eq_reif("+toFZN(x)+","+toFZN(y)+","+toFZN(z)+")"+toFZNann(ann)
+      case reif(bool_le(x,y,ann),z) => "bool_le_reif("+toFZN(x)+","+toFZN(y)+","+toFZN(z)+")"+toFZNann(ann)
+      case reif(bool_lt(x,y,ann),z) => "bool_lt_reif("+toFZN(x)+","+toFZN(y)+","+toFZN(z)+")"+toFZNann(ann)
       case bool_not(x,y, ann) => "bool_not("+toFZN(x)+","+toFZN(y)+")"+toFZNann(ann)
       case bool_xor(x,y,z,ann) => "bool_xor("+toFZN(x)+","+toFZN(y)+","+toFZN(z)+")"+toFZNann(ann)
       case bool_or(x,y,z,ann) => "bool_or("+toFZN(x)+","+toFZN(y)+","+toFZN(z)+")"+toFZNann(ann)
@@ -145,6 +152,8 @@ object FlatZincPrinter {
       case reif(int_lin_eq(x,y,z,ann),w) => "int_lin_eq_reif("+toFZN(x)+","+toFZN(y)+","+toFZN(z)+","+toFZN(w)+")"+toFZNann(ann)
       case reif(int_lin_ne(x,y,z,ann),w) => "int_lin_ne_reif("+toFZN(x)+","+toFZN(y)+","+toFZN(z)+","+toFZN(w)+")"+toFZNann(ann)
       case reif(int_lin_le(x,y,z,ann),w) => "int_lin_le_reif("+toFZN(x)+","+toFZN(y)+","+toFZN(z)+","+toFZN(w)+")"+toFZNann(ann)
+      case reif(count_eq(x,y,z,ann),w) => "count_eq_reif("+toFZN(x)+","+toFZN(y)+","+toFZN(z)+","+toFZN(w)+")"+toFZNann(ann)
+      case reif(count(x,y,z,ann),w) => "count_reif("+toFZN(x)+","+toFZN(y)+","+toFZN(z)+","+toFZN(w)+")"+toFZNann(ann)
       case all_different_int(x,ann) => "all_different_int("+toFZN(x)+")"+toFZNann(ann)
       case GeneratedConstraint(name,args,signature) => name+"("+args.map(toFZN(_)).mkString(", ")+")"
       case GenericConstraint(name,args) => name+"("+args.map(toFZN(_)).mkString(", ")+")"

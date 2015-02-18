@@ -171,7 +171,9 @@ object FZModelTransfo {
           case _ => true;
         }
         case array_bool_and(x,y,_) if x.forall(_.isBound) => y.bind(x.forall(v => v.boolValue)); false
+        case array_bool_and(x,y,_) if x.exists(_.isFalse) && y.isFalse => false
         case array_bool_or(x,y,_) if x.forall(_.isBound) => y.bind(x.exists(v => v.boolValue)); false
+        case array_bool_or(x,y,_) if x.exists(_.isTrue) && y.isTrue => false
         case int_ne(x,y,_) if y.isBound => x.neq(y.value); false
         case int_ne(x,y,_) if x.isBound => y.neq(x.value); false
         case set_in(x,d,_) => x.inter(d); false
