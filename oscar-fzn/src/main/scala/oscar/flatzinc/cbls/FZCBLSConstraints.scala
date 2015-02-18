@@ -382,6 +382,7 @@ class FZCBLSConstraintPoster(val c: ConstraintSystem, implicit val getCBLSVar: V
     for(cstr <- cstrs){
       cs.add(cstr)
     }
+    cs.close()
     cs
   }
   

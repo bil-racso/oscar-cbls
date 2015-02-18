@@ -26,6 +26,7 @@ import oscar.cbls.objective.{Objective => CBLSObjective}
 import oscar.cbls.search.SearchEngine
 import scala.collection.mutable.{Map => MMap}
 import oscar.cbls.invariants.core.computation.IntValue
+import java.util.Arrays
 
 
 
@@ -198,7 +199,7 @@ class GCCNeighborhood(val variables: Array[CBLSIntVarDom],val vals:Array[Int],va
         if(cands.isEmpty)throw new Exception("GCC cannot be satisfied")
         val curvar = cands.head
         cands = cands.tail
-        val candval = variables(curvar).getDomain().find(k => if(ups.contains(k)) cur(k) < ups(v) else !closed )
+        val candval = variables(curvar).getDomain().find(k => if(ups.contains(k)) cnts.getOrElse(k,0) < ups(k) else !closed )
         if(candval.isDefined){
           val k = candval.get 
           cnts(v) = cnts(v)-1
@@ -265,8 +266,8 @@ class GCCNeighborhood(val variables: Array[CBLSIntVarDom],val vals:Array[Int],va
     val cnt = counts.get(cur) match {case None => 1 case Some(x) => x.value}
     val lb = lows.getOrElse(cur,0)
     if(cnt <= lb) return new NoMove();//using <= to protect from potential errors?
-    val cnt2 = counts.get(cur) match {case None => 0 case Some(x) => x.value}
-    val ub = ups.getOrElse(cur,1)
+    val cnt2 = counts.get(v) match {case None => 0 case Some(x) => x.value}
+    val ub = ups.getOrElse(v,1)
     if(cnt2 >= ub) return new NoMove();//using >= to protect from potential errors?
     acceptOr(new AssignMove(variables(idx1),v,objective.assignVal(variables(idx1), v)),accept)
   }
