@@ -59,7 +59,10 @@ case class SumConstants(vars: Array[Int], cond: SetValue)
   * @author renaud.delandtsheer@cetic.be
   * */
 case class SumElements(vars: Array[IntValue], cond: SetValue)
-  extends IntInvariant(initialValue=cond.value.foldLeft(0)((acc, i) => acc + vars(i).value)) with Bulked[IntValue, Unit] with VaryingDependenciesInvariant{
+  extends IntInvariant(initialValue=cond.value.foldLeft(0)((acc, i) => acc + vars(i).value))
+  with Bulked[IntValue, Unit]
+  with VaryingDependenciesInvariant{
+
   assert(vars.size > 0, "Invariant SumElements declared with zero vars to max")
   assert(cond != null, "cond cannot be null for SumElements")
 

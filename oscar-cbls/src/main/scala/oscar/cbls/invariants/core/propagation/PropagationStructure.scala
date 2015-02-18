@@ -452,7 +452,7 @@ abstract class PropagationStructure(val verbose: Boolean, val checker:Option[Che
     propagating = false
   }
 
-  /**this method is used by propagationComponents to schedule themself for propagation. */
+  /**this method is used by propagationComponents to schedule themselves for propagation. */
   def scheduleForPropagation(p: PropagationElement) {
     scheduledElements = p :: scheduledElements
   }

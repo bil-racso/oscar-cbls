@@ -159,7 +159,6 @@ case class SwapsNeighborhood(vars:Array[CBLSIntVar],
       case Some(s) => IdenticalAggregator.removeIdenticalClassesLazily(secondIterationSchemeZone, s)
     }
 
-
     //TODO : check if two different values are considered as asymmetrical
     for (i: Int <- firstIterationScheme) {
       val firstVar = vars(i)
@@ -302,3 +301,4 @@ class ConflictAssignNeighborhood(c:ConstraintSystem, variables:List[CBLSIntVar],
   }
 }
 
+//TODO: prévoir un shiftneighborhood, qui fait des shift de partie de tableau

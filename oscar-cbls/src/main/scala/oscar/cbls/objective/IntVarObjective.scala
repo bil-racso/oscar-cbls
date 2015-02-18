@@ -27,8 +27,10 @@ import scala.language.implicitConversions
 object Objective{
   implicit def objToChangingIntValue(o:IntVarObjective):ChangingIntValue = o.objective
   implicit def objToFun(o:Objective):()=>Int = ()=>o.value
+  implicit def funToObj(f:()=>Int) = new FunctionObjective(f)
 
-  implicit def apply(f:()=>Int,model:Store = null) = new FunctionObjective(f,model)
+  def apply(f:()=>Int,model:Store = null) = new FunctionObjective(f,model)
+
   implicit def apply(objective:IntValue) =
     objective match {
       case c: ChangingIntValue => new IntVarObjective(c)
