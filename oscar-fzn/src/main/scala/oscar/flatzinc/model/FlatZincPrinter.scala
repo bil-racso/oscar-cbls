@@ -33,18 +33,17 @@ object FlatZincPrinter {
     //Variables
     for((id,e) <- dico.filter(_._2.isInstanceOf[VarRef])){
       //TODO: Make sure that aliases come after the corresponding variable... WHICH ALIASES?
-      //TODO: WHERE are the arrays?
       val v = e.asInstanceOf[VarRef].v//.asInstanceOf[ConcreteVariable]
       v match{
-        case IntegerVariable(i,d) => out.println("var "+toFZN(d)+": "+ id +" "+toFZNann(model.dicoAnnot(id))+" ;");
-        case BooleanVariable(i,v) => out.println("var bool: "+ id +" "+toFZNann(model.dicoAnnot(id))+{if(v.isDefined) "= "+v.get.toString() else ""}+" ;");
+        case IntegerVariable(i,d) => out.println("var "+toFZN(d)+": "+ id +toFZNann(model.dicoAnnot(id))+";");
+        case BooleanVariable(i,v) => out.println("var bool: "+ id +toFZNann(model.dicoAnnot(id))+{if(v.isDefined) " = "+v.get.toString() else ""}+";");
       }
     }
     for((id,e) <- dico.filter(_._2.isInstanceOf[ArrayOfElement])){
       if(e.typ.isVar){
         //println(id+" "+e)
         val a = e.asInstanceOf[ArrayOfElement].elements
-        out.println("array[1.."+a.size()+"] of var int: "+id+toFZNann(model.dicoAnnot(id))+"= "+toFZN(a)+";")
+        out.println("array[1.."+a.size()+"] of var int: "+id+toFZNann(model.dicoAnnot(id))+" = "+toFZN(a)+";")
         //println("array[1.."+a.size()+"] of var int: "+id+toFZNann(model.dicoAnnot(id))+"= "+toFZN(a)+";")
       }
     }
@@ -78,14 +77,14 @@ object FlatZincPrinter {
     }
   }
   def toFZN(ann: Annotation): String = {
-    ann.name+{if(!ann.args.isEmpty) ann.args.map(toFZN(_)).mkString("(", ", ", ")") else ""}
+    ann.name+{if(!ann.args.isEmpty) ann.args.map(toFZN(_)).mkString("(", ",", ")") else ""}
   }
   def toFZN(anns: List[Annotation]): String = {
     anns.map(toFZN(_)).mkString(" ")
   }
   def toFZNann(anns: List[Annotation]): String = {
     if(anns.isEmpty) "" else
-    anns.map(toFZN(_)).mkString(":: "," :: ","")
+    anns.map(toFZN(_)).mkString(" ::"," ::","")
   }
   def toFZN(vs: Array[Variable]): String = {
     vs.map(toFZN(_)).mkString("[",",","]")
@@ -99,10 +98,10 @@ object FlatZincPrinter {
       case s:String => s
       case c:Constraint => toFZN(c)
       case v:Variable => v.id
-      case es: ArrayOfElement => es.elements.asScala.map(toFZN(_)).mkString("[",", ","]") //In annotations
+      case es: ArrayOfElement => es.elements.asScala.map(toFZN(_)).mkString("[",",","]") //In annotations
       case vs: Array[Variable] => toFZN(vs) //arrays of variables.
       //case vs: ArrayList[VarRef] => println(vs); ""//vs.asScala.map(toFZN(_)).mkString("[",", ","]")
-      case vs: ArrayList[Element] => vs.asScala.map(toFZN(_)).mkString("[",", ","]")
+      case vs: ArrayList[Element] => vs.asScala.map(toFZN(_)).mkString("[",",","]")
       case e: Element => toFZN(e)
       case i: Integer => i.toString()
       case b: Boolean => b.toString()
@@ -130,9 +129,12 @@ object FlatZincPrinter {
       case int_div(x,y,z,ann) => "int_div("+toFZN(x)+","+toFZN(y)+","+toFZN(z)+")"+toFZNann(ann)
       case int_abs(x,y,ann) => "int_abs("+toFZN(x)+","+toFZN(y)+")"+toFZNann(ann)
       case array_int_element(x,y,z,ann) => "array_int_element("+toFZN(x)+","+toFZN(y)+","+toFZN(z)+")"+toFZNann(ann)
-      case array_var_int_element(x,y,z,ann) => "array_int_element("+toFZN(x)+","+toFZN(y)+","+toFZN(z)+")"+toFZNann(ann)
+      case array_var_int_element(x,y,z,ann) => "array_var_int_element("+toFZN(x)+","+toFZN(y)+","+toFZN(z)+")"+toFZNann(ann)
+      case array_bool_element(x,y,z,ann) => "array_bool_element("+toFZN(x)+","+toFZN(y)+","+toFZN(z)+")"+toFZNann(ann)
+      case array_var_bool_element(x,y,z,ann) => "array_var_bool_element("+toFZN(x)+","+toFZN(y)+","+toFZN(z)+")"+toFZNann(ann)
       case array_bool_and(x,y, ann) => "array_bool_and("+toFZN(x)+","+toFZN(y)+")"+toFZNann(ann)
       case array_bool_or(x,y, ann) => "array_bool_or("+toFZN(x)+","+toFZN(y)+")"+toFZNann(ann)
+      case array_bool_xor(x, ann) => "array_bool_xor("+toFZN(x)+")"+toFZNann(ann)
       case bool_clause(x,y, ann) => "bool_clause("+toFZN(x)+","+toFZN(y)+")"+toFZNann(ann)
       case bool2int(x,y, ann) => "bool2int("+toFZN(x)+","+toFZN(y)+")"+toFZNann(ann)
       case bool_eq(x,y, ann) => "bool_eq("+toFZN(x)+","+toFZN(y)+")"+toFZNann(ann)
@@ -156,7 +158,7 @@ object FlatZincPrinter {
       case reif(count(x,y,z,ann),w) => "count_reif("+toFZN(x)+","+toFZN(y)+","+toFZN(z)+","+toFZN(w)+")"+toFZNann(ann)
       case all_different_int(x,ann) => "all_different_int("+toFZN(x)+")"+toFZNann(ann)
       case GeneratedConstraint(name,args,signature) => name+"("+args.map(toFZN(_)).mkString(", ")+")"
-      case GenericConstraint(name,args) => name+"("+args.map(toFZN(_)).mkString(", ")+")"
+      case GenericConstraint(name,args, ann) => name+"("+args.map(toFZN(_)).mkString(", ")+")"+toFZNann(ann)
     }
   }
 }

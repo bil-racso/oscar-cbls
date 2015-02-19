@@ -273,7 +273,7 @@ class Model(val log: Log, val acceptAnyCstr: Boolean) {
         else getBoolVar(a)//TODO: differentiate par vs var
       else if(a.typ.typ.equals("set")) getIntSet(a)
       else throw new Exception("Case not handled: "+a))
-    GenericConstraint(c,args2)
+    GenericConstraint(c,args2,ann)
   }
   def makeConstraint[A]/* <: Constraint]*/(c:Class[A],args:List[Element], ann:List[Annotation]): Constraint = {
     val cc:Constructor[A] = c.getConstructors()(0).asInstanceOf[Constructor[A]];

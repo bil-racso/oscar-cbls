@@ -284,6 +284,11 @@ class FZCBLSSolver extends SearchEngine with StopWatch {
     
     
     
+    val allcstrs:List[Constraint] = model.constraints.toList;
+    val (maybedircstrs,maybesoftcstrs) = allcstrs.partition(_.definedVar.isDefined)
+    log("Possibly "+maybedircstrs.length+" invariants.")
+    val (invariants,removed) = FZModelTransfo.getSortedInvariants(maybedircstrs)(log)
+    log("Sorted "+invariants.length+" Invariants")
     
     // Model
     val m: Store = new Store(false, None, true)//setting the last Boolean to true would avoid calling the SCC algorithm but we have to make sure that there are no SCCs in the Graph. Is it the case in the way we build it?
@@ -293,11 +298,6 @@ class FZCBLSSolver extends SearchEngine with StopWatch {
     log("Created Model (Variables and Objective)")
     
     
-    val allcstrs:List[Constraint] = model.constraints.toList;
-    val (maybedircstrs,maybesoftcstrs) = allcstrs.partition(_.definedVar.isDefined)
-    log("Possibly "+maybedircstrs.length+" invariants.")
-    val (invariants,removed) = FZModelTransfo.getSortedInvariants(maybedircstrs)(log)
-    log("Sorted "+invariants.length+" Invariants")
     val softorimplcstrs = maybesoftcstrs ++ removed
     val softcstrs = 
     if(!opts.is("no-impl-cstr")){

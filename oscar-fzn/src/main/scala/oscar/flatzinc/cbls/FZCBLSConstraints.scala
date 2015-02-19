@@ -372,7 +372,7 @@ class FZCBLSConstraintPoster(val c: ConstraintSystem, implicit val getCBLSVar: V
        //TODO: Might be more efficient...
        val dc = DenseCount.makeDenseCount(xs.map(getCBLSVar(_)));
        val counts = dc.counts
-       val eqs = vs.toList.zip(cnts).map(_ match {case (v,c) => EQ(c,counts(v.min-dc.offset))})//TODO: +offset or -offset?
+       val eqs = vs.toList.zip(cnts).map(_ match {case (v,c) => EQ(c,counts(v.min+dc.offset))})//TODO: +offset or -offset? seems to be +
        if(closed) domains(xs,vs.map(_.min)) ++ eqs else eqs
      }
   }
