@@ -44,13 +44,18 @@ trait SearchEngineTrait{
     })
   }
 
+  @inline
+  private def flattenTwoIterables[R,S](r: Iterable[R] , s: Iterable[S]):Iterable[(R,S)]={
+    val flattened = for (rr <- r.toIterator; ss <- s.toIterator) yield (rr,ss)
+    flattened.toIterable
+  }
+
   /**return a couple (r,s) that is allowed: st(r,s) is true, and maximizing f(r,s) among the allowed couples
    * this selector is not randomized; in case of tie breaks the first one is returned
    * @param st is optional and set to true if not specified
     */
   def selectMaxNR2[R,S](r: Iterable[R] , s: Iterable[S], f: (R,S) => Int, st: ((R,S) => Boolean) = ((r:R, s:S) => true)): (R,S) = {
-    val flattened = for (rr <- r.toIterator; ss <- s.toIterator) yield (rr,ss)
-    selectMaxNR[(R,S)](flattened.toIterable , (rands:(R,S)) => f(rands._1,rands._2), (rands:(R,S)) => st(rands._1,rands._2))
+    selectMaxNR[(R,S)](flattenTwoIterables(r,s), (rands:(R,S)) => f(rands._1,rands._2), (rands:(R,S)) => st(rands._1,rands._2))
   }
 
   /**return an element r that is allowed: st(r) is true, and maximizing f(r) among the allowed couples
@@ -104,8 +109,7 @@ trait SearchEngineTrait{
    * @param st is optional and set to true if not specified
     */
   def selectMax2[R,S](r: Iterable[R] , s: Iterable[S], f: (R,S) => Int, st: ((R,S) => Boolean) = ((r:R, s:S) => true), stop: (R,S,Int) => Boolean = (_:R,_:S,_:Int) => false): (R,S) = {
-    val flattened:List[(R,S)] = for (rr <- r.toList; ss <- s.toList) yield (rr,ss)
-    selectMax[(R,S)](flattened , (rands:(R,S)) => f(rands._1,rands._2), (rands:(R,S)) => st(rands._1,rands._2))
+    selectMax[(R,S)](flattenTwoIterables(r,s), (rands:(R,S)) => f(rands._1,rands._2), (rands:(R,S)) => st(rands._1,rands._2))
   }
 
   /**return an element r that is allowed: st(r) is true, and maximizing f(r) among the allowed couples
@@ -139,8 +143,7 @@ trait SearchEngineTrait{
    * @param s is optional and set to true if not specified
    */  
   def selectMin[R,S](r: Iterable[R] , s: Iterable[S]) (f: (R,S) => Int, filter: ((R,S) => Boolean)): (R,S) = {
-     val flattened = for (rr <- r.toIterator; ss <- s.toIterator) yield (rr,ss)
-    selectMin[(R,S)](flattened.toIterable)((rands:(R,S)) => f(rands._1,rands._2), (rands:(R,S)) => filter(rands._1,rands._2))
+    selectMin[(R,S)](flattenTwoIterables(r,s))((rands:(R,S)) => f(rands._1,rands._2), (rands:(R,S)) => filter(rands._1,rands._2))
   }
 
   /**return an element r that is allowed: st(r) is true, and minimizing f(r) among the allowed couples
@@ -172,8 +175,7 @@ trait SearchEngineTrait{
    * @param st is optional and set to true if not specified
    */
   def selectFrom2[R,S](r: Iterable[R] , s: Iterable[S], st: ((R,S) => Boolean) = ((r:R, s:S) => true)): (R,S) = {
-      val flattened = for (rr <- r.toIterator; ss <- s.toIterator) yield (rr,ss)
-      selectFrom[(R,S)](flattened.toIterable , (rands:(R,S)) => st(rands._1,rands._2))
+      selectFrom[(R,S)](flattenTwoIterables(r,s), (rands:(R,S)) => st(rands._1,rands._2))
     }
 
   /**return an element r that is allowed: st(r) is true
@@ -209,9 +211,8 @@ trait SearchEngineTrait{
    * @param st is optional and set to true if not specified
    */
   def selectFirst2[R,S](r: Iterable[R] , s: Iterable[S], st: ((R,S) => Boolean) = ((r:R, s:S) => true)): (R,S) = {
-        val flattened = for (rr <- r.toIterator; ss <- s.toIterator) yield (rr,ss)
-        selectFirst[(R,S)](flattened.toIterable , (rands:(R,S)) => st(rands._1,rands._2))
-      }
+    selectFirst[(R,S)](flattenTwoIterables(r,s), (rands:(R,S)) => st(rands._1,rands._2))
+  }
 
   /**return the first element r that is allowed: st(r) is true
    * @param st is optional and set to true if not specified

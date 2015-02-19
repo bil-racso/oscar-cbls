@@ -188,7 +188,7 @@ abstract class PropagationStructure(val verbose: Boolean, val checker:Option[Che
     }
 
     propagating = false
-    previousPropagationTarget = null
+    previousPropagationTrack = null
 
     if (DropStaticGraph) dropStaticGraph()
 
@@ -285,7 +285,7 @@ abstract class PropagationStructure(val verbose: Boolean, val checker:Option[Che
     fastPropagationTracks += ((p, null))
   }
 
-  private var previousPropagationTarget: PropagationElement = null
+  private var previousPropagationTrack: Array[Boolean] = null
 
   def isPropagating:Boolean = propagating
 
@@ -300,20 +300,21 @@ abstract class PropagationStructure(val verbose: Boolean, val checker:Option[Che
     if (!propagating) {
       if (UpTo != null) {
         val Track = fastPropagationTracks.getOrElse(UpTo, null)
-        val SameAsBefore = Track != null && previousPropagationTarget == UpTo
+        val SameAsBefore = Track != null && previousPropagationTrack == Track
         propagating = true
         if (verbose) {
           println("PropagationStructure: " + (if (Track == null) "total" else "partial" ) + " propagation triggered by " + UpTo)
         }
         propagateOnTrack(Track, SameAsBefore)
+        previousPropagationTrack = Track
       } else {
         propagating = true
         if (verbose) {
           println("PropagationStructure: total propagation triggered manually")
         }
         propagateOnTrack(null, false)
+        previousPropagationTrack = null
       }
-      previousPropagationTarget = UpTo
     }
   }
 
