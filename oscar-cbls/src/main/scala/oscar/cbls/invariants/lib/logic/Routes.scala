@@ -47,7 +47,7 @@ class Routes(V: Int,
   val positionInRoute: Array[CBLSIntVar],
   val routeNr: Array[CBLSIntVar],
   val routeLength: Array[CBLSIntVar],
-  val lastInRoute: Array[CBLSIntVar]) extends VaryingDependenciesInvariant {
+  val lastInRoute: Array[CBLSIntVar]) extends VaryingDependencies {
   val UNROUTED = next.length
   val arrayOfUnregisterKeys = registerStaticAndDynamicDependencyArrayIndex(next)
   finishInitialization()

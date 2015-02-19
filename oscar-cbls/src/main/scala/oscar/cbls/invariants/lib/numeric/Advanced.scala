@@ -61,7 +61,7 @@ case class SumConstants(vars: Array[Int], cond: SetValue)
 case class SumElements(vars: Array[IntValue], cond: SetValue)
   extends IntInvariant(initialValue=cond.value.foldLeft(0)((acc, i) => acc + vars(i).value))
   with Bulked[IntValue, Unit]
-  with VaryingDependenciesInvariant{
+  with VaryingDependencies{
 
   assert(vars.size > 0, "Invariant SumElements declared with zero vars to max")
   assert(cond != null, "cond cannot be null for SumElements")
@@ -175,7 +175,7 @@ case class ProdConstants(vars: Array[Int], cond: SetValue)
   * @author renaud.delandtsheer@cetic.be
   * */
 case class ProdElements(vars: Array[IntValue], cond: SetValue)
-  extends IntInvariant with Bulked[IntValue, Unit] with VaryingDependenciesInvariant{
+  extends IntInvariant with Bulked[IntValue, Unit] with VaryingDependencies{
   assert(cond != null, "cond cannot be null for ProdElements")
 
   val keyForRemoval: Array[KeyForElementRemoval] =  Array.fill(vars.length) {null}

@@ -111,7 +111,7 @@ trait Checkpointing extends Store{
   }
 }
 
-class ChangeRecorder(s:Store) extends VaryingDependenciesInvariant{
+class ChangeRecorder(s:Store) extends VaryingDependencies{
 
   var keys : Array[KeyForElementRemoval] = null
 

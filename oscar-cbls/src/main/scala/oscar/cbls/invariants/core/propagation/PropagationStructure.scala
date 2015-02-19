@@ -1062,7 +1062,7 @@ class PropagationElement extends BasicPropagationElement with DAGNode{
 //  def getDotNode: String
 }
 
-trait VaryingDependencies extends PropagationElement{
+trait VaryingDependenciesPE extends PropagationElement{
   //for cycle managing
   /**set to true if the PropagationElement is one that can break
     * or make dependency cycles in the dynamic dependency graph

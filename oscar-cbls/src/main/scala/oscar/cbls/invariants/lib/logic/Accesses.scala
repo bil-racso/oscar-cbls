@@ -34,7 +34,7 @@ import oscar.cbls.invariants.core.propagation.{Checker, KeyForElementRemoval}
  * */
 case class IntITE(ifVar: IntValue, thenVar: IntValue, elseVar: IntValue)
   extends IntInvariant(if(ifVar.value >0) thenVar.value else elseVar.value, thenVar.domain union elseVar.domain)
-  with VaryingDependenciesInvariant {
+  with VaryingDependencies {
 
   var KeyToCurrentVar: KeyForElementRemoval = null
 
@@ -86,7 +86,7 @@ case class ConstantIntElement(index: IntValue, inputArray: Array[Int])
 case class IntElement(index: IntValue, inputarray: Array[IntValue])
   extends IntInvariant(initialValue = inputarray(index.value).value)
   with Bulked[IntValue, Domain]
-  with VaryingDependenciesInvariant {
+  with VaryingDependencies {
 
   registerStaticDependency(index)
   registerDeterminingDependency(index)
@@ -137,7 +137,7 @@ case class IntElement(index: IntValue, inputarray: Array[IntValue])
  * @author renaud.delandtsheer@cetic.be
  * */
 case class Elements[T <:IntValue](index: SetValue, inputarray: Array[T])
-  extends SetInvariant with Bulked[T, Domain] with VaryingDependenciesInvariant {
+  extends SetInvariant with Bulked[T, Domain] with VaryingDependencies {
 
   val KeysToInputArray: Array[KeyForElementRemoval] = new Array(inputarray.size)
 
@@ -236,7 +236,7 @@ case class Elements[T <:IntValue](index: SetValue, inputarray: Array[T])
  * @author renaud.delandtsheer@cetic.be
  * */
 case class SetElement(index: IntValue, inputarray: Array[SetValue])
-  extends SetInvariant(inputarray.apply(index.value).value) with Bulked[SetValue, Domain] with VaryingDependenciesInvariant {
+  extends SetInvariant(inputarray.apply(index.value).value) with Bulked[SetValue, Domain] with VaryingDependencies {
 
   var KeyToCurrentVar: KeyForElementRemoval = null
 

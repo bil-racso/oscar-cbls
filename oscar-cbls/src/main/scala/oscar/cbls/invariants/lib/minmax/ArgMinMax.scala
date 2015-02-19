@@ -66,7 +66,7 @@ case class ArgMin(vars: Array[IntValue], cond: SetValue = null, default: Int = I
  * @author renaud.delandtsheer@cetic.be
  * */
 abstract class ArgMiax(vars: Array[IntValue], cond: SetValue, default: Int)
-  extends SetInvariant(initialDomain = vars.indices.start to vars.indices.last) with Bulked[IntValue, Unit] with VaryingDependenciesInvariant {
+  extends SetInvariant(initialDomain = vars.indices.start to vars.indices.last) with Bulked[IntValue, Unit] with VaryingDependencies {
 
   override def toString:String = {
     name + "(" + InvariantHelper.arrayToString(vars) + "," + cond + "," + default + ")"
