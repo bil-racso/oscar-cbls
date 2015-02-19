@@ -12,7 +12,6 @@
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
-package oscar.examples.cp.hakank
 import oscar.cp._
 import scala.io.Source._
 import scala.math._
@@ -38,8 +37,8 @@ object Langford extends CPModel with App {
   //
   // data
   //
-  val k = if (args.length > 0) args(0).toInt else 4;
-  val num_to_show = if (args.length > 1) args(1).toInt else 0;
+  val k = if (args.length > 0) args(0).toInt else 12;
+  val num_to_show = if (args.length > 1) args(1).toInt else 1;
   //
   // variables
   //
@@ -50,22 +49,24 @@ object Langford extends CPModel with App {
   // constraints
   //
   var numSols = 0
-
+  val cons = Strong
   add(allDifferent(position), Medium)
   for (i <- 1 to k) {
     add(position(i + k - 1) == (position(i - 1) + i + 1))
-    add(elementVar(solution,position(i-1),i),Strong)
-    add(elementVar(solution,position(k + i - 1),i),Strong)
+
+    add(elementVar(solution,position(i-1),i),cons)
+    add(elementVar(solution,position(k + i - 1),i),cons)
   }
   // symmetry breaking
   add(solution(0) < solution(2 * k - 1))
   search {
     binary(position, _.size, _.min)
   }
+  /*
   onSolution {
     print("solution:" + solution.mkString("") + " ")
     println("position:" + position.mkString(""))
     numSols += 1
-  }
-  println(start(num_to_show))
+  }*/
+  println(start())
 }
