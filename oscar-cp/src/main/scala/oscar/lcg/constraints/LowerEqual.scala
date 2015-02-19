@@ -47,15 +47,17 @@ class LowerEqual(left: LCGIntervalVar, right: LCGIntervalVar) extends LCGConstra
   @inline private def updateMax(): CPOutcome = {
     val leftMax = left.max
     val rightMax = right.max
-    val lit1 = right.lowerEqual(rightMax)
-    val lit2 = left.lowerEqual(rightMax)
-    builder.clear()
-    builder.add(-lit1)
-    builder.add(lit2)
-    val literals = builder.toArray
-    if (!cdclStore.addExplanationClause(literals)) Failure
-    else Suspend
-
+    if (leftMax <= rightMax) Suspend
+    else {
+      val lit1 = right.lowerEqual(rightMax)
+      val lit2 = left.lowerEqual(rightMax)
+      builder.clear()
+      builder.add(-lit1)
+      builder.add(lit2)
+      val literals = builder.toArray
+      if (!cdclStore.addExplanationClause(literals)) Failure
+      else Suspend
+    }
   }
 
   @inline private def updateMin(): CPOutcome = {
@@ -69,7 +71,6 @@ class LowerEqual(left: LCGIntervalVar, right: LCGIntervalVar) extends LCGConstra
       builder.add(-lit1)
       builder.add(lit2)
       val literals = builder.toArray
-      //println(literals.mkString(" "))
       if (!cdclStore.addExplanationClause(literals)) Failure
       else Suspend
     }

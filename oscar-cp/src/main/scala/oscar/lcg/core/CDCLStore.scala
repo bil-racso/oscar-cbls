@@ -84,7 +84,7 @@ class CDCLStore(store: CPStore) {
 
   /** Return the clause responsible of the assignment. */
   @inline final def assignReason(varId: Int): Clause = reasons(varId)
-  
+
   /** Return the level in which the literal was assigned (-1 if unassigned). */
   @inline final def assignedLevel(literal: Literal): Int = levels(literal.varId)
 
@@ -135,13 +135,13 @@ class CDCLStore(store: CPStore) {
   final def addExplanationClause(literals: Array[Literal]): Boolean = {
 
     if (literals == null) return true
-    
+
     // Sort and filter literals
     val sortedLiterals = literals.sortBy(lit => if (levels(lit.varId) == -1) Int.MinValue else -levels(lit.varId)) // FIXME: perf
-    
+
     val allTrue = sortedLiterals.exists(lit => isTrue(lit))
     if (allTrue) return true
-    
+
     // New clause
     val clause = Clause(this, sortedLiterals, false)
 
@@ -172,8 +172,10 @@ class CDCLStore(store: CPStore) {
     else if (literals.length == 1) enqueue(literals(0), null)
     else {
       // Allocate clause
-      val clause = Clause(this, literals, learnt)
       if (learnt) {
+
+        val clause = Clause(this, literals, learnt)
+
         // Pick a second literal to watch
         var maxLit = 0
         var max = -1
@@ -195,10 +197,68 @@ class CDCLStore(store: CPStore) {
         learntClauses.append(clause)
         enqueue(literals(0), clause)
       } else {
-        problemClauses.append(clause)
-        watchers(literals(0).opposite.id).addLast(clause)
-        watchers(literals(1).opposite.id).addLast(clause)
-        true
+
+        var unassigned = 0
+        // Search a first literals to watch
+        var i = 0
+        var litId = -1
+        var maxLevel = -1
+        while (i < literals.length) {
+          val lit = literals(i)
+          val level = assignedLevel(lit)
+          if (level == -1) {
+            unassigned += 1
+            litId = i
+            i = literals.length
+          } else if (level > maxLevel) {
+            maxLevel = level
+            litId = i
+          }
+          i += 1
+        }
+
+        if (unassigned == 0) true
+        else {
+
+          // Swap first 
+          val tmp1 = literals(0)
+          literals(0) = literals(litId)
+          literals(litId) = tmp1
+
+          // Search a second literals to watch
+          i = 1
+          litId = -1
+          maxLevel = -1
+          while (i < literals.length) {
+            val lit = literals(i)
+            val level = assignedLevel(lit)
+            if (level == -1) {
+              unassigned += 1
+              litId = i
+              i = literals.length
+            } else if (level > maxLevel) {
+              maxLevel = level
+              litId = i
+            }
+            i += 1
+          }
+
+          // Swap second
+          val tmp2 = literals(1)
+          literals(1) = literals(litId)
+          literals(litId) = tmp2
+
+          val clause = Clause(this, literals, learnt)
+          problemClauses.append(clause)
+          watchers(literals(0).opposite.id).addLast(clause)
+          watchers(literals(1).opposite.id).addLast(clause)
+
+          if (unassigned == 1 && isFalse(literals(1))) {
+            enqueue(literals(0), clause)
+          }
+          else true
+
+        }
       }
     }
   }
@@ -218,7 +278,7 @@ class CDCLStore(store: CPStore) {
   }
 
   @inline private def analyze(): Unit = {
-    
+
     val seen: Array[Boolean] = new Array(values.length) // FIXME
     var counter = 0
     var literal: Literal = null
@@ -356,12 +416,12 @@ class CDCLStore(store: CPStore) {
       undoAssignment()
     }
   }
-  
+
   // Undo the last levels until level.
   @inline private def undoLevelsUntil(level: Int): Unit = {
     while (nTrailLevels > level) undoLevel()
   }
-  
+
   final def undoAll(): Unit = undoLevelsUntil(0)
 
   // Used to adapt the length of inner structures.
