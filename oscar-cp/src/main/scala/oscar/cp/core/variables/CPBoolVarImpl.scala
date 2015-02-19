@@ -216,6 +216,9 @@ class CPBoolVarImpl private(final override val store: CPStore, initDomain: Int, 
     onDomainL2.register(c)
     if (trackDelta) c.addSnapshot(this)
   }
+  
+  def callPropagateWhenDomainChanges(c: Constraint, watcher: oscar.cp.core.Watcher): Unit = ???
+
 
   final override def callValBindWhenBind(c: Constraint) {
     callValBindWhenBind(c, this)

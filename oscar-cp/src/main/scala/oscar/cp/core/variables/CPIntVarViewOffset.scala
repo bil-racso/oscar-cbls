@@ -17,6 +17,7 @@ package oscar.cp.core.variables
 import scala.util.Random
 import oscar.cp.core.CPStore
 import oscar.cp.core.Constraint
+import oscar.cp.core.Watcher
 
 /**
  * Represents a view on variable applying an offset on it.
@@ -88,6 +89,8 @@ class CPIntVarViewOffset(v: CPIntVar, offset: Int) extends CPIntVar {
 	final override def callPropagateWhenBoundsChange(c: Constraint) = v.callPropagateWhenBoundsChange(c)
 	
 	final override def callPropagateWhenDomainChanges(c: Constraint, trackDelta: Boolean = false) = v.callPropagateWhenDomainChanges(c,trackDelta)
+  
+  final override def callPropagateWhenDomainChanges(c: Constraint, watcher: Watcher) = v.callPropagateWhenDomainChanges(c,watcher)
 	
 	// this method is useful when you have a view final override defined on a view
 	final override def callValBindWhenBind(c: Constraint, variable: CPIntVar) = v.callValBindWhenBind(c, variable)

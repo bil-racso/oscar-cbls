@@ -69,6 +69,7 @@ class CPSolver(propagStrength: CPPropagStrength) extends CPOptimizer(propagStren
     block // Apply the before search action
     searchStrategy.start(heuristic, stopCondition)
     pop() // Restore the current state 
+    cleanQueues()
     // Build the statistic object
     new SearchStatistics(
       searchStrategy.nNodes,

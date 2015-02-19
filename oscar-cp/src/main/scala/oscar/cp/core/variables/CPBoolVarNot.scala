@@ -70,6 +70,8 @@ class CPBoolVarNot(final override val not: CPBoolVar) extends CPBoolVar {
   final override def callPropagateWhenBind(c: Constraint): Unit = not.callPropagateWhenBind(c)
 
   final override def callPropagateWhenBoundsChange(c: Constraint): Unit = callPropagateWhenBoundsChange(c)
+  
+  final override def  callPropagateWhenDomainChanges(c: Constraint, watcher: oscar.cp.core.Watcher): Unit = ???
 
   final override def callPropagateWhenDomainChanges(c: Constraint, trackDelta: Boolean = false): Unit = not.callPropagateWhenDomainChanges(c, trackDelta)
 

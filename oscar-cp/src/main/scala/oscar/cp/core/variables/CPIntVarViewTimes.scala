@@ -90,6 +90,8 @@ class CPIntVarViewTimes(v: CPIntVar, val a: Int) extends CPIntVar {
   override final def callPropagateWhenBind(c: Constraint) = v.callPropagateWhenBind(c)
 
   override final def callPropagateWhenBoundsChange(c: Constraint) = v.callPropagateWhenBoundsChange(c)
+  
+  override final def callPropagateWhenDomainChanges(c: Constraint, watcher: oscar.cp.core.Watcher) = v.callPropagateWhenDomainChanges(c,watcher)
 
   override final def callPropagateWhenDomainChanges(c: Constraint, trackDelta: Boolean = false) = v.callPropagateWhenDomainChanges(c, trackDelta)
 

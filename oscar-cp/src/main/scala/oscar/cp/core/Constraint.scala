@@ -49,6 +49,12 @@ class SnapshotVarSet(x: CPSetVar) extends Snapshot {
   }
 }
 
+class Watcher {
+  def shouldEnqueue(): Boolean = true
+}
+
+object alwaysTrueWatcher extends Watcher
+
 /**
  * Abstract class extended by any CP constraints
  * @author Pierre Schaus pschaus@gmail.com

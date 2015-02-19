@@ -71,6 +71,10 @@ class CPIntVarViewMinus(v: CPIntVar) extends CPIntVar {
 	def callPropagateWhenBoundsChange(c: Constraint) = v.callPropagateWhenBoundsChange(c)
 	
 	def callPropagateWhenDomainChanges(c: Constraint, trackDelta: Boolean = false) = v.callPropagateWhenDomainChanges(c,trackDelta)
+  
+  
+  final override def callPropagateWhenDomainChanges(c: Constraint, watcher: oscar.cp.core.Watcher) = v.callPropagateWhenDomainChanges(c,watcher)
+
 	
 	// this method is useful when you have a view defined on a view
 	def callValBindWhenBind(c: Constraint, variable: CPIntVar) = v.callValBindWhenBind(c, variable)

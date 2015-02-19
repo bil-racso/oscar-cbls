@@ -27,6 +27,7 @@ import oscar.cp.core.CPPropagStrength
 import oscar.cp.core.SnapshotVarInt
 import oscar.cp.core.DeltaVarInt
 import oscar.cp.core.CPOutcome
+import oscar.cp.core.Watcher
 
 trait DomainIterator extends Iterator[Int] {
   def removeValue: CPOutcome
@@ -269,7 +270,8 @@ abstract class CPIntVar extends CPVar with Iterable[Int] {
    */
   def callPropagateWhenDomainChanges(c: Constraint, trackDelta: Boolean = false): Unit
 
-
+  def callPropagateWhenDomainChanges(c: Constraint, watcher: Watcher): Unit
+  
   def filterWhenDomainChangesWithDelta(idempotent: Boolean = false, priority: Int = CPStore.MaxPriorityL2-2) (filter: DeltaVarInt => CPOutcome) {
     store.post(
       new DeltaVarInt(this,filter,idempotent,priority) {

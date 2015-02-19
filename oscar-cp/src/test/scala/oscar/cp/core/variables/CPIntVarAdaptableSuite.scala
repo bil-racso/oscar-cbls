@@ -392,7 +392,7 @@ class CPIntVarAdaptableSuite extends TestSuite {
   }
   
   
-  test("Copyt domain and to Array") {
+  test("Copy domain and to Array") {
     val context = new CPStore()
     val values = Set(10, 11, 15, 16, 17, 20, 21, 25)
     val domain = new CPIntVarAdaptable(context, 5, 30, true)
@@ -407,5 +407,35 @@ class CPIntVarAdaptableSuite extends TestSuite {
     assert(domain.toArray.toSet == values)
     
   }
+  
+  test("Copy domain and to Array with pop") {
+    val context = new CPStore()
+    val values = Set(2,3,5,7)
+    val domain = new CPIntVarAdaptable(context, 2, 7, true)
+    assert(domain.toArray.toSet == (2 to 7).toSet)
+    (2 to 7).foreach(v => if (!values.contains(v)) domain.removeValue(v))
+    
+    domain.removeValue(3)
+    
+    context.pushState()
+    domain.updateMax(4)
+    
+    assert(domain.size == 1)
+    assert(domain.toArray.size == 1)
+    assert(!domain.hasValue(5))
+    
+    context.pop()
+    
+    assert(domain.hasValue(5))
+    
+    val valuesArray = Array.ofDim[Int](values.size)
+    val s = domain.fillArray(valuesArray)
+    assert(s == 3)
+    assert(valuesArray.take(s).toSet == Set(2,5,7))
+    assert(domain.toArray.toSet == Set(2,5,7))
+    
+  }  
+  
+
   
 }
