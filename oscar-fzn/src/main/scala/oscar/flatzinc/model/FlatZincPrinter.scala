@@ -136,6 +136,7 @@ object FlatZincPrinter {
       case array_bool_or(x,y, ann) => "array_bool_or("+toFZN(x)+","+toFZN(y)+")"+toFZNann(ann)
       case array_bool_xor(x, ann) => "array_bool_xor("+toFZN(x)+")"+toFZNann(ann)
       case bool_clause(x,y, ann) => "bool_clause("+toFZN(x)+","+toFZN(y)+")"+toFZNann(ann)
+      case reif(bool_clause(x,y, ann),z) => "bool_clause_reif("+toFZN(x)+","+toFZN(y)+","+toFZN(z)+")"+toFZNann(ann)
       case bool2int(x,y, ann) => "bool2int("+toFZN(x)+","+toFZN(y)+")"+toFZNann(ann)
       case bool_eq(x,y, ann) => "bool_eq("+toFZN(x)+","+toFZN(y)+")"+toFZNann(ann)
       case bool_lt(x,y, ann) => "bool_lt("+toFZN(x)+","+toFZN(y)+")"+toFZNann(ann)
@@ -157,6 +158,11 @@ object FlatZincPrinter {
       case reif(count_eq(x,y,z,ann),w) => "count_eq_reif("+toFZN(x)+","+toFZN(y)+","+toFZN(z)+","+toFZN(w)+")"+toFZNann(ann)
       case reif(count(x,y,z,ann),w) => "count_reif("+toFZN(x)+","+toFZN(y)+","+toFZN(z)+","+toFZN(w)+")"+toFZNann(ann)
       case all_different_int(x,ann) => "all_different_int("+toFZN(x)+")"+toFZNann(ann)
+      case global_cardinality_closed(x,y,z,ann) => "global_cardinality_closed("+toFZN(x)+","+toFZN(y)+","+toFZN(z)+")"+toFZNann(ann)
+      case global_cardinality(x,y,z,ann) => "global_cardinality("+toFZN(x)+","+toFZN(y)+","+toFZN(z)+")"+toFZNann(ann)
+      case global_cardinality_low_up_closed(x,y,z,w,ann) => "global_cardinality_low_up_closed("+toFZN(x)+","+toFZN(y)+","+toFZN(z)+","+toFZN(w)+")"+toFZNann(ann)
+      case global_cardinality_low_up(x,y,z,w,ann) => "global_cardinality_low_up("+toFZN(x)+","+toFZN(y)+","+toFZN(z)+","+toFZN(w)+")"+toFZNann(ann)
+      case member_int(x,y, ann) => "member_int("+toFZN(x)+","+toFZN(y)+")"+toFZNann(ann)
       case GeneratedConstraint(name,args,signature) => name+"("+args.map(toFZN(_)).mkString(", ")+")"
       case GenericConstraint(name,args, ann) => name+"("+args.map(toFZN(_)).mkString(", ")+")"+toFZNann(ann)
     }

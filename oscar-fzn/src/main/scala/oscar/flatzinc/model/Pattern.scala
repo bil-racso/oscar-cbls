@@ -47,7 +47,7 @@ case class DefCstrPattern(val name: String, val args: List[Pattern], val defArg:
 case class IntVarPattern(val id: String) extends Pattern
 case class AnyIntVarPattern(val id: String) extends Pattern
 
-case class SomeIntValPattern(val id: String) extends Pattern
+//case class SomeIntValPattern(val id: String) extends Pattern
 case class IntValPattern(val v: Int) extends Pattern
 case class AnyIntValPattern(val id: String) extends Pattern
 
@@ -55,14 +55,18 @@ case class BoolVarPattern(val id: String) extends Pattern
 case class AnyBoolVarPattern(val id: String) extends Pattern
 
 case class BoolValPattern(val v: Boolean) extends Pattern
-case class SomeBoolValPattern(val id: String) extends Pattern
+//case class SomeBoolValPattern(val id: String) extends Pattern
 case class AnyBoolValPattern(val id: String) extends Pattern
 
 case class SetValPattern(val v: Domain) extends Pattern
-case class SomeSetValPattern(val id: String) extends Pattern
+//case class SomeSetValPattern(val id: String) extends Pattern
 case class AnySetValPattern(val id: String) extends Pattern
 
 
 case class ArrayPattern(val vals: List[Pattern]) extends Pattern
+case class SomeIntValArrayPattern(val vals: List[Pattern]) extends Pattern
+case class SomeBoolValArrayPattern(val vals: List[Pattern]) extends Pattern
+case class AnyIntValArrayPattern(val id: String) extends Pattern
+case class AnyBoolValArrayPattern(val id: String) extends Pattern
 
 case class GroupPattern(var cstrs: List[Pattern]) extends Pattern
