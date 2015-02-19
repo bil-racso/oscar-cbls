@@ -72,9 +72,7 @@ class Swap(NodesPrecedingNodesToMove:()=>Iterable[Int],
       ) {
 
         encode(beforeMovedPoint, insertionPoint)
-        commit(true)
-        val newObj = obj.value
-        undo()
+        val newObj = evalObjOnEncodedMove()
 
         if (moveRequested(newObj)
           && submitFoundMove(SwapMove(beforeMovedPoint, insertionPoint, newObj, this, neighborhoodName))) {

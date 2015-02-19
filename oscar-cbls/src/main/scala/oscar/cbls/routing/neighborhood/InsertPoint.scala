@@ -66,9 +66,7 @@ case class InsertPoint(UnroutedNodesToInsert:()=>Iterable[Int],
         assert(isRecording, "MoveDescription should be recording now")
 
         encode(beforeInsertedPoint, insertedPoint)
-        commit(true)
-        val newObj = obj.value
-        undo()
+        val newObj = evalObjOnEncodedMove()
 
         if (moveRequested(newObj)
           && submitFoundMove(InsertPointMove(beforeInsertedPoint, insertedPoint, newObj, this, neighborhoodName))) {

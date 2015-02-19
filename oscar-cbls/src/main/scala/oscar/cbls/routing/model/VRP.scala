@@ -406,15 +406,12 @@ trait NodesOfVehicle extends PositionInRouteAndRouteNr with RoutedAndUnrouted {
 /**
  * Maintains the position of nodes in the routes, the route number of each node,
  * the length of each route and their last node.
+ * that these output variables are registered for a grouped partial propagation
+ * to ensure some efficiency in the queries proposed by this trait.
  * @author renaud.delandtsheer@cetic.be
  * @author Florent Ghilain (UMONS)
  */
 trait PositionInRouteAndRouteNr extends VRP {
-
-  //TODO: this is the reason why routing is slow:
-  //querying this supposedly O(1) data in between neighborh exploration causes a rollback propagation of the state to the state we are trying to leave
-  //so that propagation does not perform in a circle fashion, but in a star fashion!!!
-
   /**
    * the invariant Routes.
    */
@@ -434,6 +431,11 @@ trait PositionInRouteAndRouteNr extends VRP {
    * the route length of each route as an array of IntVar.
    */
   val routeLength = routes.routeLength
+
+  {
+    val allvars = positionInRoute.toList ++ routeNr ++ routeLength
+    m.registerForPartialPropagation(allvars:_*)
+  }
 
   /**
    * Tells if twos given nodes form a segment of route of n minimum length.

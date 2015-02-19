@@ -31,12 +31,12 @@ import scala.collection.immutable.SortedSet
 /**
  * Maintains Max(Var(i) | i in cond)
  * @param varss is an array of IntVar, which can be bulked
- * @param ccond is the condition, supposed fully acceptant if not specified (must be specified if varss is bulked)
+ * @param cond is the condition, supposed fully acceptant if not specified (must be specified if varss is bulked)
  * update is O(log(n))
  * @author renaud.delandtsheer@cetic.be
  * */
-case class MaxArray(varss: Array[IntValue], ccond: SetValue = null, default: Int = Int.MinValue)
-  extends MiaxArray(varss, if(ccond == null) CBLSSetConst(SortedSet.empty[Int] ++ varss.indices) else ccond, default) {
+case class MaxArray(varss: Array[IntValue], cond: SetValue = null, default: Int = Int.MinValue)
+  extends MiaxArray(varss, cond, default) {
 
   override def Ord(v: IntValue): Int = -v.value
 
@@ -53,12 +53,12 @@ case class MaxArray(varss: Array[IntValue], ccond: SetValue = null, default: Int
 /**
  * Maintains Min(Var(i) | i in cond)
  * @param varss is an array of IntVar, which can be bulked
- * @param ccond is the condition, supposed fully acceptant if not specified (must be specified if varss is bulked)
+ * @param cond is the condition, supposed fully acceptant if not specified (must be specified if varss is bulked)
  * update is O(log(n))
  * @author renaud.delandtsheer@cetic.be
  * */
-case class MinArray(varss: Array[IntValue], ccond: SetValue = null, default: Int = Int.MaxValue)
-  extends MiaxArray(varss, if(ccond == null) CBLSSetConst(SortedSet.empty[Int] ++ varss.indices) else ccond, default) {
+case class MinArray(varss: Array[IntValue], cond: SetValue = null, default: Int = Int.MaxValue)
+  extends MiaxArray(varss, cond, default) {
 
   override def Ord(v: IntValue): Int = v.value
 
@@ -76,7 +76,7 @@ case class MinArray(varss: Array[IntValue], ccond: SetValue = null, default: Int
  * Maintains Miax(Var(i) | i in cond)
  * Exact ordering is specified by implementing abstract methods of the class.
  * @param vars is an array of IntVar, which can be bulked
- * @param cond is the condition, cannot be null
+ * @param cond is the condition, can be null
  * update is O(log(n))
  * @author renaud.delandtsheer@cetic.be
  * */
@@ -107,11 +107,8 @@ abstract class MiaxArray(vars: Array[IntValue], cond: SetValue, default: Int)
 
   finishInitialization()
 
-  //TODO: single pass please!
-  override def performBulkComputation(bulkedVar: Array[IntValue]) = {
-    (bulkedVar.foldLeft(Int.MaxValue)((acc, intvar) => if (intvar.min < acc) intvar.min else acc),
-      bulkedVar.foldLeft(Int.MinValue)((acc, intvar) => if (intvar.max > acc) intvar.max else acc))
-  }
+  override def performBulkComputation(bulkedVar: Array[IntValue]) =
+    InvariantHelper.getMinMaxBounds(bulkedVar)
 
   def ExtremumName: String
   def Ord(v: IntValue): Int

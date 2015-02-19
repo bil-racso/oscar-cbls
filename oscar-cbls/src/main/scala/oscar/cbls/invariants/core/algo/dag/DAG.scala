@@ -44,9 +44,9 @@ trait DAGNode extends Ordered[DAGNode]{
     */
   var uniqueID:Int = -1
 
-  def getDAGPrecedingNodes: Iterable[DAGNode]
+  protected[dag] def getDAGPrecedingNodes: Iterable[DAGNode]
 
-  def getDAGSucceedingNodes: Iterable[DAGNode]
+  protected[dag] def getDAGSucceedingNodes: Iterable[DAGNode]
 }
 
 /**

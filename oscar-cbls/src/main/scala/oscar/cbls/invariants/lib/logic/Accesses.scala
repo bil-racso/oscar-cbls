@@ -137,7 +137,9 @@ case class IntElement(index: IntValue, inputarray: Array[IntValue])
  * @author renaud.delandtsheer@cetic.be
  * */
 case class Elements[T <:IntValue](index: SetValue, inputarray: Array[T])
-  extends SetInvariant with Bulked[T, Domain] with VaryingDependencies {
+  extends SetInvariant
+  with Bulked[T, Domain]
+  with VaryingDependencies {
 
   val KeysToInputArray: Array[KeyForElementRemoval] = new Array(inputarray.size)
 

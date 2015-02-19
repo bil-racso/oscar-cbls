@@ -190,14 +190,13 @@ case class ThreeOpt(potentialInsertionPoints:()=>Iterable[Int],
      * with UNDO ACTIVATED, so that we can go back to the previous move if necessary
      */
     reverseSegmentInPlace(insertionPoint, segEndPoint) // REVERSE
-    commit(true)
+    commit(false)
     val objAfterSecondMove = obj()
 
     val FirstMoveIsBestMove = objAfterFirstMove < objAfterSecondMove
     val bestObjAfter = if(FirstMoveIsBestMove) objAfterFirstMove else objAfterSecondMove
 
     //put everything back to place, since we three-opted and reversed, the rollback performs the reverse
-    cleanRecordedMoves()
     encodeMove(insertionPoint, segStartPoint, beforeStart, REVERSE)
     commit(false)
 
@@ -256,8 +255,7 @@ case class ThreeOptMove(beforeStart: Int,
 
   // overriding methods
   override def encodeMove() {
-    neighborhood.encodeMove(beforeStart, segEndPoint, insertionPoint,
-      reverseSegment)
+    neighborhood.encodeMove(beforeStart, segEndPoint, insertionPoint, reverseSegment)
   }
 
   override def toString: String =

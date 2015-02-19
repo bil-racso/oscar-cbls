@@ -69,9 +69,7 @@ case class OnePointMove(NodesPrecedingNodesToMove:()=>Iterable[Int],
           && (!vrp.isADepot(movedPoint) || vrp.onTheSameRoute(movedPoint, insertionPoint))) {
 
         encode(beforeMovedPoint, insertionPoint)
-        commit(true)
-        val newObj = obj.value
-        undo()
+        val newObj = evalObjOnEncodedMove()
 
         if (moveRequested(newObj)
           && submitFoundMove(OnePointMoveMove(beforeMovedPoint, movedPoint, insertionPoint, newObj, this, neighborhoodName))){
@@ -86,8 +84,7 @@ case class OnePointMove(NodesPrecedingNodesToMove:()=>Iterable[Int],
     startIndice = 0
   }
 
-  def encode(predOfMovedPoint: Int,
-             insertionPoint: Int) {
+  def encode(predOfMovedPoint: Int, insertionPoint: Int) {
     val s = cutNodeAfter(predOfMovedPoint)
     insert(s, insertionPoint)
   }

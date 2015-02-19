@@ -39,6 +39,14 @@ abstract class EasyRoutingNeighborhood(best:Boolean, vrp:VRP) extends EasyNeighb
 
   private var affects: List[Affect] = List.empty
 
+  @inline
+  protected def evalObjOnEncodedMove():Int = {
+    commit(true)
+    val newObj = obj.value
+    undo()
+    newObj
+  }
+
   protected def addMove(affect: Affect) {
     require(Recording)
     //println("addMove: " + affect)

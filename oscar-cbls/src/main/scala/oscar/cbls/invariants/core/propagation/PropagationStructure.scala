@@ -277,12 +277,15 @@ abstract class PropagationStructure(val verbose: Boolean, val checker:Option[Che
   private var fastPropagationTracks: SortedMap[PropagationElement, Array[Boolean]] =
     SortedMap.empty[PropagationElement, Array[Boolean]]
 
+  private var partialPropagationTargets:List[List[PropagationElement]] = List.empty
+
   /**to call before setupPropagationStructure to specify PropagationElements
     * on which one need partial propagation
+    * if several elements are submitted at the same time,they constitute a target group, which is propagated altogether.
     */
-  def registerForPartialPropagation(p: PropagationElement) {
+  def registerForPartialPropagation(p: PropagationElement*) {
     require(!this.closed, "cannot register variables for partial propagation aftger model has been closed")
-    fastPropagationTracks += ((p, null))
+    partialPropagationTargets = p.toList :: partialPropagationTargets
   }
 
   private var previousPropagationTrack: Array[Boolean] = null
@@ -320,13 +323,10 @@ abstract class PropagationStructure(val verbose: Boolean, val checker:Option[Che
 
   /**Builds and stores the partial propagation tracks*/
   private def buildFastPropagationTracks() {
-    if (!fastPropagationTracks.isEmpty) {
-      //calculer la reacheability sur le graphe statique par algo de Floyd Warshall
-      //on prend les listening elements parce-que certains peuvent ne pas etre enregistres dans le modele
-      // si ils sont en entree du graphe.
-      val keys = fastPropagationTracks.keys
-      for (n <- keys) {
-        fastPropagationTracks += ((n, BuildFastPropagationtrack(n)))
+    for(propagationGroup <- partialPropagationTargets){
+      val track = BuildFastPropagationtrack(propagationGroup)
+      for (n <- propagationGroup) {
+        fastPropagationTracks += ((n, track))
       }
     }
   }
@@ -335,12 +335,12 @@ abstract class PropagationStructure(val verbose: Boolean, val checker:Option[Che
     * @param target the propagation element for which we build the partial propagation track
     * @return an array of boolean: UniqueID => should the element with UniqueID be propagated for this target?
     */
-  private def BuildFastPropagationtrack(target: PropagationElement): Array[Boolean] = {
+  private def BuildFastPropagationtrack(target: List[PropagationElement]): Array[Boolean] = {
     val Track: Array[Boolean] = new Array[Boolean](getMaxID + 1)
     for (i <- 0 to getMaxID) Track(i) = false
 
-    var ToExplore: List[PropagationElement] = List(target)
-    Track(target.uniqueID) = true
+    var ToExplore: List[PropagationElement] = target
+    for(pe <- target) Track(pe.uniqueID) = true
 
     while (!ToExplore.isEmpty) {
       val n = ToExplore.head

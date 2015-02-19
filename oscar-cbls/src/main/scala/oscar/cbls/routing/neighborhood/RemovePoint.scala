@@ -59,9 +59,7 @@ case class RemovePoint(PredecessorsOfRoutedPointsToRemove:()=>Iterable[Int],
         "a point to remove is a depot: beforeRemovedPoint:" + beforeRemovedPoint + " removedPoint:" + removedPoint)
 
       encode(beforeRemovedPoint)
-      commit(true)
-      val newObj = obj.value
-      undo()
+      val newObj = evalObjOnEncodedMove()
 
       if (moveRequested(newObj)
         && submitFoundMove(RemovePointMove(beforeRemovedPoint, newObj, this, neighborhoodName))) {
