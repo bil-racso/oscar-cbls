@@ -9,7 +9,7 @@ import oscar.cp.core.CPOutcome._
 import oscar.lcg.heuristic.Heuristic
 
 /** @author Renaud Hartert ren.hartert@gmail.com */
-class LCGSearch(cpStore: CPStore, lcgStore: CDCLStore) {
+class LCGSearch(cpStore: CPStore, cdclStore: CDCLStore) {
 
   private[this] var depth: Int = 0
   private[this] var _nConflicts: Int = 0
@@ -39,13 +39,16 @@ class LCGSearch(cpStore: CPStore, lcgStore: CDCLStore) {
   /** Clear all actions executed when a failed node is found */
   final def clearOnFailure(): Unit = failureActions = Nil
 
-  final def search(heuristic: Heuristic, stopCondition: () => Boolean): LiftedBoolean = {
-
-    depth = 0
+  /** Resets the statistics of the search */
+  final def resetStatistics(): Unit = {
     _nConflicts = 0
     _nSolutions = 0
     _nNodes = 0
+  }
 
+  final def search(heuristic: Heuristic, stopCondition: () => Boolean): LiftedBoolean = {
+
+    depth = 0 // reset depth
     var state: LiftedBoolean = Unassigned
     var stop = false
 
@@ -53,7 +56,7 @@ class LCGSearch(cpStore: CPStore, lcgStore: CDCLStore) {
 
       // Propagation
       var outcome = Suspend
-      if (lcgStore.propagate() == false) outcome = Failure
+      if (cdclStore.propagate() == false) outcome = Failure
       else if (cpStore.propagate() == Failure) outcome = Failure
 
       // Handle conflict
@@ -66,8 +69,8 @@ class LCGSearch(cpStore: CPStore, lcgStore: CDCLStore) {
           state = False
         } else {
           // Backjump
-          val level = lcgStore.backtrackLvl
-          println("backjump from " + depth + " to " + level)
+          val level = cdclStore.backtrackLvl
+          //println("backjump from " + depth + " to " + level)
           while (depth > level) {
             depth -= 1 // backtrack
             cpStore.pop
@@ -84,31 +87,30 @@ class LCGSearch(cpStore: CPStore, lcgStore: CDCLStore) {
           solutionActions.foreach(_())
           stop = true
           state = True
-        } 
-        // Stop condition
+        } // Stop condition
         else if (stopCondition()) {
           stop = true
-        } 
-        // Apply decision
+        } // Apply decision
         else {
           // Expand
           _nNodes += 1
           depth += 1
           cpStore.pushState()
           // Apply decision
-          lcgStore.newLevel()
-          println("\nlevel " + depth)
+          cdclStore.newLevel()
+          //println("\nlevel " + depth)
           decision()
         }
       }
     }
 
     // Pop the remaining nodes
+    cdclStore.undoAll() // untrail cdcl
     while (depth > 0) {
       cpStore.pop
       depth -= 1
     }
-    
+
     state
   }
 }

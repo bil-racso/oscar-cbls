@@ -20,7 +20,7 @@ class StaticMinHeuristic(variables: Array[LCGIntervalVar]) extends Heuristic {
       val value = x.min
       val literal = x.lowerEqual(value)
       () => {
-        println("decision  : assign " + x.name + " to " + value)
+        //println("decision  : assign " + x.name + " to " + value)
         lcgStore.enqueue(literal, null)
       }
     }

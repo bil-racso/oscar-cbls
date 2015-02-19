@@ -74,10 +74,10 @@ class CDCLStore(store: CPStore) {
   @inline final def decisionLevel: Int = nTrailLevels
 
   /** Return true if the variable is assigned to true. */
-  @inline final def isTrue(literal: Literal): Boolean = values(literal.varId) == True
+  @inline final def isTrue(literal: Literal): Boolean = value(literal) == True
 
   /** Return true if the variable is assigned to false. */
-  @inline final def isFalse(literal: Literal): Boolean = values(literal.varId) == False
+  @inline final def isFalse(literal: Literal): Boolean = value(literal) == False
 
   /** Return true if the variable is unassigned. */
   @inline final def isUnassigned(literal: Literal): Boolean = values(literal.varId) == Unassigned
@@ -134,13 +134,16 @@ class CDCLStore(store: CPStore) {
    */
   final def addExplanationClause(literals: Array[Literal]): Boolean = {
 
+    if (literals == null) return true
+    
     // Sort and filter literals
-    val sortedLiterals = literals.sortBy(lit => levels(lit.varId)) // FIXME: perf
-
+    val sortedLiterals = literals.sortBy(lit => if (levels(lit.varId) == -1) Int.MinValue else -levels(lit.varId)) // FIXME: perf
+    
+    val allTrue = sortedLiterals.exists(lit => isTrue(lit))
+    if (allTrue) return true
+    
     // New clause
     val clause = Clause(this, sortedLiterals, false)
-
-    println("explained : " + clause)
 
     // Register
     watchers(sortedLiterals(0).opposite.id).addLast(clause)
@@ -295,7 +298,6 @@ class CDCLStore(store: CPStore) {
   }
 
   @inline private def learn(literals: Array[Literal]): Unit = {
-    println("learnt    : " + literals.mkString("(", " ", ")"))
     newClause(literals, true)
   }
 
@@ -354,11 +356,13 @@ class CDCLStore(store: CPStore) {
       undoAssignment()
     }
   }
-
+  
   // Undo the last levels until level.
   @inline private def undoLevelsUntil(level: Int): Unit = {
     while (nTrailLevels > level) undoLevel()
   }
+  
+  final def undoAll(): Unit = undoLevelsUntil(0)
 
   // Used to adapt the length of inner structures.
   @inline private def growTrailAssigned(): Unit = {

@@ -21,6 +21,11 @@ class DecompTT(starts: Array[LCGIntervalVar], durations: Array[Int], demands: Ar
   private[this] val builder = cdclStore.clauseBuilder
 
   final override def cdclStore = starts(0).cdclStore
+  
+  
+  var x: Literal = null
+  var y: Literal = null
+  var z: Literal = null
 
   private[this] val taskTime = Array.tabulate(nTasks, horizon)((task, time) => {
     val start = starts(task)
@@ -44,6 +49,17 @@ class DecompTT(starts: Array[LCGIntervalVar], durations: Array[Int], demands: Ar
     builder.add(-literal)
     builder.add(lit2)
     cdclStore.addProblemClause(builder.toArray)
+    
+    if (task == 3 && time == 6) {
+      println
+      println(lit1 + " & " + lit2 + " => " + literal)
+      println(literal + " => " + lit1)
+      println(literal + " => " + lit2)
+      x = lit1
+      y = lit2
+      z = literal
+    }
+    
     literal
   })
 
@@ -59,8 +75,16 @@ class DecompTT(starts: Array[LCGIntervalVar], durations: Array[Int], demands: Ar
     }
   }
 
+  var n = 0
   final override def propagate(): CPOutcome = {
 
+    n += 1
+    //println("propagation " + n)
+    
+    if (n == 212) {
+      //println("here")
+    }
+    
     var nOverlaps = 0
     var nMandatory = 0
     var sum = 0
@@ -76,11 +100,18 @@ class DecompTT(starts: Array[LCGIntervalVar], durations: Array[Int], demands: Ar
       var i = 0
       while (i < nTasks && sum <= capa) {
         val lit = taskTime(i)(time)
-        val b = cdclStore.isTrue(lit)
+        val b1 = cdclStore.isTrue(lit)
         val lst = starts(i).max
         val est = starts(i).min
         val ect = est + durations(i)
-        if (cdclStore.value(lit) == True) {
+        val b2 = lst <= time && time < ect
+        if(b1 != b2) {
+          println(x + ": " + cdclStore.value(x))
+          println(y + ": " + cdclStore.value(y))
+          println(z + ": " + cdclStore.value(z))
+          println("strange")
+        }
+        if (b2) {
           mandatory(nMandatory) = i
           nMandatory += 1
           sum += demands(i)

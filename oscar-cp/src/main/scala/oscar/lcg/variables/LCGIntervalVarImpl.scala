@@ -131,12 +131,7 @@ class LCGIntervalVarImpl(final override val cdclStore: CDCLStore, final override
   } 
   
   final override def toString: String = {
-    var i = initMin - 1
-    literals.map(l => {
-      i += 1
-      if (cdclStore.isTrue(l)) s"$i:T"
-      else if (cdclStore.isFalse(l)) s"$i:F"
-      else s"$i:_"
-    }).mkString("[", ", ", s", $initMax:T]")   
+    if (_size == 1) _min.toString
+    else s"[${_min}, ${_max}]"
   }
 }

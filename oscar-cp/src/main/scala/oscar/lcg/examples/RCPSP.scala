@@ -1,9 +1,6 @@
 package oscar.lcg.examples
 
 import oscar.lcg._
-import oscar.lcg.constraints.DecompTT
-import oscar.lcg.heuristic.StaticMinHeuristic
-import oscar.lcg.heuristic.MinMinHeuristic
 
 object RCPSP extends LCGModel with App {
   
@@ -19,7 +16,7 @@ object RCPSP extends LCGModel with App {
   val scale = 1
   val durations = instance.durations
   val demands = instance.demands.transpose
-  val horizon = 43//instance.horizon
+  val horizon = instance.horizon
   val capa = instance.capacities
 
   // Decision variables
@@ -30,25 +27,34 @@ object RCPSP extends LCGModel with App {
   for ((t1, t2) <- instance.precedences) add(ends(t1) <= starts(t2))
   
   // Resources
-  for (r <- Resources) {
-    add(new DecompTT(starts, durations, demands(r), capa(r), horizon))
-  }
+  for (r <- Resources) add(cumulative(starts, durations, demands(r), capa(r)))
 
   // Search heuristic
-  val heuristic = new StaticMinHeuristic(starts)
+  val heuristic = static(starts)
   
   onSolution {
-    println("\nSOLUTION\n" + starts.map(v => v.name + " = " + v.min).mkString("\n"))
-    println("makespan: " + ends.map(_.max).max)
-    println
-    for (r <- Resources) println(s"Valid on $r: " + SolutionChecker.check(starts.map(_.min), durations, demands(r), capa(r), horizon))
-    val valid = instance.precedences.forall { case (t1, t2) => ends(t1).min <= starts(t2).min }
-    println("check precedence: " + valid)
+    val validOnResources = Resources.forall(r => SolutionChecker.check(starts.map(_.min), durations, demands(r), capa(r), horizon))
+    val validPrecedences = instance.precedences.forall { case (t1, t2) => ends(t1).min <= starts(t2).min }
+    println("makespan: " + ends.map(_.max).max + ", resources: " + validOnResources + ", precedences: " + validPrecedences)    
+    //Resources.foreach(r => println("resource " + r + ": " + SolutionChecker.check(starts.map(_.min), durations, demands(r), capa(r), horizon)))
+    best = ends.map(_.max).max
   }
   
   val t0 = System.currentTimeMillis()
   
-  solve(heuristic)
+  var best = horizon
+  var optimum = false
+  while (!optimum) {
+    val success = ends.forall(end => add(end.lowerEqual(best)))
+    if (!success) {
+      optimum = true
+      println("here")
+    }
+    else if (lcgSolver.solve(heuristic, false, resetStatistics = false) == False) optimum = true
+    else best -= 1
+  }
+  
+  println("best " + (best + 1))
   
   println()
   println("time (ms)  : " + (System.currentTimeMillis() - t0))

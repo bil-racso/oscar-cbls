@@ -146,7 +146,7 @@ class LCGIntervalVarSuite extends TestSuite {
     //assert(store.propagate())
   }
 
-  test("Bounds should be restored when a backtrack occurs") {
+  test("bounds should be restored when a backtrack occurs.") {
     val store = new LCGSolver()
     val context = store.cpStore
     val variable = LCGIntervalVar(5, 15)(store)

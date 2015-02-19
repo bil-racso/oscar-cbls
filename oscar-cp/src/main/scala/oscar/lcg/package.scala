@@ -1,12 +1,15 @@
 package oscar
 
+import oscar.lcg.modeling.Heuristics
+import oscar.lcg.modeling.Constraints
+import oscar.lcg.modeling.SolverUtils
 import oscar.lcg.variables.LCGIntervalViewOffset
 import oscar.lcg.constraints.LCGConstraint
-import oscar.lcg.constraints.LowerEqual
-import oscar.lcg.core.Literal
 
 /** @author Renaud Hartert ren.hartert@gmail.com */
-package object lcg {
+package object lcg extends Heuristics with Constraints with SolverUtils {
+  
+  type Literal = oscar.lcg.core.Literal
 
   type LCGIntervalVar = oscar.lcg.variables.LCGIntervalVar
   final val LCGIntervalVar = oscar.lcg.variables.LCGIntervalVar
@@ -15,7 +18,6 @@ package object lcg {
   final val CPSolver = oscar.cp.core.CPSolver
   
   type CDCLStore = oscar.lcg.core.CDCLStore
-  //final val LCGStore = oscar.cp.lcg.core.LCGStore
   
   type LCGSolver = oscar.lcg.core.LCGSolver
   
@@ -42,15 +44,6 @@ package object lcg {
       
     final def > (that: Int): Literal = variable.greaterEqual(that + 1)
     
-    final def <= (that: LCGIntervalVar): LCGConstraint = new LowerEqual(variable, that)
+    final def <= (that: LCGIntervalVar): LCGConstraint = lowerEqual(variable, that)
   }
-  
-  final def add(constraint: LCGConstraint)(implicit lcgSolver: LCGSolver): Boolean = lcgSolver.add(constraint)
-  
-  final def add(literal: Literal)(implicit lcgSolver: LCGSolver): Boolean = lcgSolver.add(literal)
-  
-  final def onSolution(action: => Unit)(implicit lcgSolver: LCGSolver): Unit = lcgSolver.onSolution(action)
-
-  final def solve(heuristic: Heuristic, stopCondition: => Boolean)(implicit lcgSolver: LCGSolver): LiftedBoolean = lcgSolver.solve(heuristic, stopCondition)
-  final def solve(heuristic: Heuristic)(implicit lcgSolver: LCGSolver): LiftedBoolean = lcgSolver.solve(heuristic, false)
 }

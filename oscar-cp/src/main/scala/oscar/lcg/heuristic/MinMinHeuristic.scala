@@ -29,7 +29,7 @@ class MinMinHeuristic(variables: Array[LCGIntervalVar]) extends Heuristic {
       val value = x.min
       val literal = x.lowerEqual(value)
       () => {
-        println("decision  : assign " + x.name + " to " + value)
+        //println("decision  : assign " + x.name + " to " + value)
         cdclStore.enqueue(literal, null)
       }
     }

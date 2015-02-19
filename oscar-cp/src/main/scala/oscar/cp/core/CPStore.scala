@@ -217,7 +217,6 @@ class CPStore( final val propagStrength: CPPropagStrength) extends DFSearchNode 
     else {
       constraints.foreach(c => enqueueL2(c))
       propagate()
-      status.value // may be changed by propagate()
     }
   }
 

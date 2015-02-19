@@ -22,25 +22,40 @@ class LowerEqual(left: LCGIntervalVar, right: LCGIntervalVar) extends LCGConstra
   }
 
   final override def propagate(): CPOutcome = {
-    if (updateMax() == Failure) Failure
+    if (check() == Failure) Failure
+    //else if (updateMax() == Failure) Failure
     else if (updateMin() == Failure) Failure
     else Suspend
+  }
+
+  @inline private def check(): CPOutcome = {
+    val leftMin = left.min
+    val rightMax = right.max
+    if (rightMax >= leftMin) Suspend
+    else {
+      val lit1 = right.lowerEqual(rightMax)
+      val lit2 = left.greaterEqual(leftMin)
+      builder.clear()
+      builder.add(-lit1)
+      builder.add(-lit2)
+      val literals = builder.toArray
+      if (!cdclStore.addExplanationClause(literals)) Failure
+      else Suspend
+    }
   }
 
   @inline private def updateMax(): CPOutcome = {
     val leftMax = left.max
     val rightMax = right.max
-    if (leftMax <= rightMax) Suspend
-    else {
-      val lit1 = right.lowerEqual(rightMax)
-      val lit2 = left.lowerEqual(rightMax)
-      builder.clear()
-      builder.add(-lit1)
-      builder.add(lit2)
-      val literals = builder.toArray
-      if (!cdclStore.addExplanationClause(literals)) Failure
-      else Suspend
-    }
+    val lit1 = right.lowerEqual(rightMax)
+    val lit2 = left.lowerEqual(rightMax)
+    builder.clear()
+    builder.add(-lit1)
+    builder.add(lit2)
+    val literals = builder.toArray
+    if (!cdclStore.addExplanationClause(literals)) Failure
+    else Suspend
+
   }
 
   @inline private def updateMin(): CPOutcome = {
@@ -54,6 +69,7 @@ class LowerEqual(left: LCGIntervalVar, right: LCGIntervalVar) extends LCGConstra
       builder.add(-lit1)
       builder.add(lit2)
       val literals = builder.toArray
+      //println(literals.mkString(" "))
       if (!cdclStore.addExplanationClause(literals)) Failure
       else Suspend
     }

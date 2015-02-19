@@ -13,7 +13,7 @@ class ClauseBuilder(lcgStore: CDCLStore) {
   private[this] val trueLit: Literal = lcgStore.trueLit
   private[this] val falseLit: Literal = lcgStore.falseLit
 
-  private[this] var array: Array[Int] = new Array(100000) // FIXME: dirty hack
+  private[this] var array: Array[Int] = new Array(10000000) // FIXME: dirty hack
   private[this] var magic: Int = 1
 
   private[this] var clauseBuffer: Array[Literal] = new Array(8)

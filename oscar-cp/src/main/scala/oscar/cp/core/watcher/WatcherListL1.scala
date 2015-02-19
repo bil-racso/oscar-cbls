@@ -7,7 +7,7 @@ import oscar.cp.core.variables.CPIntVar
 
 class WatcherListL1(store: CPStore) {
 
-  private[this] val RESERVED_INDEX = Int.MinValue
+  final val RESERVED_INDEX = Int.MinValue
   
   private[this] var lastMagic = -1L
   private[this] var constraintStack: Array[Constraint] = new Array[Constraint](4)
