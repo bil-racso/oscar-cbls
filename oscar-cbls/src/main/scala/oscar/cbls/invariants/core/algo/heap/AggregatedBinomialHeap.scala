@@ -22,6 +22,18 @@ import scala.collection.Iterator
  *         by Renaud De Landtsheer
  ******************************************************************************/
 
+class OscaRList[T](val head:T, val tail:OscaRList[T] = null){
+  def length:Int = {
+    var curr = this.tail
+    var toReturn = 1
+    while(curr != null){
+      curr = curr.tail
+      toReturn += 1
+    }
+    toReturn
+  }
+}
+
 /**This class is a faster version of a heap, where several items stored in it have same index.
  * The heap is actually made of an array, storing lists containing items with same position.
  * A binomial heap is maintained to record the lowest position in the heap.
@@ -35,13 +47,13 @@ class AggregatedBinomialHeap[@specialized T](GetKey:T => Int,val maxPosition:Int
 
   val b= new BinomialHeap[Int](a => a, maxPosition)
 
-  val a:Array[List[T]] = Array.tabulate (maxPosition)(_ => List.empty[T])
+  val a:Array[OscaRList[T]] = Array.tabulate (maxPosition)(_ => null)
 
   private var msize:Int = 0
 
   /**makes the datastruct empty*/
   override def dropAll(){
-    for (i <- b) a(i) = List.empty[T]
+    for (i <- b) a(i) = null
     msize = 0
     b.dropAll()
   }
@@ -49,34 +61,34 @@ class AggregatedBinomialHeap[@specialized T](GetKey:T => Int,val maxPosition:Int
   override def insert(elem:T){
     val position = GetKey(elem)
     val otherWithSamePosition = a(position)
-    if (otherWithSamePosition.isEmpty){
-      a(position) = List(elem)
+    if (otherWithSamePosition == null){
+      a(position) = new OscaRList(elem)
       b.insert(position)
     }else{
       //this is the desired branch, as it is O(1)
-      a(position) = elem :: otherWithSamePosition
+      a(position) = new OscaRList(elem, otherWithSamePosition)
     }
     msize+=1
   }
 
-  override def getFirsts:List[T] = {
+  override def getFirsts:List[T] = null /*{
     assert(!isEmpty)
     val toreturn = a(b.getFirst)
-    assert(!toreturn.isEmpty)
+    assert(toreturn != null)
     toreturn
-  }
+  }*/
 
-  override def popFirsts:List[T] = {
+  override def popFirsts:List[T] = null /*{
     assert(!isEmpty)
     val positionToReturn = b.popFirst()
     val toreturn = a(positionToReturn)
-    a(positionToReturn) = List.empty
+    a(positionToReturn) = null
     msize -= toreturn.length
-    assert(!toreturn.isEmpty)
+    assert(toreturn != null)
     toreturn
-  }
+  }*/
 
-  override def isEmpty:Boolean = (msize == 0)
+  override def isEmpty:Boolean = msize == 0
   override def size = msize
 
   override def getFirst: T = getFirsts.head
@@ -86,7 +98,7 @@ class AggregatedBinomialHeap[@specialized T](GetKey:T => Int,val maxPosition:Int
     val liste = a(position)
     val toreturn = liste.head
     a(position) = liste.tail
-    if (liste.tail.isEmpty){
+    if (liste.tail == null){
       b.popFirst()
     }
     msize -=1
@@ -94,11 +106,13 @@ class AggregatedBinomialHeap[@specialized T](GetKey:T => Int,val maxPosition:Int
   }
 
   override def iterator: Iterator[T] = {
-    var acc:List[T] = List.empty
+    var acc:List[T] = null
     for (position <- b){
-      for (item <- a(position)){
-        acc = item :: acc
-      }
+      var curr = a(position)
+        while(curr != null){
+          acc = curr.head :: acc
+          curr = curr.tail
+        }
     }
     acc.iterator
   }
