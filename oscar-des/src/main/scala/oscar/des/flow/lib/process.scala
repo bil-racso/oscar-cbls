@@ -90,27 +90,32 @@ case class SingleBatchProcess(m:Model,
 
   startBatches()
 
-  private def startBatches(){
+  private def startBatches() {
     if (verbose) println(name + ": start inputting")
     startWaitTime = m.clock()
     waiting = true
-    myInput.performInput( ()=> {
-      if (verbose) println(name + ": start new batch")
-      mTotalWaitDuration += (m.clock() - startWaitTime)
-      waiting = false
-      m.wait(batchDuration()){
-        if (verbose) println(name + ": finished batch")
-        startWaitTime = m.clock()
-        waiting = true
-        performedBatches +=1
-        myOutput.performOutput (() => {
-          if (verbose) println(name + ": finished outputting")
-          mTotalWaitDuration += (m.clock() - startWaitTime)
-          waiting = false
-          startBatches()
-        })
-      }
-    })
+    myInput.performInput(startExecutingBatch)
+  }
+  private def startExecutingBatch() {
+    if (verbose) println(name + ": start new batch")
+    mTotalWaitDuration += (m.clock() - startWaitTime)
+    waiting = false
+    m.wait(batchDuration())(performTheOutput)
+  }
+
+  private def performTheOutput() {
+    if (verbose) println(name + ": finished batch")
+    startWaitTime = m.clock()
+    waiting = true
+    performedBatches += 1
+    myOutput.performOutput(outputPerformed)
+  }
+
+  private def outputPerformed(){
+    if (verbose) println(name + ": finished outputting")
+    mTotalWaitDuration += (m.clock() - startWaitTime)
+    waiting = false
+    startBatches()
   }
 
   override def toString: String = {
