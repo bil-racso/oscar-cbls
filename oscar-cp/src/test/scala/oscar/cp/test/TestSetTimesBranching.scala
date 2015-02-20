@@ -1,5 +1,4 @@
-/**
- * *****************************************************************************
+/*******************************************************************************
  * OscaR is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
@@ -12,8 +11,7 @@
  *
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
- * ****************************************************************************
- */
+ ******************************************************************************/
 package oscar.cp.test
 
 import oscar.cp._
@@ -29,7 +27,8 @@ class TestSetTimesBranching extends TestSuite {
   def splitRectangle(leftBound: Int, rightBound: Int, minWidth: Int, remainingSplits: Int): List[(Int, Int)] = {
     if (remainingSplits == 0 || (rightBound - leftBound) < 2 * minWidth) {
       List((leftBound, rightBound))
-    } else {
+    }
+    else {
       val minR = leftBound + minWidth
       val randomSplit = minR + RandomGenerator.nextInt(rightBound - minR)
       splitRectangle(leftBound, randomSplit, minWidth, remainingSplits - 1) ::: splitRectangle(randomSplit, rightBound, minWidth, remainingSplits - 1)
@@ -62,12 +61,12 @@ class TestSetTimesBranching extends TestSuite {
       cp.add(maxCumulativeResource(startVars, durationVars, endVars, demandVars, CPIntVar(capacity)(cp)))
 
       cp.minimize(makespan)
-      cp.search {
-        setTimes(startVars, durationVars, endVars, i => -endVars(i).min)
+      cp.search{
+        setTimes(startVars, durationVars, endVars,i => -endVars(i).min)
       }
 
       var bestSol = 0
-      cp.onSolution {
+      cp.onSolution{
         bestSol = makespan.value
       }
 
@@ -103,12 +102,12 @@ class TestSetTimesBranching extends TestSuite {
       cp.add(maxCumulativeResource(startVars, durationVars, endVars, demandVars, CPIntVar(capacity)(cp)))
 
       cp.minimize(makespan)
-      cp.search {
-        setTimes(startVars, durationVars, endVars, i => -endVars(i).min)
+      cp.search{
+        setTimes(startVars, durationVars, endVars,i => -endVars(i).min)
       }
 
       var bestSol = 0
-      cp.onSolution {
+      cp.onSolution{
         bestSol = makespan.value
       }
 
@@ -118,20 +117,25 @@ class TestSetTimesBranching extends TestSuite {
     }
   }
 
-  test(false, "SetTimes with transitions and precedences") {
+  test("SetTimes with transitions and precedences") {
     // (duration, consumption)
+    
+    
+
 
     def solve(seed: Int, withSetTimes: Boolean): Int = {
-
+      
       val rand = new scala.util.Random(seed)
       val nTasks = 7
-      val instance = Array.tabulate(nTasks)(t => (rand.nextInt(30) + 1, rand.nextInt(4) + 1))
+      val instance = Array.tabulate(nTasks)(t => (rand.nextInt(30)+1,rand.nextInt(4)+1))
       val durationsData = instance.map(_._1)
       val demandsData = instance.map(_._2)
       val capa = 5
       val horizon = instance.map(_._1).sum
       val Times = 0 to horizon
-
+      
+      
+      
       implicit val cp = CPSolver()
       cp.silent = true
 
@@ -152,7 +156,8 @@ class TestSetTimesBranching extends TestSuite {
         }
 
         for ((i, j, d) <- prec) {
-          add(ends(i) <= starts(j) + d)
+          add(ends(i)+d <= starts(j))
+          //add(ends(i) <= starts(j)+d)
           //add(starts(i) + d <= starts(j)) // settimes failw with this
         }
       } catch {
@@ -169,19 +174,25 @@ class TestSetTimesBranching extends TestSuite {
 
       search {
         if (withSetTimes) setTimes(starts, durations, ends)
-        else binaryStatic(starts, _.min)
+        else binaryStatic(starts,_.min)
+
       }
 
       val stats = start()
       //println(stats)
       //println("obj:"+best)
       best
+
     }
     for (i <- 0 until 10000) {
-      //println(i)
+      println(i)
       val opt1 = solve(i, true)
       val opt2 = solve(i, false)
       assert(opt1 == opt2)
     }
+
+
   }
+    
+
 }
