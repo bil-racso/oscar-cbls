@@ -5,7 +5,7 @@ import oscar.algo.reversible.ReversibleInt
 import oscar.algo.search.Branching
 
 /** @author Renaud Hartert */
-class NewSetTimes(starts: Array[CPIntVar], durations: Array[Int], tieBreaker: Int => Int = (i: Int) => i) extends Branching {
+class NewSetTimes(starts: Array[CPIntVar], ends: Array[CPIntVar], tieBreaker: Int => Int = (i: Int) => i) extends Branching {
 
   require(starts.length > 0, "no variable")
   
@@ -93,7 +93,7 @@ class NewSetTimes(starts: Array[CPIntVar], durations: Array[Int], tieBreaker: In
     while (i > 0) {
       i -= 1
       val task = unassigned(i)
-      val ect = starts(task).min + durations(task)
+      val ect = ends(task).min
       if (ect < minEct && ect >= value) minEct = ect
     }
     minEct
