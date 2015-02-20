@@ -15,43 +15,44 @@
 package oscar.cp.test
 
 import org.scalatest.FunSuite
-import org.scalatest.matchers.ShouldMatchers
-
+import oscar.cp.testUtils._
 import oscar.cp.constraints._
-
 import oscar.cp._
 import collection.immutable.SortedSet
+import oscar.cp.core.CPPropagStrength
 
 
-class TestCubes extends FunSuite with ShouldMatchers  {
+class TestCubes extends TestSuite  {
 
 
   test("Cubes") {
-      
-    implicit val cp = CPSolver()
-    
-    val numCubes = 4
-    val numFaces = 6
-    
-    val words = "BUOY, CAVE, CELT, FLUB, FORK, HEMP, JUDY, JUNK, LIMN, QUIP, SWAG, VISA, WISH".split(", ")
-    val letters = words.foldLeft(SortedSet.empty[Char]){_++_}.toSeq // Set of all 24 letters
-    val numLetters = letters.size
-    def letterToInt(letter: Char): Int = letters.indexOf(letter) // Letter from letter index
-    
-    val placement = for(i <- 0 until numLetters) yield CPIntVar(0 until numCubes)(cp) // The cube (0 to 3) on which each letter is placed
-    var nbSol = 0
+    def nSol(cons: CPPropagStrength): Int = {
+      implicit val cp = CPSolver()
 
-    
-      cp.add(gcc(placement, 0 until numCubes, numFaces, numFaces), Strong) // There must be exactly 6 letters on each cube
-      for(word <- words)
+      val numCubes = 4
+      val numFaces = 6
+
+      val words = "BUOY, CAVE, CELT, FLUB, FORK, HEMP, JUDY, JUNK, LIMN, QUIP, SWAG, VISA, WISH".split(", ")
+      val letters = words.foldLeft(SortedSet.empty[Char]) { _ ++ _ }.toSeq // Set of all 24 letters
+      val numLetters = letters.size
+      def letterToInt(letter: Char): Int = letters.indexOf(letter) // Letter from letter index
+
+      val placement = for (i <- 0 until numLetters) yield CPIntVar(0 until numCubes)(cp) // The cube (0 to 3) on which each letter is placed
+      var nbSol = 0
+
+      cp.add(gcc(placement, 0 until numCubes, numFaces, numFaces), cons) // There must be exactly 6 letters on each cube
+      for (word <- words)
         cp.add(allDifferent( // The 4 letters of each word must be placed on different cubes
-            for(letter <- word.toCharArray()) yield placement(letterToInt(letter))
-        ), Strong)
-     
-    search { // Each letter will be assigned different cubes during the search
-      binaryFirstFail(placement)
+          for (letter <- word.toCharArray()) yield placement(letterToInt(letter))), cons)
+
+      search { // Each letter will be assigned different cubes during the search
+        binaryFirstFail(placement)
+      }
+      cp.start().nSols
     }
-    cp.start().nSols should be(24)
+    for (cons <- CPPropagStrength.values) {
+      assert(nSol(cons) == 24)
+    }
     
   }  
   
