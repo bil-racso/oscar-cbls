@@ -55,11 +55,25 @@ class SetTimesBranching(starts: Array[CPIntVar], durations: Array[CPIntVar], end
         assign(taskId) // the task is assigned by setTimes
         if (out != Failure) dominanceCheck()
       } {
+        val minEct = selectMinEct(est)
+        cp.post(start >= minEct - 1)
         cp.propagate()
-        oldEst(taskId).value = est
+        oldEst(taskId).value = minEct - 1
         dominanceCheck()
       }
     }
+  }
+  
+  // Return the minimum ect that is greater or equal to value
+  @inline private def selectMinEct(value: Int): Int = {
+    var task = nTasks
+    var minEct = Int.MaxValue
+    while (task > 0) {
+      task -= 1
+      val ect = ends(task).min
+      if (ect < minEct && ect > value) minEct = ect
+    }
+    minEct
   }
 
   // FIXME: selectTask, dominanceCheck and minUnselectableLst should be 

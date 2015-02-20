@@ -185,7 +185,6 @@ class TestSetTimesBranching extends TestSuite {
 
     }
     for (i <- 0 until 10000) {
-      println(i)
       val opt1 = solve(i, true)
       val opt2 = solve(i, false)
       assert(opt1 == opt2)

@@ -146,6 +146,7 @@ abstract class SchedulingSearchSuite(seed: Int, scalable: Boolean) extends TestS
       val activitySolution = Array.tabulate(capacity)(i => splitRectangle(0, optimalMakespan, minWidth, maxRecursiveSplits)).flatten
       val nTasks = activitySolution.length
       val durationsData = activitySolution.map(a => a._2 - a._1)
+      println("nTasks " + nTasks)
 
       var nNodes1 = 0
       var nNodes2 = 0
