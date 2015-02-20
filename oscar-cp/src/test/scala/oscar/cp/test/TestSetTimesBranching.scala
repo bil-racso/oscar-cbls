@@ -120,4 +120,81 @@ class TestSetTimesBranching extends FunSuite with Matchers  {
     }
   }
 
+  test("SetTimes with transitions and precedences") {
+    // (duration, consumption)
+    
+    
+
+
+    def solve(seed: Int, withSetTimes: Boolean): Int = {
+      
+      val rand = new scala.util.Random(seed)
+      val nTasks = 7
+      val instance = Array.tabulate(nTasks)(t => (rand.nextInt(30)+1,rand.nextInt(4)+1))
+      val durationsData = instance.map(_._1)
+      val demandsData = instance.map(_._2)
+      val capa = 5
+      val horizon = instance.map(_._1).sum
+      val Times = 0 to horizon
+      
+      
+      
+      implicit val cp = CPSolver()
+      cp.silent = true
+
+      val durations = Array.tabulate(nTasks)(t => CPIntVar(durationsData(t)))
+      val starts = Array.tabulate(nTasks)(t => CPIntVar(0, horizon - durations(t).min))
+      val ends = Array.tabulate(nTasks)(t => starts(t) + durationsData(t))
+      val demands = Array.tabulate(nTasks)(t => CPIntVar(demandsData(t)))
+      val makespan = maximum(ends)
+
+      try {
+        add(maxCumulativeResource(starts, durations, ends, demands, CPIntVar(capa)), Weak)
+
+        val possPrec = for (i <- 0 until nTasks; j <- i + 1 until nTasks) yield (i, j)
+
+        val prec = for (i <- 0 until 20) yield {
+          val (a, b) = possPrec(rand.nextInt(possPrec.size))
+          (a, b, rand.nextInt(10))
+        }
+
+        for ((i, j, d) <- prec) {
+          add(ends(i) <= starts(j)+d)
+          //add(starts(i) + d <= starts(j)) // settimes failw with this
+        }
+      } catch {
+        case e: NoSolutionException => return 0
+      }
+
+      minimize(makespan)
+
+      var best = Int.MaxValue
+
+      onSolution {
+        best = makespan.min
+      }
+
+      search {
+        if (withSetTimes) setTimes(starts, durations, ends)
+        else binaryStatic(starts,_.min)
+
+      }
+
+      val stats = start()
+      //println(stats)
+      //println("obj:"+best)
+      best
+
+    }
+    for (i <- 0 until 10000) {
+      //println(i)
+      val opt1 = solve(i, true)
+      val opt2 = solve(i, false)
+      assert(opt1 == opt2)
+    }
+
+
+  }
+    
+
 }
