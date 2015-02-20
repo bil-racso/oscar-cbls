@@ -120,7 +120,7 @@ class TestSetTimesBranching extends FunSuite with Matchers  {
     }
   }
 
-  /*test("SetTimes with transitions and precedences") {
+  test("SetTimes with transitions and precedences") {
     // (duration, consumption)
     
     
@@ -159,7 +159,8 @@ class TestSetTimesBranching extends FunSuite with Matchers  {
         }
 
         for ((i, j, d) <- prec) {
-          add(ends(i) <= starts(j)+d)
+          add(ends(i)+d <= starts(j))
+          //add(ends(i) <= starts(j)+d)
           //add(starts(i) + d <= starts(j)) // settimes failw with this
         }
       } catch {
@@ -187,14 +188,14 @@ class TestSetTimesBranching extends FunSuite with Matchers  {
 
     }
     for (i <- 0 until 10000) {
-      //println(i)
+      println(i)
       val opt1 = solve(i, true)
       val opt2 = solve(i, false)
       assert(opt1 == opt2)
     }
 
 
-  }*/
+  }
     
 
 }
