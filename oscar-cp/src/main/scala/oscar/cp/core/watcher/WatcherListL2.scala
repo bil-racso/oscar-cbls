@@ -18,7 +18,7 @@ class WatcherListL2(store: CPStore) {
   
   @inline final def isEmpty = index == 0
 
-  @inline final def register(constraint: Constraint, watcher: Watcher = oscar.cp.core.alwaysTrueWatcher): Unit = {
+  @inline final def register(constraint: Constraint, watcher: Watcher = null): Unit = {
     if (index == stack.length) growStack()
     stack(index) = constraint
     watchers(index) = watcher
@@ -36,11 +36,8 @@ class WatcherListL2(store: CPStore) {
     while (i > 0) { 
       i -= 1
       val constraint = stack(i)
-      if (watchers(i).shouldEnqueue())
+      if (watchers(i) == null || watchers(i).shouldEnqueue())
         store.enqueueL2(constraint)
-      else {
-        println("watcher decided not to enqueue")
-      }
     }
   }  
   

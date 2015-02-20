@@ -58,6 +58,8 @@ class ElementVarAC3(y: Array[CPIntVar], x: CPIntVar, z: CPIntVar) extends Constr
   private[this] val xvalues = Array.ofDim[Int](y.length)
   private[this] val zvalues = Array.ofDim[Int](zRange.size)
   
+  
+  
   override def setup(l: CPPropagStrength): CPOutcome = {
     if (zRange.isEmpty) return Failure
     //println("setup:"+x.mkString(","))
@@ -89,7 +91,16 @@ class ElementVarAC3(y: Array[CPIntVar], x: CPIntVar, z: CPIntVar) extends Constr
         x.callPropagateWhenDomainChanges(this)
         z.callPropagateWhenDomainChanges(this)
         for (i <- x.min to x.max; if x hasValue i) {
-          y(i).callPropagateWhenDomainChanges(this)
+          
+          
+          val watcher = new Watcher {
+            override def shouldEnqueue(): Boolean = x.hasValue(i)
+          }
+          y(i).callPropagateWhenDomainChanges(this,watcher)
+          
+          //y(i).callPropagateWhenDomainChanges(this)
+          
+          
         }
         propagate()
       }
