@@ -43,7 +43,7 @@ class NewSetTimes(starts: Array[CPIntVar], ends: Array[CPIntVar], tieBreaker: In
     branch { 
       nUnassignedRev.decr() // trully assign the task
       store.assign(start, est) 
-    } { store.post(start > minEct) }
+    } { store.post(start >= minEct) }
   }
   
   // Remove assigned tasks
@@ -88,13 +88,12 @@ class NewSetTimes(starts: Array[CPIntVar], ends: Array[CPIntVar], tieBreaker: In
   
   // Return the minimum ect that is greater or equal to value
   @inline private def selectMinEct(value: Int): Int = {
-    var i = nUnassigned
+    var task = nTasks
     var minEct = Int.MaxValue
-    while (i > 0) {
-      i -= 1
-      val task = unassigned(i)
+    while (task > 0) {
+      task -= 1
       val ect = ends(task).min
-      if (ect < minEct && ect >= value) minEct = ect
+      if (ect < minEct && ect > value) minEct = ect
     }
     minEct
   }
