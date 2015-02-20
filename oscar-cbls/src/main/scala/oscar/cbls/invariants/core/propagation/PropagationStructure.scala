@@ -20,6 +20,7 @@
 
 package oscar.cbls.invariants.core.propagation
 
+import oscar.cbls.invariants.core.algo.QuickList.QList
 import oscar.cbls.invariants.core.algo.dag._
 import oscar.cbls.invariants.core.algo.dll._
 import oscar.cbls.invariants.core.algo.heap.{AbstractHeap, AggregatedBinomialHeap, BinomialHeap}
@@ -194,7 +195,7 @@ abstract class PropagationStructure(val verbose: Boolean, val checker:Option[Che
 
     //variables are already able to propagate immediately before model close and if not monitored yet.
 
-    scheduledElements = List.empty
+    scheduledElements = null
     for (e <- getPropagationElements) {
       e.rescheduleIfNeeded()
     }
@@ -269,12 +270,12 @@ abstract class PropagationStructure(val verbose: Boolean, val checker:Option[Che
     for (p <- getPropagationElements) p.dropStaticGraph()
   }
 
-  private var scheduledElements: List[PropagationElement] = List.empty
-  private var executionQueue: AbstractHeap[PropagationElement] = null
+  private[this] var scheduledElements: QList[PropagationElement] = null
+  private[this] var executionQueue: AbstractHeap[PropagationElement] = null
 
   //I'v been thinking about using a BitArray here, but although this would slightly decrease memory
   // (think, relative to all the rest of the stored data), it would increase runtime
-  private var fastPropagationTracks: SortedMap[PropagationElement, Array[Boolean]] =
+  private[this] var fastPropagationTracks: SortedMap[PropagationElement, Array[Boolean]] =
     SortedMap.empty[PropagationElement, Array[Boolean]]
 
   private var partialPropagationTargets:List[List[PropagationElement]] = List.empty
@@ -288,7 +289,7 @@ abstract class PropagationStructure(val verbose: Boolean, val checker:Option[Che
     partialPropagationTargets = p.toList :: partialPropagationTargets
   }
 
-  private var previousPropagationTrack: Array[Boolean] = null
+  private[this] var previousPropagationTrack: Array[Boolean] = null
 
   def isPropagating:Boolean = propagating
 
@@ -366,7 +367,7 @@ abstract class PropagationStructure(val verbose: Boolean, val checker:Option[Che
   }
 
 
-  private var postponedElements: List[PropagationElement] = List.empty
+  private var postponedElements: QList[PropagationElement] = null
 
   /**
    * performs a propagation on a propagation track
@@ -379,46 +380,61 @@ abstract class PropagationStructure(val verbose: Boolean, val checker:Option[Che
 
     if(SameAsBefore){
       //initialize the heap with the scheduled elements that are on the track
-      for (e: PropagationElement <- scheduledElements) {
+      var currentPos = scheduledElements
+      while(currentPos != null){
+        val e = currentPos.head
+        currentPos = currentPos.tail
         if (Track(e.uniqueID)) {
           executionQueue.insert(e)
         } else {
-          postponedElements = e :: postponedElements
+          postponedElements = new QList(e,postponedElements)
         }
       }
-      scheduledElements = List.empty
+      scheduledElements = null
     }else if (Track == null) {
       //all elements are to be put on the heap, included postponed ones
-      for(e:PropagationElement <- postponedElements) {
+      var currentPos = postponedElements
+      while(currentPos != null){
+        val e = currentPos.head
+        currentPos = currentPos.tail
         executionQueue.insert(e)
       }
-      postponedElements = List.empty
+      postponedElements = null
 
-      for (e: PropagationElement <- scheduledElements) {
+      currentPos = scheduledElements
+      while(currentPos != null){
+        val e = currentPos.head
+        currentPos = currentPos.tail
         executionQueue.insert(e)
       }
-      scheduledElements = List.empty
+      scheduledElements = null
 
     } else {
       //there is a track, and we need to check postponed elements because they might be on this track
-      var newPostponed: List[PropagationElement] = List.empty
-      for(e:PropagationElement <- postponedElements) {
+      var newPostponed: QList[PropagationElement] = null
+      var currentPos = postponedElements
+      while(currentPos != null){
+        val e = currentPos.head
+        currentPos = currentPos.tail
         if (Track(e.uniqueID)) {
           executionQueue.insert(e)
         } else {
-          newPostponed = e :: newPostponed
+          newPostponed = new QList(e,newPostponed)
         }
       }
       postponedElements = newPostponed
 
-      for (e: PropagationElement <- scheduledElements) {
+      currentPos = scheduledElements
+      while(currentPos != null){
+        val e = currentPos.head
+        currentPos = currentPos.tail
         if (Track(e.uniqueID)) {
           executionQueue.insert(e)
         } else {
-          postponedElements = e :: postponedElements
+          postponedElements = new QList(e,postponedElements)
         }
       }
-      scheduledElements = List.empty
+      scheduledElements = null
     }
 
     var previousLayer = 0 //ExecutionQueue.head.position
@@ -430,13 +446,13 @@ abstract class PropagationStructure(val verbose: Boolean, val checker:Option[Che
       assert({
         previousLayer = first.position; true
       })
-      while (!scheduledElements.isEmpty) {
+      while (scheduledElements != null) {
         val e = scheduledElements.head
         scheduledElements = scheduledElements.tail
         if (Track == null || Track(e.uniqueID)) {
           executionQueue.insert(e)
         } else {
-          postponedElements = e :: postponedElements
+          postponedElements = new QList(e,postponedElements)
         }
       }
     }
@@ -455,7 +471,7 @@ abstract class PropagationStructure(val verbose: Boolean, val checker:Option[Che
 
   /**this method is used by propagationComponents to schedule themselves for propagation. */
   def scheduleForPropagation(p: PropagationElement) {
-    scheduledElements = p :: scheduledElements
+    scheduledElements = new QList(p,scheduledElements)
   }
 
   /**this variable controls propagation.

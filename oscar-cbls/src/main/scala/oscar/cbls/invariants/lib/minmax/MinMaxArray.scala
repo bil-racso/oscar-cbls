@@ -83,7 +83,7 @@ case class MinArray(varss: Array[IntValue], cond: SetValue = null, default: Int 
 abstract class MiaxArray(vars: Array[IntValue], cond: SetValue, default: Int)
   extends IntInvariant with Bulked[IntValue, Domain] with VaryingDependencies {
 
-  var keyForRemoval: Array[KeyForElementRemoval] = new Array(vars.size)
+  var keyForRemoval: Array[KeyForElementRemoval] = new Array(vars.length)
   var h: BinomialHeapWithMoveExtMem[Int] = new BinomialHeapWithMoveExtMem[Int](i => Ord(vars(i)), vars.size, new ArrayMap(vars.size))
 
   if (cond != null) {

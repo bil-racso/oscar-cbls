@@ -141,7 +141,7 @@ case class Elements[T <:IntValue](index: SetValue, inputarray: Array[T])
   with Bulked[T, Domain]
   with VaryingDependencies {
 
-  val KeysToInputArray: Array[KeyForElementRemoval] = new Array(inputarray.size)
+  val KeysToInputArray: Array[KeyForElementRemoval] = new Array(inputarray.length)
 
   registerStaticDependency(index)
   registerDeterminingDependency(index)

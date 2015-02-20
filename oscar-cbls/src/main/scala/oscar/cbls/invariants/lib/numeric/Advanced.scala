@@ -66,7 +66,7 @@ case class SumElements(vars: Array[IntValue], cond: SetValue)
   assert(vars.size > 0, "Invariant SumElements declared with zero vars to max")
   assert(cond != null, "cond cannot be null for SumElements")
 
-  val keyForRemoval: Array[KeyForElementRemoval] =  Array.fill(vars.indices.end) {null}
+  val keyForRemoval: Array[KeyForElementRemoval] =  Array.fill(vars.length) {null}
 
   registerStaticDependency(cond)
   registerDeterminingDependency(cond)

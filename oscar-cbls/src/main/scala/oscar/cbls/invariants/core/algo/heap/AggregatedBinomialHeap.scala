@@ -14,6 +14,8 @@
   ******************************************************************************/
 package oscar.cbls.invariants.core.algo.heap
 
+import oscar.cbls.invariants.core.algo.QuickList.QList
+
 import scala.collection.Iterator
 
 /*******************************************************************************
@@ -21,18 +23,6 @@ import scala.collection.Iterator
  *     This code has been initially developed by CETIC www.cetic.be
  *         by Renaud De Landtsheer
  ******************************************************************************/
-
-class OscaRList[T](val head:T, val tail:OscaRList[T] = null){
-  def length:Int = {
-    var curr = this.tail
-    var toReturn = 1
-    while(curr != null){
-      curr = curr.tail
-      toReturn += 1
-    }
-    toReturn
-  }
-}
 
 /**This class is a faster version of a heap, where several items stored in it have same index.
  * The heap is actually made of an array, storing lists containing items with same position.
@@ -44,12 +34,11 @@ class OscaRList[T](val head:T, val tail:OscaRList[T] = null){
  */
 class AggregatedBinomialHeap[@specialized T](GetKey:T => Int,val maxPosition:Int) extends AbstractHeap[T] {
 
+  private[this] val b= new BinomialHeap[Int](a => a, maxPosition)
 
-  val b= new BinomialHeap[Int](a => a, maxPosition)
+  private[this] val a:Array[QList[T]] = Array.tabulate (maxPosition)(_ => null)
 
-  val a:Array[OscaRList[T]] = Array.tabulate (maxPosition)(_ => null)
-
-  private var msize:Int = 0
+  private[this] var msize:Int = 0
 
   /**makes the datastruct empty*/
   override def dropAll(){
@@ -62,11 +51,11 @@ class AggregatedBinomialHeap[@specialized T](GetKey:T => Int,val maxPosition:Int
     val position = GetKey(elem)
     val otherWithSamePosition = a(position)
     if (otherWithSamePosition == null){
-      a(position) = new OscaRList(elem)
+      a(position) = new QList(elem)
       b.insert(position)
     }else{
       //this is the desired branch, as it is O(1)
-      a(position) = new OscaRList(elem, otherWithSamePosition)
+      a(position) = new QList(elem, otherWithSamePosition)
     }
     msize+=1
   }
