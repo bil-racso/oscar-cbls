@@ -33,6 +33,7 @@ class CPIntVarAdaptable(final override val store: CPStore, minValue: Int, maxVal
   private[this] val onBindL2 = new WatcherListL2(store)
   private[this] val onBoundsL2 = new WatcherListL2(store)
   private[this] val onDomainL2 = new WatcherListL2(store)
+  
   private[this] val onBindL1 = new WatcherListL1(store)
   private[this] val onBoundsL1 = new WatcherListL1(store)
   private[this] val onDomainL1 = new WatcherListL1(store)
@@ -171,7 +172,6 @@ class CPIntVarAdaptable(final override val store: CPStore, minValue: Int, maxVal
   @inline private def assignContinuous(value: Int): CPOutcome = {
     // Notify AC3
     onBoundsL2.enqueue()
-    onDomainL2.enqueue()
     onBindL2.enqueue()
     // Notify AC5
     onBindL1.enqueueBind()
@@ -189,13 +189,14 @@ class CPIntVarAdaptable(final override val store: CPStore, minValue: Int, maxVal
     _min = value
     _max = value
     _size = 1
+    // at the end because of watchers
+    onDomainL2.enqueue()
     Suspend
   }
 
   @inline private def assignSparse(value: Int): CPOutcome = {
     // Notify AC3
     onBoundsL2.enqueue()
-    onDomainL2.enqueue()
     onBindL2.enqueue()
     // Notify AC5
     onBindL1.enqueueBind()
@@ -223,6 +224,8 @@ class CPIntVarAdaptable(final override val store: CPStore, minValue: Int, maxVal
     _min = value
     _max = value
     _size = 1
+    // at the end because of watchers
+    onDomainL2.enqueue()    
     Suspend
   }
 
@@ -265,7 +268,6 @@ class CPIntVarAdaptable(final override val store: CPStore, minValue: Int, maxVal
       trail() // trail before changes 
       // Notify removed watchers
       onDomainL1.enqueueRemove(value)
-      onDomainL2.enqueue()
       // Assigned variable
       if (_size == 2) {
         // Notify bind watchers
@@ -296,7 +298,6 @@ class CPIntVarAdaptable(final override val store: CPStore, minValue: Int, maxVal
         while (positions(i) >= _size) i -= 1
         _max = i + offset
       }
-
       // Update the domain
       _size -= 1
       val v = values(_size)
@@ -306,6 +307,8 @@ class CPIntVarAdaptable(final override val store: CPStore, minValue: Int, maxVal
       values(pos2) = value
       positions(id1) = pos2
       positions(id2) = pos1
+      // the enqueue is added after the domain changes because of watchers
+      onDomainL2.enqueue() 
       Suspend
     }
   }
@@ -328,7 +331,6 @@ class CPIntVarAdaptable(final override val store: CPStore, minValue: Int, maxVal
       // Notify bounds watchers
       onBoundsL1.enqueueBounds()
       onBoundsL2.enqueue()
-      onDomainL2.enqueue()
       // Notify remove watchers if necessary
       if (!onDomainL1.isEmpty) {
         var i = _min
@@ -340,6 +342,15 @@ class CPIntVarAdaptable(final override val store: CPStore, minValue: Int, maxVal
       trail() // trail before changes 
       _size -= (value - _min)
       _min = value
+      
+      // Notify bind events
+      if (_size == 1) {
+        onBindL1.enqueueBind()
+        onBindL2.enqueue()
+      }      
+      
+      // must be last because of watchers
+      onDomainL2.enqueue()
       Suspend
     }
   }
@@ -371,10 +382,20 @@ class CPIntVarAdaptable(final override val store: CPStore, minValue: Int, maxVal
       // Search new min
       while (positions(i) >= _size) i += 1
       _min = i + offset
+
+      // Notify bind events
+      if (_size == 1) {
+        onBindL1.enqueueBind()
+        onBindL2.enqueue()
+      }
+      
       // Notify bounds events
       onBoundsL1.enqueueBounds()
       onBoundsL2.enqueue()
+      
+      // Notify domain events
       onDomainL2.enqueue()
+      
       Suspend
     }
   }
@@ -397,7 +418,6 @@ class CPIntVarAdaptable(final override val store: CPStore, minValue: Int, maxVal
       // Notify bounds watchers
       onBoundsL1.enqueueBounds()
       onBoundsL2.enqueue()
-      onDomainL2.enqueue()
       // Notify remove watchers if necessary
       if (!onDomainL1.isEmpty) {
         var i = _max
@@ -409,6 +429,15 @@ class CPIntVarAdaptable(final override val store: CPStore, minValue: Int, maxVal
       trail() // trail before changes 
       _size -= (_max - value)
       _max = value
+      
+      // Notify bind events
+      if (_size == 1) {
+        onBindL1.enqueueBind()
+        onBindL2.enqueue()
+      }      
+      
+      // must be last because of watchers
+      onDomainL2.enqueue()      
       Suspend
     }
   }
@@ -440,9 +469,18 @@ class CPIntVarAdaptable(final override val store: CPStore, minValue: Int, maxVal
       // Search new min
       while (positions(i) >= _size) i -= 1
       _max = i + offset
+      
+      // Notify bind events
+      if (_size == 1) {
+        onBindL1.enqueueBind()
+        onBindL2.enqueue()
+      }
+      
       // Notify bounds events
       onBoundsL1.enqueueBounds()
       onBoundsL2.enqueue()
+      
+      // Notify domain events
       onDomainL2.enqueue()
       Suspend
     }
@@ -496,6 +534,7 @@ class CPIntVarAdaptable(final override val store: CPStore, minValue: Int, maxVal
     onDomainL2.register(c)
     if (trackDelta) c.addSnapshot(this)
   }
+   
 
   /**
    * Level 1 registration: ask that the updateBounds(CPIntVar) method of the constraint c is called whenever

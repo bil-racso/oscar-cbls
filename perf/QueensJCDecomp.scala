@@ -47,6 +47,7 @@ object QueensJCDecomp extends CPModel with App {
   // Execution
   val stats = start(nSols = 1)
   println(stats)
+  println(solver.statistics)
 }
 
 

@@ -41,18 +41,34 @@ class ElementVarAC3(y: Array[CPIntVar], x: CPIntVar, z: CPIntVar) extends Constr
   private[this] val xRange = max(0, x.min) to min(x.max, y.size)
   private[this] val zRange = (z.min max (y.map(_.min).min)) to (z.max min (y.map(_.max).max))
   
+  // supporty(i) is a value that is in both dom(y(i)) and dom(z)
+  // if not possible to find a supporty(i) satisfying this condition, 
+  // then i can be removed from x
   
+  // to update supporty
   private[this] val supporty = Array.fill(y.length)(0)
+  
+  // supportz(v) is an index i such that 1) i is in dom(x) and 2) v in dom(y(i))
+  // if not possible to find a supportz(v) then v can be removed from z
   private[this] val supportz = Array.fill(zRange.size)(0)
-  private[this] val minZ = zRange.min
+  private[this] val minZ = if (zRange.isEmpty) 0 else zRange.min
   
   idempotent = true
   
+  private[this] val xvalues = Array.ofDim[Int](y.length)
+  private[this] val zvalues = Array.ofDim[Int](zRange.size)
+  
+  
+  
   override def setup(l: CPPropagStrength): CPOutcome = {
+    if (zRange.isEmpty) return Failure
+    //println("setup:"+x.mkString(","))
+    
     if (z.updateMax((y.map(_.max).max)) == Failure) return Failure
     if (z.updateMin((y.map(_.min).min)) == Failure) return Failure
-    if (x.updateMin(0) == Failure) return Failure
-    if (x.updateMax(y.size - 1) == Failure) return Failure
+    
+    //if (x.updateMin(0) == Failure) return Failure
+    //if (x.updateMax(y.size - 1) == Failure) return Failure
 
     if (adjustX() == Failure) Failure
     else {
@@ -71,7 +87,7 @@ class ElementVarAC3(y: Array[CPIntVar], x: CPIntVar, z: CPIntVar) extends Constr
             Success 
           }            
         }
-
+        //println("x::::::::::>"+x)
         x.callPropagateWhenDomainChanges(this)
         z.callPropagateWhenDomainChanges(this)
         for (i <- x.min to x.max; if x hasValue i) {
@@ -83,7 +99,7 @@ class ElementVarAC3(y: Array[CPIntVar], x: CPIntVar, z: CPIntVar) extends Constr
     }
   }
   
-  private[this] val zvalues = Array.ofDim[Int](zRange.size)
+  
    
   @inline private[this] def updateSupporty(i: Int, zvalues: Array[Int], m: Int): Boolean = {
     if (y(i).hasValue(supporty(i)) && z.hasValue(supporty(i))) return true
@@ -101,14 +117,15 @@ class ElementVarAC3(y: Array[CPIntVar], x: CPIntVar, z: CPIntVar) extends Constr
     
   }
   
-  private[this] val xvalues = Array.ofDim[Int](y.length)
+  
   
   @inline private[this] def updateSupportz(v: Int, xvalues: Array[Int], m: Int): Boolean = {
     if (x.hasValue(supportz(v-minZ)) && y(supportz(v-minZ)).hasValue(v)) return true
     else {
       var i = 0
       while (i < m) {
-        if (x.hasValue(xvalues(i)) && y(xvalues(i)).hasValue(v)) {
+        //println("xval:"+xvalues(i)+" y.size:"+y.size+" x="+x+" xsize:"+x.size)
+        if (y(xvalues(i)).hasValue(v)) {
           supportz(v-minZ) = xvalues(i)
           return true
         }
@@ -119,14 +136,19 @@ class ElementVarAC3(y: Array[CPIntVar], x: CPIntVar, z: CPIntVar) extends Constr
   }  
 
   override def propagate(): CPOutcome = {
-    
+    //println("propagate:"+x.mkString(","))
     var mz = z.fillArray(zvalues)
     val mx = x.fillArray(xvalues)
+    
+    //println("mx:"+mx+" x:"+x+" y.size:"+y.size+" xvalues:"+xvalues.mkString(","))
 
     var i = 0
     while (i < mz) {
       if (!updateSupportz(zvalues(i),xvalues,mx)) {
-        if (z.removeValue(zvalues(i)) == Failure) return Failure
+        if (z.removeValue(zvalues(i)) == Failure) {
+          //println("failure")
+           return Failure 
+        }
         else {
           zvalues(i) = zvalues(mz-1)
           mz -= 1
@@ -138,7 +160,10 @@ class ElementVarAC3(y: Array[CPIntVar], x: CPIntVar, z: CPIntVar) extends Constr
     i = 0
     while (i < mx) {
       if (!updateSupporty(xvalues(i),zvalues,mz)) {
-        if (x.removeValue(xvalues(i)) == Failure) return Failure
+        if (x.removeValue(xvalues(i)) == Failure) {
+           //println("failure")
+           return Failure 
+        }
       }
       i += 1
     }
@@ -194,7 +219,6 @@ class ElementVarAC3(y: Array[CPIntVar], x: CPIntVar, z: CPIntVar) extends Constr
   }
 
 }
-
 
 
 
