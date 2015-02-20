@@ -91,16 +91,15 @@ class ElementVarAC3(y: Array[CPIntVar], x: CPIntVar, z: CPIntVar) extends Constr
         x.callPropagateWhenDomainChanges(this)
         z.callPropagateWhenDomainChanges(this)
         for (i <- x.min to x.max; if x hasValue i) {
-          
-          
-          val watcher = new Watcher {
-            override def shouldEnqueue(): Boolean = x.hasValue(i)
+          if (z.size > 50) {
+            // seems like watchers pay off for larger size of the domains
+            val watcher = new Watcher {
+              override def shouldEnqueue(): Boolean = x.hasValue(i)
+            }
+            y(i).callPropagateWhenDomainChanges(this, watcher)
+          } else {
+            y(i).callPropagateWhenDomainChanges(this)
           }
-          y(i).callPropagateWhenDomainChanges(this,watcher)
-          
-          //y(i).callPropagateWhenDomainChanges(this)
-          
-          
         }
         propagate()
       }
