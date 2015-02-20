@@ -120,7 +120,7 @@ class TestSetTimesBranching extends FunSuite with Matchers  {
     }
   }
 
-  test("SetTimes with transitions and precedences") {
+  /*test("SetTimes with transitions and precedences") {
     // (duration, consumption)
     
     
@@ -194,7 +194,7 @@ class TestSetTimesBranching extends FunSuite with Matchers  {
     }
 
 
-  }
+  }*/
     
 
 }
