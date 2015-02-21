@@ -57,7 +57,7 @@ object RCPSP extends App {
         if (!success) {
           optimum = true
         } else {
-          val out = lcgSolver.solve(heuristic, System.currentTimeMillis() - t0 >= 120000, resetStatistics = false)
+          val out = lcgSolver.solve(heuristic, System.currentTimeMillis() - t0 >= 10000, resetStatistics = false)
           if (out == False) optimum = true
           else if (out == Unassigned) stop = true
           else best -= 1 

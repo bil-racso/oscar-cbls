@@ -2,7 +2,6 @@ package oscar.lcg.modeling
 
 import oscar.lcg.constraints.LCGConstraint
 import oscar.lcg.variables.LCGIntervalVar
-import oscar.lcg.constraints.DecompTT
 import oscar.lcg.constraints.LowerEqual
 import oscar.lcg.constraints.DecompCumulative
 

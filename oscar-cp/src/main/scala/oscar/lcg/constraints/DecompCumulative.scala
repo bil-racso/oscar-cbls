@@ -33,6 +33,8 @@ class DecompCumulative(starts: Array[LCGIntervalVar], durations: Array[Int], dem
   private[this] val updateEnds = new Array[Int](nTasks)
   private[this] var nUpdateStarts = 0
   private[this] var nUpdateEnds = 0
+  
+  private[this] val timePoints = new Array[Int](nTasks)
 
   private[this] val builder = cdclStore.clauseBuilder
 
@@ -76,11 +78,19 @@ class DecompCumulative(starts: Array[LCGIntervalVar], durations: Array[Int], dem
   }
 
   final override def propagate(): CPOutcome = {
+    
+    var i = nTasks
+    while (i > 0) {
+      i -= 1
+      timePoints(i) = starts(i).min + durations(i) - 1
+    }
 
     var fail = false
     var time = horizon
-    while (time > 0 && !fail) {
-      time -= 1
+    i = nTasks
+    while (i > 0 && !fail) {
+      i -= 1
+      val time = timePoints(i)
 
       // Cache
       nActives = nActivesRev(time).value
