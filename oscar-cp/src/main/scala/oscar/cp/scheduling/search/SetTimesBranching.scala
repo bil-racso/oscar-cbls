@@ -56,9 +56,8 @@ class SetTimesBranching(starts: Array[CPIntVar], durations: Array[CPIntVar], end
         if (out != Failure) dominanceCheck()
       } {
         val minEct = selectMinEct(est)
-        cp.post(start >= minEct - 1)
         cp.propagate()
-        oldEst(taskId).value = minEct - 1
+        oldEst(taskId).value = est
         dominanceCheck()
       }
     }

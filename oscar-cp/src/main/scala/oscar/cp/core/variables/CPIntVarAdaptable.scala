@@ -356,16 +356,11 @@ class CPIntVarAdaptable(final override val store: CPStore, minValue: Int, maxVal
       }
       trail() // trail before changes 
       _size -= (value - _min)
-      _min = value
+      _min = value  
       
-      // Notify bind events
-      if (_size == 1) {
-        onBindL1.enqueueBind()
-        onBindL2.enqueue()
-      }      
+      // Notify change in domain
+      onDomainL2.enqueue() // must be last because of watchers
       
-      // must be last because of watchers
-      onDomainL2.enqueue()
       Suspend
     }
   }
@@ -397,7 +392,7 @@ class CPIntVarAdaptable(final override val store: CPStore, minValue: Int, maxVal
       // Search new min
       while (positions(i) >= _size) i += 1
       _min = i + offset
-
+      
       // Notify bind events
       if (_size == 1) {
         onBindL1.enqueueBind()
@@ -445,14 +440,9 @@ class CPIntVarAdaptable(final override val store: CPStore, minValue: Int, maxVal
       _size -= (_max - value)
       _max = value
       
-      // Notify bind events
-      if (_size == 1) {
-        onBindL1.enqueueBind()
-        onBindL2.enqueue()
-      }      
-      
-      // must be last because of watchers
-      onDomainL2.enqueue()      
+      // Notify change in domain
+      onDomainL2.enqueue() // must be last because of watchers
+     
       Suspend
     }
   }
