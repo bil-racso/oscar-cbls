@@ -14,18 +14,15 @@
  ******************************************************************************/
 package oscar.cp.test
 
-import org.scalatest.{Matchers, FunSuite}
 import oscar.cp._
-import oscar.cp.modeling._
+import oscar.cp.testUtils._
 import oscar.util.RandomGenerator
-
-
 
 /**
  * Created on 06/02/15.
  * @author Cyrille Dejemeppe (cyrille.dejemeppe@gmail.com)
  */
-class TestSetTimesBranching extends FunSuite with Matchers  {
+class TestSetTimesBranching extends TestSuite {
 
   def splitRectangle(leftBound: Int, rightBound: Int, minWidth: Int, remainingSplits: Int): List[(Int, Int)] = {
     if (remainingSplits == 0 || (rightBound - leftBound) < 2 * minWidth) {
@@ -188,7 +185,6 @@ class TestSetTimesBranching extends FunSuite with Matchers  {
 
     }
     for (i <- 0 until 10000) {
-      println(i)
       val opt1 = solve(i, true)
       val opt2 = solve(i, false)
       assert(opt1 == opt2)

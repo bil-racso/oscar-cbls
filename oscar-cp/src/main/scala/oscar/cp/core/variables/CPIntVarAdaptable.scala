@@ -356,10 +356,11 @@ class CPIntVarAdaptable(final override val store: CPStore, minValue: Int, maxVal
       }
       trail() // trail before changes 
       _size -= (value - _min)
-      _min = value     
+      _min = value  
       
-      // must be last because of watchers
-      onDomainL2.enqueue()
+      // Notify change in domain
+      onDomainL2.enqueue() // must be last because of watchers
+      
       Suspend
     }
   }
@@ -437,10 +438,11 @@ class CPIntVarAdaptable(final override val store: CPStore, minValue: Int, maxVal
       }
       trail() // trail before changes 
       _size -= (_max - value)
-      _max = value    
+      _max = value
       
-      // must be last because of watchers
-      onDomainL2.enqueue()      
+      // Notify change in domain
+      onDomainL2.enqueue() // must be last because of watchers
+     
       Suspend
     }
   }
