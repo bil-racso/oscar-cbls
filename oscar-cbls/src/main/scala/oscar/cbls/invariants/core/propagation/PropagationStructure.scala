@@ -178,13 +178,9 @@ abstract class PropagationStructure(val verbose: Boolean, val checker:Option[Che
     var LayerCount = 0
     if (topologicalSort){
       computePositionsThroughTopologialSort(ClusteredPropagationComponents)
-    }else{
-      LayerCount = computePositionsThroughDistanceToInput(ClusteredPropagationComponents)+1
-    }
-
-    if (topologicalSort){
       executionQueue = new BinomialHeap[PropagationElement](p => p.position, ClusteredPropagationComponents.size)
     }else{
+      LayerCount = computePositionsThroughDistanceToInput(ClusteredPropagationComponents)+1
       executionQueue = new AggregatedBinomialHeap[PropagationElement](p => p.position, LayerCount)
     }
 
@@ -229,7 +225,7 @@ abstract class PropagationStructure(val verbose: Boolean, val checker:Option[Che
     * that is: the SCC and the PE not belonging to an SCC
     * @return the max Position, knowing that the first is zero*/
   private def computePositionsThroughDistanceToInput(ClusteredPropagationComponents:List[PropagationElement]):Int = {
-    val front:Queue[PropagationElement] =  new Queue[PropagationElement]()
+    val front:DoublyLinkedList[PropagationElement] =  new DoublyLinkedList[PropagationElement]()
     for (pe <- ClusteredPropagationComponents){
       pe.setCounterToPrecedingCount()
       if(pe.position == 0) front.enqueue(pe)
@@ -240,6 +236,7 @@ abstract class PropagationStructure(val verbose: Boolean, val checker:Option[Che
     var countInLayer = 0
 
     while (true) {
+      //we know it is not empty here
       val n = front.dequeue()
       if (n == null){
         if (front.isEmpty){
@@ -483,7 +480,7 @@ abstract class PropagationStructure(val verbose: Boolean, val checker:Option[Che
   /**this variable is set by the propagation element to notify that they are propagating.
     * it is used to ensure that no propagation element perform illegal operation
     * such as writing a variable they do not control, etc)*/
-  var PropagatingElement: PropagationElement = null
+  private[invariants] var PropagatingElement: PropagationElement = null
 
   /**returns the propagation element that is currently propagating.
     * it allows one to ensure that the propagating element behaves as declared in its dependencies
@@ -635,10 +632,10 @@ abstract class StronglyConnectedComponent(val propagationElements: Iterable[Prop
     ""
   }
 
-  var ScheduledElements: List[PropagationElement] = List.empty
+  var scheduledElements: QList[PropagationElement] = null
 
   def scheduleForPropagation(element: PropagationElement) {
-    ScheduledElements = element :: ScheduledElements
+    scheduledElements = new QList(element, scheduledElements)
     super.scheduleForPropagation()
   }
 
@@ -668,9 +665,9 @@ class StronglyConnectedComponentNoSort(Elements: Iterable[PropagationElement],
 
   override def performPropagation() {
     //TODO: this is performing a stack-based prioritization: maybe a queue would perform better? actually.
-    while (!ScheduledElements.isEmpty) {
-      val x = ScheduledElements.head
-      ScheduledElements = ScheduledElements.tail
+    while (scheduledElements != null) {
+      val x = scheduledElements.head
+      scheduledElements = scheduledElements.tail
       x.propagate()
     }
   }
@@ -773,10 +770,12 @@ class StronglyConnectedComponentTopologicalSort(
     injectWaitingNewDependencies(autoSort)
     autoSort = true
 
-    for (e <- ScheduledElements) {
-      h.insert(e)
+    var currentPos = scheduledElements
+    while(currentPos != null){
+      h.insert(currentPos.head)
+      currentPos = currentPos.tail
     }
-    ScheduledElements = List.empty
+    scheduledElements = null
 
     var maxposition:Int = -1
 
@@ -786,10 +785,12 @@ class StronglyConnectedComponentTopologicalSort(
       assert(x.position >= maxposition,"non monotonic propagation detected in SCC")
       assert({maxposition = x.position; true})
 
-      for (e <- ScheduledElements) {
-        h.insert(e)
+      var currentPos = scheduledElements
+      while(currentPos != null){
+        h.insert(currentPos.head)
+        currentPos = currentPos.tail
       }
-      ScheduledElements = List.empty
+      scheduledElements = null
     }
   }
 }
@@ -903,7 +904,8 @@ class PropagationElement extends BasicPropagationElement with DAGNode{
   /**set to true if the PropagationElement is scheduled for propagation, false otherwise.
     * this is managed by the PropagationElement
     */
-  protected var isScheduled: Boolean = false
+  private[this] var internalIsScheduled: Boolean = false
+  protected def isScheduled:Boolean = internalIsScheduled
 
   private[propagation] var staticallyListenedElements: List[PropagationElement] = List.empty
   private[propagation] var staticallyListeningElements: List[PropagationElement] = List.empty
@@ -921,7 +923,7 @@ class PropagationElement extends BasicPropagationElement with DAGNode{
     * to override*/
   protected[core] final def getStaticallyListeningElements: Iterable[PropagationElement] = staticallyListeningElements
 
-  private[core] final def getDynamicallyListeningElements: Iterable[(PropagationElement, Any)] = dynamicallyListeningElements
+  private[core] final def getDynamicallyListeningElements: DelayedPermaFilteredDoublyLinkedList[(PropagationElement, Any),PropagationElement] = dynamicallyListeningElements
 
   protected[core] def getDynamicallyListenedElements: Iterable[PropagationElement] = staticallyListenedElements
 
@@ -1031,14 +1033,14 @@ class PropagationElement extends BasicPropagationElement with DAGNode{
   /**to invoque to force inclusion of the propagation element in the current or next propagation wave. */
   final def scheduleForPropagation() {
     assert(schedulingHandler != null, "cannot schedule or propagate element out of propagation structure")
-    if (!isScheduled) {
-      isScheduled = true
+    if (!internalIsScheduled) {
+      internalIsScheduled = true
       schedulingHandler.scheduleForPropagation(this)
     }
   }
 
   private[core] def rescheduleIfNeeded() {
-    if (isScheduled) {
+    if (internalIsScheduled) {
       schedulingHandler.scheduleForPropagation(this)
     }
   }
@@ -1046,11 +1048,11 @@ class PropagationElement extends BasicPropagationElement with DAGNode{
   /**Performs the propagation, and some bookkeeping around it.
     */
   final def propagate() {
-    assert(isScheduled) //could not be scheduled actually, if was propagated, but not purged from postponed (in case select propagation for input is implemented)
+    assert(internalIsScheduled) //could not be scheduled actually, if was propagated, but not purged from postponed (in case select propagation for input is implemented)
     assert(propagationStructure != null, "cannot schedule or propagate element out of propagation structure")
     assert({propagationStructure.PropagatingElement = this; true})
     performPropagation()
-    isScheduled = false //to avoid registering SCC to the propagation structure every time...
+    internalIsScheduled = false //to avoid registering SCC to the propagation structure every time...
     assert({propagationStructure.PropagatingElement = null; true})
   }
 

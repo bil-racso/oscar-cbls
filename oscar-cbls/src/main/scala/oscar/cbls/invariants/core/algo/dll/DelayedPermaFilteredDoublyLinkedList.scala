@@ -35,7 +35,6 @@ package oscar.cbls.invariants.core.algo.dll
   * */
 class DelayedPermaFilteredDoublyLinkedList[T <: AnyRef, F <: AnyRef] extends Iterable[T]{
 
-  //TODO: we might also consider an implem with no phantom at all
   private[this] val phantom:DPFDLLStorageElement[T] = new DPFDLLStorageElement[T](null.asInstanceOf[T])
   phantom.setNext(phantom)
 
@@ -47,6 +46,8 @@ class DelayedPermaFilteredDoublyLinkedList[T <: AnyRef, F <: AnyRef] extends Ite
   private[this] var mFilter:(T,()=>Unit, ()=> Boolean) => Unit = null
   private[this] var mMap:T => F = null
   private[this] var filtered:DoublyLinkedList[F] = null
+
+  def headPhantom = phantom
 
   /**returns the size of the PermaFilteredDLL
     * this is a O(n) method because it is very rarely used.
@@ -126,7 +127,6 @@ class DelayedPermaFilteredDoublyLinkedList[T <: AnyRef, F <: AnyRef] extends Ite
     }
     toReturn
   }
-
 }
 
 /**

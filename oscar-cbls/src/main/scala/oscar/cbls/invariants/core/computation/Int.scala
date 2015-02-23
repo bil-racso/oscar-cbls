@@ -117,12 +117,25 @@ abstract class ChangingIntValue(initialValue:Int, initialDomain:Domain)
     if(OldValue!=Value){
       val old=OldValue
       OldValue=Value
-      for (e:((PropagationElement,Any)) <- getDynamicallyListeningElements){ //TODO: here should come some postponed stuff as well
-      val inv:Invariant = e._1.asInstanceOf[Invariant]
+
+      val dynListElements = getDynamicallyListeningElements
+      val headPhantom = dynListElements.headPhantom
+      var currentElement = headPhantom.next
+      while(currentElement != headPhantom){
+        val e = currentElement.elem
+        currentElement = currentElement.next
+        val inv:Invariant = e._1.asInstanceOf[Invariant]
         assert({this.model.NotifiedInvariant=inv; true})
         inv.notifyIntChangedAny(this,e._2,old,Value)
         assert({this.model.NotifiedInvariant=null; true})
       }
+      /*
+      for (e:((PropagationElement,Any)) <- getDynamicallyListeningElements){
+      val inv:Invariant = e._1.asInstanceOf[Invariant]
+        assert({this.model.NotifiedInvariant=inv; true})
+        inv.notifyIntChangedAny(this,e._2,old,Value)
+        assert({this.model.NotifiedInvariant=null; true})
+      }*/
     }
   }
 

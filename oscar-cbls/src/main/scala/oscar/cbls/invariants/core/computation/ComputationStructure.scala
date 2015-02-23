@@ -20,6 +20,7 @@
 
 package oscar.cbls.invariants.core.computation
 
+import oscar.cbls.invariants.core.algo.QuickList.QList
 import oscar.cbls.invariants.core.propagation._
 
 import scala.collection.immutable.{SortedMap, SortedSet}
@@ -54,16 +55,21 @@ case class Store(override val verbose:Boolean = false,
 
   assert({println("You are using a CBLS store with asserts activated. It makes the engine slower. Recompile it with -Xdisable-assertions"); true})
 
-  private var variables:List[AbstractVariable] = List.empty
+  private[this] var variables:QList[AbstractVariable] = null
   private var propagationElements:List[PropagationElement] = List.empty
 
-  private var privateDecisionVariables:List[Variable] = null;
+  private[this] var privateDecisionVariables:QList[Variable] = null;
 
-  def decisionVariables():List[Variable] = {
+  def decisionVariables():QList[Variable] = {
     if(privateDecisionVariables == null){
-      privateDecisionVariables  = List.empty
-      for (v:AbstractVariable <- variables if v.isDecisionVariable){
-        privateDecisionVariables = v.asInstanceOf[Variable] :: privateDecisionVariables
+      privateDecisionVariables  = null
+      var currentVarPos = variables
+      while(currentVarPos != null){
+        val v:AbstractVariable = currentVarPos.head
+        currentVarPos = currentVarPos.tail
+        if (v.isDecisionVariable){
+          privateDecisionVariables = new QList(v.asInstanceOf[Variable],privateDecisionVariables)
+        }
       }
     }
     privateDecisionVariables
@@ -79,7 +85,10 @@ case class Store(override val verbose:Boolean = false,
       decisionVariables()
     }else variables
 
-    for (v:AbstractVariable <- VariablesToSave){
+    var currentPos = VariablesToSave
+    while(currentPos != null){
+      val v:AbstractVariable = currentPos.head
+      currentPos = currentPos.tail
       v match {
         case i:ChangingIntValue =>
           assignationInt = ((i, i.value)) :: assignationInt
@@ -128,7 +137,7 @@ case class Store(override val verbose:Boolean = false,
     assert(!closed,"model is closed, cannot add variables")
     //ici on utilise des listes parce-que on ne peut pas utiliser des dictionnaires
     // vu que les variables n'ont pas encore recu leur unique ID.
-    variables = v :: variables
+    variables = new QList(v,variables)
     propagationElements =  v :: propagationElements
     GetNextID()
   }
@@ -194,7 +203,6 @@ case class Store(override val verbose:Boolean = false,
   var NotifiedInvariant:Invariant=null
 
   override def toString:String = variables.toString()
-  def toStringInputOnly = variables.filter(v => v.isDecisionVariable).toString()
 
   //returns the set of source variable that define this one.
   // This exploration procedure explores passed dynamic invariants,
