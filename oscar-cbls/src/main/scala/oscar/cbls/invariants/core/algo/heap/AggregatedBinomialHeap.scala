@@ -51,11 +51,11 @@ class AggregatedBinomialHeap[@specialized T](GetKey:T => Int,val maxPosition:Int
     val position = GetKey(elem)
     val otherWithSamePosition = a(position)
     if (otherWithSamePosition == null){
-      a(position) = new QList(elem)
+      a(position) = QList(elem)
       b.insert(position)
     }else{
       //this is the desired branch, as it is O(1)
-      a(position) = new QList(elem, otherWithSamePosition)
+      a(position) = QList(elem, otherWithSamePosition)
     }
     msize+=1
   }

@@ -78,6 +78,14 @@ class DoublyLinkedList[T] extends Iterable[T]{
   override def isEmpty = phantom.next == phantom
 
   override def iterator = new DLLIterator[T](phantom, phantom)
+
+  override def foreach[U](f: (T) => U): Unit = {
+    var currentPos = phantom.next
+    while(currentPos != phantom){
+      f(currentPos.elem)
+      currentPos = currentPos.next
+    }
+  }
 }
 
 /**

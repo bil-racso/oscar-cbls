@@ -99,7 +99,7 @@ abstract class PropagationStructure(val verbose: Boolean, val checker:Option[Che
     * on which the propagation structure will reason.
     * The method is expected to return consistent result once the setupPropagationStructure method is called
     */
-  def getPropagationElements: Iterable[PropagationElement]
+  def getPropagationElements: QList[PropagationElement]
 
   /**
    * @return the propagation structure that contains this, itself if it is a PS
@@ -137,39 +137,30 @@ abstract class PropagationStructure(val verbose: Boolean, val checker:Option[Che
     */
   protected def setupPropagationStructure(DropStaticGraph: Boolean) {
 
-    val StrognlyConnectedComponents: List[List[PropagationElement]] =
-      if (noCycle) {
-        var toreturn: List[List[PropagationElement]] = List.empty
-        for (n <- getPropagationElements) toreturn = List(n) :: toreturn
-        toreturn
-      } else {
-        //identification des composantes connexes
-        val storageForTarjan = this.getNodeStorage[TarjanNodeData]
-        storageForTarjan.initialize(() => new TarjanNodeData)
-        TarjanWithExternalStorage.getStronlyConnexComponents[PropagationElement](
-          getPropagationElements,
-          p => p.getStaticallyListeningElements,
-          storageForTarjan.get)
-      }
+    val ClusteredPropagationComponents: List[PropagationElement] =  if (noCycle) {
+      getPropagationElements.toList
+    } else {
+      //identification des composantes connexes
+      val storageForTarjan = this.getNodeStorage[TarjanNodeData]
+      storageForTarjan.initialize(() => new TarjanNodeData)
+      val StrognlyConnectedComponents:List[List[PropagationElement]] = TarjanWithExternalStorage.getStronlyConnexComponents[PropagationElement](
+        getPropagationElements,
+        p => p.getStaticallyListeningElements,
+        storageForTarjan.get)
+      acyclic = true
+      StronglyConnexComponentsList = List.empty
+      StrognlyConnectedComponents.map((a:List[PropagationElement]) =>
+        if (a.tail.isEmpty) {
+          a.head
+        } else {
+          acyclic = false
 
-    assert(getPropagationElements.size == StrognlyConnectedComponents.foldLeft(0)
-      ((acc, component) => acc + component.size))
-
-    //tri topologique sur les composantes fortement connexes
-    acyclic = true
-    StronglyConnexComponentsList = List.empty
-    val ClusteredPropagationComponents: List[PropagationElement] = StrognlyConnectedComponents.map(a => {
-      if (a.tail.isEmpty) {
-        a.head
-      } else {
-        acyclic = false
-
-        val c = if (sortScc) new StronglyConnectedComponentTopologicalSort(a, this, GetNextID())
-        else new StronglyConnectedComponentNoSort(a,this,GetNextID())
-        StronglyConnexComponentsList = c :: StronglyConnexComponentsList
-        c
-      }
-    })
+          val c:StronglyConnectedComponent = if (sortScc) new StronglyConnectedComponentTopologicalSort(a, this, GetNextID())
+          else new StronglyConnectedComponentNoSort(a,this,GetNextID())
+          StronglyConnexComponentsList = c :: StronglyConnexComponentsList
+          c
+        })
+    }
 
     buildFastPropagationTracks()
 
@@ -275,7 +266,7 @@ abstract class PropagationStructure(val verbose: Boolean, val checker:Option[Che
   private[this] var fastPropagationTracks: SortedMap[PropagationElement, Array[Boolean]] =
     SortedMap.empty[PropagationElement, Array[Boolean]]
 
-  private var partialPropagationTargets:List[List[PropagationElement]] = List.empty
+  private var partialPropagationTargets:List[QList[PropagationElement]] = List.empty
 
   /**to call before setupPropagationStructure to specify PropagationElements
     * on which one need partial propagation
@@ -283,7 +274,16 @@ abstract class PropagationStructure(val verbose: Boolean, val checker:Option[Che
     */
   def registerForPartialPropagation(p: PropagationElement*) {
     require(!this.closed, "cannot register variables for partial propagation aftger model has been closed")
-    partialPropagationTargets = p.toList :: partialPropagationTargets
+    partialPropagationTargets = toQList(p) :: partialPropagationTargets
+  }
+
+  private def toQList[T](i:Iterable[T]):QList[T]={
+    val it = i.iterator
+    var toReturn:QList[T] = null
+    while(it.hasNext){
+      toReturn = QList(it.next(),toReturn)
+    }
+    toReturn
   }
 
   private[this] var previousPropagationTrack: Array[Boolean] = null
@@ -322,9 +322,11 @@ abstract class PropagationStructure(val verbose: Boolean, val checker:Option[Che
   /**Builds and stores the partial propagation tracks*/
   private def buildFastPropagationTracks() {
     for(propagationGroup <- partialPropagationTargets){
-      val track = BuildFastPropagationtrack(propagationGroup)
-      for (n <- propagationGroup) {
-        fastPropagationTracks += ((n, track))
+      val track = BuildFastPropagationTrack(propagationGroup)
+      var currentPos = propagationGroup
+      while(currentPos != null){
+        fastPropagationTracks += ((currentPos.head, track))
+        currentPos = currentPos.tail
       }
     }
   }
@@ -333,19 +335,23 @@ abstract class PropagationStructure(val verbose: Boolean, val checker:Option[Che
     * @param target the propagation element for which we build the partial propagation track
     * @return an array of boolean: UniqueID => should the element with UniqueID be propagated for this target?
     */
-  private def BuildFastPropagationtrack(target: List[PropagationElement]): Array[Boolean] = {
-    val Track: Array[Boolean] = new Array[Boolean](getMaxID + 1)
-    for (i <- 0 to getMaxID) Track(i) = false
+  private def BuildFastPropagationTrack(target: QList[PropagationElement]): Array[Boolean] = {
+    val Track: Array[Boolean] = Array.fill(getMaxID + 1)(false)
 
-    var ToExplore: List[PropagationElement] = target
-    for(pe <- target) Track(pe.uniqueID) = true
+    var ToExplore: QList[PropagationElement] = target
 
-    while (!ToExplore.isEmpty) {
+    var currentPos = target
+    while(currentPos != null){
+      Track(currentPos.head.uniqueID) = true
+      currentPos = currentPos.tail
+    }
+
+    while (ToExplore != null) {
       val n = ToExplore.head
       ToExplore = ToExplore.tail
       for (nn <- n.getStaticallyListenedElements)
         if (nn.uniqueID != -1 && !Track(nn.uniqueID)) {
-          ToExplore = nn :: ToExplore
+          ToExplore = QList(nn,ToExplore)
           Track(nn.uniqueID) = true
         }
     }
@@ -384,7 +390,7 @@ abstract class PropagationStructure(val verbose: Boolean, val checker:Option[Che
         if (Track(e.uniqueID)) {
           executionQueue.insert(e)
         } else {
-          postponedElements = new QList(e,postponedElements)
+          postponedElements = QList(e,postponedElements)
         }
       }
       scheduledElements = null
@@ -416,7 +422,7 @@ abstract class PropagationStructure(val verbose: Boolean, val checker:Option[Che
         if (Track(e.uniqueID)) {
           executionQueue.insert(e)
         } else {
-          newPostponed = new QList(e,newPostponed)
+          newPostponed = QList(e,newPostponed)
         }
       }
       postponedElements = newPostponed
@@ -428,7 +434,7 @@ abstract class PropagationStructure(val verbose: Boolean, val checker:Option[Che
         if (Track(e.uniqueID)) {
           executionQueue.insert(e)
         } else {
-          postponedElements = new QList(e,postponedElements)
+          postponedElements = QList(e,postponedElements)
         }
       }
       scheduledElements = null
@@ -449,7 +455,7 @@ abstract class PropagationStructure(val verbose: Boolean, val checker:Option[Che
         if (Track == null || Track(e.uniqueID)) {
           executionQueue.insert(e)
         } else {
-          postponedElements = new QList(e,postponedElements)
+          postponedElements = QList(e,postponedElements)
         }
       }
     }
@@ -468,7 +474,7 @@ abstract class PropagationStructure(val verbose: Boolean, val checker:Option[Che
 
   /**this method is used by propagationComponents to schedule themselves for propagation. */
   def scheduleForPropagation(p: PropagationElement) {
-    scheduledElements = new QList(p,scheduledElements)
+    scheduledElements = QList(p,scheduledElements)
   }
 
   /**this variable controls propagation.
@@ -635,7 +641,7 @@ abstract class StronglyConnectedComponent(val propagationElements: Iterable[Prop
   var scheduledElements: QList[PropagationElement] = null
 
   def scheduleForPropagation(element: PropagationElement) {
-    scheduledElements = new QList(element, scheduledElements)
+    scheduledElements = QList(element, scheduledElements)
     super.scheduleForPropagation()
   }
 
@@ -664,7 +670,6 @@ class StronglyConnectedComponentNoSort(Elements: Iterable[PropagationElement],
                                        core: PropagationStructure, _UniqueID: Int) extends StronglyConnectedComponent(Elements,core,_UniqueID) {
 
   override def performPropagation() {
-    //TODO: this is performing a stack-based prioritization: maybe a queue would perform better? actually.
     while (scheduledElements != null) {
       val x = scheduledElements.head
       scheduledElements = scheduledElements.tail

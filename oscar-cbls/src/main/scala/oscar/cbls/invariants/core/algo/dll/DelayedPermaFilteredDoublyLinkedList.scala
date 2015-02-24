@@ -127,6 +127,14 @@ class DelayedPermaFilteredDoublyLinkedList[T <: AnyRef, F <: AnyRef] extends Ite
     }
     toReturn
   }
+
+  override def foreach[U](f: (T) => U): Unit = {
+    var currentPos = headPhantom.next
+    while(currentPos != headPhantom){
+      f(currentPos.elem)
+      currentPos = currentPos.next
+    }
+  }
 }
 
 /**

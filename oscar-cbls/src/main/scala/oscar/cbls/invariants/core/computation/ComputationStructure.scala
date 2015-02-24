@@ -56,7 +56,7 @@ case class Store(override val verbose:Boolean = false,
   assert({println("You are using a CBLS store with asserts activated. It makes the engine slower. Recompile it with -Xdisable-assertions"); true})
 
   private[this] var variables:QList[AbstractVariable] = null
-  private var propagationElements:List[PropagationElement] = List.empty
+  private var propagationElements:QList[PropagationElement] = null
 
   private[this] var privateDecisionVariables:QList[Variable] = null;
 
@@ -68,7 +68,7 @@ case class Store(override val verbose:Boolean = false,
         val v:AbstractVariable = currentVarPos.head
         currentVarPos = currentVarPos.tail
         if (v.isDecisionVariable){
-          privateDecisionVariables = new QList(v.asInstanceOf[Variable],privateDecisionVariables)
+          privateDecisionVariables = QList(v.asInstanceOf[Variable],privateDecisionVariables)
         }
       }
     }
@@ -137,8 +137,8 @@ case class Store(override val verbose:Boolean = false,
     assert(!closed,"model is closed, cannot add variables")
     //ici on utilise des listes parce-que on ne peut pas utiliser des dictionnaires
     // vu que les variables n'ont pas encore recu leur unique ID.
-    variables = new QList(v,variables)
-    propagationElements =  v :: propagationElements
+    variables = QList(v,variables)
+    propagationElements =  QList(v,propagationElements)
     GetNextID()
   }
 
@@ -148,11 +148,11 @@ case class Store(override val verbose:Boolean = false,
     */
   def registerInvariant(i:Invariant):Int = {
     assert(!closed,"model is closed, cannot add invariant")
-    propagationElements = i :: propagationElements
+    propagationElements = QList(i,propagationElements)
     GetNextID()
   }
 
-  override def getPropagationElements:Iterable[PropagationElement] = {
+  override def getPropagationElements:QList[PropagationElement] = {
     propagationElements
   }
 
