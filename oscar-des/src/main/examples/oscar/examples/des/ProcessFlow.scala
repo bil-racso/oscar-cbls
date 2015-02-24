@@ -1,10 +1,9 @@
 package oscar.des.flow
 
 import oscar.des.engine.Model
-import oscar.des.flow.core.{Putable, Fetchable}
 import oscar.des.flow.lib._
 
-object testBelt extends App with HelperForProcess{
+object TestBelt extends App with HelperForProcess{
 
   val m = new Model
   val verbose = false

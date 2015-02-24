@@ -118,14 +118,14 @@ trait RichPutable extends Putable {
    * @param amount
    * @param block
    */
-  protected def appendPut(amount:Int)(block : ()=> Unit): Unit ={
+  protected def appendPut(amount:Int)(block : ()=> Unit): Unit = {
     waitingPuts.append((amount, block))
   }
 
   /**
    * @return true if something could be done, false otherwise.
    */
-  protected def processBlockedPuts(): Boolean ={
+  protected def processBlockedPuts(): Boolean = {
     var somethingDone = false
     var finished = false
     while (! finished) {
@@ -175,7 +175,7 @@ trait RichPutable extends Putable {
  */
 case class CounterGate(waitedNotification:Int, gate: () => Unit) {
   private var remaining = waitedNotification
-  def notifyOne(): Unit ={
+  def notifyOne(): Unit = {
     remaining -=1
     if(remaining == 0) gate()
   }
@@ -185,7 +185,7 @@ case class CounterGate(waitedNotification:Int, gate: () => Unit) {
   * an output consists is outputting a set of parts to a set of Putables
   * @author renaud.delandtsheer@cetic.be
   */
-class Outputter(outputs:List[(() => Int,Putable)]) {
+class Outputter(outputs:List[(() => Int, Putable)]) {
   val outputCount = outputs.length
   def performOutput(block: () => Unit){
     val gate = CounterGate(outputCount +1, block)
@@ -200,7 +200,7 @@ class Outputter(outputs:List[(() => Int,Putable)]) {
   * an input consists in fetching a set of parts from a set of Fetchables
   * @author renaud.delandtsheer@cetic.be
   */
-class Inputter(inputs:List[(() => Int,Fetchable)]) {
+class Inputter(inputs:List[(() => Int, Fetchable)]) {
   val inputCount = inputs.length
   def performInput(block : ()=> Unit): Unit = {
     val gate = CounterGate(inputCount +1, block)

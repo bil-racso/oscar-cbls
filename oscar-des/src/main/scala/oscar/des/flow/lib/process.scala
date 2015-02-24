@@ -48,9 +48,10 @@ trait HelperForProcess{
 case class BatchProcess(m:Model,
                         numberOfBatches:Int,
                         batchDuration:() => Float,
-                        inputs:List[(() => Int,Fetchable)],
-                        outputs:List[(() => Int,Putable)],
-                        name:String, verbose:Boolean = true) {
+                        inputs:List[(() => Int, Fetchable)],
+                        outputs:List[(() => Int, Putable)],
+                        name:String,
+                        verbose:Boolean = true) {
 
   private val childProcesses:Iterable[SingleBatchProcess] =
     (1 to numberOfBatches) map((batchNumber:Int) => SingleBatchProcess(m,
@@ -81,8 +82,8 @@ case class BatchProcess(m:Model,
  * */
 case class SingleBatchProcess(m:Model,
                               batchDuration:() => Float,
-                              inputs:List[(() => Int,Fetchable)],
-                              outputs:List[(() => Int,Putable)],
+                              inputs:List[(() => Int, Fetchable)],
+                              outputs:List[(() => Int, Putable)],
                               name:String,
                               verbose:Boolean = true){
 
@@ -130,7 +131,7 @@ case class SingleBatchProcess(m:Model,
 }
 
 /**
- * This represents a failing batch process (see [[FailingSingleBatchProcess]]) with multiple batch running in parallell.
+ * This represents a failing batch process (see [[FailingSingleBatchProcess]]) with multiple batch running in parallel.
  * @param m the simulation model
  * @param numberOfBatches the number of batches running in parallel.
  * @param batchDuration the duration of a batch starting from all inputs being inputted, and ending with the beginning of the outputting
@@ -145,10 +146,10 @@ case class SingleBatchProcess(m:Model,
 case class FailingBatchProcess(m:Model,
                                numberOfBatches:Int,
                                batchDuration:() => Float,
-                               inputs:List[(() => Int,Fetchable)],
-                               outputs:List[(() => Int,Putable)],
-                               failureOutputs:List[(() => Int,Putable)],
-                               success:()=>Boolean,
+                               inputs:List[(() => Int, Fetchable)],
+                               outputs:List[(() => Int, Putable)],
+                               failureOutputs:List[(() => Int, Putable)],
+                               success:() => Boolean,
                                name:String,
                                verbose:Boolean = true){
 
@@ -170,7 +171,7 @@ case class FailingBatchProcess(m:Model,
 }
 
 /**
- * a process inputs some inputs, and produces its outputs at a given rate.
+ * A process inputs some inputs, and produces its outputs at a given rate.
  * notice that inputs and outputs are performed in parallel (thus might cause some deadlocks)
  * this process might fail. In this case, failure is assessed at the end of the batch duration,
  * and produces the failureOutputs
@@ -187,9 +188,9 @@ case class FailingBatchProcess(m:Model,
  * */
 case class FailingSingleBatchProcess(m:Model,
                                      batchDuration:() => Float,
-                                     inputs:List[(() => Int,Fetchable)],
-                                     outputs:List[(() => Int,Putable)],
-                                     failureOutputs:List[(() => Int,Putable)],
+                                     inputs:List[(() => Int, Fetchable)],
+                                     outputs:List[(() => Int, Putable)],
+                                     failureOutputs:List[(() => Int, Putable)],
                                      success:()=>Boolean,
                                      name:String,
                                      verbose:Boolean = true) {
@@ -248,7 +249,7 @@ case class FailingSingleBatchProcess(m:Model,
 }
 
 /**
- * rolling Process means that if the output is blocked, no new batch is started
+ *  A rolling (in a conveyor belt) Process means that if the output is blocked, no new batch is started
  * (imagine an industrial rolling band oven where croissants are cooked)
  * and if the input is blocked, the output still proceeds, (as if we were starting empty batches) there is no catch up for the waited time
  * batch only start when they ave their complete inputs.
@@ -264,10 +265,10 @@ case class FailingSingleBatchProcess(m:Model,
  * @author renaud.delandtsheer@cetic.be
  */
 class ConveyorBeltProcess(m:Model,
-                          processDuration:Float,
+                          processDuration:() => Float,
                           minimalSeparationBetweenBatches:Float,
-                          val inputs:List[(() => Int,Fetchable)],
-                          val outputs:List[(() => Int,Putable)],
+                          val inputs:List[(() => Int, Fetchable)],
+                          val outputs:List[(() => Int, Putable)],
                           name:String,
                           verbose:Boolean = true){
 
@@ -326,7 +327,7 @@ class ConveyorBeltProcess(m:Model,
 
   private def finishedInputs(): Unit ={
     if (belt.isEmpty) {
-      belt.prepend(processDuration)
+      belt.prepend(processDuration())
     } else {
       belt.prepend(m.clock - timeOfLastInput)
     }
@@ -378,14 +379,15 @@ class ConveyorBeltProcess(m:Model,
 
 
 /**
- * this will put some delay between the incoming and outgoing of goods.
+ * This will put some delay between the incoming and outgoing of goods.
  * Suppose a conveyor belt where you can stack things,
  * and that is not stopped by an overflow at the destination (things accumulate at the output in an ugly way)
  * also, thus implementation is much less efficient than the one of [[ConveyorBeltProcess]]
  * @param m
  * @param delay
+ * @param destination the putable where goods will be stored
  */
-class Delay(m:Model, delay:Float, destination:Putable) extends RichPutable{
+class Delay(m:Model, delay:()=>Float, destination:Putable) extends RichPutable{
 
   var blocked = false
   /**
@@ -394,12 +396,12 @@ class Delay(m:Model, delay:Float, destination:Putable) extends RichPutable{
    * @param amount
    * @param block
    */
-  override def put(amount: Int)(block: () => Unit){
-    appendPut(amount)(() => {block(); m.wait(delay){output(amount)}})
+  override def put(amount: Int)(block: () => Unit) {
+    appendPut(amount)(() => {block(); m.wait(delay()){output(amount)}})
     if (! blocked) processBlockedPuts()
   }
 
-  private def output(amount:Int): Unit ={
+  private def output(amount:Int): Unit = {
     blocked = true
     destination.put(amount)(() => {blocked = false; processBlockedPuts()})
   }
@@ -414,7 +416,7 @@ class Delay(m:Model, delay:Float, destination:Putable) extends RichPutable{
 }
 
 /**
- *This policy fills in a stock when it is below some threshold by placing an order to a supplier.
+ * This policy fills in a stock when it is below some threshold by placing an order to a supplier.
  * The storage will be refurbished when the supplier actually delivers the order
  *
  * @param s the storage that is refurbished through this policy
@@ -456,7 +458,7 @@ class OrderOnStockThreshold(s:Storage,
 }
 
 /**
- *This policy fills in a stock when it is below some threshold by placing an order to a supplier.
+ * This policy fills in a stock when it is below some threshold by placing an order to a supplier.
  * The storage will be refurbished when the supplier actually delivers the order
  * The storage is actually checked every period for its level.
  * @param s the storage that is refurbished through this policy
@@ -472,7 +474,7 @@ class OrderOnStockThreshold(s:Storage,
 class OrderOnStockThresholdWithTick(s:Storage,
                                     m:Model,
                                     threshold:Int,
-                                    period:Float,
+                                    period:()=>Float,
                                     orderQuantity:Int=>Int,
                                     supplier:PartSupplier,
                                     verbose:Boolean = true,
@@ -481,7 +483,7 @@ class OrderOnStockThresholdWithTick(s:Storage,
 
   protected override def performOrder(){
     //the order is placed at a round up period after now
-    m.wait(period - (m.clock() % period)) {if (s.content < threshold) super.performOrder()}
+    m.wait(period() - (m.clock() % period())) {if (s.content < threshold) super.performOrder()}
   }
 }
 
@@ -531,8 +533,8 @@ class PartSupplier(m:Model,
  * @param verbose true to print when stock is empty or overfull
  * @author renaud.delandtsheer@cetic.be
  * */
-case class OverflowStorage(override val size:Int,
-                           initialContent:Int,
+case class OverflowStorage(override val size:() => Int,
+                           initialContent:() => Int,
                            override val name:String,
                            override val verbose:Boolean=true)
   extends Storage(size,initialContent, name, verbose) {
@@ -557,17 +559,18 @@ case class OverflowStorage(override val size:Int,
  * @param verbose true to print when stock is empty or overfull
  * @author renaud.delandtsheer@cetic.be
  * */
-class Storage(val size:Int, initialContent:Int,
+class Storage(val size:() => Int,
+              initialContent:() => Int,
               val name:String,
               val verbose:Boolean=true)
   extends RichPutable with RichFetchable {
 
-  var content:Int = initialContent
+  var content:Int = initialContent()
 
   private var notificationTo:List[NotificationTarget] = List.empty
 
   override def toString: String = {
-    name + " " + this.getClass.getSimpleName + ":: content:" + content + " max:" + size + " totalPut:" + totalPut + " totalFetch:" + totalFetch
+    name + " " + this.getClass.getSimpleName + ":: content:" + content + " max:" + size() + " totalPut:" + totalPut + " totalFetch:" + totalFetch
   }
 
   protected def flow() :Boolean = {
@@ -575,11 +578,11 @@ class Storage(val size:Int, initialContent:Int,
     var finished = false
     while (!finished) {
       finished = true
-      if (processBlockedFetches()){
+      if (processBlockedFetches()) {
         somethingCouldBeDone = true
         finished = false
       }
-      if (processBlockedPuts()){
+      if (processBlockedPuts()) {
         somethingCouldBeDone = true
         finished = false
       }
@@ -613,11 +616,11 @@ class Storage(val size:Int, initialContent:Int,
    */
   override protected def internalPut(amount: Int): (Int,Int) = {
     val newContent = content + amount
-      if (newContent > size) {
-        content = size
-        val remainsToPut = newContent - size
+      if (newContent > size()) {
+        content = size()
+        val remainsToPut = newContent - size()
         (remainsToPut,amount - remainsToPut)
-      }else{
+      } else {
         content = newContent
         (0,amount)
       }
@@ -632,7 +635,7 @@ class Storage(val size:Int, initialContent:Int,
     if (newContent >= 0) {
       content = newContent
       (0,amount)
-    }else{
+    } else {
       content = 0
       (- newContent, amount + newContent)
     }

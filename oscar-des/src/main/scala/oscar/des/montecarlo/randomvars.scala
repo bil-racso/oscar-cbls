@@ -45,15 +45,27 @@ trait RandomVar[+T <: AnyVal] {
 
   def getValue: T
 
-  def intRandomFunc: () => Int
+  def staticIntRandomFunc: () => Int
 
-  def doubleRandomFunc: () => Double
+  def staticFloatRandomFunc: () => Float
+
+  def staticDoubleRandomFunc: () => Double
+
+  def dynamicIntRandomFunc: () => Int
+
+  def dynamicFloatRandomFunc: () => Float
+
+  def dynamicDoubleRandomFunc: () => Double
+
+  def dynamicBooleanRandomFunc: () => Boolean = () => dynamicIntRandomFunc() != 0
 
   def apply[U](fn : T => U) : U = fn(getValue)
 
-  def applyInt[U](fn : Int => U) = fn(intRandomFunc())
+  def applyInt[U](fn : Int => U) = fn(dynamicIntRandomFunc())
 
-  def applyDouble[U](fn : Double => U) = fn(doubleRandomFunc())
+  def applyDouble[U](fn : Double => U) = fn(dynamicDoubleRandomFunc())
+
+  def resetDynamicFunctions()
 }
 
 /**
@@ -66,13 +78,33 @@ trait RandomVar[+T <: AnyVal] {
 class IntRandomVar(name : String, numberGenerator: NumberGenerator) extends RandomVar[Int] {
   val typeVar = IntRdVar
 
+  var randomInt : Option[Int] = None
+
   def this(nm : String, dist : ProbabilityDistribution) = this(nm, new NumberGenerator(dist))
 
   def getValue = numberGenerator.generateNext.toInt
 
-  def intRandomFunc = () => getValue
+  def staticIntRandomFunc = () => randomInt match {
+    case Some(v) => v
+    case None =>
+      val v = getValue
+      randomInt = Some(v)
+      v
+  }
 
-  def doubleRandomFunc = () => getValue.toDouble
+  def staticFloatRandomFunc = () => staticIntRandomFunc().toFloat
+
+  def staticDoubleRandomFunc = () => staticIntRandomFunc().toDouble
+
+  def dynamicIntRandomFunc = () => getValue
+
+  def dynamicFloatRandomFunc = () => getValue.toFloat
+
+  def dynamicDoubleRandomFunc = () => getValue.toDouble
+
+  def resetDynamicFunctions(): Unit = {
+    randomInt = None
+  }
 
   override def toString : String = {
     s"Integer Random Variable $name : $getValue"
@@ -89,13 +121,33 @@ class IntRandomVar(name : String, numberGenerator: NumberGenerator) extends Rand
 class DoubleRandomVar(name : String, numberGenerator: NumberGenerator) extends RandomVar[Double] {
   val typeVar = DoubleRdVar
 
+  var randomDbl : Option[Double] = None
+
   def this(nm : String, dist : ProbabilityDistribution) = this(nm, new NumberGenerator(dist))
 
   def getValue = numberGenerator.generateNext
 
-  def intRandomFunc = () => getValue.toInt
+  def staticIntRandomFunc = () => staticDoubleRandomFunc().toInt
 
-  def doubleRandomFunc = () => getValue
+  def staticFloatRandomFunc = () => staticDoubleRandomFunc().toFloat
+
+  def staticDoubleRandomFunc = () => randomDbl match {
+    case Some(v) => v
+    case None =>
+      val v = getValue
+      randomDbl = Some(v)
+      v
+  }
+
+  def dynamicIntRandomFunc = () => getValue.toInt
+
+  def dynamicFloatRandomFunc = () => getValue.toFloat
+
+  def dynamicDoubleRandomFunc = () => getValue
+
+  def resetDynamicFunctions(): Unit = {
+    randomDbl = None
+  }
 
   override def toString : String = {
     s"Double Random Variable $name : $getValue"
@@ -158,6 +210,8 @@ class RandomVarList(name : String, numberGenerator: NumberGenerator) {
 
   def foldRight[U](z : U)(op : (AnyVal, U) => U) : U =
     rvList.foldRight(z)((rv:RandomVar[AnyVal], u:U) => op(rv.getValue, u))
+
+  def resetDynamicFunctions(): Unit =  rvList.map((rv) => rv.resetDynamicFunctions())
 }
 
 /**
@@ -194,4 +248,6 @@ class RandomVarSet(name : String) {
   }
 
   def getValues : List[AnyVal] = rvSet.map((rv) => rv.getValue).toList
+
+  def resetDynamicFunctions(): Unit =  rvSet.map((rv) => rv.resetDynamicFunctions())
 }
