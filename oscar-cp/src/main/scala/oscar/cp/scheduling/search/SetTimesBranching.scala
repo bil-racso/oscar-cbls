@@ -49,7 +49,17 @@ class SetTimesBranching(starts: Array[CPIntVar], durations: Array[CPIntVar], end
       val taskId = selectTask()
       val start = starts(taskId)
       val est = start.min
-      if (minUnselectableLst <= est) dummyAlternative // TODO: should be done at the end of each alternative
+      // 
+      if (minUnselectableLst <= est) {
+        // once an activity is postponed, it must always be scheduled after the current est
+        // (the current est can only increase down a branch)
+        // we detect that at least one postponed one cannot be scheduled after
+        dummyAlternative // TODO: should be done at the end of each alternative
+      }
+      else if (existsPostponedForever(est)) {
+        // we have detected at least one activity that will remain always postponed in this subtree
+        dummyAlternative 
+      }
       else branch {
         val out = cp.assign(start, est)
         assign(taskId) // the task is assigned by setTimes
@@ -118,6 +128,20 @@ class SetTimesBranching(starts: Array[CPIntVar], durations: Array[CPIntVar], end
     }
     minLst
   }
+  
+  
+  @inline private def existsPostponedForever(ect: Int): Boolean = {
+    var i = nUnassigned.value
+    while (i > 0) {
+      i -= 1
+      val taskId = unassigned(i)
+      // all the tasks will be scheduled >= ect
+      // so this taskId has no chance to become selectable again
+      if (ends(taskId).min <= ect)  return true
+      
+    }
+    false
+  }  
 
   // FIXME: selectTask, dominanceCheck and minUnselectableLst should be 
   //        done in a single pass at the end of each branch
