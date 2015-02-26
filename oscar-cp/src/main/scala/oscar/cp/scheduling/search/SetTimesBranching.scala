@@ -1,19 +1,17 @@
-/**
- * *****************************************************************************
+/*******************************************************************************
  * OscaR is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- *
+ *   
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License  for more details.
- *
+ *   
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
- * ****************************************************************************
- */
+ ******************************************************************************/
 
 package oscar.cp.scheduling.search
 
@@ -49,7 +47,11 @@ class SetTimesBranching(starts: Array[CPIntVar], durations: Array[CPIntVar], end
       val taskId = selectTask()
       val start = starts(taskId)
       val est = start.min
-      if (minUnselectableLst <= est) dummyAlternative // TODO: should be done at the end of each alternative
+      // 
+      if (existsPostponedForever(est)) {
+        // we have detected at least one activity that will remain always postponed in this subtree
+        dummyAlternative 
+      }
       else branch {
         val out = cp.assign(start, est)
         assign(taskId) // the task is assigned by setTimes
@@ -118,6 +120,25 @@ class SetTimesBranching(starts: Array[CPIntVar], durations: Array[CPIntVar], end
     }
     minLst
   }
+  
+  
+  @inline private def existsPostponedForever(est: Int): Boolean = {
+    var i = nUnassigned.value
+    while (i > 0) {
+      i -= 1
+      val taskId = unassigned(i)
+      if (oldEst(taskId).value >= starts(taskId).min && durations(taskId).max != 0) {
+        if (ends(taskId).min <= est || starts(taskId).max <= est)  return true
+        // once an activity is postponed, it must always be scheduled after the current est
+        // since the current est can only increase down a branch
+        // ends(taskId).min <= est  implies that taskId will remain postponed forever
+        // starts(taskId).max <= est implies that is would never be possible to schedule taskId after est
+        // if one of the two case occurs, we can safely fail    
+      }
+    } 
+    false
+
+  }  
 
   // FIXME: selectTask, dominanceCheck and minUnselectableLst should be 
   //        done in a single pass at the end of each branch

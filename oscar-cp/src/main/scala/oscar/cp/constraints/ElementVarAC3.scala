@@ -116,6 +116,10 @@ class ElementVarAC3(y: Array[CPIntVar], x: CPIntVar, z: CPIntVar) extends Constr
       while (k < m) {
         if (y(i).hasValue(zvalues(k))) {
           supporty(i) = zvalues(k)
+          
+          //supportz(zvalues(k)-minZ) = i
+          // for some reasons, it seems to be not such a good idea for perf
+          
           return true
         }
         k += 1
@@ -135,6 +139,11 @@ class ElementVarAC3(y: Array[CPIntVar], x: CPIntVar, z: CPIntVar) extends Constr
         //println("xval:"+xvalues(i)+" y.size:"+y.size+" x="+x+" xsize:"+x.size)
         if (y(xvalues(i)).hasValue(v)) {
           supportz(v-minZ) = xvalues(i)
+          
+          //supporty(xvalues(i)) = v 
+          // for some reasons, it seems to be not such a good idea for perf
+          
+          
           return true
         }
         i += 1
@@ -151,6 +160,7 @@ class ElementVarAC3(y: Array[CPIntVar], x: CPIntVar, z: CPIntVar) extends Constr
     //println("mx:"+mx+" x:"+x+" y.size:"+y.size+" xvalues:"+xvalues.mkString(","))
 
     var i = 0
+
     while (i < mz) {
       if (!updateSupportz(zvalues(i),xvalues,mx)) {
         if (z.removeValue(zvalues(i)) == Failure) {
@@ -164,7 +174,8 @@ class ElementVarAC3(y: Array[CPIntVar], x: CPIntVar, z: CPIntVar) extends Constr
         }
       }
       i += 1
-    }
+    }    
+    
     i = 0
     while (i < mx) {
       if (!updateSupporty(xvalues(i),zvalues,mz)) {
@@ -174,7 +185,12 @@ class ElementVarAC3(y: Array[CPIntVar], x: CPIntVar, z: CPIntVar) extends Constr
         }
       }
       i += 1
-    }
+    }    
+    
+
+    
+    
+
     Suspend
   }
   

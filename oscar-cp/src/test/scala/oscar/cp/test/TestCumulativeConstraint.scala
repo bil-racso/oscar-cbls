@@ -1,15 +1,22 @@
 package oscar.cp.test
 
+
 import oscar.cp.core.Constraint
 import oscar.cp.constraints.SweepMaxCumulative
-import org.scalatest.FunSuite
-import org.scalatest.matchers.ShouldMatchers
 import oscar.cp._
+import oscar.cp.testUtils._
 import oscar.cp.constraints.CumulativeDecomp
 import oscar.cp.searches.BinaryStaticOrderBranching
 import oscar.cp.constraints.EnergeticReasoning
+import oscar.cp.core.CPPropagStrength
 
-abstract class TestCumulativeConstraint(val cumulativeName: String, val nTests: Int = 100, val minDuration: Int = 0, val k: Int = 5) extends FunSuite with ShouldMatchers {
+
+import oscar.cp.core.CPOutcome._
+
+
+
+
+abstract class TestCumulativeConstraint(val cumulativeName: String, val nTests: Int = 1000, val minDuration: Int = 0, val k: Int = 5) extends TestSuite {
 
   type Sol = List[Int]
 
@@ -51,14 +58,18 @@ abstract class TestCumulativeConstraint(val cumulativeName: String, val nTests: 
     SchedulingInstance(durations, demands, resources, capacity, horizon)
   }
 
-  def solveAll(cp: CPSched, capacity: Array[Int], decomp: Boolean): Set[Sol] = {
-    if (!decomp) cp.Resources.foreach(r => cp.post(cumulative(cp.starts, cp.durations, cp.ends, cp.demands, cp.resources, CPIntVar(capacity(r))(cp), r)))
+  def solveAll(cp: CPSched, capacity: Array[Int], decomp: Boolean, cons: CPPropagStrength): Set[Sol] = {
+    if (!decomp) cp.Resources.foreach(r => cp.post(cumulative(cp.starts, cp.durations, cp.ends, cp.demands, cp.resources, CPIntVar(capacity(r))(cp), r),cons))
     else cp.Resources.foreach(r => cp.post(new CumulativeDecomp(cp.starts, cp.durations, cp.ends, cp.demands, cp.resources, CPIntVar(capacity(r))(cp), r)))
     var sols: List[Sol] = List()
+    
+    cp.post(cp.starts(0)+2 >= cp.starts(4))
+    cp.post(cp.starts(4) >= cp.ends(3)-1)
+    
 
     cp.search {
-      val b1 = new BinaryStaticOrderBranching(cp.starts)
-      val b2 = new BinaryStaticOrderBranching(cp.durations)
+      val b1 = new BinaryStaticOrderBranching(cp.starts,_.randomValue)
+      val b2 = new BinaryStaticOrderBranching(cp.durations,_.randomValue)
       val b3 = new BinaryStaticOrderBranching(cp.resources)
       b1 ++ b2 ++ b3
     }
@@ -79,38 +90,37 @@ abstract class TestCumulativeConstraint(val cumulativeName: String, val nTests: 
   }
 
   test("test solveAll " + cumulativeName) {
-    (1 to nTests).forall(i => {
+    for (i <- 1 to nTests) {
       //print("test " + cumulativeName + " instance " + i + ": ")
       val instance = generateRandomSchedulingProblem(k)
       val cpDecomp = new CPSched(instance)
-      val cpCumul = new CPSched(instance)
-      val allSolsDecomp = solveAll(cpDecomp, instance.capacity, true)
-      val allSolsCumul = solveAll(cpCumul, instance.capacity, false)
-      if (compare(allSolsDecomp, allSolsCumul)) {
-        //println("success " + allSolsDecomp.size + " " + allSolsCumul.size)
-        true
-      } else {
-        print("test " + cumulativeName + " instance " + i + ": ")
-        println("failed !")
-        println("expected number of solutions: " + allSolsDecomp.size)
-        println("number of solutions: " + allSolsCumul.size)
-        println("INSTANCE")
-        println(instance)
-        
-        false
+      val allSolsDecomp = solveAll(cpDecomp, instance.capacity, true, CPPropagStrength.Weak)
+      println(allSolsDecomp.size)
+
+      for (cons <- Array(CPPropagStrength.Weak)) {
+        val cpCumul = new CPSched(instance)
+        val allSolsCumul = solveAll(cpCumul, instance.capacity, false, cons)
+
+        val ok = compare(allSolsDecomp, allSolsCumul)
+        if (!ok) {
+          print("test " + cumulativeName + " instance " + i + ": ")
+          println("failed ! with consistency " + cons)
+          println("expected number of solutions: " + allSolsDecomp.size)
+          println("number of solutions: " + allSolsCumul.size)
+          println("INSTANCE")
+          println(instance)
+
+          false
+        }
+        ok should be(true)
       }
-    }) should be(true)
+    }
   }
 }
 
-class TestSweepMaxCumulative2 extends TestCumulativeConstraint("SweepMaxCumulative") {
-  override def cumulative(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], demands: Array[CPIntVar], resources: Array[CPIntVar], capacity: CPIntVar, id: Int): Constraint = {
-    new SweepMaxCumulative(starts, durations, ends, demands, resources, capacity, id: Int)
-  }
-}
 
-class TestEnergeticReasoning extends TestCumulativeConstraint("EnergeticReasoning") {
+class TestCumulativeDefault extends TestCumulativeConstraint("SweepMaxCumulative") {
   override def cumulative(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], demands: Array[CPIntVar], resources: Array[CPIntVar], capacity: CPIntVar, id: Int): Constraint = {
-    new EnergeticReasoning(starts, durations, ends, demands, resources, capacity, id: Int)
+    maxCumulativeResource(starts, durations, ends, demands, resources, capacity, id: Int)
   }
 }

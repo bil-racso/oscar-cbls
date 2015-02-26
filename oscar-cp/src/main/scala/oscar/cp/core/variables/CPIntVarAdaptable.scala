@@ -476,6 +476,7 @@ class CPIntVarAdaptable(final override val store: CPStore, minValue: Int, maxVal
       _max = i + offset
       
       // Notify bind events
+      
       if (_size == 1) {
         onBindL1.enqueueBind()
         onBindL2.enqueue()
