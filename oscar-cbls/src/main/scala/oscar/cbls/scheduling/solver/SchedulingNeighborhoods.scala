@@ -1,6 +1,7 @@
 package oscar.cbls.scheduling.solver
 
 import oscar.cbls.invariants.core.computation.CBLSIntVar
+import oscar.cbls.objective.Objective
 import oscar.cbls.scheduling.algo.CriticalPathFinder
 import oscar.cbls.scheduling.model._
 import oscar.cbls.search.SearchEngineTrait
@@ -228,10 +229,12 @@ object SchedulingStrategies{
    * @return a neighborhood, you just have to do all moves, and restore the best solution
    */
   def iFlatRelax(p: Planning,
+                 objective:Objective,
                  nbRelax: Int = 4,
                  pKillPerRelax: Int = 50,
                  stable: Int,
-                 displayPlanning:Boolean = false)(objective:CBLSIntVar = p.makeSpan):Neighborhood = {
+                 displayPlanning:Boolean = false
+                 ):Neighborhood = {
     require(p.model.isClosed, "model should be closed before iFlatRelax algo can be instantiated")
     val maxIterationsForFlatten = (p.activityCount * (p.activityCount - 1)) / 2
 

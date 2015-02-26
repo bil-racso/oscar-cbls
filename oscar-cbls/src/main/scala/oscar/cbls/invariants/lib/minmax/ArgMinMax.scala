@@ -119,7 +119,12 @@ abstract class ArgMiax(vars: Array[IntValue], cond: SetValue, default: Int)
     } else if (OldVal == Miax) {
       this.deleteValue(index)
       if (this.getValue(true).isEmpty) {
-        this := h.getFirsts.foldLeft(SortedSet.empty[Int])((acc, index) => acc + index)
+
+        for(first <- h.getFirsts){
+          this :+= first
+        }
+
+//        this := h.getFirsts.foldLeft(SortedSet.empty[Int])((acc, index) => acc + index)
         if (this.getValue(true).isEmpty) {
           Miax = default
         } else {
@@ -171,7 +176,11 @@ abstract class ArgMiax(vars: Array[IntValue], cond: SetValue, default: Int)
     } else if (vars(value).value == Miax) {
       this.deleteValue(value)
       if (this.getValue(true).isEmpty) {
-        this := h.getFirsts.foldLeft(SortedSet.empty[Int])((acc, index) => acc + index)
+        for(first <- h.getFirsts){
+          this :+= first
+        }
+
+//        this := h.getFirsts.foldLeft(SortedSet.empty[Int])((acc, index) => acc + index)
         Miax = vars(h.getFirst).value
       }
     }

@@ -70,6 +70,8 @@ class IntVarObjective(val objective: ChangingIntValue) extends Objective {
   def value = objective.value
 
   def model:Store = objective.model
+
+  override def toString: String = "Objective(" + objective + ")"
 }
 
 /**
@@ -81,6 +83,7 @@ class IntVarObjective(val objective: ChangingIntValue) extends Objective {
  */
 class CascadingObjective(mustBeZeroObjective: Objective, secondObjective:Objective) extends Objective {
 
+  override def toString: String = "CascadingObjective(mustBeZeroObjective:" + mustBeZeroObjective + " secondObjective:" + secondObjective + ")"
   /**
    * This method returns the actual objective value.
    * It is easy to override it, and perform a smarter propagation if needed.
@@ -106,7 +109,10 @@ class FunctionObjective(f:()=>Int, m:Store = null) extends Objective{
 }
 
 trait Objective {
-  
+
+
+  override def toString: String = "Objective(" + value + ")"
+
   def model:Store
 
   /**

@@ -20,7 +20,7 @@
 
 package oscar.cbls.invariants.core.computation
 
-import oscar.cbls.invariants.core.algo.QuickList.QList
+import oscar.cbls.invariants.core.algo.quick.QList
 import oscar.cbls.invariants.core.propagation._
 
 import scala.collection.immutable.{SortedMap, SortedSet}

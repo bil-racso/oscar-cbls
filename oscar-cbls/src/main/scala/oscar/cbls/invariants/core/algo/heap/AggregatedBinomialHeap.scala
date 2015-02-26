@@ -14,7 +14,7 @@
   ******************************************************************************/
 package oscar.cbls.invariants.core.algo.heap
 
-import oscar.cbls.invariants.core.algo.QuickList.QList
+import oscar.cbls.invariants.core.algo.quick.QList
 
 import scala.collection.Iterator
 

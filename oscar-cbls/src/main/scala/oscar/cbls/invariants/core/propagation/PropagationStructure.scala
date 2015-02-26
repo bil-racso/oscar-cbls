@@ -20,7 +20,7 @@
 
 package oscar.cbls.invariants.core.propagation
 
-import oscar.cbls.invariants.core.algo.QuickList.QList
+import oscar.cbls.invariants.core.algo.quick.QList
 import oscar.cbls.invariants.core.algo.dag._
 import oscar.cbls.invariants.core.algo.dll._
 import oscar.cbls.invariants.core.algo.heap.{AbstractHeap, AggregatedBinomialHeap, BinomialHeap}
@@ -37,7 +37,7 @@ import scala.collection.mutable.Queue
 trait SchedulingHandler{
   /**
    * when a PE needs propagation, it schedules itself to his SH through this method
-   * notice that a PE canno schedule itself for propagation if it has already been, and has not been propagated since
+   * notice that a PE cannot schedule itself for propagation if it has already been, and has not been propagated since
    * PE should ensure this by themselves, EG through an internal boolean variable
    * @param e the PE that is to be scheduled
    */
@@ -183,9 +183,12 @@ abstract class PropagationStructure(val verbose: Boolean, val checker:Option[Che
     //variables are already able to propagate immediately before model close and if not monitored yet.
 
     scheduledElements = null
-    for (e <- getPropagationElements) {
-      e.rescheduleIfNeeded()
+
+    val it = getPropagationElements.toIterator
+    while(it.hasNext){
+      it.next().rescheduleIfNeeded()
     }
+
     for (scc <- StronglyConnexComponentsList){
       scc.rescheduleIfNeeded()
     }
