@@ -4,6 +4,7 @@ import oscar.cp._
 import oscar.algo.search.NewSearch
 import oscar.algo.reversible.ReversibleBoolean
 import oscar.algo.search.NewSearch
+import oscar.cp.searches.BinaryLastConflict
 
 /**
  * n-queens model: place n-queens on a chess-board such that they don't attack each other.
@@ -15,7 +16,7 @@ import oscar.algo.search.NewSearch
  */
 object Queens extends CPModel with App {
 
-  val nQueens = 88 // Number of queens
+  val nQueens = 10 // Number of queens
   val Queens = 0 until nQueens
 
   // Variables
@@ -27,9 +28,11 @@ object Queens extends CPModel with App {
   add(allDifferent(Queens.map(i => queens(i) - i)))
   
   // Search heuristic
-  search(binaryFirstFail(queens))
+  //search(binaryFirstFail(queens))
+  
+  search(new BinaryLastConflict(queens, i => queens(i).size, i => queens(i).min))
   
   // Execution
-  val stats = start(nSols = 1)
+  val stats = start()
   println(stats)
 }
