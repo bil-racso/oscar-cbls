@@ -155,6 +155,10 @@ class TestSetTimesBranching extends TestSuite {
           (a, b, rand.nextInt(10))
         }
 
+        
+        add(starts(0) >= 5)
+        add(ends(0) <=  ends(0).min +4)
+        
         for ((i, j, d) <- prec) {
           add(ends(i)+d <= starts(j))
           //add(ends(i) <= starts(j)+d)
@@ -192,6 +196,78 @@ class TestSetTimesBranching extends TestSuite {
 
 
   }
+  
+  
+  test("SetTimes Test Dominance") {
+    // (duration, consumption)
+    
+    
+
+
+    def solve(seed: Int, withSetTimes: Boolean): Int = {
+      
+      val rand = new scala.util.Random(seed)
+      val nTasks = 4
+      val instance = Array.tabulate(nTasks)(t => (5,1))
+      val durationsData = instance.map(_._1)
+      val demandsData = instance.map(_._2)
+      val capa = 1
+      val horizon = 100
+      val Times = 0 to horizon
+      
+      
+      
+      implicit val cp = CPSolver()
+      cp.silent = true
+
+      val durations = Array.tabulate(nTasks)(t => CPIntVar(durationsData(t)))
+      val starts = Array.tabulate(nTasks)(t => CPIntVar(0, horizon - durations(t).min))
+      val ends = Array.tabulate(nTasks)(t => starts(t) + durationsData(t))
+      val demands = Array.tabulate(nTasks)(t => CPIntVar(demandsData(t)))
+      val makespan = maximum(ends)
+
+      try {
+        add(maxCumulativeResource(starts, durations, ends, demands, CPIntVar(capa)), Weak)
+
+
+        add(ends(0) <=  10)
+        for (i <- 1 until nTasks) {
+          add(starts(i) >= 8)
+        }
+
+      } catch {
+        case e: NoSolutionException => return 0
+      }
+
+      minimize(makespan)
+
+      var best = Int.MaxValue
+
+      onSolution {
+        best = makespan.min
+      }
+
+      search {
+        if (withSetTimes) setTimes(starts, durations, ends)
+        else binaryStatic(starts,_.min)
+
+      }
+
+      val stats = start()
+      //println(stats)
+      //println("obj:"+best)
+      best
+
+    }
+    for (i <- 0 until 10000) {
+      val opt1 = solve(i, true)
+      val opt2 = solve(i, false)
+      assert(opt1 == opt2)
+    }
+
+
+  }  
+  
     
 
 }

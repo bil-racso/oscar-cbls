@@ -51,28 +51,48 @@ class SetTimesBranching(starts: Array[CPIntVar], durations: Array[CPIntVar], end
       if (existsPostponedForever(est)) {
         // we have detected at least one activity that will remain always postponed in this subtree
         dummyAlternative 
-      }
-      else branch {
-        val out = cp.assign(start, est)
-        assign(taskId) // the task is assigned by setTimes
-        if (out != Failure) dominanceCheck()
-      } {
-        val minEct = selectMinEct(est)
-        cp.propagate()
-        oldEst(taskId).value = est
-        dominanceCheck()
+      } else {
+        val maxEnd = ends(taskId).max
+        //println("maxEnd:"+maxEnd)
+        //println("minEct:"+selectMinEct(est,taskId))
+        
+        if (/*false &&*/ selectMinEct(est,taskId) >= maxEnd) {
+          branchOne {
+            cp.assign(start, est)
+            assign(taskId) // the task is assigned by setTimes
+          }
+        }
+          
+        else {
+          branch {
+            val out = cp.assign(start, est)
+            assign(taskId) // the task is assigned by setTimes
+            if (out != Failure) dominanceCheck()
+          } {
+            //val minEct = selectMinEct(est)
+            cp.propagate()
+            oldEst(taskId).value = est
+            dominanceCheck()
+          }
+        }
+        
+
+
       }
     }
   }
   
   // Return the minimum ect that is greater or equal to value
-  @inline private def selectMinEct(value: Int): Int = {
+  @inline private def selectMinEct(value: Int,taskId: Int): Int = {
     var task = nTasks
     var minEct = Int.MaxValue
     while (task > 0) {
       task -= 1
-      val ect = ends(task).min
-      if (ect < minEct && ect > value) minEct = ect
+      if (task != taskId) {
+        val ect = ends(task).min
+        if (ect < minEct && ect > value) minEct = ect
+      }
+
     }
     minEct
   }
