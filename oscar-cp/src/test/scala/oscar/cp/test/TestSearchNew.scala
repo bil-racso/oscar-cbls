@@ -3,8 +3,7 @@ package oscar.cp.test
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
 
-import oscar.cp.constraints._
-import oscar.cp.searches._
+
 import oscar.cp._
 
 class TestSearchNew extends FunSuite with ShouldMatchers {
@@ -16,7 +15,7 @@ class TestSearchNew extends FunSuite with ShouldMatchers {
     val x = Array(CPIntVar(0)(cp))
     cp.silent = true
     cp.minimize(x(0))
-    search { new BinaryFirstFailBranching(x) }
+    search { binaryFirstFail(x) }
     val stat = cp.start()
     stat.nSols should be(1)
     nbSol should be(1)
@@ -31,7 +30,7 @@ class TestSearchNew extends FunSuite with ShouldMatchers {
     val x = Array.tabulate(3)(i => CPBoolVar()(cp))
 
     cp.search {
-      new BinaryStaticOrderBranching(x)
+      binaryStatic(x)
     }
 
     cp.start(nSols = 3).completed should be(false)
@@ -47,7 +46,7 @@ class TestSearchNew extends FunSuite with ShouldMatchers {
 
     var t0 = System.currentTimeMillis()
     search {
-      new BinaryStaticOrderBranching(x)
+      binaryStatic(x)
     }
 
     val stat = cp.start(timeLimit = 2)
@@ -66,7 +65,7 @@ class TestSearchNew extends FunSuite with ShouldMatchers {
     var best = 0
     cp.onSolution { best = x.value }
     cp.search {
-      new BinaryStaticOrderBranching(Array(x), _.max)
+      binaryStatic(Array(x), _.max)
     }
     val stat = cp.start()
     stat.nSols should be(4)
@@ -86,7 +85,7 @@ class TestSearchNew extends FunSuite with ShouldMatchers {
     cp.onSolution { nbSol += 1 }
 
     cp.search {
-      new BinaryFirstFailBranching(x) ++ new BinaryFirstFailBranching(y)
+      binaryFirstFail(x) ++ binaryFirstFail(y)
     }
 
     val stat = cp.start()

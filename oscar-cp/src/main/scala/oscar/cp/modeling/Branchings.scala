@@ -32,9 +32,24 @@ import oscar.cp.searches.BinaryFirstFailBranching
  */
 trait Branchings extends BranchingUtils {
   
-  def binary(vars: Seq[_ <: CPIntVar], varHeuris: (CPIntVar => Int), valHeuris: (CPIntVar => Int) = minVal): Branching = {
+
+  
+  def binaryIdx(vars: Seq[_ <: CPIntVar], varHeuris: (Int => Int), valHeuris: (Int => Int)): Branching = {
     new BinaryBranching(vars.toArray,varHeuris,valHeuris)
   }
+  
+  
+  def binary(vars: Seq[_ <: CPIntVar], varHeuris: (CPIntVar => Int), valHeuris: (CPIntVar => Int)): Branching = {
+    new BinaryBranching(vars.toArray,(i: Int) => varHeuris(vars(i)),(i: Int) => valHeuris(vars(i)))
+  }
+  
+  
+  def binaryIdx(vars: Seq[_ <: CPIntVar], varHeuris: (Int => Int)): Branching = {
+    binaryIdx(vars,varHeuris,minVal(vars.toArray))
+  } 
+  
+  
+  
  
   /**
    * Binary Search on the decision variables vars with fixed static ordering.
@@ -42,14 +57,20 @@ trait Branchings extends BranchingUtils {
    * @param vars: the array of variables to assign during the search
    * @param valHeuris: gives the value v to try on left branch for the chosen variable, this value is removed on the right branch
    */  
-  def binaryStatic(vars: Seq[_ <: CPIntVar], valHeuris: (CPIntVar => Int) = minVal): Branching = new BinaryStaticOrderBranching(vars.toArray,valHeuris)
-
+  def binaryStaticIdx(vars: Seq[_ <: CPIntVar], valHeuris: Int => Int): Branching = new BinaryStaticOrderBranching(vars.toArray,valHeuris)
+  
+  def binaryStatic(vars: Seq[_ <: CPIntVar], valHeuris: (CPIntVar => Int)): Branching = new BinaryStaticOrderBranching(vars.toArray,i => valHeuris(vars(i)))
+  
+  def binaryStatic(vars: Seq[_ <: CPIntVar]): Branching = binaryStatic(vars,(x: CPIntVar) => x.min)
+  
   /**
    * Binary First Fail (min dom size) on the decision variables vars.
    * @param vars: the array of variables to assign during the search
    * @param valHeuris: gives the value v to try on left branch for the chosen variable, this value is removed on the right branch
    */
-  def binaryFirstFail(x: Seq[CPIntVar], valHeuris: (CPIntVar => Int) = minVal): Branching = new BinaryFirstFailBranching(x.toArray, valHeuris)
+  def binaryFirstFailIdx(x: Seq[CPIntVar], valHeuris: (Int => Int)): Branching = new BinaryFirstFailBranching(x.toArray, valHeuris)
+  
+  def binaryFirstFail(x: Seq[CPIntVar], valHeuris: (CPIntVar => Int) = minVal): Branching = new BinaryFirstFailBranching(x.toArray, i => valHeuris(x(i)))
 
   /**
    * Binary search on the decision variables vars, selecting first the variables having the max number of propagation methods attached to it.
@@ -60,10 +81,25 @@ trait Branchings extends BranchingUtils {
    * Binary search on the decision variables vars, splitting the domain of the selected variable on the
    * median of the values (left : <= median, right : > median)
    */
-  def binarySplit(x: Seq[_ <: CPIntVar], varHeuris: (CPIntVar => Int) = minVar, valHeuris: (CPIntVar => Int) = (x: CPIntVar) => (x.min + x.max) / 2): Branching = {
+  def binarySplitIdx(x: Seq[_ <: CPIntVar], varHeuris: (Int => Int), valHeuris: (Int => Int)): Branching = {
     val xa = x.toArray
     new BinaryDomainSplitBranching(xa, varHeuris, valHeuris)
   }
+  
+  
+  def binarySplitIdx(x: Seq[_ <: CPIntVar], varHeuris: (Int => Int)): Branching = {
+      val xa = x.toArray
+      new BinaryDomainSplitBranching(xa, varHeuris)
+  } 
+  
+  def binarySplit(x: Seq[_ <: CPIntVar], varHeuris: (CPIntVar => Int)): Branching = {
+      binarySplitIdx(x,i => varHeuris(x(i)))
+  }   
+  
+  def binarySplit(x: Seq[_ <: CPIntVar]): Branching = {
+      val xa = x.toArray
+      new BinaryDomainSplitBranching(xa, minVar(xa.toArray))
+  }  
   
   /**
    * Binary Search on the set variable
