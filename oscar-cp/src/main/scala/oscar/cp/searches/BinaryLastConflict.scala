@@ -89,19 +89,10 @@ class BinaryLastConflict(variables: Array[CPIntVar], varHeuristic: Int => Int, v
 
       val varId = order(depth)
       val variable = variables(varId)
-      val value = lastValues(varId)
-      val contain = variable.hasValue(value)
-
-      if (contain) branch { store.assign(variable, value) } { store.remove(variable, value) }
-      else {
-        val value = valHeuristic(varId)
-        branch {
-          val out = store.assign(variable, value)
-          if (out != Failure) lastValues(varId) = value // save the value
-        } {
-          store.remove(variable, value)
-        }
-      }
+      val lastValue = lastValues(varId)
+      val value = if (variable.hasValue(lastValue)) lastValue else valHeuristic(varId)
+      // Alternatives
+      List(() => store.assign(variable, value), () => store.remove(variable, value))
     }
   }
 
