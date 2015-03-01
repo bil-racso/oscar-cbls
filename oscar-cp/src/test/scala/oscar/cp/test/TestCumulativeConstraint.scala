@@ -68,9 +68,9 @@ abstract class TestCumulativeConstraint(val cumulativeName: String, val nTests: 
     
 
     cp.search {
-      val b1 = new BinaryStaticOrderBranching(cp.starts,_.randomValue)
-      val b2 = new BinaryStaticOrderBranching(cp.durations,_.randomValue)
-      val b3 = new BinaryStaticOrderBranching(cp.resources)
+      val b1 = binaryStatic(cp.starts,_.randomValue)
+      val b2 = binaryStatic(cp.durations,_.randomValue)
+      val b3 = binaryStatic(cp.resources)
       b1 ++ b2 ++ b3
     }
 
@@ -95,7 +95,7 @@ abstract class TestCumulativeConstraint(val cumulativeName: String, val nTests: 
       val instance = generateRandomSchedulingProblem(k)
       val cpDecomp = new CPSched(instance)
       val allSolsDecomp = solveAll(cpDecomp, instance.capacity, true, CPPropagStrength.Weak)
-      println(allSolsDecomp.size)
+      //println(allSolsDecomp.size)
 
       for (cons <- Array(CPPropagStrength.Weak)) {
         val cpCumul = new CPSched(instance)
