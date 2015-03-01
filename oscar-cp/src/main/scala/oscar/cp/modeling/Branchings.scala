@@ -34,17 +34,22 @@ import oscar.cp.searches.SplitLastConflict
  * @author Pierre Schaus pschaus@gmail.com
  */
 trait Branchings extends BranchingUtils {
-
-  def binaryIdx(vars: Seq[_ <: CPIntVar], varHeuris: (Int => Int), valHeuris: (Int => Int)): Branching = {
-    new BinaryBranching(vars.toArray, varHeuris, valHeuris)
+  
+  def binaryIdx(variables: Array[CPIntVar], varHeuristic: (Int => Int), valHeuristic: (Int => Int)): Branching = {
+    new BinaryBranching(variables, varHeuristic, valHeuristic)
   }
 
-  def binary(vars: Seq[_ <: CPIntVar], varHeuris: (CPIntVar => Int), valHeuris: (CPIntVar => Int)): Branching = {
-    new BinaryBranching(vars.toArray, (i: Int) => varHeuris(vars(i)), (i: Int) => valHeuris(vars(i)))
+  def binaryIdx(variables: Array[CPIntVar], varHeuristic: (Int => Int)): Branching = {
+    binaryIdx(variables, varHeuristic, variables(_).min)
   }
 
-  def binaryIdx(vars: Seq[_ <: CPIntVar], varHeuris: (Int => Int)): Branching = {
-    binaryIdx(vars, varHeuris, minVal(vars.toArray))
+  def binary(variables: Array[CPIntVar]): Branching = {
+    binaryIdx(variables, variables(_).min, variables(_).min)
+  }
+
+  def binary(variables: Traversable[CPIntVar], varHeuris: (CPIntVar => Int), valHeuris: (CPIntVar => Int)): Branching = {
+    val vars = variables.toArray
+    binaryIdx(vars, (i: Int) => varHeuris(vars(i)), (i: Int) => valHeuris(vars(i)))
   }
   
   def binaryLastConflict(variables: Array[CPIntVar]): Branching = {
@@ -77,11 +82,11 @@ trait Branchings extends BranchingUtils {
    * @param vars: the array of variables to assign during the search
    * @param valHeuris: gives the value v to try on left branch for the chosen variable, this value is removed on the right branch
    */
-  def binaryStaticIdx(vars: Seq[_ <: CPIntVar], valHeuris: Int => Int): Branching = new BinaryStaticOrderBranching(vars.toArray, valHeuris)
+  def binaryStaticIdx(vars: Seq[CPIntVar], valHeuris: Int => Int): Branching = new BinaryStaticOrderBranching(vars.toArray, valHeuris)
 
-  def binaryStatic(vars: Seq[_ <: CPIntVar], valHeuris: (CPIntVar => Int)): Branching = new BinaryStaticOrderBranching(vars.toArray, i => valHeuris(vars(i)))
+  def binaryStatic(vars: Seq[CPIntVar], valHeuris: (CPIntVar => Int)): Branching = new BinaryStaticOrderBranching(vars.toArray, i => valHeuris(vars(i)))
 
-  def binaryStatic(vars: Seq[_ <: CPIntVar]): Branching = binaryStatic(vars, (x: CPIntVar) => x.min)
+  def binaryStatic(vars: Seq[CPIntVar]): Branching = binaryStatic(vars, (x: CPIntVar) => x.min)
 
   /**
    * Binary First Fail (min dom size) on the decision variables vars.
@@ -101,21 +106,21 @@ trait Branchings extends BranchingUtils {
    * Binary search on the decision variables vars, splitting the domain of the selected variable on the
    * median of the values (left : <= median, right : > median)
    */
-  def binarySplitIdx(x: Seq[_ <: CPIntVar], varHeuris: (Int => Int), valHeuris: (Int => Int)): Branching = {
+  def binarySplitIdx(x: Seq[CPIntVar], varHeuris: (Int => Int), valHeuris: (Int => Int)): Branching = {
     val xa = x.toArray
     new BinaryDomainSplitBranching(xa, varHeuris, valHeuris)
   }
 
-  def binarySplitIdx(x: Seq[_ <: CPIntVar], varHeuris: (Int => Int)): Branching = {
+  def binarySplitIdx(x: Seq[CPIntVar], varHeuris: (Int => Int)): Branching = {
     val xa = x.toArray
     new BinaryDomainSplitBranching(xa, varHeuris)
   }
 
-  def binarySplit(x: Seq[_ <: CPIntVar], varHeuris: (CPIntVar => Int)): Branching = {
+  def binarySplit(x: Seq[CPIntVar], varHeuris: (CPIntVar => Int)): Branching = {
     binarySplitIdx(x, i => varHeuris(x(i)))
   }
 
-  def binarySplit(x: Seq[_ <: CPIntVar]): Branching = {
+  def binarySplit(x: Seq[CPIntVar]): Branching = {
     val xa = x.toArray
     new BinaryDomainSplitBranching(xa, minVar(xa.toArray))
   }
@@ -139,7 +144,7 @@ trait Branchings extends BranchingUtils {
    */
   def rank[T](starts: IndexedSeq[CPIntVar], durations: IndexedSeq[CPIntVar], ends: IndexedSeq[CPIntVar], by: Int => T)(implicit orderer: T => Ordered[T]): Branching = new RankBranching(starts, durations, ends, by)
 
-  def rank[T](starts: IndexedSeq[CPIntVar], durations: IndexedSeq[CPIntVar], ends: IndexedSeq[CPIntVar]): Branching = {
+  def rank(starts: IndexedSeq[CPIntVar], durations: IndexedSeq[CPIntVar], ends: IndexedSeq[CPIntVar]): Branching = {
     rank(starts, durations, ends, (i: Int) => ends(i).max)
   }
 
