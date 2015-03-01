@@ -27,6 +27,8 @@ import oscar.cp.searches.BinaryStaticOrderBranching
 import oscar.cp.searches.BinaryFirstFailBranching
 import oscar.cp.core.variables.CPIntVar
 import oscar.cp.core.variables.CPSetVar
+import oscar.cp.searches.BinaryLastConflict
+import oscar.cp.searches.SplitLastConflict
 
 /**
  * @author Pierre Schaus pschaus@gmail.com
@@ -43,6 +45,30 @@ trait Branchings extends BranchingUtils {
 
   def binaryIdx(vars: Seq[_ <: CPIntVar], varHeuris: (Int => Int)): Branching = {
     binaryIdx(vars, varHeuris, minVal(vars.toArray))
+  }
+  
+  def binaryLastConflict(variables: Array[CPIntVar]): Branching = {
+    binaryLastConflict(variables, variables(_).size, variables(_).min)
+  }
+  
+  def binaryLastConflict(variables: Array[CPIntVar], varHeuristic: (Int => Int)): Branching = {
+    binaryLastConflict(variables, varHeuristic, variables(_).min)
+  }
+  
+  def binaryLastConflict(variables: Array[CPIntVar], varHeuristic: (Int => Int), valHeuristic: (Int => Int)): Branching = {
+    new BinaryLastConflict(variables, varHeuristic, valHeuristic)
+  }
+  
+  def splitLastConflict(variables: Array[CPIntVar]): Branching = {
+    splitLastConflict(variables, variables(_).size, variables(_).min)
+  }
+    
+  def splitLastConflict(variables: Array[CPIntVar], varHeuristic: (Int => Int)): Branching = {
+    splitLastConflict(variables, varHeuristic, variables(_).min)
+  }
+  
+  def splitLastConflict(variables: Array[CPIntVar], varHeuristic: (Int => Int), valHeuristic: (Int => Int)): Branching = {
+    new SplitLastConflict(variables, varHeuristic, valHeuristic)
   }
 
   /**

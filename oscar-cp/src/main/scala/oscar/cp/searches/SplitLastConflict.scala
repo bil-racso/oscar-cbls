@@ -55,7 +55,7 @@ class SplitLastConflict(variables: Array[CPIntVar], varHeuristic: Int => Int, va
   // Depth in which the last conflict occured
   private[this] var conflictDepth: Int = - 1
 
-  final def reset(): Unit = maxDepth = -1
+  final override def reset(): Unit = maxDepth = -1
 
   final override def alternatives: Seq[Alternative] = {
     val depth = currentDepth()

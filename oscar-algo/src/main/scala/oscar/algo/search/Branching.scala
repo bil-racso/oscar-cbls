@@ -24,7 +24,7 @@ abstract class Branching {
    * Initialize the branching
    * For instance in some branching strategy, some statistical probing must be done. This is the place to do it.
    */
-  def initialize(): Unit = {}
+  def reset(): Unit = {}
 
   /**
    * @return the alternative action to execute in each of the child nodes under the current node
