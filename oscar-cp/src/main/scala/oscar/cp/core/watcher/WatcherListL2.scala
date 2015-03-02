@@ -10,8 +10,6 @@ class WatcherListL2(store: CPStore) {
   private[this] var lastMagic = -1L
   private[this] var stack: Array[Constraint] = new Array[Constraint](4)
   private[this] var watchers: Array[Watcher] = new Array[Watcher](4)
-  
-  
   private[this] var index: Int = 0
 
   @inline final def length: Int = index
@@ -35,13 +33,13 @@ class WatcherListL2(store: CPStore) {
     var i = index
     while (i > 0) { 
       i -= 1
-      val constraint = stack(i)
-      if (watchers(i) == null || watchers(i).shouldEnqueue())
-        store.enqueueL2(constraint)
+      val watcher = watchers(i)
+      if (watcher == null || watcher.shouldEnqueue()) {
+        store.enqueueL2(stack(i))
+      }
     }
   }  
   
- 
   @inline private def trail(): Unit = {
     val contextMagic = store.magic
     if (lastMagic != contextMagic) {
@@ -56,7 +54,6 @@ class WatcherListL2(store: CPStore) {
     val newStack = new Array[Constraint](stack.length * 2)
     System.arraycopy(stack, 0, newStack, 0, stack.length)
     stack = newStack
-    
     val newWatchers = new Array[Watcher](watchers.length * 2)
     System.arraycopy(watchers, 0, newWatchers, 0, watchers.length)
     watchers = newWatchers
