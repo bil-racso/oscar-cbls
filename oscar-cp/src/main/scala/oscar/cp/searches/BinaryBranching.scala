@@ -85,7 +85,7 @@ class BinaryBranching(variables: Array[CPIntVar], varHeuris: (Int => Int), valHe
       val i = nextVar()
       val variable = variables(i)
       val value = valHeuris(i)
-      branch(cp.assign(variable, value))(cp.remove(variable, value))
+      List(Decision.assign(variable, value), Decision.remove(variable, value))
     }
   }
 }
