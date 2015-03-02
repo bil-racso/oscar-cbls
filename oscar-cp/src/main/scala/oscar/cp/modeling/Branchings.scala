@@ -3,12 +3,12 @@
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- *   
+ *
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License  for more details.
- *   
+ *
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
@@ -21,20 +21,21 @@ import oscar.cp.scheduling.search.SetTimesBranching
 import oscar.cp.scheduling.search.RankBranching
 import oscar.cp.searches.BinaryDomainSplitBranching
 import oscar.cp.searches.BinarySetBranching
-import oscar.cp.searches.BinaryMaxDegreeBranching
 import oscar.cp.searches.BinaryBranching
 import oscar.cp.searches.BinaryStaticOrderBranching
-import oscar.cp.searches.BinaryFirstFailBranching
 import oscar.cp.core.variables.CPIntVar
 import oscar.cp.core.variables.CPSetVar
 import oscar.cp.searches.BinaryLastConflict
 import oscar.cp.searches.SplitLastConflict
+import oscar.algo.reversible.ReversibleContext
+import oscar.cp.searches.DiscrepancyBranching
 
 /**
  * @author Pierre Schaus pschaus@gmail.com
+ * @author Renaud Hartert ren.hartert@gmail.com
  */
 trait Branchings extends BranchingUtils {
-  
+
   def binaryIdx(variables: Array[CPIntVar], varHeuristic: (Int => Int), valHeuristic: (Int => Int)): Branching = {
     new BinaryBranching(variables, varHeuristic, valHeuristic)
   }
@@ -51,27 +52,27 @@ trait Branchings extends BranchingUtils {
     val vars = variables.toArray
     binaryIdx(vars, (i: Int) => varHeuris(vars(i)), (i: Int) => valHeuris(vars(i)))
   }
-  
+
   def binaryLastConflict(variables: Array[CPIntVar]): Branching = {
     binaryLastConflict(variables, variables(_).size, variables(_).min)
   }
-  
+
   def binaryLastConflict(variables: Array[CPIntVar], varHeuristic: (Int => Int)): Branching = {
     binaryLastConflict(variables, varHeuristic, variables(_).min)
   }
-  
+
   def binaryLastConflict(variables: Array[CPIntVar], varHeuristic: (Int => Int), valHeuristic: (Int => Int)): Branching = {
     new BinaryLastConflict(variables, varHeuristic, valHeuristic)
   }
-  
+
   def splitLastConflict(variables: Array[CPIntVar]): Branching = {
     splitLastConflict(variables, variables(_).size, variables(_).min)
   }
-    
+
   def splitLastConflict(variables: Array[CPIntVar], varHeuristic: (Int => Int)): Branching = {
     splitLastConflict(variables, varHeuristic, variables(_).min)
   }
-  
+
   def splitLastConflict(variables: Array[CPIntVar], varHeuristic: (Int => Int), valHeuristic: (Int => Int)): Branching = {
     new SplitLastConflict(variables, varHeuristic, valHeuristic)
   }
@@ -93,15 +94,29 @@ trait Branchings extends BranchingUtils {
    * @param vars: the array of variables to assign during the search
    * @param valHeuris: gives the value v to try on left branch for the chosen variable, this value is removed on the right branch
    */
-  def binaryFirstFailIdx(x: Seq[CPIntVar], valHeuris: (Int => Int)): Branching = new BinaryFirstFailBranching(x.toArray, valHeuris)
+  def binaryFirstFailIdx(variables: Seq[CPIntVar], valHeuris: (Int => Int)): Branching = {
+    val vars = variables.toArray
+    binaryIdx(vars, vars(_).size, valHeuris)
+  }
+  
+  def binaryFirstFail(variables: Seq[CPIntVar]): Branching = {
+    val vars = variables.toArray    
+    binaryFirstFailIdx(vars, vars(_).min)
+  }
 
-  def binaryFirstFail(x: Seq[CPIntVar], valHeuris: (CPIntVar => Int) = minVal): Branching = new BinaryFirstFailBranching(x.toArray, i => valHeuris(x(i)))
+  def binaryFirstFail(variables: Seq[CPIntVar], valHeuris: (CPIntVar => Int)): Branching = {
+    val vars = variables.toArray    
+    binaryFirstFailIdx(vars, i => valHeuris(vars(i)))
+  }
 
   /**
    * Binary search on the decision variables vars, selecting first the variables having the max number of propagation methods attached to it.
    */
-  def binaryMaxDegree(x: Seq[_ <: CPIntVar]): Branching = new BinaryMaxDegreeBranching(x.toArray)
-
+  def binaryMaxDegree(variables: Seq[CPIntVar]): Branching = {
+    val vars = variables.toArray
+    binaryIdx(vars, vars(_).constraintDegree, vars(_).min)
+  }
+  
   /**
    * Binary search on the decision variables vars, splitting the domain of the selected variable on the
    * median of the values (left : <= median, right : > median)
@@ -137,7 +152,7 @@ trait Branchings extends BranchingUtils {
    * set times heuristic (for discrete resources)
    * see: Time- versus-capacity compromises in project scheduling. (Le Pape et al.). 1994.
    */
-  def setTimes(starts: IndexedSeq[_ <: CPIntVar], durations: IndexedSeq[_ <: CPIntVar], ends: IndexedSeq[_ <: CPIntVar], tieBreaker: Int => Int = (i: Int) => i): Branching = new SetTimesBranching(starts, durations, ends, tieBreaker)
+  def setTimes(starts: IndexedSeq[CPIntVar], durations: IndexedSeq[CPIntVar], ends: IndexedSeq[CPIntVar], tieBreaker: Int => Int = (i: Int) => i): Branching = new SetTimesBranching(starts, durations, ends, tieBreaker)
 
   /**
    * rank heuristic (for unary resources)
@@ -146,6 +161,10 @@ trait Branchings extends BranchingUtils {
 
   def rank(starts: IndexedSeq[CPIntVar], durations: IndexedSeq[CPIntVar], ends: IndexedSeq[CPIntVar]): Branching = {
     rank(starts, durations, ends, (i: Int) => ends(i).max)
+  }
+
+  def discrepancy(branching: Branching, maxDiscrepancy: Int)(implicit context: ReversibleContext): Branching = {
+    new DiscrepancyBranching(context, branching, maxDiscrepancy)
   }
 
   def minDom(x: CPIntVar): Int = x.size

@@ -60,7 +60,7 @@ class BinaryLastConflict(variables: Array[CPIntVar], varHeuristic: Int => Int, v
   final override def reset(): Unit = maxDepth = -1
 
   final override def alternatives: Seq[Alternative] = {
-    val depth = currentDepth // the current depth   
+    val depth = currentDepth  
     if (depth >= nVariables) noAlternative
     else {
 
