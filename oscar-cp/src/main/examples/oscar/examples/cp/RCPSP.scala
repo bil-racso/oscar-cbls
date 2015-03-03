@@ -3,6 +3,7 @@ package oscar.examples.cp
 import oscar.cp._
 import oscar.cp.searches.SplitLastConflict
 import oscar.cp.searches.LCSearchSimplePhaseAssign
+import oscar.cp.searches.SetTimesLastConflict
 
 object RCPSP extends CPModel with App {
   
@@ -29,6 +30,7 @@ object RCPSP extends CPModel with App {
   search {
     new SplitLastConflict(starts, starts(_).min, starts(_).min)//setTimes(starts, durations, ends)
     //new LCSearchSimplePhaseAssign(starts, starts(_).min, starts(_).min)
+    new SetTimesLastConflict(starts, durationsData, ends)
   }
   
   onSolution { 

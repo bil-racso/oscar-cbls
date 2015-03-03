@@ -20,13 +20,13 @@ package oscar.algo.search
  */
 trait BranchingUtils {
   
-  type Alternative = Function0[Unit]
+  type Alternative = Function0[Any]
   
-  def branch(left: => Unit)(right: => Unit): Seq[Alternative] = Seq(() => left,() => right)
+  def branch(left: => Any)(right: => Any): Seq[Alternative] = Seq(() => left,() => right)
   
-  def branchOne(action: => Unit) = Seq(() => action)
+  def branchOne(action: => Any) = Seq(() => action)
   
-  def branchAll[A](indexes: Seq[A])(f: A => Unit): Seq[Alternative] = {
+  def branchAll[A](indexes: Seq[A])(f: A => Any): Seq[Alternative] = {
     indexes.map(i => () => f(i))
   }
   
