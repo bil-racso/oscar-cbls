@@ -11,7 +11,7 @@
  *
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
- * *****************************************************************************/
+ ******************************************************************************/
 
 package oscar.cp.searches
 
@@ -25,11 +25,11 @@ import oscar.algo.reversible.ReversibleIntWithCache
  * You can specify your variable heuristics
  * @author Pierre Schaus pschaus@gmail.com
  * @author Renaud Hartert ren.hartert@gmail.com
- * 
- * @param varHeuris is a variable heuristic, it will select preferably first the unbound 
+ *
+ * @param varHeuris is a variable heuristic, it will select preferably first the unbound
  *        variables(i) such that varHeuris(i) is the smallest
  */
-abstract class AbstractBinaryBranching(variables: Array[CPIntVar], var varHeuris: (Int => Int)) extends Branching {
+class BinaryBranching(variables: Array[CPIntVar], var varHeuris: (Int => Int), valHeuris: (Int => Int)) extends Branching {
 
   val cp = variables(0).store
 
@@ -79,102 +79,13 @@ abstract class AbstractBinaryBranching(variables: Array[CPIntVar], var varHeuris
     bestId
   }
 
-  def alternatives(): Seq[Alternative]
-}
-/**
- * Binary Branching:
- * You can specify your variable/value heuristics
- * author: Pierre Schaus pschaus@gmail.com
- */
-class BinaryBranching(vars: Array[CPIntVar], varHeuris: (Int => Int), valHeuris: (Int => Int)) extends AbstractBinaryBranching(vars, varHeuris) {
-  
-  def this(vars: Array[CPIntVar], varHeuris: (Int => Int)) = this(vars,varHeuris,minVal(vars))
-  
-  final override def alternatives(): Seq[Alternative] = {
-    val stop = allBounds()
-    if (stop) noAlternative
+  def alternatives(): Seq[Alternative] = {
+    if (allBounds()) noAlternative
     else {
       val i = nextVar()
+      val variable = variables(i)
       val value = valHeuris(i)
-      branch(cp.assign(vars(i), value))(cp.remove(vars(i), value))
-    }
-  }
-}
-
-class BinaryStaticOrderBranching(vars: Array[CPIntVar], valHeuris: (Int => Int)) extends Branching {
-
-  def this(vars: Array[CPIntVar]) = this(vars,minVal(vars))
-  
-  val cp = vars(0).store
-  var y = vars.asInstanceOf[Array[CPIntVar]]
-  var i = new ReversibleIntWithCache(cp,0,vars.size+1)
-
-  final override def alternatives(): Seq[Alternative] = {
-
-    while (i.value < y.size && y(i.value).isBound) { i.incr() }
-
-    if (i.value < y.size) {
-
-      val x: CPIntVar = y(i.value)
-      val v = valHeuris(i.value)
-      branch {
-        cp.assign(x, v)
-      } {
-        cp.remove(x, v)
-      }
-
-    } else {
-      noAlternative
-    }
-  }
-}
-
-/**
- * Binary First Fail (min dom size) on the decision variables vars.
- * @param vars: the array of variables to assign during the search
- * @param valHeuris: gives the value v to try on left branch for the chosen variable, this value is removed on the right branch
- */
-class BinaryFirstFailBranching(x: Array[CPIntVar], valHeuris: (Int => Int)) extends BinaryBranching(x, i => x(i).size, valHeuris) {
-  
-  def this(x: Array[CPIntVar]) = this(x,minVal(x))
-  
-  def this(x: CPIntVar*) = this(x.toArray)
-}
-
-/**
- * Binary search on the decision variables vars, selecting first the variables having the max number
- * of propagation methods attached to it.
- */
-class BinaryMaxDegreeBranching(x: Array[CPIntVar]) extends BinaryBranching(x, varHeuris = i => x(i).constraintDegree, valHeuris = minVal(x))
-
-/**
- * Binary search on the decision variables vars, splitting the domain at the selected value (left : <= value, right : > value)
- */
-class BinaryDomainSplitBranching(val x: Array[CPIntVar], varHeuris: (Int => Int), valHeuris: (Int => Int)) extends AbstractBinaryBranching(x, varHeuris) {
-
-  
-  def this(x: Array[CPIntVar], varHeuris: (Int => Int)) = this(x,varHeuris,i => (x(i).min + x(i).max) / 2)
-  
-  
-  override def alternatives(): Seq[Alternative] = {
-    allBounds() match {
-      case true => noAlternative
-      case false => {
-        val i = nextVar()
-        val value = valHeuris(i)
-        branch(cp.post(x(i) <= value))(cp.post(x(i) > value))
-      }
-    }
-  }
-}
-
-class BinarySetBranching(x: CPSetVar) extends Branching {
-  val cp = x.store
-  def alternatives(): Seq[Alternative] = {
-    if (x.isBound) noAlternative
-    else {
-      val v = x.arbitraryPossibleNotRequired
-      branch(cp.post(x ++ v))(cp.post(x -- v))
+      List(Decision.assign(variable, value), Decision.remove(variable, value))
     }
   }
 }

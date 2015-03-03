@@ -4,17 +4,16 @@ import oscar.algo.reversible.ReversibleInt
 import oscar.algo.search.Branching
 import oscar.cp.linearizedDFS.{Assign, Remove}
 import oscar.cp._
-import oscar.cp.searches.AbstractBinaryBranching
 import oscar.algo.search.Alternative
 
 /**
  * Created by saschavancauwelaert on 09/12/14.
  */
-class BinaryBranching(vars: Array[CPIntVar], varHeuris: Int => Int, valHeuris: Int => Int) extends AbstractBinaryBranching(vars,varHeuris) {
+class BinaryBranching(vars: Array[CPIntVar], varHeuris: Int => Int, valHeuris: Int => Int) extends oscar.cp.searches.BinaryBranching(vars,varHeuris,valHeuris) {
   
   def this(vars: Array[CPIntVar], varHeuris: (Int => Int)) = this(vars,varHeuris,minVal(vars))
 
-  def alternatives(): Seq[Alternative] = {
+  override def alternatives(): Seq[Alternative] = {
     allBounds() match {
       case true => noAlternative
       case false => {

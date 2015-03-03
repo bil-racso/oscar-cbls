@@ -57,10 +57,10 @@ class BinaryLastConflict(variables: Array[CPIntVar], varHeuristic: Int => Int, v
   private[this] var maxDepth: Int = -1
   private[this] var deepestVar: Int = 0
 
-  final def reset(): Unit = maxDepth = -1
+  final override def reset(): Unit = maxDepth = -1
 
   final override def alternatives: Seq[Alternative] = {
-    val depth = currentDepth // the current depth   
+    val depth = currentDepth  
     if (depth >= nVariables) noAlternative
     else {
 
@@ -89,19 +89,10 @@ class BinaryLastConflict(variables: Array[CPIntVar], varHeuristic: Int => Int, v
 
       val varId = order(depth)
       val variable = variables(varId)
-      val value = lastValues(varId)
-      val contain = variable.hasValue(value)
-
-      if (contain) branch { store.assign(variable, value) } { store.remove(variable, value) }
-      else {
-        val value = valHeuristic(varId)
-        branch {
-          val out = store.assign(variable, value)
-          if (out != Failure) lastValues(varId) = value // save the value
-        } {
-          store.remove(variable, value)
-        }
-      }
+      val lastValue = lastValues(varId)
+      val value = if (variable.hasValue(lastValue)) lastValue else valHeuristic(varId)
+      // Alternatives
+      List(() => store.assign(variable, value), () => store.remove(variable, value))
     }
   }
 

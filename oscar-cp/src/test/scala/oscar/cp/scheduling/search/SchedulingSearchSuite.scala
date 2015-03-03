@@ -4,6 +4,8 @@ import oscar.cp.testUtils._
 import oscar.cp._
 import scala.util.Random
 import oscar.algo.search.Branching
+import oscar.cp.searches.SplitLastConflict
+import oscar.cp.searches.LCSearchSimplePhaseAssign
 
 /**
  *  @author Cyrille Dejemeppe cyrille.dejemeppe@gmail.com
@@ -21,6 +23,12 @@ class NewSetTimesSuite extends SchedulingSearchSuite(seed = 0, scalable = true) 
   }
 }
 
+/*class SplitLastConflictMinMinSuite extends SchedulingSearchSuite(seed = 0, scalable = true) {
+  override def searchHeuristic(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], tieBreaker: Int => Int): Branching = {
+    new LCSearchSimplePhaseAssign(starts, starts(_).min, starts(_).min)
+  }
+}*/
+
 abstract class SchedulingSearchSuite(seed: Int, scalable: Boolean) extends TestSuite {
 
   /** To implement with the search heuristic to be tested */
@@ -37,7 +45,7 @@ abstract class SchedulingSearchSuite(seed: Int, scalable: Boolean) extends TestS
     }
   }
 
-  test("SetTimes test on a dense rectangle of height 4 and width 100") {
+  test("Scheduling search test on a dense rectangle of height 4 and width 100") {
 
     val minWidth = 10
     val optimalMakespan = 100
@@ -70,7 +78,7 @@ abstract class SchedulingSearchSuite(seed: Int, scalable: Boolean) extends TestS
     }
   }
 
-  test("SetTimes test on a dense rectangle of height 10 and width 1000") {
+  test("Scheduling search test on a dense rectangle of height 10 and width 1000") {
 
     val minWidth = 10
     val optimalMakespan = 1000
@@ -104,7 +112,7 @@ abstract class SchedulingSearchSuite(seed: Int, scalable: Boolean) extends TestS
     }
   }
 
-  test("Steven example") {
+  test("Scheduling search should solve Steven's example.") {
 
     val durations = Array(2, 4, 3, 3)
     val demands = Array(1, 1, 2, 2)
@@ -146,8 +154,7 @@ abstract class SchedulingSearchSuite(seed: Int, scalable: Boolean) extends TestS
       val activitySolution = Array.tabulate(capacity)(i => splitRectangle(0, optimalMakespan, minWidth, maxRecursiveSplits)).flatten
       val nTasks = activitySolution.length
       val durationsData = activitySolution.map(a => a._2 - a._1)
-      println("nTasks " + nTasks)
-
+      
       var nNodes1 = 0
       var nNodes2 = 0
       var nNodes3 = 0
