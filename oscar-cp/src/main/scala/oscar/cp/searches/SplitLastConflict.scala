@@ -98,17 +98,17 @@ class SplitLastConflict(variables: Array[CPIntVar], varHeuristic: Int => Int, va
 
   // Return an Alternative that assign the value to the variable
   @inline private def assignValue(value: Int, variable: CPIntVar): Alternative = () => {
-    store.assign(variable, value)
+    Decision.assign(variable, value)
   }
 
   // Return an Alternative that constraints the variable to be greater than value
   @inline private def splitRight(value: Int, variable: CPIntVar): Alternative = () => {
-    store.post(variable > value)
+    Decision.greaterEq(variable, value + 1)
   }
 
   // Return an Alternative that constraints the variable to be lower than value
   @inline private def splitLeft(value: Int, variable: CPIntVar): Alternative = () => {
-    store.post(variable < value)
+    Decision.lowerEq(variable, value - 1)
   }
 
   @inline private def currentDepth(): Int = {

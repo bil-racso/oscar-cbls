@@ -92,7 +92,7 @@ class BinaryLastConflict(variables: Array[CPIntVar], varHeuristic: Int => Int, v
       val lastValue = lastValues(varId)
       val value = if (variable.hasValue(lastValue)) lastValue else valHeuristic(varId)
       // Alternatives
-      List(() => store.assign(variable, value), () => store.remove(variable, value))
+      List(Decision.assign(variable, value), Decision.remove(variable, value))
     }
   }
 
