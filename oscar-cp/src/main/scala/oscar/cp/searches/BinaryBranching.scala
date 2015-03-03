@@ -29,7 +29,7 @@ import oscar.algo.reversible.ReversibleIntWithCache
  * @param varHeuris is a variable heuristic, it will select preferably first the unbound 
  *        variables(i) such that varHeuris(i) is the smallest
  */
-abstract class AbstractBinaryBranching(variables: Array[CPIntVar], varHeuris: (Int => Int)) extends Branching {
+abstract class AbstractBinaryBranching(variables: Array[CPIntVar], var varHeuris: (Int => Int)) extends Branching {
 
   val cp = variables(0).store
 
