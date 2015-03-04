@@ -21,6 +21,7 @@ import oscar.cp._
 import oscar.algo.reversible._
 import oscar.algo.search.Branching
 
+
 /**
  * Last Conflict Search with Simple phase saving:
  * at first, branch by assign/remove.
@@ -89,6 +90,8 @@ class LCSearchSimplePhaseAssign(variables: Array[CPIntVar], varHeuris: Int => In
       // if phase is in domain, use it to guide search
       if (minX <= p && p <= maxX) {
         // if domain is continuous, do assign/split left/split right
+        
+        /*
         var s = Seq(() => { store.assign(x, p); if (!store.isFailed) phase(dd) = p })
 
         if (minX < p) {
@@ -99,6 +102,17 @@ class LCSearchSimplePhaseAssign(variables: Array[CPIntVar], varHeuris: Int => In
           s = s :+ (() => { store.post(x > p); if (!store.isFailed) phase(dd) = p + 1 })
         }
 
+        */
+        var s = Seq[() => Any](() => { store.assign(x, p); if (!store.isFailed) phase(dd) = p })
+
+        if (minX < p) {
+          s = s ++ branchOne(store.post(x < p))
+        }
+
+        if (p < maxX) {
+          s = s ++ branchOne(store.post(x > p))
+        }        
+        
         s
         // TODO: if domain not continuous, do assign/remove
       } // otherwise, use value heuristic
