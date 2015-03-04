@@ -15,8 +15,8 @@
 
 package oscar.algo.reversible
 
-import scala.collection.mutable.ArrayBuffer
 import oscar.algo.array.ArrayStackInt
+import oscar.algo.array.ArrayStack
 
 /**
  * Class representing a reversible node, that is a node able to restore all
@@ -31,7 +31,6 @@ class ReversibleContext {
   private[this] var trailTime: Long = 0
   private[this] var magicNumber: Long = 0
 
-  import oscar.algo.ArrayStack // custom version of ArrayStack
   private[this] val trailStack: ArrayStack[TrailEntry] = new ArrayStack(1024)
   private[this] val levelStack: ArrayStackInt = new ArrayStackInt(128)
   

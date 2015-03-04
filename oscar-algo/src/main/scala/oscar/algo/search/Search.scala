@@ -18,6 +18,7 @@
 package oscar.algo.search
 
 import oscar.algo.reversible._
+import oscar.algo.array.ArrayStack
 
 class SearchStatistics(
   val nNodes: Int,
@@ -37,7 +38,6 @@ class SearchStatistics(
  */
 class Search(node: SearchNode, branching: Branching) {
 
-  import oscar.algo.ArrayStack // custom array-based stack
   private val alternativesStack = new ArrayStack[Alternatives](100)
 
   // Used to count the number of discrepancy

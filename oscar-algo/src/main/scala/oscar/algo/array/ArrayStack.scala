@@ -1,38 +1,15 @@
-/*******************************************************************************
- * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 2.1 of the License, or
- * (at your option) any later version.
- *   
- * OscaR is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License  for more details.
- *   
- * You should have received a copy of the GNU Lesser General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
- ******************************************************************************/
-
-
-package oscar.algo
+package oscar.algo.array
 
 /**
  *  An array-based stack for objects.
  *  This means that primitive types are boxed.
  *
- *  @author Renaud Hartert ren.hartert@gmail.com
- *  @author Pierre Schaus pschaus@gmail.com
- *  
+ *  @author Renaud Hartert ren.hartert@gmail.com  
  */
-abstract class AbstractArrayStack[T](initialSize: Int = 100) {
+final class ArrayStack[T](initialSize: Int = 100) {
 
   private[this] var stack: Array[AnyRef] = Array.ofDim[AnyRef](initialSize)
-  
-  protected def augmentIndex()
-  protected def decreaseIndex()
-  protected def resetIndex()
-  protected def index: Int
-  
+  private[this] var index = 0
 
   /**
    *  Return the size of the stack
@@ -84,7 +61,7 @@ abstract class AbstractArrayStack[T](initialSize: Int = 100) {
   @inline final def push(entry: T): Unit = {
     if (index == stack.length) growStack()
     stack(index) = entry.asInstanceOf[AnyRef] // boxing in case of primitive type
-    augmentIndex()
+    index += 1
   }
   
   /**
@@ -101,7 +78,7 @@ abstract class AbstractArrayStack[T](initialSize: Int = 100) {
    */
   @inline final def pop(): T = {
     if (index == 0) sys.error("Stack empty")
-    decreaseIndex()
+    index -= 1
     stack(index).asInstanceOf[T]
   }
 
@@ -110,12 +87,12 @@ abstract class AbstractArrayStack[T](initialSize: Int = 100) {
    *  in the internal structure. This means that object cannot be
    *  garbage collected until references are overriden.
    */
-  @inline final def clear(): Unit = resetIndex()
+  @inline final def clear(): Unit = index = 0
 
   /** Remove all the entries in the stack */
   @inline final def clearRefs(): Unit = {
     while (index > 0) {
-      decreaseIndex()
+      index -= 1
       stack(index) = null
     }
   }
@@ -144,12 +121,10 @@ abstract class AbstractArrayStack[T](initialSize: Int = 100) {
     System.arraycopy(stack, 0, newStack, 0, stack.length)
     stack = newStack
   }
-  
-  
-  import scala.reflect.ClassTag
-  @inline final def toArray[T : ClassTag]: Array[T] = {
-    val array = new Array[T](index)
+   
+  @inline final def toArray: Array[T] = {
+    val array = new Array[AnyRef](index)
     System.arraycopy(stack, 0, array, 0, index)
-    array
+    array.asInstanceOf[Array[T]]
   }
 }
