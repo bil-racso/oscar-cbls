@@ -37,29 +37,29 @@ import oscar.cp._
  *
  */
 object Diet extends CPModel with App  {
-     // data
-     val n = 4
-     val price  = Array( 50, 20, 30, 80) // in cents
-     val limits = Array(500,  6, 10,  8) // requirements for each nutrition type
-     // nutritions for each product
-     val calories  = Array(400, 200, 150, 500)
-     val chocolate = Array(3,2,0,0)
-     val sugar     = Array(2,2,4,4)
-     val fat       = Array(2,4,1,5)
-     // variables
-     val x = Array.fill(n)(CPIntVar(0 to 10))
-     val cost = weightedSum(price, x)
-     // constraints
-    minimize(cost) 
-      add(weightedSum(calories, x) >= limits(0))
-      add(weightedSum(chocolate, x) >= limits(1))
-      add(weightedSum(sugar, x) >= limits(2))
-      add(weightedSum(fat, x) >= limits(3))
-     search{
-       binaryFirstFail(x)
-     }
-onSolution {
-       println(x.mkString(" "))
-     }
-     println(start())
-   }
+  // data
+  val n = 4
+  val price = Array(50, 20, 30, 80) // in cents
+  val limits = Array(500, 6, 10, 8) // requirements for each nutrition type
+  // nutritions for each product
+  val calories = Array(400, 200, 150, 500)
+  val chocolate = Array(3, 2, 0, 0)
+  val sugar = Array(2, 2, 4, 4)
+  val fat = Array(2, 4, 1, 5)
+  // variables
+  val x = Array.fill(n)(CPIntVar(0 to 10))
+  val cost = weightedSum(price, x)
+  // constraints
+  minimize(cost)
+  add(weightedSum(calories, x) >= limits(0))
+  add(weightedSum(chocolate, x) >= limits(1))
+  add(weightedSum(sugar, x) >= limits(2))
+  add(weightedSum(fat, x) >= limits(3))
+  search {
+    binaryFirstFail(x)
+  }
+  onSolution {
+    println(x.mkString(" "))
+  }
+  println(start())
+}

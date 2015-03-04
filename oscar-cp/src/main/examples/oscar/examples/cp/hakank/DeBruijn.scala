@@ -25,70 +25,71 @@ import scala.math.pow
  *
  *
  * Compare with the the web based programs:
- *    http://www.hakank.org/comb/debruijn.cgi   
+ *    http://www.hakank.org/comb/debruijn.cgi
  *    http://www.hakank.org/comb/debruijn_arb.cgi
  *
  * @author Hakan Kjellerstrand hakank@gmail.com
  * http://www.hakank.org/oscar/
  *
  */
-object DeBruijn extends CPModel with App  {
+object DeBruijn extends CPModel with App {
   // channeling between IntVar array t <=> IntVar s
-  def toNum(t: Array[CPIntVar], base: Int=10) = sum(
-      Array.tabulate(t.length)(i=> t(i)*pow(base, t.length-i-1).toInt))
-    // data
-    val base = if (args.length > 0) args(0).toInt else 2;
-    val n    = if (args.length > 1) args(1).toInt else 3;
-    val m    = if (args.length > 2) args(2).toInt else pow(base, n).toInt;
-    println("base: " + base + " n: " + n + " m: " + m)
-    //
-    // variables
-    //
-    // (Improvements from the original version suggested by Pierre Schaus.)
-    val x        = Array.fill(m)(CPIntVar(0 to pow(base, n).toInt - 1))
-    val binary   = Array.fill(m,n)(CPIntVar(0 to base-1))
-    val bin_code = Array.fill(m)(CPIntVar(0 to base-1))
-    val gccv     = Array.tabulate(base)(i => (i,CPIntVar(0 to m)))
-    //
-    // constraints
-    //
-    var numSols = 0
-  
-     add(allDifferent(x), Strong)
-      // channeling x <-> binary
-      for (i <- 0 until m) {
-         val t = Array.tabulate(n)(j=> CPIntVar(0 to base-1))
-        add(x(i) == toNum(t, base))
-         for (j <- 0 until n) {
-           add(binary(i)(j) == t(j))
-         }
-       }
-       // the de Bruijn condition
-       // the first elements in binary[i] is the same as the last
-       // elements in binary[i-i]
-       for (i <- 1 until m; j <- 1 until n) {
-        add(binary(i-1)(j) == binary(i)(j-1))
-       }
-       // and around the corner
-       for (j <- 1 until n) {
-        add(binary(m-1)(j) == binary(0)(j-1))
-       }
-       // convert binary -> bin_code (de Bruijn sequence)
-       for (i <- 0 until m) {
-        add(bin_code(i) == binary(i)(0))
-       }
-       // gcc on the de Bruijn sequence
-     add(gcc(bin_code, gccv))
-       // symmetry breaking: the smallest number in x should be first
-     add(minimum(x, x(0)))
-     search{
-       binaryFirstFail(x)
-     }
-onSolution {
-       println("x: " + x.mkString(""))
-       println("de Bruijn sequence:" + bin_code.mkString("")) 
-       println("gcc:" + gccv.mkString(""))
-       println()
-     } 
-     println(start())
-   }
+  def toNum(t: Array[CPIntVar], base: Int = 10) = sum(
+    Array.tabulate(t.length)(i => t(i) * pow(base, t.length - i - 1).toInt))
+  // data
+  val base = if (args.length > 0) args(0).toInt else 3;
+  val n = if (args.length > 1) args(1).toInt else 3;
+  val m = if (args.length > 2) args(2).toInt else pow(base, n).toInt;
+  println("base: " + base + " n: " + n + " m: " + m)
+  //
+  // variables
+  //
+  // (Improvements from the original version suggested by Pierre Schaus.)
+  val x = Array.fill(m)(CPIntVar(0 to pow(base, n).toInt - 1))
+  val binary = Array.fill(m, n)(CPIntVar(0 to base - 1))
+  val bin_code = Array.fill(m)(CPIntVar(0 to base - 1))
+  val gccv = Array.tabulate(base)(i => (i, CPIntVar(0 to m)))
+  //
+  // constraints
+  //
+  var numSols = 0
+
+  add(allDifferent(x), Strong)
+  // channeling x <-> binary
+  for (i <- 0 until m) {
+    val t = Array.tabulate(n)(j => CPIntVar(0 to base - 1))
+    add(x(i) == toNum(t, base))
+    for (j <- 0 until n) {
+      add(binary(i)(j) == t(j))
+    }
+  }
+  // the de Bruijn condition
+  // the first elements in binary[i] is the same as the last
+  // elements in binary[i-i]
+  for (i <- 1 until m; j <- 1 until n) {
+    add(binary(i - 1)(j) == binary(i)(j - 1))
+  }
+  // and around the corner
+  for (j <- 1 until n) {
+    add(binary(m - 1)(j) == binary(0)(j - 1))
+  }
+  // convert binary -> bin_code (de Bruijn sequence)
+  for (i <- 0 until m) {
+    add(bin_code(i) == binary(i)(0))
+  }
+  // gcc on the de Bruijn sequence
+  add(gcc(bin_code, gccv))
+  // symmetry breaking: the smallest number in x should be first
+  add(minimum(x, x(0)))
+  search {
+    binaryFirstFail(x)
+  }
+  /*
+  onSolution {
+    println("x: " + x.mkString(""))
+    println("de Bruijn sequence:" + bin_code.mkString(""))
+    println("gcc:" + gccv.mkString(""))
+    println()
+  }*/
+  println(start())
+}

@@ -70,6 +70,8 @@ class CPBoolVarNot(final override val not: CPBoolVar) extends CPBoolVar {
   final override def callPropagateWhenBind(c: Constraint): Unit = not.callPropagateWhenBind(c)
 
   final override def callPropagateWhenBoundsChange(c: Constraint): Unit = callPropagateWhenBoundsChange(c)
+  
+  final override def  callPropagateWhenDomainChanges(c: Constraint, watcher: oscar.cp.core.Watcher): Unit = ???
 
   final override def callPropagateWhenDomainChanges(c: Constraint, trackDelta: Boolean = false): Unit = not.callPropagateWhenDomainChanges(c, trackDelta)
 
@@ -96,6 +98,8 @@ class CPBoolVarNot(final override val not: CPBoolVar) extends CPBoolVar {
   final override def callValBindIdxWhenBind(c: Constraint, idx: Int): Unit = not.callValBindIdxWhenBind(c: Constraint, this, idx: Int)
 
   final override def callValBindIdxWhenBind(c: Constraint, variable: CPIntVar, idx: Int): Unit = not.callValBindIdxWhenBind(c: Constraint, variable: CPIntVar, idx: Int)
+
+  final override def fillDeltaArray(oldMin: Int, oldMax: Int, oldSize: Int, arr: Array[Int]): Int = ???    
 
   final override def delta(oldMin: Int, oldMax: Int, oldSize: Int): Iterator[Int] = ???
 

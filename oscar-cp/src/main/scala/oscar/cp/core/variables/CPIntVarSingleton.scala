@@ -132,7 +132,9 @@ final class CPIntVarSingleton(final override val store: CPStore, initValue: Int,
     Failure
   }
   
+    
   final override def delta(oldMin: Int, oldMax: Int, oldSize: Int): Iterator[Int] = ???
+  final override def fillDeltaArray(oldMin: Int, oldMax: Int, oldSize: Int, arr: Array[Int]): Int = ??? 
   final override def changed(c: Constraint): Boolean = ???
   final override def minChanged(c: Constraint): Boolean = ???
   final override def maxChanged(c: Constraint): Boolean = ???
@@ -166,6 +168,9 @@ final class CPIntVarSingleton(final override val store: CPStore, initValue: Int,
    * @see oscar.cp.core.Constraint#propagate()
    */
   final override def callPropagateWhenDomainChanges(c: Constraint, trackDelta: Boolean = false): Unit = degree.incr()
+  
+  final override def callPropagateWhenDomainChanges(c: Constraint, watcher: oscar.cp.core.Watcher) = degree.incr()
+
 
   /**
    * Level 1 registration: ask that the valBind(CPIntVar) method of the constraint c is called whenever

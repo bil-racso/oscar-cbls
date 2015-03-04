@@ -71,6 +71,10 @@ class CPIntVarViewMinus(v: CPIntVar) extends CPIntVar {
 	def callPropagateWhenBoundsChange(c: Constraint) = v.callPropagateWhenBoundsChange(c)
 	
 	def callPropagateWhenDomainChanges(c: Constraint, trackDelta: Boolean = false) = v.callPropagateWhenDomainChanges(c,trackDelta)
+  
+  
+  final override def callPropagateWhenDomainChanges(c: Constraint, watcher: oscar.cp.core.Watcher) = v.callPropagateWhenDomainChanges(c,watcher)
+
 	
 	// this method is useful when you have a view defined on a view
 	def callValBindWhenBind(c: Constraint, variable: CPIntVar) = v.callValBindWhenBind(c, variable)
@@ -108,6 +112,16 @@ class CPIntVarViewMinus(v: CPIntVar) extends CPIntVar {
 	// ----------------------------------
 	
 	def delta(oldMin: Int, oldMax: Int, oldSize: Int): Iterator[Int] = v.delta(-oldMax,-oldMin,oldSize).map(-_)
+  
+  def fillDeltaArray(oldMin: Int, oldMax: Int, oldSize: Int, arr: Array[Int]): Int = {
+    val m = v.fillDeltaArray(-oldMax,-oldMin,oldSize,arr)
+    var i = 0
+    while (i < m) {
+      arr(i) = -arr(i)
+      i += 1
+    }
+    m
+  } 
 	
 	def changed(c: Constraint): Boolean = v.changed(c)
 	
@@ -128,6 +142,16 @@ class CPIntVarViewMinus(v: CPIntVar) extends CPIntVar {
 	def delta(c: Constraint): Iterator[Int] = {
 	  v.delta(c).map(-_)
 	}
+  
+  final override def fillDeltaArray(c: Constraint, arr: Array[Int]): Int = { 
+    val m = v.fillDeltaArray(c,arr)
+    var i = 0
+    while (i < m) {
+      arr(i) = -arr(i)
+      i += 1
+    }
+    m
+  }  
 	
 }
   

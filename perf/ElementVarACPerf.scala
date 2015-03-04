@@ -21,7 +21,6 @@ import scala.io.Source
 import scala.io.Source
 import oscar.util._
 import oscar.visual._
-import oscar.cp.constraints.ElementVarAC
 
 
 object ElementVarACPerf {
@@ -38,7 +37,7 @@ object ElementVarACPerf {
       val z = CPIntVar(cp, randDom(n, prob * 2))
       var nbsol = 0
 
-      cp.add(new ElementVarAC(y, x, z))
+      cp.add(elementVar(y, x, z),Strong)
       for (i <- 0 until y.size - 4 by 3; if rand.nextInt(100) < 30) {
         cp.add(y(i) + y(i + 1) == y(i + 2))
         cp.add(y(i) != y(i + 1))

@@ -16,12 +16,14 @@
  * Contributors:
  *     This code has been initially developed by CETIC www.cetic.be
  *         by Renaud De Landtsheer
+  *           Gaël Thouvenin
  ******************************************************************************/
 
 
 package oscar.cbls.invariants.core.algo.set
 
-import collection.mutable.Set
+import collection.mutable.SortedSet
+
 import collection.Iterator
 
 /**Circular set is a dedicated data structure to represent set of integers in an efficient way
@@ -29,9 +31,9 @@ import collection.Iterator
  * stores elements from 0 to size-1
  * ensure that the maxsize is not so big because it consumes O(maxsize) memory.
   * @author renaud.delandtsheer@cetic.be
-  * THIS IS EXPERIMENTAL STUFF
+  * @author gael.thouvenin@student.umons.ac.be
  */
-class CircularIntSet(maxsize:Int) extends Set[Int]{
+class CircularIntSet(val maxsize:Int) extends scala.collection.mutable.SortedSet[Int]{
 
   private val containsvar:Array[Boolean] = new Array[Boolean](maxsize)
   private[set] val next:Array[Int] = new Array[Int](maxsize) //gives the id of the next element, so that they constitute a cycle in the array
@@ -39,39 +41,45 @@ class CircularIntSet(maxsize:Int) extends Set[Int]{
 
   private var handle:Int = -1
   private var sizevar:Int = 0
+  private var inserted:Boolean = false
 
   def -=(elem: Int):this.type = {
-    containsvar(elem) = false
-    if (handle == elem){
-      if (sizevar == 1){
-        handle = -1
-        next(elem) = -1
-        prev(elem) = -1
-        sizevar = 0
-        return this
-      }else{
-        handle = next(elem)
+    if(containsvar(elem)) {
+      containsvar(elem) = false
+      if (handle == elem) {
+        if (sizevar == 1) {
+          handle = -1
+          next(elem) = -1
+          prev(elem) = -1
+          sizevar = 0
+          return this
+        } else {
+          handle = next(elem)
+        }
       }
-    }
 
-    next(prev(elem)) = next(elem)
-    prev(next(elem)) = prev(elem)
-    next(elem) = -1
-    prev(elem) = -1
-    sizevar -=1
+      next(prev(elem)) = next(elem)
+      prev(next(elem)) = prev(elem)
+      next(elem) = -1
+      prev(elem) = -1
+      sizevar -= 1
+    }
     this
   }
 
   def +=(elem: Int):this.type = {
-    if (sizevar == 0){
+    if (sizevar == 0) {
       containsvar(elem) = true
       next(elem) = elem
       prev(elem) = elem
       sizevar = 1
       handle = elem
-    }else if (!containsvar(elem)){
+      inserted = true
+    }else if (!containsvar(elem)) {
       containsvar(elem) = true
-      insertAfter(elem,handle)
+      insertAfter(handle, elem)
+      sizevar += 1
+      inserted = true
     }
   this
   }
@@ -84,32 +92,76 @@ class CircularIntSet(maxsize:Int) extends Set[Int]{
     prev(newElem) = elem
   }
 
+  /**
+   *  Orders the collection. Should be called only if an element has been inserted since last call,
+   *  i.e. if inserted == true
+   */
+  private def reorder():Unit =
+  {
+    val values = for(e <- this) yield e
+    val sortedValues = values.toList.sorted
+    sortedValues match {
+      case _ :: _ :: _ =>
+        for (i <- 1 until sortedValues.size - 1) {
+          next(sortedValues(i)) = sortedValues(i + 1)
+          prev(sortedValues(i)) = sortedValues(i - 1)
+        }
+        prev(sortedValues(0)) = sortedValues(sortedValues.size - 1)
+        next(sortedValues(0)) = sortedValues(1)
+        prev(sortedValues(sortedValues.size - 1)) = sortedValues(sortedValues.size - 2)
+        next(sortedValues(sortedValues.size - 1)) = sortedValues(0)
+        handle = sortedValues(0)
+
+      case _ if size > 0 => handle = sortedValues(0)
+    }
+    inserted = false
+  }
+
   override def size:Int = sizevar
 
   def contains(elem: Int): Boolean = this.containsvar(elem)
 
+  /**
+   * Returns a NON-NECESSARILY ordered iterator over the set
+   * @return
+   */
   def iterator: Iterator[Int] = new CircularIntSetIterator(handle, this)
+
+  override implicit def ordering: Ordering[Int] = Ordering.Int
+
+  /**
+   * Creates and returns a sorted version of this set
+   * @param from lower bound (inclusive) of the elements to keep
+   * @param until upper bound (inclusive) of the elements to keep
+   * @return sorted version of this set, truncated such as each element \in [from, until]
+   */
+  override def rangeImpl(from: Option[Int], until: Option[Int]): scala.collection.mutable.SortedSet[Int] = {
+    if(inserted) reorder()
+    new CircularIntSet(maxsize) ++ (for(e <- this if e >= from.getOrElse(0) && e <= until.getOrElse(maxsize)) yield e)
+  }
+
+  /**
+   * Returns a sorted iterator over the set such as each element has a value over start
+   * @param start lower bound (inclusive) of the elements to keep
+   * @return an iterator over the elements > start
+   */
+  override def keysIteratorFrom(start: Int): Iterator[Int] =
+  {
+    if(inserted) reorder()
+    new CircularIntSetIterator(handle, this).filter(x => x >= start)
+  }
 }
 
 class CircularIntSetIterator(handle:Int, on:CircularIntSet) extends Iterator[Int]{
   var current = handle
   var initposition:Boolean = true
 
-  def hasNext: Boolean = on.size>0 & (initposition ||on.next(current) != handle)
+  def hasNext: Boolean = on.size > 0 & ( initposition || current != handle )
 
   def next(): Int = {
     initposition = false
     current = on.next(current)
     on.prev(current)
   }
-}
-
-class NonUpdateableInterfaceToIntSet(s:Set[Int]) extends Set[Int]{
-  def +=(elem: Int): this.type = {throw new Exception("update attempt on NonUpdateableIntSet"); this}
-  def -=(elem: Int): this.type = {throw new Exception("update attempt on NonUpdateableIntSet"); this}
-
-  def contains(elem: Int): Boolean = s.contains(elem)
-  def iterator: Iterator[Int] = s.iterator
-  override def size:Int = s.size
 }
 

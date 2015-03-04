@@ -81,6 +81,7 @@ class DFSearch(node: DFSearchNode) {
     // Initializes the search
     node.resetStats() // resets trailing time too
     alternativesStack.clear()
+    branching.reset() // resets branching
     nbSols = 0
     nbBkts = 0
     nbNodes = 0

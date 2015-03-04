@@ -34,38 +34,38 @@ import scala.math._
   @author Hakan Kjellerstrand hakank@gmail.com
   http://www.hakank.org/oscar/
 */
-object Langford extends CPModel with App  {
-    //
-    // data
-    //
-    val k = if (args.length > 0) args(0).toInt else 4;
-    val num_to_show = if (args.length > 1) args(1).toInt else 0;
-    //
-    // variables
-    //
-    val position = Array.fill(2*k)(CPIntVar(0 to 2*k-1))
-    // channel positions to a solution array
-    val solution = Array.fill(2*k)(CPIntVar(1 to k))
-    //
-    // constraints
-    //
-    var numSols = 0
-  
-     add(allDifferent(position), Strong)
-      for(i <- 1 to k) {
-       add(position(i+k-1) == (position(i-1) + i+1))
-       add(solution(position(i-1)) == i)
-       add(solution(position(k+i-1)) == i)
-      }
-      // symmetry breaking
-     add(solution(0) < solution(2*k-1))
-    search{
-      binary(position, _.size, _.min)
-    }
-onSolution {
-      print("solution:" + solution.mkString("") + " ")
-      println("position:" + position.mkString(""))
-      numSols += 1
-   } 
-   println(start(num_to_show))
+object Langford extends CPModel with App {
+  //
+  // data
+  //
+  val k = if (args.length > 0) args(0).toInt else 4;
+  val num_to_show = if (args.length > 1) args(1).toInt else 0;
+  //
+  // variables
+  //
+  val position = Array.fill(2 * k)(CPIntVar(0 to 2 * k - 1))
+  // channel positions to a solution array
+  val solution = Array.fill(2 * k)(CPIntVar(1 to k))
+  //
+  // constraints
+  //
+  var numSols = 0
+
+  add(allDifferent(position), Medium)
+  for (i <- 1 to k) {
+    add(position(i + k - 1) == (position(i - 1) + i + 1))
+    add(elementVar(solution,position(i-1),i),Strong)
+    add(elementVar(solution,position(k + i - 1),i),Strong)
   }
+  // symmetry breaking
+  add(solution(0) < solution(2 * k - 1))
+  search {
+    binary(position, _.size, _.min)
+  }
+  onSolution {
+    print("solution:" + solution.mkString("") + " ")
+    println("position:" + position.mkString(""))
+    numSols += 1
+  }
+  println(start(num_to_show))
+}

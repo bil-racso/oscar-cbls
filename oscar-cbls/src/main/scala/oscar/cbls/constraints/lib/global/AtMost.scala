@@ -22,7 +22,7 @@ package oscar.cbls.constraints.lib.global
 
 import collection.immutable.SortedMap
 import oscar.cbls.constraints.core.Constraint
-import oscar.cbls.invariants.core.computation.{InvariantHelper, Variable, CBLSIntVar}
+import oscar.cbls.invariants.core.computation.{IdentityInt, InvariantHelper, Variable, CBLSIntVar}
 import oscar.cbls.invariants.lib.logic.{DenseCount, IntElement, Int2Int}
 import oscar.cbls.modeling.Algebra._
 import oscar.cbls.invariants.core.propagation.Checker
@@ -33,15 +33,18 @@ import oscar.cbls.invariants.lib.numeric.Sum
   * There is a set of bounds, defined in the parameter bound as pair (value,bound).
   * The variables should be such that there is at most ''bound'' of them which have the value ''value''.
   *
-  * @param variables the variables that should be bounded
-  * @param bounds map(value,bound) the bounds on the variables. We use a map to ensure that there is no two bounds on the same value.
+  * @param variables the variables that should be bounded, only one occurrence of each variable is tolerated
+  * @param bounds map(value,bound) the bounds on the variables.
+  *               We use a map to ensure that there is no two bounds on the same value.
   * @author renaud.delandtsheer@cetic.be
   */
-case class AtMost(variables:Iterable[CBLSIntVar], bounds:SortedMap[Int, Int]) extends Constraint {
-  assert(variables.size < Int.MaxValue)
+case class AtMost(variables:Iterable[CBLSIntVar], bounds:SortedMap[Int, CBLSIntVar]) extends Constraint {
+
+   assert(variables.size < Int.MaxValue)
 
   model = InvariantHelper.findModel(variables)
   registerConstrainedVariables(variables)
+  registerConstrainedVariables(bounds.values)
   finishInitialization()
 
   private val countInvariant = DenseCount.makeDenseCount(variables.toArray)
@@ -56,15 +59,24 @@ case class AtMost(variables:Iterable[CBLSIntVar], bounds:SortedMap[Int, Int]) ex
   }
 
   //the violation of each input variable
-  private val Violations:SortedMap[CBLSIntVar,CBLSIntVar] = variables.foldLeft(SortedMap.empty[CBLSIntVar,CBLSIntVar])((acc,intvar)
-  => {
-    val newVar = new CBLSIntVar(model,(0 to 1),1,"Violation_AtMost_"+intvar.name)
-    newVar <== violationByVal.element(intvar + offset)
-    acc + ((intvar,newVar))
-  })
+  private val Violations:SortedMap[CBLSIntVar,CBLSIntVar] = {
+    def accumulate(acc:SortedMap[CBLSIntVar,CBLSIntVar], variable:CBLSIntVar, violation:CBLSIntVar):SortedMap[CBLSIntVar,CBLSIntVar] =
+      acc + (acc.get(variable) match{
+            case Some(oldViolation) => ((variable,(violation + oldViolation).toIntVar(violation.name)))
+            case None => ((variable,violation))})
+
+    val violationForArray = variables.foldLeft(SortedMap.empty[CBLSIntVar,CBLSIntVar])(
+      (acc,intvar) => accumulate(acc,intvar, violationByVal.element(intvar + offset).toIntVar("Violation_AtMost_"+intvar.name))
+    )
+    bounds.foldLeft(violationForArray)(
+      (acc,boundAndVariable) => {
+        val viol = violationByVal.element(boundAndVariable._1).toIntVar("Violation_AtMost_"+bounds(boundAndVariable._1).name)
+        accumulate(acc,boundAndVariable._2, viol)
+      })
+  }
 
   private val Violation:CBLSIntVar = new CBLSIntVar(model,(0 to Int.MaxValue), 0,"ViolationsOfAtMost")
-  Violation <== Sum(bounds.keys.map(bound => violationByVal(bound)))
+  Violation <== Sum(bounds.keys.map(violationByVal))
 
   /**The violation of the constraint is the sum on all bound of the number of variable that are in excess.
     * the number of variable in excess is the max between zero and
@@ -90,17 +102,17 @@ case class AtMost(variables:Iterable[CBLSIntVar], bounds:SortedMap[Int, Int]) ex
         */
       val violationOfV = violation(v)
       val expectedViolation =
-        if (checkBounds.isDefinedAt(v.value)) 0.max(checkBounds(v.value) - bounds(v.value))
+        if (checkBounds.isDefinedAt(v.value)) 0.max(checkBounds(v.value) - bounds(v.value).value)
         else 0
-      c.check(violationOfV.value == expectedViolation, Some("" + violationOfV + "== expectedViolation" + expectedViolation))
+      c.check(violationOfV.value == expectedViolation, Some("" + violationOfV + " == expectedViolation (" + expectedViolation + ")"))
     }
 
     /*The violation of the constraint is the sum on all bound of the number of variable that are in excess.
       * the number of variable in excess is the max between zero and
       * (the number of variable that have the value of the bound minus the bound).*/
-    var summedViolation = 0;
+    var summedViolation = 0
     for(i <- bounds.keys){
-      if (checkBounds(i) > bounds(i)) summedViolation += (checkBounds(i) - bounds(i))
+      if (checkBounds(i) > bounds(i).value) summedViolation += (checkBounds(i) - bounds(i).value)
     }
     c.check(summedViolation == violation.value, Some("summedViolation ("+summedViolation+") == violation.value ("+violation.value+")"))
   }

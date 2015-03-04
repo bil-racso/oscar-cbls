@@ -16,54 +16,174 @@
 package oscar.cp.scheduling.search
 
 import oscar.cp._
-import oscar.algo.reversible._
+import oscar.cp.core.CPOutcome.Failure
 import oscar.algo.search.Branching
+import oscar.algo.reversible.ReversibleInt
 
 /**
  * Set Times Branching
- * author: Pierre Schaus pschaus@gmail.com
+ * @author Pierre Schaus pschaus@gmail.com
+ * @author Renaud Hartert ren.hartert@gmail.com
  */
-class SetTimesBranching(starts: IndexedSeq[CPIntVar], durations: IndexedSeq[CPIntVar], ends: IndexedSeq[CPIntVar], tieBreaker: Int => Int = (i: Int) => i) extends Branching {
+class SetTimesBranching(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], tieBreaker: Int => Int = (i: Int) => i) extends Branching {
 
-  val cp = starts.head.store
-  val n = starts.size
-  val Activities = 0 until n
+  private[this] val cp = starts(0).store
+  private[this] val nTasks = starts.length
 
-  val selectable = Array.fill(n)(new ReversibleBoolean(cp, true))
-  // non fixed activities (by setTimes)
-  val bound = Array.fill(n)(new ReversibleBoolean(cp, false))
+  // Tasks not assigned by setTimes
+  private[this] val unassigned = Array.tabulate(nTasks)(i => i)
+  private[this] val positions = Array.tabulate(nTasks)(i => i)
+  private[this] val nUnassigned = new ReversibleInt(cp, nTasks)
 
-  val oldEST = Array.fill(n)(new ReversibleInt(cp, -1))
+  // Old Est of each task
+  private[this] val oldEst = Array.fill(nTasks)(new ReversibleInt(cp, Int.MinValue))
+  
+  // Used to avoid objects and to reduce the number of nodes
+  private[this] val dummyAlternative = Seq(() => cp.fail())
 
-  // update the new ones becoming available because est has moved
-  def updateSelectable() = (Activities).filter(i => oldEST(i).value < starts(i).min || durations(i).max == 0).foreach(selectable(_).value = true)
-  def selectableIndices() = (Activities).filter(i => selectable(i).value && !bound(i).value)
-  def allStartBounds() = bound.forall(i => i.value)
+  final override def alternatives(): Seq[Alternative] = {
+    if (nUnassigned.value == 0) noAlternative
+    else {
+      val taskId = selectTask()
+      val start = starts(taskId)
+      val est = start.min
+      // 
+      if (existsPostponedForever(est)) {
+        // we have detected at least one activity that will remain always postponed in this subtree
+        dummyAlternative 
+      } else {
+        val maxEnd = ends(taskId).max
+        //println("maxEnd:"+maxEnd)
+        //println("minEct:"+selectMinEct(est,taskId))
+        
+        if (/*false &&*/ selectMinEct(est,taskId) >= maxEnd) {
+          branchOne {
+            cp.assign(start, est)
+            assign(taskId) // the task is assigned by setTimes
+          }
+        }
+          
+        else {
+          branch {
+            val out = cp.assign(start, est)
+            assign(taskId) // the task is assigned by setTimes
+            if (out != Failure) dominanceCheck()
+          } {
+            //val minEct = selectMinEct(est)
+            cp.propagate()
+            oldEst(taskId).value = est
+            dominanceCheck()
+          }
+        }
+        
 
-  def updateAndCheck() = {
-    updateSelectable()
-    if (selectableIndices().isEmpty && !allStartBounds()) cp.fail()
-  }
 
-  def alternatives(): Seq[Alternative] = {
-    if (allStartBounds()) {
-      noAlternative
-    } else {
-      updateSelectable()
-      val (est, ect,x) = selectableIndices().map(i => (starts(i).min, tieBreaker(i),i)).min
-      // Select the activity with the smallest EST, ECT as tie breaker
-      branch {
-        cp.post(starts(x) == est)
-        bound(x).value = true
-        if (!cp.isFailed) updateAndCheck()
-      } {
-        cp.propagate()
-        selectable(x).value = false
-        oldEST(x).value = est
-        updateAndCheck()
       }
     }
-    
+  }
+  
+  // Return the minimum ect that is greater or equal to value
+  @inline private def selectMinEct(value: Int,taskId: Int): Int = {
+    var task = nTasks
+    var minEct = Int.MaxValue
+    while (task > 0) {
+      task -= 1
+      if (task != taskId) {
+        val ect = ends(task).min
+        if (ect < minEct && ect > value) minEct = ect
+      }
+
+    }
+    minEct
+  }
+
+  // FIXME: selectTask, dominanceCheck and minUnselectableLst should be 
+  //        done in a single pass at the end of each branch
+  @inline private def selectTask(): Int = {
+    var i = nUnassigned.value
+    var minTask = -1
+    var minEst = Int.MaxValue
+    var minTie = Int.MaxValue
+    while (i > 0) {
+      i -= 1
+      val taskId = unassigned(i)
+      val est = starts(taskId).min
+      if (oldEst(taskId).value < est || durations(i).max == 0) { // TODO not convinced by durations(i).max == 0
+        if (est < minEst) {
+          minTask = taskId
+          minEst = est
+          minTie = tieBreaker(taskId)
+        } else if (est == minEst) {
+          val tie = tieBreaker(taskId)
+          if (tie < minTie) {
+            minTask = taskId
+            minTie = tie
+          }
+        }
+      }
+    }
+    minTask // -1 = empty
+  }
+  
+  // FIXME: selectTask, dominanceCheck and minUnselectableLst should be 
+  //        done in a single pass at the end of each branch
+  @inline private def minUnselectableLst: Int = {
+    var i = nUnassigned.value
+    var minLst = Int.MaxValue
+    while (i > 0) {
+      i -= 1
+      val taskId = unassigned(i)
+      if (oldEst(taskId).value >= starts(taskId).min && durations(taskId).max != 0) {
+        val lst = starts(taskId).max
+        if (lst < minLst) minLst = lst
+      }
+    }
+    minLst
+  }
+  
+  
+  @inline private def existsPostponedForever(est: Int): Boolean = {
+    var i = nUnassigned.value
+    while (i > 0) {
+      i -= 1
+      val taskId = unassigned(i)
+      if (oldEst(taskId).value >= starts(taskId).min && durations(taskId).max != 0) {
+        if (ends(taskId).min <= est || starts(taskId).max <= est)  return true
+        // once an activity is postponed, it must always be scheduled after the current est
+        // since the current est can only increase down a branch
+        // ends(taskId).min <= est  implies that taskId will remain postponed forever
+        // starts(taskId).max <= est implies that is would never be possible to schedule taskId after est
+        // if one of the two case occurs, we can safely fail    
+      }
+    } 
+    false
+
+  }  
+
+  // FIXME: selectTask, dominanceCheck and minUnselectableLst should be 
+  //        done in a single pass at the end of each branch
+  @inline private def dominanceCheck(): Unit = {
+    val n = nUnassigned.value
+    if (n > 0) {
+      var failed = true
+      var i = n
+      while (i > 0 && failed) {
+        i -= 1
+        val taskId = unassigned(i)
+        failed = oldEst(taskId).value >= starts(taskId).min && durations(i).max != 0
+      }
+      if (failed) cp.fail()
+    }
+  }
+
+  @inline private def assign(taskId: Int): Unit = {
+    val p1 = positions(taskId)
+    val p2 = nUnassigned.decr()
+    val v2 = unassigned(p2)
+    positions(taskId) = p2
+    positions(v2) = p1
+    unassigned(p1) = v2
+    unassigned(p2) = taskId
   }
 }
 

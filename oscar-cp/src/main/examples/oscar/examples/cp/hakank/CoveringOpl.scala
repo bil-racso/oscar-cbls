@@ -45,36 +45,33 @@ object CoveringOpl extends CPModel with App  {
                            Array( 11, 20, 25, 28, 30, 32 ),
                            Array( 16, 19, 23, 31 ),
                            Array( 9, 18, 26, 28, 31, 32 ))
-    val cost = Array(1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 3,
-                     3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 6, 6, 6, 7, 8, 9)
-    //
-    // variables
-    //
-    val hire = Array.fill(num_workers)(CPIntVar(0 to 1))
-    val total_cost = weightedSum(cost, hire)
-    //
-    // constraints
-    //
-    var numSols = 0
-   minimize(total_cost) 
-      // Sum the costs for hiring the qualified workers
-      // and ensure that each task is covered.
-      // (Also, make 0-base.).
-      qualified.foreach(task=>
-                       add(sum(
-                                   for {
-                                     c <- 0 until task.length
-                                   } yield hire(task(c)-1)
-                                   ) >= 1
-                               )
-                        )
-    search{
-      binaryMaxDegree(hire)
-    }
-onSolution {
-      println("\nSolution:")
-      println("total_cost: " + total_cost)
-      println("hire: " + hire.zipWithIndex.filter(_._1.value == 1).map(_._2).mkString(" "))
-   }
-   println(start())
+  val cost = Array(1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 3,
+                   3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 6, 6, 6, 7, 8, 9)
+  //
+  // variables
+  //
+  val hire = Array.fill(num_workers)(CPIntVar(0 to 1))
+  val total_cost = weightedSum(cost, hire)
+  //
+  // constraints
+  //
+  var numSols = 0
+  minimize(total_cost)
+  // Sum the costs for hiring the qualified workers
+  // and ensure that each task is covered.
+  // (Also, make 0-base.).
+  qualified.foreach(task =>
+    add(sum(
+      for {
+        c <- 0 until task.length
+      } yield hire(task(c) - 1)) >= 1))
+  search {
+    binaryMaxDegree(hire)
   }
+  onSolution {
+    println("\nSolution:")
+    println("total_cost: " + total_cost)
+    println("hire: " + hire.zipWithIndex.filter(_._1.value == 1).map(_._2).mkString(" "))
+  }
+  println(start())
+}

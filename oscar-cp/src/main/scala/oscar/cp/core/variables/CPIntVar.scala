@@ -27,6 +27,7 @@ import oscar.cp.core.CPPropagStrength
 import oscar.cp.core.SnapshotVarInt
 import oscar.cp.core.DeltaVarInt
 import oscar.cp.core.CPOutcome
+import oscar.cp.core.Watcher
 
 trait DomainIterator extends Iterator[Int] {
   def removeValue: CPOutcome
@@ -239,6 +240,27 @@ abstract class CPIntVar extends CPVar with Iterable[Int] {
       }
     }
   }
+  
+  /**
+   * @return an (not sorted) array representation of the domain.
+   */
+  def toArray: Array[Int] = domainIterator.toArray
+
+  /**
+   *  @param array.length >= this.size
+   *  @return Fills the array with the domain.
+   *          returns the number of values (this.size).
+   *          The array is not sorted.
+   */
+  def fillArray(array: Array[Int]): Int = {
+    val ite = domainIterator
+    var i = 0
+    while (ite.hasNext) {
+      array(i) = ite.next
+      i += 1
+    }
+    i
+  }  
 
   /**
    * Level 2 registration: ask that the propagate() method of the constraint c is called whenever
@@ -248,9 +270,11 @@ abstract class CPIntVar extends CPVar with Iterable[Int] {
    */
   def callPropagateWhenDomainChanges(c: Constraint, trackDelta: Boolean = false): Unit
 
-  def filterWhenDomainChanges(filter: DeltaVarInt => CPOutcome) {
+  def callPropagateWhenDomainChanges(c: Constraint, watcher: Watcher): Unit
+  
+  def filterWhenDomainChangesWithDelta(idempotent: Boolean = false, priority: Int = CPStore.MaxPriorityL2-2) (filter: DeltaVarInt => CPOutcome) {
     store.post(
-      new DeltaVarInt(this, filter) {
+      new DeltaVarInt(this,filter,idempotent,priority) {
         def setup(l: CPPropagStrength) = {
           callPropagateWhenDomainChanges(this)
           CPOutcome.Suspend
@@ -258,20 +282,27 @@ abstract class CPIntVar extends CPVar with Iterable[Int] {
       }) // should not fail
   }
 
-  def filterWhenDomainChanges(filter: => CPOutcome) {
+  def filterWhenDomainChanges(idempot: Boolean = true, priority: Int = CPStore.MaxPriorityL2-2) (filter: => CPOutcome) {
     store.post(
       new Constraint(this.store, "filterWhenDomainChanges on  " + this) {
+        idempotent = idempot
+        priorityL2 = priority
+
         def setup(l: CPPropagStrength) = {
           callPropagateWhenDomainChanges(this)
           CPOutcome.Suspend
         }
         override def propagate() = filter
       })
-  }
+  } 
+  
 
-  def filterWhenBoundsChange(filter: => CPOutcome) {
+  def filterWhenBoundsChange(idempot: Boolean = false, priority: Int = CPStore.MaxPriorityL2-2)(filter: => CPOutcome) {
     store.post(
       new Constraint(this.store, "filterWhenBoundsChange on  " + this) {
+        idempotent = idempot
+        priorityL2 = priority
+
         def setup(l: CPPropagStrength) = {
           callPropagateWhenBoundsChange(this)
           CPOutcome.Suspend
@@ -280,9 +311,12 @@ abstract class CPIntVar extends CPVar with Iterable[Int] {
       })
   }
 
-  def filterWhenBind(filter: => CPOutcome) {
+  def filterWhenBind(idempot: Boolean = false, priority: Int = CPStore.MaxPriorityL2-2)(filter: => CPOutcome) {
     store.post(
       new Constraint(this.store, "filterWhenBind on  " + this) {
+        idempotent = idempot
+        priorityL2 = priority        
+        
         def setup(l: CPPropagStrength) = {
           callPropagateWhenBind(this)
           CPOutcome.Suspend
@@ -357,8 +391,10 @@ abstract class CPIntVar extends CPVar with Iterable[Int] {
   def deltaSize(sn: SnapshotVarInt): Int = {
     sn.oldSize - size
   }
-
+  
   def delta(oldMin: Int, oldMax: Int, oldSize: Int): Iterator[Int]
+  
+  def fillDeltaArray(oldMin: Int, oldMax: Int, oldSize: Int, arr: Array[Int]): Int
 
   // --------------------------------------------
 
@@ -379,6 +415,16 @@ abstract class CPIntVar extends CPVar with Iterable[Int] {
   def deltaSize(c: Constraint): Int
 
   def delta(c: Constraint): Iterator[Int]
+
+  def fillDeltaArray(c: Constraint, arr: Array[Int]): Int = {
+    val ite = delta(c)
+    var i = 0
+    while (ite.hasNext) {
+      arr(i) = ite.next()
+      i += 1
+    }
+    i
+  }  
 
   // ------------------------ some useful methods for java -------------------------
 

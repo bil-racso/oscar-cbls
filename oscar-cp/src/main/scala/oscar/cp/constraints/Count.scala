@@ -161,7 +161,7 @@ class Count(val N: CPIntVar, val X: Array[CPIntVar], val Y: CPIntVar) extends Co
       Suspend
     }
     
-    Y.filterWhenDomainChanges { d: DeltaVarInt =>
+    Y.filterWhenDomainChangesWithDelta() { d: DeltaVarInt =>
       // should test in constant time
       if (!Y.hasValue(supportmax.value)) {
         updateSupportMaxRequired = true
@@ -174,7 +174,7 @@ class Count(val N: CPIntVar, val X: Array[CPIntVar], val Y: CPIntVar) extends Co
       else Suspend
     }
     
-    Y.filterWhenBind {
+    Y.filterWhenBind() {
     	filterYBound()
     }
     
@@ -196,7 +196,7 @@ class Count(val N: CPIntVar, val X: Array[CPIntVar], val Y: CPIntVar) extends Co
     }
     
     for (x <- X; if !x.isBound) {
-      x.filterWhenDomainChanges {d: DeltaVarInt =>
+      x.filterWhenDomainChangesWithDelta() {d: DeltaVarInt =>
         filterX(x,d)
       }
 

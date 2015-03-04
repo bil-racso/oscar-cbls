@@ -30,7 +30,7 @@ import scala.language.postfixOps
  */
 object NQueensEasy2 extends CBLSModel with App{
 
-  val N = 20
+  val N = 1000
 
   println("NQueens(" + N + ")")
 

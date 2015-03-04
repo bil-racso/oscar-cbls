@@ -14,7 +14,7 @@ object OscarBuild extends Build {
   
   object BuildSettings {
     val buildOrganization = "oscar"
-    val buildVersion = "1.2.0.beta"
+    val buildVersion = "3.0.0.beta"
     val buildScalaVersion = "2.11.0"
     val buildSbtVersion= "0.13.0"
 
@@ -81,6 +81,7 @@ object OscarBuild extends Build {
   import BuildSettings._
   import Dependencies._
   import Resolvers._
+  import UnidocKeys._
 
   val commonDeps = Seq(/*scalatest,scalaswing,*/junit)
   
@@ -111,8 +112,7 @@ object OscarBuild extends Build {
   //
   lazy val jacoco_settings = Defaults.defaultSettings ++ Seq(jacoco.settings: _*)
   //jacoco.reportFormats in jacoco.Config := Seq(XMLReport("utf-8"), HTMLReport("utf-8"))
-  
-  
+
   lazy val oscar = Project(
     id = "oscar",
     base = file("."),
@@ -121,9 +121,10 @@ object OscarBuild extends Build {
                packSettings ++ unidocSettings ++ 
                Seq (/*resolvers := sbtResolvers,*/ libraryDependencies ++= commonDeps) ++ 
                sbtassembly.Plugin.assemblySettings ++ 
+               (unidocProjectFilter in (ScalaUnidoc, unidoc) := inAnyProject -- inProjects(oscarFzn)) ++
                commonTasks,
-    aggregate = Seq(oscarVisual,oscarCp,oscarCbls,oscarFzn,oscarLinprog,oscarDes,oscarDfo),
-    dependencies = Seq(oscarCp,oscarCbls,oscarFzn,oscarDes,oscarDfo,oscarLinprog)) dependsOnSource("lib")    
+    aggregate = Seq(oscarVisual,oscarCp,oscarCbls/*,oscarFzn*/,oscarLinprog,oscarDes,oscarDfo),
+    dependencies = Seq(oscarCp,oscarCbls/*,oscarFzn*/,oscarDes,oscarDfo,oscarLinprog)) dependsOnSource("lib")    
     
   lazy val oscarCbls = Project(
     id = "oscar-cbls",

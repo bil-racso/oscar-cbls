@@ -25,89 +25,88 @@ import scala.math._
   @author Hakan Kjellerstrand hakank@gmail.com
   http://www.hakank.org/oscar/
 */
-object EinsteinPuzzle extends CPModel with App  {
-    //
-    // data
-    //
-    val n = 5
-    val RANGE = 0 until n
-    val Array(brit, swede, dane, norwegian, german)            = RANGE.toArray
-    val Array(dogs, fish, birds, cats, horses)                 = RANGE.toArray
-    val Array(tea, coffee, milk, beer, water)                  = RANGE.toArray
-    val Array(pall_mall, dunhill, blends, blue_master, prince) = RANGE.toArray
-    val Array(red, green, white, yellow, blue)                 = RANGE.toArray
-    //
-    // variables
-    // 
-    val nationality = Array.fill(n)(CPIntVar(RANGE))
-    val animal      = Array.fill(n)(CPIntVar(RANGE))
-    val drink       = Array.fill(n)(CPIntVar(RANGE))
-    val smoke       = Array.fill(n)(CPIntVar(RANGE))
-    val color       = Array.fill(n)(CPIntVar(RANGE))
-    //
-    // constraints
-    //
-  
-      add(allDifferent(nationality), Strong)    
-      add(allDifferent(animal)     , Strong)
-      add(allDifferent(drink)      , Strong)
-      add(allDifferent(smoke)      , Strong)
-      add(allDifferent(color)      , Strong)
-       //
-       // The clues
-       //
-       // 1. The Brit lives in a red house.
-      add(nationality(brit) == color(red))
-       // 2. The Swede keeps dogs as pets.
-      add(nationality(swede) == animal(dogs))
-       // 3. The Dane drinks tea.
-      add(nationality(dane) == drink(tea))
-       // 4. The Green house is just on the left of the White house.
-      add(color(green) == color(white)-1)
-       // 5. The owner of the Green house drinks coffee.
-      add(color(green) == drink(coffee))
-       // 6. The person who smokes Pall Mall keeps birds.
-      add(smoke(pall_mall) == animal(birds))
-       // 7. The owner of the Yellow house smokes Dunhill.
-      add(color(yellow) == smoke(dunhill))
-       // 8. The man living in the center house drinks milk.
-      add(drink(milk) == 2)
-       // 9. The Norwegian lives in the first house.
-      add(nationality(norwegian) == 0)
-       // 10. The man who smokes Blends lives next to the one who keeps cats.
-      add((smoke(blends) - animal(cats)).abs == 1)
-       // 11. The man who smokes Blue Master drinks beer.
-      add(smoke(blue_master) == drink(beer))
-       // 12. The man who keeps horses lives next to the man who smokes Dunhill.
-      add((animal(horses) - smoke(dunhill)).abs == 1)
-       // 13. The German smokes Prince.
-      add(nationality(german) == smoke(prince))
-       // 14. The Norwegian lives next to the blue house.
-      add((nationality(norwegian) - color(blue)).abs == 1)
-       // 15. The man who smokes Blends has a neighbour who drinks water.
-      add((smoke(blends) - drink(water)).abs == 1);      
-    search{
-      binaryFirstFail(nationality ++ animal ++ drink ++ smoke ++ color)
-    }
-onSolution {
-      println("\nSolution:")
-      val nats = "Brit, Swede, Dane, Norwegian, German"            split(", *")
-      val anis = "dogs, fish, birds, cats, horses"                 split(", *")
-      val dris = "tea, coffee, milk, beer, water"                  split(", *")
-      val smos = "Pall Mall, Dunhill, Blends, Blue Master, Prince" split(", *")
-      val cols = "red, green, white, yellow, blue"                 split(", *")
-      // find the index in x where thing is
-      def getIndex(x : Array[CPIntVar], thing: Int) =
-        x.zipWithIndex.filter(_._1.value == thing)(0)._2 
-      println((for(house <- RANGE) 
-                 yield ("House " + house                   + ": " + 
-                        nats(getIndex(nationality, house)) + " "  +
-                        anis(getIndex(animal     , house)) + " "  +
-                        dris(getIndex(drink      , house)) + " "  +
-                        smos(getIndex(smoke      , house)) + " "  +
-                        cols(getIndex(color      , house)))
-               ).mkString("\n"))
-      println("\nWho owns the fish: The " + nats(getIndex(animal, fish )))
-    }
-    println(start())
+object EinsteinPuzzle extends CPModel with App {
+  //
+  // data
+  //
+  val n = 5
+  val RANGE = 0 until n
+  val Array(brit, swede, dane, norwegian, german) = RANGE.toArray
+  val Array(dogs, fish, birds, cats, horses) = RANGE.toArray
+  val Array(tea, coffee, milk, beer, water) = RANGE.toArray
+  val Array(pall_mall, dunhill, blends, blue_master, prince) = RANGE.toArray
+  val Array(red, green, white, yellow, blue) = RANGE.toArray
+  //
+  // variables
+  // 
+  val nationality = Array.fill(n)(CPIntVar(RANGE))
+  val animal = Array.fill(n)(CPIntVar(RANGE))
+  val drink = Array.fill(n)(CPIntVar(RANGE))
+  val smoke = Array.fill(n)(CPIntVar(RANGE))
+  val color = Array.fill(n)(CPIntVar(RANGE))
+  //
+  // constraints
+  //
+
+  add(allDifferent(nationality), Strong)
+  add(allDifferent(animal), Strong)
+  add(allDifferent(drink), Strong)
+  add(allDifferent(smoke), Strong)
+  add(allDifferent(color), Strong)
+  //
+  // The clues
+  //
+  // 1. The Brit lives in a red house.
+  add(nationality(brit) == color(red))
+  // 2. The Swede keeps dogs as pets.
+  add(nationality(swede) == animal(dogs))
+  // 3. The Dane drinks tea.
+  add(nationality(dane) == drink(tea))
+  // 4. The Green house is just on the left of the White house.
+  add(color(green) == color(white) - 1)
+  // 5. The owner of the Green house drinks coffee.
+  add(color(green) == drink(coffee))
+  // 6. The person who smokes Pall Mall keeps birds.
+  add(smoke(pall_mall) == animal(birds))
+  // 7. The owner of the Yellow house smokes Dunhill.
+  add(color(yellow) == smoke(dunhill))
+  // 8. The man living in the center house drinks milk.
+  add(drink(milk) == 2)
+  // 9. The Norwegian lives in the first house.
+  add(nationality(norwegian) == 0)
+  // 10. The man who smokes Blends lives next to the one who keeps cats.
+  add((smoke(blends) - animal(cats)).abs == 1)
+  // 11. The man who smokes Blue Master drinks beer.
+  add(smoke(blue_master) == drink(beer))
+  // 12. The man who keeps horses lives next to the man who smokes Dunhill.
+  add((animal(horses) - smoke(dunhill)).abs == 1)
+  // 13. The German smokes Prince.
+  add(nationality(german) == smoke(prince))
+  // 14. The Norwegian lives next to the blue house.
+  add((nationality(norwegian) - color(blue)).abs == 1)
+  // 15. The man who smokes Blends has a neighbour who drinks water.
+  add((smoke(blends) - drink(water)).abs == 1);
+  search {
+    binaryFirstFail(nationality ++ animal ++ drink ++ smoke ++ color)
   }
+  onSolution {
+    println("\nSolution:")
+    val nats = "Brit, Swede, Dane, Norwegian, German" split (", *")
+    val anis = "dogs, fish, birds, cats, horses" split (", *")
+    val dris = "tea, coffee, milk, beer, water" split (", *")
+    val smos = "Pall Mall, Dunhill, Blends, Blue Master, Prince" split (", *")
+    val cols = "red, green, white, yellow, blue" split (", *")
+    // find the index in x where thing is
+    def getIndex(x: Array[CPIntVar], thing: Int) =
+      x.zipWithIndex.filter(_._1.value == thing)(0)._2
+    println((for (house <- RANGE)
+      yield ("House " + house + ": " +
+      nats(getIndex(nationality, house)) + " " +
+      anis(getIndex(animal, house)) + " " +
+      dris(getIndex(drink, house)) + " " +
+      smos(getIndex(smoke, house)) + " " +
+      cols(getIndex(color, house)))).mkString("\n"))
+    println("\nWho owns the fish: The " + nats(getIndex(animal, fish)))
+  }
+  println(start())
+}

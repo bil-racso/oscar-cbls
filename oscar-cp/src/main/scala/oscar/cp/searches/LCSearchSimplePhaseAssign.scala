@@ -52,7 +52,7 @@ class LCSearchSimplePhaseAssign(variables: Array[CPIntVar], varHeuris: Int => In
 
   private[this] var deepest: Int = 0
 
-  final def reset(): Unit = maxDepth = -1
+  final override def reset(): Unit = maxDepth = -1
 
   final override def alternatives: Seq[Alternative] = {
     val d = updateDepth() // compute the current depth   

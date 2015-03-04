@@ -17,22 +17,18 @@
 
 package oscar
 
-import oscar.cp.core.variables.CPIntVarViewMinus
-import oscar.cp.core.CPOutcome
-import oscar.cp.core.CPPropagStrength
-import oscar.cp.core.CPSol
-import oscar.cp.modeling.Branchings
-import oscar.cp.modeling.Constraints
-import oscar.algo.search.Branching
-import oscar.algo.search.SearchNode
-import oscar.algo.search.SearchStatistics
-import oscar.util.selectMin
-import oscar.cp.core.variables.CPBoolVarImpl
-import oscar.cp.modeling.ElementBuilder
-import oscar.cp.modeling.CPSolverUtils
-import oscar.cp.modeling.LNSRelaxations
 import oscar.cp.constraints.InSet
 import oscar.cp.constraints.ModuloLHS
+import oscar.cp.core.CPOutcome
+import oscar.cp.core.CPPropagStrength
+import oscar.cp.core.variables.CPBoolVarImpl
+import oscar.cp.core.variables.CPIntVarViewMinus
+import oscar.cp.modeling.Branchings
+import oscar.cp.modeling.CPSolverUtils
+import oscar.cp.modeling.Constraints
+import oscar.cp.modeling.ElementBuilder
+import oscar.cp.modeling.LNSRelaxations
+import oscar.util.selectMin
 
 /**
  * The `cp` package provides useful functionalities to model problem using
@@ -473,15 +469,4 @@ package object cp extends Constraints with Branchings with ElementBuilder with C
   }*/
 
   def allBounds(vars: Iterable[_ <: CPIntVar]) = vars.asInstanceOf[Iterable[CPIntVar]].forall(_.isBound)
-
-  // helper functions to define searches
-
-  def minDom(x: CPIntVar): Int = x.size
-  def minRegret(x: CPIntVar): Int = x.max - x.min
-  def minDomMaxDegree(x: CPIntVar): (Int, Int) = (x.size, -x.constraintDegree)
-  def minVar(x: CPIntVar): Int = 1
-  def maxDegree(x: CPIntVar): Int = -x.constraintDegree
-  def minVal(x: CPIntVar): Int = x.min
-  def maxVal(x: CPIntVar): Int = x.max
-  def minValminVal(x: CPIntVar): (Int, Int) = (x.min, x.min)
 }

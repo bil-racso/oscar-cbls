@@ -28,34 +28,33 @@ import scala.math._
   @author Hakan Kjellerstrand hakank@gmail.com
   http://www.hakank.org/oscar/
 */
-object MagicSequence extends CPModel with App  {
-    //
-    // data
-    //
-    val n = if (args.length > 0) args(0).toInt else 10;
-    val all_values = Array.tabulate(n)(i=> (i,CPIntVar(0 to n-1)))
-    //
-    // variables
-    //
-    val x = Array.fill(n)(CPIntVar(0 to n-1))
-    //
-    // constraints
-    //
-    var numSols = 0
+object MagicSequence extends CPModel with App {
+  //
+  // data
+  //
+  val n = if (args.length > 0) args(0).toInt else 10;
+  //
+  // variables
+  //
+  val x = Array.fill(n)(CPIntVar(0 to n - 1))
+  val allValues = Array.tabulate(n)(i => (i, x(i)))
+  //
+  // constraints
+  //
+  var numSols = 0
+
+  add(weightedSum(0 to n, x) == n)
+  add(sum(x) == n)
+  add(gcc(x, allValues), Strong)
   
-     add(weightedSum(0 to n, x) == n)
-     add(sum(x) == n)
-     add(gcc(x, all_values), Strong)
-      for(i<- 0 until n) {
-       add(x(i) == all_values(i)._1)
-      }
-    search{
-      binary(x, -_.constraintDegree, _.min)
-    }
-onSolution {
-      println("\nSolution:")
-      println("x: " + x.mkString(" "))
-      numSols += 1
-   } 
-   println(start())
+  search {
+    binary(x, -_.constraintDegree, _.min)
   }
+  /*
+  onSolution {
+    println("\nSolution:")
+    println("x: " + x.mkString(" "))
+    numSols += 1
+  }*/
+  println(start())
+}
