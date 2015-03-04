@@ -2,16 +2,17 @@ package oscar.lcg.examples
 
 import oscar.lcg._
 import oscar.lcg.constraints.DecompCumulative
+import oscar.lcg.heuristic.LastConflict
 
 object RCPSP extends App {
 
   println("name\ttime\tfails\tbest\topt")
-  for (j <- 1 to 5; i <- 1 to 10) {
+  for (j <- 9 to 9; i <- 1 to 1) {
 
     new LCGModel {
 
-      val instanceFile = s"j30_${j}_${i}"
-      val instance = BLParser.parse("data/rcpsp/j30/" + instanceFile + ".rcp")
+      val instanceFile = s"j60_${j}_${i}"
+      val instance = BLParser.parse("data/rcpsp/j60/" + instanceFile + ".rcp")
 
       // Data
       val nTasks = instance.nTasks
@@ -38,13 +39,15 @@ object RCPSP extends App {
       }
 
       // Search heuristic
-      val heuristic = minValue(starts)
+      //val heuristic = minValue(starts)
+      val heuristic = new LastConflict(starts, starts(_).min, starts(_).min)
 
       onSolution {
         //val validOnResources = Resources.forall(r => SolutionChecker.check(starts.map(_.min), durations, demands(r), capa(r), horizon))
         //val validPrecedences = instance.precedences.forall { case (t1, t2) => ends(t1).min <= starts(t2).min }
         //if (!validPrecedences && !validOnResources) sys.error("PROBLEM")
         best = ends.map(_.max).max
+        println(best)
       }
 
       val t0 = System.currentTimeMillis()
@@ -57,7 +60,7 @@ object RCPSP extends App {
         if (!success) {
           optimum = true
         } else {
-          val out = lcgSolver.solve(heuristic, System.currentTimeMillis() - t0 >= 10000, resetStatistics = false)
+          val out = lcgSolver.solve(heuristic, System.currentTimeMillis() - t0 >= 1200000, resetStatistics = false)
           if (out == False) optimum = true
           else if (out == Unassigned) stop = true
           else best -= 1 

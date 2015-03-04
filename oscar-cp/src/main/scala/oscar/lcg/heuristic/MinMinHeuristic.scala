@@ -19,7 +19,7 @@ class MinMinHeuristic(variables: Array[LCGIntervalVar]) extends Heuristic {
       val variable = variables(i)
       if (!variable.isAssigned && variable.min < min) {
         minId = i
-        min = variable.min
+        min = variable.size
       }
       i += 1
     }
@@ -27,10 +27,12 @@ class MinMinHeuristic(variables: Array[LCGIntervalVar]) extends Heuristic {
     else {
       val x = variables(minId)
       val value = x.min
-      val literal = x.lowerEqual(value)
+      val literal1 = x.lowerEqual(value)
+      val literal2 = x.greaterEqual(value)
       () => {
         //println("decision  : assign " + x.name + " to " + value)
-        cdclStore.enqueue(literal, null)
+        cdclStore.enqueue(literal1, null)
+        cdclStore.enqueue(literal2, null)
       }
     }
   }

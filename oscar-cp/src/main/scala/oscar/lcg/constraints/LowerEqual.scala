@@ -23,7 +23,7 @@ class LowerEqual(left: LCGIntervalVar, right: LCGIntervalVar) extends LCGConstra
 
   final override def propagate(): CPOutcome = {
     if (check() == Failure) Failure
-    //else if (updateMax() == Failure) Failure
+    else if (updateMax() == Failure) Failure
     else if (updateMin() == Failure) Failure
     else Suspend
   }

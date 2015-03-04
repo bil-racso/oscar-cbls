@@ -78,19 +78,11 @@ class DecompCumulative(starts: Array[LCGIntervalVar], durations: Array[Int], dem
   }
 
   final override def propagate(): CPOutcome = {
-    
-    var i = nTasks
-    while (i > 0) {
-      i -= 1
-      timePoints(i) = starts(i).min + durations(i) - 1
-    }
 
     var fail = false
     var time = horizon
-    i = nTasks
-    while (i > 0 && !fail) {
-      i -= 1
-      val time = timePoints(i)
+    while (time > 0 && !fail) {
+      time -= 1
 
       // Cache
       nActives = nActivesRev(time).value
