@@ -58,7 +58,7 @@ class SplitLastConflict(variables: Array[CPIntVar], varHeuristic: Int => Int, va
   final override def reset(): Unit = maxDepth = -1
 
   final override def alternatives: Seq[Alternative] = {
-    val depth = currentDepth()
+    val depth = updateAssigned()
     if (depth >= nVariables) noAlternative
     else {
       // Trail the depth of the search tree
@@ -70,7 +70,7 @@ class SplitLastConflict(variables: Array[CPIntVar], varHeuristic: Int => Int, va
         val varId = order(conflictDepth)
         System.arraycopy(order, depth, order, depth + 1, conflictDepth - depth)
         order(depth) = varId
-        conflictDepth = depth
+        conflictDepth = -1
       } else if (depth > maxDepth) {
         // New depth level
         maxDepth = depth
@@ -78,7 +78,6 @@ class SplitLastConflict(variables: Array[CPIntVar], varHeuristic: Int => Int, va
         val varId = order(position)
         order(position) = order(depth)
         order(depth) = varId
-        conflictDepth = depth
       }
 
       // Variable and value
@@ -90,28 +89,33 @@ class SplitLastConflict(variables: Array[CPIntVar], varHeuristic: Int => Int, va
       val value = if (minValue <= lastValue && lastValue <= maxValue) lastValue else valHeuristic(varId)
 
       // Alternatives
-      if (minValue == value) List(assignValue(value, variable), splitRight(value, variable))
-      else if (value == maxValue) List(assignValue(value, variable), splitLeft(value, variable))
-      else List(assignValue(value, variable), splitLeft(value, variable), splitRight(value, variable))
+      if (maxValue == value) List(assign(variable, value, depth), lower(variable, value, depth))
+      else if (minValue == value) List(assign(variable, value, depth), greater(variable, value, depth))
+      else List(Decision.assign(variable, value), lower(variable, value, depth), greater(variable, value, depth))
     }
   }
 
   // Return an Alternative that assign the value to the variable
-  @inline private def assignValue(value: Int, variable: CPIntVar): Alternative = () => {
-    store.assign(variable, value)
+  @inline private def assign(variable: CPIntVar, value: Int, depth: Int): Alternative = () => {
+    val out = store.assign(variable, value)
+    if (out == Failure) conflictDepth = depth
   }
 
   // Return an Alternative that constraints the variable to be greater than value
-  @inline private def splitRight(value: Int, variable: CPIntVar): Alternative = () => {
-    store.post(variable > value)
+  @inline private def greater(variable: CPIntVar, value: Int, depth: Int): Alternative = () => {
+    variable.updateMin(value + 1)
+    val out = store.propagate()
+    if (out == Failure) conflictDepth = depth
   }
 
   // Return an Alternative that constraints the variable to be lower than value
-  @inline private def splitLeft(value: Int, variable: CPIntVar): Alternative = () => {
-    store.post(variable < value)
+  @inline private def lower(variable: CPIntVar, value: Int, depth: Int): Alternative = () => {
+    variable.updateMax(value - 1)
+    val out = store.propagate()
+    if (out == Failure) conflictDepth = depth
   }
 
-  @inline private def currentDepth(): Int = {
+  @inline private def updateAssigned(): Int = {
     var d = depthRev.value
     while (d < nVariables && variables(order(d)).isBound) {
       val varId = order(d)

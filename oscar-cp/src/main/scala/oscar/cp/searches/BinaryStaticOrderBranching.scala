@@ -27,7 +27,7 @@ class BinaryStaticOrderBranching(variables: Array[CPIntVar], valHeuris: (Int => 
       // Alternatives
       val variable = variables(depth)
       val value = valHeuris(depth)
-      branch { store.assign(variable, value) } { store.remove(variable, value) }
+      List(Decision.assign(variable, value), Decision.remove(variable, value))
     }
   }
 }

@@ -6,7 +6,6 @@ import scala.util.Random
 import oscar.algo.search.Branching
 import oscar.cp.searches.SplitLastConflict
 import oscar.cp.searches.LCSearchSimplePhaseAssign
-
 /**
  *  @author Cyrille Dejemeppe cyrille.dejemeppe@gmail.com
  *  @author Renaud Hartert ren.hartert@gmail.com
@@ -23,11 +22,11 @@ class NewSetTimesSuite extends SchedulingSearchSuite(seed = 0, scalable = true) 
   }
 }
 
-/*class SplitLastConflictMinMinSuite extends SchedulingSearchSuite(seed = 0, scalable = true) {
+class SplitLastConflictMinMinSuite extends SchedulingSearchSuite(seed = 0, scalable = false) {
   override def searchHeuristic(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], tieBreaker: Int => Int): Branching = {
-    new LCSearchSimplePhaseAssign(starts, starts(_).min, starts(_).min)
+    new SplitLastConflict(starts, starts(_).size, starts(_).min)
   }
-}*/
+}
 
 abstract class SchedulingSearchSuite(seed: Int, scalable: Boolean) extends TestSuite {
 
@@ -196,6 +195,8 @@ abstract class SchedulingSearchSuite(seed: Int, scalable: Boolean) extends TestS
         val stats = start()
         nNodes2 = stats.nNodes
       }
+      
+      assert(nNodes1 == nNodes2, s"scaling by $scaling1 increases the number of nodes from $nNodes1 to $nNodes2") 
 
       new CPModel {
         solver.silent = true
@@ -216,7 +217,6 @@ abstract class SchedulingSearchSuite(seed: Int, scalable: Boolean) extends TestS
         nNodes3 = stats.nNodes
       }
       
-      assert(nNodes1 == nNodes2, s"scaling by $scaling1 increases the number of nodes from $nNodes1 to $nNodes2")
       assert(nNodes1 == nNodes3, s"scaling by $scaling2 increases the number of backtracks from $nNodes1 to $nNodes3")
     }
   }

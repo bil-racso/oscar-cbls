@@ -16,7 +16,7 @@ class BinaryDomainSplitBranching(variables: Array[CPIntVar], varHeuris: (Int => 
       val i = nextVar()
       val variable = variables(i)
       val value = valHeuris(i)
-      branch(cp.post(variable <= value))(cp.post(variable > value))
+      List(Decision.lowerEq(variable, value), Decision.greaterEq(variable, value + 1))
     }
   }
 }

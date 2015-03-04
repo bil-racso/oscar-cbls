@@ -19,7 +19,7 @@ import java.util.Collection
 import java.util.LinkedList
 import scala.collection.JavaConversions.asJavaCollection
 import scala.collection.JavaConversions.collectionAsScalaIterable
-import oscar.algo.ArrayQueue
+import oscar.algo.array.ArrayQueue
 import oscar.algo.reversible.ReversiblePointer
 import oscar.algo.search.SearchNode
 import oscar.cp.constraints.EqCons

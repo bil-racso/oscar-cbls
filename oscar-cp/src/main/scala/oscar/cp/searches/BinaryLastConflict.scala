@@ -51,53 +51,64 @@ class BinaryLastConflict(variables: Array[CPIntVar], varHeuristic: Int => Int, v
   private[this] val lastValues = new Array[Int](nVariables)
 
   // Current depth of the search tree
-  private[this] val depthRev = new ReversibleInt(store, 0)
+  private[this] val nAssignedRev = new ReversibleInt(store, 0)
 
   // Last conflict
-  private[this] var maxDepth: Int = -1
-  private[this] var deepestVar: Int = 0
+  private[this] var maxAssigned: Int = -1
+  private[this] var conflictAssign: Int = 0
 
-  final override def reset(): Unit = maxDepth = -1
+  final override def reset(): Unit = maxAssigned = -1
 
   final override def alternatives: Seq[Alternative] = {
-    val depth = currentDepth  
-    if (depth >= nVariables) noAlternative
+    val nAssigned = updateAssigned()
+    if (nAssigned >= nVariables) noAlternative
     else {
 
       // Trail the new depth
-      depthRev.value = depth
+      nAssignedRev.value = nAssigned
       
       // Select the variable implied in the last conflict if any
-      if (deepestVar > depth && !variables(order(deepestVar)).isBound) {
-        val deepestId = order(deepestVar)
+      if (conflictAssign > nAssigned && !variables(order(conflictAssign)).isBound) {
+        val deepestId = order(conflictAssign)
         // Insert the last conflict in the sequence
-        System.arraycopy(order, depth, order, depth + 1, deepestVar - depth)
-        order(depth) = deepestId
+        System.arraycopy(order, nAssigned, order, nAssigned + 1, conflictAssign - nAssigned)
+        order(nAssigned) = deepestId
+        conflictAssign = -1
       } 
       // Select the next variable suggested by the variable heuristic
-      else if (depth > maxDepth) {
-        maxDepth = depth
-        deepestVar = nextVariable(depth)
-        val varId = order(deepestVar)
+      else if (nAssigned > maxAssigned) {
+        maxAssigned = nAssigned
+        conflictAssign = nextVariable(nAssigned)
+        val varId = order(conflictAssign)
         lastValues(varId) = valHeuristic(varId)
         // Swap the next variable
-        order(deepestVar) = order(depth)
-        order(depth) = varId
+        order(conflictAssign) = order(nAssigned)
+        order(nAssigned) = varId
       }
 
-      deepestVar = depth
-
-      val varId = order(depth)
+      val varId = order(nAssigned)
       val variable = variables(varId)
       val lastValue = lastValues(varId)
       val value = if (variable.hasValue(lastValue)) lastValue else valHeuristic(varId)
       // Alternatives
-      List(() => store.assign(variable, value), () => store.remove(variable, value))
+      List(assign(variable, value, nAssigned), remove(variable, value, nAssigned))
     }
   }
+  
+  // Return an Alternative that assign the value to the variable
+  @inline private def assign(variable: CPIntVar, value: Int, nAssigned: Int): Alternative = () => {
+    val out = store.assign(variable, value)
+    if (out == Failure) conflictAssign = nAssigned
+  }
+  
+  // Return an Alternative that assign the value to the variable
+  @inline private def remove(variable: CPIntVar, value: Int, nAssigned: Int): Alternative = () => {
+    val out = store.remove(variable, value)
+    if (out == Failure) conflictAssign = nAssigned
+  }
 
-  @inline private def currentDepth: Int = {
-    var d = depthRev.value
+  @inline private def updateAssigned(): Int = {
+    var d = nAssignedRev.value
     while (d < nVariables && variables(order(d)).isBound) {
       val varId = order(d)
       lastValues(varId) = variables(varId).min

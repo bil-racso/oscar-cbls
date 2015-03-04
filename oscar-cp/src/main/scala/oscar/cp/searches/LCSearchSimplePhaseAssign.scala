@@ -103,7 +103,7 @@ class LCSearchSimplePhaseAssign(variables: Array[CPIntVar], varHeuris: Int => In
         }
 
         */
-        var s = Seq[() => Any](() => { store.assign(x, p); if (!store.isFailed) phase(dd) = p })
+        var s = Seq[() => Unit](() => { store.assign(x, p); if (!store.isFailed) phase(dd) = p })
 
         if (minX < p) {
           s = s ++ branchOne(store.post(x < p))

@@ -1,9 +1,7 @@
 package oscar.examples.cp
 
 import oscar.cp._
-import oscar.algo.search.NewSearch
 import oscar.algo.reversible.ReversibleBoolean
-import oscar.algo.search.NewSearch
 import oscar.cp.searches.BinaryLastConflict
 
 /**
@@ -28,9 +26,8 @@ object Queens extends CPModel with App {
   add(allDifferent(Queens.map(i => queens(i) - i)))
   
   // Search heuristic
-  //search(binaryFirstFail(queens))
-  
-  search(new BinaryLastConflict(queens, i => queens(i).size, i => queens(i).min))
+  search(binaryFirstFail(queens))
+
   
   // Execution
   val stats = start()

@@ -15,6 +15,8 @@
 
 package oscar.algo.search
 
+import oscar.algo.array.ArrayStack
+
 /**
  *  DFS search
  *  
@@ -22,7 +24,6 @@ package oscar.algo.search
  */
 class DFSearch(node: DFSearchNode) {
 
-  import oscar.algo.ArrayStack // custom array-based stack
   private[this] val alternativesStack = new ArrayStack[Iterator[Alternative]](100)
 
   // Number of backtracks of the previous search

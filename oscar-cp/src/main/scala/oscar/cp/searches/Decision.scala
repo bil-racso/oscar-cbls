@@ -49,4 +49,7 @@ object Decision {
   @inline final def assign(variable: CPIntVar, value: Int): Decision = new Assign(variable, value)
   @inline final def lowerEq(variable: CPIntVar, value: Int): Decision = new LowerEq(variable, value)
   @inline final def greaterEq(variable: CPIntVar, value: Int): Decision = new GreaterEq(variable, value)
+  @inline final def push(context: ReversibleContext): Decision = new Push(context)
+  @inline final def pop(context: ReversibleContext): Decision = new Pop(context) 
+  def apply(decision: => Unit): Alternative = () => decision
 }

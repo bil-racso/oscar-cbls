@@ -1,4 +1,4 @@
-package oscar.algo
+package oscar.algo.array
 
 /**
  *  An array-based double ended queue for objects.

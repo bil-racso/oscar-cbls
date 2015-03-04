@@ -1,9 +1,9 @@
 package oscar.cp.linearizedDFS
 
 import java.io.{FileWriter, PrintWriter}
-
 import oscar.algo.search._
 import oscar.cp.core.CPSolver
+import oscar.algo.array.ArrayStack
 
 /**
  * Created by saschavancauwelaert on 28/11/14.
@@ -12,7 +12,6 @@ class DFSLinearizerSearch(node: CPSolver) {
 
   var searchStateModificationList = List[Decision]()
 
-  import oscar.algo.ArrayStack // custom array-based stack
   private val alternativesStack = new ArrayStack[Iterator[Alternative]](100)
 
   // Number of backtracks of the previous search

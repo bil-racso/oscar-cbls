@@ -1,4 +1,4 @@
-package oscar.algo
+package oscar.algo.array
 
 class ArrayHeap(initSize: Int, val keys: Array[Int]) {
 

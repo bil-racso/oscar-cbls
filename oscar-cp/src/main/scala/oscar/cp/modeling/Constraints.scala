@@ -157,7 +157,7 @@ trait Constraints {
   }
 
   // TODO: general case for multiplication by CPIntVar
-  
+
   /**
    * @return a variable in the same store representing: |x|
    */
@@ -251,6 +251,20 @@ trait Constraints {
 
   def allDifferent(vars: Iterable[CPIntVar]): Constraint = {
     return allDifferent(vars.toArray: _*)
+  }
+
+  def allDifferent(variables: Array[CPIntVar]): Constraint = {
+    new AllDifferent(variables: _*)
+  }
+
+  def softAllDifferent(variables: Array[CPIntVar], minValue: Int, maxValue: Int, violations: CPIntVar): Constraint = {
+    if (violations.max == 0) allDifferent(variables)
+    else {
+      val nValues = maxValue - minValue + 1
+      val minValues = Array.fill(nValues)(0)
+      val maxValues = Array.fill(nValues)(1)
+      new SoftGCC(variables, minValue, minValues, maxValues, violations)
+    }
   }
 
   /**
@@ -484,7 +498,7 @@ trait Constraints {
       s
     }
   }
-  
+
   /**
    * Sum Constraint
    * @param indexes
