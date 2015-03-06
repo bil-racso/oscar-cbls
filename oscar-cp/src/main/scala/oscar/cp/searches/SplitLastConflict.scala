@@ -44,7 +44,7 @@ class SplitLastConflict(variables: Array[CPIntVar], varHeuristic: Int => Int, va
   private[this] val order = Array.tabulate(nVariables) { i => i }
 
   // Last successfuly assigned value for each variable
-  private[this] val lastValues = Array.tabulate(nVariables) { i => valHeuristic(i) }
+  private[this] val lastValues = Array.tabulate(nVariables) { i => Int.MinValue }
 
   // Current depth of the search tree
   private[this] val depthRev = new ReversibleInt(store, 0)
@@ -91,7 +91,7 @@ class SplitLastConflict(variables: Array[CPIntVar], varHeuristic: Int => Int, va
       // Alternatives
       if (maxValue == value) List(assign(variable, value, depth), lower(variable, value, depth))
       else if (minValue == value) List(assign(variable, value, depth), greater(variable, value, depth))
-      else List(Decision.assign(variable, value), lower(variable, value, depth), greater(variable, value, depth))
+      else List(assign(variable, value,depth), lower(variable, value, depth), greater(variable, value, depth))
     }
   }
 

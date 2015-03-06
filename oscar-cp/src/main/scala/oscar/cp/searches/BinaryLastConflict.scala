@@ -48,7 +48,7 @@ class BinaryLastConflict(variables: Array[CPIntVar], varHeuristic: Int => Int, v
   private[this] val order = Array.tabulate(nVariables) { i => i }
 
   // Last successful assigned value for each variable
-  private[this] val lastValues = new Array[Int](nVariables)
+  private[this] val lastValues = Array.fill(nVariables)(Int.MinValue)
 
   // Current depth of the search tree
   private[this] val nAssignedRev = new ReversibleInt(store, 0)
@@ -80,7 +80,6 @@ class BinaryLastConflict(variables: Array[CPIntVar], varHeuristic: Int => Int, v
         maxAssigned = nAssigned
         conflictAssign = nextVariable(nAssigned)
         val varId = order(conflictAssign)
-        lastValues(varId) = valHeuristic(varId)
         // Swap the next variable
         order(conflictAssign) = order(nAssigned)
         order(nAssigned) = varId
