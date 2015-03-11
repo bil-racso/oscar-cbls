@@ -454,7 +454,7 @@ class UnaryResourceWithOptionalActivities(starts: Array[CPIntVar], durations: Ar
 
     }
     // Push in other direction.
-    
+
     updateMEst()
     JArrays.sort(mlct, lctComp)
     
@@ -744,7 +744,7 @@ class LambdaThetaTreee2(private val size: Int) {
     n.sumP = sumP(left(pos)) + pr
     n.ect = ect(right(pos)).max(ect(left(pos)) + pr)
 
-    if (responsibleEct(left(pos)) == -1 && responsibleEct(right(pos)) == -1) {
+    if (responsibleEct(left(pos)) == -1 && responsibleEct(right(pos)) == -1 && responsibleSumP(left(pos)) == -1 && responsibleSumP(right(pos)) == -1) {
       n.sumPOpt = n.sumP
       n.ectOpt = n.ect
       n.responsibleEct = -1
