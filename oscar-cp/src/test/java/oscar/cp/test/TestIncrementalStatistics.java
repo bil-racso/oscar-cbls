@@ -17,7 +17,9 @@ package oscar.cp.test;
 
 import junit.framework.TestCase;
 
+import oscar.cp.*;
 import oscar.cp.util.*;
+import oscar.util.IncrementalStatistics;
 
 
 /**
@@ -71,8 +73,8 @@ public class TestIncrementalStatistics extends TestCase {
     	for (double v : vals) {
     		stat.addPoint(v);
     	}
-    	assertEquals(round(stat.getAverage()),round(getAverage(vals)));
-    	assertEquals(round(stat.getVariance()),round(getVariance(vals)));
+    	assertEquals(round(stat.average()),round(getAverage(vals)));
+    	assertEquals(round(stat.variance()),round(getVariance(vals)));
     }
     
     public void test2(){  	
@@ -81,8 +83,8 @@ public class TestIncrementalStatistics extends TestCase {
     	for (double v : vals) {
     		stat.addPoint(v);
     	}
-    	assertEquals(round(stat.getAverage()),round(getAverage(vals)));
-    	assertEquals(round(stat.getVariance()),round(getVariance(vals)));
+    	assertEquals(round(stat.average()),round(getAverage(vals)));
+    	assertEquals(round(stat.variance()),round(getVariance(vals)));
     }
     
     
