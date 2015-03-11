@@ -342,6 +342,7 @@ class UnaryResourceWithOptionalActivities(starts: Array[CPIntVar], durations: Ar
 		}
 
 		// Propagate in other direction
+    JArrays.sort(mlst, lstComp)
 		JArrays.sort(mect, ectComp)
 		lambdaThetaTree.reset()
 		j = 0
