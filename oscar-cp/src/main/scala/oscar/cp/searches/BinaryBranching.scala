@@ -33,9 +33,9 @@ class BinaryBranching(variables: Array[CPIntVar], var varHeuris: (Int => Int), v
 
   val cp = variables(0).store
 
-  private[this] val nVariables = variables.length
-  private[this] val indexes = Array.tabulate(nVariables)(i => i)
-  private[this] val nBounds = new ReversibleInt(cp, 0)
+  protected[this] val nVariables = variables.length
+  protected[this] val indexes = Array.tabulate(nVariables)(i => i)
+  protected[this] val nBounds = new ReversibleInt(cp, 0)
 
   @inline private def bound(i: Int): Unit = {
     val id = nBounds.incr() - 1

@@ -429,6 +429,41 @@ class CPStore( final val propagStrength: CPPropagStrength) extends DFSearchNode 
       }
     }
   }
+  
+  def smallerEq(x: CPIntVar, v: Int): CPOutcome = {
+    if (isFailed()) Failure
+    else try {
+      val outcome = x.updateMax(v)
+      if (outcome != Failure) propagate()
+      else {
+        fail()
+        Failure
+      }
+    } catch {
+      case i: Inconsistency => {
+        fail()
+        Failure
+      }
+    }
+  }
+  
+  def largerEq(x: CPIntVar, v: Int): CPOutcome = {
+    if (isFailed()) Failure
+    else try {
+      val outcome = x.updateMin(v)
+      if (outcome != Failure) propagate()
+      else {
+        fail()
+        Failure
+      }
+    } catch {
+      case i: Inconsistency => {
+        fail()
+        Failure
+      }
+    }
+  }  
+  
 
   def add(c: Constraint, st: CPPropagStrength): CPOutcome = post(c, st)
 

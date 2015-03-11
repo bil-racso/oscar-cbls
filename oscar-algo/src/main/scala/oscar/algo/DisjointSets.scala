@@ -43,8 +43,7 @@ class DisjointSets[A](min: Int, max: Int) {
       all(i).reset
       all(i).data = Some(data(i+min))
       i += 1
-    }    
-    
+    }
   }
   
   def union(v1: Int, v2: Int, data: A) {

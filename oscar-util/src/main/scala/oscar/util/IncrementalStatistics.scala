@@ -12,51 +12,40 @@
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
-package oscar.cp.util;
+
+package oscar.util
 
 /**
- * Class to maintain average and variance incrementally
- * @author pschaus@gmail.com
- *
+ * @author Pierre Schaus pschaus@gmail.com
  */
-public class IncrementalStatistics {
-	
-	int n;
-	double s; // maintain sum_i xi
-	double s2; // maintain sum_i xi^2
-	
-	double variance; // maintain sum_i (xi-s/n)^2
-	
-	public IncrementalStatistics() {
-		n = 0;
-		
-	}
-	
-	public void addPoint(double x) {
-		
-		s += x;
-		n++;
-		if (n >= 1) {
-			variance = s*s / n + x*x - 2 * x * s / n + s2 - 2 * s / n * (s - x);			
-		}
-		else {
-			variance = 0;
-		}
-		s2 += x*x;
-	}
-	
-	public double getSum() {
-		return s;
-	}
-	
-	public double getAverage() {
-		assert(n > 0);
-		return getSum()/n;
-	}
-	
-	public double getVariance() {
-		assert(n > 0);
-		return variance/n;
-	}
+class IncrementalStatistics {
+  
+  private[this] var n = 0
+  private[this] var  s = 0.0 // maintain sum_i xi
+  private[this] var  s2 = 0.0 // maintain sum_i xi^2
+  private[this] var vari = 0.0 // maintain sum_i (xi-s/n)^2
+  
+  def reset() {
+    n = 0
+    s = 0
+    s2 = 0
+    vari = 0
+  }
+  
+  def addPoint(x: Double) {
+    s += x
+    n += 1
+    if (n >= 1) {
+      vari = s*s / n + x*x - 2 * x * s / n + s2 - 2 * s / n * (s - x)    
+    }
+    s2 += x*x
+  }
+  
+  def sum: Double = s
+  
+  def average: Double = sum/n
+  
+  def variance = vari/n;
+  
 
 }
