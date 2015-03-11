@@ -18,64 +18,14 @@
 package oscar.cp.modeling
 
 import java.util.LinkedList
-import scala.Vector
-import scala.collection.IndexedSeq
-import scala.collection.Iterable
-import scala.collection.immutable.Set
-import oscar.cp.constraints.AllDifferent
-import oscar.cp.constraints.Among
-import oscar.cp.constraints.AtLeastNValue
-import oscar.cp.constraints.Automaton
-import oscar.cp.constraints.BinPacking
-import oscar.cp.constraints.BinPackingFlow
-import oscar.cp.constraints.BinaryKnapsack
-import oscar.cp.constraints.BinarySum
-import oscar.cp.constraints.Circuit
-import oscar.cp.constraints.Count
-import oscar.cp.constraints.CountCst
-import oscar.cp.constraints.CountSimple
-import oscar.cp.constraints.Deviation
-import oscar.cp.constraints.Disjoint
-import oscar.cp.constraints.ElementCst
-import oscar.cp.constraints.ElementCst2D
-import oscar.cp.constraints.ElementVar
-import oscar.cp.constraints.GCC
-import oscar.cp.constraints.GCCVar
-import oscar.cp.constraints.Inverse
-import oscar.cp.constraints.Knapsack
-import oscar.cp.constraints.LexLeq
-import oscar.cp.constraints.Maximum
-import oscar.cp.constraints.MaxCumulative
-import oscar.cp.constraints.MinAssignment
-import oscar.cp.constraints.Minimum
-import oscar.cp.constraints.Modulo
-import oscar.cp.constraints.Or
-import oscar.cp.constraints.OrReif
-import oscar.cp.constraints.Permutation
-import oscar.cp.constraints.Regular
-import oscar.cp.constraints.SoftGCC
-import oscar.cp.constraints.Spread
-import oscar.cp.constraints.Sum
-import oscar.cp.constraints.Stretch
-import oscar.cp.constraints.SweepMinCumulative
-import oscar.cp.constraints.TableData
-import oscar.cp.constraints.UnaryResource
-import oscar.cp.constraints.WeightedSum
-import oscar.cp.constraints.StockingCost
-import oscar.cp.constraints.TableSTR2
-import oscar.cp.constraints.MinCircuit
-import oscar.cp.constraints.AllDiffBC
-import oscar.cp.core.CPOutcome
-import oscar.cp.core.CPPropagStrength
-import oscar.cp.core.variables.CPIntVarViewOffset
-import oscar.cp.core.variables.CPIntVarViewTimes
-import oscar.cp.core.variables.CPIntVarViewMinus
-import oscar.cp.core.variables.CPIntVarViewOffset
-import oscar.cp.core.variables.CPIntVarViewMinus
-import oscar.cp.core.variables.CPIntVarViewTimes
-import oscar.cp.core.variables.CPIntVar
+
 import oscar.cp._
-import oscar.cp.constraints.BinaryClause
+import oscar.cp.constraints._
+import oscar.cp.core.{CPOutcome, CPPropagStrength}
+import oscar.cp.core.variables.{CPIntVar, CPIntVarViewMinus, CPIntVarViewOffset, CPIntVarViewTimes}
+
+import scala.collection.{IndexedSeq, Iterable}
+import scala.collection.immutable.Set
 
 trait Constraints {
 
@@ -650,8 +600,6 @@ trait Constraints {
 
   def table(x: Array[CPIntVar], tuples: Array[Array[Int]]): Constraint = {
     //new TableSTR2(x,tuples)
-
-    import oscar.cp.constraints.TableAC5TCRecomp
     val data = new TableData(x.size)
     tuples.foreach(t => data.add(t: _*))
     new oscar.cp.constraints.TableAC5TCRecomp(data, x: _*)
@@ -1205,8 +1153,8 @@ trait Constraints {
    * @param ends the variables representing the completion time of the tasks, it is your responsibility to link starts, durations and ends such that start(i) + durations(i) = ends(i)
    * @param required tells if a task is scheduled on this resource or not, if not this task is not constrained
    */
-  def unaryResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], required: Array[CPBoolVar]): UnaryResource = {
-    new UnaryResource(starts, durations, ends, required)
+  def unaryResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], required: Array[CPBoolVar]): UnaryResourceWithOptionalActivities = {
+    new UnaryResourceWithOptionalActivities(starts, durations, ends, required)
   }
 
   /**
@@ -1218,7 +1166,7 @@ trait Constraints {
    * @param id, the resource on which we want to constraint, tasks i such that resources(i) != id are not considered
    */
   def unaryResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], resources: Array[CPIntVar], id: Int) = {
-    new UnaryResource(starts, durations, ends, resources, id)
+    new UnaryResourceWithOptionalActivities(starts, durations, ends, resources, id)
   }
 
   /**
@@ -1228,8 +1176,7 @@ trait Constraints {
    * @param ends the variables representing the completion time of the tasks, it is your responsibility to link starts, durations and ends such that start(i) + durations(i) = ends(i)
    */
   def unaryResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar]) = {
-    val cp = starts(0).store
-    new UnaryResource(starts, durations, ends, starts.map(s => CPBoolVar(true)(cp)))
+    new UnaryResource(starts, durations, ends)
   }
 
   /**
@@ -1248,7 +1195,7 @@ trait Constraints {
     } {
       cp.add((ends(j) + transitionTimes(types(j))(types(i)) <== starts(i)) || (ends(i) + transitionTimes(types(i))(types(j)) <== starts(j)))
     }
-    new UnaryResource(starts, durations, ends, starts.map(s => CPBoolVar(true)(cp)))
+    new UnaryResourceWithOptionalActivities(starts, durations, ends, starts.map(s => CPBoolVar(true)(cp)))
   }
 
   /**
@@ -1266,7 +1213,7 @@ trait Constraints {
       j <- i + 1 until starts.length
     } {
       if (states(i) != states(j)) {
-        new UnaryResource(Array(starts(i), starts(j)), Array(durations(i), durations(j)), Array(ends(i), ends(j)), Array(CPBoolVar(true)(cp), CPBoolVar(true)(cp)))
+        new UnaryResourceWithOptionalActivities(Array(starts(i), starts(j)), Array(durations(i), durations(j)), Array(ends(i), ends(j)), Array(CPBoolVar(true)(cp), CPBoolVar(true)(cp)))
         cp.add((ends(j) + transitionTimes(states(j))(states(i)) <== starts(i)) || (ends(i) + transitionTimes(states(i))(states(j)) <== starts(j)))
       }
     }
