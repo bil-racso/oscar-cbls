@@ -645,17 +645,15 @@ trait Constraints {
 
   def table(x: Array[CPIntVar], tuples: Array[Array[Int]]): Constraint = {
     //new TableSTR2(x,tuples)
+	val data = new TableData(x.size)
+	tuples.foreach(t => data.add(t: _*))
+	new oscar.cp.constraints.TableAC5TCRecomp(data, x: _*)
 
-    import oscar.cp.constraints.TableAC5TCRecomp
-    val data = new TableData(x.size)
-    tuples.foreach(t => data.add(t: _*))
-    new oscar.cp.constraints.TableAC5TCRecomp(data, x: _*)
-
-    /*
-    val tab = new TableJava(x:_*)
-    tuples.foreach(t => tab.addTupple(t:_*))
-    return tab
-  	*/
+	/*
+	val tab = new TableJava(x:_*)
+	tuples.foreach(t => tab.addTupple(t:_*))
+	return tab
+	*/
   }
 
   /**
@@ -1200,9 +1198,8 @@ trait Constraints {
    * @param ends the variables representing the completion time of the tasks, it is your responsibility to link starts, durations and ends such that start(i) + durations(i) = ends(i)
    * @param required tells if a task is scheduled on this resource or not, if not this task is not constrained
    */
-  def unaryResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], required: Array[CPBoolVar]): Constraint = {
-    if (durations.forall(_.isBoundTo(1))) allDifferent(starts)
-    else new UnaryResource(starts, durations, ends, required)
+  def unaryResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], required: Array[CPBoolVar]): UnaryResourceWithOptionalActivities = {
+    new UnaryResourceWithOptionalActivities(starts, durations, ends, required)
   }
 
   /**
@@ -1214,7 +1211,7 @@ trait Constraints {
    * @param id, the resource on which we want to constraint, tasks i such that resources(i) != id are not considered
    */
   def unaryResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], resources: Array[CPIntVar], id: Int) = {
-    new UnaryResource(starts, durations, ends, resources, id)
+    new UnaryResourceWithOptionalActivities(starts, durations, ends, resources, id)
   }
 
   /**
@@ -1224,12 +1221,7 @@ trait Constraints {
    * @param ends the variables representing the completion time of the tasks, it is your responsibility to link starts, durations and ends such that start(i) + durations(i) = ends(i)
    */
   def unaryResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar]) = {
-    if (durations.forall(_.isBoundTo(1))) allDifferent(starts)
-    else {
-      val store = starts(0).store
-      val required = Array.fill(starts.length)(CPBoolVar(true)(store))
-      new UnaryResource(starts, durations, ends, required)
-    }
+    new UnaryResource(starts, durations, ends)
   }
 
   /**
@@ -1248,7 +1240,7 @@ trait Constraints {
     } {
       cp.add((ends(j) + transitionTimes(types(j))(types(i)) <== starts(i)) || (ends(i) + transitionTimes(types(i))(types(j)) <== starts(j)))
     }
-    new UnaryResource(starts, durations, ends, starts.map(s => CPBoolVar(true)(cp)))
+    new UnaryResourceWithOptionalActivities(starts, durations, ends, starts.map(s => CPBoolVar(true)(cp)))
   }
 
   /**
@@ -1266,7 +1258,7 @@ trait Constraints {
       j <- i + 1 until starts.length
     } {
       if (states(i) != states(j)) {
-        new UnaryResource(Array(starts(i), starts(j)), Array(durations(i), durations(j)), Array(ends(i), ends(j)), Array(CPBoolVar(true)(cp), CPBoolVar(true)(cp)))
+        new UnaryResourceWithOptionalActivities(Array(starts(i), starts(j)), Array(durations(i), durations(j)), Array(ends(i), ends(j)), Array(CPBoolVar(true)(cp), CPBoolVar(true)(cp)))
         cp.add((ends(j) + transitionTimes(states(j))(states(i)) <== starts(i)) || (ends(i) + transitionTimes(states(i))(states(j)) <== starts(j)))
       }
     }
