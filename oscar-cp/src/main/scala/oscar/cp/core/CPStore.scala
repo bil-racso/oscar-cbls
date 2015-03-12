@@ -191,9 +191,11 @@ class CPStore( final val propagStrength: CPPropagStrength) extends DFSearchNode 
     }
   }
 
-  final def doAndPropagate(action: => Unit): Unit = {
-    action
-    propagate()
+  final def doAndPropagate(action: => CPOutcome): CPOutcome = {
+    val out = action // apply action
+    if (out == Failure) Failure
+    else if (isFailed()) Failure
+    else propagate()
   }
   
   /**

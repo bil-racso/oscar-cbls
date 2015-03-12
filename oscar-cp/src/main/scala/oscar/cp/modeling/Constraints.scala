@@ -76,6 +76,7 @@ import oscar.cp.core.variables.CPIntVarViewTimes
 import oscar.cp.core.variables.CPIntVar
 import oscar.cp._
 import oscar.cp.constraints.BinaryClause
+import oscar.cp.constraints.SoftAllDifferent
 
 trait Constraints {
 
@@ -256,15 +257,9 @@ trait Constraints {
   def allDifferent(variables: Array[CPIntVar]): Constraint = {
     new AllDifferent(variables: _*)
   }
-
-  def softAllDifferent(variables: Array[CPIntVar], minValue: Int, maxValue: Int, violations: CPIntVar): Constraint = {
-    if (violations.max == 0) allDifferent(variables)
-    else {
-      val nValues = maxValue - minValue + 1
-      val minValues = Array.fill(nValues)(0)
-      val maxValues = Array.fill(nValues)(1)
-      new SoftGCC(variables, minValue, minValues, maxValues, violations)
-    }
+  
+  def softAllDifferent(variables: Array[CPIntVar], violations: CPIntVar): Constraint = {
+    new SoftAllDifferent(variables, violations)
   }
 
   /**
@@ -1205,8 +1200,9 @@ trait Constraints {
    * @param ends the variables representing the completion time of the tasks, it is your responsibility to link starts, durations and ends such that start(i) + durations(i) = ends(i)
    * @param required tells if a task is scheduled on this resource or not, if not this task is not constrained
    */
-  def unaryResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], required: Array[CPBoolVar]): UnaryResource = {
-    new UnaryResource(starts, durations, ends, required)
+  def unaryResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], required: Array[CPBoolVar]): Constraint = {
+    if (durations.forall(_.isBoundTo(1))) allDifferent(starts)
+    else new UnaryResource(starts, durations, ends, required)
   }
 
   /**
@@ -1228,8 +1224,12 @@ trait Constraints {
    * @param ends the variables representing the completion time of the tasks, it is your responsibility to link starts, durations and ends such that start(i) + durations(i) = ends(i)
    */
   def unaryResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar]) = {
-    val cp = starts(0).store
-    new UnaryResource(starts, durations, ends, starts.map(s => CPBoolVar(true)(cp)))
+    if (durations.forall(_.isBoundTo(1))) allDifferent(starts)
+    else {
+      val store = starts(0).store
+      val required = Array.fill(starts.length)(CPBoolVar(true)(store))
+      new UnaryResource(starts, durations, ends, required)
+    }
   }
 
   /**

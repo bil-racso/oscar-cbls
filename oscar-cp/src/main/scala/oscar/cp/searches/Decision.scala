@@ -2,6 +2,7 @@ package oscar.cp.searches
 
 import oscar.algo.search.Alternative
 import oscar.cp.core.variables.CPIntVar
+import oscar.cp.core.CPOutcome.Failure
 import oscar.algo.reversible.ReversibleContext
 
 abstract class Decision extends Alternative
@@ -30,16 +31,18 @@ final class Assign(val variable: CPIntVar, val value: Int) extends DomainDecisio
 
 final class LowerEq(val variable: CPIntVar, val value: Int) extends DomainDecision {
   override def apply(): Unit = {
-    variable.updateMax(value)
-    variable.store.propagate()
+    val out = variable.updateMax(value)
+    if (out == Failure) variable.store.fail()
+    else variable.store.propagate()
   }
   override def toString: String = s"LowerEq(${variable.name}, $value)"
 }
 
 final class GreaterEq(val variable: CPIntVar, val value: Int) extends DomainDecision {
   override def apply(): Unit = {
-    variable.updateMin(value)
-    variable.store.propagate()
+    val out = variable.updateMin(value)
+    if (out == Failure) variable.store.fail()
+    else variable.store.propagate()
   }
   override def toString: String = s"GreaterEq(${variable.name}, $value)"
 }

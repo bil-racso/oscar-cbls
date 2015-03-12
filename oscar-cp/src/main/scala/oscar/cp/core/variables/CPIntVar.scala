@@ -545,6 +545,12 @@ abstract class CPIntVar extends CPVar with Iterable[Int] {
 
 object CPIntVar {
 
+  /** Minimum value that can be contained in an integer domain. */
+  final val MinValue: Int = -1000000000
+  
+  /** Maximum value that can be contained in an integer domain. */
+  final val MaxValue: Int = 1000000000
+  
   /**
    * Creates a new CP Integer Variable with an iterable as initial domain
    * @param values the iterable defining the possible values for the variable

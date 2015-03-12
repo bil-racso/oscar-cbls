@@ -2,7 +2,6 @@ package oscar.examples.cp
 
 import oscar.cp._
 import oscar.util._
-import oscar.cp.preprocessing.ShavingUtils
 
 /**
  * Traveling Salesman Problem with Visualization
@@ -27,17 +26,8 @@ object TSPVisu extends CPModel with App {
   // Constraints
   add(minCircuit(succ, distMatrix, totDist), Weak)
   
-  println("original bound: " + totDist.min)
-  
-  //ShavingUtils.strengthenLowerBound(solver, succ.take(2), totDist)
-  ShavingUtils.reduceDomains(solver, succ.take(2), Array(totDist))
-  
-  println("forward bounding: " + totDist.min)
-
-  
-  
   // Search heuristic
-  /*minimize(totDist)
+  minimize(totDist)
 
   search {
     // Select the not yet bound city with the smallest number of possible successors
@@ -51,7 +41,6 @@ object TSPVisu extends CPModel with App {
     }
   }  
   
-
   // Visual Component
   val visual = new VisualTSP(coordinates, succ)
 
@@ -61,7 +50,7 @@ object TSPVisu extends CPModel with App {
     visual.updateTour(nSols, totDist.value)
   }
 
-  println(start())*/
+  println(start())
 }
 
 /** Generates a random TSP instance */
