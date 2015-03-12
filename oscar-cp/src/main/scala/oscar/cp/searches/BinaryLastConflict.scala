@@ -78,10 +78,10 @@ class BinaryLastConflict(variables: Array[CPIntVar], varHeuristic: Int => Int, v
       // Select the next variable suggested by the variable heuristic
       else if (nAssigned > maxAssigned) {
         maxAssigned = nAssigned
-        conflictAssign = nextVariable(nAssigned)
-        val varId = order(conflictAssign)
+        val position = nextVariable(nAssigned)
+        val varId = order(position)
         // Swap the next variable
-        order(conflictAssign) = order(nAssigned)
+        order(position) = order(nAssigned)
         order(nAssigned) = varId
       }
 

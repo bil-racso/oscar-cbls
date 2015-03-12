@@ -55,11 +55,6 @@ class SplitLastConflict(variables: Array[CPIntVar], varHeuristic: Int => Int, va
   // Depth in which the last conflict occured
   private[this] var conflictDepth: Int = -1
 
-  private[this] var lastDepth = Int.MaxValue
-  private[this] var myMin = Int.MaxValue
-  private[this] var myMax = Int.MinValue
-  private[this] var swapDepth = Int.MinValue
-
   final override def reset(): Unit = maxDepth = -1
 
   final override def alternatives: Seq[Alternative] = {
@@ -71,21 +66,10 @@ class SplitLastConflict(variables: Array[CPIntVar], varHeuristic: Int => Int, va
 
       // Adjust variables order according to the last conflict
       if (conflictDepth > depth && !variables(order(conflictDepth)).isBound) {
-
-        val swap = if (depth < lastDepth) {
-          lastDepth = depth
-          val swap = myMax
-          myMax = Int.MinValue
-          swap
-        } else conflictDepth
-          
-          
         // Assign the last conflicting variable first
-        val varId = order(depth)
-        System.arraycopy(order, depth + 1, order, depth, swap - depth)
-        order(swap) = varId
-        //println(order.map(variables(_).name).mkString(" "))
-        
+        val varId = order(conflictDepth)
+        System.arraycopy(order, depth, order, depth + 1, conflictDepth - depth)
+        order(depth) = varId
         conflictDepth = -1
       } else if (depth > maxDepth) {
         // New depth level
@@ -107,37 +91,28 @@ class SplitLastConflict(variables: Array[CPIntVar], varHeuristic: Int => Int, va
       // Alternatives
       if (maxValue == value) List(assign(variable, value, depth), lower(variable, value, depth))
       else if (minValue == value) List(assign(variable, value, depth), greater(variable, value, depth))
-      else List(assign(variable, value, depth), lower(variable, value, depth), greater(variable, value, depth))
+      else List(assign(variable, value,depth), lower(variable, value, depth), greater(variable, value, depth))
     }
   }
 
   // Return an Alternative that assign the value to the variable
   @inline private def assign(variable: CPIntVar, value: Int, depth: Int): Alternative = () => {
     val out = store.assign(variable, value)
-    if (out == Failure) {
-      conflictDepth = depth
-      if (depth > myMax) myMax = depth
-    }
+    if (out == Failure) conflictDepth = depth
   }
 
   // Return an Alternative that constraints the variable to be greater than value
   @inline private def greater(variable: CPIntVar, value: Int, depth: Int): Alternative = () => {
     variable.updateMin(value + 1)
     val out = store.propagate()
-    if (out == Failure) {
-      conflictDepth = depth
-      if (depth > myMax) myMax = depth
-    }
+    if (out == Failure) conflictDepth = depth
   }
 
   // Return an Alternative that constraints the variable to be lower than value
   @inline private def lower(variable: CPIntVar, value: Int, depth: Int): Alternative = () => {
     variable.updateMax(value - 1)
     val out = store.propagate()
-    if (out == Failure) {
-      conflictDepth = depth
-      if (depth > myMax) myMax = depth
-    }
+    if (out == Failure) conflictDepth = depth
   }
 
   @inline private def updateAssigned(): Int = {
