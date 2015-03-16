@@ -23,7 +23,7 @@ package oscar.cbls.invariants.core.propagation
 import oscar.cbls.invariants.core.algo.quick.QList
 import oscar.cbls.invariants.core.algo.dag._
 import oscar.cbls.invariants.core.algo.dll._
-import oscar.cbls.invariants.core.algo.heap.{AbstractHeap, AggregatedBinomialHeap, BinomialHeap}
+import oscar.cbls.invariants.core.algo.heap.{AbstractHeap, AggregatedBinomialHeapQList, BinomialHeap}
 import oscar.cbls.invariants.core.algo.tarjan._
 
 import scala.collection.immutable.SortedMap
@@ -172,7 +172,7 @@ abstract class PropagationStructure(val verbose: Boolean, val checker:Option[Che
       executionQueue = new BinomialHeap[PropagationElement](p => p.position, ClusteredPropagationComponents.size)
     }else{
       LayerCount = computePositionsThroughDistanceToInput(ClusteredPropagationComponents)+1
-      executionQueue = new AggregatedBinomialHeap[PropagationElement](p => p.position, LayerCount)
+      executionQueue = new AggregatedBinomialHeapQList[PropagationElement](p => p.position, LayerCount)
     }
 
     propagating = false
@@ -588,7 +588,7 @@ abstract class PropagationStructure(val verbose: Boolean, val checker:Option[Che
   def stats:String = {
     "PropagationStructure(" + "\n" +
       "  declaredAcyclic: " + noCycle + "\n" +
-      "  topologicalSort:" + topologicalSort + (if(!topologicalSort)  " (layerCount:" + (executionQueue.asInstanceOf[AggregatedBinomialHeap[PropagationElement]].maxPosition) + ")" else "") + "\n" +
+      "  topologicalSort:" + topologicalSort + (if(!topologicalSort)  " (layerCount:" + (executionQueue.asInstanceOf[AggregatedBinomialHeapQList[PropagationElement]].maxPosition) + ")" else "") + "\n" +
       "  sortScc:" + sortScc + "\n" +
       "  actuallyAcyclic:" + acyclic + "\n" +
       "  propagationElementCount:" + getPropagationElements.size + "\n" +

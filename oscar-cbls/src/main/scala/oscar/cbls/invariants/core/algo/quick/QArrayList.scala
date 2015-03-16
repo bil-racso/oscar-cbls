@@ -2,16 +2,16 @@ package oscar.cbls.invariants.core.algo.quick
 
 
 class QArrayList[@specialized T](initialLength:Int)(implicit val X:Manifest[T]) {
-  var internalArray:Array[T] = new Array[T](initialLength)
-  var size:Int = 0
-  var maxSize = initialLength
-  val nullT = null.asInstanceOf[T]
+  private[this] var internalArray:Array[T] = new Array[T](initialLength)
+  private[this] var size:Int = 0
+  private[this] var maxSize = initialLength
+  private[this] val nullT = null.asInstanceOf[T]
 
   def put(elem:T): Unit ={
     if(size == maxSize) {
       //need to double the size of the array
 
-      maxSize *= 2
+      maxSize *= 10
       val newArray = new Array[T](maxSize)
 
       var toMove = size
@@ -37,4 +37,8 @@ class QArrayList[@specialized T](initialLength:Int)(implicit val X:Manifest[T]) 
   }
 
   def isEmpty = size == 0
+
+  def setEmpty(){
+    size = 0
+  }
 }
