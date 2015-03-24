@@ -28,20 +28,23 @@ import oscar.cbls.modeling.Algebra._
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.lib.minmax._
 import oscar.cbls.constraints.core._
-import oscar.cbls.invariants.lib.numeric.{Dist, Abs, Minus}
+import oscar.cbls.invariants.lib.numeric.{ Dist, Abs, Minus }
 import oscar.cbls.invariants.core.propagation.Checker
 import scala.math.abs
+import oscar.cbls.invariants.lib.logic.IntInt2Int
 
 /**
  * implements left <= right
  * @author renaud.delandtsheer@cetic.be
  */
 protected class LEA(val left: CBLSIntVar, val right: CBLSIntVar) extends Constraint {
-  model = InvariantHelper.findModel(List(left,right))
+  model = InvariantHelper.findModel(List(left, right))
 
   registerConstrainedVariables(left, right)
 
-  val Violation: CBLSIntVar = Max2(0, left - right).toIntVar(this.getClass().getSimpleName() + ".violation")
+  val Violation: CBLSIntVar = new IntInt2Int(left, right,
+    ((left2: Int, right2: Int) => if (left2 <= right2) 0 else left2 - right2))
+    .toIntVar(this.getClass().getSimpleName() + ".violation")
 
   finishInitialization()
 
@@ -81,7 +84,7 @@ case class GE(l: CBLSIntVar, r: CBLSIntVar) extends LEA(r, l)
  * @author renaud.delandtsheer@cetic.be
  */
 protected class LA(val left: CBLSIntVar, val right: CBLSIntVar) extends Constraint {
-  model = InvariantHelper.findModel(List(left,right))
+  model = InvariantHelper.findModel(List(left, right))
   registerConstrainedVariables(left, right)
 
   val Violation: CBLSIntVar = Max2(0, left - right + 1)
@@ -154,7 +157,7 @@ case class NE(left: CBLSIntVar, right: CBLSIntVar) extends Constraint {
  * @author renaud.delandtsheer@cetic.be
  */
 case class EQ(left: CBLSIntVar, right: CBLSIntVar) extends Constraint {
-  model = InvariantHelper.findModel(List(left,right))
+  model = InvariantHelper.findModel(List(left, right))
   registerConstrainedVariables(left, right)
   finishInitialization()
 
