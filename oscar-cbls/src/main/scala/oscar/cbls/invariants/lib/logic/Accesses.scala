@@ -28,20 +28,20 @@ import oscar.cbls.invariants.core.propagation.{ Checker, KeyForElementRemoval }
 import scala.collection.immutable.Set
 
 /**
- * if (ifVar >0) then thenVar else elveVar
+ * if (ifVar > pivot) then thenVar else elveVar
  * @param ifVar the condition (IntVar)
- * @param thenVar the returned value if ifVar > 0
- * @param elseVar the returned value if ifVar <= 0
+ * @param thenVar the returned value if ifVar > pivot
+ * @param elseVar the returned value if ifVar <= pivot
  * @author renaud.delandtsheer@cetic.be
  * */
-case class IntITE(ifVar: CBLSIntVar, thenVar: CBLSIntVar, elseVar: CBLSIntVar) extends IntInvariant {
+case class IntITE(ifVar: CBLSIntVar, thenVar: CBLSIntVar, elseVar: CBLSIntVar, pivot: Int = 0) extends IntInvariant {
 
   var output: CBLSIntVar = null
   var KeyToCurrentVar: KeyForElementRemoval = null
 
   registerStaticDependencies(ifVar, thenVar, elseVar)
   registerDeterminingDependency(ifVar)
-  KeyToCurrentVar = registerDynamicDependency((if (ifVar.value > 0) thenVar else elseVar))
+  KeyToCurrentVar = registerDynamicDependency((if (ifVar.value > pivot) thenVar else elseVar))
   finishInitialization()
 
   def myMax = thenVar.maxVal.max(elseVar.maxVal)
@@ -50,7 +50,7 @@ case class IntITE(ifVar: CBLSIntVar, thenVar: CBLSIntVar, elseVar: CBLSIntVar) e
   override def setOutputVar(v: CBLSIntVar) {
     output = v
     output.setDefiningInvariant(this)
-    output := (if (ifVar.value > 0) thenVar else elseVar).value
+    output := (if (ifVar.value > pivot) thenVar else elseVar).value
   }
 
   @inline
