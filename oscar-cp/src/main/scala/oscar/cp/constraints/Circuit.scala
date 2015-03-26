@@ -14,15 +14,12 @@
  ******************************************************************************/
 package oscar.cp.constraints
 
-import oscar.algo.reversible.ReversibleSparseSet
-import oscar.cp.core.CPOutcome._
 import oscar.algo.reversible.ReversibleInt
+import oscar.cp.core.variables.CPIntVar
 import oscar.cp.core.CPPropagStrength
 import oscar.cp.core.CPOutcome
-import oscar.cp.core.variables.CPIntVar
+import oscar.cp.core.CPOutcome._
 import oscar.cp.core.Constraint
-
-
 
 /**
  * Circuit constraint
@@ -33,61 +30,48 @@ import oscar.cp.core.Constraint
  * @param succ
  * @see CPPropagStrength
  * @author Pierre Schaus pschaus@gmail.com
+ * @author Renaud Hartert ren.hartert@gmail.com
  */
-class Circuit(val succ: Array[CPIntVar], addPredModel: Boolean = true) extends Constraint(succ(0).store, "Circuit") {
-  val n = succ.length
-  val dest = Array.tabulate(n)(i => new ReversibleInt(s,i))
-  val orig = Array.tabulate(n)(i => new ReversibleInt(s,i))
-  val lengthToDest = Array.fill(n)(new ReversibleInt(s,0))
+final class Circuit(succs: Array[CPIntVar], symmetric: Boolean) extends Constraint(succs(0).store, "Circuit") {
   
-
-  override def setup(l: CPPropagStrength): CPOutcome = {
-
-    if (s.post(new AllDifferent(succ:_*), l) == CPOutcome.Failure) {
-      return CPOutcome.Failure
-    }
-    if (n > 0) {
-      for (i <- 0 until succ.length) {
-        if (succ(i).removeValue(i) == CPOutcome.Failure) {
-          return CPOutcome.Failure;
-        }
+  require(succs.length > 0, "no variable.")
+  
+  private[this] val nSuccs = succs.length
+  private[this] val dests = Array.tabulate(nSuccs)(i => new ReversibleInt(s, i))
+  private[this] val origs = Array.tabulate(nSuccs)(i => new ReversibleInt(s, i))
+  private[this] val lengthToDest = Array.fill(nSuccs)(new ReversibleInt(s,0))
+  
+  final override def setup(l: CPPropagStrength): CPOutcome = {    
+    if (s.post(new AllDifferent(succs:_*), l) == Failure) Failure // FIXME post two allDifferent in case of symmetry
+    else {
+      var i = nSuccs
+      while (i > 0) { i -= 1
+        val succ = succs(i)
+        if (succ.removeValue(i) == Failure) return Failure
+        else if (succ.isBound && valBindIdx(succ, i) == Failure) return Failure
+        else succ.callValBindIdxWhenBind(this, i)
+      }
+      
+      if (!symmetric) Suspend
+      else {
+        val preds = Array.fill(nSuccs)(CPIntVar(0, nSuccs)(s))
+        if (s.post(new Inverse(preds, succs)) == Failure) Failure
+        else if (s.post(new Circuit(preds, false)) == Failure) Failure
+        else Suspend
       }
     }
-    for (i <- 0 until n) {
-      if (succ(i).isBound) {
-        if (valBindIdx(succ(i), i) == CPOutcome.Failure) {
-          return CPOutcome.Failure
-        }
-      } else {
-        succ(i).callValBindIdxWhenBind(this, i)
-      }
-    }
-    if (addPredModel) {
-      val pred = Array.fill(n)(CPIntVar(0 until n)(s))
-      if (s.post(new Inverse(pred, succ), l) == Failure) return Failure
-      if (s.post(new Circuit(pred, false),l) == Failure) return Failure
-    }    
-    return CPOutcome.Suspend
   }
   
-  
-  override def valBindIdx(x: CPIntVar, i: Int): CPOutcome = {
-		val j = x.min
-		// We have a new assigned path because of new edge i->j:
-		// o *-> i -> j *-> d
-		val d = dest(j).value
-		val o = orig(i).value
-		// maintain the property
-		dest(o) := d
-		orig(d) := o
-		val lengthOrigDest = lengthToDest(o).value + lengthToDest(j).value + 1
-		lengthToDest(o) := lengthOrigDest
-		if (lengthOrigDest < n-1) {
-			// otherwise we would have a closed loop with less than n-1 edges
-			return succ(d).removeValue(o);
-		} else {
-			return CPOutcome.Suspend;
-		}	
-	}  
-
+  final override def valBindIdx(x: CPIntVar, i: Int): CPOutcome = {
+    val j = x.min
+    // o *-> i -> j *-> d
+    val d = dests(j).value
+    val o = origs(i).value
+    // Maintain the path
+    dests(o).value = d
+    origs(d).value = o
+    val length = lengthToDest(o) += (lengthToDest(j).value + 1)
+    if (length < nSuccs - 1) succs(d).removeValue(o) // avoid inner loops
+    else Suspend
+  }  
 }

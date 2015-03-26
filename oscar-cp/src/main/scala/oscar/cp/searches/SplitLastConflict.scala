@@ -33,7 +33,7 @@ import oscar.cp.core.CPOutcome.Failure
  * @author Renaud Hartert
  */
 
-class SplitLastConflict(variables: Array[CPIntVar], varHeuristic: Int => Int, valHeuristic: Int => Int) extends Branching {
+class SplitLastConflict(variables: Array[CPIntVar], varHeuristic: Int => Int, valHeuristic: Int => Int, resetOnRestart: Boolean = false) extends Branching {
 
   require(variables.length > 0, "no variable")
 
@@ -55,7 +55,19 @@ class SplitLastConflict(variables: Array[CPIntVar], varHeuristic: Int => Int, va
   // Depth in which the last conflict occured
   private[this] var conflictDepth: Int = -1
 
-  final override def reset(): Unit = maxDepth = -1
+  private[this] var maxConflictDepth: Int = -1
+  private[this] var minInsertDepth: Int = nVariables
+
+  final override def reset(): Unit = {
+    conflictDepth = -1
+    if (resetOnRestart) maxDepth = -1
+    else if (minInsertDepth < maxConflictDepth) {
+      val tmp = new Array[Int](minInsertDepth)
+      System.arraycopy(order, 0, tmp, 0, minInsertDepth)
+      System.arraycopy(order, minInsertDepth, order, 0, maxConflictDepth - minInsertDepth)
+      System.arraycopy(tmp, 0, order, maxConflictDepth - minInsertDepth, minInsertDepth)
+    }
+  }
 
   final override def alternatives: Seq[Alternative] = {
     val depth = updateAssigned()
@@ -69,8 +81,12 @@ class SplitLastConflict(variables: Array[CPIntVar], varHeuristic: Int => Int, va
         // Assign the last conflicting variable first
         val varId = order(conflictDepth)
         System.arraycopy(order, depth, order, depth + 1, conflictDepth - depth)
+        // Handle restart learning
+        if (depth < minInsertDepth) minInsertDepth = depth
+        if (conflictDepth > maxConflictDepth) maxConflictDepth = conflictDepth
         order(depth) = varId
         conflictDepth = -1
+        //println(order.mkString(" "))
       } else if (depth > maxDepth) {
         // New depth level
         maxDepth = depth
@@ -86,33 +102,39 @@ class SplitLastConflict(variables: Array[CPIntVar], varHeuristic: Int => Int, va
       val minValue = variable.min
       val maxValue = variable.max
       val lastValue = lastValues(varId)
-      val value = if (minValue <= lastValue && lastValue <= maxValue) lastValue else valHeuristic(varId)
+      val value = /*if (minValue <= lastValue && lastValue <= maxValue) lastValue else*/ valHeuristic(varId)
 
       // Alternatives
       if (maxValue == value) List(assign(variable, value, depth), lower(variable, value, depth))
       else if (minValue == value) List(assign(variable, value, depth), greater(variable, value, depth))
-      else List(assign(variable, value,depth), lower(variable, value, depth), greater(variable, value, depth))
+      else List(assign(variable, value, depth), lower(variable, value, depth), greater(variable, value, depth))
     }
   }
 
   // Return an Alternative that assign the value to the variable
   @inline private def assign(variable: CPIntVar, value: Int, depth: Int): Alternative = () => {
     val out = store.assign(variable, value)
-    if (out == Failure) conflictDepth = depth
+    if (out == Failure) {
+      conflictDepth = depth
+    }
   }
 
   // Return an Alternative that constraints the variable to be greater than value
   @inline private def greater(variable: CPIntVar, value: Int, depth: Int): Alternative = () => {
     variable.updateMin(value + 1)
     val out = store.propagate()
-    if (out == Failure) conflictDepth = depth
+    if (out == Failure) {
+      conflictDepth = depth
+    }
   }
 
   // Return an Alternative that constraints the variable to be lower than value
   @inline private def lower(variable: CPIntVar, value: Int, depth: Int): Alternative = () => {
     variable.updateMax(value - 1)
     val out = store.propagate()
-    if (out == Failure) conflictDepth = depth
+    if (out == Failure) {
+      conflictDepth = depth
+    }
   }
 
   @inline private def updateAssigned(): Int = {

@@ -22,5 +22,5 @@ package oscar.cp.core;
  * Carefully choosing the filtering is usually done through experimentation (trade-off time and pruning power).
  */
 public enum CPPropagStrength {
-	Weak, Medium, Strong
+	Weak, Medium, Strong, Automatic
 }
