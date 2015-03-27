@@ -309,6 +309,71 @@ package object cp extends Constraints with Branchings with ElementBuilder with C
     def <<=(y: CPIntVar) = x <== (y - 1)
 
     def %(y: Int) = ModuloLHS(x, y)
+    
+    // New experimental function names for reification 
+    
+    /**
+     * b <=> x == v
+     */
+    def ?== (v: Int) = x.isEq(v)
+
+    /**
+     * b <=> x == y
+     */
+    def ?== (y: CPIntVar) = x.isEq(y)
+
+    /**
+     * b <=> x!= y
+     */
+    def ?!= (y: CPIntVar) = x.isDiff(y)
+
+    /**
+     * b <=> x!= y
+     */
+    def ?!= (y: Int) = x.isDiff(y)
+
+    /**
+     * b <=> x >= y
+     */
+    def ?>= (y: Int) = x.isGrEq(y)
+
+    /**
+     * b <=> x >= y
+     */
+    def ?>= (y: CPIntVar) = x.isGrEq(y)
+
+    /**
+     * b <=> x > y
+     */
+    def ?> (y: Int) = x.isGrEq(y + 1)
+
+    /**
+     * b <=> x > y
+     */
+    def ?> (y: CPIntVar) = {
+      val z = y + 1
+      x.isGrEq(z)
+    }
+
+    /**
+     * b <=> x >= y
+     */
+    def ?<= (y: Int) = x.isLeEq(y)
+
+    /**
+     * b <=> x >= y
+     */
+    def ?<= (y: CPIntVar) = y >== x
+
+    /**
+     * b <=> x > y
+     */
+    def ?< (y: Int) = x <== (y - 1)
+
+    /**
+     * b <=> x > y
+     */
+    def ?< (y: CPIntVar) = x <== (y - 1)
   }
 
   implicit class CPBoolVarOps(val variable: CPBoolVar) extends AnyVal {
@@ -350,123 +415,6 @@ package object cp extends Constraints with Branchings with ElementBuilder with C
     /** x ==> y */
     def ==>(y: CPBoolVar) = implies(y)
   }
-
-  /*implicit class CPIntervalVarOps(x: CPIntervalVar) {
-
-    /**
-     *  Returns the value assigned to the variable.
-     *  Throws an Exception if the variable is not assigned.
-     */
-    def value: Int = {
-      if (x.isBound) x.min
-      else throw new NoSuchElementException("the variable is not bound")
-    }
-
-    /**
-     * @return difference between second smallest and smallest value in the domain, Int.MaxInt if variable is bound
-     */
-    def regret: Int = {
-      if (x.isBound) Int.MaxValue
-      else {
-        val min = x.min
-        x.valueAfter(min) - min
-      }
-    }
-
-    /**
-     * @return The median value of the domain of the variable
-     */
-    def median: Int = {
-      val min = x.min
-      val max = x.max
-      min + ((max - min) / 2)
-    }
-
-    /**
-     * -x
-     */
-    def unary_-(): CPIntervalVar = new CPIntervalVarViewMinus(x)
-    /**
-     * x+y
-     */
-    def +(y: CPIntervalVar) = plus(x, y)
-    /**
-     * x-y
-     */
-    def -(y: CPIntervalVar) = minus(x, y)
-    /**
-     * x+y
-     */
-    def +(y: Int) = plus(x, y)
-    /**
-     * x-y
-     */
-    def -(y: Int) = minus(x, y)
-
-    def +(s: String) = s"$x$s"
-
-    /* TODO general multiplication of interval vars
-    /**
-     * x*y
-     */
-    def *(y: CPIntervalVar): CPIntervalVar = {
-      if (y.isBound) x * (y.value)
-      else mul(x, y)
-    }
-    * 
-    */
-
-    /**
-     * x*y
-     */
-    def *(y: Int): CPIntervalVar = mul(x, y)
-
-    /**
-     * Reified constraint
-     * @param y a variable
-     * @return a boolean variable b in the same store linked to x by the relation x == y <=> b == true
-     */
-    def isEq(y: CPIntervalVar): CPBoolVar = {
-      val b = CPBoolVar()(x.store);
-      val ok = x.store.post(new oscar.cp.constraints.EqReifIntervalVar(x, y, b));
-      assert(ok != CPOutcome.Failure);
-      b
-    }
-
-    /**
-     * x<y
-     */
-    def <(y: CPIntervalVar) = new oscar.cp.constraints.Le(x, y)
-    /**
-     * x<y
-     */
-    def <(y: Int) = new oscar.cp.constraints.Le(x, y)
-    /**
-     * x>y
-     */
-    def >(y: CPIntervalVar) = new oscar.cp.constraints.Gr(x, y)
-    /**
-     * x>y
-     */
-    def >(y: Int) = new oscar.cp.constraints.Gr(x, y)
-    /**
-     * x<=y
-     */
-    def <=(y: CPIntervalVar) = new oscar.cp.constraints.LeEq(x, y)
-    /**
-     * x<=y
-     */
-    def <=(y: Int) = new oscar.cp.constraints.LeEq(x, y)
-    /**
-     * x>=y
-     */
-    def >=(y: CPIntervalVar) = new oscar.cp.constraints.GrEq(x, y)
-    /**
-     * x>=y
-     */
-    def >=(y: Int) = new oscar.cp.constraints.GrEq(x, y)
-
-  }*/
 
   def allBounds(vars: Iterable[_ <: CPIntVar]) = vars.asInstanceOf[Iterable[CPIntVar]].forall(_.isBound)
 }
