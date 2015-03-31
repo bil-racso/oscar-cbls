@@ -43,7 +43,7 @@ object FlatZincPrinter {
       if(e.typ.isVar){
         //println(id+" "+e)
         val a = e.asInstanceOf[ArrayOfElement].elements
-        out.println("array[1.."+a.size()+"] of var int: "+id+toFZNann(model.dicoAnnot(id))+" = "+toFZN(a)+";")
+        out.println("array[1.."+a.size()+"] of var "+e.typ.typ+": "+id+toFZNann(model.dicoAnnot(id))+" = "+toFZN(a)+";")
         //println("array[1.."+a.size()+"] of var int: "+id+toFZNann(model.dicoAnnot(id))+"= "+toFZN(a)+";")
       }
     }
