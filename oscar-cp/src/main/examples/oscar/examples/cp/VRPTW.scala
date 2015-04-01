@@ -10,7 +10,7 @@ object VRPTW extends CPModel with App {
 
   solver.silent = true
 
-  val instanceFile = "data/VRPTW/Solomon/C101.txt"
+  val instanceFile = "data/VRPTW/Solomon/R105.txt"
   val instance = VRPTWParser.parse(instanceFile)
 
   // Data
@@ -22,6 +22,8 @@ object VRPTW extends CPModel with App {
   val Customers = instance.Customers
   val Sites = instance.Sites
   val Depots = instance.Depots
+  val outDepots = instance.Depots
+  val inDepots = instance.Depots
   val demands = instance.demands
   val startsMin = instance.startsMin
   val startsMax = instance.startsMax
@@ -30,34 +32,62 @@ object VRPTW extends CPModel with App {
   val distances = instance.distances
 
   val pred = Array.fill(nSites)(CPIntVar.sparse(Sites))
-  val vehicle = Array.fill(nSites)(CPIntVar.sparse(Vehicles))
-  val starts = Array.tabulate(nSites)(i => CPIntVar.sparse(startsMin(i), startsMax(i)))
+  val succ = Array.fill(nSites)(CPIntVar.sparse(Sites))
+  val vehicles = Array.fill(nSites)(CPIntVar.sparse(Vehicles))
+  val starts = Array.tabulate(nSites)(i => CPIntVar(startsMin(i), startsMax(i)))
+  val ends = Array.tabulate(nSites)(i => starts(i) + durations(i))
   val load = Array.fill(nVehicles)(CPIntVar(0, capacity))
   val totalDistance = CPIntVar(0, distances.flatten.sum, "totalDistance")
 
   minimize(totalDistance)
 
+  add(inverse(pred, succ))
   add(circuit(pred, false), Strong)
   add(minAssignment(pred, distances, totalDistance)) // lower bound
   add(sum(Sites)(s => distances(s)(pred(s))) == totalDistance)
 
   // Ensure the link between the TSPTW and the BinPacking
-  for (c <- Customers) add(vehicle(pred(c)) == vehicle(c), Strong)
+  for (c <- Customers) {
+    add(vehicles(pred(c)) == vehicles(c), Strong)
+    add(vehicles(succ(c)) == vehicles(c), Strong)
+  }
 
-  // Each vehicle starts at its own depot
-  for (v <- Vehicles) add(vehicle(nCustomers + v) == v)
+  // Each vehicle starts and ends at its own depot
+  for (v <- Vehicles) {
+    val first = nCustomers + v
+    val last = first + nVehicles
+    add(vehicles(first) == v)
+    add(vehicles(last) == v)
+  }
+  
+  // Links the depots
+  add(succ(Depots.max) == Depots.min)
+  for (v <- 0 until nVehicles - 1) {
+    val last = nCustomers + nVehicles + v
+    val first = nCustomers + v + 1
+    add(succ(last) == first)
+  }
 
   // Capacity of each vehicle
-  add(binPacking(vehicle, demands, load))
+  add(binPacking(vehicles, demands, load))
 
   // Starting time of each delivery
-  for (c <- Customers) add(starts(c) >= starts(pred(c)) + durations(pred(c)))
-  for (d <- Depots) add(starts(d) == 0)
+  for (c <- Customers) {
+    add(starts(c) >= ends(pred(c)) + distances(c)(pred(c)))
+    add(starts(succ(c)) >= ends(c) + distances(c)(succ(c)))
+  }
+  
+  for (v <- Vehicles) {
+    val first = nCustomers + v
+    val last = first + nVehicles
+    add(starts(first) == startsMin(first))
+    add(ends(last) == startsMax(last))
+  }
 
   // Conflict set / max regret search
   search(binaryLastConflict(pred, i => -pred(i).maxRegret(distances(i)), i => pred(i).minBy(distances(i))))
 
-  val visu = new VisualVRPTW(coordinates, pred)
+  val visu = new VisualVRPTW(coordinates, succ, vehicles)
 
   onSolution {
     println(totalDistance)
@@ -68,23 +98,26 @@ object VRPTW extends CPModel with App {
   println(stats)
 }
 
-class VisualVRPTW(coordinates: Array[(Int, Int)], succ: Array[CPIntVar]) {
+class VisualVRPTW(coordinates: Array[(Int, Int)], succ: Array[CPIntVar], vehicles: Array[CPIntVar]) {
 
   import oscar.visual._
 
-  val Cities = 0 until coordinates.size
-  val frame = VisualFrame("TSP")
+  val Customers = 0 until coordinates.size
+  val colors = VisualUtil.getRandomColors(vehicles.length, true)
+  val frame = VisualFrame("Visualization")
 
-  // Creates the visualization of the tour and place it into the frame
   val tour = VisualTour(coordinates)
-  frame.getContentPane.add(tour)
+  frame.createFrame("VRPTW").add(tour)
   frame.pack()
 
-  Cities.foreach(c => tour.nodeRadius(c, 1))
+  Customers.foreach(c => tour.nodeRadius(c, 1))
 
   // Updates the visualization  
   def updateTour(): Unit = {
-    Cities.foreach(i => tour.edgeDest(i, succ(i).value))
+    Customers.foreach(i => {
+      tour.edgeDest(i, succ(i).value)
+      tour.edgeColor(i, colors(vehicles(i).value))
+    })
     tour.repaint()
   }
 }
@@ -103,7 +136,7 @@ class VRPTWInstance(
   def Customers = 0 until nCustomers
   def Vehicles = 0 until nVehicles
   def Sites = 0 until nSites
-  def Depots = nCustomers until nCustomers + nVehicles
+  def Depots = nCustomers until nCustomers + 2 * nVehicles
 }
 
 object VRPTWParser {
@@ -140,14 +173,14 @@ object VRPTWParser {
         val data = line.trim.split("[ ,\t]+")
         coordinatesBf.append((data(1).toInt, data(2).toInt))
         demandsBf.append(data(3).toInt)
-        startsMinBf.append(data(4).toInt)
-        startsMaxBf.append(data(5).toInt)
-        durationsBf.append(data(6).toInt)
+        startsMinBf.append(data(4).toInt * scale)
+        startsMaxBf.append(data(5).toInt * scale)
+        durationsBf.append(data(6).toInt * scale)
       }
     }
 
     val nCustomers = durationsBf.length - 1
-    val nSites = nCustomers + nVehicles
+    val nSites = nCustomers + 2 * nVehicles
     val Sites = 0 until nSites
     
     val demands = new Array[Int](nSites)
