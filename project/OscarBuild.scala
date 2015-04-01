@@ -63,10 +63,10 @@ object OscarBuild extends Build {
       import Keys._
       Seq(unmanagedSourceDirectories in Compile <<= (unmanagedSourceDirectories in Compile, baseDirectory in ThisBuild) { (srcDirs, base) => (base / dir ) +: srcDirs },
           unmanagedJars in Compile <++= (baseDirectory in ThisBuild) map { base =>
-          	val libs = base / dir
-          	val dirs = libs // (libs / "batik") +++ (libs / "libtw") +++ (libs / "kiama")
-          	(dirs ** "*.jar").classpath
-      	   },
+            val libs = base / dir
+            val dirs = libs // (libs / "batik") +++ (libs / "libtw") +++ (libs / "kiama")
+            (dirs ** "*.jar").classpath
+           },
           
           unmanagedSourceDirectories in Test <<= (unmanagedSourceDirectories in Test, baseDirectory in ThisBuild) { (srcDirs, base) => (base / dir ) +: srcDirs })
     }
@@ -83,7 +83,7 @@ object OscarBuild extends Build {
   import Resolvers._
   import UnidocKeys._
 
-  val commonDeps = Seq(/*scalatest,scalaswing,*/junit)
+  val commonDeps = Seq(/*scalatest,scalaswing, */junit)
   
  
   TaskKey[Unit]("zipsrc") <<= baseDirectory map { bd => println(bd); IO.zip(Path.allSubpaths(new File(bd + "/src/main/scala")),new File(bd +"/oscar-src.zip"))  }
@@ -119,7 +119,7 @@ object OscarBuild extends Build {
     //
     settings = buildSettings ++ jacoco_settings ++ 
                packSettings ++ unidocSettings ++ 
-               Seq (/*resolvers := sbtResolvers,*/ libraryDependencies ++= commonDeps) ++ 
+               Seq (/*resolvers := sbtResolvers, */ libraryDependencies ++= commonDeps) ++ 
                sbtassembly.Plugin.assemblySettings ++ 
                (unidocProjectFilter in (ScalaUnidoc, unidoc) := inAnyProject -- inProjects(oscarFzn)) ++
                commonTasks,
@@ -129,17 +129,20 @@ object OscarBuild extends Build {
   lazy val oscarCbls = Project(
     id = "oscar-cbls",
     base = file("oscar-cbls"),
-    settings = buildSettings ++ jacoco_settings ++ Seq(libraryDependencies ++= commonDeps) ++
-    		   sbtassembly.Plugin.assemblySettings ++ 
-    		   commonTasks,
-    dependencies = Seq(oscarVisual)) dependsOnSource("lib")       
+    settings = buildSettings ++ jacoco_settings ++ packAutoSettings ++ Seq(
+      libraryDependencies ++= commonDeps,
+      unmanagedSourceDirectories in Compile += baseDirectory.value / "src/main/examples",
+      packGenerateWindowsBatFile := false) ++
+    sbtassembly.Plugin.assemblySettings ++ 
+    commonTasks,
+    dependencies = Seq(oscarVisual)) dependsOnSource("lib")
     
   lazy val oscarCp = Project(
     id = "oscar-cp",
     base = file("oscar-cp"),
     settings = buildSettings ++ jacoco_settings ++ Seq(libraryDependencies ++= commonDeps) ++
-    		   sbtassembly.Plugin.assemblySettings ++ 
-    		   commonTasks,
+           sbtassembly.Plugin.assemblySettings ++ 
+           commonTasks,
     dependencies = Seq(oscarAlgo,oscarVisual)) dependsOnSource("lib")
     
     
@@ -147,15 +150,15 @@ object OscarBuild extends Build {
     id = "oscar-fzn",
     base = file("oscar-fzn"),
     settings = buildSettings ++ jacoco_settings ++ Seq(libraryDependencies ++= commonDeps) ++
-    		   sbtassembly.Plugin.assemblySettings ++ 
-    		   commonTasks,
+           sbtassembly.Plugin.assemblySettings ++ 
+           commonTasks,
     dependencies = Seq(oscarCbls)) dependsOnSource("lib")     
     
   lazy val oscarDes = Project(
     id = "oscar-des",
     base = file("oscar-des"),
     settings = buildSettings ++ jacoco_settings ++ Seq(libraryDependencies ++= commonDeps) ++ 
-     		   sbtassembly.Plugin.assemblySettings ++    		   
+           sbtassembly.Plugin.assemblySettings ++          
                commonTasks,
     dependencies = Seq(oscarInvariants)) dependsOnSource("lib")     
     
@@ -210,6 +213,6 @@ object OscarBuild extends Build {
     base = file("oscar-util")) dependsOnSource("lib")       
     
 
-    
+
   
 }
