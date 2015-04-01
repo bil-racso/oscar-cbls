@@ -1,0 +1,215 @@
+package oscar.cp
+
+import scala.collection.mutable.ArrayBuffer
+import scala.collection.mutable.Map
+import scala.collection.parallel.mutable.ParHashMap
+import scala.io.Source
+
+import oscar.algo.search.SearchStatistics
+import oscar.cp.searches.CulpritsSearch
+import oscar.cp.searches.LCSearchSimplePhaseAssign
+import oscar.nogood.database.NogoodDB
+import oscar.nogood.decisions.Decision
+import oscar.nogood.searches.BinaryConflictSet
+import oscar.nogood.searches.FailureDirectedSearch
+import oscar.nogood.searches.NogoodSearch
+import oscar.nogood.searches.SplitConflictSet
+import oscar.nogood.searches.RestartConflictSet
+
+object TestRCPSP extends App {
+  
+  case class Result(id: Int, instance: String, time: Long, nNodes: Int, objective: Int, completed: Boolean) {
+    override def toString: String = s"$instance\t$time\t$nNodes\t$objective\t$completed"
+  }
+
+  val jType = "j60"
+  val boundsFile = s"data/rcpsp/$jType/opt"
+  val (upperBounds, lowerBounds) = BLParser.parseBounds(boundsFile)
+  
+  val instanceRange1 = 1 to 48
+  val instanceRange2 = 1 to 10
+  
+  val results = ParHashMap[String, Result]()
+  
+
+  for (j <- instanceRange1.par; i <- instanceRange2.par) {
+
+    new CPModel {
+      solver.silent = true
+      val instanceFile = s"${jType}_${j}_${i}"
+      val instance = BLParser.parse(s"data/rcpsp/$jType/$instanceFile.rcp")
+
+      // Data
+      val nTasks = instance.nTasks
+      val Tasks = 0 until nTasks
+      val nResources = instance.nResources
+      val Resources = 0 until nResources
+
+      val scale = 1
+      val durations = instance.durations
+      val demands = instance.demands.transpose
+      val horizon = instance.horizon
+      val capa = instance.capacities
+
+      // Decision variables
+      val starts = Array.tabulate(nTasks)(t => CPIntVar(0, horizon - durations(t), s"start_$t"))
+      val ends = Array.tabulate(nTasks)(t => starts(t) + durations(t))
+      val makespan = maximum(ends)
+
+      val ub = upperBounds(instanceFile.toUpperCase() + ".rcp")
+
+      // Precedences
+      for ((t1, t2) <- instance.precedences) add(ends(t1) <= starts(t2))
+
+      // Resources
+      for (r <- Resources) {
+        add(maxCumulativeResource(starts, durations.map(CPIntVar(_)), ends, demands(r).map(CPIntVar(_)), CPIntVar(capa(r))), Weak)
+      }
+
+      //minimize(makespan)
+      add(makespan == ub)
+      
+      //search (setTimes(starts, durations.map(CPIntVar(_)), ends))
+      //search(binaryFirstFail(starts))
+      search (binaryIdx(starts, starts(_).min, starts(_).min))
+
+      val nogoodDB = NogoodDB()
+      val cpSearch = new NogoodSearch(solver, nogoodDB)
+      
+      val branching = new RestartConflictSet(starts, starts(_).size, starts(_).min)
+      //val branching = new SplitConflictSet(starts, starts(_).size, starts(_).min)
+      //val branching = new FailureDirectedSearch(starts, starts(_).size, starts(_).min)
+     
+      val t0 = System.currentTimeMillis()
+      var n = 100
+      var completed = false
+      var timeOut = false
+      var solution = false
+      var best = makespan.min
+      
+      cpSearch.onSolution {
+        best = makespan.value
+        solution = true
+      }
+
+      var nNodes = 0
+      var time = 0l
+
+      while (!solution && !timeOut) {
+        solver.pushState()
+        nogoodDB.foreach(n => solver.post(n.toConstraint))
+        cpSearch.start(branching, s => s.nBacktracks >= n || s.nSolutions == 1 || System.currentTimeMillis() - t0 >= 10000)
+        solver.pop()
+        nNodes += cpSearch.nNodes
+        time = System.currentTimeMillis() - t0
+        completed = cpSearch.isCompleted
+        timeOut = time > 10000
+        n = (n * 115) / 100
+      }
+      
+      /*var best = ub
+      val stats = solver.start(nSols = 1, timeLimit = 5)
+      val time = stats.time
+      val nNodes = stats.nNodes
+      val solution = stats.nSols == 1*/
+          
+      val result = Result(j*10 + i, instanceFile, time, nNodes, best, solution)
+      results += (instanceFile -> result)
+      
+      println("Progression: " + results.size.toDouble / (instanceRange1.size * instanceRange2.size))
+    }
+  }
+  
+  println("name\ttime\tnodes\tbest\topt")
+  val allResults = results.values.toArray.sortBy(_.id)
+  allResults.foreach(println)
+  
+  val completed = allResults.count(r => r.completed)
+  val sumObjs = allResults.map(_.objective).sum
+  
+  println("completed   : " + completed)
+  println("uncompleted : " + (480 - completed))
+  println("sumObjs     : " + sumObjs)
+}
+
+class SchedulingInstance(val durations: Array[Int], val demands: Array[Array[Int]], val capacities: Array[Int], val horizon: Int, val precedences: Array[(Int, Int)]) {
+  def nTasks = durations.length
+  def nResources = capacities.length
+}
+
+object BLParser {
+  def parse(filePath: String): SchedulingInstance = {
+
+    var lines = Source.fromFile(filePath).getLines.toList.filter(_ != "")
+
+    //first line : nbAct and nbRes
+    val firstLineNumbers = lines.head.split(" ")
+
+    val nTasks = firstLineNumbers(0).toInt - 2 //we remove the 2 dummy activities
+    val nResources = firstLineNumbers(1).toInt
+    val Tasks = 0 until nTasks
+    val Resources = 0 until nResources
+
+    lines = lines.drop(1)
+
+    //second line : resources capacities
+    val secondLineNumbers = lines.head.split(" ")
+
+    val capacities = Array.tabulate(nResources)(r => {
+      secondLineNumbers(r).toInt
+    })
+
+    lines = lines.drop(1)
+
+    //next lines are activities descriptions
+    //skip the first dummy activity
+    lines = lines.drop(1)
+
+    val precedences = new ArrayBuffer[(Int, Int)]()
+    val demands = Array.ofDim[Int](nTasks, nResources)
+    val durations = Array.ofDim[Int](nTasks)
+
+    for (t <- Tasks) {
+
+      val data = lines.head.split(" ")
+
+      // Demands
+      Resources.foreach(r => demands(t)(r) = data(1 + r).toInt)
+
+      // Precedences
+      val successors = data.drop(nResources + 2).map(_.toInt - 2).filter(_ != nTasks) //remove 2 from the successors id and get rid of the dummy last activity in the successors
+      for (succ <- successors) precedences.append((t, succ))
+
+      // Duration
+      durations(t) = data(0).toInt
+
+      //next line
+      lines = lines.drop(1)
+    }
+
+    new SchedulingInstance(durations, demands, capacities, durations.sum, precedences.toArray)
+  }
+
+  def parseBounds(boundsFile: String): (Map[String, Int], Map[String, Int]) = {
+    val lines = Source.fromFile(boundsFile).getLines
+    // Drop four first lines
+    lines.next()
+    lines.next()
+    lines.next()
+    lines.next()
+    val lbs = Map[String, Int]()
+    val ubs = Map[String, Int]()
+    while (lines.hasNext) {
+      val line = lines.next
+      if (!line.isEmpty()) {
+        val data = line.split("\t")
+        val instance = data(0)
+        val lb = data(1).toInt
+        val ub = data(2).toInt
+        lbs += instance -> lb
+        ubs += instance -> ub
+      }
+    }
+    (lbs, ubs)
+  }
+}

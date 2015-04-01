@@ -472,7 +472,7 @@ abstract class CPIntVar extends CPVar with Iterable[Int] {
   def isGrEq(v: Int): CPBoolVar = {
     val b = CPBoolVar()(store);
     val ok = store.post(new oscar.cp.constraints.GrEqCteReif(this, v, b));
-    assert(ok != CPOutcome.Failure);
+    //assert(ok != CPOutcome.Failure);
     return b;
   }
 
@@ -484,7 +484,7 @@ abstract class CPIntVar extends CPVar with Iterable[Int] {
   def isLeEq(v: Int): CPBoolVar = {
     val b = CPBoolVar()(store);
     val ok = store.post(new oscar.cp.constraints.LeEqCteReif(this, v, b));
-    assert(ok != CPOutcome.Failure);
+    //assert(ok != CPOutcome.Failure);
     return b;
   }
 

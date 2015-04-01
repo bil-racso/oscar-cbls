@@ -12,108 +12,105 @@ class SplitConflictSet(variables: Array[CPIntVar], varHeuristic: Int => Int, val
   private[this] val nVariables = variables.length
   private[this] val store = variables(0).store
 
-  private[this] val assigned = Array.tabulate(nVariables)(i => i)
-  private[this] val nAssignedRev = new ReversibleInt(store, 0)
-  private[this] var maxAssigned = 0
+  // Order in which variables have to be assigned
+  private[this] val order = Array.tabulate(nVariables) { i => i }
 
-  private[this] val priorities = new Array[Int](nVariables)
+  // Last successfuly assigned value for each variable
+  private[this] val lastValues = Array.tabulate(nVariables) { i => Int.MinValue }
 
-  private[this] var conflictAssign: Int = -1
-  private[this] var conflictVar: Int = -1
-  
+  // Current depth of the search tree
+  private[this] val depthRev = new ReversibleInt(store, 0)
+
+  // Maximum number of assigned variables
+  private[this] var maxDepth: Int = -1
+
+  // Depth in which the last conflict occured
+  private[this] var conflictDepth: Int = -1
+
+  private[this] var maxConflictDepth: Int = -1
+  private[this] var minInsertDepth: Int = nVariables
+
+  private[this] var restarted = false
+
   final override def reset(): Unit = {
-    maxAssigned = 0
-    conflictAssign = -1
+    conflictDepth = -1
+    if (!restarted) {
+      restarted = true
+      if (minInsertDepth < maxConflictDepth) {
+        val tmp = new Array[Int](minInsertDepth)
+        System.arraycopy(order, 0, tmp, 0, minInsertDepth)
+        System.arraycopy(order, minInsertDepth, order, 0, maxConflictDepth - minInsertDepth)
+        System.arraycopy(tmp, 0, order, maxConflictDepth - minInsertDepth, minInsertDepth)
+      }
+    }
   }
-
+  
   final override def nextDecision: Decision = {
-    val nAssigned = countAssigned()
-    if (nAssigned == nVariables) null
+    val depth = updateAssigned()
+    if (depth >= nVariables) null
     else {
-      
-      // Trail the number of assigned variables
-      nAssignedRev.value = nAssigned
+      // Trail the depth of the search tree
+      depthRev.value = depth
 
-      // Handle last conflict if any
-      if (conflictAssign > nAssigned) updatePriority(conflictVar)
+      // Adjust variables order according to the last conflict
+      if (conflictDepth > depth && !variables(order(conflictDepth)).isBound) {
+        // Assign the last conflicting variable first
+        val varId = order(conflictDepth)
+        System.arraycopy(order, depth, order, depth + 1, conflictDepth - depth)
+        // Handle restart learning
+        if (depth < minInsertDepth) minInsertDepth = depth
+        if (conflictDepth > maxConflictDepth) maxConflictDepth = conflictDepth
+        order(depth) = varId
+        conflictDepth = -1
+        //println(order.mkString(" "))
+      } else if (depth > maxDepth) {
+        // New depth level
+        maxDepth = depth
+        val position = nextVariable(depth)
+        val varId = order(position)
+        order(position) = order(depth)
+        order(depth) = varId
+      }
 
-      // Select the next variable and value
-      val varId = nextVariable(nAssigned)
+      // Variable and value
+      conflictDepth = depth
+      val varId = order(depth)
       val variable = variables(varId)
       val minValue = variable.min
       val maxValue = variable.max
-      val value = variable.min
+      val lastValue = lastValues(varId)
+      val value = /*if (minValue <= lastValue && lastValue <= maxValue) lastValue else*/ valHeuristic(varId)
 
-      conflictAssign = nAssigned
-      conflictVar = varId
-
-       // Decision
+      // Alternatives
       new LowerEq(variable, value)
     }
   }
 
-  @inline private def nextVariable(nAssigned: Int): Int = {
-    if (nAssigned < maxAssigned) nextPriority(nAssigned)
-    else {
-      maxAssigned += 1
-      nextHeuristic(nAssigned)
+  @inline private def updateAssigned(): Int = {
+    var d = depthRev.value
+    while (d < nVariables && variables(order(d)).isBound) {
+      val varId = order(d)
+      lastValues(varId) = variables(varId).min
+      d += 1
     }
-  }
-  
-  @inline private def nextPriority(nAssigned: Int): Int = {
-    var minId = -1
-    var min = Int.MaxValue
-    var i = nAssigned
-    while (i < nVariables) {
-      val varId = assigned(i)
-      val priority = priorities(varId)
-      if (priority < min) {
-        min = priority
-        minId = varId
-      }
-      i += 1
-    }
-    minId
-  }
-  
-  @inline private def nextHeuristic(nAssigned: Int): Int = {
-    var minId = -1
-    var min = Int.MaxValue
-    var i = nAssigned
-    while (i < nVariables) {
-      val varId = assigned(i)
-      val heuristic = varHeuristic(varId)
-      if (heuristic < min) {
-        min = heuristic
-        minId = varId
-      }
-      i += 1
-    }
-    minId
+    d
   }
 
-  @inline private def updatePriority(varId: Int): Unit = {
-    var i = varId
-    while (i > 0) {
-      i -= 1
-      priorities(i) += 1
-    }
-    priorities(varId) = 0
-  }
-  
-  @inline private def countAssigned(): Int = {
-    var nAssigned = nAssignedRev.value
-    var i = nAssigned
+  @inline private def nextVariable(depth: Int): Int = {
+    var minId = depth
+    var min = Int.MaxValue
+    var i = depth
     while (i < nVariables) {
-      val varId = assigned(i)
-      if (variables(varId).isBound) {
-        val tmp = assigned(nAssigned)
-        assigned(nAssigned) = varId
-        assigned(i) = tmp
-        nAssigned += 1
+      val varId = order(i)
+      if (!variables(varId).isBound) {
+        val m = varHeuristic(order(i))
+        if (m < min) {
+          min = m
+          minId = i
+        }
       }
       i += 1
     }
-    nAssigned
+    minId
   }
 }

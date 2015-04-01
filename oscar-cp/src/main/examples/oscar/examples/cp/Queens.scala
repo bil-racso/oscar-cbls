@@ -14,7 +14,7 @@ import oscar.cp.searches.BinaryLastConflict
  */
 object Queens extends CPModel with App {
 
-  val nQueens = 10 // Number of queens
+  val nQueens = 140 // Number of queens
   val Queens = 0 until nQueens
 
   // Variables
@@ -26,10 +26,10 @@ object Queens extends CPModel with App {
   add(allDifferent(Queens.map(i => queens(i) - i)))
   
   // Search heuristic
-  search(binaryFirstFail(queens))
+  search(binaryLastConflict(queens))
 
   
   // Execution
-  val stats = start()
+  val stats = start(nSols = 1)
   println(stats)
 }

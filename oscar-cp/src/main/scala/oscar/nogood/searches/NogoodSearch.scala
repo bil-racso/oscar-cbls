@@ -142,7 +142,7 @@ class NogoodSearch(store: CPStore, nogoods: NogoodDB) {
   @inline private def buildNogoods(): Unit = {
 
     if (branch.isEmpty) {
-      println("UNFEASIBLE <------------------------------------------")
+      //println("UNFEASIBLE <------------------------------------------")
       nogoods.addEmpty()
     }
     else {

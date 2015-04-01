@@ -10,7 +10,7 @@ class Nogood(val decisions: Array[Decision]) {
   
   def toConstraint: Constraint = {
     if (decisions.isEmpty) new Unfeasible(null)
-    or(decisions.map(_.toLiteral))
+    else or(decisions.map(_.toLiteral))
   }
   
   def size = decisions.length

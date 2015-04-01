@@ -79,7 +79,7 @@ class Or(val x: Array[CPBoolVar]) extends Constraint(x(0).store, "Or") {
     } 
     if (down > up) {
       return Failure
-    } else if (down == up) { // only one unassigned var
+    } else if (down == up) { // only one unassigned var  
       x(up).assign(1)
       return Success
     } else {

@@ -1,18 +1,19 @@
-/*******************************************************************************
+/**
+ * *****************************************************************************
  * OscaR is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- *   
+ *
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License  for more details.
- *   
+ *
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
- ******************************************************************************/
-
+ * ****************************************************************************
+ */
 
 package oscar.cp.constraints
 
@@ -24,8 +25,6 @@ import scala.annotation.tailrec
 import scala.util.control.Breaks._
 import oscar.cp.core.CPPropagStrength
 
-
-
 /**
  * This code is adapted to CP from an original implementation by Kevin L. Stern of the Hungarian algorithm
  * @author Pierre Schaus pschaus@gmail.com
@@ -33,8 +32,8 @@ import oscar.cp.core.CPPropagStrength
 class MinAssignment(val xarg: Array[CPIntVar], val weightsarg: Array[Array[Int]], val cost: CPIntVar) extends Constraint(xarg(0).store, "MinAssignment") {
   if (weightsarg.size != xarg.size) throw new IllegalArgumentException("MinAssignment: dim of x and weights must match")
   val n = weightsarg(0).size
-  val x = xarg ++ Array.fill(n-xarg.size)(CPIntVar(0 until n)(s)) 
-  val weights = weightsarg ++ Array.fill(n-xarg.size)(Array.fill(n)(0))
+  val x = xarg ++ Array.fill(n - xarg.size)(CPIntVar(0 until n)(s))
+  val weights = weightsarg ++ Array.fill(n - xarg.size)(Array.fill(n)(0))
   val Jmax = n
   val Wmax = n
   val J = 0 until n
@@ -50,7 +49,6 @@ class MinAssignment(val xarg: Array[CPIntVar], val weightsarg: Array[Array[Int]]
   val matchJobByWorker = Array.fill(n)(new ReversibleInt(s, -1))
   val matchWorkerByJob = Array.fill(n)(new ReversibleInt(s, -1))
 
-  
   // minSlackValueByJob[j] = argmin(costMatrix[w][j] - labelByWorker[w] - labelByJob[j]) | w is unmatched)  
   val minSlackWorkerByJob = Array.fill(n)(0)
   // minSlackValueByJob[j] = min(costMatrix[w][j] - labelByWorker[w] - labelByJob[j]) | w is unmatched)
@@ -218,20 +216,13 @@ class MinAssignment(val xarg: Array[CPIntVar], val weightsarg: Array[Array[Int]]
     // Heuristics to improve performance: Reduce rows and columns by their
     // smallest element, compute an initial non-zero dual feasible solution
     // and create a greedy matching from workers to jobs of the cost matrix.
-    greedyMatch();
+    greedyMatch()
     var w = fetchUnmatchedWorker()
-    //println("fetching worker:" + w)
     while (w < n) {
-      //println("initialize phase")
       initializePhase(w)
       executePhase()
-      //printAll()
       w = fetchUnmatchedWorker()
-      //println("fetching worker:" + w)
     }
-    //println("end of execute")
-    //printAll()
-    
   }
 
   def slack(w: Int, j: Int) = costMatrix(w)(j).value - labelByWorker(w).value - labelByJob(j).value
@@ -247,13 +238,12 @@ class MinAssignment(val xarg: Array[CPIntVar], val weightsarg: Array[Array[Int]]
       j = 0
       while (j < Jmax) {
         if (matchJobByWorker(w).value == -1 && matchWorkerByJob(j).value == -1 && slack(w, j) == 0)
-        assign(w, j);
+          assign(w, j);
         j += 1
       }
       w += 1
     }
-    
-    
+
     /*
     for (w <- W; j <- J)
       if (matchJobByWorker(w).value == -1 && matchWorkerByJob(j).value == -1 && slack(w, j) == 0)
@@ -264,12 +254,9 @@ class MinAssignment(val xarg: Array[CPIntVar], val weightsarg: Array[Array[Int]]
 
   private def filter(): CPOutcome = {
 
-    //printAll()
-    //val sum = (W).foldLeft(0)((tot, w) => tot + weights(w)(matchJobByWorker(w).value))
     var sum = 0
     var w = 0
     while (w < Wmax) {
-      //println("worker "+w+" matched with:"+matchJobByWorker(w)+" cost:"+weights(w)(matchJobByWorker(w).value))
       sum += weights(w)(matchJobByWorker(w).value)
       w += 1
     }
@@ -279,37 +266,29 @@ class MinAssignment(val xarg: Array[CPIntVar], val weightsarg: Array[Array[Int]]
       return CPOutcome.Failure
     }
     val maxSlack = cost.max - sum
-    
-    /*
-    for (w <- W; j <- J; if x(w).hasValue(j)) {
-    	if (slack(w,j) > maxSlack) {
-    	  if (x(w).removeValue(j) == CPOutcome.Failure) {
-    	    return CPOutcome.Failure
-    	  }
-    	}
-    }
-    */
+
     w = 0
     var j = 0
     while (w < Wmax) {
+      val labelByWorkerW = labelByWorker(w).value
+      val costMatrixW = costMatrix(w)
       j = 0
       while (j < Jmax) {
-    	if (slack(w,j) > maxSlack) {
-    	  if (x(w).removeValue(j) == CPOutcome.Failure) {
-    	    return CPOutcome.Failure
-    	  }
-    	}        
+        val slack = costMatrixW(j).value - labelByWorkerW - labelByJob(j).value
+        if (slack > maxSlack) {
+          if (x(w).removeValue(j) == CPOutcome.Failure) {
+            return CPOutcome.Failure
+          }
+        }
         j += 1
       }
       w += 1
     }
     CPOutcome.Suspend
   }
-  
-
 
   override def setup(l: CPPropagStrength): CPOutcome = {
-    if (s.post(new AllDifferent(x:_*),l) == CPOutcome.Failure) {
+    if (s.post(new AllDifferent(x: _*), l) == CPOutcome.Failure) {
       return CPOutcome.Failure;
     }
     for (i <- 0 until n; v <- 0 until n) {
@@ -343,17 +322,14 @@ class MinAssignment(val xarg: Array[CPIntVar], val weightsarg: Array[Array[Int]]
   }
 
   override def propagate(): CPOutcome = {
-    val valid = W.forall(w => matchJobByWorker(w).value != -1)
-    if (!valid) {
-      findMinAssignment()
+    var i = n
+    var valid = true
+    while (valid && i > 0) {
+      i -= 1
+      valid &= matchJobByWorker(i).value != -1 
     }
+    if (!valid) findMinAssignment()
     filter()
   }
 
-}
-
-object MinAssignment {
-  def main(args: Array[String]) {
-
-  }
 }

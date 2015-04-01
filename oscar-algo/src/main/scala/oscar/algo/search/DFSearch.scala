@@ -131,6 +131,8 @@ class DFSearch(node: DFSearchNode) {
       }
     }
     
+    
+    
     // Pop the remaining nodes 
     var i = alternativesStack.size
     if (i == 0) completed = true
