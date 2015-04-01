@@ -19,7 +19,7 @@ object DecisionReader {
     val nameToVarMap = variables map {v => (v.name,v)} toMap
 
     val AssignPattern = ("(.+)(" + Decision.assign + ")(\\d+)").r
-    val RemovePattern = (".+" + Decision.`remove` + ".+").r
+    val RemovePattern = ("(.+)(" + Decision.remove + ")(\\d+)").r
 
     Source.fromFile(url).getLines map { l => l match {
       case Decision.`push` => Push(store)

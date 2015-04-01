@@ -6,8 +6,10 @@ import oscar.cp.core.CPOutcome.Failure
 import oscar.algo.reversible.ReversibleContext
 
 abstract class Decision extends Alternative
-abstract class DomainDecision extends Decision
 abstract class ControlDecision extends Decision
+abstract class DomainDecision extends Decision {
+  def opposite: DomainDecision 
+}
 
 final class Push(val context: ReversibleContext) extends ControlDecision {
   override def apply(): Unit = context.pushState()
@@ -22,11 +24,13 @@ final class Pop(val context: ReversibleContext) extends ControlDecision {
 final class Remove(val variable: CPIntVar, val value: Int) extends DomainDecision {
   override def apply(): Unit = variable.store.remove(variable, value)
   override def toString: String = s"Remove(${variable.name}, $value)"
+  override def opposite: DomainDecision = new Assign(variable, value)
 }
 
 final class Assign(val variable: CPIntVar, val value: Int) extends DomainDecision {
   override def apply(): Unit = variable.store.assign(variable, value)
   override def toString: String = s"Assign(${variable.name}, $value)"
+  override def opposite: DomainDecision = new Remove(variable, value)
 }
 
 final class LowerEq(val variable: CPIntVar, val value: Int) extends DomainDecision {
@@ -36,6 +40,7 @@ final class LowerEq(val variable: CPIntVar, val value: Int) extends DomainDecisi
     else variable.store.propagate()
   }
   override def toString: String = s"LowerEq(${variable.name}, $value)"
+  override def opposite: DomainDecision = new GreaterEq(variable, value + 1)
 }
 
 final class GreaterEq(val variable: CPIntVar, val value: Int) extends DomainDecision {
@@ -45,6 +50,7 @@ final class GreaterEq(val variable: CPIntVar, val value: Int) extends DomainDeci
     else variable.store.propagate()
   }
   override def toString: String = s"GreaterEq(${variable.name}, $value)"
+  override def opposite: DomainDecision = new LowerEq(variable, value - 1)
 }
 
 object Decision {

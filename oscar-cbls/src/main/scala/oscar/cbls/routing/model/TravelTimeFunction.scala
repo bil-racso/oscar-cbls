@@ -29,6 +29,7 @@ import oscar.cbls.constraints.lib.basic.GE
 import oscar.cbls.constraints.lib.basic.LE
 import oscar.cbls.invariants.lib.numeric.Sum
 import oscar.cbls.invariants.core.computation.CBLSIntConst
+import oscar.cbls.invariants.lib.logic.IntITE
 
 /** an abstract class representing a travel time function
   * @author renaud.delandtsheer@cetic.be
@@ -105,7 +106,13 @@ trait TravelTimeAsFunction extends VRP with Time {
 trait TimeWindow extends Time with StrongConstraints {
 
   def setEndWindow(node: Int, endWindow: Int) {
-    strongConstraints.post(LE(leaveTime(node), endWindow))
+    require(node >= V, "only for specifying time windows on nodes, not on vehicles")
+    strongConstraints.post(LE(IntITE(next(node), 0, leaveTime(node), N-1), endWindow))
+  }
+
+  def setVehicleEnd(vehicle:Int,endTime:Int){
+    require(vehicle < V, "only for specifying end time of vehicles")
+    strongConstraints.post(LE(arrivalTime(vehicle), endTime))
   }
 
   def setNodeDuration(node: Int, durationWithoutWait: CBLSIntVar, startWindow: Int) {

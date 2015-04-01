@@ -105,17 +105,19 @@ class CPBoolVarImpl private(final override val store: CPStore, initDomain: Int, 
   final override def updateMin(value: Int): CPOutcome = {
     if (value == 1) {
       if (domain == UNASSIGNED) setDomainTrue()
-      else Suspend
+      else if (domain == TRUE) Suspend
+      else setDomainEmpty()
     } else if (value <= 0) Suspend
-    else setDomainEmpty
+    else setDomainEmpty()
   }
 
   final override def updateMax(value: Int): CPOutcome = {
     if (value == 0) {
       if (domain == UNASSIGNED) setDomainFalse()
-      else Suspend
+      else if (domain == FALSE) Suspend
+      else setDomainEmpty()
     } else if (value >= 1) Suspend
-    else setDomainEmpty
+    else setDomainEmpty()
   }
   
   final override def assignTrue(): CPOutcome = {
