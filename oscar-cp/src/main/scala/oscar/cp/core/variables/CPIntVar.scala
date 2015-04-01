@@ -206,6 +206,10 @@ abstract class CPIntVar extends CPVar with Iterable[Int] {
     }
     res
   }
+  
+  def iterator: Iterator[Int]
+  
+  final override def foreach[@specialized(Int) U](f: Int => U): Unit = iterator.foreach(f)
 
   def domainIterator: DomainIterator = {
     new DomainIterator {

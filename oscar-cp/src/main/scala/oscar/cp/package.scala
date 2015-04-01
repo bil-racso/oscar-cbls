@@ -140,6 +140,40 @@ package object cp extends Constraints with Branchings with ElementBuilder with C
         x.valueAfter(min) - min
       }
     }
+    
+    def maxRegret(costs: Array[Int]): Int = {
+      val values = x.toArray
+      var min1 = costs(values(0))
+      var min2 = Int.MaxValue
+      var i = values.length
+      while (i > 1) {
+        i -= 1
+        val value = values(i)
+        val cost = costs(value)
+        if (cost <= min1) {
+          min2 = min1
+          min1 = cost 
+        } else if (cost < min2) min2 = cost
+      }
+      min2 - min1
+    }
+    
+    def minBy(costs: Array[Int]): Int = {
+      val values = x.toArray
+      var i = values.length
+      var minValue = values(0)
+      var minCost = costs(minValue)
+      while (i > 1) {
+        i -= 1
+        val value = values(i)
+        val cost = costs(value)
+        if (cost < minCost) {
+          minValue = value
+          minCost = cost
+        }
+      }
+      minValue
+    }
 
     /**
      * @return The median value of the domain of the variable
