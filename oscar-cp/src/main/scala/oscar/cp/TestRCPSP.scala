@@ -18,16 +18,16 @@ import oscar.nogood.searches.RestartConflictSet
 
 object TestRCPSP extends App {
   
-  case class Result(id: Int, instance: String, time: Long, nNodes: Int, objective: Int, completed: Boolean) {
-    override def toString: String = s"$instance\t$time\t$nNodes\t$objective\t$completed"
+  case class Result(id: Int, instance: String, time: Long, nFails: Int, objective: Int, completed: Boolean) {
+    override def toString: String = s"$instance\t$time\t$nFails\t$objective\t$completed"
   }
 
   val jType = "j60"
   val boundsFile = s"data/rcpsp/$jType/opt"
   val (upperBounds, lowerBounds) = BLParser.parseBounds(boundsFile)
   
-  val instanceRange1 = 1 to 48
-  val instanceRange2 = 1 to 10
+  val instanceRange1 = 5 to 5
+  val instanceRange2 = 3 to 3
   
   val results = ParHashMap[String, Result]()
   
@@ -71,7 +71,7 @@ object TestRCPSP extends App {
       
       //search (setTimes(starts, durations.map(CPIntVar(_)), ends))
       //search(binaryFirstFail(starts))
-      search (binaryIdx(starts, starts(_).min, starts(_).min))
+      //search (binaryIdx(starts, starts(_).min, starts(_).min))
 
       val nogoodDB = NogoodDB()
       val cpSearch = new NogoodSearch(solver, nogoodDB)
@@ -92,18 +92,18 @@ object TestRCPSP extends App {
         solution = true
       }
 
-      var nNodes = 0
+      var nFails = 0
       var time = 0l
 
       while (!solution && !timeOut) {
         solver.pushState()
         nogoodDB.foreach(n => solver.post(n.toConstraint))
-        cpSearch.start(branching, s => s.nBacktracks >= n || s.nSolutions == 1 || System.currentTimeMillis() - t0 >= 10000)
+        cpSearch.start(branching, s => s.nBacktracks >= n || s.nSolutions == 1 || System.currentTimeMillis() - t0 >= 600000)
         solver.pop()
-        nNodes += cpSearch.nNodes
+        nFails += cpSearch.nNodes
         time = System.currentTimeMillis() - t0
         completed = cpSearch.isCompleted
-        timeOut = time > 10000
+        timeOut = time > 600000
         n = (n * 115) / 100
       }
       
@@ -113,14 +113,14 @@ object TestRCPSP extends App {
       val nNodes = stats.nNodes
       val solution = stats.nSols == 1*/
           
-      val result = Result(j*10 + i, instanceFile, time, nNodes, best, solution)
+      val result = Result(j*10 + i, instanceFile, time, nFails, best, solution)
       results += (instanceFile -> result)
       
       println("Progression: " + results.size.toDouble / (instanceRange1.size * instanceRange2.size))
     }
   }
   
-  println("name\ttime\tnodes\tbest\topt")
+  println("name\ttime\tfails\tbest\topt")
   val allResults = results.values.toArray.sortBy(_.id)
   allResults.foreach(println)
   
