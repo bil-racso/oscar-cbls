@@ -26,7 +26,7 @@ import oscar.flatzinc.UnsatException
 
 object FZModelTransfo {
   
-  def areAllIneq(cstrs: List[Constraint]): Boolean = {
+  def areAllIneq(cstrs: Set[Constraint]): Boolean = {
     cstrs.forall{ 
       case bool_le(x,y,_) => true
       case bool_lin_le(x,y,z,_) => true
@@ -50,7 +50,7 @@ object FZModelTransfo {
       val (v,c,obj) = front.dequeue()
      // visited.add(v)
       if(!v.isDefined){
-        val cand = v.cstrs.filter((c: Constraint) => c.definedVar.isEmpty && c.canDefineVar && c.getCandidateDefVars().contains(v))
+        val cand = v.cstrs.toList.filter((c: Constraint) => c.definedVar.isEmpty && c.canDefineVar && c.getCandidateDefVars().contains(v))
         val cand2 = cand//.filter(c => ! dependsOn(c,v,false))
         if(cand2.length > 1){
           log(2,"! Found a variable that could be defined by more than one invariant (from Objective):"+v+" "+cand2.toString)
@@ -122,7 +122,7 @@ object FZModelTransfo {
       //println(v.cstrs)
       val cand = v.cstrs.filter((c: Constraint) => heuristicAccept(c) && c.definedVar.isEmpty && c.canDefineVar && c.getCandidateDefVars().contains(v))
       val cand2 = cand//.filter(c => ! dependsOn(c,v,false))
-      if(cand2.length > 1){
+      if(cand2.size > 1){
         log(2,"! Found a variable that could be defined by more than one invariant:"+v+" "+cand2.toString)
       }
       //Select the first suitable constraint with smallest number of variables (heuristic for Costas Array, might not work for others, actually a proxy for the smallest resulting output domain)
@@ -290,7 +290,7 @@ object FZModelTransfo {
     val mappingB = MMap.empty[Constraint, Int];
     var tails = List.empty[Constraint]
     for(i <- mapping.keys){
-      mappingB += i -> i.definedVar.get.cstrs.filter((c) => c!=i && c.definedVar.isDefined && mapping.contains(c)).length
+      mappingB += i -> i.definedVar.get.cstrs.filter((c) => c!=i && c.definedVar.isDefined && mapping.contains(c)).size
       
     }
     def explore() = {

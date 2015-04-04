@@ -24,6 +24,7 @@ import oscar.flatzinc.ParsingException;
 import oscar.flatzinc.Log;
 
 import org.antlr.v4.runtime.*;
+import org.antlr.v4.runtime.atn.PredictionMode;
 
 
 public class FZParser {
@@ -49,7 +50,6 @@ public class FZParser {
 			CommonTokenStream tokens = new CommonTokenStream(lex);
 			FlatzincParser p = new FlatzincParser(tokens, m);
 			p.setBuildParseTree(false);//in order to get acceptable performance on large files
-			//might also need to implement this: https://theantlrguy.atlassian.net/wiki/pages/viewpage.action?pageId=1900591
 			//System.out.println(p.getErrorListeners());
 			p.removeErrorListeners();
 			//Handling errors
@@ -60,7 +60,17 @@ public class FZParser {
                 throw new ParsingException("line "+line+":"+positionInLine+" "+message);
               }
             });
-	        p.flatzinc_model();
+			//The following try/catch and prediction modes implement this: https://theantlrguy.atlassian.net/wiki/pages/viewpage.action?pageId=1900591
+			p.getInterpreter().setPredictionMode(PredictionMode.SLL);
+	        try{
+	        	p.flatzinc_model();
+	        }catch (Exception e){
+	        	log.apply(0,"Simple SLL Parsing Failed. Fallback to complete LL parsing");
+	        	tokens.reset();
+	        	p.reset();
+	        	p.getInterpreter().setPredictionMode(PredictionMode.LL);    
+	        	p.flatzinc_model();  
+	        }
 	        if(p.getNumberOfSyntaxErrors()>0){
 	          
 	          throw new ParsingException("Parsing Error Somewhere");

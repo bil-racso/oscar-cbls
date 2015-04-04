@@ -297,6 +297,7 @@ class Model(val log: Log, val acceptAnyCstr: Boolean) {
     val x = arg;//new AsJava(arg)
     val h = new Help()
     h.buildConstraint(cc.asInstanceOf[Constructor[Constraint]],x/*.asJava*/)
+    //GenericConstraint(c.toString(),arg.toList.take(p.length-1),ann)
     //cc.newInstance(x).asInstanceOf[Constraint]
     //.tupled(arg)
   }

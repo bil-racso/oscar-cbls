@@ -96,7 +96,7 @@ abstract class AllDefiningConstraint(variables: Array[Variable], ann:List[Annota
 
 //TODO: Flatten the args into the array of variables
 case class GeneratedConstraint(name:String, args:List[Any],signature:List[Pattern]) extends Constraint(GC.flatten(args), List.empty[Annotation])
-case class GenericConstraint(name:String, args:List[Any], ann: List[Annotation]) extends Constraint(GC.flatten(args), List.empty[Annotation])
+case class GenericConstraint(name:String, args:List[Any], ann: List[Annotation]) extends Constraint(GC.flatten(args), ann)
 object GC{
   def flatten(args: List[Any]): Array[Variable] = {
     args.flatMap(_ match{

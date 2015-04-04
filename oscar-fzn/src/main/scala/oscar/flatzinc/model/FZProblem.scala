@@ -144,16 +144,18 @@ abstract class Variable(val id: String) {
     definingConstraint.isDefined//annotations.foldLeft(false)((acc,x) => x.name=="is_defined_var" || acc)
   }
   var definingConstraint: Option[Constraint] = Option.empty[Constraint]
-  var cstrs:List[Constraint] = List.empty[Constraint]
+  var cstrs:Set[Constraint] = Set.empty[Constraint]
   def addConstraint(c:Constraint) = {
-    cstrs = c :: cstrs
+    cstrs = cstrs + c
   }
   def removeConstraint(c:Constraint) = {
-    cstrs = cstrs.filterNot(c.eq(_))//might be made more efficient if cstrs was a set.
+    cstrs = cstrs - c
+   //cstrs = cstrs.filterNot(c.eq(_))//might be made more efficient if cstrs was a set.
   }
   def domainSize: Int;
   def isBound: Boolean;
 }
+
 case class BooleanVariable(i: String, private var _value: Option[Boolean] = None) extends Variable(i) {
   def this(s:String, dom: Domain) = this(s, {if (dom.min==dom.max) Some(dom.min==1) else None})
   def isTrue: Boolean = _value.getOrElse(false)
