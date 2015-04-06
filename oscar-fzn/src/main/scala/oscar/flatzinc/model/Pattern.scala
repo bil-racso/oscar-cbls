@@ -41,6 +41,8 @@ object CstrPattern{
   }*/
 }
 case class CstrPattern(val name: String, val args: List[Pattern]) extends Pattern
+//Any array of identical constraints on arguments in parallel arrays
+case class CstrArrayPattern(val name: String, val args: List[Pattern]) extends Pattern
 
 case class DefCstrPattern(val name: String, val args: List[Pattern], val defArg: Pattern) extends Pattern
 
@@ -64,6 +66,11 @@ case class AnySetValPattern(val id: String) extends Pattern
 
 
 case class ArrayPattern(val vals: List[Pattern]) extends Pattern
+//used as argument of nary constraint
+case class IntVarArrayPattern(val id: String) extends Pattern
+//used as argument of nary constraint
+case class BoolVarArrayPattern(val id: String) extends Pattern
+
 case class SomeIntValArrayPattern(val vals: List[Pattern]) extends Pattern
 case class SomeBoolValArrayPattern(val vals: List[Pattern]) extends Pattern
 case class AnyIntValArrayPattern(val id: String) extends Pattern
