@@ -4,6 +4,7 @@ import oscar.cp.core.variables.CPIntVar
 import oscar.algo.reversible.ReversibleInt
 import oscar.nogood.decisions.Decision
 import oscar.nogood.decisions.LowerEq
+import oscar.nogood.decisions.Greater
 
 class RestartConflictSet(variables: Array[CPIntVar], varHeuristic: Int => Int, valHeuristic: Int => Int) extends NogoodBranching {
 
@@ -11,6 +12,8 @@ class RestartConflictSet(variables: Array[CPIntVar], varHeuristic: Int => Int, v
 
   private[this] val nVariables = variables.length
   private[this] val store = variables(0).store
+  
+  private[this] val lastValues = Array.fill(nVariables)(Int.MinValue)
 
   private[this] val assigned = Array.tabulate(nVariables)(i => i)
   private[this] val nAssignedRev = new ReversibleInt(store, 0)
@@ -47,13 +50,15 @@ class RestartConflictSet(variables: Array[CPIntVar], varHeuristic: Int => Int, v
       val variable = variables(varId)
       val minValue = variable.min
       val maxValue = variable.max
-      val value = variable.min
+      val lastValue = lastValues(varId)
+      val value = /*if (minValue <= lastValue && lastValue <= maxValue) lastValue else*/ valHeuristic(varId)
 
       conflictDecision = decision
       conflictVar = varId
 
       // Alternatives
-      new LowerEq(variable, value)
+      if (value == variable.max) new Greater(variable, value - 1)
+      else new LowerEq(variable, value)
     }
   }
 
@@ -115,6 +120,7 @@ class RestartConflictSet(variables: Array[CPIntVar], varHeuristic: Int => Int, v
         val tmp = assigned(nAssigned)
         assigned(nAssigned) = varId
         assigned(i) = tmp
+        lastValues(varId) = variables(varId).min
         nAssigned += 1
       }
       i += 1

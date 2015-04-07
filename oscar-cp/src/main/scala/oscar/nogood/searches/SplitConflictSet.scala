@@ -4,6 +4,7 @@ import oscar.cp.core.variables.CPIntVar
 import oscar.algo.reversible.ReversibleInt
 import oscar.nogood.decisions.Decision
 import oscar.nogood.decisions.LowerEq
+import scala.util.Random
 
 class SplitConflictSet(variables: Array[CPIntVar], varHeuristic: Int => Int, valHeuristic: Int => Int) extends NogoodBranching {
 
@@ -27,22 +28,20 @@ class SplitConflictSet(variables: Array[CPIntVar], varHeuristic: Int => Int, val
   // Depth in which the last conflict occured
   private[this] var conflictDepth: Int = -1
 
-  private[this] var maxConflictDepth: Int = -1
+  private[this] var maxConflictDepth: Int = 0
   private[this] var minInsertDepth: Int = nVariables
 
   private[this] var restarted = false
-
+  private[this] val rand = new Random(0)
+  
+  
+  
   final override def reset(): Unit = {
+    
+    val array = rand.shuffle(order.toIndexedSeq).toArray
+    System.arraycopy(array, 0, order, 0, nVariables)
+    maxConflictDepth = 0
     conflictDepth = -1
-    if (!restarted) {
-      restarted = true
-      if (minInsertDepth < maxConflictDepth) {
-        val tmp = new Array[Int](minInsertDepth)
-        System.arraycopy(order, 0, tmp, 0, minInsertDepth)
-        System.arraycopy(order, minInsertDepth, order, 0, maxConflictDepth - minInsertDepth)
-        System.arraycopy(tmp, 0, order, maxConflictDepth - minInsertDepth, minInsertDepth)
-      }
-    }
   }
   
   final override def nextDecision: Decision = {

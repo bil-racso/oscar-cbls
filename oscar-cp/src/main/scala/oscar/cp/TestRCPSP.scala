@@ -18,21 +18,26 @@ import oscar.nogood.searches.RestartConflictSet
 
 object TestRCPSP extends App {
   
-  case class Result(id: Int, instance: String, time: Long, nFails: Int, objective: Int, completed: Boolean) {
-    override def toString: String = s"$instance\t$time\t$nFails\t$objective\t$completed"
+  case class Result(id: Int, instance: String, time: Long, nNodes: Int, nFails: Int, objective: Int, completed: Boolean) {
+    override def toString: String = s"$instance\t$time\t$nFails\t$objective\t$completed\t${nNodes*1000.0/time.toDouble}"
   }
 
   val jType = "j60"
   val boundsFile = s"data/rcpsp/$jType/opt"
-  val (upperBounds, lowerBounds) = BLParser.parseBounds(boundsFile)
+  val (lowerBounds, upperBounds) = BLParser.parseBounds(boundsFile)
   
-  val instanceRange1 = 5 to 5
-  val instanceRange2 = 3 to 3
+  val instances = for (i <- 1 to 48; j <- 1 to 10) yield (i, j)
+  val filtered = instances.filter(i => {
+    val instance = s"${jType.toUpperCase}_${i._1}_${i._2}.rcp"
+    val ub = upperBounds(instance)
+    val lb = lowerBounds(instance)
+    lb < ub
+  })
   
   val results = ParHashMap[String, Result]()
   
 
-  for (j <- instanceRange1.par; i <- instanceRange2.par) {
+  for ((j, i) <- filtered.par) {
 
     new CPModel {
       solver.silent = true
@@ -57,6 +62,7 @@ object TestRCPSP extends App {
       val makespan = maximum(ends)
 
       val ub = upperBounds(instanceFile.toUpperCase() + ".rcp")
+      val lb = lowerBounds(instanceFile.toUpperCase() + ".rcp")
 
       // Precedences
       for ((t1, t2) <- instance.precedences) add(ends(t1) <= starts(t2))
@@ -67,7 +73,7 @@ object TestRCPSP extends App {
       }
 
       //minimize(makespan)
-      add(makespan == ub)
+      add(makespan == lb)
       
       //search (setTimes(starts, durations.map(CPIntVar(_)), ends))
       //search(binaryFirstFail(starts))
@@ -93,6 +99,7 @@ object TestRCPSP extends App {
       }
 
       var nFails = 0
+      var nNodes = 0
       var time = 0l
 
       while (!solution && !timeOut) {
@@ -100,9 +107,10 @@ object TestRCPSP extends App {
         nogoodDB.foreach(n => solver.post(n.toConstraint))
         cpSearch.start(branching, s => s.nBacktracks >= n || s.nSolutions == 1 || System.currentTimeMillis() - t0 >= 600000)
         solver.pop()
-        nFails += cpSearch.nNodes
+        nFails += cpSearch.nBacktracks
+        nNodes += cpSearch.nNodes
         time = System.currentTimeMillis() - t0
-        completed = cpSearch.isCompleted
+        //solution = cpSearch.isCompleted // <----------
         timeOut = time > 600000
         n = (n * 115) / 100
       }
@@ -113,14 +121,14 @@ object TestRCPSP extends App {
       val nNodes = stats.nNodes
       val solution = stats.nSols == 1*/
           
-      val result = Result(j*10 + i, instanceFile, time, nFails, best, solution)
+      val result = Result(j*10 + i, instanceFile, time, nNodes, nFails, best, solution)
       results += (instanceFile -> result)
       
-      println("Progression: " + results.size.toDouble / (instanceRange1.size * instanceRange2.size))
+      println("Progression: " + results.size.toDouble / filtered.size)
     }
   }
   
-  println("name\ttime\tfails\tbest\topt")
+  println("name\ttime\tfails\tbest\topt\tnodes/sec")
   val allResults = results.values.toArray.sortBy(_.id)
   allResults.foreach(println)
   
