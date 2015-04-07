@@ -40,7 +40,7 @@ object FlatZincPrinter {
       }
     }
     for((id,e) <- dico.filter(_._2.isInstanceOf[ArrayOfElement])){
-      if(e.typ.isVar){
+      if(e.typ.isVar && model.isOutputArray(id)){//TODO: Should reuse more arrays, and avoid printing the useless ones
         //println(id+" "+e)
         val a = e.asInstanceOf[ArrayOfElement].elements
         out.println("array[1.."+a.size()+"] of var "+e.typ.typ+": "+id+toFZNann(model.dicoAnnot(id))+" = "+toFZN(a)+";")

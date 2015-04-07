@@ -131,6 +131,9 @@ class Model(val log: Log, val acceptAnyCstr: Boolean) {
   def isOutputVar(id: String): Boolean = {
     dicoAnnot(id).exists(_.name == "output_var")
   }
+  def isOutputArray(id: String): Boolean = {
+    dicoAnnot(id).exists(_.name == "output_array")
+  }
   
   private def handleVarAnnotations(name: String, e: Element, anns: List[oscar.flatzinc.model.Annotation]): Any = {
     dicoAnnot(name) = anns;
