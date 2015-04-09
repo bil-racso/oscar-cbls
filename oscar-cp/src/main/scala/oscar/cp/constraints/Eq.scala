@@ -88,25 +88,29 @@ class Eq(x: CPIntVar, y: CPIntVar) extends Constraint(x.store, "Equality") {
           val yvalues = Array.ofDim[Int](y.size)
           x.filterWhenDomainChangesWithDelta(true,CPStore.MaxPriorityL2) { d =>
             val m = d.fillArray(xvalues)
+            var hasfailed = false
             var i = 0
-            while (i < m) {
+            while (i < m && !hasfailed) {
               if (y.removeValue(xvalues(i)) == Failure) {
-                return Failure
+                hasfailed = true
               }
               i += 1
             }
-            Suspend
+            if (hasfailed) Failure
+            else Suspend
           }
           y.filterWhenDomainChangesWithDelta(true,CPStore.MaxPriorityL2) { d =>
             val m = d.fillArray(yvalues)
+            var hasfailed = false
             var i = 0
-            while (i < m) {
+            while (i < m && !hasfailed) {
               if (x.removeValue(yvalues(i)) == Failure) {
-                return Failure
+                hasfailed = true
               }
               i += 1
             }
-            Suspend
+            if (hasfailed) Failure
+            else Suspend
           }          
           
           
