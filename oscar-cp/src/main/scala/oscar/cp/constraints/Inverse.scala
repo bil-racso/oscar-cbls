@@ -88,7 +88,7 @@ class Inverse(prev: Array[CPIntVar], next: Array[CPIntVar]) extends Constraint(p
   private def init(vector1: Array[CPIntVar], vector2: Array[CPIntVar], i: Int, j: Int): Boolean = {
     if (!vector1(i).hasValue(j)) true
     else if (vector1(i).isBound) vector2(j).assign(i) != Failure
-    else if (!vector2(j).hasValue(i)) vector2(i).removeValue(j) != Failure
+    else if (!vector2(j).hasValue(i)) vector1(i).removeValue(j) != Failure
     else true
   }
 

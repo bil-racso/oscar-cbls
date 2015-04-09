@@ -58,6 +58,7 @@ class DFSLinearizerSearch(node: CPSolver) {
   final def start(branching: Branching, stopCondition: DFSLinearizerSearch => Boolean = _ => false, savingDirURL : Option[String] = None, maxNumDecisionPerFile : Int = Int.MaxValue) : (Int,Int,Int) = {
 
     var decisionChunkNumber = 0
+    var numberOfDecisionsForCurrentChunk = 0
 
     def saveCurrentDecisionsChunk(): Unit = {
       savingDirURL match {
@@ -69,6 +70,7 @@ class DFSLinearizerSearch(node: CPSolver) {
           out.close()
           decisionChunkNumber += 1
           searchStateModificationList = Nil
+          numberOfDecisionsForCurrentChunk = 0
         }
       }
     }
@@ -98,7 +100,7 @@ class DFSLinearizerSearch(node: CPSolver) {
     while (!alternativesStack.isEmpty && !stopCondition(this)) {
 
       //if the decision list too big, we save it inside a file
-      if(searchStateModificationList.length >= maxNumDecisionPerFile)
+      if(numberOfDecisionsForCurrentChunk >= maxNumDecisionPerFile)
         saveCurrentDecisionsChunk()
 
       nbNodes += 1
@@ -116,6 +118,7 @@ class DFSLinearizerSearch(node: CPSolver) {
 
       if(alternative.isInstanceOf[Decision]) {
         searchStateModificationList = alternative.asInstanceOf[Decision] :: searchStateModificationList
+        numberOfDecisionsForCurrentChunk += 1
       }
 
       alternative() // apply the alternative
@@ -128,12 +131,14 @@ class DFSLinearizerSearch(node: CPSolver) {
           nbSols += 1
           nbBkts += 1
           searchStateModificationList = Pop(node) :: searchStateModificationList
+          numberOfDecisionsForCurrentChunk += 1
           searchStateModificationList.head() //node.pop()
         }
       } else {
         failureActions.foreach(_())
         nbBkts += 1
         searchStateModificationList = Pop(node) :: searchStateModificationList
+        numberOfDecisionsForCurrentChunk += 1
         searchStateModificationList.head() //node.pop()
       }
     }
@@ -142,10 +147,12 @@ class DFSLinearizerSearch(node: CPSolver) {
     var i = alternativesStack.size
     while (i != 0) {
       searchStateModificationList = Pop(node) :: searchStateModificationList
+      numberOfDecisionsForCurrentChunk += 1
       searchStateModificationList.head() //node.pop()
       i -= 1
     }
     searchStateModificationList = Pop(node) :: searchStateModificationList
+    numberOfDecisionsForCurrentChunk += 1
     searchStateModificationList.head() //node.pop()
 
     //save the remaining decisions chunk
