@@ -30,8 +30,8 @@ import org.antlr.v4.runtime.atn.PredictionMode;
 public class FZParser {
 	public static Model readFlatZincModelFromFile(String fname,Log log, boolean acceptAnyCstr){
 		try{
-		ANTLRInputStream input = new ANTLRInputStream(new FileInputStream(fname));
-		//UnbufferedCharStream input = new UnbufferedCharStream(new FileInputStream(fname));
+		//ANTLRInputStream input = new ANTLRInputStream(new FileInputStream(fname));
+		UnbufferedCharStream input = new UnbufferedCharStream(new FileInputStream(fname));
 		return readFlatZincModel(input,log, acceptAnyCstr);
 		}catch(IOException e){
 	        System.err.println("File " + fname + " not found. Aborting.");
@@ -47,10 +47,13 @@ public class FZParser {
 		Model m = new Model(log, acceptAnyCstr);
 		//try{
 	        FlatzincLexer lex = new FlatzincLexer(input);
-			CommonTokenStream tokens = new CommonTokenStream(lex);
+			//CommonTokenStream tokens = new CommonTokenStream(lex);
+			lex.setTokenFactory(new CommonTokenFactory(true));
+			TokenStream tokens = new UnbufferedTokenStream<CommonToken>(lex);
 			FlatzincParser p = new FlatzincParser(tokens, m);
 			p.setBuildParseTree(false);//in order to get acceptable performance on large files
-			//System.out.println(p.getErrorListeners());
+			//Handling errors
+			p.removeParseListeners();
 			p.removeErrorListeners();
 			//Handling errors
 			//p.addErrorListener(new DiagnosticErrorListener());
@@ -59,6 +62,7 @@ public class FZParser {
                   int positionInLine, String message, RecognitionException e) { 
                 throw new ParsingException("line "+line+":"+positionInLine+" "+message);
               }
+              
             });
 			//The following try/catch and prediction modes implement this: https://theantlrguy.atlassian.net/wiki/pages/viewpage.action?pageId=1900591
 			p.getInterpreter().setPredictionMode(PredictionMode.SLL);
@@ -66,7 +70,8 @@ public class FZParser {
 	        	p.flatzinc_model();
 	        }catch (Exception e){
 	        	log.apply(0,"Simple SLL Parsing Failed. Fallback to complete LL parsing");
-	        	tokens.reset();
+	        	//Add to remove the following line for being able to use unbuffered streams!
+	        	//tokens.reset();
 	        	p.reset();
 	        	p.getInterpreter().setPredictionMode(PredictionMode.LL);    
 	        	p.flatzinc_model();  
