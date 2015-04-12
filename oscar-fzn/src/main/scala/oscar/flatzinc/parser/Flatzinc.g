@@ -104,10 +104,10 @@ solvegoal
 predparamtype : parpredparamtype | varpredparamtype;
 
 basicpartype returns [Type t]
-	: 'bool' {$t = new Type("bool");}
-	| 'float' {$t = new Type("float");}
-	| 'int' {$t = new Type("int");}
-	| 'set' 'of' 'int' {$t = new Type("set");}
+	: 'bool' {$t = new Type(Type.BOOL);}
+	| 'float' {$t = new Type(Type.FLOAT);}
+	| 'int' {$t = new Type(Type.INT);}
+	| 'set' 'of' 'int' {$t = new Type(Type.SET);}
 	;
 	
 partype returns [Type t]
@@ -122,9 +122,9 @@ parpredparamtype returns [Type t]
 	;
 	
 basicparpredparamtype returns [Type t]
-	: floatconst '..' floatconst {$t = new Type("float");}
-	| setconst {$t = new Type("int");}
-	| 'set' 'of' setconst {$t = new Type("set");}
+	: floatconst '..' floatconst {$t = new Type(Type.FLOAT);}
+	| setconst {$t = new Type(Type.INT);}
+	| 'set' 'of' setconst {$t = new Type(Type.SET);}
 	;
 	
 vartype returns [Type t, Element d]
@@ -133,18 +133,18 @@ vartype returns [Type t, Element d]
 	;
 	
 basicvartype returns [Type t, Element d]
-	: 'var' 'bool' {$t = new Type("bool"); ($t).isVar = true;}
-	| 'var' 'float' {$t = new Type("float"); ($t).isVar = true;}
-	| 'var' floatconst '..' floatconst {$t = new Type("float"); ($t).isVar = true;} 
- 	| 'var' 'int' {$t = new Type("int"); ($t).isVar = true;}
- 	| 'var' setconst {$t = new Type("int"); ($t).isVar = true; $d = $setconst.e;}
- 	| 'var' 'set' 'of' setconst {$t = new Type("set"); ($t).isVar = true; $d = $setconst.e;}
+	: 'var' 'bool' {$t = new Type(Type.BOOL); ($t).isVar = true;}
+	| 'var' 'float' {$t = new Type(Type.FLOAT); ($t).isVar = true;}
+	| 'var' floatconst '..' floatconst {$t = new Type(Type.FLOAT); ($t).isVar = true;} 
+ 	| 'var' 'int' {$t = new Type(Type.INT); ($t).isVar = true;}
+ 	| 'var' setconst {$t = new Type(Type.INT); ($t).isVar = true; $d = $setconst.e;}
+ 	| 'var' 'set' 'of' setconst {$t = new Type(Type.SET); ($t).isVar = true; $d = $setconst.e;}
  	;
 
 varpredparamtype returns [Type t] 
 	: vartype {$t = $vartype.t;}
-	| 'var' 'set' 'of' 'int' {$t = new Type("set"); ($t).isVar = true;}
-	| arraytype 'var' 'set' 'of' 'int' {$t = new Type("set"); ($t).isVar = true; ($t).isArray=true; ($t).size = $arraytype.size;}
+	| 'var' 'set' 'of' 'int' {$t = new Type(Type.SET); ($t).isVar = true;}
+	| arraytype 'var' 'set' 'of' 'int' {$t = new Type(Type.SET); ($t).isVar = true; ($t).isArray=true; ($t).size = $arraytype.size;}
 	;
 	
 arraytype returns [int size]:  'array' '[' ( lb=intconst '..' ub=intconst {$size = $ub.i; if($lb.i!=1) throw new ParsingException("Ranges of array must start at 1");} 
@@ -156,16 +156,16 @@ arraytype returns [int size]:  'array' '[' ( lb=intconst '..' ub=intconst {$size
 
 
 expr returns [Element e]
-	: Boolconst {$e = new Element(); ($e).value = $Boolconst.getText().equals("true"); ($e).typ = new Type("bool");} 
-	| Floatconst {$e = new Element(); ($e).value = Float.parseFloat($Floatconst.getText()); ($e).typ = new Type("float");}
-	| intconst {$e = new Element(); ($e).value = $intconst.i; ($e).typ = new Type("int");}
-	| setconst {$e = $setconst.e; ($e).typ = new Type("set");} 
+	: Boolconst {$e = new Element(); ($e).value = $Boolconst.getText().equals("true"); ($e).typ = new Type(Type.BOOL);} 
+	| Floatconst {$e = new Element(); ($e).value = Float.parseFloat($Floatconst.getText()); ($e).typ = new Type(Type.FLOAT);}
+	| intconst {$e = new Element(); ($e).value = $intconst.i; ($e).typ = new Type(Type.INT);}
+	| setconst {$e = $setconst.e; ($e).typ = new Type(Type.SET);} 
 	| varparid {$e = m.findId($varparid.text); }
 	| varparid '[' intconst ']' {$e = ((ArrayOfElement)m.findId($varparid.text)).elements.get($intconst.i-1); }
 	| arrayexpr {$e = $arrayexpr.a;}
-	| annotation {$e = new Element(); ($e).value = $annotation.ann; ($e).typ = new Type("Annotation"); // TODO: Check this: Annotation and string expressions are only permitted in annotation arguments. 
+	| annotation {$e = new Element(); ($e).value = $annotation.ann; ($e).typ = new Type(Type.ANNOTATION); // TODO: Check this: Annotation and string expressions are only permitted in annotation arguments. 
 	} 
-	| stringconstant {$e = new Element(); ($e).value = $stringconstant.str; ($e).typ = new Type("String");// TODO: Check this: Annotation and string expressions are only permitted in annotation arguments. 
+	| stringconstant {$e = new Element(); ($e).value = $stringconstant.str; ($e).typ = new Type(Type.STRING);// TODO: Check this: Annotation and string expressions are only permitted in annotation arguments. 
 	}
 	;
 // TODO: Check this: Annotation and string expressions are only permitted in annotation arguments.
@@ -178,7 +178,7 @@ setconst returns [Element e] locals [Set<Integer> s]
 	;
 
 arrayexpr returns [ArrayOfElement a]:
-	'[' {$a = new ArrayOfElement(); ($a).typ = new Type("null"); ($a).typ.isArray = true; $a.typ.size = 0;} 
+	'[' {$a = new ArrayOfElement(); ($a).typ = new Type(Type.NULL); ($a).typ.isArray = true; $a.typ.size = 0;} 
 		(e=expr {$a.elements.add($e.e); $a.typ.size+=1; if($e.e.typ.isVar)$a.typ.isVar = true; } 
 		(',' e=expr {$a.elements.add($e.e); $a.typ.size+=1; if($e.e.typ.isVar)$a.typ.isVar = true; } )* )? ']' {$a.close();};
 

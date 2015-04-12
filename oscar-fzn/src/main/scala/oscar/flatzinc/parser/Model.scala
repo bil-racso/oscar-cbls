@@ -38,7 +38,7 @@ class Model(val log: Log, val acceptAnyCstr: Boolean) {
   
   val problem: FZProblem = new FZProblem()
   val dico: Map[String,Element] = Map.empty[String,Element]
-  val dicoAnnot: Map[String, List[Annotation]] = Map.empty[String,List[Annotation]]
+  val dicoAnnot: Map[String, Iterable[Annotation]] = Map.empty[String,Iterable[Annotation]]
   
   def addId(id: String, e: Element)={
     //Console.err.println("% added" + id)
@@ -53,9 +53,9 @@ class Model(val log: Log, val acceptAnyCstr: Boolean) {
     }
   }
   
-  def createDomain(e: Domain,t: String): Domain  = {
+  def createDomain(e: Domain,t: Integer): Domain  = {
     if(e==null){
-      if(t.equals("bool")) new DomainRange(0,1)
+      if(t==Type.BOOL) new DomainRange(0,1)
       else new DomainRange(Int.MinValue, Int.MaxValue)//TODO: This is dangerous!
     }else e;      
   }
@@ -66,37 +66,38 @@ class Model(val log: Log, val acceptAnyCstr: Boolean) {
       case _ => null.asInstanceOf[Domain]
     }
   }
+  
   def addNewVariable(t: Type, de: Element, name: String, anns0: java.util.List[Annotation])={
-    val anns = anns0.asScala.toList;
-    val d = createDomain(if(de!=null)de.value.asInstanceOf[Domain]else null,t.typ)
-    if(!(t.typ.equals("int")||t.typ.equals("bool")))
+    if(!(t.typ == Type.INT||t.typ == Type.BOOL))
       throw new ParsingException("Only Supporting Int and Bool variables.");
+    val anns = anns0.asScala;
+    val d = createDomain(if(de!=null)de.value.asInstanceOf[Domain]else null,t.typ)
     if(t.isArray) {
         val a = new ArrayOfElement();
-        if(d!=null)a.domain = d;
+        //if(d!=null)a.domain = d;
         a.name = name;
         a.typ = t;
-        a.annotations = anns0;
+        //a.annotations = anns0;
         for(i <- 0 to t.size-1){
             val n = name+"["+(i+1)+"]"
-            val v = problem.addVariable(n,copy(d),t.typ.equals("bool"));
+            val v = problem.addVariable(n,copy(d),t.typ==Type.BOOL);
             val vr = new VarRef(v);
             a.elements.add(vr);
             vr.typ = new Type(t);
             vr.typ.isArray = false;
             vr.typ.size = 1;
             vr.name = n;
-            if(d!=null)vr.domain = d;
+            //if(d!=null)vr.domain = d;
         }
         addId(name,a);
         handleVarAnnotations(name, a, anns)
       }else{
-        val v = problem.addVariable(name,d,t.typ.equals("bool"))
+        val v = problem.addVariable(name,d,t.typ==Type.BOOL)
         val vr = new VarRef(v);
-        if(d!=null)vr.domain = d;
+        //if(d!=null)vr.domain = d;
         vr.name = name;
         vr.typ = t;
-        vr.annotations = anns0;
+        //vr.annotations = anns0;
         addId(name,vr);
         handleVarAnnotations(name, vr, anns)
       }
@@ -106,23 +107,24 @@ class Model(val log: Log, val acceptAnyCstr: Boolean) {
     val d = if(de!=null)de.value.asInstanceOf[Domain]else null
     //if(!name.equals(e.name)) System.out.println("% Not the same name: "+e.name+" vs "+name);
     if(!t.equals(e.typ)){
-      if(e.typ.typ.equals("null")){
+      if(e.typ.typ==Type.NULL){
         e.typ.typ = t.typ;
       }else{
         log(1,"Not the same type: "+e.typ+" vs "+t);
       }
     }
-    if(d!=null && !d.equals(e.domain)){
+    /*if(d!=null && !d.equals(e.domain)){
       //System.out.println("% Not the same domain: "+e.domain+" vs "+d);
       if(e.domain==null)e.domain = d
       else e.domain.inter(d)
-    }
+    }*/
     //if(!anns.equals(e.annotations)) System.out.println("% Not the same annotations: "+e.annotations+" vs "+anns);
     addId(name,e);
-    handleVarAnnotations(name, e, anns.asScala.toList)
+    handleVarAnnotations(name, e, anns.asScala)
   }
   
   def isIntroducedVar(id: String): Boolean = {
+    dicoAnnot.contains(id) &&
     dicoAnnot(id).exists(_.name == "var_is_introduced");
   }
   def isDefinedVar(id: String): Boolean = {
@@ -135,17 +137,17 @@ class Model(val log: Log, val acceptAnyCstr: Boolean) {
     dicoAnnot(id).exists(_.name == "output_array")
   }
   
-  private def handleVarAnnotations(name: String, e: Element, anns: List[oscar.flatzinc.model.Annotation]): Any = {
+  private def handleVarAnnotations(name: String, e: Element, anns: Iterable[oscar.flatzinc.model.Annotation]): Any = {
     dicoAnnot(name) = anns;
     if(e.typ.isArray){
       if (anns.exists((a: Annotation) => a.name == "output_array")) {
         
         val a = e.asInstanceOf[ArrayOfElement]
-          if(e.typ.typ.equals("int")){
+          if(e.typ.typ==Type.INT){
             problem.solution.addOutputArrayVarInt(name,a.elements.asScala.toArray.map{case vr: VarRef => vr.v.id; case other => if(other.name==null)other.value.toString() else other.name},
                            anns.find((p:Annotation) => p.name == "output_array").get.args(0).asInstanceOf[ArrayOfElement].elements.asScala.toList.map(e=>e.value.asInstanceOf[DomainRange].toRange))
           }
-          if(e.typ.typ.equals("bool")){
+          if(e.typ.typ==Type.INT){
             problem.solution.addOutputArrayVarBool(name,a.elements.asScala.toArray.map{case vr: VarRef => vr.v.id; case other => if(other.name==null)other.value.toString() else other.name},
                            anns.find((p:Annotation) => p.name == "output_array").get.args(0).asInstanceOf[ArrayOfElement].elements.asScala.toList.map(e=>e.value.asInstanceOf[DomainRange].toRange))
           }
@@ -153,8 +155,8 @@ class Model(val log: Log, val acceptAnyCstr: Boolean) {
     }else{
       if(anns.exists((a: Annotation) => a.name == "output_var")) {
         //println("000000 "+name)
-        if(e.typ.typ.equals("int")) problem.solution.addOutputVarInt(name,e.name)
-        if(e.typ.typ.equals("bool"))problem.solution.addOutputVarBool(name,e.name)
+        if(e.typ.typ==Type.INT) problem.solution.addOutputVarInt(name,e.name)
+        if(e.typ.typ==Type.BOOL)problem.solution.addOutputVarBool(name,e.name)
       }
     }
   }
@@ -162,6 +164,7 @@ class Model(val log: Log, val acceptAnyCstr: Boolean) {
   
   
   def addConstraint(name: String, args: java.util.List[Element], anns: java.util.List[Annotation]) = {
+    //ann_other is not used yet!
     val (ann_def,ann_other) = anns.asScala.toList.partition(a => a.name == "defines_var")
     val cstr = constructConstraint(name, args.asScala.toList, anns.asScala.toList)
     //Added the test because Mzn 2.0 adds some defined_var(12) with constants.
@@ -170,28 +173,25 @@ class Model(val log: Log, val acceptAnyCstr: Boolean) {
   }
   
   def setSATObjective(anns: java.util.List[Annotation])= {
-    problem.satisfy(anns.asScala.toList)
+    problem.satisfy(anns.asScala)
     //TODO: Search annotations are ignored for now
     if(anns.size() > 0)log(0,"ignoring search annotations")
   }
   def setMINObjective(e: Element, anns: java.util.List[Annotation])= {
-    problem.minimize(getIntVar(e),anns.asScala.toList)
+    problem.minimize(getIntVar(e),anns.asScala)
     //TODO: Search annotations are ignored for now
     if(anns.size() > 0)log(0,"ignoring search annotations")
   }
   def setMAXObjective(e: Element, anns: java.util.List[Annotation])= {
-    problem.maximize(getIntVar(e),anns.asScala.toList)
+    problem.maximize(getIntVar(e),anns.asScala)
     //TODO: Search annotations are ignored for now
     if(anns.size() > 0)log(0,"ignoring search annotations")
   }
   def getIntVar(e: Element): IntegerVariable = {
     if(e.isInstanceOf[VarRef])e.asInstanceOf[VarRef].v.asInstanceOf[IntegerVariable];
     else if(e.value.isInstanceOf[Integer])new IntegerVariable(e.value.toString(),Int.unbox(e.value))
-    //TODO: This method should only be used when IntegerVariable are used 
-    //else if(e.value.isInstanceOf[Boolean])new BooleanVariable(e.value.toString(),Some(Boolean.unbox(e.value)))
     else{
       throw new ParsingException("Expected a var int but got: "+e)
-      //null.asInstanceOf[Variable]
     }
   }
   def getBoolVar(e: Element): BooleanVariable = { 
@@ -199,7 +199,6 @@ class Model(val log: Log, val acceptAnyCstr: Boolean) {
     else if(e.value.isInstanceOf[Boolean])new BooleanVariable(e.value.toString(),Some(Boolean.unbox(e.value)))
     else{
       throw new ParsingException("Expected a var bool but got: "+e)
-      //null.asInstanceOf[Variable]
     }
   }
   def getBoolVarArray(e: Element): Array[BooleanVariable] = { 
@@ -214,13 +213,13 @@ class Model(val log: Log, val acceptAnyCstr: Boolean) {
 
   //TODO: Check if this actually reduces the memory footprint and does not increase parsing time too much...
   var knownarrays = Map.empty[WrappedArray[IntegerVariable],Array[IntegerVariable]]
-  
+  //TODO: This is actually late to do that memoization as elements might be repeated!
   def getIntVarArray(e: Element): Array[IntegerVariable] = { 
     if(e.isInstanceOf[ArrayOfElement]){
       val array = e.asInstanceOf[ArrayOfElement].elements.asScala.toArray.map(v => getIntVar(v))
       val wrap = genericWrapArray(array)
       if(knownarrays.contains(wrap)){
-       // Console.err.println("% reuse "+knownarrays.size)
+        //Console.err.println("% reuse "+knownarrays.size)
         knownarrays(wrap)
       }else{
         knownarrays(wrap) = array
@@ -230,10 +229,11 @@ class Model(val log: Log, val acceptAnyCstr: Boolean) {
       throw new ParsingException("Expected a array of var int but got: "+e)
     }
   }
+  
   def getIntSet(e: Element): Domain = {
-    //println("%"+e)
     e.value.asInstanceOf[Domain]
   }
+  
   def constructConstraint(cstr: String, varList: List[Element], ann:List[Annotation]): Constraint = {
     //special case
     if(cstr=="bool_eq_reif" && !varList(1).typ.isVar && !varList(1).value.asInstanceOf[Boolean]){
@@ -241,16 +241,17 @@ class Model(val log: Log, val acceptAnyCstr: Boolean) {
     }
     if(cstr.endsWith("_reif"))reif(constructConstraint(cstr.substring(0,cstr.length-5),varList.dropRight(1),ann),getBoolVar(varList.last))
     else
-      cstr match {
-        case "oscar_alldiff" =>
-          log(0,"deprecated: oscar_alldiff")
-          val a = getIntVarArray(varList(0));
-          all_different_int(a, ann)
-        case other =>
-          makeConstraint(other,varList,ann)
+//      cstr match {
+//        case "oscar_alldiff" =>
+//          log(0,"deprecated: oscar_alldiff")
+//          val a = getIntVarArray(varList(0));
+//          all_different_int(a, ann)
+//        case other =>
+          makeConstraint(cstr,varList,ann)
+      //GenericConstraint(cstr,List.empty[Object],ann)
           //throw new NoSuchConstraintException(notImplemented.toString(),"CBLS Solver");
 
-      }
+    //  }
   }
   
   def makeConstraint(c: String, args:List[Element], ann:List[Annotation]): Constraint = {
@@ -268,38 +269,40 @@ class Model(val log: Log, val acceptAnyCstr: Boolean) {
   
   def makeGenericConstraint(c: String, args:List[Element], ann:List[Annotation]): Constraint = {
     val args2 = args.map((a) => 
-      if(a.typ.typ.equals("int"))
+      if(a.typ.typ==Type.INT)
         if(a.typ.isArray) getIntVarArray(a)
         else getIntVar(a)
-      else if(a.typ.typ.equals("bool"))
+      else if(a.typ.typ==Type.BOOL)
         if(a.typ.isArray) getBoolVarArray(a)
         else getBoolVar(a)//TODO: differentiate par vs var
-      else if(a.typ.typ.equals("set")) getIntSet(a)
+      else if(a.typ.typ==Type.SET) getIntSet(a)
       else throw new Exception("Case not handled: "+a))
     GenericConstraint(c,args2,ann)
   }
+  
+  
+  //TODO: Might actually memoize the used constructors as most problems only involve a handful of constraint predicates.
   def makeConstraint[A]/* <: Constraint]*/(c:Class[A],args:List[Element], ann:List[Annotation]): Constraint = {
     val cc:Constructor[A] = c.getConstructors()(0).asInstanceOf[Constructor[A]];
     val p = cc.getParameterTypes();
     //println(p.mkString(","))
     val arg = new Array[Object](p.length)
     for(i <- 0 to p.length-2){
-      /*arg(i) = types(i) match {
-                    case "av" => getIntVarArray(args(i))
-                    case "v" => getIntVar(args(i))
-      }*/
       arg(i) = if (p(i).equals(classOf[Array[IntegerVariable]])) getIntVarArray(args(i))
                 else if (p(i).equals(classOf[IntegerVariable])) getIntVar(args(i))//TODO: differentiate par vs var
                 else if (p(i).equals(classOf[Array[BooleanVariable]])) getBoolVarArray(args(i))
                 else if (p(i).equals(classOf[BooleanVariable])) getBoolVar(args(i))//TODO: differentiate par vs var
                 else if(p(i).equals(classOf[Domain])) getIntSet(args(i))
                 else throw new Exception("Case not handled: "+p(i));
-    }
+    }/**/
     arg(p.length-1) = ann;
     //println(arg.length)
     val x = arg;//new AsJava(arg)
     val h = new Help()
+    //GenericConstraint(c.toString(),List.empty[Object],ann)
     h.buildConstraint(cc.asInstanceOf[Constructor[Constraint]],x/*.asJava*/)
+    
+    
     //GenericConstraint(c.toString(),arg.toList.take(p.length-1),ann)
     //cc.newInstance(x).asInstanceOf[Constraint]
     //.tupled(arg)

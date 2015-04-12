@@ -29,14 +29,14 @@ public class ArrayOfElement extends Element{
 	}
 	@Override
 	public String toString() {
-		return "Array [elements=" + elements + ", name=" + name + ", id=" + id
-				+ ", type=" + typ + ", annotations=" + annotations + "]";
+		return "Array [elements=" + elements + ", name=" + name /*+ ", id=" + id*/
+				+ ", type=" + typ/* + ", annotations=" + annotations*/ + "]";
 	}
 	public void close() {
 	  if(elements.size()>0){
-	    String typ = elements.get(0).typ.typ;
+	    int typ = elements.get(0).typ.typ;
 	    for(Element e: elements){
-	      if(!typ.equals(e.typ.typ)) throw new ParsingException("Not all same type in array");
+	      if(typ != e.typ.typ) throw new ParsingException("Not all same type in array");
 	    }
 	    this.typ.typ = typ;
 	  }

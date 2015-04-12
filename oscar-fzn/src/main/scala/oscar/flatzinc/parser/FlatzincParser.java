@@ -602,21 +602,21 @@ public class FlatzincParser extends Parser {
 				enterOuterAlt(_localctx, 1);
 				{
 				setState(159); match(T__9);
-				((BasicpartypeContext)_localctx).t =  new Type("bool");
+				((BasicpartypeContext)_localctx).t =  new Type(Type.BOOL);
 				}
 				break;
 			case T__11:
 				enterOuterAlt(_localctx, 2);
 				{
 				setState(161); match(T__11);
-				((BasicpartypeContext)_localctx).t =  new Type("float");
+				((BasicpartypeContext)_localctx).t =  new Type(Type.FLOAT);
 				}
 				break;
 			case T__17:
 				enterOuterAlt(_localctx, 3);
 				{
 				setState(163); match(T__17);
-				((BasicpartypeContext)_localctx).t =  new Type("int");
+				((BasicpartypeContext)_localctx).t =  new Type(Type.INT);
 				}
 				break;
 			case T__14:
@@ -625,7 +625,7 @@ public class FlatzincParser extends Parser {
 				setState(165); match(T__14);
 				setState(166); match(T__22);
 				setState(167); match(T__17);
-				((BasicpartypeContext)_localctx).t =  new Type("set");
+				((BasicpartypeContext)_localctx).t =  new Type(Type.SET);
 				}
 				break;
 			default:
@@ -788,7 +788,7 @@ public class FlatzincParser extends Parser {
 				setState(192); floatconst();
 				setState(193); match(T__0);
 				setState(194); floatconst();
-				((BasicparpredparamtypeContext)_localctx).t =  new Type("float");
+				((BasicparpredparamtypeContext)_localctx).t =  new Type(Type.FLOAT);
 				}
 				break;
 			case T__13:
@@ -796,7 +796,7 @@ public class FlatzincParser extends Parser {
 				enterOuterAlt(_localctx, 2);
 				{
 				setState(197); setconst();
-				((BasicparpredparamtypeContext)_localctx).t =  new Type("int");
+				((BasicparpredparamtypeContext)_localctx).t =  new Type(Type.INT);
 				}
 				break;
 			case T__14:
@@ -805,7 +805,7 @@ public class FlatzincParser extends Parser {
 				setState(200); match(T__14);
 				setState(201); match(T__22);
 				setState(202); setconst();
-				((BasicparpredparamtypeContext)_localctx).t =  new Type("set");
+				((BasicparpredparamtypeContext)_localctx).t =  new Type(Type.SET);
 				}
 				break;
 			default:
@@ -906,7 +906,7 @@ public class FlatzincParser extends Parser {
 				{
 				setState(216); match(T__15);
 				setState(217); match(T__9);
-				((BasicvartypeContext)_localctx).t =  new Type("bool"); (_localctx.t).isVar = true;
+				((BasicvartypeContext)_localctx).t =  new Type(Type.BOOL); (_localctx.t).isVar = true;
 				}
 				break;
 			case 2:
@@ -914,7 +914,7 @@ public class FlatzincParser extends Parser {
 				{
 				setState(219); match(T__15);
 				setState(220); match(T__11);
-				((BasicvartypeContext)_localctx).t =  new Type("float"); (_localctx.t).isVar = true;
+				((BasicvartypeContext)_localctx).t =  new Type(Type.FLOAT); (_localctx.t).isVar = true;
 				}
 				break;
 			case 3:
@@ -924,7 +924,7 @@ public class FlatzincParser extends Parser {
 				setState(223); floatconst();
 				setState(224); match(T__0);
 				setState(225); floatconst();
-				((BasicvartypeContext)_localctx).t =  new Type("float"); (_localctx.t).isVar = true;
+				((BasicvartypeContext)_localctx).t =  new Type(Type.FLOAT); (_localctx.t).isVar = true;
 				}
 				break;
 			case 4:
@@ -932,7 +932,7 @@ public class FlatzincParser extends Parser {
 				{
 				setState(228); match(T__15);
 				setState(229); match(T__17);
-				((BasicvartypeContext)_localctx).t =  new Type("int"); (_localctx.t).isVar = true;
+				((BasicvartypeContext)_localctx).t =  new Type(Type.INT); (_localctx.t).isVar = true;
 				}
 				break;
 			case 5:
@@ -940,7 +940,7 @@ public class FlatzincParser extends Parser {
 				{
 				setState(231); match(T__15);
 				setState(232); ((BasicvartypeContext)_localctx).setconst = setconst();
-				((BasicvartypeContext)_localctx).t =  new Type("int"); (_localctx.t).isVar = true; ((BasicvartypeContext)_localctx).d =  ((BasicvartypeContext)_localctx).setconst.e;
+				((BasicvartypeContext)_localctx).t =  new Type(Type.INT); (_localctx.t).isVar = true; ((BasicvartypeContext)_localctx).d =  ((BasicvartypeContext)_localctx).setconst.e;
 				}
 				break;
 			case 6:
@@ -950,7 +950,7 @@ public class FlatzincParser extends Parser {
 				setState(236); match(T__14);
 				setState(237); match(T__22);
 				setState(238); ((BasicvartypeContext)_localctx).setconst = setconst();
-				((BasicvartypeContext)_localctx).t =  new Type("set"); (_localctx.t).isVar = true; ((BasicvartypeContext)_localctx).d =  ((BasicvartypeContext)_localctx).setconst.e;
+				((BasicvartypeContext)_localctx).t =  new Type(Type.SET); (_localctx.t).isVar = true; ((BasicvartypeContext)_localctx).d =  ((BasicvartypeContext)_localctx).setconst.e;
 				}
 				break;
 			}
@@ -1002,7 +1002,7 @@ public class FlatzincParser extends Parser {
 				setState(247); match(T__14);
 				setState(248); match(T__22);
 				setState(249); match(T__17);
-				((VarpredparamtypeContext)_localctx).t =  new Type("set"); (_localctx.t).isVar = true;
+				((VarpredparamtypeContext)_localctx).t =  new Type(Type.SET); (_localctx.t).isVar = true;
 				}
 				break;
 			case 3:
@@ -1013,7 +1013,7 @@ public class FlatzincParser extends Parser {
 				setState(253); match(T__14);
 				setState(254); match(T__22);
 				setState(255); match(T__17);
-				((VarpredparamtypeContext)_localctx).t =  new Type("set"); (_localctx.t).isVar = true; (_localctx.t).isArray=true; (_localctx.t).size = ((VarpredparamtypeContext)_localctx).arraytype.size;
+				((VarpredparamtypeContext)_localctx).t =  new Type(Type.SET); (_localctx.t).isVar = true; (_localctx.t).isArray=true; (_localctx.t).size = ((VarpredparamtypeContext)_localctx).arraytype.size;
 				}
 				break;
 			}
@@ -1139,28 +1139,28 @@ public class FlatzincParser extends Parser {
 				enterOuterAlt(_localctx, 1);
 				{
 				setState(278); ((ExprContext)_localctx).Boolconst = match(Boolconst);
-				((ExprContext)_localctx).e =  new Element(); (_localctx.e).value = ((ExprContext)_localctx).Boolconst.getText().equals("true"); (_localctx.e).typ = new Type("bool");
+				((ExprContext)_localctx).e =  new Element(); (_localctx.e).value = ((ExprContext)_localctx).Boolconst.getText().equals("true"); (_localctx.e).typ = new Type(Type.BOOL);
 				}
 				break;
 			case 2:
 				enterOuterAlt(_localctx, 2);
 				{
 				setState(280); ((ExprContext)_localctx).Floatconst = match(Floatconst);
-				((ExprContext)_localctx).e =  new Element(); (_localctx.e).value = Float.parseFloat(((ExprContext)_localctx).Floatconst.getText()); (_localctx.e).typ = new Type("float");
+				((ExprContext)_localctx).e =  new Element(); (_localctx.e).value = Float.parseFloat(((ExprContext)_localctx).Floatconst.getText()); (_localctx.e).typ = new Type(Type.FLOAT);
 				}
 				break;
 			case 3:
 				enterOuterAlt(_localctx, 3);
 				{
 				setState(282); ((ExprContext)_localctx).intconst = intconst();
-				((ExprContext)_localctx).e =  new Element(); (_localctx.e).value = ((ExprContext)_localctx).intconst.i; (_localctx.e).typ = new Type("int");
+				((ExprContext)_localctx).e =  new Element(); (_localctx.e).value = ((ExprContext)_localctx).intconst.i; (_localctx.e).typ = new Type(Type.INT);
 				}
 				break;
 			case 4:
 				enterOuterAlt(_localctx, 4);
 				{
 				setState(285); ((ExprContext)_localctx).setconst = setconst();
-				((ExprContext)_localctx).e =  ((ExprContext)_localctx).setconst.e; (_localctx.e).typ = new Type("set");
+				((ExprContext)_localctx).e =  ((ExprContext)_localctx).setconst.e; (_localctx.e).typ = new Type(Type.SET);
 				}
 				break;
 			case 5:
@@ -1191,7 +1191,7 @@ public class FlatzincParser extends Parser {
 				enterOuterAlt(_localctx, 8);
 				{
 				setState(300); ((ExprContext)_localctx).annotation = annotation();
-				((ExprContext)_localctx).e =  new Element(); (_localctx.e).value = ((ExprContext)_localctx).annotation.ann; (_localctx.e).typ = new Type("Annotation"); // TODO: Check this: Annotation and string expressions are only permitted in annotation arguments. 
+				((ExprContext)_localctx).e =  new Element(); (_localctx.e).value = ((ExprContext)_localctx).annotation.ann; (_localctx.e).typ = new Type(Type.ANNOTATION); // TODO: Check this: Annotation and string expressions are only permitted in annotation arguments. 
 					
 				}
 				break;
@@ -1199,7 +1199,7 @@ public class FlatzincParser extends Parser {
 				enterOuterAlt(_localctx, 9);
 				{
 				setState(303); ((ExprContext)_localctx).stringconstant = stringconstant();
-				((ExprContext)_localctx).e =  new Element(); (_localctx.e).value = ((ExprContext)_localctx).stringconstant.str; (_localctx.e).typ = new Type("String");// TODO: Check this: Annotation and string expressions are only permitted in annotation arguments. 
+				((ExprContext)_localctx).e =  new Element(); (_localctx.e).value = ((ExprContext)_localctx).stringconstant.str; (_localctx.e).typ = new Type(Type.STRING);// TODO: Check this: Annotation and string expressions are only permitted in annotation arguments. 
 					
 				}
 				break;
@@ -1322,7 +1322,7 @@ public class FlatzincParser extends Parser {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(332); match(T__20);
-			((ArrayexprContext)_localctx).a =  new ArrayOfElement(); (_localctx.a).typ = new Type("null"); (_localctx.a).typ.isArray = true; _localctx.a.typ.size = 0;
+			((ArrayexprContext)_localctx).a =  new ArrayOfElement(); (_localctx.a).typ = new Type(Type.NULL); (_localctx.a).typ.isArray = true; _localctx.a.typ.size = 0;
 			setState(345);
 			_la = _input.LA(1);
 			if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__20) | (1L << T__13) | (1L << Boolconst) | (1L << PREDANNID) | (1L << VARPARID) | (1L << Floatconst) | (1L << INT) | (1L << STRING))) != 0)) {

@@ -26,13 +26,10 @@ import oscar.flatzinc.UnsatException
 import scala.collection.immutable.SortedSet
 
 class FZProblem {
-
   var variables: Set[Variable] = Set.empty[Variable]
-  
-  var constraints: Set[Constraint] = Set.empty[Constraint]//TODO: might as well replace it by a set for easy access...
- // var cstrsByName: MMap[String,List[Constraint]] = MMap.empty[String,List[Constraint]]
+  var constraints: Set[Constraint] = Set.empty[Constraint]
+
   val solution:FZSolution = new FZSolution();
-  
   val search = new Search();
   
   def addVariable(id: String, dom: Domain, bool: Boolean): Variable = {
@@ -41,48 +38,42 @@ class FZProblem {
   }
   def addIntegerVariable(id: String, dom: Domain): Variable = {
     val variable: Variable = new IntegerVariable(id, dom)
-    variables += variable //:: variables
+    variables += variable
     variable
   }
   def addBooleanVariable(id: String, dom: Domain): Variable = {
     val variable: Variable = new BooleanVariable(id, dom)
-    variables += variable //:: variables
+    variables += variable
     variable
   }
   
   def addConstraint(c: Constraint) {
     constraints += c
-    //the following code adds constraints by name
-    
-   // cstrsByName(name) = List(c) ++ cstrsByName.getOrElse(name, List.empty[Constraint])
   }
   
-  
-  def satisfy(anns:List[Annotation]) {
+  def satisfy(anns:Iterable[Annotation]) {
     search.obj = Objective.SATISFY
     search.anns = anns
   }
-  
-  def minimize(obj: IntegerVariable,anns:List[Annotation]) {
+  def minimize(obj: IntegerVariable,anns:Iterable[Annotation]) {
     search.obj = Objective.MINIMIZE
     search.variable = Some(obj)
     search.anns = anns
   }
-  
-  def maximize(obj: IntegerVariable,anns:List[Annotation]) {
+  def maximize(obj: IntegerVariable,anns:Iterable[Annotation]) {
     search.obj = Objective.MAXIMIZE
     search.variable = Some(obj)
     search.anns = anns
   }
   
-  def addSearch(s: Array[Variable],vrh: VariableHeuristic.Value,vh: ValueHeuristic.Value) {
-    //println("search "+vrh+" "+vh+ " variables:"+s.mkString(","))
-    search.heuristics =  search.heuristics :+ (s,vrh,vh)
-  }
-  
-  def nSols(n: Int) {
-    search.nSols = n
-  }
+//  def addSearch(s: Array[Variable],vrh: VariableHeuristic.Value,vh: ValueHeuristic.Value) {
+//    //println("search "+vrh+" "+vh+ " variables:"+s.mkString(","))
+//    search.heuristics =  search.heuristics :+ (s,vrh,vh)
+//  }
+//  
+//  def nSols(n: Int) {
+//    search.nSols = n
+//  }
 }
 
 sealed abstract class Domain {
@@ -235,9 +226,9 @@ object Objective extends Enumeration {
 
 
 class Search() {
-  var nSols = 0
+  //var nSols = 0
   var obj: Objective.Value = Objective.SATISFY
   var variable: Option[IntegerVariable] = None
-  var heuristics: Vector[(Array[Variable],VariableHeuristic.Value,ValueHeuristic.Value)] = Vector.empty 
-  var anns: List[Annotation] = List.empty[Annotation]
+  //var heuristics: Vector[(Array[Variable],VariableHeuristic.Value,ValueHeuristic.Value)] = Vector.empty 
+  var anns: Iterable[Annotation] = List.empty[Annotation]
 }

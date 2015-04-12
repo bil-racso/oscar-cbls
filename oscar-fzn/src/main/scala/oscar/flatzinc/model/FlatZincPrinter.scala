@@ -24,6 +24,7 @@ import oscar.flatzinc.parser.intermediatemodel.Element
 import oscar.flatzinc.parser.intermediatemodel.ArrayOfElement
 import scala.collection.JavaConverters._
 import java.util.ArrayList
+import oscar.flatzinc.parser.intermediatemodel.Type
 
 object FlatZincPrinter {
 
@@ -43,7 +44,7 @@ object FlatZincPrinter {
       if(e.typ.isVar && model.isOutputArray(id)){//TODO: Should reuse more arrays, and avoid printing the useless ones
         //println(id+" "+e)
         val a = e.asInstanceOf[ArrayOfElement].elements
-        out.println("array[1.."+a.size()+"] of var "+e.typ.typ+": "+id+toFZNann(model.dicoAnnot(id))+" = "+toFZN(a)+";")
+        out.println("array[1.."+a.size()+"] of var "+Type.typeName(e.typ.typ)+": "+id+toFZNann(model.dicoAnnot(id))+" = "+toFZN(a)+";")
         //println("array[1.."+a.size()+"] of var int: "+id+toFZNann(model.dicoAnnot(id))+"= "+toFZN(a)+";")
       }
     }
@@ -79,10 +80,10 @@ object FlatZincPrinter {
   def toFZN(ann: Annotation): String = {
     ann.name+{if(!ann.args.isEmpty) ann.args.map(toFZN(_)).mkString("(", ",", ")") else ""}
   }
-  def toFZN(anns: List[Annotation]): String = {
+  def toFZN(anns: Iterable[Annotation]): String = {
     anns.map(toFZN(_)).mkString(" ")
   }
-  def toFZNann(anns: List[Annotation]): String = {
+  def toFZNann(anns: Iterable[Annotation]): String = {
     if(anns.isEmpty) "" else
     anns.map(toFZN(_)).mkString(" ::"," ::","")
   }
@@ -94,7 +95,7 @@ object FlatZincPrinter {
     a match{
       case d: Domain => toFZN(d)
       case ann: Annotation => toFZN(ann)
-      case anns: List[Annotation] => toFZN(anns)
+      case anns: Iterable[Annotation] => toFZN(anns)
       case s:String => s
       case c:Constraint => toFZN(c)
       case v:Variable => v.id
