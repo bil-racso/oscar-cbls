@@ -28,12 +28,12 @@ public class Element {
 	public Type typ;
 	//public List<Annotation> annotations;
 	public Element(){
-		//id = nextid;
-		//nextid++;
-		//annotations = new ArrayList<Annotation>();
+//		//id = nextid;
+//		//nextid++;
+//		//annotations = new ArrayList<Annotation>();
 	}
 	public Element(Object val){
-		this();
+	//	this();
 		value = val;
 	}
 	@Override

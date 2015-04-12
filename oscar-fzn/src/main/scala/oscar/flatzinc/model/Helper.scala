@@ -20,18 +20,28 @@ package oscar.flatzinc.model
 import scala.collection.mutable.{ Map => MMap}
 
 object Helper {
+  
+//  val cnames = //MMap.empty[Constraint,String]//
+//    MMap.empty[Class[_],String]
   def getCName(c: Constraint): String = {
-    if(c.isInstanceOf[GeneratedConstraint])
-      c.asInstanceOf[GeneratedConstraint].name
-    else if(c.isInstanceOf[GenericConstraint])
-      c.asInstanceOf[GenericConstraint].name
-    else{
-      val names = c.getClass().getName().split("\\.")
-      val name = names(names.length-1)
-      if(name=="reif"){
-        val n2 = c.asInstanceOf[reif].c.getClass().getName().split("\\.")
-        n2(n2.length-1)+"_reif"
-      }else name
+    c match{
+      case c:GeneratedConstraint => c.name
+      case c:GenericConstraint => c.name
+      case reif(c,b) => getCName(c)+"_reif"
+      case c => {
+        c.getClass().getName().split("\\.").last
+//        val cl = c.getClass();
+//        if(cnames.contains(cl)){ cnames(cl) }else{
+//          val n = cl.getName().split("\\.").last
+//          cnames(cl) = n
+//          n
+//        }
+//        if(cnames.contains(c)){ cnames(c) }else{
+//          val n = c.getClass().getName().split("\\.").last
+//          cnames(c) = n
+//          n
+//        }
+      }
     }
   }
   
