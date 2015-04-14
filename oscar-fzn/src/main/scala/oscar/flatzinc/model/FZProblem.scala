@@ -21,13 +21,14 @@ package oscar.flatzinc.model
 
 import scala.Array.canBuildFrom
 import scala.collection.mutable.{Map => MMap}
+import scala.collection.mutable.{Set => MSet}
 import scala.collection.immutable.Range
 import oscar.flatzinc.UnsatException
 import scala.collection.immutable.SortedSet
 
 class FZProblem {
-  var variables: Set[Variable] = Set.empty[Variable]
-  var constraints: Set[Constraint] = Set.empty[Constraint]
+  val variables: MSet[Variable] = MSet.empty[Variable]
+  val constraints: MSet[Constraint] = MSet.empty[Constraint]
 
   val solution:FZSolution = new FZSolution();
   val search = new Search();

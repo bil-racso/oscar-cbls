@@ -239,8 +239,19 @@ class Model(val log: Log, val acceptAnyCstr: Boolean) {
     if(cstr=="bool_eq_reif" && !varList(1).typ.isVar && !varList(1).value.asInstanceOf[Boolean]){
       return constructConstraint("bool_not",varList.head :: varList.tail.tail,ann)
     }
+    cstr match{
+      case "int_eq_reif" => reif(int_eq(getIntVar(varList(0)),getIntVar(varList(1)),ann),getBoolVar(varList(2))) 
+      case "int_eq" => int_eq(getIntVar(varList(0)),getIntVar(varList(1)),ann)  
+      case "int_ne" => int_ne(getIntVar(varList(0)),getIntVar(varList(1)),ann)
+      case "int_ne_reif" => reif(int_ne(getIntVar(varList(0)),getIntVar(varList(1)),ann),getBoolVar(varList(2))) 
+      case "bool_eq" => bool_eq(getBoolVar(varList(0)),getBoolVar(varList(1)),ann) 
+      case "array_bool_or" => array_bool_or(getBoolVarArray(varList(0)),getBoolVar(varList(1)),ann)
+      //TODO: Continue here for best efficiency!
+      case _ =>
     if(cstr.endsWith("_reif"))reif(constructConstraint(cstr.substring(0,cstr.length-5),varList.dropRight(1),ann),getBoolVar(varList.last))
     else
+      //cstr match{
+      //case _ =>
 //      cstr match {
 //        case "oscar_alldiff" =>
 //          log(0,"deprecated: oscar_alldiff")
@@ -250,7 +261,8 @@ class Model(val log: Log, val acceptAnyCstr: Boolean) {
           makeConstraint(cstr,varList,ann)
       //GenericConstraint(cstr,List.empty[Object],ann)
           //throw new NoSuchConstraintException(notImplemented.toString(),"CBLS Solver");
-
+    //}
+    }
     //  }
   }
   

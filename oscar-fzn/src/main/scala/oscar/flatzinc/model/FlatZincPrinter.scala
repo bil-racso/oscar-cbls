@@ -25,27 +25,37 @@ import oscar.flatzinc.parser.intermediatemodel.ArrayOfElement
 import scala.collection.JavaConverters._
 import java.util.ArrayList
 import oscar.flatzinc.parser.intermediatemodel.Type
+import java.io.PrintWriter
 
 object FlatZincPrinter {
 
-  def outputModelTo(model:Model, out:PrintStream){
+  def outputModelTo(model:Model, out:PrintWriter){
     val dico = model.dico
     //No Parameters (all inlined) TODO
     //Variables
-    for((id,e) <- dico.filter(_._2.isInstanceOf[VarRef])){
-      //TODO: Make sure that aliases come after the corresponding variable... WHICH ALIASES?
-      val v = e.asInstanceOf[VarRef].v//.asInstanceOf[ConcreteVariable]
-      v match{
-        case IntegerVariable(i,d) => out.println("var "+toFZN(d)+": "+ id +toFZNann(model.dicoAnnot(id))+";");
-        case BooleanVariable(i,v) => out.println("var bool: "+ id +toFZNann(model.dicoAnnot(id))+{if(v.isDefined) " = "+v.get.toString() else ""}+";");
+    for((id,e) <- dico){
+      e match {
+        case e:VarRef =>{
+          //TODO: Make sure that aliases come after the corresponding variable... WHICH ALIASES?
+          val v = e.v//.asInstanceOf[ConcreteVariable]
+          val s = StringBuilder
+          v match{
+            case IntegerVariable(i,d) => out.println("var "+toFZN(d)+": "+ id +toFZNann(model.dicoAnnot(id))+";");
+            case BooleanVariable(i,v) => out.println("var bool: "+ id +toFZNann(model.dicoAnnot(id))+{if(v.isDefined) " = "+v.get.toString() else ""}+";");
+          }
+        }
+        case _ => {}
       }
     }
-    for((id,e) <- dico.filter(_._2.isInstanceOf[ArrayOfElement])){
-      if(e.typ.isVar && model.isOutputArray(id)){//TODO: Should reuse more arrays, and avoid printing the useless ones
-        //println(id+" "+e)
-        val a = e.asInstanceOf[ArrayOfElement].elements
-        out.println("array[1.."+a.size()+"] of var "+Type.typeName(e.typ.typ)+": "+id+toFZNann(model.dicoAnnot(id))+" = "+toFZN(a)+";")
-        //println("array[1.."+a.size()+"] of var int: "+id+toFZNann(model.dicoAnnot(id))+"= "+toFZN(a)+";")
+    for((id,e) <- dico){//.filter(_._2.isInstanceOf[ArrayOfElement])){
+      e match {
+        case e:ArrayOfElement if(e.typ.isVar && model.isOutputArray(id)) =>{//TODO: Should reuse more arrays, and avoid printing the useless ones
+          //println(id+" "+e)
+          val a = e.elements
+          out.println("array[1.."+a.size()+"] of var "+Type.typeName(e.typ.typ)+": "+id+toFZNann(model.dicoAnnot(id))+" = "+toFZN(a)+";")
+          //println("array[1.."+a.size()+"] of var int: "+id+toFZNann(model.dicoAnnot(id))+"= "+toFZN(a)+";")
+        }
+        case _ => {}
       }
     }
     for(c <- model.problem.constraints){

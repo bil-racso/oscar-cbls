@@ -227,16 +227,17 @@ object FZModelTransfo {
       var (cstrs,retract)= prop()
       while(!retract.isEmpty){
         log(1,"Looping")
-        model.constraints = cstrs
+        //model.constraints = cstrs
         for(c <- retract){
           c.retract()
         }
         //TODO: This step is only done if some constraint was retracted... Should move it!
-        val (c2,r2) = model.constraints.partition{
+        val (c2,r2) = cstrs.partition{
           case reif(c,b) if b.isBound => false
           case _ => true
         }
-        model.constraints = c2;
+        model.constraints.clear()
+        model.constraints ++= c2;
         for(c<-r2){
           c match {
             case reif(c2,b) =>{

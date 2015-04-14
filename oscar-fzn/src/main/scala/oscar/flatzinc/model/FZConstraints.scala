@@ -19,6 +19,7 @@
 package oscar.flatzinc.model
 
 
+//TODO: The annotation list is not used!
 
 abstract class Constraint(val variables: Array[Variable],val annotations: List[Annotation]) {
   for(v <- variables){
