@@ -60,15 +60,22 @@ public class FZParser {
 			p.addErrorListener(new BaseErrorListener() {
               public void syntaxError(Recognizer<?, ?> recon, Object offendingSymbol, int line,
                   int positionInLine, String message, RecognitionException e) { 
-                throw new ParsingException("line "+line+":"+positionInLine+" "+message);
+            	  //System.out.println(offendingSymbol);
+                throw new ParsingException("line "+line+":"+positionInLine+" "+message+" "+offendingSymbol);
               }
               
             });
 			//The following try/catch and prediction modes implement this: https://theantlrguy.atlassian.net/wiki/pages/viewpage.action?pageId=1900591
 			p.getInterpreter().setPredictionMode(PredictionMode.SLL);
+			
+			//for debugging?
+			//p.addErrorListener(new DiagnosticErrorListener());
+			//p.getInterpreter().setPredictionMode(PredictionMode.LL_EXACT_AMBIG_DETECTION);
+
 	        try{
 	        	p.flatzinc_model();
 	        }catch (Exception e){
+	        	e.printStackTrace();
 	        	log.apply(0,"Simple SLL Parsing Failed. Fallback to complete LL parsing");
 	        	//Add to remove the following line for being able to use unbuffered streams!
 	        	//tokens.reset();

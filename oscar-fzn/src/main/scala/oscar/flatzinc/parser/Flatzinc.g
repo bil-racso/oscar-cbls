@@ -51,9 +51,9 @@ import java.util.HashSet;
 	}
 }
 
-//flatzinc_model : preddecl* paramdecl* vardecl* constraint* solvegoal;
+flatzinc_model : preddecl* paramdecl* vardecl* constraint* solvegoal;
 //changed to accomodate Mzn 2.0
-flatzinc_model : preddecl* (paramdecl|vardecl)* constraint* solvegoal;
+//flatzinc_model : preddecl* (paramdecl|vardecl)* constraint* solvegoal;
 
 //Nothing is done for the predicate declarations
 preddecl : 'predicate' PREDANNID '(' predparam ( ',' predparam)* ')' ';' ;
@@ -90,9 +90,11 @@ constraint locals [List<Element> args = null;]: 'constraint' predannid
 
 
 solvegoal 
-	: 'solve' annotations 'satisfy' ';' {m.setSATObjective($annotations.anns);} 
-	| 'solve' annotations 'minimize' expr ';' {m.setMINObjective($expr.e,$annotations.anns);}
-	| 'solve' annotations 'maximize' expr ';' {m.setMAXObjective($expr.e,$annotations.anns);}
+	: 'solve' annotations 
+	( 'satisfy' ';' {m.setSATObjective($annotations.anns);} 
+	| 'minimize' expr ';' {m.setMINObjective($expr.e,$annotations.anns);}
+	| 'maximize' expr ';' {m.setMAXObjective($expr.e,$annotations.anns);}
+	)
 	;
 //expr must be a var name or var array element.
 
@@ -101,7 +103,6 @@ solvegoal
 
 
 //TYPES
-predparamtype : parpredparamtype | varpredparamtype;
 
 basicpartype returns [Type t]
 	: 'bool' {$t = new Type(Type.BOOL);}
@@ -109,22 +110,20 @@ basicpartype returns [Type t]
 	| 'int' {$t = new Type(Type.INT);}
 	| 'set' 'of' 'int' {$t = new Type(Type.SET);}
 	;
+
+basicvartype returns [Type t, Element d]
+	: 'var' 
+	( 'bool' {$t = new Type(Type.BOOL); ($t).isVar = true;}
+	| 'float' {$t = new Type(Type.FLOAT); ($t).isVar = true;}
+	| floatconst '..' floatconst {$t = new Type(Type.FLOAT); ($t).isVar = true;} 
+ 	| 'int' {$t = new Type(Type.INT); ($t).isVar = true;}
+ 	| setconst {$t = new Type(Type.INT); ($t).isVar = true; $d = $setconst.e;}
+ 	| 'set' 'of' setconst {$t = new Type(Type.SET); ($t).isVar = true; $d = $setconst.e;}
+ 	);
 	
 partype returns [Type t]
 	: basicpartype {$t = $basicpartype.t;}
 	| arraytype basicpartype {$t = $basicpartype.t; ($t).isArray=true; ($t).size = $arraytype.size;}
-	;
-	
-parpredparamtype returns [Type t]
-	: partype {$t = $partype.t;}
-	| basicparpredparamtype  {$t = $basicparpredparamtype.t;}
-	| arraytype basicparpredparamtype {$t = $basicparpredparamtype.t; ($t).isArray=true; ($t).size = $arraytype.size;}
-	;
-	
-basicparpredparamtype returns [Type t]
-	: floatconst '..' floatconst {$t = new Type(Type.FLOAT);}
-	| setconst {$t = new Type(Type.INT);}
-	| 'set' 'of' setconst {$t = new Type(Type.SET);}
 	;
 	
 vartype returns [Type t, Element d]
@@ -132,42 +131,55 @@ vartype returns [Type t, Element d]
 	| arraytype basicvartype {$t = $basicvartype.t; ($t).isArray=true; ($t).size = $arraytype.size; $d = $basicvartype.d;}
 	;
 	
-basicvartype returns [Type t, Element d]
-	: 'var' 'bool' {$t = new Type(Type.BOOL); ($t).isVar = true;}
-	| 'var' 'float' {$t = new Type(Type.FLOAT); ($t).isVar = true;}
-	| 'var' floatconst '..' floatconst {$t = new Type(Type.FLOAT); ($t).isVar = true;} 
- 	| 'var' 'int' {$t = new Type(Type.INT); ($t).isVar = true;}
- 	| 'var' setconst {$t = new Type(Type.INT); ($t).isVar = true; $d = $setconst.e;}
- 	| 'var' 'set' 'of' setconst {$t = new Type(Type.SET); ($t).isVar = true; $d = $setconst.e;}
- 	;
 
-varpredparamtype returns [Type t] 
-	: vartype {$t = $vartype.t;}
-	| 'var' 'set' 'of' 'int' {$t = new Type(Type.SET); ($t).isVar = true;}
-	| arraytype 'var' 'set' 'of' 'int' {$t = new Type(Type.SET); ($t).isVar = true; ($t).isArray=true; ($t).size = $arraytype.size;}
+arraytype returns [int size]:  'array' '[' lb=intconst '..' ub=intconst 
+	{$size = $ub.i; if($lb.i!=1) throw new ParsingException("Ranges of array must start at 1");} 
+  ']' 'of' ;
+
+predparamtype returns [Type t] 
+	: basicpredparamtype {$t = $basicpredparamtype.t;}
+	| predarraytype basicpredparamtype {$t = $basicpredparamtype.t; ($t).isArray=true; ($t).size = $predarraytype.size;}
 	;
-	
-arraytype returns [int size]:  'array' '[' ( lb=intconst '..' ub=intconst {$size = $ub.i; if($lb.i!=1) throw new ParsingException("Ranges of array must start at 1");} 
+basicpredparamtype returns [Type t]
+	: basicvartype {$t = $basicvartype.t;}
+	| basicpartype {$t = $basicpartype.t;}
+	| floatconst '..' floatconst {$t = new Type(Type.FLOAT);}
+	| setconst {$t = new Type(Type.INT);}
+	| 'set' 'of' setconst {$t = new Type(Type.SET);}
+	| 'var' 'set' 'of' 'int' {$t = new Type(Type.SET); ($t).isVar = true;}
+	;
+
+
+predarraytype returns [int size]:  'array' '[' ( lb=intconst '..' ub=intconst {$size = $ub.i; if($lb.i!=1) throw new ParsingException("Ranges of array must start at 1");} 
   | 'int' {$size = -1;}
   | 'int' ',' 'int' {$size = -1;}) ']' 'of' 
   ;
-// TODO: check: "int" and "int,int" are only allowed in predicate declarations.
- 
+	
+	
 
 
 expr returns [Element e]
-	: Boolconst {$e = new Element(); ($e).value = $Boolconst.getText().equals("true"); ($e).typ = new Type(Type.BOOL);} 
-	| Floatconst {$e = new Element(); ($e).value = Float.parseFloat($Floatconst.getText()); ($e).typ = new Type(Type.FLOAT);}
-	| intconst {$e = new Element(); ($e).value = $intconst.i; ($e).typ = new Type(Type.INT);}
-	| setconst {$e = $setconst.e; ($e).typ = new Type(Type.SET);} 
-	| varparid {$e = m.findId($varparid.text); }
-	| varparid '[' intconst ']' {$e = ((ArrayOfElement)m.findId($varparid.text)).elements.get($intconst.i-1); }
+	: boolconst {$e = new Element(); ($e).value = $boolconst.b; ($e).typ = new Type(Type.BOOL);} 
+	| floatconst {$e = new Element(); ($e).value = $floatconst.f; ($e).typ = new Type(Type.FLOAT);}
+	| intorsetconst {$e = $intorsetconst.e;}
+	| varparid  
+		({$e = m.findId($varparid.text); } //empty alternative
+		|'[' intconst ']' {$e = ((ArrayOfElement)m.findId($varparid.text)).elements.get($intconst.i-1); })
 	| arrayexpr {$e = $arrayexpr.a;}
-	| annotation {$e = new Element(); ($e).value = $annotation.ann; ($e).typ = new Type(Type.ANNOTATION); // TODO: Check this: Annotation and string expressions are only permitted in annotation arguments. 
-	} 
+/*	| annotation {$e = new Element(); ($e).value = $annotation.ann; ($e).typ = new Type(Type.ANNOTATION); // TODO: Check this: Annotation and string expressions are only permitted in annotation arguments. 
+	} */
 	| stringconstant {$e = new Element(); ($e).value = $stringconstant.str; ($e).typ = new Type(Type.STRING);// TODO: Check this: Annotation and string expressions are only permitted in annotation arguments. 
 	}
 	;
+intorsetconst returns [Element e] locals [Set<Integer> s]
+	: lb=intconst 
+		({$e = new Element(); ($e).value = $intconst.i; ($e).typ = new Type(Type.INT);}
+		| '..' ub=intconst {$e = new Element(); ($e).value = new DomainRange($lb.i,$ub.i); ($e).typ = new Type(Type.SET);}
+	)
+	| '{' {$s = new HashSet<Integer>();} (f=intconst { $s.add($f.i); } (',' n=intconst { $s.add($n.i);})*)? '}'  {$e = new Element(); ($e).value =m.createDomainSet($s); ($e).typ = new Type(Type.SET);}
+	;
+	//setconst {$e = $setconst.e; ($e).typ = new Type(Type.SET);};
+
 // TODO: Check this: Annotation and string expressions are only permitted in annotation arguments.
 
 
@@ -186,31 +198,26 @@ annotations returns [ArrayList<Annotation> anns]
 	: {$anns = new ArrayList<Annotation>();} ( '::' annotation {$anns.add($annotation.ann);} )* ;
 
 annotation returns [Annotation ann] 
-	: predannid {$ann = new Annotation($predannid.text);} 
-	| predannid {$ann = new Annotation($predannid.text);} '(' expr {($ann).add($expr.e);} (',' expr {($ann).add($expr.e);} )* ')' 
+	: predannid {$ann = new Annotation($predannid.text);} ( '(' expr {($ann).add($expr.e);} (',' expr {($ann).add($expr.e);} )* ')' )?
 	;
 // Whether an identifier is an annotation or a variable name can be identified from its type.
 // FlatZinc does not permit overloading of names
 
+
+//Pseudo-lexer rules
 predannid returns [String text]: PREDANNID {$text=$PREDANNID.getText();};
-boolconst : Boolconst;
-floatconst : Floatconst;
+boolconst returns [boolean b]: Boolconst {$b = $Boolconst.getText().equals("true");};
+floatconst returns [float f]: Floatconst {$f = Float.parseFloat($Floatconst.getText());};
 intconst returns [int i]: INT {$i = Integer.parseInt($INT.getText());};
 stringconstant returns [String str]: STRING {$str = $STRING.getText().substring(1,$STRING.getText().length()-1);};
 varparid returns [String text]:  VARPARID {$text=$VARPARID.getText();}|PREDANNID {$text=$PREDANNID.getText();} ;
 
 //LEXER rules
 Boolconst : 'true' | 'false' ;
-
 PREDANNID : ('a'..'z'|'A'..'Z')('a'..'z'|'A'..'Z'|'0'..'9'|'_')* ;
 VARPARID : '_'+ PREDANNID ;
-
-
-
 Floatconst : INT '.' NUM (('e'|'E') INT )? | INT ('e'|'E') INT;
-
 INT : ('+' | '-')? NUM ;
 fragment NUM : ('0'..'9')+;
-
 STRING :  '"' ~('"')+ '"' ;
 WS : (' ' | '\t' | '\n' |'\r\n' ) {skip();} ;
