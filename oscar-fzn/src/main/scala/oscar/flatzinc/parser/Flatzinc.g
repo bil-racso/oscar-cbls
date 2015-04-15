@@ -162,15 +162,23 @@ expr returns [Element e]
 	: boolconst {$e = new Element(); ($e).value = $boolconst.b; ($e).typ = new Type(Type.BOOL);} 
 	| floatconst {$e = new Element(); ($e).value = $floatconst.f; ($e).typ = new Type(Type.FLOAT);}
 	| intorsetconst {$e = $intorsetconst.e;}
-	| varparid  
-		({$e = m.findId($varparid.text); } //empty alternative
-		|'[' intconst ']' {$e = ((ArrayOfElement)m.findId($varparid.text)).elements.get($intconst.i-1); })
-	| arrayexpr {$e = $arrayexpr.a;}
-/*	| annotation {$e = new Element(); ($e).value = $annotation.ann; ($e).typ = new Type(Type.ANNOTATION); // TODO: Check this: Annotation and string expressions are only permitted in annotation arguments. 
-	} */
+	| idorannot {$e = $idorannot.e;}
+	| arrayexpr {$e = $arrayexpr.a;} 
 	| stringconstant {$e = new Element(); ($e).value = $stringconstant.str; ($e).typ = new Type(Type.STRING);// TODO: Check this: Annotation and string expressions are only permitted in annotation arguments. 
 	}
 	;
+	
+	//here: relaxed the definition of annotation from predannid to varparid
+idorannot returns [Element e] locals [Annotation ann]
+  : varparid  
+    ({$e = m.findId($varparid.text); } //empty alternative
+    |'[' intconst ']' {$e = ((ArrayOfElement)m.findId($varparid.text)).elements.get($intconst.i-1); }
+    | {$ann = new Annotation($varparid.text); $e = new Element(); ($e).value = $ann; ($e).typ = new Type(Type.ANNOTATION);} 
+       '(' expr {($ann).add($expr.e);} (',' expr {($ann).add($expr.e);} )* ')' 
+    ) 
+  ;
+  //TODO: annotations without parenthesis are not treated the same way as annotations with parenthesis
+  
 intorsetconst returns [Element e] locals [Set<Integer> s]
 	: lb=intconst 
 		({$e = new Element(); ($e).value = $intconst.i; ($e).typ = new Type(Type.INT);}

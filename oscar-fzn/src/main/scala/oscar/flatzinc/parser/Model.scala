@@ -44,6 +44,7 @@ class Model(val log: Log, val acceptAnyCstr: Boolean) {
     //Console.err.println("% added" + id)
     dico(id) = e
   }
+  def hasId(id: String) = dico.contains(id)
   def findId(id: String): Element = {
     if(dico.contains(id))dico(id)
     else{//TODO: That should be an annotation, how to check this?
@@ -246,6 +247,8 @@ class Model(val log: Log, val acceptAnyCstr: Boolean) {
       case "int_ne_reif" => reif(int_ne(getIntVar(varList(0)),getIntVar(varList(1)),ann),getBoolVar(varList(2))) 
       case "bool_eq" => bool_eq(getBoolVar(varList(0)),getBoolVar(varList(1)),ann) 
       case "array_bool_or" => array_bool_or(getBoolVarArray(varList(0)),getBoolVar(varList(1)),ann)
+      case "array_bool_and" => array_bool_and(getBoolVarArray(varList(0)),getBoolVar(varList(1)),ann)
+      case "bool2int" => bool2int(getBoolVar(varList(0)),getIntVar(varList(1)),ann)
       //TODO: Continue here for best efficiency!
       case _ =>
     if(cstr.endsWith("_reif"))reif(constructConstraint(cstr.substring(0,cstr.length-5),varList.dropRight(1),ann),getBoolVar(varList.last))
@@ -258,6 +261,7 @@ class Model(val log: Log, val acceptAnyCstr: Boolean) {
 //          val a = getIntVarArray(varList(0));
 //          all_different_int(a, ann)
 //        case other =>
+      //println(cstr)
           makeConstraint(cstr,varList,ann)
       //GenericConstraint(cstr,List.empty[Object],ann)
           //throw new NoSuchConstraintException(notImplemented.toString(),"CBLS Solver");
