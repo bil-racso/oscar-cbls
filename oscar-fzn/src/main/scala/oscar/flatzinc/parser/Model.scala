@@ -235,22 +235,48 @@ class Model(val log: Log, val acceptAnyCstr: Boolean) {
     e.value.asInstanceOf[Domain]
   }
   
+  val cdico: Map[String,(List[Element],List[Annotation])=>Constraint] = Map(
+    "int_eq" -> ((varList,ann) => int_eq(getIntVar(varList(0)),getIntVar(varList(1)),ann)),
+    "int_eq_reif" -> ((varList,ann) => reif(int_eq(getIntVar(varList(0)),getIntVar(varList(1)),ann),getBoolVar(varList(2)))),
+    "int_ne" -> ((varList,ann) => int_ne(getIntVar(varList(0)),getIntVar(varList(1)),ann)),
+    "int_ne_reif" -> ((varList,ann) => reif(int_ne(getIntVar(varList(0)),getIntVar(varList(1)),ann),getBoolVar(varList(2)))), 
+    "bool_eq" -> ((varList,ann) => bool_eq(getBoolVar(varList(0)),getBoolVar(varList(1)),ann) ),
+    "array_bool_or" -> ((varList,ann) => array_bool_or(getBoolVarArray(varList(0)),getBoolVar(varList(1)),ann)),
+    "array_bool_and" -> ((varList,ann) => array_bool_and(getBoolVarArray(varList(0)),getBoolVar(varList(1)),ann)),
+    "bool2int" -> ((varList,ann) => bool2int(getBoolVar(varList(0)),getIntVar(varList(1)),ann)),
+    "int_lin_eq" -> ((varList,ann) => int_lin_eq(getIntVarArray(varList(0)),getIntVarArray(varList(1)),getIntVar(varList(2)),ann)),
+    "int_lin_le" -> ((varList,ann) => int_lin_le(getIntVarArray(varList(0)),getIntVarArray(varList(1)),getIntVar(varList(2)),ann)),
+    "int_lin_ne" -> ((varList,ann) => int_lin_ne(getIntVarArray(varList(0)),getIntVarArray(varList(1)),getIntVar(varList(2)),ann)),
+    "int_lin_eq_reif" -> ((varList,ann) => reif(int_lin_eq(getIntVarArray(varList(0)),getIntVarArray(varList(1)),getIntVar(varList(2)),ann),getBoolVar(varList(3)))),
+    "int_lin_le_reif" -> ((varList,ann) => reif(int_lin_le(getIntVarArray(varList(0)),getIntVarArray(varList(1)),getIntVar(varList(2)),ann),getBoolVar(varList(3)))),
+    "int_lin_ne_reif" -> ((varList,ann) => reif(int_lin_ne(getIntVarArray(varList(0)),getIntVarArray(varList(1)),getIntVar(varList(2)),ann),getBoolVar(varList(3))))
+      
+  )
+  
   def constructConstraint(cstr: String, varList: List[Element], ann:List[Annotation]): Constraint = {
     //special case
     if(cstr=="bool_eq_reif" && !varList(1).typ.isVar && !varList(1).value.asInstanceOf[Boolean]){
       return constructConstraint("bool_not",varList.head :: varList.tail.tail,ann)
     }
-    cstr match{
-      case "int_eq_reif" => reif(int_eq(getIntVar(varList(0)),getIntVar(varList(1)),ann),getBoolVar(varList(2))) 
-      case "int_eq" => int_eq(getIntVar(varList(0)),getIntVar(varList(1)),ann)  
-      case "int_ne" => int_ne(getIntVar(varList(0)),getIntVar(varList(1)),ann)
-      case "int_ne_reif" => reif(int_ne(getIntVar(varList(0)),getIntVar(varList(1)),ann),getBoolVar(varList(2))) 
-      case "bool_eq" => bool_eq(getBoolVar(varList(0)),getBoolVar(varList(1)),ann) 
-      case "array_bool_or" => array_bool_or(getBoolVarArray(varList(0)),getBoolVar(varList(1)),ann)
-      case "array_bool_and" => array_bool_and(getBoolVarArray(varList(0)),getBoolVar(varList(1)),ann)
-      case "bool2int" => bool2int(getBoolVar(varList(0)),getIntVar(varList(1)),ann)
-      //TODO: Continue here for best efficiency!
-      case _ =>
+    
+//    cstr match{
+//      case "int_eq_reif" => reif(int_eq(getIntVar(varList(0)),getIntVar(varList(1)),ann),getBoolVar(varList(2))) 
+//      case "int_eq" => int_eq(getIntVar(varList(0)),getIntVar(varList(1)),ann)  
+//      case "int_ne" => int_ne(getIntVar(varList(0)),getIntVar(varList(1)),ann)
+//      case "int_ne_reif" => reif(int_ne(getIntVar(varList(0)),getIntVar(varList(1)),ann),getBoolVar(varList(2))) 
+//      case "bool_eq" => bool_eq(getBoolVar(varList(0)),getBoolVar(varList(1)),ann) 
+//      case "array_bool_or" => array_bool_or(getBoolVarArray(varList(0)),getBoolVar(varList(1)),ann)
+//      case "array_bool_and" => array_bool_and(getBoolVarArray(varList(0)),getBoolVar(varList(1)),ann)
+//      case "bool2int" => bool2int(getBoolVar(varList(0)),getIntVar(varList(1)),ann)
+//      case "int_lin_eq" => int_lin_eq(getIntVarArray(varList(0)),getIntVarArray(varList(1)),getIntVar(varList(2)),ann)
+//      case "int_lin_le" => int_lin_le(getIntVarArray(varList(0)),getIntVarArray(varList(1)),getIntVar(varList(2)),ann)
+//      case "int_lin_ne" => int_lin_ne(getIntVarArray(varList(0)),getIntVarArray(varList(1)),getIntVar(varList(2)),ann)
+//      case "int_lin_eq_reif" => reif(int_lin_eq(getIntVarArray(varList(0)),getIntVarArray(varList(1)),getIntVar(varList(2)),ann),getBoolVar(varList(3)))
+//      case "int_lin_le_reif" => reif(int_lin_le(getIntVarArray(varList(0)),getIntVarArray(varList(1)),getIntVar(varList(2)),ann),getBoolVar(varList(3)))
+//      case "int_lin_ne_reif" => reif(int_lin_ne(getIntVarArray(varList(0)),getIntVarArray(varList(1)),getIntVar(varList(2)),ann),getBoolVar(varList(3)))
+//      //TODO: Continue here for best efficiency!
+//      case _ =>
+    cdico.getOrElse(cstr, ((varList: List[Element], ann:List[Annotation]) =>
     if(cstr.endsWith("_reif"))reif(constructConstraint(cstr.substring(0,cstr.length-5),varList.dropRight(1),ann),getBoolVar(varList.last))
     else
       //cstr match{
@@ -266,7 +292,7 @@ class Model(val log: Log, val acceptAnyCstr: Boolean) {
       //GenericConstraint(cstr,List.empty[Object],ann)
           //throw new NoSuchConstraintException(notImplemented.toString(),"CBLS Solver");
     //}
-    }
+    ))(varList,ann)
     //  }
   }
   
