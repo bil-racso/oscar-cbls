@@ -24,7 +24,7 @@
 
 package oscar.cbls.invariants.lib.logic
 
-import oscar.cbls.invariants.core.computation.{Store, InvariantHelper, Invariant, CBLSIntVar}
+import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.core.propagation.Checker
 
 /**
@@ -34,7 +34,7 @@ import oscar.cbls.invariants.core.propagation.Checker
  * it is expected that the values are always >= 0
  * @author renaud.delandtsheer@cetic.be
  * */
-case class DenseCount(values: Array[CBLSIntVar], counts: Array[CBLSIntVar], offset:Int = 0) extends Invariant {
+case class DenseCount(values: Array[IntValue], counts: Array[CBLSIntVar], offset:Int = 0) extends Invariant {
 
   for (v <- values.indices) registerStaticAndDynamicDependency(values(v), v)
 
@@ -49,7 +49,7 @@ case class DenseCount(values: Array[CBLSIntVar], counts: Array[CBLSIntVar], offs
   for (c <- counts) { c.setDefiningInvariant(this) }
 
   @inline
-  override def notifyIntChanged(v: CBLSIntVar, index: Int, OldVal: Int, NewVal: Int) {
+  override def notifyIntChanged(v: ChangingIntValue, index: Int, OldVal: Int, NewVal: Int) {
     assert(values(index) == v)
     counts(OldVal + offset) :-= 1
     counts(NewVal + offset) :+= 1
@@ -65,7 +65,7 @@ case class DenseCount(values: Array[CBLSIntVar], counts: Array[CBLSIntVar], offs
      */
     val myCounts = Array.fill[Int](counts.length)(0)
     for (i <- values.indices) {
-      val v = values(i).getValue(false)
+      val v = values(i).value
       myCounts(v+offset) = myCounts(v+offset) + 1
     }
 
@@ -78,12 +78,12 @@ case class DenseCount(values: Array[CBLSIntVar], counts: Array[CBLSIntVar], offs
 }
 
 object DenseCount{
-  def makeDenseCount(vars: Array[CBLSIntVar]):DenseCount = {
+  def makeDenseCount(vars: Array[IntValue]):DenseCount = {
     val ((minMin,maxMax)) = InvariantHelper.getMinMaxBounds(vars)
     val mbValues = maxMax - minMin + 1
     val m:Store = InvariantHelper.findModel(vars)
     val nbVars = vars.length
-    val counts = Array.tabulate(mbValues)(i => CBLSIntVar(m,0 to nbVars,0,"count_" + (i-minMin)))
+    val counts = Array.tabulate(mbValues)(i => CBLSIntVar(m,0, 0 to nbVars, "count_" + (i-minMin)))
     DenseCount(vars,counts,-minMin)
   }
 }

@@ -24,41 +24,38 @@
 
 package oscar.cbls.constraints.lib.basic
 
-import oscar.cbls.modeling.Algebra._
-import oscar.cbls.invariants.core.computation._
-import oscar.cbls.invariants.lib.minmax._
 import oscar.cbls.constraints.core._
-import oscar.cbls.invariants.lib.numeric.{Dist, Abs, Minus}
+import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.core.propagation.Checker
+import oscar.cbls.invariants.lib.minmax._
+import oscar.cbls.invariants.lib.numeric.Dist
+import oscar.cbls.modeling.Algebra._
+
 import scala.math.abs
 
 /**
  * implements left <= right
  * @author renaud.delandtsheer@cetic.be
  */
-protected class LEA(val left: CBLSIntVar, val right: CBLSIntVar) extends Constraint {
-  model = InvariantHelper.findModel(List(left,right))
+protected class LEA(val left: IntValue, val right: IntValue) extends Constraint {
+  val model = InvariantHelper.findModel(left,right)
 
   registerConstrainedVariables(left, right)
-
-  val Violation: CBLSIntVar = Max2(0, left - right).toIntVar(this.getClass().getSimpleName() + ".violation")
-
-  finishInitialization()
 
   /**
    * the violation is Max(0,right-left)
    */
-  override def violation = Violation
+  override val violation = Max2(0, left - right).setName(this.getClass().getSimpleName() + ".violation")
 
   /**
    * The violation of each variable is equal to the global violation of the constraint
    */
-  override def violation(v: Variable): CBLSIntVar = { if (left == v || right == v) Violation else 0 }
+  override def violation(v: Value): IntValue = { if (left == v || right == v) violation else 0 }
 
   override def checkInternals(c: Checker) {
     val diff = left.value - right.value
-    c.check(Violation.value == (if (diff <= 0) 0 else diff),
-      Some("Violation.value (" + Violation.value
+    c.check(violation.value == (if (diff <= 0) 0 else diff),
+      Some("Violation.value (" + violation.value
         + ") == (if (left.value - right.value (" + diff + ") <= 0) 0 else " + diff + ")"))
   }
 }
@@ -67,39 +64,36 @@ protected class LEA(val left: CBLSIntVar, val right: CBLSIntVar) extends Constra
  * implements left <= right
  * @author  Renaud De Landtsheer rdl@cetic.be
  */
-case class LE(l: CBLSIntVar, r: CBLSIntVar) extends LEA(l, r)
+case class LE(l: IntValue, r: IntValue) extends LEA(l, r)
 
 /**
  * implements left >= right
  * it is just a parameter swap of [[oscar.cbls.constraints.lib.basic.LE]]
  * @author renaud.delandtsheer@cetic.be
  */
-case class GE(l: CBLSIntVar, r: CBLSIntVar) extends LEA(r, l)
+case class GE(l: IntValue, r: IntValue) extends LEA(r, l)
 
 /**
  * implements left < right
  * @author renaud.delandtsheer@cetic.be
  */
-protected class LA(val left: CBLSIntVar, val right: CBLSIntVar) extends Constraint {
-  model = InvariantHelper.findModel(List(left,right))
+protected class LA(val left: IntValue, val right: IntValue) extends Constraint {
   registerConstrainedVariables(left, right)
-
-  val Violation: CBLSIntVar = Max2(0, left - right + 1)
-  finishInitialization(Violation.getPropagationStructure)
 
   /**
    * the violation is Max(0,left - right + 1)
    */
-  override def violation = Violation
+  override val violation = Max2(0, left - right + 1)
+
   /**
    * The violation of each variable is equal to the global violation of the constraint
    */
-  override def violation(v: Variable): CBLSIntVar = { if (left == v || right == v) Violation else 0 }
+  override def violation(v: Value): IntValue = { if (left == v || right == v) violation else 0 }
 
   override def checkInternals(c: Checker) {
     val diff = left.value - right.value
-    c.check(Violation.value == (if (diff < 0) 0 else diff + 1),
-      Some("Violation.value (" + Violation.value
+    c.check(violation.value == (if (diff < 0) 0 else diff + 1),
+      Some("Violation.value (" + violation.value
         + ") == (if (left.value - right.value (" + diff + ") < 0) 0 else " + (diff + 1) + ")"))
   }
 }
@@ -109,40 +103,39 @@ protected class LA(val left: CBLSIntVar, val right: CBLSIntVar) extends Constrai
  * it is just a parameter swap of [[oscar.cbls.constraints.lib.basic.L]]
  * @author renaud.delandtsheer@cetic.be
  */
-case class L(l: CBLSIntVar, r: CBLSIntVar) extends LA(l, r)
+case class L(l: IntValue, r: IntValue) extends LA(l, r)
 
 /**
  * implements left > right
  * @author  Renaud De Landtsheer rdl@cetic.be
  */
-case class G(l: CBLSIntVar, r: CBLSIntVar) extends LA(r, l)
+case class G(l: IntValue, r: IntValue) extends LA(r, l)
 
 /**
  * implements left != right
  * @author renaud.delandtsheer@cetic.be
  */
-case class NE(left: CBLSIntVar, right: CBLSIntVar) extends Constraint {
+case class NE(left: IntValue, right: IntValue) extends Invariant with Constraint{
   registerConstrainedVariables(left, right)
   registerStaticAndDynamicDependenciesNoID(left, right)
   finishInitialization()
 
-  val Violation: CBLSIntVar = CBLSIntVar(model, 0, 1, if (left.value == right.value) 1 else 0, "equals")
+  /** the violation is 1 if the variables are equal, 0 otherwise*/
+  override val violation:CBLSIntVar = CBLSIntVar(model, if (left.value == right.value) 1 else 0, 0 to 1, "equals")
 
-  Violation.setDefiningInvariant(this)
+  violation.setDefiningInvariant(this)
 
   @inline
-  override def notifyIntChanged(v: CBLSIntVar, OldVal: Int, NewVal: Int) {
-    Violation := (if (left.value == right.value) 1 else 0)
+  override def notifyIntChanged(v: ChangingIntValue, OldVal: Int, NewVal: Int) {
+    violation := (if (left.value == right.value) 1 else 0)
   }
 
   /** the violation is 1 if the variables are equal, 0 otherwise*/
-  override def violation = Violation
-  /** the violation is 1 if the variables are equal, 0 otherwise*/
-  override def violation(v: Variable): CBLSIntVar = { if (left == v || right == v) Violation else 0 }
+  override def violation(v: Value): IntValue = { if (left == v || right == v) violation else 0 }
 
   override def checkInternals(c: Checker) {
-    c.check(Violation.value == (if (left.value == right.value) 1 else 0),
-      Some("Violation.value (" + Violation.value
+    c.check(violation.value == (if (left.value == right.value) 1 else 0),
+      Some("Violation.value (" + violation.value
         + ") == (if (left.value (" + left.value + ") == right.value (" + right.value + ")) 1 else 0)"))
   }
 }
@@ -153,20 +146,18 @@ case class NE(left: CBLSIntVar, right: CBLSIntVar) extends Constraint {
  * class, so that it is part of the core instead of the library
  * @author renaud.delandtsheer@cetic.be
  */
-case class EQ(left: CBLSIntVar, right: CBLSIntVar) extends Constraint {
-  model = InvariantHelper.findModel(List(left,right))
+case class EQ(left: IntValue, right: IntValue) extends Constraint {
+
   registerConstrainedVariables(left, right)
-  finishInitialization()
 
-  val Violation: CBLSIntVar = Dist(left, right)
+  override val violation = Dist(left, right)
 
-  override def violation: CBLSIntVar = Violation
-  override def violation(v: Variable): CBLSIntVar = { if (left == v || right == v) Violation else 0 }
+  override def violation(v: Value) = { if (left == v || right == v) violation else 0 }
 
   override def checkInternals(c: Checker) {
     val myViolation = abs(left.value - right.value)
-    c.check(Violation.value == (if (left.value == right.value) 0 else myViolation),
-      Some("Violation.value (" + Violation.value
+    c.check(violation.value == (if (left.value == right.value) 0 else myViolation),
+      Some("Violation.value (" + violation.value
         + ") == (if (left.value (" + left.value + ") == right.value (" + right.value
         + ")) 0 else " + myViolation + ")"))
   }

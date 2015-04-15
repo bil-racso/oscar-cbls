@@ -16,8 +16,8 @@
  */
 package oscar.cbls.scheduling.algo
 
+import oscar.cbls.scheduling.model.{Activity, Planning}
 import oscar.cbls.search.SearchEngine
-import oscar.cbls.scheduling.model.{ Activity, Planning }
 
 /**
  * finds a critical path for the given planning

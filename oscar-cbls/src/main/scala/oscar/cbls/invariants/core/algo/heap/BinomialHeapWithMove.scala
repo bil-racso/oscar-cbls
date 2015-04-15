@@ -20,9 +20,10 @@
 
 package oscar.cbls.invariants.core.algo.heap
 
-import collection.immutable.SortedMap
-import collection.Iterator
 import oscar.cbls.invariants.core.propagation.Checker
+
+import scala.collection.Iterator
+import scala.collection.immutable.SortedMap
 
 /**
  * This is a binary heap that is efficient; all operations are in O(log(n))
@@ -193,7 +194,7 @@ class BinomialHeapIterator[T](HeapArray:Array[T],size:Int) extends Iterator[T]{
  * @author renaud.delandtsheer@cetic.be
  * */
 class BinomialHeapWithMove[T](GetKey:T => Int,val maxsize:Int)(implicit val A:Ordering[T],implicit val X:Manifest[T]){
-  var HeapArray:Array[T] = new Array[T](maxsize)
+  private[this] val HeapArray:Array[T] = new Array[T](maxsize)
   var size:Int=0
   var position:SortedMap[T,Int]=SortedMap.empty
 
@@ -362,7 +363,7 @@ class ArrayMap(maxId:Int) extends scala.collection.mutable.Map[Int, Int]{
  * @tparam T
  */
 class BinomialHeapWithMoveExtMem[T](GetKey:T => Int,val maxsize:Int, position:scala.collection.mutable.Map[T,Int])(implicit val A:Ordering[T],implicit val X:Manifest[T]){
-  var HeapArray:Array[T] = new Array[T](maxsize)
+  private[this] val HeapArray:Array[T] = new Array[T](maxsize)
   var size:Int=0
 
   def checkInternals(c:Checker){
@@ -408,8 +409,9 @@ class BinomialHeapWithMoveExtMem[T](GetKey:T => Int,val maxsize:Int, position:sc
   //returns the last position of the moved item
   private def pushDown(startposition:Int):Int = {
     var position = startposition
+    val positionKey = GetKey(HeapArray(position))
     while(true)
-      if(leftChild(position) < size && GetKey(HeapArray(position)) > GetKey(HeapArray(leftChild(position)))){
+      if(leftChild(position) < size && positionKey > GetKey(HeapArray(leftChild(position)))){
         //examiner aussi left child
         if(rightChild(position) < size && GetKey(HeapArray(rightChild(position))) < GetKey(HeapArray(leftChild(position)))){
           //c'est avec le right child qu'il faut inverser
@@ -420,7 +422,7 @@ class BinomialHeapWithMoveExtMem[T](GetKey:T => Int,val maxsize:Int, position:sc
           swapPositions(position,leftChild(position))
           position = leftChild(position)
         }
-      }else if(rightChild(position) < size && GetKey(HeapArray(position)) > GetKey(HeapArray(rightChild(position)))){
+      }else if(rightChild(position) < size && positionKey > GetKey(HeapArray(rightChild(position)))){
         //only consider right child
         swapPositions(position,rightChild(position))
         position = rightChild(position)
@@ -432,9 +434,10 @@ class BinomialHeapWithMoveExtMem[T](GetKey:T => Int,val maxsize:Int, position:sc
 
   private def pushUp(startposition:Int):Int = {
     var position = startposition
+    val positionKey = GetKey(HeapArray(position))
     while(true){
       val fatherposition:Int = father(position)
-      if (fatherposition >= 0 && GetKey(HeapArray(position)) < GetKey(HeapArray(fatherposition))){
+      if (fatherposition >= 0 && positionKey < GetKey(HeapArray(fatherposition))){
         swapPositions(position,fatherposition)
         position = fatherposition
       }else{

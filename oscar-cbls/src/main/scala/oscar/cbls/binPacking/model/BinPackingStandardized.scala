@@ -22,7 +22,7 @@ package oscar.cbls.binPacking.model
 
 import oscar.cbls.constraints.core.{Constraint, ConstraintSystem}
 import oscar.cbls.constraints.lib.basic.LE
-import oscar.cbls.invariants.core.computation.{Store, CBLSSetVar, CBLSIntVar}
+import oscar.cbls.invariants.core.computation.{CBLSIntVar, CBLSSetVar, IntValue, Store}
 import oscar.cbls.invariants.lib.logic.DenseCluster
 import oscar.cbls.invariants.lib.set.SetSum
 
@@ -39,20 +39,20 @@ case class BinPackingStandardized(itemSizes:Array[Int], binSizes:Array[Int], ini
   val binsRange = 0 until binsCount
 
   /**Assigned bin for each item -> the list of CBLSIntVar to apply the Neighborhoods on*/
-  val itemAssignments = Array.tabulate(itemsCount)(x => CBLSIntVar(binsRange, initialBin, "Bin of item %d".format(x))(s))
+  val itemAssignments = Array.tabulate(itemsCount)(x => CBLSIntVar(s, initialBin, binsRange, "Bin of item %d".format(x)))
 
   /**Assigned items for each bin*/
   val binAssignments = DenseCluster(itemAssignments, Array.tabulate(binsCount)(x => CBLSSetVar(itemsRange, name = "Contents of bin %d".format(x))(s))).clusters
 
   /**Amount of space used for each bin*/
-  val contentsByBin = (for (i <- binsRange) yield SetSum(binAssignments(i), itemSizes(_)).toIntVar).toArray
+  val contentsByBin = (for (i <- binsRange) yield SetSum(binAssignments(i), itemSizes(_))).toArray
 
   /**
    * Posts the binPacking Constraint
    * @param c the constraintSystem
    * @param filter index => boolean : a function that returns true if a constraint should be applied on the given bin, false otherwise
    */
-  def withSizeConstraints(filter:Int => Boolean = _ => true, weight:CBLSIntVar = 1)(implicit c:ConstraintSystem) = {
+  def withSizeConstraints(filter:Int => Boolean = _ => true, weight:IntValue = 1)(implicit c:ConstraintSystem) = {
     val cs = new ConstraintSystem(s)
     for (bId <- binsRange if filter(bId)) cs.post(LE(contentsByBin(bId), binSizes(bId)))
     cs.close()
@@ -67,7 +67,7 @@ case class BinPackingStandardized(itemSizes:Array[Int], binSizes:Array[Int], ini
    * @param c the constraintSystem
    * @return
    */
-  def withConstraintsOnBins(fct : (Int, CBLSSetVar) => Option[Constraint], weight:CBLSIntVar = 1)(implicit c: ConstraintSystem): Unit =  {
+  def withConstraintsOnBins(fct : (Int, CBLSSetVar) => Option[Constraint], weight:IntValue = 1)(implicit c: ConstraintSystem): Unit =  {
     val cs = ConstraintSystem(s)
     for (bId <- binsRange) {
       val optConst = fct(bId, binAssignments(bId))
@@ -88,7 +88,7 @@ case class BinPackingStandardized(itemSizes:Array[Int], binSizes:Array[Int], ini
    * @param c the constraintSystem
    * @return
    */
-  def withConstraintOnItems(fct : (Int, CBLSIntVar) => Option[Constraint], weight:CBLSIntVar = 1)(implicit c: ConstraintSystem): Unit = {
+  def withConstraintOnItems(fct : (Int, CBLSIntVar) => Option[Constraint], weight:IntValue = 1)(implicit c: ConstraintSystem): Unit = {
     val cs = ConstraintSystem(s)
     for (iId <- itemsRange){
       val optConst = fct(iId, itemAssignments(iId))

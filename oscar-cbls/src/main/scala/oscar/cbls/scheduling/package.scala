@@ -20,9 +20,6 @@
 
 package oscar.cbls
 
-import oscar.cbls.scheduling.solver.IFlatIRelax
-import scheduling.model.{Planning, SuperActivity, Activity, CumulativeResource}
-
 /**
  *
  *  This package is a scheduling library.

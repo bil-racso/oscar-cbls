@@ -141,21 +141,22 @@ object NQueensWithUI extends SimpleSwingApplication with SearchEngineTrait {
     println("NQueens(" + N + ")")
     val Queens: Array[CBLSIntVar] = new Array[CBLSIntVar](N)
     for (q <- range) {
-      Queens(q) = CBLSIntVar(m, min, max, q, "queen" + q)
+      Queens(q) = CBLSIntVar(m, q, min to max, "queen" + q)
       tab(q)(q).icon = CONFLICT
     }
 
     val c = ConstraintSystem(m)
     //c.post(AllDiff(Queens)) handled trough permutations
-    c.post(AllDiff(for (q <- range) yield (q + Queens(q)).toIntVar))
-    c.post(AllDiff(for (q <- range) yield (q - Queens(q)).toIntVar))
+    c.post(AllDiff(for (q <- range) yield (q + Queens(q))))
+    c.post(AllDiff(for (q <- range) yield (q - Queens(q))))
 
     for (q <- range) {
       c.violation(Queens(q))
     }
 
-    val viol: Array[CBLSIntVar] = (for (q <- range) yield c.violation(Queens(q))).toArray
-
+    val viol = (for (q <- range) yield c.violation(Queens(q))).toArray
+    //TODO: reset this
+/*
     for (q <- range) {
       Event(Queens(q), viol(q), (oldqueenposition: Int) => {
         tab(q)(oldqueenposition).icon = EMPTY
@@ -166,7 +167,7 @@ object NQueensWithUI extends SimpleSwingApplication with SearchEngineTrait {
         }
       })
     }
-
+*/
     m.close()
 
     var it: Int = 0

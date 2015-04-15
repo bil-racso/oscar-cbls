@@ -24,11 +24,8 @@
 
 package oscar.cbls.routing.neighborhood
 
-import oscar.cbls.search.SearchEngine
-import oscar.cbls.modeling.Algebra._
 import oscar.cbls.routing.model._
-import scala.util.Random
-import oscar.cbls.search.SearchEngineTrait
+import oscar.cbls.search.algo.HotRestart
 
 /**
  * Inserts an unrouted point in a route.
@@ -41,50 +38,56 @@ import oscar.cbls.search.SearchEngineTrait
  * @author Florent Ghilain (UMONS)
  * @author yoann.guyot@cetic.be
  */
-object InsertPoint extends Neighborhood with SearchEngineTrait {
-  override protected def doSearch(
-    s: SearchZone,
-    moveAcceptor: (Int) => (Int) => Boolean,
-    returnMove: Boolean): SearchResult = {
-    val startObj: Int = s.vrp.getObjective()
-    s.vrp.cleanRecordedMoves()
-    val vrp = s.vrp
+case class InsertPoint(UnroutedNodesToInsert:()=>Iterable[Int],
+                  relevantNeighbors:()=>Int=>Iterable[Int],
+                  vrp: VRP,
+                  neighborhoodName:String = null,
+                  best:Boolean = false,
+                  hotRestart:Boolean = true) extends EasyRoutingNeighborhood(best,vrp) {
 
-    while (s.primaryNodeIterator.hasNext) {
-      val insertedPoint = s.primaryNodeIterator.next
+  //the indice to start with for the exploration
+  var startIndice: Int = 0
+
+  override def exploreNeighborhood(): Unit = {
+
+    val iterationSchemeOnZone =
+      if (hotRestart && !best) HotRestart(UnroutedNodesToInsert(), startIndice)
+      else UnroutedNodesToInsert()
+
+    cleanRecordedMoves()
+    val relevantNeighborsNow = relevantNeighbors()
+
+    for (insertedPoint <- iterationSchemeOnZone) {
       assert(!vrp.isRouted(insertedPoint),
         "The search zone should be restricted to unrouted nodes when inserting.")
 
-      val routedNeighbors = s.relevantNeighbors(insertedPoint)
-      for (beforeInsertedPoint <- routedNeighbors) {
-        assert(vrp.isRouted(beforeInsertedPoint),
-          "The relevant neighbors should be routed.")
-        assert(s.vrp.isRecording, "MoveDescription should be recording now")
+      for (beforeInsertedPoint <- relevantNeighborsNow(insertedPoint)
+           if vrp.isRouted(beforeInsertedPoint)) {
+        assert(isRecording, "MoveDescription should be recording now")
 
-        encode(beforeInsertedPoint, insertedPoint, vrp)
+        encode(beforeInsertedPoint, insertedPoint)
+        val newObj = evalObjOnEncodedMove()
 
-        checkEncodedMove(moveAcceptor(startObj), !returnMove, vrp) match {
-          case (true, newObj: Int) => { //this improved
-            if (returnMove) {
-              return MoveFound(InsertPoint(beforeInsertedPoint,
-                insertedPoint, newObj, vrp))
-            } else return MovePerformed()
-          }
-          case _ => ()
+        if (moveRequested(newObj)
+          && submitFoundMove(InsertPointMove(beforeInsertedPoint, insertedPoint, newObj, this, neighborhoodName))) {
+          startIndice = insertedPoint + 1
+          return
         }
       }
     }
-    NoMoveFound()
   }
 
-  def encode(beforeInsertedPoint: Int, insertedPoint: Int, vrp: VRP with MoveDescription) {
+  def encode(beforeInsertedPoint: Int, insertedPoint: Int) {
     assert(!vrp.isRouted(insertedPoint))
     assert(vrp.isRouted(beforeInsertedPoint))
-    val s = vrp.segmentFromUnrouted(insertedPoint)
-    vrp.insert(s, beforeInsertedPoint)
+    val s = segmentFromUnrouted(insertedPoint)
+    insert(s, beforeInsertedPoint)
   }
 
-  override def toString: String = "insertion"
+  //this resets the internal state of the Neighborhood
+  override def reset(): Unit = {
+    startIndice = 0
+  }
 }
 
 /**
@@ -92,17 +95,20 @@ object InsertPoint extends Neighborhood with SearchEngineTrait {
  * @param beforeInsertedPoint the place where to insert an unrouted point.
  * @param insertedPoint an unrouted point.
  * @param objAfter the objective value if we performed this reinsert-point operator.
- * @param vrp the given VRP problem.
+ * @param neighborhood the originating neighborhood.
  */
-case class InsertPoint(
-  beforeInsertedPoint: Int,
-  insertedPoint: Int,
-  override val objAfter: Int,
-  override val vrp: VRP with MoveDescription) extends Move(objAfter, vrp) {
-  // overriding methods
+case class InsertPointMove(beforeInsertedPoint: Int,
+                           insertedPoint: Int,
+                           override val objAfter: Int,
+                           override val neighborhood:InsertPoint,
+                           override val neighborhoodName:String = null)
+  extends VRPMove(objAfter, neighborhood, neighborhoodName) {
+
   override def encodeMove() {
-    InsertPoint.encode(beforeInsertedPoint, insertedPoint, vrp)
+    neighborhood.encode(beforeInsertedPoint, insertedPoint)
   }
 
-  override def toString: String = "InsertPoint(beforeInsertedPoint = " + beforeInsertedPoint + ", insertedPoint = " + insertedPoint + " )"
+  override def toString: String =
+    "InsertPoint(beforeInsertedPoint = " + beforeInsertedPoint +
+      ", insertedPoint = " + insertedPoint + " )"
 }

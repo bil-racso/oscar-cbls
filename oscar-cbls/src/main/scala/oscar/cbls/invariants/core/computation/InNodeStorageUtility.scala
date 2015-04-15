@@ -14,7 +14,7 @@
   ******************************************************************************/
 package oscar.cbls.invariants.core.computation
 
-import collection.immutable.SortedMap
+import scala.collection.immutable.SortedMap
 
 /**
  * integrate this trait to store something in your class using the standard storing mechanism
@@ -61,7 +61,7 @@ trait StorageUtilityManager {
     * bound to this StorageUtilityManager
     * @return
     */
-  def getStorageKey(): Int = {
+  def newStorageKey(): Int = {
     val toreturn = nextStoragePlace
     nextStoragePlace += 1
     toreturn
