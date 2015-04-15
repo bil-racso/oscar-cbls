@@ -32,7 +32,7 @@ import oscar.flatzinc.Log
 import scala.collection.mutable.WrappedArray
 
 
-class VarRef(val v: Variable) extends Element()
+//class VarRef(val v: Variable) extends Element()
 
 class Model(val log: Log, val acceptAnyCstr: Boolean) {
   
@@ -81,7 +81,7 @@ class Model(val log: Log, val acceptAnyCstr: Boolean) {
         for(i <- 0 to t.size-1){
             val n = name+"["+(i+1)+"]"
             val v = problem.addVariable(n,copy(d),t.typ==Type.BOOL);
-            val vr = new VarRef(v);
+            val vr = new Element(v);
             a.elements.add(vr);
             vr.typ = new Type(t);
             vr.typ.isArray = false;
@@ -93,7 +93,7 @@ class Model(val log: Log, val acceptAnyCstr: Boolean) {
         handleVarAnnotations(name, a, anns)
       }else{
         val v = problem.addVariable(name,d,t.typ==Type.BOOL)
-        val vr = new VarRef(v);
+        val vr = new Element(v);
         //if(d!=null)vr.domain = d;
         vr.name = name;
         vr.typ = t;
@@ -144,11 +144,11 @@ class Model(val log: Log, val acceptAnyCstr: Boolean) {
         
         val a = e.asInstanceOf[ArrayOfElement]
           if(e.typ.typ==Type.INT){
-            problem.solution.addOutputArrayVarInt(name,a.elements.asScala.toArray.map{case vr: VarRef => vr.v.id; case other => if(other.name==null)other.value.toString() else other.name},
+            problem.solution.addOutputArrayVarInt(name,a.elements.asScala.toArray.map(e => e.value match{case vr: Variable => vr.id; case other => if(e.name==null)other.toString() else e.name}),
                            anns.find((p:Annotation) => p.name == "output_array").get.args(0).asInstanceOf[ArrayOfElement].elements.asScala.toList.map(e=>e.value.asInstanceOf[DomainRange].toRange))
           }
           if(e.typ.typ==Type.INT){
-            problem.solution.addOutputArrayVarBool(name,a.elements.asScala.toArray.map{case vr: VarRef => vr.v.id; case other => if(other.name==null)other.value.toString() else other.name},
+            problem.solution.addOutputArrayVarBool(name,a.elements.asScala.toArray.map(e => e.value match{case vr: Variable => vr.id; case other => if(e.name==null)other.toString() else e.name}),
                            anns.find((p:Annotation) => p.name == "output_array").get.args(0).asInstanceOf[ArrayOfElement].elements.asScala.toList.map(e=>e.value.asInstanceOf[DomainRange].toRange))
           }
         }
@@ -168,7 +168,7 @@ class Model(val log: Log, val acceptAnyCstr: Boolean) {
     val (ann_def,ann_other) = anns.asScala.toList.partition(a => a.name == "defines_var")
     val cstr = constructConstraint(name, args.asScala.toList, anns.asScala.toList)
     //Added the test because Mzn 2.0 adds some defined_var(12) with constants.
-    ann_def.foreach(a => if(a.args(0).isInstanceOf[VarRef])cstr.setDefinedVar(a.args(0).asInstanceOf[VarRef].v))
+    ann_def.foreach(a => a.args(0) match{ case e:Element => e.value match{ case v:Variable => cstr.setDefinedVar(v); case _ => }})
     problem.addConstraint(cstr)
   }
   
@@ -188,17 +188,17 @@ class Model(val log: Log, val acceptAnyCstr: Boolean) {
     if(anns.size() > 0)log(0,"ignoring search annotations")
   }
   def getIntVar(e: Element): IntegerVariable = {
-    if(e.isInstanceOf[VarRef])e.asInstanceOf[VarRef].v.asInstanceOf[IntegerVariable];
-    else if(e.value.isInstanceOf[Integer])new IntegerVariable(e.value.toString(),Int.unbox(e.value))
-    else{
-      throw new ParsingException("Expected a var int but got: "+e)
+    e.value match{
+      case v:IntegerVariable => v
+      case i:Integer => new IntegerVariable(i.toString(),Int.unbox(i))
+      case _ => throw new ParsingException("Expected a var int but got: "+e)
     }
   }
-  def getBoolVar(e: Element): BooleanVariable = { 
-    if(e.isInstanceOf[VarRef])e.asInstanceOf[VarRef].v.asInstanceOf[BooleanVariable];
-    else if(e.value.isInstanceOf[Boolean])new BooleanVariable(e.value.toString(),Some(Boolean.unbox(e.value)))
-    else{
-      throw new ParsingException("Expected a var bool but got: "+e)
+  def getBoolVar(e: Element): BooleanVariable = {
+    e.value match{
+      case v:BooleanVariable => v
+      case b:java.lang.Boolean => new BooleanVariable(b.toString(),Some(Boolean.unbox(b)))
+      case _ => throw new ParsingException("Expected a var bool but got: "+e)
     }
   }
   def getBoolVarArray(e: Element): Array[BooleanVariable] = { 

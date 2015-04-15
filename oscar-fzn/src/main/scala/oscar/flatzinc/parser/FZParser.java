@@ -61,7 +61,7 @@ public class FZParser {
               public void syntaxError(Recognizer<?, ?> recon, Object offendingSymbol, int line,
                   int positionInLine, String message, RecognitionException e) { 
             	  //System.out.println(offendingSymbol);
-                throw new ParsingException("line "+line+":"+positionInLine+" "+message+" "+offendingSymbol);
+                throw new ParsingException("line "+line+":"+positionInLine+" "+message);
               }
               
             });

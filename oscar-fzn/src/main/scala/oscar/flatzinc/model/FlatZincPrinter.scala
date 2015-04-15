@@ -19,7 +19,6 @@ package oscar.flatzinc.model
 
 import oscar.flatzinc.parser.Model
 import java.io.PrintStream
-import oscar.flatzinc.parser.VarRef
 import oscar.flatzinc.parser.intermediatemodel.Element
 import oscar.flatzinc.parser.intermediatemodel.ArrayOfElement
 import scala.collection.JavaConverters._
@@ -34,10 +33,9 @@ object FlatZincPrinter {
     //No Parameters (all inlined) TODO
     //Variables
     for((id,e) <- dico){
-      e match {
-        case e:VarRef =>{
+      e.value match {
+        case v:Variable =>{
           //TODO: Make sure that aliases come after the corresponding variable... WHICH ALIASES?
-          val v = e.v//.asInstanceOf[ConcreteVariable]
           val s = StringBuilder
           v match{
             case IntegerVariable(i,d) => out.println("var "+toFZN(d)+": "+ id +toFZNann(model.dicoAnnot(id))+";");
