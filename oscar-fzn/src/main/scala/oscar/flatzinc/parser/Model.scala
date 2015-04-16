@@ -240,83 +240,80 @@ class Model(val log: Log, val acceptAnyCstr: Boolean) {
     "int_eq_reif" -> ((varList,ann) => reif(int_eq(getIntVar(varList(0)),getIntVar(varList(1)),ann),getBoolVar(varList(2)))),
     "int_ne" -> ((varList,ann) => int_ne(getIntVar(varList(0)),getIntVar(varList(1)),ann)),
     "int_ne_reif" -> ((varList,ann) => reif(int_ne(getIntVar(varList(0)),getIntVar(varList(1)),ann),getBoolVar(varList(2)))), 
+    "int_le" -> ((varList,ann) => int_le(getIntVar(varList(0)),getIntVar(varList(1)),ann)),
+    "int_le_reif" -> ((varList,ann) => reif(int_le(getIntVar(varList(0)),getIntVar(varList(1)),ann),getBoolVar(varList(2)))), 
     "bool_eq" -> ((varList,ann) => bool_eq(getBoolVar(varList(0)),getBoolVar(varList(1)),ann) ),
+    "bool_lt" -> ((varList,ann) => bool_lt(getBoolVar(varList(0)),getBoolVar(varList(1)),ann) ),
+    "bool_not" -> ((varList,ann) => bool_not(getBoolVar(varList(0)),getBoolVar(varList(1)),ann) ),
+    "bool_xor" -> ((varList,ann) => bool_xor(getBoolVar(varList(0)),getBoolVar(varList(1)),getBoolVar(varList(2)),ann) ),
     "array_bool_or" -> ((varList,ann) => array_bool_or(getBoolVarArray(varList(0)),getBoolVar(varList(1)),ann)),
     "array_bool_and" -> ((varList,ann) => array_bool_and(getBoolVarArray(varList(0)),getBoolVar(varList(1)),ann)),
+    "bool_clause" -> ((varList,ann) => bool_clause(getBoolVarArray(varList(0)),getBoolVarArray(varList(1)),ann)),
     "bool2int" -> ((varList,ann) => bool2int(getBoolVar(varList(0)),getIntVar(varList(1)),ann)),
+    "array_int_element" -> ((varList,ann) => array_int_element(getIntVar(varList(0)),getIntVarArray(varList(1)),getIntVar(varList(2)),ann)),
+    "array_var_int_element" -> ((varList,ann) => array_var_int_element(getIntVar(varList(0)),getIntVarArray(varList(1)),getIntVar(varList(2)),ann)),
+    "array_bool_element" -> ((varList,ann) => array_bool_element(getIntVar(varList(0)),getBoolVarArray(varList(1)),getBoolVar(varList(2)),ann)),
+    "array_var_bool_element" -> ((varList,ann) => array_var_bool_element(getIntVar(varList(0)),getBoolVarArray(varList(1)),getBoolVar(varList(2)),ann)),
     "int_lin_eq" -> ((varList,ann) => int_lin_eq(getIntVarArray(varList(0)),getIntVarArray(varList(1)),getIntVar(varList(2)),ann)),
     "int_lin_le" -> ((varList,ann) => int_lin_le(getIntVarArray(varList(0)),getIntVarArray(varList(1)),getIntVar(varList(2)),ann)),
     "int_lin_ne" -> ((varList,ann) => int_lin_ne(getIntVarArray(varList(0)),getIntVarArray(varList(1)),getIntVar(varList(2)),ann)),
     "int_lin_eq_reif" -> ((varList,ann) => reif(int_lin_eq(getIntVarArray(varList(0)),getIntVarArray(varList(1)),getIntVar(varList(2)),ann),getBoolVar(varList(3)))),
     "int_lin_le_reif" -> ((varList,ann) => reif(int_lin_le(getIntVarArray(varList(0)),getIntVarArray(varList(1)),getIntVar(varList(2)),ann),getBoolVar(varList(3)))),
-    "int_lin_ne_reif" -> ((varList,ann) => reif(int_lin_ne(getIntVarArray(varList(0)),getIntVarArray(varList(1)),getIntVar(varList(2)),ann),getBoolVar(varList(3))))
-      
+    "int_lin_ne_reif" -> ((varList,ann) => reif(int_lin_ne(getIntVarArray(varList(0)),getIntVarArray(varList(1)),getIntVar(varList(2)),ann),getBoolVar(varList(3)))),
+    "count" -> ((varList,ann) => count(getIntVarArray(varList(0)),getIntVar(varList(1)),getIntVar(varList(2)),ann)),
+    "at_least_int" -> ((varList,ann) => at_least_int(getIntVar(varList(0)),getIntVarArray(varList(1)),getIntVar(varList(2)),ann)),
+    "at_most_int" -> ((varList,ann) => at_most_int(getIntVar(varList(0)),getIntVarArray(varList(1)),getIntVar(varList(2)),ann)),
+    "count_eq" -> ((varList,ann) => count_eq(getIntVarArray(varList(0)),getIntVar(varList(1)),getIntVar(varList(2)),ann)),
+    "int_max" -> ((varList,ann) => int_max(getIntVar(varList(0)),getIntVar(varList(1)),getIntVar(varList(2)),ann)),
+    "int_min" -> ((varList,ann) => int_min(getIntVar(varList(0)),getIntVar(varList(1)),getIntVar(varList(2)),ann)),
+    "int_times" -> ((varList,ann) => int_times(getIntVar(varList(0)),getIntVar(varList(1)),getIntVar(varList(2)),ann)),
+    "int_div" -> ((varList,ann) => int_div(getIntVar(varList(0)),getIntVar(varList(1)),getIntVar(varList(2)),ann)),
+    "int_mod" -> ((varList,ann) => int_mod(getIntVar(varList(0)),getIntVar(varList(1)),getIntVar(varList(2)),ann)),
+    "int_abs" -> ((varList,ann) => int_abs(getIntVar(varList(0)),getIntVar(varList(1)),ann)),
+    "all_different_int" -> ((varList,ann) => all_different_int(getIntVarArray(varList(0)),ann)),
+    "set_in" -> ((varList,ann) => set_in(getIntVar(varList(0)),getIntSet(varList(1)),ann)),
+    "member_int" -> ((varList,ann) => member_int(getIntVarArray(varList(0)),getIntVar(varList(1)),ann)),
+    "global_cardinality_closed" -> ((varList,ann) => global_cardinality_closed(getIntVarArray(varList(0)),getIntVarArray(varList(1)),getIntVarArray(varList(2)),ann))
   )
+  
   
   def constructConstraint(cstr: String, varList: List[Element], ann:List[Annotation]): Constraint = {
     //special case
     if(cstr=="bool_eq_reif" && !varList(1).typ.isVar && !varList(1).value.asInstanceOf[Boolean]){
-      return constructConstraint("bool_not",varList.head :: varList.tail.tail,ann)
+      makeConstraint("bool_not",varList.head :: varList.tail.tail,ann)
+    }else if(cstr.endsWith("_reif")){
+      reif(makeConstraint(cstr.substring(0,cstr.length-5),varList.dropRight(1),ann),getBoolVar(varList.last))
+    }else{
+      makeConstraint(cstr,varList,ann)    
     }
-    
-//    cstr match{
-//      case "int_eq_reif" => reif(int_eq(getIntVar(varList(0)),getIntVar(varList(1)),ann),getBoolVar(varList(2))) 
-//      case "int_eq" => int_eq(getIntVar(varList(0)),getIntVar(varList(1)),ann)  
-//      case "int_ne" => int_ne(getIntVar(varList(0)),getIntVar(varList(1)),ann)
-//      case "int_ne_reif" => reif(int_ne(getIntVar(varList(0)),getIntVar(varList(1)),ann),getBoolVar(varList(2))) 
-//      case "bool_eq" => bool_eq(getBoolVar(varList(0)),getBoolVar(varList(1)),ann) 
-//      case "array_bool_or" => array_bool_or(getBoolVarArray(varList(0)),getBoolVar(varList(1)),ann)
-//      case "array_bool_and" => array_bool_and(getBoolVarArray(varList(0)),getBoolVar(varList(1)),ann)
-//      case "bool2int" => bool2int(getBoolVar(varList(0)),getIntVar(varList(1)),ann)
-//      case "int_lin_eq" => int_lin_eq(getIntVarArray(varList(0)),getIntVarArray(varList(1)),getIntVar(varList(2)),ann)
-//      case "int_lin_le" => int_lin_le(getIntVarArray(varList(0)),getIntVarArray(varList(1)),getIntVar(varList(2)),ann)
-//      case "int_lin_ne" => int_lin_ne(getIntVarArray(varList(0)),getIntVarArray(varList(1)),getIntVar(varList(2)),ann)
-//      case "int_lin_eq_reif" => reif(int_lin_eq(getIntVarArray(varList(0)),getIntVarArray(varList(1)),getIntVar(varList(2)),ann),getBoolVar(varList(3)))
-//      case "int_lin_le_reif" => reif(int_lin_le(getIntVarArray(varList(0)),getIntVarArray(varList(1)),getIntVar(varList(2)),ann),getBoolVar(varList(3)))
-//      case "int_lin_ne_reif" => reif(int_lin_ne(getIntVarArray(varList(0)),getIntVarArray(varList(1)),getIntVar(varList(2)),ann),getBoolVar(varList(3)))
-//      //TODO: Continue here for best efficiency!
-//      case _ =>
-    cdico.getOrElse(cstr, ((varList: List[Element], ann:List[Annotation]) =>
-    if(cstr.endsWith("_reif"))reif(constructConstraint(cstr.substring(0,cstr.length-5),varList.dropRight(1),ann),getBoolVar(varList.last))
-    else
-      //cstr match{
-      //case _ =>
-//      cstr match {
-//        case "oscar_alldiff" =>
-//          log(0,"deprecated: oscar_alldiff")
-//          val a = getIntVarArray(varList(0));
-//          all_different_int(a, ann)
-//        case other =>
-      //println(cstr)
-          makeConstraint(cstr,varList,ann)
-      //GenericConstraint(cstr,List.empty[Object],ann)
-          //throw new NoSuchConstraintException(notImplemented.toString(),"CBLS Solver");
-    //}
-    ))(varList,ann)
-    //  }
   }
   
+  
   def makeConstraint(c: String, args:List[Element], ann:List[Annotation]): Constraint = {
-    try{
-      val cl = Class.forName("oscar.flatzinc.model."+c)
-      makeConstraint(cl,args,ann)
-    }catch{
-      case e: ClassNotFoundException => 
-        if(acceptAnyCstr)
-          makeGenericConstraint(c,args,ann)
-        else 
-          throw new NoSuchConstraintException(c,"Intermediate Representation");
-    }
+    cdico.getOrElse(c, ((varList: List[Element], ann:List[Annotation]) =>
+      try{
+        val cl = Class.forName("oscar.flatzinc.model."+c)
+        Console.err.println("MISSING CONSTRAINT: "+c)
+        makeConstraint(cl,args,ann)
+      }catch{
+        case e: ClassNotFoundException => 
+          if(acceptAnyCstr)
+            makeGenericConstraint(c,args,ann)
+          else 
+            throw new NoSuchConstraintException(c,"Intermediate Representation");
+      }
+    ))(args,ann)
+  
   }
   
   def makeGenericConstraint(c: String, args:List[Element], ann:List[Annotation]): Constraint = {
     val args2 = args.map((a) => 
       if(a.typ.typ==Type.INT)
         if(a.typ.isArray) getIntVarArray(a)
-        else getIntVar(a)
+        else getIntVar(a) //TODO: differentiate par vs var
       else if(a.typ.typ==Type.BOOL)
         if(a.typ.isArray) getBoolVarArray(a)
-        else getBoolVar(a)//TODO: differentiate par vs var
+        else getBoolVar(a) //TODO: differentiate par vs var
       else if(a.typ.typ==Type.SET) getIntSet(a)
       else throw new Exception("Case not handled: "+a))
     GenericConstraint(c,args2,ann)
