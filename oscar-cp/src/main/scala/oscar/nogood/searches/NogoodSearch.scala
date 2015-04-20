@@ -138,6 +138,9 @@ class NogoodSearch(store: CPStore, nogoods: NogoodDB) {
     store.pop()
     branch.clear()
   }
+  
+  private[this] val toShave = new ArrayStack[Decision](16)
+  final def decisionToShave = toShave
 
   @inline private def buildNogoods(): Unit = {
 
@@ -164,6 +167,7 @@ class NogoodSearch(store: CPStore, nogoods: NogoodDB) {
         else {
           val array = positives.toArray
           val all = array ++ Array(decision)
+          //println(all.mkString(" "))
           nogoods.add(new Nogood(all))
         }
         i += 1

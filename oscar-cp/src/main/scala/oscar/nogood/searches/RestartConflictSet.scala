@@ -13,15 +13,14 @@ class RestartConflictSet(variables: Array[CPIntVar], varHeuristic: Int => Int, v
   private[this] val nVariables = variables.length
   private[this] val store = variables(0).store
   
-  private[this] val lastValues = Array.fill(nVariables)(Int.MinValue)
-
   private[this] val assigned = Array.tabulate(nVariables)(i => i)
   private[this] val nAssignedRev = new ReversibleInt(store, 0)
   private[this] val nDecisionRev = new ReversibleInt(store, 0)
   private[this] var nAssigned = 0
-  private[this] var maxDecision = 0
+  private[this] var maxAssigned = 0
 
-  private[this] val priorities = new Array[Int](nVariables)
+  private[this] val priorities = new Array[Long](nVariables)
+  private[this] var timestamp = 0L
 
   private[this] var conflictDecision: Int = -1
   private[this] var conflictVar: Int = -1
@@ -32,8 +31,9 @@ class RestartConflictSet(variables: Array[CPIntVar], varHeuristic: Int => Int, v
   }
 
   final override def nextDecision: Decision = {
+    timestamp += 1
     updateAssigned()
-    if (nAssigned == nVariables) null
+    if (computeAllAssigned == nVariables) null
     else {   
       
       // Trail the number of assigned variables
@@ -43,47 +43,43 @@ class RestartConflictSet(variables: Array[CPIntVar], varHeuristic: Int => Int, v
       val decision = nDecisionRev.incr() - 1
       
       // Handle last conflict if any
-      if (conflictDecision >= decision) updatePriority(conflictVar)
+      if (conflictDecision >= decision) priorities(conflictVar) = timestamp
 
       // Select the next variable and value
-      val varId = nextVariable(decision)
+      val varId = nextVariable()
       val variable = variables(varId)
-      val minValue = variable.min
-      val maxValue = variable.max
-      val lastValue = lastValues(varId)
-      val value = /*if (minValue <= lastValue && lastValue <= maxValue) lastValue else*/ valHeuristic(varId)
+      val value = valHeuristic(varId)
 
       conflictDecision = decision
       conflictVar = varId
 
       // Alternatives
-      if (value == variable.max) new Greater(variable, value - 1)
-      else new LowerEq(variable, value)
+      new LowerEq(variable, value)
     }
   }
 
-  @inline private def nextVariable(nDecision: Int): Int = {
-    if (nDecision < maxDecision) nextPriority
+  @inline private def nextVariable(): Int = {
+    if (nAssigned < maxAssigned) nextPriority
     else {
-      maxDecision += 1
+      maxAssigned = nAssigned
       nextHeuristic
     }
   }
   
   @inline private def nextPriority: Int = {
-    var minId = -1
-    var min = Int.MaxValue
+    var maxId = -1
+    var max = -1L
     var i = nAssigned
     while (i < nVariables) {
       val varId = assigned(i)
       val priority = priorities(varId)
-      if (priority < min) {
-        min = priority
-        minId = varId
+      if (priority > max) {
+        max = priority
+        maxId = varId
       }
       i += 1
     }
-    minId
+    maxId
   }
   
   @inline private def nextHeuristic: Int = {
@@ -101,14 +97,17 @@ class RestartConflictSet(variables: Array[CPIntVar], varHeuristic: Int => Int, v
     }
     minId
   }
-
-  @inline private def updatePriority(varId: Int): Unit = {
+  
+  @inline private def computeAllAssigned(): Int = {
     var i = nVariables
+    var n = 0
     while (i > 0) {
       i -= 1
-      priorities(i) += 1
+      if (variables(i).isBound) {
+        n += 1
+      }
     }
-    priorities(varId) = 0
+    n
   }
   
   @inline private def updateAssigned(): Unit = {
@@ -120,7 +119,6 @@ class RestartConflictSet(variables: Array[CPIntVar], varHeuristic: Int => Int, v
         val tmp = assigned(nAssigned)
         assigned(nAssigned) = varId
         assigned(i) = tmp
-        lastValues(varId) = variables(varId).min
         nAssigned += 1
       }
       i += 1

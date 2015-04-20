@@ -4,7 +4,6 @@ import scala.collection.mutable.ArrayBuffer
 import scala.collection.mutable.Map
 import scala.collection.parallel.mutable.ParHashMap
 import scala.io.Source
-
 import oscar.algo.search.SearchStatistics
 import oscar.cp.searches.CulpritsSearch
 import oscar.cp.searches.LCSearchSimplePhaseAssign
@@ -15,6 +14,9 @@ import oscar.nogood.searches.FailureDirectedSearch
 import oscar.nogood.searches.NogoodSearch
 import oscar.nogood.searches.SplitConflictSet
 import oscar.nogood.searches.RestartConflictSet
+import oscar.nogood.searches.QuickShaving
+import oscar.algo.search.DFSearch
+import oscar.nogood.searches.BadDecisionSearch
 
 object TestRCPSP extends App {
   
@@ -22,11 +24,13 @@ object TestRCPSP extends App {
     override def toString: String = s"$instance\t$time\t$nFails\t$objective\t$completed\t${nNodes*1000.0/time.toDouble}"
   }
 
-  val jType = "j60"
+  val jType = "j120"
   val boundsFile = s"data/rcpsp/$jType/opt"
   val (lowerBounds, upperBounds) = BLParser.parseBounds(boundsFile)
   
-  val instances = for (i <- 1 to 48; j <- 1 to 10) yield (i, j)
+  //val instances = Array((5, 2), (5, 7), (5, 10), (14, 3), (14, 10), (30, 10), (37, 2), (37, 6), (37, 7), (41, 1), (41, 2), (41, 7), (41, 8), (41, 9), (42, 3), (46, 6), (46, 7))
+  
+  val instances = for (i <- 1 to 60; j <- 1 to 10) yield (i, j)
   val filtered = instances.filter(i => {
     val instance = s"${jType.toUpperCase}_${i._1}_${i._2}.rcp"
     val ub = upperBounds(instance)
@@ -36,8 +40,9 @@ object TestRCPSP extends App {
   
   val results = ParHashMap[String, Result]()
   
+  println("name\ttime\tfails\tbest\topt\tnodes/sec")
 
-  for ((j, i) <- filtered.par) {
+  for ((j, i) <- instances.par) {
 
     new CPModel {
       solver.silent = true
@@ -51,18 +56,15 @@ object TestRCPSP extends App {
       val Resources = 0 until nResources
 
       val scale = 1
-      val durations = instance.durations
+      val durations = instance.durations.map(_ * scale)
       val demands = instance.demands.transpose
-      val horizon = instance.horizon
+      val horizon = durations.sum
       val capa = instance.capacities
 
       // Decision variables
       val starts = Array.tabulate(nTasks)(t => CPIntVar(0, horizon - durations(t), s"start_$t"))
       val ends = Array.tabulate(nTasks)(t => starts(t) + durations(t))
       val makespan = maximum(ends)
-
-      val ub = upperBounds(instanceFile.toUpperCase() + ".rcp")
-      val lb = lowerBounds(instanceFile.toUpperCase() + ".rcp")
 
       // Precedences
       for ((t1, t2) <- instance.precedences) add(ends(t1) <= starts(t2))
@@ -72,71 +74,76 @@ object TestRCPSP extends App {
         add(maxCumulativeResource(starts, durations.map(CPIntVar(_)), ends, demands(r).map(CPIntVar(_)), CPIntVar(capa(r))), Weak)
       }
 
-      //minimize(makespan)
-      add(makespan == lb)
-      
-      //search (setTimes(starts, durations.map(CPIntVar(_)), ends))
-      //search(binaryFirstFail(starts))
-      //search (binaryIdx(starts, starts(_).min, starts(_).min))
+      minimize(makespan)
 
       val nogoodDB = NogoodDB()
       val cpSearch = new NogoodSearch(solver, nogoodDB)
+      val branching = new RestartConflictSet(starts, starts(_).min, starts(_).min)
       
-      val branching = new RestartConflictSet(starts, starts(_).size, starts(_).min)
-      //val branching = new SplitConflictSet(starts, starts(_).size, starts(_).min)
-      //val branching = new FailureDirectedSearch(starts, starts(_).size, starts(_).min)
-     
-      val t0 = System.currentTimeMillis()
+      search (setTimes(starts, durations.map(CPIntVar(_)), ends, i => i))
+      
+      onSolution {     
+        best = makespan.value
+        solution = true
+        t0 = System.currentTimeMillis()
+      }
+      
+      val trueT0 = System.currentTimeMillis()
+      var t0 = trueT0
       var n = 100
-      var completed = false
+      var completed = solver.isFailed()
       var timeOut = false
       var solution = false
-      var best = makespan.min
+      var best = makespan.max
       
       cpSearch.onSolution {
         best = makespan.value
         solution = true
+        //t0 = System.currentTimeMillis()
       }
 
+      val timeLimit = 5000
       var nFails = 0
       var nNodes = 0
       var time = 0l
+      
+      /*val stats = solver.start(s => System.currentTimeMillis() - t0 >= timeLimit)
+      nFails = stats.nFails
+      nNodes = stats.nNodes
+      time = System.currentTimeMillis() - t0
+      completed = stats.completed
+      timeOut = time > timeLimit*/
+      
+      
 
-      while (!solution && !timeOut) {
+      while (!completed && !timeOut) {
         solver.pushState()
         nogoodDB.foreach(n => solver.post(n.toConstraint))
-        cpSearch.start(branching, s => s.nBacktracks >= n || s.nSolutions == 1 || System.currentTimeMillis() - t0 >= 600000)
+        cpSearch.start(branching, s => s.nBacktracks >= n || System.currentTimeMillis() - t0 >= timeLimit)
         solver.pop()
+        
         nFails += cpSearch.nBacktracks
         nNodes += cpSearch.nNodes
         time = System.currentTimeMillis() - t0
-        //solution = cpSearch.isCompleted // <----------
-        timeOut = time > 600000
+        completed = cpSearch.isCompleted
+        timeOut = time > timeLimit
         n = (n * 115) / 100
       }
-      
-      /*var best = ub
-      val stats = solver.start(nSols = 1, timeLimit = 5)
-      val time = stats.time
-      val nNodes = stats.nNodes
-      val solution = stats.nSols == 1*/
-          
-      val result = Result(j*10 + i, instanceFile, time, nNodes, nFails, best, solution)
+   
+      val result = Result(j*10 + i, instanceFile, System.currentTimeMillis() - trueT0, nNodes, nFails, best, completed)
       results += (instanceFile -> result)
-      
-      println("Progression: " + results.size.toDouble / filtered.size)
+      //println(result)
     }
   }
   
   println("name\ttime\tfails\tbest\topt\tnodes/sec")
-  val allResults = results.values.toArray.sortBy(_.id)
-  allResults.foreach(println)
-  
+  val allResults = results.values.toArray.sortBy(_.id) 
   val completed = allResults.count(r => r.completed)
   val sumObjs = allResults.map(_.objective).sum
+  println(allResults.mkString("\n"))
   
   println("completed   : " + completed)
-  println("uncompleted : " + (480 - completed))
+  println("uncompleted : " + (600 - completed))
   println("sumObjs     : " + sumObjs)
 }
 

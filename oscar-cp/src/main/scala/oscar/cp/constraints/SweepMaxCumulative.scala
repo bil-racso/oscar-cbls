@@ -53,6 +53,8 @@ class SweepMaxCumulative(starts: Array[CPIntVar], durations: Array[CPIntVar], en
   private val nTasks = starts.size
   private val Tasks = 0 until nTasks
 
+  var nCalls = 0
+  
   // Contains all the events representing the tasks (needs to be initialized)
   private val eventPointSeries = new Array[Event](nTasks * 3)
 
@@ -139,6 +141,8 @@ class SweepMaxCumulative(starts: Array[CPIntVar], durations: Array[CPIntVar], en
   }
 
   override def propagate(): CPOutcome = {
+    
+    nCalls += 1
 
     // Generates events
     if (!generateEventPointSeries())
