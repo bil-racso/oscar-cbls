@@ -5,6 +5,7 @@ import oscar.cp.core.Constraint
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.CPOutcome._
 import java.lang.Math._
+import oscar.cp.StaticCounter
 
 // @author Steven Gay steven.gay@uclouvain.be
 
@@ -30,6 +31,9 @@ extends CumulativeTemplate(starts, durations, ends, heights, resources, capacity
   var hasChanged = true
   
   final override def propagate(): CPOutcome = {
+    
+    StaticCounter.cpt += 1
+    
     updateCache()
     C = capacity.max
     hasChanged = true
