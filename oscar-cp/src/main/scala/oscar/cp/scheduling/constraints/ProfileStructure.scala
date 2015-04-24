@@ -6,6 +6,7 @@ import Math.min
 import Math.max
 import oscar.algo.reversible.ReversibleInt
 import oscar.cp.core.CPStore
+import oscar.algo.array.ArrayStack
 
 // Expected usage: update smin/smax...
 // Then rebuild profile
@@ -365,11 +366,9 @@ class ProfileStructure(
   
   
   // find minimum height on open interval [time1 ; time2)
-  def minInterval(time1: Int, time2: Int): Int = {
+  def minInterval(a: Int, time1: Int, time2: Int): Int = {
     // Find first
-    var i = 1
-    while (i < nPoints && pointTimes(i) <= time1) i += 1
-    i -= 1
+    var i = indexBefore(a, time1)
 
     var min = pointHeights(i)
 
@@ -382,7 +381,6 @@ class ProfileStructure(
 
     min
   }
-  
   
   def maxInterval(time1: Int, time2: Int): Int = {
     // Find first before time1
@@ -437,6 +435,55 @@ class ProfileStructure(
     max
   }
 
+
+  val hStack = new ArrayStack[Int](nTasks + 1)
+  val dStack = new ArrayStack[Int](nTasks + 1)
+  
+  @inline private def unstack(time: Int, height: Int, dur: Int) = {
+    var minHeight = Int.MaxValue
+    var lastD = time
+    while (hStack.top <= height) {
+      val h = hStack.pop()
+      lastD = dStack.pop()
+      if (time - lastD >= dur) minHeight = min(minHeight, h)
+    }
+    hStack.push(height)
+    dStack.push(lastD)
+    minHeight
+  }
+  
+  // when task a is placed anywhere on [first, last[, what is the minimum height on which it will stand? With d its duration,
+  // min_{ t \in [first, last-d[ } max_{ u \in { [t, t+d[ } } profile(u)
+  def minHeightOf(a: Int) = {
+    val first = smin(a)
+    val last  = emax(a)
+    val d = dmin(a)
+    
+    var i = indexBefore(a, first)  // find plateau where a can start
+    hStack.clear
+    dStack.clear
+    
+    hStack.push(Int.MaxValue)
+    dStack.push(first)
+    
+    hStack.push(pointHeights(i))
+    dStack.push(first)
+    
+    i += 1
+    
+    var minHeight = Int.MaxValue
+    
+    while (pointTimes(i) < last) {    
+      val thispoint = math.min(pointTimes(i), last)
+      minHeight = math.min(minHeight, unstack(thispoint, pointHeights(i), d))
+      i += 1
+    }
+      
+    minHeight = math.min(minHeight, unstack(last, Int.MaxValue - 1, d))
+    
+    minHeight
+  }
+  
   
   def printProfile: Unit = {
     var i = 0
