@@ -80,43 +80,30 @@ class Eq(x: CPIntVar, y: CPIntVar) extends Constraint(x.store, "Equality") {
       y.callValBindWhenBind(this)
 
       if (x.size > 2 || y.size > 2) {
-        if (l == Strong) {
-          //x.callValRemoveWhenValueIsRemoved(this)
-          //y.callValRemoveWhenValueIsRemoved(this)
-          
-          val xvalues = Array.ofDim[Int](x.size)
-          val yvalues = Array.ofDim[Int](y.size)
+        if (l == Strong) {        
+          val sharedValues = new Array[Int](math.max(x.size, y.size))
           x.filterWhenDomainChangesWithDelta(true,CPStore.MaxPriorityL2) { d =>
-            val m = d.fillArray(xvalues)
-            var hasfailed = false
-            var i = 0
-            while (i < m && !hasfailed) {
-              if (y.removeValue(xvalues(i)) == Failure) {
-                hasfailed = true
-              }
-              i += 1
+            val values = sharedValues
+            var i = d.fillArray(values)   
+            var notFailed = true
+            while (notFailed && i > 0) {
+              i -= 1
+              notFailed = y.removeValue(values(i)) != Failure
             }
-            if (hasfailed) Failure
-            else Suspend
+            if (notFailed) Suspend
+            else Failure
           }
           y.filterWhenDomainChangesWithDelta(true,CPStore.MaxPriorityL2) { d =>
-            val m = d.fillArray(yvalues)
-            var hasfailed = false
-            var i = 0
-            while (i < m && !hasfailed) {
-              if (x.removeValue(yvalues(i)) == Failure) {
-                hasfailed = true
-              }
-              i += 1
+            val values = sharedValues
+            var i = d.fillArray(values)
+            var notFailed = true
+            while (notFailed && i > 0) {
+              i -= 1
+              notFailed = x.removeValue(values(i)) != Failure
             }
-            if (hasfailed) Failure
-            else Suspend
-          }          
-          
-          
-          
-          
-          
+            if (notFailed) Suspend
+            else Failure
+          }               
         } else {
           x.callUpdateBoundsWhenBoundsChange(this)
           y.callUpdateBoundsWhenBoundsChange(this)

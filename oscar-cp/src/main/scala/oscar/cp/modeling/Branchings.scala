@@ -131,6 +131,10 @@ trait Branchings extends BranchingUtils {
     new BinaryDomainSplitBranching(xa, varHeuris)
   }
 
+  def binarySplit(x: Seq[CPIntVar], varHeuris: (CPIntVar => Int), valHeuris: (CPIntVar => Int)): Branching = {
+    binarySplitIdx(x, i => varHeuris(x(i)), i => valHeuris(x(i)))
+  }
+
   def binarySplit(x: Seq[CPIntVar], varHeuris: (CPIntVar => Int)): Branching = {
     binarySplitIdx(x, i => varHeuris(x(i)))
   }
