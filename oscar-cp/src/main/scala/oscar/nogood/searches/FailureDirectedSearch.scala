@@ -146,7 +146,7 @@ class FailureDirectedSearch(variables: Array[CPIntVar], varHeuristic: Int => Int
     }
   }
   
-  class FDSChoice(variable: CPIntVar, value: Int) {
+  class FDSChoice(val variable: CPIntVar, val value: Int) {
     val decision1 = new FDSLowerEq(variable, value)
     val decision2 = decision1._opposite
     def rating: Double = decision1.rating + decision2.rating
@@ -158,7 +158,7 @@ class FailureDirectedSearch(variables: Array[CPIntVar], varHeuristic: Int => Int
     }
   }
 
-  class FDSLowerEq(variable: CPIntVar, value: Int) extends FDSDecision {
+  class FDSLowerEq(val variable: CPIntVar, val value: Int) extends FDSDecision {
     private[this] var rate: Double = 1.0
     val _opposite: FDSDecision = new FDSGreater(variable, value, this)
     override def rating: Double = rate
@@ -170,7 +170,7 @@ class FailureDirectedSearch(variables: Array[CPIntVar], varHeuristic: Int => Int
     override def applyDecision(): CPOutcome = variable.store.post(variable <= value)
   }
 
-  class FDSGreater(variable: CPIntVar, value: Int, _opposite: FDSDecision) extends FDSDecision {
+  class FDSGreater(val variable: CPIntVar, val value: Int, _opposite: FDSDecision) extends FDSDecision {
     private[this] var rate: Double = 1.0
     override def rating: Double = rate
     override def rating_=(r: Double): Unit = rate = r

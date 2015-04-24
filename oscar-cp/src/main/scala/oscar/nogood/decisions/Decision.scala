@@ -11,10 +11,12 @@ abstract class Decision {
   def toLiteral: CPBoolVar
   def unary_!(): Decision = opposite
   def strengthen(): Unit = Unit
+  def variable(): CPIntVar
+  def value(): Int
 }
 
 class Assign(val variable: CPIntVar, val value: Int) extends Decision {
-  override def apply(): Unit = variable.store.assign(variable, value)
+  override def apply(): Unit = variable.store.post(variable == value)
   override def opposite: Decision = new Remove(variable, value)
   override def isTrue: Boolean = variable.isBoundTo(value)
   override def toLiteral: CPBoolVar = variable ?== value
@@ -22,7 +24,7 @@ class Assign(val variable: CPIntVar, val value: Int) extends Decision {
 }
 
 class Remove(val variable: CPIntVar, val value: Int) extends Decision {
-  override def apply(): Unit = variable.store.remove(variable, value)
+  override def apply(): Unit = variable.store.post(variable != value)
   override def opposite: Decision = new Assign(variable, value)
   override def isTrue: Boolean = !variable.hasValue(value)
   override def toLiteral: CPBoolVar = variable ?!= value

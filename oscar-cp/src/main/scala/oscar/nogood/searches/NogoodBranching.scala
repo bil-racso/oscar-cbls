@@ -3,10 +3,22 @@ package oscar.nogood.searches
 import oscar.cp.core.variables.CPIntVar
 import oscar.nogood.decisions.Decision
 import oscar.nogood.decisions.Assign
+import oscar.algo.search.Branching
+import oscar.algo.search.Alternative
 
-abstract class NogoodBranching {
-  def reset(): Unit = Unit
+abstract class NogoodBranching extends Branching {
+  // def reset(): Unit = Unit
   def nextDecision: Decision
+  
+  // should do nextDecision and return empty seq on null, seq of decision and opposite otherwise
+  // better not be implemented to crash when run, for now
+  def alternatives() : Seq[Alternative] = {
+    val dec = nextDecision
+    if (dec == null) Seq()
+    else {
+      Seq(() => { dec.apply() }, () => { dec.opposite.apply() })
+    }
+  }  
 }
 
 class StaticNogoodBranching(variables: Array[CPIntVar], valHeuristic: CPIntVar => Int) extends NogoodBranching {
