@@ -38,7 +38,7 @@ extends CumulativeTemplate(starts, durations, ends, heights, resources, capacity
       if (oneSweep()) return Failure
     }
     
-    removeExtremal()
+    if (C == capacity.min) removeExtremal()
     if (filterPossibleActivities()) return Failure
     
     Suspend 

@@ -236,8 +236,8 @@ extends CumulativeTemplate(starts, durations, ends, heights, resources, capacity
     }
     
     
-    // Step 3: trust TT to do its job, this propagator can not deduce anything on extremal fixed activities.
-    removeExtremal()
+    // Step 3: trust TT to do checking, this propagator can not deduce anything on extremal fixed activities.
+    if (C == capacity.min) removeExtremal()
     Suspend
   }
 
