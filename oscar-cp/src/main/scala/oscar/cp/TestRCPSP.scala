@@ -5,8 +5,7 @@ import scala.collection.mutable.Map
 import scala.collection.parallel.mutable.ParHashMap
 import scala.io.Source
 import oscar.algo.search.SearchStatistics
-import oscar.cp.searches.CulpritsSearch
-import oscar.cp.searches.LCSearchSimplePhaseAssign
+import oscar.cp.searches._
 import oscar.nogood.database.NogoodDB
 import oscar.nogood.decisions.Decision
 import oscar.nogood.searches.BinaryConflictSet

@@ -46,7 +46,7 @@ abstract class TestCumulativeConstraint(val cumulativeName: String, val nTests: 
     Tasks.foreach(t => post(ends(t) == starts(t) + durations(t)))
   }
 
-  def cumulative(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], demands: Array[CPIntVar], resources: Array[CPIntVar], capacity: CPIntVar, id: Int): Constraint
+  def cumulative(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], demands: Array[CPIntVar], resources: Array[CPIntVar], capacity: CPIntVar, id: Int): Array[Constraint]
 
   def generateRandomSchedulingProblem(nTasks: Int): SchedulingInstance = {
     val rand = new scala.util.Random()
@@ -120,7 +120,7 @@ abstract class TestCumulativeConstraint(val cumulativeName: String, val nTests: 
 
 
 class TestCumulativeDefault extends TestCumulativeConstraint("SweepMaxCumulative") {
-  override def cumulative(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], demands: Array[CPIntVar], resources: Array[CPIntVar], capacity: CPIntVar, id: Int): Constraint = {
-    maxCumulativeResource(starts, durations, ends, demands, resources, capacity, id: Int)
+  override def cumulative(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], demands: Array[CPIntVar], resources: Array[CPIntVar], capacity: CPIntVar, id: Int): Array[Constraint] = {
+    Array(maxCumulativeResource(starts, durations, ends, demands, resources, capacity, id: Int))
   }
 }
