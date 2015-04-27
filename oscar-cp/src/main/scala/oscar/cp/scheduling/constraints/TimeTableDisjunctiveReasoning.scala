@@ -61,9 +61,16 @@ extends CumulativeTemplate(starts, durations, ends, heights, resources, capacity
     var p = 0
     while (p < limit) {
       val a = activitiesToConsider(p)
-      dminF(a) = smax(a) - smin(a)
-      smaxF(a) = max(smax(a), emin(a))
-      eminF(a) = min(smax(a), emin(a))
+      if (smax(a) < emin(a)) {
+        smaxF(a) = emin(a)
+        eminF(a) = smax(a)
+        dminF(a) = dmin(a) - (emin(a) - smax(a))
+      }
+      else {
+        smaxF(a) = smax(a)
+        eminF(a) = emin(a)
+        dminF(a) = dmin(a)
+      }
       
       if (dminFmax < dminF(a)) dminFmax = dminF(a)
       if (hminmax < hmin(a)) hminmax = hmin(a)
@@ -124,7 +131,7 @@ extends CumulativeTemplate(starts, durations, ends, heights, resources, capacity
         hPushers(a) = min(profile.minInterval(a, eminF(a) - 1, eminF(a)),
                           profile.minInterval(a, smaxF(a), smaxF(a) + 1))
  
-        if (smax(a) >= emin(a)) { // } && smaxF(a) - eminF(a) >= dminF(a)) {    // the free part of a can be inside its "moi" 
+        if (smax(a) >= emin(a) && smaxF(a) - eminF(a) >= dminF(a)) {    // the free part of a can be inside its "moi" 
           hPushers(a) = min(hPushers(a), profile.minHeightOf(a))
           // hPushers(a) = profile.minInterval(a, eminF(a) - 1, smaxF(a) + 1)
         }
