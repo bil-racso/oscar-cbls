@@ -187,6 +187,11 @@ extends CumulativeTemplate(starts, durations, ends, heights, resources, capacity
     updateCache()
     val C = capacity.max
     
+    // Step 0: trust TT to do checking, this propagator can not deduce anything on extremal fixed activities.
+    if (C == capacity.min) removeExtremal()
+    else removeImpossible()
+
+    
     profile.rebuild(toConsider)  
     
     val limit = toConsider.limit.value
@@ -235,9 +240,6 @@ extends CumulativeTemplate(starts, durations, ends, heights, resources, capacity
       i += 1
     }
     
-    
-    // Step 3: trust TT to do checking, this propagator can not deduce anything on extremal fixed activities.
-    if (C == capacity.min) removeExtremal()
     Suspend
   }
 
