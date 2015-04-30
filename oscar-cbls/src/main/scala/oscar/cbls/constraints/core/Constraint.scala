@@ -77,6 +77,7 @@ trait Constraint{
   def registerConstrainedVariable(v: Value){
     v match{
       case c:AbstractVariable if c.model != null => _constrainedVariables = c :: _constrainedVariables
+      case _ => ()
     }   //TODO unsure if constraints can handle constraints as input parameter...
   }
 
