@@ -12,8 +12,8 @@ import oscar.cbls.invariants.lib.numeric.{Abs, Div, Minus, Mod, Prod, Prod2, Pro
 import oscar.cbls.invariants.lib.set.{Cardinality, Diff, Inter, Interval, MakeSet, SetProd, SetSum, TakeAny, Union}
 import oscar.cbls.modeling.Algebra._
 import oscar.cbls.test.invariants.bench.{InvBench, InvGen}
-
 import scala.collection.immutable.SortedMap
+import oscar.cbls.invariants.lib.set.UnionAll
 
 /**
  * @author yoann.guyot@cetic.be
@@ -390,6 +390,12 @@ class InvariantTests extends FunSuite with Checkers {
   test("Union maintains the union of two sets.") {
     val bench = new InvBench(verbose)
     new Union(bench.genIntSetVar(), bench.genIntSetVar())
+    bench.run
+  }
+  
+  test("UnionAll maintains the union of a set of sets.") {
+    val bench = new InvBench(verbose)
+    new UnionAll(bench.genIntSetVars())
     bench.run
   }
 

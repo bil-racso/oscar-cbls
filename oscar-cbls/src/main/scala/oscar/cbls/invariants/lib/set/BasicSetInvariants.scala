@@ -1,30 +1,33 @@
-/*******************************************************************************
-  * OscaR is free software: you can redistribute it and/or modify
-  * it under the terms of the GNU Lesser General Public License as published by
-  * the Free Software Foundation, either version 2.1 of the License, or
-  * (at your option) any later version.
-  *
-  * OscaR is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  * GNU Lesser General Public License  for more details.
-  *
-  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
-  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
-  ******************************************************************************/
-/*******************************************************************************
-  * Contributors:
-  *     This code has been initially developed by CETIC www.cetic.be
-  *         by Renaud De Landtsheer
-  ******************************************************************************/
-
+/**
+ * *****************************************************************************
+ * OscaR is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 2.1 of the License, or
+ * (at your option) any later version.
+ *
+ * OscaR is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License  for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
+ * ****************************************************************************
+ */
+/**
+ * *****************************************************************************
+ * Contributors:
+ *     This code has been initially developed by CETIC www.cetic.be
+ *         by Renaud De Landtsheer
+ * ****************************************************************************
+ */
 
 package oscar.cbls.invariants.lib.set
 
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.core.propagation.Checker
 
-import scala.collection.immutable.{SortedMap, SortedSet};
+import scala.collection.immutable.{ SortedMap, SortedSet };
 
 /**
  * left UNION right
@@ -33,7 +36,7 @@ import scala.collection.immutable.{SortedMap, SortedSet};
  * @author renaud.delandtsheer@cetic.be
  */
 case class Union(left: SetValue, right: SetValue)
-  extends SetInvariant(left.value.union(right.value),left.min.min(right.min) to left.max.max(right.max)) {
+  extends SetInvariant(left.value.union(right.value), left.min.min(right.min) to left.max.max(right.max)) {
   assert(left != right)
 
   registerStaticAndDynamicDependency(left)
@@ -69,11 +72,64 @@ case class Union(left: SetValue, right: SetValue)
 }
 
 /**
+ * UNION(sets(0), sets(1), ..., sets(n))
+ * @param sets is an iterable of SetValue
+ * @author yoann.guyot@cetic.be
+ */
+case class UnionAll(sets: Iterable[SetValue])
+  extends SetInvariant(initialDomain = InvariantHelper.getMinMaxBoundsSet(sets)) {
+  val count: Array[Int] = Array.fill(this.max - this.min + 1)(0)
+  val offset = -this.min
+
+  sets foreach {
+    _.value foreach { value =>
+      val i = value + offset
+      count(i) = count(i) + 1
+      if(count(i) == 1) this :+= value
+    }
+  }
+
+  sets foreach (registerStaticAndDynamicDependency(_))
+  finishInitialization()
+
+  @inline
+  override def notifyInsertOn(v: ChangingSetValue, value: Int) {
+    assert(sets.exists(_ == v))
+    
+    val i = value + offset
+    
+    if (count(i) == 0) {
+      this.insertValue(value)
+    }
+    count(i) = count(i) + 1
+  }
+
+  @inline
+  override def notifyDeleteOn(v: ChangingSetValue, value: Int) {
+    assert(sets.exists(_ == v))
+    
+    val i = value + offset
+    assert(count(i) >= 1)
+    
+    if (count(i) == 1) this.deleteValue(value)
+    count(i) = count(i) - 1
+  }
+
+  override def checkInternals(c: Checker) {
+    this.min to this.max foreach {
+      value =>
+        c.check(this.value.iterator.contains(value) == (count(value - offset) > 0),
+          Some("this.value.iterator.contains(value) == (count(value (" + value + ") - offset (" + offset + ")) > 0)"))
+    }
+  }
+}
+
+/**
  * left INTER right
  * @param left is a CBLSSetVar
  * @param right is a CBLSSetVar
  * @author renaud.delandtsheer@cetic.be
- * */
+ */
 case class Inter(left: SetValue, right: SetValue)
   extends SetInvariant(left.value.intersect(right.value),
     left.min.max(right.min) to left.max.min(right.max)) {
@@ -109,42 +165,42 @@ case class Inter(left: SetValue, right: SetValue)
   }
 }
 
-case class SetMap(a: SetValue, fun: Int=>Int,
-               initialDomain:Domain = FullRange)
+case class SetMap(a: SetValue, fun: Int => Int,
+                  initialDomain: Domain = FullRange)
   extends SetInvariant(SortedSet.empty, initialDomain) {
 
   registerStaticAndDynamicDependency(a)
   finishInitialization()
 
-  var outputCount:SortedMap[Int,Int] = SortedMap.empty
+  var outputCount: SortedMap[Int, Int] = SortedMap.empty
 
-    for(v <- a.value){
-      val mappedV = fun(v)
-      val oldCount = outputCount.getOrElse(mappedV,0)
-      if(oldCount == 0){
-        this :+= mappedV
-      }
-      outputCount += ((mappedV, oldCount+1))
+  for (v <- a.value) {
+    val mappedV = fun(v)
+    val oldCount = outputCount.getOrElse(mappedV, 0)
+    if (oldCount == 0) {
+      this :+= mappedV
     }
+    outputCount += ((mappedV, oldCount + 1))
+  }
 
   @inline
   override def notifyInsertOn(v: ChangingSetValue, value: Int) {
     val mappedV = fun(value)
-    val oldCount = outputCount.getOrElse(mappedV,0)
-    if(oldCount == 0){
+    val oldCount = outputCount.getOrElse(mappedV, 0)
+    if (oldCount == 0) {
       this :+= mappedV
     }
-    outputCount += ((mappedV, oldCount+1))
+    outputCount += ((mappedV, oldCount + 1))
   }
 
   @inline
   override def notifyDeleteOn(v: ChangingSetValue, value: Int) {
     val mappedV = fun(value)
-    val oldCount = outputCount.getOrElse(mappedV,0)
-    if(oldCount == 1){
+    val oldCount = outputCount.getOrElse(mappedV, 0)
+    if (oldCount == 1) {
       this :-= mappedV
     }
-    outputCount += ((mappedV, oldCount-1))
+    outputCount += ((mappedV, oldCount - 1))
 
   }
 
@@ -158,7 +214,7 @@ case class SetMap(a: SetValue, fun: Int=>Int,
  * @param left is the base set
  * @param right is the set that is removed from left
  * @author renaud.delandtsheer@cetic.be
- * */
+ */
 case class Diff(left: SetValue, right: SetValue)
   extends SetInvariant(left.value.diff(right.value), left.min to left.max) {
 
@@ -206,7 +262,7 @@ case class Diff(left: SetValue, right: SetValue)
  * #(v) (cardinality)
  * @param v is an IntSetVar, the set of integers to count
  * @author renaud.delandtsheer@cetic.be
- * */
+ */
 case class Cardinality(v: SetValue)
   extends IntInvariant(v.value.size, 0 to v.max - v.min) {
 
@@ -234,21 +290,20 @@ case class Cardinality(v: SetValue)
  * makes an IntSetVar out of a set of IntVar. If several variables have the same value, the value is present only once in the resulting set
  * @param on is a set of IntVar
  * @author renaud.delandtsheer@cetic.be
- * */
+ */
 case class MakeSet(on: SortedSet[IntValue])
   extends SetInvariant {
 
-  var counts: SortedMap[Int, Int] = on.foldLeft(SortedMap.empty[Int, Int])((acc:SortedMap[Int,Int], intvar:IntValue) => acc + ((intvar.value, acc.getOrElse(intvar.value, 0) + 1)))
+  var counts: SortedMap[Int, Int] = on.foldLeft(SortedMap.empty[Int, Int])((acc: SortedMap[Int, Int], intvar: IntValue) => acc + ((intvar.value, acc.getOrElse(intvar.value, 0) + 1)))
 
   for (v <- on) registerStaticAndDynamicDependency(v)
   finishInitialization()
 
-    this := SortedSet.empty[Int] ++ counts.keySet
-
+  this := SortedSet.empty[Int] ++ counts.keySet
 
   @inline
   override def notifyIntChanged(v: ChangingIntValue, OldVal: Int, NewVal: Int) {
-    assert(on.contains(v), "MakeSet notified for non interesting var :" + on.toList.exists(_==v) + " " + on.toList)
+    assert(on.contains(v), "MakeSet notified for non interesting var :" + on.toList.exists(_ == v) + " " + on.toList)
 
     assert(OldVal != NewVal)
     if (counts(OldVal) == 1) {
@@ -275,7 +330,7 @@ case class MakeSet(on: SortedSet[IntValue])
       Some("this.value.contains(v.value (" + v.value + "))"))
 
     for (v <- this.value) c.check(on.exists(i => i.value == v),
-      Some("on.exists(i => i.value == " + v +")"))
+      Some("on.exists(i => i.value == " + v + ")"))
 
   }
 }
@@ -290,7 +345,7 @@ case class MakeSet(on: SortedSet[IntValue])
  * @param lb is the lower bound of the interval
  * @param ub is the upper bound of the interval
  * @author renaud.delandtsheer@cetic.be
- * */
+ */
 case class Interval(lb: IntValue, ub: IntValue)
   extends SetInvariant(initialDomain = lb.min to ub.max) {
   assert(ub != lb)
@@ -299,8 +354,8 @@ case class Interval(lb: IntValue, ub: IntValue)
   registerStaticAndDynamicDependency(ub)
   finishInitialization()
 
-    if (lb.value <= ub.value)
-      for (i <- lb.value to ub.value) this.insertValue(i)
+  if (lb.value <= ub.value)
+    for (i <- lb.value to ub.value) this.insertValue(i)
 
   @inline
   override def notifyIntChanged(v: ChangingIntValue, OldVal: Int, NewVal: Int) {
@@ -308,21 +363,21 @@ case class Interval(lb: IntValue, ub: IntValue)
       if (OldVal < NewVal) {
         //intervale reduit
         if (OldVal <= ub.value)
-          for (i <- OldVal to (ub.value min (NewVal-1))) this.deleteValue(i)
-      }else{
+          for (i <- OldVal to (ub.value min (NewVal - 1))) this.deleteValue(i)
+      } else {
         //intervale plus grand
         if (NewVal <= ub.value)
-          for (i <- NewVal to (ub.value min (OldVal-1))) this.insertValue(i)
+          for (i <- NewVal to (ub.value min (OldVal - 1))) this.insertValue(i)
       }
     } else {
       if (OldVal > NewVal) {
         //intervale reduit
         if (lb.value <= OldVal)
-          for (i <- (NewVal+1) max lb.value to OldVal) this.deleteValue(i)
-      }else{
+          for (i <- (NewVal + 1) max lb.value to OldVal) this.deleteValue(i)
+      } else {
         //intervale plus grand
         if (lb.value <= NewVal)
-          for (i <- (OldVal+1) max lb.value to NewVal) this.insertValue(i)
+          for (i <- (OldVal + 1) max lb.value to NewVal) this.insertValue(i)
       }
     }
   }
@@ -347,7 +402,7 @@ case class Interval(lb: IntValue, ub: IntValue)
  * @param from where we take the value from
  * @param default the default value in case from is empty
  * @author renaud.delandtsheer@cetic.be
- * */
+ */
 case class TakeAny(from: SetValue, default: Int)
   extends IntInvariant(default, from.min to from.max) {
 
@@ -356,12 +411,12 @@ case class TakeAny(from: SetValue, default: Int)
 
   var wasEmpty: Boolean = false
 
-    wasEmpty = from.value.isEmpty
-    if (wasEmpty) {
-      this := default
-    } else {
-      this := from.value.head
-    }
+  wasEmpty = from.value.isEmpty
+  if (wasEmpty) {
+    this := default
+  } else {
+    this := from.value.head
+  }
 
   override def notifyInsertOn(v: ChangingSetValue, value: Int) {
     if (wasEmpty) {
@@ -393,22 +448,22 @@ case class TakeAny(from: SetValue, default: Int)
   }
 }
 
-/** an invariant that defines a singleton set out of a single int var.
-  * @author renaud.delandtsheer@cetic.be
-  */
+/**
+ * an invariant that defines a singleton set out of a single int var.
+ * @author renaud.delandtsheer@cetic.be
+ */
 case class Singleton(v: IntValue)
-  extends SetInvariant(SortedSet(v.value),v.domain) {
+  extends SetInvariant(SortedSet(v.value), v.domain) {
 
   registerStaticAndDynamicDependency(v)
   finishInitialization()
 
-
-  override def checkInternals(c:Checker){
+  override def checkInternals(c: Checker) {
     assert(this.getValue(true).size == 1)
     assert(this.getValue(true).head == v.value)
   }
 
-  override def notifyIntChanged(v:ChangingIntValue,OldVal:Int,NewVal:Int){
+  override def notifyIntChanged(v: ChangingIntValue, OldVal: Int, NewVal: Int) {
     assert(v == this.v)
     //ici, on propage tout de suite, c'est les variables qui font le stop and go.
     this.deleteValue(OldVal)
@@ -421,22 +476,21 @@ case class Singleton(v: IntValue)
  * if from is empty,the output set will be empty as well
  * @param from where we take the value from
  * @author renaud.delandtsheer@cetic.be
- * */
+ */
 case class TakeAnyToSet(from: SetValue)
-  extends SetInvariant(SortedSet.empty,from.min to from.max) {
+  extends SetInvariant(SortedSet.empty, from.min to from.max) {
 
   registerStaticAndDynamicDependency(from)
   finishInitialization()
 
   var wasEmpty: Boolean = false
 
-
-    wasEmpty = from.value.isEmpty
-    if (wasEmpty) {
-      this := SortedSet.empty
-    } else {
-      this := SortedSet(from.value.head)
-    }
+  wasEmpty = from.value.isEmpty
+  if (wasEmpty) {
+    this := SortedSet.empty
+  } else {
+    this := SortedSet(from.value.head)
+  }
 
   override def notifyInsertOn(v: ChangingSetValue, value: Int) {
     if (wasEmpty) {
@@ -446,7 +500,7 @@ case class TakeAnyToSet(from: SetValue)
   }
 
   override def notifyDeleteOn(v: ChangingSetValue, value: Int) {
-    if (value == this.getValue(true).head){
+    if (value == this.getValue(true).head) {
       if (v.value.isEmpty) {
         this := SortedSet.empty
         wasEmpty = true
