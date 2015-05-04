@@ -30,22 +30,24 @@ import oscar.cbls.invariants.core.propagation.Checker
 import oscar.cbls.invariants.lib.minmax._
 import oscar.cbls.invariants.lib.numeric.Dist
 import oscar.cbls.modeling.Algebra._
-
 import scala.math.abs
+import oscar.cbls.invariants.lib.logic.IntInt2Int
 
 /**
  * implements left <= right
  * @author renaud.delandtsheer@cetic.be
  */
 protected class LEA(val left: IntValue, val right: IntValue) extends Constraint {
-  val model = InvariantHelper.findModel(left,right)
+  val model = InvariantHelper.findModel(left, right)
 
   registerConstrainedVariables(left, right)
 
   /**
    * the violation is Max(0,right-left)
    */
-  override val violation = Max2(0, left - right).setName(this.getClass().getSimpleName() + ".violation")
+  override val violation = new IntInt2Int(left, right,
+    ((left2: Int, right2: Int) => if (left2 <= right2) 0 else left2 - right2))
+    .setName(this.getClass().getSimpleName() + ".violation")
 
   /**
    * The violation of each variable is equal to the global violation of the constraint
@@ -115,13 +117,13 @@ case class G(l: IntValue, r: IntValue) extends LA(r, l)
  * implements left != right
  * @author renaud.delandtsheer@cetic.be
  */
-case class NE(left: IntValue, right: IntValue) extends Invariant with Constraint{
+case class NE(left: IntValue, right: IntValue) extends Invariant with Constraint {
   registerConstrainedVariables(left, right)
   registerStaticAndDynamicDependenciesNoID(left, right)
   finishInitialization()
 
   /** the violation is 1 if the variables are equal, 0 otherwise*/
-  override val violation:CBLSIntVar = CBLSIntVar(model, if (left.value == right.value) 1 else 0, 0 to 1, "equals")
+  override val violation: CBLSIntVar = CBLSIntVar(model, if (left.value == right.value) 1 else 0, 0 to 1, "equals")
 
   violation.setDefiningInvariant(this)
 
