@@ -241,6 +241,8 @@ object ChangingSetValue{
 class CBLSSetVar(givenModel: Store, initialValue: SortedSet[Int], initialDomain:Domain, n: String = null)
   extends ChangingSetValue(initialValue, initialDomain) with Variable{
   
+  require(givenModel != null)
+  
   model = givenModel
 
   override def restrictDomain(d:Domain) = super.restrictDomain(d)

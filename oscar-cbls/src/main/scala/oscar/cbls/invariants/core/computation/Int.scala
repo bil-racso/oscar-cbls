@@ -77,7 +77,7 @@ abstract class ChangingIntValue(initialValue:Int, initialDomain:Domain)
   }
 
   override def toString = {
-    if(model.propagateOnToString) s"$name:=$value" else s"$name:=$Value"
+    if(model != null && model.propagateOnToString) s"$name:=$value" else s"$name:=$Value"
   }
   override def toStringNoPropagate = s"$name:=$Value"
 
@@ -189,6 +189,8 @@ object ChangingIntValue{
   */
 class CBLSIntVar(givenModel: Store, initialValue: Int, initialDomain:Domain, n: String = null)
   extends ChangingIntValue(initialValue,initialDomain) with Variable{
+  
+  require(givenModel != null)
   
   override def restrictDomain(d:Domain) = super.restrictDomain(d)
 
