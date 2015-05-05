@@ -310,7 +310,7 @@ abstract trait ClosestNeighbors extends VRP {
    * @param node the given node.
    * @return the k nearest neighbor as an iterable list of Int.
    */
-  def getKNearest(k: Int, filter: (Int => Boolean) = (_ => true))(node: Int): Iterable[Int] = {
+  def kNearest(k: Int, filter: (Int => Boolean) = (_ => true))(node: Int): Iterable[Int] = {
     if (k >= N - 1) return nodes
     if (!closestNeighbors.isDefinedAt(k)) {
       saveKNearestPoints(k: Int, filter)
@@ -593,7 +593,7 @@ trait Predecessors extends VRP {
   /**
    * the data structure array which maintains the predecessors of each node.
    */
-  val preds: Array[CBLSIntVar] = Predecessor(next, V).preds
+  val preds: Array[IntValue] = Predecessor(next, V).preds
 }
 
 /**

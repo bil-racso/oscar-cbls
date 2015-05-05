@@ -27,12 +27,16 @@ import oscar.cbls.constraints.lib.basic.GE
 import oscar.cbls.constraints.lib.basic.LE
 import oscar.cbls.invariants.core.computation.CBLSIntConst
 import oscar.cbls.invariants.core.computation.CBLSIntVar
+import oscar.cbls.invariants.core.computation.Domain.rangeToDomain
 import oscar.cbls.invariants.core.computation.IntValue
+import oscar.cbls.invariants.core.computation.IntValue.int2IntValue
+import oscar.cbls.invariants.lib.logic.IntITE
 import oscar.cbls.invariants.lib.logic.IntInt2Int
 import oscar.cbls.invariants.lib.minmax.Max2
 import oscar.cbls.invariants.lib.numeric.Sum
-import oscar.cbls.modeling.Algebra._
-import oscar.cbls.invariants.lib.logic.IntITE
+import oscar.cbls.modeling.Algebra.InstrumentArrayOfIntValue
+import oscar.cbls.modeling.Algebra.InstrumentInt
+import oscar.cbls.modeling.Algebra.InstrumentIntVar
 
 /**
  * an abstract class representing a travel time function
@@ -114,7 +118,7 @@ trait TimeWindow extends Time with StrongConstraints {
 
   def setEndWindow(node: Int, endWindow: Int) {
     require(node >= V, "only for specifying time windows on nodes, not on vehicles")
-    strongConstraints.post(LE(IntITE(next(node), 0, leaveTime(node), N-1), endWindow))
+    strongConstraints.post(LE(IntITE(next(node), 0, leaveTime(node), N - 1), endWindow))
   }
 
   def setVehicleEnd(vehicle: Int, endTime: Int) {
@@ -122,11 +126,11 @@ trait TimeWindow extends Time with StrongConstraints {
     strongConstraints.post(LE(arrivalTime(vehicle), endTime))
   }
 
-  def setNodeDuration(node: Int, durationWithoutWait: CBLSIntVar, startWindow: Int) {
+  def setNodeDuration(node: Int, durationWithoutWait: IntValue, startWindow: Int) {
     leaveTime(node) <== Max2(arrivalTime(node), startWindow) + durationWithoutWait
   }
 
-  def setNodeDuration(node: Int, durationWithoutWait: CBLSIntVar, startWindow: Int, maxWaiting: Int) {
+  def setNodeDuration(node: Int, durationWithoutWait: IntValue, startWindow: Int, maxWaiting: Int) {
     setNodeDuration(node, durationWithoutWait, startWindow)
     strongConstraints.post(GE(arrivalTime(node), startWindow - maxWaiting))
   }
@@ -142,17 +146,17 @@ trait WaitingDuration extends TimeWindow {
     (i: Int) => CBLSIntVar(m, 0, 0 to Int.MaxValue / N, "WaitingDurationBefore" + i)
   }
 
-  def setNodeDurationAndWaitingTime(node: Int, durationWithoutWait: CBLSIntVar, waitingDuration: CBLSIntVar) {
+  def setNodeDurationAndWaitingTime(node: Int, durationWithoutWait: IntValue, waitingDuration: IntValue) {
     super.setNodeDuration(node, durationWithoutWait + waitingDuration)
     this.waitingDuration(node) <== waitingDuration
   }
 
-  override def setNodeDuration(node: Int, durationWithoutWait: CBLSIntVar, startWindow: Int) {
+  override def setNodeDuration(node: Int, durationWithoutWait: IntValue, startWindow: Int) {
     super.setNodeDuration(node, durationWithoutWait, startWindow)
     waitingDuration(node) <== Max2(0, startWindow - arrivalTime(node))
   }
 
-  override def setNodeDuration(node: Int, durationWithoutWait: CBLSIntVar, startWindow: Int, maxWaiting: Int) {
+  override def setNodeDuration(node: Int, durationWithoutWait: IntValue, startWindow: Int, maxWaiting: Int) {
     setNodeDuration(node, durationWithoutWait, startWindow)
     strongConstraints.post(LE(waitingDuration(node), maxWaiting))
   }
