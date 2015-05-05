@@ -542,7 +542,7 @@ object InvariantHelper{
     "[" + a.toList.mkString(",")+"]"
 }
 
-trait Value extends BasicPropagationElement{
+trait Value extends BasicPropagationElement with DistributedStorageUtility {
   def valueString:String
 }
 
@@ -573,7 +573,7 @@ object Variable{
   * which is used solely for printing models.
   */
 trait AbstractVariable
-  extends PropagationElement with DistributedStorageUtility with Value{
+  extends PropagationElement with Value{
 
   final def model_=(s:Store): Unit ={
     schedulingHandler = s

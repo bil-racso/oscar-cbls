@@ -39,7 +39,7 @@ trait DAGNode extends Ordered[DAGNode]{
 
   /**it gives the unique ID of the PropagationElement.
     * those uniqueID are expected to start at 0 and to increase continuously
-    * An exception is tolerated: UniqueID is set to -1
+    * An exception is tolerated: uniqueID is set to -1
     * if the Propagation Element is not mentioned in the propagation structure, such as for constants
     * yet is mentioned in the dependencies of registered propagation elements
     */
