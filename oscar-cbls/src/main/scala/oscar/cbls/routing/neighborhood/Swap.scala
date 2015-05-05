@@ -35,7 +35,7 @@ import oscar.cbls.search.core.EasyNeighborhood
  * @author yoann.guyot@cetic.be
  * @author Florent Ghilain (UMONS)
  */
-class Swap(NodesPrecedingNodesToMove:()=>Iterable[Int],
+case class Swap(NodesPrecedingNodesToMove:()=>Iterable[Int],
            relevantNeighbors:()=>Int=>Iterable[Int],
            val vrp: VRP with PositionInRouteAndRouteNr,
            val neighborhoodName:String = "SwapNeighborhood",
