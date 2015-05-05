@@ -25,9 +25,17 @@
 
 package oscar.cbls.invariants.lib.numeric
 
-import oscar.cbls.invariants.core.computation._
+import oscar.cbls.invariants.core.computation.ChangingIntValue
+import oscar.cbls.invariants.core.computation.Domain
+import oscar.cbls.invariants.core.computation.Domain.rangeToDomain
+import oscar.cbls.invariants.core.computation.DomainHelper
+import oscar.cbls.invariants.core.computation.IntInvariant
+import oscar.cbls.invariants.core.computation.IntValue
+import oscar.cbls.invariants.core.computation.SetValue
+import oscar.cbls.invariants.core.computation.Store
 import oscar.cbls.invariants.core.propagation.Checker
-import oscar.cbls.invariants.lib.logic._;
+import oscar.cbls.invariants.lib.logic.Int2Int
+import oscar.cbls.invariants.lib.logic.IntInt2Int
 
 object Sum {
   def apply(vars: Array[IntValue], cond: SetValue) = SumElements(vars, cond)
@@ -116,7 +124,11 @@ class Prod(vars: Iterable[IntValue]) extends IntInvariant {
 
   //TODO: find better bound, this is far too much
   restrictDomain({
-    val myMax = vars.foldLeft(1)((acc, intvar) => acc * (if (math.abs(intvar.max) > math.abs(intvar.min)) math.abs(intvar.max) else math.abs(intvar.min)))
+    val myMax = vars.foldLeft(1)((acc, intvar) =>
+      DomainHelper.safeMulMax(acc, (if (math.abs(intvar.max) > math.abs(intvar.min))
+        math.abs(intvar.max)
+      else
+        math.abs(intvar.min))))
     -myMax to myMax
   })
 
