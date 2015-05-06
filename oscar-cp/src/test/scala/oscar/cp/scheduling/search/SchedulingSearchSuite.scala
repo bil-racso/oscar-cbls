@@ -63,7 +63,7 @@ abstract class SchedulingSearchSuite(seed: Int, scalable: Boolean) extends TestS
       val demandVars = Array.fill(nActivities)(CPIntVar(1))
       val makespan = maximum(endVars)
 
-      add(maxCumulativeResource(startVars, durationVars, endVars, demandVars, CPIntVar(capacity)))
+      add(maxCumulativeResource(startVars, durationVars, endVars, demandVars, CPIntVar(capacity)), Medium)
 
       minimize(makespan)
       search { searchHeuristic(startVars, durationVars, endVars, i => -endVars(i).min) }
@@ -97,7 +97,7 @@ abstract class SchedulingSearchSuite(seed: Int, scalable: Boolean) extends TestS
       val demandVars = Array.fill(nActivities)(CPIntVar(1))
       val makespan = maximum(endVars)
 
-      add(maxCumulativeResource(startVars, durationVars, endVars, demandVars, CPIntVar(capacity)))
+      add(maxCumulativeResource(startVars, durationVars, endVars, demandVars, CPIntVar(capacity)), Medium)
 
       minimize(makespan)
       search { searchHeuristic(startVars, durationVars, endVars, i => -endVars(i).min) }
@@ -129,7 +129,7 @@ abstract class SchedulingSearchSuite(seed: Int, scalable: Boolean) extends TestS
       solver.silent = true
 
       add(startVars(0) == 0)
-      add(maxCumulativeResource(startVars, durationVars, endVars, demandVars, CPIntVar(capa)), Strong)
+      add(maxCumulativeResource(startVars, durationVars, endVars, demandVars, CPIntVar(capa)), Medium)
       search { searchHeuristic(startVars, durationVars, endVars, i => i) }
 
       val stats = start(nSols = 1)
@@ -187,7 +187,7 @@ abstract class SchedulingSearchSuite(seed: Int, scalable: Boolean) extends TestS
         val demandVars = Array.fill(nTasks)(CPIntVar(1))
         val makespan = maximum(endVars)
 
-        add(maxCumulativeResource(startVars, durationVars, endVars, demandVars, CPIntVar(capacity)))
+        add(maxCumulativeResource(startVars, durationVars, endVars, demandVars, CPIntVar(capacity)), Medium)
 
         minimize(makespan)
         search { searchHeuristic(startVars, durationVars, endVars, i => -endVars(i).min) }
@@ -208,7 +208,7 @@ abstract class SchedulingSearchSuite(seed: Int, scalable: Boolean) extends TestS
         val demandVars = Array.fill(nTasks)(CPIntVar(1))
         val makespan = maximum(endVars)
 
-        add(maxCumulativeResource(startVars, durationVars, endVars, demandVars, CPIntVar(capacity)))
+        add(maxCumulativeResource(startVars, durationVars, endVars, demandVars, CPIntVar(capacity)), Medium)
 
         minimize(makespan)
         search { searchHeuristic(startVars, durationVars, endVars, i => -endVars(i).min) }
