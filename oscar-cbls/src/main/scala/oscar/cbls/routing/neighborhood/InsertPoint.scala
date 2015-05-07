@@ -38,12 +38,12 @@ import oscar.cbls.search.algo.HotRestart
  * @author Florent Ghilain (UMONS)
  * @author yoann.guyot@cetic.be
  */
-case class InsertPoint(UnroutedNodesToInsert:()=>Iterable[Int],
-                  relevantNeighbors:()=>Int=>Iterable[Int],
-                  vrp: VRP,
-                  neighborhoodName:String = null,
-                  best:Boolean = false,
-                  hotRestart:Boolean = true) extends EasyRoutingNeighborhood(best,vrp) {
+case class InsertPoint(unroutedNodesToInsert: () => Iterable[Int],
+                       relevantNeighbors: () => Int => Iterable[Int],
+                       vrp: VRP,
+                       neighborhoodName: String = null,
+                       best: Boolean = false,
+                       hotRestart: Boolean = true) extends EasyRoutingNeighborhood(best, vrp) {
 
   //the indice to start with for the exploration
   var startIndice: Int = 0
@@ -51,8 +51,8 @@ case class InsertPoint(UnroutedNodesToInsert:()=>Iterable[Int],
   override def exploreNeighborhood(): Unit = {
 
     val iterationSchemeOnZone =
-      if (hotRestart && !best) HotRestart(UnroutedNodesToInsert(), startIndice)
-      else UnroutedNodesToInsert()
+      if (hotRestart && !best) HotRestart(unroutedNodesToInsert(), startIndice)
+      else unroutedNodesToInsert()
 
     cleanRecordedMoves()
     val relevantNeighborsNow = relevantNeighbors()
@@ -61,8 +61,9 @@ case class InsertPoint(UnroutedNodesToInsert:()=>Iterable[Int],
       assert(!vrp.isRouted(insertedPoint),
         "The search zone should be restricted to unrouted nodes when inserting.")
 
-      for (beforeInsertedPoint <- relevantNeighborsNow(insertedPoint)
-           if vrp.isRouted(beforeInsertedPoint)) {
+      for (
+        beforeInsertedPoint <- relevantNeighborsNow(insertedPoint) if vrp.isRouted(beforeInsertedPoint)
+      ) {
         assert(isRecording, "MoveDescription should be recording now")
 
         encode(beforeInsertedPoint, insertedPoint)
@@ -100,8 +101,8 @@ case class InsertPoint(UnroutedNodesToInsert:()=>Iterable[Int],
 case class InsertPointMove(beforeInsertedPoint: Int,
                            insertedPoint: Int,
                            override val objAfter: Int,
-                           override val neighborhood:InsertPoint,
-                           override val neighborhoodName:String = null)
+                           override val neighborhood: InsertPoint,
+                           override val neighborhoodName: String = null)
   extends VRPMove(objAfter, neighborhood, neighborhoodName) {
 
   override def encodeMove() {

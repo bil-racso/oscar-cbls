@@ -34,7 +34,7 @@ import oscar.cbls.search.algo.HotRestart
  * @author yoann.guyot@cetic.be
  * @author Florent Ghilain (UMONS)
  */
-case class RemovePoint(PredecessorsOfRoutedPointsToRemove:()=>Iterable[Int],
+case class RemovePoint(predecessorsOfRoutedPointsToRemove:()=>Iterable[Int],
                        vrp: VRP,
                        neighborhoodName:String = "RemovePoint",
                        best:Boolean = false,
@@ -46,8 +46,8 @@ case class RemovePoint(PredecessorsOfRoutedPointsToRemove:()=>Iterable[Int],
   override def exploreNeighborhood(): Unit = {
 
     val iterationSchemeOnZone =
-      if (hotRestart && !best) HotRestart(PredecessorsOfRoutedPointsToRemove(), startIndice)
-      else PredecessorsOfRoutedPointsToRemove()
+      if (hotRestart && !best) HotRestart(predecessorsOfRoutedPointsToRemove(), startIndice)
+      else predecessorsOfRoutedPointsToRemove()
 
     cleanRecordedMoves()
 

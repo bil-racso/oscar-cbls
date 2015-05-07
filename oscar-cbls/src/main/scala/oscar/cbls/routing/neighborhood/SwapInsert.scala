@@ -38,14 +38,14 @@ import scala.collection.immutable.SortedSet
  *
  *         THIS IS EXPERIMENTAL
  */
-case class SwapInsert(UnroutedNodesToInsert:()=>Iterable[Int],
+case class SwapInsert(unroutedNodesToInsert:()=>Iterable[Int],
                       relevantNeighbors:()=>Int=>Iterable[Int],
                       val vrp: VRP with NodesOfVehicle,
                       val neighborhoodName:String = "SwapInsert",
                       val best:Boolean = false,
                       var insertionPoints:SortedSet[Int] = null)
   extends AndThen(
-    new InsertPoint(UnroutedNodesToInsert, relevantNeighbors, vrp, "SwapInsert.Insert"),
+    new InsertPoint(unroutedNodesToInsert, relevantNeighbors, vrp, "SwapInsert.Insert"),
     new RemovePoint(() => insertionPoints,vrp, "SwapInsert.Remove", false, false)){
 
   /** this method is called by AndThen to notify the first step, and that it is now exploring successors of this step.

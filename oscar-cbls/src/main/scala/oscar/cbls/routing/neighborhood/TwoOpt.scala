@@ -36,7 +36,7 @@ import oscar.cbls.search.algo.HotRestart
  * @author yoann.guyot@cetic.be
  * @author Florent Ghilain (UMONS)
  * */
-case class TwoOpt(PredecesorOfFirstMovedPoint:()=>Iterable[Int],
+case class TwoOpt(predecesorOfFirstMovedPoint:()=>Iterable[Int],
                   relevantNeighbors:()=>Int=>Iterable[Int],
                   vrp: VRP with PositionInRouteAndRouteNr,
                   neighborhoodName:String = "TwoOptNeighborhood",
@@ -54,8 +54,8 @@ case class TwoOpt(PredecesorOfFirstMovedPoint:()=>Iterable[Int],
   override def exploreNeighborhood(): Unit = {
 
     val iterationSchemeOnZone =
-      if (hotRestart && !best) HotRestart(PredecesorOfFirstMovedPoint(), startIndice)
-      else PredecesorOfFirstMovedPoint()
+      if (hotRestart && !best) HotRestart(predecesorOfFirstMovedPoint(), startIndice)
+      else predecesorOfFirstMovedPoint()
 
     cleanRecordedMoves()
     val relevantNeighborsNow = relevantNeighbors()

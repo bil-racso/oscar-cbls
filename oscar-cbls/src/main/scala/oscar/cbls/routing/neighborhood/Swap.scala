@@ -35,7 +35,7 @@ import oscar.cbls.search.core.EasyNeighborhood
  * @author yoann.guyot@cetic.be
  * @author Florent Ghilain (UMONS)
  */
-case class Swap(NodesPrecedingNodesToMove:()=>Iterable[Int],
+case class Swap(nodesPrecedingNodesToMove:()=>Iterable[Int],
            relevantNeighbors:()=>Int=>Iterable[Int],
            val vrp: VRP with PositionInRouteAndRouteNr,
            val neighborhoodName:String = "SwapNeighborhood",
@@ -48,8 +48,8 @@ case class Swap(NodesPrecedingNodesToMove:()=>Iterable[Int],
   override def exploreNeighborhood(){
 
     val iterationSchemeOnZone =
-      if (hotRestart && !best) HotRestart(NodesPrecedingNodesToMove(), startIndice)
-      else NodesPrecedingNodesToMove()
+      if (hotRestart && !best) HotRestart(nodesPrecedingNodesToMove(), startIndice)
+      else nodesPrecedingNodesToMove()
 
     cleanRecordedMoves()
 
