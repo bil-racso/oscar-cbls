@@ -164,7 +164,7 @@ class RestoreBestOnExhaust(a: BasicSaveBest) extends NeighborhoodCombinator(a) {
  * @param a a neighborhood
  * @param proc the procedure to execute before the neighborhood is queried
  */
-class DoOnQuery(a: Neighborhood, proc: () => Unit) extends NeighborhoodCombinator(a) {
+case class DoOnQuery(a: Neighborhood, proc: () => Unit) extends NeighborhoodCombinator(a) {
   override def getMove(obj: Objective, acceptanceCriteria: (Int, Int) => Boolean): SearchResult = {
     proc()
     a.getMove(obj, acceptanceCriteria)
@@ -331,15 +331,17 @@ class Exhaust(a: Neighborhood, b: Neighborhood) extends NeighborhoodCombinator(a
  */
 class Retry(a: Neighborhood, n: Int, cond: () => Boolean) extends NeighborhoodCombinator(a) {
   var remainingTries = n
-  var countRetries = cond()
+  var countRetries = false
   override def getMove(obj: Objective, acceptanceCriteria: (Int, Int) => Boolean): SearchResult = {
     a.getMove(obj, acceptanceCriteria) match {
       case NoMoveFound =>
         countRetries = countRetries || cond()
         if (countRetries) {
           remainingTries -= 1
-          if (remainingTries == 0) NoMoveFound
-          else this.getMove(obj, acceptanceCriteria)
+          if (remainingTries == 0) {
+            super.reset()
+            NoMoveFound
+          } else this.getMove(obj, acceptanceCriteria)
         } else this.getMove(obj, acceptanceCriteria)
       case x =>
         countRetries = countRetries || cond()
@@ -841,7 +843,8 @@ class WithAcceptanceCriterion(a: Neighborhood, overridingAcceptanceCriterion: (I
    * @param acceptanceCriterion this criterion is not considered by this combinator.
    * @return an improving move
    */
-  override def getMove(obj: Objective, acceptanceCriterion: (Int, Int) => Boolean): SearchResult = a.getMove(obj, overridingAcceptanceCriterion)
+  override def getMove(obj: Objective, acceptanceCriterion: (Int, Int) => Boolean): SearchResult = a.getMove(obj,
+    (a, b) => (a == Int.MaxValue || b != Int.MaxValue) && overridingAcceptanceCriterion(a,b))
 }
 
 /**
