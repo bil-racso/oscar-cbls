@@ -172,6 +172,7 @@ abstract class Neighborhood{
           }
 
           m.commit()
+          if (obj.value == Int.MaxValue) println("Warning : objective reached maximum int value")
           true
       }
       toReturn += 1
