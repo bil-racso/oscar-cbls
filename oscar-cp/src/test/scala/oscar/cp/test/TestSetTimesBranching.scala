@@ -78,7 +78,7 @@ class TestSetTimesBranching extends TestSuite {
   }
 
   test("SetTimes test on a dense rectangle of height 10 and width 1000") {
-    val minWidth = 450
+    val minWidth = 500
     val optimalMakespan = 1000
     val capacity = 8
     val maxRecursiveSplits = 3
@@ -129,7 +129,7 @@ class TestSetTimesBranching extends TestSuite {
     def solve(seed: Int, withSetTimes: Boolean): Int = {
       
       val rand = new scala.util.Random(seed)
-      val nTasks = 7
+      val nTasks = 6
       val instance = Array.tabulate(nTasks)(t => (rand.nextInt(30)+1,rand.nextInt(4)+1))
       val durationsData = instance.map(_._1)
       val demandsData = instance.map(_._2)
