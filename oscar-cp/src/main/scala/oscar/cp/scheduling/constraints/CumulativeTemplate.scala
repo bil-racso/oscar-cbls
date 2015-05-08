@@ -189,8 +189,8 @@ extends Constraint(capacity.store, name) {
   
   
   
+  // remove extremal activities from consideration, TT dominance.
   final def removeExtremal() = {
-    // remove extremal activities from consideration, TT dominance.
     // get smin and emax of the task set formed by unfixed activities.  
     var minSMinNotFixed = Int.MaxValue
     var maxEMaxNotFixed = Int.MinValue
@@ -198,26 +198,74 @@ extends Constraint(capacity.store, name) {
     var p = limit
     while (p >= 0) {
       val a = activitiesToConsider(p)
-      if (smin(a) + dmin(a) < emax(a)) {
+      if (smin(a) + dmin(a) < emax(a) || hmin(a) < hmax(a) || !required(a)) {  // a not fixed. With variable durations, we can't test it with smin == smax 
         minSMinNotFixed = min(minSMinNotFixed, smin(a))
         maxEMaxNotFixed = max(maxEMaxNotFixed, emax(a))
       }
       p -= 1
     }
       
-    // exclude from consideration all activities that are strictly before minSMin
+    // exclude from consideration all activities that are strictly before min smin(unbound) or after max emax(unbound)
     p = limit
     while (p >= 0) {
       val a = activitiesToConsider(p)
-      if (required(a) && hmin(a) == hmax(a)) {// && smin(a) + dmin(a) == emax(a)) {
-        if (emax(a) <= minSMinNotFixed || smin(a) >= maxEMaxNotFixed) {
-          toConsider.exclude(a)
-        }
-      }
+      if (emax(a) <= minSMinNotFixed || smin(a) >= maxEMaxNotFixed) toConsider.exclude(a)
       p -= 1
     }
   }
   
+
+  val tcBySMin = Array.ofDim[Int](n)
+  val tcByEMax = Array.ofDim[Int](n)
+  // remove tasks that can never be pushed by cumulative
+  // this computes the pessimistic profile, and removes tasks that are always under the worst profile's limit 
+  final def removeImpossible() = {
+    val C = capacity.min  // pessimistic
+    var q = 0
+    var p = toConsider.limit.value - 1
+    while (p >= 0) {
+      tcBySMin(q) = activitiesToConsider(p)
+      tcByEMax(q) = activitiesToConsider(p)
+      q += 1
+      p -= 1
+    }
+    
+    mergeSort(tcBySMin, smin, 0, q)
+    mergeSort(tcByEMax, emax, 0, q)
+    
+    var sminp = 0
+    var emaxp = 0
+    var lastOver = Int.MinValue
+    var lastUnder = Int.MinValue + 1
+    var height = 0
+    
+    // build possible profile
+    while (emaxp < q) {
+      val oldHeight = height
+      var date = emax(tcByEMax(emaxp))
+      if (sminp < q) date = min(date, smin(tcBySMin(sminp)))
+      
+      // down events, check if task was under limit during its domain, lower height
+      while (emaxp < q && emax(tcByEMax(emaxp)) == date) {
+        val a = tcByEMax(emaxp)
+        if (lastUnder > lastOver && lastUnder <= smin(a)) toConsider.exclude(a)        
+        height -= hmax(a)
+        emaxp += 1
+      }
+      
+      // up events, raise height
+      while (sminp < q && smin(tcBySMin(sminp)) == date) {
+        val a = tcBySMin(sminp)
+        height += hmax(a)
+        sminp += 1
+      }
+      
+      // remember last time profile was under/over limit
+      if (oldHeight <= C && height >  C) lastOver = date
+      if (oldHeight >  C && height <= C) lastUnder = date
+    }
+  }
+
   
   final def removeOneStepExtremal() =  {
     val limit = toConsider.limit.value 

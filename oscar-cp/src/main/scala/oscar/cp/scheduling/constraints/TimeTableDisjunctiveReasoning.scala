@@ -11,6 +11,7 @@ import java.lang.Math._
 import oscar.algo.SortUtils._
 import scala.collection.mutable.Set
 import scala.collection.mutable.TreeSet
+import oscar.cp.core.Inconsistency
 
 /*
  * For every pair of activities s.t. height(i) + height(j) > capacity,
@@ -60,9 +61,16 @@ extends CumulativeTemplate(starts, durations, ends, heights, resources, capacity
     var p = 0
     while (p < limit) {
       val a = activitiesToConsider(p)
-      dminF(a) = smax(a) - smin(a)
-      smaxF(a) = max(smax(a), emin(a))
-      eminF(a) = min(smax(a), emin(a))
+      if (smax(a) < emin(a)) {
+        smaxF(a) = emin(a)
+        eminF(a) = smax(a)
+        dminF(a) = dmin(a) - (emin(a) - smax(a))
+      }
+      else {
+        smaxF(a) = smax(a)
+        eminF(a) = emin(a)
+        dminF(a) = dmin(a)
+      }
       
       if (dminFmax < dminF(a)) dminFmax = dminF(a)
       if (hminmax < hmin(a)) hminmax = hmin(a)
@@ -74,7 +82,7 @@ extends CumulativeTemplate(starts, durations, ends, heights, resources, capacity
   val pushers = Array.ofDim[Int](n)
   val hPushers = Array.ofDim[Int](n)  // height of the MOI, i.e. min of profile on MOI + hmin(a)
   
-  def introducePushers(limit: Int, C: Int): Int = {
+  def introducePushers0(limit: Int, C: Int): Int = {
     var q = 0
     var p = 0
     
@@ -89,11 +97,11 @@ extends CumulativeTemplate(starts, durations, ends, heights, resources, capacity
         if (smax(a) < emin(a) || smaxF(a) - eminF(a) < dminF(a)) {
           // the free part of a cannot be inside its "moi" 
           hPushers(a) = hmin(a) + 
-            min(profile.minInterval(eminF(a) - 1, eminF(a)),
-                profile.minInterval(smaxF(a), smaxF(a) + 1))
+            min(profile.minInterval(a, eminF(a) - 1, eminF(a)),
+                profile.minInterval(a, smaxF(a), smaxF(a) + 1))
         }
         else {
-          hPushers(a) = hmin(a) + profile.minInterval(eminF(a) - 1, smaxF(a) + 1)
+          hPushers(a) = hmin(a) + profile.minInterval(a, eminF(a) - 1, smaxF(a) + 1)
         }
         
         // add only if some activity could be pushed using that height
@@ -106,6 +114,45 @@ extends CumulativeTemplate(starts, durations, ends, heights, resources, capacity
     }
     q
   }
+  
+  def introducePushers(limit: Int, C: Int): Int = {
+    var q = 0
+    var p = 0
+    
+    val gapmin = C - hminmax
+
+    while (p < limit) {
+      val a = activitiesToConsider(p)
+      // an activity can push with its free part if its duration is not 0
+      // and some activity may not fit strictly inside its MOI
+      if (required(a) && dminF(a) > 0 && smaxF(a) - eminF(a) < dminFmax) {
+        // compute height at which a would push
+        // extremities of moi
+        hPushers(a) = min(profile.minInterval(a, eminF(a) - 1, eminF(a)),
+                          profile.minInterval(a, smaxF(a), smaxF(a) + 1))
+ 
+        if (smax(a) >= emin(a) && smaxF(a) - eminF(a) >= dminF(a)) {    // the free part of a can be inside its "moi" 
+          hPushers(a) = min(hPushers(a), profile.minHeightOf(a))
+          // hPushers(a) = profile.minInterval(a, eminF(a) - 1, smaxF(a) + 1)
+        }
+        
+        hPushers(a) += hmin(a)
+          
+        if (hPushers(a) > C) throw Inconsistency  // a cannot fit in its domain, TT should have taken care of it          
+        
+        // add only if some activity could be pushed using that height
+        if (hPushers(a) > gapmin) {
+          pushers(q) = a
+          q += 1
+        }
+      }
+      p += 1
+    }
+
+    q
+  }
+  
+
 
   
   var maxPushersEMinF = 0
@@ -146,6 +193,11 @@ extends CumulativeTemplate(starts, durations, ends, heights, resources, capacity
   final override def propagate(): CPOutcome = {
     updateCache()
     val C = capacity.max
+    
+    // Step 0: trust TT to do checking, this propagator can not deduce anything on extremal fixed activities.
+    if (C == capacity.min) removeExtremal()
+    else removeImpossible()
+
     
     profile.rebuild(toConsider)  
     
@@ -195,9 +247,6 @@ extends CumulativeTemplate(starts, durations, ends, heights, resources, capacity
       i += 1
     }
     
-    
-    // Step 3: trust TT to do its job, this propagator can not deduce anything on extremal fixed activities.
-    removeExtremal()
     Suspend
   }
 

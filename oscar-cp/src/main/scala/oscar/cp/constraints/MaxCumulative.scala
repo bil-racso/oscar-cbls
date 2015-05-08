@@ -16,7 +16,7 @@ extends Constraint(starts.head.store, "Max Cumulative") {
      }
 
     l match {
-      case Weak => 
+      case Automatic | Weak => 
 //        if (s.post(SweepMaxCumulative(starts,durations,ends,demands,resources,capacity,id)) == Failure) return Failure
         if (s.post(TTPerTask(starts,durations,ends,demands,resources,capacity,id)) == Failure) return Failure
         //if (s.post(OverloadCheckerExtended(starts,durations,ends,demands,resources,capacity,id)) == Failure) return Failure

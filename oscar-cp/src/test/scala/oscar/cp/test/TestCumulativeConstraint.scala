@@ -9,9 +9,9 @@ import oscar.cp.constraints.CumulativeDecomp
 import oscar.cp.searches.BinaryStaticOrderBranching
 import oscar.cp.constraints.EnergeticReasoning
 import oscar.cp.core.CPPropagStrength
-
-
 import oscar.cp.core.CPOutcome._
+import oscar.cp.scheduling.constraints.TimeTableDisjunctiveReasoning
+import oscar.cp.scheduling.constraints.TTPerTask
 
 
 
@@ -46,7 +46,7 @@ abstract class TestCumulativeConstraint(val cumulativeName: String, val nTests: 
     Tasks.foreach(t => post(ends(t) == starts(t) + durations(t)))
   }
 
-  def cumulative(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], demands: Array[CPIntVar], resources: Array[CPIntVar], capacity: CPIntVar, id: Int): Constraint
+  def cumulative(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], demands: Array[CPIntVar], resources: Array[CPIntVar], capacity: CPIntVar, id: Int): Array[Constraint]  // returning array is useful when testing non-checking constraints, such as edge-finding, to couple with cumulativedecomp  
 
   def generateRandomSchedulingProblem(nTasks: Int): SchedulingInstance = {
     val rand = new scala.util.Random()
@@ -119,8 +119,26 @@ abstract class TestCumulativeConstraint(val cumulativeName: String, val nTests: 
 }
 
 
-class TestCumulativeDefault extends TestCumulativeConstraint("SweepMaxCumulative") {
-  override def cumulative(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], demands: Array[CPIntVar], resources: Array[CPIntVar], capacity: CPIntVar, id: Int): Constraint = {
-    maxCumulativeResource(starts, durations, ends, demands, resources, capacity, id: Int)
+class TestCumulativeDefault extends TestCumulativeConstraint("maxCumulative") {
+  override def cumulative(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], demands: Array[CPIntVar], resources: Array[CPIntVar], capacity: CPIntVar, id: Int): Array[Constraint] = {
+    Array(maxCumulativeResource(starts, durations, ends, demands, resources, capacity, id))
+  }
+}
+
+class TestTTDR extends TestCumulativeConstraint("TTDR") {
+  override def cumulative(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], demands: Array[CPIntVar], resources: Array[CPIntVar], capacity: CPIntVar, id: Int): Array[Constraint] = {
+    Array(
+        new CumulativeDecomp(starts, durations, ends, demands, resources, capacity, id),
+        TimeTableDisjunctiveReasoning(starts, durations, ends, demands, resources, capacity, id)
+    )
+  }
+}
+
+
+class TestTT extends TestCumulativeConstraint("TT") {
+  override def cumulative(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], demands: Array[CPIntVar], resources: Array[CPIntVar], capacity: CPIntVar, id: Int): Array[Constraint] = {
+    Array(
+        TTPerTask(starts, durations, ends, demands, resources, capacity, id)
+    )
   }
 }

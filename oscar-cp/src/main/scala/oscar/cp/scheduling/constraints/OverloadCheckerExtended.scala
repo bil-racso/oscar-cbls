@@ -46,8 +46,9 @@ final class OverloadCheckerExtended(starts: Array[CPIntVar], durations: Array[CP
                          heights: Array[CPIntVar], resources: Array[CPIntVar], capacity: CPIntVar, id: Int)
 extends CumulativeTemplate(starts, durations, ends, heights, resources, capacity, id, "OverloadCheckerExtended")
 {  
-  priorityL2 = 2  
+  priorityL2 = 2
   
+  idempotent = true  
 
   def nextPowerOfTwo(k: Int): Int = {
     1 << math.ceil(math.log(k) / math.log(2)).toInt
