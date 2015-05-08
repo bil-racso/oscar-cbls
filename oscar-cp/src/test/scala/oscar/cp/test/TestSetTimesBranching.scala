@@ -36,19 +36,20 @@ class TestSetTimesBranching extends TestSuite {
   }
 
   test("SetTimes test on a dense rectangle of height 4 and width 100") {
-    val minWidth = 10
+    val minWidth = 40
     val optimalMakespan = 100
     val capacity = 4
-    val maxRecursiveSplits = 4
+    val maxRecursiveSplits = 3
 
-    for (i <- 1 to 10) {
+    for (i <- 1 to 5) {
       val activitySolution = Array.tabulate(capacity)(i => splitRectangle(0, optimalMakespan, minWidth, maxRecursiveSplits)).flatten
       val nActivities = activitySolution.length
       val durations = activitySolution.map(a => a._2 - a._1)
 
       val cp = CPSolver()
-      cp.silent = true
+      //cp.silent = true
       val startVars = Array.tabulate(nActivities)(i => CPIntVar(0 to optimalMakespan - durations(i))(cp))
+      println(startVars.size)
       val endVars = Array.tabulate(nActivities)(i => CPIntVar(durations(i) to optimalMakespan)(cp))
       val durationVars = Array.tabulate(nActivities)(i => CPIntVar(durations(i))(cp))
       val demandVars = Array.fill(nActivities)(CPIntVar(1)(cp))
@@ -62,7 +63,7 @@ class TestSetTimesBranching extends TestSuite {
 
       cp.minimize(makespan)
       cp.search{
-        setTimes(startVars, durationVars, endVars,i => -endVars(i).min)
+        setTimes(startVars, durationVars, endVars,i => -demandVars(i).min)
       }
 
       var bestSol = 0
@@ -77,10 +78,10 @@ class TestSetTimesBranching extends TestSuite {
   }
 
   test("SetTimes test on a dense rectangle of height 10 and width 1000") {
-    val minWidth = 10
+    val minWidth = 400
     val optimalMakespan = 1000
     val capacity = 8
-    val maxRecursiveSplits = 6
+    val maxRecursiveSplits = 3
 
     for (i <- 1 to 10) {
       val activitySolution = Array.tabulate(capacity)(i => splitRectangle(0, optimalMakespan, minWidth, maxRecursiveSplits)).flatten
@@ -89,7 +90,9 @@ class TestSetTimesBranching extends TestSuite {
 
       val cp = CPSolver()
       cp.silent = true
+      
       val startVars = Array.tabulate(nActivities)(i => CPIntVar(0 to optimalMakespan - durations(i))(cp))
+      //println(startVars.size)
       val endVars = Array.tabulate(nActivities)(i => CPIntVar(durations(i) to optimalMakespan)(cp))
       val durationVars = Array.tabulate(nActivities)(i => CPIntVar(durations(i))(cp))
       val demandVars = Array.fill(nActivities)(CPIntVar(1)(cp))
@@ -103,7 +106,7 @@ class TestSetTimesBranching extends TestSuite {
 
       cp.minimize(makespan)
       cp.search{
-        setTimes(startVars, durationVars, endVars,i => -endVars(i).min)
+        setTimes(startVars, durationVars, endVars,i => -demandVars(i).min)
       }
 
       var bestSol = 0
