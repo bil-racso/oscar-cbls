@@ -29,6 +29,7 @@ import oscar.cp.core.variables.CPIntVarViewMinus
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.CPPropagStrength
 import oscar.cp._
+import oscar.cp.scheduling.constraints.DisjunctiveWithTransitionTimes
 
 trait Constraints {
 
@@ -1195,6 +1196,19 @@ trait Constraints {
     }
     new UnaryResourceWithOptionalActivities(starts, durations, ends, starts.map(s => CPBoolVar(true)(cp)))
   }
+  
+  
+
+  /**
+   * Unary Resource constraint (also called disjunctive resource): at any time, no two tasks can overlap in time
+   * @param starts the variables representing the start time of the tasks
+   * @param durations the variables representing the duration of the tasks
+   * @param ends the variables representing the completion time of the tasks, it is your responsibility to link starts, durations and ends such that start(i) + durations(i) = ends(i)
+   * @param transitionTimes matrix of the transition times between the different activities
+   */
+  def unaryResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], transitionTimes: Array[Array[Int]]) = {
+    new DisjunctiveWithTransitionTimes(starts,durations,ends,transitionTimes)
+  }  
 
   /**
    * State Resource constraint: at any time, no two tasks needing different states can overlap in time
@@ -1216,6 +1230,9 @@ trait Constraints {
       }
     }
   }
+  
+  
+  
 
   /**
    * Discrete Resource constraint with maximum capacity: at any time, the cumulative demands of the tasks executing on the resource id, must be <= than the capacity
