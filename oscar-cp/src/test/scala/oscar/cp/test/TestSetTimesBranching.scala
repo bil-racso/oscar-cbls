@@ -41,7 +41,7 @@ class TestSetTimesBranching extends TestSuite {
     val capacity = 4
     val maxRecursiveSplits = 3
 
-    for (i <- 1 to 5) {
+    for (i <- 1 to 10) {
       val activitySolution = Array.tabulate(capacity)(i => splitRectangle(0, optimalMakespan, minWidth, maxRecursiveSplits)).flatten
       val nActivities = activitySolution.length
       val durations = activitySolution.map(a => a._2 - a._1)
@@ -49,7 +49,7 @@ class TestSetTimesBranching extends TestSuite {
       val cp = CPSolver()
       //cp.silent = true
       val startVars = Array.tabulate(nActivities)(i => CPIntVar(0 to optimalMakespan - durations(i))(cp))
-      println(startVars.size)
+      //println(startVars.size)
       val endVars = Array.tabulate(nActivities)(i => CPIntVar(durations(i) to optimalMakespan)(cp))
       val durationVars = Array.tabulate(nActivities)(i => CPIntVar(durations(i))(cp))
       val demandVars = Array.fill(nActivities)(CPIntVar(1)(cp))
@@ -78,7 +78,7 @@ class TestSetTimesBranching extends TestSuite {
   }
 
   test("SetTimes test on a dense rectangle of height 10 and width 1000") {
-    val minWidth = 400
+    val minWidth = 450
     val optimalMakespan = 1000
     val capacity = 8
     val maxRecursiveSplits = 3
