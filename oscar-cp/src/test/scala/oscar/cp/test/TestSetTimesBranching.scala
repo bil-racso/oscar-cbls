@@ -39,7 +39,7 @@ class TestSetTimesBranching extends TestSuite {
     val minWidth = 10
     val optimalMakespan = 100
     val capacity = 4
-    val maxRecursiveSplits = 5
+    val maxRecursiveSplits = 4
 
     for (i <- 1 to 10) {
       val activitySolution = Array.tabulate(capacity)(i => splitRectangle(0, optimalMakespan, minWidth, maxRecursiveSplits)).flatten
@@ -58,7 +58,7 @@ class TestSetTimesBranching extends TestSuite {
         cp.add(startVars(i) + durationVars(i) == endVars(i))
       }
 
-      cp.add(maxCumulativeResource(startVars, durationVars, endVars, demandVars, CPIntVar(capacity)(cp)))
+      cp.add(maxCumulativeResource(startVars, durationVars, endVars, demandVars, CPIntVar(capacity)(cp)),Medium)
 
       cp.minimize(makespan)
       cp.search{
@@ -79,8 +79,8 @@ class TestSetTimesBranching extends TestSuite {
   test("SetTimes test on a dense rectangle of height 10 and width 1000") {
     val minWidth = 10
     val optimalMakespan = 1000
-    val capacity = 10
-    val maxRecursiveSplits = 10
+    val capacity = 8
+    val maxRecursiveSplits = 6
 
     for (i <- 1 to 10) {
       val activitySolution = Array.tabulate(capacity)(i => splitRectangle(0, optimalMakespan, minWidth, maxRecursiveSplits)).flatten
@@ -99,7 +99,7 @@ class TestSetTimesBranching extends TestSuite {
         cp.add(startVars(i) + durationVars(i) == endVars(i))
       }
 
-      cp.add(maxCumulativeResource(startVars, durationVars, endVars, demandVars, CPIntVar(capacity)(cp)))
+      cp.add(maxCumulativeResource(startVars, durationVars, endVars, demandVars, CPIntVar(capacity)(cp)), Medium)
 
       cp.minimize(makespan)
       cp.search{
@@ -227,7 +227,7 @@ class TestSetTimesBranching extends TestSuite {
       val makespan = maximum(ends)
 
       try {
-        add(maxCumulativeResource(starts, durations, ends, demands, CPIntVar(capa)), Weak)
+        add(maxCumulativeResource(starts, durations, ends, demands, CPIntVar(capa)), Medium)
 
 
         add(ends(0) <=  10)
