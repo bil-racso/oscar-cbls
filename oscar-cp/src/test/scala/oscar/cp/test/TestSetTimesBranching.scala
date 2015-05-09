@@ -17,23 +17,36 @@ package oscar.cp.test
 import oscar.cp._
 import oscar.cp.testUtils._
 import oscar.util.RandomGenerator
+import scala.collection.mutable.ArrayBuffer
+import oscar.cp.scheduling.constraints.CumulativeLinear2
 
 /**
- * Created on 06/02/15.
  * @author Cyrille Dejemeppe (cyrille.dejemeppe@gmail.com)
+ * @author Pierre Schaus (pschaus@gmail.com)
  */
 class TestSetTimesBranching extends TestSuite {
 
-  def splitRectangle(leftBound: Int, rightBound: Int, minWidth: Int, remainingSplits: Int): List[(Int, Int)] = {
-    if (remainingSplits == 0 || (rightBound - leftBound) < 2 * minWidth) {
-      List((leftBound, rightBound))
+
+  /**
+   * randomly split the given rectangle into n smaller rectangles  
+   */
+  def splitRectangle(dur: Int, height: Int, n: Int): List[(Int,Int)] = {
+    var rects = ArrayBuffer((dur,height))
+    while (rects.size < n) {
+      val (_,i) = rects.zipWithIndex.map { case ((d, h),i) => (d * h,i) }.max
+      
+      val (d,h) = rects.remove(i)
+      if (h > 2 && RandomGenerator.nextBoolean()) { // horizontal split
+        rects.append((d,h/2),(d,h-h/2))
+      } else { // vertical split
+        val dr = RandomGenerator.nextInt(d-2)
+        rects.append((dr,h),(d-dr,h))
+      }
     }
-    else {
-      val minR = leftBound + minWidth
-      val randomSplit = minR + RandomGenerator.nextInt(rightBound - minR)
-      splitRectangle(leftBound, randomSplit, minWidth, remainingSplits - 1) ::: splitRectangle(randomSplit, rightBound, minWidth, remainingSplits - 1)
-    }
+    rects.map{case(d,h)=> d*h}.sum shouldEqual (dur*height)
+    return rects.toList
   }
+  
 
   test("SetTimes test on a dense rectangle of height 4 and width 100") {
     val minWidth = 40
@@ -42,28 +55,26 @@ class TestSetTimesBranching extends TestSuite {
     val maxRecursiveSplits = 3
 
     for (i <- 1 to 10) {
-      val activitySolution = Array.tabulate(capacity)(i => splitRectangle(0, optimalMakespan, minWidth, maxRecursiveSplits)).flatten
+      //val activitySolution = Array.tabulate(capacity)(i => splitRectangle(0, optimalMakespan, minWidth, maxRecursiveSplits)).flatten
+      val activitySolution = splitRectangle(optimalMakespan, capacity,5).toArray
+
       val nActivities = activitySolution.length
-      val durations = activitySolution.map(a => a._2 - a._1)
+      val durations = activitySolution.map(a => a._1)
+      val demands = activitySolution.map(a => a._2)
 
       val cp = CPSolver()
-      //cp.silent = true
+      cp.silent = true
       val startVars = Array.tabulate(nActivities)(i => CPIntVar(0 to optimalMakespan - durations(i))(cp))
-      //println(startVars.size)
-      val endVars = Array.tabulate(nActivities)(i => CPIntVar(durations(i) to optimalMakespan)(cp))
-      val durationVars = Array.tabulate(nActivities)(i => CPIntVar(durations(i))(cp))
-      val demandVars = Array.fill(nActivities)(CPIntVar(1)(cp))
+      val endVars = Array.tabulate(nActivities)(i => startVars(i)+durations(i))
+      val durationVars = durations.map(d => CPIntVar(d)(cp))
+      val demandVars = demands.map(c => CPIntVar(c)(cp))
       val makespan = maximum(endVars)
 
-      for (i <- 0 until nActivities) {
-        cp.add(startVars(i) + durationVars(i) == endVars(i))
-      }
-
-      cp.add(maxCumulativeResource(startVars, durationVars, endVars, demandVars, CPIntVar(capacity)(cp)),Medium)
+      cp.add(maxCumulativeResource(startVars, durationVars, endVars, demandVars, CPIntVar(capacity)(cp)),Weak)
 
       cp.minimize(makespan)
       cp.search{
-        setTimes(startVars, durationVars, endVars,i => -demandVars(i).min)
+        setTimes(startVars, durationVars, endVars,i => startVars(i).min)
       }
 
       var bestSol = 0
@@ -72,41 +83,34 @@ class TestSetTimesBranching extends TestSuite {
       }
 
       cp.start()
-
       bestSol shouldEqual optimalMakespan
     }
   }
 
   test("SetTimes test on a dense rectangle of height 10 and width 1000") {
-    val minWidth = 500
     val optimalMakespan = 1000
-    val capacity = 8
-    val maxRecursiveSplits = 3
+    val capacity = 20
 
     for (i <- 1 to 10) {
-      val activitySolution = Array.tabulate(capacity)(i => splitRectangle(0, optimalMakespan, minWidth, maxRecursiveSplits)).flatten
+      //val activitySolution = Array.tabulate(capacity)(i => splitRectangle(0, optimalMakespan, minWidth, maxRecursiveSplits)).flatten
+      val activitySolution = splitRectangle(optimalMakespan, capacity,7).toArray
       val nActivities = activitySolution.length
-      val durations = activitySolution.map(a => a._2 - a._1)
+      val durations = activitySolution.map(a => a._1)
+      val demands = activitySolution.map(a => a._2)
 
       val cp = CPSolver()
       cp.silent = true
-      
       val startVars = Array.tabulate(nActivities)(i => CPIntVar(0 to optimalMakespan - durations(i))(cp))
-      //println(startVars.size)
-      val endVars = Array.tabulate(nActivities)(i => CPIntVar(durations(i) to optimalMakespan)(cp))
-      val durationVars = Array.tabulate(nActivities)(i => CPIntVar(durations(i))(cp))
-      val demandVars = Array.fill(nActivities)(CPIntVar(1)(cp))
+      val endVars = Array.tabulate(nActivities)(i => startVars(i)+durations(i))
+      val durationVars = durations.map(d => CPIntVar(d)(cp))
+      val demandVars = demands.map(c => CPIntVar(c)(cp))
       val makespan = maximum(endVars)
 
-      for (i <- 0 until nActivities) {
-        cp.add(startVars(i) + durationVars(i) == endVars(i))
-      }
-
-      cp.add(maxCumulativeResource(startVars, durationVars, endVars, demandVars, CPIntVar(capacity)(cp)), Medium)
+      cp.add(maxCumulativeResource(startVars, durationVars, endVars, demandVars, CPIntVar(capacity)(cp)),Weak)
 
       cp.minimize(makespan)
       cp.search{
-        setTimes(startVars, durationVars, endVars,i => -demandVars(i).min)
+        setTimes(startVars, durationVars, endVars,i => startVars(i).min)
       }
 
       var bestSol = 0
@@ -115,7 +119,6 @@ class TestSetTimesBranching extends TestSuite {
       }
 
       cp.start()
-
       bestSol shouldEqual optimalMakespan
     }
   }
@@ -130,7 +133,7 @@ class TestSetTimesBranching extends TestSuite {
       
       val rand = new scala.util.Random(seed)
       val nTasks = 6
-      val instance = Array.tabulate(nTasks)(t => (rand.nextInt(30)+1,rand.nextInt(4)+1))
+      val instance = Array.tabulate(nTasks)(t => (rand.nextInt(20)+1,rand.nextInt(4)+1))
       val durationsData = instance.map(_._1)
       val demandsData = instance.map(_._2)
       val capa = 5
@@ -191,7 +194,7 @@ class TestSetTimesBranching extends TestSuite {
       best
 
     }
-    for (i <- 0 until 10000) {
+    for (i <- 0 until 200) {
       val opt1 = solve(i, true)
       val opt2 = solve(i, false)
       assert(opt1 == opt2)
@@ -215,7 +218,7 @@ class TestSetTimesBranching extends TestSuite {
       val durationsData = instance.map(_._1)
       val demandsData = instance.map(_._2)
       val capa = 1
-      val horizon = 100
+      val horizon = 50
       val Times = 0 to horizon
       
       
@@ -262,7 +265,7 @@ class TestSetTimesBranching extends TestSuite {
       best
 
     }
-    for (i <- 0 until 10000) {
+    for (i <- 0 until 200) {
       val opt1 = solve(i, true)
       val opt2 = solve(i, false)
       assert(opt1 == opt2)
