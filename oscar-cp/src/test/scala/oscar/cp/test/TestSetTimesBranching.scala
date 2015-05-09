@@ -86,9 +86,9 @@ class TestSetTimesBranching extends TestSuite {
     }
   }
 
-  test("SetTimes test on a dense rectangle of height 10 and width 300") {
-    val optimalMakespan = 300
-    val capacity = 20
+  test("SetTimes test on a dense rectangle of height 10 and width 200") {
+    val optimalMakespan = 200
+    val capacity = 10
 
     for (i <- 1 to 10) {
       //val activitySolution = Array.tabulate(capacity)(i => splitRectangle(0, optimalMakespan, minWidth, maxRecursiveSplits)).flatten
