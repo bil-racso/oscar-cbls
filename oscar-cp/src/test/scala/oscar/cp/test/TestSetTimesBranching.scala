@@ -69,7 +69,7 @@ class TestSetTimesBranching extends TestSuite {
       val demandVars = demands.map(c => CPIntVar(c)(cp))
       val makespan = maximum(endVars)
 
-      cp.add(maxCumulativeResource(startVars, durationVars, endVars, demandVars, CPIntVar(capacity)(cp)),Weak)
+      cp.add(maxCumulativeResource(startVars, durationVars, endVars, demandVars, CPIntVar(capacity)(cp)),Medium)
 
       cp.minimize(makespan)
       cp.search{
@@ -86,13 +86,13 @@ class TestSetTimesBranching extends TestSuite {
     }
   }
 
-  test("SetTimes test on a dense rectangle of height 10 and width 1000") {
-    val optimalMakespan = 1000
+  test("SetTimes test on a dense rectangle of height 10 and width 300") {
+    val optimalMakespan = 300
     val capacity = 20
 
     for (i <- 1 to 10) {
       //val activitySolution = Array.tabulate(capacity)(i => splitRectangle(0, optimalMakespan, minWidth, maxRecursiveSplits)).flatten
-      val activitySolution = splitRectangle(optimalMakespan, capacity,7).toArray
+      val activitySolution = splitRectangle(optimalMakespan, capacity,5).toArray
       val nActivities = activitySolution.length
       val durations = activitySolution.map(a => a._1)
       val demands = activitySolution.map(a => a._2)
@@ -105,7 +105,7 @@ class TestSetTimesBranching extends TestSuite {
       val demandVars = demands.map(c => CPIntVar(c)(cp))
       val makespan = maximum(endVars)
 
-      cp.add(maxCumulativeResource(startVars, durationVars, endVars, demandVars, CPIntVar(capacity)(cp)),Weak)
+      cp.add(maxCumulativeResource(startVars, durationVars, endVars, demandVars, CPIntVar(capacity)(cp)),Medium)
 
       cp.minimize(makespan)
       cp.search{
@@ -151,7 +151,7 @@ class TestSetTimesBranching extends TestSuite {
       val makespan = maximum(ends)
 
       try {
-        add(maxCumulativeResource(starts, durations, ends, demands, CPIntVar(capa)), Weak)
+        add(maxCumulativeResource(starts, durations, ends, demands, CPIntVar(capa)), Medium)
 
         val possPrec = for (i <- 0 until nTasks; j <- i + 1 until nTasks) yield (i, j)
 
