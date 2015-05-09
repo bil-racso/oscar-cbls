@@ -32,14 +32,17 @@ class TestSetTimesBranching extends TestSuite {
   def splitRectangle(dur: Int, height: Int, n: Int): List[(Int,Int)] = {
     var rects = ArrayBuffer((dur,height))
     while (rects.size < n) {
-      val (_,i) = rects.zipWithIndex.map { case ((d, h),i) => (d * h,i) }.max
-      
+      //val (_,i) = rects.zipWithIndex.map { case ((d, h),i) => (d * h,i) }.max
+      val i = RandomGenerator.nextInt(rects.size)
       val (d,h) = rects.remove(i)
-      if (h > 2 && RandomGenerator.nextBoolean()) { // horizontal split
-        rects.append((d,h/2),(d,h-h/2))
-      } else { // vertical split
+      if (h >= 2 && RandomGenerator.nextBoolean()) { // horizontal split
+        val hr = RandomGenerator.nextInt(h)
+        rects.append((d,hr),(d,h-hr))
+      } else if (d > 5) { // vertical split
         val dr = RandomGenerator.nextInt(d-2)
         rects.append((dr,h),(d-dr,h))
+      } else {
+        rects.append((d,h))
       }
     }
     rects.map{case(d,h)=> d*h}.sum shouldEqual (dur*height)
@@ -47,9 +50,9 @@ class TestSetTimesBranching extends TestSuite {
   }
   
 
-  test("SetTimes test on a dense rectangle of height 4 and width 100") {
+  test("SetTimes test on a dense rectangle of height 4 and width 50") {
     val minWidth = 40
-    val optimalMakespan = 100
+    val optimalMakespan = 50
     val capacity = 4
     val maxRecursiveSplits = 3
 
