@@ -18,7 +18,6 @@ import oscar.cp._
 import oscar.cp.testUtils._
 import oscar.util.RandomGenerator
 import scala.collection.mutable.ArrayBuffer
-import oscar.cp.scheduling.constraints.CumulativeLinear2
 
 /**
  * @author Cyrille Dejemeppe (cyrille.dejemeppe@gmail.com)
