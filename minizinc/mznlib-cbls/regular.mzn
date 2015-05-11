@@ -33,7 +33,7 @@ predicate regular(array[int] of var int: x, int: Q, int: S,
             % x[i].  If a[n] is in F, then we succeed (ie. accept the string).
               int: m = min(index_set(x)),
               int: n = max(index_set(x)) + 1,
-              array[m..n] of var 1..Q+1: a ::is_defined_var,
+              array[m..n] of var 1..Q+1: a,
               array[1..Q+1,1..S] of int: d2 = array2d(1..Q+1,1..S,[if i == Q+1 then Q+1 else if d[i,j] == 0 then Q+1 else d[i,j] endif endif|i in 1..Q+1,j in 1..S]) 
             } in
         a[m] = q0  /\                    % Set a[0]. :: defines_var(a[m])
