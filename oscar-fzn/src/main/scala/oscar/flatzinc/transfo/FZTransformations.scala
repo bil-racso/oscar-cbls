@@ -274,9 +274,10 @@ object FZModelTransfo {
   
   
   
-  def getSortedInvariants(inv: List[Constraint])(implicit log: Log): (List[Constraint],List[Constraint]) = {
-    val invariants = inv.toArray;
+  def getSortedInvariants(invariants: List[Constraint])(implicit log: Log): (List[Constraint],List[Constraint]) = {
+    //val invariants = inv;
     var sorted = List.empty[Constraint];
+    //mapping maps each constraint to the number of defined variables the constraint depends on.
     val mapping = MMap.empty[Constraint, Int];
     var heads = List.empty[Constraint]
     var removed = List.empty[Constraint]
@@ -321,9 +322,10 @@ object FZModelTransfo {
       while(!tails.isEmpty){
         val k = tails.head
         tails = tails.tail
-        sortedend = k::sortedend
+        sortedend = k :: sortedend
         mapping.remove(k)//to avoid searching it again
-        for(j <- k.getVariables.filter(v => v.isDefined && (v.definingConstraint.get != k)).map(v => v.definingConstraint.get)){
+        //The toSet is necessary when some variables appear several times in the same constraint. Then we only want to substract 1.
+        for(j <- k.getVariables.toSet.filter(v => v.isDefined && (v.definingConstraint.get != k)).map(v => v.definingConstraint.get)){
           if(mappingB.contains(j)){
             mappingB(j) = mappingB(j)-1
             if(mappingB(j)==0){

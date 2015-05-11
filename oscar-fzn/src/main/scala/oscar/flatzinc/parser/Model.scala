@@ -242,8 +242,11 @@ class Model(val log: Log, val acceptAnyCstr: Boolean) {
     "int_ne_reif" -> ((varList,ann) => reif(int_ne(getIntVar(varList(0)),getIntVar(varList(1)),ann),getBoolVar(varList(2)))), 
     "int_le" -> ((varList,ann) => int_le(getIntVar(varList(0)),getIntVar(varList(1)),ann)),
     "int_le_reif" -> ((varList,ann) => reif(int_le(getIntVar(varList(0)),getIntVar(varList(1)),ann),getBoolVar(varList(2)))), 
+    "int_lt" -> ((varList,ann) => int_lt(getIntVar(varList(0)),getIntVar(varList(1)),ann)),
+    "int_lt_reif" -> ((varList,ann) => reif(int_lt(getIntVar(varList(0)),getIntVar(varList(1)),ann),getBoolVar(varList(2)))), 
     "bool_eq" -> ((varList,ann) => bool_eq(getBoolVar(varList(0)),getBoolVar(varList(1)),ann) ),
     "bool_lt" -> ((varList,ann) => bool_lt(getBoolVar(varList(0)),getBoolVar(varList(1)),ann) ),
+    "bool_le" -> ((varList,ann) => bool_le(getBoolVar(varList(0)),getBoolVar(varList(1)),ann) ),
     "bool_not" -> ((varList,ann) => bool_not(getBoolVar(varList(0)),getBoolVar(varList(1)),ann) ),
     "bool_xor" -> ((varList,ann) => bool_xor(getBoolVar(varList(0)),getBoolVar(varList(1)),getBoolVar(varList(2)),ann) ),
     "array_bool_or" -> ((varList,ann) => array_bool_or(getBoolVarArray(varList(0)),getBoolVar(varList(1)),ann)),
@@ -267,13 +270,23 @@ class Model(val log: Log, val acceptAnyCstr: Boolean) {
     "int_max" -> ((varList,ann) => int_max(getIntVar(varList(0)),getIntVar(varList(1)),getIntVar(varList(2)),ann)),
     "int_min" -> ((varList,ann) => int_min(getIntVar(varList(0)),getIntVar(varList(1)),getIntVar(varList(2)),ann)),
     "int_times" -> ((varList,ann) => int_times(getIntVar(varList(0)),getIntVar(varList(1)),getIntVar(varList(2)),ann)),
+    "int_plus" -> ((varList,ann) => int_plus(getIntVar(varList(0)),getIntVar(varList(1)),getIntVar(varList(2)),ann)),
     "int_div" -> ((varList,ann) => int_div(getIntVar(varList(0)),getIntVar(varList(1)),getIntVar(varList(2)),ann)),
     "int_mod" -> ((varList,ann) => int_mod(getIntVar(varList(0)),getIntVar(varList(1)),getIntVar(varList(2)),ann)),
     "int_abs" -> ((varList,ann) => int_abs(getIntVar(varList(0)),getIntVar(varList(1)),ann)),
     "all_different_int" -> ((varList,ann) => all_different_int(getIntVarArray(varList(0)),ann)),
     "set_in" -> ((varList,ann) => set_in(getIntVar(varList(0)),getIntSet(varList(1)),ann)),
     "member_int" -> ((varList,ann) => member_int(getIntVarArray(varList(0)),getIntVar(varList(1)),ann)),
-    "global_cardinality_closed" -> ((varList,ann) => global_cardinality_closed(getIntVarArray(varList(0)),getIntVarArray(varList(1)),getIntVarArray(varList(2)),ann))
+    "maximum_int" -> ((varList,ann) => maximum_int(getIntVar(varList(0)),getIntVarArray(varList(1)),ann)),
+    "minimum_int" -> ((varList,ann) => minimum_int(getIntVar(varList(0)),getIntVarArray(varList(1)),ann)),
+    "inverse" -> ((varList,ann) => inverse(getIntVarArray(varList(0)),getIntVarArray(varList(1)),ann)),
+    "subcircuit" -> ((varList,ann) => subcircuit(getIntVarArray(varList(0)),ann)),
+    "circuit" -> ((varList,ann) => circuit(getIntVarArray(varList(0)),ann)),
+    "global_cardinality" -> ((varList,ann) => global_cardinality(getIntVarArray(varList(0)),getIntVarArray(varList(1)),getIntVarArray(varList(2)),ann)),
+    "global_cardinality_closed" -> ((varList,ann) => global_cardinality_closed(getIntVarArray(varList(0)),getIntVarArray(varList(1)),getIntVarArray(varList(2)),ann)),
+    "global_cardinality_low_up" -> ((varList,ann) => global_cardinality_low_up(getIntVarArray(varList(0)),getIntVarArray(varList(1)),getIntVarArray(varList(2)),getIntVarArray(varList(3)),ann)),
+    "global_cardinality_low_up_closed" -> ((varList,ann) => global_cardinality_low_up_closed(getIntVarArray(varList(0)),getIntVarArray(varList(1)),getIntVarArray(varList(2)),getIntVarArray(varList(3)),ann)),
+    "cumulative" -> ((varList,ann) => cumulative(getIntVarArray(varList(0)),getIntVarArray(varList(1)),getIntVarArray(varList(2)),getIntVar(varList(3)),ann))
   )
   
   
