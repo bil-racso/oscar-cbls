@@ -186,7 +186,7 @@ case class int_lin_eq(params:Array[IntegerVariable],vars:Array[IntegerVariable],
   extends Constraint(vars++Array.empty[Variable],ann){
   override def canDefineVar = true
   override def getMaybeCandidateDefVars():Array[Variable]  = {
-    return vars.zip(params).filter((t) => Math.abs(t._2.min) == 1).map(_._1)
+    return vars.zip(params).filter((t) => Math.abs(t._2.min) == 1 && t._1.domainSize > 2).map(_._1)
   }
   override def toString() ={"int_lin_eq("+params.mkString("[", ",", "]")+","+vars.mkString("[", ",", "]")+","+sum+","+ann+")"}
 }

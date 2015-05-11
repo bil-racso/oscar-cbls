@@ -111,7 +111,8 @@ class Model(val log: Log, val acceptAnyCstr: Boolean) {
       if(e.typ.typ==Type.NULL){
         e.typ.typ = t.typ;
       }else{
-        log(1,"Not the same type: "+e.typ+" vs "+t);
+        if(!(t.isVar && !e.typ.isVar))
+          log(1,"Not the same type: "+e.typ+" vs "+t);
       }
     }
     /*if(d!=null && !d.equals(e.domain)){
