@@ -598,16 +598,11 @@ trait Constraints {
   }
 
   def table(x: Array[CPIntVar], tuples: Array[Array[Int]]): Constraint = {
-    //new TableSTR2(x,tuples)
-	val data = new TableData(x.size)
-	tuples.foreach(t => data.add(t: _*))
-	new oscar.cp.constraints.TableAC5TCRecomp(data, x: _*)
-
-	/*
-	val tab = new TableJava(x:_*)
-	tuples.foreach(t => tab.addTupple(t:_*))
-	return tab
-	*/
+    new TableSTR2(x,tuples)
+    
+	  //val data = new TableData(x.size)
+	  //tuples.foreach(t => data.add(t: _*))
+	  //new oscar.cp.constraints.TableAC5TCRecomp(data, x: _*)
   }
 
   /**
@@ -619,9 +614,6 @@ trait Constraints {
    */
   def table(x1: CPIntVar, x2: CPIntVar, tuples: Iterable[(Int, Int)]): Constraint = {
     table(Array(x1, x2), tuples.map(t => Array(t._1, t._2)).toArray)
-    //import oscar.cp.constraints.TableAC5TCRecomp
-    //new oscar.cp.constraints.TableAC5TCRecomp(x1,x2,tuples)
-
   }
 
   /**
@@ -634,8 +626,6 @@ trait Constraints {
    */
   def table(x1: CPIntVar, x2: CPIntVar, x3: CPIntVar, tuples: Iterable[(Int, Int, Int)]): Constraint = {
     table(Array(x1, x2, x3), tuples.map(t => Array(t._1, t._2, t._3)).toArray)
-    //import oscar.cp.constraints.TableAC5TCRecomp
-    //new oscar.cp.constraints.TableAC5TCRecomp(x1,x2,x3,tuples)
   }
 
   /**
@@ -649,8 +639,6 @@ trait Constraints {
    */
   def table(x1: CPIntVar, x2: CPIntVar, x3: CPIntVar, x4: CPIntVar, tuples: Iterable[(Int, Int, Int, Int)]): Constraint = {
     table(Array(x1, x2, x3, x4), tuples.map(t => Array(t._1, t._2, t._3, t._4)).toArray)
-    //import oscar.cp.constraints.TableAC5TCRecomp
-    //new oscar.cp.constraints.TableAC5TCRecomp(x1,x2,x3,x4,tuples)
   }
 
   /**
@@ -665,8 +653,6 @@ trait Constraints {
    */
   def table(x1: CPIntVar, x2: CPIntVar, x3: CPIntVar, x4: CPIntVar, x5: CPIntVar, tuples: Iterable[(Int, Int, Int, Int, Int)]): Constraint = {
     table(Array(x1, x2, x3, x4, x5), tuples.map(t => Array(t._1, t._2, t._3, t._4, t._5)).toArray)
-    //import oscar.cp.constraints.TableAC5TCRecomp
-    //new oscar.cp.constraints.TableAC5TCRecomp(x1,x2,x3,x4,tuples)
   }
 
   def modulo(x: CPIntVar, v: Int, y: CPIntVar): Constraint = {
