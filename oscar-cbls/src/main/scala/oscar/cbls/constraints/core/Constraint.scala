@@ -33,7 +33,7 @@ import oscar.cbls.invariants.lib.numeric.Step
  * and managed as invariants.
   * @author renaud.delandtsheer@cetic.be
  */
-abstract class Constraint{
+trait Constraint{
 
   /** returns the violation associated with variable v in this constraint
    * all variables that are declared as constraint should have an associated violation degree.
@@ -76,13 +76,13 @@ abstract class Constraint{
    */
   def registerConstrainedVariable(v: Value){
     v match{
-      case c:AbstractVariable if (c.model != null) => _constrainedVariables = c :: constrainedVariables
-      case _ => //nothing to do otherwise 
+      case c:AbstractVariable if c.model != null => _constrainedVariables = c :: _constrainedVariables
+      case _ => ()
     }   //TODO unsure if constraints can handle constraints as input parameter...
   }
 
   def registerConstrainedVariables(v: Value*){
-    registerConstrainedVariables(v.toSeq)
+    for (vv <- v){registerConstrainedVariable(vv)}
   }
 
   def registerConstrainedVariables(v: Iterable[Value]){

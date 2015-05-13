@@ -39,7 +39,7 @@ import oscar.cbls.invariants.lib.numeric.ReifViol
  * @author renaud.delandtsheer@cetic.be
  */
 protected class LEA(val left: IntValue, val right: IntValue) extends Constraint {
-  val model = InvariantHelper.findModel(left,right)
+  val model = InvariantHelper.findModel(left, right)
 
   registerConstrainedVariables(left, right)
 
@@ -62,7 +62,6 @@ protected class LEA(val left: IntValue, val right: IntValue) extends Constraint 
         + ") == (if (left.value - right.value (" + diff + ") <= 0) 0 else " + diff + ")"))
   }
 }
-
 
 /**
  * implements left <= right
@@ -122,13 +121,13 @@ case class G(l: IntValue, r: IntValue) extends LA(r, l)
  * implements left != right
  * @author renaud.delandtsheer@cetic.be
  */
-case class NE(left: IntValue, right: IntValue) extends Constraint with Invariant{
+case class NE(left: IntValue, right: IntValue) extends Invariant with Constraint {
   registerConstrainedVariables(left, right)
   registerStaticAndDynamicDependenciesNoID(left, right)
   finishInitialization()
 
   /** the violation is 1 if the variables are equal, 0 otherwise*/
-  override val violation:CBLSIntVar = CBLSIntVar(model, if (left.value == right.value) 1 else 0, 0 to 1, "equals")
+  override val violation: CBLSIntVar = CBLSIntVar(model, if (left.value == right.value) 1 else 0, 0 to 1, "equals")
 
   violation.setDefiningInvariant(this)
 
@@ -149,6 +148,8 @@ case class NE(left: IntValue, right: IntValue) extends Constraint with Invariant
 
 /**
  * constraints left == right
+ * this is considered as a primitive constraint and used in the [[oscar.cbls.constraints.core.Constraint]]
+ * class, so that it is part of the core instead of the library
  * @author renaud.delandtsheer@cetic.be
  */
 case class EQ(left: IntValue, right: IntValue) extends Constraint {

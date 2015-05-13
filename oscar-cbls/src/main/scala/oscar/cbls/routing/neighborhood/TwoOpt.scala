@@ -25,70 +25,83 @@
 package oscar.cbls.routing.neighborhood
 
 import oscar.cbls.routing.model._
-import oscar.cbls.search.SearchEngineTrait
+import oscar.cbls.search.algo.HotRestart
 
 /**
- * Removes two edges of routes, and rebuilds routes from the segments. (with one reverse required)
+ * Removes two edges of routes, and rebuilds routes from the segments.
+ * (with one reverse required)
  *
  * The search complexity is O(n²).
  * @author renaud.delandtsheer@cetic.be
  * @author yoann.guyot@cetic.be
  * @author Florent Ghilain (UMONS)
  * */
-object TwoOptNeighborhood extends Neighborhood with SearchEngineTrait {
+case class TwoOpt(predecesorOfFirstMovedPoint:()=>Iterable[Int],
+                  relevantNeighbors:()=>Int=>Iterable[Int],
+                  vrp: VRP with PositionInRouteAndRouteNr,
+                  neighborhoodName:String = "TwoOptNeighborhood",
+                  best:Boolean = false,
+                  hotRestart:Boolean = true) extends EasyRoutingNeighborhood(best,vrp) {
+
+  //the indice to start with for the exploration
+  var startIndice: Int = 0
 
   /**
    * Removes two edges of a route and flips the obtained segment before
    * reconnecting it.
    * The search complexity is O(n²).
    */
-  override protected def doSearch(s: SearchZone, moveAcceptor: (Int) => (Int) => Boolean, returnMove: Boolean): SearchResult = {
+  override def exploreNeighborhood(): Unit = {
 
-    val startObj: Int = s.vrp.getObjective()
-    val vrp = s.vrp
+    val iterationSchemeOnZone =
+      if (hotRestart && !best) HotRestart(predecesorOfFirstMovedPoint(), startIndice)
+      else predecesorOfFirstMovedPoint()
 
-    while (s.primaryNodeIterator.hasNext) {
-      val fstPred: Int = s.primaryNodeIterator.next()
-      if (vrp.isRouted(fstPred)) {
+    cleanRecordedMoves()
+    val relevantNeighborsNow = relevantNeighbors()
 
-        for (
-          sndPred <- s.relevantNeighbors(fstPred) if (vrp.isRouted(sndPred)
-            && sndPred != fstPred
-            && sndPred != fstPred
-            && fstPred != vrp.next(sndPred).value
-            && vrp.onTheSameRoute(fstPred, sndPred)) //FIXME correct ?
-        ) {
+    for (fstPred <- iterationSchemeOnZone) {
+      assert(vrp.isRouted(fstPred),
+        "The search zone should be restricted to routed.")
 
-          encode(fstPred, sndPred, vrp)
+      for (
+        sndPred <- relevantNeighborsNow(fstPred) if (vrp.isRouted(sndPred)
+        && sndPred != fstPred
+        && fstPred != vrp.next(sndPred).value
+        && vrp.onTheSameRoute(fstPred, sndPred))
+      ) {
 
-          checkEncodedMove(moveAcceptor(startObj), !returnMove, vrp) match {
-            case (true, newObj: Int) => { //this improved
-              if (returnMove) return MoveFound(TwoOptMove(fstPred, sndPred, newObj, vrp))
-              else return MovePerformed()
-            }
-            case _ => ()
-          }
+        encode(fstPred, sndPred)
+        val newObj = evalObjOnEncodedMove()
+
+        if (moveRequested(newObj)
+          && submitFoundMove(TwoOptMove(fstPred, sndPred, newObj, this, neighborhoodName))) {
+          startIndice = fstPred + 1
+          return
         }
       }
     }
-    NoMoveFound()
   }
 
-  def encode(fstPred:Int, sndPred:Int, vrp:VRP with MoveDescription) {
-    val seg = vrp.cut(fstPred, sndPred)
-    val rev_seg = vrp.reverse(seg)
-    vrp.insert(rev_seg, fstPred)
+  def encode(fstPred:Int, sndPred:Int) {
+    val seg = cut(fstPred, sndPred)
+    val rev_seg = reverse(seg)
+    insert(rev_seg, fstPred)
   }
-  
-  override def toString: String = "2-opt"
+
+  //this resets the internal state of the Neighborhood
+  override def reset(): Unit = {
+    startIndice = 0
+  }
 }
+
 
 /**
  * Models a two-opt-move operator of a given VRP problem.
  * @param fstPred the start of first edge that we remove.
  * @param sndPred the start of second edge that we remove.
  * @param objAfter the objective value if we performed this two-opt-move operator.
- * @param vrp the given VRP problem.
+ * @param neighborhood the originating neighborhood
  * @author renaud.delandtsheer@cetic.be
  * @author yoann.guyot@cetic.be
  * @author Florent Ghilain (UMONS)
@@ -97,10 +110,12 @@ case class TwoOptMove(
   fstPred: Int,
   sndPred: Int,
   override val objAfter: Int,
-  override val vrp: VRP with MoveDescription) extends Move(objAfter, vrp) {
+  override val neighborhood:TwoOpt,
+  override val neighborhoodName:String = null)
+  extends VRPMove(objAfter, neighborhood, neighborhoodName) {
   // overriding methods
   override def encodeMove() {
-    TwoOptNeighborhood.encode(fstPred, sndPred, vrp)
+    neighborhood.encode(fstPred, sndPred)
   }
 
   override def toString: String = ("TwoOpt(first predecessor = "

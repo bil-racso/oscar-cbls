@@ -24,12 +24,13 @@
 package oscar.examples.cbls.scheduling
 
 import oscar.cbls.invariants.core.computation.{CBLSIntVar, Store}
+import oscar.cbls.objective.Objective
 import oscar.cbls.scheduling._
 import oscar.cbls.scheduling.model._
 import oscar.cbls.invariants.core.propagation.Checker
 import oscar.cbls.scheduling.model.CumulativeResource
 import oscar.cbls.scheduling.solver.{SchedulingStrategies, IFlatIRelax}
-import oscar.cbls.search.combinators.BasicProtectBest
+import oscar.cbls.search.combinators.BasicSaveBest
 
 /**a simple model of Reagan president of USA
  * he is partly multitask, can do two things at the same time, except eating, which requires his full attention
@@ -73,10 +74,12 @@ object ReaganCombinators extends App {
   Eat precedes Sleep
   Chew precedes Speak
 
+  val makeSpan:Objective = planning.makeSpan
   model.close(false)
 
-  val iFlatRelax = SchedulingStrategies.iFlatRelax(planning, nbRelax= 4,
-    pKillPerRelax = 50, stable = 3)()
+  val iFlatRelax = SchedulingStrategies.iFlatRelax(planning, makeSpan, nbRelax= 4,
+    pKillPerRelax = 50, stable = 3)
+
   iFlatRelax.verbose = 2
   iFlatRelax.doAllMoves(_ > 100, null)
 

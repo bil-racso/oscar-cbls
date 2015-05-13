@@ -90,7 +90,7 @@ abstract class ChangingIntValue(initialValue:Int, initialDomain:Domain)
   }
 
   override def toString = {
-    if(model.propagateOnToString) s"$name:=$value" else s"$name:=$Value"
+    if(model != null && model.propagateOnToString) s"$name:=$value" else s"$name:=$Value"
   }
   override def toStringNoPropagate = s"$name:=$Value"
 
@@ -121,7 +121,7 @@ abstract class ChangingIntValue(initialValue:Int, initialDomain:Domain)
       Value
     } else{
       if (model == null) return Value
-      if (definingInvariant == null && !model.Propagating) return Value
+      if (definingInvariant == null && !model.propagating) return Value
       model.propagate(this)
       OldValue
     }
@@ -133,12 +133,25 @@ abstract class ChangingIntValue(initialValue:Int, initialDomain:Domain)
     if(OldValue!=Value){
       val old=OldValue
       OldValue=Value
-      for (e:((PropagationElement,Any)) <- getDynamicallyListeningElements){ //TODO: here should come some postponed stuff as well
-      val inv:Invariant = e._1.asInstanceOf[Invariant]
+
+      val dynListElements = getDynamicallyListeningElements
+      val headPhantom = dynListElements.headPhantom
+      var currentElement = headPhantom.next
+      while(currentElement != headPhantom){
+        val e = currentElement.elem
+        currentElement = currentElement.next
+        val inv:Invariant = e._1.asInstanceOf[Invariant]
         assert({this.model.NotifiedInvariant=inv; true})
         inv.notifyIntChangedAny(this,e._2,old,Value)
         assert({this.model.NotifiedInvariant=null; true})
       }
+      /*
+      for (e:((PropagationElement,Any)) <- getDynamicallyListeningElements){
+      val inv:Invariant = e._1.asInstanceOf[Invariant]
+        assert({this.model.NotifiedInvariant=inv; true})
+        inv.notifyIntChangedAny(this,e._2,old,Value)
+        assert({this.model.NotifiedInvariant=null; true})
+      }*/
     }
   }
 
@@ -192,6 +205,8 @@ object ChangingIntValue{
   */
 class CBLSIntVar(givenModel: Store, initialValue: Int, initialDomain:Domain, n: String = null)
   extends ChangingIntValue(initialValue,initialDomain) with Variable{
+  
+  require(givenModel != null)
   
   override def restrictDomain(d:Domain) = super.restrictDomain(d)
   override def relaxDomain(d:Domain) = super.relaxDomain(d)
@@ -291,6 +306,8 @@ abstract class IntInvariant(initialValue:Int = 0, initialDomain:Domain = FullRan
   override def isDecisionVariable:Boolean = false
 
   override def model = propagationStructure.asInstanceOf[Store]
+
+  override def hasModel:Boolean = schedulingHandler != null
 
   private var customName:String = null
   /**use this if you want to give a particular name to this concept, to be used in toString*/

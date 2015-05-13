@@ -143,7 +143,7 @@ trait ElementInvariants{
    * @param thenVar the returned value if ifVar > 0
    * @param elseVar the returned value if ifVar <= 0
    * */
-  def intITE(ifVar:IntValue, thenVar:IntValue, elseVar:IntValue) = IntITE(ifVar, thenVar, elseVar)
+  def intITE(ifVar:IntValue, thenVar:IntValue, elseVar:IntValue, pivot: Int = 0) = IntITE(ifVar, thenVar, elseVar, pivot)
 
   /** inputarray[index]
    * @param inputarray is an array of IntVar

@@ -56,7 +56,7 @@ trait DistributedStorageUtility {
 trait StorageUtilityManager {
   var nextStoragePlace: Int = 0
 
-  /** creates a unique storage key tha can be used
+  /** creates a unique storage key that can be used
     * to store anything in all DistributedStorageUtility
     * bound to this StorageUtilityManager
     * @return

@@ -98,12 +98,12 @@ class ShiftedRange(val start:Int, val end:Int, val startBy:Int, val step:Int = 1
 
   class ShiftedRangeIterator(val s:ShiftedRange) extends Iterator[Int]{
     var currentValue = s.startBy
-
-    def hasNext: Boolean = (s.getNextValue(currentValue) != s.startBy)
+    var hasNext = true
 
     def next(): Int = {
       val tmp = currentValue
       currentValue = s.getNextValue(currentValue)
+      if(currentValue == s.startBy) hasNext = false
       tmp
     }
   }

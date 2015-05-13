@@ -20,6 +20,7 @@
 
 package oscar.cbls.invariants.core.computation
 
+import oscar.cbls.invariants.core.algo.quick.QList
 import oscar.cbls.invariants.core.propagation._
 import collection.mutable.Map
 
@@ -55,16 +56,21 @@ case class Store(override val verbose:Boolean = false,
 
   assert({println("You are using a CBLS store with asserts activated. It makes the engine slower. Recompile it with -Xdisable-assertions"); true})
 
-  private var variables:List[AbstractVariable] = List.empty
-  private var propagationElements:List[PropagationElement] = List.empty
+  private[this] var variables:QList[AbstractVariable] = null
+  private var propagationElements:QList[PropagationElement] = null
 
-  private var privateDecisionVariables:List[Variable] = null;
+  private[this] var privateDecisionVariables:QList[Variable] = null;
 
-  def decisionVariables():List[Variable] = {
+  def decisionVariables():QList[Variable] = {
     if(privateDecisionVariables == null){
-      privateDecisionVariables  = List.empty
-      for (v:AbstractVariable <- variables if v.isDecisionVariable){
-        privateDecisionVariables = v.asInstanceOf[Variable] :: privateDecisionVariables
+      privateDecisionVariables  = null
+      var currentVarPos = variables
+      while(currentVarPos != null){
+        val v:AbstractVariable = currentVarPos.head
+        currentVarPos = currentVarPos.tail
+        if (v.isDecisionVariable){
+          privateDecisionVariables = QList(v.asInstanceOf[Variable],privateDecisionVariables)
+        }
       }
     }
     privateDecisionVariables
@@ -73,19 +79,22 @@ case class Store(override val verbose:Boolean = false,
     * @param inputOnly if set to true (as by default) the solution will only contain the variables that are not derived through an invariant
     */
   def solution(inputOnly:Boolean = true):Solution = {
-    var assignationInt:SortedMap[ChangingIntValue,Int] = SortedMap.empty
-    var assignationIntSet:SortedMap[ChangingSetValue,SortedSet[Int]] = SortedMap.empty
+    var assignationInt:List[(ChangingIntValue,Int)] = List.empty
+    var assignationIntSet:List[(ChangingSetValue,SortedSet[Int])] = List.empty
 
     val VariablesToSave = if(inputOnly) {
       decisionVariables()
     }else variables
 
-    for (v:AbstractVariable <- VariablesToSave){
+    var currentPos = VariablesToSave
+    while(currentPos != null){
+      val v:AbstractVariable = currentPos.head
+      currentPos = currentPos.tail
       v match {
         case i:ChangingIntValue =>
-          assignationInt += ((i, i.value))
+          assignationInt = ((i, i.value)) :: assignationInt
         case s:ChangingSetValue =>
-          assignationIntSet += ((s, s.value))
+          assignationIntSet = ((s, s.value)) :: assignationIntSet
       }
     }
     Solution(assignationInt,assignationIntSet,this)
@@ -93,9 +102,9 @@ case class Store(override val verbose:Boolean = false,
 
   /**this is to be used as a backtracking point in a search engine
     * you can only save variables that are not controlled*/
-  def saveValues(vars:Variable*):Snapshot = {
-    var assignationInt:List[(CBLSIntVar,Int)] = List.empty
-    var assignationIntSet:List[(CBLSSetVar,SortedSet[Int])] = List.empty
+  def saveValues(vars:Variable*):Solution = {
+    var assignationInt:List[(ChangingIntValue,Int)] = List.empty
+    var assignationIntSet:List[(ChangingSetValue,SortedSet[Int])] = List.empty
     for (v:Variable <- vars if v.isDecisionVariable){
       if(v.isInstanceOf[CBLSIntVar]){
         assignationInt = ((v.asInstanceOf[CBLSIntVar], v.asInstanceOf[CBLSIntVar].getValue(true))) :: assignationInt
@@ -103,7 +112,7 @@ case class Store(override val verbose:Boolean = false,
         assignationIntSet = ((v.asInstanceOf[CBLSSetVar], v.asInstanceOf[CBLSSetVar].getValue(true))) :: assignationIntSet
       }
     }
-    Snapshot(assignationInt,assignationIntSet,this)
+    Solution(assignationInt,assignationIntSet,this)
   }
 
   /**To restore a saved solution
@@ -121,21 +130,6 @@ case class Store(override val verbose:Boolean = false,
     }
   }
 
-  /**To restore a saved snapshot
-    * notice that only the variables that are not derived will be restored; others will be derived lazily at the next propagation wave.
-    * This enables invariants to rebuild their internal data structure if needed.
-    * Only solutions saved from the same model can be restored in the model.
-    */
-  def restoreSnapshot(s:Snapshot){
-    assert(s.model==this)
-    for((intsetvar,intset) <- s.assignationIntSet if intsetvar.isDecisionVariable){
-      intsetvar := intset
-    }
-    for((intvar,int) <- s.assignationInt if intvar.isDecisionVariable){
-      intvar := int
-    }
-  }
-
   /**Called by each variable to register themselves to the model
     * @param v the variable
     * @return a unique identifier that will be used to distinguish variables. basically, variables use this value to set up an arbitrary ordering for use in dictionnaries.
@@ -144,8 +138,8 @@ case class Store(override val verbose:Boolean = false,
     assert(!closed,"model is closed, cannot add variables")
     //ici on utilise des listes parce-que on ne peut pas utiliser des dictionnaires
     // vu que les variables n'ont pas encore recu leur unique ID.
-    variables = v :: variables
-    propagationElements =  v :: propagationElements
+    variables = QList(v,variables)
+    propagationElements =  QList(v,propagationElements)
     GetNextID()
   }
 
@@ -155,11 +149,11 @@ case class Store(override val verbose:Boolean = false,
     */
   def registerInvariant(i:Invariant):Int = {
     assert(!closed,"model is closed, cannot add invariant")
-    propagationElements = i :: propagationElements
+    propagationElements = QList(i,propagationElements)
     GetNextID()
   }
 
-  override def getPropagationElements:Iterable[PropagationElement] = {
+  override def getPropagationElements:QList[PropagationElement] = {
     propagationElements
   }
 
@@ -210,7 +204,6 @@ case class Store(override val verbose:Boolean = false,
   var NotifiedInvariant:Invariant=null
 
   override def toString:String = variables.toString()
-  def toStringInputOnly = variables.filter(v => v.isDecisionVariable).toString()
 
   //returns the set of source variable that define this one.
   // This exploration procedure explores passed dynamic invariants,
@@ -251,29 +244,19 @@ case class Store(override val verbose:Boolean = false,
     super.stats + "\n" +
       "Store(" + "\n" +
       "  variableCount:" + variables.size + "\n" +
-      "  inputVariableCount" + decisionVariables.size + "\n" +
+      "  inputVariableCount: " + decisionVariables.size + "\n" +
       ")"
   }
 }
-
-case class Snapshot(assignationInt:List[(CBLSIntVar, Int)],
-                    assignationIntSet:List[(CBLSSetVar,SortedSet[Int])],
-                    model:Store)
 
 /**This class contains a solution. It can be generated by a model, to store the state of the search, and restored.
   * it remains linked to the model, as it maintains references to the variables declared in the model.
   * you cannot pass it over a network connection for instance.
   * see methods getSolution and restoreSolution in [[oscar.cbls.invariants.core.computation.Store]]
   */
-case class Solution(assignationInt:SortedMap[ChangingIntValue,Int],
-                    assignationIntSet:SortedMap[ChangingSetValue,SortedSet[Int]],
+case class Solution(assignationInt:List[(ChangingIntValue,Int)],
+                    assignationIntSet:List[(ChangingSetValue,SortedSet[Int])],
                     model:Store){
-
-  /**to get the value of an IntVar in the saved solution*/
-  def getSnapshot(v:ChangingIntValue):Int = assignationInt(v)
-
-  /**to get the value of an IntSetVar in the saved solution*/
-  def getSnapshot(v:ChangingSetValue):SortedSet[Int] = assignationIntSet(v)
 
   /**converts the solution to a human-readable string*/
   override def toString:String = {
@@ -302,7 +285,7 @@ object Invariant{
   }
 }
 
-trait VaryingDependenciesInvariant extends Invariant with VaryingDependencies{
+trait VaryingDependencies extends Invariant with VaryingDependenciesPE{
 
   /**register to determining element. It must be in the static dependency graph*/
   def registerDeterminingDependency(v:Value,i:Any = -1){
@@ -364,6 +347,7 @@ trait Invariant extends PropagationElement{
     */
   final def finishInitialization(model:Store = null){
     val m:Store = preFinishInitialization(model)
+    assert(uniqueID == -1)
     if (m != null){
       uniqueID = m.registerInvariant(this)
     }else{
@@ -560,10 +544,11 @@ object InvariantHelper{
     "[" + a.toList.mkString(",")+"]"
 }
 
-trait Value extends BasicPropagationElement{
+trait Value extends BasicPropagationElement with DistributedStorageUtility {
   //def valueString:String
 }
 
+//TODO: try to remove the double inclusion of AbstractVariable into CBLSIntVar and SetVar
 trait Variable extends AbstractVariable{
   protected var definingInvariant:Invariant = null
   def setDefiningInvariant(i:Invariant){
@@ -590,13 +575,16 @@ object Variable{
   * which is used solely for printing models.
   */
 trait AbstractVariable
-  extends PropagationElement with DistributedStorageUtility with Value{
+  extends PropagationElement with Value{
 
   final def model_=(s:Store): Unit ={
     schedulingHandler = s
+    assert(uniqueID == -1)
     uniqueID = if (s == null) -1 else s.registerVariable(this)
   }
   def model = propagationStructure.asInstanceOf[Store]
+
+  def hasModel:Boolean = hasPropagationStructure
 
   def name:String
 

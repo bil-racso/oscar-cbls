@@ -3,6 +3,7 @@ package oscar.cbls.search
 import oscar.cbls.constraints.core.ConstraintSystem
 import oscar.cbls.invariants.core.computation.{CBLSIntVar, CBLSSetVar, IntValue}
 import oscar.cbls.modeling.AlgebraTrait
+import oscar.cbls.objective.Objective
 import oscar.cbls.search.algo.{HotRestart, IdenticalAggregator}
 import oscar.cbls.search.core._
 import oscar.cbls.search.move.{AssignMove, CompositeMove, Move, SwapMove}
@@ -50,7 +51,6 @@ case class AssignNeighborhood(vars:Array[CBLSIntVar],
   override def exploreNeighborhood() {
     if (amIVerbose) println(name + ": trying")
 
-    //TODO: improve the hot restart; we should continue from the last tried variable AND ITS LAST TRIED VALUE IF THE VARIABLE WAS NOT GIVEN THIS VALUE SINCE LAST TIME
     val iterationSchemeOnZone =
       if (searchZone == null) {
         if (hotRestart && !best) {
@@ -75,10 +75,8 @@ case class AssignNeighborhood(vars:Array[CBLSIntVar],
       }
 
       for (newVal <- domainIterationScheme if newVal != oldVal) {
-        val oldVal = currentVar.value
-        currentVar := newVal
-        val newObj = obj()
-        currentVar := oldVal
+
+        val newObj = obj.assignVal(currentVar,newVal)
 
         if (moveRequested(newObj) && submitFoundMove(AssignMove(currentVar, newVal, newObj, name))){
           startIndice = i + 1
@@ -141,10 +139,6 @@ case class SwapsNeighborhood(vars:Array[CBLSIntVar],
   override def exploreNeighborhood(){
     if (amIVerbose) println(name + ": trying")
 
-    //TODO: improve the hotRestart:
-    //we must restart after the last explored variable except if this variable has not changed
-    //in which case we start from this variable, from the value just after the last explored one
-
     val firstIterationSchemeZone =
       if (searchZone1 == null) {
         if (hotRestart && !best) {
@@ -165,7 +159,6 @@ case class SwapsNeighborhood(vars:Array[CBLSIntVar],
       case Some(s) => IdenticalAggregator.removeIdenticalClassesLazily(secondIterationSchemeZone, s)
     }
 
-
     //TODO : check if two different values are considered as asymmetrical
     for (i: Int <- firstIterationScheme) {
       val firstVar = vars(i)
@@ -181,9 +174,9 @@ case class SwapsNeighborhood(vars:Array[CBLSIntVar],
              && secondVar.domain.contains(oldValOfFirstVar)
              && firstVar.domain.contains(oldValOfSecondVar)) {
 
-        firstVar :=: secondVar
-        val newObj = obj()
-        firstVar :=: secondVar
+        if (amIVerbose) println(name + ": trying " + firstVar + ":=:" + secondVar)
+
+        val newObj = obj.swapVal(firstVar,secondVar)
 
         if (moveRequested(newObj) && submitFoundMove(SwapMove(firstVar, secondVar, newObj, name))) {
           startIndice = i + 1
@@ -216,7 +209,7 @@ case class RandomizeNeighborhood(vars:Array[CBLSIntVar],
                                  valuesToConsider:(CBLSIntVar,Int) => Iterable[Int] = (variable,_) => variable.domain)
   extends Neighborhood with AlgebraTrait with SearchEngineTrait{
 
-  override def getMove(obj:()=>Int, acceptanceCriteria:(Int,Int) => Boolean = null): SearchResult = {
+  override def getMove(obj: Objective, acceptanceCriteria: (Int, Int) => Boolean = null): SearchResult = {
     if(amIVerbose) println("applying " + name)
 
     var toReturn:List[Move] = List.empty
@@ -255,7 +248,7 @@ case class RandomSwapNeighborhood(vars:Array[CBLSIntVar],
                                   searchZone:CBLSSetVar = null)
   extends Neighborhood with AlgebraTrait with SearchEngineTrait{
 
-  override def getMove(obj:()=>Int, acceptanceCriteria:(Int,Int) => Boolean = null): SearchResult = {
+  override def getMove(obj: Objective, acceptanceCriteria: (Int, Int) => Boolean = null): SearchResult = {
     if(amIVerbose) println("applying " + name)
 
     var toReturn:List[Move] = List.empty
@@ -292,7 +285,7 @@ class ConflictAssignNeighborhood(c:ConstraintSystem, variables:List[CBLSIntVar],
 
   var varArray = variables.toArray
   val violations:Array[IntValue] = varArray.clone().map(c.violation(_))
-  override def getMove(obj:()=>Int, acceptanceCriteria:(Int,Int) => Boolean = (oldObj,newObj) => oldObj > newObj): SearchResult = {
+  override def getMove(obj: Objective, acceptanceCriteria: (Int, Int) => Boolean = (oldObj,newObj) => oldObj > newObj): SearchResult = {
     val oldObj = c.violation.value
     val MaxViolVarID = selectMax(varArray.indices,violations(_:Int).value)
 
@@ -308,3 +301,4 @@ class ConflictAssignNeighborhood(c:ConstraintSystem, variables:List[CBLSIntVar],
   }
 }
 
+//TODO: prévoir un shiftneighborhood, qui fait des shift de partie de tableau

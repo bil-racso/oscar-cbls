@@ -8,7 +8,7 @@ import oscar.cbls.invariants.core.propagation.Checker
  * implements v \in set
  * @author renaud.delandtsheer@cetic.be
  */
-case class BelongsTo(v: IntValue, set: SetValue) extends Constraint with Invariant {
+case class BelongsTo(v: IntValue, set: SetValue) extends Invariant with Constraint {
   registerConstrainedVariables(v, set)
   registerStaticAndDynamicDependenciesNoID(v, set)
   finishInitialization()

@@ -93,9 +93,8 @@ case class MoveItemSetRestrictions(problem: BinPackingProblem,
         idNewBin <- iterableIdBins
         newBin = problem.bins(idNewBin)
       } {
-        newBin.items :+= idItemToMove
-        val newObj = obj()
-        newBin.items :-= idItemToMove
+
+        val newObj = obj.insertValAssumeNotAlreadyIn(newBin.items,idItemToMove)
 
         if (moveRequested(newObj) &&
           submitFoundMove(AssignMove(problem.items(idItemToMove).bin, newBin.number, newObj))) {
@@ -175,7 +174,7 @@ case class SwapItemsSetRestrictions(problem: BinPackingProblem,
         bin2.items :+= idItemToSwap1
         bin2.items :-= idItemToSwap2
         bin1.items :+= idItemToSwap2
-        val newObj = obj()
+        val newObj = obj.value
         bin2.items :-= idItemToSwap1
         bin1.items :-= idItemToSwap2
         bin2.items :+= idItemToSwap2

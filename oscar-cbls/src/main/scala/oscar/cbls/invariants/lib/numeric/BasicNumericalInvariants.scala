@@ -1,38 +1,49 @@
-/*******************************************************************************
-  * OscaR is free software: you can redistribute it and/or modify
-  * it under the terms of the GNU Lesser General Public License as published by
-  * the Free Software Foundation, either version 2.1 of the License, or
-  * (at your option) any later version.
-  *
-  * OscaR is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  * GNU Lesser General Public License  for more details.
-  *
-  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
-  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
-  ******************************************************************************/
-/*******************************************************************************
-  * Contributors:
-  *     This code has been initially developed by CETIC www.cetic.be
-  *         by Renaud De Landtsheer
-  *            Yoann Guyot
-  ******************************************************************************/
+/**
+ * *****************************************************************************
+ * OscaR is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 2.1 of the License, or
+ * (at your option) any later version.
+ *
+ * OscaR is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License  for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
+ * ****************************************************************************
+ */
+/**
+ * *****************************************************************************
+ * Contributors:
+ *     This code has been initially developed by CETIC www.cetic.be
+ *         by Renaud De Landtsheer
+ *            Yoann Guyot
+ * ****************************************************************************
+ */
 
 package oscar.cbls.invariants.lib.numeric
 
-import oscar.cbls.invariants.core.computation._
+import oscar.cbls.invariants.core.computation.ChangingIntValue
+import oscar.cbls.invariants.core.computation.Domain
+import oscar.cbls.invariants.core.computation.Domain.rangeToDomain
+import oscar.cbls.invariants.core.computation.DomainHelper
+import oscar.cbls.invariants.core.computation.IntInvariant
+import oscar.cbls.invariants.core.computation.IntValue
+import oscar.cbls.invariants.core.computation.SetValue
+import oscar.cbls.invariants.core.computation.Store
 import oscar.cbls.invariants.core.propagation.Checker
-import oscar.cbls.invariants.lib.logic._;
+import oscar.cbls.invariants.lib.logic.Int2Int
+import oscar.cbls.invariants.lib.logic.IntInt2Int
 
-object Sum{
+object Sum {
   def apply(vars: Array[IntValue], cond: SetValue) = SumElements(vars, cond)
   def apply(vars: Iterable[IntValue]) = new Sum(vars)
-  def apply(vars:Array[Int], cond:SetValue) = SumConstants(vars,cond)
+  def apply(vars: Array[Int], cond: SetValue) = SumConstants(vars, cond)
 }
 
-
-object Prod{
+object Prod {
   def apply(vars: Iterable[IntValue]) = new Prod(vars)
   def apply(vars: Array[IntValue], cond: SetValue) = ProdElements(vars, cond)
   def apply(vars: Array[Int], cond: SetValue) = ProdConstants(vars, cond)
@@ -42,7 +53,7 @@ object Prod{
  * sum(vars)
  * @param vars is an iterable of IntVars
  * @author renaud.delandtsheer@cetic.be
- * */
+ */
 class Sum(vars: Iterable[IntValue])
   extends IntInvariant(
     vars.foldLeft(0)((a:Int, b:IntValue) => a + b.value), 
@@ -94,13 +105,13 @@ class Linear(vars: Iterable[IntValue], coeffs: IndexedSeq[Int])
  * sum(vars) where vars is vars that have been added to the sum through addTerm
  * @param model the store
  * @author renaud.delandtsheer@cetic.be
- * */
-class ExtendableSum(model:Store,domain:Domain)
-  extends IntInvariant(initialDomain=domain){
+ */
+class ExtendableSum(model: Store, domain: Domain)
+  extends IntInvariant(initialDomain = domain) {
 
   finishInitialization(model)
 
-  def addTerm(i:IntValue){
+  def addTerm(i: IntValue) {
     registerStaticAndDynamicDependency(i)
     this :+= i.value
   }
@@ -109,18 +120,18 @@ class ExtendableSum(model:Store,domain:Domain)
     //TODO: Update the domain of the invariant.
   }
   
-  def addTerms(is:Iterable[IntValue]){
-    for(i <- is){
+  def addTerms(is: Iterable[IntValue]) {
+    for (i <- is) {
       addTerm(i)
     }
   }
-  
+
   override def notifyIntChanged(v: ChangingIntValue, OldVal: Int, NewVal: Int) {
     this :+= NewVal - OldVal
   }
 
   override def checkInternals(c: Checker) {
-    c.check(this.value == this.getStaticallyListenedElements.foldLeft(0)((acc, intvar) => acc + intvar.asInstanceOf[IntValue].value),
+    c.check(this.value == this.getDynamicallyListenedElements.foldLeft(0)((acc, intvar) => acc + intvar.asInstanceOf[IntValue].value),
       Some("output.value == vars.foldLeft(0)((acc,intvar) => acc+intvar.value)"))
   }
 }
@@ -129,7 +140,7 @@ class ExtendableSum(model:Store,domain:Domain)
  * prod(vars)
  * @param vars is a set of IntVars
  * @author renaud.delandtsheer@cetic.be
- * */
+ */
 class Prod(vars: Iterable[IntValue]) extends IntInvariant {
   assert(vars.size > 0, "Invariant prod declared with zero vars to multiply")
 
@@ -171,7 +182,7 @@ class Prod(vars: Iterable[IntValue]) extends IntInvariant {
     }
   }
 
-  override def checkInternals(c: Checker){
+  override def checkInternals(c: Checker) {
     var prod = 1
     for (v <- vars) prod *= v.value
     c.check(this.value == prod,
@@ -183,7 +194,7 @@ class Prod(vars: Iterable[IntValue]) extends IntInvariant {
  * left - right
  * where left, right, and output are IntVar
  * @author renaud.delandtsheer@cetic.be
- * */
+ */
 case class Minus(left: IntValue, right: IntValue)
   extends IntInt2Int(left, right, (if(DomainHelper2.isSafeSub(left,right))
                                       (l,r) => l - r
@@ -230,7 +241,7 @@ case class ReifViol(b: IntValue, v:IntValue) extends IntInt2Int(b,v, (b,v) => {i
  * left + right
  * where left, right, and output are IntVar
  * @author renaud.delandtsheer@cetic.be
- * */
+ */
 case class Sum2(left: IntValue, right: IntValue)
   extends IntInt2Int(left, right, (if(DomainHelper2.isSafeAdd(left,right))
                                       (l,r) => l + r
@@ -241,7 +252,7 @@ case class Sum2(left: IntValue, right: IntValue)
  * left * right
  * where left, right, and output are IntVar
  * @author renaud.delandtsheer@cetic.be
- * */
+ */
 case class Prod2(left: IntValue, right: IntValue)
   extends IntInt2Int(left, right, (if(DomainHelper2.isSafeMult(left,right))
                                       (l,r) => l * r
@@ -252,7 +263,7 @@ case class Prod2(left: IntValue, right: IntValue)
  * where left, right, and output are IntVar
  * do not set right to zero, as usual...
  * @author renaud.delandtsheer@cetic.be
- * */
+ */
 case class Div(left: IntValue, right: IntValue)
   extends IntInt2Int(left, right, (l: Int, r: Int) => l / r, DomainHelper2.getMinDiv(left, right) to DomainHelper2.getMaxDiv(left, right))
 /**
@@ -260,7 +271,7 @@ case class Div(left: IntValue, right: IntValue)
  * where left, right, and output are IntVar
  * do not set right to zero, as usual...
  * @author renaud.delandtsheer@cetic.be
- * */
+ */
 case class Mod(left: IntValue, right: IntValue)
   extends IntInt2Int(left, right, (l: Int, r: Int) => l - r * (l / r), 0 to Math.min(left.max, right.max))
 
@@ -268,7 +279,7 @@ case class Mod(left: IntValue, right: IntValue)
  * abs(v) (absolute value)
  * where output and v are IntVar
  * @author renaud.delandtsheer@cetic.be
- * */
+ */
 case class Abs(v: IntValue)
   extends Int2Int(v, ((x: Int) => x.abs), (if (v.min <= 0) 0 else v.min) to v.max.max(-v.min))
 
@@ -294,8 +305,8 @@ case class Step(x: IntValue, pivot: Int = 0, thenval: Int = 1, elseval: Int = 0)
  * @param minBound
  * @param maxBound
  */
-case class Bound(x: IntValue, minBound:Int, maxBound:Int)
-  extends Int2Int(x, (a: Int) => if (a < minBound) minBound else if (a > maxBound) maxBound else a, math.max(minBound,x.min) to math.min(maxBound,x.max))
+case class Bound(x: IntValue, minBound: Int, maxBound: Int)
+  extends Int2Int(x, (a: Int) => if (a < minBound) minBound else if (a > maxBound) maxBound else a, math.max(minBound, x.min) to math.min(maxBound, x.max))
 
 
 /**

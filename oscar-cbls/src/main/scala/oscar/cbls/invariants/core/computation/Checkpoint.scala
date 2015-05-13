@@ -111,7 +111,7 @@ trait Checkpointing extends Store{
   }
 }
 
-class ChangeRecorder(s:Store) extends VaryingDependenciesInvariant{
+class ChangeRecorder(s:Store) extends VaryingDependencies{
 
   var keys : Array[KeyForElementRemoval] = null
 
@@ -123,13 +123,17 @@ class ChangeRecorder(s:Store) extends VaryingDependenciesInvariant{
     if(a && !myActive){
       //on active l'enregistrement, qui était désactivé
 
-      keys = Array.tabulate(s.decisionVariables.length)(null)
+      keys = Array.tabulate(s.decisionVariables.size)(null)
 
       var varId = 0;
-      for(v <- s.decisionVariables){
+      var currentPos = s.decisionVariables
+      while(currentPos != null){
+        val v = currentPos.head
+        currentPos = currentPos.tail
         keys(varId) = registerDynamicDependency(v,varId)
         varId +=1
       }
+
       changesVariables = List.empty
     }else if (!a && myActive){
       //on désactive l'enregistrement
@@ -145,7 +149,12 @@ class ChangeRecorder(s:Store) extends VaryingDependenciesInvariant{
   def active:Boolean = myActive
 
   def close() {
-    registerStaticDependencies(s.decisionVariables():_*)
+    var currentPos = s.decisionVariables
+    while(currentPos != null){
+      val v = currentPos.head
+      currentPos = currentPos.tail
+      registerStaticDependency(v)
+    }
   }
 
   def varHasChanged(variable:Variable, varId:Int){

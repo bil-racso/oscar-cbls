@@ -26,32 +26,32 @@ import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.core.propagation.{Checker, KeyForElementRemoval}
 
 /**
- * if (ifVar >0) then thenVar else elveVar
+ * if (ifVar > pivot) then thenVar else elveVar
  * @param ifVar the condition (IntVar)
- * @param thenVar the returned value if ifVar > 0
- * @param elseVar the returned value if ifVar <= 0
+ * @param thenVar the returned value if ifVar > pivot
+ * @param elseVar the returned value if ifVar <= pivot
  * @author renaud.delandtsheer@cetic.be
  * */
-case class IntITE(ifVar: IntValue, thenVar: IntValue, elseVar: IntValue)
-  extends IntInvariant(if(ifVar.value >0) thenVar.value else elseVar.value, thenVar.domain union elseVar.domain)
-  with VaryingDependenciesInvariant {
+case class IntITE(ifVar: IntValue, thenVar: IntValue, elseVar: IntValue, pivot: Int = 0)
+  extends IntInvariant(if(ifVar.value > pivot) thenVar.value else elseVar.value, thenVar.domain union elseVar.domain)
+  with VaryingDependencies {
 
   var KeyToCurrentVar: KeyForElementRemoval = null
 
   registerStaticDependencies(ifVar, thenVar, elseVar)
   registerDeterminingDependency(ifVar)
-  KeyToCurrentVar = registerDynamicDependency(if (ifVar.value > 0) thenVar else elseVar)
+  KeyToCurrentVar = registerDynamicDependency(if (ifVar.value > pivot) thenVar else elseVar)
   finishInitialization()
 
   @inline
   override def notifyIntChanged(v: ChangingIntValue, OldVal: Int, NewVal: Int) {
     if (v == ifVar) {
-      if (NewVal > 0 && OldVal <= 0) {
+      if (NewVal > pivot && OldVal <= pivot) {
         //modifier le graphe de dependances
         KeyToCurrentVar.performRemove()
         KeyToCurrentVar = registerDynamicDependency(thenVar)
         this := thenVar.value
-      } else if (NewVal <= 0 && OldVal > 0) {
+      } else if (NewVal <= pivot && OldVal > pivot) {
         //modifier le graphe de dependances
         KeyToCurrentVar.performRemove()
         KeyToCurrentVar = registerDynamicDependency(elseVar)
@@ -67,9 +67,9 @@ case class IntITE(ifVar: IntValue, thenVar: IntValue, elseVar: IntValue)
   }
 
   override def checkInternals(c: Checker) {
-    c.check(this.value == (if (ifVar.value <= 0) elseVar.value else thenVar.value),
+    c.check(this.value == (if (ifVar.value <= pivot) elseVar.value else thenVar.value),
       Some("output.value (" + this.value
-        + ") == (if (ifVar.value (" + ifVar.value + ") <= 0) elseVar.value (" + elseVar.value
+        + ") == (if (ifVar.value (" + ifVar.value + ") <= " + pivot + ") elseVar.value (" + elseVar.value
         + ") else thenVar.value (" + thenVar.value + "))"))
   }
 }
@@ -86,7 +86,7 @@ case class ConstantIntElement(index: IntValue, inputArray: Array[Int])
 case class IntElement(index: IntValue, inputarray: Array[IntValue])
   extends IntInvariant(initialValue = inputarray(index.value).value)
   with Bulked[IntValue, Domain]
-  with VaryingDependenciesInvariant {
+  with VaryingDependencies {
 
   registerStaticDependency(index)
   registerDeterminingDependency(index)
@@ -172,9 +172,11 @@ case class IntElementNoVar(index: IntValue, inputarray: Array[Int])
  * @author renaud.delandtsheer@cetic.be
  * */
 case class Elements[T <:IntValue](index: SetValue, inputarray: Array[T])
-  extends SetInvariant with Bulked[T, Domain] with VaryingDependenciesInvariant {
+  extends SetInvariant
+  with Bulked[T, Domain]
+  with VaryingDependencies {
 
-  val KeysToInputArray: Array[KeyForElementRemoval] = new Array(inputarray.size)
+  val KeysToInputArray: Array[KeyForElementRemoval] = new Array(inputarray.length)
 
   registerStaticDependency(index)
   registerDeterminingDependency(index)
@@ -271,7 +273,7 @@ case class Elements[T <:IntValue](index: SetValue, inputarray: Array[T])
  * @author renaud.delandtsheer@cetic.be
  * */
 case class SetElement(index: IntValue, inputarray: Array[SetValue])
-  extends SetInvariant(inputarray.apply(index.value).value) with Bulked[SetValue, Domain] with VaryingDependenciesInvariant {
+  extends SetInvariant(inputarray.apply(index.value).value) with Bulked[SetValue, Domain] with VaryingDependencies {
 
   var KeyToCurrentVar: KeyForElementRemoval = null
 

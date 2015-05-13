@@ -66,14 +66,16 @@ case class ArgMin(vars: Array[IntValue], cond: SetValue = null, default: Int = I
  * @author renaud.delandtsheer@cetic.be
  * */
 abstract class ArgMiax(vars: Array[IntValue], cond: SetValue, default: Int)
-  extends SetInvariant(initialDomain = vars.indices.start to vars.indices.last) with Bulked[IntValue, Unit] with VaryingDependenciesInvariant {
+  extends SetInvariant(initialDomain = vars.indices.start to vars.indices.last)
+  with Bulked[IntValue, Unit]
+  with VaryingDependencies {
 
   override def toString:String = {
     name + "(" + InvariantHelper.arrayToString(vars) + "," + cond + "," + default + ")"
   }
 
-  var keyForRemoval: Array[KeyForElementRemoval] = new Array(vars.size)
-  var h: BinomialHeapWithMoveExtMem[Int] = new BinomialHeapWithMoveExtMem[Int](i => Ord(vars(i)), vars.size, new ArrayMap(vars.size))
+  var keyForRemoval: Array[KeyForElementRemoval] = new Array(vars.length)
+  var h: BinomialHeapWithMoveExtMem[Int] = new BinomialHeapWithMoveExtMem[Int](i => Ord(vars(i)), vars.length, new ArrayMap(vars.length))
 
   if (cond != null) {
     registerStaticDependency(cond)
@@ -117,7 +119,12 @@ abstract class ArgMiax(vars: Array[IntValue], cond: SetValue, default: Int)
     } else if (OldVal == Miax) {
       this.deleteValue(index)
       if (this.getValue(true).isEmpty) {
-        this := h.getFirsts.foldLeft(SortedSet.empty[Int])((acc, index) => acc + index)
+
+        for(first <- h.getFirsts){
+          this :+= first
+        }
+
+//        this := h.getFirsts.foldLeft(SortedSet.empty[Int])((acc, index) => acc + index)
         if (this.getValue(true).isEmpty) {
           Miax = default
         } else {
@@ -169,7 +176,11 @@ abstract class ArgMiax(vars: Array[IntValue], cond: SetValue, default: Int)
     } else if (vars(value).value == Miax) {
       this.deleteValue(value)
       if (this.getValue(true).isEmpty) {
-        this := h.getFirsts.foldLeft(SortedSet.empty[Int])((acc, index) => acc + index)
+        for(first <- h.getFirsts){
+          this :+= first
+        }
+
+//        this := h.getFirsts.foldLeft(SortedSet.empty[Int])((acc, index) => acc + index)
         Miax = vars(h.getFirst).value
       }
     }
@@ -199,208 +210,3 @@ abstract class ArgMiax(vars: Array[IntValue], cond: SetValue, default: Int)
   }
 }
 
-/*
-/**
- * Maintains {i in indices of (vars Inter cond) | vars[i] == max(vars(i in indices of (vars Inter cond))}
- * @param vars is an array of IntVar
- * @param cond is the condition, supposed fully acceptant if not specified
- * @param default is the value returned when cond is empty
- * update is O(log(n))
- * @author renaud.delandtsheer@cetic.be
- * */
-case class ArgMaxHybrid[T <:IntValue](vars: Array[T], cond: SetValue = null, default: Int = Int.MinValue)
-  extends ArgMiaxHybrid(vars, cond, default) {
-
-  override def name: String = "ArgMaxArray"
-
-  override def Ord(v: IntValue): Int = -v.value
-
-  override def ExtremumName: String = "Max of ArgMax"
-
-  /**
-   * returns an IntVar equal to the value of the returned indices.
-   * not specified if cond is empty
-   */
-  def getMax: CBLSIntVar = Miax
-}
-
-/**
- * Maintains {i in indices of (vars Inter cond) | vars[i] == min(vars(i in indices of (vars Inter cond))}
- * @param vars is an array of IntVar
- * @param cond is the condition, supposed fully accepting if not specified (must be specified if vars is bulked)
- * @param default is the value returned when cond is empty
- * update is O(log(n))
- * @author renaud.delandtsheer@cetic.be
- * */
-case class ArgMinHybrid[T <:IntValue](vars: Array[T], cond: SetValue = null, default: Int = Int.MaxValue)
-  extends ArgMiaxHybrid(vars, cond, default) {
-
-  override def name: String = "ArgMinArray"
-
-  override def Ord(v: IntValue): Int = v.value
-
-  override def ExtremumName: String = "Min of ArgMin"
-
-  /**
-   * returns an IntVar equal to the value of the returned indices.
-   * not specified if cond is empty
-   */
-  def getMin: CBLSIntVar = Miax
-
-}
-
-/**
- * Maintains {i in indices of (varss Inter cond) | varss[i] == miax(varss(i in indices of (varss Inter cond))}
- * Extact ordering is specified by implementiing abstract methods of the class.
- * @param vars is an array of IntVar, which can be bulked
- * @param cond is the condition, can be null
- * update is O(log(n))
- * @author renaud.delandtsheer@cetic.be
- * */
-abstract class ArgMiaxHybrid[T <:IntValue](vars: Array[T], cond: SetValue, default: Int, Miax:CBLSIntVar, Arg:CBLSSetVar)
-  extends Invariant with Bulked[T, (Int, Int)] with VaryingDependenciesInvariant {
-
-  override def toString:String = {
-    name + "(" + InvariantHelper.arrayToString(vars) + "," + cond + "," + default + ")"
-  }
-
-  var keyForRemoval: Array[KeyForElementRemoval] = new Array(vars.size)
-  var h: BinomialHeapWithMoveExtMem[Int] = new BinomialHeapWithMoveExtMem[Int](i => Ord(vars(i)), vars.size, new ArrayMap(vars.size))
-
-  if (cond != null) {
-    registerStaticDependency(cond)
-    registerDeterminingDependency(cond)
-  }
-
-  val (minOfMiax, maxOfMiax) = bulkRegister(vars)
-
-  finishInitialization()
-
-  if (cond != null) {
-    for (i <- cond.value) {
-      h.insert(i)
-      keyForRemoval(i) = registerDynamicDependency(vars(i), i)
-    }
-  } else {
-    for (i <- vars.indices) {
-      h.insert(i)
-      keyForRemoval(i) = registerDynamicDependency(vars(i), i)
-    }
-  }
-
-  Miax.setDefiningInvariant(this)
-  Arg.setDefiningInvariant(this)
-
-  override def performBulkComputation(bulkedVar: Array[T]) = {
-    (bulkedVar.foldLeft(Int.MaxValue)((acc, intvar) => if (intvar.min < acc) intvar.min else acc),
-      bulkedVar.foldLeft(Int.MinValue)((acc, intvar) => if (intvar.max > acc) intvar.max else acc))
-  }
-
-  def name: String
-  def ExtremumName: String
-  def Ord(v: IntValue): Int
-
-  def myMin = vars.indices.start
-  def myMax = vars.indices.end
-
-  var cost:Long = 0
-
-  val firsts = h.getFirsts
-  Arg := firsts.foldLeft(SortedSet.empty[Int])((acc, index) => acc + index)
-  Miax := (if (firsts.isEmpty) default else vars(h.getFirst).value)
-
-
-  @inline
-  override def notifyIntChanged(v: ChangingIntValue, index: Int, OldVal: Int, NewVal: Int) {
-    cost = cost - System.currentTimeMillis()
-    //mettre a jour le heap
-    h.notifyChange(index)
-
-    if (vars(h.getFirst).value != Miax.getValue(true)) {
-      Miax := vars(h.getFirst).value
-      Arg := h.getFirsts.foldLeft(SortedSet.empty[Int])((acc, index) => acc + index)
-    } else if (OldVal == Miax.getValue(true)) {
-      Arg.deleteValue(index)
-      if (Arg.getValue(true).isEmpty) {
-        Arg := h.getFirsts.foldLeft(SortedSet.empty[Int])((acc, index) => acc + index)
-        if (Arg.getValue(true).isEmpty) {
-          Miax := default
-        } else {
-          Miax := vars(h.getFirst).value
-        }
-      }
-    } else if (NewVal == Miax.getValue(true)) {
-      Arg.insertValue(index)
-    }
-    cost = cost + System.currentTimeMillis()
-  }
-
-  @inline
-  override def notifyInsertOn(v: ChangingSetValue, value: Int) {
-    cost = cost - System.currentTimeMillis()
-    assert(v == cond && cond != null)
-    keyForRemoval(value) = registerDynamicDependency(vars(value), value)
-
-    //mettre a jour le heap
-    h.insert(value)
-
-    if (vars(h.getFirst).value != Miax.getValue(true)) {
-      Miax := vars(h.getFirst).value
-      Arg := h.getFirsts.foldLeft(SortedSet.empty[Int])((acc, index) => acc + index)
-    } else if (vars(value).value == Miax.getValue(true)) {
-      Arg.insertValue(value)
-      Miax := vars(h.getFirst).value
-    }
-    cost = cost + System.currentTimeMillis()
-  }
-
-  @inline
-  override def notifyDeleteOn(v: ChangingSetValue, value: Int) {
-    cost = cost - System.currentTimeMillis()
-    assert(v == cond && cond != null)
-
-    keyForRemoval(value).performRemove()
-    keyForRemoval(value) = null
-
-    //mettre a jour le heap
-    h.delete(value)
-
-    if (h.isEmpty) {
-      Miax := default
-      Arg := SortedSet.empty[Int]
-    } else if (vars(h.getFirst).value != Miax.getValue(true)) {
-      Miax := vars(h.getFirst).value
-      Arg := h.getFirsts.foldLeft(SortedSet.empty[Int])((acc, index) => acc + index)
-    } else if (vars(value).value == Miax.getValue(true)) {
-      Arg.deleteValue(value)
-      if (Arg.getValue(true).isEmpty) {
-        Arg := h.getFirsts.foldLeft(SortedSet.empty[Int])((acc, index) => acc + index)
-        Miax := vars(h.getFirst).value
-      }
-    }
-    cost = cost + System.currentTimeMillis()
-  }
-
-  override def checkInternals(c: Checker) {
-    var count: Int = 0
-    for (i <- vars.indices) {
-      if (cond == null || (cond != null && cond.value.contains(i))) {
-        if (vars(i).value == this.Miax.value) {
-          c.check(Arg.value.contains(i),
-            Some("this.value.contains(" + i + ")"))
-          count += 1
-        } else {
-          c.check(Ord(Miax.value) < Ord(vars(i).value),
-            Some("Ord(" + Miax.value + ") < Ord(vars(" + i + ").value ("
-              + vars(i).value + "))"))
-        }
-      }
-    }
-    c.check(Arg.value.size == count, Some("this.value.size == count"))
-    h.checkInternals(c: Checker)
-    c.check(h.getFirsts.length == Arg.value.size, Some("h.getFirsts.length == this.value.size"))
-    if (cond != null)
-      c.check(Arg.getValue(true).subsetOf(cond.value), Some("this.getValue(true).subsetOf(cond.getValue(true))"))
-  }
-}
-*/

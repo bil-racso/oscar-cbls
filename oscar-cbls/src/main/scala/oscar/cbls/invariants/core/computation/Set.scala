@@ -120,7 +120,12 @@ abstract class ChangingSetValue(initialValue:SortedSet[Int], initialDomain:Domai
         //need to calll every listening one, so gradual approach required
         OldValue.diff(Value).foreach(v => {
           OldValue -=v
-          for (e:((PropagationElement,Any)) <- getDynamicallyListeningElements){
+          val dynListElements = getDynamicallyListeningElements
+          val headPhantom = dynListElements.headPhantom
+          var currentElement = headPhantom.next
+          while(currentElement != headPhantom){
+            val e = currentElement.elem
+            currentElement = currentElement.next
             val inv:Invariant = e._1.asInstanceOf[Invariant]
             assert({this.model.NotifiedInvariant=inv; true})
             inv.notifyDeleteOnAny(this,e._2,v)
@@ -130,7 +135,12 @@ abstract class ChangingSetValue(initialValue:SortedSet[Int], initialDomain:Domai
         //puis on fait partir tous les insert
         Value.diff(OldValue).foreach(v => {
           OldValue += v
-          for (e:((PropagationElement,Any)) <- getDynamicallyListeningElements){
+          val dynListElements = getDynamicallyListeningElements
+          val headPhantom = dynListElements.headPhantom
+          var currentElement = headPhantom.next
+          while(currentElement != headPhantom){
+            val e = currentElement.elem
+            currentElement = currentElement.next
             val inv:Invariant = e._1.asInstanceOf[Invariant]
             assert({this.model.NotifiedInvariant=inv; true})
             inv.notifyInsertOnAny(this,e._2,v)
@@ -148,8 +158,14 @@ abstract class ChangingSetValue(initialValue:SortedSet[Int], initialDomain:Domai
           if (inserted){
             //inserted
             ToPerform = (v, inserted) :: ToPerform
-            for (e:((PropagationElement,Any)) <- getDynamicallyListeningElements){
+            val dynListElements = getDynamicallyListeningElements
+            val headPhantom = dynListElements.headPhantom
+            var currentElement = headPhantom.next
+            while(currentElement != headPhantom){
+              val e = currentElement.elem
+              currentElement = currentElement.next
               val inv:Invariant = e._1.asInstanceOf[Invariant]
+
               assert({this.model.NotifiedInvariant=inv;true})
               inv.notifyInsertOnAny(this,e._2,v)
               assert({this.model.NotifiedInvariant=null;true})
@@ -157,7 +173,12 @@ abstract class ChangingSetValue(initialValue:SortedSet[Int], initialDomain:Domai
           }else{
             //deleted
             ToPerform = (v, inserted) :: ToPerform
-            for (e:((PropagationElement,Any)) <- getDynamicallyListeningElements){
+            val dynListElements = getDynamicallyListeningElements
+            val headPhantom = dynListElements.headPhantom
+            var currentElement = headPhantom.next
+            while(currentElement != headPhantom){
+              val e = currentElement.elem
+              currentElement = currentElement.next
               val inv:Invariant = e._1.asInstanceOf[Invariant]
               assert({this.model.NotifiedInvariant=inv;true})
               inv.notifyDeleteOnAny(this,e._2,v)
@@ -181,7 +202,7 @@ abstract class ChangingSetValue(initialValue:SortedSet[Int], initialDomain:Domai
       Value
     }else{
       if (model == null) return Value
-      if (definingInvariant == null && !model.Propagating) return Value
+      if (definingInvariant == null && !model.propagating) return Value
       model.propagate(this)
       Perform()
       OldValue
@@ -219,6 +240,8 @@ object ChangingSetValue{
   * */
 class CBLSSetVar(givenModel: Store, initialValue: SortedSet[Int], initialDomain:Domain, n: String = null)
   extends ChangingSetValue(initialValue, initialDomain) with Variable{
+  
+  require(givenModel != null)
   
   model = givenModel
 
@@ -276,6 +299,7 @@ abstract class SetInvariant(initialValue:SortedSet[Int] = SortedSet.empty,
   override def isDecisionVariable:Boolean = false
 
   override def model = propagationStructure.asInstanceOf[Store]
+  override def hasModel:Boolean = schedulingHandler != null
 
   private var customName:String = null
   /**use this if you want to give a particular name to this concept, to be used in toString*/

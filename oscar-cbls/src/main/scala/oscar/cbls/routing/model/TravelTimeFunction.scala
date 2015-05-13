@@ -14,23 +14,34 @@
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  * ****************************************************************************
  */
-/*******************************************************************************
-  * Contributors:
-  *     This code has been initially developed by Renaud De Landtsheer
-  ******************************************************************************/
+/**
+ * *****************************************************************************
+ * Contributors:
+ *     This code has been initially developed by Renaud De Landtsheer
+ * ****************************************************************************
+ */
 
 package oscar.cbls.routing.model
 
-import oscar.cbls.constraints.lib.basic.{GE, LE}
-import oscar.cbls.invariants.core.computation.{CBLSIntConst, CBLSIntVar, IntValue}
+import oscar.cbls.constraints.lib.basic.GE
+import oscar.cbls.constraints.lib.basic.LE
+import oscar.cbls.invariants.core.computation.CBLSIntConst
+import oscar.cbls.invariants.core.computation.CBLSIntVar
+import oscar.cbls.invariants.core.computation.Domain.rangeToDomain
+import oscar.cbls.invariants.core.computation.IntValue
+import oscar.cbls.invariants.core.computation.IntValue.int2IntValue
+import oscar.cbls.invariants.lib.logic.IntITE
 import oscar.cbls.invariants.lib.logic.IntInt2Int
 import oscar.cbls.invariants.lib.minmax.Max2
 import oscar.cbls.invariants.lib.numeric.Sum
-import oscar.cbls.modeling.Algebra._
+import oscar.cbls.modeling.Algebra.InstrumentArrayOfIntValue
+import oscar.cbls.modeling.Algebra.InstrumentInt
+import oscar.cbls.modeling.Algebra.InstrumentIntVar
 
-/** an abstract class representing a travel time function
-  * @author renaud.delandtsheer@cetic.be
-  */
+/**
+ * an abstract class representing a travel time function
+ * @author renaud.delandtsheer@cetic.be
+ */
 abstract class TravelTimeFunction {
   def getTravelDuration(from: Int, leaveTime: Int, to: Int): Int
   def getBackwardTravelDuration(from: Int, arrivalTime: Int, to: Int): Int
@@ -42,7 +53,8 @@ abstract class TravelTimeFunction {
   def getMaxTravelDuration(from: Int, to: Int): Int
 }
 
-/** adds the notion of time to your VRP
+/**
+ * adds the notion of time to your VRP
  * @author renaud.delandtsheer@cetic.be
  */
 trait Time extends VRP with Predecessors {
@@ -98,45 +110,53 @@ trait TravelTimeAsFunction extends VRP with Time {
   }
 }
 
-/** to post time window constraints
+/**
+ * to post time window constraints
  * @author renaud.delandtsheer@cetic.be
  */
 trait TimeWindow extends Time with StrongConstraints {
 
   def setEndWindow(node: Int, endWindow: Int) {
-    strongConstraints.post(LE(leaveTime(node), endWindow))
+    require(node >= V, "only for specifying time windows on nodes, not on vehicles")
+    strongConstraints.post(LE(IntITE(next(node), 0, leaveTime(node), N - 1), endWindow))
   }
 
-  def setNodeDuration(node: Int, durationWithoutWait: CBLSIntVar, startWindow: Int) {
+  def setVehicleEnd(vehicle: Int, endTime: Int) {
+    require(vehicle < V, "only for specifying end time of vehicles")
+    strongConstraints.post(LE(arrivalTime(vehicle), endTime))
+  }
+
+  def setNodeDuration(node: Int, durationWithoutWait: IntValue, startWindow: Int) {
     leaveTime(node) <== Max2(arrivalTime(node), startWindow) + durationWithoutWait
   }
 
-  def setNodeDuration(node: Int, durationWithoutWait: CBLSIntVar, startWindow: Int, maxWaiting: Int) {
+  def setNodeDuration(node: Int, durationWithoutWait: IntValue, startWindow: Int, maxWaiting: Int) {
     setNodeDuration(node, durationWithoutWait, startWindow)
     strongConstraints.post(GE(arrivalTime(node), startWindow - maxWaiting))
   }
 
 }
 
-/** addition ot the [[oscar.cbls.routing.model.TimeWindow]] trait, adds a variable representing the waiting duration
-  * @author renaud.delandtsheer@cetic.be
-  */
+/**
+ * addition ot the [[oscar.cbls.routing.model.TimeWindow]] trait, adds a variable representing the waiting duration
+ * @author renaud.delandtsheer@cetic.be
+ */
 trait WaitingDuration extends TimeWindow {
   val waitingDuration = Array.tabulate(N) {
     (i: Int) => CBLSIntVar(m, 0, 0 to Int.MaxValue / N, "WaitingDurationBefore" + i)
   }
 
-  def setNodeDurationAndWaitingTime(node: Int, durationWithoutWait: CBLSIntVar, waitingDuration:CBLSIntVar) {
+  def setNodeDurationAndWaitingTime(node: Int, durationWithoutWait: IntValue, waitingDuration: IntValue) {
     super.setNodeDuration(node, durationWithoutWait + waitingDuration)
     this.waitingDuration(node) <== waitingDuration
   }
 
-  override def setNodeDuration(node: Int, durationWithoutWait: CBLSIntVar, startWindow: Int) {
+  override def setNodeDuration(node: Int, durationWithoutWait: IntValue, startWindow: Int) {
     super.setNodeDuration(node, durationWithoutWait, startWindow)
     waitingDuration(node) <== Max2(0, startWindow - arrivalTime(node))
   }
 
-  override def setNodeDuration(node: Int, durationWithoutWait: CBLSIntVar, startWindow: Int, maxWaiting: Int) {
+  override def setNodeDuration(node: Int, durationWithoutWait: IntValue, startWindow: Int, maxWaiting: Int) {
     setNodeDuration(node, durationWithoutWait, startWindow)
     strongConstraints.post(LE(waitingDuration(node), maxWaiting))
   }
