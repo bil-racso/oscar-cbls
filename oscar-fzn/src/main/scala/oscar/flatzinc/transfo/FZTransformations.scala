@@ -205,6 +205,8 @@ object FZModelTransfo {
           }else true
         }
         case all_different_int(x,_) if x.length==1 => false
+        //added this line for ill-defined variables in Circuit. Thanks to Emil Kajgaard
+        case circuit(x,_) => x.foreach(_.inter(DomainRange(1,x.length))); true
         case int_abs(a,b,_) if a.isBound => b.bind(math.abs(a.value)); false
         case int_abs(a,b,_) if b.isBound => a.inter(DomainSet(Set(b.value,-b.value))); false
         case array_int_element(x,y,z,_) if x.isBound => z.bind(y(x.value-1).value); false

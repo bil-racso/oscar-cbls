@@ -66,6 +66,11 @@ object IntValue {
 abstract class ChangingIntValue(initialValue:Int, initialDomain:Domain)
   extends AbstractVariable with IntValue{
 
+  //println("Creating "+name+" with value "+initialValue+" and domain "+initialDomain)
+  
+  if(!initialDomain.contains(initialValue)){
+        throw new Exception(initialValue+ " is not in the domain of "+this.name+"("+initialDomain+"). This might indicate an integer overflow.")
+      } 
   private var privatedomain:Domain = initialDomain
   private var Value: Int = initialValue
   private var OldValue = Value
@@ -74,6 +79,9 @@ abstract class ChangingIntValue(initialValue:Int, initialDomain:Domain)
 
   protected def restrictDomain(d:Domain): Unit ={
     privatedomain = privatedomain.restrict(d)
+    if(!privatedomain.contains(OldValue) || !privatedomain.contains(Value)){
+        throw new Exception(OldValue+ " or " +Value+ " is not in the domain of "+this.name+"("+privatedomain+"). This is a problem in restriction")
+      }
   }
   protected def relaxDomain(d: Domain): Domain = {
     val olddom = privatedomain

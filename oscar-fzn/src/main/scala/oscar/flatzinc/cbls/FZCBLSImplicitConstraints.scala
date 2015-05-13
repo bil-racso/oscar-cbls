@@ -28,7 +28,8 @@ class FZCBLSImplicitConstraints(val cblsmodel:FZCBLSModel) {
   
   def findAndPostImplicit(constraints: List[Constraint]) = {
       //TODO: DO not like the filtering here.
-      constraints.sortBy(c => - c.variables.length).partition((constraint: Constraint) =>
+    //TODO: Added a second criterion of sort to get the circuit before the all_different. Stupid, hey?
+      constraints.sortBy(c => (- c.variables.length,Helper.getCName(c).length())).partition((constraint: Constraint) =>
         constraint match {
           case all_different_int(xs, ann) => tryAllDiff(xs)
           case circuit(xs, ann) => tryCircuit(xs)

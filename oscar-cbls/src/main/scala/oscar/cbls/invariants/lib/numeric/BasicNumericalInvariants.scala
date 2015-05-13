@@ -70,7 +70,7 @@ class Sum(vars: Iterable[IntValue])
  * */
 class Linear(vars: Iterable[IntValue], coeffs: IndexedSeq[Int]) 
   extends IntInvariant(
-		  vars.zip(coeffs).foldLeft(0)((a, bc) => a + bc._1.value*bc._2), 
+		  vars.zip(coeffs).foldLeft(0)((acc, intvar) => acc + intvar._1.value*intvar._2), 
 		  vars.zip(coeffs).foldLeft(0)((acc, intvar) => DomainHelper.safeAddMin(acc,DomainHelper2.getMinProd(intvar._1.min,intvar._1.max,intvar._2,intvar._2))) to 
 		  vars.zip(coeffs).foldLeft(0)((acc, intvar) => DomainHelper.safeAddMax(acc,DomainHelper2.getMaxProd(intvar._1.min,intvar._1.max,intvar._2,intvar._2)))){
   //coeffs needs to be indexed as we need to access it be index from the index of vars (as given in notifyIntChanged)
@@ -198,7 +198,7 @@ case class Minus(left: IntValue, right: IntValue)
 case class MinusOffsetPos(left:IntValue, right:IntValue, offset: Int)
   extends IntInt2Int(left,right, (if(DomainHelper2.isSafeSub(left,right))
                                       (l,r) => 0.max(l - r + offset)
-                                   else ((l: Int, r: Int) => 0.max(DomainHelper2.safeSub(l,r)+1))), 
+                                   else ((l: Int, r: Int) => 0.max(DomainHelper2.safeSub(l,r)+offset))), 
                                  0 to 0.max(DomainHelper2.safeAdd(DomainHelper2.safeSub(left.max, right.min),offset)))
 
 
