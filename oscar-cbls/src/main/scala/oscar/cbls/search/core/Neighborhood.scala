@@ -172,6 +172,7 @@ abstract class Neighborhood{
           }
 
           m.commit()
+
           true
       }
       toReturn += 1
@@ -197,8 +198,8 @@ abstract class Neighborhood{
     */
   def orElse(b:Neighborhood):Neighborhood = new OrElse(this,b)
 
-  /** alias for this maxMoves1 exhaust b
-    *
+  /** alias for (this maxMoves 1) exhaust b
+    * this wil be queried once, and then, queries will be forwarded to b.
     * @param b
     * @return
     */
@@ -516,6 +517,7 @@ abstract class EasyNeighborhood(best:Boolean = false, neighborhoodName:String=nu
     this.obj = obj
 
     exploreNeighborhood()
+
 
     if(toReturnMove == null || (best && !acceptanceCriterion(oldObj,bestNewObj))) {
       if (amIVerbose) println(neighborhoodName + ": no move found")

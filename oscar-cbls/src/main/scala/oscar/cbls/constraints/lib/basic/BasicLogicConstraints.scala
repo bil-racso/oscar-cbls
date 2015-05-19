@@ -27,6 +27,7 @@ package oscar.cbls.constraints.lib.basic
 import oscar.cbls.constraints.core._
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.core.propagation.Checker
+import oscar.cbls.invariants.lib.logic.IntInt2Int
 import oscar.cbls.invariants.lib.minmax._
 import oscar.cbls.invariants.lib.numeric.Dist
 import oscar.cbls.modeling.Algebra._
@@ -45,7 +46,7 @@ protected class LEA(val left: IntValue, val right: IntValue) extends Constraint 
   /**
    * the violation is Max(0,right-left)
    */
-  override val violation = Max2(0, left - right).setName(this.getClass().getSimpleName() + ".violation")
+  override val violation = new IntInt2Int(left, right, ((left2:Int, right2:Int) => if(left2 <= right2) 0 else left2 - right2),0 to DomainHelper.safeAddMax(left.max,-right.min)).setName(this.getClass().getSimpleName() + ".violation")
 
   /**
    * The violation of each variable is equal to the global violation of the constraint
