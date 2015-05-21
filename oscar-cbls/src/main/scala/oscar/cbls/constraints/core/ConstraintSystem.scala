@@ -55,8 +55,8 @@ case class ConstraintSystem(model:Store) extends Constraint with Objective{
   override def toString = {
     val constraints = PostedConstraints.map(_._1)
     val sortedConstraints = constraints.sortBy(c => c.violation.value)
-    val sortedConstraintsStrings = sortedConstraints.map(c => "" + c.violation + " " + c)
-    "ConstraintSystem{" + this.Violation + "\n " + sortedConstraintsStrings.mkString("\n  ") + "}\n"
+    val sortedConstraintsStrings = sortedConstraints.map(c => "viol:" + c.violation.value + " " + c)
+    "ConstraintSystem(#n\tglobal violation:" + this.Violation + "\n\tconstraints:\n\t\t" + sortedConstraintsStrings.mkString("\n\t\t") + "\n)\n"
   }
 
   /**

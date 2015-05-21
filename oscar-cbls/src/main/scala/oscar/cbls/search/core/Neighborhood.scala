@@ -15,7 +15,8 @@
 
 package oscar.cbls.search.core
 
-import oscar.cbls.objective.Objective
+import oscar.cbls.invariants.core.computation.Store
+import oscar.cbls.objective.{LoggingObjective, FunctionObjective, Objective}
 import oscar.cbls.search.combinators._
 import oscar.cbls.search.move.{CallBackMove, Move}
 
@@ -123,7 +124,7 @@ abstract class Neighborhood{
    */
   def doImprovingMove(obj:Objective):Boolean = 0 != doAllMoves(_ >= 1, obj)
 
-    /**
+  /**
    * @param shouldStop a function that takes the iteration number and returns true if search should be stopped
    *                   eg if the problem is considered as solved
    *                   you can evaluate some objective function there such as a violation degree
@@ -276,7 +277,7 @@ abstract class Neighborhood{
     */
   def onceEvery(n:Int, retryOnNoMoveFound:Boolean = false) = new OnceEvery(this, n, retryOnNoMoveFound)
 
-    /**bounds the number of tolerated moves without improvements over the best value
+  /**bounds the number of tolerated moves without improvements over the best value
     * the count is reset by the reset action.
     * @author renaud.delandtsheer@cetic.be
     */
@@ -301,13 +302,13 @@ abstract class Neighborhood{
     */
   def beforeMove(proc: => Unit) = new DoOnMove(this,procBeforeMove = (_) => proc)
 
-    /** this combinator attaches a custom code to a given neighborhood.
-      * the code is called whenever a move from this neighborhood is taken
-      * is gets the applied move in input.
-      * The callBack is performed before the move is actually taken.
-      * @param procOnMove a procedure that inputs the move that is applied;
-      *                   use this to update a Tabu for instance
-      */
+  /** this combinator attaches a custom code to a given neighborhood.
+    * the code is called whenever a move from this neighborhood is taken
+    * is gets the applied move in input.
+    * The callBack is performed before the move is actually taken.
+    * @param procOnMove a procedure that inputs the move that is applied;
+    *                   use this to update a Tabu for instance
+    */
   def beforeMove(procOnMove:Move => Unit) = new DoOnMove(this,procBeforeMove = procOnMove)
 
   /** this combinator attaches a custom code to a given neighborhood.
@@ -374,9 +375,9 @@ abstract class Neighborhood{
    * this move will reset the first neighborhood on every call, since it is probably bounded by the number of moves it can provide
    *
    * @param b given that the move returned by the first neighborhood is committed, we explore the globally improving moves of this one
-    *
-    * @author renaud.delandtsheer@cetic.be
-    */
+   *
+   * @author renaud.delandtsheer@cetic.be
+   */
   def andThen(b:Neighborhood) = new AndThen(this, b)
 
   /**
@@ -435,14 +436,14 @@ abstract class Neighborhood{
    */
   def overrideObjective(a:Neighborhood, overridingObjective:Objective) = new OverrideObjective(a, overridingObjective)
 
-    /**
-     * This represents a guided local search where a series of objective criterion are optimized one after the other
-     * the switching is performed on exhaustion, and a is reset on switching.
-     * Notice that if you want to use different neighborhoods depending on the objective function, you should rather use a series of neighborhood with the objectiveFucntion combinator
-     * @param objectives the list of objective to consider
-     * @param resetOnExhaust  on exhaustion of the current objective, restores the best value for this objective before switching to the next objective
-     */
-    def guidedLocalSearch(a:Neighborhood, objectives:List[Objective], resetOnExhaust:Boolean) = new GuidedLocalSearch(a, objectives, resetOnExhaust)
+  /**
+   * This represents a guided local search where a series of objective criterion are optimized one after the other
+   * the switching is performed on exhaustion, and a is reset on switching.
+   * Notice that if you want to use different neighborhoods depending on the objective function, you should rather use a series of neighborhood with the objectiveFucntion combinator
+   * @param objectives the list of objective to consider
+   * @param resetOnExhaust  on exhaustion of the current objective, restores the best value for this objective before switching to the next objective
+   */
+  def guidedLocalSearch(a:Neighborhood, objectives:List[Objective], resetOnExhaust:Boolean) = new GuidedLocalSearch(a, objectives, resetOnExhaust)
 
   /**
    * This represents an accumulatingSearch: it searches on a given objective until this objective gets to zero,
@@ -515,21 +516,25 @@ abstract class EasyNeighborhood(best:Boolean = false, neighborhoodName:String=nu
     this.acceptanceCriterion = acceptanceCriterion
     toReturnMove = null
     bestNewObj = Int.MaxValue
-    this.obj = obj
+    this.obj = if(amIVerbose) new LoggingObjective(obj) else obj
+    if(amIVerbose) println(neighborhoodName + ": start exploration")
 
     exploreNeighborhood()
 
-
     if(toReturnMove == null || (best && !acceptanceCriterion(oldObj,bestNewObj))) {
-      if (amIVerbose) println(neighborhoodName + ": no move found")
+      if (amIVerbose){
+        println(neighborhoodName + ": no move found")
+      }
       NoMoveFound
     }else {
-      if (amIVerbose) println(neighborhoodName + ": move found")
+      if (amIVerbose){
+        println(neighborhoodName + ": move found")
+      }
       toReturnMove
     }
   }
 
-  /** This is the method you ust implement and that performs the search of your neighborhood.
+  /** This is the method you must implement and that performs the search of your neighborhood.
     * every time you explore a neighbor, you must perform the calls to notifyMoveExplored or moveRequested(newObj) && submitFoundMove(myMove)){
     * as explained in the documentation of this class
     */
@@ -541,25 +546,24 @@ abstract class EasyNeighborhood(best:Boolean = false, neighborhoodName:String=nu
    * @return true if the search must be stopped right now
    */
   def notifyMoveExplored(newObj:Int, m: =>Move):Boolean = {
-
-    if (best) {
-      if (newObj < bestNewObj) {
-        bestNewObj = newObj
-        toReturnMove = m
-      }
-    } else if (acceptanceCriterion(oldObj, newObj)) {
-      toReturnMove = m
-      return true
-    }
-    false
+    moveRequested(newObj) && submitFoundMove(m)
   }
 
+  var tmpNewObj:Int = 0
 
   /**
    * @param newObj the new value of the objective function
    * @return true if the move is requested, then you should call submitFoundMove
    */
   def moveRequested(newObj:Int):Boolean = {
+    if (amIVerbose){
+      tmpNewObj = newObj
+      return true
+    }
+    myMoveRequested(newObj)
+  }
+
+  private def myMoveRequested(newObj:Int):Boolean = {
     if (best) {
       if (newObj < bestNewObj) {
         bestNewObj = newObj
@@ -577,14 +581,31 @@ abstract class EasyNeighborhood(best:Boolean = false, neighborhoodName:String=nu
     * @return true if the search must be stopped right now (you can save some internal state by the way if you need  to, e.g. for a hotRestart
     */
   def submitFoundMove(m:Move):Boolean = {
+    val moveIsActuallyRequested:Boolean = if(amIVerbose){
+      //in this case we always ask for the move, but we decide here if it is actually needed,
+      // so we somewhat repeat the normal process of moveRequested here
+      val moveIsActuallyRequested = myMoveRequested(tmpNewObj)
 
-    if (best) {
-      bestNewObj = m.objAfter
-      toReturnMove = m
-      false
-    } else{ //we do not check acceptance criterion here anymore since it was tested in moveRequested, and it could be non-deterministic
-      toReturnMove = m
+      println("Explored " + (if(moveIsActuallyRequested) "(saved)" else "(not saved)") + " " + m)
+      println(obj.asInstanceOf[LoggingObjective].getAndCleanEvaluationLog.mkString("\n"))
+
+      moveIsActuallyRequested
+    }else{
       true
+    }
+
+    if(moveIsActuallyRequested) {
+      if (best) {
+        bestNewObj = m.objAfter
+        toReturnMove = m
+        false
+      } else {
+        //we do not check acceptance criterion here anymore since it was tested in moveRequested, and it could be non-deterministic
+        toReturnMove = m
+        true
+      }
+    }else{
+      false
     }
   }
 }

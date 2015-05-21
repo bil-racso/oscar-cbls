@@ -71,7 +71,7 @@ class IntVarObjective(val objective: ChangingIntValue) extends Objective {
 
   def model:Store = objective.model
 
-  override def toString: String = "Objective(" + objective + ")"
+  override def toString: String = "IntVarObjective(" + objective + ")"
 }
 
 /**
@@ -83,7 +83,9 @@ class IntVarObjective(val objective: ChangingIntValue) extends Objective {
  */
 class CascadingObjective(mustBeZeroObjective: Objective, secondObjective:Objective) extends Objective {
 
-  override def toString: String = "CascadingObjective(mustBeZeroObjective:" + mustBeZeroObjective + " secondObjective:" + secondObjective + ")"
+  override def toString: String =
+    "CascadingObjective(\nmustBeZeroObjective:" + mustBeZeroObjective + "\nsecondObjective:" + secondObjective + ")"
+
   /**
    * This method returns the actual objective value.
    * It is easy to override it, and perform a smarter propagation if needed.
@@ -106,12 +108,15 @@ class FunctionObjective(f:()=>Int, m:Store = null) extends Objective{
    * @return the actual objective value.
    */
   override def value: Int = f()
+
+  override def toString: String = "FunctionObjective(" + value + ")"
 }
 
 trait Objective {
 
-
   override def toString: String = "Objective(" + value + ")"
+
+  def objectiveStatus:String = toString
 
   def model:Store
 
@@ -199,5 +204,32 @@ trait Objective {
   def removeVal(a: CBLSSetVar, i:Int): Int = {
     if(!a.value.contains(i)) return value
     removeValAssumeIn(a, i)
+  }
+}
+
+/**
+ * This is a stub that logs the toString of the baseObjective every time its value is needed.
+ * these logs can be retrieved through the getAndCleanEvaluationLog method.
+ * The value of this objective function is really the one of baseObjective
+ *
+ * @param baseObjective the value of this objective function
+ */
+class LoggingObjective(baseObjective:Objective) extends Objective{
+  private var evaluationsLog:List[String] = List.empty
+
+  override def toString: String = "LoggingObjective(" + baseObjective + ")"
+
+  override def model: Store = baseObjective.model
+
+  override def value: Int = {
+    val toReturn = baseObjective.value
+    evaluationsLog = baseObjective.toString :: evaluationsLog
+    toReturn
+  }
+
+  def getAndCleanEvaluationLog:List[String] = {
+    val toReturn = evaluationsLog
+    evaluationsLog = List.empty
+    toReturn
   }
 }

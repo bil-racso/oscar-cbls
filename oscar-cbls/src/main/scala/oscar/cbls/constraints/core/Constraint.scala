@@ -42,7 +42,6 @@ case class NamedConstraint(name:String, baseConstraint:Constraint) extends Const
   override def constrainedVariables = baseConstraint.constrainedVariables
 
   override def checkInternals(c: Checker): Unit = baseConstraint.checkInternals(c)
-
 }
 
 
