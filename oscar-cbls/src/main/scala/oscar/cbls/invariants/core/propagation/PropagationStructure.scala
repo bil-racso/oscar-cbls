@@ -913,7 +913,7 @@ class PropagationElement extends BasicPropagationElement with DAGNode {
   }
 
   protected def initiateDynamicGraphFromSameComponentListened(stronglyConnectedComponentTopologicalSort: StronglyConnectedComponentTopologicalSort) {
-    assert(stronglyConnectedComponentTopologicalSort == schedulingHandler)
+    assert(stronglyConnectedComponentTopologicalSort == mySchedulingHandler)
     //filters the list of staticallyListenedElements
 
     dynamicallyListenedElementsFromSameComponent = staticallyListenedElements.filter(_.schedulingHandler == stronglyConnectedComponentTopologicalSort)
@@ -925,10 +925,10 @@ class PropagationElement extends BasicPropagationElement with DAGNode {
    */
   override def schedulingHandler: SchedulingHandler = mySchedulingHandler
   def schedulingHandler_=(s: SchedulingHandler) { mySchedulingHandler = s }
-  private var mySchedulingHandler: SchedulingHandler = null
+  private[this] var mySchedulingHandler: SchedulingHandler = null
 
-  def propagationStructure: PropagationStructure = if (schedulingHandler == null) null else schedulingHandler.propagationStructure
-  def hasPropagationStructure = schedulingHandler != null
+  def propagationStructure: PropagationStructure = if (mySchedulingHandler == null) null else mySchedulingHandler.propagationStructure
+  def hasPropagationStructure = mySchedulingHandler != null
 
   /**
    * set to true if the PropagationElement is scheduled for propagation, false otherwise.
@@ -997,7 +997,7 @@ class PropagationElement extends BasicPropagationElement with DAGNode {
   override protected[propagation] def registerDynamicallyListeningElement(listening: PropagationElement, i: Any,
                                                                           sccOfListening: StronglyConnectedComponentTopologicalSort,
                                                                           dynamicallyListenedElementDLLOfListening: DelayedPermaFilteredDoublyLinkedList[PropagationElement, PropagationElement]): KeyForElementRemoval = {
-    if (sccOfListening != null && sccOfListening == this.schedulingHandler) {
+    if (sccOfListening != null && sccOfListening == this.mySchedulingHandler) {
       //this is only called once the component is established, so no worries.
       //we must call this before performing the injection to create the waitingDependency in the SCC
       sccOfListening.addDependency(this, listening)
@@ -1023,7 +1023,7 @@ class PropagationElement extends BasicPropagationElement with DAGNode {
   def decrementSucceedingAndAccumulateFront(acc: List[PropagationElement]): List[PropagationElement] = {
     var toreturn = acc
     for (succeeding <- getStaticallyListeningElements) {
-      if (succeeding.schedulingHandler == schedulingHandler.propagationStructure || succeeding.schedulingHandler != this.schedulingHandler) {
+      if (succeeding.schedulingHandler == mySchedulingHandler.propagationStructure || succeeding.schedulingHandler != mySchedulingHandler) {
         //not in the same SCC as us
         toreturn = succeeding.decrementAndAccumulateFront(toreturn)
       }
@@ -1035,7 +1035,7 @@ class PropagationElement extends BasicPropagationElement with DAGNode {
     position -= 1
     if (position == 0) {
       //faut pusher qqchose
-      schedulingHandler match {
+      mySchedulingHandler match {
         case scc: StronglyConnectedComponent =>
           scc.decrementAndAccumulateFront(acc)
         case s: PropagationStructure => this :: acc
@@ -1052,7 +1052,7 @@ class PropagationElement extends BasicPropagationElement with DAGNode {
    */
   def setCounterToPrecedingCount(): Boolean = {
     //le compteur est mis au nombre de noeud precedent qui ne sont pas dans la meme composante connexe
-    schedulingHandler match {
+    mySchedulingHandler match {
       case scc: StronglyConnectedComponent =>
         position = this.getStaticallyListenedElements.count(p => p.schedulingHandler != scc && p.schedulingHandler != null)
       case ps: PropagationStructure =>
@@ -1066,13 +1066,13 @@ class PropagationElement extends BasicPropagationElement with DAGNode {
     assert(schedulingHandler != null, "cannot schedule or propagate element out of propagation structure")
     if (!internalIsScheduled) {
       internalIsScheduled = true
-      schedulingHandler.scheduleForPropagation(this)
+      mySchedulingHandler.scheduleForPropagation(this)
     }
   }
 
   private[core] def rescheduleIfNeeded() {
     if (internalIsScheduled) {
-      schedulingHandler.scheduleForPropagation(this)
+      mySchedulingHandler.scheduleForPropagation(this)
     }
   }
 

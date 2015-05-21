@@ -24,6 +24,28 @@ import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.core.propagation._
 import oscar.cbls.invariants.lib.numeric.Step
 
+case class NamedConstraint(name:String, baseConstraint:Constraint) extends Constraint{
+  /** returns the violation associated with variable v in this constraint
+    * all variables that are declared as constraint should have an associated violation degree.
+    * notice that you cannot create any new invariant or variable in this method
+    * because they can only be created before the model is closed.
+    * */
+  override def violation(v: Value): IntValue = baseConstraint.violation(v)
+
+  /** returns the degree of violation of the constraint
+    * notice that you cannot create any new invariant or variable in this method
+    * because they can only be created before the model is closed.
+    * @return
+    */
+  override def violation: IntValue = baseConstraint.violation
+
+  override def constrainedVariables = baseConstraint.constrainedVariables
+
+  override def checkInternals(c: Checker): Unit = baseConstraint.checkInternals(c)
+
+}
+
+
 /**A constraint is a function that computes a degree of violation that is managed as any invariant.
  * This degree of violation is obtained through the violation method.
  * Furthermore, each variable involved in the constraint also gets an associated violation.
@@ -34,6 +56,9 @@ import oscar.cbls.invariants.lib.numeric.Step
   * @author renaud.delandtsheer@cetic.be
  */
 trait Constraint{
+
+  //use this to name a constraint. it will return a named constraint that you should post in your constraint system instead of this one
+  def nameConstraint(name:String):NamedConstraint = NamedConstraint(name,this)
 
   /** returns the violation associated with variable v in this constraint
    * all variables that are declared as constraint should have an associated violation degree.
