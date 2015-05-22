@@ -168,7 +168,7 @@ abstract class PropagationStructure(val verbose: Boolean, val checker: Option[Ch
         })
     }
 
-    buildFastPropagationTracks()
+    addFastPropagationTracks()
 
     //this performs the sort on Propagation Elements that do not belong to a strongly connected component,
     // plus the strongly connected components, considered as a single node. */
@@ -285,19 +285,11 @@ abstract class PropagationStructure(val verbose: Boolean, val checker: Option[Ch
    * if several elements are submitted at the same time,they constitute a target group, which is propagated altogether.
    */
   def registerForPartialPropagation(p: PropagationElement*) {
-    if (this.closed)
+    partialPropagationTargets = QList.buildFromIterable(p) :: partialPropagationTargets
+    if(closed) {
       println("Warning: if you register a variable for partial propagation after model is closed, it is not registered for partial violation (unless it was already done before model close)")
-    else
-      partialPropagationTargets = toQList(p) :: partialPropagationTargets
-  }
-
-  private def toQList[T](i: Iterable[T]): QList[T] = {
-    val it = i.iterator
-    var toReturn: QList[T] = null
-    while (it.hasNext) {
-      toReturn = QList(it.next(), toReturn)
+      addFastPropagationTracks()
     }
-    toReturn
   }
 
   private[this] var previousPropagationTrack: Array[Boolean] = null
@@ -335,13 +327,14 @@ abstract class PropagationStructure(val verbose: Boolean, val checker: Option[Ch
   }
 
   /**Builds and stores the partial propagation tracks*/
-  private def buildFastPropagationTracks() {
+  private def addFastPropagationTracks() {
     for (propagationGroup <- partialPropagationTargets) {
-      val track = BuildFastPropagationTrack(propagationGroup)
-      var currentPos = propagationGroup
-      while (currentPos != null) {
-        fastPropagationTracks += ((currentPos.head, track))
-        currentPos = currentPos.tail
+      val propagationGroupWithoutTrack = QList.buildFromIterable(propagationGroup.filter(!fastPropagationTracks.isDefinedAt(_)))
+      if (propagationGroupWithoutTrack != null) {
+        val track = BuildFastPropagationTrack(propagationGroupWithoutTrack)
+        for (singleTarget <- propagationGroupWithoutTrack) {
+          fastPropagationTracks += ((singleTarget, track))
+        }
       }
     }
   }

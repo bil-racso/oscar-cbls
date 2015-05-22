@@ -1,24 +1,24 @@
 /*******************************************************************************
- * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 2.1 of the License, or
- * (at your option) any later version.
- *   
- * OscaR is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License  for more details.
- *   
- * You should have received a copy of the GNU Lesser General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
- ******************************************************************************/
+  * OscaR is free software: you can redistribute it and/or modify
+  * it under the terms of the GNU Lesser General Public License as published by
+  * the Free Software Foundation, either version 2.1 of the License, or
+  * (at your option) any later version.
+  *
+  * OscaR is distributed in the hope that it will be useful,
+  * but WITHOUT ANY WARRANTY; without even the implied warranty of
+  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  * GNU Lesser General Public License  for more details.
+  *
+  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
+  ******************************************************************************/
 package oscar.cbls.objective
 
 /*******************************************************************************
- * Contributors:
- *     This code has been initially developed by CETIC www.cetic.be
- *         by Renaud De Landtsheer
- ******************************************************************************/
+  * Contributors:
+  *     This code has been initially developed by CETIC www.cetic.be
+  *         by Renaud De Landtsheer
+  ******************************************************************************/
 
 import oscar.cbls.invariants.core.computation._
 
@@ -71,7 +71,7 @@ class IntVarObjective(val objective: ChangingIntValue) extends Objective {
 
   def model:Store = objective.model
 
-  override def toString: String = "IntVarObjective(" + objective + ")"
+  def detailedString(short:Boolean):String = "IntVarObjective(" + objective + ")"
 }
 
 /**
@@ -83,8 +83,11 @@ class IntVarObjective(val objective: ChangingIntValue) extends Objective {
  */
 class CascadingObjective(mustBeZeroObjective: Objective, secondObjective:Objective) extends Objective {
 
-  override def toString: String =
-    "CascadingObjective(\nmustBeZeroObjective:" + mustBeZeroObjective + "\nsecondObjective:" + secondObjective + ")"
+  override def detailedString(short: Boolean): String =
+    "CascadingObjective(\nmustBeZeroObjective" + (if(short){
+      if(mustBeZeroObjective.value == 0)  " is zero \nsecondObjective:" + secondObjective.detailedString(true)
+      else " is not zero:" + mustBeZeroObjective.detailedString(true)
+    } else ":" + mustBeZeroObjective + "\nsecondObjective:" + secondObjective) + ")"
 
   /**
    * This method returns the actual objective value.
@@ -109,14 +112,14 @@ class FunctionObjective(f:()=>Int, m:Store = null) extends Objective{
    */
   override def value: Int = f()
 
-  override def toString: String = "FunctionObjective(" + value + ")"
+  override def detailedString(short: Boolean): String = "FunctionObjective(" + value + ")"
 }
 
 trait Objective {
 
-  override def toString: String = "Objective(" + value + ")"
+  override def toString: String = detailedString(false)
 
-  def objectiveStatus:String = toString
+  def detailedString(short:Boolean):String
 
   def model:Store
 
@@ -128,10 +131,10 @@ trait Objective {
   def value:Int
 
   /**returns the value of the objective variable if the two variables a and b were swapped values.
-   * This proceeds through explicit state change and restore.
-   * this process is efficiently performed as the objective Variable is registered for partial propagation
-   * @see registerForPartialPropagation() in [[oscar.cbls.invariants.core.computation.Store]]
-   */
+    * This proceeds through explicit state change and restore.
+    * this process is efficiently performed as the objective Variable is registered for partial propagation
+    * @see registerForPartialPropagation() in [[oscar.cbls.invariants.core.computation.Store]]
+    */
   def swapVal(a: CBLSIntVar, b: CBLSIntVar): Int = {
     a :=: b
     val NewVal = value
@@ -140,17 +143,17 @@ trait Objective {
   }
 
   /**returns the value of the objective variable if variable a was assigned the value v.
-   * This proceeds through explicit state change and restore.
-   * this process is efficiently performed as the objective Variable is registered for partial propagation
-   * @see registerForPartialPropagation() in [[oscar.cbls.invariants.core.computation.Store]]
-   */
+    * This proceeds through explicit state change and restore.
+    * this process is efficiently performed as the objective Variable is registered for partial propagation
+    * @see registerForPartialPropagation() in [[oscar.cbls.invariants.core.computation.Store]]
+    */
   def assignVal(a: CBLSIntVar, v: Int): Int = assignVal(List((a,v)))
 
   /**returns the value of the objective variable if the assignment described by parameter a was performed
-   * This proceeds through explicit state change and restore.
-   * this process is efficiently performed as the objective Variable is registered for partial propagation
-   * @see registerForPartialPropagation() in [[oscar.cbls.invariants.core.computation.Store]]
-   */
+    * This proceeds through explicit state change and restore.
+    * this process is efficiently performed as the objective Variable is registered for partial propagation
+    * @see registerForPartialPropagation() in [[oscar.cbls.invariants.core.computation.Store]]
+    */
   def assignVal(a: Iterable[(CBLSIntVar, Int)]): Int = {
     //memorize
     val oldvals: Iterable[(CBLSIntVar, Int)] = a.foldLeft(List.empty[(CBLSIntVar, Int)])(
@@ -217,13 +220,13 @@ trait Objective {
 class LoggingObjective(baseObjective:Objective) extends Objective{
   private var evaluationsLog:List[String] = List.empty
 
-  override def toString: String = "LoggingObjective(" + baseObjective + ")"
+  override def detailedString(short: Boolean): String = "LoggingObjective(" + baseObjective.detailedString(short) + ")"
 
   override def model: Store = baseObjective.model
 
   override def value: Int = {
     val toReturn = baseObjective.value
-    evaluationsLog = baseObjective.toString :: evaluationsLog
+    evaluationsLog = baseObjective.detailedString(true) :: evaluationsLog
     toReturn
   }
 

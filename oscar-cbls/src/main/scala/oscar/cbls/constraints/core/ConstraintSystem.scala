@@ -52,11 +52,13 @@ case class ConstraintSystem(model:Store) extends Constraint with Objective{
   private var VarInConstraints:List[AbstractVariable] = List.empty
   private var VarsWatchedForViolation:List[AbstractVariable] = List.empty
 
-  override def toString = {
-    val constraints = PostedConstraints.map(_._1)
-    val sortedConstraints = constraints.sortBy(c => c.violation.value)
-    val sortedConstraintsStrings = sortedConstraints.map(c => "viol:" + c.violation.value + " " + c)
-    "ConstraintSystem(#n\tglobal violation:" + this.Violation + "\n\tconstraints:\n\t\t" + sortedConstraintsStrings.mkString("\n\t\t") + "\n)\n"
+  override def detailedString(short: Boolean): String = {
+    val displayedConstraints = (if(short) violatedConstraints
+      else PostedConstraints.map(_._1)).sortBy(c => c.violation.value).map(c => "viol:" + c.violation.value + " " + c)
+
+    val constraintExplanationString = if(short) "violated constraints" else "all constraints"
+
+    "ConstraintSystem(#n\tglobal violation:" + this.Violation + "\n\t" + constraintExplanationString + ":\n\t\t" + displayedConstraints.mkString("\n\t\t") + "\n)\n"
   }
 
   /**

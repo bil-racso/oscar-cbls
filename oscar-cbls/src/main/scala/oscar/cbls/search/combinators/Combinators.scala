@@ -709,6 +709,8 @@ class AndThen(a: Neighborhood, b: Neighborhood, maximalIntermediaryDegradation: 
 
     class InstrumentedObjective() extends Objective {
 
+      override def detailedString(short: Boolean): String = "AndThenInstrumentedObjective(initialObjective:" + obj.detailedString(short) + ")"
+
       override def model = obj.model
 
       override def value: Int = {
@@ -835,8 +837,13 @@ class Name(a: Neighborhood, val name: String) extends NeighborhoodCombinator(a) 
 /**
  * tis combinator overrides the acceptance criterion given to the whole neighborhood
  * this can be necessary if you have a neighborhood with some phases only including simulated annealing
+ * notice that the actual acceptance criteria is the one that you give,
+ * with a slight modification: it will reject moves that lead to MaxInt, except if we are already at MaxInt.
+ * Since MaxInt is used to represent that a strong constraint is violated, we cannot tolerate such moves at all.
  * @param a the neighborhood
- * @param overridingAcceptanceCriterion the acceptance criterion that is used instead of the one given to the overall sear
+ * @param overridingAcceptanceCriterion the acceptance criterion that is used instead of the one given to the overall search
+ *                                      with the addition that moves leading to MaxInt will be rejected anyway, except if we are already at MaxInt
+ *
  */
 class WithAcceptanceCriterion(a: Neighborhood, overridingAcceptanceCriterion: (Int, Int) => Boolean) extends NeighborhoodCombinator(a) {
   /**

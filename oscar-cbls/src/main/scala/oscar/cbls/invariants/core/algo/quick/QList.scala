@@ -1,6 +1,5 @@
 package oscar.cbls.invariants.core.algo.quick
 
-import scala.collection.generic.CanBuildFrom
 import scala.language.implicitConversions
 
 class QList[@specialized T](val head:T, val tail:QList[T] = null){
@@ -34,6 +33,14 @@ object QList{
   def apply[T](head:T,tail:QList[T] = null):QList[T] = new QList(head,tail)
   //@deprecated("really, you should not do this","ever")
   implicit def toIterable[T](l:QList[T]):Iterable[T] = new IterableQList(l)
+
+  def buildFromIterable[T](l:Iterable[T]):QList[T] = {
+    def buildFromIterator[T](l:Iterator[T]):QList[T] = {
+      if(l.hasNext) QList(l.next(),buildFromIterator(l))
+      else null
+    }
+    buildFromIterator(l.toIterator)
+  }
 }
 
 class IterableQList[@specialized T](l:QList[T]) extends Iterable[T]{
