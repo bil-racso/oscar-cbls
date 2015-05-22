@@ -118,12 +118,12 @@ trait TimeWindow extends Time with StrongConstraints {
 
   def setEndWindow(node: Int, endWindow: Int) {
     require(node >= V, "only for specifying time windows on nodes, not on vehicles")
-    strongConstraints.post(LE(IntITE(next(node), 0, leaveTime(node), N - 1), endWindow))
+    strongConstraints.post(LE(IntITE(next(node), 0, leaveTime(node), N - 1), endWindow).nameConstraint("end of time window on node " + node))
   }
 
   def setVehicleEnd(vehicle: Int, endTime: Int) {
     require(vehicle < V, "only for specifying end time of vehicles")
-    strongConstraints.post(LE(arrivalTime(vehicle), endTime))
+    strongConstraints.post(LE(arrivalTime(vehicle), endTime).nameConstraint("end of time for vehicle " + vehicle))
   }
 
   def setNodeDuration(node: Int, durationWithoutWait: IntValue, startWindow: Int) {
@@ -132,7 +132,7 @@ trait TimeWindow extends Time with StrongConstraints {
 
   def setNodeDuration(node: Int, durationWithoutWait: IntValue, startWindow: Int, maxWaiting: Int) {
     setNodeDuration(node, durationWithoutWait, startWindow)
-    strongConstraints.post(GE(arrivalTime(node), startWindow - maxWaiting))
+    strongConstraints.post(GE(arrivalTime(node), startWindow - maxWaiting).nameConstraint("end of time window on node (with duration)" + node))
   }
 
 }
@@ -158,7 +158,7 @@ trait WaitingDuration extends TimeWindow {
 
   override def setNodeDuration(node: Int, durationWithoutWait: IntValue, startWindow: Int, maxWaiting: Int) {
     setNodeDuration(node, durationWithoutWait, startWindow)
-    strongConstraints.post(LE(waitingDuration(node), maxWaiting))
+    strongConstraints.post(LE(waitingDuration(node), maxWaiting).nameConstraint("max waiting duration before node " + node))
   }
 }
 
