@@ -586,7 +586,7 @@ abstract class EasyNeighborhood(best:Boolean = false, neighborhoodName:String=nu
       // so we somewhat repeat the normal process of moveRequested here
       val moveIsActuallyRequested = myMoveRequested(tmpNewObj)
 
-      println("Explored " + (if(moveIsActuallyRequested) "(saved)" else "(not saved)") + " " + m)
+      println("Explored " + m + (if(moveIsActuallyRequested) ", saved" else ", not saved"))
       println(obj.asInstanceOf[LoggingObjective].getAndCleanEvaluationLog.mkString("\n"))
 
       moveIsActuallyRequested
