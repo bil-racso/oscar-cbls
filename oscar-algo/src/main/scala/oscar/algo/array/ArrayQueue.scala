@@ -6,16 +6,16 @@ package oscar.algo.array
  *
  *  @author Renaud Hartert ren.hartert@gmail.com
  */
-class ArrayQueue[T](initialSize: Int = 8) {
+final class ArrayQueue[T](initialSize: Int = 8) {
 
   // The length of this array must be a power of 2
-  private var queue: Array[AnyRef] = Array.ofDim[AnyRef](computeSize(initialSize))
+  private[this] var queue: Array[AnyRef] = Array.ofDim[AnyRef](computeSize(initialSize))
 
   // Used for fast position testing
-  private var bitMask: Int = queue.length - 1
+  private[this] var bitMask: Int = queue.length - 1
 
-  private var head: Int = 0
-  private var tail: Int = 0
+  private[this] var head: Int = 0
+  private[this] var tail: Int = 0
 
   /**
    *  Return the size of the queue
