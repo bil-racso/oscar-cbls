@@ -44,17 +44,17 @@ extends CumulativeTemplate(starts, durations, ends, heights, resources, capacity
 {
   priorityL2 = 3
   
-  
-  val dminF = Array.ofDim[Int](n)
-  val smaxF = Array.ofDim[Int](n)
-  val eminF = Array.ofDim[Int](n)
+  private[this] val nTasks = starts.length
+  private[this] val dminF = Array.ofDim[Int](nTasks)
+  private[this] val smaxF = Array.ofDim[Int](nTasks)
+  private[this] val eminF = Array.ofDim[Int](nTasks)
     
-  var dminFmax = 0
-  var hminmax = 0
+  private[this] var dminFmax = 0
+  private[this] var hminmax = 0
 
-  val profile = new ProfileStructure(smin, smax, dmin, emin, emax, hmin, required, possible)  
+  private[this] val profile = new ProfileStructure(smin, smax, dmin, emin, emax, hmin, required, possible)  
   
-  def updateFreeAndMaxs(limit: Int) = {
+  @inline private def updateFreeAndMaxs(limit: Int) = {
     dminFmax = 0
     hminmax = 0
     
@@ -79,10 +79,10 @@ extends CumulativeTemplate(starts, durations, ends, heights, resources, capacity
   }
   
   
-  val pushers = Array.ofDim[Int](n)
-  val hPushers = Array.ofDim[Int](n)  // height of the MOI, i.e. min of profile on MOI + hmin(a)
+  private[this] val pushers = Array.ofDim[Int](nTasks)
+  private[this] val hPushers = Array.ofDim[Int](nTasks)  // height of the MOI, i.e. min of profile on MOI + hmin(a)
   
-  def introducePushers0(limit: Int, C: Int): Int = {
+  @inline private def introducePushers0(limit: Int, C: Int): Int = {
     var q = 0
     var p = 0
     
@@ -115,7 +115,7 @@ extends CumulativeTemplate(starts, durations, ends, heights, resources, capacity
     q
   }
   
-  def introducePushers(limit: Int, C: Int): Int = {
+  @inline private def introducePushers(limit: Int, C: Int): Int = {
     var q = 0
     var p = 0
     
@@ -155,10 +155,10 @@ extends CumulativeTemplate(starts, durations, ends, heights, resources, capacity
 
 
   
-  var maxPushersEMinF = 0
-  var minPushersSMaxF = 0
+  private[this] var maxPushersEMinF = 0
+  private[this] var minPushersSMaxF = 0
   
-  def updatePushersTimeBounds(nPushers: Int) = {
+  @inline private def updatePushersTimeBounds(nPushers: Int) = {
     maxPushersEMinF = Int.MinValue
     minPushersSMaxF = Int.MaxValue
     
@@ -171,7 +171,7 @@ extends CumulativeTemplate(starts, durations, ends, heights, resources, capacity
     }
   }
   
-  def introducePushees(limit: Int): Int = {
+  @inline private def introducePushees(limit: Int): Int = {
     var q = 0
     var p = 0
     while (p < limit) {
@@ -188,7 +188,7 @@ extends CumulativeTemplate(starts, durations, ends, heights, resources, capacity
     q
   }
   
-  val pushees = Array.ofDim[Int](n)
+  private[this] val pushees = Array.ofDim[Int](nTasks)
   
   final override def propagate(): CPOutcome = {
     updateCache()

@@ -41,8 +41,8 @@ class ProfileStructure(
   private[this] val endVals = Array.ofDim[Int](nTasks)
   
   // for mergeSort
-  private val temp1 = Array.ofDim[Int](nTasks + 1)
-  private val temp2 = Array.ofDim[Int](nTasks + 1)
+  private[this] val temp1 = Array.ofDim[Int](nTasks + 1)
+  private[this] val temp2 = Array.ofDim[Int](nTasks + 1)
   
   private[this] val sortedByStartsStart = new ReversibleInt(store, 0)
   private[this] val sortedByStartsEnd   = new ReversibleInt(store, nTasks)

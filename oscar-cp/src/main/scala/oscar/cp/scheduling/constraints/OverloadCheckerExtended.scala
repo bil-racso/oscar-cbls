@@ -50,6 +50,8 @@ extends CumulativeTemplate(starts, durations, ends, heights, resources, capacity
   
   idempotent = true  
 
+  private[this] val n = starts.length
+  
   def nextPowerOfTwo(k: Int): Int = {
     1 << math.ceil(math.log(k) / math.log(2)).toInt
   }
