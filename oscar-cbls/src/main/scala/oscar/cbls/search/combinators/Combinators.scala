@@ -709,7 +709,7 @@ class AndThen(a: Neighborhood, b: Neighborhood, maximalIntermediaryDegradation: 
 
     class InstrumentedObjective() extends Objective {
 
-      override def detailedString(short: Boolean): String = "AndThenInstrumentedObjective(initialObjective:" + obj.detailedString(short) + ")"
+      override def detailedString(short: Boolean,indent:Int = 0): String = nSpace(indent) + "AndThenInstrumentedObjective(initialObjective:" + obj.detailedString(short) + ")"
 
       override def model = obj.model
 

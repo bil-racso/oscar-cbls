@@ -71,7 +71,7 @@ class IntVarObjective(val objective: ChangingIntValue) extends Objective {
 
   def model:Store = objective.model
 
-  def detailedString(short:Boolean):String = "IntVarObjective(" + objective + ")"
+  def detailedString(short:Boolean,indent:Int = 0):String = "IntVarObjective(" + objective + ")"
 }
 
 /**
@@ -83,11 +83,24 @@ class IntVarObjective(val objective: ChangingIntValue) extends Objective {
  */
 class CascadingObjective(mustBeZeroObjective: Objective, secondObjective:Objective) extends Objective {
 
-  override def detailedString(short: Boolean): String =
-    "CascadingObjective(\nmustBeZeroObjective" + (if(short){
-      if(mustBeZeroObjective.value == 0)  " is zero \nsecondObjective:" + secondObjective.detailedString(true)
-      else " is not zero:" + mustBeZeroObjective.detailedString(true)
-    } else ":" + mustBeZeroObjective + "\nsecondObjective:" + secondObjective) + ")"
+  override def detailedString(short: Boolean, indent:Int = 0): String =
+    (if(short) {
+      if (mustBeZeroObjective.value == 0) {
+        nSpace(indent) + "CascadingObjective(\n" +
+          nSpace(indent + 2) + "mustBeZeroObjective :=0 \n" +
+          nSpace(indent + 2) + "secondObjective:" + secondObjective.detailedString(true, indent + 2) + "\n" +
+          nSpace(indent + 2) + "\n)"
+      } else {
+        nSpace(indent) + "CascadingObjective(\n" +
+          nSpace(indent + 2) + "mustBeZeroObjective:" + mustBeZeroObjective.detailedString(true, indent + 2) + "\n" +
+          nSpace(indent + 2) + "\n)"
+      }
+    }else {
+      nSpace(indent) + "CascadingObjective(\n" +
+        nSpace(indent + 2) + "mustBeZeroObjective:" + mustBeZeroObjective.detailedString(true, indent + 2) + "\n" +
+        nSpace(indent + 2) + "secondObjective:" + secondObjective.detailedString(true, indent + 2) + "\n" +
+        nSpace(indent + 2) + "\n)"
+    })
 
   /**
    * This method returns the actual objective value.
@@ -112,14 +125,15 @@ class FunctionObjective(f:()=>Int, m:Store = null) extends Objective{
    */
   override def value: Int = f()
 
-  override def detailedString(short: Boolean): String = "FunctionObjective(" + value + ")"
+  override def detailedString(short: Boolean,indent:Int = 0): String = nSpace(indent) + "FunctionObjective(" + value + ")"
 }
 
 trait Objective {
 
+  def nSpace(n:Int):String = if(n <= 0) "" else " " + nSpace(n-1)
   override def toString: String = detailedString(false)
 
-  def detailedString(short:Boolean):String
+  def detailedString(short:Boolean, indent:Int = 0):String
 
   def model:Store
 
@@ -220,7 +234,7 @@ trait Objective {
 class LoggingObjective(baseObjective:Objective) extends Objective{
   private var evaluationsLog:List[String] = List.empty
 
-  override def detailedString(short: Boolean): String = "LoggingObjective(" + baseObjective.detailedString(short) + ")"
+  override def detailedString(short: Boolean, indent:Int = 0): String = nSpace(indent) + "LoggingObjective(" + baseObjective.detailedString(short) + ")"
 
   override def model: Store = baseObjective.model
 
