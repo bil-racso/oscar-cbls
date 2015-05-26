@@ -41,6 +41,7 @@ object WarehouseLocation extends App with AlgebraTrait{
                       orElse (RandomizeNeighborhood(warehouseOpenArray, W/5) maxMoves 2) saveBest obj restoreBestOnExhaust)
 
   neighborhood.verbose = 1
+  neighborhood.verboseWithExtraInfo(1,()=> "" + openWarehouses)
   neighborhood.doAllMoves(_ >= W+D, obj)
 
   println(openWarehouses)

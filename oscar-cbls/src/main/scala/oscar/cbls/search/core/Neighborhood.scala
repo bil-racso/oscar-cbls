@@ -113,6 +113,17 @@ abstract class Neighborhood{
   def verbose:Int = _verbose
   def verbose_=(i:Int){
     _verbose = i
+    additionalStringGenerator = null
+  }
+
+  var additionalStringGenerator:()=>String = null
+
+    /** sets the verbosity level with an additiojnal string generator that ins called eieher on eahc move (level = 1)
+      *   or for each explored neighbor (level = 2)
+      */
+  def verboseWithExtraInfo(verbosity:Int,additionalString:()=>String){
+    verbose = verbosity
+    additionalStringGenerator = additionalString
   }
 
   //the number of characters to display in case a verbose approach is deployed.
@@ -140,8 +151,9 @@ abstract class Neighborhood{
     var prevObj = Int.MaxValue
     var toReturn = 0
     var moveCount = 0
+    val enrichedObj = if(additionalStringGenerator == null) obj else new ObjWithStringGenerator(obj,additionalStringGenerator)
     while(!shouldStop(moveCount)){
-      getMove(obj, acceptanceCriterion) match {
+      getMove(enrichedObj, acceptanceCriterion) match {
         case NoMoveFound =>
           if (verbose >= 1) println("no more move found after " + toReturn + " it")
           return toReturn;
@@ -173,6 +185,7 @@ abstract class Neighborhood{
           }
 
           m.commit()
+          if(additionalStringGenerator != null) println(additionalStringGenerator())
           if (obj.value == Int.MaxValue) println("Warning : objective == MaxInt, maybe you have some strong constraint violated?")
           true
       }
@@ -613,3 +626,12 @@ abstract class EasyNeighborhood(best:Boolean = false, neighborhoodName:String=nu
   }
 }
 
+class ObjWithStringGenerator(obj:Objective,additionalStringGenerator:()=>String) extends Objective{
+  override def detailedString(short: Boolean, indent: Int): String = {
+    obj.detailedString(short,indent)+ "\n" + nSpace(indent) + additionalStringGenerator()
+  }
+
+  override def model: Store = obj.model
+
+  override def value: Int = obj.value
+}
