@@ -504,6 +504,8 @@ case class ConstantMoveNeighborhood(m:Move) extends Neighborhood{
  */
 abstract class EasyNeighborhood(best:Boolean = false, neighborhoodName:String=null) extends Neighborhood{
 
+  protected def neighborhoodNameToString:String = if (neighborhoodName != null) neighborhoodName else this.getClass.getSimpleName()
+
   //passing parameters, and getting return values from the search
   private var oldObj:Int=0
   private var acceptanceCriterion:(Int,Int) => Boolean=null
@@ -517,18 +519,18 @@ abstract class EasyNeighborhood(best:Boolean = false, neighborhoodName:String=nu
     toReturnMove = null
     bestNewObj = Int.MaxValue
     this.obj = if(amIVerbose) new LoggingObjective(obj) else obj
-    if(amIVerbose) println(neighborhoodName + ": start exploration")
+    if(amIVerbose) println(neighborhoodNameToString + ": start exploration")
 
     exploreNeighborhood()
 
     if(toReturnMove == null || (best && !acceptanceCriterion(oldObj,bestNewObj))) {
       if (amIVerbose){
-        println(neighborhoodName + ": no move found")
+        println(neighborhoodNameToString + ": no move found")
       }
       NoMoveFound
     }else {
       if (amIVerbose){
-        println(neighborhoodName + ": move found")
+        println(neighborhoodNameToString + ": move found")
       }
       toReturnMove
     }
@@ -542,10 +544,10 @@ abstract class EasyNeighborhood(best:Boolean = false, neighborhoodName:String=nu
 
   /**
    * @param newObj the new value of the objective function if we perform the move
-   * @param m a function that returns the found move. We expect a function here because the move might not need to be instantiated
+   * @param m the explored move.
    * @return true if the search must be stopped right now
    */
-  def notifyMoveExplored(newObj:Int, m: =>Move):Boolean = {
+  def notifyMoveExplored(newObj:Int, m:Move):Boolean = {
     moveRequested(newObj) && submitFoundMove(m)
   }
 
@@ -563,6 +565,7 @@ abstract class EasyNeighborhood(best:Boolean = false, neighborhoodName:String=nu
     myMoveRequested(newObj)
   }
 
+  @inline
   private def myMoveRequested(newObj:Int):Boolean = {
     if (best) {
       if (newObj < bestNewObj) {
@@ -576,7 +579,7 @@ abstract class EasyNeighborhood(best:Boolean = false, neighborhoodName:String=nu
     false
   }
 
-  /** you can only, and must call this method when you called moveRequested and it returned true
+  /** You can only, and must call this method when you called moveRequested and it returned true
     * @param m the move. notice that the obj must be accurate
     * @return true if the search must be stopped right now (you can save some internal state by the way if you need  to, e.g. for a hotRestart
     */

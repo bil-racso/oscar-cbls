@@ -39,7 +39,7 @@ import oscar.cbls.search.algo.HotRestart
 case class TwoOpt(predecesorOfFirstMovedPoint:()=>Iterable[Int],
                   relevantNeighbors:()=>Int=>Iterable[Int],
                   vrp: VRP with PositionInRouteAndRouteNr,
-                  neighborhoodName:String = "TwoOptNeighborhood",
+                  neighborhoodName:String = null,
                   best:Boolean = false,
                   hotRestart:Boolean = true) extends EasyRoutingNeighborhood(best,vrp) {
 
