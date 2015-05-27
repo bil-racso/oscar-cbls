@@ -89,17 +89,17 @@ class CascadingObjective(mustBeZeroObjective: Objective, secondObjective:Objecti
         nSpace(indent) + "CascadingObjective(\n" +
           nSpace(indent + 2) + "mustBeZeroObjective :=0 \n" +
           nSpace(indent + 2) + "secondObjective:" + secondObjective.detailedString(true, indent + 2) + "\n" +
-          nSpace(indent + 2) + "\n)"
+          nSpace(indent) + ")"
       } else {
         nSpace(indent) + "CascadingObjective(\n" +
-          nSpace(indent + 2) + "mustBeZeroObjective:" + mustBeZeroObjective.detailedString(true, indent + 2) + "\n" +
-          nSpace(indent + 2) + "\n)"
+          nSpace(indent + 2) + "mustBeZeroObjective:" + mustBeZeroObjective.detailedString(true, indent + 4) + "\n" +
+          nSpace(indent) + ")"
       }
     }else {
       nSpace(indent) + "CascadingObjective(\n" +
-        nSpace(indent + 2) + "mustBeZeroObjective:" + mustBeZeroObjective.detailedString(true, indent + 2) + "\n" +
-        nSpace(indent + 2) + "secondObjective:" + secondObjective.detailedString(true, indent + 2) + "\n" +
-        nSpace(indent + 2) + "\n)"
+        nSpace(indent + 2) + "mustBeZeroObjective:" + mustBeZeroObjective.detailedString(true, indent + 4) + "\n" +
+        nSpace(indent + 2) + "secondObjective:" + secondObjective.detailedString(true, indent + 4) + "\n" +
+        nSpace(indent) + ")"
     })
 
   /**
