@@ -349,12 +349,11 @@ abstract class Neighborhood{
 
   def saveBest(o: Objective) = new SaveBest(this, o)
 
-  /** retries n times the move before concluding to noMove can be found
-    * resets on the first found move, or on reset
-    * @param n the maximal number of retries on a before concluding it is dead
-    * @param cond don't start retries until this is true
+  /** retries the move before concluding to noMove can be found
+    * @param cond condition that takes the number of consecutive NoMoveFound, and says if we should try again returns true if yes, false otherwise
+    *             by default, we allow a single retry.
     */
-  def retry(n:Int = 1, cond: () => Boolean = () => true) = new Retry(this, n, cond)
+  def retry(cond: Int => Boolean = (n:Int) => n<=1) = new Retry(this, cond)
 
   /** to prevent resetting the internal state of this neighborhood
     * @return

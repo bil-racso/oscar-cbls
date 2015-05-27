@@ -325,27 +325,23 @@ class Exhaust(a: Neighborhood, b: Neighborhood) extends NeighborhoodCombinator(a
  * retries n times the move before concluding to noMove can be found
  * resets on the first found move, or on reset
  * @param a the neighborhood on which we will perform retries
- * @param n the maximal number of retries on a before concluding it is dead
+ * @param cond condition that takes the number of consecutive NoMoveFound, and says if we should try again returns true if yes, false otherwise
  * @author renaud.delandtsheer@cetic.be
  * @author yoann.guyot@cetic.be
  */
-class Retry(a: Neighborhood, n: Int, cond: () => Boolean) extends NeighborhoodCombinator(a) {
-  var remainingTries = n
-  var countRetries = false
+class Retry(a: Neighborhood, cond: Int => Boolean) extends NeighborhoodCombinator(a) {
+  var consecutiveFails = 0
   override def getMove(obj: Objective, acceptanceCriteria: (Int, Int) => Boolean): SearchResult = {
     a.getMove(obj, acceptanceCriteria) match {
       case NoMoveFound =>
-        countRetries = countRetries || cond()
-        if (countRetries) {
-          remainingTries -= 1
-          if (remainingTries == 0) {
-            super.reset()
-            NoMoveFound
-          } else this.getMove(obj, acceptanceCriteria)
-        } else this.getMove(obj, acceptanceCriteria)
+        consecutiveFails = consecutiveFails +1
+        if(cond(consecutiveFails)){
+          getMove(obj, acceptanceCriteria)
+        }else{
+          NoMoveFound
+        }
       case x =>
-        countRetries = countRetries || cond()
-        remainingTries = n
+        consecutiveFails = 0
         x
     }
   }
@@ -353,7 +349,7 @@ class Retry(a: Neighborhood, n: Int, cond: () => Boolean) extends NeighborhoodCo
   //this resets the internal state of the move combinators
   override def reset() {
     super.reset()
-    remainingTries = n
+    consecutiveFails = 0
   }
 }
 
