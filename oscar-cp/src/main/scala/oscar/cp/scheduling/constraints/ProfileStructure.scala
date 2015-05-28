@@ -49,75 +49,6 @@ class ProfileStructure(
   private[this] val sortedByEndsStart   = new ReversibleInt(store, 0)
   private[this] val sortedByEndsEnd     = new ReversibleInt(store, nTasks)
 
-  def rebuild2(toConsider: OpenSparseSet): Unit = {
-    // Reset
-    nPoints = 1
-    
-    val smax = this.smax
-    val emin = this.emin
-
-    // Sort all tasks, useful or not
-    var startsStart = sortedByStartsStart.value
-    var endsStart   = sortedByEndsStart.value
-    
-    SortUtils.mergeSort(sortedByStarts, smax, startsStart, nTasks, temp1, temp2)
-    SortUtils.mergeSort(sortedByEnds,   emin, endsStart,   nTasks, temp1, temp2)
-
-    val status = toConsider.status
-    val limit  = toConsider.limit.value
-    
-    while (startsStart < nTasks && 
-           status(sortedByStarts(startsStart)) >= limit)
-      startsStart += 1
-    sortedByStartsStart.setValue(startsStart)
-
-    while (endsStart < nTasks && 
-           status(sortedByEnds(endsStart)) >= limit)
-      endsStart += 1
-    sortedByEndsStart.setValue(endsStart)
-
-    var s = startsStart // next start
-    var e = endsStart // next end
-    var t = Int.MinValue // sweep-line
-    var h = 0 // profile height
-    
-    while (e < nTasks) {
-      val prevH = h
-
-      // Move the sweep-line
-      t = emin(sortedByEnds(e))
-      if (s < nTasks) {
-        val start = smax(sortedByStarts(s))
-        if (start < t) t = start
-      }
-
-      // Process SCP
-      while (s < nTasks && smax(sortedByStarts(s)) == t) {
-        val ss = sortedByStarts(s)
-        if (required(ss) && status(ss) < limit && smax(ss) < emin(ss))  h += hmin(ss)
-        s += 1
-      }
-
-      // Process ECP
-      while (e < nTasks && emin(sortedByEnds(e)) == t) {
-        val ee = sortedByEnds(e)
-        if (required(ee) && status(ee) < limit && smax(ee) < emin(ee))  h -= hmin(ee)
-        e += 1
-      }
-
-      // If the profile has changed
-      if (h != prevH) {
-        pointTimes(nPoints) = t
-        pointHeights(nPoints) = h
-        nPoints += 1
-      }
-    }
-    // add end of time
-    pointTimes(nPoints) = Int.MaxValue
-    pointHeights(nPoints) = 0
-    nPoints += 1
-  }
-
   
   def rebuild(toConsider: OpenSparseSet): Unit = {
     // Reset
@@ -436,38 +367,59 @@ class ProfileStructure(
   }
 
 
-  val hStack = new ArrayStack[Int](nTasks + 1)
-  val dStack = new ArrayStack[Int](nTasks + 1)
+  // stacks for height and duration
+  val hStack = new Array[Int](nTasks + 1) 
+  var hPointer = -1
+  
+  val dStack = new Array[Int](nTasks + 1) 
+  var dPointer = -1
+  
+  
+  @inline private def hPush(e: Int) = {
+    hPointer += 1
+    hStack(hPointer) = e
+  }
+  
+  @inline private def dPush(e: Int) = {
+    dPointer += 1
+    dStack(dPointer) = e
+  }
+  
   
   @inline private def unstack(time: Int, height: Int, dur: Int) = {
     var minHeight = Int.MaxValue
     var lastD = time
-    while (hStack.top <= height) {
-      val h = hStack.pop()
-      lastD = dStack.pop()
+    while (hStack(hPointer) <= height) {
+      val h = hStack(hPointer) // pop
+      hPointer -= 1
+      
+      lastD = dStack(dPointer) // pop
+      dPointer -= 1
+      
       if (time - lastD >= dur) minHeight = min(minHeight, h)
     }
-    hStack.push(height)
-    dStack.push(lastD)
+    
+    hPush(height)
+    dPush(lastD)
     minHeight
   }
   
-  // when task a is placed anywhere on [first, last[, what is the minimum height on which it will stand? With d its duration,
-  // min_{ t \in [first, last-d[ } max_{ u \in { [t, t+d[ } } profile(u)
   def minHeightOf(a: Int) = {
-    val first = smin(a)
-    val last  = emax(a)
-    val d = dmin(a)
+    //val first = min(smax(a), emin(a)) // used only
+    //val last  = max(smax(a), emin(a))
     
-    var i = indexBefore(a, first)  // find plateau where a can start
-    hStack.clear
-    dStack.clear
+    val first = emin(a) // this is only used for tasks with no mandatory part
+    val last  = smax(a) 
     
-    hStack.push(Int.MaxValue)
-    dStack.push(first)
+    var i = indexBefore(a, smin(a))  // find plateau where a can start
+    hPointer = -1  // clear stacks
+    dPointer = -1
     
-    hStack.push(pointHeights(i))
-    dStack.push(first)
+    hPush(Int.MaxValue)
+    dPush(first)
+    
+    hPush(pointHeights(i))
+    dPush(first)
     
     i += 1
     
@@ -475,14 +427,15 @@ class ProfileStructure(
     
     while (pointTimes(i) < last) {    
       val thispoint = math.min(pointTimes(i), last)
-      minHeight = math.min(minHeight, unstack(thispoint, pointHeights(i), d))
+      minHeight = math.min(minHeight, unstack(thispoint, pointHeights(i), dmin(a)))
       i += 1
     }
       
-    minHeight = math.min(minHeight, unstack(last, Int.MaxValue - 1, d))
+    minHeight = math.min(minHeight, unstack(last, Int.MaxValue - 1, dmin(a)))
     
     minHeight
   }
+  
   
   
   def printProfile: Unit = {
