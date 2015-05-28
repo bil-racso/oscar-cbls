@@ -1015,7 +1015,7 @@ class OverrideObjective(a: Neighborhood, overridingObjective: Objective) extends
 }
 
 
-case class Statistics(a:Neighborhood)extends NeighborhoodCombinator(a) with StopWatch{
+case class Statistics(a:Neighborhood,ignoreInitialObj:Boolean = false)extends NeighborhoodCombinator(a) with StopWatch{
 
   var NbCalls = 0
   var NbFound = 0
@@ -1043,7 +1043,7 @@ case class Statistics(a:Neighborhood)extends NeighborhoodCombinator(a) with Stop
       case m: MoveFound =>
         totalTimeSpent += System.currentTimeMillis - startTime
         NbFound += 1
-        TotalGainInObj += oldObj - m.objAfter
+        if(!ignoreInitialObj || NbCalls > 1) TotalGainInObj += oldObj - m.objAfter
         m
     }
   }

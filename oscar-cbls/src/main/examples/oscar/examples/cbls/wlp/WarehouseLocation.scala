@@ -37,12 +37,12 @@ object WarehouseLocation extends App with AlgebraTrait{
 
   m.close()
 
-  val neighborhood = (Statistics(AssignNeighborhood(warehouseOpenArray, "SwitchWarehouse"))
+  val neighborhood = (Statistics(AssignNeighborhood(warehouseOpenArray, "SwitchWarehouse"),true)
                       exhaustBack Statistics(SwapsNeighborhood(warehouseOpenArray, "SwapWarehouses"))
                       orElse (RandomizeNeighborhood(warehouseOpenArray, W/5) maxMoves 2) saveBest obj restoreBestOnExhaust)
 
   neighborhood.verbose = 1
-  neighborhood.verboseWithExtraInfo(2,()=> "" + openWarehouses)
+//  neighborhood.verboseWithExtraInfo(2,()=> "" + openWarehouses)
   neighborhood.doAllMoves(_ >= W+D, obj)
 
   println(openWarehouses)
