@@ -42,16 +42,14 @@ import oscar.cbls.search.algo.{IdenticalAggregator, HotRestart}
  * @author Florent Ghilain (UMONS)
  * @author yoann.guyot@cetic.be
  */
-case class InsertPointSym(unroutedNodesToInsert: () => Iterable[Int],
+class InsertPointSym(unroutedNodesToInsert: () => Iterable[Int],
                        relevantNeighbors: () => Int => Iterable[Int],
                        nodeSymmetryClass:Option[Int => Int] = None,
                        vrp: VRP,
                        neighborhoodName: String = null,
                        best: Boolean = false,
-                       hotRestart: Boolean = true) extends EasyRoutingNeighborhood(best, vrp) {
-
+                       hotRestart: Boolean = true) extends InsertPoint(unroutedNodesToInsert, relevantNeighbors, vrp, neighborhoodName, best, hotRestart){
   //the indice to start with for the exploration
-  var startIndice: Int = 0
 
   override def exploreNeighborhood(): Unit = {
 
@@ -85,17 +83,5 @@ case class InsertPointSym(unroutedNodesToInsert: () => Iterable[Int],
         }
       }
     }
-  }
-
-  def encode(beforeInsertedPoint: Int, insertedPoint: Int) {
-    assert(!vrp.isRouted(insertedPoint))
-    assert(vrp.isRouted(beforeInsertedPoint))
-    val s = segmentFromUnrouted(insertedPoint)
-    insert(s, beforeInsertedPoint)
-  }
-
-  //this resets the internal state of the Neighborhood
-  override def reset(): Unit = {
-    startIndice = 0
   }
 }
