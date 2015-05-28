@@ -18,6 +18,7 @@ package oscar.cbls.search.combinators
 
 import oscar.cbls.invariants.core.computation.{ Store, IntValue, SetValue }
 import oscar.cbls.objective.{ CascadingObjective, Objective }
+import oscar.cbls.search.StopWatch
 import oscar.cbls.search.core.{ NoMoveFound, _ }
 import oscar.cbls.search.move.{ CallBackMove, CompositeMove, InstrumentedMove, Move }
 
@@ -1011,4 +1012,41 @@ class OverrideObjective(a: Neighborhood, overridingObjective: Objective) extends
    * @return
    */
   override def getMove(obj: Objective, acceptanceCriterion: (Int, Int) => Boolean): SearchResult = getMove(overridingObjective, acceptanceCriterion)
+}
+
+
+case class Statistics(a:Neighborhood)extends NeighborhoodCombinator(a) with StopWatch{
+
+  var NbCalls = 0
+  var NbFound = 0
+  var TotalGainInObj = 0
+  var totalTimeSpent:Long = 0
+
+  /**
+   * the method that returns a move from the neighborhood.
+   * The returned move should typically be accepted by the acceptance criterion over the objective function.
+   * Some neighborhoods are actually jumps, so that they might violate this basic rule however.
+   * @param obj the objective function. notice that it is actually a function. if you have an [[oscar.cbls.objective.Objective]] there is an implicit conversion available
+   * @param acceptanceCriterion
+   * @return
+   */
+  override def getMove(obj: Objective, acceptanceCriterion: (Int, Int) => Boolean): SearchResult = {
+
+    NbCalls += 1
+    val oldObj = obj.value
+    val startTime = System.currentTimeMillis
+
+    a.getMove(obj,acceptanceCriterion) match{
+      case NoMoveFound =>
+        totalTimeSpent += System.currentTimeMillis - startTime
+        NoMoveFound
+      case m: MoveFound =>
+        totalTimeSpent += System.currentTimeMillis - startTime
+        NbFound += 1
+        TotalGainInObj += oldObj - m.objAfter
+        m
+    }
+  }
+
+  override def toString: String = "Statistics(" + a + " NbCalls:" + NbCalls + " NbFound:" + NbFound + " totalGainInObj:" + TotalGainInObj + " totalTimeSpent:" + totalTimeSpent + " ms)"
 }

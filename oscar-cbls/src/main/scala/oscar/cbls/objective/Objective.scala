@@ -108,7 +108,7 @@ class CascadingObjective(mustBeZeroObjective: Objective, secondObjective:Objecti
    * @return the actual objective value.
    */
   override def value = {
-    if (mustBeZeroObjective.value > 0) Int.MaxValue
+    if (!mustBeZeroObjective.isZero) Int.MaxValue
     else secondObjective.value
   }
 
@@ -143,6 +143,7 @@ trait Objective {
    * @return the actual objective value.
    */
   def value:Int
+  def isZero:Boolean = value == 0
 
   /**returns the value of the objective variable if the two variables a and b were swapped values.
     * This proceeds through explicit state change and restore.
