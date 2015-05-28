@@ -47,6 +47,7 @@ final class OverloadCheckerExtended(starts: Array[CPIntVar], durations: Array[CP
 extends CumulativeTemplate(starts, durations, ends, heights, resources, capacity, id, "OverloadCheckerExtended")
 {  
   priorityL2 = 2
+  private[this] val nTasks = starts.length
   
   def nextPowerOfTwo(k: Int): Int = {
     1 << math.ceil(math.log(k) / math.log(2)).toInt
@@ -63,37 +64,37 @@ extends CumulativeTemplate(starts, durations, ends, heights, resources, capacity
   }
     
   // TODO: optimize the size of tree
-  val workload    = Array.ofDim[Int](2 * nextPowerOfTwo(n)) 
-  val energy      = Array.ofDim[Int](2 * nextPowerOfTwo(n))   // base energy level
-  val workloadOpt = Array.ofDim[Int](2 * nextPowerOfTwo(n))   // maximum workload of this node using at most one optional
-  val energyOpt   = Array.ofDim[Int](2 * nextPowerOfTwo(n))   // maximum energy of an optional activity at this node
-  val activityOpt = Array.ofDim[Int](2 * nextPowerOfTwo(n))   // optional activity with max energy
+  val workload    = Array.ofDim[Int](2 * nextPowerOfTwo(nTasks)) 
+  val energy      = Array.ofDim[Int](2 * nextPowerOfTwo(nTasks))   // base energy level
+  val workloadOpt = Array.ofDim[Int](2 * nextPowerOfTwo(nTasks))   // maximum workload of this node using at most one optional
+  val energyOpt   = Array.ofDim[Int](2 * nextPowerOfTwo(nTasks))   // maximum energy of an optional activity at this node
+  val activityOpt = Array.ofDim[Int](2 * nextPowerOfTwo(nTasks))   // optional activity with max energy
   
 
-  val activitiesByLCT = Array.ofDim[Int](n)  // required activities
-  val leafActivity = Array.ofDim[Int](n)  // leaf -> activity
-  val activityLeaf = Array.ofDim[Int](n)  // activity -> leaf
+  val activitiesByLCT = Array.ofDim[Int](nTasks)  // required activities
+  val leafActivity = Array.ofDim[Int](nTasks)  // leaf -> activity
+  val activityLeaf = Array.ofDim[Int](nTasks)  // activity -> leaf
   var C = capacity.max
   
   // for mergeSort
-  val temp1 = Array.ofDim[Int](n + 1)
-  val temp2 = Array.ofDim[Int](n + 1)
+  val temp1 = Array.ofDim[Int](nTasks + 1)
+  val temp2 = Array.ofDim[Int](nTasks + 1)
 
-  val sortedBySMin = Array.tabulate(n){ i => i }
-  val sortedByEMax = Array.tabulate(n){ i => i }
+  val sortedBySMin = Array.tabulate(nTasks){ i => i }
+  val sortedByEMax = Array.tabulate(nTasks){ i => i }
   
   override def propagate(): CPOutcome = {
     updateCache()
     C = capacity.max
     
     // Step 1: Initialize leaves
-    mergeSort(sortedBySMin, smin, 0, n, temp1, temp2) 
-    mergeSort(sortedByEMax, emax, 0, n, temp1, temp2)
+    mergeSort(sortedBySMin, smin, 0, nTasks, temp1, temp2) 
+    mergeSort(sortedByEMax, emax, 0, nTasks, temp1, temp2)
 
     // Step 1.1: activities will be introduced by emax
     var q = 0
     var p = 0
-    while (p < n) {
+    while (p < nTasks) {
       val a = sortedByEMax(p)
       if (possible(a) && hmin(a) > 0 && dmin(a) > 0) {
         activitiesByLCT(q) = a
@@ -105,7 +106,7 @@ extends CumulativeTemplate(starts, durations, ends, heights, resources, capacity
     // Step 1.2: leaves are sorted by smin from left to right
     q = 0
     p = 0
-    while (p < n) {
+    while (p < nTasks) {
       val a = sortedBySMin(p)
       if (possible(a) && hmin(a) > 0 && dmin(a) > 0) {
         leafActivity(q) = a

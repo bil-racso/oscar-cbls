@@ -1,3 +1,18 @@
+/*******************************************************************************
+ * OscaR is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 2.1 of the License, or
+ * (at your option) any later version.
+ *
+ * OscaR is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License  for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
+ ******************************************************************************/
+
 package oscar.cp.scheduling.search
 
 import oscar.cp.testUtils._
@@ -6,9 +21,12 @@ import scala.util.Random
 import oscar.algo.search.Branching
 import oscar.cp.searches.SplitLastConflict
 import oscar.cp.searches.LCSearchSimplePhaseAssign
+import oscar.util.RandomGenerator
+import scala.collection.mutable.ArrayBuffer
 /**
  *  @author Cyrille Dejemeppe cyrille.dejemeppe@gmail.com
  *  @author Renaud Hartert ren.hartert@gmail.com
+ *  @author Pierre Schaus pschaus@gmail.com
  */
 class SetTimesBranchingSuite extends SchedulingSearchSuite(seed = 0, scalable = true) {
   override def searchHeuristic(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], tieBreaker: Int => Int): Branching = {
@@ -35,79 +53,100 @@ abstract class SchedulingSearchSuite(seed: Int, scalable: Boolean) extends TestS
 
   private[this] val rng = new Random(seed)
 
-  private def splitRectangle(leftBound: Int, rightBound: Int, minWidth: Int, remainingSplits: Int): List[(Int, Int)] = {
-    if (remainingSplits == 0 || (rightBound - leftBound) < 2 * minWidth) List((leftBound, rightBound))
-    else {
-      val minR = leftBound + minWidth
-      val randomSplit = minR + rng.nextInt(rightBound - minR)
-      splitRectangle(leftBound, randomSplit, minWidth, remainingSplits - 1) ::: splitRectangle(randomSplit, rightBound, minWidth, remainingSplits - 1)
+  /**
+   * randomly split the given rectangle into n smaller rectangles  
+   */
+  def splitRectangle(dur: Int, height: Int, n: Int): List[(Int,Int)] = {
+    var rects = ArrayBuffer((dur,height))
+    while (rects.size < n) {
+      //val (_,i) = rects.zipWithIndex.map { case ((d, h),i) => (d * h,i) }.max
+      val i = RandomGenerator.nextInt(rects.size)
+      val (d,h) = rects.remove(i)
+      if (h >= 2 && RandomGenerator.nextBoolean()) { // horizontal split
+        val hr = RandomGenerator.nextInt(h)
+        rects.append((d,hr),(d,h-hr))
+      } else if (d > 5) { // vertical split
+        val dr = RandomGenerator.nextInt(d-2)
+        rects.append((dr,h),(d-dr,h))
+      } else {
+        rects.append((d,h))
+      }
     }
+    rects.map{case(d,h)=> d*h}.sum shouldEqual (dur*height)
+    return rects.toList
   }
 
-  test("Scheduling search test on a dense rectangle of height 4 and width 100") {
-
-    val minWidth = 10
-    val optimalMakespan = 100
+  test("SetTimes test on a dense rectangle of height 4 and width 50") {
+    val minWidth = 40
+    val optimalMakespan = 50
     val capacity = 4
-    val maxRecursiveSplits = 5
+    val maxRecursiveSplits = 3
 
-    for (i <- 1 to 10) new CPModel {
-      val activitySolution = Array.tabulate(capacity)(i => splitRectangle(0, optimalMakespan, minWidth, maxRecursiveSplits)).flatten
+    for (i <- 1 to 10) {
+      //val activitySolution = Array.tabulate(capacity)(i => splitRectangle(0, optimalMakespan, minWidth, maxRecursiveSplits)).flatten
+      val activitySolution = splitRectangle(optimalMakespan, capacity,5).toArray
+
       val nActivities = activitySolution.length
-      val durations = activitySolution.map(a => a._2 - a._1)
+      val durations = activitySolution.map(a => a._1)
+      val demands = activitySolution.map(a => a._2)
 
-      solver.silent = true
-      val startVars = Array.tabulate(nActivities)(i => CPIntVar(0 to optimalMakespan - durations(i)))
-      val endVars = Array.tabulate(nActivities)(i => startVars(i) + durations(i))
-      val durationVars = Array.tabulate(nActivities)(i => CPIntVar(durations(i)))
-      val demandVars = Array.fill(nActivities)(CPIntVar(1))
+      val cp = CPSolver()
+      cp.silent = true
+      val startVars = Array.tabulate(nActivities)(i => CPIntVar(0 to optimalMakespan - durations(i))(cp))
+      val endVars = Array.tabulate(nActivities)(i => startVars(i)+durations(i))
+      val durationVars = durations.map(d => CPIntVar(d)(cp))
+      val demandVars = demands.map(c => CPIntVar(c)(cp))
       val makespan = maximum(endVars)
 
-      add(maxCumulativeResource(startVars, durationVars, endVars, demandVars, CPIntVar(capacity)), Strong)
+      cp.add(maxCumulativeResource(startVars, durationVars, endVars, demandVars, CPIntVar(capacity)(cp)),Medium)
 
-      minimize(makespan)
-      search { searchHeuristic(startVars, durationVars, endVars, i => -endVars(i).min) }
+      cp.minimize(makespan)
+      cp.search{
+        setTimes(startVars, durationVars, endVars,i => startVars(i).min)
+      }
 
       var bestSol = 0
-      onSolution { bestSol = makespan.value }
+      cp.onSolution{
+        bestSol = makespan.value
+      }
 
-      start()
-
-      assert(bestSol == optimalMakespan)
+      cp.start()
+      bestSol shouldEqual optimalMakespan
     }
   }
 
-  test("Scheduling search test on a dense rectangle of height 10 and width 1000") {
-
-    val minWidth = 10
-    val optimalMakespan = 1000
+  test("SetTimes test on a dense rectangle of height 10 and width 200") {
+    val optimalMakespan = 200
     val capacity = 10
-    val maxRecursiveSplits = 10
 
-    for (i <- 1 to 10) new CPModel {
-
-      val activitySolution = Array.tabulate(capacity)(i => splitRectangle(0, optimalMakespan, minWidth, maxRecursiveSplits)).flatten
+    for (i <- 1 to 10) {
+      val activitySolution = splitRectangle(optimalMakespan, capacity,5).toArray
       val nActivities = activitySolution.length
-      val durations = activitySolution.map(a => a._2 - a._1)
+      val durations = activitySolution.map(a => a._1)
+      val demands = activitySolution.map(a => a._2)
 
-      solver.silent = true
-      val startVars = Array.tabulate(nActivities)(i => CPIntVar(0 to optimalMakespan - durations(i)))
-      val endVars = Array.tabulate(nActivities)(i => startVars(i) + durations(i))
-      val durationVars = Array.tabulate(nActivities)(i => CPIntVar(durations(i)))
-      val demandVars = Array.fill(nActivities)(CPIntVar(1))
+      val cp = CPSolver()
+      cp.silent = true
+      val startVars = Array.tabulate(nActivities)(i => CPIntVar(0 to optimalMakespan - durations(i))(cp))
+      val endVars = Array.tabulate(nActivities)(i => startVars(i)+durations(i))
+      val durationVars = durations.map(d => CPIntVar(d)(cp))
+      val demandVars = demands.map(c => CPIntVar(c)(cp))
       val makespan = maximum(endVars)
 
-      add(maxCumulativeResource(startVars, durationVars, endVars, demandVars, CPIntVar(capacity)), Strong)
+      cp.add(maxCumulativeResource(startVars, durationVars, endVars, demandVars, CPIntVar(capacity)(cp)),Medium)
 
-      minimize(makespan)
-      search { searchHeuristic(startVars, durationVars, endVars, i => -endVars(i).min) }
+      cp.minimize(makespan)
+      cp.search{
+        setTimes(startVars, durationVars, endVars,i => startVars(i).min)
+      }
 
       var bestSol = 0
-      onSolution { bestSol = makespan.value }
+      cp.onSolution{
+        bestSol = makespan.value
+      }
 
-      start()
-
-      assert(bestSol == optimalMakespan)
+      cp.start()
+      bestSol shouldEqual optimalMakespan
     }
   }
 
@@ -150,7 +189,10 @@ abstract class SchedulingSearchSuite(seed: Int, scalable: Boolean) extends TestS
     for (i <- 1 to 10) {
 
       // Data
-      val activitySolution = Array.tabulate(capacity)(i => splitRectangle(0, optimalMakespan, minWidth, maxRecursiveSplits)).flatten
+      val activitySolution = splitRectangle(optimalMakespan, capacity,5).toArray
+      val nActivities = activitySolution.length
+      val durations = activitySolution.map(a => a._1)
+      val demands = activitySolution.map(a => a._2)      
       val nTasks = activitySolution.length
       val durationsData = activitySolution.map(a => a._2 - a._1)
       
@@ -168,7 +210,7 @@ abstract class SchedulingSearchSuite(seed: Int, scalable: Boolean) extends TestS
         val demandVars = Array.fill(nTasks)(CPIntVar(1))
         val makespan = maximum(endVars)
 
-        add(maxCumulativeResource(startVars, durationVars, endVars, demandVars, CPIntVar(capacity)))
+        add(maxCumulativeResource(startVars, durationVars, endVars, demandVars, CPIntVar(capacity)), Medium)
 
         minimize(makespan)
         search { searchHeuristic(startVars, durationVars, endVars, i => -endVars(i).min) }
