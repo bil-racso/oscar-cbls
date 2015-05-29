@@ -38,7 +38,7 @@ import oscar.cbls.search.core.EasyNeighborhood
 case class Swap(nodesPrecedingNodesToMove:()=>Iterable[Int],
            relevantNeighbors:()=>Int=>Iterable[Int],
            val vrp: VRP with PositionInRouteAndRouteNr,
-           neighborhoodName:String,
+           neighborhoodName:String = null,
            val best:Boolean = false,
            val hotRestart:Boolean = true) extends EasyRoutingNeighborhood(best,vrp,neighborhoodName) {
 

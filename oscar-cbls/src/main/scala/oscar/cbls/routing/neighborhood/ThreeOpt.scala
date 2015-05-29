@@ -43,7 +43,7 @@ import oscar.cbls.search.algo.HotRestart
 case class ThreeOpt(potentialInsertionPoints:()=>Iterable[Int],
                     relevantNeighbors:()=>Int=>Iterable[Int],
                     vrp: VRP with PositionInRouteAndRouteNr,
-                    neighborhoodName:String,
+                    neighborhoodName:String = null,
                     best:Boolean = false,
                     hotRestart:Boolean = true,
                     KKIterationScheme:Boolean = true) extends EasyRoutingNeighborhood(best,vrp,neighborhoodName) {
