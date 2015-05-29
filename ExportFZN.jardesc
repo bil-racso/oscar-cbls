@@ -14,7 +14,7 @@
         <javaElement handleIdentifier="=oscar/oscar-cbls\/src\/main\/scala&lt;oscar.cbls.invariants.core.algo.set"/>
         <javaElement handleIdentifier="=oscar/oscar-cbls\/src\/main\/scala&lt;oscar.cbls.scheduling"/>
         <javaElement handleIdentifier="=oscar/oscar-cbls\/src\/main\/scala&lt;oscar.cbls.invariants.lib"/>
-        <javaElement handleIdentifier="=oscar/oscar-cbls\/src\/main\/scala&lt;oscar.cbls.routing.initial"/>
+        <javaElement handleIdentifier="=oscar/oscar-cbls\/src\/main\/scala&lt;oscar.cbls.invariants.core.algo.dll2"/>
         <javaElement handleIdentifier="=oscar/oscar-cbls\/src\/main\/scala&lt;oscar.cbls.constraints.lib.global"/>
         <javaElement handleIdentifier="=oscar/oscar-cbls\/src\/main\/scala&lt;oscar.cbls.invariants.core.algo.dll"/>
         <javaElement handleIdentifier="=oscar/oscar-cbls\/src\/main\/scala&lt;oscar.cbls.constraints.lib.basic"/>
@@ -24,7 +24,6 @@
         <javaElement handleIdentifier="=oscar/oscar-cbls\/src\/main\/scala&lt;oscar.cbls.constraints.core"/>
         <javaElement handleIdentifier="=oscar/oscar-cbls\/src\/main\/scala&lt;oscar.cbls.modeling"/>
         <javaElement handleIdentifier="=oscar/oscar-cbls\/src\/main\/scala&lt;oscar.cbls.binPacking.solver"/>
-        <javaElement handleIdentifier="=oscar/oscar-cbls\/src\/main\/scala&lt;oscar.cbls.routing.neighborhood2"/>
         <javaElement handleIdentifier="=oscar/oscar-cbls\/src\/main\/scala&lt;oscar.cbls.search.move"/>
         <javaElement handleIdentifier="=oscar/oscar-cbls\/src\/main\/scala&lt;oscar.cbls.invariants.lib.numeric"/>
         <javaElement handleIdentifier="=oscar/oscar-fzn\/src\/main\/scala"/>
@@ -36,6 +35,7 @@
         <javaElement handleIdentifier="=oscar/oscar-cbls\/src\/main\/scala&lt;oscar.cbls.routing.model"/>
         <javaElement handleIdentifier="=oscar/oscar-cbls\/src\/main\/scala&lt;oscar.cbls.search.algo"/>
         <javaElement handleIdentifier="=oscar/oscar-cbls\/src\/main\/scala&lt;oscar.cbls.binPacking"/>
+        <javaElement handleIdentifier="=oscar/oscar-cbls\/src\/main\/scala&lt;oscar.cbls.invariants.core.algo.quick"/>
         <javaElement handleIdentifier="=oscar/oscar-cbls\/src\/main\/scala&lt;oscar.cbls.binPacking.model"/>
         <javaElement handleIdentifier="=oscar/oscar-cbls\/src\/main\/scala&lt;oscar.cbls.scheduling.solver{SchedulingNeighborhoods.scala"/>
         <javaElement handleIdentifier="=oscar/oscar-cbls\/src\/main\/scala&lt;oscar.cbls.search.core"/>
