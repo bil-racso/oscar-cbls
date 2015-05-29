@@ -50,9 +50,9 @@ extends Constraint(capacity.store, name) {
   final def smax: Array[Int] = sMax
   final def emin: Array[Int] = eMin
   final def emax: Array[Int] = eMax
-  final def dmin: Array[Int] = dMax
+  final def dmin: Array[Int] = dMin
   final def dmax: Array[Int] = dMax
-  final def hmin: Array[Int] = hMax
+  final def hmin: Array[Int] = hMin
   final def hmax: Array[Int] = hMax
   final def required: Array[Boolean] = requiredTasks
   final def possible: Array[Boolean] = possibleTasks
