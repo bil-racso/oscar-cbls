@@ -46,7 +46,6 @@ object WarehouseLocation extends App with AlgebraTrait{
   neighborhood.doAllMoves(_ >= W+D, obj)
 
   println(openWarehouses)
+  println()
   println(neighborhood.statistics)
-
-  println(neighborhood)
 }

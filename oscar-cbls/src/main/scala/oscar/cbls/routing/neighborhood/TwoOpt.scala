@@ -41,7 +41,7 @@ case class TwoOpt(predecesorOfFirstMovedPoint:()=>Iterable[Int],
                   vrp: VRP with PositionInRouteAndRouteNr,
                   neighborhoodName:String = null,
                   best:Boolean = false,
-                  hotRestart:Boolean = true) extends EasyRoutingNeighborhood(best,vrp) {
+                  hotRestart:Boolean = true) extends EasyRoutingNeighborhood(best,vrp,neighborhoodName) {
 
   //the indice to start with for the exploration
   var startIndice: Int = 0

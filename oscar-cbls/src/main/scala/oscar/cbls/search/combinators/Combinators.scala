@@ -1052,7 +1052,10 @@ case class Statistics(a:Neighborhood,ignoreInitialObj:Boolean = false)extends Ne
     }
   }
 
-  override def collectStatistics: String = padToLength("" + a,20) + padToLength("" + nbCalls,8) + padToLength("" + nbFound,8) + padToLength("" + totalGain,10) + totalTimeSpent
+  def gainPerCall:Int = totalGain / nbCalls
+  def callDuration = totalTimeSpent / nbCalls
+
+  override def collectStatistics: String = padToLength("" + a,20) + padToLength("" + nbCalls,8) + padToLength("" + nbFound,8) + padToLength("" + totalGain,10) + padToLength("" + totalTimeSpent,14) + padToLength("" + gainPerCall,12) + callDuration
 
   private def padToLength(s: String, l: Int) = (s + nStrings(l, " ")).substring(0, l)
   private def nStrings(n: Int, s: String): String = if (n <= 0) "" else s + nStrings(n - 1, s)
@@ -1064,5 +1067,5 @@ case class Statistics(a:Neighborhood,ignoreInitialObj:Boolean = false)extends Ne
 object Statistics{
   private def padToLength(s: String, l: Int) = (s + nStrings(l, " ")).substring(0, l)
   private def nStrings(n: Int, s: String): String = if (n <= 0) "" else s + nStrings(n - 1, s)
-  def statisticsHeader = padToLength("Neighborhood",20) + "nbCalls nbFound totalGain totalTime(ms)"
+  def statisticsHeader = padToLength("Neighborhood",20) + "nbCalls nbFound totalGain totalTime(ms) gainPerCall callDuration"
 }

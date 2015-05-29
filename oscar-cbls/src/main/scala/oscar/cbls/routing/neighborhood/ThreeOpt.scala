@@ -46,7 +46,7 @@ case class ThreeOpt(potentialInsertionPoints:()=>Iterable[Int],
                     neighborhoodName:String = "ThreeOptNeighborhood",
                     best:Boolean = false,
                     hotRestart:Boolean = true,
-                    KKIterationScheme:Boolean = true) extends EasyRoutingNeighborhood(best,vrp) {
+                    KKIterationScheme:Boolean = true) extends EasyRoutingNeighborhood(best,vrp,neighborhoodName) {
 
   val REVERSE = true // this is a constant used for readability
 
@@ -97,7 +97,6 @@ case class ThreeOpt(potentialInsertionPoints:()=>Iterable[Int],
       }
     }
   }
-
 
   /**
    * @param l a list

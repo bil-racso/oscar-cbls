@@ -40,7 +40,7 @@ case class Swap(nodesPrecedingNodesToMove:()=>Iterable[Int],
            val vrp: VRP with PositionInRouteAndRouteNr,
            val neighborhoodName:String = "SwapNeighborhood",
            val best:Boolean = false,
-           val hotRestart:Boolean = true) extends EasyRoutingNeighborhood(best,vrp) {
+           val hotRestart:Boolean = true) extends EasyRoutingNeighborhood(best,vrp,neighborhoodName) {
 
   //the indice to start with for the exploration
   var startIndice:Int = 0

@@ -52,7 +52,7 @@ case class InsertPoint(unroutedNodesToInsert: () => Iterable[Int],
                        neighborhoodName: String = null,
                        best: Boolean = false,
                        hotRestart: Boolean = true,
-                       nodeSymmetryClass:Option[Int => Int] = None) extends EasyRoutingNeighborhood(best, vrp) {
+                       nodeSymmetryClass:Option[Int => Int] = None) extends EasyRoutingNeighborhood(best, vrp, neighborhoodName) {
 
   //the indice to start with for the exploration
   var startIndice: Int = 0

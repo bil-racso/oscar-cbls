@@ -38,7 +38,7 @@ case class RemovePoint(predecessorsOfRoutedPointsToRemove:()=>Iterable[Int],
                        vrp: VRP,
                        neighborhoodName:String = "RemovePoint",
                        best:Boolean = false,
-                       hotRestart:Boolean = true) extends EasyRoutingNeighborhood(best,vrp) {
+                       hotRestart:Boolean = true) extends EasyRoutingNeighborhood(best,vrp, neighborhoodName) {
 
   //the indice to start with for the exploration
   var startIndice: Int = 0
