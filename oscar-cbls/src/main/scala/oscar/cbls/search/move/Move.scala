@@ -48,7 +48,7 @@ abstract class Move(val objAfter:Int = Int.MaxValue, val neighborhoodName:String
    */
   def objToString:String = if(objAfter == Int.MaxValue) "" else "; objAfter:" +objAfter
 
-  protected def neighborhoodNameToString:String = if (neighborhoodName != null) neighborhoodName + ": " else ""
+  protected def neighborhoodNameToString:String = if (neighborhoodName != null) neighborhoodName + ":" else ""
 
   /** this performs the move, evaluates he objective function, and backtracks the move
     *notice that the objAfter is supposed to carry the proper value, so you generally do not need to call this

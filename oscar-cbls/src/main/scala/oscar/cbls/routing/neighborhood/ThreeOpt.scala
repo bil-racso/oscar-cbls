@@ -43,10 +43,10 @@ import oscar.cbls.search.algo.HotRestart
 case class ThreeOpt(potentialInsertionPoints:()=>Iterable[Int],
                     relevantNeighbors:()=>Int=>Iterable[Int],
                     vrp: VRP with PositionInRouteAndRouteNr,
-                    neighborhoodName:String = "ThreeOptNeighborhood",
+                    neighborhoodName:String = null,
                     best:Boolean = false,
                     hotRestart:Boolean = true,
-                    KKIterationScheme:Boolean = true) extends EasyRoutingNeighborhood(best,vrp) {
+                    KKIterationScheme:Boolean = true) extends EasyRoutingNeighborhood(best,vrp,neighborhoodName) {
 
   val REVERSE = true // this is a constant used for readability
 
@@ -97,7 +97,6 @@ case class ThreeOpt(potentialInsertionPoints:()=>Iterable[Int],
       }
     }
   }
-
 
   /**
    * @param l a list
@@ -202,7 +201,7 @@ case class ThreeOpt(potentialInsertionPoints:()=>Iterable[Int],
 
     (moveRequested(bestObjAfter)
       && submitFoundMove(ThreeOptMove(beforeStart, segEndPoint, insertionPoint,
-      !FirstMoveIsBestMove, bestObjAfter, this, this.neighborhoodName)))
+      !FirstMoveIsBestMove, bestObjAfter, this, neighborhoodNameToString)))
   }
 
   //this resets the internal state of the Neighborhood

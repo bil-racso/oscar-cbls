@@ -32,7 +32,7 @@ abstract class VRPMove(override val objAfter: Int,
  * describes moves in a spart way by use of segments
  * @author renaud.delandtsheer@cetic.be
  */
-abstract class EasyRoutingNeighborhood(best:Boolean, vrp:VRP) extends EasyNeighborhood(best) {
+abstract class EasyRoutingNeighborhood(best:Boolean, vrp:VRP, neighborhoodName:String) extends EasyNeighborhood(best,neighborhoodName) {
   private var Recording = true //recording ou comitted
   protected def isRecording = Recording
   protected def noMoveRecorded = affects.isEmpty

@@ -96,7 +96,7 @@ abstract class MiaxArray(vars: Array[IntValue], cond: SetValue, default: Int)
   extends IntInvariant with Bulked[IntValue, Domain] with VaryingDependencies {
 
   var keyForRemoval: Array[KeyForElementRemoval] = new Array(vars.length)
-  var h: BinomialHeapWithMoveExtMem[Int] = new BinomialHeapWithMoveExtMem[Int](i => Ord(vars(i)), vars.size, new ArrayMap(vars.size))
+  var h: BinomialHeapWithMoveExtMem[Int] = new BinomialHeapWithMoveExtMem[Int](i => Ord(vars(i)), vars.length, new ArrayMap(vars.length))
 
   if (cond != null) {
     registerStaticDependency(cond)
@@ -219,7 +219,7 @@ case class MaxConstArray(varss: Array[Int], ccond: SetValue, default: Int = Int.
 abstract class MiaxConstArray(vars: Array[Int], cond: SetValue, default: Int)
   extends IntInvariant{
 
-  var h: BinomialHeapWithMoveExtMem[Int] = new BinomialHeapWithMoveExtMem[Int](i => Ord(vars(i)), vars.size, new ArrayMap(vars.size))
+  var h: BinomialHeapWithMoveExtMem[Int] = new BinomialHeapWithMoveExtMem[Int](i => Ord(vars(i)), vars.length, new ArrayMap(vars.length))
 
   registerStaticAndDynamicDependency(cond)
   finishInitialization()

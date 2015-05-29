@@ -36,9 +36,9 @@ import oscar.cbls.search.algo.HotRestart
  */
 case class RemovePoint(predecessorsOfRoutedPointsToRemove:()=>Iterable[Int],
                        vrp: VRP,
-                       neighborhoodName:String = "RemovePoint",
+                       neighborhoodName:String,
                        best:Boolean = false,
-                       hotRestart:Boolean = true) extends EasyRoutingNeighborhood(best,vrp) {
+                       hotRestart:Boolean = true) extends EasyRoutingNeighborhood(best,vrp, neighborhoodName) {
 
   //the indice to start with for the exploration
   var startIndice: Int = 0
@@ -62,7 +62,7 @@ case class RemovePoint(predecessorsOfRoutedPointsToRemove:()=>Iterable[Int],
       val newObj = evalObjOnEncodedMove()
 
       if (moveRequested(newObj)
-        && submitFoundMove(RemovePointMove(beforeRemovedPoint, newObj, this, neighborhoodName))) {
+        && submitFoundMove(RemovePointMove(beforeRemovedPoint, newObj, this, neighborhoodNameToString))) {
         startIndice = beforeRemovedPoint + 1
         return
       }

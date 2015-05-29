@@ -49,7 +49,6 @@ case class AssignNeighborhood(vars:Array[CBLSIntVar],
   var startIndice:Int = 0
 
   override def exploreNeighborhood() {
-    if (amIVerbose) println(name + ": trying")
 
     val iterationSchemeOnZone =
       if (searchZone == null) {
@@ -137,7 +136,6 @@ case class SwapsNeighborhood(vars:Array[CBLSIntVar],
   //the indice to start with for the exploration
   var startIndice:Int = 0
   override def exploreNeighborhood(){
-    if (amIVerbose) println(name + ": trying")
 
     val firstIterationSchemeZone =
       if (searchZone1 == null) {
@@ -174,8 +172,6 @@ case class SwapsNeighborhood(vars:Array[CBLSIntVar],
              && secondVar.domain.contains(oldValOfFirstVar)
              && firstVar.domain.contains(oldValOfSecondVar)) {
 
-        if (amIVerbose) println(name + ": trying " + firstVar + ":=:" + secondVar)
-
         val newObj = obj.swapVal(firstVar,secondVar)
 
         if (moveRequested(newObj) && submitFoundMove(SwapMove(firstVar, secondVar, newObj, name))) {
@@ -193,7 +189,9 @@ case class SwapsNeighborhood(vars:Array[CBLSIntVar],
 }
 
 /**
- * will randomize the array, typically to get out of a local minimal
+ * Will randomize the array, typically to get out of a local minimal
+ * This will not consider the objective function, even if it includes some strong constraints
+ *
  *
  * @param vars an array of [[oscar.cbls.invariants.core.computation.CBLSIntVar]] defining the search space
  * @param degree the number of variables to change randomly
@@ -235,6 +233,7 @@ case class RandomizeNeighborhood(vars:Array[CBLSIntVar],
 
 /**
  * will randomize the array, by performing swaps only.
+ * This will not consider the objective function, even if it includes some strong constraints
  *
  * @param vars an array of [[oscar.cbls.invariants.core.computation.CBLSIntVar]] defining the search space
  * @param degree the number of variables to change randomly

@@ -143,36 +143,7 @@ class VRP(val N: Int, val V: Int, val m: Store) {
   }
 }
 
-/**
- * @author renaud.delandtsheer@cetic.be
- * @author Florent Ghilain (UMONS)
- */
-trait VRPObjective extends VRP {
 
-  val objectiveFunction = CBLSIntVar(m, 0, FullRange, "objective of VRP")
-  m.registerForPartialPropagation(objectiveFunction)
-
-  var objectiveFunctionTerms: List[IntValue] = List.empty
-
-  /** adds a term top the objective function*/
-  def addObjectiveTerm(o: IntValue) {
-    objectiveFunctionTerms = o :: objectiveFunctionTerms
-  }
-
-  m.addToCallBeforeClose(() => closeObjectiveFunction)
-
-  /**
-   * This finished the accumulation of terms in the objective unction.
-   * You should not call this, actually.
-   * it is called by the model on close
-   */
-  def closeObjectiveFunction() {
-    if (objectiveFunctionTerms.isEmpty) throw new Error("you have set an Objective function to your VRP, but did not specify any term for it, call vrp.addObjectiveTerm, or add an objective trait to your VRP")
-    objectiveFunction <== Sum(objectiveFunctionTerms)
-  }
-
-  def getObjective(): Int = objectiveFunction.value
-}
 
 /**
  * Maintains the set of routed and unrouted nodes.
@@ -383,16 +354,7 @@ trait HopDistance extends VRP {
   def getHop(from: Int, to: Int): Int = distanceFunction(from, to)
 }
 
-/**
- * Declares an objective function, attached to the VRP.
- * It maintains it equal to the hop distance in the VRP,
- * based either on a matrix, or on another mechanism defined by the distance function.
- * @author renaud.delandtsheer@cetic.be
- * @author Florent Ghilain (UMONS)
- */
-trait HopDistanceAsObjectiveTerm extends VRPObjective with HopDistance {
-  addObjectiveTerm(overallDistance)
-}
+
 
 /**
  * Maintains the set of nodes reached by each vehicle
@@ -596,50 +558,3 @@ trait Predecessors extends VRP {
   val preds: Array[IntValue] = Predecessor(next, V).preds
 }
 
-/**
- * This trait maintains strong constraints system.
- * @author renaud.delandtsheer@cetic.be
- */
-trait StrongConstraints extends VRPObjective {
-  /**
-   * the strong constraints system.
-   */
-  var strongConstraints = ConstraintSystem(m)
-
-  override def getObjective(): Int =
-    (if (!strongConstraints.isTrue) Int.MaxValue else objectiveFunction.value)
-}
-
-/**
- * This trait maintains an additional strong constraints system.
- * the e purpose is that this constraint system will be tested first for
- * truth value, and the primary one of the StrongConstraints trait will only be queried for truth value
- * if this additonnal constraint system is not violated
- * the proper way to use it in order to get a speedup is to put the constraints
- * that can be checked quickly in the strongConstraintsFast
- * and to keep all the other ones in the strongCon.
- *
- * @author renaud.delandtsheer@cetic.be
- */
-trait StrongConstraintsFast extends StrongConstraints {
-  /**
-   * the strong constraints system.
-   */
-  var strongConstraintsFast = ConstraintSystem(m)
-
-  override def getObjective(): Int =
-    (if (!strongConstraintsFast.isTrue) Int.MaxValue else super.getObjective())
-}
-
-/**
- * This trait maintains weak constraints system.
- * @author renaud.delandtsheer@cetic.be
- */
-trait WeakConstraints extends VRPObjective {
-  /**
-   * the weak constraints system.
-   */
-  val weakConstraints = ConstraintSystem(m)
-
-  this.addObjectiveTerm(weakConstraints.violation)
-}

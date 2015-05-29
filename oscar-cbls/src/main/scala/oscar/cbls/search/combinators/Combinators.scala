@@ -18,6 +18,7 @@ package oscar.cbls.search.combinators
 
 import oscar.cbls.invariants.core.computation.{ Store, IntValue, SetValue }
 import oscar.cbls.objective.{ CascadingObjective, Objective }
+import oscar.cbls.search.StopWatch
 import oscar.cbls.search.core.{ NoMoveFound, _ }
 import oscar.cbls.search.move.{ CallBackMove, CompositeMove, InstrumentedMove, Move }
 
@@ -41,6 +42,8 @@ abstract class NeighborhoodCombinator(a: Neighborhood*) extends Neighborhood {
   }
 
   override def toString: String = this.getClass.getSimpleName + "(" + a.mkString(",") + ")"
+
+  override def collectStatistics: String = a.map(_.collectStatistics).mkString("\n")
 }
 
 class BasicSaveBest(a: Neighborhood, o: Objective) extends NeighborhoodCombinator(a) {
@@ -325,27 +328,24 @@ class Exhaust(a: Neighborhood, b: Neighborhood) extends NeighborhoodCombinator(a
  * retries n times the move before concluding to noMove can be found
  * resets on the first found move, or on reset
  * @param a the neighborhood on which we will perform retries
- * @param n the maximal number of retries on a before concluding it is dead
+ * @param cond condition that takes the number of consecutive NoMoveFound, and says if we should try again returns true if yes, false otherwise
  * @author renaud.delandtsheer@cetic.be
  * @author yoann.guyot@cetic.be
  */
-class Retry(a: Neighborhood, n: Int, cond: () => Boolean) extends NeighborhoodCombinator(a) {
-  var remainingTries = n
-  var countRetries = false
+class Retry(a: Neighborhood, cond: Int => Boolean) extends NeighborhoodCombinator(a) {
+  var consecutiveFails = 0
   override def getMove(obj: Objective, acceptanceCriteria: (Int, Int) => Boolean): SearchResult = {
     a.getMove(obj, acceptanceCriteria) match {
       case NoMoveFound =>
-        countRetries = countRetries || cond()
-        if (countRetries) {
-          remainingTries -= 1
-          if (remainingTries == 0) {
-            super.reset()
-            NoMoveFound
-          } else this.getMove(obj, acceptanceCriteria)
-        } else this.getMove(obj, acceptanceCriteria)
+        consecutiveFails = consecutiveFails + 1
+        if (cond(consecutiveFails)) {
+          a.reset()
+          getMove(obj, acceptanceCriteria)
+        } else {
+          NoMoveFound
+        }
       case x =>
-        countRetries = countRetries || cond()
-        remainingTries = n
+        consecutiveFails = 0
         x
     }
   }
@@ -353,7 +353,7 @@ class Retry(a: Neighborhood, n: Int, cond: () => Boolean) extends NeighborhoodCo
   //this resets the internal state of the move combinators
   override def reset() {
     super.reset()
-    remainingTries = n
+    consecutiveFails = 0
   }
 }
 
@@ -709,6 +709,8 @@ class AndThen(a: Neighborhood, b: Neighborhood, maximalIntermediaryDegradation: 
 
     class InstrumentedObjective() extends Objective {
 
+      override def detailedString(short: Boolean, indent: Int = 0): String = nSpace(indent) + "AndThenInstrumentedObjective(initialObjective:" + obj.detailedString(short) + ")"
+
       override def model = obj.model
 
       override def value: Int = {
@@ -835,8 +837,13 @@ class Name(a: Neighborhood, val name: String) extends NeighborhoodCombinator(a) 
 /**
  * tis combinator overrides the acceptance criterion given to the whole neighborhood
  * this can be necessary if you have a neighborhood with some phases only including simulated annealing
+ * notice that the actual acceptance criteria is the one that you give,
+ * with a slight modification: it will reject moves that lead to MaxInt, except if we are already at MaxInt.
+ * Since MaxInt is used to represent that a strong constraint is violated, we cannot tolerate such moves at all.
  * @param a the neighborhood
- * @param overridingAcceptanceCriterion the acceptance criterion that is used instead of the one given to the overall sear
+ * @param overridingAcceptanceCriterion the acceptance criterion that is used instead of the one given to the overall search
+ *                                      with the addition that moves leading to MaxInt will be rejected anyway, except if we are already at MaxInt
+ *
  */
 class WithAcceptanceCriterion(a: Neighborhood, overridingAcceptanceCriterion: (Int, Int) => Boolean) extends NeighborhoodCombinator(a) {
   /**
@@ -844,7 +851,7 @@ class WithAcceptanceCriterion(a: Neighborhood, overridingAcceptanceCriterion: (I
    * @return an improving move
    */
   override def getMove(obj: Objective, acceptanceCriterion: (Int, Int) => Boolean): SearchResult = a.getMove(obj,
-    (a, b) => (a == Int.MaxValue || b != Int.MaxValue) && overridingAcceptanceCriterion(a,b))
+    (a, b) => (a == Int.MaxValue || b != Int.MaxValue) && overridingAcceptanceCriterion(a, b))
 }
 
 /**
@@ -899,6 +906,8 @@ case class Atomic(a: Neighborhood, name: String = "Atomic", bound: Int = Int.Max
   override def getMove(obj: Objective, acceptanceCriterion: (Int, Int) => Boolean = (oldObj, newObj) => oldObj > newObj): SearchResult = {
     CallBackMove(() => a.doAllMoves(_ > bound, obj, acceptanceCriterion), Int.MaxValue, this.getClass.getSimpleName, () => ("Atomic(" + a + ")"))
   }
+
+  override def collectStatistics: String = a.collectStatistics
 }
 
 /**
@@ -1008,4 +1017,65 @@ class OverrideObjective(a: Neighborhood, overridingObjective: Objective) extends
    * @return
    */
   override def getMove(obj: Objective, acceptanceCriterion: (Int, Int) => Boolean): SearchResult = getMove(overridingObjective, acceptanceCriterion)
+}
+
+case class Statistics(a:Neighborhood,ignoreInitialObj:Boolean = false)extends NeighborhoodCombinator(a){
+
+  var nbCalls = 0
+  var nbFound = 0
+  var totalGain = 0
+  var totalTimeSpent: Long = 0
+
+  /**
+   * the method that returns a move from the neighborhood.
+   * The returned move should typically be accepted by the acceptance criterion over the objective function.
+   * Some neighborhoods are actually jumps, so that they might violate this basic rule however.
+   * @param obj the objective function. notice that it is actually a function. if you have an [[oscar.cbls.objective.Objective]] there is an implicit conversion available
+   * @param acceptanceCriterion
+   * @return
+   */
+  override def getMove(obj: Objective, acceptanceCriterion: (Int, Int) => Boolean): SearchResult = {
+
+    nbCalls += 1
+    val oldObj = obj.value
+    val startTime = System.currentTimeMillis
+
+    a.getMove(obj, acceptanceCriterion) match {
+      case NoMoveFound =>
+        totalTimeSpent += System.currentTimeMillis - startTime
+        NoMoveFound
+      case m: MoveFound =>
+        totalTimeSpent += System.currentTimeMillis - startTime
+        nbFound += 1
+        if (!ignoreInitialObj || nbCalls > 1) totalGain += oldObj - m.objAfter
+        m
+    }
+  }
+
+  def gainPerCall:String = if(nbCalls ==0) "NA" else ("" + totalGain / nbCalls)
+  def callDuration:String = if(nbCalls == 0 ) "NA" else ("" + totalTimeSpent / nbCalls)
+  //gain in obj/100ms
+  def slope:String = if(totalTimeSpent == 0) "NA" else ("" + ((100 * totalGain) / totalTimeSpent).toInt)
+
+  override def collectStatistics: String =
+    padToLength("" + a,20) +
+      padToLength("" + nbCalls,8) +
+      padToLength("" + nbFound,8) +
+      padToLength("" + totalGain,10) +
+      padToLength("" + totalTimeSpent,14) +
+      padToLength("" + gainPerCall,12) +
+      padToLength("" + callDuration,17)+
+      slope
+
+  private def padToLength(s: String, l: Int) = (s + nStrings(l, " ")).substring(0, l)
+  private def nStrings(n: Int, s: String): String = if (n <= 0) "" else s + nStrings(n - 1, s)
+
+  override def toString: String = "Statistics(" + a + " nbCalls:" + nbCalls + " nbFound:" + nbFound + " totalGain:" + totalGain + " totalTimeSpent " + totalTimeSpent + " ms" + ")"
+
+}
+
+object Statistics{
+  private def padToLength(s: String, l: Int) = (s + nStrings(l, " ")).substring(0, l)
+  private def nStrings(n: Int, s: String): String = if (n <= 0) "" else s + nStrings(n - 1, s)
+  def statisticsHeader = padToLength("Neighborhood",20) + "nbCalls nbFound totalGain totalTime(ms) gainPerCall callDuration(ms) slope(-D obj/100ms)"
 }

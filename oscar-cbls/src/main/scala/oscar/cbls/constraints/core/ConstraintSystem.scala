@@ -70,11 +70,14 @@ case class ConstraintSystem(model:Store) extends Constraint with Objective{
   private var VarInConstraints:List[AbstractVariable] = List.empty
   private var VarsWatchedForViolation:List[AbstractVariable] = List.empty
 
-  override def toString = {
-    val constraints = PostedConstraints.map(_._1)
-    val sortedConstraints = constraints.sortBy(c => c.violation.value)
-    val sortedConstraintsStrings = sortedConstraints.map(c => "" + c.violation + " " + c)
-    "ConstraintSystem{" + this.Violation + "\n " + sortedConstraintsStrings.mkString("\n  ") + "}\n"
+  override def detailedString(short: Boolean, indent:Int = 0): String = {
+    val displayedConstraints = (if(short) violatedConstraints
+      else PostedConstraints.map(_._1)).sortBy(c => c.violation.value).map(c => c + " " + "viol:" + c.violation.value)
+
+    val constraintExplanationString = if(short) "violated constraints" else "all constraints"
+
+    "ConstraintSystem(" + this.Violation + " " + constraintExplanationString + ":\n" +
+      nSpace(indent+4) + displayedConstraints.mkString("\n" + nSpace(indent+4)) + "\n" + nSpace(indent) + ")"
   }
 
   /**
@@ -163,9 +166,11 @@ case class ConstraintSystem(model:Store) extends Constraint with Objective{
       }
       model.registerForPartialPropagation(Violation)
 
-      aggregateLocalViolations()
-      PropagateLocalToGlobalViolations()
-      aggregateGlobalViolations()
+      if(VarsWatchedForViolation.nonEmpty) {
+        aggregateLocalViolations()
+        PropagateLocalToGlobalViolations()
+        aggregateGlobalViolations()
+      }
     }
   }
   

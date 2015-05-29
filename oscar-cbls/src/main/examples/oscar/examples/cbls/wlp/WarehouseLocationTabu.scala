@@ -1,13 +1,14 @@
-package oscar.examples.cbls
+package oscar.examples.cbls.wlp
 
-import oscar.cbls.invariants.core.computation.{CBLSIntConst, CBLSIntVar, IntValue, Store}
+import oscar.cbls.invariants.core.computation.{CBLSIntConst, CBLSIntVar, Store}
 import oscar.cbls.invariants.lib.logic.{Filter, SelectLESetQueue}
-import oscar.cbls.invariants.lib.minmax.{MinConstArray, Min, MinArray}
+import oscar.cbls.invariants.lib.minmax.MinConstArray
 import oscar.cbls.invariants.lib.numeric.Sum
 import oscar.cbls.modeling.AlgebraTrait
 import oscar.cbls.objective.Objective
 import oscar.cbls.search.AssignNeighborhood
 import oscar.cbls.search.move.Move
+
 import scala.language.postfixOps
 
 /**
@@ -24,35 +25,11 @@ object WarehouseLocationTabu extends App with AlgebraTrait{
   //the number of delivery points
   val D:Int = 150
 
-  val tabuTenure = W/3
-
-  println("WarehouseLocationTabu(W:" + W + ", D:" + D + ")")
-
+  println("WarehouseLocation(W:" + W + ", D:" + D + ")")
   //the cost per delivery point if no location is open
   val defaultCostForNoOpenWarehouse = 10000
 
-  // we put the locations randomly on a square map
-  val minXY = 0
-  val maxXY = 100
-  val side = maxXY - minXY
-
-  val weightingForOpeningWarehouseCost = 3
-
-  val costForOpeningWarehouse:Array[CBLSIntConst] = Array.tabulate(W)(
-    w => (math.random * side * weightingForOpeningWarehouseCost).toInt)
-
-  //we generate te cost distance matrix
-  def randomXY:Int = (minXY + (math.random * side)).toInt
-  def randomPosition = (randomXY,randomXY)
-  val warehousePositions:Array[(Int,Int)] = Array.tabulate(W)(w => randomPosition)
-  val deliveryPositions:Array[(Int,Int)] = Array.tabulate(D)(d => randomPosition)
-  def distance(from:(Int,Int), to:(Int, Int)) =
-    math.sqrt(math.pow(from._1 - to._1,2) + math.pow(from._2 - to._2,2)).toInt
-
-  //for each delivery point, the distance to each warehouse
-  val distanceCost = Array.tabulate(D)(
-    d => Array.tabulate(W)(
-      w => distance(warehousePositions(w), deliveryPositions(d))))
+  val (costForOpeningWarehouse,distanceCost) = WarehouseLocationGenerator.apply(W,D,0,100,3)
 
   val m = Store()
 
@@ -69,8 +46,7 @@ object WarehouseLocationTabu extends App with AlgebraTrait{
   val distanceToNearestOpenWarehouse = Array.tabulate(D)(d =>
     MinConstArray(distanceCost(d), openWarehouses, defaultCostForNoOpenWarehouse).setName("distance_for_delivery_" + d))
 
-  val obj = Objective(Sum(distanceToNearestOpenWarehouse)
-    + Sum(costForOpeningWarehouse, openWarehouses))
+  val obj = Objective(Sum(distanceToNearestOpenWarehouse) + Sum(costForOpeningWarehouse, openWarehouses))
 
   // we handle the tabu through invariants.
   // notice that they are completely dissociated from the rest of the model in this case.
@@ -85,6 +61,7 @@ object WarehouseLocationTabu extends App with AlgebraTrait{
   // *the update of the tabu and iteration count
   // *the stop criterion based on maxMoves since last improvement over obj
   // *the protection of the objectiveFunction
+  val tabuTenure = 3
   val switchWithTabuNeighborhood = (AssignNeighborhood(warehouseOpenArray, "SwitchWarehouseTabu",
     searchZone = nonTabuWarehouses, best = true)
     beforeMove((mo:Move) => {

@@ -40,7 +40,7 @@ import oscar.cbls.invariants.core.computation.Value
  * @author Jean-Noël Monette 
  */
 case class Disjunctive(start: Array[IntValue],
-                      duration: Array[Int]) extends Constraint with Invariant{
+                      duration: Array[Int]) extends Invariant with Constraint{
 //TODO: Make duration also a var
   
   registerStaticAndDynamicDependencyArrayIndex(start)

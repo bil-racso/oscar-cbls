@@ -39,9 +39,9 @@ import oscar.cbls.search.algo.HotRestart
 case class TwoOpt(predecesorOfFirstMovedPoint:()=>Iterable[Int],
                   relevantNeighbors:()=>Int=>Iterable[Int],
                   vrp: VRP with PositionInRouteAndRouteNr,
-                  neighborhoodName:String = "TwoOptNeighborhood",
+                  neighborhoodName:String = null,
                   best:Boolean = false,
-                  hotRestart:Boolean = true) extends EasyRoutingNeighborhood(best,vrp) {
+                  hotRestart:Boolean = true) extends EasyRoutingNeighborhood(best,vrp,neighborhoodName) {
 
   //the indice to start with for the exploration
   var startIndice: Int = 0
@@ -75,7 +75,7 @@ case class TwoOpt(predecesorOfFirstMovedPoint:()=>Iterable[Int],
         val newObj = evalObjOnEncodedMove()
 
         if (moveRequested(newObj)
-          && submitFoundMove(TwoOptMove(fstPred, sndPred, newObj, this, neighborhoodName))) {
+          && submitFoundMove(TwoOptMove(fstPred, sndPred, newObj, this, neighborhoodNameToString))) {
           startIndice = fstPred + 1
           return
         }

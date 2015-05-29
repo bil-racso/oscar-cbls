@@ -149,14 +149,14 @@ abstract class PropagationStructure(val verbose: Boolean, val checker: Option[Ch
       //identification des composantes connexes
       val storageForTarjan = this.getNodeStorage[TarjanNodeData]
       storageForTarjan.initialize(() => new TarjanNodeData)
-      val StrognlyConnectedComponents: List[List[PropagationElement]] = TarjanWithExternalStorage.getStronlyConnexComponents[PropagationElement](
+      val StrognlyConnectedComponents: List[QList[PropagationElement]] = TarjanWithExternalStorage.getStronlyConnexComponents[PropagationElement](
         getPropagationElements,
         p => p.getStaticallyListeningElements,
         storageForTarjan.get)
       acyclic = true
       StronglyConnexComponentsList = List.empty
-      StrognlyConnectedComponents.map((a: List[PropagationElement]) =>
-        if (a.tail.isEmpty) {
+      StrognlyConnectedComponents.map((a: QList[PropagationElement]) =>
+        if (a.tail == null) {
           a.head
         } else {
           acyclic = false
@@ -168,7 +168,7 @@ abstract class PropagationStructure(val verbose: Boolean, val checker: Option[Ch
         })
     }
 
-    buildFastPropagationTracks()
+    addFastPropagationTracks()
 
     //this performs the sort on Propagation Elements that do not belong to a strongly connected component,
     // plus the strongly connected components, considered as a single node. */
@@ -285,19 +285,11 @@ abstract class PropagationStructure(val verbose: Boolean, val checker: Option[Ch
    * if several elements are submitted at the same time,they constitute a target group, which is propagated altogether.
    */
   def registerForPartialPropagation(p: PropagationElement*) {
-    if (this.closed)
+    partialPropagationTargets = QList.buildFromIterable(p) :: partialPropagationTargets
+    if(closed) {
       println("Warning: if you register a variable for partial propagation after model is closed, it is not registered for partial violation (unless it was already done before model close)")
-    else
-      partialPropagationTargets = toQList(p) :: partialPropagationTargets
-  }
-
-  private def toQList[T](i: Iterable[T]): QList[T] = {
-    val it = i.iterator
-    var toReturn: QList[T] = null
-    while (it.hasNext) {
-      toReturn = QList(it.next(), toReturn)
+      addFastPropagationTracks()
     }
-    toReturn
   }
 
   private[this] var previousPropagationTrack: Array[Boolean] = null
@@ -335,13 +327,14 @@ abstract class PropagationStructure(val verbose: Boolean, val checker: Option[Ch
   }
 
   /**Builds and stores the partial propagation tracks*/
-  private def buildFastPropagationTracks() {
+  private def addFastPropagationTracks() {
     for (propagationGroup <- partialPropagationTargets) {
-      val track = BuildFastPropagationTrack(propagationGroup)
-      var currentPos = propagationGroup
-      while (currentPos != null) {
-        fastPropagationTracks += ((currentPos.head, track))
-        currentPos = currentPos.tail
+      val propagationGroupWithoutTrack = QList.buildFromIterable(propagationGroup.filter(!fastPropagationTracks.isDefinedAt(_)))
+      if (propagationGroupWithoutTrack != null) {
+        val track = BuildFastPropagationTrack(propagationGroupWithoutTrack)
+        for (singleTarget <- propagationGroupWithoutTrack) {
+          fastPropagationTracks += ((singleTarget, track))
+        }
       }
     }
   }
@@ -913,7 +906,7 @@ class PropagationElement extends BasicPropagationElement with DAGNode {
   }
 
   protected def initiateDynamicGraphFromSameComponentListened(stronglyConnectedComponentTopologicalSort: StronglyConnectedComponentTopologicalSort) {
-    assert(stronglyConnectedComponentTopologicalSort == schedulingHandler)
+    assert(stronglyConnectedComponentTopologicalSort == mySchedulingHandler)
     //filters the list of staticallyListenedElements
 
     dynamicallyListenedElementsFromSameComponent = staticallyListenedElements.filter(_.schedulingHandler == stronglyConnectedComponentTopologicalSort)
@@ -925,10 +918,10 @@ class PropagationElement extends BasicPropagationElement with DAGNode {
    */
   override def schedulingHandler: SchedulingHandler = mySchedulingHandler
   def schedulingHandler_=(s: SchedulingHandler) { mySchedulingHandler = s }
-  private var mySchedulingHandler: SchedulingHandler = null
+  private[this] var mySchedulingHandler: SchedulingHandler = null
 
-  def propagationStructure: PropagationStructure = if (schedulingHandler == null) null else schedulingHandler.propagationStructure
-  def hasPropagationStructure = schedulingHandler != null
+  def propagationStructure: PropagationStructure = if (mySchedulingHandler == null) null else mySchedulingHandler.propagationStructure
+  def hasPropagationStructure = mySchedulingHandler != null
 
   /**
    * set to true if the PropagationElement is scheduled for propagation, false otherwise.
@@ -997,7 +990,7 @@ class PropagationElement extends BasicPropagationElement with DAGNode {
   override protected[propagation] def registerDynamicallyListeningElement(listening: PropagationElement, i: Any,
                                                                           sccOfListening: StronglyConnectedComponentTopologicalSort,
                                                                           dynamicallyListenedElementDLLOfListening: DelayedPermaFilteredDoublyLinkedList[PropagationElement, PropagationElement]): KeyForElementRemoval = {
-    if (sccOfListening != null && sccOfListening == this.schedulingHandler) {
+    if (sccOfListening != null && sccOfListening == this.mySchedulingHandler) {
       //this is only called once the component is established, so no worries.
       //we must call this before performing the injection to create the waitingDependency in the SCC
       sccOfListening.addDependency(this, listening)
@@ -1023,7 +1016,7 @@ class PropagationElement extends BasicPropagationElement with DAGNode {
   def decrementSucceedingAndAccumulateFront(acc: List[PropagationElement]): List[PropagationElement] = {
     var toreturn = acc
     for (succeeding <- getStaticallyListeningElements) {
-      if (succeeding.schedulingHandler == schedulingHandler.propagationStructure || succeeding.schedulingHandler != this.schedulingHandler) {
+      if (succeeding.schedulingHandler == mySchedulingHandler.propagationStructure || succeeding.schedulingHandler != mySchedulingHandler) {
         //not in the same SCC as us
         toreturn = succeeding.decrementAndAccumulateFront(toreturn)
       }
@@ -1035,7 +1028,7 @@ class PropagationElement extends BasicPropagationElement with DAGNode {
     position -= 1
     if (position == 0) {
       //faut pusher qqchose
-      schedulingHandler match {
+      mySchedulingHandler match {
         case scc: StronglyConnectedComponent =>
           scc.decrementAndAccumulateFront(acc)
         case s: PropagationStructure => this :: acc
@@ -1052,7 +1045,7 @@ class PropagationElement extends BasicPropagationElement with DAGNode {
    */
   def setCounterToPrecedingCount(): Boolean = {
     //le compteur est mis au nombre de noeud precedent qui ne sont pas dans la meme composante connexe
-    schedulingHandler match {
+    mySchedulingHandler match {
       case scc: StronglyConnectedComponent =>
         position = this.getStaticallyListenedElements.count(p => p.schedulingHandler != scc && p.schedulingHandler != null)
       case ps: PropagationStructure =>
@@ -1066,13 +1059,13 @@ class PropagationElement extends BasicPropagationElement with DAGNode {
     assert(schedulingHandler != null, "cannot schedule or propagate element out of propagation structure")
     if (!internalIsScheduled) {
       internalIsScheduled = true
-      schedulingHandler.scheduleForPropagation(this)
+      mySchedulingHandler.scheduleForPropagation(this)
     }
   }
 
   private[core] def rescheduleIfNeeded() {
     if (internalIsScheduled) {
-      schedulingHandler.scheduleForPropagation(this)
+      mySchedulingHandler.scheduleForPropagation(this)
     }
   }
 

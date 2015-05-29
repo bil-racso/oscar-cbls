@@ -25,15 +25,23 @@
 package oscar.cbls.routing.neighborhood
 
 import oscar.cbls.routing.model._
-import oscar.cbls.search.algo.HotRestart
+import oscar.cbls.search.algo.{IdenticalAggregator, HotRestart}
 
 /**
- * Inserts an unrouted point in a route.
- * The search complexity is O(n²).
- *
- * PRE-CONDITIONS:
- * - the relevant neighbors must all be routed,
- * - the primary node iterator must contain only unrouted nodes.
+ * Inserts an unrouted point in a route. The size of the neighborhood is O(u*n).
+ * where u is the numberof unrouted points, and n is the number of routed points
+ * it can be cut down to u*k by using the relevant neighbors, and specifying k neighbors for each unrouted point
+ * @param unroutedNodesToInsert the nodes that this neighborhood will try to insert SHOULD BE NOT ROUTED
+ * @param relevantNeighbors a function that, for each unrouted node gives a routed node
+ *                          such that it is relevant to insert the unrouted node after this routed node
+ * @param vrp the routing problem
+ * @param neighborhoodName the name of this neighborhood
+ * @param best should we search for the best move or the first move?
+ * @param hotRestart set to true fo a hot restart fearture
+ * @param nodeSymmetryClass a function that input the ID of an unrouted node and returns a symmetry class;
+ *                      ony one of the unrouted node in each class will be considered for insert
+ *                      Int.MinValue is considered different to itself
+ *                      if you set to None this will not be used at all
  * @author renaud.delandtsheer@cetic.be
  * @author Florent Ghilain (UMONS)
  * @author yoann.guyot@cetic.be
@@ -43,7 +51,8 @@ case class InsertPoint(unroutedNodesToInsert: () => Iterable[Int],
                        vrp: VRP,
                        neighborhoodName: String = null,
                        best: Boolean = false,
-                       hotRestart: Boolean = true) extends EasyRoutingNeighborhood(best, vrp) {
+                       hotRestart: Boolean = true,
+                       nodeSymmetryClass:Option[Int => Int] = None) extends EasyRoutingNeighborhood(best, vrp, neighborhoodName) {
 
   //the indice to start with for the exploration
   var startIndice: Int = 0
@@ -54,10 +63,14 @@ case class InsertPoint(unroutedNodesToInsert: () => Iterable[Int],
       if (hotRestart && !best) HotRestart(unroutedNodesToInsert(), startIndice)
       else unroutedNodesToInsert()
 
+    val iterationScheme = nodeSymmetryClass match {
+      case None => iterationSchemeOnZone
+      case Some(s) => IdenticalAggregator.removeIdenticalClassesLazily(iterationSchemeOnZone, s)
+    }
     cleanRecordedMoves()
     val relevantNeighborsNow = relevantNeighbors()
 
-    for (insertedPoint <- iterationSchemeOnZone) {
+    for (insertedPoint <- iterationScheme) {
       assert(!vrp.isRouted(insertedPoint),
         "The search zone should be restricted to unrouted nodes when inserting.")
 
@@ -70,7 +83,7 @@ case class InsertPoint(unroutedNodesToInsert: () => Iterable[Int],
         val newObj = evalObjOnEncodedMove()
 
         if (moveRequested(newObj)
-          && submitFoundMove(InsertPointMove(beforeInsertedPoint, insertedPoint, newObj, this, neighborhoodName))) {
+          && submitFoundMove(InsertPointMove(beforeInsertedPoint, insertedPoint, newObj, this, neighborhoodNameToString))) {
           startIndice = insertedPoint + 1
           return
         }

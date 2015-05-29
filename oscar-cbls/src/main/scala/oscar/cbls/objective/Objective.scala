@@ -1,24 +1,24 @@
 /*******************************************************************************
- * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 2.1 of the License, or
- * (at your option) any later version.
- *   
- * OscaR is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License  for more details.
- *   
- * You should have received a copy of the GNU Lesser General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
- ******************************************************************************/
+  * OscaR is free software: you can redistribute it and/or modify
+  * it under the terms of the GNU Lesser General Public License as published by
+  * the Free Software Foundation, either version 2.1 of the License, or
+  * (at your option) any later version.
+  *
+  * OscaR is distributed in the hope that it will be useful,
+  * but WITHOUT ANY WARRANTY; without even the implied warranty of
+  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  * GNU Lesser General Public License  for more details.
+  *
+  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
+  ******************************************************************************/
 package oscar.cbls.objective
 
 /*******************************************************************************
- * Contributors:
- *     This code has been initially developed by CETIC www.cetic.be
- *         by Renaud De Landtsheer
- ******************************************************************************/
+  * Contributors:
+  *     This code has been initially developed by CETIC www.cetic.be
+  *         by Renaud De Landtsheer
+  ******************************************************************************/
 
 import oscar.cbls.invariants.core.computation._
 
@@ -71,7 +71,7 @@ class IntVarObjective(val objective: ChangingIntValue) extends Objective {
 
   def model:Store = objective.model
 
-  override def toString: String = "Objective(" + objective + ")"
+  def detailedString(short:Boolean,indent:Int = 0):String = "IntVarObjective(" + objective + ")"
 }
 
 /**
@@ -83,14 +83,32 @@ class IntVarObjective(val objective: ChangingIntValue) extends Objective {
  */
 class CascadingObjective(mustBeZeroObjective: Objective, secondObjective:Objective) extends Objective {
 
-  override def toString: String = "CascadingObjective(mustBeZeroObjective:" + mustBeZeroObjective + " secondObjective:" + secondObjective + ")"
+  override def detailedString(short: Boolean, indent:Int = 0): String =
+    (if(short) {
+      if (mustBeZeroObjective.value == 0) {
+        nSpace(indent) + "CascadingObjective(\n" +
+          nSpace(indent + 2) + "mustBeZeroObjective :=0 \n" +
+          nSpace(indent + 2) + "secondObjective:" + secondObjective.detailedString(true, indent + 2) + "\n" +
+          nSpace(indent) + ")"
+      } else {
+        nSpace(indent) + "CascadingObjective(\n" +
+          nSpace(indent + 2) + "mustBeZeroObjective:" + mustBeZeroObjective.detailedString(true, indent + 4) + "\n" +
+          nSpace(indent) + ")"
+      }
+    }else {
+      nSpace(indent) + "CascadingObjective(\n" +
+        nSpace(indent + 2) + "mustBeZeroObjective:" + mustBeZeroObjective.detailedString(true, indent + 4) + "\n" +
+        nSpace(indent + 2) + "secondObjective:" + secondObjective.detailedString(true, indent + 4) + "\n" +
+        nSpace(indent) + ")"
+    })
+
   /**
    * This method returns the actual objective value.
    * It is easy to override it, and perform a smarter propagation if needed.
    * @return the actual objective value.
    */
   override def value = {
-    if (mustBeZeroObjective.value > 0) Int.MaxValue
+    if (!mustBeZeroObjective.isZero) Int.MaxValue
     else secondObjective.value
   }
 
@@ -106,12 +124,16 @@ class FunctionObjective(f:()=>Int, m:Store = null) extends Objective{
    * @return the actual objective value.
    */
   override def value: Int = f()
+
+  override def detailedString(short: Boolean,indent:Int = 0): String = nSpace(indent) + "FunctionObjective(" + value + ")"
 }
 
 trait Objective {
 
+  def nSpace(n:Int):String = if(n <= 0) "" else " " + nSpace(n-1)
+  override def toString: String = detailedString(false)
 
-  override def toString: String = "Objective(" + value + ")"
+  def detailedString(short:Boolean, indent:Int = 0):String
 
   def model:Store
 
@@ -121,12 +143,13 @@ trait Objective {
    * @return the actual objective value.
    */
   def value:Int
+  def isZero:Boolean = value == 0
 
   /**returns the value of the objective variable if the two variables a and b were swapped values.
-   * This proceeds through explicit state change and restore.
-   * this process is efficiently performed as the objective Variable is registered for partial propagation
-   * @see registerForPartialPropagation() in [[oscar.cbls.invariants.core.computation.Store]]
-   */
+    * This proceeds through explicit state change and restore.
+    * this process is efficiently performed as the objective Variable is registered for partial propagation
+    * @see registerForPartialPropagation() in [[oscar.cbls.invariants.core.computation.Store]]
+    */
   def swapVal(a: CBLSIntVar, b: CBLSIntVar): Int = {
     a :=: b
     val NewVal = value
@@ -135,17 +158,17 @@ trait Objective {
   }
 
   /**returns the value of the objective variable if variable a was assigned the value v.
-   * This proceeds through explicit state change and restore.
-   * this process is efficiently performed as the objective Variable is registered for partial propagation
-   * @see registerForPartialPropagation() in [[oscar.cbls.invariants.core.computation.Store]]
-   */
+    * This proceeds through explicit state change and restore.
+    * this process is efficiently performed as the objective Variable is registered for partial propagation
+    * @see registerForPartialPropagation() in [[oscar.cbls.invariants.core.computation.Store]]
+    */
   def assignVal(a: CBLSIntVar, v: Int): Int = assignVal(List((a,v)))
 
   /**returns the value of the objective variable if the assignment described by parameter a was performed
-   * This proceeds through explicit state change and restore.
-   * this process is efficiently performed as the objective Variable is registered for partial propagation
-   * @see registerForPartialPropagation() in [[oscar.cbls.invariants.core.computation.Store]]
-   */
+    * This proceeds through explicit state change and restore.
+    * this process is efficiently performed as the objective Variable is registered for partial propagation
+    * @see registerForPartialPropagation() in [[oscar.cbls.invariants.core.computation.Store]]
+    */
   def assignVal(a: Iterable[(CBLSIntVar, Int)]): Int = {
     //memorize
     val oldvals: Iterable[(CBLSIntVar, Int)] = a.foldLeft(List.empty[(CBLSIntVar, Int)])(
@@ -199,5 +222,32 @@ trait Objective {
   def removeVal(a: CBLSSetVar, i:Int): Int = {
     if(!a.value.contains(i)) return value
     removeValAssumeIn(a, i)
+  }
+}
+
+/**
+ * This is a stub that logs the toString of the baseObjective every time its value is needed.
+ * these logs can be retrieved through the getAndCleanEvaluationLog method.
+ * The value of this objective function is really the one of baseObjective
+ *
+ * @param baseObjective the value of this objective function
+ */
+class LoggingObjective(baseObjective:Objective) extends Objective{
+  private var evaluationsLog:List[String] = List.empty
+
+  override def detailedString(short: Boolean, indent:Int = 0): String = nSpace(indent) + "LoggingObjective(" + baseObjective.detailedString(short) + ")"
+
+  override def model: Store = baseObjective.model
+
+  override def value: Int = {
+    val toReturn = baseObjective.value
+    evaluationsLog = baseObjective.detailedString(true) :: evaluationsLog
+    toReturn
+  }
+
+  def getAndCleanEvaluationLog:List[String] = {
+    val toReturn = evaluationsLog
+    evaluationsLog = List.empty
+    toReturn
   }
 }

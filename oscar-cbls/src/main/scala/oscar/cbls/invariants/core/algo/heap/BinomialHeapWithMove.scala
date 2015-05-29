@@ -354,6 +354,8 @@ class ArrayMap(maxId:Int) extends scala.collection.mutable.Map[Int, Int]{
 }
 
 /**
+ * beware that this heap does not delete references that are passed to it, so GC will not be able to recover this space.
+ * it does not hurt if you only use this datastruct to store object that are permanently living in you memory anyway
  * @author renaud.delandtsheer@cetic.be
  * @param GetKey
  * @param maxsize
@@ -447,8 +449,11 @@ class BinomialHeapWithMoveExtMem[T](GetKey:T => Int,val maxsize:Int, position:sc
     position //never reached
   }
 
+  @inline
   private def leftChild(position:Int):Int = (position+1)*2-1
+  @inline
   private def rightChild(position:Int):Int =(position+1)*2
+  @inline
   private def father(position:Int):Int = scala.math.floor((position+1)/2).toInt-1
 
   def getFirsts:List[T] = {
@@ -471,7 +476,6 @@ class BinomialHeapWithMoveExtMem[T](GetKey:T => Int,val maxsize:Int, position:sc
     swapPositions(0,size-1)
     size -=1
     position -= toreturn
-    HeapArray(size)=null.asInstanceOf[T]
     pushDown(0)
     toreturn
   }
@@ -486,12 +490,10 @@ class BinomialHeapWithMoveExtMem[T](GetKey:T => Int,val maxsize:Int, position:sc
     if (startposition == size-1){
       size -=1
       position -= elem
-      HeapArray(size)=null.asInstanceOf[T]
     }else{
       swapPositions(startposition,size-1)
       size -=1
       position -= elem
-      HeapArray(size)=null.asInstanceOf[T]
       pushDown(pushUp(startposition))
     }
   }
