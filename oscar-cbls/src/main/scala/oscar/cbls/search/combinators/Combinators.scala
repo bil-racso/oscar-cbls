@@ -337,10 +337,11 @@ class Retry(a: Neighborhood, cond: Int => Boolean) extends NeighborhoodCombinato
   override def getMove(obj: Objective, acceptanceCriteria: (Int, Int) => Boolean): SearchResult = {
     a.getMove(obj, acceptanceCriteria) match {
       case NoMoveFound =>
-        consecutiveFails = consecutiveFails +1
-        if(cond(consecutiveFails)){
+        consecutiveFails = consecutiveFails + 1
+        if (cond(consecutiveFails)) {
+          a.reset()
           getMove(obj, acceptanceCriteria)
-        }else{
+        } else {
           NoMoveFound
         }
       case x =>
@@ -708,7 +709,7 @@ class AndThen(a: Neighborhood, b: Neighborhood, maximalIntermediaryDegradation: 
 
     class InstrumentedObjective() extends Objective {
 
-      override def detailedString(short: Boolean,indent:Int = 0): String = nSpace(indent) + "AndThenInstrumentedObjective(initialObjective:" + obj.detailedString(short) + ")"
+      override def detailedString(short: Boolean, indent: Int = 0): String = nSpace(indent) + "AndThenInstrumentedObjective(initialObjective:" + obj.detailedString(short) + ")"
 
       override def model = obj.model
 
@@ -850,7 +851,7 @@ class WithAcceptanceCriterion(a: Neighborhood, overridingAcceptanceCriterion: (I
    * @return an improving move
    */
   override def getMove(obj: Objective, acceptanceCriterion: (Int, Int) => Boolean): SearchResult = a.getMove(obj,
-    (a, b) => (a == Int.MaxValue || b != Int.MaxValue) && overridingAcceptanceCriterion(a,b))
+    (a, b) => (a == Int.MaxValue || b != Int.MaxValue) && overridingAcceptanceCriterion(a, b))
 }
 
 /**
@@ -1018,13 +1019,12 @@ class OverrideObjective(a: Neighborhood, overridingObjective: Objective) extends
   override def getMove(obj: Objective, acceptanceCriterion: (Int, Int) => Boolean): SearchResult = getMove(overridingObjective, acceptanceCriterion)
 }
 
-
 case class Statistics(a:Neighborhood,ignoreInitialObj:Boolean = false)extends NeighborhoodCombinator(a){
 
   var NbCalls = 0
   var NbFound = 0
   var TotalGainInObj = 0
-  var totalTimeSpent:Long = 0
+  var totalTimeSpent: Long = 0
 
   /**
    * the method that returns a move from the neighborhood.
@@ -1040,14 +1040,14 @@ case class Statistics(a:Neighborhood,ignoreInitialObj:Boolean = false)extends Ne
     val oldObj = obj.value
     val startTime = System.currentTimeMillis
 
-    a.getMove(obj,acceptanceCriterion) match{
+    a.getMove(obj, acceptanceCriterion) match {
       case NoMoveFound =>
         totalTimeSpent += System.currentTimeMillis - startTime
         NoMoveFound
       case m: MoveFound =>
         totalTimeSpent += System.currentTimeMillis - startTime
         NbFound += 1
-        if(!ignoreInitialObj || NbCalls > 1) TotalGainInObj += oldObj - m.objAfter
+        if (!ignoreInitialObj || NbCalls > 1) TotalGainInObj += oldObj - m.objAfter
         m
     }
   }
