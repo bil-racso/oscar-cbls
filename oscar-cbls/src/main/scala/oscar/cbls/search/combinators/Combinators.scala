@@ -1021,9 +1021,9 @@ class OverrideObjective(a: Neighborhood, overridingObjective: Objective) extends
 
 case class Statistics(a:Neighborhood,ignoreInitialObj:Boolean = false)extends NeighborhoodCombinator(a){
 
-  var NbCalls = 0
-  var NbFound = 0
-  var TotalGainInObj = 0
+  var nbCalls = 0
+  var nbFound = 0
+  var totalGain = 0
   var totalTimeSpent: Long = 0
 
   /**
@@ -1036,7 +1036,7 @@ case class Statistics(a:Neighborhood,ignoreInitialObj:Boolean = false)extends Ne
    */
   override def getMove(obj: Objective, acceptanceCriterion: (Int, Int) => Boolean): SearchResult = {
 
-    NbCalls += 1
+    nbCalls += 1
     val oldObj = obj.value
     val startTime = System.currentTimeMillis
 
@@ -1046,19 +1046,19 @@ case class Statistics(a:Neighborhood,ignoreInitialObj:Boolean = false)extends Ne
         NoMoveFound
       case m: MoveFound =>
         totalTimeSpent += System.currentTimeMillis - startTime
-        NbFound += 1
-        if (!ignoreInitialObj || NbCalls > 1) TotalGainInObj += oldObj - m.objAfter
+        nbFound += 1
+        if (!ignoreInitialObj || nbCalls > 1) totalGain += oldObj - m.objAfter
         m
     }
   }
 
-  def statisticsString = padToLength("" + NbCalls,8) + padToLength("" + NbFound,8) + padToLength("" + TotalGainInObj,10) + totalTimeSpent
-  override def collectStatistics: String = padToLength("" + a,20) + statisticsString
+  override def collectStatistics: String = padToLength("" + a,20) + padToLength("" + nbCalls,8) + padToLength("" + nbFound,8) + padToLength("" + totalGain,10) + totalTimeSpent
 
   private def padToLength(s: String, l: Int) = (s + nStrings(l, " ")).substring(0, l)
   private def nStrings(n: Int, s: String): String = if (n <= 0) "" else s + nStrings(n - 1, s)
 
-  override def toString: String = "Statistics(" + a + " " + statisticsString + ")"
+  override def toString: String = "Statistics(" + a + " nbCalls:" + nbCalls + " nbFound:" + nbFound + " totalGain:" + totalGain + " totalTimeSpent " + totalTimeSpent + " ms" + ")"
+
 }
 
 object Statistics{

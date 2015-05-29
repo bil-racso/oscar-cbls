@@ -47,4 +47,6 @@ object WarehouseLocation extends App with AlgebraTrait{
 
   println(openWarehouses)
   println(neighborhood.statistics)
+
+  println(neighborhood)
 }
