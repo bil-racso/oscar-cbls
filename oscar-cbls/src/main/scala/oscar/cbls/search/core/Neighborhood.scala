@@ -90,6 +90,14 @@ abstract class JumpNeighborhoodParam[T] extends Neighborhood{
  * @author renaud.delandtsheer@cetic.be
  */
 abstract class Neighborhood{
+
+  /** collects and returns the statistics that have been requested in the neighborhood.
+    * use the Statistics combinator to activate the collection of statistics
+    * @return
+    */
+  final def statistics:String = Statistics.statisticsHeader + "\n" + collectStatistics
+  def collectStatistics:String = ""
+
   /**
    * the method that returns a move from the neighborhood.
    * The returned move should typically be accepted by the acceptance criterion over the objective function.

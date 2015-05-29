@@ -149,14 +149,14 @@ abstract class PropagationStructure(val verbose: Boolean, val checker: Option[Ch
       //identification des composantes connexes
       val storageForTarjan = this.getNodeStorage[TarjanNodeData]
       storageForTarjan.initialize(() => new TarjanNodeData)
-      val StrognlyConnectedComponents: List[List[PropagationElement]] = TarjanWithExternalStorage.getStronlyConnexComponents[PropagationElement](
+      val StrognlyConnectedComponents: List[QList[PropagationElement]] = TarjanWithExternalStorage.getStronlyConnexComponents[PropagationElement](
         getPropagationElements,
         p => p.getStaticallyListeningElements,
         storageForTarjan.get)
       acyclic = true
       StronglyConnexComponentsList = List.empty
-      StrognlyConnectedComponents.map((a: List[PropagationElement]) =>
-        if (a.tail.isEmpty) {
+      StrognlyConnectedComponents.map((a: QList[PropagationElement]) =>
+        if (a.tail == null) {
           a.head
         } else {
           acyclic = false

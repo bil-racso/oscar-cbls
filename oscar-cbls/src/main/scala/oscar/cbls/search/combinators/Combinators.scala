@@ -42,6 +42,8 @@ abstract class NeighborhoodCombinator(a: Neighborhood*) extends Neighborhood {
   }
 
   override def toString: String = this.getClass.getSimpleName + "(" + a.mkString(",") + ")"
+
+  override def collectStatistics: String = a.map(_.collectStatistics).mkString("\n")
 }
 
 class BasicSaveBest(a: Neighborhood, o: Objective) extends NeighborhoodCombinator(a) {
@@ -903,6 +905,8 @@ case class Atomic(a: Neighborhood, name: String = "Atomic", bound: Int = Int.Max
   override def getMove(obj: Objective, acceptanceCriterion: (Int, Int) => Boolean = (oldObj, newObj) => oldObj > newObj): SearchResult = {
     CallBackMove(() => a.doAllMoves(_ > bound, obj, acceptanceCriterion), Int.MaxValue, this.getClass.getSimpleName, () => ("Atomic(" + a + ")"))
   }
+
+  override def collectStatistics: String = a.collectStatistics
 }
 
 /**
@@ -1015,7 +1019,7 @@ class OverrideObjective(a: Neighborhood, overridingObjective: Objective) extends
 }
 
 
-case class Statistics(a:Neighborhood,ignoreInitialObj:Boolean = false)extends NeighborhoodCombinator(a) with StopWatch{
+case class Statistics(a:Neighborhood,ignoreInitialObj:Boolean = false)extends NeighborhoodCombinator(a){
 
   var NbCalls = 0
   var NbFound = 0
@@ -1048,5 +1052,17 @@ case class Statistics(a:Neighborhood,ignoreInitialObj:Boolean = false)extends Ne
     }
   }
 
-  override def toString: String = "Statistics(" + a + " NbCalls:" + NbCalls + " NbFound:" + NbFound + " totalGainInObj:" + TotalGainInObj + " totalTimeSpent:" + totalTimeSpent + " ms)"
+  def statisticsString = padToLength("" + NbCalls,8) + padToLength("" + NbFound,8) + padToLength("" + TotalGainInObj,10) + totalTimeSpent
+  override def collectStatistics: String = padToLength("" + a,20) + statisticsString
+
+  private def padToLength(s: String, l: Int) = (s + nStrings(l, " ")).substring(0, l)
+  private def nStrings(n: Int, s: String): String = if (n <= 0) "" else s + nStrings(n - 1, s)
+
+  override def toString: String = "Statistics(" + a + " " + statisticsString + ")"
+}
+
+object Statistics{
+  private def padToLength(s: String, l: Int) = (s + nStrings(l, " ")).substring(0, l)
+  private def nStrings(n: Int, s: String): String = if (n <= 0) "" else s + nStrings(n - 1, s)
+  def statisticsHeader = padToLength("Neighborhood",20) + "nbCalls nbFound totalGain totalTime(ms)"
 }

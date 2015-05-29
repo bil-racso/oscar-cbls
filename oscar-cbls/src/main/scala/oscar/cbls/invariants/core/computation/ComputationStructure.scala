@@ -208,9 +208,9 @@ case class Store(override val verbose:Boolean = false,
   // This exploration procedure explores passed dynamic invariants,
   // but it over-estimates the set of source variables over dynamic invariants, as it uses the static graph.
   def getSourceVariables(v:AbstractVariable):SortedSet[Variable] = {
-    var ToExplore: List[PropagationElement] = List(v)
+    var ToExplore: QList[PropagationElement] = QList(v)
     var SourceVariables:SortedSet[Variable] = SortedSet.empty
-    while(!ToExplore.isEmpty){
+    while(ToExplore != null){
       val head = ToExplore.head
       ToExplore = ToExplore.tail
       //TODO: we can have both var and invar in the same class now.
@@ -219,14 +219,14 @@ case class Store(override val verbose:Boolean = false,
         if(!SourceVariables.contains(v)){
           SourceVariables += v
           for(listened <- v.getStaticallyListenedElements)
-            ToExplore = listened :: ToExplore
+            ToExplore = QList(listened,ToExplore)
         }
         //TODO: keep a set of the explored invariants, to speed up this thing?
       }else if(head.isInstanceOf[Invariant]){
         val i:Invariant = head.asInstanceOf[Invariant]
         for (listened <- i.getStaticallyListenedElements){
           if (listened.propagationStructure != null && (!listened.isInstanceOf[Variable] || !SourceVariables.contains(listened.asInstanceOf[Variable]))){
-            ToExplore = listened :: ToExplore
+            ToExplore = QList(listened,ToExplore)
           }
         }
       }else{assert(false,"propagation element that is not a variable, and not an invariant??")}
