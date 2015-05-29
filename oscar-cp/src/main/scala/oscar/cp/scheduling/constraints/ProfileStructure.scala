@@ -410,6 +410,7 @@ class ProfileStructure(
     
     val first = emin(a) // this is only used for tasks with no mandatory part
     val last  = smax(a) 
+    val d = dmin(a)
     
     var i = indexBefore(a, smin(a))  // find plateau where a can start
     hPointer = -1  // clear stacks
@@ -427,11 +428,11 @@ class ProfileStructure(
     
     while (pointTimes(i) < last) {    
       val thispoint = math.min(pointTimes(i), last)
-      minHeight = math.min(minHeight, unstack(thispoint, pointHeights(i), dmin(a)))
+      minHeight = math.min(minHeight, unstack(thispoint, pointHeights(i), d))
       i += 1
     }
       
-    minHeight = math.min(minHeight, unstack(last, Int.MaxValue - 1, dmin(a)))
+    minHeight = math.min(minHeight, unstack(last, Int.MaxValue - 1, d))
     
     minHeight
   }
