@@ -75,7 +75,7 @@ case class TwoOpt(predecesorOfFirstMovedPoint:()=>Iterable[Int],
         val newObj = evalObjOnEncodedMove()
 
         if (moveRequested(newObj)
-          && submitFoundMove(TwoOptMove(fstPred, sndPred, newObj, this, neighborhoodName))) {
+          && submitFoundMove(TwoOptMove(fstPred, sndPred, newObj, this, neighborhoodNameToString))) {
           startIndice = fstPred + 1
           return
         }

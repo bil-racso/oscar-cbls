@@ -83,7 +83,7 @@ case class InsertPoint(unroutedNodesToInsert: () => Iterable[Int],
         val newObj = evalObjOnEncodedMove()
 
         if (moveRequested(newObj)
-          && submitFoundMove(InsertPointMove(beforeInsertedPoint, insertedPoint, newObj, this, neighborhoodName))) {
+          && submitFoundMove(InsertPointMove(beforeInsertedPoint, insertedPoint, newObj, this, neighborhoodNameToString))) {
           startIndice = insertedPoint + 1
           return
         }

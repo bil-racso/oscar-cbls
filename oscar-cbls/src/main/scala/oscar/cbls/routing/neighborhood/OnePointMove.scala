@@ -74,7 +74,7 @@ case class OnePointMove(nodesPrecedingNodesToMove: () => Iterable[Int],
         val newObj = evalObjOnEncodedMove()
 
         if (moveRequested(newObj)
-          && submitFoundMove(OnePointMoveMove(beforeMovedPoint, movedPoint, insertionPoint, newObj, this, neighborhoodName))) {
+          && submitFoundMove(OnePointMoveMove(beforeMovedPoint, movedPoint, insertionPoint, newObj, this, neighborhoodNameToString))) {
           startIndice = beforeMovedPoint + 1
           return
         }

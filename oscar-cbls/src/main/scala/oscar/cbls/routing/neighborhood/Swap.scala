@@ -38,7 +38,7 @@ import oscar.cbls.search.core.EasyNeighborhood
 case class Swap(nodesPrecedingNodesToMove:()=>Iterable[Int],
            relevantNeighbors:()=>Int=>Iterable[Int],
            val vrp: VRP with PositionInRouteAndRouteNr,
-           val neighborhoodName:String = "SwapNeighborhood",
+           neighborhoodName:String,
            val best:Boolean = false,
            val hotRestart:Boolean = true) extends EasyRoutingNeighborhood(best,vrp,neighborhoodName) {
 
@@ -75,7 +75,7 @@ case class Swap(nodesPrecedingNodesToMove:()=>Iterable[Int],
         val newObj = evalObjOnEncodedMove()
 
         if (moveRequested(newObj)
-          && submitFoundMove(SwapMove(beforeMovedPoint, insertionPoint, newObj, this, neighborhoodName))) {
+          && submitFoundMove(SwapMove(beforeMovedPoint, insertionPoint, newObj, this, neighborhoodNameToString))) {
           startIndice = beforeMovedPoint + 1
           return
         }

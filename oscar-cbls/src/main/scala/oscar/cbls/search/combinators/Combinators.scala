@@ -1054,8 +1054,18 @@ case class Statistics(a:Neighborhood,ignoreInitialObj:Boolean = false)extends Ne
 
   def gainPerCall:Int = totalGain / nbCalls
   def callDuration = totalTimeSpent / nbCalls
+  //gain in obj/100ms
+  def slope:Int = ((100 * totalGain) / totalTimeSpent).toInt
 
-  override def collectStatistics: String = padToLength("" + a,20) + padToLength("" + nbCalls,8) + padToLength("" + nbFound,8) + padToLength("" + totalGain,10) + padToLength("" + totalTimeSpent,14) + padToLength("" + gainPerCall,12) + callDuration
+  override def collectStatistics: String =
+    padToLength("" + a,20) +
+      padToLength("" + nbCalls,8) +
+      padToLength("" + nbFound,8) +
+      padToLength("" + totalGain,10) +
+      padToLength("" + totalTimeSpent,14) +
+      padToLength("" + gainPerCall,12) +
+      padToLength("" + callDuration,17)+
+      slope
 
   private def padToLength(s: String, l: Int) = (s + nStrings(l, " ")).substring(0, l)
   private def nStrings(n: Int, s: String): String = if (n <= 0) "" else s + nStrings(n - 1, s)
@@ -1067,5 +1077,5 @@ case class Statistics(a:Neighborhood,ignoreInitialObj:Boolean = false)extends Ne
 object Statistics{
   private def padToLength(s: String, l: Int) = (s + nStrings(l, " ")).substring(0, l)
   private def nStrings(n: Int, s: String): String = if (n <= 0) "" else s + nStrings(n - 1, s)
-  def statisticsHeader = padToLength("Neighborhood",20) + "nbCalls nbFound totalGain totalTime(ms) gainPerCall callDuration"
+  def statisticsHeader = padToLength("Neighborhood",20) + "nbCalls nbFound totalGain totalTime(ms) gainPerCall callDuration(ms) slope(obj/100ms)"
 }
