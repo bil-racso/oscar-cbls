@@ -518,6 +518,8 @@ abstract class EasyNeighborhood(best:Boolean = false, neighborhoodName:String=nu
 
   protected def neighborhoodNameToString:String = if (neighborhoodName != null) neighborhoodName else this.getClass.getSimpleName()
 
+  override def toString: String = neighborhoodNameToString
+
   //passing parameters, and getting return values from the search
   private var oldObj:Int=0
   private var acceptanceCriterion:(Int,Int) => Boolean=null

@@ -145,9 +145,11 @@ case class ConstraintSystem(model:Store) extends Constraint with Objective{
 
       model.registerForPartialPropagation(Violation)
 
-      aggregateLocalViolations()
-      PropagateLocalToGlobalViolations()
-      aggregateGlobalViolations()
+      if(VarsWatchedForViolation.nonEmpty) {
+        aggregateLocalViolations()
+        PropagateLocalToGlobalViolations()
+        aggregateGlobalViolations()
+      }
     }
   }
   
