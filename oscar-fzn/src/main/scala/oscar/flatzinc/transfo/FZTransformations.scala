@@ -294,7 +294,7 @@ object FZModelTransfo {
     val mappingB = MMap.empty[Constraint, Int];
     var tails = List.empty[Constraint]
     for(i <- mapping.keys){
-      mappingB += i -> i.definedVar.get.cstrs.filter((c) => c!=i && c.definedVar.isDefined && mapping.contains(c)).size
+      mappingB += i -> i.definedVar.flatMap(_.cstrs).filter((c) => c!=i && !c.definedVar.isEmpty && mapping.contains(c)).size
       
     }
     def explore() = {
@@ -303,7 +303,7 @@ object FZModelTransfo {
         heads = heads.tail
         sorted = k::sorted
         mappingB.remove(k)
-        for(j <- k.definedVar.get.cstrs){
+        for(j <- k.definedVar.flatMap(_.cstrs)){
           if(mapping.contains(j) ){
             mapping(j) = mapping(j)-1
             if(mapping(j)==0){
@@ -347,10 +347,10 @@ object FZModelTransfo {
       //print(mapping.mkString("\n"))
     }
     while(!mapping.isEmpty){
-      val remc = mapping.keys.minBy(c => (c.definedVar.get.domainSize,-mapping(c),-mappingB(c)))//foldLeft((null.asInstanceOf[Constraint],Int.MinValue))((best,cur) => {val curval = - cur.definedVar.get.domainSize/*mapping(cur)*//*cur.definedVar.get.cstrs.filter(c => c!=cur && mapping.contains(c) && mapping(c)==1).length*/; if(curval > best._2) (cur,curval) else best;});
+      val remc = mapping.keys.minBy(c => (c.definedVar.size,c.definedVar.head.domainSize,-mapping(c),-mappingB(c)))//foldLeft((null.asInstanceOf[Constraint],Int.MinValue))((best,cur) => {val curval = - cur.definedVar.get.domainSize/*mapping(cur)*//*cur.definedVar.get.cstrs.filter(c => c!=cur && mapping.contains(c) && mapping(c)==1).length*/; if(curval > best._2) (cur,curval) else best;});
       mapping.remove(remc)
       mappingB.remove(remc)
-      for(j <- remc.definedVar.get.cstrs){
+      for(j <- remc.definedVar.flatMap(_.cstrs)){
         if(mapping.contains(j) ){
           mapping(j) = mapping(j) -1
           if(mapping(j)==0){
@@ -364,9 +364,9 @@ object FZModelTransfo {
           mappingB(j) = mappingB(j) -1
         }
       }
-      log(2,"Removed "+remc+ " for "+remc.definedVar.get)
+      log(2,"Removed "+remc+ " for "+remc.definedVar)
       removed = remc :: removed
-      remc.unsetDefinedVar(remc.definedVar.get)
+      remc.definedVar.foreach(remc.unsetDefinedVar(_))//todo: remove all of them at once!
       explore()
       exploreBackward()
      // println(mapping.map{case (c,i) => (c,i,c.getVariables.filter(v => {val cc = v.definingConstraint.getOrElse(c); /*mapping.contains(cc) &&*/ cc!=c}).toList.map(v => v.definingConstraint.get )) }.mkString("\n"))      

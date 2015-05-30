@@ -273,19 +273,23 @@ class FZCBLSSolver extends SearchEngine with StopWatch {
     //Moved this line after invariant discovery to avoid problem in Nonogram but then it is maybe useless? What was the initial purpose?
     //But this creates problems for the nonogram, where it creates another invariant that targets the input of an element and makes an out-of-bound exception
     for(c <- model.constraints ){
-      if(c.definedVar.isDefined && c.definedVar.get.isBound)c.unsetDefinedVar(c.definedVar.get)
+      for(v <-  c.definedVar if v.isBound){
+       c.unsetDefinedVar(v) 
+      }
     }
     
     if(opts.is("no-post-inv")){
       for(c <- model.constraints ){
-        if(c.definedVar.isDefined)c.unsetDefinedVar(c.definedVar.get)
+        for(v <-  c.definedVar){
+          c.unsetDefinedVar(v) 
+        }
       }
     }
     
     
     
     val allcstrs:List[Constraint] = model.constraints.toList;
-    val (maybedircstrs,maybesoftcstrs) = allcstrs.partition(_.definedVar.isDefined)
+    val (maybedircstrs,maybesoftcstrs) = allcstrs.partition(!_.definedVar.isEmpty)
     log("Possibly "+maybedircstrs.length+" invariants.")
     val (invariants,removed) = FZModelTransfo.getSortedInvariants(maybedircstrs)(log)
     log("Sorted "+invariants.length+" Invariants")
@@ -336,8 +340,7 @@ class FZCBLSSolver extends SearchEngine with StopWatch {
     val softConstraints = softcstrs;
     for (invariant <- invariants){
       log(2,"Posting as Invariant "+invariant)
-      val inv = poster.add_invariant(invariant)
-      cblsmodel.cblsIntMap += invariant.definedVar.get.id -> inv;
+      poster.add_invariant(invariant,cblsmodel.cblsIntMap)
     }
     log("Posted "+invariants.length+" Invariants")
     Helper.getCstrsByName(invariants).map{ case (n:String,l:List[Constraint]) => l.length +"\t"+n}.toList.sorted.foreach(s => log(" "+s))

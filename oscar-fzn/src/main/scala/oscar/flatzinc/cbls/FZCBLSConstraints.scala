@@ -323,6 +323,15 @@ class FZCBLSConstraintPoster(val c: ConstraintSystem, implicit val getCBLSVar: V
     //TODO: check the index_sets? Assumes it starts at 1
     xs.zipWithIndex.map{case (xi,i) => EQ(i,Sum2(IntElement(Sum2(xi,-1),ys.map(getCBLSVar(_))),-1))}.toList
   }
+  def get_inverse_inv(xs: Array[IntegerVariable], ys:Array[IntegerVariable]) = {
+    //yi = index j such that x[j] = i
+    //TODO: This requires that all the x[j] take different values. Hence this constraint is not ONLY an invariant!
+    //TODO: To solve that, the easiest would be to have a relaxed version of the constraint and add the alldifferent constraint in the model 
+    //      so that it can become a "implicit constraint" if possible. Or should the whole inverse be a hard constraint? But not always possible!
+    //ys.zipWithIndex.map{case (yi,i) => (yi.id -> )}
+    //TODO: check the index_sets? Assumes it starts at 1
+    //xs.zipWithIndex.map{case (xi,i) => EQ(i,Sum2(IntElement(Sum2(xi,-1),ys.map(getCBLSVar(_))),-1))}.toList
+  }
   
   def get_count_eq_inv(xs:Array[IntegerVariable], y: IntegerVariable, cnt:IntegerVariable, defined: String, ann: List[Annotation]) = {
     //TODO: DenseCount might be quite expensive...
@@ -482,22 +491,37 @@ class FZCBLSConstraintPoster(val c: ConstraintSystem, implicit val getCBLSVar: V
     }
   }
   
+  def constructCBLSIntInvariants(constraint: Constraint): MMap[String,IntValue] = {
+    constraint match {
+      case inverse(x,y,ann) => get_inverse_inv(x,y); throw new Exception("TODO")
+    }
+  }
   
   def add_constraint(constraint: Constraint) = {
     c.add(constructCBLSConstraint(constraint))
   }
-  def add_invariant(constraint: Constraint):IntValue = {
-    constraint.definedVar match {
-      case None =>
-        throw new Exception("Constraint "+constraint+" is not supposed to be an invariant.")
-      case Some(v) =>
+  def add_invariant(constraint: Constraint,cblsIntMap:MMap[String,IntValue]) = {
+    if(constraint.definedVar.isEmpty)throw new Exception("Constraint "+constraint+" is not supposed to be an invariant.")
+    else if(constraint.definedVar.size==1){
+        val v = constraint.definedVar.head
         val inv = constructCBLSIntInvariant(constraint,v.id)
         val dom = v match{
           case IntegerVariable(i,d) => d
           case bv: BooleanVariable => DomainRange(if(bv.isTrue) 1 else 0, if(bv.isFalse) 0 else 1)
         }
         EnsureDomain(inv,dom,c)
-        inv
+        cblsIntMap += v.id -> inv;
+    }else{
+      val invs = constructCBLSIntInvariants(constraint)
+      //TODO: Add Ensure Domain
+      for(v <- constraint.definedVar){
+        val dom = v match{
+          case IntegerVariable(i,d) => d
+          case bv: BooleanVariable => DomainRange(if(bv.isTrue) 1 else 0, if(bv.isFalse) 0 else 1)
+        }
+        EnsureDomain(invs(v.id),dom,c)
+        cblsIntMap += v.id -> invs(v.id);
+      }
     }
   }
 }

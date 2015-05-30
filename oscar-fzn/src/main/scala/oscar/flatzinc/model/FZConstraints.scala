@@ -43,25 +43,32 @@ abstract class Constraint(val variables: Array[Variable],val annotations: List[A
   }
   def getMaybeCandidateDefVars():Array[Variable] = Array.empty[Variable]
   //def simplify(p: FZProblem){}
+  
   //The variable the constraint functionally defines
   //TODO: generalize to arrays of defined variables (e.g. in sort/bin-packing)
   def setDefinedVar(v: Variable) = {
-    definedVars match {
+  v.definingConstraint = Some(this)
+  definedVars = definedVars + v
+    /*  definedVars match {
       case None => v.definingConstraint = Some(this);
                     definedVars = Some(v);
       case Some(vv) => throw new Exception("Not supported yet.")
-    }
+    }*/
   }
   def unsetDefinedVar(v: Variable) = {
-    definedVars = definedVars match {
-      case Some(vv) if v==vv => {
+    //definedVars = definedVars match {
+    //  case Some(vv) if v==vv => {
+    if(definedVars.contains(v)){
         v.definingConstraint = None
-        None  
-      }
-      case _ => throw new Exception(v+" was not defined by "+this)
-    }
+        definedVars = definedVars - v
+    }else
+    //    None  
+     // }
+     // case _ => 
+      throw new Exception(v+" was not defined by "+this)
+    //}
   }
-  private var definedVars = Option.empty[Variable]
+  private var definedVars = Set.empty[Variable]
   def definedVar = definedVars
   
   //True if the constraints annotations says that it defines x
