@@ -285,7 +285,7 @@ object FZModelTransfo {
     var removed = List.empty[Constraint]
     var sortedend = List.empty[Constraint];
     for (i <- invariants) {
-      mapping += i -> i.getVariables.filter((v) => v.isDefined && (v.definingConstraint.get != i)).length;
+      mapping += i -> i.getVariables.toSet.filter((v) => v.isDefined && (v.definingConstraint.get != i)).size;
       if(mapping(i)==0){
         heads = i :: heads;
         mapping.remove(i)
@@ -372,6 +372,7 @@ object FZModelTransfo {
      // println(mapping.map{case (c,i) => (c,i,c.getVariables.filter(v => {val cc = v.definingConstraint.getOrElse(c); /*mapping.contains(cc) &&*/ cc!=c}).toList.map(v => v.definingConstraint.get )) }.mkString("\n"))      
     }
     log("Had to remove "+removed.length+" invariants to be acyclic.")
+    //println((sorted.reverse++sortedend).map(_.definedVar.get))
     return (sorted.reverse++sortedend,removed);
   }
 }

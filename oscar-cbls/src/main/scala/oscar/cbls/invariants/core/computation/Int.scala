@@ -79,8 +79,9 @@ abstract class ChangingIntValue(initialValue:Int, initialDomain:Domain)
 
   protected def restrictDomain(d:Domain): Unit ={
     privatedomain = privatedomain.restrict(d)
-    if(!privatedomain.contains(OldValue) || !privatedomain.contains(Value)){
-        throw new Exception(OldValue+ " or " +Value+ " is not in the domain of "+this.name+"("+privatedomain+"). This is a problem in restriction")
+    if(!privatedomain.contains(Value)){
+        Console.err.println("% Warning: "+OldValue+ " or " +Value+ " is not in the domain of "+this.name+"("+privatedomain+"). This is a problem in restriction. Setting the value to its minimum")
+        this := privatedomain.min
       }
   }
   protected def relaxDomain(d: Domain): Domain = {
