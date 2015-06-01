@@ -30,6 +30,8 @@ import oscar.cp.core.CPOutcome
 import oscar.cp.core.CPPropagStrength
 import oscar.cp._
 import oscar.cp.scheduling.constraints.DisjunctiveWithTransitionTimes
+import oscar.cp.constraints.tables.TableAlgo
+import oscar.cp.constraints.tables._
 
 trait Constraints {
 
@@ -597,12 +599,10 @@ trait Constraints {
     z
   }
 
-  def table(x: Array[CPIntVar], tuples: Array[Array[Int]]): Constraint = {
-    new TableSTR2(x,tuples)
-    
-	  //val data = new TableData(x.size)
-	  //tuples.foreach(t => data.add(t: _*))
-	  //new oscar.cp.constraints.TableAC5TCRecomp(data, x: _*)
+  import oscar.cp.constraints.tables.TableAlgo._
+  
+  def table(x: Array[CPIntVar], tuples: Array[Array[Int]], algo: TableAlgo = CompactTable): Constraint = {
+    new Table(x,tuples,algo)
   }
 
   /**

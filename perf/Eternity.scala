@@ -3,6 +3,7 @@
 import oscar.cp._
 import oscar.util.InFile
 import oscar.cp.constraints.TableAC5TCRecomp
+import oscar.cp.constraints.tables.TableAlgo
 
 /**
  * Eternity Problem = Edge Matching Puzzle
@@ -12,7 +13,7 @@ import oscar.cp.constraints.TableAC5TCRecomp
  */
 object Eternity extends CPModel with App {
 
-  val reader = new InFile("../data/eternity8x8.txt");
+  val reader = new InFile("data/eternity8x8.txt");
   val n = reader.nextInt()
   val m = reader.nextInt()
   println("n:"+n+" m:"+m)
@@ -33,11 +34,11 @@ object Eternity extends CPModel with App {
     // make the link between id, orientation and up variable
   val tableData = for (i <- 0 until n*m; r <- 0 until 4) yield {
     val row = pieces(i)
-    (i,row((r+0) % 4),row((r+1) % 4),row((r+2) % 4),row((r+3) % 4))
+    Array(i,row((r+0) % 4),row((r+1) % 4),row((r+2) % 4),row((r+3) % 4))
   }
   println("table size:"+tableData.size)
   for (i <- 0 until n; j <- 0 until m) {    
-    add(table(id(i)(j),up(i)(j),right(i)(j),down(i)(j),left(i)(j),tableData));
+    add(table(Array(id(i)(j),up(i)(j),right(i)(j),down(i)(j),left(i)(j)),tableData.toArray,TableAlgo.CompactTable));
   }
 
   
