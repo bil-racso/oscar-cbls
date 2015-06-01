@@ -213,11 +213,12 @@ class FZCBLSModel(val model: FZProblem, val c: ConstraintSystem, val m: Store, v
       (s: String) => cblsIntMap.get(s) match {
         case Some(intVar) =>
           intVar.value + ""
-        case _ => try{
+        case r => if(s=="true" || s=="false") s 
+        else try{
           s.toInt.toString()
         }catch{
           case e: NumberFormatException => {
-            throw new Exception("Unhappy")
+            throw new Exception("Unhappy: "+r+ " "+s)
           }
         }
      });
@@ -257,6 +258,8 @@ class FZCBLSSolver extends SearchEngine with StopWatch {
     })
     model.constraints.foreach{ case reif(c,b) => if(b.isBound) log(0,"Fixed reified constraint: "+b.boolValue); case _ => {}}
     
+    //model.variables.filter(!_.isDefined).foreach(v => println(v.domainSize))
+    //System.exit(0)
     
     
     

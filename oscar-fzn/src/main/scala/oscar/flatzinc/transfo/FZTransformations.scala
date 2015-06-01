@@ -191,6 +191,22 @@ object FZModelTransfo {
           if(sum!=v.value) throw new UnsatException(c.toString())
           false
         }
+        //added for wwtpp with Mzn 2.0.2
+        //TODO: avoid overflows!
+        case int_lin_eq(c,x,v,_) if c.forall(_.value.abs <= 1) && x.filter(_.domainSize==Int.MaxValue).length==1 =>{
+          val (theone,others) = x.zip(c).partition(_._1.domainSize==Int.MaxValue)
+          val one = theone(0)
+          val summin = others.foldLeft(0)((acc,xc) => acc + xc._2.value*(if(xc._2.value > 0){xc._1.min}else{xc._1.max}))
+          val summax = others.foldLeft(0)((acc,xc) => acc + xc._2.value*(if(xc._2.value > 0){xc._1.max}else{xc._1.min}))
+          if(one._2.value==1){
+            one._1.geq(v.value - summax)
+            one._1.leq(v.value - summin)
+          }else{
+            one._1.geq(summin - v.value)
+            one._1.leq(summax - v.value)
+          }
+          true
+        } 
         case int_lin_le(c,x,v,_) if x.length==1 && c(0).value == 1 => x(0).leq(v.value); false
         case int_lin_le(c,x,v,_) if x.filterNot(_.isBound).length == 1 =>{
           val (rest,one) = x.zip(c).partition(_._1.isBound);

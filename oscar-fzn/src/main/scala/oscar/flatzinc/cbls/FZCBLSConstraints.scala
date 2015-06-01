@@ -134,6 +134,9 @@ class FZCBLSConstraintPoster(val c: ConstraintSystem, implicit val getCBLSVar: V
   }
   def get_array_bool_xor_inv(as: Array[BooleanVariable], defId: String, ann: List[Annotation]) = {
     val index = as.indexWhere(p => p.id == defId);
+    if(index < 0){
+      throw new Exception(defId + " is defined by this constraint but is not one of the variables the constraint is applied on.")
+    }
     val defVar = as(index);
     val vars2 = (as.take(index) ++ as.drop(index + 1)).map(getCBLSVar(_));
     Mod(Sum2(Sum(vars2), 1), 2)
