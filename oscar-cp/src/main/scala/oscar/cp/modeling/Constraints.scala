@@ -602,7 +602,7 @@ trait Constraints {
   import oscar.cp.constraints.tables.TableAlgo._
   
   def table(x: Array[CPIntVar], tuples: Array[Array[Int]], algo: TableAlgo = CompactTable): Constraint = {
-    new Table(x,tuples,algo)
+    oscar.cp.constraints.tables.table(x,tuples,algo)
   }
 
   /**

@@ -35,27 +35,41 @@ object TableAlgo extends Enumeration {
 
 
 
-class Table(val X: Array[CPIntVar], table: Array[Array[Int]], algo: TableAlgo.Value = TableAlgo.CompactTable) extends Constraint(X(0).store, "Table"){
-
-  override def setup(l: CPPropagStrength): CPOutcome = {
+object table {
+  
+  def apply(X: Array[CPIntVar], table: Array[Array[Int]], algo: TableAlgo.Value = TableAlgo.CompactTable): Constraint = {
     import oscar.cp.constraints.tables.TableAlgo._
     
-    val cons = algo match {
-      case CompactTable => new TableCT(X,table)
-      case GAC4 => new TableGAC4(X,table)
-      case GAC4R => new TableGAC4R(X,table)
-      case MDD4R => new TableMDD4R(X,table)
-      case STR2 => new TableSTR2(X,table)
-      case STR3 => new TableSTR3(X,table)
-      case AC5TCRecomp => {
-        val data = new TableData(X.size)
-        table.foreach(t => data.add(t: _*))
-        new TableAC5TCRecomp(data, X: _*)
-      }
-      case _ => new TableCT(X,table)
+    algo match {
+      case CompactTable => compactTable(X,table)
+      case GAC4 => gac4(X,table)
+      case GAC4R => gac4r(X,table)
+      case MDD4R => mdd4r(X,table)
+      case STR2 => str2(X,table)
+      case STR3 => str3(X,table)
+      case AC5TCRecomp => ac5tcRecomp(X,table)
+      case _ => compactTable(X,table)
     }
-    if (s.post(cons) == Failure) return Failure
-    else Success
   }
+  
+  def compactTable(X: Array[CPIntVar], table: Array[Array[Int]]): Constraint = new TableCT(X,table)
+  
+  def gac4(X: Array[CPIntVar], table: Array[Array[Int]]): Constraint = new TableGAC4(X,table)
+  
+  def gac4r(X: Array[CPIntVar], table: Array[Array[Int]]): Constraint = new TableGAC4R(X,table)
+  
+  def mdd4r(X: Array[CPIntVar], table: Array[Array[Int]]): Constraint = new TableMDD4R(X,table)
+
+  def str2(X: Array[CPIntVar], table: Array[Array[Int]]): Constraint = new TableSTR2(X,table)
+  
+  def str3(X: Array[CPIntVar], table: Array[Array[Int]]): Constraint = new TableSTR3(X,table)
+
+  def ac5tcRecomp(X: Array[CPIntVar], table: Array[Array[Int]]): Constraint = {
+    val data = new TableData(X.size)
+    table.foreach(t => data.add(t: _*))
+    new TableAC5TCRecomp(data, X: _*)
+  }
+  
+  
 
 }
