@@ -1,286 +1,376 @@
 package oscar.sat.core
 
 import oscar.algo.array.ArrayQueue
-import oscar.algo.array.ArrayQueueInt
 import oscar.algo.array.ArrayStack
 import oscar.algo.array.ArrayStackInt
+import oscar.algo.array.ArrayStackDouble
 import oscar.sat.constraints.Clause
-import oscar.sat.constraints.Constraint
 
 /** @author Renaud Hartert ren.hartert@gmail.com */
 
 class CDCLStore {
 
-  // Level in which the store was still consistent
-  private[this] var backtrackLevel: Int = Int.MaxValue
+  // Clauses and literals
+  private[this] val problemClauses: ArrayStack[Clause] = new ArrayStack(128)
+  private[this] val learntClauses: ArrayStack[Clause] = new ArrayStack(128)
+  private[this] val variables: ArrayStack[Literal] = new ArrayStack(128)
 
-  // Clauses
-  private[this] val constraints: ArrayStack[Constraint] = new ArrayStack(512)
-  private[this] val learntClauses: ArrayStack[Clause] = new ArrayStack(512)
+  // Activity and Decay
+  private final val scaleLimit: Double = 100000000
+  private[this] var activityStep: Double = 0.5
+  private[this] var activityDecay: Double = 0.5
+  private[this] var variableStep: Double = 0.5
+  private[this] var variableDecay: Double = 0.5
+  private[this] val activities: ArrayStackDouble = new ArrayStackDouble(128)
 
   // Watchers of each literal
-  private[this] val watchers: ArrayStack[ArrayQueue[Constraint]] = new ArrayStack(256)
-
-  // Variables store
-  private[this] val values: ArrayStack[LiftedBoolean] = new ArrayStack(128)
-  private[this] val reasons: ArrayStack[Constraint] = new ArrayStack(128)
-  private[this] val levels: ArrayStackInt = new ArrayStackInt(128)
-  private[this] val seens: ArrayStackInt = new ArrayStackInt(128)
-  private[this] var varStoreSize: Int = 0 // not used yet
-
+  private[this] val watchers: ArrayStack[ArrayQueue[Clause]] = new ArrayStack(128)
+  
   // Trailing queue  
-  private[this] var trailAssigned: Array[Int] = new Array[Int](128)
-  private[this] var trailExplanations: Array[Clause] = new Array[Clause](32)
-  private[this] var trailLevels: Array[Int] = new Array[Int](16)
-  private[this] var nTrailAssigned: Int = 0
-  private[this] var nTrailExplanations: Int = 0
-  private[this] var nTrailLevels: Int = 0
+  private[this] val trail: ArrayStack[Literal] = new ArrayStack(100)
+  private[this] val trailLevels: ArrayStackInt = new ArrayStackInt(100)
 
   // Propagation queue
-  private[this] val queue: ArrayQueueInt = new ArrayQueueInt(128)
+  private[this] val queue: ArrayQueue[Literal] = new ArrayQueue(128)
 
-  // Structure for the conflict analysis procedure
-  private[this] val outLearnt = new ArrayStackInt(16)
-  private[this] val litReason = new ArrayStackInt(16)
-  private[this] var conflictingConstraint: Constraint = null
-
-  /** Return the current decision level. */
-  @inline final def decisionLevel: Int = nTrailLevels
-
-  final def newVariable(): Int = {
-    val varId = varStoreSize
-    values(varId) = Unassigned
-    reasons(varId) = null
-    levels(varId) = -1
-    varStoreSize += 1
-    // Watchers for both literals
-    watchers.append(new ArrayQueue[Constraint](16))
-    watchers.append(new ArrayQueue[Constraint](16))
+  // Variables structure
+  private[this] val values: ArrayStack[LiftedBoolean] = new ArrayStack(128)
+  private[this] val reasons: ArrayStack[Clause] = new ArrayStack(128)
+  private[this] val levels: ArrayStackInt = new ArrayStackInt(128)
+  
+  /** Returns the clause responsible of the assignment */
+  @inline final def assignReason(varId: Int): Clause = reasons(varId)
+  
+  final def newVar(name: String): Int = {
+    val varId = values.size
+    val literal = new Literal(varId, name)
+    variables.append(literal)
+    watchers.append(new ArrayQueue[Clause](16))
+    watchers.append(new ArrayQueue[Clause](16))
+    reasons.append(null)
+    values.append(Unassigned)
+    levels.append(-1)
+    activities.append(0)
+    // order
     varId
   }
 
-  /** Register the constraint as a watcher of `litId`. */
-  @inline final def watch(constraint: Constraint, litId: Int): Unit = {
-    watchers(litId).addLast(constraint)
+  
+  @inline final def watch(clause: Clause, literal: Literal): Unit = {
+    watchers(literal.id).addLast(clause)
+  }
+  
+  final def newClause(literals: Array[Literal]): Boolean = newClause(literals, false)
+  
+  final def newClause(literals: Array[Int]): Boolean = {
+    newClause(literals.map(i => {
+      if ((i & 1) == 1) variables(i / 2).opposite
+      else variables(i / 2)
+    }), false)
   }
 
-  @inline final def litValue(litId: Int): LiftedBoolean = {
-    val varId = litId >> 1
-    val varValue = values(varId)
-    if (varValue == Unassigned) Unassigned
-    else if ((litId & 1) == 0) varValue
-    else varValue.opposite
-  }
+  final def newClause(literals: Array[Literal], learnt: Boolean): Boolean = {
 
-  @inline final def varValue(varId: Int): LiftedBoolean = values(varId)
+    if (!learnt) {
+      // check for initial satisfiability
+    }
 
-  /** Add a permanent clause to the store. */
-  final def addProblemClause(literals: Array[Int]): Boolean = {
-    val nLiterals = literals.length
-    if (nLiterals == 0) false
-    else if (nLiterals == 1) enqueue(literals(0), null)
+    if (literals.length == 0) true
+    else if (literals.length == 1) enqueue(literals(0), null) // Unit fact
     else {
-      val clause = Clause(literals, this)
-      constraints.append(clause)
-      watch(clause, literals(0) ^ 1)
-      watch(clause, literals(1) ^ 1)
+      // Allocate clause
+      val clause = new Clause(this, literals, learnt)
+      if (learnt) {
+        // Add clause to learnt
+        learntClauses.append(clause)
+        // Pick a second literal to watch
+        var maxLit = 0
+        var max = -1
+        var j = 1
+        while (j < literals.length) {
+          val level = levels(literals(j).varId)
+          if (max < level) {
+            max = level
+            maxLit = j
+          }
+          j += 1
+        }
+        val tmp = literals(1)
+        literals(1) = literals(maxLit)
+        literals(maxLit) = tmp
+
+        // Bumping
+        claBumpActivity(clause)
+        var i = 0
+        while (i < literals.length) {
+          varBumpActivity(literals(i))
+          i += 1
+        }
+      }
+      else {
+        problemClauses.append(clause)
+      }
+      watchers(literals(0).opposite.id).addLast(clause)
+      watchers(literals(1).opposite.id).addLast(clause)
       true
     }
   }
 
-  // Literals(0) is the literal to be asserted
-  @inline private def buildConflictClause(): Boolean = {
-    val nLiterals = outLearnt.length
-    if (nLiterals == 0) false
-    else if (nLiterals == 1) enqueue(outLearnt(0), null)
-    else {
-      val literals = outLearnt.toArray
-      val maxLitPos = maxLevelLiteral(literals)
-      val maxLit = literals(maxLitPos)
-      literals(maxLitPos) = literals(1)
-      literals(1) = maxLit
-      val clause = Clause.learnt(literals, this)
-      learntClauses.append(clause)
-      watch(clause, literals(0) ^ 1)
-      watch(clause, literals(1) ^ 1)
-      true
-    }
-  }
-
-  @inline private def maxLevelLiteral(literals: Array[Int]): Int = {
-    var i = literals.length
-    var maxLit = -1
-    var maxLevel = -1
-    while (i > 1) {
-      i -= 1
-      val varId = literals(i) >> 1
-      val level = levels(varId)
-      if (level > maxLevel) {
-        maxLit = i
-        maxLevel = level
+  /** 
+   *  Empty the propagation queue
+   *  Return the inconsistent clause if any
+   */
+  final def propagate(): Clause = {
+    var failReason: Clause = null
+    while (!queue.isEmpty) {
+      val literal = queue.removeFirst
+      val clauses = watchers(literal.id)
+      val nClauses = clauses.size
+      var i = clauses.size
+      while (i > 0 && failReason == null) {
+        i -= 1
+        val clause = clauses.removeFirst()
+        val consistent = clause.propagate(literal)
+        if (!consistent) failReason = clause
       }
     }
-    maxLit
+    queue.clear()
+    failReason
   }
 
-  /**
-   *  Propagate and conflict analysis
-   */
-  final def propagate(): Boolean = {
-    if (fixedPoint()) true
-    else if (nTrailLevels == 0) false
-    else {
-      analyze()
-      undoLevelsUntil(backtrackLevel)
-      buildConflictClause()
-      false
+  final def enqueue(literal: Literal, from: Clause): Boolean = {
+    val varId = literal.varId
+    val lboolean = value(literal)
+    if (lboolean != Unassigned) {
+      if (lboolean == False) false
+      else true
+    } else {
+      // new fact to store
+      if (literal.signed) values(varId) = False
+      else values(varId) = True
+      levels(varId) = trailLevels.size
+      reasons(varId) = from
+      trail.push(literal)
+      queue.addLast(literal)
+      true
     }
   }
 
-  @inline private def analyze(): Unit = {
+  final def value(literal: Literal): LiftedBoolean = {
+    val assigned = values(literal.varId)
+    if (assigned == Unassigned) Unassigned
+    else if (literal.signed) assigned.opposite
+    else assigned
+  }
 
-    val seen: Array[Boolean] = new Array(values.length) // FIXME
+  final def claBumpActivity(clause: Clause): Unit = {
+    clause.activity += activityStep
+    if (clause.activity >= scaleLimit) {
+      varRescaleActivity()
+    }
+  }
+
+  final def claRescaleActivity(): Unit = {
+    var i = 0
+    while (i < learntClauses.length) {
+      learntClauses(i).activity /= scaleLimit
+      i += 1
+    }
+  }
+
+  final def claDecayActivity(): Unit = activityStep *= activityDecay
+
+  final def varBumpActivity(literal: Literal): Unit = {
+    val varId = literal.varId
+    activities(varId) += variableStep
+    if (activities(varId) >= scaleLimit) {
+      varRescaleActivity()
+    }
+  }
+
+  final def varRescaleActivity(): Unit = {
+    var i = 0
+    while (i < activities.length) {
+      activities(i) /= scaleLimit
+      i += 1
+    }
+  }
+  
+  var solution: Array[Boolean] = null
+  
+  final def search(nofConflict: Int, initVarDecay: Double, initClaDecay: Double): LiftedBoolean = {
+    
+    var conflictC = 0
+    variableDecay = 1 / initVarDecay
+    activityDecay = 1 / initClaDecay
+    
+    var complete = false
+    
+    while (!complete) {
+      val conflict = propagate()
+      
+      // Conflict to learn
+      if (conflict != null) {
+        conflictC += 1
+        if (decisionLevel == 0) return False
+        else {
+          analyze(conflict)
+          cancelUntil(outBacktsLevel)
+          record(outLearnt.toArray)
+          decayActivities()
+        }
+      }
+      // No conflict
+      else {
+      
+        // No root simplification
+        // No filtering of learnt clause
+        
+        if (nAssigns() == nVars) {
+          // Model found
+          solution = Array.tabulate(values.length)(i => values(i) == True)
+          cancelUntil(0)
+          return True
+        }
+        else if (conflictC >= nofConflict) {
+          // Reached bound on number of conflicts
+          cancelUntil(0)
+          return Unassigned
+        }
+        else {
+          // Search heuristic
+          val id = (0 until values.size).filter(values(_) == Unassigned).sortBy(activities(_)).head
+          val literal = variables(id)
+          assume(literal)
+        } 
+      }
+    }
+    
+    Unassigned
+  }
+  
+  final def nAssigns(): Int = trail.size
+  final def nVars(): Int = values.size
+
+  final def varDecayActivity(): Unit = variableStep *= variableDecay
+  
+  final def decayActivities(): Unit = {
+    varDecayActivity()
+    claDecayActivity()
+  }
+
+  // ANALYZE
+
+  
+  // These structures are used to build the nogood returned by a conflict analysis.
+  private[this] val outLearnt: ArrayStack[Literal] = new ArrayStack[Literal](16)
+  private[this] val pReason: ArrayStack[Literal] = new ArrayStack[Literal](16)
+  
+  private[this] final var outBacktsLevel: Int = -1
+  
+  private def analyze(initConflict: Clause): Unit = {
+
+    val seen: Array[Boolean] = new Array(values.size) // FIXME
     var counter = 0
-    var litId: Int = -1
-    var conflict: Constraint = conflictingConstraint
+    var p: Literal = null
+    var conflict: Clause = initConflict
 
     outLearnt.clear()
-    outLearnt.append(-1) // leave a room for the asserting literal
-    backtrackLevel = 0
+    outLearnt.append(null) // leave a room for the asserting literal
+    outBacktsLevel = 0
 
     do {
 
-      litReason.clear
+      pReason.clear
+      if (p == null) conflict.explainAll(pReason)
+      else conflict.explain(pReason)
 
-      if (litId == -1) conflict.explainFail(litReason)
-      else conflict.explainAssign(litReason)
-
-      var i = litReason.length
-      while (i > 0) {
-        i -= 1
-        val litId = litReason(i)
-        val varId = litId >> 1
+      // Trace reason for p
+      for (literal <- pReason) { // FIXME 
+        val varId = literal.varId
         if (!seen(varId)) {
           seen(varId) = true
-          val varLevel = levels(varId)
-          if (varLevel == nTrailLevels) counter += 1
-          else {
-            outLearnt.append(litId ^ 1)
-            if (varLevel > backtrackLevel) backtrackLevel = varLevel
+          val level = levels(varId)
+          if (level == decisionLevel) counter += 1
+          else if (level > 0) {
+            outLearnt.append(literal.opposite)
+            if (level > outBacktsLevel) outBacktsLevel = level
           }
         }
       }
 
       // Select next literal to look at
       do {
-        litId = trailAssigned(nTrailAssigned - 1)
-        conflict = reasons(litId >> 1)
-        undoAssignment()
-      } while (!seen(litId >> 1))
-
+        p = trail.top
+        conflict = reasons(p.varId)
+        undoOne()
+      } while (!seen(p.varId))
+        
       counter -= 1
-
+      
     } while (counter > 0)
-
-    outLearnt(0) = litId ^ 1
+      
+    outLearnt(0) = p.opposite
   }
 
-  /**
-   *  Empty the propagation queue
-   *  Return true if no conflict occurs
-   */
-  @inline private def fixedPoint(): Boolean = {
-    var noConflict = true // false if a conflict occurs
-    while (!queue.isEmpty && noConflict) {
-      val litId = queue.removeFirst
-      val constraints = watchers(litId)
-      val nConstraints = constraints.size
-      var i = nConstraints
-      while (i > 0 && noConflict) {
-        i -= 1
-        val constraint = constraints.removeFirst()
-        if (constraint.deleted) { // remove the constraint if not active
-          noConflict = constraint.propagate(litId)
-          if (!noConflict) conflictingConstraint = constraint
-        }
-      }
-    }
-
-    queue.clear() // possibly not empty
-    noConflict
+  final def record(literals: Array[Literal]): Unit = {
+    newClause(literals, true)
+    val clause = learntClauses.top
+    enqueue(literals(0), clause)
   }
 
-  final def enqueue(litId: Int, reason: Constraint): Boolean = {
-    val varId = litId >> 1
-    val lboolean = litValue(litId)
-    if (lboolean != Unassigned) lboolean == True
-    else {
-      // New assignment to store
-      if ((litId ^ 1) == 0) values(varId) = True
-      else values(varId) = False
-      reasons(varId) = reason
-      levels(varId) = nTrailLevels
-      // Trail the new assignment
-      newAssignment(litId)
-      // Add the literal to the propagation queue
-      queue.addLast(litId)
-      true
-    }
-  }
+  final def decisionLevel: Int = trailLevels.size
 
-  final def printTrail(): Unit = println("TRAIL = " + trailAssigned.take(nTrailAssigned).mkString("[", ", ", "]"))
+  // TRAIL
 
-  @inline final def newLevel(): Unit = {
-    if (trailLevels.length == nTrailLevels) growTrailLevels()
-    trailLevels(nTrailLevels) = nTrailAssigned
-    nTrailLevels += 1
-  }
-
-  @inline private def newAssignment(litId: Int): Unit = {
-    if (trailAssigned.length == nTrailAssigned) growTrailAssigned()
-    trailAssigned(nTrailAssigned) = litId
-    nTrailAssigned += 1
-  }
-
-  // Undo the last assignment.
-  @inline private def undoAssignment(): Unit = {
-    assert(nTrailAssigned > 0)
-    nTrailAssigned -= 1
-    val litId = trailAssigned(nTrailAssigned)
-    val varId = litId >> 1
-    values(varId) = Unassigned
+  @inline private def undoOne(): Unit = {
+    assert(trail.size > 0)
+    val literal = trail.pop()
+    val varId = literal.varId
+    values(varId) = Unassigned // unasign
     reasons(varId) = null
     levels(varId) = -1
+    //order.undo
   }
 
-  // Undo the last level.
-  @inline private def undoLevel(): Unit = {
-    nTrailLevels -= 1
-    var nUndo = nTrailAssigned - trailLevels(nTrailLevels)
-    while (nUndo > 0) {
-      nUndo -= 1
-      undoAssignment()
+  @inline private def assume(literal: Literal): Boolean = {
+    trailLevels.push(trail.size)
+    enqueue(literal, null)
+  }
+
+  @inline private def cancel(): Unit = {
+    var nLevels = trail.size - trailLevels.pop()
+    while (nLevels > 0) {
+      nLevels -= 1
+      undoOne()
     }
   }
-
-  // Undo the last levels until level.
-  @inline private def undoLevelsUntil(level: Int): Unit = {
-    while (nTrailLevels > level) undoLevel()
+  
+  @inline private def cancelUntil(level: Int): Unit = {
+    while (trailLevels.size > level) cancel()
   }
 
-  final def undoAll(): Unit = undoLevelsUntil(0)
-
-  // Used to adapt the length of inner structures.
-  @inline private def growTrailAssigned(): Unit = {
-    val newTrail = new Array[Int](nTrailAssigned << 1)
-    System.arraycopy(trailAssigned, 0, newTrail, 0, nTrailAssigned)
-    trailAssigned = newTrail
+  final def print: Unit = {
+    var i = 0
+    while (i < values.size) {
+      println(values(i))
+      i += 1
+    }
   }
-
-  // Used to adapt the length of inner structures.
-  @inline private def growTrailLevels(): Unit = {
-    val newTrail = new Array[Int](nTrailLevels << 1)
-    System.arraycopy(trailLevels, 0, newTrail, 0, nTrailLevels)
-    trailLevels = newTrail
+  
+  final def solve: Boolean = {
+    
+    var nofConflicts = 100
+    var nofLearnts = problemClauses.size / 3
+    var status: LiftedBoolean = Unassigned
+    
+    while (status == Unassigned) {
+      status = search(nofConflicts, 0.95, 0.999)
+      nofConflicts += nofConflicts/2
+      nofLearnts += nofLearnts/10
+    }
+    
+    cancelUntil(0)
+    status == True
   }
 }

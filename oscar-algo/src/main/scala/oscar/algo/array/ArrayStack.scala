@@ -121,10 +121,11 @@ final class ArrayStack[T](initialSize: Int = 100) {
     System.arraycopy(stack, 0, newStack, 0, index)
     stack = newStack
   }
-   
-  @inline final def toArray: Array[T] = {
-    val array = new Array[AnyRef](index)
+  
+  import scala.reflect.ClassTag
+  @inline final def toArray[A >: T : ClassTag]: Array[A] = {
+    val array = new Array[A](index)
     System.arraycopy(stack, 0, array, 0, index)
-    array.asInstanceOf[Array[T]]
+    array
   }
 }
