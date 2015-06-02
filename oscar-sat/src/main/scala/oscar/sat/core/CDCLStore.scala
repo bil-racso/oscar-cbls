@@ -5,71 +5,71 @@ import oscar.algo.array.ArrayStack
 import oscar.algo.array.ArrayStackInt
 import oscar.algo.array.ArrayStackDouble
 import oscar.sat.constraints.Clause
+import oscar.sat.heuristics.Heuristic
+import oscar.sat.heuristics.Heuristic
 
 /** @author Renaud Hartert ren.hartert@gmail.com */
 
 class CDCLStore {
+  
+  private var heuristic: Heuristic = null
 
   // Clauses and literals
   private[this] val problemClauses: ArrayStack[Clause] = new ArrayStack(128)
   private[this] val learntClauses: ArrayStack[Clause] = new ArrayStack(128)
-  private[this] val variables: ArrayStack[Literal] = new ArrayStack(128)
 
   // Activity and Decay
-  private final val scaleLimit: Double = 100000000
+  private final val scaleLimit: Double = 1000000
   private[this] var activityStep: Double = 0.5
   private[this] var activityDecay: Double = 0.5
   private[this] var variableStep: Double = 0.5
   private[this] var variableDecay: Double = 0.5
-  private[this] val activities: ArrayStackDouble = new ArrayStackDouble(128)
 
   // Watchers of each literal
   private[this] val watchers: ArrayStack[ArrayQueue[Clause]] = new ArrayStack(128)
   
   // Trailing queue  
-  private[this] val trail: ArrayStack[Literal] = new ArrayStack(100)
+  private[this] val trail: ArrayStackInt = new ArrayStackInt(100)
   private[this] val trailLevels: ArrayStackInt = new ArrayStackInt(100)
 
   // Propagation queue
-  private[this] val queue: ArrayQueue[Literal] = new ArrayQueue(128)
+  private[this] val queue: ArrayQueue[Int] = new ArrayQueue(128)
 
   // Variables structure
-  private[this] val values: ArrayStack[LiftedBoolean] = new ArrayStack(128)
-  private[this] val reasons: ArrayStack[Clause] = new ArrayStack(128)
-  private[this] val levels: ArrayStackInt = new ArrayStackInt(128)
+  private[this] var values: Array[LiftedBoolean] = new Array(128)
+  private[this] var reasons: Array[Clause] = new Array(128)
+  private[this] var levels: Array[Int] = new Array(128)
+  private[this] var activities: Array[Double] = new Array(128)
+  private[this] var varStoreSize: Int = 0
   
   /** Returns the clause responsible of the assignment */
   @inline final def assignReason(varId: Int): Clause = reasons(varId)
   
+  @inline final def isAssigned(varId: Int): Boolean = values(varId) != Unassigned
+  
+  @inline final def varActivity(varId: Int): Double = activities(varId)
+  
   final def newVar(name: String): Int = {
-    val varId = values.size
-    val literal = new Literal(varId, name)
-    variables.append(literal)
+    if (varStoreSize == values.length) growVariableStore()
+    val varId = varStoreSize
+    values(varId) = Unassigned
+    reasons(varId) = null
+    levels(varId) = -1
+    activities(varId) = 0.0
+    varStoreSize += 1
     watchers.append(new ArrayQueue[Clause](16))
     watchers.append(new ArrayQueue[Clause](16))
-    reasons.append(null)
-    values.append(Unassigned)
-    levels.append(-1)
-    activities.append(0)
-    // order
     varId
   }
 
   
-  @inline final def watch(clause: Clause, literal: Literal): Unit = {
-    watchers(literal.id).addLast(clause)
+  @inline final def watch(clause: Clause, literal: Int): Unit = {
+    watchers(literal).addLast(clause)
   }
   
-  final def newClause(literals: Array[Literal]): Boolean = newClause(literals, false)
-  
-  final def newClause(literals: Array[Int]): Boolean = {
-    newClause(literals.map(i => {
-      if ((i & 1) == 1) variables(i / 2).opposite
-      else variables(i / 2)
-    }), false)
-  }
+  final def newClause(literals: Array[Int]): Boolean = newClause(literals, false)
 
-  final def newClause(literals: Array[Literal], learnt: Boolean): Boolean = {
+  final def newClause(literals: Array[Int], learnt: Boolean): Boolean = {
 
     if (!learnt) {
       // check for initial satisfiability
@@ -88,7 +88,7 @@ class CDCLStore {
         var max = -1
         var j = 1
         while (j < literals.length) {
-          val level = levels(literals(j).varId)
+          val level = levels(literals(j) / 2)
           if (max < level) {
             max = level
             maxLit = j
@@ -110,8 +110,8 @@ class CDCLStore {
       else {
         problemClauses.append(clause)
       }
-      watchers(literals(0).opposite.id).addLast(clause)
-      watchers(literals(1).opposite.id).addLast(clause)
+      watchers(literals(0) ^ 1).addLast(clause)
+      watchers(literals(1) ^ 1).addLast(clause)
       true
     }
   }
@@ -124,7 +124,7 @@ class CDCLStore {
     var failReason: Clause = null
     while (!queue.isEmpty) {
       val literal = queue.removeFirst
-      val clauses = watchers(literal.id)
+      val clauses = watchers(literal)
       val nClauses = clauses.size
       var i = clauses.size
       while (i > 0 && failReason == null) {
@@ -138,15 +138,15 @@ class CDCLStore {
     failReason
   }
 
-  final def enqueue(literal: Literal, from: Clause): Boolean = {
-    val varId = literal.varId
-    val lboolean = value(literal)
+  final def enqueue(literal: Int, from: Clause): Boolean = {
+    val varId = literal / 2
+    val lboolean = litValue(literal)
     if (lboolean != Unassigned) {
       if (lboolean == False) false
       else true
     } else {
       // new fact to store
-      if (literal.signed) values(varId) = False
+      if ((literal & 1) == 1) values(varId) = False
       else values(varId) = True
       levels(varId) = trailLevels.size
       reasons(varId) = from
@@ -156,10 +156,10 @@ class CDCLStore {
     }
   }
 
-  final def value(literal: Literal): LiftedBoolean = {
-    val assigned = values(literal.varId)
+  final def litValue(literal: Int): LiftedBoolean = {
+    val assigned = values(literal / 2)
     if (assigned == Unassigned) Unassigned
-    else if (literal.signed) assigned.opposite
+    else if ((literal & 1) == 1) assigned.opposite
     else assigned
   }
 
@@ -180,9 +180,10 @@ class CDCLStore {
 
   final def claDecayActivity(): Unit = activityStep *= activityDecay
 
-  final def varBumpActivity(literal: Literal): Unit = {
-    val varId = literal.varId
+  final def varBumpActivity(literal: Int): Unit = {
+    val varId = literal / 2
     activities(varId) += variableStep
+    heuristic.updateActivity(varId)
     if (activities(varId) >= scaleLimit) {
       varRescaleActivity()
     }
@@ -190,19 +191,23 @@ class CDCLStore {
 
   final def varRescaleActivity(): Unit = {
     var i = 0
-    while (i < activities.length) {
-      activities(i) /= scaleLimit
+    while (i < varStoreSize) {
+      activities(i) /= scaleLimit    
+      heuristic.updateActivity(i)
       i += 1
     }
   }
   
   var solution: Array[Boolean] = null
+  var totalConfict = 0
   
   final def search(nofConflict: Int, initVarDecay: Double, initClaDecay: Double): LiftedBoolean = {
     
     var conflictC = 0
     variableDecay = 1 / initVarDecay
     activityDecay = 1 / initClaDecay
+    
+    heuristic.init()
     
     var complete = false
     
@@ -212,6 +217,7 @@ class CDCLStore {
       // Conflict to learn
       if (conflict != null) {
         conflictC += 1
+        totalConfict += 1
         if (decisionLevel == 0) return False
         else {
           analyze(conflict)
@@ -228,7 +234,7 @@ class CDCLStore {
         
         if (nAssigns() == nVars) {
           // Model found
-          solution = Array.tabulate(values.length)(i => values(i) == True)
+          solution = Array.tabulate(varStoreSize)(i => values(i) == True)
           cancelUntil(0)
           return True
         }
@@ -239,8 +245,7 @@ class CDCLStore {
         }
         else {
           // Search heuristic
-          val id = (0 until values.size).filter(values(_) == Unassigned).sortBy(activities(_)).head
-          val literal = variables(id)
+          val literal = heuristic.nextLiteral()
           assume(literal)
         } 
       }
@@ -250,7 +255,7 @@ class CDCLStore {
   }
   
   final def nAssigns(): Int = trail.size
-  final def nVars(): Int = values.size
+  final def nVars(): Int = varStoreSize
 
   final def varDecayActivity(): Unit = variableStep *= variableDecay
   
@@ -263,8 +268,8 @@ class CDCLStore {
 
   
   // These structures are used to build the nogood returned by a conflict analysis.
-  private[this] val outLearnt: ArrayStack[Literal] = new ArrayStack[Literal](16)
-  private[this] val pReason: ArrayStack[Literal] = new ArrayStack[Literal](16)
+  private[this] val outLearnt: ArrayStackInt = new ArrayStackInt(16)
+  private[this] val pReason: ArrayStackInt = new ArrayStackInt(16)
   
   private[this] final var outBacktsLevel: Int = -1
   
@@ -272,28 +277,28 @@ class CDCLStore {
 
     val seen: Array[Boolean] = new Array(values.size) // FIXME
     var counter = 0
-    var p: Literal = null
+    var p: Int = -1
     var conflict: Clause = initConflict
 
     outLearnt.clear()
-    outLearnt.append(null) // leave a room for the asserting literal
+    outLearnt.append(-1) // leave a room for the asserting literal
     outBacktsLevel = 0
 
     do {
 
       pReason.clear
-      if (p == null) conflict.explainAll(pReason)
+      if (p == -1) conflict.explainAll(pReason)
       else conflict.explain(pReason)
 
       // Trace reason for p
       for (literal <- pReason) { // FIXME 
-        val varId = literal.varId
+        val varId = literal / 2
         if (!seen(varId)) {
           seen(varId) = true
           val level = levels(varId)
           if (level == decisionLevel) counter += 1
           else if (level > 0) {
-            outLearnt.append(literal.opposite)
+            outLearnt.append(literal ^ 1)
             if (level > outBacktsLevel) outBacktsLevel = level
           }
         }
@@ -302,18 +307,18 @@ class CDCLStore {
       // Select next literal to look at
       do {
         p = trail.top
-        conflict = reasons(p.varId)
+        conflict = reasons(p / 2)
         undoOne()
-      } while (!seen(p.varId))
+      } while (!seen(p / 2))
         
       counter -= 1
       
     } while (counter > 0)
       
-    outLearnt(0) = p.opposite
+    outLearnt(0) = p ^ 1
   }
 
-  final def record(literals: Array[Literal]): Unit = {
+  final def record(literals: Array[Int]): Unit = {
     newClause(literals, true)
     val clause = learntClauses.top
     enqueue(literals(0), clause)
@@ -326,14 +331,14 @@ class CDCLStore {
   @inline private def undoOne(): Unit = {
     assert(trail.size > 0)
     val literal = trail.pop()
-    val varId = literal.varId
+    val varId = literal / 2
     values(varId) = Unassigned // unasign
     reasons(varId) = null
     levels(varId) = -1
-    //order.undo
+    heuristic.undo(varId)
   }
 
-  @inline private def assume(literal: Literal): Boolean = {
+  @inline private def assume(literal: Int): Boolean = {
     trailLevels.push(trail.size)
     enqueue(literal, null)
   }
@@ -358,19 +363,36 @@ class CDCLStore {
     }
   }
   
-  final def solve: Boolean = {
-    
+  final def solve(h: Heuristic): Boolean = {
+    heuristic = h
     var nofConflicts = 100
     var nofLearnts = problemClauses.size / 3
     var status: LiftedBoolean = Unassigned
     
     while (status == Unassigned) {
-      status = search(nofConflicts, 0.95, 0.999)
+      status = search(nofConflicts, 0.98, 0.999)
       nofConflicts += nofConflicts/2
       nofLearnts += nofLearnts/10
     }
     
     cancelUntil(0)
     status == True
+  }
+  
+    // Used to adapt the length of inner structures.
+  @inline private def growVariableStore(): Unit = {
+    val newSize = varStoreSize * 2
+    val newValues = new Array[LiftedBoolean](newSize)
+    val newReasons = new Array[Clause](newSize)
+    val newLevels = new Array[Int](newSize)
+    val newActivities = new Array[Double](newSize)
+    System.arraycopy(values, 0, newValues, 0, varStoreSize)
+    System.arraycopy(reasons, 0, newReasons, 0, varStoreSize)
+    System.arraycopy(levels, 0, newLevels, 0, varStoreSize)
+    System.arraycopy(activities, 0, newActivities, 0, varStoreSize)
+    values = newValues
+    reasons = newReasons
+    levels = newLevels
+    activities = newActivities
   }
 }

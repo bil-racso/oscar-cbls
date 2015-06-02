@@ -106,7 +106,7 @@ final class ArrayStack[T](initialSize: Int = 100) {
   }
   
   @inline def apply(idx: Int): T = {
-    if (idx >= index) throw new IndexOutOfBoundsException
+    if (idx >= index) throw new IndexOutOfBoundsException(idx.toString)
     else stack(idx).asInstanceOf[T]
   }
 

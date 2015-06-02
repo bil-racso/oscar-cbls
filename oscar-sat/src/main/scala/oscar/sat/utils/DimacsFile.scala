@@ -2,11 +2,12 @@ package oscar.sat.utils
 
 import scala.io.Source
 import oscar.sat.core.CDCLStore
+import oscar.sat.heuristics.ActivityHeuristic
 
 class DimacsFile(final val nClauses: Int, final val nVariables: Int, final val clauses: Array[Array[Int]]) {
   
   final def model: CDCLStore = {
-    val solver = new CDCLStore
+    val solver = new CDCLStore()
     // Creates literals
     val literals = Array.tabulate(nVariables)(i => solver.newVar((i+1).toString))
     // Creates clauses
@@ -57,9 +58,9 @@ object DimacsFile {
       // Comment lines
       var comments = true
       while (lines.hasNext && comments) {
-        val line = lines.next
+        val line = lines.next.replaceAll("\\s+", " ")
         if (line.charAt(0) == 'p') {
-          val data = line.trim.split(" ")
+          val data = line.trim.split("\\s+")
           nVariables = data(2).toInt
           nClauses = data(3).toInt
           comments = false
@@ -69,8 +70,8 @@ object DimacsFile {
       val clauses = new Array[Array[Int]](nClauses)
       var i = 0
       while (i < nClauses) {
-        val line = lines.next
-        val data = line.trim.split(" ").dropRight(1)
+        val line = lines.next.replaceAll("\\s+", " ")
+        val data = line.trim.split("\\s+").dropRight(1)
         clauses(i) = data.map(_.toInt)
         i += 1
       }
