@@ -258,8 +258,6 @@ class FZCBLSSolver extends SearchEngine with StopWatch {
     })
     model.constraints.foreach{ case reif(c,b) => if(b.isBound) log(0,"Fixed reified constraint: "+b.boolValue); case _ => {}}
     
-    //model.variables.filter(!_.isDefined).foreach(v => println(v.domainSize))
-    //System.exit(0)
     
     
     
@@ -374,7 +372,7 @@ class FZCBLSSolver extends SearchEngine with StopWatch {
     
     
     //Search
-    val timeout = (if(opts.timeOut>0) {opts.timeOut} else 5 * 60) * 1000
+    val timeout = (if(opts.timeOut>0) {opts.timeOut} else 15 * 60) * 1000
     log("Timeout is set to "+timeout+" milliseconds"); 
     val sc : SearchControl =  model.search.obj match {
           case Objective.SATISFY => new SearchControl(cblsmodel,0,timeout,true);
