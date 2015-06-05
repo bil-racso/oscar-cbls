@@ -473,23 +473,23 @@ object InvariantHelper{
     * @return the model that the invariant belongs to
     */
   def findModel(i:Iterable[BasicPropagationElement]):Store={
-    i.foreach(e => {
-      e match{
+    val it = i.toIterator
+    while(it.hasNext){
+      it.next() match{
         case pe:AbstractVariable if pe.model != null => return pe.model
       }
-    })
+    }
     null
   }
 
   def findModel(i:BasicPropagationElement*):Store={
-    i.foreach(e => {
-      if (e.isInstanceOf[Variable]){
-        val m = e.asInstanceOf[Variable].model
-        if (m != null){
-          return m
-        }
-      }
-    })
+    val it = i.toIterator
+    while(it.hasNext){
+      it.next() match {
+        case v: Variable =>
+          val m = v.model
+          if (m != null) return m
+      }}
     null
   }
 
