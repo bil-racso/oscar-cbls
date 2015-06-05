@@ -477,6 +477,7 @@ object InvariantHelper{
     while(it.hasNext){
       it.next() match{
         case pe:AbstractVariable if pe.model != null => return pe.model
+        case _ => ;
       }
     }
     null
@@ -489,6 +490,7 @@ object InvariantHelper{
         case v: Variable =>
           val m = v.model
           if (m != null) return m
+        case _ => ;
       }}
     null
   }
