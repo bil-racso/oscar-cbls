@@ -77,15 +77,7 @@ class TableCT(val X: Array[CPIntVar], table: Array[Array[Int]]) extends Constrai
 
     /* Compute the masks for each (x,a) pair */
     fillMasks()
-
-    /* Remove values not supported by any tuple */
-    if (removeUnsupportedValues() == Failure) {
-      return Failure
-    }
-
-    /* Compute the boundaries of the bitsets */
-    computeMasksBoundaries()
-
+    
     /* Call propagate() and update(x, delta) when domains change */
     var i = 0
     while (i < arity) {
@@ -96,6 +88,14 @@ class TableCT(val X: Array[CPIntVar], table: Array[Array[Int]]) extends Constrai
       lastSizes(i).setValue(x.size)
       i += 1
     }
+
+    /* Remove values not supported by any tuple */
+    if (removeUnsupportedValues() == Failure) {
+      return Failure
+    }
+
+    /* Compute the boundaries of the bitsets */
+    computeMasksBoundaries()
     
     Suspend
   }
@@ -398,12 +398,14 @@ class TableCT(val X: Array[CPIntVar], table: Array[Array[Int]]) extends Constrai
    */
   @inline private final def orTempMask(varIndex: Int, valueIndex: Int): Unit = {
     val mask = masks(varIndex)(valueIndex)
-    val start = Math.max(firstActive.value, starts(varIndex)(valueIndex))
-    val end = Math.min(lastActive.value, ends(varIndex)(valueIndex))
-    var offset = start
-    while (offset <= end) {
-      tempMask(offset) |= mask(offset)
-      offset += 1
+    if (mask != null) {
+      val start = Math.max(firstActive.value, starts(varIndex)(valueIndex))
+      val end = Math.min(lastActive.value, ends(varIndex)(valueIndex))
+      var offset = start
+      while (offset <= end) {
+        tempMask(offset) |= mask(offset)
+        offset += 1
+      }
     }
   }
 
