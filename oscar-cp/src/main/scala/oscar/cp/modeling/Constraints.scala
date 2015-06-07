@@ -30,6 +30,8 @@ import oscar.cp.core.CPOutcome
 import oscar.cp.core.CPPropagStrength
 import oscar.cp._
 import oscar.cp.scheduling.constraints.DisjunctiveWithTransitionTimes
+import oscar.cp.constraints.tables.TableAlgo
+import oscar.cp.constraints.tables._
 
 trait Constraints {
 
@@ -597,12 +599,10 @@ trait Constraints {
     z
   }
 
-  def table(x: Array[CPIntVar], tuples: Array[Array[Int]]): Constraint = {
-    new TableSTR2(x,tuples)
-    
-	  //val data = new TableData(x.size)
-	  //tuples.foreach(t => data.add(t: _*))
-	  //new oscar.cp.constraints.TableAC5TCRecomp(data, x: _*)
+  import oscar.cp.constraints.tables.TableAlgo._
+  
+  def table(x: Array[CPIntVar], tuples: Array[Array[Int]], algo: TableAlgo = CompactTable): Constraint = {
+    oscar.cp.constraints.tables.table(x,tuples,algo)
   }
 
   /**
@@ -1216,9 +1216,22 @@ trait Constraints {
       }
     }
   }
-  
-  
-  
+
+  /**
+   * Reservoir resource with specified parameters. For any point of time, the amount of resource in the reservoir must be between its minimal and maximal capacity
+   *
+   * @param startVars Variables for task starting times
+   * @param durationVars Variables for task durations
+   * @param endVars Variables for task ending times
+   * @param productionVars Variables for task productions; represents the amounts of the resource produced by tasks
+   * @param consumptionVars Variables for task consumptions; represents the amounts of the resource consumed by tasks
+   * @param minCapacity The minimal capacity of the reservoir
+   * @param maxCapacity The maximal capacity of the reservoir
+   * @param initialAmount The initial amount of resource in the reservoir
+   */
+  def reservoirResource(startVars: Array[CPIntVar], durationVars: Array[CPIntVar], endVars: Array[CPIntVar], productionVars: Array[CPIntVar], consumptionVars: Array[CPIntVar], minCapacity: Int, maxCapacity: Int, initialAmount: Int = 0) = {
+    ReservoirResource(startVars, durationVars, endVars, productionVars, consumptionVars, minCapacity, maxCapacity, initialAmount)
+  }
 
   /**
    * Discrete Resource constraint with maximum capacity: at any time, the cumulative demands of the tasks executing on the resource id, must be <= than the capacity
