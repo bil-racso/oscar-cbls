@@ -63,11 +63,6 @@ final class TableSTR2(variables: Array[CPIntVar], table: Array[Array[Int]]) exte
   // Last size must be initially different from the domain size
   private[this] val lastSize = Array.fill(arity)(new ReversibleInt(s, -1))
 
-  // Active variables
-  private[this] val unboundVariableIndexes = new Array[Int](arity)
-  private[this] val unboundVariableSizeRev = new ReversibleInt(s, arity)
-  private[this] var unboundVariableSize = 0
-
   override def setup(l: CPPropagStrength): CPOutcome = {
     if (propagate() == Failure) Failure
     else {
@@ -89,23 +84,20 @@ final class TableSTR2(variables: Array[CPIntVar], table: Array[Array[Int]]) exte
     // Cache
     nActiveTuples = nActiveTuplesRev.value
 
-    unboundVariableSize = 0
     var i = arity
     while (i > 0) {
       i -= 1
       if (!isBoundAndChecked(i).value) {
         updateSet(i) // Copy the domain of the variable
-        unboundVariableIndexes(unboundVariableSize) = i
-        unboundVariableSize += 1 // push
+        sSup(sSupSize) = i
+        sSupSize += 1 // push
       }
     }
 
-    i = unboundVariableSize
+    i = sSupSize
     while (i > 0) {
       i -= 1
-      val varId = unboundVariableIndexes(i)
-      sSup(sSupSize) = varId
-      sSupSize += 1 // push
+      val varId = sSup(i)
       val varSize = variables(varId).size
       val inSVal = lastSize(varId).value != varSize // changed since last propagate
       lastSize(varId).value = varSize
