@@ -367,60 +367,40 @@ class ProfileStructure(
   }
 
 
-  // stacks for height and duration
-  val hStack = new Array[Int](nTasks + 1) 
-  var hPointer = -1
-  
-  val dStack = new Array[Int](nTasks + 1) 
-  var dPointer = -1
-  
-  
-  @inline private def hPush(e: Int) = {
-    hPointer += 1
-    hStack(hPointer) = e
-  }
-  
-  @inline private def dPush(e: Int) = {
-    dPointer += 1
-    dStack(dPointer) = e
-  }
-  
+  // stacks for height and dates, these actually represent one stack of (height, date) pairs
+  val hStack = new Array[Int](nTasks + 1)
+  val dStack = new Array[Int](nTasks + 1)
+  var sPointer = -1
   
   @inline private def unstack(time: Int, height: Int, dur: Int) = {
     var minHeight = Int.MaxValue
     var lastD = time
-    while (hStack(hPointer) <= height) {
-      val h = hStack(hPointer) // pop
-      hPointer -= 1
-      
-      lastD = dStack(dPointer) // pop
-      dPointer -= 1
+    while (hStack(sPointer) <= height) {
+      val h = hStack(sPointer) // pop
+      lastD = dStack(sPointer) // pop
+      sPointer -= 1
       
       if (time - lastD >= dur) minHeight = min(minHeight, h)
     }
     
-    hPush(height)
-    dPush(lastD)
+    sPointer += 1
+    hStack(sPointer) = height  // push height
+    dStack(sPointer) = lastD   // push date  
     minHeight
   }
   
   def minHeightOf(a: Int) = {
-    //val first = min(smax(a), emin(a)) // used only
-    //val last  = max(smax(a), emin(a))
-    
     val first = emin(a) // this is only used for tasks with no mandatory part
     val last  = smax(a) 
-    val d = dmin(a)
     
     var i = indexBefore(a, smin(a))  // find plateau where a can start
-    hPointer = -1  // clear stacks
-    dPointer = -1
+    sPointer = 0
+    hStack(0) = Int.MaxValue
+    dStack(0) = first
     
-    hPush(Int.MaxValue)
-    dPush(first)
-    
-    hPush(pointHeights(i))
-    dPush(first)
+    sPointer = 1
+    hStack(1) = pointHeights(i)
+    dStack(1) = first
     
     i += 1
     
@@ -428,16 +408,14 @@ class ProfileStructure(
     
     while (pointTimes(i) < last) {    
       val thispoint = math.min(pointTimes(i), last)
-      minHeight = math.min(minHeight, unstack(thispoint, pointHeights(i), d))
+      minHeight = math.min(minHeight, unstack(thispoint, pointHeights(i), dmin(a)))
       i += 1
     }
       
-    minHeight = math.min(minHeight, unstack(last, Int.MaxValue - 1, d))
+    minHeight = math.min(minHeight, unstack(last, Int.MaxValue - 1, dmin(a)))
     
     minHeight
   }
-  
-  
   
   def printProfile: Unit = {
     var i = 0
