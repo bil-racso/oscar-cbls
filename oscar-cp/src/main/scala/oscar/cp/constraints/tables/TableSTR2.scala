@@ -22,6 +22,7 @@ import oscar.algo.reversible.ReversibleBoolean
 import oscar.cp.core.variables.CPIntVar
 import oscar.cp.core.CPPropagStrength
 import oscar.cp.core.Constraint
+import oscar.cp.core.CPStore
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.CPOutcome._
 
@@ -35,6 +36,7 @@ import oscar.cp.core.CPOutcome._
 final class TableSTR2(variables: Array[CPIntVar], table: Array[Array[Int]]) extends Constraint(variables(0).store, "TableSTR2") {
 
   idempotent = true
+  priorityL2 = CPStore.MaxPriorityL2 - 1
 
   private[this] val arity = variables.length
   private[this] val nTuples = table.length
@@ -94,7 +96,7 @@ final class TableSTR2(variables: Array[CPIntVar], table: Array[Array[Int]]) exte
       if (!isBoundAndChecked(i).value) {
         updateSet(i) // Copy the domain of the variable
         unboundVariableIndexes(unboundVariableSize) = i
-        unboundVariableSize += 1
+        unboundVariableSize += 1 // push
       }
     }
 

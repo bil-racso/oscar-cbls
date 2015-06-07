@@ -63,8 +63,6 @@ class TableCT(val X: Array[CPIntVar], table: Array[Array[Int]]) extends Constrai
   private[this] val lastSizes = Array.fill(arity)(new ReversibleInt(store, 0))
   private[this] val needPropagate = new ReversibleBoolean(store, false)
 
-  /* ----- Setup ----- */
-  
   override def setup(l: CPPropagStrength): CPOutcome = {
     /* Setting idempotency & lower priority for propagate() */
     this.idempotent = true
@@ -99,9 +97,7 @@ class TableCT(val X: Array[CPIntVar], table: Array[Array[Int]]) extends Constrai
     
     Suspend
   }
-  
-  /* ----- Propagation & Update ----- */
-
+ 
   /**
    * Invalidates tuples by handling delta, the set of values removed from D(x) since the last call to this function.
    * @param intVar the CPIntVar associated to x.
@@ -487,18 +483,18 @@ class TableCT(val X: Array[CPIntVar], table: Array[Array[Int]]) extends Constrai
   /* ----- Functions used during the setup of the constraint ----- */
   
   /* Bits operations */
-  private final def oneBitLong(pos: Int): Long = 1L << pos
-  private final def bitLength(size: Int): Int = (size + 63) >>> 6 // = pos / 64 + 1
-  private final def bitOffset(pos: Int): Int = pos >>> 6 // = pos / 64
-  private final def bitPos(pos: Int): Int = pos & 63 // = pos % 63
-  private final def setBit(bitset: Array[Long], pos: Int): Unit = bitset(bitOffset(pos)) |= oneBitLong(bitPos(pos))
+  @inline private def oneBitLong(pos: Int): Long = 1L << pos
+  @inline private def bitLength(size: Int): Int = (size + 63) >>> 6 // = pos / 64 + 1
+  @inline private def bitOffset(pos: Int): Int = pos >>> 6 // = pos / 64
+  @inline private def bitPos(pos: Int): Int = pos & 63 // = pos % 63
+  @inline private def setBit(bitset: Array[Long], pos: Int): Unit = bitset(bitOffset(pos)) |= oneBitLong(bitPos(pos))
 
   /**
    * Check if a tuple is valid.
    * @param tupleIndex the index of the tuple in the table.
    * @return true if the tuple is valid, false otherwise.
    */
-  private final def isTupleValid(tupleIndex: Int): Boolean = {
+  @inline private def isTupleValid(tupleIndex: Int): Boolean = {
     var varIndex = 0
     while (varIndex < arity) {
       if (!X(varIndex).hasValue(table(tupleIndex)(varIndex))) {
@@ -513,7 +509,7 @@ class TableCT(val X: Array[CPIntVar], table: Array[Array[Int]]) extends Constrai
    * Retrieve the valid tuples from the table and store their index in validTuplesBuffer.
    * @return Failure if there is no valid tuples, Suspend otherwise.
    */
-  private final def fillValidTuples(): CPOutcome = {
+   @inline private def fillValidTuples(): CPOutcome = {
     validTuplesBuffer.clear()
     var tupleIndex = 0
     while (tupleIndex < nbTuples) {
@@ -536,7 +532,7 @@ class TableCT(val X: Array[CPIntVar], table: Array[Array[Int]]) extends Constrai
   /**
    * Compute the mask for each variable value pair (x,a).
    */
-  private final def fillMasks(): Unit = {
+  @inline private def fillMasks(): Unit = {
     tempMask = Array.fill(nbLongs)(0L)
     validTuples = Array.fill(nbLongs)(0L)
     lastMagics = Array.fill(nbLongs)(-1L)
@@ -572,7 +568,7 @@ class TableCT(val X: Array[CPIntVar], table: Array[Array[Int]]) extends Constrai
    * Compute the bounds of the masks for each variable value pair (x,a), i.e. the minimal and maximal i such that
    *      mask(x,a) != 0
    */
-  private final def computeMasksBoundaries(): Unit = {
+  @inline private def computeMasksBoundaries(): Unit = {
     var varIndex = 0
     while (varIndex < arity) {
       var valueIndex = 0
@@ -600,7 +596,7 @@ class TableCT(val X: Array[CPIntVar], table: Array[Array[Int]]) extends Constrai
    * Remove values not supported by any tuple.
    * @return the outcome i.e. Failure or Success.
    */
-  private final def removeUnsupportedValues(): CPOutcome = {
+  @inline private def removeUnsupportedValues(): CPOutcome = {
     var varIndex = 0
     while (varIndex < arity) {
       val intVar = X(varIndex)
