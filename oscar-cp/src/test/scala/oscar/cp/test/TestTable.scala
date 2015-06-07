@@ -38,31 +38,37 @@ class TestTable extends FunSuite with ShouldMatchers  {
   }
 
   test("Table Test") {
-    for (i <- 0 until 10) {
+    for (i <- 0 until 1000) {
 
       val cp = CPSolver()
-      var x = Array.fill(5)(CPIntVar(3 to 8)(cp))
+      var x = Array.fill(5)(CPIntVar(1 to 8)(cp))
 
-      val tuples1 = randomTuples(3, 40, 3, 8)
-      val tuples2 = randomTuples(3, 40, 4, 7)
+      val tuples1 = randomTuples(3, 100, 3, 8)
+      val tuples2 = randomTuples(3, 100, 2, 7)
+      val tuples3 = randomTuples(3, 100, 1, 6)
 
+      cp.add(allDifferent(x))
+      
       cp.search {
         binaryFirstFail(x, _.max)
       }
 
+      
+      
       val statRef = cp.startSubjectTo() {
-        cp.post(new TableDecomp(Array(x(0), x(1), x(2)), tuples1))
-        cp.post(new TableDecomp(Array(x(2), x(3), x(4)), tuples2))
+        
+        val cons = Seq(new TableDecomp(Array(x(0), x(1), x(2)), tuples1),new TableDecomp(Array(x(2), x(3), x(4)), tuples2),new TableDecomp(Array(x(0), x(2), x(4)), tuples3))
+        cp.add(cons)
       }
 
       for (algo <- TableAlgo.values) {
         val stat = cp.startSubjectTo() {
-          cp.post(table(Array(x(0), x(1), x(2)), tuples1, algo))
-          cp.post(table(Array(x(2), x(3), x(4)), tuples2, algo))
+          val cons = Seq(table(Array(x(0), x(1), x(2)), tuples1, algo), table(Array(x(2), x(3), x(4)), tuples2, algo), table(Array(x(0), x(2), x(4)), tuples3, algo))
+          cp.add(cons)
+
         }
         assert(stat.nSols == statRef.nSols)
         assert(stat.nFails == statRef.nFails)
-
       }
 
     }

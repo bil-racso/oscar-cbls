@@ -1,19 +1,17 @@
-/**
- * *****************************************************************************
+/*******************************************************************************
  * OscaR is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- *
+ *   
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License  for more details.
- *
+ *   
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
- * ****************************************************************************
- */
+ *******************************************************************************/
 
 package oscar.cp.core.variables
 
@@ -275,58 +273,53 @@ abstract class CPIntVar extends CPVar with Iterable[Int] {
   def callPropagateWhenDomainChanges(c: Constraint, trackDelta: Boolean = false): Unit
 
   def callPropagateWhenDomainChanges(c: Constraint, watcher: Watcher): Unit
-  
-  def filterWhenDomainChangesWithDelta(idempotent: Boolean = false, priority: Int = CPStore.MaxPriorityL2-2) (filter: DeltaVarInt => CPOutcome) {
-    store.post(
-      new DeltaVarInt(this,filter,idempotent,priority) {
-        def setup(l: CPPropagStrength) = {
-          callPropagateWhenDomainChanges(this)
-          CPOutcome.Suspend
-        }
-      }) // should not fail
+
+  def filterWhenDomainChangesWithDelta(idempotent: Boolean = false, priority: Int = CPStore.MaxPriorityL2 - 2)(filter: DeltaVarInt => CPOutcome) {
+    (new DeltaVarInt(this, filter, idempotent, priority) {
+      def setup(l: CPPropagStrength) = {
+        callPropagateWhenDomainChanges(this)
+        CPOutcome.Suspend
+      }
+    }).setup(store.propagStrength) // should not fail
   }
 
-  def filterWhenDomainChanges(idempot: Boolean = true, priority: Int = CPStore.MaxPriorityL2-2) (filter: => CPOutcome) {
-    store.post(
-      new Constraint(this.store, "filterWhenDomainChanges on  " + this) {
-        idempotent = idempot
-        priorityL2 = priority
+  def filterWhenDomainChanges(idempot: Boolean = true, priority: Int = CPStore.MaxPriorityL2 - 2)(filter: => CPOutcome) {
+    (new Constraint(this.store, "filterWhenDomainChanges on  " + this) {
+      idempotent = idempot
+      priorityL2 = priority
 
-        def setup(l: CPPropagStrength) = {
-          callPropagateWhenDomainChanges(this)
-          CPOutcome.Suspend
-        }
-        override def propagate() = filter
-      })
-  } 
-  
+      def setup(l: CPPropagStrength) = {
+        callPropagateWhenDomainChanges(this)
+        CPOutcome.Suspend
+      }
+      override def propagate() = filter
+    }).setup(store.propagStrength)
+  }
 
-  def filterWhenBoundsChange(idempot: Boolean = false, priority: Int = CPStore.MaxPriorityL2-2)(filter: => CPOutcome) {
-    store.post(
-      new Constraint(this.store, "filterWhenBoundsChange on  " + this) {
-        idempotent = idempot
-        priorityL2 = priority
+  def filterWhenBoundsChange(idempot: Boolean = false, priority: Int = CPStore.MaxPriorityL2 - 2)(filter: => CPOutcome) {
+    (new Constraint(this.store, "filterWhenBoundsChange on  " + this) {
+      idempotent = idempot
+      priorityL2 = priority
 
-        def setup(l: CPPropagStrength) = {
-          callPropagateWhenBoundsChange(this)
-          CPOutcome.Suspend
-        }
-        override def propagate() = filter
-      })
+      def setup(l: CPPropagStrength) = {
+        callPropagateWhenBoundsChange(this)
+        CPOutcome.Suspend
+      }
+      override def propagate() = filter
+    }).setup(store.propagStrength)
   }
 
   def filterWhenBind(idempot: Boolean = false, priority: Int = CPStore.MaxPriorityL2-2)(filter: => CPOutcome) {
-    store.post(
-      new Constraint(this.store, "filterWhenBind on  " + this) {
-        idempotent = idempot
-        priorityL2 = priority        
-        
-        def setup(l: CPPropagStrength) = {
-          callPropagateWhenBind(this)
-          CPOutcome.Suspend
-        }
-        override def propagate() = filter
-      })
+    (new Constraint(this.store, "filterWhenBind on  " + this) {
+      idempotent = idempot
+      priorityL2 = priority
+
+      def setup(l: CPPropagStrength) = {
+        callPropagateWhenBind(this)
+        CPOutcome.Suspend
+      }
+      override def propagate() = filter
+    }).setup(store.propagStrength)
   }
 
   /**
