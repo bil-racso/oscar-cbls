@@ -91,19 +91,13 @@ final class TableSTR2(variables: Array[CPIntVar], table: Array[Array[Int]]) exte
         updateSet(i) // Copy the domain of the variable
         sSup(sSupSize) = i
         sSupSize += 1 // push
-      }
-    }
-
-    i = sSupSize
-    while (i > 0) {
-      i -= 1
-      val varId = sSup(i)
-      val varSize = variables(varId).size
-      val inSVal = lastSize(varId).value != varSize // changed since last propagate
-      lastSize(varId).value = varSize
-      if (inSVal) {
-        sVal(sValSize) = varId
-        sValSize += 1 // push
+        val varSize = variables(i).size
+        val inSVal = lastSize(i).value != varSize // changed since last propagate
+        lastSize(i).value = varSize
+        if (inSVal) {
+          sVal(sValSize) = i
+          sValSize += 1 // push
+        }
       }
     }
 
