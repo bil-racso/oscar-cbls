@@ -3,7 +3,10 @@ package oscar.cp.test
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
 import oscar.cp.core.CPStore
-import oscar.cp.core.CPIntVar
+import oscar.cp._
+import oscar.cp.core.variables.CPIntVar
+import oscar.cp.core.CPPropagStrength
+import oscar.cp.core.CPOutcome
 
 class TestVariable extends FunSuite with ShouldMatchers {
 
@@ -12,6 +15,7 @@ class TestVariable extends FunSuite with ShouldMatchers {
     val a = CPIntVar(1, 6)(store)
     val b = CPIntVar(0, 31)(store)
     val c = CPIntVar(1, 10)(store)
+    val d = CPIntVar(1 to 5)(store)
   }
 
   test("test a") {
@@ -46,7 +50,7 @@ class TestVariable extends FunSuite with ShouldMatchers {
   test("test b") {
     new StoreAndVariables {
       b.assign(0)
-      assert(b.isBound && b.value == 0)
+      assert(b.isBound && b.min == 0)
     }
   }
 
@@ -125,4 +129,96 @@ class TestVariable extends FunSuite with ShouldMatchers {
     assert(w.intersectionSize(x) == 0)
     assert(x.intersectionSize(w) == 0)
   }
+  
+  test("test g: toArray and fillArray") {
+    new StoreAndVariables {
+      d.removeValue(3)
+      val values  = d.toArray
+      assert(values.toSet == Set(1,2,4,5))
+      val empty = Array.ofDim[Int](10)
+      val s = d.fillArray(empty)
+      assert(s == 4)
+      assert(d.take(4).toSet == Set(1,2,4,5))
+    }
+  }
+
+  test("test AC3 bind sparse") {
+    var propagCalled = 0
+    class FooValBind(val x: CPIntVar) extends Constraint(x.store, "Foo") {
+      override def setup(l: oscar.cp.core.CPPropagStrength): CPOutcome = {
+        x.callPropagateWhenBind(this)
+        return propagate()
+      }
+      override def propagate(): CPOutcome = {
+        propagCalled += 1
+        CPOutcome.Suspend
+      }
+
+    }
+    val cp = CPSolver()
+    val x = CPIntVar(Set(1,4,6))(cp)
+    cp.add(new FooValBind(x))
+    
+    cp.pushState()
+    
+    
+    propagCalled = 0
+    cp.add(x != 1)
+    assert(propagCalled == 0)
+    cp.add(x != 4)
+    assert(propagCalled == 1)
+    assert(x.isBound)
+    
+    
+    cp.pop()
+    cp.pushState()
+    
+    propagCalled = 0
+    cp.add(x <=3)
+    assert(propagCalled == 1)
+    assert(x.isBound)
+
+  }
+  
+  test("test AC3 bind continuous") {
+    var propagCalled = 0
+    class FooValBind(val x: CPIntVar) extends Constraint(x.store, "Foo") {
+      override def setup(l: oscar.cp.core.CPPropagStrength): CPOutcome = {
+        x.callPropagateWhenBind(this)
+        return propagate()
+      }
+      override def propagate(): CPOutcome = {
+        propagCalled += 1
+        CPOutcome.Suspend
+      }
+
+    }
+    val cp = CPSolver()
+    val x = CPIntVar(1 to 6)(cp)
+    cp.add(new FooValBind(x))
+    
+    cp.pushState()
+    
+    
+    propagCalled = 0
+    cp.add(x < 5 )
+    assert(propagCalled == 0)
+    cp.add(x <= 1)
+    assert(propagCalled == 1)
+    assert(x.isBound)
+    
+    
+    cp.pop()
+    cp.pushState()
+    
+    propagCalled = 0
+    cp.add(x >= 6)
+    assert(propagCalled == 1)
+    assert(x.isBound)
+
+  }  
+  
+  
+  
+ 
 }

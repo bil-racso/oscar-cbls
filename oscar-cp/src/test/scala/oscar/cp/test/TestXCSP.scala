@@ -1,28 +1,27 @@
 package oscar.cp.test
 
-import org.scalatest.FunSuite
-import org.scalatest.matchers.ShouldMatchers
 import oscar.cp.xcsp.modeling.DefaultConstraints
 import oscar.cp.xcsp.XCSPSolver
-import oscar.cp.modeling._
 import oscar.cp.xcsp.ast.ParameterParser
 import oscar.cp.xcsp.ast.IntegerVariable
+import oscar.cp.testUtils.TestSuite
+import oscar.cp._
 
-class TestXCSP extends FunSuite with ShouldMatchers  {
-  
-  test("test format") { 
-	  val solver = new XCSPSolver with DefaultConstraints
-	  val str : String = """<?xml version="1.0" encoding="UTF-8"?> 
+class TestXCSP extends TestSuite {
+
+  test("test format") {
+    val solver = new XCSPSolver with DefaultConstraints
+    val str: String = """<?xml version="1.0" encoding="UTF-8"?> 
 	    <instance> 
 	    		<presentation name="?" maxConstraintArity="3" format="XCSP 2.0"/> 
 	    </instance>"""
-	  val thrown = intercept[RuntimeException] { solver.model(str) }
-	  assert(thrown.getMessage === "Only XCSP 2.1 format is supported.")
+    val thrown = intercept[RuntimeException] { solver.model(str) }
+    assert(thrown.getMessage === "Only XCSP 2.1 format is supported.")
   }
-  
-  test("nqueen intension"){
-     val solver = new XCSPSolver with DefaultConstraints
-	  val str : String = """<?xml version="1.0" encoding="UTF-8"?>
+
+  test("nqueen intension") {
+    val solver = new XCSPSolver with DefaultConstraints
+    val str: String = """<?xml version="1.0" encoding="UTF-8"?>
 
 <instance>
 <presentation name="?" maxConstraintArity="2" format="XCSP 2.1"/>
@@ -68,19 +67,19 @@ class TestXCSP extends FunSuite with ShouldMatchers  {
 </constraint>
 </constraints>
 </instance> """
-	    
-	  val (cp, vars) = solver.model(str)
-	  var nbSol : Int = 0
-	  cp.onSolution(nbSol += 1)
- 
-	  cp.search(binaryFirstFail(vars.toSeq))
-	  cp.start()
-	  assert(nbSol === 2)
+
+    val (cp, vars) = solver.model(str)
+    var nbSol: Int = 0
+    cp.onSolution(nbSol += 1)
+
+    cp.search(binaryFirstFail(vars.toSeq))
+    cp.start()
+    assert(nbSol === 2)
   }
-  
-    test("hanoi 03 sat extension"){
-     val solver = new XCSPSolver with DefaultConstraints
-	  val str : String = """<?xml version="1.0" encoding="UTF-8"?>
+
+  test("hanoi 03 sat extension") {
+    val solver = new XCSPSolver with DefaultConstraints
+    val str: String = """<?xml version="1.0" encoding="UTF-8"?>
 
 <instance>
 <presentation name="?" maxConstraintArity="2" format="XCSP 2.1"/>
@@ -114,19 +113,19 @@ class TestXCSP extends FunSuite with ShouldMatchers  {
 <constraint name="C4" arity="2" scope="V4 V5" reference="R2"/>
 </constraints>
 </instance>"""
-	    
-	  val (cp, vars) = solver.model(str)
-	  var nbSol : Int = 0
-	  cp.onSolution(nbSol += 1)
- 
-	  cp.search(binaryFirstFail(vars.toSeq))
-	  cp.start(1)
-	  assert(nbSol === 1)
+
+    val (cp, vars) = solver.model(str)
+    var nbSol: Int = 0
+    cp.onSolution(nbSol += 1)
+
+    cp.search(binaryFirstFail(vars.toSeq))
+    cp.start(1)
+    assert(nbSol === 1)
   }
-  
-  test("test weightedsum") { 
-	  val solver = new XCSPSolver with DefaultConstraints
-	  val str : String = """<?xml version="1.0" encoding="UTF-8"?>
+
+  test("test weightedsum") {
+    val solver = new XCSPSolver with DefaultConstraints
+    val str: String = """<?xml version="1.0" encoding="UTF-8"?>
 	  	<instance>
 	  		<presentation name="?" maxConstraintArity="3" format="XCSP 2.1"/>
 	  		<domains nbDomains="1">
@@ -149,18 +148,18 @@ class TestXCSP extends FunSuite with ShouldMatchers  {
 	  			</constraint>
 	  		</constraints>
 	  	</instance>"""
-	  val (cp, vars) = solver.model(str)
-	  var nbSol : Int = 0
-	  cp.onSolution(nbSol += 1)
- 
-	  cp.search(binaryFirstFail(vars.toSeq))
-	  cp.start()
-	  assert(nbSol === 1)
+    val (cp, vars) = solver.model(str)
+    var nbSol: Int = 0
+    cp.onSolution(nbSol += 1)
+
+    cp.search(binaryFirstFail(vars.toSeq))
+    cp.start()
+    assert(nbSol === 1)
   }
-  
+
   test("test alldiff") {
-     val solver = new XCSPSolver with DefaultConstraints
-	  val str : String = """<?xml version="1.0" encoding="UTF-8"?>
+    val solver = new XCSPSolver with DefaultConstraints
+    val str: String = """<?xml version="1.0" encoding="UTF-8"?>
 	  <instance>
 	  <presentation name="?" maxConstraintArity="3" format="XCSP 2.1"/>
 	  <domains nbDomains="1">
@@ -179,20 +178,19 @@ class TestXCSP extends FunSuite with ShouldMatchers  {
 	  	</constraint>
 	  </constraints>
 	  </instance>"""
-	  val (cp, vars) = solver.model(str)
-	  var nbSol : Int = 0
-	  cp.onSolution(nbSol += 1)
- 
-	  cp.search(binaryFirstFail(vars.toSeq))
-	  cp.start()
-	  assert(nbSol === 6)
-	    
-    
+    val (cp, vars) = solver.model(str)
+    var nbSol: Int = 0
+    cp.onSolution(nbSol += 1)
+
+    cp.search(binaryFirstFail(vars.toSeq))
+    cp.start()
+    assert(nbSol === 6)
+
   }
-  
+
   test("test alldiff 2") {
-     val solver = new XCSPSolver with DefaultConstraints
-	  val str : String = """<?xml version="1.0" encoding="UTF-8"?>
+    val solver = new XCSPSolver with DefaultConstraints
+    val str: String = """<?xml version="1.0" encoding="UTF-8"?>
 	  <instance>
 	  <presentation name="?" maxConstraintArity="3" format="XCSP 2.1"/>
 	  <domains nbDomains="1">
@@ -210,20 +208,19 @@ class TestXCSP extends FunSuite with ShouldMatchers  {
 	  	</constraint>
 	  </constraints>
 	  </instance>"""
-	  val (cp, vars) = solver.model(str)
-	  var nbSol : Int = 0
-	  cp.onSolution(nbSol += 1)
- 
-	  cp.search(binaryFirstFail(vars.toSeq))
-	  cp.start()
-	  assert(nbSol === 2)
-	    
-    
+    val (cp, vars) = solver.model(str)
+    var nbSol: Int = 0
+    cp.onSolution(nbSol += 1)
+
+    cp.search(binaryFirstFail(vars.toSeq))
+    cp.start()
+    assert(nbSol === 2)
+
   }
-  
-  test("test among") { 
-	  val solver = new XCSPSolver with DefaultConstraints
-	  val str : String = """<?xml version="1.0" encoding="UTF-8"?>
+
+  test("test among") {
+    val solver = new XCSPSolver with DefaultConstraints
+    val str: String = """<?xml version="1.0" encoding="UTF-8"?>
 	  	<instance>
 	  		<presentation name="?" maxConstraintArity="3" format="XCSP 2.1"/>
 	  		<domains nbDomains="1">
@@ -247,17 +244,17 @@ class TestXCSP extends FunSuite with ShouldMatchers  {
 	  			</constraint>
 	  		</constraints>
 	  	</instance>"""
-	  val (cp, vars) = solver.model(str)
-	  cp.onSolution(assert(vars(0).value === 0))
- 
-	  cp.search(binaryFirstFail(vars.toSeq))
-	  cp.start()
-	  
+    val (cp, vars) = solver.model(str)
+    cp.onSolution(assert(vars(0).value === 0))
+
+    cp.search(binaryFirstFail(vars.toSeq))
+    cp.start()
+
   }
-  
-  test("test atleast") { 
-	  val solver = new XCSPSolver with DefaultConstraints
-	  val str : String = """<?xml version="1.0" encoding="UTF-8"?>
+
+  test("test atleast") {
+    val solver = new XCSPSolver with DefaultConstraints
+    val str: String = """<?xml version="1.0" encoding="UTF-8"?>
 	  	<instance>
 	  		<presentation name="?" maxConstraintArity="3" format="XCSP 2.1"/>
 	  		<domains nbDomains="1">
@@ -280,20 +277,20 @@ class TestXCSP extends FunSuite with ShouldMatchers  {
 	  			</constraint>
 	  		</constraints>
 	  	</instance>"""
-	    
-	    var nbSol = 0
-	  val (cp, vars) = solver.model(str)
-	  cp.onSolution(nbSol += 1)
- 
-	  cp.search(binaryFirstFail(vars.toSeq))
-	  cp.start()
-	  assert(nbSol === 5)
-	  
+
+    var nbSol = 0
+    val (cp, vars) = solver.model(str)
+    cp.onSolution(nbSol += 1)
+
+    cp.search(binaryFirstFail(vars.toSeq))
+    cp.start()
+    assert(nbSol === 5)
+
   }
-  
-  test("test atmost") { 
-	  val solver = new XCSPSolver with DefaultConstraints
-	  val str : String = """<?xml version="1.0" encoding="UTF-8"?>
+
+  test("test atmost") {
+    val solver = new XCSPSolver with DefaultConstraints
+    val str: String = """<?xml version="1.0" encoding="UTF-8"?>
 	  	<instance>
 	  		<presentation name="?" maxConstraintArity="3" format="XCSP 2.1"/>
 	  		<domains nbDomains="1">
@@ -316,23 +313,23 @@ class TestXCSP extends FunSuite with ShouldMatchers  {
 	  			</constraint>
 	  		</constraints>
 	  	</instance>"""
-	    
-	    var nbSol = 0
-	  val (cp, vars) = solver.model(str)
-	  cp.onSolution{
-	    val t = vars
-	    nbSol += 1
-	  }
- 
-	  cp.search(binaryFirstFail(vars.toSeq))
-	  cp.start()
-	  assert(nbSol === 8)
-	  
+
+    var nbSol = 0
+    val (cp, vars) = solver.model(str)
+    cp.onSolution {
+      val t = vars
+      nbSol += 1
+    }
+
+    cp.search(binaryFirstFail(vars.toSeq))
+    cp.start()
+    assert(nbSol === 8)
+
   }
-  
-  test("test cumulative") { 
-	  val solver = new XCSPSolver with DefaultConstraints
-	  val str : String = """<?xml version="1.0" encoding="UTF-8"?>
+
+  test("test cumulative") {
+    val solver = new XCSPSolver with DefaultConstraints
+    val str: String = """<?xml version="1.0" encoding="UTF-8"?>
 	  	<instance>
 	  		<presentation name="?" maxConstraintArity="3" format="XCSP 2.1"/>
 	  		<domains nbDomains="1">
@@ -351,23 +348,23 @@ class TestXCSP extends FunSuite with ShouldMatchers  {
 	  			</constraint>
 	  		</constraints>
 	  	</instance>"""
-	    
-	    var nbSol = 0
-	  val (cp, vars) = solver.model(str)
-	  cp.onSolution{
-	    val t = vars
-	    nbSol += 1
-	  }
- 
-	  cp.search(binaryFirstFail(vars.toSeq))
-	  cp.start()
-	  assert(nbSol === 1)
-	  
+
+    var nbSol = 0
+    val (cp, vars) = solver.model(str)
+    cp.onSolution {
+      val t = vars
+      nbSol += 1
+    }
+
+    cp.search(binaryFirstFail(vars.toSeq))
+    cp.start()
+    assert(nbSol === 1)
+
   }
-  
-  test("test cumulative 2") { 
-	  val solver = new XCSPSolver with DefaultConstraints
-	  val str : String = """<?xml version="1.0" encoding="UTF-8"?>
+
+  test("test cumulative 2") {
+    val solver = new XCSPSolver with DefaultConstraints
+    val str: String = """<?xml version="1.0" encoding="UTF-8"?>
 	  	<instance>
 	  		<presentation name="?" maxConstraintArity="3" format="XCSP 2.1"/>
 	  		<domains nbDomains="1">
@@ -386,23 +383,23 @@ class TestXCSP extends FunSuite with ShouldMatchers  {
 	  			</constraint>
 	  		</constraints>
 	  	</instance>"""
-	    
-	    var nbSol = 0
-	  val (cp, vars) = solver.model(str)
-	  cp.onSolution{
-	    val t = vars
-	    nbSol += 1
-	  }
- 
-	  cp.search(binaryFirstFail(vars.toSeq))
-	  cp.start()
-	  assert(nbSol === 0)
-	  
+
+    var nbSol = 0
+    val (cp, vars) = solver.model(str)
+    cp.onSolution {
+      val t = vars
+      nbSol += 1
+    }
+
+    cp.search(binaryFirstFail(vars.toSeq))
+    cp.start()
+    assert(nbSol === 0)
+
   }
-  
-  test("test disjunctive") { 
-	  val solver = new XCSPSolver with DefaultConstraints
-	  val str : String = """<?xml version="1.0" encoding="UTF-8"?>
+
+  test("test disjunctive") {
+    val solver = new XCSPSolver with DefaultConstraints
+    val str: String = """<?xml version="1.0" encoding="UTF-8"?>
 	  	<instance>
 	  		<presentation name="?" maxConstraintArity="3" format="XCSP 2.1"/>
 	  		<domains nbDomains="2">
@@ -425,24 +422,23 @@ class TestXCSP extends FunSuite with ShouldMatchers  {
 	  			</constraint>
 	  		</constraints>
 	  	</instance>"""
-	    
-	    var nbSol = 0
-	  val (cp, vars) = solver.model(str)
-	  cp.onSolution{
-	    val t = vars
-	    nbSol += 1
-	  }
- 
-	  cp.search(binaryFirstFail(vars.toSeq))
-	  cp.start()
-	  assert(nbSol === 1)
-	  
+
+    var nbSol = 0
+    val (cp, vars) = solver.model(str)
+    cp.onSolution {
+      val t = vars
+      nbSol += 1
+    }
+
+    cp.search(binaryFirstFail(vars.toSeq))
+    cp.start()
+    assert(nbSol === 1)
+
   }
 
-  
-  test("test disjunctive 2") { 
-	  val solver = new XCSPSolver with DefaultConstraints
-	  val str : String = """<?xml version="1.0" encoding="UTF-8"?>
+  test("test disjunctive 2") {
+    val solver = new XCSPSolver with DefaultConstraints
+    val str: String = """<?xml version="1.0" encoding="UTF-8"?>
 	  	<instance>
 	  		<presentation name="?" maxConstraintArity="3" format="XCSP 2.1"/>
 	  		<domains nbDomains="2">
@@ -465,24 +461,24 @@ class TestXCSP extends FunSuite with ShouldMatchers  {
 	  			</constraint>
 	  		</constraints>
 	  	</instance>"""
-	    
-	    var nbSol = 0
-	  val (cp, vars) = solver.model(str)
-	  cp.onSolution{
-	    val t = vars
-	    nbSol += 1
-	  }
- 
-	  cp.search(binaryFirstFail(vars.toSeq))
-	  cp.start()
-	  assert(nbSol === 0)
-	  
+
+    var nbSol = 0
+    val (cp, vars) = solver.model(str)
+    cp.onSolution {
+      val t = vars
+      nbSol += 1
+    }
+
+    cp.search(binaryFirstFail(vars.toSeq))
+    cp.start()
+    assert(nbSol === 0)
+
   }
 
   //index is going from 1 to n, not from 0 to n-1 in XCSP format (follows specifications of global constraint catalog)
-  test("test element") { 
-	  val solver = new XCSPSolver with DefaultConstraints
-	  val str : String = """<?xml version="1.0" encoding="UTF-8"?>
+  test("test element") {
+    val solver = new XCSPSolver with DefaultConstraints
+    val str: String = """<?xml version="1.0" encoding="UTF-8"?>
 	  	<instance>
 	  		<presentation name="?" maxConstraintArity="3" format="XCSP 2.1"/>
 	  		<domains nbDomains="3">
@@ -508,23 +504,23 @@ class TestXCSP extends FunSuite with ShouldMatchers  {
 	  			</constraint>
 	  		</constraints>
 	  	</instance>"""
-	    
-	    var nbSol = 0
-	  val (cp, vars) = solver.model(str)
-	  cp.onSolution{
-	    val t = vars
-	    nbSol += 1
-	  }
- 
-	  cp.search(binaryFirstFail(vars.toSeq))
-	  cp.start()
-	  assert(nbSol === 2)
-	  
+
+    var nbSol = 0
+    val (cp, vars) = solver.model(str)
+    cp.onSolution {
+      val t = vars
+      nbSol += 1
+    }
+
+    cp.search(binaryFirstFail(vars.toSeq))
+    cp.start()
+    assert(nbSol === 2)
+
   }
-  
-  test("test global_cardinality") { 
-	  val solver = new XCSPSolver with DefaultConstraints
-	  val str : String = """<?xml version="1.0" encoding="UTF-8"?>
+
+  test("test global_cardinality") {
+    val solver = new XCSPSolver with DefaultConstraints
+    val str: String = """<?xml version="1.0" encoding="UTF-8"?>
 	  	<instance>
 	  		<presentation name="?" maxConstraintArity="3" format="XCSP 2.1"/>
 	  		<domains nbDomains="3">
@@ -549,22 +545,22 @@ class TestXCSP extends FunSuite with ShouldMatchers  {
 	  		</constraint>
 	  		</constraints>
 	  	</instance>"""
-	    
-	    var nbSol = 0
-	  val (cp, vars) = solver.model(str)
-	  cp.onSolution{
-	    val t = vars
-	    nbSol += 1
-	  }
- 
-	  cp.search(binaryFirstFail(vars.toSeq))
-	  cp.start()
-	  assert(nbSol === 3)
-  } 
 
-  test("test minimum_weight_all_different") { 
-	  val solver = new XCSPSolver with DefaultConstraints
-	  val str : String = """<?xml version="1.0" encoding="UTF-8"?>
+    var nbSol = 0
+    val (cp, vars) = solver.model(str)
+    cp.onSolution {
+      val t = vars
+      nbSol += 1
+    }
+
+    cp.search(binaryFirstFail(vars.toSeq))
+    cp.start()
+    assert(nbSol === 3)
+  }
+
+  test("test minimum_weight_all_different") {
+    val solver = new XCSPSolver with DefaultConstraints
+    val str: String = """<?xml version="1.0" encoding="UTF-8"?>
 	  	<instance>
 	  		<presentation name="?" maxConstraintArity="3" format="XCSP 2.1"/>
 	  		<domains nbDomains="2">
@@ -593,33 +589,32 @@ class TestXCSP extends FunSuite with ShouldMatchers  {
 	    </constraints>
 
 	  	</instance>"""
-	    
-	    var nbSol = 0
-	  val (cp, vars) = solver.model(str)
-	  cp.onSolution{
-	    val t = vars
-	    nbSol += 1
-	  }
- 
-	  cp.search(binaryFirstFail(vars.toSeq))
-	  cp.start()
-	  assert(nbSol === 3)
-  } 
-  
-  
+
+    var nbSol = 0
+    val (cp, vars) = solver.model(str)
+    cp.onSolution {
+      val t = vars
+      nbSol += 1
+    }
+
+    cp.search(binaryFirstFail(vars.toSeq))
+    cp.start()
+    assert(nbSol === 3)
+  }
+
   test("parsing variables in scope must work") {
-	  val parser = new ParameterParser(Seq("V0", "V01"))
-	  assert(parser.parseAll(parser.variableList,"[ V01 V0 ] ").get === List(IntegerVariable("V01"), IntegerVariable("V0")))
+    val parser = new ParameterParser(Seq("V0", "V01"))
+    assert(parser.parseAll(parser.variableList, "[ V01 V0 ] ").get === List(IntegerVariable("V01"), IntegerVariable("V0")))
   }
-  
+
   test("parsing variables not in scope must not work") {
-	  val parser = new ParameterParser(Seq("V0"))
-	  intercept[RuntimeException] {parser.parseAll(parser.variableList,"[ V01 V0 ] ").get } 
+    val parser = new ParameterParser(Seq("V0"))
+    intercept[RuntimeException] { parser.parseAll(parser.variableList, "[ V01 V0 ] ").get }
   }
-  
+
   test("constraint in intension") {
-     val solver = new XCSPSolver with DefaultConstraints
-	  val str : String = """<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+    val solver = new XCSPSolver with DefaultConstraints
+    val str: String = """<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <instance>
 <presentation format="XCSP 2.1" maxConstraintArity="17"/>
 	    
@@ -645,14 +640,14 @@ class TestXCSP extends FunSuite with ShouldMatchers  {
 	    </constraints>
 	    </instance>
 	    """
-	  val (cp, vars) = solver.model(str)
-	  
-	  assert((2-1)*4 + 1 === vars(0).value - 1)
+    val (cp, vars) = solver.model(str)
+
+    assert((2 - 1) * 4 + 1 === vars(0).value - 1)
   }
-  
+
   test("test weightedSum operator different from equality") {
-     val solver = new XCSPSolver with DefaultConstraints
-	  val str : String = """<?xml version="1.0" encoding="UTF-8"?>
+    val solver = new XCSPSolver with DefaultConstraints
+    val str: String = """<?xml version="1.0" encoding="UTF-8"?>
 <instance>
 <presentation  maxConstraintArity="10" format="XCSP 2.1" type="CSP"/>
 <domains nbDomains="1">
@@ -671,11 +666,10 @@ class TestXCSP extends FunSuite with ShouldMatchers  {
 </constraints>
 </instance>
 	    """
-	    
-val thrown = intercept[RuntimeException] { solver.model(str)}
-assert(thrown.getMessage === "weightedSum with an operator different from equality is not supported.")	    
 
-	  
+    val thrown = intercept[RuntimeException] { solver.model(str) }
+    assert(thrown.getMessage === "weightedSum with an operator different from equality is not supported.")
+
   }
 
 }

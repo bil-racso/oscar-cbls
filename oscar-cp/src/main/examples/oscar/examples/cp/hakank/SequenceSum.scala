@@ -13,75 +13,45 @@
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
 package oscar.examples.cp.hakank
-
-import oscar.cp.modeling._
-
-import oscar.cp.core._
-
-
+import oscar.cp._
 /**
-
   Sequence sum in Oscar.
-
   Sum of each sequence in s-slices in an array of n elements should be m.
-
   @author Hakan Kjellerstrand hakank@gmail.com
   http://www.hakank.org/oscar/
-
  */
-object SequenceSum {
-
+object SequenceSum extends CPModel with App  {
   // Sum the elements in y where each subsequence of length s
   // sums to m
-  def sequence_sum(cp: CPSolver, y: Array[CPIntVar], m: CPIntVar, s: Int) = {
+  def sequence_sum(y: Array[CPIntVar], m: CPIntVar, s: Int) = {
     val n = y.length
     for(i <- 0 until n - s + 1) {
-      cp.add(sum( Range(i,i+s).map(j => y(j) ).toList) == m)
+     add(sum( Range(i,i+s).map(j => y(j) ).toList) == m)
     }
-    
   }
-
- 
-  def main(args: Array[String]) {
-
-    val cp = CPSolver()
-
     val n = 6
     // val m = 10 // the sum
     val s = 3 // the sliding size
-
-
     // variables
-    val x = Array.fill(n)(CPIntVar(1 to n)(cp))
+    val x = Array.fill(n)(CPIntVar(1 to n))
     // the sum
-    val m = CPIntVar(1 to n*n)(cp)
-
+    val m = CPIntVar(1 to n*n)
     //
     // constraints
     //
     var numSols = 0
-
-    cp.solve subjectTo {
-
-      sequence_sum(cp, x, m, s)
-      cp.add(m == 10)
-      
+  
+      sequence_sum(x, m, s)
+     add(m == 10)
       // symmetry breaking
-      // cp.add(x(0) == 1)
-      
-      
-    } search {
-      
+      //add(x(0) == 1)
+    search{
       binaryFirstFail(x)
-    } onSolution {  
+    }
+onSolution {  
       print("x: " + x.mkString(""))
       println("  m: " + m)
-        
       numSols += 1
-        
     } 
-    println(cp.start())
-
+    println(start())
    }
-
-}

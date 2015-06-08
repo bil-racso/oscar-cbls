@@ -17,8 +17,8 @@ package oscar.cp.constraints;
 import oscar.algo.reversible.ReversibleInt;
 import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
-import oscar.cp.core.CPIntVar;
-import oscar.cp.core.CPIntervalVar;
+import oscar.cp.core.variables.CPIntVar;
+import oscar.cp.core.variables.CPIntVar;
 import oscar.cp.core.Constraint;
 
 /**
@@ -98,7 +98,7 @@ public class Minimum extends Constraint {
 	}
 	
 	@Override
-	public CPOutcome updateBoundsIdx(CPIntervalVar x, int idx) {
+	public CPOutcome updateBoundsIdx(CPIntVar x, int idx) {
 		if (idx == minvalsupport.getValue() || idx == maxvalsupport.getValue()) {
 			updateSupport();
 			if (y.updateMin(minval.getValue()) == CPOutcome.Failure) {
@@ -108,7 +108,7 @@ public class Minimum extends Constraint {
 				return CPOutcome.Failure;
 			}
 		}
-		if (x.isBound() && x.getValue() == minval.getValue()) {
+		if (x.isBound() && x.min() == minval.getValue()) {
 			if (y.assign(minval.getValue()) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
 			}
@@ -120,7 +120,7 @@ public class Minimum extends Constraint {
 	
 	
 	@Override
-	public CPOutcome updateBounds(CPIntervalVar y) {
+	public CPOutcome updateBounds(CPIntVar y) {
 		int ymin = y.getMin();
 		for (int i=0; i < x.length; i++) {			
 			if (x[i].updateMin(ymin) == CPOutcome.Failure) {

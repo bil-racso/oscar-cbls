@@ -13,11 +13,12 @@
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
 package oscar.cp.constraints
-import oscar.cp.core.Constraint
-import oscar.cp.core._
+
 import oscar.algo.reversible._
+import oscar.cp.core._
 import oscar.cp.core.CPOutcome
-import oscar.cp.modeling._
+import oscar.cp.core.Constraint
+import oscar.cp.core.variables.CPIntVar
 
 /**
  * Global Cardinality Constraint
@@ -66,7 +67,7 @@ class GCCFWC(val X: Array[CPIntVar], val minVal: Int, val low: Array[Int], val u
     outcome
   }
   
-  override def valBind(x:CPIntervalVar): CPOutcome = {
+  override def valBind(x:CPIntVar): CPOutcome = {
     val idx = x.min - minVal
     if (idx >= 0 && idx < low.size) {
       nbBound(idx).incr()
@@ -98,7 +99,7 @@ class GCCFWC(val X: Array[CPIntVar], val minVal: Int, val low: Array[Int], val u
     //    println("something changed:" + X.mkString(","));
 
     // Set of variables that have at least one value in the set of cardinality constrained values 
-    var X2 = Set[oscar.cp.core.CPIntVar]()
+    var X2 = Set[CPIntVar]()
     constrainedValues foreach (v => X2 = X2 union (X filter (x => x.hasValue(v)) toSet))
 
     // Process constrained values one by one

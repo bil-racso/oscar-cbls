@@ -15,9 +15,9 @@
 
 package oscar.cp.constraints
 
-import oscar.cp.core.CPSetVar
+import oscar.cp.core.variables.CPSetVar
 import oscar.algo.reversible.ReversibleDouble
-import oscar.cp.modeling._
+import oscar.cp._
 import oscar.cp.core._
 import scala.io.Source
 import oscar.algo.reversible.ReversibleInt

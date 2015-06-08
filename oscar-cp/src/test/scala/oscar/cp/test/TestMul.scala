@@ -18,8 +18,7 @@ package oscar.cp.test
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
 import oscar.cp.core.CPStore
-import oscar.cp.core.CPIntVar
-import oscar.cp.modeling._
+import oscar.cp._
 import oscar.cp.constraints.WeightedSum
 import oscar.cp.constraints.MulCte
 import oscar.cp.constraints.Eq

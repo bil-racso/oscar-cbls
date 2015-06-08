@@ -1,6 +1,7 @@
 package oscar.cp.core
 
 import oscar.cp.testUtils.TestSuite
+import oscar.cp.core.variables.CPIntVar
 
 class CPStoreSuite extends TestSuite {
 

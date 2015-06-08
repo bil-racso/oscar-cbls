@@ -16,9 +16,9 @@ package oscar.cp.constraints;
 
 import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
-import oscar.cp.core.CPBoolVar;
-import oscar.cp.core.CPIntVar;
-import oscar.cp.core.CPIntervalVar;
+import oscar.cp.core.variables.CPBoolVar;
+import oscar.cp.core.variables.CPIntVar;
+import oscar.cp.core.variables.CPIntVar;
 import oscar.cp.core.Constraint;
 
 /**
@@ -67,10 +67,10 @@ public class EqReifVar extends Constraint {
 	}
 	
 	@Override
-	public CPOutcome valBind(CPIntervalVar var) {
+	public CPOutcome valBind(CPIntVar var) {
 		if (b.isBound()) {
 			deactivate();
-			if (b.getValue() == 1) {
+			if (b.min() == 1) {
 				// x == y
 				if (s().post(new Eq(x,y)) == CPOutcome.Failure) {
 					return CPOutcome.Failure;
@@ -85,14 +85,14 @@ public class EqReifVar extends Constraint {
 		}	
 		else if (x.isBound()) {
 			deactivate();
-			if (s().post(new EqReif(y,x.getValue(),b)) == CPOutcome.Failure) {
+			if (s().post(new EqReif(y,x.min(),b)) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
 			}
 			return CPOutcome.Success;
 		}
 		else { // y.isBound()
 			deactivate();
-			if (s().post(new EqReif(x,y.getValue(),b)) == CPOutcome.Failure) {
+			if (s().post(new EqReif(x,y.min(),b)) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
 			}
 			return CPOutcome.Success;
@@ -122,7 +122,7 @@ public class EqReifVar extends Constraint {
 			int start = Math.max(x.getMin(), y.getMin());
 			int end = Math.min(x.getMax(), y.getMax());
 			boolean commonValues = false;
-			if (x.isRange() || y.isRange()) return CPOutcome.Suspend;
+			if (x.isContinuous() || y.isContinuous()) return CPOutcome.Suspend;
 			for (int i = start; i <= end; i++) {
  				if (x.hasValue(i) && y.hasValue(i)) {
 					commonValues = true;

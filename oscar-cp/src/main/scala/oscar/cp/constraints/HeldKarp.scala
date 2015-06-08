@@ -17,16 +17,16 @@
 
 package oscar.cp.constraints
 
-import oscar.cp.core.CPSetVar
 import oscar.algo.reversible.ReversibleDouble
-import oscar.cp.modeling._
-import oscar.cp.core._
+import oscar.cp._
 import scala.io.Source
 import oscar.algo.reversible.ReversibleInt
 import oscar.algo.DisjointSets
-import CPOutcome._
 import scala.collection.mutable.ArrayBuffer
 import oscar.algo.RangeMinQuery
+import oscar.cp.core.CPPropagStrength
+import oscar.cp.core.CPOutcome
+import oscar.cp.core.CPOutcome._
 
 /**
  * @author Pierre Schaus pschaus@gmail.com
@@ -383,7 +383,7 @@ class ChannelTSP(val succ: Array[CPIntVar],val distMatrix: Array[Array[Int]]) ex
     else CPOutcome.Suspend
   }
   
-  override def valBindIdx(x: CPIntervalVar, idx: Int): CPOutcome = {
+  override def valBindIdx(x: CPIntVar, idx: Int): CPOutcome = {
     edgeVar.requires(edgeIndex(idx)(x.value))
   } 
   

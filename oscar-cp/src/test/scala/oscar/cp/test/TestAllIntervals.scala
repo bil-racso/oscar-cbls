@@ -15,66 +15,32 @@
 
 package oscar.cp.test
 
-import org.scalatest.FunSuite
-import org.scalatest.matchers.ShouldMatchers
+import oscar.cp._
+import oscar.cp.testUtils._
 
-import oscar.cp.modeling._
-import oscar.algo.search._
-import oscar.cp.core._
-import oscar.cp.scheduling._
-import oscar.cp.constraints._
-
-class TestAllIntervals extends FunSuite with ShouldMatchers {
+class TestAllIntervals extends TestSuite {
 
   test("AllIntervals") {
+    implicit val cp = CPSolver()
+    
+    val n = 6 
+    val x = Array.fill(n)(CPIntVar(0 to n - 1))
+    val diffs = Array.fill(n - 1)(CPIntVar(1 to n - 1))
+    
+    add(allDifferent(diffs), Strong)
+    add(allDifferent(x), Strong)
 
-    val cp = CPSolver()
+    for (k <- 0 until n - 1) {
+      add(diffs(k) == (x(k + 1) - (x(k))).abs)
+    }
 
-    //
-    // data
-    //
-    val n = 6
+    // symmetry breaking
+    add(x(0) < x(n - 1))
+    add(diffs(0) < diffs(1))
 
-    println("n: " + n)
-
-    //
-    // variables
-    //
-
-    val x = Array.fill(n)(CPIntVar(0 to n - 1)(cp))
-    val diffs = Array.fill(n - 1)(CPIntVar(1 to n - 1)(cp))
-
-    //
-    // constraints
-    //
-    var numSols = 0
-    cp.solve subjectTo {
-
-      cp.add(allDifferent(diffs), Strong)
-      cp.add(allDifferent(x), Strong)
-
-      for (k <- 0 until n - 1) {
-        cp.add(diffs(k) == (x(k + 1) - (x(k))).abs)
-      }
-
-      // symmetry breaking
-      cp.add(x(0) < x(n - 1))
-      cp.add(diffs(0) < diffs(1))
-
-    } search {
-      binaryStatic(x)
-    } onSolution {
-      //print("x:" + x.mkString(""))
-      //print("  diffs:" + diffs.mkString(""))
-      //println()
-
-      numSols += 1
-
-    } start()
-    numSols should be(8)
-    //println("\nIt was " + numSols + " solutions.")
-
+    search { binaryStatic(x) } 
+    
+    val stats = start()
+    assert(stats.nSols == 8)
   }
-
- 
 }

@@ -14,31 +14,37 @@ object OscarBuild extends Build {
   
   object BuildSettings {
     val buildOrganization = "oscar"
-    val buildVersion = "1.2.0.beta"
+    val buildVersion = "3.0.0.beta"
     val buildScalaVersion = "2.11.0"
     val buildSbtVersion= "0.13.0"
 
     val osNativeLibDir = (sys.props("os.name"), sys.props("os.arch")) match {
-    case (os, arch) if os.contains("Mac") && arch.endsWith("64") => "macos64"
-    case (os, arch) if os.contains("Linux") && arch.endsWith("64") => "linux64"
-    case (os, arch) if os.contains("Windows") && arch.endsWith("32") => "windows32"
-    case (os, arch) if os.contains("Windows") && arch.endsWith("64") => "windows64"
-    case (os, arch) => sys.error("Unsupported OS [${os}] Architecture [${arch}] combo, OscaR currently supports macos64, linux64, windows32, windows64")
-}
+      case (os, arch) if os.contains("Mac") && arch.endsWith("64") => "macos64"
+      case (os, arch) if os.contains("Linux") && arch.endsWith("64") => "linux64"
+      case (os, arch) if os.contains("Windows") && arch.endsWith("32") => "windows32"
+      case (os, arch) if os.contains("Windows") && arch.endsWith("64") => "windows64"
+      case (os, arch) => sys.error("Unsupported OS [${os}] Architecture [${arch}] combo, OscaR currently supports macos64, linux64, windows32, windows64")
+    }
 
     val buildSettings = Defaults.defaultSettings ++ Seq(
       organization := buildOrganization,
       version := buildVersion,
-      scalacOptions in Compile ++= Seq("-encoding", "UTF-8", "-deprecation", "-feature", "-unchecked", "-Xdisable-assertions"),
+      scalacOptions in Compile ++= Seq("-encoding", "UTF-8", "-deprecation", "-feature", "-unchecked", "-Xdisable-assertions"/*"-optimise", "-Xdisable-assertions"*/),
+      scalacOptions in Test := Seq("-optimise"),
       testOptions in Test <+= (target in Test) map {
-          t => Tests.Argument(TestFrameworks.ScalaTest, "junitxml(directory=\"%s\")" format (t / "test-reports")) },
+          t => Tests.Argument(TestFrameworks.ScalaTest, "junitxml(directory=\"%s\")" format (t / "test-reports") ) },
       parallelExecution in Test := false,
       fork in Test := true,
       javaOptions in Test += "-Djava.library.path=../lib:../lib/" + osNativeLibDir,
       unmanagedBase <<= baseDirectory { base => base / "../lib/" }, // unfortunately does not work
       unmanagedClasspath in Compile <+= (baseDirectory) map { bd => Attributed.blank(bd / "../lib/") },
-      scalaVersion := buildScalaVersion)
+      scalaVersion := buildScalaVersion,
+      publishTo := Some(Resolver.url("sbt-release-local", new URL("http://localhost:8081/artifactory/libs-release-local")))
+    )
   }
+  
+  
+
 
   object Resolvers {
     val typesafe = "Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases/"
@@ -50,17 +56,17 @@ object OscarBuild extends Build {
 
     //val scalatest = "org.scalatest" %% "scalatest" % "2.0.M5b"
     val junit = "junit" % "junit" % "4.8.1" % "test"
-    val scalaswing = "org.scala-lang" % "scala-swing" % "2.11.0-M7"
+    //val scalaswing = "org.scala-lang" % "scala-swing" % "2.11.0-M7"
 
     // DSL for adding source dependencies ot projects.
     def dependsOnSource(dir: String): Seq[Setting[_]] = {
       import Keys._
       Seq(unmanagedSourceDirectories in Compile <<= (unmanagedSourceDirectories in Compile, baseDirectory in ThisBuild) { (srcDirs, base) => (base / dir ) +: srcDirs },
           unmanagedJars in Compile <++= (baseDirectory in ThisBuild) map { base =>
-          	val libs = base / dir
-          	val dirs = libs // (libs / "batik") +++ (libs / "libtw") +++ (libs / "kiama")
-          	(dirs ** "*.jar").classpath
-      	   },
+            val libs = base / dir
+            val dirs = libs // (libs / "batik") +++ (libs / "libtw") +++ (libs / "kiama")
+            (dirs ** "*.jar").classpath
+           },
           
           unmanagedSourceDirectories in Test <<= (unmanagedSourceDirectories in Test, baseDirectory in ThisBuild) { (srcDirs, base) => (base / dir ) +: srcDirs })
     }
@@ -75,8 +81,9 @@ object OscarBuild extends Build {
   import BuildSettings._
   import Dependencies._
   import Resolvers._
+  import UnidocKeys._
 
-  val commonDeps = Seq(/*scalatest,*/junit,scalaswing)
+  val commonDeps = Seq(/*scalatest,scalaswing, */junit)
   
  
   TaskKey[Unit]("zipsrc") <<= baseDirectory map { bd => println(bd); IO.zip(Path.allSubpaths(new File(bd + "/src/main/scala")),new File(bd +"/oscar-src.zip"))  }
@@ -105,34 +112,37 @@ object OscarBuild extends Build {
   //
   lazy val jacoco_settings = Defaults.defaultSettings ++ Seq(jacoco.settings: _*)
   //jacoco.reportFormats in jacoco.Config := Seq(XMLReport("utf-8"), HTMLReport("utf-8"))
-  
-  
+
   lazy val oscar = Project(
     id = "oscar",
     base = file("."),
     //
     settings = buildSettings ++ jacoco_settings ++ 
                packSettings ++ unidocSettings ++ 
-               Seq (/*resolvers := sbtResolvers,*/ libraryDependencies ++= commonDeps) ++ 
+               Seq (/*resolvers := sbtResolvers, */ libraryDependencies ++= commonDeps) ++ 
                sbtassembly.Plugin.assemblySettings ++ 
+               (unidocProjectFilter in (ScalaUnidoc, unidoc) := inAnyProject -- inProjects(oscarFzn)) ++
                commonTasks,
-    aggregate = Seq(oscarVisual,oscarCp,oscarCbls,oscarFzn,oscarLinprog,oscarDes,oscarDfo),
-    dependencies = Seq(oscarCp,oscarCbls,oscarFzn,oscarDes,oscarDfo,oscarLinprog)) dependsOnSource("lib")    
+    aggregate = Seq(oscarVisual,oscarCp,oscarCbls/*,oscarFzn*/,oscarLinprog,oscarDes,oscarDfo),
+    dependencies = Seq(oscarCp,oscarCbls/*,oscarFzn*/,oscarDes,oscarDfo,oscarLinprog)) dependsOnSource("lib")    
     
   lazy val oscarCbls = Project(
     id = "oscar-cbls",
     base = file("oscar-cbls"),
-    settings = buildSettings ++ jacoco_settings ++ Seq(libraryDependencies ++= commonDeps) ++
-    		   sbtassembly.Plugin.assemblySettings ++ 
-    		   commonTasks,
-    dependencies = Seq(oscarVisual)) dependsOnSource("lib")       
+    settings = buildSettings ++ jacoco_settings ++ packAutoSettings ++ Seq(
+      libraryDependencies ++= commonDeps,
+      unmanagedSourceDirectories in Compile += baseDirectory.value / "src/main/examples",
+      packGenerateWindowsBatFile := false) ++
+    sbtassembly.Plugin.assemblySettings ++ 
+    commonTasks,
+    dependencies = Seq(oscarVisual)) dependsOnSource("lib")
     
   lazy val oscarCp = Project(
     id = "oscar-cp",
     base = file("oscar-cp"),
     settings = buildSettings ++ jacoco_settings ++ Seq(libraryDependencies ++= commonDeps) ++
-    		   sbtassembly.Plugin.assemblySettings ++ 
-    		   commonTasks,
+           sbtassembly.Plugin.assemblySettings ++ 
+           commonTasks,
     dependencies = Seq(oscarAlgo,oscarVisual)) dependsOnSource("lib")
     
     
@@ -140,15 +150,15 @@ object OscarBuild extends Build {
     id = "oscar-fzn",
     base = file("oscar-fzn"),
     settings = buildSettings ++ jacoco_settings ++ Seq(libraryDependencies ++= commonDeps) ++
-    		   sbtassembly.Plugin.assemblySettings ++ 
-    		   commonTasks,
+           sbtassembly.Plugin.assemblySettings ++ 
+           commonTasks,
     dependencies = Seq(oscarCbls)) dependsOnSource("lib")     
     
   lazy val oscarDes = Project(
     id = "oscar-des",
     base = file("oscar-des"),
     settings = buildSettings ++ jacoco_settings ++ Seq(libraryDependencies ++= commonDeps) ++ 
-     		   sbtassembly.Plugin.assemblySettings ++    		   
+           sbtassembly.Plugin.assemblySettings ++          
                commonTasks,
     dependencies = Seq(oscarInvariants)) dependsOnSource("lib")     
     
@@ -203,6 +213,6 @@ object OscarBuild extends Build {
     base = file("oscar-util")) dependsOnSource("lib")       
     
 
-    
+
   
 }

@@ -15,10 +15,10 @@
 package oscar.cp.constraints;
 
 import oscar.algo.reversible.ReversibleInt;
-import oscar.cp.core.CPIntervalVar;
+import oscar.cp.core.variables.CPIntVar;
 import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
-import oscar.cp.core.CPIntVar;
+import oscar.cp.core.variables.CPIntVar;
 import oscar.cp.core.Constraint;
 
 /**
@@ -99,7 +99,7 @@ public class LexLeq extends Constraint {
 	}
 	
 	@Override
-	public CPOutcome updateBoundsIdx(CPIntervalVar var, int idx) {
+	public CPOutcome updateBoundsIdx(CPIntVar var, int idx) {
 		i = idx;
 		if (i == q.getValue()) return state1();
 		else if (i == r.getValue()) return state2();

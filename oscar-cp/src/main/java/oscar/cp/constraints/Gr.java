@@ -17,7 +17,7 @@ package oscar.cp.constraints;
 import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
 import oscar.cp.core.CPStore;
-import oscar.cp.core.CPIntervalVar;
+import oscar.cp.core.variables.CPIntVar;
 import oscar.cp.core.Constraint;
 
 /**
@@ -26,21 +26,21 @@ import oscar.cp.core.Constraint;
  */
 public class Gr extends Constraint {
 
-	CPIntervalVar x, y;
+	CPIntVar x, y;
 
     /**
      * x > y
      * @param x
      * @param y
      */
-	public Gr(CPIntervalVar x, CPIntervalVar y) {
+	public Gr(CPIntVar x, CPIntVar y) {
 		super(x.store(),">");
 		this.x = x;
 		this.y = y;
 	}
 	
-	public Gr(CPIntervalVar x, int v) {
-		this(x, CPIntervalVar.apply(x.store(),v,v));
+	public Gr(CPIntVar x, int v) {
+		this(x, CPIntVar.apply(v,v, x.store()));
 	}
 	
 	@Override

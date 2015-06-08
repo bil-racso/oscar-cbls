@@ -17,7 +17,7 @@ package oscar.cp.scheduling.visual
 
 import oscar.visual._
 import oscar.cp.scheduling._
-import oscar.cp.core.CPIntVar
+import oscar.cp.core.variables.CPIntVar
 import java.awt.Color
 import oscar.visual.shapes.VisualText
 import oscar.visual.shapes.VisualLine
@@ -41,7 +41,7 @@ class VisualGanttChart(starts: Array[CPIntVar], durations: Array[CPIntVar], ends
   private val makespanLine: VisualLine = VisualLine(this, 0, 0, 0, 0)
   makespanLine.outerCol = Color.RED;
 
-  def update(xScale: Int, yScale: Int) {
+  def update(xScale: Double, yScale: Double) {
 
     for (i <- 0 until starts.size) {
 

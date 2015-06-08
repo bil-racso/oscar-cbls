@@ -17,6 +17,7 @@ package oscar.cp.constraints
 import oscar.cp.core._
 import oscar.algo.reversible._
 import oscar.cp.core.CPOutcome._
+import oscar.cp.core.variables.CPIntVar
 
 
 /**
@@ -58,7 +59,7 @@ class CountSimple(val N: CPIntVar, val X: Array[CPIntVar], val Y: CPIntVar) exte
   override def propagate(): CPOutcome = {
     var i = 0
     if (Y.isBound) {
-      val v = Y.value
+      val v = Y.min
       var i = nEqY.value
       while (i < n) {
         if (eqY(i).isBoundTo(v)) setEq(i)
@@ -87,7 +88,7 @@ class CountSimple(val N: CPIntVar, val X: Array[CPIntVar], val Y: CPIntVar) exte
     
     // we reached the maximum number values
     if (minCount == N.max && Y.isBound) {
-      val v = Y.value
+      val v = Y.min
       i = nEqY.value
       while (i < n) {
         if (eqY(i).removeValue(v) == CPOutcome.Failure) return CPOutcome.Failure
@@ -97,7 +98,7 @@ class CountSimple(val N: CPIntVar, val X: Array[CPIntVar], val Y: CPIntVar) exte
     }
     // every value not surely equal to Y must be equal to Y
     if (maxCount == N.min && Y.isBound) {
-      val v = Y.value
+      val v = Y.min
       i = nDiffY.value
       while (i < n) {
         if (diffY(i).assign(v) == CPOutcome.Failure) return CPOutcome.Failure

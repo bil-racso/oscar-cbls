@@ -1,8 +1,8 @@
 package oscar.cp.constraints
 
 import oscar.cp.testUtils.TestSuite
-import oscar.cp.core.CPIntVar
-import oscar.cp.modeling.CPSolver
+import oscar.cp.core.variables.CPIntVar
+import oscar.cp.core.CPSolver
 
 /** @author Renaud Hartert ren.hartert@gmail.com */
 class InverseSuite extends TestSuite {
@@ -66,11 +66,11 @@ class InverseSuite extends TestSuite {
     solver.post(next(0) == 3)
     assert(!solver.isFailed)
     assert(prev(3).isBound)
-    assert(prev(3).value == 0) 
+    assert(prev(3).min == 0) 
     solver.post(next(1) == 1)  
     assert(!solver.isFailed)
     assert(prev(1).isBound)
-    assert(prev(1).value == 1)
+    assert(prev(1).min == 1)
   }
   
   test("Inverse should assign next(j) == i when prev(i) == j") {
@@ -81,11 +81,11 @@ class InverseSuite extends TestSuite {
     solver.post(prev(0) == 3)
     assert(!solver.isFailed)
     assert(next(3).isBound)
-    assert(next(3).value == 0) 
+    assert(next(3).min == 0) 
     solver.post(prev(1) == 1)  
     assert(!solver.isFailed)
     assert(next(1).isBound)
-    assert(next(1).value == 1)
+    assert(next(1).min == 1)
   }
   
   test("Inverse should remove i from next(j) when prev(i) != j") {

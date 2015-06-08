@@ -15,13 +15,13 @@
 
 package oscar.cp.constraints
 
-import oscar.cp.core.CPIntVar
-import oscar.cp.core.CPIntervalVar
+import oscar.cp.core.variables.CPIntVar
 import oscar.cp.core.Constraint
 import oscar.cp.core.CPPropagStrength
 import oscar.cp.core.CPPropagStrength._
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.CPOutcome._
+import oscar.cp.core.CPStore
 
 class EqCons(x: CPIntVar, v: Int) extends Constraint(x.store, "Equality") {
   final override def setup(l: CPPropagStrength): CPOutcome = {
@@ -35,16 +35,16 @@ class EqCons(x: CPIntVar, v: Int) extends Constraint(x.store, "Equality") {
 
 class Eq(x: CPIntVar, y: CPIntVar) extends Constraint(x.store, "Equality") {
 
-  //idempotent = true
+  idempotent = true
   
   final override def setup(l: CPPropagStrength): CPOutcome = {
 
     // Assigned variables
     if (y.isBound) {
-      if (x.assign(y.value) == Failure) Failure
+      if (x.assign(y.min) == Failure) Failure
       else Success
     } else if (x.isBound) {
-      if (y.assign(x.value) == Failure) Failure
+      if (y.assign(x.min) == Failure) Failure
       else Success
     } 
     
@@ -80,9 +80,30 @@ class Eq(x: CPIntVar, y: CPIntVar) extends Constraint(x.store, "Equality") {
       y.callValBindWhenBind(this)
 
       if (x.size > 2 || y.size > 2) {
-        if (l == Strong) {
-          x.callValRemoveWhenValueIsRemoved(this)
-          y.callValRemoveWhenValueIsRemoved(this)
+        if (l == Strong) {        
+          val sharedValues = new Array[Int](math.max(x.size, y.size))
+          x.filterWhenDomainChangesWithDelta(true,CPStore.MaxPriorityL2) { d =>
+            val values = sharedValues
+            var i = d.fillArray(values)   
+            var notFailed = true
+            while (notFailed && i > 0) {
+              i -= 1
+              notFailed = y.removeValue(values(i)) != Failure
+            }
+            if (notFailed) Suspend
+            else Failure
+          }
+          y.filterWhenDomainChangesWithDelta(true,CPStore.MaxPriorityL2) { d =>
+            val values = sharedValues
+            var i = d.fillArray(values)
+            var notFailed = true
+            while (notFailed && i > 0) {
+              i -= 1
+              notFailed = x.removeValue(values(i)) != Failure
+            }
+            if (notFailed) Suspend
+            else Failure
+          }               
         } else {
           x.callUpdateBoundsWhenBoundsChange(this)
           y.callUpdateBoundsWhenBoundsChange(this)
@@ -93,17 +114,17 @@ class Eq(x: CPIntVar, y: CPIntVar) extends Constraint(x.store, "Equality") {
     }
   }
 
-  @inline final override def valBind(intVar: CPIntervalVar): CPOutcome = {
+  @inline final override def valBind(intVar: CPIntVar): CPOutcome = {
     if (intVar == x) {
-      if (y.assign(x.value) == Failure) Failure
+      if (y.assign(x.min) == Failure) Failure
       else Success
     } else if (intVar == y) {
-      if (x.assign(y.value) == Failure) Failure
+      if (x.assign(y.min) == Failure) Failure
       else Success
     } else sys.error("unknown variable")
   }
 
-  @inline final override def updateBounds(intVar: CPIntervalVar): CPOutcome = {
+  @inline final override def updateBounds(intVar: CPIntVar): CPOutcome = {
     if (intVar == y) {
       if (x.updateMax(y.max) == Failure) Failure
       else if (x.updateMin(y.min) == Failure) Failure

@@ -2,9 +2,7 @@ package oscar.cp.minizinc
 
 import scala.util.parsing.combinator._
 import FZType._
-import oscar.cp.modeling.CPSolver
-import oscar.cp.core._
-import oscar.cp.modeling._
+import oscar.cp._
 import java.io.FileReader
 import scala.Equals
 import oscar.cp.constraints.EqReifVar
@@ -25,6 +23,12 @@ import java.util.Collection
 import oscar.algo.search.Branching
 import oscar.cp.constraints.MulCte
 import oscar.cp.constraints.SubCircuit
+import oscar.cp.core.variables.CPVar
+import oscar.cp.core.NoSolutionException
+import oscar.cp.core.variables.CPSetVar
+import oscar.cp.core.CPPropagStrength
+import oscar.cp.core.CPOutcome
+import oscar.cp.core.Constraint
 
 class Parser extends JavaTokenParsers { // RegexParsers {
 

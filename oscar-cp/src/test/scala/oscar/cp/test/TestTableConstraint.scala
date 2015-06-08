@@ -3,13 +3,10 @@ package oscar.cp.test
 import oscar.cp.core.Constraint
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
-import oscar.cp.modeling._
-import oscar.cp.core.CPIntVar
-import oscar.cp.search.BinaryStaticOrderBranching
+import oscar.cp._
 import oscar.cp.constraints.TableDecomp
 import oscar.cp.constraints.TableSTR2
 import oscar.cp.constraints.TableData
-import oscar.cp.constraints.TableSTR
 
 abstract class TestTableConstraint(val tableConstraintName: String, val nTests: Int = 100) extends FunSuite with ShouldMatchers {
 
@@ -92,11 +89,7 @@ abstract class TestTableConstraint(val tableConstraintName: String, val nTests: 
   }
 }
 
-class TestSTRAgainstDecomp extends TestTableConstraint("TableSTR") {
-  override def table(X: Array[CPIntVar], table: Array[Array[Int]]) : Constraint = {
-    new TableSTR(X,table)
-  }
-}
+
 
 class TestSTR2AgainstDecomp extends TestTableConstraint("TableSTR2") {
   override def table(X: Array[CPIntVar], table: Array[Array[Int]]) : Constraint = {

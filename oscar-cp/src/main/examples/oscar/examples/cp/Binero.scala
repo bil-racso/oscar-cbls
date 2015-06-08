@@ -1,11 +1,11 @@
 package oscar.examples.cp
 
-import oscar.cp.modeling._
+import oscar.cp._
 import oscar.algo.search._
 import oscar.algo.reversible._
-import oscar.cp.core._
 import scala.io.Source
-import oscar.cp.search.BinaryFirstFailBranching
+import oscar.cp.core.CPPropagStrength
+import oscar.cp.core.CPOutcome
 
 /**
  * Binero is a grid game, similar to Sudoku.
@@ -110,7 +110,7 @@ class TabNotEqual(val tab1: Array[CPIntVar], val tab2: Array[CPIntVar], val len:
     CPOutcome.Suspend
   }
 
-  override def valBindIdx(x: CPIntervalVar, i: Int): CPOutcome = {
+  override def valBindIdx(x: CPIntVar, i: Int): CPOutcome = {
     valuesBin(i / len).value += x.min * intPow(2, i % len)
     numBound(i / len).incr()
     if (numBound(0).value == len && numBound(1).value == len) {

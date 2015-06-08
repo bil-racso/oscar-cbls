@@ -25,7 +25,7 @@ import oscar.algebra._
  * We include constraints that regulate the number of
  * calories and amounts of vitamins, minerals, fats, sodium and cholesterol in the diet.
  */
-object Diet extends LPModel with App {
+object Diet extends LPModelLPSolve with App {
 
   case class Nutriment(name: String) {
     val shortName = name

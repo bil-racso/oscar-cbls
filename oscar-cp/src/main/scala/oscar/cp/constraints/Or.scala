@@ -18,6 +18,8 @@ import oscar.cp.core._
 import oscar.algo.reversible._
 import oscar.cp.core.CPOutcome._
 import oscar.algo.reversible.ReversibleSparseSet
+import oscar.cp.core.variables.CPBoolVar
+import oscar.cp.core.variables.CPIntVar
 
 /**
  * or x_i = true
@@ -59,7 +61,7 @@ class Or(val x: Array[CPBoolVar]) extends Constraint(x(0).store, "Or") {
     Suspend
   }
 
-  override def valBindIdx(y: CPIntervalVar, idx: Int): CPOutcome = {
+  override def valBindIdx(y: CPIntVar, idx: Int): CPOutcome = {
     if (y.isBoundTo(1)) return Success
     if (down >= n || up < 0 || x(down).isBound || x(up).isBound || (down >= up)) {
       i = 0

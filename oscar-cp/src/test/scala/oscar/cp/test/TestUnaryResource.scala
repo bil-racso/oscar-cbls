@@ -16,10 +16,8 @@ package oscar.cp.test
 
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
-import oscar.cp.constraints._
-import oscar.cp.core._
-import oscar.cp.modeling._
-import oscar.cp.search.BinaryFirstFailBranching
+import oscar.cp._
+import oscar.cp.constraints.{UnaryResourceWithOptionalActivities, UnaryResource}
 
 /**
  * @author Pierre Schaus pschaus@gmail.com
@@ -43,7 +41,7 @@ class TestUnaryResource extends FunSuite with ShouldMatchers {
   }  
 
   def unary(cp: CPSolver, starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar]): Unit = {
-    cp.add(unaryResource(starts, durations, ends))
+    cp.add(new UnaryResource(starts, durations, ends))
   }
 
   def randomDurations(n: Int, seed: Int = 0): Array[Int] = {
@@ -55,19 +53,7 @@ class TestUnaryResource extends FunSuite with ShouldMatchers {
     val rand = new scala.util.Random(seed)
     Array.tabulate(n)(i => (1 + rand.nextInt(3),rand.nextBoolean))
   }
-  
-  test("unary unit 1") {
 
-      implicit val cp = CPSolver()
-      cp.silent = true
-      val starts = Array(CPIntVar(10), CPIntVar(7), CPIntVar(10))
-      val durations = Array(3,1,3)
-      val durs = durations.map(d => CPIntVar(d))
-      val ends = Array.tabulate(starts.size)(i => starts(i) + durations(i))
-      val required = Array(CPBoolVar(false),CPBoolVar(true),CPBoolVar(false))
-      add(unaryResource(starts,durs,ends, required))
-      cp.isFailed should be(false)
-  } 
   
   test("unary unit 2") {
       // s:{2..4},{2..4} dur:1,1 ends:{3..5},{3..5}newMin:2,2
@@ -77,53 +63,10 @@ class TestUnaryResource extends FunSuite with ShouldMatchers {
       val durations = Array(1,1)
       val durs = durations.map(d => CPIntVar(d))
       val ends = Array.tabulate(starts.size)(i => starts(i) + durations(i))
-      val required = Array(CPBoolVar(true),CPBoolVar(true))
-      add(unaryResource(starts,durs,ends, required))
+      add(new UnaryResource(starts,durs,ends))
       cp.isFailed should be(false)
-      println(starts.mkString(","))
   }   
-  
-  
-  
-  test("unary vs cumul") {
-    for (i <- 0 to 10) {
-      val n = 4
-      val inst = randomInstance(n,i)
-      
-      val durations = inst.map(_._1)
-      val optional = inst.map(_._2)
-      val horizon = durations.sum
-      val cp = CPSolver()
-      cp.silent = true
-      val starts = Array.tabulate(n)(i => CPIntVar(0 until (horizon - durations(i) + 1))(cp))
-      val durs = Array.tabulate(n)(i => CPIntVar(durations(i))(cp))
-      val ends = Array.tabulate(n)(i => starts(i) + durations(i))
-      val resources = Array.tabulate(n)(i => if (optional(i)) CPIntVar(0 to 1)(cp) else CPIntVar(0)(cp) )
-      cp.search {
-        binaryFirstFail(starts) ++ binaryFirstFail(resources)
-      }
-      
-      val statCum = cp.startSubjectTo() {
-        cp.add(maxCumulativeResource(starts, durs, ends,starts.map(_ => CPIntVar(1)(cp)), resources, CPIntVar(1)(cp),0))
-      }
-      val statUnary = cp.startSubjectTo() {
-        cp.add(unaryResource(starts,durs,ends, resources,0))
-      }
-      
-      val statUnaryDecomp = cp.startSubjectTo() {
-        decomp(cp,starts,durs,ends, resources,0)
-      }
-      
-      statCum.nSols should be (statUnary.nSols)
-      statUnaryDecomp.nSols should be (statUnary.nSols)
-    }
 
-     
-  }
-  
-
-  
- 
   test("decomp vs global, permutations") {
 
     def testPermutations(seed: Int) {
@@ -140,7 +83,6 @@ class TestUnaryResource extends FunSuite with ShouldMatchers {
 
       cp.onSolution {
         val p = (0 until n).sortBy(i => starts(i).value)
-        //println("solution:" + p.map(i => "[" + starts(i).value + "," + ends(i).value + "]"))
       }
 
       cp.search {
@@ -182,8 +124,8 @@ class TestUnaryResource extends FunSuite with ShouldMatchers {
 		val r1 =  Array(0,3) // activity on r1
 		val r2 = Array(1,2) // activity on r2
 		
-		add(unaryResource(r1.map(starts(_)),r1.map(durs(_)),r1.map(ends(_))))
-		add(unaryResource(r2.map(starts(_)),r2.map(durs(_)),r2.map(ends(_))))
+		add(new UnaryResource(r1.map(starts(_)),r1.map(durs(_)),r1.map(ends(_))))
+		add(new UnaryResource(r2.map(starts(_)),r2.map(durs(_)),r2.map(ends(_))))
 		
 		var nSol = 0
 		
@@ -216,8 +158,8 @@ class TestUnaryResource extends FunSuite with ShouldMatchers {
 		val r1 =  Array(0,3) // activity on r1
 		val r2 = Array(1,2) // activity on r2
 		
-		add(unaryResource(r1.map(starts(_)),r1.map(durs(_)),r1.map(ends(_))))
-		add(unaryResource(r2.map(starts(_)),r2.map(durs(_)),r2.map(ends(_))))
+		add(new UnaryResource(r1.map(starts(_)),r1.map(durs(_)),r1.map(ends(_))))
+		add(new UnaryResource(r2.map(starts(_)),r2.map(durs(_)),r2.map(ends(_))))
 		
 		var nSol = 0
 		
@@ -235,8 +177,8 @@ class TestUnaryResource extends FunSuite with ShouldMatchers {
 		start().nSols should be(4)
 	}
 	
-	test("Test 3: durations") {	
-		
+
+	test("Test 3: durations") {
 		val horizon = 5
 		implicit val cp = new CPSolver()
 		cp.silent = true
@@ -251,8 +193,8 @@ class TestUnaryResource extends FunSuite with ShouldMatchers {
 		val r1 =  Array(0,1) // activity on r1
 		val r2 = Array(2,3) // activity on r2
 		
-		add(unaryResource(r1.map(starts(_)),r1.map(durs(_)),r1.map(ends(_))))
-		add(unaryResource(r2.map(starts(_)),r2.map(durs(_)),r2.map(ends(_))))
+		add(new UnaryResource(r1.map(starts(_)),r1.map(durs(_)),r1.map(ends(_))))
+		add(new UnaryResource(r2.map(starts(_)),r2.map(durs(_)),r2.map(ends(_))))
 		
 		var nSol = 0
 		
@@ -293,43 +235,131 @@ class TestUnaryResource extends FunSuite with ShouldMatchers {
 		start().nSols should be(24)
 	}
 
-  test("unary minimization with optional") {
-    for (i <- 0 to 100) {
-      var n = 6
-      val inst = randomInstance(n / 2, i)
-      val durations = inst.map(_._1) ++ inst.map(_._1)
+  test("Test 4: 7 random activities") {
+    val nActivities = 7
+    val horizon = nActivities * 15
+    for (i <- 1 to 10) {
+      val randDurs = randomDurations(nActivities, i)
 
-      val horizon = durations.sum
-      val expectedOpt = horizon / 2
-
-      implicit val cp = CPSolver()
+      val cp = new CPSolver()
       cp.silent = true
-      val starts = Array.tabulate(n)(i => CPIntVar(0 until (horizon - durations(i) + 1)))
-      val durs = Array.tabulate(n)(i => CPIntVar(durations(i)))
-      val ends = Array.tabulate(n)(i => starts(i) + durations(i))
-      val resources = Array.tabulate(n)(i => CPIntVar(1 to 2))
+      val starts = Array.fill(nActivities)(CPIntVar(0 to horizon)(cp))
+      val ends = Array.fill(nActivities)(CPIntVar(0 to horizon)(cp))
+      val durs = randDurs.map(e => CPIntVar(e)(cp))
+      val makespan = maximum(ends)
 
-      add(unaryResource(starts, durs, ends, resources, 1))
-      add(unaryResource(starts, durs, ends, resources, 2))
-      val obj = maximum(ends)
-      var bestObj = Int.MaxValue
-      minimize(obj)
-      cp.search {
-        binaryFirstFail(resources) ++ binaryFirstFail(starts)
-      } onSolution {
-        bestObj = obj.value
+      for (i <- 0 until nActivities) {
+        cp.add(starts(i) + durs(i) == ends(i))
       }
+      cp.add(new UnaryResource(starts, durs, ends))
 
-      val stat = start()
+      cp.minimize(makespan)
 
       cp.search {
-         binaryFirstFail(starts) ++ binaryFirstFail(resources)
+        binaryStatic(starts)
       }
-      bestObj should be(expectedOpt)
+
+      val cp3 = new CPSolver()
+      cp3.silent = true
+      val starts3 = Array.fill(nActivities)(CPIntVar(0 to horizon)(cp3))
+      val ends3 = Array.fill(nActivities)(CPIntVar(0 to horizon)(cp3))
+      val durs3 = randDurs.map(e => CPIntVar(e)(cp3))
+      val makespan3 = maximum(ends3)
+
+      for (i <- 0 until nActivities) {
+        cp3.add(starts3(i) + durs3(i) == ends3(i))
+      }
+      cp3.add(new UnaryResourceWithOptionalActivities(starts3, durs3, ends3))
+
+      cp3.minimize(makespan3)
+
+      cp3.search {
+        binaryStatic(starts3)
+      }
+
+
+      val cp2 = new CPSolver()
+      cp2.silent = true
+      val starts2 = Array.fill(nActivities)(CPIntVar(0 to horizon)(cp2))
+      val ends2 = Array.fill(nActivities)(CPIntVar(0 to horizon)(cp2))
+      val durs2 = randDurs.map(e => CPIntVar(e)(cp2))
+      val makespan2 = maximum(ends2)
+
+      for (i <- 0 until nActivities) {
+        cp2.add(starts2(i) + durs2(i) == ends2(i))
+        for (j <- 0 until nActivities) {
+          if (i != j){
+            cp2.add((ends2(i) <== starts2(j)) || (ends2(j) <== starts2(i)))
+          }
+        }
+      }
+
+      cp2.minimize(makespan2)
+
+      cp2.search {
+        binaryStatic(starts2)
+      }
+
+      val stats1 = cp.start()
+      val stats2 = cp2.start()
+      val stats3 = cp3.start()
+
+      stats1.nSols shouldBe stats2.nSols
+      stats1.nSols shouldBe stats3.nSols
+      stats1.nFails shouldBe stats3.nFails
+      stats1.nNodes shouldBe stats3.nNodes
     }
-
   }
-	
 
+  test("Test 5: unary vs unary with optional") {
+    val nActivities = 15
+    val horizon = nActivities * 15
+    for (i <- 1 to 10) {
+      val randDurs = randomDurations(nActivities, i)
+
+      val cp = new CPSolver()
+      cp.silent = true
+      val starts = Array.fill(nActivities)(CPIntVar(0 to horizon)(cp))
+      val ends = Array.fill(nActivities)(CPIntVar(0 to horizon)(cp))
+      val durs = randDurs.map(e => CPIntVar(e)(cp))
+      val makespan = maximum(ends)
+
+      for (i <- 0 until nActivities) {
+        cp.add(starts(i) + durs(i) == ends(i))
+      }
+      cp.add(new UnaryResource(starts, durs, ends))
+
+      cp.minimize(makespan)
+
+      cp.search {
+        binaryFirstFail(starts)
+      }
+
+      val cp3 = new CPSolver()
+      cp3.silent = true
+      val starts3 = Array.fill(nActivities)(CPIntVar(0 to horizon)(cp3))
+      val ends3 = Array.fill(nActivities)(CPIntVar(0 to horizon)(cp3))
+      val durs3 = randDurs.map(e => CPIntVar(e)(cp3))
+      val makespan3 = maximum(ends3)
+
+      for (i <- 0 until nActivities) {
+        cp3.add(starts3(i) + durs3(i) == ends3(i))
+      }
+      cp3.add(new UnaryResourceWithOptionalActivities(starts3, durs3, ends3))
+
+      cp3.minimize(makespan3)
+
+      cp3.search {
+        binaryStatic(starts3)
+      }
+
+      val stats1 = cp.start()
+      val stats3 = cp3.start()
+
+      stats1.nSols shouldBe stats3.nSols
+      stats1.nFails shouldBe stats3.nFails
+      stats1.nNodes shouldBe stats3.nNodes
+    }
+  }
 
 }

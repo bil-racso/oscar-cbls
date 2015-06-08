@@ -1,11 +1,9 @@
 package oscar.cp.constraints
 
-package stockingCost
-
 import oscar.cp.core._
 import oscar.cp.core.CPOutcome._
-import oscar.cp.constraints.AllDiffBC
 import scala.collection.mutable.PriorityQueue
+import oscar.cp.core.variables.CPIntVar
 
 /**
   * The StockingCost constraint holds when each item is produced before

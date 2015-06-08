@@ -18,19 +18,15 @@ package oscar.cp.constraints;
 
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.CPPropagStrength
-import oscar.cp.core.CPIntVar
+import oscar.cp.core.variables.CPIntVar
 import oscar.cp.core.Constraint
-import oscar.cp.util.ArrayUtils;
-import oscar.algo.reversible.ReversibleInt
 
 import scala.math.min
 import scala.math.max
 
 import oscar.cp.core._
 import oscar.cp.core.CPOutcome._
-import oscar.cp.modeling.CPSolver
-import oscar.algo.reversible.ReversibleInt
-import oscar.algo.reversible.ReversibleSetIndexedArray
+import oscar.cp.core.CPSolver
 
 
 /**
@@ -39,12 +35,11 @@ import oscar.algo.reversible.ReversibleSetIndexedArray
  * @author Pierre Schaus - pschaus@gmail.com
  */
 class ElementVar(val y: Array[CPIntVar], val x: CPIntVar, val z: CPIntVar) extends Constraint(y(0).store, "ElementVar") {
-    
-
 
   override def setup(l: CPPropagStrength): CPOutcome = {
     if (l == CPPropagStrength.Strong) {
-      if (s.post(new ElementVarAC(y,x,z)) == Failure) return Failure
+      //if (s.post(new ElementVarAC(y,x,z)) == Failure) return Failure
+      if (s.post(new ElementVarAC3(y,x,z)) == Failure) return Failure
       else Success
     } else {
       if (s.post(new ElementVarBC(y,x,z)) == Failure) return Failure

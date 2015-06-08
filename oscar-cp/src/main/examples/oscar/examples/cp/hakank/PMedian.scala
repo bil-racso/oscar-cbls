@@ -13,17 +13,11 @@
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
 package oscar.examples.cp.hakank
-
-import oscar.cp.modeling._
-
-import oscar.cp.core._
+import oscar.cp._
 import scala.io.Source._
 import scala.math._
-
 /*
-
   P-median problem in Oscar.
-
   Model and data from the OPL Manual, which describes the problem:
   """
   The P-Median problem is a well known problem in Operations Research.
@@ -33,68 +27,48 @@ import scala.math._
   warehouses to open that minimize the demand-weighted distance of serving
   all customers from those P warehouses.
   """
-
-
   @author Hakan Kjellerstrand hakank@gmail.com
   http://www.hakank.org/oscar/
- 
 */
-
-object PMedian {
-
-  def main(args: Array[String]) {
-
-    val cp = CPSolver()
-
+object PMedian extends CPModel with App  {
     //
     // data
     //
     val p = 2
     val num_customers = 4
-
     val CUSTOMERS = 0 until num_customers
-
     val num_warehouses = 3;
     val WAREHOUSES = 0 until num_warehouses
-
     val demand = Array(100,80,80,70)
     val distance = Array(
                          Array( 2, 10, 50),
                          Array( 2, 10, 52),
                          Array(50, 60,  3),
                          Array(40, 60,  1))
-
     //
     // variables
     //
-    val open = Array.fill(num_warehouses)(CPIntVar(0 to num_warehouses)(cp))
-    val ship = Array.fill(num_customers,num_warehouses)(CPIntVar(0 to 1)(cp))
-
+    val open = Array.fill(num_warehouses)(CPIntVar(0 to num_warehouses))
+    val ship = Array.fill(num_customers,num_warehouses)(CPIntVar(0 to 1))
       // val z = CPIntVar(cp, 0 to 1000)
     val z = sum(for{c <- CUSTOMERS
                     w <- WAREHOUSES} yield ship(c)(w)*demand(c)*distance(c)(w))      
-
-
     //
     // constraints
     //
     var numSols = 0
-
-    cp.minimize(z) subjectTo {
-
-      cp.add(sum(open) == p)
-
+   minimize(z) 
+     add(sum(open) == p)
       for(c <- CUSTOMERS) {
         for(w <- WAREHOUSES) {
-          cp.add(ship(c)(w) <= open(w))
+         add(ship(c)(w) <= open(w))
         }
-        cp.add(sum(for(w <- WAREHOUSES) yield ship(c)(w)) == 1)
+       add(sum(for(w <- WAREHOUSES) yield ship(c)(w)) == 1)
       }
-        
-    } search {
-       
+    search{
       binary(ship.flatten ++ open, _.constraintDegree, _.max)
-    } onSolution {
+    }
+onSolution {
       println("z:" + z)
       println("open:" + open.mkString(""))
       println("ship:")
@@ -102,13 +76,7 @@ object PMedian {
         println(ship(c).mkString(""))
       }
       println()
-
       numSols += 1
-
    }
-
-   println(cp.start())
-
+   println(start())
   }
-
-}

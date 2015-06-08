@@ -15,8 +15,13 @@
 package oscar.cp.constraints;
 
 import oscar.algo.reversible.ReversibleInt;
-import oscar.algo.reversible.SetIndexedArray;
-import oscar.cp.core.*;
+import oscar.algo.reversible.SparseSet;
+import oscar.cp.core.CPOutcome;
+import oscar.cp.core.CPPropagStrength;
+import oscar.cp.core.Constraint;
+import oscar.cp.core.variables.CPBoolVar;
+import oscar.cp.core.variables.CPIntVar;
+import oscar.cp.core.variables.CPIntVar;
 
 
 /**
@@ -25,7 +30,7 @@ import oscar.cp.core.*;
 public class MemberReif extends Constraint {
 
 	private CPIntVar x;
-	private SetIndexedArray set;
+	private SparseSet set;
 	private CPBoolVar b;
 	private ReversibleInt inter;  // size of the intersection of D(x) and set
     private ReversibleInt xsize; // size of x
@@ -36,7 +41,7 @@ public class MemberReif extends Constraint {
 	 * @param set, should not be modified externally after posting the constraint
 	 * @param b
 	 */
-	public MemberReif(CPIntVar x, SetIndexedArray set, CPBoolVar b) {
+	public MemberReif(CPIntVar x, SparseSet set, CPBoolVar b) {
 		super(x.store(),"MemberReif");
 		this.x = x;
 		this.set = set;
@@ -90,10 +95,10 @@ public class MemberReif extends Constraint {
     }
 
     @Override
-    public CPOutcome valBind(CPIntervalVar var) {
+    public CPOutcome valBind(CPIntVar var) {
         assert(var.isBound());
 		if (var == x) {
-             if (set.hasValue(x.getValue())) {
+             if (set.hasValue(x.min())) {
                  if (b.assign(1) == CPOutcome.Failure) {
                      return CPOutcome.Failure;
                  }
@@ -105,7 +110,7 @@ public class MemberReif extends Constraint {
              return CPOutcome.Success;
         } else {
             assert(var == b);
-            if (b.getValue() == 1) { // x must be a member of the set
+            if (b.min() == 1) { // x must be a member of the set
                 return removeValues(false); // remove all non member values of x and return success if no failure
             } else { // x cannot be a member of the set
                 return removeValues(true); // remove all member values of x and return success if no failure

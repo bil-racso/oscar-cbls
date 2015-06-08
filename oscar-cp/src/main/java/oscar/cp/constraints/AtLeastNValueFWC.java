@@ -14,13 +14,11 @@
  ******************************************************************************/
 package oscar.cp.constraints;
 
-import oscar.algo.reversible.ReversibleBool;
+import oscar.algo.reversible.ReversibleBoolean;
 import oscar.algo.reversible.ReversibleInt;
 import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
-import oscar.cp.core.CPIntVar;
-import oscar.cp.core.CPIntervalVar;
-import oscar.cp.core.CPIntervalVar;
+import oscar.cp.core.variables.CPIntVar;
 import oscar.cp.core.Constraint;
 
 /**
@@ -32,7 +30,7 @@ public class AtLeastNValueFWC extends Constraint {
 	
 	private CPIntVar nValueVar;
 	
-	private ReversibleBool [] isValueUsed; //for each value if it is used or not
+	private ReversibleBoolean [] isValueUsed; //for each value if it is used or not
 	private ReversibleInt nbValueUsed; //number of value used
 	private ReversibleInt nbBound; //number of bound variables
 
@@ -54,9 +52,9 @@ public class AtLeastNValueFWC extends Constraint {
 	     findValueRange();
 
 	     //initialize trails and counters
-	     isValueUsed   = new ReversibleBool[valSize];
+	     isValueUsed   = new ReversibleBoolean[valSize];
 	     for (int v = 0; v < valSize; v++) {
-	    	 isValueUsed[v] = new ReversibleBool(s());
+	    	 isValueUsed[v] = new ReversibleBoolean(s());
 	    	 isValueUsed[v].setValue(false);
 	     }
 	     nbValueUsed = new ReversibleInt(s(), 0);
@@ -66,7 +64,7 @@ public class AtLeastNValueFWC extends Constraint {
 	     	    
 	     for (int k = 0; k < x.length; k++) {
 	       if (x[k].isBound()) {
-	    	 int v = x[k].getValue();
+	    	 int v = x[k].min();
 	         nbBound.incr();
 	         if (!isValueUsed[v-min].getValue()) {
 	           nbValueUsed.incr();
@@ -103,9 +101,9 @@ public class AtLeastNValueFWC extends Constraint {
 	}
 	
 	@Override
-	public CPOutcome valBindIdx(CPIntervalVar var, int idx) {
+	public CPOutcome valBindIdx(CPIntVar var, int idx) {
 		
-		int val = var.getValue();
+		int val = var.min();
 		nbBound.incr();
 		if(!isValueUsed[val-min].getValue()){
 			nbValueUsed.incr();
@@ -144,7 +142,7 @@ public class AtLeastNValueFWC extends Constraint {
 		  int nb = 0;
 		  for (int k = 0; k < x.length; k++) {
 		    if (x[k].isBound()) {
-		      values[nb] = x[k].getValue();
+		      values[nb] = x[k].min();
 		      nb++;
 		    }
 		  }

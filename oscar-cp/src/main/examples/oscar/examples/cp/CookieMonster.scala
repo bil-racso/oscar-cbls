@@ -1,7 +1,6 @@
 package oscar.examples.cp
 
-import oscar.cp.modeling._
-import oscar.cp.core._
+import oscar.cp._
 import collection.immutable.SortedSet
 
 /**
@@ -30,8 +29,6 @@ import collection.immutable.SortedSet
  */
 object CookieMonster extends CPModel with App {
 
-  val numCubes = 4
-  val numFaces = 6
 
   val jars = Array(15, 13, 12, 4, 2, 1)
   val maxMove = 6

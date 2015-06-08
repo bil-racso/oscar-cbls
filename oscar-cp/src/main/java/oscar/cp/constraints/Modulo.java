@@ -15,10 +15,10 @@
 package oscar.cp.constraints;
 
 
-import oscar.algo.reversible.ReversibleSetIndexedArray;
+import oscar.algo.reversible.ReversibleSparseSetJava;
 import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
-import oscar.cp.core.CPIntVar;
+import oscar.cp.core.variables.CPIntVar;
 import oscar.cp.core.Constraint;
 
 
@@ -35,7 +35,7 @@ public class Modulo extends Constraint{
 	// for each value from 0 to v-1 how many values in D(x) support it ? When it fall to 0 the value can be removed from y	
 	// for each value in D(y) what are the values in x supporting it (= set), when a value in D(y) is removed, all values from the set are removed as well from D(x)
 
-	private ReversibleSetIndexedArray [] supportSet; // supportSet[i] is the set of values val in D(x) such that val%v == i
+	private ReversibleSparseSetJava [] supportSet; // supportSet[i] is the set of values val in D(x) such that val%v == i
 
 	/**
 	 * Creates a modulo constraint x % v = y
@@ -61,13 +61,13 @@ public class Modulo extends Constraint{
 			return CPOutcome.Failure;
 		}
 
-		supportSet = new ReversibleSetIndexedArray[2*v-1]; // for negative and positive numbers if v = 3, we must consider -2,-1,0,1,2
+		supportSet = new ReversibleSparseSetJava[2*v-1]; // for negative and positive numbers if v = 3, we must consider -2,-1,0,1,2
 		for (int i = -v+1; i < v; i++) {		
 			for (int val = x.min(); val <= x.max(); val++) {
 				if (x.hasValue(val)) {
 					if ((val % v) == i) {
 						if (supportSet[i+v-1] == null) {
-							supportSet[i+v-1] = new ReversibleSetIndexedArray(s(), x.getMin(), x.getMax(),true); // contains no values initially
+							supportSet[i+v-1] = new ReversibleSparseSetJava(s(), x.getMin(), x.getMax(),true); // contains no values initially
 						}
 						supportSet[i+v-1].insert(val);
 					}

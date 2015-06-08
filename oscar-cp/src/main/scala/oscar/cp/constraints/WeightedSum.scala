@@ -17,14 +17,15 @@ package oscar.cp.constraints
 import oscar.cp.core._
 import oscar.algo.reversible._
 import oscar.cp.core.CPOutcome._
+import oscar.cp.core.variables.CPIntVar
 
 /**
  * Implementation of Sum Constraint:
  * @author Pierre Schaus pschaus@gmail.com
  */
-class WeightedSum(val W: Array[Int], val X: Array[_ <: CPIntervalVar], val y: CPIntervalVar) extends Constraint(y.store, "WeightedSum2") {
+class WeightedSum(val W: Array[Int], val X: Array[CPIntVar], val y: CPIntVar) extends Constraint(y.store, "WeightedSum2") {
 
-  val x: Array[CPIntervalVar] = X.map(i => i.asInstanceOf[CPIntervalVar])
+  val x: Array[CPIntVar] = X.map(i => i.asInstanceOf[CPIntVar])
   val w = W.map(i => i)
   val sumBounds = new ReversibleInt(s,0)
   val nBounds = new ReversibleInt(s,0)
@@ -39,7 +40,7 @@ class WeightedSum(val W: Array[Int], val X: Array[_ <: CPIntervalVar], val y: CP
   }
   
   private def setBound(i: Int) {
-    sumBounds.value = sumBounds.value + w(i)*x(i).value
+    sumBounds.value = sumBounds.value + w(i)*x(i).min
     val tmp = x(nBounds.value)
     val tmpw = w(nBounds.value)
     x(nBounds.value) = x(i)

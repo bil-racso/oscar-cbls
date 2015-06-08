@@ -19,6 +19,8 @@ import oscar.cp.core._
 import oscar.algo.reversible._
 import oscar.cp.core.CPOutcome
 import scala.collection.JavaConversions._
+import oscar.cp.core.variables.CPIntVar
+import oscar.cp.core.variables.CPBoolVar
 
 
 /**
@@ -75,7 +77,7 @@ class Knapsack(val X: Array[CPBoolVar], val profit: Array[Int], val weight: Arra
   }
 
   
-  override def valBindIdx(y: CPIntervalVar, i: Int) : CPOutcome = {
+  override def valBindIdx(y: CPIntVar, i: Int) : CPOutcome = {
     unbound.removeValue(i);
     if (y.min == 1) {
     	// add this to the capacity and to the reward

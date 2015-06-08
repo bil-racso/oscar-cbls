@@ -18,7 +18,7 @@ package oscar.examples.linprog
 import oscar.linprog.modeling._
 import oscar.algebra._
 
-object BasicMIP extends MIPModel with App  {
+object BasicMIP extends MIPModelGurobi with App  {
 
   val x0 = MIPFloatVar("x0", 0.0, 40.0)
   val x1 = MIPIntVar("x1", 0 to 1000)
@@ -31,7 +31,11 @@ object BasicMIP extends MIPModel with App  {
   add(x0 - 3.0 * x1 + x2 <= 30)
   add(x1 - 3.5 * x3 == 0)
   
+  
+  
   start()
+  
+  x2.branchPriority()
   
   println("objective: " + objectiveValue)
   println("x0= " + x0.value + " " + x1.value)

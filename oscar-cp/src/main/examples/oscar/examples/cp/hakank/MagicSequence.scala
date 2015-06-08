@@ -13,17 +13,11 @@
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
 package oscar.examples.cp.hakank
-
-import oscar.cp.modeling._
-
-import oscar.cp.core._
+import oscar.cp._
 import scala.io.Source._
 import scala.math._
-
 /*
-
   Magic sequence problem in Oscar.
-  
   http://www.dcs.st-and.ac.uk/~ianm/CSPLib/prob/prob019/spec.html
   """
   A magic sequence of length n is a sequence of integers x0 . . xn-1 between 
@@ -31,57 +25,36 @@ import scala.math._
   times in the sequence. For instance, 6,2,1,0,0,0,1,0,0,0 is a magic sequence 
   since 0 occurs 6 times in it, 1 occurs twice, ...
   """
-
   @author Hakan Kjellerstrand hakank@gmail.com
   http://www.hakank.org/oscar/
- 
 */
-object MagicSequence {
+object MagicSequence extends CPModel with App {
+  //
+  // data
+  //
+  val n = if (args.length > 0) args(0).toInt else 10;
+  //
+  // variables
+  //
+  val x = Array.fill(n)(CPIntVar(0 to n - 1))
+  val allValues = Array.tabulate(n)(i => (i, x(i)))
+  //
+  // constraints
+  //
+  var numSols = 0
 
-
-  def main(args: Array[String]) {
-
-    val cp = CPSolver()
-
-    //
-    // data
-    //
-    val n = if (args.length > 0) args(0).toInt else 10;
-    val all_values = Array.tabulate(n)(i=> (i,CPIntVar(0 to n-1)(cp)))
-
-    //
-    // variables
-    //
-    val x = Array.fill(n)(CPIntVar(0 to n-1)(cp))
-
-    //
-    // constraints
-    //
-    var numSols = 0
-    cp.solve subjectTo {
-
-      cp.add(weightedSum(0 to n, x) == n)
-
-      cp.add(sum(x) == n)
-
-      cp.add(gcc(x, all_values), Strong)
-      for(i<- 0 until n) {
-        cp.add(x(i) == all_values(i)._1)
-      }
-
-    } search {
-       
-      binary(x, -_.constraintDegree, _.min)
-    } onSolution {
-      
-      println("\nSolution:")
-      println("x: " + x.mkString(" "))
-
-      numSols += 1
-
-   } 
-   println(cp.start())
-
+  add(weightedSum(0 to n, x) == n)
+  add(sum(x) == n)
+  add(gcc(x, allValues), Strong)
+  
+  search {
+    binary(x, -_.constraintDegree, _.min)
   }
-
+  /*
+  onSolution {
+    println("\nSolution:")
+    println("x: " + x.mkString(" "))
+    numSols += 1
+  }*/
+  println(start())
 }

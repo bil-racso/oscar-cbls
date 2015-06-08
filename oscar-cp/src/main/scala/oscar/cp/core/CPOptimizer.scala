@@ -1,6 +1,5 @@
 package oscar.cp.core
 
-import oscar.cp.modeling.CPSolver
 import oscar.cp.constraints.CPObjectiveUnit
 import oscar.cp.constraints.ParetoConstraint
 import oscar.cp.multiobjective.Pareto
@@ -8,10 +7,10 @@ import oscar.cp.multiobjective.ListPareto
 import oscar.cp.constraints.CPObjectiveUnitMaximize
 import oscar.cp.constraints.CPObjective
 import oscar.cp.constraints.CPObjectiveUnitMinimize
-import oscar.cp.modeling.TightenType
+import oscar.cp.TightenType
 import oscar.cp.constraints.CPObjectiveGeometricMinimize
 import oscar.cp.constraints.CPObjectiveUnit
-import oscar.cp.constraints.CPObjectiveUnit
+import oscar.cp.core.variables.CPIntVar
 
 class CPOptimizer(propagStrength: CPPropagStrength) extends CPStore(propagStrength) {
   
@@ -81,18 +80,5 @@ class CPOptimizer(propagStrength: CPPropagStrength) extends CPStore(propagStreng
     this
   }
   
-  @deprecated("solve is the default behavior of CPSolver and does not need to be specified anymore.", "1.0")
-  def solve(): CPOptimizer = this
-
-  @deprecated("constraints do not need to be stated in the subjectTo block anymore.", "1.0")
-  def subjectTo(constraintsBlock: => Unit): CPOptimizer = {
-    try {
-      constraintsBlock
-    } catch {
-      case ex: NoSolutionException => println("No Solution, inconsistent model")
-    }
-    this
-  }
-  
-  override def update(): Unit = propagate()
+  def update(): Unit = propagate()
 }

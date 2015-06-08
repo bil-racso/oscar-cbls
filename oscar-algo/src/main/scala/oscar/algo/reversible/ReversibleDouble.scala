@@ -20,8 +20,14 @@ package oscar.algo.reversible;
  * @author Pierre Schaus  pschaus@gmail.com
  * @author Renaud Hartert ren.hartert@gmail.com
  */
+class ReversibleDoubleTrailEntry(reversible: ReversibleDouble, value: Double) extends TrailEntry {
+  @inline override final def restore(): Unit = reversible.restore(value)
+}
+
 class ReversibleDouble(node: ReversibleContext, value: Double) extends ReversiblePointer[Double](node, value) {
 
+  @inline final override def trailEntry = new ReversibleDoubleTrailEntry(this, pointer)
+  
   /** Increments the reversible integer by i */
   def +=(v: Double): Double = {
     trail()
@@ -39,5 +45,4 @@ class ReversibleDouble(node: ReversibleContext, value: Double) extends Reversibl
 
 object ReversibleDouble {
   def apply(value: Double)(implicit context: ReversibleContext) = new ReversibleDouble(context, value)
-  implicit def reversibleDouble2Double(rd: ReversibleDouble): Double = rd.getValue
 }

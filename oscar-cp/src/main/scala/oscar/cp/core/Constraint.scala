@@ -15,10 +15,14 @@
 
 package oscar.cp.core
 
-import oscar.algo.reversible.ReversibleBool
+import oscar.algo.reversible.ReversibleBoolean
 import oscar.cp.constraints.Garded
 import scala.collection.mutable.ArrayBuffer
 import oscar.algo.reversible.MagicBoolean
+import oscar.cp.core.variables.CPSetVar
+import oscar.cp.core.variables.CPBoolVar
+import oscar.cp.core.variables.CPIntVar
+import scala.collection.JavaConversions.mapAsScalaMap
 
 
 abstract class Snapshot {
@@ -45,22 +49,39 @@ class SnapshotVarSet(x: CPSetVar) extends Snapshot {
   }
 }
 
+class Watcher {
+  def shouldEnqueue(): Boolean = true
+}
+
 /**
  * Abstract class extended by any CP constraints
  * @author Pierre Schaus pschaus@gmail.com
  */
 abstract class Constraint(val s: CPStore, val name: String = "cons") {
 
-  private final val active = new ReversibleBool(s,true)
-  private final val inQueue = new MagicBoolean(s, false)
+  private[this] val active = new ReversibleBoolean(s,true)
+  private[this] val inQueue = new MagicBoolean(s, false)
 
-  val snapshotsVarInt = scala.collection.mutable.Map[CPIntVar, SnapshotVarInt]() 
-  val snapshotsVarSet = scala.collection.mutable.Map[CPSetVar, SnapshotVarSet]()
+  val snapshotsVarInt = new java.util.HashMap[CPIntVar, SnapshotVarInt] // scala.collection.mutable.Map[CPIntVar, SnapshotVarInt]() 
+  val snapshotsVarSet = new java.util.HashMap[CPSetVar, SnapshotVarSet] // scala.collection.mutable.Map[CPSetVar, SnapshotVarSet]()
+  private[this] var toSnapShotVarInt = Array.ofDim[SnapshotVarInt](10)
+  private[this] var nSnapshotVarInt = 0
+  private[this] var toSnapShotVarSet = Array.ofDim[SnapshotVarSet](10)
+  private[this] var nSnapshotVarSet = 0
 
   private var _mustSnapshot = false
 
   def addSnapshot(x: CPIntVar): Unit = {
     snapshotsVarInt(x) = new SnapshotVarInt(x)
+    
+    if (nSnapshotVarInt >= toSnapShotVarInt.length) {
+      val toSnapShotVarIntNew = new Array[SnapshotVarInt](nSnapshotVarInt*2)
+      System.arraycopy(toSnapShotVarInt, 0, toSnapShotVarIntNew, 0, nSnapshotVarInt)
+      toSnapShotVarInt = toSnapShotVarIntNew
+    }
+    toSnapShotVarInt(nSnapshotVarInt) = snapshotsVarInt(x)
+    nSnapshotVarInt += 1   
+    
     snapshotsVarInt(x).update()
     if (!_mustSnapshot) {
       s.onPop { snapShot() }
@@ -68,20 +89,31 @@ abstract class Constraint(val s: CPStore, val name: String = "cons") {
     } 
   }
 
-  private def snapShot() {
+  @inline private def snapShot() {
     snapshotVarInt()
     snapshotVarSet()
   }
 
-  protected def snapshotVarInt(): Unit = {
-    if (snapshotsVarInt.size > 0) {
-      snapshotsVarInt.values.foreach(_.update())
+  @inline protected def snapshotVarInt(): Unit = {
+    var i = 0
+    while (i < nSnapshotVarInt) {
+      toSnapShotVarInt(i).update()
+      i += 1
     }
   }
   
 
   def addSnapshot(x: CPSetVar): Unit = {
     snapshotsVarSet(x) = new SnapshotVarSet(x)
+    
+    if (nSnapshotVarSet >= toSnapShotVarSet.length) {
+      val toSnapShotVarSetNew = new Array[SnapshotVarSet](nSnapshotVarSet*2)
+      System.arraycopy(toSnapShotVarSet, 0, toSnapShotVarSetNew, 0, nSnapshotVarSet)
+      toSnapShotVarSet = toSnapShotVarSetNew
+    }
+    toSnapShotVarSet(nSnapshotVarSet) = snapshotsVarSet(x)
+    nSnapshotVarSet += 1  
+    
     snapshotsVarSet(x).update()
     if (!_mustSnapshot) {
       s.onPop { snapShot() }
@@ -89,33 +121,45 @@ abstract class Constraint(val s: CPStore, val name: String = "cons") {
     }    
   }
 
-  protected def snapshotVarSet(): Unit = {
-    if (snapshotsVarSet.size > 0)
-      snapshotsVarSet.values.foreach(_.update())
+  @inline protected def snapshotVarSet(): Unit = {
+    var i = 0
+    while (i < nSnapshotVarSet) {
+      toSnapShotVarSet(i).update()
+      i += 1
+    } 
   }  
 
-  private var priorL2 = CPStore.MAXPRIORL2 - 2
-  private var priorBindL1 = CPStore.MAXPRIORL1 - 1
-  private var priorBoundsL1 = CPStore.MAXPRIORL1 - 2
-  private var priorRemoveL1 = CPStore.MAXPRIORL1 - 2
-  private var priorRequireL1 = CPStore.MAXPRIORL1 - 1
-  private var priorExcludeL1 = CPStore.MAXPRIORL1 - 2
+  private var priorL2 = CPStore.MaxPriorityL2 - 2
+  private var priorBindL1 = CPStore.MaxPriorityL1 - 1
+  private var priorBoundsL1 = CPStore.MaxPriorityL1 - 2
+  private var priorRemoveL1 = CPStore.MaxPriorityL1 - 2
+  private var priorRequireL1 = CPStore.MaxPriorityL1 - 1
+  private var priorExcludeL1 = CPStore.MaxPriorityL1 - 2
 
   /**
    * Set to true when it is currently executing the propagate method
    */
-  var executingPropagate = false
+  private[this] var _inPropagate = false
 
   /**
    * True if the constraint is idempotent i.e. calling two times propagate is useless if no other changes occurred
    * sigma(store) = sigma(sigma(store))
    */
-  var idempotent = false
+  private[this] var _idempotent = false
+  @inline final def idempotent: Boolean = _idempotent
+  final def idempotent_=(b: Boolean): Unit = _idempotent = b
 
   /**
    * @return true if it is currently executing the propagate method.
    */
-  def inPropagate() = executingPropagate
+  @inline final def inPropagate() = _inPropagate
+  
+  
+  
+  @inline final def isEnqueuable: Boolean = {
+    active.value && !inQueue.value && (!_inPropagate || !_idempotent)
+  }
+  
 
   /**
    * @param b
@@ -226,7 +270,7 @@ abstract class Constraint(val s: CPStore, val name: String = "cons") {
    * @param x has a new minimum and/or maximum value in its domain since last call
    * @return the outcome i.e. Failure, Success or Suspend
    */
-  def updateBounds(x: CPIntervalVar) = CPOutcome.Suspend
+  def updateBounds(x: CPIntVar) = CPOutcome.Suspend
 
   /**
    * Propagation method of Level L1 that is called if variable x has asked to do so
@@ -236,7 +280,7 @@ abstract class Constraint(val s: CPStore, val name: String = "cons") {
    *        This is typically used to retrieve the index of x in an array of variables in constant time
    * @return the outcome i.e. Failure, Success or Suspend
    */
-  def updateBoundsIdx(x: CPIntervalVar, idx: Int) = CPOutcome.Suspend
+  def updateBoundsIdx(x: CPIntVar, idx: Int) = CPOutcome.Suspend
 
   /**
    * Propagation method of Level L1 that is called if variable x has asked to do so
@@ -244,7 +288,7 @@ abstract class Constraint(val s: CPStore, val name: String = "cons") {
    * @param x is bind
    * @return the outcome i.e. Failure, Success or Suspend
    */
-  def valBind(x: CPIntervalVar) = CPOutcome.Suspend
+  def valBind(x: CPIntVar) = CPOutcome.Suspend
 
   /**
    * Propagation method of Level L1 that is called if variable x has asked to do so
@@ -254,7 +298,7 @@ abstract class Constraint(val s: CPStore, val name: String = "cons") {
    *        This is typically used to retrieve the index of x in an array of variables in constant time
    * @return the outcome i.e. Failure, Success or Suspend
    */
-  def valBindIdx(x: CPIntervalVar, idx: Int) = CPOutcome.Suspend
+  def valBindIdx(x: CPIntVar, idx: Int) = CPOutcome.Suspend
 
   /**
    * Propagation method of Level L1 that is called if variable x has asked to do so
@@ -312,13 +356,13 @@ abstract class Constraint(val s: CPStore, val name: String = "cons") {
 
   def execute(): CPOutcome = {
     inQueue.value = false
-    executingPropagate = true
+    _inPropagate = true
     val oc = propagate()
     if (oc != CPOutcome.Failure) {
       snapshotVarInt()
       snapshotVarSet()
     }
-    executingPropagate = false
+    _inPropagate = false
     if (oc == CPOutcome.Success) {
       deactivate()
     }
@@ -333,7 +377,10 @@ abstract class Constraint(val s: CPStore, val name: String = "cons") {
 
 
 
-abstract class DeltaVarInt(x: CPIntVar,filter: DeltaVarInt => CPOutcome) extends Constraint(x.store, "DeltaVarInt") {
+abstract class DeltaVarInt(x: CPIntVar,filter: DeltaVarInt => CPOutcome,idempot: Boolean = false, priority: Int) extends Constraint(x.store, "DeltaVarInt") {
+  
+  idempotent = idempot
+  priorityL2 = priority
   
   val sn = new SnapshotVarInt(x)
   s.onPop {
@@ -350,6 +397,7 @@ abstract class DeltaVarInt(x: CPIntVar,filter: DeltaVarInt => CPOutcome) extends
   def changed() = x.changed(sn)
   def size() = x.deltaSize(sn)
   def values() = x.delta(sn.oldMin,sn.oldMax,sn.oldSize)
+  def fillArray(arr: Array[Int]): Int = x.fillDeltaArray(sn.oldMin,sn.oldMax,sn.oldSize,arr)
   def minChanged() = x.minChanged(sn)
   def maxChanged() = x.maxChanged(sn)
   def oldMin() = x.oldMin(sn)
@@ -358,6 +406,8 @@ abstract class DeltaVarInt(x: CPIntVar,filter: DeltaVarInt => CPOutcome) extends
 }
 
 abstract class DeltaVarSet(x: CPSetVar,filter: DeltaVarSet => CPOutcome) extends Constraint(x.store, "DeltaVarSet") {
+  
+  idempotent = true
   
   val sn = new SnapshotVarSet(x)
   s.onPop {

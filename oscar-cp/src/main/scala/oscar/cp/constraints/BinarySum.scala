@@ -17,6 +17,7 @@ package oscar.cp.constraints
 import oscar.cp.core._
 import oscar.algo.reversible._
 import oscar.cp.core.CPOutcome._
+import oscar.cp.core.variables.CPIntVar
 
 /**
  * x + y = z 
@@ -24,7 +25,7 @@ import oscar.cp.core.CPOutcome._
  * @author Steven Gay steven.gay@uclouvain.be
  * 
  */
-class BinarySum(val x: CPIntervalVar, val y: CPIntervalVar, val z: CPIntervalVar) extends Constraint(x.store, "BinarySum") {
+class BinarySum(val x: CPIntVar, val y: CPIntVar, val z: CPIntVar) extends Constraint(x.store, "BinarySum") {
 
   idempotent = true
   override def setup(l: CPPropagStrength): CPOutcome = {

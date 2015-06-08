@@ -17,7 +17,7 @@ package oscar.cp.constraints;
 
 import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
-import oscar.cp.core.CPIntVar;
+import oscar.cp.core.variables.CPIntVar;
 import oscar.cp.core.Constraint;
 import oscar.cp.util.NumberUtils;
 
@@ -82,12 +82,12 @@ public class MulCteRes extends Constraint {
 			}
 		}
 		if (x.isBound()) {
-			if (s().post(new MulCte(y,x.value(),CPIntVar.apply(s(), c,c))) == CPOutcome.Failure) {
+			if (s().post(new MulCte(y,x.min(),CPIntVar.apply(s(), c,c))) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
 			}
 			return CPOutcome.Success;
 		} else if (y.isBound()) {
-			if (s().post(new MulCte(x,y.value(),CPIntVar.apply(s(), c,c))) == CPOutcome.Failure) {
+			if (s().post(new MulCte(x,y.min(),CPIntVar.apply(s(), c,c))) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
 			}
 			return CPOutcome.Success;

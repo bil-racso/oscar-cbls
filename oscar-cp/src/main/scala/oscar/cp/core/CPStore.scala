@@ -15,46 +15,73 @@
 
 package oscar.cp.core
 
-import java.util.{Collection, LinkedList}
-
-import oscar.algo.ArrayQueue
+import java.util.Collection
+import java.util.LinkedList
+import scala.collection.JavaConversions.asJavaCollection
+import scala.collection.JavaConversions.collectionAsScalaIterable
+import oscar.algo.array.ArrayQueue
 import oscar.algo.reversible.ReversiblePointer
 import oscar.algo.search.SearchNode
 import oscar.cp.constraints.EqCons
-import oscar.cp.core.CPOutcome.{Failure, Success, Suspend}
-
-import scala.collection.JavaConversions.{asJavaCollection, collectionAsScalaIterable}
+import oscar.cp.core.CPOutcome.Failure
+import oscar.cp.core.CPOutcome.Success
+import oscar.cp.core.CPOutcome.Suspend
+import oscar.cp.core.variables.CPBoolVar
+import oscar.cp.core.variables.CPIntVar
+import oscar.cp.core.variables.CPIntVar
+import oscar.cp.core.variables.CPSetVar
+import oscar.cp.core.watcher.PropagEventQueueVarSet
+import oscar.cp.core.watcher.PropagEventQueueVarInt
+import oscar.algo.search.DFSearchNode
+import scala.util.Random
 
 /**
  * Constraint Programming CPStore
  * @author Pierre Schaus pschaus@gmail.com
  * @author Renaud Hartert ren.hartert@gmail.com
  */
-class CPStore( final val propagStrength: CPPropagStrength) extends SearchNode {
+class CPStore( final val propagStrength: CPPropagStrength) extends DFSearchNode {
 
   def this() = this(CPPropagStrength.Weak)
+  
+  // Random object
+  private[this] val rand = new Random(0)
 
   // Propagation queue L1 (AC5)
-  private val propagQueueL1 = Array.fill(CPStore.MaxPriorityL1 + 1)(new ArrayQueue[() => CPOutcome](1000))
-  private var highestPriorL1 = -1
+  private[this] val propagQueueL1 = Array.fill(CPStore.MaxPriorityL1 + 1)(new ArrayQueue[() => CPOutcome](1000))
+  private[this] var highestPriorL1 = -1
 
   // Propagation queue L2 (AC3)
-  private val propagQueueL2 = Array.fill(CPStore.MaxPriorityL2 + 1)(new ArrayQueue[Constraint](100))
-  private var highestPriorL2 = -1
+  private[this] val propagQueueL2 = Array.fill(CPStore.MaxPriorityL2 + 1)(new ArrayQueue[Constraint](100))
+  private[this] var highestPriorL2 = -1
 
-  private val cutConstraints = new ArrayQueue[Constraint](1) // usually empty
-
-  // Status of the store (should be replaced by the failed reversible boolean of SearchNode)
-  private val status: ReversiblePointer[CPOutcome] = new ReversiblePointer[CPOutcome](this, Suspend)
+  private[this] val cutConstraints = new ArrayQueue[Constraint](1) // usually empty
 
   // Total time spent in the fixed point algorithm
-  private var timeInFixedPoint: Long = 0
+  private[this] var timeInFixedPoint: Long = 0
 
   // True if the store is executing the fixed point algorithm
-  private var inFixedPoint = false
+  private[this] var inFixedPoint = false
+  
+  // Number of times an L1 filtering is called during the fix point
+  private[this] var nCallsL1 = 0L  
+  
+  // Number of times an L1 filtering is called during the fix point
+  private[this] var nCallsL2 = 0L   
+  
+  def resetStatistics() {
+    timeInFixedPoint = 0
+    nCallsL1 = 0
+    nCallsL2 = 0
+  }
+  
+  def statistics = new SolverStatistics(nCallsL1,nCallsL2,timeInFixedPoint)
+  
 
   // Reference to the last constraint called
-  private var lastConstraint: Constraint = null
+  private[this] var lastConstraint: Constraint = null
+  
+  final def getRandom(): Random = rand
 
   /**
    *  Returns the last constraint called in the propagate algorithm.
@@ -65,14 +92,8 @@ class CPStore( final val propagStrength: CPPropagStrength) extends SearchNode {
    */
   def lastConstraintCalled: Constraint = lastConstraint
 
-  /** Changes the status of the store to Failure */
-  override def fail(): Unit = status.setValue(Failure)
-
-  /** Returns true if the store is failed */
-  override def isFailed: Boolean = status.value == Failure
-
   // Cleans the propagation queues
-  @inline private def cleanQueues(): Unit = {
+  @inline protected def cleanQueues(): Unit = {
     // Clean queue L1
     highestPriorL1 = -1
     var i = 0
@@ -90,8 +111,8 @@ class CPStore( final val propagStrength: CPPropagStrength) extends SearchNode {
   }
 
   // Adds the constraint in the L2 queue
-  @inline protected def enqueueL2(c: Constraint): Unit = {
-    if (c.isActive && !c.isInQueue && (!c.inPropagate || !c.idempotent)) {
+  @inline final def enqueueL2(c: Constraint): Unit = {
+    if (c.isEnqueuable) {
       c.setInQueue()
       val priority = c.priorityL2
       propagQueueL2(priority).addLast(c)
@@ -102,7 +123,7 @@ class CPStore( final val propagStrength: CPPropagStrength) extends SearchNode {
   }
 
   // Adds the constraint in the L1 queue
-  @inline protected def enqueueL1(c: Constraint, priority: Int, evt: => CPOutcome): Unit = {
+  @inline final def enqueueL1(c: Constraint, priority: Int, evt: => CPOutcome): Unit = {
     propagQueueL1(priority).addLast(() => {
       if (c.isActive) {
         lastConstraint = c // last constraint called
@@ -113,95 +134,6 @@ class CPStore( final val propagStrength: CPPropagStrength) extends SearchNode {
     })
     if (priority > highestPriorL1) {
       highestPriorL1 = priority
-    }
-  }
-
-  /**
-   * Notify the constraints that is enqueue them in the L2 propagation queue such that their propagate method
-   * is called at some point in the current fix point
-   * @param constraints
-   */
-  def notifyL2(constraints: ConstraintQueue): Unit = {
-    var q = constraints;
-    while (q != null) {
-      val c = q.cons
-      enqueueL2(c)
-      q = q.next
-    }
-  }
-
-  def notifRemoveL1(constraints: PropagEventQueueVarInt[CPIntVar], x: CPIntVar, v: Int) {
-    var q = constraints;
-    while (q != null) {
-      val c = q.cons
-      val x = q.x
-      if (c.isActive) {
-        enqueueL1(c, c.priorityRemoveL1, c.valRemove(x, x.transform(v)));
-      }
-      q = q.next
-    }
-  }
-
-  def notifyRemoveIdxL1(constraints: PropagEventQueueVarInt[CPIntVar], x: CPIntVar, v: Int) {
-    var q = constraints;
-    while (q != null) {
-      val c = q.cons
-      val x = q.x
-      val idx = q.idx
-      if (c.isActive) {
-        enqueueL1(c, c.priorityRemoveL1, c.valRemoveIdx(x, idx, x.transform(v)))
-      }
-      q = q.next
-    }
-  }
-
-  def notifyUpdateBoundsL1(constraints: PropagEventQueueVarInt[CPIntervalVar], x: CPIntervalVar) {
-    var q = constraints;
-    while (q != null) {
-      val c = q.cons
-      val x = q.x
-      if (c.isActive) {
-        enqueueL1(c, c.priorityBoundsL1, c.updateBounds(x))
-      }
-      q = q.next;
-    }
-  }
-
-  def notifyUpdateBoundsIdxL1(constraints: PropagEventQueueVarInt[CPIntervalVar], x: CPIntervalVar) {
-    var q = constraints;
-    while (q != null) {
-      val c = q.cons
-      val x = q.x
-      val idx = q.idx
-      if (c.isActive) {
-        enqueueL1(c, c.priorityBoundsL1, c.updateBoundsIdx(x, idx))
-      }
-      q = q.next;
-    }
-  }
-
-  def notifyBindL1(constraints: PropagEventQueueVarInt[CPIntervalVar], x: CPIntervalVar) {
-    var q = constraints;
-    while (q != null) {
-      val c = q.cons
-      val x = q.x
-      if (c.isActive) {
-        enqueueL1(c, c.priorityBindL1, c.valBind(x))
-      }
-      q = q.next
-    }
-  }
-
-  def notifyBindIdxL1(constraints: PropagEventQueueVarInt[CPIntervalVar], x: CPIntervalVar) {
-    var q = constraints;
-    while (q != null) {
-      val c = q.cons
-      val x = q.x
-      val idx = q.idx
-      if (c.isActive) {
-        enqueueL1(c, c.priorityBindL1, c.valBindIdx(x, idx))
-      }
-      q = q.next
     }
   }
 
@@ -259,6 +191,13 @@ class CPStore( final val propagStrength: CPPropagStrength) extends SearchNode {
     }
   }
 
+  final def doAndPropagate(action: => CPOutcome): CPOutcome = {
+    val out = action // apply action
+    if (out == Failure) Failure
+    else if (isFailed()) Failure
+    else propagate()
+  }
+  
   /**
    *  Call the propagate function of the constraints and trigger the fix point algorithm
    *
@@ -267,16 +206,17 @@ class CPStore( final val propagStrength: CPPropagStrength) extends SearchNode {
    *  @param constraints a sequence of constraints
    */
   def propagate(constraints: Constraint*): CPOutcome = {
-    if (status.value == Failure) Failure
+    if (isFailed()) Failure
     else {
       constraints.foreach(c => enqueueL2(c))
       propagate()
-      status.value // may be changed by propagate()
+      if (isFailed()) Failure
+      else Suspend
     }
   }
 
   protected def propagate(): CPOutcome = {
-    if (status.value == Failure) throw Inconsistency("the store is already inconsistent")
+    if (isFailed()) throw Inconsistency
     else {
       val t = System.currentTimeMillis()
       inFixedPoint = true
@@ -284,13 +224,13 @@ class CPStore( final val propagStrength: CPPropagStrength) extends SearchNode {
         val outcome = fixedPoint()
         if (outcome == Failure) {
           cleanQueues() // may be not empty
-          status.value = Failure
+          fail()
         }
         outcome
       } catch {
         case i: Inconsistency => {
           cleanQueues() // may be not empty
-          status.value = Failure
+          fail()
           Failure
         }
       } finally {
@@ -313,6 +253,7 @@ class CPStore( final val propagStrength: CPPropagStrength) extends SearchNode {
         val queue = propagQueueL1(highestPriorL1)
         if (queue.isEmpty) highestPriorL1 -= 1
         else {
+          nCallsL1 += 1
           val event = queue.removeFirst()
           isFailed = event() == Failure
         }
@@ -323,6 +264,7 @@ class CPStore( final val propagStrength: CPPropagStrength) extends SearchNode {
         val queue = propagQueueL2(highestPriorL2)
         if (queue.isEmpty) highestPriorL2 -= 1
         else {
+          nCallsL2 += 1
           val constraint = queue.removeFirst()
           lastConstraint = constraint
           isFailed = constraint.execute() == Failure
@@ -348,16 +290,22 @@ class CPStore( final val propagStrength: CPPropagStrength) extends SearchNode {
    * @return Failure if the fix point detects a failure that is one of the domain became empty, Suspend otherwise.
    */
   def post(constraint: Constraint, st: CPPropagStrength): CPOutcome = {
-    if (status.value == Failure) Failure
+    if (isFailed()) Failure
     else if (inFixedPoint) { // already in a try block
       val outcome = constraint.setup(st)
-      if (outcome == Success) constraint.deactivate()
-      status.value = outcome
-      outcome
+      if (outcome == Success) {
+         constraint.deactivate()
+         Success
+      }
+      else if (outcome == Failure) {
+        fail()
+        Failure
+      }
+      else Suspend
     } else try {
       val outcome = constraint.setup(st)
       if (outcome == Failure) {
-        status.value = Failure
+        fail()
         Failure
       } else {
         if (outcome == Success) constraint.deactivate()
@@ -365,7 +313,7 @@ class CPStore( final val propagStrength: CPPropagStrength) extends SearchNode {
       }
     } catch {
       case i: Inconsistency => {
-        status.value = Failure
+        fail()
         Failure
       }
     }
@@ -404,7 +352,7 @@ class CPStore( final val propagStrength: CPPropagStrength) extends SearchNode {
    * @return Failure if the fix point detects a failure that is one of the domain became empty, Suspend otherwise.
    */
   def post(constraints: Array[Constraint], st: CPPropagStrength): CPOutcome = {
-    if (status.value == Failure) Failure
+    if (isFailed()) Failure
     else if (inFixedPoint) { // already in a try block
       var outcome: CPOutcome = Suspend
       var i = 0
@@ -414,7 +362,7 @@ class CPStore( final val propagStrength: CPPropagStrength) extends SearchNode {
         if (outcome == Success) constraint.deactivate()
         i += 1
       }
-      status.value = outcome
+      if (outcome == Failure) fail()
       outcome
     } else try {
       var outcome: CPOutcome = Suspend
@@ -427,12 +375,12 @@ class CPStore( final val propagStrength: CPPropagStrength) extends SearchNode {
       }
       if (outcome != Failure) propagate()
       else {
-        status.value = Failure
+        fail()
         Failure
       }
     } catch {
       case i: Inconsistency => {
-        status.value = Failure
+        fail()
         Failure
       }
     }
@@ -451,38 +399,73 @@ class CPStore( final val propagStrength: CPPropagStrength) extends SearchNode {
   def post(constraints: Collection[Constraint]): CPOutcome = post(constraints.map(x => x.asInstanceOf[Constraint]), propagStrength)
 
   def assign(x: CPIntVar, v: Int): CPOutcome = {
-    if (status.value == Failure) Failure
+    if (isFailed()) Failure
     else try {
       val outcome = x.assign(v)
       if (outcome != Failure) propagate()
       else {
-        status.value = Failure
+        fail()
         Failure
       }
     } catch {
       case i: Inconsistency => {
-        status.value = Failure
+        fail()
         Failure
       }
     }
   }
 
   def remove(x: CPIntVar, v: Int): CPOutcome = {
-    if (status.value == Failure) Failure
+    if (isFailed()) Failure
     else try {
       val outcome = x.removeValue(v)
       if (outcome != Failure) propagate()
       else {
-        status.value = Failure
+        fail()
         Failure
       }
     } catch {
       case i: Inconsistency => {
-        status.value = Failure
+        fail()
         Failure
       }
     }
   }
+  
+  def smallerEq(x: CPIntVar, v: Int): CPOutcome = {
+    if (isFailed()) Failure
+    else try {
+      val outcome = x.updateMax(v)
+      if (outcome != Failure) propagate()
+      else {
+        fail()
+        Failure
+      }
+    } catch {
+      case i: Inconsistency => {
+        fail()
+        Failure
+      }
+    }
+  }
+  
+  def largerEq(x: CPIntVar, v: Int): CPOutcome = {
+    if (isFailed()) Failure
+    else try {
+      val outcome = x.updateMin(v)
+      if (outcome != Failure) propagate()
+      else {
+        fail()
+        Failure
+      }
+    } catch {
+      case i: Inconsistency => {
+        fail()
+        Failure
+      }
+    }
+  }  
+  
 
   def add(c: Constraint, st: CPPropagStrength): CPOutcome = post(c, st)
 
@@ -534,4 +517,11 @@ object CPStore {
 
   /** The lowest priority for an Level 2 filtering method */
   val MinPriorityL2 = 0
+}
+
+class SolverStatistics(
+  val nCallsL1: Long,
+  val nCallsL2: Long,
+  val timeInFixPoint: Long) {
+  override val toString: String = s"nCallsL1: $nCallsL1\nnCallsL2: $nCallsL2\ntimeInFixedPoint(ms): $timeInFixPoint"
 }

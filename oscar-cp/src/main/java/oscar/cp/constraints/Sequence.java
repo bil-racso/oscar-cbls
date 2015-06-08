@@ -15,8 +15,12 @@
 package oscar.cp.constraints;
 
 
-import oscar.algo.reversible.SetIndexedArray;
-import oscar.cp.core.*;
+import oscar.algo.reversible.SparseSet;
+import oscar.cp.core.CPOutcome;
+import oscar.cp.core.CPPropagStrength;
+import oscar.cp.core.Constraint;
+import oscar.cp.core.variables.CPBoolVar;
+import oscar.cp.core.variables.CPIntVar;
 
 
 /**
@@ -30,7 +34,7 @@ public class Sequence extends Constraint {
 	private CPIntVar[] xinit;
     private CPBoolVar[] x; // x[i] <-> (xinit[i] memberOf values)
 	private int min, max, len;
-    private SetIndexedArray values;
+    private SparseSet values;
     private CPIntVar[] cumulatedCounters; // cumulatedCounters[i] = x[0]+x[1]+...+x[i]
 	private CPIntVar[][] P; // partial sums Pij = x[i]+...+x[j]
 	
@@ -43,7 +47,7 @@ public class Sequence extends Constraint {
 	 * @param min the minimal occurrences of values from set within a sequence.
 	 * @param max the maximal occurrences of values from set within a sequence.
 	 */
-	public Sequence(CPIntVar [] x, SetIndexedArray values, int l, int min, int max) {
+	public Sequence(CPIntVar [] x, SparseSet values, int l, int min, int max) {
 		super(x[0].store(),"Sequence");
 		assert (!(values.getSize() == 0));
 		assert(l < x.length);

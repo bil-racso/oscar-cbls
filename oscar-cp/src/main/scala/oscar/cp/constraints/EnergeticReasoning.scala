@@ -8,10 +8,11 @@ import scala.math.ceil
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.CPOutcome._
 import oscar.cp.core.CPPropagStrength
-import oscar.cp.core.CPIntVar
+import oscar.cp.core.variables.CPIntVar
+import oscar.cp.core.variables.CPIntVar
 import oscar.cp.core.Constraint
 
-class EnergeticReasoning(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], demands: Array[CPIntVar], resources: Array[CPIntVar], capacity: CPIntVar, id: Int = 1) extends Constraint(starts.head.store, "Energetic Reasoning") {
+class EnergeticReasoning(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], demands: Array[CPIntVar], resources: Array[CPIntVar], capacity: CPIntVar, id: Int = 1) extends Constraint(capacity.store, "Energetic Reasoning") {
 
   assert(starts.length == durations.length && starts.length == ends.length && starts.length == demands.length && starts.length == resources.length, "starts, durations, ends, demands and resources must be of same length")
 
@@ -49,6 +50,9 @@ class EnergeticReasoning(starts: Array[CPIntVar], durations: Array[CPIntVar], en
   }
 
   override def propagate: CPOutcome = {
+
+    if(s.isFailed)
+      return Failure
     
     //cache
     var i = 0
@@ -66,7 +70,7 @@ class EnergeticReasoning(starts: Array[CPIntVar], durations: Array[CPIntVar], en
     cmax = capacity.max
 
     //keep only the tasks that we know are assigned to the resource id considered by this constraint 
-    val tasks = tasksId filter (task => resources(task).isBound && resources(task).value == id && durmin(task) > 0 && demmin(task) > 0)
+    val tasks = tasksId filter (task => resources(task).isBound && resources(task).min == id && durmin(task) > 0 && demmin(task) > 0)
 
     val newEets = emin map ( v => v)
     val newLsts = smax map (v => v)

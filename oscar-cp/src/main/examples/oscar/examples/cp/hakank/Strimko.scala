@@ -13,17 +13,11 @@
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
 package oscar.examples.cp.hakank
-
-import oscar.cp.modeling._
-
-import oscar.cp.core._
+import oscar.cp._
 import scala.io.Source._
 import scala.math._
-
 /*
-
   Strimko problem in Oscar.
-
   From
   360: A New Twist on Latin Squares
   http://threesixty360.wordpress.com/2009/08/04/a-new-twist-on-latin-squares/
@@ -33,29 +27,18 @@ import scala.math._
   Latin square), and each "stream" (connected path in the grid) must
   also contain the numbers 1, 2, ..., n exactly once.
   """
-
   For more information, see:
   * http://www.strimko.com/
   * http://www.strimko.com/rules.htm
   * http://www.strimko.com/about.htm
   * http://www.puzzlersparadise.com/Strimko.htm
-
   I blogged about this problem (using MiniZinc model) in
   'Strimko - Latin squares puzzle with "streams"'
   http://www.hakank.org/constraint_programming_blog/2009/08/strimko_latin_squares_puzzle_w_1.html
-
-
   @author Hakan Kjellerstrand hakank@gmail.com
   http://www.hakank.org/oscar/
- 
 */
-
-object Strimko {
-
-  def main(args: Array[String]) {
-
-    val cp = CPSolver()
-
+object Strimko extends CPModel with App  {
     //
     // data
     //
@@ -66,7 +49,6 @@ object Strimko {
                         Array(4,6,6,6,7,7,5),
                         Array(6,4,6,4,5,5,7),
                         Array(6,6,4,7,7,7,7))
-
     // Note: This is 1-based (fixed below)
     val placed = Array(Array(2,1,1),
                        Array(2,3,7),
@@ -78,62 +60,43 @@ object Strimko {
                        Array(4,7,5),
                        Array(5,2,2),
                        Array(5,6,6))
-
     val n = streams.length
     val num_placed = placed.length
-
-
     //
     // variables
     //
-    val x = Array.fill(n)(Array.fill(n)(CPIntVar(1 to n)(cp)))
-
+    val x = Array.fill(n)(Array.fill(n)(CPIntVar(1 to n)))
     //
     // constraints
     //
     var numSols = 0
-
-    cp.solve subjectTo {
-
+  
       // all rows and columns must be unique, i.e. a Latin Square
       for(i <- 0 until n) {
         // rows
-        cp.add(allDifferent(for(j <- 0 until n) yield x(i)(j)), Strong)
+       add(allDifferent(for(j <- 0 until n) yield x(i)(j)), Strong)
         // cols
-        cp.add(allDifferent(for(j <- 0 until n) yield x(j)(i)), Strong)
+       add(allDifferent(for(j <- 0 until n) yield x(j)(i)), Strong)
       }
-      
       // Handle the streams
       for(s <- 1 to n) {
-        cp.add(allDifferent(for{i <- 0 until n
+       add(allDifferent(for{i <- 0 until n
                                 j <- 0 until n if streams(i)(j) == s} yield x(i)(j)), Strong)
-
-        
       }
-      
       // Handle the placed
       for(i <- 0 until num_placed) {
         // note: also adjust to 0-based
-        cp.add(x(placed(i)(0) - 1)(placed(i)(1)- 1) ==  placed(i)(2))
+       add(x(placed(i)(0) - 1)(placed(i)(1)- 1) ==  placed(i)(2))
       }
-
-
-    } search {
-       
+    search{
       binaryFirstFail(x.flatten.toSeq)
-      
-    } onSolution {
-      
+    }
+onSolution {
       for(i <- 0 until n) {
         println(x(i).mkString(""))
       }
       println()
-
       numSols += 1
-
     }
-
-    println(cp.start())
+    println(start())
   }
-
-}

@@ -16,8 +16,9 @@ package oscar.cp.test;
 
 
 import junit.framework.TestCase;
-import oscar.cp.core.*;
-import oscar.cp.modeling.package$.*;
+import oscar.cp.core.CPStore;
+import oscar.cp.core.variables.CPBoolVar;
+import oscar.cp.core.variables.CPIntVar;
 
 
 /**
@@ -53,7 +54,7 @@ public class TestView extends TestCase {
     	CPIntVar y = CPIntVar.apply(s,1,5);
         System.out.println(x);
 
-        CPBoolVar b = new CPBoolVar(s);
+        CPBoolVar b = CPBoolVar.apply(s);
 
 
     	CPIntVar x1 = oscar.cp.modeling.constraint.plus(x,0);

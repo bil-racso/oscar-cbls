@@ -17,19 +17,20 @@ package oscar.cp.constraints
 import scala.math.max
 import scala.math.min
 import oscar.cp.core.CPStore
-import oscar.cp.core.CPIntVar
+import oscar.cp.core.variables.CPIntVar
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.CPOutcome._
 import oscar.cp.core.Constraint
 import oscar.cp.core.CPPropagStrength
 import oscar.cp.modeling._
-import oscar.cp.modeling.CPSolver
 import oscar.algo.SortUtils._
 
 /**
  * @author Renaud Hartert ren.hartert@gmail.com
  */
-class SweepMaxCumulative(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], demands: Array[CPIntVar], resources: Array[CPIntVar], capacity: CPIntVar, id: Int) extends Constraint(starts.head.store, "SweepMaxCumulative") {
+/* // left-right sweeping is sufficient, but left-right and right-left might be more efficient
+ * 
+class SweepMaxCumulative(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], demands: Array[CPIntVar], resources: Array[CPIntVar], capacity: CPIntervalVar, id: Int) extends Constraint(starts.head.store, "SweepMaxCumulative") {
   val sweepLR = new SweepMaxCumulativeLR(starts,        durations,            ends, demands, resources, capacity, id) 
   val sweepRL = new SweepMaxCumulativeLR(ends map {-_}, durations, starts map {-_}, demands, resources, capacity, id)
     
@@ -46,8 +47,9 @@ class SweepMaxCumulative(starts: Array[CPIntVar], durations: Array[CPIntVar], en
   }
   
 }
+*/
 
-class SweepMaxCumulativeLR(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], demands: Array[CPIntVar], resources: Array[CPIntVar], capacity: CPIntVar, id: Int) extends Constraint(starts.head.store, "SweepMaxCumulative") {
+class SweepMaxCumulative(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], demands: Array[CPIntVar], resources: Array[CPIntVar], capacity: CPIntVar, id: Int) extends Constraint(starts.head.store, "SweepMaxCumulative") {
   private val nTasks = starts.size
   private val Tasks = 0 until nTasks
 

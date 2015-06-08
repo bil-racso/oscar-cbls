@@ -14,8 +14,7 @@
  ******************************************************************************/
 package oscar.examples.cp.multiobjective
 
-import oscar.cp.modeling._
-import oscar.cp.core._
+import oscar.cp._
 import oscar.cp.constraints.Inverse
 import oscar.cp.multiobjective.Pareto
 import scala.collection.mutable.Queue
@@ -41,7 +40,7 @@ object BiTSP extends App {
   
   // Model
   // -----
-  val cp = new CPSolver()
+  implicit val cp = new CPSolver()
   cp.silent = true
   
   // Successors & Predecessors
@@ -53,11 +52,11 @@ object BiTSP extends App {
 
   // Constraints
   // -----------
-  cp.paretoMinimize(totDists: _*) subjectTo {
-    for (o <- Objs) {
-      cp.add(minCircuit(succ, distMatrices(o), totDists(o)), Strong)
-    }
-  } search {
+  cp.paretoMinimize(totDists: _*) 
+  for (o <- Objs) {
+    cp.add(minCircuit(succ, distMatrices(o), totDists(o)), Strong)
+  }
+  search {
     binaryFirstFail(succ)
   }  
   

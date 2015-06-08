@@ -19,10 +19,9 @@ import java.util.Comparator;
 import java.util.Hashtable;
 
 import oscar.algo.reversible.ReversibleInt;
-import oscar.cp.core.CPIntervalVar;
 import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
-import oscar.cp.core.CPIntVar;
+import oscar.cp.core.variables.CPIntVar;
 import oscar.cp.core.Constraint;
 
 
@@ -165,9 +164,9 @@ public class ElementCst extends Constraint {
 		return CPOutcome.Suspend;
 	}
 	@Override
-	public CPOutcome valBind(CPIntervalVar x) {
+	public CPOutcome valBind(CPIntVar x) {
 		// x is bound
-		if (z.assign(y[x.getValue()]) == CPOutcome.Failure)
+		if (z.assign(y[x.min()]) == CPOutcome.Failure)
 			return CPOutcome.Failure;
 		return CPOutcome.Success;
 	}

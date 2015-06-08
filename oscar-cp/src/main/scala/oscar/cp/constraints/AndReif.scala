@@ -18,6 +18,8 @@ import oscar.cp.core._
 import oscar.algo.reversible._
 import oscar.cp.core.CPOutcome._
 import oscar.algo.reversible.ReversibleSparseSet
+import oscar.cp.core.variables.CPBoolVar
+import oscar.cp.core.variables.CPIntVar
 
 /**
  * and_i x_i <--> bi 
@@ -47,7 +49,7 @@ class And(val X: Array[CPBoolVar], val b: CPBoolVar) extends Constraint(b.store,
     propagate()
   }
   
-  override def valBindIdx(x: CPIntervalVar, idx: Int): CPOutcome = {
+  override def valBindIdx(x: CPIntVar, idx: Int): CPOutcome = {
     if (x.isBoundTo(0)) {
       if (b.assign(0) == Failure) Failure
       else Success

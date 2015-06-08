@@ -1,25 +1,42 @@
+/*******************************************************************************
+ * OscaR is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 2.1 of the License, or
+ * (at your option) any later version.
+ *   
+ * OscaR is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License  for more details.
+ *   
+ * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
+ ******************************************************************************/
+
 package oscar.algo.reversible
 
 /**
- * Generic Reversible inside a reversible node
+ * Abstract class for reversible data structure
  * @author Pierre Schaus  pschaus@gmail.com
  * @author Renaud Hartert ren.hartert@gmail.com
  */
-abstract class Reversible[T](val context: ReversibleContext) {
+abstract class Reversible {
   
-  private var lastMagic: Long = -1L
-
-  @inline protected final def trail(): Unit = {
+  private[this] var lastMagic: Long = -1L
+  
+  @inline final protected def trail(): Unit = {
     val contextMagic = context.magic
-    if (lastMagic != contextMagic) {   
+    if (lastMagic != contextMagic) {
       lastMagic = contextMagic
-      context.pushOnTrail(this, value)
+      context.trail(trailEntry)
     }
   }
   
-  /** Return the current value of the reversible */
-  def value: T
+  def context: ReversibleContext
   
-  /** Restores the state of the object */
-  def restore(value: T): Unit  
+  def trailEntry: TrailEntry
+}
+
+abstract class TrailEntry { 
+  def restore(): Unit
 }

@@ -1,16 +1,15 @@
 package oscar.cp.xcsp.examples
-/*
-import oscar.cp.modeling._
-import oscar.cp.core.CPIntVar
+
+import oscar.cp.core.variables.CPIntVar
 import oscar.cp.core.Constraint
-import java.io.File
 import oscar.cp.xcsp.modeling.DefaultConstraints
 import oscar.cp.xcsp.XCSPSolver
+import oscar.cp._
 
 object Example2 extends App {
  
   val xcspSolver = new XCSPSolver with DefaultConstraints {
-    override def allDifferent(vars: Iterable[CPIntVar]) : Constraint = oscar.cp.modeling.allDifferent(vars)
+    override def allDifferent(vars: Iterable[CPIntVar]) : Constraint = oscar.cp.modeling.constraint.allDifferent(vars)
   }
   
   val instance = """<?xml version="1.0" encoding="UTF-8"?>
@@ -43,11 +42,10 @@ object Example2 extends App {
   val (cp, vars) = xcspSolver.model(instance)
  
   cp.onSolution{
-    vars.toSeq.sortBy(v=>v.name)foreach{v=>print(v.name + "=" + v.value+ " ")}
+    vars.toSeq.sortBy(v=>v.name)foreach{v=>print(v.name + "=" + v.min+ " ")}
     println
   }
   cp.search(binaryFirstFail(vars.toSeq))
   println(cp.start())
  
 }
-*/

@@ -17,6 +17,7 @@ package oscar.cp.constraints
 import oscar.cp.core._
 import oscar.algo.reversible._
 import oscar.cp.core.CPOutcome._
+import oscar.cp.core.variables.CPIntVar
 
 
 /**
@@ -98,7 +99,7 @@ class Count(val N: CPIntVar, val X: Array[CPIntVar], val Y: CPIntVar) extends Co
     
     def filterYBound(): CPOutcome = {
       assert(Y.isBound)
-      val v = Y.value
+      val v = Y.min
       val mincount = X.count(_.isBoundTo(v))
       val maxcount = X.count(_.hasValue(v))
       if (N.updateMin(mincount) == Failure) {
@@ -160,7 +161,7 @@ class Count(val N: CPIntVar, val X: Array[CPIntVar], val Y: CPIntVar) extends Co
       Suspend
     }
     
-    Y.filterWhenDomainChanges { d: DeltaVarInt =>
+    Y.filterWhenDomainChangesWithDelta() { d: DeltaVarInt =>
       // should test in constant time
       if (!Y.hasValue(supportmax.value)) {
         updateSupportMaxRequired = true
@@ -173,7 +174,7 @@ class Count(val N: CPIntVar, val X: Array[CPIntVar], val Y: CPIntVar) extends Co
       else Suspend
     }
     
-    Y.filterWhenBind {
+    Y.filterWhenBind() {
     	filterYBound()
     }
     
@@ -185,7 +186,7 @@ class Count(val N: CPIntVar, val X: Array[CPIntVar], val Y: CPIntVar) extends Co
         }
         if (x.isBound) {
           //println("is now bound")
-          updateBindValue(x.value)
+          updateBindValue(x.min)
         }
         if (updateN() == Failure) Failure
         else if (Y.isBound) filterYBound()
@@ -195,7 +196,7 @@ class Count(val N: CPIntVar, val X: Array[CPIntVar], val Y: CPIntVar) extends Co
     }
     
     for (x <- X; if !x.isBound) {
-      x.filterWhenDomainChanges {d: DeltaVarInt =>
+      x.filterWhenDomainChangesWithDelta() {d: DeltaVarInt =>
         filterX(x,d)
       }
 

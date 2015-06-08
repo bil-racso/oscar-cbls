@@ -1,10 +1,10 @@
 package oscar.cp.scheduling.constraints
 
 import oscar.cp.core._
+import oscar.cp._
 import oscar.cp.core.CPOutcome._
 import oscar.algo.SortUtils._
 import oscar.algo.reversible.ReversibleInt
-import oscar.cp.modeling._
 
 // @author Steven Gay steven.gay@uclouvain.be
 
@@ -184,7 +184,7 @@ extends Constraint(capacity.store, "IQuadL2R") {
     
     var k = 0
     while(k < n) {
-    if (resources(byEndMax(k)).hasValue(id)) {
+    if (resources(byEndMax(k)).hasValue(id) && cmin(byEndMax(k)) > 0) {
       val du = endsmax(byEndMax(k))               // du is the upper bound of \Omega
       while (iUpdatableMax < n && rmin(iUpdatableMax) < du) iUpdatableMax += 1
       

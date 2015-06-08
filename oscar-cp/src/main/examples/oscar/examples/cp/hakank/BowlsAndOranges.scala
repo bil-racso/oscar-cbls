@@ -1,29 +1,23 @@
-/*******************************************************************************
+/**
+ * *****************************************************************************
  * OscaR is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- *   
+ *
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License  for more details.
- *   
+ *
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
- ******************************************************************************/
+ * ****************************************************************************
+ */
 package oscar.examples.cp.hakank
-
-import oscar.cp.modeling._
-
-import oscar.cp.core._
-import scala.io.Source._
-import scala.math._
-
+import oscar.cp._
 /*
-
   Bowls and Oranges problem in Oscar.
-
   From BitTorrent Developer Challenge
   http://www.bittorrent.com/company/about/developer_challenge
   """
@@ -34,66 +28,30 @@ import scala.math._
   equal to the distance between B and C. How many ways can you arrange 
   the oranges in the bowls?.
   """
-  
   Via http://surana.wordpress.com/2011/06/01/constraint-programming-example/
-
-
   @author Hakan Kjellerstrand hakank@gmail.com
   http://www.hakank.org/oscar/
- 
 */
-object BowlsAndOranges {
-
-  def main(args: Array[String]) {
-
-    val cp = CPSolver()
-
-    //
-    // data
-    //
-    val n = 40
-    val m = 9
-
-
-    //
-    // variables
-    //
-    val x = Array.fill(m)(CPIntVar(1 to n)(cp))
-
-    //
-    // constraints
-    //
-    var numSols = 0
-    cp.solve subjectTo {
-
-      // constraints
-      cp.add(allDifferent(x), Strong)
-
-      // increasing(x)
-      for(i <- 1 until m) {
-        cp.add(x(i-1) < x(i))
-      }
-
-      for(i <- 0 until m) {
-        for(j <- 0 until i) {
-          for(k <- 0 until j) {
-            cp.add(x(j)-x(i) != x(k)-x(j))
-          }
-        }
-      }
- 
-    } search {
-       
-      binaryMaxDegree(x)
-
-   } onSolution {
-     
-      println(x.mkString(""))
-      numSols += 1     
-   }
-   
-   println(cp.start())
-  
+object BowlsAndOranges extends CPModel with App {
+  // Data
+  val n = 40
+  val m = 9
+  // Variables
+  val x = Array.fill(m)(CPIntVar(1 to n))
+  // Constraints
+  add(allDifferent(x), Strong)
+  // increasing x
+  for (i <- 1 until m) {
+    add(x(i - 1) < x(i))
   }
-
+  for (i <- 0 until m) {
+    for (j <- 0 until i) {
+      for (k <- 0 until j) {
+        add(x(j) - x(i) != x(k) - x(j))
+      }
+    }
+  }
+  search { binaryMaxDegree(x) }
+  onSolution { println(x.mkString("")) }
+  println(start())
 }

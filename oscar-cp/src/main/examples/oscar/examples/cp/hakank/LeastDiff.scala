@@ -13,11 +13,7 @@
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
 package oscar.examples.cp.hakank
-
-import oscar.cp.modeling._
-
-import oscar.cp.core._
-
+import oscar.cp._
 /**
  *
  * Least diff problem in Oscar.
@@ -29,51 +25,35 @@ import oscar.cp.core._
  * http://www.hakank.org/oscar/
  *
  */
-object LeastDiff {
-
-  def main(args: Array[String]) {
-
-    val cp = CPSolver()
-
+object LeastDiff extends CPModel with App  {
     // variables
-    val A = CPIntVar(0 to 9)(cp)
-    val B = CPIntVar(0 to 9)(cp)
-    val C = CPIntVar(0 to 9)(cp)
-    val D = CPIntVar(0 to 9)(cp)
-    val E = CPIntVar(0 to 9)(cp)
-    val F = CPIntVar(0 to 9)(cp)
-    val G = CPIntVar(0 to 9)(cp)
-    val H = CPIntVar(0 to 9)(cp)
-    val I = CPIntVar(0 to 9)(cp)
-    val J = CPIntVar(0 to 9)(cp)
-
+    val A = CPIntVar(0 to 9)
+    val B = CPIntVar(0 to 9)
+    val C = CPIntVar(0 to 9)
+    val D = CPIntVar(0 to 9)
+    val E = CPIntVar(0 to 9)
+    val F = CPIntVar(0 to 9)
+    val G = CPIntVar(0 to 9)
+    val H = CPIntVar(0 to 9)
+    val I = CPIntVar(0 to 9)
+    val J = CPIntVar(0 to 9)
     val all = Array(A, B, C, D, E, F, G, H, I, J)
     val X = A * 10000 + B * 1000 + C * 100 + D * 10 + E
     val Y = F * 10000 + G * 1000 + H * 100 + I * 10 + J
     val Diff = X - Y
-
     // constraints
-    cp.minimize(Diff) subjectTo {
-
-      cp.add(allDifferent(all), Strong)
-      cp.add(A > 0)
-      cp.add(F > 0)
-      cp.add(Diff > 0)
-
-    } search {
-
+   minimize(Diff) 
+     add(allDifferent(all), Strong)
+     add(A > 0)
+     add(F > 0)
+     add(Diff > 0)
+    search{
       binary(all ++ Array(X, Y, Diff), -_.constraintDegree, _.min)
-      
-    } onSolution {
-      
+    }
+onSolution {
       println(Array(A, B, C, D, E).mkString("") + " -" +
               Array(F, G, H, I, J).mkString("") + " =" +
               Diff)
-
     }
-
-    println(cp.start())
-
+    println(start())
   }
-
-}

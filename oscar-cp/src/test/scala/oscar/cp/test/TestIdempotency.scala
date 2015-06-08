@@ -18,12 +18,11 @@ package oscar.cp.test
 
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
-
 import oscar.cp.core.Constraint
-import oscar.cp.core._
 import oscar.algo.reversible._
 import oscar.cp.core.CPOutcome
-import oscar.cp.modeling._
+import oscar.cp._
+import oscar.cp.core.CPPropagStrength
 
 /**
  * @author Pierre Schaus pschaus@gmail.com

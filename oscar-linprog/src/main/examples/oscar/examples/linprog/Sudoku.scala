@@ -21,7 +21,7 @@ import oscar.algebra._
 /**
  * Model for Sudoku
  */
-object Sudoku extends MIPModel(LPSolverLib.glpk) with App {
+object Sudoku extends MIPModelGLPK with App {
 
   val n = 9
 

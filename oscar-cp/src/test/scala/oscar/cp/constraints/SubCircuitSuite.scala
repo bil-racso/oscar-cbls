@@ -1,8 +1,7 @@
 package oscar.cp.constraints
 
 import oscar.cp.testUtils.TestSuite
-import oscar.cp.core.CPIntVar
-import oscar.cp.modeling._
+import oscar.cp._
 
 class SubCircuitSuite extends TestSuite {
   

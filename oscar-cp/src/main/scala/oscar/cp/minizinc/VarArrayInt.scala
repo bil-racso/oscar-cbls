@@ -1,6 +1,6 @@
 package oscar.cp.minizinc
 
-import oscar.cp.core.CPIntVar
+import oscar.cp.core.variables.CPIntVar
 
 class VarArrayInt (
     override val value: Set[Int],

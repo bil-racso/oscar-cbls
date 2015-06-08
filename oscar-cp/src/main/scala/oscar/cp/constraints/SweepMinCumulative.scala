@@ -19,11 +19,12 @@ package oscar.cp.constraints
 import scala.math.max
 import scala.math.min
 import oscar.cp.core.CPStore
-import oscar.cp.core.CPIntVar
+import oscar.cp.core.variables.CPIntVar
+import oscar.cp.core.variables.CPIntVar
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.Constraint
 import oscar.cp.core.CPPropagStrength
-import oscar.cp.modeling.CPSolver
+import oscar.cp.core.CPSolver
 import oscar.algo.SortUtils.stableSort
 
 /**

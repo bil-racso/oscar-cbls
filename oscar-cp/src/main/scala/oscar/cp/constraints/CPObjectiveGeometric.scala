@@ -1,10 +1,9 @@
 package oscar.cp.constraints
 
-import oscar.cp.core.CPIntVar
+import oscar.cp.core.variables.CPIntVar
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.CPOutcome._
-import oscar.cp.modeling.TightenType
-import oscar.cp.modeling.TightenType._
+import oscar.cp._
 
 abstract class CPObjectiveGeometric(objVar: CPIntVar, name: String, ratio: Double)
 extends CPObjectiveUnit(objVar, name) {

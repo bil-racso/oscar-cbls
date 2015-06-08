@@ -17,8 +17,7 @@ package oscar.cp.test
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
 import oscar.cp.constraints._
-import oscar.cp.core._
-import oscar.cp.modeling._
+import oscar.cp._
 import org.junit.runner.RunWith
 import org.scalatest.junit.JUnitRunner
 
@@ -75,9 +74,9 @@ class TestTableSTR2 extends FunSuite with ShouldMatchers  {
     
     var nbSol = 0
     	
-    cp.solve subjectTo {
+
       cp.add(new TableSTR2(x,tuples))
-    } search {
+    cp.search {
       binaryStatic(x)
     } onSolution {
       nbSol += 1

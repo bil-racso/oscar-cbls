@@ -14,11 +14,11 @@
  ******************************************************************************/
 package oscar.cp.constraints
 
-import oscar.cp.core._
-import oscar.algo.reversible._
-import oscar.cp.core.CPOutcome._
-import oscar.cp.modeling._
 import oscar.algo.reversible.ReversibleSparseSet
+import oscar.cp.core.CPPropagStrength
+import oscar.cp.core.CPOutcome
+import oscar.cp.core.CPOutcome._
+import oscar.cp._
 
 /**
  * Ensures that succ represents a valid circuit. <br>
@@ -34,22 +34,18 @@ import oscar.algo.reversible.ReversibleSparseSet
  */
 class MinCircuit(val succ: Array[CPIntVar], val distMatrix: Array[Array[Int]], obj: CPIntVar, addPredModel: Boolean = true) extends Constraint(obj.store, "MinCircuit") {
 
-  
-  
   override def setup(l: CPPropagStrength): CPOutcome = {
     val n = succ.size
-    val distMatrixSucc = Array.tabulate(n,n)((i,j) => distMatrix(i)(j))
-    
-    
-    
+    val distMatrixSucc = Array.tabulate(n, n)((i, j) => distMatrix(i)(j))
+
     val pred = Array.fill(n)(CPIntVar(0 until n)(s))
 
-    if (s.post(new Circuit(succ,false), Strong) == Failure) return Failure
+    if (s.post(new Circuit(succ, false), Strong) == Failure) return Failure
 
     if (s.post(new Sum((0 until n).map(i => distMatrixSucc(i)(succ(i))), obj)) == Failure) return Failure
 
     if (l == CPPropagStrength.Medium || l == CPPropagStrength.Strong) {
-      if (s.post(minAssignment(succ, distMatrixSucc, obj)) == Failure) {
+      if (s.post(new MinAssignment(succ, distMatrixSucc, obj)) == Failure) {
         return Failure
       }
     }
@@ -64,7 +60,7 @@ class MinCircuit(val succ: Array[CPIntVar], val distMatrix: Array[Array[Int]], o
       val distMatrixPred = Array.tabulate(n, n)((i, j) => distMatrixSucc(j)(i))
       val pred = Array.fill(n)(CPIntVar(0 until n)(s))
       if (s.post(new Inverse(pred, succ), l) == Failure) return Failure
-      if (s.post(new MinCircuit(pred, distMatrixPred, obj, false),l) == Failure) return Failure
+      if (s.post(new MinCircuit(pred, distMatrixPred, obj, false), l) == Failure) return Failure
     }
 
     return CPOutcome.Success

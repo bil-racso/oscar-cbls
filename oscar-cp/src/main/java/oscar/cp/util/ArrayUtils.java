@@ -17,9 +17,8 @@ package oscar.cp.util;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.Random;
-
-import oscar.cp.core.CPIntVar;
+import scala.util.Random;
+import oscar.cp.core.variables.CPIntVar;
 
 
 /**
@@ -388,7 +387,7 @@ public class ArrayUtils {
 		int v = Integer.MIN_VALUE;
 		for (int i = 0; i < x.length; i++) {
 			if(x[i].isBound()){
-				v = Math.max(v, x[i].getValue());
+				v = Math.max(v, x[i].min());
 			}
 		}
 		return v;

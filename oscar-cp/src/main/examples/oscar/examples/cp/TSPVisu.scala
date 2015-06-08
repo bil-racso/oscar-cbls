@@ -1,7 +1,22 @@
+/*******************************************************************************
+ * OscaR is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 2.1 of the License, or
+ * (at your option) any later version.
+ *   
+ * OscaR is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License  for more details.
+ *   
+ * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
+ *******************************************************************************/
+
 package oscar.examples.cp
 
-import oscar.cp.modeling._
-import oscar.cp.core._
+import oscar.cp._
+import oscar.util._
 
 /**
  * Traveling Salesman Problem with Visualization
@@ -15,19 +30,33 @@ import oscar.cp.core._
 object TSPVisu extends CPModel with App {
 
   // Data
-  val nCities = 20
+  val nCities = 40
   val Cities = 0 until nCities
   val (distMatrix, coordinates) = TSPGenerator.randomInstance(nCities)
 
   // Variables
   val succ = Array.fill(nCities)(CPIntVar(Cities)) 
   val totDist = CPIntVar(0 to distMatrix.flatten.sum)
+  add(sum(Cities)(i => distMatrix(i)(succ(i))) == totDist)
 
   // Constraints
-  add(minCircuit(succ, distMatrix, totDist),Strong)
+  add(minCircuit(succ, distMatrix, totDist), Weak)
+  
   // Search heuristic
-  minimize(totDist) search binaryFirstFail(succ)
+  minimize(totDist)
 
+  search {
+    // Select the not yet bound city with the smallest number of possible successors
+    selectMin(Cities)(!succ(_).isBound)(succ(_).size) match {
+      case None => noAlternative
+      case Some(x) => {
+        // Select the closest successors of the city x
+        val v = selectMin(Cities)(succ(x).hasValue(_))(distMatrix(x)(_)).get
+        branch(add(succ(x) == v))(add(succ(x) != v))
+      }
+    }
+  }  
+  
   // Visual Component
   val visual = new VisualTSP(coordinates, succ)
 

@@ -17,13 +17,12 @@ package oscar.cp.constraints;
 import java.util.Arrays;
 import java.util.Comparator;
 
-import oscar.algo.reversible.ReversibleBool;
+import oscar.algo.reversible.ReversibleBoolean;
 import oscar.algo.reversible.ReversibleInt;
 import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
-import oscar.cp.core.CPBoolVar;
-import oscar.cp.core.CPIntVar;
-import oscar.cp.core.CPIntervalVar;
+import oscar.cp.core.variables.CPBoolVar;
+import oscar.cp.core.variables.CPIntVar;
 import oscar.cp.core.Constraint;
 import oscar.cp.core.CPStore;
 
@@ -168,8 +167,8 @@ public class BinaryKnapsack extends Constraint {
 	
 
 	@Override
-	public CPOutcome valBindIdx(CPIntervalVar var, int idx) {
-		if (var.getValue() == 1)
+	public CPOutcome valBindIdx(CPIntVar var, int idx) {
+		if (var.getMin() == 1)
 			return bind(idx);
 		else
 			return remove(idx);
@@ -339,7 +338,7 @@ class LightBinaryKnapsack extends Constraint {
 	int [] w;
 	CPIntVar c;
 
-	ReversibleBool []  candidate; // index of items 0-1 (we dont't know if they are packed)
+	ReversibleBoolean []  candidate; // index of items 0-1 (we dont't know if they are packed)
 	ReversibleInt  psum;     // possible sum: sum of weight of items with dom x = {0,1}
 	ReversibleInt  rsum;     // required cap: sum of weight of required items with x=1 (packed for sure in the knapsack)
 
@@ -373,9 +372,9 @@ class LightBinaryKnapsack extends Constraint {
 	@Override
 	public CPOutcome setup(CPPropagStrength l) {
 		
-		candidate = new ReversibleBool[x.length];
+		candidate = new ReversibleBoolean[x.length];
 		for (int i = 0; i < candidate.length; i++) {
-			candidate[i] = new ReversibleBool(s());
+			candidate[i] = new ReversibleBoolean(s());
 			candidate[i].setValue(true);
 		}
 		
@@ -387,7 +386,7 @@ class LightBinaryKnapsack extends Constraint {
 		for (int i = 0; i < w.length; i++) {
 			if (x[i].isBound()) {
 				candidate[i].setValue(false);
-				if (x[i].getValue() == 1) {
+				if (x[i].getMin() == 1) {
 					rsum.setValue(rsum.getValue()+w[i]);
 				}
 			} else {
@@ -417,10 +416,10 @@ class LightBinaryKnapsack extends Constraint {
 	}
 	
 	@Override
-	public CPOutcome valBindIdx(CPIntervalVar var, int idx) {
+	public CPOutcome valBindIdx(CPIntVar var, int idx) {
 		candidate[idx].setValue(false);
 		psum.setValue(psum.getValue()-w[idx]);
-		if (var.getValue() == 1) {
+		if (var.getMin() == 1) {
 			rsum.setValue(rsum.getValue()+w[idx]);
 		}
 
@@ -520,8 +519,8 @@ class BinaryKnapsackWithCardinality extends Constraint {
 	}
 
 	@Override
-	public CPOutcome valBindIdx(CPIntervalVar var, int idx) {
-        if (var.getValue() == 1) {
+	public CPOutcome valBindIdx(CPIntVar var, int idx) {
+        if (var.getMin() == 1) {
             nPacked.incr();
             packed.setValue(packed.getValue() + w[idx]);
         }

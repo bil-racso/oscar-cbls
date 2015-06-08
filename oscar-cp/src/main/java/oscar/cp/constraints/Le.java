@@ -16,7 +16,7 @@ package oscar.cp.constraints;
 
 import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
-import oscar.cp.core.CPIntervalVar;
+import oscar.cp.core.variables.CPIntVar;
 import oscar.cp.core.Constraint;
 
 /**
@@ -25,27 +25,27 @@ import oscar.cp.core.Constraint;
  */
 public class Le extends Constraint {
 
-	private CPIntervalVar x, y;
+	private CPIntVar x, y;
 
     /**
      * x < y
      * @param x
      * @param y
      */
-	public Le(CPIntervalVar x, CPIntervalVar y) {
+	public Le(CPIntVar x, CPIntVar y) {
 		super(x.store()," < ");
 		this.x = x;
 		this.y = y;
 	}
 	
-	public Le(CPIntervalVar x, int v) {
-		this(x, CPIntervalVar.apply(x.store(),v,v));
+	public Le(CPIntVar x, int v) {
+		this(x, CPIntVar.apply(v, v, x.store()));
 	}
 	
 	@Override
 	public CPOutcome setup(CPPropagStrength l) {
 		if (y.isBound()) {
-			if (x.updateMax(y.value()-1) == CPOutcome.Failure){
+			if (x.updateMax(y.min()-1) == CPOutcome.Failure){
 				return CPOutcome.Failure;
 			}
 			return CPOutcome.Success;

@@ -16,8 +16,7 @@
  */
 package oscar.cp.constraints
 
-import oscar.cp.core.CPIntVar
-import oscar.cp.core.CPIntervalVar
+import oscar.cp.core.variables.CPIntVar
 import oscar.cp.core.CPPropagStrength
 import oscar.cp.core.Constraint
 import oscar.cp.core.CPOutcome
@@ -89,7 +88,7 @@ class Inverse(prev: Array[CPIntVar], next: Array[CPIntVar]) extends Constraint(p
   private def init(vector1: Array[CPIntVar], vector2: Array[CPIntVar], i: Int, j: Int): Boolean = {
     if (!vector1(i).hasValue(j)) true
     else if (vector1(i).isBound) vector2(j).assign(i) != Failure
-    else if (!vector2(j).hasValue(i)) vector2(i).removeValue(j) != Failure
+    else if (!vector2(j).hasValue(i)) vector1(i).removeValue(j) != Failure
     else true
   }
 
@@ -98,9 +97,9 @@ class Inverse(prev: Array[CPIntVar], next: Array[CPIntVar]) extends Constraint(p
     else next(value).removeValue(id)
   }
   
-  override def valBindIdx(intVar: CPIntervalVar, id: Int): CPOutcome = {
-    if (intVar == next(id)) prev(next(id).value).assign(id)
-    else next(prev(id).value).assign(id)
+  override def valBindIdx(intVar: CPIntVar, id: Int): CPOutcome = {
+    if (intVar == next(id)) prev(next(id).min).assign(id)
+    else next(prev(id).min).assign(id)
   }
 }
 
