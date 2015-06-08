@@ -284,18 +284,6 @@ trait NumericInvariants{
    */
   def  bound(x: IntValue, min:Int, max:Int) = Bound(x, min, max)
 
-
-  /**
-   * This invariant implements the identity function within the min-max range.
-   * values lower tham min result to min
-   * values higher tham max result to max
-   * @author renaud.delandtsheer@cetic.be
-   * @param x
-   * @param min
-   * @param max
-   */
-  def  bound(x: CBLSIntVar, min:Int, max:Int) = Bound(x, min, max)
-
   /**Maintains output to the smallest value such that
     * output >= from
     * (output - shift) MOD period > zone

@@ -103,8 +103,6 @@ case class InsertPoint(unroutedNodesToInsert: () => Iterable[Int],
   override def reset(): Unit = {
     startIndice = 0
   }
-
-  override def toString: String = "insertion"
 }
 
 /**

@@ -12,3 +12,4 @@ lib/scalatest-1.6.1.jar
 .worksheet/src/test.scala
 .settings
 oscar.eml
+.idea
