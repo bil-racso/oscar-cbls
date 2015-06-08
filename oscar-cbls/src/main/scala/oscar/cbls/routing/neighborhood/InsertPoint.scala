@@ -55,6 +55,7 @@ case class InsertPoint(unroutedNodesToInsert: () => Iterable[Int],
                        nodeSymmetryClass:Option[Int => Int] = None) extends EasyRoutingNeighborhood(best, vrp, neighborhoodName) {
 
   //the indice to start with for the exploration
+  //TODO: this is poor, we should do the hotRestart on the symmetry class instead of the node indice.
   var startIndice: Int = 0
 
   override def exploreNeighborhood(): Unit = {

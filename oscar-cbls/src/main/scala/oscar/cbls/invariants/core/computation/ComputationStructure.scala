@@ -22,7 +22,6 @@ package oscar.cbls.invariants.core.computation
 
 import oscar.cbls.invariants.core.algo.quick.QList
 import oscar.cbls.invariants.core.propagation._
-import collection.mutable.Map
 
 import scala.collection.immutable.{SortedMap, SortedSet}
 import scala.language.implicitConversions
@@ -474,24 +473,25 @@ object InvariantHelper{
     * @return the model that the invariant belongs to
     */
   def findModel(i:Iterable[BasicPropagationElement]):Store={
-    i.foreach(e => {
-      e match{
+    val it = i.toIterator
+    while(it.hasNext){
+      it.next() match{
         case pe:AbstractVariable if pe.model != null => return pe.model
-        //case _ => //otherwise skip to the next
+        case _ => ;
       }
-    })
+    }
     null
   }
 
   def findModel(i:BasicPropagationElement*):Store={
-    i.foreach(e => {
-      if (e.isInstanceOf[Variable]){
-        val m = e.asInstanceOf[Variable].model
-        if (m != null){
-          return m
-        }
-      }
-    })
+    val it = i.toIterator
+    while(it.hasNext){
+      it.next() match {
+        case v: Variable =>
+          val m = v.model
+          if (m != null) return m
+        case _ => ;
+      }}
     null
   }
 

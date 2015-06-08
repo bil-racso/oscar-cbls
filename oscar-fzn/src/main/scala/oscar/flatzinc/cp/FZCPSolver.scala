@@ -13,7 +13,7 @@
   * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
   ******************************************************************************/
 /**
- * @author Leonard Debroux
+ * @author Jean-Noel Monette
  */
 package oscar.flatzinc.cp
 
@@ -23,11 +23,7 @@ import oscar.flatzinc.parser.FZParser
 import oscar.cp.core.CPIntVar
 import scala.collection.mutable.{Map => MMap}
 import oscar.cp.core.CPBoolVar
-import oscar.flatzinc.model.BooleanVariable
-import oscar.flatzinc.model.IntegerVariable
-import oscar.flatzinc.model.DomainRange
-import oscar.flatzinc.model.DomainSet
-import oscar.flatzinc.model.cumulative
+import oscar.flatzinc.model._
 import oscar.cp.modeling.Constraints
 
 /*
@@ -53,6 +49,8 @@ class FZCPSolverProblem {
     log("Parsed.")
     val solver: CPSolver = CPSolver()  
     
+    //TODO: Find binary constraints that can be used for views.
+    
     val dicoVars = MMap.empty[String,CPIntVar]
     for(v <- model.variables){
       dicoVars(v.id) = v match{
@@ -66,7 +64,9 @@ class FZCPSolverProblem {
     }
     for(c <- model.constraints){
       c match{
-        case cumulative(s,d,r,capa,_) => oscar.cp.cumulative
+        case cumulative(s,d,r,capa,_) => //add oscar.cp.cumulative
+        case maximum_int(x,y,_) => //add oscar.cp.maximum
+        case int_lin_eq(x,y,z,_) => // add a sum. Need to specialise?
       }
     }
   }

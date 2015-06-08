@@ -1058,24 +1058,24 @@ case class Statistics(a:Neighborhood,ignoreInitialObj:Boolean = false)extends Ne
   def slope:String = if(totalTimeSpent == 0) "NA" else ("" + ((100 * totalGain) / totalTimeSpent).toInt)
 
   override def collectStatistics: String =
-    padToLength("" + a,20) +
-      padToLength("" + nbCalls,8) +
-      padToLength("" + nbFound,8) +
-      padToLength("" + totalGain,10) +
-      padToLength("" + totalTimeSpent,14) +
-      padToLength("" + gainPerCall,12) +
-      padToLength("" + callDuration,17)+
+    padToLength("" + a,31) +
+      padToLength("" + nbCalls,6) +
+      padToLength("" + nbFound,6) +
+      padToLength("" + totalGain,8) +
+      padToLength("" + totalTimeSpent,12) +
+      padToLength("" + gainPerCall,8) +
+      padToLength("" + callDuration,12)+
       slope
 
   private def padToLength(s: String, l: Int) = (s + nStrings(l, " ")).substring(0, l)
   private def nStrings(n: Int, s: String): String = if (n <= 0) "" else s + nStrings(n - 1, s)
 
   override def toString: String = "Statistics(" + a + " nbCalls:" + nbCalls + " nbFound:" + nbFound + " totalGain:" + totalGain + " totalTimeSpent " + totalTimeSpent + " ms" + ")"
-
 }
 
 object Statistics{
   private def padToLength(s: String, l: Int) = (s + nStrings(l, " ")).substring(0, l)
   private def nStrings(n: Int, s: String): String = if (n <= 0) "" else s + nStrings(n - 1, s)
-  def statisticsHeader = padToLength("Neighborhood",20) + "nbCalls nbFound totalGain totalTime(ms) gainPerCall callDuration(ms) slope(-D obj/100ms)"
+  def statisticsHeader = padToLength("Neighborhood",30) + " calls found sumGain sumTime(ms) avgGain avgTime(ms) slope(-Dobj/.1s)"
 }
+
