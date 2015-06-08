@@ -213,11 +213,12 @@ class FZCBLSModel(val model: FZProblem, val c: ConstraintSystem, val m: Store, v
       (s: String) => cblsIntMap.get(s) match {
         case Some(intVar) =>
           intVar.value + ""
-        case _ => try{
+        case r => if(s=="true" || s=="false") s 
+        else try{
           s.toInt.toString()
         }catch{
           case e: NumberFormatException => {
-            throw new Exception("Unhappy")
+            throw new Exception("Unhappy: "+r+ " "+s)
           }
         }
      });
@@ -371,7 +372,7 @@ class FZCBLSSolver extends SearchEngine with StopWatch {
     
     
     //Search
-    val timeout = (if(opts.timeOut>0) {opts.timeOut} else 5 * 60) * 1000
+    val timeout = (if(opts.timeOut>0) {opts.timeOut} else 15 * 60) * 1000
     log("Timeout is set to "+timeout+" milliseconds"); 
     val sc : SearchControl =  model.search.obj match {
           case Objective.SATISFY => new SearchControl(cblsmodel,0,timeout,true);
