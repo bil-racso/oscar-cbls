@@ -61,17 +61,19 @@ class FZCPSolver {
     }
     log("created variables")
     //TODO: Add a try catch for if the problem fails at the root.
+    //TODO: Put all the added cstrs in a ArrayBuffer and then post them all at once.
     for(c <- model.constraints){
       //TODO: Take consistency annotation to post constraints.
       c match{
         //TODO: We create variables in cumulative but we might want to memoize those as well!
+        //TODO: Actually to avoid creating new variables, we could rewrite the cumulative in the minizinc definition to create those variables while flattening, and CSE will take care of it.
         case cumulative(s,d,r,capa,_) => solver.add(oscar.cp.maxCumulativeResource(s.map(getVar), d.map(getVar), s.zip(d).map(vv => getVar(vv._1)+getVar(vv._2)), r.map(getVar), getVar(capa)))
         case maximum_int(x,y,_) => 
           solver.add(oscar.cp.maximum(y.map(getVar), getVar(x)))
-          //solver.add(y.map(v => getVar(v) <= getVar(x)))
+          solver.add(y.map(v => getVar(v) <= getVar(x)))
         //TODO: Handle binary and ternary cases, as well as all unit weights
         case int_lin_eq(x,y,z,_) => solver.add(oscar.cp.weightedSum(x.map(_.value), y.map(getVar), getVar(z)))
-        case all_different_int(x,_) => solver.add(oscar.cp.allDifferent(x.map(getVar)))
+        case all_different_int(x,_) => solver.add(oscar.cp.allDifferent(x.map(getVar)), Medium)//Weak, Strong, Medium
       }
     }
     log("constraints posted")
@@ -97,15 +99,16 @@ class FZCPSolver {
      });
     }
     solver.onSolution{
-      println("found")
+      //println("found")
       handleSolution()
     }
-    
+    solver.silent = true
     //TODO: Take into account the search annotations
-    solver.search(binaryFirstFail((model.variables-model.search.variable.get).map(getVar).toSeq))
+    solver.search(binaryFirstFail((model.variables-model.search.variable.get).map(getVar).toArray[CPIntVar]))
     log("search created")
     //TODO: search for more than one solution for optimisation
-    val stats = solver.start()
+    //TODO: Remove the time spent in parsing and posting
+    val stats = solver.start(nSols= Int.MaxValue,timeLimit=60*15)
     log(stats.toString)
 
     
