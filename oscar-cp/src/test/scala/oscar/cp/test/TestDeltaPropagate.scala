@@ -19,9 +19,9 @@ import org.scalatest.matchers.ShouldMatchers
 import oscar.cp.constraints._
 import oscar.cp._
 import collection.immutable.SortedSet
-import java.util.LinkedList
 import oscar.cp.core.CPPropagStrength
 import oscar.cp.core.CPOutcome
+import scala.collection.mutable.ArrayBuffer
 
 
 /**
@@ -129,9 +129,9 @@ class TestDeltaPropagate extends FunSuite with ShouldMatchers {
     val cp = CPSolver()
     val x = CPIntVar(Array(1, 3, 5, 7))(cp) -2 -3 + 2 // -2,0,2,4
     cp.add(new MyCons(x))
-    val cons = new LinkedList[Constraint]()
-    cons.add(x < 4)
-    cons.add(x < 2)
+    val cons = ArrayBuffer[Constraint]()
+    cons.append(x < 4)
+    cons.append(x < 2)
     cp.add(cons)
     //println("x dom:"+x.toSet)
     propag should be(true)
@@ -164,9 +164,9 @@ class TestDeltaPropagate extends FunSuite with ShouldMatchers {
     val cp = CPSolver()
     val x = CPIntVar(Array(1, 3, 5, 7))(cp) -2 -3 + 2 // -2,0,2,4
     cp.add(new MyCons(x))
-    val cons = new LinkedList[Constraint]()
-    cons.add(x < 4)
-    cons.add(x < 2)
+    val cons = ArrayBuffer[Constraint]()
+    cons.append(x < 4)
+    cons.append(x < 2)
     cp.add(cons)
     // println("x dom:"+x.toSet)
     propag should be(true)
@@ -197,9 +197,9 @@ class TestDeltaPropagate extends FunSuite with ShouldMatchers {
     val cp = CPSolver()
     val x = -(CPIntVar(Array(1, 3, 5, 7))(cp) -2 -3 + 2) // -4,-2,0,2
     cp.add(new MyCons(x))
-    val cons = new LinkedList[Constraint]()
-    cons.add(x > -4)
-    cons.add(x > -2)
+    val cons = ArrayBuffer[Constraint]()
+    cons.append(x > -4)
+    cons.append(x > -2)
     cp.add(cons)
     //println("x dom:"+x.toSet)
     propag should be(true)
@@ -360,9 +360,9 @@ class TestDeltaPropagate extends FunSuite with ShouldMatchers {
     val x = -(CPIntVar(Array(1, 3, 5, 7))(cp) -2 -3 + 2) // -4,-2,0,2
     cp.add(new MyCons(x))
     
-    val cons = new LinkedList[Constraint]()
-    cons.add(x > -4)
-    cons.add(x > -2)
+    val cons = ArrayBuffer[Constraint]()
+    cons.append(x > -4)
+    cons.append(x > -2)
     cp.add(cons)
     
     cp.add(x > 0)
@@ -415,9 +415,9 @@ class TestDeltaPropagate extends FunSuite with ShouldMatchers {
     val x = CPIntVar(Array(-4,-2,0,2))(cp) // -4,-2,0,2  //-(CPIntVar(Array(1, 3, 5, 7))(cp) -2 -3 + 2) // -4,-2,0,2
     cp.add(new MyCons(x))
     
-    val cons = new LinkedList[Constraint]()
-    cons.add(x > -4)
-    cons.add(x > -2)
+    val cons = ArrayBuffer[Constraint]()
+    cons.append(x > -4)
+    cons.append(x > -2)
     cp.add(cons)
     
     //println("x dom:"+x.toSet)

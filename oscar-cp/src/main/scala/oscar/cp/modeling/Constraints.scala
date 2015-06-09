@@ -15,7 +15,6 @@
 
 package oscar.cp.modeling
 
-import java.util.LinkedList
 import scala.Vector
 import scala.collection.IndexedSeq
 import scala.collection.Iterable
@@ -30,6 +29,7 @@ import oscar.cp._
 import oscar.cp.scheduling.constraints.DisjunctiveWithTransitionTimes
 import oscar.cp.constraints.tables.TableAlgo
 import oscar.cp.constraints.tables._
+import scala.collection.mutable.ArrayBuffer
 
 trait Constraints {
 
@@ -1026,16 +1026,17 @@ trait Constraints {
     new Permutation(x, y)
   }
 
-  def sortedness(x: IndexedSeq[CPIntVar], s: IndexedSeq[CPIntVar], p: IndexedSeq[CPIntVar], strictly: Boolean = false): LinkedList[Constraint] = {
+  def sortedness(x: IndexedSeq[CPIntVar], s: IndexedSeq[CPIntVar], p: IndexedSeq[CPIntVar], strictly: Boolean = false): Array[Constraint] = {
     val cp = x(0).store
     val n = x.size
-    val cons = new LinkedList[Constraint]
+    val constraints = ArrayBuffer[Constraint]()
+
     for (i <- 0 until n - 1) {
-      cons.add(elementVar(x, p(i), Strong) <= elementVar(x, p(i + 1), Strong))
+      constraints.append(elementVar(x, p(i), Strong) <= elementVar(x, p(i + 1), Strong))
       if (strictly) {
-        cons.add(s(i) < s(i + 1))
+        constraints.append(s(i) < s(i + 1))
       } else {
-        cons.add(s(i) <= s(i + 1))
+        constraints.append(s(i) <= s(i + 1))
       }
 
     }
@@ -1045,26 +1046,26 @@ trait Constraints {
     val maxs = s.map(_.max).max
 
     for (i <- 0 until x.size) {
-      cons.add(p(i) >= 0)
-      cons.add(p(i) <= n)
+      constraints.append(p(i) >= 0)
+      constraints.append(p(i) <= n)
 
-      cons.add(s(i) <= maxx)
-      cons.add(s(i) >= minx)
+      constraints.append(s(i) <= maxx)
+      constraints.append(s(i) >= minx)
 
-      cons.add(x(i) <= maxs)
-      cons.add(x(i) >= mins)
+      constraints.append(x(i) <= maxs)
+      constraints.append(x(i) >= mins)
     }
     for (i <- 0 until n) {
-      cons.add(elementVar(x, p(i), s(i)))
+      constraints.append(elementVar(x, p(i), s(i)))
     }
-    cons.add(allDifferent(p))
+    constraints.append(allDifferent(p))
 
     val minVal: Int = x.map(_.min).min
     val maxVal: Int = x.map(_.max).max
 
     // array of variable occ with domains {0,...,n} that will represent the number of occurrences of each value
     val occ = Array.fill(maxVal - minVal + 1)(CPIntVar(0 to n)(cp))
-    cons.add(gcc(x, (minVal to maxVal).zip(occ)))
+    constraints.append(gcc(x, (minVal to maxVal).zip(occ)))
 
     // nbBefore(i) = #{i | x(i) < i } i.e. number of values strictly small than i for i in [minVal .. maxVal]
     val nbBefore = for (i <- minVal to maxVal) yield {
@@ -1074,9 +1075,9 @@ trait Constraints {
 
     for (i <- 0 until n) {
       // there are less than i values smaller than s(i) 
-      cons.add(elementVar(nbBefore, s(i) - minVal) <= i)
+      constraints.append(elementVar(nbBefore, s(i) - minVal) <= i)
     }
-    cons
+    constraints.toArray
   }
 
   /**
