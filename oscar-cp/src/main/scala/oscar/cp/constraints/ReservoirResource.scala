@@ -24,10 +24,11 @@ import oscar.visual.{VisualUtil, VisualFrame}
  */
 class ReservoirResource(startVars: Array[CPIntVar], durationVars: Array[CPIntVar], endVars: Array[CPIntVar], productionVars: Array[CPIntVar], consumptionVars: Array[CPIntVar], minCapacity: Int, maxCapacity: Int, initialAmount: Int = 0) {
   private[this] val nTasks = startVars.length
-  val cpSolver: CPStore = startVars(0).store
-  val startingPointOfTime = startVars.map(myVar => myVar.min).min
-  val horizon = endVars.map(myVar => myVar.max).max
-  val producer = Array.tabulate(nTasks)(i => productionVars(i).max > 0)
+  private[this] val cpSolver: CPStore = startVars(0).store
+  private[this] val startingPointOfTime = startVars.map(myVar => myVar.min).min
+  private[this] val horizon = endVars.map(myVar => myVar.max).max
+  private[this] val producer = Array.tabulate(nTasks)(i => productionVars(i).max > 0)
+  private[this] val consumer = Array.tabulate(nTasks)(i => consumptionVars(i).max > 0)
 
   /* Check if the maximal capacity of the reservoir is never exceeded.
    *
@@ -36,15 +37,15 @@ class ReservoirResource(startVars: Array[CPIntVar], durationVars: Array[CPIntVar
    * - Each consumer task is transformed into a new task spanning from starting point of time to the start var of former consumer
    * - Each producer task is transformed into a new task spanning from the end var of former producer to horizon
    */
-  val sumConsumption = consumptionVars.map(cVar => cVar.max).sum
-  val cumulativeCapacity1 = CPIntVar(sumConsumption + maxCapacity - initialAmount)(cpSolver)
-  val cumulativeStart1 = Array.tabulate(nTasks)(i => if(!producer(i)) CPIntVar(startingPointOfTime)(cpSolver) else endVars(i))
-  val cumulativeEnd1 = Array.tabulate(nTasks)(i => if(producer(i)) CPIntVar(horizon)(cpSolver) else startVars(i))
-  val cumulativeDuration1 = Array.tabulate(nTasks)(i => CPIntVar((cumulativeEnd1(i).min - cumulativeStart1(i).max) to (cumulativeEnd1(i).max - cumulativeStart1(i).min))(cpSolver))
-  val cumulativeDemand = Array.tabulate(nTasks)(i => if(producer(i)) productionVars(i) else consumptionVars(i))
+  private[this] val sumConsumption = consumptionVars.map(cVar => cVar.max).sum
+  private[this] val cumulativeCapacity1 = CPIntVar(sumConsumption + maxCapacity - initialAmount)(cpSolver)
+  private[this] val cumulativeStart1 = Array.tabulate(nTasks)(i => if(consumer(i)) CPIntVar(startingPointOfTime)(cpSolver) else endVars(i))
+  private[this] val cumulativeEnd1 = Array.tabulate(nTasks)(i => if(producer(i)) CPIntVar(horizon)(cpSolver) else startVars(i))
+  private[this] val cumulativeDuration1 = Array.tabulate(nTasks)(i => CPIntVar((cumulativeEnd1(i).min - cumulativeStart1(i).max) to (cumulativeEnd1(i).max - cumulativeStart1(i).min))(cpSolver))
+  private[this] val cumulativeDemand = Array.tabulate(nTasks)(i => if(producer(i)) productionVars(i) else consumptionVars(i))
 
   for (i <- 0 until nTasks) {
-    cpSolver.add(cumulativeEnd1(i) - cumulativeStart1(i) == cumulativeDuration1(i))
+    cpSolver.add(cumulativeStart1(i) + cumulativeDuration1(i) == cumulativeEnd1(i))
   }
   cpSolver.add(maxCumulativeResource(cumulativeStart1, cumulativeDuration1, cumulativeEnd1, cumulativeDemand, cumulativeCapacity1))
 
@@ -55,14 +56,14 @@ class ReservoirResource(startVars: Array[CPIntVar], durationVars: Array[CPIntVar
    * - Each producer task is transformed into a new task spanning from starting point of time to the end var of former producer
    * - Each consumer task is transformed into a new task spanning from the start var of former consumer to horizon
    */
-  val sumProduction = productionVars.map(cVar => cVar.max).sum
-  val cumulativeCapacity2 = CPIntVar(sumProduction - minCapacity + initialAmount)(cpSolver)
-  val cumulativeStart2 = Array.tabulate(nTasks)(i => if(!producer(i)) startVars(i) else CPIntVar(startingPointOfTime)(cpSolver))
-  val cumulativeEnd2 = Array.tabulate(nTasks)(i => if(producer(i)) endVars(i) else CPIntVar(horizon)(cpSolver))
-  val cumulativeDuration2 = Array.tabulate(nTasks)(i => CPIntVar((cumulativeEnd2(i).min - cumulativeStart2(i).max) to (cumulativeEnd2(i).max - cumulativeStart2(i).min))(cpSolver))
+  private[this] val sumProduction = productionVars.map(cVar => cVar.max).sum
+  private[this] val cumulativeCapacity2 = CPIntVar(sumProduction - minCapacity + initialAmount)(cpSolver)
+  private[this] val cumulativeStart2 = Array.tabulate(nTasks)(i => if(consumer(i)) startVars(i) else CPIntVar(startingPointOfTime)(cpSolver))
+  private[this] val cumulativeEnd2 = Array.tabulate(nTasks)(i => if(producer(i)) endVars(i) else CPIntVar(horizon)(cpSolver))
+  private[this] val cumulativeDuration2 = Array.tabulate(nTasks)(i => CPIntVar((cumulativeEnd2(i).min - cumulativeStart2(i).max) to (cumulativeEnd2(i).max - cumulativeStart2(i).min))(cpSolver))
 
   for (i <- 0 until nTasks) {
-    cpSolver.add(cumulativeEnd2(i) - cumulativeStart2(i) == cumulativeDuration2(i))
+    cpSolver.add(cumulativeStart2(i) + cumulativeDuration2(i) == cumulativeEnd2(i))
   }
   cpSolver.add(maxCumulativeResource(cumulativeStart2, cumulativeDuration2, cumulativeEnd2, cumulativeDemand, cumulativeCapacity2))
 }

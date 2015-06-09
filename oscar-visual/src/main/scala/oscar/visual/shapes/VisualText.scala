@@ -50,10 +50,10 @@ class VisualText(d: VisualDrawing, private var x: Double, private var y: Double,
    * @param y
    */
   def move(x: Double, y: Double) {
-    this.x = x;
-    this.y = y;
+    this.x = x
+    this.y = y
     shape.setRect(x,y,shape.getWidth(),shape.getHeight())
-    drawing.repaint();
+    drawing.repaint()
   }
   
   def text = t
@@ -65,19 +65,19 @@ class VisualText(d: VisualDrawing, private var x: Double, private var y: Double,
 
   override def draw(g: Graphics2D) {
     if (centered)
-      drawCenteredString(text, x.toInt, y.toInt, g);
+      drawCenteredString(text, x.toInt, y.toInt, g)
     else
-      g.drawString(text, x.toInt, y.toInt);
+      g.drawString(text, x.toInt, y.toInt)
     
-    shape.setRect(x,y, fm.stringWidth(text),fm.getHeight())
+    shape.setRect(x,y, fm.stringWidth(text), fm.getHeight())
   }
 
   def drawCenteredString(text: String, x: Int, y: Int, g: Graphics2D) {
     g.setFont(font)
     g.setColor(fontColor)
-    val fm = g.getFontMetrics();
-    val w = fm.stringWidth(text);
-    g.drawString(text, x - (w / 2), y);
+    val fm = g.getFontMetrics()
+    val w = fm.stringWidth(text)
+    g.drawString(text, x - (w / 2), y)
   }
  
 }
