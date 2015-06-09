@@ -74,6 +74,7 @@ trait Constraints {
    */
   def plus(x: CPIntVar, y: CPIntVar): CPIntVar = {
     if (y.isBound) plus(x, y.value)
+    else if(x.isBound) plus(y,x.value)
     else {
       val c = CPIntVar(x.min + y.min, x.max + y.max)(x.store)
       val ok = x.store.post(new oscar.cp.constraints.BinarySum(x, y, c))

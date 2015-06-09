@@ -17,29 +17,14 @@
  */
 package oscar.flatzinc.cp
 
-import oscar.cp.modeling.CPSolver
+import oscar.cp._
 import oscar.flatzinc.Options
 import oscar.flatzinc.parser.FZParser
-import oscar.cp.core.CPIntVar
 import scala.collection.mutable.{Map => MMap}
-import oscar.cp.core.CPBoolVar
 import oscar.flatzinc.model._
-import oscar.cp.modeling.Constraints
 
-/*
-import oscar.cp.modeling.CPSolver
-import oscar.cp.core.CPIntVar
-import scala.collection.mutable.{Map => MMap}
-import oscar.cp.core.CPBoolVar
-import scala.Array.canBuildFrom
-import scala.collection.mutable.{Map => MMap}
-import oscar.flatzinc.model._
-import oscar.cp.constraints.And
-import oscar.cp.modeling._
-import oscar.cp.constraints.ElementVar
-*/
-//NOTE by JNM: Commented to avoid dependency on the CP part.
-class FZCPSolverProblem {
+
+class FZCPSolver {
   
   def solve(opts: Options){
     val log = opts.log();
@@ -47,96 +32,85 @@ class FZCPSolverProblem {
     val model = FZParser.readFlatZincModelFromFile(opts.fileName,log, false).problem;
      
     log("Parsed.")
-    val solver: CPSolver = CPSolver()  
+    implicit val solver: CPSolver = CPSolver()  
     
     //TODO: Find binary constraints that can be used for views.
     
     val dicoVars = MMap.empty[String,CPIntVar]
+    def getVar(v:Variable):CPIntVar = {
+      dicoVars.get(v.id) match {
+        case None if v.isBound =>
+            val c = v match{
+              case v:IntegerVariable => CPIntVar(v.value);
+              case v:BooleanVariable => CPBoolVar(v.boolValue);
+            }
+            dicoVars += v.id -> c;
+            c
+        case Some(c) => c;
+      }
+    }
     for(v <- model.variables){
       dicoVars(v.id) = v match{
-        case bv:BooleanVariable => CPBoolVar()(solver)
+        case bv:BooleanVariable => CPBoolVar()
         case iv:IntegerVariable => iv.domain match{
-          case DomainRange(min, max) => CPIntVar(min to max)(solver)
-          case DomainSet(v) => CPIntVar(v)(solver)
+          case DomainRange(min, max) => CPIntVar(min to max)
+          case DomainSet(v) => CPIntVar(v)
           case _ => throw new RuntimeException("unknown domain")
         }
       }
     }
+    log("created variables")
+    //TODO: Add a try catch for if the problem fails at the root.
     for(c <- model.constraints){
+      //TODO: Take consistency annotation to post constraints.
       c match{
-        case cumulative(s,d,r,capa,_) => //add oscar.cp.cumulative
-        case maximum_int(x,y,_) => //add oscar.cp.maximum
-        case int_lin_eq(x,y,z,_) => // add a sum. Need to specialise?
+        //TODO: We create variables in cumulative but we might want to memoize those as well!
+        case cumulative(s,d,r,capa,_) => solver.add(oscar.cp.maxCumulativeResource(s.map(getVar), d.map(getVar), s.zip(d).map(vv => getVar(vv._1)+getVar(vv._2)), r.map(getVar), getVar(capa)))
+        case maximum_int(x,y,_) => 
+          solver.add(oscar.cp.maximum(y.map(getVar), getVar(x)))
+          //solver.add(y.map(v => getVar(v) <= getVar(x)))
+        //TODO: Handle binary and ternary cases, as well as all unit weights
+        case int_lin_eq(x,y,z,_) => solver.add(oscar.cp.weightedSum(x.map(_.value), y.map(getVar), getVar(z)))
+        case all_different_int(x,_) => solver.add(oscar.cp.allDifferent(x.map(getVar)))
       }
     }
-  }
-  
-/*
-  def instanciate(vari: Variable, cp: CPSolver, varMap: MMap[Variable, CPIntVar]) {
-    vari match {
-      case ConcreteVariable(i: String, dom: Domain,ann) =>
-        if (varMap.contains(vari)) return
-        else {
-          val variable: CPIntVar = dom match {
-            case DomainRange(min, max) => CPIntVar(min to max)(cp)
-            case DomainSet(v) => CPIntVar(v)(cp)
-            case _ => throw new RuntimeException("unknown domain")
+    log("constraints posted")
+    model.search.obj match{
+     case Objective.SATISFY => 
+     case Objective.MAXIMIZE => maximize(getVar(model.search.variable.get))
+     case Objective.MINIMIZE => minimize(getVar(model.search.variable.get))
+    }
+    log("objective created")
+    def handleSolution() = {
+     model.solution.handleSolution(
+      (s: String) => dicoVars.get(s) match {
+        case Some(intVar) =>
+          intVar.value + ""
+        case r => if(s=="true" || s=="false") s 
+        else try{
+          s.toInt.toString()
+        }catch{
+          case e: NumberFormatException => {
+            throw new Exception("Unhappy: "+r+ " "+s)
           }
-          varMap += (vari -> variable)
         }
- /*     case OffSetVariable(i, offset, x,ann) =>
-        if (varMap.contains(vari)) return
-        else {
-          instanciate(x, cp, varMap)
-          assert(varMap.contains(x))
-          varMap += (vari -> (varMap(x) + offset))
-        }
-      case MinusVariable(i, x,ann) =>
-        if (varMap.contains(vari)) return
-        else {
-          instanciate(x, cp, varMap)
-          assert(varMap.contains(x))
-          varMap += (vari -> (-varMap(x)))
-        }*/
+     });
     }
-  }
-  
-  
-  def instanciate(cp: CPSolver, prob: FZProblem): Map[String,CPIntVar] = {
-    var res = Map.empty[String,CPIntVar]
-    val varMap = MMap[Variable,CPIntVar]()
-    for ((s,v) <- prob.map){
-      instanciate(v,cp, varMap)
-      res += s -> varMap(v)
+    solver.onSolution{
+      println("found")
+      handleSolution()
     }
-    res
-  }
-  
-  
-  def search = {
+    
+    //TODO: Take into account the search annotations
+    solver.search(binaryFirstFail((model.variables-model.search.variable.get).map(getVar).toSeq))
+    log("search created")
+    //TODO: search for more than one solution for optimisation
+    val stats = solver.start()
+    log(stats.toString)
+
     
   }
+
   
-  def addConstraints(cp: CPSolver, prob: FZProblem, varMap: Map[String,CPIntVar]) = {
-    for (c <- prob.constraints) {
-    c match {
-        case array_bool_and(as,r,ann) => 
-        	val x = as.map(y => new CPBoolVar(varMap(y.id)))
-        	val y = new CPBoolVar(varMap(r.id))
-        	cp.add(new And(x,y))          
-//        case array_bool_element(b,as,c,ann) =>
-//        	val x = as.map(y => new CPBoolVar(varMap(y.id)))
-//        	val y = new CPBoolVar(varMap(b.id))
-//        	val z = new CPBoolVar(varMap(c.id))
-//        	cp.add(new ElementVar(x,y,z))  
-        case bool_eq(x,y,ann) => throw new RuntimeException("should not be posted")
-        case bool2int(b,x,ann) => throw new RuntimeException("should not be posted")
-        case int_eq(x,y,ann) => throw new RuntimeException("should not be posted")
-       
-      }
-    }
-  }
-  
-*/
 }
   
