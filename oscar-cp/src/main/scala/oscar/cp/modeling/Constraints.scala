@@ -509,7 +509,10 @@ trait Constraints {
    * @return y == sum(i)(w_i * x_i)
    */
   def weightedSum(w: Array[Int], x: Array[CPIntVar], y: CPIntVar): Constraint = {
-    new WeightedSum(w, x.map(_.asInstanceOf[CPIntVar]), y)
+    var i = 0
+    while (i < w.length && w(i) == 1) i += 1
+    if (i == x.length) sum(x, y)
+    else new WeightedSum(w, x, y)
   }
 
   /**
