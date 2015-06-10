@@ -40,7 +40,7 @@ import scala.util.Random
  * @author Pierre Schaus pschaus@gmail.com
  * @author Renaud Hartert ren.hartert@gmail.com
  */
-class CPStore( final val propagStrength: CPPropagStrength) extends DFSearchNode {
+class CPStore(final val propagStrength: CPPropagStrength) extends DFSearchNode {
 
   def this() = this(CPPropagStrength.Weak)
   
