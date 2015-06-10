@@ -28,13 +28,18 @@ import scala.collection.mutable.ArrayBuffer
  * @param table the list of tuples composing the table.
  * @author Jordan Demeulenaere j.demeulenaere1@gmail.com
  */
-class TableCT(val X: Array[CPIntVar], table: Array[Array[Int]]) extends Constraint(X(0).store, "TableCT") {
+  
+/* Trailable entry to restore the value of the ith Long of the valid tuples */
+final class TableCTLongTrailEntry(table: TableCT, i: Int, value: Long) extends TrailEntry {
+  @inline override def restore(): Unit = table.restore(i, value)
+}
 
-  /* Trailable entry to restore the value of the ith Long of the valid tuples */
-  final class LongTrailEntry(table: TableCT, i: Int, value: Long) extends TrailEntry {
-    @inline override def restore(): Unit = table.restore(i, value)
-  }
+final class TableCT(val X: Array[CPIntVar], table: Array[Array[Int]]) extends Constraint(X(0).store, "TableCT") {
 
+  /* Setting idempotency & lower priority for propagate() */
+  idempotent = true
+  priorityL2 = CPStore.MaxPriorityL2 - 1
+  
   /* Basic information */
   private[this] val arity = X.length
   private[this] val nbTuples = table.length
@@ -64,9 +69,6 @@ class TableCT(val X: Array[CPIntVar], table: Array[Array[Int]]) extends Constrai
   private[this] val needPropagate = new ReversibleBoolean(store, false)
 
   override def setup(l: CPPropagStrength): CPOutcome = {
-    /* Setting idempotency & lower priority for propagate() */
-    this.idempotent = true
-    priorityL2 = CPStore.MaxPriorityL2 - 1
 
     /* Retrieve the current valid tuples */
     if (fillValidTuples() == Failure) {
@@ -105,7 +107,7 @@ class TableCT(val X: Array[CPIntVar], table: Array[Array[Int]]) extends Constrai
    * @param delta the set of values removed since the last call.
    * @return the outcome i.e. Failure or Success.
    */
-  @inline private final def updateDelta(intVar: CPIntVar, varIndex: Int, delta: DeltaVarInt): CPOutcome = {
+  @inline private def updateDelta(intVar: CPIntVar, varIndex: Int, delta: DeltaVarInt): CPOutcome = {
     /* No need to update validTuples if there was no modification since last propagate() */
     if (intVar.size == lastSizes(varIndex).value) {
       return Suspend
@@ -201,7 +203,7 @@ class TableCT(val X: Array[CPIntVar], table: Array[Array[Int]]) extends Constrai
    * Unsupported values are removed.
    * @return the outcome i.e. Failure or Success.
    */
-  @inline override def propagate(): CPOutcome = {
+  override def propagate(): CPOutcome = {
     /* No need for the check if validTuples has not changed */
     if (!needPropagate.value) {
       return Suspend
@@ -301,7 +303,7 @@ class TableCT(val X: Array[CPIntVar], table: Array[Array[Int]]) extends Constrai
    * Update the bounds of validTuples, i.e. the two extreme indexes i such that validTuples[i] != 0.
    * @return the outcome i.e. Failure or Success.
    */
-  @inline private final def updateFirstAndLast(): CPOutcome = {
+  @inline private def updateFirstAndLast(): CPOutcome = {
     var first = firstActive.value
     var last = lastActive.value
     while (first <= last && validTuples(first) == 0) {
@@ -367,22 +369,22 @@ class TableCT(val X: Array[CPIntVar], table: Array[Array[Int]]) extends Constrai
    * @param varIndex the index of x.
    * @param valueIndex the index of a (i.e. a - originalMin(x)).
    */
-  @inline private final def setTempMask(varIndex: Int, valueIndex: Int): Unit = {
-    var i = 0
-    while (i < nbLongs) {
+  @inline private def setTempMask(varIndex: Int, valueIndex: Int): Unit = {
+    var i = nbLongs
+    while (i > 0) {
+      i -= 1
       tempMask(i) = masks(varIndex)(valueIndex)(i)
-      i += 1
     }
   }
 
   /**
    * Clear the tempMask.
    */
-  @inline private final def clearTempMask(): Unit = {
-    var i = 0
-    while (i < nbLongs) {
+  @inline private def clearTempMask(): Unit = {
+    var i = nbLongs
+    while (i > 0) {
+      i -= 1
       tempMask(i) = 0L
-      i += 1
     }
   }
 
@@ -392,7 +394,7 @@ class TableCT(val X: Array[CPIntVar], table: Array[Array[Int]]) extends Constrai
    * @param varIndex the index of x.
    * @param valueIndex the index of a (i.e. a - originalMin(x)).
    */
-  @inline private final def orTempMask(varIndex: Int, valueIndex: Int): Unit = {
+  @inline private def orTempMask(varIndex: Int, valueIndex: Int): Unit = {
     val mask = masks(varIndex)(valueIndex)
     val start = Math.max(firstActive.value, starts(varIndex)(valueIndex))
     val end = Math.min(lastActive.value, ends(varIndex)(valueIndex))
@@ -408,7 +410,7 @@ class TableCT(val X: Array[CPIntVar], table: Array[Array[Int]]) extends Constrai
    *      validTuples = validTuples & tempMask
    * @return true if validTuples has changed, false otherwise.
    */
-  @inline private final def andTempMaskWithValid(): Boolean = {
+  @inline private def andTempMaskWithValid(): Boolean = {
     val first = firstActive.value
     val last = lastActive.value
     var changed = false
@@ -430,7 +432,7 @@ class TableCT(val X: Array[CPIntVar], table: Array[Array[Int]]) extends Constrai
    *      validTuples = validTuples & (~tempMask)
    * @return true if validTuples has changed, false otherwise.
    */
-  @inline private final def substractTempMaskFromValid(): Boolean = {
+  @inline private def substractTempMaskFromValid(): Boolean = {
     val first = firstActive.value
     val last = lastActive.value
     var changed = false
@@ -452,7 +454,7 @@ class TableCT(val X: Array[CPIntVar], table: Array[Array[Int]]) extends Constrai
    * @param offset the index of the Long in validTuples to change.
    * @param mask the mask to apply.
    */
-  @inline private final def andValidTuples(offset: Int, mask: Long): Unit = {
+  @inline private def andValidTuples(offset: Int, mask: Long): Unit = {
     val storeMagic = store.magic
     if (lastMagics(offset) != storeMagic) {
       lastMagics(offset) = storeMagic
@@ -465,8 +467,8 @@ class TableCT(val X: Array[CPIntVar], table: Array[Array[Int]]) extends Constrai
    * Trail the value of validTuples[offset].
    * @param offset the index of the Long to trail.
    */
-  @inline private final def trail(offset: Int): Unit = {
-    val trailEntry = new LongTrailEntry(this, offset, validTuples(offset))
+  @inline private def trail(offset: Int): Unit = {
+    val trailEntry = new TableCTLongTrailEntry(this, offset, validTuples(offset))
     store.trail(trailEntry)
   }
 

@@ -15,10 +15,6 @@
 
 package oscar.cp.modeling
 
-import scala.Vector
-import scala.collection.IndexedSeq
-import scala.collection.Iterable
-import scala.collection.immutable.Set
 import oscar.cp.constraints._
 import oscar.cp.core.variables.CPIntVarViewOffset
 import oscar.cp.core.variables.CPIntVarViewTimes
@@ -287,6 +283,13 @@ trait Constraints {
   def minCircuit(succ: Array[CPIntVar], distMatrixSucc: Array[Array[Int]], cost: CPIntVar, addPredModel: Boolean = true): Constraint = {
     return new MinCircuit(succ, distMatrixSucc, cost, addPredModel)
   }
+  
+  /**
+   * SubCircuit constraint (only one mode of filtering)
+   * This constraint enforces `successors` to represent an Hamiltonian circuit on a subset of nodes.
+   * A node that is not part of the circuit is its own successor. 
+   */
+  def subCircuit(successors: Array[CPIntVar]): Constraint = SubCircuit(successors)
 
   /**
    * Lexicographically Less or Equal Constraint
@@ -1243,6 +1246,8 @@ trait Constraints {
    * @param id, the resource on which we want to constraint the capacity (only tasks i with resources(i) = id are taken into account)
    */
   def maxCumulativeResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], demands: Array[CPIntVar], resources: Array[CPIntVar], capacity: CPIntVar, id: Int): Constraint = {
+    
+    
     MaxCumulative(starts, durations, ends, demands, resources, capacity, id)
   }
 

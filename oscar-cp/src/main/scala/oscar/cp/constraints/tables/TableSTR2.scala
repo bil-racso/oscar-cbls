@@ -60,7 +60,7 @@ final class TableSTR2(variables: Array[CPIntVar], table: Array[Array[Int]]) exte
   private[this] val offsets = Array.tabulate(arity)(i => variables(i).min)
   private[this] val sizes = new Array[Int](arity)
 
-  // Last size must be initially different from the domain size
+  // Last size of the domain
   private[this] val lastSize = Array.fill(arity)(new ReversibleInt(s, -1))
 
   override def setup(l: CPPropagStrength): CPOutcome = {
@@ -150,7 +150,9 @@ final class TableSTR2(variables: Array[CPIntVar], table: Array[Array[Int]]) exte
 
   @inline private def updateSet(varId: Int): Unit = {
     val variable = variables(varId)
+    // Copy the values
     val size = variable.fillArray(toRemoveValues(varId))
+    // Compute the positions
     val values = toRemoveValues(varId)
     val positions = toRemovePositions(varId)
     val offset = offsets(varId)
