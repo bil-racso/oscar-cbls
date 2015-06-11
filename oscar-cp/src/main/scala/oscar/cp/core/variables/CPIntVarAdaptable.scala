@@ -659,7 +659,7 @@ class CPIntVarAdaptable( final override val store: CPStore, minValue: Int, maxVa
       val val1 = newDomain(i)
       val pos1 = positions(val1 - offset)
       assert(pos1 < oldSize, "newDomain must be a subset of the actual domain.")
-      val val2 = positions(_size)
+      val val2 = values(_size)
       val pos2 = positions(val2 - offset)
       values(pos1) = val2
       values(pos2) = val1
