@@ -25,29 +25,7 @@ import oscar.cp.core.variables.CPIntVar
 import scala.collection.JavaConversions.mapAsScalaMap
 
 
-abstract class Snapshot {
-  def update()
-}
 
-class SnapshotVarInt(x: CPIntVar) extends Snapshot {
-  var oldMin: Int = x.min 
-  var oldMax: Int = x.max
-  var oldSize: Int = x.size
-  def update() {
-    oldMin = x.min
-    oldMax = x.max
-    oldSize = x.size
-  }
-}
-
-class SnapshotVarSet(x: CPSetVar) extends Snapshot {
-  var oldSizePossible: Int = x.possibleSize
-  var oldSizeRequired: Int = x.requiredSize
-  def update() {
-    oldSizePossible = x.possibleSize
-    oldSizeRequired = x.requiredSize
-  }
-}
 
 class Watcher {
   def shouldEnqueue(): Boolean = true
@@ -56,33 +34,36 @@ class Watcher {
 /**
  * Abstract class extended by any CP constraints
  * @author Pierre Schaus pschaus@gmail.com
+ * @author Renaud Hartert ren.hartert@gmail.com
  */
 abstract class Constraint(val s: CPStore, val name: String = "cons") {
 
   private[this] val active = new ReversibleBoolean(s,true)
   private[this] val inQueue = new MagicBoolean(s, false)
-
-  val snapshotsVarInt = new java.util.HashMap[CPIntVar, SnapshotVarInt] // FIXME variables should have an id 
-  val snapshotsVarSet = new java.util.HashMap[CPSetVar, SnapshotVarSet] // FIXME variables should have an id
+  
+  // FIXME variables should have an id 
+  val snapshotsVarInt = new java.util.HashMap[CPIntVar, SnapshotVarInt] 
+  val snapshotsVarSet = new java.util.HashMap[CPSetVar, SnapshotVarSet]
+  
   private[this] var toSnapShotVarInt = Array.ofDim[SnapshotVarInt](10)
   private[this] var nSnapshotVarInt = 0
   private[this] var toSnapShotVarSet = Array.ofDim[SnapshotVarSet](10)
   private[this] var nSnapshotVarSet = 0
 
-  private var _mustSnapshot = false
+  private[this] var _mustSnapshot = false
 
   def addSnapshot(x: CPIntVar): Unit = {
-    snapshotsVarInt(x) = new SnapshotVarInt(x)
+    snapshotsVarInt(x) = new SnapshotVarInt(x) // FIXME avoid the implicit cast
     
     if (nSnapshotVarInt >= toSnapShotVarInt.length) {
       val toSnapShotVarIntNew = new Array[SnapshotVarInt](nSnapshotVarInt*2)
       System.arraycopy(toSnapShotVarInt, 0, toSnapShotVarIntNew, 0, nSnapshotVarInt)
       toSnapShotVarInt = toSnapShotVarIntNew
     }
-    toSnapShotVarInt(nSnapshotVarInt) = snapshotsVarInt(x)
+    toSnapShotVarInt(nSnapshotVarInt) = snapshotsVarInt(x) // FIXME avoid the implicit cast
     nSnapshotVarInt += 1   
     
-    snapshotsVarInt(x).update()
+    snapshotsVarInt(x).update() // FIXME avoid the implicit cast
     if (!_mustSnapshot) {
       s.onPop { snapShot() }
       _mustSnapshot = true
@@ -95,26 +76,26 @@ abstract class Constraint(val s: CPStore, val name: String = "cons") {
   }
 
   @inline protected def snapshotVarInt(): Unit = {
-    var i = 0
-    while (i < nSnapshotVarInt) {
+    var i = nSnapshotVarInt
+    while (i > 0) {
+      i -= 1
       toSnapShotVarInt(i).update()
-      i += 1
     }
   }
   
 
   def addSnapshot(x: CPSetVar): Unit = {
-    snapshotsVarSet(x) = new SnapshotVarSet(x)
+    snapshotsVarSet(x) = new SnapshotVarSet(x) // FIXME avoid the implicit cast
     
     if (nSnapshotVarSet >= toSnapShotVarSet.length) {
       val toSnapShotVarSetNew = new Array[SnapshotVarSet](nSnapshotVarSet*2)
       System.arraycopy(toSnapShotVarSet, 0, toSnapShotVarSetNew, 0, nSnapshotVarSet)
       toSnapShotVarSet = toSnapShotVarSetNew
     }
-    toSnapShotVarSet(nSnapshotVarSet) = snapshotsVarSet(x)
+    toSnapShotVarSet(nSnapshotVarSet) = snapshotsVarSet(x) // FIXME avoid the implicit cast
     nSnapshotVarSet += 1  
     
-    snapshotsVarSet(x).update()
+    snapshotsVarSet(x).update() // FIXME avoid the implicit cast
     if (!_mustSnapshot) {
       s.onPop { snapShot() }
       _mustSnapshot = true
@@ -129,12 +110,12 @@ abstract class Constraint(val s: CPStore, val name: String = "cons") {
     } 
   }  
 
-  private var priorL2 = CPStore.MaxPriorityL2 - 2
-  private var priorBindL1 = CPStore.MaxPriorityL1 - 1
-  private var priorBoundsL1 = CPStore.MaxPriorityL1 - 2
-  private var priorRemoveL1 = CPStore.MaxPriorityL1 - 2
-  private var priorRequireL1 = CPStore.MaxPriorityL1 - 1
-  private var priorExcludeL1 = CPStore.MaxPriorityL1 - 2
+  private[this] var priorL2 = CPStore.MaxPriorityL2 - 2
+  private[this] var priorBindL1 = CPStore.MaxPriorityL1 - 1
+  private[this] var priorBoundsL1 = CPStore.MaxPriorityL1 - 2
+  private[this] var priorRemoveL1 = CPStore.MaxPriorityL1 - 2
+  private[this] var priorRequireL1 = CPStore.MaxPriorityL1 - 1
+  private[this] var priorExcludeL1 = CPStore.MaxPriorityL1 - 2
 
   /**
    * Set to true when it is currently executing the propagate method
@@ -152,7 +133,7 @@ abstract class Constraint(val s: CPStore, val name: String = "cons") {
   /**
    * @return true if it is currently executing the propagate method.
    */
-  @inline final def inPropagate() = _inPropagate
+  @inline final def inPropagate(): Boolean = _inPropagate
   
   
   
@@ -173,7 +154,7 @@ abstract class Constraint(val s: CPStore, val name: String = "cons") {
    */
   def whenNot(b: CPBoolVar) = new Garded(b, this, false)
 
-  override def toString = "constraint:" + name
+  override def toString: String = "constraint:" + name
 
   /**
    * setup the constraint, typically this is the place where
@@ -184,47 +165,25 @@ abstract class Constraint(val s: CPStore, val name: String = "cons") {
    */
   def setup(l: CPPropagStrength): CPOutcome
 
-  /**
-   *
-   * @param set the L2 priority (propagate method) in the propagation queue, a number between 0 and CPStore.MAXPRIORL2
-   */
-  def priorityL2_=(priority: Int) {
-    priorL2 = priority;
+  final def priorityL2: Int = priorL2
+  final def priorityBindL1: Int = priorBindL1
+  final def priorityRemoveL1: Int = priorRemoveL1
+  final def priorityBoundsL1: Int = priorBoundsL1
+  final def priorityRequireL1: Int = priorRequireL1
+  final def priorityExcludeL1: Int = priorExcludeL1
+  
+  final def priorityL2_=(priority: Int): Unit = priorL2 = priority
+  final def priorityBindL1_=(priority: Int): Unit = priorBindL1 = checkL1Prior(priority)
+  final def priorityRemoveL1_=(priority: Int): Unit = priorRemoveL1 = checkL1Prior(priority)
+  final def priorityBoundsL1_=(priority: Int): Unit = priorBoundsL1 = checkL1Prior(priority)
+  final def priorityRequireL1_=(priority: Int): Unit = priorRequireL1 = checkL1Prior(priority)
+  final def priorityExcludeL1_=(priority: Int): Unit = priorExcludeL1 = checkL1Prior(priority)
+  
+  @inline private def checkL1Prior(priority: Int): Int = {
+    if (priority > CPStore.MaxPriorityL1) CPStore.MaxPriorityL1
+    else if (priority < 0) 0
+    else priority
   }
-
-  private def checkL1Prior(priority: Int) = 0 max (priority min CPStore.MAXPRIORL1)
-
-  def priorityBindL1_=(priority: Int) {
-    priorBindL1 = checkL1Prior(priority)
-  }
-
-  def priorityRemoveL1_=(priority: Int) {
-    priorRemoveL1 = checkL1Prior(priority)
-  }
-
-  def priorityBoundsL1_=(priority: Int) {
-    priorBoundsL1 = checkL1Prior(priority)
-  }
-
-  def priorityRequireL1_=(priority: Int) {
-    priorRequireL1 = checkL1Prior(priority)
-  }
-
-  def priorityExcludeL1_=(priority: Int) {
-    priorExcludeL1 = checkL1Prior(priority)
-  }
-
-  def priorityL2 = priorL2
-
-  def priorityBindL1 = priorBindL1
-
-  def priorityRemoveL1 = priorRemoveL1
-
-  def priorityBoundsL1 = priorBoundsL1
-
-  def priorityRequireL1 = priorRequireL1
-
-  def priorityExcludeL1 = priorExcludeL1
 
   /**
    * @return true if the constraint is still active
@@ -240,16 +199,12 @@ abstract class Constraint(val s: CPStore, val name: String = "cons") {
    * Disable the constraint such that it is not propagated any more (will not enter into the propagation queue).
    * Note that this state is reversible (trailable).
    */
-  def deactivate() {
-    active.value = false
-  }
+  def deactivate(): Unit = active.setFalse()
 
   /**
    * Reactivate the constraint
    */
-  def activate() {
-    active.value = true
-  }
+  def activate(): Unit = active.setTrue()
 
   /**
    * Propagation method of Level L2 that is called if variable x has asked to do so with

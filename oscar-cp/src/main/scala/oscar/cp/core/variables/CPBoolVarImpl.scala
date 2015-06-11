@@ -10,7 +10,6 @@ import oscar.cp.core.CPOutcome.Failure
 import oscar.cp.core.CPOutcome.Suspend
 import oscar.cp.core.CPStore
 import oscar.cp.core.Constraint
-import oscar.cp.core.ConstraintQueue
 import oscar.cp.core.watcher.WatcherListL2
 import oscar.cp.core.watcher.WatcherListL1
 
