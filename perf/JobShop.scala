@@ -1,17 +1,17 @@
 /*******************************************************************************
- * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 2.1 of the License, or
- * (at your option) any later version.
- *   
- * OscaR is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License  for more details.
- *   
- * You should have received a copy of the GNU Lesser General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
- ******************************************************************************/
+  * OscaR is free software: you can redistribute it and/or modify
+  * it under the terms of the GNU Lesser General Public License as published by
+  * the Free Software Foundation, either version 2.1 of the License, or
+  * (at your option) any later version.
+  *
+  * OscaR is distributed in the hope that it will be useful,
+  * but WITHOUT ANY WARRANTY; without even the implied warranty of
+  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  * GNU Lesser General Public License  for more details.
+  *
+  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
+  ******************************************************************************/
 
 package oscar.examples.cp.scheduling
 
@@ -22,26 +22,27 @@ import oscar.util._
 import scala.io.Source
 import oscar.cp.scheduling.visual.VisualGanttChart
 
-
-
 /**
  * Job-Shop Problem
  *
- *  A Job is a a sequence of n Activities that must be executed one after the
- *  others. There are n machines and each activity of the jobs require one of the
- *  n machines. The objective is to assign the starting time of each activity
- *  minimizing the total makespan and such that no two activities from two different
- *  jobs requiring the same machine overlap.
+ * Created on 03/06/15.
  *
- *  @author Pierre Schaus  pschaus@gmail.com
- *  @author Renaud Hartert ren.hartert@gmail.com
+ * A Job is a a sequence of n Activities that must be executed one after the
+ * others. There are n machines and each activity of the jobs require one of the
+ * n machines. The objective is to assign the starting time of each activity
+ * minimizing the total makespan and such that no two activities from two different
+ * jobs requiring the same machine overlap.
+ *
+ * @author Cyrille Dejemeppe (cyrille.dejemeppe@gmail.com)
+ * @author Pierre Schaus  pschaus@gmail.com
+ * @author Renaud Hartert ren.hartert@gmail.com
  */
 object JobShop extends CPModel with App {
 
-  // Parsing    
+  // Parsing
   // -----------------------------------------------------------------------
 
-  var lines = Source.fromFile("data/ft07.txt").getLines.toList
+  var lines = Source.fromFile("../data/ft07.txt").getLines.toList
 
   val nJobs = lines.head.trim().split(" ")(0).toInt
   val nTasksPerJob = lines.head.trim().split(" ")(1).toInt
@@ -70,7 +71,7 @@ object JobShop extends CPModel with App {
     lines = lines.drop(1)
   }
 
-  // Modeling 
+  // Modeling
   // -----------------------------------------------------------------------
 
   val horizon = durations.sum
@@ -84,25 +85,10 @@ object JobShop extends CPModel with App {
 
   val makespan = maximum(endsVar)
 
-  // Visualization  
-  // -----------------------------------------------------------------------
-
-  val frame = new VisualFrame("JobShop Problem", nResources + 1, 1)
-  val colors = VisualUtil.getRandomColors(nResources, true)
-  val gantt1 = new VisualGanttChart(startsVar, durationsVar, endsVar, i => jobs(i), colors = i => colors(resources(i)))
-  val gantt2 = new VisualGanttChart(startsVar, durationsVar, endsVar, i => resources(i), colors = i => colors(resources(i)))
-  onSolution {
-    gantt1.update(1, 20)
-    gantt2.update(1, 20)
-  }
-  frame.createFrame("Gantt chart").add(gantt1)
-  frame.createFrame("Gantt chart").add(gantt2)
-  frame.pack
-
   // Constraints & Search
   // -----------------------------------------------------------------------
 
-  // Consistency 
+  // Consistency
   for (t <- Activities) {
     add(endsVar(t) == startsVar(t) + durationsVar(t))
   }
@@ -117,18 +103,16 @@ object JobShop extends CPModel with App {
     add(unaryResource(s,d,e))
     rank(s,d,e)
   }
-  
-  minimize(makespan) 
-  
 
-  import oscar.algo.search._
+  minimize(makespan)
+
   val rankBranching = rankBranchings.reduce{_++_}
-    
+
   solver.search {
     rankBranchings.reduce{_++_} ++ binaryStatic(startsVar)
   }
-  println(start())
-  
-  
+  val stats = start()
+
+  println(stats)
 }
 
