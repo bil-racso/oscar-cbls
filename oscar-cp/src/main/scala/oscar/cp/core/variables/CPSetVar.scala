@@ -10,7 +10,6 @@ import oscar.cp.core.domains.SetDomain
 import oscar.algo.reversible.ReversiblePointer
 import oscar.cp.core.DeltaVarSet
 import oscar.cp.core.SnapshotVarSet
-import oscar.cp.core.ConstraintQueue
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.Constraint
 import oscar.cp.core.CPStore

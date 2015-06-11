@@ -29,7 +29,7 @@ import oscar.cp.core.CPStore
 import oscar.cp.core.Constraint
 import oscar.cp.core.watcher.WatcherListL2
 import oscar.cp.core.watcher.WatcherListL1
-import scala.collection.JavaConversions.mapAsScalaMap
+import scala.collection.JavaConversions.mapAsScalaMap 
 
 /**
  *  @author Renaud Hartert ren.hartert@gmail.com
@@ -658,7 +658,7 @@ class CPIntVarAdaptable( final override val store: CPStore, minValue: Int, maxVa
       i -= 1
       val val1 = newDomain(i)
       val pos1 = positions(val1 - offset)
-      assert(pos1 < oldSize, "newDomain must be a subset of the domain")
+      assert(pos1 < oldSize, "newDomain must be a subset of the actual domain.")
       val val2 = positions(_size)
       val pos2 = positions(val2 - offset)
       values(pos1) = val2
