@@ -13,8 +13,6 @@
   * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
   ******************************************************************************/
 
-package oscar.examples.cp.scheduling
-
 import oscar.cp._
 
 import oscar.visual._
