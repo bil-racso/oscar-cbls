@@ -25,6 +25,7 @@ import oscar.cp.core.Constraint
 import oscar.cp.core.CPStore
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.CPOutcome._
+import oscar.cp.core.variables.CPIntVarAdaptable
 
 /**
  * @author Cyrille Dejemeppe cyrille.dejemeppe@gmail.com
