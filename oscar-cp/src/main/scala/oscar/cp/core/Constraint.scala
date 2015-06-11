@@ -62,8 +62,8 @@ abstract class Constraint(val s: CPStore, val name: String = "cons") {
   private[this] val active = new ReversibleBoolean(s,true)
   private[this] val inQueue = new MagicBoolean(s, false)
 
-  val snapshotsVarInt = new java.util.HashMap[CPIntVar, SnapshotVarInt] // scala.collection.mutable.Map[CPIntVar, SnapshotVarInt]() 
-  val snapshotsVarSet = new java.util.HashMap[CPSetVar, SnapshotVarSet] // scala.collection.mutable.Map[CPSetVar, SnapshotVarSet]()
+  val snapshotsVarInt = new java.util.HashMap[CPIntVar, SnapshotVarInt] // FIXME variables should have an id 
+  val snapshotsVarSet = new java.util.HashMap[CPSetVar, SnapshotVarSet] // FIXME variables should have an id
   private[this] var toSnapShotVarInt = Array.ofDim[SnapshotVarInt](10)
   private[this] var nSnapshotVarInt = 0
   private[this] var toSnapShotVarSet = Array.ofDim[SnapshotVarSet](10)
