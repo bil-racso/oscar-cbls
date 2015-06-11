@@ -408,7 +408,6 @@ class CPIntVarAdaptableSuite extends TestSuite {
     assert(s == values.size)
     assert(valuesArray.toSet == values)
     assert(domain.toArray.toSet == values)
-    
   }
   
   test("Copy domain and to Array with pop") {
@@ -499,7 +498,7 @@ class CPIntVarAdaptableSuite extends TestSuite {
     val variable = new CPIntVarAdaptable(context, 0, 10, true)
     val removedValues = scala.collection.mutable.Set[Int]()
     
-    class ValRemoveConstraint extends Constraint(context, "valRemoveTester") {
+    class TestConstraint extends Constraint(context, "valRemoveTester") {
       override def setup(l: CPPropagStrength): CPOutcome = {
         variable.callValRemoveWhenValueIsRemoved(this)
         Suspend
@@ -510,7 +509,7 @@ class CPIntVarAdaptableSuite extends TestSuite {
       }
     }
     
-    context.add(new ValRemoveConstraint)
+    context.add(new TestConstraint)
     val values1 = Array(1, 7, 6, 8, 3)
     val values2 = Array(1, 7, 6)
     val values3 = Array(1)
@@ -531,7 +530,7 @@ class CPIntVarAdaptableSuite extends TestSuite {
     val variable = new CPIntVarAdaptable(context, 0, 10, true)
     var n = 0
     
-    class ValRemoveConstraint extends Constraint(context, "valRemoveTester") {
+    class TestConstraint extends Constraint(context, "valRemoveTester") {
       override def setup(l: CPPropagStrength): CPOutcome = {
         variable.callPropagateWhenDomainChanges(this)
         Suspend
@@ -542,7 +541,7 @@ class CPIntVarAdaptableSuite extends TestSuite {
       }
     }
     
-    context.add(new ValRemoveConstraint)
+    context.add(new TestConstraint)
     val values1 = Array(1, 7, 6, 8, 3)
     val values2 = Array(1, 7, 6)
     val values3 = Array(1)
@@ -563,7 +562,7 @@ class CPIntVarAdaptableSuite extends TestSuite {
     val variable = new CPIntVarAdaptable(context, 0, 10, true)
     var n = 0
     
-    class ValRemoveConstraint extends Constraint(context, "valRemoveTester") {
+    class TestConstraint extends Constraint(context, "valRemoveTester") {
       override def setup(l: CPPropagStrength): CPOutcome = {
         variable.callPropagateWhenBind(this)
         Suspend
@@ -574,7 +573,7 @@ class CPIntVarAdaptableSuite extends TestSuite {
       }
     }
     
-    context.add(new ValRemoveConstraint)
+    context.add(new TestConstraint)
     val values1 = Array(1, 7, 6, 8, 3)
     val values2 = Array(1, 7, 6)
     val values3 = Array(1)
@@ -595,7 +594,7 @@ class CPIntVarAdaptableSuite extends TestSuite {
     val variable = new CPIntVarAdaptable(context, 0, 10, true)
     var n = 0
     
-    class ValRemoveConstraint extends Constraint(context, "valRemoveTester") {
+    class TestConstraint extends Constraint(context, "valRemoveTester") {
       override def setup(l: CPPropagStrength): CPOutcome = {
         variable.callPropagateWhenBoundsChange(this); Suspend
       }
@@ -604,7 +603,7 @@ class CPIntVarAdaptableSuite extends TestSuite {
       }
     }
     
-    context.add(new ValRemoveConstraint)
+    context.add(new TestConstraint)
     val values1 = Array(1, 7, 6, 8, 3)
     val values2 = Array(1, 7, 6)
     val values3 = Array(1, 7)

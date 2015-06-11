@@ -138,10 +138,10 @@ class CPIntVarAdaptable( final override val store: CPStore, minValue: Int, maxVa
 
   @inline private def iteratorSparse: Iterator[Int] = new Iterator[Int] {
     private[this] val array = new Array[Int](_size)
-    private[this] var i = 0
+    private[this] var i = _size
     System.arraycopy(values, 0, array, 0, _size)
-    final override def next(): Int = { val v = array(i); i += 1; v }
-    final override def hasNext: Boolean = i < _size
+    final override def next(): Int = { i -= 1; array(i) }
+    final override def hasNext: Boolean = i > 0
   }
 
   /**

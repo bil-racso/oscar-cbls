@@ -27,11 +27,6 @@ import oscar.cp.core.DeltaVarInt
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.Watcher
 
-trait DomainIterator extends Iterator[Int] {
-  def removeValue: CPOutcome
-  def execute()
-}
-
 /**
  * @author Pierre Schaus pschaus@gmail.com
  */
@@ -208,45 +203,11 @@ abstract class CPIntVar extends CPVar with Iterable[Int] {
   def iterator: Iterator[Int]
   
   final override def foreach[@specialized(Int) U](f: Int => U): Unit = iterator.foreach(f)
-
-  def domainIterator: DomainIterator = {
-    new DomainIterator {
-      private val it = iterator
-      private var ok = false
-      private var v = Int.MinValue
-      private var collect: List[Int] = Nil
-      private var maxRemove = CPIntVar.this.size
-
-      def next(): Int = {
-        v = it.next()
-        ok = true
-        v
-      }
-      def hasNext: Boolean = {
-        it.hasNext
-      }
-
-      def removeValue(): CPOutcome = {
-        assert(ok == true)
-        ok = false
-        collect = v :: collect
-        maxRemove -= 1
-        if (maxRemove <= 0)
-          CPOutcome.Failure
-        else
-          CPOutcome.Suspend
-      }
-
-      def execute() = {
-        for (v <- collect) CPIntVar.this.removeValue(v)
-      }
-    }
-  }
   
   /**
    * @return an (not sorted) array representation of the domain.
    */
-  def toArray: Array[Int] = domainIterator.toArray
+  def toArray: Array[Int] = iterator.toArray
 
   /**
    *  @param array.length >= this.size
@@ -255,14 +216,14 @@ abstract class CPIntVar extends CPVar with Iterable[Int] {
    *          The array is not sorted.
    */
   def fillArray(array: Array[Int]): Int = {
-    val ite = domainIterator
+    val ite = iterator
     var i = 0
     while (ite.hasNext) {
       array(i) = ite.next
       i += 1
     }
     i
-  }  
+  } 
 
   /**
    * Level 2 registration: ask that the propagate() method of the constraint c is called whenever
