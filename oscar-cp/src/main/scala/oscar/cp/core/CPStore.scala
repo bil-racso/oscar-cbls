@@ -40,7 +40,7 @@ import scala.util.Random
  * @author Pierre Schaus pschaus@gmail.com
  * @author Renaud Hartert ren.hartert@gmail.com
  */
-class CPStore( final val propagStrength: CPPropagStrength) extends DFSearchNode {
+class CPStore(final val propagStrength: CPPropagStrength) extends DFSearchNode {
 
   def this() = this(CPPropagStrength.Weak)
   
@@ -472,6 +472,8 @@ class CPStore( final val propagStrength: CPPropagStrength) extends DFSearchNode 
   def add(c: Constraint): CPOutcome = add(c, propagStrength)
 
   def add(b: CPBoolVar): CPOutcome = post(new EqCons(b, 1))
+  
+  def addCut(c: Constraint): CPOutcome = postCut(c)
 
   /**
    * Add a set of constraints to the store in a reversible way and trigger the fix-point algorithm afterwards.
@@ -480,19 +482,13 @@ class CPStore( final val propagStrength: CPPropagStrength) extends DFSearchNode 
    * @param st the propagation strength asked for the constraint. Will be used only if available for the constraint (see specs of the constraint)
    * @throws NoSolutionException if the fix point detects a failure that is one of the domain became empty, Suspend otherwise.
    */
-  def add(constraints: Collection[Constraint], st: CPPropagStrength): CPOutcome = post(constraints, st);
+  def add(constraints: Array[Constraint], st: CPPropagStrength): CPOutcome = post(constraints, st)
 
-  def addCut(c: Constraint): CPOutcome = postCut(c)
+  def add(constraints: Array[Constraint]): CPOutcome = add(constraints, propagStrength)
 
-  def add(constraints: Collection[Constraint]): CPOutcome = add(constraints, propagStrength)
+  def add(constraints: Iterable[Constraint], st: CPPropagStrength): CPOutcome = add(constraints.toArray, st)
 
-  def add(constraints: Iterable[Constraint], st: CPPropagStrength): CPOutcome = {
-    val cs = new LinkedList[Constraint]()
-    constraints.foreach(cs.add(_))
-    add(cs, st)
-  }
-
-  def add(constraints: Iterable[Constraint]): CPOutcome = add(constraints, propagStrength)
+  def add(constraints: Iterable[Constraint]): CPOutcome = add(constraints.toArray, propagStrength)
 
   def +=(c: Constraint, st: CPPropagStrength): CPOutcome = add(c, st)
   def +=(c: Constraint): CPOutcome = add(c, propagStrength)

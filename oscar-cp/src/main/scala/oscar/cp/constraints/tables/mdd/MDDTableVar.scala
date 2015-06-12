@@ -138,7 +138,7 @@ class MDDTableVar(context: ReversibleContext, linkedVar: CPIntVar, indexVar: Int
    */
   @inline final def getEdgesToKeep(edgesToKeep: Array[Int]): Int = {
     var size = 0
-    for (value <- linkedVar.domainIterator) {
+    for (value <- linkedVar.iterator) {
       val indexOfValue = mdd.indexOfValue(indexVar, value)
       var i = 0
       while (i < edgesPerValue(indexOfValue).size) {

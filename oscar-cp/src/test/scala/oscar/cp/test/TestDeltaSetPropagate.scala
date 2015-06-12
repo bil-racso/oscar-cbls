@@ -14,14 +14,13 @@
  ******************************************************************************/
 package oscar.cp.test
 
-import java.util.LinkedList
 
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
-
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.CPPropagStrength
 import oscar.cp._
+import scala.collection.mutable.ArrayBuffer
 
 
 /**
@@ -62,11 +61,11 @@ class TestDeltaSetPropagate extends FunSuite with ShouldMatchers {
     //println(x.requiredSize+" "+x.possibleSize)
     cp.add(new MyCons(x))
     
-    val cons = new LinkedList[Constraint]()
-    cons.add(x ++ 1)
-    cons.add(x ++ 3)
-    cons.add(x -- 2)
-    cons.add(x -- 4)
+    val cons = ArrayBuffer[Constraint]()
+    cons.append(x ++ 1)
+    cons.append(x ++ 3)
+    cons.append(x -- 2)
+    cons.append(x -- 4)
     
     cp.add(cons)
     
@@ -104,11 +103,11 @@ class TestDeltaSetPropagate extends FunSuite with ShouldMatchers {
     println(x.requiredSize+" "+x.possibleSize)
     cp.add(new MyCons(x))
     
-    val cons = new LinkedList[Constraint]()
-    cons.add(x ++ 1)
-    cons.add(x ++ 3)
-    cons.add(x -- 2)
-    cons.add(x -- 4)
+    val cons = ArrayBuffer[Constraint]()
+    cons.append(x ++ 1)
+    cons.append(x ++ 3)
+    cons.append(x -- 2)
+    cons.append(x -- 4)
     
     cp.add(cons)
     

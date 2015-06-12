@@ -124,6 +124,21 @@ class CPBoolVarNot(final override val not: CPBoolVar) extends CPBoolVar {
   final override def constraintTrue(): Constraint = not.constraintFalse
 
   final override def constraintFalse(): Constraint = not.constraintTrue
+  
+  final override def restrict(newDomain: Array[Int], newSize: Int): Unit = {
+    assert(newSize > 0 && newSize <= size)
+    if (newSize == 1) {
+      val value = newDomain(0)
+      if (value == 1) {
+        assert(!not.isTrue) 
+        not.assignFalse()
+      } else {
+        assert(!not.isFalse) 
+        not.assignTrue()    
+      }
+    }
+  }
+
 
   final override def toString: String = {
     if (not.isEmpty) "empty"

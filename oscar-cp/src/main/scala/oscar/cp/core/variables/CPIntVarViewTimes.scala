@@ -25,8 +25,9 @@ import oscar.cp.core.CPStore
  * Represents a view on variable applying an offset on it.
  * @author Cyrille Dejemeppe Cyrille.Dejemeppe@gmail.com
  * @author Steven Gay steven.gay@uclouvain.be
+ * @author Renaud Hartert ren.hartert@gmail.com
  */
-class CPIntVarViewTimes(v: CPIntVar, val a: Int) extends CPIntVar {
+final class CPIntVarViewTimes(v: CPIntVar, a: Int) extends CPIntVar {
   
   require(a != 0, "a should be different than 0")
   
@@ -51,18 +52,29 @@ class CPIntVarViewTimes(v: CPIntVar, val a: Int) extends CPIntVar {
   // Scala's division always rounds to the integer closest to zero, but we need flooring/ceiling versions.
   // The following divisions are just a little faster than using the modulo version,
   // and safer+faster than using casting to Double and using Double's ceil/floor 
-  @inline
-  private def floor_div(a: Int, b: Int) = {
+  @inline private def floor_div(a: Int, b: Int) = {
     val q = a / b
     if (a < 0 && q * b != a) q - 1
     else q
   }
 
-  @inline
-  private def ceiling_div(a: Int, b: Int) = {
+  @inline private def ceiling_div(a: Int, b: Int) = {
     val q = a / b
     if (a > 0 && q * b != a) q + 1
     else q
+  }
+  
+  final override def restrict(newDomain: Array[Int], newSize: Int): Unit = {
+    assert(newSize > 0 && newSize <= size )
+    val mapped = new Array[Int](newSize)
+    var i = newSize
+    while (i > 0) {
+      i -= 1
+      val value = newDomain(i)
+      assert(value % a == 0) // always true
+      mapped(i) = value / a
+    }
+    v.restrict(mapped, newSize)
   }
 
   override final def valueAfter(value: Int): Int = v.valueAfter(floor_div(value, a)) * a

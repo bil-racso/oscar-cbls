@@ -1,23 +1,25 @@
-/*******************************************************************************
-  * OscaR is free software: you can redistribute it and/or modify
-  * it under the terms of the GNU Lesser General Public License as published by
-  * the Free Software Foundation, either version 2.1 of the License, or
-  * (at your option) any later version.
-  *
-  * OscaR is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  * GNU Lesser General Public License  for more details.
-  *
-  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
-  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
-  ******************************************************************************/
+/**
+ * *****************************************************************************
+ * OscaR is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 2.1 of the License, or
+ * (at your option) any later version.
+ *
+ * OscaR is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License  for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
+ * ****************************************************************************
+ */
 
 package oscar.cp.constraints.tables
 
-import oscar.algo.reversible.{ReversibleInt, ReversibleBoolean, TrailEntry}
+import oscar.algo.reversible.{ ReversibleInt, ReversibleBoolean, TrailEntry }
 import oscar.cp.core.variables.CPIntVar
-import oscar.cp.core.{Constraint, CPStore, CPOutcome, CPPropagStrength, DeltaVarInt}
+import oscar.cp.core.{ Constraint, CPStore, CPOutcome, CPPropagStrength, DeltaVarInt }
 import oscar.cp.core.CPOutcome._
 
 import scala.collection.mutable.ArrayBuffer
@@ -28,12 +30,17 @@ import scala.collection.mutable.ArrayBuffer
  * @param table the list of tuples composing the table.
  * @author Jordan Demeulenaere j.demeulenaere1@gmail.com
  */
-class TableCT(val X: Array[CPIntVar], table: Array[Array[Int]]) extends Constraint(X(0).store, "TableCT") {
 
-  /* Trailable entry to restore the value of the ith Long of the valid tuples */
-  final class LongTrailEntry(table: TableCT, i: Int, value: Long) extends TrailEntry {
-    @inline override def restore(): Unit = table.restore(i, value)
-  }
+/* Trailable entry to restore the value of the ith Long of the valid tuples */
+final class TableCTLongTrailEntry(table: TableCT, i: Int, value: Long) extends TrailEntry {
+  @inline override def restore(): Unit = table.restore(i, value)
+}
+
+final class TableCT(X: Array[CPIntVar], table: Array[Array[Int]]) extends Constraint(X(0).store, "TableCT") {
+
+  /* Setting idempotency & lower priority for propagate() */
+  idempotent = true
+  priorityL2 = CPStore.MaxPriorityL2 - 1
 
   /* Basic information */
   private[this] val arity = X.length
@@ -44,7 +51,7 @@ class TableCT(val X: Array[CPIntVar], table: Array[Array[Int]]) extends Constrai
   private[this] val maxDomain = X.map(_.size).max
   private[this] val domainArray = new Array[Int](maxDomain)
   private[this] var domainArraySize = 0
-  
+
   /* Bitsets and other arrays */
   private[this] var nbLongs = 0
   private[this] val validTuplesBuffer = ArrayBuffer[Int]()
@@ -54,7 +61,7 @@ class TableCT(val X: Array[CPIntVar], table: Array[Array[Int]]) extends Constrai
   private[this] val ends = Array.tabulate(arity)(i => Array.fill(spans(i))(0))
   private[this] var lastMagics: Array[Long] = null
   private[this] var tempMask: Array[Long] = null
-  
+
   /* Structures for the improvements */
   private[this] var touchedVar = -1
   private[this] val firstActive = new ReversibleInt(store, 0)
@@ -63,12 +70,7 @@ class TableCT(val X: Array[CPIntVar], table: Array[Array[Int]]) extends Constrai
   private[this] val lastSizes = Array.fill(arity)(new ReversibleInt(store, 0))
   private[this] val needPropagate = new ReversibleBoolean(store, false)
 
-  /* ----- Setup ----- */
-  
   override def setup(l: CPPropagStrength): CPOutcome = {
-    /* Setting idempotency & lower priority for propagate() */
-    this.idempotent = true
-    priorityL2 = CPStore.MaxPriorityL2 - 1
 
     /* Retrieve the current valid tuples */
     if (fillValidTuples() == Failure) {
@@ -77,17 +79,6 @@ class TableCT(val X: Array[CPIntVar], table: Array[Array[Int]]) extends Constrai
 
     /* Compute the masks for each (x,a) pair */
     fillMasks()
-    
-    /* Call propagate() and update(x, delta) when domains change */
-    var i = 0
-    while (i < arity) {
-      val x = X(i)
-      val varIndex = i
-      x.filterWhenDomainChangesWithDelta(idempotent=true, CPStore.MaxPriorityL2)(delta => updateDelta(x, varIndex, delta))
-      x.callPropagateWhenDomainChanges(this)
-      lastSizes(i).setValue(x.size)
-      i += 1
-    }
 
     /* Remove values not supported by any tuple */
     if (removeUnsupportedValues() == Failure) {
@@ -96,11 +87,20 @@ class TableCT(val X: Array[CPIntVar], table: Array[Array[Int]]) extends Constrai
 
     /* Compute the boundaries of the bitsets */
     computeMasksBoundaries()
-    
+
+    /* Call propagate() and update(x, delta) when domains change */
+    var i = 0
+    while (i < arity) {
+      val x = X(i)
+      val varIndex = i
+      x.filterWhenDomainChangesWithDelta(idempotent = true, CPStore.MaxPriorityL2)(delta => updateDelta(x, varIndex, delta))
+      x.callPropagateWhenDomainChanges(this)
+      lastSizes(i).setValue(x.size)
+      i += 1
+    }
+
     Suspend
   }
-  
-  /* ----- Propagation & Update ----- */
 
   /**
    * Invalidates tuples by handling delta, the set of values removed from D(x) since the last call to this function.
@@ -109,7 +109,7 @@ class TableCT(val X: Array[CPIntVar], table: Array[Array[Int]]) extends Constrai
    * @param delta the set of values removed since the last call.
    * @return the outcome i.e. Failure or Success.
    */
-  @inline private final def updateDelta(intVar: CPIntVar, varIndex: Int, delta: DeltaVarInt): CPOutcome = {
+  @inline private def updateDelta(intVar: CPIntVar, varIndex: Int, delta: DeltaVarInt): CPOutcome = {
     /* No need to update validTuples if there was no modification since last propagate() */
     if (intVar.size == lastSizes(varIndex).value) {
       return Suspend
@@ -119,7 +119,7 @@ class TableCT(val X: Array[CPIntVar], table: Array[Array[Int]]) extends Constrai
     if (updateFirstAndLast() == Failure) {
       return Failure
     }
-    
+
     var changed = false
     val originalMin = originalMins(varIndex)
     val varSize = intVar.size
@@ -130,14 +130,12 @@ class TableCT(val X: Array[CPIntVar], table: Array[Array[Int]]) extends Constrai
       /* The variable is assigned */
       setTempMask(varIndex, intVar.min - originalMin)
       changed = andTempMaskWithValid()
-    }
-    else if (varSize == 2) {
+    } else if (varSize == 2) {
       /* The variable has only two values */
       setTempMask(varIndex, intVar.min - originalMin)
       orTempMask(varIndex, intVar.max - originalMin)
       changed = andTempMaskWithValid()
-    }
-    else {
+    } else {
       clearTempMask()
       if (delta.size() < varSize) {
         /* Use delta to update validTuples */
@@ -148,8 +146,7 @@ class TableCT(val X: Array[CPIntVar], table: Array[Array[Int]]) extends Constrai
           i += 1
         }
         changed = substractTempMaskFromValid()
-      }
-      else {
+      } else {
         /* Use domain to update validTuples */
         val varMin = intVar.min
         val varMax = intVar.max
@@ -160,8 +157,7 @@ class TableCT(val X: Array[CPIntVar], table: Array[Array[Int]]) extends Constrai
             orTempMask(varIndex, value - originalMin)
             value += 1
           }
-        }
-        else {
+        } else {
           /* The domain is sparse */
           domainArraySize = intVar.fillArray(domainArray)
           var i = 0
@@ -185,8 +181,7 @@ class TableCT(val X: Array[CPIntVar], table: Array[Array[Int]]) extends Constrai
           /* We check if x was the only modified variable since last propagate() */
           if (touchedVar == -1 || touchedVar == varIndex) {
             touchedVar = varIndex
-          }
-          else {
+          } else {
             touchedVar = -2
           }
           needPropagate.setTrue()
@@ -196,7 +191,7 @@ class TableCT(val X: Array[CPIntVar], table: Array[Array[Int]]) extends Constrai
       }
       return Failure
     }
-    
+
     Suspend
   }
 
@@ -205,7 +200,7 @@ class TableCT(val X: Array[CPIntVar], table: Array[Array[Int]]) extends Constrai
    * Unsupported values are removed.
    * @return the outcome i.e. Failure or Success.
    */
-  @inline override def propagate(): CPOutcome = {
+  override def propagate(): CPOutcome = {
     /* No need for the check if validTuples has not changed */
     if (!needPropagate.value) {
       return Suspend
@@ -227,18 +222,16 @@ class TableCT(val X: Array[CPIntVar], table: Array[Array[Int]]) extends Constrai
       /* No need to check the values of a variable if it was the only modified since last check */
       if (touchedVar == varIndex) {
         touchedVar = -1
-      }
-      else {
+      } else {
         val intVar = X(varIndex)
         val originalMin = originalMins(varIndex)
         val varSize = intVar.size
-        
+
         if (varSize == 1) {
           if (!supported(varIndex, intVar.min - originalMin)) {
             return Failure
           }
-        } 
-        else if (varSize == 2) {
+        } else if (varSize == 2) {
           val varMin = intVar.min
           val varMax = intVar.max
           val minSupported = supported(varIndex, varMin - originalMin)
@@ -246,21 +239,18 @@ class TableCT(val X: Array[CPIntVar], table: Array[Array[Int]]) extends Constrai
           if (!minSupported) {
             if (!maxSupported) {
               return Failure
-            }
-            else {
+            } else {
               intVar.assign(varMax)
               lastSizes(varIndex).setValue(1)
             }
-          }
-          else if (!maxSupported) {
+          } else if (!maxSupported) {
             intVar.assign(varMin)
             lastSizes(varIndex).setValue(1)
           }
-        }
-        else {
+        } else {
           val varMin = intVar.min
           val varMax = intVar.max
-          
+
           /* Domain of the variable is an interval */
           if (varMax - varMin + 1 == varSize) {
             var value = varMin
@@ -272,8 +262,7 @@ class TableCT(val X: Array[CPIntVar], table: Array[Array[Int]]) extends Constrai
               }
               value += 1
             }
-          }
-          else { /* Domain is sparse */
+          } else { /* Domain is sparse */
             domainArraySize = intVar.fillArray(domainArray)
             var i = 0
             var value = 0
@@ -287,39 +276,39 @@ class TableCT(val X: Array[CPIntVar], table: Array[Array[Int]]) extends Constrai
               i += 1
             }
           }
-          
+
           lastSizes(varIndex).setValue(intVar.size)
         }
-        
+
       }
       varIndex += 1
     }
-    
+
     needPropagate.setFalse()
     Suspend
   }
-  
+
   /* ----- Functions used during propagation ----- */
 
   /**
    * Update the bounds of validTuples, i.e. the two extreme indexes i such that validTuples[i] != 0.
    * @return the outcome i.e. Failure or Success.
    */
-  @inline private final def updateFirstAndLast(): CPOutcome = {
+  @inline private def updateFirstAndLast(): CPOutcome = {
     var first = firstActive.value
     var last = lastActive.value
     while (first <= last && validTuples(first) == 0) {
       first += 1
     }
-    
+
     if (first > last) {
       return Failure
     }
-    
+
     while (last > first && validTuples(last) == 0) {
       last -= 1
     }
-    
+
     firstActive.setValue(first)
     lastActive.setValue(last)
     Suspend
@@ -353,7 +342,7 @@ class TableCT(val X: Array[CPIntVar], table: Array[Array[Int]]) extends Constrai
       }
       offset += 1
     }
-    
+
     offset = loopStart
     while (offset < support) {
       if ((mask(offset) & validTuples(offset)) != 0) {
@@ -362,7 +351,7 @@ class TableCT(val X: Array[CPIntVar], table: Array[Array[Int]]) extends Constrai
       }
       offset += 1
     }
-    
+
     false
   }
 
@@ -371,22 +360,22 @@ class TableCT(val X: Array[CPIntVar], table: Array[Array[Int]]) extends Constrai
    * @param varIndex the index of x.
    * @param valueIndex the index of a (i.e. a - originalMin(x)).
    */
-  @inline private final def setTempMask(varIndex: Int, valueIndex: Int): Unit = {
-    var i = 0
-    while (i < nbLongs) {
+  @inline private def setTempMask(varIndex: Int, valueIndex: Int): Unit = {
+    var i = nbLongs
+    while (i > 0) {
+      i -= 1
       tempMask(i) = masks(varIndex)(valueIndex)(i)
-      i += 1
     }
   }
 
   /**
    * Clear the tempMask.
    */
-  @inline private final def clearTempMask(): Unit = {
-    var i = 0
-    while (i < nbLongs) {
+  @inline private def clearTempMask(): Unit = {
+    var i = nbLongs
+    while (i > 0) {
+      i -= 1
       tempMask(i) = 0L
-      i += 1
     }
   }
 
@@ -396,16 +385,14 @@ class TableCT(val X: Array[CPIntVar], table: Array[Array[Int]]) extends Constrai
    * @param varIndex the index of x.
    * @param valueIndex the index of a (i.e. a - originalMin(x)).
    */
-  @inline private final def orTempMask(varIndex: Int, valueIndex: Int): Unit = {
+  @inline private def orTempMask(varIndex: Int, valueIndex: Int): Unit = {
     val mask = masks(varIndex)(valueIndex)
-    if (mask != null) {
-      val start = Math.max(firstActive.value, starts(varIndex)(valueIndex))
-      val end = Math.min(lastActive.value, ends(varIndex)(valueIndex))
-      var offset = start
-      while (offset <= end) {
-        tempMask(offset) |= mask(offset)
-        offset += 1
-      }
+    val start = Math.max(firstActive.value, starts(varIndex)(valueIndex))
+    val end = Math.min(lastActive.value, ends(varIndex)(valueIndex))
+    var offset = start
+    while (offset <= end) {
+      tempMask(offset) |= mask(offset)
+      offset += 1
     }
   }
 
@@ -414,7 +401,7 @@ class TableCT(val X: Array[CPIntVar], table: Array[Array[Int]]) extends Constrai
    *      validTuples = validTuples & tempMask
    * @return true if validTuples has changed, false otherwise.
    */
-  @inline private final def andTempMaskWithValid(): Boolean = {
+  @inline private def andTempMaskWithValid(): Boolean = {
     val first = firstActive.value
     val last = lastActive.value
     var changed = false
@@ -436,7 +423,7 @@ class TableCT(val X: Array[CPIntVar], table: Array[Array[Int]]) extends Constrai
    *      validTuples = validTuples & (~tempMask)
    * @return true if validTuples has changed, false otherwise.
    */
-  @inline private final def substractTempMaskFromValid(): Boolean = {
+  @inline private def substractTempMaskFromValid(): Boolean = {
     val first = firstActive.value
     val last = lastActive.value
     var changed = false
@@ -458,7 +445,7 @@ class TableCT(val X: Array[CPIntVar], table: Array[Array[Int]]) extends Constrai
    * @param offset the index of the Long in validTuples to change.
    * @param mask the mask to apply.
    */
-  @inline private final def andValidTuples(offset: Int, mask: Long): Unit = {
+  @inline private def andValidTuples(offset: Int, mask: Long): Unit = {
     val storeMagic = store.magic
     if (lastMagics(offset) != storeMagic) {
       lastMagics(offset) = storeMagic
@@ -471,8 +458,8 @@ class TableCT(val X: Array[CPIntVar], table: Array[Array[Int]]) extends Constrai
    * Trail the value of validTuples[offset].
    * @param offset the index of the Long to trail.
    */
-  @inline private final def trail(offset: Int): Unit = {
-    val trailEntry = new LongTrailEntry(this, offset, validTuples(offset))
+  @inline private def trail(offset: Int): Unit = {
+    val trailEntry = new TableCTLongTrailEntry(this, offset, validTuples(offset))
     store.trail(trailEntry)
   }
 
@@ -482,23 +469,22 @@ class TableCT(val X: Array[CPIntVar], table: Array[Array[Int]]) extends Constrai
    * @param value the value to restore.
    */
   @inline final def restore(offset: Int, value: Long): Unit = validTuples(offset) = value
-  
-  
+
   /* ----- Functions used during the setup of the constraint ----- */
-  
+
   /* Bits operations */
-  private final def oneBitLong(pos: Int): Long = 1L << pos
-  private final def bitLength(size: Int): Int = (size + 63) >>> 6 // = pos / 64 + 1
-  private final def bitOffset(pos: Int): Int = pos >>> 6 // = pos / 64
-  private final def bitPos(pos: Int): Int = pos & 63 // = pos % 63
-  private final def setBit(bitset: Array[Long], pos: Int): Unit = bitset(bitOffset(pos)) |= oneBitLong(bitPos(pos))
+  @inline private def oneBitLong(pos: Int): Long = 1L << pos
+  @inline private def bitLength(size: Int): Int = (size + 63) >>> 6 // = pos / 64 + 1
+  @inline private def bitOffset(pos: Int): Int = pos >>> 6 // = pos / 64
+  @inline private def bitPos(pos: Int): Int = pos & 63 // = pos % 63
+  @inline private def setBit(bitset: Array[Long], pos: Int): Unit = bitset(bitOffset(pos)) |= oneBitLong(bitPos(pos))
 
   /**
    * Check if a tuple is valid.
    * @param tupleIndex the index of the tuple in the table.
    * @return true if the tuple is valid, false otherwise.
    */
-  private final def isTupleValid(tupleIndex: Int): Boolean = {
+  @inline private def isTupleValid(tupleIndex: Int): Boolean = {
     var varIndex = 0
     while (varIndex < arity) {
       if (!X(varIndex).hasValue(table(tupleIndex)(varIndex))) {
@@ -513,7 +499,7 @@ class TableCT(val X: Array[CPIntVar], table: Array[Array[Int]]) extends Constrai
    * Retrieve the valid tuples from the table and store their index in validTuplesBuffer.
    * @return Failure if there is no valid tuples, Suspend otherwise.
    */
-  private final def fillValidTuples(): CPOutcome = {
+  @inline private def fillValidTuples(): CPOutcome = {
     validTuplesBuffer.clear()
     var tupleIndex = 0
     while (tupleIndex < nbTuples) {
@@ -522,49 +508,49 @@ class TableCT(val X: Array[CPIntVar], table: Array[Array[Int]]) extends Constrai
       }
       tupleIndex += 1
     }
-    
+
     if (validTuplesBuffer.isEmpty) {
       return Failure
     }
 
     /* Compute number of Long in a bitset */
     nbLongs = bitLength(validTuplesBuffer.length)
-    
+
     Suspend
   }
 
   /**
    * Compute the mask for each variable value pair (x,a).
    */
-  private final def fillMasks(): Unit = {
+  @inline private def fillMasks(): Unit = {
     tempMask = Array.fill(nbLongs)(0L)
     validTuples = Array.fill(nbLongs)(0L)
     lastMagics = Array.fill(nbLongs)(-1L)
     lastActive.setValue(nbLongs - 1)
-    
+
     var validIndex = 0
     while (validIndex < validTuplesBuffer.length) {
       setBit(validTuples, validIndex)
-      
+
       val tupleIndex = validTuplesBuffer(validIndex)
       var varIndex = 0
       while (varIndex < arity) {
         val value = table(tupleIndex)(varIndex)
         val valueIndex = value - originalMins(varIndex)
         var mask = masks(varIndex)(valueIndex)
-        
+
         if (mask == null) {
           mask = Array.fill(nbLongs)(0L)
           masks(varIndex)(valueIndex) = mask
         }
         setBit(mask, validIndex)
-        
+
         varIndex += 1
       }
-      
+
       validIndex += 1
     }
-    
+
     validTuplesBuffer.clear()
   }
 
@@ -572,7 +558,7 @@ class TableCT(val X: Array[CPIntVar], table: Array[Array[Int]]) extends Constrai
    * Compute the bounds of the masks for each variable value pair (x,a), i.e. the minimal and maximal i such that
    *      mask(x,a) != 0
    */
-  private final def computeMasksBoundaries(): Unit = {
+  @inline private def computeMasksBoundaries(): Unit = {
     var varIndex = 0
     while (varIndex < arity) {
       var valueIndex = 0
@@ -580,12 +566,12 @@ class TableCT(val X: Array[CPIntVar], table: Array[Array[Int]]) extends Constrai
         val mask = masks(varIndex)(valueIndex)
         if (mask != null) {
           starts(varIndex)(valueIndex) = 0
-          while(mask(starts(varIndex)(valueIndex)) == 0L) {
+          while (mask(starts(varIndex)(valueIndex)) == 0L) {
             starts(varIndex)(valueIndex) += 1
           }
           lastSupports(varIndex)(valueIndex) = starts(varIndex)(valueIndex)
           ends(varIndex)(valueIndex) = nbLongs - 1
-          while(mask(ends(varIndex)(valueIndex)) == 0L) {
+          while (mask(ends(varIndex)(valueIndex)) == 0L) {
             ends(varIndex)(valueIndex) -= 1
           }
         }
@@ -593,14 +579,14 @@ class TableCT(val X: Array[CPIntVar], table: Array[Array[Int]]) extends Constrai
       }
       varIndex += 1
     }
-    
+
   }
 
   /**
    * Remove values not supported by any tuple.
    * @return the outcome i.e. Failure or Success.
    */
-  private final def removeUnsupportedValues(): CPOutcome = {
+  @inline private def removeUnsupportedValues(): CPOutcome = {
     var varIndex = 0
     while (varIndex < arity) {
       val intVar = X(varIndex)
@@ -610,7 +596,7 @@ class TableCT(val X: Array[CPIntVar], table: Array[Array[Int]]) extends Constrai
         val value = domainArray(i)
         val valueIndex = value - originalMins(varIndex)
         if (masks(varIndex)(valueIndex) == null) {
-          if(intVar.removeValue(value) == Failure) {
+          if (intVar.removeValue(value) == Failure) {
             return Failure
           }
         }
@@ -618,8 +604,8 @@ class TableCT(val X: Array[CPIntVar], table: Array[Array[Int]]) extends Constrai
       }
       varIndex += 1
     }
-    
+
     Suspend
   }
-  
+
 }

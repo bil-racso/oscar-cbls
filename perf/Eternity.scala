@@ -14,15 +14,14 @@ import oscar.cp.constraints.tables.TableAlgo
 object Eternity extends CPModel with App {
 
   val reader = new InFile("../data/eternity8x8.txt");
+  
   val n = reader.nextInt()
   val m = reader.nextInt()
-  println("n:"+n+" m:"+m)
   val pieces = Array.tabulate(n*m)(i =>  Array.fill(4)(reader.nextInt()).drop(0));
 
   val minColor = pieces.flatten.min
   val maxColor = pieces.flatten.max
   
-  println("minCol/maxCol:"+(minColor,maxColor))
     
     // create the variables
   val  id = Array.fill(n,m)(CPIntVar(0 until (n*m)))
@@ -36,9 +35,8 @@ object Eternity extends CPModel with App {
     val row = pieces(i)
     Array(i,row((r+0) % 4),row((r+1) % 4),row((r+2) % 4),row((r+3) % 4))
   }
-  println("table size:"+tableData.size)
   for (i <- 0 until n; j <- 0 until m) {    
-    add(table(Array(id(i)(j),up(i)(j),right(i)(j),down(i)(j),left(i)(j)),tableData.toArray,TableAlgo.CompactTable));
+    add(table(Array(id(i)(j),up(i)(j),right(i)(j),down(i)(j),left(i)(j)),tableData.toArray,TableAlgo.STR2));
   }
 
   

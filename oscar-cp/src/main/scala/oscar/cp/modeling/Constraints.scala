@@ -1,27 +1,20 @@
-/**
- * *****************************************************************************
+/*******************************************************************************
  * OscaR is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- *
+ *   
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License  for more details.
- *
+ *   
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
- * ****************************************************************************
- */
+ ******************************************************************************/
 
 package oscar.cp.modeling
 
-import java.util.LinkedList
-import scala.Vector
-import scala.collection.IndexedSeq
-import scala.collection.Iterable
-import scala.collection.immutable.Set
 import oscar.cp.constraints._
 import oscar.cp.core.variables.CPIntVarViewOffset
 import oscar.cp.core.variables.CPIntVarViewTimes
@@ -32,6 +25,7 @@ import oscar.cp._
 import oscar.cp.scheduling.constraints.DisjunctiveWithTransitionTimes
 import oscar.cp.constraints.tables.TableAlgo
 import oscar.cp.constraints.tables._
+import scala.collection.mutable.ArrayBuffer
 
 trait Constraints {
 
@@ -289,6 +283,13 @@ trait Constraints {
   def minCircuit(succ: Array[CPIntVar], distMatrixSucc: Array[Array[Int]], cost: CPIntVar, addPredModel: Boolean = true): Constraint = {
     return new MinCircuit(succ, distMatrixSucc, cost, addPredModel)
   }
+  
+  /**
+   * SubCircuit constraint (only one mode of filtering)
+   * This constraint enforces `successors` to represent an Hamiltonian circuit on a subset of nodes.
+   * A node that is not part of the circuit is its own successor. 
+   */
+  def subCircuit(successors: Array[CPIntVar]): Constraint = SubCircuit(successors)
 
   /**
    * Lexicographically Less or Equal Constraint
@@ -508,7 +509,10 @@ trait Constraints {
    * @return y == sum(i)(w_i * x_i)
    */
   def weightedSum(w: Array[Int], x: Array[CPIntVar], y: CPIntVar): Constraint = {
-    new WeightedSum(w, x.map(_.asInstanceOf[CPIntVar]), y)
+    var i = 0
+    while (i < w.length && w(i) == 1) i += 1
+    if (i == x.length) sum(x, y)
+    else new WeightedSum(w, x, y)
   }
 
   /**
@@ -1028,16 +1032,17 @@ trait Constraints {
     new Permutation(x, y)
   }
 
-  def sortedness(x: IndexedSeq[CPIntVar], s: IndexedSeq[CPIntVar], p: IndexedSeq[CPIntVar], strictly: Boolean = false): LinkedList[Constraint] = {
+  def sortedness(x: IndexedSeq[CPIntVar], s: IndexedSeq[CPIntVar], p: IndexedSeq[CPIntVar], strictly: Boolean = false): Array[Constraint] = {
     val cp = x(0).store
     val n = x.size
-    val cons = new LinkedList[Constraint]
+    val constraints = ArrayBuffer[Constraint]()
+
     for (i <- 0 until n - 1) {
-      cons.add(elementVar(x, p(i), Strong) <= elementVar(x, p(i + 1), Strong))
+      constraints.append(elementVar(x, p(i), Strong) <= elementVar(x, p(i + 1), Strong))
       if (strictly) {
-        cons.add(s(i) < s(i + 1))
+        constraints.append(s(i) < s(i + 1))
       } else {
-        cons.add(s(i) <= s(i + 1))
+        constraints.append(s(i) <= s(i + 1))
       }
 
     }
@@ -1047,26 +1052,26 @@ trait Constraints {
     val maxs = s.map(_.max).max
 
     for (i <- 0 until x.size) {
-      cons.add(p(i) >= 0)
-      cons.add(p(i) <= n)
+      constraints.append(p(i) >= 0)
+      constraints.append(p(i) <= n)
 
-      cons.add(s(i) <= maxx)
-      cons.add(s(i) >= minx)
+      constraints.append(s(i) <= maxx)
+      constraints.append(s(i) >= minx)
 
-      cons.add(x(i) <= maxs)
-      cons.add(x(i) >= mins)
+      constraints.append(x(i) <= maxs)
+      constraints.append(x(i) >= mins)
     }
     for (i <- 0 until n) {
-      cons.add(elementVar(x, p(i), s(i)))
+      constraints.append(elementVar(x, p(i), s(i)))
     }
-    cons.add(allDifferent(p))
+    constraints.append(allDifferent(p))
 
     val minVal: Int = x.map(_.min).min
     val maxVal: Int = x.map(_.max).max
 
     // array of variable occ with domains {0,...,n} that will represent the number of occurrences of each value
     val occ = Array.fill(maxVal - minVal + 1)(CPIntVar(0 to n)(cp))
-    cons.add(gcc(x, (minVal to maxVal).zip(occ)))
+    constraints.append(gcc(x, (minVal to maxVal).zip(occ)))
 
     // nbBefore(i) = #{i | x(i) < i } i.e. number of values strictly small than i for i in [minVal .. maxVal]
     val nbBefore = for (i <- minVal to maxVal) yield {
@@ -1076,9 +1081,9 @@ trait Constraints {
 
     for (i <- 0 until n) {
       // there are less than i values smaller than s(i) 
-      cons.add(elementVar(nbBefore, s(i) - minVal) <= i)
+      constraints.append(elementVar(nbBefore, s(i) - minVal) <= i)
     }
-    cons
+    constraints.toArray
   }
 
   /**
@@ -1244,6 +1249,8 @@ trait Constraints {
    * @param id, the resource on which we want to constraint the capacity (only tasks i with resources(i) = id are taken into account)
    */
   def maxCumulativeResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], demands: Array[CPIntVar], resources: Array[CPIntVar], capacity: CPIntVar, id: Int): Constraint = {
+    
+    
     MaxCumulative(starts, durations, ends, demands, resources, capacity, id)
   }
 

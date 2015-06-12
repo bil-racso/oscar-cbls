@@ -22,7 +22,7 @@ import oscar.cp.core.Constraint
  * Represents a view -x on variable x 
  * @author Pierre Schaus pschaus@gmail.com
  */
-class CPIntVarViewMinus(v: CPIntVar) extends CPIntVar {
+final class CPIntVarViewMinus(v: CPIntVar) extends CPIntVar {
     
   final override val store: CPStore = v.store
   
@@ -63,8 +63,19 @@ class CPIntVarViewMinus(v: CPIntVar) extends CPIntVar {
 	def iterator = {
 		v.iterator.map(-_)
 	}
+  
+  @inline final def restrict(newDomain: Array[Int], newSize: Int): Unit = {
+    assert(newSize > 0 && newSize <= size)
+    val mapped = new Array[Int](newSize)
+    var i = newSize
+    while (i > 0) {
+      i -= 1
+      mapped(i) = -newDomain(i)
+    }
+    v.restrict(mapped, newSize)
+  }
 	
-	override def toString() = "-("+v+")";
+	override def toString() = "-("+v+")"
 		
 	def callPropagateWhenBind(c: Constraint) = v.callPropagateWhenBind(c)
 	

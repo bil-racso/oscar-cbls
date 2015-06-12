@@ -307,7 +307,7 @@ class TableGAC4R(val X: Array[CPIntVar], initTable: Array[Array[Int]]) extends C
       val x = X(indexMax)
       val supportsX = supports(indexMax)
       val originalMinX = originalMins(indexMax)
-      for (a <- x.domainIterator) {
+      for (a <- x.iterator) {
         val aIndex = a - originalMinX
         val supportsXa = supportsX(aIndex)
         val nbSupportsXa = supportsX.size(aIndex)
@@ -324,7 +324,7 @@ class TableGAC4R(val X: Array[CPIntVar], initTable: Array[Array[Int]]) extends C
         val y = X(i)
         val supportsY = supports(i)
         val originalMinY = originalMins(i)
-        for (b <- y.domainIterator) {
+        for (b <- y.iterator) {
           supportsY.clear(b - originalMinY)
         }
         i += 1
