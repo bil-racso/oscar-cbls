@@ -389,13 +389,15 @@ class ProfileStructure(
     minHeight
   }
   
+  hStack(0) = Int.MaxValue
   def minHeightOf(a: Int) = {
     val first = emin(a) // this is only used for tasks with no mandatory part
-    val last  = smax(a) 
+    val last  = smax(a)
+    val d = dmin(a)
     
     var i = indexBefore(a, smin(a))  // find plateau where a can start
-    sPointer = 0
-    hStack(0) = Int.MaxValue
+//    sPointer = 0
+//    hStack(0) = Int.MaxValue
     dStack(0) = first
     
     sPointer = 1
@@ -407,12 +409,11 @@ class ProfileStructure(
     var minHeight = Int.MaxValue
     
     while (pointTimes(i) < last) {    
-      val thispoint = math.min(pointTimes(i), last)
-      minHeight = math.min(minHeight, unstack(thispoint, pointHeights(i), dmin(a)))
+      minHeight = math.min(minHeight, unstack(pointTimes(i), pointHeights(i), d))
       i += 1
     }
       
-    minHeight = math.min(minHeight, unstack(last, Int.MaxValue - 1, dmin(a)))
+    minHeight = math.min(minHeight, unstack(last, Int.MaxValue - 1, d))
     
     minHeight
   }

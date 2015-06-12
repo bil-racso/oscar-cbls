@@ -49,7 +49,7 @@ extends CumulativeTemplate(starts, durations, ends, heights, resources, capacity
   priorityL2 = 2
   private[this] val nTasks = starts.length
   
-  def nextPowerOfTwo(k: Int): Int = {
+  private def nextPowerOfTwo(k: Int): Int = {
     1 << math.ceil(math.log(k) / math.log(2)).toInt
   }
   
@@ -58,30 +58,30 @@ extends CumulativeTemplate(starts, durations, ends, heights, resources, capacity
   // there are 2 * req nodes in the tree, node 0 is never used.
   // leaves are counted from bottom leftmost to right
   // TODO: optimize the size of tree
-  def leafRankToArray(rank: Int, nLeaves: Int): Int = {
+  private def leafRankToArray(rank: Int, nLeaves: Int): Int = {
     val r = nextPowerOfTwo(nLeaves)
     r + rank
   }
     
   // TODO: optimize the size of tree
-  val workload    = Array.ofDim[Int](2 * nextPowerOfTwo(nTasks)) 
-  val energy      = Array.ofDim[Int](2 * nextPowerOfTwo(nTasks))   // base energy level
-  val workloadOpt = Array.ofDim[Int](2 * nextPowerOfTwo(nTasks))   // maximum workload of this node using at most one optional
-  val energyOpt   = Array.ofDim[Int](2 * nextPowerOfTwo(nTasks))   // maximum energy of an optional activity at this node
-  val activityOpt = Array.ofDim[Int](2 * nextPowerOfTwo(nTasks))   // optional activity with max energy
+  private[this] val workload    = Array.ofDim[Int](2 * nextPowerOfTwo(nTasks)) 
+  private[this] val energy      = Array.ofDim[Int](2 * nextPowerOfTwo(nTasks))   // base energy level
+  private[this] val workloadOpt = Array.ofDim[Int](2 * nextPowerOfTwo(nTasks))   // maximum workload of this node using at most one optional
+  private[this] val energyOpt   = Array.ofDim[Int](2 * nextPowerOfTwo(nTasks))   // maximum energy of an optional activity at this node
+  private[this] val activityOpt = Array.ofDim[Int](2 * nextPowerOfTwo(nTasks))   // optional activity with max energy
   
 
-  val activitiesByLCT = Array.ofDim[Int](nTasks)  // required activities
-  val leafActivity = Array.ofDim[Int](nTasks)  // leaf -> activity
-  val activityLeaf = Array.ofDim[Int](nTasks)  // activity -> leaf
-  var C = capacity.max
+  private[this] val activitiesByLCT = Array.ofDim[Int](nTasks)  // required activities
+  private[this] val leafActivity = Array.ofDim[Int](nTasks)  // leaf -> activity
+  private[this] val activityLeaf = Array.ofDim[Int](nTasks)  // activity -> leaf
+  private var C = capacity.max
   
   // for mergeSort
-  val temp1 = Array.ofDim[Int](nTasks + 1)
-  val temp2 = Array.ofDim[Int](nTasks + 1)
+  private[this] val temp1 = Array.ofDim[Int](nTasks + 1)
+  private[this] val temp2 = Array.ofDim[Int](nTasks + 1)
 
-  val sortedBySMin = Array.tabulate(nTasks){ i => i }
-  val sortedByEMax = Array.tabulate(nTasks){ i => i }
+  private[this] val sortedBySMin = Array.tabulate(nTasks){ i => i }
+  private[this] val sortedByEMax = Array.tabulate(nTasks){ i => i }
   
   override def propagate(): CPOutcome = {
     updateCache()
@@ -190,7 +190,7 @@ extends CumulativeTemplate(starts, durations, ends, heights, resources, capacity
   }
   
   @tailrec
-  def insertActivity(t: Int): Unit = {
+  final def insertActivity(t: Int): Unit = {
     if (t > 0) {
       val left = t << 1
       val right = 1 + left
@@ -216,7 +216,7 @@ extends CumulativeTemplate(starts, durations, ends, heights, resources, capacity
    * but when activity removal is rare, recomputing on need is cheaper.
    */
   @tailrec
-  def getMaxOptional(t:Int, tMax: Int): Int = {
+  final def getMaxOptional(t:Int, tMax: Int): Int = {
     if (t >= tMax) t  // reached a leaf
     else {
       val left = t << 1
@@ -240,7 +240,7 @@ extends CumulativeTemplate(starts, durations, ends, heights, resources, capacity
    * find which optional activity causes the value of workloadOpt
    */
   @tailrec
-  def getMaxOptionalWorkload(t: Int, tMax: Int): Int = {
+  final def getMaxOptionalWorkload(t: Int, tMax: Int): Int = {
     if (t >= tMax) t  // reached a leaf
     else {
       val left = t << 1
