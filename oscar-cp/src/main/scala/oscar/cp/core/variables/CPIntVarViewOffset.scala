@@ -65,6 +65,17 @@ class CPIntVarViewOffset(v: CPIntVar, offset: Int) extends CPIntVar {
 		v.iterator.map(_ + offset)
 	}
   
+  @inline final def restrict(newDomain: Array[Int], newSize: Int): Unit = {
+    assert(newSize > 0 && newSize <= size)
+    val mapped = new Array[Int](newSize)
+    var i = newSize
+    while (i > 0) {
+      i -= 1
+      mapped(i) = newDomain(i) - offset
+    }
+    v.restrict(mapped, newSize)
+  }
+  
   final override def fillArray(array: Array[Int]): Int = {
     val m = v.fillArray(array)
     var i = 0

@@ -647,6 +647,7 @@ class CPIntVarAdaptable( final override val store: CPStore, minValue: Int, maxVa
   }
 
   final def restrict(newDomain: Array[Int], newSize: Int): Unit = {
+    assert(newSize > 0 && newSize <= size )
     
     // Restrict the domain
     if (_continuous) buildSparse()

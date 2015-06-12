@@ -132,6 +132,11 @@ final class CPIntVarSingleton(final override val store: CPStore, initValue: Int,
     Failure
   }
   
+  @inline final def restrict(newDomain: Array[Int], newSize: Int): Unit = {
+    assert(newSize <= 1)
+    assert(initValue == newDomain(0))
+  }
+  
     
   final override def delta(oldMin: Int, oldMax: Int, oldSize: Int): Iterator[Int] = ???
   final override def fillDeltaArray(oldMin: Int, oldMax: Int, oldSize: Int, arr: Array[Int]): Int = ??? 

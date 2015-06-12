@@ -183,6 +183,22 @@ class CPBoolVarImpl private(final override val store: CPStore, initDomain: Int, 
     else if (domain == TRUE) Iterator(1)
     else Iterator.empty
   }
+  
+  final override def restrict(newDomain: Array[Int], newSize: Int): Unit = {
+    assert(newSize > 0 && newSize <= size )
+    if (newSize == 1) {
+      val value = newDomain(0)
+      assert(value == 1 || value == 0)
+      if (value == 0) {
+        assert(domain == FALSE)
+        setDomainFalse()
+      } else {
+        assert(domain == TRUE)
+        setDomainTrue()
+      }
+    }   
+  }
+
     
   final override def constraintTrue(): Constraint = new oscar.cp.constraints.EqCons(this, 1)
 

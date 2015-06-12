@@ -310,6 +310,12 @@ abstract class CPIntVar extends CPVar with Iterable[Int] {
    * @return  Suspend if the domain is not equal to the singleton {val}, Failure otherwise
    */
   def removeValue(value: Int): CPOutcome
+  
+  /** 
+   *  Restrict the domain to be equal to the `newSize` first values contained in `newDomain`.
+   *  Observe that the restricted new domain must be a subset of the actual domain of the variable.
+   */
+  def restrict(newDomain: Array[Int], newSize: Int): Unit
 
   // ------ delta methods to be called in propagate -------
 
