@@ -517,6 +517,8 @@ class AllDifferent(searchVariables: Array[CBLSIntVarDom], objective: CBLSObjecti
       cnt(cur(i)) = cnt.getOrElse(cur(i), 0) + 1
       if(cnt(cur(i))>1)nbprob +=1
     }
+    //TODO: Correct this code to avoid an infinite loop!
+    //TODO: We actually need to make a max matching as in the CP propagator.
     var i = 0
     while(nbprob > 0){
        if(cnt(cur(i))>1){

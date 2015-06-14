@@ -51,7 +51,8 @@ class FZCBLSObjective(cblsmodel:FZCBLSModel,log:Log){
   private val objectiveVar = cblsmodel.model.search.variable.map(cblsmodel.getCBLSVar(_)).getOrElse(null)
   val violation = cblsmodel.c.violation;
   val violationWeight = CBLSIntVar(cblsmodel.c.model, 1, 0 to (if(violation.max!=0)math.max(1,Int.MaxValue/violation.max/2) else 1) , "violation_weight")
-  val objectiveWeight = CBLSIntVar(cblsmodel.c.model, 1, 0 to (if(objectiveVar!=null)math.max(1,Int.MaxValue/objectiveVar.max/2) else 1) , "objective_weight")
+  //TODO: The division does not seem right... why max and not min?
+  val objectiveWeight = CBLSIntVar(cblsmodel.c.model, 1, 0 to (if(objectiveVar!=null && objectiveVar.max > 0)math.max(1,Int.MaxValue/objectiveVar.max/2) else 1) , "objective_weight")
   private val objective2 = opt match {
         case Objective.SATISFY => violation
         case Objective.MAXIMIZE => Minus(Prod2(violation, violationWeight), Prod2(objectiveVar, objectiveWeight))
@@ -259,6 +260,9 @@ class FZCBLSSolver extends SearchEngine with StopWatch {
     model.constraints.foreach{ case reif(c,b) => if(b.isBound) log(0,"Fixed reified constraint: "+b.boolValue); case _ => {}}
     
     
+//      for(c <- model.constraints ){
+//        if(c.definedVar.isDefined)c.unsetDefinedVar(c.definedVar.get)
+//      }    
     
     
     
