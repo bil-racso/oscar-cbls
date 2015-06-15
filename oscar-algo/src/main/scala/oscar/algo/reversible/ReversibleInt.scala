@@ -20,10 +20,12 @@ package oscar.algo.reversible;
  * @author Pierre Schaus  pschaus@gmail.com
  * @author Renaud Hartert ren.hartert@gmail.com
  */
-class ReversibleInt(context: ReversibleContext, initValue: Int) extends TrailEntry {
+class ReversibleInt(context: ReversibleContext, initValue: Int, initSize: Int) extends TrailEntry {
+  
+  def this(context: ReversibleContext, initValue: Int) = this(context, initValue, 32)
   
   // Inner trailing queue
-  private[this] var trail = new Array[Int](64)
+  private[this] var trail = new Array[Int](initSize)
   private[this] var trailSize = 0
   
   // Current value
@@ -92,16 +94,10 @@ class ReversibleInt(context: ReversibleContext, initValue: Int) extends TrailEnt
   /** @return current value */
   @inline final def value: Int = pointer
 
-  /**
-   * Check if the pointer is different from null
-   * @return true if the pointer is != null, false otherwise
-   */
-  @inline final def hasValue: Boolean = true
-
   /** @return the current pointer */
   @inline final def getValue(): Int = pointer
 
-  override def toString(): String = if (hasValue) pointer.toString else ""
+  override def toString(): String = pointer.toString
     
   @inline private def growTrail(): Unit = {
     val newTrail = new Array[Int](trailSize * 2)
