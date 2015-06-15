@@ -36,7 +36,7 @@ object Eternity extends CPModel with App {
     Array(i,row((r+0) % 4),row((r+1) % 4),row((r+2) % 4),row((r+3) % 4))
   }
   for (i <- 0 until n; j <- 0 until m) {    
-    add(table(Array(id(i)(j),up(i)(j),right(i)(j),down(i)(j),left(i)(j)),tableData.toArray,TableAlgo.STR2));
+    add(table(Array(id(i)(j),up(i)(j),right(i)(j),down(i)(j),left(i)(j)),tableData.toArray,TableAlgo.CompactTable));
   }
 
   
