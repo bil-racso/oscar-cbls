@@ -20,9 +20,6 @@ package oscar.algo.reversible;
  * @author Pierre Schaus  pschaus@gmail.com
  * @author Renaud Hartert ren.hartert@gmail.com
  */
-
-
-
 class ReversibleInt(context: ReversibleContext, initValue: Int) extends TrailEntry {
   
   // Inner trailing queue

@@ -26,7 +26,7 @@ import oscar.algo.reversible.ReversibleArrayStack
  */
 class ReversibleArrayStackTest extends FunSuite {
 
-  test("test ReversibleArrayStack 1") {
+  /*test("test ReversibleArrayStack 1") {
 
     val rc = new ReversibleContext()
 
@@ -63,7 +63,7 @@ class ReversibleArrayStackTest extends FunSuite {
     
     //
 
-  }
+  }*/
   
 
 }
