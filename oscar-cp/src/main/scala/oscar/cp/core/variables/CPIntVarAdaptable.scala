@@ -59,7 +59,7 @@ final class CPIntVarAdaptable( final override val store: CPStore, minValue: Int,
   private[this] var _size = maxValue - minValue + 1
   
   // Inner trail
-  private[this] val initTrailSize = if (continuous) Math.max(16, _size / 4) else Math.max(2, _size / 4)
+  private[this] val initTrailSize = computeInitialTrailSize
   private[this] var trailMin = new Array[Int](initTrailSize)
   private[this] var trailMax = new Array[Int](initTrailSize)
   private[this] var trailSize = new Array[Int](initTrailSize)
@@ -73,6 +73,11 @@ final class CPIntVarAdaptable( final override val store: CPStore, minValue: Int,
 
   // Switch to a sparse set if necessary
   if (!continuous) buildSparse()
+  
+  @inline private def computeInitialTrailSize: Int = {
+    if (continuous) Math.min(16, Math.max(2, _size / 4))
+    else Math.min(128, Math.max(2, _size / 4))
+  }
 
   @inline private def trail(): Unit = {
     val contextMagic = store.magic
