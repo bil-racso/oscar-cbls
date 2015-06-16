@@ -17,7 +17,7 @@ import oscar.cp.core.watcher.WatcherListL1
  * @author Renaud Hartert ren.hartert@gmail.com
  */
 
-class CPBoolVarImpl private(final override val store: CPStore, initDomain: Int, final override val name: String = "") extends CPBoolVar {
+class CPBoolVarImpl private(final override val store: CPStore, initDomain: Int, final override val name: String = "") extends CPBoolVar with TrailEntry {
   
   import CPBoolVarImpl._
   
@@ -37,11 +37,9 @@ class CPBoolVarImpl private(final override val store: CPStore, initDomain: Int, 
   // 10 : Unassigned
   // 01 : Empty
   private[this] var domain: Int = initDomain
-
-  // A Boolean variable only needs one pre-instantiated trail entry
-  private[this] val trailEntry = new TrailEntry { 
-    final override def restore(): Unit = domain = UNASSIGNED 
-  }
+  
+  // Domain to restore when a backtrack occurs
+  private[this] var trailedDomain: Int = UNASSIGNED
 
   final override def transform(v: Int) = v
 
@@ -142,9 +140,15 @@ class CPBoolVarImpl private(final override val store: CPStore, initDomain: Int, 
     else if (value == 1) assignFalse()
     else Suspend
   }
+  
+  final override def restore(): Unit = {
+    domain = trailedDomain
+    trailedDomain = UNASSIGNED
+  }
 
   @inline private def setDomainTrue(): CPOutcome = {
-    store.trail(trailEntry)
+    store.trail(this)
+    trailedDomain = domain
     domain = TRUE
     // Notify constraints
     onDomainL1.enqueueRemove(0)
@@ -157,7 +161,8 @@ class CPBoolVarImpl private(final override val store: CPStore, initDomain: Int, 
   }
 
   @inline private def setDomainFalse(): CPOutcome = {
-    store.trail(trailEntry)
+    store.trail(this)
+    trailedDomain = domain
     domain = FALSE
     // Notify constraints
     onDomainL1.enqueueRemove(1)
@@ -170,9 +175,8 @@ class CPBoolVarImpl private(final override val store: CPStore, initDomain: Int, 
   }
 
   @inline private def setDomainEmpty(): CPOutcome = {
-    // FIXME
-    val value = domain
-    store.trail(new TrailEntry { final override def restore(): Unit = domain = value })
+    store.trail(this)
+    trailedDomain = domain
     domain = EMPTY
     Failure
   }
