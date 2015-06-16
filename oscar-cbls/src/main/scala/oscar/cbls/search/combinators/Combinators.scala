@@ -262,7 +262,8 @@ class Random(a: Neighborhood*) extends NeighborhoodCombinator(a:_*) {
  * @param a a neighborhood
  * @author renaud.delandtsheer@cetic.be
  */
-class BiasedRandom(a: (Neighborhood,Double)*) extends NeighborhoodCombinator(a.map(_._1):_*) {
+class BiasedRandom(a: (Neighborhood,Double)*)(noRetryOnExhaust:Boolean = false) extends NeighborhoodCombinator(a.map(_._1):_*) {
+  require(a.nonEmpty)
 
   abstract sealed class Node(val weight:Double)
   case class MiddleNode(l:Node,r:Node) extends Node(l.weight + r.weight)
@@ -278,7 +279,7 @@ class BiasedRandom(a: (Neighborhood,Double)*) extends NeighborhoodCombinator(a.m
     }
   }
 
-  def fixpoint[A](init:A, function:A => A, fixpointReached:A => Boolean):A={
+  def fixPoint[A](init:A, function:A => A, fixpointReached:A => Boolean):A={
     var current = init
     while(!fixpointReached(current)){
       current = function(current)
@@ -286,7 +287,7 @@ class BiasedRandom(a: (Neighborhood,Double)*) extends NeighborhoodCombinator(a.m
     current
   }
 
-  val initialNeighborhoodTree:Node =  fixpoint(
+  val initialNeighborhoodTree:Node =  fixPoint(
     a.toList.map(nw => new TerminalNode(nw._2,nw._1)),
     reduce,
     (_:List[Node]) match{case List(_) => true; case _ => false}
@@ -304,18 +305,20 @@ class BiasedRandom(a: (Neighborhood,Double)*) extends NeighborhoodCombinator(a.m
     }
   }
 
+  var neighborhoodWithExhaustedRemoved:Option[Node] = Some(initialNeighborhoodTree)
+
   override def getMove(obj: Objective, acceptanceCriteria: (Int, Int) => Boolean): SearchResult = {
-    var remainingNeighborhoods:Option[Node] = Some(initialNeighborhoodTree)
+    var remainingNeighborhoods:Option[Node] = neighborhoodWithExhaustedRemoved
     while (true) {
       remainingNeighborhoods match{
         case None => return NoMoveFound
-        case Some(t:TerminalNode) => return t.n.getMove(obj,acceptanceCriteria)
         case Some(node) =>
           val (newHead,selectedNeighborhood) = findAndRemove(node,r.nextFloat()*node.weight)
           remainingNeighborhoods = newHead
           selectedNeighborhood.getMove(obj, acceptanceCriteria) match {
             case m: MoveFound => return m
-            case _ => ;
+            case _ =>
+              if(noRetryOnExhaust) neighborhoodWithExhaustedRemoved = newHead
           }
       }
     }
@@ -323,20 +326,27 @@ class BiasedRandom(a: (Neighborhood,Double)*) extends NeighborhoodCombinator(a.m
   }
 }
 
-//TODO: the learning mechanism is crap: measuring on the slope is unstable is neighborhod is never called.
+//TODO: the learning mechanism is crap: measuring on the slope is unstable is neighborhood is never called.
 
+/**
+ *
+ * inspired from O. Braysy, A reactive variable neighborhood search for the vehicle-routing problem with time windows, INFORMS JOURNAL ON COMPUTING 15 (2003), no. 4, 347-368.
+ * @param l
+ * @param weightUpdate
+ * @param updateEveryXCalls
+ */
 class LearningRandom(l:List[Neighborhood], weightUpdate:(Statistics,Double) => Double = (stat,oldWeight) => stat.slopeOrZero + oldWeight, updateEveryXCalls:Int = 10)
   extends NeighborhoodCombinator(l:_*){
 
   val instrumentedNeighborhood = l.map(Statistics(_))
   var weightedInstrumentedNeighborhoods = instrumentedNeighborhood.map((_,1.0))
-  var currentRandom = new BiasedRandom(weightedInstrumentedNeighborhoods:_*)
+  var currentRandom = new BiasedRandom(weightedInstrumentedNeighborhoods:_*)()
   var stepsBeforeUpdate = updateEveryXCalls
 
   override def getMove(obj: Objective, acceptanceCriterion: (Int, Int) => Boolean): SearchResult = {
     if(stepsBeforeUpdate <= 0){
       weightedInstrumentedNeighborhoods = weightedInstrumentedNeighborhoods.map(nw=> (nw._1,weightUpdate(nw._1,nw._2)))
-      currentRandom = new BiasedRandom(weightedInstrumentedNeighborhoods:_*)
+      currentRandom = new BiasedRandom(weightedInstrumentedNeighborhoods:_*)()
       stepsBeforeUpdate = updateEveryXCalls
       println("review done" + weightedInstrumentedNeighborhoods)
     }
