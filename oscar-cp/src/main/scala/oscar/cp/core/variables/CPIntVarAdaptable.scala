@@ -35,7 +35,16 @@ import scala.collection.JavaConversions.mapAsScalaMap
  *  @author Renaud Hartert ren.hartert@gmail.com
  *  @author Pierre Schaus pschaus@gmail.com
  */
-final class CPIntVarAdaptable( final override val store: CPStore, minValue: Int, maxValue: Int, continuous: Boolean, final override val name: String = "") extends CPIntVar with TrailEntry {
+
+class CPIntVarAdaptableDomainContinuous(variable: CPIntVarAdaptable, min: Int, max: Int, size: Int) extends TrailEntry {
+  final override def restore(): Unit = variable.restoreContinuous(min, max, size)
+}
+
+class CPIntVarAdaptableDomainSparse(variable: CPIntVarAdaptable, min: Int, max: Int, size: Int) extends TrailEntry {
+  final override def restore(): Unit = variable.restoreSparse(min, max, size)
+}
+
+final class CPIntVarAdaptable( final override val store: CPStore, minValue: Int, maxValue: Int, continuous: Boolean, final override val name: String = "") extends CPIntVar {
 
   // Registered constraints
   private[this] val onBindL2 = new WatcherListL2(store)
@@ -57,63 +66,31 @@ final class CPIntVarAdaptable( final override val store: CPStore, minValue: Int,
   private[this] var _min = minValue
   private[this] var _max = maxValue
   private[this] var _size = maxValue - minValue + 1
-  
-  // Inner trail
-  private[this] val initTrailSize = computeInitialTrailSize
-  private[this] var trailMin = new Array[Int](initTrailSize)
-  private[this] var trailMax = new Array[Int](initTrailSize)
-  private[this] var trailSize = new Array[Int](initTrailSize)
-  private[this] var nTrailEntry = 0
-  
+
+  // Switch to a sparse set if necessacry
+  if (!continuous) buildSparse()
+
   // Used to trail changes in the domain
   private[this] var lastMagic: Long = -1L
-
-  // True if the domain had to switch its representation
-  private[this] var switchLevel = -1
-
-  // Switch to a sparse set if necessary
-  if (!continuous) buildSparse()
-  
-  @inline private def computeInitialTrailSize: Int = {
-    if (continuous) Math.min(16, Math.max(2, _size / 4))
-    else Math.min(128, Math.max(2, _size / 4))
-  }
 
   @inline private def trail(): Unit = {
     val contextMagic = store.magic
     if (lastMagic != contextMagic) {
       lastMagic = contextMagic
-      if (nTrailEntry == trailMin.length) growTrail()
-      trailMin(nTrailEntry) = _min
-      trailMax(nTrailEntry) = _max
-      trailSize(nTrailEntry) = _size
-      nTrailEntry += 1
-      store.trail(this)
+      if (_continuous) store.trail(new CPIntVarAdaptableDomainContinuous(this, _min, _max, _size))
+      else store.trail(new CPIntVarAdaptableDomainSparse(this, _min, _max, _size))
     }
   }
-  
-  @inline final override def restore(): Unit = {
-    nTrailEntry -= 1
-    _min = trailMin(nTrailEntry)
-    _max = trailMax(nTrailEntry)
-    _size = trailSize(nTrailEntry)
-    if (nTrailEntry < switchLevel) {
-      switchLevel = nTrailEntry
-      buildSparse()
-    }
+
+  // Restore the domain to continuous domain
+  @inline final def restoreContinuous(oldMin: Int, oldMax: Int, oldSize: Int): Unit = {
+    _min = oldMin; _max = oldMax; _size = oldSize
+    if (!_continuous) buildSparse() // recreate a sparse domain on backtrack
   }
-  
-  @inline private def growTrail(): Unit = {
-    val newSize = nTrailEntry * 2
-    val newTrailMin = new Array[Int](newSize)
-    val newTrailMax = new Array[Int](newSize)
-    val newTrailSize = new Array[Int](newSize)
-    System.arraycopy(trailMin, 0, newTrailMin, 0, nTrailEntry)
-    System.arraycopy(trailMax, 0, newTrailMax, 0, nTrailEntry)
-    System.arraycopy(trailSize, 0, newTrailSize, 0, nTrailEntry)
-    trailMin = newTrailMin
-    trailMax = newTrailMax
-    trailSize = newTrailSize
+
+  // Restore the domain to a sparse domain
+  @inline final def restoreSparse(oldMin: Int, oldMax: Int, oldSize: Int): Unit = {
+    _min = oldMin; _max = oldMax; _size = oldSize
   }
 
   @inline final override def size: Int = _size
@@ -287,16 +264,13 @@ final class CPIntVarAdaptable( final override val store: CPStore, minValue: Int,
     }
   }
 
-  // Switch the domain representation
   @inline private def buildSparse(): Unit = {
-    if (_continuous) {
-      _continuous = false
-      switchLevel = nTrailEntry
-    }
+    _continuous = false
     val nValues = _max - _min + 1
     offset = _min
     values = Array.tabulate(nValues)(i => i + offset)
     positions = Array.tabulate(nValues)(i => i)
+
   }
 
   @inline private def removeSparse(value: Int): CPOutcome = {
@@ -791,7 +765,7 @@ final class CPIntVarAdaptable( final override val store: CPStore, minValue: Int,
 
   final def deltaSize(c: Constraint): Int = deltaSize(c.snapshotsVarInt(this))
 
-  final override def fillDeltaArray(oldMin: Int, oldMax: Int, oldSize: Int, arr: Array[Int]): Int = {
+  @inline final override def fillDeltaArray(oldMin: Int, oldMax: Int, oldSize: Int, arr: Array[Int]): Int = {
     var i = 0
     if (_continuous) {
       var j = oldMin
