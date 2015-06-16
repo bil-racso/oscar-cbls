@@ -22,9 +22,7 @@ class CPBoolVarImpl private(final override val store: CPStore, initDomain: Int, 
   import CPBoolVarImpl._
   
   // Registered constraints
-  private[this] val onBoundsL2 = new WatcherListL2(store)
   private[this] val onBindL2 = new WatcherListL2(store)
-  private[this] val onDomainL2 = new WatcherListL2(store)
   private[this] val onBoundsL1 = new WatcherListL1(store)
   private[this] val onBindL1 = new WatcherListL1(store)
   private[this] val onDomainL1 = new WatcherListL1(store)
@@ -154,8 +152,6 @@ class CPBoolVarImpl private(final override val store: CPStore, initDomain: Int, 
     onDomainL1.enqueueRemove(0)
     onBoundsL1.enqueueBounds()
     onBindL1.enqueueBind()
-    onDomainL2.enqueue()
-    onBoundsL2.enqueue()
     onBindL2.enqueue()
     Suspend
   }
@@ -168,8 +164,6 @@ class CPBoolVarImpl private(final override val store: CPStore, initDomain: Int, 
     onDomainL1.enqueueRemove(1)
     onBoundsL1.enqueueBounds()
     onBindL1.enqueueBind()
-    onDomainL2.enqueue()
-    onBoundsL2.enqueue()
     onBindL2.enqueue()
     Suspend
   }
@@ -229,12 +223,12 @@ class CPBoolVarImpl private(final override val store: CPStore, initDomain: Int, 
 
   final override def callPropagateWhenBoundsChange(c: Constraint) {
     degree.incr()
-    onBoundsL2.register(c)
+    onBindL2.register(c)
   }
 
   final override def callPropagateWhenDomainChanges(c: Constraint, trackDelta: Boolean = false) {
     degree.incr()
-    onDomainL2.register(c)
+    onBindL2.register(c)
     if (trackDelta) c.addSnapshot(this)
   }
   
