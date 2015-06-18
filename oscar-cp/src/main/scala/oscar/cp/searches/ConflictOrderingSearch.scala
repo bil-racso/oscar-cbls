@@ -3,10 +3,7 @@ package oscar.cp.searches
 import oscar.cp.core.CPStore
 import oscar.algo.reversible.ReversibleInt
 import oscar.cp.CPIntVar
-import scala.collection.mutable.Queue
-import oscar.nogood.decisions._
 import oscar.algo.search.Branching
-import oscar.algo.search.Alternative
 import oscar.cp.modeling.Branchings
 
 /*
