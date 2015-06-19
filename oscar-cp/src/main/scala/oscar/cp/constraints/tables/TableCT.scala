@@ -20,7 +20,6 @@ package oscar.cp.constraints.tables
 import oscar.algo.reversible.{ ReversibleInt, ReversibleBoolean, TrailEntry }
 import oscar.cp.core.variables.CPIntVar
 import oscar.cp.core.{ Constraint, CPStore, CPOutcome, CPPropagStrength }
-import oscar.cp.core.delta.DeltaIntVar
 import oscar.cp.core.CPOutcome._
 import scala.collection.mutable.ArrayBuffer
 import oscar.cp.core.delta.SnapshotIntVar

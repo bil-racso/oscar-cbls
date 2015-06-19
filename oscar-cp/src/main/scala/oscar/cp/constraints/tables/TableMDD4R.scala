@@ -18,7 +18,6 @@ package oscar.cp.constraints.tables
 import oscar.cp.core.variables.CPIntVar
 import oscar.cp.core.{Constraint, CPOutcome, CPPropagStrength}
 import oscar.cp.core.CPOutcome._
-import oscar.cp.core.delta.DeltaIntVar
 import oscar.cp.constraints.tables.mdd.{MDDTableVar, ReversibleMDD}
 
 /**
@@ -86,7 +85,7 @@ class TableMDD4R (val X: Array[CPIntVar], table: Array[Array[Int]]) extends Cons
     Suspend
   }
   
-  @inline final def propagateDelta(tableVar: MDDTableVar, indexVar: Int, deltaVar: DeltaIntVar): CPOutcome = {
+  /*@inline final def propagateDelta(tableVar: MDDTableVar, indexVar: Int, deltaVar: DeltaIntVar): CPOutcome = {
     if (!tableVar.hasChanged) {
       return Suspend
     }
@@ -102,7 +101,7 @@ class TableMDD4R (val X: Array[CPIntVar], table: Array[Array[Int]]) extends Cons
     
     deltaSize = newDeltaSize
     update(tableVar, indexVar)
-  }
+  }*/
   
   /**
    * We update the MDD by removing edges corresponding to the delta values. We

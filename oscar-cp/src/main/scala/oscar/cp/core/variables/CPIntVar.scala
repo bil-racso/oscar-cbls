@@ -22,7 +22,7 @@ import scala.util.Random
 import oscar.cp.core.domains.SparseSetDomain
 import oscar.cp._
 import oscar.cp.core.CPPropagStrength
-import oscar.cp.core.delta.DeltaIntVar
+import oscar.cp.core.delta.PropagatorIntVar
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.Watcher
 import oscar.cp.core.delta.SnapshotIntVar
@@ -236,10 +236,18 @@ abstract class CPIntVar extends CPVar with Iterable[Int] {
 
   def callPropagateWhenDomainChanges(c: Constraint, watcher: Watcher): Unit
 
+  def callOnChanges(propagate: SnapshotIntVar => CPOutcome): PropagatorIntVar = {
+    val propagator = new PropagatorIntVar(this, propagate)
+    propagator.setup(store.propagStrength) // should not fail 
+    propagator
+  }
+  
   def filterWhenDomainChangesWithDelta(idempotent: Boolean = false, priority: Int = CPStore.MaxPriorityL2 - 2)(filter: SnapshotIntVar => CPOutcome): SnapshotIntVar = {
-    val deltaPropagator = new DeltaIntVar(this, filter, idempotent, priority)
-    deltaPropagator.setup(store.propagStrength) // should not fail TODO: why not ?
-    deltaPropagator.getSnapshot
+    val propagator = new PropagatorIntVar(this, filter)
+    propagator.idempotent = idempotent
+    propagator.priorityL2 = priority
+    propagator.setup(store.propagStrength) // should not fail 
+    propagator.snapshot
   }
 
   def filterWhenDomainChanges(idempot: Boolean = true, priority: Int = CPStore.MaxPriorityL2 - 2)(filter: => CPOutcome) {

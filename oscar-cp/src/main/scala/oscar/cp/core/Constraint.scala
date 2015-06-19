@@ -53,51 +53,31 @@ abstract class Constraint(val s: CPStore, val name: String = "cons") {
   private[this] var nSnapshots = 0
   private[this] var _mustSnapshot = false
   
-  def watchChanges(x: CPIntVar): SnapshotIntVar = {
-    val snapshot = x.snapshot
+  
+  final def addSnapshot(x: CPIntVar): Unit = addSnapshot(x, x.snapshot)
+  
+  final def addSnapshot(variable: CPIntVar, snapshot: SnapshotIntVar): Unit = {
+    snapshotsVarInt.put(variable, snapshot)
     if (nSnapshots == snapshots.length) growSnapshots()
     snapshots(nSnapshots) = snapshot
-    nSnapshots += 1 
-    if (!_mustSnapshot) { s.onPop { snapShot() }; _mustSnapshot = true } 
-    snapshot
+    nSnapshots += 1   
+    snapshot.update() 
+    if (!_mustSnapshot) { s.onPop { updateSnapshots() }; _mustSnapshot = true }
   }
-  
+
   @inline private def growSnapshots(): Unit = {
     val newStack = new Array[Snapshot](nSnapshots*2)
     System.arraycopy(snapshots, 0, newStack, 0, nSnapshots)
     snapshots = newStack
   }
-  
-  
-
-  def addSnapshot(x: CPIntVar): Unit = {
-    val snapshot = x.snapshot
-
-    snapshotsVarInt.put(x, snapshot)
-    if (nSnapshots == snapshots.length) growSnapshots()
-    snapshots(nSnapshots) = snapshot
-    nSnapshots += 1   
-    
-    snapshot.update() 
-    if (!_mustSnapshot) {
-      s.onPop { snapShot() }
-      _mustSnapshot = true
-    } 
-  }
-
-  @inline private def snapShot() {
-    snapshotVarInt()
-    snapshotVarSet()
-  }
-
-  @inline protected def snapshotVarInt(): Unit = {
+   
+  @inline private def updateSnapshots(): Unit = {
     var i = nSnapshots
     while (i > 0) {
       i -= 1
       snapshots(i).update()
     }
   }
-  
 
   def addSnapshot(x: CPSetVar): Unit = {
     snapshotsVarSet(x) = new SnapshotVarSet(x) // FIXME avoid the implicit cast
@@ -108,7 +88,7 @@ abstract class Constraint(val s: CPStore, val name: String = "cons") {
     
     snapshotsVarSet(x).update() // FIXME avoid the implicit cast
     if (!_mustSnapshot) {
-      s.onPop { snapShot() }
+      s.onPop { updateSnapshots() }
       _mustSnapshot = true
     }    
   }
@@ -325,8 +305,7 @@ abstract class Constraint(val s: CPStore, val name: String = "cons") {
     _inPropagate = true
     val oc = propagate()
     if (oc != CPOutcome.Failure) {
-      snapshotVarInt()
-      snapshotVarSet()
+      updateSnapshots()
     }
     _inPropagate = false
     if (oc == CPOutcome.Success) {
