@@ -13,7 +13,7 @@ import oscar.cp.constraints.tables.TableAlgo
  */
 object Eternity extends CPModel with App {
 
-  val reader = new InFile("../data/eternity8x8.txt");
+  val reader = new InFile("data/eternity8x8.txt");
   
   val n = reader.nextInt()
   val m = reader.nextInt()
@@ -24,11 +24,11 @@ object Eternity extends CPModel with App {
   
     
     // create the variables
-  val  id = Array.fill(n,m)(CPIntVar(0 until (n*m)))
-  val  up = Array.fill(n, m)(CPIntVar(minColor to maxColor))
-  val  right = Array.fill(n,m)(CPIntVar(minColor to maxColor))
-  val  down = Array.fill(n, m)(CPIntVar(minColor to maxColor))
-  val  left = Array.fill(n,m)(CPIntVar(minColor to maxColor))
+  val  id = Array.fill(n,m)(CPIntVar.sparse(0 until (n*m)))
+  val  up = Array.fill(n, m)(CPIntVar.sparse(minColor to maxColor))
+  val  right = Array.fill(n,m)(CPIntVar.sparse(minColor to maxColor))
+  val  down = Array.fill(n, m)(CPIntVar.sparse(minColor to maxColor))
+  val  left = Array.fill(n,m)(CPIntVar.sparse(minColor to maxColor))
     
     // make the link between id, orientation and up variable
   val tableData = for (i <- 0 until n*m; r <- 0 until 4) yield {
