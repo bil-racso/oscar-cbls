@@ -13,7 +13,7 @@ import oscar.cp.constraints.tables.TableAlgo
  */
 object Eternity extends CPModel with App {
 
-  val reader = new InFile("data/eternity8x8.txt");
+  val reader = new InFile("../data/eternity8x8.txt");
   
   val n = reader.nextInt()
   val m = reader.nextInt()

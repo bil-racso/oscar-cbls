@@ -26,8 +26,6 @@ import scala.math.max
 import oscar.cp.core._
 import oscar.cp.core.CPOutcome._
 import oscar.cp.core.CPSolver
-import oscar.algo.reversible.ReversibleInt
-import oscar.algo.reversible.ReversibleIntWithCache
 
 /**
  * Bound Consistent Element Constraint: y(x) == z
@@ -37,8 +35,8 @@ import oscar.algo.reversible.ReversibleIntWithCache
 class ElementVarBC(val y: Array[CPIntVar], val x: CPIntVar, val z: CPIntVar) extends Constraint(y(0).store, "BCElementVar") {
 
 
-  private val zminSup = new ReversibleIntWithCache(s,0,y.size)
-  private val zmaxSup = new ReversibleIntWithCache(s,0,y.size)
+  private val zminSup = new ReversibleInt(s, 0)
+  private val zmaxSup = new ReversibleInt(s, 0)
 
   
   override def setup(l: CPPropagStrength): CPOutcome = {
