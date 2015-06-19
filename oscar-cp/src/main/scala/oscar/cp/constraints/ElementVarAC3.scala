@@ -28,7 +28,6 @@ import oscar.cp.core.CPOutcome._
 import oscar.cp.core.CPSolver
 import oscar.algo.reversible.ReversibleInt
 import oscar.algo.reversible.ReversibleSparseSet
-import oscar.algo.reversible.ReversibleIntWithCache
 
 
 /**
