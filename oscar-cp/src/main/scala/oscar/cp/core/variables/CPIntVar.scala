@@ -22,10 +22,11 @@ import scala.util.Random
 import oscar.cp.core.domains.SparseSetDomain
 import oscar.cp._
 import oscar.cp.core.CPPropagStrength
-import oscar.cp.core.SnapshotVarInt
-import oscar.cp.core.DeltaVarInt
+import oscar.cp.core.delta.DeltaIntVar
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.Watcher
+import oscar.cp.core.delta.SnapshotIntVar
+import oscar.cp.core.delta.SnapshotIntVarAdaptable
 
 /**
  * @author Pierre Schaus pschaus@gmail.com
@@ -235,13 +236,10 @@ abstract class CPIntVar extends CPVar with Iterable[Int] {
 
   def callPropagateWhenDomainChanges(c: Constraint, watcher: Watcher): Unit
 
-  def filterWhenDomainChangesWithDelta(idempotent: Boolean = false, priority: Int = CPStore.MaxPriorityL2 - 2)(filter: DeltaVarInt => CPOutcome) {
-    (new DeltaVarInt(this, filter, idempotent, priority) {
-      def setup(l: CPPropagStrength) = {
-        callPropagateWhenDomainChanges(this)
-        CPOutcome.Suspend
-      }
-    }).setup(store.propagStrength) // should not fail
+  def filterWhenDomainChangesWithDelta(idempotent: Boolean = false, priority: Int = CPStore.MaxPriorityL2 - 2)(filter: SnapshotIntVar => CPOutcome): SnapshotIntVar = {
+    val deltaPropagator = new DeltaIntVar(this, filter, idempotent, priority)
+    deltaPropagator.setup(store.propagStrength) // should not fail TODO: why not ?
+    deltaPropagator.getSnapshot
   }
 
   def filterWhenDomainChanges(idempot: Boolean = true, priority: Int = CPStore.MaxPriorityL2 - 2)(filter: => CPOutcome) {
@@ -319,40 +317,40 @@ abstract class CPIntVar extends CPVar with Iterable[Int] {
 
   // ------ delta methods to be called in propagate -------
 
-  def changed(sn: SnapshotVarInt): Boolean = {
+  def changed(sn: SnapshotIntVar): Boolean = {
     sn.oldSize != size
   }
 
-  def minChanged(sn: SnapshotVarInt): Boolean = {
+  def minChanged(sn: SnapshotIntVar): Boolean = {
     assert(sn.oldMin <= min)
     sn.oldMin < min
   }
 
-  def maxChanged(sn: SnapshotVarInt): Boolean = {
+  def maxChanged(sn: SnapshotIntVar): Boolean = {
     assert(sn.oldMax >= max)
     sn.oldMax > max
   }
 
-  def boundsChanged(sn: SnapshotVarInt): Boolean = {
+  def boundsChanged(sn: SnapshotIntVar): Boolean = {
     sn.oldMax == max
   }
 
-  def oldMin(sn: SnapshotVarInt): Int = {
+  def oldMin(sn: SnapshotIntVar): Int = {
     assert(sn.oldMin <= min)
     sn.oldMin
   }
 
-  def oldMax(sn: SnapshotVarInt): Int = {
+  def oldMax(sn: SnapshotIntVar): Int = {
     assert(sn.oldMax >= max)
     sn.oldMax
   }
 
-  def oldSize(sn: SnapshotVarInt): Int = {
+  def oldSize(sn: SnapshotIntVar): Int = {
     assert(sn.oldSize >= size)
     sn.oldSize
   }
 
-  def deltaSize(sn: SnapshotVarInt): Int = {
+  def deltaSize(sn: SnapshotIntVar): Int = {
     sn.oldSize - size
   }
   
@@ -360,6 +358,8 @@ abstract class CPIntVar extends CPVar with Iterable[Int] {
   
   def fillDeltaArray(oldMin: Int, oldMax: Int, oldSize: Int, arr: Array[Int]): Int
 
+  def snapshot: SnapshotIntVar = new SnapshotIntVarAdaptable(this)
+  
   // --------------------------------------------
 
   def changed(c: Constraint): Boolean

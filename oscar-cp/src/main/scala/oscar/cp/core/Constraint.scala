@@ -23,6 +23,9 @@ import oscar.cp.core.variables.CPSetVar
 import oscar.cp.core.variables.CPBoolVar
 import oscar.cp.core.variables.CPIntVar
 import scala.collection.JavaConversions.mapAsScalaMap
+import oscar.cp.core.delta.SnapshotVarSet
+import oscar.cp.core.delta.SnapshotIntVar
+import oscar.cp.core.delta.Snapshot
 
 
 
@@ -42,28 +45,40 @@ abstract class Constraint(val s: CPStore, val name: String = "cons") {
   private[this] val inQueue = new MagicBoolean(s, false)
   
   // FIXME variables should have an id 
-  val snapshotsVarInt = new java.util.HashMap[CPIntVar, SnapshotVarInt] 
+  val snapshotsVarInt = new java.util.HashMap[CPIntVar, SnapshotIntVar] 
   val snapshotsVarSet = new java.util.HashMap[CPSetVar, SnapshotVarSet]
   
-  private[this] var toSnapShotVarInt = Array.ofDim[SnapshotVarInt](10)
-  private[this] var nSnapshotVarInt = 0
-  private[this] var toSnapShotVarSet = Array.ofDim[SnapshotVarSet](10)
-  private[this] var nSnapshotVarSet = 0
-
+  // Snapshots
+  private[this] var snapshots = new Array[Snapshot](10)
+  private[this] var nSnapshots = 0
   private[this] var _mustSnapshot = false
+  
+  def watchChanges(x: CPIntVar): SnapshotIntVar = {
+    val snapshot = x.snapshot
+    if (nSnapshots == snapshots.length) growSnapshots()
+    snapshots(nSnapshots) = snapshot
+    nSnapshots += 1 
+    if (!_mustSnapshot) { s.onPop { snapShot() }; _mustSnapshot = true } 
+    snapshot
+  }
+  
+  @inline private def growSnapshots(): Unit = {
+    val newStack = new Array[Snapshot](nSnapshots*2)
+    System.arraycopy(snapshots, 0, newStack, 0, nSnapshots)
+    snapshots = newStack
+  }
+  
+  
 
   def addSnapshot(x: CPIntVar): Unit = {
-    snapshotsVarInt(x) = new SnapshotVarInt(x) // FIXME avoid the implicit cast
+    val snapshot = x.snapshot
+
+    snapshotsVarInt.put(x, snapshot)
+    if (nSnapshots == snapshots.length) growSnapshots()
+    snapshots(nSnapshots) = snapshot
+    nSnapshots += 1   
     
-    if (nSnapshotVarInt >= toSnapShotVarInt.length) {
-      val toSnapShotVarIntNew = new Array[SnapshotVarInt](nSnapshotVarInt*2)
-      System.arraycopy(toSnapShotVarInt, 0, toSnapShotVarIntNew, 0, nSnapshotVarInt)
-      toSnapShotVarInt = toSnapShotVarIntNew
-    }
-    toSnapShotVarInt(nSnapshotVarInt) = snapshotsVarInt(x) // FIXME avoid the implicit cast
-    nSnapshotVarInt += 1   
-    
-    snapshotsVarInt(x).update() // FIXME avoid the implicit cast
+    snapshot.update() 
     if (!_mustSnapshot) {
       s.onPop { snapShot() }
       _mustSnapshot = true
@@ -76,10 +91,10 @@ abstract class Constraint(val s: CPStore, val name: String = "cons") {
   }
 
   @inline protected def snapshotVarInt(): Unit = {
-    var i = nSnapshotVarInt
+    var i = nSnapshots
     while (i > 0) {
       i -= 1
-      toSnapShotVarInt(i).update()
+      snapshots(i).update()
     }
   }
   
@@ -87,13 +102,9 @@ abstract class Constraint(val s: CPStore, val name: String = "cons") {
   def addSnapshot(x: CPSetVar): Unit = {
     snapshotsVarSet(x) = new SnapshotVarSet(x) // FIXME avoid the implicit cast
     
-    if (nSnapshotVarSet >= toSnapShotVarSet.length) {
-      val toSnapShotVarSetNew = new Array[SnapshotVarSet](nSnapshotVarSet*2)
-      System.arraycopy(toSnapShotVarSet, 0, toSnapShotVarSetNew, 0, nSnapshotVarSet)
-      toSnapShotVarSet = toSnapShotVarSetNew
-    }
-    toSnapShotVarSet(nSnapshotVarSet) = snapshotsVarSet(x) // FIXME avoid the implicit cast
-    nSnapshotVarSet += 1  
+    if (nSnapshots == snapshots.length) growSnapshots()
+    snapshots(nSnapshots) = snapshotsVarSet(x) // FIXME avoid the implicit cast
+    nSnapshots += 1  
     
     snapshotsVarSet(x).update() // FIXME avoid the implicit cast
     if (!_mustSnapshot) {
@@ -104,8 +115,8 @@ abstract class Constraint(val s: CPStore, val name: String = "cons") {
 
   @inline protected def snapshotVarSet(): Unit = {
     var i = 0
-    while (i < nSnapshotVarSet) {
-      toSnapShotVarSet(i).update()
+    while (i < nSnapshots) {
+      snapshots(i).update()
       i += 1
     } 
   }  
@@ -328,60 +339,4 @@ abstract class Constraint(val s: CPStore, val name: String = "cons") {
     inQueue.value = true
   }
 
-}
-
-
-
-abstract class DeltaVarInt(x: CPIntVar,filter: DeltaVarInt => CPOutcome,idempot: Boolean = false, priority: Int) extends Constraint(x.store, "DeltaVarInt") {
-  
-  idempotent = idempot
-  priorityL2 = priority
-  
-  val sn = new SnapshotVarInt(x)
-  s.onPop {
-    sn.update()
-  }
-  
-  override def snapshotVarInt() {
-    super.snapshotVarInt()
-    sn.update()
-  }
-  
-  override def propagate() = filter(this)
-  
-  def changed() = x.changed(sn)
-  def size() = x.deltaSize(sn)
-  def values() = x.delta(sn.oldMin,sn.oldMax,sn.oldSize)
-  def fillArray(arr: Array[Int]): Int = x.fillDeltaArray(sn.oldMin,sn.oldMax,sn.oldSize,arr)
-  def minChanged() = x.minChanged(sn)
-  def maxChanged() = x.maxChanged(sn)
-  def oldMin() = x.oldMin(sn)
-  def oldMax() = x.oldMax(sn)
-  
-}
-
-abstract class DeltaVarSet(x: CPSetVar,filter: DeltaVarSet => CPOutcome) extends Constraint(x.store, "DeltaVarSet") {
-  
-  idempotent = true
-  
-  val sn = new SnapshotVarSet(x)
-  s.onPop {
-    sn.update()
-  }
-  
-  override def snapshotVarSet() {
-    super.snapshotVarSet()
-    sn.update()
-  }
-  
-  override def propagate() = filter(this)
-  
-  def changed() = x.changed(sn)
-  def possibleChanged() = x.possibleChanged(sn)
-  def requiredChanged() = x.requiredChanged(sn)
-  def deltaPossibleSize() = x.deltaPossibleSize(sn)
-  def deltaRequiredSize() = x.deltaRequiredSize(sn)
-  def deltaPossible(): Iterator[Int] = x.deltaPossible(sn)
-  def deltaRequired(): Iterator[Int] = x.deltaRequired(sn)
-  
 }

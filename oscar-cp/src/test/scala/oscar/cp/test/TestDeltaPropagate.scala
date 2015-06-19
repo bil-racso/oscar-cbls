@@ -14,20 +14,19 @@
  ******************************************************************************/
 package oscar.cp.test
 
-import org.scalatest.FunSuite
-import org.scalatest.matchers.ShouldMatchers
 import oscar.cp.constraints._
 import oscar.cp._
 import collection.immutable.SortedSet
 import oscar.cp.core.CPPropagStrength
 import oscar.cp.core.CPOutcome
 import scala.collection.mutable.ArrayBuffer
+import oscar.cp.testUtils._
 
 
 /**
  * @author Pierre Schaus pschaus@gmail.com
  */
-class TestDeltaPropagate extends FunSuite with ShouldMatchers {
+class TestDeltaPropagate extends TestSuite {
   
   test("test delta 1") {
     var propag = false
@@ -148,13 +147,13 @@ class TestDeltaPropagate extends FunSuite with ShouldMatchers {
       override def setup(l: CPPropagStrength): CPOutcome = {
         X.filterWhenDomainChangesWithDelta() { delta =>
           propag = true
-          delta.changed() should be(true)
-          delta.size() should be(2)
-          delta.values().toSet should be(Set(2,4))
-          delta.maxChanged() should be(true)
-          delta.minChanged() should be(false)
-          delta.oldMin() should be(-2)
-          delta.oldMax() should be(4)
+          delta.changed should be(true)
+          delta.size should be(2)
+          delta.values.toSet should be(Set(2,4))
+          delta.maxChanged should be(true)
+          delta.minChanged should be(false)
+          delta.oldMin should be(-2)
+          delta.oldMax should be(4)
           CPOutcome.Suspend
         }
         CPOutcome.Suspend
@@ -181,13 +180,13 @@ class TestDeltaPropagate extends FunSuite with ShouldMatchers {
       override def setup(l: CPPropagStrength): CPOutcome = {
         X.filterWhenDomainChangesWithDelta() { delta =>
           propag = true
-          delta.changed() should be(true)
-          delta.size() should be(2)
-          delta.values().toSet should be(Set(-2,-4))
-          delta.maxChanged() should be(false)
-          delta.minChanged() should be(true)
-          delta.oldMin() should be(-4)
-          delta.oldMax() should be(2)
+          delta.changed should be(true)
+          delta.size should be(2)
+          delta.values.toSet should be(Set(-2,-4))
+          delta.maxChanged should be(false)
+          delta.minChanged should be(true)
+          delta.oldMin should be(-4)
+          delta.oldMax should be(2)
           CPOutcome.Suspend
         }
         CPOutcome.Suspend
@@ -330,24 +329,24 @@ class TestDeltaPropagate extends FunSuite with ShouldMatchers {
           nPropag += 1
 
           if (nPropag == 1) {
-            delta.changed() should be(true)
-            delta.size() should be(2)
-            val d = delta.values().toArray
+            delta.changed should be(true)
+            delta.size should be(2)
+            val d = delta.values.toArray
             d.size should be(2)
             d.toSet should be(Set(-2, -4))
-            delta.maxChanged() should be(false)
-            delta.minChanged() should be(true)
-            delta.oldMin() should be(-4)
-            delta.oldMax() should be(2)
+            delta.maxChanged should be(false)
+            delta.minChanged should be(true)
+            delta.oldMin should be(-4)
+            delta.oldMax should be(2)
           }
           if (nPropag == 2) {
-            delta.changed() should be(true)
-            delta.size() should be(1)
-            delta.values().toArray should be(Array(0))
-            delta.maxChanged() should be(false)
-            delta.minChanged() should be(true)
-            delta.oldMin() should be(0)
-            delta.oldMax() should be(2)
+            delta.changed should be(true)
+            delta.size should be(1)
+            delta.values.toArray should be(Array(0))
+            delta.maxChanged should be(false)
+            delta.minChanged should be(true)
+            delta.oldMin should be(0)
+            delta.oldMax should be(2)
           }
 
           CPOutcome.Suspend
@@ -381,28 +380,28 @@ class TestDeltaPropagate extends FunSuite with ShouldMatchers {
           nPropag += 1
 
           if (nPropag == 1) {
-            delta.changed() should be(true)
-            delta.size() should be(2)
-            val d = delta.values().toArray
+            delta.changed should be(true)
+            delta.size should be(2)
+            val d = delta.values.toArray
             d.size should be(2)
             d.toSet should be(Set(-2, -4))
-            delta.maxChanged() should be(false)
-            delta.minChanged() should be(true)
-            delta.oldMin() should be(-4)
-            delta.oldMax() should be(2)
+            delta.maxChanged should be(false)
+            delta.minChanged should be(true)
+            delta.oldMin should be(-4)
+            delta.oldMax should be(2)
             X.updateMin(1)
   
           }
           if (nPropag == 2) {
             // should not come here since it is idempotent, don't know what should be the correct delta in this case
             println("oldMin:"+delta.oldMin+" oldMax:"+delta.oldMax+" size:"+delta.size)
-            delta.changed() should be(true)
-            delta.size() should be(1)
-            delta.values().toArray should be(Array(0))
-            delta.maxChanged() should be(false)
-            delta.minChanged() should be(true)
-            delta.oldMin() should be(0)
-            delta.oldMax() should be(2)
+            delta.changed should be(true)
+            delta.size should be(1)
+            delta.values.toArray should be(Array(0))
+            delta.maxChanged should be(false)
+            delta.minChanged should be(true)
+            delta.oldMin should be(0)
+            delta.oldMax should be(2)
           }
 
           CPOutcome.Suspend

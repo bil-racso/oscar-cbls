@@ -8,8 +8,8 @@ import oscar.cp.constraints.sets.Excludes
 import oscar.cp.constraints.SetCard
 import oscar.cp.core.domains.SetDomain
 import oscar.algo.reversible.ReversiblePointer
-import oscar.cp.core.DeltaVarSet
-import oscar.cp.core.SnapshotVarSet
+import oscar.cp.core.delta.DeltaSetVar
+import oscar.cp.core.delta.SnapshotVarSet
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.Constraint
 import oscar.cp.core.CPStore
@@ -66,9 +66,9 @@ class CPSetVar(override val store: CPStore, min: Int, max: Int, override val nam
     if (trackDelta) c.addSnapshot(this)
   }
 
-  def filterWhenDomainChanges(filter: DeltaVarSet => CPOutcome) {
+  def filterWhenDomainChanges(filter: DeltaSetVar => CPOutcome) {
     store.post(
-      new DeltaVarSet(this, filter) {
+      new DeltaSetVar(this, filter) {
         def setup(l: CPPropagStrength) = {
           callPropagateWhenDomainChanges(this)
           CPOutcome.Suspend
