@@ -450,7 +450,7 @@ abstract class Neighborhood{
   def atomic(name:String = "Atomic", bound:Int = Int.MaxValue)  = new Atomic(this, name, bound)
 
   /**
-   * Forces the use of a given objetive function.
+   * Forces the use of a given objective function.
    * this overrides the one that you might pass in the higher level
    * @param overridingObjective the objective to use instead of the given one
    */

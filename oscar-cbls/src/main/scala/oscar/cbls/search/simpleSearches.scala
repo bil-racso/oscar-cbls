@@ -19,7 +19,7 @@ import scala.collection.immutable.SortedSet
  * @param searchZone a subset of the indices of vars to consider.
  *                   If none is provided, all the array will be considered each time
  * @param symmetryClassOfVariables a function that input the ID of a variable and returns a symmetry class;
- *                      ony one of the variable in each class will be considered to make search faster
+ *                      only one of the variables in each class will be considered to make search faster
  *                      Int.MinValue is considered different to itself
  *                      if you set to None this will not be used at all
  *                      variables of the same class with different values will not be considered as symmetrical
