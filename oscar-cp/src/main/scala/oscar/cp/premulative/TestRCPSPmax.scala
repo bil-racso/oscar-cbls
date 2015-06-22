@@ -22,37 +22,43 @@ import oscar.algo.reversible._
 
 object RCPSPmaxBench extends App {
   var k = 0;
-  for(i <- 57 to 57){
-    val (n_orig,b_orig,c_orig) = test("/home/janho/data/rcpspmax/j20/PSP"+i+".SCH",false)
-    val (n,b,c) = test("/home/janho/data/rcpspmax/j20/PSP"+i+".SCH",true)
+  val lst = List(("ubo10/psp",".sch",90),("ubo20/psp",".sch",90),("ubo50/psp",".sch",90),("ubo100/psp",".sch",90),("j10/PSP",".SCH",270),("j20/PSP",".SCH",270))
+  val bench = 3
+  for(i <- 1 to lst(bench)._3){
+    val (n_orig,b_orig,c_orig) = test("data/rcpsp-max/"+lst(bench)._1+i+lst(bench)._2,false)
+    val (n,b,c) = test("data/rcpsp-max/"+lst(bench)._1+i+lst(bench)._2,true)
+//    val nbc1 = test("data/rcpsp-max/"+lst(bench)._1+i+lst(bench)._2,true,true,false)
+//    val nbc2 = test("data/rcpsp-max/"+lst(bench)._1+i+lst(bench)._2,true,false,true)
+//    val nbc3 = test("data/rcpsp-max/"+lst(bench)._1+i+lst(bench)._2,true,false,false)
     //print(i+" ")
     //if(b_orig!=b)
       print(i+" ==>\t"+n_orig+"\t"+n+"\t\t"+b_orig+"\t"+b+"\t\t"+c_orig+"\t"+c+"\t")
       if(c && b > b_orig) print("XXX\t") else print("\t")
-      if(!c && !c_orig) print("inc  " + (b < b_orig))
+      if(!c && !c_orig) print("inc  " + (b < b_orig && b > 0))
       if(c && c_orig) print("comp "+(n < n_orig))
       println()
+//      println((n_orig,b_orig,c_orig)+"\t"+(n,b,c)+"\t"+nbc1+"\t"+nbc2+"\t"+nbc3)
     //if(n_orig!=n)println(i+" ==>\t"+n_orig+"\t"+n+"\t\t"+b_orig+"\t"+b)
-    //if(n_orig!=n && b > 0){println(i+" ====>\t"+n_orig+"\t"+n+"\t\t"+b_orig+"\t"+b); k+=1}
+    if(n_orig!=n && b > 0 && c && c_orig){/*println(i+" ====>\t"+n_orig+"\t"+n+"\t\t"+b_orig+"\t"+b);*/ k+=1}
   }
   println(k)
   /*
   val s_orig = System.currentTimeMillis()
   for(i <- 1 to 90){
-    val (n_orig,b_orig) = test("/home/janho/data/rcpspmax/ubo20/psp"+i+".sch",false)
+    val (n_orig,b_orig,c_orig) = test("/home/janho/data/rcpspmax/ubo20/psp"+i+".sch",false)
     print(i+" ")
   }
   println(System.currentTimeMillis() - s_orig)
   
   val s = System.currentTimeMillis()
   for(i <- 1 to 90){
-    val (n,b) = test("/home/janho/data/rcpspmax/ubo20/psp"+i+".sch",true)
+    val (n,b,c) = test("/home/janho/data/rcpspmax/ubo20/psp"+i+".sch",true)
     print(i+" ")
   }
   println(System.currentTimeMillis() - s)
   */
   
-  def test(instance: String, prop: Boolean): (Int,Int, Boolean) = { 
+  def test(instance: String, prop: Boolean,pest:Boolean = true,plst: Boolean = true): (Int,Int, Boolean) = { 
 
   val ninf = Int.MinValue
     def computeTransitiveClosure(tab: Array[Array[Int]]){
@@ -146,7 +152,7 @@ object RCPSPmaxBench extends App {
   for (r <- resIds) {
     add(maxCumulativeResource(starts, durations, ends, demands(r), resources, capacities(r), resourceid), Medium)
 //    println(capacities(r)+" "+taskIds.filterNot(demands(r)(_).value==0).map(v => (v,durations(v).value,demands(r)(v).value)))
-    if(prop)add(new CumulativeLinearWithLags(starts, durations, ends, demands(r), resources, capacities(r), resourceid,tab))
+    if(prop)add(new CumulativeLinearWithLags(starts, durations, ends, demands(r), resources, capacities(r), resourceid,tab,pest,plst))
   }
 
     //println(t+"->"+succ) 

@@ -24,7 +24,7 @@ object RCPSPmax extends App {
 
   val ninf = Int.MinValue
   
-  val (nTasks, nRes, resourcesCapacities, taskDescriptions, precedences) = RCPmaxReader.readInstance("data/rcpsp-max/j20/PSP57.SCH")
+  val (nTasks, nRes, resourcesCapacities, taskDescriptions, precedences) = RCPmaxReader.readInstance("data/rcpsp-max/ubo10/psp1.sch")
 
   val tab = makeMatrix(nTasks,precedences)
   computeTransitiveClosure(tab)
@@ -109,11 +109,14 @@ object RCPSPmax extends App {
     }
   }
   println("}")
-  add(starts(1)==7)  
-  add(starts(2)==39)
-  add(starts(3)==19)
-  add(starts(4)==32)
-  add(starts(5)==0)
+//  for((i,t) <- List((2,0),(4,9),(5,0),(6,0),(9,48),(11,21),(12,60),(15,43),(16,34))){
+//    add(starts(i)==t)
+//  }
+//  add(starts(1)==7)  
+//  add(starts(2)==39)
+//  add(starts(3)==19)
+//  add(starts(4)==32)
+//  add(starts(5)==0)
 //  add(starts(6)==26)
 //  add(starts(11)==27)
  // add(starts(12)==40)
@@ -122,14 +125,17 @@ object RCPSPmax extends App {
   
   
   // Cumulative
-  for (r <- List(0,2)) {
+  for (r <- List(0,1,2,3,4)) {
     add(maxCumulativeResource(starts, durations, ends, demands(r), resources, capacities(r), resourceid), Medium)
     println(capacities(r)+" "+taskIds.filterNot(demands(r)(_).value==0).map(v => (v,durations(v).value,demands(r)(v).value)))
-    //add(new CumulativeLinearWithLags(starts, durations, ends, demands(r), resources, capacities(r), resourceid,tab))
+    add(new CumulativeLinearWithLags(starts, durations, ends, demands(r), resources, capacities(r), resourceid,tab,true,true))
     //System.exit(0)
   }
-  add(new CumulativeLinearWithLags(starts, durations, ends, demands(0), resources, capacities(0), resourceid,tab))
-System.exit(0)
+    println(starts.mkString(", "))
+    println(ends.mkString(", "))
+  
+ // add(new CumulativeLinearWithLags(starts, durations, ends, demands(0), resources, capacities(0), resourceid,tab))
+  //System.exit(0)
     //println(t+"->"+succ) 
   //}
   // Search
