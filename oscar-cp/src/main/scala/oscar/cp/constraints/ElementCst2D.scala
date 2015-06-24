@@ -1,22 +1,24 @@
-/*******************************************************************************
+/**
+ * *****************************************************************************
  * OscaR is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- *   
+ *
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License  for more details.
- *   
+ *
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
- ******************************************************************************/
-
+ * ****************************************************************************
+ */
 
 package oscar.cp.constraints;
 
 import oscar.cp.core.CPOutcome
+import oscar.cp.core.CPOutcome._
 import oscar.cp.core.CPPropagStrength
 import oscar.cp.core.variables.CPIntVar
 import oscar.cp.core.Constraint
@@ -44,81 +46,91 @@ object ElementCst2D {
   }
 }
 
-
 /**
  * BC Element Constraint on a 2D array
  * @author Pierre Schaus pschaus@gmail.com
+ * @author Renaud Hartert ren.hartert@gmail.com
  */
-class ElementCst2D(T: Array[Array[Int]], x: CPIntVar, y: CPIntVar, z: CPIntVar) extends Constraint(x.store, "ElementCst2D") {
+final class ElementCst2D(T: Array[Array[Int]], x: CPIntVar, y: CPIntVar, z: CPIntVar) extends Constraint(x.store, "ElementCst2D") {
 
-  val sortedTuples = (for (i <- 0 until T.size; j <- 0 until T(i).size) yield (T(i)(j), i, j)).sortBy(t => t).toArray
-  val nbColSupports = Array.fill(T.size)(new ReversibleInt(s, 0))
-  val nbRowSupports = Array.fill(T(0).size)(new ReversibleInt(s, 0))
-  val low = new ReversibleInt(s, 0)
-  val up = new ReversibleInt(s, sortedTuples.size - 1)
+  require(T.length > 0)
+  require(T(0).length > 0)
 
+  private[this] val nRows = T.length
+  private[this] val nCols = T(0).length
 
+  private[this] val nTuples = nCols * nRows
+  private[this] val sortedTuples = (for (i <- 0 until T.size; j <- 0 until T(i).size) yield Array(T(i)(j), i, j)).sortBy(t => t(0)).transpose.toArray
+  private[this] val nbColSupports = Array.fill(nRows)(new ReversibleInt(s, 0))
+  private[this] val nbRowSupports = Array.fill(nCols)(new ReversibleInt(s, 0))
+  private[this] val lowRev = new ReversibleInt(s, 0)
+  private[this] val upRev = new ReversibleInt(s, nTuples - 1)
+  
+  private[this] val zvalue = sortedTuples(0)
+  private[this] val xvalue = sortedTuples(1)
+  private[this] val yvalue = sortedTuples(2)
 
-  def setup(l: CPPropagStrength): CPOutcome = {
-
-    for ((v,i,j) <- sortedTuples) {
-      nbColSupports(i).incr()
-      nbRowSupports(j).incr()
+  override def setup(l: CPPropagStrength): CPOutcome = {
+    if (x.updateMin(0) == Failure) Failure
+    else if (x.updateMax(nRows - 1) == Failure) Failure
+    else if (y.updateMin(0) == Failure) Failure
+    else if (y.updateMax(nCols - 1) == Failure) Failure
+    else {
+      init()
+      x.callPropagateWhenDomainChanges(this)
+      y.callPropagateWhenDomainChanges(this)
+      z.callPropagateWhenBoundsChange(this)
+      propagate()
     }
-    if (x.updateMin(0) == CPOutcome.Failure) return CPOutcome.Failure
-    if (x.updateMax(T.size-1) == CPOutcome.Failure) return CPOutcome.Failure
-    if (y.updateMin(0) == CPOutcome.Failure) return CPOutcome.Failure
-    if (y.updateMax(T(0).size-1) == CPOutcome.Failure) return CPOutcome.Failure
-    x.callPropagateWhenDomainChanges(this)
-    y.callPropagateWhenDomainChanges(this)
-    z.callPropagateWhenBoundsChange(this)
-    propagate()
   }
 
-  def zvalue(i: Int) = sortedTuples(i)._1
-  def xvalue(i: Int) = sortedTuples(i)._2
-  def yvalue(i: Int) = sortedTuples(i)._3
-  
-  
-  def xlow = xvalue(low.value)
-  def ylow = yvalue(low.value)
-  def zlow = zvalue(low.value)
-  def xup = xvalue(up.value)
-  def yup = yvalue(up.value)
-  def zup = zvalue(up.value)
+  @inline private def init(): Unit = {
+    var i = nTuples
+    while (i > 0) {
+      i -= 1
+      nbColSupports(sortedTuples(1)(i)).incr()
+      nbRowSupports(sortedTuples(2)(i)).incr()
+    }
+  }
 
   // entry i disappear
-  def update(i: Int): Boolean = {
-    nbColSupports(xvalue(i)).decr()
-    if (nbColSupports(xvalue(i)).value == 0) {
-      if (x.removeValue(xvalue(i)) == CPOutcome.Failure) return false
+  @inline private def update(i: Int): Boolean = {
+    if (nbColSupports(xvalue(i)).decr() == 0) {
+      if (x.removeValue(xvalue(i)) == Failure) return false
     }
-    nbRowSupports(yvalue(i)).decr()
-    if (nbRowSupports(yvalue(i)).value == 0) {
-      if (y.removeValue(yvalue(i)) == CPOutcome.Failure) return false
+    if (nbRowSupports(yvalue(i)).decr() == 0) {
+      if (y.removeValue(yvalue(i)) == Failure) return false
     }
     true
   }
-  
-  def remainingSupport = up.value - low.value + 1
-  def supportLeft = remainingSupport > 0
 
   override def propagate(): CPOutcome = {
-    while (zlow < z.min || !x.hasValue(xlow) || !y.hasValue(ylow)) {
-      if (!update(low.value)) return CPOutcome.Failure
-      low.incr()
-      if (!supportLeft) return CPOutcome.Failure
-    }
-    while (zup > z.max || !x.hasValue(xup) || !y.hasValue(yup)) {
-      if (!update(up.value)) return CPOutcome.Failure
-      up.decr()
-      if (!supportLeft) return CPOutcome.Failure
-    }
-    if (z.updateMin(zvalue(low.value)) == CPOutcome.Failure) return CPOutcome.Failure
-    if (z.updateMax(zvalue(up.value)) == CPOutcome.Failure) return CPOutcome.Failure
-    CPOutcome.Suspend
-  }
 
+    // Cache
+    var low = lowRev.value
+    var up = upRev.value
+
+    while (zvalue(low) < z.min || !x.hasValue(xvalue(low)) || !y.hasValue(yvalue(low))) {
+      if (!update(low)) return Failure
+      low += 1
+      if (up < low) return Failure
+    }
+
+    while (zvalue(up) > z.max || !x.hasValue(xvalue(up)) || !y.hasValue(yvalue(up))) {
+      if (!update(up)) return Failure
+      up -= 1
+      if (up < low) return Failure
+    }
+
+    if (z.updateMin(zvalue(low)) == Failure) Failure
+    else if (z.updateMax(zvalue(up)) == Failure) Failure
+    else {
+      // Trail
+      lowRev.value = low
+      upRev.value = up
+      Suspend
+    }
+  }
 }
 	
 
