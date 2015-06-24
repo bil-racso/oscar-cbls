@@ -410,6 +410,14 @@ trait Constraints {
    */
   def inverse(prev: Array[CPIntVar], next: Array[CPIntVar]): Inverse = new Inverse(prev, next)
 
+  def inverse(prev: Array[CPIntVar]): Array[CPIntVar] = {
+    require(prev.length > 0)
+    val store = prev(0).store
+    val next = Array.fill(prev.length)(CPIntVar(0, prev.length - 1)(store))
+    store.add(inverse(prev, next))
+    next
+  }
+  
   /**
    * Sum Constraint
    * @param vars a non empty array of n variables

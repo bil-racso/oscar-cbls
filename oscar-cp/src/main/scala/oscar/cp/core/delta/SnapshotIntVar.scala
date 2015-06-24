@@ -1,10 +1,14 @@
 package oscar.cp.core.delta
 
+import oscar.cp.core.variables.CPIntVar
+
 /**
  * @author Pierre Schaus pschaus@gmail.com
  * @author Renaud Hartert ren.hartert@gmail.com
  */
 abstract class SnapshotIntVar extends Snapshot {
+  def id: Int
+  def variable: CPIntVar
   def oldMin: Int
   def oldMax: Int
   def oldSize: Int

@@ -7,7 +7,7 @@ import oscar.cp.core.variables.CPIntVar
  * @author Pierre Schaus pschaus@gmail.com
  * @author Renaud Hartert ren.hartert@gmail.com
  */
-final class SnapshotIntVarAdaptable(x: CPIntVar) extends SnapshotIntVar {
+final class SnapshotIntVarAdaptable(x: CPIntVar, final override val id: Int) extends SnapshotIntVar {
 
   private[this] var _oldMin: Int = x.min
   private[this] var _oldMax: Int = x.max
@@ -16,7 +16,7 @@ final class SnapshotIntVarAdaptable(x: CPIntVar) extends SnapshotIntVar {
   @inline final override def oldMin: Int = _oldMin
   @inline final override def oldMax: Int = _oldMax
   @inline final override def oldSize: Int = _oldSize
-  
+  @inline final override def variable: CPIntVar = x
   @inline final override def changed: Boolean = x.size != _oldSize
   @inline final override def size: Int = _oldSize - x.size
   @inline final override def values: Iterator[Int] = x.delta(_oldMin, _oldMax, _oldSize)

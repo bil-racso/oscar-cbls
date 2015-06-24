@@ -24,6 +24,7 @@ import oscar.cp._
 import oscar.cp.core.CPPropagStrength
 import oscar.cp.core.delta.PropagatorIntVar
 import oscar.cp.core.CPOutcome
+import oscar.cp.core.CPOutcome._
 import oscar.cp.core.Watcher
 import oscar.cp.core.delta.SnapshotIntVar
 import oscar.cp.core.delta.SnapshotIntVarAdaptable
@@ -237,13 +238,22 @@ abstract class CPIntVar extends CPVar with Iterable[Int] {
   def callPropagateWhenDomainChanges(c: Constraint, watcher: Watcher): Unit
 
   def callOnChanges(propagate: SnapshotIntVar => CPOutcome): PropagatorIntVar = {
-    val propagator = new PropagatorIntVar(this, propagate)
-    propagator.setup(store.propagStrength) // should not fail 
+    val propagator = new PropagatorIntVar(this, 0, propagate)
+    callPropagateWhenDomainChanges(propagator)
+    propagator.idempotent = true
+    propagator
+  }
+  
+  def callOnChanges(id: Int, propagate: SnapshotIntVar => CPOutcome): PropagatorIntVar = {
+    val propagator = new PropagatorIntVar(this, id, propagate)
+    propagator.idempotent = true
+    propagator.priority = CPStore.MaxPriorityL2
+    callPropagateWhenDomainChanges(propagator)
     propagator
   }
   
   def filterWhenDomainChangesWithDelta(idempotent: Boolean = false, priority: Int = CPStore.MaxPriorityL2 - 2)(filter: SnapshotIntVar => CPOutcome): SnapshotIntVar = {
-    val propagator = new PropagatorIntVar(this, filter)
+    val propagator = new PropagatorIntVar(this, 0, filter)
     propagator.idempotent = idempotent
     propagator.priorityL2 = priority
     propagator.setup(store.propagStrength) // should not fail 
@@ -317,6 +327,17 @@ abstract class CPIntVar extends CPVar with Iterable[Int] {
    */
   def removeValue(value: Int): CPOutcome
   
+  def removeValues(values: Array[Int], nValues: Int): CPOutcome = {
+    var i = nValues
+    while (i > 0) {
+      i -= 1
+      if (removeValue(values(i)) == Failure) return Failure
+    }
+    Suspend
+  }
+  
+  final def removeValues(values: Array[Int]): CPOutcome = removeValues(values, values.length)
+  
   /** 
    *  Restrict the domain to be equal to the `newSize` first values contained in `newDomain`.
    *  Observe that the restricted new domain must be a subset of the actual domain of the variable.
@@ -366,7 +387,9 @@ abstract class CPIntVar extends CPVar with Iterable[Int] {
   
   def fillDeltaArray(oldMin: Int, oldMax: Int, oldSize: Int, arr: Array[Int]): Int
 
-  def snapshot: SnapshotIntVar = new SnapshotIntVarAdaptable(this)
+  def snapshot: SnapshotIntVar = new SnapshotIntVarAdaptable(this, 0)
+  
+  def snapshot(id: Int): SnapshotIntVar = new SnapshotIntVarAdaptable(this, id)
   
   // --------------------------------------------
 

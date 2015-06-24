@@ -254,7 +254,7 @@ final class CPIntVarAdaptable( final override val store: CPStore, minValue: Int,
     else if (_continuous) removeContinuous(value)
     else removeSparse(value)
   }
-
+  
   @inline private def removeContinuous(value: Int): CPOutcome = {
     if (value == _min) updateMinContinuous(value + 1)
     else if (value == _max) updateMaxContinuous(value - 1)
@@ -270,7 +270,6 @@ final class CPIntVarAdaptable( final override val store: CPStore, minValue: Int,
     offset = _min
     values = Array.tabulate(nValues)(i => i + offset)
     positions = Array.tabulate(nValues)(i => i)
-
   }
 
   @inline private def removeSparse(value: Int): CPOutcome = {

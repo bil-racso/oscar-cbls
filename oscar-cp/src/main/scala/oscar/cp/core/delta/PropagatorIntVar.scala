@@ -6,10 +6,13 @@ import oscar.cp.core.Constraint
 import oscar.cp.core.variables.CPIntVar
 import oscar.cp.core.CPStore
 
-class PropagatorIntVar(x: CPIntVar, filter: SnapshotIntVar => CPOutcome, name: String = "PropagatorIntVar") extends Constraint(x.store, name) {
+class PropagatorIntVar(x: CPIntVar, id: Int, filter: SnapshotIntVar => CPOutcome, name: String = "PropagatorIntVar") extends Constraint(x.store, name) {
   
-  private[this] val _snapshot = x.snapshot
+  private[this] val _snapshot = x.snapshot(id)
   addSnapshot(x, _snapshot)
+  
+  final def priority: Int = this.priorityL2
+  final def priority_=(level: Int): Unit = this.priorityL2 = level
   
   @inline final def snapshot = _snapshot
   

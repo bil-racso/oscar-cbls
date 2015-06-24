@@ -89,8 +89,7 @@ final class TableCT(X: Array[CPIntVar], table: Array[Array[Int]]) extends Constr
     var i = 0
     while (i < arity) {
       val x = X(i)
-      val varIndex = i
-      x.filterWhenDomainChangesWithDelta(idempotent = true, CPStore.MaxPriorityL2)(delta => updateDelta(x, varIndex, delta))
+      x.callOnChanges(i, s => updateDelta(s))
       x.callPropagateWhenDomainChanges(this)
       lastSizes(i).setValue(x.size)
       i += 1
@@ -106,8 +105,11 @@ final class TableCT(X: Array[CPIntVar], table: Array[Array[Int]]) extends Constr
    * @param delta the set of values removed since the last call.
    * @return the outcome i.e. Failure or Success.
    */
-  @inline private def updateDelta(intVar: CPIntVar, varIndex: Int, delta: SnapshotIntVar): CPOutcome = {
+  @inline private def updateDelta(delta: SnapshotIntVar): CPOutcome = {
 
+    val intVar = delta.variable
+    val varIndex = delta.id
+    
     /* No need to update validTuples if there was no modification since last propagate() */
     if (intVar.size == lastSizes(varIndex).value) return Suspend
 
