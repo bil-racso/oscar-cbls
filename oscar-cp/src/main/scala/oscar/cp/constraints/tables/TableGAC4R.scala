@@ -19,8 +19,8 @@ import oscar.algo.reversible.{ReversibleContext, TrailEntry, ReversibleSharedSpa
 import oscar.cp.core.variables.CPIntVar
 import oscar.cp.core.{Constraint, CPOutcome, CPPropagStrength}
 import oscar.cp.core.CPOutcome._
-
 import scala.collection.mutable.ArrayBuffer
+import oscar.cp.core.delta.SnapshotIntVar
 
 /**
  * Implementation of the GAC-4R algorithm for the table constraint.
@@ -28,7 +28,7 @@ import scala.collection.mutable.ArrayBuffer
  * @param initTable the list of tuples composing the table.
  * @author Jordan Demeulenaere j.demeulenaere1@gmail.com
  */
-class TableGAC4R(val X: Array[CPIntVar], initTable: Array[Array[Int]]) extends Constraint(X(0).store, "TableGAC4R") {
+class TableGAC4R(X: Array[CPIntVar], initTable: Array[Array[Int]]) extends Constraint(X(0).store, "TableGAC4R") {
 
   /* Trailable entry to restore the size of support set of the ith value of a variable */
   final class SupportsTrailEntry(supports: VariableSupports, id: Int, word: Int) extends TrailEntry {
@@ -119,6 +119,9 @@ class TableGAC4R(val X: Array[CPIntVar], initTable: Array[Array[Int]]) extends C
   
   /* Valid Tuples */
   private[this] var validTuples: ReversibleSharedSparseSet = null
+  
+  // Snapshots
+  private[this] val snapshots = new Array[SnapshotIntVar](arity)
 
   /* ----- Set up ----- */
 
@@ -133,8 +136,13 @@ class TableGAC4R(val X: Array[CPIntVar], initTable: Array[Array[Int]]) extends C
     
     /* AC3 propagator with delta */
     idempotent = true
-    X.zipWithIndex.foreach { case (x, index) => 
-      x.callPropagateWhenDomainChanges(this, trackDelta = true)
+    
+    var i = arity
+    while (i > 0) {
+       i -= 1
+       val x = X(i)
+       snapshots(i) = addSnapshot(x)
+       x.callPropagateWhenDomainChanges(this)
     }
 
     Suspend
@@ -279,9 +287,10 @@ class TableGAC4R(val X: Array[CPIntVar], initTable: Array[Array[Int]]) extends C
     var indexMax = 0
     var i = 0
     while (i < arity) {
-      if (X(i).changed(this)) {
+      val snapshot = snapshots(i)
+      if (snapshot.changed) {
         var nbInvalidated = 0
-        val deltaSize = X(i).fillDeltaArray(this, domainsFillArray)
+        val deltaSize = snapshot.fillArray(domainsFillArray)
         val supportsX = supports(i)
         val originalMinX = originalMins(i)
         var deltaIndex = 0
@@ -370,9 +379,10 @@ class TableGAC4R(val X: Array[CPIntVar], initTable: Array[Array[Int]]) extends C
       /* Classic deletion */
        i = 0
       while (i < arity) {
+        val snapshot = snapshots(i)
         val intVar = X(i)
-        if (intVar.changed(this)) {
-          val deltaSize = X(i).fillDeltaArray(this, domainsFillArray)
+        if (snapshot.changed) {
+          val deltaSize = snapshot.fillArray(domainsFillArray)
           var deltaIndex = 0
           while (deltaIndex < deltaSize) {
             if (valRemoveIdx(intVar, i, domainsFillArray(deltaIndex)) == Failure) {

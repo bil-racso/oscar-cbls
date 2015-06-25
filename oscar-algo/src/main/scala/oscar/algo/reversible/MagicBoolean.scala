@@ -36,11 +36,11 @@ class MagicBoolean(context: ReversibleContext, default: Boolean) {
   
   @inline final def setTrue(): Unit = {
     magic = context.magic
-    this.b = b
+    this.b = true
   }
   
   @inline final def setFalse(): Unit = {
     magic = context.magic
-    this.b = b
+    this.b = false
   }
 }
