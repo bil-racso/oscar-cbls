@@ -294,24 +294,6 @@ class CPBoolVarImpl private(final override val store: CPStore, initDomain: Int, 
   final override def fillDeltaArray(oldMin: Int, oldMax: Int, oldSize: Int, arr: Array[Int]): Int = ???
 
   final override def delta(oldMin: Int, oldMax: Int, oldSize: Int): Iterator[Int] = ???
-
-  final override def changed(c: Constraint): Boolean = ???
-
-  final override def minChanged(c: Constraint): Boolean = ???
-
-  final override def maxChanged(c: Constraint): Boolean = ???
-
-  final override def boundsChanged(c: Constraint): Boolean = ???
-
-  final override def oldMin(c: Constraint): Int = ???
-
-  final override def oldMax(c: Constraint): Int = ???
-
-  final override def oldSize(c: Constraint): Int = ???
-
-  final override def deltaSize(c: Constraint): Int = ???
-
-  final override def delta(c: Constraint): Iterator[Int] = ???
 }
 
 object CPBoolVarImpl {

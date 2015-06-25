@@ -132,37 +132,6 @@ final class CPIntVarViewMinus(v: CPIntVar) extends CPIntVar {
       i += 1
     }
     m
-  } 
-	
-	def changed(c: Constraint): Boolean = v.changed(c)
-	
-	def minChanged(c: Constraint): Boolean = v.maxChanged(c)
-	
-	def maxChanged(c: Constraint): Boolean = v.minChanged(c)
-	
-	def boundsChanged(c: Constraint): Boolean = v.boundsChanged(c)
-	
-	def oldMin(c: Constraint): Int = -v.oldMax(c)
-	
-	def oldMax(c: Constraint): Int = -v.oldMin(c)
-	
-	def oldSize(c: Constraint): Int = v.oldSize(c)
-	
-	def deltaSize(c: Constraint): Int = v.deltaSize(c)
-	
-	def delta(c: Constraint): Iterator[Int] = {
-	  v.delta(c).map(-_)
-	}
-  
-  final override def fillDeltaArray(c: Constraint, arr: Array[Int]): Int = { 
-    val m = v.fillDeltaArray(c,arr)
-    var i = 0
-    while (i < m) {
-      arr(i) = -arr(i)
-      i += 1
-    }
-    m
-  }  
-	
+  }   
 }
   

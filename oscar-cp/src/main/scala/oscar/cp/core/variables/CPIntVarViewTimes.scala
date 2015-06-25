@@ -153,34 +153,6 @@ final class CPIntVarViewTimes(v: CPIntVar, a: Int) extends CPIntVar {
       i += 1
     }
     m
-  }    
-
-  override final def changed(c: Constraint): Boolean = v.changed(c)
-
-  override final def minChanged(c: Constraint): Boolean = v.minChanged(c)
-
-  override final def maxChanged(c: Constraint): Boolean = v.maxChanged(c)
-
-  override final def boundsChanged(c: Constraint): Boolean = v.boundsChanged(c)
-
-  override final def oldMin(c: Constraint): Int = v.oldMin(c) * a
-
-  override final def oldMax(c: Constraint): Int = v.oldMax(c) * a
-
-  override final def oldSize(c: Constraint): Int = v.oldSize(c)
-
-  override final def deltaSize(c: Constraint): Int = v.deltaSize(c)
-
-  override final def delta(c: Constraint): Iterator[Int] = v.delta(c).map(_ * a)
-  
-  final override def fillDeltaArray(c: Constraint, arr: Array[Int]): Int = { 
-    val m = v.fillDeltaArray(c,arr)
-    var i = 0
-    while (i < m) {
-      arr(i) *= a
-      i += 1
-    }
-    m
-  }    
+  }       
 }
   

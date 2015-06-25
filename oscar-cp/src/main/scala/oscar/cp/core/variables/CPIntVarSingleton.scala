@@ -140,15 +140,6 @@ final class CPIntVarSingleton(final override val store: CPStore, initValue: Int,
     
   final override def delta(oldMin: Int, oldMax: Int, oldSize: Int): Iterator[Int] = ???
   final override def fillDeltaArray(oldMin: Int, oldMax: Int, oldSize: Int, arr: Array[Int]): Int = ??? 
-  final override def changed(c: Constraint): Boolean = ???
-  final override def minChanged(c: Constraint): Boolean = ???
-  final override def maxChanged(c: Constraint): Boolean = ???
-  final override def boundsChanged(c: Constraint): Boolean = ???
-  final override def oldMin(c: Constraint): Int = ???
-  final override def oldMax(c: Constraint): Int = ???
-  final override def oldSize(c: Constraint): Int = ???
-  final override def deltaSize(c: Constraint): Int = ???
-  final override def delta(c: Constraint): Iterator[Int] = ??? 
 
   /**
    * Level 2 registration: ask that the propagate() method of the constraint c is called whenever

@@ -103,24 +103,6 @@ class CPBoolVarNot(final override val not: CPBoolVar) extends CPBoolVar {
 
   final override def delta(oldMin: Int, oldMax: Int, oldSize: Int): Iterator[Int] = ???
 
-  final override def changed(c: Constraint): Boolean = ???
-
-  final override def minChanged(c: Constraint): Boolean = ???
-
-  final override def maxChanged(c: Constraint): Boolean = ???
-
-  final override def boundsChanged(c: Constraint): Boolean = ???
-
-  final override def oldMin(c: Constraint): Int = ???
-
-  final override def oldMax(c: Constraint): Int = ???
-
-  final override def oldSize(c: Constraint): Int = ???
-
-  final override def deltaSize(c: Constraint): Int = ???
-
-  final override def delta(c: Constraint): Iterator[Int] = ???
-
   final override def constraintTrue(): Constraint = not.constraintFalse
 
   final override def constraintFalse(): Constraint = not.constraintTrue

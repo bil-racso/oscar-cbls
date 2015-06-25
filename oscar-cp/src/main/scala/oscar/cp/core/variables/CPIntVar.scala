@@ -235,6 +235,8 @@ abstract class CPIntVar extends CPVar with Iterable[Int] {
    */
   def callPropagateWhenDomainChanges(c: Constraint, trackDelta: Boolean = false): Unit
 
+  //def callPropagateOnChangesWithDelta(c: Constraint): SnapshotIntVar
+  
   def callPropagateWhenDomainChanges(c: Constraint, watcher: Watcher): Unit
 
   def callOnChanges(propagate: SnapshotIntVar => CPOutcome): PropagatorIntVar = {
@@ -343,45 +345,6 @@ abstract class CPIntVar extends CPVar with Iterable[Int] {
    *  Observe that the restricted new domain must be a subset of the actual domain of the variable.
    */
   def restrict(newDomain: Array[Int], newSize: Int): Unit
-
-  // ------ delta methods to be called in propagate -------
-
-  def changed(sn: SnapshotIntVar): Boolean = {
-    sn.oldSize != size
-  }
-
-  def minChanged(sn: SnapshotIntVar): Boolean = {
-    assert(sn.oldMin <= min)
-    sn.oldMin < min
-  }
-
-  def maxChanged(sn: SnapshotIntVar): Boolean = {
-    assert(sn.oldMax >= max)
-    sn.oldMax > max
-  }
-
-  def boundsChanged(sn: SnapshotIntVar): Boolean = {
-    sn.oldMax == max
-  }
-
-  def oldMin(sn: SnapshotIntVar): Int = {
-    assert(sn.oldMin <= min)
-    sn.oldMin
-  }
-
-  def oldMax(sn: SnapshotIntVar): Int = {
-    assert(sn.oldMax >= max)
-    sn.oldMax
-  }
-
-  def oldSize(sn: SnapshotIntVar): Int = {
-    assert(sn.oldSize >= size)
-    sn.oldSize
-  }
-
-  def deltaSize(sn: SnapshotIntVar): Int = {
-    sn.oldSize - size
-  }
   
   def delta(oldMin: Int, oldMax: Int, oldSize: Int): Iterator[Int]
   
@@ -390,36 +353,6 @@ abstract class CPIntVar extends CPVar with Iterable[Int] {
   def snapshot: SnapshotIntVar = new SnapshotIntVarAdaptable(this, 0)
   
   def snapshot(id: Int): SnapshotIntVar = new SnapshotIntVarAdaptable(this, id)
-  
-  // --------------------------------------------
-
-  def changed(c: Constraint): Boolean
-
-  def minChanged(c: Constraint): Boolean
-
-  def maxChanged(c: Constraint): Boolean
-
-  def boundsChanged(c: Constraint): Boolean
-
-  def oldMin(c: Constraint): Int
-
-  def oldMax(c: Constraint): Int
-
-  def oldSize(c: Constraint): Int
-
-  def deltaSize(c: Constraint): Int
-
-  def delta(c: Constraint): Iterator[Int]
-
-  def fillDeltaArray(c: Constraint, arr: Array[Int]): Int = {
-    val ite = delta(c)
-    var i = 0
-    while (ite.hasNext) {
-      arr(i) = ite.next()
-      i += 1
-    }
-    i
-  }  
 
   // ------------------------ some useful methods for java -------------------------
 

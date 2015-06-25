@@ -748,22 +748,6 @@ final class CPIntVarAdaptable( final override val store: CPStore, minValue: Int,
     }
   }
 
-  final def changed(c: Constraint): Boolean = changed(c.snapshotsVarInt(this))
-
-  final def minChanged(c: Constraint): Boolean = minChanged(c.snapshotsVarInt(this))
-
-  final def maxChanged(c: Constraint): Boolean = maxChanged(c.snapshotsVarInt(this))
-
-  final def boundsChanged(c: Constraint): Boolean = boundsChanged(c.snapshotsVarInt(this))
-
-  final def oldMin(c: Constraint): Int = oldMin(c.snapshotsVarInt(this))
-
-  final def oldMax(c: Constraint): Int = oldMax(c.snapshotsVarInt(this))
-
-  final def oldSize(c: Constraint): Int = oldSize(c.snapshotsVarInt(this))
-
-  final def deltaSize(c: Constraint): Int = deltaSize(c.snapshotsVarInt(this))
-
   @inline final override def fillDeltaArray(oldMin: Int, oldMax: Int, oldSize: Int, arr: Array[Int]): Int = {
     var i = 0
     if (_continuous) {
@@ -799,16 +783,4 @@ final class CPIntVarAdaptable( final override val store: CPStore, minValue: Int,
     }
     i
   }
-
-  final override def fillDeltaArray(c: Constraint, arr: Array[Int]): Int = {
-
-    val sn = c.snapshotsVarInt(this)
-    fillDeltaArray(sn.oldMin, sn.oldMax, sn.oldSize, arr)
-  }
-
-  final def delta(c: Constraint): Iterator[Int] = {
-    val sn = c.snapshotsVarInt(this)
-    delta(sn.oldMin, sn.oldMax, sn.oldSize)
-  }
-
 }

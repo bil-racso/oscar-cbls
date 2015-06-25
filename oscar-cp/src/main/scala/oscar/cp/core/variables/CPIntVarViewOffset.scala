@@ -149,36 +149,5 @@ class CPIntVarViewOffset(v: CPIntVar, offset: Int) extends CPIntVar {
     }
     m
   }   
-	
-	final override def changed(c: Constraint): Boolean = v.changed(c)
-	
-	final override def minChanged(c: Constraint): Boolean = v.minChanged(c)
-	
-	final override def maxChanged(c: Constraint): Boolean = v.maxChanged(c)
-	
-	final override def boundsChanged(c: Constraint): Boolean = v.boundsChanged(c)
-	
-	final override def oldMin(c: Constraint): Int = v.oldMin(c) + offset
-	
-	final override def oldMax(c: Constraint): Int = v.oldMax(c) + offset
-	
-	final override def oldSize(c: Constraint): Int = v.oldSize(c)
-	
-	final override def deltaSize(c: Constraint): Int = v.deltaSize(c)
-	
-	final override def delta(c: Constraint): Iterator[Int] = {
-	  v.delta(c).map(_ + offset)
-	}
-  
-  final override def fillDeltaArray(c: Constraint, arr: Array[Int]): Int = { 
-    val m = v.fillDeltaArray(c,arr)
-    var i = 0
-    while (i < m) {
-      arr(i) += offset
-      i += 1
-    }
-    m
-  }
-	
 }
   
