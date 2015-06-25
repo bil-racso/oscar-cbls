@@ -15,7 +15,7 @@
  * ****************************************************************************
  */
 
-package oscar.cp.constraints;
+package oscar.cp.constraints
 
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.CPOutcome._
@@ -58,17 +58,17 @@ final class ElementCst2D(T: Array[Array[Int]], x: CPIntVar, y: CPIntVar, z: CPIn
 
   private[this] val nRows = T.length
   private[this] val nCols = T(0).length
-
-  private[this] val nTuples = nCols * nRows
-  private[this] val sortedTuples = (for (i <- 0 until T.size; j <- 0 until T(i).size) yield Array(T(i)(j), i, j)).sortBy(t => t(0)).transpose.toArray
+  private[this] val nTuples = nRows * nCols
+  private[this] val sortedTuples = (for (i <- 0 until nRows; j <- 0 until nCols) yield (T(i)(j), i, j)).sortBy(t => t).map(t => Array(t._1, t._2, t._3)).toArray.transpose
   private[this] val nbColSupports = Array.fill(nRows)(new ReversibleInt(s, 0))
   private[this] val nbRowSupports = Array.fill(nCols)(new ReversibleInt(s, 0))
+   
+  private[this] val zValues = sortedTuples(0)
+  private[this] val xValues = sortedTuples(1)
+  private[this] val yValues = sortedTuples(2)
+
   private[this] val lowRev = new ReversibleInt(s, 0)
   private[this] val upRev = new ReversibleInt(s, nTuples - 1)
-  
-  private[this] val zvalue = sortedTuples(0)
-  private[this] val xvalue = sortedTuples(1)
-  private[this] val yvalue = sortedTuples(2)
 
   override def setup(l: CPPropagStrength): CPOutcome = {
     if (x.updateMin(0) == Failure) Failure
@@ -76,7 +76,7 @@ final class ElementCst2D(T: Array[Array[Int]], x: CPIntVar, y: CPIntVar, z: CPIn
     else if (y.updateMin(0) == Failure) Failure
     else if (y.updateMax(nCols - 1) == Failure) Failure
     else {
-      init()
+      init()     
       x.callPropagateWhenDomainChanges(this)
       y.callPropagateWhenDomainChanges(this)
       z.callPropagateWhenBoundsChange(this)
@@ -88,18 +88,18 @@ final class ElementCst2D(T: Array[Array[Int]], x: CPIntVar, y: CPIntVar, z: CPIn
     var i = nTuples
     while (i > 0) {
       i -= 1
-      nbColSupports(sortedTuples(1)(i)).incr()
-      nbRowSupports(sortedTuples(2)(i)).incr()
+      nbColSupports(xValues(i)).incr()
+      nbRowSupports(yValues(i)).incr()
     }
   }
 
   // entry i disappear
   @inline private def update(i: Int): Boolean = {
-    if (nbColSupports(xvalue(i)).decr() == 0) {
-      if (x.removeValue(xvalue(i)) == Failure) return false
+    if (nbColSupports(xValues(i)).decr() == 0) {
+      if (x.removeValue(xValues(i)) == Failure) return false
     }
-    if (nbRowSupports(yvalue(i)).decr() == 0) {
-      if (y.removeValue(yvalue(i)) == Failure) return false
+    if (nbRowSupports(yValues(i)).decr() == 0) {
+      if (y.removeValue(yValues(i)) == Failure) return false
     }
     true
   }
@@ -110,22 +110,19 @@ final class ElementCst2D(T: Array[Array[Int]], x: CPIntVar, y: CPIntVar, z: CPIn
     var low = lowRev.value
     var up = upRev.value
 
-    while (zvalue(low) < z.min || !x.hasValue(xvalue(low)) || !y.hasValue(yvalue(low))) {
-      if (!update(low)) return Failure
+    while (zValues(low) < z.min || !x.hasValue(xValues(low)) || !y.hasValue(yValues(low))) {
+      if (!update(low) || up == low) return Failure
       low += 1
-      if (up < low) return Failure
     }
-
-    while (zvalue(up) > z.max || !x.hasValue(xvalue(up)) || !y.hasValue(yvalue(up))) {
-      if (!update(up)) return Failure
+    while (zValues(up) > z.max || !x.hasValue(xValues(up)) || !y.hasValue(yValues(up))) {
+      if (!update(up) || up == low) return Failure
       up -= 1
-      if (up < low) return Failure
     }
 
-    if (z.updateMin(zvalue(low)) == Failure) Failure
-    else if (z.updateMax(zvalue(up)) == Failure) Failure
+    if (z.updateMin(zValues(low)) == Failure) Failure
+    else if (z.updateMax(zValues(up)) == Failure) Failure
     else {
-      // Trail
+      // Trail 
       lowRev.value = low
       upRev.value = up
       Suspend
