@@ -61,7 +61,7 @@ public class EqReif extends Constraint {
 			//x.addAC5Bounds(this);
 			//x.callValRemoveWhenValueIsRemoved(this);
 			
-			x.callPropagateWhenDomainChanges(this,false);
+			x.callPropagateWhenDomainChanges(this);
 			//x.callPropagateWhenBind(this,false);
 			//b.callPropagateWhenBind(this,false);
 			return propagate();

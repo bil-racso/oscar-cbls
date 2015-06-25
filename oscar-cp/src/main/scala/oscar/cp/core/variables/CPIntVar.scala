@@ -233,11 +233,11 @@ abstract class CPIntVar extends CPVar with Iterable[Int] {
    * @param c
    * @see oscar.cp.core.Constraint#propagate()
    */
-  def callPropagateWhenDomainChanges(c: Constraint, trackDelta: Boolean = false): Unit
-
-  //def callPropagateOnChangesWithDelta(c: Constraint): SnapshotIntVar
-  
+  def callPropagateWhenDomainChanges(c: Constraint): Unit
   def callPropagateWhenDomainChanges(c: Constraint, watcher: Watcher): Unit
+
+  def callPropagateOnChangesWithDelta(c: Constraint): SnapshotIntVar
+  def callPropagateOnChangesWithDelta(c: Constraint, watcher: Watcher): SnapshotIntVar
 
   def callOnChanges(propagate: SnapshotIntVar => CPOutcome): PropagatorIntVar = {
     val propagator = new PropagatorIntVar(this, 0, propagate)

@@ -45,7 +45,6 @@ abstract class Constraint(val s: CPStore, val name: String = "cons") {
   private[this] val inQueue = new MagicBoolean(s, false)
   
   // FIXME variables should have an id 
-  val snapshotsVarInt = new java.util.HashMap[CPIntVar, SnapshotIntVar] 
   val snapshotsVarSet = new java.util.HashMap[CPSetVar, SnapshotVarSet]
   
   // Snapshots
@@ -53,11 +52,7 @@ abstract class Constraint(val s: CPStore, val name: String = "cons") {
   private[this] var nSnapshots = 0
   private[this] var _mustSnapshot = false
   
-  
-  final def addSnapshot(x: CPIntVar): SnapshotIntVar = addSnapshot(x, x.snapshot)
-  
   final def addSnapshot(variable: CPIntVar, snapshot: SnapshotIntVar): SnapshotIntVar = {
-    snapshotsVarInt.put(variable, snapshot)
     if (nSnapshots == snapshots.length) growSnapshots()
     snapshots(nSnapshots) = snapshot
     nSnapshots += 1   

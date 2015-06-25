@@ -12,6 +12,8 @@ import oscar.cp.core.CPStore
 import oscar.cp.core.Constraint
 import oscar.cp.core.watcher.WatcherListL2
 import oscar.cp.core.watcher.WatcherListL1
+import oscar.cp.core.Watcher
+import oscar.cp.core.delta.SnapshotIntVar
 
 /**
  * @author Renaud Hartert ren.hartert@gmail.com
@@ -226,10 +228,25 @@ class CPBoolVarImpl private(final override val store: CPStore, initDomain: Int, 
     onBindL2.register(c)
   }
 
-  final override def callPropagateWhenDomainChanges(c: Constraint, trackDelta: Boolean = false) {
+  final override def callPropagateWhenDomainChanges(c: Constraint) {
     degree.incr()
     onBindL2.register(c)
-    if (trackDelta) c.addSnapshot(this)
+  }
+  
+  final override def callPropagateOnChangesWithDelta(c: Constraint): SnapshotIntVar = {
+    val snap = snapshot
+    c.addSnapshot(this, snap)
+    degree.incr()
+    onBindL2.register(c)
+    snap
+  }
+  
+  final override def callPropagateOnChangesWithDelta(c: Constraint, watcher: Watcher): SnapshotIntVar = {
+    val snap = snapshot
+    c.addSnapshot(this, snap)
+    degree.incr()
+    onBindL2.register(c, watcher)
+    snap
   }
   
   def callPropagateWhenDomainChanges(c: Constraint, watcher: oscar.cp.core.Watcher): Unit = ???

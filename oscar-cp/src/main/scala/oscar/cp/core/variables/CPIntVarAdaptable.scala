@@ -30,6 +30,8 @@ import oscar.cp.core.Constraint
 import oscar.cp.core.watcher.WatcherListL2
 import oscar.cp.core.watcher.WatcherListL1
 import scala.collection.JavaConversions.mapAsScalaMap 
+import oscar.cp.core.Watcher
+import oscar.cp.core.delta.SnapshotIntVar
 
 /**
  *  @author Renaud Hartert ren.hartert@gmail.com
@@ -532,12 +534,27 @@ final class CPIntVarAdaptable( final override val store: CPStore, minValue: Int,
    * @param c
    * @see oscar.cp.core.Constraint#propagate()
    */
-  final override def callPropagateWhenDomainChanges(c: Constraint, trackDelta: Boolean = false) {
+  final override def callPropagateWhenDomainChanges(c: Constraint): Unit = {
     degree.incr()
     onDomainL2.register(c)
-    if (trackDelta) c.addSnapshot(this)
   }
 
+  final override def callPropagateOnChangesWithDelta(c: Constraint): SnapshotIntVar = {
+    val snap = snapshot
+    c.addSnapshot(this, snap)
+    degree.incr()
+    onDomainL2.register(c)
+    snap
+  }
+  
+  final override def callPropagateOnChangesWithDelta(c: Constraint, watcher: Watcher): SnapshotIntVar = {
+    val snap = snapshot
+    c.addSnapshot(this, snap)
+    degree.incr()
+    onDomainL2.register(c, watcher)
+    snap
+  }
+  
   /**
    * Level 2 registration: ask that the propagate() method of the constraint c is called whenever
    * one of the value is removed from the domain

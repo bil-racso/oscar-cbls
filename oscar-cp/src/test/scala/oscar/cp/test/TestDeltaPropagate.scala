@@ -37,8 +37,7 @@ class TestDeltaPropagate extends TestSuite {
       var snapshot: SnapshotIntVar = null
 
       override def setup(l: CPPropagStrength): CPOutcome = {
-        snapshot = addSnapshot(X)
-        X.callPropagateWhenDomainChanges(this,true)
+        snapshot = X.callPropagateOnChangesWithDelta(this)
         CPOutcome.Suspend
       }
       
@@ -76,8 +75,7 @@ class TestDeltaPropagate extends TestSuite {
       var snapshot: SnapshotIntVar = null
 
       override def setup(l: CPPropagStrength): CPOutcome = {
-        snapshot = addSnapshot(X)
-        X.callPropagateWhenDomainChanges(this,true)
+        snapshot = X.callPropagateOnChangesWithDelta(this)
         CPOutcome.Suspend
       }
       
@@ -113,8 +111,7 @@ class TestDeltaPropagate extends TestSuite {
       var snapshot: SnapshotIntVar = null
 
       override def setup(l: CPPropagStrength): CPOutcome = {
-        snapshot = addSnapshot(X)
-        X.callPropagateWhenDomainChanges(this,true)
+        snapshot = X.callPropagateOnChangesWithDelta(this)
         CPOutcome.Suspend
       }
       
@@ -227,8 +224,7 @@ class TestDeltaPropagate extends TestSuite {
       override def setup(l: CPPropagStrength): CPOutcome = {
 
         for (i <- 0 until x.size) {
-          snapshots(i) = addSnapshot(x(i))
-          x(i).callPropagateWhenDomainChanges(this)
+          snapshots(i) = x(i).callPropagateOnChangesWithDelta(this)
           x(i).callValRemoveIdxWhenValueIsRemoved(this, i)
         }
         propagate()
@@ -306,8 +302,7 @@ class TestDeltaPropagate extends TestSuite {
       var snapshot: SnapshotIntVar = null
       
       override def setup(l: CPPropagStrength): CPOutcome = {
-        snapshot = addSnapshot(X)
-        X.callPropagateWhenDomainChanges(this, true)
+        snapshot = X.callPropagateOnChangesWithDelta(this)
         // I remove some values such that propagate should be called again
         X.updateMax(5)
         X.updateMin(1)

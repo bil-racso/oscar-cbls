@@ -116,7 +116,7 @@ public class GCCVar extends Constraint {
 		}
 		for(int k = 0 ; k < x.length; k++) {
 			if (!x[k].isBound()) {
-				x[k].callPropagateWhenDomainChanges(this,false);
+				x[k].callPropagateWhenDomainChanges(this);
 			}
 		}
 		for (int i = 0; i < o.length; i++) {

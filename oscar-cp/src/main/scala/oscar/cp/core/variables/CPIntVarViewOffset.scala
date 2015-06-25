@@ -18,6 +18,7 @@ import scala.util.Random
 import oscar.cp.core.CPStore
 import oscar.cp.core.Constraint
 import oscar.cp.core.Watcher
+import oscar.cp.core.delta.SnapshotIntVar
 
 /**
  * Represents a view on variable applying an offset on it.
@@ -98,10 +99,24 @@ class CPIntVarViewOffset(v: CPIntVar, offset: Int) extends CPIntVar {
 	final override def callPropagateWhenBind(c: Constraint) = v.callPropagateWhenBind(c)
 	
 	final override def callPropagateWhenBoundsChange(c: Constraint) = v.callPropagateWhenBoundsChange(c)
-	
-	final override def callPropagateWhenDomainChanges(c: Constraint, trackDelta: Boolean = false) = v.callPropagateWhenDomainChanges(c,trackDelta)
   
-  final override def callPropagateWhenDomainChanges(c: Constraint, watcher: Watcher) = v.callPropagateWhenDomainChanges(c,watcher)
+	final override def callPropagateWhenDomainChanges(c: Constraint): Unit = v.callPropagateWhenDomainChanges(c)
+  
+  final override def callPropagateWhenDomainChanges(c: Constraint, watcher: Watcher): Unit = v.callPropagateWhenDomainChanges(c,watcher)
+
+  final override def callPropagateOnChangesWithDelta(c: Constraint): SnapshotIntVar = {
+    val snap = snapshot
+    c.addSnapshot(this, snap)
+    v.callPropagateWhenDomainChanges(c)
+    snap
+  }
+  
+  final override def callPropagateOnChangesWithDelta(c: Constraint, watcher: Watcher): SnapshotIntVar = {
+    val snap = snapshot
+    c.addSnapshot(this, snap)
+    v.callPropagateWhenDomainChanges(c, watcher)
+    snap
+  }
 	
 	// this method is useful when you have a view final override defined on a view
 	final override def callValBindWhenBind(c: Constraint, variable: CPIntVar) = v.callValBindWhenBind(c, variable)

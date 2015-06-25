@@ -4,6 +4,8 @@ import scala.util.Random
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.Constraint
 import oscar.cp.core.CPStore
+import oscar.cp.core.Watcher
+import oscar.cp.core.delta.SnapshotIntVar
 
 /** 
  *  A not view on a boolean variable. 
@@ -70,11 +72,15 @@ class CPBoolVarNot(final override val not: CPBoolVar) extends CPBoolVar {
   final override def callPropagateWhenBind(c: Constraint): Unit = not.callPropagateWhenBind(c)
 
   final override def callPropagateWhenBoundsChange(c: Constraint): Unit = callPropagateWhenBoundsChange(c)
+
+  final override def callPropagateWhenDomainChanges(c: Constraint): Unit = not.callPropagateWhenDomainChanges(c)
   
-  final override def  callPropagateWhenDomainChanges(c: Constraint, watcher: oscar.cp.core.Watcher): Unit = ???
+  final override def callPropagateWhenDomainChanges(c: Constraint, watcher: Watcher): Unit = not.callPropagateWhenDomainChanges(c, watcher)
 
-  final override def callPropagateWhenDomainChanges(c: Constraint, trackDelta: Boolean = false): Unit = not.callPropagateWhenDomainChanges(c, trackDelta)
-
+  final override def callPropagateOnChangesWithDelta(c: Constraint): SnapshotIntVar = not.callPropagateOnChangesWithDelta(c)
+  
+  final override def callPropagateOnChangesWithDelta(c: Constraint, watcher: Watcher): SnapshotIntVar = not.callPropagateOnChangesWithDelta(c, watcher)
+  
   final override def callValBindWhenBind(c: Constraint): Unit = not.callValBindWhenBind(c, this) 
   
   final override def callValBindWhenBind(c: Constraint, variable: CPIntVar): Unit = not.callValBindWhenBind(c, variable)

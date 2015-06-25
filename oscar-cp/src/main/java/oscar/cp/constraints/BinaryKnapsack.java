@@ -149,7 +149,7 @@ public class BinaryKnapsack extends Constraint {
 			}
 			else {
 				x[i].callValBindIdxWhenBind(this, i); // valBindIdx
-				x[i].callPropagateWhenDomainChanges(this,false); // propagate
+				x[i].callPropagateWhenDomainChanges(this); // propagate
 			}
 		}
 		if (!c.isBound()) c.callPropagateWhenBoundsChange(this);

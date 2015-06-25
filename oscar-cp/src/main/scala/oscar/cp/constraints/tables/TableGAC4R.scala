@@ -141,8 +141,7 @@ class TableGAC4R(X: Array[CPIntVar], initTable: Array[Array[Int]]) extends Const
     while (i > 0) {
        i -= 1
        val x = X(i)
-       snapshots(i) = addSnapshot(x)
-       x.callPropagateWhenDomainChanges(this)
+       snapshots(i) = x.callPropagateOnChangesWithDelta(this)
     }
 
     Suspend
