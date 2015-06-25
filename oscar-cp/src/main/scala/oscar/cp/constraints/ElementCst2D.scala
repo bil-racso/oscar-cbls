@@ -96,12 +96,12 @@ final class ElementCst2D(T: Array[Array[Int]], x: CPIntVar, y: CPIntVar, z: CPIn
   // entry i disappear
   @inline private def update(i: Int): Boolean = {
     if (nbColSupports(xValues(i)).decr() == 0) {
-      if (x.removeValue(xValues(i)) == Failure) return false
+      if (x.removeValue(xValues(i)) == Failure) return true
     }
     if (nbRowSupports(yValues(i)).decr() == 0) {
-      if (y.removeValue(yValues(i)) == Failure) return false
+      if (y.removeValue(yValues(i)) == Failure) return true
     }
-    true
+    false
   }
 
   override def propagate(): CPOutcome = {
@@ -110,12 +110,15 @@ final class ElementCst2D(T: Array[Array[Int]], x: CPIntVar, y: CPIntVar, z: CPIn
     var low = lowRev.value
     var up = upRev.value
 
-    while (zValues(low) < z.min || !x.hasValue(xValues(low)) || !y.hasValue(yValues(low))) {
-      if (!update(low) || up == low) return Failure
+    val zMin = z.min
+    val zMax = z.max
+    
+    while (zValues(low) < zMin || !x.hasValue(xValues(low)) || !y.hasValue(yValues(low))) {
+      if (up == low || update(low)) return Failure
       low += 1
     }
-    while (zValues(up) > z.max || !x.hasValue(xValues(up)) || !y.hasValue(yValues(up))) {
-      if (!update(up) || up == low) return Failure
+    while (zValues(up) > zMax || !x.hasValue(xValues(up)) || !y.hasValue(yValues(up))) {
+      if (up == low || update(up)) return Failure
       up -= 1
     }
 

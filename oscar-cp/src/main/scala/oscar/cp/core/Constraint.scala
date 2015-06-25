@@ -91,15 +91,15 @@ abstract class Constraint(val s: CPStore, val name: String = "cons") {
       s.onPop { updateSnapshots() }
       _mustSnapshot = true
     }    
-  }
-
+  } 
+  
   @inline protected def snapshotVarSet(): Unit = {
     var i = 0
     while (i < nSnapshots) {
       snapshots(i).update()
       i += 1
     } 
-  }  
+  } 
 
   private[this] var priorL2 = CPStore.MaxPriorityL2 - 2
   private[this] var priorBindL1 = CPStore.MaxPriorityL1 - 1
@@ -108,9 +108,7 @@ abstract class Constraint(val s: CPStore, val name: String = "cons") {
   private[this] var priorRequireL1 = CPStore.MaxPriorityL1 - 1
   private[this] var priorExcludeL1 = CPStore.MaxPriorityL1 - 2
 
-  /**
-   * Set to true when it is currently executing the propagate method
-   */
+  // Set to true when it is currently executing the propagate method
   private[this] var _inPropagate = false
 
   /**
@@ -314,8 +312,5 @@ abstract class Constraint(val s: CPStore, val name: String = "cons") {
     oc
   }
 
-  def setInQueue() {
-    inQueue.value = true
-  }
-
+  @inline private[cp] def setInQueue(): Unit = inQueue.setTrue()
 }

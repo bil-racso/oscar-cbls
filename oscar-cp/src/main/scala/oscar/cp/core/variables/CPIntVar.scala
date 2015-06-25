@@ -239,8 +239,8 @@ abstract class CPIntVar extends CPVar with Iterable[Int] {
 
   def callOnChanges(propagate: SnapshotIntVar => CPOutcome): PropagatorIntVar = {
     val propagator = new PropagatorIntVar(this, 0, propagate)
-    callPropagateWhenDomainChanges(propagator)
     propagator.idempotent = true
+    callPropagateWhenDomainChanges(propagator)
     propagator
   }
   
@@ -256,7 +256,7 @@ abstract class CPIntVar extends CPVar with Iterable[Int] {
     val propagator = new PropagatorIntVar(this, 0, filter)
     propagator.idempotent = idempotent
     propagator.priorityL2 = priority
-    propagator.setup(store.propagStrength) // should not fail 
+    callPropagateWhenDomainChanges(propagator)
     propagator.snapshot
   }
 
