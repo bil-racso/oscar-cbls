@@ -141,8 +141,8 @@ final class CPIntVarSingleton(final override val store: CPStore, initValue: Int,
   }
   
     
-  final override def delta(oldMin: Int, oldMax: Int, oldSize: Int): Iterator[Int] = ???
-  final override def fillDeltaArray(oldMin: Int, oldMax: Int, oldSize: Int, arr: Array[Int]): Int = ??? 
+  final override def delta(oldMin: Int, oldMax: Int, oldSize: Int): Iterator[Int] = Iterator.empty
+  final override def fillDeltaArray(oldMin: Int, oldMax: Int, oldSize: Int, arr: Array[Int]): Int = 0
 
   /**
    * Level 2 registration: ask that the propagate() method of the constraint c is called whenever
