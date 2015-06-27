@@ -13,7 +13,7 @@ import oscar.cp.core.Constraint
 import oscar.cp.core.watcher.WatcherListL2
 import oscar.cp.core.watcher.WatcherListL1
 import oscar.cp.core.Watcher
-import oscar.cp.core.delta.SnapshotIntVar
+import oscar.cp.core.delta.DeltaIntVar
 
 /**
  * @author Renaud Hartert ren.hartert@gmail.com
@@ -233,7 +233,7 @@ class CPBoolVarImpl private(final override val store: CPStore, initDomain: Int, 
     onBindL2.register(c)
   }
   
-  final override def callPropagateOnChangesWithDelta(c: Constraint): SnapshotIntVar = {
+  final override def callPropagateOnChangesWithDelta(c: Constraint): DeltaIntVar = {
     val snap = snapshot
     c.addSnapshot(this, snap)
     degree.incr()
@@ -241,7 +241,7 @@ class CPBoolVarImpl private(final override val store: CPStore, initDomain: Int, 
     snap
   }
   
-  final override def callPropagateOnChangesWithDelta(c: Constraint, watcher: Watcher): SnapshotIntVar = {
+  final override def callPropagateOnChangesWithDelta(c: Constraint, watcher: Watcher): DeltaIntVar = {
     val snap = snapshot
     c.addSnapshot(this, snap)
     degree.incr()

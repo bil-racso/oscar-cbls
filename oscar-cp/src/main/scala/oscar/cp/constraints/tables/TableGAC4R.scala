@@ -20,7 +20,7 @@ import oscar.cp.core.variables.CPIntVar
 import oscar.cp.core.{Constraint, CPOutcome, CPPropagStrength}
 import oscar.cp.core.CPOutcome._
 import scala.collection.mutable.ArrayBuffer
-import oscar.cp.core.delta.SnapshotIntVar
+import oscar.cp.core.delta.DeltaIntVar
 
 /**
  * Implementation of the GAC-4R algorithm for the table constraint.
@@ -121,7 +121,7 @@ class TableGAC4R(X: Array[CPIntVar], initTable: Array[Array[Int]]) extends Const
   private[this] var validTuples: ReversibleSharedSparseSet = null
   
   // Snapshots
-  private[this] val snapshots = new Array[SnapshotIntVar](arity)
+  private[this] val snapshots = new Array[DeltaIntVar](arity)
 
   /* ----- Set up ----- */
 

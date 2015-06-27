@@ -6,7 +6,7 @@ import oscar.cp.core.variables.CPIntVar
  * @author Pierre Schaus pschaus@gmail.com
  * @author Renaud Hartert ren.hartert@gmail.com
  */
-abstract class SnapshotIntVar extends Snapshot {
+abstract class DeltaIntVar extends Delta {
   def id: Int
   def variable: CPIntVar
   def oldMin: Int

@@ -26,8 +26,8 @@ import oscar.cp.core.delta.PropagatorIntVar
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.CPOutcome._
 import oscar.cp.core.Watcher
-import oscar.cp.core.delta.SnapshotIntVar
-import oscar.cp.core.delta.SnapshotIntVarAdaptable
+import oscar.cp.core.delta.DeltaIntVar
+import oscar.cp.core.delta.DeltaIntVarAdaptable
 
 /**
  * @author Pierre Schaus pschaus@gmail.com
@@ -236,17 +236,17 @@ abstract class CPIntVar extends CPVar with Iterable[Int] {
   def callPropagateWhenDomainChanges(c: Constraint): Unit
   def callPropagateWhenDomainChanges(c: Constraint, watcher: Watcher): Unit
 
-  def callPropagateOnChangesWithDelta(c: Constraint): SnapshotIntVar
-  def callPropagateOnChangesWithDelta(c: Constraint, watcher: Watcher): SnapshotIntVar
+  def callPropagateOnChangesWithDelta(c: Constraint): DeltaIntVar
+  def callPropagateOnChangesWithDelta(c: Constraint, watcher: Watcher): DeltaIntVar
 
-  def callOnChanges(propagate: SnapshotIntVar => CPOutcome): PropagatorIntVar = {
+  def callOnChanges(propagate: DeltaIntVar => CPOutcome): PropagatorIntVar = {
     val propagator = new PropagatorIntVar(this, 0, propagate)
     propagator.idempotent = true
     callPropagateWhenDomainChanges(propagator)
     propagator
   }
   
-  def callOnChanges(id: Int, propagate: SnapshotIntVar => CPOutcome): PropagatorIntVar = {
+  def callOnChanges(id: Int, propagate: DeltaIntVar => CPOutcome): PropagatorIntVar = {
     val propagator = new PropagatorIntVar(this, id, propagate)
     propagator.idempotent = true
     propagator.priority = CPStore.MaxPriorityL2
@@ -254,7 +254,7 @@ abstract class CPIntVar extends CPVar with Iterable[Int] {
     propagator
   }
   
-  def filterWhenDomainChangesWithDelta(idempotent: Boolean = false, priority: Int = CPStore.MaxPriorityL2 - 2)(filter: SnapshotIntVar => CPOutcome): SnapshotIntVar = {
+  def filterWhenDomainChangesWithDelta(idempotent: Boolean = false, priority: Int = CPStore.MaxPriorityL2 - 2)(filter: DeltaIntVar => CPOutcome): DeltaIntVar = {
     val propagator = new PropagatorIntVar(this, 0, filter)
     propagator.idempotent = idempotent
     propagator.priorityL2 = priority
@@ -350,9 +350,9 @@ abstract class CPIntVar extends CPVar with Iterable[Int] {
   
   def fillDeltaArray(oldMin: Int, oldMax: Int, oldSize: Int, arr: Array[Int]): Int
 
-  def snapshot: SnapshotIntVar = new SnapshotIntVarAdaptable(this, 0)
+  def snapshot: DeltaIntVar = new DeltaIntVarAdaptable(this, 0)
   
-  def snapshot(id: Int): SnapshotIntVar = new SnapshotIntVarAdaptable(this, id)
+  def snapshot(id: Int): DeltaIntVar = new DeltaIntVarAdaptable(this, id)
 
   // ------------------------ some useful methods for java -------------------------
 

@@ -6,7 +6,7 @@ import oscar.cp.core.Constraint
 import oscar.cp.core.variables.CPIntVar
 import oscar.cp.core.CPStore
 
-class PropagatorIntVar(x: CPIntVar, id: Int, filter: SnapshotIntVar => CPOutcome, name: String = "PropagatorIntVar") extends Constraint(x.store, name) {
+class PropagatorIntVar(x: CPIntVar, id: Int, filter: DeltaIntVar => CPOutcome, name: String = "PropagatorIntVar") extends Constraint(x.store, name) {
   
   private[this] val _snapshot = x.snapshot(id)
   addSnapshot(x, _snapshot)

@@ -18,7 +18,7 @@ import oscar.cp.core._
 import oscar.algo.reversible._
 import oscar.cp.core.CPOutcome._
 import oscar.cp.core.variables.CPIntVar
-import oscar.cp.core.delta.SnapshotIntVar
+import oscar.cp.core.delta.DeltaIntVar
 
 
 /**
@@ -162,7 +162,7 @@ class Count(val N: CPIntVar, val X: Array[CPIntVar], val Y: CPIntVar) extends Co
       Suspend
     }
     
-    Y.filterWhenDomainChangesWithDelta() { d: SnapshotIntVar =>
+    Y.filterWhenDomainChangesWithDelta() { d: DeltaIntVar =>
       // should test in constant time
       if (!Y.hasValue(supportmax.value)) {
         updateSupportMaxRequired = true
@@ -179,7 +179,7 @@ class Count(val N: CPIntVar, val X: Array[CPIntVar], val Y: CPIntVar) extends Co
     	filterYBound()
     }
     
-    def filterX(x: CPIntVar, d: SnapshotIntVar): CPOutcome = {
+    def filterX(x: CPIntVar, d: DeltaIntVar): CPOutcome = {
         //println("FilterX"+X.mkString(",")+" Y:"+Y)
         for (v <- d.values) {
           //println("lost value"+v)
@@ -197,7 +197,7 @@ class Count(val N: CPIntVar, val X: Array[CPIntVar], val Y: CPIntVar) extends Co
     }
     
     for (x <- X; if !x.isBound) {
-      x.filterWhenDomainChangesWithDelta() {d: SnapshotIntVar =>
+      x.filterWhenDomainChangesWithDelta() {d: DeltaIntVar =>
         filterX(x,d)
       }
 

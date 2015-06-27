@@ -21,7 +21,7 @@ import oscar.cp.core.CPPropagStrength
 import oscar.cp.core.CPOutcome
 import scala.collection.mutable.ArrayBuffer
 import oscar.cp.testUtils._
-import oscar.cp.core.delta.SnapshotIntVar
+import oscar.cp.core.delta.DeltaIntVar
 
 
 /**
@@ -34,7 +34,7 @@ class TestDeltaPropagate extends TestSuite {
     
     class MyCons(val X: CPIntVar) extends Constraint(X.store, "TestDelta") {
       
-      var snapshot: SnapshotIntVar = null
+      var snapshot: DeltaIntVar = null
 
       override def setup(l: CPPropagStrength): CPOutcome = {
         snapshot = X.callPropagateOnChangesWithDelta(this)
@@ -72,7 +72,7 @@ class TestDeltaPropagate extends TestSuite {
     
     class MyCons(val X: CPIntVar) extends Constraint(X.store, "TestDelta") {
 
-      var snapshot: SnapshotIntVar = null
+      var snapshot: DeltaIntVar = null
 
       override def setup(l: CPPropagStrength): CPOutcome = {
         snapshot = X.callPropagateOnChangesWithDelta(this)
@@ -108,7 +108,7 @@ class TestDeltaPropagate extends TestSuite {
     
     class MyCons(val X: CPIntVar) extends Constraint(X.store, "TestDelta") {
       priorityL2 = CPStore.MAXPRIORL2-5 
-      var snapshot: SnapshotIntVar = null
+      var snapshot: DeltaIntVar = null
 
       override def setup(l: CPPropagStrength): CPOutcome = {
         snapshot = X.callPropagateOnChangesWithDelta(this)
@@ -219,7 +219,7 @@ class TestDeltaPropagate extends TestSuite {
       val delta2 = Array.tabulate(x.size)(i => Array.ofDim[Int](x(i).size))
       var currDim = Array.tabulate(x.size)(i => 0)
       
-      val snapshots = new Array[SnapshotIntVar](x.length)
+      val snapshots = new Array[DeltaIntVar](x.length)
 
       override def setup(l: CPPropagStrength): CPOutcome = {
 
@@ -299,7 +299,7 @@ class TestDeltaPropagate extends TestSuite {
     class MyCons(val X: CPIntVar) extends Constraint(X.store, "TestDelta") {
       priorityL2 = CPStore.MAXPRIORL2-5 
       
-      var snapshot: SnapshotIntVar = null
+      var snapshot: DeltaIntVar = null
       
       override def setup(l: CPPropagStrength): CPOutcome = {
         snapshot = X.callPropagateOnChangesWithDelta(this)

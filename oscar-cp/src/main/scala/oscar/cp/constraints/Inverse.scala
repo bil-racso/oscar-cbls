@@ -21,9 +21,8 @@ import oscar.cp.core.CPPropagStrength
 import oscar.cp.core.Constraint
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.CPOutcome._
-import oscar.cp.core.delta.SnapshotIntVar
+import oscar.cp.core.delta.DeltaIntVar
 import oscar.cp.core.CPStore
-import oscar.cp.core.delta.PropagatorIntVar
 
 /**
  * Inverse
@@ -56,12 +55,12 @@ class Inverse(prev: Array[CPIntVar], next: Array[CPIntVar]) extends Constraint(p
     }
   }
 
-  @inline private def propagatePrev(snapshot: SnapshotIntVar): CPOutcome = {
-    val varId = snapshot.id
+  @inline private def propagatePrev(delta: DeltaIntVar): CPOutcome = {
+    val varId = delta.id
     val intVar = prev(varId)
     if (intVar.isBound) next(intVar.min).assign(varId)
     else {
-      var i = snapshot.fillArray(removedValues)
+      var i = delta.fillArray(removedValues)
       while (i > 0) {
         i -= 1
         val value = removedValues(i)
@@ -71,12 +70,12 @@ class Inverse(prev: Array[CPIntVar], next: Array[CPIntVar]) extends Constraint(p
     }
   }
 
-  @inline private def propagateNext(snapshot: SnapshotIntVar): CPOutcome = {
-    val varId = snapshot.id
+  @inline private def propagateNext(delta: DeltaIntVar): CPOutcome = {
+    val varId = delta.id
     val intVar = next(varId)
     if (intVar.isBound) prev(intVar.min).assign(varId)
     else {
-      var i = snapshot.fillArray(removedValues)
+      var i = delta.fillArray(removedValues)
       while (i > 0) {
         i -= 1
         val value = removedValues(i)

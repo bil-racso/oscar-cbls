@@ -7,7 +7,7 @@ import oscar.cp.core.variables.CPIntVar
  * @author Pierre Schaus pschaus@gmail.com
  * @author Renaud Hartert ren.hartert@gmail.com
  */
-final class SnapshotIntVarAdaptable(x: CPIntVar, final override val id: Int) extends SnapshotIntVar {
+final class DeltaIntVarAdaptable(x: CPIntVar, final override val id: Int) extends DeltaIntVar {
 
   private[this] var _oldMin: Int = x.min
   private[this] var _oldMax: Int = x.max

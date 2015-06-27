@@ -22,7 +22,7 @@ import oscar.cp.core.variables.CPIntVar
 import oscar.cp.core.{ Constraint, CPStore, CPOutcome, CPPropagStrength }
 import oscar.cp.core.CPOutcome._
 import scala.collection.mutable.ArrayBuffer
-import oscar.cp.core.delta.SnapshotIntVar
+import oscar.cp.core.delta.DeltaIntVar
 
 /**
  * Implementation of the Compact Table algorithm (CT) for the table constraint.
@@ -105,7 +105,7 @@ final class TableCT(X: Array[CPIntVar], table: Array[Array[Int]]) extends Constr
    * @param delta the set of values removed since the last call.
    * @return the outcome i.e. Failure or Success.
    */
-  @inline private def updateDelta(delta: SnapshotIntVar): CPOutcome = {
+  @inline private def updateDelta(delta: DeltaIntVar): CPOutcome = {
 
     val intVar = delta.variable
     val varIndex = delta.id

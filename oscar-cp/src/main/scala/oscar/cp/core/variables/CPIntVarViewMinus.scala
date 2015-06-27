@@ -18,7 +18,7 @@ import scala.util.Random
 import oscar.cp.core.CPStore
 import oscar.cp.core.Constraint
 import oscar.cp.core.Watcher
-import oscar.cp.core.delta.SnapshotIntVar
+import oscar.cp.core.delta.DeltaIntVar
 
 /**
  * Represents a view -x on variable x 
@@ -87,14 +87,14 @@ final class CPIntVarViewMinus(v: CPIntVar) extends CPIntVar {
   
   def callPropagateWhenDomainChanges(c: Constraint, watcher: Watcher): Unit = v.callPropagateWhenDomainChanges(c,watcher)
 
-  def callPropagateOnChangesWithDelta(c: Constraint): SnapshotIntVar = {
+  def callPropagateOnChangesWithDelta(c: Constraint): DeltaIntVar = {
     val snap = snapshot
     c.addSnapshot(this, snap)
     v.callPropagateWhenDomainChanges(c)
     snap
   }
   
-  def callPropagateOnChangesWithDelta(c: Constraint, watcher: Watcher): SnapshotIntVar = {
+  def callPropagateOnChangesWithDelta(c: Constraint, watcher: Watcher): DeltaIntVar = {
     val snap = snapshot
     c.addSnapshot(this, snap)
     v.callPropagateWhenDomainChanges(c, watcher)

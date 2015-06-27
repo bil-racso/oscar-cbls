@@ -31,7 +31,7 @@ import oscar.cp.core.watcher.WatcherListL2
 import oscar.cp.core.watcher.WatcherListL1
 import scala.collection.JavaConversions.mapAsScalaMap 
 import oscar.cp.core.Watcher
-import oscar.cp.core.delta.SnapshotIntVar
+import oscar.cp.core.delta.DeltaIntVar
 
 /**
  *  @author Renaud Hartert ren.hartert@gmail.com
@@ -539,7 +539,7 @@ final class CPIntVarAdaptable( final override val store: CPStore, minValue: Int,
     onDomainL2.register(c)
   }
 
-  final override def callPropagateOnChangesWithDelta(c: Constraint): SnapshotIntVar = {
+  final override def callPropagateOnChangesWithDelta(c: Constraint): DeltaIntVar = {
     val snap = snapshot
     c.addSnapshot(this, snap)
     degree.incr()
@@ -547,7 +547,7 @@ final class CPIntVarAdaptable( final override val store: CPStore, minValue: Int,
     snap
   }
   
-  final override def callPropagateOnChangesWithDelta(c: Constraint, watcher: Watcher): SnapshotIntVar = {
+  final override def callPropagateOnChangesWithDelta(c: Constraint, watcher: Watcher): DeltaIntVar = {
     val snap = snapshot
     c.addSnapshot(this, snap)
     degree.incr()

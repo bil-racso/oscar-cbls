@@ -23,9 +23,9 @@ import oscar.cp.core.variables.CPSetVar
 import oscar.cp.core.variables.CPBoolVar
 import oscar.cp.core.variables.CPIntVar
 import scala.collection.JavaConversions.mapAsScalaMap
-import oscar.cp.core.delta.SnapshotVarSet
-import oscar.cp.core.delta.SnapshotIntVar
-import oscar.cp.core.delta.Snapshot
+import oscar.cp.core.delta.DeltaSetVar
+import oscar.cp.core.delta.DeltaIntVar
+import oscar.cp.core.delta.Delta
 
 
 
@@ -45,14 +45,14 @@ abstract class Constraint(val s: CPStore, val name: String = "cons") {
   private[this] val inQueue = new MagicBoolean(s, false)
   
   // FIXME variables should have an id 
-  val snapshotsVarSet = new java.util.HashMap[CPSetVar, SnapshotVarSet]
+  val snapshotsVarSet = new java.util.HashMap[CPSetVar, DeltaSetVar]
   
   // Snapshots
-  private[this] var snapshots = new Array[Snapshot](10)
+  private[this] var snapshots = new Array[Delta](10)
   private[this] var nSnapshots = 0
   private[this] var _mustSnapshot = false
   
-  final def addSnapshot(variable: CPIntVar, snapshot: SnapshotIntVar): SnapshotIntVar = {
+  final def addSnapshot(variable: CPIntVar, snapshot: DeltaIntVar): DeltaIntVar = {
     if (nSnapshots == snapshots.length) growSnapshots()
     snapshots(nSnapshots) = snapshot
     nSnapshots += 1   
@@ -62,7 +62,7 @@ abstract class Constraint(val s: CPStore, val name: String = "cons") {
   }
 
   @inline private def growSnapshots(): Unit = {
-    val newStack = new Array[Snapshot](nSnapshots*2)
+    val newStack = new Array[Delta](nSnapshots*2)
     System.arraycopy(snapshots, 0, newStack, 0, nSnapshots)
     snapshots = newStack
   }
@@ -76,7 +76,7 @@ abstract class Constraint(val s: CPStore, val name: String = "cons") {
   }
 
   def addSnapshot(x: CPSetVar): Unit = {
-    snapshotsVarSet(x) = new SnapshotVarSet(x) // FIXME avoid the implicit cast
+    snapshotsVarSet(x) = new DeltaSetVar(x) // FIXME avoid the implicit cast
     
     if (nSnapshots == snapshots.length) growSnapshots()
     snapshots(nSnapshots) = snapshotsVarSet(x) // FIXME avoid the implicit cast

@@ -3,7 +3,7 @@ package oscar.cp.core.delta
 import oscar.cp.core.variables.CPIntVar
 
 /** @author Renaud Hartert ren.hartert@gmail.com */
-final class SnapshotIntVarEmpty(final override val variable: CPIntVar) extends SnapshotIntVar {
+final class DeltaIntVarEmpty(final override val variable: CPIntVar) extends DeltaIntVar {
   final override val id: Int = 0
   final override val oldMin: Int = variable.min
   final override val oldMax: Int = variable.max

@@ -18,7 +18,7 @@ import scala.util.Random
 import oscar.cp.core.CPStore
 import oscar.cp.core.Constraint
 import oscar.cp.core.Watcher
-import oscar.cp.core.delta.SnapshotIntVar
+import oscar.cp.core.delta.DeltaIntVar
 
 /**
  * Represents a view on variable applying an offset on it.
@@ -104,14 +104,14 @@ class CPIntVarViewOffset(v: CPIntVar, offset: Int) extends CPIntVar {
   
   final override def callPropagateWhenDomainChanges(c: Constraint, watcher: Watcher): Unit = v.callPropagateWhenDomainChanges(c,watcher)
 
-  final override def callPropagateOnChangesWithDelta(c: Constraint): SnapshotIntVar = {
+  final override def callPropagateOnChangesWithDelta(c: Constraint): DeltaIntVar = {
     val snap = snapshot
     c.addSnapshot(this, snap)
     v.callPropagateWhenDomainChanges(c)
     snap
   }
   
-  final override def callPropagateOnChangesWithDelta(c: Constraint, watcher: Watcher): SnapshotIntVar = {
+  final override def callPropagateOnChangesWithDelta(c: Constraint, watcher: Watcher): DeltaIntVar = {
     val snap = snapshot
     c.addSnapshot(this, snap)
     v.callPropagateWhenDomainChanges(c, watcher)
