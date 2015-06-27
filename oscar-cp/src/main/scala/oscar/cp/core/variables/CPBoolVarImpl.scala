@@ -234,16 +234,14 @@ class CPBoolVarImpl private(final override val store: CPStore, initDomain: Int, 
   }
   
   final override def callPropagateOnChangesWithDelta(c: Constraint): DeltaIntVar = {
-    val snap = snapshot
-    c.addSnapshot(this, snap)
+    val snap = delta(c)
     degree.incr()
     onBindL2.register(c)
     snap
   }
   
   final override def callPropagateOnChangesWithDelta(c: Constraint, watcher: Watcher): DeltaIntVar = {
-    val snap = snapshot
-    c.addSnapshot(this, snap)
+    val snap = delta(c)
     degree.incr()
     onBindL2.register(c, watcher)
     snap

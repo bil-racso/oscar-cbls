@@ -52,13 +52,12 @@ abstract class Constraint(val s: CPStore, val name: String = "cons") {
   private[this] var nSnapshots = 0
   private[this] var _mustSnapshot = false
   
-  final def addSnapshot(variable: CPIntVar, snapshot: DeltaIntVar): DeltaIntVar = {
+  final def registerDelta(delta: DeltaIntVar): Unit = {
     if (nSnapshots == snapshots.length) growSnapshots()
-    snapshots(nSnapshots) = snapshot
+    snapshots(nSnapshots) = delta
     nSnapshots += 1   
-    snapshot.update() 
+    delta.update() 
     if (!_mustSnapshot) { s.onPop { updateSnapshots() }; _mustSnapshot = true }
-    snapshot
   }
 
   @inline private def growSnapshots(): Unit = {

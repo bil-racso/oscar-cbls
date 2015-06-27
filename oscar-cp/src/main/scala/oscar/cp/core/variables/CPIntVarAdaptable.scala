@@ -540,16 +540,14 @@ final class CPIntVarAdaptable( final override val store: CPStore, minValue: Int,
   }
 
   final override def callPropagateOnChangesWithDelta(c: Constraint): DeltaIntVar = {
-    val snap = snapshot
-    c.addSnapshot(this, snap)
+    val snap = delta(c)
     degree.incr()
     onDomainL2.register(c)
     snap
   }
   
   final override def callPropagateOnChangesWithDelta(c: Constraint, watcher: Watcher): DeltaIntVar = {
-    val snap = snapshot
-    c.addSnapshot(this, snap)
+    val snap = delta(c)
     degree.incr()
     onDomainL2.register(c, watcher)
     snap

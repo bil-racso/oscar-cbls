@@ -88,15 +88,13 @@ final class CPIntVarViewMinus(v: CPIntVar) extends CPIntVar {
   def callPropagateWhenDomainChanges(c: Constraint, watcher: Watcher): Unit = v.callPropagateWhenDomainChanges(c,watcher)
 
   def callPropagateOnChangesWithDelta(c: Constraint): DeltaIntVar = {
-    val snap = snapshot
-    c.addSnapshot(this, snap)
+    val snap = delta(c)
     v.callPropagateWhenDomainChanges(c)
     snap
   }
   
   def callPropagateOnChangesWithDelta(c: Constraint, watcher: Watcher): DeltaIntVar = {
-    val snap = snapshot
-    c.addSnapshot(this, snap)
+    val snap = delta(c)
     v.callPropagateWhenDomainChanges(c, watcher)
     snap
   }

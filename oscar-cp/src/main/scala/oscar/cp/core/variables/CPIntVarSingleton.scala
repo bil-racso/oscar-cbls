@@ -172,12 +172,14 @@ final class CPIntVarSingleton(final override val store: CPStore, initValue: Int,
   
   final override def callPropagateOnChangesWithDelta(c: Constraint): DeltaIntVar = {
     degree.incr()
-    new DeltaIntVarEmpty(this)
+    delta(c)
   }
+  
+  final override def delta(c: Constraint): DeltaIntVar = new DeltaIntVarEmpty(this)
   
   final override def callPropagateOnChangesWithDelta(c: Constraint, watcher: Watcher): DeltaIntVar = {
     degree.incr()
-    new DeltaIntVarEmpty(this)
+    delta(c)
   }
 
 

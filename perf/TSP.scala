@@ -33,7 +33,7 @@ object TSP extends CPModel with App {
 
   val n = 58
   val Cities = 0 until n
-  val lines = Source.fromFile("data/tsp.txt").getLines.toList
+  val lines = Source.fromFile("../data/tsp.txt").getLines.toList
 
   val distMatrix = lines.grouped(n).map(i => i.map(j => j.toInt).toArray).toArray
 

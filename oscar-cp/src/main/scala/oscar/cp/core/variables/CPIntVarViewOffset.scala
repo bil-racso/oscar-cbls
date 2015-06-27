@@ -105,15 +105,13 @@ class CPIntVarViewOffset(v: CPIntVar, offset: Int) extends CPIntVar {
   final override def callPropagateWhenDomainChanges(c: Constraint, watcher: Watcher): Unit = v.callPropagateWhenDomainChanges(c,watcher)
 
   final override def callPropagateOnChangesWithDelta(c: Constraint): DeltaIntVar = {
-    val snap = snapshot
-    c.addSnapshot(this, snap)
+    val snap = delta(c)
     v.callPropagateWhenDomainChanges(c)
     snap
   }
   
   final override def callPropagateOnChangesWithDelta(c: Constraint, watcher: Watcher): DeltaIntVar = {
-    val snap = snapshot
-    c.addSnapshot(this, snap)
+    val snap = delta(c)
     v.callPropagateWhenDomainChanges(c, watcher)
     snap
   }

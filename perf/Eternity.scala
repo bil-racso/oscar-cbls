@@ -14,7 +14,7 @@ import oscar.cp.searches.ConflictOrderingSearch
  */
 object Eternity extends CPModel with App {
 
-  val reader = new InFile("data/eternity8x8.txt");
+  val reader = new InFile("../data/eternity8x8.txt");
 
   val nCols = reader.nextInt()
   val nRows = reader.nextInt()
