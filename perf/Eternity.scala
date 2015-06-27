@@ -14,7 +14,7 @@ import oscar.cp.searches.ConflictOrderingSearch
  */
 object Eternity extends CPModel with App {
 
-  val reader = new InFile("../data/eternity8x8.txt");
+  val reader = new InFile("data/eternity8x8.txt");
 
   val nCols = reader.nextInt()
   val nRows = reader.nextInt()
@@ -33,12 +33,12 @@ object Eternity extends CPModel with App {
 
   // horizontal match on adjacent cells
   for (l <- 0 until nCols; c <- 0 until nRows - 1) {
-    right(l)(c) = left(l)(c + 1)
+    add(right(l)(c) == left(l)(c + 1))
   }
 
   // vertical match on adjacent cells
   for (l <- 0 until nCols - 1; c <- 0 until nRows) {
-    down(l)(c) = up(l + 1)(c)
+    add(down(l)(c) == up(l + 1)(c))
   }
   
   // make the link between id, orientation and up variable
@@ -74,20 +74,12 @@ object Eternity extends CPModel with App {
   
 
   search {
-      binaryIdx(fId, fId(_).size, fId(_).randomValue(rand)) ++
+      binaryFirstFail(fId) ++
       binaryFirstFail(fUp) ++
       binaryFirstFail(fRight) ++
       binaryFirstFail(fDown)
   }
   
-  var sol = false
-  var n = 100
-  
-  
-  while (!sol) {
-    //println("restart " + n)
-    val stat = start(failureLimit = n)
-    if (sol) println(stat)
-    else n = (n * 115) / 100
-  }
+  val stat = start(nSols = 1)
+  println(stat)
 }
