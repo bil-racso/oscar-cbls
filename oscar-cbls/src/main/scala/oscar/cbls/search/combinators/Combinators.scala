@@ -16,11 +16,10 @@
  */
 package oscar.cbls.search.combinators
 
-import oscar.cbls.invariants.core.computation.{ Store, IntValue, SetValue }
-import oscar.cbls.objective.{ CascadingObjective, Objective }
-import oscar.cbls.search.StopWatch
-import oscar.cbls.search.core.{ NoMoveFound, _ }
-import oscar.cbls.search.move.{ CallBackMove, CompositeMove, InstrumentedMove, Move }
+import oscar.cbls.invariants.core.computation.{IntValue, SetValue}
+import oscar.cbls.objective.{CascadingObjective, Objective}
+import oscar.cbls.search.core.{NoMoveFound, _}
+import oscar.cbls.search.move.{CallBackMove, CompositeMove, InstrumentedMove, Move}
 
 import scala.language.implicitConversions
 
@@ -239,21 +238,120 @@ class DoOnFirstMove(a: Neighborhood, proc: () => Unit) extends NeighborhoodCombi
  * this combinator randomly tries one neighborhood.
  * it tries the other if the first did not find any move
  * @param a a neighborhood
- * @param b another neighborhood
  * @author renaud.delandtsheer@cetic.be
  */
-class Random(a: Neighborhood, b: Neighborhood) extends NeighborhoodCombinator(a, b) {
+class Random(a: Neighborhood*) extends NeighborhoodCombinator(a:_*) {
+  private val r = new scala.util.Random()
+
   override def getMove(obj: Objective, acceptanceCriteria: (Int, Int) => Boolean): SearchResult = {
-    var currentIsA: Boolean = math.random > 0.5
-    def search(canDoMore: Boolean): SearchResult = {
-      val current = if (currentIsA) a else b
+    val neighborhoods = r.shuffle(a).toIterator
+    while (neighborhoods.hasNext) {
+      val current = neighborhoods.next
       current.getMove(obj, acceptanceCriteria) match {
-        case NoMoveFound =>
-          currentIsA = !currentIsA; if (canDoMore) search(false) else NoMoveFound
-        case x: MoveFound => x
+        case m: MoveFound => return m
+        case _ => ;
       }
     }
-    search(true)
+    NoMoveFound
+  }
+}
+
+/**
+ * this combinator randomly tries one neighborhood.
+ * it tries the other if the first did not find any move
+ * @param a a neighborhood
+ * @author renaud.delandtsheer@cetic.be
+ */
+class BiasedRandom(a: (Neighborhood,Double)*)(noRetryOnExhaust:Boolean = false) extends NeighborhoodCombinator(a.map(_._1):_*) {
+  require(a.nonEmpty)
+
+  abstract sealed class Node(val weight:Double)
+  case class MiddleNode(l:Node,r:Node) extends Node(l.weight + r.weight)
+  case class TerminalNode(override val weight:Double, val n:Neighborhood) extends Node(weight)
+
+  private val r = new scala.util.Random()
+
+  def reduce(l:List[Node]):List[Node] = {
+    l match{
+      case h1 :: h2 :: t => MiddleNode(h1,h2) :: reduce(t)
+      case List(h) => l
+      case nil => nil
+    }
+  }
+
+  def fixPoint[A](init:A, function:A => A, fixpointReached:A => Boolean):A={
+    var current = init
+    while(!fixpointReached(current)){
+      current = function(current)
+    }
+    current
+  }
+
+  val initialNeighborhoodTree:Node =  fixPoint(
+    a.toList.map(nw => new TerminalNode(nw._2,nw._1)),
+    reduce,
+    (_:List[Node]) match{case List(_) => true; case _ => false}
+  ).head
+
+  def findAndRemove(n:Node,p:Double):(Option[Node],Neighborhood) = {
+    n match{
+      case TerminalNode(w,n) => (None,n)
+      case MiddleNode(l,r) =>
+        val ((newNode,found),other) = if (p <= l.weight) (findAndRemove(l,p),r) else (findAndRemove(r,p-l.weight),l)
+        newNode match{
+          case None => (Some(other),found)
+          case Some(p) => (Some(MiddleNode(p,other)),found)
+        }
+    }
+  }
+
+  var neighborhoodWithExhaustedRemoved:Option[Node] = Some(initialNeighborhoodTree)
+
+  override def getMove(obj: Objective, acceptanceCriteria: (Int, Int) => Boolean): SearchResult = {
+    var remainingNeighborhoods:Option[Node] = neighborhoodWithExhaustedRemoved
+    while (true) {
+      remainingNeighborhoods match{
+        case None => return NoMoveFound
+        case Some(node) =>
+          val (newHead,selectedNeighborhood) = findAndRemove(node,r.nextFloat()*node.weight)
+          remainingNeighborhoods = newHead
+          selectedNeighborhood.getMove(obj, acceptanceCriteria) match {
+            case m: MoveFound => return m
+            case _ =>
+              if(noRetryOnExhaust) neighborhoodWithExhaustedRemoved = newHead
+          }
+      }
+    }
+    NoMoveFound
+  }
+}
+
+//TODO: the learning mechanism is crap: measuring on the slope is unstable is neighborhood is never called.
+
+/**
+ *
+ * inspired from O. Braysy, A reactive variable neighborhood search for the vehicle-routing problem with time windows, INFORMS JOURNAL ON COMPUTING 15 (2003), no. 4, 347-368.
+ * @param l
+ * @param weightUpdate
+ * @param updateEveryXCalls
+ */
+class LearningRandom(l:List[Neighborhood], weightUpdate:(Statistics,Double) => Double = (stat,oldWeight) => stat.slopeOrZero + oldWeight, updateEveryXCalls:Int = 10)
+  extends NeighborhoodCombinator(l:_*){
+
+  val instrumentedNeighborhood = l.map(Statistics(_))
+  var weightedInstrumentedNeighborhoods = instrumentedNeighborhood.map((_,1.0))
+  var currentRandom = new BiasedRandom(weightedInstrumentedNeighborhoods:_*)()
+  var stepsBeforeUpdate = updateEveryXCalls
+
+  override def getMove(obj: Objective, acceptanceCriterion: (Int, Int) => Boolean): SearchResult = {
+    if(stepsBeforeUpdate <= 0){
+      weightedInstrumentedNeighborhoods = weightedInstrumentedNeighborhoods.map(nw=> (nw._1,weightUpdate(nw._1,nw._2)))
+      currentRandom = new BiasedRandom(weightedInstrumentedNeighborhoods:_*)()
+      stepsBeforeUpdate = updateEveryXCalls
+      println("review done" + weightedInstrumentedNeighborhoods)
+    }
+    stepsBeforeUpdate -=1
+    currentRandom.getMove(obj,acceptanceCriterion)
   }
 }
 
@@ -1058,13 +1156,13 @@ case class Statistics(a:Neighborhood,ignoreInitialObj:Boolean = false)extends Ne
   def slope:String = if(totalTimeSpent == 0) "NA" else ("" + ((100 * totalGain) / totalTimeSpent).toInt)
 
   override def collectStatistics: String =
-    padToLength("" + a,20) +
-      padToLength("" + nbCalls,8) +
-      padToLength("" + nbFound,8) +
-      padToLength("" + totalGain,10) +
-      padToLength("" + totalTimeSpent,14) +
-      padToLength("" + gainPerCall,12) +
-      padToLength("" + callDuration,17)+
+    padToLength("" + a,31) +
+      padToLength("" + nbCalls,6) +
+      padToLength("" + nbFound,6) +
+      padToLength("" + totalGain,8) +
+      padToLength("" + totalTimeSpent,12) +
+      padToLength("" + gainPerCall,8) +
+      padToLength("" + callDuration,12)+
       slope
 
   private def padToLength(s: String, l: Int) = (s + nStrings(l, " ")).substring(0, l)
@@ -1072,10 +1170,12 @@ case class Statistics(a:Neighborhood,ignoreInitialObj:Boolean = false)extends Ne
 
   override def toString: String = "Statistics(" + a + " nbCalls:" + nbCalls + " nbFound:" + nbFound + " totalGain:" + totalGain + " totalTimeSpent " + totalTimeSpent + " ms" + ")"
 
+  def slopeOrZero:Int = if(totalTimeSpent == 0) 0 else ((100 * totalGain) / totalTimeSpent).toInt
 }
 
 object Statistics{
   private def padToLength(s: String, l: Int) = (s + nStrings(l, " ")).substring(0, l)
   private def nStrings(n: Int, s: String): String = if (n <= 0) "" else s + nStrings(n - 1, s)
-  def statisticsHeader = padToLength("Neighborhood",20) + "nbCalls nbFound totalGain totalTime(ms) gainPerCall callDuration(ms) slope(-D obj/100ms)"
+  def statisticsHeader = padToLength("Neighborhood",30) + " calls found sumGain sumTime(ms) avgGain avgTime(ms) slope(-Dobj/.1s)"
 }
+

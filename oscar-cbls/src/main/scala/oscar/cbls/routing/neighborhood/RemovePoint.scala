@@ -36,7 +36,7 @@ import oscar.cbls.search.algo.HotRestart
  */
 case class RemovePoint(predecessorsOfRoutedPointsToRemove:()=>Iterable[Int],
                        vrp: VRP,
-                       neighborhoodName:String,
+                       neighborhoodName:String = null,
                        best:Boolean = false,
                        hotRestart:Boolean = true) extends EasyRoutingNeighborhood(best,vrp, neighborhoodName) {
 

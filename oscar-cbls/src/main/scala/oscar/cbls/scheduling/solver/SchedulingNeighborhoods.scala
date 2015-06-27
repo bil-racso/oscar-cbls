@@ -1,14 +1,22 @@
 package oscar.cbls.scheduling.solver
 
-import oscar.cbls.invariants.core.computation.CBLSIntVar
+import scala.language.postfixOps
+
+import oscar.cbls.invariants.core.computation.IntValue.toFunction
+import oscar.cbls.invariants.core.computation.SetValue.toFunction
 import oscar.cbls.objective.Objective
+import oscar.cbls.objective.Objective.objToFun
 import oscar.cbls.scheduling.algo.CriticalPathFinder
-import oscar.cbls.scheduling.model._
+import oscar.cbls.scheduling.model.Activity
+import oscar.cbls.scheduling.model.NonMoveableActivity
+import oscar.cbls.scheduling.model.Planning
+import oscar.cbls.scheduling.model.PrecedenceCleaner
+import oscar.cbls.scheduling.model.Resource
 import oscar.cbls.search.SearchEngineTrait
 import oscar.cbls.search.combinators.BasicSaveBest
-import oscar.cbls.search.core._
-
-import scala.language.postfixOps
+import oscar.cbls.search.core.JumpNeighborhood
+import oscar.cbls.search.core.JumpNeighborhoodParam
+import oscar.cbls.search.core.Neighborhood
 
 /**
  * @param p the planning to flatten
@@ -20,13 +28,11 @@ import scala.language.postfixOps
  *                                                   since it is the same factor, you can use this method to chose among a set of precedence
  *                                                   because this will forget about the correcting factor.
  * THIS IS COMPLETELY NEW EXPERIMENTAL AND UNTESTED
- * */
-case class FlattenWorseFirst(p:Planning,
-                             maxIterations:Int,
-                             estimateMakespanExpansionForNewDependency:(Activity,Activity) => Int =
-                             (from: Activity, to: Activity) => from.earliestEndDate.value - to.latestStartDate.value,
-                             priorityToPrecedenceToMovableActivities:Boolean = true
-                              )(supportForSuperActivities:Boolean = p.isThereAnySuperActitity)
+ */
+case class FlattenWorseFirst(p: Planning,
+                             maxIterations: Int,
+                             estimateMakespanExpansionForNewDependency: (Activity, Activity) => Int = (from: Activity, to: Activity) => from.earliestEndDate.value - to.latestStartDate.value,
+                             priorityToPrecedenceToMovableActivities: Boolean = true)(supportForSuperActivities: Boolean = p.isThereAnySuperActitity)
   extends JumpNeighborhood with SearchEngineTrait {
 
   require(p.isClosed)
@@ -59,33 +65,32 @@ case class FlattenWorseFirst(p:Planning,
         flattenOneWithSuperTaskHandling(r, t)
       }
     }
-//    print(p.toAsciiArt)
+    //    print(p.toAsciiArt)
   }
 
   /**
-    * @param r
-    * @param t
-    * @return true if flattening was performed, false otherwise.
-    */
-  def flattenOne(r: Resource, t: Int):Boolean = {
+   * @param r
+   * @param t
+   * @return true if flattening was performed, false otherwise.
+   */
+  def flattenOne(r: Resource, t: Int): Boolean = {
     val conflictActivities = r.conflictingActivities(t)
     val baseForEjection = r.baseActivityForEjection(t)
 
     val makeSpanExpansionEstimator = (if (priorityToPrecedenceToMovableActivities)
       (from: Activity, to: Activity) =>
-        2 * estimateMakespanExpansionForNewDependency(from, to)
-          +(if (from.isInstanceOf[NonMoveableActivity]) 1 else 0)
+      2 * estimateMakespanExpansionForNewDependency(from, to)
+        + (if (from.isInstanceOf[NonMoveableActivity]) 1 else 0)
     else estimateMakespanExpansionForNewDependency)
 
     selectMin2[Activity, Activity](baseForEjection, conflictActivities,
       makeSpanExpansionEstimator,
-      p.canAddPrecedenceAssumingResourceConflict)
-    match {
-      case (a, b) =>
-        b.addDynamicPredecessor(a, amIVerbose)
-        return true
-      case null => return false;
-    }
+      p.canAddPrecedenceAssumingResourceConflict) match {
+        case (a, b) =>
+          b.addDynamicPredecessor(a, amIVerbose)
+          return true
+        case null => return false;
+      }
   }
 
   def flattenOneWithSuperTaskHandling(r: Resource, t: Int): Unit = {
@@ -106,14 +111,14 @@ case class FlattenWorseFirst(p:Planning,
     selectMin2(baseForEjectionArray.indices, conflictActivityArray.indices,
       (a: Int, b: Int) => estimateMakespanExpansionForNewDependency(baseForEjectionArray(a), conflictActivityArray(b)),
       (a: Int, b: Int) => dependencyKillers(a)(b).canBeKilled) match {
-      case (a, b) =>
-        if (amIVerbose) println("need to kill dependencies to complete flattening")
-        dependencyKillers(a)(b).killDependencies(amIVerbose)
+        case (a, b) =>
+          if (amIVerbose) println("need to kill dependencies to complete flattening")
+          dependencyKillers(a)(b).killDependencies(amIVerbose)
 
-        conflictActivityArray(b).addDynamicPredecessor(baseForEjectionArray(a), amIVerbose)
+          conflictActivityArray(b).addDynamicPredecessor(baseForEjectionArray(a), amIVerbose)
 
-      case null => throw new Error("cannot flatten at time " + t + " activities: " + conflictActivities)
-    }
+        case null => throw new Error("cannot flatten at time " + t + " activities: " + conflictActivities)
+      }
   }
 }
 
@@ -121,13 +126,12 @@ case class FlattenWorseFirst(p:Planning,
  * @param p the planning to relax
  * @param pKill the probability to kill a killable precedence constraint in percent. must be bigger than 10 (otherwise this will crash
  * THIS IS COMPLETELY NEW EXPERIMENTAL AND UNTESTED
- * */
-case class Relax(p:Planning, pKill: Int,
-                 doRelax:(Activity, Activity, Boolean) => Unit = (from: Activity, to: Activity, verbose:Boolean) => to.removeDynamicPredecessor(from, verbose))
-                (activitiesToRelax:()=>Iterable[Int] = p.sentinelActivity.staticPredecessorsID)
+ */
+case class Relax(p: Planning, pKill: Int,
+                 doRelax: (Activity, Activity, Boolean) => Unit = (from: Activity, to: Activity, verbose: Boolean) => to.removeDynamicPredecessor(from, verbose))(activitiesToRelax: () => Iterable[Int] = p.sentinelActivity.staticPredecessorsID)
   extends JumpNeighborhoodParam[List[(Activity, Activity)]] with SearchEngineTrait {
 
-  override def doIt(potentiallyKilledPrecedences: List[(Activity, Activity)]){
+  override def doIt(potentiallyKilledPrecedences: List[(Activity, Activity)]) {
     for ((from, to) <- potentiallyKilledPrecedences) {
       doRelax(from, to, amIVerbose)
     }
@@ -135,13 +139,13 @@ case class Relax(p:Planning, pKill: Int,
 
   override def getParam: List[(Activity, Activity)] = {
 
-    val activityToRelax = selectMax(activitiesToRelax(), (activityID:Int) => p.activityArray(activityID).earliestEndDate.value)
+    val activityToRelax = selectMax(activitiesToRelax(), (activityID: Int) => p.activityArray(activityID).earliestEndDate.value)
     val potentiallyKilledPrecedences = CriticalPathFinder.nonSolidCriticalPath(p)(p.activityArray(activityToRelax))
     if (potentiallyKilledPrecedences.isEmpty) null
-    else{
-      var toReturn:List[(Activity, Activity)] = List.empty
+    else {
+      var toReturn: List[(Activity, Activity)] = List.empty
       var maxTrials = 0
-      while(toReturn.isEmpty && maxTrials < 10) {
+      while (toReturn.isEmpty && maxTrials < 10) {
         maxTrials += 1
         toReturn = potentiallyKilledPrecedences.filter(_ => flip(pKill))
       }
@@ -151,10 +155,10 @@ case class Relax(p:Planning, pKill: Int,
   }
 
   override def getShortDescription(param: List[(Activity, Activity)]): String =
-    "Relax critical Path " + param.map{case (a,b) => a + "->" + b}.mkString(", ")
+    "Relax critical Path " + param.map { case (a, b) => a + "->" + b }.mkString(", ")
 
   //this resets the internal state of the Neighborhood
-  override def reset(){}
+  override def reset() {}
 }
 
 /**
@@ -166,10 +170,10 @@ case class Relax(p:Planning, pKill: Int,
  *                      so you need to experiment on this option.
  *                      it has no influence on the result, only on the speed of this neighborhood.
  */
-case class RelaxNoConflict(p:Planning, twoPhaseCheck:Boolean = false)
+case class RelaxNoConflict(p: Planning, twoPhaseCheck: Boolean = false)
   extends JumpNeighborhood with SearchEngineTrait {
 
-  override def doIt(): Unit ={
+  override def doIt(): Unit = {
     require(p.worseOvershotResource.value.isEmpty)
 
     var relaxCount = 0
@@ -188,24 +192,25 @@ case class RelaxNoConflict(p:Planning, twoPhaseCheck:Boolean = false)
           if (dependencyCanBeKilledWithoutMoreCheck || p.worseOvershotResource.value.isEmpty) {
             relaxCount += 1
             improved = true
-          }else{
+          } else {
             t.addDynamicPredecessor(testedPredecessor, false)
           }
         }
       }
     }
-    if(amIVerbose) println("RelaxNoConflict: relaxCount:" + relaxCount)
+    if (amIVerbose) println("RelaxNoConflict: relaxCount:" + relaxCount)
   }
   override def shortDescription(): String = "relaxes all precedences without introducing a conflict (based on planning.worseOvershotResource)"
 }
 
-/**removes all additional Activity precedences that are not tight
-  * @param p the planning to relax
-  * THIS IS COMPLETELY NEW EXPERIMENTAL AND UNTESTED
-  * */
-case class CleanPrecedences(p:Planning) extends JumpNeighborhood with SearchEngineTrait {
+/**
+ * removes all additional Activity precedences that are not tight
+ * @param p the planning to relax
+ * THIS IS COMPLETELY NEW EXPERIMENTAL AND UNTESTED
+ */
+case class CleanPrecedences(p: Planning) extends JumpNeighborhood with SearchEngineTrait {
 
-  override def doIt(){
+  override def doIt() {
     for (t: Activity <- p.activityArray) {
       for (iD: Int <- t.additionalPredecessors.value) {
         if (!t.potentiallyKilledPredecessors.value.contains(iD)) {
@@ -219,7 +224,7 @@ case class CleanPrecedences(p:Planning) extends JumpNeighborhood with SearchEngi
     "removes all additional Activity precedences that are not tight"
 }
 
-object SchedulingStrategies{
+object SchedulingStrategies {
 
   /**
    * @param p the planning
@@ -229,16 +234,15 @@ object SchedulingStrategies{
    * @return a neighborhood, you just have to do all moves, and restore the best solution
    */
   def iFlatRelax(p: Planning,
-                 objective:Objective,
+                 objective: Objective,
                  nbRelax: Int = 4,
                  pKillPerRelax: Int = 50,
                  stable: Int,
-                 displayPlanning:Boolean = false
-                 ):Neighborhood = {
+                 displayPlanning: Boolean = false): Neighborhood = {
     require(p.model.isClosed, "model should be closed before iFlatRelax algo can be instantiated")
     val maxIterationsForFlatten = (p.activityCount * (p.activityCount - 1)) / 2
 
-    val flatten = FlattenWorseFirst(p,maxIterationsForFlatten)() afterMove {
+    val flatten = FlattenWorseFirst(p, maxIterationsForFlatten)() afterMove {
       if (displayPlanning) println(p.toAsciiArt)
       println(objective)
     }
@@ -247,33 +251,33 @@ object SchedulingStrategies{
     //search Loop is a round Robin
     val searchLoop = flatten step relax repeat nbRelax
 
-    (searchLoop maxMoves stable*4 withoutImprovementOver objective
+    (searchLoop maxMoves stable * 4 withoutImprovementOver objective
       saveBest objective whenEmpty p.worseOvershotResource restoreBestOnExhaust) exhaust (CleanPrecedences(p) once)
   }
 
   def iFlatRelaxUntilMakeSpanReduced(p: Planning,
-                 nbRelax: Int = 4,
-                 pKillPerRelax: Int = 50,
-                 stable: Int,
-                 objective:CBLSIntVar,
-                 displayPlanning:Boolean = false):BasicSaveBest = {
+                                     nbRelax: Int = 4,
+                                     pKillPerRelax: Int = 50,
+                                     stable: Int,
+                                     objective: Objective,
+                                     displayPlanning: Boolean = false): BasicSaveBest = {
     require(p.model.isClosed, "model should be closed before iFlatRelax algo can be instantiated")
     val maxIterationsForFlatten = (p.activityCount * (p.activityCount - 1)) / 2
 
-    val flatten = FlattenWorseFirst(p,maxIterationsForFlatten)() afterMove {
+    val flatten = FlattenWorseFirst(p, maxIterationsForFlatten)() afterMove {
       if (displayPlanning) println(p.toAsciiArt)
       println(objective)
     }
     val relax = Relax(p, pKillPerRelax)()
 
-    val searchStep = (relax untilImprovement(p.makeSpan, nbRelax, maxIterationsForFlatten)) exhaust (flatten maxMoves 1)
+    val searchStep = (relax untilImprovement (p.makeSpan, nbRelax, maxIterationsForFlatten)) exhaust (flatten maxMoves 1)
 
-    (flatten sequence (searchStep atomic()) maxMoves stable withoutImprovementOver objective
+    (flatten sequence (searchStep atomic ()) maxMoves stable withoutImprovementOver objective
       saveBest objective whenEmpty p.worseOvershotResource)
   }
 
-//  val searchLoop = FlattenWorseFirst(p,maxIterationsForFlatten) maxMoves 1 afterMove {if (displayPlanning) println(p.toAsciiArt)} exhaustBack
-//    Relax(p, pKillPerRelax) untilImprovement(p.makeSpan, nbRelax, maxIterationsForFlatten)
+  //  val searchLoop = FlattenWorseFirst(p,maxIterationsForFlatten) maxMoves 1 afterMove {if (displayPlanning) println(p.toAsciiArt)} exhaustBack
+  //    Relax(p, pKillPerRelax) untilImprovement(p.makeSpan, nbRelax, maxIterationsForFlatten)
 
   /*
       //TODO: moves should have reference to their originating neighborhoods

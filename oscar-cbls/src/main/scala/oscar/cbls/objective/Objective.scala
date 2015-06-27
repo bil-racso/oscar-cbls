@@ -152,9 +152,9 @@ trait Objective {
     */
   def swapVal(a: CBLSIntVar, b: CBLSIntVar): Int = {
     a :=: b
-    val NewVal = value
+    val newVal = value
     a :=: b
-    NewVal
+    newVal
   }
 
   /**returns the value of the objective variable if variable a was assigned the value v.
@@ -190,9 +190,9 @@ trait Objective {
     */
   def insertValAssumeNotAlreadyIn(a: CBLSSetVar, i:Int): Int = {
     a :+= i
-    val NewVal = value
+    val newVal = value
     a :-= i
-    NewVal
+    newVal
   }
 
   /**returns the value of the objective variable if i is inserted to a
@@ -210,9 +210,9 @@ trait Objective {
     */
   def removeValAssumeIn(a: CBLSSetVar, i:Int): Int = {
     a :-= i
-    val NewVal = value
+    val newVal = value
     a :+= i
-    NewVal
+    newVal
   }
 
   /**returns the value of the objective variable if i is removed from a

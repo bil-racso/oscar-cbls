@@ -34,7 +34,7 @@ import oscar.cbls.modeling.Algebra.InstrumentIntVar
  * THIS IS EXPERIMENTAL
  */
 class ActivityWithDeadline(
-  duration: CBLSIntVar,
+  duration: IntValue,
   planning: Planning with Deadlines,
   name: String = "",
   shifter: (IntValue, IntValue) => IntValue= (a: IntValue, _) => a)
@@ -44,7 +44,7 @@ class ActivityWithDeadline(
 
   planning.addActivityWithDeadline(this)
 
-  def setDeadline(deadline: CBLSIntVar, weight: CBLSIntVar) {
+  def setDeadline(deadline: IntValue, weight: IntValue) {
     tardiness <== Max2(0, (earliestEndDate - deadline) * weight)
   }
 

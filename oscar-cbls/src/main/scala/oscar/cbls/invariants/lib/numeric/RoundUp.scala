@@ -111,6 +111,12 @@ object TestRoundUpModulo extends App {
  */
 case class RoundUpCustom(from: IntValue, duration: IntValue, forbiddenZones: List[(Int, Int)])
   extends IntInvariant(initialDomain = from.min to forbiddenZones.maxBy(_._2)._2 + 1) {
+  /**
+   * These must be computed first.
+   */
+  private val sortedRegularizedZones = regularizeZones(forbiddenZones.sortBy(_._1))
+  private val forbiddenStarts: Array[Int] = sortedRegularizedZones.map(_._1).toArray
+  private val forbiddenEnds: Array[Int] = sortedRegularizedZones.map(_._2).toArray
 
   registerStaticAndDynamicDependenciesNoID(from, duration)
   finishInitialization()
@@ -151,11 +157,6 @@ case class RoundUpCustom(from: IntValue, duration: IntValue, forbiddenZones: Lis
       case newTail => (a, b) :: newTail
     }
   }
-
-  private val sortedRegularizedZones = regularizeZones(forbiddenZones.sortBy(_._1))
-
-  private val forbiddenStarts: Array[Int] = sortedRegularizedZones.map(_._1).toArray
-  private val forbiddenEnds: Array[Int] = sortedRegularizedZones.map(_._2).toArray
 
   def roundup(): Int = {
     var newStart: Int = from.value
@@ -288,7 +289,7 @@ object TestPreEmption extends App {
   val m = new Store()
 
   val from = CBLSIntVar(m, 0, FullRange, "from")
-  val duration = CBLSIntVar(m, 4, FullRange,"duration")
+  val duration = CBLSIntVar(m, 4, FullRange, "duration")
 
   val preEmptionFrom = 2
   val preEmptionDuration = 3

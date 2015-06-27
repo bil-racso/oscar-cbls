@@ -83,6 +83,11 @@ trait Time extends VRP with Predecessors {
   for (i <- 0 to N - 1) {
     arrivalTime(i) <== arrivalTimeToNext.element(preds(i))
   }
+
+  addToStringInfo(() => "arrivalTime:      " + arrivalTime.toList.mkString(",") + ")")
+  addToStringInfo(() => "leaveTime:        " + arrivalTime.toList.mkString(",") + ")")
+  addToStringInfo(() => "travelOutDuration:" + arrivalTime.toList.mkString(",") + ")")
+  addToStringInfo(() => "arrivalTimeToNext:" + arrivalTime.toList.mkString(",") + ")")
 }
 
 /**

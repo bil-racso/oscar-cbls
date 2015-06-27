@@ -1,27 +1,28 @@
 /*******************************************************************************
- * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 2.1 of the License, or
- * (at your option) any later version.
- *   
- * OscaR is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License  for more details.
- *   
- * You should have received a copy of the GNU Lesser General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
- ******************************************************************************/
+  * OscaR is free software: you can redistribute it and/or modify
+  * it under the terms of the GNU Lesser General Public License as published by
+  * the Free Software Foundation, either version 2.1 of the License, or
+  * (at your option) any later version.
+  *
+  * OscaR is distributed in the hope that it will be useful,
+  * but WITHOUT ANY WARRANTY; without even the implied warranty of
+  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  * GNU Lesser General Public License  for more details.
+  *
+  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
+  ******************************************************************************/
 /*******************************************************************************
- * Contributors:
- *     This code has been initially developed by CETIC www.cetic.be
- *         by Renaud De Landtsheer
- *            Yoann Guyot
- ******************************************************************************/
+  * Contributors:
+  *     This code has been initially developed by CETIC www.cetic.be
+  *         by Renaud De Landtsheer
+  *            Yoann Guyot
+  ******************************************************************************/
 
 package oscar.cbls.invariants.lib.minmax
 
 import oscar.cbls.invariants.core.algo.heap.{ArrayMap, BinomialHeapWithMoveExtMem}
+import oscar.cbls.invariants.core.algo.quick.QList
 import oscar.cbls.invariants.core.computation.Invariant._
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.core.propagation.{Checker, KeyForElementRemoval}
@@ -226,9 +227,9 @@ abstract class MiaxConstArray(vars: Array[Int], cond: SetValue, default: Int)
 
   //TODO: restrict domain
 
-    for (i <- cond.value) {
-      h.insert(i)
-    }
+  for (i <- cond.value) {
+    h.insert(i)
+  }
 
   def Ord(v: IntValue): Int
 
@@ -257,6 +258,125 @@ abstract class MiaxConstArray(vars: Array[Int], cond: SetValue, default: Int)
       this := default
     } else {
       this := vars(h.getFirst)
+    }
+  }
+}
+
+/**
+ * Maintains Miax(Var(i) | i in cond)
+ * Exact ordering is specified by implementing abstract methods of the class.
+ * @param vars is an array of IntVar, which can be bulked
+ * @param cond is the condition, cannot be null
+ * update is O(log(n))
+ * @author renaud.delandtsheer@cetic.be
+ * */
+abstract class MiaxConstArrayLazy(vars: Array[Int], cond: SetValue, default: Int, maxToDoSize:Int)
+  extends IntInvariant{
+
+  val n = vars.length
+  var h: BinomialHeapWithMoveExtMem[Int] = new BinomialHeapWithMoveExtMem[Int](i => Ord(vars(i)), vars.length, new ArrayMap(vars.length))
+
+  registerStaticAndDynamicDependency(cond)
+  finishInitialization()
+
+  //TODO: restrict domain
+
+  for (i <- cond.value) {
+    h.insert(i)
+  }
+
+  def Ord(v: IntValue): Int
+
+  if (h.isEmpty) {
+    this := default
+  } else {
+    this := vars(h.getFirst)
+  }
+
+  val self = this
+
+  //an update is a couple: (value, bolean)
+  // where the boolean is true for an insert, false for a delete
+
+  private def isOpposite(a:(Int,Boolean),b:(Int,Boolean)):Boolean =
+    a._1 == b._1 && a._2 != b._2
+
+  private def  doIt(a:(Int,Boolean)) {
+    if (a._2) {
+      h.insert(a._1)
+      self := vars(h.getFirst)
+    } else {
+      h.delete(a._1)
+      if (h.isEmpty) {
+        self := default
+      } else {
+        self := vars(h.getFirst)
+      }
+    }
+  }
+
+  private def isMiaxImpacted(u:(Int,Boolean)): Boolean = {
+    if(u._2){
+      //inseret
+      Ord(vars(u._1)) < Ord(self.getValue(true))
+    }else{
+      //delete
+      vars(u._1) == self.getValue(true)
+    }
+  }
+
+  //they must be done in this order
+  var toDo:QList[(Int,Boolean)] = null
+  var toDoSize:Int = 0
+
+  @inline
+  override def notifyInsertOn(v: ChangingSetValue, value: Int) {
+    assert(v == cond)
+    processUpdate((value,true))
+  }
+
+  @inline
+  override def notifyDeleteOn(v: ChangingSetValue, value: Int) {
+    assert(v == cond)
+    processUpdate((value,false))
+  }
+
+  def processUpdate(u:(Int,Boolean)){
+    if(isMiaxImpacted(u)){
+      //      println("done straight" + u)
+      doIt(u)
+      while(toDo != null){
+        doIt(toDo.head)
+        toDo = toDo.tail
+      }
+      toDoSize  = 0
+    }else{
+      postponeOrDo(u)
+    }
+  }
+
+  //TODO this is a queue, but a stack might be faster.
+  def postponeOrDo(u:(Int,Boolean)) {
+//    println("postponeOrDo:" + u)
+    def updateToDo(mToDo: QList[(Int,Boolean)]): QList[(Int,Boolean)] =
+      if (mToDo == null) {
+        toDoSize += 1;
+//        println("postponed");
+        QList(u)
+      } else {
+        if (isOpposite(mToDo.head,u)) {
+//          println("anihilation")
+          toDoSize -= 1
+          mToDo.tail
+        } else QList(mToDo.head, updateToDo(mToDo.tail))
+      }
+
+    toDo = updateToDo(toDo)
+    while(toDoSize > maxToDoSize){
+//      println("popping")
+      doIt(toDo.head)
+      toDo = toDo.tail
+      toDoSize -=1
     }
   }
 }

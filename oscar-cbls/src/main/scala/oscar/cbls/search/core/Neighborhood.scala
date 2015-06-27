@@ -114,8 +114,9 @@ abstract class Neighborhood{
   override def toString: String = this.getClass.getSimpleName
 
   /** verbosity: 0: none
-    * 1: combinators
-    * 2: combinators + neighborhoods
+    * 1: moves
+    * 2: moves + failed searches
+    * 3: moves + explored neighborhoods
     */
   var _verbose:Int = 0
   def verbose:Int = _verbose

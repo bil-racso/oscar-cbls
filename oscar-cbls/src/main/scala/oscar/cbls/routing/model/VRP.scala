@@ -139,7 +139,15 @@ class VRP(val N: Int, val V: Int, val m: Store) {
       toReturn += routeToString(v)
       toReturn += "\n"
     }
+    for (additionalStringFunction <- additionalStrings){
+      toReturn += additionalStringFunction() + "\n"
+    }
     toReturn
+  }
+
+  private var additionalStrings:List[()=>String] = List.empty
+  def addToStringInfo(a:()=>String){
+    additionalStrings = a :: additionalStrings
   }
 }
 
