@@ -52,7 +52,7 @@ abstract class Constraint(val variables: Array[Variable],val annotations: List[A
           v.definingConstraint= Some(this);
           definedVars = Some(v);
         case Some(cc) =>
-          Console.err.println(v +" is already defined by "+cc+". But "+this+" wants to define it as well. The second one is ignored.");
+          //Console.err.println(v +" is already defined by "+cc+". But "+this+" wants to define it as well. The second one is ignored.");
       }
       case Some(vv) => throw new Exception("Not supported yet.")
     }

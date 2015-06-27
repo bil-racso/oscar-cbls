@@ -35,6 +35,8 @@ class Options(name: String, cbls: Boolean, args: Array[String]) {
   var timeOut = 0
   var nSols = 1
   var help = false;
+  var freeSearch = false;
+  
   private val opts = Map.empty[String,String]
   def is(s: String): Boolean = {
     //println("% checking option: "+s)
@@ -76,7 +78,9 @@ class Options(name: String, cbls: Boolean, args: Array[String]) {
         i += 1
       } else if (oneOf("-v", "--verbose")) {
         verbose = 1;
-      } else if (oneOf("-vl", "--verbose-level")) {
+      } else if (oneOf("-f")) {
+        freeSearch = true;
+      }else if (oneOf("-vl", "--verbose-level")) {
         verbose = args(i+1).toInt
         i += 1
       } else if (args(i).startsWith("-X")){
