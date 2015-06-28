@@ -15,7 +15,7 @@
  * ****************************************************************************
  */
 
-package oscar.cp.constraints;
+package oscar.cp.constraints
 
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.CPPropagStrength
@@ -38,10 +38,8 @@ import oscar.cp.core.delta.DeltaIntVar
  */
 final class ElementVarBC(y: Array[CPIntVar], x: CPIntVar, z: CPIntVar) extends Constraint(y(0).store, "ElementVarBC") {
 
-  priorityL2 = CPStore.MaxPriorityL2
+  priorityL2 = CPStore.MaxPriorityL2 - 1
   
-  private[this] val supMinRev = new ReversibleInt(s, 0)
-  private[this] val supMaxRev = new ReversibleInt(s, 0)
   private[this] var supMin: Int = 0
   private[this] var supMax: Int = 0
   private[this] var zMin: Int = 0
@@ -55,14 +53,12 @@ final class ElementVarBC(y: Array[CPIntVar], x: CPIntVar, z: CPIntVar) extends C
       for (i <- x) y(i).callPropagateWhenBoundsChange(this)
       x.callPropagateWhenDomainChanges(this)
       z.callPropagateWhenBoundsChange(this)
-      Suspend
+      propagate()
     }
   }
 
   @inline private def init(): CPOutcome = {
-    if (z.updateMax((y.map(_.max).max)) == Failure) Failure
-    else if (z.updateMin((y.map(_.min).min)) == Failure) Failure
-    else if (x.updateMin(0) == Failure) Failure
+    if (x.updateMin(0) == Failure) Failure
     else if (x.updateMax(y.length - 1) == Failure) Failure
     else propagate()
   }
@@ -72,17 +68,11 @@ final class ElementVarBC(y: Array[CPIntVar], x: CPIntVar, z: CPIntVar) extends C
     zMax = z.max
     if (x.isBound) equalityPropagate()
     else {
-      supMin = supMinRev.value
-      supMax = supMaxRev.value
       if (filterX() == Failure) Failure
       else if (x.isBound) equalityPropagate()
       else if (z.updateMin(y(supMin).min) == Failure) Failure
       else if (z.updateMax(y(supMax).max) == Failure) Failure
-      else {
-        supMinRev.value = supMin
-        supMaxRev.value = supMax
-        Suspend
-      }
+      else Suspend
     }
   }
 
