@@ -38,6 +38,8 @@ import oscar.cp.core.delta.DeltaIntVar
  */
 final class ElementVarBC(y: Array[CPIntVar], x: CPIntVar, z: CPIntVar) extends Constraint(y(0).store, "ElementVarBC") {
 
+  priorityL2 = CPStore.MaxPriorityL2
+  
   private[this] val supMinRev = new ReversibleInt(s, 0)
   private[this] val supMaxRev = new ReversibleInt(s, 0)
   private[this] var supMin: Int = 0
