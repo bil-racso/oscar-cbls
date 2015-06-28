@@ -93,7 +93,9 @@ class ElementVarAC3(y: Array[CPIntVar], x: CPIntVar, z: CPIntVar) extends Constr
           if (z.size > 50) {
             // seems like watchers pay off for larger size of the domains
             val watcher = new Watcher {
-              override def shouldEnqueue(): Boolean = x.hasValue(i)
+              override def shouldEnqueue(): Boolean = {
+                x.hasValue(i)
+              }
             }
             y(i).callPropagateWhenDomainChanges(this, watcher)
           } else {

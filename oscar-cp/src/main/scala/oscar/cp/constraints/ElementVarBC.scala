@@ -40,13 +40,13 @@ final class ElementVarBC(y: Array[CPIntVar], x: CPIntVar, z: CPIntVar) extends C
 
   priorityL2 = CPStore.MaxPriorityL2 - 1
   
-  private[this] var supMin: Int = 0
-  private[this] var supMax: Int = 0
+  private[this] var supMin: CPIntVar = null
+  private[this] var supMax: CPIntVar = null
   private[this] var zMin: Int = 0
   private[this] var zMax: Int = 0
 
   private[this] val xValues = new Array[Int](x.size)
-
+  
   override def setup(l: CPPropagStrength): CPOutcome = {
     if (init() == Failure) Failure
     else {
@@ -70,8 +70,8 @@ final class ElementVarBC(y: Array[CPIntVar], x: CPIntVar, z: CPIntVar) extends C
     else {
       if (filterX() == Failure) Failure
       else if (x.isBound) equalityPropagate()
-      else if (z.updateMin(y(supMin).min) == Failure) Failure
-      else if (z.updateMax(y(supMax).max) == Failure) Failure
+      else if (z.updateMin(supMin.min) == Failure) Failure
+      else if (z.updateMax(supMax.max) == Failure) Failure
       else Suspend
     }
   }
@@ -87,8 +87,6 @@ final class ElementVarBC(y: Array[CPIntVar], x: CPIntVar, z: CPIntVar) extends C
   }
 
   @inline private def filterX(): CPOutcome = {
-    supMin = 0
-    supMax = 0
     var min = Int.MaxValue
     var max = Int.MinValue
     var i = x.fillArray(xValues)
@@ -103,11 +101,11 @@ final class ElementVarBC(y: Array[CPIntVar], x: CPIntVar, z: CPIntVar) extends C
       } else {
         if (yMin < min) {
           min = yMin
-          supMin = id
+          supMin = yVar
         }
         if (yMax > max) {
           max = yMax
-          supMax = id
+          supMax = yVar
         }
       }
     }
