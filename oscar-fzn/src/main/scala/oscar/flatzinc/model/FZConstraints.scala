@@ -74,7 +74,6 @@ abstract class Constraint(val variables: Array[Variable],val annotations: List[A
   
   //this must be called when a constraint is removed from the model to remove references from variables. 
   def retract(){
-    //todo remove the defined var if any
     if(definedVar.isDefined)unsetDefinedVar(definedVar.get)
     for(v <- variables){
       v.removeConstraint(this)

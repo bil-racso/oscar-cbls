@@ -69,7 +69,7 @@ object FZModelTransfo {
           }
         }else{
           if(areAllIneq(v.cstrs)){
-            log(0,"Found a possibility to make a min/max constraint for "+v);
+            log("Found a possibility to make a min/max constraint for "+v);
             //v.cstrs.foreach(println(_))
           } 
         }

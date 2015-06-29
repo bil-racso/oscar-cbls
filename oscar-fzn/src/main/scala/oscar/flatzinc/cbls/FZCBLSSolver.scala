@@ -252,15 +252,20 @@ class FZCBLSSolver extends SearchEngine with StopWatch {
     }else{
       log("No domain reduction")
     }
-    model.constraints.foreach(c => if(c.getVariables().length <=1) log(0,"Remaining Unary Constraint "+c)
+    model.constraints.foreach(c => if(c.getVariables().length <=1) log("Remaining Unary Constraint "+c)
     else if(c.getVariables().filter(v => !v.isBound).length <= 1){
       log("De facto Unary Constraint "+c); 
       //log(2,c.getVariables().map(v => v.min+".."+v.max).mkString(" , "))
     })
-    model.constraints.foreach{ case reif(c,b) => if(b.isBound) log(0,"Fixed reified constraint: "+b.boolValue); case _ => {}}
+    model.constraints.foreach{ case reif(c,b) => if(b.isBound) log("Fixed reified constraint: "+b.boolValue); case _ => {}}
     
     
     
+    //Hack for the subcircuit constraints:
+    model.variables.foreach(v => if(v.isDefined && v.cstrs.exists{ 
+        case c:subcircuit => true; 
+        case c:circuit => true;
+        case _ => false}) v.definingConstraint.get.unsetDefinedVar(v))    
     
     
     if(!opts.is("no-find-inv")){
@@ -283,6 +288,12 @@ class FZCBLSSolver extends SearchEngine with StopWatch {
         if(c.definedVar.isDefined)c.unsetDefinedVar(c.definedVar.get)
       }
     }
+    
+    //Hack for the subcircuit constraints:
+    model.variables.foreach(v => if(v.isDefined && v.cstrs.exists{ 
+        case c:subcircuit => true; 
+        case c:circuit => true;
+        case _ => false}) v.definingConstraint.get.unsetDefinedVar(v))    
     
     
     
@@ -415,6 +426,7 @@ class FZCBLSSolver extends SearchEngine with StopWatch {
         log(0,"Best Overall Solution: "+sc.bestKnownObjective * (if(model.search.obj==Objective.MAXIMIZE) -1 else 1))
       }
     }
+    System.exit(0)
   }
 
   
