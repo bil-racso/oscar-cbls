@@ -417,7 +417,7 @@ class MaxViolating(searchVariables: Array[CBLSIntVarDom], objective: CBLSObjecti
   
   val indexRange = 0 until searchVariables.length;
   val variableViolation: Array[IntValue] = searchVariables.map(constraintSystem.violation(_)).toArray
-  
+  var start = 0;
   
   def reset() = {
     for (v: CBLSIntVarDom <- searchVariables)
@@ -436,12 +436,47 @@ class MaxViolating(searchVariables: Array[CBLSIntVarDom], objective: CBLSObjecti
     return acceptOr(new AssignMove(searchVariables(bestIndex),bestValue,objective.assignVal(searchVariables(bestIndex), bestValue)),accept)
   }
   def getExtendedMinObjective(it: Int, accept: Move => Boolean): Move = {
+    //TODO: write this loop manually, with hotstart and selectfirst/best hybrid. 
+    var bMv = null.asInstanceOf[Move]
+    var bObj = Int.MaxValue
+    var cVar = start
+    var looped = false
+    val oObj = objective.value
+    while(!(looped && cVar == start)){
+      val v = searchVariables(cVar)
+      if(v.domainSize < 10000000){
+        for(cVal <- v.getDomain()){
+          if(v.value != cVal){
+            val mv = new AssignMove(v,cVal,objective.assignVal(v,cVal))
+            if(accept(mv)){
+              val cObj = mv.value
+              if(cObj < bObj){
+                bObj = cObj
+                bMv = mv
+              }
+            }
+          }
+        }
+        if(bObj < oObj){ 
+          start = cVar
+          return bMv
+        }
+      }
+      cVar +=1
+      if(cVar == searchVariables.length){
+        looped = true
+        cVar = 0
+      }
+    }
+    if(bMv ==null) return new NoMove()
+    else return bMv
+    /*
     val bestPair = selectMinImb(indexRange.filter(searchVariables(_).domainSize < 10000000), (i:Int) => searchVariables(i).getDomain(), 
         (v:Int,i:Int) => acceptOr(new AssignMove(searchVariables(v),i,objective.assignVal(searchVariables(v),i)),accept).value,(v:Int,i:Int) => searchVariables(v).value!=i)
     bestPair match{
       case (v,i)  => new AssignMove(searchVariables(v),i,objective.assignVal(searchVariables(v),i))
       case _ => new NoMove()
-    }
+    }*/
   }
   
   def violation() = { variableViolation.foldLeft(0)((acc, x) => acc + x.value) };
