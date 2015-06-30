@@ -25,6 +25,7 @@ import scala.collection.mutable.ArrayOps
 
     
 class FZCBLSImplicitConstraints(val cblsmodel:FZCBLSModel) {
+  var uid = 0;
   
   def findAndPostImplicit(constraints: List[Constraint]) = {
       //TODO: DO not like the filtering here.
@@ -71,13 +72,19 @@ class FZCBLSImplicitConstraints(val cblsmodel:FZCBLSModel) {
       }
     }
     def trySubCircuit(xs: Array[IntegerVariable]):Boolean = {
-      if (allOK(xs)){
+      if (allOK(xs,true)){
         //TODO: We assume that the offset is 1. Is it always the case?
         //TODO: remove some of the defined if it is better to use the SubCircuit implicit constraint
-        for(i <- 0 until xs.length){
-          RelaxAndEnsureDomain(cblsmodel.getCBLSVarDom(xs(i)),1,xs.length,cblsmodel.c)
+        val vars = xs.map{ v =>
+          val avar = if(v.isBound){
+            uid+=1
+            CBLSIntVarDom(cblsmodel.m, v.value, v.domain,  "EXTRA_VAR_"+uid);
+          }else{
+            cblsmodel.getCBLSVarDom(v)
+          }
+          RelaxAndEnsureDomain(avar,1,xs.length,cblsmodel.c)
+          avar
         }
-        val vars = xs.map(cblsmodel.getCBLSVarDom(_))
         cblsmodel.addNeighbourhood((o,c) => new ThreeOptSub(vars,o,c,1),vars)
         true
       }else{
@@ -124,8 +131,10 @@ class FZCBLSImplicitConstraints(val cblsmodel:FZCBLSModel) {
         false
       }
     }
-  def allOK(xs: Array[IntegerVariable]):Boolean = {
-    xs.forall(x => ! x.isDefined && cblsmodel.vars.contains(cblsmodel.getCBLSVar(x)))
+  
+  //TODO: I only added the bound acceptance criterion for subcircuit to avoid disrupting other neighbourhoods.
+  def allOK(xs: Array[IntegerVariable],acceptBound: Boolean = false):Boolean = {
+    xs.forall(x => ! x.isDefined && (cblsmodel.vars.contains(cblsmodel.getCBLSVar(x)) || (acceptBound && x.isBound)))
   }
   def allOK(xs: Array[BooleanVariable]):Boolean = {
     xs.forall(x => ! x.isDefined && cblsmodel.vars.contains(cblsmodel.getCBLSVar(x)))
