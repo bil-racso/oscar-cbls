@@ -57,14 +57,19 @@ class FZCBLSImplicitConstraints(val cblsmodel:FZCBLSModel) {
       }else false
     }
     def tryCircuit(xs: Array[IntegerVariable]):Boolean = {
-      if (allOK(xs)){
+      if (allOK(xs,true)){
         //TODO: remove some of the defined if it is better to use the Circuit implicit constraint
         //TODO: We assume that the offset is 1. Is it always the case?
-        
-        for(i <- 0 until xs.length){
-          RelaxAndEnsureDomain(cblsmodel.getCBLSVarDom(xs(i)),1,xs.length,cblsmodel.c)
+         val vars = xs.map{ v =>
+          val avar = if(v.isBound){
+            uid+=1
+            CBLSIntVarDom(cblsmodel.m, v.value, v.domain,  "EXTRA_VAR_"+uid);
+          }else{
+            cblsmodel.getCBLSVarDom(v)
+          }
+          RelaxAndEnsureDomain(avar,1,xs.length,cblsmodel.c)
+          avar
         }
-        val vars = xs.map(cblsmodel.getCBLSVarDom(_))
         cblsmodel.addNeighbourhood((o,c) => new ThreeOpt(vars,o,c,1),vars)
         true
       }else{
