@@ -9,7 +9,13 @@ import oscar.cp.core.CPOutcome
 import oscar.cp.core.CPOutcome._
 import oscar.algo.reversible.ReversibleBoolean
 
+/** 
+ *  @author Renaud Hartert ren.hartert@gmail.com
+ *  @author Pierre Schaus pschaus@gmail.com
+ */
 final class LightBinaryKnapsack(items: Array[CPBoolVar], weights: Array[Int], load: CPIntVar) extends Constraint(load.store, "LightBinaryKnapsack") {
+
+  idempotent = true
 
   private[this] val nItems = items.length
   private[this] val unassigned = Array.tabulate(nItems)(i => i)
@@ -31,7 +37,7 @@ final class LightBinaryKnapsack(items: Array[CPBoolVar], weights: Array[Int], lo
         items(i).callPropagateWhenBind(this)
       }
       load.callPropagateWhenDomainChanges(this)
-      propagate()//Suspend
+      Suspend
     }
   }
 
@@ -106,24 +112,46 @@ final class LightBinaryKnapsack(items: Array[CPBoolVar], weights: Array[Int], lo
   }
 
   @inline private def filterItems(): CPOutcome = {
-    if (load.updateMax(possibleLoad) == Failure) Failure
-    else if (load.updateMin(requiredLoad) == Failure) Failure
-    else {
-      val maxWeight = load.max - requiredLoad
-      val minWeight = possibleLoad - load.min
-      var i = nUnassigned
-      while (i > 0) {
-        i -= 1
-        val itemId = unassigned(i)
-        val item = items(itemId)
-        val weight = weights(itemId)
-        if (weight > maxWeight) {
-          if (item.assignFalse() == Failure) return Failure
-        } else if (minWeight < weight) {
-          if (item.assignTrue() == Failure) return Failure
+    var fixed = false
+    while (!fixed) { // inner fixed point
+      fixed = true
+      if (load.updateMax(possibleLoad) == Failure) return Failure
+      else if (load.updateMin(requiredLoad) == Failure) return Failure
+      else {
+        val maxWeight = load.max - requiredLoad
+        val minWeight = possibleLoad - load.min
+        var i = nUnassigned
+        while (i > 0) {
+          i -= 1
+          val itemId = unassigned(i)
+          val item = items(itemId)
+          val weight = weights(itemId)
+          if (weight > maxWeight) {
+            if (item.assignFalse() == Failure) return Failure
+            else {
+              // Remove from set
+              nUnassigned -= 1
+              unassigned(i) = unassigned(nUnassigned)
+              unassigned(nUnassigned) = itemId
+              // Update loads
+              possibleLoad -= weight
+              fixed = false
+            }
+          } else if (minWeight < weight) {
+            if (item.assignTrue() == Failure) return Failure
+            else {
+              // Remove from set
+              nUnassigned -= 1
+              unassigned(i) = unassigned(nUnassigned)
+              unassigned(nUnassigned) = itemId
+              // Update loads
+              requiredLoad += weight
+              fixed = false
+            }
+          }
         }
       }
-      Suspend
     }
+    Suspend
   }
 }
