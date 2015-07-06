@@ -20,7 +20,7 @@ import scala.util.Random
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.Constraint
 import oscar.cp.core.CPStore
-import oscar.cp.core.Watcher
+import oscar.cp.core.watcher.Watcher
 import oscar.cp.core.delta.DeltaIntVar
 
 /**

@@ -127,7 +127,7 @@ trait Constraints {
    * @return a binpacking constraint linking the variables in argument such that l[i] == sum,,j,, w[j]*(x[j]==i) for all bins i
    */
   def binPacking(x: IndexedSeq[CPIntVar], w: IndexedSeq[Int], l: IndexedSeq[CPIntVar]): Constraint = {
-    return new BinPacking(x.toArray, w.toArray, l.toArray)
+    new BinPacking(x.toArray, w.toArray, l.toArray)
   }
 
   @deprecated("use binPacking instead", "1.0")

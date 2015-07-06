@@ -27,13 +27,6 @@ import oscar.cp.core.delta.DeltaSetVar
 import oscar.cp.core.delta.DeltaIntVar
 import oscar.cp.core.delta.Delta
 
-
-
-
-class Watcher {
-  def shouldEnqueue(): Boolean = true
-}
-
 /**
  * Abstract class extended by any CP constraints
  * @author Pierre Schaus pschaus@gmail.com

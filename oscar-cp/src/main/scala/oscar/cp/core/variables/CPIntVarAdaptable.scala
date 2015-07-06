@@ -29,8 +29,7 @@ import oscar.cp.core.CPStore
 import oscar.cp.core.Constraint
 import oscar.cp.core.watcher.WatcherListL2
 import oscar.cp.core.watcher.WatcherListL1
-import scala.collection.JavaConversions.mapAsScalaMap 
-import oscar.cp.core.Watcher
+import oscar.cp.core.watcher.Watcher
 import oscar.cp.core.delta.DeltaIntVar
 
 /**
@@ -559,7 +558,7 @@ final class CPIntVarAdaptable( final override val store: CPStore, minValue: Int,
    * @param c
    * @see oscar.cp.core.Constraint#propagate()
    */
-  final override def callPropagateWhenDomainChanges(c: Constraint, watcher: oscar.cp.core.Watcher) {
+  final override def callPropagateWhenDomainChanges(c: Constraint, watcher: Watcher) {
     degree.incr()
     onDomainL2.register(c, watcher)
   }

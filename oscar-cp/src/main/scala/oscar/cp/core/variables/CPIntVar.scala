@@ -25,7 +25,7 @@ import oscar.cp.core.CPPropagStrength
 import oscar.cp.core.delta.PropagatorIntVar
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.CPOutcome._
-import oscar.cp.core.Watcher
+import oscar.cp.core.watcher.Watcher
 import oscar.cp.core.delta.DeltaIntVar
 import oscar.cp.core.delta.DeltaIntVarAdaptable
 

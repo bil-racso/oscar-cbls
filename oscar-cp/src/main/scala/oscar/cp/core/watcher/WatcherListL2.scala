@@ -3,7 +3,6 @@ package oscar.cp.core.watcher
 import oscar.algo.reversible.TrailEntry
 import oscar.cp.core.CPStore
 import oscar.cp.core.Constraint
-import oscar.cp.core.Watcher
 
 class WatcherListL2(store: CPStore) {
   

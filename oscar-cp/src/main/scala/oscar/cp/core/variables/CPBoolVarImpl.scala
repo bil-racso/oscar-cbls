@@ -12,7 +12,7 @@ import oscar.cp.core.CPStore
 import oscar.cp.core.Constraint
 import oscar.cp.core.watcher.WatcherListL2
 import oscar.cp.core.watcher.WatcherListL1
-import oscar.cp.core.Watcher
+import oscar.cp.core.watcher.Watcher
 import oscar.cp.core.delta.DeltaIntVar
 
 /**
@@ -247,7 +247,7 @@ class CPBoolVarImpl private(final override val store: CPStore, initDomain: Int, 
     snap
   }
   
-  def callPropagateWhenDomainChanges(c: Constraint, watcher: oscar.cp.core.Watcher): Unit = ???
+  def callPropagateWhenDomainChanges(c: Constraint, watcher: Watcher): Unit = ???
 
 
   final override def callValBindWhenBind(c: Constraint) {

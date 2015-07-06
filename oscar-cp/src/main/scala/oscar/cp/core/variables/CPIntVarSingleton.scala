@@ -8,7 +8,7 @@ import oscar.cp.core.CPOutcome
 import oscar.cp.core.Constraint
 import oscar.cp.core.CPStore
 import oscar.cp.core.delta.DeltaIntVarEmpty
-import oscar.cp.core.Watcher
+import oscar.cp.core.watcher.Watcher
 import oscar.cp.core.delta.DeltaIntVar
 
 final class CPIntVarSingleton(final override val store: CPStore, initValue: Int, final override val name: String = "") extends CPIntVar {
@@ -168,7 +168,7 @@ final class CPIntVarSingleton(final override val store: CPStore, initValue: Int,
    */
   final override def callPropagateWhenDomainChanges(c: Constraint): Unit = degree.incr()
   
-  final override def callPropagateWhenDomainChanges(c: Constraint, watcher: oscar.cp.core.Watcher) = degree.incr()
+  final override def callPropagateWhenDomainChanges(c: Constraint, watcher: Watcher) = degree.incr()
   
   final override def callPropagateOnChangesWithDelta(c: Constraint): DeltaIntVar = {
     degree.incr()
