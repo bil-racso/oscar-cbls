@@ -82,7 +82,7 @@ final class LightBinaryKnapsack(items: Array[CPBoolVar], weights: Array[Int], lo
     requiredLoad = requiredLoadRev.value
     possibleLoad = possibleLoadRev.value
     // Filtering
-    updateAssignedItems()
+    updateUnassignedItems()
     if (filterItems() == Failure) Failure
     else {
       // Trail
@@ -93,7 +93,7 @@ final class LightBinaryKnapsack(items: Array[CPBoolVar], weights: Array[Int], lo
     }
   }
 
-  @inline private def updateAssignedItems(): Unit = {
+  @inline private def updateUnassignedItems(): Unit = {
     var i = nUnassigned
     while (i > 0) {
       i -= 1

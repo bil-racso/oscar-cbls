@@ -16,10 +16,9 @@ package oscar.cp.constraints;
 
 import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
+import oscar.cp.core.Constraint;
 import oscar.cp.core.variables.CPBoolVar;
 import oscar.cp.core.variables.CPIntVar;
-import oscar.cp.core.variables.CPIntVar;
-import oscar.cp.core.Constraint;
 
 /**
  * Reified constraint.
