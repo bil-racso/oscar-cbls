@@ -48,9 +48,15 @@ abstract class Constraint(val variables: Array[Variable],val annotations: List[A
   def setDefinedVar(v: Variable) = {
     definedVars match {
       case None => v.definingConstraint match {
-        case None => 
-          v.definingConstraint= Some(this);
-          definedVars = Some(v);
+        case None =>
+          //Make sure that this can indeed be defined. It might be that some annotations from fzn are wrong. We simply ignore those.
+          if(getCandidateDefVars().contains(v)){
+            v.definingConstraint= Some(this);
+            definedVars = Some(v);
+          }
+          /*else{
+            Console.err.println(v+" can not be defined by "+this)
+          }*/
         case Some(cc) =>
           //Console.err.println(v +" is already defined by "+cc+". But "+this+" wants to define it as well. The second one is ignored.");
       }
