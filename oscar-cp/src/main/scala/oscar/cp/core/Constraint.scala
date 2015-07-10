@@ -26,17 +26,21 @@ import scala.collection.JavaConversions.mapAsScalaMap
 import oscar.cp.core.delta.DeltaSetVar
 import oscar.cp.core.delta.DeltaIntVar
 import oscar.cp.core.delta.Delta
+import oscar.algo.reversible.TrailEntry
 
 /**
  * Abstract class extended by any CP constraints
  * @author Pierre Schaus pschaus@gmail.com
  * @author Renaud Hartert ren.hartert@gmail.com
  */
-abstract class Constraint(store: CPStore, val name: String = "cons") {
+abstract class Constraint(store: CPStore, val name: String = "cons") extends TrailEntry {
 
-  private[this] val active = new ReversibleBoolean(store, true)
+  private[this] var active: Boolean = true
   private[this] var inQueue: Boolean = false
-  private[this] var lastMagic = -1L
+  private[this] var lastMagicInQueue = -1L
+  private[this] var lastMagicActive = -1L
+  
+  final override def restore(): Unit = active = !active
   
   val s: CPStore = store
   
@@ -118,8 +122,8 @@ abstract class Constraint(store: CPStore, val name: String = "cons") {
   
   
   @inline final def isEnqueuable: Boolean = {
-    active.value && 
-    (lastMagic != store.magic || !inQueue) && 
+    active && 
+    (lastMagicInQueue != store.magic || !inQueue) && 
     (!_inPropagate || !_idempotent)
   }
   
@@ -170,23 +174,37 @@ abstract class Constraint(store: CPStore, val name: String = "cons") {
   /**
    * @return true if the constraint is still active
    */
-  final def isActive = active.value
+  final def isActive = active
 
   /**
    * @return true if the constraint is still in the propagation queue, false otherwise
    */
-  final def isInQueue = lastMagic == store.magic && inQueue
+  final def isInQueue = lastMagicInQueue == store.magic && inQueue
 
   /**
    * Disable the constraint such that it is not propagated any more (will not enter into the propagation queue).
    * Note that this state is reversible (trailable).
    */
-  def deactivate(): Unit = active.setFalse()
+  def deactivate(): Unit = {
+    trail()
+    active = false
+  }
 
   /**
    * Reactivate the constraint
    */
-  def activate(): Unit = active.setTrue()
+  def activate(): Unit = {
+    trail()
+    active = true
+  }
+  
+  @inline private def trail(): Unit = {
+    val contextMagic = store.magic
+    if (lastMagicActive != contextMagic) {
+      lastMagicActive = contextMagic
+      store.trail(this)
+    }
+  }
 
   /**
    * Propagation method of Level L2 that is called if variable x has asked to do so with
@@ -302,7 +320,7 @@ abstract class Constraint(store: CPStore, val name: String = "cons") {
   }
 
   @inline private[cp] def setInQueue(): Unit = {
-    lastMagic = store.magic
+    lastMagicInQueue = store.magic
     inQueue = true
   }
 }
