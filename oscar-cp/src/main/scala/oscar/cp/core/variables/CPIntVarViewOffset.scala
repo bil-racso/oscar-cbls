@@ -102,7 +102,7 @@ class CPIntVarViewOffset(v: CPIntVar, offset: Int) extends CPIntVar {
   
 	final override def callPropagateWhenDomainChanges(c: Constraint): Unit = v.callPropagateWhenDomainChanges(c)
   
-  final override def callPropagateWhenDomainChanges(c: Constraint, watcher: Watcher): Unit = v.callPropagateWhenDomainChanges(c,watcher)
+  final override def callPropagateWhenDomainChanges(c: Constraint, cond: => Boolean): Unit = v.callPropagateWhenDomainChanges(c, cond)
 
   final override def callPropagateOnChangesWithDelta(c: Constraint): DeltaIntVar = {
     val snap = delta(c)
@@ -110,11 +110,13 @@ class CPIntVarViewOffset(v: CPIntVar, offset: Int) extends CPIntVar {
     snap
   }
   
-  final override def callPropagateOnChangesWithDelta(c: Constraint, watcher: Watcher): DeltaIntVar = {
+  final override def callPropagateOnChangesWithDelta(c: Constraint, cond: => Boolean): DeltaIntVar = {
     val snap = delta(c)
-    v.callPropagateWhenDomainChanges(c, watcher)
+    v.callPropagateWhenDomainChanges(c, cond)
     snap
   }
+  
+  final override def awakeOnChanges(watcher: Watcher): Unit = v.awakeOnChanges(watcher)
 	
 	// this method is useful when you have a view final override defined on a view
 	final override def callValBindWhenBind(c: Constraint, variable: CPIntVar) = v.callValBindWhenBind(c, variable)

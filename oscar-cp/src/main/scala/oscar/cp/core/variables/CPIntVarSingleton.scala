@@ -168,7 +168,7 @@ final class CPIntVarSingleton(final override val store: CPStore, initValue: Int,
    */
   final override def callPropagateWhenDomainChanges(c: Constraint): Unit = degree.incr()
   
-  final override def callPropagateWhenDomainChanges(c: Constraint, watcher: Watcher) = degree.incr()
+  final override def callPropagateWhenDomainChanges(c: Constraint, cond: => Boolean) = degree.incr()
   
   final override def callPropagateOnChangesWithDelta(c: Constraint): DeltaIntVar = {
     degree.incr()
@@ -177,10 +177,12 @@ final class CPIntVarSingleton(final override val store: CPStore, initValue: Int,
   
   final override def delta(c: Constraint): DeltaIntVar = new DeltaIntVarEmpty(this)
   
-  final override def callPropagateOnChangesWithDelta(c: Constraint, watcher: Watcher): DeltaIntVar = {
+  final override def callPropagateOnChangesWithDelta(c: Constraint, cond: => Boolean): DeltaIntVar = {
     degree.incr()
     delta(c)
   }
+  
+  final override def awakeOnChanges(watcher: Watcher): Unit = degree.incr()
 
 
   /**

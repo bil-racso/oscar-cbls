@@ -83,9 +83,11 @@ final class CPIntVarViewMinus(v: CPIntVar) extends CPIntVar {
 	
 	def callPropagateWhenBoundsChange(c: Constraint) = v.callPropagateWhenBoundsChange(c)
   
-  def callPropagateWhenDomainChanges(c: Constraint): Unit = v.callPropagateWhenDomainChanges(c)
+  final override def callPropagateWhenDomainChanges(c: Constraint): Unit = v.callPropagateWhenDomainChanges(c)
   
-  def callPropagateWhenDomainChanges(c: Constraint, watcher: Watcher): Unit = v.callPropagateWhenDomainChanges(c,watcher)
+  final override def callPropagateWhenDomainChanges(c: Constraint, cond: => Boolean): Unit = v.callPropagateWhenDomainChanges(c, cond)
+  
+  final override def awakeOnChanges(watcher: Watcher): Unit = v.awakeOnChanges(watcher)
 
   def callPropagateOnChangesWithDelta(c: Constraint): DeltaIntVar = {
     val snap = delta(c)
@@ -93,9 +95,9 @@ final class CPIntVarViewMinus(v: CPIntVar) extends CPIntVar {
     snap
   }
   
-  def callPropagateOnChangesWithDelta(c: Constraint, watcher: Watcher): DeltaIntVar = {
+  def callPropagateOnChangesWithDelta(c: Constraint, cond: => Boolean): DeltaIntVar = {
     val snap = delta(c)
-    v.callPropagateWhenDomainChanges(c, watcher)
+    v.callPropagateWhenDomainChanges(c, cond)
     snap
   }
   

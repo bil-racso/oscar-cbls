@@ -75,11 +75,13 @@ class CPBoolVarNot(final override val not: CPBoolVar) extends CPBoolVar {
 
   final override def callPropagateWhenDomainChanges(c: Constraint): Unit = not.callPropagateWhenDomainChanges(c)
   
-  final override def callPropagateWhenDomainChanges(c: Constraint, watcher: Watcher): Unit = not.callPropagateWhenDomainChanges(c, watcher)
+  final override def callPropagateWhenDomainChanges(c: Constraint, cond: => Boolean): Unit = not.callPropagateWhenDomainChanges(c, cond)
 
   final override def callPropagateOnChangesWithDelta(c: Constraint): DeltaIntVar = not.callPropagateOnChangesWithDelta(c)
   
-  final override def callPropagateOnChangesWithDelta(c: Constraint, watcher: Watcher): DeltaIntVar = not.callPropagateOnChangesWithDelta(c, watcher)
+  final override def callPropagateOnChangesWithDelta(c: Constraint, cond: => Boolean): DeltaIntVar = not.callPropagateOnChangesWithDelta(c, cond)
+  
+  final override def awakeOnChanges(watcher: Watcher): Unit = not.awakeOnChanges(watcher)
   
   final override def callValBindWhenBind(c: Constraint): Unit = not.callValBindWhenBind(c, this) 
   

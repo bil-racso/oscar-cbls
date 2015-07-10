@@ -240,15 +240,22 @@ class CPBoolVarImpl private(final override val store: CPStore, initDomain: Int, 
     snap
   }
   
-  final override def callPropagateOnChangesWithDelta(c: Constraint, watcher: Watcher): DeltaIntVar = {
+  final override def callPropagateOnChangesWithDelta(c: Constraint, cond: => Boolean): DeltaIntVar = {
     val snap = delta(c)
     degree.incr()
-    onBindL2.register(c, watcher)
+    onBindL2.register(c, cond)
     snap
   }
   
-  def callPropagateWhenDomainChanges(c: Constraint, watcher: Watcher): Unit = ???
+  def callPropagateWhenDomainChanges(c: Constraint, cond: => Boolean): Unit = {
+    degree.incr()
+    onBindL2.register(c, cond)
+  }
 
+  def awakeOnChanges(watcher: Watcher): Unit = {
+    degree.incr()
+    onBindL2.register(watcher)
+  }
 
   final override def callValBindWhenBind(c: Constraint) {
     callValBindWhenBind(c, this)

@@ -545,10 +545,10 @@ final class CPIntVarAdaptable( final override val store: CPStore, minValue: Int,
     snap
   }
   
-  final override def callPropagateOnChangesWithDelta(c: Constraint, watcher: Watcher): DeltaIntVar = {
+  final override def callPropagateOnChangesWithDelta(c: Constraint, cond: => Boolean): DeltaIntVar = {
     val snap = delta(c)
     degree.incr()
-    onDomainL2.register(c, watcher)
+    onDomainL2.register(c, cond)
     snap
   }
   
@@ -558,9 +558,14 @@ final class CPIntVarAdaptable( final override val store: CPStore, minValue: Int,
    * @param c
    * @see oscar.cp.core.Constraint#propagate()
    */
-  final override def callPropagateWhenDomainChanges(c: Constraint, watcher: Watcher) {
+  final override def callPropagateWhenDomainChanges(c: Constraint, cond: => Boolean) {
     degree.incr()
-    onDomainL2.register(c, watcher)
+    onDomainL2.register(c, cond)
+  }
+  
+  final override def awakeOnChanges(watcher: Watcher): Unit = {
+    degree.incr()
+    onDomainL2.register(watcher)
   }
 
   /**
