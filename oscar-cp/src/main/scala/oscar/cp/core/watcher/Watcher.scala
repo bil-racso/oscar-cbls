@@ -3,16 +3,16 @@ package oscar.cp.core.watcher
 import oscar.cp.core.Constraint
 import oscar.cp.core.variables.CPIntVar
 
-trait Watcher { def awake(): Unit }
+abstract class Watcher { def awake(): Unit }
 
 final class WatcherL2Garded(constraint: Constraint, gard: => Boolean) extends Watcher {
   private[this] val store = constraint.s
-  final override def awake(): Unit = if (gard) store.enqueueL2(constraint)
+  @inline final override def awake(): Unit = if (gard) store.enqueueL2(constraint)
 }
 
 final class WatcherL2(constraint: Constraint) extends Watcher {
   private[this] val store = constraint.s
-  final override def awake(): Unit = store.enqueueL2(constraint)
+  @inline final override def awake(): Unit = store.enqueueL2(constraint)
 }
 
 final class WatcherL1BindId(constraint: Constraint, variable: CPIntVar, id: Int) extends Watcher {
