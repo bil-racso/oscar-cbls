@@ -72,7 +72,7 @@ final class LightBinaryKnapsack(items: Array[CPBoolVar], weights: Array[Int], lo
     }
     // Largest 
     largestItem = nItems - 1
-    while (items(sortedItems(largestItem)).isBound) largestItem -= 1
+    while (largestItem >= 0 && items(sortedItems(largestItem)).isBound) largestItem -= 1
     // Initial filtering
     if (filterItems == Failure) Failure
     else {
