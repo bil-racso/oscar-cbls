@@ -33,7 +33,7 @@ class FZSolution {
     }
     def addOutputArrayVarInt(label:String,vars:Array[String],dimRanges: List[Range]) = {
       def k(c:(String => String)) = {
-        "array"+dimRanges.length+"d("+dimRanges.map(r => r.min+".."+r.max).mkString(", ")+", ["+vars.map(c(_)).mkString(", ")+" ])"
+        "array"+dimRanges.length+"d("+dimRanges.map(r => if(r.isEmpty) "1..0" else (r.min+".."+r.max)).mkString(", ")+", ["+vars.map(c(_)).mkString(", ")+" ])"
       }
       output += label -> k
     }
