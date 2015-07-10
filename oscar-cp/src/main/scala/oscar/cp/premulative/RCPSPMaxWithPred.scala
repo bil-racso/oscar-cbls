@@ -24,7 +24,7 @@ object RCPSPMaxWithPred extends App {
 
   val ninf = Int.MinValue
   
-  val (nTasks, nRes, resourcesCapacities, taskDescriptions, precedences) = RCPmaxReader.readInstance("data/rcpsp-max/j20/PSP37.SCH")
+  val (nTasks, nRes, resourcesCapacities, taskDescriptions, precedences) = RCPmaxReader.readInstance("data/rcpsp-max/j20/PSP128.SCH")
 
   val tab = makeMatrix(nTasks,precedences)
   computeTransitiveClosure(tab)
@@ -128,12 +128,9 @@ object RCPSPMaxWithPred extends App {
   for (r <- List(0,1,2,3,4)) {
     add(maxCumulativeResource(starts, durations, ends, demands(r), resources, capacities(r), resourceid), Medium)
     println(capacities(r)+" "+taskIds.filterNot(demands(r)(_).value==0).map(v => (v,durations(v).value,demands(r)(v).value)))
-    //add(new CumulativeLinearWithLags(starts, durations, ends, demands(r), resources, capacities(r), resourceid,tab,true,true))
-    
-    
-    //add(new Premulative(starts, durations, ends, demands(r), resources, capacities(r), resourceid,tab))
-    
-    //System.exit(0)
+ 
+    add(new Premulative(starts, durations, ends, demands(r), resources, capacities(r), resourceid,tab))
+
   }
     println(starts.mkString(", "))
     println(ends.mkString(", "))

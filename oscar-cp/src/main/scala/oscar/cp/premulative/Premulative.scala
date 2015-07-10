@@ -35,8 +35,11 @@ class Premulative(startsArg: Array[CPIntVar], durationsArg: Array[CPIntVar], end
   private[this] val n = starts.size
   
   val pred = for (i <- args) yield args.map(j => delayMatrix(i)(j))
-  val precedences: Array[Array[(Int,Int)]] = Array.tabulate(n)(i => Array.tabulate(n)(j => (j,pred(j)(i))).filter(_._2 > 0))
+  
   // start(i) + w(i)(j) <= start(j)
+  val precedences: Array[Array[(Int,Int)]] = Array.tabulate(n)(i => Array.tabulate(n)(j => (j,pred(j)(i))).filter(_._2 > 0))
+  
+  
   
   val totalPredEnergy: Array[Int] = Array.fill(n)(0)
   for (i <- 0 until n; (j,w) <- precedences(i)) {
@@ -44,7 +47,7 @@ class Premulative(startsArg: Array[CPIntVar], durationsArg: Array[CPIntVar], end
   }
   //, (jmap{  case(j,w) => (durations(j) min w)*demands(j)}.sum) // maybe need ceiling here
   println("totalEnergyPred:"+totalPredEnergy.mkString(","))
-  val minLagEarliestPred = totalPredEnergy.map(e => e/capaArg.max)
+
   
   
   
@@ -270,20 +273,24 @@ class Premulative(startsArg: Array[CPIntVar], durationsArg: Array[CPIntVar], end
   }
   
   override def setup(l: CPPropagStrength): CPOutcome = {
-    /*
-   val totalPredEnergy = Array.tabulate(n)(i => pred(i).map{case(j,w) => (durations(j) min w)*demands(j)}.sum) // maybe need ceiling here
-   val minLagEarliestPred = totalPredEnergy.map(e => Math.ceil(e.toDouble/capaArg.max.toInt))
-    */
+
     
     //println(precedences.map(_.size).mkString(","))
     for (i <- 0 until n; if (precedences(i).size > 0)) {
-      println("capa max "+capa)
-      println("predecessors of "+i+"="+precedences(i).map(a => (a,durations(a._1).min,demands(a._1).min)).mkString(",")+" minLag:"+minLagEarliestPred(i))
+      
+      
       import oscar.cp.modeling._
       val minEarliestPred: CPIntVar = minimum(precedences(i).map{case (j,w) => starts(j)})
       
+      // 
 
-      s.post(minEarliestPred + minLagEarliestPred(i) <= starts(i))
+      
+      val minLagEarliestPred = totalPredEnergy(i)/capa + (if (totalPredEnergy(i) % capa + demands(i).min > capa) 1 else 0)
+      
+      println("capa max "+capa)
+      println("predecessors of "+i+"="+precedences(i).map(a => (a,durations(a._1).min,demands(a._1).min)).mkString(",")+" minLag:"+minLagEarliestPred)
+      
+      s.post(minEarliestPred + minLagEarliestPred <= starts(i))
       
     }
     
@@ -331,6 +338,40 @@ class Premulative(startsArg: Array[CPIntVar], durationsArg: Array[CPIntVar], end
 
   def filter(i: Int): Boolean = {
     if (dur(i) > 0) {
+      
+      val sortedPred = precedences(i).sortBy{case(j,w) => starts(j).min}
+      
+      var currEst = 0
+      var slackOnCurrEst = 0
+      var currProfIdx = 0
+      
+      for ((j,w) <- sortedPred) {
+        var energyBefore: Int = Math.min (dur(j) - (if (hasManda(j)) (mandaMax(j)-mandaMin(j)-1) else 0),w) * demand(j) // TODO: check if not -1 needed on w
+        while (energyBefore > 0) {
+          /*
+          val energyOnSegment = (profileMax(currProfIdx)-currEst+1)*(capa-profileHeight(currProfIdx))
+          if (energyOnSegment <= energyBefore) {
+            energyBefore -= energyOnSegment
+            currProfIdx += 1
+            currEst = 
+          }
+          */
+          
+        }
+        
+        
+        
+        
+        
+        
+        
+        
+      }
+      
+      
+      
+      
+      
       var profIdx = 0 // current index of the profile segment
       val d = demand(i)
       var changed = false
