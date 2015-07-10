@@ -32,10 +32,13 @@ import oscar.cp.core.delta.Delta
  * @author Pierre Schaus pschaus@gmail.com
  * @author Renaud Hartert ren.hartert@gmail.com
  */
-abstract class Constraint(val s: CPStore, val name: String = "cons") {
+abstract class Constraint(store: CPStore, val name: String = "cons") {
 
-  private[this] val active = new ReversibleBoolean(s,true)
-  private[this] val inQueue = new MagicBoolean(s, false)
+  private[this] val active = new ReversibleBoolean(store, true)
+  private[this] var inQueue: Boolean = false
+  private[this] var lastMagic = -1L
+  
+  val s: CPStore = store
   
   // FIXME variables should have an id 
   val snapshotsVarSet = new java.util.HashMap[CPSetVar, DeltaSetVar]
@@ -115,7 +118,9 @@ abstract class Constraint(val s: CPStore, val name: String = "cons") {
   
   
   @inline final def isEnqueuable: Boolean = {
-    active.value && !inQueue.value && (!_inPropagate || !_idempotent)
+    active.value && 
+    (lastMagic != store.magic || !inQueue) && 
+    (!_inPropagate || !_idempotent)
   }
   
 
@@ -170,7 +175,7 @@ abstract class Constraint(val s: CPStore, val name: String = "cons") {
   /**
    * @return true if the constraint is still in the propagation queue, false otherwise
    */
-  final def isInQueue = inQueue.value
+  final def isInQueue = lastMagic == store.magic && inQueue
 
   /**
    * Disable the constraint such that it is not propagated any more (will not enter into the propagation queue).
@@ -287,18 +292,17 @@ abstract class Constraint(val s: CPStore, val name: String = "cons") {
   def valExcludedIdx(x: CPSetVar, idx: Int, value: Int) = CPOutcome.Suspend
 
   def execute(): CPOutcome = {
-    inQueue.value = false
+    inQueue = false
     _inPropagate = true
     val oc = propagate()
-    if (oc != CPOutcome.Failure) {
-      updateSnapshots()
-    }
+    if (oc != CPOutcome.Failure) updateSnapshots()
+    if (oc == CPOutcome.Success) deactivate()
     _inPropagate = false
-    if (oc == CPOutcome.Success) {
-      deactivate()
-    }
     oc
   }
 
-  @inline private[cp] def setInQueue(): Unit = inQueue.setTrue()
+  @inline private[cp] def setInQueue(): Unit = {
+    lastMagic = store.magic
+    inQueue = true
+  }
 }
