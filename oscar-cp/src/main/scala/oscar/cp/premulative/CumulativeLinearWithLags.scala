@@ -282,16 +282,18 @@ class CumulativeLinearWithLags(startsArg: Array[CPIntVar], durationsArg: Array[C
         SortUtils.mergeSort(orderedTasks, startMin, 0, orderedTasks.length,runs1,aux1)
         var z = 0
         while(z < orderedTasks.length){
-          var y = z+1
-          while(y < orderedTasks.length && startMin(orderedTasks(y)) < endMin(orderedTasks(z))){//if they overlap in time. If one does not, the next won't either.
-            if(!hasManda(orderedTasks(z)) && !hasManda(orderedTasks(y))){//We should do something better here but for now we are conservative and avoid any mandatory part.
-              val res1 = filterEST(orderedTasks(z),orderedTasks(y))
-              val res2 = filterEST(orderedTasks(y),orderedTasks(z))
-              if(!res1 || !res2){
-                return CPOutcome.Failure
+          if(!hasManda(orderedTasks(z))){
+            var y = z+1
+            while(y < orderedTasks.length && startMin(orderedTasks(y)) < endMin(orderedTasks(z))){//if they overlap in time. If one does not, the next won't either.
+              if(!hasManda(orderedTasks(z)) && !hasManda(orderedTasks(y))){//We should do something better here but for now we are conservative and avoid any mandatory part.
+                val res1 = filterESTBoth(orderedTasks(z),orderedTasks(y))
+                //val res2 = filterEST(orderedTasks(y),orderedTasks(z))
+                if(!res1 /*|| !res2*/){
+                  return CPOutcome.Failure
+                }
               }
+              y+=1
             }
-            y+=1
           }
           z+=1
         }
@@ -301,16 +303,18 @@ class CumulativeLinearWithLags(startsArg: Array[CPIntVar], durationsArg: Array[C
         SortUtils.mergeSort(orderedTasks, endMax, 0, orderedTasks.length,runs1,aux1)
         var z = orderedTasks.length-1
         while(z >=0){
-          var y = z-1
-          while(y >= 0 && endMax(orderedTasks(y)) > startMax(orderedTasks(z))){//if they overlap in time. If one does not, the next won't either.
-            if(!hasManda(orderedTasks(z)) && !hasManda(orderedTasks(y))){//We should do something better here but for now we are conservative and avoid any mandatory part.
-              val res1 = filterLST(orderedTasks(z),orderedTasks(y))
-              val res2 = filterLST(orderedTasks(y),orderedTasks(z))
-              if(!res1 || !res2){
-                return CPOutcome.Failure
+          if(!hasManda(orderedTasks(z))){
+            var y = z-1
+            while(y >= 0 && endMax(orderedTasks(y)) > startMax(orderedTasks(z))){//if they overlap in time. If one does not, the next won't either.
+              if(!hasManda(orderedTasks(z)) && !hasManda(orderedTasks(y))){//We should do something better here but for now we are conservative and avoid any mandatory part.
+                val res1 = filterLSTBoth(orderedTasks(z),orderedTasks(y))
+                //val res2 = filterLST(orderedTasks(y),orderedTasks(z))
+                if(!res1 /*|| !res2*/){
+                  return CPOutcome.Failure
+                }
               }
+              y-=1
             }
-            y-=1
           }
           z-=1
         }
@@ -381,36 +385,32 @@ class CumulativeLinearWithLags(startsArg: Array[CPIntVar], durationsArg: Array[C
   
   //can start of task j be scheduled somewhere between min and max, given the current schedule.
   def canBeMovedRight(j: Int, min: Int, max: Int, firstp: Int): Boolean  = {
-//    if(startMin(j)==46){
-//      println(j + " "+min+ " "+max+ " "+profileHeight(firstp))
-//    }
     if(min > max){
-    //  println("YEP")
       return false
     }
-  //  println("NO")
+    return true
+    
     //Do a sweep to make sure it can be placed without conflict!
     var p = firstp
     var t = min
     val durj = dur(j)
     val demandj = demand(j)
     while(p < nProfile && profileMin(p) < math.min(t+durj,max+durj)){
-    //  println(" "+p+" "+profileMin(p)+" "+(t+dur(j))+" "+max+" "+profileHeight(p))
       if(profileHeight(p) + demandj > capa){
         t = profileMin(p+1)
       }
       p+=1
     }
-//    println(t+"\t"+max)
     if(t> max) return false
     else true
   }
   
 
-   /**
-   * Filter the domain of i with respect to its potential conflict with j at their est without considering precedences
+  
+  /**
+   * Filter the domain of i with respect to its potential conflict with j at their est
    */
-  def filterESTSimple(i: Int, j: Int): Boolean = {
+  def filterESTBoth(i: Int, j: Int): Boolean = {
     //1. Test whether there is a conflict!
     //Build the intersection of the tasks
     val intersection = (math.max(startMin(i),startMin(j)),math.min(endMin(i),endMin(j)))
@@ -429,44 +429,37 @@ class CumulativeLinearWithLags(startsArg: Array[CPIntVar], durationsArg: Array[C
     //Otherwise, cp is the last conflicting profile section. We will try to avoid that one.
     val endofcp = math.min(if(cp+1 < nProfile) profileMin(cp+1) else Int.MaxValue, intersection._2)
     val startofcp = math.max(profileMin(cp),intersection._1)
-//    if(startMin(i)==48) println((startofcp,endofcp))
-    //println(cp+" "+i+" "+j+" "+endofcp)
-    
+    //val lengthofcp = endofcp-startofcp
+        
+    //return true
     
     //Until here it is common for i=a,j=b and for i=b,j=a, so we should factor the code.
-    
     //2. Test whether j can be pushed after endofcp without any conflict
     val distji = dist(j)(i)
     //first case: the task can be scheduled at its latest without overlapping and without violating the precedence
-    if(startMax(j)>=endofcp && startMin(i) >= startMax(j)+distji) return true
     //second case: j can be moved such that start(j) >= endofcp && start(j)+dist(j)(i) =< startMin(i)
-    //Do a sweep
-    val canBeMoved = canBeMovedRightSimple(j,endofcp,startMin(i)-distji,cp)
-    if(canBeMoved) return true
-    //2. if task j cannot be moved, then we need to move task i so as to resolve the *current* conflict
-    val lengthofcp = endofcp-startofcp
-    //TODO: Check that the length of the move is both correct and optimal (note that moving by 1 is correct but not optimal)
-    val move = if(lengthofcp+dist(j)(i) > 0)math.min(lengthofcp,lengthofcp+distji) else lengthofcp//?
-    //if(startMin(i)==48) 
-//      println("move by " + move+" to "+(startMin(i)+move)+" vs "+lengthofcp)
-    if (startMin(i)+move > startMax(i)) return false
-    else starts(i).updateMin(startMin(i)+move)
+    if(!((startMax(j)>=endofcp && startMin(i) >= startMax(j)+distji)) && !canBeMovedRight(j,endofcp,startMin(i)-distji,cp)){
+      //3. if task j cannot be moved, then we need to move task i so as to resolve the *current* conflict
+      //TODO: Check that the length of the move is both correct and optimal (note that moving by 1 is correct but not optimal)
+      val move = endofcp - (if(startMin(i)-distji < endofcp)math.max(startofcp,startMin(i)-distji) else startofcp)//?
+      if (startMin(i)+move > startMax(i)) return false
+      else starts(i).updateMin(startMin(i)+move)
+    }
+    
+    //2. Test whether i can be pushed after endofcp without any conflict
+    val distij = dist(i)(j)
+    //first case: the task can be scheduled at its latest without overlapping and without violating the precedence
+    //second case: i can be moved such that start(i) >= endofcp && start(i)+dist(i)(j) =< startMin(j)
+    if((startMax(i)<endofcp || startMin(j) < startMax(i)+distij) && !canBeMovedRight(i,endofcp,startMin(j)-distij,cp)){
+      //3. if task j cannot be moved, then we need to move task i so as to resolve the *current* conflict
+      //TODO: Check that the length of the move is both correct and optimal (note that moving by 1 is correct but not optimal)
+      val move = endofcp - (if(startMin(j)-distij < endofcp)math.max(startofcp,startMin(j)-distij) else startofcp)
+      if (startMin(j)+move > startMax(j)) return false
+      else starts(j).updateMin(startMin(j)+move)
+    }
     return true
   }
-    
-  
-    //can start of task j be scheduled somewhere between min and max, given the current schedule.
-  def canBeMovedRightSimple(j: Int, min: Int, max: Int, firstp: Int): Boolean  = {
-//    if(startMin(j)==46){
-//      println(j + " "+min+ " "+max+ " "+profileHeight(firstp))
-//    }
-    if(min > max){
-    //  println("YEP")
-      return false
-    }
-    true
-  }
-  
+
   
     /**
    * Filter the domain of i with respect to its potential conflict with j at their lst
@@ -516,13 +509,80 @@ class CumulativeLinearWithLags(startsArg: Array[CPIntVar], durationsArg: Array[C
     //negative
     val lengthofcp = endofcp-startofcp
     //TODO: Check that the length of the move is both correct and optimal (note that moving by 1 is correct but not optimal)
-    val move = if(lengthofcp-distij > 0)math.max(lengthofcp,lengthofcp-distij) else lengthofcp//?
+    val move = if(lengthofcp-distij < 0)math.max(lengthofcp,lengthofcp-distij) else lengthofcp//?
     //if(startMin(i)==48) 
 //      println("move by " + move+" to "+(startMin(i)+move)+" vs "+lengthofcp)
     if (startMax(i)+move < startMin(i)) return false
     else starts(i).updateMax(startMax(i)+move)
     return true
   }
+  
+  
+  
+    /**
+   * Filter the domain of i with respect to its potential conflict with j at their lst
+   */
+  def filterLSTBoth(i: Int, j: Int): Boolean = {
+    //println("filter "+i+ " using "+j)
+//    if(demand(i) + demand(j) > capa){
+//      println("should filter "+i+ " using "+j)
+//    }
+    //1. Test whether there is a conflict!
+    //Build the intersection of the tasks
+    val intersection = (math.max(startMax(i),startMax(j))-1,math.min(endMax(i),endMax(j))-1)
+    //Get the first profile
+    var p = math.max(indexEndMaxMinusOne(i),indexEndMaxMinusOne(j))
+    //Test if any profile creates a conflict
+    var cp = -1
+    val demandi = demand(i)
+    val demandj = demand(j)
+    while(p > -1 && profileMax(p) > intersection._1){
+      if(demandi+demandj+profileHeight(p) > capa) cp = p
+      p-=1
+    }
+    //There is no conflict, we quit
+    if(cp== -1) return true
+    //Otherwise, cp is the first conflicting profile section. We will try to avoid that one.
+    val endofcp = math.max(if(cp-1 > -1) profileMax(cp-1) else Int.MinValue, intersection._1)
+    val startofcp = math.min(profileMax(cp),intersection._2)
+      //negative value
+    val lengthofcp = endofcp-startofcp
+    
+    //Until here it is common for i=a,j=b and for i=b,j=a, so we should factor the code.
+    //return true
+    
+    //2. Test whether j can be pushed before endofcp without any conflict
+    //ATTENTION: The distances are with respect to the start times, not the end times
+    val distij = dist(i)(j)
+    //first case: the task can be scheduled at its earliest without overlapping and without violating the precedence
+    //second case: j can be moved such that start(j) >= endofcp && start(j)+dist(j)(i) =< startMin(i)
+    if(!(endMin(j)-1<=endofcp && startMax(i) <= startMin(j)-distij) && !canBeMovedLeft(j,endofcp,startMax(i)-1+distij+dur(j),cp)){
+      //3. if task j cannot be moved, then we need to move task i so as to resolve the *current* conflict
+      //TODO: Check that the length of the move is both correct and optimal (note that moving by 1 is correct but not optimal)
+      //if(lengthofcp+dist(i)(j) > 0)math.min(lengthofcp,lengthofcp+distij) else lengthofcp
+      //val move = endofcp - (if(startMin(i)-distji < endofcp)math.max(startofcp,startMin(i)-distji) else startofcp)//?
+      val move = endofcp - (if(startMax(i)+distij > endofcp)math.min(startofcp,startMax(i)+distij) else startofcp)//?
+      
+//      (if(lengthofcp-distij < 0)math.max(lengthofcp,lengthofcp-distij) else endofcp)
+      if (startMax(i)+move < startMin(i)) return false
+      else starts(i).updateMax(startMax(i)+move)
+    }
+    
+    //2. Test whether i can be pushed before endofcp without any conflict
+    //ATTENTION: The distances are with respect to the start times, not the end times
+    val distji = dist(j)(i)
+    //first case: the task can be scheduled at its earliest without overlapping and without violating the precedence
+    //second case: j can be moved such that start(j) >= endofcp && start(j)+dist(j)(i) =< startMin(i)
+    if(!(endMin(i)-1<=endofcp && startMax(j) <= startMin(i)-distji) && !canBeMovedLeft(i,endofcp,startMax(j)-1+distji+dur(i),cp)){
+      //3. if task i cannot be moved, then we need to move task j so as to resolve the *current* conflict
+      //TODO: Check that the length of the move is both correct and optimal (note that moving by 1 is correct but not optimal)
+      val move = endofcp - (if(startMax(j)+distji > endofcp)math.min(startofcp,startMax(j)+distji) else startofcp)//?
+      if (startMax(j)+move < startMin(j)) return false
+      else starts(j).updateMax(startMax(j)+move)
+    }
+    return true
+  }
+  
   
   //can task j be scheduled somewhere between min and max, given the current schedule.
   def canBeMovedLeft(j: Int, max: Int, min: Int, firstp: Int): Boolean  = {

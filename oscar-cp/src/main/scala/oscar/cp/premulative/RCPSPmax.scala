@@ -24,18 +24,19 @@ object RCPSPmax extends App {
 
   val ninf = Int.MinValue
   
-  val (nTasks, nRes, resourcesCapacities, taskDescriptions, precedences) = RCPmaxReader.readInstance("data/rcpsp-max/ubo10/psp1.sch")
-
-  val tab = makeMatrix(nTasks,precedences)
-  computeTransitiveClosure(tab)
-      
-  val durationsData = taskDescriptions.map(_._1)
-  val horizon = durationsData.sum + math.max(0,tab(0)(nTasks-1))
-  val demandsData = taskDescriptions.map(_._2)
-  //val successorsData = taskDescriptions.map(_._3)
-
+  val (nTasks, nRes, resourcesCapacities, taskDescriptions, precedences) = RCPmaxReader.readInstance("data/rcpsp-max/ubo100/psp4.sch")
   val taskIds = 0 until nTasks
   val resIds = 0 until nRes
+  
+  val durationsData = taskDescriptions.map(_._1)
+  val demandsData = taskDescriptions.map(_._2)
+
+  val tab = GraphAlgorithms.makeMatrix(nTasks,precedences)  
+  GraphAlgorithms.todot(tab,durationsData.zip(demandsData.map(_(2)).zip(demandsData.map(_(4)))))
+  GraphAlgorithms.computeTransitiveClosure(tab)
+      
+  val horizon = (0 until nTasks).map(i => durationsData(i).max(tab(i).max)).sum
+  
 
   implicit val cp = CPSolver()
   //cp.silent=true
@@ -49,29 +50,7 @@ object RCPSPmax extends App {
   val resources = Array.tabulate(nTasks)(t => CPIntVar(resourceid))
   val capacities = Array.tabulate(nRes)(r => CPIntVar(resourcesCapacities(r)))
 
-  def computeTransitiveClosure(tab: Array[Array[Int]]){
-    //tab = getAdjacencyMatrix();
-    val s = tab.length; 
-    for(k <- 0 until s){
-      for(i <- 0 until s){
-        if(tab(i)(k)>ninf){
-          for(j <- 0 until s){
-            if(tab(k)(j)>ninf && tab(i)(j) < tab(i)(k)+tab(k)(j)){
-              tab(i)(j) = tab(i)(k)+tab(k)(j);
-            }
-          }
-        }
-      }
-    }
-  }
-  def makeMatrix(ntasks: Int, pred: List[Tuple3[Int,Int,Int]]): Array[Array[Int]] = {
-    val tab = Array.tabulate(ntasks)(t => Array.tabulate(ntasks)(s => ninf))
-    for((i,j,w) <- pred){
-      tab(i)(j) = w
-    }
-    tab
-  }
-  
+
   // Constraints	
   // -----------------------------------------------------------------------
   val makespan = ends(nTasks-1)//maximum(ends)
@@ -87,29 +66,68 @@ object RCPSPmax extends App {
   }
 
   
+  var changed = false
+  do{
+    changed = false
+    for(i <- taskIds; j <- i+1 until nTasks){
+      if(resIds.exists(r => demands(r)(i).value+demands(r)(j).value > capacities(r).value)){
+        if(-durations(j).value < tab(i)(j) && durations(i).value > tab(i)(j)){
+          changed = true
+          tab(i)(j) = math.max(tab(i)(j),durations(i).value)
+        }else if(-durations(i).value < tab(j)(i)  && durations(j).value > tab(j)(i)){
+          changed = true
+          tab(j)(i) = math.max(tab(j)(i),durations(j).value)
+        }else{
+          //cp.add(new BinaryDisjunctiveWithTransitionTimes(starts(i),ends(i),starts(j),ends(j),0,0));  
+        }      
+      }
+    }
+    GraphAlgorithms.computeTransitiveClosure(tab)
+    if((taskIds).exists(i => tab(i)(i) > 0))changed = false
 
+  }while(changed)
+    /*
+    println((taskIds).map(i => tab(i)(i)))
+    val red = GraphAlgorithms.copy(tab)
+    GraphAlgorithms.makeTransitiveReduction(red)
+  GraphAlgorithms.todot(red,durationsData.zip(demandsData.map(_(2)).zip(demandsData.map(_(4)))))
+  */
+    
+    val cliques = Array.tabulate(tab.length)(t => Array.tabulate(tab.length)(s => 0))
+    println("graph{")
+    for(i <- taskIds; j <- i+1 until nTasks){
+      if(resIds.exists(r => demands(r)(i).value+demands(r)(j).value > capacities(r).value)
+          || tab(i)(j) >= durationsData(i) || tab(j)(i) >= durationsData(j)
+          ){
+        cliques(i)(j) = 1
+        cliques(j)(i) = 1
+        println(i+"--"+j)
+      }
+    }
+    println("}")
+    val cliques2 = GraphAlgorithms.findCliques(cliques)
+    cliques2.foreach(println)
+    //GraphAlgorithms.todot(red,durationsData)
 //    val rid = 0;
-  println("digraph{")
-  for (t <- taskIds){
-//    if(demands(rid)(t).value>0)
-    println(t+" [label=\""+t+","+durations(t).value+"\"]")
-  }
-  //Precedence
-//  for ((i,j,w) <- precedences){
-//    cp.add(starts(i) + w <= starts(j))
-//    println(i+"->"+j+" [label=\""+w+"\"]")
-//  }
+  
   for(i <- taskIds; j <- taskIds){
     val w = tab(i)(j)
     if(w > ninf){
-      println(i+"->"+j+" [label=\""+w+"\"]")
       cp.add(starts(i) + w <= starts(j))
-//      if(demands(rid)(i).value>0 && demands(rid)(j).value>0)
-      
     }
   }
-  println("}")
-//  for((i,t) <- List((2,0),(4,9),(5,0),(6,0),(9,48),(11,21),(12,60),(15,43),(16,34))){
+  for(c <- cliques2){
+    add(unaryResource(c.map(starts(_)).toArray, c.map(durations(_)).toArray,c.map(ends(_)).toArray))
+    //add(new Prejunctive(c.map(starts(_)).toArray, c.map(durations(_)).toArray,c.map(ends(_)).toArray,c.map(i => c.map(j => tab(i)(j)).toArray).toArray))
+  }
+  
+  val sol = Array(0,137,74,12,184,0,41,57,16,125,183,84,37,134,146,133,159,105,205,196,114,168,100,114,172,186,133,180,132,159,107,65,24,28,87,153,2,172,47,187,76,187,129,188,196,188,124,220,214,229,204,231)
+  for(i <- 0 to 0){
+    add(starts(i) == sol(i))
+  }
+//for((i,t) <- List((1,10),(2,0),(3,0),(4,15),(6,75),(9,28),(10,126),(12,43),(17,232),(21,100),(23,68),(24,71),(27,101),(28,18),
+//      (29,25),(36,37),(38,8),(39,229),(45,80),(46,12),(51,105),(59,76),(62,94),(63,80),(64,12),(65,204),(68,71),(70,223),(71,48),
+//      (72,219),(73,104),(78,201),(80,87),(81,26),(85,1),(91,94),(96,28),(97,109),(99,85))){
 //    add(starts(i)==t)
 //  }
 //  add(starts(1)==7)  
@@ -131,8 +149,8 @@ object RCPSPmax extends App {
     add(new CumulativeLinearWithLags(starts, durations, ends, demands(r), resources, capacities(r), resourceid,tab,true,true))
     //System.exit(0)
   }
-    println(starts.mkString(", "))
-    println(ends.mkString(", "))
+//    println(starts.mkString(", "))
+//    println(ends.mkString(", "))
   
  // add(new CumulativeLinearWithLags(starts, durations, ends, demands(0), resources, capacities(0), resourceid,tab))
   //System.exit(0)
