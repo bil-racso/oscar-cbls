@@ -739,8 +739,10 @@ public class GCCBinPacking extends Constraint {
 						nPacked += 1;
 						wPacked += w[k];
 					}
-				} else
+				} else {
 					alreadyPacked[k] = false;
+				}
+					
 			}
 
 			// compute minimum cardinality in bin v
@@ -752,13 +754,10 @@ public class GCCBinPacking extends Constraint {
 			// verifier car on pourrait stopper plus rapidement
 			while (k < x.length && currLoad < l[v - minVal].min()
 					&& currCard < up[v - minVal]) {
-
-				// System.out.println("currLoad:"+currLoad+" considering adding item:"+k+" with weight "+w[k]+
-				// "into bin "+v);
+				//	System.out.println("currLoad:"+currLoad+" considering adding item:"+k+" with weight "+w[k] +" and dom "+ x[k]+ " into bin "+v+ "varmatch is currently "+ varMatch[k]);
 				// try to find a path from v to k in the residual graph
 				magic += 1;
-				if (!alreadyPacked[k] && (varMatch[k] == v || findResidualPathValue(v, k, true))) {
-
+				if (!alreadyPacked[k] && x[k].hasValue(v) && (varMatch[k] == v || findResidualPathValue(v, k, true))) {
 					assign(k, v);
 					currLoad += w[k];
 					currCard += 1;
@@ -776,7 +775,7 @@ public class GCCBinPacking extends Constraint {
 				// System.out.println("currLoad:"+currLoad+" considering adding item:"+k+" with weight "+w[k]);
 				// try to find a path from v to k in the residual graph
 				magic += 1;
-				if (!alreadyPacked[k] && (varMatch[k] == v || findResidualPathValue(v, k, true))) {
+				if (!alreadyPacked[k] && x[k].hasValue(v)  && (varMatch[k] == v || findResidualPathValue(v, k, true))) {
 					assign(k, v);
 					currLoad += w[k];
 					currCard += 1;
@@ -799,7 +798,7 @@ public class GCCBinPacking extends Constraint {
 				magic += 1;
 				// try to find a path from v to k in the residual graph
 
-				if (!alreadyPacked[k] && (varMatch[k] == v || findResidualPathValue(v, k, false))) {
+				if (!alreadyPacked[k] && x[k].hasValue(v)  && (varMatch[k] == v || findResidualPathValue(v, k, false))) {
 
 					assign(k, v);
 					currLoad += w[k];

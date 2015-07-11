@@ -14,6 +14,8 @@
  ******************************************************************************/
 package oscar.cp.constraints;
 
+import java.util.Arrays;
+
 import oscar.algo.reversible.ReversibleInt;
 import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
@@ -50,6 +52,7 @@ public class BinPackingFlow extends Constraint {
 			l_t[i] = new ReversibleInt(s(),0);
 			c_t[i] = new ReversibleInt(s(),0);
 		}
+		priorityL2_$eq(0);
 	}
 	
 	@Override
@@ -136,6 +139,7 @@ public class BinPackingFlow extends Constraint {
 	    if(v < minVal) return CPOutcome.Failure; //not possible to reach the minimum level
 	    int nbMin = nbAdded + c_t[j].getValue();
 	    //System.out.println("cardmin="+nbMin);
+
 	    if (c[j].updateMin(nbMin) == CPOutcome.Failure){
 	      return CPOutcome.Failure;
 	    }
@@ -152,6 +156,7 @@ public class BinPackingFlow extends Constraint {
 	    }
 	    int nbMax = nbAdded + c_t[j].getValue();
 	    //System.out.println("cardmax="+nbMax);
+
 	    if (c[j].updateMax(nbMax) == CPOutcome.Failure){
 	      return CPOutcome.Failure;
 	    }

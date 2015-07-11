@@ -129,6 +129,48 @@ class TestBinPackingCard extends FunSuite with ShouldMatchers  {
     println(l.mkString(","))
   }  
   
+  test("BP 4") {
+    def readDom(s: String) = {
+      if (s.trim().contains(",")) {
+        if (s.startsWith("[")) {
+          val vals = s.trim.take(s.size-1).drop(1).split(",")
+          (vals(0).trim.toInt to vals(1).trim.toInt).toSet
+        } else {
+          s.trim.take(s.size-1).drop(1).split(",").map(_.trim.toInt).toSet
+        }
+          
+      } else {
+        Set(s.trim.toInt)
+      }
+    }
+    
+    val cp = CPSolver()
+    val xs = "6* 1* 5* 2* 5* 3* 6* 11* 11* 10* 3* 10* {8, 9}* {9, 11}* {8, 9, 11}* {8, 9}* 7* 8* 1* {8, 9, 11}* 0* 0* 10* 7* 9* 2* 6* 5* 4* 1* 2* 1* 4* 0* 4* 4* 6* 5* {7, 8, 9, 11}* {7, 8, 9, 11}* 3* 8* 4* 4* 7* 2* 8* 7* 3* 7* 3* 10* 2* 2* 0* 1* 5* 0* 0* 11* 3* 9* 8* {6, 7, 8, 9, 10, 11}* {6, 7, 8, 9, 10, 11}* {6, 7, 8, 9, 10}"
+    val w = Array(5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1) 
+    val cs = "6* 5* 6* 6* 6* 5* 5* 6* 6* 5* 5* 5"
+    val ls = "14* 18* 17* 18* 17* 18* 18* 18* 18* 18* 18* 18"
+    
+
+    
+    val x = xs.split("\\*").map(_.trim).map(s => CPIntVar(readDom(s))(cp))
+    val c = cs.split("\\*").map(_.trim).map(s => CPIntVar(readDom(s))(cp))
+    val l = ls.split("\\*").map(_.trim).map(s => CPIntVar(readDom(s))(cp))
+
+    
+    //println("packed:" + (0 until x.size).filter(i => x(i).isBoundTo(10)).map(w(_)).sum)
+    //println("#packed:" + (0 until x.size).filter(i => x(i).isBoundTo(10)).size)
+    var ok = false
+    try {
+    cp.add(new GCCBinPacking(x,w,l,c))
+    } catch {
+      case e: NoSolutionException => ok = true
+    }
+    assert(ok)
+    
+    
+  }
+
+  
    
   
 
