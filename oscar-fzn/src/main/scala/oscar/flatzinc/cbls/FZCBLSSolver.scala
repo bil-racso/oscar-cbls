@@ -419,11 +419,11 @@ class FZCBLSSolver extends SearchEngine with StopWatch {
       search.run();
       log("Done at "+getWatchString)
       if(sc.bestKnownViolation > 0){
-        log(0,"Did not find any solution.")
-        log(0,"Smallest violation: "+sc.bestKnownViolation )
-        log(1,cblsmodel.c.violatedConstraints.length+" violated constraints")
+        log("Did not find any solution.")
+        log("Smallest violation: "+sc.bestKnownViolation )
+        log(cblsmodel.c.violatedConstraints.length+" violated constraints")
       }else{
-        log(0,"Best Overall Solution: "+sc.bestKnownObjective * (if(model.search.obj==Objective.MAXIMIZE) -1 else 1))
+        log("Best Overall Solution: "+sc.bestKnownObjective * (if(model.search.obj==Objective.MAXIMIZE) -1 else 1))
       }
     }
     System.exit(0)

@@ -406,7 +406,7 @@ class NeighbourhoodSearchOPT(m:FZCBLSModel, sc: SearchControl) extends Neighbour
       }
       if(m.getWatch() > timeOfBest + 300000){
         timeOfBest = m.getWatch()
-        log(0,"Reset neighourhoods 5 minutes")
+        log("Reset neighourhoods 5 minutes")
         for (n <- neighbourhoods)
           n.reset();
       }
@@ -472,7 +472,7 @@ class NeighbourhoodSearchSAT(m:FZCBLSModel, sc: SearchControl) extends Neighbour
       }
       if(m.getWatch() > timeOfBest + 300000){
         timeOfBest = m.getWatch()
-        log(0,"Reset neighourhoods 5 minutes")
+        log("Reset neighourhoods 5 minutes")
         for (n <- neighbourhoods)
           n.reset();
       }
