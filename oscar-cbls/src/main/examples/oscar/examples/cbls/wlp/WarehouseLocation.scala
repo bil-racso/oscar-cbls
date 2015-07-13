@@ -7,7 +7,7 @@ import oscar.cbls.invariants.lib.numeric.Sum
 import oscar.cbls.modeling.AlgebraTrait
 import oscar.cbls.objective.Objective
 import oscar.cbls.search.combinators.{LearningRandom, BiasedRandom, Statistics}
-import oscar.cbls.search.{AssignNeighborhood, RandomizeNeighborhood, SwapsNeighborhood}
+import oscar.cbls.search.{Benchmark, AssignNeighborhood, RandomizeNeighborhood, SwapsNeighborhood}
 
 import scala.language.postfixOps
 
@@ -36,22 +36,31 @@ object WarehouseLocation extends App with AlgebraTrait{
   val obj = Objective(Sum(distanceToNearestOpenWarehouse) + Sum(costForOpeningWarehouse, openWarehouses))
 
   m.close()
-
-  //val neighborhood = (new BiasedRandom((Statistics(AssignNeighborhood(warehouseOpenArray, "SwitchWarehouse"),true),0.8),
-  //  (Statistics(SwapsNeighborhood(warehouseOpenArray, "SwapWarehouses")), 0.2))
-  //  orElse (RandomizeNeighborhood(warehouseOpenArray, W/5) maxMoves 2) saveBest obj restoreBestOnExhaust)
-
-  val neighborhood = (new LearningRandom(List(Statistics(AssignNeighborhood(warehouseOpenArray, "SwitchWarehouse"),true),
-    Statistics(SwapsNeighborhood(warehouseOpenArray, "SwapWarehouses"))))
+/*
+  val neighborhood = (Statistics(AssignNeighborhood(warehouseOpenArray, "SwitchWarehouse"),true)
+    exhaustBack Statistics(SwapsNeighborhood(warehouseOpenArray, "SwapWarehouses"))
     orElse (RandomizeNeighborhood(warehouseOpenArray, W/5) maxMoves 2) saveBest obj restoreBestOnExhaust)
-
 
   neighborhood.verbose = 1
 
-  //  neighborhood.verboseWithExtraInfo(2,()=> "" + openWarehouses)
-  neighborhood.doAllMoves(_ >= W+D, obj)
+  neighborhood.doAllMoves(_>= W + D, obj)
 
-  println(openWarehouses)
-  println()
   println(neighborhood.statistics)
+*/
+  val neighborhood1 = (AssignNeighborhood(warehouseOpenArray, "SwitchWarehouse")
+    exhaustBack SwapsNeighborhood(warehouseOpenArray, "SwapWarehouses")
+    orElse (RandomizeNeighborhood(warehouseOpenArray, W/5) maxMoves 2) saveBest obj restoreBestOnExhaust)
+
+  val neighborhood2 = (AssignNeighborhood(warehouseOpenArray, "SwitchWarehouse")
+    random SwapsNeighborhood(warehouseOpenArray, "SwapWarehouses")
+    orElse (RandomizeNeighborhood(warehouseOpenArray, W/5) maxMoves 2) saveBest obj restoreBestOnExhaust)
+
+  val neighborhood3 = (new LearningRandom(List(AssignNeighborhood(warehouseOpenArray, "SwitchWarehouse"),
+    SwapsNeighborhood(warehouseOpenArray, "SwapWarehouses")))
+    orElse (RandomizeNeighborhood(warehouseOpenArray, W/5) maxMoves 2) saveBest obj restoreBestOnExhaust)
+
+  val a = Benchmark.benchToStatistics(obj,10,neighborhood1,neighborhood2,neighborhood3)
+
+  println(a)
+
 }

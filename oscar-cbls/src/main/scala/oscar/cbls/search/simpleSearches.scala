@@ -53,7 +53,6 @@ case class AssignNeighborhood(vars:Array[CBLSIntVar],
     val iterationSchemeOnZone =
       if (searchZone == null) {
         if (hotRestart && !best) {
-          if (startIndice >= vars.size) startIndice = 0
           vars.indices startBy startIndice
         }else vars.indices
       }else if (hotRestart && !best) HotRestart(searchZone(), startIndice)
@@ -75,12 +74,22 @@ case class AssignNeighborhood(vars:Array[CBLSIntVar],
 
       for (newVal <- domainIterationScheme if newVal != oldVal) {
 
+        //AVANT
         val newObj = obj.assignVal(currentVar,newVal)
 
         if (moveRequested(newObj) && submitFoundMove(AssignMove(currentVar, newVal, newObj, name))){
           startIndice = i + 1
           return
         }
+/*
+        //APRES
+        if (exploreMove(_.assignVal(currentVar,newVal),
+          AssignMove(currentVar, newVal, _, name))){
+          startIndice = i + 1
+          return
+        }
+*/
+
       }
     }
   }

@@ -348,7 +348,7 @@ class LearningRandom(l:List[Neighborhood], weightUpdate:(Statistics,Double) => D
       weightedInstrumentedNeighborhoods = weightedInstrumentedNeighborhoods.map(nw=> (nw._1,weightUpdate(nw._1,nw._2)))
       currentRandom = new BiasedRandom(weightedInstrumentedNeighborhoods:_*)()
       stepsBeforeUpdate = updateEveryXCalls
-      println("review done" + weightedInstrumentedNeighborhoods)
+      if(amIVerbose) println("learning done:" + weightedInstrumentedNeighborhoods)
     }
     stepsBeforeUpdate -=1
     currentRandom.getMove(obj,acceptanceCriterion)
