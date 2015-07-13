@@ -185,6 +185,14 @@ final class CPIntVarAdaptable( final override val store: CPStore, minValue: Int,
   }
 
   @inline private def assignContinuous(value: Int): CPOutcome = {
+    // Trail before changes
+    trail()
+    // Update the domain
+    val oldMin = _min
+    val oldMax = _max
+    _min = value
+    _max = value
+    _size = 1
     // Notify AC3
     onBoundsL2.enqueue()
     onBindL2.enqueue()
@@ -193,29 +201,18 @@ final class CPIntVarAdaptable( final override val store: CPStore, minValue: Int,
     onBoundsL1.enqueueBounds()
     // Notify removed values if necessary
     if (!onDomainL1.isEmpty) {
-      var i = _min
-      while (i <= _max) {
+      var i = oldMin
+      while (i <= oldMax) {
         if (i != value) onDomainL1.enqueueRemove(i)
         i += 1
       }
     }
-    // Update the domain
-    trail() // trail before changes
-    _min = value
-    _max = value
-    _size = 1
     // at the end because of watchers
     onDomainL2.enqueue()
     Suspend
   }
 
   @inline private def assignSparse(value: Int): CPOutcome = {
-    // Notify AC3
-    onBoundsL2.enqueue()
-    onBindL2.enqueue()
-    // Notify AC5
-    onBindL1.enqueueBind()
-    onBoundsL1.enqueueBounds()
     // Notify removed values if necessary
     if (!onDomainL1.isEmpty) {
       var i = _size
@@ -223,7 +220,7 @@ final class CPIntVarAdaptable( final override val store: CPStore, minValue: Int,
         i -= 1
         val v = values(i)
         if (v != value) {
-          onDomainL1.enqueueRemove(v)
+          onDomainL1.enqueueRemove(v) // FIXME should be notified after the actual update
         }
       }
     }
@@ -238,8 +235,14 @@ final class CPIntVarAdaptable( final override val store: CPStore, minValue: Int,
     trail() // trail before changes 
     _min = value
     _max = value
-    _size = 1
-    // at the end because of watchers
+    _size = 1    
+    // Notify AC3
+    onBoundsL2.enqueue()
+    onBindL2.enqueue()
+    // Notify AC5
+    onBindL1.enqueueBind()
+    onBoundsL1.enqueueBounds()
+    // Notify domain watchers
     onDomainL2.enqueue()
     Suspend
   }
@@ -255,7 +258,7 @@ final class CPIntVarAdaptable( final override val store: CPStore, minValue: Int,
     else if (_continuous) removeContinuous(value)
     else removeSparse(value)
   }
-  
+
   @inline private def removeContinuous(value: Int): CPOutcome = {
     if (value == _min) updateMinContinuous(value + 1)
     else if (value == _max) updateMaxContinuous(value - 1)
@@ -278,11 +281,19 @@ final class CPIntVarAdaptable( final override val store: CPStore, minValue: Int,
     val pos1 = positions(id1)
     if (pos1 >= _size) Suspend
     else {
-      trail() // trail before changes 
-      // Notify removed watchers
-      onDomainL1.enqueueRemove(value)
-      // Assigned variable
-      if (_size == 2) {
+      // Trail before changes 
+      trail()
+      // Update the domain
+      _size -= 1
+      val v = values(_size)
+      val id2 = v - offset
+      val pos2 = positions(id2)
+      values(pos1) = v
+      values(pos2) = value
+      positions(id1) = pos2
+      positions(id2) = pos1
+      // Notify watchers
+      if (_size == 1) {
         // Notify bind watchers
         onBindL1.enqueueBind()
         onBindL2.enqueue()
@@ -311,17 +322,9 @@ final class CPIntVarAdaptable( final override val store: CPStore, minValue: Int,
         while (positions(i) >= _size) i -= 1
         _max = i + offset
       }
-      // Update the domain
-      _size -= 1
-      val v = values(_size)
-      val id2 = v - offset
-      val pos2 = positions(id2)
-      values(pos1) = v
-      values(pos2) = value
-      positions(id1) = pos2
-      positions(id2) = pos1
-      // the enqueue is added after the domain changes because of watchers
+      // Notify domain watchers
       onDomainL2.enqueue()
+      onDomainL1.enqueueRemove(value)
       Suspend
     }
   }
@@ -341,24 +344,25 @@ final class CPIntVarAdaptable( final override val store: CPStore, minValue: Int,
   @inline private def updateMinContinuous(value: Int): CPOutcome = {
     if (value == _max) assignContinuous(value)
     else {
+      // Trail before changes 
+      trail()
+      // Update domain
+      val oldMin = _min
+      _size -= (value - _min)
+      _min = value
       // Notify bounds watchers
       onBoundsL1.enqueueBounds()
       onBoundsL2.enqueue()
       // Notify remove watchers if necessary
       if (!onDomainL1.isEmpty) {
-        var i = _min
+        var i = oldMin
         while (i < value) {
           onDomainL1.enqueueRemove(i)
           i += 1
         }
       }
-      trail() // trail before changes 
-      _size -= (value - _min)
-      _min = value
-
-      // Notify change in domain
-      onDomainL2.enqueue() // must be last because of watchers
-
+      // Notify domain watchers
+      onDomainL2.enqueue()
       Suspend
     }
   }
@@ -383,7 +387,7 @@ final class CPIntVarAdaptable( final override val store: CPStore, minValue: Int,
           values(pos2) = v1
           positions(i) = pos2
           positions(id2) = pos1
-          onDomainL1.enqueueRemove(v1)
+          onDomainL1.enqueueRemove(v1) // FIXME should be notified after the actual update
         }
         i += 1
       }
@@ -423,24 +427,25 @@ final class CPIntVarAdaptable( final override val store: CPStore, minValue: Int,
   @inline private def updateMaxContinuous(value: Int): CPOutcome = {
     if (value == _min) assignContinuous(value)
     else {
+      // Trail before changes 
+      trail()
+      // Update domain
+      val oldMax = _max
+      _size -= (_max - value)
+      _max = value
       // Notify bounds watchers
       onBoundsL1.enqueueBounds()
       onBoundsL2.enqueue()
       // Notify remove watchers if necessary
       if (!onDomainL1.isEmpty) {
-        var i = _max
+        var i = oldMax
         while (i > value) {
           onDomainL1.enqueueRemove(i)
           i -= 1
         }
       }
-      trail() // trail before changes 
-      _size -= (_max - value)
-      _max = value
-
-      // Notify change in domain
-      onDomainL2.enqueue() // must be last because of watchers
-
+      // Notify domain watchers
+      onDomainL2.enqueue()
       Suspend
     }
   }
@@ -465,7 +470,7 @@ final class CPIntVarAdaptable( final override val store: CPStore, minValue: Int,
           values(pos2) = v1
           positions(i) = pos2
           positions(id2) = pos1
-          onDomainL1.enqueueRemove(v1)
+          onDomainL1.enqueueRemove(v1) // FIXME should be notified after the actual update
         }
         i -= 1
       }
@@ -544,14 +549,14 @@ final class CPIntVarAdaptable( final override val store: CPStore, minValue: Int,
     onDomainL2.register(c)
     snap
   }
-  
+
   final override def callPropagateOnChangesWithDelta(c: Constraint, cond: => Boolean): DeltaIntVar = {
     val snap = delta(c)
     degree.incr()
     onDomainL2.register(c, cond)
     snap
   }
-  
+
   /**
    * Level 2 registration: ask that the propagate() method of the constraint c is called whenever
    * one of the value is removed from the domain
@@ -562,7 +567,7 @@ final class CPIntVarAdaptable( final override val store: CPStore, minValue: Int,
     degree.incr()
     onDomainL2.register(c, cond)
   }
-  
+
   final override def awakeOnChanges(watcher: Watcher): Unit = {
     degree.incr()
     onDomainL2.register(watcher)
@@ -662,8 +667,8 @@ final class CPIntVarAdaptable( final override val store: CPStore, minValue: Int,
   }
 
   final def restrict(newDomain: Array[Int], newSize: Int): Unit = {
-    assert(newSize > 0 && newSize <= size )
-    
+    assert(newSize > 0 && newSize <= size)
+
     // Restrict the domain
     if (_continuous) buildSparse()
     trail()

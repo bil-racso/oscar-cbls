@@ -1,17 +1,19 @@
-/*******************************************************************************
+/**
+ * *****************************************************************************
  * OscaR is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- *   
+ *
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License  for more details.
- *   
+ *
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
- ******************************************************************************/
+ * ****************************************************************************
+ */
 
 package oscar.cp.core
 
@@ -39,33 +41,33 @@ abstract class Constraint(store: CPStore, val name: String = "cons") extends Tra
   private[this] var inQueue: Boolean = false
   private[this] var lastMagicInQueue = -1L
   private[this] var lastMagicActive = -1L
-  
+
   final override def restore(): Unit = active = !active
-  
+
   val s: CPStore = store
-  
+
   // FIXME variables should have an id 
   val snapshotsVarSet = new java.util.HashMap[CPSetVar, DeltaSetVar]
-  
+
   // Snapshots
   private[this] var snapshots = new Array[Delta](10)
   private[this] var nSnapshots = 0
   private[this] var _mustSnapshot = false
-  
+
   final def registerDelta(delta: DeltaIntVar): Unit = {
     if (nSnapshots == snapshots.length) growSnapshots()
     snapshots(nSnapshots) = delta
-    nSnapshots += 1   
-    delta.update() 
+    nSnapshots += 1
+    delta.update()
     if (!_mustSnapshot) { s.onPop { updateSnapshots() }; _mustSnapshot = true }
   }
 
   @inline private def growSnapshots(): Unit = {
-    val newStack = new Array[Delta](nSnapshots*2)
+    val newStack = new Array[Delta](nSnapshots * 2)
     System.arraycopy(snapshots, 0, newStack, 0, nSnapshots)
     snapshots = newStack
   }
-   
+
   @inline private def updateSnapshots(): Unit = {
     var i = nSnapshots
     while (i > 0) {
@@ -76,25 +78,25 @@ abstract class Constraint(store: CPStore, val name: String = "cons") extends Tra
 
   def addSnapshot(x: CPSetVar): Unit = {
     snapshotsVarSet(x) = new DeltaSetVar(x) // FIXME avoid the implicit cast
-    
+
     if (nSnapshots == snapshots.length) growSnapshots()
     snapshots(nSnapshots) = snapshotsVarSet(x) // FIXME avoid the implicit cast
-    nSnapshots += 1  
-    
+    nSnapshots += 1
+
     snapshotsVarSet(x).update() // FIXME avoid the implicit cast
     if (!_mustSnapshot) {
       s.onPop { updateSnapshots() }
       _mustSnapshot = true
-    }    
-  } 
-  
+    }
+  }
+
   @inline protected def snapshotVarSet(): Unit = {
     var i = 0
     while (i < nSnapshots) {
       snapshots(i).update()
       i += 1
-    } 
-  } 
+    }
+  }
 
   private[this] var priorL2 = CPStore.MaxPriorityL2 - 2
   private[this] var priorBindL1 = CPStore.MaxPriorityL1 - 1
@@ -118,15 +120,12 @@ abstract class Constraint(store: CPStore, val name: String = "cons") extends Tra
    * @return true if it is currently executing the propagate method.
    */
   @inline final def inPropagate(): Boolean = _inPropagate
-  
-  
-  
+
   @inline final def isEnqueuable: Boolean = {
-    active && 
-    (lastMagicInQueue != store.magic || !inQueue) && 
-    (!_inPropagate || !_idempotent)
+    active &&
+      (lastMagicInQueue != store.magic || !inQueue) &&
+      (!_inPropagate || !_idempotent)
   }
-  
 
   /**
    * @param b
@@ -157,14 +156,14 @@ abstract class Constraint(store: CPStore, val name: String = "cons") extends Tra
   final def priorityBoundsL1: Int = priorBoundsL1
   final def priorityRequireL1: Int = priorRequireL1
   final def priorityExcludeL1: Int = priorExcludeL1
-  
+
   final def priorityL2_=(priority: Int): Unit = priorL2 = priority
   final def priorityBindL1_=(priority: Int): Unit = priorBindL1 = checkL1Prior(priority)
   final def priorityRemoveL1_=(priority: Int): Unit = priorRemoveL1 = checkL1Prior(priority)
   final def priorityBoundsL1_=(priority: Int): Unit = priorBoundsL1 = checkL1Prior(priority)
   final def priorityRequireL1_=(priority: Int): Unit = priorRequireL1 = checkL1Prior(priority)
   final def priorityExcludeL1_=(priority: Int): Unit = priorExcludeL1 = checkL1Prior(priority)
-  
+
   @inline private def checkL1Prior(priority: Int): Int = {
     if (priority > CPStore.MaxPriorityL1) CPStore.MaxPriorityL1
     else if (priority < 0) 0
@@ -186,18 +185,22 @@ abstract class Constraint(store: CPStore, val name: String = "cons") extends Tra
    * Note that this state is reversible (trailable).
    */
   def deactivate(): Unit = {
-    trail()
-    active = false
+    if (active) {
+      trail()
+      active = false
+    }
   }
 
   /**
    * Reactivate the constraint
    */
   def activate(): Unit = {
-    trail()
-    active = true
+    if (!active) {
+      trail()
+      active = true
+    }
   }
-  
+
   @inline private def trail(): Unit = {
     val contextMagic = store.magic
     if (lastMagicActive != contextMagic) {
