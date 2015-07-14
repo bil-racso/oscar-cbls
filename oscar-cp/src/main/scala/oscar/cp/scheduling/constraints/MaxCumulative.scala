@@ -1,4 +1,4 @@
-package oscar.cp.constraints
+package oscar.cp.scheduling.constraints
 
 import oscar.cp.core.variables.CPIntVar
 import oscar.cp.core.Constraint
@@ -34,7 +34,7 @@ extends Constraint(starts.head.store, "Max Cumulative") {
         if (s.post(OverloadCheckerExtended(starts,durations,ends,demands,resources,capacity,id)) == Failure) return Failure
         if (s.post(IQuad(starts,durations,ends,demands,resources,capacity,id)) == Failure) return Failure
         if (s.post(TimeTableDisjunctiveReasoning(starts,durations,ends,demands,resources,capacity,id)) == Failure) return Failure
-        if (s.post(new EnergeticReasoning(starts,durations,ends,demands,resources,capacity,id)) == Failure) return Failure
+        if (s.post(EnergeticReasoning(starts,durations,ends,demands,resources,capacity,id)) == Failure) return Failure
         
     }
     Success

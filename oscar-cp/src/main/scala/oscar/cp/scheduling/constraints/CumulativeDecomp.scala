@@ -1,10 +1,11 @@
-package oscar.cp.constraints
+package oscar.cp.scheduling.constraints
 
 import oscar.cp._
 import oscar.cp.core.Constraint
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.CPOutcome._
 import oscar.cp.core.CPPropagStrength
+import oscar.cp.constraints.Sum
 
 /**
  * @author Renaud Hartert ren.hartert@gmail.com

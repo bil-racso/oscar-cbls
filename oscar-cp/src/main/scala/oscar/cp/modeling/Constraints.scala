@@ -26,6 +26,8 @@ import oscar.cp.scheduling.constraints.DisjunctiveWithTransitionTimes
 import oscar.cp.constraints.tables.TableAlgo
 import oscar.cp.constraints.tables._
 import scala.collection.mutable.ArrayBuffer
+import oscar.cp.scheduling.constraints.SweepMinCumulative
+import oscar.cp.scheduling.constraints.MaxCumulative
 
 trait Constraints {
 
