@@ -47,20 +47,20 @@ object WarehouseLocation extends App with AlgebraTrait{
 
   println(neighborhood.statistics)
 */
-  val neighborhood1 = (AssignNeighborhood(warehouseOpenArray, "SwitchWarehouse")
+  val neighborhood1 = ()=>(AssignNeighborhood(warehouseOpenArray, "SwitchWarehouse")
     exhaustBack SwapsNeighborhood(warehouseOpenArray, "SwapWarehouses")
     orElse (RandomizeNeighborhood(warehouseOpenArray, W/5) maxMoves 2) saveBest obj restoreBestOnExhaust)
 
-  val neighborhood2 = (AssignNeighborhood(warehouseOpenArray, "SwitchWarehouse")
+  val neighborhood2 = ()=>(AssignNeighborhood(warehouseOpenArray, "SwitchWarehouse")
     random SwapsNeighborhood(warehouseOpenArray, "SwapWarehouses")
     orElse (RandomizeNeighborhood(warehouseOpenArray, W/5) maxMoves 2) saveBest obj restoreBestOnExhaust)
 
-  val neighborhood3 = (new LearningRandom(List(AssignNeighborhood(warehouseOpenArray, "SwitchWarehouse"),
+  val neighborhood3 = ()=>(new LearningRandom(List(AssignNeighborhood(warehouseOpenArray, "SwitchWarehouse"),
     SwapsNeighborhood(warehouseOpenArray, "SwapWarehouses")))
     orElse (RandomizeNeighborhood(warehouseOpenArray, W/5) maxMoves 2) saveBest obj restoreBestOnExhaust)
 
   val a = Benchmark.benchToStatistics(obj,10,neighborhood1,neighborhood2,neighborhood3)
 
-  println(a)
+  println(a.mkString("\n"))
 
 }
