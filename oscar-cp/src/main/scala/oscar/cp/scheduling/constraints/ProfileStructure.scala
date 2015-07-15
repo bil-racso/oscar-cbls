@@ -23,7 +23,6 @@ class ProfileStructure(
    possible: Array[Boolean])(implicit val store: CPStore) {
 
   private[this] final val nTasks = smax.length
-//  private final val Tasks = 0 until nTasks
 
   private[this] val pointTimes = Array.ofDim[Int](nTasks * 2 + 2)  // one point for origin of times, one for ending
   private[this] val pointHeights = Array.ofDim[Int](nTasks * 2 + 2)
@@ -33,96 +32,131 @@ class ProfileStructure(
   pointTimes(0) = Int.MinValue
   pointHeights(0) = 0
 
-  private[this] val sortedByStarts = Array.tabulate(nTasks)(i => i)
-  private[this] val sortedByEnds   = Array.tabulate(nTasks)(i => i)
-  private var nSorted = 0
-
-  private[this] val startVals = Array.ofDim[Int](nTasks)
-  private[this] val endVals = Array.ofDim[Int](nTasks)
-  
   // for mergeSort
   private[this] val temp1 = Array.ofDim[Int](nTasks + 1)
   private[this] val temp2 = Array.ofDim[Int](nTasks + 1)
-  
-  private[this] val sortedByStartsStart = new ReversibleInt(store, 0)
-  private[this] val sortedByStartsEnd   = new ReversibleInt(store, nTasks)
-  private[this] val sortedByEndsStart   = new ReversibleInt(store, 0)
-  private[this] val sortedByEndsEnd     = new ReversibleInt(store, nTasks)
 
+  // events
+  private[this] val sortedBySMax = Array.tabulate(nTasks)(i => i)
+  private[this] val sortedByEMin = Array.tabulate(nTasks)(i => i)
+  private var nSorted = 0
+  
+  private[this] val filteredBySMax = new Array[Int](nTasks)
+  private[this] val filteredByEMin = new Array[Int](nTasks)
+  private[this] val location = new Array[Int](nTasks)
   
   def rebuild(toConsider: OpenSparseSet): Unit = {
+    /*
+     *  Filter tasks by toConsider + has mandatory part, sort, then generate events
+     */
+    
     // Reset
     nPoints = 1
     nSorted = 0
+    
+    val status = toConsider.status
+    val limit = toConsider.limit.value
+    
+    // filter and sort smax events
+    var p, q = 0
 
-    // TODO: remove need for sorting here if mergesort becomes a bottleneck/costly
-        
-    // Compute only profile events to consider
-    val acts = toConsider.sortedByStatus
-    var p = toConsider.limit.value - 1
-    while (p >= 0) {
-      val i = acts(p)
-      if (required(i) && hmin(i) > 0) {
-        val start = smax(i)
-        val end = emin(i)
-      
-        if (start < end) {
-          sortedByStarts(nSorted) = i
-          sortedByEnds(nSorted) = i
-          startVals(i) = start
-          endVals(i) = end
-          nSorted += 1
-        }
-      }
+    // filter
+    while (p < nTasks) {
+      val task = sortedBySMax(p)
+      if (status(task) < limit && smax(task) < emin(task) && required(task) && hmin(task) > 0) {
+        filteredBySMax(q) = task
+        location(q) = p
+        q += 1        
+      } 
+     p += 1
+    }    
+    
+    // sort 
+    SortUtils.mergeSort(filteredBySMax, smax, 0, q, temp1, temp2)
+    
+    // put tasks back sorted for mergeSort's incremental behaviour
+    p = q
+    while (p > 0) {
       p -= 1
+      sortedBySMax(location(p)) = filteredBySMax(p) 
     }
 
-    // Sort events
-    SortUtils.mergeSort(sortedByStarts, startVals, 0, nSorted, temp1, temp2)
-    SortUtils.mergeSort(sortedByEnds,   endVals,   0, nSorted, temp1, temp2)
 
+    // filter and sort emin events
+    p = 0
+    q = 0
+
+    // filter
+    while (p < nTasks) {
+      val task = sortedByEMin(p)
+      if (status(task) < limit && smax(task) < emin(task) && required(task) && hmin(task) > 0) {
+        filteredByEMin(q) = task
+        location(q) = p
+        q += 1        
+      } 
+     p += 1
+    }    
+    
+    // sort
+    SortUtils.mergeSort(filteredByEMin, emin, 0, q, temp1, temp2)
+    
+    // put tasks back sorted for mergeSort's incremental behaviour
+    p = q
+    while (p > 0) {
+      p -= 1
+      sortedByEMin(location(p)) = filteredByEMin(p) 
+    }
+    
+    nSorted = q
+
+    
+
+    // generate events
+    
     var s = 0 // next start
     var e = 0 // next end
     var t = 0 // sweep-line
     var h = 0 // height
     while (e < nSorted) {
 
-      val end = endVals(sortedByEnds(e))
+      val end = emin(filteredByEMin(e))
       val prevH = h
 
       // Move the sweep-line
       if (s == nSorted) t = end
       else {
-        val start = startVals(sortedByStarts(s))
+        val start = smax(filteredBySMax(s))
         if (start < end) t = start
         else t = end
       }
 
-      // Process SCP
-      while (s < nSorted && startVals(sortedByStarts(s)) == t) {
-        h += hmin(sortedByStarts(s))
+      // add all tasks at smax
+      while (s < nSorted && smax(filteredBySMax(s)) == t) {
+        h += hmin(filteredBySMax(s))
         s += 1
       }
 
-      // Process ECP
-      while (e < nSorted && endVals(sortedByEnds(e)) == t) {
-        h -= hmin(sortedByEnds(e))
+      // remove all tasks at emin
+      while (e < nSorted && emin(filteredByEMin(e)) == t) {
+        h -= hmin(filteredByEMin(e))
         e += 1
       }
 
-      // If the profile has changed
+      // if the profile has changed, register new profile point
       if (h != prevH) {
         pointTimes(nPoints) = t
         pointHeights(nPoints) = h
         nPoints += 1
       }
     }
+    
     // add end of time
     pointTimes(nPoints) = Int.MaxValue
     pointHeights(nPoints) = 0
     nPoints += 1
   }
-
+  
+  
   /*
    * Functions to manage sweeping.
    * Tasks are sweep left to right (right to left) to find left (right) support.
