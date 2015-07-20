@@ -119,9 +119,8 @@ object JobShop extends CPModel with App {
   }
   
   minimize(makespan) 
-  
 
-  import oscar.algo.search._
+
   val rankBranching = rankBranchings.reduce{_++_}
     
   solver.search {
