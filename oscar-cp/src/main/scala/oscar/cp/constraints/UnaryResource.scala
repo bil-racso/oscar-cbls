@@ -52,7 +52,7 @@ class UnaryResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: A
   private[this] val formerMinEnds : Array[ReversibleInt] = Array.fill(nTasks)(new ReversibleInt(starts(0).store,Int.MaxValue))
   private[this] val formerMaxStarts : Array[ReversibleInt] = Array.fill(nTasks)(new ReversibleInt(starts(0).store,Int.MinValue))
 
-  private[this] val boundChangedActivityIds: mutable.BitSet = new mutable.BitSet()
+  //private[this] val boundChangedActivityIds: mutable.BitSet = new mutable.BitSet()
 
   //array to map a value to its index (tree insertion order mapped to est order)
   //private[this] val indexOfInOrderedEstsIds = Array.fill(nTasks)(-1)
@@ -77,7 +77,6 @@ class UnaryResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: A
     failure = false
     changed = true
 
-    boundChangedActivityIds.clear()
 
     var i = 0
     while(i < nTasks) {
@@ -94,11 +93,6 @@ class UnaryResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: A
       newMaxEnds(i) = currentMaxEnds(i)
       newMinStartsMirror(i) = currentMinStartsMirror(i)
       newMaxEndsMirror(i) = currentMaxEndsMirror(i)
-
-      if(formerMinEnds(i).value != currentMinEnds(i) || formerMaxStarts(i).value != currentMaxStarts(i)) {
-        boundChangedActivityIds += i
-      }
-
       i += 1
     }
 
@@ -324,7 +318,6 @@ class UnaryResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: A
         }
         else {
           domainModified = true
-          boundChangedActivityIds += i
           currentMinStarts(i) = newMinStarts(i)
           currentMinEnds(i) = currentMinStarts(i) + currentMinDurations(i)
           currentMaxEndsMirror(i) = -currentMinStarts(i)
@@ -339,7 +332,6 @@ class UnaryResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: A
         }
         else {
           domainModified = true
-          boundChangedActivityIds += i
           currentMaxEnds(i) = newMaxEnds(i)
           currentMaxStarts(i) = currentMaxEnds(i) - currentMinDurations(i)
           currentMinStartsMirror(i) = -currentMaxEnds(i)
@@ -367,7 +359,6 @@ class UnaryResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: A
         }
         else {
           domainModified = true
-          boundChangedActivityIds += i
           startMins(i) = updatedMinStarts(i)
           endMins(i) = startMins(i) + currentMinDurations(i)
           endMaxsMirror(i) = -startMins(i)
@@ -396,7 +387,6 @@ class UnaryResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: A
         }
         else {
           domainModified = true
-          boundChangedActivityIds += i
           endMaxs(i) = updatedMaxEnds(i)
           startMaxs(i) = endMaxs(i) - currentMinDurations(i)
           startMinsMirror(i) = -endMaxs(i)
