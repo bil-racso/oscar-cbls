@@ -14,9 +14,9 @@
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  * ****************************************************************************
  */
-package oscar.cp.constraints
+package oscar.cp.scheduling.constraints
 
-import scala.collection.mutable.Queue
+
 /*
 import oscar.algo.EfficientHeap
 import oscar.cp.scheduling.CumulativeActivity

@@ -40,7 +40,7 @@ object JobShop extends CPModel with App {
   // Parsing
   // -----------------------------------------------------------------------
 
-  var lines = Source.fromFile("../data/ft07.txt").getLines.toList
+  var lines = Source.fromFile("../data/ft10.txt").getLines.toList
 
   val nJobs = lines.head.trim().split(" ")(0).toInt
   val nTasksPerJob = lines.head.trim().split(" ")(1).toInt
@@ -109,7 +109,7 @@ object JobShop extends CPModel with App {
   solver.search {
     rankBranchings.reduce{_++_} ++ binaryStatic(startsVar)
   }
-  val stats = start()
+  val stats = start(85)
 
   println(stats)
 }

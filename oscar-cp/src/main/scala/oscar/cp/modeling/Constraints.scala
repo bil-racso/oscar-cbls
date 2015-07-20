@@ -26,6 +26,8 @@ import oscar.cp.scheduling.constraints.DisjunctiveWithTransitionTimes
 import oscar.cp.constraints.tables.TableAlgo
 import oscar.cp.constraints.tables._
 import scala.collection.mutable.ArrayBuffer
+import oscar.cp.scheduling.constraints.SweepMinCumulative
+import oscar.cp.scheduling.constraints.MaxCumulative
 
 trait Constraints {
 
@@ -1188,7 +1190,7 @@ trait Constraints {
   def unaryResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], types: Array[Int], transitionTimes: Array[Array[Int]]) = {
     val cp = starts(0).store
     for {
-      i <- 0 until starts.length
+      i <- starts.indices
       j <- i + 1 until starts.length
     } {
       cp.add((ends(j) + transitionTimes(types(j))(types(i)) <== starts(i)) || (ends(i) + transitionTimes(types(i))(types(j)) <== starts(j)))
@@ -1220,7 +1222,7 @@ trait Constraints {
   def stateResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], states: Array[Int], transitionTimes: Array[Array[Int]]) = {
     val cp = starts(0).store
     for {
-      i <- 0 until starts.length
+      i <- starts.indices
       j <- i + 1 until starts.length
     } {
       if (states(i) != states(j)) {
@@ -1242,8 +1244,25 @@ trait Constraints {
    * @param maxCapacity The maximal capacity of the reservoir
    * @param initialAmount The initial amount of resource in the reservoir
    */
-  def reservoirResource(startVars: Array[CPIntVar], durationVars: Array[CPIntVar], endVars: Array[CPIntVar], productionVars: Array[CPIntVar], consumptionVars: Array[CPIntVar], minCapacity: Int, maxCapacity: Int, initialAmount: Int = 0) = {
+  def reservoirResource(startVars: Array[CPIntVar], durationVars: Array[CPIntVar], endVars: Array[CPIntVar], productionVars: Array[CPIntVar], consumptionVars: Array[CPIntVar], minCapacity: Int, maxCapacity: Int, initialAmount: Int) = {
     ReservoirResource(startVars, durationVars, endVars, productionVars, consumptionVars, minCapacity, maxCapacity, initialAmount)
+  }
+
+  /**
+   * Reservoir resource with specified parameters. For any point of time, the amount of resource in the reservoir must be between its minimal and maximal capacity
+   *
+   * @param startVars Variables for task starting times
+   * @param durationVars Variables for task durations
+   * @param endVars Variables for task ending times
+   * @param productionVars Variables for task productions; represents the amounts of the resource produced by tasks
+   * @param consumptionVars Variables for task consumptions; represents the amounts of the resource consumed by tasks
+   * @param temporaryProdCons Booleans set to true if corresponding task produces/consumes only during its duration
+   * @param minCapacity The minimal capacity of the reservoir
+   * @param maxCapacity The maximal capacity of the reservoir
+   * @param initialAmount The initial amount of resource in the reservoir
+   */
+  def reservoirResource(startVars: Array[CPIntVar], durationVars: Array[CPIntVar], endVars: Array[CPIntVar], productionVars: Array[CPIntVar], consumptionVars: Array[CPIntVar], temporaryProdCons: Array[Boolean], minCapacity: Int, maxCapacity: Int, initialAmount: Int) = {
+    ReservoirResource(startVars, durationVars, endVars, productionVars, consumptionVars, temporaryProdCons, minCapacity, maxCapacity, initialAmount)
   }
 
   /**
@@ -1257,8 +1276,6 @@ trait Constraints {
    * @param id, the resource on which we want to constraint the capacity (only tasks i with resources(i) = id are taken into account)
    */
   def maxCumulativeResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], demands: Array[CPIntVar], resources: Array[CPIntVar], capacity: CPIntVar, id: Int): Constraint = {
-    
-    
     MaxCumulative(starts, durations, ends, demands, resources, capacity, id)
   }
 

@@ -35,9 +35,14 @@ class EqCons(x: CPIntVar, v: Int) extends Constraint(x.store, "Equality") {
 class Eq(x: CPIntVar, y: CPIntVar) extends Constraint(x.store, "Equality") {
 
   final override def setup(l: CPPropagStrength): CPOutcome = {
-    if (l == Strong) s.post(new EqualityDC(x, y))
+    if (l == Strong) s.post(equalityStrong(x, y))
     else if (l == Medium) s.post(new EqualityBC(x, y))
     else if (l == Weak) s.post(new EqualityBC(x, y))
     else sys.error("unknown propagation level") 
+  }
+  
+  private def equalityStrong(x: CPIntVar, y: CPIntVar): Constraint = {
+    if (x.size == 2 || y.size == 2) new EqualityBC(x, y)
+    else new EqualityDC(x, y)
   }
 }
