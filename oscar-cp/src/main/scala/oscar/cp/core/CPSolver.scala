@@ -35,6 +35,8 @@ class CPSolver(propagStrength: CPPropagStrength) extends CPOptimizer(propagStren
   private[this] var heuristic: Branching = null
   
   def this() = this(CPPropagStrength.Weak)
+  
+  final def searchEngine: DFSearch = searchStrategy
 
   final def onSolution(action: => Unit): CPSolver = {
     searchStrategy.onSolution(action); this

@@ -12,11 +12,10 @@
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  * *****************************************************************************/
-package oscar.cp.constraints
+package oscar.cp.scheduling.constraints
 
 import scala.math.max
 import scala.math.min
-import oscar.cp.core.CPStore
 import oscar.cp.core.variables.CPIntVar
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.CPOutcome._

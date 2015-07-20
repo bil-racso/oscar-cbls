@@ -1,10 +1,9 @@
-package oscar.cp.constraints
+package oscar.cp.scheduling.constraints
 
 import scala.collection.mutable.HashSet
 import scala.math.min
 import scala.math.max
 import scala.math.ceil
-
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.CPOutcome._
 import oscar.cp.core.CPPropagStrength
@@ -180,3 +179,7 @@ class EnergeticReasoning(starts: Array[CPIntVar], durations: Array[CPIntVar], en
   private def activityEnergyForInterval(task: Int, t1: Int, t2: Int, tasks: IndexedSeq[Int]) = min(t2 - t1, min(p_plusForInterval(task, t1, t2, tasks), p_minusForInterval(task, t1, t2, tasks))) * demmin(task)
 }
 
+object EnergeticReasoning {
+  def apply(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], heights: Array[CPIntVar], resources: Array[CPIntVar], capacity: CPIntVar, id: Int) =
+    new EnergeticReasoning(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], heights: Array[CPIntVar], resources: Array[CPIntVar], capacity: CPIntVar, id: Int)
+}

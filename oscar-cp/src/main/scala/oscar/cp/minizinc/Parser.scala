@@ -706,7 +706,7 @@ class Parser extends JavaTokenParsers { // RegexParsers {
       throw new NoSolutionException("VarInt domains are incompatible")
     }
     if (!(s.max - s.min + 1 == s.size)) {
-      for (e <- cpvar.domainIterator) {
+      for (e <- cpvar.iterator) {
         if (!(s contains e)) {
           if (cpvar.removeValue(e) == CPOutcome.Failure) {
             throw new NoSolutionException("VarInt domains are incompatible")

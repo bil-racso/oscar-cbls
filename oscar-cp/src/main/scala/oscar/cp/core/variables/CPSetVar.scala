@@ -8,8 +8,8 @@ import oscar.cp.constraints.sets.Excludes
 import oscar.cp.constraints.SetCard
 import oscar.cp.core.domains.SetDomain
 import oscar.algo.reversible.ReversiblePointer
-import oscar.cp.core.DeltaVarSet
-import oscar.cp.core.SnapshotVarSet
+import oscar.cp.core.delta.PropagatorSetVar
+import oscar.cp.core.delta.DeltaSetVar
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.Constraint
 import oscar.cp.core.CPStore
@@ -66,9 +66,9 @@ class CPSetVar(override val store: CPStore, min: Int, max: Int, override val nam
     if (trackDelta) c.addSnapshot(this)
   }
 
-  def filterWhenDomainChanges(filter: DeltaVarSet => CPOutcome) {
+  def filterWhenDomainChanges(filter: PropagatorSetVar => CPOutcome) {
     store.post(
-      new DeltaVarSet(this, filter) {
+      new PropagatorSetVar(this, filter) {
         def setup(l: CPPropagStrength) = {
           callPropagateWhenDomainChanges(this)
           CPOutcome.Suspend
@@ -227,19 +227,19 @@ class CPSetVar(override val store: CPStore, min: Int, max: Int, override val nam
   def deltaRequired(c: Constraint): Iterator[Int] = deltaRequired(c.snapshotsVarSet(this))
   
 
-  def changed(sn: SnapshotVarSet): Boolean = possibleChanged(sn) || requiredChanged(sn)
+  def changed(sn: DeltaSetVar): Boolean = possibleChanged(sn) || requiredChanged(sn)
 
-  def possibleChanged(sn: SnapshotVarSet): Boolean = sn.oldSizePossible != possibleSize
+  def possibleChanged(sn: DeltaSetVar): Boolean = sn.oldSizePossible != possibleSize
 
-  def requiredChanged(sn: SnapshotVarSet): Boolean = sn.oldSizeRequired != requiredSize
+  def requiredChanged(sn: DeltaSetVar): Boolean = sn.oldSizeRequired != requiredSize
 
-  def deltaPossibleSize(sn: SnapshotVarSet): Int = sn.oldSizePossible - possibleSize
+  def deltaPossibleSize(sn: DeltaSetVar): Int = sn.oldSizePossible - possibleSize
 
-  def deltaRequiredSize(sn: SnapshotVarSet): Int = requiredSize - sn.oldSizeRequired
+  def deltaRequiredSize(sn: DeltaSetVar): Int = requiredSize - sn.oldSizeRequired
 
-  def deltaPossible(sn: SnapshotVarSet): Iterator[Int] = dom.deltaPossible(sn.oldSizePossible)
+  def deltaPossible(sn: DeltaSetVar): Iterator[Int] = dom.deltaPossible(sn.oldSizePossible)
 
-  def deltaRequired(sn: SnapshotVarSet): Iterator[Int] = dom.deltaRequired(sn.oldSizeRequired)
+  def deltaRequired(sn: DeltaSetVar): Iterator[Int] = dom.deltaRequired(sn.oldSizeRequired)
 
   def ==(y: CPSetVar): Constraint = new oscar.cp.constraints.SetEq(this, y)
 }

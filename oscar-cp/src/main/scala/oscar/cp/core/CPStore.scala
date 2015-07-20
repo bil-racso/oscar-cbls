@@ -96,17 +96,17 @@ class CPStore(final val propagStrength: CPPropagStrength) extends DFSearchNode {
   @inline protected def cleanQueues(): Unit = {
     // Clean queue L1
     highestPriorL1 = -1
-    var i = 0
-    while (i < propagQueueL1.length) {
+    var i = propagQueueL1.length
+    while (i > 0) {
+      i -= 1
       propagQueueL1(i).clear()
-      i += 1
     }
     // Clean queue L2
     highestPriorL2 = -1
-    i = 0
-    while (i < propagQueueL2.length) {
+    i = propagQueueL2.length
+    while (i > 0) {
+      i -= 1
       propagQueueL2(i).clear()
-      i += 1
     }
   }
 
@@ -245,35 +245,35 @@ class CPStore(final val propagStrength: CPPropagStrength) extends DFSearchNode {
     // Adds the cut constraints
     cutConstraints.foreach(c => enqueueL2(c))
 
-    var isFailed = false
-    while (!isFailed && (highestPriorL1 >= 0 || highestPriorL2 >= 0)) {
+    var isNotFailed = true
+    while (isNotFailed && (highestPriorL1 >= 0 || highestPriorL2 >= 0)) {
 
       // Propagate L1
-      while (highestPriorL1 >= 0 && !isFailed) {
+      while (highestPriorL1 >= 0 && isNotFailed) {
         val queue = propagQueueL1(highestPriorL1)
         if (queue.isEmpty) highestPriorL1 -= 1
         else {
           nCallsL1 += 1
           val event = queue.removeFirst()
-          isFailed = event() == Failure
+          isNotFailed = event() != Failure
         }
       }
 
       // Propagate L2 if no constraint in L1
-      while (highestPriorL1 < 0 && highestPriorL2 >= 0 && !isFailed) {
+      while (highestPriorL1 < 0 && highestPriorL2 >= 0 && isNotFailed) {
         val queue = propagQueueL2(highestPriorL2)
         if (queue.isEmpty) highestPriorL2 -= 1
         else {
           nCallsL2 += 1
           val constraint = queue.removeFirst()
           lastConstraint = constraint
-          isFailed = constraint.execute() == Failure
+          isNotFailed = constraint.execute() != Failure
         }
       }
     }
 
-    if (isFailed) Failure
-    else Suspend
+    if (isNotFailed) Suspend
+    else Failure
   }
 
   def printQueues(): Unit = {

@@ -29,22 +29,23 @@ import oscar.cp.core.CPStore
 import oscar.cp.core.Constraint
 import oscar.cp.core.watcher.WatcherListL2
 import oscar.cp.core.watcher.WatcherListL1
-import scala.collection.JavaConversions.mapAsScalaMap 
+import oscar.cp.core.watcher.Watcher
+import oscar.cp.core.delta.DeltaIntVar
 
 /**
  *  @author Renaud Hartert ren.hartert@gmail.com
  *  @author Pierre Schaus pschaus@gmail.com
  */
 
-class CPIntVarAdaptableDomainContinuous(variable: CPIntVarAdaptable, min: Int, max: Int, size: Int, continuous: Boolean) extends TrailEntry {
-  final override def restore(): Unit = variable.restoreContinuous(min, max, size, continuous)
+class CPIntVarAdaptableDomainContinuous(variable: CPIntVarAdaptable, min: Int, max: Int, size: Int) extends TrailEntry {
+  final override def restore(): Unit = variable.restoreContinuous(min, max, size)
 }
 
 class CPIntVarAdaptableDomainSparse(variable: CPIntVarAdaptable, min: Int, max: Int, size: Int) extends TrailEntry {
   final override def restore(): Unit = variable.restoreSparse(min, max, size)
 }
 
-class CPIntVarAdaptable( final override val store: CPStore, minValue: Int, maxValue: Int, continuous: Boolean, final override val name: String = "") extends CPIntVar {
+final class CPIntVarAdaptable( final override val store: CPStore, minValue: Int, maxValue: Int, continuous: Boolean, final override val name: String = "") extends CPIntVar {
 
   // Registered constraints
   private[this] val onBindL2 = new WatcherListL2(store)
@@ -67,9 +68,6 @@ class CPIntVarAdaptable( final override val store: CPStore, minValue: Int, maxVa
   private[this] var _max = maxValue
   private[this] var _size = maxValue - minValue + 1
 
-  // True if the domain had to switch its representation
-  private[this] var switched = false
-
   // Switch to a sparse set if necessacry
   if (!continuous) buildSparse()
 
@@ -80,15 +78,15 @@ class CPIntVarAdaptable( final override val store: CPStore, minValue: Int, maxVa
     val contextMagic = store.magic
     if (lastMagic != contextMagic) {
       lastMagic = contextMagic
-      if (_continuous) store.trail(new CPIntVarAdaptableDomainContinuous(this, _min, _max, _size, _continuous))
+      if (_continuous) store.trail(new CPIntVarAdaptableDomainContinuous(this, _min, _max, _size))
       else store.trail(new CPIntVarAdaptableDomainSparse(this, _min, _max, _size))
     }
   }
 
   // Restore the domain to continuous domain
-  @inline final def restoreContinuous(oldMin: Int, oldMax: Int, oldSize: Int, continuous: Boolean): Unit = {
-    _min = oldMin; _max = oldMax; _size = oldSize; _continuous = continuous
-    if (continuous && switched) buildSparse() // recreate a sparse domain on backtrack
+  @inline final def restoreContinuous(oldMin: Int, oldMax: Int, oldSize: Int): Unit = {
+    _min = oldMin; _max = oldMax; _size = oldSize
+    if (!_continuous) buildSparse() // recreate a sparse domain on backtrack
   }
 
   // Restore the domain to a sparse domain
@@ -138,10 +136,10 @@ class CPIntVarAdaptable( final override val store: CPStore, minValue: Int, maxVa
 
   @inline private def iteratorSparse: Iterator[Int] = new Iterator[Int] {
     private[this] val array = new Array[Int](_size)
-    private[this] var i = 0
+    private[this] var i = _size
     System.arraycopy(values, 0, array, 0, _size)
-    final override def next(): Int = { val v = array(i); i += 1; v }
-    final override def hasNext: Boolean = i < _size
+    final override def next(): Int = { i -= 1; array(i) }
+    final override def hasNext: Boolean = i > 0
   }
 
   /**
@@ -187,6 +185,14 @@ class CPIntVarAdaptable( final override val store: CPStore, minValue: Int, maxVa
   }
 
   @inline private def assignContinuous(value: Int): CPOutcome = {
+    // Trail before changes
+    trail()
+    // Update the domain
+    val oldMin = _min
+    val oldMax = _max
+    _min = value
+    _max = value
+    _size = 1
     // Notify AC3
     onBoundsL2.enqueue()
     onBindL2.enqueue()
@@ -195,29 +201,18 @@ class CPIntVarAdaptable( final override val store: CPStore, minValue: Int, maxVa
     onBoundsL1.enqueueBounds()
     // Notify removed values if necessary
     if (!onDomainL1.isEmpty) {
-      var i = _min
-      while (i <= _max) {
+      var i = oldMin
+      while (i <= oldMax) {
         if (i != value) onDomainL1.enqueueRemove(i)
         i += 1
       }
     }
-    // Update the domain
-    trail() // trail before changes
-    _min = value
-    _max = value
-    _size = 1
     // at the end because of watchers
     onDomainL2.enqueue()
     Suspend
   }
 
   @inline private def assignSparse(value: Int): CPOutcome = {
-    // Notify AC3
-    onBoundsL2.enqueue()
-    onBindL2.enqueue()
-    // Notify AC5
-    onBindL1.enqueueBind()
-    onBoundsL1.enqueueBounds()
     // Notify removed values if necessary
     if (!onDomainL1.isEmpty) {
       var i = _size
@@ -225,7 +220,7 @@ class CPIntVarAdaptable( final override val store: CPStore, minValue: Int, maxVa
         i -= 1
         val v = values(i)
         if (v != value) {
-          onDomainL1.enqueueRemove(v)
+          onDomainL1.enqueueRemove(v) // FIXME should be notified after the actual update
         }
       }
     }
@@ -240,8 +235,14 @@ class CPIntVarAdaptable( final override val store: CPStore, minValue: Int, maxVa
     trail() // trail before changes 
     _min = value
     _max = value
-    _size = 1
-    // at the end because of watchers
+    _size = 1    
+    // Notify AC3
+    onBoundsL2.enqueue()
+    onBindL2.enqueue()
+    // Notify AC5
+    onBindL1.enqueueBind()
+    onBoundsL1.enqueueBounds()
+    // Notify domain watchers
     onDomainL2.enqueue()
     Suspend
   }
@@ -268,12 +269,11 @@ class CPIntVarAdaptable( final override val store: CPStore, minValue: Int, maxVa
   }
 
   @inline private def buildSparse(): Unit = {
-    switched = true
+    _continuous = false
     val nValues = _max - _min + 1
     offset = _min
     values = Array.tabulate(nValues)(i => i + offset)
     positions = Array.tabulate(nValues)(i => i)
-    _continuous = false
   }
 
   @inline private def removeSparse(value: Int): CPOutcome = {
@@ -281,11 +281,19 @@ class CPIntVarAdaptable( final override val store: CPStore, minValue: Int, maxVa
     val pos1 = positions(id1)
     if (pos1 >= _size) Suspend
     else {
-      trail() // trail before changes 
-      // Notify removed watchers
-      onDomainL1.enqueueRemove(value)
-      // Assigned variable
-      if (_size == 2) {
+      // Trail before changes 
+      trail()
+      // Update the domain
+      _size -= 1
+      val v = values(_size)
+      val id2 = v - offset
+      val pos2 = positions(id2)
+      values(pos1) = v
+      values(pos2) = value
+      positions(id1) = pos2
+      positions(id2) = pos1
+      // Notify watchers
+      if (_size == 1) {
         // Notify bind watchers
         onBindL1.enqueueBind()
         onBindL2.enqueue()
@@ -314,17 +322,9 @@ class CPIntVarAdaptable( final override val store: CPStore, minValue: Int, maxVa
         while (positions(i) >= _size) i -= 1
         _max = i + offset
       }
-      // Update the domain
-      _size -= 1
-      val v = values(_size)
-      val id2 = v - offset
-      val pos2 = positions(id2)
-      values(pos1) = v
-      values(pos2) = value
-      positions(id1) = pos2
-      positions(id2) = pos1
-      // the enqueue is added after the domain changes because of watchers
+      // Notify domain watchers
       onDomainL2.enqueue()
+      onDomainL1.enqueueRemove(value)
       Suspend
     }
   }
@@ -344,24 +344,25 @@ class CPIntVarAdaptable( final override val store: CPStore, minValue: Int, maxVa
   @inline private def updateMinContinuous(value: Int): CPOutcome = {
     if (value == _max) assignContinuous(value)
     else {
+      // Trail before changes 
+      trail()
+      // Update domain
+      val oldMin = _min
+      _size -= (value - _min)
+      _min = value
       // Notify bounds watchers
       onBoundsL1.enqueueBounds()
       onBoundsL2.enqueue()
       // Notify remove watchers if necessary
       if (!onDomainL1.isEmpty) {
-        var i = _min
+        var i = oldMin
         while (i < value) {
           onDomainL1.enqueueRemove(i)
           i += 1
         }
       }
-      trail() // trail before changes 
-      _size -= (value - _min)
-      _min = value
-
-      // Notify change in domain
-      onDomainL2.enqueue() // must be last because of watchers
-
+      // Notify domain watchers
+      onDomainL2.enqueue()
       Suspend
     }
   }
@@ -386,7 +387,7 @@ class CPIntVarAdaptable( final override val store: CPStore, minValue: Int, maxVa
           values(pos2) = v1
           positions(i) = pos2
           positions(id2) = pos1
-          onDomainL1.enqueueRemove(v1)
+          onDomainL1.enqueueRemove(v1) // FIXME should be notified after the actual update
         }
         i += 1
       }
@@ -426,24 +427,25 @@ class CPIntVarAdaptable( final override val store: CPStore, minValue: Int, maxVa
   @inline private def updateMaxContinuous(value: Int): CPOutcome = {
     if (value == _min) assignContinuous(value)
     else {
+      // Trail before changes 
+      trail()
+      // Update domain
+      val oldMax = _max
+      _size -= (_max - value)
+      _max = value
       // Notify bounds watchers
       onBoundsL1.enqueueBounds()
       onBoundsL2.enqueue()
       // Notify remove watchers if necessary
       if (!onDomainL1.isEmpty) {
-        var i = _max
+        var i = oldMax
         while (i > value) {
           onDomainL1.enqueueRemove(i)
           i -= 1
         }
       }
-      trail() // trail before changes 
-      _size -= (_max - value)
-      _max = value
-
-      // Notify change in domain
-      onDomainL2.enqueue() // must be last because of watchers
-
+      // Notify domain watchers
+      onDomainL2.enqueue()
       Suspend
     }
   }
@@ -468,7 +470,7 @@ class CPIntVarAdaptable( final override val store: CPStore, minValue: Int, maxVa
           values(pos2) = v1
           positions(i) = pos2
           positions(id2) = pos1
-          onDomainL1.enqueueRemove(v1)
+          onDomainL1.enqueueRemove(v1) // FIXME should be notified after the actual update
         }
         i -= 1
       }
@@ -536,10 +538,23 @@ class CPIntVarAdaptable( final override val store: CPStore, minValue: Int, maxVa
    * @param c
    * @see oscar.cp.core.Constraint#propagate()
    */
-  final override def callPropagateWhenDomainChanges(c: Constraint, trackDelta: Boolean = false) {
+  final override def callPropagateWhenDomainChanges(c: Constraint): Unit = {
     degree.incr()
     onDomainL2.register(c)
-    if (trackDelta) c.addSnapshot(this)
+  }
+
+  final override def callPropagateOnChangesWithDelta(c: Constraint): DeltaIntVar = {
+    val snap = delta(c)
+    degree.incr()
+    onDomainL2.register(c)
+    snap
+  }
+
+  final override def callPropagateOnChangesWithDelta(c: Constraint, cond: => Boolean): DeltaIntVar = {
+    val snap = delta(c)
+    degree.incr()
+    onDomainL2.register(c, cond)
+    snap
   }
 
   /**
@@ -548,9 +563,14 @@ class CPIntVarAdaptable( final override val store: CPStore, minValue: Int, maxVa
    * @param c
    * @see oscar.cp.core.Constraint#propagate()
    */
-  final override def callPropagateWhenDomainChanges(c: Constraint, watcher: oscar.cp.core.Watcher) {
+  final override def callPropagateWhenDomainChanges(c: Constraint, cond: => Boolean) {
     degree.incr()
-    onDomainL2.register(c, watcher)
+    onDomainL2.register(c, cond)
+  }
+
+  final override def awakeOnChanges(watcher: Watcher): Unit = {
+    degree.incr()
+    onDomainL2.register(watcher)
   }
 
   /**
@@ -647,7 +667,8 @@ class CPIntVarAdaptable( final override val store: CPStore, minValue: Int, maxVa
   }
 
   final def restrict(newDomain: Array[Int], newSize: Int): Unit = {
-    
+    assert(newSize > 0 && newSize <= size)
+
     // Restrict the domain
     if (_continuous) buildSparse()
     trail()
@@ -659,7 +680,7 @@ class CPIntVarAdaptable( final override val store: CPStore, minValue: Int, maxVa
       val val1 = newDomain(i)
       val pos1 = positions(val1 - offset)
       assert(pos1 < oldSize, "newDomain must be a subset of the actual domain.")
-      val val2 = positions(_size)
+      val val2 = values(_size)
       val pos2 = positions(val2 - offset)
       values(pos1) = val2
       values(pos2) = val1
@@ -751,22 +772,6 @@ class CPIntVarAdaptable( final override val store: CPStore, minValue: Int, maxVa
     }
   }
 
-  final def changed(c: Constraint): Boolean = changed(c.snapshotsVarInt(this))
-
-  final def minChanged(c: Constraint): Boolean = minChanged(c.snapshotsVarInt(this))
-
-  final def maxChanged(c: Constraint): Boolean = maxChanged(c.snapshotsVarInt(this))
-
-  final def boundsChanged(c: Constraint): Boolean = boundsChanged(c.snapshotsVarInt(this))
-
-  final def oldMin(c: Constraint): Int = oldMin(c.snapshotsVarInt(this))
-
-  final def oldMax(c: Constraint): Int = oldMax(c.snapshotsVarInt(this))
-
-  final def oldSize(c: Constraint): Int = oldSize(c.snapshotsVarInt(this))
-
-  final def deltaSize(c: Constraint): Int = deltaSize(c.snapshotsVarInt(this))
-
   @inline final override def fillDeltaArray(oldMin: Int, oldMax: Int, oldSize: Int, arr: Array[Int]): Int = {
     var i = 0
     if (_continuous) {
@@ -802,16 +807,4 @@ class CPIntVarAdaptable( final override val store: CPStore, minValue: Int, maxVa
     }
     i
   }
-
-  final override def fillDeltaArray(c: Constraint, arr: Array[Int]): Int = {
-
-    val sn = c.snapshotsVarInt(this)
-    fillDeltaArray(sn.oldMin, sn.oldMax, sn.oldSize, arr)
-  }
-
-  final def delta(c: Constraint): Iterator[Int] = {
-    val sn = c.snapshotsVarInt(this)
-    delta(sn.oldMin, sn.oldMax, sn.oldSize)
-  }
-
 }

@@ -26,6 +26,8 @@ import oscar.cp.scheduling.constraints.DisjunctiveWithTransitionTimes
 import oscar.cp.constraints.tables.TableAlgo
 import oscar.cp.constraints.tables._
 import scala.collection.mutable.ArrayBuffer
+import oscar.cp.scheduling.constraints.SweepMinCumulative
+import oscar.cp.scheduling.constraints.MaxCumulative
 
 trait Constraints {
 
@@ -127,7 +129,7 @@ trait Constraints {
    * @return a binpacking constraint linking the variables in argument such that l[i] == sum,,j,, w[j]*(x[j]==i) for all bins i
    */
   def binPacking(x: IndexedSeq[CPIntVar], w: IndexedSeq[Int], l: IndexedSeq[CPIntVar]): Constraint = {
-    return new BinPacking(x.toArray, w.toArray, l.toArray)
+    new BinPacking(x.toArray, w.toArray, l.toArray)
   }
 
   @deprecated("use binPacking instead", "1.0")
@@ -410,6 +412,14 @@ trait Constraints {
    */
   def inverse(prev: Array[CPIntVar], next: Array[CPIntVar]): Inverse = new Inverse(prev, next)
 
+  def inverse(prev: Array[CPIntVar]): Array[CPIntVar] = {
+    require(prev.length > 0)
+    val store = prev(0).store
+    val next = Array.fill(prev.length)(CPIntVar(0, prev.length - 1)(store))
+    store.add(inverse(prev, next))
+    next
+  }
+  
   /**
    * Sum Constraint
    * @param vars a non empty array of n variables
