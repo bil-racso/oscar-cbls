@@ -37,6 +37,7 @@ import oscar.cp._
  * @param endVars Variables for task ending times
  * @param productionVars Variables for task productions; represents the amounts of the resource produced by tasks
  * @param consumptionVars Variables for task consumptions; represents the amounts of the resource consumed by tasks
+ * @param temporaryProdCons Booleans set to true if corresponding task produces/consumes only during its duration
  * @param minCapacity The minimal capacity of the reservoir
  * @param maxCapacity The maximal capacity of the reservoir
  * @param initialAmount The initial amount of resource in the reservoir
@@ -44,8 +45,8 @@ import oscar.cp._
  */
 class VisualReservoirProfile(startVars: Array[CPIntVar], durationVars: Array[CPIntVar],
                              endVars: Array[CPIntVar], productionVars: Array[CPIntVar],
-                             consumptionVars: Array[CPIntVar], minCapacity: Int,
-                             maxCapacity: Int, initialAmount: Int = 0,
+                             consumptionVars: Array[CPIntVar], temporaryProdCons: Array[Boolean],
+                             minCapacity: Int, maxCapacity: Int, initialAmount: Int,
                              color: Color = Color.WHITE) extends VisualDrawing(true, false) {
 
   private[this] val nTasks = startVars.length
@@ -76,7 +77,27 @@ class VisualReservoirProfile(startVars: Array[CPIntVar], durationVars: Array[CPI
 
 
   def update(xScale: Int, yScale: Int) {
-    val events = (0 until nTasks).map(index => if (producer(index)) (index, endVars(index).max) else (index, startVars(index).min)).sortBy(pair => pair._2)
+    var events = List[(Int, Int)]()
+    for (i <- 0 until nTasks) {
+      if (temporaryProdCons(i)) {
+        if (producer(i)) {
+          events ::= (startVars(i).min, productionVars(i).max)
+          events ::= (endVars(i).max, -productionVars(i).max)
+        }
+        else if (consumer(i)) {
+          events ::= (startVars(i).min, -consumptionVars(i).max)
+          events ::= (endVars(i).max, consumptionVars(i).max)
+        }
+      }
+      else if (producer(i)) {
+        events ::= (endVars(i).max, productionVars(i).max)
+      }
+      else if (consumer(i)) {
+        events ::= (startVars(i).min, - consumptionVars(i).max)
+      }
+    }
+    val levelDeltas = events.groupBy(_._1).map(kv => (kv._1, kv._2.map(_._2).sum)).toArray.sortBy(_._1)
+
     var i = 0
     var points = List[(Int, Int)]()
     var height = initialAmount
@@ -87,15 +108,12 @@ class VisualReservoirProfile(startVars: Array[CPIntVar], durationVars: Array[CPI
     points ::= (start, 0)
     points ::= (start, initialAmount)
 
-    while (i < nTasks) {
-      points ::= (events(i)._2, height)
-      if (producer(events(i)._1)) {
-        height += productionVars(events(i)._1).max
-      }
-      else if (consumer(events(i)._1)) {
-        height -= consumptionVars(events(i)._1).max
-      }
-      points ::= (events(i)._2, height)
+    var curTimeStep = 0
+    while (i < levelDeltas.length) {
+      curTimeStep = levelDeltas(i)._1
+      points ::= (curTimeStep, height)
+      height += levelDeltas(i)._2
+      points ::= (curTimeStep, height)
       i += 1
     }
 
@@ -143,11 +161,11 @@ object VisualReservoirProfile extends App {
 
   val frame = new VisualFrame("Test Reservoir Profile", 1, 1)
   val f1 = frame.createFrame("Reservoir Profile")
-  val vp = VisualReservoirProfile(Array(s1, s2), Array(d1, d2), Array(e1, e2), Array(p1, p2), Array(c1, c2), minCapacity, maxCapacity, initialAmount, Color.CYAN)
+  val vp = VisualReservoirProfile(Array(s1, s2), Array(d1, d2), Array(e1, e2), Array(p1, p2), Array(c1, c2), Array(false, false), minCapacity, maxCapacity, initialAmount, Color.CYAN)
   f1.add(vp)
   f1.pack()
   frame.pack()
-  vp.update(20, 20)
+  vp.update(5, 5)
 
   /**
    * @constructor Create a new graphical profile for reservoir resource with specified parameters.
@@ -164,11 +182,11 @@ object VisualReservoirProfile extends App {
    */
   def apply(startVars: Array[CPIntVar], durationVars: Array[CPIntVar],
                              endVars: Array[CPIntVar], productionVars: Array[CPIntVar],
-                             consumptionVars: Array[CPIntVar], minCapacity: Int,
-                             maxCapacity: Int, initialAmount: Int = 0,
+                             consumptionVars: Array[CPIntVar], temporaryProdCons: Array[Boolean],
+                             minCapacity: Int, maxCapacity: Int, initialAmount: Int,
                              color: Color = Color.WHITE): VisualReservoirProfile = {
-    new VisualReservoirProfile(startVars, durationVars, endVars, productionVars,
-                                consumptionVars, minCapacity, maxCapacity, initialAmount, color)
+    new VisualReservoirProfile(startVars, durationVars, endVars, productionVars, consumptionVars,
+                               temporaryProdCons, minCapacity, maxCapacity, initialAmount, color)
   }
 
 }
