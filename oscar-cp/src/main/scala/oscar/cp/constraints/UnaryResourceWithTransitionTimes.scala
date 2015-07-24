@@ -7,8 +7,6 @@ import oscar.cp.core.variables.CPIntVar
 import oscar.cp.core.{CPOutcome, CPPropagStrength, Constraint}
 import oscar.cp.scheduling.util.{TransitionLowerBounds, ThetaLambdaTreeWithTransitionTimes}
 
-import scala.collection.mutable
-
 /**
  * Created on 21/01/15.
  * @author Cyrille Dejemeppe (cyrille.dejemeppe@gmail.com)
@@ -55,15 +53,13 @@ class UnaryResourceWithTransitionTimes(starts: Array[CPIntVar], durations: Array
   private[this] val formerMinEnds : Array[ReversibleInt] = Array.fill(nTasks)(new ReversibleInt(starts(0).store,Int.MaxValue))
   private[this] val formerMaxStarts : Array[ReversibleInt] = Array.fill(nTasks)(new ReversibleInt(starts(0).store,Int.MinValue))
 
-  private[this] val boundChangedActivityIds: mutable.BitSet = new mutable.BitSet()
-
-  //array to map a value to its index (tree insertion order mapped to est order)
-  //private[this] val indexOfInOrderedEstsIds = Array.fill(nTasks)(-1)
+  //Structures needed to represent a stack of the indexes of the activities whose bounds have changed
+  private[this] val stackOfBoundChangeIds = Array.fill(nTasks)(0)
+  private[this] var stackOfBoundChangeIdsSize = 0
+  private[this] val stackOfBoundChangeIdsContains = Array.fill(nTasks)(false)
 
   private[this] var failure = false
   private[this] var changed = true
-
-
 
   override def setup(l: CPPropagStrength): CPOutcome = {
     for (i <- 0 until nTasks) {
@@ -74,13 +70,11 @@ class UnaryResourceWithTransitionTimes(starts: Array[CPIntVar], durations: Array
     propagate()
   }
 
-  //TODO : USE A SPARSE SET INSTEAD OF HASHSET
   override def propagate(): CPOutcome = {
-
     failure = false
     changed = true
 
-    boundChangedActivityIds.clear()
+    clearIdStack()
 
     var i = 0
     while(i < nTasks) {
@@ -98,8 +92,8 @@ class UnaryResourceWithTransitionTimes(starts: Array[CPIntVar], durations: Array
       newMinStartsMirror(i) = currentMinStartsMirror(i)
       newMaxEndsMirror(i) = currentMaxEndsMirror(i)
 
-      if(formerMinEnds(i).value != currentMinEnds(i) || formerMaxStarts(i).value != currentMaxStarts(i)) {
-        boundChangedActivityIds += i
+      if (formerMinEnds(i).value != currentMinEnds(i) || formerMaxStarts(i).value != currentMaxStarts(i)) {
+        addIdToStack(i)
       }
 
       i += 1
@@ -310,9 +304,9 @@ class UnaryResourceWithTransitionTimes(starts: Array[CPIntVar], durations: Array
   private def binaryPropagate(): Boolean = {
     var i, j = 0
     var domainModified = false
-    while (!failure && boundChangedActivityIds.nonEmpty) {
-      while (boundChangedActivityIds.nonEmpty) {
-        i = boundChangedActivityIds.head
+    while (!failure && stackOfBoundChangeIdsSize > 0) {
+      while (stackOfBoundChangeIdsSize > 0) {
+        i = popLastIdFromStack()
         j = 0
         while (j < nTasks) {
           if (j != i) {
@@ -338,7 +332,6 @@ class UnaryResourceWithTransitionTimes(starts: Array[CPIntVar], durations: Array
           }
           j += 1
         }
-        boundChangedActivityIds.remove(i)
       }
       if (updateBounds())
         domainModified = true
@@ -362,7 +355,7 @@ class UnaryResourceWithTransitionTimes(starts: Array[CPIntVar], durations: Array
         }
         else {
           domainModified = true
-          boundChangedActivityIds += i
+          addIdToStack(i)
           currentMinStarts(i) = newMinStarts(i)
           currentMinEnds(i) = currentMinStarts(i) + currentMinDurations(i)
           currentMaxEndsMirror(i) = -currentMinStarts(i)
@@ -377,7 +370,7 @@ class UnaryResourceWithTransitionTimes(starts: Array[CPIntVar], durations: Array
         }
         else {
           domainModified = true
-          boundChangedActivityIds += i
+          addIdToStack(i)
           currentMaxEnds(i) = newMaxEnds(i)
           currentMaxStarts(i) = currentMaxEnds(i) - currentMinDurations(i)
           currentMinStartsMirror(i) = -currentMaxEnds(i)
@@ -405,7 +398,7 @@ class UnaryResourceWithTransitionTimes(starts: Array[CPIntVar], durations: Array
         }
         else {
           domainModified = true
-          boundChangedActivityIds += i
+          addIdToStack(i)
           startMins(i) = updatedMinStarts(i)
           endMins(i) = startMins(i) + currentMinDurations(i)
           endMaxsMirror(i) = -startMins(i)
@@ -434,7 +427,7 @@ class UnaryResourceWithTransitionTimes(starts: Array[CPIntVar], durations: Array
         }
         else {
           domainModified = true
-          boundChangedActivityIds += i
+          addIdToStack(i)
           endMaxs(i) = updatedMaxEnds(i)
           startMaxs(i) = endMaxs(i) - currentMinDurations(i)
           startMinsMirror(i) = -endMaxs(i)
@@ -445,6 +438,33 @@ class UnaryResourceWithTransitionTimes(starts: Array[CPIntVar], durations: Array
       i += 1
     }
     domainModified
+  }
+
+  @inline
+  private def addIdToStack(index: Int): Unit = {
+    if (!stackOfBoundChangeIdsContains(index)) {
+      stackOfBoundChangeIdsContains(index) = true
+      stackOfBoundChangeIds(stackOfBoundChangeIdsSize) = index
+      stackOfBoundChangeIdsSize += 1
+    }
+  }
+
+  @inline
+  private def popLastIdFromStack(): Int = {
+    stackOfBoundChangeIdsSize -= 1
+    val index = stackOfBoundChangeIds(stackOfBoundChangeIdsSize)
+    stackOfBoundChangeIdsContains(index) = false
+    index
+  }
+
+  @inline
+  private def clearIdStack(): Unit = {
+    stackOfBoundChangeIdsSize = 0
+    var iter = nTasks - 1
+    while (iter >= 0) {
+      stackOfBoundChangeIdsContains(iter) = false
+      iter -= 1
+    }
   }
 }
 

@@ -92,6 +92,6 @@ object JobShopWithTransitionTimes extends CPModel with App {
   minimize(makespan)
 
   search(setTimes(startsVar, durationsVar, endsVar))
-  
+
   start(nSols=8)
 }
