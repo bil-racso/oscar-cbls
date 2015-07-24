@@ -2,23 +2,28 @@ package oscar.cp.constraints
 
 import oscar.algo.SortUtils._
 import oscar.algo.reversible.ReversibleInt
-import oscar.cp.core.CPOutcome._
+import oscar.cp._
 import oscar.cp.core.variables.CPIntVar
 import oscar.cp.core.{CPOutcome, CPPropagStrength, Constraint}
-import oscar.cp.scheduling.util.ThetaLambdaTree
-import oscar.cp._
+import oscar.cp.scheduling.util.{TransitionLowerBounds, ThetaLambdaTreeWithTransitionTimes}
+
+import scala.collection.mutable
 
 /**
  * Created on 21/01/15.
  * @author Cyrille Dejemeppe (cyrille.dejemeppe@gmail.com)
  * @author Sascha Van Cauwelaert (sascha.vancauwelaert@gmail.com)
  */
-class UnaryResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar]) extends Constraint(starts(0).store) {
-  idempotent = false
+class UnaryResourceWithTransitionTimes(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], ttMatrix: Array[Array[Int]]) extends Constraint(starts(0).store) {
+  idempotent = true
 
   private[this] val nTasks = starts.length
-  private[this] val thetaLambdaTree = new ThetaLambdaTree(nTasks)
-  private[this] val thetaLambdaTreeMirror = new ThetaLambdaTree(nTasks)
+  private[this] val ttMatrixTransposed = Array.tabulate(nTasks)(i => Array.tabulate(nTasks)(j => ttMatrix(j)(i)))
+  private[this] val minTransitionTimeFromActivity = Array.tabulate(nTasks)(i => ttMatrix(i).sorted.apply(1))
+  private[this] val minTransitionTimeToActivity = Array.tabulate(nTasks)(i => ttMatrixTransposed(i).sorted.apply(1))
+  private[this] val transitionSetLowerBounds = new TransitionLowerBounds(ttMatrix).getLowerBounds()
+  private[this] val thetaLambdaTree = new ThetaLambdaTreeWithTransitionTimes(nTasks, transitionSetLowerBounds)
+  private[this] val thetaLambdaTreeMirror = new ThetaLambdaTreeWithTransitionTimes(nTasks, transitionSetLowerBounds)
 
   private[this] val indexByIncreasingMinStarts: Array[Int] = Array.tabulate(nTasks)(i => i)
   private[this] val indexByIncreasingMaxStarts: Array[Int] = Array.tabulate(nTasks)(i => i)
@@ -50,7 +55,7 @@ class UnaryResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: A
   private[this] val formerMinEnds : Array[ReversibleInt] = Array.fill(nTasks)(new ReversibleInt(starts(0).store,Int.MaxValue))
   private[this] val formerMaxStarts : Array[ReversibleInt] = Array.fill(nTasks)(new ReversibleInt(starts(0).store,Int.MinValue))
 
-  //private[this] val boundChangedActivityIds: mutable.BitSet = new mutable.BitSet()
+  private[this] val boundChangedActivityIds: mutable.BitSet = new mutable.BitSet()
 
   //array to map a value to its index (tree insertion order mapped to est order)
   //private[this] val indexOfInOrderedEstsIds = Array.fill(nTasks)(-1)
@@ -75,6 +80,7 @@ class UnaryResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: A
     failure = false
     changed = true
 
+    boundChangedActivityIds.clear()
 
     var i = 0
     while(i < nTasks) {
@@ -91,19 +97,20 @@ class UnaryResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: A
       newMaxEnds(i) = currentMaxEnds(i)
       newMinStartsMirror(i) = currentMinStartsMirror(i)
       newMaxEndsMirror(i) = currentMaxEndsMirror(i)
+
+      if(formerMinEnds(i).value != currentMinEnds(i) || formerMaxStarts(i).value != currentMaxStarts(i)) {
+        boundChangedActivityIds += i
+      }
+
       i += 1
     }
 
     while(!failure && changed) {
-      if (OC() || DP() || NFNL() || EF()) {
-        changed = true
-      }
-      else
-        changed = false
+      changed = EF() || OC() || DP() || NFNL() || binaryPropagate()
     }
 
     if(failure)
-      Failure
+      CPOutcome.Failure
     else {
       i = 0
       while(i < nTasks) {
@@ -111,7 +118,7 @@ class UnaryResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: A
         formerMaxStarts(i).setValue(currentMaxStarts(i))
         i += 1
       }
-      Suspend
+      CPOutcome.Suspend
     }
 
   }
@@ -124,7 +131,7 @@ class UnaryResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: A
    * returns true if some domain is changed (here failure), false otherwise
    */
   @inline
-  private def overloadChecking(startMins : Array[Int], endMaxs : Array[Int], tree : ThetaLambdaTree, orderedMinStartIds : Array[Int], orderedMaxEndIds : Array[Int]): Boolean = {
+  private def overloadChecking(startMins : Array[Int], endMaxs : Array[Int], tree : ThetaLambdaTreeWithTransitionTimes, orderedMinStartIds : Array[Int], orderedMaxEndIds : Array[Int]): Boolean = {
     // Clearing the tree
     mergeSort(orderedMinStartIds, startMins)
     tree.clearAndPlaceLeaves(orderedMinStartIds, startMins, currentMinDurations)
@@ -150,11 +157,11 @@ class UnaryResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: A
     detectablePrecedences(currentMinStarts, currentMaxStarts, currentMinEnds,
       currentMaxStartsMirror, currentMaxEndsMirror, newMinStarts, newMaxEndsMirror,
       starts, ends, thetaLambdaTree,
-      indexByIncreasingMinStarts, indexByIncreasingMaxStarts, indexByIncreasingMinEnds) ||
+      indexByIncreasingMinStarts, indexByIncreasingMaxStarts, indexByIncreasingMinEnds, minTransitionTimeToActivity) ||
       detectablePrecedences(currentMinStartsMirror, currentMaxStartsMirror, currentMinEndsMirror,
         currentMaxStarts, currentMaxEnds, newMinStartsMirror, newMaxEnds,
         startsMirror, endsMirror, thetaLambdaTreeMirror,
-        indexByIncreasingMinStartMirror, indexByIncreasingMaxStartMirror, indexByIncreasingMinEndMirror)
+        indexByIncreasingMinStartMirror, indexByIncreasingMaxStartMirror, indexByIncreasingMinEndMirror, minTransitionTimeFromActivity)
   }
 
   /**
@@ -163,9 +170,8 @@ class UnaryResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: A
   @inline
   private def detectablePrecedences(startMins : Array[Int], startMaxs: Array[Int], endMins : Array[Int],
                                     startMaxsMirror : Array[Int], endMaxsMirror : Array[Int], updatedMinStarts : Array[Int], updatedMaxEndsMirror : Array[Int],
-                                    startVars : Array[_ <: CPIntVar], endVars : Array[_ <: CPIntVar], tree : ThetaLambdaTree,
-                                    orderedMinStartIds : Array[Int], orderedMaxStartIds: Array[Int], orderedMinEndIds : Array[Int]): Boolean = {
-
+                                    startVars : Array[_ <: CPIntVar], endVars : Array[_ <: CPIntVar], tree : ThetaLambdaTreeWithTransitionTimes,
+                                    orderedMinStartIds : Array[Int], orderedMaxStartIds: Array[Int], orderedMinEndIds : Array[Int], minTransitionToActivity: Array[Int]): Boolean = {
     // Clearing the tree
     mergeSort(orderedMinStartIds, startMins)
     tree.clearAndPlaceLeaves(orderedMinStartIds, startMins, currentMinDurations)
@@ -183,8 +189,7 @@ class UnaryResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: A
         tree.insert(orderedMaxStartIds(q))
         q += 1
       }
-
-      updatedMinStarts(ectIndex) = math.max(updatedMinStarts(ectIndex), tree.ectWithoutActivity(ectIndex))
+      updatedMinStarts(ectIndex) = math.max(updatedMinStarts(ectIndex), tree.ectWithoutActivity(ectIndex) + minTransitionToActivity(ectIndex))
       i += 1
     }
 
@@ -194,13 +199,13 @@ class UnaryResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: A
   @inline
   private def NFNL(): Boolean = {
     notLast(currentMinStarts, currentMaxStarts, currentMaxEnds,
-            currentMinStartsMirror, currentMinEndsMirror, newMaxEnds, newMinStartsMirror,
-            starts, ends, thetaLambdaTree,
-            indexByIncreasingMinStarts, indexByIncreasingMaxStarts, indexByIncreasingMaxEnds) ||
-    notLast(currentMinStartsMirror, currentMaxStartsMirror, currentMaxEndsMirror,
-            currentMinStarts, currentMinEnds, newMaxEndsMirror, newMinStarts,
-            startsMirror, endsMirror, thetaLambdaTreeMirror,
-            indexByIncreasingMinStartMirror, indexByIncreasingMaxStartMirror, indexByIncreasingMaxEndMirror)
+      currentMinStartsMirror, currentMinEndsMirror, newMaxEnds, newMinStartsMirror,
+      starts, ends, thetaLambdaTree,
+      indexByIncreasingMinStarts, indexByIncreasingMaxStarts, indexByIncreasingMaxEnds, minTransitionTimeFromActivity) ||
+      notLast(currentMinStartsMirror, currentMaxStartsMirror, currentMaxEndsMirror,
+        currentMinStarts, currentMinEnds, newMaxEndsMirror, newMinStarts,
+        startsMirror, endsMirror, thetaLambdaTreeMirror,
+        indexByIncreasingMinStartMirror, indexByIncreasingMaxStartMirror, indexByIncreasingMaxEndMirror, minTransitionTimeToActivity)
   }
 
   /**
@@ -209,9 +214,8 @@ class UnaryResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: A
   @inline
   private def notLast(startMins : Array[Int], startMaxs : Array[Int], endMaxs : Array[Int],
                       startMinsMirror : Array[Int], endMinsMirror : Array[Int], updatedMaxEnds : Array[Int], updatedMinStartsMirror : Array[Int],
-                      startVars : Array[_ <: CPIntVar], endVars : Array[_ <: CPIntVar], tree : ThetaLambdaTree,
-                      orderedMinStartIds : Array[Int], orderedMaxStartIds: Array[Int], orderedMaxEndIds : Array[Int]) : Boolean = {
-
+                      startVars : Array[_ <: CPIntVar], endVars : Array[_ <: CPIntVar], tree : ThetaLambdaTreeWithTransitionTimes,
+                      orderedMinStartIds : Array[Int], orderedMaxStartIds: Array[Int], orderedMaxEndIds : Array[Int], minTransitionFromActivity : Array[Int]) : Boolean = {
     // Clearing the tree
     mergeSort(orderedMinStartIds, startMins)
     tree.clearAndPlaceLeaves(orderedMinStartIds, startMins, currentMinDurations)
@@ -234,7 +238,7 @@ class UnaryResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: A
       }
 
       if(tree.ectWithoutActivity(lctIndex) > startMaxs(lctIndex)) {
-        updatedMaxEnds(lctIndex) = math.min(startMaxs(orderedMaxStartIds(j - 1)), updatedMaxEnds(lctIndex))
+        updatedMaxEnds(lctIndex) = math.min(startMaxs(orderedMaxStartIds(j - 1)) - minTransitionFromActivity(lctIndex) ,updatedMaxEnds(lctIndex))
       }
 
       i += 1
@@ -247,13 +251,13 @@ class UnaryResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: A
   @inline
   private def EF() : Boolean = {
     edgeFinding(currentMinStarts, currentMaxEnds, currentMinEnds,
-                currentMaxStartsMirror,currentMaxEndsMirror, newMinStarts, newMaxEndsMirror,
-                starts, ends, thetaLambdaTree,
-                indexByIncreasingMinStarts, indexByIncreasingMaxEnds) ||
-    edgeFinding(currentMinStartsMirror, currentMaxEndsMirror, currentMinEndsMirror,
-                currentMaxStarts, currentMaxEnds, newMinStartsMirror, newMaxEnds,
-                startsMirror,endsMirror, thetaLambdaTreeMirror,
-                indexByIncreasingMinStartMirror, indexByIncreasingMaxEndMirror)
+      currentMaxStartsMirror,currentMaxEndsMirror, newMinStarts, newMaxEndsMirror,
+      starts, ends, thetaLambdaTree,
+      indexByIncreasingMinStarts, indexByIncreasingMaxEnds, minTransitionTimeToActivity) ||
+      edgeFinding(currentMinStartsMirror, currentMaxEndsMirror, currentMinEndsMirror,
+        currentMaxStarts, currentMaxEnds, newMinStartsMirror, newMaxEnds,
+        startsMirror,endsMirror, thetaLambdaTreeMirror,
+        indexByIncreasingMinStartMirror, indexByIncreasingMaxEndMirror, minTransitionTimeFromActivity)
   }
 
   /**
@@ -262,22 +266,19 @@ class UnaryResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: A
   @inline
   private def edgeFinding(startMins : Array[Int], endMaxs : Array[Int], endMins : Array[Int],
                           startMaxsMirror : Array[Int], endMaxsMirror : Array[Int], updatedMinStarts : Array[Int], updatedMaxEndsMirror : Array[Int],
-                          startVars : Array[_ <: CPIntVar], endVars : Array[_ <: CPIntVar], tree : ThetaLambdaTree,
-                          orderedMinStartIds : Array[Int], orderedMaxEndIds : Array[Int]) : Boolean = {
-
+                          startVars : Array[_ <: CPIntVar], endVars : Array[_ <: CPIntVar], tree : ThetaLambdaTreeWithTransitionTimes,
+                          orderedMinStartIds : Array[Int], orderedMaxEndIds : Array[Int], minTransitionToActivity: Array[Int]) : Boolean = {
     // Inserting all activities in the tree
     mergeSort(orderedMinStartIds, startMins)
-
     tree.fillAndPlaceLeaves(orderedMinStartIds, startMins, currentMinDurations) // true as we use gray nodes
 
     //sorting activities in non-decreasing lct
-    //NOTE: we sort the array by increasing lct, we just will browse it from right to left
+    //NOTE: we sort the array by increasing lct, we just will browse it from left to right
     mergeSort(orderedMaxEndIds, endMaxs)
 
     var estIndex = 0
     var j = nTasks - 1
     while (j > 0) {
-
       if(tree.ect > endMaxs(orderedMaxEndIds(j))) {
         failure = true
         return true
@@ -292,12 +293,57 @@ class UnaryResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: A
           return true
         }
         estIndex = orderedMinStartIds(tree.responsibleEctBar)
-        updatedMinStarts(estIndex) = math.max(updatedMinStarts(estIndex), tree.ect)
+        updatedMinStarts(estIndex) = math.max(updatedMinStarts(estIndex), tree.ect + minTransitionToActivity(estIndex))
         tree.remove(estIndex)
       }
     }
 
     updateMins(startMins, endMins, startMaxsMirror, endMaxsMirror, updatedMinStarts, updatedMaxEndsMirror, startVars, endVars)
+  }
+
+
+
+  /**
+   * returns true if some domain is changed, false otherwise
+   */
+  @inline
+  private def binaryPropagate(): Boolean = {
+    var i, j = 0
+    var domainModified = false
+    while (!failure && boundChangedActivityIds.nonEmpty) {
+      while (boundChangedActivityIds.nonEmpty) {
+        i = boundChangedActivityIds.head
+        j = 0
+        while (j < nTasks) {
+          if (j != i) {
+            // activity i is after activity j
+            if (currentMinEnds(i) + ttMatrix(i)(j) > currentMaxStarts(j)) {
+              //activity i is not after j nor before => failure
+              if (currentMinEnds(j) + ttMatrix(j)(i) > currentMaxStarts(i)) {
+                failure = true
+                return true
+              }
+              else {
+                newMinStarts(i) = math.max(currentMinEnds(j) + ttMatrix(j)(i), newMinStarts(i))
+                newMaxEnds(j) = math.min(currentMaxStarts(i) - ttMatrix(j)(i), newMaxEnds(j))
+              }
+            }
+            // activity j is after activity i
+            else {
+              if (currentMinEnds(j) + ttMatrix(j)(i) > currentMaxStarts(i)) {
+                newMinStarts(j) = math.max(currentMinEnds(i) + ttMatrix(i)(j), newMinStarts(j))
+                newMaxEnds(i) = math.min(currentMaxStarts(j) - ttMatrix(i)(j), newMaxEnds(i))
+              }
+            }
+          }
+          j += 1
+        }
+        boundChangedActivityIds.remove(i)
+      }
+      if (updateBounds())
+        domainModified = true
+    }
+    domainModified
   }
 
 
@@ -310,12 +356,13 @@ class UnaryResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: A
     var i = 0
     while (i < nTasks) {
       if (newMinStarts(i) > currentMinStarts(i)) {
-        if (starts(i).updateMin(newMinStarts(i)) == Failure || ends(i).updateMin(newMinStarts(i) + currentMinDurations(i)) == Failure) {
+        if (starts(i).updateMin(newMinStarts(i)) == CPOutcome.Failure || ends(i).updateMin(newMinStarts(i) + currentMinDurations(i)) == CPOutcome.Failure) {
           failure = true
           return true
         }
         else {
           domainModified = true
+          boundChangedActivityIds += i
           currentMinStarts(i) = newMinStarts(i)
           currentMinEnds(i) = currentMinStarts(i) + currentMinDurations(i)
           currentMaxEndsMirror(i) = -currentMinStarts(i)
@@ -324,12 +371,13 @@ class UnaryResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: A
         }
       }
       if (newMaxEnds(i) < currentMaxEnds(i)) {
-        if (ends(i).updateMax(newMaxEnds(i)) == Failure || starts(i).updateMax(newMaxEnds(i) - currentMinDurations(i)) == Failure) {
+        if (ends(i).updateMax(newMaxEnds(i)) == CPOutcome.Failure || starts(i).updateMax(newMaxEnds(i) - currentMinDurations(i)) == CPOutcome.Failure) {
           failure = true
           return true
         }
         else {
           domainModified = true
+          boundChangedActivityIds += i
           currentMaxEnds(i) = newMaxEnds(i)
           currentMaxStarts(i) = currentMaxEnds(i) - currentMinDurations(i)
           currentMinStartsMirror(i) = -currentMaxEnds(i)
@@ -351,12 +399,13 @@ class UnaryResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: A
     var i = 0
     while (i < nTasks) {
       if (updatedMinStarts(i) > startMins(i)) {
-        if (startVars(i).updateMin(updatedMinStarts(i)) == Failure || endVars(i).updateMin(updatedMinStarts(i) + currentMinDurations(i)) == Failure) {
+        if (startVars(i).updateMin(updatedMinStarts(i)) == CPOutcome.Failure || endVars(i).updateMin(updatedMinStarts(i) + currentMinDurations(i)) == CPOutcome.Failure) {
           failure = true
           return true
         }
         else {
           domainModified = true
+          boundChangedActivityIds += i
           startMins(i) = updatedMinStarts(i)
           endMins(i) = startMins(i) + currentMinDurations(i)
           endMaxsMirror(i) = -startMins(i)
@@ -379,12 +428,13 @@ class UnaryResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: A
     var i = 0
     while (i < nTasks) {
       if (updatedMaxEnds(i) < endMaxs(i)) {
-        if (endVars(i).updateMax(updatedMaxEnds(i)) == Failure || startVars(i).updateMax(updatedMaxEnds(i) - currentMinDurations(i)) == Failure) {
+        if (endVars(i).updateMax(updatedMaxEnds(i)) == CPOutcome.Failure || startVars(i).updateMax(updatedMaxEnds(i) - currentMinDurations(i)) == CPOutcome.Failure) {
           failure = true
           return true
         }
         else {
           domainModified = true
+          boundChangedActivityIds += i
           endMaxs(i) = updatedMaxEnds(i)
           startMaxs(i) = endMaxs(i) - currentMinDurations(i)
           startMinsMirror(i) = -endMaxs(i)
