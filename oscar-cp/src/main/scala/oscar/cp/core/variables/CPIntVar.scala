@@ -141,6 +141,8 @@ abstract class CPIntVar extends CPVar with Iterable[Int] {
    */
   def callPropagateWhenBoundsChange(c: Constraint): Unit
 
+  def callPropagateWhenBoundsChange(c: Constraint, cond: => Boolean): Unit
+
   /**
    * Level 1 registration: ask that the valBind(CPIntVar) method of the constraint c is called whenever
    * the domain of the variable is a singleton (i.e. isBound).

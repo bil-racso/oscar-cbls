@@ -159,6 +159,8 @@ final class CPIntVarSingleton(final override val store: CPStore, initValue: Int,
    * @see oscar.cp.core.Constraint#propagate()
    */
   final override def callPropagateWhenBoundsChange(c: Constraint): Unit = degree.incr()
+  
+  final override def callPropagateWhenBoundsChange(c: Constraint, cond: => Boolean): Unit = degree.incr()
 
   /**
    * Level 2 registration: ask that the propagate() method of the constraint c is called whenever

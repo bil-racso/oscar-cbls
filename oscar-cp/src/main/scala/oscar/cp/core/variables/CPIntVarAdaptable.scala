@@ -532,6 +532,11 @@ final class CPIntVarAdaptable( final override val store: CPStore, minValue: Int,
     onBoundsL2.register(c)
   }
 
+  final override def callPropagateWhenBoundsChange(c: Constraint, cond: => Boolean) {
+    degree.incr()
+    onBoundsL2.register(c, cond)
+  }
+  
   /**
    * Level 2 registration: ask that the propagate() method of the constraint c is called whenever
    * one of the value is removed from the domain

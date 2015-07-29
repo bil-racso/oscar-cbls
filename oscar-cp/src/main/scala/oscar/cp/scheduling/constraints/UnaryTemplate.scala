@@ -22,14 +22,23 @@ extends Constraint(store, name) {
 
     
   def setup(strength: CPPropagStrength): CPOutcome = {
-    def callbacks(a: Int) = {
-      if (!resources(a).isBound) resources(a).callPropagateWhenBind(this)    
-      if (!starts(a).isBound)    starts(a)   .callPropagateWhenBoundsChange(this)
-      if (!durations(a).isBound) durations(a).callPropagateWhenBoundsChange(this)
-      if (!ends(a).isBound)      ends(a)     .callPropagateWhenBoundsChange(this)
+    for (a <- 0 until n) {
+      if (resources(a).hasValue(id)) {
+        if (!resources(a).isBound) {
+          resources(a).callPropagateWhenBind(this)
+          val cond = { resources(a).hasValue(id) }
+          if (!starts(a).isBound)    starts(a)   .callPropagateWhenBoundsChange(this, cond)
+          if (!durations(a).isBound) durations(a).callPropagateWhenBoundsChange(this, cond)
+          if (!ends(a).isBound)      ends(a)     .callPropagateWhenBoundsChange(this, cond)
+        }
+        else {
+          if (!starts(a).isBound)    starts(a)   .callPropagateWhenBoundsChange(this)
+          if (!durations(a).isBound) durations(a).callPropagateWhenBoundsChange(this)
+          if (!ends(a).isBound)      ends(a)     .callPropagateWhenBoundsChange(this)
+        }
+      }
+      else toConsider.exclude(a)
     }
-    
-    for (a <- 0 until n) if (resources(a).hasValue(id)) callbacks(a)
     
     propagate()
   }

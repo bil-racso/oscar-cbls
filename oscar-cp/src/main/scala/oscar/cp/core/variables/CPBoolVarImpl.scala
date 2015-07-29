@@ -228,6 +228,11 @@ class CPBoolVarImpl private(final override val store: CPStore, initDomain: Int, 
     onBindL2.register(c)
   }
 
+  final override def callPropagateWhenBoundsChange(c: Constraint, cond: => Boolean) {
+    degree.incr()
+    onBindL2.register(c, cond)
+  }
+
   final override def callPropagateWhenDomainChanges(c: Constraint) {
     degree.incr()
     onBindL2.register(c)
