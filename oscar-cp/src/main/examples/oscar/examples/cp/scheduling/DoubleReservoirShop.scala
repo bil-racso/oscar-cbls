@@ -58,10 +58,10 @@ object DoubleReservoirShop extends App {
   }
 
   for (r <- 0 until nReservoirs) {
-    reservoirResource(filterByReservoir(r, startVars), filterByReservoir(r, durationVars),
+    add(reservoirResource(filterByReservoir(r, startVars), filterByReservoir(r, durationVars),
       filterByReservoir(r, endVars), filterByReservoir(r, productionVars),
       filterByReservoir(r, consumptionVars), filterByReservoir(r, temporary),
-      minCapas(r), maxCapas(r), initialAmounts(r))
+      minCapas(r), maxCapas(r), initialAmounts(r)))
   }
 
   minimize(makespan) search {

@@ -17,7 +17,6 @@ package oscar.cp.test
 import org.scalatest.FunSuite
 import org.scalatest.Matchers
 import oscar.cp._
-import oscar.cp.constraints.ReservoirResource
 import oscar.util.RandomGenerator
 
 /**
@@ -57,7 +56,7 @@ class TestReservoirResource extends FunSuite with Matchers {
     for (i <- startVars.indices) {
       add(startVars(i) + durationVars(i) == endVars(i))
     }
-    reservoirResource(startVars, durationVars, endVars, productionVars, consumptionVars, minCapacity, maxCapacity, initialAmount)
+    add(reservoirResource(startVars, durationVars, endVars, productionVars, consumptionVars, minCapacity, maxCapacity, initialAmount))
 
     startVars(0).min should be(0)
     startVars(1).min should be(10)
@@ -87,7 +86,7 @@ class TestReservoirResource extends FunSuite with Matchers {
     for (i <- startVars.indices) {
       add(startVars(i) + durationVars(i) == endVars(i))
     }
-    reservoirResource(startVars, durationVars, endVars, productionVars, consumptionVars, minCapacity, maxCapacity, initialAmount)
+    add(reservoirResource(startVars, durationVars, endVars, productionVars, consumptionVars, minCapacity, maxCapacity, initialAmount))
 
     startVars(0).min should be(1)
     startVars(1).min should be(6)
@@ -124,10 +123,10 @@ class TestReservoirResource extends FunSuite with Matchers {
         add(startVars(i) + durationVars(i) == endVars(i))
       }
       try {
-        reservoirResource(startVars, durationVars, endVars, productionVars, consumptionVars, minCapacity, maxCapacity, initialAmount)
+        add(reservoirResource(startVars, durationVars, endVars, productionVars, consumptionVars, minCapacity, maxCapacity, initialAmount))
       } catch {
         case e: NoSolutionException => // The instance is not solvable
-        case _ => println("A problem has occured")
+        case _: Throwable => println("A problem has occured")
       }
 
       onSolution{
@@ -165,10 +164,10 @@ class TestReservoirResource extends FunSuite with Matchers {
         add(startVars(i) + durationVars(i) == endVars(i))
       }
       try {
-        reservoirResource(startVars, durationVars, endVars, productionVars, consumptionVars, minCapacity, maxCapacity, initialAmount)
+        add(reservoirResource(startVars, durationVars, endVars, productionVars, consumptionVars, minCapacity, maxCapacity, initialAmount))
       } catch {
         case e: NoSolutionException => // The instance is not solvable
-        case _ => println("A problem has occured")
+        case _: Throwable => println("A problem has occured")
       }
 
       onSolution{

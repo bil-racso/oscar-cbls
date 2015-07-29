@@ -1,6 +1,8 @@
 package oscar.cp.constraints
 
 import oscar.cp._
+import oscar.cp.core.{CPOutcome, CPPropagStrength}
+import oscar.cp.core.CPOutcome.{Success, Failure}
 
 /**
  * Created on 03/06/15.
@@ -21,7 +23,7 @@ import oscar.cp._
  * @param maxCapacity The maximal capacity of the reservoir
  * @param initialAmount The initial amount of resource in the reservoir
  */
-class ReservoirResource(startVars: Array[CPIntVar], durationVars: Array[CPIntVar], endVars: Array[CPIntVar], productionVars: Array[CPIntVar], consumptionVars: Array[CPIntVar], temporaryProdCons: Array[Boolean], minCapacity: Int, maxCapacity: Int, initialAmount: Int = 0) {
+class ReservoirResource(startVars: Array[CPIntVar], durationVars: Array[CPIntVar], endVars: Array[CPIntVar], productionVars: Array[CPIntVar], consumptionVars: Array[CPIntVar], temporaryProdCons: Array[Boolean], minCapacity: Int, maxCapacity: Int, initialAmount: Int = 0) extends Constraint(startVars(0).store) {
   private[this] val nTasks = startVars.length
   private[this] val cpSolver: CPStore = startVars(0).store
   private[this] val startingPointOfTime = startVars.map(myVar => myVar.min).min
@@ -40,28 +42,17 @@ class ReservoirResource(startVars: Array[CPIntVar], durationVars: Array[CPIntVar
   private[this] val sumConsumption = consumptionVars.map(cVar => cVar.max).sum
   private[this] val cumulativeCapacity1 = CPIntVar(sumConsumption + maxCapacity - initialAmount)(cpSolver)
   private[this] val cumulativeStart1 = Array.tabulate(nTasks)(i => {
-    if (temporaryProdCons(i))
-      startVars(i)
-    else if(consumer(i))
-      CPIntVar(startingPointOfTime)(cpSolver)
-    else
-      endVars(i)
+    if (temporaryProdCons(i)) startVars(i)
+    else if(consumer(i)) CPIntVar(startingPointOfTime)(cpSolver)
+    else endVars(i)
   })
   private[this] val cumulativeEnd1 = Array.tabulate(nTasks)(i => {
-    if (temporaryProdCons(i))
-      endVars(i)
-    else if(producer(i))
-      CPIntVar(horizon)(cpSolver)
-    else
-      startVars(i)
+    if (temporaryProdCons(i)) endVars(i)
+    else if(producer(i)) CPIntVar(horizon)(cpSolver)
+    else startVars(i)
   })
   private[this] val cumulativeDuration1 = Array.tabulate(nTasks)(i => CPIntVar((cumulativeEnd1(i).min - cumulativeStart1(i).max) to (cumulativeEnd1(i).max - cumulativeStart1(i).min))(cpSolver))
   private[this] val cumulativeDemand = Array.tabulate(nTasks)(i => if(producer(i)) productionVars(i) else consumptionVars(i))
-
-  for (i <- 0 until nTasks) {
-    cpSolver.add(cumulativeStart1(i) + cumulativeDuration1(i) == cumulativeEnd1(i))
-  }
-  cpSolver.add(maxCumulativeResource(cumulativeStart1, cumulativeDuration1, cumulativeEnd1, cumulativeDemand, cumulativeCapacity1))
 
   /* Check if reservoir amount is never under its minimal capacity.
    *
@@ -91,10 +82,24 @@ class ReservoirResource(startVars: Array[CPIntVar], durationVars: Array[CPIntVar
   })
   private[this] val cumulativeDuration2 = Array.tabulate(nTasks)(i => CPIntVar((cumulativeEnd2(i).min - cumulativeStart2(i).max) to (cumulativeEnd2(i).max - cumulativeStart2(i).min))(cpSolver))
 
-  for (i <- 0 until nTasks) {
-    cpSolver.add(cumulativeStart2(i) + cumulativeDuration2(i) == cumulativeEnd2(i))
+
+  override def setup(l: CPPropagStrength): CPOutcome = {
+    for (i <- 0 until nTasks) {
+      if (cpSolver.post(cumulativeStart1(i) + cumulativeDuration1(i) == cumulativeEnd1(i)) == Failure)
+        return Failure
+    }
+    if (cpSolver.post(maxCumulativeResource(cumulativeStart1, cumulativeDuration1, cumulativeEnd1, cumulativeDemand, cumulativeCapacity1)) == Failure)
+      return Failure
+
+
+    for (i <- 0 until nTasks) {
+      if (cpSolver.post(cumulativeStart2(i) + cumulativeDuration2(i) == cumulativeEnd2(i)) == Failure)
+        return Failure
+    }
+    if (cpSolver.post(maxCumulativeResource(cumulativeStart2, cumulativeDuration2, cumulativeEnd2, cumulativeDemand, cumulativeCapacity2)) == Failure)
+      return Failure
+    Success
   }
-  cpSolver.add(maxCumulativeResource(cumulativeStart2, cumulativeDuration2, cumulativeEnd2, cumulativeDemand, cumulativeCapacity2))
 }
 
 object ReservoirResource {

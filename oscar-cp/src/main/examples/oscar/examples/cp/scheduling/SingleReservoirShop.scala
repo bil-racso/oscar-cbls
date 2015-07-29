@@ -45,7 +45,7 @@ object SingleReservoirShop extends App {
 
   val makespan = maximum(endVars)
 
-  reservoirResource(startVars, durationVars, endVars, productionVars, consumptionVars, temporary, minCapa, maxCapa, initialAmount)
+  add(reservoirResource(startVars, durationVars, endVars, productionVars, consumptionVars, temporary, minCapa, maxCapa, initialAmount))
 
   minimize(makespan) search {
     binaryFirstFail(startVars)
