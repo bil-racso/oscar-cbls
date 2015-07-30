@@ -14,7 +14,7 @@ import oscar.cp._
  * @author Sascha Van Cauwelaert (sascha.vancauwelaert@gmail.com)
  */
 class UnaryResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar]) extends Constraint(starts(0).store) {
-  idempotent = false
+  idempotent = true
 
   private[this] val nTasks = starts.length
   private[this] val thetaLambdaTree = new ThetaLambdaTree(nTasks)
@@ -50,14 +50,8 @@ class UnaryResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: A
   private[this] val formerMinEnds : Array[ReversibleInt] = Array.fill(nTasks)(new ReversibleInt(starts(0).store,Int.MaxValue))
   private[this] val formerMaxStarts : Array[ReversibleInt] = Array.fill(nTasks)(new ReversibleInt(starts(0).store,Int.MinValue))
 
-  //private[this] val boundChangedActivityIds: mutable.BitSet = new mutable.BitSet()
-
-  //array to map a value to its index (tree insertion order mapped to est order)
-  //private[this] val indexOfInOrderedEstsIds = Array.fill(nTasks)(-1)
-
   private[this] var failure = false
   private[this] var changed = true
-
 
 
   override def setup(l: CPPropagStrength): CPOutcome = {
@@ -65,16 +59,12 @@ class UnaryResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: A
       starts(i).callPropagateWhenBoundsChange(this)
       ends(i).callPropagateWhenBoundsChange(this)
     }
-
     propagate()
   }
 
-  //TODO : USE A SPARSE SET INSTEAD OF HASHSET
   override def propagate(): CPOutcome = {
-
     failure = false
     changed = true
-
 
     var i = 0
     while(i < nTasks) {
@@ -95,7 +85,7 @@ class UnaryResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: A
     }
 
     while(!failure && changed) {
-      if (OC() || DP() || NFNL() || EF()) {
+      if (DP() || NFNL() || EF()) {
         changed = true
       }
       else
@@ -114,35 +104,6 @@ class UnaryResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: A
       Suspend
     }
 
-  }
-
-  @inline
-  private def OC(): Boolean = overloadChecking(currentMinStarts, currentMaxEnds, thetaLambdaTree, indexByIncreasingMinStarts, indexByIncreasingMaxEnds) || overloadChecking(currentMinStartsMirror, currentMaxEndsMirror, thetaLambdaTreeMirror, indexByIncreasingMinStartMirror, indexByIncreasingMaxEndMirror)
-
-
-  /**
-   * returns true if some domain is changed (here failure), false otherwise
-   */
-  @inline
-  private def overloadChecking(startMins : Array[Int], endMaxs : Array[Int], tree : ThetaLambdaTree, orderedMinStartIds : Array[Int], orderedMaxEndIds : Array[Int]): Boolean = {
-    // Clearing the tree
-    mergeSort(orderedMinStartIds, startMins)
-    tree.clearAndPlaceLeaves(orderedMinStartIds, startMins, currentMinDurations)
-
-    //sorting activities in non-decreasing lct
-    mergeSort(orderedMaxEndIds, endMaxs)
-
-    var i = 0
-    while (i < nTasks) {
-      tree.insert(orderedMaxEndIds(i))
-      if(tree.ect > endMaxs(orderedMaxEndIds(i))) {
-        failure = true
-        return true
-      }
-      i += 1
-    }
-
-    false
   }
 
   @inline
