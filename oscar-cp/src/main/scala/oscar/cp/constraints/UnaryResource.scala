@@ -108,10 +108,10 @@ class UnaryResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: A
 
   @inline
   private def DP(): Boolean = {
-    detectablePrecedences(currentMinStarts, currentMaxStarts, currentMinEnds,
+    (detectablePrecedences(currentMinStarts, currentMaxStarts, currentMinEnds,
       currentMaxStartsMirror, currentMaxEndsMirror, newMinStarts, newMaxEndsMirror,
       starts, ends, thetaLambdaTree,
-      indexByIncreasingMinStarts, indexByIncreasingMaxStarts, indexByIncreasingMinEnds) ||
+      indexByIncreasingMinStarts, indexByIncreasingMaxStarts, indexByIncreasingMinEnds) && !failure) |
       detectablePrecedences(currentMinStartsMirror, currentMaxStartsMirror, currentMinEndsMirror,
         currentMaxStarts, currentMaxEnds, newMinStartsMirror, newMaxEnds,
         startsMirror, endsMirror, thetaLambdaTreeMirror,
@@ -119,7 +119,7 @@ class UnaryResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: A
   }
 
   /**
-   * returns true if some domain is changed (here failure), false otherwise
+   * returns true if some domain is changed, false otherwise
    */
   @inline
   private def detectablePrecedences(startMins : Array[Int], startMaxs: Array[Int], endMins : Array[Int],
@@ -137,14 +137,13 @@ class UnaryResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: A
     //sorting activities in non-decreasing ect
     mergeSort(orderedMinEndIds, endMins)
 
-    var i, q = 0
+    var i, j = 0
     while (i < nTasks) {
       val ectIndex = orderedMinEndIds(i)
-      while (q < nTasks && endMins(ectIndex) > startMaxs(orderedMaxStartIds(q))) {
-        tree.insert(orderedMaxStartIds(q))
-        q += 1
+      while (j < nTasks && endMins(ectIndex) > startMaxs(orderedMaxStartIds(j))) {
+        tree.insert(orderedMaxStartIds(j))
+        j += 1
       }
-
       updatedMinStarts(ectIndex) = math.max(updatedMinStarts(ectIndex), tree.ectWithoutActivity(ectIndex))
       i += 1
     }
@@ -154,10 +153,10 @@ class UnaryResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: A
 
   @inline
   private def NFNL(): Boolean = {
-    notLast(currentMinStarts, currentMaxStarts, currentMaxEnds,
+    (notLast(currentMinStarts, currentMaxStarts, currentMaxEnds,
             currentMinStartsMirror, currentMinEndsMirror, newMaxEnds, newMinStartsMirror,
             starts, ends, thetaLambdaTree,
-            indexByIncreasingMinStarts, indexByIncreasingMaxStarts, indexByIncreasingMaxEnds) ||
+            indexByIncreasingMinStarts, indexByIncreasingMaxStarts, indexByIncreasingMaxEnds) && !failure) |
     notLast(currentMinStartsMirror, currentMaxStartsMirror, currentMaxEndsMirror,
             currentMinStarts, currentMinEnds, newMaxEndsMirror, newMinStarts,
             startsMirror, endsMirror, thetaLambdaTreeMirror,
@@ -165,7 +164,7 @@ class UnaryResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: A
   }
 
   /**
-   * returns true if some domain is changed (here failure), false otherwise
+   * returns true if some domain is changed, false otherwise
    */
   @inline
   private def notLast(startMins : Array[Int], startMaxs : Array[Int], endMaxs : Array[Int],
@@ -207,10 +206,10 @@ class UnaryResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: A
 
   @inline
   private def EF() : Boolean = {
-    edgeFinding(currentMinStarts, currentMaxEnds, currentMinEnds,
+    (edgeFinding(currentMinStarts, currentMaxEnds, currentMinEnds,
                 currentMaxStartsMirror,currentMaxEndsMirror, newMinStarts, newMaxEndsMirror,
                 starts, ends, thetaLambdaTree,
-                indexByIncreasingMinStarts, indexByIncreasingMaxEnds) ||
+                indexByIncreasingMinStarts, indexByIncreasingMaxEnds) && ! failure) |
     edgeFinding(currentMinStartsMirror, currentMaxEndsMirror, currentMinEndsMirror,
                 currentMaxStarts, currentMaxEnds, newMinStartsMirror, newMaxEnds,
                 startsMirror,endsMirror, thetaLambdaTreeMirror,
@@ -218,7 +217,7 @@ class UnaryResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: A
   }
 
   /**
-   * returns true if some domain is changed (here failure), false otherwise
+   * returns true if some domain is changed, false otherwise
    */
   @inline
   private def edgeFinding(startMins : Array[Int], endMaxs : Array[Int], endMins : Array[Int],
@@ -259,48 +258,6 @@ class UnaryResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: A
     }
 
     updateMins(startMins, endMins, startMaxsMirror, endMaxsMirror, updatedMinStarts, updatedMaxEndsMirror, startVars, endVars)
-  }
-
-
-  /**
-   * returns true if some domain is changed, false otherwise
-   */
-  @inline
-  private def updateBounds(): Boolean = {
-    var domainModified = false
-    var i = 0
-    while (i < nTasks) {
-      if (newMinStarts(i) > currentMinStarts(i)) {
-        if (starts(i).updateMin(newMinStarts(i)) == Failure || ends(i).updateMin(newMinStarts(i) + currentMinDurations(i)) == Failure) {
-          failure = true
-          return true
-        }
-        else {
-          domainModified = true
-          currentMinStarts(i) = newMinStarts(i)
-          currentMinEnds(i) = currentMinStarts(i) + currentMinDurations(i)
-          currentMaxEndsMirror(i) = -currentMinStarts(i)
-          currentMaxStartsMirror(i) = -currentMinEnds(i)
-          newMaxEndsMirror(i) = - newMinStarts(i)
-        }
-      }
-      if (newMaxEnds(i) < currentMaxEnds(i)) {
-        if (ends(i).updateMax(newMaxEnds(i)) == Failure || starts(i).updateMax(newMaxEnds(i) - currentMinDurations(i)) == Failure) {
-          failure = true
-          return true
-        }
-        else {
-          domainModified = true
-          currentMaxEnds(i) = newMaxEnds(i)
-          currentMaxStarts(i) = currentMaxEnds(i) - currentMinDurations(i)
-          currentMinStartsMirror(i) = -currentMaxEnds(i)
-          currentMinEndsMirror(i) = -currentMaxStarts(i)
-          newMinStartsMirror(i) = - newMaxEnds(i)
-        }
-      }
-      i += 1
-    }
-    domainModified
   }
 
   /**

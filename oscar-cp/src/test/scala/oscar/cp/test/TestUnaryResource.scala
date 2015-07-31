@@ -14,15 +14,14 @@
  ******************************************************************************/
 package oscar.cp.test
 
-import org.scalatest.FunSuite
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.{Matchers, FunSuite}
 import oscar.cp._
 import oscar.cp.constraints.{UnaryResourceWithOptionalActivities, UnaryResource}
 
 /**
  * @author Pierre Schaus pschaus@gmail.com
  */
-class TestUnaryResource extends FunSuite with ShouldMatchers {
+class TestUnaryResource extends FunSuite with Matchers {
 
   // decomp without resource variables
   def decomp(cp: CPSolver, starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar]): Unit = {
