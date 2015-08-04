@@ -17,7 +17,8 @@ package oscar.cp.core.variables
 import scala.util.Random
 import oscar.cp.core.CPStore
 import oscar.cp.core.Constraint
-import oscar.cp.core.Watcher
+import oscar.cp.core.watcher.Watcher
+import oscar.cp.core.delta.DeltaIntVar
 
 /**
  * Represents a view on variable applying an offset on it.
@@ -98,10 +99,26 @@ class CPIntVarViewOffset(v: CPIntVar, offset: Int) extends CPIntVar {
 	final override def callPropagateWhenBind(c: Constraint) = v.callPropagateWhenBind(c)
 	
 	final override def callPropagateWhenBoundsChange(c: Constraint) = v.callPropagateWhenBoundsChange(c)
-	
-	final override def callPropagateWhenDomainChanges(c: Constraint, trackDelta: Boolean = false) = v.callPropagateWhenDomainChanges(c,trackDelta)
   
-  final override def callPropagateWhenDomainChanges(c: Constraint, watcher: Watcher) = v.callPropagateWhenDomainChanges(c,watcher)
+  final override def callPropagateWhenBoundsChange(c: Constraint, cond: => Boolean): Unit = v.callPropagateWhenBoundsChange(c, cond)
+  
+	final override def callPropagateWhenDomainChanges(c: Constraint): Unit = v.callPropagateWhenDomainChanges(c)
+  
+  final override def callPropagateWhenDomainChanges(c: Constraint, cond: => Boolean): Unit = v.callPropagateWhenDomainChanges(c, cond)
+
+  final override def callPropagateOnChangesWithDelta(c: Constraint): DeltaIntVar = {
+    val snap = delta(c)
+    v.callPropagateWhenDomainChanges(c)
+    snap
+  }
+  
+  final override def callPropagateOnChangesWithDelta(c: Constraint, cond: => Boolean): DeltaIntVar = {
+    val snap = delta(c)
+    v.callPropagateWhenDomainChanges(c, cond)
+    snap
+  }
+  
+  final override def awakeOnChanges(watcher: Watcher): Unit = v.awakeOnChanges(watcher)
 	
 	// this method is useful when you have a view final override defined on a view
 	final override def callValBindWhenBind(c: Constraint, variable: CPIntVar) = v.callValBindWhenBind(c, variable)
@@ -149,36 +166,5 @@ class CPIntVarViewOffset(v: CPIntVar, offset: Int) extends CPIntVar {
     }
     m
   }   
-	
-	final override def changed(c: Constraint): Boolean = v.changed(c)
-	
-	final override def minChanged(c: Constraint): Boolean = v.minChanged(c)
-	
-	final override def maxChanged(c: Constraint): Boolean = v.maxChanged(c)
-	
-	final override def boundsChanged(c: Constraint): Boolean = v.boundsChanged(c)
-	
-	final override def oldMin(c: Constraint): Int = v.oldMin(c) + offset
-	
-	final override def oldMax(c: Constraint): Int = v.oldMax(c) + offset
-	
-	final override def oldSize(c: Constraint): Int = v.oldSize(c)
-	
-	final override def deltaSize(c: Constraint): Int = v.deltaSize(c)
-	
-	final override def delta(c: Constraint): Iterator[Int] = {
-	  v.delta(c).map(_ + offset)
-	}
-  
-  final override def fillDeltaArray(c: Constraint, arr: Array[Int]): Int = { 
-    val m = v.fillDeltaArray(c,arr)
-    var i = 0
-    while (i < m) {
-      arr(i) += offset
-      i += 1
-    }
-    m
-  }
-	
 }
   

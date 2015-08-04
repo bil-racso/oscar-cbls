@@ -47,6 +47,7 @@ final class OverloadCheckerExtended(starts: Array[CPIntVar], durations: Array[CP
 extends CumulativeTemplate(starts, durations, ends, heights, resources, capacity, id, "OverloadCheckerExtended")
 {  
   priorityL2 = 2
+//  idempotent = true
   private[this] val nTasks = starts.length
   
   private def nextPowerOfTwo(k: Int): Int = {
@@ -68,12 +69,11 @@ extends CumulativeTemplate(starts, durations, ends, heights, resources, capacity
   private[this] val energy      = Array.ofDim[Int](2 * nextPowerOfTwo(nTasks))   // base energy level
   private[this] val workloadOpt = Array.ofDim[Int](2 * nextPowerOfTwo(nTasks))   // maximum workload of this node using at most one optional
   private[this] val energyOpt   = Array.ofDim[Int](2 * nextPowerOfTwo(nTasks))   // maximum energy of an optional activity at this node
-  private[this] val activityOpt = Array.ofDim[Int](2 * nextPowerOfTwo(nTasks))   // optional activity with max energy
   
 
   private[this] val activitiesByLCT = Array.ofDim[Int](nTasks)  // required activities
-  private[this] val leafActivity = Array.ofDim[Int](nTasks)  // leaf -> activity
-  private[this] val activityLeaf = Array.ofDim[Int](nTasks)  // activity -> leaf
+  private[this] val leafActivity    = Array.ofDim[Int](nTasks)  // leaf -> activity
+  private[this] val activityLeaf    = Array.ofDim[Int](nTasks)  // activity -> leaf
   private var C = capacity.max
   
   // for mergeSort
@@ -181,7 +181,7 @@ extends CumulativeTemplate(starts, durations, ends, heights, resources, capacity
         workloadOpt(opt) = 0
         energyOpt(opt)      = Int.MinValue
         insertActivity(opt/2)
-        return Suspend
+//        return Suspend
       }
 
       p += 1

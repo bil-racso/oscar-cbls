@@ -12,6 +12,8 @@ import oscar.cp.core.CPStore
 import oscar.cp.core.Constraint
 import oscar.cp.core.watcher.WatcherListL2
 import oscar.cp.core.watcher.WatcherListL1
+import oscar.cp.core.watcher.Watcher
+import oscar.cp.core.delta.DeltaIntVar
 
 /**
  * @author Renaud Hartert ren.hartert@gmail.com
@@ -226,14 +228,39 @@ class CPBoolVarImpl private(final override val store: CPStore, initDomain: Int, 
     onBindL2.register(c)
   }
 
-  final override def callPropagateWhenDomainChanges(c: Constraint, trackDelta: Boolean = false) {
+  final override def callPropagateWhenBoundsChange(c: Constraint, cond: => Boolean) {
+    degree.incr()
+    onBindL2.register(c, cond)
+  }
+
+  final override def callPropagateWhenDomainChanges(c: Constraint) {
     degree.incr()
     onBindL2.register(c)
-    if (trackDelta) c.addSnapshot(this)
   }
   
-  def callPropagateWhenDomainChanges(c: Constraint, watcher: oscar.cp.core.Watcher): Unit = ???
+  final override def callPropagateOnChangesWithDelta(c: Constraint): DeltaIntVar = {
+    val snap = delta(c)
+    degree.incr()
+    onBindL2.register(c)
+    snap
+  }
+  
+  final override def callPropagateOnChangesWithDelta(c: Constraint, cond: => Boolean): DeltaIntVar = {
+    val snap = delta(c)
+    degree.incr()
+    onBindL2.register(c, cond)
+    snap
+  }
+  
+  def callPropagateWhenDomainChanges(c: Constraint, cond: => Boolean): Unit = {
+    degree.incr()
+    onBindL2.register(c, cond)
+  }
 
+  def awakeOnChanges(watcher: Watcher): Unit = {
+    degree.incr()
+    onBindL2.register(watcher)
+  }
 
   final override def callValBindWhenBind(c: Constraint) {
     callValBindWhenBind(c, this)
@@ -294,24 +321,6 @@ class CPBoolVarImpl private(final override val store: CPStore, initDomain: Int, 
   final override def fillDeltaArray(oldMin: Int, oldMax: Int, oldSize: Int, arr: Array[Int]): Int = ???
 
   final override def delta(oldMin: Int, oldMax: Int, oldSize: Int): Iterator[Int] = ???
-
-  final override def changed(c: Constraint): Boolean = ???
-
-  final override def minChanged(c: Constraint): Boolean = ???
-
-  final override def maxChanged(c: Constraint): Boolean = ???
-
-  final override def boundsChanged(c: Constraint): Boolean = ???
-
-  final override def oldMin(c: Constraint): Int = ???
-
-  final override def oldMax(c: Constraint): Int = ???
-
-  final override def oldSize(c: Constraint): Int = ???
-
-  final override def deltaSize(c: Constraint): Int = ???
-
-  final override def delta(c: Constraint): Iterator[Int] = ???
 }
 
 object CPBoolVarImpl {

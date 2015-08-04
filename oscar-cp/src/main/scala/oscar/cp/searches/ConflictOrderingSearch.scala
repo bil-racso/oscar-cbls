@@ -1,10 +1,9 @@
 package oscar.cp.searches
 
-import oscar.cp.core.CPStore
 import oscar.algo.reversible.ReversibleInt
-import oscar.cp.CPIntVar
-import oscar.algo.search.Branching
-import oscar.cp.modeling.Branchings
+import oscar.cp.core.CPStore
+import oscar.cp.core.variables.CPIntVar
+import oscar.algo.search._
 
 /*
  *  Conflict Ordering Search, basically orders the variables by latest conflict
@@ -16,12 +15,17 @@ object ConflictOrderingSearch {
     new ConflictOrderingSearch(variables, varHeuristic, valHeuristic, doReset)
 }
 
-class ConflictOrderingSearch(variables: Array[CPIntVar], varHeuristic: (Int) => Int, valHeuristic: (Int) => Int, doReset: Boolean = false)(implicit S: CPStore) extends Branching with Branchings {  
+class ConflictOrderingSearch(variables: Array[CPIntVar], varHeuristic: (Int) => Int, valHeuristic: (Int) => Int, doReset: Boolean = false) extends Branching {  
+  
+  require(variables.length > 0)
+  
+  private[this] val store = variables(0).store
+  
   var lastVariables = List[Int]()
   
   var lastVariable: Option[Int] = None
   var lastDepth = 0
-  val depth = new ReversibleInt(S, 0)
+  val depth = new ReversibleInt(store, 0)
   
   override def reset() = {
     lastVariable = None
@@ -49,7 +53,7 @@ class ConflictOrderingSearch(variables: Array[CPIntVar], varHeuristic: (Int) => 
       if (!x.isBound) {
         lastVariable = Some(i)
         val value = valHeuristic(i)
-        val alternatives = branch { S.post(x == value) } { S.post(x != value) }
+        val alternatives = branch { store.post(x == value) } { store.post(x != value) }
         return alternatives        
       }
     }
@@ -78,7 +82,7 @@ class ConflictOrderingSearch(variables: Array[CPIntVar], varHeuristic: (Int) => 
       lastVariable = Some(bestVar)
       val x = variables(bestVar)
       val value = valHeuristic(bestVar)
-      val alternatives = branch { S.post(x == value) } { S.post(x != value) }
+      val alternatives = branch { store.post(x == value) } { store.post(x != value) }
       alternatives        
     }
   }

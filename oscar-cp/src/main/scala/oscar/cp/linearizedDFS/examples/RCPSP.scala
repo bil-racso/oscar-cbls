@@ -1,6 +1,8 @@
 package oscar.cp.linearizedDFS.examples
 
-import oscar.cp.constraints.{CPObjective, CPObjectiveUnitMinimize, EnergeticReasoning, SweepMaxCumulative}
+import oscar.cp.constraints.{CPObjective, CPObjectiveUnitMinimize}
+import oscar.cp.scheduling.constraints.SweepMaxCumulative
+import oscar.cp.scheduling.constraints.EnergeticReasoning
 import oscar.cp.linearizedDFS.{DFSLinearizerSearch, DFSReplayer, Tracking}
 import oscar.cp.linearizedDFS.branching.SetTimesBranchingToReplay
 import oscar.cp._

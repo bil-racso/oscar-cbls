@@ -19,16 +19,17 @@ package oscar.cp.constraints.tables
 
 import oscar.algo.reversible.{ ReversibleInt, ReversibleBoolean, TrailEntry }
 import oscar.cp.core.variables.CPIntVar
-import oscar.cp.core.{ Constraint, CPStore, CPOutcome, CPPropagStrength, DeltaVarInt }
+import oscar.cp.core.{ Constraint, CPStore, CPOutcome, CPPropagStrength }
 import oscar.cp.core.CPOutcome._
-
 import scala.collection.mutable.ArrayBuffer
+import oscar.cp.core.delta.DeltaIntVar
 
 /**
  * Implementation of the Compact Table algorithm (CT) for the table constraint.
  * @param X the variables restricted by the constraint.
  * @param table the list of tuples composing the table.
  * @author Jordan Demeulenaere j.demeulenaere1@gmail.com
+ * @author Renaud Hartert ren.hartert@gmail.com
  */
 
 /* Trailable entry to restore the value of the ith Long of the valid tuples */
@@ -56,26 +57,25 @@ final class TableCT(X: Array[CPIntVar], table: Array[Array[Int]]) extends Constr
   private[this] var nbLongs = 0
   private[this] val validTuplesBuffer = ArrayBuffer[Int]()
   private[this] var validTuples: Array[Long] = null
-  private[this] val masks = Array.tabulate(arity)(i => Array.fill(spans(i))(null: Array[Long]))
-  private[this] val starts = Array.tabulate(arity)(i => Array.fill(spans(i))(0))
-  private[this] val ends = Array.tabulate(arity)(i => Array.fill(spans(i))(0))
+  private[this] val masks = Array.tabulate(arity)(i => new Array[Array[Long]](spans(i)))
   private[this] var lastMagics: Array[Long] = null
   private[this] var tempMask: Array[Long] = null
 
+  /* We keep the valid longs in a sparse set */
+  private[this] var validLongs: Array[Int] = null
+  private[this] val nValidLongsRev = new ReversibleInt(s, 0)
+  private[this] var nValidLongs: Int = 0
+
   /* Structures for the improvements */
   private[this] var touchedVar = -1
-  private[this] val firstActive = new ReversibleInt(store, 0)
-  private[this] val lastActive = new ReversibleInt(store, -1)
-  private[this] val lastSupports = Array.tabulate(arity)(i => Array.fill(spans(i))(0))
+  private[this] val lastSupports = Array.tabulate(arity)(i => new Array[Int](spans(i)))
   private[this] val lastSizes = Array.fill(arity)(new ReversibleInt(store, 0))
   private[this] val needPropagate = new ReversibleBoolean(store, false)
 
   override def setup(l: CPPropagStrength): CPOutcome = {
 
     /* Retrieve the current valid tuples */
-    if (fillValidTuples() == Failure) {
-      return Failure
-    }
+    if (fillValidTuples() == Failure) return Failure
 
     /* Compute the masks for each (x,a) pair */
     fillMasks()
@@ -85,15 +85,11 @@ final class TableCT(X: Array[CPIntVar], table: Array[Array[Int]]) extends Constr
       return Failure
     }
 
-    /* Compute the boundaries of the bitsets */
-    computeMasksBoundaries()
-
     /* Call propagate() and update(x, delta) when domains change */
     var i = 0
     while (i < arity) {
       val x = X(i)
-      val varIndex = i
-      x.filterWhenDomainChangesWithDelta(idempotent = true, CPStore.MaxPriorityL2)(delta => updateDelta(x, varIndex, delta))
+      x.callOnChanges(i, s => updateDelta(s))
       x.callPropagateWhenDomainChanges(this)
       lastSizes(i).setValue(x.size)
       i += 1
@@ -109,88 +105,83 @@ final class TableCT(X: Array[CPIntVar], table: Array[Array[Int]]) extends Constr
    * @param delta the set of values removed since the last call.
    * @return the outcome i.e. Failure or Success.
    */
-  @inline private def updateDelta(intVar: CPIntVar, varIndex: Int, delta: DeltaVarInt): CPOutcome = {
-    /* No need to update validTuples if there was no modification since last propagate() */
-    if (intVar.size == lastSizes(varIndex).value) {
-      return Suspend
-    }
+  @inline private def updateDelta(delta: DeltaIntVar): CPOutcome = {
 
-    /* Update the bounds of validTuples */
-    if (updateFirstAndLast() == Failure) {
-      return Failure
-    }
+    val intVar = delta.variable
+    val varIndex = delta.id
+    
+    /* No need to update validTuples if there was no modification since last propagate() */
+    if (intVar.size == lastSizes(varIndex).value) return Suspend
+
+    // Cache reversible values
+    nValidLongs = nValidLongsRev.value
 
     var changed = false
     val originalMin = originalMins(varIndex)
     val varSize = intVar.size
+    val varMin = intVar.min
 
     /* Update the value of validTuples by considering D(x) or delta */
     lastSizes(varIndex).setValue(varSize)
     if (varSize == 1) {
       /* The variable is assigned */
-      setTempMask(varIndex, intVar.min - originalMin)
-      changed = andTempMaskWithValid()
-    } else if (varSize == 2) {
-      /* The variable has only two values */
-      setTempMask(varIndex, intVar.min - originalMin)
-      orTempMask(varIndex, intVar.max - originalMin)
+      setTempMask(varIndex, varMin - originalMin)
       changed = andTempMaskWithValid()
     } else {
-      clearTempMask()
-      if (delta.size() < varSize) {
-        /* Use delta to update validTuples */
-        domainArraySize = delta.fillArray(domainArray)
-        var i = 0
-        while (i < domainArraySize) {
-          orTempMask(varIndex, domainArray(i) - originalMin)
-          i += 1
-        }
-        changed = substractTempMaskFromValid()
+      val varMax = intVar.max
+      if (varSize == 2) {
+        /* The variable has only two values */
+        setTempMask(varIndex, varMin - originalMin)
+        orTempMask(varIndex, varMax - originalMin)
+        changed = andTempMaskWithValid()
       } else {
-        /* Use domain to update validTuples */
-        val varMin = intVar.min
-        val varMax = intVar.max
-        if (varMax - varMin + 1 == varSize) {
-          /* The domain is an interval */
-          var value = varMin
-          while (value <= varMax) {
-            orTempMask(varIndex, value - originalMin)
-            value += 1
-          }
-        } else {
-          /* The domain is sparse */
-          domainArraySize = intVar.fillArray(domainArray)
+        clearTempMask()
+        if (delta.size < varSize) {
+          /* Use delta to update validTuples */
+          domainArraySize = delta.fillArray(domainArray)
           var i = 0
           while (i < domainArraySize) {
             orTempMask(varIndex, domainArray(i) - originalMin)
             i += 1
           }
+          changed = substractTempMaskFromValid()
+        } else {
+          /* Use domain to update validTuples */
+          if (varMax - varMin + 1 == varSize) {
+            /* The domain is an interval */
+            var value = varMin
+            while (value <= varMax) {
+              orTempMask(varIndex, value - originalMin)
+              value += 1
+            }
+          } else {
+            /* The domain is sparse */
+            domainArraySize = intVar.fillArray(domainArray)
+            var i = 0
+            while (i < domainArraySize) {
+              orTempMask(varIndex, domainArray(i) - originalMin)
+              i += 1
+            }
+          }
+          changed = andTempMaskWithValid()
         }
-        changed = andTempMaskWithValid()
       }
     }
 
     /* If validTuples has changed, we need to perform a consistency check by propagate() */
     if (changed) {
-      val first = firstActive.value
-      val last = lastActive.value
-      var offset = first
-      /* We first check if at least one tuple is valid */
-      while (offset <= last) {
-        if (validTuples(offset) != 0) {
-          /* We check if x was the only modified variable since last propagate() */
-          if (touchedVar == -1 || touchedVar == varIndex) {
-            touchedVar = varIndex
-          } else {
-            touchedVar = -2
-          }
-          needPropagate.setTrue()
-          return Suspend
-        }
-        offset += 1
-      }
-      return Failure
+      /* Failure if there are no more valid tuples */
+      if (nValidLongs == 0) return Failure
+
+      /* We check if x was the only modified variable since last propagate() */
+      if (touchedVar == -1 || touchedVar == varIndex) touchedVar = varIndex
+      else touchedVar = -2
+      
+      needPropagate.setTrue()
     }
+
+    // Trail reversibles
+    nValidLongsRev.value = nValidLongs
 
     Suspend
   }
@@ -201,15 +192,12 @@ final class TableCT(X: Array[CPIntVar], table: Array[Array[Int]]) extends Constr
    * @return the outcome i.e. Failure or Success.
    */
   override def propagate(): CPOutcome = {
-    /* No need for the check if validTuples has not changed */
-    if (!needPropagate.value) {
-      return Suspend
-    }
 
-    /* Update the bounds of validTuples */
-    if (updateFirstAndLast() == Failure) {
-      return Failure
-    }
+    // No need for the check if validTuples has not changed 
+    if (!needPropagate.value) return Suspend
+
+    // Cache reversible values
+    nValidLongs = nValidLongsRev.value
 
     if (touchedVar == -2) {
       touchedVar = -1
@@ -285,34 +273,14 @@ final class TableCT(X: Array[CPIntVar], table: Array[Array[Int]]) extends Constr
     }
 
     needPropagate.setFalse()
+
+    // Trail reversibles
+    nValidLongsRev.value = nValidLongs
+
     Suspend
   }
 
   /* ----- Functions used during propagation ----- */
-
-  /**
-   * Update the bounds of validTuples, i.e. the two extreme indexes i such that validTuples[i] != 0.
-   * @return the outcome i.e. Failure or Success.
-   */
-  @inline private def updateFirstAndLast(): CPOutcome = {
-    var first = firstActive.value
-    var last = lastActive.value
-    while (first <= last && validTuples(first) == 0) {
-      first += 1
-    }
-
-    if (first > last) {
-      return Failure
-    }
-
-    while (last > first && validTuples(last) == 0) {
-      last -= 1
-    }
-
-    firstActive.setValue(first)
-    lastActive.setValue(last)
-    Suspend
-  }
 
   /**
    * Check wether a variable value (x,a) is supported by the current validTuples.
@@ -331,25 +299,15 @@ final class TableCT(X: Array[CPIntVar], table: Array[Array[Int]]) extends Constr
     /* We check the equations
      *         mask(x,a) & validTuples != 0
      * only for the relevant parts of the bitsets. */
-    val loopStart = Math.max(firstActive.value, starts(varIndex)(valueIndex))
-    val loopEnd = Math.min(lastActive.value, ends(varIndex)(valueIndex))
-    var offset = support + 1
-    while (offset <= loopEnd) {
+    var i = nValidLongs
+    while (i > 0) {
+      i -= 1
+      val offset = validLongs(i)
       if ((mask(offset) & validTuples(offset)) != 0) {
         /* We found a support and we store the index of the Long where the support is */
         lastSupports(varIndex)(valueIndex) = offset
         return true
       }
-      offset += 1
-    }
-
-    offset = loopStart
-    while (offset < support) {
-      if ((mask(offset) & validTuples(offset)) != 0) {
-        lastSupports(varIndex)(valueIndex) = offset
-        return true
-      }
-      offset += 1
     }
 
     false
@@ -387,12 +345,11 @@ final class TableCT(X: Array[CPIntVar], table: Array[Array[Int]]) extends Constr
    */
   @inline private def orTempMask(varIndex: Int, valueIndex: Int): Unit = {
     val mask = masks(varIndex)(valueIndex)
-    val start = Math.max(firstActive.value, starts(varIndex)(valueIndex))
-    val end = Math.min(lastActive.value, ends(varIndex)(valueIndex))
-    var offset = start
-    while (offset <= end) {
+    var i = nValidLongs
+    while (i > 0) {
+      i -= 1
+      val offset = validLongs(i)
       tempMask(offset) |= mask(offset)
-      offset += 1
     }
   }
 
@@ -402,18 +359,16 @@ final class TableCT(X: Array[CPIntVar], table: Array[Array[Int]]) extends Constr
    * @return true if validTuples has changed, false otherwise.
    */
   @inline private def andTempMaskWithValid(): Boolean = {
-    val first = firstActive.value
-    val last = lastActive.value
     var changed = false
-    var offset = first
-    while (offset <= last) {
-      val notTempMask = ~tempMask(offset)
-      val offsetValue = validTuples(offset)
-      if ((notTempMask & offsetValue) != 0) {
-        andValidTuples(offset, tempMask(offset))
+    var i = nValidLongs
+    while (i > 0) {
+      i -= 1
+      val offset = validLongs(i)
+      val tempMaskOffset = tempMask(offset)
+      if ((~tempMaskOffset & validTuples(offset)) != 0) {
+        andValidTuples(i, offset, tempMaskOffset)
         changed = true
       }
-      offset += 1
     }
     changed
   }
@@ -424,16 +379,16 @@ final class TableCT(X: Array[CPIntVar], table: Array[Array[Int]]) extends Constr
    * @return true if validTuples has changed, false otherwise.
    */
   @inline private def substractTempMaskFromValid(): Boolean = {
-    val first = firstActive.value
-    val last = lastActive.value
     var changed = false
-    var offset = first
-    while (offset <= last) {
-      if ((tempMask(offset) & validTuples(offset)) != 0) {
-        andValidTuples(offset, ~tempMask(offset))
+    var i = nValidLongs
+    while (i > 0) {
+      i -= 1
+      val offset = validLongs(i)
+      val tempMaskOffset = tempMask(offset)
+      if ((tempMaskOffset & validTuples(offset)) != 0) {
+        andValidTuples(i, offset, ~tempMaskOffset)
         changed = true
       }
-      offset += 1
     }
     changed
   }
@@ -445,13 +400,23 @@ final class TableCT(X: Array[CPIntVar], table: Array[Array[Int]]) extends Constr
    * @param offset the index of the Long in validTuples to change.
    * @param mask the mask to apply.
    */
-  @inline private def andValidTuples(offset: Int, mask: Long): Unit = {
+  @inline private def andValidTuples(position: Int, offset: Int, mask: Long): Unit = {
+    
     val storeMagic = store.magic
     if (lastMagics(offset) != storeMagic) {
       lastMagics(offset) = storeMagic
       trail(offset)
     }
-    validTuples(offset) &= mask
+    
+    val newLong = validTuples(offset) & mask
+    validTuples(offset) = newLong
+
+    // Remove the long from the set if
+    if (newLong == 0) {
+      nValidLongs -= 1
+      validLongs(position) = validLongs(nValidLongs)
+      validLongs(nValidLongs) = offset
+    }
   }
 
   /**
@@ -526,7 +491,8 @@ final class TableCT(X: Array[CPIntVar], table: Array[Array[Int]]) extends Constr
     tempMask = Array.fill(nbLongs)(0L)
     validTuples = Array.fill(nbLongs)(0L)
     lastMagics = Array.fill(nbLongs)(-1L)
-    lastActive.setValue(nbLongs - 1)
+    validLongs = Array.tabulate(nbLongs)(i => i)
+    nValidLongsRev.value = nbLongs
 
     var validIndex = 0
     while (validIndex < validTuplesBuffer.length) {
@@ -552,34 +518,6 @@ final class TableCT(X: Array[CPIntVar], table: Array[Array[Int]]) extends Constr
     }
 
     validTuplesBuffer.clear()
-  }
-
-  /**
-   * Compute the bounds of the masks for each variable value pair (x,a), i.e. the minimal and maximal i such that
-   *      mask(x,a) != 0
-   */
-  @inline private def computeMasksBoundaries(): Unit = {
-    var varIndex = 0
-    while (varIndex < arity) {
-      var valueIndex = 0
-      while (valueIndex < spans(varIndex)) {
-        val mask = masks(varIndex)(valueIndex)
-        if (mask != null) {
-          starts(varIndex)(valueIndex) = 0
-          while (mask(starts(varIndex)(valueIndex)) == 0L) {
-            starts(varIndex)(valueIndex) += 1
-          }
-          lastSupports(varIndex)(valueIndex) = starts(varIndex)(valueIndex)
-          ends(varIndex)(valueIndex) = nbLongs - 1
-          while (mask(ends(varIndex)(valueIndex)) == 0L) {
-            ends(varIndex)(valueIndex) -= 1
-          }
-        }
-        valueIndex += 1
-      }
-      varIndex += 1
-    }
-
   }
 
   /**
