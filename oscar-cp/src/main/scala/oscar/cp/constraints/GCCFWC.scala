@@ -44,71 +44,21 @@ class GCCFWC(val X: Array[CPIntVar], val minVal: Int, val lower: Array[Int], val
 
   // MEMORIZATION STRUCTURE:
   // Number of variables currently bound to the value
-  val nBound = Array.tabulate(nValues)(vi => new ReversibleInt(s, 0))
+  val nBound = Array.tabulate(nValues)(_ => new ReversibleInt(s, 0))
   // Number of unbound variables currently having the value
-  val nUnbound = Array.tabulate(nValues)(vi => new ReversibleInt(s, 0))
+  val nUnbound = Array.tabulate(nValues)(_ => new ReversibleInt(s, 0))
   // List of the unbound variables currently having the value
-  val unboundForValue = Array.tabulate(nValues)(vi => new ReversibleSparseSet(s, 0, X.length - 1))
+  val unboundForValue = Array.tabulate(nValues)(_ => new ReversibleSparseSet(s, 0, X.length - 1))
   // Whether the condition on the value is definitely respected or not
-  val definitelyOk = Array.tabulate(nValues)(vi => new ReversibleBoolean(s, false))
+  val definitelyOk = Array.tabulate(nValues)(_ => new ReversibleBoolean(s, false))
   // The number of values whose conditions are definitely respected
   val nDefinitelyOk = new ReversibleInt(s, 0)
 
+
   // Change buffer to load the deltas
   var changeBuffer: Array[Int] = null
-
-  /**
-   * When the number of variables having a value decreases, it might have reached the lower bound.
-   * In that case, one has to bind all the variables which have that value and were yet unbound.
-   * It may fail in case the value was actually removed from one of those variables in the meantime.
-   */
-  private def onTotalDecrease(vi: Int): CPOutcome = {
-
-    if (nBound(vi).value + nUnbound(vi).value == lower(vi)) {
-      val it = unboundForValue(vi).iterator
-      while (it.hasNext) {
-        if (X(it.next()).assign(vi + minVal) == Failure) {
-          return Failure
-        }
-      }
-    }
-    Suspend
-  }
-
-  /**
-   * When the number of variables bound to a value increases, it might have reached the upper bound.
-   * In that case, one has to remove the value from any additional (unbound) variables.
-   * It may fail in case one of those variables was actually bound to the value in the meantime.
-   */
-  private def onBoundIncrease(vi: Int): CPOutcome = {
-
-    if (nBound(vi).value == upper(vi)) {
-      val it = unboundForValue(vi).iterator
-      while (it.hasNext) {
-        if (X(it.next()).removeValue(vi + minVal) == Failure) {
-          return Failure
-        }
-      }
-    }
-    Suspend
-  }
-
-  // Update the success status for a value in the range
-  private def updateOk(vi: Int) = {
-    if (!definitelyOk(vi).value &&
-      nBound(vi).value >= lower(vi) &&
-      nBound(vi).value + nUnbound(vi).value <= upper(vi)) {
-      definitelyOk(vi).setValue(true)
-      nDefinitelyOk.incr()
-    }
-  }
-
-  // Compute current outcome
-  private def status() =
-    if (nDefinitelyOk.value == nValues)
-      Success
-    else
-      Suspend
+  // Buffer to load unbound variables from `unboundForValue`
+  val unboundBuffer = new Array[Int](X.length)
 
   override def setup(l: CPPropagStrength): CPOutcome = {
 
@@ -206,6 +156,67 @@ class GCCFWC(val X: Array[CPIntVar], val minVal: Int, val lower: Array[Int], val
     }
     status()
   }
+
+  /**
+   * When the number of variables having a value decreases, it might have reached the lower bound.
+   * In that case, one has to bind all the variables which have that value and were yet unbound.
+   * It may fail in case the value was actually removed from one of those variables in the meantime.
+   */
+  private def onTotalDecrease(vi: Int): CPOutcome = {
+
+    if (nBound(vi).value + nUnbound(vi).value == lower(vi)) {
+      val v = vi + minVal
+      var c = unboundForValue(vi).fillArray(unboundBuffer)
+      while (c > 0) {
+        c -= 1
+        if (X(unboundBuffer(c)).assign(v) == Failure) {
+          return Failure
+        }
+      }
+    }
+    Suspend
+  }
+
+  /**
+   * When the number of variables bound to a value increases, it might have reached the upper bound.
+   * In that case, one has to remove the value from any additional (unbound) variables.
+   * It may fail in case one of those variables was actually bound to the value in the meantime.
+   */
+  private def onBoundIncrease(vi: Int): CPOutcome = {
+
+    if (nBound(vi).value == upper(vi)) {
+      val v = vi + minVal
+      var c = unboundForValue(vi).fillArray(unboundBuffer)
+      while (c > 0) {
+        c -= 1
+        if (X(unboundBuffer(c)).removeValue(v) == Failure) {
+          return Failure
+        }
+      }
+    }
+    Suspend
+  }
+
+  /**
+   * Update the success status for a value in the range
+   */
+  private def updateOk(vi: Int) = {
+
+    if (!definitelyOk(vi).value &&
+      nBound(vi).value >= lower(vi) &&
+      nBound(vi).value + nUnbound(vi).value <= upper(vi)) {
+
+      definitelyOk(vi).setValue(true)
+      nDefinitelyOk.incr()
+    }
+  }
+
+  /**
+   * Compute current outcome
+   */
+  private def status() =
+    if (nDefinitelyOk.value == nValues) Success
+    else Suspend
 
   def debug() {
     println("General state:")
