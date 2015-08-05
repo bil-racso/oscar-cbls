@@ -39,16 +39,16 @@ class GCCFWC(val X: Array[CPIntVar], val minVal: Int, val lower: Array[Int], val
   idempotent = false
 
   val nValues = lower.length
-  val nSubconstraints = 2 * nValues
+  val nBounds = 2 * nValues
   val rValues = minVal until (minVal + nValues)
 
   // MEMORIZATION STRUCTURE:
-  // The number of variables that *must* take this value
+  // The number of variables that are bound to the value
   var nMandatoryRev: Array[ReversibleInt] = null
-  // The number of variables that *may* take this value
+  // The number of variables that have the value
   var nPossibleRev: Array[ReversibleInt] = null
-  // The number of subconstraints among the 2*nValues subconstraints that are respected
-  var nDefinitelyOkRev: ReversibleInt = null
+  // The number of bounds that are respected
+  var nBoundsOkRev: ReversibleInt = null
 
   // Change buffer to load the deltas
   var changeBuffer: Array[Int] = null
@@ -58,7 +58,7 @@ class GCCFWC(val X: Array[CPIntVar], val minVal: Int, val lower: Array[Int], val
     // Temporary variables to avoid using reversible variables too much
     val nMandatory = new Array[Int](nValues)
     val nPossible = new Array[Int](nValues)
-    var nDefinitelyOk = 0
+    var nBoundsOk = 0
 
     // Initial counting (the rest is done in the update functions)
     var bufferSize = 0
@@ -67,6 +67,7 @@ class GCCFWC(val X: Array[CPIntVar], val minVal: Int, val lower: Array[Int], val
       i -= 1
       val x = X(i)
 
+      // Count the number of variables that are bound to the value
       if (x.isBound) {
         val v = x.min
         if (rValues.contains(v)) {
@@ -74,6 +75,7 @@ class GCCFWC(val X: Array[CPIntVar], val minVal: Int, val lower: Array[Int], val
           nMandatory(vi) += 1
         }
       }
+      // Count the number of variables that have the value
       var vi = nValues
       while (vi > 0) {
         vi -= 1
@@ -98,34 +100,34 @@ class GCCFWC(val X: Array[CPIntVar], val minVal: Int, val lower: Array[Int], val
 
       // Few enough variables have the value
       if (nPossible(vi) <= upper(vi)) {
-        nDefinitelyOk += 1
+        nBoundsOk += 1
       }
       // Too few variables have the value
       if (nPossible(vi) < lower(vi) ||
-        (nPossible(vi) == lower(vi) && atLowerBound(vi) == Failure)) {
+        (nPossible(vi) == lower(vi) && whenMinPossible(vi) == Failure)) {
         return Failure
       }
 
       // Enough variables are bound to the value
       if (nMandatory(vi) >= lower(vi)) {
-        nDefinitelyOk += 1
+        nBoundsOk += 1
       }
       // Too many variables are bound to the value
       if (nMandatory(vi) > upper(vi) ||
-        (nMandatory(vi) == upper(vi) && atUpperBound(vi) == Failure)) {
+        (nMandatory(vi) == upper(vi) && whenMaxMandatory(vi) == Failure)) {
         return Failure
       }
     }
     
-    // If the constraint is already respected
-    if (nDefinitelyOk == nSubconstraints) {
+    // If the all the bounds are ok, the constraint is ok
+    if (nBoundsOk == nBounds) {
       return Success
     }
 
     // Initialize the memorization structure
     nMandatoryRev = Array.tabulate(nValues)(_ => new ReversibleInt(s, 0))
     nPossibleRev = Array.tabulate(nValues)(_ => new ReversibleInt(s, 0))
-    nDefinitelyOkRev = new ReversibleInt(s, 0)
+    nBoundsOkRev = new ReversibleInt(s, 0)
 
     // Create the buffer
     changeBuffer = new Array(bufferSize)
@@ -137,66 +139,68 @@ class GCCFWC(val X: Array[CPIntVar], val minVal: Int, val lower: Array[Int], val
       nMandatoryRev(vi).setValue(nMandatory(vi))
       nPossibleRev(vi).setValue(nPossible(vi))
     }
-    nDefinitelyOkRev.setValue(nDefinitelyOk)
+    nBoundsOkRev.setValue(nBoundsOk)
 
     Suspend
   }
 
   /**
-   * Update the structure when values are removed from a variable
+   * Update the structure when values are removed from a variable.
    */
   @inline private def whenDomainChanges(delta: DeltaIntVar, x: CPIntVar): CPOutcome = {
+
+    // Treat the value removals
     val i = delta.id
     var c = delta.fillArray(changeBuffer)
     while (c > 0) {
       c -= 1
       val v = changeBuffer(c)
-
-      // For every relevant value removed from the variable
+      // If the value removed is one we track
       if (rValues.contains(v)) {
         val vi = v - minVal
         val nPossible = nPossibleRev(vi).decr()
 
-        if (nPossible == upper(vi) && nDefinitelyOkRev.incr() == nSubconstraints) {
+        // If the number of variables that have the value decreases to the upper bound, all good!
+        if (nPossible == upper(vi) && nBoundsOkRev.incr() == nBounds) {
           return Success
         }
-        if (nPossible == lower(vi) && atLowerBound(vi) == Failure) {
+        // If the number of variables that have the value decreases to the lower bound, that's worrying!
+        if (nPossible == lower(vi) && whenMinPossible(vi) == Failure) {
           return Failure
         }
       }
     }
+
+    // Treat the value assignments
     if (x.isBound) {
-      whenBind(x.min, i)
-    } else {
-      Suspend
-    }
-  }
+      val v = x.min
+      // If the value assigned is one we track
+      if (rValues.contains(v)) {
+        val vi = v - minVal
+        val nMandatory = nMandatoryRev(vi).incr()
 
-  /**
-   * Update the structure when a variable is bound
-   */
-  @inline private def whenBind(v: Int, i: Int): CPOutcome = {
-    if (rValues.contains(v)) {
-      val vi = v - minVal
-      val nMandatory = nMandatoryRev(vi).incr()
-
-      if (nMandatory == lower(vi) && nDefinitelyOkRev.incr() == nSubconstraints) {
-        return Success
-      }
-      if (nMandatory == upper(vi) && atUpperBound(vi) == Failure) {
-        return Failure
+        // If the number of variables that are bound to the value increases to the lower bound, all good!
+        if (nMandatory == lower(vi) && nBoundsOkRev.incr() == nBounds) {
+          return Success
+        }
+        // If the number of variables that are bound to the value increases to the upper bound, that's worrying!
+        if (nMandatory == upper(vi) && whenMaxMandatory(vi) == Failure) {
+          return Failure
+        }
       }
     }
+
     Suspend
   }
 
   /**
-   * Changes to be made when the number of possible variables reaches the lower bound.
+   * When the number of possible variables drops to the lower bound, bind the unbound.
    */
-  @inline private def atLowerBound(vi: Int): CPOutcome = {
+  @inline private def whenMinPossible(vi: Int): CPOutcome = {
     val v = vi + minVal
     var nPossible = 0
 
+    // Bind all the unbound variables that have this value
     var i = X.length
     while (i > 0) {
       i -= 1
@@ -209,17 +213,19 @@ class GCCFWC(val X: Array[CPIntVar], val minVal: Int, val lower: Array[Int], val
       }
     }
 
+    // If there are still too few possible variables, the constraint fails!
     if (nPossible == lower(vi)) Suspend
     else Failure
   }
 
   /**
-   * Changes to be made when the number of mandatory variables reaches the upper bound
+   * When the number of mandatory variables reaches the upper bound, drop the unbound.
    */
-  @inline private def atUpperBound(vi: Int): CPOutcome = {
+  @inline private def whenMaxMandatory(vi: Int): CPOutcome = {
     val v = vi + minVal
     var nMandatory = 0
 
+    // Remove the value from the unbound variables that have this value
     var i = X.length
     while (i > 0) {
       i -= 1
@@ -231,6 +237,7 @@ class GCCFWC(val X: Array[CPIntVar], val minVal: Int, val lower: Array[Int], val
       }
     }
 
+    // If there are still too many mandatory variables, the constraint fails!
     if (nMandatory == upper(vi)) Suspend
     else Failure
   }
