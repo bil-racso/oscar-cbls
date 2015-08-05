@@ -46,11 +46,11 @@ extends CumulativeTemplate(starts, durations, ends, heights, resources, capacity
   final override def propagate(): CPOutcome = { 
     updateCache()
     C = capacity.max
-    hasChanged = true
-    while (hasChanged) {
+
+    do {
       hasChanged = false
       if (oneSweep()) return Failure
-    }
+    } while (hasChanged)
     
     if (C == capacity.min) removeExtremal()
     else removeImpossible()

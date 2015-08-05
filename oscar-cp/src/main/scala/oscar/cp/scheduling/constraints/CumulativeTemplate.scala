@@ -51,9 +51,6 @@ extends Constraint(capacity.store, name) {
     propagate()
   }
   
-  // seriously ?
-  implicit val store = capacity.store
-  
   // Access to inner structure
   final def smin: Array[Int] = sMin
   final def smax: Array[Int] = sMax
@@ -77,6 +74,7 @@ extends Constraint(capacity.store, name) {
   private[this] val requiredTasks = new Array[Boolean](n)
   private[this] val possibleTasks = new Array[Boolean](n)
   
+  implicit val store = capacity.store
   private[this] val rToUpdate = new OpenSparseSet(n)
   private[this] val rByStatus = rToUpdate.sortedByStatus
   
@@ -89,7 +87,7 @@ extends Constraint(capacity.store, name) {
   private[this] val tToUpdate = new OpenSparseSet(n)  // time variables: s/e coupled since constant durations are common
   private[this] val tByStatus = tToUpdate.sortedByStatus
   
-  class OpenSparseSetMod(n: Int) extends OpenSparseSet(n: Int) {
+  final class OpenSparseSetMod(n: Int) extends OpenSparseSet(n: Int) {
     override def exclude(a: Int) = {
       super.exclude(a)
       rToUpdate.exclude(a)
@@ -102,7 +100,7 @@ extends Constraint(capacity.store, name) {
   val toConsider = new OpenSparseSetMod(n)
   val activitiesToConsider = toConsider.sortedByStatus
   
-  final def nToConsider = toConsider.limit.value
+  // final def nToConsider = toConsider.limit.value
 
 
   final def updateResource() = {

@@ -12,7 +12,7 @@ import oscar.algo.array.ArrayStack
 // Then rebuild profile
 // Finally sweep all relevant activities
 
-class ProfileStructure(
+final class ProfileStructure(
    smin: Array[Int], 
    smax: Array[Int], 
    dmin: Array[Int],
@@ -22,7 +22,7 @@ class ProfileStructure(
    required: Array[Boolean], 
    possible: Array[Boolean])(implicit val store: CPStore) {
 
-  private[this] final val nTasks = smax.length
+  private[this] val nTasks = smax.length
 
   private[this] val pointTimes = Array.ofDim[Int](nTasks * 2 + 2)  // one point for origin of times, one for ending
   private[this] val pointHeights = Array.ofDim[Int](nTasks * 2 + 2)
@@ -81,7 +81,6 @@ class ProfileStructure(
       sortedBySMax(location(p)) = filteredBySMax(p) 
     }
 
-
     // filter and sort emin events
     p = 0
     q = 0
@@ -109,27 +108,19 @@ class ProfileStructure(
     
     nSorted = q
 
-    
-
     // generate events
-    
     var s = 0 // next start
     var e = 0 // next end
-    var t = 0 // sweep-line
     var h = 0 // height
+    
     while (e < nSorted) {
-
-      val end = emin(filteredByEMin(e))
       val prevH = h
 
-      // Move the sweep-line
-      if (s == nSorted) t = end
-      else {
-        val start = smax(filteredBySMax(s))
-        if (start < end) t = start
-        else t = end
-      }
-
+      // find next event
+      var tSweepLine = emin(filteredByEMin(e))
+      if (s < nSorted) tSweepLine = min(tSweepLine, smax(filteredBySMax(s)))
+      val t = tSweepLine
+      
       // add all tasks at smax
       while (s < nSorted && smax(filteredBySMax(s)) == t) {
         h += hmin(filteredBySMax(s))
@@ -167,8 +158,8 @@ class ProfileStructure(
    * We expect that in many cases, the cache will have the exact index.
    */
   
-  val lastIndexBefore = Array.fill(nTasks)(0)
-  val lastIndexAfter = Array.fill(nTasks)(0)
+  private[this] val lastIndexBefore = Array.fill(nTasks)(0)
+  private[this] val lastIndexAfter = Array.fill(nTasks)(0)
   
     // returns the profile event at t or the closest before
   @inline private final def indexBefore(a: Int, t: Int): Int = {
@@ -297,8 +288,6 @@ class ProfileStructure(
     
     checkFrom
   }
-
-
   
   
   // reverse of sweepLR, watch out for < that become >= and the such, since e is not in [s ; e)
@@ -365,29 +354,6 @@ class ProfileStructure(
     max
   }
   
-  // return the first profile event to happen striclty after t, sweeps right to left
-  def pointStrictlyAfter(t: Int) = {
-    var et = Int.MaxValue // must be correct if point is at +infinity
-    var i = nPoints - 1
-    while (i >= 0 && pointTimes(i) > t) {
-      et = pointTimes(i)
-      i -= 1
-    }
-    et
-  }
-  
-  
-  // return the first profile event to happen striclty after t, sweeps right to left
-  def pointStrictlyBefore(t: Int) = {
-    var et = Int.MinValue // must be correct if point is at +infinity
-    var i = 0
-    while (i < nPoints && pointTimes(i) < t) {
-      et = pointTimes(i)
-      i += 1
-    }
-    et
-  }
-  
   
   // returns the maximal height of the whole profile
   def maxHeight(): Int = {
@@ -402,9 +368,9 @@ class ProfileStructure(
 
 
   // stacks for height and dates, these actually represent one stack of (height, date) pairs
-  val hStack = new Array[Int](nTasks + 1)
-  val dStack = new Array[Int](nTasks + 1)
-  var sPointer = -1
+  private[this] val hStack = new Array[Int](nTasks + 1)
+  private[this] val dStack = new Array[Int](nTasks + 1)
+  private[this] var sPointer = -1
   
   @inline private def unstack(time: Int, height: Int, dur: Int) = {
     var minHeight = Int.MaxValue
