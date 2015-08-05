@@ -16,9 +16,6 @@ package oscar.examples.cp
 
 import scala.util.Random
 import oscar.cp._
-import oscar.cp.constraints.{GCCFWC, GCCBC, SoftGCC}
-import oscar.cp.core.{Constraint, CPSolver}
-import oscar.cp.core.variables.CPIntVar
 
 /**
  * In a hospital, there is a certain number of rooms, and a certain number of doctors, with special skills.
@@ -153,62 +150,5 @@ object Hospital extends MultiGCCBenchmark {
     }
 
     print(cp.start())
-  }
-}
-
-/**
- * Allows easy creation of GCC comparative benchmarks.
- * All you have to do is implement the run() method, as if it were a typical
- * subclass of CPModel and App.
- * @author Victor Lecomte
- */
-trait MultiGCCBenchmark extends App {
-
-  object Mode extends Enumeration {
-    type Mode = Value
-    val Soft, BC, FWC = Value
-  }
-  import Mode._
-
-  def init() {}
-  def run()
-
-  init()
-
-  var mode = Soft
-  implicit var cp = CPSolver()
-  println("SoftGCC:")
-  run()
-  println()
-
-  mode = BC
-  cp = CPSolver()
-  println("GCCBC:")
-  //run()
-  println()
-
-  mode = FWC
-  cp = CPSolver()
-  println("GCCFWC:")
-  run()
-  println()
-
-  def gcc(x: Array[CPIntVar], values: Range, lower: Int, upper: Int): Constraint = {
-    gcc(x, values, Array.fill(values.size)(lower), Array.fill(values.size)(upper))
-  }
-  def gcc(x: Array[CPIntVar], values: Range, lower: Array[Int], upper: Array[Int]): Constraint = {
-    if (mode == Soft) {
-      new SoftGCC(x, values.min, lower, upper, CPIntVar(0, 0))
-    } else if (mode == BC) {
-      var bounds: Map[Int, (Int, Int)] = Map()
-      for (i <- values.indices) {
-        bounds += (values(i) -> (lower(i), upper(i)))
-        //println((values(i), lower(i), upper(i)))
-      }
-      //println()
-      new GCCBC(x, bounds)
-    } else {
-      new GCCFWC(x, values.min, lower, upper)
-    }
   }
 }

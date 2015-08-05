@@ -42,16 +42,26 @@ class GCCFWC(val X: Array[CPIntVar], val minVal: Int, val lower: Array[Int], val
   val rValues = minVal until (minVal + nValues)
   val valuesIdx = 0 until nValues
 
-  // Memorization structure
-  val nBound = Array.tabulate(nValues)(i => new ReversibleInt(s, 0))
-  val nUnbound = Array.tabulate(nValues)(i => new ReversibleInt(s, 0))
-  val unboundForValue = Array.tabulate(nValues)(i => new ReversibleSparseSet(s, 0, X.length - 1))
-  val currentlyOk = Array.tabulate(nValues)(i => new ReversibleBoolean(s, false))
-  val nCurrentlyOk = new ReversibleInt(s, 0)
+  // MEMORIZATION STRUCTURE:
+  // Number of variables currently bound to the value
+  val nBound = Array.tabulate(nValues)(vi => new ReversibleInt(s, 0))
+  // Number of unbound variables currently having the value
+  val nUnbound = Array.tabulate(nValues)(vi => new ReversibleInt(s, 0))
+  // List of the unbound variables currently having the value
+  val unboundForValue = Array.tabulate(nValues)(vi => new ReversibleSparseSet(s, 0, X.length - 1))
+  // Whether the condition on the value is definitely respected or not
+  val definitelyOk = Array.tabulate(nValues)(vi => new ReversibleBoolean(s, false))
+  // The number of values whose conditions are definitely respected
+  val nDefinitelyOk = new ReversibleInt(s, 0)
 
+  // Change buffer to load the deltas
   var changeBuffer: Array[Int] = null
 
-  // Things to check when the number of variables with value vi decreases
+  /**
+   * When the number of variables having a value decreases, it might have reached the lower bound.
+   * In that case, one has to bind all the variables which have that value and were yet unbound.
+   * It may fail in case the value was actually removed from one of those variables in the meantime.
+   */
   private def onTotalDecrease(vi: Int): CPOutcome = {
 
     if (nBound(vi).value + nUnbound(vi).value == lower(vi)) {
@@ -65,7 +75,11 @@ class GCCFWC(val X: Array[CPIntVar], val minVal: Int, val lower: Array[Int], val
     Suspend
   }
 
-  // Things to check when the number of variables bound to vi increases
+  /**
+   * When the number of variables bound to a value increases, it might have reached the upper bound.
+   * In that case, one has to remove the value from any additional (unbound) variables.
+   * It may fail in case one of those variables was actually bound to the value in the meantime.
+   */
   private def onBoundIncrease(vi: Int): CPOutcome = {
 
     if (nBound(vi).value == upper(vi)) {
@@ -81,17 +95,17 @@ class GCCFWC(val X: Array[CPIntVar], val minVal: Int, val lower: Array[Int], val
 
   // Update the success status for a value in the range
   private def updateOk(vi: Int) = {
-    if (!currentlyOk(vi).value &&
+    if (!definitelyOk(vi).value &&
       nBound(vi).value >= lower(vi) &&
       nBound(vi).value + nUnbound(vi).value <= upper(vi)) {
-      currentlyOk(vi).setValue(true)
-      nCurrentlyOk.incr()
+      definitelyOk(vi).setValue(true)
+      nDefinitelyOk.incr()
     }
   }
 
   // Compute current outcome
   private def status() =
-    if (nCurrentlyOk.value == nValues)
+    if (nDefinitelyOk.value == nValues)
       Success
     else
       Suspend
@@ -127,13 +141,16 @@ class GCCFWC(val X: Array[CPIntVar], val minVal: Int, val lower: Array[Int], val
     // First check loop (according to the counts in the initial counting)
     for (vi <- valuesIdx) {
 
+      // Too few variables have the value
       if (nBound(vi).value + nUnbound(vi).value < lower(vi)) {
         return Failure
       }
+      // Too many variables are bound to the value
       if (nBound(vi).value > upper(vi)) {
         return Failure
       }
 
+      // Check for the corresponding equality cases
       if (onTotalDecrease(vi) == Failure) {
         return Failure
       }
@@ -144,10 +161,12 @@ class GCCFWC(val X: Array[CPIntVar], val minVal: Int, val lower: Array[Int], val
       updateOk(vi)
     }
 
-    //debug()
     status()
   }
 
+  /**
+   * Update the structure when values are removed from a variable
+   */
   def whenDomainChanges(delta: DeltaIntVar, x: CPIntVar, i: Int): CPOutcome = {
     var c = delta.fillArray(changeBuffer)
     while (c > 0) {
@@ -170,6 +189,9 @@ class GCCFWC(val X: Array[CPIntVar], val minVal: Int, val lower: Array[Int], val
     }
   }
 
+  /**
+   * Update the structure when a variable is bound
+   */
   def whenBind(x: CPIntVar, i: Int): CPOutcome = {
     if (rValues.contains(x.min)) {
       val vi = x.min - minVal
@@ -185,7 +207,7 @@ class GCCFWC(val X: Array[CPIntVar], val minVal: Int, val lower: Array[Int], val
     status()
   }
 
-  private def debug() {
+  def debug() {
     println("General state:")
     println("Variables:")
     for (x <- X) println(x.toArray.mkString(" "))
@@ -200,8 +222,8 @@ class GCCFWC(val X: Array[CPIntVar], val minVal: Int, val lower: Array[Int], val
       println()
     }
     println("currentlyOk:")
-    println(currentlyOk.map(_.value).mkString(" "))
-    println("nCurrentlyOk: " + nCurrentlyOk.value)
+    println(definitelyOk.map(_.value).mkString(" "))
+    println("nCurrentlyOk: " + nDefinitelyOk.value)
     println()
   }
 }
