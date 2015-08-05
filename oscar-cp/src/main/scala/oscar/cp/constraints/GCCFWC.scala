@@ -38,20 +38,20 @@ class GCCFWC(val X: Array[CPIntVar], val minVal: Int, val lower: Array[Int], val
 
   idempotent = false
 
-  val nValues = lower.length
-  val nBounds = 2 * nValues
-  val rValues = minVal until (minVal + nValues)
+  private[this] val nValues = lower.length
+  private[this] val rValues = minVal until (minVal + nValues)
+  private[this] val nBounds = 2 * nValues
 
   // MEMORIZATION STRUCTURE:
   // The number of variables that are bound to the value
-  var nMandatoryRev: Array[ReversibleInt] = null
+  private[this] var nMandatoryRev: Array[ReversibleInt] = null
   // The number of variables that have the value
-  var nPossibleRev: Array[ReversibleInt] = null
+  private[this] var nPossibleRev: Array[ReversibleInt] = null
   // The number of bounds that are respected
-  var nBoundsOkRev: ReversibleInt = null
+  private[this] var nBoundsOkRev: ReversibleInt = null
 
   // Change buffer to load the deltas
-  var changeBuffer: Array[Int] = null
+  private[this] var changeBuffer: Array[Int] = null
 
   override def setup(l: CPPropagStrength): CPOutcome = {
 
