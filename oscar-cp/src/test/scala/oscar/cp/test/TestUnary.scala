@@ -234,3 +234,16 @@ class TestUnaryEF extends TestUnary("UnaryEF", 1000) {
   override def unary(starts: Vars, durations: Vars, ends: Vars,resources: Vars, id: Int)(implicit store: CPStore) =
     Array(UnaryEF(starts, durations, ends, resources, id))
 }
+
+class TestNaiveUnary extends TestUnary("NaiveUnary", 1000) {
+  override def unary(starts: Vars, durations: Vars, ends: Vars,resources: Vars, id: Int)(implicit store: CPStore) =
+    Array(NaiveUnary(starts, durations, ends, resources, id))
+}
+
+class TestNaiveEEF extends TestUnary("NaiveEEF", 1000) {
+  override def unary(starts: Vars, durations: Vars, ends: Vars,resources: Vars, id: Int)(implicit store: CPStore) = {
+    val one = CPIntVar(1)
+    val heights = Array.fill(starts.length)(one)
+    Array(NaiveEEF(starts, durations, ends, heights, resources, one, id))
+  }
+}

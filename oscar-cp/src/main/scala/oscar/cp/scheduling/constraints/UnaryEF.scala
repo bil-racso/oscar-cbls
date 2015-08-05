@@ -43,7 +43,7 @@ extends UnaryTemplate(starts, durations, ends, resources, id, "UnaryDetectablePr
 {
   private[this] val nTasks = starts.length
   
-  priorityL2 = 3
+  priorityL2 = 2
   
   private def nextPowerOfTwo(k: Int): Int = {
     1 << math.ceil(math.log(k) / math.log(2)).toInt
@@ -200,8 +200,8 @@ extends UnaryTemplate(starts, durations, ends, resources, id, "UnaryDetectablePr
       
     }
       
-    removeExtremal()
-    // removeIsolated(toConsiderBySMin, toConsiderByEMax, nToConsider)
+    // removeExtremal()
+    removeIsolated(toConsiderBySMin, toConsiderByEMax, nToConsider)
     Suspend
   }
   

@@ -183,8 +183,14 @@ extends UnaryTemplate(starts, durations, ends, resources, id, "UnaryDetectablePr
         q += 1
       }
       
-      
-      if (required(i)) {// && dmin(i) > 0) {    // remove impossible optionals
+      if (!required(i)) {
+        if (envelope(1) > smax(i)) { // optional activity would be pushed too far
+          if (resources(i).removeValue(id) == Failure) throw Inconsistency
+          toConsider.exclude(i)
+          removeFromLambda(i)
+        }
+      }
+      else {// && dmin(i) > 0) {    // remove impossible optionals
         val mustRemoveI = smax(i) < emin(i)
         if (mustRemoveI) {
           // if (debug) print(s"UnaryDP: removing ${if (required(i)) "required" else "optional"} $i, " +
@@ -221,6 +227,7 @@ extends UnaryTemplate(starts, durations, ends, resources, id, "UnaryDetectablePr
     }
     // println(s"UnaryDP @${store.magic}for $id: used $count over $p tasks in the tree")
     
+    removeExtremal()
     // removeIsolated(toConsiderBySMin, toConsiderByEMax, nToConsider)
     Suspend
   }

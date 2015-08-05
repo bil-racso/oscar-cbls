@@ -316,3 +316,7 @@ class UnaryResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: A
   }
 }
 
+object UnaryResource {
+  def apply(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar]) =
+    new UnaryResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar])
+}

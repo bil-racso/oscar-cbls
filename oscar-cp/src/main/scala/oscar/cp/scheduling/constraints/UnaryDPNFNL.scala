@@ -45,7 +45,7 @@ extends UnaryTemplate(starts, durations, ends, resources, id, "UnaryDetectablePr
   private[this] val nTasks = starts.length
 
   // private final val compareFlag = true
-  priorityL2 = 2
+  priorityL2 = 3
   
   private def nextPowerOfTwo(k: Int): Int = {
     1 << math.ceil(math.log(k) / math.log(2)).toInt
@@ -159,7 +159,17 @@ extends UnaryTemplate(starts, durations, ends, resources, id, "UnaryDetectablePr
       }
       
       
-      if (required(i)) { //} && dmin(i) > 0) {    // remove impossible optionals
+      if (!required(i)) {
+        if (envelope(1) > smax(i)) {
+          if ((emaxEvent && smax(jj) < emin(i)) || !emaxEvent) {
+            if (resources(i).removeValue(id) == Failure) throw Inconsistency
+            // println((if (emaxEvent) "NFNL" else "DP") + " removing with a push")
+            toConsider.exclude(i)
+            removeFromLambda(i)
+          }
+        }
+      }
+      else { //} && dmin(i) > 0) {    // remove impossible optionals
         val mustRemoveI = workload(leafOfActivity(i)) > 0
         if (mustRemoveI) removeFromTheta(i)
         

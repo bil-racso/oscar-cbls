@@ -83,7 +83,7 @@ extends Constraint(store, name) {
   val toConsider = new OpenSparseSetMod(n)
   val activitiesToConsider = toConsider.sortedByStatus
 
-  final def updateResource() = {
+  private def updateResource() = {
     var p = rToUpdate.limit.value - 1
     while (p >= 0) {
       val a = rByStatus(p)
@@ -105,7 +105,7 @@ extends Constraint(store, name) {
   }
   
   
-  final def updateDurations() = {
+  private def updateDurations() = {
     var p = dToUpdate.limit.value - 1
     while (p >= 0) {
       val a = dByStatus(p)
@@ -124,7 +124,7 @@ extends Constraint(store, name) {
   
   val identity = Array.tabulate(n)(i => i)
   
-  @inline private def updateStartsEnds() = {
+  private def updateStartsEnds() = {
     var p = tToUpdate.limit.value
     while (p > 0) {
       p -= 1
@@ -155,7 +155,7 @@ extends Constraint(store, name) {
     }
   }
   
-  def updateCache() = {
+  final def updateCache() = {
     // Step 1: filter out activities not in this resource
     updateResource()
     

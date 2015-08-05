@@ -71,7 +71,7 @@ extends UnaryTemplate(starts, durations, ends, resources, id, "UnaryDetectablePr
   private[this] val toConsiderByEMin = Array.ofDim[Int](nTasks)
   private[this] val toConsiderBySMax = Array.ofDim[Int](nTasks)
   
-  val heapByEMin = new ArrayHeapInt(nTasks)
+  private [this] val heapByEMin = new ArrayHeapInt(nTasks)
   
   
   override def propagate(): CPOutcome = {
@@ -158,14 +158,30 @@ extends UnaryTemplate(starts, durations, ends, resources, id, "UnaryDetectablePr
       }
       
       // treat pruning event
-      if (required(i)) {    // remove impossible optionals
+      if (!required(i)) {
+        if (envelope(1) > smax(i)) { // optional activity would be pushed too far
+          if (resources(i).removeValue(id) == Failure) throw Inconsistency
+          toConsider.exclude(i)
+          removeFromLambda(i)
+        }
+        else {
+          val newEMin = envelope(1) + dmin(i)
+          if (newEMin > emin(i)) { // push for later
+            emin(i) = newEMin
+            heapByEMin.enqueue(emin(i), i)
+            nPruningEvents += 1
+          }
+          
+        }
+      }
+      else {    // remove impossible optionals
         val mustRemoveI = workload(leafOfActivity(i)) > 0
         if (mustRemoveI) removeFromTheta(i)
       
         if (envelope(1) > smin(i)) {
           if (starts(i).updateMin(envelope(1)) == Failure) throw Inconsistency
           val newEMin = envelope(1) + dmin(i)
-          if (false && newEMin > emin(i)) { // push event back
+          if (newEMin > emin(i)) { // push event back
             // smin(i) = envelope(1) // not possible since theta lambda tree is fixed
             emin(i) = newEMin
             heapByEMin.enqueue(emin(i), i)
