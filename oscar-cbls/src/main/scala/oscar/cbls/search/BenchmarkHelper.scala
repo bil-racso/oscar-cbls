@@ -13,6 +13,10 @@ object Benchmark extends StopWatch{
   def benchToStatistics(obj:Objective, nRuns:Int, strategies:(()=>Neighborhood)*) =
     benchToTrace(obj, nRuns, strategies:_*).map{case (n:Neighborhood,t:IndexedSeq[RunValues]) => (n,aggregate(t.toList))}
 
+  def benchtoString(obj:Objective, nRuns:Int, strategies:(()=>Neighborhood)*):String = {
+    val stats = benchToStatistics(obj,nRuns,strategies:_*)
+    stats.map()
+  }
 
   def benchToTrace(obj:Objective, nRuns:Int, strategies:(()=>Neighborhood)*)={
     val m = obj.model
