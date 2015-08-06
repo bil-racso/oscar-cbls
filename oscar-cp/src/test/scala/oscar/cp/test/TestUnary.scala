@@ -184,9 +184,6 @@ abstract class TestUnary(name: String, nTests: Int) extends TestSuite {
       }
       
       ok should be(true)
-      
-      //println(s"nSolutionsUnary = $nSolutionsUnary")
-      //println(s"nSolutionsDecomp = $nSolutionsDecomp")
     }
   }
 }
@@ -207,43 +204,7 @@ class TestUnaryDPNFNL extends TestUnary("UnaryDPNFNL", 1000) {
     Array(UnaryDPNFNL(starts, durations, ends, resources, id))
 }
 
-/*
-class TestUnaryWO extends TestUnary("UnaryWO", 1000) {
-  override def unary(starts: Vars, durations: Vars, ends: Vars,resources: Vars, id: Int)(implicit store: CPStore) =
-    Array(new UnaryResourceWithOptionalActivities(starts, durations, ends, resources, id))
-}
-
-class TestTTUnary extends TestUnary("UnaryTT", 1000) {
-  override def unary(starts: Vars, durations: Vars, ends: Vars,resources: Vars, id: Int)(implicit store: CPStore) = {
-    val one = CPIntVar(1)
-    val heights = Array.fill(starts.length)(one)
-    Array(TTPerTask(starts, durations, ends, heights, resources, one, id))
-  }
-}
-
-class TestOCUnary extends TestUnary("UnaryOC", 1000) {
-  override def unary(starts: Vars, durations: Vars, ends: Vars,resources: Vars, id: Int)(implicit store: CPStore) = {
-    val one = CPIntVar(1)
-    val heights = Array.fill(starts.length)(one)
-    Array(OverloadCheckerExtended(starts, durations, ends, heights, resources, one, id))
-  }
-}
-*/
-
 class TestUnaryEF extends TestUnary("UnaryEF", 1000) {
   override def unary(starts: Vars, durations: Vars, ends: Vars,resources: Vars, id: Int)(implicit store: CPStore) =
     Array(UnaryEF(starts, durations, ends, resources, id))
-}
-
-class TestNaiveUnary extends TestUnary("NaiveUnary", 1000) {
-  override def unary(starts: Vars, durations: Vars, ends: Vars,resources: Vars, id: Int)(implicit store: CPStore) =
-    Array(NaiveUnary(starts, durations, ends, resources, id))
-}
-
-class TestNaiveEEF extends TestUnary("NaiveEEF", 1000) {
-  override def unary(starts: Vars, durations: Vars, ends: Vars,resources: Vars, id: Int)(implicit store: CPStore) = {
-    val one = CPIntVar(1)
-    val heights = Array.fill(starts.length)(one)
-    Array(NaiveEEF(starts, durations, ends, heights, resources, one, id))
-  }
 }
