@@ -50,7 +50,7 @@ class TestUnaryResource extends FunSuite with Matchers {
   
   def randomInstance(n: Int, seed: Int = 0) = {
     val rand = new scala.util.Random(seed)
-    Array.tabulate(n)(i => (1 + rand.nextInt(3),rand.nextBoolean))
+    Array.tabulate(n)(i => (1 + rand.nextInt(3),rand.nextBoolean()))
   }
 
   
@@ -61,9 +61,9 @@ class TestUnaryResource extends FunSuite with Matchers {
       val starts = Array(CPIntVar(2 to 4), CPIntVar(2 to 4))
       val durations = Array(1,1)
       val durs = durations.map(d => CPIntVar(d))
-      val ends = Array.tabulate(starts.size)(i => starts(i) + durations(i))
+      val ends = Array.tabulate(starts.length)(i => starts(i) + durations(i))
       add(new UnaryResource(starts,durs,ends))
-      cp.isFailed should be(false)
+      cp.isFailed shouldBe false
   }   
 
   test("decomp vs global, permutations") {
@@ -96,8 +96,8 @@ class TestUnaryResource extends FunSuite with Matchers {
         unary(cp, starts, durs, ends)
       }
       
-      statDecomp.nSols should be(statGlobal.nSols)
-      statDecomp.nSols should be(factorial(n))
+      statDecomp.nSols shouldBe statGlobal.nSols
+      statDecomp.nSols shouldBe factorial(n)
     }
     for (i <- 0 until 100) {
       testPermutations(i)
@@ -134,10 +134,10 @@ class TestUnaryResource extends FunSuite with Matchers {
 
 		} onSolution {
 		  	val sol = (starts(0).value,starts(1).value,starts(2).value,starts(3).value)
-			expectedSol.contains(sol) should be(true)
+			expectedSol.contains(sol) shouldBe true
 		}
 		
-		start().nSols should be(4)
+		start().nSols shouldBe 4
 	}
 	
 	test("Test 2: durations") {	
@@ -167,13 +167,13 @@ class TestUnaryResource extends FunSuite with Matchers {
 			binaryStatic(starts)
 
 		} onSolution {
-		    durs(0).value should be(3)
-		    durs(0).isBound should be(true)
+		    durs(0).value shouldBe 3
+		    durs(0).isBound shouldBe true
 		  	val sol = (starts(0).value,starts(1).value,starts(2).value,starts(3).value)
-			expectedSol.contains(sol) should be(true)
+			expectedSol.contains(sol) shouldBe true
 		}
 		
-		start().nSols should be(4)
+		start().nSols shouldBe 4
 	}
 	
 
@@ -225,13 +225,13 @@ class TestUnaryResource extends FunSuite with Matchers {
 			binaryStatic(starts)
 
 		} onSolution {
-		    durs(0).value should be(3)
-		    durs(0).isBound should be(true)
+		    durs(0).value shouldBe 3
+		    durs(0).isBound shouldBe true
 		  	val sol = (starts(0).value,starts(1).value,starts(2).value,starts(3).value)
-			expectedSol.contains(sol) should be(true)
+			expectedSol.contains(sol) shouldBe true
 		}
 		
-		start().nSols should be(24)
+		start().nSols shouldBe 24
 	}
 
   test("Test 4: 7 random activities") {

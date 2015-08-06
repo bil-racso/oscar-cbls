@@ -53,6 +53,10 @@ class UnaryResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: A
   private[this] var failure = false
   private[this] var changed = true
 
+  // Temporary arrays needed by the mergeSort Algorithm
+  private[this] val mergeSortRuns = Array.ofDim[Int](nTasks + 1)
+  private[this] val mergeSortAux = Array.ofDim[Int](nTasks)
+
 
   override def setup(l: CPPropagStrength): CPOutcome = {
     for (i <- 0 until nTasks) {
@@ -128,14 +132,14 @@ class UnaryResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: A
                                     orderedMinStartIds : Array[Int], orderedMaxStartIds: Array[Int], orderedMinEndIds : Array[Int]): Boolean = {
 
     // Clearing the tree
-    mergeSort(orderedMinStartIds, startMins)
+    mergeSort(orderedMinStartIds, startMins, 0, nTasks, mergeSortRuns, mergeSortAux)
     tree.clearAndPlaceLeaves(orderedMinStartIds, startMins, currentMinDurations)
 
     //sorting activities in non-decreasing lst
-    mergeSort(orderedMaxStartIds, startMaxs)
+    mergeSort(orderedMaxStartIds, startMaxs, 0, nTasks, mergeSortRuns, mergeSortAux)
 
     //sorting activities in non-decreasing ect
-    mergeSort(orderedMinEndIds, endMins)
+    mergeSort(orderedMinEndIds, endMins, 0, nTasks, mergeSortRuns, mergeSortAux)
 
     var i, j = 0
     while (i < nTasks) {
@@ -173,14 +177,14 @@ class UnaryResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: A
                       orderedMinStartIds : Array[Int], orderedMaxStartIds: Array[Int], orderedMaxEndIds : Array[Int]) : Boolean = {
 
     // Clearing the tree
-    mergeSort(orderedMinStartIds, startMins)
+    mergeSort(orderedMinStartIds, startMins, 0, nTasks, mergeSortRuns, mergeSortAux)
     tree.clearAndPlaceLeaves(orderedMinStartIds, startMins, currentMinDurations)
 
     //sorting activities in non-decreasing lst
-    mergeSort(orderedMaxStartIds, startMaxs)
+    mergeSort(orderedMaxStartIds, startMaxs, 0, nTasks, mergeSortRuns, mergeSortAux)
 
     //sorting activities in non-decreasing lct
-    mergeSort(orderedMaxEndIds, endMaxs)
+    mergeSort(orderedMaxEndIds, endMaxs, 0, nTasks, mergeSortRuns, mergeSortAux)
 
     var i, j = 0
     while(i < nTasks) {
@@ -226,13 +230,13 @@ class UnaryResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: A
                           orderedMinStartIds : Array[Int], orderedMaxEndIds : Array[Int]) : Boolean = {
 
     // Inserting all activities in the tree
-    mergeSort(orderedMinStartIds, startMins)
+    mergeSort(orderedMinStartIds, startMins, 0, nTasks, mergeSortRuns, mergeSortAux)
 
     tree.fillAndPlaceLeaves(orderedMinStartIds, startMins, currentMinDurations) // true as we use gray nodes
 
     //sorting activities in non-decreasing lct
     //NOTE: we sort the array by increasing lct, we just will browse it from right to left
-    mergeSort(orderedMaxEndIds, endMaxs)
+    mergeSort(orderedMaxEndIds, endMaxs, 0, nTasks, mergeSortRuns, mergeSortAux)
 
     var estIndex = 0
     var j = nTasks - 1
