@@ -14,9 +14,11 @@
   ******************************************************************************/
 package oscar.examples.cp
 
-import oscar.cp.constraints.{GCCFWC, GCCBC, SoftGCC}
+import oscar.cp.constraints.{GCCVarFWC, GCCFWC, GCCBC, SoftGCC}
 import oscar.cp.core.{Constraint, CPSolver}
 import oscar.cp.core.variables.CPIntVar
+
+import scala.util.Random
 
 /**
  * Allows easy creation of GCC comparative benchmarks.
@@ -28,17 +30,18 @@ trait MultiGCCBenchmark extends App {
 
   object Mode extends Enumeration {
     type Mode = Value
-    val Soft, BC, FWC = Value
+    val Soft, BC, FWC, VarFWC = Value
   }
   import Mode._
 
-  def init() {}
   def run()
 
-  init()
+  var mode: Mode = null
+  implicit var cp: CPSolver = null
+  val seed = Random.nextInt()
 
-  var mode = Soft
-  implicit var cp = CPSolver()
+  mode = Soft
+  cp = CPSolver()
   println("SoftGCC:")
   run()
   println()
@@ -52,6 +55,12 @@ trait MultiGCCBenchmark extends App {
   mode = FWC
   cp = CPSolver()
   println("GCCFWC:")
+  run()
+  println()
+
+  mode = VarFWC
+  cp = CPSolver()
+  println("GCCVarFWC:")
   run()
   println()
 
@@ -69,8 +78,10 @@ trait MultiGCCBenchmark extends App {
       }
       //println()
       new GCCBC(x, bounds)
-    } else {
+    } else if (mode == FWC) {
       new GCCFWC(x, values.min, lower, upper)
+    } else {
+      new GCCVarFWC(x, values.min, values.indices.map(vi => CPIntVar(lower(vi), upper(vi))).toArray)
     }
   }
 }

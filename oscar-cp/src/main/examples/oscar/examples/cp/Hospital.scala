@@ -31,25 +31,19 @@ import oscar.cp._
  */
 object Hospital extends MultiGCCBenchmark {
 
-  var seed = 0
-
-  override def init() {
-    seed = Random.nextInt()
-  }
-
   override def run() {
 
     val rand = new Random(seed)
 
     val nDoctors = 6
     val nSkills = 4
-    val nDays = 4
+    val nDays = 8
     val nRooms = 4
 
     val maxSkills = nSkills/2
     val minServicePerDay = 2*nRooms/3
     val maxMinWork = nDays/2
-    val minMaxWork = 3*nDays/5
+    val minMaxWork = nDays/2-1
 
     val skillDoNothing = -1
 
@@ -149,6 +143,6 @@ object Hospital extends MultiGCCBenchmark {
       }
     }
 
-    print(cp.start())
+    print(start(failureLimit = 2000000))
   }
 }
