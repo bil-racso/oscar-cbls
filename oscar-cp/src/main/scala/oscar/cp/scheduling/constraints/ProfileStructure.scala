@@ -76,7 +76,7 @@ final class ProfileStructure(
     
     while (smaxMin < smaxMax && continue) {
       val task = sortedBySMax(smaxMin)
-      if (status(task) < limit && required(task)) continue = false
+      if (status(task) < limit) continue = false
       else smaxMin += 1
     }
     if (smaxMin > oldSMaxMin) smaxMinToConsider.setValue(smaxMin)
@@ -86,7 +86,7 @@ final class ProfileStructure(
     smaxMax -= 1
     while (smaxMin < smaxMax && continue) {
       val task = sortedBySMax(smaxMax)
-      if (status(task) < limit && required(task)) continue = false
+      if (status(task) < limit) continue = false
       else smaxMax -= 1
     }
     smaxMax += 1
@@ -124,7 +124,7 @@ final class ProfileStructure(
     
     while (eminMin < eminMax && continue) {
       val task = sortedByEMin(eminMin)
-      if (status(task) < limit && required(task)) continue = false
+      if (status(task) < limit) continue = false
       else eminMin += 1
     }
     if (eminMin > oldEMinMin) eminMinToConsider.setValue(eminMin)
@@ -134,7 +134,7 @@ final class ProfileStructure(
     eminMax -= 1
     while (eminMin < eminMax && continue) {
       val task = sortedByEMin(eminMax)
-      if (status(task) < limit && required(task)) continue = false
+      if (status(task) < limit) continue = false
       else eminMax -= 1
     }
     eminMax += 1
