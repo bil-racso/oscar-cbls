@@ -45,6 +45,17 @@ final class ProfileStructure(
   private[this] val filteredByEMin = new Array[Int](nTasks)
   private[this] val location = new Array[Int](nTasks)
   
+  // range of indexes of interest in sortedBySMax = [smaxMin, smaxMax[
+  // indexes outside are in toConsider
+  // this is kept incrementally
+  private[this] val smaxMinToConsider = new ReversibleInt(store, 0)
+  private[this] val smaxMaxToConsider = new ReversibleInt(store, nTasks)
+  
+  // same for emin
+  private[this] val eminMinToConsider = new ReversibleInt(store, 0)
+  private[this] val eminMaxToConsider = new ReversibleInt(store, nTasks)
+  
+  
   def rebuild(toConsider: OpenSparseSet): Unit = {
     /*
      *  Filter tasks by toConsider + has mandatory part, sort, then generate events
@@ -58,10 +69,34 @@ final class ProfileStructure(
     val limit = toConsider.limit.value
     
     // filter and sort smax events
-    var p, q = 0
-
+    var smaxMin = smaxMinToConsider.value
+    var smaxMax = smaxMaxToConsider.value
+    val oldSMaxMin = smaxMin
+    var continue = true
+    
+    while (smaxMin < smaxMax && continue) {
+      val task = sortedBySMax(smaxMin)
+      if (status(task) < limit && required(task)) continue = false
+      else smaxMin += 1
+    }
+    if (smaxMin > oldSMaxMin) smaxMinToConsider.setValue(smaxMin)
+    
+    val oldSMaxMax = smaxMax
+    continue = true
+    smaxMax -= 1
+    while (smaxMin < smaxMax && continue) {
+      val task = sortedBySMax(smaxMax)
+      if (status(task) < limit && required(task)) continue = false
+      else smaxMax -= 1
+    }
+    smaxMax += 1
+    if (smaxMax < oldSMaxMax) smaxMaxToConsider.setValue(smaxMax)
+    
+    var p = smaxMin 
+    var q = 0
+    
     // filter
-    while (p < nTasks) {
+    while (p < smaxMax) {
       val task = sortedBySMax(p)
       if (status(task) < limit && smax(task) < emin(task) && required(task) && hmin(task) > 0) {
         filteredBySMax(q) = task
@@ -82,11 +117,34 @@ final class ProfileStructure(
     }
 
     // filter and sort emin events
-    p = 0
+    var eminMin = eminMinToConsider.value
+    var eminMax = eminMaxToConsider.value
+    val oldEMinMin = eminMin
+    continue = true
+    
+    while (eminMin < eminMax && continue) {
+      val task = sortedByEMin(eminMin)
+      if (status(task) < limit && required(task)) continue = false
+      else eminMin += 1
+    }
+    if (eminMin > oldEMinMin) eminMinToConsider.setValue(eminMin)
+    
+    val oldEMinMax = eminMax
+    continue = true
+    eminMax -= 1
+    while (eminMin < eminMax && continue) {
+      val task = sortedByEMin(eminMax)
+      if (status(task) < limit && required(task)) continue = false
+      else eminMax -= 1
+    }
+    eminMax += 1
+    if (eminMax < oldEMinMax) eminMaxToConsider.setValue(eminMax)
+    
+    p = eminMin 
     q = 0
-
+    
     // filter
-    while (p < nTasks) {
+    while (p < eminMax) {
       val task = sortedByEMin(p)
       if (status(task) < limit && smax(task) < emin(task) && required(task) && hmin(task) > 0) {
         filteredByEMin(q) = task
