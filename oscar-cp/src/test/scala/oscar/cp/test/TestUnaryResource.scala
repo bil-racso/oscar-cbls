@@ -25,7 +25,7 @@ class TestUnaryResource extends FunSuite with Matchers {
 
   // decomp without resource variables
   def decomp(cp: CPSolver, starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar]): Unit = {
-    val n = starts.size
+    val n = starts.length
     for (i <- 0 until n; j <- i + 1 until n) {
       cp.add((ends(i) <== starts(j)) || (ends(j) <== starts(i)))
     }
@@ -33,7 +33,7 @@ class TestUnaryResource extends FunSuite with Matchers {
   
   // decomp with resource variables
   def decomp(cp: CPSolver, starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar],resources: Array[CPIntVar], id: Int ): Unit = {
-    val n = starts.size
+    val n = starts.length
     for (i <- 0 until n; j <- i + 1 until n) {
       cp.add((ends(i) <== starts(j)) || (ends(j) <== starts(i)) || (resources(i) !== id) || (resources(j) !== id))
     }
@@ -80,10 +80,6 @@ class TestUnaryResource extends FunSuite with Matchers {
       val durs = Array.tabulate(n)(i => CPIntVar(durations(i)))
       val ends = Array.tabulate(n)(i => starts(i) + durations(i))
 
-      cp.onSolution {
-        val p = (0 until n).sortBy(i => starts(i).value)
-      }
-
       cp.search {
         binaryFirstFail(starts)
       }
@@ -111,8 +107,8 @@ class TestUnaryResource extends FunSuite with Matchers {
 		val horizon = 5
 		implicit val cp = new CPSolver()
 		cp.silent = true
-        val starts = Array.fill(4)(CPIntVar(0 to 5))
-        val ends = Array.fill(4)(CPIntVar(0 to 5))
+        val starts = Array.fill(4)(CPIntVar(0 to horizon))
+        val ends = Array.fill(4)(CPIntVar(0 to horizon))
         val durs = Array(CPIntVar(3),CPIntVar(1),CPIntVar(2),CPIntVar(2))
         for (i <- 0 until 4) {
           add(starts(i) + durs(i) == ends(i))
@@ -125,9 +121,7 @@ class TestUnaryResource extends FunSuite with Matchers {
 		
 		add(new UnaryResource(r1.map(starts(_)),r1.map(durs(_)),r1.map(ends(_))))
 		add(new UnaryResource(r2.map(starts(_)),r2.map(durs(_)),r2.map(ends(_))))
-		
-		var nSol = 0
-		
+
 		val expectedSol = Set((0, 3, 0, 3), (0, 4, 0, 3), (0, 3, 1, 3), (0, 4, 1, 3))
 		cp.search {
 			binaryStatic(starts)
@@ -145,8 +139,8 @@ class TestUnaryResource extends FunSuite with Matchers {
 		val horizon = 5
 		implicit val cp = new CPSolver()
 		cp.silent = true
-        val starts = Array.fill(4)(CPIntVar(0 to 5))
-        val ends = Array.fill(4)(CPIntVar(0 to 5))
+        val starts = Array.fill(4)(CPIntVar(0 to horizon))
+        val ends = Array.fill(4)(CPIntVar(0 to horizon))
         val durs = Array(CPIntVar(3 to 4),CPIntVar(1),CPIntVar(2),CPIntVar(2))
         for (i <- 0 until 4) {
           add(starts(i) + durs(i) == ends(i))
@@ -159,9 +153,7 @@ class TestUnaryResource extends FunSuite with Matchers {
 		
 		add(new UnaryResource(r1.map(starts(_)),r1.map(durs(_)),r1.map(ends(_))))
 		add(new UnaryResource(r2.map(starts(_)),r2.map(durs(_)),r2.map(ends(_))))
-		
-		var nSol = 0
-		
+
 		val expectedSol = Set((0, 3, 0, 3), (0, 4, 0, 3), (0, 3, 1, 3), (0, 4, 1, 3))
 		cp.search {
 			binaryStatic(starts)
@@ -181,8 +173,8 @@ class TestUnaryResource extends FunSuite with Matchers {
 		val horizon = 5
 		implicit val cp = new CPSolver()
 		cp.silent = true
-        val starts = Array.fill(4)(CPIntVar(0 to 5))
-        val ends = Array.fill(4)(CPIntVar(0 to 5))
+        val starts = Array.fill(4)(CPIntVar(0 to horizon))
+        val ends = Array.fill(4)(CPIntVar(0 to horizon))
         val durs = Array(CPIntVar(3 to 4),CPIntVar(2),CPIntVar(2),CPIntVar(1))
         for (i <- 0 until 4) {
           add(starts(i) + durs(i) == ends(i))
@@ -194,9 +186,7 @@ class TestUnaryResource extends FunSuite with Matchers {
 		
 		add(new UnaryResource(r1.map(starts(_)),r1.map(durs(_)),r1.map(ends(_))))
 		add(new UnaryResource(r2.map(starts(_)),r2.map(durs(_)),r2.map(ends(_))))
-		
-		var nSol = 0
-		
+
 		val expectedSol = Set((0, 3, 0, 2),
 							  (0, 3, 0, 3),
 							  (0, 3, 0, 4), 

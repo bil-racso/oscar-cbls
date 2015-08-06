@@ -1023,7 +1023,7 @@ class Parser extends JavaTokenParsers { // RegexParsers {
           }
           capaCP
       }
-    cp.add(binpacking(getCPIntVarArray(varList(1)).map(_ - 1),
+    cp.add(binPacking(getCPIntVarArray(varList(1)).map(_ - 1),
       getIntArray(varList(2)), l), Strong)
   }
 
