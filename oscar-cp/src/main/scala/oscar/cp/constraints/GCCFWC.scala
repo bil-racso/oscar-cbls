@@ -24,7 +24,7 @@ import oscar.cp.core.CPOutcome._
  * Global Cardinality Constraint
  *
  * Constraint the values minVal+i to appear between low[i] and up[i] times in X
- * @param X The variables to constraint
+ * @param X The variables to constraint (at least one)
  * @param minVal The smallest value in the interval; its size is determined by the size of lower and upper
  * @param lower The lower bounds for the occurrences of the values of the interval, in order
  * @param upper The upper bounds for the occurrences of the values of the interval, in order
@@ -90,7 +90,7 @@ class GCCFWC(val X: Array[CPIntVar], val minVal: Int, val lower: Array[Int], val
       }
 
       // Register before the first check loop so that we receive information on what we changed there
-      x.callOnChanges(i, whenDomainChanges(_, x))
+      x.callOnChanges(i, delta => if (nBoundsOkRev.value == nBounds) Success else whenDomainChanges(delta, x))
     }
 
     // First check loop (according to the counts in the initial counting)
@@ -104,7 +104,7 @@ class GCCFWC(val X: Array[CPIntVar], val minVal: Int, val lower: Array[Int], val
       }
       // Too few variables have the value
       if (nPossible(vi) < lower(vi) ||
-        (nPossible(vi) == lower(vi) && whenMinPossible(vi) == Failure)) {
+        (nPossible(vi) == lower(vi) && whenMinPossible(vi) != lower(vi))) {
         return Failure
       }
 
@@ -114,34 +114,27 @@ class GCCFWC(val X: Array[CPIntVar], val minVal: Int, val lower: Array[Int], val
       }
       // Too many variables are bound to the value
       if (nMandatory(vi) > upper(vi) ||
-        (nMandatory(vi) == upper(vi) && whenMaxMandatory(vi) == Failure)) {
+        (nMandatory(vi) == upper(vi) && whenMaxMandatory(vi) != upper(vi))) {
         return Failure
       }
     }
+
+    // This one has to be initialized in any case
+    nBoundsOkRev = new ReversibleInt(s, nBoundsOk)
     
-    // If the all the bounds are ok, the constraint is ok
-    if (nBoundsOk == nBounds) {
-      return Success
+    // If the constraint is not okay yet
+    if (nBoundsOk != nBounds) {
+
+      // Initialize the memorization structure
+      nMandatoryRev = Array.tabulate(nValues)(vi => new ReversibleInt(s, nMandatory(vi)))
+      nPossibleRev = Array.tabulate(nValues)(vi => new ReversibleInt(s, nPossible(vi)))
+
+      // Create the buffer
+      changeBuffer = new Array(bufferSize)
     }
 
-    // Initialize the memorization structure
-    nMandatoryRev = Array.tabulate(nValues)(_ => new ReversibleInt(s, 0))
-    nPossibleRev = Array.tabulate(nValues)(_ => new ReversibleInt(s, 0))
-    nBoundsOkRev = new ReversibleInt(s, 0)
-
-    // Create the buffer
-    changeBuffer = new Array(bufferSize)
-
-    // Update the structure
-    vi = nValues
-    while (vi > 0) {
-      vi -= 1
-      nMandatoryRev(vi).setValue(nMandatory(vi))
-      nPossibleRev(vi).setValue(nPossible(vi))
-    }
-    nBoundsOkRev.setValue(nBoundsOk)
-
-    Suspend
+    // Everything is up to the closures now
+    Success
   }
 
   /**
@@ -150,7 +143,6 @@ class GCCFWC(val X: Array[CPIntVar], val minVal: Int, val lower: Array[Int], val
   @inline private def whenDomainChanges(delta: DeltaIntVar, x: CPIntVar): CPOutcome = {
 
     // Treat the value removals
-    val i = delta.id
     var c = delta.fillArray(changeBuffer)
     while (c > 0) {
       c -= 1
@@ -165,7 +157,7 @@ class GCCFWC(val X: Array[CPIntVar], val minVal: Int, val lower: Array[Int], val
           return Success
         }
         // If the number of variables that have the value decreases to the lower bound, that's worrying!
-        if (nPossible == lower(vi) && whenMinPossible(vi) == Failure) {
+        if (nPossible == lower(vi) && whenMinPossible(vi) != lower(vi)) {
           return Failure
         }
       }
@@ -184,7 +176,7 @@ class GCCFWC(val X: Array[CPIntVar], val minVal: Int, val lower: Array[Int], val
           return Success
         }
         // If the number of variables that are bound to the value increases to the upper bound, that's worrying!
-        if (nMandatory == upper(vi) && whenMaxMandatory(vi) == Failure) {
+        if (nMandatory == upper(vi) && whenMaxMandatory(vi) != upper(vi)) {
           return Failure
         }
       }
@@ -196,49 +188,49 @@ class GCCFWC(val X: Array[CPIntVar], val minVal: Int, val lower: Array[Int], val
   /**
    * When the number of possible variables drops to the lower bound, bind the unbound.
    */
-  @inline private def whenMinPossible(vi: Int): CPOutcome = {
+  @inline private def whenMinPossible(vi: Int): Int = {
     val v = vi + minVal
-    var nPossible = 0
+    var possible = 0
 
     // Bind all the unbound variables that have this value
     var i = X.length
     while (i > 0) {
       i -= 1
       val x = X(i)
+
       if (x.hasValue(v)) {
         if (!x.isBound) {
           x.assign(v)
         }
-        nPossible += 1
+        possible += 1
       }
     }
 
-    // If there are still too few possible variables, the constraint fails!
-    if (nPossible == lower(vi)) Suspend
-    else Failure
+    // Return the number of variables that actually have the value
+    possible
   }
 
   /**
    * When the number of mandatory variables reaches the upper bound, drop the unbound.
    */
-  @inline private def whenMaxMandatory(vi: Int): CPOutcome = {
+  @inline private def whenMaxMandatory(vi: Int): Int = {
     val v = vi + minVal
-    var nMandatory = 0
+    var mandatory = 0
 
     // Remove the value from the unbound variables that have this value
     var i = X.length
     while (i > 0) {
       i -= 1
       val x = X(i)
+
       if (x.isBoundTo(v)) {
-        nMandatory += 1
+        mandatory += 1
       } else if (x.hasValue(v)) {
         x.removeValue(v)
       }
     }
 
-    // If there are still too many mandatory variables, the constraint fails!
-    if (nMandatory == upper(vi)) Suspend
-    else Failure
+    // Return the number of variables that are actually bound to the value
+    mandatory
   }
 }
