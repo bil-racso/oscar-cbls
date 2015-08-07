@@ -34,10 +34,11 @@ class GCC(x: Array[CPIntVar], minval: Int, low: Array[Int], up: Array[Int]) exte
     
     val ok = l match {
       case CPPropagStrength.Weak => {
-         //s.post(new GCCBC(x,((minval until minval+low.length) zip (low zip up)).toMap))
-         // s.post(new GCCBCNew(x, minval, low, up)) 
+        s.post(new GCCFWC(x, minval, low, up)) 
       }
       case CPPropagStrength.Medium => {
+        s.post(new GCCFWC(x, minval, low, up))
+        // Ratheil constraint is buggy
         //s.post(new GCCBC(x,((minval until minval+low.length) zip (low zip up)).toMap))
         // s.post(new GCCBCNew(x, minval, low, up)) 
       }
