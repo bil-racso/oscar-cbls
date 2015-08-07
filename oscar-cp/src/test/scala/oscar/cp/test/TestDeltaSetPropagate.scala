@@ -27,7 +27,7 @@ import scala.collection.mutable.ArrayBuffer
  * @author Pierre Schaus pschaus@gmail.com
  */
 class TestDeltaSetPropagate extends FunSuite with ShouldMatchers {
-  
+
 
 
 
@@ -100,7 +100,7 @@ class TestDeltaSetPropagate extends FunSuite with ShouldMatchers {
 
     val cp = CPSolver()
     val x = new CPSetVar(cp, 1 , 5)
-    println(x.requiredSize+" "+x.possibleSize)
+    //println(x.requiredSize+" "+x.possibleSize)
     cp.add(new MyCons(x))
     
     val cons = ArrayBuffer[Constraint]()
@@ -111,7 +111,7 @@ class TestDeltaSetPropagate extends FunSuite with ShouldMatchers {
     
     cp.add(cons)
     
-    println(x.requiredSet+" <= x <="+x.possibleSet)
+    //println(x.requiredSet+" <= x <="+x.possibleSet)
     propag should be(true)
   }
   

@@ -345,7 +345,7 @@ class CPIntVarAdaptableSuite extends TestSuite {
     val values = Set(10, 11, 15, 16, 17, 20, 21, 25)
     val domain = new CPIntVarAdaptable(context, 10, 25, true)
     (10 to 25).foreach(v => if (!values.contains(v)) domain.removeValue(v))
-    println("iterator " + domain.iterator.mkString(" "))
+    //println("iterator " + domain.iterator.mkString(" "))
     assert(domain.iterator.size == 8)
     assert(domain.iterator.min == 10)
     assert(domain.iterator.max == 25)

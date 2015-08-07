@@ -49,6 +49,8 @@ class TestRostering extends FunSuite with ShouldMatchers  {
 
     val cp = CPSolver()
 
+    cp.silent=true
+
     val activities = Array.tabulate(nbPersons, nbSlots)((p, t) => CPIntVar(possibleActivities(p))(cp))
 
     val underDemand = Array.tabulate(nbSlots)(t => CPIntVar(0 to nbPersons)(cp))
