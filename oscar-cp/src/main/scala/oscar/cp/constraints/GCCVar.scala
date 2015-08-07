@@ -25,25 +25,25 @@ import oscar.cp.core.variables.CPIntVar
 
 /**
  * Global Cardinality Constraint
- * Constraint the values minval+i to appear between low[i] and up[i] times in x
+ * Constraint the values minval+i cards(i) times in x
  * @author Pierre Schaus pschaus@gmail.com
  */
-class GCC(x: Array[CPIntVar], minval: Int, low: Array[Int], up: Array[Int]) extends Constraint(x(0).store) {
+class GCCVar(x: Array[CPIntVar], val minVal: Int, val cards: Array[CPIntVar]) extends Constraint(x(0).store) {
   
   override def setup(l: CPPropagStrength): CPOutcome = {
     
     val ok = l match {
       case CPPropagStrength.Weak => {
-        s.post(new GCCFWC(x, minval, low, up)) 
+        //s.post(new GCCVarAC(x.toArray, minVal, cards))
+        s.post(new GCCVarFWC(x, minVal, cards)) 
       }
       case CPPropagStrength.Medium => {
-        s.post(new GCCFWC(x, minval, low, up))
-        //s.post(new GCCUpperBC(x, minval, up))
-        // Ratheil constraint is buggy
-        //s.post(new GCCBC(x,((minval until minval+low.length) zip (low zip up)).toMap))
-        // s.post(new GCCBCNew(x, minval, low, up)) 
+        //s.post(new GCCVarAC(x.toArray, minVal, cards))
+        s.post(new GCCVarFWC(x, minVal, cards))
       }
-      case CPPropagStrength.Strong => s.post(new SoftGCC(x, minval, low, up, CPIntVar(0,0)(s)))
+      case CPPropagStrength.Strong => {
+        s.post(new GCCVarAC(x.toArray, minVal, cards))
+      }
       
     }
     if (ok == CPOutcome.Failure) return CPOutcome.Failure;

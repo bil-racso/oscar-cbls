@@ -70,7 +70,7 @@ class TestGCC extends FunSuite with ShouldMatchers {
 
     val o = Array.fill(10)(CPIntVar(0 to 10)(cp))
 
-    cp.post(new oscar.cp.constraints.GCCVar(x, 0, o));
+    cp.post(new oscar.cp.constraints.GCCVarAC(x, 0, o));
 
     cp.isFailed() should be(false)
 
