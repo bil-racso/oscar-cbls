@@ -52,8 +52,8 @@ class TestGCCFixedBounds extends FunSuite with ShouldMatchers {
 
   test("GccBC2") {
     var nbWins = 0
-    for (i <- 1 to 200) {
-      //println(i)
+    for (i <- 1 to 100) {
+      println(i)
       rand =  new scala.util.Random(i)
       
       val nbVars = 8
