@@ -35,7 +35,8 @@ object OscarBuild extends Build {
       fork in Test := true,
       javaOptions in Test += "-Djava.library.path=../lib:../lib/" + osNativeLibDir,
       scalaVersion := buildScalaVersion,
-      publishTo := Some(Resolver.url("sbt-release-local", new URL("http://localhost:8081/artifactory/libs-release-local")))
+      publishTo := Some(Resolver.url("sbt-release-local", new URL("http://localhost:8081/artifactory/libs-release-local"))),
+      unmanagedSourceDirectories in Compile += baseDirectory.value / "src" / "main" / "examples"
     )
   }
   
@@ -49,6 +50,8 @@ object OscarBuild extends Build {
   }
 
   object Dependencies {
+
+    // TODO: Use `latest.milestone` where possible
 
     // Regular libraries
     val antlr4Runtime = "org.antlr" % "antlr4-runtime" % "4.5.1"
