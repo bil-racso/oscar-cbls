@@ -14,7 +14,7 @@ lib/scalatest-1.6.1.jar
 .worksheet/src/test.scala
 oscar.eml
 .idea
-.project
+*/.project
 
 syntax: regexp
 \.jardesc$
