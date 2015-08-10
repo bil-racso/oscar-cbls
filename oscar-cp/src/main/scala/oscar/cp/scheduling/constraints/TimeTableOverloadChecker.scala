@@ -245,7 +245,7 @@ extends CumulativeTemplate(starts, durations, ends, heights, resources, capacity
       // remove all optional that would make the resource overload
       while (tree.lambdaEnvelope + endEventMandatoryEnergy(p) > maxEnvelope) {
         // find task associated to overloading event and remove it from resource
-        val optEvent = tree.getLambdaEvent(1)
+        val optEvent = tree.getLambdaEvent()
         val optTask = startEventTask(optEvent)
         
         if (resources(optTask).removeValue(id) == Failure) throw Inconsistency        

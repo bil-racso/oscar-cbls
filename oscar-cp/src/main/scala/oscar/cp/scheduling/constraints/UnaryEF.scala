@@ -17,7 +17,7 @@ import oscar.cp.scheduling.util.OpenSparseSet
  */
 
 class UnaryEF(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], resources: Array[CPIntVar], id: Int)(implicit store: CPStore)
-extends Constraint(store, "UnaryDetectablePrecedences") {
+extends Constraint(store, "UnaryEdgeFinding") {
   val lr = new UnaryEFLR(starts, durations, ends, resources, id) 
   val rl = new UnaryEFLR(ends map(-_), durations, starts map(-_), resources, id)
   
@@ -39,7 +39,7 @@ extends Constraint(store, "UnaryDetectablePrecedences") {
 
 class UnaryEFLR(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], resources: Array[CPIntVar], id: Int)(implicit store: CPStore)
 //extends Constraint(store, "UnaryEFLR")
-extends UnaryTemplate(starts, durations, ends, resources, id, "UnaryDetectablePrecedencesLR")(store)
+extends UnaryTemplate(starts, durations, ends, resources, id, "UnaryEdgeFindingLR")(store)
 {
   private[this] val nTasks = starts.length
   

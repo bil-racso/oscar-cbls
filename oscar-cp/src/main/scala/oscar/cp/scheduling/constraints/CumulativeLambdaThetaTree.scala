@@ -9,14 +9,14 @@ import scala.math.{min, max}
  */
 
 /* 
- *  A cumulative theta tree.
+ *  A cumulative theta tree. Envelope/workload must be Long, to be able to handle large tasks and horizons.
  *  Workflow:
  *  _ fill by events
  *  _ call reset(nEvents), where nEvents is the number of events.
  *  _ insert/move/remove events in theta and lambda
- *  _ ask for ect, ectOpt, event causing ectOpt...
- *  
+ *  _ ask for envelope, enevelopeOpt, event causing envelopeOpt...
  */
+
 class CumulativeLambdaThetaTree(eventEnvelope: Array[Long], eventWorkload: Array[Long]) {
   private def nextPowerOfTwo(k: Int): Int = {
     if (k < 2) 
@@ -37,6 +37,9 @@ class CumulativeLambdaThetaTree(eventEnvelope: Array[Long], eventWorkload: Array
   
   def thetaEnvelope  = envelope(1)
   def lambdaEnvelope = envelopeOpt(1)
+  
+  def isEventInTheta(event: Int)  = workload(event + nNodes) > 0
+  def isEventInLambda(event: Int) = workloadOpt(event + nNodes) > 0
 
   def reset(nEvents: Int) = {
     nNodes = nextPowerOfTwo(nEvents)
@@ -100,8 +103,10 @@ class CumulativeLambdaThetaTree(eventEnvelope: Array[Long], eventWorkload: Array
     update(node >> 1)
   }
   
+  def getLambdaEvent(): Int = getLambdaEvent(1)
+  
   // Find which optional event causes the value of energyOpt
-  @tailrec final def getLambdaEvent(node: Int): Int = {
+  @tailrec private def getLambdaEvent(node: Int): Int = {
     if (node >= nNodes) node - nNodes  // reached a leaf
     else {
       val left = node << 1
