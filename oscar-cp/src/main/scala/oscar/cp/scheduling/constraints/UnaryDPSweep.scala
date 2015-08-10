@@ -7,6 +7,7 @@ import oscar.algo.SortUtils._
 import scala.math.{min, max}
 import scala.annotation.tailrec
 import oscar.cp.scheduling.util.OpenSparseSet
+import oscar.algo.array.ArrayHeapInt
 
 /**
  * @author Steven Gay steven.gay@uclouvain.be
@@ -16,10 +17,10 @@ import oscar.cp.scheduling.util.OpenSparseSet
  *  As in "Extension of O(n log n) Filtering...", Vilim et al. Constraints 2005. 
  */
 
-class UnaryDP(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], resources: Array[CPIntVar], id: Int)(implicit store: CPStore)
-extends Constraint(store, "UnaryDetectablePrecedences") {
-  val lr = new UnaryDPLR(starts, durations, ends, resources, id) 
-  val rl = new UnaryDPLR(ends map(-_), durations, starts map(-_), resources, id)
+class UnaryDPSweep(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], resources: Array[CPIntVar], id: Int)(implicit store: CPStore)
+extends Constraint(store, "UnaryDetectablePrecedences2") {
+  val lr = new UnaryDPSweepLR(starts, durations, ends, resources, id) 
+  val rl = new UnaryDPSweepLR(ends map(-_), durations, starts map(-_), resources, id)
   
   override def setup(strength: CPPropagStrength) = {
     try {
@@ -37,56 +38,12 @@ extends Constraint(store, "UnaryDetectablePrecedences") {
 
 
 
-class UnaryDPLR(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], resources: Array[CPIntVar], id: Int)(implicit store: CPStore)
-//extends Constraint(store, "UnaryDPLR")
+class UnaryDPSweepLR(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], resources: Array[CPIntVar], id: Int)(implicit store: CPStore)
 extends UnaryTemplate(starts, durations, ends, resources, id, "UnaryDetectablePrecedencesLR")(store)
 {
   private[this] val nTasks = starts.length
   
-/*  
-  // TODO: remove when unary template ok
-  def setup(strength: CPPropagStrength): CPOutcome = {
-    def callbacks(a: Int) = {
-      if (!resources(a).isBound) resources(a).callPropagateWhenBind(this)    
-      if (!starts(a).isBound)    starts(a)   .callPropagateWhenBoundsChange(this)
-      if (!durations(a).isBound) durations(a).callPropagateWhenBoundsChange(this)
-      if (!ends(a).isBound)      ends(a)     .callPropagateWhenBoundsChange(this)
-    }
-    
-    for (a <- 0 until nTasks) if (resources(a).hasValue(id)) callbacks(a)
-    
-    propagate()
-  }
-  
-  
-  val smin = Array.ofDim[Int](nTasks)
-  val emin = Array.ofDim[Int](nTasks)
-  val smax = Array.ofDim[Int](nTasks)
-  val emax = Array.ofDim[Int](nTasks)
-  val dmin = Array.ofDim[Int](nTasks)
-  
-  val required = Array.ofDim[Boolean](nTasks)
-  val possible = Array.ofDim[Boolean](nTasks)
-  
-  val toConsider = new OpenSparseSet(nTasks)
-  
-  def updateCache() = {
-    for (i <- 0 until nTasks) {
-      smin(i) = starts(i).min
-      smax(i) = starts(i).max
-      emin(i) = ends(i).min
-      emax(i) = ends(i).max
-      dmin(i) = durations(i).min
-      required(i) = resources(i).isBoundTo(id)
-      possible(i) = resources(i).hasValue(id)
-    }
-  }  
-  */
-  
   priorityL2 = 3
-  // idempotent = true
-  
-  final val debug = false
   
   private def nextPowerOfTwo(k: Int): Int = {
     1 << math.ceil(math.log(k) / math.log(2)).toInt
@@ -105,21 +62,21 @@ extends UnaryTemplate(starts, durations, ends, resources, id, "UnaryDetectablePr
   private[this] val temp2 = Array.ofDim[Int](nTasks + 1)
 
   private[this] val sortedBySMin = Array.tabulate(nTasks){ i => i }
-  private[this] val sortedByEMax = Array.tabulate(nTasks){ i => i }
+  // private[this] val sortedByEMax = Array.tabulate(nTasks){ i => i }
   private[this] val sortedByEMin = Array.tabulate(nTasks){ i => i }
   private[this] val sortedBySMax = Array.tabulate(nTasks){ i => i }
   
   private[this] val toConsiderBySMin = Array.ofDim[Int](nTasks)
-  private[this] val toConsiderByEMax = Array.ofDim[Int](nTasks)
+  // private[this] val toConsiderByEMax = Array.ofDim[Int](nTasks)
   private[this] val toConsiderByEMin = Array.ofDim[Int](nTasks)
   private[this] val toConsiderBySMax = Array.ofDim[Int](nTasks)
+  
+  private [this] val heapByEMin = new ArrayHeapInt(nTasks)
   
   
   override def propagate(): CPOutcome = {
     updateCache()
-    
-    // removeExtremal()
-    
+        
     // Step 1: Initialization
     // Step 1.1: sort activities by criteria of interest
     // TODO: we will only introduce task with smax < max{emin}, filter out the others
@@ -127,10 +84,6 @@ extends UnaryTemplate(starts, durations, ends, resources, id, "UnaryDetectablePr
     //       not at smin(i), but at emin(i) - dmin(i)
     // TODO: we can skip the introduction of tasks with dmin(i) == 0 in the tree, however pruning these tasks is crucial
     
-    filterSort(sortedBySMin, toConsiderBySMin, smin)
-    // filterSort(sortedByEMax, toConsiderByEMax, emax)
-    filterSort(sortedByEMin, toConsiderByEMin, emin)
-    filterSort(sortedBySMax, toConsiderBySMax, smax)
 
     // Step 1.2: initialize arrays of the tree
     /*
@@ -140,12 +93,17 @@ extends UnaryTemplate(starts, durations, ends, resources, id, "UnaryDetectablePr
      */
     val nToConsider = toConsider.limit.value
     val nodes = nextPowerOfTwo(nToConsider)
-    
-    // if (debug) println(s"UnaryDP: considering $nToConsider over $nTasks tasks, making a tree of ${2*nodes} nodes.")
-    // if (nodes < nToConsider) throw new IllegalArgumentException()
+    var p = 0
+    // Put tasks that have energy in a heap, by emin, for DP pruning events.
+    // TODO: heapify can be done in linear time if the whole array is given to the right algorithm...
+
+    filterSort(sortedBySMin, toConsiderBySMin, smin)
+    // filterSort(sortedByEMax, toConsiderByEMax, emax)
+    filterSort(sortedByEMin, toConsiderByEMin, emin)
+    filterSort(sortedBySMax, toConsiderBySMax, smax)
     
     // make a map from activities to leaves
-    var p = nToConsider
+    p = nToConsider
     while (p > 0) {
       p -= 1
       val a = toConsiderBySMin(p)
@@ -165,55 +123,71 @@ extends UnaryTemplate(starts, durations, ends, resources, id, "UnaryDetectablePr
     // Step 2: Do main loop
     p = 0
     var q = 0
-    while (p < nToConsider) {
-      val i = toConsiderByEMin(p)
-      val eminI = emin(i)
+    var nPruningEvents = nToConsider
+    
+    heapByEMin.clear()
+    
+    while (nPruningEvents > 0) {
+      // find whether next event is in array or in heap of pushed back
+      var eventDate = Int.MaxValue
+      var i = -1
       
-      while (q < nToConsider && smax(toConsiderBySMax(q)) < eminI) {
+      if (p < nToConsider) {
+        i = toConsiderByEMin(p)
+        eventDate = emin(i)
+      }
+      
+      if (!heapByEMin.isEmpty && heapByEMin.minKey <= eventDate) {  // the '<=' empties the heap first, then the queue
+        i = heapByEMin.dequeue()
+        eventDate = emin(i)
+      }
+      else p += 1      
+      
+      nPruningEvents -= 1
+      
+      // insert all consumption events      
+      while (q < nToConsider && smax(toConsiderBySMax(q)) < eventDate) {
         val j = toConsiderBySMax(q)
-        
-        // if (debug) print(s"UnaryDP: adding number $q, ${if (required(j)) "required" else "optional"} $j, " +
-        //                         s"smin = ${smin(j)}, smax = ${smax(j)}, at ${leafOfActivity(j)}, ${dmin(j)} units...")
-        
-        //if (dmin(j) > 0) {
-          if (required(j)) addToTheta(j) else addToLambda(j)
-        //}
-        
-        // if (debug) println(s"new ect is ${envelope(1)}")
+        if (required(j)) addToTheta(j) else addToLambda(j)
         q += 1
       }
       
+      // treat pruning event
       if (!required(i)) {
         if (envelope(1) > smax(i)) { // optional activity would be pushed too far
           if (resources(i).removeValue(id) == Failure) throw Inconsistency
           toConsider.exclude(i)
           removeFromLambda(i)
         }
-      }
-      else {// && dmin(i) > 0) {    // remove impossible optionals
-        val mustRemoveI = smax(i) < emin(i)
-        if (mustRemoveI) {
-          // if (debug) print(s"UnaryDP: removing ${if (required(i)) "required" else "optional"} $i, " +
-          //         s"smin = ${smin(i)}, smax = ${smax(i)}, at ${leafOfActivity(i)}, ${dmin(i)} units...")
-                   
-          removeFromTheta(i)
+        else {
+          val newEMin = envelope(1) + dmin(i)
+          if (newEMin > emin(i)) { // push for later
+            emin(i) = newEMin
+            heapByEMin.enqueue(emin(i), i)
+            nPruningEvents += 1
+          }
           
-          // if (debug) println(s"new ect is ${envelope(1)}")
         }
-        
+      }
+      else {    // remove impossible optionals
+        val mustRemoveI = workload(leafOfActivity(i)) > 0
+        if (mustRemoveI) removeFromTheta(i)
+      
         if (envelope(1) > smin(i)) {
-          // if (debug) println(s"UnaryDP pushing right $i with dmin ${dmin(i)}, emin ${emin(i)}, from ${smin(i)} to ${envelope(1)}")
-
-          //if (starts(i).updateMin(min(emin(i), envelope(1))) == Failure) throw Inconsistency
           if (starts(i).updateMin(envelope(1)) == Failure) throw Inconsistency
+          val newEMin = envelope(1) + dmin(i)
+          if (newEMin > emin(i)) { // push event back
+            // smin(i) = envelope(1) // not possible since theta lambda tree is fixed
+            emin(i) = newEMin
+            heapByEMin.enqueue(emin(i), i)
+            nPruningEvents += 1
+          }
         }
         
-        
-        while (envelopeOpt(1) > smax(i)) { //} && dmin(i) > 0) {
+        while (envelopeOpt(1) > smax(i)) {
           val opt = getMaxOptional(1, nodes)  // get responsible optional leaf
           val b = toConsiderBySMin(opt-nodes)  // get activity of that leaf
           
-          // if (debug) println(s"UnaryDP removing $b")
           // remove b from resource
           if (resources(b).removeValue(id) == Failure) throw Inconsistency
           toConsider.exclude(b)
@@ -222,13 +196,8 @@ extends UnaryTemplate(starts, durations, ends, resources, id, "UnaryDetectablePr
         
         if (mustRemoveI) addToTheta(i)
       }
-
-      p += 1
     }
-    // println(s"UnaryDP @${store.magic}for $id: used $count over $p tasks in the tree")
-    
     removeExtremal()
-    // removeIsolated(toConsiderBySMin, toConsiderByEMax, nToConsider)
     Suspend
   }
   
@@ -238,8 +207,6 @@ extends UnaryTemplate(starts, durations, ends, resources, id, "UnaryDetectablePr
     envelope(leaf)    = smin(act) + dmin(act)
     workloadOpt(leaf) = dmin(act)
     envelopeOpt(leaf) = smin(act) + dmin(act)
-    
-    // if (debug) println(s"envelope ${envelope(leaf)}")
     
     insertActivity(leaf / 2)
   }
@@ -378,8 +345,8 @@ extends UnaryTemplate(starts, durations, ends, resources, id, "UnaryDetectablePr
 
 }
 
-object UnaryDP {
+object UnaryDPSweep {
   def apply(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], resources: Array[CPIntVar], id: Int)(implicit store: CPStore) = 
-    new UnaryDP(starts, durations, ends, resources, id) 
+    new UnaryDPSweep(starts, durations, ends, resources, id) 
 
 }

@@ -189,22 +189,13 @@ abstract class TestUnary(name: String, nTests: Int) extends TestSuite {
 }
 
 
-class TestUnaryDP extends TestUnary("UnaryDP", 1000) {
+class TestUnaryDPSweep extends TestUnary("UnaryDPSweep, correctness", 100) {
   override def unary(starts: Vars, durations: Vars, ends: Vars,resources: Vars, id: Int)(implicit store: CPStore) =
-    Array(UnaryDP(starts, durations, ends, resources, id))
+    Array(UnaryDPSweep(starts, durations, ends, resources, id))
 }
 
-class TestUnaryDP2 extends TestUnary("UnaryDP2", 1000) {
-  override def unary(starts: Vars, durations: Vars, ends: Vars,resources: Vars, id: Int)(implicit store: CPStore) =
-    Array(UnaryDP2(starts, durations, ends, resources, id))
-}
 
-class TestUnaryDPNFNL extends TestUnary("UnaryDPNFNL", 1000) {
+class TestUnaryStack extends TestUnary("Unary, correctness", 100) {
   override def unary(starts: Vars, durations: Vars, ends: Vars,resources: Vars, id: Int)(implicit store: CPStore) =
-    Array(UnaryDPNFNL(starts, durations, ends, resources, id))
-}
-
-class TestUnaryEF extends TestUnary("UnaryEF", 1000) {
-  override def unary(starts: Vars, durations: Vars, ends: Vars,resources: Vars, id: Int)(implicit store: CPStore) =
-    Array(UnaryEF(starts, durations, ends, resources, id))
+    Array(Unary(starts, durations, ends, resources, id))
 }
