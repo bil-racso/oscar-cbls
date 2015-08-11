@@ -23,7 +23,7 @@ object OscarBuild extends Build {
       case (os, arch) => sys.error("Unsupported OS [${os}] Architecture [${arch}] combo, OscaR currently supports macos64, linux64, windows32, windows64")
     }
 
-    val commonSettings = Defaults.defaultSettings ++ Seq(
+    lazy val commonSettings = Defaults.defaultSettings ++ jacoco.settings ++ Seq(
       organization := buildOrganization,
       version := buildVersion,
       scalacOptions in Compile ++= Seq("-encoding", "UTF-8", "-deprecation", "-feature", "-unchecked", "-Xdisable-assertions"),
@@ -34,10 +34,10 @@ object OscarBuild extends Build {
       fork in Test := true,
       javaOptions in Test += "-Djava.library.path=../lib:../lib/" + osNativeLibDir,
       scalaVersion := buildScalaVersion,
-      publishTo := Some(Resolver.url("sbt-release-local", new URL("http://localhost:8081/artifactory/libs-release-local")))
+      unmanagedSourceDirectories in Test += baseDirectory.value / "src" / "main" / "examples",
+      publishTo := Some("Artifactory Realm" at "http://localhost:8081/artifactory/sbt-repo"),
+      credentials += Credentials(Path.userHome / ".ivy2" / ".credentials")
     )
-  
-    lazy val lazySettings = jacoco.settings :+ (unmanagedSourceDirectories in Test += baseDirectory.value / "src/main/examples")
   }
   
   object Resolvers {
@@ -81,122 +81,123 @@ object OscarBuild extends Build {
     base = file("."),
     settings =
       commonSettings ++
-      lazySettings ++ 
       packSettings ++
-      unidocSettings ++ 
-      Seq (libraryDependencies ++= testDeps) ++ 
-      sbtassembly.Plugin.assemblySettings ++ 
-      (unidocProjectFilter in (ScalaUnidoc, unidoc) :=
-        inAnyProject -- inProjects(oscarFzn)),
-    aggregate = Seq(oscarVisual,oscarCp,oscarCbls/*,oscarFzn*/,oscarLinprog,oscarDes,oscarDfo),
-    dependencies = Seq(oscarCp,oscarCbls/*,oscarFzn*/,oscarDes,oscarDfo,oscarLinprog))
+      unidocSettings ++
+      Seq(libraryDependencies ++= testDeps) ++
+      sbtassembly.Plugin.assemblySettings :+
+        (unidocProjectFilter in (ScalaUnidoc, unidoc) := inAnyProject -- inProjects(oscarFzn)),
+    aggregate = Seq(oscarAlgebra, oscarAlgo, oscarCbls, oscarCp, oscarDfo, oscarLinprog, oscarUtil, oscarVisual)
+  )
 
   lazy val oscarAlgebra = Project(
     id = "oscar-algebra",
+    base = file("oscar-algebra"),
     settings =
       commonSettings ++
-      lazySettings ++
-      Seq (libraryDependencies ++= testDeps),
-    base = file("oscar-algebra"))
+      Seq(libraryDependencies ++= testDeps)
+  )
 
   lazy val oscarAlgo = Project(
     id = "oscar-algo",
+    base = file("oscar-algo"),
     settings =
       commonSettings ++
-      jacoco.settings ++
-      Seq (libraryDependencies ++= testDeps),
-    base = file("oscar-algo"),
-    dependencies= Seq(oscarUtil,oscarVisual))
+      Seq(libraryDependencies ++= testDeps),
+    dependencies = Seq(oscarUtil, oscarVisual)
+  )
 
   lazy val oscarCbls = Project(
     id = "oscar-cbls",
     base = file("oscar-cbls"),
     settings =
       commonSettings ++
-      lazySettings ++
       packAutoSettings ++
       Seq(
         libraryDependencies ++= testDeps :+ scalaSwing,
         packGenerateWindowsBatFile := false
       ) ++
       sbtassembly.Plugin.assemblySettings,
-    dependencies = Seq(oscarVisual))
+    dependencies = Seq(oscarVisual)
+  )
 
   lazy val oscarCp = Project(
     id = "oscar-cp",
     base = file("oscar-cp"),
     settings =
       commonSettings ++
-      lazySettings ++
       Seq(libraryDependencies ++= testDeps :+ scalaParserCombinators) ++
       sbtassembly.Plugin.assemblySettings,
-    dependencies = Seq(oscarAlgo,oscarVisual))
+    dependencies = Seq(oscarAlgo, oscarVisual)
+  )
 
+  // Not included in the root build
   lazy val oscarDes = Project(
     id = "oscar-des",
     base = file("oscar-des"),
     settings =
       commonSettings ++
-      lazySettings ++
       Seq(libraryDependencies ++= testDeps :+ jsci) ++
       sbtassembly.Plugin.assemblySettings,
-    dependencies = Seq(oscarInvariants))
+    dependencies = Seq(oscarInvariants)
+  )
 
   lazy val oscarDfo = Project(
     id = "oscar-dfo",
     base = file("oscar-dfo"),
     settings =
       commonSettings ++
-      lazySettings ++
       Seq(libraryDependencies ++= testDeps :+ jcommon :+ jfreechart) ++
       sbtassembly.Plugin.assemblySettings,
-    dependencies = Seq(oscarAlgebra,oscarVisual,oscarAlgo))
+    dependencies = Seq(oscarAlgebra, oscarAlgo, oscarVisual)
+  )
 
+  // Not included in the default build
   lazy val oscarFzn = Project(
     id = "oscar-fzn",
     base = file("oscar-fzn"),
     settings =
       commonSettings ++
-      lazySettings ++
       Seq(libraryDependencies ++= testDeps :+ antlr4Runtime) ++
       sbtassembly.Plugin.assemblySettings,
-    dependencies = Seq(oscarCbls))
+    dependencies = Seq(oscarCbls)
+  )
 
+  // Not included in the build
   lazy val oscarInvariants = Project(
     id = "oscar-invariants",
+    base = file("oscar-invariants"),
     settings =
       commonSettings ++
-      lazySettings ++
-      Seq (libraryDependencies ++= testDeps),
-    base = file("oscar-invariants"))
+      Seq(libraryDependencies ++= testDeps)
+  )
 
   lazy val oscarLinprog = Project( 
     id = "oscar-linprog",
     base = file("oscar-linprog"),
     settings =
       commonSettings ++
-      lazySettings ++
       Seq(
         resolvers ++= Seq(xypron, leadoperations, cogcomp),
         libraryDependencies ++= testDeps :+ glpk :+ gurobi :+ lpsolve :+ scalaXml
       ) ++ 
       sbtassembly.Plugin.assemblySettings,
-    dependencies = Seq(oscarAlgebra, oscarVisual))
+    dependencies = Seq(oscarAlgebra, oscarVisual)
+  )
 
   lazy val oscarUtil = Project(
     id = "oscar-util",
+    base = file("oscar-util"),
     settings =
       commonSettings ++
-      lazySettings ++
-      Seq (libraryDependencies ++= testDeps :+ scalaXml),
-    base = file("oscar-util"))
+      Seq(libraryDependencies ++= testDeps :+ scalaXml)
+  )
 
   lazy val oscarVisual = Project(
     id = "oscar-visual",
+    base = file("oscar-visual"),
     settings =
       commonSettings ++
-      lazySettings ++
-      Seq (libraryDependencies ++= testDeps :+ jfreechart :+ swingx :+ swingxWs),
-    base = file("oscar-visual"),
-    dependencies= Seq(oscarUtil))
+      Seq(libraryDependencies ++= testDeps :+ jfreechart :+ swingx :+ swingxWs),
+    dependencies = Seq(oscarUtil)
+  )
 }
