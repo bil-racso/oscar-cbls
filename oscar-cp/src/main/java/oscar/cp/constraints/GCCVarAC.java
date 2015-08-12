@@ -26,7 +26,7 @@ import oscar.cp.core.CPStore;
  * Global Cardinality Constraint with variable cardinality
  * @author Pierre Schaus pschaus@gmail.com
  */
-public class GCCVar extends Constraint {
+public class GCCVarAC extends Constraint {
 
 
 	private final int NONE = -Integer.MIN_VALUE;
@@ -82,7 +82,7 @@ public class GCCVar extends Constraint {
      * @see  GCC
      * @see  SoftGCC
      */
-	public GCCVar(CPIntVar[] x, int minval,CPIntVar [] o) {
+	public GCCVarAC(CPIntVar[] x, int minval,CPIntVar [] o) {
 		super(x[0].store(),"GCCVar");
 		this.x = x;
 		this.o = o;

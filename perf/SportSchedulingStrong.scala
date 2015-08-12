@@ -16,6 +16,7 @@
  */
 
 import oscar.cp._
+import oscar.cp.core.CPPropagStrength
 
 /**
  * The problem is to schedule an even number n of teams over n/2 periods and n - 1 weeks,
@@ -26,7 +27,7 @@ import oscar.cp._
  *
  * @author Pierre Schaus pschaus@gmail.com
  */
-object SportScheduling extends CPModel with App {
+object SportSchedulingStrong extends CPModel with App {
 
   val n = 14
   val nbPeriods = n / 2
@@ -53,7 +54,7 @@ object SportScheduling extends CPModel with App {
     }
     println("\n")
   }
-
+  val cl = CPPropagStrength.Strong
   // make the link between the team and game variables
   for (p <- Periods; w <- Weeks) {
     add(table(team(p)(w)(0), team(p)(w)(1), game(p)(w), tuples))
@@ -61,15 +62,16 @@ object SportScheduling extends CPModel with App {
   // a team plays exactly one game per week
   for (w <- Weeks) {
     val teamw = for (p <- Periods; h <- Homes) yield team(p)(w)(h)
-    add(allDifferent(teamw), Strong)
+    add(allDifferent(teamw), cl)
   }
   // every team plays against every other team
-  add(allDifferent(game.flatten), Strong)
+  add(allDifferent(game.flatten), cl)
   // a team can play at most twice in the same period
   for (p <- Periods)
-    add(gcc(team(p).flatten, Teams, 1, 2), Strong)
+    add(gcc(team(p).flatten, Teams, 1, 2), cl)
   search {
     binaryFirstFail(game.flatten.toSeq)
-  } start (1)
+  } 
+  println(start (1))
 
 }
