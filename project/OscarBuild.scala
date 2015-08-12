@@ -11,7 +11,7 @@ object OscarBuild extends Build {
 
   object BuildSettings {
     val buildOrganization = "oscar"
-    val buildVersion = "3.0.0.beta"
+    val buildVersion = "3.0.0-SNAPSHOT"
     val buildScalaVersion = "2.11.0"
     val buildSbtVersion= "0.13.0"
 
@@ -35,7 +35,14 @@ object OscarBuild extends Build {
       javaOptions in Test += "-Djava.library.path=../lib:../lib/" + osNativeLibDir,
       scalaVersion := buildScalaVersion,
       unmanagedSourceDirectories in Test += baseDirectory.value / "src" / "main" / "examples",
-      publishTo := Some("Artifactory Realm" at "http://localhost:8081/artifactory/sbt-repo"),
+      publishTo := {
+        val artifactoryName = "Artifactory Realm"
+        val artifactoryUrl = "http://130.104.228.80:8080/artifactory/"
+        if (isSnapshot.value)
+          Some(artifactoryName at artifactoryUrl + "libs-snapshot-local;build.timestamp=" + new java.util.Date().getTime)
+        else
+          Some(artifactoryName at artifactoryUrl + "libs-release-local")
+      },
       credentials += Credentials(Path.userHome / ".ivy2" / ".credentials")
     )
   }
