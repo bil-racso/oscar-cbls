@@ -32,13 +32,14 @@ import oscar.cp.core.CPOutcome._
  *
  * @author Victor Lecomte
  */
-class GCCVarFWC(val X: Array[CPIntVar], val minVal: Int, val boundingVar: Array[CPIntVar])
+class GCCVarFWC(X: Array[CPIntVar], minVal: Int, boundingVar: Array[CPIntVar])
   extends Constraint(X(0).store, "GCCVarFWC") {
 
   idempotent = false
 
   private[this] val nValues = boundingVar.length
-  private[this] val rValues = minVal until (minVal + nValues)
+  private[this] val maxVal = minVal + nValues - 1
+  private[this] val nVariables = X.length
 
   // MEMORIZATION STRUCTURE:
   // The number of variables that are bound to the value
@@ -48,6 +49,9 @@ class GCCVarFWC(val X: Array[CPIntVar], val minVal: Int, val boundingVar: Array[
   private[this] var valueOkRev: Array[ReversibleBoolean] = null
   // The number of bounds that are respected
   private[this] var nValuesOkRev: ReversibleInt = null
+  // The sparse set to memorize the variables having a value that is unbound
+  private[this] val unboundSet = Array.tabulate(nValues)(vi => new Array[Int](nVariables))
+  private[this] val unboundIndex = Array.tabulate(nValues)(vi => new Array[Int](nVariables))
 
   // Change buffer to load the deltas
   private[this] var changeBuffer: Array[Int] = null
@@ -62,7 +66,7 @@ class GCCVarFWC(val X: Array[CPIntVar], val minVal: Int, val boundingVar: Array[
 
     // Initial counting (the rest is done in the update functions)
     var bufferSize = 0
-    var i = X.length
+    var i = nVariables
     while (i > 0) {
       i -= 1
       val x = X(i)
@@ -70,7 +74,7 @@ class GCCVarFWC(val X: Array[CPIntVar], val minVal: Int, val boundingVar: Array[
       // Count the number of variables that are bound to the value
       if (x.isBound) {
         val v = x.min
-        if (rValues.contains(v)) {
+        if (minVal <= v && v <= maxVal) {
           val vi = v - minVal
           nMandatory(vi) += 1
         }
@@ -81,6 +85,13 @@ class GCCVarFWC(val X: Array[CPIntVar], val minVal: Int, val boundingVar: Array[
         vi -= 1
         if (x.hasValue(vi + minVal)) {
           nPossible(vi) += 1
+
+          // If x is unbound, add it to the value's sparse set
+          if (!x.isBound) {
+            val index = nPossible(vi) - nMandatory(vi) - 1
+            unboundSet(vi)(index) = i
+            unboundIndex(vi)(i) = index
+          }
         }
       }
 
@@ -90,7 +101,11 @@ class GCCVarFWC(val X: Array[CPIntVar], val minVal: Int, val boundingVar: Array[
       }
 
       // Register before the first check loop so that we receive information on what we changed there
-      x.callOnChanges(i, delta => if (nValuesOkRev.value == nValues) Success else whenDomainChanges(delta, x))
+      x.callOnChanges(i, delta => {
+        val nValuesOk = nValuesOkRev.value
+        if (nValuesOk == nValues) Success
+        else whenDomainChanges(delta, x, nValuesOk)
+      })
     }
 
     // INITIAL CHECK LOOP
@@ -98,11 +113,13 @@ class GCCVarFWC(val X: Array[CPIntVar], val minVal: Int, val boundingVar: Array[
     while (vi > 0) {
       vi -= 1
 
+      val v = vi + minVal
       val bound = boundingVar(vi)
       var lower = bound.min
       var upper = bound.max
       val possible = nPossible(vi)
       val mandatory = nMandatory(vi)
+      val unbound = possible - mandatory
 
       // Restrict the bounding to what is possible
       if (upper > possible) {
@@ -126,7 +143,7 @@ class GCCVarFWC(val X: Array[CPIntVar], val minVal: Int, val boundingVar: Array[
       else if (possible == lower) {
 
         // Try to bind them all
-        if (whenMinPossible(vi) != lower) {
+        if (whenMinPossible(vi, v, unbound) == Failure) {
           return Failure
         }
 
@@ -146,7 +163,7 @@ class GCCVarFWC(val X: Array[CPIntVar], val minVal: Int, val boundingVar: Array[
         else if (mandatory == upper) {
 
           // Try to remove the unbound
-          if (whenMaxMandatory(vi) != upper) {
+          if (whenMaxMandatory(vi, v, unbound) == Failure) {
             return Failure
           }
 
@@ -177,7 +194,10 @@ class GCCVarFWC(val X: Array[CPIntVar], val minVal: Int, val boundingVar: Array[
       var vi = nValues
       while (vi > 0) {
         vi -= 1
-        boundingVar(vi).filterWhenBoundsChange()(if (valueOkRev(vi).value) Success else whenBoundsChange(boundingVar(vi), vi))
+        boundingVar(vi).filterWhenBoundsChange()({
+          if (valueOkRev(vi).value) Success
+          else whenBoundsChange(boundingVar(vi), vi)
+        })
       }
     }
 
@@ -188,22 +208,25 @@ class GCCVarFWC(val X: Array[CPIntVar], val minVal: Int, val boundingVar: Array[
   /**
    * Update the structure when values are removed from a variable.
    */
-  @inline private def whenDomainChanges(delta: DeltaIntVar, x: CPIntVar): CPOutcome = {
+  @inline private def whenDomainChanges(delta: DeltaIntVar, x: CPIntVar, nValuesOk: Int): CPOutcome = {
+    val i = delta.id
+    var nValuesOkVar = nValuesOk
 
     // Treat the value removals
-    //println("Copying in "+this.hashCode())
     var c = delta.fillArray(changeBuffer)
     while (c > 0) {
       c -= 1
       val v = changeBuffer(c)
 
       // If the value removed is one we track
-      if (rValues.contains(v)) {
+      if (minVal <= v && v <= maxVal) {
         val vi = v - minVal
         if (!valueOkRev(vi).value) {
 
           val possible = nPossibleRev(vi).decr()
-          //println("decreasing value " + v)
+          val unbound = possible - nMandatoryRev(vi).value
+
+          removeUnbound(i, vi, unbound)
 
           // Restrict the bounding to what is possible
           val bound = boundingVar(vi)
@@ -224,14 +247,16 @@ class GCCVarFWC(val X: Array[CPIntVar], val minVal: Int, val boundingVar: Array[
           else if (possible == lower) {
 
             // Try to bind them all
-            if (whenMinPossible(vi) != lower) {
+            if (whenMinPossible(vi, v, unbound) == Failure) {
               return Failure
             }
 
             // The correct number of variables have the value, and we have bound them all
             if (lower == upper) {
               valueOkRev(vi).setTrue()
-              if (nValuesOkRev.incr() == nValues) {
+              nValuesOkVar += 1
+              if (nValuesOkVar == nValues) {
+                nValuesOkRev.setValue(nValues)
                 return Success
               }
             }
@@ -245,11 +270,14 @@ class GCCVarFWC(val X: Array[CPIntVar], val minVal: Int, val boundingVar: Array[
       val v = x.min
 
       // If the value assigned is one we track
-      if (rValues.contains(v)) {
+      if (minVal <= v && v <= maxVal) {
         val vi = v - minVal
         if (!valueOkRev(vi).value) {
 
           val mandatory = nMandatoryRev(vi).incr()
+          val unbound = nPossibleRev(vi).value - mandatory
+
+          removeUnbound(i, vi, unbound)
 
           // Restrict the bounding to what is possible
           val bound = boundingVar(vi)
@@ -270,14 +298,16 @@ class GCCVarFWC(val X: Array[CPIntVar], val minVal: Int, val boundingVar: Array[
           else if (mandatory == upper) {
 
             // Try to remove the unbound
-            if (whenMaxMandatory(vi) != upper) {
+            if (whenMaxMandatory(vi, v, unbound) == Failure) {
               return Failure
             }
 
             // The correct number of variables are bound to the value, and we have removed the unbound
             if (lower == upper) {
               valueOkRev(vi).setTrue()
-              if (nValuesOkRev.incr() == nValues) {
+              nValuesOkVar += 1
+              if (nValuesOkVar == nValues) {
+                nValuesOkRev.setValue(nValues)
                 return Success
               }
             }
@@ -286,15 +316,21 @@ class GCCVarFWC(val X: Array[CPIntVar], val minVal: Int, val boundingVar: Array[
       }
     }
 
+    if (nValuesOkVar != nValuesOk) {
+      nValuesOkRev.setValue(nValuesOkVar)
+    }
     Suspend
   }
 
   def whenBoundsChange(bound: CPIntVar, vi: Int): CPOutcome = {
+    val v = vi + minVal
     val lower = bound.min
     val upper = bound.max
+    val possible = nPossibleRev(vi).value
+    val mandatory = nMandatoryRev(vi).value
+    val unbound = possible - mandatory
 
     // Too few variables have the value
-    val possible = nPossibleRev(vi).value
     if (possible < lower) {
       return Failure
     }
@@ -302,7 +338,7 @@ class GCCVarFWC(val X: Array[CPIntVar], val minVal: Int, val boundingVar: Array[
     else if (possible == lower) {
 
       // Try to bind them all
-      if (whenMinPossible(vi) != lower) {
+      if (whenMinPossible(vi, v, unbound) == Failure) {
         return Failure
       }
 
@@ -315,7 +351,6 @@ class GCCVarFWC(val X: Array[CPIntVar], val minVal: Int, val boundingVar: Array[
     }
 
     // Too many variables are bound to the value
-    val mandatory = nMandatoryRev(vi).value
     if (mandatory > upper) {
       return Failure
     }
@@ -323,7 +358,7 @@ class GCCVarFWC(val X: Array[CPIntVar], val minVal: Int, val boundingVar: Array[
     else if (mandatory == upper) {
 
       // Try to remove the unbound
-      if (whenMaxMandatory(vi) != upper) {
+      if (whenMaxMandatory(vi, v, unbound) == Failure) {
         return Failure
       }
 
@@ -339,51 +374,54 @@ class GCCVarFWC(val X: Array[CPIntVar], val minVal: Int, val boundingVar: Array[
   }
 
   /**
+   * Remove a variable from a value's unbound sparse set
+   */
+  @inline private def removeUnbound(i: Int, vi: Int, last: Int): Unit = {
+
+    val thisUnboundSet = unboundSet(vi)
+    val thisUnboundIndex = unboundIndex(vi)
+    val atLast = thisUnboundSet(last)
+    val index = thisUnboundIndex(i)
+
+    thisUnboundSet(index) = atLast
+    thisUnboundIndex(atLast) = index
+    thisUnboundSet(last) = i
+    thisUnboundIndex(i) = last
+  }
+
+  /**
    * When the number of possible variables drops to the lower bound, bind the unbound.
    */
-  @inline private def whenMinPossible(vi: Int): Int = {
-    val v = vi + minVal
-    var possible = 0
+  @inline private def whenMinPossible(vi: Int, v: Int, nUnbound: Int): CPOutcome = {
+    val thisUnboundSet = unboundSet(vi)
 
     // Bind all the unbound variables that have this value
-    var i = X.length
+    var i = nUnbound
     while (i > 0) {
       i -= 1
-      val x = X(i)
-
-      if (x.hasValue(v)) {
-        if (!x.isBound) {
-          x.assign(v)
-        }
-        possible += 1
+      if (X(thisUnboundSet(i)).assign(v) == Failure) {
+        return Failure
       }
     }
 
-    // Return the number of variables that actually have the value
-    possible
+    Suspend
   }
 
   /**
    * When the number of mandatory variables reaches the upper bound, drop the unbound.
    */
-  @inline private def whenMaxMandatory(vi: Int): Int = {
-    val v = vi + minVal
-    var mandatory = 0
+  @inline private def whenMaxMandatory(vi: Int, v: Int, nUnbound: Int): CPOutcome = {
+    val thisUnboundSet = unboundSet(vi)
 
     // Remove the value from the unbound variables that have this value
-    var i = X.length
+    var i = nUnbound
     while (i > 0) {
       i -= 1
-      val x = X(i)
-
-      if (x.isBoundTo(v)) {
-        mandatory += 1
-      } else if (x.hasValue(v)) {
-        x.removeValue(v)
+      if (X(thisUnboundSet(i)).removeValue(v) == Failure) {
+        return Failure
       }
     }
 
-    // Return the number of variables that are actually bound to the value
-    mandatory
+    Suspend
   }
 }
