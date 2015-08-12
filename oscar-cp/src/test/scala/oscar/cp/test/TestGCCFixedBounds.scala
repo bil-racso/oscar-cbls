@@ -31,11 +31,15 @@ class TestGCCFixedBounds extends FunSuite with ShouldMatchers {
     val X = Array.tabulate(domX.size)(i => CPIntVar(domX(i))(cp))
 
     try {
+
       cp.add(gcc(X, values, min, max), s)
 
     } catch {
-      case e: oscar.cp.core.NoSolutionException => return (0, 0, 0)
+      case e: oscar.cp.core.NoSolutionException => {
+          return (0, 0, 0) 
+      }
     }
+
     cp.search {
       binaryStatic(X)
     } onSolution {
@@ -49,11 +53,34 @@ class TestGCCFixedBounds extends FunSuite with ShouldMatchers {
 
   var rand = new scala.util.Random(0)
   def randomDom(size: Int) = Array.fill(size)(rand.nextInt(size)-3).toSet
+  
+  /*
+  test("GccBC1") {
+    var nbWins = 0
+
+      
+      val nbVars = 4
+
+      val domVars = Array(-3 to -1, -3 to -1, -3 to 0, -3 to 0)
+      val cardMin = Array(2,0,0,2)
+      val cardMax = Array(4,4,4,4)
+      
+      val cp = CPSolver()
+
+      val X = Array.tabulate(domVars.size)(i => CPIntVar(domVars(i))(cp))
+
+      val values = -3 to 0
+      cp.add(gcc(X, values, cardMin,cardMax), CPPropagStrength.Medium)
+    
+      
+      println(X.mkString(","))
+      
+    }*/
 
   test("GccBC2") {
     var nbWins = 0
-    for (i <- 1 to 200) {
-      println(i)
+    for (i <- 1 to 100) {
+      //println(i)
       rand =  new scala.util.Random(i)
       
       val nbVars = 8
@@ -67,9 +94,16 @@ class TestGCCFixedBounds extends FunSuite with ShouldMatchers {
       var cardMin = (for (v <- min to max) yield rand.nextInt(3)).toArray
       var cardMax = cardMin.map(v => v+rand.nextInt(3))
 
+      //val res = nbSol(domVars, min to max, cardMin,cardMax, CPPropagStrength.Medium)
+      //println(res)
+      
+      
       var (nSol1, nSol2, nSol3) = (0, 0, 0)
       var (bkt1, bkt2, bkt3) = (0, 0, 0)
       var (nNode1, nNode2, nNode3) = (0, 0, 0)
+      
+      
+      
       val t1 = oscar.util.time {
         val (a, b, c) = nbSol(domVars, min to max, cardMin,cardMax, CPPropagStrength.Weak)
         nSol1 = a
@@ -89,9 +123,11 @@ class TestGCCFixedBounds extends FunSuite with ShouldMatchers {
         nNode3 = c
       }
 
-      //println(nSol1)
+      //println("===================================>"+nSol1)
       nSol1 should equal(nSol2)
       nSol1 should equal(nSol3)
+      assert(bkt2 <= bkt1)
+      assert(bkt3 <= bkt2)
 
         
 

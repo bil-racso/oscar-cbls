@@ -24,31 +24,38 @@ import scala.collection.mutable.ArrayBuffer
 import oscar.cp.core.variables.CPIntVar
 
 /**
- * Global Cardinality Constraint
- * Constraint the values minval+i to appear between low[i] and up[i] times in x
+ * Alldifferent constraint
  * @author Pierre Schaus pschaus@gmail.com
  */
-class GCC(x: Array[CPIntVar], minval: Int, low: Array[Int], up: Array[Int]) extends Constraint(x(0).store) {
+class AllDifferent(x: Array[CPIntVar]) extends Constraint(x(0).store) {
   
+  
+  def this(x: CPIntVar*) =  this(x.toArray)
+
+  /**
+   * Post the constraint that for every pair of variables in x[i], x[j], we have x[i] != x[j] <br>
+   * Available propagation strength are Weak (default) and Strong
+   * @see CPPropagStrength
+   * @param x
+   */
   override def setup(l: CPPropagStrength): CPOutcome = {
-    
+
     val ok = l match {
       case CPPropagStrength.Weak => {
-        s.post(new GCCFWC(x, minval, low, up)) 
+        s.post(new AllDiffFWC(x))
       }
       case CPPropagStrength.Medium => {
-        s.post(Array(new GCCUpperBC(x, minval, up), new GCCFWC(x, minval, low, up)))
-        //s.post(Array(new GCCBCNew(x, minval, low, up), new GCCFWC(x, minval, low, up)))
-        
-        //s.post(new GCCBCNew(x, minval, low, up)) 
+        val minVal = x.map(_.min).min
+        val maxVal = x.map(_.max).max
+        val cards = Array.fill(maxVal - minVal + 1)(1)
+        s.post(Array(new AllDiffFWC(x), new GCCUpperBC(x, minVal, cards)))
       }
-      case CPPropagStrength.Strong => s.post(new SoftGCC(x, minval, low, up, CPIntVar(0,0)(s)))
-      
+      case CPPropagStrength.Strong => s.post(new AllDiffAC(x))
+
     }
     if (ok == CPOutcome.Failure) return CPOutcome.Failure;
     else return CPOutcome.Success;
 
   }
-  
 
 }
