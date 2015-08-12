@@ -51,6 +51,13 @@ class AllDifferent(x: Array[CPIntVar]) extends Constraint(x(0).store) {
         s.post(Array(new AllDiffFWC(x), new GCCUpperBC(x, minVal, cards)))
       }
       case CPPropagStrength.Strong => s.post(new AllDiffAC(x))
+      case CPPropagStrength.Automatic => {
+        val minVal = x.map(_.min).min
+        val maxVal = x.map(_.max).max
+        val cards = Array.fill(maxVal - minVal + 1)(1)
+        s.post(Array(new AllDiffFWC(x), new GCCUpperBC(x, minVal, cards)))        
+      }
+      
 
     }
     if (ok == CPOutcome.Failure) return CPOutcome.Failure;

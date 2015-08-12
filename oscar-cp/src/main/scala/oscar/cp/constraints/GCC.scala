@@ -38,11 +38,11 @@ class GCC(x: Array[CPIntVar], minval: Int, low: Array[Int], up: Array[Int]) exte
       }
       case CPPropagStrength.Medium => {
         s.post(Array(new GCCUpperBC(x, minval, up), new GCCFWC(x, minval, low, up)))
-        //s.post(Array(new GCCBCNew(x, minval, low, up), new GCCFWC(x, minval, low, up)))
-        
-        //s.post(new GCCBCNew(x, minval, low, up)) 
       }
       case CPPropagStrength.Strong => s.post(new SoftGCC(x, minval, low, up, CPIntVar(0,0)(s)))
+      case CPPropagStrength.Automatic => {
+        s.post(Array(new GCCUpperBC(x, minval, up), new GCCFWC(x, minval, low, up)))
+      }
       
     }
     if (ok == CPOutcome.Failure) return CPOutcome.Failure;
