@@ -29,11 +29,11 @@ class TestBuild extends FunSuite with ShouldMatchers {
 	  if (ineclipse) new File("minizinc/test/flatzinc").listFiles.filter(_.getName.endsWith(".fzn")).sorted
 	  else new File(pwd+"/../minizinc/test/flatzinc").listFiles.filter(_.getName.endsWith(".fzn")).sorted
 
-	  println("testing ..."+modelFileList.mkString(","))
+	  //println("testing ..."+modelFileList.mkString(","))
 	  val old = Console.out;
 	  for(f <- modelFileList) {
 	    
-	    old.println("Testing: " + f.getName())
+	    //old.println("Testing: " + f.getName())
 	    
 	    // redirect Console.out
 	    var baos = new ByteArrayOutputStream();

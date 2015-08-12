@@ -288,7 +288,7 @@ class TestDeltaPropagate extends TestSuite {
 
     // Execution
     val stats = start()
-    println(stats)
+    //println(stats)
 
   }
   
@@ -406,7 +406,7 @@ class TestDeltaPropagate extends TestSuite {
           }
           if (nPropag == 2) {
             // should not come here since it is idempotent, don't know what should be the correct delta in this case
-            println("oldMin:"+delta.oldMin+" oldMax:"+delta.oldMax+" size:"+delta.size)
+            //println("oldMin:"+delta.oldMin+" oldMax:"+delta.oldMax+" size:"+delta.size)
             delta.changed should be(true)
             delta.size should be(1)
             delta.values.toArray should be(Array(0))
