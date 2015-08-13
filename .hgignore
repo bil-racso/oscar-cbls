@@ -15,6 +15,7 @@ lib/scalatest-1.6.1.jar
 oscar.eml
 .idea
 */.project
+LPParam.ini
 
 syntax: regexp
 \.jardesc$

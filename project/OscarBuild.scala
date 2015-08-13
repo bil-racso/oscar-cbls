@@ -57,7 +57,7 @@ object OscarBuild extends Build {
 
     // Regular libraries
     val antlr4Runtime = "org.antlr" % "antlr4-runtime" % "latest.milestone"
-    val glpk = "org.gnu.glpk" % "glpk-java" % "1.1.0"
+    val glpk = "org.gnu.glpk" % "glpk-java" % "1.0.16"
     val gurobi = "gurobi" % "gurobi" % "5.0.1"
     val lpsolve = "lpsolve" % "lpsolve" % "5.5.2"
     val jcommon = "org.jfree" % "jcommon" % "latest.milestone"
