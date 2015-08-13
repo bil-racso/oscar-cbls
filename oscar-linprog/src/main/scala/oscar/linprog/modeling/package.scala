@@ -28,7 +28,7 @@ package object modeling {
   
   // solvers used for test
   lazy val solvers = List(LPSolverLib.lp_solve, LPSolverLib.glpk, LPSolverLib.gurobi).filter(canInstantiateSolver(_))
-
+  println("===>  solvers possible to instanciate are: "+solvers.mkString(","))
   def canInstantiateSolver(s: LPSolverLib.Value): Boolean = {
 	  try {
       val solver = s match {
