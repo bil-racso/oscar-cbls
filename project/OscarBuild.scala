@@ -90,8 +90,7 @@ object OscarBuild extends Build {
       commonSettings ++
       packSettings ++
       unidocSettings ++
-      Seq(libraryDependencies ++= testDeps) ++
-      sbtassembly.Plugin.assemblySettings :+
+      Seq(libraryDependencies ++= testDeps) :+
         (unidocProjectFilter in (ScalaUnidoc, unidoc) := inAnyProject -- inProjects(oscarFzn)),
     aggregate = Seq(oscarAlgebra, oscarAlgo, oscarCbls, oscarCp, oscarDfo, oscarLinprog, oscarUtil, oscarVisual)
   )
@@ -122,8 +121,7 @@ object OscarBuild extends Build {
       Seq(
         libraryDependencies ++= testDeps :+ scalaSwing,
         packGenerateWindowsBatFile := false
-      ) ++
-      sbtassembly.Plugin.assemblySettings,
+      ),
     dependencies = Seq(oscarVisual)
   )
 
@@ -132,8 +130,7 @@ object OscarBuild extends Build {
     base = file("oscar-cp"),
     settings =
       commonSettings ++
-      Seq(libraryDependencies ++= testDeps :+ scalaParserCombinators) ++
-      sbtassembly.Plugin.assemblySettings,
+      Seq(libraryDependencies ++= testDeps :+ scalaParserCombinators),
     dependencies = Seq(oscarAlgo, oscarVisual)
   )
 
@@ -143,8 +140,7 @@ object OscarBuild extends Build {
     base = file("oscar-des"),
     settings =
       commonSettings ++
-      Seq(libraryDependencies ++= testDeps :+ jsci) ++
-      sbtassembly.Plugin.assemblySettings,
+      Seq(libraryDependencies ++= testDeps :+ jsci),
     dependencies = Seq(oscarInvariants)
   )
 
@@ -153,8 +149,7 @@ object OscarBuild extends Build {
     base = file("oscar-dfo"),
     settings =
       commonSettings ++
-      Seq(libraryDependencies ++= testDeps :+ jcommon :+ jfreechart) ++
-      sbtassembly.Plugin.assemblySettings,
+      Seq(libraryDependencies ++= testDeps :+ jcommon :+ jfreechart),
     dependencies = Seq(oscarAlgebra, oscarAlgo, oscarVisual)
   )
 
@@ -164,8 +159,7 @@ object OscarBuild extends Build {
     base = file("oscar-fzn"),
     settings =
       commonSettings ++
-      Seq(libraryDependencies ++= testDeps :+ antlr4Runtime) ++
-      sbtassembly.Plugin.assemblySettings,
+      Seq(libraryDependencies ++= testDeps :+ antlr4Runtime),
     dependencies = Seq(oscarCbls)
   )
 
@@ -186,8 +180,7 @@ object OscarBuild extends Build {
       Seq(
         resolvers ++= Seq(xypron, leadoperations, cogcomp),
         libraryDependencies ++= testDeps :+ glpk :+ gurobi :+ lpsolve :+ scalaXml
-      ) ++ 
-      sbtassembly.Plugin.assemblySettings,
+      ),
     dependencies = Seq(oscarAlgebra, oscarVisual)
   )
 
