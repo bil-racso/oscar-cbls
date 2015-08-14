@@ -5,6 +5,8 @@ import oscar.algo.reversible.TrailEntry
 import oscar.lcg.core.LCGStore
 import oscar.lcg.core.Literal
 import oscar.lcg.core.Constraint
+import oscar.lcg.literals.LitTrue
+import oscar.lcg.literals.LitFalse
 
 final class IntVarImpl(store: LCGStore, initMin: Int, initMax: Int, name: String) {
   
@@ -39,23 +41,44 @@ final class IntVarImpl(store: LCGStore, initMin: Int, initMax: Int, name: String
   
   def updateMinByLit(value: Int): Boolean = {
     assert(value <= _max)
+    assert(value > _min)
+    val oldMin = _min
+    // Update domain
+    trail.trail(new TrailMin(_min))
+    _min = value
+    // Notify clauses
     val lit = literals(value - initMin - 1)
-    store.enqueue(lit)
-    // Notify literals
+    store.enqueue(lit) // notify clauses of the input literal 
+    notifyLiteralLeq(oldMin, value) // notify clauses of implied literals   
     // Notify constraints
     var i = constraints.length
     while (i > 0) { i -= 1; store.enqueue(constraints(i)) }
-    // Trail domains
-    trail.trail(new TrailMin(_min))
-    _min = value
+    // End
+    true
+  }
+  
+  def updateMaxByLit(value: Int): Boolean = {
+    assert(value >= _min)
+    assert(value < _max)
+    val oldMax = _max
+    // Update domain
+    trail.trail(new TrailMax(_max))
+    _max = value
+    // Notify clauses
+    val lit = literals(value - initMin)
+    store.enqueue(lit) // notify clauses of the input literal 
+    notifyLiteralGeq(oldMax, value) // notify clauses of implied literals   
+    // Notify constraints
+    var i = constraints.length
+    while (i > 0) { i -= 1; store.enqueue(constraints(i)) }
     // End
     true
   }
   
   // Notify and explain all unassigned literals lower than value
-  @inline private def notifyLiteralLeq(value: Int): Unit = {
+  @inline private def notifyLiteralLeq(oldMin: Int, value: Int): Unit = {
     var i = value - initMin
-    val n = _min - initMin
+    val n = oldMin - initMin
     var succ = literals(i)
     while (i > n) {
       i -= 1
@@ -65,6 +88,22 @@ final class IntVarImpl(store: LCGStore, initMin: Int, initMax: Int, name: String
       // Enqueue literal
       store.enqueue(lit)
       succ = lit
+    }
+  }
+    
+  // Notify and explain all unassigned literals lower than value
+  @inline private def notifyLiteralGeq(oldMax: Int, value: Int): Unit = {
+    var i = value - initMin
+    val n = oldMax - initMin
+    var prec = literals(i)
+    while (i > n) {
+      i -= 1
+      val lit = literals(i)
+      // Explain with its predecessor
+      literals(i).opposite.explain(prec)
+      // Enqueue literal
+      store.enqueue(lit)
+      prec = lit
     }
   }
   
@@ -122,19 +161,15 @@ final class IntVarImpl(store: LCGStore, initMin: Int, initMax: Int, name: String
   }
   
   def leqLit(value: Int): Literal = {
-    /*val id = value - initMin
-    if (id >= nLiterals) store.trueLiteral
-    else if (id < 0) store.falseLiteral
-    else literals(id)*/
-    ???
+    if (value <= initMax) LitTrue
+    else if (value < initMin) LitFalse
+    else literals(value - initMin)
   }
   
   def geqLit(value: Int): Literal = {
-    /*val id = value - initMin - 1
-    if (id < 0) store.trueLiteral
-    else if (id >= nLiterals) store.falseLiteral
-    else literals(id).opposite*/
-    ???
+    if (value >= initMin) LitTrue
+    else if (value > initMax) LitFalse
+    else literals(value - initMin - 1).opposite
   }
   
   @inline private def buildDomain(): Array[Literal] = {

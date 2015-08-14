@@ -11,10 +11,12 @@ import oscar.lcg.variables.IntVar
 class LCGStore {
   
   // Trail
-  private[this] val trailQueue = new ReversibleContext
+  private[this] val trailQueue = new ReversibleContext()
+  
+  // Conflict analyzer
+  private[this] val analyzer = new ConflictAnalyzer()
   
   // Registered literals
-  private[this] val watchers = new ArrayStack[ArrayQueue[Clause]](1024)
   private[this] val variables = new ArrayStack[IntVar](128)
   
   // Propagation queues
@@ -23,10 +25,14 @@ class LCGStore {
   
   def trail: ReversibleContext = trailQueue
   
+  def newLevel(): Unit = {
+    trail.pushState()
+    analyzer.newLevel()
+  }
   
-  def watch(clause: Clause, litId: Int): Unit = {
-    assert(litId > 1)
-    watchers(litId).addLast(clause)
+  def undoLevel(): Unit = {
+    trail.pop()
+    analyzer.undoLevel()
   }
 
   def enqueue(literal: Literal): Unit = {

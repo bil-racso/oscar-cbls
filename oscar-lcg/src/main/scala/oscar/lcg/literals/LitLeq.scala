@@ -45,17 +45,17 @@ final class LitLeq(@inline override val varId: Int, intVar: IntVar, value: Int) 
   }
   
   /** */
-  override def explain(explanation: Literal): Boolean = {
+  override def explain(explanation: Literal): Unit = {
     assert(isTrue)
     assert(_explanation.isEmpty)
     _explanation.push(explanation)
-    true
   }
 }
 
 final class LitGr(@inline override val opposite: LitLeq, intVar: IntVar, value: Int) extends Literal {
   
-  private[this] val watchers = new ArrayQueue[Clause](32)
+  private[this] val _clauses = new ArrayQueue[Clause](32)
+  private[this] val _explanation = new ArrayStack[Literal](16)
   
   @inline override val varId: Int = opposite.varId
   
@@ -67,9 +67,9 @@ final class LitGr(@inline override val opposite: LitLeq, intVar: IntVar, value: 
   
   @inline override def isFalse: Boolean = intVar.max <= value
   
-  @inline override def watch(clause: Clause): Unit = clauses.addLast(clause)
+  @inline override def watch(clause: Clause): Unit = _clauses.addLast(clause)
   
-  @inline override def clauses: ArrayQueue[Clause] = watchers
+  @inline override def clauses: ArrayQueue[Clause] = _clauses
   
   override def assign(explanation: Array[Literal], explanationSize: Int): Boolean = {
     if (intVar.min > value) true // The literal is already assigned
@@ -87,5 +87,11 @@ final class LitGr(@inline override val opposite: LitLeq, intVar: IntVar, value: 
   
   override def assign(explanation: Literal): Boolean = {
     ???
+  }
+    
+  override def explain(explanation: Literal): Unit = {
+    assert(isTrue)
+    assert(_explanation.isEmpty)
+    _explanation.push(explanation)
   }
 }
