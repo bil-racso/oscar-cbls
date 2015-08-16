@@ -50,8 +50,8 @@ class DFSearch(store: LCGStore) {
     _completed = false
 
     // Initial propagate
-    val failed = store.propagate()
-    if (failed) {}
+    val notFailed = store.propagate()
+    if (!notFailed) {}
     else {
       
       // Take a first decision
@@ -60,6 +60,8 @@ class DFSearch(store: LCGStore) {
         solutionActions.foreach(_())
         _nSols += 1
       }
+      
+      store.newLevel()
       
       // Start the search
       while (!alternativesStack.isEmpty && !stopCondition(this)) {
@@ -75,10 +77,10 @@ class DFSearch(store: LCGStore) {
         else alternativesStack.pop() // No more decision in the sequence
         
         // Apply decision
-        alternative.assign(Array.empty[Literal])
+        alternative.assign()
         
-        val failed = store.propagate()
-        if (!failed) {
+        val notFailed = store.propagate()
+        if (notFailed) {
           val isExpandable = expand(heuristic)
           if (!isExpandable) {
             _nSols += 1
@@ -98,7 +100,6 @@ class DFSearch(store: LCGStore) {
         store.undoLevel()
         i -= 1
       }
-      store.undoLevel()
     }
   }
 }

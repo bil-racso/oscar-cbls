@@ -135,7 +135,7 @@ final class IntVarImpl(override val store: LCGStore, initMin: Int, initMax: Int,
       // Trail domains
       trailDomain()
       // Update domain
-      _min = value
+      _max = value
       // End
       true
     }
@@ -149,6 +149,7 @@ final class IntVarImpl(override val store: LCGStore, initMin: Int, initMax: Int,
   @inline private def trailDomain(): Unit = {
     oldMins.push(_min)
     oldMaxs.push(_max)
+    trail.trail(this)
   }
 
   override def restore(): Unit = {

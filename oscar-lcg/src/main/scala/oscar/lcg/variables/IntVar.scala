@@ -31,10 +31,14 @@ abstract class IntVar {
   def store: LCGStore
   
   def name: String
+  
+  override def toString: String = {
+    if (isAssigned) s"$name: [$min]"
+    else s"$name: [$min, $max]"
+  }
 }
 
 object IntVar {
-  
   def apply(min: Int, max: Int, name: String)(implicit lcgStore: LCGStore): IntVar = {
     new IntVarImpl(lcgStore, min, max, name)
   }
