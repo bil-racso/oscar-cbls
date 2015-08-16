@@ -7,40 +7,58 @@ import oscar.lcg.core.Literal
 import oscar.lcg.core.Constraint
 import oscar.lcg.literals.LitTrue
 import oscar.lcg.literals.LitFalse
+import oscar.algo.array.ArrayStackInt
 
-final class IntVarImpl(store: LCGStore, initMin: Int, initMax: Int, name: String) {
-  
-  // Trailables used to restore the domain state
-  final class TrailMax(oldMax: Int) extends TrailEntry { override def restore(): Unit = _max = oldMax }
-  final class TrailMin(oldMin: Int) extends TrailEntry { override def restore(): Unit = _min = oldMin }
+final class IntVarImpl(override val store: LCGStore, initMin: Int, initMax: Int, override val name: String) extends IntVar with TrailEntry {
+
+  // Trailable stacks used to restore the domain
+  private[this] val oldMins = new ArrayStackInt(64)
+  private[this] val oldMaxs = new ArrayStackInt(64)
   private[this] val trail = store.trail
   
+  // Registered constraints 
+  private[this] val constraints = new ArrayStack[Constraint](8)
+  private[this] val onAssigns = new ArrayStack[Constraint](8)
+
   // Domain representation
   private[this] val initSize = initMax - initMin + 1
   private[this] var _min = initMin
   private[this] var _max = initMax
-    
+
   // Literals
   private[this] val literals = buildDomain()
   private[this] val nLiterals = literals.length
-  
-  // Registered constraints 
-  private[this] val constraints = new ArrayStack[Constraint](8)
-  
-  def min: Int = _min
-  
-  def max: Int = _max
-  
-  def size: Int = _max - _min
-  
-  def contains(value: Int): Boolean = _min <= value && value <= _max
-  
-  def isAssigned: Boolean = _max == _min
-  
-  def isAssignedTo(value: Int): Boolean = _min == value && _max == value
-  
-  def updateMinByLit(value: Int): Boolean = {
-    assert(value <= _max)
+
+  override def min: Int = _min
+
+  override def max: Int = _max
+
+  override def size: Int = _max - _min
+
+  override def contains(value: Int): Boolean = _min <= value && value <= _max
+
+  override def isAssigned: Boolean = _max == _min
+
+  override def isAssignedTo(value: Int): Boolean = _min == value && _max == value
+
+  override def updateMin(value: Int, explanation: Array[Literal]): Boolean = {
+    if (value <= _min) true
+    else if (value > _max) {
+      false
+    } else {
+      // Notify constraints
+      notifyConstraints()
+      // Trail domains
+      trailDomain()
+      // Update domain
+      _min = value
+      // End
+      true
+    }
+  }
+
+  /*def updateMinByLit(value: Int): Boolean = {
+    /*assert(value <= _max)
     assert(value > _min)
     val oldMin = _min
     // Update domain
@@ -53,12 +71,12 @@ final class IntVarImpl(store: LCGStore, initMin: Int, initMax: Int, name: String
     // Notify constraints
     var i = constraints.length
     while (i > 0) { i -= 1; store.enqueue(constraints(i)) }
-    // End
+    // End*/
     true
   }
-  
+
   def updateMaxByLit(value: Int): Boolean = {
-    assert(value >= _min)
+    /*assert(value >= _min)
     assert(value < _max)
     val oldMax = _max
     // Update domain
@@ -71,10 +89,10 @@ final class IntVarImpl(store: LCGStore, initMin: Int, initMax: Int, name: String
     // Notify constraints
     var i = constraints.length
     while (i > 0) { i -= 1; store.enqueue(constraints(i)) }
-    // End
+    // End*/
     true
   }
-  
+
   // Notify and explain all unassigned literals lower than value
   @inline private def notifyLiteralLeq(oldMin: Int, value: Int): Unit = {
     var i = value - initMin
@@ -90,7 +108,7 @@ final class IntVarImpl(store: LCGStore, initMin: Int, initMax: Int, name: String
       succ = lit
     }
   }
-    
+
   // Notify and explain all unassigned literals lower than value
   @inline private def notifyLiteralGeq(oldMax: Int, value: Int): Unit = {
     var i = value - initMin
@@ -105,74 +123,59 @@ final class IntVarImpl(store: LCGStore, initMin: Int, initMax: Int, name: String
       store.enqueue(lit)
       prec = lit
     }
-  }
-  
-  def updateMin(value: Int, explanation: Array[Literal]): Boolean = {
-    if (value <= _min) true
-    else if (value > _max) {
-      fail(value, explanation)
+  }*/
+
+  override def updateMax(value: Int, explanation: Array[Literal]): Boolean = {
+    if (value >= _max) true
+    else if (value < _min) {
       false
     } else {
-      val litId = value - initMin
-      val lit = literals(litId)
-      // Explain literal
-      lit.explain(explanation)
-      // Notify clauses and enqueue literals
-      // TODO
       // Notify constraints
-      var i = constraints.length
-      while (i > 0) { i -= 1; store.enqueue(constraints(i)) }
+      notifyConstraints()
       // Trail domains
-      trail.trail(new TrailMin(_min))
+      trailDomain()
+      // Update domain
       _min = value
       // End
       true
     }
   }
-  
-  def updateMax(value: Int, explanation: Array[Int]): Boolean = {
-    if (value >= _max) true
-    else if (value < _min) {
-      fail(value, explanation)
-      false
-    } else {
-      val litId = value - initMin
-      val lit = literals(litId)
-      // Explain literal
-      store.
-      // Notify clauses and enqueue literals
-      // TODO
-      // Notify constraints
-      var i = constraints.length
-      while (i > 0) { i -= 1; store.enqueue(constraints(i)) }
-      // Trail domains
-      trail.trail(new TrailMax(_max))
-      _max = value
-      // End
-      true
-    }
+
+  @inline private def notifyConstraints(): Unit = {
+    var i = constraints.length
+    while (i > 0) { i -= 1; store.enqueue(constraints(i)) }
   }
-  
-  def awakeOnChanges(constraint: Constraint): Unit = constraints.append(constraint)
+
+  @inline private def trailDomain(): Unit = {
+    oldMins.push(_min)
+    oldMaxs.push(_max)
+  }
+
+  override def restore(): Unit = {
+    _min = oldMins.pop()
+    _max = oldMaxs.pop()
+  }
+
+  override def awakeOnChanges(constraint: Constraint): Unit = constraints.append(constraint)
 
   @inline private def fail(value: Int, explanation: Array[Literal]): Unit = {
-    
+
     // store.explain(lit, explanation)
   }
-  
+
   def leqLit(value: Int): Literal = {
     if (value <= initMax) LitTrue
     else if (value < initMin) LitFalse
     else literals(value - initMin)
   }
-  
+
   def geqLit(value: Int): Literal = {
     if (value >= initMin) LitTrue
     else if (value > initMax) LitFalse
     else literals(value - initMin - 1).opposite
   }
-  
+
   @inline private def buildDomain(): Array[Literal] = {
-    ???
+    new Array(0)
   }
 }

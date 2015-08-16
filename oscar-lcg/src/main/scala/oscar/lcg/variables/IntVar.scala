@@ -2,6 +2,7 @@ package oscar.lcg.variables
 
 import oscar.lcg.core.Literal
 import oscar.lcg.core.Constraint
+import oscar.lcg.core.LCGStore
 
 abstract class IntVar {
 
@@ -27,5 +28,14 @@ abstract class IntVar {
   
   def geqLit(value: Int): Literal
   
-  def update(): Unit
+  def store: LCGStore
+  
+  def name: String
+}
+
+object IntVar {
+  
+  def apply(min: Int, max: Int, name: String)(implicit lcgStore: LCGStore): IntVar = {
+    new IntVarImpl(lcgStore, min, max, name)
+  }
 }

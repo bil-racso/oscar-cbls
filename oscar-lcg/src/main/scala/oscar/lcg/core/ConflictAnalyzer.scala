@@ -14,6 +14,10 @@ class ConflictAnalyzer {
   private[this] val trailLevels = new ArrayStackInt(64)
   
   def isExplained(literal: Literal): Unit = trailLiterals.push(literal)
+  
+  def fail(literal: Literal): Unit = ???
+  
+  def fail(explanation: Array[Literal]): Unit = ???
 
   /** Builds a no good in case of failure */
   def analyze(conflictingLit: Literal): ArrayStack[Literal] = {

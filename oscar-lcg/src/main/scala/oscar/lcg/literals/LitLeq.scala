@@ -5,28 +5,30 @@ import oscar.lcg.core.Literal
 import oscar.lcg.variables.IntVar
 import oscar.lcg.core.Clause
 import oscar.algo.array.ArrayStack
+import oscar.lcg.core.ConflictAnalyzer
 
+class LitLeq(intVar: IntVar, value: Int) extends Literal {
 
-final class LitLeq(@inline override val varId: Int, intVar: IntVar, value: Int) extends Literal {
-  
   private[this] val _clauses = new ArrayQueue[Clause](32)
   private[this] val _explanation = new ArrayStack[Literal](16)
-  
-  @inline override val litId: Int = varId * 2
-  
+
   @inline override def isAssigned: Boolean = intVar.max <= value || intVar.min > value
-  
+
   @inline override def isTrue: Boolean = intVar.max <= value
-  
+
   @inline override def isFalse: Boolean = intVar.min > value
-  
+
   @inline override val opposite = new LitGr(this, intVar, value)
-  
+
   @inline override def watch(clause: Clause): Unit = _clauses.addLast(clause)
-  
+
   @inline override def clauses: ArrayQueue[Clause] = _clauses
-  
-  override def assign(explanation: Array[Literal], explanationSize: Int): Boolean = {
+
+  @inline override def explanation: ArrayStack[Literal] = _explanation
+
+  override def toString: String = s"[${intVar.name} <= $value]"
+
+  override def assign(): Boolean = {
     if (intVar.max <= value) true // The literal is already assigned
     else if (intVar.min > value) {
       // Need to tell the conflict analyzer
@@ -36,44 +38,44 @@ final class LitLeq(@inline override val varId: Int, intVar: IntVar, value: Int) 
       // Need to register the level of explanation
       // Need to notify the clauses
       // Need to notify the variable 
+
+      // Notify the variable
+      intVar.updateMax(value, Array.empty)
       true
     }
   }
-  
-  override def assign(explanation: Literal): Boolean = {
+
+  override def explain(explanation: Literal): Unit = {
     ???
   }
-  
-  /** */
-  override def explain(explanation: Literal): Unit = {
-    assert(isTrue)
-    assert(_explanation.isEmpty)
-    _explanation.push(explanation)
+
+  override def explain(explanation: Array[Literal], explanationSize: Int): Unit = {
+    ???
   }
 }
 
-final class LitGr(@inline override val opposite: LitLeq, intVar: IntVar, value: Int) extends Literal {
-  
+class LitGr(@inline override val opposite: LitLeq, intVar: IntVar, value: Int) extends Literal {
+
   private[this] val _clauses = new ArrayQueue[Clause](32)
   private[this] val _explanation = new ArrayStack[Literal](16)
-  
-  @inline override val varId: Int = opposite.varId
-  
-  @inline override val litId: Int = opposite.litId + 1
-  
+
   @inline override def isAssigned: Boolean = intVar.min > value || intVar.max <= value
-  
+
   @inline override def isTrue: Boolean = intVar.min > value
-  
+
   @inline override def isFalse: Boolean = intVar.max <= value
-  
+
   @inline override def watch(clause: Clause): Unit = _clauses.addLast(clause)
-  
+
   @inline override def clauses: ArrayQueue[Clause] = _clauses
   
-  override def assign(explanation: Array[Literal], explanationSize: Int): Boolean = {
-    if (intVar.min > value) true // The literal is already assigned
-    else if (intVar.max <= value) {
+  @inline override def explanation: ArrayStack[Literal] = _explanation
+
+  override def toString: String = s"[${intVar.name} > $value]"
+
+  override def assign(): Boolean = {
+    if (intVar.max <= value) true // The literal is already assigned
+    else if (intVar.min > value) {
       // Need to tell the conflict analyzer
       false
     } else {
@@ -81,17 +83,18 @@ final class LitGr(@inline override val opposite: LitLeq, intVar: IntVar, value: 
       // Need to register the level of explanation
       // Need to notify the clauses
       // Need to notify the variable 
+
+      // Notify the variable
+      intVar.updateMin(value + 1, Array.empty)
       true
     }
   }
-  
-  override def assign(explanation: Literal): Boolean = {
+
+  override def explain(explanation: Literal): Unit = {
     ???
   }
-    
-  override def explain(explanation: Literal): Unit = {
-    assert(isTrue)
-    assert(_explanation.isEmpty)
-    _explanation.push(explanation)
+
+  override def explain(explanation: Array[Literal], explanationSize: Int): Unit = {
+    ???
   }
 }

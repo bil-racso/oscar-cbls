@@ -7,6 +7,7 @@ import oscar.algo.reversible.TrailEntry
 import oscar.algo.array.ArrayStackInt
 import oscar.algo.array.ArrayQueueInt
 import oscar.lcg.variables.IntVar
+import oscar.algo.reversible.ReversibleBoolean
 
 class LCGStore {
   
@@ -23,7 +24,12 @@ class LCGStore {
   private[this] val nogoodsQueue = new ArrayQueue[Literal](128)
   private[this] val constraintsQueue = new ArrayQueue[Constraint](128)
   
+  // State of the solver
+  private[this] val _failed = new ReversibleBoolean(trail, false)
+  
   def trail: ReversibleContext = trailQueue
+  
+  def isFailed = _failed.value
   
   def newLevel(): Unit = {
     trail.pushState()
@@ -42,16 +48,24 @@ class LCGStore {
   }
   
   def enqueue(constraint: Constraint): Unit = {
-    constraintsQueue.addLast(constraint)
+    if (constraint.isEnqueuable) {
+      constraint.enqueued = true
+      constraintsQueue.addLast(constraint)     
+    }
   }
 
-  protected def propagate(): Clause = {
-    if (fixedPoint()) null
+  def propagate(): Boolean = {
+    if (fixedPoint()) true
     else {
+      // Change store status 
+      _failed.setTrue()
+      // Clean queues
+      nogoodsQueue.clear()
+      constraintsQueue.clear()
       // analyze
       // Build the clause
-      // return it
-      ???
+      // return/add it
+      false
     }
   }
   
@@ -72,14 +86,10 @@ class LCGStore {
       // Propagate constraints
       while (noConflict && nogoodsQueue.isEmpty && !constraintsQueue.isEmpty) {
         val constraint = constraintsQueue.removeFirst()
+        constraint.enqueued = false
         noConflict = constraint.propagate()
       }
     }   
-    if (noConflict) true
-    else {
-      nogoodsQueue.clear()
-      constraintsQueue.clear()
-      false
-    }
+    noConflict
   }
 }

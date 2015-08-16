@@ -8,10 +8,6 @@ abstract class Literal {
   // Used by conflict analyzer
   var seen: Boolean = false
   var level: Int = -1
-
-  def varId: Int
-  
-  def litId: Int
   
   def isAssigned: Boolean
   
@@ -27,13 +23,24 @@ abstract class Literal {
   
   def explanation: ArrayStack[Literal]
   
-  def assign(explanation: Array[Literal], explanationSize: Int): Boolean 
-  
-  def assign(explanation: Literal): Boolean
+  def assign(): Boolean
   
   def explain(explanation: Literal): Unit
   
+  def explain(explanation: Array[Literal], explanationSize: Int): Unit
+  
+  final def assign(explanation: Array[Literal], explanationSize: Int): Boolean = {
+    explain(explanation, explanationSize)
+    assign()
+  }
+  
   final def assign(explanation: Array[Literal]): Boolean = {
-    assign(explanation, explanation.length)
+    explain(explanation, explanation.length)
+    assign()
+  }
+    
+  final def assign(explanation: Literal): Boolean = {
+    explain(explanation)
+    assign()
   }
 }
