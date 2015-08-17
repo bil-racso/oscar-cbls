@@ -99,26 +99,40 @@ class PrefixCCFWC(X: Array[CPIntVar], minVal: Int, lowerLists: Array[Array[(Int,
     while (vi > 0) {
       vi -= 1
 
-      // TODO: Make it cleaner by traversing the given lower and upper bounds directly
-      var (i, lowerI, upperI) = (0, 0, 0)
-      while (i <= nVariables) {
-        // Fill the lower bounds
-        if (lowerI < nLower(vi) - 1 && lowerIdx(vi)(lowerI + 1) == i) {
-          lowerI += 1
+      var i = nVariables + 1
+      var lowerI = nLower(vi)
+      while (lowerI > 0) {
+        lowerI -= 1
+        val middle = {
+          if (lowerI == nLowerInter(vi)) nVariables + 1
+          else lowerIdx(vi)(lowerI + 1) - lowerVal(vi)(lowerI + 1) + lowerVal(vi)(lowerI)
         }
-        allLower(vi)(i) = lowerVal(vi)(lowerI)
-        if (lowerI < nLower(vi) - 1 && lowerIdx(vi)(lowerI + 1) - i <= lowerVal(vi)(lowerI + 1) - lowerVal(vi)(lowerI)) {
-          allLower(vi)(i) = lowerVal(vi)(lowerI + 1) - lowerVal(vi)(lowerI) + i
+        while (i > middle) {
+          i -= 1
+          allLower(vi)(i) = lowerVal(vi)(lowerI + 1) - lowerIdx(vi)(lowerI + 1) + i
         }
-        // Fill the upper bounds
-        if (upperI < nUpper(vi) - 1 && upperIdx(vi)(upperI + 1) == i) {
-          upperI += 1
+        while (i > lowerIdx(vi)(lowerI)) {
+          i -= 1
+          allLower(vi)(i) = lowerVal(vi)(lowerI)
         }
-        allUpper(vi)(i) = upperVal(vi)(upperI) + i - upperIdx(vi)(upperI)
-        if (upperI < nUpper(vi) - 1 && i - upperIdx(vi)(upperI) >= upperVal(vi)(upperI + 1) - upperVal(vi)(upperI)) {
-          allUpper(vi)(i) = upperVal(vi)(upperI + 1)
+      }
+
+      i = nVariables + 1
+      var upperI = nUpper(vi)
+      while (upperI > 0) {
+        upperI -= 1
+        val middle = {
+          if (upperI == nUpperInter(vi)) nVariables + 1
+          else upperIdx(vi)(upperI) + upperVal(vi)(lowerI + 1) - upperVal(vi)(upperI)
         }
-        i += 1
+        while (i > middle) {
+          i -= 1
+          allUpper(vi)(i) = upperVal(vi)(lowerI + 1)
+        }
+        while (i > upperIdx(vi)(upperI)) {
+          i -= 1
+          allUpper(vi)(i) = upperVal(vi)(upperI) + i - upperIdx(vi)(upperI)
+        }
       }
     }
   }
@@ -215,13 +229,13 @@ class PrefixCCFWC(X: Array[CPIntVar], minVal: Int, lowerLists: Array[Array[(Int,
     // Create the linked list of unbound variables
     val firstUnbound = Array.fill(nValues)(nRelevantVariables)
     val lastUnbound = Array.fill(nValues)(-1)
+    val isUnbound = Array.fill(nValues, nRelevantVariables)(false)
     val prevUnbound = Array.fill(nValues, nRelevantVariables)(-1)
     val nextUnbound = Array.fill(nValues, nRelevantVariables)(nRelevantVariables)
 
     // Initial count
-    i = nRelevantVariables
-    while (i > 0) {
-      i -= 1
+    i = 0
+    while (i < nRelevantVariables) {
       val x = X(i)
 
       if (x.isBound) {
@@ -236,27 +250,29 @@ class PrefixCCFWC(X: Array[CPIntVar], minVal: Int, lowerLists: Array[Array[(Int,
         var c = x.fillArray(changeBuffer)
         while (c > 0) {
           c -= 1
-          val v = x.min
+          val v = changeBuffer(c)
           if (minVal <= v && v <= maxVal) {
             val vi = v - minVal
             if (i < lowerLast(vi)) {
               lowerUntilCritical(vi)(lowerInterval(vi)(i)) += 1
-
-              // Fill the linked list of unbound variables
-              if (firstUnbound(vi) == nRelevantVariables) {
-                firstUnbound(vi) = i
-              } else {
-                nextUnbound(vi)(lastUnbound(vi)) = i
-                prevUnbound(vi)(i) = lastUnbound(vi)
-              }
-              lastUnbound(vi) = i
             }
+
+            // Fill the linked list of unbound variables
+            isUnbound(vi)(i) = true
+            if (firstUnbound(vi) == nRelevantVariables) {
+              firstUnbound(vi) = i
+            } else {
+              nextUnbound(vi)(lastUnbound(vi)) = i
+              prevUnbound(vi)(i) = lastUnbound(vi)
+            }
+            lastUnbound(vi) = i
           }
         }
       }
 
       // Register before the first check loop so that we receive information on what we changed there
       x.callOnChanges(i, delta => whenDomainChanges(delta, x))
+      i += 1
     }
 
     // Initial checks
@@ -277,22 +293,24 @@ class PrefixCCFWC(X: Array[CPIntVar], minVal: Int, lowerLists: Array[Array[(Int,
         }
       }
 
-      // If some of the leftmost constraints are already decided
-      if (lowerUntilCritical(vi)(0) < 0) return Failure
-      else if(lowerUntilCritical(vi)(0) == 0) {
-        if (assignUntil(vi, v, lowerRightLimit(vi)(0)) == Failure) {
-          return Failure
-        }
-        // If this is the only interval remaining
-        else if (lowerRightLimit(vi)(0) == upperLast(vi)) {
-          lowerParent(vi)(0) = -1
-        }
-        // Otherwise, merge it to the right
-        else {
-          val next = lowerInterval(vi)(lowerRightLimit(vi)(0))
-          lowerParent(vi)(next) = 0
-          lowerUntilCritical(vi)(0) = lowerUntilCritical(vi)(next)
-          lowerRightLimit(vi)(0) = lowerRightLimit(vi)(next)
+      if (nLowerInter(vi) > 0) {
+        // If some of the leftmost constraints are already decided
+        if (lowerUntilCritical(vi)(0) < 0) return Failure
+        else if (lowerUntilCritical(vi)(0) == 0) {
+          if (assignUntil(vi, v, lowerRightLimit(vi)(0)) == Failure) {
+            return Failure
+          }
+          // If this is the only interval remaining
+          else if (lowerRightLimit(vi)(0) == upperLast(vi)) {
+            lowerParent(vi)(0) = -1
+          }
+          // Otherwise, merge it to the right
+          else {
+            val next = lowerInterval(vi)(lowerRightLimit(vi)(0))
+            lowerParent(vi)(next) = 0
+            lowerUntilCritical(vi)(0) = lowerUntilCritical(vi)(next)
+            lowerRightLimit(vi)(0) = lowerRightLimit(vi)(next)
+          }
         }
       }
 
@@ -321,22 +339,24 @@ class PrefixCCFWC(X: Array[CPIntVar], minVal: Int, lowerLists: Array[Array[(Int,
         }
       }
 
-      // If some of the leftmost constraints are already decided
-      if (upperUntilCritical(vi)(0) < 0) return Failure
-      else if(upperUntilCritical(vi)(0) == 0) {
-        if (removeUntil(vi, v, upperRightLimit(vi)(0)) == Failure) {
-          return Failure
-        }
-        // If this is the only interval remaining
-        else if (upperRightLimit(vi)(0) == upperIdx(vi)(nUpperInter(vi))) {
-          upperParent(vi)(0) = -1
-        }
-        // Otherwise, merge it to the right
-        else {
-          val next = upperInterval(vi)(upperRightLimit(vi)(0))
-          upperParent(vi)(next) = 0
-          upperUntilCritical(vi)(0) = upperUntilCritical(vi)(next)
-          upperRightLimit(vi)(0) = upperRightLimit(vi)(next)
+      if (nUpperInter(vi) > 0) {
+        // If some of the leftmost constraints are already decided
+        if (upperUntilCritical(vi)(0) < 0) return Failure
+        else if (upperUntilCritical(vi)(0) == 0) {
+          if (removeUntil(vi, v, upperRightLimit(vi)(0)) == Failure) {
+            return Failure
+          }
+          // If this is the only interval remaining
+          else if (upperRightLimit(vi)(0) == upperIdx(vi)(nUpperInter(vi))) {
+            upperParent(vi)(0) = -1
+          }
+          // Otherwise, merge it to the right
+          else {
+            val next = upperInterval(vi)(upperRightLimit(vi)(0))
+            upperParent(vi)(next) = 0
+            upperUntilCritical(vi)(0) = upperUntilCritical(vi)(next)
+            upperRightLimit(vi)(0) = upperRightLimit(vi)(next)
+          }
         }
       }
 
@@ -375,10 +395,10 @@ class PrefixCCFWC(X: Array[CPIntVar], minVal: Int, lowerLists: Array[Array[(Int,
       var lowerPrev = -1
       while (lowerI < nLowerInter(vi)) {
         if (lowerParent(vi)(lowerI) == lowerI) {
-          lowerParentRev(vi)(lowerI) = ReversibleInt(lowerI)
-          lowerUntilCriticalRev(vi)(lowerI) = ReversibleInt(lowerUntilCritical(vi)(lowerI))
-          lowerPrevRev(vi)(lowerI) = ReversibleInt(lowerPrev)
-          lowerRightLimitRev(vi)(lowerI) = ReversibleInt(lowerRightLimit(vi)(lowerI))
+          lowerParentRev(vi)(lowerI) = new ReversibleInt(s, lowerI)
+          lowerUntilCriticalRev(vi)(lowerI) = new ReversibleInt(s, lowerUntilCritical(vi)(lowerI))
+          lowerPrevRev(vi)(lowerI) = new ReversibleInt(s, lowerPrev)
+          lowerRightLimitRev(vi)(lowerI) = new ReversibleInt(s, lowerRightLimit(vi)(lowerI))
           lowerPrev = lowerI
         }
         lowerI += 1
@@ -388,14 +408,24 @@ class PrefixCCFWC(X: Array[CPIntVar], minVal: Int, lowerLists: Array[Array[(Int,
       var upperPrev = -1
       while (upperI < nUpperInter(vi)) {
         if (upperParent(vi)(upperI) == upperI) {
-          upperParentRev(vi)(upperI) = ReversibleInt(upperI)
-          upperUntilCriticalRev(vi)(upperI) = ReversibleInt(upperUntilCritical(vi)(upperI))
-          upperPrevRev(vi)(upperI) = ReversibleInt(upperPrev)
-          upperRightLimitRev(vi)(upperI) = ReversibleInt(upperRightLimit(vi)(upperI))
+          upperParentRev(vi)(upperI) = new ReversibleInt(s, upperI)
+          upperUntilCriticalRev(vi)(upperI) = new ReversibleInt(s, upperUntilCritical(vi)(upperI))
+          upperPrevRev(vi)(upperI) = new ReversibleInt(s, upperPrev)
+          upperRightLimitRev(vi)(upperI) = new ReversibleInt(s, upperRightLimit(vi)(upperI))
           upperPrev = upperI
         }
         upperI += 1
       }
+
+      firstUnboundRev = Array.tabulate(nValues)(vi => new ReversibleInt(s, firstUnbound(vi)))
+      prevUnboundRev = Array.tabulate(nValues, nRelevantVariables)((vi, i) =>
+        if (isUnbound(vi)(i)) new ReversibleInt(s, prevUnbound(vi)(i))
+        else null
+      )
+      nextUnboundRev = Array.tabulate(nValues, nRelevantVariables)((vi, i) =>
+        if (isUnbound(vi)(i)) new ReversibleInt(s, nextUnbound(vi)(i))
+        else null
+      )
     }
 
     Success
@@ -413,22 +443,24 @@ class PrefixCCFWC(X: Array[CPIntVar], minVal: Int, lowerLists: Array[Array[(Int,
       var lowerI = lowerLists(vi).length
       while (lowerI > 0) {
         lowerI -= 1
-        if (lowerLists(vi)(lowerI)._1 < 0 || lowerLists(vi)(lowerI)._1 > nVariables) {
-          throw new IllegalArgumentException("Lower bound cutoff out of range: " + lowerLists(vi)(lowerI)._1)
-        } else if (lowerLists(vi)(lowerI)._2 < 0) {
+        val (index, value) = lowerLists(vi)(lowerI)
+        if (index < 0 || index > nVariables) {
+          throw new IllegalArgumentException("Lower bound cutoff out of range: " + index)
+        } else if (value > index) {
           return Failure
         }
-        allLower(vi)(lowerLists(vi)(lowerI)._1) = lowerLists(vi)(lowerI)._2
+        allLower(vi)(index) = value
       }
       var upperI = upperLists(vi).length
       while (upperI > 0) {
         upperI -= 1
-        if (upperLists(vi)(upperI)._1 < 0 || upperLists(vi)(upperI)._1 > nVariables) {
-          throw new IllegalArgumentException("Upper bound cutoff out of range: " + upperLists(vi)(upperI)._1)
-        } else if (upperLists(vi)(upperI)._2 > upperI) {
+        val (index, value) = upperLists(vi)(upperI)
+        if (index < 0 || index > nVariables) {
+          throw new IllegalArgumentException("Upper bound cutoff out of range: " + index)
+        } else if (value < 0) {
           return Failure
         }
-        allUpper(vi)(upperLists(vi)(upperI)._1) = upperLists(vi)(upperI)._2
+        allUpper(vi)(index) = value
       }
     }
 
@@ -445,9 +477,31 @@ class PrefixCCFWC(X: Array[CPIntVar], minVal: Int, lowerLists: Array[Array[(Int,
     upperLast = Array.ofDim[Int](nValues)
 
     filterBounds()
+    /*println("filtered " + nLower.mkString(" ") + " " + nUpper.mkString(" "))
+    println(lowerIdx(0).mkString(" ") + "  " + lowerVal(0).mkString(" "))
+    println(upperIdx(0).mkString(" ") + "  " + upperVal(0).mkString(" "))
+    println(lowerIdx(1).mkString(" ") + "  " + lowerVal(1).mkString(" "))
+    println(upperIdx(1).mkString(" ") + "  " + upperVal(1).mkString(" "))*/
     fillBounds()
+    /*println("pouf")
+    println(allLower(0) mkString " ")
+    println(allUpper(0) mkString " ")
+    println(allLower(1) mkString " ")
+    println(allUpper(1) mkString " ")*/
     if (testAndDeduceBounds() == Failure) return Failure
+    /*println("pif")
+    println(allLower(0) mkString " ")
+    println(allUpper(0) mkString " ")
+    println(allLower(1) mkString " ")
+    println(allUpper(1) mkString " ")*/
     filterBounds()
+    /*println("filtered " + nLower.mkString(" ") + " " + nUpper.mkString(" "))
+    println(lowerIdx(0).mkString(" ") + "  " + lowerVal(0).mkString(" "))
+    println(upperIdx(0).mkString(" ") + "  " + upperVal(0).mkString(" "))
+    println(lowerIdx(1).mkString(" ") + "  " + lowerVal(1).mkString(" "))
+    println(upperIdx(1).mkString(" ") + "  " + upperVal(1).mkString(" "))
+
+    println("passed deduction")*/
 
     initAndCheck()
   }
@@ -465,12 +519,14 @@ class PrefixCCFWC(X: Array[CPIntVar], minVal: Int, lowerLists: Array[Array[(Int,
         val vi = v - minVal
         
         if (i < lowerLast(vi)) {
-          removeUnbound(vi, v)
+          removeUnbound(vi, i)
+          //println("remove " + (vi, i))
 
           val lowerI = findParent(lowerParentRev(vi), lowerInterval(vi)(i))
           val untilCritical = lowerUntilCriticalRev(vi)(lowerI).decr()
 
           if (untilCritical == 0) {
+            //println("critical lower " + (vi, lowerIdx(vi)(lowerI)))
             val directPrev = lowerPrevRev(vi)(lowerI).value
             // If we are at zero
             if (directPrev == -1) {
@@ -627,20 +683,25 @@ class PrefixCCFWC(X: Array[CPIntVar], minVal: Int, lowerLists: Array[Array[(Int,
   }
 
   private def assignUntil(vi: Int, v: Int, limit: Int): CPOutcome = {
+    //println("assign " + vi + " till " + limit)
     var i = firstUnboundRev(vi).value
 
     // Bind all the unbound variables that have this value
     while (i < limit) {
       if (X(i).assign(v) == Failure) return Failure
+      //println("bound " + i)
       i = nextUnboundRev(vi)(i).value
     }
-    prevUnboundRev(vi)(i).setValue(-1)
+    if (i != nRelevantVariables) {
+      prevUnboundRev(vi)(i).setValue(-1)
+    }
     firstUnboundRev(vi).setValue(i)
 
     Suspend
   }
 
   private def removeUntil(vi: Int, v: Int, limit: Int): CPOutcome = {
+    //println("remove " + vi + " till " + limit)
     var i = firstUnboundRev(vi).value
 
     // Bind all the unbound variables that have this value
@@ -648,7 +709,9 @@ class PrefixCCFWC(X: Array[CPIntVar], minVal: Int, lowerLists: Array[Array[(Int,
       if (X(i).removeValue(v) == Failure) return Failure
       i = nextUnboundRev(vi)(i).value
     }
-    prevUnboundRev(vi)(i).setValue(-1)
+    if (i != nRelevantVariables) {
+      prevUnboundRev(vi)(i).setValue(-1)
+    }
     firstUnboundRev(vi).setValue(i)
 
     Suspend
