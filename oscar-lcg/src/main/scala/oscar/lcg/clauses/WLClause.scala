@@ -23,8 +23,6 @@ class WLClause(literals: Array[Literal], initUnassigned: Boolean = true) extends
   
   override def propagate(oppLit: Literal): Boolean = {
     
-    println("propagate " + literals.mkString(" "))
-    
     // Falsified literal
     val lit2 = oppLit.opposite
     
@@ -82,7 +80,6 @@ class WLClause(literals: Array[Literal], initUnassigned: Boolean = true) extends
       }
     }
     assert(maxId != -1)
-    //assert(literals(maxId).isAssigned)
     val tmp = literals(maxId)
     literals(maxId) = literals(watchLit2) 
     literals(watchLit2) = tmp

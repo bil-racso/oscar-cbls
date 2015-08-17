@@ -13,11 +13,14 @@ class ConflictAnalyzer {
   private[this] val trailLiterals = new ArrayStack[Literal](128)
   private[this] val trailLevels = new ArrayStackInt(64)
   
-  def isExplained(literal: Literal): Unit = trailLiterals.push(literal)
+  private[this] var _backjumpLevel = 0
   
-  def fail(literal: Literal): Unit = ???
+  def backjumpLevel = _backjumpLevel
   
-  def fail(explanation: Array[Literal]): Unit = ???
+  def isExplained(literal: Literal): Unit = {
+    trailLiterals.push(literal)
+    literal.level = trailLevels.length
+  }
 
   /** Builds a no good in case of failure */
   def analyze(conflictingLit: Literal): ArrayStack[Literal] = {
@@ -26,6 +29,8 @@ class ConflictAnalyzer {
     var nPaths = 0
     val currentLevel = trailLevels.size
     var lit = conflictingLit
+    _backjumpLevel = 0
+    nogood.clear()
 
     // Handle conflicting literal if any  
     if (conflictingLit != LitFalse) {
@@ -44,7 +49,10 @@ class ConflictAnalyzer {
           seenStack.append(exLit)
           val level = exLit.level
           if (level == currentLevel) nPaths += 1
-          else if (level > 0) nogood.push(exLit.opposite)
+          else if (level > 0) {
+            nogood.push(exLit.opposite)
+            if (level > _backjumpLevel) _backjumpLevel = level
+          }
         }
       }
       

@@ -4,6 +4,8 @@ import oscar.lcg.core.Constraint
 import oscar.lcg.variables.BooleanVar
 import oscar.lcg.variables.IntVar
 import oscar.algo.reversible.ReversibleInt
+import oscar.lcg.core.Literal
+import oscar.lcg.literals.LitFalse
 
 final class BinaryKnapsack(items: Array[BooleanVar], costs: Array[Int], cost: IntVar, override val name: String) extends Constraint {
 
@@ -11,6 +13,8 @@ final class BinaryKnapsack(items: Array[BooleanVar], costs: Array[Int], cost: In
   
   private[this] val trail = items(0).store.trail
   private[this] val nItems = items.length
+  
+  private[this] val explanation = new Array[Literal](nItems)
   
   private[this] val unassigned = Array.tabulate(nItems)(i => i)
   private[this] val nUnassignedRev = new ReversibleInt(trail, nItems)
@@ -55,9 +59,17 @@ final class BinaryKnapsack(items: Array[BooleanVar], costs: Array[Int], cost: In
     }
   }
   
+  @inline def uglyHack(explanationSize: Int): Boolean = {
+    LitFalse.explain(explanation, explanationSize)
+    items(0).store.failedLiteral = LitFalse
+    items(0).store.explained(LitFalse)
+    false
+  }
+  
   @inline private def filterItems(): Boolean = {
-    if (!cost.updateMin(requiredCost, Array.empty)) false
-    else if (!cost.updateMax(possibleCost, Array.empty)) false
+    val explanationSize = fillExplanation()
+    if (!cost.updateMin(requiredCost, Array.empty)) uglyHack(explanationSize)
+    else if (!cost.updateMax(possibleCost, Array.empty)) uglyHack(explanationSize)
     else {
       val maxCost = cost.max - requiredCost
       val minCost = possibleCost - cost.min
@@ -68,9 +80,9 @@ final class BinaryKnapsack(items: Array[BooleanVar], costs: Array[Int], cost: In
         val cost = costs(varId)
         val item = items(varId)
         if (cost > maxCost) {
-          if (!item.assignFalse(Array.empty)) return false
+          if (!item.assignFalse(explanation, explanationSize)) return false
         } else if (cost > minCost) {
-          if (!item.assignTrue(Array.empty)) return false          
+          if (!item.assignTrue(explanation, explanationSize)) return false          
         }
       }
       true
@@ -94,5 +106,14 @@ final class BinaryKnapsack(items: Array[BooleanVar], costs: Array[Int], cost: In
     var s = 0
     while (i > 0) { i -= 1; s += costs(i) }
     s
+  }
+  
+  @inline def fillExplanation(): Int = {
+    var i = nUnassigned
+    while (i < nItems) {
+      explanation(i - nUnassigned) = items(unassigned(i)).eqLit
+      i += 1
+    }
+    nItems - nUnassigned
   }
 }

@@ -23,12 +23,16 @@ final object LitTrue extends Literal {
   
   override def assign(): Boolean = true
   
+  override def explain(): Unit = Unit
+  
   override def explain(explanation: Literal): Unit = Unit
   
   override def explain(explanation: Array[Literal], explanationSize: Int): Unit = Unit
 }
 
 final object LitFalse extends Literal {
+  
+  private[this] val _explanation = new ArrayStack[Literal](16)
   
   override val isAssigned: Boolean = true
   
@@ -42,11 +46,22 @@ final object LitFalse extends Literal {
   
   override def clauses: ArrayQueue[Clause] = sys.error("False literal.")
   
-  override def explanation: ArrayStack[Literal] = ???
+  override def explanation: ArrayStack[Literal] = _explanation
   
   override def assign(): Boolean = false
   
-  override def explain(explanation: Literal): Unit = Unit
-  
-  override def explain(explanation: Array[Literal], explanationSize: Int): Unit = Unit
+  override def explain(): Unit = {
+    _explanation.clear()
+  }
+
+  override def explain(explanation: Literal): Unit = {
+    _explanation.clear()
+    _explanation.push(explanation)
+  }
+
+  override def explain(explanation: Array[Literal], explanationSize: Int): Unit = {
+    _explanation.clear()
+    var i = explanationSize
+    while (i > 0) { i -= 1; _explanation.push(explanation(i)) }
+  }
 }

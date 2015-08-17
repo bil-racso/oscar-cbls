@@ -4,8 +4,8 @@ import oscar.lcg._
 
 object Knapsack extends LCGModel with App {
 
-  val costs = Array(1, 2, 3, 4, 5)
-  val values = Array(5, 4, 3, 2, 1)
+  val costs = Array(6, 5, 4, 3, 2, 1)
+  val values = Array(1, 2, 3, 4, 5, 6)
   
   val nItems = costs.length
   val items = Array.tabulate(nItems)(i => BooleanVar("item " + i))

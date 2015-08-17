@@ -10,6 +10,7 @@ import oscar.lcg.literals.LitBooleanTrue
 final class BooleanVarImpl(override val store: LCGStore, override val name: String) extends BooleanVar with TrailEntry {
 
   private[this] val _eqLit: Literal = new LitBooleanTrue(this)
+  private[this] val _diffLit: Literal = _eqLit.opposite
   private[this] val trail = store.trail
     
   // Registered constraints 
@@ -27,22 +28,32 @@ final class BooleanVarImpl(override val store: LCGStore, override val name: Stri
 
   override def isFalse: Boolean = _domain == 0
 
-  override def assignTrue(explanation: Array[Literal]): Boolean = {
+  override def assignTrue(explanation: Array[Literal], explanationSize: Int): Boolean = {
     if (_domain == 2) {
       trail.trail(this)
       _domain = 1
       notifyConstraints()
-      true
-    } else _domain == 1
+      _eqLit.assign(explanation, explanationSize)
+    } else if (_domain == 1) true 
+    else {
+      _eqLit.explain(explanation, explanationSize)
+      store.failedLiteral = _eqLit
+      false
+    }
   }
 
-  override def assignFalse(explanation: Array[Literal]): Boolean = {
+  override def assignFalse(explanation: Array[Literal], explanationSize: Int): Boolean = {
     if (_domain == 2) {
       trail.trail(this)
       _domain = 0
       notifyConstraints()
-      true
-    } else _domain == 0
+      _diffLit.assign(explanation, explanationSize)
+    } else if (_domain == 0) true 
+    else {
+      _diffLit.explain(explanation, explanationSize)
+      store.failedLiteral = diffLit
+      false
+    }
   }
 
   override def awakeOnAssign(constraint: Constraint): Unit = {
@@ -51,9 +62,9 @@ final class BooleanVarImpl(override val store: LCGStore, override val name: Stri
 
   override def restore(): Unit = _domain = 2
 
-  override val eqLit: Literal = _eqLit
+  override def eqLit: Literal = _eqLit
 
-  override val diffLit: Literal = _eqLit.opposite
+  override def diffLit: Literal = _diffLit
 
   @inline private def notifyConstraints(): Unit = {
     var i = constraints.length

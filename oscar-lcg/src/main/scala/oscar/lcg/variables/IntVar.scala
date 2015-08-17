@@ -18,9 +18,9 @@ abstract class IntVar {
   
   def isAssignedTo(value: Int): Boolean
   
-  def updateMin(value: Int, explanation: Array[Literal]): Boolean
+  def updateMin(value: Int, explanation: Array[Literal], explanationSize: Int): Boolean 
   
-  def updateMax(value: Int, explanation: Array[Literal]): Boolean
+  def updateMax(value: Int, explanation: Array[Literal], explanationSize: Int): Boolean 
   
   def awakeOnChanges(constraint: Constraint): Unit
   
@@ -31,6 +31,15 @@ abstract class IntVar {
   def store: LCGStore
   
   def name: String
+  
+  
+  final def updateMin(value: Int, explanation: Array[Literal]): Boolean = {
+    updateMin(value, explanation, explanation.length)
+  }
+  
+  final def updateMax(value: Int, explanation: Array[Literal]): Boolean = {
+    updateMax(value, explanation, explanation.length)
+  }
   
   override def toString: String = {
     if (isAssigned) s"$name: [$min]"

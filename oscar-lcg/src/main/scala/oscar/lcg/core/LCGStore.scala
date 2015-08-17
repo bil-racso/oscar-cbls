@@ -9,13 +9,15 @@ import oscar.algo.array.ArrayQueueInt
 import oscar.lcg.variables.IntVar
 import oscar.algo.reversible.ReversibleBoolean
 
-class LCGStore {
+class LCGStore(val analyzer: ConflictAnalyzer) {
+  
+  def this() = this(new ConflictAnalyzer)
 
   // Trail
   private[this] val trailQueue = new ReversibleContext()
 
   // Conflict analyzer
-  private[this] val analyzer = new ConflictAnalyzer()
+  private[this] var _failedLiteral: Literal = null
 
   // Registered literals
   private[this] val variables = new ArrayStack[IntVar](128)
@@ -23,6 +25,8 @@ class LCGStore {
   // Propagation queues
   private[this] val nogoodsQueue = new ArrayQueue[Literal](128)
   private[this] val constraintsQueue = new ArrayQueue[Constraint](128)
+  
+  // Facts 
 
   // State of the solver
   private[this] val _failed = new ReversibleBoolean(trail, false)
@@ -30,6 +34,10 @@ class LCGStore {
   def trail: ReversibleContext = trailQueue
 
   def isFailed = _failed.value
+  
+  def failedLiteral_=(lit: Literal): Unit = _failedLiteral = lit
+  
+  def failedLiteral: Literal = _failedLiteral
 
   def newLevel(): Unit = {
     trail.pushState()
@@ -39,6 +47,10 @@ class LCGStore {
   def undoLevel(): Unit = {
     trail.pop()
     analyzer.undoLevel()
+  }
+  
+  def explained(literal: Literal): Unit = {
+    analyzer.isExplained(literal)
   }
 
   def enqueue(literal: Literal): Unit = {

@@ -16,9 +16,9 @@ abstract class BooleanVar {
   
   def isFalse: Boolean
   
-  def assignTrue(explanation: Array[Literal]): Boolean
+  def assignTrue(explanation: Array[Literal], explanationSize: Int): Boolean
   
-  def assignFalse(explanation: Array[Literal]): Boolean
+  def assignFalse(explanation: Array[Literal], explanationSize: Int): Boolean
   
   def awakeOnAssign(constraint: Constraint): Unit
   
@@ -29,6 +29,14 @@ abstract class BooleanVar {
   final def assign(value : Boolean, explanation: Array[Literal]): Boolean = {
     if (value) assignTrue(explanation)
     else assignFalse(explanation)
+  }
+  
+  final def assignTrue(explanation: Array[Literal]): Boolean = {
+    assignTrue(explanation, explanation.length)
+  }
+    
+  final def assignFalse(explanation: Array[Literal]): Boolean = {
+    assignFalse(explanation, explanation.length)
   }
   
   override def toString: String = {

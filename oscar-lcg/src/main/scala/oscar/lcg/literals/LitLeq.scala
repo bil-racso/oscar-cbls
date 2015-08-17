@@ -44,6 +44,10 @@ class LitLeq(intVar: IntVar, value: Int) extends Literal {
       true
     }
   }
+  
+  override def explain(): Unit = {
+    
+  }
 
   override def explain(explanation: Literal): Unit = {
     ???
@@ -88,6 +92,10 @@ class LitGr(@inline override val opposite: LitLeq, intVar: IntVar, value: Int) e
       intVar.updateMin(value + 1, Array.empty)
       true
     }
+  }
+    
+  override def explain(): Unit = {
+    
   }
 
   override def explain(explanation: Literal): Unit = {
