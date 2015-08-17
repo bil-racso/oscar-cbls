@@ -1,21 +1,24 @@
 package oscar.lcg.examples
 
 import oscar.lcg._
-import oscar.lcg.constraints.BinaryKnapsack
 
-object BinaryKnapsackTest extends LCGModel with App {
+object Knapsack extends LCGModel with App {
 
   val costs = Array(1, 2, 3, 4, 5)
+  val values = Array(5, 4, 3, 2, 1)
+  
   val nItems = costs.length
-  val Items = 0 until nItems
   val items = Array.tabulate(nItems)(i => BooleanVar("item " + i))
   val cost = IntVar(7, 8, "cost")
+  val value = IntVar(0, values.sum, "value")
   
-  add(new BinaryKnapsack(items, costs, cost, "knapsack"))
+  add(binaryKnapsack(items, costs, cost))
+  add(binaryKnapsack(items, values, value))
   
   onSolution { 
     for (i <- 0 until 5) if (items(i).isTrue) print(costs(i) + " ")
-    println("= " + cost.value)
+    print("= " + cost.value)
+    println(", value = " + value.value)   
   }
   
   val heuristic = static(items)
@@ -25,5 +28,5 @@ object BinaryKnapsackTest extends LCGModel with App {
   println("nFails " + dfsearch.nFails)
   println("nNodes " + dfsearch.nNodes)
   println("nSols  " + dfsearch.nSols)
-  println("compl. " + dfsearch.completed)
+  println("compl  " + dfsearch.completed)
 }

@@ -29,11 +29,11 @@ final class IntVarImpl(override val store: LCGStore, initMin: Int, initMax: Int,
   private[this] val literals = buildDomain()
   private[this] val nLiterals = literals.length
 
-  override def min: Int = _min
+  @inline override def min: Int = _min
 
-  override def max: Int = _max
+  @inline override def max: Int = _max
 
-  override def size: Int = _max - _min
+  @inline override def size: Int = _max - _min
 
   override def contains(value: Int): Boolean = _min <= value && value <= _max
 

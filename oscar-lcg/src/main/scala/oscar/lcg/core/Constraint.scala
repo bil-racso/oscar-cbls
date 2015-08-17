@@ -30,4 +30,6 @@ abstract class Constraint {
     _inPropagate = false
     out
   }
+  
+  override def toString: String = name
 }

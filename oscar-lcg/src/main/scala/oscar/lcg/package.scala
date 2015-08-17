@@ -5,8 +5,9 @@ import oscar.lcg.core.Constraint
 import oscar.lcg.searches.Heuristic
 import oscar.lcg.searches.DFSearch
 import oscar.lcg.modeling.Heuristics
+import oscar.lcg.modeling.Constraints
 
-package object lcg extends Heuristics {
+package object lcg extends Heuristics with Constraints {
 
   type IntVar = oscar.lcg.variables.IntVar
   final val IntVar = oscar.lcg.variables.IntVar
@@ -35,8 +36,16 @@ package object lcg extends Heuristics {
   
   final def add(constraint: Constraint)(implicit lcgStore: LCGStore): Boolean = {
     if (!constraint.setup()) false
-    else if (!lcgStore.propagate()) false
-    else true
+    else lcgStore.propagate()
+  }
+  
+  final def add(constraints: Array[Constraint])(implicit lcgStore: LCGStore): Boolean = {
+    var i = constraints.length
+    while (i > 0) {
+      i -= 1
+      if (!constraints(i).setup()) return false
+    }
+    lcgStore.propagate()
   }
   
   final def search(heuristic: Heuristic, stopCondition: => Boolean)(implicit dfsearch: DFSearch): Unit = {
