@@ -7,14 +7,10 @@ abstract class Constraint {
   private[this] var _idempotent = false
   private[this] var _enqueued = false
   private[this] var _inPropagate = false
-
-  def store: LCGStore  
   
   def name: String
   
   def setup(): Boolean
-  
-  def explain(): Unit
   
   protected def filter(): Boolean
   

@@ -1,4 +1,4 @@
-package oscar.lcg.search
+package oscar.lcg.searches
 
 import oscar.algo.array.ArrayStack
 import oscar.lcg.core.LCGStore

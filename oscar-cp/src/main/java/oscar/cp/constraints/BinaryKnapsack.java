@@ -114,7 +114,7 @@ public class BinaryKnapsack extends Constraint {
             }
         }
 
-		if (s().post(new LightBinaryKnapsack(x,w,c)) == CPOutcome.Failure) {
+		if (s().post(new oscar.cp.constraints.LightBinaryKnapsack(x,w,c)) == CPOutcome.Failure) {
 			return CPOutcome.Failure;
 		}
 		if (l == CPPropagStrength.Weak)
