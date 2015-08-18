@@ -17,6 +17,8 @@ package oscar.des.flow.core
 
 import scala.collection.mutable.ListBuffer
 
+
+
 /** represents a process fragment where one can put a part
   * @author renaud.delandtsheer@cetic.be
   */
@@ -24,10 +26,10 @@ trait Putable {
   /**
    * put the amount of goods into the putable.
    * This is potentially blocking
-   * @param amount
+   * @param amount: the items to be put in the puteable
    * @param block
    */
-  def put(amount:Int)(block : ()=> Unit)
+  def put(amount:Int,i:ItemClass)(block : () => Unit)
 }
 
 /** represents a process fragment from which one can fetch a part
@@ -38,9 +40,9 @@ trait Fetchable {
    * fetch the amount of goods from the putable.
    * This is potentially blocking
    * @param amount
-   * @param block
+   * @param block the block to execute once the items are actually fetched. these are bigen to the block method
    */
-  def fetch(amount:Int)(block : () => Unit)
+  def fetch(amount:Int)(block : ItemClass => Unit)
 }
 
 /** This proposes a standard FIFO model behind the fetch operation,
@@ -49,20 +51,19 @@ trait Fetchable {
  * @author renaud.delandtsheer@cetic.be
  */
 trait RichFetchable extends Fetchable {
-  private val waitingFetches:ListBuffer[(Int, () => Unit)] = ListBuffer.empty
+  private val waitingFetches:ListBuffer[(Int, List[ItemClass], List[ItemClass] => Unit)] = ListBuffer.empty
   protected var totalFetch = 0
 
   def isThereAnyWaitingFetch:Boolean = waitingFetches.nonEmpty
 
   /**
-   *
    * @param amount
    * @return what remains to be fetched, whas has been fetched
    */
-  protected def internalFetch(amount:Int):(Int,Int)
+  protected def internalFetch(amount:Int,hasBeenFetch:List[ItemClass] = List.empty):(Int,List[ItemClass])
 
-  def appendFetch(amount:Int)(block : () => Unit) {
-    waitingFetches.append((amount, block))
+  def appendFetch(amount:Int)(block : List[ItemClass] => Unit) {
+    waitingFetches.append((amount, List.empty, block))
   }
 
   /**
@@ -74,16 +75,17 @@ trait RichFetchable extends Fetchable {
     while (! finished) {
       finished = true
       if (waitingFetches.nonEmpty) {
-        val (toFetch, block) = waitingFetches.remove(0)
+        val (toFetch, alreadyFetched, block) = waitingFetches.remove(0)
         val (remainingToFetch,fetched) = internalFetch(toFetch)
-        totalFetch += fetched
+        totalFetch += fetched.length
+        val allFetchedForThisFetch = fetched ::: alreadyFetched
         if (remainingToFetch == 0) {
-          block()
+          block(allFetchedForThisFetch)
           finished = false
           somethingDone = true
         } else {
           if (remainingToFetch != toFetch) somethingDone = true
-          waitingFetches.prepend((remainingToFetch, block))
+          waitingFetches.prepend((remainingToFetch, allFetchedForThisFetch, block))
           finished = true
         }
       } else {
@@ -101,25 +103,25 @@ trait RichFetchable extends Fetchable {
   */
 trait RichPutable extends Putable {
 
-  protected val waitingPuts:ListBuffer[(Int, () => Unit)] = ListBuffer.empty
+  protected val waitingPuts:ListBuffer[(List[ItemClass], () => Unit)] = ListBuffer.empty
   protected var totalPut = 0
 
   def isThereAnyWaitingPut:Boolean = waitingPuts.nonEmpty
 
   /**
-   * @param amount
+   * @param l
    * @return what remains to be pt after this put, and what has been put
    */
-  protected def internalPut(amount:Int):(Int,Int)
+  protected def internalPut(l:List[ItemClass], hasBeenPut:Int = 0):(List[ItemClass],Int)
 
   /**
    * put the amount of goods into the putable.
    * This is potentially blocking
-   * @param amount
+   * @param l the items to be put
    * @param block
    */
-  protected def appendPut(amount:Int)(block : ()=> Unit): Unit = {
-    waitingPuts.append((amount, block))
+  protected def appendPut(l:List[ItemClass])(block : () => Unit): Unit = {
+    waitingPuts.append((l, block))
   }
 
   /**
@@ -159,8 +161,9 @@ trait RichPutable extends Putable {
     while (waitingPuts.nonEmpty) {
       val (toPut, block) = waitingPuts.remove(0)
       block()
-      flushedUnits += toPut
-      totalPut += toPut
+      val nbToPut = toPut.length
+      flushedUnits += nbToPut
+      totalPut += nbToPut
     }
     flushedUnits
   }
@@ -173,9 +176,13 @@ trait RichPutable extends Putable {
  * @param waitedNotification the number of waited notifications
  * @param gate the method to call once the method notifyOne has been called waitedNotification times
  */
-case class CounterGate(waitedNotification:Int, gate: () => Unit) {
+case class CounterGate(waitedNotification:Int, gate: () => Unit, var itemClass:ItemClass = null) {
   private var remaining = waitedNotification
-  def notifyOne(): Unit = {
+  def notifyOne(mItemClass:ItemClass = null): Unit = {
+    if(mItemClass != null){
+      if (itemClass == null) itemClass = mItemClass
+      else itemClass = itemClass union mItemClass
+    }
     remaining -=1
     if(remaining == 0) gate()
   }
@@ -185,12 +192,12 @@ case class CounterGate(waitedNotification:Int, gate: () => Unit) {
   * an output consists is outputting a set of parts to a set of Putables
   * @author renaud.delandtsheer@cetic.be
   */
-class Outputter(outputs:List[(() => Int, Putable)]) {
-  val outputCount = outputs.length
-  def performOutput(block: () => Unit){
+class Outputter(outputs:Iterable[(() => Int, Putable)]) {
+  val outputCount = outputs.size
+  def performOutput(i:ItemClass, block: () => Unit){
     val gate = CounterGate(outputCount +1, block)
-    for((amount,putable) <- outputs){
-      putable.put(amount())(() => gate.notifyOne())
+    for((nr,putable) <- outputs){
+      putable.put(nr(),i)(() => gate.notifyOne())
     }
     gate.notifyOne()
   }
@@ -200,17 +207,37 @@ class Outputter(outputs:List[(() => Int, Putable)]) {
   * an input consists in fetching a set of parts from a set of Fetchables
   * @author renaud.delandtsheer@cetic.be
   */
-class Inputter(inputs:List[(() => Int, Fetchable)]) {
-  val inputCount = inputs.length
-  def performInput(block : ()=> Unit): Unit = {
-    val gate = CounterGate(inputCount +1, block)
-    for((amount,fetchable) <- inputs){
-      fetchable.fetch(amount())(() => gate.notifyOne())
+class Inputter(inputs:Iterable[(() => Int, Fetchable)]) {
+  val inputCount = inputs.size
+  def addPreliminaryInput(preliminaryInput:Fetchable){
+    require(preliminaryInput == null)
+    this.preliminaryInput = preliminaryInput
+  }
+  var preliminaryInput:Fetchable = null
+
+  def performInput(block : ItemClass => Unit): Unit = {
+
+    def doPerformInput() {
+      val gate = CounterGate(inputCount + 1, finished)
+      def finished(): Unit = {
+        block(gate.itemClass)
+      }
+      var i = 0;
+      for ((amount, fetchable) <- inputs) {
+        fetchable.fetch(amount())(gate.notifyOne)
+        i += 1
+      }
+      gate.notifyOne()
     }
-    gate.notifyOne()
+
+    if (preliminaryInput == null){
+      doPerformInput()
+    }else{
+      preliminaryInput.fetch(1)(_ => doPerformInput())
+    }
   }
 }
 
-trait NotificationTarget{
+trait StockNotificationTarget{
   def notifyStockLevel(level:Int)
 }

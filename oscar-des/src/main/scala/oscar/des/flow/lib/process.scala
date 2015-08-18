@@ -35,40 +35,6 @@ trait HelperForProcess{
 }
 
 /**
- * This represents a batch process (see [[SingleBatchProcess]]) with multiple batch running in parallel.
- * @param numberOfBatches the number of batches running in parallel.
- * @param m the simulation model
- * @param batchDuration the duration of a batch starting from all inputs being inputted, and ending with the beginning of the outputting
- * @param inputs the set of inputs (number of parts to input, storage)
- * @param outputs the set of outputs (number of parts, storage)
- * @param name the name of this process, for pretty printing, bath are named "name chain i" where i is the identifier of the batch process
- * @param verbose true if you want to see the start input, start batch, end batch start output, end output events on the console
- * @author renaud.delandtsheer@cetic.be
- * */
-case class BatchProcess(m:Model,
-                        numberOfBatches:Int,
-                        batchDuration:() => Float,
-                        inputs:List[(() => Int, Fetchable)],
-                        outputs:List[(() => Int, Putable)],
-                        name:String,
-                        verbose:Boolean = true) {
-
-  private val childProcesses:Iterable[SingleBatchProcess] =
-    (1 to numberOfBatches) map((batchNumber:Int) => SingleBatchProcess(m,
-                                                                       batchDuration,
-                                                                       inputs,
-                                                                       outputs,
-                                                                       name + " chain " + batchNumber,
-                                                                       verbose))
-
-  override def toString: String = {
-    name + " " + this.getClass.getSimpleName + ":: lines:" + numberOfBatches +" performedBatches:" + childProcesses.foldLeft(0)(_ + _.performedBatches) +
-      " totalWaitDuration:" + childProcesses.foldLeft(0.0)(_ + _.totalWaitDuration) +
-      " waitingLines:" + childProcesses.foldLeft(0)((waitings:Int,p:SingleBatchProcess) => waitings + (if (p.isWaiting) 1 else 0))
-  }
-}
-
-/**
  * a process inputs some inputs, and produces its outputs at a given rate.
  * notice that inputs and outputs are performed in parallel (thus might cause some deadlocks)
  *
@@ -82,13 +48,14 @@ case class BatchProcess(m:Model,
  * */
 case class SingleBatchProcess(m:Model,
                               batchDuration:() => Float,
-                              inputs:List[(() => Int, Fetchable)],
-                              outputs:List[(() => Int, Putable)],
+                              inputs:Array[(() => Int, Fetchable)],
+                              outputs:Array[(()=>Int,Putable)],
                               name:String,
-                              verbose:Boolean = true){
+                              transformFunction:ItemClass => ItemClass,
+                              verbose:Boolean = true) extends ActivableAtomicProcess(name,verbose){
 
   private val myOutput = new Outputter(outputs)
-  private val myInput = new Inputter(inputs)
+  override val myInput = new Inputter(inputs)
 
   var performedBatches = 0
 
@@ -106,7 +73,7 @@ case class SingleBatchProcess(m:Model,
     if (verbose) println(name + ": start inputting")
     startWaitTime = m.clock()
     waiting = true
-    myInput.performInput( ()=> {
+    myInput.performInput((i:ItemClass) => {
       if (verbose) println(name + ": start new batch")
       mTotalWaitDuration += (m.clock() - startWaitTime)
       waiting = false
@@ -115,7 +82,7 @@ case class SingleBatchProcess(m:Model,
         startWaitTime = m.clock()
         waiting = true
         performedBatches +=1
-        myOutput.performOutput (() => {
+        myOutput.performOutput(transformFunction(i), () => {
           if (verbose) println(name + ": finished outputting")
           mTotalWaitDuration += (m.clock() - startWaitTime)
           waiting = false
@@ -131,42 +98,38 @@ case class SingleBatchProcess(m:Model,
 }
 
 /**
- * This represents a failing batch process (see [[FailingSingleBatchProcess]]) with multiple batch running in parallel.
- * @param m the simulation model
+ * This represents a batch process (see [[SingleBatchProcess]]) with multiple batch running in parallel.
  * @param numberOfBatches the number of batches running in parallel.
+ * @param m the simulation model
  * @param batchDuration the duration of a batch starting from all inputs being inputted, and ending with the beginning of the outputting
  * @param inputs the set of inputs (number of parts to input, storage)
  * @param outputs the set of outputs (number of parts, storage)
- * @param failureOutputs the set of produced outputs in case of failure
- * @param success true if the batch succeeds, false otherwise. inputs are then lost, and the failure outputs are produced.
- * @param name the name of this process, for pretty printing
+ * @param name the name of this process, for pretty printing, bath are named "name chain i" where i is the identifier of the batch process
  * @param verbose true if you want to see the start input, start batch, end batch start output, end output events on the console
  * @author renaud.delandtsheer@cetic.be
  * */
-case class FailingBatchProcess(m:Model,
-                               numberOfBatches:Int,
-                               batchDuration:() => Float,
-                               inputs:List[(() => Int, Fetchable)],
-                               outputs:List[(() => Int, Putable)],
-                               failureOutputs:List[(() => Int, Putable)],
-                               success:() => Boolean,
-                               name:String,
-                               verbose:Boolean = true){
+case class BatchProcess(m:Model,
+                        numberOfBatches:Int,
+                        batchDuration:() => Float,
+                        inputs:Array[(() => Int, Fetchable)],
+                        outputs:Array[(() => Int,Putable)],
+                        name:String,
+                        transformFunction:ItemClass => ItemClass,
+                        verbose:Boolean = true) extends ActivableMultipleProcess(name,verbose){
 
-  private val childProcesses:Iterable[FailingSingleBatchProcess] =
-    (1 to numberOfBatches) map((batchNumber:Int) => FailingSingleBatchProcess(m,
-                                                                              batchDuration,
-                                                                              inputs,
-                                                                              outputs,
-                                                                              failureOutputs,
-                                                                              success,
-                                                                              name + " chain " + batchNumber,
-                                                                              verbose))
+  override val childProcesses:Iterable[SingleBatchProcess] =
+    (1 to numberOfBatches) map((batchNumber:Int) => SingleBatchProcess(m:Model,
+      batchDuration,
+      inputs,
+      outputs,
+      name + " chain " + batchNumber,
+      transformFunction,
+      verbose))
 
   override def toString: String = {
-    name + ":: lines:" + numberOfBatches + " performedBatches: " + childProcesses.foldLeft(0)(_ + _.performedBatches) +
+    name + " " + this.getClass.getSimpleName + ":: lines:" + numberOfBatches +" performedBatches:" + childProcesses.foldLeft(0)(_ + _.performedBatches) +
       " totalWaitDuration:" + childProcesses.foldLeft(0.0)(_ + _.totalWaitDuration) +
-      " waitingLines:" + childProcesses.foldLeft(0)((waitings:Int,p:FailingSingleBatchProcess) => waitings + (if (p.isWaiting) 1 else 0))
+      " waitingLines:" + childProcesses.foldLeft(0)((waitings:Int,p:SingleBatchProcess) => waitings + (if (p.isWaiting) 1 else 0))
   }
 }
 
@@ -180,24 +143,20 @@ case class FailingBatchProcess(m:Model,
  * @param batchDuration the duration of a batch starting from all inputs being inputted, and ending with the beginning of the outputting
  * @param inputs the set of inputs (number of parts to input, storage)
  * @param outputs the set of outputs (number of parts, storage)
- * @param failureOutputs the set of produced outputs in case of failure
- * @param success true if the batch succeeds, false otherwise. inputs are then lost, and the failure outputs are produced.
  * @param name the name of this process, for pretty printing
  * @param verbose true if you want to see the start input, start batch, end batch start output, end output events on the console
  * @author renaud.delandtsheer@cetic.be
  * */
-case class FailingSingleBatchProcess(m:Model,
-                                     batchDuration:() => Float,
-                                     inputs:List[(() => Int, Fetchable)],
-                                     outputs:List[(() => Int, Putable)],
-                                     failureOutputs:List[(() => Int, Putable)],
-                                     success:()=>Boolean,
-                                     name:String,
-                                     verbose:Boolean = true) {
+case class SplittingSingleBatchProcess(m:Model,
+                                 batchDuration:() => Float,
+                                 inputs:Array[(() => Int, Fetchable)],
+                                 outputs:Array[Array[(() => Int,Putable)]],
+                                 name:String,
+                                 transformFunction:ItemClass => (Int,ItemClass),
+                                 verbose:Boolean = true) extends ActivableAtomicProcess(name,verbose){
 
-  private val myOutput = new Outputter(outputs)
-  private val myInput = new Inputter(inputs)
-  private val myFailedOutput = new Outputter(failureOutputs)
+  private val myOutputs = outputs.map(o => new Outputter(o))
+  override protected val myInput = new Inputter(inputs)
 
   var performedBatches = 0
   private var failedBatches = 0
@@ -212,28 +171,22 @@ case class FailingSingleBatchProcess(m:Model,
 
   startBatches()
 
-  private def startBatches() {
+
+  private def startBatches(){
     if (verbose) println(name + ": start inputting")
     startWaitTime = m.clock()
     waiting = true
-    myInput.performInput (() => {
+    myInput.performInput((i:ItemClass) => {
       if (verbose) println(name + ": start new batch")
       mTotalWaitDuration += (m.clock() - startWaitTime)
       waiting = false
-      m.wait(batchDuration()) {
-        val targetedOutputter =
-          if (success()) {
-            if (verbose) println(name + ": finished batch: success")
-            performedBatches += 1
-            myOutput
-          } else {
-            if (verbose) println(name + ": finished batch: failure")
-            failedBatches += 1
-            myFailedOutput
-          }
+      m.wait(batchDuration()){
         startWaitTime = m.clock()
         waiting = true
-        targetedOutputter.performOutput (() => {
+        performedBatches +=1
+        val (outputPort,outputi) = transformFunction(i)
+        if (verbose) println(name + ": finished batch, outputting to " + outputPort)
+        myOutputs(outputPort).performOutput(outputi, () => {
           if (verbose) println(name + ": finished outputting")
           mTotalWaitDuration += (m.clock() - startWaitTime)
           waiting = false
@@ -247,6 +200,46 @@ case class FailingSingleBatchProcess(m:Model,
     name + " " + this.getClass.getSimpleName + ":: performedBatches:" + performedBatches + " failedBatches:" + failedBatches + " totalWaitDuration:" + totalWaitDuration + (if (waiting) " waiting" else " running")
   }
 }
+
+
+
+/**
+ * This represents a failing batch process (see [[SplittingBatchProcess]]) with multiple batch running in parallel.
+ * @param m the simulation model
+ * @param numberOfBatches the number of batches running in parallel.
+ * @param batchDuration the duration of a batch starting from all inputs being inputted, and ending with the beginning of the outputting
+ * @param inputs the set of inputs (number of parts to input, storage)
+ * @param outputs the set of outputs (number of parts, storage)
+ * @param name the name of this process, for pretty printing
+ * @param verbose true if you want to see the start input, start batch, end batch start output, end output events on the console
+ * @author renaud.delandtsheer@cetic.be
+ * */
+case class SplittingBatchProcess(m:Model,
+                                 numberOfBatches:Int,
+                                 batchDuration:() => Float,
+                                 inputs:Array[(() => Int, Fetchable)],
+                                 outputs:Array[Array[(()=>Int,Putable)]],
+                                 name:String,
+                                 transformFunction:ItemClass => (Int,ItemClass),
+                                 verbose:Boolean = true) extends ActivableMultipleProcess(name,verbose){
+
+  override val childProcesses:Iterable[SplittingSingleBatchProcess] =
+    (1 to numberOfBatches) map((batchNumber:Int) => SplittingSingleBatchProcess(m,
+      batchDuration,
+      inputs,
+      outputs,
+      name + " chain " + batchNumber,
+      transformFunction,
+      verbose))
+
+  override def toString: String = {
+    name + ":: lines:" + numberOfBatches + " performedBatches: " + childProcesses.foldLeft(0)(_ + _.performedBatches) +
+      " totalWaitDuration:" + childProcesses.foldLeft(0.0)(_ + _.totalWaitDuration) +
+      " waitingLines:" + childProcesses.foldLeft(0)((waitings:Int,p:SplittingSingleBatchProcess) => waitings + (if (p.isWaiting) 1 else 0))
+  }
+}
+
+
 
 /**
  *  A rolling (in a conveyor belt) Process means that if the output is blocked, no new batch is started
@@ -269,14 +262,15 @@ class ConveyorBeltProcess(m:Model,
                           minimalSeparationBetweenBatches:Float,
                           val inputs:List[(() => Int, Fetchable)],
                           val outputs:List[(() => Int, Putable)],
+                          transformFunction:ItemClass => ItemClass,
                           name:String,
-                          verbose:Boolean = true){
+                          verbose:Boolean = true) extends ActivableAtomicProcess(name,verbose){
 
   private val myOutput = new Outputter(outputs)
-  private val myInput = new Inputter(inputs)
+  override protected val myInput = new Inputter(inputs)
 
   //the belt contains the delay for the output since the previous element that was input. delay since input if the belt was empty
-  private val belt: ListBuffer[Double] = ListBuffer.empty
+  private val belt: ListBuffer[(Double,ItemClass)] = ListBuffer.empty
 
   private var timeOfLastInput:Double = 0
 
@@ -325,11 +319,11 @@ class ConveyorBeltProcess(m:Model,
     }
   }
 
-  private def finishedInputs(): Unit ={
+  private def finishedInputs(i:ItemClass): Unit ={
     if (belt.isEmpty) {
-      belt.prepend(processDuration())
+      belt.prepend((processDuration(),transformFunction(i)))
     } else {
-      belt.prepend(m.clock - timeOfLastInput)
+      belt.prepend((m.clock - timeOfLastInput,transformFunction(i)))
     }
     timeOfLastInput = m.clock()
     blockedTimeSinceLastInput = 0
@@ -344,17 +338,17 @@ class ConveyorBeltProcess(m:Model,
     if (outputMustBeRestarted) {
       require(belt.nonEmpty)
       outputMustBeRestarted = false
-      m.wait(belt.last) {
-        startPerformOutput()
+      m.wait(belt.last._1) {
+        startPerformOutput(belt.last._2)
       }
     }
   }
 
-  private def startPerformOutput() {
+  private def startPerformOutput(i:ItemClass) {
     blocked = true
     startBlockingTime = m.clock()
     if (verbose) println(name + " start outputting")
-    myOutput.performOutput(finishedOutputs)
+    myOutput.performOutput(i,finishedOutputs)
   }
 
   private def finishedOutputs(): Unit = {
@@ -367,277 +361,12 @@ class ConveyorBeltProcess(m:Model,
     restartInputtingIfNeeded()
     //otherwise, the belt is empty and the outputting process will be restarted by the next performed input.
     if (belt.nonEmpty) {
-      m.wait(belt.last) {
-        startPerformOutput()
+      m.wait(belt.last._1) {
+        startPerformOutput(belt.last._2)
       }
     } else {
       outputMustBeRestarted = true
       if(verbose) println(name + " belt is empty")
-    }
-  }
-}
-
-
-/**
- * This will put some delay between the incoming and outgoing of goods.
- * Suppose a conveyor belt where you can stack things,
- * and that is not stopped by an overflow at the destination (things accumulate at the output in an ugly way)
- * also, thus implementation is much less efficient than the one of [[ConveyorBeltProcess]]
- * @param m
- * @param delay
- * @param destination the putable where goods will be stored
- */
-class Delay(m:Model, delay:()=>Float, destination:Putable) extends RichPutable{
-
-  var blocked = false
-  /**
-   * put the amount of goods into the putable.
-   * This is potentially blocking if the output is blocked
-   * @param amount
-   * @param block
-   */
-  override def put(amount: Int)(block: () => Unit) {
-    appendPut(amount)(() => {block(); m.wait(delay()){output(amount)}})
-    if (! blocked) processBlockedPuts()
-  }
-
-  private def output(amount:Int): Unit = {
-    blocked = true
-    destination.put(amount)(() => {blocked = false; processBlockedPuts()})
-  }
-
-  /** there is an unlimited input rate, actually, it is solely blocked if output is blocked
-    *
-    * @param amount
-    * @return what remains to be pt after this put
-    */
-  //TODO: use maxInputRate!!
-  override protected def internalPut(amount: Int): (Int,Int) = (0,0)
-}
-
-/**
- * This policy fills in a stock when it is below some threshold by placing an order to a supplier.
- * The storage will be refurbished when the supplier actually delivers the order
- *
- * @param s the storage that is refurbished through this policy
- * @param threshold the order is placed as soon as the stock gets below this threshold
- * @param orderQuantity given the actual level of the stock, how much do we order?
- * @param supplier the supplier at which the order will be placed
- * @param verbose true to print order placement on the console
- * @param name a name used for pretty printing
- * @author renaud.delandtsheer@cetic.be
- * */
-class OrderOnStockThreshold(s:Storage,
-                            threshold:Int,
-                            orderQuantity:Int=>Int,
-                            supplier:PartSupplier,
-                            verbose:Boolean = true,
-                            name:String)
-  extends NotificationTarget {
-  s.registerNotificationTarget(this)
-
-  private var placedOrders = 0
-
-  private var lastNotifiedlevel:Int = s.content
-
-  def notifyStockLevel(level: Int): Unit = {
-    if(level <= threshold && lastNotifiedlevel > threshold){
-      performOrder()
-    }
-    lastNotifiedlevel = level
-  }
-
-  protected def performOrder(): Unit ={
-    val orderedQuantity = orderQuantity(s.content)
-    if (verbose) println("threshold (" + threshold + ") reached on " + s.name + " (now:" + s.content + "), ordered " + orderedQuantity + " parts to " + supplier.name)
-    supplier.order(orderedQuantity, s)
-    placedOrders += 1
-  }
-
-  override def toString: String = name + " " + this.getClass.getSimpleName + ":: placedOrders:" + placedOrders
-}
-
-/**
- * This policy fills in a stock when it is below some threshold by placing an order to a supplier.
- * The storage will be refurbished when the supplier actually delivers the order
- * The storage is actually checked every period for its level.
- * @param s the storage that is refurbished through this policy
- * @param m the model of the simulation
- * @param threshold the order is placed as soon as the stock gets below this threshold
- * @param period the period of time where the stock is checked
- * @param orderQuantity given the actual level of the stock, how much do we order?
- * @param supplier the supplier at which the order will be placed
- * @param verbose true to print order placement on the console
- * @param name a name used for pretty printing
- * @author renaud.delandtsheer@cetic.be
- * */
-class OrderOnStockThresholdWithTick(s:Storage,
-                                    m:Model,
-                                    threshold:Int,
-                                    period:()=>Float,
-                                    orderQuantity:Int=>Int,
-                                    supplier:PartSupplier,
-                                    verbose:Boolean = true,
-                                    name:String)
-  extends OrderOnStockThreshold(s, threshold, orderQuantity, supplier, verbose, name) {
-
-  protected override def performOrder(){
-    //the order is placed at a round up period after now
-    m.wait(period() - (m.clock() % period())) {if (s.content < threshold) super.performOrder()}
-  }
-}
-
-/**
- * represents a supplier. the main operation is order
- * @param m the model of the simulation
- * @param supplierDelay the delay of the supplier (random function)
- * @param deliveredPercentage the delivered percentage, when an order is placed
- * @param name the name of the supplier, for pretty printing purpose
- * @param verbose true to print order deliveries on the console
- * @author renaud.delandtsheer@cetic.be
- * */
-class PartSupplier(m:Model,
-                   supplierDelay:()=>Int,
-                   deliveredPercentage:() => Int,
-                   val name:String,
-                   verbose:Boolean = true) {
-  private var placedOrders = 0
-  private var totalOrderedParts = 0
-  private var deliveredOrders = 0
-  private var totalDeliveredParts = 0
-
-  def order(orderQuantity:Int, to:Storage): Unit ={
-    totalOrderedParts += orderQuantity
-    placedOrders += 1
-    val willBeDelivered = (deliveredPercentage() * orderQuantity) / 100
-    m.wait(supplierDelay()){
-      if (verbose) println(name + ": delivered " + willBeDelivered + " parts to stock " + to.name +
-        (if (willBeDelivered != orderQuantity) " (ordered: " + orderQuantity + ")" else ""))
-      to.put(willBeDelivered)(() => {totalDeliveredParts += willBeDelivered; deliveredOrders +=1})
-    }
-  }
-
-  override def toString: String = name + " " + this.getClass.getSimpleName +
-    ":: receivedOrders:" + placedOrders +
-    " totalOrderedParts:" + totalOrderedParts +
-    " deliveredOrders:" + deliveredOrders +
-    " totalDeliveredParts:" + totalDeliveredParts
-}
-
-/**
- * represents a storage point, or a stock as you name it
- * This storage overflows when it is too much filled in
- * @param size the maximal content of the stock. attempting to put more items will lead t oan overflow, with loss of stock content
- * @param initialContent the initial content of the stock
- * @param name the name of the stock
- * @param verbose true to print when stock is empty or overfull
- * @author renaud.delandtsheer@cetic.be
- * */
-case class OverflowStorage(override val size:() => Int,
-                           initialContent:() => Int,
-                           override val name:String,
-                           override val verbose:Boolean=true)
-  extends Storage(size,initialContent, name, verbose) {
-  //TODO: overflow should happen only once per simulation step (or kind of once) since all events are supposed to happen at the same time
-  private var totalLosByOverflow = 0
-  override protected def flow():Boolean = {
-    val toReturn = super.flow()
-    val lostByOverflow = flushBlockedPuts()
-    totalLosByOverflow += lostByOverflow
-    if (lostByOverflow !=0 && verbose) println(name + ": overflow, lost " + lostByOverflow)
-    toReturn || (lostByOverflow !=0)
-  }
-
-  override def toString: String = super.toString + " totalOverflow:" + totalLosByOverflow
-}
-
-/**
- * represents a storage point, or a stock as you name it
- * @param size the maximal content of the stock. attempting to put more items will block the putting operations
- * @param initialContent the initial content of the stock
- * @param name the name of the stock
- * @param verbose true to print when stock is empty or overfull
- * @author renaud.delandtsheer@cetic.be
- * */
-class Storage(val size:() => Int,
-              initialContent:() => Int,
-              val name:String,
-              val verbose:Boolean=true)
-  extends RichPutable with RichFetchable {
-
-  var content:Int = initialContent()
-
-  private var notificationTo:List[NotificationTarget] = List.empty
-
-  override def toString: String = {
-    name + " " + this.getClass.getSimpleName + ":: content:" + content + " max:" + size() + " totalPut:" + totalPut + " totalFetch:" + totalFetch
-  }
-
-  protected def flow() :Boolean = {
-    var somethingCouldBeDone = false
-    var finished = false
-    while (!finished) {
-      finished = true
-      if (processBlockedFetches()) {
-        somethingCouldBeDone = true
-        finished = false
-      }
-      if (processBlockedPuts()) {
-        somethingCouldBeDone = true
-        finished = false
-      }
-    }
-
-    if(somethingCouldBeDone)
-      for(target <- notificationTo) target.notifyStockLevel(content)
-
-    somethingCouldBeDone
-  }
-
-  def registerNotificationTarget(t:NotificationTarget): Unit ={
-    notificationTo = t :: notificationTo
-  }
-
-  def fetch(amount:Int)(block : () => Unit){
-    appendFetch(amount)(block)
-    flow()
-    if(isThereAnyWaitingFetch && verbose) println("Empty storage on " + name)
-  }
-
-  def put(amount:Int)(block : () => Unit): Unit ={
-    appendPut(amount)(block)
-    flow()
-    if(isThereAnyWaitingPut && verbose) println("Full storage on " + name)
-  }
-
-  /**
-   * @param amount
-   * @return what remains to be pt after this put
-   */
-  override protected def internalPut(amount: Int): (Int,Int) = {
-    val newContent = content + amount
-      if (newContent > size()) {
-        content = size()
-        val remainsToPut = newContent - size()
-        (remainsToPut,amount - remainsToPut)
-      } else {
-        content = newContent
-        (0,amount)
-      }
-  }
-
-  /**
-   * @param amount
-   * @return what remains to be fetched, what has been fetched
-   */
-  override protected def internalFetch(amount: Int): (Int,Int) = {
-    val newContent = content - amount
-    if (newContent >= 0) {
-      content = newContent
-      (0,amount)
-    } else {
-      content = 0
-      (- newContent, amount + newContent)
     }
   }
 }
