@@ -43,6 +43,12 @@ case class MaxArray(varss: Array[IntValue], cond: SetValue = null, default: Int 
 
   override def ExtremumName: String = "Max"
 
+  //More precise bounds
+  override def performBulkComputation(bulkedVar: Array[IntValue]) = {
+    (bulkedVar.foldLeft(Int.MinValue)((acc, intvar) => if (intvar.min > acc) intvar.min else acc),
+      bulkedVar.foldLeft(Int.MinValue)((acc, intvar) => if (intvar.max > acc) intvar.max else acc))
+  }
+  
   override def checkInternals(c: Checker) {
     for (v <- this.varss) {
       c.check(this.value >= v.value,
@@ -65,6 +71,12 @@ case class MinArray(varss: Array[IntValue], cond: SetValue = null, default: Int 
 
   override def ExtremumName: String = "Min"
 
+  //More precise bounds 
+  override def performBulkComputation(bulkedVar: Array[IntValue]) = {
+    (bulkedVar.foldLeft(Int.MaxValue)((acc, intvar) => if (intvar.min < acc) intvar.min else acc),
+      bulkedVar.foldLeft(Int.MaxValue)((acc, intvar) => if (intvar.max < acc) intvar.max else acc))
+  }
+  
   override def checkInternals(c: Checker) {
     for (v <- this.varss) {
       c.check(this.value <= v.value,

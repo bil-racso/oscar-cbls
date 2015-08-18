@@ -22,7 +22,7 @@
 package oscar.cbls.invariants.core.computation
 
 import oscar.cbls.invariants.core.propagation.{Checker, PropagationElement}
-
+import scala.collection.mutable.{Map => MMap}
 import scala.language.implicitConversions
 
 /** this is something that has an integer value.
@@ -66,6 +66,9 @@ object IntValue {
 abstract class ChangingIntValue(initialValue:Int, initialDomain:Domain)
   extends AbstractVariable with IntValue{
 
+  if(!initialDomain.contains(initialValue)){
+        throw new Exception(initialValue+ " is not in the domain of "+this.name+"("+initialDomain+"). This might indicate an integer overflow.")
+      } 
   private var privatedomain:Domain = initialDomain
   private var Value: Int = initialValue
   private var OldValue = Value
@@ -74,6 +77,14 @@ abstract class ChangingIntValue(initialValue:Int, initialDomain:Domain)
 
   protected def restrictDomain(d:Domain): Unit ={
     privatedomain = privatedomain.restrict(d)
+    if(!privatedomain.contains(Value)){
+        this := privatedomain.min
+      }
+  }
+  protected def relaxDomain(d: Domain): Domain = {
+    val olddom = privatedomain
+    privatedomain = d
+    olddom
   }
 
   override def toString = {
@@ -91,6 +102,9 @@ abstract class ChangingIntValue(initialValue:Int, initialDomain:Domain)
           "domain : ["+MinVal+ ";"+MaxVal+"]\n" +
            "new value :"+ v +"\n" ))
            */
+      if(!domain.contains(v)){
+        throw new Exception(v+ " is not in the domain of "+this+"("+min+".."+max+"). This might indicate an integer overflow.")
+      } 
       Value = v
       notifyChanged()
     }
@@ -193,6 +207,7 @@ class CBLSIntVar(givenModel: Store, initialValue: Int, initialDomain:Domain, n: 
   require(givenModel != null)
   
   override def restrictDomain(d:Domain) = super.restrictDomain(d)
+  override def relaxDomain(d:Domain) = super.relaxDomain(d)
 
   model = givenModel
 
@@ -263,9 +278,18 @@ class CBLSIntConst(override val value:Int)
 
 
 object CBLSIntConst{
-  implicit def int2IntValue(a: Int): IntValue = new CBLSIntConst(a)
-  implicit def int2IntConst(a: Int): CBLSIntConst = new CBLSIntConst(a)
-  def apply(a:Int) = new CBLSIntConst(a)
+  implicit def int2IntValue(a: Int): IntValue = apply(a)
+  implicit def int2IntConst(a: Int): CBLSIntConst = apply(a)
+  //def apply(a:Int) = new CBLSIntConst(a)
+  val constMap = MMap.empty[Int,CBLSIntConst]
+  def apply(a:Int) = {
+    if(constMap.contains(a))constMap(a)
+    else{
+      val res = new CBLSIntConst(a)
+      constMap(a) = res
+      res
+    }
+  }
 }
 
 /** this is a special case of invariant that has a single output variable, that is an IntVar

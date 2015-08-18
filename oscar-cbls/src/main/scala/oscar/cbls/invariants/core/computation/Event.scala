@@ -81,7 +81,7 @@ object Event{
     toreturn
   }
 
-  def apply(v:Variable,
+  def apply(v:IntValue,
             intaction:Int=>Unit):Event = {
     val toreturn = new Event(v,null,null)
     if (intaction != null) toreturn.setIntAction(intaction)
@@ -111,7 +111,7 @@ object Event{
 }
 
 /**Use the apply method in the companion object for building this*/
-class Event(v:Variable, w:Variable, ModifiedVars:Iterable[Variable]) extends Invariant{
+class Event(v:Value, w:Variable, ModifiedVars:Iterable[Variable]) extends Invariant{
   //unfortunately, it is not possible to pass a type "=>Unit" as parameter to a case class.
 
   private var action: (()=>Unit)=null
@@ -133,7 +133,7 @@ class Event(v:Variable, w:Variable, ModifiedVars:Iterable[Variable]) extends Inv
   }
   def setIntAction(action: Int=>Unit){
     this.actionIntParam = action
-    oldIntv = v.asInstanceOf[CBLSIntVar].value
+    oldIntv = v.asInstanceOf[IntValue].value
   }
   def setIntSetAction(action: SortedSet[Int] => Unit){
     this.actionIntSetParam = action
@@ -199,7 +199,7 @@ class Event(v:Variable, w:Variable, ModifiedVars:Iterable[Variable]) extends Inv
     //updating internal vars
 
     if (actionIntParam!= null){
-      oldIntv = v.asInstanceOf[CBLSIntVar].value
+      oldIntv = v.asInstanceOf[IntValue].value
     }
     if (actionIntSetParam != null){
       oldIntSetv = v.asInstanceOf[CBLSSetVar].value

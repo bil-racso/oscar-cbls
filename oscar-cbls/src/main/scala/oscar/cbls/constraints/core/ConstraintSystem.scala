@@ -133,7 +133,7 @@ case class ConstraintSystem(model:Store) extends Constraint with Objective{
 
   var isClosed = false
   /**Must be invoked before the violation can be queried.
-   * no constraint can be added after his method has been called.
+   * no constraint can be added after this method has been called.
    * this method must also be called before closing the model.
    */
   def close(){
@@ -143,7 +143,10 @@ case class ConstraintSystem(model:Store) extends Constraint with Objective{
         if(constraintANDintvar._2 == null) constraintANDintvar._1.violation
         else Prod(List(constraintANDintvar._1.violation,constraintANDintvar._2))
       })).setName("violation")
-
+      if(Violation.model==null){
+        assert(PostedConstraints.size==0,"Null model but has constraints")
+        Violation.model = model
+      }
       model.registerForPartialPropagation(Violation)
 
       if(VarsWatchedForViolation.nonEmpty) {

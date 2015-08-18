@@ -53,7 +53,7 @@ case class AtLeast(variables: Iterable[IntValue], bounds: SortedMap[Int, IntValu
   private val noViolation:IntValue = 0
 
   private val Violation =
-    Sum(bounds.toList.map((value_bound) => Max2(noViolation,value_bound._2 - valueCount(value_bound._1))))
+    Sum(bounds.toList.map((value_bound) => Max2(noViolation,value_bound._2 - valueCount(value_bound._1+offset))))
     .setName("ViolationsOfAtLeast")
 
   private val violationByVal=Array.tabulate(valueCount.length)(value => {
@@ -75,7 +75,7 @@ case class AtLeast(variables: Iterable[IntValue], bounds: SortedMap[Int, IntValu
 
     bounds.foldLeft(violationForArray)(
       (acc,boundAndVariable) => {
-        val viol = Max2(noViolation,boundAndVariable._2 - valueCount(boundAndVariable._1)).setName("Violation_AtLeast_" + boundAndVariable._2.name)
+        val viol = Max2(noViolation,boundAndVariable._2 - valueCount(boundAndVariable._1+offset)).setName("Violation_AtLeast_" + boundAndVariable._2.name)
         accumulate(acc, boundAndVariable._2, viol)
       })
   }

@@ -174,7 +174,7 @@ abstract class PropagationStructure(val verbose: Boolean, val checker: Option[Ch
     // plus the strongly connected components, considered as a single node. */
     var LayerCount = 0
     if (topologicalSort) {
-      computePositionsThroughTopologialSort(ClusteredPropagationComponents)
+      computePositionsThroughTopologicalSort(ClusteredPropagationComponents)
       executionQueue = new BinomialHeap[PropagationElement](p => p.position, ClusteredPropagationComponents.size)
     } else {
       LayerCount = computePositionsThroughDistanceToInput(ClusteredPropagationComponents) + 1
@@ -202,7 +202,7 @@ abstract class PropagationStructure(val verbose: Boolean, val checker: Option[Ch
   }
 
   /**This computes the position of the clustered PE, that is: the SCC and the PE not belonging to an SCC*/
-  private def computePositionsThroughTopologialSort(ClusteredPropagationComponents: List[PropagationElement]) {
+  private def computePositionsThroughTopologicalSort(ClusteredPropagationComponents: List[PropagationElement]) {
     var front: List[PropagationElement] = ClusteredPropagationComponents.filter(n => { n.setCounterToPrecedingCount(); n.position == 0 })
     var position = 0 //la position du prochain noeud place.
     while (!front.isEmpty) {
