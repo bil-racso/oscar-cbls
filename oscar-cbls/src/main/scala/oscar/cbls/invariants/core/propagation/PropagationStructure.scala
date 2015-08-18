@@ -287,7 +287,10 @@ abstract class PropagationStructure(val verbose: Boolean, val checker: Option[Ch
   def registerForPartialPropagation(p: PropagationElement*) {
     partialPropagationTargets = QList.buildFromIterable(p) :: partialPropagationTargets
     if(closed) {
-      println("Warning: if you register a variable for partial propagation after model is closed, it is not registered for partial violation (unless it was already done before model close)")
+      println("Warning: You should not register a variable for partial propagation after model is closed.")
+      println("         this might cause the model to crash if static graph was dropped on model close.")
+      println("         To avoid this, create all your objective functions before model close.")
+      println("         Note: there might be some implicit conversions related to the use of search strategies. ")
       addFastPropagationTracks()
     }
   }

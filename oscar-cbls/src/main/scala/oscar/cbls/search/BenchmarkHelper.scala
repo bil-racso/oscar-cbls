@@ -3,24 +3,31 @@ package oscar.cbls.search
 import oscar.cbls.objective.Objective
 import oscar.cbls.search.core.Neighborhood
 
-class Benchmark extends StopWatch{
+object Benchmark extends StopWatch{
 
   case class RunValues(it:Int,duration:Int,quality:Int)
-  case class RunStatistics(it:Statistics,duration:Statistics,quality:Statistics)
+  case class RunStatistics(it:Statistics,duration:Statistics,quality:Statistics){
+    override def toString: String = "(it:" + it + " dur:" + duration + " obj:" + quality+")"
+  }
 
-  def benchToStatistics(obj:Objective, nRuns:Int, strategies:Neighborhood*) =
+  def benchToStatistics(obj:Objective, nRuns:Int, strategies:(()=>Neighborhood)*) =
     benchToTrace(obj, nRuns, strategies:_*).map{case (n:Neighborhood,t:IndexedSeq[RunValues]) => (n,aggregate(t.toList))}
 
+  def benchtoString(obj:Objective, nRuns:Int, strategies:(()=>Neighborhood)*):String = {
+    val stats = benchToStatistics(obj,nRuns,strategies:_*)
+    stats.map()
+  }
 
-  def benchToTrace(obj:Objective, nRuns:Int, strategies:Neighborhood*)={
+  def benchToTrace(obj:Objective, nRuns:Int, strategies:(()=>Neighborhood)*)={
     val m = obj.model
     val initialSolution = m.solution()
 
     for(n <- strategies)
-      yield (n,for(trial <- 0 to nRuns) yield {
+      yield (n(),for(trial <- 0 to nRuns) yield {
         m.restoreSolution(initialSolution)
+        val strategyInstance = n()
         this.startWatch()
-        val it = n.doAllMoves(_ => false, obj)
+        val it = strategyInstance.doAllMoves(_ => false, obj)
         val time = this.getWatch
         val quality = obj.value
         RunValues(it,time.toInt,quality)
@@ -34,7 +41,9 @@ class Benchmark extends StopWatch{
   }
 }
 
-case class Statistics(min:Int, max:Int, avg:Int, med:Int)
+case class Statistics(min:Int, max:Int, avg:Int, med:Int){
+  override def toString: String = "(min:" + min + " max:" + max + " avg:" + avg + " med:" + med + ")"
+}
 
 object Statistics {
   def apply(l: List[Int]): Statistics = {

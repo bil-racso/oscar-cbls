@@ -326,32 +326,41 @@ class BiasedRandom(a: (Neighborhood,Double)*)(noRetryOnExhaust:Boolean = false) 
   }
 }
 
-//TODO: the learning mechanism is crap: measuring on the slope is unstable is neighborhood is never called.
 
 /**
- *
- * inspired from O. Braysy, A reactive variable neighborhood search for the vehicle-routing problem with time windows, INFORMS JOURNAL ON COMPUTING 15 (2003), no. 4, 347-368.
  * @param l
- * @param weightUpdate
+ * @param weightUpdate a function that updates the weight of a neighborhood. if the function returns a negative number, the neighborhood gets the average weight thatthe other received.
  * @param updateEveryXCalls
  */
-class LearningRandom(l:List[Neighborhood], weightUpdate:(Statistics,Double) => Double = (stat,oldWeight) => stat.slopeOrZero + oldWeight, updateEveryXCalls:Int = 10)
+class LearningRandom(l:List[Neighborhood], weightUpdate:(Statistics,Double) => Double =
+(stat,oldWeight) => {if (stat.nbCalls == 0) -1 else {
+  val toReturn =  (stat.slopeOrZero + oldWeight)/2
+  stat.resetStatistics
+  toReturn}}, updateEveryXCalls:Int = 10)
   extends NeighborhoodCombinator(l:_*){
 
-  val instrumentedNeighborhood = l.map(Statistics(_))
-  var weightedInstrumentedNeighborhoods = instrumentedNeighborhood.map((_,1.0))
+  val instrumentedNeighborhood:List[Statistics] = l.map(Statistics(_))
+  var weightedInstrumentedNeighborhoods:List[(Statistics,Double)] = instrumentedNeighborhood.map((_,1.0))
   var currentRandom = new BiasedRandom(weightedInstrumentedNeighborhoods:_*)()
   var stepsBeforeUpdate = updateEveryXCalls
 
   override def getMove(obj: Objective, acceptanceCriterion: (Int, Int) => Boolean): SearchResult = {
     if(stepsBeforeUpdate <= 0){
-      weightedInstrumentedNeighborhoods = weightedInstrumentedNeighborhoods.map(nw=> (nw._1,weightUpdate(nw._1,nw._2)))
-      currentRandom = new BiasedRandom(weightedInstrumentedNeighborhoods:_*)()
+      val newlyWeightedNeighborhoods = weightedInstrumentedNeighborhoods.map((sd => (sd._1,weightUpdate(sd._1,sd._2))))
+      val (totalWeightNonNegative,nonNegativeCount) = newlyWeightedNeighborhoods.foldLeft((0.0,0))((a:(Double,Int),b:(Statistics,Double)) => (if(b._2 <0) a else (a._1 + b._2,a._2+1)))
+      val defaultWeight = totalWeightNonNegative / nonNegativeCount
+      weightedInstrumentedNeighborhoods = newlyWeightedNeighborhoods.map(sw => (sw._1,(if (sw._2 < 0) defaultWeight else sw._2)))
+      currentRandom = new BiasedRandom(weightedInstrumentedNeighborhoods :_*)()
       stepsBeforeUpdate = updateEveryXCalls
-      println("review done" + weightedInstrumentedNeighborhoods)
+      if(amIVerbose) println("learning done:" + weightedInstrumentedNeighborhoods )
     }
     stepsBeforeUpdate -=1
     currentRandom.getMove(obj,acceptanceCriterion)
+  }
+
+  //this resets the internal state of the move combinators
+  override def reset(): Unit ={
+    super.reset()
   }
 }
 
@@ -1123,6 +1132,13 @@ case class Statistics(a:Neighborhood,ignoreInitialObj:Boolean = false)extends Ne
   var nbFound = 0
   var totalGain = 0
   var totalTimeSpent: Long = 0
+
+  def resetStatistics(){
+    nbCalls = 0
+    nbFound = 0
+    totalGain = 0
+    totalTimeSpent = 0
+  }
 
   /**
    * the method that returns a move from the neighborhood.

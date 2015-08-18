@@ -196,6 +196,58 @@ case class MaxConstArray(varss: Array[Int], ccond: SetValue, default: Int = Int.
   }
 }
 
+/**
+ * Maintains Min(Var(i) | i in cond)
+ * this is a variant that is lazy, and maintains a TODO-list of postponed updates.
+ * postponed updates are ones that do not impact on the outout of the invariant.
+ * when there is an update, it is first checked against the TODO-list, for cancellation.
+ * if the update does not impact the output, it is postponed
+ * if it affects the output, it is performed
+ * @param varss is an array of Int
+ * @param ccond is the condition, supposed fully acceptant if not specified (must be specified if varss is bulked)
+ * @param maxTODOSize is the maximal number of postponed updates (TODOlist is handled as a FIFO)
+ * update is O(log(n))
+ * @author renaud.delandtsheer@cetic.be
+ * */
+case class MinConstArrayLazy(varss: Array[Int], ccond: SetValue, default: Int = Int.MaxValue, maxTODOSize:Int = 2)
+  extends MiaxConstArrayLazy(varss, ccond, default, maxTODOSize) {
+
+  override def Ord(v: IntValue): Int = v.value
+
+  override def checkInternals(c: Checker) {
+    for (v <- this.varss) {
+      c.check(this.value <= v,
+        Some("this.value (" + this.value + ") <= " + v + ".value (" + v + ")"))
+    }
+  }
+}
+
+
+/**
+ * Maintains Max(Var(i) | i in cond)
+ * this is a variant that is lazy, and maintains a TODO-list of postponed updates.
+ * postponed updates are ones that do not impact on the outout of the invariant.
+ * when there is an update, it is first checked against the TODO-list, for cancellation.
+ * if the update does not impact the output, it is postponed
+ * if it affects the output, it is performed
+ * @param varss is an array of IntVar, which can be bulked
+ * @param ccond is the condition, supposed fully acceptant if not specified (must be specified if varss is bulked)
+ * @param maxTODOSize is the maximal number of postponed updates (TODOlist is handled as a FIFO)
+ * update is O(log(n))
+ * @author renaud.delandtsheer@cetic.be
+ * */
+case class MaxConstArrayLazy(varss: Array[Int], ccond: SetValue, default: Int = Int.MinValue, maxTODOSize:Int = 2)
+  extends MiaxConstArrayLazy(varss, ccond, default, maxTODOSize) {
+
+  override def Ord(v: IntValue): Int = -v.value
+
+  override def checkInternals(c: Checker) {
+    for (v <- this.varss) {
+      c.check(this.value >= v,
+        Some("output.value (" + this.value + ") >= " + v + ".value (" + v + ")"))
+    }
+  }
+}
 
 /**
  * Maintains Miax(Var(i) | i in cond)

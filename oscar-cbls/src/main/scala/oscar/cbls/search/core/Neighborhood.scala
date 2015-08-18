@@ -634,6 +634,8 @@ abstract class EasyNeighborhood(best:Boolean = false, neighborhoodName:String=nu
       false
     }
   }
+
+//  def exploreMove(moveEvaluator:Objective => Int, moveInstancier:Int => Move):Boolean
 }
 
 class ObjWithStringGenerator(obj:Objective,additionalStringGenerator:()=>String) extends Objective{

@@ -114,7 +114,7 @@ case class ConstraintSystem(model:Store) extends Constraint with Objective{
   private def PropagateLocalToGlobalViolations(){
     for(varWithLocalViol <- VarInConstraints){
       val localViol:IntValue = varWithLocalViol.getAndFreeStorageAt(IndexForLocalViolationINSU)
-      val sources = model.getSourceVariables(varWithLocalViol)
+      val sources = model.sourceVariables(varWithLocalViol)
       //TODO: this seems a bit inefficient
       for(sourcevar <- sources){
         val GlobalViol:GlobalViolationDescriptor = sourcevar.getStorageAt(IndexForGlobalViolationINSU,null)
