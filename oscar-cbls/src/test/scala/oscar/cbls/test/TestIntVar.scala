@@ -15,7 +15,7 @@
 package oscar.cbls.test
 
 import org.scalatest.{FunSuite, Matchers}
-import oscar.cbls.invariants.core.computation.{CBLSIntVar, Store}
+import oscar.cbls.invariants.core.computation.{Domain, CBLSIntVar, Store}
 
 import scala.language.postfixOps
 
@@ -41,11 +41,11 @@ class TestIntVar extends FunSuite with Matchers {
   test("test create IntVar using invalid ranges"){
 	  val solver = new Store
 
-    an [IllegalArgumentException] should be thrownBy {
+    an [NoSuchElementException] should be thrownBy {
       val x = CBLSIntVar(solver, 1, (0 to -1), "x")
     }
 
-    an [IllegalArgumentException] should be thrownBy {
+    an [NoSuchElementException] should be thrownBy {
       val x = CBLSIntVar(solver, 0, (0 until 0), "x") // until makes an empty range
     }
 
@@ -64,7 +64,7 @@ class TestIntVar extends FunSuite with Matchers {
   
   test("test domain of IntVar"){
     val solver = new Store
-    val domain = (1 to 10)
+    val domain:Domain = (1 to 10)
     val x = CBLSIntVar(solver, 1, domain, "x")
     val y = CBLSIntVar(solver, 1, 1 to 10, "y")
     
@@ -86,7 +86,7 @@ class TestIntVar extends FunSuite with Matchers {
   test("test :=:"){
     val solver = new Store
     val x = CBLSIntVar(solver, 1, (1 to 10), "x")
-    val y = CBLSIntVar(solver, 1, (1 to 10), "y")
+    val y = CBLSIntVar(solver, 10, (1 to 10), "y")
     solver.close()
     
     x.value should be(1)
