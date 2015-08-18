@@ -6,12 +6,12 @@ import oscar.cbls.invariants.lib.minmax.MinConstArray
 import oscar.cbls.invariants.lib.numeric.Sum
 import oscar.cbls.modeling.AlgebraTrait
 import oscar.cbls.objective.Objective
-import oscar.cbls.search.combinators.{LearningRandom, BiasedRandom, Statistics}
-import oscar.cbls.search.{Benchmark, AssignNeighborhood, RandomizeNeighborhood, SwapsNeighborhood}
+import oscar.cbls.search.combinators.Statistics
+import oscar.cbls.search.{AssignNeighborhood, RandomizeNeighborhood, SwapsNeighborhood}
 
 import scala.language.postfixOps
 
-object WarehouseLocation extends App with AlgebraTrait{
+object WarehouseLocationStatistics extends App with AlgebraTrait{
 
   //the number of warehouses
   val W:Int = 15
@@ -37,14 +37,14 @@ object WarehouseLocation extends App with AlgebraTrait{
 
   m.close()
 
-  val neighborhood = ((AssignNeighborhood(warehouseOpenArray, "SwitchWarehouse")
-    exhaustBack SwapsNeighborhood(warehouseOpenArray, "SwapWarehouses"))
+  val neighborhood = (Statistics(AssignNeighborhood(warehouseOpenArray, "SwitchWarehouse"),true)
+    exhaustBack Statistics(SwapsNeighborhood(warehouseOpenArray, "SwapWarehouses"))
     orElse (RandomizeNeighborhood(warehouseOpenArray, W/5) maxMoves 2) saveBest obj restoreBestOnExhaust)
 
   neighborhood.verbose = 1
 
   neighborhood.doAllMoves(_>= W + D, obj)
 
-  println(openWarehouses)
+  println(neighborhood.statistics)
 
 }
