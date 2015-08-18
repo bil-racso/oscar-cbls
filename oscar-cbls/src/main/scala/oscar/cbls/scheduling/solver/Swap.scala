@@ -1,10 +1,5 @@
 package oscar.cbls.scheduling.solver
 
-import oscar.cbls.invariants.core.computation.{Store, CBLSIntVar, Snapshot}
-import oscar.cbls.scheduling.algo.CriticalPathFinder._
-import oscar.cbls.scheduling.model.{TotalResourcesOvershootEvaluation, Deadlines, Activity, Planning}
-import oscar.cbls.search.core.EasyNeighborhood
-
 /*
 
 

@@ -22,11 +22,10 @@
  * ****************************************************************************
  */
 
-package oscar.cbls.routing.neighborhood2
+package oscar.cbls.routing.neighborhood
 
 import oscar.cbls.routing.model._
 import oscar.cbls.search.algo.HotRestart
-import oscar.cbls.search.core.EasyNeighborhood
 
 /**
  * Removes two edges of routes, and rebuilds routes from the segments.
@@ -37,12 +36,12 @@ import oscar.cbls.search.core.EasyNeighborhood
  * @author yoann.guyot@cetic.be
  * @author Florent Ghilain (UMONS)
  * */
-case class TwoOpt(PredecesorOfFirstMovedPoint:()=>Iterable[Int],
+case class TwoOpt(predecesorOfFirstMovedPoint:()=>Iterable[Int],
                   relevantNeighbors:()=>Int=>Iterable[Int],
-                  vrp: VRP with MoveDescription with PositionInRouteAndRouteNr,
-                  neighborhoodName:String = "TwoOptNeighborhood",
+                  vrp: VRP with PositionInRouteAndRouteNr,
+                  neighborhoodName:String = null,
                   best:Boolean = false,
-                  hotRestart:Boolean = true) extends EasyNeighborhood(best) {
+                  hotRestart:Boolean = true) extends EasyRoutingNeighborhood(best,vrp,neighborhoodName) {
 
   //the indice to start with for the exploration
   var startIndice: Int = 0
@@ -55,10 +54,10 @@ case class TwoOpt(PredecesorOfFirstMovedPoint:()=>Iterable[Int],
   override def exploreNeighborhood(): Unit = {
 
     val iterationSchemeOnZone =
-      if (hotRestart && !best) HotRestart(PredecesorOfFirstMovedPoint(), startIndice)
-      else PredecesorOfFirstMovedPoint()
+      if (hotRestart && !best) HotRestart(predecesorOfFirstMovedPoint(), startIndice)
+      else predecesorOfFirstMovedPoint()
 
-    vrp.cleanRecordedMoves()
+    cleanRecordedMoves()
     val relevantNeighborsNow = relevantNeighbors()
 
     for (fstPred <- iterationSchemeOnZone) {
@@ -72,14 +71,11 @@ case class TwoOpt(PredecesorOfFirstMovedPoint:()=>Iterable[Int],
         && vrp.onTheSameRoute(fstPred, sndPred))
       ) {
 
-        TwoOpt.encode(fstPred, sndPred, vrp)
-
-        vrp.commit(true)
-        val newObj = obj()
-        vrp.undo()
+        encode(fstPred, sndPred)
+        val newObj = evalObjOnEncodedMove()
 
         if (moveRequested(newObj)
-          && submitFoundMove(TwoOptMove(fstPred, sndPred, newObj, vrp, neighborhoodName))) {
+          && submitFoundMove(TwoOptMove(fstPred, sndPred, newObj, this, neighborhoodNameToString))) {
           startIndice = fstPred + 1
           return
         }
@@ -87,25 +83,25 @@ case class TwoOpt(PredecesorOfFirstMovedPoint:()=>Iterable[Int],
     }
   }
 
+  def encode(fstPred:Int, sndPred:Int) {
+    val seg = cut(fstPred, sndPred)
+    val rev_seg = reverse(seg)
+    insert(rev_seg, fstPred)
+  }
+
   //this resets the internal state of the Neighborhood
   override def reset(): Unit = {
     startIndice = 0
   }
 }
-object TwoOpt{
-  def encode(fstPred:Int, sndPred:Int, vrp:VRP with MoveDescription) {
-    val seg = vrp.cut(fstPred, sndPred)
-    val rev_seg = vrp.reverse(seg)
-    vrp.insert(rev_seg, fstPred)
-  }
-}
+
 
 /**
  * Models a two-opt-move operator of a given VRP problem.
  * @param fstPred the start of first edge that we remove.
  * @param sndPred the start of second edge that we remove.
  * @param objAfter the objective value if we performed this two-opt-move operator.
- * @param vrp the given VRP problem.
+ * @param neighborhood the originating neighborhood
  * @author renaud.delandtsheer@cetic.be
  * @author yoann.guyot@cetic.be
  * @author Florent Ghilain (UMONS)
@@ -114,12 +110,12 @@ case class TwoOptMove(
   fstPred: Int,
   sndPred: Int,
   override val objAfter: Int,
-  override val vrp: VRP with MoveDescription,
+  override val neighborhood:TwoOpt,
   override val neighborhoodName:String = null)
-  extends VRPMove(objAfter, vrp, neighborhoodName) {
+  extends VRPMove(objAfter, neighborhood, neighborhoodName) {
   // overriding methods
   override def encodeMove() {
-    TwoOpt.encode(fstPred, sndPred, vrp)
+    neighborhood.encode(fstPred, sndPred)
   }
 
   override def toString: String = ("TwoOpt(first predecessor = "
