@@ -22,9 +22,19 @@ public class Type {
 	public boolean isArray = false;
 	public int size = 1;
 	public boolean isVar = false;
-	public String typ;
+	public int typ;
 	
-	public Type(String typ){
+	public static final String[] typeName = {"null","bool","int","set of int","float", "string","annotation"};
+	public static final int NULL = 0;
+	public static final int BOOL = 1;
+	public static final int INT = 2;
+	public static final int SET = 3;
+	public static final int FLOAT = 4;
+	public static final int STRING = 5;
+	public static final int ANNOTATION = 6;
+	
+	public Type(int typ){
+		
 		this.typ = typ;
 	}
 	public Type(Type t){
@@ -41,7 +51,7 @@ public class Type {
 		result = prime * result + (isArray ? 1231 : 1237);
 		result = prime * result + (isVar ? 1231 : 1237);
 		result = prime * result + size;
-		result = prime * result + ((typ == null) ? 0 : typ.hashCode());
+		result = prime * result + typ;
 		return result;
 	}
 	@Override
@@ -59,10 +69,7 @@ public class Type {
 			return false;
 		if (size != other.size)
 			return false;
-		if (typ == null) {
-			if (other.typ != null)
-				return false;
-		} else if (!typ.equals(other.typ))
+		if (typ != other.typ)
 			return false;
 		return true;
 	}

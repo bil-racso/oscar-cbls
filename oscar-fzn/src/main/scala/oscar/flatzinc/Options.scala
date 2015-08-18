@@ -18,25 +18,36 @@
  * @author Jean-Noël Monette
  */
 
-package oscar.flatzinc.parser
+package oscar.flatzinc
 
-import java.io.FileReader
 import scala.collection.mutable.Map
 
-class Options(cbls: Boolean, args: Array[String]) {
+class Options(name: String, cbls: Boolean, args: Array[String]) {
   //println("options:"+args.mkString("%"))
-  val progName = "fzn-oscar-" + (if (cbls) "cbls" else "cp")
+  val progName = name
 
   
   //var file: FileReader = null
   var fileName: String = null
   var all = false
-  var verbose = false
+  var verbose = 0
   var statistics = false
   var timeOut = 0
   var nSols = 1
   var help = false;
-  val opts = Map.empty[String,String]
+  var freeSearch = false;
+  
+  private val opts = Map.empty[String,String]
+  def is(s: String): Boolean = {
+    //println("% checking option: "+s)
+    opts.contains(s) && opts(s)=="true"
+  }
+  def get(s: String): Option[String] = {
+    //println("% checking option: "+s)
+    opts.get(s)
+  }
+  
+  def log(): Log = new Log(verbose)
   
   if (args.length == 0) {
     System.out.println(progName+": no model file specified");
@@ -66,7 +77,12 @@ class Options(cbls: Boolean, args: Array[String]) {
         nSols = args(i+1).toInt
         i += 1
       } else if (oneOf("-v", "--verbose")) {
-        verbose = true;
+        verbose = 1;
+      } else if (oneOf("-f")) {
+        freeSearch = true;
+      }else if (oneOf("-vl", "--verbose-level")) {
+        verbose = args(i+1).toInt
+        i += 1
       } else if (args(i).startsWith("-X")){
         val parts = args(i).substring(2).split("=", 2)
         opts(parts(0)) = if(parts.length==1) "true" else parts(1)

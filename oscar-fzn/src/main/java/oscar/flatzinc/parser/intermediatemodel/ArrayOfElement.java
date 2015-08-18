@@ -15,8 +15,31 @@
 /**
  * @author Jean-Noël Monette
  */
-package oscar.flatzinc.cbls.support
+package oscar.flatzinc.parser.intermediatemodel;
 
-class DiffNConstraint {
-//TODO
+import java.util.ArrayList;
+import java.util.List;
+import oscar.flatzinc.ParsingException;
+
+public class ArrayOfElement extends Element{
+
+	public List<Element> elements;
+	public ArrayOfElement(){
+		elements = new ArrayList<Element>();
+	}
+	@Override
+	public String toString() {
+		return "Array [elements=" + elements + ", name=" + name /*+ ", id=" + id*/
+				+ ", type=" + typ/* + ", annotations=" + annotations*/ + "]";
+	}
+	public void close() {
+	  if(elements.size()>0){
+	    int typ = elements.get(0).typ.typ;
+	    for(Element e: elements){
+	      if(typ != e.typ.typ) throw new ParsingException("Not all same type in array");
+	    }
+	    this.typ.typ = typ;
+	  }
+	}
+	
 }

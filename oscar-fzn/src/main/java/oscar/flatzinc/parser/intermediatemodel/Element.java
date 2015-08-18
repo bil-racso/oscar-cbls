@@ -17,19 +17,29 @@
  */
 package oscar.flatzinc.parser.intermediatemodel;
 
-import java.util.ArrayList;
-import java.util.List;
 
-public class ArrayOfElement extends Element{
-
-	public List<Element> elements;
-	public ArrayOfElement(){
-		elements = new ArrayList<Element>();
+public class Element {
+    //public String  location;
+	//static int nextid = 0;
+	public String name;
+	//int id;
+	public Object value;
+	//public Domain domain;
+	public Type typ;
+	//public List<Annotation> annotations;
+	public Element(){
+//		//id = nextid;
+//		//nextid++;
+//		//annotations = new ArrayList<Annotation>();
+	}
+	public Element(Object val){
+	//	this();
+		value = val;
 	}
 	@Override
 	public String toString() {
-		return "Array [elements=" + elements + ", name=" + name + ", id=" + id
-				+ ", type=" + typ + ", annotations=" + annotations + "]";
+		return "Element [name=" + name + ", value=" + value + /*", domain=" + domain +*/ ", type=" + typ
+				/*+ ", annotations=" + annotations */+ "]";
 	}
 	
 }

@@ -15,31 +15,17 @@
 /**
  * @author Jean-Noël Monette
  */
-package oscar.flatzinc.parser.intermediatemodel;
 
-import java.util.ArrayList;
-import java.util.List;
+package oscar.flatzinc
 
-import oscar.flatzinc.model.Annotation;
-import oscar.flatzinc.model.Domain;
+import java.io.PrintStream
 
-public class Element {
-	static int nextid = 0;
-	public String name;
-	int id;
-	public Object value;
-	public Domain domain;
-	public Type typ;
-	public List<Annotation> annotations;
-	public Element(){
-		id = nextid;
-		nextid++;
-		annotations = new ArrayList<Annotation>();
-	}
-	@Override
-	public String toString() {
-		return "Element [name=" + name + ", value=" + value + ", domain=" + domain + ", type=" + typ
-				+ ", annotations=" + annotations + "]";
-	}
-	
+//TODO: Replace with a real solution (e.g., log4j)
+class Log(val level: Int, val out:PrintStream = Console.err, val pre: String= "%"){
+  def apply(s:String) = {
+    if (level > 0) out.println(pre+" "+s)
+  }
+  def apply(i:Int, s:String) = {
+    if(i <= level) out.println((pre*math.max(1,i))+" "+s)
+  }
 }
