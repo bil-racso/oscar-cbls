@@ -28,6 +28,27 @@ import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.core.propagation.Checker
 
 /**
+ * Author: Jean-Noël Monette
+ */
+case class SparseCount(values: Array[IntValue], counts: Map[Int,CBLSIntVar]) extends Invariant {
+  for (v <- values.indices) registerStaticAndDynamicDependency(values(v), v)
+  
+  finishInitialization()
+  for (count <- counts.values) { count := 0 }
+  for (v <- values.indices){
+    counts.get(values(v).value).foreach(c => c :+= 1)
+  }
+  for(c <- counts.values) c.setDefiningInvariant(this)
+    
+   @inline
+  override def notifyIntChanged(v: ChangingIntValue, index: Int, OldVal: Int, NewVal: Int) {
+    assert(values(index) == v)
+    counts.get(OldVal).foreach(c => c :-= 1)
+    counts.get(NewVal).foreach(c => c :+= 1)
+  }
+}
+
+/**
  * Maintains a count of the indexes of array: count(j) = #{i in index of values | values[i]+offset == j}
  * This is considered as a dense count because counts is an array and must cover all the possibles values of the values in the array ''values''
  *

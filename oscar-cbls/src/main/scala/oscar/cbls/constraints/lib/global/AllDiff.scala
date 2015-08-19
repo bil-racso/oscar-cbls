@@ -45,7 +45,7 @@ case class AllDiff(variables: Iterable[IntValue]) extends Invariant with Constra
 
   //le degre global de violation est la somme des tailles -1 des ensembles de var ayant meme value
   // et on ne prend que les ensembles de cardinalite > 1
-  private val Violation: CBLSIntVar = new CBLSIntVar(model, 0, (0 to Int.MaxValue), "ViolationsOfAllDiff")
+  private val Violation: CBLSIntVar = new CBLSIntVar(model, 0, (0 to variables.size), "ViolationsOfAllDiff")
   Violation.setDefiningInvariant(this)
 
 
@@ -57,7 +57,7 @@ case class AllDiff(variables: Iterable[IntValue]) extends Invariant with Constra
   private val range = 0 to N
 
   private val ValueCount: Array[CBLSIntVar] = Array.tabulate[CBLSIntVar](N + 1)((i: Int) => {
-    val tmp = new CBLSIntVar(model, 0, (0 to 1), "alldiff_count_of_value_" + (i - offset))
+    val tmp = new CBLSIntVar(model,0, (0 to variables.size), "alldiff_count_of_value_" + (i - offset))
     tmp.setDefiningInvariant(this)
     tmp
   })

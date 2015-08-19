@@ -131,6 +131,41 @@ case class IntElement(index: IntValue, inputarray: Array[IntValue])
 }
 
 /**
+ * inputarray[index]
+ * @param inputarray is an array of Int
+ * @param index is the index accessing the array (its value must be always inside the array range)
+ * @author renaud.delandtsheer@cetic.be
+ * @author jean-noel.monette@it.uu.se
+ * */
+case class IntElementNoVar(index: IntValue, inputarray: Array[Int])
+  extends IntInvariant(initialValue = inputarray(index.value),DomainRange(inputarray.min,inputarray.max)) {
+
+  registerStaticAndDynamicDependency(index)
+  finishInitialization()
+
+  @inline
+  override def notifyIntChanged(v: ChangingIntValue, OldVal: Int, NewVal: Int) {
+   // println(OldVal + " "+ NewVal)
+    this := inputarray(NewVal)
+  }
+
+  override def checkInternals(c: Checker) {
+    c.check(this.value == inputarray(index.value),
+      Some("output.value (" + this.value + ") == inputarray(index.value ("
+        + index.value + ")) (" + inputarray(index.value) + ")"))
+  }
+
+  override def toString: String = {
+    val inputs = inputarray.toList
+    if(inputs.length > 4){
+      "Array(" +inputs.take(4).map(_.toString).mkString(",") + ", ...)"+ "[" + index.toString + "] = " + this.value
+    }else{
+      "Array(" +inputs.map(_.toString).mkString(",") + ", ...)"+ "[" + index.toString + "] = " + this.value
+    }
+  }
+}
+
+/**
  * Union(i in index) (array[i])
  * @param index is an IntSetVar denoting the set of positions in the array to consider
  * @param inputarray is the array of intvar that can be selected by the index

@@ -33,6 +33,8 @@ import oscar.cbls.invariants.lib.numeric.Dist
 import oscar.cbls.modeling.Algebra._
 import scala.math.abs
 import oscar.cbls.invariants.lib.logic.IntInt2Int
+import oscar.cbls.invariants.lib.numeric.MinusOffsetPos
+import oscar.cbls.invariants.lib.numeric.ReifViol
 
 /**
  * implements left <= right
@@ -46,9 +48,9 @@ protected class LEA(val left: IntValue, val right: IntValue) extends Constraint 
   /**
    * the violation is Max(0,right-left)
    */
-  override val violation = new IntInt2Int(left, right,
-    ((left2: Int, right2: Int) => if (left2 <= right2) 0 else left2 - right2))
-    .setName(this.getClass().getSimpleName() + ".violation")
+  override val violation =
+    MinusOffsetPos(left,right,0).setName(this.getClass().getSimpleName() + ".violation")
+    //Max2(0, left - right).setName(this.getClass().getSimpleName() + ".violation")
 
   /**
    * The violation of each variable is equal to the global violation of the constraint
@@ -86,7 +88,10 @@ protected class LA(val left: IntValue, val right: IntValue) extends Constraint {
   /**
    * the violation is Max(0,left - right + 1)
    */
-  override val violation = Max2(0, left - right + 1)
+  override val violation =
+    MinusOffsetPos(left,right,1).setName(this.getClass().getSimpleName() + ".violation")
+    //TODO: If the constraint is always satisfied, given the domains, should set to a constant invariant. 
+    //Max2(0, left - right + 1)
 
   /**
    * The violation of each variable is equal to the global violation of the constraint
@@ -164,4 +169,14 @@ case class EQ(left: IntValue, right: IntValue) extends Constraint {
         + ") == (if (left.value (" + left.value + ") == right.value (" + right.value
         + ")) 0 else " + myViolation + ")"))
   }
+}
+/**
+ * constraints b <=> c, i.e., b is true iff c is satisfied.
+ * @author jean-noel.monette@it.uu.se 
+ */
+case class Reif(b: IntValue, c: Constraint) extends Constraint { 
+  registerConstrainedVariables(b, c.violation)
+  override val violation = ReifViol(b,c.violation)
+  override def violation(v: Value) =  { if (b == v || c.violation == v) violation else 0 }
+  //TODO: Check internals
 }

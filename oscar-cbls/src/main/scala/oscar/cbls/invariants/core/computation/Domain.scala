@@ -15,7 +15,7 @@
 /*******************************************************************************
   * Contributors:
   *     This code has been initially developed by
-  *         by Jean Noël Monette
+  *         by Jean Noël Monette, Gustav Björdal
   ******************************************************************************/
 package oscar.cbls.invariants.core.computation
 
@@ -35,6 +35,7 @@ object Domain{
     else DomainRange(i._1,i._2)
   }
 
+  implicit def intToDomain(i:Int) = SingleValueDomain(i)
 
   def apply(v:Iterable[Int]):Domain =
     v match{
