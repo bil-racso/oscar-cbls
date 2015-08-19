@@ -56,7 +56,7 @@ class VRP(val N: Int, val V: Int, val m: Store) {
    * are used to modelise customers. Finally the value N is used for unrouted node.
    */
   val next: Array[CBLSIntVar] = Array.tabulate(N)(i =>
-    if (i < V) CBLSIntVar(m, i, V to N - 1, "next" + i)
+    if (i < V) CBLSIntVar(m, i, 0 to N - 1, "next" + i)
     else CBLSIntVar(m, N, 0 to N,  "next" + i))
 
   /**unroutes all points of the VRP*/
