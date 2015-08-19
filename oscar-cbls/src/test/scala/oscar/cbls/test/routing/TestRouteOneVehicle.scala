@@ -89,7 +89,7 @@ class TestRouteOneVehicle extends FunSuite with Matchers {
     val f = fixture
     f.model.propagate()
 
-    an [java.lang.Exception] should be thrownBy {
+    an [java.lang.Error] should be thrownBy {
       f.next(5) := 1
       f.next(0) := f.UNROUTED
       f.model.propagate()
@@ -190,7 +190,7 @@ class TestRouteOneVehicle extends FunSuite with Matchers {
   test("* form a cycle") {
     val f = fixture
 
-    an [java.lang.Exception] should be thrownBy {
+    an [java.lang.Error] should be thrownBy {
       f.next(4) := 3
       f.model.propagate()
     }
@@ -219,7 +219,7 @@ class TestRouteOneVehicle extends FunSuite with Matchers {
   test("* temp depot unrouted") {
     val f = fixture
 
-    an [java.lang.Exception] should be thrownBy {
+    an [java.lang.Error] should be thrownBy {
       f.next(0) := f.UNROUTED
       f.next(4) := 1
       f.next(5) := 2

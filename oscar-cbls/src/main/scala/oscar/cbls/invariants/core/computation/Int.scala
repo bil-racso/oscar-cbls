@@ -66,9 +66,8 @@ object IntValue {
 abstract class ChangingIntValue(initialValue:Int, initialDomain:Domain)
   extends AbstractVariable with IntValue{
 
-  if(!initialDomain.contains(initialValue)){
-        throw new Exception(initialValue+ " is not in the domain of "+this.name+"("+initialDomain+"). This might indicate an integer overflow.")
-      } 
+  assert(initialDomain.contains(initialValue),initialValue+ " is not in the domain of "+this.name+"("+initialDomain+"). This might indicate an integer overflow.")
+  
   private var privatedomain:Domain = initialDomain
   private var Value: Int = initialValue
   private var OldValue = Value
@@ -102,9 +101,7 @@ abstract class ChangingIntValue(initialValue:Int, initialDomain:Domain)
           "domain : ["+MinVal+ ";"+MaxVal+"]\n" +
            "new value :"+ v +"\n" ))
            */
-      if(!domain.contains(v)){
-        throw new Exception(v+ " is not in the domain of "+this+"("+min+".."+max+"). This might indicate an integer overflow.")
-      } 
+      assert(domain.contains(v),v+ " is not in the domain of "+this+"("+min+".."+max+"). This might indicate an integer overflow.")
       Value = v
       notifyChanged()
     }
