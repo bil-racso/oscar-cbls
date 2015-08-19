@@ -26,7 +26,7 @@ final class BinaryKnapsack(items: Array[BooleanVar], costs: Array[Int], cost: In
   private[this] var requiredCost = 0
   
   override def setup(): Boolean = {
-    if (!filter) false
+    if (!filter()) false
     else {
       var i = nUnassigned
       while (i > 0) { i -= 1; items(unassigned(i)).awakeOnAssign(this) }

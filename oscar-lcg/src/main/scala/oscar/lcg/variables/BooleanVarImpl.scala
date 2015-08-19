@@ -33,10 +33,28 @@ final class BooleanVarImpl(override val store: LCGStore, override val name: Stri
       trail.trail(this)
       _domain = 1
       notifyConstraints()
-      _eqLit.assign(explanation, explanationSize)
+      _eqLit.explain(explanation, explanationSize)
+      _eqLit.notifyAssign()
+      true
     } else if (_domain == 1) true 
     else {
       _eqLit.explain(explanation, explanationSize)
+      store.failedLiteral = _eqLit
+      false
+    }
+  }
+  
+  override def assignTrue(): Boolean = {
+    if (_domain == 2) {
+      trail.trail(this)
+      _domain = 1
+      notifyConstraints()
+      _eqLit.explain()
+      _eqLit.notifyAssign()
+      true
+    } else if (_domain == 1) true 
+    else {
+      _eqLit.explain()
       store.failedLiteral = _eqLit
       false
     }
@@ -47,11 +65,29 @@ final class BooleanVarImpl(override val store: LCGStore, override val name: Stri
       trail.trail(this)
       _domain = 0
       notifyConstraints()
-      _diffLit.assign(explanation, explanationSize)
+      _diffLit.explain(explanation, explanationSize)
+      _diffLit.notifyAssign()
+      true
     } else if (_domain == 0) true 
     else {
       _diffLit.explain(explanation, explanationSize)
-      store.failedLiteral = diffLit
+      store.failedLiteral = _diffLit
+      false
+    }
+  }
+  
+  override def assignFalse(): Boolean = {
+    if (_domain == 2) {
+      trail.trail(this)
+      _domain = 0
+      notifyConstraints()
+      _diffLit.explain()
+      _diffLit.notifyAssign()
+      true
+    } else if (_domain == 0) true 
+    else {
+      _diffLit.explain()
+      store.failedLiteral = _diffLit
       false
     }
   }

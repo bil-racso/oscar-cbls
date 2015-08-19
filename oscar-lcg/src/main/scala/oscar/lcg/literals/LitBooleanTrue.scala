@@ -34,11 +34,8 @@ class LitBooleanTrue(booleanVar: BooleanVar) extends Literal {
   }
 
   override def assign(): Boolean = {
-    explain()
     if (!booleanVar.isAssigned) {
       booleanVar.assignTrue(Array.empty)
-      store.enqueue(this)
-      true
     } else if (booleanVar.isTrue) true
     else {
       store.failedLiteral = this
@@ -46,6 +43,8 @@ class LitBooleanTrue(booleanVar: BooleanVar) extends Literal {
     }
   }
   
+  override def notifyAssign(): Unit = store.enqueue(this)
+
   override def explain(): Unit = {
     _explanation.clear()
     store.explained(this)
@@ -90,17 +89,16 @@ class LitBooleanFalse(@inline override val opposite: LitBooleanTrue, booleanVar:
   }
 
   override def assign(): Boolean = {
-    explain()
     if (!booleanVar.isAssigned) {
       booleanVar.assignFalse(Array.empty)
-      store.enqueue(this)
-      true
     } else if (booleanVar.isFalse) true
     else {
       store.failedLiteral = this
       false
     }
   }
+  
+  override def notifyAssign(): Unit = store.enqueue(this)
   
   override def explain(): Unit = {
     _explanation.clear()

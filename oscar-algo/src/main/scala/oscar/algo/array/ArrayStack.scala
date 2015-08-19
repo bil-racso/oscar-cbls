@@ -4,7 +4,7 @@ package oscar.algo.array
  *  An array-based stack for objects.
  *  This means that primitive types are boxed.
  *
- *  @author Renaud Hartert ren.hartert@gmail.com  
+ *  @author Renaud Hartert ren.hartert@gmail.com
  */
 final class ArrayStack[T](initialSize: Int = 100) {
 
@@ -17,7 +17,7 @@ final class ArrayStack[T](initialSize: Int = 100) {
    *  @return The size of the stack
    */
   @inline final def size: Int = index
-  
+
   /**
    *  Return the size of the stack
    *
@@ -63,7 +63,7 @@ final class ArrayStack[T](initialSize: Int = 100) {
     stack(index) = entry.asInstanceOf[AnyRef] // boxing in case of primitive type
     index += 1
   }
-  
+
   /**
    *  Push an element onto the stack.
    *
@@ -96,15 +96,15 @@ final class ArrayStack[T](initialSize: Int = 100) {
       stack(index) = null
     }
   }
-  
+
   @inline final def foreach[U](f: T => U): Unit = {
     var i = index
-    while(i > 0) {
+    while (i > 0) {
       i -= 1
       f(stack(i).asInstanceOf[T])
     }
   }
-  
+
   @inline def apply(idx: Int): T = {
     if (idx >= index) throw new IndexOutOfBoundsException
     else stack(idx).asInstanceOf[T]
@@ -114,17 +114,28 @@ final class ArrayStack[T](initialSize: Int = 100) {
     if (idx >= index) throw new IndexOutOfBoundsException
     else stack(idx) = entry.asInstanceOf[AnyRef]
   }
-  
+
   // Double the size of the stack
   @inline private def growStack(): Unit = {
     val newStack = new Array[AnyRef](stack.length * 2)
     System.arraycopy(stack, 0, newStack, 0, stack.length)
     stack = newStack
   }
-   
+
   @inline final def toArray: Array[T] = {
     val array = new Array[AnyRef](index)
     System.arraycopy(stack, 0, array, 0, index)
     array.asInstanceOf[Array[T]]
+  }
+
+  override def toString: String = {
+    if (index == 0) "ArrayStack()"
+    else {
+      val sb = new StringBuffer("ArrayStack(")
+      var i = 0
+      while (i < index - 1) { sb.append(s"${stack(i).toString}, "); i += 1 }
+      sb.append(s"${stack(i).toString})")
+      sb.toString
+    }
   }
 }

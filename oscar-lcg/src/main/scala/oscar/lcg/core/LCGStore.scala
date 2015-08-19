@@ -10,7 +10,7 @@ import oscar.lcg.variables.IntVar
 import oscar.algo.reversible.ReversibleBoolean
 
 class LCGStore(val analyzer: ConflictAnalyzer) {
-  
+
   def this() = this(new ConflictAnalyzer)
 
   // Trail
@@ -19,13 +19,15 @@ class LCGStore(val analyzer: ConflictAnalyzer) {
   // Conflict analyzer
   private[this] var _failedLiteral: Literal = null
 
+  private[this] var _level = 0
+
   // Registered literals
   private[this] val variables = new ArrayStack[IntVar](128)
 
   // Propagation queues
   private[this] val nogoodsQueue = new ArrayQueue[Literal](128)
   private[this] val constraintsQueue = new ArrayQueue[Constraint](128)
-  
+
   // Facts 
 
   // State of the solver
@@ -34,21 +36,41 @@ class LCGStore(val analyzer: ConflictAnalyzer) {
   def trail: ReversibleContext = trailQueue
 
   def isFailed = _failed.value
-  
+
   def failedLiteral_=(lit: Literal): Unit = _failedLiteral = lit
-  
+
   def failedLiteral: Literal = _failedLiteral
 
+  def level: Int = _level
+
+  def add(constraint: Constraint): Boolean = {
+    if (constraint.setup()) propagate()
+    else {
+      _failed.setTrue()
+      false
+    }
+  }
+  
+  def add(clause: Clause): Boolean = {
+    if (clause.setup()) propagate()
+    else {
+      _failed.setTrue()
+      false
+    }
+  }
+
   def newLevel(): Unit = {
+    _level += 1
     trail.pushState()
     analyzer.newLevel()
   }
 
   def undoLevel(): Unit = {
+    _level -= 1
     trail.pop()
     analyzer.undoLevel()
   }
-  
+
   def explained(literal: Literal): Unit = {
     analyzer.isExplained(literal)
   }
@@ -67,7 +89,8 @@ class LCGStore(val analyzer: ConflictAnalyzer) {
   }
 
   def propagate(): Boolean = {
-    if (fixedPoint()) true
+    if (_failed.value) false
+    else if (fixedPoint()) true
     else {
       // Change store status 
       _failed.setTrue()

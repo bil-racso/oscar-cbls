@@ -6,6 +6,7 @@ import oscar.lcg.searches.Heuristic
 import oscar.lcg.searches.DFSearch
 import oscar.lcg.modeling.Heuristics
 import oscar.lcg.modeling.Constraints
+import oscar.lcg.searches.BackjumpSearch
 
 package object lcg extends Heuristics with Constraints {
 
@@ -17,7 +18,7 @@ package object lcg extends Heuristics with Constraints {
   
   trait LCGModel { 
     implicit val lcgStore = new LCGStore 
-    implicit val dfsearch = new DFSearch(lcgStore)
+    implicit val bjSearch = new BackjumpSearch(lcgStore)
   }
   
   implicit final class IntVarOps(val intVar: IntVar) extends AnyVal {    
@@ -35,8 +36,7 @@ package object lcg extends Heuristics with Constraints {
   }
   
   final def add(constraint: Constraint)(implicit lcgStore: LCGStore): Boolean = {
-    if (!constraint.setup()) false
-    else lcgStore.propagate()
+    lcgStore.add(constraint)
   }
   
   final def add(constraints: Array[Constraint])(implicit lcgStore: LCGStore): Boolean = {
@@ -48,15 +48,15 @@ package object lcg extends Heuristics with Constraints {
     lcgStore.propagate()
   }
   
-  final def search(heuristic: Heuristic, stopCondition: => Boolean)(implicit dfsearch: DFSearch): Unit = {
-    dfsearch.start(heuristic, s => stopCondition)
+  final def search(heuristic: Heuristic, stopCondition: => Boolean)(implicit search: BackjumpSearch): Unit = {
+    search.start(heuristic, s => stopCondition)
   }
   
-  final def search(heuristic: Heuristic)(implicit dfsearch: DFSearch): Unit = {
-    dfsearch.start(heuristic, s => false)
+  final def search(heuristic: Heuristic)(implicit search: BackjumpSearch): Unit = {
+    search.start(heuristic, s => false)
   }
   
-  final def onSolution(action: => Unit)(implicit dfsearch: DFSearch): Unit = {
-    dfsearch.onSolution(action)
+  final def onSolution(action: => Unit)(implicit search: BackjumpSearch): Unit = {
+    search.onSolution(action)
   }
 }

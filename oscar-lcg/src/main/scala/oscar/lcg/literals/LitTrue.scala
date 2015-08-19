@@ -23,11 +23,15 @@ final object LitTrue extends Literal {
   
   override def assign(): Boolean = true
   
+  override def notifyAssign(): Unit = Unit
+  
   override def explain(): Unit = Unit
   
   override def explain(explanation: Literal): Unit = Unit
   
   override def explain(explanation: Array[Literal], explanationSize: Int): Unit = Unit
+  
+  override def toString: String = "[true]"
 }
 
 final object LitFalse extends Literal {
@@ -50,6 +54,8 @@ final object LitFalse extends Literal {
   
   override def assign(): Boolean = false
   
+  override def notifyAssign(): Unit = Unit
+  
   override def explain(): Unit = {
     _explanation.clear()
   }
@@ -64,4 +70,6 @@ final object LitFalse extends Literal {
     var i = explanationSize
     while (i > 0) { i -= 1; _explanation.push(explanation(i)) }
   }
+  
+  override def toString: String = "[false]"
 }

@@ -20,6 +20,10 @@ abstract class BooleanVar {
   
   def assignFalse(explanation: Array[Literal], explanationSize: Int): Boolean
   
+  def assignTrue(): Boolean
+  
+  def assignFalse(): Boolean
+  
   def awakeOnAssign(constraint: Constraint): Unit
   
   def eqLit: Literal

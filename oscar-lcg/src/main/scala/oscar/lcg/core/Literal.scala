@@ -23,29 +23,24 @@ abstract class Literal {
 
   def explanation: ArrayStack[Literal]
 
+  /** 
+   *  Assign the literal to true. 
+   *  @return true if the operation succeeded, false otherwise.
+   */
   def assign(): Boolean
+  
+  /** 
+   *  Notify the domain that its value might have changed. 
+   */
+  def notifyAssign(): Unit
 
   def explain(): Unit 
   
   def explain(explanation: Literal): Unit
 
   def explain(explanation: Array[Literal], explanationSize: Int): Unit
-
-  final def assign(explanation: Array[Literal], explanationSize: Int): Boolean = {
-    val out = assign()
-    explain(explanation, explanationSize)
-    out
-  }
-
-  final def assign(explanation: Array[Literal]): Boolean = {
-    val out = assign()
+  
+  final def explain(explanation: Array[Literal]): Unit = {
     explain(explanation, explanation.length)
-    out
-  }
-
-  final def assign(explanation: Literal): Boolean = {
-    val out = assign()
-    explain(explanation)
-    out
   }
 }
