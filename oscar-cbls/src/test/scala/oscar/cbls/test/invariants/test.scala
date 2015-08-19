@@ -36,7 +36,7 @@ object test extends SearchEngine {
     val m: Store = new Store
 
     val min = 0
-    val max = 100
+    val max = 10000
 
     val a:CBLSIntVar = CBLSIntVar(m, 9, min to max, "a")
     val b:CBLSIntVar = CBLSIntVar(m, 5, min to max, "b")

@@ -35,6 +35,7 @@ object Domain{
     else DomainRange(i._1,i._2)
   }
 
+  implicit def intToDomain(i:Int) = SingleValueDomain(i)
 
   def apply(v:Iterable[Int]):Domain =
     v match{
