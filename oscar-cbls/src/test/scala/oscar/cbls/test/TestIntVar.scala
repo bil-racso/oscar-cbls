@@ -111,7 +111,7 @@ class TestIntVar extends FunSuite with Matchers {
   
   test("test :*=") {
     val solver = new Store
-    val x = CBLSIntVar(solver, 10, (1 to 10), "x")
+    val x = CBLSIntVar(solver, 10, (1 to 30), "x")
     
     x.value should be(10)
     x :*= 2

@@ -264,7 +264,7 @@ case class Diff(left: SetValue, right: SetValue)
  * @author renaud.delandtsheer@cetic.be
  */
 case class Cardinality(v: SetValue)
-  extends IntInvariant(v.value.size, 0 to v.max - v.min) {
+  extends IntInvariant(v.value.size, 0 to (v.max - v.min +1)) {
 
   registerStaticAndDynamicDependency(v)
   finishInitialization()
