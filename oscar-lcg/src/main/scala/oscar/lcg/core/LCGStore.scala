@@ -5,7 +5,6 @@ import oscar.algo.array.ArrayStack
 import oscar.algo.reversible.ReversibleContext
 import oscar.algo.reversible.TrailEntry
 import oscar.algo.array.ArrayStackInt
-import oscar.algo.array.ArrayQueueInt
 import oscar.lcg.variables.IntVar
 import oscar.algo.reversible.ReversibleBoolean
 
