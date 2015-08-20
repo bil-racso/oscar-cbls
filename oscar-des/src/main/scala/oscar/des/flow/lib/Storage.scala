@@ -23,8 +23,9 @@ abstract class Storage[Content<:StockContentType](val maxSize: Int,
                                                   overflowOnInput:Boolean)
   extends RichPutable with RichFetchable {
 
-  override def totalPut:Int = super.totalPut
-  override def totalFetch:Int = super.totalFetch
+  def totalFetch:Int = pTotalFetch
+  def totalPut:Int = pTotalPut
+
   var totalLosByOverflow = 0
 
   def contentSize:Int
@@ -103,7 +104,7 @@ class FIFOStorage[Content<:StockContentType](maxSize:Int,
         }else {
           (l, hasBeenPut)
         }
-      case null => (l, hasBeenPut)
+      case Nil => (l, hasBeenPut)
     }
   }
 
@@ -145,7 +146,7 @@ class LIFOStorage[Content<:StockContentType](maxSize:Int,
         }else {
           (l, hasBeenPut)
         }
-      case null => (l, hasBeenPut)
+      case Nil => (l, hasBeenPut)
     }
   }
 
@@ -160,7 +161,7 @@ class LIFOStorage[Content<:StockContentType](maxSize:Int,
       case h :: t =>
         content = t
         internalFetch(remainsToFetch - 1, h :: hasBeenFetch)
-      case null =>
+      case Nil =>
         (remainsToFetch, hasBeenFetch)
     }
   }

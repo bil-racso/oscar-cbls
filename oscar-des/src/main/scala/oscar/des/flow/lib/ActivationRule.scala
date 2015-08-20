@@ -25,14 +25,14 @@ class RegularActivation(m:Model, intensity:Int, tick:Float, a:Activable) extends
  * @param name a name used for pretty printing
  * @author renaud.delandtsheer@cetic.be
  * */
-class OnStockThreshold(s:Storage,
-                       m:Model,
-                       a:Activable,
-                       threshold:Int,
-                       activationSize:Int=>Int,
-                       verbose:Boolean = true,
-                       period:Float, //set to zero if no tick needed
-                       name:String)
+class OnStockThreshold[Content<:StockContentType](s:Storage[Content],
+                                                  m:Model,
+                                                  a:Activable,
+                                                  threshold:Int,
+                                                  activationSize:Int=>Int,
+                                                  verbose:Boolean = true,
+                                                  period:Float, //set to zero if no tick needed
+                                                  name:String)
   extends ActivationRule(a:Activable) with StockNotificationTarget{
   s.registerNotificationTarget(this)
 
@@ -66,11 +66,12 @@ class OnStockThreshold(s:Storage,
 }
 
 
-class OnOrder(s:Storage,
-                       m:Model,
-                       orderBook:Storage[Orders],
-                       threshold:Int,
-                       activationSize:Int=>Int,
-                       verbose:Boolean = true,
-                       period:Float, //set to zero if no tick needed
-                       name:String) extends ActivationRule(a:Activable)
+class OnOrder[Content<:StockContentType](s:Storage[Content],
+                                         m:Model,
+                                         orderBook:Storage[Orders],
+                                         threshold:Int,
+                                         a:Activable,
+                                         activationSize:Int=>Int,
+                                         verbose:Boolean = true,
+                                         period:Float, //set to zero if no tick needed
+                                         name:String) extends ActivationRule(a:Activable)

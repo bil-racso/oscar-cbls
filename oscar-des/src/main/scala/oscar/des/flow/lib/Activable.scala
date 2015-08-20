@@ -21,7 +21,7 @@ abstract class ActivableProcess(name:String, verbose:Boolean) extends Activable{
   }
 
   override def activate(intensity: Int): Unit ={
-    productionBatch.put(intensity,null)
+    productionBatch.put(intensity,null)({()=>})
   }
 
   def addPreliminaryInput(preliminary:Storage[Items])

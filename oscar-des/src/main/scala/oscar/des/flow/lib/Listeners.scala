@@ -81,19 +81,19 @@ case class Empty[Content<:StockContentType](s:Storage[Content]) extends BoolExpr
   override def updatedValue = s.contentSize == 0
 }
 
-case class Content(s:Storage) extends DoubleExpr(false){
+case class Content[Content<:StockContentType](s:Storage[Content]) extends DoubleExpr(false){
   override def updatedValue(): Double = s.contentSize
 }
 
-case class TotalPut(s:Storage) extends DoubleExpr(false){
+case class TotalPut[Content<:StockContentType](s:Storage[Content]) extends DoubleExpr(false){
   override def updatedValue(): Double = s.totalPut
 }
 
-case class TotalFetch(s:Storage) extends DoubleExpr(false){
+case class TotalFetch[Content<:StockContentType](s:Storage[Content]) extends DoubleExpr(false){
   override def updatedValue(): Double = s.totalFetch
 }
 
-case class TotalLosByOverflow(s:Storage) extends DoubleExpr(false){
+case class TotalLosByOverflow[Content<:StockContentType](s:Storage[Content]) extends DoubleExpr(false){
   override def updatedValue(): Double = s.totalLosByOverflow
 }
 
@@ -200,7 +200,7 @@ class Changes(p:BoolExpr) extends BoolExpr(true,p){
 
 //variables always have a value.
 class CumulatedDuration(b:BoolExpr, t:Time) extends DoubleExpr(true,b){
-  var acc:Int = 0
+  var acc:Double = 0
   var wasTrue = b.value
   var previousTime = t.time
 
@@ -257,7 +257,7 @@ class NEQ(a:DoubleExpr,b:DoubleExpr) extends BoolExpr(false,a,b){
 //temporal on integers
 //triangles
 class PonderateWithDuration(s:DoubleExpr,t:Time) extends DoubleExpr(true,s){
-  var acc = 0
+  var acc:Double = 0
   var prevTime = t.time
   var prevValue = s.value
   override def updatedValue(): Double = {

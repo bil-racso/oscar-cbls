@@ -158,7 +158,7 @@ case class SplittingSingleBatchProcess(m:Model,
                                  verbose:Boolean = true) extends ActivableAtomicProcess(name,verbose){
 
   private val myOutputs = outputs.map(o => new Outputter(o))
-  override protected val myInput = new Inputter(inputs)
+  override val myInput = new Inputter(inputs)
 
   var performedBatches = 0
   private var failedBatches = 0
@@ -169,10 +169,14 @@ case class SplittingSingleBatchProcess(m:Model,
 
   def isWaiting = waiting
 
+
+  override def isRunning: Boolean = !waiting
+
+  override def batchCount: Int = performedBatches
+
   override def totalWaitDuration():Double = if (waiting) mTotalWaitDuration + m.clock() - startWaitTime else mTotalWaitDuration
 
   startBatches()
-
 
   private def startBatches(){
     if (verbose) println(name + ": start inputting")
@@ -269,7 +273,7 @@ class ConveyorBeltProcess(m:Model,
                           verbose:Boolean = true) extends ActivableAtomicProcess(name,verbose){
 
   private val myOutput = new Outputter(outputs)
-  override protected val myInput = new Inputter(inputs)
+  override val myInput = new Inputter(inputs)
 
   //the belt contains the delay for the output since the previous element that was input. delay since input if the belt was empty
   private val belt: ListBuffer[(Double,ItemClass)] = ListBuffer.empty

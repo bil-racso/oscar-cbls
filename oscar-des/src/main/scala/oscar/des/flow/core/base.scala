@@ -52,7 +52,8 @@ trait Fetchable {
  */
 trait RichFetchable extends Fetchable {
   private val waitingFetches:ListBuffer[(Int, List[ItemClass], List[ItemClass] => Unit)] = ListBuffer.empty
-  protected var totalFetch = 0
+  var mTotalFetch = 0
+  protected def pTotalFetch:Int = mTotalFetch
 
   def isThereAnyWaitingFetch:Boolean = waitingFetches.nonEmpty
 
@@ -77,7 +78,7 @@ trait RichFetchable extends Fetchable {
       if (waitingFetches.nonEmpty) {
         val (toFetch, alreadyFetched, block) = waitingFetches.remove(0)
         val (remainingToFetch,fetched) = internalFetch(toFetch)
-        totalFetch += fetched.length
+        mTotalFetch += fetched.length
         val allFetchedForThisFetch = fetched ::: alreadyFetched
         if (remainingToFetch == 0) {
           block(allFetchedForThisFetch)
@@ -104,7 +105,8 @@ trait RichFetchable extends Fetchable {
 trait RichPutable extends Putable {
 
   protected val waitingPuts:ListBuffer[(List[ItemClass], () => Unit)] = ListBuffer.empty
-  protected var totalPut = 0
+  var mTotalPut = 0
+  def pTotalPut:Int = mTotalPut
 
   def isThereAnyWaitingPut:Boolean = waitingPuts.nonEmpty
 
@@ -135,7 +137,7 @@ trait RichPutable extends Putable {
       if (waitingPuts.nonEmpty) {
         val (toPut, block) = waitingPuts.remove(0)
         val (remainingToPut,put) = internalPut(toPut)
-        totalPut += put
+        mTotalPut += put
         if (remainingToPut == 0) {
           block()
           finished = false
@@ -163,7 +165,7 @@ trait RichPutable extends Putable {
       block()
       val nbToPut = toPut.length
       flushedUnits += nbToPut
-      totalPut += nbToPut
+      mTotalPut += nbToPut
     }
     flushedUnits
   }
@@ -176,7 +178,7 @@ trait RichPutable extends Putable {
  * @param waitedNotification the number of waited notifications
  * @param gate the method to call once the method notifyOne has been called waitedNotification times
  */
-case class CounterGate(waitedNotification:Int, gate: () => Unit, var itemClass:ItemClass = null) {
+case class CounterGate(waitedNotification:Int, gate: ItemClass => Unit, var itemClass:ItemClass = null) {
   private var remaining = waitedNotification
   def notifyOne(mItemClass:ItemClass = null): Unit = {
     if(mItemClass != null){
@@ -184,7 +186,7 @@ case class CounterGate(waitedNotification:Int, gate: () => Unit, var itemClass:I
       else itemClass = itemClass union mItemClass
     }
     remaining -=1
-    if(remaining == 0) gate()
+    if(remaining == 0) gate(itemClass)
   }
 }
 
@@ -195,7 +197,7 @@ case class CounterGate(waitedNotification:Int, gate: () => Unit, var itemClass:I
 class Outputter(outputs:Iterable[(() => Int, Putable)]) {
   val outputCount = outputs.size
   def performOutput(i:ItemClass, block: () => Unit){
-    val gate = CounterGate(outputCount +1, block)
+    val gate = CounterGate(outputCount +1, _ => block())
     for((nr,putable) <- outputs){
       putable.put(nr(),i)(() => gate.notifyOne())
     }
@@ -218,10 +220,8 @@ class Inputter(inputs:Iterable[(() => Int, Fetchable)]) {
   def performInput(block : ItemClass => Unit): Unit = {
 
     def doPerformInput() {
-      val gate = CounterGate(inputCount + 1, finished)
-      def finished(): Unit = {
-        block(gate.itemClass)
-      }
+      val gate = CounterGate(inputCount + 1, block)
+
       var i = 0;
       for ((amount, fetchable) <- inputs) {
         fetchable.fetch(amount())(gate.notifyOne)

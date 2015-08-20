@@ -14,7 +14,6 @@
  ******************************************************************************/
 package oscar.des.engine
 
-import oscar.invariants._
 
 class Tank(m: Model, capacity: Double) {
 /*

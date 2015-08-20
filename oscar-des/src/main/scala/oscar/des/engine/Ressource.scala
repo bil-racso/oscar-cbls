@@ -14,10 +14,6 @@
  ******************************************************************************/
 package oscar.des.engine
 
-
-import scala.collection.mutable._
-import oscar.invariants._
-
 import scala.collection.mutable._
 
 
