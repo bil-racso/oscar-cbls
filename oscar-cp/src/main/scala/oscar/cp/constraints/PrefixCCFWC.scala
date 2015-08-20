@@ -26,131 +26,198 @@ import CPOutcome._
 class PrefixCCFWC(X: Array[CPIntVar], minVal: Int, lowerLists: Array[Array[(Int, Int)]], upperLists: Array[Array[(Int, Int)]])
   extends Constraint(X(0).store, "PrefixCCFWC") {
 
+  // Handy structures for memorization
+
+  private class SegmentStructure() {
+    var full: Array[Int] = null
+
+    val boundIdx = Array.ofDim[Int](nVariables + 1)
+    val boundVal = Array.ofDim[Int](nVariables + 1)
+    var nBounds = 0
+    var nIntervals = 0
+    var lastIdx = 0
+
+    var intervalOf: Array[Int] = null
+    var parentRev: Array[ReversibleInt] = null
+    var untilCriticalRev: Array[ReversibleInt] = null
+    var prevRev: Array[ReversibleInt] = null
+    var rightLimitRev: Array[ReversibleInt] = null
+  }
+
+  private class TempStructure() {
+    var parent: Array[Int] = null
+    var untilCritical: Array[Int] = null
+    var rightLimit: Array[Int] = null
+  }
+
+  private class UnboundList() {
+    var firstRev: ReversibleInt = null
+    var prevRev: Array[ReversibleInt] = null
+    var nextRev: Array[ReversibleInt] = null
+  }
+
+  private class TempList(size: Int) {
+    var first = size
+    var last = -1
+    val prev = Array.fill(size)(-1)
+    val next = Array.fill(size)(size)
+    val contains = Array.fill(size)(false)
+  }
+
   private[this] val nVariables = X.length
   private[this] var nRelevantVariables = 0
   private[this] val nValues = lowerLists.length
   private[this] val maxVal = minVal + nValues - 1
 
-  private[this] var allLower: Array[Array[Int]] = null
-  private[this] var allUpper: Array[Array[Int]] = null
-
-  private[this] var lowerIdx: Array[Array[Int]] = null
-  private[this] var lowerVal: Array[Array[Int]] = null
-  private[this] var nLower: Array[Int] = null
-  private[this] var nLowerInter: Array[Int] = null
-  private[this] var lowerLast: Array[Int] = null
-
-  private[this] var upperIdx: Array[Array[Int]] = null
-  private[this] var upperVal: Array[Array[Int]] = null
-  private[this] var nUpper: Array[Int] = null
-  private[this] var nUpperInter: Array[Int] = null
-  private[this] var upperLast: Array[Int] = null
-
-  private[this] var lowerInterval: Array[Array[Int]] = null
-  private[this] var lowerParentRev: Array[Array[ReversibleInt]] = null
-  private[this] var lowerUntilCriticalRev: Array[Array[ReversibleInt]] = null
-  private[this] var lowerPrevRev: Array[Array[ReversibleInt]] = null
-  private[this] var lowerRightLimitRev: Array[Array[ReversibleInt]] = null
-
-  private[this] var upperInterval: Array[Array[Int]] = null
-  private[this] var upperParentRev: Array[Array[ReversibleInt]] = null
-  private[this] var upperUntilCriticalRev: Array[Array[ReversibleInt]] = null
-  private[this] var upperPrevRev: Array[Array[ReversibleInt]] = null
-  private[this] var upperRightLimitRev: Array[Array[ReversibleInt]] = null
-
-  private[this] var firstUnboundRev: Array[ReversibleInt] = null
-  private[this] var prevUnboundRev: Array[Array[ReversibleInt]] = null
-  private[this] var nextUnboundRev: Array[Array[ReversibleInt]] = null
+  private[this] val lower = Array.fill(nValues)(new SegmentStructure())
+  private[this] val upper = Array.fill(nValues)(new SegmentStructure())
+  private[this] val unbound = Array.fill(nValues)(new UnboundList())
 
   private[this] var changeBuffer: Array[Int] = null
+
+
+  // ============
+  // INIT METHODS
+  // ============
+
+  override def setup(l: CPPropagStrength): CPOutcome = {
+
+    val feasibleLower = (index: Int, value: Int) => value <= index
+    val feasibleUpper = (index: Int, value: Int) => value >= 0
+
+    var vi = nValues
+    while (vi > 0) {
+      vi -= 1
+
+      lower(vi).full = Array.tabulate(nVariables + 1)(i => 0)
+      upper(vi).full = Array.tabulate(nVariables + 1)(i => i)
+
+      if (readArguments(lower(vi), lowerLists(vi), feasibleLower) == Failure) return Failure
+      if (readArguments(upper(vi), upperLists(vi), feasibleUpper) == Failure) return Failure
+    }
+
+    filterBounds()
+    fillBounds()
+    if (testAndDeduceBounds() == Failure) return Failure
+    filterBounds()
+
+    initAndCheck()
+  }
+
+  private def readArguments(st: SegmentStructure, boundList: Array[(Int, Int)],
+                            feasible: (Int, Int) => Boolean): CPOutcome = {
+    var bound = boundList.length
+    while (bound > 0) {
+      bound -= 1
+      val (index, value) = boundList(bound)
+      if (index < 0 || index > nVariables) {
+        throw new IllegalArgumentException("Bound cutoff out of range: " + index)
+      } else if (!feasible(index, value)) {
+        return Failure
+      }
+      st.full(index) = value
+    }
+
+    Suspend
+  }
+
+  // ---------
+  // Filtering
+  // ---------
 
   private def filterBounds() {
     nRelevantVariables = 0
 
+    val filterFlat = (prevIdx: Int, prevVal: Int, nextIdx: Int, nextVal: Int) => nextVal > prevVal
+    val filterSlope = (prevIdx: Int, prevVal: Int, nextIdx: Int, nextVal: Int) => nextVal - prevVal < nextIdx - prevIdx
+
     var vi = nValues
     while (vi > 0) {
       vi -= 1
 
-      // Adding lower and upper bound 0 at 0, for convenience.
-      lowerIdx(vi)(0) = 0
-      lowerVal(vi)(0) = 0
-      nLower(vi) = 1
-      upperIdx(vi)(0) = 0
-      upperVal(vi)(0) = 0
-      nUpper(vi) = 1
-
-      var i = 1
-      while (i <= nVariables) {
-        if (allLower(vi)(i) > lowerVal(vi)(nLower(vi) - 1)) {
-          //println(s"adding ${allLower(vi)(i)} at $i")
-          while (nLower(vi) > 1 && allLower(vi)(i) >= lowerVal(vi)(nLower(vi) - 1) + i - lowerIdx(vi)(nLower(vi) - 1)) {
-            nLower(vi) -= 1
-          }
-          lowerIdx(vi)(nLower(vi)) = i
-          lowerVal(vi)(nLower(vi)) = allLower(vi)(i)
-          nLower(vi) += 1
-        }
-        if (allUpper(vi)(i) < upperVal(vi)(nUpper(vi) - 1) + i - upperIdx(vi)(nUpper(vi) - 1)) {
-          while (nUpper(vi) > 1 && allUpper(vi)(i) <= upperVal(vi)(nUpper(vi) - 1)) {
-            nUpper(vi) -= 1
-          }
-          upperIdx(vi)(nUpper(vi)) = i
-          upperVal(vi)(nUpper(vi)) = allUpper(vi)(i)
-          nUpper(vi) += 1
-        }
-        i += 1
-      }
-
-      nLowerInter(vi) = nLower(vi) - 1
-      nUpperInter(vi) = nUpper(vi) - 1
-      lowerLast(vi) = lowerIdx(vi)(nLowerInter(vi))
-      upperLast(vi) = upperIdx(vi)(nUpperInter(vi))
-      nRelevantVariables = nRelevantVariables max lowerLast(vi) max upperLast(vi)
+      filterGeneric(lower(vi), filterSlope, filterFlat)
+      filterGeneric(upper(vi), filterFlat, filterSlope)
+      nRelevantVariables = nRelevantVariables max lower(vi).lastIdx max upper(vi).lastIdx
     }
   }
+
+  private def filterGeneric(st: SegmentStructure,
+                            prevFilter: (Int, Int, Int, Int) => Boolean,
+                            nextFilter: (Int, Int, Int, Int) => Boolean) {
+    import st._
+
+    // Adding lower and upper bound 0 at 0, for convenience.
+    boundIdx(0) = 0
+    boundVal(0) = 0
+    nBounds = 1
+
+    def lastIdx = boundIdx(nBounds - 1)
+    def lastVal = boundVal(nBounds - 1)
+
+    var i = 1
+    while (i <= nVariables) {
+      if (nextFilter(lastIdx, lastVal, i, full(i))) {
+        while (nBounds > 1 && !prevFilter(lastIdx, lastVal, i, full(i))) {
+          nBounds -= 1
+        }
+        boundIdx(nBounds) = i
+        boundVal(nBounds) = full(i)
+        nBounds += 1
+      }
+      i += 1
+    }
+
+    (nBounds, nBounds - 1, lastIdx)
+    nIntervals = nBounds - 1
+    st.lastIdx = lastIdx
+  }
+
+  // -------
+  // Filling
+  // -------
 
   private def fillBounds() {
+    val flatFill = (baseIdx: Int, baseVal: Int, i: Int) => baseVal
+    val slopeFill = (baseIdx: Int, baseVal: Int, i: Int) => baseVal + i - baseIdx
+    val lowerSplit = (prevIdx: Int, prevVal: Int, nextIdx: Int, nextVal: Int) => nextIdx - nextVal + prevVal
+    val upperSplit = (prevIdx: Int, prevVal: Int, nextIdx: Int, nextVal: Int) => prevIdx + nextVal - prevVal
+
     var vi = nValues
     while (vi > 0) {
       vi -= 1
 
-      var i = nVariables + 1
-      var lowerI = nLower(vi)
-      while (lowerI > 0) {
-        lowerI -= 1
-        val middle = {
-          if (lowerI == nLowerInter(vi)) nVariables + 1
-          else lowerIdx(vi)(lowerI + 1) - lowerVal(vi)(lowerI + 1) + lowerVal(vi)(lowerI)
-        }
-        while (i > middle) {
-          i -= 1
-          allLower(vi)(i) = lowerVal(vi)(lowerI + 1) - lowerIdx(vi)(lowerI + 1) + i
-        }
-        while (i > lowerIdx(vi)(lowerI)) {
-          i -= 1
-          allLower(vi)(i) = lowerVal(vi)(lowerI)
-        }
-      }
+      fillGeneric(lower(vi), lowerSplit, flatFill, slopeFill)
+      fillGeneric(upper(vi), upperSplit, slopeFill, flatFill)
+    }
+  }
 
-      i = nVariables + 1
-      var upperI = nUpper(vi)
-      while (upperI > 0) {
-        upperI -= 1
-        val middle = {
-          if (upperI == nUpperInter(vi)) nVariables + 1
-          else upperIdx(vi)(upperI) + upperVal(vi)(upperI + 1) - upperVal(vi)(upperI)
-        }
-        while (i > middle) {
-          i -= 1
-          allUpper(vi)(i) = upperVal(vi)(upperI + 1)
-        }
-        while (i > upperIdx(vi)(upperI)) {
-          i -= 1
-          allUpper(vi)(i) = upperVal(vi)(upperI) + i - upperIdx(vi)(upperI)
-        }
+  private def fillGeneric(st: SegmentStructure,
+                          splitAt: (Int, Int, Int, Int) => Int,
+                          leftFill: (Int, Int, Int) => Int, rightFill: (Int, Int, Int) => Int) {
+    import st._
+
+    var i = nVariables + 1
+    var lowerI = nBounds
+    while (lowerI > 0) {
+      lowerI -= 1
+      val split = {
+        if (lowerI == nIntervals) nVariables + 1
+        else splitAt(boundIdx(lowerI), boundVal(lowerI), boundIdx(lowerI + 1), boundVal(lowerI + 1))
+      }
+      while (i > split) {
+        i -= 1
+        full(i) = rightFill(boundIdx(lowerI + 1), boundVal(lowerI + 1), i)
+      }
+      while (i > boundIdx(lowerI)) {
+        i -= 1
+        full(i) = leftFill(boundIdx(lowerI), boundVal(lowerI), i)
       }
     }
   }
+
+  // ---------
+  // Deduction
+  // ---------
 
   private def testAndDeduceBounds(): CPOutcome = {
     // Perform some deduction based on other values' lower and upper bounds
@@ -162,9 +229,9 @@ class PrefixCCFWC(X: Array[CPIntVar], minVal: Int, lowerLists: Array[Array[(Int,
       var vi = nValues
       while (vi > 0) {
         vi -= 1
-        if (allLower(vi)(i) > allUpper(vi)(i)) return Failure
-        lowerSum += allLower(vi)(i)
-        upperSum += allUpper(vi)(i)
+        if (lower(vi).full(i) > upper(vi).full(i)) return Failure
+        lowerSum += lower(vi).full(i)
+        upperSum += upper(vi).full(i)
       }
       // Test the sums
       if (lowerSum > i || upperSum < i) return Failure
@@ -173,62 +240,33 @@ class PrefixCCFWC(X: Array[CPIntVar], minVal: Int, lowerLists: Array[Array[(Int,
       while (vi > 0) {
         vi -= 1
         // The lower bound will be at least the number of variables minus the sum of all other upper bounds
-        allLower(vi)(i) = allLower(vi)(i) max (i - upperSum + allUpper(vi)(i))
+        lower(vi).full(i) = lower(vi).full(i) max (i - upperSum + upper(vi).full(i))
         // The upper bound will be at most the number of variables minus the sum of all other lower bounds
-        allUpper(vi)(i) = allUpper(vi)(i) min (i - lowerSum + allLower(vi)(i))
+        upper(vi).full(i) = upper(vi).full(i) min (i - lowerSum + lower(vi).full(i))
       }
       i -= 1
     }
     Suspend
   }
 
+  // -------------------------
+  // Initial counts and checks
+  // -------------------------
+
   private def initAndCheck(): CPOutcome = {
 
-    lowerInterval = Array.ofDim[Array[Int]](nValues)
-    val lowerParent = Array.ofDim[Array[Int]](nValues)
-    val lowerUntilCritical = Array.ofDim[Array[Int]](nValues)
-    val lowerRightLimit = Array.ofDim[Array[Int]](nValues)
-    upperInterval = Array.ofDim[Array[Int]](nValues)
-    val upperParent = Array.ofDim[Array[Int]](nValues)
-    val upperUntilCritical = Array.ofDim[Array[Int]](nValues)
-    val upperRightLimit = Array.ofDim[Array[Int]](nValues)
+    val lowerTmp = Array.fill(nValues)(new TempStructure())
+    val upperTmp = Array.fill(nValues)(new TempStructure())
+
+    val criticalInitLower = (prevVal: Int, nextVal: Int) => prevVal - nextVal
+    val criticalInitUpper = (prevVal: Int, nextVal: Int) => nextVal - prevVal
 
     // Give initial values to the structures
     var vi = nValues
     while (vi > 0) {
       vi -= 1
-
-      lowerInterval(vi) = Array.ofDim[Int](lowerLast(vi))
-      lowerParent(vi) = Array.tabulate(nLowerInter(vi))(lowerI => lowerI)
-      // We have to add the number of bound and unbound variables to this number
-      lowerUntilCritical(vi) = Array.tabulate(nLowerInter(vi))(lowerI => lowerVal(vi)(lowerI) - lowerVal(vi)(lowerI + 1))
-      lowerRightLimit(vi) = Array.tabulate(nLowerInter(vi))(lowerI => lowerIdx(vi)(lowerI + 1))
-
-      var lowerI = 0
-      while (lowerI < nLowerInter(vi)) {
-        var i = lowerIdx(vi)(lowerI)
-        while (i < lowerIdx(vi)(lowerI + 1)) {
-          lowerInterval(vi)(i) = lowerI
-          i += 1
-        }
-        lowerI += 1
-      }
-
-      upperInterval(vi) = Array.ofDim[Int](upperLast(vi))
-      upperParent(vi) = Array.tabulate(nUpperInter(vi))(upperI => upperI)
-      // We have to remove the number of bound variables to this number
-      upperUntilCritical(vi) = Array.tabulate(nUpperInter(vi))(upperI => upperVal(vi)(upperI + 1) - upperVal(vi)(upperI))
-      upperRightLimit(vi) = Array.tabulate(nUpperInter(vi))(upperI => upperIdx(vi)(upperI + 1))
-
-      var upperI = 0
-      while (upperI < nUpperInter(vi)) {
-        var i = upperIdx(vi)(upperI)
-        while (i < upperIdx(vi)(upperI + 1)) {
-          upperInterval(vi)(i) = upperI
-          i += 1
-        }
-        upperI += 1
-      }
+      initTemp(lower(vi), lowerTmp(vi), criticalInitLower)
+      initTemp(upper(vi), upperTmp(vi), criticalInitUpper)
     }
 
     // Adapt the size of the buffer
@@ -241,14 +279,36 @@ class PrefixCCFWC(X: Array[CPIntVar], minVal: Int, lowerLists: Array[Array[(Int,
     changeBuffer = Array.ofDim[Int](bufferSize)
 
     // Create the linked list of unbound variables
-    val firstUnbound = Array.fill(nValues)(nRelevantVariables)
-    val lastUnbound = Array.fill(nValues)(-1)
-    val isUnbound = Array.fill(nValues, nRelevantVariables)(false)
-    val prevUnbound = Array.fill(nValues, nRelevantVariables)(-1)
-    val nextUnbound = Array.fill(nValues, nRelevantVariables)(nRelevantVariables)
+    val unboundTmp = Array.fill(nValues)(new TempList(nRelevantVariables))
+    initialCount(lowerTmp, upperTmp, unboundTmp)
 
+    // Initial checks
+    vi = nValues
+    while (vi > 0) {
+      vi -= 1
+      val v = vi + minVal
+
+      if (initialCheck(lower(vi), lowerTmp(vi), unboundTmp(vi), x => x.assign(v)) == Failure) return Failure
+      if (initialCheck(upper(vi), upperTmp(vi), unboundTmp(vi), x => x.removeValue(v)) == Failure) return Failure
+    }
+
+    // Copy the temporary values into the reversible arrays
+    vi = nValues
+    while (vi > 0) {
+      vi -= 1
+
+      copyToRev(lower(vi), lowerTmp(vi))
+      copyToRev(upper(vi), upperTmp(vi))
+      copyListToRev(unbound(vi), unboundTmp(vi))
+    }
+
+    Success
+  }
+
+  private def initialCount(lowerTmp: Array[TempStructure], upperTmp: Array[TempStructure],
+                           unboundTmp: Array[TempList]) {
     // Initial count
-    i = 0
+    var i = 0
     while (i < nRelevantVariables) {
       val x = X(i)
 
@@ -256,11 +316,11 @@ class PrefixCCFWC(X: Array[CPIntVar], minVal: Int, lowerLists: Array[Array[(Int,
         val v = x.min
         if (minVal <= v && v <= maxVal) {
           val vi = v - minVal
-          if (i < lowerLast(vi)) {
-            lowerUntilCritical(vi)(lowerInterval(vi)(i)) += 1
+          if (i < lower(vi).lastIdx) {
+            lowerTmp(vi).untilCritical(lower(vi).intervalOf(i)) += 1
           }
-          if (i < upperLast(vi)) {
-            upperUntilCritical(vi)(upperInterval(vi)(i)) -= 1
+          if (i < upper(vi).lastIdx) {
+            upperTmp(vi).untilCritical(upper(vi).intervalOf(i)) -= 1
           }
         }
       } else {
@@ -270,19 +330,20 @@ class PrefixCCFWC(X: Array[CPIntVar], minVal: Int, lowerLists: Array[Array[(Int,
           val v = changeBuffer(c)
           if (minVal <= v && v <= maxVal) {
             val vi = v - minVal
-            if (i < lowerLast(vi)) {
-              lowerUntilCritical(vi)(lowerInterval(vi)(i)) += 1
+            if (i < lower(vi).lastIdx) {
+              lowerTmp(vi).untilCritical(lower(vi).intervalOf(i)) += 1
             }
 
             // Fill the linked list of unbound variables
-            isUnbound(vi)(i) = true
-            if (firstUnbound(vi) == nRelevantVariables) {
-              firstUnbound(vi) = i
+            val list = unboundTmp(vi)
+            list.contains(i) = true
+            if (list.first == nRelevantVariables) {
+              list.first = i
             } else {
-              nextUnbound(vi)(lastUnbound(vi)) = i
-              prevUnbound(vi)(i) = lastUnbound(vi)
+              list.next(list.last) = i
+              list.prev(i) = list.last
             }
-            lastUnbound(vi) = i
+            list.last = i
           }
         }
       }
@@ -291,262 +352,126 @@ class PrefixCCFWC(X: Array[CPIntVar], minVal: Int, lowerLists: Array[Array[(Int,
       x.callOnChanges(i, delta => whenDomainChanges(delta, x))
       i += 1
     }
+  }
 
-    // Initial checks
-    vi = nValues
-    while (vi > 0) {
-      vi -= 1
-      val v = vi + minVal
+  private def initialCheck(st: SegmentStructure, tmp: TempStructure, list: TempList,
+                           action: CPIntVar => CPOutcome): CPOutcome = {
+    import st._
+    // Merge as much as possible, intentionally backwards!
+    var inter = nIntervals
+    while (inter > 1) {
+      inter -= 1
 
-      // Merge as much as possible, intentionally backwards!
-      var lowerI = nLowerInter(vi)
-      while (lowerI > 1) {
-        lowerI -= 1
-
-        if (lowerUntilCritical(vi)(lowerI) <= 0) {
-          lowerParent(vi)(lowerI) = lowerI - 1
-          lowerUntilCritical(vi)(lowerI - 1) += lowerUntilCritical(vi)(lowerI)
-          lowerRightLimit(vi)(lowerI - 1) = lowerRightLimit(vi)(lowerI)
-        }
+      if (tmp.untilCritical(inter) <= 0) {
+        // TODO: decrement nIntervals probably??
+        tmp.parent(inter) = inter - 1
+        tmp.untilCritical(inter - 1) += tmp.untilCritical(inter)
+        tmp.rightLimit(inter - 1) = tmp.rightLimit(inter)
       }
-      //println("A")
+    }
 
-      if (nLowerInter(vi) > 0) {
-        //println(s"A3 $vi, ${lowerUntilCritical(vi)(0)} until ${lowerRightLimit(vi)(0)}")
-        // If some of the leftmost constraints are already decided
-        if (lowerUntilCritical(vi)(0) < 0) return Failure
-        else if (lowerUntilCritical(vi)(0) == 0) {
-          //println("A2")
-
-          // Try to bind the unbound
-          var i = firstUnbound(vi)
-          while (i < lowerRightLimit(vi)(0)) {
-            if (X(i).assign(v) == Failure) return Failure
-            i = nextUnbound(vi)(i)
-          }
-
-          // If this is the only interval remaining
-          if (lowerRightLimit(vi)(0) == lowerLast(vi)) {
-            lowerParent(vi)(0) = -1
-          }
-          // Otherwise, merge it to the right
-          else {
-            val next = lowerInterval(vi)(lowerRightLimit(vi)(0))
-            lowerParent(vi)(next) = 0
-            lowerUntilCritical(vi)(0) = lowerUntilCritical(vi)(next)
-            lowerRightLimit(vi)(0) = lowerRightLimit(vi)(next)
-          }
+    if (nIntervals > 0) {
+      // If some of the leftmost constraints are already decided
+      if (tmp.untilCritical(0) < 0) return Failure
+      else if (tmp.untilCritical(0) == 0) {
+        // Try to assign or remove the unbound
+        var i = list.first
+        while (i < tmp.rightLimit(0)) {
+          if (action(X(i)) == Failure) return Failure
+          i = list.next(i)
         }
-      }
 
-      // Redirect variables
-      lowerI = nLowerInter(vi)
-      while (lowerI > 0) {
-        lowerI -= 1
-
-        if (lowerParent(vi)(lowerI) == lowerI) {
-          var i = lowerIdx(vi)(lowerI)
-          while (i < lowerRightLimit(vi)(lowerI)) {
-            lowerInterval(vi)(i) = lowerI
-            i += 1
-          }
+        // If this is the only interval remaining
+        if (tmp.rightLimit(0) == lastIdx) {
+          tmp.parent(0) = -1
         }
-      }
-      //println("B")
-
-      // Merge as much as possible, intentionally backwards!
-      var upperI = nUpperInter(vi)
-      while (upperI > 1) {
-        upperI -= 1
-        if (upperUntilCritical(vi)(upperI) <= 0) {
-          upperParent(vi)(upperI) = upperI - 1
-          upperUntilCritical(vi)(upperI - 1) += upperUntilCritical(vi)(upperI)
-          upperRightLimit(vi)(upperI - 1) = upperRightLimit(vi)(upperI)
-        }
-      }
-
-      if (nUpperInter(vi) > 0) {
-        // If some of the leftmost constraints are already decided
-        if (upperUntilCritical(vi)(0) < 0) return Failure
-        else if (upperUntilCritical(vi)(0) == 0) {
-
-          // Try to remove the unbound
-          var i = firstUnbound(vi)
-          while (i < upperRightLimit(vi)(0)) {
-            //println(s"removed from $i")
-            if (X(i).removeValue(v) == Failure) return Failure
-            i = nextUnbound(vi)(i)
-          }
-
-          // If this is the only interval remaining
-          if (upperRightLimit(vi)(0) == upperLast(vi)) {
-            //println(s"confirmation $vi")
-            upperParent(vi)(0) = -1
-          }
-          // Otherwise, merge it to the right
-          else {
-            val next = upperInterval(vi)(upperRightLimit(vi)(0))
-            upperParent(vi)(next) = 0
-            upperUntilCritical(vi)(0) = upperUntilCritical(vi)(next)
-            upperRightLimit(vi)(0) = upperRightLimit(vi)(next)
-          }
-        }
-      }
-
-      // Redirect variables
-      upperI = nUpperInter(vi)
-      while (upperI > 0) {
-        upperI -= 1
-
-        if (upperParent(vi)(upperI) == upperI) {
-          var i = upperIdx(vi)(upperI)
-          while (i < upperRightLimit(vi)(upperI)) {
-            upperInterval(vi)(i) = upperI
-            i += 1
-          }
+        // Otherwise, merge it to the right
+        else {
+          val next = intervalOf(tmp.rightLimit(0))
+          tmp.parent(next) = 0
+          tmp.untilCritical(0) = tmp.untilCritical(next)
+          tmp.rightLimit(0) = tmp.rightLimit(next)
         }
       }
     }
 
+    // Redirect variables
+    inter = nIntervals
+    var i = lastIdx
+    while (inter > 0) {
+      inter -= 1
+      if (tmp.parent(inter) == inter) {
+        while (i > boundIdx(inter)) {
+          i -= 1
+          intervalOf(i) = inter
+        }
+      }
+    }
+
+    Suspend
+  }
+
+  // ------------------------------
+  // Temporary structure management
+  // ------------------------------
+
+  private def initTemp(st: SegmentStructure, tmp: TempStructure, criticalInit: (Int, Int) => Int) {
+    import st._
+
+    intervalOf = Array.ofDim[Int](lastIdx)
+    tmp.parent = Array.tabulate(nIntervals)(inter => inter)
+    tmp.untilCritical = Array.tabulate(nIntervals)(inter => criticalInit(boundVal(inter), boundVal(inter + 1)))
+    tmp.rightLimit = Array.tabulate(nIntervals)(inter => boundIdx(inter + 1))
+
+    var inter = nIntervals
+    var i = lastIdx
+    while (inter > 0) {
+      inter -= 1
+      while (i > boundIdx(inter)) {
+        i -= 1
+        intervalOf(i) = inter
+      }
+    }
+  }
+
+  private def copyToRev(st: SegmentStructure, tmp: TempStructure) {
+    import st._
     // Initialize the reversible arrays
-    lowerParentRev = Array.tabulate(nValues)(vi => Array.ofDim[ReversibleInt](nLowerInter(vi)))
-    lowerUntilCriticalRev = Array.tabulate(nValues)(vi => Array.ofDim[ReversibleInt](nLowerInter(vi)))
-    lowerPrevRev = Array.tabulate(nValues)(vi => Array.ofDim[ReversibleInt](nLowerInter(vi)))
-    lowerRightLimitRev = Array.tabulate(nValues)(vi => Array.ofDim[ReversibleInt](nLowerInter(vi)))
+    parentRev = Array.ofDim[ReversibleInt](nIntervals)
+    untilCriticalRev = Array.ofDim[ReversibleInt](nIntervals)
+    prevRev = Array.ofDim[ReversibleInt](nIntervals)
+    rightLimitRev = Array.ofDim[ReversibleInt](nIntervals)
 
-    upperParentRev = Array.tabulate(nValues)(vi => Array.ofDim[ReversibleInt](nUpperInter(vi)))
-    upperUntilCriticalRev = Array.tabulate(nValues)(vi => Array.ofDim[ReversibleInt](nUpperInter(vi)))
-    upperPrevRev = Array.tabulate(nValues)(vi => Array.ofDim[ReversibleInt](nUpperInter(vi)))
-    upperRightLimitRev = Array.tabulate(nValues)(vi => Array.ofDim[ReversibleInt](nUpperInter(vi)))
-    
-    // Copy the temporary values into the reversible arrays
-    vi = nValues
-    while (vi > 0) {
-      vi -= 1
-
-      var lowerI = 0
-      var lowerPrev = -1
-      while (lowerI < nLowerInter(vi)) {
-        lowerParentRev(vi)(lowerI) = new ReversibleInt(s, lowerParent(vi)(lowerI))
-        if (lowerParent(vi)(lowerI) == lowerI) {
-          lowerUntilCriticalRev(vi)(lowerI) = new ReversibleInt(s, lowerUntilCritical(vi)(lowerI))
-          lowerPrevRev(vi)(lowerI) = new ReversibleInt(s, lowerPrev)
-          lowerRightLimitRev(vi)(lowerI) = new ReversibleInt(s, lowerRightLimit(vi)(lowerI))
-          lowerPrev = lowerI
-        }
-        lowerI += 1
+    var inter = 0
+    var prevInter = -1
+    while (inter < nIntervals) {
+      if (tmp.parent(inter) == inter) {
+        parentRev(inter) = new ReversibleInt(s, tmp.parent(inter))
+        untilCriticalRev(inter) = new ReversibleInt(s, tmp.untilCritical(inter))
+        prevRev(inter) = new ReversibleInt(s, prevInter)
+        rightLimitRev(inter) = new ReversibleInt(s, tmp.rightLimit(inter))
+        prevInter = inter
       }
-
-      var upperI = 0
-      var upperPrev = -1
-      while (upperI < nUpperInter(vi)) {
-        upperParentRev(vi)(upperI) = new ReversibleInt(s, upperParent(vi)(upperI))
-        if (upperParent(vi)(upperI) == upperI) {
-          upperUntilCriticalRev(vi)(upperI) = new ReversibleInt(s, upperUntilCritical(vi)(upperI))
-          upperPrevRev(vi)(upperI) = new ReversibleInt(s, upperPrev)
-          upperRightLimitRev(vi)(upperI) = new ReversibleInt(s, upperRightLimit(vi)(upperI))
-          upperPrev = upperI
-        }
-        upperI += 1
-      }
-
-      firstUnboundRev = Array.tabulate(nValues)(vi => new ReversibleInt(s, firstUnbound(vi)))
-      prevUnboundRev = Array.tabulate(nValues, nRelevantVariables)((vi, i) =>
-        if (isUnbound(vi)(i)) new ReversibleInt(s, prevUnbound(vi)(i))
-        else null
-      )
-      nextUnboundRev = Array.tabulate(nValues, nRelevantVariables)((vi, i) =>
-        if (isUnbound(vi)(i)) new ReversibleInt(s, nextUnbound(vi)(i))
-        else null
-      )
+      inter += 1
     }
-
-    //println("passed the first checks")
-
-    Success
   }
 
-  override def setup(l: CPPropagStrength): CPOutcome = {
-
-    allLower = Array.fill(nValues, nVariables + 1)(0)
-    allUpper = Array.fill(nValues, nVariables + 1)(nVariables)
-
-    var vi = nValues
-    while (vi > 0) {
-      vi -= 1
-
-      var lowerI = lowerLists(vi).length
-      while (lowerI > 0) {
-        lowerI -= 1
-        val (index, value) = lowerLists(vi)(lowerI)
-        if (index < 0 || index > nVariables) {
-          throw new IllegalArgumentException("Lower bound cutoff out of range: " + index)
-        } else if (value > index) {
-          return Failure
-        }
-        allLower(vi)(index) = value
-      }
-      var upperI = upperLists(vi).length
-      while (upperI > 0) {
-        upperI -= 1
-        val (index, value) = upperLists(vi)(upperI)
-        if (index < 0 || index > nVariables) {
-          throw new IllegalArgumentException("Upper bound cutoff out of range: " + index)
-        } else if (value < 0) {
-          return Failure
-        }
-        allUpper(vi)(index) = value
-      }
-    }
-
-    lowerIdx = Array.ofDim[Int](nValues, nVariables + 1)
-    lowerVal = Array.ofDim[Int](nValues, nVariables + 1)
-    nLower = Array.ofDim[Int](nValues)
-    nLowerInter = Array.ofDim[Int](nValues)
-    lowerLast = Array.ofDim[Int](nValues)
-    
-    upperIdx = Array.ofDim[Int](nValues, nVariables + 1)
-    upperVal = Array.ofDim[Int](nValues, nVariables + 1)
-    nUpper = Array.ofDim[Int](nValues)
-    nUpperInter = Array.ofDim[Int](nValues)
-    upperLast = Array.ofDim[Int](nValues)
-
-    /*println("lowerLists:")
-    for (vi <- 0 until nValues) {
-      println(s"$vi: ${lowerLists(vi) mkString " "}")
-    }
-    println("upperLists:")
-    for (vi <- 0 until nValues) {
-      println(s"$vi: ${upperLists(vi) mkString " "}")
-    }*/
-
-    filterBounds()
-    /*println("filtered")
-    for (vi <- 0 until nValues) {
-      println(s"lower $vi: ${(lowerIdx(vi) zip lowerVal(vi)).splitAt(nLower(vi))._1 mkString " "}")
-      println(s"upper $vi: ${(upperIdx(vi) zip upperVal(vi)).splitAt(nUpper(vi))._1 mkString " "}")
-    }*/
-    fillBounds()
-    /*println("filled")
-    for (vi <- 0 until nValues) {
-      println(s"lower $vi: ${allLower(vi) mkString " "}")
-      println(s"upper $vi: ${allUpper(vi) mkString " "}")
-    }*/
-    if (testAndDeduceBounds() == Failure) return Failure
-    /*println("deduced")
-    for (vi <- 0 until nValues) {
-      println(s"lower $vi: ${allLower(vi) mkString " "}")
-      println(s"upper $vi: ${allUpper(vi) mkString " "}")
-    }*/
-    filterBounds()
-    /*println("filtered")
-    for (vi <- 0 until nValues) {
-      println(s"lower $vi: ${(lowerIdx(vi) zip lowerVal(vi)).splitAt(nLower(vi))._1 mkString " "}")
-      println(s"upper $vi: ${(upperIdx(vi) zip upperVal(vi)).splitAt(nUpper(vi))._1 mkString " "}")
-    }*/
-
-    initAndCheck()
+  private def copyListToRev(list: UnboundList, tmpList: TempList) {
+    list.firstRev = new ReversibleInt(s, tmpList.first)
+    list.prevRev = Array.tabulate(nRelevantVariables)(i =>
+      if (tmpList.contains(i)) new ReversibleInt(s, tmpList.prev(i))
+      else null
+    )
+    list.nextRev = Array.tabulate(nRelevantVariables)(i =>
+      if (tmpList.contains(i)) new ReversibleInt(s, tmpList.next(i))
+      else null
+    )
   }
+
+
+  // ==============
+  // UPDATE METHODS
+  // ==============
 
   @inline private def whenDomainChanges(delta: DeltaIntVar, x: CPIntVar): CPOutcome = {
     val i = delta.id
@@ -559,73 +484,8 @@ class PrefixCCFWC(X: Array[CPIntVar], minVal: Int, lowerLists: Array[Array[(Int,
       // If the value removed is one we track
       if (minVal <= v && v <= maxVal) {
         val vi = v - minVal
-        
-        if (i < lowerLast(vi)) {
-          removeUnbound(vi, i)
-          //println("remove " + (vi, i))
 
-          //println("P1")
-          val lowerI = findParent(lowerParentRev(vi), lowerInterval(vi)(i))
-          if (lowerI != -1) {
-            val untilCritical = lowerUntilCriticalRev(vi)(lowerI).decr()
-
-            if (untilCritical == 0) {
-              //println("critical lower " + (vi, lowerIdx(vi)(lowerI)))
-              val directPrev = lowerPrevRev(vi)(lowerI).value
-              // If we are at zero
-              if (directPrev == -1) {
-                // Assign everything in the interval
-                if (assignUntil(vi, v, lowerRightLimitRev(vi)(lowerI).value) == Failure) {
-                  return Failure
-                }
-                // Merge with next if possible
-                val middleLimit = lowerRightLimitRev(vi)(lowerI).value
-                if (middleLimit != lowerLast(vi)) {
-                  //println("P2")
-                  val next = findParent(lowerParentRev(vi), lowerInterval(vi)(middleLimit))
-
-                  // Compute limits to guess the preferable merge side
-                  val rightLimit = lowerRightLimitRev(vi)(next).value
-
-                  // Left merge
-                  if (2 * middleLimit > rightLimit) {
-                    lowerParentRev(vi)(next).setValue(lowerI)
-                    lowerUntilCriticalRev(vi)(lowerI).setValue(lowerUntilCriticalRev(vi)(next).value)
-                    lowerRightLimitRev(vi)(lowerI).setValue(rightLimit)
-                  }
-                  // Right merge
-                  else {
-                    lowerParentRev(vi)(lowerI).setValue(next)
-                    lowerPrevRev(vi)(next).setValue(-1)
-                  }
-                }
-              }
-              // Otherwise, we merge with the left interval
-              else {
-                //println("P3")
-                val prev = findParent(lowerParentRev(vi), directPrev)
-
-                // Compute limits to guess the preferable merge side
-                val prevPrev = lowerPrevRev(vi)(prev).value
-                val leftLimit = lowerIdx(vi)(prevPrev + 1)
-                val middleLimit = lowerIdx(vi)(directPrev + 1)
-                val rightLimit = lowerRightLimitRev(vi)(lowerI).value
-
-                // Left merge
-                if (2 * middleLimit >= leftLimit + rightLimit) {
-                  lowerParentRev(vi)(lowerI).setValue(prev)
-                  lowerRightLimitRev(vi)(prev).setValue(rightLimit)
-                }
-                // Right merge
-                else {
-                  lowerParentRev(vi)(prev).setValue(lowerI)
-                  lowerUntilCriticalRev(vi)(lowerI).setValue(lowerUntilCriticalRev(vi)(prev).value)
-                  lowerPrevRev(vi)(lowerI).setValue(prevPrev)
-                }
-              }
-            }
-          }
-        }
+        if (onUpdate(i, lower(vi), unbound(vi), otherVar => otherVar.assign(v)) == Failure) return Failure
       }
     }
 
@@ -635,67 +495,79 @@ class PrefixCCFWC(X: Array[CPIntVar], minVal: Int, lowerLists: Array[Array[(Int,
       if (minVal <= v && v <= maxVal) {
         val vi = v - minVal
 
-        if (i < upperLast(vi)) {
-          removeUnbound(vi, i)
+        if (onUpdate(i, upper(vi), unbound(vi), otherVar => otherVar.removeValue(v)) == Failure) return Failure
+      }
+    }
 
-          //println(s"P4 $vi, $i, interval ${upperInterval(vi)(i)}")
-          val upperI = findParent(upperParentRev(vi), upperInterval(vi)(i))
-          if (upperI != -1) {
-            val untilCritical = upperUntilCriticalRev(vi)(upperI).decr()
+    Suspend
+  }
 
-            if (untilCritical == 0) {
-              val directPrev = upperPrevRev(vi)(upperI).value
-              // If we are at zero
-              if (directPrev == -1) {
-                // Assign everything in the interval
-                if (removeUntil(vi, v, upperRightLimitRev(vi)(upperI).value) == Failure) {
-                  return Failure
-                }
-                // Merge with next if possible
-                val middleLimit = upperRightLimitRev(vi)(upperI).value
-                if (middleLimit != upperLast(vi)) {
-                  //println("P5")
-                  val next = findParent(upperParentRev(vi), upperInterval(vi)(middleLimit))
+  @inline private def onUpdate(i: Int, st: SegmentStructure, list: UnboundList,
+                               action: CPIntVar => CPOutcome): CPOutcome = {
+    import st._
 
-                  // Compute limits to guess the preferable merge side
-                  val rightLimit = upperRightLimitRev(vi)(next).value
+    if (i < lastIdx) {
+      removeUnbound(list, i)
 
-                  // Left merge
-                  if (2 * middleLimit > rightLimit) {
-                    upperParentRev(vi)(next).setValue(upperI)
-                    upperUntilCriticalRev(vi)(upperI).setValue(upperUntilCriticalRev(vi)(next).value)
-                    upperRightLimitRev(vi)(upperI).setValue(rightLimit)
-                  }
-                  // Right merge
-                  else {
-                    upperParentRev(vi)(upperI).setValue(next)
-                    upperPrevRev(vi)(next).setValue(-1)
-                  }
-                }
+      val inter = findParent(parentRev, intervalOf(i))
+      if (inter != -1) {
+        val untilCritical = untilCriticalRev(inter).decr()
+
+        if (untilCritical == 0) {
+          val directPrev = prevRev(inter).value
+
+          // If we are at zero, we eliminate unbound and merge with the next interval
+          if (directPrev == -1) {
+
+            // Assign or remove every unbound
+            val middleLimit = rightLimitRev(inter).value
+            var unboundI = list.firstRev.value
+            while (unboundI < middleLimit) {
+              if (action(X(unboundI)) == Failure) return Failure
+              unboundI = list.nextRev(unboundI).value
+            }
+
+            // Merge with next if possible
+            if (middleLimit != lastIdx) {
+              val next = findParent(parentRev, intervalOf(middleLimit))
+
+              // Compute limits to guess the preferable merge side
+              val rightLimit = rightLimitRev(next).value
+
+              // Left merge
+              if (2 * middleLimit > rightLimit) {
+                parentRev(next).setValue(inter)
+                untilCriticalRev(inter).setValue(untilCriticalRev(next).value)
+                rightLimitRev(inter).setValue(rightLimit)
               }
-              // Otherwise, we merge with the left interval
+              // Right merge
               else {
-                //println("P6")
-                val prev = findParent(upperParentRev(vi), directPrev)
-
-                // Compute limits to guess the preferable merge side
-                val prevPrev = upperPrevRev(vi)(prev).value
-                val leftLimit = upperIdx(vi)(prevPrev + 1)
-                val middleLimit = upperIdx(vi)(directPrev + 1)
-                val rightLimit = upperRightLimitRev(vi)(upperI).value
-
-                // Left merge
-                if (2 * middleLimit >= leftLimit + rightLimit) {
-                  upperParentRev(vi)(upperI).setValue(prev)
-                  upperRightLimitRev(vi)(prev).setValue(rightLimit)
-                }
-                // Right merge
-                else {
-                  upperParentRev(vi)(prev).setValue(upperI)
-                  upperUntilCriticalRev(vi)(upperI).setValue(upperUntilCriticalRev(vi)(prev).value)
-                  upperPrevRev(vi)(upperI).setValue(prevPrev)
-                }
+                parentRev(inter).setValue(next)
+                prevRev(next).setValue(-1)
               }
+            }
+          }
+
+          // Otherwise, we merge with the previous interval
+          else {
+            val prev = findParent(parentRev, directPrev)
+
+            // Compute limits to guess the preferable merge side
+            val prevPrev = prevRev(prev).value
+            val leftLimit = boundIdx(prevPrev + 1)
+            val middleLimit = boundIdx(directPrev + 1)
+            val rightLimit = rightLimitRev(inter).value
+
+            // Left merge
+            if (2 * middleLimit >= leftLimit + rightLimit) {
+              parentRev(inter).setValue(prev)
+              rightLimitRev(prev).setValue(rightLimit)
+            }
+            // Right merge
+            else {
+              parentRev(prev).setValue(inter)
+              untilCriticalRev(inter).setValue(untilCriticalRev(prev).value)
+              prevRev(inter).setValue(prevPrev)
             }
           }
         }
@@ -703,6 +575,21 @@ class PrefixCCFWC(X: Array[CPIntVar], minVal: Int, lowerLists: Array[Array[(Int,
     }
 
     Suspend
+  }
+
+  @inline private def removeUnbound(list: UnboundList, i: Int) {
+    import list._
+    val prev = prevRev(i).value
+    val next = nextRev(i).value
+
+    if (prev == -1) {
+      firstRev.setValue(next)
+    } else {
+      nextRev(prev).setValue(next)
+    }
+    if (next != nRelevantVariables) {
+      prevRev(next).setValue(prev)
+    }
   }
   
   @inline private def findParent(parentTable: Array[ReversibleInt], child: Int): Int = {
@@ -719,46 +606,5 @@ class PrefixCCFWC(X: Array[CPIntVar], minVal: Int, lowerLists: Array[Array[(Int,
     }
     parentTable(child).setValue(parent)
     parent
-  }
-
-  @inline private def removeUnbound(vi: Int, i: Int) {
-    val prev = prevUnboundRev(vi)(i).value
-    val next = nextUnboundRev(vi)(i).value
-    
-    if (prev == -1) {
-      firstUnboundRev(vi).setValue(next)
-    } else {
-      nextUnboundRev(vi)(prev).setValue(next)
-    }
-    if (next != nRelevantVariables) {
-      prevUnboundRev(vi)(next).setValue(prev)
-    }
-  }
-
-  @inline private def assignUntil(vi: Int, v: Int, limit: Int): CPOutcome = {
-    //println("assign " + vi + " till " + limit)
-    var i = firstUnboundRev(vi).value
-
-    // Bind all the unbound variables that have this value
-    while (i < limit) {
-      if (X(i).assign(v) == Failure) return Failure
-      //println("bound " + i)
-      i = nextUnboundRev(vi)(i).value
-    }
-
-    Suspend
-  }
-
-  @inline private def removeUntil(vi: Int, v: Int, limit: Int): CPOutcome = {
-    //println("remove " + vi + " till " + limit)
-    var i = firstUnboundRev(vi).value
-
-    // Bind all the unbound variables that have this value
-    while (i < limit) {
-      if (X(i).removeValue(v) == Failure) return Failure
-      i = nextUnboundRev(vi)(i).value
-    }
-
-    Suspend
   }
 }
