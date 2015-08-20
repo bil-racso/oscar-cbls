@@ -16,6 +16,7 @@ class PartSupplier(m:Model,
                    supplierDelay:()=>Int,
                    deliveredPercentage:() => Int,
                    val name:String,
+                   deliveredItemClass:ItemClass,
                    verbose:Boolean = true) {
   private var placedOrders = 0
   private var totalOrderedParts = 0
@@ -29,7 +30,7 @@ class PartSupplier(m:Model,
     m.wait(supplierDelay()){
       if (verbose) println(name + ": delivered " + willBeDelivered + " parts to stock " + to.name +
         (if (willBeDelivered != orderQuantity) " (ordered: " + orderQuantity + ")" else ""))
-      to.put(willBeDelivered)(() => {totalDeliveredParts += willBeDelivered; deliveredOrders +=1})
+      to.put(willBeDelivered,deliveredItemClass)(() => {totalDeliveredParts += willBeDelivered; deliveredOrders +=1})
     }
   }
 
@@ -39,3 +40,4 @@ class PartSupplier(m:Model,
     " deliveredOrders:" + deliveredOrders +
     " totalDeliveredParts:" + totalDeliveredParts
 }
+

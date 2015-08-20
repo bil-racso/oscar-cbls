@@ -23,6 +23,8 @@ abstract class Storage[Content<:StockContentType](val maxSize: Int,
                                                   overflowOnInput:Boolean)
   extends RichPutable with RichFetchable {
 
+  override def totalPut:Int = super.totalPut
+  override def totalFetch:Int = super.totalFetch
   var totalLosByOverflow = 0
 
   def contentSize:Int

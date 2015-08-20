@@ -10,6 +10,9 @@ abstract class Activable{
 
 abstract class ActivableProcess(name:String, verbose:Boolean) extends Activable{
   def isRunning:Boolean
+  def batchCount:Int
+  def totalWaitDuration():Double
+
   var productionBatch:LIFOStorage[Items] = null;
 
   override def setUnderControl(){
@@ -39,5 +42,12 @@ abstract class ActivableMultipleProcess(name:String, verbose:Boolean) extends Ac
   override def addPreliminaryInput(preliminary: Storage[Items]) {
     for(s <- childProcesses) s.myInput.addPreliminaryInput(preliminary)
   }
+
+  override def isRunning: Boolean = childProcesses.exists(_.isRunning)
+  override def batchCount: Int = sumIntOnChildren(_.batchCount)
+  override def totalWaitDuration():Double = sumDoubleOnChildren(_.totalWaitDuration)
+
+  private def sumIntOnChildren(f:(ActivableAtomicProcess => Int)) = childProcesses.foldLeft(0)({case (i:Int,a:ActivableAtomicProcess) => i+f(a)})
+  private def sumDoubleOnChildren(f:(ActivableAtomicProcess => Double)) = childProcesses.foldLeft(0.0)({case (i:Double,a:ActivableAtomicProcess) => i+f(a)})
 }
 

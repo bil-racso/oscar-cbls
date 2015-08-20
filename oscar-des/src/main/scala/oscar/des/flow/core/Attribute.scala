@@ -8,7 +8,9 @@ class AttributeDefinitions(l:List[String]){
 
 class Attribute(val id:Int,val convention:AttributeDefinitions)
 
-case class AttributeSet(val attributes:BitSet, val convention:AttributeDefinitions)
+case class AttributeSet(val attributes:BitSet, val convention:AttributeDefinitions){
+  def quickMask:Int =
+}
 
 object AttributeHelper{
   def unionAll(l:List[AttributeSet]):AttributeSet = AttributeSet(l.foldLeft(BitSet.empty)((acc,l) => acc union l.attributes), l.head.convention)
@@ -39,7 +41,7 @@ class AddAttribute(a:Attribute) extends A2ATransformFunction{
   def quickApply(i:Int):Int = i | conjunctionMask
 }
 
-class ConstantAttributes(l:AttributeSet) extends A2ATransformFunction{
+class ConstantAttributes(a:Attribute) extends A2ATransformFunction{
   override def apply(l:AttributeSet):AttributeSet = l
 
   val conjunctionMask:Int = (1 << a.id)

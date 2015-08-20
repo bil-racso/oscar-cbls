@@ -65,7 +65,9 @@ case class SingleBatchProcess(m:Model,
 
   def isWaiting = waiting
 
-  def totalWaitDuration = if (waiting) mTotalWaitDuration + m.clock() - startWaitTime else mTotalWaitDuration
+  override def isRunning: Boolean = !waiting
+  override def batchCount: Int = performedBatches
+  override def totalWaitDuration():Double = if (waiting) mTotalWaitDuration + m.clock() - startWaitTime else mTotalWaitDuration
 
   startBatches()
 
@@ -167,7 +169,7 @@ case class SplittingSingleBatchProcess(m:Model,
 
   def isWaiting = waiting
 
-  def totalWaitDuration = if (waiting) mTotalWaitDuration + m.clock() - startWaitTime else mTotalWaitDuration
+  override def totalWaitDuration():Double = if (waiting) mTotalWaitDuration + m.clock() - startWaitTime else mTotalWaitDuration
 
   startBatches()
 
@@ -272,6 +274,10 @@ class ConveyorBeltProcess(m:Model,
   //the belt contains the delay for the output since the previous element that was input. delay since input if the belt was empty
   private val belt: ListBuffer[(Double,ItemClass)] = ListBuffer.empty
 
+
+  override def isRunning: Boolean = !blocked
+  override def batchCount: Int = totalOutputBatches
+
   private var timeOfLastInput:Double = 0
 
   private var blocked:Boolean = false
@@ -286,10 +292,10 @@ class ConveyorBeltProcess(m:Model,
   private var mTotalBlockedTime:Double = 0.0
   restartInputtingIfNeeded()
 
-  def totalBlockedTime = if (blocked) mTotalBlockedTime + m.clock() - startBlockingTime else mTotalBlockedTime
+  override def totalWaitDuration():Double = if (blocked) mTotalBlockedTime + m.clock() - startBlockingTime else mTotalBlockedTime
 
   override def toString: String = {
-    name + " " + this.getClass.getSimpleName + ":: content:" + belt.size + " totalInputBatches:" + totalInputBatches + " totalOutputBatches:" + totalOutputBatches + " totalBlockedTime:" + totalBlockedTime + (if (blocked) " blocked" else " running")
+    name + " " + this.getClass.getSimpleName + ":: content:" + belt.size + " totalInputBatches:" + totalInputBatches + " totalOutputBatches:" + totalOutputBatches + " totalBlockedTime:" + totalWaitDuration + (if (blocked) " blocked" else " running")
   }
 
   private def restartInputtingIfNeeded(): Unit ={
