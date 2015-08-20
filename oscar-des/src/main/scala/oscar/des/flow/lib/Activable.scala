@@ -40,3 +40,4 @@ abstract class ActivableMultipleProcess(name:String, verbose:Boolean) extends Ac
     for(s <- childProcesses) s.myInput.addPreliminaryInput(preliminary)
   }
 }
+
