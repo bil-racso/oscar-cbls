@@ -17,7 +17,7 @@ package oscar.des.flow.core
 
 import scala.collection.mutable.ListBuffer
 
-
+import ItemClassHelper._
 
 /** represents a process fragment where one can put a part
   * @author renaud.delandtsheer@cetic.be
@@ -138,7 +138,7 @@ trait RichPutable extends Putable {
         val (toPut, block) = waitingPuts.remove(0)
         val (remainingToPut,put) = internalPut(toPut)
         mTotalPut += put
-        if (remainingToPut == 0) {
+        if (remainingToPut.isEmpty) {
           block()
           finished = false
           somethingDone = true
@@ -178,13 +178,10 @@ trait RichPutable extends Putable {
  * @param waitedNotification the number of waited notifications
  * @param gate the method to call once the method notifyOne has been called waitedNotification times
  */
-case class CounterGate(waitedNotification:Int, gate: ItemClass => Unit, var itemClass:ItemClass = null) {
+case class CounterGate(waitedNotification:Int, gate: ItemClass => Unit, var itemClass:ItemClass = zeroItemClass) {
   private var remaining = waitedNotification
-  def notifyOne(mItemClass:ItemClass = null): Unit = {
-    if(mItemClass != null){
-      if (itemClass == null) itemClass = mItemClass
-      else itemClass = itemClass union mItemClass
-    }
+  def notifyOne(mItemClass:ItemClass = zeroItemClass): Unit = {
+    itemClass = union(itemClass,mItemClass)
     remaining -=1
     if(remaining == 0) gate(itemClass)
   }

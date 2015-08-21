@@ -5,6 +5,7 @@ import oscar.des.engine.Model
 import oscar.des.flow.lib._
 import oscar.des.montecarlo.{DoubleRandomVar, IntRandomVar}
 
+/*
 object TestBeltRV extends App with HelperForProcess{
 
   val m = new Model
@@ -162,3 +163,4 @@ object SimpleFactoryRV extends App with HelperForProcess{
   println(attaching)
   println(delivering)
 }
+*/

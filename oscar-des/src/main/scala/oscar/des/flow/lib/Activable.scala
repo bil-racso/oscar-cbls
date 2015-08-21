@@ -1,6 +1,7 @@
 package oscar.des.flow.lib
 
 import oscar.des.flow.core.Inputter
+import oscar.des.flow.core.ItemClassHelper._
 
 abstract class Activable{
   def setUnderControl()
@@ -20,7 +21,7 @@ abstract class ActivableProcess(name:String, verbose:Boolean) extends Activable{
   }
 
   override def activate(intensity: Int): Unit ={
-    productionBatch.put(intensity,null)({()=>})
+    productionBatch.put(intensity,zeroItemClass)({()=>})
   }
 
   def addPreliminaryInput(preliminary:Storage[Items])

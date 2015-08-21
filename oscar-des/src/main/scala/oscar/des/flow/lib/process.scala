@@ -20,6 +20,7 @@ import oscar.des.flow.core._
 
 import scala.collection.mutable.ListBuffer
 import scala.language.implicitConversions
+import oscar.des.flow.core.ItemClassHelper._
 
 /** since many of the classes proposed by this lib support random variables, represented using functions to Floats or Ints,
   * and ou might not need this dimension in your model,
@@ -32,6 +33,7 @@ trait HelperForProcess{
   implicit def intToConstantIntFunction(f: Int): (() => Int) = () => f
   implicit def constantFetchableToFunctionFetchable(l: List[(Int,Fetchable)]): List[(()=>Int,Fetchable)] = l.map(v => (()=>v._1,v._2))
   implicit def constantPutableToFunctionPutable(l: List[(Int,Putable)]): List[(()=>Int,Putable)] = l.map(v => (()=>v._1,v._2))
+
 }
 
 /**

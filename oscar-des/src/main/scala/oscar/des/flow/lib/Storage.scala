@@ -1,5 +1,6 @@
 package oscar.des.flow.lib
 
+import oscar.des.flow.core.ItemClassHelper._
 import oscar.des.flow.core._
 
 import scala.collection.mutable.ListBuffer
@@ -77,7 +78,8 @@ abstract class Storage[Content<:StockContentType](val maxSize: Int,
   def put(amount: Int, i:ItemClass)(block: () => Unit): Unit = {
     appendPut(List.fill(amount)(i))(block)
     flow()
-    if (isThereAnyWaitingPut && verbose) println("Full storage on " + name)
+    if (isThereAnyWaitingPut && verbose)
+      println("Full storage on " + name)
   }
 }
 
@@ -87,7 +89,7 @@ class FIFOStorage[Content<:StockContentType](maxSize:Int,
                                              verbose:Boolean,
                                              overflowOnInput:Boolean) extends Storage[Content](maxSize,name,verbose,overflowOnInput){
 
-  val content:ListBuffer[ItemClass] = ListBuffer.empty
+  val content:ListBuffer[ItemClass] = ListBuffer.empty ++ initialContent
 
   override def contentSize: Int = content.size
 

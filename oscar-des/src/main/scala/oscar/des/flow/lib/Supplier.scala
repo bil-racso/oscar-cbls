@@ -1,8 +1,8 @@
 package oscar.des.flow.lib
 
 import oscar.des.engine.Model
-import oscar.des.flow.core.{Inputter, ItemClass, StockNotificationTarget}
-
+import oscar.des.flow.core.{Inputter, StockNotificationTarget}
+import oscar.des.flow.core.ItemClassHelper._
 /**
  * represents a supplier. the main operation is order
  * @param m the model of the simulation

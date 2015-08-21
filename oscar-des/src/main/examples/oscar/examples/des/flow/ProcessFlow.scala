@@ -3,6 +3,7 @@ package oscar.des.flow
 import oscar.des.engine.Model
 import oscar.des.flow.lib._
 
+/*
 object TestBelt extends App with HelperForProcess{
 
   val m = new Model
@@ -131,3 +132,4 @@ object SimpleFactory extends App with HelperForProcess{
   println(attaching)
   println(delivering)
 }
+*/

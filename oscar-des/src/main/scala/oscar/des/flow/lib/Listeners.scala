@@ -1,13 +1,21 @@
 package oscar.des.flow.lib
 
+import oscar.des.engine.Model
+
 abstract class Time{
   def time():Double
 }
+
+case class ModelTime(m:Model) extends Time{
+  override def time(): Double = m.clock()
+}
+
 //This file is about thing we want to measure on the factory process
 
 abstract class Expression(val accumulating:Boolean, val children:Expression*){
   def update()
   var id:Int = -1
+  def valueString:String
 }
 
 //Variables have values at all time.
@@ -15,14 +23,17 @@ abstract class BoolExpr(accumulating:Boolean, children:Expression*) extends Expr
   override def update(){value = updatedValue}
   def updatedValue:Boolean
   var value:Boolean = updatedValue
+
+  override def valueString: String = "" + value
 }
 abstract class DoubleExpr(accumulating:Boolean, children:Expression*) extends Expression(accumulating,children:_*){
   override def update(){value = updatedValue}
   def updatedValue():Double
   var value:Double = updatedValue
+  override def valueString: String = "" + value
 }
 
-class MetricsStore{
+class MetricsStore(verbose:Boolean){
   var expressions:List[Expression] = List.empty
   var accumulatingExpressions:List[Expression] = List.empty
   var nonAccumulatingExpressions:List[Expression] = List.empty
@@ -31,9 +42,7 @@ class MetricsStore{
   var rootExpressions:List[(Expression,String)] = List.empty
 
   override def toString: String = {
-    "MetricsStore{\n" +
-      "   rootExpressions:" + rootExpressions.mkString(",") + "\n" +
-      "   expressions:" + expressions.mkString(",") + "\n}\n"
+    "MetricsStore{\n\t" + rootExpressions.map(es => es._2 + ":" + es._1.valueString).mkString("\n\t") + "\n}\n"
   }
 
   def addMetric(e:Expression)(s:String = e.toString): Unit ={
@@ -66,6 +75,7 @@ class MetricsStore{
 
   //to be called at each step
   def updateMetricsIfNeeded(){
+    if(verbose) println("updating metrics")
     accumulatingExpressions.foreach(_.update())
   }
 
@@ -199,7 +209,7 @@ class Changes(p:BoolExpr) extends BoolExpr(true,p){
 }
 
 //variables always have a value.
-class CumulatedDuration(b:BoolExpr, t:Time) extends DoubleExpr(true,b){
+case class CumulatedDuration(b:BoolExpr, t:Time) extends DoubleExpr(true,b){
   var acc:Double = 0
   var wasTrue = b.value
   var previousTime = t.time
@@ -229,34 +239,34 @@ class CurrentTime(t:Time) extends DoubleExpr(false){
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 //arithmetic operators
-class Mult(a:DoubleExpr,b:DoubleExpr) extends DoubleExpr(false,a,b){
+case class Mult(a:DoubleExpr,b:DoubleExpr) extends DoubleExpr(false,a,b){
   override def updatedValue(): Double = a.value * b.value
 }
-class Plus(a:DoubleExpr,b:DoubleExpr) extends DoubleExpr(false,a,b){
+case class Plus(a:DoubleExpr,b:DoubleExpr) extends DoubleExpr(false,a,b){
   override def updatedValue(): Double = a.value + b.value
 }
 
 //relational operators to get back to Propositions
-class G(a:DoubleExpr,b:DoubleExpr) extends BoolExpr(false,a,b) {
+case class G(a:DoubleExpr,b:DoubleExpr) extends BoolExpr(false,a,b) {
   override def updatedValue: Boolean = a.value > b.value
 }
-class GE(a:DoubleExpr,b:DoubleExpr) extends BoolExpr(false,a,b){
+case class GE(a:DoubleExpr,b:DoubleExpr) extends BoolExpr(false,a,b){
   override def updatedValue: Boolean = a.value >= b.value
 }
-class LE(a:DoubleExpr,b:DoubleExpr) extends BoolExpr(false,a,b){
+case class LE(a:DoubleExpr,b:DoubleExpr) extends BoolExpr(false,a,b){
   override def updatedValue: Boolean = a.value <= b.value
 }
-class EQ(a:DoubleExpr,b:DoubleExpr) extends BoolExpr(false,a,b){
+case class EQ(a:DoubleExpr,b:DoubleExpr) extends BoolExpr(false,a,b){
   override def updatedValue: Boolean = a.value == b.value
 }
-class NEQ(a:DoubleExpr,b:DoubleExpr) extends BoolExpr(false,a,b){
+case class NEQ(a:DoubleExpr,b:DoubleExpr) extends BoolExpr(false,a,b){
   override def updatedValue: Boolean = a.value != b.value
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 //temporal on integers
 //triangles
-class PonderateWithDuration(s:DoubleExpr,t:Time) extends DoubleExpr(true,s){
+case class PonderateWithDuration(s:DoubleExpr,t:Time) extends DoubleExpr(true,s){
   var acc:Double = 0
   var prevTime = t.time
   var prevValue = s.value
@@ -270,7 +280,7 @@ class PonderateWithDuration(s:DoubleExpr,t:Time) extends DoubleExpr(true,s){
   }
 }
 
-class MaxOnHistory(s:DoubleExpr) extends DoubleExpr(true,s){
+case class MaxOnHistory(s:DoubleExpr) extends DoubleExpr(true,s){
   var maxOnHistory = s.value
 
   override def updatedValue(): Double = {
@@ -281,7 +291,7 @@ class MaxOnHistory(s:DoubleExpr) extends DoubleExpr(true,s){
   }
 }
 
-class MinOnHistory(s:DoubleExpr) extends DoubleExpr(true,s){
+case class MinOnHistory(s:DoubleExpr) extends DoubleExpr(true,s){
   var minOnHistory = s.value
 
   override def updatedValue(): Double = {
@@ -292,7 +302,7 @@ class MinOnHistory(s:DoubleExpr) extends DoubleExpr(true,s){
   }
 }
 
-class AvgOnHistory(s:DoubleExpr,t:Time) extends DoubleExpr(true,s){
+case class AvgOnHistory(s:DoubleExpr,t:Time) extends DoubleExpr(true,s){
   val p = new PonderateWithDuration(s,t)
 
   override def updatedValue(): Double = {

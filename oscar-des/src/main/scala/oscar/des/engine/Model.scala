@@ -31,13 +31,14 @@ class Model {
 
   private def addEvent(e:SimEvent) = eventQueue += e
 
-  def simulate(horizon:Float, verbose:Boolean = true) {
+  def simulate(horizon:Float, verbose:Boolean = true, callAfterEachStep:()=>Unit = null) {
     while (eventQueue.nonEmpty) {
       steps +=1
       val e = eventQueue.dequeue()
       require(e.time >= currentTime)
       if(e.time <= horizon){
         if(verbose && e.time != currentTime){
+          if(callAfterEachStep != null) callAfterEachStep()
           println("-----------> time: "+  e.time)
         }
         currentTime = e.time
@@ -46,6 +47,7 @@ class Model {
         // we are after the horizon, so event is pushed back into queue, and simulation stops
         eventQueue.enqueue(e)
         if(verbose && horizon != currentTime)
+          if(callAfterEachStep != null) callAfterEachStep()
           println("-----------> time: "+  horizon)
         currentTime = horizon
         return
