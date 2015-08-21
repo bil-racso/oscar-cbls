@@ -1,6 +1,7 @@
 package oscar.lcg.core
 
 import oscar.algo.reversible.ReversibleBoolean
+import oscar.lcg.support.Builder
 
 abstract class Constraint {
   
@@ -30,6 +31,8 @@ abstract class Constraint {
     _inPropagate = false
     out
   }
+  //TODO: Register the reason for failure
+  final def fail(b: Builder): Boolean = false
   
   override def toString: String = name
 }

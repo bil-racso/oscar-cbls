@@ -61,6 +61,16 @@ abstract class BooleanVar {
       assignTrue(b.array(),b.size());
     }else true
   }
+  final def assign(value : Int, b: Builder): Boolean = {
+    assert(value==0 || value ==1)
+    if (value == 1) assignTrue(b.array(),b.size())
+    else assignFalse(b.array(),b.size())
+  }
+  final def remove(value : Int, b: Builder): Boolean = {
+    assert(value==0 || value ==1)
+    if (value == 1) assignFalse(b.array(),b.size())
+    else assignTrue(b.array(),b.size())
+  }
   final def geqLit(i:Int): Literal = {
     if(i==1){
       eqLit
@@ -70,6 +80,10 @@ abstract class BooleanVar {
     if(i==0){
       diffLit
     }else LitTrue
+  }
+  final def getValue: Int = {
+    assert(isAssigned)
+    if(isTrue) 1 else 0
   }
   override def toString: String = {
     if (isAssigned) s"$name: {$isTrue}"

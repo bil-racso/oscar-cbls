@@ -39,6 +39,11 @@ final class IntVarImpl(override val store: LCGStore, initMin: Int, initMax: Int,
 
   override def isAssigned: Boolean = _max == _min
 
+  override def getValue: Int = {
+    assert(isAssigned)
+    _min
+  }
+  
   override def isAssignedTo(value: Int): Boolean = _min == value && _max == value
   
   override def updateMin(value: Int, explanation: Array[Literal], explanationSize: Int): Boolean = {
