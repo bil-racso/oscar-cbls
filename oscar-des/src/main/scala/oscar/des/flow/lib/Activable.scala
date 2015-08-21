@@ -2,7 +2,6 @@ package oscar.des.flow.lib
 
 import oscar.des.flow.core.Inputter
 
-
 abstract class Activable{
   def setUnderControl()
   def activate(intensity:Int)
