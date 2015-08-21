@@ -13,18 +13,33 @@
   * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
   ******************************************************************************/
 /**
- * @author Leonard Debroux
  * @author Jean-Noël Monette
  */
-package oscar.flatzinc.model
+package oscar.flatzinc.parser.intermediatemodel;
 
-class Annotation (
-    val name: String,
-    var args: List[Any]
-	){
-    def this(name: String) = this(name,List.empty[Any]);
-    def add(e: Any){
-      args = args ++ List(e);
-    }
-	override def toString() = name + " " + args
+import java.util.ArrayList;
+import java.util.List;
+import oscar.flatzinc.ParsingException;
+
+public class ArrayOfElement extends Element{
+
+	public List<Element> elements;
+	public ArrayOfElement(){
+		elements = new ArrayList<Element>();
+	}
+	@Override
+	public String toString() {
+		return "Array [elements=" + elements + ", name=" + name /*+ ", id=" + id*/
+				+ ", type=" + typ/* + ", annotations=" + annotations*/ + "]";
+	}
+	public void close() {
+	  if(elements.size()>0){
+	    int typ = elements.get(0).typ.typ;
+	    for(Element e: elements){
+	      if(typ != e.typ.typ) throw new ParsingException("Not all same type in array");
+	    }
+	    this.typ.typ = typ;
+	  }
+	}
+	
 }

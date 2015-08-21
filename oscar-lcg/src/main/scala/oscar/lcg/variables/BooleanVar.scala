@@ -3,6 +3,8 @@ package oscar.lcg.variables
 import oscar.lcg.core.LCGStore
 import oscar.lcg.core.Literal
 import oscar.lcg.core.Constraint
+import oscar.lcg.support.Builder
+import oscar.lcg.literals.LitTrue
 
 abstract class BooleanVar {
       
@@ -43,6 +45,32 @@ abstract class BooleanVar {
     assignFalse(explanation, explanation.length)
   }
   
+  //Basically the following methods make a Boolean act as an integer. 
+  final def awakeOnChanges(constraint: Constraint): Unit = awakeOnAssign(constraint)
+  
+  final def min(): Int = if(isAssigned && isTrue) 1 else 0
+  final def max(): Int = if(isAssigned && isFalse) 0 else 1
+  
+  final def updateub(i: Int, b: Builder): Boolean = {
+    if(i==0){
+      assignFalse(b.array(),b.size());
+    }else true
+  }
+  final def updatelb(i: Int, b: Builder): Boolean = {
+    if(i==1){
+      assignTrue(b.array(),b.size());
+    }else true
+  }
+  final def geqLit(i:Int): Literal = {
+    if(i==1){
+      eqLit
+    }else LitTrue
+  }
+  final def leqLit(i:Int): Literal = {
+    if(i==0){
+      diffLit
+    }else LitTrue
+  }
   override def toString: String = {
     if (isAssigned) s"$name: {$isTrue}"
     else s"$name: {true, false}"

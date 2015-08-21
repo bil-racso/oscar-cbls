@@ -21,14 +21,10 @@ import oscar.flatzinc.model.Domain;
 import oscar.flatzinc.model.DomainSet;
 import oscar.flatzinc.model.DomainRange;
 import oscar.flatzinc.ParsingException;
+
 import java.util.Set;
 import java.util.HashSet;
 
-
-import org.antlr.v4.runtime.Lexer;
-import org.antlr.v4.runtime.CharStream;
-import org.antlr.v4.runtime.Token;
-import org.antlr.v4.runtime.TokenStream;
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.atn.*;
 import org.antlr.v4.runtime.dfa.DFA;
