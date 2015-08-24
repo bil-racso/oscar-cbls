@@ -8,6 +8,7 @@ import oscar.cp.core.CPPropagStrength
 import oscar.cp.modeling._
 import java.lang.Math._
 import oscar.algo.SortUtils._
+import oscar.cp.core.Inconsistency
 
 /*
  * TTEF of Vilim 2011 as described in Schutt et al 2013 
@@ -120,8 +121,10 @@ extends CumulativeTemplate(starts, durations, ends, heights, resources, capacity
     count
   }
   
-  private[this] val smaxEF = Array.ofDim[Int](nTasks)
-  private[this] val eEF    = Array.ofDim[Long](nTasks)
+  private[this] val smaxF = Array.ofDim[Int](nTasks)
+  private[this] val eminF = Array.ofDim[Int](nTasks)
+  private[this] val dminF = Array.ofDim[Int](nTasks)
+  private[this] val eFree = Array.ofDim[Long](nTasks)
   
   //  TT structure, needed by ttEn primitive
   private[this] val ttBeforeSMin = Array.ofDim[Long](nTasks)
@@ -152,12 +155,12 @@ extends CumulativeTemplate(starts, durations, ends, heights, resources, capacity
     while (emaxp < nActive) {  // do all events until last one = last emax
       // find next date
       date = emax(activeByEMax(emaxp))
-      if (sminp < nActive)      date = min(date, smin(activeBySMin(sminp)))
+      if (sminp < nActive)    date = min(date, smin(activeBySMin(sminp)))
       if (smaxp < nMandatory) date = min(date, smax(mandatoryBySMax(smaxp)))
       if (eminp < nMandatory) date = min(date, emin(mandatoryByEMin(eminp)))
       
       // update energy
-      //e += minHeight * (date - prevDate)
+      // e += minHeight * (date - prevDate)
       e += (minHeight + max(0L, C - maxHeight)) * (date - prevDate)
       
       // process events 
@@ -187,6 +190,8 @@ extends CumulativeTemplate(starts, durations, ends, heights, resources, capacity
         eminp += 1
       }
       
+      if (minHeight > C) throw Inconsistency
+      
       prevDate = date
     }
     
@@ -196,13 +201,17 @@ extends CumulativeTemplate(starts, durations, ends, heights, resources, capacity
       i -= 1
       val a = activeBySMin(i)
       
-      if (smax(a) < emin(a)) {
-        smaxEF(a) = emin(a)
-        eEF(a) = hmin(a).toLong * (dmin(a) - (emin(a) - smax(a)))
+      if (smax(a) < emin(a) && required(a)) {
+        smaxF(a) = emin(a)
+        eminF(a) = smax(a)
+        dminF(a) = dmin(a) - (emin(a) - smax(a))
+        eFree(a) = hmin(a).toLong * dminF(a)
       }
       else {
-        smaxEF(a) = smax(a)
-        eEF(a) = hmin(a).toLong * dmin(a)
+        smaxF(a) = smax(a)
+        eminF(a) = emin(a)
+        dminF(a) = dmin(a)
+        eFree(a) = hmin(a).toLong * dmin(a)
       }
     }
 
@@ -215,7 +224,7 @@ extends CumulativeTemplate(starts, durations, ends, heights, resources, capacity
       
       end = emax(b) 
       var minBegin = Int.MaxValue ; var u = -1
-      var E, enReqU = 0L
+      var E, energyReqU = 0L
       
       while (oldMaxX >= 0 && smin(activeBySMin(oldMaxX)) >= end) oldMaxX -= 1
       
@@ -224,24 +233,45 @@ extends CumulativeTemplate(starts, durations, ends, heights, resources, capacity
         val a = activeBySMin(x)
         val begin = smin(a)
         
-        if (emax(a) <= end) E += eEF(a)  // the whole free task is in [ begin ; end [
-        else {
-          val enIn = hmin(a).toLong * max(0, end - smaxEF(a))   // minimal length, rightmost placement in [ begin ; end [
-          E += enIn
-          val enReqA = min(eEF(a), hmin(a).toLong * (end - smin(a))) - enIn  // additional if leftmost placement
-          if (enReqA > enReqU) {
+        if (required(a)) {
+          if (smax(a) + dmin(a) <= end) E += eFree(a)  // the whole free task is in [ begin ; end [
+          else {
+            val energyIn = hmin(a).toLong * max(0, end - smaxF(a))   // minimal length, rightmost placement in [ begin ; end [
+            E += energyIn
+            val energyReqA = min(eFree(a), hmin(a).toLong * (end - smin(a))) - energyIn  // additional if leftmost placement
+            if (energyReqA > energyReqU) {
+              u = a
+              energyReqU = energyReqA
+            }
+          }
+        }
+        else if (possible(a)) {
+          val energyReqA = min(eFree(a), hmin(a).toLong * (end - smin(a)))
+          if (energyReqA > energyReqU) {
             u = a
-            enReqU = enReqA
+            energyReqU = energyReqA
           }
         }
       
         val reserve = C * (end - begin) - E - ttEn(a, b)
-        if (reserve < 0) return Failure
+        if (reserve < 0) throw Inconsistency
         
-        if (reserve < enReqU) {
-          val newSMin = min(end, smax(u)) - reserve / hmin(u) 
-          
-          if (smin(u) < newSMin && starts(u).updateMin(newSMin.toInt) == Failure) return Failure
+        if (reserve < energyReqU) {
+          if (required(u)) {
+            val allowedLength = (reserve + hmin(u).toLong * max(0, min(dmin(u), end - smax(u)))) / hmin(u)
+            val newSMin = end - allowedLength
+            
+            if (smin(u) < newSMin && starts(u).updateMin(newSMin.toInt) == Failure) throw Inconsistency
+          }
+          else { // possible(u)
+            val newSMin = end - reserve / hmin(u) 
+            
+            if (smax(u) < newSMin) {
+              if (resources(u).removeValue(id)  == Failure) throw Inconsistency
+              possible(u) = false
+              energyReqU = 0L
+            } 
+          }
         }
 
         x -= 1
@@ -252,7 +282,6 @@ extends CumulativeTemplate(starts, durations, ends, heights, resources, capacity
     
     Suspend
   }
-  
 }
 
 
