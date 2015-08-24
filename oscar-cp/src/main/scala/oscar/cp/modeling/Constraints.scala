@@ -24,8 +24,7 @@ import oscar.cp.core.CPPropagStrength
 import oscar.cp._
 import oscar.cp.scheduling.constraints.DisjunctiveWithTransitionTimes
 import scala.collection.mutable.ArrayBuffer
-import oscar.cp.scheduling.constraints.SweepMinCumulative
-import oscar.cp.scheduling.constraints.MaxCumulative
+import oscar.cp.scheduling.constraints._
 import oscar.cp.constraints.tables.TableAlgo._
 
 trait Constraints {
@@ -1247,7 +1246,7 @@ trait Constraints {
    * @return a constraint ensuring activities don't overlap in time
    */
   def unaryResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], resources: Array[CPIntVar], id: Int) = {
-    new UnaryResourceWithOptionalActivities(starts, durations, ends, resources, id)
+    Unary(starts, durations, ends, resources, id)(starts(0).store)
   }
 
   /**
@@ -1258,7 +1257,11 @@ trait Constraints {
    * @return a constraint ensuring activities don't overlap in time
    */
   def unaryResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar]) = {
-    new UnaryResource(starts, durations, ends)
+    implicit val store = starts(0).store
+    val n = starts.length
+    val zero = CPIntVar(0)
+    val resources = Array.fill(n)(zero)
+    Unary(starts, durations, ends, resources, 0)
   }
 
   /**
