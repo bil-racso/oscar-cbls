@@ -78,6 +78,8 @@ object OscarBuild extends Build {
     val testDeps = Seq(junit, scalaCheck, scalaTest)
   }
   
+  val zipFZN = TaskKey[File]("zip-fzn", "Creates a distributable zip file containing a FlatZinc solver.")
+  
   import BuildSettings._
   import Dependencies._
   import Resolvers._
@@ -90,8 +92,9 @@ object OscarBuild extends Build {
       commonSettings ++
       packSettings ++
       unidocSettings ++
-      Seq(libraryDependencies ++= testDeps) :+
-        (unidocProjectFilter in (ScalaUnidoc, unidoc) := inAnyProject -- inProjects(oscarFzn, oscarFznCbls)),
+      (Seq(libraryDependencies ++= testDeps) :+
+        (unidocProjectFilter in (ScalaUnidoc, unidoc) := inAnyProject -- inProjects(oscarFzn, oscarFznCbls))) ++
+      Seq(zipFZN <<= (zipFZN in oscarFznCbls)),
     aggregate = Seq(oscarAlgebra, oscarAlgo, oscarCbls, oscarCp, oscarDfo, oscarLinprog, oscarUtil, oscarVisual)
   )
 
@@ -162,14 +165,52 @@ object OscarBuild extends Build {
       Seq(libraryDependencies ++= testDeps :+ antlr4Runtime)
   )
 
+
   lazy val oscarFznCbls = Project(
     id = "oscar-fzn-cbls",
     base = file("oscar-fzn-cbls"),
     settings =
       commonSettings ++
-      Seq(libraryDependencies ++= testDeps),
+      Seq(libraryDependencies ++= testDeps) ++
+      Seq(zipFZN <<= (Keys.packageBin in Compile,
+                Keys.baseDirectory,
+                Keys.target,
+                Keys.name,
+                Keys.version,
+                Keys.packageBin in (oscarCbls, Compile),
+                Keys.name in (oscarCbls, Compile),
+                Keys.packageBin in (oscarFzn, Compile),
+                Keys.name in (oscarFzn, Compile)) map { (jarfile:File, basedir:File, target:File, name:String, version:String, 
+                    cblsjar: File, cblsname:String, fznjar: File, fznname:String) =>
+  val distdir = target / (name +"-"+ version)
+  val zipFile = target / (name +"-"+ version +".zip")
+  IO.delete(zipFile)
+  IO.delete(distdir)
+
+  IO.createDirectories(Seq(distdir))
+
+  //copy the script and README files
+  IO.copyFile(basedir / "distrib" / "README", distdir / "README")
+  IO.copyFile(basedir / "distrib" / "setup", distdir / "setup")
+  
+  //copying the mznlib
+  IO.copyDirectory(basedir / "mznlib", distdir / "mznlib")
+  
+  IO.copyFile(cblsjar, distdir / (cblsname+".jar"))
+  IO.copyFile(fznjar, distdir / (fznname+".jar"))
+  
+  //copying the jar file, stripping away the version values
+  IO.copyFile(jarfile, distdir / (name+".jar"))
+  
+  //zipping all of it.
+  def entries(f: File):List[File] = f :: (if (f.isDirectory) IO.listFiles(f).toList.flatMap(entries(_)) else Nil)
+  IO.zip(entries(distdir).map(d => (d, d.getAbsolutePath.substring(distdir.getParent.length +1))), zipFile)
+  zipFile
+}),
     dependencies = Seq(oscarCbls,oscarFzn)
   )
+  
+
 
   // Not included in the build
   lazy val oscarInvariants = Project(
@@ -208,4 +249,5 @@ object OscarBuild extends Build {
       Seq(libraryDependencies ++= testDeps :+ jfreechart :+ swingx :+ swingxWs),
     dependencies = Seq(oscarUtil)
   )
+  
 }
