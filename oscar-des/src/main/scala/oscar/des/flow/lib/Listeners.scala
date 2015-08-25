@@ -33,20 +33,23 @@ abstract class DoubleExpr(accumulating:Boolean, children:Expression*) extends Ex
   override def valueString: String = "" + value
 }
 
-class MetricsStore(verbose:Boolean){
+class MetricsStore(rootExpressions:List[(Expression,String)],verbose:Boolean){
   var expressions:List[Expression] = List.empty
   var accumulatingExpressions:List[Expression] = List.empty
   var nonAccumulatingExpressions:List[Expression] = List.empty
   var currentStartID = 0
   var isClosed = false
-  var rootExpressions:List[(Expression,String)] = List.empty
+
+  for((e,s) <- rootExpressions){
+    addMetric(e)(s)
+  }
+  close()
 
   override def toString: String = {
     "MetricsStore{\n\t" + rootExpressions.map(es => es._2 + ":" + es._1.valueString).mkString("\n\t") + "\n}\n"
   }
 
-  def addMetric(e:Expression)(s:String = e.toString): Unit ={
-    rootExpressions = (e,s) :: rootExpressions
+  private def addMetric(e:Expression)(s:String = e.toString): Unit ={
     require(!isClosed)
 
     def setNumbering(e:Expression, startID:Int, fatherAccumulating:Boolean):Int={
@@ -66,7 +69,7 @@ class MetricsStore(verbose:Boolean){
     currentStartID = setNumbering(e,currentStartID,false)
   }
 
-  def close(){
+  private def close(){
     isClosed = true
     expressions = expressions.reverse
     accumulatingExpressions = accumulatingExpressions.reverse

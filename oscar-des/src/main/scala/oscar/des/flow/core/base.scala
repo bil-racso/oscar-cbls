@@ -51,7 +51,7 @@ trait Fetchable {
  * @author renaud.delandtsheer@cetic.be
  */
 trait RichFetchable extends Fetchable {
-  private val waitingFetches:ListBuffer[(Int, List[ItemClass], List[ItemClass] => Unit)] = ListBuffer.empty
+  private val waitingFetches:ListBuffer[(Int, ItemClass, ItemClass => Unit)] = ListBuffer.empty
   var mTotalFetch = 0
   protected def pTotalFetch:Int = mTotalFetch
 
@@ -61,10 +61,10 @@ trait RichFetchable extends Fetchable {
    * @param amount
    * @return what remains to be fetched, whas has been fetched
    */
-  protected def internalFetch(amount:Int,hasBeenFetch:List[ItemClass] = List.empty):(Int,List[ItemClass])
+  protected def internalFetch(amount:Int,hasBeenFetch:ItemClass = ItemClassHelper.zeroItemClass):(Int,ItemClass)
 
-  def appendFetch(amount:Int)(block : List[ItemClass] => Unit) {
-    waitingFetches.append((amount, List.empty, block))
+  def appendFetch(amount:Int)(block : ItemClass => Unit) {
+    waitingFetches.append((amount, ItemClassHelper.zeroItemClass, block))
   }
 
   /**
@@ -77,16 +77,16 @@ trait RichFetchable extends Fetchable {
       finished = true
       if (waitingFetches.nonEmpty) {
         val (toFetch, alreadyFetched, block) = waitingFetches.remove(0)
-        val (remainingToFetch,fetched) = internalFetch(toFetch)
-        mTotalFetch += fetched.length
-        val allFetchedForThisFetch = fetched ::: alreadyFetched
+        val (remainingToFetch,fetched) = internalFetch(toFetch,alreadyFetched)
+        val nbFetched = toFetch - remainingToFetch
+        mTotalFetch += nbFetched
         if (remainingToFetch == 0) {
-          block(allFetchedForThisFetch)
+          block(fetched)
           finished = false
           somethingDone = true
         } else {
           if (remainingToFetch != toFetch) somethingDone = true
-          waitingFetches.prepend((remainingToFetch, allFetchedForThisFetch, block))
+          waitingFetches.prepend((remainingToFetch, fetched, block))
           finished = true
         }
       } else {
@@ -104,7 +104,7 @@ trait RichFetchable extends Fetchable {
   */
 trait RichPutable extends Putable {
 
-  protected val waitingPuts:ListBuffer[(List[ItemClass], () => Unit)] = ListBuffer.empty
+  protected val waitingPuts:ListBuffer[(List[(Int,ItemClass)], () => Unit)] = ListBuffer.empty
   var mTotalPut = 0
   def pTotalPut:Int = mTotalPut
 
@@ -114,7 +114,7 @@ trait RichPutable extends Putable {
    * @param l
    * @return what remains to be pt after this put, and what has been put
    */
-  protected def internalPut(l:List[ItemClass], hasBeenPut:Int = 0):(List[ItemClass],Int)
+  protected def internalPut(l:List[(Int,ItemClass)], hasBeenPut:Int = 0):(List[(Int,ItemClass)],Int)
 
   /**
    * put the amount of goods into the putable.
@@ -122,7 +122,7 @@ trait RichPutable extends Putable {
    * @param l the items to be put
    * @param block
    */
-  protected def appendPut(l:List[ItemClass])(block : () => Unit): Unit = {
+  protected def appendPut(l:List[(Int,ItemClass)])(block : () => Unit): Unit = {
     waitingPuts.append((l, block))
   }
 

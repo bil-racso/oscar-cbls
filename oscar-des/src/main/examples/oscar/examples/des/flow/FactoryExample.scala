@@ -18,13 +18,13 @@ object FactoryExample extends App with HelperForProcess{
   }
 
   val m = new Model
-  val verbose = true
+  val verbose = false
 
   val standardItemClass:ItemClass = zeroItemClass
   val noTransform = mkFunction(Identity())
 
   //time unit is the second
-  val rawMaterialStorage = new  FIFOStorage[Items](200,(200,standardItemClass),"rawMaterialStorage", verbose,false)
+  val rawMaterialStorage = new  FIFOStorage[Items](200,List((200,standardItemClass)),"rawMaterialStorage", verbose,false)
 
   val inputFeederOfDieCuttingPartA = new FIFOStorage[Items](100,Nil,"inputFeederOfDieCuttingPartA", verbose,false)
 
@@ -37,16 +37,11 @@ object FactoryExample extends App with HelperForProcess{
   val dieCuttingPartA = SingleBatchProcess(m, 10, Array((()=>1, inputFeederOfDieCuttingPartA)), Array((()=>4,outputSlotOfDieCuttingPArtA)), "dieCuttingPartA", noTransform, verbose)
 
 
-  val ametric = Mult(BatchCount(dieCuttingPartA),TotalPut(outputSlotOfDieCuttingPArtA))
-  val anothermetric = CumulatedDuration(Empty(outputSlotOfDieCuttingPArtA),ModelTime(m))
-
-  val metricsStore = new MetricsStore(verbose)
-  metricsStore.addMetric(ametric)("aMetric")
-  metricsStore.addMetric(anothermetric)("anotherMetric")
-  metricsStore.close()
+  val metricsStore = new MetricsStore(List(
+    (Mult(BatchCount(dieCuttingPartA),TotalPut(outputSlotOfDieCuttingPArtA)),"aMetric"),
+    (CumulatedDuration(Empty(outputSlotOfDieCuttingPArtA),ModelTime(m)),"anotherMetric")), verbose)
 
   /*
-
   val bufferForDieA =  new FIFOStorage[Items](500,Nil,"bufferForDieA", verbose,false)
   val outputBeltFromDieCuttingA = new ConveyerBeltProcess(m, 20, 0.5.toFloat , List((1, outputSlotOfDieCuttingPArtA)), List((1, bufferForDieA)), "outputBeltFromDieCuttingA", verbose)
 

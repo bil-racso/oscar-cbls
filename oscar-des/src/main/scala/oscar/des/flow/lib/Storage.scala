@@ -4,6 +4,8 @@ import oscar.des.flow.core.ItemClassHelper._
 import oscar.des.flow.core._
 
 import scala.collection.mutable.ListBuffer
+import scala.language.implicitConversions
+
 
 class StockContentType
 class Orders extends StockContentType
@@ -12,8 +14,7 @@ class Items extends StockContentType
 
 /**
  * represents a storage point, or a stock as you name it
- * @param size the maximal content of the stock. attempting to put more items will block the putting operations
- * @param initialContent the initial content of the stock
+ * @param maxSize the maximal content of the stock. attempting to put more items will block the putting operations
  * @param name the name of the stock
  * @param verbose true to print when stock is empty or overfull
  * @author renaud.delandtsheer@cetic.be
@@ -23,6 +24,9 @@ abstract class Storage[Content<:StockContentType](val maxSize: Int,
                                                   val verbose:Boolean,
                                                   overflowOnInput:Boolean)
   extends RichPutable with RichFetchable {
+
+  class BufferCompositeItem(var n:Int, val itemClass:ItemClass)
+  implicit def coupleToComposite(c:(Int,ItemClass)):BufferCompositeItem = new BufferCompositeItem(c._1,c._2)
 
   def totalFetch:Int = pTotalFetch
   def totalPut:Int = pTotalPut
@@ -70,13 +74,13 @@ abstract class Storage[Content<:StockContentType](val maxSize: Int,
   }
 
   def fetch(amount: Int)(block: ItemClass => Unit) {
-    appendFetch(amount)(l => block(ItemClassHelper.unionAll(l)))
+    appendFetch(amount)(block)
     flow()
     if (isThereAnyWaitingFetch && verbose) println("Empty storage on " + name)
   }
 
   def put(amount: Int, i:ItemClass)(block: () => Unit): Unit = {
-    appendPut(List.fill(amount)(i))(block)
+    appendPut(List((amount,i)))(block)
     flow()
     if (isThereAnyWaitingPut && verbose)
       println("Full storage on " + name)
@@ -84,25 +88,37 @@ abstract class Storage[Content<:StockContentType](val maxSize: Int,
 }
 
 class FIFOStorage[Content<:StockContentType](maxSize:Int,
-                                             initialContent:List[ItemClass],
+                                             initialContent:List[(Int,ItemClass)],
                                              name:String,
                                              verbose:Boolean,
                                              overflowOnInput:Boolean) extends Storage[Content](maxSize,name,verbose,overflowOnInput){
 
-  val content:ListBuffer[ItemClass] = ListBuffer.empty ++ initialContent
+  val content:ListBuffer[BufferCompositeItem] = ListBuffer.empty ++ initialContent.map(coupleToComposite)
 
-  override def contentSize: Int = content.size
+  override def contentSize: Int = internalSize
+
+    private[this] var internalSize = content.foldLeft(0)({case (acc,bufferItem) => acc + bufferItem.n})
 
   /**
    * @param l
    * @return what remains to be pt after this put, and what has been put
    */
-  override protected def internalPut(l: List[ItemClass], hasBeenPut:Int = 0): (List[ItemClass], Int) = {
+  override protected def internalPut(l: List[(Int,ItemClass)], hasBeenPut:Int = 0): (List[(Int,ItemClass)], Int) = {
     l match {
       case h :: t =>
-        if(content.size < maxSize) {
+        val n = h.n
+        if(n + internalSize <= maxSize) {
+          //we can put the header composite fully (so far, we do not aggregate composite items)
           content.prepend(h)
-          internalPut(t, hasBeenPut + 1)
+          internalSize += n
+          internalPut(t, hasBeenPut + n) //tail
+        }else if (internalSize < maxSize){
+          //only partial put, and end of recursion
+          val toPut = maxSize - internalSize
+          val remain = n - toPut
+          content.prepend((toPut,h._2))
+          internalSize += toPut
+          ((remain,h._2) :: t,hasBeenPut + toPut)
         }else {
           (l, hasBeenPut)
         }
@@ -110,15 +126,22 @@ class FIFOStorage[Content<:StockContentType](maxSize:Int,
     }
   }
 
-  /**
-   * @param amount
-   * @return what remains to be fetched, what has been fetched
-   */
-  override protected def internalFetch(remainsToFetch: Int, hasBeenFetch:List[ItemClass] = List.empty): (Int,List[ItemClass]) = {
+
+  override protected def internalFetch(remainsToFetch: Int, hasBeenFetch:ItemClass = ItemClassHelper.zeroItemClass): (Int,ItemClass) = {
     if(remainsToFetch == 0){
       (0,hasBeenFetch)
     }else if (content.nonEmpty){
-      internalFetch(remainsToFetch-1, content.remove(0) :: hasBeenFetch)
+      val head = content.head
+      if(head.n <= remainsToFetch){
+        content.remove(0)
+        internalSize -= head.n
+        internalFetch(remainsToFetch-head.n, ItemClassHelper.union(head.itemClass,hasBeenFetch))
+      }else{
+        //we do not take everything, we have to put a part back
+        head.n -= remainsToFetch
+        internalSize -= remainsToFetch
+        (0,ItemClassHelper.union(head.itemClass,hasBeenFetch))
+      }
     }else{
       (remainsToFetch,hasBeenFetch)
     }
@@ -126,25 +149,36 @@ class FIFOStorage[Content<:StockContentType](maxSize:Int,
 }
 
 class LIFOStorage[Content<:StockContentType](maxSize:Int,
-                                             initialContent:List[ItemClass] = List.empty,
+                                             initialContent:List[(Int,ItemClass)] = List.empty,
                                              name:String,
                                              verbose:Boolean,
                                              overflowOnInput:Boolean) extends Storage[Content](maxSize,name,verbose,overflowOnInput){
 
-  var content:List[ItemClass] = List.empty
+  var content:List[BufferCompositeItem] = initialContent.map(coupleToComposite)
 
-  override def contentSize: Int = content.size
+  override def contentSize: Int = internalSize
+  private[this] var internalSize: Int = content.foldLeft(0)({case (acc,bufferItem) => acc + bufferItem.n})
 
   /**
    * @param l
    * @return what remains to be pt after this put, and what has been put
    */
-  override protected def internalPut(l: List[ItemClass], hasBeenPut:Int = 0): (List[ItemClass], Int) = {
+  override protected def internalPut(l: List[(Int,ItemClass)], hasBeenPut:Int = 0): (List[(Int,ItemClass)], Int) = {
     l match {
       case h :: t =>
-        if(content.size < maxSize) {
+        val n = h.n
+        if(n + internalSize <= maxSize) {
+          //we can put the header composite fully (so far, we do not aggregate composite items)
           content = h :: content
-          internalPut(t, hasBeenPut + 1)
+          internalSize += n
+          internalPut(t, hasBeenPut + n) //tail
+        }else if (internalSize < maxSize){
+          //only partial put, and end of recursion
+          val toPut = maxSize - internalSize
+          val remain = n - toPut
+          content = (toPut,h._2) :: content
+          internalSize += toPut
+          ((remain,h._2) :: t,hasBeenPut + toPut)
         }else {
           (l, hasBeenPut)
         }
@@ -152,19 +186,25 @@ class LIFOStorage[Content<:StockContentType](maxSize:Int,
     }
   }
 
-  /**
-   * @param amount
-   * @return what remains to be fetched, what has been fetched
-   */
-  override protected def internalFetch(remainsToFetch: Int, hasBeenFetch:List[ItemClass] = List.empty): (Int,List[ItemClass]) = {
-    if (remainsToFetch == 0) {
-      (0, hasBeenFetch)
-    } else content match {
-      case h :: t =>
-        content = t
-        internalFetch(remainsToFetch - 1, h :: hasBeenFetch)
+
+  override protected def internalFetch(remainsToFetch: Int, hasBeenFetch:ItemClass = ItemClassHelper.zeroItemClass): (Int,ItemClass) = {
+    if(remainsToFetch == 0){
+      (0,hasBeenFetch)
+    }else content match{
+      case head :: t =>
+        if(head.n <= remainsToFetch){
+          //we take this composite fully
+          content = t
+          internalSize -= remainsToFetch
+          internalFetch(remainsToFetch-head.n, ItemClassHelper.union(head.itemClass,hasBeenFetch))
+        }else{
+          //we do not take everything, we have to put a part back
+          head.n -= remainsToFetch
+          internalSize -= remainsToFetch
+          (0,ItemClassHelper.union(head.itemClass,hasBeenFetch))
+        }
       case Nil =>
-        (remainsToFetch, hasBeenFetch)
+        (remainsToFetch,hasBeenFetch)
     }
   }
 }
