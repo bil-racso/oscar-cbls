@@ -28,7 +28,19 @@ object FactoryExample extends App with HelperForProcess{
   val noTransform = mkFunction(Identity())
 
   //time unit is the second
-  val rawMaterialStorage = new  FIFOStorage[Items](200,List((200,standardItemClass)),"rawMaterialStorage", verbose,false)
+  val rawMaterialStorage = new  FIFOStorage[Items](200,List((40,standardItemClass)),"rawMaterialStorage", verbose,false)
+
+
+  val rawSupplier = new SingleBatchProcess(m, 5000, Array(), Array((()=>1,rawMaterialStorage)), noTransform, "rawSupplier", verbose)
+  val ordering = new OnStockThreshold[Items](rawMaterialStorage,
+    m,
+    rawSupplier,
+    20,
+    (size:Int) => 20,
+    true,
+    0,
+    "orderingPolicy")
+
 
   val inputFeederOfDieCuttingPartA = new FIFOStorage[Items](100,Nil,"inputFeederOfDieCuttingPartA", verbose,false)
 
@@ -39,11 +51,6 @@ object FactoryExample extends App with HelperForProcess{
 
   val outputSlotOfDieCuttingPArtA = new LIFOStorage[Items](400,Nil,"outputSlotOfDieCuttingPArtA", verbose,false)
   val dieCuttingPartA = SingleBatchProcess(m, 10, Array((()=>1, inputFeederOfDieCuttingPartA)), Array((()=>4,outputSlotOfDieCuttingPArtA)), noTransform, "dieCuttingPartA", verbose)
-
-  val metricsStore = new MetricsStore(List(
-    (Mult(BatchCount(dieCuttingPartA),TotalPut(outputSlotOfDieCuttingPArtA)),"aMetric"),
-    (CumulatedDuration(Empty(outputSlotOfDieCuttingPArtA),ModelTime(m)),"anotherMetric")), verbose)
-
 
   val bufferForDieA =  new FIFOStorage[Items](500,Nil,"bufferForDieA", verbose,false)
   val outputBeltFromDieCuttingA = new ConveyorBeltProcess(m, 20, 0.5.toFloat , List((1, outputSlotOfDieCuttingPArtA)), List((1, bufferForDieA)), noTransform, "outputBeltFromDieCuttingA", verbose)
@@ -70,7 +77,6 @@ object FactoryExample extends App with HelperForProcess{
   val outputContainerOfForming = new LIFOStorage[Items](120, Nil, "outputContainerOfForming", verbose,false)
   val forming = SingleBatchProcess(m, 30, Array((()=>2, inputAOfForming),(()=>2, inputBOfForming)), Array((()=>2,outputContainerOfForming)), noTransform, "forming", verbose)
 
-
   val formedContainerStoragePlace = new LIFOStorage[Items](1000000000, Nil, "containerStoragePlace", verbose, false)
   val trashContainerStoragePlace = new LIFOStorage[Items](1000000000, Nil, "TrashContainerStoragePlace", verbose, false)
   val transportingOutputContainerFromForming = SplittingSingleBatchProcess(m, 30,
@@ -78,8 +84,19 @@ object FactoryExample extends App with HelperForProcess{
     Array(Array((()=>1,formedContainerStoragePlace)),
       Array((()=>1,trashContainerStoragePlace))), (i:ItemClass) => (choose(0 to 1),i), "transportingOutputContainerFromForming", verbose)
 
+
+
+  val metricsStore = new MetricsStore(List(
+    (Mult(BatchCount(dieCuttingPartA),TotalPut(outputSlotOfDieCuttingPArtA)),"aMetric"),
+    (CumulatedDuration(Empty(rawMaterialStorage),ModelTime(m)),"duration of empty raw material storage"),
+    (Empty(rawMaterialStorage),"empty raw material storage")
+  ), verbose)
+
+
+
   m.simulate(8*60*60, verbose,metricsStore.updateMetricsIfNeeded)
   metricsStore.finish()
+
   println(m)
   println(rawMaterialStorage)
   println("part A of the process")
@@ -110,5 +127,4 @@ object FactoryExample extends App with HelperForProcess{
 
   println(metricsStore)
   println("duration:" + (System.currentTimeMillis - starttime))
-
 }

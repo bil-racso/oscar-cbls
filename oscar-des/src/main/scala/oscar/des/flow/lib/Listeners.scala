@@ -92,6 +92,7 @@ class MetricsStore(rootExpressions:List[(Expression,String)],verbose:Boolean){
 //probe on simulation elements
 case class Empty[Content<:StockContentType](s:Storage[Content]) extends BoolExpr(false){
   override def updatedValue = s.contentSize == 0
+
 }
 
 case class Content[Content<:StockContentType](s:Storage[Content]) extends DoubleExpr(false){
@@ -226,11 +227,9 @@ case class CumulatedDuration(b:BoolExpr, t:Time) extends DoubleExpr(true,b){
       }else{
         wasTrue = false
       }
-    }else{
-      if(b.value){
+    }else if(b.value){
         wasTrue = true
         previousTime = t.time
-      }
     }
     acc
   }

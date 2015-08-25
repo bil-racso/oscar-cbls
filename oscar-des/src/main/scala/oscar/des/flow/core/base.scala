@@ -209,7 +209,7 @@ class Outputter(outputs:Iterable[(() => Int, Putable)]) {
 class Inputter(inputs:Iterable[(() => Int, Fetchable)]) {
   val inputCount = inputs.size
   def addPreliminaryInput(preliminaryInput:Fetchable){
-    require(preliminaryInput == null)
+    require(this.preliminaryInput == null)
     this.preliminaryInput = preliminaryInput
   }
   var preliminaryInput:Fetchable = null

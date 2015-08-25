@@ -37,26 +37,28 @@ class Model {
       val e = eventQueue.dequeue()
       require(e.time >= currentTime)
       if(e.time <= horizon){
-        if(verbose && e.time != currentTime){
+        if(e.time != currentTime){
           if(callAfterEachStep != null) callAfterEachStep()
-          println("-----------> time: "+  e.time)
+          if(verbose) println("-----------> time: "+  e.time)
         }
         currentTime = e.time
         e.process
       }else{
         // we are after the horizon, so event is pushed back into queue, and simulation stops
         eventQueue.enqueue(e)
-        if(verbose && horizon != currentTime)
+        if(horizon != currentTime)
           if(callAfterEachStep != null) callAfterEachStep()
-          println("-----------> time: "+  horizon)
+        if(verbose) println("-----------> time: "+  horizon)
         currentTime = horizon
         return
       }
     }
 
     //no more event to process, but time runs to the horizon
-    if(verbose && horizon != currentTime)
-      println("-----------> time: "+  horizon)
+    if(horizon != currentTime) {
+      if(callAfterEachStep != null) callAfterEachStep()
+      if (verbose) println("-----------> time: " + horizon)
+    }
     currentTime = horizon
   }
 
