@@ -97,7 +97,7 @@ class FIFOStorage[Content<:StockContentType](maxSize:Int,
 
   override def contentSize: Int = internalSize
 
-    private[this] var internalSize = content.foldLeft(0)({case (acc,bufferItem) => acc + bufferItem.n})
+  private[this] var internalSize = content.foldLeft(0)({case (acc,bufferItem) => acc + bufferItem.n})
 
   /**
    * @param l
@@ -106,17 +106,28 @@ class FIFOStorage[Content<:StockContentType](maxSize:Int,
   override protected def internalPut(l: List[(Int,ItemClass)], hasBeenPut:Int = 0): (List[(Int,ItemClass)], Int) = {
     l match {
       case h :: t =>
-        val n = h.n
+        val n = h._1
         if(n + internalSize <= maxSize) {
-          //we can put the header composite fully (so far, we do not aggregate composite items)
-          content.prepend(h)
+          //we can put the header composite fully
+          if (content.nonEmpty && content.last.itemClass == h._2){
+            //we can aggregate wit hthe previously put item because tehy have the same ItemClass :-)
+            content.last.n += n
+          }else {
+            content.prepend(h)
+          }
           internalSize += n
           internalPut(t, hasBeenPut + n) //tail
+
         }else if (internalSize < maxSize){
           //only partial put, and end of recursion
           val toPut = maxSize - internalSize
           val remain = n - toPut
-          content.prepend((toPut,h._2))
+          if (content.nonEmpty && content.last.itemClass == h._2){
+            //we can aggregate wit hthe previously put item because they have the same ItemClass :-)
+            content.last.n += toPut
+          }else {
+            content.prepend((toPut,h._2))
+          }
           internalSize += toPut
           ((remain,h._2) :: t,hasBeenPut + toPut)
         }else {
@@ -166,17 +177,25 @@ class LIFOStorage[Content<:StockContentType](maxSize:Int,
   override protected def internalPut(l: List[(Int,ItemClass)], hasBeenPut:Int = 0): (List[(Int,ItemClass)], Int) = {
     l match {
       case h :: t =>
-        val n = h.n
+        val n = h._1
         if(n + internalSize <= maxSize) {
           //we can put the header composite fully (so far, we do not aggregate composite items)
-          content = h :: content
+          if(content.nonEmpty && content.head.itemClass == h._2){
+            content.head.n += n
+          }else{
+            content = h :: content
+          }
           internalSize += n
           internalPut(t, hasBeenPut + n) //tail
         }else if (internalSize < maxSize){
           //only partial put, and end of recursion
           val toPut = maxSize - internalSize
           val remain = n - toPut
-          content = (toPut,h._2) :: content
+          if(content.nonEmpty && content.head.itemClass == h._2){
+            content.head.n += toPut
+          }else{
+            content = (toPut,h._2) :: content
+          }
           internalSize += toPut
           ((remain,h._2) :: t,hasBeenPut + toPut)
         }else {
