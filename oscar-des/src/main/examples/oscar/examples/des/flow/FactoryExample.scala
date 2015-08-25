@@ -16,6 +16,10 @@ object FactoryExample extends App with HelperForProcess{
   def probability(p:Double)():Boolean = {
     math.random < p
   }
+  def choose(r:Range)():Int = {
+    r.apply ((math.random * r.size).toInt)
+  }
+
 
   val m = new Model
   val verbose = false
@@ -66,15 +70,13 @@ object FactoryExample extends App with HelperForProcess{
   val outputContainerOfForming = new LIFOStorage[Items](120, Nil, "outputContainerOfForming", verbose,false)
   val forming = SingleBatchProcess(m, 30, Array((()=>2, inputAOfForming),(()=>2, inputBOfForming)), Array((()=>2,outputContainerOfForming)), noTransform, "forming", verbose)
 
-  /*
+
   val formedContainerStoragePlace = new LIFOStorage[Items](1000000000, Nil, "containerStoragePlace", verbose, false)
   val trashContainerStoragePlace = new LIFOStorage[Items](1000000000, Nil, "TrashContainerStoragePlace", verbose, false)
-  val transportingOutputContainerFromForming = FailingSingleBatchProcess(m, 30,
-    List((120, outputContainerOfForming)),
-    List((1,formedContainerStoragePlace)),
-    List((1,trashContainerStoragePlace)), probability(1-0.05), "transportingOutputContainerFromForming", verbose)
-*/
-
+  val transportingOutputContainerFromForming = SplittingSingleBatchProcess(m, 30,
+    Array((()=>120, outputContainerOfForming)),
+    Array(Array((()=>1,formedContainerStoragePlace)),
+      Array((()=>1,trashContainerStoragePlace))), (i:ItemClass) => (choose(0 to 1),i), "transportingOutputContainerFromForming", verbose)
 
   m.simulate(8*60*60, verbose,metricsStore.updateMetricsIfNeeded)
   metricsStore.finish()
@@ -85,8 +87,6 @@ object FactoryExample extends App with HelperForProcess{
   println(inputFeederOfDieCuttingPartA)
   println(outputSlotOfDieCuttingPArtA)
   println(dieCuttingPartA)
-
-
 
   println(outputBeltFromDieCuttingA)
   println(bufferForDieA)
@@ -104,11 +104,9 @@ object FactoryExample extends App with HelperForProcess{
   println(inputBOfForming)
   println(forming)
   println(outputContainerOfForming)
-  /*
   println(transportingOutputContainerFromForming)
   println(formedContainerStoragePlace )
   println(trashContainerStoragePlace )
-*/
 
   println(metricsStore)
   println("duration:" + (System.currentTimeMillis - starttime))

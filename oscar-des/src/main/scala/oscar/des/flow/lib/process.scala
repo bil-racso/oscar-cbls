@@ -152,12 +152,12 @@ case class BatchProcess(m:Model,
  * @author renaud.delandtsheer@cetic.be
  * */
 case class SplittingSingleBatchProcess(m:Model,
-                                 batchDuration:() => Float,
-                                 inputs:Array[(() => Int, Fetchable)],
-                                 outputs:Array[Array[(() => Int,Putable)]],
-                                 name:String,
-                                 transformFunction:ItemClass => (Int,ItemClass),
-                                 verbose:Boolean = true) extends ActivableAtomicProcess(name,verbose){
+                                       batchDuration:() => Float,
+                                       inputs:Array[(() => Int, Fetchable)],
+                                       outputs:Array[Array[(() => Int,Putable)]],
+                                       transformFunction:ItemClass => (Int,ItemClass),
+                                       name:String,
+                                       verbose:Boolean = true) extends ActivableAtomicProcess(name,verbose){
 
   private val myOutputs = outputs.map(o => new Outputter(o))
   override val myInput = new Inputter(inputs)
@@ -236,8 +236,8 @@ case class SplittingBatchProcess(m:Model,
       batchDuration,
       inputs,
       outputs,
-      name + " chain " + batchNumber,
       transformFunction,
+      name + " chain " + batchNumber,
       verbose))
 
   override def toString: String = {
