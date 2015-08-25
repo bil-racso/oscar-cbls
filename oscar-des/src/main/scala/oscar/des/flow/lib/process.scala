@@ -52,8 +52,8 @@ case class SingleBatchProcess(m:Model,
                               batchDuration:() => Float,
                               inputs:Array[(() => Int, Fetchable)],
                               outputs:Array[(()=>Int,Putable)],
-                              name:String,
                               transformFunction:ItemClass => ItemClass,
+                              name:String,
                               verbose:Boolean = true) extends ActivableAtomicProcess(name,verbose){
 
   private val myOutput = new Outputter(outputs)
@@ -126,8 +126,8 @@ case class BatchProcess(m:Model,
       batchDuration,
       inputs,
       outputs,
-      name + " chain " + batchNumber,
       transformFunction,
+      name + " chain " + batchNumber,
       verbose))
 
   override def toString: String = {
