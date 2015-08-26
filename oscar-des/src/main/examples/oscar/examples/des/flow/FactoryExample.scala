@@ -20,7 +20,6 @@ object FactoryExample extends App with HelperForProcess{
     r.apply ((math.random * r.size).toInt)
   }
 
-
   val m = new Model
   val verbose = false
 
@@ -83,23 +82,20 @@ object FactoryExample extends App with HelperForProcess{
     Array(Array((()=>1,formedContainerStoragePlace)),
       Array((()=>1,trashContainerStoragePlace))), (i:ItemClass) => (choose(0 to 1),i), "transportingOutputContainerFromForming", verbose)
 
-
-
   val metricsStore = new MetricsStore(List(
-    (Mult(BatchCount(dieCuttingPartA),TotalPut(outputSlotOfDieCuttingPArtA)),"aMetric"),
-    (CumulatedDuration(Empty(rawMaterialStorage),ModelTime(m)),"duration of empty raw material storage"),
-    (Empty(rawMaterialStorage),"empty raw material storage"),
-    (CumulatedDuration(Not(IsRunning(forming)),ModelTime(m)), "cumulated duration of forming being inactive"),
-    (CumulatedDuration(Not(HasBeen(IsRunning(forming))),ModelTime(m)), "cumulated duration of forming being inactive at the beginnig of the story"),
-      (CulumatedDurationNotStart(Not(IsRunning(forming)),ModelTime(m)), "cumulated duration of forming being inactive, not countint initial")
-
+    (Mult(CompletedBatchCount(dieCuttingPartA),TotalPut(outputSlotOfDieCuttingPArtA)),"a stupid metric, to test the stuff"),
+    (CumulatedDuration(Empty(rawMaterialStorage)),"duration of empty raw material storage"),
+    (Empty(rawMaterialStorage),"is raw material storage empty? (at the end of the trace)"),
+    (CumulatedDuration(Not(Running(forming))), "cumulated duration of forming being inactive"),
+    (CumulatedDuration(Not(HasBeen(Running(forming)))), "cumulated duration of forming being inactive at the start of the trace"),
+    (CulumatedDurationNotStart(Not(Running(forming))), "cumulated duration of forming being inactive, not counting initial"),
+    (MaxOnHistory(StockLevel(rawMaterialStorage)),"max content of raw material storage"),
+      (MinOnHistory(StockLevel(rawMaterialStorage)),"min content of raw material storage")
 
   ), verbose)
-
-
-
-  m.simulate(8*60*60, verbose,metricsStore.updateMetricsIfNeeded)
-  metricsStore.finish()
+  
+  m.simulate(8*60*60, verbose,()=>metricsStore.updateMetricsIfNeeded(m.clock()))
+  metricsStore.finish(m.clock())
 
   println(m)
   println(rawMaterialStorage)

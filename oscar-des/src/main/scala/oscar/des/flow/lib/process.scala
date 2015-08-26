@@ -60,7 +60,7 @@ case class SingleBatchProcess(m:Model,
   override val myInput = new Inputter(inputs)
 
   var performedBatches = 0
-
+  var startedBatches = 0
   private var mTotalWaitDuration:Double = 0
   private var startWaitTime:Double = 0
   private var waiting = false
@@ -68,7 +68,8 @@ case class SingleBatchProcess(m:Model,
   def isWaiting = waiting
 
   override def isRunning: Boolean = !waiting
-  override def batchCount: Int = performedBatches
+  override def completedBatchCount: Int = performedBatches
+  override def startedBatchCount: Int = startedBatches
   override def totalWaitDuration():Double = if (waiting) mTotalWaitDuration + m.clock() - startWaitTime else mTotalWaitDuration
 
   startBatches()
@@ -79,6 +80,7 @@ case class SingleBatchProcess(m:Model,
     waiting = true
     myInput.performInput((i:ItemClass) => {
       if (verbose) println(name + ": start new batch")
+      startedBatches += 1
       mTotalWaitDuration += (m.clock() - startWaitTime)
       waiting = false
       m.wait(batchDuration()){
@@ -163,6 +165,7 @@ case class SplittingSingleBatchProcess(m:Model,
   override val myInput = new Inputter(inputs)
 
   var performedBatches = 0
+  var startedBatches = 0
   private var failedBatches = 0
 
   private var mTotalWaitDuration: Double = 0
@@ -174,7 +177,9 @@ case class SplittingSingleBatchProcess(m:Model,
 
   override def isRunning: Boolean = !waiting
 
-  override def batchCount: Int = performedBatches
+  override def completedBatchCount: Int = performedBatches
+
+  override def startedBatchCount: Int = startedBatches
 
   override def totalWaitDuration():Double = if (waiting) mTotalWaitDuration + m.clock() - startWaitTime else mTotalWaitDuration
 
@@ -186,6 +191,7 @@ case class SplittingSingleBatchProcess(m:Model,
     waiting = true
     myInput.performInput((i:ItemClass) => {
       if (verbose) println(name + ": start new batch")
+      startedBatches += 1
       mTotalWaitDuration += (m.clock() - startWaitTime)
       waiting = false
       m.wait(batchDuration()){
@@ -282,7 +288,9 @@ class ConveyorBeltProcess(m:Model,
 
 
   override def isRunning: Boolean = !blocked
-  override def batchCount: Int = totalOutputBatches
+  override def completedBatchCount: Int = totalOutputBatches
+
+  override def startedBatchCount: Int = totalInputBatches
 
   private var timeOfLastInput:Double = 0
 

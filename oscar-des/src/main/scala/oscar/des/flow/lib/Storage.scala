@@ -6,11 +6,9 @@ import oscar.des.flow.core._
 import scala.collection.mutable.ListBuffer
 import scala.language.implicitConversions
 
-
 class StockContentType
 class Orders extends StockContentType
 class Items extends StockContentType
-
 
 /**
  * represents a storage point, or a stock as you name it
