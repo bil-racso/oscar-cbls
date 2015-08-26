@@ -90,8 +90,8 @@ object FactoryExample extends App with HelperForProcess{
     (CumulatedDuration(Not(HasBeen(Running(forming)))), "cumulated duration of forming being inactive at the start of the trace"),
     (CulumatedDurationNotStart(Not(Running(forming))), "cumulated duration of forming being inactive, not counting initial"),
     (MaxOnHistory(StockLevel(rawMaterialStorage)),"max content of raw material storage"),
-      (MinOnHistory(StockLevel(rawMaterialStorage)),"min content of raw material storage")
-
+      (MinOnHistory(StockLevel(rawMaterialStorage)),"min content of raw material storage"),
+    (AvgOnHistory(RelativeStockLevel(rawMaterialStorage)), "avg relative stock level of raw material storage")
   ), verbose)
   
   m.simulate(8*60*60, verbose,()=>metricsStore.updateMetricsIfNeeded(m.clock()))

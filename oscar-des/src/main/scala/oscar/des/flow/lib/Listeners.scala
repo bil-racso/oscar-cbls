@@ -106,7 +106,7 @@ case class StockCapacity[Content<:StockContentType](s:Storage[Content]) extends 
 }
 
 case class RelativeStockLevel[Content<:StockContentType](s:Storage[Content]) extends DoubleExpr(false){
-  override def updatedValue(time:Double): Double = s.contentSize / s.maxSize
+  override def updatedValue(time:Double): Double = s.contentSize.toDouble / s.maxSize.toDouble
 }
 
 case class TotalPut[Content<:StockContentType](s:Storage[Content]) extends DoubleExpr(false){
@@ -287,7 +287,7 @@ case class CumulatedDuration(b:BoolExpr) extends DoubleExpr(true,b){
   }
 }
 
-class CurrentTime() extends DoubleExpr(false){
+case class CurrentTime() extends DoubleExpr(false){
   override def updatedValue(time:Double): Double = time
 }
 
@@ -305,8 +305,8 @@ case class Minus(a:DoubleExpr,b:DoubleExpr) extends DoubleExpr(false,a,b){
   override def updatedValue(time:Double): Double = a.value - b.value
 }
 
-case class Div(a:DoubleExpr,b:DoubleExpr) extends DoubleExpr(false,a,b){
-  override def updatedValue(time:Double): Double = a.value / b.value
+case class Div(a:DoubleExpr,b:DoubleExpr,defaultValueIfDividerIsZero:Double = Int.MaxValue) extends DoubleExpr(false,a,b){
+  override def updatedValue(time:Double): Double = if(b.value == 0) defaultValueIfDividerIsZero else (a.value / b.value)
 }
 
 //relational operators to get back to Propositions
@@ -336,7 +336,7 @@ case class NEQ(a:DoubleExpr,b:DoubleExpr) extends BoolExpr(false,a,b){
 case class PonderateWithDuration(s:DoubleExpr) extends DoubleExpr(true,s){
   var acc:Double = 0
   var prevTime:Double = 0
-  var prevValue = s.value
+  var prevValue:Double = s.value
   override def updatedValue(time:Double): Double = {
     val now = time
     val nowValue = s.value
@@ -377,11 +377,8 @@ case class MinOnHistory(s:DoubleExpr) extends DoubleExpr(true,s){
   }
 }
 
-case class AvgOnHistory(s:DoubleExpr) extends DoubleExpr(true,s){
-  val p = new PonderateWithDuration(s)
-
-  override def updatedValue(time:Double): Double = {
-    p.updatedValue(time)
-    p.value / time
+object AvgOnHistory{
+  def apply (s:DoubleExpr):DoubleExpr = {
+    Div(PonderateWithDuration(s),CurrentTime())
   }
 }
