@@ -10,11 +10,18 @@ case class ModelTime(m:Model) extends Time{
   override def time(): Double = m.clock()
 }
 
+object ExpressionStatus extends Enumeration {
+  type ExpressionStatus = Value
+  val Fresh, RegisteredNonAccumulating, RegisteredAccumulating = Value
+}
+
+import ExpressionStatus._
+
 //This file is about thing we want to measure on the factory process
 
 abstract class Expression(val accumulating:Boolean, val children:Expression*){
   def update()
-  var id:Int = -1
+  var status:ExpressionStatus = Fresh
   def valueString:String
 }
 
@@ -37,7 +44,6 @@ class MetricsStore(rootExpressions:List[(Expression,String)],verbose:Boolean){
   var expressions:List[Expression] = List.empty
   var accumulatingExpressions:List[Expression] = List.empty
   var nonAccumulatingExpressions:List[Expression] = List.empty
-  var currentStartID = 0
   var isClosed = false
 
   for((e,s) <- rootExpressions){
@@ -52,28 +58,33 @@ class MetricsStore(rootExpressions:List[(Expression,String)],verbose:Boolean){
   private def addMetric(e:Expression)(s:String = e.toString): Unit ={
     require(!isClosed)
 
-    def setNumbering(e:Expression, startID:Int, fatherAccumulating:Boolean):Int={
-      require(e.id == -1)
+    def registerSubExpressions(e:Expression, fatherAccumulating:Boolean){
+      if(e.status == RegisteredAccumulating ||  (e.status == RegisteredNonAccumulating && !fatherAccumulating))
+        return
+      //so now, either it is fresh, or was registered as non accumulating, and it is now with an accumulating gather
       val subtreeAccumulating = fatherAccumulating || e.accumulating
 
-      e.id = e.children.foldLeft(startID)({case (receivedID:Int,child:Expression) => setNumbering(child,receivedID,subtreeAccumulating)})
-      expressions = e :: expressions
-      if(subtreeAccumulating) {
-        accumulatingExpressions = e :: accumulatingExpressions
-      }else{
-        nonAccumulatingExpressions = e :: nonAccumulatingExpressions
+      for(child <- e.children) {
+        registerSubExpressions(child, subtreeAccumulating)
       }
-      e.id + 1
+
+      if(e.status == Fresh) expressions = e :: expressions
+      if (subtreeAccumulating) {
+        accumulatingExpressions = e :: accumulatingExpressions
+        e.status = RegisteredAccumulating
+      } else {
+        e.status = RegisteredNonAccumulating
+      }
     }
 
-    currentStartID = setNumbering(e,currentStartID,false)
+    registerSubExpressions(e,false)
   }
 
   private def close(){
     isClosed = true
     expressions = expressions.reverse
     accumulatingExpressions = accumulatingExpressions.reverse
-    nonAccumulatingExpressions = nonAccumulatingExpressions.reverse
+    nonAccumulatingExpressions = expressions.filter(_.status == RegisteredNonAccumulating).reverse
   }
 
   //to be called at each step
@@ -212,6 +223,12 @@ class Changes(p:BoolExpr) extends BoolExpr(true,p){
   }
 }
 
+object CulumatedDurationNotStart {
+  def apply(b: BoolExpr, t: Time): DoubleExpr = {
+    Minus(CumulatedDuration(b, t), CumulatedDuration(HasAlwaysBeen(b), t))
+  }
+}
+
 //variables always have a value.
 case class CumulatedDuration(b:BoolExpr, t:Time) extends DoubleExpr(true,b){
   var acc:Double = 0
@@ -228,8 +245,8 @@ case class CumulatedDuration(b:BoolExpr, t:Time) extends DoubleExpr(true,b){
         wasTrue = false
       }
     }else if(b.value){
-        wasTrue = true
-        previousTime = t.time
+      wasTrue = true
+      previousTime = t.time
     }
     acc
   }
@@ -247,6 +264,15 @@ case class Mult(a:DoubleExpr,b:DoubleExpr) extends DoubleExpr(false,a,b){
 case class Plus(a:DoubleExpr,b:DoubleExpr) extends DoubleExpr(false,a,b){
   override def updatedValue(): Double = a.value + b.value
 }
+
+case class Minus(a:DoubleExpr,b:DoubleExpr) extends DoubleExpr(false,a,b){
+  override def updatedValue(): Double = a.value - b.value
+}
+
+case class Div(a:DoubleExpr,b:DoubleExpr) extends DoubleExpr(false,a,b){
+  override def updatedValue(): Double = a.value / b.value
+}
+
 
 //relational operators to get back to Propositions
 case class G(a:DoubleExpr,b:DoubleExpr) extends BoolExpr(false,a,b) {

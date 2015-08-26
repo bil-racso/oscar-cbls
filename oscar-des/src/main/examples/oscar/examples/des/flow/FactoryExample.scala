@@ -41,7 +41,6 @@ object FactoryExample extends App with HelperForProcess{
     0,
     "orderingPolicy")
 
-
   val inputFeederOfDieCuttingPartA = new FIFOStorage[Items](100,Nil,"inputFeederOfDieCuttingPartA", verbose,false)
 
   //takes 15 minutes to transport a coil, and install it
@@ -89,7 +88,12 @@ object FactoryExample extends App with HelperForProcess{
   val metricsStore = new MetricsStore(List(
     (Mult(BatchCount(dieCuttingPartA),TotalPut(outputSlotOfDieCuttingPArtA)),"aMetric"),
     (CumulatedDuration(Empty(rawMaterialStorage),ModelTime(m)),"duration of empty raw material storage"),
-    (Empty(rawMaterialStorage),"empty raw material storage")
+    (Empty(rawMaterialStorage),"empty raw material storage"),
+    (CumulatedDuration(Not(IsRunning(forming)),ModelTime(m)), "cumulated duration of forming being inactive"),
+    (CumulatedDuration(Not(HasBeen(IsRunning(forming))),ModelTime(m)), "cumulated duration of forming being inactive at the beginnig of the story"),
+      (CulumatedDurationNotStart(Not(IsRunning(forming)),ModelTime(m)), "cumulated duration of forming being inactive, not countint initial")
+
+
   ), verbose)
 
 

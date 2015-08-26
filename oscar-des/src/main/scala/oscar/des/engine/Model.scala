@@ -93,3 +93,4 @@ class Model {
     " eventQueue is" + (if (this.eventQueue.isEmpty) " " else " not ") + " empty"
   }
 }
+
