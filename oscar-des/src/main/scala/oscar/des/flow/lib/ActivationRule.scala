@@ -3,36 +3,55 @@ package oscar.des.flow.lib
 import oscar.des.engine.Model
 import oscar.des.flow.core.StockNotificationTarget
 
+/**
+ * a rule that activates a, based on its specific activation scheme
+ * @param a the activeable that is activated by this activation
+ */
 abstract class ActivationRule(a:Activable){
   a.setUnderControl()
   def activate(intensity:Int) {a.activate(intensity)}
 }
 
-class RegularActivation(m:Model, intensity:Int, tick:Float, a:Activable) extends ActivationRule(a:Activable){
+/**
+ * activates "a" with intensity "intensity" every "delay". the initial activation is performed after "offset"
+ * @param m the model of the simulation
+ * @param intensity the intensity if the activation
+ * @param delay the delay between consecutive activations
+ * @param initialDelay the initial delay before the first activation
+ * @param a the activeable that is activated by this activation
+ */
+class RegularActivation(m:Model, intensity:Int, delay:Float, initialDelay:Float, a:Activable) extends ActivationRule(a:Activable){
   def doActivate(){
     activate(intensity)
-    m.wait(tick){doActivate()}
+    m.wait(delay){doActivate()}
   }
+  m.wait(initialDelay){doActivate()}
 }
 
 /**
- * This policy fills in a stock when it is below some threshold by placing an order to a supplier.
- * The storage will be refurbished when the supplier actually delivers the order
+ * This rule activates the activeable "a" by intensity activationSize(s.content)
+ * whenever s.content goes below "threshold"
  *
- * @param s the storage that is refurbished through this policy
- * @param threshold the order is placed as soon as the stock gets below this threshold
- * @param verbose true to print order placement on the console
- * @param name a name used for pretty printing
- * @author renaud.delandtsheer@cetic.be
- * */
-class OnStockThreshold[Content<:StockContentType](s:Storage[Content],
-                                                  m:Model,
-                                                  a:Activable,
-                                                  threshold:Int,
-                                                  activationSize:Int=>Int,
-                                                  verbose:Boolean = true,
-                                                  period:Float, //set to zero if no tick needed
-                                                  name:String)
+ * if period is specified, it only perform the activation when time is a multiple of period.
+ * the intensity is computed at the time of activation of "a"
+ *
+ * @param s the stock that is monitored by this rule
+ * @param m tye model of the simulation
+ * @param a the activeable that is activated by this activation
+ * @param threshold the threshold for activation
+ * @param activationSize a function that computes the level of activation, given the s.content
+ * @param verbose true to have verbosities o nthe standard output
+ * @param period the period of activation, set to zero for immediate activation
+ * @param name the name of this rule, for debugging purposes
+ */
+class OnLowerThreshold(s:Storage,
+                       m:Model,
+                       a:Activable,
+                       threshold:Int,
+                       activationSize:Int=>Int,
+                       verbose:Boolean = true,
+                       period:Float,
+                       name:String)
   extends ActivationRule(a:Activable) with StockNotificationTarget{
   s.registerNotificationTarget(this)
 
@@ -40,38 +59,27 @@ class OnStockThreshold[Content<:StockContentType](s:Storage[Content],
 
   private var lastNotifiedlevel:Int = s.contentSize
 
-  def notifyStockLevel(level: Int): Unit = {
+  override def notifyStockLevel(level: Int): Unit = {
     if(level <= threshold && lastNotifiedlevel > threshold){
-      performOrder()
+      activation()
     }
     lastNotifiedlevel = level
   }
 
-  private def doPerformOrder(): Unit ={
+  private def doActivate(): Unit ={
     val activation = activationSize(s.contentSize)
     if (verbose) println("threshold (" + threshold + ") reached on " + s.name + " (now:" + s.contentSize + "), activation " + activation)
     activate(activation)
     placedOrders += 1
   }
 
-  protected def performOrder(): Unit ={
+  protected def activation(): Unit ={
     if(period == 0){
-      doPerformOrder
+      doActivate
     }else{
-      m.wait(period - (m.clock() % period)) {if (s.contentSize < threshold) doPerformOrder()}
+      m.wait(period - (m.clock() % period)) {if (s.contentSize < threshold) doActivate()}
     }
   }
 
   override def toString: String = name + " " + this.getClass.getSimpleName + ":: placedOrders:" + placedOrders
 }
-
-
-class OnOrder[Content<:StockContentType](s:Storage[Content],
-                                         m:Model,
-                                         orderBook:Storage[Orders],
-                                         threshold:Int,
-                                         a:Activable,
-                                         activationSize:Int=>Int,
-                                         verbose:Boolean = true,
-                                         period:Float, //set to zero if no tick needed
-                                         name:String) extends ActivationRule(a:Activable)

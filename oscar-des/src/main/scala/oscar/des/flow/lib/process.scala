@@ -22,19 +22,7 @@ import scala.collection.mutable.ListBuffer
 import scala.language.implicitConversions
 import oscar.des.flow.core.ItemClassHelper._
 
-/** since many of the classes proposed by this lib support random variables, represented using functions to Floats or Ints,
-  * and ou might not need this dimension in your model,
-  * this trait provides implicit translation eg. from Float to function to Float
-  */
-trait HelperForProcess{
-  implicit def floatToConstantFloatFunction(f: Float): (() => Float) = () => f
-  implicit def intToConstantFloatFunction(f: Int): (() => Float) = () => f
-  implicit def floatToConstantIntFunction(f: Float): (() => Int) = () => f.toInt
-  implicit def intToConstantIntFunction(f: Int): (() => Int) = () => f
-  implicit def constantFetchableToFunctionFetchable(l: List[(Int,Fetchable)]): List[(()=>Int,Fetchable)] = l.map(v => (()=>v._1,v._2))
-  implicit def constantPutableToFunctionPutable(l: List[(Int,Putable)]): List[(()=>Int,Putable)] = l.map(v => (()=>v._1,v._2))
 
-}
 
 /**
  * a process inputs some inputs, and produces its outputs at a given rate.
@@ -52,7 +40,7 @@ case class SingleBatchProcess(m:Model,
                               batchDuration:() => Float,
                               inputs:Array[(() => Int, Fetchable)],
                               outputs:Array[(()=>Int,Putable)],
-                              transformFunction:ItemClass => ItemClass,
+                              transformFunction:ItemClassTransformFunction,
                               name:String,
                               verbose:Boolean = true) extends ActivableAtomicProcess(name,verbose){
 
@@ -120,7 +108,7 @@ case class BatchProcess(m:Model,
                         inputs:Array[(() => Int, Fetchable)],
                         outputs:Array[(() => Int,Putable)],
                         name:String,
-                        transformFunction:ItemClass => ItemClass,
+                        transformFunction:ItemClassTransformFunction,
                         verbose:Boolean = true) extends ActivableMultipleProcess(name,verbose){
 
   override val childProcesses:Iterable[SingleBatchProcess] =
@@ -157,7 +145,7 @@ case class SplittingSingleBatchProcess(m:Model,
                                        batchDuration:() => Float,
                                        inputs:Array[(() => Int, Fetchable)],
                                        outputs:Array[Array[(() => Int,Putable)]],
-                                       transformFunction:ItemClass => (Int,ItemClass),
+                                       transformFunction:ItemClassTransformWitAdditionalOutput,
                                        name:String,
                                        verbose:Boolean = true) extends ActivableAtomicProcess(name,verbose){
 
@@ -234,7 +222,7 @@ case class SplittingBatchProcess(m:Model,
                                  inputs:Array[(() => Int, Fetchable)],
                                  outputs:Array[Array[(()=>Int,Putable)]],
                                  name:String,
-                                 transformFunction:ItemClass => (Int,ItemClass),
+                                 transformFunction:ItemClassTransformWitAdditionalOutput,
                                  verbose:Boolean = true) extends ActivableMultipleProcess(name,verbose){
 
   override val childProcesses:Iterable[SplittingSingleBatchProcess] =
@@ -276,7 +264,7 @@ class ConveyorBeltProcess(m:Model,
                           minimalSeparationBetweenBatches:Float,
                           val inputs:List[(() => Int, Fetchable)],
                           val outputs:List[(() => Int, Putable)],
-                          transformFunction:ItemClass => ItemClass,
+                          transformFunction:ItemClassTransformFunction,
                           name:String,
                           verbose:Boolean = true) extends ActivableAtomicProcess(name,verbose){
 

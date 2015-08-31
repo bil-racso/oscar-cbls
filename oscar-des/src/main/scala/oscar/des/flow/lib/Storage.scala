@@ -6,10 +6,6 @@ import oscar.des.flow.core._
 import scala.collection.mutable.ListBuffer
 import scala.language.implicitConversions
 
-class StockContentType
-class Orders extends StockContentType
-class Items extends StockContentType
-
 /**
  * represents a storage point, or a stock as you name it
  * @param maxSize the maximal content of the stock. attempting to put more items will block the putting operations
@@ -17,10 +13,10 @@ class Items extends StockContentType
  * @param verbose true to print when stock is empty or overfull
  * @author renaud.delandtsheer@cetic.be
  * */
-abstract class Storage[Content<:StockContentType](val maxSize: Int,
-                                                  val name:String,
-                                                  val verbose:Boolean,
-                                                  overflowOnInput:Boolean)
+abstract class Storage(val maxSize: Int,
+                       val name:String,
+                       val verbose:Boolean,
+                       overflowOnInput:Boolean)
   extends RichPutable with RichFetchable {
 
   class BufferCompositeItem(var n:Int, val itemClass:ItemClass)
@@ -54,8 +50,14 @@ abstract class Storage[Content<:StockContentType](val maxSize: Int,
       }
     }
 
-    if (somethingCouldBeDone)
-      for (target <- notificationTo) target.notifyStockLevel(contentSize)
+    if (somethingCouldBeDone){
+      //dirty but faster
+      var tmp = notificationTo
+      while(tmp.nonEmpty){
+        tmp.head.notifyStockLevel(contentSize)
+        tmp = tmp.tail
+      }
+    }
 
     if (overflowOnInput) {
       val lostByOverflow = flushBlockedPuts()
@@ -85,11 +87,20 @@ abstract class Storage[Content<:StockContentType](val maxSize: Int,
   }
 }
 
-class FIFOStorage[Content<:StockContentType](maxSize:Int,
-                                             initialContent:List[(Int,ItemClass)],
-                                             name:String,
-                                             verbose:Boolean,
-                                             overflowOnInput:Boolean) extends Storage[Content](maxSize,name,verbose,overflowOnInput){
+/**
+ *this type of storage acts in a FIFO-way.
+ * it does matter to know this if you distinguish between different items.
+ * @param maxSize the maximal content of the stock. attempting to put more items will block the putting operations
+ * @param initialContent the initial content of the stock
+ * @param name the name of the stock
+ * @param verbose true to print when stock is empty or overfull
+ * @param overflowOnInput true if the stock overflows when there are excessing input, false to have it blocking the puts when it is full
+ */
+class FIFOStorage(maxSize:Int,
+                  initialContent:List[(Int,ItemClass)],
+                  name:String,
+                  verbose:Boolean,
+                  overflowOnInput:Boolean) extends Storage(maxSize,name,verbose,overflowOnInput){
 
   val content:ListBuffer[BufferCompositeItem] = ListBuffer.empty ++ initialContent.map(coupleToComposite)
 
@@ -157,11 +168,20 @@ class FIFOStorage[Content<:StockContentType](maxSize:Int,
   }
 }
 
-class LIFOStorage[Content<:StockContentType](maxSize:Int,
-                                             initialContent:List[(Int,ItemClass)] = List.empty,
-                                             name:String,
-                                             verbose:Boolean,
-                                             overflowOnInput:Boolean) extends Storage[Content](maxSize,name,verbose,overflowOnInput){
+ /**
+ *this type of storage acts in a LIFO-way.
+ * it does matter to know this if you distinguish between different items.
+ * @param maxSize the maximal content of the stock. attempting to put more items will block the putting operations
+ * @param initialContent the initial content of the stock
+ * @param name the name of the stock
+ * @param verbose true to print when stock is empty or overfull
+ * @param overflowOnInput true if the stock overflows when there are excessing input, false to have it blocking the puts when it is full
+ */
+class LIFOStorage(maxSize:Int,
+                  initialContent:List[(Int,ItemClass)] = List.empty,
+                  name:String,
+                  verbose:Boolean,
+                  overflowOnInput:Boolean) extends Storage(maxSize,name,verbose,overflowOnInput){
 
   var content:List[BufferCompositeItem] = initialContent.map(coupleToComposite)
 

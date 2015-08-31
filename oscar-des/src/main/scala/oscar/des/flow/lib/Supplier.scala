@@ -23,7 +23,7 @@ class PartSupplier(m:Model,
   private var deliveredOrders = 0
   private var totalDeliveredParts = 0
 
-  def order[Content<:StockContentType](orderQuantity:Int, to:Storage[Content]): Unit ={
+  def order(orderQuantity:Int, to:Storage): Unit ={
     totalOrderedParts += orderQuantity
     placedOrders += 1
     val willBeDelivered = (deliveredPercentage() * orderQuantity) / 100

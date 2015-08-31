@@ -14,10 +14,10 @@ abstract class ActivableProcess(name:String, verbose:Boolean) extends Activable{
   def startedBatchCount:Int
   def totalWaitDuration():Double
 
-  var productionBatch:LIFOStorage[Items] = null;
+  var productionBatch:LIFOStorage = null;
 
   override def setUnderControl(){
-    productionBatch = new LIFOStorage[Items](Int.MaxValue,List.empty,"productionWindow_" + this.name, verbose, false)
+    productionBatch = new LIFOStorage(Int.MaxValue,List.empty,"productionWindow_" + this.name, verbose, false)
     addPreliminaryInput(productionBatch)
   }
 
@@ -25,14 +25,14 @@ abstract class ActivableProcess(name:String, verbose:Boolean) extends Activable{
     productionBatch.put(intensity,zeroItemClass)({()=>})
   }
 
-  def addPreliminaryInput(preliminary:Storage[Items])
+  def addPreliminaryInput(preliminary:Storage)
 }
 
 abstract class ActivableAtomicProcess(name:String, verbose:Boolean) extends ActivableProcess(name,verbose){
 
   def myInput:Inputter
 
-  override def addPreliminaryInput(preliminary: Storage[Items]) {
+  override def addPreliminaryInput(preliminary: Storage) {
     myInput.addPreliminaryInput(preliminary)
   }
 }
@@ -40,7 +40,7 @@ abstract class ActivableAtomicProcess(name:String, verbose:Boolean) extends Acti
 abstract class ActivableMultipleProcess(name:String, verbose:Boolean) extends ActivableProcess(name,verbose){
   def childProcesses:Iterable[ActivableAtomicProcess]
 
-  override def addPreliminaryInput(preliminary: Storage[Items]) {
+  override def addPreliminaryInput(preliminary: Storage) {
     for(s <- childProcesses) s.myInput.addPreliminaryInput(preliminary)
   }
 
