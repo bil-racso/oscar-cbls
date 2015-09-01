@@ -35,7 +35,7 @@ object FactoryExample extends App with FactorySimulationHelper {
     rawSupplier,
     20,
     (size:Int) => 20,
-    true,
+    verbose,
     0,
     "orderingPolicy")
 

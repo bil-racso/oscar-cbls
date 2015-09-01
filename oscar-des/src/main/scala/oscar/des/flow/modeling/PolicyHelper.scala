@@ -19,7 +19,6 @@ trait PolicyHelper {
   def regularActivation(m:Model, intensity:Int, delay:Float, initialDelay:Float, a:Activable)
   = new RegularActivation(m, intensity, delay, initialDelay, a)
 
-
   /**
    * This rule activates the activeable "a" by intensity activationSize(s.content)
    * whenever s.content goes below "threshold"
@@ -32,7 +31,7 @@ trait PolicyHelper {
    * @param a the activeable that is activated by this activation
    * @param threshold the threshold for activation
    * @param activationSize a function that computes the level of activation, given the s.content
-   * @param verbose true to have verbosities o nthe standard output
+   * @param verbose true to have verbosities on the standard output
    * @param period the period of activation, set to zero for immediate activation
    * @param name the name of this rule, for debugging purposes
    */

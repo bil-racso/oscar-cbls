@@ -232,7 +232,7 @@ class LIFOStorage(maxSize:Int,
         if(head.n <= remainsToFetch){
           //we take this composite fully
           content = t
-          internalSize -= remainsToFetch
+          internalSize -= head.n
           internalFetch(remainsToFetch-head.n, ItemClassHelper.union(head.itemClass,hasBeenFetch))
         }else{
           //we do not take everything, we have to put a part back

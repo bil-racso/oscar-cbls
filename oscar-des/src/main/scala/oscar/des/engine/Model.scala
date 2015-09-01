@@ -87,9 +87,8 @@ class Model {
     proc.resume()
   }
 
-
   override def toString():String = {
-    "Model:: currentTime:" + currentTime + " " + " step:" + steps +
+    "Model::currentTime:" + currentTime + " " + " step:" + steps +
     " eventQueue is" + (if (this.eventQueue.isEmpty) " " else " not ") + " empty"
   }
 }
