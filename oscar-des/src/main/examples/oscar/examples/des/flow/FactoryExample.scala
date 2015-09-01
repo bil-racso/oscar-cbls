@@ -50,8 +50,6 @@ object FactoryExample extends App with FactorySimulationHelper {
   //we consider here individual "already cut" dies although they are still aggregated into a single coil
   val transportingToDieCutterA = singleBatchProcess(m, 15*60, Array((()=>1, rawMaterialStorage)), Array((()=>100,inputFeederOfDieCuttingPartA)), identity, "transportingToDieCutterA", verbose)
 
-
-
   val outputSlotOfDieCuttingPArtA = lIFOStorage(400,Nil,"outputSlotOfDieCuttingPArtA", verbose,false)
   val dieCuttingPartA = singleBatchProcess(m, 10, Array((()=>1, inputFeederOfDieCuttingPartA)), Array((()=>4,outputSlotOfDieCuttingPArtA)), identity, "dieCuttingPartA", verbose)
 

@@ -100,6 +100,7 @@ class Aggregator{
   override def toString = s"Aggregator(sum=$sum, mult=$mult, size=$size, max=$max, min=$min)"
 }
 
+
 class RichAggregator(fields:Array[String]){
   val fieldDico:SortedMap[String,Int] =
     SortedMap.empty[String,Int].++(for (a <- fields.indices) yield (fields(a),a))
@@ -110,13 +111,32 @@ class RichAggregator(fields:Array[String]){
     recordedData = d :: recordedData
   }
 
-  def statisticsForField(field:String):Statistics
-}
+  def statisticsForField(field:String):Statistics = {
+    val id = fieldDico(field)
+    val dataForThisField = recordedData.map(_(id))
+    Statistics(dataForThisField)
+  }
 
-object Statistics{
-  def apply(l:List[Double]):Statistics = {
-
-
+  def dataForTheseTwoFields(field1:String,field2:String):List[(Double,Double)] = {
+    val id1 = fieldDico(field1)
+    val id2 = fieldDico(field2)
+    recordedData.map(line => (line(id1),line(id2)))
   }
 }
-case class Statistics(min:Double,max:Double,avg:Double,median:Double)
+
+case class Statistics(min:Double, max:Double, avg:Double, med:Double){
+  override def toString: String = "(min:" + min + " max:" + max + " avg:" + avg + " med:" + med + ")"
+  def denseString:String = padToLength("" + min,4) + " " + padToLength("" + max,4) + " " + padToLength("" + avg,4) + " " + padToLength("" + med,5)
+  def nSpace(n:Int):String = if(n <= 0) "" else " " + nSpace(n-1)
+  private def padToLength(s: String, l: Int) = (s + nSpace(l)).substring(0, l)
+}
+
+object Statistics {
+  def apply(l: List[Double]): Statistics = {
+    require(l.nonEmpty)
+    val sorted = l.sorted
+    val size = l.size
+    Statistics(min=sorted.head, max = sorted.last, avg=l.sum/size, med=sorted.apply(size/2))
+  }
+}
+
