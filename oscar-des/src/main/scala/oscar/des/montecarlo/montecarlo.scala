@@ -17,6 +17,8 @@ package oscar.des.montecarlo
 
 import JSci.maths.statistics._
 
+import scala.collection.immutable.SortedMap
+
 /**
  * Monte Carlo framework.
  *
@@ -97,3 +99,24 @@ class Aggregator{
 
   override def toString = s"Aggregator(sum=$sum, mult=$mult, size=$size, max=$max, min=$min)"
 }
+
+class RichAggregator(fields:Array[String]){
+  val fieldDico:SortedMap[String,Int] =
+    SortedMap.empty[String,Int].++(for (a <- fields.indices) yield (fields(a),a))
+
+  var recordedData:List[Array[Double]] = List.empty
+
+  def addData(d:Array[Double]): Unit ={
+    recordedData = d :: recordedData
+  }
+
+  def statisticsForField(field:String):Statistics
+}
+
+object Statistics{
+  def apply(l:List[Double]):Statistics = {
+
+
+  }
+}
+case class Statistics(min:Double,max:Double,avg:Double,median:Double)

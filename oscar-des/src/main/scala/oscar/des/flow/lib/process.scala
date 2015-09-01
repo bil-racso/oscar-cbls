@@ -154,7 +154,7 @@ case class SplittingSingleBatchProcess(m:Model,
 
   var performedBatches = 0
   var startedBatches = 0
-  private var failedBatches = 0
+  private var completedBatches:Array[Int]= Array.fill(outputs.size)(0)
 
   private var mTotalWaitDuration: Double = 0
   private var startWaitTime: Double = 0
@@ -188,6 +188,7 @@ case class SplittingSingleBatchProcess(m:Model,
         performedBatches +=1
         val (outputPort,outputi) = transformFunction(i)
         if (verbose) println(name + ": finished batch, outputting to " + outputPort)
+        completedBatches(outputPort) += 1
         myOutputs(outputPort).performOutput(outputi, () => {
           if (verbose) println(name + ": finished outputting")
           mTotalWaitDuration += (m.clock() - startWaitTime)
@@ -199,7 +200,7 @@ case class SplittingSingleBatchProcess(m:Model,
   }
 
   override def toString: String = {
-    name + " " + this.getClass.getSimpleName + ":: performedBatches:" + performedBatches + " failedBatches:" + failedBatches + " totalWaitDuration:" + totalWaitDuration + (if (waiting) " waiting" else " running")
+    name + " " + this.getClass.getSimpleName + ":: performedBatches:" + performedBatches + " outputBatches:[" + completedBatches.mkString(";") + "] totalWaitDuration:" + totalWaitDuration + (if (waiting) " waiting" else " running")
   }
 }
 

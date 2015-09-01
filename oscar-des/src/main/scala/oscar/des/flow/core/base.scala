@@ -193,6 +193,7 @@ case class CounterGate(waitedNotification:Int, gate: ItemClass => Unit, var item
   */
 class Outputter(outputs:Iterable[(() => Int, Putable)]) {
   val outputCount = outputs.size
+  /**returns the number of output items*/
   def performOutput(i:ItemClass, block: () => Unit){
     val gate = CounterGate(outputCount +1, _ => block())
     for((nr,putable) <- outputs){

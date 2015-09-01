@@ -1,5 +1,7 @@
 package oscar.des.flow.core
 
+import oscar.des.flow.core.ItemClassHelper.ItemClass
+
 import scala.collection.SortedSet
 import scala.collection.immutable.{SortedMap, BitSet}
 import scala.language.implicitConversions
@@ -29,6 +31,8 @@ class AttributeDefinitions(l:String*){
     case Some(a) => a
     case None => throw new Error("unknown attribute:"+ s)
   }
+
+  def getN(i:Int) = attributeArray(i)
 }
 
 class Attribute(val name:String, val id:Int,val convention:AttributeDefinitions) extends Ordered[Attribute]{
@@ -50,7 +54,7 @@ object AttributeSet{
  */
 case class AttributeSet(attributes:SortedSet[Attribute], val convention:AttributeDefinitions){
   def mask:Int = attributes.foldLeft(0)((acc,l) => acc | l.mask)
-
+  implicit def itemClass:ItemClass = mask
   override def toString: String = {
     "AttributeSet(" + attributes.map(_.name).mkString(",") + " " + convention + ")"
   }

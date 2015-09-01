@@ -1,7 +1,9 @@
 package oscar.examples.des
 
 import oscar.des.engine.Model
+import oscar.des.flow.core.{AttributeSet, AttributeDefinitions, Attribute}
 import oscar.des.flow.modeling.FactorySimulationHelper
+import scala.collection.immutable.SortedSet
 import scala.language.implicitConversions
 
 /**
@@ -23,10 +25,12 @@ object FactoryExample extends App with FactorySimulationHelper {
   val verbose = false
 
   val standardItemClass = zeroItemClass
-  val choseZeroOne = outputValue(choose(0 to 1))
+  val allAttributes = new AttributeDefinitions("sampleAttribute")
+  val initialRawBatch = allAttributes.getN(0)
+  val choseZeroOne = iTE(initialRawBatch,outputValue(choose(0 to 1)),outputValue(1))
 
   //time unit is the second
-  val rawMaterialStorage = fIFOStorage(200,List((40,standardItemClass)),"rawMaterialStorage", verbose,false)
+  val rawMaterialStorage = fIFOStorage(200,List((40,AttributeSet(SortedSet(initialRawBatch),allAttributes).itemClass)),"rawMaterialStorage", verbose,false)
 
 
   val rawSupplier = singleBatchProcess(m, 5000, Array(), Array((()=>1,rawMaterialStorage)), identity, "rawSupplier", verbose)
@@ -39,15 +43,24 @@ object FactoryExample extends App with FactorySimulationHelper {
     0,
     "orderingPolicy")
 
-  val inputFeederOfDieCuttingPartA = fIFOStorage(100,Nil,"inputFeederOfDieCuttingPartA", verbose,false)
 
+  val inputFeederOfDieCuttingPartA = fIFOStorage(100,Nil,"inputFeederOfDieCuttingPartA", verbose,false)
   //takes 15 minutes to transport a coil, and install it
   //we suppose that hte coil is decomposed into parts during the transportation, because we have no model of "cutting process"
   //we consider here individual "already cut" dies although they are still aggregated into a single coil
   val transportingToDieCutterA = singleBatchProcess(m, 15*60, Array((()=>1, rawMaterialStorage)), Array((()=>100,inputFeederOfDieCuttingPartA)), identity, "transportingToDieCutterA", verbose)
 
+
+
   val outputSlotOfDieCuttingPArtA = lIFOStorage(400,Nil,"outputSlotOfDieCuttingPArtA", verbose,false)
   val dieCuttingPartA = singleBatchProcess(m, 10, Array((()=>1, inputFeederOfDieCuttingPartA)), Array((()=>4,outputSlotOfDieCuttingPArtA)), identity, "dieCuttingPartA", verbose)
+
+  val outputOfQAAfterCutting = fIFOStorage(100,Nil,"inputFeederOfDieCuttingPartA", verbose,false)
+  val trashContainerForRejectedCutItems = lIFOStorage(1000000000, Nil, "trashContainerForRejectedCutItems", verbose, false)
+  val qAOnInputFeeder = splittingSingleBatchProcess(m, 30,
+    Array((()=>1, outputSlotOfDieCuttingPArtA)),
+    Array(Array((()=>1,outputOfQAAfterCutting)),
+      Array((()=>1,trashContainerForRejectedCutItems))), choseZeroOne, "QAAterSp", verbose)
 
   val bufferForDieA =  fIFOStorage(500,Nil,"bufferForDieA", verbose,false)
   val outputBeltFromDieCuttingA = conveyorBeltProcess(m, 20, 0.5.toFloat , List((1, outputSlotOfDieCuttingPArtA)), List((1, bufferForDieA)), identity, "outputBeltFromDieCuttingA", verbose)
@@ -103,6 +116,9 @@ object FactoryExample extends App with FactorySimulationHelper {
   println(inputFeederOfDieCuttingPartA)
   println(outputSlotOfDieCuttingPArtA)
   println(dieCuttingPartA)
+
+  println(qAOnInputFeeder)
+  println(trashContainerForRejectedCutItems)
 
   println(outputBeltFromDieCuttingA)
   println(bufferForDieA)
