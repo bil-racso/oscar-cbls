@@ -61,11 +61,11 @@ object FactoryExample extends App with FactorySimulationHelper {
       Array((()=>1,trashContainerForRejectedCutItems))), choseZeroOne, "QAAterSp", verbose)
 
   val bufferForDieA =  fIFOStorage(500,Nil,"bufferForDieA", verbose,false)
-  val outputBeltFromDieCuttingA = conveyorBeltProcess(m, 20, 0.5.toFloat , List((1, outputSlotOfDieCuttingPArtA)), List((1, bufferForDieA)), identity, "outputBeltFromDieCuttingA", verbose)
+  val outputBeltFromDieCuttingA = conveyorBeltProcess(m, 20, 0.5.toFloat , Array((1, outputSlotOfDieCuttingPArtA)), Array((1, bufferForDieA)), identity, "outputBeltFromDieCuttingA", verbose)
 
 
   val inputAOfForming = fIFOStorage(2, Nil, "inputAOfForming", verbose, false)
-  val transportingFromBufferA = conveyorBeltProcess(m, 20, 0.5.toFloat , List((1, bufferForDieA)), List((1, inputAOfForming)), identity, "transportingFromBufferA", verbose)
+  val transportingFromBufferA = conveyorBeltProcess(m, 20, 0.5.toFloat , Array((1, bufferForDieA)), Array((1, inputAOfForming)), identity, "transportingFromBufferA", verbose)
 
   //we consider here individual "already cut" dies although they are still aggregated into a single coil
   val inputFeederOfDieCuttingPartB = fIFOStorage(100, Nil, "inputFeederOfDieCuttingPartB", verbose, false)
@@ -77,10 +77,10 @@ object FactoryExample extends App with FactorySimulationHelper {
   val dieCuttingPartB = singleBatchProcess(m, 10, Array((()=>1, inputFeederOfDieCuttingPartB)), Array((()=>4,outputSlotOfDieCuttingPArtB)), identity, "dieCuttingPartB", verbose)
 
   val bufferForDieB = lIFOStorage(500, Nil, "outputSlotOfDieCuttingPArtA", verbose, false)
-  val outputBeltFromDieCuttingB = conveyorBeltProcess(m, 20, 0.5.toFloat , List((1, outputSlotOfDieCuttingPArtB)), List((1, bufferForDieB)), identity, "outputBeltFromDieCuttingB", verbose)
+  val outputBeltFromDieCuttingB = conveyorBeltProcess(m, 20, 0.5.toFloat , Array((1, outputSlotOfDieCuttingPArtB)), Array((1, bufferForDieB)), identity, "outputBeltFromDieCuttingB", verbose)
 
   val inputBOfForming = lIFOStorage(2, Nil, "inputBOfForming", verbose, false)
-  val transportingFromBufferB = conveyorBeltProcess(m, 20, 0.5.toFloat , List((1, bufferForDieB)), List((1, inputBOfForming)), identity, "transportingFromBufferB", verbose)
+  val transportingFromBufferB = conveyorBeltProcess(m, 20, 0.5.toFloat , Array((1, bufferForDieB)), Array((1, inputBOfForming)), identity, "transportingFromBufferB", verbose)
 
   val outputContainerOfForming = lIFOStorage(120, Nil, "outputContainerOfForming", verbose,false)
   val forming = singleBatchProcess(m, 30, Array((()=>2, inputAOfForming),(()=>2, inputBOfForming)), Array((()=>2,outputContainerOfForming)), identity, "forming", verbose)

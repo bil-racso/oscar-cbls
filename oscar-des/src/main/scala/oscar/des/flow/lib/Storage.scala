@@ -1,9 +1,9 @@
 package oscar.des.flow.lib
 
+import oscar.des.flow.DoublyLinkedList
 import oscar.des.flow.core.ItemClassHelper._
 import oscar.des.flow.core._
 
-import scala.collection.mutable.ListBuffer
 import scala.language.implicitConversions
 
 /**
@@ -102,7 +102,10 @@ class FIFOStorage(maxSize:Int,
                   verbose:Boolean,
                   overflowOnInput:Boolean) extends Storage(maxSize,name,verbose,overflowOnInput){
 
-  val content:ListBuffer[BufferCompositeItem] = ListBuffer.empty ++ initialContent.map(coupleToComposite)
+  val content:DoublyLinkedList[BufferCompositeItem] = new DoublyLinkedList[BufferCompositeItem]
+  for(i <- initialContent){
+    content.append(coupleToComposite(i))
+  }
 
   override def contentSize: Int = internalSize
 
@@ -153,7 +156,7 @@ class FIFOStorage(maxSize:Int,
     }else if (content.nonEmpty){
       val head = content.head
       if(head.n <= remainsToFetch){
-        content.remove(0)
+        content.deleteFirst
         internalSize -= head.n
         internalFetch(remainsToFetch-head.n, ItemClassHelper.union(head.itemClass,hasBeenFetch))
       }else{

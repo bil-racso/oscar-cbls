@@ -17,8 +17,8 @@ trait FactoryHelper {
   implicit def intToConstantFloatFunction(f: Int): (() => Float) = () => f
   implicit def floatToConstantIntFunction(f: Float): (() => Int) = () => f.toInt
   implicit def intToConstantIntFunction(f: Int): (() => Int) = () => f
-  implicit def constantFetchableToFunctionFetchable(l: List[(Int,Fetchable)]): List[(()=>Int,Fetchable)] = l.map(v => (()=>v._1,v._2))
-  implicit def constantPutableToFunctionPutable(l: List[(Int,Putable)]): List[(()=>Int,Putable)] = l.map(v => (()=>v._1,v._2))
+  implicit def constantFetchableToFunctionFetchable(l: Array[(Int,Fetchable)]): Array[(()=>Int,Fetchable)] = l.map(v => (()=>v._1,v._2))
+  implicit def constantPutableToFunctionPutable(l: Array[(Int,Putable)]): Array[(()=>Int,Putable)] = l.map(v => (()=>v._1,v._2))
 
 
 
@@ -85,8 +85,8 @@ trait FactoryHelper {
   def conveyorBeltProcess(m:Model,
                           processDuration:() => Float,
                           minimalSeparationBetweenBatches:Float,
-                          inputs:List[(() => Int, Fetchable)],
-                          outputs:List[(() => Int, Putable)],
+                          inputs:Array[(() => Int, Fetchable)],
+                          outputs:Array[(() => Int, Putable)],
                           transformFunction:ItemClassTransformFunction,
                           name:String,
                           verbose:Boolean = true) =

@@ -16,9 +16,9 @@
 package oscar.des.flow.lib
 
 import oscar.des.engine.Model
+import oscar.des.flow.DoublyLinkedList
 import oscar.des.flow.core._
 
-import scala.collection.mutable.ListBuffer
 import scala.language.implicitConversions
 import oscar.des.flow.core.ItemClassHelper._
 
@@ -263,8 +263,8 @@ case class SplittingBatchProcess(m:Model,
 class ConveyorBeltProcess(m:Model,
                           processDuration:() => Float,
                           minimalSeparationBetweenBatches:Float,
-                          val inputs:List[(() => Int, Fetchable)],
-                          val outputs:List[(() => Int, Putable)],
+                          val inputs:Array[(() => Int, Fetchable)],
+                          val outputs:Array[(() => Int, Putable)],
                           transformFunction:ItemClassTransformFunction,
                           name:String,
                           verbose:Boolean = true) extends ActivableAtomicProcess(name,verbose){
@@ -273,8 +273,7 @@ class ConveyorBeltProcess(m:Model,
   override val myInput = new Inputter(inputs)
 
   //the belt contains the delay for the output since the previous element that was input. delay since input if the belt was empty
-  private val belt: ListBuffer[(Double,ItemClass)] = ListBuffer.empty
-
+  private val belt: DoublyLinkedList[(Double,ItemClass)] = new DoublyLinkedList[(Double,ItemClass)]()
 
   override def isRunning: Boolean = !blocked
   override def completedBatchCount: Int = totalOutputBatches
@@ -364,7 +363,7 @@ class ConveyorBeltProcess(m:Model,
     blocked = false
     blockedTimeSinceLastInput = m.clock() - startBlockingTime
     mTotalBlockedTime += blockedTimeSinceLastInput
-    belt.remove(belt.size-1)
+    belt.deleteLast
     if (verbose) println(name + " output performed")
     totalOutputBatches += 1
     restartInputtingIfNeeded()

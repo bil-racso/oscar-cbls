@@ -48,8 +48,8 @@ trait Fetchable {
 /** This proposes a standard FIFO model behind the fetch operation,
   * in case the fetch operation is not possible
   * and must wait eg. for some refurbishment to proceed
- * @author renaud.delandtsheer@cetic.be
- */
+  * @author renaud.delandtsheer@cetic.be
+  */
 trait RichFetchable extends Fetchable {
   private val waitingFetches:ListBuffer[(Int, ItemClass, ItemClass => Unit)] = ListBuffer.empty
   var mTotalFetch = 0
@@ -174,10 +174,10 @@ trait RichPutable extends Putable {
 /** This class counts a set of event,and calls a callback method
   * once a defined number of such events have happened.
   * @author renaud.delandtsheer@cetic.be
- *
- * @param waitedNotification the number of waited notifications
- * @param gate the method to call once the method notifyOne has been called waitedNotification times
- */
+  *
+  * @param waitedNotification the number of waited notifications
+  * @param gate the method to call once the method notifyOne has been called waitedNotification times
+  */
 case class CounterGate(waitedNotification:Int, gate: ItemClass => Unit, var itemClass:ItemClass = zeroItemClass) {
   private var remaining = waitedNotification
   def notifyOne(mItemClass:ItemClass = zeroItemClass): Unit = {
@@ -207,7 +207,7 @@ class Outputter(outputs:Iterable[(() => Int, Putable)]) {
   * an input consists in fetching a set of parts from a set of Fetchables
   * @author renaud.delandtsheer@cetic.be
   */
-class Inputter(inputs:Iterable[(() => Int, Fetchable)]) {
+class Inputter(inputs:Array[(() => Int, Fetchable)]) {
   val inputCount = inputs.size
   def addPreliminaryInput(preliminaryInput:Fetchable){
     require(this.preliminaryInput == null)
@@ -221,7 +221,8 @@ class Inputter(inputs:Iterable[(() => Int, Fetchable)]) {
       val gate = CounterGate(inputCount + 1, block)
 
       var i = 0;
-      for ((amount, fetchable) <- inputs) {
+      while(i < inputCount){
+        val (amount, fetchable) =inputs(i)
         fetchable.fetch(amount())(gate.notifyOne)
         i += 1
       }
