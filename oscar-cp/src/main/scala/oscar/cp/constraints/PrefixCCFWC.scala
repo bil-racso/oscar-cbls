@@ -21,41 +21,82 @@ import oscar.cp.core.variables.CPIntVar
 import CPOutcome._
 
 /**
+ * Cardinality constraint on prefixes of a variable array
+ * @param X The variables to be constrained
+ * @param minVal The first value to be constrained; they are consecutive and their number is determined by the size of
+ *               the bound lists
+ * @param lowerLists The lists of lower bounds for each value; for example (5,2) will mean that there has to be at least
+ *                   two occurences of the value in the first five variables
+ * @param upperLists The lists of upper bounds for each value; for example (6,3) will mean that there has to be at most
+ *                   three occurrences of the value in the first six variables
  * @author Victor Lecomte
  */
-class PrefixCCFWC(X: Array[CPIntVar], minVal: Int, lowerLists: Array[Array[(Int, Int)]], upperLists: Array[Array[(Int, Int)]])
+class PrefixCCFWC(X: Array[CPIntVar], minVal: Int, lowerLists: Array[Array[(Int, Int)]],
+                  upperLists: Array[Array[(Int, Int)]])
   extends Constraint(X(0).store, "PrefixCCFWC") {
 
-  // Handy structures for memorization
+  // Handy structures for memorization.
+  // They allow to have common code for lower bound and upper bound treatment.
 
+  /**
+   * Main memorization structure for lower/upper bounds.
+   * Mainly it keeps the state of the segments between bounds and how many more variables can be assigned or removed
+   * before some actions have to be triggered, but it is also used in the initialization process.
+   */
   private class SegmentStructure() {
+    /** Used in the initialization process, is used to store the best known bound for every prefix. */
     var full: Array[Int] = null
 
+    // The filtered bounds
+    /** Ending point of the prefix for this bound */
     val boundIdx = Array.ofDim[Int](nVariables + 1)
+    /** Value of this bound (i.e. minimal or maximal number of occurrences) */
     val boundVal = Array.ofDim[Int](nVariables + 1)
+    /** Number of bounds */
     var nBounds = 0
+    /** Number of intervals between the bounds */
     var nIntervals = 0
+    /** Ending point of the largest prefix that is bound */
     var lastIdx = 0
 
+    // The segment structure itself
+    /** The segment a variable belongs to */
     var intervalOf: Array[Int] = null
+    /** The parent of an interval, if it has been merged with others */
     var parentRev: Array[ReversibleInt] = null
+    /** The number of unbound removals before the segment reaches its critical point */
     var untilCriticalRev: Array[ReversibleInt] = null
+    /** The previous segment (the interval on the left) */
     var prevRev: Array[ReversibleInt] = null
+    /** The endpoint of the segment */
     var rightLimitRev: Array[ReversibleInt] = null
   }
 
+  /**
+   * Temporary structure for the reversible parts of the segment structure, used in the initialization process
+   */
   private class TempStructure() {
     var parent: Array[Int] = null
     var untilCritical: Array[Int] = null
     var rightLimit: Array[Int] = null
   }
 
+  /**
+   * Doubly-linked list of unbound variables for a value, used when pruning
+   */
   private class UnboundList() {
+    /** Points to the first unbound variable for that value */
     var firstRev: ReversibleInt = null
+    /** Points to the previous one */
     var prevRev: Array[ReversibleInt] = null
+    /** Points to the next one */
     var nextRev: Array[ReversibleInt] = null
   }
 
+  /**
+   * Temporary structure for the above list of unbound variables, used in the initialization process
+   * @param size The number of variables this has to cover (will not always be [[nVariables]])
+   */
   private class TempList(size: Int) {
     var first = size
     var last = -1
@@ -64,15 +105,23 @@ class PrefixCCFWC(X: Array[CPIntVar], minVal: Int, lowerLists: Array[Array[(Int,
     val contains = Array.fill(size)(false)
   }
 
+  /** Number of variables */
   private[this] val nVariables = X.length
+  /** Number of variables that are actually constrained */
   private[this] var nRelevantVariables = 0
+  /** Number of values for which we are given bounds */
   private[this] val nValues = lowerLists.length
+  /** Largest value */
   private[this] val maxVal = minVal + nValues - 1
 
+  /** Memorization structure for the lower bounds */
   private[this] val lower = Array.fill(nValues)(new SegmentStructure())
+  /** Memorization structure for the upper bounds */
   private[this] val upper = Array.fill(nValues)(new SegmentStructure())
+  /** Lists of unbound variables for the values */
   private[this] val unbound = Array.fill(nValues)(new UnboundList())
 
+  /** Change buffer used when copying value removals from a delta */
   private[this] var changeBuffer: Array[Int] = null
 
 
@@ -101,9 +150,17 @@ class PrefixCCFWC(X: Array[CPIntVar], minVal: Int, lowerLists: Array[Array[(Int,
     if (testAndDeduceBounds() == Failure) return Failure
     filterBounds()
 
-    initAndCheck()
+    if (initAndCheck() == Failure) return Failure
+    Success
   }
 
+  /**
+   * Copies the bounds given into the structure or fails if the bounds are unfeasible
+   * @param st The structure into which to copy the bounds
+   * @param boundList The given list of bounds
+   * @param feasible The feasibility criteria in terms of index and value of the bound
+   * @return [[Failure]] if one of the bounds in unfeasible, [[Suspend]] otherwise
+   */
   private def readArguments(st: SegmentStructure, boundList: Array[(Int, Int)],
                             feasible: (Int, Int) => Boolean): CPOutcome = {
     var bound = boundList.length
@@ -125,6 +182,9 @@ class PrefixCCFWC(X: Array[CPIntVar], minVal: Int, lowerLists: Array[Array[(Int,
   // Filtering
   // ---------
 
+  /**
+   * Filters the bounds given in the input to keep only a minimal set of them that gives the same information.
+   */
   private def filterBounds() {
     nRelevantVariables = 0
 
@@ -141,6 +201,12 @@ class PrefixCCFWC(X: Array[CPIntVar], minVal: Int, lowerLists: Array[Array[(Int,
     }
   }
 
+  /**
+   * Filters bounds according to filtering criteria
+   * @param st The structure into which the filtered bounds are to be put
+   * @param prevFilter Returns true if the previous bound gives additional information wrt the next one
+   * @param nextFilter Returns true if the next bound gives additional information wrt the previous one
+   */
   private def filterGeneric(st: SegmentStructure,
                             prevFilter: (Int, Int, Int, Int) => Boolean,
                             nextFilter: (Int, Int, Int, Int) => Boolean) {
@@ -151,15 +217,19 @@ class PrefixCCFWC(X: Array[CPIntVar], minVal: Int, lowerLists: Array[Array[(Int,
     boundVal(0) = 0
     nBounds = 1
 
+    // Convenience macros that give the last bound
     def lastIdx = boundIdx(nBounds - 1)
     def lastVal = boundVal(nBounds - 1)
 
     var i = 1
     while (i <= nVariables) {
+      // If this new bound gives additional information
       if (nextFilter(lastIdx, lastVal, i, full(i))) {
+        // Remove every previous bound that does not give additional information
         while (nBounds > 1 && !prevFilter(lastIdx, lastVal, i, full(i))) {
           nBounds -= 1
         }
+        // Add the bound to the structure
         boundIdx(nBounds) = i
         boundVal(nBounds) = full(i)
         nBounds += 1
@@ -167,7 +237,6 @@ class PrefixCCFWC(X: Array[CPIntVar], minVal: Int, lowerLists: Array[Array[(Int,
       i += 1
     }
 
-    (nBounds, nBounds - 1, lastIdx)
     nIntervals = nBounds - 1
     st.lastIdx = lastIdx
   }
@@ -176,6 +245,11 @@ class PrefixCCFWC(X: Array[CPIntVar], minVal: Int, lowerLists: Array[Array[(Int,
   // Filling
   // -------
 
+  /**
+   * Fills holes in the known bounds by deducing values on the left or the right of given bounds.
+   * For example, if there is a maximum of 3 occurrences in the interval [0,5[, there will be a maximum of 3 in [0,4[
+   * and of 4 in [0,6[.
+   */
   private def fillBounds() {
     val flatFill = (baseIdx: Int, baseVal: Int, i: Int) => baseVal
     val slopeFill = (baseIdx: Int, baseVal: Int, i: Int) => baseVal + i - baseIdx
@@ -191,6 +265,14 @@ class PrefixCCFWC(X: Array[CPIntVar], minVal: Int, lowerLists: Array[Array[(Int,
     }
   }
 
+  /**
+   * Fills bounds according to some filling rules
+   * @param st The structure to work on
+   * @param splitAt The turning point between two given bounds at the limit of the influence of the left one and the
+   *                right one
+   * @param leftFill The rule for filling on the left of an interval (i.e. on the right of the left bound)
+   * @param rightFill The rule for filling on the right of an interval (i.e. on the left of the right bound)
+   */
   private def fillGeneric(st: SegmentStructure,
                           splitAt: (Int, Int, Int, Int) => Int,
                           leftFill: (Int, Int, Int) => Int, rightFill: (Int, Int, Int) => Int) {
@@ -219,8 +301,11 @@ class PrefixCCFWC(X: Array[CPIntVar], minVal: Int, lowerLists: Array[Array[(Int,
   // Deduction
   // ---------
 
+  /**
+   * Does some basic tests on the bounds and deduces bounds based on the bounds for other values
+   * @return [[Failure]] if the bounds are found to be unfeasible, [[Suspend]] otherwise
+   */
   private def testAndDeduceBounds(): CPOutcome = {
-    // Perform some deduction based on other values' lower and upper bounds
     var i = nVariables
     while (i > 0) {
       // Compute the sums
@@ -229,6 +314,7 @@ class PrefixCCFWC(X: Array[CPIntVar], minVal: Int, lowerLists: Array[Array[(Int,
       var vi = nValues
       while (vi > 0) {
         vi -= 1
+        // The lower bound cannot be higher than the upper bound
         if (lower(vi).full(i) > upper(vi).full(i)) return Failure
         lowerSum += lower(vi).full(i)
         upperSum += upper(vi).full(i)
@@ -253,6 +339,10 @@ class PrefixCCFWC(X: Array[CPIntVar], minVal: Int, lowerLists: Array[Array[(Int,
   // Initial counts and checks
   // -------------------------
 
+  /**
+   * Initializes the memorization structures and performs first checks
+   * @return [[Failure]] if a failure is detected, [[Suspend]] otherwise
+   */
   private def initAndCheck(): CPOutcome = {
 
     val lowerTmp = Array.fill(nValues)(new TempStructure())
@@ -302,12 +392,17 @@ class PrefixCCFWC(X: Array[CPIntVar], minVal: Int, lowerLists: Array[Array[(Int,
       copyListToRev(unbound(vi), unboundTmp(vi))
     }
 
-    Success
+    Suspend
   }
 
+  /**
+   * Performs the initial counting of bound and unbound variables for all values
+   * @param lowerTmp The structure for the lower bounds
+   * @param upperTmp The structure for the upper bounds
+   * @param unboundTmp The list of unbound variables for each value
+   */
   private def initialCount(lowerTmp: Array[TempStructure], upperTmp: Array[TempStructure],
                            unboundTmp: Array[TempList]) {
-    // Initial count
     var i = 0
     while (i < nRelevantVariables) {
       val x = X(i)
@@ -315,6 +410,7 @@ class PrefixCCFWC(X: Array[CPIntVar], minVal: Int, lowerLists: Array[Array[(Int,
       if (x.isBound) {
         val v = x.min
         if (minVal <= v && v <= maxVal) {
+          // The variable is bound to this value
           val vi = v - minVal
           if (i < lower(vi).lastIdx) {
             lowerTmp(vi).untilCritical(lower(vi).intervalOf(i)) += 1
@@ -329,6 +425,7 @@ class PrefixCCFWC(X: Array[CPIntVar], minVal: Int, lowerLists: Array[Array[(Int,
           c -= 1
           val v = changeBuffer(c)
           if (minVal <= v && v <= maxVal) {
+            // The variable has this value but is not bound to it
             val vi = v - minVal
             if (i < lower(vi).lastIdx) {
               lowerTmp(vi).untilCritical(lower(vi).intervalOf(i)) += 1
@@ -354,16 +451,25 @@ class PrefixCCFWC(X: Array[CPIntVar], minVal: Int, lowerLists: Array[Array[(Int,
     }
   }
 
+  /**
+   * Performs the initial checks on the feasibility of lower or upper bounds of a value, and assigns or removes values
+   * from variables if necessary
+   * @param st The segment structure (for fixed information)
+   * @param tmp The temporary structure to work on
+   * @param list The unbound list
+   * @param action The action to perform when reaching the critical value on a leftmost interval
+   * @return [[Failure]] if applying the action was impossible, [[Suspend]] otherwise
+   */
   private def initialCheck(st: SegmentStructure, tmp: TempStructure, list: TempList,
                            action: CPIntVar => CPOutcome): CPOutcome = {
     import st._
+
     // Merge as much as possible, intentionally backwards!
     var inter = nIntervals
     while (inter > 1) {
       inter -= 1
 
       if (tmp.untilCritical(inter) <= 0) {
-        // TODO: decrement nIntervals probably??
         tmp.parent(inter) = inter - 1
         tmp.untilCritical(inter - 1) += tmp.untilCritical(inter)
         tmp.rightLimit(inter - 1) = tmp.rightLimit(inter)
@@ -415,6 +521,12 @@ class PrefixCCFWC(X: Array[CPIntVar], minVal: Int, lowerLists: Array[Array[(Int,
   // Temporary structure management
   // ------------------------------
 
+  /**
+   * Initializes a temporary segment structure
+   * @param st The reversible segment structure
+   * @param tmp The temporary segment structure
+   * @param criticalInit Gives the initial value for untilCritical
+   */
   private def initTemp(st: SegmentStructure, tmp: TempStructure, criticalInit: (Int, Int) => Int) {
     import st._
 
@@ -434,14 +546,21 @@ class PrefixCCFWC(X: Array[CPIntVar], minVal: Int, lowerLists: Array[Array[(Int,
     }
   }
 
+  /**
+   * Copies a temporary segment structure to the reversible one
+   * @param st The reversible segment structure
+   * @param tmp The temporary segment structure
+   */
   private def copyToRev(st: SegmentStructure, tmp: TempStructure) {
     import st._
+
     // Initialize the reversible arrays
     parentRev = Array.ofDim[ReversibleInt](nIntervals)
     untilCriticalRev = Array.ofDim[ReversibleInt](nIntervals)
     prevRev = Array.ofDim[ReversibleInt](nIntervals)
     rightLimitRev = Array.ofDim[ReversibleInt](nIntervals)
 
+    // Copy the temporary structures into them
     var inter = 0
     var prevInter = -1
     while (inter < nIntervals) {
@@ -456,7 +575,13 @@ class PrefixCCFWC(X: Array[CPIntVar], minVal: Int, lowerLists: Array[Array[(Int,
     }
   }
 
+  /**
+   * Copies a temporary unbound variable list into a reversible one
+   * @param list The reversible unbound list
+   * @param tmpList The temporary unbound list
+   */
   private def copyListToRev(list: UnboundList, tmpList: TempList) {
+    // Copy the temporary unbound list into the reversible one
     list.firstRev = new ReversibleInt(s, tmpList.first)
     list.prevRev = Array.tabulate(nRelevantVariables)(i =>
       if (tmpList.contains(i)) new ReversibleInt(s, tmpList.prev(i))
@@ -473,6 +598,12 @@ class PrefixCCFWC(X: Array[CPIntVar], minVal: Int, lowerLists: Array[Array[(Int,
   // UPDATE METHODS
   // ==============
 
+  /**
+   * Updates the structures and prunes according to the changes made on the variable
+   * @param delta The values that were removed
+   * @param x The variable they were removed from
+   * @return [[Failure]] if the pruning caused a failure, [[Suspend]] otherwise
+   */
   @inline private def whenDomainChanges(delta: DeltaIntVar, x: CPIntVar): CPOutcome = {
     val i = delta.id
 
@@ -484,7 +615,6 @@ class PrefixCCFWC(X: Array[CPIntVar], minVal: Int, lowerLists: Array[Array[(Int,
       // If the value removed is one we track
       if (minVal <= v && v <= maxVal) {
         val vi = v - minVal
-
         if (onUpdate(i, lower(vi), unbound(vi), otherVar => otherVar.assign(v)) == Failure) return Failure
       }
     }
@@ -494,7 +624,6 @@ class PrefixCCFWC(X: Array[CPIntVar], minVal: Int, lowerLists: Array[Array[(Int,
       // If the value removed is one we track
       if (minVal <= v && v <= maxVal) {
         val vi = v - minVal
-
         if (onUpdate(i, upper(vi), unbound(vi), otherVar => otherVar.removeValue(v)) == Failure) return Failure
       }
     }
@@ -502,21 +631,32 @@ class PrefixCCFWC(X: Array[CPIntVar], minVal: Int, lowerLists: Array[Array[(Int,
     Suspend
   }
 
+  /**
+   * Generic update when the critical value of a segment decreases, merges segments if needed
+   * @param i The index of the variable
+   * @param st The segment structure
+   * @param list The unbound list
+   * @param action The action to be performed when the critical value of a leftmost segment is reached
+   * @return [[Failure]] if the pruning caused a failure, [[Suspend]] otherwise
+   */
   @inline private def onUpdate(i: Int, st: SegmentStructure, list: UnboundList,
                                action: CPIntVar => CPOutcome): CPOutcome = {
     import st._
 
+    // If this variable is in one of the segments
     if (i < lastIdx) {
       removeUnbound(list, i)
 
+      // Find the segment this variable is in
       val inter = findParent(parentRev, intervalOf(i))
       if (inter != -1) {
         val untilCritical = untilCriticalRev(inter).decr()
 
+        // If the critical value is reached
         if (untilCritical == 0) {
           val directPrev = prevRev(inter).value
 
-          // If we are at zero, we eliminate unbound and merge with the next interval
+          // If this is the leftmost segment, we eliminate unbound and merge with the next interval
           if (directPrev == -1) {
 
             // Assign or remove every unbound
@@ -577,6 +717,11 @@ class PrefixCCFWC(X: Array[CPIntVar], minVal: Int, lowerLists: Array[Array[(Int,
     Suspend
   }
 
+  /**
+   * Removes a variable from the list of unbound variables of a value
+   * @param list The unbound variable list
+   * @param i The index of the variable
+   */
   @inline private def removeUnbound(list: UnboundList, i: Int) {
     import list._
     val prev = prevRev(i).value
@@ -591,20 +736,16 @@ class PrefixCCFWC(X: Array[CPIntVar], minVal: Int, lowerLists: Array[Array[(Int,
       prevRev(next).setValue(prev)
     }
   }
-  
+
+  /**
+   * Finds the parent of a segment
+   * @param parentTable The table of direct parents
+   * @param child The segment whose parent we want to find
+   * @return The id of the parent segment
+   */
   @inline private def findParent(parentTable: Array[ReversibleInt], child: Int): Int = {
-    var parent = parentTable(child).value
-    if (parent == child) return child
-    if (parent == -1) return -1
-    
-    var ancestor = parentTable(parent).value
-    if (ancestor == parent) return parent
-    
-    while (ancestor != parent) {
-      parent = ancestor
-      ancestor = parentTable(parent).value
-    }
-    parentTable(child).setValue(parent)
-    parent
+    val parent = parentTable(child).value
+    if (parent == child || parent == -1) return parent
+    findParent(parentTable, parent)
   }
 }
