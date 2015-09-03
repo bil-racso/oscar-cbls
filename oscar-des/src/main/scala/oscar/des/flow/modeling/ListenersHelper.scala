@@ -292,7 +292,7 @@ trait ListenersHelper{
    * @param s the measured expression
    * @param when a boolean expression telling the relevant point of time to consider
    */
-  def minOnHistory(s:DoubleExpr, when:BoolExpr = null) = opposite(MaxOnHistory(opposite(maxOnHistory(s,when))))
+  def minOnHistory(s:DoubleExpr, when:BoolExpr = null) = opposite(MaxOnHistory(opposite(s),when))
 
   /**
    * the average value of s in history, ponderated with the duration

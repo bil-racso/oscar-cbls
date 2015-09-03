@@ -80,7 +80,11 @@ class MetricsStore(rootExpressions:List[(Expression,String)],verbose:Boolean){
   //to be called at each step
   def updateMetricsIfNeeded(time:Double){
     if(verbose) println("updating metrics")
-    accumulatingExpressions.foreach(_.update(time))
+    var currentExpressionList = accumulatingExpressions
+    while(currentExpressionList.nonEmpty){
+      currentExpressionList.head.update(time)
+      currentExpressionList = currentExpressionList.tail
+    }
   }
 
   //the last updateMEtrics must have been performed o nthe last state
@@ -88,8 +92,6 @@ class MetricsStore(rootExpressions:List[(Expression,String)],verbose:Boolean){
     nonAccumulatingExpressions.foreach(_.update(time))
   }
 }
-
-
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 //probe on simulation elements
