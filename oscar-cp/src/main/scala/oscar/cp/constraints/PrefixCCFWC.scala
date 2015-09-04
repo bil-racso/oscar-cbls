@@ -145,7 +145,6 @@ class PrefixCCFWC(X: Array[CPIntVar], minVal: Int, lowerLists: Array[Array[(Int,
       if (readArguments(upper(vi), upperLists(vi), feasibleUpper) == Failure) return Failure
     }
 
-    filterBounds()
     fillBounds()
     if (testAndDeduceBounds() == Failure) return Failure
     filterBounds()
@@ -251,48 +250,20 @@ class PrefixCCFWC(X: Array[CPIntVar], minVal: Int, lowerLists: Array[Array[(Int,
    * and of 4 in [0,6[.
    */
   private def fillBounds() {
-    val flatFill = (baseIdx: Int, baseVal: Int, i: Int) => baseVal
-    val slopeFill = (baseIdx: Int, baseVal: Int, i: Int) => baseVal + i - baseIdx
-    val lowerSplit = (prevIdx: Int, prevVal: Int, nextIdx: Int, nextVal: Int) => nextIdx - nextVal + prevVal
-    val upperSplit = (prevIdx: Int, prevVal: Int, nextIdx: Int, nextVal: Int) => prevIdx + nextVal - prevVal
-
     var vi = nValues
     while (vi > 0) {
       vi -= 1
 
-      fillGeneric(lower(vi), lowerSplit, flatFill, slopeFill)
-      fillGeneric(upper(vi), upperSplit, slopeFill, flatFill)
-    }
-  }
-
-  /**
-   * Fills bounds according to some filling rules
-   * @param st The structure to work on
-   * @param splitAt The turning point between two given bounds at the limit of the influence of the left one and the
-   *                right one
-   * @param leftFill The rule for filling on the left of an interval (i.e. on the right of the left bound)
-   * @param rightFill The rule for filling on the right of an interval (i.e. on the left of the right bound)
-   */
-  private def fillGeneric(st: SegmentStructure,
-                          splitAt: (Int, Int, Int, Int) => Int,
-                          leftFill: (Int, Int, Int) => Int, rightFill: (Int, Int, Int) => Int) {
-    import st._
-
-    var i = nVariables + 1
-    var lowerI = nBounds
-    while (lowerI > 0) {
-      lowerI -= 1
-      val split = {
-        if (lowerI == nIntervals) nVariables + 1
-        else splitAt(boundIdx(lowerI), boundVal(lowerI), boundIdx(lowerI + 1), boundVal(lowerI + 1))
+      var i = 0
+      while (i < nVariables) {
+        i += 1
+        lower(vi).full(i) = lower(vi).full(i) max lower(vi).full(i - 1)
+        upper(vi).full(i) = upper(vi).full(i) min (upper(vi).full(i - 1) + 1)
       }
-      while (i > split) {
+      while (i > 0) {
         i -= 1
-        full(i) = rightFill(boundIdx(lowerI + 1), boundVal(lowerI + 1), i)
-      }
-      while (i > boundIdx(lowerI)) {
-        i -= 1
-        full(i) = leftFill(boundIdx(lowerI), boundVal(lowerI), i)
+        lower(vi).full(i) = lower(vi).full(i) max (lower(vi).full(i + 1) - 1)
+        upper(vi).full(i) = upper(vi).full(i) min upper(vi).full(i + 1)
       }
     }
   }
@@ -306,6 +277,7 @@ class PrefixCCFWC(X: Array[CPIntVar], minVal: Int, lowerLists: Array[Array[(Int,
    * @return [[Failure]] if the bounds are found to be unfeasible, [[Suspend]] otherwise
    */
   private def testAndDeduceBounds(): CPOutcome = {
+    // TODO: at least check that those are the only values in the domains of the variables; preferably adapt smartly
     var i = nVariables
     while (i > 0) {
       // Compute the sums

@@ -17,7 +17,7 @@ package oscar.cp.test
 import oscar.cp._
 import oscar.cp.core.CPPropagStrength
 import oscar.cp.testUtils._
-import oscar.cp.constraints.PrefixCCFWC
+import oscar.cp.constraints.{PrefixCCFWC2, PrefixCCFWC}
 
 import scala.collection.mutable.ArrayBuffer
 import scala.util.Random
@@ -30,6 +30,7 @@ class TestPrefixCC extends TestSuite {
   val MULTIPLE_GCC_AC = 0
   val MULTIPLE_GCC_FWC = 1
   val PREFIX_CC_FWC = 2
+  val PREFIX_CC_FWC2 = 3
 
   def nbSol(domX: Array[Set[Int]], values: Range, lower: Array[Array[(Int, Int)]], upper: Array[Array[(Int, Int)]],
             mode: Int): (Int, Long, Int, Int) = {
@@ -42,7 +43,7 @@ class TestPrefixCC extends TestSuite {
     val X = Array.tabulate(nVariables)(i => CPIntVar(domX(i))(cp))
 
     try {
-      if (mode < PREFIX_CC_FWC) {
+      if (mode == MULTIPLE_GCC_AC || mode == MULTIPLE_GCC_FWC) {
 
         val strength = {
           if (mode == MULTIPLE_GCC_AC) CPPropagStrength.Strong
@@ -66,8 +67,10 @@ class TestPrefixCC extends TestSuite {
         for (i <- cutoffs) {
           cp.add(gcc(X.splitAt(i)._1, values, allLower(i), allUpper(i)), strength)
         }
-      } else {
+      } else if (mode == PREFIX_CC_FWC) {
         cp.add(new PrefixCCFWC(X, values.min, lower, upper))
+      } else {
+        cp.add(new PrefixCCFWC2(X, values.min, lower, upper))
       }
 
     } catch {
@@ -75,10 +78,8 @@ class TestPrefixCC extends TestSuite {
     }
 
     cp.search { binaryStatic(X) }
-    //cp.onSolution { solSet += X.mkString(" ") }
 
     val stat = cp.start(nSols = 10000000)
-    println(stat.maxTrailSize, stat.timeInTrail)
     (stat.nSols, stat.time, stat.nNodes, stat.nFails)
   }
 
@@ -99,12 +100,16 @@ class TestPrefixCC extends TestSuite {
 
   // nSols on random domains
   test("PrefixCC Test #1: random bounds") {
-    for (i <- 0 to 100) {
+    for (i <- 1 to 100) {
+      println(i)
       rand =  new scala.util.Random(i)
 
       val nVariables = 9
 
       val domVars = Array.fill(nVariables)(randomDom(size = 6))
+      /*for (i <- 0 until nVariables) {
+        println(s"$i: ${domVars(i) mkString " "}")
+      }*/
 
       val min = domVars.flatten.min
       val max = domVars.flatten.max
@@ -127,21 +132,23 @@ class TestPrefixCC extends TestSuite {
 
       val (nSols1, time1, nNodes1, nFails1) = nbSol(domVars, min to max, lower, upper, MULTIPLE_GCC_FWC)
       val (nSols2, time2, nNodes2, nFails2) = nbSol(domVars, min to max, lower, upper, PREFIX_CC_FWC)
-      //println(i)
+      val (nSols3, time3, nNodes3, nFails3) = nbSol(domVars, min to max, lower, upper, PREFIX_CC_FWC2)
 
       nSols1 should be(nSols2)
+      println(time1, time3)
+      nSols1 should be(nSols3)
     }
   }
 
   test("Test #2: compatible bounds") {
-    var (total1, total2) = (0L, 0L)
-    for (i <- 1 to 1) {
+    var (total1, total2, total3) = (0L, 0L, 0L)
+    for (i <- 1 to 10) {
       rand =  new scala.util.Random(i)
 
-      val nVariables = 32
-      val nValuesMax = 4
-      val nBounds = nVariables * nValuesMax / 2
-      //val minSignificance = 2
+      val nVariables = 12
+      val nValuesMax = 6
+      val nBounds = 11
+      val minSignificance = 4
 
       val domVars = Array.fill(nVariables)(randomDom(nValuesMax))
       val modelSolution = domVars.map(s => s.toVector(rand.nextInt(s.size)))
@@ -155,33 +162,36 @@ class TestPrefixCC extends TestSuite {
 
       randomPlaces(nVariables, size = nBounds / 2).foreach(i => {
         val vi = rand.nextInt(nValues)
-        lowerBuffer(vi) += ((i, occurrences(modelSolution, vi + min, i)))
-        //lowerBuffer(vi) += ((i, ifPossibleAtLeast(occurrences(modelSolution, vi + min, i), minSignificance)))
+        //lowerBuffer(vi) += ((i, occurrences(modelSolution, vi + min, i)))
+        lowerBuffer(vi) += ((i, ifPossibleAtLeast(occurrences(modelSolution, vi + min, i), minSignificance)))
       })
       randomPlaces(nVariables, size = nBounds / 2).foreach(i => {
         val vi = rand.nextInt(nValues)
-        upperBuffer(vi) += ((i, occurrences(modelSolution, vi + min, i)))
-        //upperBuffer(vi) += ((i, ifPossibleAtMost(occurrences(modelSolution, vi + min, i), i - minSignificance)))
+        //upperBuffer(vi) += ((i, occurrences(modelSolution, vi + min, i)))
+        upperBuffer(vi) += ((i, ifPossibleAtMost(occurrences(modelSolution, vi + min, i), i - minSignificance)))
       })
 
       val lower = lowerBuffer.map(_.toArray)
       val upper = upperBuffer.map(_.toArray)
 
-      //val (nSols1, time1, nNodes1, nFails1) = nbSol(domVars, min to max, lower, upper, MULTIPLE_GCC_FWC)
+      val (nSols1, time1, nNodes1, nFails1) = nbSol(domVars, min to max, lower, upper, MULTIPLE_GCC_FWC)
       val (nSols2, time2, nNodes2, nFails2) = nbSol(domVars, min to max, lower, upper, PREFIX_CC_FWC)
-      val (nSols1, time1, nNodes1, nFails1) = (nSols2, time2, nNodes2, nFails2)
+      val (nSols3, time3, nNodes3, nFails3) = nbSol(domVars, min to max, lower, upper, PREFIX_CC_FWC2)
+      //val (nSols2, time2, nNodes2, nFails2) = (nSols3, time3, nNodes3, nFails3)
+      //val (nSols1, time1, nNodes1, nFails1) = (nSols2, time2, nNodes2, nFails2)
 
 
-      println(s"$i: time ($time1, $time2), $nSols1 sols")
-      if (nNodes1 != nNodes2 || nFails1 != nFails2) {
-        println(s"nodes: $nNodes1, $nNodes2")
-        println(s"fails: $nFails1, $nFails2")
+      println(s"$i: time ($time1, $time2, $time3), $nSols1 sols")
+      if (nNodes1 != nNodes2 || nNodes2 != nNodes3 || nFails1 != nFails2 || nFails2 != nFails3) {
+        println(s"nodes: $nNodes1, $nNodes2, $nNodes3")
+        println(s"fails: $nFails1, $nFails2, $nFails3")
       }
       total1 += time1
       total2 += time2
+      total3 += time3
 
       nSols1 should be(nSols2)
     }
-    println(s"total time: GCCFWC: $total1, PrefixCCFWC $total2")
+    println(s"total time: GCCFWC: $total1, PrefixCCFWC $total2, PrefixCCFWC2 $total3")
   }
 }
