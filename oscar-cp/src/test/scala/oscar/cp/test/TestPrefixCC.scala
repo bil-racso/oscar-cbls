@@ -101,7 +101,7 @@ class TestPrefixCC extends TestSuite {
   // nSols on random domains
   test("PrefixCC Test #1: random bounds") {
     for (i <- 1 to 100) {
-      println(i)
+      //println(i)
       rand =  new scala.util.Random(i)
 
       val nVariables = 9
@@ -135,19 +135,18 @@ class TestPrefixCC extends TestSuite {
       val (nSols3, time3, nNodes3, nFails3) = nbSol(domVars, min to max, lower, upper, PREFIX_CC_FWC2)
 
       nSols1 should be(nSols2)
-      println(time1, time3)
       nSols1 should be(nSols3)
     }
   }
 
   test("Test #2: compatible bounds") {
     var (total1, total2, total3) = (0L, 0L, 0L)
-    for (i <- 1 to 10) {
+    for (i <- 1 to 100) {
       rand =  new scala.util.Random(i)
 
       val nVariables = 12
-      val nValuesMax = 6
-      val nBounds = 11
+      val nValuesMax = 4
+      val nBounds = 10
       val minSignificance = 4
 
       val domVars = Array.fill(nVariables)(randomDom(nValuesMax))
@@ -181,17 +180,17 @@ class TestPrefixCC extends TestSuite {
       //val (nSols1, time1, nNodes1, nFails1) = (nSols2, time2, nNodes2, nFails2)
 
 
-      println(s"$i: time ($time1, $time2, $time3), $nSols1 sols")
+      /*println(s"$i: time ($time1, $time2, $time3), $nSols1 sols")
       if (nNodes1 != nNodes2 || nNodes2 != nNodes3 || nFails1 != nFails2 || nFails2 != nFails3) {
         println(s"nodes: $nNodes1, $nNodes2, $nNodes3")
         println(s"fails: $nFails1, $nFails2, $nFails3")
-      }
+      }*/
       total1 += time1
       total2 += time2
       total3 += time3
 
       nSols1 should be(nSols2)
     }
-    println(s"total time: GCCFWC: $total1, PrefixCCFWC $total2, PrefixCCFWC2 $total3")
+    //println(s"total time: GCCFWC: $total1, PrefixCCFWC $total2, PrefixCCFWC2 $total3")
   }
 }
