@@ -16,18 +16,17 @@ extends Constraint(starts.head.store, "Max Cumulative") {
      }
 
     l match {
-      case Automatic | Weak => 
+      case Weak =>
+        if (s.post(TTPerTask(starts,durations,ends,demands,resources,capacity,id)) == Failure) return Failure
+        // steven, stop adding things here, weak = time-table only
+      case Automatic =>
         if (s.post(TTPerTask(starts,durations,ends,demands,resources,capacity,id)) == Failure) return Failure
         if (s.post(TimeTableOverloadChecker(starts,durations,ends,demands,resources,capacity,id)) == Failure) return Failure
-        
-        
       case Medium =>
         if (s.post(TTPerTask(starts,durations,ends,demands,resources,capacity,id)) == Failure) return Failure
         if (s.post(TimeTableDisjunctiveReasoning(starts,durations,ends,demands,resources,capacity,id)) == Failure) return Failure
         if (s.post(TimeTableOverloadChecker(starts,durations,ends,demands,resources,capacity,id)) == Failure) return Failure
         if (s.post(TimeTableEdgeFinding(starts,durations,ends,demands,resources,capacity,id)) == Failure) return Failure
-        
-        
       case Strong =>
         if (s.post(TTPerTask(starts,durations,ends,demands,resources,capacity,id)) == Failure) return Failure
         if (s.post(TimeTableDisjunctiveReasoning(starts,durations,ends,demands,resources,capacity,id)) == Failure) return Failure
