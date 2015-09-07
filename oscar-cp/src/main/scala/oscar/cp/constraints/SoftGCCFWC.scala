@@ -21,15 +21,15 @@ import oscar.cp.core.delta._
 import oscar.cp.core.variables._
 
 /**
- * Global Cardinality Constraint with violation
+ * Global Cardinality Constraint with violation.
+ * Only the maximum of the violation variable is taken into account, and only its minimum is updated.
  *
- * Constraint the values minVal+i to appear between low[i] and up[i] times in X
  * @param X The variables to constraint (at least one)
  * @param minVal The smallest value in the interval; its size is determined by the size of lower and upper
  * @param lower The lower bounds for the occurrences of the values of the interval, in order
  * @param upper The upper bounds for the occurrences of the values of the interval, in order
  * @param viol The violation of the constraints, i.e. the sum of the distances under lower bounds and over upper bounds
- * @see SoftGCC
+ * @see SoftGCC, the AC version of this constraint.
  *
  * @author Victor Lecomte
  */
@@ -47,10 +47,23 @@ class SoftGCCFWC(X: Array[CPIntVar], minVal: Int, lower: Array[Int], upper: Arra
   private[this] var nMandatoryRev: Array[ReversibleInt] = null
   // The number of variables that have the value
   private[this] var nPossibleRev: Array[ReversibleInt] = null
+
+  // The sparse set to memorize the variables having a value that is unbound
+  private[this] val unboundSet = Array.ofDim[Int](nValues, nVariables)
+  private[this] val unboundIndex = Array.ofDim[Int](nValues, nVariables)
+
   // The best-known minimal/effective violation right now
   private[this] var minViolRev: ReversibleInt = null
-  // The best-known maximal/potential violation right now
-  private[this] var maxViolRev: ReversibleInt = null
+
+  // Whether we reached the max violation and we should prune
+  private[this] var atMaxViolRev: ReversibleBoolean = null
+
+  // Values for which the number of possible variables is under the lower bound
+  private[this] var nValuesInLackRev: ReversibleInt = null
+  private[this] val inLack = Array.ofDim[Int](nValues)
+  // Values for which the number of mandatory variables is over the upper bound
+  private[this] var nValuesInExcessRev: ReversibleInt = null
+  private[this] val inExcess = Array.ofDim[Int](nValues)
 
   // Change buffer to load the deltas
   private[this] var changeBuffer: Array[Int] = null
@@ -61,7 +74,8 @@ class SoftGCCFWC(X: Array[CPIntVar], minVal: Int, lower: Array[Int], upper: Arra
     val nMandatory = new Array[Int](nValues)
     val nPossible = new Array[Int](nValues)
     var minViol = 0
-    var maxViol = 0
+    var nValuesInLack = 0
+    var nValuesInExcess = 0
 
     // Initial counting (the rest is done in the update functions)
     var bufferSize = 0
@@ -84,6 +98,13 @@ class SoftGCCFWC(X: Array[CPIntVar], minVal: Int, lower: Array[Int], upper: Arra
         vi -= 1
         if (x.hasValue(vi + minVal)) {
           nPossible(vi) += 1
+
+          // If x is unbound, add it to the value's sparse set
+          if (!x.isBound) {
+            val index = nPossible(vi) - nMandatory(vi) - 1
+            unboundSet(vi)(index) = i
+            unboundIndex(vi)(i) = index
+          }
         }
       }
 
@@ -101,25 +122,29 @@ class SoftGCCFWC(X: Array[CPIntVar], minVal: Int, lower: Array[Int], upper: Arra
     while (vi > 0) {
       vi -= 1
 
-      // Effective violations
-      if (nPossible(vi) < lower(vi)) {
-        minViol += lower(vi) - nPossible(vi)
-      }
-      if (nMandatory(vi) > upper(vi)) {
-        minViol += nMandatory(vi) - upper(vi)
+      // Ensure that lower <= upper
+      if (lower(vi) > upper(vi)) {
+        minViol += lower(vi) - upper(vi)
+        val tmp = lower(vi)
+        lower(vi) = upper(vi)
+        upper(vi) = tmp
       }
 
-      // Potential violations
-      if (nMandatory(vi) < lower(vi)) {
-        maxViol += lower(vi) - nMandatory(vi)
+      // Count and remember effective violations
+      if (nPossible(vi) <= lower(vi)) {
+        inLack(nValuesInLack) = vi
+        nValuesInLack += 1
+        minViol += lower(vi) - nPossible(vi)
       }
-      if (nPossible(vi) > upper(vi)) {
-        maxViol += nPossible(vi) - upper(vi)
+      if (nMandatory(vi) >= upper(vi)) {
+        inExcess(nValuesInExcess) = vi
+        nValuesInExcess += 1
+        minViol += nMandatory(vi) - upper(vi)
       }
     }
 
-    // First check
-    if (viol.updateMin(minViol) == Failure || viol.updateMax(maxViol) == Failure)
+    // First violation check
+    if (viol.updateMin(minViol) == Failure)
       return Failure
 
     // Initialize the memorization structure
@@ -127,7 +152,25 @@ class SoftGCCFWC(X: Array[CPIntVar], minVal: Int, lower: Array[Int], upper: Arra
     nMandatoryRev = Array.tabulate(nValues)(vi => ReversibleInt(nMandatory(vi)))
     nPossibleRev = Array.tabulate(nValues)(vi => ReversibleInt(nPossible(vi)))
     minViolRev = ReversibleInt(minViol)
-    maxViolRev = ReversibleInt(maxViol)
+    atMaxViolRev = new ReversibleBoolean(s, false)
+    nValuesInLackRev = ReversibleInt(nValuesInLack)
+    nValuesInExcessRev = ReversibleInt(nValuesInExcess)
+    
+    // If we have reached the maximal violation
+    if (minViol == viol.max) {
+      if (whenMaxViolReached() == Failure) {
+        return Failure
+      }
+    }
+
+    // Detect when the maximal violation is externally reduced
+    viol.filterWhenBind(idempot = true) {
+      if (!atMaxViolRev.value && minViolRev.value == viol.max) {
+        whenMaxViolReached()
+      } else {
+        Success
+      }
+    }
 
     // Create the buffer
     changeBuffer = new Array(bufferSize)
@@ -137,9 +180,13 @@ class SoftGCCFWC(X: Array[CPIntVar], minVal: Int, lower: Array[Int], upper: Arra
   }
 
   /**
-   * Update the structure when values are removed from a variable.
+   * Propagates when the domain of a variable in [[X]] changes.
+   * @param delta The domain changes
+   * @param x The variable that changed
+   * @return [[Failure]] on failure, [[Suspend]] otherwise
    */
   @inline private def whenDomainChanges(delta: DeltaIntVar, x: CPIntVar): CPOutcome = {
+    val i = delta.id
 
     // Treat the value removals
     var c = delta.fillArray(changeBuffer)
@@ -150,17 +197,29 @@ class SoftGCCFWC(X: Array[CPIntVar], minVal: Int, lower: Array[Int], upper: Arra
       if (minVal <= v && v <= maxVal) {
         val vi = v - minVal
         val nPossible = nPossibleRev(vi).decr()
+        val nMandatory = nMandatoryRev(vi).value
+        val nUnbound = nPossible - nMandatory
 
-        // Worsen the effective violation
-        if (nPossible < lower(vi)) {
-          if (viol.updateMin(minViolRev.incr()) == Failure)
-            return Failure
-        }
+        removeUnbound(i, vi, nUnbound)
 
-        // Lessen the potential violation
-        if (nPossible >= upper(vi)) {
-          if (viol.updateMax(maxViolRev.decr()) == Failure)
-            return Failure
+        // If too few variables have the value
+        if (nPossible <= lower(vi)) {
+          // If we cannot violate anymore
+          if (atMaxViolRev.value) {
+            // Assign the unbound
+            if (eliminateUnbound(vi, nUnbound, _.assign(v)) == Failure) {
+              return Failure
+            }
+          } else {
+            // If we only reach the limit, remember this value
+            if (nPossible == lower(vi)) {
+              inLack(nValuesInLackRev.incr() - 1) = vi
+            }
+            // If we go past the limit, increase the minimal violation
+            else if (increaseMinViol() == Failure) {
+              return Failure
+            }
+          }
         }
       }
     }
@@ -171,22 +230,116 @@ class SoftGCCFWC(X: Array[CPIntVar], minVal: Int, lower: Array[Int], upper: Arra
       // If the value assigned is one we track
       if (minVal <= v && v <= maxVal) {
         val vi = v - minVal
+        val nPossible = nPossibleRev(vi).value
         val nMandatory = nMandatoryRev(vi).incr()
+        val nUnbound = nPossible - nMandatory
 
-        // Worsen the effective violation
-        if (nMandatory > upper(vi)) {
-          if (viol.updateMin(minViolRev.incr()) == Failure)
-            return Failure
-        }
+        removeUnbound(i, vi, nUnbound)
 
-        // Lessen the potential violation
-        if (nMandatory <= lower(vi)) {
-          if (viol.updateMax(maxViolRev.decr()) == Failure)
-            return Failure
+        // If too many variables are bound to the value
+        if (nMandatory >= upper(vi)) {
+          // If we cannot violate anymore
+          if (atMaxViolRev.value) {
+            // Remove the value from the unbound
+            if (eliminateUnbound(vi, nUnbound, _.removeValue(v)) == Failure) {
+              return Failure
+            }
+          } else {
+            // If we only reach the limit, remember this value
+            if (nMandatory == upper(vi)) {
+              inExcess(nValuesInExcessRev.incr() - 1) = vi
+            }
+            // If we go past the limit, increase the minimal violation
+            else if (increaseMinViol() == Failure) {
+              return Failure
+            }
+          }
         }
       }
     }
 
+    Suspend
+  }
+
+  /**
+   * Increases the minimal violation locally and in [[viol]], prunes if it reaches the maximum
+   * @return [[Failure]] on failure, [[Suspend]] otherwise
+   */
+  @inline def increaseMinViol(): CPOutcome = {
+    val minViol = minViolRev.incr()
+    if (minViol == viol.max) {
+      if (whenMaxViolReached() == Failure) {
+        return Failure
+      }
+      viol.assign(minViol)
+    } else if (viol.updateMin(minViol) == Failure)
+      return Failure
+    Suspend
+  }
+
+  /**
+   * Prunes everything that waited until the maximum violation was reached
+   * @return [[Failure]] on failure, [[Suspend]] otherwise
+   */
+  @inline def whenMaxViolReached(): CPOutcome = {
+    atMaxViolRev.setTrue()
+
+    var c = nValuesInLackRev.value
+    while (c > 0) {
+      c -= 1
+      val vi = inLack(c)
+      val v = vi + minVal
+      if (eliminateUnbound(vi, nPossibleRev(vi).value - nMandatoryRev(vi).value, _.assign(v)) == Failure) {
+        return Failure
+      }
+    }
+    c = nValuesInExcessRev.value
+    while (c > 0) {
+      c -= 1
+      val vi = inExcess(c)
+      val v = vi + minVal
+      if (eliminateUnbound(vi, nPossibleRev(vi).value - nMandatoryRev(vi).value, _.removeValue(v)) == Failure) {
+        return Failure
+      }
+    }
+
+    Suspend
+  }
+
+  /**
+   * Removes a variable from the unbound sparse set of a value
+   * @param i The index of the variable to remove
+   * @param vi The index of the value
+   * @param last The index of the element that will replace i
+   */
+  @inline private def removeUnbound(i: Int, vi: Int, last: Int) {
+    val thisUnboundSet = unboundSet(vi)
+    val thisUnboundIndex = unboundIndex(vi)
+    val atLast = thisUnboundSet(last)
+    val index = thisUnboundIndex(i)
+
+    thisUnboundSet(index) = atLast
+    thisUnboundIndex(atLast) = index
+    thisUnboundSet(last) = i
+    thisUnboundIndex(i) = last
+  }
+
+  /**
+   * Eliminates applies an action the unbound variables of a value
+   * @param vi The index of the value
+   * @param nUnbound The size of the unbound sparse set
+   * @param action The action to be performed
+   * @return [[Failure]] on failure, [[Suspend]] otherwise
+   */
+  @inline private def eliminateUnbound(vi: Int, nUnbound: Int, action: CPIntVar => CPOutcome): CPOutcome = {
+    val thisUnboundSet = unboundSet(vi)
+    var i = nUnbound
+    while (i > 0) {
+      i -= 1
+      if (action(X(thisUnboundSet(i))) == Failure) {
+        return Failure
+      }
+    }
     Suspend
   }
 }

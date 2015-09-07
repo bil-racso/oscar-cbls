@@ -46,7 +46,7 @@ class TestSoftGCC extends TestSuite {
       case e: oscar.cp.core.NoSolutionException => return (0, 0, 0, 0)
     }
 
-    cp.search { binaryStatic(X :+ viol) }
+    cp.search { binaryStatic(X) }
 
     val stat = cp.start(nSols = 10000000)
     (stat.nSols, stat.time, stat.nNodes, stat.nFails)
@@ -57,29 +57,44 @@ class TestSoftGCC extends TestSuite {
 
   // nSols on random domains
   test("Test #1: Random bounds") {
+    var totalTime1 = 0L
+    var totalTime2 = 0L
+    var totalNodes1 = 0
+    var totalNodes2 = 0
+
     for (i <- 1 to 100) {
-      println(i)
+      //println(s"test #$i")
       rand =  new scala.util.Random(i)
 
       val nVariables = 8
 
       val domVars = Array.fill(nVariables)(randomDom(size = 6))
-      val domViol = randomDom(size = 5)
+      val domViol = (0 to rand.nextInt(6)).toSet
       /*for (i <- 0 until nVariables) {
         println(s"$i: ${domVars(i) mkString " "}")
       }*/
 
       val min = domVars.flatten.min
       val max = domVars.flatten.max
-      val nValues = (min to max).length
 
       val lower = (for (v <- min to max) yield rand.nextInt(3)).toArray
       val upper = lower.map(v => v+rand.nextInt(3))
+      /*println(s"lower: ${lower.mkString(" ")}")
+      println(s"upper: ${upper.mkString(" ")}")
+      println(s"viol: $domViol")*/
 
       val (nSols1, time1, nNodes1, nFails1) = nbSol(domVars, min to max, lower, upper, domViol, AC)
       val (nSols2, time2, nNodes2, nFails2) = nbSol(domVars, min to max, lower, upper, domViol, FWC)
+      totalTime1 += time1
+      totalTime2 += time2
+      totalNodes1 += nNodes1
+      totalNodes2 += nNodes2
+      //println(s"time: $time1, $time2")
+      //println(s"nodes: $nNodes1, $nNodes2")
 
       nSols1 should be(nSols2)
     }
+    //println(s"total time: ac $totalTime1, fwc $totalTime2")
+    //println(s"total nodes: ac $totalNodes1, fwc $totalNodes2")
   }
 }
