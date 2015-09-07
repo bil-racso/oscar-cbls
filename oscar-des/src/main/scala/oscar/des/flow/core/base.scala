@@ -178,12 +178,11 @@ trait RichPutable extends Putable {
   * @param waitedNotification the number of waited notifications
   * @param gate the method to call once the method notifyOne has been called waitedNotification times
   */
-case class CounterGate(waitedNotification:Int, gate: ItemClass => Unit, var itemClass:ItemClass = zeroItemClass) {
-  private var remaining = waitedNotification
+case class CounterGate(var waitedNotification:Int, gate: ItemClass => Unit, var itemClass:ItemClass = zeroItemClass) {
   def notifyOne(mItemClass:ItemClass = zeroItemClass): Unit = {
     itemClass = union(itemClass,mItemClass)
-    remaining -=1
-    if(remaining == 0) gate(itemClass)
+    waitedNotification -=1
+    if(waitedNotification == 0) gate(itemClass)
   }
 }
 
@@ -191,13 +190,16 @@ case class CounterGate(waitedNotification:Int, gate: ItemClass => Unit, var item
   * an output consists is outputting a set of parts to a set of Putables
   * @author renaud.delandtsheer@cetic.be
   */
-class Outputter(outputs:Iterable[(() => Int, Putable)]) {
+class Outputter(outputs:Array[(() => Int, Putable)]) {
   val outputCount = outputs.size
   /**returns the number of output items*/
   def performOutput(i:ItemClass, block: () => Unit){
     val gate = CounterGate(outputCount +1, _ => block())
-    for((nr,putable) <- outputs){
+    var i = 0
+    while(i<outputCount){
+      val (nr,putable) = outputs(i)
       putable.put(nr(),i)(() => gate.notifyOne())
+      i+=1
     }
     gate.notifyOne()
   }

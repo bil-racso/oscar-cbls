@@ -1,7 +1,7 @@
 package oscar.examples.des
 
 import oscar.des.engine.Model
-import oscar.des.flow.core.{AttributeSet, AttributeDefinitions, Attribute}
+import oscar.des.flow.core.{AttributeSet, AttributeDefinitions}
 import oscar.des.flow.modeling.FactorySimulationHelper
 import scala.collection.immutable.SortedSet
 import scala.language.implicitConversions
@@ -32,7 +32,6 @@ object FactoryExample extends App with FactorySimulationHelper {
   //time unit is the second
   val rawMaterialStorage = fIFOStorage(200,List((40,AttributeSet(SortedSet(initialRawBatch),allAttributes).itemClass)),"rawMaterialStorage", verbose,false)
 
-
   val rawSupplier = singleBatchProcess(m, 5000, Array(), Array((()=>1,rawMaterialStorage)), identity, "rawSupplier", verbose)
   val ordering = onLowerThreshold(rawMaterialStorage,
     m,
@@ -42,7 +41,6 @@ object FactoryExample extends App with FactorySimulationHelper {
     verbose,
     0,
     "orderingPolicy")
-
 
   val inputFeederOfDieCuttingPartA = fIFOStorage(100,Nil,"inputFeederOfDieCuttingPartA", verbose,false)
   //takes 15 minutes to transport a coil, and install it
@@ -61,11 +59,10 @@ object FactoryExample extends App with FactorySimulationHelper {
       Array((()=>1,trashContainerForRejectedCutItems))), choseZeroOne, "QAAterSp", verbose)
 
   val bufferForDieA =  fIFOStorage(500,Nil,"bufferForDieA", verbose,false)
-  val outputBeltFromDieCuttingA = conveyorBeltProcess(m, 20, 0.5.toFloat , Array((1, outputSlotOfDieCuttingPArtA)), Array((1, bufferForDieA)), identity, "outputBeltFromDieCuttingA", verbose)
-
+  val outputBeltFromDieCuttingA = conveyorBeltProcess(m, 20, 0.5.toFloat , Array((()=>1, outputSlotOfDieCuttingPArtA)), Array((()=>1, bufferForDieA)), identity, "outputBeltFromDieCuttingA", verbose)
 
   val inputAOfForming = fIFOStorage(2, Nil, "inputAOfForming", verbose, false)
-  val transportingFromBufferA = conveyorBeltProcess(m, 20, 0.5.toFloat , Array((1, bufferForDieA)), Array((1, inputAOfForming)), identity, "transportingFromBufferA", verbose)
+  val transportingFromBufferA = conveyorBeltProcess(m, 20, 0.5.toFloat , Array((()=>1, bufferForDieA)), Array((()=>1, inputAOfForming)), identity, "transportingFromBufferA", verbose)
 
   //we consider here individual "already cut" dies although they are still aggregated into a single coil
   val inputFeederOfDieCuttingPartB = fIFOStorage(100, Nil, "inputFeederOfDieCuttingPartB", verbose, false)
@@ -77,10 +74,10 @@ object FactoryExample extends App with FactorySimulationHelper {
   val dieCuttingPartB = singleBatchProcess(m, 10, Array((()=>1, inputFeederOfDieCuttingPartB)), Array((()=>4,outputSlotOfDieCuttingPArtB)), identity, "dieCuttingPartB", verbose)
 
   val bufferForDieB = lIFOStorage(500, Nil, "outputSlotOfDieCuttingPArtA", verbose, false)
-  val outputBeltFromDieCuttingB = conveyorBeltProcess(m, 20, 0.5.toFloat , Array((1, outputSlotOfDieCuttingPArtB)), Array((1, bufferForDieB)), identity, "outputBeltFromDieCuttingB", verbose)
+  val outputBeltFromDieCuttingB = conveyorBeltProcess(m, 20, 0.5.toFloat , Array((()=>1, outputSlotOfDieCuttingPArtB)), Array((()=>1, bufferForDieB)), identity, "outputBeltFromDieCuttingB", verbose)
 
   val inputBOfForming = lIFOStorage(2, Nil, "inputBOfForming", verbose, false)
-  val transportingFromBufferB = conveyorBeltProcess(m, 20, 0.5.toFloat , Array((1, bufferForDieB)), Array((1, inputBOfForming)), identity, "transportingFromBufferB", verbose)
+  val transportingFromBufferB = conveyorBeltProcess(m, 20, 0.5.toFloat , Array((()=>1, bufferForDieB)), Array((()=>1, inputBOfForming)), identity, "transportingFromBufferB", verbose)
 
   val outputContainerOfForming = lIFOStorage(120, Nil, "outputContainerOfForming", verbose,false)
   val forming = singleBatchProcess(m, 30, Array((()=>2, inputAOfForming),(()=>2, inputBOfForming)), Array((()=>2,outputContainerOfForming)), identity, "forming", verbose)
@@ -95,13 +92,15 @@ object FactoryExample extends App with FactorySimulationHelper {
   val myStore = metricsStore(List(
     (mult(completedBatchCount(dieCuttingPartA),totalPut(outputSlotOfDieCuttingPArtA)),"a stupid metric, to test the stuff"),
     (cumulatedDuration(empty(rawMaterialStorage)),"duration of empty raw material storage"),
+    (cumulatedDuration(not(hasBeen(running(forming)))), "summed duration of forming being inactive at the start of the trace"),
     (empty(rawMaterialStorage),"is raw material storage empty? (at the end of the trace)"),
     (cumulatedDuration(not(running(forming))), "summed duration of forming being inactive"),
-    (cumulatedDuration(not(hasBeen(running(forming)))), "summed duration of forming being inactive at the start of the trace"),
     (culumatedDurationNotStart(not(running(forming))), "summed duration of forming being inactive, not counting initial"),
     (maxOnHistory(stockLevel(rawMaterialStorage)),"max content of raw material storage"),
     (minOnHistory(stockLevel(rawMaterialStorage)),"min content of raw material storage"),
-    (avgOnHistory(relativeStockLevel(rawMaterialStorage)), "avg relative stock level of raw material storage")
+    (avgOnHistory(relativeStockLevel(rawMaterialStorage)), "avg relative stock level of raw material storage"),
+    (avgOnHistory(stockLevel(rawMaterialStorage)), "avg  stock level of raw material storage"),
+    (ponderateWithDuration(stockLevel(rawMaterialStorage)),"toto")
   ), verbose)
 
   m.simulate(8*60*60, verbose,()=>myStore.updateMetricsIfNeeded(m.clock()))
@@ -139,5 +138,6 @@ object FactoryExample extends App with FactorySimulationHelper {
   println(trashContainerStoragePlace )
 
   println(myStore)
-  println("duration:" + (System.currentTimeMillis - starttime))
+  println("duration:" + (System.currentTimeMillis - starttime) + "ms")
 }
+

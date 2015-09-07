@@ -3,13 +3,13 @@ package oscar.des.flow.modeling
 import oscar.des.flow.lib._
 import scala.language.implicitConversions
 
-
 /** this trait is a factory for all the elements of the listener tooling
   */
 trait ListenersHelper{
 
   def metricsStore(rootExpressions:List[(Expression,String)],verbose:Boolean) =
     new MetricsStore(rootExpressions,verbose)
+
   /**
    * true if the storage is empty, false otherwise
    * @param s a storage
@@ -271,7 +271,6 @@ trait ListenersHelper{
    */
   def neq(a:DoubleExpr,b:DoubleExpr) = not(EQ(a,b))
 
-
   /**
    * computes the integral of s over time through the trapezoidal rule
    * taking the events as discretizations base
@@ -300,5 +299,5 @@ trait ListenersHelper{
    * @param s a double expression
    */
   def avgOnHistory(s:DoubleExpr):DoubleExpr = Div(PonderateWithDuration(s),CurrentTime())
-
 }
+
