@@ -27,42 +27,69 @@ package oscar.cbls.invariants.core.algo.dll
   */
 class DoublyLinkedList[T] extends Iterable[T]{
 
-  val headfantom:DLLStorageElement[T] = new DLLStorageElement[T](null.asInstanceOf[T])
-  val endfantom:DLLStorageElement[T] = new DLLStorageElement[T](null.asInstanceOf[T])
+  val phantom:DLLStorageElement[T] = new DLLStorageElement[T](null.asInstanceOf[T])
 
-  headfantom.setNext(endfantom)
+  phantom.setNext(phantom)
 
-  override def size = msize
-  var msize:Int = 0
+  /**returns the size of the PermaFilteredDLL
+    * this is a O(n) method because it is very rarely used.
+    * and in this context, we want to keep the memory footprint as small as possible*/
+  override def size ={
+    var toReturn = 0
+    var current = phantom.next
+    while(current != phantom){
+      toReturn += 1
+      current = current.next
+    }
+    toReturn
+  }
+
+  /**adds the element at the start of the DLL*/
   def addElem(elem:T):DLLStorageElement[T] = {
     val d = new DLLStorageElement[T](elem)
-    d.setNext(headfantom.next)
-    headfantom.setNext(d)
-    msize +=1
+    d.setNext(phantom.next)
+    phantom.setNext(d)
     d
+  }
+
+
+  /**adds the element at the end of the DLL*/
+  def enqueue(elem:T):DLLStorageElement[T] = {
+    val d = new DLLStorageElement[T](elem)
+    phantom.prev.setNext(d)
+    d.setNext(phantom)
+    d
+  }
+
+  def dequeue():T = {
+    val d = phantom.next
+    assert(d != phantom)
+    d.delete()
+    d.elem
   }
 
   def +(elem:T){addElem(elem)}
   def ++(elems:Iterable[T]) {for(elem <- elems) addElem(elem)}
 
-  def deleteElem(elemkey:DLLStorageElement[T]):T = {
-    elemkey.prev.setNext(elemkey.next)
-    msize -=1
-    elemkey.elem
-  }
-
   def dropAll(){
-    headfantom.setNext(endfantom)
-    msize = 0
+    phantom.setNext(phantom)
   }
 
-  override def isEmpty:Boolean = (size == 0)
+  override def isEmpty = phantom.next == phantom
 
-  override def iterator = new DLLIterator[T](headfantom,endfantom)
+  override def iterator = new DLLIterator[T](phantom, phantom)
+
+  override def foreach[U](f: (T) => U): Unit = {
+    var currentPos = phantom.next
+    while(currentPos != phantom){
+      f(currentPos.elem)
+      currentPos = currentPos.next
+    }
+  }
 }
 
 /**
-* @author renaud.delandtsheer@cetic.be
+ * @author renaud.delandtsheer@cetic.be
  * @param elem
  * @tparam T
  */
@@ -74,19 +101,23 @@ class DLLStorageElement[T](val elem:T){
     this.next = d
     d.prev = this
   }
+
+  def delete(): Unit ={
+    prev.setNext(next)
+  }
 }
 
 /**
-   * @author renaud.delandtsheer@cetic.be
+ * @author renaud.delandtsheer@cetic.be
  * @param CurrentKey
- * @param endfantom
+ * @param phantom
  * @tparam T
  */
-class DLLIterator[T](var CurrentKey:DLLStorageElement[T], val endfantom:DLLStorageElement[T]) extends Iterator[T]{
+class DLLIterator[T](var CurrentKey:DLLStorageElement[T], val phantom:DLLStorageElement[T]) extends Iterator[T]{
   def next():T = {
     CurrentKey = CurrentKey.next
     CurrentKey.elem
   }
 
-  def hasNext:Boolean = {CurrentKey.next != endfantom}
+  def hasNext:Boolean = {CurrentKey.next != phantom}
 }

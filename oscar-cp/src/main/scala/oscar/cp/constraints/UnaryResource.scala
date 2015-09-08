@@ -1,866 +1,326 @@
-/*******************************************************************************
- * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 2.1 of the License, or
- * (at your option) any later version.
- *   
- * OscaR is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License  for more details.
- *   
- * You should have received a copy of the GNU Lesser General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
- ******************************************************************************/
-
 package oscar.cp.constraints
 
-import oscar.cp.core._
-import java.util.{Arrays => JArrays}
+import oscar.algo.SortUtils._
+import oscar.algo.reversible.ReversibleInt
+import oscar.cp.core.CPOutcome._
+import oscar.cp.core.variables.CPIntVar
+import oscar.cp.core.{CPOutcome, CPPropagStrength, Constraint}
+import oscar.cp.scheduling.util.ThetaLambdaTree
+import oscar.cp._
 
 /**
- * @author Pierre Schaus pschaus@gmail.com
+ * Created on 21/01/15.
+ * @author Cyrille Dejemeppe (cyrille.dejemeppe@gmail.com)
+ * @author Sascha Van Cauwelaert (sascha.vancauwelaert@gmail.com)
  */
-class UnaryResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], required: Array[CPBoolVar]) extends Constraint(starts(0).store) {
-  
-  def this(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar], resources: Array[CPIntVar], id: Int) = this(starts,durations,ends,resources.map(_.isEq(id)))
-  
-  def this(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar]) = {
-    this (starts,durations,ends,Array.fill(starts.size)(CPBoolVar(starts(0).store,true)))
-  }
+class UnaryResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar]) extends Constraint(starts(0).store) {
+  idempotent = true
 
-  val n = starts.size // number of activities
+  private[this] val nTasks = starts.length
+  private[this] val thetaLambdaTree = new ThetaLambdaTree(nTasks)
+  private[this] val thetaLambdaTreeMirror = new ThetaLambdaTree(nTasks)
 
-  assert(durations.size == n)
-  assert(ends.size == n)
-  assert(required.size == n)
+  private[this] val indexByIncreasingMinStarts: Array[Int] = Array.tabulate(nTasks)(i => i)
+  private[this] val indexByIncreasingMaxStarts: Array[Int] = Array.tabulate(nTasks)(i => i)
+  private[this] val indexByIncreasingMinEnds: Array[Int] = Array.tabulate(nTasks)(i => i)
+  private[this] val indexByIncreasingMaxEnds: Array[Int] = Array.tabulate(nTasks)(i => i)
+  private[this] val indexByIncreasingMinStartMirror: Array[Int] = Array.tabulate(nTasks)(i => i)
+  private[this] val indexByIncreasingMaxStartMirror: Array[Int] = Array.tabulate(nTasks)(i => i)
+  private[this] val indexByIncreasingMinEndMirror: Array[Int] = Array.tabulate(nTasks)(i => i)
+  private[this] val indexByIncreasingMaxEndMirror: Array[Int] = Array.tabulate(nTasks)(i => i)
 
-  val activities = Array.tabulate(n) { i =>
-    new ActivityUnary(s, starts(i), durations(i), ends(i), required(i), i)
-  }
-  // mirror activities
-  val mactivities = Array.tabulate(n) { i =>
-    new MirrorActivityUnary(activities(i))
-  }
+  private[this] val startsMirror = ends map {-_}
+  private[this] val endsMirror = starts map {-_}
 
-  val ect = Array.tabulate(n)(i => activities(i))
-  val est = Array.tabulate(n)(i => activities(i))
-  val lct = Array.tabulate(n)(i => activities(i))
-  val lst = Array.tabulate(n)(i => activities(i))
+  private[this] val currentMinStarts: Array[Int] = Array.ofDim[Int](nTasks)
+  private[this] val currentMaxEnds: Array[Int] = Array.ofDim[Int](nTasks)
+  private[this] val currentMinEnds: Array[Int] = Array.ofDim[Int](nTasks)
+  private[this] val currentMaxStarts: Array[Int] = Array.ofDim[Int](nTasks)
+  private[this] val currentMinStartsMirror: Array[Int] = Array.ofDim[Int](nTasks)
+  private[this] val currentMaxEndsMirror: Array[Int] = Array.ofDim[Int](nTasks)
+  private[this] val currentMinEndsMirror: Array[Int] = Array.ofDim[Int](nTasks)
+  private[this] val currentMaxStartsMirror: Array[Int] = Array.ofDim[Int](nTasks)
+  private[this] val currentMinDurations: Array[Int] = Array.ofDim[Int](nTasks)
 
-  val mect: Array[ActivityUnary] = Array.tabulate(n)(i => mactivities(i))
-  val mest: Array[ActivityUnary] = Array.tabulate(n)(i => mactivities(i))
-  val mlct: Array[ActivityUnary] = Array.tabulate(n)(i => mactivities(i))
-  val mlst: Array[ActivityUnary] = Array.tabulate(n)(i => mactivities(i))
+  private[this] val newMinStarts: Array[Int] = Array.ofDim[Int](nTasks)
+  private[this] val newMaxEnds: Array[Int] = Array.ofDim[Int](nTasks)
+  private[this] val newMinStartsMirror: Array[Int] = Array.ofDim[Int](nTasks)
+  private[this] val newMaxEndsMirror: Array[Int] = Array.ofDim[Int](nTasks)
 
-  val newEst = Array.fill(n)(Int.MinValue)
-  val newLct = Array.fill(n)(Int.MaxValue)
+  private[this] val formerMinEnds : Array[ReversibleInt] = Array.fill(nTasks)(new ReversibleInt(starts(0).store,Int.MaxValue))
+  private[this] val formerMaxStarts : Array[ReversibleInt] = Array.fill(nTasks)(new ReversibleInt(starts(0).store,Int.MinValue))
 
-  val lambdaThetaTree = new LambdaThetaTreee2(n)
+  private[this] var failure = false
+  private[this] var changed = true
 
-  val estComp = new ESTComparator2()
-  val lstComp = new LSTComparator2()
-  val ectComp = new ECTComparator2()
-  val lctComp = new LCTComparator2()
+  // Temporary arrays needed by the mergeSort Algorithm
+  private[this] val mergeSortRuns = Array.ofDim[Int](nTasks + 1)
+  private[this] val mergeSortAux = Array.ofDim[Int](nTasks)
 
-  var failure = false
 
   override def setup(l: CPPropagStrength): CPOutcome = {
-
-    // to do, link start, end, dur
-
-    for (i <- 0 until n) {
-      starts(i).callPropagateWhenBoundsChange(this, false)
-      ends(i).callPropagateWhenBoundsChange(this, false)
-      if (!required(i).isBound) {
-        required(i).callPropagateWhenBind(this, false)
-      }
+    for (i <- 0 until nTasks) {
+      starts(i).callPropagateWhenBoundsChange(this)
+      ends(i).callPropagateWhenBoundsChange(this)
     }
-
-    if (propagate() == CPOutcome.Failure) {
-      return CPOutcome.Failure
-    }
-
-    return CPOutcome.Suspend
+    propagate()
   }
 
   override def propagate(): CPOutcome = {
-    //println("propagate start...")
-    //println(activities.mkString("\n"))
-    
-    for (i <- 0 until n) {
-      activities(i).update() // forces update of start, end, dur
-    }
-    //println("after update...")
-    //println(activities.mkString("\n"))
-    
-    
     failure = false
-    do {
-      do {
-        do {
-          if (!overloadChecking()) {
-            return CPOutcome.Failure
-          }
-        } while (!failure && detectablePrecedences())
-      } while (!failure && notFirstNotLast() && !failure)
-    } while (!failure && edgeFinder())
+    changed = true
 
-    if (failure) {
-      return CPOutcome.Failure
-    } else {
-      return CPOutcome.Suspend
+    var i = 0
+    while(i < nTasks) {
+      currentMinDurations(i) = durations(i).min
+      currentMinStarts(i) = starts(i).min
+      currentMaxEnds(i) = ends(i).max
+      currentMinEnds(i) = ends(i).min
+      currentMaxStarts(i) = starts(i).max
+      currentMinStartsMirror(i) = -currentMaxEnds(i)
+      currentMaxEndsMirror(i) = -currentMinStarts(i)
+      currentMinEndsMirror(i) = -currentMaxStarts(i)
+      currentMaxStartsMirror(i) = -currentMinEnds(i)
+      newMinStarts(i) = currentMinStarts(i)
+      newMaxEnds(i) = currentMaxEnds(i)
+      newMinStartsMirror(i) = currentMinStartsMirror(i)
+      newMaxEndsMirror(i) = currentMaxEndsMirror(i)
+      i += 1
     }
 
-  }  
-  
-
-  private def updateEst() {
-    JArrays.sort(est, estComp)
-    for (i <- 0 until n) {
-      est(i).estPos = i
-    }
-  }
-  
-  private def updateMEst() {
-    JArrays.sort(mest, estComp)
-    for (i <- 0 until n) {
-      mest(i).estPos = i
-    }
-  }
-
-  private def overloadChecking(): Boolean = {
-    //println("overload checking start")
-    // Init
-    updateEst() // update the activity wrappers such that they now their position according to a non decreasing est sorting
-
-    // left to right
-    JArrays.sort(lct, lctComp)
-    lambdaThetaTree.reset()
-    for (i <- 0 until n) {
-      val aw = lct(i)
-      if (!aw.isForbidden) { // skip forbidden activities
-        lambdaThetaTree.insert(aw, aw.estPos)
-        if (aw.isOptional) {
-          lambdaThetaTree.grey(aw.estPos)
-        } else if (aw.isMandatory) {
-          if (lambdaThetaTree.ect > aw.lct) {
-            return false
-          }
-        }
-        while (lambdaThetaTree.ectOpt > aw.lct) {
-          val j = lambdaThetaTree.responsibleEct
-          val actj = est(j).index
-          val ok = activities(actj).setForbidden()
-          assert(ok != CPOutcome.Failure)
-          lambdaThetaTree.remove(j)
-        }
+    while(!failure && changed) {
+      if (DP() || NFNL() || EF()) {
+        changed = true
       }
+      else
+        changed = false
     }
-    
-    // right to left
-    updateMEst()
-    JArrays.sort(mlct, lctComp)
-    lambdaThetaTree.reset()
-    for (i <- 0 until n) {
-      val aw = mlct(i)
-      if (!aw.isForbidden) { // skip forbidden activities
-        lambdaThetaTree.insert(aw, aw.estPos)
-        if (aw.isOptional()) {
-          lambdaThetaTree.grey(aw.estPos)
-        } else if (aw.isMandatory) {
-          if (lambdaThetaTree.ect > aw.lct) {
-            return false
-          }
-        }
-        while (lambdaThetaTree.ectOpt > aw.lct) {
-          val j = lambdaThetaTree.responsibleEct
-          val actj = mest(j).index
-          val ok = mactivities(actj).setForbidden()
-          assert(ok != CPOutcome.Failure)
-          lambdaThetaTree.remove(j)
-        }
+
+    if(failure)
+      Failure
+    else {
+      i = 0
+      while(i < nTasks) {
+        formerMinEnds(i).setValue(currentMinEnds(i))
+        formerMaxStarts(i).setValue(currentMaxStarts(i))
+        i += 1
       }
+      Suspend
     }
-    //println("end of overload:")
-    //println(activities.mkString("\n"))
-    return true
+
   }
 
-  private def notFirstNotLast(): Boolean = {
+  @inline
+  private def DP(): Boolean = {
+    (detectablePrecedences(currentMinStarts, currentMaxStarts, currentMinEnds,
+      currentMaxStartsMirror, currentMaxEndsMirror, newMinStarts, newMaxEndsMirror,
+      starts, ends, thetaLambdaTree,
+      indexByIncreasingMinStarts, indexByIncreasingMaxStarts, indexByIncreasingMinEnds) && !failure) |
+      detectablePrecedences(currentMinStartsMirror, currentMaxStartsMirror, currentMinEndsMirror,
+        currentMaxStarts, currentMaxEnds, newMinStartsMirror, newMaxEnds,
+        startsMirror, endsMirror, thetaLambdaTreeMirror,
+        indexByIncreasingMinStartMirror, indexByIncreasingMaxStartMirror, indexByIncreasingMinEndMirror)
+  }
 
-    // Init
-    updateEst()
-    for (i <- 0 until n) {
-      newEst(i) = activities(i).est
-      newLct(i) = activities(i).lct
-    }
+  /**
+   * returns true if some domain is changed, false otherwise
+   */
+  @inline
+  private def detectablePrecedences(startMins : Array[Int], startMaxs: Array[Int], endMins : Array[Int],
+                                    startMaxsMirror : Array[Int], endMaxsMirror : Array[Int], updatedMinStarts : Array[Int], updatedMaxEndsMirror : Array[Int],
+                                    startVars : Array[_ <: CPIntVar], endVars : Array[_ <: CPIntVar], tree : ThetaLambdaTree,
+                                    orderedMinStartIds : Array[Int], orderedMaxStartIds: Array[Int], orderedMinEndIds : Array[Int]): Boolean = {
 
-    // Push in one direction.
-    JArrays.sort(lst, lstComp) // order activities in non decreasing lct_j - p_j (i.e. latest starting time)
-    JArrays.sort(lct, lctComp)
+    // Clearing the tree
+    mergeSort(orderedMinStartIds, startMins, 0, nTasks, mergeSortRuns, mergeSortAux)
+    tree.clearAndPlaceLeaves(orderedMinStartIds, startMins, currentMinDurations)
 
-    lambdaThetaTree.reset()
-    var j = 0
-    while (j < n && !lst(j).isMandatory()) { // skip non mandatory
-      j += 1
-    }
-    for (i <- 0 until n) {
-      val awi = lct(i)
-      if (lct(i).isMandatory()) {
-        while (j < n && awi.lct > lst(j).lst) {
-          if (j > 0 && lambdaThetaTree.ect > lst(j).lst) {
-            newLct(lst(j).index) = lst(j - 1).lst
-          }
-          lambdaThetaTree.insert(lst(j), lst(j).estPos)
-          j += 1
-          while (j < n && !lst(j).isMandatory()) { // skip non mandatory
-            j += 1
-          }
-        }
-        val inserted = lambdaThetaTree.isInserted(awi.estPos)
-        if (inserted) {
-          lambdaThetaTree.remove(awi.estPos)
-        }
-        val ectThetaLessi = lambdaThetaTree.ect
-        if (inserted) {
-          lambdaThetaTree.insert(awi, awi.estPos)
-        }
-        if (ectThetaLessi > awi.lct && j > 0) {
-          newLct(awi.index) = Math.min(newLct(awi.index), lst(j - 1).lct)
-        }
+    //sorting activities in non-decreasing lst
+    mergeSort(orderedMaxStartIds, startMaxs, 0, nTasks, mergeSortRuns, mergeSortAux)
+
+    //sorting activities in non-decreasing ect
+    mergeSort(orderedMinEndIds, endMins, 0, nTasks, mergeSortRuns, mergeSortAux)
+
+    var i, j = 0
+    while (i < nTasks) {
+      val ectIndex = orderedMinEndIds(i)
+      while (j < nTasks && endMins(ectIndex) > startMaxs(orderedMaxStartIds(j))) {
+        tree.insert(orderedMaxStartIds(j))
+        j += 1
       }
+      updatedMinStarts(ectIndex) = math.max(updatedMinStarts(ectIndex), tree.ectWithoutActivity(ectIndex))
+      i += 1
     }
 
-    // Push in other direction.
-    JArrays.sort(mlst, lstComp)
-    JArrays.sort(mlct, lctComp)
-    lambdaThetaTree.reset()
-    j = 0
-    while (j < n && !mlst(j).isMandatory()) { // skip non mandatory
-      j += 1
-    }
-    for (i <- 0 until n) {
-      val awi = mlct(i)
-      if (awi.isMandatory()) {
-        while (j < n && awi.lct > mlst(j).lst) {
-          if (j > 0 && lambdaThetaTree.ect > mlst(j).lst) {
-            newEst(mlst(j).index) = -mlst(j - 1).lst
-          }
-          lambdaThetaTree.insert(mlst(j), mlst(j).estPos)
-          j += 1
-          while (j < n && !mlst(j).isMandatory()) { // skip non mandatory
-            j += 1
-          }
+    updateMins(startMins,endMins,startMaxsMirror,endMaxsMirror, updatedMinStarts, updatedMaxEndsMirror, startVars, endVars)
+  }
+
+  @inline
+  private def NFNL(): Boolean = {
+    (notLast(currentMinStarts, currentMaxStarts, currentMaxEnds,
+            currentMinStartsMirror, currentMinEndsMirror, newMaxEnds, newMinStartsMirror,
+            starts, ends, thetaLambdaTree,
+            indexByIncreasingMinStarts, indexByIncreasingMaxStarts, indexByIncreasingMaxEnds) && !failure) |
+    notLast(currentMinStartsMirror, currentMaxStartsMirror, currentMaxEndsMirror,
+            currentMinStarts, currentMinEnds, newMaxEndsMirror, newMinStarts,
+            startsMirror, endsMirror, thetaLambdaTreeMirror,
+            indexByIncreasingMinStartMirror, indexByIncreasingMaxStartMirror, indexByIncreasingMaxEndMirror)
+  }
+
+  /**
+   * returns true if some domain is changed, false otherwise
+   */
+  @inline
+  private def notLast(startMins : Array[Int], startMaxs : Array[Int], endMaxs : Array[Int],
+                      startMinsMirror : Array[Int], endMinsMirror : Array[Int], updatedMaxEnds : Array[Int], updatedMinStartsMirror : Array[Int],
+                      startVars : Array[_ <: CPIntVar], endVars : Array[_ <: CPIntVar], tree : ThetaLambdaTree,
+                      orderedMinStartIds : Array[Int], orderedMaxStartIds: Array[Int], orderedMaxEndIds : Array[Int]) : Boolean = {
+
+    // Clearing the tree
+    mergeSort(orderedMinStartIds, startMins, 0, nTasks, mergeSortRuns, mergeSortAux)
+    tree.clearAndPlaceLeaves(orderedMinStartIds, startMins, currentMinDurations)
+
+    //sorting activities in non-decreasing lst
+    mergeSort(orderedMaxStartIds, startMaxs, 0, nTasks, mergeSortRuns, mergeSortAux)
+
+    //sorting activities in non-decreasing lct
+    mergeSort(orderedMaxEndIds, endMaxs, 0, nTasks, mergeSortRuns, mergeSortAux)
+
+    var i, j = 0
+    while(i < nTasks) {
+      val lctIndex = orderedMaxEndIds(i)
+      while(j < nTasks && endMaxs(lctIndex) > startMaxs(orderedMaxStartIds(j))) {
+        if(tree.ect > startMaxs(orderedMaxStartIds(j))) {
+          updatedMaxEnds(orderedMaxStartIds(j)) = startMaxs(orderedMaxStartIds(j - 1))
         }
-        val inserted = lambdaThetaTree.isInserted(awi.estPos)
-        if (inserted) {
-          lambdaThetaTree.remove(awi.estPos)
-        }
-        val mectThetaLessi = lambdaThetaTree.ect
-        if (inserted) {
-          lambdaThetaTree.insert(awi, awi.estPos)
-        }
-        if (mectThetaLessi > awi.lct && j > 0) {
-          newEst(awi.index) = Math.max(newEst(awi.index), -mlst(j - 1).lct)
-        }
+        tree.insert(orderedMaxStartIds(j))
+        j += 1
       }
-    }
 
-    // Apply modifications
-    var modified = false
-    for (i <- 0 until n) {
-      if (required(i).isTrue) {
-        if (activities(i).lct > newLct(i) || activities(i).est < newEst(i)) {
-          modified = true
-
-          if (activities(i).start.updateMin(newEst(i)) == CPOutcome.Failure) {
-            failure = true
-          }
-
-          if (activities(i).end.updateMax(newLct(i)) == CPOutcome.Failure) {
-            failure = true
-          }
-        }
+      if(tree.ectWithoutActivity(lctIndex) > startMaxs(lctIndex)) {
+        updatedMaxEnds(lctIndex) = math.min(startMaxs(orderedMaxStartIds(j - 1)), updatedMaxEnds(lctIndex))
       }
-    }
-    return modified
 
-  } //end of notFirstNotLast 
-  
-  
-	private def detectablePrecedences(): Boolean = {
-		// Init
-		updateEst()
-		// Propagate in one direction
-		JArrays.sort(ect, ectComp) // order activities in non decreasing order of est_i + p_i (i.e. earliest completion time)
-		JArrays.sort(lst, lstComp) // order activities in non decreasing lct_j - p_j (i.e. latest starting time)
-		lambdaThetaTree.reset()
-		var j = 0
-		for (i <-  0 until n) { // for i in T in non decreasing order of est_i + p_i
-			val awi = ect(i)
-			if (awi.isMandatory()) {
-				while (j < n && !lst(j).isMandatory()) { // skip non mandatory
-					j += 1
-				}
-				if (j < n) {
-					var awj = lst(j)
-					while (awi.ect > awj.lst && j < n) {
-						lambdaThetaTree.insert(awj, awj.estPos)
-						j += 1
-						while (j < n && !lst(j).isMandatory()) { // skip non mandatory
-							j += 1
-						}
-						if (j < n) {
-						  awj = lst(j)
-						}
-					}
-				}
-				val esti = awi.est
-				val inserted = lambdaThetaTree.isInserted(awi.estPos)
-				if (inserted) {
-					lambdaThetaTree.remove(awi.estPos)
-				}
-				val oesti = lambdaThetaTree.ect
-				if (inserted) {
-					lambdaThetaTree.insert(awi, awi.estPos)
-				}
-				if (oesti > esti) {
-					newEst(awi.index) = oesti
-				} else {
-					newEst(awi.index) = Int.MinValue
-				}
-			}
-		}
-
-		// Propagate in other direction
-		JArrays.sort(mect, ectComp)
-		lambdaThetaTree.reset()
-		j = 0
-		for (i <- 0 until n) {
-			val awi = mect(i)
-			if (awi.isMandatory()) {
-				if (j < n) {
-					while (j < n && !mlst(j).isMandatory()) { // skip non mandatory
-						j += 1
-					}
-					var awj = mlst(j)
-					while (awi.ect > awj.lst && j < n) {
-						lambdaThetaTree.insert(awj, awj.estPos)
-						j += 1
-						while (j < n && !mlst(j).isMandatory()) { // skip non mandatory
-							j += 1
-						}						
-						if (j < n) {
-						  awj = mlst(j)
-						}
-						
-					}
-				}
-				val lcti = awi.est
-				val inserted = lambdaThetaTree.isInserted(awi.estPos)
-				if (inserted) {
-					lambdaThetaTree.remove(awi.estPos)
-				}
-				val olcti = lambdaThetaTree.ect
-				if (inserted) {
-					lambdaThetaTree.insert(awi, awi.estPos)
-				}
-				if (olcti > lcti) {
-					newLct(awi.index) = -olcti
-				} else {
-					newLct(awi.index) = Int.MaxValue
-				}
-			}
-		}
-
-		// Apply modifications
-		var modified = false
-		for (i <- 0 until n) {
-			if (required(i).isTrue) {
-				if (newEst(i) != Int.MinValue) {
-					modified = true
-					if (activities(i).start.updateMin(newEst(i)) == CPOutcome.Failure) {
-						failure = true
-					}
-				}
-				if (newLct(i) != Int.MaxValue) {
-					modified = true
-					if (activities(i).end.updateMax(newLct(i)) == CPOutcome.Failure) {
-						failure = true
-					}
-				}
-			}
-		}
-		return modified
-	}
-  
-
-  private def edgeFinder(): Boolean = {
-    
-    
-    
-    //println("--------------edge--------")
-    //activities.foreach(a => println(a))
-    // Init
-    updateEst()
-    for (i <- 0 until n) {
-      newEst(i) = activities(i).est
-      newLct(i) = activities(i).lct
+      i += 1
     }
 
-    // Push in one direction.
-    JArrays.sort(lct, lctComp)
-    lambdaThetaTree.reset()
+    updateMaxs(startMaxs, endMaxs, startMinsMirror, endMinsMirror, updatedMaxEnds, updatedMinStartsMirror, startVars, endVars)
 
-    for (i <- 0 until n) {
-      if (est(i).isMandatory) {
-        lambdaThetaTree.insert(est(i), i)
+  }
+
+  @inline
+  private def EF() : Boolean = {
+    (edgeFinding(currentMinStarts, currentMaxEnds, currentMinEnds,
+                currentMaxStartsMirror,currentMaxEndsMirror, newMinStarts, newMaxEndsMirror,
+                starts, ends, thetaLambdaTree,
+                indexByIncreasingMinStarts, indexByIncreasingMaxEnds) && ! failure) |
+    edgeFinding(currentMinStartsMirror, currentMaxEndsMirror, currentMinEndsMirror,
+                currentMaxStarts, currentMaxEnds, newMinStartsMirror, newMaxEnds,
+                startsMirror,endsMirror, thetaLambdaTreeMirror,
+                indexByIncreasingMinStartMirror, indexByIncreasingMaxEndMirror)
+  }
+
+  /**
+   * returns true if some domain is changed, false otherwise
+   */
+  @inline
+  private def edgeFinding(startMins : Array[Int], endMaxs : Array[Int], endMins : Array[Int],
+                          startMaxsMirror : Array[Int], endMaxsMirror : Array[Int], updatedMinStarts : Array[Int], updatedMaxEndsMirror : Array[Int],
+                          startVars : Array[_ <: CPIntVar], endVars : Array[_ <: CPIntVar], tree : ThetaLambdaTree,
+                          orderedMinStartIds : Array[Int], orderedMaxEndIds : Array[Int]) : Boolean = {
+
+    // Inserting all activities in the tree
+    mergeSort(orderedMinStartIds, startMins, 0, nTasks, mergeSortRuns, mergeSortAux)
+
+    tree.fillAndPlaceLeaves(orderedMinStartIds, startMins, currentMinDurations) // true as we use gray nodes
+
+    //sorting activities in non-decreasing lct
+    //NOTE: we sort the array by increasing lct, we just will browse it from right to left
+    mergeSort(orderedMaxEndIds, endMaxs, 0, nTasks, mergeSortRuns, mergeSortAux)
+
+    var estIndex = 0
+    var j = nTasks - 1
+    while (j > 0) {
+
+      if(tree.ect > endMaxs(orderedMaxEndIds(j))) {
+        failure = true
+        return true
       }
-    }
-    var j = n - 1
-    while (j >= 0 && !lct(j).isMandatory) {
+
+      tree.grayActivity(orderedMaxEndIds(j))
+
       j -= 1
-    }
-    while (j >= 0) { // we consider mandatory only
-      var awj = lct(j)
-      lambdaThetaTree.grey(awj.estPos)
-      j -= 1
-      while (j >= 0 && !lct(j).isMandatory) { j -= 1 }
-      if (j >= 0) {
-        awj = lct(j)
-        if (lambdaThetaTree.ect > awj.lct) {
-          failure = true // Resource is overloaded
-          return false
+      while(tree.ectBar > endMaxs(orderedMaxEndIds(j))) {
+        if (tree.responsibleEctBar < 0) {
+          failure = true
+          return true
         }
-        while (lambdaThetaTree.ectOpt > awj.lct) {
-          val i = lambdaThetaTree.responsibleEct
-          assert(i >= 0)
-          val acti = est(i).index
-          if (lambdaThetaTree.ect > newEst(acti)) {
-            newEst(acti) = lambdaThetaTree.ect
-          }
-          lambdaThetaTree.remove(i)
-        }
-      }
-
-    }
-    // Push in other direction.
-    
-    updateMEst()
-    JArrays.sort(mlct, lctComp)
-    
-    //println("est:"+mest.mkString(","))
-    //println("lct:"+mlct.mkString(","))
-    //println("mandatory lct:"+mlct.map(_.isMandatory).mkString(","))
-    
-    lambdaThetaTree.reset()
-    for (i <- 0 until n) {
-      if (mest(i).isMandatory) {
-        //println("insert:"+mest(i)+" in position "+i)
-        lambdaThetaTree.insert(mest(i), i)
+        estIndex = orderedMinStartIds(tree.responsibleEctBar)
+        updatedMinStarts(estIndex) = math.max(updatedMinStarts(estIndex), tree.ect)
+        tree.remove(estIndex)
       }
     }
-    //println("initial tree ect:"+lambdaThetaTree.ect)
-    j = n - 1
-    while (j >= 0 && !mlct(j).isMandatory) {
-      //println("activity at "+ j +" mandatory?"+lct(j).isMandatory+ " " + lct(j))
-      j -= 1
-    }
-    
-    
-    
-    while (j >= 0) {
-      var awj = mlct(j)
-      //println("j:"+j+" activity awj:"+awj)
-      //println("greying position "+awj.estPos)
-      lambdaThetaTree.grey(awj.estPos)
-      j -= 1
-      while (j >= 0 && !mlct(j).isMandatory) { j -= 1 }
-      if (j >= 0) {
-        awj = mlct(j)
-        
-        if (lambdaThetaTree.ect > awj.lct) {
-          //println("failure here?"+lambdaThetaTree.ect +">"+ awj.lct )
-          failure = true // Resource is overloaded
-          return false
-        }
-        while (lambdaThetaTree.ectOpt > awj.lct) {
-          val i = lambdaThetaTree.responsibleEct
-          assert(i >= 0)
-          val acti = mest(i).index
-          if (-lambdaThetaTree.ect < newLct(acti)) {
-            newLct(acti) = -lambdaThetaTree.ect
-          }
-          lambdaThetaTree.remove(i)
-        }
-      }
 
-    }
-    
-    
-    // Apply modifications.
-    var modified = false
-    for (i <- 0 until n) {
-      if (required(i).isTrue) {
-        
-        if (activities(i).est < newEst(i)) {
-          modified = true
-          if (activities(i).start.updateMin(newEst(i)) == CPOutcome.Failure) {
-            failure = true
-            return false
-          }
-        }
-        
-        if (activities(i).lct > newLct(i)) {
-          modified = true
-          if (activities(i).end.updateMax(newLct(i)) == CPOutcome.Failure) {
-            failure = true
-            return false
-          }
-        }
-        
-      }
-
-    }
-    return modified
-  }
-
-}
-
-/**
- * This object is used internally by UnaryResource, it is not intended to be used in modeling
- * @author Pierre Schaus pschaus@gmail.com
- */
-class ActivityUnary(val cp: CPStore, startVar: CPIntVar, durVar: CPIntVar, endVar: CPIntVar, requiredVar: CPBoolVar, val index: Int) {
-
-  var estPos = -1
-
-  // The variables
-  def start = startVar
-  def end = endVar
-  def dur = durVar
-  def required = requiredVar
-
-  val  infty: Int = Int.MaxValue << 2;
-  
-  // Earliest starting time
-  def est = start.min
-  // Latest starting time
-  def lst = start.max // if (required.isTrue) start.max else infty
-  // Earliest completion time assuming the smallest duration
-  def ect = end.min
-  // Latest completion time assuming the smallest duration
-  def lct = end.max // if (required.isTrue) end.max else infty
-
-  // Current minimal duration of this activity
-  def minDuration = dur.min
-  // Current maximal duration of this activity
-  def maxDuration = dur.max
-
-  /**
-   * @return true if the activity may be possibly be scheduled on this resource
-   */
-  def isOptional() = !required.isBound
-
-  /**
-   * @return true if the activity must be scheduled on this resource
-   */
-  def isMandatory() = required.isTrue
-
-  /**
-   * @return true if the activity cannot be scheduled on this resource
-   */
-  def isForbidden() = required.isFalse
-
-  /**
-   * @return set the activity forbidden on this resource
-   */
-  def setForbidden(): CPOutcome = required.assign(0)
-
-  override def toString = "ActivityUnary" + "(est: " + est + ", d: " + dur + ", lct: " + lct + ", req:"+ required + ", estPos:" + estPos + ")"
-
-  def adjustStart(v: Int): CPOutcome = {
-
-    if (startVar.updateMin(v) == CPOutcome.Failure)
-      return CPOutcome.Failure
-
-    if (endVar.updateMin(v + durVar.min) == CPOutcome.Failure)
-      return CPOutcome.Failure
-
-    return CPOutcome.Suspend
+    updateMins(startMins, endMins, startMaxsMirror, endMaxsMirror, updatedMinStarts, updatedMaxEndsMirror, startVars, endVars)
   }
 
   /**
-   * forces the update of start, end, dur
+   * returns true if some domain is changed, false otherwise
    */
-  def update(): CPOutcome = {
-
-    // end <= start
-    if (end.updateMin(start.min) == CPOutcome.Failure) {
-      CPOutcome.Failure
-    } else if (start.updateMax(end.max) == CPOutcome.Failure) {
-      CPOutcome.Failure
-    } // end = start + dur
-    else if (end.updateMax(start.max + dur.max) == CPOutcome.Failure) {
-      CPOutcome.Failure
-    } else if (end.updateMin(start.min + dur.min) == CPOutcome.Failure) {
-      CPOutcome.Failure
-    } // start = end - dur
-    else if (start.updateMax(end.max - dur.min) == CPOutcome.Failure) {
-      CPOutcome.Failure
-    } else if (start.updateMin(end.min - dur.max) == CPOutcome.Failure) {
-      CPOutcome.Failure
-    } // dur = end - start
-    else if (dur.updateMax(end.max - start.min) == CPOutcome.Failure) {
-      CPOutcome.Failure
-    } else if (dur.updateMin(end.min - start.max) == CPOutcome.Failure) {
-      CPOutcome.Failure
-    } else CPOutcome.Suspend
-  }
-}
-
-class MirrorActivityUnary(val act: ActivityUnary) extends ActivityUnary(act.cp, act.start, act.dur, act.end, act.required, act.index) {
-
-  override def start: CPIntVar = throw new UninitializedFieldError("not available")
-  override def end: CPIntVar = throw new UninitializedFieldError("not available")
-
-  // Earliest starting time
-  override def est = -act.lct
-  // Latest starting time
-  override def lst = -act.ect
-  // Earliest completion time assuming the smallest duration
-  override def ect = -act.lst
-  // Latest completion time assuming the smallest duration
-  override def lct = -act.est
-
-  override def adjustStart(v: Int): CPOutcome = {
-
-    if (end.updateMax(-v) == CPOutcome.Failure)
-      return CPOutcome.Failure
-
-    if (start.updateMax(-v + dur.min) == CPOutcome.Failure)
-      return CPOutcome.Failure
-
-    return CPOutcome.Suspend
-  }
-
-  override def toString() = "mirror" + super.toString()
-
-}
-
-/**
- * @author Pierre Schaus pschaus@gmail.com
- */
-class LambdaThetaTreee2(private val size: Int) {
-
-  // http://en.wikipedia.org/wiki/Binary_heap#Adding_to_the_heap
-  private var isize = 1
-  //enumerate mupltiples of two 2, 4, 6, 8 ... until isize larger than size
-  while (isize < size) {
-    isize <<= 1 //shift the pattern to the left by 1 (i.e. multiplies by 2)
-  }
-  //number of nodes in a complete  binary tree with isize leaf nodes is (isize*2)-1
-  val nodes = Array.fill((isize << 2) - 1)(new LTNode())
-  isize -= 1
-
-  def reset() {
-    nodes.foreach(_.reset())
-  }
-
-  def ect(pos: Int) = nodes(pos).ect
-
-  def ect: Int = ect(0)
-
-  def ectOpt(pos: Int) = nodes(pos).ectOpt
-
-  def ectOpt: Int = ectOpt(0)
-
-  def sumPOpt(pos: Int) = nodes(pos).sumPOpt
-
-  def sumP: Int = sumP(0)
-  
-  def sumPOpt: Int = sumPOpt(0)
-
-  def responsibleEct(pos: Int) = nodes(pos).responsibleEct
-
-  def responsibleEct: Int = responsibleEct(0)
-
-  def responsibleSumP(pos: Int) = nodes(pos).responsibleSumP
-
-  def sumP(pos: Int) = nodes(pos).sumP
-
-  def isInserted(pos: Int) = nodes(pos + isize).hasActivity
-
-  def father(pos: Int) = (pos - 1) >> 1 // //the father of node in pos is (pos-1)/2
-
-  def left(pos: Int) = (pos << 1) + 1 // the left child of pos is pos*2+1
-
-  def right(pos: Int) = (pos + 1) << 1 //the right child of pos is (pos+1)*2
-
-  def insert(act: ActivityUnary, pos: Int) {
-    //the last size nodes are the leaf nodes so the first one is isize (the number of internal nodes)
-    val p = isize + pos
-    val node = nodes(p)
-    node.activity = act
-    node.ect = act.ect
-    node.sumP = act.minDuration
-    node.ectOpt = act.ect
-    node.sumPOpt = act.minDuration
-    node.responsibleEct = -1
-    node.responsibleSumP = -1
-    //println("insert into node "+p+":"+node)
-    reCompute(father(p))
-  }
-
-  def grey(pos: Int) {
-    var p = isize + pos
-    val node = nodes(p)
-    node.ect = Int.MinValue
-    node.sumP = 0
-    node.responsibleEct = pos
-    node.responsibleSumP = pos
-    reCompute(father(p))
-  }
-
-  def remove(pos: Int) {
-    val p = isize + pos
-    val node = nodes(p)
-    node.reset()
-    reCompute(father(p))
-  }
-
-  private def reComputeAux(pos: Int) {
-    val n = nodes(pos)
-    val pr = sumP(right(pos))
-    n.sumP = sumP(left(pos)) + pr
-    n.ect = ect(right(pos)).max(ect(left(pos)) + pr)
-
-    if (responsibleEct(left(pos)) == -1 && responsibleEct(right(pos)) == -1) {
-      n.sumPOpt = n.sumP
-      n.ectOpt = n.ect
-      n.responsibleEct = -1
-      n.responsibleSumP = -1
-    } else {
-      val lo = sumPOpt(left(pos)) + sumP(right(pos))
-      val ro = sumP(left(pos)) + sumPOpt(right(pos))
-      if (lo > ro) {
-        n.sumPOpt = lo
-        n.responsibleSumP = responsibleSumP(left(pos))
-      } else {
-        n.sumPOpt = ro
-        n.responsibleSumP = responsibleSumP(right(pos))
+  @inline
+  private def updateMins(startMins : Array[Int], endMins : Array[Int], startMaxsMirror : Array[Int], endMaxsMirror : Array[Int], updatedMinStarts : Array[Int], updatedMaxEndsMirror : Array[Int], startVars : Array[_ <: CPIntVar], endVars : Array[_ <: CPIntVar]): Boolean = {
+    var domainModified = false
+    var i = 0
+    while (i < nTasks) {
+      if (updatedMinStarts(i) > startMins(i)) {
+        if (startVars(i).updateMin(updatedMinStarts(i)) == Failure || endVars(i).updateMin(updatedMinStarts(i) + currentMinDurations(i)) == Failure) {
+          failure = true
+          return true
+        }
+        else {
+          domainModified = true
+          startMins(i) = updatedMinStarts(i)
+          endMins(i) = startMins(i) + currentMinDurations(i)
+          endMaxsMirror(i) = -startMins(i)
+          startMaxsMirror(i) = -endMins(i)
+          updatedMaxEndsMirror(i) = -updatedMinStarts(i)
+        }
       }
-      val ect1 = ectOpt(right(pos))
-      val ect2 = ect(left(pos)) + sumPOpt(right(pos))
-      val ect3 = ectOpt(left(pos)) + sumP(right(pos))
-      if (ect1 >= ect2 && ect1 >= ect3) { // ect1 max
-        n.ectOpt = ect1
-        n.responsibleEct = responsibleEct(right(pos))
-      } else if (ect2 >= ect1 && ect2 >= ect3) { // ect2 max
-        n.ectOpt = ect2
-        n.responsibleEct = responsibleSumP(right(pos))
-      } else { // ect3 max
-        n.ectOpt = ect3
-        n.responsibleEct = responsibleEct(left(pos))
+
+      i += 1
+    }
+    domainModified
+  }
+
+  /**
+   * returns true if some domain is changed, false otherwise
+   */
+  @inline
+  private def updateMaxs(startMaxs : Array[Int], endMaxs : Array[Int], startMinsMirror : Array[Int], endMinsMirror : Array[Int], updatedMaxEnds : Array[Int], updatedMinStartsMirror : Array[Int], startVars : Array[_ <: CPIntVar], endVars : Array[_ <: CPIntVar]): Boolean = {
+    var domainModified = false
+    var i = 0
+    while (i < nTasks) {
+      if (updatedMaxEnds(i) < endMaxs(i)) {
+        if (endVars(i).updateMax(updatedMaxEnds(i)) == Failure || startVars(i).updateMax(updatedMaxEnds(i) - currentMinDurations(i)) == Failure) {
+          failure = true
+          return true
+        }
+        else {
+          domainModified = true
+          endMaxs(i) = updatedMaxEnds(i)
+          startMaxs(i) = endMaxs(i) - currentMinDurations(i)
+          startMinsMirror(i) = -endMaxs(i)
+          endMinsMirror(i) = -startMaxs(i)
+          updatedMinStartsMirror(i) = -updatedMaxEnds(i)
+        }
       }
-      assert(n.responsibleSumP != -1)
+      i += 1
     }
+    domainModified
   }
-/*
-  private def reComputeTop() {
-    val n = nodes(0)
-    n.ect = ect(2) max (ect(1) + sumP(2))
-    n.sumP = sumP(0) + sumP(1)
-    
-    if (responsibleEct(1) == -1 && responsibleEct(2) == -1) {
-      n.sumPOpt = n.sumP
-      n.ectOpt = n.ect
-      n.responsibleEct = -1
-      n.responsibleSumP = -1
-    } else {
-      val ect1 = ectOpt(2)
-      val ect2 = ect(1) + sumPOpt(2)
-      val ect3 = ectOpt(1) + sumP(2)
-      if (ect1 >= ect2 && ect1 >= ect3) {
-        n.ectOpt = ect1
-        n.responsibleEct = responsibleEct(2)
-      } else if (ect2 >= ect1 && ect2 >= ect3) {
-        n.ectOpt = ect2
-        n.responsibleEct = responsibleSumP(2)
-      } else { // ect3 >= ect1 && ect3 >= ect2
-        n.ectOpt = ect3
-        n.responsibleEct = responsibleEct(1)
-      }
-    }
-  }
-*/
-  private def reCompute(pos: Int) {
-    var p = pos
-    while (p > 0) {
-      reComputeAux(p)
-      p = father(p)
-    }
-    reComputeAux(0)
-    //reComputeTop()
-  }
-
-  class LTNode {
-
-    var activity: ActivityUnary = null
-    var sumP: Int = 0 // SUMP
-    var ect: Int = Int.MinValue // ECT
-    var ectOpt: Int = Int.MinValue // ECT_OPT
-    var sumPOpt: Int = 0 // SUM_OPT
-    var responsibleEct: Int = -1
-    var responsibleSumP: Int = -1
-
-    def hasActivity = activity != null
-
-    def reset() {
-      activity = null
-      sumP = 0
-      ect = Int.MinValue
-      ectOpt = Int.MinValue
-      sumPOpt = 0
-      responsibleEct = -1
-      responsibleSumP = -1
-    }
-
-    override def toString: String = {
-      "---LTNode--------\n" +
-        "sump:" + sumP + "\n" +
-        "sump_opt:" + sumPOpt + "\n" +
-        "resp_sump:" + responsibleSumP + "\n" +
-        "ect:" + ect + "\n" +
-        "ect_opt:" + ectOpt + "\n" +
-        "resp_ect:" + responsibleEct + "\n" +
-        (if (hasActivity) ("est:" + activity.est) else "no activity")
-    }
-
-  }
-
 }
 
-import java.util.Comparator
-
-class ESTComparator2 extends Comparator[ActivityUnary] {
-  def compare(act0: ActivityUnary, act1: ActivityUnary): Int = {
-    act0.est - act1.est
-  }
-}
-class LSTComparator2 extends Comparator[ActivityUnary] {
-  def compare(act0: ActivityUnary, act1: ActivityUnary): Int = {
-    act0.lst - act1.lst
-  }
-}
-class LCTComparator2 extends Comparator[ActivityUnary] {
-  def compare(act0: ActivityUnary, act1: ActivityUnary): Int = {
-    act0.lct - act1.lct
-  }
-}
-class ECTComparator2 extends Comparator[ActivityUnary] {
-  def compare(act0: ActivityUnary, act1: ActivityUnary): Int = {
-    act0.ect - act1.ect
-  }
+object UnaryResource {
+  def apply(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar]) =
+    new UnaryResource(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: Array[CPIntVar])
 }

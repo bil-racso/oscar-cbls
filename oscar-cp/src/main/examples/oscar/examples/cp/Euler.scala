@@ -1,8 +1,7 @@
 package oscar.examples.cp
 
-import oscar.cp.modeling._
+import oscar.cp._
 import oscar.algo.search._
-import oscar.cp.core._
 import oscar.visual._
 import java.awt.Color
 import oscar.visual.shapes.VisualLine
@@ -45,12 +44,12 @@ object Euler extends CPModel with App {
     for (i <- 0 until 8; j <- 0 until 8) {
       val rect = new VisualRectangle(drawing, i * scale, j * scale, scale, scale)
       if (i % 2 == 0 && j % 2 == 0) rect.innerCol = Color.gray
-      else if (j % 2 == 1) rect.innerCol = Color.gray
+      else if (i % 2 == 1 && j % 2 == 1) rect.innerCol = Color.gray
     }
     for (i <- 0 until 64) {
       val v = x(i).value
       val (c, l) = (v / 8, v % 8)
-      new VisualCircle(drawing, scale / 2 + (i / 8) * scale, scale / 2 + (i % 8) * scale, 3).innerCol = Color.RED
+      new VisualCircle(drawing, scale / 2 + (i / 8) * scale, scale / 2 + (i % 8) * scale, 6).innerCol = Color.RED
       VisualLine(drawing, scale / 2 + (i / 8) * scale, scale / 2 + (i % 8) * scale, scale / 2 + c * scale, scale / 2 + l * scale)
     }
     f.pack()

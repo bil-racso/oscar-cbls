@@ -2,9 +2,9 @@ package oscar.cp.test
 
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
-
 import oscar.cp.constraints.DiffVal
-import oscar.cp.core.{CPIntVar, CPStore}
+import oscar.cp.core.variables.CPIntVar
+import oscar.cp.core.CPStore
 
 class TestModulo extends FunSuite with ShouldMatchers {
 
@@ -14,7 +14,7 @@ class TestModulo extends FunSuite with ShouldMatchers {
     val y = CPIntVar(0, 5)
     cp.post(x % 3 == y)
     assert(y.isBound)
-    assert(y.value == 0)
+    assert(y.min == 0)
   }
 
   test("test modulo 2") {
@@ -25,7 +25,7 @@ class TestModulo extends FunSuite with ShouldMatchers {
     assert(y.size == 2)
     cp.post(new DiffVal(x, 1))
     assert(y.isBound)
-    assert(y.value == 0)
+    assert(y.min == 0)
   }
 
   test("test modulo 3") {
@@ -35,7 +35,7 @@ class TestModulo extends FunSuite with ShouldMatchers {
     cp.post(x % 3 == y)
     cp.post(new DiffVal(y, 0))
     assert(x.isBound)
-    assert(x.value == 1)
+    assert(x.min == 1)
   }
 
   test("test modulo 4") {
@@ -46,8 +46,9 @@ class TestModulo extends FunSuite with ShouldMatchers {
     cp.post(new DiffVal(y, 0))
     cp.post(new DiffVal(y, 2))
     assert(x.isBound)
-    assert(x.value == 1)
-    assert(y.value == 1)
+    assert(x.min == 1)
+    assert(y.isBound)
+    assert(y.min == 1)
   }
 
   test("test modulo 5") {
@@ -58,8 +59,9 @@ class TestModulo extends FunSuite with ShouldMatchers {
     cp.post(new DiffVal(y, 0))
     cp.post(new DiffVal(y, -2))
     assert(x.isBound)
-    assert(x.value == -1)
-    assert(y.value == -1)
+    assert(x.min == -1)
+    assert(y.isBound)
+    assert(y.min == -1)
   }
 
   test("test modulo 6") {
@@ -67,7 +69,7 @@ class TestModulo extends FunSuite with ShouldMatchers {
     val x = CPIntVar(Set(-6, -3, -9, -12, 3, 6, 9, 12))
     val y = CPIntVar(-5, 5)
     cp.post(x % 3 == y)
-    assert(y.value == 0)
+    assert(y.min == 0)
   }
   
   test("test modulo 7") {

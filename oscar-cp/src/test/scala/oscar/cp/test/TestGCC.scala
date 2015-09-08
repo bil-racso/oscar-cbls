@@ -4,9 +4,8 @@ import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
 
 import oscar.cp.constraints._
-import oscar.cp.core._
 
-import oscar.cp.modeling._
+import oscar.cp._
 
 class TestGCC extends FunSuite with ShouldMatchers {
   val rand = new scala.util.Random(0)
@@ -71,7 +70,7 @@ class TestGCC extends FunSuite with ShouldMatchers {
 
     val o = Array.fill(10)(CPIntVar(0 to 10)(cp))
 
-    cp.post(new oscar.cp.constraints.GCCVar(x, 0, o));
+    cp.post(new oscar.cp.constraints.GCCVarAC(x, 0, o));
 
     cp.isFailed() should be(false)
 

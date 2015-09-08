@@ -18,9 +18,8 @@ import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
 
 import oscar.cp.constraints._
-import oscar.cp.core._
 
-import oscar.cp.modeling._
+import oscar.cp._
 import collection.immutable.SortedSet
 
 
@@ -49,6 +48,8 @@ class TestRostering extends FunSuite with ShouldMatchers  {
                        Array(0, 0, 1, 0, 0, 1, 1, 0, 1, 0));
 
     val cp = CPSolver()
+
+    cp.silent=true
 
     val activities = Array.tabulate(nbPersons, nbSlots)((p, t) => CPIntVar(possibleActivities(p))(cp))
 

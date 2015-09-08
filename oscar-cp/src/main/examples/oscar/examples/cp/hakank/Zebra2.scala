@@ -13,20 +13,13 @@
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
 package oscar.examples.cp.hakank
-
-import oscar.cp.modeling._
-
-import oscar.cp.core._
+import oscar.cp._
 import scala.io.Source._
 import scala.math._
-
 /*
-
   Zebra problem in Oscar.
-
   """
   This is the zebra problem as invented by Lewis Caroll.
-
   There are five houses.
   The Englishman lives in the red house.
   The Spaniard owns the dog.
@@ -43,100 +36,71 @@ import scala.math._
   The Lucky Strike smoker drinks orange juice.
   The Japanese smokes Parliaments.
   The Norwegian lives next to the blue house.
-
   Who owns a zebra and who drinks water?
   """
-
   This is a slightly alternative version of 
      http://www.hakank.org/oscar/Zebra.scala
   The difference is mostly how the decision variables are declared
   which makes it a little neater model.
-  
-
   @author Hakan Kjellerstrand hakank@gmail.com
   http://www.hakank.org/oscar/
- 
 */
-
-object Zebra2 {
-
-  def main(args: Array[String]) {
-
-    val cp = CPSolver()
-
+object Zebra2 extends CPModel with App {
     //
     // data
     //
     val n = 5
-
     //
     // variables
     // 
-    val colors      = Array.fill(n)(CPIntVar(1 to n)(cp))
+    val colors      = Array.fill(n)(CPIntVar(1 to n))
     val Array(red, green, yellow, blue, ivory) = colors
-
-    val nationality = Array.fill(n)(CPIntVar(1 to n)(cp))
+    val nationality = Array.fill(n)(CPIntVar(1 to n))
     val Array(englishman,spaniard,japanese,ukrainian,norwegian) = nationality
-
-    val animal      = Array.fill(n)(CPIntVar(1 to n)(cp))
+    val animal      = Array.fill(n)(CPIntVar(1 to n))
     val Array(dog,snails,fox,zebra,horse) = animal
-
-    val drink       = Array.fill(n)(CPIntVar(1 to n)(cp))
+    val drink       = Array.fill(n)(CPIntVar(1 to n))
     val Array(tea,coffee,water,milk,fruit_juice) = drink
-
-    val smoke       = Array.fill(n)(CPIntVar(1 to n)(cp))
+    val smoke       = Array.fill(n)(CPIntVar(1 to n))
     val Array(old_gold,kools,chesterfields,lucky_strike,parliaments) = smoke
-
     // for labeling
     val all_vars = colors ++ nationality ++ animal ++ drink ++ smoke
-
     //
     // constraints
     //
     var numSols = 0
-
-    cp.solve subjectTo {
     
-       cp.add(allDifferent(colors), Strong)
-       cp.add(allDifferent(nationality), Strong)
-       cp.add(allDifferent(animal),Strong)
-       cp.add(allDifferent(drink), Strong)
-       cp.add(allDifferent(smoke), Strong)
-
+      add(allDifferent(colors), Strong)
+      add(allDifferent(nationality), Strong)
+      add(allDifferent(animal),Strong)
+      add(allDifferent(drink), Strong)
+      add(allDifferent(smoke), Strong)
        // The clues
-       cp.add(englishman == red)
-       cp.add(spaniard == dog)
-       cp.add(coffee == green)
-       cp.add(ukrainian == tea)
-       cp.add(green == ivory + 1)
-       cp.add(old_gold == snails)
-       cp.add(kools == yellow)
-       cp.add(milk == 3)
-       cp.add(norwegian == 1)
-       cp.add((fox - chesterfields).abs() == 1)
-       cp.add((horse - kools).abs() == 1)
-       cp.add(lucky_strike == fruit_juice)
-       cp.add(japanese == parliaments)
-       cp.add((norwegian - blue).abs() == 1)
-
-
-
-    } search {       
+      add(englishman == red)
+      add(spaniard == dog)
+      add(coffee == green)
+      add(ukrainian == tea)
+      add(green == ivory + 1)
+      add(old_gold == snails)
+      add(kools == yellow)
+      add(milk == 3)
+      add(norwegian == 1)
+      add((fox - chesterfields).abs == 1)
+      add((horse - kools).abs == 1)
+      add(lucky_strike == fruit_juice)
+      add(japanese == parliaments)
+      add((norwegian - blue).abs == 1)
+    search{       
       binaryFirstFail(all_vars)
-    } onSolution {
+    }
+onSolution {
       println("\nSolution:")
       val ns = Array("englishman", "spaniard", "japanese", "ukrainian", "norwegian")
       println("water drinker: " + 
               ns((for{i <- 0 until n if nationality(i).value == water.value} yield i).head))
       println("owns zebra: " + 
               ns((for{i <- 0 until n if nationality(i).value == zebra.value} yield i).head))
-
       numSols += 1
-
     } 
-
-    println(cp.start())
-
+    println(start())
   }
-
-}

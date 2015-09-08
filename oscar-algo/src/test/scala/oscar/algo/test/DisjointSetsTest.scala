@@ -20,7 +20,7 @@ import org.scalatest.matchers.ShouldMatchers
 import oscar.algo.search._
 import oscar.algo.reversible._
 import oscar.algo.DisjointSets
-import oscar.algo.DisjointSets
+import oscar.algo.RangeMinQuery
 
 
 class DisjointSetsTest extends FunSuite with ShouldMatchers  {
@@ -63,6 +63,8 @@ class DisjointSetsTest extends FunSuite with ShouldMatchers  {
     sets.find(4).min should be(1)
     sets.find(3).max should be(4)   
   }
+  
+
 
 
 }

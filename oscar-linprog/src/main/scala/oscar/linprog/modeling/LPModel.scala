@@ -16,6 +16,8 @@ package oscar.linprog.modeling
 
 import oscar.linprog._
 import oscar.algebra._
+import lpsolve.LpSolve
+import org.gnu.glpk.GLPK
 
 /**
  * Abstract class that must be extended to define a new LP solver
@@ -40,6 +42,7 @@ class LPFloatVar(lp: LPSolver, name_ : String, lbound: Double = 0.0, ubound: Dou
   }
 
   def reducedCost(): Double = lp.getReducedCost(index)
+  
 }
 
 object LPFloatVar {
@@ -51,15 +54,8 @@ object LPFloatVar {
   def apply(lp: LPSolver, name: String,lbound: Double = 0.0, ubound: Double = Double.PositiveInfinity) = new LPFloatVar(lp,name,lbound,ubound)
 }
 
-class LPSolver(solverLib: LPSolverLib.Value = LPSolverLib.lp_solve) extends AbstractLPSolver() {
-
-  val solver = solverLib match {
-    case LPSolverLib.lp_solve => new LPSolve()
-    case LPSolverLib.glpk => new GlpkLP()
-    case LPSolverLib.gurobi => new GurobiLP()
-    case _ => new LPSolve()
-  }
-
+abstract class LPSolver extends AbstractLPSolver() {
+  val solver: AbstractLP
   def getReducedCost(varId: Int): Double = solver.getReducedCost(varId)
 
   def addColumn(objCoef: Double, constraints: IndexedSeq[LPConstraint], lhsConstraintCoefs: Array[Double]): LPFloatVar = {
@@ -72,12 +68,25 @@ class LPSolver(solverLib: LPSolverLib.Value = LPSolverLib.lp_solve) extends Abst
 
 }
 
-object LPSolver {
-  def apply(solverLib: LPSolverLib.Value = LPSolverLib.lp_solve): LPSolver = new LPSolver(solverLib)
+case class LPSolverLPSolve() extends LPSolver {
+  val solver: LPSolve = new LPSolve()
 }
 
-abstract class LPModel(solverLib: LPSolverLib.Value = LPSolverLib.lp_solve) {
-  implicit val lpsolver = LPSolver(solverLib)
+case class LPSolverGLPK() extends LPSolver {
+  val solver: GlpkLP = new GlpkLP()
 }
-  
+
+case class LPSolverGurobi() extends LPSolver {
+  val solver: GurobiLP = new GurobiLP()
+}
+
+abstract class LPModelGLPK {
+  implicit val lpsolver = new LPSolverGLPK()
+}
+abstract class LPModelLPSolve {
+  implicit val lpsolver = new LPSolverLPSolve()
+}
+abstract class LPModelGurobi {
+  implicit val lpsolver = new LPSolverGurobi()
+}
 

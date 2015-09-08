@@ -15,10 +15,10 @@
 
 package oscar.cp.constraints;
 
-import oscar.cp.modeling._
+import oscar.cp._
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.CPPropagStrength
-import oscar.cp.core.CPIntVar
+import oscar.cp.core.variables.CPIntVar
 import oscar.cp.core.Constraint
 import oscar.cp.util.ArrayUtils
 import oscar.algo.reversible.ReversibleInt
@@ -26,9 +26,8 @@ import scala.math.min
 import scala.math.max
 import oscar.cp.core._
 import oscar.cp.core.CPOutcome._
-import oscar.cp.modeling.CPSolver
+import oscar.cp.core.CPSolver
 import oscar.algo.reversible.ReversibleInt
-import oscar.algo.reversible.ReversibleSetIndexedArray
 import java.security.InvalidParameterException
 
 

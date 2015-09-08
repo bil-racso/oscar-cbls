@@ -28,16 +28,43 @@ package object modeling {
   
   // solvers used for test
   lazy val solvers = List(LPSolverLib.lp_solve, LPSolverLib.glpk, LPSolverLib.gurobi).filter(canInstantiateSolver(_))
-
+  println("===>  solvers possible to instanciate are: "+solvers.mkString(","))
   def canInstantiateSolver(s: LPSolverLib.Value): Boolean = {
 	  try {
-	    val lp = LPSolver(s)
+      val solver = s match {
+        case LPSolverLib.lp_solve => new LPSolverLPSolve()
+        case LPSolverLib.glpk => new LPSolverGLPK()
+        case LPSolverLib.gurobi => new LPSolverGurobi()
+        case _ => new LPSolverLPSolve()
+      }
 	  } catch {
-	    case e: UnsatisfiedLinkError => { println(e.getMessage()); return false }
-	    case e: NoClassDefFoundError => { println(e.getMessage()); return false }
+	    case e: UnsatisfiedLinkError => { 
+        System.out.println("PATH : "+ System.getProperty("java.library.path"));
+        System.err.println(e.getMessage()); return false }
+	    case e: NoClassDefFoundError => { System.err.println(e.getMessage()); return false }
 	  }
 	  true
   }
+  
+  def instantiateLPSolver(s: LPSolverLib.Value): LPSolver = {
+	  s match {
+        case LPSolverLib.lp_solve => new LPSolverLPSolve()
+        case LPSolverLib.glpk => new LPSolverGLPK()
+        case LPSolverLib.gurobi => new LPSolverGurobi()
+        case _ => new LPSolverLPSolve()
+      }
+  } 
+  
+  def instantiateMIPSolver(s: LPSolverLib.Value): MIPSolver = {
+	  s match {
+        case LPSolverLib.lp_solve => new MIPSolverLPSolve()
+        case LPSolverLib.glpk => new MIPSolverGLPK()
+        case LPSolverLib.gurobi => new MIPSolverGurobi()
+        case _ => new MIPSolverLPSolve()
+      }
+  }  
+  
+  
   
   // helper functions to model with an implicit LP/MIPSolver
   def add(constr: LinearConstraint, name: String = "")(implicit linearSolver: AbstractLPSolver) = linearSolver.add(constr,name)

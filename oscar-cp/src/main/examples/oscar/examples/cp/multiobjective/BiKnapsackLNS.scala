@@ -16,8 +16,7 @@
 
 package oscar.examples.cp.multiobjective
 
-import oscar.cp.modeling._
-import oscar.cp.core._
+import oscar.cp._
 import oscar.visual.VisualFrame
 import oscar.cp.multiobjective.visual._
 import java.awt.Color
@@ -61,7 +60,7 @@ object BiKnapsackLNS extends App {
 
   // Model
   // -----
-  val cp = CPSolver()
+  implicit val cp = CPSolver()
   cp.silent = true
 
   val x: Array[CPBoolVar] = Array.fill(nItems)(CPBoolVar()(cp))
@@ -77,17 +76,22 @@ object BiKnapsackLNS extends App {
   cp.addDecisionVariables(Array(capaVar1, capaVar2))
 
   var obj = 0
-  cp.paretoMaximize(profitVar1, profitVar2) subjectTo {
-    cp.add(knapsack1)
-    cp.add(knapsack2)
-  } search {
+  cp.paretoMaximize(profitVar1, profitVar2) 
+  
+  cp.add(knapsack1)
+  cp.add(knapsack2)
+  search {
     selectMin(0 until x.size)(!x(_).isBound)(-ratio(obj)(_)) match {
       case None => noAlternative
       case Some(i) => branch(cp.post(x(i) == 1))(cp.post(x(i) == 0))
     }
-  } onSolution {
+  }
+  
+  onSolution {
     paretoPlot.insert(profitVar1.value, profitVar2.value)
-  } start(1)
+  } 
+  
+  start(1)
 
 
   val rand = new scala.util.Random()

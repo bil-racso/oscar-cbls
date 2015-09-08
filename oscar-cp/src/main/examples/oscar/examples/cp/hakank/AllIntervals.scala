@@ -1,14 +1,9 @@
 package oscar.examples.cp.hakank
-
-import oscar.cp.modeling._
-
-import oscar.cp.core._
+import oscar.cp._
 import scala.io.Source._
 import scala.math._
-
 /*
   All intervals problem in Oscar.
-
   CSPLib problem number 7
   http://www.cs.st-andrews.ac.uk/~ianm/CSPLib/prob/prob007/index.html
   """
@@ -29,46 +24,32 @@ import scala.math._
   a series is the all-interval series problem of size n. We may also be 
   interested in finding all possible series of a given size. 
   """
-  
   @author Hakan Kjellerstrand hakank@gmail.com
   http://www.hakank.org/oscar/
- 
 */
 object AllIntervals extends CPModel with App {
-
   // Data
-
   val n = if (args.length > 0) args(0).toInt else 11;
   val num_to_show = if (args.length > 1) args(1).toInt else 1;
-
   println("n: " + n)
-
   // Variables
-
   val x = Array.fill(n)(CPIntVar(0 to n - 1))
   val diffs = Array.fill(n - 1)(CPIntVar(1 to n - 1))
-
   // Constraints
-
   add(allDifferent(diffs), Strong)
   add(allDifferent(x), Strong)
-
   for (k <- 0 until n - 1) {
-    add(diffs(k) == (x(k + 1) - (x(k))).abs())
+    add(diffs(k) == (x(k + 1) - (x(k))).abs)
   }
-
   // Symmetry breaking
   add(x(0) < x(n - 1))
   add(diffs(0) < diffs(1))
-
   search { binaryStatic(x) }
-
   onSolution {
     print("x:" + x.mkString(""))
     print("  diffs:" + diffs.mkString(""))
     println()
   }
-
   val stats = start(nSols = num_to_show)
   println(stats)
 }

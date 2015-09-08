@@ -17,12 +17,12 @@ package oscar.cbls.binPacking.solver
 
 //TODO: tabu
 
-import oscar.cbls.search.algo.IdenticalAggregator
-import oscar.cbls.search.core.{StatelessNeighborhood, NoMoveFound, SearchResult}
+import oscar.cbls.binPacking.model.{Bin, BinPackingProblem, Item}
+import oscar.cbls.objective.Objective
 import oscar.cbls.search.SearchEngineTrait
-import oscar.cbls.binPacking.model.{BinPackingProblem, Bin, Item}
-import oscar.cbls.search.move.{CompositeMove, SwapMove, AssignMove}
-import scala.collection.immutable.SortedSet
+import oscar.cbls.search.algo.IdenticalAggregator
+import oscar.cbls.search.core.{Neighborhood, NoMoveFound, SearchResult}
+import oscar.cbls.search.move.{AssignMove, CompositeMove, SwapMove}
 
 /**
  * this is a standard solver for a binPacking. 
@@ -34,9 +34,9 @@ object BinPackingSolver extends SearchEngineTrait {
 
     val x = ((MoveItem(p) exhaustBack SwapItems(p))
               orElse (JumpSwapItems(p) maxMoves 3)
-              orElse EmptyMostViolatedBin(p)) protectBest p.overallViolation.objective
+              orElse EmptyMostViolatedBin(p)) saveBest p.overallViolation
 
-    x.doAllImprovingMoves(_ >= maxStep || p.overallViolation.value == 0)
+    x.doAllMoves(_ >= maxStep || p.overallViolation.value == 0, p.overallViolation)
     x.restoreBest()
   }
 }
@@ -61,14 +61,14 @@ case class MoveItem(p:BinPackingProblem,
                     best:Boolean = false,
                     areItemsIdentical: (Item,Item) => Boolean = null,
                     areBinsIdentical: (Bin,Bin) => Boolean = null)
-  extends StatelessNeighborhood with SearchEngineTrait{
+  extends Neighborhood with SearchEngineTrait{
 
   val binList:List[Bin] = p.bins.toList.map(_._2)
 
-  override def getImprovingMove(acceptanceCriteria:(Int,Int) => Boolean = (oldObj,newObj) => oldObj > newObj):SearchResult = {
+  override def getMove(obj: Objective, acceptanceCriteria: (Int, Int) => Boolean = (oldObj,newObj) => oldObj > newObj):SearchResult = {
     require(!p.mostViolatedBins.value.isEmpty)
 
-    val oldViolation:Int = p.overallViolation.objective.value
+    val oldViolation:Int = obj()
     val bin1 = p.bins(selectFrom(p.mostViolatedBins.value))
 
     if(bin1.violation.value == 0){
@@ -124,15 +124,15 @@ case class MoveItem(p:BinPackingProblem,
 case class SwapItems(p:BinPackingProblem,
                      best:Boolean = false,
                      areItemsIdentical: (Item,Item) => Boolean = null)
-  extends StatelessNeighborhood with SearchEngineTrait{
+  extends Neighborhood with SearchEngineTrait{
 
   val itemList:List[Item] = p.items.toList.map(_._2)
   val binList:List[Bin] = p.bins.toList.map(_._2)
 
-  override def getImprovingMove(acceptanceCriteria:(Int,Int) => Boolean = (oldObj,newObj) => oldObj > newObj): SearchResult = {
+  override def getMove(obj: Objective, acceptanceCriteria: (Int, Int) => Boolean = (oldObj,newObj) => oldObj > newObj): SearchResult = {
     require(!p.mostViolatedBins.value.isEmpty)
 
-    val oldViolation:Int = p.overallViolation.objective.value
+    val oldViolation:Int = p.overallViolation.value
     val bin1 = p.bins(selectFrom(p.mostViolatedBins.value))
 
     if(bin1.violation.value == 0){
@@ -189,12 +189,12 @@ case class SwapItems(p:BinPackingProblem,
   * @author renaud.delandtsheer@cetic.be
   * */
 case class JumpSwapItems(p:BinPackingProblem)
-  extends StatelessNeighborhood with SearchEngineTrait {
+  extends Neighborhood with SearchEngineTrait {
 
   val itemList: List[Item] = p.items.toList.map(_._2)
   val binList: List[Bin] = p.bins.toList.map(_._2)
 
-  override def getImprovingMove(acceptanceCriteria:(Int,Int) => Boolean = null): SearchResult = {
+  override def getMove(obj: Objective, acceptanceCriteria: (Int, Int) => Boolean = null): SearchResult = {
 
     val bin1:Bin = selectMax(binList, (bin:Bin) => bin.violation.value, (bin:Bin) => bin.violation.value > 0)
 
@@ -213,7 +213,7 @@ case class JumpSwapItems(p:BinPackingProblem)
     match {
       case (item1,item2) =>
         if (verbose >= 2) println("Jump: swapping bins of " + item1 + " and " + item2)
-        SwapMove(item1.bin, item2.bin, 0, "Jump")
+        SwapMove(item1.bin, item2.bin, Int.MaxValue, "Jump")
       case null =>
         if (verbose >= 2) println("Jump: no move found")
         NoMoveFound
@@ -226,12 +226,12 @@ case class JumpSwapItems(p:BinPackingProblem)
   * @author renaud.delandtsheer@cetic.be
   */
 case class EmptyMostViolatedBin(p:BinPackingProblem)
-  extends StatelessNeighborhood with SearchEngineTrait {
+  extends Neighborhood with SearchEngineTrait {
 
   val itemList: List[Item] = p.items.toList.map(_._2)
   val binList: List[Bin] = p.bins.toList.map(_._2)
 
-  override def getImprovingMove(acceptanceCriteria:(Int,Int) => Boolean = null): SearchResult = {
+  override def getMove(obj: Objective, acceptanceCriteria: (Int, Int) => Boolean = null): SearchResult = {
 
     val bin1:Bin = selectMax(binList, (bin:Bin) => bin.violation.value, (bin:Bin) => bin.violation.value > 0)
 
@@ -244,10 +244,8 @@ case class EmptyMostViolatedBin(p:BinPackingProblem)
       bin1.items.value.toList.map(itemid => {
         val item = p.items(itemid)
         val newBin = selectFrom(binList, (bin:Bin) => bin.number != bin1.number)
-        AssignMove(item.bin,newBin.number,0)
-      }), 0, "Jump, Emptying bin " + bin1.number
+        AssignMove(item.bin,newBin.number,Int.MaxValue)
+      }), Int.MaxValue, "Jump, Emptying bin " + bin1.number
     )
   }
 }
-
-

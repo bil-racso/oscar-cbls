@@ -16,8 +16,9 @@ package oscar.cp.constraints;
 
 import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
-import oscar.cp.core.CPBoolVar;
-import oscar.cp.core.CPIntVar;
+import oscar.cp.core.variables.CPBoolVar;
+import oscar.cp.core.variables.CPIntVar;
+import oscar.cp.core.variables.CPIntVar;
 import oscar.cp.core.Constraint;
 import oscar.cp.core.CPStore;
 
@@ -102,7 +103,7 @@ public class Implication extends Constraint {
 			}
 		}	
 		if (V.isBound()) {
-			if (V.getValue() == 0) {
+			if (V.min() == 0) {
 				// only way to get A => B <-> F is to have T => F
 				if (A.assign(1) == CPOutcome.Failure) return CPOutcome.Failure;
 				if (B.assign(0) == CPOutcome.Failure) return CPOutcome.Failure;

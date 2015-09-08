@@ -1,16 +1,30 @@
+/*******************************************************************************
+ * OscaR is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 2.1 of the License, or
+ * (at your option) any later version.
+ *   
+ * OscaR is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License  for more details.
+ *   
+ * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
+ ******************************************************************************/
+
 package oscar.cp.test
 
 import org.scalatest.FunSuite
-import org.scalatest.matchers.ShouldMatchers
-import oscar.cp.core._
-import oscar.cp.modeling._
+import oscar.cp._
 import oscar.cp.constraints.ElementCst2D
+import org.scalatest.Matchers
 
 /**
  * Test on Element Var Constraint
  * @author Pierre Schaus pschaus@gmail.com
  */
-class TestElementVar extends FunSuite with ShouldMatchers {
+class TestElementVar extends FunSuite with Matchers {
 
   // --------- gac element var ----------
 
@@ -24,7 +38,7 @@ class TestElementVar extends FunSuite with ShouldMatchers {
     z.min should be(1)
     z.max should be(2)
   }
-
+  
   test("Test Element Var AC 2") {
     val cp = CPSolver()
     val x = CPIntVar(-3 to 10)(cp)
@@ -162,7 +176,9 @@ class TestElementVar extends FunSuite with ShouldMatchers {
     cp.add(z != 2)
 
     x.isBound should be(true)
-    tab(1).value should be(2)
+    tab(1).min should be(2)
+    tab(1).size should be(2)
+    tab(0).value should be(1)
   }
 
   test("Test Element Var AC10") {
@@ -329,5 +345,5 @@ class TestElementVar extends FunSuite with ShouldMatchers {
     x.min should be(1)
     x.max should be(2)
   }
-
+  
 }

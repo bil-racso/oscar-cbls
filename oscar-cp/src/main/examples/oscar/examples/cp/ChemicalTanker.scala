@@ -1,13 +1,29 @@
+/*******************************************************************************
+ * OscaR is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 2.1 of the License, or
+ * (at your option) any later version.
+ *   
+ * OscaR is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License  for more details.
+ *   
+ * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
+ ******************************************************************************/
+
 package oscar.examples.cp
 
-import oscar.cp.modeling._
-import oscar.cp.core._
+import oscar.cp._
 import oscar.algo.reversible._
 import oscar.visual._
 import scala.collection.JavaConversions._
 import oscar.cp.constraints.BinPackingFlow
 import oscar.visual.shapes.VisualRectangle
 import oscar.visual.plot.PlotLine
+import oscar.cp.core.CPPropagStrength
+import oscar.cp.core.CPOutcome
 
 /**
  * Chemical Tanker Problem:
@@ -87,7 +103,7 @@ object ChemicalTanker extends CPModel with App {
     }
 
     override def valBindIdx(x: CPIntVar, tank: Int) = {
-      if (x.getValue == cargo.id) {
+      if (x.value == cargo.id) {
         curCapa.setValue(curCapa.getValue + tanks(tank).capa)
         if (curCapa.getValue >= cargo.volume) {
           // the volume is reached for the cargo so we prevent any other tank to take this cargo
@@ -149,7 +165,7 @@ object ChemicalTanker extends CPModel with App {
   val nbFreeTanks = card(0)
 
   // tanks allocated to cargo c in current partial solution
-  def tanksAllocated(c: Int) = (0 until tanks.size).filter(t => (cargo(t).isBound && cargo(t).getValue == c))
+  def tanksAllocated(c: Int) = (0 until tanks.size).filter(t => (cargo(t).isBound && cargo(t).value == c))
   // volume allocated to cargo c in current partial solution
   def volumeAllocated(c: Int) = tanksAllocated(c).map(tanks(_).capa).sum
 
@@ -166,7 +182,7 @@ object ChemicalTanker extends CPModel with App {
     println("solution")
     nbSol += 1
     for (i <- 0 until cargo.size) {
-      cargosol(i) = cargo(i).getValue
+      cargosol(i) = cargo(i).value
       tanks(i).setCargo(cargos(cargo(i).value))
     }
     val volumeLeft = Array.tabulate(cargos.size)(c => cargos(c).volume - volumeAllocated(c))

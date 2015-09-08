@@ -1,5 +1,3 @@
-package oscar.algo
-
 /*******************************************************************************
  * OscaR is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,10 +13,16 @@ package oscar.algo
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
 
+package oscar.algo
+
+
+
 import scala.annotation.tailrec
 
-
-class DisjointSets(min: Int, max: Int) {
+/**
+ * @author Pierre Schaus pschaus@gmail.com
+ */
+class DisjointSets[A](min: Int, max: Int) {
   
   val all = Array.tabulate(max-min+1)(i => makeSet(min+i))
   
@@ -30,9 +34,25 @@ class DisjointSets(min: Int, max: Int) {
     }
   }
   
-  def union(v1: Int, v2: Int) {
-    union(all(v1-min),all(v2-min))
+  /**
+   * for each value in min..max, store some initial data(i) in the sets
+   */
+  def resetAndSetData(data: Int => A) {
+    var i = 0
+    while (i < all.size) {
+      all(i).reset
+      all(i).data = Some(data(i+min))
+      i += 1
+    }
   }
+  
+  def union(v1: Int, v2: Int, data: A) {
+    union(all(v1-min),all(v2-min),Some(data))
+  }
+  
+  def union(v1: Int, v2: Int) {
+    union(all(v1-min),all(v2-min),None)
+  }  
   
   def inSameSet(v1: Int,v2: Int) = {
     findSet(all(v1-min)) == findSet(all(v2-min))
@@ -47,24 +67,27 @@ class DisjointSets(min: Int, max: Int) {
 	var min = elem
     var rank : Int = 0
     var parent : Set = this
+    var data: Option[A] = None
     
     def reset() {
 	  max = elem
 	  min = elem
 	  rank = 0
 	  parent = this
+	  data = None
 	}
     
   }
   
-  def union(x: Set, y: Set) {
-    link(findSet(x),findSet(y))
+  def union(x: Set, y: Set, data: Option[A]) {
+    link(findSet(x),findSet(y),data)
   }
   
-  private def link(x: Set, y: Set) {
+  private def link(x: Set, y: Set, data: Option[A]) {
     if (x == y) return
     if (x.rank > y.rank) {
       y.parent = x
+      x.data = data
       // x becomes root
       x.max = x.max max (y.max)
       x.min = x.min min (y.min)
@@ -73,6 +96,7 @@ class DisjointSets(min: Int, max: Int) {
       y.max = y.max max (x.max)
       y.min = y.min min (x.min)
       x.parent = y
+      y.data = data
       if (x.rank == y.rank) {
         y.rank += 1
       }

@@ -1,80 +1,57 @@
-/**
- * *****************************************************************************
- * OscaR is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 2.1 of the License, or
- * (at your option) any later version.
- *
- * OscaR is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License  for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License along with OscaR.
- * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
- * ****************************************************************************
- */
-
-
 package oscar.algo.reversible
 
-
 /**
- * Creates a generic reversible pointer
+ * A generic reversible pointer
  * @author Pierre Schaus  pschaus@gmail.com
  * @author Renaud Hartert ren.hartert@gmail.com
  */
-class ReversiblePointer[@specialized T](n: ReversibleContext, v: T) extends Reversible(n) {
-  
-  // Pointer to the object to trail
-  protected var pointer: T = v
 
-  def setValue(value: T): Unit = {
+class ReversibleTrailEntry[T](reversible: ReversiblePointer[T], value: T) extends TrailEntry {
+  override def restore(): Unit = reversible.restore(value)
+}
+
+class ReversiblePointer[@specialized T](final override val context: ReversibleContext, initialValue: T) extends Reversible {
+  
+  // Reference on the current value
+  protected var pointer: T = initialValue
+  
+  @inline override def trailEntry: TrailEntry = {
+    new ReversibleTrailEntry[T](this, pointer)
+  }
+
+  @inline final def setValue(value: T): Unit = {
     if (value != pointer) {
       trail()
       this.pointer = value
     }
   }
 
-  /**
-   * @param value to assign
-   */
-  def value_= (value: T): Unit = setValue(value)
+  /** @param value to assign */
+  @inline final def value_= (value: T): Unit = setValue(value)
   
-  /**
-   * @param value to assign
-   */
-  def := (value: T): Unit = setValue(value)
+  /** @param value to assign */
+  final def := (value: T): Unit = setValue(value)
   
-  /**
-   * @return current value
-   */
-  @inline def value = pointer
+  /** @return current value */
+  @inline final def value: T = pointer
 
   /**
    * Check if the pointer is different from null
    * @return true if the pointer is != null, false otherwise
    */
-  @inline def hasValue(): Boolean = pointer != null
+  @inline final def hasValue[T]: Boolean = pointer != null
 
-  /**
-   * @return the current pointer
-   */
-  @inline def getValue(): T = pointer
+  /** @return the current pointer */
+  @inline final def getValue(): T = pointer
 
-  override def addOnTrail(): Unit = {
-    node.getTrail().addEntry(this, pointer)
-  }
+  @inline final def restore(value: T): Unit = pointer = value
 
-  override def restore(value: Object): Unit = {
-    pointer = value.asInstanceOf[T]
-  }
-
-  override def toString(): String = if (hasValue) s"$pointer" else ""
+  override def toString(): String = if (hasValue) pointer.toString else ""
 }
 
 object ReversiblePointer {
   def apply[T](node: ReversibleContext, value: T): ReversiblePointer[T] = {
     new ReversiblePointer[T](node, value)
   }
+  implicit def reversiblePointerToValue[@specialized T](reversible: ReversiblePointer[T]): T = reversible.value
 }

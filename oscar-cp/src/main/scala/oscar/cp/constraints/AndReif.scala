@@ -18,6 +18,8 @@ import oscar.cp.core._
 import oscar.algo.reversible._
 import oscar.cp.core.CPOutcome._
 import oscar.algo.reversible.ReversibleSparseSet
+import oscar.cp.core.variables.CPBoolVar
+import oscar.cp.core.variables.CPIntVar
 
 /**
  * and_i x_i <--> bi 
@@ -43,7 +45,7 @@ class And(val X: Array[CPBoolVar], val b: CPBoolVar) extends Constraint(b.store,
       }
       else x.callValBindIdxWhenBind(this,i)
     }
-    b.callPropagateWhenBind(this,false)
+    b.callPropagateWhenBind(this)
     propagate()
   }
   

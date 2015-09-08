@@ -12,20 +12,14 @@
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
-
 package oscar.examples.cp.hakank
-
 import oscar.cp.modeling._
-
 import oscar.cp.core._
 import oscar.cp.scheduling._
 import scala.io.Source._
 import scala.math._
-
 /*
-
   Building a house (scheduling) in Oscar.
-
   This model is adapted from OPL model sched_intro.mod (examples).
   """
   This is a basic problem that involves building a house. The masonry,
@@ -33,18 +27,12 @@ import scala.math._
   necessarily take place before others, and these requirements are
   expressed through precedence constraints.
   """
-
   This model uses OscaR's Scheduling API.
-
   @author Hakan Kjellerstrand hakank@gmail.com
   http://www.hakank.org/oscar/
- 
 */
-
 object BuildingAHouseScheduling {
-
 	/*def main(args : Array[String]) {
-
 		//
 		// data
 		//
@@ -53,9 +41,7 @@ object BuildingAHouseScheduling {
 		val capa = 3
 		val horizon = duration.sum
 		val cp = CPScheduler(horizon)
-
 		println("horizon: " + horizon)
-
 		//
 		// variables
 		//
@@ -69,30 +55,23 @@ object BuildingAHouseScheduling {
 		val facade    = Activity(cp, duration(7), "Facade")
 		val garden    = Activity(cp, duration(8), "Garden")
 		val moving    = Activity(cp, duration(9), "Moving")
-
 		val resource = MaxResource(cp, capa, "BuildingAHouse")
-		val activities = cp.activities
-
+		val activities =activities
 		for (activity <- activities) {
 			activity needs 1 ofResource resource
 		}
-
-		val makespan = cp.makespan
-
+		val makespan =makespan
 		// extra constraint
-		val zero = CPIntVar(0 to 0)(cp)
+		val zero = CPIntVar(0 to 0)
 		val z = maximum(Array(moving.end - 100, zero)) * 400 +
 			    maximum(Array(-masonry.start + 25, zero)) * 200 +
 			    maximum(Array(-carpentry.start + 75, zero)) * 300 +
 			    maximum(Array(-ceiling.start + 75, zero)) * 100
-
 		//
 		// constraints
 		//
-
-		// cp.minimize(makespan) subjectTo {
-		cp.minimize(z) subjectTo {
-
+		//minimize(makespan) 
+		cp.minimize(z) 
 			// precedences
 			masonry precedes carpentry
 			masonry precedes plumbing
@@ -108,21 +87,15 @@ object BuildingAHouseScheduling {
 			facade precedes moving
 			garden precedes moving
 			painting precedes moving
-
-		} search {
-
+		search{
 			setTimes(cp.activities.map(_.start),cp.activities.map(_.dur),cp.activities.map(_.end))
-
-		} onSolution {
-		  
+		}
+onSolution {
 			println("makespan:" + makespan)
 			println(activities.map(a => "%-10s".format(a.name) + ": " + "%3d".format(a.start.value) + " --" + "%3d".format(a.dur.value) + "h --" + "%3d".format(a.end.value)).mkString("\n"))
 			println()
-		  
 		}
-
-		println(cp.start())
-
+		println(start())
 	}
 */
 }

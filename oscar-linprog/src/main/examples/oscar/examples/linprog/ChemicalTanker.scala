@@ -30,7 +30,7 @@ import oscar.algebra._
  *
  * @author Pierre Schaus pschaus@gmail.com
  */
-object ChemicalTanker extends MIPModel(LPSolverLib.gurobi) with App {
+object ChemicalTanker extends MIPModelGurobi with App {
 
 
   /**

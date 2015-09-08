@@ -27,14 +27,14 @@ package oscar.cbls.invariants.core.algo.dag
   */
 class ConcreteDAGNode(val _UniqueID:Int) extends DAGNode{
 
-  UniqueID = _UniqueID
+  uniqueID = _UniqueID
 
   var PrecedingNodes: List[DAGNode] = List.empty
   var SucceedingNodes:List[DAGNode] = List.empty
 
   final def compare(that: DAGNode):Int = {
-    assert(this.UniqueID != that.UniqueID || this == that)
-    this.UniqueID - that.UniqueID
+    assert(this.uniqueID != that.uniqueID || this == that)
+    this.uniqueID - that.uniqueID
   }
 
   override def getDAGPrecedingNodes: Iterable[DAGNode] = PrecedingNodes

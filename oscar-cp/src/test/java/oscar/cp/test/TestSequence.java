@@ -16,9 +16,11 @@ package oscar.cp.test;
 
 
 import junit.framework.TestCase;
-import oscar.algo.reversible.*;
-import oscar.cp.constraints.*;
-import oscar.cp.core.*;
+import oscar.algo.reversible.SparseSet;
+import oscar.cp.constraints.EqCons;
+import oscar.cp.constraints.Sequence;
+import oscar.cp.core.CPStore;
+import oscar.cp.core.variables.CPIntVar;
 
 
 /**
@@ -53,15 +55,15 @@ public class TestSequence extends TestCase {
     	for (int i = 0; i < x.length; i++) {
 			x[i] = CPIntVar.apply(s,0,1);
 		}
-        SetIndexedArray set = new SetIndexedArray(1,1);
+        SparseSet set = new SparseSet(1,1);
     
-        s.add(new Eq(x[2], 0));
+        s.add(new EqCons(x[2], 0));
         s.add(new Sequence(x, set, 2, 1, 2));
 
         assertTrue(x[3].isBound());
         assertTrue(x[1].isBound());
-        assertEquals(x[1].getValue(),1);
-        assertEquals(x[3].getValue(),1);
+        assertEquals(x[1].min(),1);
+        assertEquals(x[3].min(),1);
         assertFalse(s.isFailed());
     }
 
@@ -70,15 +72,15 @@ public class TestSequence extends TestCase {
     	for (int i = 0; i < x.length; i++) {
 			x[i] = CPIntVar.apply(s,1,5);
 		}
-        SetIndexedArray set = new SetIndexedArray(3,3);
+        SparseSet set = new SparseSet(3,3);
 
-        s.add(new Eq(x[2], 2));
+        s.add(new EqCons(x[2], 2));
         s.add(new Sequence(x, set, 2, 1, 2));
 
         assertTrue(x[3].isBound());
         assertTrue(x[1].isBound());
-        assertEquals(x[1].getValue(),3);
-        assertEquals(x[3].getValue(),3);
+        assertEquals(x[1].min(),3);
+        assertEquals(x[3].min(),3);
         assertFalse(s.isFailed());
     }
 
@@ -87,9 +89,9 @@ public class TestSequence extends TestCase {
     	for (int i = 0; i < x.length; i++) {
 			x[i] = CPIntVar.apply(s,1,5);
 		}
-        SetIndexedArray set = new SetIndexedArray(2,3);
+        SparseSet set = new SparseSet(2,3);
 
-        s.add(new Eq(x[2], 1));
+        s.add(new EqCons(x[2], 1));
         s.add(new Sequence(x, set, 2, 1, 2));
 
         assertTrue(x[1].getSize() == 2 && x[1].hasValue(2) && x[1].hasValue(3));
@@ -102,9 +104,9 @@ public class TestSequence extends TestCase {
     	for (int i = 0; i < x.length; i++) {
 			x[i] = CPIntVar.apply(s,1,5);
 		}
-        SetIndexedArray set = new SetIndexedArray(4,4);
+        SparseSet set = new SparseSet(4,4);
 
-        s.add(new Eq(x[2], 1));
+        s.add(new EqCons(x[2], 1));
         s.post(new Sequence(x, set, 1, 1, 1));
 
         assertTrue(s.isFailed());

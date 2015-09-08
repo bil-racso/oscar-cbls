@@ -17,6 +17,7 @@ package oscar.cp.constraints
 import oscar.cp.core._
 import oscar.algo.reversible._
 import oscar.cp.core.CPOutcome._
+import oscar.cp.core.variables.CPIntVar
 
 
 /**
@@ -30,8 +31,8 @@ class CountCst(val N: CPIntVar, val X: Array[CPIntVar], val Y: Int) extends Cons
   val n = X.size
 
   override def setup(l: CPPropagStrength): CPOutcome = {
-    X.foreach(_.callPropagateWhenDomainChanges(this,false))
-    N.callPropagateWhenBoundsChange(this, false)
+    X.foreach(_.callPropagateWhenDomainChanges(this))
+    N.callPropagateWhenBoundsChange(this)
     CPOutcome.Suspend
   }
   

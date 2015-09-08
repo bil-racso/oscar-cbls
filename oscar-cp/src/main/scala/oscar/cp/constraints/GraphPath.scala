@@ -19,8 +19,10 @@ package oscar.cp.constraints
 import oscar.cp.core._
 import oscar.cp.core.CPOutcome._
 import scala.collection.mutable.PriorityQueue
-import oscar.algo.reversible.ReversibleBool
+import oscar.algo.reversible.ReversibleBoolean
 import oscar.algo.reversible.ReversibleInt
+import oscar.cp.core.variables.CPIntVar
+import oscar.cp.core.variables.CPGraphVar
 
 /**
  * @author Andrew Lambert andrew.lambert@student.uclouvain.be
@@ -38,7 +40,7 @@ class GraphPath(val g : CPGraphVar, src : Int, dest : Int, w : (Int,Int) => Int,
     val n : Int = pNodes.length
     // build transitive closure of the possible values of the graph
     //   tc is composed of ReversibleBool to allow backtrack in search and still update tc
-    var tc : Array[Array[ReversibleBool]] = buildTC(pNodes)
+    var tc : Array[Array[ReversibleBoolean]] = buildTC(pNodes)
     // count the number of possible edges/nodes to be able to detect modification when propagate is called
     var nbEdges : ReversibleInt = new ReversibleInt(g.s, g.nbPossibleEdges)
     var nbNodes : ReversibleInt = new ReversibleInt(g.s, n)
@@ -212,8 +214,8 @@ class GraphPath(val g : CPGraphVar, src : Int, dest : Int, w : (Int,Int) => Int,
     }
 	
     // build transitive closure of possible edges of the graph
-    private def buildTC(possNodes : List[Int]) : Array[Array[ReversibleBool]] = {
-      val tempTc =  Array.fill(n)(Array.fill(n)(new ReversibleBool(g.s,true)))
+    private def buildTC(possNodes : List[Int]) : Array[Array[ReversibleBoolean]] = {
+      val tempTc =  Array.fill(n)(Array.fill(n)(new ReversibleBoolean(g.s,true)))
       // precompute possible neighbors to spare computation time and give it to existsPath()
       val possNeigh : List[List[Int]] = (0 until n).toList.map(possibleNeighborsList(_))
       // update tc

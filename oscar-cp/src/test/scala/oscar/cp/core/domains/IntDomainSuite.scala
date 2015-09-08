@@ -1,6 +1,6 @@
 package oscar.cp.core.domains
 
-import oscar.cp.TestSuite
+import oscar.cp.testUtils.TestSuite
 import oscar.algo.reversible.ReversibleContext
 import oscar.cp.core.CPOutcome._
 

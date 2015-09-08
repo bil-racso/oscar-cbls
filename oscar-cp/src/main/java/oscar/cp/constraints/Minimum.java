@@ -17,7 +17,8 @@ package oscar.cp.constraints;
 import oscar.algo.reversible.ReversibleInt;
 import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
-import oscar.cp.core.CPIntVar;
+import oscar.cp.core.variables.CPIntVar;
+import oscar.cp.core.variables.CPIntVar;
 import oscar.cp.core.Constraint;
 
 /**
@@ -107,7 +108,7 @@ public class Minimum extends Constraint {
 				return CPOutcome.Failure;
 			}
 		}
-		if (x.isBound() && x.getValue() == minval.getValue()) {
+		if (x.isBound() && x.min() == minval.getValue()) {
 			if (y.assign(minval.getValue()) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
 			}

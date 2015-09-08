@@ -1,4 +1,5 @@
 /*******************************************************************************
+
  * OscaR is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
@@ -18,6 +19,7 @@ import oscar.cp.core._
 import oscar.algo.reversible._
 import oscar.cp.core.CPOutcome._
 import oscar.algo.reversible.ReversibleSparseSet
+import oscar.cp.core.variables.CPBoolVar
 
 /**
  * y is true if at least one of the xi's is true, false otherwise
@@ -53,8 +55,8 @@ class OrReif(val X: Array[CPBoolVar], y: CPBoolVar) extends Constraint(y.store, 
 	  val ok = propagate()
 	  if (ok != Suspend) return ok
 	  for (z <- x; if !z.isBound) 
-	    z.callPropagateWhenBind(this, false)
-	  if (!y.isBound) y.callPropagateWhenBind(this, false)
+	    z.callPropagateWhenBind(this)
+	  if (!y.isBound) y.callPropagateWhenBind(this)
 	  Suspend
   }
 

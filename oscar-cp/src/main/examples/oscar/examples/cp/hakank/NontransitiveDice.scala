@@ -13,13 +13,9 @@
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
 package oscar.examples.cp.hakank
-
-import oscar.cp.modeling._
-
-import oscar.cp.core._
+import oscar.cp._
 import scala.io.Source._
 import scala.math._
-
 /**
  *
  * Nontransitive dice in OscaR.
@@ -35,116 +31,85 @@ import scala.math._
  * in which each element has an advantage over one choice and a
  * disadvantage to the other.
  * """
- 
  *
  * @author Hakan Kjellerstrand hakank@gmail.com
  * http://www.hakank.org/oscar/
  *
  */
-
-object NontransitiveDice {
-
-  def main(args: Array[String]) {
-
-    val cp = CPSolver()
-
+object NontransitiveDice extends CPModel with App  {
     //
     // data
     //
     var m = 3 // number of dice
     var n = 6  // number of sides on each die
     var num_to_show = 1
-
     if (args.length > 0) {
        m = args(0).toInt
     }
-
     if (args.length > 1) {
        n = args(1).toInt
     }
-
     if (args.length > 2) {
        num_to_show = args(2).toInt
     }
-
     val MRANGE = 0 until m
     val NRANGE = 0 until n
-
     println("number of dice : " + m)
     println("number of sides: " + n)
     println("num_to_show    : " + num_to_show)
-
-
     //
     // Decision variables
     // 
-    val dice = Array.fill(m,n)(CPIntVar(1 to n*2)(cp))
+    val dice = Array.fill(m,n)(CPIntVar(1 to n*2))
     val dice_flat = dice.flatten
-
-    val comp = Array.fill(m,2)(CPIntVar(0 to n*n)(cp))
+    val comp = Array.fill(m,2)(CPIntVar(0 to n*n))
     val comp_flat = comp.flatten
-
     // The following variables are for summaries or objectives
-    val gap = Array.fill(m)(CPIntVar(0 to n*n)(cp))
+    val gap = Array.fill(m)(CPIntVar(0 to n*n))
     val gap_sum = sum(gap)
-
     val max_val = maximum(dice_flat) // CPIntVar(cp, 0 to n*2) // max of dice_flat
     val max_win = maximum(comp_flat) // CPIntVar(cp, 0 to n*n)   // max of comp_flat
-
     // number of occurrences of each value of the dice
     // val counts  = Array.tabulate(n*2+1)(i => (CPIntVar(cp, 0 to n*m), i))
-
     // for labeling
     val all = dice_flat ++ Array(max_val, max_win)
-
     //
     // constraints
     //
     var numSols = 0
-
-    cp.solve subjectTo {
-
+  
       // Number of occurrences for each number
-      // cp.add(gcc(dice_flat, counts))
-
+      //add(gcc(dice_flat, counts))
       // Order of the number of each die, lowest first
       for(i <- MRANGE;
           j <- 0 until n-1) {
-          cp.add(dice(i)(j) <= dice(i)(j+1))
+         add(dice(i)(j) <= dice(i)(j+1))
       }
-
       // Nontransitivity
       for(i <- MRANGE) {
-        cp.add(comp(i)(0) > comp(i)(1))
+       add(comp(i)(0) > comp(i)(1))
       }
-
       // Probability gap
       for(i <- MRANGE) {
-        cp.add(gap(i) == comp(i)(0) - comp(i)(1))
-        cp.add(gap(i) > 0)
+       add(gap(i) == comp(i)(0) - comp(i)(1))
+       add(gap(i) > 0)
       }
-      
       // And now we roll...
       // comp() is the number of wins for (A vs B, B vs A)
       for(d <- MRANGE) {
         val sum1 = sum(for{r1 <- NRANGE
                            r2 <- NRANGE}
                           yield (dice(d % m)(r1) >>= dice((d+1) % m)(r2)))
-        
-        cp.add(comp(d%m)(0) == sum1)
-        
+       add(comp(d%m)(0) == sum1)
         val sum2 = sum(for{r1 <- NRANGE
                               r2 <- NRANGE}
                               yield (dice((d+1) % m)(r1) >>= dice(d % m)(r2)))
-        
-        cp.add(comp(d%m)(1) == sum2)
-
+       add(comp(d%m)(1) == sum2)
       }
-        
-    } search {
-        
+    search{
       binaryMaxDegree(all)
-    } onSolution {
+    }
+onSolution {
       println("\ngap_sum: " + gap_sum)
       println("gap: " + gap.mkString(""))
       println("max_val: " + max_val)
@@ -158,12 +123,7 @@ object NontransitiveDice {
          println(comp(i).mkString(""))
       }
       println()
-       
       numSols += 1
-
     } 
-    println(cp.start(num_to_show))
-
+    println(start(num_to_show))
   }
-
-}

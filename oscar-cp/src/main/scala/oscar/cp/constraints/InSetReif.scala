@@ -17,6 +17,8 @@ package oscar.cp.constraints
 import oscar.cp.core._
 import oscar.algo.reversible._
 import oscar.cp.core.CPOutcome._
+import oscar.cp.core.variables.CPIntVar
+import oscar.cp.core.variables.CPBoolVar
 
 /**
  * x must be a value of the set
@@ -89,7 +91,7 @@ class InSetReif(val x: CPIntVar, val set: Set[Int], val b: CPBoolVar) extends Co
         }
       }
     } else if (x.isBound) {
-      val value = if (set.contains(x.value)) 1 else 0
+      val value = if (set.contains(x.min)) 1 else 0
       if (b.assign(value) == Failure) {
         return Failure
       }

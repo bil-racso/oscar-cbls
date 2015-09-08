@@ -1,13 +1,14 @@
 package oscar.examples.cp
 
-import oscar.cp.modeling._
-import oscar.cp.core._
-import oscar.visual.VisualDrawing
-import oscar.visual.shapes.VisualLine
-import oscar.visual.shapes.VisualCircle
-import oscar.visual.VisualFrame
-import scala.io.Source
 import java.awt.Color
+
+import scala.io.Source
+
+import oscar.cp._
+import oscar.visual.VisualDrawing
+import oscar.visual.VisualFrame
+import oscar.visual.shapes.VisualCircle
+import oscar.visual.shapes.VisualLine
 
 /**
  * P-Median Problem

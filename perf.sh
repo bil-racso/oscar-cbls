@@ -13,8 +13,8 @@ for f in `ls -1 *.scala`; do
   echo "File -> $f"
   f2=${f%%??????}
   echo "class file: $f2"
-  $SCALA/scalac  -cp oscar.jar  -P:continuations:enable $f
-  SECONDS=0; $SCALA/scala  -cp oscar.jar:.  -P:continuations:enable $f2 ; echo "that took approximately $SECONDS seconds"
+  $SCALA/scalac  -cp oscar.jar $f
+  SECONDS=0; $SCALA/scala -J-Xmx1g -cp oscar.jar:.  $f2 ; echo "that took approximately $SECONDS seconds"
   echo $f $SECONDS $D2 $D1 $C >> ../perfresults.txt
   echo $f $SECONDS $D $C
 done

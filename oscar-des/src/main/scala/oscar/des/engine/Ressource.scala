@@ -16,9 +16,6 @@ package oscar.des.engine
 
 
 import scala.collection.mutable._
-import oscar.invariants._
-
-import scala.collection.mutable._
 
 
 /**
@@ -26,28 +23,29 @@ import scala.collection.mutable._
  * @author pschaus
  */
 class Resource(m : Model, capacity: Int) {
-	
-	private var n = 0
-	private var pendings = new DoubleLinkedList ()
-	
-	def request(block: => Unit) {
-		if (n < capacity) {
-	         n += 1
-	         block
-	    } else {
-	         pendings :+ block;
-	    }
-	}
-	
-	def release() {
-		n -= 1
-		if (pendings.nonEmpty) {
-			val block = pendings.head
-			pendings = pendings.drop(1)
-			block
-		}
-	}
-	
+  
+  private var n = 0
+  private var pendings = Queue[() => Unit]()
+  
+  def request(block: => Unit) {
+    if (n < capacity) {
+           n += 1
+           block
+      } else {
+           println("resource saturated, don't give the request immediately")
+           pendings += (() => block);
+      }
+  }
+  
+  def release() {
+    n -= 1
+    if (pendings.nonEmpty) {
+      val block = pendings.dequeue
+      n += 1 
+      block()
+    }
+  }
+  
 }
 
 class UnaryResource(m : Model) extends Resource(m,1)

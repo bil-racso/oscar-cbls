@@ -16,8 +16,10 @@ package oscar.cp.test;
 
 
 import junit.framework.TestCase;
-import oscar.cp.constraints.*;
-import oscar.cp.core.*;
+import oscar.cp.constraints.EqCons;
+import oscar.cp.constraints.GrEq;
+import oscar.cp.core.CPStore;
+import oscar.cp.core.variables.CPIntVar;
 
 
 /**
@@ -53,12 +55,13 @@ public class TestGrAbs extends TestCase {
     	for (int i = 0; i < x.length; i++) {
 			x[i] = CPIntVar.apply(s,1,256);
 		}
+    	CPIntVar tmp = oscar.cp.modeling.constraint.absolute(oscar.cp.modeling.constraint.minus(x[0],x[1]));
     	
-    	s.post(new GrEq((x[0].minus(x[1])).abs(),0));
+    	s.post(new GrEq(tmp,0));
     	
     	
     	
-    	s.post(new Eq(x[0],1));
+    	s.post(new EqCons(x[0],1));
     	
     	assertTrue(!s.isFailed());
 

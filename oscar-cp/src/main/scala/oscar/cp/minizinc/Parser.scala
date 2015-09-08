@@ -2,9 +2,7 @@ package oscar.cp.minizinc
 
 import scala.util.parsing.combinator._
 import FZType._
-import oscar.cp.modeling.CPSolver
-import oscar.cp.core._
-import oscar.cp.modeling._
+import oscar.cp._
 import java.io.FileReader
 import scala.Equals
 import oscar.cp.constraints.EqReifVar
@@ -25,6 +23,12 @@ import java.util.Collection
 import oscar.algo.search.Branching
 import oscar.cp.constraints.MulCte
 import oscar.cp.constraints.SubCircuit
+import oscar.cp.core.variables.CPVar
+import oscar.cp.core.NoSolutionException
+import oscar.cp.core.variables.CPSetVar
+import oscar.cp.core.CPPropagStrength
+import oscar.cp.core.CPOutcome
+import oscar.cp.core.Constraint
 
 class Parser extends JavaTokenParsers { // RegexParsers {
 
@@ -702,7 +706,7 @@ class Parser extends JavaTokenParsers { // RegexParsers {
       throw new NoSolutionException("VarInt domains are incompatible")
     }
     if (!(s.max - s.min + 1 == s.size)) {
-      for (e <- cpvar.domainIterator) {
+      for (e <- cpvar.iterator) {
         if (!(s contains e)) {
           if (cpvar.removeValue(e) == CPOutcome.Failure) {
             throw new NoSolutionException("VarInt domains are incompatible")
@@ -1019,7 +1023,7 @@ class Parser extends JavaTokenParsers { // RegexParsers {
           }
           capaCP
       }
-    cp.add(binpacking(getCPIntVarArray(varList(1)).map(_ - 1),
+    cp.add(binPacking(getCPIntVarArray(varList(1)).map(_ - 1),
       getIntArray(varList(2)), l), Strong)
   }
 

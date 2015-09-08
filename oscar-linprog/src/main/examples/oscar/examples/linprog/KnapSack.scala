@@ -24,7 +24,7 @@ import oscar.algebra._
  * and the total utility is as large as possible.
  * @author gme
  */
-object KnapSack extends MIPModel with App {
+object KnapSack extends MIPModelLPSolve with App {
 
   case class O(val weight: Int, val utility: Int, val x: MIPFloatVar)
   val weights = Array(100, 50, 45, 20, 10, 5)

@@ -1,6 +1,6 @@
 package oscar.cp.minizinc
 
-import oscar.cp.core.CPVar
+import oscar.cp.core.variables.CPVar
 
 class FZVarObject ( 
     val annotations: List[Annotation],

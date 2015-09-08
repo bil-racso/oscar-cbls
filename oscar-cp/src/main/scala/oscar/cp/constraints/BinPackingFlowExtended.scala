@@ -17,7 +17,7 @@ package oscar.cp.constraints;
 
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.CPPropagStrength
-import oscar.cp.core.CPIntVar
+import oscar.cp.core.variables.CPIntVar
 import oscar.cp.core.Constraint
 import oscar.cp.util.ArrayUtils
 import oscar.algo.reversible.ReversibleInt;
@@ -38,14 +38,14 @@ class BinPackingFlowExtended(val x: Array[CPIntVar], val sizes: Array[Int], val 
 
     if (x.exists(_.updateMax(l.length - 1) == CPOutcome.Failure)
       || x.exists(_.updateMin(0) == CPOutcome.Failure)
-      || s.post(new GCCVar(x, 0, c), CPPropagStrength.Strong) == CPOutcome.Failure) {
+      || s.post(new GCCVarAC(x, 0, c), CPPropagStrength.Strong) == CPOutcome.Failure) {
       CPOutcome.Failure
     } else {
       for (lt <- l)
         lt.callPropagateWhenBoundsChange(this);
       for ((xt, i) <- x.zipWithIndex) {
         if (xt.isBound) {
-          val j = xt.getValue
+          val j = xt.min
           l_t(j).setValue(l_t(j).value + sizes(i))
           c_t(j).incr
         } else {
@@ -74,7 +74,7 @@ class BinPackingFlowExtended(val x: Array[CPIntVar], val sizes: Array[Int], val 
 
 
   override def valBindIdx(x: CPIntVar, idx: Int): CPOutcome = {
-    val j = x.value;
+    val j = x.min;
     val wj = sizes(idx);
     l_t(j).setValue(l_t(j).value + wj);
     c_t(j).incr();

@@ -14,9 +14,8 @@
  ******************************************************************************/
 
 
-import oscar.cp.modeling._
+import oscar.cp._
 
-import oscar.cp.core._
 import scala.io.Source._
 import scala.math._
 
@@ -54,12 +53,12 @@ object AllIntervals {
 
   def main(args: Array[String]) {
 
-    val cp = CPSolver()
+    implicit val cp = CPSolver()
 
     //
     // data
     //
-    val n = 14
+    val n = 16
 
     println("n: " + n)
 
@@ -67,29 +66,29 @@ object AllIntervals {
     // variables
     //
 
-    val x = Array.fill(n)(CPIntVar(cp, 0 to n - 1))
-    val diffs = Array.fill(n - 1)(CPIntVar(cp, 1 to n - 1))
+    val x = Array.fill(n)(CPIntVar.sparse(0 to n - 1))
+    val diffs = Array.fill(n - 1)(CPIntVar.sparse(1 to n - 1))
 
     //
     // constraints
     //
     var numSols = 0
-    cp.solve subjectTo {
 
-      cp.add(allDifferent(diffs), Strong)
-      cp.add(allDifferent(x), Strong)
+    cp.add(allDifferent(diffs), Strong)
+    cp.add(allDifferent(x), Strong)
 
-      for (k <- 0 until n - 1) {
-        cp.add(diffs(k) == (x(k + 1) - (x(k))).abs())
-      }
+    for (k <- 0 until n - 1) {
+      cp.add(diffs(k) == (x(k + 1) - (x(k))).abs)
+    }
 
-      // symmetry breaking
-      cp.add(x(0) < x(n - 1))
-      cp.add(diffs(0) < diffs(1))
+    // symmetry breaking
+    cp.add(x(0) < x(n - 1))
+    cp.add(diffs(0) < diffs(1))
 
-    } search {
+    search {
 
       binaryStatic(x)
+      
     } onSolution {
       print("x:" + x.mkString(""))
       print("  diffs:" + diffs.mkString(""))

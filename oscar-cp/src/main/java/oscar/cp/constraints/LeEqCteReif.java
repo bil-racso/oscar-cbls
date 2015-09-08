@@ -16,8 +16,8 @@ package oscar.cp.constraints;
 
 import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
-import oscar.cp.core.CPBoolVar;
-import oscar.cp.core.CPIntVar;
+import oscar.cp.core.variables.CPBoolVar;
+import oscar.cp.core.variables.CPIntVar;
 import oscar.cp.core.Constraint;
 import oscar.cp.core.CPStore;
 
@@ -52,7 +52,7 @@ public class LeEqCteReif extends Constraint {
 		CPOutcome oc = propagate();
 		if(oc == CPOutcome.Suspend){
 			b.callValBindWhenBind(this);
-			x.callPropagateWhenBoundsChange(this,false);
+			x.callPropagateWhenBoundsChange(this);
 			if (b.isBound()) {
 				oc = valBind(b);
 			}
@@ -80,7 +80,7 @@ public class LeEqCteReif extends Constraint {
 		
 	@Override
 	public CPOutcome valBind(CPIntVar var) {
-		if (b.getValue() == 0) {
+		if (b.min() == 0) {
 			//x > v
 			if (x.updateMin(v+1) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
