@@ -24,7 +24,7 @@ package oscar.cbls.invariants.lib.logic
 
 
 import oscar.cbls.invariants.core.computation._
-import oscar.cbls.invariants.core.propagation.Checker
+import oscar.cbls.invariants.core.propagation.{Asymmetric, Checker}
 
 import scala.collection.immutable.SortedSet
 
@@ -38,7 +38,10 @@ import scala.collection.immutable.SortedSet
   * */
 case class Filter(values:Array[IntValue], cond:(Int=>Boolean)=_>0)
   extends SetInvariant(values.indices.foldLeft(SortedSet.empty[Int])((acc:SortedSet[Int],indice:Int) => if(cond(values(indice).value)){acc+indice}else acc),
-    values.indices.start to values.indices.end) {
+    values.indices.start to values.indices.end)
+  with Asymmetric {
+
+  override val allInputsExplicits = false
 
   for (v <- values.indices) registerStaticAndDynamicDependency(values(v),v)
   finishInitialization()

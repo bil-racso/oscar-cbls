@@ -24,7 +24,7 @@ package oscar.cbls.constraints.lib.global
 import oscar.cbls.constraints.core.Constraint
 import oscar.cbls.invariants.core.computation.CBLSIntVar._
 import oscar.cbls.invariants.core.computation._
-import oscar.cbls.invariants.core.propagation.Checker
+import oscar.cbls.invariants.core.propagation.{Symmetric, Checker}
 import oscar.cbls.modeling.Algebra._
 
 import scala.collection.immutable.SortedMap
@@ -36,7 +36,10 @@ import scala.collection.immutable.SortedMap
  * @param variables the variable whose values should all be different.
  * @author renaud.delandtsheer@cetic.be
  */
-case class AllDiff(variables: Iterable[IntValue]) extends Invariant with Constraint{
+case class AllDiff(variables: Iterable[IntValue])
+  extends Invariant
+  with Constraint
+  with Symmetric  {
 
   registerStaticAndDynamicDependencyAllNoID(variables)
   registerConstrainedVariables(variables)
@@ -45,7 +48,7 @@ case class AllDiff(variables: Iterable[IntValue]) extends Invariant with Constra
 
   //le degre global de violation est la somme des tailles -1 des ensembles de var ayant meme value
   // et on ne prend que les ensembles de cardinalite > 1
-  private val Violation: CBLSIntVar = new CBLSIntVar(model, 0, (0 to Int.MaxValue), "ViolationsOfAllDiff")
+  private val Violation: CBLSIntVar = new CBLSIntVar(model, 0, (0, Int.MaxValue), "ViolationsOfAllDiff")
   Violation.setDefiningInvariant(this)
 
 

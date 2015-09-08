@@ -22,14 +22,16 @@
 package oscar.cbls.invariants.lib.logic
 
 import oscar.cbls.invariants.core.computation._
-import oscar.cbls.invariants.core.propagation.Checker
+import oscar.cbls.invariants.core.propagation.{Asymmetric, Checker}
 
 import scala.collection.immutable.SortedSet
 
 /**maintains the reverse references. Referencing(i) = {j | Reference(j) includes i}
   * @author renaud.delandtsheer@cetic.be
   * */
-case class DenseRef(references:Array[SetValue], referencing:Array[CBLSSetVar]) extends Invariant {
+case class DenseRef(references:Array[SetValue], referencing:Array[CBLSSetVar])
+  extends Invariant
+  with Asymmetric {
 
   for (v <- references.indices) registerStaticAndDynamicDependency(references(v),v)
 

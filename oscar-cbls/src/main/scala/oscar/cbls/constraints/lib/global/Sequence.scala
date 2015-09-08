@@ -23,7 +23,7 @@ package oscar.cbls.constraints.lib.global
 
 import oscar.cbls.constraints.core.Constraint
 import oscar.cbls.invariants.core.computation._
-import oscar.cbls.invariants.core.propagation.Checker
+import oscar.cbls.invariants.core.propagation.{Asymmetric, Checker}
 import oscar.cbls.invariants.lib.numeric.Sum
 
 import scala.collection.immutable.SortedMap
@@ -38,7 +38,9 @@ import scala.collection.immutable.SortedMap
   * @author renaud.delandtsheer@cetic.be
  */
 case class Sequence(variables: Array[IntValue], length:Int, Max:Int, predicate:(Int=>Boolean))
-  extends Invariant with Constraint{
+  extends Invariant
+  with Constraint
+  with Asymmetric {
 
   assert(Max <= length, "Sequence: Max > length")
 

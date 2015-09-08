@@ -27,13 +27,15 @@ package oscar.cbls.invariants.lib.minmax
 
 import oscar.cbls.invariants.core.algo.heap._
 import oscar.cbls.invariants.core.computation._
-import oscar.cbls.invariants.core.propagation.Checker
+import oscar.cbls.invariants.core.propagation.{Symmetric, Checker}
 import oscar.cbls.invariants.lib.logic._
 
 import scala.collection.immutable.SortedSet
 
 abstract class MiaxLin(vars: SortedSet[IntValue])
-  extends IntInvariant(initialValue = 0) {
+  extends IntInvariant(initialValue = 0)
+  with Symmetric {
+
   require(vars.size > 0, "Invariant " + this + " declared with zero vars to max")
 
   for (v <- vars) registerStaticAndDynamicDependency(v)
@@ -111,7 +113,8 @@ case class MinLin(vars: SortedSet[IntValue]) extends MiaxLin(vars) {
 }
 
 abstract class Miax(vars: SortedSet[IntValue])
-  extends IntInvariant {
+  extends IntInvariant
+  with Symmetric {
 
   for (v <- vars) registerStaticAndDynamicDependency(v)
   finishInitialization()
@@ -193,6 +196,7 @@ object Max{
  * */
 case class Max2(a: IntValue, b: IntValue)
   extends IntInt2Int(a, b, (x: Int, y: Int) => x.max(y), a.min.max(b.min) to a.max.max(b.max))
+  {override val allInputsExplicits = true}
 
 /**
  * maintains output = Min(a,b)
@@ -202,3 +206,4 @@ case class Max2(a: IntValue, b: IntValue)
  * */
 case class Min2(a: IntValue, b: IntValue)
   extends IntInt2Int(a, b, (x: Int, y: Int) => x.min(y), a.min.min(b.min) to a.max.min(b.max))
+  {override val allInputsExplicits = true}

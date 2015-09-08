@@ -25,7 +25,7 @@ import oscar.cbls.invariants.core.algo.heap.{ArrayMap, BinomialHeapWithMoveExtMe
 import oscar.cbls.invariants.core.algo.quick.QList
 import oscar.cbls.invariants.core.computation.Invariant._
 import oscar.cbls.invariants.core.computation._
-import oscar.cbls.invariants.core.propagation.{Checker, KeyForElementRemoval}
+import oscar.cbls.invariants.core.propagation.{Asymmetric, Checker, KeyForElementRemoval}
 
 import scala.collection.immutable.SortedSet
 
@@ -82,7 +82,12 @@ case class MinArray(varss: Array[IntValue], cond: SetValue = null, default: Int 
  * @author renaud.delandtsheer@cetic.be
  * */
 abstract class MiaxArray(vars: Array[IntValue], cond: SetValue, default: Int)
-  extends IntInvariant with Bulked[IntValue, Domain] with VaryingDependencies {
+  extends IntInvariant
+  with Bulked[IntValue, Domain]
+  with VaryingDependencies
+  with Asymmetric {
+
+  override val allInputsExplicits = false
 
   var keyForRemoval: Array[KeyForElementRemoval] = new Array(vars.length)
   var h: BinomialHeapWithMoveExtMem[Int] = new BinomialHeapWithMoveExtMem[Int](i => Ord(vars(i)), vars.length, new ArrayMap(vars.length))
@@ -258,7 +263,10 @@ case class MaxConstArrayLazy(varss: Array[Int], ccond: SetValue, default: Int = 
  * @author renaud.delandtsheer@cetic.be
  * */
 abstract class MiaxConstArray(vars: Array[Int], cond: SetValue, default: Int)
-  extends IntInvariant{
+  extends IntInvariant
+  with Asymmetric {
+
+  override val allInputsExplicits = false
 
   var h: BinomialHeapWithMoveExtMem[Int] = new BinomialHeapWithMoveExtMem[Int](i => Ord(vars(i)), vars.length, new ArrayMap(vars.length))
 
@@ -311,7 +319,10 @@ abstract class MiaxConstArray(vars: Array[Int], cond: SetValue, default: Int)
  * @author renaud.delandtsheer@cetic.be
  * */
 abstract class MiaxConstArrayLazy(vars: Array[Int], cond: SetValue, default: Int, maxToDoSize:Int)
-  extends IntInvariant{
+  extends IntInvariant
+  with Asymmetric {
+
+  override val allInputsExplicits = false
 
   val n = vars.length
   var h: BinomialHeapWithMoveExtMem[Int] = new BinomialHeapWithMoveExtMem[Int](i => Ord(vars(i)), vars.length, new ArrayMap(vars.length))

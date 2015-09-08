@@ -20,7 +20,7 @@
 package oscar.cbls.invariants.lib.logic
 
 import oscar.cbls.invariants.core.computation.{CBLSIntVar, ChangingIntValue, IntValue, Invariant}
-import oscar.cbls.invariants.core.propagation.Checker
+import oscar.cbls.invariants.core.propagation.{NotSubjectToSymmetries, Checker}
 
 /**
  * This invariant maintains the predecessors of each node.
@@ -33,7 +33,9 @@ import oscar.cbls.invariants.core.propagation.Checker
  * @param V the number of vehicles.
  * @author renaud.delandtsheer@cetic.be
  * */
-case class Predecessor(next:Array[IntValue],V:Int) extends Invariant{
+case class Predecessor(next:Array[IntValue],V:Int)
+  extends Invariant
+  with NotSubjectToSymmetries {
 
   val N = next.length
   registerStaticAndDynamicDependencyArrayIndex(next)

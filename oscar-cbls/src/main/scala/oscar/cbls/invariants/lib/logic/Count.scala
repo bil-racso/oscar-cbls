@@ -25,7 +25,7 @@
 package oscar.cbls.invariants.lib.logic
 
 import oscar.cbls.invariants.core.computation._
-import oscar.cbls.invariants.core.propagation.Checker
+import oscar.cbls.invariants.core.propagation.{Symmetric, Checker}
 
 /**
  * Maintains a count of the indexes of array: count(j) = #{i in index of values | values[i]+offset == j}
@@ -34,7 +34,11 @@ import oscar.cbls.invariants.core.propagation.Checker
  * it is expected that the values are always >= 0
  * @author renaud.delandtsheer@cetic.be
  * */
-case class DenseCount(values: Array[IntValue], counts: Array[CBLSIntVar], offset:Int = 0) extends Invariant {
+case class DenseCount(values: Array[IntValue], counts: Array[CBLSIntVar], offset:Int = 0)
+  extends Invariant
+  with Symmetric {
+
+  override val allInputsExplicits = false
 
   for (v <- values.indices) registerStaticAndDynamicDependency(values(v), v)
 

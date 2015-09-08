@@ -26,7 +26,7 @@
 package oscar.cbls.invariants.lib.set
 
 import oscar.cbls.invariants.core.computation.{ChangingSetValue, IntInvariant, SetValue}
-import oscar.cbls.invariants.core.propagation.Checker
+import oscar.cbls.invariants.core.propagation.{Asymmetric, Checker}
 
 /**
  * Sum(i in on)(fun(i))
@@ -35,7 +35,8 @@ import oscar.cbls.invariants.core.propagation.Checker
  * @author renaud.delandtsheer@cetic.be
  * */
 case class SetSum(on: SetValue, fun: (Int => Int) = (a: Int) => a)
-  extends IntInvariant(on.value.foldLeft(0)((a, b) => a + fun(b))) {
+  extends IntInvariant(on.value.foldLeft(0)((a, b) => a + fun(b)))
+  with Asymmetric {
 
   registerStaticAndDynamicDependency(on)
   finishInitialization()
@@ -65,7 +66,9 @@ case class SetSum(on: SetValue, fun: (Int => Int) = (a: Int) => a)
  * @param fun is an optional function Int -> Int to apply before multiplying elements. It is expected not to rely on any variable of the model.
  * @author renaud.delandtsheer@cetic.be
  * */
-case class SetProd(on: SetValue, fun: (Int => Int) = (a: Int) => a) extends IntInvariant {
+case class SetProd(on: SetValue, fun: (Int => Int) = (a: Int) => a)
+  extends IntInvariant
+  with Asymmetric {
 
   var NonZeroProduct: Int = 0
 

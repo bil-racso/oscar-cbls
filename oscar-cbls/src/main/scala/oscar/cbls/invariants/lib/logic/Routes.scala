@@ -26,7 +26,7 @@ package oscar.cbls.invariants.lib.logic
 
 import oscar.cbls.invariants.core.algo.heap.BinomialHeap
 import oscar.cbls.invariants.core.computation._
-import oscar.cbls.invariants.core.propagation.Checker
+import oscar.cbls.invariants.core.propagation.{NotSubjectToSymmetries, Checker}
 
 /**
  * This invariants maintains data structures representing a VRP and his
@@ -47,7 +47,10 @@ class Routes(V: Int,
   val positionInRoute: Array[CBLSIntVar],
   val routeNr: Array[CBLSIntVar],
   val routeLength: Array[CBLSIntVar],
-  val lastInRoute: Array[CBLSIntVar]) extends VaryingDependencies {
+  val lastInRoute: Array[CBLSIntVar])
+  extends VaryingDependencies
+  with NotSubjectToSymmetries
+{
   val UNROUTED = next.length
   val arrayOfUnregisterKeys = registerStaticAndDynamicDependencyArrayIndex(next)
   finishInitialization()

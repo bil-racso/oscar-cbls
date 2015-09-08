@@ -22,11 +22,14 @@
 package oscar.cbls.invariants.lib.minmax
 
 import oscar.cbls.invariants.core.computation._
-import oscar.cbls.invariants.core.propagation.Checker
+import oscar.cbls.invariants.core.propagation.{Asymmetric, Checker}
 
 //Log
 abstract class MiaxSet(v: SetValue)
-  extends IntInvariant(initialDomain = v.min to v.max){
+  extends IntInvariant(initialDomain = v.min to v.max)
+  with Asymmetric {
+
+  override val allInputsExplicits = false
 
   registerStaticAndDynamicDependency(v)
   finishInitialization()

@@ -20,7 +20,7 @@
 
 package oscar.cbls.invariants.core.computation
 
-import oscar.cbls.invariants.core.propagation.KeyForElementRemoval
+import oscar.cbls.invariants.core.propagation.{NotSubjectToSymmetries, KeyForElementRemoval}
 
 trait Checkpointing extends Store{
 
@@ -111,7 +111,9 @@ trait Checkpointing extends Store{
   }
 }
 
-class ChangeRecorder(s:Store) extends VaryingDependencies{
+class ChangeRecorder(s:Store)
+  extends VaryingDependencies
+  with NotSubjectToSymmetries {
 
   var keys : Array[KeyForElementRemoval] = null
 

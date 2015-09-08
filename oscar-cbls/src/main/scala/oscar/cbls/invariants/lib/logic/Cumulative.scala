@@ -24,6 +24,7 @@
 package oscar.cbls.invariants.lib.logic
 
 import oscar.cbls.invariants.core.computation._
+import oscar.cbls.invariants.core.propagation.NotSubjectToSymmetries
 
 import scala.collection.immutable.SortedSet
 
@@ -42,7 +43,9 @@ case class Cumulative(indices: Array[Int],
                       duration: Array[IntValue],
                       amount: Array[IntValue],
                       profile: Array[CBLSIntVar],
-                      active: Array[CBLSSetVar]) extends Invariant {
+                      active: Array[CBLSSetVar])
+  extends Invariant
+  with NotSubjectToSymmetries {
 
   //horizon is the uppermost indice of the profile, which is supposed to be the same as active
   val horizonPlus1 = profile.length
