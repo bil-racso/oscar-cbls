@@ -74,7 +74,7 @@ case class BinPackingStandardized(itemSizes: Array[Int], binSizes: Array[Int], i
     val cs = new ConstraintSystem(s)
     for (bId <- binsRange if filter(bId)) cs.post(LE(binUseAmounts(bId), binSizes(bId)))
     cs.close()
-    c.post(cs, weight.value)
+    c.post(cs)//, weight.value)
     for (assignation <- itemAssignments) c.violation(assignation)
   }
 
@@ -95,7 +95,7 @@ case class BinPackingStandardized(itemSizes: Array[Int], binSizes: Array[Int], i
       }
     }
     cs.close()
-    c.post(cs, weight.value)
+    c.post(cs)//, weight.value)
     for (i <- itemAssignments) c.violation(i)
   }
 
@@ -116,7 +116,7 @@ case class BinPackingStandardized(itemSizes: Array[Int], binSizes: Array[Int], i
       }
     }
     cs.close()
-    c.post(cs, weight)
+    c.post(cs)//, weight)
     for (i <- itemAssignments) c.violation(i)
   }
 }
