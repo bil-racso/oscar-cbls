@@ -31,10 +31,10 @@ trait FznOscarMain extends App{
     }catch{
       case e: ClassNotFoundException => {
         if(e.getMessage().contains("antlr")){
-          System.err.println("Antlr 4.4 is not in the classpath.")
+          System.err.println("Antlr 4.5.1 is not in the classpath.")
           System.err.println("Please put the antlr runtime jar alongside the oscar-fzn.jar")
           System.err.println("You can issue:")
-          System.err.println("\twget http://www.antlr.org/download/antlr-runtime-4.4.jar")
+          System.err.println("\twget http://www.antlr.org/download/antlr-runtime-4.5.1.jar")
         }else{
           e.printStackTrace()
         }
