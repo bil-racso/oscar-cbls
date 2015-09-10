@@ -323,22 +323,22 @@ package object cp extends Constraints with Branchings with ElementBuilder with C
     }
 
     /**
-     * b <=> x >= y
+     * b <=> x <= y
      */
     def <==(y: Int) = x.isLeEq(y)
 
     /**
-     * b <=> x >= y
+     * b <=> x <= y
      */
     def <==(y: CPIntVar) = y >== x
 
     /**
-     * b <=> x > y
+     * b <=> x < y
      */
     def <<=(y: Int) = x <== (y - 1)
 
     /**
-     * b <=> x > y
+     * b <=> x < y
      */
     def <<=(y: CPIntVar) = x <== (y - 1)
 
