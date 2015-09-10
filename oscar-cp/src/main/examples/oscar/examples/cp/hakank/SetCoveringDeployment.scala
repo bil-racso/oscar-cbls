@@ -13,17 +13,11 @@
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
 package oscar.examples.cp.hakank
-
-import oscar.cp.modeling._
-
-import oscar.cp.core._
+import oscar.cp._
 import scala.io.Source._
 import scala.math._
-
 /*
-
   Set covering deployment problem in Oscar.
-
   From http://mathworld.wolfram.com/SetCoveringDeployment.html
   """
   Set covering deployment (sometimes written 'set-covering deployment'
@@ -34,23 +28,13 @@ import scala.math._
   this in a study of Emperor Constantine the Great's mobile field
   army placements to secure the Roman Empire.
   """
-
-
   @author Hakan Kjellerstrand hakank@gmail.com
   http://www.hakank.org/oscar/
- 
 */
-
-object SetCoveringDeployment {
-
-  def main(args: Array[String]) {
-
-    val cp = CPSolver()
-
+object SetCoveringDeployment extends CPModel with App  {
     //
     // data
     //
-
      // From http://mathworld.wolfram.com/SetCoveringDeployment.html
     val countries = Array("Alexandria",
                           "Asia Minor",
@@ -60,10 +44,8 @@ object SetCoveringDeployment {
                           "Iberia",
                           "Rome",
                           "Tunis")
-
     val n = countries.length
     val RANGE = 0 until n
-
     // the incidence matrix (neighbours)
     val mat = Array(Array(0, 1, 0, 1, 0, 0, 1, 1),
                     Array(1, 0, 0, 1, 0, 0, 0, 0),
@@ -73,27 +55,19 @@ object SetCoveringDeployment {
                     Array(0, 0, 1, 0, 1, 0, 1, 1),
                     Array(1, 0, 0, 1, 1, 1, 0, 1),
                     Array(1, 0, 0, 0, 0, 1, 1, 0))
-   
-
     //
     // variables
     //
- 
     // First army
-    val x = Array.fill(n)(CPIntVar(0 to 1)(cp))
-    val y = Array.fill(n)(CPIntVar(0 to 1)(cp))
-
+    val x = Array.fill(n)(CPIntVar(0 to 1))
+    val y = Array.fill(n)(CPIntVar(0 to 1))
     // total number of elements in the choosen sets
     val num_armies = sum(x) + sum(y)
-
-
     //
     // constraints
     //
     var numSols = 0
-
-    cp.minimize(num_armies) subjectTo {
-
+   minimize(num_armies) 
       //
       //  Constraint 1: There is always an army in a city
       //                (+ maybe a backup)
@@ -101,27 +75,23 @@ object SetCoveringDeployment {
       //                must be an army in that city.
       //
       for(i <- 0 until n) {
-        cp.add(x(i) >= y(i))
+       add(x(i) >= y(i))
       }
-      
       //
       // Constraint 2: There should always be an backup
       //               army near every city
       //
       for(i <- RANGE) {
-        cp.add(
+       add(
                x(i) + 
                sum(for{j <- RANGE if mat(i)(j) == 1} yield y(j)) 
                >= 1
                )
       }
-
-
-    } search {
-       
+    search{
       binaryStatic(x)
-    } onSolution {
-      
+    }
+onSolution {
       println("\nSolution:")
       println("num_armies: " + num_armies)
       println("x: " + x.mkString(""))
@@ -134,13 +104,7 @@ object SetCoveringDeployment {
         foreach(print)
       }
       println()
-
       numSols += 1
-
    }
-
-   println(cp.start())
-
+   println(start())
   }
-
-}

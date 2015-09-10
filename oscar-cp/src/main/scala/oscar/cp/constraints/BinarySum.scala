@@ -17,6 +17,7 @@ package oscar.cp.constraints
 import oscar.cp.core._
 import oscar.algo.reversible._
 import oscar.cp.core.CPOutcome._
+import oscar.cp.core.variables.CPIntVar
 
 /**
  * x + y = z 
@@ -28,7 +29,7 @@ class BinarySum(val x: CPIntVar, val y: CPIntVar, val z: CPIntVar) extends Const
 
   idempotent = true
   override def setup(l: CPPropagStrength): CPOutcome = {
-    priorityL2 = CPStore.MAXPRIORL2 - 1
+    priorityL2 = CPStore.MaxPriorityL2 - 1
     if (!x.isBound) x.callPropagateWhenBoundsChange(this)
     if (!y.isBound) y.callPropagateWhenBoundsChange(this)
     if (!z.isBound) z.callPropagateWhenBoundsChange(this)

@@ -1,7 +1,6 @@
 package oscar.examples.cp
 
-import oscar.cp.modeling._
-import oscar.cp.core._
+import oscar.cp._
 
 /**
  * Create a number using only the digits 4,4,3,3,2,2,1 and 1.

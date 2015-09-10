@@ -1,7 +1,6 @@
 package oscar.examples.cp
 
-import oscar.cp.modeling._
-import oscar.cp.core._
+import oscar.cp._
 import scala.io.Source
 import scala.io.Source
 import oscar.util._
@@ -130,7 +129,7 @@ object Nurses extends CPModel with App {
     // each nurse can have at most 3 and at least one patient
     add(gcc(nurseOfPatient, 0 until nbNursesInZone(i), 1, 3))
     // bin-packing to compute the load of each nurse
-    add(binpacking(nurseOfPatient, acuityByZone(i), acuityOfNurse))
+    add(binPacking(nurseOfPatient, acuityByZone(i), acuityOfNurse))
 
     minimize(spreadAcuity) search {
       // first fail, take the patient with smallest domain not yet bound to a nurse

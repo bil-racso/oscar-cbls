@@ -16,7 +16,7 @@ package oscar.cp.constraints;
 
 import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
-import oscar.cp.core.CPIntVar;
+import oscar.cp.core.variables.CPIntVar;
 import oscar.cp.core.Constraint;
 
 /**
@@ -50,10 +50,10 @@ public class SumLeEq extends Constraint {
 		}
 		for (int i = 0; i < x.length; i++) {
 			if (!x[i].isBound()) 
-				x[i].callPropagateWhenBoundsChange(this,false);
+				x[i].callPropagateWhenBoundsChange(this);
 		}
 		if (!y.isBound())
-			y.callPropagateWhenBoundsChange(this,false);
+			y.callPropagateWhenBoundsChange(this);
 		return CPOutcome.Suspend;
 	}
 	

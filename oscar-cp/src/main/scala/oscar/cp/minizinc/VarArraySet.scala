@@ -1,6 +1,6 @@
 package oscar.cp.minizinc
 
-import oscar.cp.core.CPSetVar
+import oscar.cp.core.variables.CPSetVar
 
 class VarArraySet (
     val value: Set[Int],

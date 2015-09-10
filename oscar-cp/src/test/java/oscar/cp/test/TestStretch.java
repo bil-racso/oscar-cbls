@@ -16,9 +16,12 @@ package oscar.cp.test;
 
 
 import junit.framework.TestCase;
-
-import oscar.cp.constraints.*;
-import oscar.cp.core.*;
+import oscar.cp.constraints.Automaton;
+import oscar.cp.constraints.EqCons;
+import oscar.cp.constraints.Regular;
+import oscar.cp.constraints.Stretch;
+import oscar.cp.core.CPStore;
+import oscar.cp.core.variables.CPIntVar;
 
 
 /**
@@ -58,11 +61,11 @@ public class TestStretch extends TestCase {
     	
     	Automaton automaton = Stretch.getStretchAutomaton(x, shortest, longest);
     	s.post(new Regular(x,automaton));
-    	s.post(new Eq(x[0],0));
-    	assertTrue(x[1].isBound() && x[1].getValue()==0);
-    	s.post(new Eq(x[1],0));
-    	s.post(new Eq(x[2],0));
-    	s.post(new Eq(x[3],0));
+    	s.post(new EqCons(x[0], 0));
+    	assertTrue(x[1].isBound() && x[1].min()==0);
+    	s.post(new EqCons(x[1], 0));
+    	s.post(new EqCons(x[2], 0));
+    	s.post(new EqCons(x[3], 0));
     	assertTrue(!x[4].hasValue(0));
     }
     

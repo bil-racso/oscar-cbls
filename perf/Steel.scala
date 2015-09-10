@@ -1,21 +1,21 @@
-/*******************************************************************************
+/**
+ * *****************************************************************************
  * OscaR is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
- *   
+ *
  * OscaR is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License  for more details.
- *   
+ *
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
- ******************************************************************************/
+ * ****************************************************************************
+ */
 
-
-import oscar.cp.modeling._
-import oscar.cp.core._
+import oscar.cp._
 import oscar.visual._
 import oscar.util._
 
@@ -82,19 +82,18 @@ object Steel {
     val x = (for (s <- Slabs) yield CPIntVar(cp, 0 until nbSlab))
     val weightMap = (for (s <- Slabs) yield (x(s) -> weight(s))).toMap
     val l = for (s <- Slabs) yield CPIntVar(cp, 0 to capa.max)
-  
 
     val rnd = new Random(0)
     var nbSol = 0
 
     val obj = sum(Slabs)(s => element(loss, l(s)))
-    cp.minimize(obj) subjectTo {
-      cp.add(binPacking(x, weight, l), Strong)
-      for (s <- Slabs) {
-        def colPresent(c: Int) = isOr((for (o <- colorOrders(c)) yield x(o) === s)) //return a CPBoolVar telling whether color c is present is slab s
-        cp.add(sum(Cols)(c => colPresent(c)) <= 2) //at most two colors present in each slab
-      }
-    } search {
+    cp.minimize(obj)
+    cp.add(binPacking(x, weight, l), Strong)
+    for (s <- Slabs) {
+      def colPresent(c: Int) = isOr((for (o <- colorOrders(c)) yield x(o) === s)) //return a CPBoolVar telling whether color c is present is slab s
+      cp.add(sum(Cols)(c => colPresent(c)) <= 2) //at most two colors present in each slab
+    }
+    cp.search {
       selectMin(x)(!_.isBound)(x => 10000 * x.size - weightMap(x)) match {
         case None => noAlternative
         case Some(y) => {
@@ -103,10 +102,9 @@ object Steel {
           branchAll((0 to maxUsed + 1).filter(y.hasValue(_)))(v => cp.add(y == v))
         }
       }
-    } 
+    }
 
     println(cp.start())
-
 
   }
 }

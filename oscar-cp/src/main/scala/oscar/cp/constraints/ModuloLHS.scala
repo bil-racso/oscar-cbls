@@ -15,7 +15,7 @@
 
 package oscar.cp.constraints
 
-import oscar.cp.core.CPIntVar
+import oscar.cp.core.variables.CPIntVar
 import oscar.cp.modeling.Constraints
 import oscar.cp.core.Constraint
 

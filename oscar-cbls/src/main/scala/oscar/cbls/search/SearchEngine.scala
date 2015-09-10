@@ -140,7 +140,6 @@ trait SearchEngineTrait{
 
   /**return a couple (r,s) that is allowed: filter(r,s) is true, and minimizing f(r,s) among the allowed couples
     * this selector is randomized; in case of tie breaks the returned one is chosen randomly
-    * @param s is optional and set to true if not specified
     */
   def selectMin[R,S](r: Iterable[R] , s: Iterable[S]) (f: (R,S) => Int, filter: ((R,S) => Boolean)): (R,S) = {
     selectMin[(R,S)](flattenTwoIterables(r,s))((rands:(R,S)) => f(rands._1,rands._2), (rands:(R,S)) => filter(rands._1,rands._2))

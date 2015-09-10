@@ -19,9 +19,8 @@ import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
 
 import oscar.cp.constraints._
-import oscar.cp.core._
 
-import oscar.cp.modeling._
+import oscar.cp._
 
 class TestObjective extends FunSuite with ShouldMatchers {
 
@@ -63,7 +62,7 @@ class TestObjective extends FunSuite with ShouldMatchers {
     cp.search {
       binaryStatic(Array(x1, x2), _.max)
     } onSolution {
-      println("=>"+x1+" "+x2)
+      //println("=>"+x1+" "+x2)
     }
     cp.start().nSols should be(4)
   }

@@ -14,16 +14,15 @@
  ******************************************************************************/
 package oscar.cp.test
 
-import org.scalatest.FunSuite
-import org.scalatest.matchers.ShouldMatchers
-
 import oscar.cp.constraints._
-import oscar.cp.core._
+import oscar.cp._
+import oscar.cp.testUtils._
+import oscar.cp.core.CPPropagStrength
 
-import oscar.cp.modeling._
+
+class TestLostAtSea extends TestSuite {
 
 
-class TestLostAtSea extends FunSuite with ShouldMatchers  {
 
   val proba = Array(Array(3, 0, 0, 3, 2, 4, 2, 3),
     Array(3, 3, 3, 1, 2, 4, 1, 4),
@@ -70,32 +69,40 @@ class TestLostAtSea extends FunSuite with ShouldMatchers  {
   }
 
   test("Circuit Model") {
-    
-    val cp = CPSolver()
-    cp.silent = true
-    val succ = Array.tabulate(64)(i => CPIntVar(neighbors(i))(cp))
 
-    val path = Array.fill(10)(CPIntVar(0 until 64)(cp)) // represent the path of length ten which is the solution
+    def testCircuit(cons: CPPropagStrength): Int = {
 
-    val sol = Array.fill(10)(0)
+      val cp = CPSolver()
+      cp.silent = true
+      val succ = Array.tabulate(64)(i => CPIntVar(neighbors(i))(cp))
 
-    var best = 1000
-    val prob = proba.flatten
+      val path = Array.fill(10)(CPIntVar(0 until 64)(cp)) // represent the path of length ten which is the solution
 
-    for (i <- 0 until 9) {
-      cp.add(elementVar(succ, path(i), path(i + 1)))
+      val sol = Array.fill(10)(0)
+
+      var best = 1000
+      val prob = proba.flatten
+
+      for (i <- 0 until 9) {
+        cp.add(elementVar(succ, path(i), path(i + 1)),cons)
+      }
+      cp.add(circuit(succ), cons)
+
+      val obj = sum(0 until 10)(i => element(prob, path(i)))
+      cp.maximize(obj)
+      cp.search {
+        binaryFirstFail(path)
+      } onSolution {
+        (0 until 10).foreach(i => sol(i) = path(i).value) // record the solution
+        best = obj.value
+      } start ()
+      best
+
     }
-    cp.add(circuit(succ), Strong)
 
-    val obj = sum(0 until 10)(i => element(prob, path(i)))
-    cp.maximize(obj) 
-    cp.search {
-      binaryFirstFail(path)
-    } onSolution {
-      (0 until 10).foreach(i => sol(i) = path(i).value) // record the solution
-      best = obj.value
-    } start ()
-    best should be(33)
+    assert(testCircuit(CPPropagStrength.Weak) == 33)
+    assert(testCircuit(CPPropagStrength.Medium) == 33)
+    assert(testCircuit(CPPropagStrength.Strong) == 33)
 
   } 
 

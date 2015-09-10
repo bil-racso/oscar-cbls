@@ -17,6 +17,7 @@ package oscar.linprog.modeling
 
 import oscar.algebra._
 import scala.collection._
+import scala.collection.mutable.ArrayBuffer
 
 object LPStatus extends Enumeration {
   val NOT_SOLVED = Value("not solved yet")
@@ -73,11 +74,10 @@ abstract class AbstractLP {
    *  Remark: defining this method in AbstractLP instead of AbstractLPSolver allows to overwrite it for different solvers
    *  if it has a method to add all the constraints at once (ex: Gurobi).
    */
-  def addAllConstraints(cons: Map[Int, LPConstraint]) {
+  def addAllConstraints(cons: Seq[LPConstraint]) {
     var nbC = 0
     for {
-      i <- cons.keys.toSeq.sortWith(_ < _)
-      c = cons(i)
+      (c,i) <- cons.zipWithIndex
     } {
       if (nbC > 0 && nbC % 1000 == 0) println("Added " + nbC + " constraints. Currently at constraint index " + i)
         c match {
@@ -350,7 +350,7 @@ abstract class AbstractLPSolver {
 
   // map from the index of variables to their implementation
   protected val vars = mutable.HashMap.empty[Int, AbstractLPFloatVar]
-  private val cons = mutable.HashMap.empty[Int, LPConstraint]
+  private val cons = ArrayBuffer[LPConstraint]()//mutable.HashMap.empty[Int, LPConstraint]
   private val solution = mutable.HashMap.empty[Int, Double]
   protected var objective: LinearExpression = 0
   protected var minimize = true
@@ -379,14 +379,14 @@ abstract class AbstractLPSolver {
   def add(constr: LinearConstraint, name: String = ""): LPConstraint = {
     val cstName = if (name.isEmpty()) "cstr" + cons.size else name
     val constraint = new LPConstraint(this, constr, cons.size, cstName)
-    cons(cons.size) = constraint
+    cons.append(constraint)
     constraint
   }
   
   def addSOS(constr: LinearConstraint, name: String = ""): SOSConstraint = {
     val cstName = if (name.isEmpty()) "SOS_" + cons.size else name
     val constraint = new SOSConstraint(this, constr, cons.size, cstName)
-    cons(cons.size) = constraint
+    cons.append(constraint)
     constraint
   }
 
@@ -493,7 +493,7 @@ abstract class AbstractLPSolver {
   /**
    * Check that all the constraints are satisfied
    */
-  def checkConstraints(tol: Double = 10e-6): Boolean = cons.values.forall(c => c.check(tol))
+  def checkConstraints(tol: Double = 10e-6): Boolean = cons.forall(c => c.check(tol))
 
   /**
    *  modify the right hand side (constant term) of the specified constraint directly in the solver

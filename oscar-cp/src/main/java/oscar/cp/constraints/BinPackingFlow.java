@@ -17,7 +17,7 @@ package oscar.cp.constraints;
 import oscar.algo.reversible.ReversibleInt;
 import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
-import oscar.cp.core.CPIntVar;
+import oscar.cp.core.variables.CPIntVar;
 import oscar.cp.core.Constraint;
 import oscar.cp.util.ArrayUtils;
 
@@ -62,21 +62,21 @@ public class BinPackingFlow extends Constraint {
 				return CPOutcome.Failure;
 			}
 		}
-		if(s().post(new GCCVar(x, 0, c), CPPropagStrength.Strong) == CPOutcome.Failure) {
+		if(s().post(new GCCVarAC(x, 0, c), CPPropagStrength.Strong) == CPOutcome.Failure) {
 			return CPOutcome.Failure;
 		}
 		for (int j = 0; j < l.length; j++) {
-			l[j].callPropagateWhenBoundsChange(this,false);
+			l[j].callPropagateWhenBoundsChange(this);
 		}
 		for (int i = 0; i < sizes.length; i++) {
 			if (x[i].isBound()) {
-				int j = x[i].getValue();
+				int j = x[i].min();
 				l_t[j].setValue(l_t[j].getValue() + sizes[i]);
 				c_t[j].incr();
 			}
 			else {
 				x[i].callValBindIdxWhenBind(this,i);
-				x[i].callPropagateWhenBind(this,false);
+				x[i].callPropagateWhenBind(this);
 			}
 		}
 		return propagate();
@@ -84,7 +84,7 @@ public class BinPackingFlow extends Constraint {
 	
 	@Override
 	public CPOutcome valBindIdx(CPIntVar x, int idx) {
-		int j = x.getValue();
+		int j = x.min();
 		int size = sizes[idx];
 		l_t[j].setValue(l_t[j].getValue() + size);
 		c_t[j].incr();

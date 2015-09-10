@@ -15,6 +15,7 @@
 
 package oscar
 
+import scala.util.Random
 package object util {
   val rand = new scala.util.Random(0)
 
@@ -139,6 +140,34 @@ package object util {
 
   
   implicit def iter2Crossable[E1](es1: Iterable[E1]): Crossable[E1] = new Crossable[E1](es1)
+
+  implicit class RandomOps(val random: Random) extends AnyVal {
+
+    def weightedSelect[@specialized(Int) B](array: Array[B])(prob: B => Int): B = {
+      var elem = array(1)
+      var acc = prob(elem)
+      var i = 1
+      while (i < array.length) {
+        val e = array(i)
+        val p = prob(e)
+        acc += p
+        if (random.nextInt(acc) < p) elem = e
+        i += 1
+      }
+      elem
+    }
+
+    def weightedSelect[@specialized(Int) B](col: Traversable[B])(prob: B => Int): B = {
+      var acc = prob(col.head)
+      var elem = col.head
+      col.tail.foreach(e => {
+        val p = prob(e)
+        acc += p
+        if (random.nextInt(acc) < p) elem = e
+      })
+      elem
+    }
+  }  
   
 
 }

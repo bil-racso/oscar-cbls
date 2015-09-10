@@ -18,11 +18,11 @@ package oscar.cp.constraints
 
 import oscar.algo.reversible._
 import oscar.cp.core.CPOutcome
-import oscar.cp.modeling._
+import oscar.cp._
 import scala.collection.JavaConversions._
-import oscar.cp.core._
 import scala.annotation.tailrec
 import scala.util.control.Breaks._
+import oscar.cp.core.CPPropagStrength
 
 
 
@@ -39,7 +39,8 @@ class MinAssignment(val xarg: Array[CPIntVar], val weightsarg: Array[Array[Int]]
   val Wmax = n
   val J = 0 until n
   val W = 0 until n
-  val M = (weights.flatten.max + 1) * n
+  val maxVal = (0 until xarg.size).map(i => xarg(i).map(v => weightsarg(i)(v)).max).max
+  val M = (maxVal + 1) * n
 
   val costMatrix = Array.tabulate(n, n)((i, j) => new ReversibleInt(s, if (!x(i).hasValue(j)) M else weights(i)(j)))
 
@@ -268,12 +269,15 @@ class MinAssignment(val xarg: Array[CPIntVar], val weightsarg: Array[Array[Int]]
     var sum = 0
     var w = 0
     while (w < Wmax) {
+      //println("worker "+w+" matched with:"+matchJobByWorker(w)+" cost:"+weights(w)(matchJobByWorker(w).value))
       sum += weights(w)(matchJobByWorker(w).value)
       w += 1
     }
-    
-    
-    if (cost.updateMin(sum) == CPOutcome.Failure) return CPOutcome.Failure
+
+    if (cost.updateMin(sum) == CPOutcome.Failure) {
+      //println("failure min assingment filter cost:"+sum)
+      return CPOutcome.Failure
+    }
     val maxSlack = cost.max - sum
     
     /*
@@ -308,10 +312,17 @@ class MinAssignment(val xarg: Array[CPIntVar], val weightsarg: Array[Array[Int]]
     if (s.post(new AllDifferent(x:_*),l) == CPOutcome.Failure) {
       return CPOutcome.Failure;
     }
+    for (i <- 0 until n; v <- 0 until n) {
+      if (!x(i).hasValue(v)) {
+        valRemoveIdx(x(i), i, v)
+      }
+    }
     reduce()
     computeInitialFeasibleSolution();
     findMinAssignment()
-    if (filter() == CPOutcome.Failure) return CPOutcome.Failure
+    if (filter() == CPOutcome.Failure) {
+      return CPOutcome.Failure
+    }
     for (i <- 0 until n; if !x(i).isBound) {
       x(i).callValRemoveIdxWhenValueIsRemoved(this, i)
       x(i).callPropagateWhenDomainChanges(this)

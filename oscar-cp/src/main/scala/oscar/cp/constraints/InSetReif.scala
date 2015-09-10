@@ -17,6 +17,8 @@ package oscar.cp.constraints
 import oscar.cp.core._
 import oscar.algo.reversible._
 import oscar.cp.core.CPOutcome._
+import oscar.cp.core.variables.CPIntVar
+import oscar.cp.core.variables.CPBoolVar
 
 /**
  * x must be a value of the set
@@ -24,23 +26,24 @@ import oscar.cp.core.CPOutcome._
  */
 class InSetReif(val x: CPIntVar, val set: Set[Int], val b: CPBoolVar) extends Constraint(x.store, "InSetReif") {
   val setSize = set.size
-  val setMin = set.min
-  val setMax = set.max
-  val setRange = (setSize == (setMax-setMin+1))
+  val (setMin, setMax, setRange) = 
+    if (setSize == 0) (Int.MaxValue, Int.MinValue, true)
+    else (set.min, set.max, setSize == (set.max - set.min + 1))
   
   val supportValueInSet = new ReversibleInt(s,0)
   val supportValueNotInSet = new ReversibleInt(s,0)
   
   
   override def setup(l: CPPropagStrength): CPOutcome = {
-    
     if (!b.isBound) b.callValBindWhenBind(this)
     else return valBind(b)
     
     if (!x.isBound) x.callValBindWhenBind(this)
     else return valBind(x)
+    
     updateSupportNotInSet()
-    updateSupportNotInSet()
+    updateSupportInSet()
+    
     x.callPropagateWhenDomainChanges(this)
     
     propagate()
@@ -88,7 +91,7 @@ class InSetReif(val x: CPIntVar, val set: Set[Int], val b: CPBoolVar) extends Co
         }
       }
     } else if (x.isBound) {
-      val value = if (set.contains(x.value)) 1 else 0
+      val value = if (set.contains(x.min)) 1 else 0
       if (b.assign(value) == Failure) {
         return Failure
       }

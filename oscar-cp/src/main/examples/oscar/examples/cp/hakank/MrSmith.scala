@@ -13,17 +13,11 @@
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
 package oscar.examples.cp.hakank
-
-import oscar.cp.modeling._
-
-import oscar.cp.core._
+import oscar.cp._
 import scala.io.Source._
 import scala.math._
-
 /*
-
   Mr Smith problem in Oscar.
-
   From an IF Prolog example (http://www.ifcomputer.de/)
   """
   The Smith family and their three children want to pay a visit but they
@@ -36,66 +30,45 @@ import scala.math._
    o If Matt comes, then John and his father will
      also come.
   """
-  
   The answer should be:
   Mr_Smith_comes      =  0
   Mrs_Smith_comes     =  0
   Matt_comes          =  0
   John_comes          =  1
   Tim_comes           =  1
-
-
   @author Hakan Kjellerstrand hakank@gmail.com
   http://www.hakank.org/oscar/
- 
 */
-
-object MrSmith {
-
-  def main(args: Array[String]) {
-
-    val cp = CPSolver()
-
+object MrSmith extends CPModel with App  {
     //
     // data
     //
     var n = 5
-
     //
     // variables
     // 
     // The matrix
-    val x = Array.fill(n)(CPIntVar(0 to 1)(cp))
+    val x = Array.fill(n)(CPIntVar(0 to 1))
     val Array(mr_smith, mrs_smith, matt, john, tim) = x
-
     //
     // constraints
     //
     var numSols = 0
-
-    cp.solve subjectTo {
-
+  
       // If Mr Smith comes then his wife will come too.
-      cp.add((mr_smith === 1) ==> (mrs_smith === 1))
-
+     add((mr_smith === 1) ==> (mrs_smith === 1))
       // At least one of their two sons Matt and John will come.
-      cp.add((matt === 1 or john ===1))
-
+     add((matt === 1 or john ===1))
       // Either Mrs Smith or Tim will come but not both.
-      cp.add(mrs_smith + tim == 1)
-      
+     add(mrs_smith + tim == 1)
       // Either Tim and John will come or neither will come.
-      cp.add(tim == john)
-      
+     add(tim == john)
       // If Matt comes then John and his father will also come.
-      cp.add((matt === 1) ==> ((john === 1) && (mr_smith === 1)))
-
-
-    } search {
-       
+     add((matt === 1) ==> ((john === 1) && (mr_smith === 1)))
+    search{
       binaryStatic(x)
-    } onSolution {
-      
+    }
+onSolution {
       println("\nSolution:")
       println(x.mkString(""))
       println("Mr Smith : " + mr_smith)
@@ -103,13 +76,7 @@ object MrSmith {
       println("Matt     : " + matt)
       println("John     : " + john)
       println("Tim      : " + tim)
-
       numSols += 1
-
    } 
-   println(cp.start())
-
-
+   println(start())
   }
-
-}

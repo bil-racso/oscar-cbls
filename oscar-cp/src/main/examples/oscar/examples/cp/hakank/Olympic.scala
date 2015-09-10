@@ -13,106 +13,66 @@
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
 package oscar.examples.cp.hakank
-
-import oscar.cp.modeling._
-
-import oscar.cp.core._
+import oscar.cp._
 import scala.io.Source._
 import scala.math._
-
 /*
-
   Olympic puzzle in Oscar.
-
   Benchmark for Prolog (BProlog)
   """
   File   : olympic.pl
   Author : Neng-Fa ZHOU
   Date   : 1993
-  
-  Purpose: solve a puzzle taken from Olympic Arithmetic Contest
-  
+  Purpose:a puzzle taken from Olympic Arithmetic Contest
   Given ten variables with the following configuration:
-  
                   X7   X8   X9   X10
-  
                      X4   X5   X6
-  
                         X2   X3
-  
                            X1
-  
   We already know that X1 is equal to 3 and want to assign each variable
   with a different integer from {1,2,...,10} such that for any three
   variables
                          Xi   Xj
-  
                             Xk
-  
   the following constraint is satisfied:
-  
                        |Xi-Xj| = Xk
   """
-
-
   @author Hakan Kjellerstrand hakank@gmail.com
   http://www.hakank.org/oscar/
- 
 */
-
-object Olympic {
-
+object Olympic extends CPModel with App  {
   def abs_minus(x: CPIntVar,
              y: CPIntVar,
              z: CPIntVar) : Constraint = 
-    z == (x-y).abs()
-
-
-  def main(args: Array[String]) {
-
-    val cp = CPSolver()
-
+    z == (x-y).abs
     //
     // data
     //
     val n = 10
-
     //
     // variables
     //
-    val x = Array.fill(n)(CPIntVar(1 to n)(cp))
+    val x = Array.fill(n)(CPIntVar(1 to n))
     val Array(x1,x2,x3,x4,x5,x6,x7,x8,x9,x10) = x
-      
     //
     // constraints
     //
     var numSols = 0
-
-    cp.solve subjectTo {
-
-      cp.add(allDifferent(x), Strong)
-
-      cp.add(x1 == 3)
-
-      cp.add(abs_minus(x2, x3, x1))
-      cp.add(abs_minus(x4, x5, x2))
-      cp.add(abs_minus(x5, x6, x3))
-      cp.add(abs_minus(x7, x8, x4))
-      cp.add(abs_minus(x8, x9, x5))
-      cp.add(abs_minus(x9, x10, x6))
-
-
-    } search {
-       
+  
+     add(allDifferent(x), Strong)
+     add(x1 == 3)
+     add(abs_minus(x2, x3, x1))
+     add(abs_minus(x4, x5, x2))
+     add(abs_minus(x5, x6, x3))
+     add(abs_minus(x7, x8, x4))
+     add(abs_minus(x8, x9, x5))
+     add(abs_minus(x9, x10, x6))
+    search{
       binary(x, _.size, _.min)
-    } onSolution {
+    }
+onSolution {
       println("x: " + x.mkString(""))
-
       numSols += 1
-
    }
-   println(cp.start())
-
+   println(start())
   }
-
-}

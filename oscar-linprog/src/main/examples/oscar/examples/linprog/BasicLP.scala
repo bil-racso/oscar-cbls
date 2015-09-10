@@ -18,7 +18,7 @@ import oscar.algebra._
 import oscar.linprog.modeling._
 
 
-object BasicLP extends LPModel with App  {
+object BasicLP extends LPModelLPSolve with App  {
 
 
   val x0 = LPFloatVar("x0", 0, 40)
@@ -34,6 +34,7 @@ object BasicLP extends LPModel with App  {
   cons = cons :+ add(x0 - 3.0 * x1 + x2 <= 30, "cons2")
   cons = cons :+ add(x1 - 3.5 * x3 == 0)
 
+  
   start()
   
   println("x0:" + x0.value)

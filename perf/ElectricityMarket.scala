@@ -12,8 +12,7 @@
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
-import oscar.cp.modeling._
-import oscar.cp.core._
+import oscar.cp._
 import scala.io.Source
 import scala.collection.mutable.Map
 /** 
@@ -40,7 +39,7 @@ object ElectricityMarket {
 
     }
     //val firstLine :: restLines = Source.fromFile("data/electricityMarket.txt").getLines.toList
-    val firstLine::restLines = Source.fromFile("../data/electricityMarket.txt").getLines.toList
+    val firstLine::restLines = Source.fromFile("../data/electricityMarketMedium.txt").getLines.toList
     val n = firstLine.toInt
 
     val orders = restLines.map(_.split(" ").map(_.toInt)).map(Order(_)).toArray
@@ -59,17 +58,18 @@ object ElectricityMarket {
     // total amount of exchanged quantity
     val obj: CPIntVar = sum(tmin to tmax)(t => varMapQty(t))
 
-    cp.maximize(obj) subjectTo {
-      for (t <- tmin to tmax) {
-        val prodVars = producers.filter(_.overlap(t)).map(_.selected)
-        val prodQty = producers.filter(_.overlap(t)).map(_.qty)
-        val consVars = consumers.filter(_.overlap(t)).map(_.selected)
-        val consQty = consumers.filter(_.overlap(t)).map(_.qty.abs)
+    for (t <- tmin to tmax) {
+      val prodVars = producers.filter(_.overlap(t)).map(_.selected)
+      val prodQty = producers.filter(_.overlap(t)).map(_.qty)
+      val consVars = consumers.filter(_.overlap(t)).map(_.selected)
+      val consQty = consumers.filter(_.overlap(t)).map(_.qty.abs)
 
-        cp.add(binaryKnapsack(prodVars, prodQty, varMapQty(t)), Strong)
-        cp.add(binaryKnapsack(consVars, consQty, varMapQty(t)), Strong)
-      }
-    } search {
+      cp.add(binaryKnapsack(prodVars, prodQty, varMapQty(t)), Strong)
+      cp.add(binaryKnapsack(consVars, consQty, varMapQty(t)), Strong)
+    }
+
+    cp.maximize(obj)
+    cp.search {
       if (allBounds(orders.map(_.selected))) noAlternative
       else {
         val unboundOrders = orders.filter(!_.bound)

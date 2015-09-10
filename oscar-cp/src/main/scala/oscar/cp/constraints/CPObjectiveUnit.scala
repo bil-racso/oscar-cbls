@@ -15,9 +15,9 @@
 
 package oscar.cp.constraints
 
-import oscar.cp.modeling.TightenType
-import oscar.cp.modeling.TightenType._
-import oscar.cp.core.CPIntVar
+import oscar.cp.TightenType
+import oscar.cp.TightenType._
+import oscar.cp.core.variables.CPIntVar
 import oscar.cp.core.Constraint
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.CPOutcome._
@@ -70,7 +70,7 @@ abstract class CPObjectiveUnit(val objVar: CPIntVar, val n: String = "") extends
       if (tightenType != NoTighten) throw new RuntimeException("objective"+n+" not bound:" + objVar)
     }
     else {
-      best = objVar.value // Sets new best value
+      best = objVar.min // Sets new best value
       if (!objVar.store.silent && tightenType != NoTighten) {
         println("objective"+n+" tightened to " + best + " lb:"+  lb)
       }

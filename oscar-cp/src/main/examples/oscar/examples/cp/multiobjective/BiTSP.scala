@@ -14,9 +14,8 @@
  ******************************************************************************/
 package oscar.examples.cp.multiobjective
 
-import oscar.cp.modeling._
-import oscar.cp.core._
-import oscar.cp.constraints.ChannelingPredSucc
+import oscar.cp._
+import oscar.cp.constraints.Inverse
 import oscar.cp.multiobjective.Pareto
 import scala.collection.mutable.Queue
 import oscar.cp.constraints.MinAssignment
@@ -41,7 +40,7 @@ object BiTSP extends App {
   
   // Model
   // -----
-  val cp = new CPSolver()
+  implicit val cp = new CPSolver()
   cp.silent = true
   
   // Successors & Predecessors
@@ -53,22 +52,11 @@ object BiTSP extends App {
 
   // Constraints
   // -----------
-  cp.paretoMinimize(totDists:_*) subjectTo {
-
-    // Channeling between predecessors and successors
-    cp.add(ChannelingPredSucc(pred, succ))
-
-    // Consistency of the circuit with Strong filtering
-    cp.add(circuit(succ), Strong)
-    cp.add(circuit(pred), Strong)
-
-    for (o <- Objs) {
-      cp.add(sum(Cities)(i => distMatrices(o)(i)(succ(i))) == totDists(o))
-      cp.add(sum(Cities)(i => distMatrices(o)(i)(pred(i))) == totDists(o))
-      cp.add(minAssignment(pred, distMatrices(o), totDists(o)))
-      cp.add(minAssignment(succ, distMatrices(o), totDists(o)))
-    }
-  } search {
+  cp.paretoMinimize(totDists: _*) 
+  for (o <- Objs) {
+    cp.add(minCircuit(succ, distMatrices(o), totDists(o)), Strong)
+  }
+  search {
     binaryFirstFail(succ)
   }  
   

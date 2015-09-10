@@ -17,8 +17,7 @@ package oscar.cp.constraints;
 
 import java.util.Set;
 import java.util.TreeSet;
-
-import oscar.cp.core.CPIntVar;
+import oscar.cp.core.variables.CPIntVar;
 import oscar.cp.util.ArrayUtils;
 
 /**

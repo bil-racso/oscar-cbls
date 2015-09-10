@@ -15,9 +15,9 @@
 
 package oscar.algo.search
 
-import java.util.Random
+import scala.util.Random
 import oscar.algo.reversible.ReversibleContext
-import oscar.algo.reversible.ReversibleBool
+import oscar.algo.reversible.ReversibleBoolean
 
 /**
  * Class representing a (reversible search) node <br>
@@ -29,7 +29,7 @@ class SearchNode extends ReversibleContext {
   var silent = false
 
   val random: Random = new Random(0)
-  val failed = new ReversibleBool(this, false)
+  val failed = new ReversibleBoolean(this, false)
 
   /**
    * @return The Random generator of this node potentially used in other algorithms
@@ -47,8 +47,6 @@ class SearchNode extends ReversibleContext {
   def fail(): Unit = failed.setValue(true)
 
   def solFound(): Unit = {}
-
-  override def toString(): String = super.toString
 
   /**
    * executed just before the actual branch action
@@ -74,12 +72,17 @@ class SearchNode extends ReversibleContext {
     this
   }
 
-  private var solCallBacks: List[() => Unit] = List.empty
+  private var solCallBacks: List[(SearchStatistics) => Unit] = List.empty
 
   def onSolution(block: => Unit): SearchNode = {
-    solCallBacks = (() => block) :: solCallBacks
+    solCallBacks = ((stat: SearchStatistics) => block) :: solCallBacks
     this
   }
+  
+  def onSolutionWithStats(block: SearchStatistics => Unit): SearchNode = {
+    solCallBacks = (block) :: solCallBacks
+    this
+  } 
   
   def clearOnsolution() {
     solCallBacks = List.empty
@@ -88,13 +91,13 @@ class SearchNode extends ReversibleContext {
   def beforeStartAction(): Unit = {}
 
   def startSubjectTo(nSols: Int = Int.MaxValue, failureLimit: Int = Int.MaxValue, timeLimit: Int = Int.MaxValue, maxDiscrepancy: Int = Int.MaxValue)(reversibleBlock: => Unit = {}): SearchStatistics = {
-    beforeStartAction()
-    pushState()
+    beforeStartAction()   
+    pushState() // store the current state
     reversibleBlock
     val s = new Search(this, branchings)
-    solCallBacks.foreach(b => s.onSolution(b()))
-    s.onSolution(solFound())
+    solCallBacks.foreach(b => s.onSolutionWithStats(b))
     val stats = s.solveAll(nSols = nSols, failureLimit = failureLimit, timeLimit = timeLimit, maxDiscrepancy = maxDiscrepancy)
+    pop() // restore the current state  
     stats
   }
 

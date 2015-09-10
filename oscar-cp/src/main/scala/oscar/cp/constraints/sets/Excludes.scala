@@ -1,12 +1,12 @@
 package oscar.cp.constraints.sets
 
-import oscar.cp.core.CPSetVar
+import oscar.cp.core.variables.CPSetVar
 import oscar.cp.core.Constraint
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.CPOutcome._
-import oscar.cp.core.CPBoolVar
+import oscar.cp.core.variables.CPBoolVar
 import oscar.cp.core.CPPropagStrength
-import oscar.cp.core.CPIntVar
+import oscar.cp.core.variables.CPIntVar
 
 /** 
  *  @author Renaud Hartert ren.hartert@gmail.com

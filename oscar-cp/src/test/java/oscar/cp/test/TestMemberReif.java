@@ -1,5 +1,5 @@
 /*******************************************************************************
- * OscaR is free software: you can redistribute it and/or modify
+variables. * OscaR is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 2.1 of the License, or
  * (at your option) any later version.
@@ -16,9 +16,13 @@ package oscar.cp.test;
 
 
 import junit.framework.TestCase;
-import oscar.algo.reversible.*;
-import oscar.cp.constraints.*;
-import oscar.cp.core.*;
+import oscar.algo.reversible.SparseSet;
+import oscar.cp.constraints.GrEq;
+import oscar.cp.constraints.LeEq;
+import oscar.cp.constraints.MemberReif;
+import oscar.cp.core.CPStore;
+import oscar.cp.core.variables.CPBoolVar;
+import oscar.cp.core.variables.CPIntVar;
 
 
 /**
@@ -50,14 +54,14 @@ public class TestMemberReif extends TestCase {
     }
 
     public void test0(){
-        SetIndexedArray set = new SetIndexedArray(0,10,true);
+        SparseSet set = new SparseSet(0,10,true);
         set.insert(1);
         set.insert(2);
         set.insert(4);
         //set1 = {1,2,4}
         CPIntVar x = CPIntVar.apply(s,0,5);
         //x = {0,1,2,3,4,5}
-        CPBoolVar b = new CPBoolVar(s);
+        CPBoolVar b = CPBoolVar.apply(s);
         assertFalse(b.isBound());
         s.post(b.constraintFalse()); // forbid x to be a member os set
         s.post(new MemberReif(x,set,b));
@@ -67,14 +71,14 @@ public class TestMemberReif extends TestCase {
     }
 
     public void test1(){
-        SetIndexedArray set = new SetIndexedArray(0,10,true);
+        SparseSet set = new SparseSet(0,10,true);
         set.insert(1);
         set.insert(2);
         set.insert(4);
         //set1 = {1,2,4}
         CPIntVar x = CPIntVar.apply(s,0,5);
         //x = {0,1,2,3,4,5}
-        CPBoolVar b = new CPBoolVar(s);
+        CPBoolVar b = CPBoolVar.apply(s);
         s.post(new MemberReif(x,set,b));
         assertFalse(b.isBound());
         s.post(b.constraintFalse());  // forbid x to be a member os set
@@ -84,14 +88,14 @@ public class TestMemberReif extends TestCase {
     }
 
     public void test2(){
-        SetIndexedArray set = new SetIndexedArray(0,10,true);
+        SparseSet set = new SparseSet(0,10,true);
         set.insert(1);
         set.insert(2);
         set.insert(4);
         //set1 = {1,2,4}
         CPIntVar x = CPIntVar.apply(s,0,5);
         //x = {0,1,2,3,4,5}
-        CPBoolVar b = new CPBoolVar(s);
+        CPBoolVar b = CPBoolVar.apply(s);
         assertFalse(b.isBound());
         s.post(b.constraintTrue());  //force x to be a member of s
         s.post(new MemberReif(x,set,b));
@@ -101,14 +105,14 @@ public class TestMemberReif extends TestCase {
     }
 
     public void test3(){
-        SetIndexedArray set = new SetIndexedArray(0,10,true);
+        SparseSet set = new SparseSet(0,10,true);
         set.insert(1);
         set.insert(2);
         set.insert(4);
         //set1 = {1,2,4}
         CPIntVar x = CPIntVar.apply(s,0,5);
         //x = {0,1,2,3,4,5}
-        CPBoolVar b = new CPBoolVar(s);
+        CPBoolVar b = CPBoolVar.apply(s);
         assertFalse(b.isBound());
         s.post(new MemberReif(x,set,b));
         s.post(b.constraintTrue());  //force x to be a member of s
@@ -118,14 +122,14 @@ public class TestMemberReif extends TestCase {
     }
 
     public void test4(){
-        SetIndexedArray set = new SetIndexedArray(0,10,true);
+        SparseSet set = new SparseSet(0,10,true);
         set.insert(1);
         set.insert(2);
         set.insert(3);
         //set1 = {1,2,3}
         CPIntVar x = CPIntVar.apply(s,1,5);
         //x = {1,2,3,4,5}
-        CPBoolVar b = new CPBoolVar(s);
+        CPBoolVar b = CPBoolVar.apply(s);
         assertFalse(b.isBound());
         s.post(new MemberReif(x,set,b));
         s.post(new LeEq(x,3));  //force D(x) = 1,2,3 so that x is always a member
@@ -134,14 +138,14 @@ public class TestMemberReif extends TestCase {
     }
 
     public void test5(){
-        SetIndexedArray set = new SetIndexedArray(0,10,true);
+        SparseSet set = new SparseSet(0,10,true);
         set.insert(1);
         set.insert(2);
         set.insert(3);
         //set1 = {1,2,3}
         CPIntVar x = CPIntVar.apply(s,1,5);
         //x = {1,2,3,4,5}
-        CPBoolVar b = new CPBoolVar(s);
+        CPBoolVar b = CPBoolVar.apply(s);
         assertFalse(b.isBound());
         s.post(new LeEq(x,3));  //force D(x) = 1,2,3 so that x is always a member
         s.post(new MemberReif(x,set,b));
@@ -150,14 +154,14 @@ public class TestMemberReif extends TestCase {
     }
 
     public void test6(){
-        SetIndexedArray set = new SetIndexedArray(0,10,true);
+        SparseSet set = new SparseSet(0,10,true);
         set.insert(1);
         set.insert(2);
         set.insert(3);
         //set1 = {1,2,3}
         CPIntVar x = CPIntVar.apply(s,1,5);
         //x = {1,2,3,4,5}
-        CPBoolVar b = new CPBoolVar(s);
+        CPBoolVar b = CPBoolVar.apply(s);
         assertFalse(b.isBound());
         s.post(new GrEq(x,4));  //force D(x) = 4,5 so that x is not a member
         s.post(new MemberReif(x,set,b));
@@ -166,14 +170,14 @@ public class TestMemberReif extends TestCase {
     }
 
     public void test7(){
-        SetIndexedArray set = new SetIndexedArray(0,10,true);
+        SparseSet set = new SparseSet(0,10,true);
         set.insert(1);
         set.insert(2);
         set.insert(3);
         //set1 = {1,2,3}
         CPIntVar x = CPIntVar.apply(s,1,5);
         //x = {1,2,3,4,5}
-        CPBoolVar b = new CPBoolVar(s);
+        CPBoolVar b = CPBoolVar.apply(s);
         assertFalse(b.isBound());
         s.post(new MemberReif(x,set,b));
         s.post(new GrEq(x,4));  //force D(x) = 4,5 so that x is not a member

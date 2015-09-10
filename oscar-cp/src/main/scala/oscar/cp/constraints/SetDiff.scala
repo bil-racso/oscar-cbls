@@ -18,6 +18,8 @@
 package oscar.cp.constraints
 
 import oscar.cp.core._
+import oscar.cp.core.variables.CPSetVar
+import oscar.cp.core.delta.PropagatorSetVar
 
 /**
  * @author Pierre Schaus pschaus@gmail.com
@@ -86,7 +88,7 @@ class SetDiff(val a: CPSetVar, val b: CPSetVar, val c: CPSetVar) extends Constra
   //                         if this value is not possible in c, it is required in b
   //                         if this value is required in c, it is not possible in b
   //                         if this value is possible but not required in c, nothing to do in b  
-  def filtera(d: DeltaVarSet): CPOutcome = {
+  def filtera(d: PropagatorSetVar): CPOutcome = {
     if (d.possibleChanged) {
       for (v <- d.deltaPossible) {
         if (c.excludes(v) == CPOutcome.Failure) {
@@ -117,7 +119,7 @@ class SetDiff(val a: CPSetVar, val b: CPSetVar, val c: CPSetVar) extends Constra
   //                           otherwise nothing to do
 
   // if value required in b, it is removed from c  
-  def filterb(d: DeltaVarSet): CPOutcome = {
+  def filterb(d: PropagatorSetVar): CPOutcome = {
     if (d.possibleChanged) {
       for (v <- d.deltaPossible) {
         if (a.isRequired(v)) {
@@ -146,7 +148,7 @@ class SetDiff(val a: CPSetVar, val b: CPSetVar, val c: CPSetVar) extends Constra
   //                           if required in a, it is becomes required in b
 
   // if value required in c, it becomes required in a and impossible in b  
-  def filterc(d: DeltaVarSet): CPOutcome = {
+  def filterc(d: PropagatorSetVar): CPOutcome = {
     if (d.possibleChanged) {
       for (v <- d.deltaPossible) {
         if (!a.isPossible(v) && a.excludes(v) == CPOutcome.Failure) {

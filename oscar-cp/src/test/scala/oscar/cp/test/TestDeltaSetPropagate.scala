@@ -14,20 +14,20 @@
  ******************************************************************************/
 package oscar.cp.test
 
+
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
-import oscar.cp.constraints._
-import oscar.cp.core._
-import oscar.cp.modeling._
-import collection.immutable.SortedSet
-import java.util.LinkedList
+import oscar.cp.core.CPOutcome
+import oscar.cp.core.CPPropagStrength
+import oscar.cp._
+import scala.collection.mutable.ArrayBuffer
 
 
 /**
  * @author Pierre Schaus pschaus@gmail.com
  */
 class TestDeltaSetPropagate extends FunSuite with ShouldMatchers {
-  
+
 
 
 
@@ -61,11 +61,11 @@ class TestDeltaSetPropagate extends FunSuite with ShouldMatchers {
     //println(x.requiredSize+" "+x.possibleSize)
     cp.add(new MyCons(x))
     
-    val cons = new LinkedList[Constraint]()
-    cons.add(x ++ 1)
-    cons.add(x ++ 3)
-    cons.add(x -- 2)
-    cons.add(x -- 4)
+    val cons = ArrayBuffer[Constraint]()
+    cons.append(x ++ 1)
+    cons.append(x ++ 3)
+    cons.append(x -- 2)
+    cons.append(x -- 4)
     
     cp.add(cons)
     
@@ -100,18 +100,18 @@ class TestDeltaSetPropagate extends FunSuite with ShouldMatchers {
 
     val cp = CPSolver()
     val x = new CPSetVar(cp, 1 , 5)
-    println(x.requiredSize+" "+x.possibleSize)
+    //println(x.requiredSize+" "+x.possibleSize)
     cp.add(new MyCons(x))
     
-    val cons = new LinkedList[Constraint]()
-    cons.add(x ++ 1)
-    cons.add(x ++ 3)
-    cons.add(x -- 2)
-    cons.add(x -- 4)
+    val cons = ArrayBuffer[Constraint]()
+    cons.append(x ++ 1)
+    cons.append(x ++ 3)
+    cons.append(x -- 2)
+    cons.append(x -- 4)
     
     cp.add(cons)
     
-    println(x.requiredSet+" <= x <="+x.possibleSet)
+    //println(x.requiredSet+" <= x <="+x.possibleSet)
     propag should be(true)
   }
   

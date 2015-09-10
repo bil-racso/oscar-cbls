@@ -13,12 +13,7 @@
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
 package oscar.examples.cp.hakank
-
-import oscar.cp.modeling._
-
-import oscar.cp.core._
-
-
+import oscar.cp._
 /**
  *
  * Map coloring in Oscar
@@ -28,13 +23,7 @@ import oscar.cp.core._
  * http://www.hakank.org/oscar/
  *
  */
-object MapColoring2 {
-
-
-  def main(args: Array[String]) {
-
-    val cp = CPSolver()
-
+object MapColoring2 extends CPModel with App  {
     // data
     var Belgium     = 0
     val Denmark     = 1
@@ -42,48 +31,32 @@ object MapColoring2 {
     val Germany     = 3
     val Netherlands = 4
     val Luxembourg  = 5
-
     val n = 6
     val num_colors = 4
-      
     // variables
-    val color = Array.fill(n)(CPIntVar(1 to num_colors)(cp))
-
+    val color = Array.fill(n)(CPIntVar(1 to num_colors))
     //
     // constraints
     //
     var numSols = 0
-
-    cp.solve subjectTo {
-
-      cp.add(color(France) != color(Belgium))
-      cp.add(color(France) != color(Luxembourg))
-      cp.add(color(France) != color(Germany))
-      cp.add(color(Luxembourg) != color(Germany))
-      cp.add(color(Luxembourg) != color(Belgium))
-      cp.add(color(Belgium) != color(Netherlands))
-      cp.add(color(Belgium) != color(Germany))
-      cp.add(color(Germany) != color(Netherlands))
-      cp.add(color(Germany) != color(Denmark))
-
-
+  
+     add(color(France) != color(Belgium))
+     add(color(France) != color(Luxembourg))
+     add(color(France) != color(Germany))
+     add(color(Luxembourg) != color(Germany))
+     add(color(Luxembourg) != color(Belgium))
+     add(color(Belgium) != color(Netherlands))
+     add(color(Belgium) != color(Germany))
+     add(color(Germany) != color(Netherlands))
+     add(color(Germany) != color(Denmark))
       // Symmetry breaking: Belgium has color 1
-      cp.add(color(Belgium) == 1)
-
-
-     } search {
-       
+     add(color(Belgium) == 1)
+     search{
        binaryFirstFail(color)
-     
-     } onSolution {
-     
+     }
+onSolution {
        println("color:" + color.mkString(" "))
-
        numSols += 1
-       
      } 
-     
-     println(cp.start())
+     println(start())
    }
-
-}

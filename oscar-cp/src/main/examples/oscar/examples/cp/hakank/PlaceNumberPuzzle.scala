@@ -13,17 +13,11 @@
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
 package oscar.examples.cp.hakank
-
-import oscar.cp.modeling._
-
-import oscar.cp.core._
+import oscar.cp._
 import scala.io.Source._
 import scala.math._
-
 /*
-
   Place number puzzle in Oscar.
-
   From http://ai.uwaterloo.ca/~vanbeek/Courses/Slides/introduction.pdf
   """
   Place numbers 1 through 8 on nodes
@@ -35,23 +29,14 @@ import scala.math._
       \ | X | /
         4 - 7
   """
-
   @author Hakan Kjellerstrand hakank@gmail.com
   http://www.hakank.org/oscar/
- 
 */
-
-object PlaceNumberPuzzle {
-
-  def main(args: Array[String]) {
-
-    val cp = CPSolver()
-
+object PlaceNumberPuzzle extends CPModel with App  {
     //
     // data
     //
     val n = 8 // number of nodes
-
     // Note: this is 1-based for compatibility (and lazyness)
     val graph =  Array(Array(1,2),
                        Array(1,3),
@@ -85,43 +70,29 @@ object PlaceNumberPuzzle {
                        Array(8,5),
                        Array(8,6),
                        Array(8,7))
-
     val m = graph.length
-
     //
     // variables
     //
-    val x = Array.fill(n)(CPIntVar(1 to n)(cp))
-
+    val x = Array.fill(n)(CPIntVar(1 to n))
     //
     // constraints
     //
     var numSols = 0
-
-    cp.solve subjectTo {
-
-      cp.add(allDifferent(x))
-
+  
+     add(allDifferent(x))
       for(i <- 0 until m) {
         // (also make 0-base)
-        cp.add( (x(graph(i)(0)-1)-x(graph(i)(1)-1)).abs() > 1)
+       add( (x(graph(i)(0)-1)-x(graph(i)(1)-1)).abs > 1)
       }
-
       // symmetry breaking
-      cp.add(x(0) < x(n-1))
-
-
-    } search {
-       
+     add(x(0) < x(n-1))
+    search{
       binaryMaxDegree(x)
-    } onSolution {
+    }
+onSolution {
       println("x: " + x.mkString(""))
-
       numSols += 1
-
    } 
-   println(cp.start())
-
+   println(start())
   }
-
-}

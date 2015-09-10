@@ -1,11 +1,9 @@
 package oscar.examples.cp
 
-import oscar.cp.modeling._
+import oscar.cp._
 import oscar.algo.search._
-import oscar.cp.core._
 import collection.immutable.SortedSet
 import oscar.cp.constraints.ElementVarAC
-import oscar.cp.search.BinaryFirstFailBranching
 
 /**
  * Problem statement :
@@ -52,8 +50,10 @@ object ResourceAssignment extends CPModel with App {
   val load = Array.fill(nbBins)(CPIntVar(0 to binCapa))
 
   add(binPacking(x, taskWeight.map(_._2), load))
+  
+  val objective = maximum(0 until nbBins)(load(_))
 
-  minimize(maximum(0 until nbBins)(load(_))) search {
+  minimize(objective) search {
     binaryFirstFail(x)
   }
 

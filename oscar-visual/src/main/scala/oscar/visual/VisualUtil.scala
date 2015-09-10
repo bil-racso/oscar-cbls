@@ -41,8 +41,8 @@ object VisualUtil {
   def getRandomColors(n: Int, pastel: Boolean = false): Array[Color] = {
     val hStep: Float = 1f / n
     val coef: Float = if (pastel) pastelCoef else brightCoef
-    val colors = for (i <- 0 until n) yield hsbColor(i * hStep, coef * randSat, randSat)
-    rand.shuffle(colors).toArray
+    val colors = Array.tabulate(n)(i => hsbColor(i * hStep, coef * randSat, randSat))
+    colors.sortBy(i => rand.nextInt)
   }
 
   /** Returns an array of n hue-uniform colors. */

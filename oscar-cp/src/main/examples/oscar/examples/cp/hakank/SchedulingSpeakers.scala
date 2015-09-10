@@ -13,11 +13,7 @@
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
 package oscar.examples.cp.hakank
-
-import oscar.cp.modeling._
-
-import oscar.cp.core._
-
+import oscar.cp._
 /**
  *
  * Scheduling speakers problem in Oscar
@@ -29,19 +25,12 @@ import oscar.cp.core._
  * http://www.hakank.org/oscar/
  *
  */
-object SchedulingSpeakers {
-
-
-   def main(args: Array[String]) {
-
-      val cp = CPSolver()
-
+object SchedulingSpeakers extends CPModel with App  {
       //
       // data
       // 
       val num_speakers = 6
       val num_slots    = 6
-
       // Slots available to speakers
       val available = Array(
                             //                    Reasoning:
@@ -52,29 +41,19 @@ object SchedulingSpeakers {
                             Array(3,4),        // 5) 3 or 4
                             Array(1,2,3,4,5,6) // 1) the only with 1
                             )
-
-
       //
       // decision variables
       // 
-      val speakers = Array.tabulate(num_speakers)(i=>CPIntVar(available(i).toSet)(cp))
-
+      val speakers = Array.tabulate(num_speakers)(i=>CPIntVar(available(i).toSet))
       var numSols = 0
-      cp.solve subjectTo {
-
-        cp.add(allDifferent(speakers))
-
-
-      } search {
-
+    
+       add(allDifferent(speakers))
+      search{
         binaryStatic(speakers)
-      } onSolution {
+      }
+onSolution {
         println(speakers.mkString(""))
-
         numSols += 1
       } 
-      println(cp.start())
-
+      println(start())
   }
-
-}

@@ -285,13 +285,13 @@ class InvariantTests extends FunSuite with Checkers {
 
   test("MinSet maintains the minimum of a set.") {
     val bench = new InvBench(verbose)
-    new MinSet(bench.genIntSetVar())
+    new MinSet(bench.genIntSetVar(),Default=100)
     bench.run
   }
 
   test("MaxSet maintains the maximum of a set") {
     val bench = new InvBench(verbose)
-    new MaxSet(bench.genIntSetVar())
+    new MaxSet(bench.genIntSetVar(),Default=0)
     bench.run
   }
 

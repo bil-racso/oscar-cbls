@@ -13,12 +13,7 @@
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
 
-
-
-import oscar.cp.modeling._
-import oscar.algo.search._
-import oscar.cp.core._
-import collection.immutable.SortedSet
+import oscar.cp._
 
 /**
  * Cookie Monster Problem (by Richard Green https://plus.google.com/u/0/101584889282878921052/posts/8qWvSaLJVGD
@@ -44,50 +39,35 @@ import collection.immutable.SortedSet
  *
  * @author Pierre Schaus pschaus@gmail.com
  */
-object CookieMonster {
-  def main(args: Array[String]) {
+object CookieMonster extends CPModel with App {
 
-    implicit val cp = CPSolver()
-    cp.silent = true
-    val numCubes = 4
-    val numFaces = 6
+  solver.silent = true
 
-    val jars = Array(15, 13, 12, 4, 2, 1)
-    val maxMove = 6
+  val jars = Array(20, 16, 13, 5, 2, 1)
+  val maxMove = 7
 
-    val x = Array.fill(maxMove)(CPIntVar(cp, 0 to jars.max))
-    val b = Array.fill(maxMove, jars.size)(CPBoolVar())
-    val bx = Array.tabulate(maxMove, jars.size) { case (m, j) => b(m)(j) * x(m) }
-    var nbSol = 0
+  val x = Array.fill(maxMove)(CPIntVar(0 to jars.max))
+  val b = Array.fill(maxMove, jars.length)(CPBoolVar())
+  val bx = Array.tabulate(maxMove, jars.length) { (m, j) => b(m)(j) * x(m) }
 
-    def printSol() = {
-      for (i <- 0 until maxMove) {
-        println("move" + i + ":\t" + bx(i).mkString("\t"))
-      }
+  def printSol() = {
+    for (i <- 0 until maxMove) {
+      println("move" + i + ":\t" + bx(i).mkString("\t"))
     }
-
-    cp.solve subjectTo {
-      for (j <- 0 until jars.size) {
-        cp.add(sum(0 until maxMove)(m => bx(m)(j)) == jars(j))
-      }
-      // break symmetry
-      for (m <- 0 until maxMove - 1) {
-        cp.add(lexLeq(bx(m + 1), bx(m)))
-      }
-    }
-    search {
-      binaryStatic(x) ++ binaryStatic(b.flatten.toSeq)
-    }
-
-    for (i <- 0 until maxMove; if nbSol == 0) {
-      startSubjectTo(nSols = 100000) {
-        for (m <- i + 1 until maxMove) {
-          if (m > i) post(x(m) == 0)
-          else post(x(m) > 0)
-        }
-      }
-    }
-
   }
 
+  for (j <- 0 until jars.size) {
+    add(sum(0 until maxMove)(m => bx(m)(j)) == jars(j))
+  }
+
+  // break symmetries
+  for (m <- 0 until maxMove - 1) {
+    add(lexLeq(bx(m + 1), bx(m)))
+  }
+
+  search {
+    binaryStatic(x, _.min) ++ binaryStatic(b.flatten.toSeq, _.min)
+  }
+
+  println(start())
 }

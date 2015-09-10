@@ -15,20 +15,17 @@
 package oscar.cp.test
 
 import org.scalatest.FunSuite
-import org.scalatest.matchers.ShouldMatchers
-import oscar.cp.constraints._
-import oscar.cp.core._
-import oscar.cp.modeling._
+import oscar.cp._
 import collection.immutable.SortedSet
-import oscar.algo.reversible.ReversibleSetIndexedArray
 import oscar.algo.reversible.ReversibleSparseSubset
+import org.scalatest.Matchers
 
 
 
 /**
  * @author Pierre Schaus pschaus@gmail.com
  */
-class TestReversibleSparseSubset extends FunSuite with ShouldMatchers  {
+class TestReversibleSparseSubset extends FunSuite with Matchers  {
 
 
   

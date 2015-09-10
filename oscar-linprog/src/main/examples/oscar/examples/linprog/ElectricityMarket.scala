@@ -23,7 +23,7 @@ import scala.collection.mutable.Map
  * Maximize the total market exchange such that demand and supply match at any time
  * @author Pierre Schaus pschaus@gmail.com
  */
-object ElectricityMarket extends MIPModel with App {
+object ElectricityMarket extends MIPModelLPSolve with App {
 
   // format is : qty ( > 0 if producer < 0 if consumer) start end
   val firstLine :: restLines = Source.fromFile("data/electricityMarketEasy.txt").getLines.toList

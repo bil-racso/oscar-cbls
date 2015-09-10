@@ -21,7 +21,7 @@ import java.util.Hashtable;
 import oscar.algo.reversible.ReversibleInt;
 import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
-import oscar.cp.core.CPIntVar;
+import oscar.cp.core.variables.CPIntVar;
 import oscar.cp.core.Constraint;
 
 
@@ -65,9 +65,9 @@ public class ElementCst extends Constraint {
 			public int compare(Integer i1, Integer i2) {
 				return (y[i1]-y[i2]);
 			}});
-		minIndSupp = new ReversibleInt(s());
+		minIndSupp = new ReversibleInt(s(), 0);
 		minIndSupp.setValue(0);
-		maxIndSupp = new ReversibleInt(s());
+		maxIndSupp = new ReversibleInt(s(), 0);
 		maxIndSupp.setValue(y.length-1);
 		
 	}
@@ -90,8 +90,8 @@ public class ElementCst extends Constraint {
 			x.callValRemoveWhenValueIsRemoved(this);
 			z.callValRemoveWhenValueIsRemoved(this);
 		}
-		z.callPropagateWhenBoundsChange(this,false);
-		x.callPropagateWhenDomainChanges(this,false);		
+		z.callPropagateWhenBoundsChange(this);
+		x.callPropagateWhenDomainChanges(this);		
 		x.callValBindWhenBind(this);
 
 		return CPOutcome.Suspend;
@@ -163,10 +163,10 @@ public class ElementCst extends Constraint {
 		}
 		return CPOutcome.Suspend;
 	}
-	
+	@Override
 	public CPOutcome valBind(CPIntVar x) {
 		// x is bound
-		if (z.assign(y[x.getValue()]) == CPOutcome.Failure)
+		if (z.assign(y[x.min()]) == CPOutcome.Failure)
 			return CPOutcome.Failure;
 		return CPOutcome.Success;
 	}

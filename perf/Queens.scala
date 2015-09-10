@@ -12,8 +12,8 @@
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
-import oscar.cp.modeling._
-import oscar.cp.core._
+
+import oscar.cp._
 
 /**
  * n-queens model: place n-queens on a chess-board such that they don't attack each other.
@@ -32,11 +32,10 @@ object Queens {
     val queens = for (i <- Queens) yield CPIntVar(cp, 1 to n)
 
     var nbsol = 0
-    cp.solve subjectTo {
       cp.add(allDifferent(queens), Strong)
       cp.add(allDifferent(for (i <- Queens) yield queens(i) + i), Strong)
       cp.add(allDifferent(for (i <- Queens) yield queens(i) - i), Strong)
-    } search {
+    cp.search {
       queens.find(!_.isBound) match {
         case None => noAlternative
         case Some(x) => branchAll(1 to n)(v => cp.add(x == v))

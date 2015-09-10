@@ -16,7 +16,7 @@ package oscar.cp.constraints;
 
 import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
-import oscar.cp.core.CPIntVar;
+import oscar.cp.core.variables.CPIntVar;
 import oscar.cp.core.Constraint;
 
 /**
@@ -49,11 +49,11 @@ public class Abs extends Constraint {
 			return CPOutcome.Failure;
 		}
 		if (!x.isBound()) {
-			x.callPropagateWhenBoundsChange(this,false);
+			x.callPropagateWhenBoundsChange(this);
 			x.callValBindWhenBind(this);
 		}
 		if (!y.isBound()) {
-			y.callPropagateWhenBoundsChange(this,false);
+			y.callPropagateWhenBoundsChange(this);
 			y.callValBindWhenBind(this);
 		}
 		//we can do more propagation with val remove
@@ -116,20 +116,20 @@ public class Abs extends Constraint {
 		
 		if (x.isBound()) {
 			
-			if (y.assign(Math.abs(x.getValue())) == CPOutcome.Failure) {
+			if (y.assign(Math.abs(x.min())) == CPOutcome.Failure) {
 				return CPOutcome.Failure;
 			}
 			return CPOutcome.Success;
 			
 		} else { // y is bound
 			// y = |x|	
-			if(!x.hasValue(-y.getValue())) {
-				if (x.assign(y.getValue()) == CPOutcome.Failure) {
+			if(!x.hasValue(-y.min())) {
+				if (x.assign(y.min()) == CPOutcome.Failure) {
 					return CPOutcome.Failure;
 				}
 			}
-			else if(!x.hasValue(y.getValue())) {
-				if (x.assign(-y.getValue()) == CPOutcome.Failure) {
+			else if(!x.hasValue(y.min())) {
+				if (x.assign(-y.min()) == CPOutcome.Failure) {
 					return CPOutcome.Failure;
 				}
 			}
@@ -138,7 +138,7 @@ public class Abs extends Constraint {
 				// x can be (y or -y)
 				// remove everything except y and -y from x
 				for (int v = x.getMin(); v <= x.getMax(); v++) {
-					if(v != y.getValue() && v != -y.getValue()) {
+					if(v != y.min() && v != -y.min()) {
 						if (x.removeValue(v) == CPOutcome.Failure) {
 							return CPOutcome.Failure;
 						}

@@ -18,6 +18,8 @@
 package oscar.cp.constraints
 
 import oscar.cp.core._
+import oscar.cp.core.variables.CPIntVar
+import oscar.cp.core.variables.CPSetVar
 
 /**
  * @author Pierre Schaus pschaus@gmail.com
@@ -26,7 +28,7 @@ class SetCard(val x: CPSetVar, val c: CPIntVar) extends Constraint(x.store, "Set
   priorityL2 = CPStore.MAXPRIORL2
   override def setup(l: CPPropagStrength): CPOutcome = {
     x.callPropagateWhenDomainChanges(this, false)
-    c.callPropagateWhenBoundsChange(this, false)
+    c.callPropagateWhenBoundsChange(this)
     propagate()
   }
   

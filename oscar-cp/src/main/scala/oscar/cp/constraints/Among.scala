@@ -18,6 +18,7 @@ import oscar.cp.core._
 import oscar.algo.reversible._
 import oscar.cp.core.CPOutcome
 import oscar.algo.reversible.ReversibleSparseSet
+import oscar.cp.core.variables.CPIntVar
 
 /**
  * Implementation of Among Constraint:
@@ -59,11 +60,10 @@ class Among(val N: CPIntVar, val X: Array[CPIntVar], val S: Set[Int]) extends Co
       // if ub = min(N), it mean all the values still with non empty intersection must be in the set. 
       // every variable with non empty intersection must only keep values from the set
       for (i <- nonEmptyInterIdx) {
-    	  var Dxi = X(i).domainIterator
+    	  var Dxi = X(i).iterator
     	  for (v <- Dxi; if !S.contains(v)) {
-    	    if (Dxi.removeValue == CPOutcome.Failure) return CPOutcome.Failure
+    	    if (X(i).removeValue(v) == CPOutcome.Failure) return CPOutcome.Failure
     	  }
-    	  Dxi.execute()
       }
       return CPOutcome.Success
     }
@@ -82,9 +82,9 @@ class Among(val N: CPIntVar, val X: Array[CPIntVar], val S: Set[Int]) extends Co
 
     // for every variables not yet included and not disjoint from S
     for (i <- 0 until X.size; if interSize(i).value < X(i).size && interSize(i).value > 0) {
-      X(i).filterWhenDomainChanges { d =>
+      X(i).filterWhenDomainChangesWithDelta() { d =>
         if (X(i).isBound) {
-          val v = X(i).value
+          val v = X(i).min
           if (S.contains(v)) {
             interSize(i).value = 1
           } else {
@@ -112,7 +112,7 @@ class Among(val N: CPIntVar, val X: Array[CPIntVar], val S: Set[Int]) extends Co
         else CPOutcome.Suspend
       }
     }
-    N.filterWhenBoundsChanges { d =>
+    N.filterWhenBoundsChange() {
       filter()
     }
     filter()

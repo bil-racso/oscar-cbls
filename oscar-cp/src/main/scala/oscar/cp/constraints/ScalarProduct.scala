@@ -1,7 +1,7 @@
 package oscar.cp.constraints
 
 import oscar.cp.core._
-import oscar.cp.modeling.sum
+import oscar.cp._
 
 
 /**
@@ -14,10 +14,10 @@ object ScalarProduct {
   // Constraints linked to scalar products of variables by constants
   // The goal here is to avoid the creation of new variables, so we use views wherever we can
   
-  def zero(vars: Seq[CPIntVar], scalars: Seq[Int])(implicit cp: CPStore): Constraint = { // the scalar product must be zero
+  def zero(vars: Seq[CPIntVar], scalars: Seq[Int], rhs: Int = 0)(implicit cp: CPStore): Constraint = { // the scalar product must be zero
     assert(vars.size == scalars.size)
     
-    sum(vars.zip(scalars).map { case (x, c) => x * c }) == 0
+    sum(vars.zip(scalars).map { case (x, c) => x * c }) == rhs
     
     /*
     // step 1, take all indices where x_i * a_i is known in advance, and put these in a separate int
@@ -49,10 +49,10 @@ object ScalarProduct {
   }
   
   // the scalar product must be nonzero, code is a copypasta of zero
-  def nonzero(vars: Seq[CPIntVar], scalars: Seq[Int])(implicit cp: CPStore): Constraint = {
+  def nonzero(vars: Seq[CPIntVar], scalars: Seq[Int], rhs: Int = 0)(implicit cp: CPStore): Constraint = {
     assert(vars.size == scalars.size)
     
-    sum(vars.zip(scalars).map { case (x, c) => x * c }) != 0
+    sum(vars.zip(scalars).map { case (x, c) => x * c }) != rhs
     
     /*
     val (constants, nonconstants) = vars.indices.partition { i => scalars(i) == 0 || vars(i).isBound }
@@ -68,10 +68,10 @@ object ScalarProduct {
   }
   
   // the scalar product must be negative or zero, code is a copypasta of zero
-  def leq(vars: Seq[CPIntVar], scalars: Seq[Int])(implicit cp: CPStore): Constraint = {
+  def leq(vars: Seq[CPIntVar], scalars: Seq[Int], rhs: Int = 0)(implicit cp: CPStore): Constraint = {
     assert(vars.size == scalars.size)
 
-    sum(vars.zip(scalars).map { case (x, c) => x * c }) <= 0
+    sum(vars.zip(scalars).map { case (x, c) => x * c }) <= rhs
 
     /*
     val (constants, nonconstants) = vars.indices.partition { i => scalars(i) == 0 || vars(i).isBound }
@@ -86,5 +86,21 @@ object ScalarProduct {
     * 
     */
   }
+
+  def lt(vars: Seq[CPIntVar], scalars: Seq[Int], rhs: Int = 0)(implicit cp: CPStore): Constraint = {
+    assert(vars.size == scalars.size)
+    sum(vars.zip(scalars).map { case (x, c) => x * c }) < rhs
+  }
+
+  def gt(vars: Seq[CPIntVar], scalars: Seq[Int], rhs: Int = 0)(implicit cp: CPStore): Constraint = {
+    assert(vars.size == scalars.size)
+    sum(vars.zip(scalars).map { case (x, c) => x * c }) > rhs
+  }
+
+  def geq(vars: Seq[CPIntVar], scalars: Seq[Int], rhs: Int = 0)(implicit cp: CPStore): Constraint = {
+    assert(vars.size == scalars.size)
+    sum(vars.zip(scalars).map { case (x, c) => x * c }) >= rhs
+  }
+
 
 }

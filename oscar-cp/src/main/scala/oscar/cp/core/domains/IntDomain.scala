@@ -1,34 +1,22 @@
+/*******************************************************************************
+ * OscaR is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 2.1 of the License, or
+ * (at your option) any later version.
+ *   
+ * OscaR is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License  for more details.
+ *   
+ * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
+ ******************************************************************************/
+
 package oscar.cp.core.domains
 
 import oscar.cp.core.CPOutcome
 
-/** @author Renaud Hartert */
-
-abstract class IntDomain extends Iterable[Int] {
-  
-  def size: Int
-
-  def isEmpty: Boolean
-  
-  def isBound: Boolean 
-
-  def max: Int
-
-  def min: Int
-  
-  def hasValue(value: Int): Boolean
-  
+abstract class IntDomain extends IntervalDomain {
   def removeValue(value: Int): CPOutcome 
-  
-  def assign(value: Int): CPOutcome
-
-  def updateMin(value: Int): CPOutcome
-
-  def updateMax(value: Int): CPOutcome
-
-  def nextValue(value: Int): Int
-
-  def prevValue(value: Int): Int
-
-  def delta(oldMin: Int, oldMax: Int, oldSize: Int): Iterator[Int] 
 }

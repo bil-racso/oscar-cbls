@@ -14,11 +14,10 @@
  ******************************************************************************/
 package oscar.cp.constraints
 
-import oscar.cp.core._
+import oscar.cp._
 import oscar.cp.core.Constraint
 import oscar.cp.core.CPOutcome
 import oscar.cp.core.CPPropagStrength
-import oscar.cp.core.CPOutcome
 
 
 /**

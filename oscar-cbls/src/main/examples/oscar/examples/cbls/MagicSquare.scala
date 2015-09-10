@@ -61,7 +61,7 @@ object MagicSquare extends SearchEngine with StopWatch {
     val perm:Iterator[Int] = getRandomPermutation(M)
     var v:Int=1
     for(i <- Dim; j <-Dim) { 
-      magic(i)(j)=CBLSIntVar(m, perm.next+1, 1 to N, "v_"+i+"_"+j) // init with random permutation (ensuring all diff)
+      magic(i)(j)=CBLSIntVar(m, perm.next+1, 1 to M, "v_"+i+"_"+j) // init with random permutation (ensuring all diff)
       v=v+1
     }
     showSquare(magic)

@@ -1,7 +1,6 @@
 package oscar.examples.cp
 
-import oscar.cp.modeling._
-import oscar.cp.core._
+import oscar.cp._
 import oscar.visual._
 import oscar.util._
 import scala.collection.JavaConversions._
@@ -30,7 +29,7 @@ import oscar.visual.plot.PlotLine
 object Steel extends CPModel with App {
 
   def readData(): (Array[Int], Array[Int], Array[Int]) = {
-    val lines = Source.fromFile("data/steelMillSlabOrig.txt").getLines.reduceLeft(_ + " " + _)
+    val lines = Source.fromFile("data/steelMillSlab.txt").getLines.reduceLeft(_ + " " + _)
     var vals = lines.split("[ ,\t]").toList.filterNot(_ == "").map(_.toInt)
     val nbCapa = vals.head
     vals = vals.drop(1)

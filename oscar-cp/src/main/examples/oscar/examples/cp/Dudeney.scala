@@ -1,7 +1,6 @@
 package oscar.examples.cp
 
-import oscar.cp.modeling._
-import oscar.cp.core._
+import oscar.cp._
 
 import scala.math
 
@@ -21,7 +20,7 @@ object Dudeney extends CPModel with App {
   val nb = CPIntVar(1 to math.pow(10, n).toInt - 1)
   val s = CPIntVar(1 to 9 * n)
 
-  add(nb == (s mul s mul s))
+  add(nb == (s * s * s))
   add(sum(0 until n)(i => x(i) * (math.pow(10, (n - i - 1)).toInt)) == nb)
   add(sum(x) == s)
 

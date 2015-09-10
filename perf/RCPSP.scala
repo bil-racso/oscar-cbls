@@ -13,41 +13,37 @@
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
 
-import oscar.cp.modeling._
-import oscar.cp.core._
+import oscar.cp._
 
-/**
- *
- *  @authors: Pierre Schaus pschaus@gmail.com
- */
-object RCPSP {
+object RCPSP extends CPModel with App {
+  
+  // (duration, consumption)
+  val instance = Array((50, 1), (30, 1), (90, 3), (10, 2), (9, 3), (20, 2),(20, 1), (80, 1), (30, 2),(30, 1), (20, 2), (20, 1), (10, 1), (10, 2))
+  val durationsData = instance.map(_._1)
+  val demandsData = instance.map(_._2)
+  val capa = 5
+  val horizon = instance.map(_._1).sum
+  val Times = 0 to horizon
+  val nTasks = instance.size
 
-  def main(args: Array[String]) {
+  solver.silent = true
 
-    // (duration, consumption)
-    val instance = Array((50, 1), (30, 1), (90, 3), (10, 2), (20, 2), (80, 1), (30, 2), (20, 2), (20, 1), (10, 1), (10, 2), (20, 2), (80, 1))
-    val durationsData = instance.map(_._1)
-    val demandsData = instance.map(_._2)
-    val capa = 4
-    val horizon = instance.map(_._1).sum
-    val Times = 0 to horizon
-    val nTasks = instance.size
-
-    implicit val cp = CPSolver()
-    cp.silent = true
-
-    val durations = Array.tabulate(nTasks)(t => CPIntVar(durationsData(t)))
-    val starts = Array.tabulate(nTasks)(t => CPIntVar(0 to horizon - durations(t).min))
-    val ends = Array.tabulate(nTasks)(t => starts(t) + durations(t))
-    val demands = Array.tabulate(nTasks)(t => CPIntVar(demandsData))
-
-    val makespan = maximum(ends)
-    add(maxCumulativeResource(starts, durations, ends,demands, CPIntVar(capa)))
-    
-    minimize(makespan) search {
-      setTimes(starts, durations,ends)
-    }
-    println(cp.start())
-
+  val durations = Array.tabulate(nTasks)(t => CPIntVar(durationsData(t)))
+  val starts = Array.tabulate(nTasks)(t => CPIntVar(0, horizon - durations(t).min))
+  val ends = Array.tabulate(nTasks)(t => starts(t) + durationsData(t))
+  val demands = Array.tabulate(nTasks)(t => CPIntVar(demandsData(t)))
+  val makespan = maximum(ends)
+  
+  add(maxCumulativeResource(starts, durations, ends, demands, CPIntVar(capa)),Weak)
+  
+  
+  minimize(makespan) 
+  
+  search {
+    setTimes(starts, durations,ends)
   }
+    
+  val stats = start()
+  
+  println(stats)
 }

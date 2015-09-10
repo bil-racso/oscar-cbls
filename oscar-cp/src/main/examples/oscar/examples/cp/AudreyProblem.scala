@@ -1,13 +1,12 @@
 package oscar.examples.cp
 
-import oscar.cp.modeling._
+import oscar.cp._
 import oscar.visual._
 import java.awt.Color
 import oscar.visual.shapes.VisualText
 import oscar.visual.shapes.VisualLine
 import oscar.visual.shapes.VisualRectangle
 import oscar.visual.shapes.VisualCircle
-import oscar.cp.core.CPIntVar
 
 /**
  * Little Problem given by my n-Side colleague Audrey Timmermans:

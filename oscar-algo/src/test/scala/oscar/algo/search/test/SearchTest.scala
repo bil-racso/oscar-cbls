@@ -296,8 +296,34 @@ class SearchTest extends FunSuite with ShouldMatchers  {
     val stat2 = node.start()
     stat2.nSols should be(8)
   }
+  
+  test("should restore the state of the root node") {
+    val node = new SearchNode()
     
-
-
+    val a = new ReversibleInt(node, 0)
+    val b = new ReversibleInt(node, 0)
+    
+    a.value = 3
+    b.value = 5
+    node.pushState
+    
+    a.value = 4
+    b.value = 4
+    node.pushState
+    
+    a.value = 5
+    b.value = 3
+    node.pushState
+    
+    node.search {
+      if (a > 8 || b > 8) noAlternative
+      else branch(a.incr())(b.incr())
+    } 
+    
+    node.start()
+    
+    assert(a.value == 5)
+    assert(b.value == 3)
+  }
 }
 

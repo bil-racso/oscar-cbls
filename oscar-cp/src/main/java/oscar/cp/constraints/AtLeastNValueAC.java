@@ -16,7 +16,7 @@ package oscar.cp.constraints;
 
 import oscar.cp.core.CPOutcome;
 import oscar.cp.core.CPPropagStrength;
-import oscar.cp.core.CPIntVar;
+import oscar.cp.core.variables.CPIntVar;
 import oscar.cp.core.Constraint;
 import oscar.cp.core.CPStore;
 
@@ -112,12 +112,12 @@ public class AtLeastNValueAC extends Constraint {
 
 		for (int k = 0 ; k < x.length; k++) {
 			if (!x[k].isBound()) {
-				x[k].callPropagateWhenDomainChanges(this,false);
+				x[k].callPropagateWhenDomainChanges(this);
 			}
 		}
 
 		if (!nValueVar.isBound()) {
-			nValueVar.callPropagateWhenBoundsChange(this,false);
+			nValueVar.callPropagateWhenBoundsChange(this);
 		}
 
 		return CPOutcome.Suspend;
@@ -136,7 +136,7 @@ public class AtLeastNValueAC extends Constraint {
 		return Integer.MIN_VALUE;
 	}
 
-
+	@Override
 	public CPOutcome propagate() {		
 		for (int k = 0; k < x.length; k++) {
 			if (match[k] != NONE) {

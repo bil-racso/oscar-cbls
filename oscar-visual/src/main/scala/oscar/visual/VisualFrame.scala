@@ -19,8 +19,6 @@ package oscar.visual;
 import java.awt.Dimension
 import java.awt.event._
 import javax.swing._
-import scala.swing.BoxPanel
-import scala.swing.Orientation
 import java.awt.Color
 import java.awt.Toolkit
 import java.awt.BorderLayout
@@ -44,7 +42,7 @@ class VisualFrame(title: String, val nbLines: Int = 1, val nbCols: Int = 1) exte
   setVisible(true)
   
   def onWindowClosing(): Unit = {
-      System.exit(0)
+    System.exit(0)
   }
 
   addWindowListener(new WindowAdapter() {
@@ -92,11 +90,10 @@ class VisualFrame(title: String, val nbLines: Int = 1, val nbCols: Int = 1) exte
     content.add(toolbar, BorderLayout.NORTH)
     toolbar
   }
-
 }
 
 object VisualFrame {
-
+  
   def apply(title: String, nbLines: Int = 2, nbCols: Int = 2): VisualFrame = {
     new VisualFrame(title, nbLines, nbCols)
   }

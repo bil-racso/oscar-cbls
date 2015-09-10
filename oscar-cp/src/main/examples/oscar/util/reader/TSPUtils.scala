@@ -18,7 +18,7 @@ package oscar.examples.cp.util.reader
 import scala.io.Source
 import oscar.util.OutFile
 import oscar.cp.modeling._
-import oscar.cp.core.CPIntVar
+import oscar.cp.core.variables.CPIntVar
 import oscar.util._
 
 object TSPUtils {

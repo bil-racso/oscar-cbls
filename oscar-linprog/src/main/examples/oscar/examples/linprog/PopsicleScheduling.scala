@@ -29,7 +29,7 @@ import oscar.algebra._
  * Question:  What is the minimal weekly staffing cost you can achieve while meeting the required staffing levels?
  * @author Pierre Schaus pschaus@gmail.com
  */
-object PropsicleScheduling extends MIPModel with App {
+object PropsicleScheduling extends MIPModelLPSolve with App {
 
   val demand = Array(5, 7, 7, 10, 16, 18, 12)
 

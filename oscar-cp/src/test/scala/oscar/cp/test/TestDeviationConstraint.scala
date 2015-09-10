@@ -18,8 +18,7 @@ import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
 
 import oscar.cp.constraints._
-import oscar.cp.core._
-import oscar.cp.modeling._
+import oscar.cp._
 
 
 class TestDeviationConstraint extends FunSuite with ShouldMatchers  {
@@ -52,7 +51,7 @@ class TestDeviationConstraint extends FunSuite with ShouldMatchers  {
 
     def deviationDecomp(x: Array[CPIntVar], s: Int, nd: CPIntVar) {
         val cp = x(0).store;
-        val dev: Array[CPIntVar] = Array.tabulate(x.length)(i => x(i).mul(x.length).minus(s).abs())
+        val dev: Array[CPIntVar] = Array.tabulate(x.length)(i => (mul(x(i),x.length)-s).abs)
 		cp.post(new Sum(dev, nd))
         cp.post(new Sum(x, CPIntVar(s)(cp)))
     }
