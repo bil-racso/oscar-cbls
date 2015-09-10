@@ -25,7 +25,7 @@ object FactoryExample extends App with FactorySimulationHelper {
   val verbose = false
 
   val standardItemClass = zeroItemClass
-  val allAttributes = new AttributeDefinitions("sampleAttribute")
+  val allAttributes = new AttributeDefinitions("sampleAttribute", "anotherOne", "CheapSteel","expensiveSteel")
   val initialRawBatch = allAttributes.getN(0)
   val choseZeroOne = iTE(initialRawBatch,outputValue(choose(0 to 1)),outputValue(1))
 
@@ -103,7 +103,7 @@ object FactoryExample extends App with FactorySimulationHelper {
     (ponderateWithDuration(stockLevel(rawMaterialStorage)),"toto")
   ), verbose)
 
-  m.simulate(8*60*60, verbose,()=>myStore.updateMetricsIfNeeded(m.clock()))
+  m.simulate(8*60*60, verbose,()=>{myStore.updateMetricsIfNeeded(m.clock());false})
   myStore.finish(m.clock())
 
   println(m)

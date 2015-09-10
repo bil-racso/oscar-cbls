@@ -16,7 +16,6 @@
 package oscar.des.montecarlo
 
 import JSci.maths.statistics._
-
 import scala.collection.immutable.SortedMap
 
 /**

@@ -31,14 +31,24 @@ class Model {
 
   private def addEvent(e:SimEvent) = eventQueue += e
 
-  def simulate(horizon:Float, verbose:Boolean = true, callAfterEachStep:()=>Unit = null) {
+  /**
+   *
+   * @param horizon
+   * @param verbose
+   * @param abort is called after every progress in time. if returns true, the simulation is aborted.
+   *              You can also use it to update some trace analysis functions.
+   */
+  def simulate(horizon:Float, verbose:Boolean = true, abort:()=>Boolean = ()=>false) {
     while (eventQueue.nonEmpty) {
       steps +=1
       val e = eventQueue.dequeue()
       require(e.time >= currentTime)
       if(e.time <= horizon){
         if(e.time != currentTime){
-          if(callAfterEachStep != null) callAfterEachStep()
+          if(abort()) {
+            if (verbose) println("-----------> time: " +  e.time + " ABORTED")
+            return
+          }
           if(verbose) println("-----------> time: "+  e.time)
         }
         currentTime = e.time
@@ -46,8 +56,7 @@ class Model {
       }else{
         // we are after the horizon, so event is pushed back into queue, and simulation stops
         eventQueue.enqueue(e)
-        if(horizon != currentTime)
-          if(callAfterEachStep != null) callAfterEachStep()
+        if(horizon != currentTime) abort() //we call it, since we re at the end, and it is a new state
         if(verbose) println("-----------> time: "+  horizon)
         currentTime = horizon
         return
@@ -56,7 +65,7 @@ class Model {
 
     //no more event to process, but time runs to the horizon
     if(horizon != currentTime) {
-      if(callAfterEachStep != null) callAfterEachStep()
+      abort()
       if (verbose) println("-----------> time: " + horizon)
     }
     currentTime = horizon
