@@ -151,25 +151,28 @@ class SearchControl(val m: FZCBLSModel, val objLB:Int, val MaxTimeMilli: Int,val
     (m.objective.violation.value==0 && m.objective.getObjectiveValue() == objLB) //reached the lower bound
   }
   var bestKnownObjective = Int.MaxValue 
-  var bestKnownViolation = Int.MaxValue
+  //var bestKnownViolation = Int.MaxValue
+  var bestPair = (Int.MaxValue,Int.MaxValue)
   def handlePossibleSolution(){
     if(m.objective.violation.value==0 && m.objective.getObjectiveValue() < bestKnownObjective){
-      bestKnownViolation = 0
+      //bestKnownViolation = 0
       bestKnownObjective = m.objective.getObjectiveValue();
       m.handleSolution();
       if(bestKnownObjective==objLB && !stopOnSat)println("==========")//added !stopOnSat to not print it on Satisfaction problems.
-    }else if(m.objective.violation.value < bestKnownViolation){
-      bestKnownViolation = m.objective.violation.value
-      m.log("Best Violation: "+bestKnownViolation+ "\tat "+m.getWatch()+ " ms")
+    }else if(bestKnownObjective == Int.MaxValue){
+      m.log("Best Violation: "+m.objective.violation.value+ "\tat "+m.getWatch()+ " ms")
+    }
+    if(m.objective().value < weightedBest){
+      bestPair = (m.objective.violation.value,m.objective.getObjectiveValue())
     }
   }
+  def weightedBest = bestPair._1 * m.objective.violationWeight.value + bestPair._2 * m.objective.objectiveWeight.value
   def cancelObjective() = {
     m.objective.objectiveWeight := 0;
   }
   def restoreObjective() = {
     m.objective.objectiveWeight := 1;
   }
-  def weightedBest = bestKnownViolation * m.objective.violationWeight.value + bestKnownObjective * m.objective.objectiveWeight.value
 }
 
 
@@ -308,6 +311,7 @@ abstract class NeighbourhoodTabuSearch(m: FZCBLSModel, sc: SearchControl) extend
         log(3,bestNeighbour.value.toString +" < "+bestValue.toString +" ; "+m.objective().value)
       }
       log(3,bestNeighbour.toString)
+      log(3,tabu.filter(t => t.value > it.value).toList.toString())
       
       bestNeighbour.commit();
       sc.handlePossibleSolution()
