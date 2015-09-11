@@ -21,13 +21,16 @@ import oscar.cp.core.variables.CPIntVar
 import CPOutcome._
 
 /**
- * Cardinality constraint on prefixes of a variable array
+ * Cardinality constraint on prefixes of a variable array.
+ * See https://github.com/vlecomte/prefixcc-tech-report/blob/master/report.pdf for a technical report of the problem and
+ * an explanation of the implementation.
+ *
  * @param X The variables to be constrained
  * @param minVal The first value to be constrained: they are consecutive and their number is determined by the size of
  *               the bound lists. WARNING: the algorithm assumes that the variables only contain values in that
  *               interval!
  * @param lowerLists The lists of lower bounds for each value; for example (5,2) will mean that there has to be at least
- *                   two occurences of the value in the first five variables
+ *                   two occurrences of the value in the first five variables
  * @param upperLists The lists of upper bounds for each value; for example (6,3) will mean that there has to be at most
  *                   three occurrences of the value in the first six variables
  * @author Victor Lecomte

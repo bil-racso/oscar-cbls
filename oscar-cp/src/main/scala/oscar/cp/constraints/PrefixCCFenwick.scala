@@ -22,7 +22,8 @@ import CPOutcome._
 
 /**
  * Cardinality constraint on prefixes of a variable array.
- * Strong version of PrefixCCSegments using Fenwick trees, where the pruning is optimal (AC) for each value on the
+ *
+ * Stronger version of PrefixCCSegments using Fenwick trees, where the pruning is optimal (AC) for each value on the
  * subset of the bounds that concern that value. For the parameters of the constructor, see PrefixCCSegments.
  * @author Victor Lecomte
  */
@@ -48,6 +49,9 @@ class PrefixCCFenwick(X: Array[CPIntVar], minVal: Int, lowerLists: Array[Array[(
    *
    * The tricky part: How to update the lower bounds and upper bounds as much as we can when an update is received. That
    * is the reason why the whenDomainChanges method is so long (but probably not a very good excuse).
+   *
+   * See https://github.com/vlecomte/prefixcc-tech-report/blob/master/perf-comparison.pdf to discover why we chose to
+   * keep such a dreadfully complex code.
    */
 
   /** Number of variables */
