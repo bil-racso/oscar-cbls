@@ -14,7 +14,7 @@
   ******************************************************************************/
 package oscar.cp.constraints
 
-import oscar.algo.reversible.{ReversibleBoolean, ReversibleInt}
+import oscar.algo.reversible.ReversibleInt
 import oscar.cp.core.delta.DeltaIntVar
 import oscar.cp.core.{CPPropagStrength, CPOutcome, Constraint}
 import oscar.cp.core.variables.CPIntVar
@@ -110,9 +110,9 @@ class PrefixCCFenwick(X: Array[CPIntVar], minVal: Int, lowerLists: Array[Array[(
     val slopeForwards = (value: Int) => value + 1
     val slopeBackwards = (value: Int) => value - 1
 
-    if (readArguments(lower, lowerLists, feasibleLower) == Failure)
+    if (readArguments(lower, lowerLists, feasibleLower, keepMax) == Failure)
       return Failure
-    if (readArguments(upper, upperLists, feasibleUpper) == Failure)
+    if (readArguments(upper, upperLists, feasibleUpper, keepMin) == Failure)
       return Failure
 
     cleverFill(lower, flat, slopeBackwards, keepMax)
@@ -120,6 +120,9 @@ class PrefixCCFenwick(X: Array[CPIntVar], minVal: Int, lowerLists: Array[Array[(
 
     if (testAndDeduceBetweenValues() == Failure)
       return Failure
+
+    cleverFill(lower, flat, slopeBackwards, keepMax)
+    cleverFill(upper, slopeForwards, flat, keepMin)
 
     registerForChanges()
 
@@ -138,7 +141,7 @@ class PrefixCCFenwick(X: Array[CPIntVar], minVal: Int, lowerLists: Array[Array[(
    * @return [[Failure]] if one of the bounds in unfeasible, [[Suspend]] otherwise
    */
   private def readArguments(bounds: Array[Array[Int]], boundLists: Array[Array[(Int, Int)]],
-                            feasible: (Int, Int) => Boolean): CPOutcome = {
+                            feasible: (Int, Int) => Boolean, keep: (Int, Int) => Int): CPOutcome = {
     var vi = nValues
     while (vi > 0) {
       vi -= 1
@@ -153,7 +156,7 @@ class PrefixCCFenwick(X: Array[CPIntVar], minVal: Int, lowerLists: Array[Array[(
         else if (!feasible(index, value))
           return Failure
 
-        bounds(vi)(index) = value
+        bounds(vi)(index) = keep(bounds(vi)(index), value)
       }
     }
 
