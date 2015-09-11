@@ -29,8 +29,8 @@ class TestPrefixCC extends TestSuite {
 
   val MULTIPLE_GCC_AC = 0
   val MULTIPLE_GCC_FWC = 1
-  val PREFIX_CC_FWC = 3
-  val PREFIX_CC_FWC2 = 4
+  val PREFIX_CC_SEGMENTS = 3
+  val PREFIX_CC_FENWICK = 4
   val PREFIX_CC_FWC3 = 5
 
   def makeGccs(X: Array[CPIntVar], values: Range, lower: Array[Array[(Int, Int)]], upper: Array[Array[(Int, Int)]],
@@ -57,10 +57,10 @@ class TestPrefixCC extends TestSuite {
       for (i <- cutoffs.toArray)
         yield new GCC(X.splitAt(i)._1, values.min, allLower(i), allUpper(i))
 
-    } else if (mode == PREFIX_CC_FWC) {
-      Array(new PrefixCCFWC(X, values.min, lower, upper))
-    } else if (mode == PREFIX_CC_FWC2) {
-      Array(new PrefixCCFWC2(X, values.min, lower, upper))
+    } else if (mode == PREFIX_CC_SEGMENTS) {
+      Array(new PrefixCCSegments(X, values.min, lower, upper))
+    } else if (mode == PREFIX_CC_FENWICK) {
+      Array(new PrefixCCFenwick(X, values.min, lower, upper))
     } else {
       Array(new PrefixCCFWC3(X, values.min, lower, upper))
     }
@@ -141,8 +141,8 @@ class TestPrefixCC extends TestSuite {
       val upper = upperBuffer.map(_.toArray)
 
       val (nSols1, time1, nNodes1, nFails1) = nbSol(domVars, min to max, lower, upper, MULTIPLE_GCC_FWC)
-      val (nSols2, time2, nNodes2, nFails2) = nbSol(domVars, min to max, lower, upper, PREFIX_CC_FWC)
-      val (nSols3, time3, nNodes3, nFails3) = nbSol(domVars, min to max, lower, upper, PREFIX_CC_FWC2)
+      val (nSols2, time2, nNodes2, nFails2) = nbSol(domVars, min to max, lower, upper, PREFIX_CC_SEGMENTS)
+      val (nSols3, time3, nNodes3, nFails3) = nbSol(domVars, min to max, lower, upper, PREFIX_CC_FENWICK)
       val (nSols4, time4, nNodes4, nFails4) = nbSol(domVars, min to max, lower, upper, PREFIX_CC_FWC3)
       //val (nSols3, time3, nNodes3, nFails3) = (nSols4, time4, nNodes4, nFails4)
       //val (nSols2, time2, nNodes2, nFails2) = (nSols3, time3, nNodes3, nFails3)
@@ -193,8 +193,8 @@ class TestPrefixCC extends TestSuite {
       val upper = upperBuffer.map(_.toArray)
 
       val (nSols1, time1, nNodes1, nFails1) = nbSol(domVars, min to max, lower, upper, MULTIPLE_GCC_FWC)
-      val (nSols2, time2, nNodes2, nFails2) = nbSol(domVars, min to max, lower, upper, PREFIX_CC_FWC)
-      val (nSols3, time3, nNodes3, nFails3) = nbSol(domVars, min to max, lower, upper, PREFIX_CC_FWC2)
+      val (nSols2, time2, nNodes2, nFails2) = nbSol(domVars, min to max, lower, upper, PREFIX_CC_SEGMENTS)
+      val (nSols3, time3, nNodes3, nFails3) = nbSol(domVars, min to max, lower, upper, PREFIX_CC_FENWICK)
       val (nSols4, time4, nNodes4, nFails4) = nbSol(domVars, min to max, lower, upper, PREFIX_CC_FWC3)
       //val (nSols3, time3, nNodes3, nFails3) = (nSols4, time4, nNodes4, nFails4)
       //val (nSols2, time2, nNodes2, nFails2) = (nSols3, time3, nNodes3, nFails3)
@@ -221,7 +221,7 @@ class TestPrefixCC extends TestSuite {
   /* Code used to compare the performance of the different approaches and choose which one to keep.
   See performance comparison at https://github.com/vlecomte/prefixcc-tech-report/blob/master/perf-comparison.pdf
   test("Performance profile") {
-    val modes = Array(MULTIPLE_GCC_FWC, PREFIX_CC_FWC, PREFIX_CC_FWC2, PREFIX_CC_FWC3)
+    val modes = Array(MULTIPLE_GCC_FWC, PREFIX_CC_SEGMENTS, PREFIX_CC_FENWICK, PREFIX_CC_FWC3)
     val modeNames = Array("Multiple GCCs", "PrefixCCFWC", "PrefixCCFWC2", "PrefixCCFWC3")
     val resultsTime = Array.fill(modes.length)(new ArrayBuffer[Long]())
     val resultsBacktrack = Array.fill(modes.length)(new ArrayBuffer[Int]())
@@ -230,7 +230,7 @@ class TestPrefixCC extends TestSuite {
       println()
       println(s"batch #$batch")
       println()
-      var hard = false
+      val hard = false
 
       for ((nVariables, i) <- Seq(50,100,200).zipWithIndex) {
         rand = new scala.util.Random(batch * 1000 + i)

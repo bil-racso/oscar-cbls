@@ -23,18 +23,18 @@ import CPOutcome._
 /**
  * Cardinality constraint on prefixes of a variable array
  * @param X The variables to be constrained
- * @param minVal The first value to be constrained; they are consecutive and their number is determined by the size of
- *               the bound lists; WARNING: at the moment the algorithm assumes that the variables only contain values
- *               in that interval...
+ * @param minVal The first value to be constrained: they are consecutive and their number is determined by the size of
+ *               the bound lists. WARNING: the algorithm assumes that the variables only contain values in that
+ *               interval!
  * @param lowerLists The lists of lower bounds for each value; for example (5,2) will mean that there has to be at least
  *                   two occurences of the value in the first five variables
  * @param upperLists The lists of upper bounds for each value; for example (6,3) will mean that there has to be at most
  *                   three occurrences of the value in the first six variables
  * @author Victor Lecomte
  */
-class PrefixCCFWC(X: Array[CPIntVar], minVal: Int, lowerLists: Array[Array[(Int, Int)]],
+class PrefixCCSegments(X: Array[CPIntVar], minVal: Int, lowerLists: Array[Array[(Int, Int)]],
                   upperLists: Array[Array[(Int, Int)]])
-  extends Constraint(X(0).store, "PrefixCCFWC") {
+  extends Constraint(X(0).store, "PrefixCCSegment") {
 
   // Handy structures for memorization.
   // They allow to have common code for lower bound and upper bound treatment.
@@ -158,7 +158,7 @@ class PrefixCCFWC(X: Array[CPIntVar], minVal: Int, lowerLists: Array[Array[(Int,
    * Copies the bounds given into the structure or fails if the bounds are unfeasible
    * @param st The structure into which to copy the bounds
    * @param boundList The given list of bounds
-   * @param feasible The feasibility criteria in terms of index and value of the bound
+   * @param feasible The feasibility criterion in terms of index and value of the bound
    * @return [[Failure]] if one of the bounds in unfeasible, [[Suspend]] otherwise
    */
   private def readArguments(st: SegmentStructure, boundList: Array[(Int, Int)],
@@ -278,7 +278,6 @@ class PrefixCCFWC(X: Array[CPIntVar], minVal: Int, lowerLists: Array[Array[(Int,
    * @return [[Failure]] if the bounds are found to be unfeasible, [[Suspend]] otherwise
    */
   private def testAndDeduceBounds(): CPOutcome = {
-    // TODO: at least check that those are the only values in the domains of the variables; preferably adapt smartly
     var i = nVariables
     while (i > 0) {
       // Compute the sums
