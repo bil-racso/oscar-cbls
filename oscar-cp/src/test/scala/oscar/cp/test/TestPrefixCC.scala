@@ -17,7 +17,7 @@ package oscar.cp.test
 import oscar.cp._
 import oscar.cp.core.CPPropagStrength
 import oscar.cp.testUtils._
-import oscar.cp.constraints.{PrefixCCFWC3, PrefixCCFWC2, PrefixCCFWC}
+import oscar.cp.constraints._
 
 import scala.collection.mutable.ArrayBuffer
 import scala.util.Random
@@ -29,60 +29,60 @@ class TestPrefixCC extends TestSuite {
 
   val MULTIPLE_GCC_AC = 0
   val MULTIPLE_GCC_FWC = 1
-  val PREFIX_CC_FWC = 2
-  val PREFIX_CC_FWC2 = 3
-  val PREFIX_CC_FWC3 = 4
+  val PREFIX_CC_FWC = 3
+  val PREFIX_CC_FWC2 = 4
+  val PREFIX_CC_FWC3 = 5
+
+  def makeGccs(X: Array[CPIntVar], values: Range, lower: Array[Array[(Int, Int)]], upper: Array[Array[(Int, Int)]],
+               mode: Int): Array[Constraint] = {
+    val nVariables = X.length
+    val nValues = values.length
+
+    if (mode == MULTIPLE_GCC_AC || mode == MULTIPLE_GCC_FWC) {
+      var cutoffs = Set[Int]()
+      val allLower = Array.tabulate(nVariables + 1, nValues)((i, vi) => 0)
+      val allUpper = Array.tabulate(nVariables + 1, nValues)((i, vi) => i)
+
+      for (vi <- values.indices) {
+        for ((i, bound) <- lower(vi)) {
+          allLower(i)(vi) = bound
+          cutoffs += i
+        }
+        for ((i, bound) <- upper(vi)) {
+          allUpper(i)(vi) = bound
+          cutoffs += i
+        }
+      }
+
+      for (i <- cutoffs.toArray)
+        yield new GCC(X.splitAt(i)._1, values.min, allLower(i), allUpper(i))
+
+    } else if (mode == PREFIX_CC_FWC) {
+      Array(new PrefixCCFWC(X, values.min, lower, upper))
+    } else if (mode == PREFIX_CC_FWC2) {
+      Array(new PrefixCCFWC2(X, values.min, lower, upper))
+    } else {
+      Array(new PrefixCCFWC3(X, values.min, lower, upper))
+    }
+  }
 
   def nbSol(domX: Array[Set[Int]], values: Range, lower: Array[Array[(Int, Int)]], upper: Array[Array[(Int, Int)]],
             mode: Int): (Int, Long, Int, Int) = {
     val cp = CPSolver()
 
-    //var solSet = Set[String]()
+    val X = domX.map(dom => CPIntVar(dom)(cp))
 
-    val nVariables = domX.length
-    val nValues = values.length
-    val X = Array.tabulate(nVariables)(i => CPIntVar(domX(i))(cp))
-
-    try {
-      if (mode == MULTIPLE_GCC_AC || mode == MULTIPLE_GCC_FWC) {
-
-        val strength = {
-          if (mode == MULTIPLE_GCC_AC) CPPropagStrength.Strong
-          else CPPropagStrength.Weak
-        }
-        var cutoffs = Set[Int]()
-        val allLower = Array.tabulate(nVariables + 1, nValues)((i, vi) => 0)
-        val allUpper = Array.tabulate(nVariables + 1, nValues)((i, vi) => i)
-
-        for (vi <- values.indices) {
-          for ((i, bound) <- lower(vi)) {
-            allLower(i)(vi) = bound
-            cutoffs += i
-          }
-          for ((i, bound) <- upper(vi)) {
-            allUpper(i)(vi) = bound
-            cutoffs += i
-          }
-        }
-
-        for (i <- cutoffs) {
-          cp.add(gcc(X.splitAt(i)._1, values, allLower(i), allUpper(i)), strength)
-        }
-      } else if (mode == PREFIX_CC_FWC) {
-        cp.add(new PrefixCCFWC(X, values.min, lower, upper))
-      } else if (mode == PREFIX_CC_FWC2) {
-        cp.add(new PrefixCCFWC2(X, values.min, lower, upper))
-      } else {
-        cp.add(new PrefixCCFWC3(X, values.min, lower, upper))
-      }
-
-    } catch {
-      case e: oscar.cp.core.NoSolutionException => return (0, 0, 0, 0)
+    val strength = {
+      if (mode == MULTIPLE_GCC_AC) CPPropagStrength.Strong
+      else CPPropagStrength.Weak
     }
+
+    for (con <- makeGccs(X, values, lower, upper, mode))
+      cp.post(con, strength)
 
     cp.search { binaryStatic(X) }
 
-    val stat = cp.start(nSols = 10000000)
+    val stat = cp.start(nSols = 1000000)
     (stat.nSols, stat.time, stat.nNodes, stat.nFails)
   }
 
@@ -99,6 +99,13 @@ class TestPrefixCC extends TestSuite {
   def ifPossibleAtMost(min: Int, atMost: Int): Int = {
     if (atMost < min) min
     else min + rand.nextInt(atMost - min + 1)
+  }
+
+  def lowerAtMostBy(max: Int, error: Double): Int = {
+    max - rand.nextInt((max * error).toInt + 1)
+  }
+  def higherAtMostBy(min: Int, error: Double): Int = {
+    min + rand.nextInt((min * error).toInt + 1)
   }
 
   // nSols on random domains
@@ -210,4 +217,100 @@ class TestPrefixCC extends TestSuite {
     }
     //println(s"total time: GCCFWC: $total1, PrefixCCFWC $total2, PrefixCCFWC2 $total3, PrefixCCFWC3 $total4")
   }
+
+  /* Code used to compare the performance of the different approaches and choose which one to keep.
+  See performance comparison at https://github.com/vlecomte/prefixcc-tech-report/blob/master/perf-comparison.pdf
+  test("Performance profile") {
+    val modes = Array(MULTIPLE_GCC_FWC, PREFIX_CC_FWC, PREFIX_CC_FWC2, PREFIX_CC_FWC3)
+    val modeNames = Array("Multiple GCCs", "PrefixCCFWC", "PrefixCCFWC2", "PrefixCCFWC3")
+    val resultsTime = Array.fill(modes.length)(new ArrayBuffer[Long]())
+    val resultsBacktrack = Array.fill(modes.length)(new ArrayBuffer[Int]())
+
+    for (batch <- 1 to 10) {
+      println()
+      println(s"batch #$batch")
+      println()
+      var hard = false
+
+      for ((nVariables, i) <- Seq(50,100,200).zipWithIndex) {
+        rand = new scala.util.Random(batch * 1000 + i)
+        println(s"test #${i + 1}: $nVariables variables")
+
+        val nValuesMax = 3
+        val nBounds = 2 * nVariables
+        val stupidFactor = 7
+        val boundFraction = 0.25
+
+        val domX = Array.fill(nVariables)(randomDom(nValuesMax))
+        val modelSolution = domX.map(s => s.toVector(rand.nextInt(s.size)))
+
+        val min = domX.flatten.min
+        val max = domX.flatten.max
+        val values = min to max
+        val nValues = values.length
+
+        val lowerBuffer = Array.fill(nValues)(ArrayBuffer[(Int, Int)]())
+        val upperBuffer = Array.fill(nValues)(ArrayBuffer[(Int, Int)]())
+
+        val lowerPlaces = randomPlaces(nVariables, size = nBounds / 2)
+        val upperPlaces = randomPlaces(nVariables, size = nBounds / 2)
+        lowerPlaces.foreach(i => {
+          val vi = rand.nextInt(nValues)
+          //lowerBuffer(vi) += ((i, occurrences(modelSolution, vi + min, i)))
+          //lowerBuffer(vi) += ((i, lowerBy(occurrences(modelSolution, vi + min, i), boundFraction)))
+          if (hard) lowerBuffer(vi) += ((i, lowerAtMostBy(occurrences(modelSolution, vi + min, i), boundFraction)))
+          else lowerBuffer(vi) += ((i, i / stupidFactor))
+        })
+        upperPlaces.foreach(i => {
+          val vi = rand.nextInt(nValues)
+          //upperBuffer(vi) += ((i, occurrences(modelSolution, vi + min, i)))
+          //upperBuffer(vi) += ((i, higherBy(occurrences(modelSolution, vi + min, i), boundFraction)))
+          if (hard) upperBuffer(vi) += ((i, higherAtMostBy(occurrences(modelSolution, vi + min, i), boundFraction)))
+          else upperBuffer(vi) += ((i, i - i / stupidFactor))
+        })
+
+        val lower = lowerBuffer.map(_.toArray)
+        val upper = upperBuffer.map(_.toArray)
+
+        val decisionOrder = rand.shuffle((0 until nVariables).toList).toArray
+
+        val solLimit = 50000000 / nVariables
+        val player = (mode: Int) => nbSol2(domX, values, lower, upper, solLimit, decisionOrder, mode)
+
+        val runningOrder = rand.shuffle(modes.indices.toList).toArray
+        for (i <- runningOrder) {
+          println(modeNames(i))
+          val (time, backtracks) = player(modes(i))
+          resultsTime(i) += time
+          resultsBacktrack(i) += backtracks
+        }
+        println()
+      }
+    }
+    for (i <- modes.indices) {
+      println(s"results for ${modeNames(i)} (time then backtracks)")
+      println(resultsTime(i).toArray.mkString(", "))
+      println(resultsBacktrack(i).toArray.mkString(", "))
+    }
+  }
+
+  def nbSol2(domX: Array[Set[Int]], values: Range, lower: Array[Array[(Int, Int)]], upper: Array[Array[(Int, Int)]],
+            solLimit: Int, decisionOrder: Array[Int], mode: Int): (Long, Int) = {
+    val cp = CPSolver()
+    val X = domX.map(dom => CPIntVar(dom)(cp))
+
+    val strength = {
+      if (mode == MULTIPLE_GCC_AC) CPPropagStrength.Strong
+      else CPPropagStrength.Weak
+    }
+
+    for (con <- makeGccs(X, values, lower, upper, mode))
+      cp.post(con, strength)
+
+    cp.search { binaryStatic(decisionOrder.map(X(_))) }
+
+    val stat = cp.start(nSols = solLimit, timeLimit = 300)
+    println("sols=" + stat.nSols, "time=" + stat.time, "nodes=" + stat.nNodes, "fails=" + stat.nFails)
+    (stat.time, stat.nFails)
+  }*/
 }
