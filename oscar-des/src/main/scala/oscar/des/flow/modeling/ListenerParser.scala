@@ -33,7 +33,7 @@ class ListenerParser(storageFunction:String => Option[Storage],
     }
   }
 
-  def expressionParser:Parser[Expression] = doubleExprParser | boolExprParser
+  def expressionParser:Parser[Expression] = regularDoubleExpressionParser | boolExprParser
 
   def boolExprParser:Parser[BoolExpr] = (
     "empty(" ~> storageParser <~")" ^^ {empty(_)}
@@ -58,7 +58,16 @@ class ListenerParser(storageFunction:String => Option[Storage],
       | "changed(" ~> (boolExprParser | doubleExprParser) <~")" ^^ {case e:Expression => changed(e)}
       | failure("expected boolean expression"))
 
+  
+  def binaryTerm:Parser[BoolExpr] = unaryOperatorB2BParser("not",not)
+
+
   def doubleExprParser:Parser[DoubleExpr] = (
+    atomicDoubleExprParser
+      | regularDoubleExpressionParser
+      | failure("expected double expression"))
+
+  def atomicDoubleExprParser:Parser[DoubleExpr] = (
     storageDoubleProbe("stockLevel",stockLevel)
       | storageDoubleProbe("stockCapacity",stockCapacity)
       | storageDoubleProbe("relativeStockLevel",relativeStockLevel)
@@ -87,8 +96,20 @@ class ListenerParser(storageFunction:String => Option[Storage],
       case (d~None) => minOnHistory(d)
       case (d~Some(cond:BoolExpr)) => minOnHistory(d,cond)}
       | unaryOperatorD2DParser("avgOnHistory",avgOnHistory)
-      | failure("expected double expression"))
+      | "-"~> regularDoubleExpressionParser ^^ {opposite(_)}
+      | "("~>doubleExprParser<~")")
 
+  def regularDoubleExpressionParser:Parser[DoubleExpr] =
+    term ~ opt(("+"|"-")~regularDoubleExpressionParser) ^^ {
+        case a~None => a
+        case a~Some("+"~b) => plus(a,b)
+        case a~Some("-"~b) => minus(a,b)}
+
+  def term: Parser[DoubleExpr] =
+    atomicDoubleExprParser ~ opt(("*"|"/")~term) ^^ {
+      case a~None => a
+      case a~Some("*"~b) => mult(a,b)
+      case a~Some("/"~b) => div(a,b)}
 
   //generic code
 
@@ -169,8 +190,8 @@ object ParserTester extends App with FactoryHelper{
     processFunction = (s:String) => processes.get(s))
 
 
-  println(myParser("mult(completedBatchCount(aProcess),totalPut(aStorage))"))
-
+  println(myParser("completedBatchCount(aProcess) * totalPut(aStorage)"))
+  println(myParser("-(-(-completedBatchCount(aProcess)) * -totalPut(aStorage))"))
   println(myParser("cumulatedDuration(empty(bStorage))"))
   println(myParser("cumulatedDuration(not(hasBeen(running(cProcess))))"))
   println(myParser("empty(aStorage)"))
@@ -182,3 +203,4 @@ object ParserTester extends App with FactoryHelper{
   println(myParser("avgOnHistory(stockLevel(aStorage))"))
   println(myParser("ponderateWithDuration(stockLevel(bStorage))"))
 }
+
