@@ -27,7 +27,7 @@ enum FlowType { UF, OF };
  * Soft Global Cardinality Constraint
  * @author Pierre Schaus pschaus@gmail.com
  */
-public class SoftGCC extends Constraint{
+public class SoftGCCAC extends Constraint{
 	
 	private final int NONE = -Integer.MIN_VALUE;
 	
@@ -100,8 +100,8 @@ public class SoftGCC extends Constraint{
      * @param viol = sum(i) viol(i)
      * @see GCC
      */
-	public SoftGCC(CPIntVar [] x,int minval, int [] low, int [] up, CPIntVar viol) {
-		super(x[0].store(),"SoftGCC");
+	public SoftGCCAC(CPIntVar[] x, int minval, int[] low, int[] up, CPIntVar viol) {
+		super(x[0].store(),"SoftGCCAC");
 		this.x = x;
 		this.minval = minval;
 		this.maxval = minval+low.length-1;
