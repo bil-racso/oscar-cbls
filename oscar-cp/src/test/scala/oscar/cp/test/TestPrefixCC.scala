@@ -23,6 +23,8 @@ import scala.collection.mutable.ArrayBuffer
 import scala.util.Random
 
 /**
+ * Tests for the various approaches to solving the PrefixCC problem.
+ * See https://github.com/vlecomte/prefixcc-tech-report/blob/master/report.pdf for the problem statement.
  * @author Victor Lecomte
  */
 class TestPrefixCC extends TestSuite {
@@ -31,7 +33,6 @@ class TestPrefixCC extends TestSuite {
   val MULTIPLE_GCC_FWC = 1
   val PREFIX_CC_SEGMENTS = 3
   val PREFIX_CC_FENWICK = 4
-  val PREFIX_CC_FWC3 = 5
 
   def makeGccs(X: Array[CPIntVar], values: Range, lower: Array[Array[(Int, Int)]], upper: Array[Array[(Int, Int)]],
                mode: Int): Array[Constraint] = {
@@ -59,10 +60,8 @@ class TestPrefixCC extends TestSuite {
 
     } else if (mode == PREFIX_CC_SEGMENTS) {
       Array(new PrefixCCSegments(X, values.min, lower, upper))
-    } else if (mode == PREFIX_CC_FENWICK) {
-      Array(new PrefixCCFenwick(X, values.min, lower, upper))
     } else {
-      Array(new PrefixCCFWC3(X, values.min, lower, upper))
+      Array(new PrefixCCFenwick(X, values.min, lower, upper))
     }
   }
 
@@ -143,19 +142,16 @@ class TestPrefixCC extends TestSuite {
       val (nSols1, time1, nNodes1, nFails1) = nbSol(domVars, min to max, lower, upper, MULTIPLE_GCC_FWC)
       val (nSols2, time2, nNodes2, nFails2) = nbSol(domVars, min to max, lower, upper, PREFIX_CC_SEGMENTS)
       val (nSols3, time3, nNodes3, nFails3) = nbSol(domVars, min to max, lower, upper, PREFIX_CC_FENWICK)
-      val (nSols4, time4, nNodes4, nFails4) = nbSol(domVars, min to max, lower, upper, PREFIX_CC_FWC3)
-      //val (nSols3, time3, nNodes3, nFails3) = (nSols4, time4, nNodes4, nFails4)
       //val (nSols2, time2, nNodes2, nFails2) = (nSols3, time3, nNodes3, nFails3)
       //val (nSols1, time1, nNodes1, nFails1) = (nSols2, time2, nNodes2, nFails2)
 
       nSols1 should be(nSols2)
       nSols1 should be(nSols3)
-      nSols1 should be(nSols4)
     }
   }
 
   test("Compatible bounds") {
-    var (total1, total2, total3, total4) = (0L, 0L, 0L, 0L)
+    var (total1, total2, total3) = (0L, 0L, 0L)
     for (i <- 1 to 100) {
       //println(s"test #$i")
       rand =  new scala.util.Random(i)
@@ -195,7 +191,6 @@ class TestPrefixCC extends TestSuite {
       val (nSols1, time1, nNodes1, nFails1) = nbSol(domVars, min to max, lower, upper, MULTIPLE_GCC_FWC)
       val (nSols2, time2, nNodes2, nFails2) = nbSol(domVars, min to max, lower, upper, PREFIX_CC_SEGMENTS)
       val (nSols3, time3, nNodes3, nFails3) = nbSol(domVars, min to max, lower, upper, PREFIX_CC_FENWICK)
-      val (nSols4, time4, nNodes4, nFails4) = nbSol(domVars, min to max, lower, upper, PREFIX_CC_FWC3)
       //val (nSols3, time3, nNodes3, nFails3) = (nSols4, time4, nNodes4, nFails4)
       //val (nSols2, time2, nNodes2, nFails2) = (nSols3, time3, nNodes3, nFails3)
       //val (nSols1, time1, nNodes1, nFails1) = (nSols2, time2, nNodes2, nFails2)
@@ -209,13 +204,11 @@ class TestPrefixCC extends TestSuite {
       total1 += time1
       total2 += time2
       total3 += time3
-      total4 += time4
 
       nSols1 should be(nSols2)
       nSols1 should be(nSols3)
-      nSols1 should be(nSols4)
     }
-    //println(s"total time: GCCFWC: $total1, PrefixCCFWC $total2, PrefixCCFWC2 $total3, PrefixCCFWC3 $total4")
+    //println(s"total time: GCCFWC: $total1, PrefixCCFWC $total2, PrefixCCFWC2 $total3")
   }
 
   /* Code used to compare the performance of the different approaches and choose which one to keep.
