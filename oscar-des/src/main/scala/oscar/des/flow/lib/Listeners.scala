@@ -9,7 +9,7 @@ import ExpressionStatus._
 
 //This file is about thing we want to measure on the factory process
 
-abstract class Expression(val accumulating:Boolean, val children:Expression*){
+sealed abstract class Expression(val accumulating:Boolean, val children:Expression*){
   def update(time:Double)
   var status:ExpressionStatus = Fresh
   def valueString:String

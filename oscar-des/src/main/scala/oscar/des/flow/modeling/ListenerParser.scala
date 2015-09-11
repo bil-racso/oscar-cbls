@@ -21,7 +21,9 @@ class ListenerParser(storageFunction:String => Option[Storage],
   sealed class ListenerParsingResult
   case class DoubleExpressionResult(d:DoubleExpr) extends ListenerParsingResult
   case class BooleanExpressionResult(b:BoolExpr) extends ListenerParsingResult
-  case class ParsingError(s:String) extends ListenerParsingResult
+  case class ParsingError(s:String) extends ListenerParsingResult {
+    override def toString: String = "Parse Error:\n" + s + "\n"
+  }
 
   def apply(input:String):ListenerParsingResult = {
     parseAll(expressionParser, input) match {
@@ -53,7 +55,8 @@ class ListenerParser(storageFunction:String => Option[Storage],
       | binaryOperatorDD2BParser("le",le)
       | binaryOperatorDD2BParser("eq",eq)
       | binaryOperatorDD2BParser("ne",neq)
-      | "changed(" ~> (boolExprParser | doubleExprParser) <~")" ^^ {case e:Expression => changed(e)})
+      | "changed(" ~> (boolExprParser | doubleExprParser) <~")" ^^ {case e:Expression => changed(e)}
+      | failure("expected boolean expression"))
 
   def doubleExprParser:Parser[DoubleExpr] = (
     storageDoubleProbe("stockLevel",stockLevel)
@@ -83,7 +86,8 @@ class ListenerParser(storageFunction:String => Option[Storage],
       | "minOnHistory(" ~> doubleExprParser~opt("," ~> boolExprParser)<~")"^^ {
       case (d~None) => minOnHistory(d)
       case (d~Some(cond:BoolExpr)) => minOnHistory(d,cond)}
-      | unaryOperatorD2DParser("avgOnHistory",avgOnHistory))
+      | unaryOperatorD2DParser("avgOnHistory",avgOnHistory)
+      | failure("expected double expression"))
 
 
   //generic code
@@ -135,7 +139,7 @@ class ListenerParser(storageFunction:String => Option[Storage],
     def convertStringUsingSymbolTable[U](symbolTable:String=>Option[U],symbolType:String):Parser[U] = new Parser[U] {
       def apply(in: Input) = identifierParser(in) match {
         case Success(x, in1) => symbolTable(x) match{
-          case Some(u:U) =>Success(u, in1)
+          case Some(u:U) => Success(u, in1)
           case None => Failure("" + x + " is not a known " + symbolType,in)
         }
         case f:Failure => f
@@ -168,7 +172,7 @@ object ParserTester extends App with FactoryHelper{
   println(myParser("mult(completedBatchCount(aProcess),totalPut(aStorage))"))
 
   println(myParser("cumulatedDuration(empty(bStorage))"))
-  println(myParser("cumulatedDuration(not(hasBeen(running(aProcess))))"))
+  println(myParser("cumulatedDuration(not(hasBeen(running(cProcess))))"))
   println(myParser("empty(aStorage)"))
   println(myParser("cumulatedDuration(not(running(bProcess)))"))
   println(myParser("cumulatedDurationNotStart(not(running(aProcess)))"))
@@ -177,7 +181,4 @@ object ParserTester extends App with FactoryHelper{
   println(myParser("avgOnHistory(relativeStockLevel(bStorage))"))
   println(myParser("avgOnHistory(stockLevel(aStorage))"))
   println(myParser("ponderateWithDuration(stockLevel(bStorage))"))
-
-
-
 }
