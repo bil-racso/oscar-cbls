@@ -169,7 +169,7 @@ object OscarBuild extends Build {
     settings =
       commonSettings ++
       Seq(libraryDependencies ++= testDeps),
-    dependencies = Seq(oscarCbls,oscarFzn)
+    dependencies = Seq(oscarCbls,oscarFzn,oscarFznCp)
   )
 
   lazy val oscarFznCp = Project(

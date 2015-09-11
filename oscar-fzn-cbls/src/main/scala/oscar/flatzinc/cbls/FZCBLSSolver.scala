@@ -20,6 +20,7 @@ package oscar.flatzinc.cbls
 
 import scala.util.Random
 import scala.collection.mutable.{ Map => MMap}
+import scala.language.implicitConversions
 import oscar.cbls.search._
 import oscar.cbls.objective.{ Objective => CBLSObjective }
 import oscar.cbls.constraints.core._
@@ -42,6 +43,8 @@ import oscar.util.RandomGenerator
 import oscar.flatzinc.NoSuchConstraintException
 import oscar.cbls.objective.IntVarObjective
 import oscar.flatzinc.Log
+import oscar.flatzinc.cp.FZCPModel
+import oscar.flatzinc.cp.FZCPModel
 
 
 
@@ -223,6 +226,27 @@ class FZCBLSModel(val model: FZProblem, val c: ConstraintSystem, val m: Store, v
           }
         }
      });
+    if(cpmodel!=null && model.search.obj != Objective.SATISFY){
+      log("Calling the CP solver")
+      cpmodel.updateBestObjectiveValue(getCBLSVar(model.search.variable.get).value)
+    //TODO: ignore variables whose domain should not be reduced (e.g. variables in the Circuit constraint)
+      cpmodel.updateModelDomains();
+      updateVarDomains();
+      log("Variable domains updated")
+    }
+  }
+  var cpmodel = null.asInstanceOf[FZCPModel]
+  def useCPsolver(cpm: FZCPModel){
+    assert(cpm.model == model);
+    cpmodel = cpm
+  }
+  def updateVarDomains(){
+    //TODO: ignore variables whose domain should not be reduced (e.g. variables in the Circuit constraint)
+    //Make sure this is necessary...
+    for(vm<-model.variables if !vm.isDefined){
+      val vls = getCBLSVarDom(vm)
+      vls.restrictDomain(vls.dom.min to vls.dom.max)
+    }
   }
   /*
   def getSolution():String = {
@@ -242,11 +266,28 @@ class FZCBLSSolver extends SearchEngine with StopWatch {
     val log = opts.log();
     log("start")
     
+    val useCP = opts.is("usecp")
+    
     val model = FZParser.readFlatZincModelFromFile(opts.fileName,log, false).problem;
-     
+    
     Helper.getCstrsByName(model.constraints).map{ case (n:String,l:List[Constraint]) => l.length +"\t"+n}.toList.sorted.foreach(log(_))
+    
     log("Parsed. Parsing took "+getWatch+" ms")
+    val cpmodel = new FZCPModel(model,oscar.cp.Strong )
+    println(model.variables.toList.map(v => v.domainSize))
+    
+    if(useCP){
+      FZModelTransfo.propagateDomainBounds(model)(log);
+      log("Reduced Domains before CP")
+      println(model.variables.toList.map(v => v.domainSize))
+      cpmodel.createVariables()
+      cpmodel.createConstraints()
+      cpmodel.updateModelDomains()
+      log("Reduced Domains with CP")
+      println(model.variables.toList.map(v => v.domainSize))
+    }
     if(!opts.is("no-simpl")){
+      //TODO: check which part of the following is still necessary after using CP for bounds reduction.
       FZModelTransfo.propagateDomainBounds(model)(log);
       log("Reduced Domains")
     }else{
@@ -308,6 +349,7 @@ class FZCBLSSolver extends SearchEngine with StopWatch {
     // constraint system
     val cs = ConstraintSystem(m)
     val cblsmodel = new FZCBLSModel(model,cs,m,log,() => getWatch)
+    if(useCP)cblsmodel.useCPsolver(cpmodel)
     log("Created Model (Variables and Objective)")
     
     

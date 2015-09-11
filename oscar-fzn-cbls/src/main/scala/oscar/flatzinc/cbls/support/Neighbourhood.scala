@@ -38,7 +38,7 @@ abstract class Move(val value:Int){
 case class AssignMove(x: CBLSIntVar,k:Int,override val value:Int) extends Move(value){
   def commit(){x := k}
   def getModified=Set(x)
-  override def toString() = x + " assigned to " +k
+  override def toString() = x + " assigned to " +k + "doms: "+x.domain+ x.asInstanceOf[CBLSIntVarDom].dom
 }
 case class AssignsMove(xk: List[(CBLSIntVar,Int)],override val  value:Int) extends Move(value){
   def commit(){xk.foreach(x => x._1 := x._2)}

@@ -303,8 +303,12 @@ abstract class NeighbourhoodTabuSearch(m: FZCBLSModel, sc: SearchControl) extend
 //      println("X")
     if(bestNeighbour!=null){
       //TODO: Aspiration sometimes accepts moves that do not improve but seem to improve because of changing weights. 
-      //if(log.level > 0 && bestNeighbour.getModified.exists(!nonTabuSet.contains(_)))log("Aspiration");
-      //log(3,bestNeighbour.toString)
+      if(log.level > 0 && bestNeighbour.getModified.exists(!nonTabuSet.contains(_))){
+        log("Aspiration");
+        log(3,bestNeighbour.value.toString +" < "+bestValue.toString +" ; "+m.objective().value)
+      }
+      log(3,bestNeighbour.toString)
+      
       bestNeighbour.commit();
       sc.handlePossibleSolution()
     }else

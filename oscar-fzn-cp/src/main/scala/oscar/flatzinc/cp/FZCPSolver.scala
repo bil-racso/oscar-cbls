@@ -23,74 +23,94 @@ import oscar.flatzinc.parser.FZParser
 import scala.collection.mutable.{Map => MMap}
 import oscar.flatzinc.model._
 import oscar.flatzinc.UnsatException
+import oscar.cp.core.CPPropagStrength
+import oscar.flatzinc.transfo.FZModelTransfo
 
-
-class FZCPSolver {
-  val pstrength = oscar.cp.Medium 
-  
-  def solve(opts: Options){
-    val log = opts.log();
-    log("start")
-    val model = FZParser.readFlatZincModelFromFile(opts.fileName,log, false).problem;
-     
-    log("Parsed.")
-    implicit val solver: CPSolver = CPSolver()  
-    
-    //TODO: Find binary constraints that can be used for views.
-    
-    val dicoVars = MMap.empty[String,CPIntVar]
-    def getIntVar(v:Variable):CPIntVar = {
-      dicoVars.get(v.id) match {
-        case None if v.isBound =>
-            val c = v match{
-              case v:IntegerVariable => CPIntVar(v.value);
-              case v:BooleanVariable => CPBoolVar(v.boolValue);
-            }
-            dicoVars += v.id -> c;
-            c
-        case Some(c) => c;
-      }
-    }
-    def getBoolVar(v:Variable):CPBoolVar = {
-      dicoVars.get(v.id) match {
-        case None if v.isBound =>
-            val c = v match{
-              case v:BooleanVariable => CPBoolVar(v.boolValue);
-            }
-            dicoVars += v.id -> c;
-            c
-        case Some(c) => c.asInstanceOf[CPBoolVar];
-      }
-    }
+class FZCPModel(val model:oscar.flatzinc.model.FZProblem, val pstrength: oscar.cp.core.CPPropagStrength = oscar.cp.Medium) {
+  implicit val solver: CPSolver = CPSolver()
+  solver.silent = true
+  val poster = new CPConstraintPoster(pstrength);
+  val dicoVars = MMap.empty[String,CPIntVar]
+  def getIntVar(v:Variable):CPIntVar = {
+    dicoVars.get(v.id) match {
+      case None if v.isBound =>
+        val c = v match{
+          case v:IntegerVariable => CPIntVar(v.value);
+          case v:BooleanVariable => CPBoolVar(v.boolValue);
+        }
+        dicoVars += v.id -> c;
+        c
+	  case Some(c) => c;
+	}
+  }
+  def getBoolVar(v:Variable):CPBoolVar = {
+	dicoVars.get(v.id) match {
+	  case None if v.isBound =>
+	    val c = v match{
+	      case v:BooleanVariable => CPBoolVar(v.boolValue);
+	    }
+	    dicoVars += v.id -> c;
+	    c
+	  case Some(c) => c.asInstanceOf[CPBoolVar];
+	}
+  }
+  def createVariables(){
     for(v <- model.variables){
       dicoVars(v.id) = v match{
         case bv:BooleanVariable => CPBoolVar()
         case iv:IntegerVariable => iv.domain match{
-          case DomainRange(min, max) => CPIntVar(min to max)
+          case DomainRange(min, max) => CPIntVar(min, max)
           case DomainSet(v) => CPIntVar(v)
           case _ => throw new RuntimeException("unknown domain")
         }
       }
     }
-    log("created variables")
+  }
+  def createConstraints(){
     //TODO: Add a try catch for if the problem fails at the root.
     //TODO: Put all the added cstrs in a ArrayBuffer and then post them all at once.
     //try{
-	    for(c <- model.constraints){
-	      //TODO: Take consistency annotation to post constraints.
-	      add(solver,getConstraint(c,getIntVar,getBoolVar))
-	    }
+        for(c <- model.constraints){
+          //TODO: Take consistency annotation to post constraints.
+          add(poster.getConstraint(c,getIntVar,getBoolVar))
+        }
     //}catch{
     //  case e => //throw new UnsatException(e.getMessage());
     //}
-    log("constraints posted")
+  }
+  //TODO: why do we need a separate method?
+  def add(c:Array[(oscar.cp.Constraint,oscar.cp.core.CPPropagStrength)]){
+    c.foreach(cs => solver.add(cs._1,cs._2));
+  }
+  def createObjective(){
     model.search.obj match{
      case Objective.SATISFY => 
      case Objective.MAXIMIZE => maximize(getIntVar(model.search.variable.get))
      case Objective.MINIMIZE => minimize(getIntVar(model.search.variable.get))
     }
-    log("objective created")
-    def handleSolution() = {
+  }
+  def updateBestObjectiveValue(value: Int): Boolean = {
+    model.search.obj match{
+     case Objective.SATISFY => 
+     case Objective.MAXIMIZE => getIntVar(model.search.variable.get).updateMin(value+1)
+     case Objective.MINIMIZE => getIntVar(model.search.variable.get).updateMax(value-1)
+    }
+    if(solver.propagate()==oscar.cp.core.CPOutcome.Failure) false
+    else true
+  }
+  def getMinFor(v:IntegerVariable): Int = {
+    getIntVar(v).getMin
+  }
+  def getMaxFor(v:IntegerVariable): Int = {
+    getIntVar(v).getMax
+  }
+  def getMinFor(v:BooleanVariable): Int = {
+    getBoolVar(v).getMin
+  }
+  def getMaxFor(v:BooleanVariable): Int = {
+    getBoolVar(v).getMax
+  }
+  def handleSolution() = {
      model.solution.handleSolution(
       (s: String) => dicoVars.get(s) match {
         case Some(intVar) =>
@@ -104,85 +124,71 @@ class FZCPSolver {
           }
         }
      });
-    }
-    solver.onSolution{
-      //println("found")
-      handleSolution()
-    }
-    solver.silent = true
+   }
+  def createSearch() = {
     //TODO: Take into account the search annotations
-    solver.search(oscar.cp.binaryLastConflict((model.variables/*-model.search.variable.get*/).map(getIntVar).toArray[CPIntVar]) ++ binaryFirstFail(Array(getIntVar(model.search.variable.get))))
+    solver.search(oscar.cp.binaryLastConflict((model.variables/*-model.search.variable.get*/).map(getIntVar).toArray[CPIntVar]))
+  }
+  
+  def updateModelDomains(): Boolean ={
+    try{
+      for(v <- model.variables){
+        v match{
+          case bv:BooleanVariable =>
+            if(getMinFor(bv)>=1)bv.bind(true)
+            if(getMaxFor(bv)<=0)bv.bind(false)
+          case iv:IntegerVariable => 
+            iv.geq(getMinFor(iv));
+            iv.leq(getMaxFor(iv));
+        }
+      }
+    }catch{
+      case e:UnsatException => false
+    }
+    true
+  }
+}
+
+class FZCPSolver {
+  val pstrength = oscar.cp.Medium 
+  
+  def solve(opts: Options){
+    val log = opts.log();
+    log("start")
+    val model = FZParser.readFlatZincModelFromFile(opts.fileName,log, false).problem;
+     
+    
+    log("Parsed.")
+    FZModelTransfo.propagateDomainBounds(model)(log)
+    log("initial variable reduction (to avoid overflows)")
+    
+    //TODO: Find binary constraints that can be used for views.
+    val cpmodel = new FZCPModel(model)
+    
+    cpmodel.createVariables();
+    log("created variables")
+    
+    cpmodel.createConstraints();
+    log("constraints posted")
+    
+    cpmodel.createObjective();
+    log("objective created")
+    
+    cpmodel.createSearch()
     log("search created")
+    
+    cpmodel.solver.onSolution{
+      //println("found")
+      cpmodel.handleSolution()
+    }
+    
     //TODO: search for more than one solution for optimisation
     //TODO: Remove the time spent in parsing and posting
-    val stats = solver.start(nSols= Int.MaxValue,timeLimit=60*15)
+    val stats = cpmodel.solver.start(nSols= Int.MaxValue,timeLimit=60*15)
     if(stats.completed) println("==========")
     log(stats.toString)
 
     
 
   }
-  def add(s: CPSolver, c:Array[(oscar.cp.Constraint,oscar.cp.core.CPPropagStrength)]){
-    c.foreach(cs => s.add(cs._1,cs._2));
-  }
-  implicit def c2ca(c: oscar.cp.Constraint): Array[(oscar.cp.Constraint,oscar.cp.core.CPPropagStrength)] = Array[(oscar.cp.Constraint,oscar.cp.core.CPPropagStrength)]((c,pstrength))
-  implicit def c2cs(c: oscar.cp.Constraint): (oscar.cp.Constraint,oscar.cp.core.CPPropagStrength)= (c,pstrength)
-  implicit def c2ca(c: (oscar.cp.Constraint,oscar.cp.core.CPPropagStrength)): Array[(oscar.cp.Constraint,oscar.cp.core.CPPropagStrength)] = Array[(oscar.cp.Constraint,oscar.cp.core.CPPropagStrength)](c)
-  implicit def ca2cs(c: Array[oscar.cp.Constraint]): Array[(oscar.cp.Constraint,oscar.cp.core.CPPropagStrength)] = c.map(c2cs)
-  def getConstraint(c: oscar.flatzinc.model.Constraint,getVar: Variable => CPIntVar,getBoolVar: Variable => CPBoolVar): Array[(oscar.cp.Constraint,oscar.cp.core.CPPropagStrength)] = {
-    def getVarArray(x:Array[Variable]) = {x.map(getVar);}
-    c match{
-      //TODO: We create variables in cumulative but we might want to memoize those as well!
-      //TODO: Actually to avoid creating new variables, we could rewrite the cumulative in the minizinc definition to create those variables while flattening, and CSE will take care of it.
-      case cumulative(s,d,r,capa,_) => oscar.cp.maxCumulativeResource(s.map(getVar), d.map(getVar), s.zip(d).map(vv => getVar(vv._1)+getVar(vv._2)), r.map(getVar), getVar(capa))
-      case maximum_int(x,y,_) => 
-        c2ca(oscar.cp.maximum(y.map(getVar), getVar(x))) ++ ca2cs(y.map(v => getVar(v) <= getVar(x)))
-     
-      case all_different_int(x,_) => (oscar.cp.allDifferent(x.map(getVar)), Medium)//Weak, Strong, Medium
-        
-      
-      case array_bool_and(as, r, ann)                 => new oscar.cp.constraints.And(as.map(getBoolVar),getBoolVar(r))
-     // case array_bool_element(b, as, r, ann)          => 
-      case array_bool_or(as, r, ann)                  => oscar.cp.or(as.map(getBoolVar),getBoolVar(r))
-     // case array_bool_xor(as, ann)                    => 
-      case array_int_element(b, as, r, ann)           => oscar.cp.element(as.map(_.value), getVar(b), getVar(r))
-      case array_var_bool_element(b, as, r, ann)      => oscar.cp.elementVar(as.map(getBoolVar), getVar(b), getBoolVar(r))
-      case array_var_int_element(b, as, r, ann)       => oscar.cp.elementVar(as.map(getVar), getVar(b), getVar(r))
-
-      case bool2int(x, y, ann)                        => getBoolVar(x) == getVar(y)
-      case bool_and(a, b, r, ann)                     => new oscar.cp.constraints.And(Array(getBoolVar(a),getBoolVar(b)),getBoolVar(r))
-      case bool_clause(a, b, ann)                     => oscar.cp.or(a.map(getBoolVar)++b.map(getBoolVar(_).not))
-      case bool_eq(a, b, ann)                         => getBoolVar(a) == getBoolVar(b)
-      case bool_le(a, b, ann)                         => getBoolVar(a) <= getBoolVar(b)
-      case bool_lin_eq(params, vars, sum, ann)        => oscar.cp.weightedSum(params.map(_.value), vars.map(getVar), getVar(sum))
-      case bool_lin_le(params, vars, sum, ann)        => oscar.cp.weightedSum(params.map(_.value), vars.map(getVar)) <= getVar(sum) //TODO: make it native
-      case bool_lt(a, b, ann)                         => getBoolVar(a) < getBoolVar(b)
-      case bool_not(a, b, ann)                        => getBoolVar(a) == getBoolVar(b).not
-      case bool_or(a, b, r, ann)                      => oscar.cp.or(Array(getBoolVar(a),getBoolVar(b)),getBoolVar(r))
-      //case bool_xor(a, b, r, ann)                     => 
-
-      case int_abs(x, y, ann)                         => new oscar.cp.constraints.Abs(getVar(x), getVar(y))
-      //case int_div(x, y, z, ann)                      => 
-      case int_eq(x, y, ann)                          => getVar(x) == getVar(y)
-      case int_le(x, y, ann)                          => getVar(x) <= getVar(y)
-      case reif(int_eq(x,y,ann),b)                    => getBoolVar(b) == (getVar(x) ?== getVar(y))
-      case reif(int_le(x,y,ann),b)                    => getBoolVar(b) == ( getVar(x) ?<= getVar(y))
-      //TODO: Handle binary and ternary cases, as well as all unit weights
-      case int_lin_eq(params, vars, sum, ann)         => oscar.cp.weightedSum(params.map(_.value), vars.map(getVar), getVar(sum))
-      case int_lin_le(params, vars, sum, ann)         => oscar.cp.weightedSum(params.map(_.value), vars.map(getVar)) <= getVar(sum) //TODO: make it native
-      case int_lin_ne(params, vars, sum, ann)         => oscar.cp.weightedSum(params.map(_.value), vars.map(getVar)) != getVar(sum) //TODO: make it native
-      case reif(int_lin_le(params, vars, sum, ann),b) => getBoolVar(b) == (oscar.cp.weightedSum(params.map(_.value), vars.map(getVar)) ?<= getVar(sum)) //TODO: make it native
-      case int_lt(x, y, ann)                          => getVar(x) < getVar(y)
-      case int_max(x, y, z, ann)                      => oscar.cp.maximum(Array(getVar(x),getVar(y)),getVar(z))
-      case int_min(x, y, z, ann)                      => oscar.cp.minimum(Array(getVar(x),getVar(y)),getVar(z))
-      //case int_mod(x, y, z, ann)                      => 
-      case int_ne(x, y, ann)                          => getVar(x) != getVar(y)
-      case int_plus(x, y, z, ann)                     => oscar.cp.plus(getVar(x), getVar(y))==getVar(z)
-      case int_times(x, y, z, ann)                    => oscar.cp.mul(getVar(x), getVar(y)) ==getVar(z)
-      case set_in(x, s, ann)                          => new oscar.cp.constraints.InSet(getVar(x),s.toSortedSet)
-    } 
-  }
-  
-  
 }
-  
