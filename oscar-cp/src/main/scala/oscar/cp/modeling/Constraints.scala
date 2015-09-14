@@ -585,7 +585,7 @@ trait Constraints {
   def or(vars: Array[CPBoolVar]): Constraint = {
     val nVariables = vars.length
     if (nVariables == 1) vars(0).constraintTrue
-    if (nVariables == 2) new BinaryClause(vars(0), vars(1), "")
+    else if (nVariables == 2) new BinaryClause(vars(0), vars(1), "")
     else new Or(vars)
   }
 
