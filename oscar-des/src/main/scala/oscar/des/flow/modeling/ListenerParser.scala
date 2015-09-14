@@ -1,13 +1,49 @@
 package oscar.des.flow.modeling
 
-import javafx.beans.binding.{BooleanExpression, DoubleExpression}
-
 import oscar.des.engine.Model
-import oscar.des.flow.core.ItemClassHelper._
 import oscar.des.flow.lib._
 import oscar.examples.des.FactoryExample._
+
 import scala.collection.immutable.SortedMap
 import scala.util.parsing.combinator._
+
+abstract class QuickParseResult(val parseOK:Boolean)
+case class QuickParseError(s:String) extends QuickParseResult(false){
+  override def toString: String = s
+}
+case object QuickParseOK extends QuickParseResult(true)
+
+/**
+ * This is a wrapper over the parser that can evaluate whether an
+ * expression is syntactly correct or not, given a set of storages and processes.
+ *
+ * @param storages
+ * @param processes
+ */
+class QuickParser(storages:Iterable[String],processes:Iterable[String]){
+  val m = new Model
+  val storagesMap = storages.foldLeft[SortedMap[String,Storage]](SortedMap.empty)(
+    (theMap,storageName) => theMap + ((storageName,new FIFOStorage(10,Nil,storageName,false,false))))
+  val processMap = processes.foldLeft[SortedMap[String,ActivableProcess]](SortedMap.empty)(
+    (theMap,processName) => theMap + ((processName,new SingleBatchProcess(m, 1, Array(), Array(), identity, processName, verbose))))
+
+  val myParser = new ListenerParser(storageFunction = (s:String) => storagesMap.get(s),
+    processFunction = (s:String) => processMap.get(s))
+
+  def checkSyntax(expression:String):QuickParseResult = {
+    myParser(expression) match{
+      case ParsingError(s) => QuickParseError(s)
+      case _ => QuickParseOK
+    }
+  }
+}
+
+sealed class ListenerParsingResult
+case class DoubleExpressionResult(d:DoubleExpr) extends ListenerParsingResult
+case class BooleanExpressionResult(b:BoolExpr) extends ListenerParsingResult
+case class ParsingError(s:String) extends ListenerParsingResult {
+  override def toString: String = "Parse Error:\n" + s + "\n"
+}
 
 /**
  * Created by rdl on 08-09-15.
@@ -17,13 +53,6 @@ class ListenerParser(storageFunction:String => Option[Storage],
   extends RegexParsers with ListenersHelper{
 
   override def skipWhitespace: Boolean = true
-
-  sealed class ListenerParsingResult
-  case class DoubleExpressionResult(d:DoubleExpr) extends ListenerParsingResult
-  case class BooleanExpressionResult(b:BoolExpr) extends ListenerParsingResult
-  case class ParsingError(s:String) extends ListenerParsingResult {
-    override def toString: String = "Parse Error:\n" + s + "\n"
-  }
 
   def apply(input:String):ListenerParsingResult = {
     parseAll(expressionParser, input) match {
@@ -58,7 +87,7 @@ class ListenerParser(storageFunction:String => Option[Storage],
       | "changed(" ~> (boolExprParser | doubleExprParser) <~")" ^^ {case e:Expression => changed(e)}
       | failure("expected boolean expression"))
 
-  
+
   def binaryTerm:Parser[BoolExpr] = unaryOperatorB2BParser("not",not)
 
 
@@ -189,9 +218,9 @@ object ParserTester extends App with FactoryHelper{
   val myParser = new ListenerParser(storageFunction = (s:String) => storages.get(s),
     processFunction = (s:String) => processes.get(s))
 
-
   println(myParser("completedBatchCount(aProcess) * totalPut(aStorage)"))
   println(myParser("-(-(-completedBatchCount(aProcess)) * -totalPut(aStorage))"))
+  println(myParser("-(-(-completedBatchCount(aProcess)) + -totalPut(aStorage))"))
   println(myParser("cumulatedDuration(empty(bStorage))"))
   println(myParser("cumulatedDuration(not(hasBeen(running(cProcess))))"))
   println(myParser("empty(aStorage)"))

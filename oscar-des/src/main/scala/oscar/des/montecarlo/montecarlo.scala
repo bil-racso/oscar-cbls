@@ -16,6 +16,7 @@
 package oscar.des.montecarlo
 
 import JSci.maths.statistics._
+import org.scalatest.fixture
 import scala.collection.immutable.SortedMap
 
 /**
@@ -100,42 +101,147 @@ class Aggregator{
 }
 
 
-class RichAggregator(fields:Array[String]){
-  val fieldDico:SortedMap[String,Int] =
-    SortedMap.empty[String,Int].++(for (a <- fields.indices) yield (fields(a),a))
+class RichAggregator(doubleFields:Array[String], booleanFields:Array[String]){
+  //bool is true for Double (lool this is not intuitive)
+  val fieldDico:SortedMap[String,(Boolean,Int)] =
+    SortedMap.empty[String,(Boolean,Int)]
+      .++ (for (a <- doubleFields.indices) yield (doubleFields(a),(true,a)))
+      .++ (for (a <- booleanFields.indices) yield (booleanFields(a),(true,a)))
 
-  var recordedData:List[Array[Double]] = List.empty
+  var recordedData:List[(Array[Double],Array[Boolean])] = List.empty
 
-  def addData(d:Array[Double]): Unit ={
-    recordedData = d :: recordedData
+  def addData(d:Array[Double],b:Array[Boolean]): Unit ={
+    recordedData = (d,b) :: recordedData
   }
 
-  def statisticsForField(field:String):Statistics = {
-    val id = fieldDico(field)
-    val dataForThisField = recordedData.map(_(id))
-    Statistics(dataForThisField)
+  def statisticsForField(field:String):SingleDataStatistics = {
+    val (isDouble,id) = fieldDico(field)
+    if(isDouble){
+      val dataForThisField = recordedData.map(_._1.apply(id))
+      Statistics.applyDouble(dataForThisField,field)
+    }else{
+      val dataForThisField = recordedData.map(_._2.apply(id))
+      Statistics.applyBool(dataForThisField,field)
+    }
   }
 
-  def dataForTheseTwoFields(field1:String,field2:String):List[(Double,Double)] = {
-    val id1 = fieldDico(field1)
-    val id2 = fieldDico(field2)
-    recordedData.map(line => (line(id1),line(id2)))
+  def statisticsForTheseTwoFields(field1:String,field2:String):PairDataStatistics = {
+    val (double1, id1) = fieldDico(field1)
+    val (double2, id2) = fieldDico(field2)
+
+    (double1, double2) match {
+      case (true, true) => NoPairStatistics(field1,field2)
+      case (true, false) => Statistics.applyBoolDouble(recordedData.map(l => (l._2.apply(id2),l._1.apply(id1))), field2, field1)
+      case (false, true) => Statistics.applyBoolDouble(recordedData.map(l => (l._2.apply(id1),l._1.apply(id2))), field1, field2)
+      case (false, false) => Statistics.applyBoolBool(recordedData.map(l => (l._2.apply(id1),l._2.apply(id2))),field1, field2)
+    }
   }
 }
 
-case class Statistics(min:Double, max:Double, avg:Double, med:Double){
-  override def toString: String = "(min:" + min + " max:" + max + " avg:" + avg + " med:" + med + ")"
-  def denseString:String = padToLength("" + min,4) + " " + padToLength("" + max,4) + " " + padToLength("" + avg,4) + " " + padToLength("" + med,5)
-  def nSpace(n:Int):String = if(n <= 0) "" else " " + nSpace(n-1)
-  private def padToLength(s: String, l: Int) = (s + nSpace(l)).substring(0, l)
+sealed abstract class SingleDataStatistics(val fieldName:String){
+  def stringNoFieldName:String
+  override def toString: String = fieldName + ":" + stringNoFieldName
+}
+case class BoolStatistics(trueRatio:Double, falseRatio:Double,totalSample:Int,override val fieldName:String) extends SingleDataStatistics(fieldName){
+  override def stringNoFieldName: String = "(trueRatio:" + trueRatio + " falseRatio:" + falseRatio + " totalSample:" + totalSample + ")"
+}
+
+case class DoubleStatistics(min:Double, max:Double, avg:Double, med:Double, totalSample:Int, override val fieldName:String) extends SingleDataStatistics(fieldName){
+  override def stringNoFieldName:String = "(min:" + min + " max:" + max + " avg:" + avg + " med:" + med + "totalSample:" + totalSample + ")"
+}
+
+case class NoSingleStatistics(override val fieldName:String) extends SingleDataStatistics(fieldName){
+  override def stringNoFieldName: String = "no statistics"
 }
 
 object Statistics {
-  def apply(l: List[Double]): Statistics = {
+  def applyDouble(l: List[Double], fieldName: String): DoubleStatistics = {
     require(l.nonEmpty)
     val sorted = l.sorted
     val size = l.size
-    Statistics(min=sorted.head, max = sorted.last, avg=l.sum/size, med=sorted.apply(size/2))
+    DoubleStatistics(min = sorted.head, max = sorted.last, avg = (l.sum / (size.toDouble)), med = sorted.apply(size / 2), size, fieldName)
+  }
+
+  def applyBool(l: List[Boolean], fieldName: String): BoolStatistics = {
+    require(l.nonEmpty)
+    val size = l.size
+    val nbTrue: Int = l.count(b => b)
+    val trueRatio = nbTrue.toDouble / size.toDouble
+    BoolStatistics(trueRatio, 1.0 - trueRatio, size, fieldName)
+  }
+
+  def applyBoolBool(fieldValues: List[(Boolean, Boolean)], field1: String, field2: String): PairDataStatistics = {
+    val stat1 = applyBool(fieldValues.map(_._1), field1)
+    val stat2 = applyBool(fieldValues.map(_._2), field2)
+
+    var trueTrue: Int = 0
+    var trueFalse: Int = 0
+    var falseTrue: Int = 0
+    var falseFalse: Int = 0
+    var nbSample = 0;
+
+    for (vc <- fieldValues) {
+      vc match {
+        case (true, true) => trueTrue += 1
+        case (true, false) => trueFalse += 1
+        case (false, true) => falseTrue += 1
+        case (false, false) => falseFalse += 1
+      }
+      nbSample += 1
+    }
+
+    BoolBoolStatistics(stat1, stat2, trueTrue.toDouble / nbSample, falseFalse.toDouble / nbSample, trueFalse.toDouble / nbSample, falseTrue.toDouble / nbSample)
+  }
+
+  def applyBoolDouble(fieldValues: List[(Boolean, Double)], field1: String, field2: String): PairDataStatistics = {
+    val stat1 = applyBool(fieldValues.map(_._1), field1)
+    val stat2 = applyDouble(fieldValues.map(_._2), field2)
+
+    var valuesWhenTrue: List[Double] = List.empty
+    var valuesWhenFalse: List[Double] = List.empty
+    var nbSample = 0;
+    for (vc <- fieldValues) {
+      vc match {
+        case (true, v) => valuesWhenTrue = v :: valuesWhenTrue
+        case (false, v) => valuesWhenFalse = v :: valuesWhenFalse
+      }
+      nbSample += 1
+    }
+
+    BoolDoubleStatistics(stat1, stat2, applyDouble(valuesWhenTrue, field2 + " with " + field2 + "=true"), applyDouble(valuesWhenFalse, field2 + " with " + field2 + "=false"))
+  }
+}
+
+sealed abstract class PairDataStatistics(val field1:String,val field2:String){
+  def nSpace(n:Int):String = if(n <= 0) "" else " " + nSpace(n-1)
+  protected def padToLength(s: String, l: Int) = (s + nSpace(l)).substring(0, l)
+}
+
+case class NoPairStatistics(override val field1:String,override val field2:String) extends PairDataStatistics(field1,field2){
+  override def toString: String = "no statistics for " + field1 + "," + field2
+}
+
+case class BoolBoolStatistics(field1Statistics:BoolStatistics,field2Statistics:BoolStatistics, trueTrue:Double ,falseFalse:Double, trueFalse:Double, falseTrue:Double)
+  extends PairDataStatistics(field1Statistics.fieldName,field1Statistics.fieldName){
+  override def toString: String = {
+    field1Statistics + "\n" +
+      field2Statistics + "\n" +
+      padToLength(field1,15) + "|" + padToLength(field2,15) + "| stat\n" +
+      " false         | false         |" + falseFalse + "\n" +
+      " false         | true          |" + falseTrue + "\n" +
+      " true          | false         |" + trueFalse + "\n" +
+      " true          | true          |" + trueTrue + "\n"
+  }
+}
+
+case class BoolDoubleStatistics(field1Statistics:BoolStatistics,field2Statistics:DoubleStatistics, field2Whenfield1True:DoubleStatistics, field2whenField1False:DoubleStatistics)
+  extends PairDataStatistics(field1Statistics.fieldName,field1Statistics.fieldName){
+  override def toString: String = {
+    field1Statistics + "\n" +
+      field2Statistics + "\n" +
+      padToLength(field1,15) + "|" + padToLength(field2,15) +
+      " false         |" + field2whenField1False.stringNoFieldName + "\n" +
+      " true          |" + field2Whenfield1True.stringNoFieldName + "\n"
   }
 }
 
