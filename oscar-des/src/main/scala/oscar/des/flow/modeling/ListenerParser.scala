@@ -45,6 +45,20 @@ case class ParsingError(s:String) extends ListenerParsingResult {
   override def toString: String = "Parse Error:\n" + s + "\n"
 }
 
+object ListenerParser{
+  def apply(storages:Iterable[Storage],processes:Iterable[ActivableProcess]): ListenerParser ={
+    val storagesMap = storages.foldLeft[SortedMap[String,Storage]](SortedMap.empty)(
+      (theMap,storage) => theMap + ((storage.name,storage)))
+    val processMap = processes.foldLeft[SortedMap[String,ActivableProcess]](SortedMap.empty)(
+      (theMap,process) => theMap + ((process.name,process)))
+
+    new ListenerParser(storageFunction = (s:String) => storagesMap.get(s),
+      processFunction = (s:String) => processMap.get(s))
+
+  }
+
+
+}
 /**
  * Created by rdl on 08-09-15.
  */
@@ -62,9 +76,43 @@ class ListenerParser(storageFunction:String => Option[Storage],
     }
   }
 
-  def expressionParser:Parser[Expression] = regularDoubleExpressionParser | boolExprParser
+  def expressionParser:Parser[Expression] = doubleExprParser | boolExprParser
+
+  /*
+ def doubleExprParser:Parser[DoubleExpr] =
+  term ~ opt(("+"|"-")~doubleExprParser) ^^ {
+    case a~None => a
+    case a~Some("+"~b) => plus(a,b)
+    case a~Some("-"~b) => minus(a,b)}
+ */
 
   def boolExprParser:Parser[BoolExpr] = (
+    "[*]" ~> boolExprParser ^^ {case b => hasAlwaysBeen(b)}
+      | "<*>" ~> boolExprParser ^^ {case b => hasBeen(b)}
+      | "@T" ~> boolExprParser ^^ {case b => becomesTrue(b)}
+      | "@F" ~> boolExprParser ^^ {case b => becomesFalse(b)}
+      | doubleExprParser~(">="|">"|"<="|"<"|"!="|"=")~doubleExprParser ^^ {
+      case (a~op~b) => op match{
+        case ">" => g(a,b)
+        case ">=" => ge(a,b)
+        case "<" => l(a,b)
+        case "<=" => le(a,b)
+        case "=" => eq(a,b)
+        case "!=" => neq(a,b)
+      }}
+    | disjunctionParser)
+
+  def disjunctionParser:Parser[BoolExpr] =
+    conjunctionParser ~ opt("|"~>disjunctionParser) ^^ {
+      case a~None => a
+      case a~Some(b) => or(a,b)}
+
+  def conjunctionParser:Parser[BoolExpr]  =
+    atomicBoolExprParser ~ opt("|"~>conjunctionParser) ^^ {
+      case a~None => a
+      case a~Some(b) => or(a,b)}
+
+  def atomicBoolExprParser:Parser[BoolExpr] = (
     "empty(" ~> storageParser <~")" ^^ {empty(_)}
       | processBoolProbe("running",running)
       | processBoolProbe("anyBatchStarted",anyBatchStarted)
@@ -74,6 +122,7 @@ class ListenerParser(storageFunction:String => Option[Storage],
       | binaryOperatorBB2BParser("or",or)
       | binaryOperatorBB2BParser("since",since)
       | unaryOperatorB2BParser("not",not)
+      | "!"~>boolExprParser^^{case (b:BoolExpr) => not(b)}
       | unaryOperatorB2BParser("hasAlwaysBeen",hasAlwaysBeen)
       | unaryOperatorB2BParser("hasBeen",hasBeen)
       | unaryOperatorB2BParser("becomesTrue",becomesTrue)
@@ -87,14 +136,19 @@ class ListenerParser(storageFunction:String => Option[Storage],
       | "changed(" ~> (boolExprParser | doubleExprParser) <~")" ^^ {case e:Expression => changed(e)}
       | failure("expected boolean expression"))
 
-
   def binaryTerm:Parser[BoolExpr] = unaryOperatorB2BParser("not",not)
 
+  def doubleExprParser:Parser[DoubleExpr] =
+    term ~ opt(("+"|"-")~doubleExprParser) ^^ {
+      case a~None => a
+      case a~Some("+"~b) => plus(a,b)
+      case a~Some("-"~b) => minus(a,b)}
 
-  def doubleExprParser:Parser[DoubleExpr] = (
-    atomicDoubleExprParser
-      | regularDoubleExpressionParser
-      | failure("expected double expression"))
+  def term: Parser[DoubleExpr] =
+    atomicDoubleExprParser ~ opt(("*"|"/")~term) ^^ {
+      case a~None => a
+      case a~Some("*"~b) => mult(a,b)
+      case a~Some("/"~b) => div(a,b)}
 
   def atomicDoubleExprParser:Parser[DoubleExpr] = (
     storageDoubleProbe("stockLevel",stockLevel)
@@ -118,27 +172,18 @@ class ListenerParser(storageFunction:String => Option[Storage],
       | "time"^^^ currentTime
       | "tic" ^^^ delta(currentTime)
       | unaryOperatorD2DParser("ponderateWithDuration",ponderateWithDuration)
-      | "maxOnHistory(" ~> doubleExprParser~opt("," ~> boolExprParser)<~")" ^^ {
+      | ("maxOnHistory("|"max(") ~> doubleExprParser~opt("," ~> boolExprParser)<~")" ^^ {
       case (d~None) => maxOnHistory(d)
       case (d~Some(cond:BoolExpr)) => maxOnHistory(d,cond)}
-      | "minOnHistory(" ~> doubleExprParser~opt("," ~> boolExprParser)<~")"^^ {
+      | ("minOnHistory("|"min(") ~> doubleExprParser~opt("," ~> boolExprParser)<~")"^^ {
       case (d~None) => minOnHistory(d)
       case (d~Some(cond:BoolExpr)) => minOnHistory(d,cond)}
+      | unaryOperatorD2DParser("avg",avgOnHistory)
       | unaryOperatorD2DParser("avgOnHistory",avgOnHistory)
-      | "-"~> regularDoubleExpressionParser ^^ {opposite(_)}
+      | "-"~> doubleExprParser ^^ {opposite(_)}
       | "("~>doubleExprParser<~")")
 
-  def regularDoubleExpressionParser:Parser[DoubleExpr] =
-    term ~ opt(("+"|"-")~regularDoubleExpressionParser) ^^ {
-        case a~None => a
-        case a~Some("+"~b) => plus(a,b)
-        case a~Some("-"~b) => minus(a,b)}
 
-  def term: Parser[DoubleExpr] =
-    atomicDoubleExprParser ~ opt(("*"|"/")~term) ^^ {
-      case a~None => a
-      case a~Some("*"~b) => mult(a,b)
-      case a~Some("/"~b) => div(a,b)}
 
   //generic code
 
@@ -218,18 +263,25 @@ object ParserTester extends App with FactoryHelper{
   val myParser = new ListenerParser(storageFunction = (s:String) => storages.get(s),
     processFunction = (s:String) => processes.get(s))
 
-  println(myParser("completedBatchCount(aProcess) * totalPut(aStorage)"))
-  println(myParser("-(-(-completedBatchCount(aProcess)) * -totalPut(aStorage))"))
-  println(myParser("-(-(-completedBatchCount(aProcess)) + -totalPut(aStorage))"))
-  println(myParser("cumulatedDuration(empty(bStorage))"))
-  println(myParser("cumulatedDuration(not(hasBeen(running(cProcess))))"))
-  println(myParser("empty(aStorage)"))
-  println(myParser("cumulatedDuration(not(running(bProcess)))"))
-  println(myParser("cumulatedDurationNotStart(not(running(aProcess)))"))
-  println(myParser("maxOnHistory(stockLevel(aStorage))"))
-  println(myParser("minOnHistory(stockLevel(aStorage))"))
-  println(myParser("avgOnHistory(relativeStockLevel(bStorage))"))
-  println(myParser("avgOnHistory(stockLevel(aStorage))"))
-  println(myParser("ponderateWithDuration(stockLevel(bStorage))"))
+  def testOn(s:String){
+    println("testing on:" + s)
+    println(myParser(s))
+    println
+  }
+
+  testOn("completedBatchCount(aProcess) * totalPut(aStorage)")
+  testOn("-(-(-completedBatchCount(aProcess)) * -totalPut(aStorage))")
+  testOn("-(-(-completedBatchCount(aProcess)) + -totalPut(aStorage))")
+  testOn("cumulatedDuration(empty(bStorage))")
+  testOn("cumulatedDuration(!!!<*>running(bProcess))")
+  testOn("cumulatedDuration(!!!<*>running(cProcess))")
+  testOn("empty(aStorage)")
+  testOn("cumulatedDuration(!running(bProcess))")
+  testOn("cumulatedDurationNotStart(not(running(aProcess)))")
+  testOn("max(stockLevel(aStorage))")
+  testOn("min(stockLevel(aStorage))")
+  testOn("avg(relativeStockLevel(bStorage))")
+  testOn("avg(stockLevel(aStorage))")
+  testOn("ponderateWithDuration(stockLevel(bStorage))")
 }
 

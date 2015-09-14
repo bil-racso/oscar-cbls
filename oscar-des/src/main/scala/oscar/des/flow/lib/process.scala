@@ -41,7 +41,7 @@ case class SingleBatchProcess(m:Model,
                               inputs:Array[(() => Int, Fetchable)],
                               outputs:Array[(()=>Int,Putable)],
                               transformFunction:ItemClassTransformFunction,
-                              name:String,
+                              override val name:String,
                               verbose:Boolean = true) extends ActivableAtomicProcess(name,verbose){
 
   private val myOutput = new Outputter(outputs)
@@ -107,7 +107,7 @@ case class BatchProcess(m:Model,
                         batchDuration:() => Float,
                         inputs:Array[(() => Int, Fetchable)],
                         outputs:Array[(() => Int,Putable)],
-                        name:String,
+                        override val name:String,
                         transformFunction:ItemClassTransformFunction,
                         verbose:Boolean = true) extends ActivableMultipleProcess(name,verbose){
 
@@ -146,7 +146,7 @@ case class SplittingSingleBatchProcess(m:Model,
                                        inputs:Array[(() => Int, Fetchable)],
                                        outputs:Array[Array[(() => Int,Putable)]],
                                        transformFunction:ItemClassTransformWitAdditionalOutput,
-                                       name:String,
+                                       override val name:String,
                                        verbose:Boolean = true) extends ActivableAtomicProcess(name,verbose){
 
   private val myOutputs = outputs.map(o => new Outputter(o))
@@ -222,7 +222,7 @@ case class SplittingBatchProcess(m:Model,
                                  batchDuration:() => Float,
                                  inputs:Array[(() => Int, Fetchable)],
                                  outputs:Array[Array[(()=>Int,Putable)]],
-                                 name:String,
+                                 override val name:String,
                                  transformFunction:ItemClassTransformWitAdditionalOutput,
                                  verbose:Boolean = true) extends ActivableMultipleProcess(name,verbose){
 
@@ -241,8 +241,6 @@ case class SplittingBatchProcess(m:Model,
       " waitingLines:" + childProcesses.foldLeft(0)((waitings:Int,p:SplittingSingleBatchProcess) => waitings + (if (p.isWaiting) 1 else 0))
   }
 }
-
-
 
 /**
  *  A rolling (in a conveyor belt) Process means that if the output is blocked, no new batch is started

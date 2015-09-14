@@ -105,7 +105,12 @@ trait ListenersHelper{
    * the negation of expression f
    * @param f a boolean expression
    */
-  def not(f:BoolExpr) = Not(f:BoolExpr)
+  def not(f:BoolExpr) = {
+    f match{
+      case Not(g) => g
+      case _ => Not(f)
+    }
+  }
 
   /**
    * the conjunction of two boolean expressions

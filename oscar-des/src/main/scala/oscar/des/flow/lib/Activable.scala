@@ -8,7 +8,7 @@ abstract class Activable{
   def activate(intensity:Int)
 }
 
-abstract class ActivableProcess(name:String, verbose:Boolean) extends Activable{
+abstract class ActivableProcess(val name:String, verbose:Boolean) extends Activable{
   def isRunning:Boolean
   def completedBatchCount:Int
   def startedBatchCount:Int
