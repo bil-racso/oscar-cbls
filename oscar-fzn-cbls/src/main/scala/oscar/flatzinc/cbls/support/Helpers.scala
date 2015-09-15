@@ -127,13 +127,13 @@ object EnsureDomain{
   }
 }
 
-
+/*
   object RelaxAndEnsureDomain{
     def apply(v: CBLSIntVarDom,newMin:Int,newMax:Int,c: ConstraintSystem) = {
       v.relaxDomain(oscar.cbls.invariants.core.computation.DomainRange(newMin,newMax))
       EnsureDomain(v,v.dom,c)
     }
-  }
+  }*/
 
 
   //TODO: Not really tested

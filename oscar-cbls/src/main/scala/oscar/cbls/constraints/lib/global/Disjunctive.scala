@@ -58,6 +58,7 @@ case class Disjunctive(start: Array[IntValue],
     SortedMap.empty[IntValue, CBLSIntVar])(
       (acc, intvar) => {
         val newvar = new CBLSIntVar(model, 0, (0 to sumdur), "Violation_Disjunctive_" + intvar.name)
+        newvar.setDefiningInvariant(this)
         acc + ((intvar, newvar))
       })
   

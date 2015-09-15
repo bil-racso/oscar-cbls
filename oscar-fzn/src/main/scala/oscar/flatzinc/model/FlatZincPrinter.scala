@@ -172,6 +172,7 @@ object FlatZincPrinter {
       case global_cardinality_low_up_closed(x,y,z,w,ann) => "global_cardinality_low_up_closed("+toFZN(x)+","+toFZN(y)+","+toFZN(z)+","+toFZN(w)+")"+toFZNann(ann)
       case global_cardinality_low_up(x,y,z,w,ann) => "global_cardinality_low_up("+toFZN(x)+","+toFZN(y)+","+toFZN(z)+","+toFZN(w)+")"+toFZNann(ann)
       case member_int(x,y, ann) => "member_int("+toFZN(x)+","+toFZN(y)+")"+toFZNann(ann)
+      case set_in(x,y,ann) => "set_in("+toFZN(x)+","+toFZN(y)+")"+toFZNann(ann)
       case GeneratedConstraint(name,args,signature) => name+"("+args.map(toFZN(_)).mkString(", ")+")"
       case GenericConstraint(name,args, ann) => name+"("+args.map(toFZN(_)).mkString(", ")+")"+toFZNann(ann)
     }

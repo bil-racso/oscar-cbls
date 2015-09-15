@@ -80,11 +80,11 @@ abstract class ChangingIntValue(initialValue:Int, initialDomain:Domain)
         this := privatedomain.min
       }
   }
-  protected def relaxDomain(d: Domain): Domain = {
+  /*protected def relaxDomain(d: Domain): Domain = {
     val olddom = privatedomain
     privatedomain = d
     olddom
-  }
+  }*/
 
   override def toString = {
     if(model != null && model.propagateOnToString) s"$name:=$value" else s"$name:=$Value"
@@ -204,7 +204,7 @@ class CBLSIntVar(givenModel: Store, initialValue: Int, initialDomain:Domain, n: 
   require(givenModel != null)
   
   override def restrictDomain(d:Domain) = super.restrictDomain(d)
-  override def relaxDomain(d:Domain) = super.relaxDomain(d)
+  //override def relaxDomain(d:Domain) = super.relaxDomain(d)
 
   model = givenModel
 

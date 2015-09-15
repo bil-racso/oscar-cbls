@@ -26,7 +26,7 @@ import oscar.flatzinc.UnsatException
 import oscar.cp.core.CPPropagStrength
 import oscar.flatzinc.transfo.FZModelTransfo
 
-class FZCPModel(val model:oscar.flatzinc.model.FZProblem, val pstrength: oscar.cp.core.CPPropagStrength = oscar.cp.Medium) {
+class FZCPModel(val model:oscar.flatzinc.model.FZProblem, val pstrength: oscar.cp.core.CPPropagStrength = oscar.cp.Medium, val ignoreUnkownConstraints: Boolean = false) {
   implicit val solver: CPSolver = CPSolver()
   solver.silent = true
   val poster = new CPConstraintPoster(pstrength);
@@ -72,7 +72,11 @@ class FZCPModel(val model:oscar.flatzinc.model.FZProblem, val pstrength: oscar.c
     //try{
         for(c <- model.constraints){
           //TODO: Take consistency annotation to post constraints.
-          add(poster.getConstraint(c,getIntVar,getBoolVar))
+          try{
+            add(poster.getConstraint(c,getIntVar,getBoolVar))
+          }catch{
+            case e: scala.MatchError if ignoreUnkownConstraints => Console.err.println("% ignoring in CP: "+c)
+          }
         }
     //}catch{
     //  case e => //throw new UnsatException(e.getMessage());

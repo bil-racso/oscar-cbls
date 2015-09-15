@@ -16,7 +16,7 @@
  * @author Gustav Björdal
  * @author Jean-Noël Monette
  */
-package oscar.flatzinc.cbls
+package oscar.flatzinc.cbls2
 
 import scala.util.Random
 import scala.collection.mutable.{ Map => MMap}
@@ -34,7 +34,7 @@ import oscar.flatzinc.Options
 import oscar.flatzinc.model._
 import oscar.flatzinc.model.Constraint
 import oscar.flatzinc.model.Variable
-import oscar.flatzinc.cbls.support._
+import oscar.flatzinc.cbls2.support._
 import oscar.cbls.invariants.lib.numeric.Sum2
 import oscar.flatzinc.transfo.FZModelTransfo
 import java.io.PrintWriter
@@ -44,11 +44,16 @@ import oscar.flatzinc.NoSuchConstraintException
 import oscar.cbls.objective.IntVarObjective
 import oscar.flatzinc.Log
 import oscar.flatzinc.cp.FZCPModel
-import oscar.flatzinc.cp.FZCPModel
+import oscar.flatzinc.cbls.FZCBLSConstraintPoster
+import oscar.flatzinc.cbls.support.CBLSIntVarDom
+import oscar.flatzinc.cbls.support.Neighbourhood
+import oscar.flatzinc.cbls.support.MaxViolating
+import oscar.flatzinc.cbls.support.MaxViolatingSwap
+import oscar.flatzinc.cbls.support.CBLSIntConstDom
 
 
 
-
+/*
 class FZCBLSObjective(cblsmodel:FZCBLSModel,log:Log){
   private val opt = cblsmodel.model.search.obj
   private val objectiveVar = cblsmodel.model.search.variable.map(cblsmodel.getCBLSVar(_)).getOrElse(null)
@@ -94,12 +99,29 @@ class FZCBLSObjective(cblsmodel:FZCBLSModel,log:Log){
 
   }
 }
-
+*/
 
 class FZCBLSModel(val model: FZProblem, val c: ConstraintSystem, val m: Store, val log:Log, val getWatch: () => Long) {
   val cblsIntMap: MMap[String, IntValue] = MMap.empty[String, IntValue]
   var vars: List[CBLSIntVarDom] = createVariables();
-  var objective = null.asInstanceOf[FZCBLSObjective]
+  //var objective = null.asInstanceOf[CBLSObjective]
+  var objectiveVar = null.asInstanceOf[IntValue]
+  var objectiveBound = null.asInstanceOf[CBLSIntVar]
+  def createObjective(){
+    model.search.obj match {
+        case Objective.SATISFY => 
+        case Objective.MAXIMIZE => 
+          objectiveVar = getCBLSVar(model.search.variable.get)
+          //objective = new IntVarObjective(objectiveVar.asInstanceOf[ChangingIntValue])
+          objectiveBound = CBLSIntVar(m,objectiveVar.min,objectiveVar.min to objectiveVar.max+1)
+          c.add(GE(objectiveVar,objectiveBound), CBLSIntConst(100))
+        case Objective.MINIMIZE => 
+          objectiveVar = getCBLSVar(model.search.variable.get)
+          objectiveBound = CBLSIntVar(m,objectiveVar.max,objectiveVar.min-1 to objectiveVar.max)
+          c.add(LE(objectiveVar,objectiveBound), CBLSIntConst(100))
+          //objective = new IntVarObjective(objectiveVar.asInstanceOf[ChangingIntValue])
+      }
+  }
   var neighbourhoods: List[Neighbourhood] = List.empty[Neighbourhood];
   var neighbourhoodGenerator: List[(CBLSObjective,ConstraintSystem) => Neighbourhood] = List.empty[(CBLSObjective,ConstraintSystem) => Neighbourhood]
   def addNeighbourhood(n: (CBLSObjective,ConstraintSystem) => Neighbourhood,removeVars: Array[CBLSIntVarDom]){
@@ -109,15 +131,17 @@ class FZCBLSModel(val model: FZProblem, val c: ConstraintSystem, val m: Store, v
   }
   def addDefaultNeighbourhouds(){
     if (vars.length > 0) {
-      addNeighbourhood((o,c) => new MaxViolating(vars.toArray, o, c),Array.empty[CBLSIntVarDom])
-      val boolVars = vars.filter((v: CBLSIntVar) => v.min == 0 && v.max == 1)
+      //Do not want to search on such variables!
+      val searchvars = vars.filterNot(v => v.domainSize==1 || v.isControlledVariable);
+      if(searchvars.length > 0) addNeighbourhood((o,c) => new MaxViolating(searchvars.toArray, o, c),Array.empty[CBLSIntVarDom])
+      val boolVars = searchvars.filter((v: CBLSIntVar) => v.min == 0 && v.max == 1)
       if (boolVars.length > 1)
         addNeighbourhood((o,c) => new MaxViolatingSwap(boolVars.toArray, o, c),Array.empty[CBLSIntVarDom]) 
     }
   }
  
   def createNeighbourhoods(){
-    neighbourhoods = neighbourhoodGenerator.map(_(objective(),c))
+    neighbourhoods = neighbourhoodGenerator.map(_(c/*TODO:might be null*/,c))
   }
   def createVariables() = {
     var variables: List[CBLSIntVarDom] = List.empty[CBLSIntVarDom];
@@ -174,44 +198,26 @@ class FZCBLSModel(val model: FZProblem, val c: ConstraintSystem, val m: Store, v
   }
     implicit def getCBLSVar(v: Variable) = {
       v match {
-      /*  case ConcreteConstant(_, value, _) =>
-          
-        cblsIntMap.get(value + "") match {
-          case None =>
-            val c = CBLSIntConstDom(value, m);
-            cblsIntMap += value + "" -> c;
-            c;
-          case Some(c) => c;
-        }
-    */
       case v:IntegerVariable =>
         cblsIntMap.get(v.id) match {
           case None if v.isBound =>
-            /*cblsIntMap.get(v.min.toString) match {
-              case Some(c) => c;
-              case None => {*/
             //From Gustav: All constants need to have a store, otherwise they won't have a UniqueID (from PropagationElement) and constraints will start throwing exceptions
             //JNM: I removed ",m " to avoid introducing a lot of useless "variables" in the model in the hope of making it more efficient.
             //JNM: restored the "m," as one need it to find the model sometimes.
             val c = new CBLSIntConstDom(m,v.value);
-            //println("ICI "+id + " "+v.min)
-            cblsIntMap += v.id -> c; //was id -> 
-            c;//}}
+            cblsIntMap += v.id -> c;
+            c;
           case Some(c) => c;
         }
       case v:BooleanVariable =>
         cblsIntMap.get(v.id) match {
           case None if v.isBound =>
-            /*cblsIntMap.get(v.min.toString) match {
-              case Some(c) => c;
-              case None => {*/
             //From Gustav: All constants need to have a store, otherwise they won't have a UniqueID (from PropagationElement) and constraints will start throwing exceptions
             //JNM: I removed ",m " to avoid introducing a lot of useless "variables" in the model in the hope of making it more efficient.
             //JNM: restored the "m," as one need it to find the model sometimes.
             val c = new CBLSIntConstDom(m,v.intValue);
-            //println("ICI "+id + " "+v.min)
-            cblsIntMap += v.id -> c; //was id -> 
-            c;//}}
+            cblsIntMap += v.id -> c;
+            c;
           case Some(c) => c;
         }
       }
@@ -233,12 +239,22 @@ class FZCBLSModel(val model: FZProblem, val c: ConstraintSystem, val m: Store, v
      });
     if(cpmodel!=null && model.search.obj != Objective.SATISFY){
       log("Calling the CP solver")
-      cpmodel.updateBestObjectiveValue(getCBLSVar(model.search.variable.get).value)
+      cpmodel.updateBestObjectiveValue(objectiveVar.value)
     //TODO: ignore variables whose domain should not be reduced (e.g. variables in the Circuit constraint)
       cpmodel.updateModelDomains();
       updateVarDomains();
       log("Variable domains updated")
     }
+     updateBestObjectiveValue(objectiveVar.value)
+  }
+  def updateBestObjectiveValue(value: Int){
+    model.search.obj match {
+	  case Objective.SATISFY => 
+	  case Objective.MAXIMIZE => 
+	    objectiveBound := value + 1
+	  case Objective.MINIMIZE =>
+	    objectiveBound := value - 1
+	}
   }
   var cpmodel = null.asInstanceOf[FZCPModel]
   def useCPsolver(cpm: FZCPModel){
@@ -256,44 +272,35 @@ class FZCBLSModel(val model: FZProblem, val c: ConstraintSystem, val m: Store, v
       vls.restrictDomain(vls.dom.min to vls.dom.max)
     }
   }
-  /*
-  def getSolution():String = {
-    model.solution.getSolution(
-      (s: String) => cblsIntMap.get(s) match {
-        case Some(intVar) =>
-          intVar.value + "";
-        case _ => throw new Exception("Unhappy")
-      });
-  }*/
 }
+
+
 class FZCBLSSolver extends SearchEngine with StopWatch {
 
   
   def solve(opts: Options) {
     startWatch()
     val log = opts.log();
+    val useCP = opts.is("usecp")
     log("start")
     
-    val useCP = opts.is("usecp")
-    
     val model = FZParser.readFlatZincModelFromFile(opts.fileName,log, false).problem;
-    
     Helper.getCstrsByName(model.constraints).map{ case (n:String,l:List[Constraint]) => l.length +"\t"+n}.toList.sorted.foreach(log(_))
-    
     log("Parsed. Parsing took "+getWatch+" ms")
-    val cpmodel = new FZCPModel(model,oscar.cp.Strong )
-    println(model.variables.toList.map(v => v.domainSize))
     
-    if(useCP){
+    val cpmodel = if(useCP){
+      val cpmodel = new FZCPModel(model,oscar.cp.Strong, true)
       FZModelTransfo.propagateDomainBounds(model)(log);
       log("Reduced Domains before CP")
-      println(model.variables.toList.map(v => v.domainSize))
+      //println(model.variables.toList.map(v => v.domainSize))
       cpmodel.createVariables()
       cpmodel.createConstraints()
       cpmodel.updateModelDomains()
       log("Reduced Domains with CP")
-      println(model.variables.toList.map(v => v.domainSize))
-    }
+      //println(model.variables.toList.map(v => v.domainSize))
+      cpmodel
+    }else null
+    
     if(!opts.is("no-simpl")){
       //TODO: check which part of the following is still necessary after using CP for bounds reduction.
       FZModelTransfo.propagateDomainBounds(model)(log);
@@ -310,6 +317,7 @@ class FZCBLSSolver extends SearchEngine with StopWatch {
     
     
     
+    
     //Hack for the subcircuit constraints:
     model.variables.foreach(v => if(v.isDefined && v.cstrs.exists{ 
         case c:subcircuit => true; 
@@ -317,12 +325,14 @@ class FZCBLSSolver extends SearchEngine with StopWatch {
         case _ => false}) v.definingConstraint.get.unsetDefinedVar(v))    
     
     
+        
     if(!opts.is("no-find-inv")){
       FZModelTransfo.findInvariants(model,log);
       log("Found Invariants")
     }else{
       log("Did not search for new invariants")
     }
+    
     
     //
     //added this loop to remove invariants targeting a bound variable.
@@ -333,17 +343,20 @@ class FZCBLSSolver extends SearchEngine with StopWatch {
       if(c.definedVar.isDefined && c.definedVar.get.isBound)c.unsetDefinedVar(c.definedVar.get)
     }
     
+    //Hack for the subcircuit constraints:
+    model.variables.foreach(v => if(v.isDefined && v.cstrs.exists{ 
+        case c:subcircuit => true; 
+        case c:circuit => true;
+        case _ => false}){v.definingConstraint.get.unsetDefinedVar(v)})    
+    
+    
+    
     if(opts.is("no-post-inv")){
       for(c <- model.constraints ){
         if(c.definedVar.isDefined)c.unsetDefinedVar(c.definedVar.get)
       }
     }
     
-    //Hack for the subcircuit constraints:
-    model.variables.foreach(v => if(v.isDefined && v.cstrs.exists{ 
-        case c:subcircuit => true; 
-        case c:circuit => true;
-        case _ => false}){v.definingConstraint.get.unsetDefinedVar(v)})    
     
     
     
@@ -353,13 +366,15 @@ class FZCBLSSolver extends SearchEngine with StopWatch {
     val (invariants,removed) = FZModelTransfo.getSortedInvariants(maybedircstrs)(log)
     log("Sorted "+invariants.length+" Invariants")
     
+    
+    
     // Model
     val m: Store = new Store(false, None, true)//setting the last Boolean to true would avoid calling the SCC algorithm but we have to make sure that there are no SCCs in the Graph. Is it the case in the way we build it?
     // constraint system
     val cs = ConstraintSystem(m)
     val cblsmodel = new FZCBLSModel(model,cs,m,log,() => getWatch)
     if(useCP)cblsmodel.useCPsolver(cpmodel)
-    log("Created Model (Variables and Objective)")
+    log("Created Model (Variables)")
     
     
     val softorimplcstrs = maybesoftcstrs ++ removed
@@ -383,12 +398,9 @@ class FZCBLSSolver extends SearchEngine with StopWatch {
       hardCS.close()
       Event(hardCS.violation, Unit => {if(hardCS.violation.value > 0){
         log(0,"PROBLEM: Some implicit Constraint is not satisfied during search.")
-        cblsmodel.neighbourhoods .foreach(n => log(0,n.getClass().toString()+" "+n.getVariables().mkString("[",",","]")))
+        cblsmodel.neighbourhoods.foreach(n => log(0,n.getClass().toString()+" "+n.getVariables().mkString("[",",","]")))
         throw new Exception()
-      }});
-      //Event(cs.violation, Unit => {log(cs.violation.toString);})
-      //
-       
+      }}); 
       softcstrs
     }else{
       log("Did not try to find implicit constraints")
@@ -404,22 +416,27 @@ class FZCBLSSolver extends SearchEngine with StopWatch {
       cblsmodel.cblsIntMap += invariant.definedVar.get.id -> inv;
     }
     log("Posted "+invariants.length+" Invariants")
+    
     Helper.getCstrsByName(invariants).map{ case (n:String,l:List[Constraint]) => l.length +"\t"+n}.toList.sorted.foreach(s => log(" "+s))
     for (constraint <- softConstraints) {
       log(2,"Posting as Soft "+constraint)
       poster.add_constraint(constraint);
     }
     log("Posted "+softConstraints.length+" Soft Constraints")
+    
     Helper.getCstrsByName(softConstraints).map{ case (n:String,l:List[Constraint]) => l.length +"\t"+n}.toList.sorted.foreach(s => log(" "+s))
     log(softConstraints.filter(c => c.getVariables().forall(v => !v.isDefined)).size+" are only on search variables.")
     log(softConstraints.filter(c => c.getVariables().forall(v => v.isDefined)).size+" are only on defined variables.")
     
     //println(implicitConstraints.length + " implicit constraints");
-    //Do not want to search on such variables!
-    cblsmodel.vars = cblsmodel.vars.filterNot(v => v.domainSize==1 || v.isControlledVariable);
-    cblsmodel.addDefaultNeighbourhouds()
+    
+    cblsmodel.createObjective()
+    
     cblsmodel.c.close()//The objective depends on the violation of the CS, so it must be first closed before creating the Objective.
-    cblsmodel.objective = new FZCBLSObjective(cblsmodel,log)//But objective is needed in neighbourhoods
+    //cblsmodel.objective = new FZCBLSObjective(cblsmodel,log)//But objective is needed in neighbourhoods
+    
+    
+    cblsmodel.addDefaultNeighbourhouds()
     cblsmodel.createNeighbourhoods()//So we actually create the neighbourhoods only after!
     cblsmodel.neighbourhoods.foreach(n => log(2,"Created Neighbourhood "+ n+ " over "+n.searchVariables.length+" variables"))
     
@@ -428,20 +445,29 @@ class FZCBLSSolver extends SearchEngine with StopWatch {
       log(0,"No neighbourhood has been created. Aborting!")
       return;
     }
-    log("Using "+cblsmodel.vars.length+" Search Variables in default assign neighbourhood")
-    log("Using "+cblsmodel.vars.filter(v => v.min ==0 && v.max==1).length+" Search Variables in default flip neighbourhood")
-    cblsmodel.vars.foreach(v => log(2,"Search with "+v+" dom: "+v.min +".."+v.max))
+    log("Using "+cblsmodel.vars.count(v => v.domainSize>1 && !v.isControlledVariable)+" Search Variables in default assign neighbourhood")
+    log("Using "+cblsmodel.vars.count(v => v.domainSize>1 && !v.isControlledVariable && v.min ==0 && v.max==1)+" Search Variables in default flip neighbourhood")
+    cblsmodel.vars.filter(v => v.domainSize>1 && !v.isControlledVariable).foreach(v => log(2,"Search with "+v+" dom: "+v.min +".."+v.max))
     log("Created all Neighborhoods")
     
     
     //Search
     val timeout = (if(opts.timeOut>0) {opts.timeOut} else 15 * 60) * 1000
-    log("Timeout is set to "+timeout+" milliseconds"); 
+    log("Timeout is set to "+timeout+" milliseconds");
+    
+    
+    
     val sc : SearchControl =  model.search.obj match {
-          case Objective.SATISFY => new SearchControl(cblsmodel,0,timeout,true);
-          case Objective.MAXIMIZE => new SearchControl(cblsmodel,-model.search.variable.get.max, timeout,false);
-          case Objective.MINIMIZE => new SearchControl(cblsmodel,model.search.variable.get.min, timeout,false);
+          case Objective.SATISFY => new SearchControl(cblsmodel,timeout,true);
+          case Objective.MAXIMIZE => new SearchControl(cblsmodel, timeout,false);
+          case Objective.MINIMIZE => new SearchControl(cblsmodel, timeout,false);
         }
+    
+    val search = new NeighbourhoodTabuSearch(cblsmodel,sc)
+    m.close()
+    sc.run(search)
+    //search.run()
+    /*
     //TODO: The search should print the solution if, by chance, the initial assingnment is a solution!
     val search = new Chain(
         new ActionSearch(() => {sc.cancelObjective()}),
@@ -477,6 +503,8 @@ class FZCBLSSolver extends SearchEngine with StopWatch {
         log("Best Overall Solution: "+sc.bestKnownObjective * (if(model.search.obj==Objective.MAXIMIZE) -1 else 1))
       }
     }
+    * 
+    */
     System.exit(0)
   }
 

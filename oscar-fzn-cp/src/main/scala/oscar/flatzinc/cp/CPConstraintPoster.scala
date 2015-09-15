@@ -66,6 +66,7 @@ class CPConstraintPoster(val pstrength: oscar.cp.core.CPPropagStrength){
       case int_le(x, y, ann)                          => getVar(x) <= getVar(y)
       case reif(int_eq(x,y,ann),b)                    => getBoolVar(b) == (getVar(x) ?== getVar(y))
       case reif(int_le(x,y,ann),b)                    => getBoolVar(b) == ( getVar(x) ?<= getVar(y))
+      case reif(int_ne(x,y,ann),b)                    => getBoolVar(b) == ( getVar(x) ?!= getVar(y))
       //TODO: Handle binary and ternary cases, as well as all unit weights
       case int_lin_eq(params, vars, sum, ann)         => oscar.cp.weightedSum(params.map(_.value), vars.map(getVar), getVar(sum))
       case int_lin_le(params, vars, sum, ann)         => oscar.cp.weightedSum(params.map(_.value), vars.map(getVar)) <= getVar(sum) //TODO: make it native

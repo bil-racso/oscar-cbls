@@ -15,7 +15,7 @@
 /**
  * @author Jean-Noël Monette
  */
-package oscar.flatzinc.cbls
+package oscar.flatzinc.cbls2
 
 import oscar.cbls.invariants.core.computation.CBLSIntVar
 import oscar.flatzinc.cbls.support._

@@ -435,8 +435,7 @@ class MaxViolating(searchVariables: Array[CBLSIntVarDom], objective: CBLSObjecti
     val bestValue = selectMin(searchVariables(bestIndex).getDomain())((i: Int) => acceptOr(new AssignMove(searchVariables(bestIndex),i,objective.assignVal(searchVariables(bestIndex), i)),accept).value, _ != searchVariables(bestIndex).value)
     return acceptOr(new AssignMove(searchVariables(bestIndex),bestValue,objective.assignVal(searchVariables(bestIndex), bestValue)),accept)
   }
-  def getExtendedMinObjective(it: Int, accept: Move => Boolean): Move = {
-    //TODO: write this loop manually, with hotstart and selectfirst/best hybrid. 
+  def getExtendedMinObjective(it: Int, accept: Move => Boolean): Move = { 
     var bMv = null.asInstanceOf[Move]
     var bObj = Int.MaxValue
     var cVar = start
@@ -444,7 +443,7 @@ class MaxViolating(searchVariables: Array[CBLSIntVarDom], objective: CBLSObjecti
     val oObj = objective.value
     while(!(looped && cVar == start)){
       val v = searchVariables(cVar)
-      if(v.domainSize < 10000000){
+      if(v.domainSize < 10000000){//TODO: Do something about this!
         for(cVal <- v.getDomain()){
           if(v.value != cVal){
             val mv = new AssignMove(v,cVal,objective.assignVal(v,cVal))
