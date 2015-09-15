@@ -116,7 +116,7 @@ abstract class Neighborhood{
   /** verbosity: 0: none
     * 1: moves
     * 2: moves + failed searches
-    * 3: moves + explored neighborhoods
+    * 3: moves + explored neighbors
     */
   var _verbose:Int = 0
   def verbose:Int = _verbose
@@ -135,10 +135,14 @@ abstract class Neighborhood{
     additionalStringGenerator = additionalString
   }
 
+  protected def printTakenMoves:Boolean = verbose >= 1
+  protected def printPerformedSearches:Boolean = verbose >=2
+  protected def printExploredNeighbors:Boolean = verbose >=3
+
+
   //the number of characters to display in case a verbose approach is deployed.
   var paddingLength:Int = 100
 
-  protected def amIVerbose = verbose >= 2
   /**
    * @return true if a move has been performed, false otherwise
    */
@@ -164,10 +168,10 @@ abstract class Neighborhood{
     while(!shouldStop(moveCount)){
       getMove(enrichedObj, acceptanceCriterion) match {
         case NoMoveFound =>
-          if (verbose >= 1) println("no more move found after " + toReturn + " it")
+          if (printTakenMoves) println("no more move found after " + toReturn + " it")
           return toReturn;
         case m: MoveFound =>
-          if (verbose >= 1){
+          if (printTakenMoves){
 
             def nStrings(n: Int, s: String): String = if (n <= 0) "" else s + nStrings(n - 1, s)
             def padToLength(s: String, l: Int) = (s + nStrings(l, " ")).substring(0, l)
@@ -201,7 +205,7 @@ abstract class Neighborhood{
       toReturn += 1
       moveCount += 1
     }
-    if(verbose >= 1)println("stop criteria met after "+ moveCount+" moves")
+    if(printTakenMoves)println("stop criteria met after "+ moveCount+" moves")
     toReturn
   }
 
@@ -541,19 +545,19 @@ abstract class EasyNeighborhood(best:Boolean = false, neighborhoodName:String=nu
     this.acceptanceCriterion = acceptanceCriterion
     toReturnMove = null
     bestNewObj = Int.MaxValue
-    this.obj = if(amIVerbose) new LoggingObjective(obj) else obj
-    if(amIVerbose) println(neighborhoodNameToString + ": start exploration")
+    this.obj = if(printExploredNeighbors) new LoggingObjective(obj) else obj
+    if(printPerformedSearches) println(neighborhoodNameToString + ": start exploration")
 
     exploreNeighborhood()
 
     if(toReturnMove == null || (best && !acceptanceCriterion(oldObj,bestNewObj))) {
-      if (amIVerbose){
+      if (printPerformedSearches){
         println(neighborhoodNameToString + ": no move found")
       }
       NoMoveFound
     }else {
-      if (amIVerbose){
-        println(neighborhoodNameToString + ": move found")
+      if (printPerformedSearches){
+        println(neighborhoodNameToString + ": move found: " + toReturnMove)
       }
       toReturnMove
     }
@@ -581,7 +585,7 @@ abstract class EasyNeighborhood(best:Boolean = false, neighborhoodName:String=nu
    * @return true if the move is requested, then you should call submitFoundMove
    */
   def moveRequested(newObj:Int):Boolean = {
-    if (amIVerbose){
+    if (printExploredNeighbors){
       tmpNewObj = newObj
       return true
     }
@@ -607,7 +611,7 @@ abstract class EasyNeighborhood(best:Boolean = false, neighborhoodName:String=nu
     * @return true if the search must be stopped right now (you can save some internal state by the way if you need  to, e.g. for a hotRestart
     */
   def submitFoundMove(m:Move):Boolean = {
-    val moveIsActuallyRequested:Boolean = if(amIVerbose){
+    val moveIsActuallyRequested:Boolean = if(printExploredNeighbors){
       //in this case we always ask for the move, but we decide here if it is actually needed,
       // so we somewhat repeat the normal process of moveRequested here
       val moveIsActuallyRequested = myMoveRequested(tmpNewObj)

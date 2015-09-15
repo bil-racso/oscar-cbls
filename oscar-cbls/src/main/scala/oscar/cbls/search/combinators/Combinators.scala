@@ -75,7 +75,7 @@ class BasicSaveBest(a: Neighborhood, o: Objective) extends NeighborhoodCombinato
           //so we save
           best = s.solution(true)
           bestObj = objBeforeMove
-          if (verbose >= 2) println("saving best solution before degradation (obj:" + bestObj + ")")
+          if (printTakenMoves) println("saving best solution before degradation (obj:" + bestObj + ")")
         }
         MoveFound(m)
     }
@@ -86,11 +86,11 @@ class BasicSaveBest(a: Neighborhood, o: Objective) extends NeighborhoodCombinato
   def restoreBest() {
     val isCurrentAccepteable = currentSolutionIsAcceptable
     if (best == null && !isCurrentAccepteable) {
-      if (verbose >= 1) println("no single acceptable solution seen")
+      if (printTakenMoves) println("no single acceptable solution seen")
     } else if (o.value > bestObj || !isCurrentAccepteable) {
       s.restoreSolution(best)
-      if (verbose >= 1) println("restoring best solution (obj:" + bestObj + ")")
-    } else if (verbose >= 1) println("no better solution to restore")
+      if (printTakenMoves) println("restoring best solution (obj:" + bestObj + ")")
+    } else if (printTakenMoves) println("no better solution to restore")
   }
 
   /**
@@ -352,7 +352,7 @@ class LearningRandom(l:List[Neighborhood], weightUpdate:(Statistics,Double) => D
       weightedInstrumentedNeighborhoods = newlyWeightedNeighborhoods.map(sw => (sw._1,(if (sw._2 < 0) defaultWeight else sw._2)))
       currentRandom = new BiasedRandom(weightedInstrumentedNeighborhoods :_*)()
       stepsBeforeUpdate = updateEveryXCalls
-      if(amIVerbose) println("learning done:" + weightedInstrumentedNeighborhoods )
+      if(printPerformedSearches) println("learning done:" + weightedInstrumentedNeighborhoods )
     }
     stepsBeforeUpdate -=1
     currentRandom.getMove(obj,acceptanceCriterion)
@@ -638,7 +638,7 @@ class MaxMoves(a: Neighborhood, val maxMove: Int, cond: Move => Boolean = null) 
         case x => x
       }
     } else {
-      if (verbose >= 1)
+      if (printPerformedSearches)
         println("MaxMoves: reached " + (if (maxMove == 1) "1 move " else maxMove + " moves"))
       NoMoveFound
     }
@@ -864,7 +864,7 @@ class MaxMovesWithoutImprovement(a: Neighborhood, val cond: Move => Boolean, val
         case x => x
       }
     } else {
-      if (verbose >= 1) println("MaxStepsWithoutImprovement: reached " + maxMovesWithoutImprovement + " moves without improvement")
+      if (printPerformedSearches) println("MaxStepsWithoutImprovement: reached " + maxMovesWithoutImprovement + " moves without improvement")
       NoMoveFound
     }
   }

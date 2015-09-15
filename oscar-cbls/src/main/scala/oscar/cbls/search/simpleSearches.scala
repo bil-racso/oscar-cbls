@@ -89,7 +89,6 @@ case class AssignNeighborhood(vars:Array[CBLSIntVar],
           return
         }
 */
-
       }
     }
   }
@@ -217,7 +216,7 @@ case class RandomizeNeighborhood(vars:Array[CBLSIntVar],
   extends Neighborhood with AlgebraTrait with SearchEngineTrait{
 
   override def getMove(obj: Objective, acceptanceCriteria: (Int, Int) => Boolean = null): SearchResult = {
-    if(amIVerbose) println("applying " + name)
+    if(printPerformedSearches) println("applying " + name)
 
     var toReturn:List[Move] = List.empty
 
@@ -235,7 +234,7 @@ case class RandomizeNeighborhood(vars:Array[CBLSIntVar],
         toReturn = AssignMove(vars(i),selectFrom(valuesToConsider(vars(i),i), (_:Int) != oldVal),Int.MaxValue) :: toReturn
       }
     }
-    if(amIVerbose) println(name + ": move found")
+    if(printPerformedSearches) println(name + ": move found")
     CompositeMove(toReturn, Int.MaxValue, name)
   }
 }
@@ -257,7 +256,7 @@ case class RandomSwapNeighborhood(vars:Array[CBLSIntVar],
   extends Neighborhood with AlgebraTrait with SearchEngineTrait{
 
   override def getMove(obj: Objective, acceptanceCriteria: (Int, Int) => Boolean = null): SearchResult = {
-    if(amIVerbose) println("applying " + name)
+    if(printPerformedSearches) println("applying " + name)
 
     var toReturn:List[Move] = List.empty
 
@@ -271,7 +270,7 @@ case class RandomSwapNeighborhood(vars:Array[CBLSIntVar],
       toReturn = SwapMove(vars(i), vars(j), Int.MaxValue) :: toReturn
     }
 
-    if(amIVerbose) println(name + ": move found")
+    if(printPerformedSearches) println(name + ": move found")
     CompositeMove(toReturn, Int.MaxValue, name)
   }
 }
