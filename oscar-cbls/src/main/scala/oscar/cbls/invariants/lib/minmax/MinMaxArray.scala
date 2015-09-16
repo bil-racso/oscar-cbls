@@ -44,11 +44,12 @@ case class MaxArray(varss: Array[IntValue], cond: SetValue = null, default: Int 
   override def ExtremumName: String = "Max"
 
   //More precise bounds
-  override def performBulkComputation(bulkedVar: Array[IntValue]) = {
-    (bulkedVar.foldLeft(Int.MinValue)((acc, intvar) => if (intvar.min > acc) intvar.min else acc),
-      bulkedVar.foldLeft(Int.MinValue)((acc, intvar) => if (intvar.max > acc) intvar.max else acc))
-  }
-  
+  override def performBulkComputation(bulkedVar: Array[IntValue]) =
+    if (cond == null){
+      (bulkedVar.foldLeft(Int.MinValue)((acc, intvar) => if (intvar.min > acc) intvar.min else acc),
+        bulkedVar.foldLeft(Int.MinValue)((acc, intvar) => if (intvar.max > acc) intvar.max else acc))
+    }else super.performBulkComputation(bulkedVar)
+
   override def checkInternals(c: Checker) {
     for (v <- this.varss) {
       c.check(this.value >= v.value,
@@ -71,12 +72,13 @@ case class MinArray(varss: Array[IntValue], cond: SetValue = null, default: Int 
 
   override def ExtremumName: String = "Min"
 
-  //More precise bounds 
-  override def performBulkComputation(bulkedVar: Array[IntValue]) = {
-    (bulkedVar.foldLeft(Int.MaxValue)((acc, intvar) => if (intvar.min < acc) intvar.min else acc),
-      bulkedVar.foldLeft(Int.MaxValue)((acc, intvar) => if (intvar.max < acc) intvar.max else acc))
-  }
-  
+  //More precise bounds
+  override def performBulkComputation(bulkedVar: Array[IntValue]) =
+    if (cond == null){
+      (bulkedVar.foldLeft(Int.MaxValue)((acc, intvar) => if (intvar.min < acc) intvar.min else acc),
+        bulkedVar.foldLeft(Int.MaxValue)((acc, intvar) => if (intvar.max < acc) intvar.max else acc))
+    }else super.performBulkComputation(bulkedVar)
+
   override def checkInternals(c: Checker) {
     for (v <- this.varss) {
       c.check(this.value <= v.value,
@@ -409,15 +411,15 @@ abstract class MiaxConstArrayLazy(vars: Array[Int], cond: SetValue, default: Int
 
   //TODO this is a queue, but a stack might be faster.
   def postponeOrDo(u:(Int,Boolean)) {
-//    println("postponeOrDo:" + u)
+    //    println("postponeOrDo:" + u)
     def updateToDo(mToDo: QList[(Int,Boolean)]): QList[(Int,Boolean)] =
       if (mToDo == null) {
         toDoSize += 1;
-//        println("postponed");
+        //        println("postponed");
         QList(u)
       } else {
         if (isOpposite(mToDo.head,u)) {
-//          println("anihilation")
+          //          println("anihilation")
           toDoSize -= 1
           mToDo.tail
         } else QList(mToDo.head, updateToDo(mToDo.tail))
@@ -425,7 +427,7 @@ abstract class MiaxConstArrayLazy(vars: Array[Int], cond: SetValue, default: Int
 
     toDo = updateToDo(toDo)
     while(toDoSize > maxToDoSize){
-//      println("popping")
+      //      println("popping")
       doIt(toDo.head)
       toDo = toDo.tail
       toDoSize -=1
