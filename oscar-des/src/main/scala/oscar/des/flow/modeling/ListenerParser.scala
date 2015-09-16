@@ -2,7 +2,6 @@ package oscar.des.flow.modeling
 
 import oscar.des.engine.Model
 import oscar.des.flow.lib._
-import oscar.examples.des.FactoryExample._
 
 import scala.collection.immutable.SortedMap
 import scala.util.parsing.combinator._
@@ -25,7 +24,7 @@ class QuickParser(storages:Iterable[String],processes:Iterable[String]){
   val storagesMap = storages.foldLeft[SortedMap[String,Storage]](SortedMap.empty)(
     (theMap,storageName) => theMap + ((storageName,new FIFOStorage(10,Nil,storageName,false,false))))
   val processMap = processes.foldLeft[SortedMap[String,ActivableProcess]](SortedMap.empty)(
-    (theMap,processName) => theMap + ((processName,new SingleBatchProcess(m, 1, Array(), Array(), identity, processName, verbose))))
+    (theMap,processName) => theMap + ((processName,new SingleBatchProcess(m, () => 1.0 , Array(), Array(), null, processName, false))))
 
   val myParser = new ListenerParser(storageFunction = (s:String) => storagesMap.get(s),
     processFunction = (s:String) => processMap.get(s))
@@ -256,8 +255,8 @@ object ParserTester extends App with FactoryHelper{
   val bStorage = new FIFOStorage(10,Nil,"bStorage",false,false)
   val storages = SortedMap("aStorage"->aStorage,"bStorage" -> bStorage)
 
-  val aProcess = new SingleBatchProcess(m, 5000, Array(), Array((()=>1,aStorage)), identity, "aProcess", verbose)
-  val bProcess = new SingleBatchProcess(m, 5000, Array(), Array((()=>1,aStorage)), identity, "bProcess", verbose)
+  val aProcess = new SingleBatchProcess(m, 5000, Array(), Array((()=>1,aStorage)), null, "aProcess", false)
+  val bProcess = new SingleBatchProcess(m, 5000, Array(), Array((()=>1,aStorage)), null, "bProcess", false)
   val processes = SortedMap("aProcess"->aProcess,"bProcess" -> bProcess)
 
   val myParser = new ListenerParser(storageFunction = (s:String) => storages.get(s),

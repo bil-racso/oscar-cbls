@@ -37,7 +37,7 @@ import oscar.des.flow.core.ItemClassHelper._
  * @author renaud.delandtsheer@cetic.be
  * */
 case class SingleBatchProcess(m:Model,
-                              batchDuration:() => Float,
+                              batchDuration:() => Double,
                               inputs:Array[(() => Int, Fetchable)],
                               outputs:Array[(()=>Int,Putable)],
                               transformFunction:ItemClassTransformFunction,
@@ -104,7 +104,7 @@ case class SingleBatchProcess(m:Model,
  * */
 case class BatchProcess(m:Model,
                         numberOfBatches:Int,
-                        batchDuration:() => Float,
+                        batchDuration:() => Double,
                         inputs:Array[(() => Int, Fetchable)],
                         outputs:Array[(() => Int,Putable)],
                         override val name:String,
@@ -142,7 +142,7 @@ case class BatchProcess(m:Model,
  * @author renaud.delandtsheer@cetic.be
  * */
 case class SplittingSingleBatchProcess(m:Model,
-                                       batchDuration:() => Float,
+                                       batchDuration:() => Double,
                                        inputs:Array[(() => Int, Fetchable)],
                                        outputs:Array[Array[(() => Int,Putable)]],
                                        transformFunction:ItemClassTransformWitAdditionalOutput,
@@ -219,7 +219,7 @@ case class SplittingSingleBatchProcess(m:Model,
  * */
 case class SplittingBatchProcess(m:Model,
                                  numberOfBatches:Int,
-                                 batchDuration:() => Float,
+                                 batchDuration:() => Double,
                                  inputs:Array[(() => Int, Fetchable)],
                                  outputs:Array[Array[(()=>Int,Putable)]],
                                  override val name:String,
@@ -259,8 +259,8 @@ case class SplittingBatchProcess(m:Model,
  * @author renaud.delandtsheer@cetic.be
  */
 class ConveyorBeltProcess(m:Model,
-                          processDuration:() => Float,
-                          minimalSeparationBetweenBatches:Float,
+                          processDuration:() => Double,
+                          minimalSeparationBetweenBatches:Double,
                           val inputs:Array[(() => Int, Fetchable)],
                           val outputs:Array[(() => Int, Putable)],
                           transformFunction:ItemClassTransformFunction,

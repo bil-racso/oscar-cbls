@@ -13,9 +13,9 @@ import scala.language.implicitConversions
 trait FactoryHelper {
 
 
-  implicit def floatToConstantFloatFunction(f: Float): (() => Float) = () => f
-  implicit def intToConstantFloatFunction(f: Int): (() => Float) = () => f
-  implicit def floatToConstantIntFunction(f: Float): (() => Int) = () => f.toInt
+  implicit def doubleToConstantDoubleFunction(f: Double): (() => Double) = () => f
+  implicit def intToConstantDoubleFunction(f: Int): (() => Double) = () => f
+  implicit def doubleToConstantIntFunction(f: Double): (() => Int) = () => f.toInt
   implicit def intToConstantIntFunction(f: Int): (() => Int) = () => f
   implicit def constantFetchableToFunctionFetchable(l: Array[(Int,Fetchable)]): Array[(()=>Int,Fetchable)] = l.map(v => (()=>v._1,v._2))
   implicit def constantPutableToFunctionPutable(l: Array[(Int,Putable)]): Array[(()=>Int,Putable)] = l.map(v => (()=>v._1,v._2))
@@ -35,7 +35,7 @@ trait FactoryHelper {
    * @author renaud.delandtsheer@cetic.be
    * */
   def singleBatchProcess(m:Model,
-                         batchDuration:() => Float,
+                         batchDuration:() => Double,
                          inputs:Array[(() => Int, Fetchable)],
                          outputs:Array[(()=>Int,Putable)],
                          transformFunction:ItemClassTransformFunction,
@@ -57,7 +57,7 @@ trait FactoryHelper {
    * */
   def batchProcess(m:Model,
                    numberOfBatches:Int,
-                   batchDuration:() => Float,
+                   batchDuration:() => Double,
                    inputs:Array[(() => Int, Fetchable)],
                    outputs:Array[(() => Int,Putable)],
                    name:String,
@@ -83,8 +83,8 @@ trait FactoryHelper {
    * @author renaud.delandtsheer@cetic.be
    */
   def conveyorBeltProcess(m:Model,
-                          processDuration:() => Float,
-                          minimalSeparationBetweenBatches:Float,
+                          processDuration:() => Double,
+                          minimalSeparationBetweenBatches:Double,
                           inputs:Array[(() => Int, Fetchable)],
                           outputs:Array[(() => Int, Putable)],
                           transformFunction:ItemClassTransformFunction,
@@ -105,7 +105,7 @@ trait FactoryHelper {
    * */
   def splittingBatchProcess(m:Model,
                             numberOfBatches:Int,
-                            batchDuration:() => Float,
+                            batchDuration:() => Double,
                             inputs:Array[(() => Int, Fetchable)],
                             outputs:Array[Array[(()=>Int,Putable)]],
                             name:String,
@@ -128,7 +128,7 @@ trait FactoryHelper {
    * @author renaud.delandtsheer@cetic.be
    * */
   def splittingSingleBatchProcess(m:Model,
-                                  batchDuration:() => Float,
+                                  batchDuration:() => Double,
                                   inputs:Array[(() => Int, Fetchable)],
                                   outputs:Array[Array[(() => Int,Putable)]],
                                   transformFunction:ItemClassTransformWitAdditionalOutput,
