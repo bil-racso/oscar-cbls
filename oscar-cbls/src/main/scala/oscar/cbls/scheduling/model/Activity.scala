@@ -54,6 +54,8 @@ class Activity(var duration: IntValue, val planning: Planning, val name: String 
                shifter: (IntValue, IntValue) => IntValue = (a: IntValue, _) => a) {
   val ID: Int = planning.addActivity(this)
 
+
+  duration.domain.restrict(PositiveOrNullRange)
   val isTakenInSentinel = true
 
   override def equals(obj: Any): Boolean = {
@@ -99,7 +101,6 @@ class Activity(var duration: IntValue, val planning: Planning, val name: String 
     }
   }
 
-  @deprecated("method that perform such intricate operations have been moved as neighborhood", "1.2")
   def removeNonTightAdditionalPredecessors() {
     for (iD: Int <- additionalPredecessors.value) {
       if (!potentiallyKilledPredecessors.value.contains(iD)) {
@@ -123,19 +124,21 @@ class Activity(var duration: IntValue, val planning: Planning, val name: String 
   }
 
   def maxDuration = planning.maxDuration
+  val durationMinusOne = duration - 1
 
   val earliestStartDate: CBLSIntVar = CBLSIntVar(planning.model, 0, 0 to maxDuration,
     "esd(" + name + ")")
-  val earliestEndDate: CBLSIntVar = CBLSIntVar(planning.model, duration.value, 0 to maxDuration,
+  val earliestEndDate: CBLSIntVar = CBLSIntVar(planning.model,
+    duration.value, -1 to maxDuration, //-1 is used because activity end at "start + duration -1", and duration might be zero
     "eed(" + name + ")")
-  earliestEndDate <== earliestStartDate + duration - 1
+  earliestEndDate <== earliestStartDate + durationMinusOne
 
-  val latestEndDate: CBLSIntVar = CBLSIntVar(planning.model, maxDuration, 0 to maxDuration,
+  val latestEndDate: CBLSIntVar = CBLSIntVar(planning.model, maxDuration, 0 to (maxDuration + 2), //idem, we have to do +1 here for the same reason
     "led(" + name + ")")
 
   var staticPredecessorsID:CBLSSetConst = null
 
-  val latestStartDate = latestEndDate - duration
+  val latestStartDate = latestEndDate - durationMinusOne
   var allSucceedingActivities: CBLSSetVar = null
 
   var additionalPredecessors = new CBLSSetVar(planning.model, SortedSet.empty, 0 to planning.activities.size,
@@ -179,7 +182,7 @@ class Activity(var duration: IntValue, val planning: Planning, val name: String 
         "succeeding_activities_of_" + name)
 
       latestEndDate <== MinArray(planning.latestStartDates, allSucceedingActivities,
-          planning.maxDuration)
+          planning.maxDuration)-1
     }
   }
 

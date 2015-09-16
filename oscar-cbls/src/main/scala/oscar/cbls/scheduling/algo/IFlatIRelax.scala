@@ -67,7 +67,7 @@ case class plateauMaxItStopCriterion(maxIt: Int, stable: Int, verbose:Boolean)
   }
 }
 */
-
+/*
 /**
  * @param p
  * @param verbose
@@ -295,3 +295,4 @@ class IFlatIRelax(p: Planning,
   }
 
 }
+*/

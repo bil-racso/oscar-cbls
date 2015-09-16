@@ -1,12 +1,12 @@
 package oscar.cbls.scheduling.model
-
+/*
 import oscar.cbls.binPacking.model.{Bin, BinPackingProblem, Item}
 import oscar.cbls.binPacking.solver.BinPackingSolver
 import oscar.cbls.constraints.core.ConstraintSystem
 import oscar.cbls.constraints.lib.global.MultiKnapsack
 import oscar.cbls.invariants.core.computation.{CBLSIntConst, CBLSIntVar, CBLSSetVar}
 import oscar.cbls.invariants.lib.logic.TranslatedDenseCluster
-import oscar.cbls.invariants.lib.minmax.ArgMaxArray
+import oscar.cbls.invariants.lib.minmax.ArgMax
 import oscar.cbls.invariants.lib.numeric.Sum
 import oscar.cbls.modeling.Algebra._
 import oscar.cbls.objective.Objective
@@ -89,10 +89,10 @@ class BinPackingResource(planning:Planning, n:String, bins:Int => List[Int], Max
     ResourceAtTime(t,binArray)
   })
 
-  private val violationTracker = ArgMaxArray(binsAtAllTimes.map(_.overallViolation.objective))
+  private val violationTracker = ArgMax(binsAtAllTimes.map(_.overallViolation))
   private val highestViolationPositions: CBLSSetVar = violationTracker
 
-  val overShoot: CBLSIntVar = violationTracker.getMax
+  val overShoot: CBLSIntVar = violationTracker.
   def worseOverShootTime: Int = highestViolationPositions.value.firstKey
 
   /** This method is called by the framework before starting the scheduling
@@ -166,3 +166,4 @@ class BinPackingResource(planning:Planning, n:String, bins:Int => List[Int], Max
     use(t).value.map((activityID:Int) => planning.activityArray(activityID))
   }
 }
+*/
