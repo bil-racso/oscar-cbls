@@ -332,11 +332,13 @@ class BiasedRandom(a: (Neighborhood,Double)*)(noRetryOnExhaust:Boolean = false) 
  * @param weightUpdate a function that updates the weight of a neighborhood. if the function returns a negative number, the neighborhood gets the average weight thatthe other received.
  * @param updateEveryXCalls
  */
-class LearningRandom(l:List[Neighborhood], weightUpdate:(Statistics,Double) => Double =
-(stat,oldWeight) => {if (stat.nbCalls == 0) -1 else {
-  val toReturn =  (stat.slopeOrZero + oldWeight)/2
-  stat.resetStatistics
-  toReturn}}, updateEveryXCalls:Int = 10)
+class LearningRandom(l:List[Neighborhood],
+                     weightUpdate:(Statistics,Double) => Double =
+                     (stat,oldWeight) => {if (stat.nbCalls == 0) -1 else {
+                       val toReturn =  (stat.slopeOrZero + oldWeight)/2
+                       stat.resetStatistics
+                       toReturn}},
+                     updateEveryXCalls:Int = 10)
   extends NeighborhoodCombinator(l:_*){
 
   val instrumentedNeighborhood:List[Statistics] = l.map(Statistics(_))
@@ -347,12 +349,12 @@ class LearningRandom(l:List[Neighborhood], weightUpdate:(Statistics,Double) => D
   override def getMove(obj: Objective, acceptanceCriterion: (Int, Int) => Boolean): SearchResult = {
     if(stepsBeforeUpdate <= 0){
       val newlyWeightedNeighborhoods = weightedInstrumentedNeighborhoods.map((sd => (sd._1,weightUpdate(sd._1,sd._2))))
-      val (totalWeightNonNegative,nonNegativeCount) = newlyWeightedNeighborhoods.foldLeft((0.0,0))((a:(Double,Int),b:(Statistics,Double)) => (if(b._2 <0) a else (a._1 + b._2,a._2+1)))
+      val (totalWeightNonNegative,nonNegativeCount) = newlyWeightedNeighborhoods.foldLeft((0.0,0))((a:(Double,Int),b:(Statistics,Double)) => (if(b._2 < 0) a else (a._1 + b._2,a._2+1)))
       val defaultWeight = totalWeightNonNegative / nonNegativeCount
       weightedInstrumentedNeighborhoods = newlyWeightedNeighborhoods.map(sw => (sw._1,(if (sw._2 < 0) defaultWeight else sw._2)))
       currentRandom = new BiasedRandom(weightedInstrumentedNeighborhoods :_*)()
       stepsBeforeUpdate = updateEveryXCalls
-      if(printTakenMoves) println("learning done:" + weightedInstrumentedNeighborhoods )
+      if(printPerformedSearches ||true) println("LearningRandom: weights updated: " + weightedInstrumentedNeighborhoods )
     }
     stepsBeforeUpdate -=1
     currentRandom.getMove(obj,acceptanceCriterion)
