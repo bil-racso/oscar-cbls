@@ -245,7 +245,7 @@ class FZCBLSModel(val model: FZProblem, val c: ConstraintSystem, val m: Store, v
       //updateVarDomains();
       log(2,"Variable domains updated")
     }
-     updateBestObjectiveValue(objectiveVar.value)
+    if(model.search.obj != Objective.SATISFY)updateBestObjectiveValue(objectiveVar.value)
   }
   def updateBestObjectiveValue(value: Int){
     model.search.obj match {
