@@ -1,9 +1,7 @@
 package oscar.des.flow.modeling
 
 import oscar.des.flow.core._
-import oscar.des.flow.lib.BoolExpr
 import scala.collection.immutable.SortedSet
-import scala.util.parsing.combinator._
 
 sealed abstract class ParsingResultItemClassTransformFunction()
 case class ParsedTransformFuntion(f:ItemClassTransformFunction) extends ParsingResultItemClassTransformFunction
@@ -35,8 +33,18 @@ class AttributeFunctionParser(attributes:AttributeDefinitions)
   private def transformFunctionWithOutputParser:Parser[ItemClassTransformWitAdditionalOutput] = (
     "if"~>attributeConditionParser~("then"~>(transformFunctionWithOutputParser~("else"~>transformFunctionWithOutputParser))) ^^ {
       case ((attr:AttributeCondition)~((thenF:ItemClassTransformWitAdditionalOutput)~(elseF:ItemClassTransformWitAdditionalOutput))) => iTE(attr,thenF,elseF)}
-      |"outputPort"~>integer~attributeTransformFunctionParser^^{case i~f => outputValue(()=>i,f)}
+      | outputPortParser ~attributeTransformFunctionParser^^{case i~f => outputValue(i,f)}
     )
+
+  private def outputPortParser:Parser[PortChoice] =
+    rep1("outputPort"~>integer~opt("weight"~>doubleParser)^^{
+      case i~None => (i,1)
+      case i~Some(j) => (i,j)}) ^^
+      { case List(a) => constantPort(a._1)
+      case l:List[(Int,Double)] => discreteChoice(l)
+      }
+
+  def doubleParser:Parser[Double] = """[0-9]+(\.[0-9]+)?""".r ^^ {case s:String => println("converting" + s);s.toDouble}
 
   private def attributeTransformFunctionParser: Parser[ItemClassTransformFunction] =
     rep(atomicAttributeTransformFunctionParser) ^^ {
@@ -103,11 +111,13 @@ object testAttributeFctParser extends App{
   testTransformFunctionWithOutput(
     "if attribute1 & attribute3 | attribute4 then \n" +
       "if attribute2 then \n" +
-      "  outputPort 3 \n" +
+      "  outputPort 1 weight 0.5 \n" +
+      "  outputPort 3 weight 0.5 \n" +
       "else \n" +
       "  outputPort 12 \n" +
-    "else \n" +
-    "  outputPort 2 \n" +
-    aTransformFunction
+      "else \n" +
+      "  outputPort 2 \n" +
+      aTransformFunction
   )
 }
+

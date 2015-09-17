@@ -66,15 +66,18 @@ trait AttributeHelper {
 
   /**
    * a function that defines the output integer sent back
-   * @param outputValue
+   * @param port
    * @param attr
    */
-  def outputValue(outputValue: () => Int, attr: ItemClassTransformFunction = Identity())
-  = OutputValue(outputValue, attr)
+  def outputValue(port:PortChoice, attr: ItemClassTransformFunction = Identity())
+  = OutputValue(port, attr)
+
+  def discreteChoice(choices:List[(Int,Double)]):PortChoice = new DiscreteChoice(choices)
+
+  def constantPort(port:Int):PortChoice = ConstantPort(port)
 
 
-
-  def and(a:AttributeCondition,b:AttributeCondition) = AttributeAnd(a,b)
+    def and(a:AttributeCondition,b:AttributeCondition) = AttributeAnd(a,b)
   def or(a:AttributeCondition,b:AttributeCondition) = AttributeOr(a,b)
   def not(a:AttributeCondition) = AttributeNot(a)
   def attributeTerminal(a:Attribute) = AttributeTerminal(a)

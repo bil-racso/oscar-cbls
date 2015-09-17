@@ -27,7 +27,7 @@ object FactoryExample extends App with FactorySimulationHelper {
   val standardItemClass = zeroItemClass
   val allAttributes = new AttributeDefinitions("sampleAttribute", "anotherOne", "CheapSteel","expensiveSteel")
   val initialRawBatch = allAttributes.getN(0)
-  val choseZeroOne = iTE(attributeTerminal(initialRawBatch),outputValue(choose(0 to 1)),outputValue(1))
+  val choseZeroOne = iTE(attributeTerminal(initialRawBatch),outputValue(discreteChoice(List((0,0.5),(1,0.5)))),outputValue(constantPort(1)))
 
   //time unit is the second
   val rawMaterialStorage = fIFOStorage(200,List((40,AttributeSet(SortedSet(initialRawBatch),allAttributes).itemClass)),"rawMaterialStorage", verbose,false)

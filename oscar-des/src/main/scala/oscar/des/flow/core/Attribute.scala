@@ -5,6 +5,7 @@ import oscar.des.flow.core.ItemClassHelper.ItemClass
 import scala.collection.SortedSet
 import scala.collection.immutable.{SortedMap, BitSet}
 import scala.language.implicitConversions
+import scala.util.Random
 
 
 /**
@@ -217,11 +218,36 @@ case class AttributeTerminal(a:Attribute) extends AttributeCondition{
  * @param outputValue
  * @param attr
  */
-case class OutputValue(outputValue:()=>Int,attr:ItemClassTransformFunction = Identity()) extends ItemClassTransformWitAdditionalOutput{
+case class OutputValue(outputValue:PortChoice,attr:ItemClassTransformFunction = Identity()) extends ItemClassTransformWitAdditionalOutput{
   override def slowApply(l: AttributeSet): (Int, AttributeSet) =
     (outputValue(),attr.slowApply(l))
 
   override def apply(i: Int): (Int, Int) = {
     (outputValue(),attr(i))
   }
+}
+abstract class PortChoice{
+  def apply():Int
+}
+case class ConstantPort(port:Int) extends PortChoice{
+  override def apply():Int = port
+}
+case class DiscreteChoice(choices:List[(Int,Double)]) extends PortChoice{
+  val totalWeights = choices.foldLeft(0.0)((acc,newVal) => {
+    require(newVal._2 > 0.0)
+    (acc + newVal._2)
+  })
+
+  def apply():Int = getValue(choices,Random.nextDouble()*totalWeights)
+
+  private def getValue(l:List[(Int,Double)],offset:Double):Int = {
+    l match{
+      case List(l) => l._1
+      case (value,weight)::t =>
+        if (weight < offset) getValue(t,offset - weight)
+        else value
+      case Nil => throw new Error("unexpected end of list")
+    }
+  }
+
 }
