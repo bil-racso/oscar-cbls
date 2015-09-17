@@ -55,8 +55,6 @@ object ListenerParser{
       processFunction = (s:String) => processMap.get(s))
 
   }
-
-
 }
 /**
  * Created by rdl on 08-09-15.
@@ -189,6 +187,7 @@ class ListenerParser(storageFunction:String => Option[Storage],
   //probes on storages
   def storageDoubleProbe(probeName:String,constructor:Storage=>DoubleExpr):Parser[DoubleExpr] =
     probeName~>"("~>storageParser <~")" ^^ {constructor(_)}
+
   def storageParser:Parser[Storage] = identifier convertStringUsingSymbolTable(storageFunction, "storage")
 
   //probes on processes

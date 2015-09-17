@@ -76,5 +76,4 @@ trait AttributeHelper {
   val zeroItemClass = 0
 
   implicit def storage(i:(Int,ItemClass)):List[ItemClass] = (1 to i._1).map(_=>i._2).toList
-
 }

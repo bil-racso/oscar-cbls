@@ -32,6 +32,8 @@ class AttributeDefinitions(l:String*){
     case None => throw new Error("unknown attribute:"+ s)
   }
 
+  def optionGet(s:String):Option[Attribute] = attributeDico.get(s)
+
   def getN(i:Int) = attributeArray(i)
 }
 
