@@ -164,7 +164,7 @@ class FZCBLSModel(val model: FZProblem, val c: ConstraintSystem, val m: Store, v
           val sc = parsedVariable.cstrs.map{ 
           	case c:subcircuit => c.variables.length; 
           	case c:circuit => c.variables.length;
-          	case _ => 0}.max
+          	case _ => 0}.fold(0)((x, y) => if (x > y) x else y)//This is a max with 0 by default.
           val thedom = if(sc > 0){oscar.flatzinc.model.DomainRange(1, sc)}else{dom}
           val cblsVariable = CBLSIntVarDom(m, initialValue, thedom,  id);
           //TODO: handle constant variables here.
@@ -288,11 +288,15 @@ class FZCBLSSolver extends SearchEngine with StopWatch {
     Helper.getCstrsByName(model.constraints).map{ case (n:String,l:List[Constraint]) => l.length +"\t"+n}.toList.sorted.foreach(log(_))
     log("Parsed. Parsing took "+getWatch+" ms")
     
+//    model.variables.foreach{
+//      case v:IntegerVariable => println(v+"\t"+v.domain)
+//    }
     val cpmodel = if(useCP){
       val cpmodel = new FZCPModel(model,oscar.cp.Strong, true)
+//      println(model.variables.toList.map(v => v.domainSize))
       FZModelTransfo.propagateDomainBounds(model)(log);
       log("Reduced Domains before CP")
-      //println(model.variables.toList.map(v => v.domainSize))
+//      println(model.variables.toList.map(v => v.domainSize))
       cpmodel.createVariables()
       cpmodel.createConstraints()
       cpmodel.updateModelDomains()

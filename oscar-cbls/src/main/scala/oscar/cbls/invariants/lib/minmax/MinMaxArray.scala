@@ -104,8 +104,8 @@ abstract class MiaxArray(vars: Array[IntValue], cond: SetValue, default: Int)
     registerDeterminingDependency(cond)
   }
 
-  restrictDomain(bulkRegister(vars).union(default))
-
+  restrictDomain(if(cond ==null && vars.length>0) bulkRegister(vars) else bulkRegister(vars).union(default))
+  
   if (cond != null) {
     for (i <- cond.value) {
       h.insert(i)

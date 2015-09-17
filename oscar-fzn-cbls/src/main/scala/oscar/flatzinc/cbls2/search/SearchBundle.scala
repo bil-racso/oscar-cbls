@@ -157,7 +157,7 @@ class NeighbourhoodTabuSearch(m: FZCBLSModel, sc: SearchControl) extends Neighbo
     //if(it.value%10==0){
     //    log(2,"it: "+it.value+" violation: "+m.c.violation.value+" objective: "+m.objective.getObjectiveValue())
     //  }
-    log(3,"it: "+it.value+" violation: "+m.c.violation.value+" objective: "+m.objectiveVar.value)
+    log(3,"it: "+it.value+" violation: "+m.c.violation.value/*+" objective: "+m.objectiveVar.value*/)
     if(m.c.violation.value==0)System.exit(0)
     //if(log.level>=4) for(cc <- m.c.violatedConstraints){
     //    log(4,cc + " "+cc.violation.value)
@@ -178,7 +178,7 @@ class NeighbourhoodTabuSearch(m: FZCBLSModel, sc: SearchControl) extends Neighbo
     if(bestNeighbour!=null){
       if(log.level > 0 && bestNeighbour.getModified.forall(!nonTabuSet.contains(_))){
         log(2,"Aspiration");
-        log(3,bestNeighbour.value.toString +" < "+bestValue.toString +" ; "+m.objectiveVar.value)
+        log(3,bestNeighbour.value.toString +" < "+bestValue.toString /*+" ; "+m.objectiveVar.value*/)
       }
       log(3,bestNeighbour.toString)
       log(4,tabu.filter(t => t.value > it.value).toList.toString())

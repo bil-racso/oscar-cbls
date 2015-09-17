@@ -166,19 +166,52 @@ object FZModelTransfo {
           case int_ne(x,y,_) if x.isBound && y.isBound => b.bind(x.value !=y.value); false
           case int_lt(x,y,_) if x.isBound && y.isBound => b.bind(x.value < y.value); false
           case int_le(x,y,_) if x.isBound && y.isBound => b.bind(x.value <= y.value); false
+          case bool_eq(x,y,_) if x.isBound && y.isBound => b.bind(x.intValue ==y.intValue); false
+          case bool_lt(x,y,_) if x.isBound && y.isBound => b.bind(x.intValue < y.intValue); false
+          case bool_le(x,y,_) if x.isBound && y.isBound => b.bind(x.intValue <= y.intValue); false
           case int_lin_eq(c,x,y,_) if x.forall(_.isBound) => b.bind(c.zip(x).foldLeft(0)((acc,cur) => acc + cur._1.value*cur._2.value)==y.value); false
           case int_lin_le(c,x,y,_) if x.forall(_.isBound) => b.bind(c.zip(x).foldLeft(0)((acc,cur) => acc + cur._1.value*cur._2.value)<=y.value); false
+          case int_lin_ne(c,x,y,_) if x.forall(_.isBound) => b.bind(c.zip(x).foldLeft(0)((acc,cur) => acc + cur._1.value*cur._2.value)!=y.value); false
+          case bool_clause(x,y,_) if x.forall(_.isBound) && y.forall(_.isBound) => b.bind(x.exists(_.isTrue) || y.exists(_.isFalse)); false
+          case set_in(x,y,_) if x.isBound => b.bind(y.contains(x.value)); false
           case _ => true;
         }
         case array_bool_and(x,y,_) if x.forall(_.isBound) => y.bind(x.forall(v => v.boolValue)); false
         case array_bool_and(x,y,_) if x.exists(_.isFalse) && y.isFalse => false
         case array_bool_or(x,y,_) if x.forall(_.isBound) => y.bind(x.exists(v => v.boolValue)); false
         case array_bool_or(x,y,_) if x.exists(_.isTrue) && y.isTrue => false
+        case bool_clause(x,y,_) if x.exists(_.isTrue) || y.exists(_.isFalse) => false
+        case bool_clause(x,y,_) if x.count(!_.isBound) + y.count(!_.isBound) == 1 =>
+          x.foreach(v => if(!v.isBound)v.bind(true))
+          y.foreach(v => if(!v.isBound)v.bind(false))
+          false
         case int_ne(x,y,_) if y.isBound => x.neq(y.value); false
         case int_ne(x,y,_) if x.isBound => y.neq(x.value); false
         case set_in(x,d,_) => x.inter(d); false
+        case int_max(a,b,c,_) if a.isBound && b.isBound => c.bind(a.value.max(b.value)); false
+        case int_max(a,b,c,_) if a.isBound && c.isBound => 
+          	if(a.value==c.value) b.leq(c.value) 
+        	else if(a.value < c.value) b.bind(c.value)
+        	else throw new UnsatException(c.toString())
+          	false
+        case int_max(a,b,c,_) if b.isBound && c.isBound => 
+          	if(b.value==c.value) a.leq(c.value) 
+        	else if(b.value < c.value) a.bind(c.value)
+        	else throw new UnsatException(c.toString())
+          	false
+        case int_min(a,b,c,_) if a.isBound && b.isBound => c.bind(a.value.min(b.value)); false
+        case int_min(a,b,c,_) if a.isBound && c.isBound => 
+          	if(a.value==c.value) b.geq(c.value) 
+        	else if(a.value > c.value) b.bind(c.value)
+        	else throw new UnsatException(c.toString())
+          	false
+        case int_min(a,b,c,_) if b.isBound && c.isBound => 
+          	if(b.value==c.value) a.geq(c.value) 
+        	else if(b.value > c.value) a.bind(c.value)
+        	else throw new UnsatException(c.toString())
+          	false
         case int_lin_eq(c,x,v,_) if x.length==1 && math.abs(c(0).value) == 1 => x(0).bind(v.value/c(0).value); false
-        case int_lin_eq(c,x,v,_) if x.filterNot(_.isBound).length == 1 =>{
+        case int_lin_eq(c,x,v,_) if x.count(!_.isBound) == 1 =>{
           val (rest,one) = x.zip(c).partition(_._1.isBound);
           if(math.abs(one(0)._2.value)==1){
             val sumrest = rest.foldLeft(0)((acc,xc) => acc + xc._1.value*xc._2.value)
@@ -186,7 +219,7 @@ object FZModelTransfo {
             false
           }else true
         }
-        case int_lin_eq(c,x,v,_) if x.filterNot(_.isBound).length==0 =>{
+        case int_lin_eq(c,x,v,_) if x.forall(_.isBound) =>{
           val sum = x.zip(c).foldLeft(0)((acc,xc) => acc + xc._1.value*xc._2.value)
           if(sum!=v.value) throw new UnsatException(c.toString())
           false
@@ -208,7 +241,7 @@ object FZModelTransfo {
           true
         } 
         case int_lin_le(c,x,v,_) if x.length==1 && c(0).value == 1 => x(0).leq(v.value); false
-        case int_lin_le(c,x,v,_) if x.filterNot(_.isBound).length == 1 =>{
+        case int_lin_le(c,x,v,_) if x.count(!_.isBound) == 1 =>{
           val (rest,one) = x.zip(c).partition(_._1.isBound);
           if(one(0)._2.value==1){
             val sumrest = rest.foldLeft(0)((acc,xc) => acc + xc._1.value*xc._2.value)
@@ -220,7 +253,17 @@ object FZModelTransfo {
             false
           }else true
         }
+        case int_lin_ne(c,x,v,_) if x.length==1 => if (v.value %c(0).value==0){x(0).neq(v.value /c(0).value)}; false
         case all_different_int(x,_) if x.length==1 => false
+        case count_eq(x,v,n,_) if v.isBound && n.isBound && x.forall(_.isBound) =>
+          if(x.count(_.value == v.value)!=n.value)throw new UnsatException(c.toString())
+          false
+        case count_eq(x,v,n,_) if v.isBound && n.isBound && x.count(!_.isBound) == 1 =>
+          val cnt = x.count(vv => vv.isBound && vv.value==v.value)
+          if(cnt == n.value)x.foreach(vv => if (!vv.isBound) vv.neq(v.value))
+          else if(cnt + 1 == n.value)x.foreach(vv => if (!vv.isBound) vv.bind(v.value))
+          else throw new UnsatException(c.toString())
+          false
         //added this line for ill-defined variables in Circuit. Thanks to Emil Kajgaard
         case circuit(x,_) => x.foreach(_.inter(DomainRange(1,x.length))); true
         case int_abs(a,b,_) if a.isBound => b.bind(math.abs(a.value)); false
