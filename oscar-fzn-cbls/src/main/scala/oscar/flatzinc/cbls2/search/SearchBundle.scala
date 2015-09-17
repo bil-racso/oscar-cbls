@@ -158,7 +158,7 @@ class NeighbourhoodTabuSearch(m: FZCBLSModel, sc: SearchControl) extends Neighbo
     //    log(2,"it: "+it.value+" violation: "+m.c.violation.value+" objective: "+m.objective.getObjectiveValue())
     //  }
     log(3,"it: "+it.value+" violation: "+m.c.violation.value/*+" objective: "+m.objectiveVar.value*/)
-    if(m.c.violation.value==0)System.exit(0)
+    //if(m.c.violation.value==0)System.exit(0)
     //if(log.level>=4) for(cc <- m.c.violatedConstraints){
     //    log(4,cc + " "+cc.violation.value)
     //}

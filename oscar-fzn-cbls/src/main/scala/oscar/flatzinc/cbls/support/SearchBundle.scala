@@ -306,12 +306,12 @@ abstract class NeighbourhoodTabuSearch(m: FZCBLSModel, sc: SearchControl) extend
 //      println("X")
     if(bestNeighbour!=null){
       //TODO: Aspiration sometimes accepts moves that do not improve but seem to improve because of changing weights. 
-      if(log.level > 0 && bestNeighbour.getModified.exists(!nonTabuSet.contains(_))){
-        log("Aspiration");
+      if(log.level > 0 && bestNeighbour.getModified.forall(!nonTabuSet.contains(_))){
+        log(2,"Aspiration");
         log(3,bestNeighbour.value.toString +" < "+bestValue.toString +" ; "+m.objective().value)
       }
       log(3,bestNeighbour.toString)
-      log(3,tabu.filter(t => t.value > it.value).toList.toString())
+      log(4,tabu.filter(t => t.value > it.value).toList.toString())
       
       bestNeighbour.commit();
       sc.handlePossibleSolution()
@@ -430,7 +430,7 @@ class NeighbourhoodSearchOPT(m:FZCBLSModel, sc: SearchControl) extends Neighbour
 class NeighbourhoodSearchSAT(m:FZCBLSModel, sc: SearchControl) extends NeighbourhoodTabuSearch(m,sc) {
   override def run()= {
     log("Starting Satisfaction Search")
-    var extendedSearch = true;
+    var extendedSearch = false;
     var roundsWithoutSat = 0;
     val maxRounds = 5;
 

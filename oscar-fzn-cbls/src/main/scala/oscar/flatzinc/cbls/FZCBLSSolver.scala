@@ -282,17 +282,17 @@ class FZCBLSSolver extends SearchEngine with StopWatch {
     
     log("Parsed. Parsing took "+getWatch+" ms")
     val cpmodel = new FZCPModel(model,oscar.cp.Strong )
-    println(model.variables.toList.map(v => v.domainSize))
+    //println(model.variables.toList.map(v => v.domainSize))
     
     if(useCP){
       FZModelTransfo.propagateDomainBounds(model)(log);
       log("Reduced Domains before CP")
-      println(model.variables.toList.map(v => v.domainSize))
+      //println(model.variables.toList.map(v => v.domainSize))
       cpmodel.createVariables()
       cpmodel.createConstraints()
       cpmodel.updateModelDomains()
       log("Reduced Domains with CP")
-      println(model.variables.toList.map(v => v.domainSize))
+      //println(model.variables.toList.map(v => v.domainSize))
     }
     if(!opts.is("no-simpl")){
       //TODO: check which part of the following is still necessary after using CP for bounds reduction.
