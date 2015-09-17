@@ -238,12 +238,12 @@ class FZCBLSModel(val model: FZProblem, val c: ConstraintSystem, val m: Store, v
         }
      });
     if(cpmodel!=null && model.search.obj != Objective.SATISFY){
-      log("Calling the CP solver")
+      log(2,"Calling the CP solver")
       cpmodel.updateBestObjectiveValue(objectiveVar.value)
     //TODO: ignore variables whose domain should not be reduced (e.g. variables in the Circuit constraint)
       cpmodel.updateModelDomains();
-      updateVarDomains();
-      log("Variable domains updated")
+      //updateVarDomains();
+      log(2,"Variable domains updated")
     }
      updateBestObjectiveValue(objectiveVar.value)
   }
@@ -465,7 +465,7 @@ class FZCBLSSolver extends SearchEngine with StopWatch {
     
     val search = new NeighbourhoodTabuSearch(cblsmodel,sc)
     m.close()
-    sc.run(search)
+  //  sc.run(search)
     //search.run()
     /*
     //TODO: The search should print the solution if, by chance, the initial assingnment is a solution!

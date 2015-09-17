@@ -87,10 +87,11 @@ abstract class Neighbourhood(val searchVariables: Array[CBLSIntVarDom]) extends 
     else new NoMove()
   }
   
-  def selectMinImb[R,S](r: Iterable[R] , s: R => Iterable[S],f: (R,S) => Int, st: ((R,S) => Boolean) = ((r:R, s:S) => true)): (R,S) = {
+  def selectMinImb[R,S](r: Iterable[R] , s: R => Iterable[S],f: ((R,S)) => Int, st: ((R,S) => Boolean) = ((r:R, s:S) => true)): (R,S) = {
     //TODO: check that it is fine
     val flattened:Iterator[(R,S)] = for (rr <- r.toIterator; ss <- s(rr).toIterator) yield (rr,ss)
-    selectMin[(R,S)](flattened.toIterable)((rands:(R,S)) => {/*Console.err.println(rands);*/ f(rands._1,rands._2)}, (rands:(R,S)) => st(rands._1,rands._2))
+    selectMin[(R,S)](flattened.toIterable)(f //(rands:(R,S)) => {/*Console.err.println(rands);*/ f(rands._1,rands._2)}
+        , (rands:(R,S)) => st(rands._1,rands._2))
   }
 }
 
@@ -139,7 +140,7 @@ class SumNeighborhood(val variables: Array[CBLSIntVarDom],val coeffs:Array[Int],
   }
   def getExtendedMinObjective(it: Int, accept: Move => Boolean): Move = {
     val rng = 0 until variables.length;
-    val part1 = selectMinImb(rng,(i:Int) => variables(i).min to variables(i).max,(i:Int,v:Int) => objective.assignVal(variables(i),v))
+    val part1 = selectMinImb(rng,(i:Int) => variables(i).min to variables(i).max,(iv:(Int,Int)) => objective.assignVal(variables(iv._1),iv._2))
     part1 match{ 
       case (i1,v1) => 
         val diff = v1 - variables(i1).value

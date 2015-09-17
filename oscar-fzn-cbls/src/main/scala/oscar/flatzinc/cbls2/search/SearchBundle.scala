@@ -110,7 +110,10 @@ class SearchControl(val m: FZCBLSModel,val MaxTimeMilli: Int,val stopOnSat:Boole
     })
   }
   def run(search: SearchProcedure){
+    //currentBestViolation = m.c.violation.value
+    //handlePossibleSolution()
     while(!stopAll()){
+      m.updateVarDomains()//TODO: Is this necessary or wished?
       currentBestViolation = m.c.violation.value
       search.run()
     }
@@ -174,7 +177,7 @@ class NeighbourhoodTabuSearch(m: FZCBLSModel, sc: SearchControl) extends Neighbo
 //      println("X")
     if(bestNeighbour!=null){
       if(log.level > 0 && bestNeighbour.getModified.forall(!nonTabuSet.contains(_))){
-        log("Aspiration");
+        log(2,"Aspiration");
         log(3,bestNeighbour.value.toString +" < "+bestValue.toString +" ; "+m.objectiveVar.value)
       }
       log(3,bestNeighbour.toString)
@@ -194,6 +197,7 @@ class NeighbourhoodTabuSearch(m: FZCBLSModel, sc: SearchControl) extends Neighbo
   }
 
   override def run()= {
+    sc.handlePossibleSolution()
     log("Starting Satisfaction Search")
     var extendedSearch = false;
     var roundsWithoutSat = 0;
