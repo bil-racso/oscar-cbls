@@ -465,7 +465,7 @@ class FZCBLSSolver extends SearchEngine with StopWatch {
     
     val search = new NeighbourhoodTabuSearch(cblsmodel,sc)
     m.close()
-  //  sc.run(search)
+    sc.run(search)
     //search.run()
     /*
     //TODO: The search should print the solution if, by chance, the initial assingnment is a solution!
