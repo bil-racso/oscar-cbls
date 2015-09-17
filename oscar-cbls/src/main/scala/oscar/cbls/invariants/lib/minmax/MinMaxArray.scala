@@ -106,7 +106,11 @@ abstract class MiaxArray(vars: Array[IntValue], cond: SetValue, default: Int)
     registerDeterminingDependency(cond)
   }
 
-  restrictDomain(bulkRegister(vars).union(default))
+  /**
+   * since the value of the bulkcomputationResult depends on the presence or absence of cond,
+   * we register two bcr, so that you can join the correct bulk whataver happens.
+   */
+  restrictDomain(bulkRegister(vars,if (cond == null) 0 else 1).union(default))
 
   if (cond != null) {
     for (i <- cond.value) {
