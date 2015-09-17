@@ -94,7 +94,6 @@ trait AlgebraTrait{
     def minus(v: CBLSSetVar): SetInvariant = Diff(x, v)
 
     def map(fun:Int=>Int, myMin:Int = Int.MinValue, myMax:Int = Int.MaxValue) = SetMap(x,fun,myMin,myMax)
-
     }
 
   implicit def InstrumentArrayOfIntVar(inputarray: Array[CBLSIntVar]): InstrumentedArrayOfIntVar

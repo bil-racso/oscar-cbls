@@ -241,6 +241,7 @@ class ListenerParser(storageFunction:String => Option[Storage],
       }
     }
   }
+
   implicit def addSymbolTableFeature(identifierParser:Parser[String]):parserWithSymbolTable = new parserWithSymbolTable(identifierParser)
 
   def identifier:Parser[String] = """[a-zA-Z0-9]+""".r ^^ {_.toString}
@@ -253,14 +254,11 @@ object ParserTester extends App with FactoryHelper{
   val m = new Model
   val aStorage = new FIFOStorage(10,Nil,"aStorage",false,false)
   val bStorage = new FIFOStorage(10,Nil,"bStorage",false,false)
-  val storages = SortedMap("aStorage"->aStorage,"bStorage" -> bStorage)
 
   val aProcess = new SingleBatchProcess(m, 5000, Array(), Array((()=>1,aStorage)), null, "aProcess", false)
   val bProcess = new SingleBatchProcess(m, 5000, Array(), Array((()=>1,aStorage)), null, "bProcess", false)
-  val processes = SortedMap("aProcess"->aProcess,"bProcess" -> bProcess)
 
-  val myParser = new ListenerParser(storageFunction = (s:String) => storages.get(s),
-    processFunction = (s:String) => processes.get(s))
+  val myParser = ListenerParser(List(aStorage,bStorage), List(aProcess,bProcess))
 
   def testOn(s:String){
     println("testing on:" + s)
