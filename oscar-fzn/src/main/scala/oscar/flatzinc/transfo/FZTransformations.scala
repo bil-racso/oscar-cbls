@@ -55,9 +55,11 @@ object FZModelTransfo {
         if(cand2.length > 1){
           log(2,"! Found a variable that could be defined by more than one invariant (from Objective):"+v+" "+cand2.toString)
           
-        }else{
-          log(2,"!!Otherwise "+v+" "+cand2.toString)
         }
+        //else{
+        //  log(2,"!!Otherwise "+v+" "+cand2.toString)
+        //}
+        
         //Select the first suitable constraint
         if(!cand2.isEmpty){
           if(cand2.length==1 || !first){

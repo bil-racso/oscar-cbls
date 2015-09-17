@@ -224,6 +224,9 @@ class FZCBLSModel(val model: FZProblem, val c: ConstraintSystem, val m: Store, v
     }
   def handleSolution() = {
     println("% time from start: "+getWatch())
+    if(model.search.obj != Objective.SATISFY){
+      println("% objective value: "+objectiveVar.value)
+    }
     model.solution.handleSolution(
       (s: String) => cblsIntMap.get(s) match {
         case Some(intVar) =>
@@ -245,7 +248,9 @@ class FZCBLSModel(val model: FZProblem, val c: ConstraintSystem, val m: Store, v
       //updateVarDomains();
       log(2,"Variable domains updated")
     }
-    if(model.search.obj != Objective.SATISFY)updateBestObjectiveValue(objectiveVar.value)
+    if(model.search.obj != Objective.SATISFY){
+      updateBestObjectiveValue(objectiveVar.value)
+    }
   }
   def updateBestObjectiveValue(value: Int){
     model.search.obj match {
