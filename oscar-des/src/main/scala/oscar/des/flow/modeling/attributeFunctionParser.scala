@@ -1,6 +1,7 @@
 package oscar.des.flow.modeling
 
 import oscar.des.flow.core._
+import oscar.des.flow.lib.BoolExpr
 import scala.collection.immutable.SortedSet
 import scala.util.parsing.combinator._
 
@@ -13,8 +14,9 @@ case class ParsedItemClassTransformWitAdditionalOutput(f:ItemClassTransformWitAd
 case class ParseErrorItemClassTransformWitAdditionalOutput(s:String) extends ParsingResultItemClassTransformWitAdditionalOutput
 
 class AttributeFunctionParser(attributes:AttributeDefinitions)
-  extends RegexParsers with AttributeHelper {
+  extends ParserWithSymbolTable with AttributeHelper {
   override def skipWhitespace: Boolean = true
+  protected override val whiteSpace = """(\s|//.*|(?m)/\*(\*(?!/)|[^*])*\*/)+""".r
 
   def parseTransformFunction(input: String): ParsingResultItemClassTransformFunction = {
     parseAll(attributeTransformFunctionParser, input) match {
@@ -31,9 +33,9 @@ class AttributeFunctionParser(attributes:AttributeDefinitions)
   }
 
   private def transformFunctionWithOutputParser:Parser[ItemClassTransformWitAdditionalOutput] = (
-    "if"~>attribute~("then"~>(transformFunctionWithOutputParser~("else"~>transformFunctionWithOutputParser))) ^^ {
-      case ((attr:Attribute)~((thenF:ItemClassTransformWitAdditionalOutput)~(elseF:ItemClassTransformWitAdditionalOutput))) => iTE(attr,thenF,elseF)}
-      |"outputPort"~>integer~atomicAttributeTransformFunctionParser^^{case i~f => outputValue(()=>i,f)}
+    "if"~>attributeConditionParser~("then"~>(transformFunctionWithOutputParser~("else"~>transformFunctionWithOutputParser))) ^^ {
+      case ((attr:AttributeCondition)~((thenF:ItemClassTransformWitAdditionalOutput)~(elseF:ItemClassTransformWitAdditionalOutput))) => iTE(attr,thenF,elseF)}
+      |"outputPort"~>integer~attributeTransformFunctionParser^^{case i~f => outputValue(()=>i,f)}
     )
 
   private def attributeTransformFunctionParser: Parser[ItemClassTransformFunction] =
@@ -44,30 +46,68 @@ class AttributeFunctionParser(attributes:AttributeDefinitions)
     }
 
   private def atomicAttributeTransformFunctionParser: Parser[ItemClassTransformFunction] = (
-    "add" ~> attribute ^^ { a: Attribute => addAttribute(a) }
-      | "remove" ~> attribute ^^ { a: Attribute => removeAttribute(a) }
-      | "const{" ~> (rep(attribute) <~ "}") ^^ { c: List[Attribute] => constantAttributes(attributeSet(SortedSet.empty[Attribute] ++ c, attributes)) }
+    "+" ~> attribute ^^ { a: Attribute => addAttribute(a) }
+      | "-" ~> attribute ^^ { a: Attribute => removeAttribute(a) }
+      | ":=" ~ "{" ~> (rep(attribute) <~ "}") ^^ { c: List[Attribute] => constantAttributes(attributeSet(SortedSet.empty[Attribute] ++ c, attributes)) }
+      | failure("expected +, -,or :={...}")
+    )
+
+  def attributeConditionParser:Parser[AttributeCondition] = disjunctionParser
+  def disjunctionParser:Parser[AttributeCondition] =
+    conjunctionParser ~ opt("|"~>disjunctionParser) ^^ {
+      case a~None => a
+      case a~Some(b) => or(a,b)}
+
+  def conjunctionParser:Parser[AttributeCondition]  =
+    atomicBoolExprParser ~ opt("&"~>conjunctionParser) ^^ {
+      case a~None => a
+      case a~Some(b) => and(a,b)}
+
+  def atomicBoolExprParser:Parser[AttributeCondition] = (
+    "!"~>disjunctionParser^^{case (b:AttributeCondition) => not(b)}
+      | "("~>disjunctionParser<~")"
+      |attribute^^{attributeTerminal(_)}
     )
 
   private def attribute: Parser[Attribute] =
-    identifier convertStringUsingSymbolTable(attributes.optionGet, "attribute")
+    identifier convertStringUsingSymbolTable(attributes.attributeMap, "attribute")
 
   private def identifier: Parser[String] = """[a-zA-Z0-9]+""".r ^^ {_.toString}
 
   private def integer:Parser[Int] = """[0-9]+""".r ^^ {_.toInt}
+}
 
-  private implicit def addSymbolTableFeature(identifierParser: Parser[String]): parserWithSymbolTable = new parserWithSymbolTable(identifierParser)
+object testAttributeFctParser extends App{
+  val myParser = new AttributeFunctionParser(new AttributeDefinitions("attribute1","attribute2","attribute3","attribute4"))
 
-  private class parserWithSymbolTable(identifierParser: Parser[String]) {
-    def convertStringUsingSymbolTable[U](symbolTable: String => Option[U], symbolType: String): Parser[U] = new Parser[U] {
-      def apply(in: Input) = identifierParser(in) match {
-        case Success(x, in1) => symbolTable(x) match {
-          case Some(u: U) => Success(u, in1)
-          case None => Failure("" + x + " is not a known " + symbolType, in)
-        }
-        case f: Failure => f
-        case e: Error => e
-      }
-    }
+  def testTransformFunction(s:String): Unit ={
+    println()
+    println(s)
+    println(myParser.parseTransformFunction(s))
   }
+  def testTransformFunctionWithOutput(s:String): Unit ={
+    println()
+    println(s)
+    println(myParser.parseTransformFunctionWithAdditionalOutput(s))
+  }
+
+  val aTransformFunction =     "+ attribute1 \n" +
+    "- attribute2 \n" +
+    "+ attribute3 \n" +
+    ":={attribute1 attribute3} \n"
+
+  testTransformFunction(aTransformFunction)
+
+  testTransformFunction("")
+
+  testTransformFunctionWithOutput(
+    "if attribute1 & attribute3 | attribute4 then \n" +
+      "if attribute2 then \n" +
+      "  outputPort 3 \n" +
+      "else \n" +
+      "  outputPort 12 \n" +
+    "else \n" +
+    "  outputPort 2 \n" +
+    aTransformFunction
+  )
 }

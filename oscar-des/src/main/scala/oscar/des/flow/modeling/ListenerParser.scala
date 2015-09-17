@@ -26,8 +26,7 @@ class QuickParser(storages:Iterable[String],processes:Iterable[String]){
   val processMap = processes.foldLeft[SortedMap[String,ActivableProcess]](SortedMap.empty)(
     (theMap,processName) => theMap + ((processName,new SingleBatchProcess(m, () => 1.0 , Array(), Array(), null, processName, false))))
 
-  val myParser = new ListenerParser(storageFunction = (s:String) => storagesMap.get(s),
-    processFunction = (s:String) => processMap.get(s))
+  val myParser = new ListenerParser(storagesMap,processMap)
 
   def checkSyntax(expression:String):QuickParseResult = {
     myParser(expression) match{
@@ -51,17 +50,17 @@ object ListenerParser{
     val processMap = processes.foldLeft[SortedMap[String,ActivableProcess]](SortedMap.empty)(
       (theMap,process) => theMap + ((process.name,process)))
 
-    new ListenerParser(storageFunction = (s:String) => storagesMap.get(s),
-      processFunction = (s:String) => processMap.get(s))
-
+    new ListenerParser(storagesMap, processMap)
   }
 }
 /**
  * Created by rdl on 08-09-15.
  */
-class ListenerParser(storageFunction:String => Option[Storage],
-                     processFunction:String => Option[ActivableProcess])
-  extends RegexParsers with ListenersHelper{
+class ListenerParser(storages:Map[String,Storage],
+                     processes:Map[String,ActivableProcess])
+  extends ParserWithSymbolTable with ListenersHelper{
+
+  protected override val whiteSpace = """(\s|//.*|(?m)/\*(\*(?!/)|[^*])*\*/)+""".r
 
   override def skipWhitespace: Boolean = true
 
@@ -74,14 +73,6 @@ class ListenerParser(storageFunction:String => Option[Storage],
   }
 
   def expressionParser:Parser[Expression] = doubleExprParser | boolExprParser
-
-  /*
- def doubleExprParser:Parser[DoubleExpr] =
-  term ~ opt(("+"|"-")~doubleExprParser) ^^ {
-    case a~None => a
-    case a~Some("+"~b) => plus(a,b)
-    case a~Some("-"~b) => minus(a,b)}
- */
 
   def boolExprParser:Parser[BoolExpr] = (
     "[*]" ~> boolExprParser ^^ {case b => hasAlwaysBeen(b)}
@@ -105,9 +96,9 @@ class ListenerParser(storageFunction:String => Option[Storage],
       case a~Some(b) => or(a,b)}
 
   def conjunctionParser:Parser[BoolExpr]  =
-    atomicBoolExprParser ~ opt("|"~>conjunctionParser) ^^ {
+    atomicBoolExprParser ~ opt("&"~>conjunctionParser) ^^ {
       case a~None => a
-      case a~Some(b) => or(a,b)}
+      case a~Some(b) => and(a,b)}
 
   def atomicBoolExprParser:Parser[BoolExpr] = (
     "empty(" ~> storageParser <~")" ^^ {empty(_)}
@@ -131,6 +122,7 @@ class ListenerParser(storageFunction:String => Option[Storage],
       | binaryOperatorDD2BParser("eq",eq)
       | binaryOperatorDD2BParser("ne",neq)
       | "changed(" ~> (boolExprParser | doubleExprParser) <~")" ^^ {case e:Expression => changed(e)}
+      | "("~>boolExprParser<~")"
       | failure("expected boolean expression"))
 
   def binaryTerm:Parser[BoolExpr] = unaryOperatorB2BParser("not",not)
@@ -180,22 +172,20 @@ class ListenerParser(storageFunction:String => Option[Storage],
       | "-"~> doubleExprParser ^^ {opposite(_)}
       | "("~>doubleExprParser<~")")
 
-
-
   //generic code
 
   //probes on storages
   def storageDoubleProbe(probeName:String,constructor:Storage=>DoubleExpr):Parser[DoubleExpr] =
     probeName~>"("~>storageParser <~")" ^^ {constructor(_)}
 
-  def storageParser:Parser[Storage] = identifier convertStringUsingSymbolTable(storageFunction, "storage")
+  def storageParser:Parser[Storage] = identifier convertStringUsingSymbolTable(storages, "storage")
 
   //probes on processes
   def processDoubleProbe(probeName:String,constructor:ActivableProcess=>DoubleExpr):Parser[DoubleExpr] =
     probeName~>"("~>processParser <~")" ^^ {constructor(_)}
   def processBoolProbe(probeName:String,constructor:ActivableProcess=>BoolExpr):Parser[BoolExpr] =
     probeName~>"("~>processParser <~")" ^^ {constructor(_)}
-  def processParser:Parser[ActivableProcess] = identifier convertStringUsingSymbolTable(processFunction, "process")
+  def processParser:Parser[ActivableProcess] = identifier convertStringUsingSymbolTable(processes, "process")
 
   // some generic parsing methods
   def unaryOperatorD2DParser(operatorString:String,constructor:DoubleExpr=>DoubleExpr):Parser[DoubleExpr] =
@@ -228,20 +218,6 @@ class ListenerParser(storageFunction:String => Option[Storage],
       case param1~param2 => constructor(param1,param2)
     }
 
-  class parserWithSymbolTable(identifierParser:Parser[String]){
-    def convertStringUsingSymbolTable[U](symbolTable:String=>Option[U],symbolType:String):Parser[U] = new Parser[U] {
-      def apply(in: Input) = identifierParser(in) match {
-        case Success(x, in1) => symbolTable(x) match{
-          case Some(u:U) => Success(u, in1)
-          case None => Failure("" + x + " is not a known " + symbolType,in)
-        }
-        case f:Failure => f
-        case e:Error => e
-      }
-    }
-  }
-
-  implicit def addSymbolTableFeature(identifierParser:Parser[String]):parserWithSymbolTable = new parserWithSymbolTable(identifierParser)
 
   def identifier:Parser[String] = """[a-zA-Z0-9]+""".r ^^ {_.toString}
 
@@ -265,13 +241,13 @@ object ParserTester extends App with FactoryHelper{
     println
   }
 
-  testOn("completedBatchCount(aProcess) * totalPut(aStorage)")
+  testOn("completedBatchCount(aProcess) /*a comment in the middle*/ * totalPut(aStorage)")
   testOn("-(-(-completedBatchCount(aProcess)) * -totalPut(aStorage))")
   testOn("-(-(-completedBatchCount(aProcess)) + -totalPut(aStorage))")
   testOn("cumulatedDuration(empty(bStorage))")
   testOn("cumulatedDuration(!!!<*>running(bProcess))")
   testOn("cumulatedDuration(!!!<*>running(cProcess))")
-  testOn("empty(aStorage)")
+  testOn("empty(aStorage) & empty(aStorage) | empty(aStorage)")
   testOn("cumulatedDuration(!running(bProcess))")
   testOn("cumulatedDurationNotStart(not(running(aProcess)))")
   testOn("max(stockLevel(aStorage))")
@@ -281,3 +257,19 @@ object ParserTester extends App with FactoryHelper{
   testOn("ponderateWithDuration(stockLevel(bStorage))")
 }
 
+trait ParserWithSymbolTable extends RegexParsers{
+  class parserWithSymbolTable(identifierParser: Parser[String]) {
+    def convertStringUsingSymbolTable[U](symbolTable: Map[String,U], symbolType: String): Parser[U] = new Parser[U] {
+      def apply(in: Input) = identifierParser(in) match {
+        case Success(x, in1) => symbolTable.get(x) match {
+          case Some(u: U) => Success(u, in1)
+          case None => Failure("" + x + " is not a known " + symbolType + ": (" + symbolTable.keys.mkString(",") + ")", in)
+        }
+        case f: Failure => f
+        case e: Error => e
+      }
+    }
+  }
+
+  implicit def addSymbolTableFeature(identifierParser:Parser[String]):parserWithSymbolTable = new parserWithSymbolTable(identifierParser)
+}

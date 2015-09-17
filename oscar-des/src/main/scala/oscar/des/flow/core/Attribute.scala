@@ -32,7 +32,7 @@ class AttributeDefinitions(l:String*){
     case None => throw new Error("unknown attribute:"+ s)
   }
 
-  def optionGet(s:String):Option[Attribute] = attributeDico.get(s)
+  def attributeMap:Map[String,Attribute] = attributeDico
 
   def getN(i:Int) = attributeArray(i)
 }
@@ -168,10 +168,10 @@ sealed abstract class ItemClassTransformWitAdditionalOutput{
  * @param thenBranch the then branch, taken if a is in the submitted attribute  set
  * @param elseBranch the else branch, taken if a is not in the submitted attribute set
  */
-case class ITE(a:Attribute,thenBranch:ItemClassTransformWitAdditionalOutput,elseBranch:ItemClassTransformWitAdditionalOutput) extends ItemClassTransformWitAdditionalOutput{
-  val theMask:Int = a.mask
+case class ITE(a:AttributeCondition,thenBranch:ItemClassTransformWitAdditionalOutput,elseBranch:ItemClassTransformWitAdditionalOutput) extends ItemClassTransformWitAdditionalOutput{
+
   override def slowApply(l: AttributeSet): (Int, AttributeSet) = {
-    if (l.attributes.contains(a)){
+    if (a.slowEvaluate(l)){
       thenBranch.slowApply(l)
     }else{
       elseBranch.slowApply(l)
@@ -179,12 +179,37 @@ case class ITE(a:Attribute,thenBranch:ItemClassTransformWitAdditionalOutput,else
   }
 
   override def apply(i: Int): (Int, Int) = {
-    if((i & theMask) != 0){
+    if(a.evaluate(i)){
       thenBranch.apply(i)
     }else{
       elseBranch.apply(i)
     }
   }
+}
+
+sealed abstract class AttributeCondition{
+  def slowEvaluate(l: AttributeSet):Boolean
+  def evaluate(i:Int):Boolean
+}
+
+case class AttributeAnd(a:AttributeCondition,b:AttributeCondition) extends AttributeCondition{
+  override def slowEvaluate(l: AttributeSet): Boolean = a.slowEvaluate(l) && b.slowEvaluate(l)
+  override def evaluate(i: ItemClass): Boolean = a.evaluate(i) && b.evaluate(i)
+}
+
+case class AttributeOr(a:AttributeCondition,b:AttributeCondition) extends AttributeCondition{
+  override def slowEvaluate(l: AttributeSet): Boolean = a.slowEvaluate(l) || b.slowEvaluate(l)
+  override def evaluate(i: ItemClass): Boolean = a.evaluate(i) || b.evaluate(i)
+}
+
+case class AttributeNot(a:AttributeCondition) extends AttributeCondition {
+  override def slowEvaluate(l: AttributeSet): Boolean = !a.slowEvaluate(l)
+  override def evaluate(i: ItemClass): Boolean = !a.evaluate(i)
+}
+
+case class AttributeTerminal(a:Attribute) extends AttributeCondition{
+  override def slowEvaluate(l: AttributeSet): Boolean =  l.attributes.contains(a)
+  override def evaluate(i: ItemClass): Boolean = (i & a.mask) != 0
 }
 
 /**

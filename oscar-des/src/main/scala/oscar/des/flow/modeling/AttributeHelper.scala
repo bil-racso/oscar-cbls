@@ -61,7 +61,7 @@ trait AttributeHelper {
    * @param thenBranch the then branch, taken if a is in the submitted attribute  set
    * @param elseBranch the else branch, taken if a is not in the submitted attribute set
    */
-  def iTE(a: Attribute, thenBranch: ItemClassTransformWitAdditionalOutput, elseBranch: ItemClassTransformWitAdditionalOutput)
+  def iTE(a: AttributeCondition, thenBranch: ItemClassTransformWitAdditionalOutput, elseBranch: ItemClassTransformWitAdditionalOutput)
   = new ITE(a, thenBranch, elseBranch)
 
   /**
@@ -72,6 +72,12 @@ trait AttributeHelper {
   def outputValue(outputValue: () => Int, attr: ItemClassTransformFunction = Identity())
   = OutputValue(outputValue, attr)
 
+
+
+  def and(a:AttributeCondition,b:AttributeCondition) = AttributeAnd(a,b)
+  def or(a:AttributeCondition,b:AttributeCondition) = AttributeOr(a,b)
+  def not(a:AttributeCondition) = AttributeNot(a)
+  def attributeTerminal(a:Attribute) = AttributeTerminal(a)
 
   val zeroItemClass = 0
 
