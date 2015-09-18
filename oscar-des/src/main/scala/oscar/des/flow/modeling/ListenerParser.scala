@@ -72,13 +72,15 @@ class ListenerParser(storages:Map[String,Storage],
     }
   }
 
-  def expressionParser:Parser[Expression] = doubleExprParser | boolExprParser
+  def expressionParser:Parser[Expression] = (
+    doubleExprParser
+      | boolExprParser
+      |failure("expected boolean or arithmetic expression"))
 
   def boolExprParser:Parser[BoolExpr] = (
     "[*]" ~> boolExprParser ^^ {case b => hasAlwaysBeen(b)}
       | "<*>" ~> boolExprParser ^^ {case b => hasBeen(b)}
-      | "@T" ~> boolExprParser ^^ {case b => becomesTrue(b)}
-      | "@F" ~> boolExprParser ^^ {case b => becomesFalse(b)}
+      | "@" ~> boolExprParser ^^ {case b => becomesTrue(b)}
       | doubleExprParser~(">="|">"|"<="|"<"|"!="|"=")~doubleExprParser ^^ {
       case (a~op~b) => op match{
         case ">" => g(a,b)
@@ -140,8 +142,8 @@ class ListenerParser(storages:Map[String,Storage],
       case a~Some("/"~b) => div(a,b)}
 
   def atomicDoubleExprParser:Parser[DoubleExpr] = (
-    storageDoubleProbe("stockLevel",stockLevel)
-      | storageDoubleProbe("stockCapacity",stockCapacity)
+    storageDoubleProbe("content",stockLevel)
+      | storageDoubleProbe("capacity",stockCapacity)
       | storageDoubleProbe("relativeStockLevel",relativeStockLevel)
       | storageDoubleProbe("totalPut",totalPut)
       | storageDoubleProbe("totalFetch",totalFetch)
@@ -160,7 +162,7 @@ class ListenerParser(storages:Map[String,Storage],
       | unaryOperatorB2DParser("cumulatedDurationNotStart",culumatedDurationNotStart)
       | "time"^^^ currentTime
       | "tic" ^^^ delta(currentTime)
-      | unaryOperatorD2DParser("ponderateWithDuration",ponderateWithDuration)
+      | unaryOperatorD2DParser("integral",ponderateWithDuration)
       | ("maxOnHistory("|"max(") ~> doubleExprParser~opt("," ~> boolExprParser)<~")" ^^ {
       case (d~None) => maxOnHistory(d)
       case (d~Some(cond:BoolExpr)) => maxOnHistory(d,cond)}
@@ -170,7 +172,8 @@ class ListenerParser(storages:Map[String,Storage],
       | unaryOperatorD2DParser("avg",avgOnHistory)
       | unaryOperatorD2DParser("avgOnHistory",avgOnHistory)
       | "-"~> doubleExprParser ^^ {opposite(_)}
-      | "("~>doubleExprParser<~")")
+      | "("~>doubleExprParser<~")"
+      | failure("expected arithmetic expression"))
 
   //generic code
 
@@ -248,13 +251,16 @@ object ParserTester extends App with FactoryHelper{
   testOn("cumulatedDuration(!!!<*>running(bProcess))")
   testOn("cumulatedDuration(!!!<*>running(cProcess))")
   testOn("empty(aStorage) & empty(aStorage) | empty(aStorage)")
+  testOn("empty(aStorage) & empty(aStorage) + empty(aStorage)")
+  testOn("empty(aStorage) & empty(aStorage) & empty(aStorage)")
+
   testOn("cumulatedDuration(!running(bProcess))")
   testOn("cumulatedDurationNotStart(not(running(aProcess)))")
-  testOn("max(stockLevel(aStorage))")
-  testOn("min(stockLevel(aStorage))")
+  testOn("max(content(aStorage))")
+  testOn("min(content(aStorage))")
   testOn("avg(relativeStockLevel(bStorage))")
-  testOn("avg(stockLevel(aStorage))")
-  testOn("ponderateWithDuration(stockLevel(bStorage))")
+  testOn("avg(content(aStorage))")
+  testOn("integral(content(bStorage))")
 }
 
 trait ParserWithSymbolTable extends RegexParsers{
