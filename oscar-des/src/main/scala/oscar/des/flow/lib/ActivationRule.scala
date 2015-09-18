@@ -49,7 +49,7 @@ class OnLowerThreshold(s:Storage,
                        a:Activable,
                        threshold:Int,
                        activationSize:Int=>Int,
-                       verbose:Boolean = true,
+                       verbosity:String=>Unit = null,
                        period:Float,
                        name:String)
   extends ActivationRule(a:Activable) with StockNotificationTarget{
@@ -68,7 +68,7 @@ class OnLowerThreshold(s:Storage,
 
   private def doActivate(): Unit ={
     val activation = activationSize(s.contentSize)
-    if (verbose) println("threshold (" + threshold + ") reached on " + s.name + " (now:" + s.contentSize + "), activation " + activation)
+    if (verbosity != null) verbosity("threshold (" + threshold + ") reached on " + s.name + " (now:" + s.contentSize + "), activation " + activation)
     activate(activation)
     placedOrders += 1
   }

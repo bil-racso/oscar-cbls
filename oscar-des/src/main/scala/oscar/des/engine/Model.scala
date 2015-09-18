@@ -38,7 +38,7 @@ class Model {
    * @param abort is called after every progress in time. if returns true, the simulation is aborted.
    *              You can also use it to update some trace analysis functions.
    */
-  def simulate(horizon:Float, verbose:Boolean = true, abort:()=>Boolean = ()=>false) {
+  def simulate(horizon:Float, verbosity:String=>Unit, abort:()=>Boolean = ()=>false) {
     while (eventQueue.nonEmpty) {
       steps +=1
       val e = eventQueue.dequeue()
@@ -46,10 +46,10 @@ class Model {
       if(e.time <= horizon){
         if(e.time != currentTime){
           if(abort()) {
-            if (verbose) println("-----------> time: " +  e.time + " ABORTED")
+            if (verbosity!=null) verbosity("-----------> time: " +  e.time + " ABORTED")
             return
           }
-          if(verbose) println("-----------> time: "+  e.time)
+          if(verbosity!=null) verbosity("-----------> time: "+  e.time)
         }
         currentTime = e.time
         e.process
@@ -57,7 +57,7 @@ class Model {
         // we are after the horizon, so event is pushed back into queue, and simulation stops
         eventQueue.enqueue(e)
         if(horizon != currentTime) abort() //we call it, since we re at the end, and it is a new state
-        if(verbose) println("-----------> time: "+  horizon)
+        if(verbosity!=null) verbosity("-----------> time: "+  horizon)
         currentTime = horizon
         return
       }
@@ -66,7 +66,7 @@ class Model {
     //no more event to process, but time runs to the horizon
     if(horizon != currentTime) {
       abort()
-      if (verbose) println("-----------> time: " + horizon)
+      if (verbosity!=null) verbosity("-----------> time: " + horizon)
     }
     currentTime = horizon
   }

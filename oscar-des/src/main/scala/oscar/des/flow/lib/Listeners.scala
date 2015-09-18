@@ -30,7 +30,7 @@ abstract class DoubleExpr(accumulating:Boolean, children:Expression*) extends Ex
   override def valueString: String = "" + value
 }
 
-class MetricsStore(rootExpressions:List[(Expression,String)],verbose:Boolean){
+class MetricsStore(rootExpressions:List[(Expression,String)],verbosity:String=>Unit){
   var expressions:List[Expression] = List.empty
   var accumulatingExpressions:List[Expression] = List.empty
   var nonAccumulatingExpressions:List[Expression] = List.empty
@@ -79,7 +79,7 @@ class MetricsStore(rootExpressions:List[(Expression,String)],verbose:Boolean){
 
   //to be called at each step
   def updateMetricsIfNeeded(time:Double){
-    if(verbose) println("updating metrics")
+    if(verbosity!=null) verbosity("updating metrics")
     var currentExpressionList = accumulatingExpressions
     while(currentExpressionList.nonEmpty){
       currentExpressionList.head.update(time)

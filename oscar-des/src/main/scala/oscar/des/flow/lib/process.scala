@@ -42,7 +42,7 @@ case class SingleBatchProcess(m:Model,
                               outputs:Array[(()=>Int,Putable)],
                               transformFunction:ItemClassTransformFunction,
                               override val name:String,
-                              verbose:Boolean = true) extends ActivableAtomicProcess(name,verbose){
+                              verbosity:String=>Unit = null) extends ActivableAtomicProcess(name,verbosity){
 
   private val myOutput = new Outputter(outputs)
   override val myInput = new Inputter(inputs)
@@ -63,21 +63,21 @@ case class SingleBatchProcess(m:Model,
   startBatches()
 
   private def startBatches(){
-    if (verbose) println(name + ": start inputting")
+    if (verbosity!=null) verbosity(name + ": start inputting")
     startWaitTime = m.clock()
     waiting = true
     myInput.performInput((i:ItemClass) => {
-      if (verbose) println(name + ": start new batch")
+      if (verbosity!=null) verbosity(name + ": start new batch")
       startedBatches += 1
       mTotalWaitDuration += (m.clock() - startWaitTime)
       waiting = false
       m.wait(batchDuration()){
-        if (verbose) println(name + ": finished batch")
+        if (verbosity!=null) verbosity(name + ": finished batch")
         startWaitTime = m.clock()
         waiting = true
         performedBatches +=1
         myOutput.performOutput(transformFunction(i), () => {
-          if (verbose) println(name + ": finished outputting")
+          if (verbosity!=null) verbosity(name + ": finished outputting")
           mTotalWaitDuration += (m.clock() - startWaitTime)
           waiting = false
           startBatches()
@@ -109,7 +109,7 @@ case class BatchProcess(m:Model,
                         outputs:Array[(() => Int,Putable)],
                         override val name:String,
                         transformFunction:ItemClassTransformFunction,
-                        verbose:Boolean = true) extends ActivableMultipleProcess(name,verbose){
+                        verbosity:String=>Unit = null) extends ActivableMultipleProcess(name,verbosity){
 
   override val childProcesses:Iterable[SingleBatchProcess] =
     (1 to numberOfBatches) map((batchNumber:Int) => SingleBatchProcess(m:Model,
@@ -118,7 +118,7 @@ case class BatchProcess(m:Model,
       outputs,
       transformFunction,
       name + " chain " + batchNumber,
-      verbose))
+      verbosity))
 
   override def toString: String = {
     name + " " + this.getClass.getSimpleName + ":: lines:" + numberOfBatches +" performedBatches:" + childProcesses.foldLeft(0)(_ + _.performedBatches) +
@@ -147,7 +147,7 @@ case class SplittingSingleBatchProcess(m:Model,
                                        outputs:Array[Array[(() => Int,Putable)]],
                                        transformFunction:ItemClassTransformWitAdditionalOutput,
                                        override val name:String,
-                                       verbose:Boolean = true) extends ActivableAtomicProcess(name,verbose){
+                                       verbosity:String=>Unit = null) extends ActivableAtomicProcess(name,verbosity){
 
   private val myOutputs = outputs.map(o => new Outputter(o))
   override val myInput = new Inputter(inputs)
@@ -174,11 +174,11 @@ case class SplittingSingleBatchProcess(m:Model,
   startBatches()
 
   private def startBatches(){
-    if (verbose) println(name + ": start inputting")
+    if (verbosity!=null) verbosity(name + ": start inputting")
     startWaitTime = m.clock()
     waiting = true
     myInput.performInput((i:ItemClass) => {
-      if (verbose) println(name + ": start new batch")
+      if (verbosity!=null) verbosity(name + ": start new batch")
       startedBatches += 1
       mTotalWaitDuration += (m.clock() - startWaitTime)
       waiting = false
@@ -187,10 +187,10 @@ case class SplittingSingleBatchProcess(m:Model,
         waiting = true
         performedBatches +=1
         val (outputPort,outputi) = transformFunction(i)
-        if (verbose) println(name + ": finished batch, outputting to " + outputPort)
+        if (verbosity!=null) verbosity(name + ": finished batch, outputting to " + outputPort)
         completedBatches(outputPort) += 1
         myOutputs(outputPort).performOutput(outputi, () => {
-          if (verbose) println(name + ": finished outputting")
+          if (verbosity!=null) verbosity(name + ": finished outputting")
           mTotalWaitDuration += (m.clock() - startWaitTime)
           waiting = false
           startBatches()
@@ -224,7 +224,7 @@ case class SplittingBatchProcess(m:Model,
                                  outputs:Array[Array[(()=>Int,Putable)]],
                                  override val name:String,
                                  transformFunction:ItemClassTransformWitAdditionalOutput,
-                                 verbose:Boolean = true) extends ActivableMultipleProcess(name,verbose){
+                                 verbosity:String=>Unit = null) extends ActivableMultipleProcess(name,verbosity){
 
   override val childProcesses:Iterable[SplittingSingleBatchProcess] =
     (1 to numberOfBatches) map((batchNumber:Int) => SplittingSingleBatchProcess(m,
@@ -233,7 +233,7 @@ case class SplittingBatchProcess(m:Model,
       outputs,
       transformFunction,
       name + " chain " + batchNumber,
-      verbose))
+      verbosity))
 
   override def toString: String = {
     name + ":: lines:" + numberOfBatches + " performedBatches: " + childProcesses.foldLeft(0)(_ + _.performedBatches) +
@@ -265,7 +265,7 @@ class ConveyorBeltProcess(m:Model,
                           val outputs:Array[(() => Int, Putable)],
                           transformFunction:ItemClassTransformFunction,
                           name:String,
-                          verbose:Boolean = true) extends ActivableAtomicProcess(name,verbose){
+                          verbosity:String=>Unit = null) extends ActivableAtomicProcess(name,verbosity){
 
   private val myOutput = new Outputter(outputs)
   override val myInput = new Inputter(inputs)
@@ -300,7 +300,7 @@ class ConveyorBeltProcess(m:Model,
 
   private def restartInputtingIfNeeded(): Unit ={
     if (inputMustBeRestarted) {
-      if(verbose) println(name + " restarting belt")
+      if(verbosity!=null) verbosity(name + " restarting belt")
       inputMustBeRestarted = false
       startPerformInput()
     }
@@ -311,11 +311,11 @@ class ConveyorBeltProcess(m:Model,
     val timeForNextInput = timeOfLastInput + minimalSeparationBetweenBatches + blockedTimeSinceLastInput
 
     if (blocked) {
-      if (verbose) println(name + " belt blocked at output, next input blocked")
+      if (verbosity!=null) verbosity(name + " belt blocked at output, next input blocked")
       inputMustBeRestarted = true
     } else if (belt.isEmpty || timeForNextInput >= m.clock()) {
       //we can perform the input
-      if (verbose) println(name + " start input")
+      if (verbosity!=null) verbosity(name + " start input")
       startBlockingTime = m.clock()
       myInput.performInput(finishedInputs)
     } else {
@@ -334,7 +334,7 @@ class ConveyorBeltProcess(m:Model,
     timeOfLastInput = m.clock()
     blockedTimeSinceLastInput = 0
     restartOutputtingIfNeeded()
-    if (verbose) println(name + " input performed")
+    if (verbosity!=null) verbosity(name + " input performed")
     totalInputBatches += 1
     m.wait(minimalSeparationBetweenBatches){startPerformInput()}
   }
@@ -353,7 +353,7 @@ class ConveyorBeltProcess(m:Model,
   private def startPerformOutput(i:ItemClass) {
     blocked = true
     startBlockingTime = m.clock()
-    if (verbose) println(name + " start outputting")
+    if (verbosity!=null) verbosity(name + " start outputting")
     myOutput.performOutput(i,finishedOutputs)
   }
 
@@ -362,7 +362,7 @@ class ConveyorBeltProcess(m:Model,
     blockedTimeSinceLastInput = m.clock() - startBlockingTime
     mTotalBlockedTime += blockedTimeSinceLastInput
     belt.deleteLast
-    if (verbose) println(name + " output performed")
+    if (verbosity!=null) verbosity(name + " output performed")
     totalOutputBatches += 1
     restartInputtingIfNeeded()
     //otherwise, the belt is empty and the outputting process will be restarted by the next performed input.
@@ -372,7 +372,7 @@ class ConveyorBeltProcess(m:Model,
       }
     } else {
       outputMustBeRestarted = true
-      if(verbose) println(name + " belt is empty")
+      if(verbosity!=null) verbosity(name + " belt is empty")
     }
   }
 }

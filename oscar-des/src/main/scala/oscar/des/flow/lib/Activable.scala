@@ -8,7 +8,7 @@ abstract class Activable{
   def activate(intensity:Int)
 }
 
-abstract class ActivableProcess(val name:String, verbose:Boolean) extends Activable{
+abstract class ActivableProcess(val name:String, verbosity:String=>Unit) extends Activable{
   def isRunning:Boolean
   def completedBatchCount:Int
   def startedBatchCount:Int
@@ -17,7 +17,7 @@ abstract class ActivableProcess(val name:String, verbose:Boolean) extends Activa
   var productionBatch:LIFOStorage = null;
 
   override def setUnderControl(){
-    productionBatch = new LIFOStorage(Int.MaxValue,List.empty,"productionWindow_" + this.name, verbose, false)
+    productionBatch = new LIFOStorage(Int.MaxValue,List.empty,"productionWindow_" + this.name, verbosity, false)
     addPreliminaryInput(productionBatch)
   }
 
@@ -28,7 +28,7 @@ abstract class ActivableProcess(val name:String, verbose:Boolean) extends Activa
   def addPreliminaryInput(preliminary:Storage)
 }
 
-abstract class ActivableAtomicProcess(name:String, verbose:Boolean) extends ActivableProcess(name,verbose){
+abstract class ActivableAtomicProcess(name:String, verbosity:String=>Unit) extends ActivableProcess(name,verbosity){
 
   def myInput:Inputter
 
@@ -37,7 +37,7 @@ abstract class ActivableAtomicProcess(name:String, verbose:Boolean) extends Acti
   }
 }
 
-abstract class ActivableMultipleProcess(name:String, verbose:Boolean) extends ActivableProcess(name,verbose){
+abstract class ActivableMultipleProcess(name:String, verbosity:String=>Unit) extends ActivableProcess(name,verbosity){
   def childProcesses:Iterable[ActivableAtomicProcess]
 
   override def addPreliminaryInput(preliminary: Storage) {

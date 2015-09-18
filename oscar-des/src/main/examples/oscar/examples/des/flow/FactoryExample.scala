@@ -22,7 +22,7 @@ object FactoryExample extends App with FactorySimulationHelper {
   }
 
   val m = new Model
-  val verbose = false
+  val verbosity = null
 
   val standardItemClass = zeroItemClass
   val allAttributes = new AttributeDefinitions("sampleAttribute", "anotherOne", "CheapSteel","expensiveSteel")
@@ -30,64 +30,64 @@ object FactoryExample extends App with FactorySimulationHelper {
   val choseZeroOne = iTE(attributeTerminal(initialRawBatch),outputValue(discreteChoice(List((0,0.5),(1,0.5)))),outputValue(constantPort(1)))
 
   //time unit is the second
-  val rawMaterialStorage = fIFOStorage(200,List((40,AttributeSet(SortedSet(initialRawBatch),allAttributes).itemClass)),"rawMaterialStorage", verbose,false)
+  val rawMaterialStorage = fIFOStorage(200,List((40,AttributeSet(SortedSet(initialRawBatch),allAttributes).itemClass)),"rawMaterialStorage", verbosity,false)
 
-  val rawSupplier = singleBatchProcess(m, 5000, Array(), Array((()=>1,rawMaterialStorage)), identity, "rawSupplier", verbose)
+  val rawSupplier = singleBatchProcess(m, 5000, Array(), Array((()=>1,rawMaterialStorage)), identity, "rawSupplier", verbosity)
   val ordering = onLowerThreshold(rawMaterialStorage,
     m,
     rawSupplier,
     20,
     (size:Int) => 20,
-    verbose,
+    verbosity,
     0,
     "orderingPolicy")
 
-  val inputFeederOfDieCuttingPartA = fIFOStorage(100,Nil,"inputFeederOfDieCuttingPartA", verbose,false)
+  val inputFeederOfDieCuttingPartA = fIFOStorage(100,Nil,"inputFeederOfDieCuttingPartA", verbosity,false)
   //takes 15 minutes to transport a coil, and install it
   //we suppose that hte coil is decomposed into parts during the transportation, because we have no model of "cutting process"
   //we consider here individual "already cut" dies although they are still aggregated into a single coil
-  val transportingToDieCutterA = singleBatchProcess(m, 15*60, Array((()=>1, rawMaterialStorage)), Array((()=>100,inputFeederOfDieCuttingPartA)), identity, "transportingToDieCutterA", verbose)
+  val transportingToDieCutterA = singleBatchProcess(m, 15*60, Array((()=>1, rawMaterialStorage)), Array((()=>100,inputFeederOfDieCuttingPartA)), identity, "transportingToDieCutterA", verbosity)
 
-  val outputSlotOfDieCuttingPArtA = lIFOStorage(400,Nil,"outputSlotOfDieCuttingPArtA", verbose,false)
-  val dieCuttingPartA = singleBatchProcess(m, 10, Array((()=>1, inputFeederOfDieCuttingPartA)), Array((()=>4,outputSlotOfDieCuttingPArtA)), identity, "dieCuttingPartA", verbose)
+  val outputSlotOfDieCuttingPArtA = lIFOStorage(400,Nil,"outputSlotOfDieCuttingPArtA", verbosity,false)
+  val dieCuttingPartA = singleBatchProcess(m, 10, Array((()=>1, inputFeederOfDieCuttingPartA)), Array((()=>4,outputSlotOfDieCuttingPArtA)), identity, "dieCuttingPartA", verbosity)
 
-  val outputOfQAAfterCutting = fIFOStorage(100,Nil,"inputFeederOfDieCuttingPartA", verbose,false)
-  val trashContainerForRejectedCutItems = lIFOStorage(1000000000, Nil, "trashContainerForRejectedCutItems", verbose, false)
+  val outputOfQAAfterCutting = fIFOStorage(100,Nil,"inputFeederOfDieCuttingPartA", verbosity,false)
+  val trashContainerForRejectedCutItems = lIFOStorage(1000000000, Nil, "trashContainerForRejectedCutItems", verbosity, false)
   val qAOnInputFeeder = splittingSingleBatchProcess(m, 30,
     Array((()=>1, outputSlotOfDieCuttingPArtA)),
     Array(Array((()=>1,outputOfQAAfterCutting)),
-      Array((()=>1,trashContainerForRejectedCutItems))), choseZeroOne, "QAAterSp", verbose)
+      Array((()=>1,trashContainerForRejectedCutItems))), choseZeroOne, "QAAterSp", verbosity)
 
-  val bufferForDieA =  fIFOStorage(500,Nil,"bufferForDieA", verbose,false)
-  val outputBeltFromDieCuttingA = conveyorBeltProcess(m, 20, 0.5.toFloat , Array((()=>1, outputSlotOfDieCuttingPArtA)), Array((()=>1, bufferForDieA)), identity, "outputBeltFromDieCuttingA", verbose)
+  val bufferForDieA =  fIFOStorage(500,Nil,"bufferForDieA", verbosity,false)
+  val outputBeltFromDieCuttingA = conveyorBeltProcess(m, 20, 0.5.toFloat , Array((()=>1, outputSlotOfDieCuttingPArtA)), Array((()=>1, bufferForDieA)), identity, "outputBeltFromDieCuttingA", verbosity)
 
-  val inputAOfForming = fIFOStorage(2, Nil, "inputAOfForming", verbose, false)
-  val transportingFromBufferA = conveyorBeltProcess(m, 20, 0.5.toFloat , Array((()=>1, bufferForDieA)), Array((()=>1, inputAOfForming)), identity, "transportingFromBufferA", verbose)
+  val inputAOfForming = fIFOStorage(2, Nil, "inputAOfForming", verbosity, false)
+  val transportingFromBufferA = conveyorBeltProcess(m, 20, 0.5.toFloat , Array((()=>1, bufferForDieA)), Array((()=>1, inputAOfForming)), identity, "transportingFromBufferA", verbosity)
 
   //we consider here individual "already cut" dies although they are still aggregated into a single coil
-  val inputFeederOfDieCuttingPartB = fIFOStorage(100, Nil, "inputFeederOfDieCuttingPartB", verbose, false)
+  val inputFeederOfDieCuttingPartB = fIFOStorage(100, Nil, "inputFeederOfDieCuttingPartB", verbosity, false)
 
   //takes 15 minutes to transport a coil, and install it
-  val transportingToDieCutterB = singleBatchProcess(m, 15*60, Array((()=>1, rawMaterialStorage)), Array((()=>100,inputFeederOfDieCuttingPartB)), identity, "transportingToDieCutterB", verbose)
+  val transportingToDieCutterB = singleBatchProcess(m, 15*60, Array((()=>1, rawMaterialStorage)), Array((()=>100,inputFeederOfDieCuttingPartB)), identity, "transportingToDieCutterB", verbosity)
 
-  val outputSlotOfDieCuttingPArtB = lIFOStorage(4, Nil, "outputSlotOfDieCuttingPArtB", verbose, true)
-  val dieCuttingPartB = singleBatchProcess(m, 10, Array((()=>1, inputFeederOfDieCuttingPartB)), Array((()=>4,outputSlotOfDieCuttingPArtB)), identity, "dieCuttingPartB", verbose)
+  val outputSlotOfDieCuttingPArtB = lIFOStorage(4, Nil, "outputSlotOfDieCuttingPArtB", verbosity, true)
+  val dieCuttingPartB = singleBatchProcess(m, 10, Array((()=>1, inputFeederOfDieCuttingPartB)), Array((()=>4,outputSlotOfDieCuttingPArtB)), identity, "dieCuttingPartB", verbosity)
 
-  val bufferForDieB = lIFOStorage(500, Nil, "outputSlotOfDieCuttingPArtA", verbose, false)
-  val outputBeltFromDieCuttingB = conveyorBeltProcess(m, 20, 0.5.toFloat , Array((()=>1, outputSlotOfDieCuttingPArtB)), Array((()=>1, bufferForDieB)), identity, "outputBeltFromDieCuttingB", verbose)
+  val bufferForDieB = lIFOStorage(500, Nil, "outputSlotOfDieCuttingPArtA", verbosity, false)
+  val outputBeltFromDieCuttingB = conveyorBeltProcess(m, 20, 0.5.toFloat , Array((()=>1, outputSlotOfDieCuttingPArtB)), Array((()=>1, bufferForDieB)), identity, "outputBeltFromDieCuttingB", verbosity)
 
-  val inputBOfForming = lIFOStorage(2, Nil, "inputBOfForming", verbose, false)
-  val transportingFromBufferB = conveyorBeltProcess(m, 20, 0.5.toFloat , Array((()=>1, bufferForDieB)), Array((()=>1, inputBOfForming)), identity, "transportingFromBufferB", verbose)
+  val inputBOfForming = lIFOStorage(2, Nil, "inputBOfForming", verbosity, false)
+  val transportingFromBufferB = conveyorBeltProcess(m, 20, 0.5.toFloat , Array((()=>1, bufferForDieB)), Array((()=>1, inputBOfForming)), identity, "transportingFromBufferB", verbosity)
 
-  val outputContainerOfForming = lIFOStorage(120, Nil, "outputContainerOfForming", verbose,false)
-  val forming = singleBatchProcess(m, 30, Array((()=>2, inputAOfForming),(()=>2, inputBOfForming)), Array((()=>2,outputContainerOfForming)), identity, "forming", verbose)
+  val outputContainerOfForming = lIFOStorage(120, Nil, "outputContainerOfForming", verbosity,false)
+  val forming = singleBatchProcess(m, 30, Array((()=>2, inputAOfForming),(()=>2, inputBOfForming)), Array((()=>2,outputContainerOfForming)), identity, "forming", verbosity)
 
-  val formedContainerStoragePlace = lIFOStorage(1000000000, Nil, "containerStoragePlace", verbose, false)
-  val trashContainerStoragePlace = lIFOStorage(1000000000, Nil, "TrashContainerStoragePlace", verbose, false)
+  val formedContainerStoragePlace = lIFOStorage(1000000000, Nil, "containerStoragePlace", verbosity, false)
+  val trashContainerStoragePlace = lIFOStorage(1000000000, Nil, "TrashContainerStoragePlace", verbosity, false)
   val transportingOutputContainerFromForming = splittingSingleBatchProcess(m, 30,
     Array((()=>120, outputContainerOfForming)),
     Array(Array((()=>1,formedContainerStoragePlace)),
-      Array((()=>1,trashContainerStoragePlace))), choseZeroOne, "transportingOutputContainerFromForming", verbose)
+      Array((()=>1,trashContainerStoragePlace))), choseZeroOne, "transportingOutputContainerFromForming", verbosity)
 
   val myStore = metricsStore(List(
     (mult(completedBatchCount(dieCuttingPartA),totalPut(outputSlotOfDieCuttingPArtA)),"a stupid metric, to test the stuff"),
@@ -101,9 +101,9 @@ object FactoryExample extends App with FactorySimulationHelper {
     (avgOnHistory(relativeStockLevel(rawMaterialStorage)), "avg relative stock level of raw material storage"),
     (avgOnHistory(stockLevel(rawMaterialStorage)), "avg  stock level of raw material storage"),
     (ponderateWithDuration(stockLevel(rawMaterialStorage)),"toto")
-  ), verbose)
+  ), verbosity)
 
-  m.simulate(8*60*60, verbose,()=>{myStore.updateMetricsIfNeeded(m.clock());false})
+  m.simulate(8*60*60, verbosity,()=>{myStore.updateMetricsIfNeeded(m.clock());false})
   myStore.finish(m.clock())
 
   println(m)

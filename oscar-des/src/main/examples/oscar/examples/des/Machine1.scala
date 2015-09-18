@@ -54,6 +54,6 @@ object Machine1 {
 		m1.run()
 		val m2 = new Machine1(mod,"machine2")
 		m2.run()
-		mod.simulate(100,true);
+		mod.simulate(100,println);
 	}
 }

@@ -15,7 +15,7 @@ import scala.language.implicitConversions
  * */
 abstract class Storage(val maxSize: Int,
                        val name:String,
-                       val verbose:Boolean,
+                       val verbosity:String=>Unit,
                        overflowOnInput:Boolean)
   extends RichPutable with RichFetchable {
 
@@ -62,7 +62,7 @@ abstract class Storage(val maxSize: Int,
     if (overflowOnInput) {
       val lostByOverflow = flushBlockedPuts()
       totalLosByOverflow += lostByOverflow
-      if (lostByOverflow != 0 && verbose) println(name + ": overflow, lost " + lostByOverflow)
+      if (lostByOverflow != 0 && verbosity!=null) verbosity(name + ": overflow, lost " + lostByOverflow)
       somethingCouldBeDone || (lostByOverflow != 0)
     }else {
       somethingCouldBeDone
@@ -76,14 +76,14 @@ abstract class Storage(val maxSize: Int,
   def fetch(amount: Int)(block: ItemClass => Unit) {
     appendFetch(amount)(block)
     flow()
-    if (isThereAnyWaitingFetch && verbose) println("Empty storage on " + name)
+    if (isThereAnyWaitingFetch && verbosity!=null) verbosity("Empty storage on " + name)
   }
 
   def put(amount: Int, i:ItemClass)(block: () => Unit): Unit = {
     appendPut(List((amount,i)))(block)
     flow()
-    if (isThereAnyWaitingPut && verbose)
-      println("Full storage on " + name)
+    if (isThereAnyWaitingPut && verbosity!=null)
+      verbosity("Full storage on " + name)
   }
 }
 
@@ -99,8 +99,8 @@ abstract class Storage(val maxSize: Int,
 class FIFOStorage(maxSize:Int,
                   initialContent:List[(Int,ItemClass)],
                   name:String,
-                  verbose:Boolean,
-                  overflowOnInput:Boolean) extends Storage(maxSize,name,verbose,overflowOnInput){
+                  verbosity:String=>Unit,
+                  overflowOnInput:Boolean) extends Storage(maxSize,name,verbosity,overflowOnInput){
 
   val content:DoublyLinkedList[BufferCompositeItem] = new DoublyLinkedList[BufferCompositeItem]
   for(i <- initialContent){
@@ -183,8 +183,8 @@ class FIFOStorage(maxSize:Int,
 class LIFOStorage(maxSize:Int,
                   initialContent:List[(Int,ItemClass)] = List.empty,
                   name:String,
-                  verbose:Boolean,
-                  overflowOnInput:Boolean) extends Storage(maxSize,name,verbose,overflowOnInput){
+                  verbosity:String=>Unit,
+                  overflowOnInput:Boolean) extends Storage(maxSize,name,verbosity,overflowOnInput){
 
   var content:List[BufferCompositeItem] = initialContent.map(coupleToComposite)
 
@@ -254,7 +254,7 @@ class NonAttributeStorage[Content<:StockContentType]
  initialContent:Int,
  fetchedClass:ItemClass,
  name:String,
- verbose:Boolean,
+ verbosity:String=>Unit,
  overflowOnInput:Boolean) extends Storage[Content](maxSize,name,verbose,overflowOnInput){
 
   override var contentSize: Int = initialContent

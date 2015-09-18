@@ -106,7 +106,7 @@ object Machine3 {
 		m1.run()
 		val m2 = new Machine3(mod,"machine2",mlist)
 		m2.run()
-		mod.simulate(100,true);
+		mod.simulate(100,println);
   		println("done1")
 	}
 }

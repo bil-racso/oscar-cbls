@@ -22,9 +22,9 @@ case object QuickParseOK extends QuickParseResult(true)
 class QuickParser(storages:Iterable[String],processes:Iterable[String]){
   val m = new Model
   val storagesMap = storages.foldLeft[SortedMap[String,Storage]](SortedMap.empty)(
-    (theMap,storageName) => theMap + ((storageName,new FIFOStorage(10,Nil,storageName,false,false))))
+    (theMap,storageName) => theMap + ((storageName,new FIFOStorage(10,Nil,storageName,null,false))))
   val processMap = processes.foldLeft[SortedMap[String,ActivableProcess]](SortedMap.empty)(
-    (theMap,processName) => theMap + ((processName,new SingleBatchProcess(m, () => 1.0 , Array(), Array(), null, processName, false))))
+    (theMap,processName) => theMap + ((processName,new SingleBatchProcess(m, () => 1.0 , Array(), Array(), null, processName, null))))
 
   val myParser = new ListenerParser(storagesMap,processMap)
 
@@ -227,11 +227,11 @@ class ListenerParser(storages:Map[String,Storage],
 object ParserTester extends App with FactoryHelper{
 
   val m = new Model
-  val aStorage = new FIFOStorage(10,Nil,"aStorage",false,false)
-  val bStorage = new FIFOStorage(10,Nil,"bStorage",false,false)
+  val aStorage = new FIFOStorage(10,Nil,"aStorage",null,false)
+  val bStorage = new FIFOStorage(10,Nil,"bStorage",null,false)
 
-  val aProcess = new SingleBatchProcess(m, 5000, Array(), Array((()=>1,aStorage)), null, "aProcess", false)
-  val bProcess = new SingleBatchProcess(m, 5000, Array(), Array((()=>1,aStorage)), null, "bProcess", false)
+  val aProcess = new SingleBatchProcess(m, 5000, Array(), Array((()=>1,aStorage)), null, "aProcess", null)
+  val bProcess = new SingleBatchProcess(m, 5000, Array(), Array((()=>1,aStorage)), null, "bProcess", null)
 
   val myParser = ListenerParser(List(aStorage,bStorage), List(aProcess,bProcess))
 

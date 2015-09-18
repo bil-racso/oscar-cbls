@@ -31,7 +31,7 @@ trait PolicyHelper {
    * @param a the activeable that is activated by this activation
    * @param threshold the threshold for activation
    * @param activationSize a function that computes the level of activation, given the s.content
-   * @param verbose true to have verbosities on the standard output
+   * @param verbosity true to have verbosities on the standard output
    * @param period the period of activation, set to zero for immediate activation
    * @param name the name of this rule, for debugging purposes
    */
@@ -40,9 +40,9 @@ trait PolicyHelper {
                        a:Activable,
                        threshold:Int,
                        activationSize:Int=>Int,
-                       verbose:Boolean = true,
+                       verbosity:String=>Unit = null,
                        period:Float,
                        name:String)
-  = new OnLowerThreshold(s,m,a,threshold,activationSize,verbose,period,name)
+  = new OnLowerThreshold(s,m,a,threshold,activationSize,verbosity,period,name)
 
 }

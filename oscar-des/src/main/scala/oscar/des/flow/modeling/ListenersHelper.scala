@@ -7,8 +7,8 @@ import scala.language.implicitConversions
   */
 trait ListenersHelper{
 
-  def metricsStore(rootExpressions:List[(Expression,String)],verbose:Boolean) =
-    new MetricsStore(rootExpressions,verbose)
+  def metricsStore(rootExpressions:List[(Expression,String)],verbosity:String=>Unit) =
+    new MetricsStore(rootExpressions,verbosity)
 
   /**
    * true if the storage is empty, false otherwise
