@@ -87,7 +87,7 @@ case class FlattenWorseFirst(p: Planning,
       makeSpanExpansionEstimator,
       p.canAddPrecedenceAssumingResourceConflict) match {
         case (a, b) =>
-          b.addDynamicPredecessor(a, amIVerbose)
+          b.addDynamicPredecessor(a, printTakenMoves)
           return true
         case null => return false;
       }
@@ -112,10 +112,10 @@ case class FlattenWorseFirst(p: Planning,
       (a: Int, b: Int) => estimateMakespanExpansionForNewDependency(baseForEjectionArray(a), conflictActivityArray(b)),
       (a: Int, b: Int) => dependencyKillers(a)(b).canBeKilled) match {
         case (a, b) =>
-          if (amIVerbose) println("need to kill dependencies to complete flattening")
-          dependencyKillers(a)(b).killDependencies(amIVerbose)
+          if (printTakenMoves) println("need to kill dependencies to complete flattening")
+          dependencyKillers(a)(b).killDependencies(printTakenMoves)
 
-          conflictActivityArray(b).addDynamicPredecessor(baseForEjectionArray(a), amIVerbose)
+          conflictActivityArray(b).addDynamicPredecessor(baseForEjectionArray(a), printTakenMoves)
 
         case null => throw new Error("cannot flatten at time " + t + " activities: " + conflictActivities)
       }
@@ -133,7 +133,7 @@ case class Relax(p: Planning, pKill: Int,
 
   override def doIt(potentiallyKilledPrecedences: List[(Activity, Activity)]) {
     for ((from, to) <- potentiallyKilledPrecedences) {
-      doRelax(from, to, amIVerbose)
+      doRelax(from, to, printTakenMoves)
     }
   }
 
@@ -198,7 +198,7 @@ case class RelaxNoConflict(p: Planning, twoPhaseCheck: Boolean = false)
         }
       }
     }
-    if (amIVerbose) println("RelaxNoConflict: relaxCount:" + relaxCount)
+    if (printTakenMoves) println("RelaxNoConflict: relaxCount:" + relaxCount)
   }
   override def shortDescription(): String = "relaxes all precedences without introducing a conflict (based on planning.worseOvershotResource)"
 }
@@ -214,7 +214,7 @@ case class CleanPrecedences(p: Planning) extends JumpNeighborhood with SearchEng
     for (t: Activity <- p.activityArray) {
       for (iD: Int <- t.additionalPredecessors.value) {
         if (!t.potentiallyKilledPredecessors.value.contains(iD)) {
-          t.removeDynamicPredecessor(p.activityArray(iD), amIVerbose)
+          t.removeDynamicPredecessor(p.activityArray(iD), printTakenMoves)
         }
       }
     }

@@ -72,7 +72,7 @@ case class MoveItem(p:BinPackingProblem,
     val bin1 = p.bins(selectFrom(p.mostViolatedBins.value))
 
     if(bin1.violation.value == 0){
-      if (verbose >= 2) println("ItemMove: problem seems to be solved")
+      if (printPerformedSearches) println("ItemMove: problem seems to be solved")
       return NoMoveFound
     }
 
@@ -101,11 +101,11 @@ case class MoveItem(p:BinPackingProblem,
         val objAfter = p.overallViolation.assignVal(item.bin, newBin.number)
         if(acceptanceCriteria(oldViolation,objAfter)) AssignMove(item.bin,newBin.number,objAfter, "ItemMove")
         else{
-          if (verbose >= 2) println("ItemMove: no improvement found")
+          if (printPerformedSearches) println("ItemMove: no improvement found")
           NoMoveFound
         }
       case null =>
-        if (verbose >= 2) println("ItemMove: no improvement found")
+        if (printPerformedSearches) println("ItemMove: no improvement found")
         NoMoveFound
     }
   }
@@ -136,7 +136,7 @@ case class SwapItems(p:BinPackingProblem,
     val bin1 = p.bins(selectFrom(p.mostViolatedBins.value))
 
     if(bin1.violation.value == 0){
-      if (verbose >= 2) println("ItemsSwapNeighborhood: problem seems to be solved")
+      if (printPerformedSearches) println("ItemsSwapNeighborhood: problem seems to be solved")
       return NoMoveFound
     }
 
@@ -173,11 +173,11 @@ case class SwapItems(p:BinPackingProblem,
         val newObj = p.overallViolation.swapVal(item1.bin, item2.bin)
         if(acceptanceCriteria(oldViolation,newObj)) SwapMove(item1.bin, item2.bin, newObj, "ItemsSwap")
         else{
-          if (verbose >= 2) println("ItemsSwap: no improvement found")
+          if (printPerformedSearches) println("ItemsSwap: no improvement found")
           NoMoveFound
         }
       case null =>
-        if (verbose >= 2) println("ItemsSwap: no improvement found")
+        if (printPerformedSearches) println("ItemsSwap: no improvement found")
         NoMoveFound
     }
   }
@@ -199,7 +199,7 @@ case class JumpSwapItems(p:BinPackingProblem)
     val bin1:Bin = selectMax(binList, (bin:Bin) => bin.violation.value, (bin:Bin) => bin.violation.value > 0)
 
     if (bin1 == null) {
-      if (verbose >= 2) println("Jump: problem seems to be solved")
+      if (printPerformedSearches) println("Jump: problem seems to be solved")
       return NoMoveFound
     }
 
@@ -212,10 +212,10 @@ case class JumpSwapItems(p:BinPackingProblem)
       })
     match {
       case (item1,item2) =>
-        if (verbose >= 2) println("Jump: swapping bins of " + item1 + " and " + item2)
+        if (printPerformedSearches) println("Jump: swapping bins of " + item1 + " and " + item2)
         SwapMove(item1.bin, item2.bin, Int.MaxValue, "Jump")
       case null =>
-        if (verbose >= 2) println("Jump: no move found")
+        if (printPerformedSearches) println("Jump: no move found")
         NoMoveFound
     }
   }
@@ -236,7 +236,7 @@ case class EmptyMostViolatedBin(p:BinPackingProblem)
     val bin1:Bin = selectMax(binList, (bin:Bin) => bin.violation.value, (bin:Bin) => bin.violation.value > 0)
 
     if (bin1 == null) {
-      if (verbose >= 2) println("EmptyMostViolatedBin: problem seems to be solved")
+      if (printPerformedSearches) println("EmptyMostViolatedBin: problem seems to be solved")
       return NoMoveFound
     }
 
