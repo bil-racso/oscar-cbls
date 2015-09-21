@@ -50,7 +50,7 @@ abstract class Resource(planning: Planning, n: String) {
    * these are the activities that you can use for ejecting
    * one of the conflicting activities
    */
-  def baseActivityForEjection(t: Int): Iterable[Activity]
+  def activitieUsingResourceAtThisTime(t: Int): Iterable[Activity]
 
   def toAsciiArt(headerLength: Int): String
 }

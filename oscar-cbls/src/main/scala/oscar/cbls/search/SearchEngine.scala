@@ -29,6 +29,8 @@ class SearchEngine(isRandomized: Boolean = true) extends SearchEngineTrait{
   setRandomized(isRandomized)
 }
 
+object SearchEngine extends SearchEngineTrait
+
 trait SearchEngineTrait{
   var RandomGenerator: Random = null
 

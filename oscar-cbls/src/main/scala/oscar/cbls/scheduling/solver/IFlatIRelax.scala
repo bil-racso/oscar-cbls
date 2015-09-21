@@ -209,7 +209,7 @@ class IFlatIRelax(p: Planning,
       val t: Int = r.worseOverShootTime
 
       val conflictActivities = r.conflictingActivities(t)
-      val baseForEjection = r.baseActivityForEjection(t)
+      val baseForEjection = r.activitieUsingResourceAtThisTime(t)
 
       selectMin2(baseForEjection, conflictActivities,
         estimateMakespanExpansionForNewDependency,

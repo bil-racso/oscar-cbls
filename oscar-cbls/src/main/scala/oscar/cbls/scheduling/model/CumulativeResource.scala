@@ -73,17 +73,25 @@ class CumulativeResource(planning: Planning, val maxAmount: Int = 1, name: Strin
   }
 
   /**these are the activities that you can use for ejecting one of the conflicting activities*/
-  def baseActivityForEjection(t: Int): Iterable[Activity] = {
+  def activitieUsingResourceAtThisTime(t: Int): Iterable[Activity] = {
     activitiesAndUse(t).map(_._1)
   }
 
-  /** you need to eject one of these to solve the conflict */
+
+  /**
+   * returns a list of activity
+   * such that their summed resource usage exceeds the capacity of the resource
+   * put in oder words: for sure, these activities cannot ba performed at the same time with this resource
+   * and if only one is removed, this onflict will be resolved (but there might be other ones remaining)
+   * @param t
+   * @return
+   */
   def conflictingActivities(t: Int): List[Activity] = {
     val conflictSet: List[(Activity, IntValue)] = ConflictSearch(
       0,
       activitiesAndUse(t),
-      (use: Int, ActivityAndamount: (Activity, IntValue)) => use + ActivityAndamount._2.value,
-      (use: Int, ActivityAndamount: (Activity, IntValue)) => use - ActivityAndamount._2.value,
+      (use: Int, activityAndAmount: (Activity, IntValue)) => use + activityAndAmount._2.value,
+      (use: Int, activityAndAmount: (Activity, IntValue)) => use - activityAndAmount._2.value,
       (use: Int) => use > maxAmount)
 
     conflictSet.map(_._1)

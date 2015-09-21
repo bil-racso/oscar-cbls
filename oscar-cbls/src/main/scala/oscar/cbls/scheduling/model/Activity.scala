@@ -158,6 +158,12 @@ class Activity(var duration: IntValue, val planning: Planning, val name: String 
     additionalPredecessors :-= t.getEndActivity.ID
   }
 
+  /**
+   * @param from
+   * @return true if from is a predecessor to this, false otherwise
+   */
+  def hasPredecessor(from:Activity): Boolean = allPrecedingActivities.value.contains(from.ID)
+
   def getEndActivity: Activity = this
   def getStartActivity: Activity = this
 

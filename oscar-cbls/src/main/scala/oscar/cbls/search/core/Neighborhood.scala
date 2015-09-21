@@ -538,7 +538,13 @@ abstract class EasyNeighborhood(best:Boolean = false, neighborhoodName:String=nu
   private var acceptanceCriterion:(Int,Int) => Boolean=null
   private var toReturnMove:Move = null
   private var bestNewObj:Int = Int.MaxValue
-  protected var obj:Objective = null
+
+  private var private_objective:Objective = null
+
+  protected def obj_=(o:Objective){
+    private_objective = o
+  }
+  protected def obj:Objective = private_objective
 
   override final def getMove(obj:Objective, acceptanceCriterion:(Int,Int) => Boolean):SearchResult = {
     oldObj = obj()

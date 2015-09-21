@@ -75,7 +75,7 @@ case class FlattenWorseFirst(p: Planning,
    */
   def flattenOne(r: Resource, t: Int): Boolean = {
     val conflictActivities = r.conflictingActivities(t)
-    val baseForEjection = r.baseActivityForEjection(t)
+    val baseForEjection = r.activitieUsingResourceAtThisTime(t)
 
     val makeSpanExpansionEstimator = (if (priorityToPrecedenceToMovableActivities)
       (from: Activity, to: Activity) =>
@@ -95,7 +95,7 @@ case class FlattenWorseFirst(p: Planning,
 
   def flattenOneWithSuperTaskHandling(r: Resource, t: Int): Unit = {
     val conflictActivities = r.conflictingActivities(t)
-    val baseForEjection = r.baseActivityForEjection(t)
+    val baseForEjection = r.activitieUsingResourceAtThisTime(t)
 
     //no precedence can be added because some additional precedence must be killed to allow that
     //this happens when superTasks are used, and when dependencies have been added around the start and end tasks of a superTask
