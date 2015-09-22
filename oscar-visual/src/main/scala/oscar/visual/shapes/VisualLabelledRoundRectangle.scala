@@ -31,6 +31,8 @@ class VisualLabelledRoundRectangle(d: VisualDrawing, s: RoundRectangle2D.Double,
   def rect: RoundRectangle2D.Double = shape
   var marginWidth = _marginWidth
   val textDraw = new VisualText(d, (x + marginWidth).toInt, (y + marginWidth + d.getFontMetrics(d.getFont).getHeight).toInt, label)
+  shape.height = (textDraw.nLines * d.getFontMetrics(d.getFont).getHeight) + marginWidth * 2
+  shape.width = getWidth(label)
   
   textDraw.move(xText, yText)
 
@@ -71,7 +73,8 @@ class VisualLabelledRoundRectangle(d: VisualDrawing, s: RoundRectangle2D.Double,
   }
 
   def getWidth(newLabel: String) = {
-    d.getFontMetrics(d.getFont).stringWidth(newLabel) + marginWidth * 2
+    val linesSortedByDecLength = newLabel.trim.split("\n").sortBy(-_.length)
+    d.getFontMetrics(d.getFont).stringWidth(linesSortedByDecLength(0)) + marginWidth * 2
   }
 }
 
@@ -82,7 +85,7 @@ object VisualLabelledRoundRectangle {
     val d = VisualDrawing(flipped=false)
     val inf = f.createFrame("Drawing")
 
-    val rect = new VisualLabelledRoundRectangle(d, 50, 50, "I'm a rectangle.\nJust a rectangle...", marginWidth=10);
+    val rect = new VisualLabelledRoundRectangle(d, 50, 50, "I'm a rectangle.\nJust a rectangle...", marginWidth=10)
     rect.toolTip = "Hello"
 
     inf.add(d)
