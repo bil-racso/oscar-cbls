@@ -1,6 +1,6 @@
 package oscar.des.flow.lib
 
-import oscar.des.flow.core.Inputter
+import oscar.des.flow.core.{Outputter, Inputter}
 import oscar.des.flow.core.ItemClassHelper._
 
 abstract class Activable{
