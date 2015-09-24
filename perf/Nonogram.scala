@@ -49,7 +49,8 @@ object Nonogram extends App {
       "STR3" -> ((x: Array[CPIntVar], tuples: Array[Array[Int]]) => table(x, tuples,STR3)),
       "GAC4" -> ((x: Array[CPIntVar], tuples: Array[Array[Int]]) => table(x, tuples,GAC4)),
       "GAC4R" -> ((x: Array[CPIntVar], tuples: Array[Array[Int]]) => table(x, tuples,GAC4R)),
-      "MDD4R" -> ((x: Array[CPIntVar], tuples: Array[Array[Int]]) => table(x, tuples,MDD4R))
+      "MDD4R" -> ((x: Array[CPIntVar], tuples: Array[Array[Int]]) => table(x, tuples,MDD4R)),
+      "AC5TCR" -> ((x: Array[CPIntVar], tuples: Array[Array[Int]]) => table(x, tuples,AC5TCRecomp))
   )
   
   implicit val solver: CPSolver = CPSolver()
