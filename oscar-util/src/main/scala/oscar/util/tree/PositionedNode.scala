@@ -15,6 +15,7 @@
 package oscar.util.tree
 
 import java.awt.Color
+import javax.swing.JPanel
 
 class PositionedNode[T](val label: T, var pos: Double, val sons: List[PositionedNode[T]], val edgeLabels: List[T], val col: Color= Color.white, val action: () => Unit = () => Unit) {
   private var maxLinesPerLevel = Array[Int]()
@@ -58,6 +59,10 @@ class PositionedNode[T](val label: T, var pos: Double, val sons: List[Positioned
     for (son <- curNode.sons) {
       computeMaxLinesPerLevelAux(son, level + 1)
     }
+  }
+
+  def getMaxStringWidth(d: JPanel): Int = {
+    label.toString.split("\n").map(l => d.getFontMetrics(d.getFont).stringWidth(l)).max
   }
 
 }
