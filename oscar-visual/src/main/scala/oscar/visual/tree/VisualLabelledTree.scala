@@ -23,7 +23,7 @@ import oscar.visual.VisualFrame
 
 class VisualLabelledTree[T](var tree: PositionedNode[T]) extends VisualDrawing(false, false) {
 
-  private def baseOffset = this.getFontMetrics(this.getFont).stringWidth(tree.label.toString) + tree.minOffset
+  private def baseOffset = tree.getMaxStringWidth(this) + tree.minOffset
 
   val levelHeights = Array.fill(tree.getMaxDepth + 1)(1)
   val maxLinesPerLevel = tree.getMaxLinesPerLevel
@@ -52,8 +52,6 @@ class VisualLabelledTree[T](var tree: PositionedNode[T]) extends VisualDrawing(f
         computeRectangles()
         revalidate()
         repaint()
-        repaint(0, 0, 2000, 2000)
-
       }
     })
 
@@ -109,7 +107,7 @@ object VisualLabelledTree {
     val G = Node("G\nL", List(H, I, J), List("Son 1", "Son 2", "Son 3"))
     val A = Node("A\nThe root!", List(B, F, G), List("Son 1", "Son 2", "Son 3"))
     println(A)
-    val positionedA = Node.design(A, 142)
+    val positionedA = Node.design(A, 1002)
 
     val visualTree = new VisualLabelledTree(positionedA)
 
