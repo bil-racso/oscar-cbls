@@ -73,8 +73,7 @@ class VisualLabelledRoundRectangle(d: VisualDrawing, s: RoundRectangle2D.Double,
   }
 
   def getWidth(newLabel: String) = {
-    val linesSortedByDecLength = newLabel.trim.split("\n").sortBy(-_.length)
-    d.getFontMetrics(d.getFont).stringWidth(linesSortedByDecLength(0)) + marginWidth * 2
+    newLabel.trim.split("\n").map(l => d.getFontMetrics(d.getFont).stringWidth(l)).max + marginWidth * 2
   }
 }
 
@@ -86,6 +85,7 @@ object VisualLabelledRoundRectangle {
     val inf = f.createFrame("Drawing")
 
     val rect = new VisualLabelledRoundRectangle(d, 50, 50, "I'm a rectangle.\nJust a rectangle...", marginWidth=10)
+    val lol = VisualLine(d, 50, 25, 50, 150)
     rect.toolTip = "Hello"
 
     inf.add(d)

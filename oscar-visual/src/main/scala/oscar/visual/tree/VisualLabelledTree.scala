@@ -61,15 +61,15 @@ class VisualLabelledTree[T](var tree: PositionedNode[T]) extends VisualDrawing(f
   
   def computeRectangles() = {
     def rectAux(node: PositionedNode[T], accOffset: Double, level: Int): Unit = {
-      val newNode = new VisualLabelledRoundRectangle(this, accOffset + node.pos, levelHeights(level), node.label.toString, 10)
+      val newNode = new VisualLabelledRoundRectangle(this, accOffset + node.pos - node.getMaxStringWidth(this) / 2, levelHeights(level), node.label.toString, 10)
       newNode.innerCol = node.col
       newNode.onClick(node.action())
       rectSet += newNode
       for (i <- node.sons.indices) {
         branchSet += new VisualLabelledBranch(this,
-            accOffset + node.pos + newNode.width / 2,
+            accOffset + node.pos - node.getMaxStringWidth(this) / 2 + newNode.width / 2,
             levelHeights(level) + newNode.height,
-            accOffset + node.pos + node.sons(i).pos + newNode.getWidth(node.sons(i).label.toString) / 2,
+            accOffset + node.pos + node.sons(i).pos - node.sons(i).getMaxStringWidth(this) / 2 + newNode.getWidth(node.sons(i).label.toString) / 2,
             levelHeights(level + 1) , node.edgeLabels(i).toString)
         rectAux(node.sons(i), accOffset + node.pos, level + 1)
       }
@@ -92,32 +92,32 @@ class VisualLabelledTree[T](var tree: PositionedNode[T]) extends VisualDrawing(f
   }
 }
 
-object VisualLabelledTree{
+object VisualLabelledTree {
   	
   def main(args : Array[String]) {
-	val f = VisualFrame("toto")
-	val inf = f.createFrame("Drawing")
-	
-	val C = Node("C",action = () => {println("hello")})
-	val D = Node("D")
-	val E = Node("E")
-	val H = Node("H")
-	val I = Node("I")
-	val J = Node("J")
-	val B = Node("B", List(C, D, E), List("Son 1", "Son 2", "Son 3"))
-	val F = Node("F")
-	val G = Node("G\nL", List(H, I, J), List("Son 1", "Son 2", "Son 3"))
-	val A = Node("A\nThe root!", List(B, F, G), List("Son 1", "Son 2", "Son 3"))
-	println(A)
-	val positionedA = Node.design(A, 42)
-	
-	val visualTree = new VisualLabelledTree(positionedA)
-	
-	inf.add(visualTree)
-	f.pack()
-	
-	visualTree.repaint()
-			
-	Thread.sleep(100000)
+    val f = VisualFrame("toto", 1, 1)
+    val inf = f.createFrame("Drawing")
+
+    val C = Node("C",action = () => {println("hello")})
+    val D = Node("D")
+    val E = Node("E")
+    val H = Node("Hello world\nI am a node")
+    val I = Node("I")
+    val J = Node("J")
+    val B = Node("B", List(C, D, E), List("Son 1", "Son 2", "Son 3"))
+    val F = Node("FFF")
+    val G = Node("G\nL", List(H, I, J), List("Son 1", "Son 2", "Son 3"))
+    val A = Node("A\nThe root!", List(B, F, G), List("Son 1", "Son 2", "Son 3"))
+    println(A)
+    val positionedA = Node.design(A, 142)
+
+    val visualTree = new VisualLabelledTree(positionedA)
+
+    inf.add(visualTree)
+    f.pack()
+
+    visualTree.repaint()
+
+    //Thread.sleep(100000)
   }
 }
