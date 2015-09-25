@@ -105,9 +105,9 @@ object VisualLabelledTree {
     val B = Node("B", List(C, D, E), List("Son 1", "Son 2", "Son 3"))
     val F = Node("FFF")
     val G = Node("G\nL", List(H, I, J), List("Son 1", "Son 2", "Son 3"))
-    val A = Node("A\nThe root!", List(B, F, G), List("Son 1", "Son 2", "Son 3"))
+    val A = Node("A\nThe root!\nI like to be a root\nBeing a root is my purpose in life", List(B, F, G), List("Son 1", "Son 2", "Son 3"))
     println(A)
-    val positionedA = Node.design(A, 1002)
+    val positionedA = Node.design(A, 145)
 
     val visualTree = new VisualLabelledTree(positionedA)
 
