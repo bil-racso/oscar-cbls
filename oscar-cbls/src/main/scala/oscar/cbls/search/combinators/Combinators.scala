@@ -354,7 +354,7 @@ class LearningRandom(l:List[Neighborhood],
       weightedInstrumentedNeighborhoods = newlyWeightedNeighborhoods.map(sw => (sw._1,(if (sw._2 < 0) defaultWeight else sw._2)))
       currentRandom = new BiasedRandom(weightedInstrumentedNeighborhoods :_*)()
       stepsBeforeUpdate = updateEveryXCalls
-      if(printPerformedSearches ||true) println("LearningRandom: weights updated: " + weightedInstrumentedNeighborhoods )
+      if(printPerformedSearches) println("LearningRandom: weights updated: " + weightedInstrumentedNeighborhoods )
     }
     stepsBeforeUpdate -=1
     currentRandom.getMove(obj,acceptanceCriterion)
@@ -1171,7 +1171,7 @@ case class Statistics(a:Neighborhood,ignoreInitialObj:Boolean = false)extends Ne
   def gainPerCall:String = if(nbCalls ==0) "NA" else ("" + totalGain / nbCalls)
   def callDuration:String = if(nbCalls == 0 ) "NA" else ("" + totalTimeSpent / nbCalls)
   //gain in obj/100ms
-  def slope:String = if(totalTimeSpent == 0) "NA" else ("" + ((100 * totalGain) / totalTimeSpent).toInt)
+  def slope:String = if(totalTimeSpent == 0) "NA" else ("" + "%.3f".format(totalGain / totalTimeSpent.toDouble))
 
   override def collectStatistics: String =
     padToLength("" + a,31) +
@@ -1194,6 +1194,6 @@ case class Statistics(a:Neighborhood,ignoreInitialObj:Boolean = false)extends Ne
 object Statistics{
   private def padToLength(s: String, l: Int) = (s + nStrings(l, " ")).substring(0, l)
   private def nStrings(n: Int, s: String): String = if (n <= 0) "" else s + nStrings(n - 1, s)
-  def statisticsHeader = padToLength("Neighborhood",30) + " calls found sumGain sumTime(ms) avgGain avgTime(ms) slope(-Dobj/.1s)"
+  def statisticsHeader = padToLength("Neighborhood",30) + " calls found sumGain sumTime(ms) avgGain avgTime(ms) -slope(-Dobj/ms)"
 }
 

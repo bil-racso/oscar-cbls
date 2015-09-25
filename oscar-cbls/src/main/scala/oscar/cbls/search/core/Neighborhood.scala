@@ -441,10 +441,11 @@ abstract class Neighborhood{
    * the criterion accepts all improving moves, and for worsening moves, it applies the metropolis criterion:
    * accept if math.random(0.0; 1.0) < base exponent (-gain / temperatureValue)
    * @param temperature a function that inputs the number of moves taken, and outputs a temperature, for use in the criterion
-   *                    the number of steps is reset to zero when the combinator is reset
+   *                    the number of steps is reset to zero when the combinator is reset.
+   *                    By default, the temperature is 100/the number of steps
    * @param base the base for the exponent calculation. default is 2
    */
-  def metropolis(temperature:Int => Float = _ => 100, base:Float = 2) = new Metropolis(this, temperature, base)
+  def metropolis(temperature:Int => Float = (it:Int) => 100/(it + 1), base:Float = 2) = new Metropolis(this, temperature, base)
 
   /**
    * This is an atomic combinator, it represent that the neighborhood below should be considered as a single piece.

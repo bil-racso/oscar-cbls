@@ -59,7 +59,21 @@ object WarehouseLocationComparativeBench extends App with AlgebraTrait{
     SwapsNeighborhood(warehouseOpenArray, "SwapWarehouses")))
     orElse (RandomizeNeighborhood(warehouseOpenArray, W/5) maxMoves 2) saveBest obj restoreBestOnExhaust)
 
-  val a = Benchmark.benchtoString(obj,10,neighborhood1,neighborhood2,neighborhood3)
+  val neighborhood4 = ()=>("onlySwitch",AssignNeighborhood(warehouseOpenArray, "SwitchWarehouse")
+    orElse (RandomizeNeighborhood(warehouseOpenArray, W/5) maxMoves 2) saveBest obj restoreBestOnExhaust)
+
+  val neighborhood5 = ()=>("simulatedAnnealing",AssignNeighborhood(warehouseOpenArray, "SwitchWarehouse")
+    metropolis() maxMoves W/2 withoutImprovementOver obj saveBest obj restoreBestOnExhaust)
+
+  val neighborhood6 = ()=>("roundRobin",AssignNeighborhood(warehouseOpenArray, "SwitchWarehouse")
+    roundRobin SwapsNeighborhood(warehouseOpenArray, "SwapWarehouses")
+    orElse (RandomizeNeighborhood(warehouseOpenArray, W/5) maxMoves 2) saveBest obj restoreBestOnExhaust)
+
+  val neighborhood7 = ()=>("best",AssignNeighborhood(warehouseOpenArray, "SwitchWarehouse")
+    best SwapsNeighborhood(warehouseOpenArray, "SwapWarehouses")
+    orElse (RandomizeNeighborhood(warehouseOpenArray, W/5) maxMoves 2) saveBest obj restoreBestOnExhaust)
+
+  val a = Benchmark.benchtoString(obj,10,neighborhood1,neighborhood2,neighborhood3,neighborhood4,neighborhood5,neighborhood6,neighborhood7)
 
   println(a)
 
