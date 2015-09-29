@@ -525,13 +525,29 @@ abstract class AbstractLPSolver {
 
     // update of the coeff in the oscar model
     val oldExpr = constraint.cstr.linExpr
-    val updatedExpr = if (oldExpr.coef.keys.exists(_ == variable)) oldExpr - oldExpr.coef(variable) * variable + coeff * variable
+    val updatedExpr = if (oldExpr.coef.keys.exists(_ eq variable)) oldExpr - oldExpr.coef(variable) * variable + coeff * variable
     else oldExpr + coeff * variable
     val updatedCstr = new LinearConstraint(updatedExpr, constraint.cstr.consType)
     val updatedConstraint = new LPConstraint(this, updatedCstr, constraint.index, constraint.name)
     cons(constraint.index) = updatedConstraint
 
     updatedConstraint
+  }
+
+  /**
+   *  Set the coefficient of the variable in the corresponding constraint to the specified value
+   */
+  def updateObjCoef(variable: AbstractLPFloatVar, coeff: Double) = {
+    // update directly in the solver if the model has already been build
+    if (statuss != LPStatus.NOT_SOLVED) solver.updateObjCoef(variable.index, coeff)
+
+    // update of the coeff in the oscar model
+    val oldObj = objective
+    val updatedObj = if (oldObj.coef.keys.exists(_ eq variable)) oldObj - oldObj.coef(variable) * variable + coeff * variable
+    else oldObj + coeff * variable
+    optimize(updatedObj, minimize)
+
+    updatedObj
   }
 } // end class AbstractLPSolver
 
