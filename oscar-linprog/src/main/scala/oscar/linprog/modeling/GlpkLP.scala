@@ -275,6 +275,8 @@ class GlpkLP extends AbstractLP {
     GLPK.glp_delete_prob(lp)
   }
 
+  def abort(): Unit = println("Warning: abort is not implemented for GLPK")
+
   def updateRhs(consId: Int, rhs: Double): Unit = {
     GLPK.glp_set_row_bnds(lp, consId + 1, GLPKConstants.GLP_UP, 0.0, rhs)
   }

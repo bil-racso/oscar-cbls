@@ -235,7 +235,9 @@ class GurobiLP extends AbstractLP {
     env.release
     env.dispose
   }
-  
+
+  def abort() = println("Warning: abort is not implemented for Gurobi")
+
   /** Gurobi's export file handling is a little different. The format is defined by the fileName
   * passed to model.write for the LP format it's .lp and for MPS it's .mps
   */ 

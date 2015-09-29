@@ -32,7 +32,8 @@ class LPSolve extends AbstractLP {
   var closed = false
   var released = false
   var configFile = new java.io.File("options.ini")
-  
+  var abortSolve: Boolean = false
+
   def startModelBuilding(nbRows: Int, nbCols: Int) {
     this.nbRows = 0
     this.nbCols = nbCols
@@ -132,6 +133,7 @@ class LPSolve extends AbstractLP {
   }
 
   def solveModel(): LPStatus.Value = {
+    lp.putAbortfunc(new LPSolveAborter(this), this)
 
     val status = lp.solve match {
       case LpSolve.OPTIMAL =>
@@ -146,9 +148,12 @@ class LPSolve extends AbstractLP {
         LPStatus.INFEASIBLE
       case LpSolve.UNBOUNDED =>
         LPStatus.UNBOUNDED
-      case LpSolve.TIMEOUT => { println("lp_solve timed out before integer solution found...")
-      	LPStatus.NOT_SOLVED
-      }
+      case LpSolve.USERABORT =>
+        println("lp_solve was aborted before integer solution found...")
+        LPStatus.NO_SOLUTION
+      case LpSolve.TIMEOUT =>
+        println("lp_solve timed out before integer solution found...")
+        LPStatus.NO_SOLUTION
       case _ =>
         LPStatus.INFEASIBLE
     }
@@ -240,6 +245,10 @@ class LPSolve extends AbstractLP {
     lp.deleteLp()
   }
 
+  def abort(): Unit = {
+    abortSolve = true
+  }
+
   def updateRhs(rowId: Int, rhs: Double): Unit = {
     lp.setRh(rowId + 1, rhs)
   }
@@ -253,3 +262,6 @@ class LPSolve extends AbstractLP {
   }
 }
 
+class LPSolveAborter(solver: LPSolve) extends lpsolve.AbortListener {
+  def abortfunc(problem: lpsolve.LpSolve, userhandle: Any): Boolean = solver.abortSolve
+}

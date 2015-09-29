@@ -25,6 +25,7 @@ object LPStatus extends Enumeration {
   val SUBOPTIMAL = Value("suboptimal")
   val UNBOUNDED = Value("unbounded")
   val INFEASIBLE = Value("infeasible")
+  val NO_SOLUTION = Value("no solution found")
 }
 
 object LPExportFormat extends Enumeration {
@@ -193,12 +194,16 @@ abstract class AbstractLP {
   def exportModel(fileName: String, format: LPExportFormat.Value = LPExportFormat.MPS)
   
   def setTimeout(t: Int)
-  
 
   /**
-   * Release the memory of this solver
+   * Releases the memory of this solver
    */
   def release()
+
+  /**
+   * Aborts the current solve (if any)
+   */
+  def abort()
 
   def setIntParameter(name: String, value: Int) { println("not implemented") }
 
@@ -375,8 +380,10 @@ abstract class AbstractLPSolver {
   protected val solver: AbstractLP
 
   protected var statuss = LPStatus.NOT_SOLVED
-  protected var modelName = "" 
- 
+
+  protected var solving: Boolean = false
+
+  protected var modelName = ""
   def name_= (n: String): Unit = modelName = n
   def name: String = modelName
   
@@ -492,7 +499,9 @@ abstract class AbstractLPSolver {
   def solveModel() {
     solver.endModelBuilding()
     println("Solving ...")
+    solving = true
     statuss = solver.solveModel()
+    solving = false
     if ((statuss == LPStatus.OPTIMAL) || (statuss == LPStatus.SUBOPTIMAL)) {
       (0 until vars.size) foreach { i => solution(i) = solver.getValue(i) }
     }
@@ -506,6 +515,14 @@ abstract class AbstractLPSolver {
   def status(): LPStatus.Value = statuss
 
   def release() = solver.release()
+
+  /**
+   * Aborts the current solve (if any)
+   */
+  def abort(): Unit =
+    if(solving) {
+      solver.abort()
+    }
 
   /**
    * Check that all the constraints are satisfied
