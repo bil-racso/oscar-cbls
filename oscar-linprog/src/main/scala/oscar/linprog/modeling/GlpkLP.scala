@@ -57,7 +57,7 @@ class GlpkLP extends AbstractLP {
     GLPK.glp_set_prob_name(lp, name)
   }
 
-  def addConstraint(coef: Array[Double], col: Array[Int], rhs: Double, sign: String, name: String) {
+  def addConstraint(coef: Array[Double], col: Array[Int], rhs: Double, sign: String, name: String) = {
     nbRows += 1
     //Adding a row giving a name
     GLPK.glp_add_rows(lp, 1)
@@ -85,18 +85,25 @@ class GlpkLP extends AbstractLP {
     // adding the value of columns with corresponding coefficients 
     GLPK.glp_set_mat_row(lp, nbRows, col.size, cols, coefs)
 
+    nbRows - 1
   }
 
-  def addConstraintGreaterEqual(coef: Array[Double], col: Array[Int], rhs: Double, name: String) {
+  def addConstraintGreaterEqual(coef: Array[Double], col: Array[Int], rhs: Double, name: String) = {
     addConstraint(coef, col, rhs, ">=", name)
   }
 
-  def addConstraintLessEqual(coef: Array[Double], col: Array[Int], rhs: Double, name: String) {
+  def addConstraintLessEqual(coef: Array[Double], col: Array[Int], rhs: Double, name: String) = {
     addConstraint(coef, col, rhs, "<=", name)
   }
 
-  def addConstraintEqual(coef: Array[Double], col: Array[Int], rhs: Double, name: String) {
+  def addConstraintEqual(coef: Array[Double], col: Array[Int], rhs: Double, name: String) = {
     addConstraint(coef, col, rhs, "==", name)
+  }
+
+  // TODO implement me
+  def addConstraintSOS1(coef: Array[Double], col: Array[Int], name: String): Int = {
+    println("Warning: addConstraintSOS1 is not yet implemented for GLPK")
+    -1
   }
 
   def addObjective(coef: Array[Double], col: Array[Int], minMode: Boolean = true) {

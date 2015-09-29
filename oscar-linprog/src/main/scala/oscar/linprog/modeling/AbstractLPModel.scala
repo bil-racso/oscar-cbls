@@ -68,11 +68,11 @@ abstract class AbstractLP {
   def endModelBuilding()
 
   /**
-   *  Adds all the constraints to the model
-   *  @param cons map of all the constraints with their id
+   * Adds all the constraints to the model
+   * @param cons map of all the constraints with their id
    *
-   *  Remark: defining this method in AbstractLP instead of AbstractLPSolver allows to overwrite it for different solvers
-   *  if it has a method to add all the constraints at once (ex: Gurobi).
+   * Remark: defining this method in AbstractLP instead of AbstractLPSolver allows to overwrite it for different solvers
+   * if it has a method to add all the constraints at once (ex: Gurobi).
    */
   def addAllConstraints(cons: Seq[LPConstraint]) {
     var nbC = 0
@@ -81,51 +81,63 @@ abstract class AbstractLP {
     } {
       if (nbC > 0 && nbC % 1000 == 0) println("Added " + nbC + " constraints. Currently at constraint index " + i)
         c match {
-        	case c: SOSConstraint => addConstraintSOS1(c.varIds, c.weightings(), c.name)
-        	case _ if(c.cstr.consType == ConstraintType.GQ) => addConstraintGreaterEqual(c.coef, c.varIds, c.rhs, c.name)
-        	case _ if(c.cstr.consType == ConstraintType.LQ) => addConstraintLessEqual(c.coef, c.varIds, c.rhs, c.name)
-        	case _ if(c.cstr.consType == ConstraintType.EQ) => addConstraintEqual(c.coef, c.varIds, c.rhs, c.name)
+        	case c: SOSConstraint => addConstraintSOS1(c.weightings(), c.varIds, c.name)
+        	case _ if c.cstr.consType == ConstraintType.GQ => addConstraintGreaterEqual(c.coef, c.varIds, c.rhs, c.name)
+        	case _ if c.cstr.consType == ConstraintType.LQ => addConstraintLessEqual(c.coef, c.varIds, c.rhs, c.name)
+        	case _ if c.cstr.consType == ConstraintType.EQ => addConstraintEqual(c.coef, c.varIds, c.rhs, c.name)
       	}
       nbC += 1
     }
   }
 
   /**
-   * Add the constraint ''coef(0)*x[col(0)] + ... + coef(n)*x[col(n)] >= rhs'' to the model.
+   * Adds the constraint ''coef(0)*x[col(0)] + ... + coef(n)*x[col(n)] >= rhs'' to the model.
+   *
    * @param coef are the coefficients of the linear term
    * @param col indicates to which column/variable the coefficients refer to
+   *
+   * @return constraint index
    */
-  def addConstraintGreaterEqual(coef: Array[Double], col: Array[Int], rhs: Double, name: String)
+  def addConstraintGreaterEqual(coef: Array[Double], col: Array[Int], rhs: Double, name: String): Int
 
   /**
-   * Add the constraint ''coef(0)*x[col(0)] + ... + coef(n)*x[col(n)] <= rhs'' to the model.
+   * Adds the constraint ''coef(0)*x[col(0)] + ... + coef(n)*x[col(n)] <= rhs'' to the model.
+   *
    * @param coef are the coefficients of the linear term
    * @param col indicates to which column/variable the coefficients refer to
+   *
+   * @return constraint index
    */
-  def addConstraintLessEqual(coef: Array[Double], col: Array[Int], rhs: Double, name: String)
-  
+  def addConstraintLessEqual(coef: Array[Double], col: Array[Int], rhs: Double, name: String): Int
+
   /**
-   * Add an Specially Ordered Set (SOS) Type 1 constraint. Constrains at most one variable 
+   * Adds the constraint ''coef(0)*x[col(0)] + ... + coef(n)*x[col(n)] == rhs'' to the model.
+   *
+   * @param coef are the coefficients of the linear term
+   * @param col indicates to which column/variable the coefficients refer to
+   *
+   * @return constraint index
+   */
+  def addConstraintEqual(coef: Array[Double], col: Array[Int], rhs: Double, name: String): Int
+
+  /**
+   * Adds a Specially Ordered Set (SOS) Type 1 constraint. Constrains at most one variable
    * in a collection to be equal to 1. Useful for modelling discrete choices
-   * @param col indicates which variables are included in the SOS constraints 
+   *
    * @param coef the weightings on the variables (these influence the search branching decision)
+   * @param col indicates which variables are included in the SOS constraints
+   *
+   * @return constraint index
    */
-  def addConstraintSOS1(col: Array[Int], coef: Array[Double] = null, name: String): Unit = ???
-  
-  /**
-   * Add the constraint ''coef(0)*x[col(0)] + ... + coef(n)*x[col(n)] == rhs'' to the model.
-   * @param coef are the coefficients of the linear term
-   * @param col indicates to which column/variable the coefficients refer to
-   */
-  def addConstraintEqual(coef: Array[Double], col: Array[Int], rhs: Double, name: String)
+  def addConstraintSOS1(coef: Array[Double], col: Array[Int], name: String): Int
 
   /**
-   *  modify the right hand side (constant term) of the specified constraint
+   * Modifies the right hand side (constant term) of the specified constraint
    */
   def updateRhs(consId: Int, rhs: Double): Unit
 
   /**
-   *  Set the coefficient of the variable in the corresponding constraint to the specified value
+   * Sets the coefficient of the variable in the corresponding constraint to the specified value
    */
   def updateCoef(consId: Int, varId: Int, coef: Double): Unit
 
@@ -142,7 +154,7 @@ abstract class AbstractLP {
   def updateObjCoef(colId: Int, coef: Double): Unit
 
   /**
-   * Add a column to the problem
+   * Adds a column to the problem
    */
   def addColumn(obj: Double, row: Array[Int], coef: Array[Double])
 

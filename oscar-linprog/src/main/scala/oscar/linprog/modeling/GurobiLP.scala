@@ -61,7 +61,7 @@ class GurobiLP extends AbstractLP {
     model.getVar(colId).set(GRB.StringAttr.VarName, name)
   }
   
-  def addConstraint(coef: Array[Double], col: Array[Int], rhs: Double, sign: String, name: String) {
+  def addConstraint(coef: Array[Double], col: Array[Int], rhs: Double, sign: String, name: String) = {
     nbRows += 1
     var ntot = new GRBLinExpr()
     ntot.addTerms(coef, col map (model.getVar(_)))
@@ -73,22 +73,25 @@ class GurobiLP extends AbstractLP {
       case "==" =>
         model.addConstr(ntot, GRB.EQUAL, rhs, name)
     }
+
+    nbRows - 1
   }
   
-  def addConstraintGreaterEqual(coef: Array[Double], col: Array[Int], rhs: Double, name: String) {
+  def addConstraintGreaterEqual(coef: Array[Double], col: Array[Int], rhs: Double, name: String) = {
     addConstraint(coef, col, rhs, ">=", name)
   }
 
-  def addConstraintLessEqual(coef: Array[Double], col: Array[Int], rhs: Double, name: String) {
+  def addConstraintLessEqual(coef: Array[Double], col: Array[Int], rhs: Double, name: String) = {
     addConstraint(coef, col, rhs, "<=", name)
   }
-  def addConstraintEqual(coef: Array[Double], col: Array[Int], rhs: Double, name: String) {
+  def addConstraintEqual(coef: Array[Double], col: Array[Int], rhs: Double, name: String) = {
     addConstraint(coef, col, rhs, "==", name)
   }
 
-  override def addConstraintSOS1(col: Array[Int], coef: Array[Double] = null,  name: String) {
+  override def addConstraintSOS1(coef: Array[Double], col: Array[Int], name: String) = {
     nbRows += 1
     model.addSOS(col.map(model.getVar(_)), coef, GRB.SOS_TYPE1)
+    nbRows - 1
   }
   
   def addObjective(coef: Array[Double], col: Array[Int], minMode: Boolean = true) {
@@ -211,6 +214,7 @@ class GurobiLP extends AbstractLP {
   }
 
   def deleteConstraint(rowId: Int) {
+    nbRows -= 1
     model.remove(model.getConstr(rowId))
   }
 
@@ -221,6 +225,7 @@ class GurobiLP extends AbstractLP {
   }
 
   def deleteVariable(colId: Int) {
+    nbCols -= 1
     model.remove(model.getVar(colId))
   }
   
@@ -297,6 +302,6 @@ class GurobiLP extends AbstractLP {
     obj.remove(variable)
     obj.addTerm(coef, variable)
     model.setObjective(obj)
-    model.update
+    model.update()
   }
 }
