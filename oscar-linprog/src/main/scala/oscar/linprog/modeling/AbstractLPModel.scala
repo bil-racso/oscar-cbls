@@ -108,7 +108,7 @@ abstract class AbstractLP {
    * Add an Specially Ordered Set (SOS) Type 1 constraint. Constrains at most one variable 
    * in a collection to be equal to 1. Useful for modelling discrete choices
    * @param col indicates which variables are included in the SOS constraints 
-   * @param ceof the weightings on the variables (these influence the search branching decision)
+   * @param coef the weightings on the variables (these influence the search branching decision)
    */
   def addConstraintSOS1(col: Array[Int], coef: Array[Double] = null, name: String): Unit = ???
   
@@ -127,7 +127,7 @@ abstract class AbstractLP {
   /**
    *  Set the coefficient of the variable in the corresponding constraint to the specified value
    */
-  def updateCoef(consId: Int, varId: Int, coeff: Double): Unit
+  def updateCoef(consId: Int, varId: Int, coef: Double): Unit
 
   /** Define the objective function as ''coef(0)*x[col(0)] + ... + coef(n)*x[col(n)]'' to the model.
    * @param coef are the coefficients of the linear term
@@ -135,6 +135,11 @@ abstract class AbstractLP {
    * @param minMode = true if this objective should be minimized (default), false to maximize it
    */
   def addObjective(coef: Array[Double], col: Array[Int], minMode: Boolean = true)
+
+  /**
+   * Sets the coefficient of the variable in the objective to the given value.
+   */
+  def updateObjCoef(colId: Int, coef: Double): Unit
 
   /**
    * Add a column to the problem

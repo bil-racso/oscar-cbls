@@ -236,9 +236,12 @@ class LPSolve extends AbstractLP {
     lp.setRh(rowId + 1, rhs)
   }
 
-  def updateCoef(rowId: Int, colId: Int, coeff: Double): Unit = {
-    lp.setMat(rowId + 1, colId + 1, coeff)
+  def updateCoef(rowId: Int, colId: Int, coef: Double): Unit = {
+    lp.setMat(rowId + 1, colId + 1, coef)
   }
 
+  def updateObjCoef(colId: Int, coef: Double): Unit = {
+    lp.setObj(colId + 1, coef)
+  }
 }
 

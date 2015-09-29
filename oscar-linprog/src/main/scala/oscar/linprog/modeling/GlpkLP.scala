@@ -255,14 +255,14 @@ class GlpkLP extends AbstractLP {
     GLPK.glp_del_cols(lp, 1, num)
     nbCols -= 1
   }
-  
+
   def exportModel(fileName: String, format: LPExportFormat.Value) {
     format match {
-        case LPExportFormat.LP => GLPK.glp_write_lp(lp, null, fileName)
-        case LPExportFormat.MPS => GLPK.glp_write_mps(lp, GLPKConstants.GLP_MPS_FILE, null, fileName)
-        case _ => println(s"Unrecognised export format ${format}")
-    }  
-}
+      case LPExportFormat.LP => GLPK.glp_write_lp(lp, null, fileName)
+      case LPExportFormat.MPS => GLPK.glp_write_mps(lp, GLPKConstants.GLP_MPS_FILE, null, fileName)
+      case _ => println(s"Unrecognised export format ${format}")
+    }
+  }
 
   def release() {
     GLPK.glp_delete_prob(lp)
@@ -272,20 +272,25 @@ class GlpkLP extends AbstractLP {
     GLPK.glp_set_row_bnds(lp, consId + 1, GLPKConstants.GLP_UP, 0.0, rhs)
   }
  
-  def updateCoef(consId: Int, varId: Int, coeff: Double): Unit = {
+  def updateCoef(consId: Int, varId: Int, coef: Double): Unit = {
     val nColumns = GLPK.glp_get_num_cols(lp)
     // + 1 to array lengths since the cols start from 1 
-    val coef = GLPK.new_doubleArray(nColumns + 1) 
+    val _coef = GLPK.new_doubleArray(nColumns + 1)
     val ind = GLPK.new_intArray(nColumns + 1)
     // Populates coef and ind arrays with selected row's values
-    GLPK.glp_get_mat_row(lp, consId + 1, ind, coef)
+    GLPK.glp_get_mat_row(lp, consId + 1, ind, _coef)
     
     // Need to find which index in the coef array to update
     // Maybe varId should represent model index to make this
     // translation unnecessary. 
     val id = (0 to nColumns).find(i => GLPK.intArray_getitem(ind, i) == (varId + 1)).get
 
-    GLPK.doubleArray_setitem(coef, id, coeff) // Replace element
-    GLPK.glp_set_mat_row(lp, consId + 1, nColumns, ind, coef) // Update whole row.
+    GLPK.doubleArray_setitem(_coef, id, coef) // Replace element
+    GLPK.glp_set_mat_row(lp, consId + 1, nColumns, ind, _coef) // Update whole row.
+  }
+
+  // TODO implement me
+  def updateObjCoef(colId: Int, coef: Double): Unit = {
+    println("Warning: updateObjCoef is not yet implemented for GLPK")
   }
 }
