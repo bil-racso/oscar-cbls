@@ -717,7 +717,6 @@ class RoundRobin(l: List[Neighborhood], steps: Int = 1) extends NeighborhoodComb
       }
     } else {
       //move to next robin
-      remainingSteps = steps
       moveToNextRobin()
       myGetImprovingMove(obj, acceptanceCriteria, triedRobins + 1)
     }
@@ -734,7 +733,6 @@ class RoundRobin(l: List[Neighborhood], steps: Int = 1) extends NeighborhoodComb
 
   //this resets the internal state of the move combinators
   override def reset() {
-    remainingSteps = steps
     super.reset()
   }
 
