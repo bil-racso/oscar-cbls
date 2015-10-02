@@ -163,7 +163,7 @@ class FZCPSolver {
      
     
     log("Parsed.")
-    FZModelTransfo.propagateDomainBounds(model)(log)
+    FZModelTransfo.propagate(model)(log)
     log("initial variable reduction (to avoid overflows)")
     
     //TODO: Find binary constraints that can be used for views.

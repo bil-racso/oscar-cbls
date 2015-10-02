@@ -85,6 +85,11 @@ abstract class Constraint(val variables: Array[Variable],val annotations: List[A
       v.removeConstraint(this)
     }
   }
+  def insert(){
+    for(v <- variables){
+       v.addConstraint(this);
+    }
+  }
 }
 
 abstract class SimpleDefiningConstraint(variables: Array[Variable], val maybeDefinedVar: Variable, ann:List[Annotation])

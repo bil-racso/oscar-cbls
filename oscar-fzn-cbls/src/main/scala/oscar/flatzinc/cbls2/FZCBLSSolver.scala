@@ -299,7 +299,7 @@ class FZCBLSSolver extends SearchEngine with StopWatch {
     val cpmodel = if(useCP){
       val cpmodel = new FZCPModel(model,oscar.cp.Strong, true)
 //      println(model.variables.toList.map(v => v.domainSize))
-      FZModelTransfo.propagateDomainBounds(model)(log);
+      FZModelTransfo.propagate(model)(log);
       log("Reduced Domains before CP")
 //      println(model.variables.toList.map(v => v.domainSize))
       cpmodel.createVariables()
@@ -312,7 +312,7 @@ class FZCBLSSolver extends SearchEngine with StopWatch {
     
     if(!opts.is("no-simpl")){
       //TODO: check which part of the following is still necessary after using CP for bounds reduction.
-      FZModelTransfo.propagateDomainBounds(model)(log);
+      FZModelTransfo.simplify(model)(log);
       log("Reduced Domains")
     }else{
       log("No domain reduction")
@@ -474,7 +474,11 @@ class FZCBLSSolver extends SearchEngine with StopWatch {
     
     val search = new NeighbourhoodTabuSearch(cblsmodel,sc)
     m.close()
-    sc.run(search)
+    if(opts.is("no-run")){
+      log("Not running the search...")
+    }else{
+    	sc.run(search)
+    }
     //search.run()
     /*
     //TODO: The search should print the solution if, by chance, the initial assingnment is a solution!

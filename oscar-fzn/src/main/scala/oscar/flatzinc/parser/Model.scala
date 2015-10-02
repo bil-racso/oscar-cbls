@@ -282,6 +282,7 @@ class Model(val log: Log, val acceptAnyCstr: Boolean) {
     "member_int" -> ((varList,ann) => member_int(getIntVarArray(varList(0)),getIntVar(varList(1)),ann)),
     "maximum_int" -> ((varList,ann) => maximum_int(getIntVar(varList(0)),getIntVarArray(varList(1)),ann)),
     "minimum_int" -> ((varList,ann) => minimum_int(getIntVar(varList(0)),getIntVarArray(varList(1)),ann)),
+    //TODO: If the name is not the same, it should not be same in the output either.
     "inverse_no_offset" -> ((varList,ann) => inverse(getIntVarArray(varList(0)),getIntVarArray(varList(1)),ann)),
     "subcircuit_no_offset" -> ((varList,ann) => subcircuit(getIntVarArray(varList(0)),ann)),
     "circuit_no_offset" -> ((varList,ann) => circuit(getIntVarArray(varList(0)),ann)),
@@ -295,9 +296,10 @@ class Model(val log: Log, val acceptAnyCstr: Boolean) {
   
   def constructConstraint(cstr: String, varList: List[Element], ann:List[Annotation]): Constraint = {
     //special case
-    if(cstr=="bool_eq_reif" && !varList(1).typ.isVar && !varList(1).value.asInstanceOf[Boolean]){
-      makeConstraint("bool_not",varList.head :: varList.tail.tail,ann)
-    }else if(cstr.endsWith("_reif")){
+//    if(cstr=="bool_eq_reif" && !varList(1).typ.isVar && !varList(1).value.asInstanceOf[Boolean]){
+//      makeConstraint("bool_not",varList.head :: varList.tail.tail,ann)
+//    }else 
+      if(cstr.endsWith("_reif")){
       reif(makeConstraint(cstr.substring(0,cstr.length-5),varList.dropRight(1),ann),getBoolVar(varList.last))
     }else{
       makeConstraint(cstr,varList,ann)    

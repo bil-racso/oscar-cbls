@@ -285,7 +285,7 @@ class FZCBLSSolver extends SearchEngine with StopWatch {
     //println(model.variables.toList.map(v => v.domainSize))
     
     if(useCP){
-      FZModelTransfo.propagateDomainBounds(model)(log);
+      FZModelTransfo.propagate(model)(log);
       log("Reduced Domains before CP")
       //println(model.variables.toList.map(v => v.domainSize))
       cpmodel.createVariables()
@@ -296,7 +296,7 @@ class FZCBLSSolver extends SearchEngine with StopWatch {
     }
     if(!opts.is("no-simpl")){
       //TODO: check which part of the following is still necessary after using CP for bounds reduction.
-      FZModelTransfo.propagateDomainBounds(model)(log);
+      FZModelTransfo.simplify(model)(log);
       log("Reduced Domains")
     }else{
       log("No domain reduction")
