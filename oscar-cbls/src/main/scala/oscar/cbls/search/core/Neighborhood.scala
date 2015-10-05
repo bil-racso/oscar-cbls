@@ -95,8 +95,8 @@ abstract class Neighborhood{
     * use the Statistics combinator to activate the collection of statistics
     * @return
     */
-  final def statistics:String = Statistics.statisticsHeader + "\n" + collectStatistics
-  def collectStatistics:String = ""
+  final def statistics:String = Statistics.statisticsHeader + "\n" + collectStatistics.mkString("\n")
+  def collectStatistics:List[String] = List.empty
 
   /**
    * the method that returns a move from the neighborhood.
@@ -621,9 +621,7 @@ abstract class EasyNeighborhood(best:Boolean = false, neighborhoodName:String=nu
       println(obj.asInstanceOf[LoggingObjective].getAndCleanEvaluationLog.mkString("\n"))
 
       moveIsActuallyRequested
-    }else{
-      true
-    }
+    }else true
 
     if(moveIsActuallyRequested) {
       if (best) {

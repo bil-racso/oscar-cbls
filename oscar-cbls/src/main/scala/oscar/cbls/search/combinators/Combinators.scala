@@ -42,7 +42,7 @@ abstract class NeighborhoodCombinator(a: Neighborhood*) extends Neighborhood {
 
   override def toString: String = this.getClass.getSimpleName + "(" + a.mkString(",") + ")"
 
-  override def collectStatistics: String = a.map(_.collectStatistics).mkString("\n")
+  override def collectStatistics: List[String] = a.flatMap(_.collectStatistics).toList
 }
 
 class BasicSaveBest(a: Neighborhood, o: Objective) extends NeighborhoodCombinator(a) {
@@ -1016,7 +1016,7 @@ case class Atomic(a: Neighborhood, name: String = "Atomic", bound: Int = Int.Max
     CallBackMove(() => a.doAllMoves(_ > bound, obj, acceptanceCriterion), Int.MaxValue, this.getClass.getSimpleName, () => ("Atomic(" + a + ")"))
   }
 
-  override def collectStatistics: String = a.collectStatistics
+  override def collectStatistics: List[String] = a.collectStatistics
 }
 
 /**
@@ -1128,7 +1128,16 @@ class OverrideObjective(a: Neighborhood, overridingObjective: Objective) extends
   override def getMove(obj: Objective, acceptanceCriterion: (Int, Int) => Boolean): SearchResult = getMove(overridingObjective, acceptanceCriterion)
 }
 
-case class Statistics(a:Neighborhood,ignoreInitialObj:Boolean = false)extends NeighborhoodCombinator(a){
+/**
+ * collects statistics about the run time and progress achieved by neighborhood a
+ * they can be obtained by querying this object with method toString
+ * or globally on the whole neighborhood using the method statistics
+ * WARNING: do not use this inside an AndThen,
+ *          since the objective function is instrumented by this combinator, so the statistics will be counter-intuitive
+ * @param a
+ * @param ignoreInitialObj
+ */
+case class Statistics(a:Neighborhood,ignoreInitialObj:Boolean = false) extends NeighborhoodCombinator(a){
 
   var nbCalls = 0
   var nbFound = 0
@@ -1173,15 +1182,15 @@ case class Statistics(a:Neighborhood,ignoreInitialObj:Boolean = false)extends Ne
   //gain in obj/100ms
   def slope:String = if(totalTimeSpent == 0) "NA" else ("" + "%.3f".format(totalGain / totalTimeSpent.toDouble))
 
-  override def collectStatistics: String =
-    padToLength("" + a,31) +
+  override def collectStatistics: List[String] =
+    (padToLength("" + a,31) +
       padToLength("" + nbCalls,6) +
       padToLength("" + nbFound,6) +
       padToLength("" + totalGain,8) +
       padToLength("" + totalTimeSpent,12) +
       padToLength("" + gainPerCall,8) +
       padToLength("" + callDuration,12)+
-      slope
+      slope) ::  super.collectStatistics
 
   private def padToLength(s: String, l: Int) = (s + nStrings(l, " ")).substring(0, l)
   private def nStrings(n: Int, s: String): String = if (n <= 0) "" else s + nStrings(n - 1, s)

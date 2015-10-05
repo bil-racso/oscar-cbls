@@ -32,7 +32,7 @@ import oscar.cbls.search.algo.{IdenticalAggregator, HotRestart}
  * where u is the numberof unrouted points, and n is the number of routed points
  * it can be cut down to u*k by using the relevant neighbors, and specifying k neighbors for each unrouted point
  * @param unroutedNodesToInsert the nodes that this neighborhood will try to insert SHOULD BE NOT ROUTED
- * @param relevantNeighbors a function that, for each unrouted node gives a routed node
+ * @param relevantNeighbors a function that, for each unrouted node gives a list of routed node
  *                          such that it is relevant to insert the unrouted node after this routed node
  * @param vrp the routing problem
  * @param neighborhoodName the name of this neighborhood
