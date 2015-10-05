@@ -21,7 +21,7 @@
 
 package oscar.cbls.invariants.core.computation
 
-import oscar.cbls.invariants.core.propagation.{Checker, PropagationElement}
+import oscar.cbls.invariants.core.propagation.{Asymmetric, Checker, PropagationElement}
 
 import scala.language.implicitConversions
 
@@ -188,7 +188,9 @@ object ChangingIntValue{
   * @param n is the name of the variable, used for pretty printing only. if not set, a default will be used, based on the variable number
   */
 class CBLSIntVar(givenModel: Store, initialValue: Int, initialDomain:Domain, n: String = null)
-  extends ChangingIntValue(initialValue,initialDomain) with Variable{
+  extends ChangingIntValue(initialValue,initialDomain)
+  with Variable
+  with Asymmetric {
   
   require(givenModel != null)
   
@@ -312,7 +314,9 @@ object IdentityInt{
 /** an invariant that is the identity function
   * @author renaud.delandtsheer@cetic.be
   */
-class IdentityInt(toValue:CBLSIntVar, fromValue:IntValue) extends Invariant{
+class IdentityInt(toValue:CBLSIntVar, fromValue:IntValue)
+  extends Invariant
+  with Asymmetric {
   registerStaticAndDynamicDependency(fromValue)
   toValue.setDefiningInvariant(this)
   finishInitialization()

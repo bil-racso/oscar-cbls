@@ -33,7 +33,7 @@ import oscar.cbls.invariants.core.computation.IntInvariant
 import oscar.cbls.invariants.core.computation.IntValue
 import oscar.cbls.invariants.core.computation.SetValue
 import oscar.cbls.invariants.core.computation.Store
-import oscar.cbls.invariants.core.propagation.Checker
+import oscar.cbls.invariants.core.propagation.{SymmetryClasses, Asymmetric, Symmetric, Checker}
 import oscar.cbls.invariants.lib.logic.Int2Int
 import oscar.cbls.invariants.lib.logic.IntInt2Int
 
@@ -56,7 +56,8 @@ object Prod {
  */
 class Sum(vars: Iterable[IntValue])
   extends IntInvariant(
-    vars.foldLeft(0)((a: Int, b: IntValue) => a + b.value), vars.foldLeft(0)((acc, intvar) => DomainHelper.safeAddMin(acc, intvar.min)) to vars.foldLeft(0)((acc, intvar) => DomainHelper.safeAddMax(acc, intvar.max))) {
+    vars.foldLeft(0)((a: Int, b: IntValue) => a + b.value), vars.foldLeft(0)((acc, intvar) => DomainHelper.safeAddMin(acc, intvar.min)) to vars.foldLeft(0)((acc, intvar) => DomainHelper.safeAddMax(acc, intvar.max)))
+  with Symmetric {
 
   for (v <- vars) registerStaticAndDynamicDependency(v)
   finishInitialization()
@@ -77,7 +78,8 @@ class Sum(vars: Iterable[IntValue])
  * @author renaud.delandtsheer@cetic.be
  */
 class ExtendableSum(model: Store, domain: Domain)
-  extends IntInvariant(initialDomain = domain) {
+  extends IntInvariant(initialDomain = domain)
+  with Symmetric{
 
   finishInitialization(model)
 
@@ -107,7 +109,9 @@ class ExtendableSum(model: Store, domain: Domain)
  * @param vars is a set of IntVars
  * @author renaud.delandtsheer@cetic.be
  */
-class Prod(vars: Iterable[IntValue]) extends IntInvariant {
+class Prod(vars: Iterable[IntValue])
+  extends IntInvariant
+  with Symmetric{
   assert(vars.size > 0, "Invariant prod declared with zero vars to multiply")
 
   for (v <- vars) registerStaticAndDynamicDependency(v)
@@ -167,9 +171,12 @@ class Prod(vars: Iterable[IntValue]) extends IntInvariant {
  */
 case class Minus(left: IntValue, right: IntValue)
   extends IntInt2Int(left, right, (l: Int, r: Int) => l - r,
-    DomainHelper.safeAddMin(left.min, -right.max) to DomainHelper.safeAddMax(left.max, -right.min)) {
+    DomainHelper.safeAddMin(left.min, -right.max) to DomainHelper.safeAddMax(left.max, -right.min))
+  with Asymmetric {
   assert(left != right)
+  override val allInputsExplicits = true
 }
+
 
 /**
  * left + right
@@ -178,6 +185,8 @@ case class Minus(left: IntValue, right: IntValue)
  */
 case class Sum2(left: IntValue, right: IntValue)
   extends IntInt2Int(left, right, ((l: Int, r: Int) => l + r), DomainHelper.safeAddMin(left.min, right.min) to DomainHelper.safeAddMax(left.max, right.max))
+  with Symmetric
+{ override val allInputsExplicits = true  }
 
 /**
  * left * right
@@ -186,6 +195,8 @@ case class Sum2(left: IntValue, right: IntValue)
  */
 case class Prod2(left: IntValue, right: IntValue)
   extends IntInt2Int(left, right, ((l: Int, r: Int) => l * r))
+  with Symmetric
+  { override val allInputsExplicits = true  }
 
 /**
  * Abs(Left - Right)
@@ -193,7 +204,9 @@ case class Prod2(left: IntValue, right: IntValue)
  * @author renaud.delandtsheer@cetic.be
  */
 case class Dist(left: IntValue, right: IntValue)
-  extends IntInt2Int(left, right, ((l: Int, r: Int) => (l - r).abs), 0 to Int.MaxValue)
+  extends IntInt2Int(left, right, ((l: Int, r: Int) => (l - r).abs), (0, Int.MaxValue))
+  with Symmetric
+  { override val allInputsExplicits = true  }
 
 /**
  * left / right
@@ -203,6 +216,8 @@ case class Dist(left: IntValue, right: IntValue)
  */
 case class Div(left: IntValue, right: IntValue)
   extends IntInt2Int(left, right, (l: Int, r: Int) => l / r)
+  with Asymmetric
+  {override val allInputsExplicits = true}
 
 /**
  * left / right
@@ -212,6 +227,7 @@ case class Div(left: IntValue, right: IntValue)
  */
 case class Mod(left: IntValue, right: IntValue)
   extends IntInt2Int(left, right, (l: Int, r: Int) => l - r * (l / r))
+  {override val allInputsExplicits = true}
 
 /**
  * abs(v) (absolute value)
@@ -220,6 +236,8 @@ case class Mod(left: IntValue, right: IntValue)
  */
 case class Abs(v: IntValue)
   extends Int2Int(v, ((x: Int) => x.abs), (if (v.min <= 0) 0 else v.min) to v.max.max(-v.min))
+  with Asymmetric {
+  override val allInputsExplicits = true }
 
 /**
  * This invariant implements a step function. Values higher than pivot are mapped to ifval
@@ -234,6 +252,7 @@ case class Abs(v: IntValue)
 case class Step(x: IntValue, pivot: Int = 0, thenval: Int = 1, elseval: Int = 0)
   extends Int2Int(x, (a: Int) => if (a > pivot) thenval else elseval, 0 to 1)
 
+
 /**
  * This invariant implements the identity function within the min-max range.
  * values lower tham min result to min
@@ -245,3 +264,5 @@ case class Step(x: IntValue, pivot: Int = 0, thenval: Int = 1, elseval: Int = 0)
  */
 case class Bound(x: IntValue, minBound: Int, maxBound: Int)
   extends Int2Int(x, (a: Int) => if (a < minBound) minBound else if (a > maxBound) maxBound else a, math.max(minBound, x.min) to math.min(maxBound, x.max))
+  with Asymmetric
+  {override val allInputsExplicits = false }

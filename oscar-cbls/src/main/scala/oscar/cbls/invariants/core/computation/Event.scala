@@ -20,7 +20,7 @@
 
 package oscar.cbls.invariants.core.computation
 
-import oscar.cbls.invariants.core.propagation.Checker
+import oscar.cbls.invariants.core.propagation.{NotSubjectToSymmetries, Checker}
 
 import scala.collection.immutable.SortedSet
 
@@ -111,7 +111,9 @@ object Event{
 }
 
 /**Use the apply method in the companion object for building this*/
-class Event(v:Variable, w:Variable, ModifiedVars:Iterable[Variable]) extends Invariant{
+class Event(v:Variable, w:Variable, ModifiedVars:Iterable[Variable])
+  extends Invariant
+  with NotSubjectToSymmetries {
   //unfortunately, it is not possible to pass a type "=>Unit" as parameter to a case class.
 
   private var action: (()=>Unit)=null

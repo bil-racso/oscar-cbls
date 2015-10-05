@@ -21,7 +21,7 @@
 
 package oscar.cbls.invariants.core.computation
 
-import oscar.cbls.invariants.core.propagation.{BulkPropagator, Checker}
+import oscar.cbls.invariants.core.propagation.{Asymmetric, BulkPropagator, Checker}
 
 import scala.collection.immutable.SortedMap
 
@@ -83,7 +83,9 @@ trait Bulked[VarType <: Value, BulkedComputationResult] extends Invariant {
  * @author renaud.delandtsheer@cetic.be
  */
 class Bulk(m: Store, val bulkedVars: Array[Value], val bulkedComputationResult: Any)
-  extends Invariant with BulkPropagator {
+  extends Invariant
+  with BulkPropagator
+  with Asymmetric {
 
   for (dd <- bulkedVars) registerStaticallyListenedElement(dd)
   finishInitialization(m)

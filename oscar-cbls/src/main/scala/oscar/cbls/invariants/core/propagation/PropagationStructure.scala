@@ -31,7 +31,6 @@ import oscar.cbls.invariants.core.algo.heap.{ AbstractHeap, AggregatedBinomialHe
 import oscar.cbls.invariants.core.algo.tarjan._
 
 import scala.collection.immutable.SortedMap
-import scala.collection.mutable.Queue;
 
 /**
  * a schedulingHandler handles the scheduling for a set of PE.
@@ -638,7 +637,11 @@ class NodeDictionary[T](val MaxNodeID: Int)(implicit val X: Manifest[T]) {
 }
 
 abstract class StronglyConnectedComponent(val propagationElements: Iterable[PropagationElement],
-                                          val core: PropagationStructure, val _UniqueID: Int) extends PropagationElement with SchedulingHandler {
+                                          val core: PropagationStructure, val _UniqueID: Int)
+  extends PropagationElement
+  with SchedulingHandler
+  with NotSubjectToSymmetries
+{
   schedulingHandler = core
   uniqueID = _UniqueID
 
@@ -686,7 +689,8 @@ abstract class StronglyConnectedComponent(val propagationElements: Iterable[Prop
 }
 
 class StronglyConnectedComponentNoSort(Elements: Iterable[PropagationElement],
-                                       core: PropagationStructure, _UniqueID: Int) extends StronglyConnectedComponent(Elements, core, _UniqueID) {
+                                       core: PropagationStructure, _UniqueID: Int)
+  extends StronglyConnectedComponent(Elements, core, _UniqueID) {
 
   override def performPropagation() {
     while (scheduledElements != null) {
@@ -697,11 +701,11 @@ class StronglyConnectedComponentNoSort(Elements: Iterable[PropagationElement],
   }
 }
 
-class StronglyConnectedComponentTopologicalSort(
+class StronglyConnectedComponentTopologicalSort (
   override val propagationElements: Iterable[PropagationElement],
   override val core: PropagationStructure,
   _UniqueID: Int)
-  extends StronglyConnectedComponent(propagationElements, core, _UniqueID) with DAG {
+  extends StronglyConnectedComponent(propagationElements, core, _UniqueID) with DAG with NotSubjectToSymmetries {
 
   for (e <- propagationElements) {
     e.setInSortingSCC()
@@ -879,7 +883,9 @@ trait BasicPropagationElement {
  * it does not changes it listened elements
  * however, its listening elements might change, and a proper list must therefore be kept.
  */
-class PropagationElement extends BasicPropagationElement with DAGNode {
+abstract class PropagationElement extends BasicPropagationElement with DAGNode with SymmetricType {
+  val allInputsExplicits = true
+  override val selfAsPropagationElement = this
 
   def dropStaticGraph() {
     staticallyListenedElements = null

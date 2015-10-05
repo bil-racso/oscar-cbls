@@ -21,7 +21,7 @@
 
 package oscar.cbls.invariants.core.computation
 
-import oscar.cbls.invariants.core.propagation.{Checker, PropagationElement}
+import oscar.cbls.invariants.core.propagation.{Asymmetric, Checker, PropagationElement}
 
 import scala.collection.immutable.SortedSet
 import scala.language.implicitConversions
@@ -239,7 +239,9 @@ object ChangingSetValue{
   * @param n is the name of the variable, used for pretty printing only. if not set, a default will be used, based on the variable number
   * */
 class CBLSSetVar(givenModel: Store, initialValue: SortedSet[Int], initialDomain:Domain, n: String = null)
-  extends ChangingSetValue(initialValue, initialDomain) with Variable{
+  extends ChangingSetValue(initialValue, initialDomain)
+  with Variable
+  with Asymmetric {
   
   require(givenModel != null)
   
@@ -330,7 +332,9 @@ object IdentitySet{
 /** an invariant that is the identity function
   * @author renaud.delandtsheer@cetic.be
   */
-class IdentitySet(toValue:CBLSSetVar, fromValue:ChangingSetValue) extends Invariant{
+class IdentitySet(toValue:CBLSSetVar, fromValue:ChangingSetValue)
+  extends Invariant
+  with Asymmetric {
   registerStaticAndDynamicDependency(fromValue)
   toValue.setDefiningInvariant(this)
   finishInitialization()

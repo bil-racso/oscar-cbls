@@ -2,13 +2,16 @@ package oscar.cbls.constraints.lib.basic
 
 import oscar.cbls.constraints.core.Constraint
 import oscar.cbls.invariants.core.computation._
-import oscar.cbls.invariants.core.propagation.Checker
+import oscar.cbls.invariants.core.propagation.{Asymmetric, Checker}
 
 /**
  * implements v \in set
  * @author renaud.delandtsheer@cetic.be
  */
-case class BelongsTo(v: IntValue, set: SetValue) extends Invariant with Constraint {
+case class BelongsTo(v: IntValue, set: SetValue)
+  extends Invariant
+  with Constraint
+  with Asymmetric {
   registerConstrainedVariables(v, set)
   registerStaticAndDynamicDependenciesNoID(v, set)
   finishInitialization()

@@ -61,7 +61,7 @@ sealed abstract class Domain extends Iterable[Int]{
 
 /**this is an inclusive domain*/
 case class DomainRange(override val min: Int, override val max: Int) extends Domain {
-  if (min > max) throw new EmptyDomainException
+  //if (min > max) throw new EmptyDomainException
   def contains(v:Int): Boolean = min <= v && max >= v
   override def size = if(max==Int.MaxValue && min==Int.MinValue) Int.MaxValue else math.max(max-min+1,0)
   override def values: Iterable[Int] = min to max

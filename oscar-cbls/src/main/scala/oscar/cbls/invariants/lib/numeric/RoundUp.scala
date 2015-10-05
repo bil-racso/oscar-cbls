@@ -25,7 +25,7 @@ package oscar.cbls.invariants.lib.numeric
  */
 
 import oscar.cbls.invariants.core.computation._
-import oscar.cbls.invariants.core.propagation.Checker
+import oscar.cbls.invariants.core.propagation.{NotSubjectToSymmetries, Checker}
 import oscar.cbls.invariants.lib.logic.LazyIntInt2Int
 
 /**
@@ -110,7 +110,8 @@ object TestRoundUpModulo extends App {
  * @author renaud.delandtsheer@cetic.be
  */
 case class RoundUpCustom(from: IntValue, duration: IntValue, forbiddenZones: List[(Int, Int)])
-  extends IntInvariant(initialDomain = from.min to forbiddenZones.maxBy(_._2)._2 + 1) {
+  extends IntInvariant(initialDomain = from.min to forbiddenZones.maxBy(_._2)._2 + 1)
+  with NotSubjectToSymmetries {
   /**
    * These must be computed first.
    */

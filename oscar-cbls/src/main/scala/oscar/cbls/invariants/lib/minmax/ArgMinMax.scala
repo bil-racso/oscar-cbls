@@ -25,7 +25,7 @@ package oscar.cbls.invariants.lib.minmax
 import oscar.cbls.invariants.core.algo.heap.{ArrayMap, BinomialHeapWithMoveExtMem}
 import oscar.cbls.invariants.core.computation.Invariant._
 import oscar.cbls.invariants.core.computation._
-import oscar.cbls.invariants.core.propagation.{Checker, KeyForElementRemoval}
+import oscar.cbls.invariants.core.propagation.{Asymmetric, Checker, KeyForElementRemoval}
 
 import scala.collection.immutable.SortedSet
 
@@ -68,7 +68,10 @@ case class ArgMin(vars: Array[IntValue], cond: SetValue = null, default: Int = I
 abstract class ArgMiax(vars: Array[IntValue], cond: SetValue, default: Int)
   extends SetInvariant(initialDomain = vars.indices.start to vars.indices.last)
   with Bulked[IntValue, Unit]
-  with VaryingDependencies {
+  with VaryingDependencies
+  with Asymmetric {
+
+  override val allInputsExplicits = false
 
   override def toString:String = {
     name + "(" + InvariantHelper.arrayToString(vars) + "," + cond + "," + default + ")"

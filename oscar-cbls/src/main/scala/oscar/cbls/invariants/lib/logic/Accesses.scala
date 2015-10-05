@@ -23,7 +23,7 @@
 package oscar.cbls.invariants.lib.logic
 
 import oscar.cbls.invariants.core.computation._
-import oscar.cbls.invariants.core.propagation.{Checker, KeyForElementRemoval}
+import oscar.cbls.invariants.core.propagation.{Asymmetric, Checker, KeyForElementRemoval}
 
 /**
  * if (ifVar > pivot) then thenVar else elveVar
@@ -34,7 +34,8 @@ import oscar.cbls.invariants.core.propagation.{Checker, KeyForElementRemoval}
  * */
 case class IntITE(ifVar: IntValue, thenVar: IntValue, elseVar: IntValue, pivot: Int = 0)
   extends IntInvariant(if(ifVar.value > pivot) thenVar.value else elseVar.value, thenVar.domain union elseVar.domain)
-  with VaryingDependencies {
+  with VaryingDependencies
+  with Asymmetric {
 
   var KeyToCurrentVar: KeyForElementRemoval = null
 
@@ -76,6 +77,7 @@ case class IntITE(ifVar: IntValue, thenVar: IntValue, elseVar: IntValue, pivot: 
 
 case class ConstantIntElement(index: IntValue, inputArray: Array[Int])
   extends Int2Int(index, inputArray(_), InvariantHelper.getMinMaxRangeInt(inputArray))
+  with Asymmetric
 
 /**
  * inputarray[index]
@@ -86,7 +88,8 @@ case class ConstantIntElement(index: IntValue, inputArray: Array[Int])
 case class IntElement(index: IntValue, inputarray: Array[IntValue])
   extends IntInvariant(initialValue = inputarray(index.value).value)
   with Bulked[IntValue, Domain]
-  with VaryingDependencies {
+  with VaryingDependencies
+  with Asymmetric {
 
   registerStaticDependency(index)
   registerDeterminingDependency(index)
@@ -139,7 +142,7 @@ case class IntElement(index: IntValue, inputarray: Array[IntValue])
 case class Elements[T <:IntValue](index: SetValue, inputarray: Array[T])
   extends SetInvariant
   with Bulked[T, Domain]
-  with VaryingDependencies {
+  with VaryingDependencies with Asymmetric {
 
   val KeysToInputArray: Array[KeyForElementRemoval] = new Array(inputarray.length)
 
@@ -238,7 +241,10 @@ case class Elements[T <:IntValue](index: SetValue, inputarray: Array[T])
  * @author renaud.delandtsheer@cetic.be
  * */
 case class SetElement(index: IntValue, inputarray: Array[SetValue])
-  extends SetInvariant(inputarray.apply(index.value).value) with Bulked[SetValue, Domain] with VaryingDependencies {
+  extends SetInvariant(inputarray.apply(index.value).value)
+  with Bulked[SetValue, Domain]
+  with VaryingDependencies
+  with Asymmetric {
 
   var KeyToCurrentVar: KeyForElementRemoval = null
 

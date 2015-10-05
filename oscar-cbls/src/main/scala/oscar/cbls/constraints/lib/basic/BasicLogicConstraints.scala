@@ -26,8 +26,7 @@ package oscar.cbls.constraints.lib.basic
 
 import oscar.cbls.constraints.core._
 import oscar.cbls.invariants.core.computation._
-import oscar.cbls.invariants.core.propagation.Checker
-import oscar.cbls.invariants.lib.logic.IntInt2Int
+import oscar.cbls.invariants.core.propagation.{Symmetric, Checker}
 import oscar.cbls.invariants.lib.minmax._
 import oscar.cbls.invariants.lib.numeric.Dist
 import oscar.cbls.modeling.Algebra._
@@ -118,7 +117,10 @@ case class G(l: IntValue, r: IntValue) extends LA(r, l)
  * implements left != right
  * @author renaud.delandtsheer@cetic.be
  */
-case class NE(left: IntValue, right: IntValue) extends Invariant with Constraint {
+case class NE(left: IntValue, right: IntValue)
+  extends Invariant
+  with Constraint
+  with Symmetric  {
   registerConstrainedVariables(left, right)
   registerStaticAndDynamicDependenciesNoID(left, right)
   finishInitialization()

@@ -24,7 +24,7 @@ package oscar.cbls.invariants.lib.logic
 /**This package proposes a set of logic invariants, which are used to define the structure of the problem*/
 
 import oscar.cbls.invariants.core.computation._
-import oscar.cbls.invariants.core.propagation.Checker
+import oscar.cbls.invariants.core.propagation.{Asymmetric, Checker}
 
 /**
  * maintains a sorting of the ''values'' array:
@@ -32,7 +32,10 @@ import oscar.cbls.invariants.core.propagation.Checker
  * see method GetForwardPerm() for the forward permutation: ReversePerm(ForwardPerm(i)) == i
  * @author renaud.delandtsheer@cetic.be
  * */
-class Sort(var values:Array[IntValue], ReversePerm:Array[CBLSIntVar]) extends Invariant {
+class Sort(var values:Array[IntValue], ReversePerm:Array[CBLSIntVar])
+  extends Invariant
+  with Asymmetric {
+
   for (v <- values.indices) registerStaticAndDynamicDependency(values(v),v)
 
   finishInitialization()

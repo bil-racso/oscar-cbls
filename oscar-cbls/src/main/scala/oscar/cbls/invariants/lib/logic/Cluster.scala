@@ -24,7 +24,7 @@ package oscar.cbls.invariants.lib.logic
 
 import oscar.cbls.invariants.core.computation.CBLSIntVar._
 import oscar.cbls.invariants.core.computation._
-import oscar.cbls.invariants.core.propagation.Checker
+import oscar.cbls.invariants.core.propagation.{Asymmetric, Checker}
 
 import scala.collection.immutable.{SortedMap, SortedSet}
 ;
@@ -33,7 +33,9 @@ import scala.collection.immutable.{SortedMap, SortedSet}
   * This is considered as a sparse cluster because Cluster is a map and must not cover all possibles values of the values in the array ''values''
   * @author renaud.delandtsheer@cetic.be
   * */
-case class SparseCluster[T<:IntValue](values:Array[T], Clusters:SortedMap[Int,CBLSSetVar]) extends Invariant {
+case class SparseCluster[T<:IntValue](values:Array[T], Clusters:SortedMap[Int,CBLSSetVar])
+  extends Invariant
+  with Asymmetric {
 
   for (v <- values.indices) registerStaticAndDynamicDependency(values(v),v)
 
@@ -74,7 +76,9 @@ case class SparseCluster[T<:IntValue](values:Array[T], Clusters:SortedMap[Int,CB
   * This is considered as a dense cluster because Cluster is an array and must cover all the possibles values of the values in the array ''values''
   * @author renaud.delandtsheer@cetic.be
   * */
-case class DenseCluster[T<:IntValue](values:Array[T], clusters:Array[CBLSSetVar]) extends Invariant {
+case class DenseCluster[T<:IntValue](values:Array[T], clusters:Array[CBLSSetVar])
+  extends Invariant
+  with Asymmetric {
 
   //We register the static and dynamic dependencies.
   //Dynamic dependencies are the ones considered for the notifications.
@@ -126,7 +130,11 @@ case class DenseCluster[T<:IntValue](values:Array[T], clusters:Array[CBLSSetVar]
   * This is considered as a dense cluster because Cluster is an array and must cover all the possibles values of the values in the array ''values''
   * @author renaud.delandtsheer@cetic.be
   * */
-case class TranslatedDenseCluster(values:Array[CBLSIntVar],  indicesArray:Array[Int], clusters:Array[CBLSSetVar]) extends Invariant {
+case class TranslatedDenseCluster(values:Array[CBLSIntVar],  indicesArray:Array[Int], clusters:Array[CBLSSetVar])
+  extends Invariant
+  with Asymmetric {
+
+  override val allInputsExplicits = false
 
   //We register the static and dynamic dependencies.
   //Dynamic dependencies are the ones considered for the notifications.

@@ -22,7 +22,7 @@
 package oscar.cbls.invariants.lib.logic
 
 import oscar.cbls.invariants.core.computation._
-import oscar.cbls.invariants.core.propagation.Checker
+import oscar.cbls.invariants.core.propagation.{Asymmetric, Checker}
 
 /** This is a helper to define an invariant from an Int -> Int function.
   * Ths invariant is not incremental, so it should only be used for very simple functions.
@@ -32,7 +32,11 @@ import oscar.cbls.invariants.core.propagation.Checker
   * @param domain the expected domain of the output
   * @author renaud.delandtsheer@cetic.be
   * */
-class Int2Int(a:IntValue, fun:Int => Int, domain:Domain = FullRange) extends IntInvariant(fun(a.value),domain) {
+class Int2Int(a:IntValue, fun:Int => Int, domain:Domain = FullRange)
+  extends IntInvariant(fun(a.value),domain)
+  with Asymmetric {
+
+  override val allInputsExplicits = false
 
   registerStaticAndDynamicDependency(a)
   finishInitialization()
@@ -58,7 +62,11 @@ class Int2Int(a:IntValue, fun:Int => Int, domain:Domain = FullRange) extends Int
   * @param domain the expected domain of the output
   * @author renaud.delandtsheer@cetic.be
   * */
-class IntInt2Int(a:IntValue, b:IntValue, fun:((Int, Int) => Int), domain:Domain = FullRange) extends IntInvariant(fun(a.value,b.value),domain) {
+class IntInt2Int(a:IntValue, b:IntValue, fun:((Int, Int) => Int), domain:Domain = FullRange)
+  extends IntInvariant(fun(a.value,b.value),domain)
+  with Asymmetric {
+
+  override val allInputsExplicits = false
 
   registerStaticAndDynamicDependenciesNoID(a,b)
   finishInitialization()
@@ -82,7 +90,11 @@ class IntInt2Int(a:IntValue, b:IntValue, fun:((Int, Int) => Int), domain:Domain 
   * @param domain the expected domain of the output
   * @author renaud.delandtsheer@cetic.be
   * */
-class LazyIntInt2Int(a:IntValue, b:IntValue, fun:((Int, Int) => Int), domain:Domain = FullRange) extends IntInvariant(fun(a.value,b.value),domain) {
+class LazyIntInt2Int(a:IntValue, b:IntValue, fun:((Int, Int) => Int), domain:Domain = FullRange)
+  extends IntInvariant(fun(a.value,b.value),domain)
+  with Asymmetric {
+
+  override val allInputsExplicits = false
 
   registerStaticAndDynamicDependenciesNoID(a,b)
   finishInitialization()
