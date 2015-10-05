@@ -19,6 +19,7 @@ import oscar.algebra._
 import lpsolve.LpSolve
 import org.gnu.glpk.GLPK
 
+/*
 /**
  * Abstract class that must be extended to define a new LP solver
  * @author Pierre Schaus
@@ -89,4 +90,4 @@ abstract class LPModelLPSolve {
 abstract class LPModelGurobi {
   implicit val lpsolver = new LPSolverGurobi()
 }
-
+*/

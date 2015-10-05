@@ -18,8 +18,6 @@ package oscar.algebra
 abstract class Var extends LinearExpression {
 
   def name: String
-  val ub: Double
-  val lb: Double
   val index: Int
 
   val cte = 0.0
@@ -28,7 +26,7 @@ abstract class Var extends LinearExpression {
   override def toString = name
 
   override def derive(v: Var): Expression = {
-    if (v == this) One
+    if (v equals this) One
     else Zero
   }
 
@@ -36,11 +34,11 @@ abstract class Var extends LinearExpression {
 
   override def equals(that: Any) = {
     that match {
-      case other: Var => {
-        other.index == index
-      }
+      case other: Var =>
+        other.index equals index
       case _ => false
     }
   }
 
-}  
+  override def hashCode: Int = index
+}

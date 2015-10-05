@@ -19,6 +19,7 @@ import oscar.algebra._
 import scala.collection._
 import scala.collection.mutable.ArrayBuffer
 
+/*
 object LPStatus extends Enumeration {
   val NOT_SOLVED = Value("not solved yet")
   val OPTIMAL = Value("optimal")
@@ -579,7 +580,7 @@ abstract class AbstractLPSolver {
     updatedObj
   }
 } // end class AbstractLPSolver
-
+*/
 
 
 

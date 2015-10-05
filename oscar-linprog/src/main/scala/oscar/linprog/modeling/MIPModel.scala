@@ -18,7 +18,7 @@ package oscar.linprog.modeling
 import oscar.linprog._
 import oscar.algebra._
 
-
+/*
 /**
  * @author Pierre Schaus pschaus@gmail.com  
  */
@@ -228,4 +228,4 @@ abstract class MIPModelLPSolve {
 abstract class MIPModelGurobi {
   implicit val mipsolver = new MIPSolverGurobi()
 } 
-
+*/
