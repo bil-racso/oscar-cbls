@@ -32,7 +32,8 @@ class LPSolve extends AbstractLP {
   var closed = false
   var released = false
   var configFile = new java.io.File("options.ini")
-  
+  var abortSolve: Boolean = false
+
   def startModelBuilding(nbRows: Int, nbCols: Int) {
     this.nbRows = 0
     this.nbCols = nbCols
@@ -63,22 +64,31 @@ class LPSolve extends AbstractLP {
 	  lp.setColName(colId + 1, name)
   }
 
-  def addConstraintGreaterEqual(coef: Array[Double], col: Array[Int], rhs: Double, name: String) {
+  def addConstraintGreaterEqual(coef: Array[Double], col: Array[Int], rhs: Double, name: String) = {
     nbRows += 1
     lp.addConstraintex(coef.length, coef, col.map(_ + 1), LpSolve.GE, rhs) //the column index of lp_solve is 1 based
     lp.setRowName(nbRows, name)
+    nbRows - 1
   }
 
-  def addConstraintLessEqual(coef: Array[Double], col: Array[Int], rhs: Double, name: String) { 
+  def addConstraintLessEqual(coef: Array[Double], col: Array[Int], rhs: Double, name: String) = {
     nbRows += 1
     lp.addConstraintex(coef.length, coef, col.map(_ + 1), LpSolve.LE, rhs)
     lp.setRowName(nbRows, name)
+    nbRows - 1
   }
   
-  def addConstraintEqual(coef: Array[Double], col: Array[Int], rhs: Double, name: String) {
+  def addConstraintEqual(coef: Array[Double], col: Array[Int], rhs: Double, name: String) = {
     nbRows += 1
     lp.addConstraintex(coef.length, coef, col.map(_ + 1), LpSolve.EQ, rhs)
     lp.setRowName(nbRows, name)
+    nbRows - 1
+  }
+
+  def addConstraintSOS1(coef: Array[Double], col: Array[Int], name: String): Int = {
+    nbRows += 1
+    lp.addSOS(name, 1, 1, col.size, col.map(_ + 1), coef)
+    nbRows - 1
   }
 
   def addObjective(coef: Array[Double], col: Array[Int], minMode: Boolean = true) {
@@ -95,10 +105,6 @@ class LPSolve extends AbstractLP {
   
   override def setName(name: String) {
     lp.setLpName(name)
-  }
-  
-  override def addConstraintSOS1(col: Array[Int], coef: Array[Double] = null,  name: String) {
-    lp.addSOS(name, 1, 1, col.size, col.map(_ + 1), coef)
   }
 
   def addColumn(obj: Double, row: Array[Int], coef: Array[Double]) {
@@ -127,30 +133,34 @@ class LPSolve extends AbstractLP {
   }
 
   def solveModel(): LPStatus.Value = {
+    lp.putAbortfunc(new LPSolveAborter(this), this)
 
     val status = lp.solve match {
       case LpSolve.OPTIMAL =>
-        sol = Array.tabulate(nbCols)(c => lp.getVarPrimalresult(nbRows + c + 1))
-        objectiveValue = lp.getObjective()
+        sol = Array.tabulate(nbCols)(c => lp.getVarPrimalresult(lp.getNorigRows + c + 1))
+        objectiveValue = lp.getObjective
         LPStatus.OPTIMAL
       case LpSolve.SUBOPTIMAL =>
-        sol = Array.tabulate(nbCols)(c => lp.getVarPrimalresult(nbRows + c + 1))
-        objectiveValue = lp.getObjective()
+        sol = Array.tabulate(nbCols)(c => lp.getVarPrimalresult(lp.getNorigRows + c + 1))
+        objectiveValue = lp.getObjective
         LPStatus.SUBOPTIMAL
       case LpSolve.INFEASIBLE =>
         LPStatus.INFEASIBLE
       case LpSolve.UNBOUNDED =>
         LPStatus.UNBOUNDED
-      case LpSolve.TIMEOUT => { println("lp_solve timed out before integer solution found...")
-      	LPStatus.NOT_SOLVED
-      }
+      case LpSolve.USERABORT =>
+        println("lp_solve was aborted before integer solution found...")
+        LPStatus.NO_SOLUTION
+      case LpSolve.TIMEOUT =>
+        println("lp_solve timed out before integer solution found...")
+        LPStatus.NO_SOLUTION
       case _ =>
         LPStatus.INFEASIBLE
     }
     if (status == LpSolve.OPTIMAL) {
       println("-------  ssolving ----- " + status)
-      println("nbcol now:" + lp.getNcolumns() + " orig columns:" + lp.getNorigColumns())
-      println("nbrow now:" + lp.getNrows() + " orig rows:" + lp.getNorigRows())
+      println("nbcol now:" + lp.getNcolumns + " orig columns:" + lp.getNorigColumns)
+      println("nbrow now:" + lp.getNrows + " orig rows:" + lp.getNorigRows)
     }
     status
   }
@@ -209,14 +219,17 @@ class LPSolve extends AbstractLP {
   }
 
   def deleteConstraint(rowId: Int) {
+    nbRows -= 1
     lp.delConstraint(rowId + 1)
   }
 
   def addVariable() {
+    nbCols += 1
     lp.addColumnex(0, null, null)
   }
 
   def deleteVariable(colId: Int) {
+    nbCols -= 1
     lp.delColumn(colId)
   }
 
@@ -232,13 +245,23 @@ class LPSolve extends AbstractLP {
     lp.deleteLp()
   }
 
+  def abort(): Unit = {
+    abortSolve = true
+  }
+
   def updateRhs(rowId: Int, rhs: Double): Unit = {
     lp.setRh(rowId + 1, rhs)
   }
 
-  def updateCoef(rowId: Int, colId: Int, coeff: Double): Unit = {
-    lp.setMat(rowId + 1, colId + 1, coeff)
+  def updateCoef(rowId: Int, colId: Int, coef: Double): Unit = {
+    lp.setMat(rowId + 1, colId + 1, coef)
   }
 
+  def updateObjCoef(colId: Int, coef: Double): Unit = {
+    lp.setObj(colId + 1, coef)
+  }
 }
 
+class LPSolveAborter(solver: LPSolve) extends lpsolve.AbortListener {
+  def abortfunc(problem: lpsolve.LpSolve, userhandle: Any): Boolean = solver.abortSolve
+}

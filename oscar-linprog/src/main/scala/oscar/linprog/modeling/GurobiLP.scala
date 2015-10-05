@@ -61,7 +61,7 @@ class GurobiLP extends AbstractLP {
     model.getVar(colId).set(GRB.StringAttr.VarName, name)
   }
   
-  def addConstraint(coef: Array[Double], col: Array[Int], rhs: Double, sign: String, name: String) {
+  def addConstraint(coef: Array[Double], col: Array[Int], rhs: Double, sign: String, name: String) = {
     nbRows += 1
     var ntot = new GRBLinExpr()
     ntot.addTerms(coef, col map (model.getVar(_)))
@@ -73,26 +73,28 @@ class GurobiLP extends AbstractLP {
       case "==" =>
         model.addConstr(ntot, GRB.EQUAL, rhs, name)
     }
+
+    nbRows - 1
   }
   
-  def addConstraintGreaterEqual(coef: Array[Double], col: Array[Int], rhs: Double, name: String) {
+  def addConstraintGreaterEqual(coef: Array[Double], col: Array[Int], rhs: Double, name: String) = {
     addConstraint(coef, col, rhs, ">=", name)
   }
 
-  def addConstraintLessEqual(coef: Array[Double], col: Array[Int], rhs: Double, name: String) {
+  def addConstraintLessEqual(coef: Array[Double], col: Array[Int], rhs: Double, name: String) = {
     addConstraint(coef, col, rhs, "<=", name)
   }
-  def addConstraintEqual(coef: Array[Double], col: Array[Int], rhs: Double, name: String) {
+  def addConstraintEqual(coef: Array[Double], col: Array[Int], rhs: Double, name: String) = {
     addConstraint(coef, col, rhs, "==", name)
   }
 
-  override def addConstraintSOS1(col: Array[Int], coef: Array[Double] = null,  name: String) {
+  override def addConstraintSOS1(coef: Array[Double], col: Array[Int], name: String) = {
     nbRows += 1
     model.addSOS(col.map(model.getVar(_)), coef, GRB.SOS_TYPE1)
+    nbRows - 1
   }
   
   def addObjective(coef: Array[Double], col: Array[Int], minMode: Boolean = true) {
-
     val ntot = toGRBLinExpr(coef, col, model.getVars)
     model.setObjective(ntot, if (minMode) 1 else -1)
     model.update()
@@ -116,7 +118,6 @@ class GurobiLP extends AbstractLP {
 
   def getUpperBound(colId: Int): Double = {
     model.getVar(colId).get(GRB.DoubleAttr.UB)
-
   }
 
   def updateLowerBound(colId: Int, lb: Double) {
@@ -125,7 +126,6 @@ class GurobiLP extends AbstractLP {
 
   def updateUpperBound(colId: Int, ub: Double) {
     model.getVar(colId).set(GRB.DoubleAttr.UB, ub)
-
   }
 
   def solveModel(): LPStatus.Value = {
@@ -144,7 +144,6 @@ class GurobiLP extends AbstractLP {
       LPStatus.OPTIMAL
     } else if (optimstatus == GRB.INFEASIBLE) {
       println("Model is infeasible")
-
       // compute and write out IIS
       model.computeIIS()
       LPStatus.INFEASIBLE
@@ -215,6 +214,7 @@ class GurobiLP extends AbstractLP {
   }
 
   def deleteConstraint(rowId: Int) {
+    nbRows -= 1
     model.remove(model.getConstr(rowId))
   }
 
@@ -225,6 +225,7 @@ class GurobiLP extends AbstractLP {
   }
 
   def deleteVariable(colId: Int) {
+    nbCols -= 1
     model.remove(model.getVar(colId))
   }
   
@@ -234,7 +235,9 @@ class GurobiLP extends AbstractLP {
     env.release
     env.dispose
   }
-  
+
+  def abort() = println("Warning: abort is not implemented for Gurobi")
+
   /** Gurobi's export file handling is a little different. The format is defined by the fileName
   * passed to model.write for the LP format it's .lp and for MPS it's .mps
   */ 
@@ -247,7 +250,6 @@ class GurobiLP extends AbstractLP {
   }
 
   override def addAllConstraints(cons: Seq[LPConstraint]) = {
-
     val vars = model.getVars
     //val allCons = cons.values.toArray.sortWith(_.index < _.index)
     val allCons = cons.toArray
@@ -289,11 +291,19 @@ class GurobiLP extends AbstractLP {
 
   def updateRhs(rowId: Int, rhs: Double): Unit = model.getConstr(rowId).set(GRB.DoubleAttr.RHS, rhs)
 
-  def updateCoef(rowId: Int, colId: Int, coeff: Double): Unit = {
+  def updateCoef(rowId: Int, colId: Int, coef: Double): Unit = {
     val cons = model.getConstr(rowId)
     val variable = model.getVar(colId)
     
-    model.chgCoeff(cons, variable, coeff)
+    model.chgCoeff(cons, variable, coef)
   }
 
+  def updateObjCoef(colId: Int, coef: Double): Unit = {
+    val variable = model.getVar(colId)
+    val obj = model.getObjective().asInstanceOf[GRBLinExpr]
+    obj.remove(variable)
+    obj.addTerm(coef, variable)
+    model.setObjective(obj)
+    model.update()
+  }
 }
