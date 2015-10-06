@@ -19,6 +19,6 @@ class LinearConstraint(solver: MPSolverInterface with LPSolverInterface, index: 
 
 }
 
-class SOS1Constraint(solver: MPSolverInterface with MIPSolverInterface, index: Int, name: String, val vars: Seq[AbstractMPVar], val weights: Seq[Double]) extends AbstractMPConstraint(solver, index, name) {
+class SOS1Constraint(solver: MPSolverInterface with MIPSolverInterface, index: Int, name: String, val vars: Seq[AbstractMPVar[_]], val weights: Seq[Double]) extends AbstractMPConstraint(solver, index, name) {
 
 }

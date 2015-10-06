@@ -47,10 +47,4 @@ trait MIPSolverInterface { self: MPSolverInterface =>
    * @return constraint index
    */
   def addConstraintSOS1(coef: Vector[Double], varId: Vector[Int], name: String): Int
-
-  /**
-   * Returns the LP model corresponding to this MIP model
-   * with all its integer variables fixed to their value in the integer solution found by the solver.
-   */
-  def fixed: LPSolverInterface
 }
