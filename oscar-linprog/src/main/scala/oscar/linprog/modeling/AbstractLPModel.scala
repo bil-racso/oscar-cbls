@@ -169,11 +169,38 @@ abstract class AbstractLP {
 
   def solveModel(): LPStatus.Value
 
-  def analyseInfeasibility(): Unit
-
   def getValue(colId: Int): Double
 
   def getObjectiveValue(): Double
+
+  /**
+   * Finds the sources of infeasibilities in the problem.
+   */
+  def analyseInfeasibility(): Unit
+
+  /**
+   * Returns true if the lower bound of the given column/variable
+   * belongs to the set of constraints making the problem infeasible
+   */
+  def getVarLBInfeasibilityStatus(colId: Int): Boolean
+
+  /**
+   * Returns true if the upper bound of the given column/variable
+   * belongs to the set of constraints making the problem infeasible
+   */
+  def getVarUBInfeasibilityStatus(colId: Int): Boolean
+
+  /**
+   * Returns true if the given row/constraint
+   * belongs to the set of constraints making the problem infeasible
+   */
+  def getLinearConstraintInfeasibilityStatus(rowId: Int): Boolean
+
+  /**
+   * Returns true if the given SOS1 constraint
+   * belongs to the set of constraints making the problem infeasible
+   */
+  def getSOS1ConstraintInfeasibilityStatus(id: Int): Boolean
 
   def setBounds(colId: Int, low: Double, up: Double)
 
@@ -316,6 +343,8 @@ class AbstractLPFloatVar(val solver: AbstractLPSolver, varName: String, lbound: 
    */
   def getName(): String = name
 
+  def lowerBoundInfeasible: Option[Boolean] = solver.getVarLBInfeasibilityStatus(index)
+  def upperBoundInfeasible: Option[Boolean] = solver.getVarUBInfeasibilityStatus(index)
 }
 
 class LPConstraint(val solver: AbstractLPSolver, val cstr: LinearConstraint, val index: Int, val name: String) {
@@ -360,6 +389,9 @@ class LPConstraint(val solver: AbstractLPSolver, val cstr: LinearConstraint, val
   }
 
   def isTight(tol: Double = 10e-6) = slack.abs <= tol
+
+  def infeasible: Option[Boolean] = solver.getLinearConstraintInfeasibilityStatus(index)
+
   override def toString: String = name + ": " + cstr
 }
 
@@ -367,6 +399,8 @@ class SOSConstraint(override val solver: AbstractLPSolver, override val cstr: Li
 	
 	def weightings() = coef
 	def getSOSType() = rhs
+
+  override def infeasible: Option[Boolean] = solver.getSOS1ConstraintInfeasibilityStatus(index)
 }
 
 
@@ -378,12 +412,10 @@ abstract class AbstractLPSolver {
   private val solution = mutable.HashMap.empty[Int, Double]
   protected var objective: LinearExpression = 0
   protected var minimize = true
- 
   protected val solver: AbstractLP
-
   protected var statuss = LPStatus.NOT_SOLVED
-
   protected var solving: Boolean = false
+  protected var infeasibilityStatusAvailable = false
 
   protected var modelName = ""
   def name_= (n: String): Unit = modelName = n
@@ -499,6 +531,7 @@ abstract class AbstractLPSolver {
 
   def solveModel() {
     solver.endModelBuilding()
+    infeasibilityStatusAvailable = false
     println("Solving ...")
     solving = true
     statuss = solver.solveModel()
@@ -507,10 +540,6 @@ abstract class AbstractLPSolver {
       (0 until vars.size) foreach { i => solution(i) = solver.getValue(i) }
     }
   }
-
-  def analyseInfeasibility() =
-    if(statuss == LPStatus.INFEASIBLE) solver.analyseInfeasibility()
-    else  println("Warning: the problem should be infeasible in order to analyze infeasibilities.")
 
   /**
    * @return The objective value (None if problem not yet solved or infeasible)
@@ -533,6 +562,47 @@ abstract class AbstractLPSolver {
    * Check that all the constraints are satisfied
    */
   def checkConstraints(tol: Double = 10e-6): Boolean = cons.forall(c => c.check(tol))
+
+  /**
+   * Finds the sources of infeasibilities in the problem.
+   */
+  def analyseInfeasibility() =
+    if(statuss == LPStatus.INFEASIBLE) {
+      solver.analyseInfeasibility()
+      infeasibilityStatusAvailable = true
+    } else  println("Warning: the problem should be infeasible in order to analyze infeasibilities.")
+
+  /**
+   * Returns true if the lower bound of the given variable
+   * belongs to the set of constraints making the problem infeasible
+   */
+  def getVarLBInfeasibilityStatus(id: Int): Option[Boolean] =
+    if(infeasibilityStatusAvailable) Some(solver.getVarLBInfeasibilityStatus(id))
+    else None
+
+  /**
+   * Returns true if the upper bound of the given variable
+   * belongs to the set of constraints making the problem infeasible
+   */
+  def getVarUBInfeasibilityStatus(id: Int): Option[Boolean] =
+    if(infeasibilityStatusAvailable) Some(solver.getVarUBInfeasibilityStatus(id))
+    else None
+
+  /**
+   * Returns true if the given constraint
+   * belongs to the set of constraints making the problem infeasible
+   */
+  def getLinearConstraintInfeasibilityStatus(id: Int): Option[Boolean] =
+    if(infeasibilityStatusAvailable) Some(solver.getLinearConstraintInfeasibilityStatus(id))
+    else None
+
+  /**
+   * Returns true if the given SOS1 constraint
+   * belongs to the set of constraints making the problem infeasible
+   */
+  def getSOS1ConstraintInfeasibilityStatus(id: Int): Option[Boolean] =
+    if(infeasibilityStatusAvailable) Some(solver.getSOS1ConstraintInfeasibilityStatus(id))
+    else None
 
   /**
    *  modify the right hand side (constant term) of the specified constraint directly in the solver

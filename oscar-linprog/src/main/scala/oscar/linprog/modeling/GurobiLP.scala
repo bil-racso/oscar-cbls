@@ -157,16 +157,36 @@ class GurobiLP extends AbstractLP {
     }
   }
 
-  def analyseInfeasibility(): Unit = {
-    println("Warning: analyseInfeasibility is not yet implemented for Gurobi")
-  }
-
   def getValue(colId: Int): Double = {
     sol(colId)
   }
 
   def getObjectiveValue(): Double = {
     Obj
+  }
+
+  def analyseInfeasibility(): Unit = {
+    println("Warning: analyseInfeasibility is not yet implemented for Gurobi")
+  }
+
+  def getVarLBInfeasibilityStatus(colId: Int): Boolean = {
+    println("Warning: infeasibility analysis is not yet implemented for Gurobi")
+    ???
+  }
+
+  def getVarUBInfeasibilityStatus(colId: Int): Boolean = {
+    println("Warning: infeasibility analysis is not yet implemented for Gurobi")
+    ???
+  }
+
+  def getLinearConstraintInfeasibilityStatus(rowId: Int): Boolean = {
+    println("Warning: infeasibility analysis is not yet implemented for Gurobi")
+    ???
+  }
+
+  def getSOS1ConstraintInfeasibilityStatus(id: Int): Boolean = {
+    println("Warning: infeasibility analysis is not yet implemented for Gurobi")
+    ???
   }
 
   def setInteger(colId: Int) {

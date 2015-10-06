@@ -188,10 +188,6 @@ class GlpkLP extends AbstractLP {
     }
   }
 
-  def analyseInfeasibility(): Unit = {
-    println("Warning: analyseInfeasibility is not yet implemented for GLPK")
-  }
-
   def getValue(colId: Int): Double = {
     if (sol == null || colId < 0 || colId >= nbCols)
       0.0
@@ -201,6 +197,30 @@ class GlpkLP extends AbstractLP {
 
   def getObjectiveValue(): Double = {
     objectiveValue
+  }
+
+  def analyseInfeasibility(): Unit = {
+    println("Warning: infeasibility analysis is not yet implemented for GLPK")
+  }
+
+  def getVarLBInfeasibilityStatus(colId: Int): Boolean = {
+    println("Warning: infeasibility analysis is not yet implemented for GLPK")
+    ???
+  }
+
+  def getVarUBInfeasibilityStatus(colId: Int): Boolean = {
+    println("Warning: infeasibility analysis is not yet implemented for GLPK")
+    ???
+  }
+
+  def getLinearConstraintInfeasibilityStatus(rowId: Int): Boolean = {
+    println("Warning: infeasibility analysis is not yet implemented for GLPK")
+    ???
+  }
+
+  def getSOS1ConstraintInfeasibilityStatus(id: Int): Boolean = {
+    println("Warning: infeasibility analysis is not yet implemented for GLPK")
+    ???
   }
 
   def setInteger(colId: Int) {

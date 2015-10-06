@@ -165,10 +165,6 @@ class LPSolve extends AbstractLP {
     status
   }
 
-  def analyseInfeasibility(): Unit = {
-    println("Warning: analyseInfeasibility is not yet implemented for LPSolve")
-  }
-
   def getValue(colId: Int): Double = {
     if (sol == null || colId < 0 || colId >= nbCols) {
       0.0
@@ -179,6 +175,30 @@ class LPSolve extends AbstractLP {
 
   def getObjectiveValue(): Double = {
     objectiveValue
+  }
+
+  def analyseInfeasibility(): Unit = {
+    println("Warning: analyseInfeasibility is not yet implemented for LPSolve")
+  }
+
+  def getVarLBInfeasibilityStatus(colId: Int): Boolean = {
+    println("Warning: infeasibility analysis is not yet implemented for LPSolve")
+    ???
+  }
+
+  def getVarUBInfeasibilityStatus(colId: Int): Boolean = {
+    println("Warning: infeasibility analysis is not yet implemented for LPSolve")
+    ???
+  }
+
+  def getLinearConstraintInfeasibilityStatus(rowId: Int): Boolean = {
+    println("Warning: infeasibility analysis is not yet implemented for LPSolve")
+    ???
+  }
+
+  def getSOS1ConstraintInfeasibilityStatus(id: Int): Boolean = {
+    println("Warning: infeasibility analysis is not yet implemented for LPSolve")
+    ???
   }
 
   def setInteger(colId: Int) {
