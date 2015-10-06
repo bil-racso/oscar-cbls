@@ -169,6 +169,8 @@ abstract class AbstractLP {
 
   def solveModel(): LPStatus.Value
 
+  def analyseInfeasibility(): Unit
+
   def getValue(colId: Int): Double
 
   def getObjectiveValue(): Double
@@ -495,7 +497,6 @@ abstract class AbstractLPSolver {
     (status == LPStatus.OPTIMAL) || (status == LPStatus.SUBOPTIMAL)
   }
 
-
   def solveModel() {
     solver.endModelBuilding()
     println("Solving ...")
@@ -506,6 +507,10 @@ abstract class AbstractLPSolver {
       (0 until vars.size) foreach { i => solution(i) = solver.getValue(i) }
     }
   }
+
+  def analyseInfeasibility() =
+    if(statuss == LPStatus.INFEASIBLE) solver.analyseInfeasibility()
+    else  println("Warning: the problem should be infeasible in order to analyze infeasibilities.")
 
   /**
    * @return The objective value (None if problem not yet solved or infeasible)

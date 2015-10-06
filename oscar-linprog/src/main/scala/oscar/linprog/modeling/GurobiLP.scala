@@ -157,6 +157,10 @@ class GurobiLP extends AbstractLP {
     }
   }
 
+  def analyseInfeasibility(): Unit = {
+    println("Warning: analyseInfeasibility is not yet implemented for Gurobi")
+  }
+
   def getValue(colId: Int): Double = {
     sol(colId)
   }

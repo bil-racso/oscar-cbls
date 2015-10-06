@@ -188,6 +188,10 @@ class GlpkLP extends AbstractLP {
     }
   }
 
+  def analyseInfeasibility(): Unit = {
+    println("Warning: analyseInfeasibility is not yet implemented for GLPK")
+  }
+
   def getValue(colId: Int): Double = {
     if (sol == null || colId < 0 || colId >= nbCols)
       0.0

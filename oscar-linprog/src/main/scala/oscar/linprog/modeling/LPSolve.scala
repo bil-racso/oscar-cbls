@@ -165,6 +165,10 @@ class LPSolve extends AbstractLP {
     status
   }
 
+  def analyseInfeasibility(): Unit = {
+    println("Warning: analyseInfeasibility is not yet implemented for LPSolve")
+  }
+
   def getValue(colId: Int): Double = {
     if (sol == null || colId < 0 || colId >= nbCols) {
       0.0
