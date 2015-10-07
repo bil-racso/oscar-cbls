@@ -199,8 +199,9 @@ class GlpkLP extends AbstractLP {
     objectiveValue
   }
 
-  def analyseInfeasibility(): Unit = {
+  def analyseInfeasibility(): Boolean = {
     println("Warning: infeasibility analysis is not yet implemented for GLPK")
+    ???
   }
 
   def getVarLBInfeasibilityStatus(colId: Int): Boolean = {

@@ -177,8 +177,9 @@ class LPSolve extends AbstractLP {
     objectiveValue
   }
 
-  def analyseInfeasibility(): Unit = {
+  def analyseInfeasibility(): Boolean = {
     println("Warning: analyseInfeasibility is not yet implemented for LPSolve")
+    ???
   }
 
   def getVarLBInfeasibilityStatus(colId: Int): Boolean = {

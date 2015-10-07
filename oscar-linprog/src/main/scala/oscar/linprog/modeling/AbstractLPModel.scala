@@ -175,8 +175,10 @@ abstract class AbstractLP {
 
   /**
    * Finds the sources of infeasibilities in the problem.
+   *
+   * @return true if the infeasibility analysis could be performed
    */
-  def analyseInfeasibility(): Unit
+  def analyseInfeasibility(): Boolean
 
   /**
    * Returns true if the lower bound of the given column/variable
@@ -343,7 +345,14 @@ class AbstractLPFloatVar(val solver: AbstractLPSolver, varName: String, lbound: 
    */
   def getName(): String = name
 
+  /**
+   * Returns true in case the lower bound on this variable belongs to the set of infeasible constraints
+   */
   def lowerBoundInfeasible: Option[Boolean] = solver.getVarLBInfeasibilityStatus(index)
+
+  /**
+   * Returns true in case the upper bound on this variable belongs to the set of infeasible constraints
+   */
   def upperBoundInfeasible: Option[Boolean] = solver.getVarUBInfeasibilityStatus(index)
 }
 
@@ -390,6 +399,9 @@ class LPConstraint(val solver: AbstractLPSolver, val cstr: LinearConstraint, val
 
   def isTight(tol: Double = 10e-6) = slack.abs <= tol
 
+  /**
+   * Returns true in case this Constraint belongs to the set of infeasible constraints
+   */
   def infeasible: Option[Boolean] = solver.getLinearConstraintInfeasibilityStatus(index)
 
   override def toString: String = name + ": " + cstr
@@ -400,6 +412,9 @@ class SOSConstraint(override val solver: AbstractLPSolver, override val cstr: Li
 	def weightings() = coef
 	def getSOSType() = rhs
 
+  /**
+   * Returns true in case this SOSConstraint belongs to the set of infeasible constraints
+   */
   override def infeasible: Option[Boolean] = solver.getSOS1ConstraintInfeasibilityStatus(index)
 }
 
@@ -565,12 +580,17 @@ abstract class AbstractLPSolver {
 
   /**
    * Finds the sources of infeasibilities in the problem.
+   *
+   * @return true if the infeasibility analysis succeeded
    */
-  def analyseInfeasibility() =
+  def analyseInfeasibility(): Boolean =
     if(statuss == LPStatus.INFEASIBLE) {
-      solver.analyseInfeasibility()
       infeasibilityStatusAvailable = true
-    } else  println("Warning: the problem should be infeasible in order to analyze infeasibilities.")
+      solver.analyseInfeasibility()
+    } else  {
+      println("Warning: the problem should be infeasible in order to analyze infeasibilities.")
+      false
+    }
 
   /**
    * Returns true if the lower bound of the given variable

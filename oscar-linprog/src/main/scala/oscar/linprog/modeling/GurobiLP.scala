@@ -165,8 +165,9 @@ class GurobiLP extends AbstractLP {
     Obj
   }
 
-  def analyseInfeasibility(): Unit = {
+  def analyseInfeasibility(): Boolean = {
     println("Warning: analyseInfeasibility is not yet implemented for Gurobi")
+    ???
   }
 
   def getVarLBInfeasibilityStatus(colId: Int): Boolean = {
