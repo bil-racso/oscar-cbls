@@ -29,8 +29,20 @@ object FZSimplify{
   def propagate(model: FZProblem)(implicit log: Log):Unit = {
     for(c <- model.constraints){
       val unsat = isUnsatisfiable(c)
-      if(unsat) throw new UnsatException(c.toString())
-      propagate(c)
+      if(unsat){
+        log(c+"")
+        throw new UnsatException(c.toString())
+      }
+      if(log.level > 0){
+        val bef = c.variables.map(v => v.domainSize).fold(1)((a,b) => a * b)
+        propagate(c)
+        val aft = c.variables.map(v => v.domainSize).fold(1)((a,b) => a * b)
+        if(bef != aft){
+          log("propagated "+c)
+        }
+      }else{
+    	propagate(c)
+      }
     }
   }
   
@@ -40,12 +52,16 @@ object FZSimplify{
     var mod = false
     for(c <- model.constraints){
       val unsat = isUnsatisfiable(c)
-      if(unsat) throw new UnsatException(c.toString())
+      if(unsat){
+        log(c+"")
+        throw new UnsatException(c.toString())
+      } 
       val ent = isEntailed(c)
       if(!ent){
 	    val rew = rewrite(c)
 	    newcstrs += rew
 	    if(rew!=c){
+	      log(c + " -> " + rew)
 	      mod = true
 	      c.retract()
 	      rew.insert()
@@ -101,12 +117,15 @@ object FZSimplify{
       case set_in(x,y,_) => y.contains(x.value)
       case array_bool_and(x,y,_) => (x.exists(_.isFalse) && y.isFalse) || (x.forall(_.isTrue) && y.isTrue)
       case array_bool_or(x,y,_) => (x.exists(_.isTrue) && y.isTrue) || (x.forall(_.isFalse) && y.isFalse)
-      case bool_clause(x,y,_) => x.exists(_.isTrue) || y.exists(_.isFalse)
+      case bool_clause(x,y,_) => (x.exists(_.isTrue) || y.exists(_.isFalse))
+      case int_max(x,y,z,_) => x.value.max(y.value) == z .value
+      case int_min(x,y,z,_) => x.value.min(y.value) == z .value
       case _ => false
     }
   }else false
   
-  def isUnsatisfiable(c: Constraint) = if(isBound(c)) !isEntailed(c) else false
+  def isUnsatisfiable(c: Constraint) = //if(isBound(c)) !isEntailed(c) else 
+    false
   
   def negate(c: Constraint): Constraint = { 
     c match {

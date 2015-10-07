@@ -140,7 +140,7 @@ class FZCBLSModel(val model: FZProblem, val c: ConstraintSystem, val m: Store, v
           val sc = parsedVariable.cstrs.map{ 
           	case c:subcircuit => c.variables.length; 
           	case c:circuit => c.variables.length;
-          	case _ => 0}.max
+          	case _ => 0}.fold(0)((x, y) => if (x > y) x else y)
           val thedom = if(sc > 0){oscar.flatzinc.model.DomainRange(1, sc)}else{dom}
           val cblsVariable = CBLSIntVarDom(m, initialValue, thedom,  id);
           //TODO: handle constant variables here.
@@ -318,7 +318,7 @@ class FZCBLSSolver extends SearchEngine with StopWatch {
     
     
     if(!opts.is("no-find-inv")){
-      FZModelTransfo.findInvariants(model,log);
+      FZModelTransfo.findInvariants(model,log,List.empty[Variable]);
       log("Found Invariants")
     }else{
       log("Did not search for new invariants")

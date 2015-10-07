@@ -68,7 +68,7 @@ class InstrumentedRange(r:Range){
  */
 class ShiftedRange(val start:Int, val end:Int, val startBy:Int, val step:Int = 1) extends Iterable[Int]{
   if((start > startBy) || (startBy > end)) throw new Exception("ShiftedRange must contain startBy value ")
-  if(step != 1) throw new Exception("only step of 1 is supported in ShirtedRange")
+  if(step != 1) throw new Exception("only step of 1 is supported in ShiftedRange")
 
   //include the at Value
   private def unfold(at:Int):List[Int] = {

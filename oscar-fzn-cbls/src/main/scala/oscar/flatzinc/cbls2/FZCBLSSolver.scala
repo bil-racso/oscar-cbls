@@ -279,6 +279,29 @@ class FZCBLSModel(val model: FZProblem, val c: ConstraintSystem, val m: Store, v
   }
 }
 
+class Heuristic(model: FZProblem){
+  val lsheuristic = model.search.getHeuristic().find(a => a.name.startsWith("ls") || a.name.equalsIgnoreCase("local_search"))  
+  var listOfSearchVariables = lsheuristic.map(getSearchVariables).getOrElse(List.empty[Variable])
+  listOfSearchVariables.foreach(v => if(v.isDefined) v.definingConstraint.get.unsetDefinedVar(v))
+  
+  def addSearchVariables(newvars: Iterable[Variable]){
+    listOfSearchVariables ++= newvars
+    newvars.foreach(v => if(v.isDefined) v.definingConstraint.get.unsetDefinedVar(v))  
+  }
+  private[this] def getSearchVariables(ann: Any): Iterable[Variable] = {
+    ann match{
+      case ann:Annotation => ann.args.flatMap(getSearchVariables)
+      case av:Array[IntegerVariable] => av
+      case av:Array[BooleanVariable] => av
+      case av:Array[Annotation] => av.flatMap(getSearchVariables)
+      case ite:Iterable[Any] => ite.flatMap(getSearchVariables)
+      case v:Variable => List(v)
+      case i:Int => List.empty[Variable]
+      case s:String => List.empty[Variable]
+    }
+    
+  }
+}
 
 class FZCBLSSolver extends SearchEngine with StopWatch {
 
@@ -292,6 +315,8 @@ class FZCBLSSolver extends SearchEngine with StopWatch {
     val model = FZParser.readFlatZincModelFromFile(opts.fileName,log, false).problem;
     Helper.getCstrsByName(model.constraints).map{ case (n:String,l:List[Constraint]) => l.length +"\t"+n}.toList.sorted.foreach(log(_))
     log("Parsed. Parsing took "+getWatch+" ms")
+    
+    val heuristic = new Heuristic(model)
     
 //    model.variables.foreach{
 //      case v:IntegerVariable => println(v+"\t"+v.domain)
@@ -326,17 +351,16 @@ class FZCBLSSolver extends SearchEngine with StopWatch {
     
     
     
-    
-    //Hack for the subcircuit constraints:
-    model.variables.foreach(v => if(v.isDefined && v.cstrs.exists{ 
+    model.constraints.filter{
         case c:subcircuit => true; 
         case c:circuit => true;
-        case _ => false}) v.definingConstraint.get.unsetDefinedVar(v))    
-    
+        case _ => false
+    }.foreach(c => heuristic.addSearchVariables(c.variables) )
+   
     
         
     if(!opts.is("no-find-inv")){
-      FZModelTransfo.findInvariants(model,log);
+      FZModelTransfo.findInvariants(model,log,heuristic.listOfSearchVariables );
       log("Found Invariants")
     }else{
       log("Did not search for new invariants")
@@ -352,13 +376,7 @@ class FZCBLSSolver extends SearchEngine with StopWatch {
       if(c.definedVar.isDefined && c.definedVar.get.isBound)c.unsetDefinedVar(c.definedVar.get)
     }
     
-    //Hack for the subcircuit constraints:
-    model.variables.foreach(v => if(v.isDefined && v.cstrs.exists{ 
-        case c:subcircuit => true; 
-        case c:circuit => true;
-        case _ => false}){v.definingConstraint.get.unsetDefinedVar(v)})    
-    
-    
+
     
     if(opts.is("no-post-inv")){
       for(c <- model.constraints ){
@@ -444,67 +462,81 @@ class FZCBLSSolver extends SearchEngine with StopWatch {
     cblsmodel.c.close()//The objective depends on the violation of the CS, so it must be first closed before creating the Objective.
     //cblsmodel.objective = new FZCBLSObjective(cblsmodel,log)//But objective is needed in neighbourhoods
     
+      log("Starting Search at "+getWatchString)
+    val hasSpecialNeighbourhoods = !cblsmodel.neighbourhoodGenerator.isEmpty
     
-    cblsmodel.addDefaultNeighbourhouds()
-    cblsmodel.createNeighbourhoods()//So we actually create the neighbourhoods only after!
-    cblsmodel.neighbourhoods.foreach(n => log(2,"Created Neighbourhood "+ n+ " over "+n.searchVariables.length+" variables"))
-    
-    
-    if(cblsmodel.neighbourhoods.length==0){
-      log(0,"No neighbourhood has been created. Aborting!")
-      return;
-    }
-    log("Using "+cblsmodel.vars.count(v => v.domainSize>1 && !v.isControlledVariable)+" Search Variables in default assign neighbourhood")
-    log("Using "+cblsmodel.vars.count(v => v.domainSize>1 && !v.isControlledVariable && v.min ==0 && v.max==1)+" Search Variables in default flip neighbourhood")
-    cblsmodel.vars.filter(v => v.domainSize>1 && !v.isControlledVariable).foreach(v => log(2,"Search with "+v+" dom: "+v.min +".."+v.max))
-    log("Created all Neighborhoods")
-    
-    
-    //Search
-    val timeout = (if(opts.timeOut>0) {opts.timeOut} else 15 * 60) * 1000
-    log("Timeout is set to "+timeout+" milliseconds");
-    
-    
-    
-    val sc : SearchControl =  model.search.obj match {
-          case Objective.SATISFY => new SearchControl(cblsmodel,timeout,true);
-          case Objective.MAXIMIZE => new SearchControl(cblsmodel, timeout,false);
-          case Objective.MINIMIZE => new SearchControl(cblsmodel, timeout,false);
-        }
-    
-    val search = new NeighbourhoodTabuSearch(cblsmodel,sc)
-    m.close()
-    if(opts.is("no-run")){
-      log("Not running the search...")
+	val timeout = (if(opts.timeOut>0) {opts.timeOut} else 15 * 60) * 1000
+    if(/*hasSpecialNeighbourhoods || */!opts.is("use-comb")){
+	    cblsmodel.addDefaultNeighbourhouds()
+	    cblsmodel.createNeighbourhoods()//So we actually create the neighbourhoods only after!
+	    cblsmodel.neighbourhoods.foreach(n => log(2,"Created Neighbourhood "+ n+ " over "+n.searchVariables.length+" variables"))
+	    
+	    
+	    if(cblsmodel.neighbourhoods.length==0){
+	      log(0,"No neighbourhood has been created. Aborting!")
+	      return;
+	    }
+	    log("Using "+cblsmodel.vars.count(v => v.domainSize>1 && !v.isControlledVariable)+" Search Variables in default assign neighbourhood")
+	    log("Using "+cblsmodel.vars.count(v => v.domainSize>1 && !v.isControlledVariable && v.min ==0 && v.max==1)+" Search Variables in default flip neighbourhood")
+	    cblsmodel.vars.filter(v => v.domainSize>1 && !v.isControlledVariable).foreach(v => log(2,"Search with "+v+" dom: "+v.min +".."+v.max))
+	    log("Created all Neighborhoods")
+	    
+	    
+	    //Search
+	    log("Timeout is set to "+timeout+" milliseconds");
+	    
+	    
+	    
+	    val sc : SearchControl =  model.search.obj match {
+	          case Objective.SATISFY => new SearchControl(cblsmodel,timeout,true);
+	          case Objective.MAXIMIZE => new SearchControl(cblsmodel, timeout,false);
+	          case Objective.MINIMIZE => new SearchControl(cblsmodel, timeout,false);
+	        }
+	    
+	    val search = new NeighbourhoodTabuSearch(cblsmodel,sc)
+	    m.close()
+	    if(opts.is("no-run")){
+	      log("Not running the search...")
+	    }else{
+	    	sc.run(search)
+	    	//search.run()
+	    }
     }else{
-    	sc.run(search)
+
+      log("Solving with the neighbourhood combinators")
+      val sv = cblsmodel.vars.filter(v => v.domainSize>1 && !v.isControlledVariable).toArray[CBLSIntVar]
+      val bsv = cblsmodel.vars.filter(v => v.domainSize>1 && !v.isControlledVariable && v.min ==0 && v.max==1).toArray[CBLSIntVar]
+      val argmax = ArgMax(sv.map(v => cblsmodel.c.violation(v)))
+      //This is a scheme of Iterated Local Search: Dive then perturb. 
+      //TODO: Choose an appropriate value for the number of variables to randomize.
+      //TODO: This currently only works for non-special neighbourhoods
+      val neighborhood = (
+         (AssignNeighborhood(sv,searchZone = () => argmax.value, domain= (v,i) => v.asInstanceOf[CBLSIntVarDom].getDomain()/*,best=true,hotRestart=false*/) orElse
+           AssignNeighborhood(sv,domain= (v,i) => v.asInstanceOf[CBLSIntVarDom].getDomain()/*,best=true,hotRestart=false*/)  best
+          SwapsNeighborhood(bsv)
+         )orElse 
+         RandomizeNeighborhood(sv, 5)    
+     )
+     
+      //(ConflictAssignNeighborhood(cblsmodel.c,sv.toList,true) name "cool" orElse AssignNeighborhood(sv,"bad") )
+     
+       //println(sv.map(v => cblsmodel.c.violation(v)).toList)
+      //neighborhood.verbose = 1 
+     m.close()
+      var cont = true;
+      while(cont){
+    	val nm = neighborhood.doAllMoves(shouldStop = _ => (cblsmodel.c.isTrue || cblsmodel.getWatch() >= timeout), obj=cblsmodel.c )
+    	log("nbmoves: " + nm)
+        if(cblsmodel.c.isTrue){
+          cblsmodel.handleSolution()
+        }else cont = false
+      }
     }
     //search.run()
-    /*
-    //TODO: The search should print the solution if, by chance, the initial assingnment is a solution!
-    val search = new Chain(
-        new ActionSearch(() => {sc.cancelObjective()}),
-        if(!opts.is("no-sls"))new SimpleLocalSearch(cblsmodel,sc) else new ActionSearch(() =>{}),
-        //new GreedySearch(1,cblsmodel,sc),
-        //new GreedySearch(2,cblsmodel,sc),
-        //if(opts.is("use-cb"))new NeighbourhoodCBSearch(cblsmodel,sc) else //new ActionSearch(() =>{}),
-        //new GreedySearch(3,cblsmodel,sc),
-        new NeighbourhoodSearchSAT(cblsmodel,sc),
-        new ActionSearch(() => {sc.restoreObjective(); /*cblsmodel.objective.violationWeight :=1500*/}),
-        //new NeighbourhoodCBSearch(cblsmodel,sc),
-        //new NeighbourhoodCBSearch(cblsmodel,sc),
-        model.search.obj match {
-          case Objective.SATISFY => new ActionSearch(() => {}) 
-          case Objective.MAXIMIZE => new NeighbourhoodSearchOPT(cblsmodel,sc);
-          case Objective.MINIMIZE => new NeighbourhoodSearchOPT(cblsmodel,sc);
-        });
     
-    log("Search created")
-    m.close();
-    log("Model closed");
-    if(opts.is("no-run")){
-      log("Not running the search...")
-    }else{
+    //TODO: Restore the following somewhere!
+    /*
+
       log("Starting Search at "+getWatchString)
       search.run();
       log("Done at "+getWatchString)

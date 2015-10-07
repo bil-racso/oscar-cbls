@@ -26,7 +26,7 @@ import oscar.flatzinc.UnsatException
 
 object FZModelTransfo {
  
-  def findInvariants(model: FZProblem, log:Log):Unit = FZFindDefined.findInvariants(model,log)
+  def findInvariants(model: FZProblem, log:Log, searchVars: Iterable[Variable]):Unit = FZFindDefined.findInvariants(model,log, searchVars)
   def getSortedInvariants(invariants: List[Constraint])(implicit log: Log): (List[Constraint],List[Constraint]) = FZFindDefined.getSortedInvariants(invariants)(log)
   
   //def propagateDomainBounds(model: FZProblem)(implicit log: Log) = FZSimplify.propagateDomainBounds(model)(log)

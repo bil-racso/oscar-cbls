@@ -50,6 +50,8 @@ class Model(val log: Log, val acceptAnyCstr: Boolean) {
     else{//TODO: That should be an annotation, how to check this?
       val e = new Element();
       e.name = id;
+      e.value = new Annotation(e.name);
+      e.typ = new Type(Type.ANNOTATION)
       e
     }
   }
@@ -147,11 +149,12 @@ class Model(val log: Log, val acceptAnyCstr: Boolean) {
         val a = e.asInstanceOf[ArrayOfElement]
           if(e.typ.typ==Type.INT){
             problem.solution.addOutputArrayVarInt(name,a.elements.asScala.toArray.map(e => e.value match{case vr: Variable => vr.id; case other => if(e.name==null)other.toString() else e.name}),
-                           anns.find((p:Annotation) => p.name == "output_array").get.args(0).asInstanceOf[ArrayOfElement].elements.asScala.toList.map(e=>e.value.asInstanceOf[DomainRange].toRange))
+                           anns.find((p:Annotation) => p.name == "output_array").get.args(0).asInstanceOf[Array[Domain]].map(e=>e.asInstanceOf[DomainRange].toRange).toList)
           }
           if(e.typ.typ==Type.BOOL){
             problem.solution.addOutputArrayVarBool(name,a.elements.asScala.toArray.map(e => e.value match{case vr: Variable => vr.id; case other => if(e.name==null)other.toString() else e.name}),
-                           anns.find((p:Annotation) => p.name == "output_array").get.args(0).asInstanceOf[ArrayOfElement].elements.asScala.toList.map(e=>e.value.asInstanceOf[DomainRange].toRange))
+                           anns.find((p:Annotation) => p.name == "output_array").get.args(0).asInstanceOf[Array[Domain]].map(e=>e.asInstanceOf[DomainRange].toRange).toList)
+                           
           }
         }
     }else{
@@ -164,30 +167,45 @@ class Model(val log: Log, val acceptAnyCstr: Boolean) {
   }
   
   
+  def addAnnArg(a: Annotation, x: Any){
+	val newarg = x match{
+      case e: Element =>    
+        if(e.typ.typ==Type.INT)
+          if(e.typ.isArray) getIntVarArray(e)
+          else getIntVar(e) //TODO: differentiate par vs var
+        else if(e.typ.typ==Type.BOOL)
+          if(e.typ.isArray) getBoolVarArray(e)
+          else getBoolVar(e) //TODO: differentiate par vs var
+        else if(e.typ.typ==Type.SET) 
+          if(e.typ.isArray) getIntSetArray(e)
+          else getIntSet(e)
+        else if (e.typ.typ ==Type.ANNOTATION)
+          if(e.typ.isArray) e.asInstanceOf[ArrayOfElement].elements.asScala.toArray.map(v => v.value.asInstanceOf[Annotation])
+          else e.value.asInstanceOf[Annotation]
+        else throw new Exception("Case not handled: "+e)
+    }
+	if(newarg==null) println(x)
+	//println(newarg)
+    a.add(newarg)
+  }
   
   def addConstraint(name: String, args: java.util.List[Element], anns: java.util.List[Annotation]) = {
     //ann_other is not used yet!
     val (ann_def,ann_other) = anns.asScala.toList.partition(a => a.name == "defines_var")
     val cstr = constructConstraint(name, args.asScala.toList, anns.asScala.toList)
     //Added the test because Mzn 2.0 adds some defined_var(12) with constants.
-    ann_def.foreach(a => a.args(0) match{ case e:Element => e.value match{ case v:Variable => cstr.setDefinedVar(v); case _ => }})
+    ann_def.foreach(a => a.args(0) match{ case v:Variable => cstr.setDefinedVar(v); case _ => })
     problem.addConstraint(cstr)
   }
   
   def setSATObjective(anns: java.util.List[Annotation])= {
     problem.satisfy(anns.asScala)
-    //TODO: Search annotations are ignored for now
-    if(anns.size() > 0)log(0,"ignoring search annotations")
   }
   def setMINObjective(e: Element, anns: java.util.List[Annotation])= {
     problem.minimize(getIntVar(e),anns.asScala)
-    //TODO: Search annotations are ignored for now
-    if(anns.size() > 0)log(0,"ignoring search annotations")
   }
   def setMAXObjective(e: Element, anns: java.util.List[Annotation])= {
     problem.maximize(getIntVar(e),anns.asScala)
-    //TODO: Search annotations are ignored for now
-    if(anns.size() > 0)log(0,"ignoring search annotations")
   }
   def getIntVar(e: Element): IntegerVariable = {
     e.value match{
@@ -234,6 +252,14 @@ class Model(val log: Log, val acceptAnyCstr: Boolean) {
   
   def getIntSet(e: Element): Domain = {
     e.value.asInstanceOf[Domain]
+  }
+  def getIntSetArray(e: Element): Array[Domain] = {
+    if(e.isInstanceOf[ArrayOfElement]){
+      val a = e.asInstanceOf[ArrayOfElement]
+      a.elements.asScala.toArray.map(v => getIntSet(v))
+    }else{
+      throw new ParsingException("Expected a array of sets but got: "+e)
+    }
   }
   
   val cdico: Map[String,(List[Element],List[Annotation])=>Constraint] = Map(

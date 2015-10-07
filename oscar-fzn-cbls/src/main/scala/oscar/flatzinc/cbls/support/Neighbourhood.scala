@@ -472,7 +472,7 @@ class MaxViolating(searchVariables: Array[CBLSIntVarDom], objective: CBLSObjecti
     else return bMv
     /*
     val bestPair = selectMinImb(indexRange.filter(searchVariables(_).domainSize < 10000000), (i:Int) => searchVariables(i).getDomain(), 
-        (v:Int,i:Int) => acceptOr(new AssignMove(searchVariables(v),i,objective.assignVal(searchVariables(v),i)),accept).value,(v:Int,i:Int) => searchVariables(v).value!=i)
+        (vi:(Int,Int)) => acceptOr(new AssignMove(searchVariables(vi._1),vi._2,objective.assignVal(searchVariables(vi._1),vi._2)),accept).value,(v:Int,i:Int) => searchVariables(v).value!=i);
     bestPair match{
       case (v,i)  => new AssignMove(searchVariables(v),i,objective.assignVal(searchVariables(v),i))
       case _ => new NoMove()

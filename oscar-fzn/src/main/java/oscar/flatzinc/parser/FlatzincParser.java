@@ -1361,7 +1361,7 @@ public class FlatzincParser extends Parser {
 				match(T__1);
 				setState(300);
 				((IdorannotContext)_localctx).expr = expr();
-				(_localctx.ann).add(((IdorannotContext)_localctx).expr.e);
+				m.addAnnArg(_localctx.ann,((IdorannotContext)_localctx).expr.e);
 				setState(308);
 				_errHandler.sync(this);
 				_la = _input.LA(1);
@@ -1372,7 +1372,7 @@ public class FlatzincParser extends Parser {
 					match(T__2);
 					setState(303);
 					((IdorannotContext)_localctx).expr = expr();
-					(_localctx.ann).add(((IdorannotContext)_localctx).expr.e);
+					m.addAnnArg(_localctx.ann,((IdorannotContext)_localctx).expr.e);
 					}
 					}
 					setState(310);
@@ -1757,7 +1757,7 @@ public class FlatzincParser extends Parser {
 				match(T__1);
 				setState(397);
 				((AnnotationContext)_localctx).expr = expr();
-				(_localctx.ann).add(((AnnotationContext)_localctx).expr.e);
+				m.addAnnArg(_localctx.ann,((AnnotationContext)_localctx).expr.e);
 				setState(405);
 				_errHandler.sync(this);
 				_la = _input.LA(1);
@@ -1768,7 +1768,7 @@ public class FlatzincParser extends Parser {
 					match(T__2);
 					setState(400);
 					((AnnotationContext)_localctx).expr = expr();
-					(_localctx.ann).add(((AnnotationContext)_localctx).expr.e);
+					m.addAnnArg(_localctx.ann,((AnnotationContext)_localctx).expr.e);
 					}
 					}
 					setState(407);

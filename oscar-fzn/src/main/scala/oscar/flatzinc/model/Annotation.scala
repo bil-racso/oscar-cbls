@@ -26,5 +26,5 @@ class Annotation (
     def add(e: Any){
       args = args ++ List(e);
     }
-	override def toString() = name + " " + args
+	override def toString() = name + "(" + args.mkString(", ") + ")"
 }

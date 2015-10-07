@@ -193,7 +193,7 @@ class NeighbourhoodTabuSearch(m: FZCBLSModel, sc: SearchControl) extends Neighbo
       //tabu(index) := it.value + tenure;
       tabu(index) := it.value + Math.min(MaxTenure, tenure + RandomGenerator.nextInt(tenureIncrement));
     }
-    it++;
+    it:+=1;
   }
 
   override def run()= {
@@ -258,6 +258,6 @@ class NeighbourhoodTabuSearch(m: FZCBLSModel, sc: SearchControl) extends Neighbo
       }
     }
     log("Completed Satisfaction Search at "+m.getWatch())
-    log("nb moves "+ecnt+"\t"+bcnt)
+    log("nb moves ext: "+ecnt+"\tbsc: "+bcnt)
   }
 }

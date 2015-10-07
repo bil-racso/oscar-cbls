@@ -288,7 +288,7 @@ case class RandomSwapNeighborhood(vars:Array[CBLSIntVar],
  * @param variables the array of variable that define the search space of this neighborhood
  * @param best true: the new value is the best one, false, the new value is the first found one that improves
  */
-class ConflictAssignNeighborhood(c:ConstraintSystem, variables:List[CBLSIntVar], best:Boolean = false)
+case class ConflictAssignNeighborhood(c:ConstraintSystem, variables:List[CBLSIntVar], best:Boolean = false)
   extends Neighborhood with SearchEngineTrait{
 
   var varArray = variables.toArray

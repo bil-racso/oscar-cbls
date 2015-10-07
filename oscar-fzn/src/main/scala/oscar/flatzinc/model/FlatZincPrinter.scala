@@ -63,7 +63,7 @@ object FlatZincPrinter {
   }
   
   def toFZN(s: Search): String = {
-    "solve "+toFZNann(s.anns)+" "+{
+    "solve "+toFZNann(s.getHeuristic())+" "+{
       s.obj match{
         case Objective.SATISFY => "satisfy"
         case Objective.MAXIMIZE => "maximize "+s.variable.get.id

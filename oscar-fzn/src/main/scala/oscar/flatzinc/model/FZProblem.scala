@@ -54,17 +54,17 @@ class FZProblem {
   
   def satisfy(anns:Iterable[Annotation]) {
     search.obj = Objective.SATISFY
-    search.anns = anns
+    search.setHeuristic(anns)
   }
   def minimize(obj: IntegerVariable,anns:Iterable[Annotation]) {
     search.obj = Objective.MINIMIZE
     search.variable = Some(obj)
-    search.anns = anns
+    search.setHeuristic(anns)
   }
   def maximize(obj: IntegerVariable,anns:Iterable[Annotation]) {
     search.obj = Objective.MAXIMIZE
     search.variable = Some(obj)
-    search.anns = anns
+    search.setHeuristic(anns)
   }
   
 //  def addSearch(s: Array[Variable],vrh: VariableHeuristic.Value,vh: ValueHeuristic.Value) {
@@ -231,5 +231,10 @@ class Search() {
   var obj: Objective.Value = Objective.SATISFY
   var variable: Option[IntegerVariable] = None
   //var heuristics: Vector[(Array[Variable],VariableHeuristic.Value,ValueHeuristic.Value)] = Vector.empty 
-  var anns: Iterable[Annotation] = List.empty[Annotation]
+  private[this] var anns: Iterable[Annotation] = List.empty[Annotation]
+  def setHeuristic(anns: Iterable[Annotation]) = { 
+    this.anns = anns
+    //if(this.anns.size > 0) Console.err.println("% ignoring search annotations")
+  }
+  def getHeuristic(): Iterable[Annotation] = anns
 }

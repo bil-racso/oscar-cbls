@@ -26,15 +26,16 @@ import oscar.flatzinc.UnsatException
 
 object FZFindDefined {
   
-  def findInvariants(model: FZProblem, log:Log):Unit = {
-    findInvariantsFromObjective(model,log)//Start from the objective and reach as far as possible.
-    findInvariants(model,log,0)//First only variables that are directional by nature
-    findInvariants(model,log,1)//Then all of them
+  def findInvariants(model: FZProblem, log:Log, searchVars: Iterable[Variable]):Unit = {
+    val mysearchVars = searchVars.toSet
+    findInvariantsFromObjective(model,log,mysearchVars)//Start from the objective and reach as far as possible.
+    findInvariants(model,log,0,mysearchVars)//First only constraints that are directional by nature
+    findInvariants(model,log,1,mysearchVars)//Then all of them
   }
   
   
   
-  def findInvariantsFromObjective(model: FZProblem, log: Log): Unit = {
+  def findInvariantsFromObjective(model: FZProblem, log: Log, searchVars: Set[Variable]): Unit = {
     val visited = MSet.empty[Variable] 
     var front: Queue[(Variable,Constraint,Objective.Value)] = Queue.empty[(Variable,Constraint,Objective.Value)]//Not sure the Constraint is useful
     var front2: Queue[(Variable,Constraint,Objective.Value)] = Queue.empty[(Variable,Constraint,Objective.Value)]
@@ -45,7 +46,7 @@ object FZFindDefined {
      // println(front.size + " "+ visited.size+ " " +model.variables.length)
       val (v,c,obj) = front.dequeue()
      // visited.add(v)
-      if(!v.isDefined){
+      if(!v.isDefined && !searchVars.contains(v)){
         val cand = v.cstrs.toList.filter((c: Constraint) => c.definedVar.isEmpty && c.canDefineVar && c.getCandidateDefVars().contains(v))
         val cand2 = cand//.filter(c => ! dependsOn(c,v,false))
         if(cand2.length > 1){
@@ -97,7 +98,7 @@ object FZFindDefined {
     }
   }
   
-  private def findInvariants(model: FZProblem, log:Log,step:Int) = {
+  private def findInvariants(model: FZProblem, log:Log,step:Int, searchVars: Set[Variable]) = {
     //Find all free variables of the model.
     var freeVariables: List[Variable] =
       model.variables.toList.filter((variable: Variable) =>
@@ -105,6 +106,7 @@ object FZFindDefined {
         //&&
         !variable.isDefined //to remove the ones already defined
         && !variable.isBound //to remove de facto constants
+        && ! searchVars.contains(variable)
           //JNM: Removed the following because the CP search variables are maybe not the CBLS search variables. 
           //This makes a huge difference for the BACP for instance.
           //&&
