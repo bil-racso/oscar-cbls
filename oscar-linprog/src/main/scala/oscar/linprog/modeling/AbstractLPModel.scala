@@ -18,6 +18,7 @@ package oscar.linprog.modeling
 import oscar.algebra._
 import scala.collection._
 import scala.collection.mutable.ArrayBuffer
+import scala.util.{Success, Failure, Try}
 
 object LPStatus extends Enumeration {
   val NOT_SOLVED = Value("not solved yet")
@@ -418,6 +419,17 @@ class SOSConstraint(override val solver: AbstractLPSolver, override val cstr: Li
   override def infeasible: Option[Boolean] = solver.getSOS1ConstraintInfeasibilityStatus(index)
 }
 
+/**
+ * Represents the set of constraints making the problem infeasible as found by the infeasibility analysis.
+ *
+ * @param linearConstraints the names of the linear constraints belonging to the infeasible set
+ * @param sos1Constraints the names of the SOS constraints of type 1 belonging to the infeasible set
+ * @param lowerBounds the names of the variables whose lower bound belongs to the infeasible set
+ * @param upperBounds the names of the variables whose upper bound belongs to the infeasible set
+ */
+class InfeasibleSet(val linearConstraints: Seq[String], val sos1Constraints: Seq[String], val lowerBounds: Seq[String], val upperBounds: Seq[String])
+
+case object NoInfeasibilityFoundException extends Exception("The infeasibility analysis could not find any infeasibility.")
 
 abstract class AbstractLPSolver {
 
@@ -583,13 +595,28 @@ abstract class AbstractLPSolver {
    *
    * @return true if the infeasibility analysis succeeded
    */
-  def analyseInfeasibility(): Boolean =
+  def analyseInfeasibility(): Try[InfeasibleSet] =
     if(statuss == LPStatus.INFEASIBLE) {
       infeasibilityStatusAvailable = true
-      solver.analyseInfeasibility()
+      val success = solver.analyseInfeasibility()
+      if(success) {
+        val linearConstraints = cons.filterNot{
+          case _: SOSConstraint => true
+          case _ => false
+        }.filter(_.infeasible.get).map(_.name).toSeq
+        val sos1Constraints = cons.filter{
+          case _: SOSConstraint => true
+          case _ => false
+        }.filter(_.infeasible.get).map(_.name).toSeq
+        val lowerBounds = vars.values.filter(_.lowerBoundInfeasible.get).map(_.name).toSeq
+        val upperBounds = vars.values.filter(_.upperBoundInfeasible.get).map(_.name).toSeq
+
+        Success(new InfeasibleSet(linearConstraints, sos1Constraints, lowerBounds, upperBounds))
+      } else {
+        Failure(NoInfeasibilityFoundException)
+      }
     } else  {
-      println("Warning: the problem should be infeasible in order to analyze infeasibilities.")
-      false
+      Failure(new IllegalArgumentException("Warning: the problem should be infeasible in order to analyze infeasibilities."))
     }
 
   /**
