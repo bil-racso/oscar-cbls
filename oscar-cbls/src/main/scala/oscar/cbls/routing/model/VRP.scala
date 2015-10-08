@@ -31,7 +31,7 @@ import oscar.cbls.invariants.lib.numeric.Sum
 import oscar.cbls.invariants.lib.set.Cardinality
 import oscar.cbls.modeling.Algebra._
 
-import scala.collection.immutable.{SortedMap, SortedSet}
+import scala.collection.immutable.{ SortedMap, SortedSet }
 import scala.math.min
 
 /**
@@ -57,7 +57,7 @@ class VRP(val N: Int, val V: Int, val m: Store) {
    */
   val next: Array[CBLSIntVar] = Array.tabulate(N)(i =>
     if (i < V) CBLSIntVar(m, i, 0 to N - 1, "next" + i)
-    else CBLSIntVar(m, N, 0 to N,  "next" + i))
+    else CBLSIntVar(m, N, 0 to N, "next" + i))
 
   /**unroutes all points of the VRP*/
   def unroute() {
@@ -72,7 +72,7 @@ class VRP(val N: Int, val V: Int, val m: Store) {
   /**
    * the range vehicle of the problem.
    */
-  val Vehicles = 0 until V
+  val vehicles = 0 until V
 
   /**
    * Returns if a given point is a depot.
@@ -139,19 +139,17 @@ class VRP(val N: Int, val V: Int, val m: Store) {
       toReturn += routeToString(v)
       toReturn += "\n"
     }
-    for (additionalStringFunction <- additionalStrings){
+    for (additionalStringFunction <- additionalStrings) {
       toReturn += additionalStringFunction() + "\n"
     }
     toReturn
   }
 
-  private var additionalStrings:List[()=>String] = List.empty
-  def addToStringInfo(a:()=>String){
+  private var additionalStrings: List[() => String] = List.empty
+  def addToStringInfo(a: () => String) {
     additionalStrings = a :: additionalStrings
   }
 }
-
-
 
 /**
  * Maintains the set of routed and unrouted nodes.
@@ -235,49 +233,32 @@ trait HopClosestNeighbors extends ClosestNeighbors with HopDistance {
  * Used by some neighborhood searches.
  * @author renaud.delandtsheer@cetic.be
  * @author Florent Ghilain (UMONS)
+ * @author yoann.guyot@cetic.be
  */
 abstract trait ClosestNeighbors extends VRP {
 
   protected def getDistance(from: Int, to: Int): Int
   /**
-   * the data structure which maintains the k closest neighbors of each point.
+   * This array contains, for each node, the list of neighbors,
+   * sorted by their distance to the node, in ascending order.
+   * TODO: implement a lazy sort which sorts the k nearest
    */
-  var closestNeighbors: SortedMap[Int, Array[List[Int]]] = SortedMap.empty
+  var closestNeighbors: Array[List[Int]] = null
+
+  def computeClosestNeighbors() =
+    closestNeighbors = Array.tabulate(N)(node => {
+      reachableNeigbors(node).sortBy(neighbor =>
+        min(getDistance(neighbor, node), getDistance(node, neighbor)))
+    })
 
   /**
-   * Save the k nearest neighbors of each node of the VRP.
-   * It allows us to add a filter (optional) on the neighbor we want to save.
-   * @param k the parameter k.
-   * @param filter the filter
+   * Filters the node itself and unreachable neighbors.
    */
-  def saveKNearestPoints(k: Int, filter: (Int => Boolean) = (_ => true)) {
-    if (k < N - 1) {
-      val neighbors = Array.tabulate(N)((node: Int) => computeKNearestNeighbors(node, k, filter))
-      closestNeighbors += ((k, neighbors))
-    }
-  }
-
-  /**
-   * Computes and returns the k nearest neighbor of a given node.
-   * It allows us to add a filter (optional) on the neighbor we want to save.
-   * @param node the given node.
-   * @param k the parameter k.
-   * @param filter the optional filter.
-   * @return the k nearest neighbor of the a node as a list of Int.
-   */
-  def computeKNearestNeighbors(node: Int, k: Int, filter: (Int => Boolean) = (_ => true)): List[Int] = {
-
-    val reachableNeigbors = nodes.filter((next: Int) => node != next && filter(next) && (getDistance(node, next) != Int.MaxValue || getDistance(next, node) != Int.MaxValue))
-
-    val heap = new BinomialHeap[(Int, Int)](-_._2, k + 1)
-
-    for (neigbor <- reachableNeigbors) {
-      heap.insert(neigbor, min(getDistance(neigbor, node), getDistance(node, neigbor)))
-      if (heap.size > k) heap.popFirst()
-    }
-
-    heap.toList.map(_._1)
-  }
+  def reachableNeigbors(node: Int) =
+    nodes.filter((node2: Int) =>
+      node != node2
+        && (getDistance(node, node2) != Int.MaxValue
+          || getDistance(node2, node) != Int.MaxValue)).toList
 
   /**
    * Returns the k nearest nodes of a given node.
@@ -290,11 +271,21 @@ abstract trait ClosestNeighbors extends VRP {
    * @return the k nearest neighbor as an iterable list of Int.
    */
   def kNearest(k: Int, filter: (Int => Boolean) = (_ => true))(node: Int): Iterable[Int] = {
-    if (k >= N - 1) return nodes
-    if (!closestNeighbors.isDefinedAt(k)) {
-      saveKNearestPoints(k: Int, filter)
+    if (k >= N - 1) return nodes.filter(filter)
+
+    def kNearestAccumulator(sortedNeighbors: List[Int], k: Int, kNearestAcc: List[Int]): List[Int] = {
+      require(k >= 0)
+      (sortedNeighbors, k) match {
+        case (Nil, _) | (_, 0) => kNearestAcc.reverse
+        case (neighbor :: remainingNeighbors, _) =>
+          if (filter(neighbor))
+            kNearestAccumulator(remainingNeighbors, k - 1, neighbor :: kNearestAcc)
+          else
+            kNearestAccumulator(remainingNeighbors, k, kNearestAcc)
+      }
     }
-    closestNeighbors(k)(node)
+
+    kNearestAccumulator(closestNeighbors(node), k, Nil)
   }
 }
 
@@ -311,14 +302,14 @@ trait HopDistance extends VRP {
    * Info : the domain max is (Int.MaxValue / N) to avoid problem with domain. (allow us to use sum invariant without
    * throw over flow exception to save the distance of all vehicle).
    */
-  var hopDistance:Array[IntValue] = new Array[IntValue](N)
+  var hopDistance: Array[IntValue] = new Array[IntValue](N)
 
   /**
    * maintains the total distance of all vehicle, linked on the actual next hop of each node.
    */
   val overallDistance = CBLSIntVar(m, name = "overall distance")
 
-  def assignOverallDistance(){
+  def assignOverallDistance() {
     overallDistance <== Sum(hopDistance)
   }
   /**
@@ -349,7 +340,7 @@ trait HopDistance extends VRP {
     assignOverallDistance()
   }
 
-  def installhopDistance(d:Domain = 0 to Int.MaxValue/N){
+  def installhopDistance(d: Domain = 0 to Int.MaxValue / N) {
     hopDistance = Array.tabulate(N) { (i: Int) => CBLSIntVar(m, 0, 0 to Int.MaxValue / N, "hopDistanceForLeaving" + i) }
     assignOverallDistance()
   }
@@ -361,8 +352,6 @@ trait HopDistance extends VRP {
    */
   def getHop(from: Int, to: Int): Int = distanceFunction(from, to)
 }
-
-
 
 /**
  * Maintains the set of nodes reached by each vehicle
@@ -404,7 +393,7 @@ trait PositionInRouteAndRouteNr extends VRP {
 
   {
     val allvars = positionInRoute.toList ++ routeNr ++ routeLength
-    m.registerForPartialPropagation(allvars:_*)
+    m.registerForPartialPropagation(allvars: _*)
   }
 
   /**
@@ -528,7 +517,7 @@ trait PenaltyForEmptyRouteWithException extends VRP with NodesOfVehicle {
    */
   val emptyRoutes = Filter(nodesOfRealVehicles.map(
     (vehicleNodes: CBLSSetVar) => Cardinality(vehicleNodes minus exceptionNodes)), _ == 1)
-    
+
   /**
    * The variable which maintains the sum of route penalties,
    * thanks to SumElements invariant.
