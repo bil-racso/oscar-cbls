@@ -25,6 +25,7 @@ object LPStatus extends Enumeration {
   val SUBOPTIMAL = Value("suboptimal")
   val UNBOUNDED = Value("unbounded")
   val INFEASIBLE = Value("infeasible")
+  val NO_SOLUTION = Value("no solution found")
 }
 
 object LPExportFormat extends Enumeration {
@@ -68,11 +69,11 @@ abstract class AbstractLP {
   def endModelBuilding()
 
   /**
-   *  Adds all the constraints to the model
-   *  @param cons map of all the constraints with their id
+   * Adds all the constraints to the model
+   * @param cons map of all the constraints with their id
    *
-   *  Remark: defining this method in AbstractLP instead of AbstractLPSolver allows to overwrite it for different solvers
-   *  if it has a method to add all the constraints at once (ex: Gurobi).
+   * Remark: defining this method in AbstractLP instead of AbstractLPSolver allows to overwrite it for different solvers
+   * if it has a method to add all the constraints at once (ex: Gurobi).
    */
   def addAllConstraints(cons: Seq[LPConstraint]) {
     var nbC = 0
@@ -81,53 +82,65 @@ abstract class AbstractLP {
     } {
       if (nbC > 0 && nbC % 1000 == 0) println("Added " + nbC + " constraints. Currently at constraint index " + i)
         c match {
-        	case c: SOSConstraint => addConstraintSOS1(c.varIds, c.weightings(), c.name)
-        	case _ if(c.cstr.consType == ConstraintType.GQ) => addConstraintGreaterEqual(c.coef, c.varIds, c.rhs, c.name)
-        	case _ if(c.cstr.consType == ConstraintType.LQ) => addConstraintLessEqual(c.coef, c.varIds, c.rhs, c.name)
-        	case _ if(c.cstr.consType == ConstraintType.EQ) => addConstraintEqual(c.coef, c.varIds, c.rhs, c.name)
+        	case c: SOSConstraint => addConstraintSOS1(c.weightings(), c.varIds, c.name)
+        	case _ if c.cstr.consType == ConstraintType.GQ => addConstraintGreaterEqual(c.coef, c.varIds, c.rhs, c.name)
+        	case _ if c.cstr.consType == ConstraintType.LQ => addConstraintLessEqual(c.coef, c.varIds, c.rhs, c.name)
+        	case _ if c.cstr.consType == ConstraintType.EQ => addConstraintEqual(c.coef, c.varIds, c.rhs, c.name)
       	}
       nbC += 1
     }
   }
 
   /**
-   * Add the constraint ''coef(0)*x[col(0)] + ... + coef(n)*x[col(n)] >= rhs'' to the model.
+   * Adds the constraint ''coef(0)*x[col(0)] + ... + coef(n)*x[col(n)] >= rhs'' to the model.
+   *
    * @param coef are the coefficients of the linear term
    * @param col indicates to which column/variable the coefficients refer to
+   *
+   * @return constraint index
    */
-  def addConstraintGreaterEqual(coef: Array[Double], col: Array[Int], rhs: Double, name: String)
+  def addConstraintGreaterEqual(coef: Array[Double], col: Array[Int], rhs: Double, name: String): Int
 
   /**
-   * Add the constraint ''coef(0)*x[col(0)] + ... + coef(n)*x[col(n)] <= rhs'' to the model.
+   * Adds the constraint ''coef(0)*x[col(0)] + ... + coef(n)*x[col(n)] <= rhs'' to the model.
+   *
    * @param coef are the coefficients of the linear term
    * @param col indicates to which column/variable the coefficients refer to
+   *
+   * @return constraint index
    */
-  def addConstraintLessEqual(coef: Array[Double], col: Array[Int], rhs: Double, name: String)
-  
+  def addConstraintLessEqual(coef: Array[Double], col: Array[Int], rhs: Double, name: String): Int
+
   /**
-   * Add an Specially Ordered Set (SOS) Type 1 constraint. Constrains at most one variable 
+   * Adds the constraint ''coef(0)*x[col(0)] + ... + coef(n)*x[col(n)] == rhs'' to the model.
+   *
+   * @param coef are the coefficients of the linear term
+   * @param col indicates to which column/variable the coefficients refer to
+   *
+   * @return constraint index
+   */
+  def addConstraintEqual(coef: Array[Double], col: Array[Int], rhs: Double, name: String): Int
+
+  /**
+   * Adds a Specially Ordered Set (SOS) Type 1 constraint. Constrains at most one variable
    * in a collection to be equal to 1. Useful for modelling discrete choices
-   * @param col indicates which variables are included in the SOS constraints 
-   * @param ceof the weightings on the variables (these influence the search branching decision)
+   *
+   * @param coef the weightings on the variables (these influence the search branching decision)
+   * @param col indicates which variables are included in the SOS constraints
+   *
+   * @return constraint index
    */
-  def addConstraintSOS1(col: Array[Int], coef: Array[Double] = null, name: String): Unit = ???
-  
-  /**
-   * Add the constraint ''coef(0)*x[col(0)] + ... + coef(n)*x[col(n)] == rhs'' to the model.
-   * @param coef are the coefficients of the linear term
-   * @param col indicates to which column/variable the coefficients refer to
-   */
-  def addConstraintEqual(coef: Array[Double], col: Array[Int], rhs: Double, name: String)
+  def addConstraintSOS1(coef: Array[Double], col: Array[Int], name: String): Int
 
   /**
-   *  modify the right hand side (constant term) of the specified constraint
+   * Modifies the right hand side (constant term) of the specified constraint
    */
   def updateRhs(consId: Int, rhs: Double): Unit
 
   /**
-   *  Set the coefficient of the variable in the corresponding constraint to the specified value
+   * Sets the coefficient of the variable in the corresponding constraint to the specified value
    */
-  def updateCoef(consId: Int, varId: Int, coeff: Double): Unit
+  def updateCoef(consId: Int, varId: Int, coef: Double): Unit
 
   /** Define the objective function as ''coef(0)*x[col(0)] + ... + coef(n)*x[col(n)]'' to the model.
    * @param coef are the coefficients of the linear term
@@ -137,7 +150,12 @@ abstract class AbstractLP {
   def addObjective(coef: Array[Double], col: Array[Int], minMode: Boolean = true)
 
   /**
-   * Add a column to the problem
+   * Sets the coefficient of the variable in the objective to the given value.
+   */
+  def updateObjCoef(colId: Int, coef: Double): Unit
+
+  /**
+   * Adds a column to the problem
    */
   def addColumn(obj: Double, row: Array[Int], coef: Array[Double])
 
@@ -176,12 +194,16 @@ abstract class AbstractLP {
   def exportModel(fileName: String, format: LPExportFormat.Value = LPExportFormat.MPS)
   
   def setTimeout(t: Int)
-  
 
   /**
-   * Release the memory of this solver
+   * Releases the memory of this solver
    */
   def release()
+
+  /**
+   * Aborts the current solve (if any)
+   */
+  def abort()
 
   def setIntParameter(name: String, value: Int) { println("not implemented") }
 
@@ -358,8 +380,10 @@ abstract class AbstractLPSolver {
   protected val solver: AbstractLP
 
   protected var statuss = LPStatus.NOT_SOLVED
-  protected var modelName = "" 
- 
+
+  protected var solving: Boolean = false
+
+  protected var modelName = ""
   def name_= (n: String): Unit = modelName = n
   def name: String = modelName
   
@@ -475,7 +499,9 @@ abstract class AbstractLPSolver {
   def solveModel() {
     solver.endModelBuilding()
     println("Solving ...")
+    solving = true
     statuss = solver.solveModel()
+    solving = false
     if ((statuss == LPStatus.OPTIMAL) || (statuss == LPStatus.SUBOPTIMAL)) {
       (0 until vars.size) foreach { i => solution(i) = solver.getValue(i) }
     }
@@ -489,6 +515,14 @@ abstract class AbstractLPSolver {
   def status(): LPStatus.Value = statuss
 
   def release() = solver.release()
+
+  /**
+   * Aborts the current solve (if any)
+   */
+  def abort(): Unit =
+    if(solving) {
+      solver.abort()
+    }
 
   /**
    * Check that all the constraints are satisfied
@@ -520,13 +554,29 @@ abstract class AbstractLPSolver {
 
     // update of the coeff in the oscar model
     val oldExpr = constraint.cstr.linExpr
-    val updatedExpr = if (oldExpr.coef.keys.exists(_ == variable)) oldExpr - oldExpr.coef(variable) * variable + coeff * variable
+    val updatedExpr = if (oldExpr.coef.keys.exists(_ eq variable)) oldExpr - oldExpr.coef(variable) * variable + coeff * variable
     else oldExpr + coeff * variable
     val updatedCstr = new LinearConstraint(updatedExpr, constraint.cstr.consType)
     val updatedConstraint = new LPConstraint(this, updatedCstr, constraint.index, constraint.name)
     cons(constraint.index) = updatedConstraint
 
     updatedConstraint
+  }
+
+  /**
+   *  Set the coefficient of the variable in the corresponding constraint to the specified value
+   */
+  def updateObjCoef(variable: AbstractLPFloatVar, coeff: Double) = {
+    // update directly in the solver if the model has already been build
+    if (statuss != LPStatus.NOT_SOLVED) solver.updateObjCoef(variable.index, coeff)
+
+    // update of the coeff in the oscar model
+    val oldObj = objective
+    val updatedObj = if (oldObj.coef.keys.exists(_ eq variable)) oldObj - oldObj.coef(variable) * variable + coeff * variable
+    else oldObj + coeff * variable
+    optimize(updatedObj, minimize)
+
+    updatedObj
   }
 } // end class AbstractLPSolver
 

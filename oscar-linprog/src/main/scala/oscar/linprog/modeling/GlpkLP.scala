@@ -57,7 +57,7 @@ class GlpkLP extends AbstractLP {
     GLPK.glp_set_prob_name(lp, name)
   }
 
-  def addConstraint(coef: Array[Double], col: Array[Int], rhs: Double, sign: String, name: String) {
+  def addConstraint(coef: Array[Double], col: Array[Int], rhs: Double, sign: String, name: String) = {
     nbRows += 1
     //Adding a row giving a name
     GLPK.glp_add_rows(lp, 1)
@@ -85,18 +85,25 @@ class GlpkLP extends AbstractLP {
     // adding the value of columns with corresponding coefficients 
     GLPK.glp_set_mat_row(lp, nbRows, col.size, cols, coefs)
 
+    nbRows - 1
   }
 
-  def addConstraintGreaterEqual(coef: Array[Double], col: Array[Int], rhs: Double, name: String) {
+  def addConstraintGreaterEqual(coef: Array[Double], col: Array[Int], rhs: Double, name: String) = {
     addConstraint(coef, col, rhs, ">=", name)
   }
 
-  def addConstraintLessEqual(coef: Array[Double], col: Array[Int], rhs: Double, name: String) {
+  def addConstraintLessEqual(coef: Array[Double], col: Array[Int], rhs: Double, name: String) = {
     addConstraint(coef, col, rhs, "<=", name)
   }
 
-  def addConstraintEqual(coef: Array[Double], col: Array[Int], rhs: Double, name: String) {
+  def addConstraintEqual(coef: Array[Double], col: Array[Int], rhs: Double, name: String) = {
     addConstraint(coef, col, rhs, "==", name)
+  }
+
+  // TODO implement me
+  def addConstraintSOS1(coef: Array[Double], col: Array[Int], name: String): Int = {
+    println("Warning: addConstraintSOS1 is not yet implemented for GLPK")
+    -1
   }
 
   def addObjective(coef: Array[Double], col: Array[Int], minMode: Boolean = true) {
@@ -255,37 +262,44 @@ class GlpkLP extends AbstractLP {
     GLPK.glp_del_cols(lp, 1, num)
     nbCols -= 1
   }
-  
+
   def exportModel(fileName: String, format: LPExportFormat.Value) {
     format match {
-        case LPExportFormat.LP => GLPK.glp_write_lp(lp, null, fileName)
-        case LPExportFormat.MPS => GLPK.glp_write_mps(lp, GLPKConstants.GLP_MPS_FILE, null, fileName)
-        case _ => println(s"Unrecognised export format ${format}")
-    }  
-}
+      case LPExportFormat.LP => GLPK.glp_write_lp(lp, null, fileName)
+      case LPExportFormat.MPS => GLPK.glp_write_mps(lp, GLPKConstants.GLP_MPS_FILE, null, fileName)
+      case _ => println(s"Unrecognised export format ${format}")
+    }
+  }
 
   def release() {
     GLPK.glp_delete_prob(lp)
   }
 
+  def abort(): Unit = println("Warning: abort is not implemented for GLPK")
+
   def updateRhs(consId: Int, rhs: Double): Unit = {
     GLPK.glp_set_row_bnds(lp, consId + 1, GLPKConstants.GLP_UP, 0.0, rhs)
   }
  
-  def updateCoef(consId: Int, varId: Int, coeff: Double): Unit = {
+  def updateCoef(consId: Int, varId: Int, coef: Double): Unit = {
     val nColumns = GLPK.glp_get_num_cols(lp)
     // + 1 to array lengths since the cols start from 1 
-    val coef = GLPK.new_doubleArray(nColumns + 1) 
+    val _coef = GLPK.new_doubleArray(nColumns + 1)
     val ind = GLPK.new_intArray(nColumns + 1)
     // Populates coef and ind arrays with selected row's values
-    GLPK.glp_get_mat_row(lp, consId + 1, ind, coef)
+    GLPK.glp_get_mat_row(lp, consId + 1, ind, _coef)
     
     // Need to find which index in the coef array to update
     // Maybe varId should represent model index to make this
     // translation unnecessary. 
     val id = (0 to nColumns).find(i => GLPK.intArray_getitem(ind, i) == (varId + 1)).get
 
-    GLPK.doubleArray_setitem(coef, id, coeff) // Replace element
-    GLPK.glp_set_mat_row(lp, consId + 1, nColumns, ind, coef) // Update whole row.
+    GLPK.doubleArray_setitem(_coef, id, coef) // Replace element
+    GLPK.glp_set_mat_row(lp, consId + 1, nColumns, ind, _coef) // Update whole row.
+  }
+
+  // TODO implement me
+  def updateObjCoef(colId: Int, coef: Double): Unit = {
+    println("Warning: updateObjCoef is not yet implemented for GLPK")
   }
 }
