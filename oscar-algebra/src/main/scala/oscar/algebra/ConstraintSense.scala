@@ -14,9 +14,10 @@
  ******************************************************************************/
 package oscar.algebra
 
-/**
- * A linear constraint has the form (linearExpression REL 0) with REL in {<=, ==, >=}
- */
-class LinearConstraint(val linExpr: LinearExpression, val consType: ConstraintType.Value) {
-  override def toString = linExpr + " " + consType + " " + 0
+sealed abstract class ConstraintSense(val symbol: String) {
+  override def toString = symbol
 }
+
+case object LQ extends ConstraintSense("<=")
+case object GQ extends ConstraintSense(">=")
+case object EQ extends ConstraintSense("==")

@@ -12,46 +12,36 @@
  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
-package oscar.examples.linprog
 
-import oscar.algebra._
+
+package oscar.linprog.test
+
+import org.scalatest.FunSuite
+import oscar.linprog.interface.{SolutionFound, LP}
 import oscar.linprog.modeling._
+import oscar.algebra._
+import org.scalatest.Matchers
 
 
-object BasicLP extends LPModelLPSolve with App  {
+class LPTester extends FunSuite with Matchers {
+  test("Feasible model 1") {
+    for (_solver <- MPSolver.lpSolvers) {
+      implicit val solver: MPSolver[_] = _solver
 
+      val x = FloatVar("x", 100, 200)
+      val y = FloatVar("y", 80, 170)
 
-  val x0 = LPFloatVar("x0", 0, 40)
-  val x1 = LPFloatVar("x1", 0, 1000)
-  val x2 = LPFloatVar("x2", 0, 17)
-  val x3 = LPFloatVar("x3", 2, 3)
+      maximize(-2 * x + 5 * y)
+      add(y >= -x + 200)
 
-  var cons = Array[LPConstraint]()
-  
-  maximize(x0 + 2 * x1 + 3 * x2 + x3)
+      val endStatus = solver.solve
 
-  cons = cons :+ add(-1 * x0 + x1 + x2 + 10 * x3 <= 20, "cons1")
-  cons = cons :+ add(x0 - 3.0 * x1 + x2 <= 30, "cons2")
-  cons = cons :+ add(x1 - 3.5 * x3 == 0)
+      endStatus should equal(SolutionFound)
 
-  
-  start()
-  
-  println("x0:" + x0.value)
-  println("x1:" + x1.value)
-  println("x2:" + x2.value)
-  println("x3:" + x3.value)
+      x.value should equal(Some(100))
+      y.value should equal(Some(170))
 
-  for (c <- cons) {
-    println("-------------")
-    println(c.name)
-    println(c.slack())
-    println(c.isTight())
-    println(c.check())
+      solver.release()
+    }
   }
-
-  println("objective" + objectiveValue)
-
-  release()
-
 }

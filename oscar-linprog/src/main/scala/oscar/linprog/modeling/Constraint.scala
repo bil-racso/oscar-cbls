@@ -1,6 +1,20 @@
+/*******************************************************************************
+  * OscaR is free software: you can redistribute it and/or modify
+  * it under the terms of the GNU Lesser General Public License as published by
+  * the Free Software Foundation, either version 2.1 of the License, or
+  * (at your option) any later version.
+  *
+  * OscaR is distributed in the hope that it will be useful,
+  * but WITHOUT ANY WARRANTY; without even the implied warranty of
+  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  * GNU Lesser General Public License  for more details.
+  *
+  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
+  ******************************************************************************/
+
 package oscar.linprog.modeling
 
-import oscar.algebra.LinearExpression
 import oscar.linprog.interface.{LPSolverInterface, MIPSolverInterface, MPSolverInterface}
 
 /**
@@ -8,17 +22,10 @@ import oscar.linprog.interface.{LPSolverInterface, MIPSolverInterface, MPSolverI
  *
  * @author acrucifix acr@n-side.com
  */
-abstract class AbstractMPConstraint(solver: MPSolverInterface, val index: Int, val name: String)
+abstract class AbstractMPConstraint(val name: String)(implicit solver: MPSolver[_])
 
-sealed abstract class Sense(val symbol: String)
-case object LQ extends Sense("<=")
-case object EQ extends Sense("==")
-case object GQ extends Sense(">=")
-
-class LinearConstraint(solver: MPSolverInterface with LPSolverInterface, index: Int, name: String, val expression: LinearExpression, val sense: Sense) extends AbstractMPConstraint(solver, index, name) {
-
+class LinearConstraint(name: String, val constraintExpr: oscar.algebra.LinearConstraintExpression)(implicit solver: MPSolver[_]) extends AbstractMPConstraint(name) {
+  solver.add(this)
 }
 
-class SOS1Constraint(solver: MPSolverInterface with MIPSolverInterface, index: Int, name: String, val vars: Seq[AbstractMPVar[_]], val weights: Seq[Double]) extends AbstractMPConstraint(solver, index, name) {
-
-}
+class SOS1Constraint(name: String, val vars: Seq[AbstractMPVar[_]], val weights: Seq[Double])(implicit solver: MPSolver[_ <: MPSolverInterface with MIPSolverInterface]) extends AbstractMPConstraint(name)

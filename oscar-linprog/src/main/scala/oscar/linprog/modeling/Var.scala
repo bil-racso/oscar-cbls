@@ -1,6 +1,23 @@
+/*******************************************************************************
+  * OscaR is free software: you can redistribute it and/or modify
+  * it under the terms of the GNU Lesser General Public License as published by
+  * the Free Software Foundation, either version 2.1 of the License, or
+  * (at your option) any later version.
+  *
+  * OscaR is distributed in the hope that it will be useful,
+  * but WITHOUT ANY WARRANTY; without even the implied warranty of
+  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  * GNU Lesser General Public License  for more details.
+  *
+  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
+  ******************************************************************************/
+
 package oscar.linprog.modeling
 
-import oscar.linprog.interface.{MIPSolverInterface, LPSolverInterface, MPSolverInterface}
+import oscar.linprog.interface.{MIPSolverInterface, MPSolverInterface}
+
+import scala.util.Try
 
 /**
  * Defines a type T that can be converted to and from a Double
@@ -29,7 +46,7 @@ object ToFromDouble {
  *
  * @author acrucifix acr@n-side.com
  */
-abstract class AbstractMPVar[B](solver: MPSolverInterface, val index: Int, val name: String, val initialLowerBound: B, val initialUpperBound: B)(implicit tfd: ToFromDouble[B]) extends oscar.algebra.Var {
+abstract class AbstractMPVar[B](val name: String, val initialLowerBound: B, val initialUpperBound: B)(implicit solver: MPSolver[_], tfd: ToFromDouble[B]) extends oscar.algebra.Var {
 
   private var _lowerBound: B = initialLowerBound
 
@@ -42,7 +59,7 @@ abstract class AbstractMPVar[B](solver: MPSolverInterface, val index: Int, val n
    * Sets the lower bound to the given value.
    */
   def lowerBound_=(value: B) = {
-    solver.setVarLB(index, tfd.toDouble(value))
+    solver.updateLowerBound(name, tfd.toDouble(value))
     _lowerBound = value
   }
 
@@ -57,7 +74,7 @@ abstract class AbstractMPVar[B](solver: MPSolverInterface, val index: Int, val n
    * Sets the upper bound to the given value.
    */
   def upperBound_=(value: B) = {
-    solver.setVarUB(index, tfd.toDouble(value))
+    solver.updateUpperBound(name, tfd.toDouble(value))
     _upperBound = value
   }
 
@@ -88,9 +105,7 @@ abstract class AbstractMPVar[B](solver: MPSolverInterface, val index: Int, val n
   /**
    * Returns the value of this variable in the solution found by the solver if any
    */
-  override def value: Option[Double] =
-    if(solver.hasSolution) Some(solver.getVarValue(index))
-    else None
+  override def value: Option[Double] = solver.value(name).toOption
 }
 
 /**
@@ -98,18 +113,28 @@ abstract class AbstractMPVar[B](solver: MPSolverInterface, val index: Int, val n
  *
  * @author acrucifix acr@n-side.com
  */
-class FloatVar(solver: MPSolverInterface with LPSolverInterface, index: Int, name: String, initialLowerBound: Double = Double.NegativeInfinity, initialUpperBound: Double = Double.PositiveInfinity) extends AbstractMPVar[Double](solver, index, name, initialLowerBound, initialUpperBound)
+class FloatVar(name: String, initialLowerBound: Double = Double.NegativeInfinity, initialUpperBound: Double = Double.PositiveInfinity)(implicit solver: MPSolver[_]) extends AbstractMPVar[Double](name, initialLowerBound, initialUpperBound) {
+  solver.add(this)
+}
+
+object FloatVar {
+  def apply(name: String, lb: Double = Double.NegativeInfinity, ub: Double = Double.PositiveInfinity)(implicit solver: MPSolver[_]) = new FloatVar(name, lb, ub)
+}
 
 /**
  * Represents an integer variable
  *
  * @author acrucifix acr@n-side.com
  */
-class IntVar(solver: MPSolverInterface with MIPSolverInterface, index: Int, name: String, initialLowerBound: Int, initialUpperBound: Int) extends AbstractMPVar[Int](solver, index, name, initialLowerBound, initialUpperBound)
+class IntVar(name: String, initialLowerBound: Int, initialUpperBound: Int)(implicit solver: MPSolver[_ <: MPSolverInterface with MIPSolverInterface]) extends AbstractMPVar[Int](name, initialLowerBound, initialUpperBound) {
+  solver.add(this)
+}
 
 /**
  * Represents a binary (0-1) integer variable
  *
  * @author acrucifix acr@n-side.com
  */
-class BinaryVar(solver: MPSolverInterface with MIPSolverInterface, index: Int, name: String) extends IntVar(solver, index, name, 0, 1)
+class BinaryVar(name: String)(implicit solver: MPSolver[_ <: MPSolverInterface with MIPSolverInterface]) extends IntVar(name, 0, 1) {
+  solver.add(this)
+}

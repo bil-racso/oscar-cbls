@@ -18,7 +18,6 @@ package oscar.algebra
 abstract class Var extends LinearExpression {
 
   def name: String
-  val index: Int
 
   val cte = 0.0
   val coef = scala.collection.immutable.Map(this -> 1.0)
@@ -35,10 +34,10 @@ abstract class Var extends LinearExpression {
   override def equals(that: Any) = {
     that match {
       case other: Var =>
-        other.index equals index
+        other.name equals this.name
       case _ => false
     }
   }
 
-  override def hashCode: Int = index
+  override def hashCode: Int = name.hashCode
 }

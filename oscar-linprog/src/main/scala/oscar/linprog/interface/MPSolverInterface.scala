@@ -1,3 +1,18 @@
+/*******************************************************************************
+  * OscaR is free software: you can redistribute it and/or modify
+  * it under the terms of the GNU Lesser General Public License as published by
+  * the Free Software Foundation, either version 2.1 of the License, or
+  * (at your option) any later version.
+  *
+  * OscaR is distributed in the hope that it will be useful,
+  * but WITHOUT ANY WARRANTY; without even the implied warranty of
+  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  * GNU Lesser General Public License  for more details.
+  *
+  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
+  ******************************************************************************/
+
 package oscar.linprog.interface
 
 import java.nio.file.Path
@@ -9,6 +24,10 @@ import java.nio.file.Path
  * @author acrucifix acr@n-side.com
  */
 abstract class MPSolverInterface(solverOptions: (String, Any)*) {
+  // NOTE:
+  // "varId" refers the column (starting at 0) representing the variable in the matrix of the problem.
+  // "cstrId" refers the row (starting at 0) representing the constraint in the matrix of the problem.
+
   /**
    * The type of the underlying solver
    */
@@ -22,12 +41,12 @@ abstract class MPSolverInterface(solverOptions: (String, Any)*) {
   /**
    * Returns the name of the model.
    */
-  def name: String
+  def modelName: String
 
   /**
    * Sets the name of the model in the solver.
    */
-  def name_=(value: String)
+  def modelName_=(value: String)
 
   /**
    * Defines the objective function of the model as ''coef(0)*x[col(0)] + ... + coef(n)*x[col(n)]''.
@@ -44,19 +63,28 @@ abstract class MPSolverInterface(solverOptions: (String, Any)*) {
   def setObjCoef(varId: Int, coef: Double): Unit
 
   /**
-   * Adds a new variable (column) to the model.
+   * Sets the problem as a minimization (true) or maximization (false) problem
+   */
+  def setOptimizationDirection(minimize: Boolean): Unit
+
+  /**
+   * Adds a new variable to the model.
    *
+   * This function can be used for column generation by specifying
+   * the three parameters '''objCoef''', '''cstrCoef''', '''cstrId'''.
+   * Note: all three parameters should be defined otherwise an [[IllegalArgumentException]] is thrown.
+   *
+   * @param name the name of the variable in the model
    * @param lb the lower bound (default is -Inf)
    * @param ub the upper bound (default is +Inf)
-   * @param name the name of the variable in the model
-   * @param objCoef the coefficient in the objective function
-   * @param cstrCoef the non-zero constraint coefficients
-   * @param cstrId the indices of the corresponding linear constraints
+   * @param objCoef the coefficient in the objective function (optional)
+   * @param cstrCoef the non-zero constraint coefficients (optional)
+   * @param cstrId the indices of the corresponding linear constraints (optional)
    *
    * @return the index of the variable (column number) in the model
    */
-  def addVariable(lb: Double = Double.NegativeInfinity, ub: Double = Double.PositiveInfinity, name: String,
-    objCoef: Option[Double] = None, cstrCoef: Option[Vector[Double]] = None, cstrId: Option[Vector[Int]] = None): Int
+  def addVariable(name: String, lb: Double = Double.NegativeInfinity, ub: Double = Double.PositiveInfinity,
+    objCoef: Option[Double] = None, cstrCoef: Option[Array[Double]] = None, cstrId: Option[Array[Int]] = None): Int
 
   /**
    * Returns the lower bound of the variable.
@@ -104,15 +132,15 @@ abstract class MPSolverInterface(solverOptions: (String, Any)*) {
   /**
    * Adds a new linear constraint (row) to the model.
    *
+   * @param name the name of the constraint in the model
    * @param coef the non-zero coefficients
    * @param varId the indices of the corresponding variables
-   * @param rhs the right hand side
    * @param sense the sense of the constraint (one of ''<='', ''=='', ''>='')
-   * @param name the name of the constraint in the model
+   * @param rhs the right hand side
    *
    * @return the index of the constraint (row number) in the model
    */
-  def addConstraint(coef: Vector[Double], varId: Vector[Int], rhs: Double, sense: String, name: String): Int
+  def addConstraint(name: String, coef: Array[Double], varId: Array[Int], sense: String, rhs: Double): Int
 
   /**
    * Adds the constraint ''coef(0)*x[col(0)] + ... + coef(n)*x[col(n)] >= rhs'' to the model.
@@ -122,8 +150,8 @@ abstract class MPSolverInterface(solverOptions: (String, Any)*) {
    *
    * @return the index of the constraint (row number) in the model
    */
-  def addConstraintGreaterEqual(coef: Vector[Double], varId: Vector[Int], rhs: Double, name: String): Int =
-    addConstraint(coef, varId, rhs, ">=", name)
+  def addConstraintGreaterEqual(name: String, coef: Array[Double], varId: Array[Int], rhs: Double): Int =
+    addConstraint(name, coef, varId, ">=", rhs)
 
   /**
    * Adds the constraint ''coef(0)*x[col(0)] + ... + coef(n)*x[col(n)] <= rhs'' to the model.
@@ -133,8 +161,8 @@ abstract class MPSolverInterface(solverOptions: (String, Any)*) {
    *
    * @return the index of the constraint (row number) in the model
    */
-  def addConstraintLessEqual(coef: Vector[Double], varId: Vector[Int], rhs: Double, name: String): Int =
-    addConstraint(coef, varId, rhs, "<=", name)
+  def addConstraintLessEqual(name: String, coef: Array[Double], varId: Array[Int], rhs: Double): Int =
+    addConstraint(name, coef, varId, "<=", rhs)
 
   /**
    * Adds the constraint ''coef(0)*x[col(0)] + ... + coef(n)*x[col(n)] == rhs'' to the model.
@@ -144,18 +172,18 @@ abstract class MPSolverInterface(solverOptions: (String, Any)*) {
    *
    * @return the index of the constraint (row number) in the model
    */
-  def addConstraintEqual(coef: Vector[Double], varId: Vector[Int], rhs: Double, name: String): Int =
-    addConstraint(coef, varId, rhs, "==", name)
+  def addConstraintEqual(name: String, coef: Array[Double], varId: Array[Int], rhs: Double): Int =
+    addConstraint(name, coef, varId, "==", rhs)
 
   /**
    * Sets the coefficient of the variable in the corresponding constraint to the specified value.
    */
-  def setCstrCoef(consId: Int, varId: Int, coef: Double): Unit
+  def setCstrCoef(cstrId: Int, varId: Int, coef: Double): Unit
 
   /**
    * Sets the right hand side (constant term) of the specified constraint to the given value.
    */
-  def setCstrRhs(consId: Int, rhs: Double): Unit
+  def setCstrRhs(cstrId: Int, rhs: Double): Unit
 
   /**
    * Returns the current number of variables in the model.
@@ -163,9 +191,9 @@ abstract class MPSolverInterface(solverOptions: (String, Any)*) {
   def nVariables: Int
 
   /**
-   * Returns the current number of constraints in the model.
+   * Returns the current number of linear constraints in the model.
    */
-  def nConstraints: Int
+  def nLinearConstraints: Int
 
   /**
    * Commits to the solver the last changes done to the model.
@@ -205,7 +233,7 @@ abstract class MPSolverInterface(solverOptions: (String, Any)*) {
    *
    * In particular, this may be the best feasible solution found so far if optimality is not attained or proven.
    */
-  def solution: Vector[Double]
+  def solution: Array[Double]
 
   /**
    * Returns the value of the given variable in the solution.
@@ -215,7 +243,7 @@ abstract class MPSolverInterface(solverOptions: (String, Any)*) {
   /**
    * Returns the vector of the values taken by the linear constraints in the solution found by the solver.
    */
-  def cstrSolution: Vector[Double]
+  def cstrSolution: Array[Double]
 
   /**
    * Returns the value taken by the specified linear constraint in the solution.
@@ -224,13 +252,10 @@ abstract class MPSolverInterface(solverOptions: (String, Any)*) {
 
   /**
    * Solves the optimization problem.
+   *
+   * This operation is blocking until the optimization ends.
    */
   def optimize(): EndStatus
-
-  /**
-   * Aborts the current optimization (if any).
-   */
-  def abort(): Unit
 
   /**
    * Releases the memory of this solver.
@@ -251,10 +276,4 @@ abstract class MPSolverInterface(solverOptions: (String, Any)*) {
    * Adds a time limit to the solver.
    */
   def setTimeout(t: Long)
-
-  def setIntParameter(name: String, value: Int)
-
-  def setFloatParameter(name: String, value: Double): Unit
-
-  def setStringParameter(name: String, value: String): Unit
 }

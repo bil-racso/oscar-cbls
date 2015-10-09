@@ -16,69 +16,19 @@ package oscar.linprog
 
 import oscar.algebra._
 
+/**
+ * Helper functions to build models within the context of an implicit solver
+ */
 package object modeling {
-  
-  val rand = new scala.util.Random(12)
-    
-  object LPSolverLib extends Enumeration {
-    val lp_solve = Value("lp_solve")
-    val glpk = Value("glpk")
-    val gurobi = Value("gurobi")
-  }
-  
-  // solvers used for test
-  lazy val solvers = List(LPSolverLib.lp_solve, LPSolverLib.glpk, LPSolverLib.gurobi).filter(canInstantiateSolver(_))
-  println("===>  solvers possible to instanciate are: "+solvers.mkString(","))
-  def canInstantiateSolver(s: LPSolverLib.Value): Boolean = {
-	  try {
-      val solver = s match {
-        case LPSolverLib.lp_solve => new LPSolverLPSolve()
-        case LPSolverLib.glpk => new LPSolverGLPK()
-        case LPSolverLib.gurobi => new LPSolverGurobi()
-        case _ => new LPSolverLPSolve()
-      }
-	  } catch {
-	    case e: UnsatisfiedLinkError => { 
-        System.out.println("PATH : "+ System.getProperty("java.library.path"));
-        System.err.println(e.getMessage()); return false }
-	    case e: NoClassDefFoundError => { System.err.println(e.getMessage()); return false }
-	  }
-	  true
-  }
-  
-  def instantiateLPSolver(s: LPSolverLib.Value): LPSolver = {
-	  s match {
-        case LPSolverLib.lp_solve => new LPSolverLPSolve()
-        case LPSolverLib.glpk => new LPSolverGLPK()
-        case LPSolverLib.gurobi => new LPSolverGurobi()
-        case _ => new LPSolverLPSolve()
-      }
-  } 
-  
-  def instantiateMIPSolver(s: LPSolverLib.Value): MIPSolver = {
-	  s match {
-        case LPSolverLib.lp_solve => new MIPSolverLPSolve()
-        case LPSolverLib.glpk => new MIPSolverGLPK()
-        case LPSolverLib.gurobi => new MIPSolverGurobi()
-        case _ => new MIPSolverLPSolve()
-      }
-  }  
-  
-  
-  
-  // helper functions to model with an implicit LP/MIPSolver
-  def add(constr: LinearConstraint, name: String = "")(implicit linearSolver: AbstractLPSolver) = linearSolver.add(constr,name)
-  def addAll(constraints: LinearConstraint*)(implicit linearSolver: AbstractLPSolver) {
-    constraints.foreach(add(_))
-  }
-  
-  def start()(implicit linearSolver: AbstractLPSolver) = linearSolver.start()
-  def minimize(expr: LinearExpression)(implicit linearSolver: AbstractLPSolver) = linearSolver.minimize(expr)
-  def maximize(expr: LinearExpression)(implicit linearSolver: AbstractLPSolver) = linearSolver.maximize(expr)
-  def release()(implicit linearSolver: AbstractLPSolver) = linearSolver.release()
-  def objectiveValue(implicit linearSolver: AbstractLPSolver) = linearSolver.objectiveValue()
-  def status(implicit linearSolver: AbstractLPSolver) = linearSolver.status
-  def checkConstraints(tol: Double = 10e-6)(implicit linearSolver: AbstractLPSolver) = linearSolver.checkConstraints(tol)
 
-  
+  def minimize(expr: LinearExpression)(implicit solver: MPSolver[_]) = solver.optimize(expr, min = true)
+  def maximize(expr: LinearExpression)(implicit solver: MPSolver[_]) = solver.optimize(expr, min = false)
+
+  def add(cstr: LinearConstraintExpression, name: String = "")(implicit solver: MPSolver[_]): LinearConstraint = {
+    val n =
+      if(name == "") "cstr" + solver.nLinearConstraints
+      else name
+
+    new LinearConstraint(n, cstr)
+  }
 }
