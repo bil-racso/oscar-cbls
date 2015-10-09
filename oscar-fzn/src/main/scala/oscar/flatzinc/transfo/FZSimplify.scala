@@ -38,7 +38,7 @@ object FZSimplify{
         propagate(c)
         val aft = c.variables.map(v => v.domainSize).fold(1)((a,b) => a * b)
         if(bef != aft){
-          log("propagated "+c)
+          log(2,"propagated "+c)
         }
       }else{
     	propagate(c)
@@ -61,7 +61,7 @@ object FZSimplify{
 	    val rew = rewrite(c)
 	    newcstrs += rew
 	    if(rew!=c){
-	      log(c + " -> " + rew)
+	      log(2,c + " -> " + rew)
 	      mod = true
 	      c.retract()
 	      rew.insert()
@@ -89,6 +89,14 @@ object FZSimplify{
     c match{
       case reif(bool_eq(x,y,ann),b) if x.isFalse => bool_not(y,b,ann)
       case reif(bool_eq(x,y,ann),b) if y.isFalse => bool_not(x,b,ann)
+      case bool_xor(x,y,z,ann) => 
+        if (x.isTrue) bool_not(y,z,ann)
+        else if (y.isTrue) bool_not(x,z,ann)
+        else if (x.isFalse) bool_eq(y,z,ann)
+        else if (y.isFalse) bool_eq(x,z,ann)
+        else if (z.isTrue) bool_not(x,y,ann)
+        else if (z.isFalse) bool_eq(x,y,ann)
+        else c
       case reif(c1,b) => 
         if(b.isTrue) c1
         else if(b.isFalse){
@@ -103,6 +111,7 @@ object FZSimplify{
 
   def isEntailed(c: Constraint) = if(isBound(c)){
     c match {
+      case bool2int(x,y,_) => x.intValue==y.value
       case int_eq(x,y,_) => x.value ==y.value
       case int_ne(x,y,_) => x.value !=y.value
       case int_lt(x,y,_) => x.value < y.value
@@ -122,7 +131,25 @@ object FZSimplify{
       case int_min(x,y,z,_) => x.value.min(y.value) == z .value
       case _ => false
     }
-  }else false
+  }else c match{
+    case int_ne(x,y,_) => 
+        if(x.isBound)!y.domain.contains(x.value)
+        else if(y.isBound)!x.domain.contains(y.value)
+        else x.max < y.min || x.min > y.max
+    case int_lt(x,y,_) => x.max < y.min
+    case int_le(x,y,_) => x.max <= y.min
+    case set_in(x,y,_) => x.domainSize <= y.size && x.domain.toSortedSet.forall(y.contains(_))
+    case all_different_int(x,_) => x.length<=1
+    case int_max(a,b,c,_) if a.isBound && c.isBound => 
+      (a.value==c.value && b.max <= c.value) 
+    case int_max(a,b,c,_) if b.isBound && c.isBound => 
+      (b.value==c.value && a.max <= c.value)
+    case int_min(a,b,c,_) if a.isBound && c.isBound => 
+      (a.value==c.value && b.min >= c.value) 
+    case int_min(a,b,c,_) if b.isBound && c.isBound => 
+      (b.value==c.value && a.min >= c.value)
+    case _ => false
+  }
   
   def isUnsatisfiable(c: Constraint) = //if(isBound(c)) !isEntailed(c) else 
     false

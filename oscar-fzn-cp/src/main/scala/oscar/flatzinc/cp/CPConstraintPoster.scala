@@ -42,6 +42,7 @@ class CPConstraintPoster(val pstrength: oscar.cp.core.CPPropagStrength){
       case at_most_int(c,x,v,_) => oscar.cp.atMost(c.value, x.map(getVar), v.value)
       case exactly_int(c,x,v,_) => oscar.cp.countEq(getVar(c), x.map(getVar), v.value)//TODO: use a version with fixed c
       case count_eq(x,v,c,_) => oscar.cp.countEq(getVar(c), x.map(getVar), getVar(v))
+      //case reif(count_eq(x,v,c,_),b) => getBoolVar(b) ?== oscar.cp.countEq(getVar(c), x.map(getVar), getVar(v))
       
       case array_bool_and(as, r, ann)                 => new oscar.cp.constraints.And(as.map(getBoolVar),getBoolVar(r))
      // case array_bool_element(b, as, r, ann)          => 
@@ -61,6 +62,7 @@ class CPConstraintPoster(val pstrength: oscar.cp.core.CPPropagStrength){
       case bool_lin_le(params, vars, sum, ann)        => oscar.cp.weightedSum(params.map(_.value), vars.map(getVar)) <= getVar(sum) //TODO: make it native
       case bool_lt(a, b, ann)                         => getBoolVar(a) < getBoolVar(b)
       case reif(bool_lt(a, b, ann),c)                 => getBoolVar(c) == (getBoolVar(a) ?< getBoolVar(b))//TODO: There might exist a better expression for this.
+      case reif(bool_eq(a, b, ann),c)                 => getBoolVar(c) == (getBoolVar(a) ?== getBoolVar(b))//TODO: There might exist a better expression for this.
       case bool_not(a, b, ann)                        => getBoolVar(a) == getBoolVar(b).not
       case bool_or(a, b, r, ann)                      => oscar.cp.or(Array(getBoolVar(a),getBoolVar(b)),getBoolVar(r))
       //case bool_xor(a, b, r, ann)                     => 
@@ -69,8 +71,10 @@ class CPConstraintPoster(val pstrength: oscar.cp.core.CPPropagStrength){
       //case int_div(x, y, z, ann)                      => 
       case int_eq(x, y, ann)                          => getVar(x) == getVar(y)
       case int_le(x, y, ann)                          => getVar(x) <= getVar(y)
+      case int_lt(x, y, ann)                          => getVar(x) < getVar(y)
       case reif(int_eq(x,y,ann),b)                    => getBoolVar(b) == (getVar(x) ?== getVar(y))
       case reif(int_le(x,y,ann),b)                    => getBoolVar(b) == (getVar(x) ?<= getVar(y))
+      case reif(int_lt(x,y,ann),b)                    => getBoolVar(b) == (getVar(x) ?< getVar(y))
       case reif(int_ne(x,y,ann),b)                    => getBoolVar(b) == (getVar(x) ?!= getVar(y))
       //TODO: Handle binary and ternary cases, as well as all unit weights
       case int_lin_eq(params, vars, sum, ann)         => oscar.cp.weightedSum(params.map(_.value), vars.map(getVar), getVar(sum))
@@ -79,7 +83,6 @@ class CPConstraintPoster(val pstrength: oscar.cp.core.CPPropagStrength){
       case reif(int_lin_eq(params, vars, sum, ann),b) => getBoolVar(b) == (oscar.cp.weightedSum(params.map(_.value), vars.map(getVar)) ?== getVar(sum)) //TODO: make it native
       case reif(int_lin_le(params, vars, sum, ann),b) => getBoolVar(b) == (oscar.cp.weightedSum(params.map(_.value), vars.map(getVar)) ?<= getVar(sum)) //TODO: make it native
       case reif(int_lin_ne(params, vars, sum, ann),b) => getBoolVar(b) == (oscar.cp.weightedSum(params.map(_.value), vars.map(getVar)) ?!= getVar(sum)) //TODO: make it native
-      case int_lt(x, y, ann)                          => getVar(x) < getVar(y)
       case int_max(x, y, z, ann)                      => oscar.cp.maximum(Array(getVar(x),getVar(y)),getVar(z))
       case int_min(x, y, z, ann)                      => oscar.cp.minimum(Array(getVar(x),getVar(y)),getVar(z))
       //case int_mod(x, y, z, ann)                      => 

@@ -324,7 +324,7 @@ class FZCBLSSolver extends SearchEngine with StopWatch {
     val cpmodel = if(useCP){
       val cpmodel = new FZCPModel(model,oscar.cp.Strong, true)
 //      println(model.variables.toList.map(v => v.domainSize))
-      FZModelTransfo.propagate(model)(log);
+      FZModelTransfo.simplify(model)(log);
       log("Reduced Domains before CP")
 //      println(model.variables.toList.map(v => v.domainSize))
       cpmodel.createVariables()
@@ -347,7 +347,7 @@ class FZCBLSSolver extends SearchEngine with StopWatch {
       log("De facto Unary Constraint "+c); 
       //log(2,c.getVariables().map(v => v.min+".."+v.max).mkString(" , "))
     })
-    model.constraints.foreach{ case reif(c,b) => if(b.isBound) log("Fixed reified constraint: "+b.boolValue); case _ => {}}
+    model.constraints.foreach{ case reif(c,b) => if(b.isBound) log("Fixed reified constraint: "+b.boolValue+" <=> "+c); case _ => {}}
     
     
     
@@ -505,6 +505,10 @@ class FZCBLSSolver extends SearchEngine with StopWatch {
 
       log("Solving with the neighbourhood combinators")
       val sv = cblsmodel.vars.filter(v => v.domainSize>1 && !v.isControlledVariable).toArray[CBLSIntVar]
+      if(sv.length==0){
+        log("No search variables (for now), abort")
+        
+      }else{
       val bsv = cblsmodel.vars.filter(v => v.domainSize>1 && !v.isControlledVariable && v.min ==0 && v.max==1).toArray[CBLSIntVar]
       val argmax = ArgMax(sv.map(v => cblsmodel.c.violation(v)))
       //This is a scheme of Iterated Local Search: Dive then perturb. 
@@ -531,6 +535,7 @@ class FZCBLSSolver extends SearchEngine with StopWatch {
           cblsmodel.handleSolution()
         }else cont = false
       }
+    }
     }
     //search.run()
     
