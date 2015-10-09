@@ -16,6 +16,8 @@
 
 package oscar.linprog.test
 
+import java.nio.file.Paths
+
 import org.scalatest.FunSuite
 import oscar.linprog.interface.{SolutionFound, LP}
 import oscar.linprog.modeling._
@@ -35,7 +37,7 @@ class LPTester extends FunSuite with Matchers {
       add(y >= -x + 200)
 
       val endStatus = solver.solve
-
+      
       endStatus should equal(SolutionFound)
 
       x.value should equal(Some(100))

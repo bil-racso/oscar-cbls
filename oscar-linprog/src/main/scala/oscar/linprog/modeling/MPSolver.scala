@@ -68,7 +68,7 @@ class MPSolver[I <: MPSolverInterface](val solverInterface: I) {
 
     val coefs = value.coef.values.toArray
     val varIds = value.coef.keys.map(v => variableColumn(v.name)).toArray
-    solverInterface.addObjective(coefs, varIds, minimize)
+    solverInterface.addObjective(coefs, varIds)
   }
 
   private var _minimize: Boolean = true
@@ -207,7 +207,7 @@ class MPSolver[I <: MPSolverInterface](val solverInterface: I) {
     val coefs = linearConstraint.constraintExpr.linExpr.coef.values.toArray
     val varIds = linearConstraint.constraintExpr.linExpr.coef.keys.map(v => variableColumn(v.name)).toArray
 
-    val rowId = solverInterface.addConstraint(linearConstraint.name, coefs, varIds, linearConstraint.constraintExpr.sense.symbol, linearConstraint.constraintExpr.linExpr.cte)
+    val rowId = solverInterface.addConstraint(linearConstraint.name, coefs, varIds, linearConstraint.constraintExpr.sense.symbol, -linearConstraint.constraintExpr.linExpr.cte)
 
     register(linearConstraint, rowId)
   }
@@ -274,8 +274,8 @@ object MPSolver {
     try {
       Some(lp_solve)
     } catch {
-      case e: UnsatisfiedLinkError => { println(e.getMessage()); None }
-      case e: NoClassDefFoundError => { println(e.getMessage()); None }
+      case e: UnsatisfiedLinkError => println(e.getMessage); None
+      case e: NoClassDefFoundError => println(e.getMessage); None
     }
 
   lazy val lpSolvers = List(MPSolver.lp_solveOption).flatten

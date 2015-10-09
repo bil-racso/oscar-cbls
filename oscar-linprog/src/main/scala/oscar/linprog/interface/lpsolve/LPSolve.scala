@@ -27,21 +27,10 @@ class LPSolve extends MPSolverInterface {
 
   type Solver = LpSolve
 
-  private var rawSolverOpt: Option[Solver] = None
+  val rawSolver = LpSolve.makeLp(0, 0)
 
-  private def solverInitialized: Boolean = rawSolverOpt.isDefined
-
-  def rawSolver = rawSolverOpt.get
-
-  private def initSolver() = {
-    rawSolverOpt = Some(LpSolve.makeLp(nRows, nCols))
-
-    // infinity in OscaR is represented by Double.PositiveInfinity
-    rawSolver.setInfinite(Double.PositiveInfinity)
-
-    // Initially optimize for row by row addition
-    rawSolver.setAddRowmode(true)
-  }
+  // infinity in OscaR is represented by Double.PositiveInfinity
+  rawSolver.setInfinite(Double.PositiveInfinity)
 
   private var nCols = 0
   private var nRows = 0
@@ -49,24 +38,19 @@ class LPSolve extends MPSolverInterface {
   def modelName = rawSolver.getLpName
   def modelName_=(value: String) = rawSolver.setLpName(value)
 
-  private var pendingObj: (Array[Double], Array[Int], Boolean) = (Array(), Array(), true)
+  private var pendingObj: Option[(Array[Double], Array[Int])] = None
+  private def flushPendingObj() = pendingObj = None
 
-  def addObjective(coef: Array[Double], varId: Array[Int], minimize: Boolean = true): Unit = {
-    pendingObj = (coef, varId, minimize)
-  }
+  def addObjective(coefs: Array[Double], varIds: Array[Int]): Unit = pendingObj = Some((coefs, varIds))
 
   def setObjCoef(varId: Int, coef: Double): Unit = rawSolver.setObj(varId + 1, coef)
 
-  def setOptimizationDirection(minimize: Boolean): Unit = {
-    if(solverInitialized) {
-      if (minimize) rawSolver.setMinim()
-      else rawSolver.setMaxim()
-    } else {
-      pendingObj = (pendingObj._1, pendingObj._2, minimize)
-    }
-  }
+  def setOptimizationDirection(minimize: Boolean): Unit =
+    if (minimize) rawSolver.setMinim()
+    else          rawSolver.setMaxim()
 
   private var pendingVars: Seq[(Int, String, Double, Double)] = Seq()
+  private def flushPendingVars() = pendingVars = Seq()
 
   private def setVarProperties(varId: Int, name: String, lb: Double, ub: Double) = {
     rawSolver.setColName(varId + 1, name)
@@ -75,13 +59,13 @@ class LPSolve extends MPSolverInterface {
   }
 
   def addVariable(name: String, lb: Double = Double.NegativeInfinity, ub: Double = Double.PositiveInfinity,
-    objCoef: Option[Double] = None, cstrCoef: Option[Array[Double]] = None, cstrId: Option[Array[Int]] = None): Int =
-    (objCoef, cstrCoef, cstrId) match {
-      case (Some(oCoef), Some(cCoef), Some(cId)) =>
+    objCoef: Option[Double] = None, cstrCoefs: Option[Array[Double]] = None, cstrIds: Option[Array[Int]] = None): Int =
+    (objCoef, cstrCoefs, cstrIds) match {
+      case (Some(oCoef), Some(cCoefs), Some(cIds)) =>
         // first arg is the length of the arrays
         // second arg is the array of the coefficients of the constraints (coef in position 0 is the coef for the objective)
         // third arg is the row numbers of the constraints that should be updated (row 0 is the objective)
-        rawSolver.addColumnex(cCoef.length + 1, oCoef +: cCoef, 0 +: cId.map(_ + 1))
+        rawSolver.addColumnex(cCoefs.length + 1, oCoef +: cCoefs, 0 +: cIds.map(_ + 1))
         val varId = this.nCols
         setVarProperties(varId, name, lb, ub)
         this.nCols += 1
@@ -103,8 +87,9 @@ class LPSolve extends MPSolverInterface {
   def setVarUB(varId: Int, ub: Double) = rawSolver.setUpbo(varId + 1, ub)
 
   private var pendingCstrs: Seq[(Int, String, Array[Double], Array[Int], String, Double)] = Seq()
+  private def flushPendingCstrs() = pendingCstrs = Seq()
 
-  private def addConstraintToModel(cstrId: Int, name: String, coef: Array[Double], varId: Array[Int], sense: String, rhs: Double) = {
+  private def addConstraintToModel(cstrId: Int, name: String, coefs: Array[Double], varIds: Array[Int], sense: String, rhs: Double) = {
     val sen = sense match {
       case "<=" => LpSolve.LE
       case "==" => LpSolve.EQ
@@ -112,13 +97,13 @@ class LPSolve extends MPSolverInterface {
       case _ => throw new IllegalArgumentException(s"Unexpected symbol for sense. Found: $sense. Expected: one of <=, == or >=.")
     }
 
-    rawSolver.addConstraintex(coef.length, coef, varId.map(_ + 1), sen, rhs)
+    rawSolver.addConstraintex(coefs.length, coefs, varIds.map(_ + 1), sen, rhs)
     rawSolver.setRowName(cstrId, name)
   }
 
-  def addConstraint(name: String, coef: Array[Double], varId: Array[Int], sense: String, rhs: Double): Int = {
+  def addConstraint(name: String, coefs: Array[Double], varIds: Array[Int], sense: String, rhs: Double): Int = {
     val cstrId = this.nRows
-    pendingCstrs = (cstrId, name, coef, varId, sense, rhs) +: pendingCstrs
+    pendingCstrs = (cstrId, name, coefs, varIds, sense, rhs) +: pendingCstrs
     this.nRows += 1
     cstrId
   }
@@ -130,21 +115,25 @@ class LPSolve extends MPSolverInterface {
   def nLinearConstraints: Int = nRows
 
   def updateModel() = {
-    if(!solverInitialized) initSolver()
-    else rawSolver.resizeLp(nRows, nCols)
+    rawSolver.resizeLp(nRows, nCols)
 
     // add the pending vars
     pendingVars foreach { case (varId, name, lb, ub) => setVarProperties(varId, name, lb, ub) }
+    flushPendingVars()
 
     // add the pending objective
-    val (oCoef, oVarId, oMin) = pendingObj
-    rawSolver.setObjFnex(oCoef.length, oCoef, oVarId.map(_ + 1))
-    setOptimizationDirection(oMin)
+    pendingObj foreach { case (oCoef, oVarId) =>
+      rawSolver.setObjFnex(oCoef.length, oCoef, oVarId.map(_ + 1))
+    }
+    flushPendingObj()
 
     // add the pending constraints
-    pendingCstrs foreach { case (cstrId, name, coef, varId, sense, rhs) => addConstraintToModel(cstrId, name, coef, varId, sense, rhs) }
-
-    rawSolver.setAddRowmode(false)
+    pendingCstrs sortBy {
+      case (cstrId, name, coefs, varIds, sense, rhs) => cstrId
+    } foreach {
+      case (cstrId, name, coefs, varIds, sense, rhs) => addConstraintToModel(cstrId, name, coefs, varIds, sense, rhs)
+    }
+    flushPendingCstrs()
   }
 
   def exportModel(filepath: Path, format: ExportFormat): Unit =

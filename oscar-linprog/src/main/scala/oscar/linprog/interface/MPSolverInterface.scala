@@ -51,11 +51,10 @@ abstract class MPSolverInterface(solverOptions: (String, Any)*) {
   /**
    * Defines the objective function of the model as ''coef(0)*x[col(0)] + ... + coef(n)*x[col(n)]''.
    *
-   * @param coef are the coefficients of the linear term
-   * @param varId indicates to which variable the coefficients refer to
-   * @param minimize set to true if this objective should be minimized (default), false to maximize it
+   * @param coefs are the coefficients of the linear term
+   * @param varIds indicates to which variable the coefficients refer to
    */
-  def addObjective(coef: Array[Double], varId: Array[Int], minimize: Boolean = true): Unit
+  def addObjective(coefs: Array[Double], varIds: Array[Int]): Unit
 
   /**
    * Sets the coefficient of the variable in the objective to the given value.
@@ -78,13 +77,13 @@ abstract class MPSolverInterface(solverOptions: (String, Any)*) {
    * @param lb the lower bound (default is -Inf)
    * @param ub the upper bound (default is +Inf)
    * @param objCoef the coefficient in the objective function (optional)
-   * @param cstrCoef the non-zero constraint coefficients (optional)
-   * @param cstrId the indices of the corresponding linear constraints (optional)
+   * @param cstrCoefs the non-zero constraint coefficients (optional)
+   * @param cstrIds the indices of the corresponding linear constraints (optional)
    *
    * @return the index of the variable (column number) in the model
    */
   def addVariable(name: String, lb: Double = Double.NegativeInfinity, ub: Double = Double.PositiveInfinity,
-    objCoef: Option[Double] = None, cstrCoef: Option[Array[Double]] = None, cstrId: Option[Array[Int]] = None): Int
+    objCoef: Option[Double] = None, cstrCoefs: Option[Array[Double]] = None, cstrIds: Option[Array[Int]] = None): Int
 
   /**
    * Returns the lower bound of the variable.
@@ -133,47 +132,14 @@ abstract class MPSolverInterface(solverOptions: (String, Any)*) {
    * Adds a new linear constraint (row) to the model.
    *
    * @param name the name of the constraint in the model
-   * @param coef the non-zero coefficients
-   * @param varId the indices of the corresponding variables
+   * @param coefs the non-zero coefficients
+   * @param varIds the indices of the corresponding variables
    * @param sense the sense of the constraint (one of ''<='', ''=='', ''>='')
    * @param rhs the right hand side
    *
    * @return the index of the constraint (row number) in the model
    */
-  def addConstraint(name: String, coef: Array[Double], varId: Array[Int], sense: String, rhs: Double): Int
-
-  /**
-   * Adds the constraint ''coef(0)*x[col(0)] + ... + coef(n)*x[col(n)] >= rhs'' to the model.
-   *
-   * @param coef are the coefficients of the linear term
-   * @param varId indicates to which variable the coefficients refer to
-   *
-   * @return the index of the constraint (row number) in the model
-   */
-  def addConstraintGreaterEqual(name: String, coef: Array[Double], varId: Array[Int], rhs: Double): Int =
-    addConstraint(name, coef, varId, ">=", rhs)
-
-  /**
-   * Adds the constraint ''coef(0)*x[col(0)] + ... + coef(n)*x[col(n)] <= rhs'' to the model.
-   *
-   * @param coef are the coefficients of the linear term
-   * @param varId indicates to which variable the coefficients refer to
-   *
-   * @return the index of the constraint (row number) in the model
-   */
-  def addConstraintLessEqual(name: String, coef: Array[Double], varId: Array[Int], rhs: Double): Int =
-    addConstraint(name, coef, varId, "<=", rhs)
-
-  /**
-   * Adds the constraint ''coef(0)*x[col(0)] + ... + coef(n)*x[col(n)] == rhs'' to the model.
-   *
-   * @param coef are the coefficients of the linear term
-   * @param varId indicates to which variable the coefficients refer to
-   *
-   * @return the index of the constraint (row number) in the model
-   */
-  def addConstraintEqual(name: String, coef: Array[Double], varId: Array[Int], rhs: Double): Int =
-    addConstraint(name, coef, varId, "==", rhs)
+  def addConstraint(name: String, coefs: Array[Double], varIds: Array[Int], sense: String, rhs: Double): Int
 
   /**
    * Sets the coefficient of the variable in the corresponding constraint to the specified value.
