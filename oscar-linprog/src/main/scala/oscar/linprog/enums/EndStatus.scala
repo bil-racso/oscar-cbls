@@ -13,9 +13,15 @@
   * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
   ******************************************************************************/
 
-package oscar.linprog.interface
+package oscar.linprog.enums
 
-sealed abstract class ExportFormat(val extension: String)
+sealed abstract class EndStatus(val name: String) {
+  override def toString: String = name
+}
 
-case object LP extends ExportFormat("lp")
-case object MPS extends ExportFormat("mps")
+case object SolutionFound extends EndStatus("SOLUTION_FOUND")
+case object Unbounded extends EndStatus("UNBOUNDED")
+case object Infeasible extends EndStatus("INFEASIBLE")
+case object NoSolution extends EndStatus("NO_SOLUTION")
+
+case class NoSolutionFound(endStatus: EndStatus) extends Exception(s"No solution found to the problem, end status is $endStatus")

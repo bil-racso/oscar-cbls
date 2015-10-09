@@ -18,8 +18,8 @@ package oscar.linprog.interface.lpsolve
 import java.nio.file.Path
 
 import _root_.lpsolve.LpSolve
+import oscar.linprog.enums._
 import oscar.linprog.interface._
-import oscar.linprog.modeling.NotSolvedYet
 
 class LPSolve extends MPSolverInterface {
   // NOTE:
@@ -150,7 +150,14 @@ class LPSolve extends MPSolverInterface {
     case None => throw NotSolvedYet
   }
 
-  def hasSolution: Boolean = endStatus == SolutionFound
+  def hasSolution: Boolean = _endStatus.isDefined && endStatus == SolutionFound
+
+  private var _solutionQuality: Option[SolutionQuality] = None
+
+  def solutionQuality: SolutionQuality = _solutionQuality match {
+    case Some(sq) => sq
+    case None => if(_endStatus.isDefined) throw NoSolutionFound(endStatus) else throw NotSolvedYet
+  }
 
   def objectiveValue: Double = rawSolver.getObjective
 
@@ -169,15 +176,24 @@ class LPSolve extends MPSolverInterface {
 
     val status = rawSolver.solve
 
-    _endStatus = Some(status match {
-      case LpSolve.OPTIMAL => SolutionFound
-      case LpSolve.SUBOPTIMAL => SolutionFound
-      case LpSolve.INFEASIBLE => Infeasible
-      case LpSolve.UNBOUNDED => Unbounded
-      case LpSolve.USERABORT => NoSolution
-      case LpSolve.TIMEOUT => NoSolution
-      case _ => NoSolution
-    })
+    status match {
+      case LpSolve.OPTIMAL =>
+        _endStatus = Some(SolutionFound)
+        _solutionQuality = Some(Optimal)
+      case LpSolve.SUBOPTIMAL =>
+        _endStatus = Some(SolutionFound)
+        _solutionQuality = Some(Suboptimal)
+      case LpSolve.INFEASIBLE =>
+        _endStatus = Some(Infeasible)
+      case LpSolve.UNBOUNDED =>
+        _endStatus = Some(Unbounded)
+      case LpSolve.USERABORT =>
+        _endStatus = Some(NoSolution)
+      case LpSolve.TIMEOUT =>
+        _endStatus = Some(NoSolution)
+      case _ =>
+        _endStatus = Some(NoSolution)
+    }
 
     endStatus
   }

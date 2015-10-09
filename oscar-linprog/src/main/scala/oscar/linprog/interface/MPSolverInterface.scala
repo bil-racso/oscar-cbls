@@ -17,6 +17,8 @@ package oscar.linprog.interface
 
 import java.nio.file.Path
 
+import oscar.linprog.enums.{EndStatus, ExportFormat, SolutionQuality}
+
 /**
  * Solver-independent low-level interface describing a solver for mathematical programming problems
  * that should be implemented by the individual solvers to make them available in OscaR.
@@ -180,6 +182,11 @@ abstract class MPSolverInterface(solverOptions: (String, Any)*) {
    * Returns true if the solver has found a valid solution
    */
   def hasSolution: Boolean
+
+  /**
+   * Returns the [[SolutionQuality]] of the solution found.
+   */
+  def solutionQuality: SolutionQuality
 
   /**
    * Returns the objective value of the solution found by the solver.

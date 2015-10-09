@@ -17,11 +17,12 @@ package oscar.linprog.modeling
 
 import java.nio.file.Path
 
-import oscar.algebra.{LinearConstraintExpression, Expression, Const, LinearExpression}
+import oscar.algebra.{Const, LinearExpression}
+import oscar.linprog.enums._
 import oscar.linprog.interface._
 import oscar.linprog.interface.lpsolve.LPSolve
 
-import scala.util.{Success, Failure, Try}
+import scala.util.{Failure, Success, Try}
 
 /**
  * A solver that can be used to solve mathematical programming problems.
@@ -252,6 +253,11 @@ class MPSolver[I <: MPSolverInterface](val solverInterface: I) {
    * Returns true if there is a solution to the current problem
    */
   def hasSolution: Boolean = solved && endStatus == Success(SolutionFound)
+
+  /**
+   * Returns the [[SolutionQuality]] of the solution if any
+   */
+  def solutionQuality: Try[SolutionQuality] = asSuccessIfSolFound(solverInterface.solutionQuality)
 
   /**
    * Releases the raw solver interfaced by OscaR. This may be needed by some solvers that use native resources.

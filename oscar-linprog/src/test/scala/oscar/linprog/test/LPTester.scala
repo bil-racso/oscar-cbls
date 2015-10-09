@@ -13,16 +13,15 @@
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  ******************************************************************************/
 
-
 package oscar.linprog.test
 
-import java.nio.file.Paths
-
 import org.scalatest.FunSuite
-import oscar.linprog.interface.{SolutionFound, LP}
+import oscar.linprog.enums.{Optimal, SolutionFound}
 import oscar.linprog.modeling._
 import oscar.algebra._
 import org.scalatest.Matchers
+
+import scala.util.Success
 
 
 class LPTester extends FunSuite with Matchers {
@@ -37,11 +36,14 @@ class LPTester extends FunSuite with Matchers {
       add(y >= -x + 200)
 
       val endStatus = solver.solve
-      
+
       endStatus should equal(SolutionFound)
 
       x.value should equal(Some(100))
       y.value should equal(Some(170))
+
+      solver.objectiveValue should equal(Success(650))
+      solver.solutionQuality should equal(Success(Optimal))
 
       solver.release()
     }

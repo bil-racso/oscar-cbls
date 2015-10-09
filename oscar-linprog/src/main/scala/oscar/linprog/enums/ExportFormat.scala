@@ -13,14 +13,9 @@
   * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
   ******************************************************************************/
 
-package oscar.linprog.modeling
+package oscar.linprog.enums
 
-sealed abstract class SolveStatus(val name: String) {
-  override def toString: String = name
-}
+sealed abstract class ExportFormat(val extension: String)
 
-case object NotSolved extends SolveStatus("NOT_SOLVED")
-case object Solving extends SolveStatus("SOLVING")
-case object Solved extends SolveStatus("SOLVED")
-
-case object NotSolvedYet extends Exception("Problem is not solved yet.")
+case object LP extends ExportFormat("lp")
+case object MPS extends ExportFormat("mps")
