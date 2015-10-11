@@ -137,13 +137,15 @@ class LPTester extends FunSuite with Matchers {
       solver.objectiveValue should equal(Success(-2*100 + 5*100))
       solver.solutionQuality should equal(Success(Optimal))
 
-      // Update bounds and reoptimize
+      // Update bounds
       x.lowerBound = 0
       y.upperBound = 250
 
+      // Model has changed
       solver.solved should equal(false)
       solver.hasSolution should equal(false)
 
+      // Reoptimize to get new solution
       val endStatus2 = solver.solve
 
       endStatus should equal(SolutionFound)
@@ -178,12 +180,14 @@ class LPTester extends FunSuite with Matchers {
       solver.objectiveValue should equal(Success(-2*100 + 5*100))
       solver.solutionQuality should equal(Success(Optimal))
 
-      // Update objective and reoptimize
+      // Update objective
       solver.objective = 2 * x - 5 * y
 
+      // Model has changed
       solver.solved should equal(false)
       solver.hasSolution should equal(false)
 
+      // Reoptimize to get new solution
       val endStatus2 = solver.solve
 
       endStatus should equal(SolutionFound)
