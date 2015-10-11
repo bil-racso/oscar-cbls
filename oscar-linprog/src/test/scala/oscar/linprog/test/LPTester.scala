@@ -16,33 +16,182 @@
 package oscar.linprog.test
 
 import org.scalatest.FunSuite
-import oscar.linprog.enums.{Optimal, SolutionFound}
+import oscar.linprog.enums._
 import oscar.linprog.modeling._
 import oscar.algebra._
 import org.scalatest.Matchers
 
 import scala.util.Success
 
-
 class LPTester extends FunSuite with Matchers {
-  test("Feasible model 1") {
+
+  test("Maximize objective under constraints") {
     for (_solver <- MPSolver.lpSolvers) {
       implicit val solver: MPSolver[_] = _solver
 
-      val x = FloatVar("x", 100, 200)
+      val x = FloatVar("x", 100, 150)
       val y = FloatVar("y", 80, 170)
 
       maximize(-2 * x + 5 * y)
-      add(y >= -x + 200)
+      add(x + y <= 200)
 
       val endStatus = solver.solve
 
       endStatus should equal(SolutionFound)
 
       x.value should equal(Some(100))
-      y.value should equal(Some(170))
+      y.value should equal(Some(100))
 
-      solver.objectiveValue should equal(Success(650))
+      solver.objectiveValue should equal(Success(-2*100 + 5*100))
+      solver.solutionQuality should equal(Success(Optimal))
+
+      solver.release()
+    }
+  }
+
+  test("Minimize objective under constraints") {
+    for (_solver <- MPSolver.lpSolvers) {
+      implicit val solver: MPSolver[_] = _solver
+
+      val x = FloatVar("x", 100, 150)
+      val y = FloatVar("y", 80, 170)
+
+      minimize(-2 * x + 5 * y)
+      add(x + y >= 200)
+
+      val endStatus = solver.solve
+
+      endStatus should equal(SolutionFound)
+
+      x.value should equal(Some(150))
+      y.value should equal(Some(80))
+
+      solver.objectiveValue should equal(Success(-2*150 + 5*80))
+      solver.solutionQuality should equal(Success(Optimal))
+
+      solver.release()
+    }
+  }
+
+  test("Detect infeasible problem") {
+    for (_solver <- MPSolver.lpSolvers) {
+      implicit val solver: MPSolver[_] = _solver
+
+      val x = FloatVar("x", 0, 10)
+      val y = FloatVar("y", 80, 170)
+
+      minimize(-2 * x + 5 * y)
+      add(x + y >= 200)
+
+      val endStatus = solver.solve
+
+      endStatus should equal(Infeasible)
+
+      intercept[NoSolutionFound] {
+        solver.solutionQuality
+      }
+
+      solver.release()
+    }
+  }
+
+  test("Detect unbounded problem") {
+    for (_solver <- MPSolver.lpSolvers) {
+      implicit val solver: MPSolver[_] = _solver
+
+      val x = FloatVar("x")
+      val y = FloatVar("y", 80, 170)
+
+      minimize(-2 * x + 5 * y)
+      add(x + y >= 200)
+
+      val endStatus = solver.solve
+
+      endStatus should equal(Unbounded)
+
+      intercept[NoSolutionFound] {
+        solver.solutionQuality
+      }
+
+      solver.release()
+    }
+  }
+
+  test("Update variable bounds") {
+    for (_solver <- MPSolver.lpSolvers) {
+      implicit val solver: MPSolver[_] = _solver
+
+      val x = FloatVar("x", 100, 150)
+      val y = FloatVar("y", 80, 170)
+
+      maximize(-2 * x + 5 * y)
+      add(x + y <= 200)
+
+      val endStatus = solver.solve
+
+      endStatus should equal(SolutionFound)
+
+      x.value should equal(Some(100))
+      y.value should equal(Some(100))
+
+      solver.objectiveValue should equal(Success(-2*100 + 5*100))
+      solver.solutionQuality should equal(Success(Optimal))
+
+      // Update bounds and reoptimize
+      x.lowerBound = 0
+      y.upperBound = 250
+
+      solver.solved should equal(false)
+      solver.hasSolution should equal(false)
+
+      val endStatus2 = solver.solve
+
+      endStatus should equal(SolutionFound)
+
+      x.value should equal(Some(0))
+      y.value should equal(Some(200))
+
+      solver.objectiveValue should equal(Success(-2*0 + 5*200))
+      solver.solutionQuality should equal(Success(Optimal))
+
+      solver.release()
+    }
+  }
+
+  test("Update objective") {
+    for (_solver <- MPSolver.lpSolvers) {
+      implicit val solver: MPSolver[_] = _solver
+
+      val x = FloatVar("x", 100, 150)
+      val y = FloatVar("y", 80, 170)
+
+      maximize(-2 * x + 5 * y)
+      add(x + y <= 200)
+
+      val endStatus = solver.solve
+
+      endStatus should equal(SolutionFound)
+
+      x.value should equal(Some(100))
+      y.value should equal(Some(100))
+
+      solver.objectiveValue should equal(Success(-2*100 + 5*100))
+      solver.solutionQuality should equal(Success(Optimal))
+
+      // Update objective and reoptimize
+      solver.objective = 2 * x - 5 * y
+
+      solver.solved should equal(false)
+      solver.hasSolution should equal(false)
+
+      val endStatus2 = solver.solve
+
+      endStatus should equal(SolutionFound)
+
+      x.value should equal(Some(120))
+      y.value should equal(Some(80))
+
+      solver.objectiveValue should equal(Success(2*120 - 5*80))
       solver.solutionQuality should equal(Success(Optimal))
 
       solver.release()

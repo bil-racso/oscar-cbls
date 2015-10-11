@@ -284,5 +284,5 @@ object MPSolver {
       case e: NoClassDefFoundError => println(e.getMessage); None
     }
 
-  lazy val lpSolvers = List(MPSolver.lp_solveOption).flatten
+  def lpSolvers = List(MPSolver.lp_solveOption).flatten
 }
