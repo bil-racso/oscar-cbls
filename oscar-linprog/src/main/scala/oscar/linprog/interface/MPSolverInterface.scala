@@ -41,6 +41,11 @@ abstract class MPSolverInterface(solverOptions: (String, Any)*) {
   def rawSolver: Solver
 
   /**
+   * Returns the name of the solver implementing this interface.
+   */
+  def solverName: String
+
+  /**
    * Returns the name of the model.
    */
   def modelName: String

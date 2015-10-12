@@ -1,14 +1,38 @@
+/*******************************************************************************
+  * OscaR is free software: you can redistribute it and/or modify
+  * it under the terms of the GNU Lesser General Public License as published by
+  * the Free Software Foundation, either version 2.1 of the License, or
+  * (at your option) any later version.
+  *
+  * OscaR is distributed in the hope that it will be useful,
+  * but WITHOUT ANY WARRANTY; without even the implied warranty of
+  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  * GNU Lesser General Public License  for more details.
+  *
+  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
+  ******************************************************************************/
+
 package oscar.examples.linprog
 
 import oscar.linprog.modeling._
 import oscar.algebra._
 
+/**
+ * A number of 12 products can be produced, each of which has a set of features, such as volume, weight, etc.
+ * There is a capacity constraint on the total amount that can be produced from each feature;
+ * for example, an upper limit of the total weight of the produced products.
+ * Also, each product generates a profit per unit produced.
+ * The objective is to maximize the total profit, while satisfying capacity constraints.
+ *
+ * @author pschaus@gmail.com
+ */
 object ProductionPlanning extends MPModel(MPSolver.lp_solve) with App {
   val b = Array(18209, 7692, 1333, 924, 26638, 61188, 13360) // Dimensions
   val c = Array(96, 76, 56, 11, 86, 10, 66, 86, 83, 12, 9, 81) // Products
 
-  val Dimensions = 0 until b.size
-  val Products = 0 until c.size
+  val Dimensions = 0 until b.length
+  val Products = 0 until c.length
 
   val coef = Array(
     Array(19,   1, 10,  1,   1,  14, 152, 11,  1,   1, 1, 1), //Dimensions x Products

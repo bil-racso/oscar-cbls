@@ -27,6 +27,8 @@ class LPSolve extends MPSolverInterface {
 
   type Solver = LpSolve
 
+  val solverName = "lp_solve"
+
   val rawSolver = LpSolve.makeLp(0, 0)
 
   // infinity in OscaR is represented by Double.PositiveInfinity
@@ -34,6 +36,9 @@ class LPSolve extends MPSolverInterface {
 
   private var nCols = 0
   private var nRows = 0
+
+  def nVariables: Int = nCols
+  def nLinearConstraints: Int = nRows
 
   def modelName = rawSolver.getLpName
   def modelName_=(value: String) = rawSolver.setLpName(value)
@@ -111,9 +116,6 @@ class LPSolve extends MPSolverInterface {
   def setCstrCoef(cstrId: Int, varId: Int, coef: Double): Unit = rawSolver.setMat(cstrId + 1, varId + 1, coef)
   def setCstrRhs(cstrId: Int, rhs: Double): Unit = rawSolver.setRh(cstrId + 1, rhs)
 
-  def nVariables: Int = nCols
-  def nLinearConstraints: Int = nRows
-
   def updateModel() = {
     rawSolver.resizeLp(nRows, nCols)
 
@@ -134,6 +136,12 @@ class LPSolve extends MPSolverInterface {
       case (cstrId, name, coefs, varIds, sense, rhs) => addConstraintToModel(cstrId, name, coefs, varIds, sense, rhs)
     }
     flushPendingCstrs()
+
+    // verify that the raw model contains the correct number of variables and constraints
+    assert(rawSolver.getNorigColumns == nVariables,
+      s"$solverName: the number of variables contained by the raw solver does not correspond to the number of variables added.")
+    assert(rawSolver.getNorigRows == nLinearConstraints,
+      s"$solverName: the number of constraints contained by the raw solver does not correspond to the number of constraints added.")
   }
 
   def exportModel(filepath: Path, format: ExportFormat): Unit =

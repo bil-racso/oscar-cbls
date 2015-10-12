@@ -113,7 +113,12 @@ class MPSolver[I <: MPSolverInterface](val solverInterface: I) {
   protected var variables = Map[String, AbstractMPVar[_]]()
   protected var variableColumn = Map[String, Int]()
 
-  def nVariables = variables.size
+  def nVariables = {
+    assert(variables.size == solverInterface.nVariables,
+      "The number of variables stored does not correspond to the number of variables added to the solver.")
+
+    variables.size
+  }
 
   protected def register(variable: AbstractMPVar[_], colId: Int): Unit = {
     setDirty()
@@ -192,7 +197,12 @@ class MPSolver[I <: MPSolverInterface](val solverInterface: I) {
   protected var linearConstraints = Map[String, LinearConstraint]()
   protected var linearConstraintRows = Map[String, Int]()
 
-  def nLinearConstraints = linearConstraints.size
+  def nLinearConstraints = {
+    assert(linearConstraints.size == solverInterface.nLinearConstraints,
+      "The number of linear constraints stored does not correspond to the number of linear constraints added to the solver.")
+
+    linearConstraints.size
+  }
 
   protected def register(linearConstraint: LinearConstraint, rowId: Int): Unit = {
     setDirty()
