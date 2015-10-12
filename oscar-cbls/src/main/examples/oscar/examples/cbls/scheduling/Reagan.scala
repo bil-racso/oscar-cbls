@@ -60,8 +60,8 @@ object Reagan extends App {
   val Drink = Activity(3, planning, "drink")
   Drink uses 3 ofResource Reagan
 
-  val Pray = NonMoveableActivity(5, 2, planning, "pray")
-  Pray uses 2 ofResource Reagan
+//  val Pray = NonMoveableActivity(5, 2, planning, "pray")
+//  Pray uses 2 ofResource Reagan
 
   val Digest = SuperActivity(Eat, Sleep, "digest")
   Digest uses 1 ofResource Reagan

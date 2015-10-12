@@ -50,6 +50,8 @@ trait SchedulingHandler {
    * @return the propagation structure that contains this, itself if it is a PS
    */
   def propagationStructure: PropagationStructure
+
+
 }
 
 /**
@@ -605,9 +607,10 @@ abstract class PropagationStructure(val verbose: Boolean, val checker: Option[Ch
       "  topologicalSort:" + topologicalSort + (if (!topologicalSort) " (layerCount:" + (executionQueue.asInstanceOf[AggregatedBinomialHeapQList[PropagationElement]].maxPosition) + ")" else "") + "\n" +
       "  sortScc:" + sortScc + "\n" +
       "  actuallyAcyclic:" + acyclic + "\n" +
-      "  propagationElementCount:" + getPropagationElements.size + "\n" +
+      "  TotalPropagationElementCount:" + getPropagationElements.size + "\n" +
       "  StronglyConnectedComponentsCount:" + StronglyConnexComponentsList.size + "\n" +
-      "  PropagationElemeType{" + "\n    " + getPropagationElements.map(_.getClass.getSimpleName).groupBy((name: String) => name).map(a => a._1 + ":" + a._2.size).mkString("\n    ") + "\n" +
+      StronglyConnexComponentsList.map(_.stats).mkString("\n") + "\n" +
+      "  PropagationElementsNotInSCC:{" + "\n    " + getPropagationElements.filter(_.schedulingHandler == this).map(_.getClass.getSimpleName).groupBy((name: String) => name).map(a => a._1 + ":" + a._2.size).mkString("\n    ") + "\n" +
       "  }\n" +
       ")"
   }
@@ -683,6 +686,10 @@ abstract class StronglyConnectedComponent(val propagationElements: Iterable[Prop
   override def checkInternals(c: Checker) {
     for (e <- propagationElements) { e.checkInternals(c) }
   }
+
+  def stats:String = {
+    "{" + "\n    " + propagationElements.map(_.getClass.getSimpleName).groupBy((name: String) => name).map(a => a._1 + ":" + a._2.size).mkString("\n    ") + "\n  }"
+  }
 }
 
 class StronglyConnectedComponentNoSort(Elements: Iterable[PropagationElement],
@@ -695,6 +702,8 @@ class StronglyConnectedComponentNoSort(Elements: Iterable[PropagationElement],
       x.propagate()
     }
   }
+
+  override def stats: String = "  StronglyConnectedComponentNoSort" + super.stats
 }
 
 class StronglyConnectedComponentTopologicalSort(
@@ -819,6 +828,8 @@ class StronglyConnectedComponentTopologicalSort(
       scheduledElements = null
     }
   }
+
+  override def stats: String = "  StronglyConnectedComponentTopologicalSort" + super.stats
 }
 
 object PropagationElement {

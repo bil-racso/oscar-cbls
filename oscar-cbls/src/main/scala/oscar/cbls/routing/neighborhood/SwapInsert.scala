@@ -32,7 +32,7 @@ import scala.collection.immutable.SortedSet
 
 /**
  * inserts a non routed point, and removes a routed point from the same route
- *
+ * but not necessarily at the same place
  * The search complexity is O(n²).
  * @author yoann.guyot@cetic.be
  *
@@ -60,3 +60,4 @@ case class SwapInsert(unroutedNodesToInsert:()=>Iterable[Int],
     }
   }
 }
+

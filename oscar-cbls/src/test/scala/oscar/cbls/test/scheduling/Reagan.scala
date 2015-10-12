@@ -85,6 +85,9 @@ object Reagan extends App {
   
   val solver = new IFlatIRelax(planning)
  // println(model.dumpToDot(true, true))
+
+  println(model.stats)
+
   solver.solve(15, 10)
 
   println(planning.toAsciiArt)

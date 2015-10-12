@@ -42,6 +42,9 @@ import oscar.cbls.search.algo.{IdenticalAggregator, HotRestart}
  *                      ony one of the unrouted node in each class will be considered for insert
  *                      Int.MinValue is considered different to itself
  *                      if you set to None this will not be used at all
+ * @param hotRestartOnNextSymmetryClass when you have ymmetries among points to insert and hotRestart,
+ *                                  this option will try to have the hotRestart starting
+ *                                  at a different symmetry class than the last one.
  * @author renaud.delandtsheer@cetic.be
  * @author Florent Ghilain (UMONS)
  * @author yoann.guyot@cetic.be
@@ -52,10 +55,11 @@ case class InsertPoint(unroutedNodesToInsert: () => Iterable[Int],
                        neighborhoodName: String = null,
                        best: Boolean = false,
                        hotRestart: Boolean = true,
-                       nodeSymmetryClass:Option[Int => Int] = None) extends EasyRoutingNeighborhood(best, vrp, neighborhoodName) {
+                       nodeSymmetryClass:Option[Int => Int] = None,
+                       hotRestartOnNextSymmetryClass:Boolean = false)
+  extends EasyRoutingNeighborhood(best, vrp, neighborhoodName) {
 
   //the indice to start with for the exploration
-  //TODO: this is poor, we should do the hotRestart on the symmetry class instead of the node indice.
   var startIndice: Int = 0
 
   override def exploreNeighborhood(): Unit = {
@@ -71,7 +75,9 @@ case class InsertPoint(unroutedNodesToInsert: () => Iterable[Int],
     cleanRecordedMoves()
     val relevantNeighborsNow = relevantNeighbors()
 
-    for (insertedPoint <- iterationScheme) {
+    val iterationSchemeIterator = iterationScheme.iterator
+    while(iterationSchemeIterator.hasNext){
+      val insertedPoint = iterationSchemeIterator.next
       assert(!vrp.isRouted(insertedPoint),
         "The search zone should be restricted to unrouted nodes when inserting.")
 
@@ -85,7 +91,11 @@ case class InsertPoint(unroutedNodesToInsert: () => Iterable[Int],
 
         if (moveRequested(newObj)
           && submitFoundMove(InsertPointMove(beforeInsertedPoint, insertedPoint, newObj, this, neighborhoodNameToString))) {
-          startIndice = insertedPoint + 1
+          startIndice = if(hotRestartOnNextSymmetryClass){
+            if(iterationSchemeIterator.hasNext)
+              iterationSchemeIterator.next
+            else iterationScheme.head
+          } else insertedPoint + 1
           return
         }
       }
