@@ -26,7 +26,7 @@ import org.scalatest.Matchers
 import scala.util.Success
 
 @RunWith(classOf[JUnitRunner])
-class LPTester extends FunSuite with Matchers {
+class LPTester extends FunSuite with Matchers with OscarLinprogMatchers {
 
   test("Maximize objective under constraints") {
     for (_solver <- MPSolver.lpSolvers) {
@@ -42,8 +42,8 @@ class LPTester extends FunSuite with Matchers {
 
       endStatus should equal(SolutionFound)
 
-      x.value should equal(Some(100))
-      y.value should equal(Some(100))
+      x.value should equalWithTolerance(Some(100))
+      y.value should equalWithTolerance(Some(100))
 
       solver.objectiveValue should equal(Success(-2*100 + 5*100))
       solver.solutionQuality should equal(Success(Optimal))
@@ -66,10 +66,37 @@ class LPTester extends FunSuite with Matchers {
 
       endStatus should equal(SolutionFound)
 
-      x.value should equal(Some(150))
-      y.value should equal(Some(80))
+      x.value should equalWithTolerance(Some(150))
+      y.value should equalWithTolerance(Some(80))
 
       solver.objectiveValue should equal(Success(-2*150 + 5*80))
+      solver.solutionQuality should equal(Success(Optimal))
+
+      solver.release()
+    }
+  }
+
+  test("Add multiple constraints") {
+    for (_solver <- MPSolver.lpSolvers) {
+      implicit val solver: MPSolver[_] = _solver
+
+      val x = FloatVar("x", 0, 100)
+      val y = FloatVar("y", 0, 100)
+      val z = FloatVar("z", 0, 100)
+
+      maximize(1 * x + 2 * y + 3 * z)
+      add(x + y <= 75)
+      add(x + z <= 75)
+
+      val endStatus = solver.solve
+
+      endStatus should equal(SolutionFound)
+
+      x.value should equalWithTolerance(Some(0))
+      y.value should equalWithTolerance(Some(75))
+      z.value should equalWithTolerance(Some(75))
+
+      solver.objectiveValue should equal(Success(1*0 + 2*75 + 3*75))
       solver.solutionQuality should equal(Success(Optimal))
 
       solver.release()
@@ -134,8 +161,8 @@ class LPTester extends FunSuite with Matchers {
 
       endStatus should equal(SolutionFound)
 
-      x.value should equal(Some(100))
-      y.value should equal(Some(100))
+      x.value should equalWithTolerance(Some(100))
+      y.value should equalWithTolerance(Some(100))
 
       solver.objectiveValue should equal(Success(-2*100 + 5*100))
       solver.solutionQuality should equal(Success(Optimal))
@@ -153,8 +180,8 @@ class LPTester extends FunSuite with Matchers {
 
       endStatus should equal(SolutionFound)
 
-      x.value should equal(Some(0))
-      y.value should equal(Some(200))
+      x.value should equalWithTolerance(Some(0))
+      y.value should equalWithTolerance(Some(200))
 
       solver.objectiveValue should equal(Success(-2*0 + 5*200))
       solver.solutionQuality should equal(Success(Optimal))
@@ -177,8 +204,8 @@ class LPTester extends FunSuite with Matchers {
 
       endStatus should equal(SolutionFound)
 
-      x.value should equal(Some(100))
-      y.value should equal(Some(100))
+      x.value should equalWithTolerance(Some(100))
+      y.value should equalWithTolerance(Some(100))
 
       solver.objectiveValue should equal(Success(-2*100 + 5*100))
       solver.solutionQuality should equal(Success(Optimal))
@@ -195,8 +222,8 @@ class LPTester extends FunSuite with Matchers {
 
       endStatus should equal(SolutionFound)
 
-      x.value should equal(Some(120))
-      y.value should equal(Some(80))
+      x.value should equalWithTolerance(Some(120))
+      y.value should equalWithTolerance(Some(80))
 
       solver.objectiveValue should equal(Success(2*120 - 5*80))
       solver.solutionQuality should equal(Success(Optimal))

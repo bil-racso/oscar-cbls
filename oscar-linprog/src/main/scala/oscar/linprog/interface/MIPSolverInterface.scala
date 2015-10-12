@@ -17,7 +17,7 @@ package oscar.linprog.interface
 
 /**
  * This interface complements the [[MPSolverInterface]] by adding functions specific
- * to MIPs (such as the addition of SOS constraints).
+ * to MIPs (such as the addition of integer variables).
  *
  * @author acrucifix acr@n-side.com
  */

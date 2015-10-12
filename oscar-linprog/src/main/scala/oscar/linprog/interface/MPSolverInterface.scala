@@ -17,7 +17,7 @@ package oscar.linprog.interface
 
 import java.nio.file.Path
 
-import oscar.linprog.enums.{EndStatus, ExportFormat, SolutionQuality}
+import oscar.linprog.enums.{EndStatus, ModelExportFormat, SolutionQuality}
 
 /**
  * Solver-independent low-level interface describing a solver for mathematical programming problems
@@ -25,7 +25,7 @@ import oscar.linprog.enums.{EndStatus, ExportFormat, SolutionQuality}
  *
  * @author acrucifix acr@n-side.com
  */
-abstract class MPSolverInterface(solverOptions: (String, Any)*) {
+abstract class MPSolverInterface {
   // NOTE:
   // "varId" refers the column (starting at 0) representing the variable in the matrix of the problem.
   // "cstrId" refers the row (starting at 0) representing the constraint in the matrix of the problem.
@@ -176,7 +176,9 @@ abstract class MPSolverInterface(solverOptions: (String, Any)*) {
   /**
    * Saves the problem to the file at the given path in the given format.
    */
-  def exportModel(filepath: Path, format: ExportFormat): Unit
+  def exportModel(filepath: Path, format: ModelExportFormat): Unit
+
+  // TODO exportSolution
 
   /**
    * Returns the status after termination of the optimization.
@@ -252,6 +254,8 @@ abstract class MPSolverInterface(solverOptions: (String, Any)*) {
 
   /**
    * Adds a time limit to the solver.
+   *
+   * @param nSeconds the time limit duration in seconds.
    */
-  def setTimeout(t: Long)
+  def setTimeout(nSeconds: Long)
 }

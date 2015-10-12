@@ -15,7 +15,11 @@
 
 package oscar.linprog.enums
 
-sealed abstract class ExportFormat(val extension: String)
+sealed abstract class ModelExportFormat(val extension: String)
 
-case object LP extends ExportFormat("lp")
-case object MPS extends ExportFormat("mps")
+case object LP extends ModelExportFormat("lp")
+case object MPS extends ModelExportFormat("mps")
+
+object ModelExportFormat {
+  def formats: Seq[ModelExportFormat] = Seq(LP, MPS)
+}

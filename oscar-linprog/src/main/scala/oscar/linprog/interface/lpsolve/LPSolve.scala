@@ -182,7 +182,7 @@ class LPSolve extends MPSolverInterface with MIPSolverInterface {
       s"$solverName: the number of constraints contained by the raw solver does not correspond to the number of constraints added.")
   }
 
-  def exportModel(filepath: Path, format: ExportFormat): Unit =
+  def exportModel(filepath: Path, format: ModelExportFormat): Unit =
     format match {
       case LP => rawSolver.writeLp(filepath.toString) // Note: this is lp_solve's own lp format which is different from CPLEX's one.
       case MPS => rawSolver.writeFreeMps(filepath.toString)
@@ -255,5 +255,5 @@ class LPSolve extends MPSolverInterface with MIPSolverInterface {
 
   def configure(absPath: Path) = rawSolver.readParams(absPath.toString, "[Default]")
 
-  def setTimeout(t: Long) = rawSolver.setTimeout(t)
+  def setTimeout(nSeconds: Long) = rawSolver.setTimeout(nSeconds)
 }

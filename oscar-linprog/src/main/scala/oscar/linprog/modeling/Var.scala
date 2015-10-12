@@ -144,3 +144,8 @@ object IntVar {
 class BinaryVar(name: String)(implicit solver: MPSolver[_ <: MPSolverInterface with MIPSolverInterface]) extends IntVar(name, 0, 1) {
   solver.add(this)
 }
+
+object BinaryVar {
+  def apply(name: String)(implicit solver: MPSolver[_ <: MPSolverInterface with MIPSolverInterface]): BinaryVar =
+    new BinaryVar(name)
+}

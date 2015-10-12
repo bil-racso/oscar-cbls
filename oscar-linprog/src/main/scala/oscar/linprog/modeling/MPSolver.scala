@@ -277,7 +277,7 @@ class MPSolver[I <: MPSolverInterface](val solverInterface: I) {
   /**
    * Saves the problem to the file at the given path in the given format.
    */
-  def exportModel(filepath: Path, format: ExportFormat): Unit = {
+  def exportModel(filepath: Path, format: ModelExportFormat): Unit = {
     if(dirty) solverInterface.updateModel()
 
     solverInterface.exportModel(filepath, format)
