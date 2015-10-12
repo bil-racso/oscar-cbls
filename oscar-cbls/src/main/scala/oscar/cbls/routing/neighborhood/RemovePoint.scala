@@ -30,6 +30,11 @@ import oscar.cbls.search.algo.HotRestart
 /**
  * Removes a point of route.
  * The search complexity is O(n).
+ * @param predecessorsOfRoutedPointsToRemove: the predecessors ofthe points that we will try to remove
+ * @param vrp the routing problem
+ * @param neighborhoodName the name of the neighborhood, for verbosities
+ * @param best true for the best move, false for the first move
+ * @param hotRestart true if hotRestart is needed, false otherwise
  * @author renaud.delandtsheer@cetic.be
  * @author yoann.guyot@cetic.be
  * @author Florent Ghilain (UMONS)

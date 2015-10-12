@@ -789,13 +789,6 @@ object RoundRobinNoParam {
 class AndThen(a: Neighborhood, b: Neighborhood, maximalIntermediaryDegradation: Int = Int.MaxValue)
   extends NeighborhoodCombinator(a, b) {
 
-  /**
-   * this method is called by AndThen to notify the first step, and that it is now exploring successors of this step.
-   * this method is called before the step is actually taken.
-   * @param m
-   */
-  def notifyFirstStep(m: Move) {}
-
   override def getMove(obj: Objective, acceptanceCriteria: (Int, Int) => Boolean): SearchResult = {
 
     var secondMove: Move = null //the move performed by b

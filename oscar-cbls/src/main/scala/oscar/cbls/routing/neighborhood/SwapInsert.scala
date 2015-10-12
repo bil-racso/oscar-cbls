@@ -31,33 +31,38 @@ import oscar.cbls.search.move.Move
 import scala.collection.immutable.SortedSet
 
 /**
- * inserts a non routed point, and removes a routed point from the same route
- * but not necessarily at the same place
+ * inserts a non routed point, and removes a routed point
+ * but not necessarily at the same place, and not necessarily from the same route,
+ * unless you'v specified some searchZone parameters
  * The search complexity is O(n²).
+ * @param unroutedNodesToInsert the nodes that this neighborhood will try to insert SHOULD BE NOT ROUTED
+ * @param relevantNeighborsForInsertion a function that, for each unrouted node gives a list of routed node
+ *                          such that it is relevant to insert the unrouted node after this routed node
+ * @param vrp the routing problem
+ * @param neighborhoodName the name of this neighborhood
+ * @param best should we search for the best move or the first move?
+
+ * @param symmetryClassesOnInsert a function that input the ID of an unrouted node and returns a symmetry class;
+ *                      ony one of the unrouted node in each class will be considered for insert
+ *                      Int.MinValue is considered different to itself
+ *                      if you set to None this will not be used at all
+ * @param predecessorsOfRoutedPointsToRemove: the predecessors ofthe points that we will try to remove
+ * @param hotRestartOnInsert set to true fo a hot restart for the insertion, with symmety elimination if present
+ * @param hotRestartOnRemove true if hotRestart is needed, false otherwise
  * @author yoann.guyot@cetic.be
  *
  *         THIS IS EXPERIMENTAL
  */
 case class SwapInsert(unroutedNodesToInsert:()=>Iterable[Int],
-                      relevantNeighbors:()=>Int=>Iterable[Int],
+                      relevantNeighborsForInsertion:()=>Int=>Iterable[Int],
+                      predecessorsOfRoutedPointsToRemove:()=>Iterable[Int],
                       val vrp: VRP with NodesOfVehicle,
                       val neighborhoodName:String = null,
                       val best:Boolean = false,
-                      var insertionPoints:SortedSet[Int] = null)
+                      symmetryClassesOnInsert:Option[Int => Int] = None,
+                      val hotRestartOnInsert:Boolean = true,
+                      val hotRestartOnRemove:Boolean = true)
   extends AndThen(
-    new InsertPoint(unroutedNodesToInsert, relevantNeighbors, vrp, "SwapInsert.Insert"),
-    new RemovePoint(() => insertionPoints,vrp, "SwapInsert.Remove", false, false)){
-
-  /** this method is called by AndThen to notify the first step, and that it is now exploring successors of this step.
-    * this method is called before the step is actually taken.
-    * @param m
-    */
-  override def notifyFirstStep(m: Move){
-    m match{
-      case i:InsertPointMove =>
-        val vehicle = vrp.routeNr(i.beforeInsertedPoint).value
-        insertionPoints = vrp.nodesOfVehicle(vehicle).value
-    }
-  }
+    new InsertPoint(unroutedNodesToInsert, relevantNeighborsForInsertion, vrp, "SwapInsert.Insert",best,hotRestartOnInsert,symmetryClassesOnInsert,hotRestartOnInsert),
+    new RemovePoint(predecessorsOfRoutedPointsToRemove,vrp, "SwapInsert.Remove", best, hotRestartOnRemove)){
 }
-
