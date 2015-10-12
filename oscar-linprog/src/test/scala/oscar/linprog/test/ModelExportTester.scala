@@ -24,10 +24,10 @@ class ModelExportTester extends FunSuite with Matchers with BeforeAndAfter {
       format <- ModelExportFormat.formats
       _solver <- MPSolver.lpSolvers
     } {
-      implicit val solver: MPSolver[_] = _solver
+      implicit val solver = _solver
 
-      val x = FloatVar("x", 100, 150)
-      val y = FloatVar("y", 80, 170)
+      val x = MPFloatVar("x", 100, 150)
+      val y = MPFloatVar("y", 80, 170)
 
       maximize(-2 * x + 5 * y)
       add(x + y <= 200)
@@ -41,10 +41,10 @@ class ModelExportTester extends FunSuite with Matchers with BeforeAndAfter {
       format <- ModelExportFormat.formats
       _solver <- MPSolver.lpSolvers
     } {
-      implicit val solver: MPSolver[_] = _solver
+      implicit val solver = _solver
 
-      val x = FloatVar("x", 100, 150)
-      val y = FloatVar("y", 80, 170)
+      val x = MPFloatVar("x", 100, 150)
+      val y = MPFloatVar("y", 80, 170)
 
       maximize(-2 * x + 5 * y)
       add(x + y <= 200)

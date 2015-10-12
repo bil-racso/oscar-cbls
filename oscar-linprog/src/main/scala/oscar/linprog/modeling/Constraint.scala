@@ -28,4 +28,4 @@ class LinearConstraint(name: String, val constraintExpr: oscar.algebra.LinearCon
   solver.add(this)
 }
 
-class SOS1Constraint(name: String, val vars: Seq[AbstractMPVar[_]], val weights: Seq[Double])(implicit solver: MPSolver[_ <: MPSolverInterface with MIPSolverInterface]) extends AbstractMPConstraint(name)
+class SOS1Constraint(name: String, val vars: Seq[MPVar], val weights: Seq[Double])(implicit solver: MPSolver[_ <: MPSolverInterface with MIPSolverInterface]) extends AbstractMPConstraint(name)

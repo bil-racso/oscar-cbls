@@ -110,7 +110,7 @@ class MPSolver[I <: MPSolverInterface](val solverInterface: I) {
 
   /* VARIABLES */
 
-  protected var variables = Map[String, AbstractMPVar[_]]()
+  protected var variables = Map[String, MPVar]()
   protected var variableColumn = Map[String, Int]()
 
   def nVariables = {
@@ -120,42 +120,52 @@ class MPSolver[I <: MPSolverInterface](val solverInterface: I) {
     variables.size
   }
 
-  protected def register(variable: AbstractMPVar[_], colId: Int): Unit = {
+  protected def register(variable: MPVar, colId: Int): Unit = {
     setDirty()
+
+    require(!variables.contains(variable.name), s"There exists already a variable with name ${variable.name}.")
 
     variables += (variable.name -> variable)
     variableColumn += (variable.name -> colId)
   }
 
   /**
-   * Adds the given [[FloatVar]] to the problem
+   * Adds the given [[MPFloatVar]] to the problem
    */
-  def add(variable: FloatVar) = {
+  def addFloatVar(variable: MPVar) = {
+    require(variable.varType == Continuous, "Cannot add a non continuous variable using addFloatVar")
+
     val colId = solverInterface.addVariable(variable.name, variable.lowerBound, variable.upperBound)
 
     register(variable, colId)
   }
 
   /**
-   * Adds the given [[IntVar]] to the problem
+   * Adds the given [[MPIntVar]] to the problem
    */
-  def add(variable: IntVar)(implicit ev: I => MIPSolverInterface) = {
-    val colId = solverInterface.addIntegerVariable(variable.name, variable.lowerBound, variable.upperBound)
+  def addIntVar(variable: MPVar)(implicit ev: I => MIPSolverInterface) = {
+    require(variable.varType == Integer, "Cannot add a non integer variable using addIntVar")
+    require(variable.lowerBound.isValidInt, "The lower bound of an integer variable should be an integral number.")
+    require(variable.upperBound.isValidInt, "The upper bound of an integer variable should be an integral number.")
+
+    val colId = solverInterface.addIntegerVariable(variable.name, variable.lowerBound.toInt, variable.upperBound.toInt)
 
     register(variable, colId)
   }
 
   /**
-   * Adds the given [[BinaryVar]] to the problem
+   * Adds the given [[MPBinaryVar]] to the problem
    */
-  def add(variable: BinaryVar)(implicit ev: I => MIPSolverInterface) = {
+  def addBinaryVar(variable: MPVar)(implicit ev: I => MIPSolverInterface) = {
+    require(variable.varType == Binary, "Cannot add a non binary variable using addBinaryVar")
+
     val colId = solverInterface.addBinaryVariable(variable.name)
 
     register(variable, colId)
   }
 
   /**
-   * Returns the [[AbstractMPVar]] corresponding to the given name
+   * Returns the [[MPVar]] corresponding to the given name
    */
   def variable(name: String) = variables(name)
 
@@ -206,6 +216,8 @@ class MPSolver[I <: MPSolverInterface](val solverInterface: I) {
 
   protected def register(linearConstraint: LinearConstraint, rowId: Int): Unit = {
     setDirty()
+
+    require(!linearConstraints.contains(linearConstraint.name), s"There exists already a linear constraint with name ${linearConstraint.name}.")
 
     linearConstraints += (linearConstraint.name -> linearConstraint)
     linearConstraintRows += (linearConstraint.name -> rowId)

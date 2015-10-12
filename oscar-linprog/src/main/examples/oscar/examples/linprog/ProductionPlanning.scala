@@ -44,7 +44,7 @@ object ProductionPlanning extends MPModel(MPSolver.lp_solve) with App {
     Array( 0,  32,  0,  0,   0,   5,   0,  3,  0, 660, 0, 9)
   )
 
-  val x = Products.map(p => FloatVar("x", 0, 10000))
+  val x = Products.map(p => MPFloatVar("x", 0, 10000))
 
   maximize(sum(Products) { p => x(p) * c(p) })
   

@@ -18,25 +18,44 @@ package oscar.linprog.modeling
 import oscar.linprog.interface.{MIPSolverInterface, MPSolverInterface}
 
 /**
- * Defines a type T that can be converted to and from a Double
+ * Describes the type of an MPVar: [[Continuous]], [[Integer]] or [[Binary]]
  *
  * @author acrucifix acr@n-side.com
  */
-trait ToFromDouble[T] {
-  def toDouble(t: T): Double
-  def fromDouble(d: Double): T
+sealed abstract class MPVarType(name: String) {
+  def createVar(variable: MPVar)(implicit solver: MPSolver[_])
+
+  override def toString = name
 }
 
-object ToFromDouble {
-  implicit object _Double extends ToFromDouble[Double] {
-    def toDouble(d: Double) = d
-    def fromDouble(d: Double) = d
-  }
+/**
+ * Variables of this type can take values in the real domain.
+ *
+ * @author acrucifix acr@n-side.com
+ */
+case object Continuous extends MPVarType("continuous") {
+  def createVar(variable: MPVar)(implicit solver: MPSolver[_]) =
+    solver.addFloatVar(variable)
+}
 
-  implicit object _Int extends ToFromDouble[Int] {
-    def toDouble(i: Int) = i.toDouble
-    def fromDouble(d: Double) = d.toInt
-  }
+/**
+ * Variables of this type can take values in the integer domain.
+ *
+ * @author acrucifix acr@n-side.com
+ */
+case object Integer extends MPVarType("integer") {
+  def createVar(variable: MPVar)(implicit solver: MPSolver[_]) =
+    solver.asInstanceOf[MPSolver[_ <: MIPSolverInterface]].addIntVar(variable)
+}
+
+/**
+ * Variables of this type can take values in the binary (0-1) domain.
+ *
+ * @author acrucifix acr@n-side.com
+ */
+case object Binary extends MPVarType("binary") {
+  def createVar(variable: MPVar)(implicit solver: MPSolver[_]) =
+    solver.asInstanceOf[MPSolver[_ <: MIPSolverInterface]].addBinaryVar(variable)
 }
 
 /**
@@ -44,42 +63,42 @@ object ToFromDouble {
  *
  * @author acrucifix acr@n-side.com
  */
-abstract class AbstractMPVar[B](val name: String, val initialLowerBound: B, val initialUpperBound: B)(implicit solver: MPSolver[_], tfd: ToFromDouble[B]) extends oscar.algebra.Var {
+class MPVar private (var varType: MPVarType, val name: String, val initialLowerBound: Double, val initialUpperBound: Double)(implicit solver: MPSolver[_]) extends oscar.algebra.Var {
+  private var _lowerBound = initialLowerBound
+  private var _upperBound = initialUpperBound
 
-  private var _lowerBound: B = initialLowerBound
+  varType.createVar(this)
 
   /**
    * Returns the lower bound.
    */
-  def lowerBound: B = _lowerBound
+  def lowerBound = _lowerBound
 
   /**
    * Sets the lower bound to the given value.
    */
-  def lowerBound_=(value: B) = {
-    solver.updateLowerBound(name, tfd.toDouble(value))
+  def lowerBound_=(value: Double) = {
+    solver.updateLowerBound(name, value)
     _lowerBound = value
   }
-
-  private var _upperBound: B = initialUpperBound
 
   /**
    * Returns the upper bound.
    */
-  def upperBound: B = _upperBound
+  def upperBound = _upperBound
 
   /**
    * Sets the upper bound to the given value.
    */
-  def upperBound_=(value: B) = {
-    solver.updateUpperBound(name, tfd.toDouble(value))
+  def upperBound_=(value: Double) = {
+    solver.updateUpperBound(name, value)
     _upperBound = value
   }
 
   /**
    * Returns the bounds of this variable (lower, upper)
    */
-  def bounds: (B, B) = (lowerBound, upperBound)
+  def bounds = (lowerBound, upperBound)
 
   /**
    * Sets the bounds of this variable to the given value.
@@ -87,7 +106,7 @@ abstract class AbstractMPVar[B](val name: String, val initialLowerBound: B, val 
    * @param lb = the new value for the lower bound
    * @param ub = the new value for the upper bound
    */
-  def setBounds(lb: B, ub: B) = {
+  def setBounds(lb: Double, ub: Double) = {
     lowerBound = lb
     upperBound = ub
   }
@@ -107,45 +126,49 @@ abstract class AbstractMPVar[B](val name: String, val initialLowerBound: B, val 
 }
 
 /**
- * Represents a continuous variable
+ * Creates variables
  *
  * @author acrucifix acr@n-side.com
  */
-class FloatVar(name: String, initialLowerBound: Double = Double.NegativeInfinity, initialUpperBound: Double = Double.PositiveInfinity)(implicit solver: MPSolver[_]) extends AbstractMPVar[Double](name, initialLowerBound, initialUpperBound) {
-  solver.add(this)
-}
+object MPVar {
+  def float(name: String, lb: Double = Double.NegativeInfinity, ub: Double = Double.PositiveInfinity)(implicit solver: MPSolver[_ <: MPSolverInterface]): MPVar =
+    new MPVar(Continuous, name, lb, ub)
 
-object FloatVar {
-  def apply(name: String, lb: Double = Double.NegativeInfinity, ub: Double = Double.PositiveInfinity)(implicit solver: MPSolver[_]) =
-    new FloatVar(name, lb, ub)
+  def int(name: String, from: Int, to: Int)(implicit solver: MPSolver[_ <: MPSolverInterface with MIPSolverInterface]): MPVar =
+    new MPVar(Integer, name, from, to)
+
+  def binary(name: String)(implicit solver: MPSolver[_ <: MPSolverInterface with MIPSolverInterface]): MPVar =
+    new MPVar(Binary, name, 0.0, 1.0)
 }
 
 /**
- * Represents an integer variable
+ * Creates continuous variables
  *
  * @author acrucifix acr@n-side.com
  */
-class IntVar(name: String, initialLowerBound: Int, initialUpperBound: Int)(implicit solver: MPSolver[_ <: MPSolverInterface with MIPSolverInterface]) extends AbstractMPVar[Int](name, initialLowerBound, initialUpperBound) {
-  solver.add(this)
+object MPFloatVar {
+  def apply(name: String, lb: Double = Double.NegativeInfinity, ub: Double = Double.PositiveInfinity)(implicit solver: MPSolver[_ <: MPSolverInterface]): MPVar =
+    MPVar.float(name, lb, ub)
 }
 
-object IntVar {
-  def apply(name: String, from: Int, to: Int)(implicit solver: MPSolver[_ <: MPSolverInterface with MIPSolverInterface]): IntVar =
-    new IntVar(name, from, to)
-  def apply(name: String, range: Range)(implicit solver: MPSolver[_ <: MPSolverInterface with MIPSolverInterface]): IntVar =
+/**
+ * Creates integer variables
+ *
+ * @author acrucifix acr@n-side.com
+ */
+object MPIntVar {
+  def apply(name: String, from: Int, to: Int)(implicit solver: MPSolver[_ <: MPSolverInterface with MIPSolverInterface]): MPVar =
+    MPVar.int(name, from, to)
+  def apply(name: String, range: Range)(implicit solver: MPSolver[_ <: MPSolverInterface with MIPSolverInterface]): MPVar =
     apply(name, range.min, range.max)
 }
 
 /**
- * Represents a binary (0-1) integer variable
+ * Creates binary (0-1) integer variables
  *
  * @author acrucifix acr@n-side.com
  */
-class BinaryVar(name: String)(implicit solver: MPSolver[_ <: MPSolverInterface with MIPSolverInterface]) extends IntVar(name, 0, 1) {
-  solver.add(this)
-}
-
-object BinaryVar {
-  def apply(name: String)(implicit solver: MPSolver[_ <: MPSolverInterface with MIPSolverInterface]): BinaryVar =
-    new BinaryVar(name)
+object MPBinaryVar {
+  def apply(name: String)(implicit solver: MPSolver[_ <: MPSolverInterface with MIPSolverInterface]): MPVar =
+    MPVar.binary(name)
 }

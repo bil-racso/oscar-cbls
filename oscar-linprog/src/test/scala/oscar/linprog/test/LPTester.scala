@@ -15,6 +15,8 @@
 
 package oscar.linprog.test
 
+import java.nio.file.Paths
+
 import org.junit.runner.RunWith
 import org.scalatest.FunSuite
 import org.scalatest.junit.JUnitRunner
@@ -30,15 +32,17 @@ class LPTester extends FunSuite with Matchers with OscarLinprogMatchers {
 
   test("Maximize objective under constraints") {
     for (_solver <- MPSolver.lpSolvers) {
-      implicit val solver: MPSolver[_] = _solver
+      implicit val solver = _solver
 
-      val x = FloatVar("x", 100, 150)
-      val y = FloatVar("y", 80, 170)
+      val x = MPFloatVar("x", 100, 150)
+      val y = MPFloatVar("y", 80, 170)
 
       maximize(-2 * x + 5 * y)
       add(x + y <= 200)
 
       val endStatus = solver.solve
+
+      solver.exportModel(Paths.get("test.lp"), LP)
 
       endStatus should equal(SolutionFound)
 
@@ -54,10 +58,10 @@ class LPTester extends FunSuite with Matchers with OscarLinprogMatchers {
 
   test("Minimize objective under constraints") {
     for (_solver <- MPSolver.lpSolvers) {
-      implicit val solver: MPSolver[_] = _solver
+      implicit val solver = _solver
 
-      val x = FloatVar("x", 100, 150)
-      val y = FloatVar("y", 80, 170)
+      val x = MPFloatVar("x", 100, 150)
+      val y = MPFloatVar("y", 80, 170)
 
       minimize(-2 * x + 5 * y)
       add(x + y >= 200)
@@ -78,11 +82,11 @@ class LPTester extends FunSuite with Matchers with OscarLinprogMatchers {
 
   test("Add multiple constraints") {
     for (_solver <- MPSolver.lpSolvers) {
-      implicit val solver: MPSolver[_] = _solver
+      implicit val solver = _solver
 
-      val x = FloatVar("x", 0, 100)
-      val y = FloatVar("y", 0, 100)
-      val z = FloatVar("z", 0, 100)
+      val x = MPFloatVar("x", 0, 100)
+      val y = MPFloatVar("y", 0, 100)
+      val z = MPFloatVar("z", 0, 100)
 
       maximize(1 * x + 2 * y + 3 * z)
       add(x + y <= 75)
@@ -105,10 +109,10 @@ class LPTester extends FunSuite with Matchers with OscarLinprogMatchers {
 
   test("Detect infeasible problem") {
     for (_solver <- MPSolver.lpSolvers) {
-      implicit val solver: MPSolver[_] = _solver
+      implicit val solver = _solver
 
-      val x = FloatVar("x", 0, 10)
-      val y = FloatVar("y", 80, 170)
+      val x = MPFloatVar("x", 0, 10)
+      val y = MPFloatVar("y", 80, 170)
 
       minimize(-2 * x + 5 * y)
       add(x + y >= 200)
@@ -127,10 +131,10 @@ class LPTester extends FunSuite with Matchers with OscarLinprogMatchers {
 
   test("Detect unbounded problem") {
     for (_solver <- MPSolver.lpSolvers) {
-      implicit val solver: MPSolver[_] = _solver
+      implicit val solver = _solver
 
-      val x = FloatVar("x")
-      val y = FloatVar("y", 80, 170)
+      val x = MPFloatVar("x")
+      val y = MPFloatVar("y", 80, 170)
 
       minimize(-2 * x + 5 * y)
       add(x + y >= 200)
@@ -149,10 +153,10 @@ class LPTester extends FunSuite with Matchers with OscarLinprogMatchers {
 
   test("Update variable bounds") {
     for (_solver <- MPSolver.lpSolvers) {
-      implicit val solver: MPSolver[_] = _solver
+      implicit val solver = _solver
 
-      val x = FloatVar("x", 100, 150)
-      val y = FloatVar("y", 80, 170)
+      val x = MPFloatVar("x", 100, 150)
+      val y = MPFloatVar("y", 80, 170)
 
       maximize(-2 * x + 5 * y)
       add(x + y <= 200)
@@ -192,10 +196,10 @@ class LPTester extends FunSuite with Matchers with OscarLinprogMatchers {
 
   test("Update objective") {
     for (_solver <- MPSolver.lpSolvers) {
-      implicit val solver: MPSolver[_] = _solver
+      implicit val solver = _solver
 
-      val x = FloatVar("x", 100, 150)
-      val y = FloatVar("y", 80, 170)
+      val x = MPFloatVar("x", 100, 150)
+      val y = MPFloatVar("y", 80, 170)
 
       maximize(-2 * x + 5 * y)
       add(x + y <= 200)

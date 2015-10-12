@@ -15,8 +15,8 @@ class MIPTester extends FunSuite with Matchers with OscarLinprogMatchers {
     for (_solver <- MPSolver.mipSolvers) {
       implicit val solver = _solver
 
-      val x = IntVar("x", 0 to 100)
-      val y = FloatVar("y", 0, 100)
+      val x = MPIntVar("x", 0 to 100)
+      val y = MPFloatVar("y", 0, 100)
 
       maximize(100 * x + 1 * y)
       add(3 * x + 1 * y <= 14.5)
@@ -37,8 +37,8 @@ class MIPTester extends FunSuite with Matchers with OscarLinprogMatchers {
     for (_solver <- MPSolver.mipSolvers) {
       implicit val solver = _solver
 
-      val x = BinaryVar("x")
-      val y = FloatVar("y", 0, 100)
+      val x = MPBinaryVar("x")
+      val y = MPFloatVar("y", 0, 100)
 
       maximize(100 * x + 1 * y)
       add(3 * x + 1 * y <= 14.5)
