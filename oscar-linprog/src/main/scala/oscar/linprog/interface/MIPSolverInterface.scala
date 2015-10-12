@@ -21,7 +21,7 @@ package oscar.linprog.interface
  *
  * @author acrucifix acr@n-side.com
  */
-trait MIPSolverInterface { self: MPSolverInterface =>
+trait MIPSolverInterface extends MPSolverInterface {
   /**
    * Adds a new integer variable (column) to the model.
    *

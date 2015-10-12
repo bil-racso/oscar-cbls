@@ -21,7 +21,7 @@ package oscar.linprog.interface
  *
  * @author acrucifix acr@n-side.com
  */
-trait LPSolverInterface { self: MPSolverInterface =>
+trait LPSolverInterface extends MPSolverInterface {
   /**
    * Returns the reduced costs of the variables in the solution.
    *
