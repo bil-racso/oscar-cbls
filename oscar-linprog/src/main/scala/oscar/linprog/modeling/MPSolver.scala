@@ -140,7 +140,7 @@ class MPSolver[I <: MPSolverInterface](val solverInterface: I) {
    * Adds the given [[IntVar]] to the problem
    */
   def add(variable: IntVar)(implicit ev: I => MIPSolverInterface) = {
-    val colId = solverInterface.addIntegerVariable(variable.lowerBound, variable.upperBound, variable.name)
+    val colId = solverInterface.addIntegerVariable(variable.name, variable.lowerBound, variable.upperBound)
 
     register(variable, colId)
   }
@@ -295,4 +295,5 @@ object MPSolver {
     }
 
   def lpSolvers = List(MPSolver.lp_solveOption).flatten
+  def mipSolvers: List[MPSolver[_ <: MPSolverInterface with MIPSolverInterface]] = List(MPSolver.lp_solveOption).flatten
 }

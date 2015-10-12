@@ -32,4 +32,14 @@ package object modeling {
 
     new LinearConstraint(n, cstr)
   }
+
+  def subjectTo(cstrs: Seq[(String, LinearConstraintExpression)])(implicit solver: MPSolver[_]): Seq[(String, LinearConstraint)] =
+    cstrs map { case (name, cstr) =>
+      name -> add(cstr, name)
+    }
+
+  def subjectTo(cstrs: IndexedSeq[LinearConstraintExpression])(implicit solver: MPSolver[_]): IndexedSeq[LinearConstraint] =
+    cstrs map { cstr =>
+      add(cstr)
+    }
 }

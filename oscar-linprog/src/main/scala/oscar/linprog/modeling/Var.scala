@@ -116,7 +116,8 @@ class FloatVar(name: String, initialLowerBound: Double = Double.NegativeInfinity
 }
 
 object FloatVar {
-  def apply(name: String, lb: Double = Double.NegativeInfinity, ub: Double = Double.PositiveInfinity)(implicit solver: MPSolver[_]) = new FloatVar(name, lb, ub)
+  def apply(name: String, lb: Double = Double.NegativeInfinity, ub: Double = Double.PositiveInfinity)(implicit solver: MPSolver[_]) =
+    new FloatVar(name, lb, ub)
 }
 
 /**
@@ -126,6 +127,13 @@ object FloatVar {
  */
 class IntVar(name: String, initialLowerBound: Int, initialUpperBound: Int)(implicit solver: MPSolver[_ <: MPSolverInterface with MIPSolverInterface]) extends AbstractMPVar[Int](name, initialLowerBound, initialUpperBound) {
   solver.add(this)
+}
+
+object IntVar {
+  def apply(name: String, from: Int, to: Int)(implicit solver: MPSolver[_ <: MPSolverInterface with MIPSolverInterface]): IntVar =
+    new IntVar(name, from, to)
+  def apply(name: String, range: Range)(implicit solver: MPSolver[_ <: MPSolverInterface with MIPSolverInterface]): IntVar =
+    apply(name, range.min, range.max)
 }
 
 /**

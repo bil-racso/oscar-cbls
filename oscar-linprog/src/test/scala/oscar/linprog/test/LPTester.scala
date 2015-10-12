@@ -15,7 +15,9 @@
 
 package oscar.linprog.test
 
+import org.junit.runner.RunWith
 import org.scalatest.FunSuite
+import org.scalatest.junit.JUnitRunner
 import oscar.linprog.enums._
 import oscar.linprog.modeling._
 import oscar.algebra._
@@ -23,6 +25,7 @@ import org.scalatest.Matchers
 
 import scala.util.Success
 
+@RunWith(classOf[JUnitRunner])
 class LPTester extends FunSuite with Matchers {
 
   test("Maximize objective under constraints") {

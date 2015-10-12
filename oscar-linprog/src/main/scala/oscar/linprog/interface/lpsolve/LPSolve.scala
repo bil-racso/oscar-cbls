@@ -21,7 +21,7 @@ import _root_.lpsolve.LpSolve
 import oscar.linprog.enums._
 import oscar.linprog.interface._
 
-class LPSolve extends MPSolverInterface {
+class LPSolve extends MPSolverInterface with MIPSolverInterface {
   // NOTE:
   // variables (columns) and constraints (rows) indices of LpSolve are 1 based
 
@@ -43,6 +43,9 @@ class LPSolve extends MPSolverInterface {
   def modelName = rawSolver.getLpName
   def modelName_=(value: String) = rawSolver.setLpName(value)
 
+
+  /* OBJECTIVE */
+
   private var pendingObj: Option[(Array[Double], Array[Int])] = None
   private def flushPendingObj() = pendingObj = None
 
@@ -54,17 +57,22 @@ class LPSolve extends MPSolverInterface {
     if (minimize) rawSolver.setMinim()
     else          rawSolver.setMaxim()
 
-  private var pendingVars: Seq[(Int, String, Double, Double)] = Seq()
+
+  /* VARIABLES */
+
+  private var pendingVars: Seq[(Int, String, Double, Double, Boolean, Boolean)] = Seq()
   private def flushPendingVars() = pendingVars = Seq()
 
-  private def setVarProperties(varId: Int, name: String, lb: Double, ub: Double) = {
+  private def setVarProperties(varId: Int, name: String, lb: Double, ub: Double, integer: Boolean, binary: Boolean) = {
     rawSolver.setColName(varId + 1, name)
     setVarLB(varId, lb)
     setVarUB(varId, ub)
+    if(integer) setInteger(varId)
+    if(binary) setBinary(varId)
   }
 
-  def addVariable(name: String, lb: Double = Double.NegativeInfinity, ub: Double = Double.PositiveInfinity,
-    objCoef: Option[Double] = None, cstrCoefs: Option[Array[Double]] = None, cstrIds: Option[Array[Int]] = None): Int =
+  private def addVariable(name: String, lb: Double, ub: Double, objCoef: Option[Double],
+    cstrCoefs: Option[Array[Double]], cstrIds: Option[Array[Int]], integer: Boolean, binary: Boolean): Int =
     (objCoef, cstrCoefs, cstrIds) match {
       case (Some(oCoef), Some(cCoefs), Some(cIds)) =>
         // first arg is the length of the arrays
@@ -72,24 +80,51 @@ class LPSolve extends MPSolverInterface {
         // third arg is the row numbers of the constraints that should be updated (row 0 is the objective)
         rawSolver.addColumnex(cCoefs.length + 1, oCoef +: cCoefs, 0 +: cIds.map(_ + 1))
         val varId = this.nCols
-        setVarProperties(varId, name, lb, ub)
+        setVarProperties(varId, name, lb, ub, false, false)
         this.nCols += 1
         varId
       case (None, None, None) =>
         // Note: actual addition of the variable is delayed until the next updateModel
         val varId = this.nCols
-        pendingVars = (varId, name, lb, ub) +: pendingVars
+        pendingVars = (varId, name, lb, ub, integer, binary) +: pendingVars
         this.nCols += 1
         varId
       case _ =>
         throw new IllegalArgumentException("Parameters objCoef, cstrCoef, cstrId should all be defined or none.")
     }
 
+  def addVariable(name: String, lb: Double = Double.NegativeInfinity, ub: Double = Double.PositiveInfinity,
+    objCoef: Option[Double] = None, cstrCoefs: Option[Array[Double]] = None, cstrIds: Option[Array[Int]] = None) =
+    addVariable(name, lb, ub, objCoef, cstrCoefs, cstrIds, integer = false, binary = false)
+
+  def addIntegerVariable(name: String, from: Int, to: Int,
+    objCoef: Option[Double] = None, cstrCoefs: Option[Array[Double]] = None, cstrIds: Option[Array[Int]] = None): Int =
+    addVariable(name, from.toDouble, to.toDouble, objCoef, cstrCoefs, cstrIds, integer = true, binary = false)
+
+  def addBinaryVariable(name: String,
+    objCoef: Option[Double] = None, cstrCoefs: Option[Array[Double]] = None, cstrIds: Option[Array[Int]] = None): Int =
+    addVariable(name, 0.0, 1.0, objCoef, cstrCoefs, cstrIds, integer = false, binary = true)
+
   def getVarLB(varId: Int): Double = rawSolver.getLowbo(varId + 1)
   def setVarLB(varId: Int, lb: Double) = rawSolver.setLowbo(varId + 1, lb)
 
   def getVarUB(varId: Int): Double = rawSolver.getUpbo(varId + 1)
   def setVarUB(varId: Int, ub: Double) = rawSolver.setUpbo(varId + 1, ub)
+
+  def isInteger(varId: Int): Boolean = rawSolver.isInt(varId + 1)
+  def setInteger(varId: Int) = rawSolver.setInt(varId + 1, true)
+
+  def isBinary(varId: Int): Boolean = rawSolver.isBinary(varId + 1)
+  def setBinary(varId: Int) = rawSolver.setBinary(varId + 1, true)
+
+  def isFloat(varId: Int): Boolean = !isInteger(varId) && !isBinary(varId)
+  def setFloat(varId: Int) = {
+    if (isInteger(varId)) rawSolver.setInt(varId + 1, false)
+    if (isBinary(varId)) rawSolver.setBinary(varId + 1, false)
+  }
+
+
+  /* CONSTRAINTS */
 
   private var pendingCstrs: Seq[(Int, String, Array[Double], Array[Int], String, Double)] = Seq()
   private def flushPendingCstrs() = pendingCstrs = Seq()
@@ -116,11 +151,14 @@ class LPSolve extends MPSolverInterface {
   def setCstrCoef(cstrId: Int, varId: Int, coef: Double): Unit = rawSolver.setMat(cstrId + 1, varId + 1, coef)
   def setCstrRhs(cstrId: Int, rhs: Double): Unit = rawSolver.setRh(cstrId + 1, rhs)
 
+
+  /* SOLVE */
+
   def updateModel() = {
     rawSolver.resizeLp(nRows, nCols)
 
     // add the pending vars
-    pendingVars foreach { case (varId, name, lb, ub) => setVarProperties(varId, name, lb, ub) }
+    pendingVars foreach { case (varId, name, lb, ub, integer, binary) => setVarProperties(varId, name, lb, ub, integer, binary) }
     flushPendingVars()
 
     // add the pending objective
