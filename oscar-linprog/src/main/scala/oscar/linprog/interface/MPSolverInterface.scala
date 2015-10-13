@@ -56,22 +56,20 @@ abstract class MPSolverInterface {
   def modelName_=(value: String)
 
   /**
-   * Defines the objective function of the model as ''coef(0)*x[col(0)] + ... + coef(n)*x[col(n)]''.
+   * Defines the optimization direction and the objective function of the model.
    *
+   * The objective function is given as ''coef(0)*x[col(0)] + ... + coef(n)*x[col(n)]''.
+   *
+   * @param minimize optimization direction, true for minimization and false for maximization
    * @param coefs are the coefficients of the linear term
    * @param varIds indicates to which variable the coefficients refer to
    */
-  def addObjective(coefs: Array[Double], varIds: Array[Int]): Unit
+  def addObjective(minimize: Boolean, coefs: Array[Double], varIds: Array[Int]): Unit
 
   /**
    * Sets the coefficient of the variable in the objective to the given value.
    */
   def setObjCoef(varId: Int, coef: Double): Unit
-
-  /**
-   * Sets the problem as a minimization (true) or maximization (false) problem
-   */
-  def setOptimizationDirection(minimize: Boolean): Unit
 
   /**
    * Adds a new variable to the model.
@@ -218,17 +216,7 @@ abstract class MPSolverInterface {
   /**
    * Returns the value of the given variable in the solution.
    */
-  def getVarValue(varId: Int): Double
-
-  /**
-   * Returns the vector of the values taken by the linear constraints in the solution found by the solver.
-   */
-  def cstrSolution: Array[Double]
-
-  /**
-   * Returns the value taken by the specified linear constraint in the solution.
-   */
-  def getCstrValue(cstrId: Int): Double
+  def getVarValue(varId: Int): Double = solution(varId)
 
   /**
    * Solves the optimization problem.

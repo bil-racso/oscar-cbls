@@ -238,7 +238,7 @@ class LPTester extends FunSuite with Matchers with OscarLinprogMatchers {
       solver.solutionQuality should equal(Success(Optimal))
 
       // Update objective
-      solver.objective = 2 * x - 5 * y
+      maximize(2 * x - 5 * y)
 
       // Model has changed
       solver.solved should equal(false)

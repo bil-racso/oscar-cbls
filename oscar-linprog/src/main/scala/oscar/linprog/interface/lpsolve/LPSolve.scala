@@ -22,7 +22,7 @@ import oscar.linprog.enums._
 import oscar.linprog.interface._
 
 /**
- * Interface inOscaR for solver [[LpSolve]]
+ * Interface for solver [[LpSolve]]
  *
  * @author acrucifix acr@n-side.com
  */
@@ -52,16 +52,13 @@ class LPSolve extends MPSolverInterface with MIPSolverInterface {
 
   /* OBJECTIVE */
 
-  private var pendingObj: Option[(Array[Double], Array[Int])] = None
+  private var pendingObj: Option[(Boolean, Array[Double], Array[Int])] = None
   private def flushPendingObj() = pendingObj = None
 
-  def addObjective(coefs: Array[Double], varIds: Array[Int]): Unit = pendingObj = Some((coefs, varIds))
+  def addObjective(minimize: Boolean, coefs: Array[Double], varIds: Array[Int]): Unit =
+    pendingObj = Some((minimize, coefs, varIds))
 
   def setObjCoef(varId: Int, coef: Double): Unit = rawSolver.setObj(varId + 1, coef)
-
-  def setOptimizationDirection(minimize: Boolean): Unit =
-    if (minimize) rawSolver.setMinim()
-    else          rawSolver.setMaxim()
 
 
   /* VARIABLES */
@@ -78,8 +75,8 @@ class LPSolve extends MPSolverInterface with MIPSolverInterface {
     if(binary) setBinary(varId)
   }
 
-  private def addVariable(name: String, lb: Double, ub: Double, objCoef: Option[Double],
-    cstrCoefs: Option[Array[Double]], cstrIds: Option[Array[Int]], integer: Boolean, binary: Boolean): Int =
+  private def addVariable(name: String, lb: Double, ub: Double,
+    objCoef: Option[Double], cstrCoefs: Option[Array[Double]], cstrIds: Option[Array[Int]], integer: Boolean, binary: Boolean): Int =
     (objCoef, cstrCoefs, cstrIds) match {
       case (Some(oCoef), Some(cCoefs), Some(cIds)) =>
         // first arg is the length of the arrays
@@ -156,6 +153,7 @@ class LPSolve extends MPSolverInterface with MIPSolverInterface {
   }
 
   def setCstrCoef(cstrId: Int, varId: Int, coef: Double): Unit = rawSolver.setMat(cstrId + 1, varId + 1, coef)
+
   def setCstrRhs(cstrId: Int, rhs: Double): Unit = rawSolver.setRh(cstrId + 1, rhs)
 
 
@@ -169,8 +167,9 @@ class LPSolve extends MPSolverInterface with MIPSolverInterface {
     flushPendingVars()
 
     // add the pending objective
-    pendingObj foreach { case (oCoef, oVarId) =>
+    pendingObj foreach { case (min, oCoef, oVarId) =>
       rawSolver.setObjFnex(oCoef.length, oCoef, oVarId.map(_ + 1))
+      if(min) rawSolver.setMinim() else rawSolver.setMaxim()
     }
     flushPendingObj()
 
@@ -217,12 +216,6 @@ class LPSolve extends MPSolverInterface with MIPSolverInterface {
   def objectiveBound: Double = rawSolver.getObjBound
 
   def solution: Array[Double] = rawSolver.getPtrVariables
-
-  def getVarValue(varId: Int): Double = solution(varId)
-
-  def cstrSolution: Array[Double] = rawSolver.getPtrConstraints
-
-  def getCstrValue(cstrId: Int): Double = cstrSolution(cstrId)
 
   private[lpsolve] var aborted: Boolean = false
   rawSolver.putAbortfunc(new LPSolveAborter(this), this)

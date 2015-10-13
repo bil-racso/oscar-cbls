@@ -60,36 +60,6 @@ class MPSolver[I <: MPSolverInterface](val solverInterface: I) {
   def objective: LinearExpression = _objective
 
   /**
-   * Replaces the objective to be optimized by the given [[LinearExpression]]
-   */
-  def objective_=(value: LinearExpression) = {
-    setDirty()
-
-    _objective = value
-
-    val coefs = value.coef.values.toArray
-    val varIds = value.coef.keys.map(v => variableColumn(v.name)).toArray
-    solverInterface.addObjective(coefs, varIds)
-  }
-
-  private var _minimize: Boolean = true
-
-  /**
-   * Returns true if the problem is a minimization problem. That is the target is to minimize the given objective.
-   */
-  def minimize: Boolean = _minimize
-
-  /**
-   * Sets the problem as a minimization (true) or maximization (false) problem.
-   */
-  def minimize_=(value: Boolean) = {
-    setDirty()
-
-    _minimize = value
-    solverInterface.setOptimizationDirection(value)
-  }
-
-  /**
    * Sets the optimization objective and direction to the given values.
    *
    * @param obj the new objective expression
@@ -98,8 +68,11 @@ class MPSolver[I <: MPSolverInterface](val solverInterface: I) {
   def optimize(obj: LinearExpression, min: Boolean) = {
     setDirty()
 
-    objective = obj
-    minimize = min
+    _objective = obj
+
+    val coefs = obj.coef.values.toArray
+    val varIds = obj.coef.keys.map(v => variableColumn(v.name)).toArray
+    solverInterface.addObjective(min, coefs, varIds)
   }
 
   /**
