@@ -15,15 +15,12 @@
 
 package oscar.linprog.test
 
-import java.nio.file.Paths
-
 import org.junit.runner.RunWith
-import org.scalatest.FunSuite
+import org.scalatest.{FunSuite, Matchers}
 import org.scalatest.junit.JUnitRunner
+import oscar.algebra._
 import oscar.linprog.enums._
 import oscar.linprog.modeling._
-import oscar.algebra._
-import org.scalatest.Matchers
 
 import scala.util.Success
 
@@ -99,6 +96,34 @@ class LPTester extends FunSuite with Matchers with OscarLinprogMatchers {
       z.value should equalWithTolerance(Some(75))
 
       solver.objectiveValue should equal(Success(1*0 + 2*75 + 3*75))
+      solver.solutionQuality should equal(Success(Optimal))
+
+      solver.release()
+    }
+  }
+
+  test("Free variable") {
+    for (_solver <- MPSolver.lpSolvers) {
+      implicit val solver = _solver
+
+      val x = MPFloatVar("x")
+      val y = MPFloatVar("y", 0, 100)
+      val z = MPFloatVar("z", 0, 100)
+
+      maximize(10 * x + 2 * y + 3 * z)
+      add(x + y <= 75)
+      add(x + z <= 75)
+      add(x >= 0)
+
+      val endStatus = solver.solve
+
+      endStatus should equal(Solution)
+
+      x.value should equalWithTolerance(Some(75))
+      y.value should equalWithTolerance(Some(0))
+      z.value should equalWithTolerance(Some(0))
+
+      solver.objectiveValue should equal(Success(10*75 + 2*0 + 3*0))
       solver.solutionQuality should equal(Success(Optimal))
 
       solver.release()

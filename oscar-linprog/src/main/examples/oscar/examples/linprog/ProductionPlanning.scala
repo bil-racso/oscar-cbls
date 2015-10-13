@@ -15,8 +15,8 @@
 
 package oscar.examples.linprog
 
-import oscar.linprog.modeling._
 import oscar.algebra._
+import oscar.linprog.modeling._
 
 /**
  * A number of 12 products can be produced, each of which has a set of features, such as volume, weight, etc.

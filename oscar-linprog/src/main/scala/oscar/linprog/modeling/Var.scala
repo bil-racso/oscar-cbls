@@ -15,7 +15,7 @@
 
 package oscar.linprog.modeling
 
-import oscar.linprog.interface.{MPSolverInterface, MIPSolverInterface}
+import oscar.linprog.interface.{MIPSolverInterface, MPSolverInterface}
 
 /**
  * Describes the type of an MPVar: [[Continuous]], [[Integer]] or [[Binary]]

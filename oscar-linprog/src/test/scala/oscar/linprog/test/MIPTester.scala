@@ -1,12 +1,9 @@
 package oscar.linprog.test
 
-import java.nio.file.Paths
-
-import lpsolve.LpSolve
 import org.junit.runner.RunWith
-import org.scalatest.{Matchers, FunSuite}
 import org.scalatest.junit.JUnitRunner
-import oscar.linprog.enums.{LP, Optimal, Solution}
+import org.scalatest.{FunSuite, Matchers}
+import oscar.linprog.enums.{Optimal, Solution}
 import oscar.linprog.modeling._
 
 import scala.util.Success

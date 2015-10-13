@@ -15,7 +15,7 @@
 
 package oscar.linprog.modeling
 
-import oscar.linprog.interface.{MIPSolverInterface, MPSolverInterface}
+import oscar.linprog.interface.MIPSolverInterface
 
 /**
  * Represents a constraint in a mathematical programming model.

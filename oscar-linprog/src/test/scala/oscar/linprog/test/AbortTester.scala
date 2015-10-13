@@ -1,14 +1,14 @@
 package oscar.linprog.test
 
 import org.junit.runner.RunWith
-import org.scalatest.{Matchers, FunSuite}
 import org.scalatest.junit.JUnitRunner
+import org.scalatest.{FunSuite, Matchers}
+import oscar.algebra._
 import oscar.linprog.enums._
 import oscar.linprog.modeling._
-import oscar.algebra._
 
-import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
+import scala.concurrent.{Await, Future}
 import scala.util.Success
 
 @RunWith(classOf[JUnitRunner])

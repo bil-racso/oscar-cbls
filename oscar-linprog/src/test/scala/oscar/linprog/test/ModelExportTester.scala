@@ -3,8 +3,8 @@ package oscar.linprog.test
 import java.nio.file.Paths
 
 import org.junit.runner.RunWith
-import org.scalatest.{BeforeAndAfter, Matchers, FunSuite}
 import org.scalatest.junit.JUnitRunner
+import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
 import oscar.linprog.enums.ModelExportFormat
 import oscar.linprog.modeling._
 
