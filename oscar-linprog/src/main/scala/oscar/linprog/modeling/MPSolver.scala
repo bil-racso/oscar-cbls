@@ -110,7 +110,7 @@ class MPSolver[I <: MPSolverInterface](val solverInterface: I) {
 
   /* VARIABLES */
 
-  protected var variables = Map[String, MPVar]()
+  protected var variables = Map[String, MPVar[I]]()
   protected var variableColumn = Map[String, Int]()
 
   def nVariables = {
@@ -120,7 +120,7 @@ class MPSolver[I <: MPSolverInterface](val solverInterface: I) {
     variables.size
   }
 
-  protected def register(variable: MPVar, colId: Int): Unit = {
+  protected def register(variable: MPVar[I], colId: Int): Unit = {
     setDirty()
 
     require(!variables.contains(variable.name), s"There exists already a variable with name ${variable.name}.")
@@ -132,10 +132,10 @@ class MPSolver[I <: MPSolverInterface](val solverInterface: I) {
   /**
    * Adds the given [[MPFloatVar]] to the problem
    */
-  def addFloatVar(variable: MPVar) = {
-    require(variable.varType == Continuous, "Cannot add a non continuous variable using addFloatVar")
+  def addFloatVar(variable: MPVar[I]) = {
+    require(variable.initialVarType == Continuous, "Cannot add a non continuous variable using addFloatVar")
 
-    val colId = solverInterface.addVariable(variable.name, variable.lowerBound, variable.upperBound)
+    val colId = solverInterface.addVariable(variable.name, variable.initialLowerBound, variable.initialUpperBound)
 
     register(variable, colId)
   }
@@ -143,21 +143,21 @@ class MPSolver[I <: MPSolverInterface](val solverInterface: I) {
   /**
    * Adds the given [[MPIntVar]] to the problem
    */
-  def addIntVar(variable: MPVar)(implicit ev: I => MIPSolverInterface) = {
-    require(variable.varType == Integer, "Cannot add a non integer variable using addIntVar")
-    require(variable.lowerBound.isValidInt, "The lower bound of an integer variable should be an integral number.")
-    require(variable.upperBound.isValidInt, "The upper bound of an integer variable should be an integral number.")
+  def addIntVar(variable: MPVar[I])(implicit ev: I => MIPSolverInterface) = {
+    require(variable.initialVarType == Integer, "Cannot add a non integer variable using addIntVar")
+    require(variable.initialLowerBound.isValidInt, "The lower bound of an integer variable should be an integral number.")
+    require(variable.initialUpperBound.isValidInt, "The upper bound of an integer variable should be an integral number.")
 
-    val colId = solverInterface.addIntegerVariable(variable.name, variable.lowerBound.toInt, variable.upperBound.toInt)
+    val colId = solverInterface.addIntegerVariable(variable.name, variable.initialLowerBound.toInt, variable.initialUpperBound.toInt)
 
     register(variable, colId)
   }
 
   /**
-   * Adds the given [[MPBinaryVar]] to the problem
+   * Adds the given [[MPBinaryVar]] to the problem.
    */
-  def addBinaryVar(variable: MPVar)(implicit ev: I => MIPSolverInterface) = {
-    require(variable.varType == Binary, "Cannot add a non binary variable using addBinaryVar")
+  def addBinaryVar(variable: MPVar[I])(implicit ev: I => MIPSolverInterface) = {
+    require(variable.initialVarType == Binary, "Cannot add a non binary variable using addBinaryVar")
 
     val colId = solverInterface.addBinaryVariable(variable.name)
 
@@ -165,9 +165,68 @@ class MPSolver[I <: MPSolverInterface](val solverInterface: I) {
   }
 
   /**
-   * Returns the [[MPVar]] corresponding to the given name
+   * Returns the [[MPVar]] corresponding to the given name.
    */
   def variable(name: String) = variables(name)
+
+  /**
+   * Returns the type of the variable with the given name.
+   */
+  def getVarType(varName: String)(implicit ev: I => MIPSolverInterface): MPVarType = {
+    if(isInteger(varName))     Integer
+    else if(isBinary(varName)) Binary
+    else                       Continuous
+  }
+
+  /**
+   * Return true if the variable with the given name is of type [[Continuous]]
+   */
+  def isFloat(varName: String)(implicit ev: I => MIPSolverInterface): Boolean = solverInterface.isFloat(variableColumn(varName))
+
+  /**
+   * Return true if the variable with the given name is of type [[Integer]]
+   */
+  def isInteger(varName: String)(implicit ev: I => MIPSolverInterface): Boolean = solverInterface.isInteger(variableColumn(varName))
+
+  /**
+   * Return true if the variable with the given name is of type [[Binary]]
+   */
+  def isBinary(varName: String)(implicit ev: I => MIPSolverInterface): Boolean = solverInterface.isBinary(variableColumn(varName))
+
+  /**
+   * Updates the type of the variable
+   */
+  def updateVarType(varName: String, varType: MPVarType)(implicit ev: I => MIPSolverInterface) = {
+    setDirty()
+
+    if (getVarType(varName) != varType) {
+      varType match {
+        case Continuous => solverInterface.setFloat(variableColumn(varName))
+        case Integer    => solverInterface.setInteger(variableColumn(varName))
+        case Binary     => solverInterface.setBinary(variableColumn(varName))
+      }
+    }
+  }
+
+  /**
+   * Updates the type of the given variable to [[Continuous]]
+   */
+  def setFloat(varName: String)(implicit ev: I => MIPSolverInterface) = updateVarType(varName, Continuous)
+
+  /**
+   * Updates the type of the given variable to [[Integer]]
+   */
+  def setInteger(varName: String)(implicit ev: I => MIPSolverInterface) = updateVarType(varName, Integer)
+
+  /**
+   * Updates the type of the given variable to [[Binary]]
+   */
+  def setBinary(varName: String)(implicit ev: I => MIPSolverInterface) = updateVarType(varName, Binary)
+
+  /**
+   * Returns the lower bound of the variable with the given name.
+   */
+  def getLowerBound(varName: String): Double = solverInterface.getVarLB(variableColumn(varName))
 
   /**
    * Updates the lower bound of the variable with the given name to the given value
@@ -180,6 +239,11 @@ class MPSolver[I <: MPSolverInterface](val solverInterface: I) {
 
     solverInterface.setVarLB(variableColumn(varName), lb)
   }
+
+  /**
+   * Returns the upper bound of the variable with the given name.
+   */
+  def getUpperBound(varName: String): Double = solverInterface.getVarUB(variableColumn(varName))
 
   /**
    * Updates the upper bound of the variable with the given name to the given value
