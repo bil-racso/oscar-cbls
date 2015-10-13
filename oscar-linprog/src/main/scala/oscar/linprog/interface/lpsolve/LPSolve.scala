@@ -31,8 +31,9 @@ class LPSolve extends MPSolverInterface with MIPSolverInterface {
 
   val rawSolver = LpSolve.makeLp(0, 0)
 
-  // infinity in OscaR is represented by Double.PositiveInfinity
-  rawSolver.setInfinite(Double.PositiveInfinity)
+  // !!! BEWARE: DO NOT UNCOMMENT THE FOLLOWING LINE,
+  // current versions of LpSolve behaves unpredictably when changing the value of infinity.
+  // rawSolver.setInfinite(Double.PositiveInfinity) // infinity in OscaR is represented by Double.PositiveInfinity
 
   private var nCols = 0
   private var nRows = 0
@@ -80,7 +81,7 @@ class LPSolve extends MPSolverInterface with MIPSolverInterface {
         // third arg is the row numbers of the constraints that should be updated (row 0 is the objective)
         rawSolver.addColumnex(cCoefs.length + 1, oCoef +: cCoefs, 0 +: cIds.map(_ + 1))
         val varId = this.nCols
-        setVarProperties(varId, name, lb, ub, false, false)
+        setVarProperties(varId, name, lb, ub, integer = false, binary = false)
         this.nCols += 1
         varId
       case (None, None, None) =>

@@ -1,9 +1,12 @@
 package oscar.linprog.test
 
+import java.nio.file.Paths
+
+import lpsolve.LpSolve
 import org.junit.runner.RunWith
 import org.scalatest.{Matchers, FunSuite}
 import org.scalatest.junit.JUnitRunner
-import oscar.linprog.enums.{Optimal, SolutionFound}
+import oscar.linprog.enums.{LP, Optimal, SolutionFound}
 import oscar.linprog.modeling._
 
 import scala.util.Success
@@ -28,6 +31,30 @@ class MIPTester extends FunSuite with Matchers with OscarLinprogMatchers {
 
       x.value should equalWithTolerance(Some(4.0))
       y.value should equalWithTolerance(Some(14.5 - 3*4))
+
+      solver.release()
+    }
+  }
+
+  test("Maximize objective under constraints with integer variables only") {
+    // NOTE:
+    // this test might fail for LpSolve in case infinity is modified
+    for (_solver <- MPSolver.mipSolvers) {
+      implicit val solver = _solver
+
+      val x = MPIntVar("x", 0, 100)
+      val y = MPIntVar("y", 0, 100)
+
+      maximize(100 * x + 1 * y)
+      add(3 * x + 1 * y <= 14.5)
+
+      val endStatus = solver.solve
+
+      endStatus should equal(SolutionFound)
+      solver.solutionQuality should equal(Success(Optimal))
+
+      x.value should equalWithTolerance(Some(4.0))
+      y.value should equalWithTolerance(Some(2.0))
 
       solver.release()
     }
