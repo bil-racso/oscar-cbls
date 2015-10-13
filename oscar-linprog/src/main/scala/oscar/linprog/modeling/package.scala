@@ -41,8 +41,8 @@ package object modeling {
   def subjectTo(cstr: (String, LinearConstraintExpression))(implicit solver: MPSolver[_]): (String, LinearConstraint) =
     cstr._1 -> add(cstr._2, cstr._1)
 
-  def subjectTo(cstrs: IndexedSeq[LinearConstraintExpression])(implicit solver: MPSolver[_]): IndexedSeq[LinearConstraint] =
-    cstrs map { cstr =>
+  def subjectTo(cstrs: LinearConstraintExpression*)(implicit solver: MPSolver[_]): IndexedSeq[LinearConstraint] =
+    cstrs.toIndexedSeq map { cstr =>
       add(cstr)
     }
 }
