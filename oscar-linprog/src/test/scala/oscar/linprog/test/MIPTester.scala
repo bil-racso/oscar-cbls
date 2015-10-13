@@ -6,7 +6,7 @@ import lpsolve.LpSolve
 import org.junit.runner.RunWith
 import org.scalatest.{Matchers, FunSuite}
 import org.scalatest.junit.JUnitRunner
-import oscar.linprog.enums.{LP, Optimal, SolutionFound}
+import oscar.linprog.enums.{LP, Optimal, Solution}
 import oscar.linprog.modeling._
 
 import scala.util.Success
@@ -26,7 +26,7 @@ class MIPTester extends FunSuite with Matchers with OscarLinprogMatchers {
 
       val endStatus = solver.solve
 
-      endStatus should equal(SolutionFound)
+      endStatus should equal(Solution)
       solver.solutionQuality should equal(Success(Optimal))
 
       x.value should equalWithTolerance(Some(4.0))
@@ -50,7 +50,7 @@ class MIPTester extends FunSuite with Matchers with OscarLinprogMatchers {
 
       val endStatus = solver.solve
 
-      endStatus should equal(SolutionFound)
+      endStatus should equal(Solution)
       solver.solutionQuality should equal(Success(Optimal))
 
       x.value should equalWithTolerance(Some(4.0))
@@ -72,7 +72,7 @@ class MIPTester extends FunSuite with Matchers with OscarLinprogMatchers {
 
       val endStatus = solver.solve
 
-      endStatus should equal(SolutionFound)
+      endStatus should equal(Solution)
 
       // Set x as a continuous var => performs the linear relaxation of the above problem
       x.setFloat()
@@ -88,7 +88,7 @@ class MIPTester extends FunSuite with Matchers with OscarLinprogMatchers {
       // Reoptimize to get new solution
       val endStatus2 = solver.solve
 
-      endStatus2 should equal(SolutionFound)
+      endStatus2 should equal(Solution)
       solver.solutionQuality should equal(Success(Optimal))
 
       x.value should equalWithTolerance(Some(14.5/3.0))
@@ -112,7 +112,7 @@ class MIPTester extends FunSuite with Matchers with OscarLinprogMatchers {
 
       val endStatus = solver.solve
 
-      endStatus should equal(SolutionFound)
+      endStatus should equal(Solution)
 
       // Set y as an integer var
       y.setInteger()
@@ -129,7 +129,7 @@ class MIPTester extends FunSuite with Matchers with OscarLinprogMatchers {
       // Reoptimize to get new solution
       val endStatus2 = solver.solve
 
-      endStatus2 should equal(SolutionFound)
+      endStatus2 should equal(Solution)
       solver.solutionQuality should equal(Success(Optimal))
 
       x.value should equalWithTolerance(Some(0.0))
@@ -152,7 +152,7 @@ class MIPTester extends FunSuite with Matchers with OscarLinprogMatchers {
 
       val endStatus = solver.solve
 
-      endStatus should equal(SolutionFound)
+      endStatus should equal(Solution)
       solver.solutionQuality should equal(Success(Optimal))
 
       x.value should equalWithTolerance(Some(1))

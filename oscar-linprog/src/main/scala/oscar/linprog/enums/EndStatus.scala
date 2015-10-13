@@ -19,7 +19,7 @@ sealed abstract class EndStatus(val name: String) {
   override def toString: String = name
 }
 
-case object SolutionFound extends EndStatus("SOLUTION_FOUND")
+case object Solution extends EndStatus("SOLUTION_FOUND")
 case object Unbounded extends EndStatus("UNBOUNDED")
 case object Infeasible extends EndStatus("INFEASIBLE")
 case object NoSolution extends EndStatus("NO_SOLUTION")

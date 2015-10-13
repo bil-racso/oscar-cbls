@@ -21,6 +21,11 @@ import _root_.lpsolve.LpSolve
 import oscar.linprog.enums._
 import oscar.linprog.interface._
 
+/**
+ * Interface inOscaR for solver [[LpSolve]]
+ *
+ * @author acrucifix acr@n-side.com
+ */
 class LPSolve extends MPSolverInterface with MIPSolverInterface {
   // NOTE:
   // variables (columns) and constraints (rows) indices of LpSolve are 1 based
@@ -65,6 +70,7 @@ class LPSolve extends MPSolverInterface with MIPSolverInterface {
   private def flushPendingVars() = pendingVars = Seq()
 
   private def setVarProperties(varId: Int, name: String, lb: Double, ub: Double, integer: Boolean, binary: Boolean) = {
+    // NOTE: do not swap the next two lines, the name of the variable should be set before setting any property.
     rawSolver.setColName(varId + 1, name)
     setVarLB(varId, lb)
     setVarUB(varId, ub)
@@ -197,7 +203,7 @@ class LPSolve extends MPSolverInterface with MIPSolverInterface {
     case None => throw NotSolvedYet
   }
 
-  def hasSolution: Boolean = _endStatus.isDefined && endStatus == SolutionFound
+  def hasSolution: Boolean = _endStatus.isDefined && endStatus == Solution
 
   private var _solutionQuality: Option[SolutionQuality] = None
 
@@ -218,17 +224,21 @@ class LPSolve extends MPSolverInterface with MIPSolverInterface {
 
   def getCstrValue(cstrId: Int): Double = cstrSolution(cstrId)
 
-  def optimize(): EndStatus = {
+  private[lpsolve] var aborted: Boolean = false
+  rawSolver.putAbortfunc(new LPSolveAborter(this), this)
+
+  def optimize: EndStatus = {
     updateModel()
+    aborted = false
 
     val status = rawSolver.solve
 
     status match {
       case LpSolve.OPTIMAL =>
-        _endStatus = Some(SolutionFound)
+        _endStatus = Some(Solution)
         _solutionQuality = Some(Optimal)
       case LpSolve.SUBOPTIMAL =>
-        _endStatus = Some(SolutionFound)
+        _endStatus = Some(Solution)
         _solutionQuality = Some(Suboptimal)
       case LpSolve.INFEASIBLE =>
         _endStatus = Some(Infeasible)
@@ -245,6 +255,8 @@ class LPSolve extends MPSolverInterface with MIPSolverInterface {
     endStatus
   }
 
+  def abort(): Unit = aborted = true
+
   var _released = false
 
   def release(): Unit = {
@@ -253,6 +265,9 @@ class LPSolve extends MPSolverInterface with MIPSolverInterface {
   }
 
   def released: Boolean = _released
+
+
+  /* CONFIGURATION */
 
   def configure(absPath: Path) = rawSolver.readParams(absPath.toString, "[Default]")
 

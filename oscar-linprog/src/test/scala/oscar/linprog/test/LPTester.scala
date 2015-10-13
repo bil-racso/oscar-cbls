@@ -42,9 +42,7 @@ class LPTester extends FunSuite with Matchers with OscarLinprogMatchers {
 
       val endStatus = solver.solve
 
-      solver.exportModel(Paths.get("test.lp"), LP)
-
-      endStatus should equal(SolutionFound)
+      endStatus should equal(Solution)
 
       x.value should equalWithTolerance(Some(100))
       y.value should equalWithTolerance(Some(100))
@@ -68,7 +66,7 @@ class LPTester extends FunSuite with Matchers with OscarLinprogMatchers {
 
       val endStatus = solver.solve
 
-      endStatus should equal(SolutionFound)
+      endStatus should equal(Solution)
 
       x.value should equalWithTolerance(Some(150))
       y.value should equalWithTolerance(Some(80))
@@ -94,7 +92,7 @@ class LPTester extends FunSuite with Matchers with OscarLinprogMatchers {
 
       val endStatus = solver.solve
 
-      endStatus should equal(SolutionFound)
+      endStatus should equal(Solution)
 
       x.value should equalWithTolerance(Some(0))
       y.value should equalWithTolerance(Some(75))
@@ -163,7 +161,7 @@ class LPTester extends FunSuite with Matchers with OscarLinprogMatchers {
 
       val endStatus = solver.solve
 
-      endStatus should equal(SolutionFound)
+      endStatus should equal(Solution)
 
       x.value should equalWithTolerance(Some(100))
       y.value should equalWithTolerance(Some(100))
@@ -182,7 +180,7 @@ class LPTester extends FunSuite with Matchers with OscarLinprogMatchers {
       // Reoptimize to get new solution
       val endStatus2 = solver.solve
 
-      endStatus should equal(SolutionFound)
+      endStatus should equal(Solution)
 
       x.value should equalWithTolerance(Some(0))
       y.value should equalWithTolerance(Some(200))
@@ -206,7 +204,7 @@ class LPTester extends FunSuite with Matchers with OscarLinprogMatchers {
 
       val endStatus = solver.solve
 
-      endStatus should equal(SolutionFound)
+      endStatus should equal(Solution)
 
       x.value should equalWithTolerance(Some(100))
       y.value should equalWithTolerance(Some(100))
@@ -224,7 +222,7 @@ class LPTester extends FunSuite with Matchers with OscarLinprogMatchers {
       // Reoptimize to get new solution
       val endStatus2 = solver.solve
 
-      endStatus should equal(SolutionFound)
+      endStatus should equal(Solution)
 
       x.value should equalWithTolerance(Some(120))
       y.value should equalWithTolerance(Some(80))

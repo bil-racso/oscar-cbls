@@ -20,7 +20,6 @@ sealed abstract class SolveStatus(val name: String) {
 }
 
 case object NotSolved extends SolveStatus("NOT_SOLVED")
-case object Solving extends SolveStatus("SOLVING")
 case object Solved extends SolveStatus("SOLVED")
 
 case object NotSolvedYet extends Exception("Problem is not solved yet.")

@@ -235,7 +235,15 @@ abstract class MPSolverInterface {
    *
    * This operation is blocking until the optimization ends.
    */
-  def optimize(): EndStatus
+  def optimize: EndStatus
+
+  /**
+   * Aborts the current solve (if any).
+   *
+   * This method gracefully terminates the previous call to [[MPSolverInterface.optimize]].
+   * This method should not impact the successive calls to [[MPSolverInterface.optimize]].
+   */
+  def abort(): Unit
 
   /**
    * Releases the memory of this solver.

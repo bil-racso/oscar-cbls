@@ -35,7 +35,7 @@ class MPSolver[I <: MPSolverInterface](val solverInterface: I) {
   protected def setDirty() = _solveStatus = NotSolved
 
   protected def asSuccessIfSolFound[B](value: B): Try[B] = endStatus.flatMap { status =>
-    if (status == SolutionFound) Success(value)
+    if (status == Solution) Success(value)
     else                         Failure(NoSolutionFound(status))
   }
 
@@ -261,7 +261,7 @@ class MPSolver[I <: MPSolverInterface](val solverInterface: I) {
    * Returns the value of the variable with the given name in the current solution (if any)
    */
   def value(varName: String): Try[Double] = endStatus.flatMap { status =>
-    if (status == SolutionFound) Success(solverInterface.getVarValue(variableColumn(varName)))
+    if (status == Solution) Success(solverInterface.getVarValue(variableColumn(varName)))
     else                         Failure(NoSolutionFound(status))
   }
 
@@ -315,13 +315,20 @@ class MPSolver[I <: MPSolverInterface](val solverInterface: I) {
    * @return the [[EndStatus]] of the solve
    */
   def solve: EndStatus = {
-    _solveStatus = Solving
     solverInterface.updateModel()
-    val es = solverInterface.optimize()
+    val es = solverInterface.optimize
     _solveStatus = Solved
     _endStatus = Success(es)
     es
   }
+
+  /**
+   * Aborts the current solve (if any).
+   *
+   * The method gracefully terminates the previous unterminated call to [[MPSolver.solve]].
+   * The method has no effect on successive calls to [[MPSolver.solve]].
+   */
+  def abort(): Unit = solverInterface.abort()
 
   /**
    * Returns true if the current problem has been solved
@@ -338,7 +345,7 @@ class MPSolver[I <: MPSolverInterface](val solverInterface: I) {
   /**
    * Returns true if there is a solution to the current problem
    */
-  def hasSolution: Boolean = solved && endStatus == Success(SolutionFound)
+  def hasSolution: Boolean = solved && endStatus == Success(Solution)
 
   /**
    * Returns the [[SolutionQuality]] of the solution if any
