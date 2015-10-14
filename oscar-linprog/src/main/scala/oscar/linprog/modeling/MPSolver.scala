@@ -67,9 +67,8 @@ class MPSolver[I <: MPSolverInterface](val solverInterface: I) {
 
     _objective = obj
 
-    val coefs = obj.coef.values.toArray
-    val varIds = obj.coef.keys.map(v => variableColumn(v.name)).toArray
-    solverInterface.addObjective(min, coefs, varIds)
+    val (varIds, coefs) = obj.coef.map { case(vari, coef) => (variableColumn(vari.name), coef)}.unzip
+    solverInterface.addObjective(min, coefs.toArray, varIds.toArray)
   }
 
   /**
@@ -261,10 +260,11 @@ class MPSolver[I <: MPSolverInterface](val solverInterface: I) {
    * Adds the given [[LinearConstraint]] to the model
    */
   def add(linearConstraint: LinearConstraint[I]) = {
-    val coefs = linearConstraint.constraintExpr.linExpr.coef.values.toArray
-    val varIds = linearConstraint.constraintExpr.linExpr.coef.keys.map(v => variableColumn(v.name)).toArray
+    val (varIds, coefs) = linearConstraint.constraintExpr.linExpr.coef.map {
+      case (vari, coef) => (variableColumn(vari.name), coef)
+    }.unzip
 
-    val rowId = solverInterface.addConstraint(linearConstraint.name, coefs, varIds, linearConstraint.constraintExpr.sense.symbol, -linearConstraint.constraintExpr.linExpr.cte)
+    val rowId = solverInterface.addConstraint(linearConstraint.name, coefs.toArray, varIds.toArray, linearConstraint.constraintExpr.sense.symbol, -linearConstraint.constraintExpr.linExpr.cte)
 
     register(linearConstraint, rowId)
   }
