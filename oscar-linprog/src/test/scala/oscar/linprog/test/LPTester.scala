@@ -36,7 +36,7 @@ class LPTester extends OscarLinprogTester {
 
     val endStatus = solver.solve
 
-    endStatus should equal(Solution)
+    endStatus should equal(SolutionFound)
 
     x.value should equalWithTolerance(Some(100))
     y.value should equalWithTolerance(Some(100))
@@ -54,7 +54,7 @@ class LPTester extends OscarLinprogTester {
 
     val endStatus = solver.solve
 
-    endStatus should equal(Solution)
+    endStatus should equal(SolutionFound)
 
     x.value should equalWithTolerance(Some(150))
     y.value should equalWithTolerance(Some(80))
@@ -74,7 +74,7 @@ class LPTester extends OscarLinprogTester {
 
     val endStatus = solver.solve
 
-    endStatus should equal(Solution)
+    endStatus should equal(SolutionFound)
 
     x.value should equalWithTolerance(Some(0))
     y.value should equalWithTolerance(Some(75))
@@ -96,7 +96,7 @@ class LPTester extends OscarLinprogTester {
 
     val endStatus = solver.solve
 
-    endStatus should equal(Solution)
+    endStatus should equal(SolutionFound)
 
     x.value should equalWithTolerance(Some(75))
     y.value should equalWithTolerance(Some(0))
@@ -117,7 +117,7 @@ class LPTester extends OscarLinprogTester {
 
     endStatus should equal(Infeasible)
 
-    intercept[NoSolutionFound] {
+    intercept[NoSolutionFoundException] {
       solver.solutionQuality
     }
   }
@@ -133,7 +133,7 @@ class LPTester extends OscarLinprogTester {
 
     endStatus should equal(Unbounded)
 
-    intercept[NoSolutionFound] {
+    intercept[NoSolutionFoundException] {
       solver.solutionQuality
     }
   }
@@ -147,7 +147,7 @@ class LPTester extends OscarLinprogTester {
 
     val endStatus = solver.solve
 
-    endStatus should equal(Solution)
+    endStatus should equal(SolutionFound)
 
     x.value should equalWithTolerance(Some(100))
     y.value should equalWithTolerance(Some(100))
@@ -166,7 +166,7 @@ class LPTester extends OscarLinprogTester {
     // Reoptimize to get new solution
     val endStatus2 = solver.solve
 
-    endStatus2 should equal(Solution)
+    endStatus2 should equal(SolutionFound)
 
     x.value should equalWithTolerance(Some(0))
     y.value should equalWithTolerance(Some(200))
@@ -184,7 +184,7 @@ class LPTester extends OscarLinprogTester {
 
     val endStatus = solver.solve
 
-    endStatus should equal(Solution)
+    endStatus should equal(SolutionFound)
 
     x.value should equalWithTolerance(Some(100))
     y.value should equalWithTolerance(Some(100))
@@ -202,7 +202,7 @@ class LPTester extends OscarLinprogTester {
     // Reoptimize to get new solution
     val endStatus2 = solver.solve
 
-    endStatus2 should equal(Solution)
+    endStatus2 should equal(SolutionFound)
 
     x.value should equalWithTolerance(Some(120))
     y.value should equalWithTolerance(Some(80))

@@ -9,9 +9,8 @@ import oscar.linprog.modeling._
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
-import scala.util.Success
-
 import scala.language.postfixOps
+import scala.util.Success
 
 @RunWith(classOf[JUnitRunner])
 class AbortTester extends OscarLinprogTester {
@@ -28,7 +27,7 @@ class AbortTester extends OscarLinprogTester {
     val binSize = n * maxSize / 2
 
     minimize(sum(ys))
-    subjectTo {
+    subjectTo(
       (for {
         i <- 0 until n
       } yield {
@@ -38,8 +37,8 @@ class AbortTester extends OscarLinprogTester {
           j <- 0 until n
         } yield {
           s"unicity[$j]" -> (sum(0 until n)(i => xs(i)(j)) == Const(1.0))
-        })
-    }
+        }): _*
+    )
 
     val startTime = System.currentTimeMillis()
 
@@ -74,7 +73,7 @@ class AbortTester extends OscarLinprogTester {
 
     val endStatus = solver.solve
 
-    endStatus should equal(Solution)
+    endStatus should equal(SolutionFound)
 
     x.value should equalWithTolerance(Some(100))
     y.value should equalWithTolerance(Some(100))

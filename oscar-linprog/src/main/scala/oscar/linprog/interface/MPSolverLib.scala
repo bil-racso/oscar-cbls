@@ -35,7 +35,8 @@ abstract class MPSolverLib[+I <: MPSolverInterface](val name: String) {
 object MPSolverLib {
   def canInstantiate[I <: MPSolverInterface](lib: MPSolverLib[I]): Boolean =
     try {
-      lib.createSolver
+      val s = lib.createSolver
+      s.release()
       true
     } catch {
       case e: UnsatisfiedLinkError => println(e.getMessage); false

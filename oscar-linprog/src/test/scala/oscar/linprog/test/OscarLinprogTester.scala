@@ -1,6 +1,6 @@
 package oscar.linprog.test
 
-import org.scalatest.{BeforeAndAfter, Matchers, FunSuite}
+import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
 import oscar.linprog.interface.{MPSolverInterface, MPSolverLib}
 import oscar.linprog.modeling.MPSolver
 

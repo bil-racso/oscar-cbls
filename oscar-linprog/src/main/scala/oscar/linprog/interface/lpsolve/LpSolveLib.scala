@@ -15,7 +15,7 @@
 
 package oscar.linprog.interface.lpsolve
 
-import oscar.linprog.enums.{MPS, LP}
+import oscar.linprog.enums.{LP, MPS}
 import oscar.linprog.interface.MPSolverLib
 
 case object LPSolveLib extends MPSolverLib[LPSolve]("lp_solve") {

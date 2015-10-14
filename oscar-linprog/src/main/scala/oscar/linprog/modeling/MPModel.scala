@@ -15,7 +15,7 @@
 
 package oscar.linprog.modeling
 
-import oscar.linprog.interface.{MPSolverLib, MPSolverInterface}
+import oscar.linprog.interface.{MPSolverInterface, MPSolverLib}
 
 /**
  * Brings an implicit [[MPSolver]] in the context for modeling mathematical programming problems.

@@ -4,7 +4,6 @@ import java.nio.file.Paths
 
 import org.junit.runner.RunWith
 import org.scalatest.junit.JUnitRunner
-import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
 import oscar.linprog.enums.ModelExportFormat
 import oscar.linprog.interface.MPSolverLib
 import oscar.linprog.modeling._

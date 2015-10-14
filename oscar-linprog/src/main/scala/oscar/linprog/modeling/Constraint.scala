@@ -15,7 +15,7 @@
 
 package oscar.linprog.modeling
 
-import oscar.linprog.interface.{InfeasibilityAnalysisInterface, MPSolverInterface, MIPSolverInterface}
+import oscar.linprog.interface.{InfeasibilityAnalysisInterface, MPSolverInterface}
 
 /**
  * Represents a constraint in a mathematical programming model.

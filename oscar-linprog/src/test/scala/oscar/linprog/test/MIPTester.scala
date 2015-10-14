@@ -2,7 +2,7 @@ package oscar.linprog.test
 
 import org.junit.runner.RunWith
 import org.scalatest.junit.JUnitRunner
-import oscar.linprog.enums.{Optimal, Solution}
+import oscar.linprog.enums.{Optimal, SolutionFound}
 import oscar.linprog.interface.MPSolverLib
 import oscar.linprog.modeling._
 
@@ -20,7 +20,7 @@ class MIPTester extends OscarLinprogTester {
 
     val endStatus = solver.solve
 
-    endStatus should equal(Solution)
+    endStatus should equal(SolutionFound)
     solver.solutionQuality should equal(Success(Optimal))
 
     x.value should equalWithTolerance(Some(4.0))
@@ -38,7 +38,7 @@ class MIPTester extends OscarLinprogTester {
 
     val endStatus = solver.solve
 
-    endStatus should equal(Solution)
+    endStatus should equal(SolutionFound)
     solver.solutionQuality should equal(Success(Optimal))
 
     x.value should equalWithTolerance(Some(4.0))
@@ -54,7 +54,7 @@ class MIPTester extends OscarLinprogTester {
 
     val endStatus = solver.solve
 
-    endStatus should equal(Solution)
+    endStatus should equal(SolutionFound)
 
     // Set x as a continuous var => performs the linear relaxation of the above problem
     x.setFloat()
@@ -70,7 +70,7 @@ class MIPTester extends OscarLinprogTester {
     // Reoptimize to get new solution
     val endStatus2 = solver.solve
 
-    endStatus2 should equal(Solution)
+    endStatus2 should equal(SolutionFound)
     solver.solutionQuality should equal(Success(Optimal))
 
     x.value should equalWithTolerance(Some(14.5/3.0))
@@ -88,7 +88,7 @@ class MIPTester extends OscarLinprogTester {
 
     val endStatus = solver.solve
 
-    endStatus should equal(Solution)
+    endStatus should equal(SolutionFound)
 
     // Set y as an integer var
     y.setInteger()
@@ -105,7 +105,7 @@ class MIPTester extends OscarLinprogTester {
     // Reoptimize to get new solution
     val endStatus2 = solver.solve
 
-    endStatus2 should equal(Solution)
+    endStatus2 should equal(SolutionFound)
     solver.solutionQuality should equal(Success(Optimal))
 
     x.value should equalWithTolerance(Some(0.0))
@@ -122,7 +122,7 @@ class MIPTester extends OscarLinprogTester {
 
     val endStatus = solver.solve
 
-    endStatus should equal(Solution)
+    endStatus should equal(SolutionFound)
     solver.solutionQuality should equal(Success(Optimal))
 
     x.value should equalWithTolerance(Some(1))

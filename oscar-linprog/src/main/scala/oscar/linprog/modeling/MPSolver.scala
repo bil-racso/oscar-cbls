@@ -20,7 +20,6 @@ import java.nio.file.Path
 import oscar.algebra.{Const, LinearExpression}
 import oscar.linprog.enums._
 import oscar.linprog.interface._
-import oscar.linprog.interface.lpsolve.LPSolve
 
 import scala.util.{Failure, Success, Try}
 
@@ -232,8 +231,8 @@ class MPSolver[I <: MPSolverInterface](val solverInterface: I) {
    * Returns the value of the variable with the given name in the current solution (if any)
    */
   def value(varName: String): Try[Double] = endStatus.flatMap { status =>
-    if (status == Solution) Success(solverInterface.getVarValue(variableColumn(varName)))
-    else                         Failure(NoSolutionFound(status))
+    if (status == SolutionFound) Success(solverInterface.getVarValue(variableColumn(varName)))
+    else                         Failure(NoSolutionFoundException(status))
   }
 
 
@@ -306,7 +305,7 @@ class MPSolver[I <: MPSolverInterface](val solverInterface: I) {
    */
   def solved: Boolean = solveStatus == Solved
 
-  private var _endStatus: Try[EndStatus] = Failure(NotSolvedYet)
+  private var _endStatus: Try[EndStatus] = Failure(NotSolvedYetException)
 
   /**
    * Returns the end status of the last solve (if any)
@@ -316,11 +315,11 @@ class MPSolver[I <: MPSolverInterface](val solverInterface: I) {
   /**
    * Returns true if there is a solution to the current problem
    */
-  def hasSolution: Boolean = solved && endStatus == Success(Solution)
+  def hasSolution: Boolean = solved && endStatus == Success(SolutionFound)
 
   protected def asSuccessIfSolFound[B](value: B): Try[B] = endStatus.flatMap { status =>
-    if (status == Solution) Success(value)
-    else                    Failure(NoSolutionFound(status))
+    if (status == SolutionFound) Success(value)
+    else                    Failure(NoSolutionFoundException(status))
   }
 
   /**

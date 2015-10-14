@@ -14,10 +14,10 @@
  ******************************************************************************/
 package oscar.algebra
 
-sealed abstract class ConstraintSense(val symbol: String) {
+sealed abstract class ConstraintSense(val symbol: String, val name: String) {
   override def toString = symbol
 }
 
-case object LQ extends ConstraintSense("<=")
-case object GQ extends ConstraintSense(">=")
-case object EQ extends ConstraintSense("==")
+case object LQ extends ConstraintSense("<=", "LQ")
+case object GQ extends ConstraintSense(">=", "GQ")
+case object EQ extends ConstraintSense("==", "EQ")

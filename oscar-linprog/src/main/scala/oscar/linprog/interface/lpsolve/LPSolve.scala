@@ -201,16 +201,16 @@ class LPSolve extends MPSolverInterface with MIPSolverInterface {
 
   def endStatus: EndStatus = _endStatus match {
     case Some(es) => es
-    case None => throw NotSolvedYet
+    case None => throw NotSolvedYetException
   }
 
-  def hasSolution: Boolean = _endStatus.isDefined && endStatus == Solution
+  def hasSolution: Boolean = _endStatus.isDefined && endStatus == SolutionFound
 
   private var _solutionQuality: Option[SolutionQuality] = None
 
   def solutionQuality: SolutionQuality = _solutionQuality match {
     case Some(sq) => sq
-    case None => if(_endStatus.isDefined) throw NoSolutionFound(endStatus) else throw NotSolvedYet
+    case None => if(_endStatus.isDefined) throw NoSolutionFoundException(endStatus) else throw NotSolvedYetException
   }
 
   def objectiveValue: Double = rawSolver.getObjective
@@ -230,21 +230,21 @@ class LPSolve extends MPSolverInterface with MIPSolverInterface {
 
     status match {
       case LpSolve.OPTIMAL =>
-        _endStatus = Some(Solution)
+        _endStatus = Some(SolutionFound)
         _solutionQuality = Some(Optimal)
       case LpSolve.SUBOPTIMAL =>
-        _endStatus = Some(Solution)
+        _endStatus = Some(SolutionFound)
         _solutionQuality = Some(Suboptimal)
       case LpSolve.INFEASIBLE =>
         _endStatus = Some(Infeasible)
       case LpSolve.UNBOUNDED =>
         _endStatus = Some(Unbounded)
       case LpSolve.USERABORT =>
-        _endStatus = Some(NoSolution)
+        _endStatus = Some(NoSolutionFound)
       case LpSolve.TIMEOUT =>
-        _endStatus = Some(NoSolution)
+        _endStatus = Some(NoSolutionFound)
       case _ =>
-        _endStatus = Some(NoSolution)
+        _endStatus = Some(NoSolutionFound)
     }
 
     endStatus

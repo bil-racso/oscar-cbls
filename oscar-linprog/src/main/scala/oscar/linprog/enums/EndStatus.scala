@@ -19,9 +19,19 @@ sealed abstract class EndStatus(val name: String) {
   override def toString: String = name
 }
 
-case object Solution extends EndStatus("SOLUTION_FOUND")
+case object SolutionFound extends EndStatus("SOLUTION_FOUND")
 case object Unbounded extends EndStatus("UNBOUNDED")
 case object Infeasible extends EndStatus("INFEASIBLE")
-case object NoSolution extends EndStatus("NO_SOLUTION")
+case object NoSolutionFound extends EndStatus("NO_SOLUTION_FOUND")
 
-case class NoSolutionFound(endStatus: EndStatus) extends Exception(s"No solution found to the problem, end status is $endStatus")
+object EndStatus {
+  def fromString(str: String) = str.toUpperCase match {
+    case "SOLUTION_FOUND"    => SolutionFound
+    case "UNBOUNDED"         => Unbounded
+    case "INFEASIBLE"        => Infeasible
+    case "NO_SOLUTION_FOUND" => NoSolutionFound
+    case _  => throw new IllegalArgumentException(s"Unrecognized end status: $str")
+  }
+}
+
+case class NoSolutionFoundException(endStatus: EndStatus) extends Exception(s"No solution found to the problem, end status is $endStatus")
