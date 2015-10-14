@@ -32,11 +32,9 @@ import scala.util.{Failure, Success, Try}
 class MPSolver[I <: MPSolverInterface](val solverInterface: I) {
 
   protected def dirty: Boolean = solveStatus == NotSolved
-  protected def setDirty() = _solveStatus = NotSolved
-
-  protected def asSuccessIfSolFound[B](value: B): Try[B] = endStatus.flatMap { status =>
-    if (status == Solution) Success(value)
-    else                         Failure(NoSolutionFound(status))
+  protected def setDirty() = {
+    _solveStatus = NotSolved
+    infeasibilitiesFound = false
   }
 
   /**
@@ -241,7 +239,7 @@ class MPSolver[I <: MPSolverInterface](val solverInterface: I) {
 
   /* CONSTRAINTS */
 
-  protected var linearConstraints = Map[String, LinearConstraint]()
+  protected var linearConstraints = Map[String, LinearConstraint[I]]()
   protected var linearConstraintRows = Map[String, Int]()
 
   def nLinearConstraints = {
@@ -251,7 +249,7 @@ class MPSolver[I <: MPSolverInterface](val solverInterface: I) {
     linearConstraints.size
   }
 
-  protected def register(linearConstraint: LinearConstraint, rowId: Int): Unit = {
+  protected def register(linearConstraint: LinearConstraint[I], rowId: Int): Unit = {
     setDirty()
 
     require(!linearConstraints.contains(linearConstraint.name), s"There exists already a linear constraint with name ${linearConstraint.name}.")
@@ -263,7 +261,7 @@ class MPSolver[I <: MPSolverInterface](val solverInterface: I) {
   /**
    * Adds the given [[LinearConstraint]] to the model
    */
-  def add(linearConstraint: LinearConstraint) = {
+  def add(linearConstraint: LinearConstraint[I]) = {
     val coefs = linearConstraint.constraintExpr.linExpr.coef.values.toArray
     val varIds = linearConstraint.constraintExpr.linExpr.coef.keys.map(v => variableColumn(v.name)).toArray
 
@@ -320,6 +318,11 @@ class MPSolver[I <: MPSolverInterface](val solverInterface: I) {
    */
   def hasSolution: Boolean = solved && endStatus == Success(Solution)
 
+  protected def asSuccessIfSolFound[B](value: B): Try[B] = endStatus.flatMap { status =>
+    if (status == Solution) Success(value)
+    else                    Failure(NoSolutionFound(status))
+  }
+
   /**
    * Returns the [[SolutionQuality]] of the solution if any
    */
@@ -338,4 +341,56 @@ class MPSolver[I <: MPSolverInterface](val solverInterface: I) {
 
     solverInterface.exportModel(filepath, format)
   }
+
+  /* INFEASIBILITY ANALYSIS */
+
+  /**
+   * Finds the sources of infeasibilities in the problem.
+   *
+   * @return true if the infeasibility analysis succeeded
+   */
+
+  private var infeasibilitiesFound = false
+
+  protected def asSuccessIfInfeasFound[B](value: B): Try[B] = {
+    if (infeasibilitiesFound) Success(value)
+    else                      Failure(NoInfeasibilityFoundException)
+  }
+
+  def analyseInfeasibility()(implicit ev: I => InfeasibilityAnalysisInterface): Try[InfeasibleSet] =
+    if(endStatus == Success(Infeasible)) {
+      val success = solverInterface.analyseInfeasibility()
+      if(success) {
+        val linearCstrs = linearConstraints.values.filter(_.infeasible.get).map(_.name).toSeq
+        val lowerBounds = variables.values.filter(_.lowerBoundInfeasible.get).map(_.name).toSeq
+        val upperBounds = variables.values.filter(_.upperBoundInfeasible.get).map(_.name).toSeq
+
+        Success(InfeasibleSet(linearCstrs, lowerBounds, upperBounds))
+      } else {
+        Failure(NoInfeasibilityFoundException)
+      }
+    } else  {
+      Failure(new IllegalArgumentException("Warning: the problem should be infeasible in order to analyze infeasibilities."))
+    }
+
+  /**
+   * Returns true if the lower bound of the given variable
+   * belongs to the set of constraints making the problem infeasible
+   */
+  def getVarLBInfeasibilityStatus(varName: String)(implicit ev: I => InfeasibilityAnalysisInterface): Try[Boolean] =
+    asSuccessIfInfeasFound(solverInterface.getVarLBInfeasibilityStatus(variableColumn(varName)))
+
+  /**
+   * Returns true if the upper bound of the given variable
+   * belongs to the set of constraints making the problem infeasible
+   */
+  def getVarUBInfeasibilityStatus(varName: String)(implicit ev: I => InfeasibilityAnalysisInterface): Try[Boolean] =
+    asSuccessIfInfeasFound(solverInterface.getVarUBInfeasibilityStatus(variableColumn(varName)))
+
+  /**
+   * Returns true if the given constraint
+   * belongs to the set of constraints making the problem infeasible
+   */
+  def getLinearConstraintInfeasibilityStatus(cstrName: String)(implicit ev: I => InfeasibilityAnalysisInterface): Try[Boolean] =
+    asSuccessIfInfeasFound(solverInterface.getLinearConstraintInfeasibilityStatus(linearConstraintRows(cstrName)))
 }

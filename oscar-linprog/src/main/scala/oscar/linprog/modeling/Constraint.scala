@@ -15,17 +15,29 @@
 
 package oscar.linprog.modeling
 
-import oscar.linprog.interface.MIPSolverInterface
+import oscar.linprog.interface.{InfeasibilityAnalysisInterface, MPSolverInterface, MIPSolverInterface}
 
 /**
  * Represents a constraint in a mathematical programming model.
  *
  * @author acrucifix acr@n-side.com
  */
-abstract class AbstractMPConstraint(val name: String)(implicit solver: MPSolver[_])
-
-class LinearConstraint(name: String, val constraintExpr: oscar.algebra.LinearConstraintExpression)(implicit solver: MPSolver[_]) extends AbstractMPConstraint(name) {
-  solver.add(this)
+abstract class AbstractMPConstraint[+I <: MPSolverInterface](val name: String)(implicit solver: MPSolver[I]) {
+  override def toString = name
 }
 
-class SOS1Constraint(name: String, val vars: Seq[MPVar[_]], val weights: Seq[Double])(implicit solver: MPSolver[_ <: MIPSolverInterface]) extends AbstractMPConstraint(name)
+class LinearConstraint[+I <: MPSolverInterface] private (name: String, val constraintExpr: oscar.algebra.LinearConstraintExpression)(implicit solver: MPSolver[I]) extends AbstractMPConstraint[I](name) {
+  solver.add(this)
+
+  /**
+   * Returns true in case this Constraint belongs to the set of infeasible constraints
+   */
+  def infeasible(implicit ev: I => InfeasibilityAnalysisInterface): Option[Boolean] = solver.getLinearConstraintInfeasibilityStatus(name).toOption
+
+  override def toString: String = name + ": " + constraintExpr
+}
+
+object LinearConstraint {
+  def apply[I <: MPSolverInterface](name: String, constraintExpr: oscar.algebra.LinearConstraintExpression)(implicit solver: MPSolver[I]) =
+    new LinearConstraint[I](name, constraintExpr)
+}

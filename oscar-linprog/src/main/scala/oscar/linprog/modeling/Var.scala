@@ -15,7 +15,9 @@
 
 package oscar.linprog.modeling
 
-import oscar.linprog.interface.{MIPSolverInterface, MPSolverInterface}
+import oscar.linprog.interface.{InfeasibilityAnalysisInterface, MIPSolverInterface, MPSolverInterface}
+
+import scala.language.implicitConversions
 
 /**
  * Describes the type of an MPVar: [[Continuous]], [[Integer]] or [[Binary]]
@@ -160,6 +162,16 @@ class MPVar[+I <: MPSolverInterface] private (val initialVarType: MPVarType, val
    * Returns the value of this variable in the solution found by the solver if any
    */
   override def value: Option[Double] = solver.value(name).toOption
+
+  /**
+   * Returns true in case the lower bound on this variable belongs to the set of infeasible constraints
+   */
+  def lowerBoundInfeasible(implicit ev: I => InfeasibilityAnalysisInterface): Option[Boolean] = solver.getVarLBInfeasibilityStatus(name).toOption
+
+  /**
+   * Returns true in case the upper bound on this variable belongs to the set of infeasible constraints
+   */
+  def upperBoundInfeasible(implicit ev: I => InfeasibilityAnalysisInterface): Option[Boolean] = solver.getVarUBInfeasibilityStatus(name).toOption
 }
 
 /**

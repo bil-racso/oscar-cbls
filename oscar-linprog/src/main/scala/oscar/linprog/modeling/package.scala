@@ -16,32 +16,33 @@
 package oscar.linprog
 
 import oscar.algebra._
+import oscar.linprog.interface.MPSolverInterface
 
 /**
  * Helper functions to build models within the context of an implicit solver
  */
 package object modeling {
 
-  def minimize(expr: LinearExpression)(implicit solver: MPSolver[_]) = solver.optimize(expr, min = true)
-  def maximize(expr: LinearExpression)(implicit solver: MPSolver[_]) = solver.optimize(expr, min = false)
+  def minimize[I <: MPSolverInterface](expr: LinearExpression)(implicit solver: MPSolver[I]) = solver.optimize(expr, min = true)
+  def maximize[I <: MPSolverInterface](expr: LinearExpression)(implicit solver: MPSolver[I]) = solver.optimize(expr, min = false)
 
-  def add(cstr: LinearConstraintExpression, name: String = "")(implicit solver: MPSolver[_]): LinearConstraint = {
+  def add[I <: MPSolverInterface](cstr: LinearConstraintExpression, name: String = "")(implicit solver: MPSolver[I]): LinearConstraint[I] = {
     val n =
       if(name == "") "cstr" + solver.nLinearConstraints
       else name
 
-    new LinearConstraint(n, cstr)
+    LinearConstraint(n, cstr)
   }
 
-  def subjectTo(cstrs: Seq[(String, LinearConstraintExpression)])(implicit solver: MPSolver[_]): Seq[(String, LinearConstraint)] =
+  def subjectTo[I <: MPSolverInterface](cstrs: Seq[(String, LinearConstraintExpression)])(implicit solver: MPSolver[I]): Seq[(String, LinearConstraint[I])] =
     cstrs map { case (name, cstr) =>
       name -> add(cstr, name)
     }
 
-  def subjectTo(cstr: (String, LinearConstraintExpression))(implicit solver: MPSolver[_]): (String, LinearConstraint) =
+  def subjectTo[I <: MPSolverInterface](cstr: (String, LinearConstraintExpression))(implicit solver: MPSolver[I]): (String, LinearConstraint[I]) =
     cstr._1 -> add(cstr._2, cstr._1)
 
-  def subjectTo(cstrs: LinearConstraintExpression*)(implicit solver: MPSolver[_]): IndexedSeq[LinearConstraint] =
+  def subjectTo[I <: MPSolverInterface](cstrs: LinearConstraintExpression*)(implicit solver: MPSolver[I]): IndexedSeq[LinearConstraint[I]] =
     cstrs.toIndexedSeq map { cstr =>
       add(cstr)
     }
