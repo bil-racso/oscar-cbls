@@ -6,10 +6,11 @@ import org.junit.runner.RunWith
 import org.scalatest.junit.JUnitRunner
 import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
 import oscar.linprog.enums.ModelExportFormat
+import oscar.linprog.interface.MPSolverLib
 import oscar.linprog.modeling._
 
 @RunWith(classOf[JUnitRunner])
-class ModelExportTester extends FunSuite with Matchers with BeforeAndAfter {
+class ModelExportTester extends OscarLinprogTester {
 
   def exportPath(format: ModelExportFormat) = Paths.get(s"test.${format.extension}")
 
@@ -21,10 +22,10 @@ class ModelExportTester extends FunSuite with Matchers with BeforeAndAfter {
 
   test("Export model before solve") {
     for {
-      format <- ModelExportFormat.formats
-      _solver <- MPSolver.lpSolvers
+      solverLib <- MPSolverLib.solvers
+      format <- solverLib.supportedModelExportFormats
     } {
-      implicit val solver = _solver
+      implicit val solver = new MPSolver(solverLib.createSolver)
 
       val x = MPFloatVar("x", 100, 150)
       val y = MPFloatVar("y", 80, 170)
@@ -38,10 +39,10 @@ class ModelExportTester extends FunSuite with Matchers with BeforeAndAfter {
 
   test("Export model after solve") {
     for {
-      format <- ModelExportFormat.formats
-      _solver <- MPSolver.lpSolvers
+      solverLib <- MPSolverLib.solvers
+      format <- solverLib.supportedModelExportFormats
     } {
-      implicit val solver = _solver
+      implicit val solver = new MPSolver(solverLib.createSolver)
 
       val x = MPFloatVar("x", 100, 150)
       val y = MPFloatVar("y", 80, 170)

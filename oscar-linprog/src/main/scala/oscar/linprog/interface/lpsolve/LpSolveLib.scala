@@ -13,13 +13,12 @@
   * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
   ******************************************************************************/
 
-package oscar.linprog.modeling
+package oscar.linprog.interface.lpsolve
 
-import oscar.linprog.interface.{MPSolverLib, MPSolverInterface}
+import oscar.linprog.enums.{MPS, LP}
+import oscar.linprog.interface.MPSolverLib
 
-/**
- * Brings an implicit [[MPSolver]] in the context for modeling mathematical programming problems.
- */
-class MPModel[I <: MPSolverInterface](solverLib: MPSolverLib[I]) {
-  implicit val solver: MPSolver[I] = new MPSolver(solverLib.createSolver)
+case object LPSolveLib extends MPSolverLib[LPSolve]("lp_solve") {
+  def createSolver = new LPSolve
+  def supportedModelExportFormats = Seq(LP, MPS)
 }

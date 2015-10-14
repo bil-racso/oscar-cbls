@@ -16,6 +16,7 @@
 package oscar.examples.linprog
 
 import oscar.algebra._
+import oscar.linprog.interface.lpsolve.LPSolveLib
 import oscar.linprog.modeling._
 
 /**
@@ -27,7 +28,7 @@ import oscar.linprog.modeling._
  *
  * @author pschaus@gmail.com
  */
-object ProductionPlanning extends MPModel(MPSolver.lp_solve) with App {
+object ProductionPlanning extends MPModel(LPSolveLib) with App {
   val b = Array(18209, 7692, 1333, 924, 26638, 61188, 13360) // Dimensions
   val c = Array(96, 76, 56, 11, 86, 10, 66, 86, 83, 12, 9, 81) // Products
 
@@ -48,10 +49,6 @@ object ProductionPlanning extends MPModel(MPSolver.lp_solve) with App {
 
   maximize(sum(Products) { p => x(p) * c(p) })
   
-  for (d <- Dimensions) {
-    add(sum(Products)(p => coef(d)(p) * x(p)) <= b(d))
-  }
-
   for (d <- Dimensions) {
     add(sum(Products)(p => coef(d)(p) * x(p)) <= b(d))
   }

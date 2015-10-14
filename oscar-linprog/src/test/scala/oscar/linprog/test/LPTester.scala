@@ -16,246 +16,198 @@
 package oscar.linprog.test
 
 import org.junit.runner.RunWith
-import org.scalatest.{FunSuite, Matchers}
 import org.scalatest.junit.JUnitRunner
 import oscar.algebra._
 import oscar.linprog.enums._
+import oscar.linprog.interface.MPSolverLib
 import oscar.linprog.modeling._
 
 import scala.util.Success
 
 @RunWith(classOf[JUnitRunner])
-class LPTester extends FunSuite with Matchers with OscarLinprogMatchers {
+class LPTester extends OscarLinprogTester {
 
-  test("Maximize objective under constraints") {
-    for (_solver <- MPSolver.lpSolvers) {
-      implicit val solver = _solver
+  testForAllSolvers(MPSolverLib.lpSolvers, "Maximize objective under constraints") { implicit solver =>
+    val x = MPFloatVar("x", 100, 150)
+    val y = MPFloatVar("y", 80, 170)
 
-      val x = MPFloatVar("x", 100, 150)
-      val y = MPFloatVar("y", 80, 170)
+    maximize(-2 * x + 5 * y)
+    add(x + y <= 200)
 
-      maximize(-2 * x + 5 * y)
-      add(x + y <= 200)
+    val endStatus = solver.solve
 
-      val endStatus = solver.solve
+    endStatus should equal(Solution)
 
-      endStatus should equal(Solution)
+    x.value should equalWithTolerance(Some(100))
+    y.value should equalWithTolerance(Some(100))
 
-      x.value should equalWithTolerance(Some(100))
-      y.value should equalWithTolerance(Some(100))
+    solver.objectiveValue should equal(Success(-2*100 + 5*100))
+    solver.solutionQuality should equal(Success(Optimal))
+  }
 
-      solver.objectiveValue should equal(Success(-2*100 + 5*100))
-      solver.solutionQuality should equal(Success(Optimal))
+  testForAllSolvers(MPSolverLib.lpSolvers, "Minimize objective under constraints") { implicit solver =>
+    val x = MPFloatVar("x", 100, 150)
+    val y = MPFloatVar("y", 80, 170)
 
-      solver.release()
+    minimize(-2 * x + 5 * y)
+    add(x + y >= 200)
+
+    val endStatus = solver.solve
+
+    endStatus should equal(Solution)
+
+    x.value should equalWithTolerance(Some(150))
+    y.value should equalWithTolerance(Some(80))
+
+    solver.objectiveValue should equal(Success(-2*150 + 5*80))
+    solver.solutionQuality should equal(Success(Optimal))
+  }
+
+  testForAllSolvers(MPSolverLib.lpSolvers, "Add multiple constraints") { implicit solver =>
+    val x = MPFloatVar("x", 0, 100)
+    val y = MPFloatVar("y", 0, 100)
+    val z = MPFloatVar("z", 0, 100)
+
+    maximize(1 * x + 2 * y + 3 * z)
+    add(x + y <= 75)
+    add(x + z <= 75)
+
+    val endStatus = solver.solve
+
+    endStatus should equal(Solution)
+
+    x.value should equalWithTolerance(Some(0))
+    y.value should equalWithTolerance(Some(75))
+    z.value should equalWithTolerance(Some(75))
+
+    solver.objectiveValue should equal(Success(1*0 + 2*75 + 3*75))
+    solver.solutionQuality should equal(Success(Optimal))
+  }
+
+  testForAllSolvers(MPSolverLib.lpSolvers, "Free variable") { implicit solver =>
+    val x = MPFloatVar("x")
+    val y = MPFloatVar("y", 0, 100)
+    val z = MPFloatVar("z", 0, 100)
+
+    maximize(10 * x + 2 * y + 3 * z)
+    add(x + y <= 75)
+    add(x + z <= 75)
+    add(x >= 0)
+
+    val endStatus = solver.solve
+
+    endStatus should equal(Solution)
+
+    x.value should equalWithTolerance(Some(75))
+    y.value should equalWithTolerance(Some(0))
+    z.value should equalWithTolerance(Some(0))
+
+    solver.objectiveValue should equal(Success(10*75 + 2*0 + 3*0))
+    solver.solutionQuality should equal(Success(Optimal))
+  }
+
+  testForAllSolvers(MPSolverLib.lpSolvers, "Detect infeasible problem") { implicit solver =>
+    val x = MPFloatVar("x", 0, 10)
+    val y = MPFloatVar("y", 80, 170)
+
+    minimize(-2 * x + 5 * y)
+    add(x + y >= 200)
+
+    val endStatus = solver.solve
+
+    endStatus should equal(Infeasible)
+
+    intercept[NoSolutionFound] {
+      solver.solutionQuality
     }
   }
 
-  test("Minimize objective under constraints") {
-    for (_solver <- MPSolver.lpSolvers) {
-      implicit val solver = _solver
+  testForAllSolvers(MPSolverLib.lpSolvers, "Detect unbounded problem") { implicit solver =>
+    val x = MPFloatVar("x")
+    val y = MPFloatVar("y", 80, 170)
 
-      val x = MPFloatVar("x", 100, 150)
-      val y = MPFloatVar("y", 80, 170)
+    minimize(-2 * x + 5 * y)
+    add(x + y >= 200)
 
-      minimize(-2 * x + 5 * y)
-      add(x + y >= 200)
+    val endStatus = solver.solve
 
-      val endStatus = solver.solve
+    endStatus should equal(Unbounded)
 
-      endStatus should equal(Solution)
-
-      x.value should equalWithTolerance(Some(150))
-      y.value should equalWithTolerance(Some(80))
-
-      solver.objectiveValue should equal(Success(-2*150 + 5*80))
-      solver.solutionQuality should equal(Success(Optimal))
-
-      solver.release()
+    intercept[NoSolutionFound] {
+      solver.solutionQuality
     }
   }
 
-  test("Add multiple constraints") {
-    for (_solver <- MPSolver.lpSolvers) {
-      implicit val solver = _solver
+  testForAllSolvers(MPSolverLib.lpSolvers, "Update variable bounds") { implicit solver =>
+    val x = MPFloatVar("x", 100, 150)
+    val y = MPFloatVar("y", 80, 170)
 
-      val x = MPFloatVar("x", 0, 100)
-      val y = MPFloatVar("y", 0, 100)
-      val z = MPFloatVar("z", 0, 100)
+    maximize(-2 * x + 5 * y)
+    add(x + y <= 200)
 
-      maximize(1 * x + 2 * y + 3 * z)
-      add(x + y <= 75)
-      add(x + z <= 75)
+    val endStatus = solver.solve
 
-      val endStatus = solver.solve
+    endStatus should equal(Solution)
 
-      endStatus should equal(Solution)
+    x.value should equalWithTolerance(Some(100))
+    y.value should equalWithTolerance(Some(100))
 
-      x.value should equalWithTolerance(Some(0))
-      y.value should equalWithTolerance(Some(75))
-      z.value should equalWithTolerance(Some(75))
+    solver.objectiveValue should equal(Success(-2*100 + 5*100))
+    solver.solutionQuality should equal(Success(Optimal))
 
-      solver.objectiveValue should equal(Success(1*0 + 2*75 + 3*75))
-      solver.solutionQuality should equal(Success(Optimal))
+    // Update bounds
+    x.lowerBound = 0
+    y.upperBound = 250
 
-      solver.release()
-    }
+    // Model has changed
+    solver.solved should equal(false)
+    solver.hasSolution should equal(false)
+
+    // Reoptimize to get new solution
+    val endStatus2 = solver.solve
+
+    endStatus2 should equal(Solution)
+
+    x.value should equalWithTolerance(Some(0))
+    y.value should equalWithTolerance(Some(200))
+
+    solver.objectiveValue should equal(Success(-2*0 + 5*200))
+    solver.solutionQuality should equal(Success(Optimal))
   }
 
-  test("Free variable") {
-    for (_solver <- MPSolver.lpSolvers) {
-      implicit val solver = _solver
+  testForAllSolvers(MPSolverLib.lpSolvers, "Update objective") { implicit solver =>
+    val x = MPFloatVar("x", 100, 150)
+    val y = MPFloatVar("y", 80, 170)
 
-      val x = MPFloatVar("x")
-      val y = MPFloatVar("y", 0, 100)
-      val z = MPFloatVar("z", 0, 100)
+    maximize(-2 * x + 5 * y)
+    add(x + y <= 200)
 
-      maximize(10 * x + 2 * y + 3 * z)
-      add(x + y <= 75)
-      add(x + z <= 75)
-      add(x >= 0)
+    val endStatus = solver.solve
 
-      val endStatus = solver.solve
+    endStatus should equal(Solution)
 
-      endStatus should equal(Solution)
+    x.value should equalWithTolerance(Some(100))
+    y.value should equalWithTolerance(Some(100))
 
-      x.value should equalWithTolerance(Some(75))
-      y.value should equalWithTolerance(Some(0))
-      z.value should equalWithTolerance(Some(0))
+    solver.objectiveValue should equal(Success(-2*100 + 5*100))
+    solver.solutionQuality should equal(Success(Optimal))
 
-      solver.objectiveValue should equal(Success(10*75 + 2*0 + 3*0))
-      solver.solutionQuality should equal(Success(Optimal))
+    // Update objective
+    maximize(2 * x - 5 * y)
 
-      solver.release()
-    }
-  }
+    // Model has changed
+    solver.solved should equal(false)
+    solver.hasSolution should equal(false)
 
-  test("Detect infeasible problem") {
-    for (_solver <- MPSolver.lpSolvers) {
-      implicit val solver = _solver
+    // Reoptimize to get new solution
+    val endStatus2 = solver.solve
 
-      val x = MPFloatVar("x", 0, 10)
-      val y = MPFloatVar("y", 80, 170)
+    endStatus2 should equal(Solution)
 
-      minimize(-2 * x + 5 * y)
-      add(x + y >= 200)
+    x.value should equalWithTolerance(Some(120))
+    y.value should equalWithTolerance(Some(80))
 
-      val endStatus = solver.solve
-
-      endStatus should equal(Infeasible)
-
-      intercept[NoSolutionFound] {
-        solver.solutionQuality
-      }
-
-      solver.release()
-    }
-  }
-
-  test("Detect unbounded problem") {
-    for (_solver <- MPSolver.lpSolvers) {
-      implicit val solver = _solver
-
-      val x = MPFloatVar("x")
-      val y = MPFloatVar("y", 80, 170)
-
-      minimize(-2 * x + 5 * y)
-      add(x + y >= 200)
-
-      val endStatus = solver.solve
-
-      endStatus should equal(Unbounded)
-
-      intercept[NoSolutionFound] {
-        solver.solutionQuality
-      }
-
-      solver.release()
-    }
-  }
-
-  test("Update variable bounds") {
-    for (_solver <- MPSolver.lpSolvers) {
-      implicit val solver = _solver
-
-      val x = MPFloatVar("x", 100, 150)
-      val y = MPFloatVar("y", 80, 170)
-
-      maximize(-2 * x + 5 * y)
-      add(x + y <= 200)
-
-      val endStatus = solver.solve
-
-      endStatus should equal(Solution)
-
-      x.value should equalWithTolerance(Some(100))
-      y.value should equalWithTolerance(Some(100))
-
-      solver.objectiveValue should equal(Success(-2*100 + 5*100))
-      solver.solutionQuality should equal(Success(Optimal))
-
-      // Update bounds
-      x.lowerBound = 0
-      y.upperBound = 250
-
-      // Model has changed
-      solver.solved should equal(false)
-      solver.hasSolution should equal(false)
-
-      // Reoptimize to get new solution
-      val endStatus2 = solver.solve
-
-      endStatus should equal(Solution)
-
-      x.value should equalWithTolerance(Some(0))
-      y.value should equalWithTolerance(Some(200))
-
-      solver.objectiveValue should equal(Success(-2*0 + 5*200))
-      solver.solutionQuality should equal(Success(Optimal))
-
-      solver.release()
-    }
-  }
-
-  test("Update objective") {
-    for (_solver <- MPSolver.lpSolvers) {
-      implicit val solver = _solver
-
-      val x = MPFloatVar("x", 100, 150)
-      val y = MPFloatVar("y", 80, 170)
-
-      maximize(-2 * x + 5 * y)
-      add(x + y <= 200)
-
-      val endStatus = solver.solve
-
-      endStatus should equal(Solution)
-
-      x.value should equalWithTolerance(Some(100))
-      y.value should equalWithTolerance(Some(100))
-
-      solver.objectiveValue should equal(Success(-2*100 + 5*100))
-      solver.solutionQuality should equal(Success(Optimal))
-
-      // Update objective
-      maximize(2 * x - 5 * y)
-
-      // Model has changed
-      solver.solved should equal(false)
-      solver.hasSolution should equal(false)
-
-      // Reoptimize to get new solution
-      val endStatus2 = solver.solve
-
-      endStatus should equal(Solution)
-
-      x.value should equalWithTolerance(Some(120))
-      y.value should equalWithTolerance(Some(80))
-
-      solver.objectiveValue should equal(Success(2*120 - 5*80))
-      solver.solutionQuality should equal(Success(Optimal))
-
-      solver.release()
-    }
+    solver.objectiveValue should equal(Success(2*120 - 5*80))
+    solver.solutionQuality should equal(Success(Optimal))
   }
 }

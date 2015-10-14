@@ -339,17 +339,3 @@ class MPSolver[I <: MPSolverInterface](val solverInterface: I) {
     solverInterface.exportModel(filepath, format)
   }
 }
-
-object MPSolver {
-  def lp_solve: MPSolver[LPSolve] = new MPSolver(new LPSolve)
-  def lp_solveOption: Option[MPSolver[LPSolve]] =
-    try {
-      Some(lp_solve)
-    } catch {
-      case e: UnsatisfiedLinkError => println(e.getMessage); None
-      case e: NoClassDefFoundError => println(e.getMessage); None
-    }
-
-  def lpSolvers = List(MPSolver.lp_solveOption).flatten
-  def mipSolvers: List[MPSolver[_ <: MPSolverInterface with MIPSolverInterface]] = List(MPSolver.lp_solveOption).flatten
-}
