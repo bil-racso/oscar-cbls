@@ -361,6 +361,8 @@ class MPSolver[I <: MPSolverInterface](val solverInterface: I) {
     if(endStatus == Success(Infeasible)) {
       val success = solverInterface.analyseInfeasibility()
       if(success) {
+        infeasibilitiesFound = true
+
         val linearCstrs = linearConstraints.values.filter(_.infeasible.get).map(_.name).toSeq
         val lowerBounds = variables.values.filter(_.lowerBoundInfeasible.get).map(_.name).toSeq
         val upperBounds = variables.values.filter(_.upperBoundInfeasible.get).map(_.name).toSeq
