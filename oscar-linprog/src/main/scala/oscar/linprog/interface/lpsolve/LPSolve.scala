@@ -188,8 +188,6 @@ class LPSolve extends MPSolverInterface with MIPSolverInterface {
       s"$solverName: the number of constraints contained by the raw solver does not correspond to the number of constraints added.")
   }
 
-  def supportedModelExportFormats: Seq[ModelExportFormat] = Seq(LP, MPS)
-
   def exportModel(filepath: Path, format: ModelExportFormat): Unit =
     format match {
       case LP => rawSolver.writeLp(filepath.toString) // Note: this is lp_solve's own lp format which is different from CPLEX's one.

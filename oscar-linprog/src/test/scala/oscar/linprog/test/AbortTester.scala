@@ -16,6 +16,7 @@ import scala.util.Success
 class AbortTester extends OscarLinprogTester {
 
   testForAllSolvers(MPSolverLib.mipSolvers, "Call to abort AFTER solve") { implicit solver =>
+    // A 1D bin packing problem
     val n = 200
 
     val xs = Array.tabulate(n, n)((i, j) => MPBinaryVar(s"x[$i,$j]"))

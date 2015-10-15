@@ -16,6 +16,7 @@
 package oscar.linprog.interface
 
 import oscar.linprog.enums.ModelExportFormat
+import oscar.linprog.interface.gurobi.GurobiLib
 import oscar.linprog.interface.lpsolve.LPSolveLib
 
 /**
@@ -43,7 +44,7 @@ object MPSolverLib {
       case e: NoClassDefFoundError => println(e.getMessage); false
     }
 
-  def solvers: List[MPSolverLib[MPSolverInterface]] = List(LPSolveLib).filter(canInstantiate)
-  def lpSolvers: List[MPSolverLib[MPSolverInterface]] = List(LPSolveLib).filter(canInstantiate)
-  def mipSolvers: List[MPSolverLib[MIPSolverInterface]] = List(LPSolveLib).filter(canInstantiate)
+  def solvers: List[MPSolverLib[MPSolverInterface]] = List(LPSolveLib, GurobiLib).filter(canInstantiate)
+  def lpSolvers: List[MPSolverLib[MPSolverInterface]] = List(LPSolveLib, GurobiLib).filter(canInstantiate)
+  def mipSolvers: List[MPSolverLib[MIPSolverInterface]] = List(LPSolveLib, GurobiLib).filter(canInstantiate)
 }
