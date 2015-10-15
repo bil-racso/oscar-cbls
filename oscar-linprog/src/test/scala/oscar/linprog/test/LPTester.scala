@@ -32,7 +32,7 @@ class LPTester extends OscarLinprogTester {
     val y = MPFloatVar("y", 80, 170)
 
     maximize(-2 * x + 5 * y)
-    add(x + y <= 200)
+    add(x + y <:= 200)
 
     val endStatus = solver.solve
 
@@ -50,7 +50,7 @@ class LPTester extends OscarLinprogTester {
     val y = MPFloatVar("y", 80, 170)
 
     minimize(-2 * x + 5 * y)
-    add(x + y >= 200)
+    add(x + y >:= 200)
 
     val endStatus = solver.solve
 
@@ -69,8 +69,8 @@ class LPTester extends OscarLinprogTester {
     val z = MPFloatVar("z", 0, 100)
 
     maximize(1 * x + 2 * y + 3 * z)
-    add(x + y <= 75)
-    add(x + z <= 75)
+    add(x + y <:= 75)
+    add(x + z <:= 75)
 
     val endStatus = solver.solve
 
@@ -90,9 +90,9 @@ class LPTester extends OscarLinprogTester {
     val z = MPFloatVar("z", 0, 100)
 
     maximize(10 * x + 2 * y + 3 * z)
-    add(x + y <= 75)
-    add(x + z <= 75)
-    add(x >= 0)
+    add(x + y <:= 75)
+    add(x + z <:= 75)
+    add(x >:= 0)
 
     val endStatus = solver.solve
 
@@ -111,7 +111,7 @@ class LPTester extends OscarLinprogTester {
     val y = MPFloatVar("y", 80, 170)
 
     minimize(-2 * x + 5 * y)
-    add(x + y >= 200)
+    add(x + y >:= 200)
 
     val endStatus = solver.solve
 
@@ -127,7 +127,7 @@ class LPTester extends OscarLinprogTester {
     val y = MPFloatVar("y", 80, 170)
 
     minimize(-2 * x + 5 * y)
-    add(x + y >= 200)
+    add(x + y >:= 200)
 
     val endStatus = solver.solve
 
@@ -143,7 +143,7 @@ class LPTester extends OscarLinprogTester {
     val y = MPFloatVar("y", 80, 170)
 
     maximize(-2 * x + 5 * y)
-    add(x + y <= 200)
+    add(x + y <:= 200)
 
     val endStatus = solver.solve
 
@@ -180,7 +180,7 @@ class LPTester extends OscarLinprogTester {
     val y = MPFloatVar("y", 80, 170)
 
     maximize(-2 * x + 5 * y)
-    add(x + y <= 200)
+    add(x + y <:= 200)
 
     val endStatus = solver.solve
 

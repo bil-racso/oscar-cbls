@@ -17,7 +17,7 @@ class MIPTester extends OscarLinprogTester {
     val y = MPFloatVar("y", 0, 100)
 
     maximize(100 * x + 1 * y)
-    add(3 * x + 1 * y <= 14.5)
+    add(3 * x + 1 * y <:= 14.5)
 
     val endStatus = solver.solve
 
@@ -35,7 +35,7 @@ class MIPTester extends OscarLinprogTester {
     val y = MPIntVar("y", 0, 100)
 
     maximize(100 * x + 1 * y)
-    add(3 * x + 1 * y <= 14.5)
+    add(3 * x + 1 * y <:= 14.5)
 
     val endStatus = solver.solve
 
@@ -51,7 +51,7 @@ class MIPTester extends OscarLinprogTester {
     val y = MPFloatVar("y", 0, 100)
 
     maximize(100 * x + 1 * y)
-    add(3 * x + 1 * y <= 14.5)
+    add(3 * x + 1 * y <:= 14.5)
 
     val endStatus = solver.solve
 
@@ -84,8 +84,8 @@ class MIPTester extends OscarLinprogTester {
     val z = MPFloatVar("z", 0, 100)
 
     maximize(1 * x + 2 * y + 3 * z)
-    add(x + y <= 75.5)
-    add(x + z <= 75.5)
+    add(x + y <:= 75.5)
+    add(x + z <:= 75.5)
 
     val endStatus = solver.solve
 
@@ -119,7 +119,7 @@ class MIPTester extends OscarLinprogTester {
     val y = MPFloatVar("y", 0, 100)
 
     maximize(100 * x + 1 * y)
-    add(3 * x + 1 * y <= 14.5)
+    add(3 * x + 1 * y <:= 14.5)
 
     val endStatus = solver.solve
 
@@ -143,27 +143,27 @@ class MIPTester extends OscarLinprogTester {
 
       /* at most one queen can be placed in each row */
       for (l <- lines)
-        add(sum(columns)(c => x(l)(c)) <= 1)
+        add(sum(columns)(c => x(l)(c)) <:= 1)
 
       /* at most one queen can be placed in each column */
       for (c <- columns)
-        add(sum(lines)(l => x(l)(c)) <= 1)
+        add(sum(lines)(l => x(l)(c)) <:= 1)
 
       /* at most one queen can be placed in each "/"-diagonal  upper half*/
       for (i <- 1 until n)
-        add(sum(0 to i)((j) => x(i - j)(j)) <= 1)
+        add(sum(0 to i)((j) => x(i - j)(j)) <:= 1)
 
       /* at most one queen can be placed in each "/"-diagonal  lower half*/
       for (i <- 1 until n)
-        add(sum(i until n)((j) => x(j)(n - 1 - j + i)) <= 1)
+        add(sum(i until n)((j) => x(j)(n - 1 - j + i)) <:= 1)
 
       /* at most one queen can be placed in each "/"-diagonal  upper half*/
       for (i <- 0 until n)
-        add(sum(0 until n - i)((j) => x(j)(j + i)) <= 1)
+        add(sum(0 until n - i)((j) => x(j)(j + i)) <:= 1)
 
       /* at most one queen can be placed in each "/"-diagonal  lower half*/
       for (i <- 1 until n)
-        add(sum(0 until n - i)((j) => x(j + i)(j)) <= 1)
+        add(sum(0 until n - i)((j) => x(j + i)(j)) <:= 1)
 
       val endStatus = solver.solve
 

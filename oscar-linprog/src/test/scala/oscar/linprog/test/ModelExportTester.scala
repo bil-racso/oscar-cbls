@@ -30,7 +30,7 @@ class ModelExportTester extends OscarLinprogTester {
       val y = MPFloatVar("y", 80, 170)
 
       maximize(-2 * x + 5 * y)
-      add(x + y <= 200)
+      add(x + y <:= 200)
 
       solver.exportModel(exportPath(format), format)
     }
@@ -47,7 +47,7 @@ class ModelExportTester extends OscarLinprogTester {
       val y = MPFloatVar("y", 80, 170)
 
       maximize(-2 * x + 5 * y)
-      add(x + y <= 200)
+      add(x + y <:= 200)
 
       solver.solve
 

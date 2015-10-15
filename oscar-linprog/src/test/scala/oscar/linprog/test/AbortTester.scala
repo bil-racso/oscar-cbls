@@ -32,12 +32,12 @@ class AbortTester extends OscarLinprogTester {
       (for {
         i <- 0 until n
       } yield {
-          s"allocation[$i]" -> (sum(0 until n)(j => xs(i)(j) * sizes(j)) <= ys(i) * binSize)
+          s"allocation[$i]" -> (sum(0 until n)(j => xs(i)(j) * sizes(j)) <:= ys(i) * binSize)
         }) ++ (
         for {
           j <- 0 until n
         } yield {
-          s"unicity[$j]" -> (sum(0 until n)(i => xs(i)(j)) == Const(1.0))
+          s"unicity[$j]" -> (sum(0 until n)(i => xs(i)(j)) =:= 1.0)
         }): _*
     )
 
@@ -67,7 +67,7 @@ class AbortTester extends OscarLinprogTester {
     val y = MPFloatVar("y", 80, 170)
 
     maximize(-2 * x + 5 * y)
-    add(x + y <= 200)
+    add(x + y <:= 200)
 
     // Abort before solve should not prevent it
     solver.abort()
