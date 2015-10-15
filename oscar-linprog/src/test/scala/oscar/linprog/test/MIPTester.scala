@@ -5,6 +5,7 @@ import org.scalatest.junit.JUnitRunner
 import oscar.linprog.enums.{Optimal, SolutionFound}
 import oscar.linprog.interface.MPSolverLib
 import oscar.linprog.modeling._
+import oscar.algebra._
 
 import scala.util.Success
 
@@ -128,4 +129,49 @@ class MIPTester extends OscarLinprogTester {
     x.value should equalWithTolerance(Some(1))
     y.value should equalWithTolerance(Some(14.5 - 3*1))
   }
+
+  for {
+    n <- Seq(4, 8, 16)
+  } {
+    testForAllSolvers(MPSolverLib.mipSolvers, s"Solves the $n Queens problem") { implicit solver =>
+      val lines = 0 until n
+      val columns = 0 until n
+
+      val x = Array.tabulate(n, n)((l, c) => MPBinaryVar(s"x($l, $c)"))
+
+      maximize(sum(lines, columns) { (l, c) => x(l)(c) })
+
+      /* at most one queen can be placed in each row */
+      for (l <- lines)
+        add(sum(columns)(c => x(l)(c)) <= 1)
+
+      /* at most one queen can be placed in each column */
+      for (c <- columns)
+        add(sum(lines)(l => x(l)(c)) <= 1)
+
+      /* at most one queen can be placed in each "/"-diagonal  upper half*/
+      for (i <- 1 until n)
+        add(sum(0 to i)((j) => x(i - j)(j)) <= 1)
+
+      /* at most one queen can be placed in each "/"-diagonal  lower half*/
+      for (i <- 1 until n)
+        add(sum(i until n)((j) => x(j)(n - 1 - j + i)) <= 1)
+
+      /* at most one queen can be placed in each "/"-diagonal  upper half*/
+      for (i <- 0 until n)
+        add(sum(0 until n - i)((j) => x(j)(j + i)) <= 1)
+
+      /* at most one queen can be placed in each "/"-diagonal  lower half*/
+      for (i <- 1 until n)
+        add(sum(0 until n - i)((j) => x(j + i)(j)) <= 1)
+
+      val endStatus = solver.solve
+
+      endStatus should equal(SolutionFound)
+      solver.solutionQuality should equal(Success(Optimal))
+
+      solver.objectiveValue.toOption should equalWithTolerance(Some(n))
+    }
+  }
+
 }
