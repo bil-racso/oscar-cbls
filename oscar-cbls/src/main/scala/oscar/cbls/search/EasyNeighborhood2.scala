@@ -1,11 +1,12 @@
 package oscar.cbls.search
 
-import oscar.cbls.invariants.core.computation.CBLSIntVar
+import oscar.cbls.invariants.core.computation.{Solution, Store, Variable, CBLSIntVar}
 import oscar.cbls.modeling.AlgebraTrait
 import oscar.cbls.objective.{LoggingObjective, Objective}
 import oscar.cbls.search.algo.{HotRestart, IdenticalAggregator}
-import oscar.cbls.search.core.{Neighborhood, NoMoveFound, SearchResult}
-import oscar.cbls.search.move.{AssignMove, Move}
+import oscar.cbls.search.combinators.NeighborhoodCombinator
+import oscar.cbls.search.core.{MoveFound, Neighborhood, NoMoveFound, SearchResult}
+import oscar.cbls.search.move.{CompositeMove, CallBackMove, AssignMove, Move}
 
 
 abstract class EasyNeighborhood2[MyMove <: Move](best:Boolean = false, neighborhoodName:String=null) extends Neighborhood {
@@ -174,10 +175,156 @@ case class AssignNeighborhood(vars:Array[CBLSIntVar],
   }
 }
 
-trait moveInstanciator[MyMove <: Move] {
+trait MoveInstanciator[MyMove <: Move] {
   def instantiateMove(newObj: Int): MyMove
+}
+
+
+trait MoveInstantiatorCarrier[MyMove <: Move]{
+  var myMoveInstantiator:MoveInstanciator[MyMove] = null
+  def setMoveInstantiator(m:MoveInstanciator[MyMove]): Unit ={
+    myMoveInstantiator = m
+  }
+
+  def currentMove(newObj:Int = Int.MaxValue):MyMove = myMoveInstantiator.instantiateMove(newObj)
+}
+
+class AndThen(a: Neighborhood, b: Neighborhood, maximalIntermediaryDegradation: Int = Int.MaxValue)
+  extends NeighborhoodCombinator(a, b) {
+
+  override def getMove(obj: Objective, acceptanceCriteria: (Int, Int) => Boolean): SearchResult = {
+
+    var secondMove: Move = null //the move performed by b
+    val oldObj: Int = obj.value
+
+    //the acceptance criterion is on the diff between the oldObj and the newObj over the two consecutive moves
+    //it is evaluated for the second move
+    //the first move is about accepting all moves that are not maxVal, since the newObj is for the consecutive moves,
+    // and is already accepted by the time it is returned to the first neighrhood
+    def firstAcceptanceCriterion(oldObj: Int, newObj: Int): Boolean = {
+      newObj != Int.MaxValue
+    }
+
+    def secondAcceptanceCriteria(intermediaryObj: Int, newObj: Int): Boolean = {
+      //we ignore the intermediaryObj.
+      acceptanceCriteria(oldObj, newObj)
+    }
+
+    class InstrumentedObjective() extends Objective {
+
+      override def detailedString(short: Boolean, indent: Int = 0): String = nSpace(indent) + "AndThenInstrumentedObjective(initialObjective:" + obj.detailedString(short) + ")"
+
+      override def model = obj.model
+
+      override def value: Int = {
+
+        if (maximalIntermediaryDegradation != Int.MaxValue) {
+          //we need to ensure that intermediary step is admissible
+          val intermediaryVal = obj.value
+          val intermediaryDegradation = intermediaryVal - oldObj
+          if (intermediaryDegradation > maximalIntermediaryDegradation)
+            return Int.MaxValue //we do not consider this first step
+        }
+
+        //now, we need to check the other neighborhood
+        b.getMove(obj, secondAcceptanceCriteria) match {
+          case NoMoveFound => Int.MaxValue
+          case MoveFound(m: Move) =>
+            secondMove = m
+            m.objAfter
+        }
+      }
+    }
+
+    a.getMove(new InstrumentedObjective(), firstAcceptanceCriterion) match {
+      case NoMoveFound => NoMoveFound
+      case MoveFound(m: Move) => CompositeMove(List(m, secondMove), m.objAfter, this.toString)
+    }
+  }
 }
 
 //TODO: un obj peut être un moveInstanciator en fait, suffit de sauver les valeurs du mouvement
 // (si disponible, ce qui n'est pas toujours le cas.)
+
+case class DynAndThen[MyMove <: Move](a:EasyNeighborhood2[MyMove],
+                                      b:(MyMove => Neighborhood),
+                                      maximalIntermediaryDegradation: Int = Int.MaxValue)
+  extends NeighborhoodCombinator(a) { //TODO: b is not represented, but reset is not needed, restriction: no profiling on b
+
+  override def getMove(obj: Objective, acceptanceCriteria: (Int, Int) => Boolean): SearchResult = {
+
+    var secondMove: Move = null //the move performed by b
+    val oldObj: Int = obj.value
+
+    //the acceptance criterion is on the diff between the oldObj and the newObj over the two consecutive moves
+    //it is evaluated for the second move
+    //the first move is about accepting all moves that are not maxVal, since the newObj is for the consecutive moves,
+    // and is already accepted by the time it is returned to the first neighrhood
+    def firstAcceptanceCriterion(oldObj: Int, newObj: Int): Boolean = {
+      newObj != Int.MaxValue
+    }
+
+    def secondAcceptanceCriteria(intermediaryObj: Int, newObj: Int): Boolean = {
+      //we ignore the intermediaryObj.
+      acceptanceCriteria(oldObj, newObj)
+    }
+
+    class InstrumentedObjective() extends Objective with MoveInstantiatorCarrier[MyMove]{
+
+      override def detailedString(short: Boolean, indent: Int = 0): String = nSpace(indent) + "AndThenInstrumentedObjective(initialObjective:" + obj.detailedString(short) + ")"
+
+      override def model = obj.model
+
+      override def value: Int = {
+
+        val intermediaryObjValue =
+        if (maximalIntermediaryDegradation != Int.MaxValue) {
+          //we need to ensure that intermediary step is admissible
+          val intermediaryVal = obj.value
+          val intermediaryDegradation = intermediaryVal - oldObj
+          if (intermediaryDegradation > maximalIntermediaryDegradation) {
+            return Int.MaxValue //we do not consider this first step
+          }else{
+            intermediaryVal
+          }
+        }else{
+          Int.MaxValue
+        }
+
+        //now, we need to check the other neighborhood
+        //first, let's instantiate it:
+        val otherNeighborhood = b(currentMove(intermediaryObjValue))
+        otherNeighborhood.getMove(obj, secondAcceptanceCriteria) match {
+          case NoMoveFound => Int.MaxValue
+          case MoveFound(m: Move) =>
+            secondMove = m
+            m.objAfter
+        }
+      }
+    }
+
+    a.getMove(new InstrumentedObjective(), firstAcceptanceCriterion) match {
+      case NoMoveFound => NoMoveFound
+      case MoveFound(m: Move) => CompositeMove(List(m, secondMove), m.objAfter, this.toString)
+    }
+  }
+}
+
+case class DynAndThenWithPrev[MyMove <: Move](a:EasyNeighborhood2[MyMove],
+                                              b:((MyMove,Solution) => Neighborhood),
+                                              decisionVariablesToSave:Store => Iterable[Variable] = (s:Store) => s.decisionVariables()){
+
+}
+
+case class SaveDecisionVarsOnEntry(a: Neighborhood, decisionVariablesToSave:Store => Iterable[Variable] = (s:Store) => s.decisionVariables())
+  extends NeighborhoodCombinator(a) {
+
+  var savedSolution:Solution = null
+
+  override def getMove(obj: Objective, acceptanceCriterion: (Int, Int) => Boolean = (oldObj, newObj) => oldObj > newObj): SearchResult = {
+    val s = obj.model
+    savedSolution = s.saveValues(decisionVariablesToSave(s))
+    a.getMove(obj,acceptanceCriterion)
+  }
+}
 

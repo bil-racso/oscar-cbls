@@ -101,7 +101,7 @@ case class Store(override val verbose:Boolean = false,
 
   /**this is to be used as a backtracking point in a search engine
     * you can only save variables that are not controlled*/
-  def saveValues(vars:Variable*):Solution = {
+  def saveValues(vars:Iterable[Variable]):Solution = {
     var assignationInt:List[(ChangingIntValue,Int)] = List.empty
     var assignationIntSet:List[(ChangingSetValue,SortedSet[Int])] = List.empty
     for (v:Variable <- vars if v.isDecisionVariable){
