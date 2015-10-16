@@ -16,7 +16,7 @@
 package oscar.cbls.search.core
 
 import oscar.cbls.invariants.core.computation.Store
-import oscar.cbls.objective.{LoggingObjective, FunctionObjective, Objective}
+import oscar.cbls.objective.{LoggingObjective, Objective}
 import oscar.cbls.search.combinators._
 import oscar.cbls.search.move.{CallBackMove, Move}
 
@@ -637,8 +637,6 @@ abstract class EasyNeighborhood(best:Boolean = false, neighborhoodName:String=nu
       false
     }
   }
-
-//  def exploreMove(moveEvaluator:Objective => Int, moveInstancier:Int => Move):Boolean
 }
 
 class ObjWithStringGenerator(obj:Objective,additionalStringGenerator:()=>String) extends Objective{
@@ -650,3 +648,6 @@ class ObjWithStringGenerator(obj:Objective,additionalStringGenerator:()=>String)
 
   override def value: Int = obj.value
 }
+
+
+

@@ -71,7 +71,6 @@ case class RemovePoint(predecessorsOfRoutedPointsToRemove:()=>Iterable[Int],
         startIndice = beforeRemovedPoint + 1
         return
       }
-
     }
   }
 

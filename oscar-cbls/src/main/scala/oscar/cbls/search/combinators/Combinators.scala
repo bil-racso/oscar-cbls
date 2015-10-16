@@ -792,7 +792,7 @@ class AndThen(a: Neighborhood, b: Neighborhood, maximalIntermediaryDegradation: 
   override def getMove(obj: Objective, acceptanceCriteria: (Int, Int) => Boolean): SearchResult = {
 
     var secondMove: Move = null //the move performed by b
-    var oldObj: Int = obj.value
+    val oldObj: Int = obj.value
 
     //the acceptance criterion is on the diff between the oldObj and the newObj over the two consecutive moves
     //it is evaluated for the second move

@@ -130,9 +130,8 @@ class FunctionObjective(f:()=>Int, m:Store = null) extends Objective{
 
 trait Objective {
 
-  def nSpace(n:Int):String = if(n <= 0) "" else " " + nSpace(n-1)
+  private def nSpace(n:Int):String = if(n <= 0) "" else " " + nSpace(n-1)
   override def toString: String = detailedString(false)
-
   def detailedString(short:Boolean, indent:Int = 0):String
 
   def model:Store

@@ -88,6 +88,8 @@ case class ThreeOpt(potentialInsertionPoints:()=>Iterable[Int],
           if(!vrp.isBetween(insertionPoint, first, second)
             && !(vrp.next(insertionPoint).value == first)){
 
+            //TODO: this approach is slow, since we will reverse segments a lots of time.
+            //better to to segment moves alltogehter,and reversed segment moves afterwards
             if(chooseBest3Opt(first, vrp.next(first).value, second, insertionPoint)){
               startIndice = insertionPoint + 1
               return
