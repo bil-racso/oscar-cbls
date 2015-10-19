@@ -71,8 +71,11 @@ class LPSolve extends MPSolverInterface with MIPSolverInterface {
     rawSolver.setColName(varId + 1, name)
     setVarLB(varId, lb)
     setVarUB(varId, ub)
-    if(integer) setInteger(varId)
-    if(binary) setBinary(varId)
+    (integer, binary) match {
+      case (true, false) => setInteger(varId)
+      case (true, true) => setBinary(varId)
+      case (false, false) => setFloat(varId)
+    }
   }
 
   private def addVariable(name: String, lb: Double, ub: Double,
@@ -84,7 +87,7 @@ class LPSolve extends MPSolverInterface with MIPSolverInterface {
         // third arg is the row numbers of the constraints that should be updated (row 0 is the objective)
         rawSolver.addColumnex(cCoefs.length + 1, oCoef +: cCoefs, 0 +: cIds.map(_ + 1))
         val varId = this.nCols
-        setVarProperties(varId, name, lb, ub, integer = false, binary = false)
+        setVarProperties(varId, name, lb, ub, integer, binary)
         this.nCols += 1
         varId
       case (None, None, None) =>
@@ -107,7 +110,7 @@ class LPSolve extends MPSolverInterface with MIPSolverInterface {
 
   def addBinaryVariable(name: String,
     objCoef: Option[Double] = None, cstrCoefs: Option[Array[Double]] = None, cstrIds: Option[Array[Int]] = None): Int =
-    addVariable(name, 0.0, 1.0, objCoef, cstrCoefs, cstrIds, integer = false, binary = true)
+    addVariable(name, 0.0, 1.0, objCoef, cstrCoefs, cstrIds, integer = true, binary = true)
 
   def getVarLB(varId: Int): Double = rawSolver.getLowbo(varId + 1)
   def setVarLB(varId: Int, lb: Double) = rawSolver.setLowbo(varId + 1, lb)
@@ -242,7 +245,7 @@ class LPSolve extends MPSolverInterface with MIPSolverInterface {
       case LpSolve.TIMEOUT =>
         _endStatus = Some(NoSolutionFound)
       case _ =>
-        _endStatus = Some(NoSolutionFound)
+        _endStatus = Some(Warning)
     }
 
     endStatus

@@ -23,6 +23,7 @@ case object SolutionFound extends EndStatus("SOLUTION_FOUND")
 case object Unbounded extends EndStatus("UNBOUNDED")
 case object Infeasible extends EndStatus("INFEASIBLE")
 case object NoSolutionFound extends EndStatus("NO_SOLUTION_FOUND")
+case object Warning extends EndStatus("WARNING")
 
 object EndStatus {
   def fromString(str: String) = str.toUpperCase match {
@@ -30,6 +31,7 @@ object EndStatus {
     case "UNBOUNDED"         => Unbounded
     case "INFEASIBLE"        => Infeasible
     case "NO_SOLUTION_FOUND" => NoSolutionFound
+    case "WARNING"           => Warning
     case _  => throw new IllegalArgumentException(s"Unrecognized end status: $str")
   }
 }

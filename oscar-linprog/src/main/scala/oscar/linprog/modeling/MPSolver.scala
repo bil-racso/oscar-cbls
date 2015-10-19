@@ -379,19 +379,19 @@ class MPSolver[I <: MPSolverInterface](val solverInterface: I) {
    * belongs to the set of constraints making the problem infeasible
    */
   def getVarLBInfeasibilityStatus(varName: String)(implicit ev: I => InfeasibilityAnalysisInterface): Try[Boolean] =
-    asSuccessIfInfeasFound(solverInterface.getVarLBInfeasibilityStatus(variableColumn(varName)))
+    asSuccessIfInfeasFound(solverInterface.isVarLBInfeasible(variableColumn(varName)))
 
   /**
    * Returns true if the upper bound of the given variable
    * belongs to the set of constraints making the problem infeasible
    */
   def getVarUBInfeasibilityStatus(varName: String)(implicit ev: I => InfeasibilityAnalysisInterface): Try[Boolean] =
-    asSuccessIfInfeasFound(solverInterface.getVarUBInfeasibilityStatus(variableColumn(varName)))
+    asSuccessIfInfeasFound(solverInterface.isVarUBInfeasible(variableColumn(varName)))
 
   /**
    * Returns true if the given constraint
    * belongs to the set of constraints making the problem infeasible
    */
   def getLinearConstraintInfeasibilityStatus(cstrName: String)(implicit ev: I => InfeasibilityAnalysisInterface): Try[Boolean] =
-    asSuccessIfInfeasFound(solverInterface.getLinearConstraintInfeasibilityStatus(linearConstraintRows(cstrName)))
+    asSuccessIfInfeasFound(solverInterface.isLinearConstraintInfeasible(linearConstraintRows(cstrName)))
 }

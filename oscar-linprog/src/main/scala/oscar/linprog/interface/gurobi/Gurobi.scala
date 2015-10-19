@@ -73,7 +73,7 @@ class Gurobi(_env: Option[GRBEnv] = None) extends MPSolverInterface with MIPSolv
 
   private def toGRBVarType(integer: Boolean, binary: Boolean): Char = (integer, binary) match {
     case (true, false) => GRB.INTEGER
-    case (false, true) => GRB.BINARY
+    case (true, true) => GRB.BINARY
     case (false, false) => GRB.CONTINUOUS
   }
 
@@ -102,7 +102,7 @@ class Gurobi(_env: Option[GRBEnv] = None) extends MPSolverInterface with MIPSolv
 
   def addBinaryVariable(name: String,
     objCoef: Option[Double] = None, cstrCoefs: Option[Array[Double]] = None, cstrIds: Option[Array[Int]] = None): Int =
-    addVariable(name, 0.0, 1.0, objCoef, cstrCoefs, cstrIds, integer = false, binary = true)
+    addVariable(name, 0.0, 1.0, objCoef, cstrCoefs, cstrIds, integer = true, binary = true)
 
   def getVarLB(varId: Int): Double = rawSolver.getVar(varId).get(GRB.DoubleAttr.LB)
   def setVarLB(varId: Int, lb: Double) = rawSolver.getVar(varId).set(GRB.DoubleAttr.LB, lb)
@@ -169,7 +169,7 @@ class Gurobi(_env: Option[GRBEnv] = None) extends MPSolverInterface with MIPSolv
       case GRB.INFEASIBLE => Infeasible
       case GRB.UNBOUNDED => Unbounded
       case GRB.LOADED => throw NotSolvedYetException
-      case _ => NoSolutionFound
+      case _ => Warning
     }
 
   def hasSolution: Boolean =
