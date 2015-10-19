@@ -87,7 +87,7 @@ abstract class MPSolverInterface {
    *
    * @return the index of the variable (column number) in the model
    */
-  def addVariable(name: String, lb: Double = Double.NegativeInfinity, ub: Double = Double.PositiveInfinity,
+  def addVariable(name: String, lb: Double = -Double.MaxValue, ub: Double = Double.MaxValue,
     objCoef: Option[Double] = None, cstrCoefs: Option[Array[Double]] = None, cstrIds: Option[Array[Int]] = None): Int
 
   /**
@@ -103,7 +103,7 @@ abstract class MPSolverInterface {
   /**
    * Removes the lower bound on the variable (sets it to -Inf).
    */
-  def setUnboundedVarLB(varId: Int) = setVarLB(varId, Double.NegativeInfinity)
+  def setUnboundedVarLB(varId: Int) = setVarLB(varId, -Double.MaxValue)
 
   /**
    * Returns the upper bound of the variable.
@@ -118,7 +118,7 @@ abstract class MPSolverInterface {
   /**
    * Removes the upper bound on the variable (sets it to +Inf).
    */
-  def setUnboundedVarUB(varId: Int) = setVarUB(varId, Double.PositiveInfinity)
+  def setUnboundedVarUB(varId: Int) = setVarUB(varId, Double.MaxValue)
 
   /**
    * Returns the bounds of the variable as a pair (lower, upper).

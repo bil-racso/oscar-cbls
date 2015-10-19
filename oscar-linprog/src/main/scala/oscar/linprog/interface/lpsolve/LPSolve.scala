@@ -100,7 +100,7 @@ class LPSolve extends MPSolverInterface with MIPSolverInterface {
         throw new IllegalArgumentException("Parameters objCoef, cstrCoef, cstrId should all be defined or none.")
     }
 
-  def addVariable(name: String, lb: Double = Double.NegativeInfinity, ub: Double = Double.PositiveInfinity,
+  def addVariable(name: String, lb: Double = -Double.MaxValue, ub: Double = Double.MaxValue,
     objCoef: Option[Double] = None, cstrCoefs: Option[Array[Double]] = None, cstrIds: Option[Array[Int]] = None) =
     addVariable(name, lb, ub, objCoef, cstrCoefs, cstrIds, integer = false, binary = false)
 

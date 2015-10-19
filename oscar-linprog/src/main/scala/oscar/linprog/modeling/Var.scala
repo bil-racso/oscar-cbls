@@ -180,7 +180,7 @@ class MPVar[+I <: MPSolverInterface] private (val initialVarType: MPVarType, val
  * @author acrucifix acr@n-side.com
  */
 object MPVar {
-  def float[I <: MPSolverInterface](name: String, lb: Double = Double.NegativeInfinity, ub: Double = Double.PositiveInfinity)(implicit solver: MPSolver[I]): MPVar[I] =
+  def float[I <: MPSolverInterface](name: String, lb: Double = -Double.MaxValue, ub: Double = Double.MaxValue)(implicit solver: MPSolver[I]): MPVar[I] =
     new MPVar[I](Continuous, name, lb, ub)
 
   def int[I <: MIPSolverInterface](name: String, from: Int, to: Int)(implicit solver: MPSolver[I]): MPVar[I] =
@@ -196,7 +196,7 @@ object MPVar {
  * @author acrucifix acr@n-side.com
  */
 object MPFloatVar {
-  def apply[I <: MPSolverInterface](name: String, lb: Double = Double.NegativeInfinity, ub: Double = Double.PositiveInfinity)(implicit solver: MPSolver[I]): MPVar[I] =
+  def apply[I <: MPSolverInterface](name: String, lb: Double = -Double.MaxValue, ub: Double = Double.MaxValue)(implicit solver: MPSolver[I]): MPVar[I] =
     MPVar.float(name, lb, ub)
 }
 
