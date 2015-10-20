@@ -26,10 +26,29 @@ class TestCountingBasedAllDifferent extends FunSuite with ShouldMatchers  {
   test("CountingBasedAllDifferent : small") {
     implicit val cp = CPSolver()
     val x = Array.fill(2)(CPIntVar(0 to 1))
-    cp.post(new CountingBasedAllDifferent(x))
-    cp.search(binaryStatic(x))
-    val stat = cp.start()
+    post(new CountingBasedAllDifferent(x))
+    search(binaryStatic(x))
+    val stat = start()
     assert(stat.nSols == 2)
+  }
+
+
+  test("CountingBasedAllDifferent : incremental number of processed variables") {
+    implicit val cp = CPSolver()
+    val x = Array(CPIntVar(-1 to 0), CPIntVar(0 to 2), CPIntVar(2))
+    post(new CountingBasedAllDifferent(x))
+    search(binaryStatic(x))
+    val stat = start()
+    assert(stat.nSols == 3)
+  }
+
+  test("CountingBasedAllDifferent : incremental number of processed variables 2") {
+    implicit val cp = CPSolver()
+    val x = Array(CPIntVar(0 to 1), CPIntVar(3 to 4), CPIntVar(1 to 3), CPIntVar(2))
+    post(new CountingBasedAllDifferent(x))
+    search(binaryStatic(x))
+    val stat = start()
+    assert(stat.nSols == 4)
   }
 
 
@@ -60,6 +79,7 @@ class TestCountingBasedAllDifferent extends FunSuite with ShouldMatchers  {
       val stat1 = cp.startSubjectTo() {
         cp.add(new AllDiffFWC(x))
       }
+
       val stat2 = cp.startSubjectTo() {
         cp.post(new CountingBasedAllDifferent(x))
       }

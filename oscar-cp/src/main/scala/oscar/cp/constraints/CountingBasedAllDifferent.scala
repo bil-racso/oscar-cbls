@@ -1,6 +1,7 @@
 package oscar.cp.constraints
 
 import oscar.algo.SortUtils._
+import oscar.algo.reversible.ReversibleInt
 import oscar.cp.core.CPOutcome._
 import oscar.cp.core.variables.CPIntVar
 import oscar.cp.core.{CPOutcome, CPPropagStrength, Constraint}
@@ -12,7 +13,7 @@ import oscar.cp.core.{CPOutcome, CPPropagStrength, Constraint}
 //Counting-based all-different propagation, from "A Parallel, Backjumping Subgraph Isomorphism Algorithm using Supplemental Graphs" (CP2015)
 class CountingBasedAllDifferent(constrainedVariables: Array[CPIntVar]) extends Constraint(constrainedVariables(0).store){
 
-  //TODO : incremental size of bit sets depending on (min and max of all variables)
+  //TODO : incremental mapping of bits using a sparse set (no need of the second table maintaining the positions of the values)
 
   //general variables
   private[this] val numberOfVariables = constrainedVariables.length
@@ -22,8 +23,6 @@ class CountingBasedAllDifferent(constrainedVariables: Array[CPIntVar]) extends C
   private[this] val numberOfBuckets : Int = maximumDomainCardinality/64 + 1 //bucketIndexForValue(maximumDomainCardinality) + 1
   private[this] var currentVariableIndex : Int = -1
   private[this] var currentBucketIndex : Int = -1
-  /*private[this] var numberOfBoundVariables : ReversibleInt = new ReversibleInt(constrainedVariables(0).store, 0)*/
-
 
   //set variables
   private[this] val detectedHallSetUnion : Array[Long] = Array.fill(numberOfBuckets)(0L) //H in the paper
@@ -44,6 +43,9 @@ class CountingBasedAllDifferent(constrainedVariables: Array[CPIntVar]) extends C
   private[this] val domainSizes = Array.tabulate(numberOfVariables)(constrainedVariables(_).size)
   private[this] var currentOrderedVariableId : Int = -1
 
+  //used to prevent using already processed variables
+  private[this] val numberOfBoundAndProcessedVariables = new ReversibleInt(constrainedVariables(0).store, 0) //keep track of number of variables to be skipped, because their value is already removed from the other domains
+
   final override def setup(l: CPPropagStrength): CPOutcome = {
     if (propagate() == Failure) Failure
     else {
@@ -58,6 +60,9 @@ class CountingBasedAllDifferent(constrainedVariables: Array[CPIntVar]) extends C
 
   final override def propagate(): CPOutcome = {
 
+    val currentNumberOfBoundAndProcessedVariables = numberOfBoundAndProcessedVariables.value
+    var newNumberOfBoundAndProcessedVariables = 0
+
     //initialization
     numberOfDomainsContributingToUnion = 0
     clearUnionSets()
@@ -65,18 +70,25 @@ class CountingBasedAllDifferent(constrainedVariables: Array[CPIntVar]) extends C
     //sort by cardinality and set bit set domains as variable domains
     currentVariableIndex = numberOfVariables
     while (currentVariableIndex > 0) {
+    //while (currentVariableIndex > currentNumberOfBoundAndProcessedVariables) {
       currentVariableIndex -= 1
-      domainSizes(currentVariableIndex) = constrainedVariables(currentVariableIndex).size
+      val domainSize = constrainedVariables(currentVariableIndex).size
+      domainSizes(currentVariableIndex) = domainSize
+
+      if(domainSize == 1)
+        newNumberOfBoundAndProcessedVariables += 1
+
       //TODO : do not clearAndFill if domain size did not change compared to last call
       currentDomain = bitSetDomains(currentVariableIndex)
       clearAndFillCurrentBitSetDomain()
     }
-    mergeSort(orderedVariablesIds, domainSizes)
+
+    mergeSort(orderedVariablesIds, domainSizes,  currentNumberOfBoundAndProcessedVariables, numberOfVariables)
 
     //loop on variables by non-decreasing domain cardinality
+    currentVariableIndex = currentNumberOfBoundAndProcessedVariables
     while(currentVariableIndex < numberOfVariables) {
       currentOrderedVariableId = orderedVariablesIds(currentVariableIndex)
-      //TODO : maintain reversible number of bound variables and skip them as they have been propagated during last call
       currentDomain = bitSetDomains(currentOrderedVariableId)
       numberOfDomainsContributingToUnion += 1
       removeHallSetFromCurrentDomainAndUpdateDomainUnion()
@@ -93,6 +105,9 @@ class CountingBasedAllDifferent(constrainedVariables: Array[CPIntVar]) extends C
     }
 
     updateDomainsWithBitSetDomains()
+
+    //update number of bound and processed variables
+    numberOfBoundAndProcessedVariables.setValue(newNumberOfBoundAndProcessedVariables)
 
     CPOutcome.Suspend
   }
@@ -158,10 +173,15 @@ class CountingBasedAllDifferent(constrainedVariables: Array[CPIntVar]) extends C
   }
 
   @inline private def updateDomainsWithBitSetDomains() : Unit = {
+
+    val currentNumberOfBoundAndProcessedVariables = numberOfBoundAndProcessedVariables.value
+
     currentVariableIndex = numberOfVariables
-    while(currentVariableIndex > 0) {
+    while(currentVariableIndex > currentNumberOfBoundAndProcessedVariables) {
       currentVariableIndex -= 1
-      currentDomain = bitSetDomains(currentVariableIndex)
+
+      currentOrderedVariableId = orderedVariablesIds(currentVariableIndex)
+      currentDomain = bitSetDomains(currentOrderedVariableId)
 
       //get the values by bucket and remove them from the real domain of the current variable
       currentBucketIndex = numberOfBuckets
@@ -169,7 +189,7 @@ class CountingBasedAllDifferent(constrainedVariables: Array[CPIntVar]) extends C
       while(currentBucketIndex > 0) {
         currentBucketIndex -= 1
 
-        var valuesToBeRemovedBitSet = currentDomain(currentBucketIndex) ^ bitSetDomainsBeforePropagation(currentVariableIndex)(currentBucketIndex)
+        var valuesToBeRemovedBitSet = currentDomain(currentBucketIndex) ^ bitSetDomainsBeforePropagation(currentOrderedVariableId)(currentBucketIndex)
 
         //TODO : for now, linear to get the values, could be done more efficiently with a lookup table
         var bitIndex = 0
@@ -187,7 +207,7 @@ class CountingBasedAllDifferent(constrainedVariables: Array[CPIntVar]) extends C
       }
 
       if(numberOfValuesToRemove > 0)
-        constrainedVariables(currentVariableIndex).removeValues(temporalDomainValues, numberOfValuesToRemove) //do not have to check for failure as domain wipe out would have been detected before
+        constrainedVariables(currentOrderedVariableId).removeValues(temporalDomainValues, numberOfValuesToRemove) //do not have to check for failure as domain wipe out would have been detected before
     }
   }
 }
