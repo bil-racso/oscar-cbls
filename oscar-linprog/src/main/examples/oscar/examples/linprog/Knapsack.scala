@@ -25,9 +25,10 @@ import oscar.algebra._
  * Given a set of items, each with a weight and an utility, determine the count of each item
  * to include in a collection so that the total weight is less than or equal to a given limit
  * and the total utility is as large as possible.
+ *
  * @author gme
  */
-object KnapSack extends MPModel(LPSolveLib) with App {
+object Knapsack extends MPModel(LPSolveLib) with App {
 
   case class O(weight: Int, utility: Int, x: MPVar[_ <: MIPSolverInterface])
 

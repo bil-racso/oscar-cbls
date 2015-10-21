@@ -33,13 +33,13 @@ trait InfeasibilityAnalysisInterface { self: MPSolverInterface =>
    * Returns true if the lower bound of the given variable
    * belongs to the set of constraints making the problem infeasible
    */
-  def isVarLBInfeasible(varId: Int): Boolean
+  def isVariableLowerBoundInfeasible(varId: Int): Boolean
 
   /**
    * Returns true if the upper bound of the given variable
    * belongs to the set of constraints making the problem infeasible
    */
-  def isVarUBInfeasible(varId: Int): Boolean
+  def isVariableUpperBoundInfeasible(varId: Int): Boolean
 
   /**
    * Returns true if the given constraint

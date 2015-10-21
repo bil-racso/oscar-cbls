@@ -62,13 +62,13 @@ class MPSolver[I <: MPSolverInterface](val solverInterface: I) {
    * @param obj the new objective expression
    * @param min the new optimization direction (true for minimization and false for maximization)
    */
-  def optimize(obj: LinearExpression, min: Boolean) = {
+  def setObjective(obj: LinearExpression, min: Boolean) = {
     setDirty()
 
     _objective = obj
 
     val (varIds, coefs) = obj.coef.map { case(vari, coef) => (variableColumn(vari.name), coef)}.unzip
-    solverInterface.addObjective(min, coefs.toArray, varIds.toArray)
+    solverInterface.setObjective(min, coefs.toArray, varIds.toArray)
   }
 
   /**
@@ -82,8 +82,8 @@ class MPSolver[I <: MPSolverInterface](val solverInterface: I) {
   protected var variables = Map[String, MPVar[I]]()
   protected var variableColumn = Map[String, Int]()
 
-  def nVariables = {
-    assert(variables.size == solverInterface.nVariables,
+  def getNumberOfVariables = {
+    assert(variables.size == solverInterface.getNumberOfVariables,
       "The number of variables stored does not correspond to the number of variables added to the solver.")
 
     variables.size
@@ -117,7 +117,7 @@ class MPSolver[I <: MPSolverInterface](val solverInterface: I) {
     require(variable.initialLowerBound.isValidInt, "The lower bound of an integer variable should be an integral number.")
     require(variable.initialUpperBound.isValidInt, "The upper bound of an integer variable should be an integral number.")
 
-    val colId = solverInterface.addIntegerVariable(variable.name, variable.initialLowerBound.toInt, variable.initialUpperBound.toInt)
+    val colId = ev(solverInterface).addIntegerVariable(variable.name, variable.initialLowerBound.toInt, variable.initialUpperBound.toInt)
 
     register(variable, colId)
   }
@@ -141,7 +141,7 @@ class MPSolver[I <: MPSolverInterface](val solverInterface: I) {
   /**
    * Returns the type of the variable with the given name.
    */
-  def getVarType(varName: String)(implicit ev: I => MIPSolverInterface): MPVarType = {
+  def getVariableType(varName: String)(implicit ev: I => MIPSolverInterface): MPVarType = {
     if(isInteger(varName))     Integer
     else if(isBinary(varName)) Binary
     else                       Continuous
@@ -150,29 +150,29 @@ class MPSolver[I <: MPSolverInterface](val solverInterface: I) {
   /**
    * Return true if the variable with the given name is of type [[Continuous]]
    */
-  def isFloat(varName: String)(implicit ev: I => MIPSolverInterface): Boolean = solverInterface.isFloat(variableColumn(varName))
+  def isFloat(varName: String)(implicit ev: I => MIPSolverInterface): Boolean = ev(solverInterface).isFloat(variableColumn(varName))
 
   /**
    * Return true if the variable with the given name is of type [[Integer]]
    */
-  def isInteger(varName: String)(implicit ev: I => MIPSolverInterface): Boolean = solverInterface.isInteger(variableColumn(varName))
+  def isInteger(varName: String)(implicit ev: I => MIPSolverInterface): Boolean = ev(solverInterface).isInteger(variableColumn(varName))
 
   /**
    * Return true if the variable with the given name is of type [[Binary]]
    */
-  def isBinary(varName: String)(implicit ev: I => MIPSolverInterface): Boolean = solverInterface.isBinary(variableColumn(varName))
+  def isBinary(varName: String)(implicit ev: I => MIPSolverInterface): Boolean = ev(solverInterface).isBinary(variableColumn(varName))
 
   /**
    * Updates the type of the variable
    */
-  def updateVarType(varName: String, varType: MPVarType)(implicit ev: I => MIPSolverInterface) = {
+  def setVariableType(varName: String, varType: MPVarType)(implicit ev: I => MIPSolverInterface) = {
     setDirty()
 
-    if (getVarType(varName) != varType) {
+    if (getVariableType(varName) != varType) {
       varType match {
-        case Continuous => solverInterface.setFloat(variableColumn(varName))
-        case Integer    => solverInterface.setInteger(variableColumn(varName))
-        case Binary     => solverInterface.setBinary(variableColumn(varName))
+        case Continuous => ev(solverInterface).setFloat(variableColumn(varName))
+        case Integer    => ev(solverInterface).setInteger(variableColumn(varName))
+        case Binary     => ev(solverInterface).setBinary(variableColumn(varName))
       }
     }
   }
@@ -180,22 +180,22 @@ class MPSolver[I <: MPSolverInterface](val solverInterface: I) {
   /**
    * Updates the type of the given variable to [[Continuous]]
    */
-  def setFloat(varName: String)(implicit ev: I => MIPSolverInterface) = updateVarType(varName, Continuous)
+  def setFloat(varName: String)(implicit ev: I => MIPSolverInterface) = setVariableType(varName, Continuous)
 
   /**
    * Updates the type of the given variable to [[Integer]]
    */
-  def setInteger(varName: String)(implicit ev: I => MIPSolverInterface) = updateVarType(varName, Integer)
+  def setInteger(varName: String)(implicit ev: I => MIPSolverInterface) = setVariableType(varName, Integer)
 
   /**
    * Updates the type of the given variable to [[Binary]]
    */
-  def setBinary(varName: String)(implicit ev: I => MIPSolverInterface) = updateVarType(varName, Binary)
+  def setBinary(varName: String)(implicit ev: I => MIPSolverInterface) = setVariableType(varName, Binary)
 
   /**
    * Returns the lower bound of the variable with the given name.
    */
-  def getLowerBound(varName: String): Double = solverInterface.getVarLB(variableColumn(varName))
+  def getVariableLowerBound(varName: String): Double = solverInterface.getVariableLowerBound(variableColumn(varName))
 
   /**
    * Updates the lower bound of the variable with the given name to the given value
@@ -203,16 +203,16 @@ class MPSolver[I <: MPSolverInterface](val solverInterface: I) {
    * @param varName the name of the variable that should be updated
    * @param lb the new value of the lower bound for this variable
    */
-  def updateLowerBound(varName: String, lb: Double) = {
+  def setVariableLowerBound(varName: String, lb: Double) = {
     setDirty()
 
-    solverInterface.setVarLB(variableColumn(varName), lb)
+    solverInterface.setVariableLowerBound(variableColumn(varName), lb)
   }
 
   /**
    * Returns the upper bound of the variable with the given name.
    */
-  def getUpperBound(varName: String): Double = solverInterface.getVarUB(variableColumn(varName))
+  def getVariableUpperBound(varName: String): Double = solverInterface.getVariableUpperBound(variableColumn(varName))
 
   /**
    * Updates the upper bound of the variable with the given name to the given value
@@ -220,17 +220,17 @@ class MPSolver[I <: MPSolverInterface](val solverInterface: I) {
    * @param varName the name of the variable that should be updated
    * @param ub the new value of the upper bound for this variable
    */
-  def updateUpperBound(varName: String, ub: Double) = {
+  def setVariableUpperBound(varName: String, ub: Double) = {
     setDirty()
 
-    solverInterface.setVarUB(variableColumn(varName), ub)
+    solverInterface.setVariableUpperBound(variableColumn(varName), ub)
   }
 
   /**
    * Returns the value of the variable with the given name in the current solution (if any)
    */
   def value(varName: String): Try[Double] = endStatus.flatMap { status =>
-    if (status == SolutionFound) Success(solverInterface.getVarValue(variableColumn(varName)))
+    if (status == SolutionFound) Success(solverInterface.getVariableValue(variableColumn(varName)))
     else                         Failure(NoSolutionFoundException(status))
   }
 
@@ -240,8 +240,8 @@ class MPSolver[I <: MPSolverInterface](val solverInterface: I) {
   protected var linearConstraints = Map[String, LinearConstraint[I]]()
   protected var linearConstraintRows = Map[String, Int]()
 
-  def nLinearConstraints = {
-    assert(linearConstraints.size == solverInterface.nLinearConstraints,
+  def getNumberOfLinearConstraints = {
+    assert(linearConstraints.size == solverInterface.getNumberOfLinearConstraints,
       "The number of linear constraints stored does not correspond to the number of linear constraints added to the solver.")
 
     linearConstraints.size
@@ -286,7 +286,7 @@ class MPSolver[I <: MPSolverInterface](val solverInterface: I) {
    */
   def solve: EndStatus = {
     solverInterface.updateModel()
-    val es = solverInterface.optimize
+    val es = solverInterface.solve
     _solveStatus = Solved
     _endStatus = Success(es)
     es
@@ -341,13 +341,8 @@ class MPSolver[I <: MPSolverInterface](val solverInterface: I) {
     solverInterface.exportModel(filepath, format)
   }
 
-  /* INFEASIBILITY ANALYSIS */
 
-  /**
-   * Finds the sources of infeasibilities in the problem.
-   *
-   * @return true if the infeasibility analysis succeeded
-   */
+  /* INFEASIBILITY ANALYSIS */
 
   private var infeasibilitiesFound = false
 
@@ -356,9 +351,12 @@ class MPSolver[I <: MPSolverInterface](val solverInterface: I) {
     else                      Failure(NoInfeasibilityFoundException)
   }
 
+  /**
+   * Finds the sources of infeasibilities in the problem.
+   */
   def analyseInfeasibility()(implicit ev: I => InfeasibilityAnalysisInterface): Try[InfeasibleSet] =
     if(endStatus == Success(Infeasible)) {
-      val success = solverInterface.analyseInfeasibility()
+      val success = ev(solverInterface).analyseInfeasibility()
       if(success) {
         infeasibilitiesFound = true
 
@@ -378,20 +376,20 @@ class MPSolver[I <: MPSolverInterface](val solverInterface: I) {
    * Returns true if the lower bound of the given variable
    * belongs to the set of constraints making the problem infeasible
    */
-  def getVarLBInfeasibilityStatus(varName: String)(implicit ev: I => InfeasibilityAnalysisInterface): Try[Boolean] =
-    asSuccessIfInfeasFound(solverInterface.isVarLBInfeasible(variableColumn(varName)))
+  def isVariableLowerBoundInfeasible(varName: String)(implicit ev: I => InfeasibilityAnalysisInterface): Try[Boolean] =
+    asSuccessIfInfeasFound(ev(solverInterface).isVariableLowerBoundInfeasible(variableColumn(varName)))
 
   /**
    * Returns true if the upper bound of the given variable
    * belongs to the set of constraints making the problem infeasible
    */
-  def getVarUBInfeasibilityStatus(varName: String)(implicit ev: I => InfeasibilityAnalysisInterface): Try[Boolean] =
-    asSuccessIfInfeasFound(solverInterface.isVarUBInfeasible(variableColumn(varName)))
+  def isVariableUpperBoundInfeasible(varName: String)(implicit ev: I => InfeasibilityAnalysisInterface): Try[Boolean] =
+    asSuccessIfInfeasFound(ev(solverInterface).isVariableUpperBoundInfeasible(variableColumn(varName)))
 
   /**
    * Returns true if the given constraint
    * belongs to the set of constraints making the problem infeasible
    */
-  def getLinearConstraintInfeasibilityStatus(cstrName: String)(implicit ev: I => InfeasibilityAnalysisInterface): Try[Boolean] =
-    asSuccessIfInfeasFound(solverInterface.isLinearConstraintInfeasible(linearConstraintRows(cstrName)))
+  def isLinearConstraintInfeasible(cstrName: String)(implicit ev: I => InfeasibilityAnalysisInterface): Try[Boolean] =
+    asSuccessIfInfeasFound(ev(solverInterface).isLinearConstraintInfeasible(linearConstraintRows(cstrName)))
 }

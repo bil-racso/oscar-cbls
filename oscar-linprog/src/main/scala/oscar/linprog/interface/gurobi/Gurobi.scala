@@ -48,8 +48,8 @@ class Gurobi(_env: Option[GRBEnv] = None) extends MPSolverInterface with MIPSolv
     linExpr
   }
 
-  def nVariables: Int = rawSolver.get(GRB.IntAttr.NumVars)
-  def nLinearConstraints: Int = rawSolver.get(GRB.IntAttr.NumConstrs)
+  def getNumberOfVariables: Int = rawSolver.get(GRB.IntAttr.NumVars)
+  def getNumberOfLinearConstraints: Int = rawSolver.get(GRB.IntAttr.NumConstrs)
 
   def modelName: String = rawSolver.get(GRB.StringAttr.ModelName)
   def modelName_=(value: String) = rawSolver.set(GRB.StringAttr.ModelName, value)
@@ -57,10 +57,10 @@ class Gurobi(_env: Option[GRBEnv] = None) extends MPSolverInterface with MIPSolv
 
   /* OBJECTIVE */
 
-  def addObjective(minimize: Boolean, coefs: Array[Double], varIds: Array[Int]): Unit =
+  def setObjective(minimize: Boolean, coefs: Array[Double], varIds: Array[Int]): Unit =
     rawSolver.setObjective(toGRBLinExpr(coefs, varIds), if(minimize) 1 else -1)
 
-  def setObjCoef(varId: Int, coef: Double): Unit = {
+  def setObjectiveCoefficient(varId: Int, coef: Double): Unit = {
     val variable = rawSolver.getVar(varId)
     val obj = rawSolver.getObjective.asInstanceOf[GRBLinExpr]
     obj.remove(variable)
@@ -81,11 +81,11 @@ class Gurobi(_env: Option[GRBEnv] = None) extends MPSolverInterface with MIPSolv
     objCoef: Option[Double], cstrCoefs: Option[Array[Double]], cstrIds: Option[Array[Int]], integer: Boolean, binary: Boolean): Int =
     (objCoef, cstrCoefs, cstrIds) match {
       case (Some(oCoef), Some(cCoefs), Some(cIds)) =>
-        val varId = nVariables
+        val varId = getNumberOfVariables
         rawSolver.addVar(lb, ub, oCoef, toGRBVarType(integer, binary), cIds.map(i => rawSolver.getConstr(i)), cCoefs, name)
         varId
       case (None, None, None) =>
-        val varId = nVariables
+        val varId = getNumberOfVariables
         rawSolver.addVar(lb, ub, 0.0, toGRBVarType(integer, binary), name)
         varId
       case _ =>
@@ -104,11 +104,11 @@ class Gurobi(_env: Option[GRBEnv] = None) extends MPSolverInterface with MIPSolv
     objCoef: Option[Double] = None, cstrCoefs: Option[Array[Double]] = None, cstrIds: Option[Array[Int]] = None): Int =
     addVariable(name, 0.0, 1.0, objCoef, cstrCoefs, cstrIds, integer = true, binary = true)
 
-  def getVarLB(varId: Int): Double = rawSolver.getVar(varId).get(GRB.DoubleAttr.LB)
-  def setVarLB(varId: Int, lb: Double) = rawSolver.getVar(varId).set(GRB.DoubleAttr.LB, lb)
+  def getVariableLowerBound(varId: Int): Double = rawSolver.getVar(varId).get(GRB.DoubleAttr.LB)
+  def setVariableLowerBound(varId: Int, lb: Double) = rawSolver.getVar(varId).set(GRB.DoubleAttr.LB, lb)
 
-  def getVarUB(varId: Int): Double = rawSolver.getVar(varId).get(GRB.DoubleAttr.UB)
-  def setVarUB(varId: Int, ub: Double) = rawSolver.getVar(varId).set(GRB.DoubleAttr.UB, ub)
+  def getVariableUpperBound(varId: Int): Double = rawSolver.getVar(varId).get(GRB.DoubleAttr.UB)
+  def setVariableUpperBound(varId: Int, ub: Double) = rawSolver.getVar(varId).set(GRB.DoubleAttr.UB, ub)
 
   private def getVarType(varId: Int) = rawSolver.getVar(varId).get(GRB.CharAttr.VType)
   private def setVarType(varId: Int, t: Char) = rawSolver.getVar(varId).set(GRB.CharAttr.VType, t)
@@ -126,7 +126,7 @@ class Gurobi(_env: Option[GRBEnv] = None) extends MPSolverInterface with MIPSolv
   /* CONSTRAINTS */
 
   def addConstraint(name: String, coefs: Array[Double], varIds: Array[Int], sense: String, rhs: Double): Int = {
-    val cstrId = nLinearConstraints
+    val cstrId = getNumberOfLinearConstraints
 
     val GRBSense =
       sense match {
@@ -142,10 +142,10 @@ class Gurobi(_env: Option[GRBEnv] = None) extends MPSolverInterface with MIPSolv
     cstrId
   }
 
-  def setCstrCoef(cstrId: Int, varId: Int, coef: Double): Unit =
+  def setConstraintCoefficient(cstrId: Int, varId: Int, coef: Double): Unit =
     rawSolver.chgCoeff(rawSolver.getConstr(cstrId), rawSolver.getVar(varId), coef)
 
-  def setCstrRhs(cstrId: Int, rhs: Double): Unit =
+  def setConstraintRightHandSide(cstrId: Int, rhs: Double): Unit =
     rawSolver.getConstr(cstrId).set(GRB.DoubleAttr.RHS, rhs)
 
 
@@ -195,7 +195,7 @@ class Gurobi(_env: Option[GRBEnv] = None) extends MPSolverInterface with MIPSolv
   private[gurobi] var aborted: Boolean = false
   rawSolver.setCallback(new GurobiAborter(this))
 
-  def optimize: EndStatus = {
+  def solve: EndStatus = {
     updateModel()
     aborted = false
 

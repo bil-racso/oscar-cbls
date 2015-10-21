@@ -32,7 +32,7 @@ class LinearConstraint[+I <: MPSolverInterface] private (name: String, val const
   /**
    * Returns true in case this Constraint belongs to the set of infeasible constraints
    */
-  def infeasible(implicit ev: I => InfeasibilityAnalysisInterface): Option[Boolean] = solver.getLinearConstraintInfeasibilityStatus(name).toOption
+  def infeasible(implicit ev: I => InfeasibilityAnalysisInterface): Option[Boolean] = solver.isLinearConstraintInfeasible(name).toOption
 
   override def toString: String = name + ": " + constraintExpr
 }

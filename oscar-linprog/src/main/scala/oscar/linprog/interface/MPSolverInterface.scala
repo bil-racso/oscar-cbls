@@ -64,12 +64,12 @@ abstract class MPSolverInterface {
    * @param coefs are the coefficients of the linear term
    * @param varIds indicates to which variable the coefficients refer to
    */
-  def addObjective(minimize: Boolean, coefs: Array[Double], varIds: Array[Int]): Unit
+  def setObjective(minimize: Boolean, coefs: Array[Double], varIds: Array[Int]): Unit
 
   /**
    * Sets the coefficient of the variable in the objective to the given value.
    */
-  def setObjCoef(varId: Int, coef: Double): Unit
+  def setObjectiveCoefficient(varId: Int, coef: Double): Unit
 
   /**
    * Adds a new variable to the model.
@@ -93,44 +93,44 @@ abstract class MPSolverInterface {
   /**
    * Returns the lower bound of the variable.
    */
-  def getVarLB(varId: Int): Double
+  def getVariableLowerBound(varId: Int): Double
 
   /**
    * Sets the lower bound of the variable to the given value.
    */
-  def setVarLB(varId: Int, lb: Double)
+  def setVariableLowerBound(varId: Int, lb: Double)
 
   /**
    * Removes the lower bound on the variable (sets it to -Inf).
    */
-  def setUnboundedVarLB(varId: Int) = setVarLB(varId, -Double.MaxValue)
+  def setUnboundedVariableLowerBound(varId: Int) = setVariableLowerBound(varId, -Double.MaxValue)
 
   /**
    * Returns the upper bound of the variable.
    */
-  def getVarUB(varId: Int): Double
+  def getVariableUpperBound(varId: Int): Double
 
   /**
    * Sets the upper bound of the variable to the given value.
    */
-  def setVarUB(varId: Int, ub: Double)
+  def setVariableUpperBound(varId: Int, ub: Double)
 
   /**
    * Removes the upper bound on the variable (sets it to +Inf).
    */
-  def setUnboundedVarUB(varId: Int) = setVarUB(varId, Double.MaxValue)
+  def setUnboundedVariableUpperBound(varId: Int) = setVariableUpperBound(varId, Double.MaxValue)
 
   /**
    * Returns the bounds of the variable as a pair (lower, upper).
    */
-  def getVarBounds(varId: Int): (Double, Double) = (getVarLB(varId), getVarUB(varId))
+  def getVariableBounds(varId: Int): (Double, Double) = (getVariableLowerBound(varId), getVariableUpperBound(varId))
 
   /**
    * Sets the bounds of the variable to the given values.
    */
-  def setVarBounds(varId: Int, lb: Double, ub: Double) = {
-    setVarLB(varId, lb)
-    setVarUB(varId, ub)
+  def setVariableBounds(varId: Int, lb: Double, ub: Double) = {
+    setVariableLowerBound(varId, lb)
+    setVariableUpperBound(varId, ub)
   }
 
   /**
@@ -149,22 +149,22 @@ abstract class MPSolverInterface {
   /**
    * Sets the coefficient of the variable in the corresponding constraint to the specified value.
    */
-  def setCstrCoef(cstrId: Int, varId: Int, coef: Double): Unit
+  def setConstraintCoefficient(cstrId: Int, varId: Int, coef: Double): Unit
 
   /**
    * Sets the right hand side (constant term) of the specified constraint to the given value.
    */
-  def setCstrRhs(cstrId: Int, rhs: Double): Unit
+  def setConstraintRightHandSide(cstrId: Int, rhs: Double): Unit
 
   /**
    * Returns the current number of variables in the model.
    */
-  def nVariables: Int
+  def getNumberOfVariables: Int
 
   /**
    * Returns the current number of linear constraints in the model.
    */
-  def nLinearConstraints: Int
+  def getNumberOfLinearConstraints: Int
 
   /**
    * Commits to the solver the last changes done to the model.
@@ -216,20 +216,20 @@ abstract class MPSolverInterface {
   /**
    * Returns the value of the given variable in the solution.
    */
-  def getVarValue(varId: Int): Double = solution(varId)
+  def getVariableValue(varId: Int): Double = solution(varId)
 
   /**
    * Solves the optimization problem.
    *
    * This operation is blocking until the optimization ends.
    */
-  def optimize: EndStatus
+  def solve: EndStatus
 
   /**
    * Aborts the current solve (if any).
    *
-   * This method gracefully terminates the previous call to [[MPSolverInterface.optimize]].
-   * This method should not impact the successive calls to [[MPSolverInterface.optimize]].
+   * This method gracefully terminates the previous call to [[MPSolverInterface.solve]].
+   * This method should not impact the successive calls to [[MPSolverInterface.solve]].
    */
   def abort(): Unit
 

@@ -77,7 +77,7 @@ class MPVar[+I <: MPSolverInterface] private (val initialVarType: MPVarType, val
   /**
    * Returns the [[MPVarType]] of this variable.
    */
-  def varType(implicit ev: I => MIPSolverInterface): MPVarType = solver.getVarType(name)
+  def variableType(implicit ev: I => MIPSolverInterface): MPVarType = solver.getVariableType(name)
 
   /**
    * Returns true if this variable is of type [[Continuous]]
@@ -97,7 +97,7 @@ class MPVar[+I <: MPSolverInterface] private (val initialVarType: MPVarType, val
   /**
    * Sets the [[MPVarType]] of this variable to the given type.
    */
-  def varType_=(value: MPVarType)(implicit ev: I => MIPSolverInterface) = solver.updateVarType(name, value)
+  def variableType_=(value: MPVarType)(implicit ev: I => MIPSolverInterface) = solver.setVariableType(name, value)
 
   /**
    * Sets the [[MPVarType]] of this variable to [[Continuous]]
@@ -117,22 +117,22 @@ class MPVar[+I <: MPSolverInterface] private (val initialVarType: MPVarType, val
   /**
    * Returns the lower bound.
    */
-  def lowerBound = solver.getLowerBound(name)
+  def lowerBound = solver.getVariableLowerBound(name)
 
   /**
    * Sets the lower bound to the given value.
    */
-  def lowerBound_=(value: Double) = solver.updateLowerBound(name, value)
+  def lowerBound_=(value: Double) = solver.setVariableLowerBound(name, value)
 
   /**
    * Returns the upper bound.
    */
-  def upperBound = solver.getUpperBound(name)
+  def upperBound = solver.getVariableUpperBound(name)
 
   /**
    * Sets the upper bound to the given value.
    */
-  def upperBound_=(value: Double) = solver.updateUpperBound(name, value)
+  def upperBound_=(value: Double) = solver.setVariableUpperBound(name, value)
 
   /**
    * Returns the bounds of this variable (lower, upper)
@@ -166,12 +166,12 @@ class MPVar[+I <: MPSolverInterface] private (val initialVarType: MPVarType, val
   /**
    * Returns true in case the lower bound on this variable belongs to the set of infeasible constraints
    */
-  def lowerBoundInfeasible(implicit ev: I => InfeasibilityAnalysisInterface): Option[Boolean] = solver.getVarLBInfeasibilityStatus(name).toOption
+  def lowerBoundInfeasible(implicit ev: I => InfeasibilityAnalysisInterface): Option[Boolean] = solver.isVariableLowerBoundInfeasible(name).toOption
 
   /**
    * Returns true in case the upper bound on this variable belongs to the set of infeasible constraints
    */
-  def upperBoundInfeasible(implicit ev: I => InfeasibilityAnalysisInterface): Option[Boolean] = solver.getVarUBInfeasibilityStatus(name).toOption
+  def upperBoundInfeasible(implicit ev: I => InfeasibilityAnalysisInterface): Option[Boolean] = solver.isVariableUpperBoundInfeasible(name).toOption
 }
 
 /**

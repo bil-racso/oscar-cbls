@@ -43,8 +43,8 @@ class LPSolve extends MPSolverInterface with MIPSolverInterface {
   private var nCols = 0
   private var nRows = 0
 
-  def nVariables: Int = nCols
-  def nLinearConstraints: Int = nRows
+  def getNumberOfVariables: Int = nCols
+  def getNumberOfLinearConstraints: Int = nRows
 
   def modelName = rawSolver.getLpName
   def modelName_=(value: String) = rawSolver.setLpName(value)
@@ -55,10 +55,10 @@ class LPSolve extends MPSolverInterface with MIPSolverInterface {
   private var pendingObj: Option[(Boolean, Array[Double], Array[Int])] = None
   private def flushPendingObj() = pendingObj = None
 
-  def addObjective(minimize: Boolean, coefs: Array[Double], varIds: Array[Int]): Unit =
+  def setObjective(minimize: Boolean, coefs: Array[Double], varIds: Array[Int]): Unit =
     pendingObj = Some((minimize, coefs, varIds))
 
-  def setObjCoef(varId: Int, coef: Double): Unit = rawSolver.setObj(varId + 1, coef)
+  def setObjectiveCoefficient(varId: Int, coef: Double): Unit = rawSolver.setObj(varId + 1, coef)
 
 
   /* VARIABLES */
@@ -69,8 +69,8 @@ class LPSolve extends MPSolverInterface with MIPSolverInterface {
   private def setVarProperties(varId: Int, name: String, lb: Double, ub: Double, integer: Boolean, binary: Boolean) = {
     // NOTE: do not swap the next two lines, the name of the variable should be set before setting any property.
     rawSolver.setColName(varId + 1, name)
-    setVarLB(varId, lb)
-    setVarUB(varId, ub)
+    setVariableLowerBound(varId, lb)
+    setVariableUpperBound(varId, ub)
     (integer, binary) match {
       case (true, false) => setInteger(varId)
       case (true, true) => setBinary(varId)
@@ -112,11 +112,11 @@ class LPSolve extends MPSolverInterface with MIPSolverInterface {
     objCoef: Option[Double] = None, cstrCoefs: Option[Array[Double]] = None, cstrIds: Option[Array[Int]] = None): Int =
     addVariable(name, 0.0, 1.0, objCoef, cstrCoefs, cstrIds, integer = true, binary = true)
 
-  def getVarLB(varId: Int): Double = rawSolver.getLowbo(varId + 1)
-  def setVarLB(varId: Int, lb: Double) = rawSolver.setLowbo(varId + 1, lb)
+  def getVariableLowerBound(varId: Int): Double = rawSolver.getLowbo(varId + 1)
+  def setVariableLowerBound(varId: Int, lb: Double) = rawSolver.setLowbo(varId + 1, lb)
 
-  def getVarUB(varId: Int): Double = rawSolver.getUpbo(varId + 1)
-  def setVarUB(varId: Int, ub: Double) = rawSolver.setUpbo(varId + 1, ub)
+  def getVariableUpperBound(varId: Int): Double = rawSolver.getUpbo(varId + 1)
+  def setVariableUpperBound(varId: Int, ub: Double) = rawSolver.setUpbo(varId + 1, ub)
 
   def isInteger(varId: Int): Boolean = rawSolver.isInt(varId + 1)
   def setInteger(varId: Int) = rawSolver.setInt(varId + 1, true)
@@ -155,9 +155,9 @@ class LPSolve extends MPSolverInterface with MIPSolverInterface {
     cstrId
   }
 
-  def setCstrCoef(cstrId: Int, varId: Int, coef: Double): Unit = rawSolver.setMat(cstrId + 1, varId + 1, coef)
+  def setConstraintCoefficient(cstrId: Int, varId: Int, coef: Double): Unit = rawSolver.setMat(cstrId + 1, varId + 1, coef)
 
-  def setCstrRhs(cstrId: Int, rhs: Double): Unit = rawSolver.setRh(cstrId + 1, rhs)
+  def setConstraintRightHandSide(cstrId: Int, rhs: Double): Unit = rawSolver.setRh(cstrId + 1, rhs)
 
 
   /* SOLVE */
@@ -166,28 +166,28 @@ class LPSolve extends MPSolverInterface with MIPSolverInterface {
     rawSolver.resizeLp(nRows, nCols)
 
     // add the pending vars
-    pendingVars foreach { case (varId, name, lb, ub, integer, binary) => setVarProperties(varId, name, lb, ub, integer, binary) }
+    pendingVars.foreach { case (varId, name, lb, ub, integer, binary) => setVarProperties(varId, name, lb, ub, integer, binary) }
     flushPendingVars()
 
     // add the pending objective
-    pendingObj foreach { case (min, oCoef, oVarId) =>
+    pendingObj.foreach { case (min, oCoef, oVarId) =>
       rawSolver.setObjFnex(oCoef.length, oCoef, oVarId.map(_ + 1))
       if(min) rawSolver.setMinim() else rawSolver.setMaxim()
     }
     flushPendingObj()
 
     // add the pending constraints
-    pendingCstrs sortBy {
-      case (cstrId, name, coefs, varIds, sense, rhs) => cstrId
-    } foreach {
+    pendingCstrs.sortBy {
+      case (cstrId, _, _, _, _, _) => cstrId
+    }.foreach {
       case (cstrId, name, coefs, varIds, sense, rhs) => addConstraintToModel(cstrId, name, coefs, varIds, sense, rhs)
     }
     flushPendingCstrs()
 
     // verify that the raw model contains the correct number of variables and constraints
-    assert(rawSolver.getNorigColumns == nVariables,
+    assert(rawSolver.getNorigColumns == getNumberOfVariables,
       s"$solverName: the number of variables contained by the raw solver does not correspond to the number of variables added.")
-    assert(rawSolver.getNorigRows == nLinearConstraints,
+    assert(rawSolver.getNorigRows == getNumberOfLinearConstraints,
       s"$solverName: the number of constraints contained by the raw solver does not correspond to the number of constraints added.")
   }
 
@@ -223,7 +223,7 @@ class LPSolve extends MPSolverInterface with MIPSolverInterface {
   private[lpsolve] var aborted: Boolean = false
   rawSolver.putAbortfunc(new LPSolveAborter(this), this)
 
-  def optimize: EndStatus = {
+  def solve: EndStatus = {
     updateModel()
     aborted = false
 

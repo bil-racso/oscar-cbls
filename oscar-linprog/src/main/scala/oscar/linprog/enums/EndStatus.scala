@@ -26,13 +26,11 @@ case object NoSolutionFound extends EndStatus("NO_SOLUTION_FOUND")
 case object Warning extends EndStatus("WARNING")
 
 object EndStatus {
-  def fromString(str: String) = str.toUpperCase match {
-    case "SOLUTION_FOUND"    => SolutionFound
-    case "UNBOUNDED"         => Unbounded
-    case "INFEASIBLE"        => Infeasible
-    case "NO_SOLUTION_FOUND" => NoSolutionFound
-    case "WARNING"           => Warning
-    case _  => throw new IllegalArgumentException(s"Unrecognized end status: $str")
+  val values: List[EndStatus] = List(SolutionFound, Unbounded, Infeasible, NoSolutionFound, Warning)
+
+  def fromString(str: String): EndStatus = values.find(es => es.name == str.toUpperCase) match {
+    case Some(es) => es
+    case None     => throw new IllegalArgumentException(s"Unrecognized end status: $str")
   }
 }
 

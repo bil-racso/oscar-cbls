@@ -39,10 +39,10 @@ trait LPSolverInterface extends MPSolverInterface {
   /**
    * Returns the vector of the values in the solution of the dual variables corresponding to the linear constraint.
    */
-  def cstrDuals: Double
+  def constraintDualValues: Double
 
   /**
    * Return the value in the solution of the dual to the given constraint.
    */
-  def getCstrDual(cstrId: Int): Double
+  def getConstraintDualValue(cstrId: Int): Double
 }

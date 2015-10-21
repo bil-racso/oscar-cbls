@@ -23,12 +23,12 @@ import oscar.linprog.interface.MPSolverInterface
  */
 package object modeling {
 
-  def minimize[I <: MPSolverInterface](expr: LinearExpression)(implicit solver: MPSolver[I]) = solver.optimize(expr, min = true)
-  def maximize[I <: MPSolverInterface](expr: LinearExpression)(implicit solver: MPSolver[I]) = solver.optimize(expr, min = false)
+  def minimize[I <: MPSolverInterface](expr: LinearExpression)(implicit solver: MPSolver[I]) = solver.setObjective(expr, min = true)
+  def maximize[I <: MPSolverInterface](expr: LinearExpression)(implicit solver: MPSolver[I]) = solver.setObjective(expr, min = false)
 
   def add[I <: MPSolverInterface](cstr: LinearConstraintExpression, name: String = "")(implicit solver: MPSolver[I]): LinearConstraint[I] = {
     val n =
-      if(name == "") "cstr" + solver.nLinearConstraints
+      if(name == "") "cstr" + solver.getNumberOfLinearConstraints
       else name
 
     LinearConstraint(n, cstr)
