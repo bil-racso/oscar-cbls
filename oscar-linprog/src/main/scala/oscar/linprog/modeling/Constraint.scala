@@ -15,7 +15,8 @@
 
 package oscar.linprog.modeling
 
-import oscar.linprog.interface.{InfeasibilityAnalysisInterface, MPSolverInterface}
+import oscar.algebra._
+import oscar.linprog.interface.{MIPSolverInterface, InfeasibilityAnalysisInterface, MPSolverInterface}
 
 /**
  * Represents a constraint in a mathematical programming model.
@@ -23,21 +24,45 @@ import oscar.linprog.interface.{InfeasibilityAnalysisInterface, MPSolverInterfac
  * @author acrucifix acr@n-side.com
  */
 abstract class AbstractMPConstraint[+I <: MPSolverInterface](val name: String)(implicit solver: MPSolver[I]) {
+  def addToSolver(): Unit
+
+  addToSolver()
+
   override def toString = name
 }
 
-class LinearConstraint[+I <: MPSolverInterface] private (name: String, val constraintExpr: oscar.algebra.LinearConstraintExpression)(implicit solver: MPSolver[I]) extends AbstractMPConstraint[I](name) {
-  solver.add(this)
+class LinearConstraint[+I <: MPSolverInterface] protected (
+  name: String,
+  val expression: oscar.algebra.LinearConstraintExpression
+  )(implicit solver: MPSolver[I]) extends AbstractMPConstraint[I](name) {
+
+  def addToSolver(): Unit = solver.addLinearConstraint(this)
 
   /**
    * Returns true in case this Constraint belongs to the set of infeasible constraints
    */
   def infeasible(implicit ev: I => InfeasibilityAnalysisInterface): Option[Boolean] = solver.isLinearConstraintInfeasible(name).toOption
 
-  override def toString: String = name + ": " + constraintExpr
+  override def toString: String = name + ": " + expression
 }
 
 object LinearConstraint {
-  def apply[I <: MPSolverInterface](name: String, constraintExpr: oscar.algebra.LinearConstraintExpression)(implicit solver: MPSolver[I]) =
-    new LinearConstraint[I](name, constraintExpr)
+  def apply[I <: MPSolverInterface](name: String, expression: oscar.algebra.LinearConstraintExpression)(implicit solver: MPSolver[I]) =
+    new LinearConstraint[I](name, expression)
+}
+
+class IndicatorConstraint[+I <: MPSolverInterface] private (
+  name: String,
+  override val expression : oscar.algebra.IndicatorConstraintExpression
+  )(implicit solver: MPSolver[I]) extends LinearConstraint[I](name, expression) {
+
+  if(expression.indicators.length > 0)
+    require(expression.bigM.isDefined, s"M should be defined for the IndicatorConstraint $name")
+
+  override def addToSolver(): Unit = solver.addIndicatorConstraint(this)
+}
+
+object IndicatorConstraint {
+  def apply[I <: MPSolverInterface](name: String, expression : oscar.algebra.IndicatorConstraintExpression)(implicit solver: MPSolver[I]) =
+    new IndicatorConstraint[I](name, expression)
 }
