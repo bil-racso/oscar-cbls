@@ -15,8 +15,7 @@
 
 package oscar.linprog.modeling
 
-import oscar.algebra._
-import oscar.linprog.interface.{MIPSolverInterface, InfeasibilityAnalysisInterface, MPSolverInterface}
+import oscar.linprog.interface.{InfeasibilityAnalysisInterface, MPSolverInterface}
 
 /**
  * Represents a constraint in a mathematical programming model.
@@ -24,8 +23,10 @@ import oscar.linprog.interface.{MIPSolverInterface, InfeasibilityAnalysisInterfa
  * @author acrucifix acr@n-side.com
  */
 abstract class AbstractMPConstraint[+I <: MPSolverInterface](val name: String)(implicit solver: MPSolver[I]) {
+  // How should the constraints be added to the solver.
   protected def addToSolver(): Unit
 
+  // Add the constraint to the solver upon instantiation.
   addToSolver()
 
   override def toString = name
