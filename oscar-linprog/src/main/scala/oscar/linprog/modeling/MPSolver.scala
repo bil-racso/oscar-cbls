@@ -382,12 +382,11 @@ class MPSolver[I <: MPSolverInterface](val solverInterface: I) {
       if(success) {
         infeasibilitiesFound = true
 
+        // linear constraints coming from an indicator constraint are not taken into account
         val linearCstrs = linearConstraints.filterNot { case (name, _) =>
           linearConstraintsPerIndicatorConstraint.values.flatten.toSeq.contains(name)
         }.values.filter(_.infeasible.get).map(_.name).toSeq
-        val indicatorCstrs = linearConstraintsPerIndicatorConstraint.filter { case (icName, lcs) =>
-            lcs.count(lcName => isLinearConstraintInfeasible(lcName).get) > 0
-        }.keys.toSeq
+        val indicatorCstrs = indicatorConstraints.values.filter(_.infeasible.get).map(_.name).toSeq
         val lowerBounds = variables.values.filter(_.lowerBoundInfeasible.get).map(_.name).toSeq
         val upperBounds = variables.values.filter(_.upperBoundInfeasible.get).map(_.name).toSeq
 
@@ -419,4 +418,17 @@ class MPSolver[I <: MPSolverInterface](val solverInterface: I) {
    */
   def isLinearConstraintInfeasible(cstrName: String)(implicit ev: I => InfeasibilityAnalysisInterface): Try[Boolean] =
     asSuccessIfInfeasFound(ev(solverInterface).isLinearConstraintInfeasible(linearConstraintRows(cstrName)))
+
+  /**
+   * Returns true if the given indicator constraint
+   * belongs to the set of constraints making the problem infeasible.
+   *
+   * An indicator constraints is infeasible as soon as any of its related linear constraints is infeasible.
+   */
+  def isIndicatorConstraintInfeasible(cstrName: String)(implicit ev: I => InfeasibilityAnalysisInterface): Try[Boolean] =
+    asSuccessIfInfeasFound {
+      linearConstraintsPerIndicatorConstraint(cstrName).exists { lcName =>
+        ev(solverInterface).isLinearConstraintInfeasible(linearConstraintRows(lcName))
+      }
+    }
 }

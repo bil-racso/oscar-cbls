@@ -24,19 +24,20 @@ import oscar.linprog.interface.{MIPSolverInterface, InfeasibilityAnalysisInterfa
  * @author acrucifix acr@n-side.com
  */
 abstract class AbstractMPConstraint[+I <: MPSolverInterface](val name: String)(implicit solver: MPSolver[I]) {
-  def addToSolver(): Unit
+  protected def addToSolver(): Unit
 
   addToSolver()
 
   override def toString = name
 }
 
+
 class LinearConstraint[+I <: MPSolverInterface] protected (
   name: String,
   val expression: oscar.algebra.LinearConstraintExpression
   )(implicit solver: MPSolver[I]) extends AbstractMPConstraint[I](name) {
 
-  def addToSolver(): Unit = solver.addLinearConstraint(this)
+  protected def addToSolver(): Unit = solver.addLinearConstraint(this)
 
   /**
    * Returns true in case this Constraint belongs to the set of infeasible constraints
@@ -51,6 +52,7 @@ object LinearConstraint {
     new LinearConstraint[I](name, expression)
 }
 
+
 class IndicatorConstraint[+I <: MPSolverInterface] private (
   name: String,
   override val expression : oscar.algebra.IndicatorConstraintExpression
@@ -59,7 +61,12 @@ class IndicatorConstraint[+I <: MPSolverInterface] private (
   if(expression.indicators.length > 0)
     require(expression.bigM.isDefined, s"M should be defined for the IndicatorConstraint $name")
 
-  override def addToSolver(): Unit = solver.addIndicatorConstraint(this)
+  override protected def addToSolver(): Unit = solver.addIndicatorConstraint(this)
+
+  /**
+   * Returns true in case this Constraint belongs to the set of infeasible constraints
+   */
+  override def infeasible(implicit ev: I => InfeasibilityAnalysisInterface): Option[Boolean] = solver.isIndicatorConstraintInfeasible(name).toOption
 }
 
 object IndicatorConstraint {
