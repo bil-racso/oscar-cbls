@@ -259,16 +259,38 @@ class MPSolver[I <: MPSolverInterface](val solverInterface: I) {
   /**
    * Adds the given [[LinearConstraint]] to the model
    */
-  def add(linearConstraint: LinearConstraint[I]) = {
-    val (varIds, coefs) = linearConstraint.constraintExpr.linExpr.coef.map {
+  def addLinearConstraint(linearConstraint: LinearConstraint[I]) = {
+    val (varIds, coefs) = linearConstraint.expression.linExpr.coef.map {
       case (vari, coef) => (variableColumn(vari.name), coef)
     }.unzip
 
-    val rowId = solverInterface.addConstraint(linearConstraint.name, coefs.toArray, varIds.toArray, linearConstraint.constraintExpr.sense.symbol, -linearConstraint.constraintExpr.linExpr.cte)
+    val rowId = solverInterface.addConstraint(linearConstraint.name, coefs.toArray, varIds.toArray, linearConstraint.expression.sense.symbol, -linearConstraint.expression.linExpr.cte)
 
     register(linearConstraint, rowId)
   }
 
+  protected var indicatorConstraints = Map[String, IndicatorConstraint[I]]()
+  protected var linearConstraintsPerIndicatorConstraint = Map[String, Seq[String]]()
+
+  protected def register(indicatorConstraint: IndicatorConstraint[I], relatedConstraints: Seq[LinearConstraint[I]]): Unit = {
+    setDirty()
+
+    require(!indicatorConstraints.contains(indicatorConstraint.name), s"There exists already an indicator constraint with name ${indicatorConstraint.name}.")
+
+    indicatorConstraints += (indicatorConstraint.name -> indicatorConstraint)
+    linearConstraintsPerIndicatorConstraint += (indicatorConstraint.name -> relatedConstraints.map(_.name))
+  }
+
+  /**
+   * Adds the given [[IndicatorConstraint]] to the model
+   */
+  def addIndicatorConstraint(indicatorConstraint: IndicatorConstraint[I]) = {
+    val constraints = indicatorConstraint.expression.constraintExpressions.zipWithIndex.map { case (cstr, i) =>
+      LinearConstraint(s"${indicatorConstraint.name}_${cstr.sense}_$i", cstr)(this)
+    }
+
+    register(indicatorConstraint, constraints)
+  }
 
   /* SOLVE */
 
@@ -360,11 +382,15 @@ class MPSolver[I <: MPSolverInterface](val solverInterface: I) {
       if(success) {
         infeasibilitiesFound = true
 
-        val linearCstrs = linearConstraints.values.filter(_.infeasible.get).map(_.name).toSeq
+        // linear constraints coming from an indicator constraint are not taken into account
+        val linearCstrs = linearConstraints.filterNot { case (name, _) =>
+          linearConstraintsPerIndicatorConstraint.values.flatten.toSeq.contains(name)
+        }.values.filter(_.infeasible.get).map(_.name).toSeq
+        val indicatorCstrs = indicatorConstraints.values.filter(_.infeasible.get).map(_.name).toSeq
         val lowerBounds = variables.values.filter(_.lowerBoundInfeasible.get).map(_.name).toSeq
         val upperBounds = variables.values.filter(_.upperBoundInfeasible.get).map(_.name).toSeq
 
-        Success(InfeasibleSet(linearCstrs, lowerBounds, upperBounds))
+        Success(InfeasibleSet(linearCstrs ++ indicatorCstrs, lowerBounds, upperBounds))
       } else {
         Failure(NoInfeasibilityFoundException)
       }
@@ -392,4 +418,17 @@ class MPSolver[I <: MPSolverInterface](val solverInterface: I) {
    */
   def isLinearConstraintInfeasible(cstrName: String)(implicit ev: I => InfeasibilityAnalysisInterface): Try[Boolean] =
     asSuccessIfInfeasFound(ev(solverInterface).isLinearConstraintInfeasible(linearConstraintRows(cstrName)))
+
+  /**
+   * Returns true if the given indicator constraint
+   * belongs to the set of constraints making the problem infeasible.
+   *
+   * An indicator constraints is infeasible as soon as any of its related linear constraints is infeasible.
+   */
+  def isIndicatorConstraintInfeasible(cstrName: String)(implicit ev: I => InfeasibilityAnalysisInterface): Try[Boolean] =
+    asSuccessIfInfeasFound {
+      linearConstraintsPerIndicatorConstraint(cstrName).exists { lcName =>
+        ev(solverInterface).isLinearConstraintInfeasible(linearConstraintRows(lcName))
+      }
+    }
 }
