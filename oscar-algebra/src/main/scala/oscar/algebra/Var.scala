@@ -29,7 +29,7 @@ abstract class Var extends LinearExpression {
     else Zero
   }
 
-  def *(cons: Const): LinearExpression = new CstVar(cons, this)
+  override def *(cons: Const): LinearExpression = new CstVar(cons, this)
 
   override def equals(that: Any) = {
     that match {

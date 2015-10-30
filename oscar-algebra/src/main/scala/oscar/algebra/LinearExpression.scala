@@ -14,8 +14,6 @@
  ******************************************************************************/
 package oscar.algebra
 
-/**Abstract type for variables*/
-
 /**
  * @author Pierre Schaus pschaus@gmail.com 
  */
@@ -30,11 +28,15 @@ abstract class LinearExpression extends Expression {
 
   def unary_- : LinearExpression = new LinearExpressionDiff(0, this)
 
+  def *(c: Const): LinearExpression = new LinearExpressionProd(c, this)
+
   def <:=(linExpr: LinearExpression) = new LinearConstraintExpression(this - linExpr, LQ)
 
   def >:=(linExpr: LinearExpression) = new LinearConstraintExpression(this - linExpr, GQ)
 
   def =:=(linExpr: LinearExpression) = new LinearConstraintExpression(this - linExpr, EQ)
+
+  def toLinearPiece(abscissa: LinearExpression = 0.0, interval: Interval = Singleton(0.0)) = new LinearPiece(this, abscissa, interval)
 
   /**
    * Test if two linear expressions are logically equivalent

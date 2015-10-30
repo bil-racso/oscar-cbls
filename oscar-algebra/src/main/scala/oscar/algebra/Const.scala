@@ -21,7 +21,9 @@ class Const(val d: Double) extends LinearExpression {
 
   def *(expr: LinearExpression): LinearExpression = new LinearExpressionProd(this, expr)
 
-  def *(c2: Const) = new Const(d * c2.d)
+  override def *(c2: Const) = new Const(d * c2.d)
+
+  def *(linearPiece: LinearPiece): LinearPiece = linearPiece * this
 
   def +(c2: Const) = new Const(d + c2.d)
 

@@ -15,7 +15,9 @@
 package oscar.algebra
 
 /**
- * (expr1 + expr2) or (expr1 - expr2)
+ * A binary operation applied to a pair of [[LinearExpression]].
+ *
+ * This can be the sum (expr1 + expr2) or the difference (expr1 - expr2).
  */
 abstract class LinearExpressionBinary(expr1: LinearExpression, expr2: LinearExpression) extends LinearExpression {
 
