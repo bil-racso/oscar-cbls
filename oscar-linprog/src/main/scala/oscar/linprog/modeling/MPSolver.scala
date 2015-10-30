@@ -49,7 +49,7 @@ class MPSolver[I <: MPSolverInterface](val solverInterface: I) {
 
   /* OBJECTIVE */
 
-  private var _objective: LinearExpression = Const(1)
+  protected var _objective: LinearExpression = Const(1)
 
   /**
    * Returns the [[LinearExpression]] representing the current objective of the problem
@@ -97,6 +97,31 @@ class MPSolver[I <: MPSolverInterface](val solverInterface: I) {
     variables += (variable.name -> variable)
     variableColumn += (variable.name -> colId)
   }
+
+  /**
+   * Removes the variable with the given name from the model (if any).
+   *
+   * The variable should not be used in the objective or in any constraint.
+   */
+  def removeVariable(varName: String): Unit =
+    if(variables.contains(varName)) {
+      setDirty()
+
+      val varId = variableColumn(varName)
+
+      val v = variable(varName)
+      require(
+        !objective.uses(v) &&
+        linearConstraints.values.forall(c => !c.expression.linExpr.uses(v)),
+        s"Cannot remove variable $varName because it is either used in the objective or in a constraint. Please remove the objective or the constraint first."
+      )
+
+      solverInterface.removeVariable(varId)
+
+      variables -= varName
+      variableColumn -= varName
+      variableColumn = variableColumn.mapValues(colId => if(colId > varId) colId - 1 else colId)
+    }
 
   /**
    * Adds the given [[MPFloatVar]] to the problem
@@ -237,8 +262,9 @@ class MPSolver[I <: MPSolverInterface](val solverInterface: I) {
 
   /* CONSTRAINTS */
 
+  /* LINEAR CONSTRAINTS */
   protected var linearConstraints = Map[String, LinearConstraint[I]]()
-  protected var linearConstraintRows = Map[String, Int]()
+  protected var linearConstraintRow = Map[String, Int]()
 
   def getNumberOfLinearConstraints = {
     assert(linearConstraints.size == solverInterface.getNumberOfLinearConstraints,
@@ -253,8 +279,24 @@ class MPSolver[I <: MPSolverInterface](val solverInterface: I) {
     require(!linearConstraints.contains(linearConstraint.name), s"There exists already a linear constraint with name ${linearConstraint.name}.")
 
     linearConstraints += (linearConstraint.name -> linearConstraint)
-    linearConstraintRows += (linearConstraint.name -> rowId)
+    linearConstraintRow += (linearConstraint.name -> rowId)
   }
+
+  /**
+   * Removes the constraint with the given name from the model (if any).
+   */
+  def removeLinearConstraint(cstrName: String) =
+    if(linearConstraints.contains(cstrName)) {
+      setDirty()
+
+      val cstrId = linearConstraintRow(cstrName)
+
+      solverInterface.removeConstraint(cstrId)
+
+      linearConstraints -= cstrName
+      linearConstraintRow -= cstrName
+      linearConstraintRow = linearConstraintRow.mapValues(rowId => if(rowId > cstrId) rowId - 1 else rowId)
+    }
 
   /**
    * Adds the given [[LinearConstraint]] to the model
@@ -269,6 +311,7 @@ class MPSolver[I <: MPSolverInterface](val solverInterface: I) {
     register(linearConstraint, rowId)
   }
 
+  /* INDICATOR CONSTRAINTS */
   protected var indicatorConstraints = Map[String, IndicatorConstraint[I]]()
   protected var linearConstraintsPerIndicatorConstraint = Map[String, Seq[String]]()
 
@@ -291,6 +334,7 @@ class MPSolver[I <: MPSolverInterface](val solverInterface: I) {
 
     register(indicatorConstraint, constraints)
   }
+
 
   /* SOLVE */
 
@@ -417,7 +461,7 @@ class MPSolver[I <: MPSolverInterface](val solverInterface: I) {
    * belongs to the set of constraints making the problem infeasible
    */
   def isLinearConstraintInfeasible(cstrName: String)(implicit ev: I => InfeasibilityAnalysisInterface): Try[Boolean] =
-    asSuccessIfInfeasFound(ev(solverInterface).isLinearConstraintInfeasible(linearConstraintRows(cstrName)))
+    asSuccessIfInfeasFound(ev(solverInterface).isLinearConstraintInfeasible(linearConstraintRow(cstrName)))
 
   /**
    * Returns true if the given indicator constraint
@@ -428,7 +472,7 @@ class MPSolver[I <: MPSolverInterface](val solverInterface: I) {
   def isIndicatorConstraintInfeasible(cstrName: String)(implicit ev: I => InfeasibilityAnalysisInterface): Try[Boolean] =
     asSuccessIfInfeasFound {
       linearConstraintsPerIndicatorConstraint(cstrName).exists { lcName =>
-        ev(solverInterface).isLinearConstraintInfeasible(linearConstraintRows(lcName))
+        ev(solverInterface).isLinearConstraintInfeasible(linearConstraintRow(lcName))
       }
     }
 }

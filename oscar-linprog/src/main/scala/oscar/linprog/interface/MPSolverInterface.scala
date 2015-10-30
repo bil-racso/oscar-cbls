@@ -91,6 +91,11 @@ abstract class MPSolverInterface {
     objCoef: Option[Double] = None, cstrCoefs: Option[Array[Double]] = None, cstrIds: Option[Array[Int]] = None): Int
 
   /**
+   * Removes the variable with the given index from the model.
+   */
+  def removeVariable(varId: Int): Unit
+
+  /**
    * Returns the lower bound of the variable.
    */
   def getVariableLowerBound(varId: Int): Double
@@ -145,6 +150,13 @@ abstract class MPSolverInterface {
    * @return the index of the constraint (row number) in the model
    */
   def addConstraint(name: String, coefs: Array[Double], varIds: Array[Int], sense: String, rhs: Double): Int
+
+  /**
+   * Removes the constraint with the given index from the model.
+   *
+   * @return true if the constraint was successfully removed
+   */
+  def removeConstraint(cstrId: Int): Unit
 
   /**
    * Sets the coefficient of the variable in the corresponding constraint to the specified value.
