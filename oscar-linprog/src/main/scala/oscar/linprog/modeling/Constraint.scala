@@ -59,9 +59,6 @@ class IndicatorConstraint[+I <: MPSolverInterface] private (
   override val expression : oscar.algebra.IndicatorConstraintExpression
   )(implicit solver: MPSolver[I]) extends LinearConstraint[I](name, expression) {
 
-  if(expression.indicators.length > 0)
-    require(expression.bigM.isDefined, s"M should be defined for the IndicatorConstraint $name")
-
   override protected def addToSolver(): Unit = solver.addIndicatorConstraint(this)
 
   /**

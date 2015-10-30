@@ -49,14 +49,13 @@ class IndicatorConstraintExpression(
   linExpr: LinearExpression,
   sense: ConstraintSense,
   val indicators: Seq[LinearExpression],
-  val bigM: Option[Double]) extends LinearConstraintExpression(linExpr, sense) {
+  val bigM: Double) extends LinearConstraintExpression(linExpr, sense) {
 
-  if(indicators.length > 0)
-    require(bigM.isDefined, s"M should be defined for each IndicatorConstraint")
+  require(indicators.length > 0, s"An IndicatorConstraint should declare at least one indicator.")
 
   val constraintExpressions: Seq[LinearConstraintExpression] =
-    indicators.zipWithIndex.map { case (ind, i) =>
-      val actualBound = bigM.get * ind
+    indicators.map { ind =>
+      val actualBound = bigM * ind
 
       lazy val constraintLQ = linExpr <:= actualBound
       lazy val constraintGQ = linExpr >:= -actualBound
