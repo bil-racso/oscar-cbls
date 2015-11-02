@@ -153,8 +153,6 @@ abstract class MPSolverInterface {
 
   /**
    * Removes the constraint with the given index from the model.
-   *
-   * @return true if the constraint was successfully removed
    */
   def removeConstraint(cstrId: Int): Unit
 
