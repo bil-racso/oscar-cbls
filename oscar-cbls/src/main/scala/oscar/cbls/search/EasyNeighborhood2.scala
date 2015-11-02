@@ -1,17 +1,17 @@
 package oscar.cbls.search
 
-import oscar.cbls.invariants.core.computation.{Solution, Store, Variable, CBLSIntVar}
+import oscar.cbls.invariants.core.computation.{CBLSIntVar, Solution, Store, Variable}
 import oscar.cbls.modeling.AlgebraTrait
 import oscar.cbls.objective.{LoggingObjective, Objective}
 import oscar.cbls.search.algo.{HotRestart, IdenticalAggregator}
 import oscar.cbls.search.combinators.NeighborhoodCombinator
 import oscar.cbls.search.core.{MoveFound, Neighborhood, NoMoveFound, SearchResult}
-import oscar.cbls.search.move.{CompositeMove, CallBackMove, AssignMove, Move}
+import oscar.cbls.search.move.{AssignMove, CompositeMove, Move}
 
+abstract class EasyNeighborhood2(best:Boolean = false, neighborhoodName:String=null)
+  extends Neighborhood with SupportForAndThenChaining{
 
-abstract class EasyNeighborhood2[MyMove <: Move](best:Boolean = false, neighborhoodName:String=null) extends Neighborhood {
-
-  protected def neighborhoodNameToString: String = if (neighborhoodName != null) neighborhoodName else this.getClass.getSimpleName()
+  protected def neighborhoodNameToString: String = if (neighborhoodName != null) neighborhoodName else this.getClass().getSimpleName()
 
   override def toString: String = neighborhoodNameToString
 
@@ -23,6 +23,7 @@ abstract class EasyNeighborhood2[MyMove <: Move](best:Boolean = false, neighborh
   protected var obj: Objective = null
 
   override final def getMove(obj: Objective, acceptanceCriterion: (Int, Int) => Boolean): SearchResult = {
+
     oldObj = obj()
     this.acceptanceCriterion = acceptanceCriterion
     toReturnMove = null
@@ -45,40 +46,37 @@ abstract class EasyNeighborhood2[MyMove <: Move](best:Boolean = false, neighborh
     }
   }
 
+
   /** This is the method you must implement and that performs the search of your neighborhood.
     * every time you explore a neighbor, you must perform the calls to notifyMoveExplored or moveRequested(newObj) && submitFoundMove(myMove)){
     * as explained in the documentation of this class
     */
   def exploreNeighborhood()
 
-  def evaluateObj(): Int
-
-  def instantiateMove(newObj: Int): MyMove
+  def instantiateCurrentMove(newObj: Int): Move
 
   var tmpNewObj: Int = 0
 
-  def exploreMoveTrueIfStopRequired(): Boolean = {
+  def evaluateCurrentMoveObjTrueIfStopRequired(newObj: Int): Boolean = {
     //cas à gérer:
     //verbose (on affiche le mouvement; qu'on instancie donc avec obj)
     //andThen (pas utile de l'instancier sns obj pq on va de tt façons propager en commençant le voisinage suivant.
     //normal
     //pour l'instant, cas normal uniquement (en fait le AndThen sera géré par le combinateur idoine)
 
-    val newObj = evaluateObj()
-
     val myPrintExploredNeighbors = printExploredNeighbors
 
     if (best) {
       if (newObj < bestNewObj) {
         bestNewObj = newObj
-        toReturnMove = instantiateMove(newObj)
+        toReturnMove = instantiateCurrentMove(newObj)
         if (myPrintExploredNeighbors) {
           println("Explored " + toReturnMove + ", new best, saved (might be filtered out if best is not accepted)")
           println(obj.asInstanceOf[LoggingObjective].getAndCleanEvaluationLog.mkString("\n"))
         }
       } else {
         if (myPrintExploredNeighbors) {
-          println("Explored " + instantiateMove(newObj) + ", not the new best, not saved")
+          println("Explored " + instantiateCurrentMove(newObj) + ", not the new best, not saved")
           println(obj.asInstanceOf[LoggingObjective].getAndCleanEvaluationLog.mkString("\n"))
         }
       }
@@ -86,7 +84,7 @@ abstract class EasyNeighborhood2[MyMove <: Move](best:Boolean = false, neighborh
     } else {
       if (acceptanceCriterion(oldObj, newObj)) {
         bestNewObj = newObj
-        toReturnMove = instantiateMove(newObj)
+        toReturnMove = instantiateCurrentMove(newObj)
         if (myPrintExploredNeighbors) {
           println("Explored " + toReturnMove + ", accepted, exploration stopped")
           println(obj.asInstanceOf[LoggingObjective].getAndCleanEvaluationLog.mkString("\n"))
@@ -95,7 +93,7 @@ abstract class EasyNeighborhood2[MyMove <: Move](best:Boolean = false, neighborh
       } else {
         //explored, but not saved
         if (myPrintExploredNeighbors) {
-          println("Explored " + instantiateMove(newObj) + ", not accepted, not saved")
+          println("Explored " + instantiateCurrentMove(newObj) + ", not accepted, not saved")
           println(obj.asInstanceOf[LoggingObjective].getAndCleanEvaluationLog.mkString("\n"))
         }
         false
@@ -112,7 +110,7 @@ case class AssignNeighborhood(vars:Array[CBLSIntVar],
                               symmetryClassOfValues:Option[Int => Int => Int] = None,
                               domain:(CBLSIntVar,Int) => Iterable[Int] = (v,i) => v.domain,
                               hotRestart:Boolean = true)
-  extends EasyNeighborhood2[AssignMove](best,name) with AlgebraTrait{
+  extends EasyNeighborhood2(best,name) with AlgebraTrait{
   //the indice to start with for the exploration
   var startIndice:Int = 0
 
@@ -154,7 +152,8 @@ case class AssignNeighborhood(vars:Array[CBLSIntVar],
         newVal = domainIterationSchemeIterator.next()
         if (newVal != oldVal){
           //testing newValue
-          if (exploreMoveTrueIfStopRequired()){
+          val newObj = obj.assignVal(currentVar,newVal)
+          if (evaluateCurrentMoveObjTrueIfStopRequired(newObj)){
             startIndice = currentIndice + 1
             return
           }
@@ -163,10 +162,7 @@ case class AssignNeighborhood(vars:Array[CBLSIntVar],
     }
   }
 
-  override def evaluateObj():Int =
-    obj.assignVal(currentVar,newVal)
-
-  override def instantiateMove(newObj:Int) =
+  override def instantiateCurrentMove(newObj:Int) =
     AssignMove(currentVar, newVal, newObj, name)
 
   //this resets the internal state of the Neighborhood
@@ -175,18 +171,13 @@ case class AssignNeighborhood(vars:Array[CBLSIntVar],
   }
 }
 
-trait MoveInstanciator[MyMove <: Move] {
-  def instantiateMove(newObj: Int): MyMove
-}
+trait SupportForAndThenChaining extends Neighborhood{
 
+  def instantiateCurrentMove(newObj:Int):Move
 
-trait MoveInstantiatorCarrier[MyMove <: Move]{
-  var myMoveInstantiator:MoveInstanciator[MyMove] = null
-  def setMoveInstantiator(m:MoveInstanciator[MyMove]): Unit ={
-    myMoveInstantiator = m
+  def dynAndThen(other:Move => Neighborhood,maximalIntermediaryDegradation: Int = Int.MaxValue):DynAndThen = {
+    DynAndThen(this,other,maximalIntermediaryDegradation)
   }
-
-  def currentMove(newObj:Int = Int.MaxValue):MyMove = myMoveInstantiator.instantiateMove(newObj)
 }
 
 class AndThen(a: Neighborhood, b: Neighborhood, maximalIntermediaryDegradation: Int = Int.MaxValue)
@@ -243,13 +234,12 @@ class AndThen(a: Neighborhood, b: Neighborhood, maximalIntermediaryDegradation: 
   }
 }
 
-//TODO: un obj peut être un moveInstanciator en fait, suffit de sauver les valeurs du mouvement
-// (si disponible, ce qui n'est pas toujours le cas.)
+case class DynAndThen(a:Neighborhood with SupportForAndThenChaining,
+                      b:(Move => Neighborhood),
+                      maximalIntermediaryDegradation: Int = Int.MaxValue)
+  extends NeighborhoodCombinator(a) with SupportForAndThenChaining{
 
-case class DynAndThen[MyMove <: Move](a:EasyNeighborhood2[MyMove],
-                                      b:(MyMove => Neighborhood),
-                                      maximalIntermediaryDegradation: Int = Int.MaxValue)
-  extends NeighborhoodCombinator(a) { //TODO: b is not represented, but reset is not needed, restriction: no profiling on b
+  var currentB:Neighborhood = null
 
   override def getMove(obj: Objective, acceptanceCriteria: (Int, Int) => Boolean): SearchResult = {
 
@@ -269,7 +259,7 @@ case class DynAndThen[MyMove <: Move](a:EasyNeighborhood2[MyMove],
       acceptanceCriteria(oldObj, newObj)
     }
 
-    class InstrumentedObjective() extends Objective with MoveInstantiatorCarrier[MyMove]{
+    class InstrumentedObjective() extends Objective{
 
       override def detailedString(short: Boolean, indent: Int = 0): String = nSpace(indent) + "AndThenInstrumentedObjective(initialObjective:" + obj.detailedString(short) + ")"
 
@@ -278,23 +268,24 @@ case class DynAndThen[MyMove <: Move](a:EasyNeighborhood2[MyMove],
       override def value: Int = {
 
         val intermediaryObjValue =
-        if (maximalIntermediaryDegradation != Int.MaxValue) {
-          //we need to ensure that intermediary step is admissible
-          val intermediaryVal = obj.value
-          val intermediaryDegradation = intermediaryVal - oldObj
-          if (intermediaryDegradation > maximalIntermediaryDegradation) {
-            return Int.MaxValue //we do not consider this first step
+          if (maximalIntermediaryDegradation != Int.MaxValue) {
+            //we need to ensure that intermediary step is admissible
+            val intermediaryVal = obj.value
+            val intermediaryDegradation = intermediaryVal - oldObj
+            if (intermediaryDegradation > maximalIntermediaryDegradation) {
+              return Int.MaxValue //we do not consider this first step
+            }else{
+              intermediaryVal
+            }
           }else{
-            intermediaryVal
+            Int.MaxValue
           }
-        }else{
-          Int.MaxValue
-        }
 
         //now, we need to check the other neighborhood
         //first, let's instantiate it:
-        val otherNeighborhood = b(currentMove(intermediaryObjValue))
-        otherNeighborhood.getMove(obj, secondAcceptanceCriteria) match {
+        currentB = b(a.instantiateCurrentMove(intermediaryObjValue))
+
+        currentB.getMove(obj, secondAcceptanceCriteria) match {
           case NoMoveFound => Int.MaxValue
           case MoveFound(m: Move) =>
             secondMove = m
@@ -303,21 +294,44 @@ case class DynAndThen[MyMove <: Move](a:EasyNeighborhood2[MyMove],
       }
     }
 
-    a.getMove(new InstrumentedObjective(), firstAcceptanceCriterion) match {
+    val tmp = a.getMove(new InstrumentedObjective(), firstAcceptanceCriterion)
+
+     tmp match {
       case NoMoveFound => NoMoveFound
       case MoveFound(m: Move) => CompositeMove(List(m, secondMove), m.objAfter, this.toString)
     }
   }
+
+
+  override def instantiateCurrentMove(newObj: Int): Move ={
+    currentB match{
+      case null => throw new Error("DynAndThen is not presently exploring something")
+      case s:SupportForAndThenChaining =>
+        CompositeMove(List(a.instantiateCurrentMove(Int.MaxValue),
+          s.instantiateCurrentMove(Int.MaxValue)),newObj,"DynAndThen(" + a + "," + currentB + ")")
+      case _ => throw new Error("DynAndThen: Neighborhood on the right cannot be chained")
+    }
+  }
 }
 
-case class DynAndThenWithPrev[MyMove <: Move](a:EasyNeighborhood2[MyMove],
-                                              b:((MyMove,Solution) => Neighborhood),
-                                              decisionVariablesToSave:Store => Iterable[Variable] = (s:Store) => s.decisionVariables()){
+case class DynAndThenWithPrev(x:Neighborhood with SupportForAndThenChaining,
+                              b:((Move,Solution) => Neighborhood),
+                              maximalIntermediaryDegradation:Int = Int.MaxValue,
+                              decisionVariablesToSave:Store => Iterable[Variable] = (s:Store) => s.decisionVariables()) extends NeighborhoodCombinator(x){
 
+  val instrumentedA = new SaveDecisionVarsOnEntry(x,decisionVariablesToSave) with SupportForAndThenChaining{
+    override def instantiateCurrentMove(newObj: Int): Move = x.instantiateCurrentMove(newObj)
+  }
+
+  val slave = DynAndThen(instrumentedA,
+    (m:Move) => b(m,instrumentedA.savedSolution),
+    maximalIntermediaryDegradation)
+
+  override def getMove(obj: Objective, acceptanceCriterion: (Int, Int) => Boolean): SearchResult = slave.getMove(obj,acceptanceCriterion)
 }
 
 case class SaveDecisionVarsOnEntry(a: Neighborhood, decisionVariablesToSave:Store => Iterable[Variable] = (s:Store) => s.decisionVariables())
-  extends NeighborhoodCombinator(a) {
+  extends NeighborhoodCombinator(a){
 
   var savedSolution:Solution = null
 
