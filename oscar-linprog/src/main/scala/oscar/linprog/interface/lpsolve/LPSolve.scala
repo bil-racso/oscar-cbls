@@ -112,6 +112,12 @@ class LPSolve extends MPSolverInterface with MIPSolverInterface {
     objCoef: Option[Double] = None, cstrCoefs: Option[Array[Double]] = None, cstrIds: Option[Array[Int]] = None): Int =
     addVariable(name, 0.0, 1.0, objCoef, cstrCoefs, cstrIds, integer = true, binary = true)
 
+  def removeVariable(varId: Int): Unit = {
+    this.nCols -= 1
+    if(pendingVars.exists(v => v._1 == varId)) pendingVars = pendingVars.filter(p => p._1 != varId)
+    else rawSolver.delColumn(varId + 1)
+  }
+
   def getVariableLowerBound(varId: Int): Double = rawSolver.getLowbo(varId + 1)
   def setVariableLowerBound(varId: Int, lb: Double) = rawSolver.setLowbo(varId + 1, lb)
 
@@ -153,6 +159,12 @@ class LPSolve extends MPSolverInterface with MIPSolverInterface {
     pendingCstrs = (cstrId, name, coefs, varIds, sense, rhs) +: pendingCstrs
     this.nRows += 1
     cstrId
+  }
+
+  def removeConstraint(cstrId: Int): Unit = {
+    this.nRows -= 1
+    if(pendingCstrs.exists(c => c._1 == cstrId)) pendingCstrs = pendingCstrs.filter(c => c._1 != cstrId)
+    else rawSolver.delConstraint(cstrId + 1)
   }
 
   def setConstraintCoefficient(cstrId: Int, varId: Int, coef: Double): Unit = rawSolver.setMat(cstrId + 1, varId + 1, coef)

@@ -104,6 +104,8 @@ class Gurobi(_env: Option[GRBEnv] = None) extends MPSolverInterface with MIPSolv
     objCoef: Option[Double] = None, cstrCoefs: Option[Array[Double]] = None, cstrIds: Option[Array[Int]] = None): Int =
     addVariable(name, 0.0, 1.0, objCoef, cstrCoefs, cstrIds, integer = true, binary = true)
 
+  def removeVariable(varId: Int): Unit = rawSolver.remove(rawSolver.getVar(varId))
+
   def getVariableLowerBound(varId: Int): Double = rawSolver.getVar(varId).get(GRB.DoubleAttr.LB)
   def setVariableLowerBound(varId: Int, lb: Double) = rawSolver.getVar(varId).set(GRB.DoubleAttr.LB, lb)
 
@@ -141,6 +143,8 @@ class Gurobi(_env: Option[GRBEnv] = None) extends MPSolverInterface with MIPSolv
 
     cstrId
   }
+
+  def removeConstraint(cstrId: Int): Unit = rawSolver.remove(rawSolver.getConstr(cstrId))
 
   def setConstraintCoefficient(cstrId: Int, varId: Int, coef: Double): Unit =
     rawSolver.chgCoeff(rawSolver.getConstr(cstrId), rawSolver.getVar(varId), coef)
