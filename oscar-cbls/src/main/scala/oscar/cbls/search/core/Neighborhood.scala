@@ -17,7 +17,6 @@ package oscar.cbls.search.core
 
 import oscar.cbls.invariants.core.computation.Store
 import oscar.cbls.objective.{LoggingObjective, Objective}
-import oscar.cbls.search.DynAndThen
 import oscar.cbls.search.combinators._
 import oscar.cbls.search.move.{CallBackMove, Move}
 

@@ -59,7 +59,7 @@ abstract class Move(val objAfter:Int = Int.MaxValue, val neighborhoodName:String
     */
   def evaluate(obj:Objective):Int = {
     val model = obj.model
-    val snapshot = model.saveValues(touchedVariables:_*)
+    val snapshot = model.saveValues(touchedVariables)
     commit()
     val toReturn = obj.value
     model.restoreSolution(snapshot)

@@ -28,6 +28,7 @@ package oscar.cbls.routing.neighborhood
 import oscar.cbls.routing.model.PositionInRouteAndRouteNr
 import oscar.cbls.routing.model.VRP
 import oscar.cbls.search.algo.HotRestart
+import oscar.cbls.search.move.Move
 
 /**
  * Moves a point of a route to another place in the same or in an other route.
@@ -56,31 +57,39 @@ case class OnePointMove(nodesPrecedingNodesToMove: () => Iterable[Int],
 
     val relevantNeighborsNow = relevantNeighbors()
 
-    for (
-      beforeMovedPoint <- iterationSchemeOnZone if vrp.isRouted(beforeMovedPoint)
-    ) {
+    val beforeMovedPointsIt = iterationSchemeOnZone.iterator
+    while (beforeMovedPointsIt.hasNext) {
+      beforeMovedPoint = beforeMovedPointsIt.next()
+      if (vrp.isRouted(beforeMovedPoint)) {
+        movedPoint = vrp.next(beforeMovedPoint).value
 
-      val movedPoint = vrp.next(beforeMovedPoint).value
+        val insertionPointIt = relevantNeighborsNow(movedPoint).iterator
+        while (insertionPointIt.hasNext) {
+          insertionPoint = insertionPointIt.next()
+          if (vrp.isRouted(insertionPoint)
+            && beforeMovedPoint != insertionPoint
+            && movedPoint != insertionPoint
+            && beforeMovedPoint != vrp.next(insertionPoint).value
+            && (!vrp.isADepot(movedPoint) || vrp.onTheSameRoute(movedPoint, insertionPoint))) {
 
-      for (
-        insertionPoint <- relevantNeighborsNow(movedPoint) if (vrp.isRouted(insertionPoint)
-          && beforeMovedPoint != insertionPoint
-          && movedPoint != insertionPoint
-          && beforeMovedPoint != vrp.next(insertionPoint).value)
-          && (!vrp.isADepot(movedPoint) || vrp.onTheSameRoute(movedPoint, insertionPoint))
-      ) {
+            encode(beforeMovedPoint, insertionPoint)
 
-        encode(beforeMovedPoint, insertionPoint)
-        val newObj = evalObjOnEncodedMove()
-
-        if (moveRequested(newObj)
-          && submitFoundMove(OnePointMoveMove(beforeMovedPoint, movedPoint, insertionPoint, newObj, this, neighborhoodNameToString))) {
-          startIndice = beforeMovedPoint + 1
-          return
+            if (evaluateCurrentMoveObjTrueIfStopRequired(evalObjOnEncodedMove())){
+              startIndice = beforeMovedPoint + 1
+              return
+            }
+          }
         }
       }
     }
   }
+
+  var beforeMovedPoint:Int = 0
+  var movedPoint:Int = 0
+  var insertionPoint:Int = 0
+
+  override def instantiateCurrentMove(newObj: Int): Move =
+    OnePointMoveMove(beforeMovedPoint, movedPoint, insertionPoint, newObj, this, neighborhoodNameToString)
 
   override def reset(): Unit = {
     startIndice = 0
@@ -115,6 +124,6 @@ case class OnePointMoveMove(predOfMovedPoint: Int,
 
   override def toString: String = (
     neighborhoodNameToString + "OnePointMove(Moved point " + movedPoint
-    + " after " + insertionPoint + objToString + " )")
+      + " after " + insertionPoint + objToString + " )")
 }
 

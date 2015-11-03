@@ -186,15 +186,21 @@ case class SwapsNeighborhood(vars:Array[CBLSIntVar],
              && secondVar.domain.contains(oldValOfFirstVar)
              && firstVar.domain.contains(oldValOfSecondVar)) {
 
-        val newObj = obj.swapVal(firstVar,secondVar)
+        this.firstVar = firstVar
+        this.secondVar = secondVar
 
-        if (moveRequested(newObj) && submitFoundMove(SwapMove(firstVar, secondVar, newObj, name))) {
+        if (evaluateCurrentMoveObjTrueIfStopRequired(obj.swapVal(firstVar,secondVar))) {
           startIndice = i + 1
           return
         }
       }
     }
   }
+
+  var firstVar:CBLSIntVar = null
+  var secondVar:CBLSIntVar = null
+
+  override def instantiateCurrentMove(newObj: Int): Move = SwapMove(firstVar, secondVar, newObj, name)
 
   //this resets the internal state of the Neighborhood
   override def reset(): Unit = {

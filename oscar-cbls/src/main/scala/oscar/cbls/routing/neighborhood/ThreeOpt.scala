@@ -28,6 +28,7 @@ package oscar.cbls.routing.neighborhood
 
 import oscar.cbls.routing.model._
 import oscar.cbls.search.algo.HotRestart
+import oscar.cbls.search.move.Move
 
 /**
  * Removes three edges of routes, and rebuilds routes from the segments.
@@ -177,6 +178,11 @@ case class ThreeOpt(potentialInsertionPoints:()=>Iterable[Int],
   def chooseBest3Opt(beforeStart: Int, segStartPoint: Int, segEndPoint: Int,
                      insertionPoint: Int): Boolean = {
 
+    this.beforeStart = beforeStart
+    this.segEndPoint = segEndPoint
+    this.insertionPoint = insertionPoint
+    this.reverse3Opt = false
+
     /**
      * FIRST, we do a simple 3-opt move,
      * with UNDO DEACTIVATED,
@@ -192,19 +198,28 @@ case class ThreeOpt(potentialInsertionPoints:()=>Iterable[Int],
      */
     reverseSegmentInPlace(insertionPoint, segEndPoint) // REVERSE
     commit(false)
+    this.reverse3Opt = true
     val objAfterSecondMove = obj()
 
     val FirstMoveIsBestMove = objAfterFirstMove < objAfterSecondMove
     val bestObjAfter = if(FirstMoveIsBestMove) objAfterFirstMove else objAfterSecondMove
+    reverse3Opt = !FirstMoveIsBestMove
 
     //put everything back to place, since we three-opted and reversed, the rollback performs the reverse
     encodeMove(insertionPoint, segStartPoint, beforeStart, REVERSE)
     commit(false)
 
-    (moveRequested(bestObjAfter)
-      && submitFoundMove(ThreeOptMove(beforeStart, segEndPoint, insertionPoint,
-      !FirstMoveIsBestMove, bestObjAfter, this, neighborhoodNameToString)))
+    evaluateCurrentMoveObjTrueIfStopRequired(bestObjAfter)
   }
+
+  var beforeStart:Int = 0
+  var segEndPoint:Int = 0
+  var insertionPoint:Int = 0
+  var reverse3Opt:Boolean = false
+
+  override def instantiateCurrentMove(newObj: Int): Move =
+    ThreeOptMove(beforeStart, segEndPoint, insertionPoint,
+      reverse3Opt, newObj, this, neighborhoodNameToString)
 
   //this resets the internal state of the Neighborhood
   override def reset(){
