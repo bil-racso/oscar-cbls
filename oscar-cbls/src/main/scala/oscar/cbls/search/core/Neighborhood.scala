@@ -17,6 +17,7 @@ package oscar.cbls.search.core
 
 import oscar.cbls.invariants.core.computation.Store
 import oscar.cbls.objective.{LoggingObjective, Objective}
+import oscar.cbls.search.DynAndThen
 import oscar.cbls.search.combinators._
 import oscar.cbls.search.move.{CallBackMove, Move}
 
@@ -495,69 +496,67 @@ case class ConstantMoveNeighborhood(m:Move) extends Neighborhood{
   override def getMove(obj: Objective, acceptanceCriterion: (Int, Int) => Boolean): SearchResult = m
 }
 
+trait SupportForAndThenChaining extends Neighborhood{
+
+  def instantiateCurrentMove(newObj:Int):Move
+
+  def dynAndThen(other:Move => Neighborhood,maximalIntermediaryDegradation: Int = Int.MaxValue):DynAndThen = {
+    DynAndThen(this,other,maximalIntermediaryDegradation)
+  }
+}
+
 /**
  * This is an easier way to implement your neighborhood; it provides a simplified interface and hides away searching for the best move vs. the first move
  * and the management of the acceptingCriterion.
  *
- * to implement a neighborhood, you must implement the method searchImprovingMoveEasy
+ * to implement a neighborhood, you must implement the method exploreNeighborhood
  * in this method, you evaluate moves, and to notify that a move has been
- * explored you have two possibilities:
+ * explored you call the method evaluateCurrentMoveObjTrueIfStopRequired(newObj:Int)
  *
- * either you do
- * {{{
- * if notifyMoveExplored(newObj, =>myMove) return
- *}}}
- * or you do
- *{{{
- * if(moveRequested(newObj) && submitFoundMove(myMove)) return
- *}}}
+ * this method tells you if the search must be stopped, or not.
  *
- * The second option is more efficient since it will not create a closure on each call
- * and the move will only be instantiated when needed
+ * you must also implement the method instantiateCurrentMove,
+ * so that the framework can actually get the current move, notably to return and comit it.
  *
- * You can also save some state on return, eg if your neighborhood performs some hotRestart:
- *{{{
- * if(moveRequested(newObj) && submitFoundMove(myMove)){
- *   hotRestartForNextTime = ...
- *   return
- * }
- *}}}
+ * this method must be able to return its result when you call the method evaluateCurrentMoveObjTrueIfStopRequired
  *
- * to evaluate the objective function, call the method obj
+ * to evaluate the objective function, the Objective is in the variable obj
  *
  * @param best true if you want the best move false if you want the first acceptable move
  * @param neighborhoodName the name of the neighborhood, used for verbosities
  */
-abstract class EasyNeighborhood(best:Boolean = false, neighborhoodName:String=null) extends Neighborhood{
+abstract class EasyNeighborhood(best:Boolean = false, neighborhoodName:String=null)
+  extends Neighborhood with SupportForAndThenChaining{
 
-  protected def neighborhoodNameToString:String = if (neighborhoodName != null) neighborhoodName else this.getClass.getSimpleName()
+  protected def neighborhoodNameToString: String = if (neighborhoodName != null) neighborhoodName else this.getClass().getSimpleName()
 
   override def toString: String = neighborhoodNameToString
 
   //passing parameters, and getting return values from the search
-  private var oldObj:Int=0
-  private var acceptanceCriterion:(Int,Int) => Boolean=null
-  private var toReturnMove:Move = null
-  private var bestNewObj:Int = Int.MaxValue
-  protected var obj:Objective = null
+  private var oldObj: Int = 0
+  private var acceptanceCriterion: (Int, Int) => Boolean = null
+  private var toReturnMove: Move = null
+  private var bestNewObj: Int = Int.MaxValue
+  protected var obj: Objective = null
 
-  override final def getMove(obj:Objective, acceptanceCriterion:(Int,Int) => Boolean):SearchResult = {
+  override final def getMove(obj: Objective, acceptanceCriterion: (Int, Int) => Boolean): SearchResult = {
+
     oldObj = obj()
     this.acceptanceCriterion = acceptanceCriterion
     toReturnMove = null
     bestNewObj = Int.MaxValue
-    this.obj = if(printExploredNeighbors) new LoggingObjective(obj) else obj
-    if(printPerformedSearches) println(neighborhoodNameToString + ": start exploration")
+    this.obj = if (printExploredNeighbors) new LoggingObjective(obj) else obj
+    if (printPerformedSearches) println(neighborhoodNameToString + ": start exploration")
 
     exploreNeighborhood()
 
-    if(toReturnMove == null || (best && !acceptanceCriterion(oldObj,bestNewObj))) {
-      if (printPerformedSearches){
+    if (toReturnMove == null || (best && !acceptanceCriterion(oldObj, bestNewObj))) {
+      if (printPerformedSearches) {
         println(neighborhoodNameToString + ": no move found")
       }
       NoMoveFound
-    }else {
-      if (printPerformedSearches){
+    } else {
+      if (printPerformedSearches) {
         println(neighborhoodNameToString + ": move found: " + toReturnMove)
       }
       toReturnMove
@@ -570,71 +569,51 @@ abstract class EasyNeighborhood(best:Boolean = false, neighborhoodName:String=nu
     */
   def exploreNeighborhood()
 
-  /**
-   * @param newObj the new value of the objective function if we perform the move
-   * @param m the explored move.
-   * @return true if the search must be stopped right now
-   */
-  def notifyMoveExplored(newObj:Int, m:Move):Boolean = {
-    moveRequested(newObj) && submitFoundMove(m)
-  }
+  def instantiateCurrentMove(newObj: Int): Move
 
-  var tmpNewObj:Int = 0
+  var tmpNewObj: Int = 0
 
-  /**
-   * @param newObj the new value of the objective function
-   * @return true if the move is requested, then you should call submitFoundMove
-   */
-  def moveRequested(newObj:Int):Boolean = {
-    if (printExploredNeighbors){
-      tmpNewObj = newObj
-      return true
-    }
-    myMoveRequested(newObj)
-  }
+  def evaluateCurrentMoveObjTrueIfStopRequired(newObj: Int): Boolean = {
+    //cas à gérer:
+    //verbose (on affiche le mouvement; qu'on instancie donc avec obj)
+    //andThen (pas utile de l'instancier sns obj pq on va de tt façons propager en commençant le voisinage suivant.
+    //normal
+    //pour l'instant, cas normal uniquement (en fait le AndThen sera géré par le combinateur idoine)
 
-  @inline
-  private def myMoveRequested(newObj:Int):Boolean = {
+    val myPrintExploredNeighbors = printExploredNeighbors
+
     if (best) {
       if (newObj < bestNewObj) {
         bestNewObj = newObj
-        toReturnMove = null
-        return true
-      }
-    } else if (acceptanceCriterion(oldObj, newObj)) {
-      return true
-    }
-    false
-  }
-
-  /** You can only, and must call this method when you called moveRequested and it returned true
-    * @param m the move. notice that the obj must be accurate
-    * @return true if the search must be stopped right now (you can save some internal state by the way if you need  to, e.g. for a hotRestart
-    */
-  def submitFoundMove(m:Move):Boolean = {
-    val moveIsActuallyRequested:Boolean = if(printExploredNeighbors){
-      //in this case we always ask for the move, but we decide here if it is actually needed,
-      // so we somewhat repeat the normal process of moveRequested here
-      val moveIsActuallyRequested = myMoveRequested(tmpNewObj)
-
-      println("Explored " + m + (if(moveIsActuallyRequested) ", saved" else ", not saved"))
-      println(obj.asInstanceOf[LoggingObjective].getAndCleanEvaluationLog.mkString("\n"))
-
-      moveIsActuallyRequested
-    }else true
-
-    if(moveIsActuallyRequested) {
-      if (best) {
-        bestNewObj = m.objAfter
-        toReturnMove = m
-        false
+        toReturnMove = instantiateCurrentMove(newObj)
+        if (myPrintExploredNeighbors) {
+          println("Explored " + toReturnMove + ", new best, saved (might be filtered out if best is not accepted)")
+          println(obj.asInstanceOf[LoggingObjective].getAndCleanEvaluationLog.mkString("\n"))
+        }
       } else {
-        //we do not check acceptance criterion here anymore since it was tested in moveRequested, and it could be non-deterministic
-        toReturnMove = m
-        true
+        if (myPrintExploredNeighbors) {
+          println("Explored " + instantiateCurrentMove(newObj) + ", not the new best, not saved")
+          println(obj.asInstanceOf[LoggingObjective].getAndCleanEvaluationLog.mkString("\n"))
+        }
       }
-    }else{
-      false
+      false //since we are looking for the best one, we do not stop
+    } else {
+      if (acceptanceCriterion(oldObj, newObj)) {
+        bestNewObj = newObj
+        toReturnMove = instantiateCurrentMove(newObj)
+        if (myPrintExploredNeighbors) {
+          println("Explored " + toReturnMove + ", accepted, exploration stopped")
+          println(obj.asInstanceOf[LoggingObjective].getAndCleanEvaluationLog.mkString("\n"))
+        }
+        true //since we are looking for the first one, we stop
+      } else {
+        //explored, but not saved
+        if (myPrintExploredNeighbors) {
+          println("Explored " + instantiateCurrentMove(newObj) + ", not accepted, not saved")
+          println(obj.asInstanceOf[LoggingObjective].getAndCleanEvaluationLog.mkString("\n"))
+        }
+        false
+      }
     }
   }
 }

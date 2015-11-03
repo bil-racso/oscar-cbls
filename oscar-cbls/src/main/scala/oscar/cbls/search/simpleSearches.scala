@@ -48,41 +48,56 @@ case class AssignNeighborhood(vars:Array[CBLSIntVar],
   //the indice to start with for the exploration
   var startIndice:Int = 0
 
+  var currentVar:CBLSIntVar = null
+  var newVal:Int = 0
+
   override def exploreNeighborhood() {
 
-    val iterationSchemeOnZone =
-      if (searchZone == null) {
-        if (hotRestart && !best) {
-          vars.indices startBy startIndice
-        }else vars.indices
-      }else if (hotRestart && !best) HotRestart(searchZone(), startIndice)
+    val iterationZone =
+      if (searchZone == null) vars.indices
       else searchZone()
 
-    val iterationScheme = symmetryClassOfVariables match {
+    val iterationSchemeOnZone =
+      if (hotRestart && !best) HotRestart(iterationZone, startIndice)
+      else iterationZone
+
+    val iterationSchemeOnSymmetryFreeZone = symmetryClassOfVariables match {
       case None => iterationSchemeOnZone
       case Some(s) => IdenticalAggregator.removeIdenticalClassesLazily(iterationSchemeOnZone, (index:Int) => (s(index),vars(index).value))
     }
 
-    for (i <- iterationScheme) {
+    //iterating over the variables to consider
+    val indicesIterator = iterationSchemeOnSymmetryFreeZone.iterator
+    while(indicesIterator.hasNext){
+      val currentIndice = indicesIterator.next()
+      currentVar = vars(currentIndice)
+      //now we have the current variable
 
-      val currentVar = vars(i)
       val oldVal = currentVar.value
+
       val domainIterationScheme = symmetryClassOfValues match {
-        case None => domain(currentVar, i)
-        case Some(s) => IdenticalAggregator.removeIdenticalClassesLazily(domain(currentVar, i), s(i))
+        case None => domain(currentVar, currentIndice)
+        case Some(s) => IdenticalAggregator.removeIdenticalClassesLazily(domain(currentVar, currentIndice), s(currentIndice))
       }
 
-      for (newVal <- domainIterationScheme if newVal != oldVal) {
-
-        val newObj = obj.assignVal(currentVar,newVal)
-
-        if (moveRequested(newObj) && submitFoundMove(AssignMove(currentVar, newVal, newObj, name))){
-          startIndice = i + 1
-          return
+      //iterating over the values of the variable
+      val domainIterationSchemeIterator = domainIterationScheme.iterator
+      while(domainIterationSchemeIterator.hasNext){
+        newVal = domainIterationSchemeIterator.next()
+        if (newVal != oldVal){
+          //testing newValue
+          val newObj = obj.assignVal(currentVar,newVal)
+          if (evaluateCurrentMoveObjTrueIfStopRequired(newObj)){
+            startIndice = currentIndice + 1
+            return
+          }
         }
       }
     }
   }
+
+  override def instantiateCurrentMove(newObj:Int) =
+    AssignMove(currentVar, newVal, newObj, name)
 
   //this resets the internal state of the Neighborhood
   override def reset(): Unit = {
