@@ -17,7 +17,7 @@ package oscar.linprog.modeling
 
 import java.nio.file.Path
 
-import oscar.algebra.{Const, LinearExpression}
+import oscar.algebra.{LinearPiece, PiecewiseLinearExpression, Const, LinearExpression}
 import oscar.linprog.enums._
 import oscar.linprog.interface._
 
@@ -49,12 +49,35 @@ class MPSolver[I <: MPSolverInterface](val solverInterface: I) {
 
   /* OBJECTIVE */
 
-  protected var _objective: LinearExpression = Const(1)
+  // Removes any objective from this MPSolver
+  // Note: It does not remove the objective from the underlying solver.
+  //       It is supposed that the objective will be replaced in the solver after a call to this method.
+  protected def removeObjective() = {
+    removeLinearObjective()
+    removePiecewiseLinearObjective()
+  }
+
+  /* LINEAR */
+  protected var _objective: Option[LinearExpression] = None
 
   /**
-   * Returns the [[LinearExpression]] representing the current objective of the problem
+   * Returns the [[LinearExpression]] representing the current objective of the problem (if any)
    */
-  def objective: LinearExpression = _objective
+  def objective: Option[LinearExpression] = _objective
+
+  // Removes the linear objective from this MPSolver
+  // Note: It does not remove the linear objective from the underlying solver.
+  //       It is supposed that the objective will be replaced in the solver after a call to this method.
+  protected def removeLinearObjective(): Unit = {
+    // Clears the objective expression
+    _objective = None
+  }
+
+  // Adds the objective to the underlying solver
+  protected def addLinearObjective(obj: LinearExpression, min: Boolean): Unit = {
+    val (varIds, coefs) = obj.coef.map { case(vari, coef) => (variableColumn(vari.name), coef)}.unzip
+    solverInterface.setObjective(min, coefs.toArray, varIds.toArray)
+  }
 
   /**
    * Sets the optimization objective and direction to the given values.
@@ -65,10 +88,123 @@ class MPSolver[I <: MPSolverInterface](val solverInterface: I) {
   def setObjective(obj: LinearExpression, min: Boolean) = {
     setDirty()
 
-    _objective = obj
+    removeObjective()
 
-    val (varIds, coefs) = obj.coef.map { case(vari, coef) => (variableColumn(vari.name), coef)}.unzip
-    solverInterface.setObjective(min, coefs.toArray, varIds.toArray)
+    _objective = Some(obj)
+
+    addLinearObjective(obj, min)
+  }
+
+  /* PIECEWISE LINEAR
+   * The piecewise linear expression of the objective is modelled as a linear expression using the Multiple Choice Model
+   * see "Mixed-Integer Models for Nonseparable Piecewise Linear Optimization: Unifying Framework and Extensions", J.P. Vielma, S. Ahmed, G. Nemhauser
+   */
+
+  protected var _piecewiseLinearObjective: Option[PiecewiseLinearExpression] = None
+
+  /**
+   * Returns the [[PiecewiseLinearExpression]] representing the current objective of the problem (if any)
+   */
+  def piecewiseLinearObjective: Option[PiecewiseLinearExpression] = _piecewiseLinearObjective
+
+  // The linear expression used as objective to represent the piecewise linear expression.
+  protected var pwloLinExpr: Option[LinearExpression] = None
+  // The variables used to model the piecewise linear objective as a linear expression.
+  protected var pwloVars: Seq[MPVar[MIPSolverInterface]] = Seq()
+  // The additional constraints used to model the piecewise linear objective as a linear expression.
+  protected var pwloConstraints: Seq[LinearConstraint[MIPSolverInterface]] = Seq()
+
+  // Removes the piecewise linear objective from this MPSolver
+  // Note: It does not remove the piecewise linear objective from the underlying solver.
+  //       It is supposed that the objective will be replaced in the solver after a call to this method.
+  protected def removePiecewiseLinearObjective(): Unit = {
+    // Clears the objective expression
+    _piecewiseLinearObjective = None
+
+    // Clears the linear expression of the objective
+    pwloLinExpr = None
+
+    // Removes and clears the additional variables used to model the objective
+    pwloVars.foreach(v => this.removeVariable(v.name))
+    pwloVars = Seq()
+
+    // Removes and clears the additional constraints used to model the objective
+    pwloConstraints.foreach(c => this.removeLinearConstraint(c.name))
+    pwloConstraints = Seq()
+  }
+
+  // Adds the given LinearPiece to the model by creating the necessary variables and constraints.
+  //
+  //   f(x) | g(x) in [L; U]
+  // leads to the following:
+  //   binary variables: b      is true if g(x) is within the bounds
+  //                     bPlus  is true if g(x) is smaller than the lower bound
+  //                     bMinus is true if g(x) is greater than the upper bound
+  //   constraints: bMinus + bPlus = 1 - b
+  //                g(x) >= L - bMinus M      in case L is exclusive, L is replace by (L + eps)
+  //                g(x) <= U + bPlus M       in case U is exclusive, U is replaced by (U - eps)
+  //
+  // Returns the binary variable (b) representing the activation of the LinearPiece
+  protected def addObjLinearPiece[J <: MIPSolverInterface](pieceId: Int, linearPiece: LinearPiece, bigM: Double, eps: Double)(implicit ev: MPSolver[I] => MPSolver[J]): MPVar[MIPSolverInterface] = {
+    implicit val solver = ev(this)
+
+    val b = MPBinaryVar(s"b$pieceId")
+    val bMinus = MPBinaryVar(s"bMinus$pieceId")
+    val bPlus = MPBinaryVar(s"bPlus$pieceId")
+
+    pwloVars = pwloVars ++ Seq(b, bMinus, bPlus)
+
+    val bLink = LinearConstraint(s"bLink$pieceId", bMinus + bPlus =:= 1 - b)
+
+    // TODO use an IndicatorConstraint
+    val bigL = linearPiece.interval.lowerBound + (if(linearPiece.interval.lbInclusive) 0.0 else eps)
+    val gAboveLowerBound = LinearConstraint(s"gAboveLowerBound$pieceId", linearPiece.abscissa >:= bigL - bMinus * bigM)
+
+    // TODO use an IndicatorConstraint
+    val bigU = linearPiece.interval.upperBound - (if(linearPiece.interval.ubInclusive) 0.0 else eps)
+    val gBelowUpperBound = LinearConstraint(s"gBelowUpperBound$pieceId", linearPiece.abscissa <:= bigU + bPlus * bigM)
+
+    pwloConstraints = pwloConstraints ++ Seq(bLink, gAboveLowerBound, gBelowUpperBound)
+
+    b
+  }
+
+  /**
+   * Sets the optimization objective to the given [[PiecewiseLinearExpression]] and direction.
+   *
+   * @param obj the new objective expression
+   * @param min the new optimization direction (true for minimization and false for maximization)
+   */
+  def setPiecewiseLinearObjective[J <: MIPSolverInterface](obj: PiecewiseLinearExpression, bigMs: IndexedSeq[Double], eps: Double, min: Boolean)(implicit ev: MPSolver[I] => MPSolver[J]) = {
+    setDirty()
+
+    removeObjective()
+
+    _piecewiseLinearObjective = Some(obj)
+
+    val objLinExpr =
+      obj.pieces.zipWithIndex.map { case(piece, i) =>
+        implicit val solver = ev(this)
+
+        val b = addObjLinearPiece(i, piece, bigMs(i), eps)
+        val objTerm = MPFloatVar(s"objTerm$i")
+
+        pwloVars = objTerm +: pwloVars
+
+        // TODO use IndicatorConstraint
+        val objTermActivationUB = LinearConstraint(s"objTerm${i}ActivationUB", objTerm <:= piece.ordinate + (1 - b) * bigMs(i))
+        val objTermActivationLB = LinearConstraint(s"objTerm${i}ActivationLB", objTerm >:= piece.ordinate - (1 - b) * bigMs(i))
+        val objTermDeactivationUB = LinearConstraint(s"objTerm${i}DeactivationUB", objTerm <:= b * bigMs(i))
+        val objTermDeactivationLB = LinearConstraint(s"objTerm${i}DeactivationLB", objTerm >:= -b * bigMs(i))
+
+        pwloConstraints = pwloConstraints ++ Seq(objTermActivationUB, objTermActivationLB, objTermDeactivationUB, objTermDeactivationLB)
+
+        objTerm.asInstanceOf[LinearExpression]
+      }.reduce(_ + _)
+
+    pwloLinExpr = Some(objLinExpr)
+
+    addLinearObjective(objLinExpr, min)
   }
 
   /**
@@ -111,7 +247,7 @@ class MPSolver[I <: MPSolverInterface](val solverInterface: I) {
 
       val v = variable(varName)
       require(
-        !objective.uses(v) &&
+        !(objective.exists(o => o.uses(v)) || piecewiseLinearObjective.exists(o => o.uses(v))) &&
         linearConstraints.values.forall(c => !c.expression.linExpr.uses(v)),
         s"Cannot remove variable $varName because it is either used in the objective or in a constraint. Please remove the objective or the constraint first."
       )

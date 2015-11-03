@@ -22,6 +22,8 @@ package oscar.algebra
  * @param lbInclusive true if the lower bound belongs to the interval
  * @param upperBound is the upper bound of the interval
  * @param ubInclusive true if the upper bound belongs to the interval
+ *
+ * @author acrucifix acr@n-side.com
  */
 case class Interval(lowerBound: Double, lbInclusive: Boolean, upperBound: Double, ubInclusive: Boolean) {
   if(lbInclusive && ubInclusive) require(lowerBound <= upperBound, "The lower bound should be smaller or equal to the upper bound")
@@ -75,8 +77,12 @@ object Singleton {
  * @param ordinate = f(x), the [[LinearExpression]] giving the value of this [[LinearPiece]].
  * @param abscissa = g(x), the [[LinearExpression]] whose value should be in the interval for the [[LinearPiece]] to be defined.
  * @param interval the interval to which the value of the abscissa should belong for the [[LinearPiece]] to be defined.
+ *
+ * @author acrucifix acr@n-side.com
  */
 class LinearPiece(val ordinate: LinearExpression, val abscissa: LinearExpression, val interval: Interval) extends Expression {
+  def uses[V <: Var](v: V) = ordinate.uses(v) || abscissa.uses(v)
+
   override def eval(env: Var => Double): Double =
     if(interval.contains(abscissa.eval(env))) ordinate.eval(env)
     else throw new IllegalArgumentException("This LinearPiece is not defined at the given point.")
@@ -100,7 +106,7 @@ class LinearPiece(val ordinate: LinearExpression, val abscissa: LinearExpression
   def +(expr: LinearExpression): LinearPiece = new LinearPiece(ordinate + expr, abscissa, interval)
   def -(expr: LinearExpression): LinearPiece = new LinearPiece(ordinate - expr, abscissa, interval)
 
-  override def toString = s"$ordinate for $abscissa in $interval"
+  override def toString = s"$ordinate | $abscissa in $interval"
 }
 
 /**
@@ -122,9 +128,12 @@ class LinearPiece(val ordinate: LinearExpression, val abscissa: LinearExpression
  *    -2 (2 x + 1)      on  20 <= 2 x + 1 < Inf
  *  }
  *
+ * @author acrucifix acr@n-side.com
  */
 class PiecewiseLinearExpression(val pieces: Seq[LinearPiece]) extends Expression {
   require(pieces.size > 0, "A PiecewiseLinearExpression should have at least one LinearPiece")
+
+  def uses[V <: Var](v: V) = pieces.exists(p => p.uses(v))
 
   def eval(env: Var => Double): Double =
     pieces.filter { piece =>

@@ -16,7 +16,7 @@
 package oscar.linprog
 
 import oscar.algebra._
-import oscar.linprog.interface.MPSolverInterface
+import oscar.linprog.interface.{MIPSolverInterface, MPSolverInterface}
 
 /**
  * Helper functions to build models within the context of an implicit solver
@@ -25,6 +25,10 @@ package object modeling {
 
   def minimize[I <: MPSolverInterface](expr: LinearExpression)(implicit solver: MPSolver[I]) = solver.setObjective(expr, min = true)
   def maximize[I <: MPSolverInterface](expr: LinearExpression)(implicit solver: MPSolver[I]) = solver.setObjective(expr, min = false)
+
+  def minimize[I <: MIPSolverInterface](expr: PiecewiseLinearExpression, bigMs: IndexedSeq[Double], eps: Double = 0.0)(implicit solver: MPSolver[I]) = solver.setPiecewiseLinearObjective(expr, bigMs, eps, min = true)
+  def maximize[I <: MIPSolverInterface](expr: PiecewiseLinearExpression, bigMs: IndexedSeq[Double], eps: Double = 0.0)(implicit solver: MPSolver[I]) = solver.setPiecewiseLinearObjective(expr, bigMs, eps, min = false)
+
 
   def add[I <: MPSolverInterface](cstr: LinearConstraintExpression, name: String = "")(implicit solver: MPSolver[I]): LinearConstraint[I] = {
     val n =
