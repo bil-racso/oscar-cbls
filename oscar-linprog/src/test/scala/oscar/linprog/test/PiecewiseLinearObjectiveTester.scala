@@ -15,7 +15,7 @@ class PiecewiseLinearObjectiveTester extends OscarLinprogTester {
   testForAllSolvers(MPSolverLib.mipSolvers, "Minimize |x|") { implicit solver =>
     val x = MPFloatVar("x", -100, 100)
 
-    minimize(Abs(x, -100, 100), bigMs = Vector(100, 100))
+    minimize(Abs(x, -100, 100), bigM = 100)
 
     val endStatus = solver.solve
 
@@ -30,7 +30,7 @@ class PiecewiseLinearObjectiveTester extends OscarLinprogTester {
   testForAllSolvers(MPSolverLib.mipSolvers, "Minimize |-x|") { implicit solver =>
     val x = MPFloatVar("x", -100, 100)
 
-    minimize(Abs(-x, -100, 100), bigMs = Vector(100, 100))
+    minimize(Abs(-x, -100, 100), bigM = 100)
 
     val endStatus = solver.solve
 

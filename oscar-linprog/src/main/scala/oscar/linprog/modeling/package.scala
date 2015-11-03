@@ -23,11 +23,15 @@ import oscar.linprog.interface.{MIPSolverInterface, MPSolverInterface}
  */
 package object modeling {
 
-  def minimize[I <: MPSolverInterface](expr: LinearExpression)(implicit solver: MPSolver[I]) = solver.setObjective(expr, min = true)
-  def maximize[I <: MPSolverInterface](expr: LinearExpression)(implicit solver: MPSolver[I]) = solver.setObjective(expr, min = false)
+  def minimize[I <: MPSolverInterface](expr: LinearExpression)(implicit solver: MPSolver[I]) =
+    solver.setObjective(expr, min = true)
+  def maximize[I <: MPSolverInterface](expr: LinearExpression)(implicit solver: MPSolver[I]) =
+    solver.setObjective(expr, min = false)
 
-  def minimize[I <: MIPSolverInterface](expr: PiecewiseLinearExpression, bigMs: IndexedSeq[Double], eps: Double = 0.0)(implicit solver: MPSolver[I]) = solver.setPiecewiseLinearObjective(expr, bigMs, eps, min = true)
-  def maximize[I <: MIPSolverInterface](expr: PiecewiseLinearExpression, bigMs: IndexedSeq[Double], eps: Double = 0.0)(implicit solver: MPSolver[I]) = solver.setPiecewiseLinearObjective(expr, bigMs, eps, min = false)
+  def minimize[I <: MIPSolverInterface](expr: PiecewiseLinearExpression, bigM: Double, eps: Double = 0.0)(implicit solver: MPSolver[I]) =
+    solver.setPiecewiseLinearObjective(expr, bigM, eps, min = true)
+  def maximize[I <: MIPSolverInterface](expr: PiecewiseLinearExpression, bigM: Double, eps: Double = 0.0)(implicit solver: MPSolver[I]) =
+    solver.setPiecewiseLinearObjective(expr, bigM, eps, min = false)
 
 
   def add[I <: MPSolverInterface](cstr: LinearConstraintExpression, name: String = "")(implicit solver: MPSolver[I]): LinearConstraint[I] = {
