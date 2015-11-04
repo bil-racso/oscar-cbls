@@ -6,7 +6,7 @@ import oscar.cbls.modeling.AlgebraTrait
 import oscar.cbls.objective.Objective
 import oscar.cbls.search.algo.{HotRestart, IdenticalAggregator}
 import oscar.cbls.search.core._
-import oscar.cbls.search.move.{AssignMove, CompositeMove, Move, SwapMove}
+import oscar.cbls.search.move._
 
 import scala.collection.immutable.SortedSet
 
@@ -106,7 +106,7 @@ case class AssignNeighborhood(vars:Array[CBLSIntVar],
 }
 
 /**
- * will iteratively swap the value of two different variables in the array
+ * this neighborhood consider swap moves that swap the value of two CBLSIntVar
  *
  * @param vars an array of [[oscar.cbls.invariants.core.computation.CBLSIntVar]] defining the search space
  * @param searchZone1 a subset of the indices of vars to consider for the first moved point
@@ -149,7 +149,7 @@ case class SwapsNeighborhood(vars:Array[CBLSIntVar],
   extends EasyNeighborhood(best,name) with AlgebraTrait{
   //the indice to start with for the exploration
   var startIndice:Int = 0
-  override def exploreNeighborhood(){
+  override def exploreNeighborhood() {
 
     val firstIterationSchemeZone =
       if (searchZone1 == null) {
@@ -171,27 +171,31 @@ case class SwapsNeighborhood(vars:Array[CBLSIntVar],
       case Some(s) => IdenticalAggregator.removeIdenticalClassesLazily(secondIterationSchemeZone, s)
     }
 
-    //TODO : check if two different values are considered as asymmetrical
-    for (i: Int <- firstIterationScheme) {
+    val iIterator = firstIterationScheme.iterator
+    while (iIterator.hasNext) {
+      val i = iIterator.next()
       val firstVar = vars(i)
       val oldValOfFirstVar = firstVar.value
 
-      for (j: Int <- secondIterationScheme;
-           secondVar = vars(j);
-           oldValOfSecondVar = secondVar.value
-           if (!symmetryCanBeBrokenOnIndices || i < j) //we break symmetry on variables
-             && i != j
-             && (!symmetryCanBeBrokenOnValue || oldValOfFirstVar < oldValOfSecondVar) //we break symmetry on values
-             && oldValOfFirstVar != oldValOfSecondVar
-             && secondVar.domain.contains(oldValOfFirstVar)
-             && firstVar.domain.contains(oldValOfSecondVar)) {
+      val jIterator = secondIterationScheme.iterator
+      while (jIterator.hasNext) {
+        val j = jIterator.next()
+        val secondVar = vars(j);
+        val oldValOfSecondVar = secondVar.value
+        if ((!symmetryCanBeBrokenOnIndices || i < j) //we break symmetry on variables
+          && i != j
+          && (!symmetryCanBeBrokenOnValue || oldValOfFirstVar < oldValOfSecondVar) //we break symmetry on values
+          && oldValOfFirstVar != oldValOfSecondVar
+          && secondVar.domain.contains(oldValOfFirstVar)
+          && firstVar.domain.contains(oldValOfSecondVar)) {
 
-        this.firstVar = firstVar
-        this.secondVar = secondVar
+          this.firstVar = firstVar
+          this.secondVar = secondVar
 
-        if (evaluateCurrentMoveObjTrueIfStopRequired(obj.swapVal(firstVar,secondVar))) {
-          startIndice = i + 1
-          return
+          if (evaluateCurrentMoveObjTrueIfStopRequired(obj.swapVal(firstVar, secondVar))) {
+            startIndice = i + 1
+            return
+          }
         }
       }
     }
@@ -287,37 +291,136 @@ case class RandomSwapNeighborhood(vars:Array[CBLSIntVar],
   }
 }
 
+
 /**
- *  will chose a variable in the array of variable that maximizes its violation (ties broken randomly)
- *  and find a value from its range that improves the objective function
- *  the new value can be either the best one or the first one that improves according to parameter "best"
+ * This neighborhood will consider roll moves that roll the value of contiguous CBLSIntVar in the given array
  *
- *  notice that the search of variable is performed linearly, as for the search of new value.
- *  For a smarter search, one should use [[oscar.cbls.search.AssignNeighborhood]] and a searchZone set with [[oscar.cbls.invariants.lib.minmax.ArgMax]]
- *
- * @param c the constraint system
- * @param variables the array of variable that define the search space of this neighborhood
- * @param best true: the new value is the best one, false, the new value is the first found one that improves
- */
-class ConflictAssignNeighborhood(c:ConstraintSystem, variables:List[CBLSIntVar], best:Boolean = false)
-  extends Neighborhood with SearchEngineTrait{
+ * @param vars an array of [[oscar.cbls.invariants.core.computation.CBLSIntVar]] defining the search space
+ * @param searchZone a subset of the indices of vars to consider for the roll
+ *                   If none is provided, all the array will be considered each time
+ * @param bridgeOverFrozenVariables if false, contiguous variables are the ones that are adjacent in the array,
+ *                                  so that if a variable is not in the search zone,
+ *                                  no roll can involve vars on its left and on its right
+ *                                  if true, variable in the search zone will simply be ignored
+ * @param maxShiftSize the max size of the roll, given the first indice considered in the roll
+ * @param name the name of the neighborhood
+ * @param hotRestart  if true, the exploration order in case you ar not going for the best
+ *                    is a hotRestart for the first swapped variable
+ *                    even if you specify a searchZone that is: the exploration starts again
+ *                    at the position where it stopped, and consider the indices in increasing order
+ *                    if false, consider the exploration range in natural order from the first position.
+ **/
+case class RollNeighborhood(vars:Array[CBLSIntVar],
+                            name:String = "RollNeighborhood",
+                            searchZone:()=>Set[Int] = null,
+                            bridgeOverFrozenVariables:Boolean = false,
+                            maxShiftSize:Int=>Int, //the max size of the roll, given the ID of the first variable
+                            best:Boolean = false,
+                            hotRestart:Boolean = true)
+  extends EasyNeighborhood(best,name) with AlgebraTrait{
+  //the indice to start with for the exploration
+  var startIndice:Int = 0
+  override def exploreNeighborhood(){
 
-  var varArray = variables.toArray
-  val violations:Array[IntValue] = varArray.clone().map(c.violation(_))
-  override def getMove(obj: Objective, acceptanceCriteria: (Int, Int) => Boolean = (oldObj,newObj) => oldObj > newObj): SearchResult = {
-    val oldObj = c.violation.value
-    val MaxViolVarID = selectMax(varArray.indices,violations(_:Int).value)
+    val searchZoneObject = if(searchZone == null) null else searchZone()
+    val currentSearchZone = if(searchZone == null) vars.indices else searchZoneObject
 
-    val NewVal = if(best) selectMin(varArray(MaxViolVarID).domain)(c.assignVal(varArray(MaxViolVarID),_:Int))
-    else selectFirst(varArray(MaxViolVarID).domain, (newVal:Int) => c.assignVal(varArray(MaxViolVarID),newVal) < oldObj)
-    val newObj = c.assignVal(varArray(MaxViolVarID),NewVal)
+    @inline
+    def searchZoneContains(i:Int):Boolean = {
+      if(searchZone == null) vars.indices.contains(i) else searchZoneObject.contains(i)
+    }
 
-    if(acceptanceCriteria(oldObj,newObj)){
-      AssignMove(varArray(MaxViolVarID),NewVal,newObj)
-    }else{
-      NoMoveFound
+    val firstIndices = if (hotRestart && !best)
+      HotRestart(currentSearchZone, startIndice)
+    else currentSearchZone
+
+    for (firstIndice: Int <- firstIndices) {
+
+      val currentMaxShiftSize = maxShiftSize(firstIndice)
+
+      var currentEnd = firstIndice
+      var currentRollSize = 1
+      currentRollCluster = List(vars(currentEnd))
+      initValue = List(vars(currentEnd).value)
+
+      def advance(lastIndice:Int):(Int,Boolean) = {
+        if(currentRollSize >= currentMaxShiftSize) return (0,false)
+        val potentialAdd = currentEnd+1
+        if(potentialAdd >= vars.length) return (0,false)
+        if(searchZoneContains(potentialAdd)){
+          (potentialAdd,true)
+        }else if(bridgeOverFrozenVariables){
+          advance(potentialAdd)
+        }else{
+          (0,false)
+        }
+      }
+
+      var (newEnd,isNewEnd) = advance(currentEnd)
+      while(isNewEnd){
+        //updating roll
+        currentEnd = newEnd
+        currentRollSize +=1
+        currentRollCluster = vars(currentEnd) :: currentRollCluster
+        initValue = vars(currentEnd).value :: initValue
+
+        //performing rolls
+
+        rollOffset = 1
+        while(rollOffset < currentRollSize){
+          //check this roll
+          doRollOneLeft()
+          if (evaluateCurrentMoveObjTrueIfStopRequired(obj.value)) {
+            startIndice = advance(firstIndice)._1
+            assignAll(currentRollCluster,initValue)
+            return
+          }
+          rollOffset += 1
+        }
+        assignAll(currentRollCluster,initValue)
+
+        val tmp = advance(currentEnd)
+        newEnd = tmp._1
+        isNewEnd = tmp._2
+      }
     }
   }
-}
 
-//TODO: prévoir un shiftneighborhood, qui fait des shift de partie de tableau
+  var rollOffset:Int = 0
+  var currentRollCluster:List[CBLSIntVar] = List.empty
+  var initValue:List[Int] = List.empty
+
+  def doRollOneLeft(): Unit ={
+    val i = currentRollCluster.head.value
+    var currentPos = currentRollCluster
+    while(true){
+      currentPos match{
+        case h1::h2::t =>
+          h1 := h2.value
+          currentPos = h2 :: t
+        case h1 :: Nil =>
+          h1 := i
+          return
+        case Nil => throw new Error("empty roll?")
+      }
+    }
+  }
+
+  def assignAll(vars:List[CBLSIntVar],vals:List[Int]){
+    (vars, vals) match {
+      case (hVar :: t1, hVal :: t2) =>
+        hVar := hVal
+        assignAll(t1,t2)
+      case (Nil,Nil) => return
+      case _ => throw new Error("bug in assignAll")
+    }
+  }
+
+  override def instantiateCurrentMove(newObj: Int): Move =
+    RollMove(currentRollCluster,rollOffset,newObj,name)
+
+  //this resets the internal state of the Neighborhood
+  override def reset(): Unit = {
+    startIndice = 0
+  }
+}
