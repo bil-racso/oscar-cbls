@@ -21,6 +21,6 @@ trait OscarLinprogMatchers {
         s"$left did equal $right but it shouldn't")
     }
   }
-  def equalWithTolerance(right: Option[Double], tol: Double = 1e-6) = DoubleOptionMatcher(right, tol)
+  def equalWithTolerance(right: Option[Double], tol: Double = 1e-3) = DoubleOptionMatcher(right, tol)
 
 }

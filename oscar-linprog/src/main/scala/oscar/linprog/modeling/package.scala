@@ -28,10 +28,10 @@ package object modeling {
   def maximize[I <: MPSolverInterface](expr: LinearExpression)(implicit solver: MPSolver[I]) =
     solver.setObjective(expr, min = false)
 
-  def minimize[I <: MIPSolverInterface](expr: PiecewiseLinearExpression, bigM: Double, eps: Double = 0.0)(implicit solver: MPSolver[I]) =
-    solver.setPiecewiseLinearObjective(expr, bigM, eps, min = true)
-  def maximize[I <: MIPSolverInterface](expr: PiecewiseLinearExpression, bigM: Double, eps: Double = 0.0)(implicit solver: MPSolver[I]) =
-    solver.setPiecewiseLinearObjective(expr, bigM, eps, min = false)
+  def minimize[I <: MIPSolverInterface](expr: PiecewiseLinearExpression, bigM: Double = Double.MaxValue)(implicit solver: MPSolver[I]) =
+    solver.setPiecewiseLinearObjective(expr, bigM, min = true)
+  def maximize[I <: MIPSolverInterface](expr: PiecewiseLinearExpression, bigM: Double = Double.MaxValue)(implicit solver: MPSolver[I]) =
+    solver.setPiecewiseLinearObjective(expr, bigM, min = false)
 
 
   def add[I <: MPSolverInterface](cstr: LinearConstraintExpression, name: String = "")(implicit solver: MPSolver[I]): LinearConstraint[I] = {

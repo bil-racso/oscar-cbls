@@ -126,17 +126,16 @@ class MPSolver[I <: MPSolverInterface](val solverInterface: I) {
    *
    * @param obj the new objective expression
    * @param bigM the value to be added to deactivate the pieces.
-   * @param eps  the value to be added to represent the excluding bounds.
    * @param min the new optimization direction (true for minimization and false for maximization)
    *
    * @return the name associated to the [[PiecewiseLinearExpression]] in the model.
    */
-  def setPiecewiseLinearObjective[J <: MIPSolverInterface](obj: PiecewiseLinearExpression, bigM: Double, eps: Double, min: Boolean)(implicit ev: MPSolver[I] => MPSolver[J]): String = {
+  def setPiecewiseLinearObjective[J <: MIPSolverInterface](obj: PiecewiseLinearExpression, bigM: Double, min: Boolean)(implicit ev: MPSolver[I] => MPSolver[J]): String = {
     setDirty()
 
     removeObjective()
 
-    val name = addPiecewiseLinearExpression(obj, bigM, eps)
+    val name = addPiecewiseLinearExpression(obj, bigM)
     val objLinExpr = pwleLinExpr(name)
     _piecewiseLinearObjective = Some(objLinExpr)
     addLinearObjective(objLinExpr, min)
@@ -429,47 +428,53 @@ class MPSolver[I <: MPSolverInterface](val solverInterface: I) {
   protected def register(pwle: PiecewiseLinearExpression): String = s"pwle$nextPWLEId"
 
   // Adds the given LinearPiece to the model by creating the necessary variables and constraints.
-  //
-  //   f(x) | g(x) in [L; U]
-  // leads to the following:
-  //   binary variables: b      is true if g(x) is within the bounds
-  //                     bPlus  is true if g(x) is smaller than the lower bound
-  //                     bMinus is true if g(x) is greater than the upper bound
-  //   constraints: bMinus + bPlus = 1 - b
-  //                g(x) >= L - bMinus M      in case L is exclusive, L is replace by (L + eps)
-  //                g(x) <= U + bPlus M       in case U is exclusive, U is replaced by (U - eps)
-  //
   // Returns the LinearExpression representing this LinearPiece
-  protected def addLinearPiece[J <: MIPSolverInterface](pwleName: String, pieceId: Int, piece: LinearPiece, bigM: Double, eps: Double)(implicit ev: MPSolver[I] => MPSolver[J]): LinearExpression = {
+  protected def addLinearPiece[J <: MIPSolverInterface](pwleName: String, pieceId: Int, piece: LinearPiece, bigM: Double)(implicit ev: MPSolver[I] => MPSolver[J]): LinearExpression = {
     implicit val solver = ev(this)
 
-    val b = MPBinaryVar(s"${pwleName}_b$pieceId")
-    val bMinus = MPBinaryVar(s"${pwleName}_bMinus$pieceId")
-    val bPlus = MPBinaryVar(s"${pwleName}_bPlus$pieceId")
-    val f = MPFloatVar(s"${pwleName}_f$pieceId")
+    val eps = 1e-5
 
-    pwleVars += (pwleName -> Seq(b, bMinus, bPlus, f))
+    val z = MPFloatVar(s"${pwleName}_z$pieceId")
 
-    val bLink = LinearConstraint(s"${pwleName}_bLink$pieceId", bMinus + bPlus =:= 1 - b)
+    val deltaBelow = MPFloatVar(s"${pwleName}_deltaBelow$pieceId")
+    val deltaWithin = MPFloatVar(s"${pwleName}_deltaWithin$pieceId")
+    val deltaAbove = MPFloatVar(s"${pwleName}_deltaAbove$pieceId")
 
-    // TODO use an IndicatorConstraint
-    val bigL = piece.interval.lowerBound + (if(piece.interval.lbInclusive) 0.0 else eps)
-    val gAboveLowerBound = LinearConstraint(s"${pwleName}_gAboveLowerBound$pieceId", piece.abscissa >:= bigL - bMinus * bigM)
+    val l = MPBinaryVar(s"${pwleName}_l$pieceId")
+    val u = MPBinaryVar(s"${pwleName}_u$pieceId")
 
-    // TODO use an IndicatorConstraint
-    val bigU = piece.interval.upperBound - (if(piece.interval.ubInclusive) 0.0 else eps)
-    val gBelowUpperBound = LinearConstraint(s"${pwleName}_gBelowUpperBound$pieceId", piece.abscissa <:= bigU + bPlus * bigM)
+    pwleVars += (pwleName -> Seq(z, deltaBelow, deltaWithin, deltaAbove, l, u))
+
+    val bigMLower = -bigM
+    val bigMUpper = bigM
+
+    val deltasDef = LinearConstraint(s"${pwleName}_deltasDef$pieceId", piece.abscissa =:= bigMLower + deltaBelow + deltaWithin + deltaAbove)
+
+    val bigL = piece.interval.lowerBound + (if(piece.interval.lbInclusive) -eps else eps)
+    val bigU = piece.interval.upperBound - (if(piece.interval.ubInclusive) -eps else eps)
+
+    val deltaBelowLB = LinearConstraint(s"${pwleName}_deltaBelow${pieceId}_LB", deltaBelow >:= (bigL - bigMLower) * l)
+    val deltaBelowUB = LinearConstraint(s"${pwleName}_deltaBelow${pieceId}_UB", deltaBelow <:= bigL - bigMLower)
+
+    val deltaWithinLB = LinearConstraint(s"${pwleName}_deltaWithin${pieceId}_LB", deltaWithin >:= (bigU - bigL) * u)
+    val deltaWithinUB = LinearConstraint(s"${pwleName}_deltaWithin${pieceId}_UB", deltaWithin <:= (bigU - bigL) * l)
+
+    val deltaAboveLB = LinearConstraint(s"${pwleName}_deltaAbove${pieceId}_LB", deltaAbove >:= 0)
+    val deltaAboveUB = LinearConstraint(s"${pwleName}_deltaAbove${pieceId}_UB", deltaAbove <:= (bigMUpper - bigU) * u)
 
     // TODO use IndicatorConstraint
-    val objTermActivationUB = LinearConstraint(s"${pwleName}_fActivationUB$pieceId", f <:= piece.ordinate + (1 - b) * bigM)
-    val objTermActivationLB = LinearConstraint(s"${pwleName}_fActivationLB$pieceId", f >:= piece.ordinate - (1 - b) * bigM)
-    val objTermDeactivationUB = LinearConstraint(s"${pwleName}_fDeactivationUB$pieceId", f <:= b * bigM)
-    val objTermDeactivationLB = LinearConstraint(s"${pwleName}_fDeactivationLB$pieceId", f >:= -b * bigM)
+    val zWithinIntervalUB = LinearConstraint(s"${pwleName}_zWithinIntervalUB$pieceId", z <:= piece.ordinate + (1 - l + u) * bigM)
+    val zWithinIntervalLB = LinearConstraint(s"${pwleName}_zWithinIntervalLB$pieceId", z >:= piece.ordinate - (1 - l + u) * bigM)
+    val zSmallerThanIntervalUB = LinearConstraint(s"${pwleName}_zSmallerThanIntervalUB$pieceId", z <:= l * bigM)
+    val zSmallerThanIntervalLB = LinearConstraint(s"${pwleName}_zSmallerThanIntervalLB$pieceId", z >:= -l * bigM)
+    val zGreaterThanIntervalUB = LinearConstraint(s"${pwleName}_zGreaterThanIntervalUB$pieceId", z <:= (1 - u) * bigM)
+    val zGreaterThanIntervalLB = LinearConstraint(s"${pwleName}_zGreaterThanIntervalLB$pieceId", z >:= -(1 - u) * bigM)
 
-    pwleConstraints += (pwleName -> Seq(bLink, gAboveLowerBound, gBelowUpperBound,
-      objTermActivationUB, objTermActivationLB, objTermDeactivationUB, objTermDeactivationLB))
+    pwleConstraints += (pwleName -> Seq(deltasDef, deltaBelowLB, deltaBelowUB, deltaWithinLB, deltaWithinUB,
+      deltaAboveLB, deltaAboveUB, zWithinIntervalUB, zWithinIntervalLB, zSmallerThanIntervalUB, zSmallerThanIntervalLB,
+      zGreaterThanIntervalUB, zGreaterThanIntervalLB))
 
-    f
+    z
   }
 
   /**
@@ -482,17 +487,16 @@ class MPSolver[I <: MPSolverInterface](val solverInterface: I) {
    *
    * @param expr the [[PiecewiseLinearExpression]] to be added.
    * @param bigM the value to be added to deactivate the pieces.
-   * @param eps  the value to be added to represent the excluding bounds.
    *
    * @return the name associated to the [[PiecewiseLinearExpression]]
    */
-  def addPiecewiseLinearExpression[J <: MIPSolverInterface](expr: PiecewiseLinearExpression, bigM: Double, eps: Double)(implicit ev: MPSolver[I] => MPSolver[J]): String = {
+  def addPiecewiseLinearExpression[J <: MIPSolverInterface](expr: PiecewiseLinearExpression, bigM: Double)(implicit ev: MPSolver[I] => MPSolver[J]): String = {
     setDirty()
 
     val name = register(expr)
 
     _pwleLinExpr += (name -> expr.pieces.zipWithIndex.map {
-      case(piece, i) => addLinearPiece(name, i, piece, bigM, eps)
+      case(piece, i) => addLinearPiece(name, i, piece, bigM)
     }.reduce(_ + _))
 
     name
@@ -661,4 +665,30 @@ class MPSolver[I <: MPSolverInterface](val solverInterface: I) {
         ev(solverInterface).isLinearConstraintInfeasible(linearConstraintRow(lcName))
       }
     }
+
+
+  /* CONFIGURATION */
+
+  /**
+   * Configures the solver using the configuration file located at the given ''absolute'' path.
+   */
+  def configure(absPath: Path) = solverInterface.configure(absPath)
+
+  /**
+   * Returns the current time limit given to the solver.
+   */
+  def timeout: Long = solverInterface.timeout
+
+  /**
+   * Adds a time limit to the solver.
+   *
+   * @param nSeconds the time limit duration in seconds.
+   */
+  def timeout_=(nSeconds: Long) = solverInterface.timeout = nSeconds
+
+  /**
+   * Returns the value of the feasibility tolerance,
+   * that is the tolerance on the constraints and variable bounds.
+   */
+  def feasibilityTolerance: Double = solverInterface.feasibilityTolerance
 }

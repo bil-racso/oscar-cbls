@@ -17,6 +17,7 @@ package oscar.linprog.interface
 
 import java.nio.file.Path
 
+import _root_.gurobi.GRB.DoubleParam
 import oscar.linprog.enums.{EndStatus, ModelExportFormat, SolutionQuality}
 
 /**
@@ -254,14 +255,25 @@ abstract class MPSolverInterface {
   def released: Boolean
 
   /**
-   * Configure the solver using the configuration file located at the given ''absolute'' path.
+   * Configures the solver using the configuration file located at the given ''absolute'' path.
    */
   def configure(absPath: Path)
+
+  /**
+   * Returns the current time limit given to the solver.
+   */
+  def timeout: Long
 
   /**
    * Adds a time limit to the solver.
    *
    * @param nSeconds the time limit duration in seconds.
    */
-  def setTimeout(nSeconds: Long)
+  def timeout_= (nSeconds: Long): Unit
+
+  /**
+   * Returns the value of the feasibility tolerance,
+   * that is the tolerance on the constraints and variable bounds.
+   */
+  def feasibilityTolerance: Double
 }

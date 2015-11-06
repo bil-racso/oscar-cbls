@@ -15,32 +15,35 @@
 package oscar.algebra
 
 /**
- * Represents the absolute value of a [[LinearExpression]]
+ * Represents the sign of a [[LinearExpression]]
  *
- * |f(x)| =
+ * sign(f(x)) =
  *   {
- *      -f(x)  for f(x) < 0;
- *       f(x)  for f(x) >= 0
+ *      -1  for f(x) < 0;
+ *       0  for f(x) = 0;
+ *       1  for f(x) > 0
  *   }
  *
  * @author acrucifix acr@n-side.com
  */
-case class Abs(linExpr: LinearExpression, lowerBound: Double = -Double.MaxValue, upperBound: Double = Double.MaxValue)
+case class Sign(linExpr: LinearExpression, lowerBound: Double = -Double.MaxValue, upperBound: Double = Double.MaxValue)
   extends PiecewiseLinearExpression(
     pieces = {
       require(upperBound > lowerBound, s"The upper bound $upperBound should be greater than the lower bound $lowerBound.")
 
       val minus =
-        if(lowerBound < 0) Some(new LinearPiece(-linExpr, linExpr, Interval(lowerBound, lbInclusive = true, 0, ubInclusive = true)))
+        if(lowerBound < 0) Some(new LinearPiece(-1, linExpr, Interval(lowerBound, lbInclusive = true, 0, ubInclusive = true)))
+        else if(lowerBound == 0) Some(new LinearPiece(0, linExpr, Interval(lowerBound, lbInclusive = true, 0, ubInclusive = true)))
         else None
 
       val plus =
-        if(upperBound > 0) Some(new LinearPiece(linExpr, linExpr, Interval(0, lbInclusive = true, upperBound, ubInclusive = true)))
+        if(upperBound > 0) Some(new LinearPiece(1, linExpr, Interval(0, lbInclusive = true, upperBound, ubInclusive = true)))
+        else if(upperBound == 0) Some(new LinearPiece(0, linExpr, Interval(0, lbInclusive = true, upperBound, ubInclusive = true)))
         else None
 
       Seq(minus, plus).flatten
     }
   ) {
 
-  override def toString = s"|$linExpr|"
+  override def toString = s"sign($linExpr)"
 }

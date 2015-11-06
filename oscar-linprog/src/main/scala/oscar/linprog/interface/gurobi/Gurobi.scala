@@ -240,5 +240,9 @@ class Gurobi(_env: Option[GRBEnv] = None) extends MPSolverInterface with MIPSolv
 
   def configure(absPath: Path) = env.readParams(absPath.toString)
 
-  def setTimeout(t: Long): Unit = env.set(GRB.DoubleParam.TimeLimit, t.toDouble)
+  def timeout: Long = env.get(GRB.DoubleParam.TimeLimit).toLong
+
+  def timeout_= (nSeconds: Long): Unit = env.set(GRB.DoubleParam.TimeLimit, nSeconds.toDouble)
+
+  def feasibilityTolerance: Double = env.get(GRB.DoubleParam.FeasibilityTol)
 }

@@ -151,7 +151,7 @@ class LPSolve extends MPSolverInterface with MIPSolverInterface {
     }
 
     rawSolver.addConstraintex(coefs.length, coefs, varIds.map(_ + 1), sen, rhs)
-    rawSolver.setRowName(cstrId, name)
+    rawSolver.setRowName(cstrId + 1, name)
   }
 
   def addConstraint(name: String, coefs: Array[Double], varIds: Array[Int], sense: String, rhs: Double): Int = {
@@ -279,5 +279,9 @@ class LPSolve extends MPSolverInterface with MIPSolverInterface {
 
   def configure(absPath: Path) = rawSolver.readParams(absPath.toString, "[Default]")
 
-  def setTimeout(nSeconds: Long) = rawSolver.setTimeout(nSeconds)
+  def timeout: Long = rawSolver.getTimeout
+
+  def timeout_= (nSeconds: Long): Unit = rawSolver.setTimeout(nSeconds)
+
+  def feasibilityTolerance: Double = rawSolver.getEpsb
 }
