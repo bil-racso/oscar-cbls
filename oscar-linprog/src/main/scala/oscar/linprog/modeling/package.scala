@@ -16,7 +16,7 @@
 package oscar.linprog
 
 import oscar.algebra._
-import oscar.linprog.interface.MPSolverInterface
+import oscar.linprog.interface.{MIPSolverInterface, MPSolverInterface}
 
 /**
  * Helper functions to build models within the context of an implicit solver
@@ -43,4 +43,10 @@ package object modeling {
     cstrs.toIndexedSeq map { cstr =>
       add(cstr)
     }
+
+  def abs[I <: MIPSolverInterface](linearExpression: LinearExpression, lb: Double, ub: Double)(implicit solver: MPSolver[I]): LinearExpression = {
+    val absName = solver.addAbsExpression(linearExpression, lb, ub)
+
+    solver.linExprForPWLE(absName)
+  }
 }

@@ -336,6 +336,109 @@ class MPSolver[I <: MPSolverInterface](val solverInterface: I) {
   }
 
 
+  /* PIECEWISE LINEAR EXPRESSIONS */
+  // The linear expression used to represent the piecewise linear expression.
+  protected var pwleLinExpr: Map[String, LinearExpression] = Map()
+  // The variables used to model the piecewise linear expression as a linear expression.
+  protected var pwleVars: Map[String, Seq[MPVar[MIPSolverInterface]]] = Map()
+  // The additional constraints used to model the piecewise linear expression as a linear expression.
+  protected var pwleConstraints: Map[String, Seq[LinearConstraint[MIPSolverInterface]]] = Map()
+
+  /**
+   * Returns the [[LinearExpression]] used in the model to represent the piecewise linear expression with the given name.
+   */
+  def linExprForPWLE(pwleName: String) = pwleLinExpr(pwleName)
+
+  /**
+   * Removes the piecewise linear expression with the given name from the model (if any).
+   *
+   * It removes all the constraints and variables added to the model to represent the piecewise linear expression.
+   *
+   * It is not recursive, in case the PiecewiseLinearExpression is a composition of piecewise linear expression:
+   *  f(g(x)) with f and g piecewise linear expressions.
+   * it removes only the variables and constraints associated to the outer expression (f).
+   * The inner expression g should be removed explicitly by a call to [[MPSolver.removePiecewiseLinearExpression]].
+   */
+  def removePiecewiseLinearExpression(pwleName: String): Unit = {
+    pwleLinExpr -= pwleName
+    // Constraints should be removed first in order to be able to remove the variables.
+    // Indeed to remove a variable, it should not be present in either the objective or the constraints.
+    pwleConstraints.get(pwleName).foreach(vOpt => vOpt.foreach(c => this.removeLinearConstraint(c.name)))
+    pwleConstraints -= pwleName
+    pwleVars.get(pwleName).foreach(vOpt => vOpt.foreach(v => this.removeVariable(v.name)))
+    pwleVars -= pwleName
+  }
+
+  /* ABSOLUTE VALUE EXPRESSION */
+  protected var currentAbsExprId: Int = 0
+  protected def nextAbsExprId: Int = {
+    val i = currentAbsExprId
+    currentAbsExprId += 1
+    i
+  }
+
+  // Returns the name associated to the next absolute expression
+  protected def registerAbsExpr: String = s"abs$nextAbsExprId"
+
+  /**
+   * Adds a new absolute value expression to the solver.
+   *
+   * |f(x)| = {
+   *    -f(x)  if f(x) is <= 0
+   *     f(x)  if f(x) is >= 0
+   * }
+   *
+   * The absolute value is modelled as a [[LinearExpression]]
+   * by adding additional variables and constraints to the model.
+   *
+   * The [[LinearExpression]] can be retrieved by calling [[MPSolver.linExprForPWLE()]]
+   * with the name associated to this absolute value expression.
+   *
+   * @param linearExpression = f(x) the [[LinearExpression]] whose absolute value is to be computed
+   * @param lowerBound the lower bound on f(x). It should be negative.
+   * @param upperBound the upper bound on f(x). It should be positive.
+   *
+   * @return the name associated to the absolute value expression
+   */
+  def addAbsExpression[J <: MIPSolverInterface](linearExpression: LinearExpression, lowerBound: Double, upperBound: Double)(implicit ev: MPSolver[I] => MPSolver[J]): String = {
+    require(lowerBound <= 0, "The lower bound given to an absolute expression should be negative")
+    require(upperBound >= 0, "The upper bound given to an absolute expression should be positive")
+
+    setDirty()
+
+    implicit val solver = ev(this)
+
+    val name = registerAbsExpr
+
+    val xPlus = MPFloatVar(s"${name}_xPlus", lb = 0)   // the positive part of the linear expression (it is a positive value)
+    val xMinus = MPFloatVar(s"${name}_xMinus", lb = 0) // the negative part of the linear expression (it is a positive value)
+
+    val b = MPBinaryVar(s"${name}_b") // b = 1 if the linear expression is positive, 0 otherwise
+
+    pwleVars += (name -> Seq(xPlus, xMinus, b))
+
+    val xDef     = LinearConstraint(s"${name}_xDef",    linearExpression =:= xPlus - xMinus                 )
+    val xPlusUB  = LinearConstraint(s"${name}_xPlusUB",            xPlus <:= upperBound * b                 )
+    val xMinusUB = LinearConstraint(s"${name}_xMinusUB",           xMinus <:= math.abs(lowerBound) * (1 - b) )
+
+    pwleConstraints += (name -> Seq(xDef, xPlusUB, xMinusUB))
+
+    // |x| = xPlus + xMinus
+    pwleLinExpr += (name -> (xPlus + xMinus))
+
+    name
+  }
+
+  /**
+   * Returns the [[LinearExpression]] used in the model to represent the absolute value expression with the given name.
+   */
+  def absLinearExpression(absExprName: String) = linExprForPWLE(absExprName)
+
+  /**
+   * Removes the absolute value expression with the given name from the model.
+   */
+  def removeAbsExpression(absExprName: String) = removePiecewiseLinearExpression(absExprName)
+
   /* SOLVE */
 
   private var _solveStatus: SolveStatus = NotSolved
