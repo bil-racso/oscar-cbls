@@ -469,13 +469,15 @@ class MPSolver[I <: MPSolverInterface](val solverInterface: I) {
    * @param linearExpression = f(x) the [[LinearExpression]] whose sign is to be computed
    * @param lowerBound the lower bound on f(x). It should be negative.
    * @param upperBound the upper bound on f(x). It should be positive.
-   * @param eps defines a small interval around f(x) = 0 within which f(x) is considered null. Default is 1e-5.
+   * @param eps defines a small interval around f(x) = 0 within which f(x) is considered null.
+   *            It should be positive. Default is 1e-5.
    *
    * @return the name associated to the sign expression
    */
   def addSignExpression[J <: MIPSolverInterface](linearExpression: LinearExpression, lowerBound: Double, upperBound: Double, eps: Double = 1e-5)(implicit ev: MPSolver[I] => MPSolver[J]): String = {
     require(lowerBound <= 0, "The lower bound given to a sign expression should be negative.")
     require(upperBound >= 0, "The upper bound given to a sign expression should be positive.")
+    require(eps >= 0, "The eps given to a sign expression should be positive.")
 
     setDirty()
 
