@@ -111,4 +111,60 @@ class PiecewiseLinearExpressionTester extends OscarLinprogTester {
     solver.objectiveValue.toOption should equalWithTolerance(Some(-100.0))
     solver.solutionQuality should equal(Success(Optimal))
   }
+
+  testForAllSolvers(MPSolverLib.mipSolvers, "Minimize sign(x)") { implicit solver =>
+    val x = MPFloatVar("x", -100, 100)
+
+    minimize(sign(x, -100, 100))
+
+    solver.solve should equal(SolutionFound)
+
+    x.value.get should be < 0.0
+
+    solver.objectiveValue.toOption should equalWithTolerance(Some(-1))
+    solver.solutionQuality should equal(Success(Optimal))
+  }
+
+  testForAllSolvers(MPSolverLib.mipSolvers, "Maximize sign(x)") { implicit solver =>
+    val x = MPFloatVar("x", -100, 100)
+
+    maximize(sign(x, -100, 100))
+
+    solver.solve should equal(SolutionFound)
+
+    x.value.get should be > 0.0
+
+    solver.objectiveValue.toOption should equalWithTolerance(Some(1))
+    solver.solutionQuality should equal(Success(Optimal))
+  }
+
+  testForAllSolvers(MPSolverLib.mipSolvers, "Minimize |sign(x) - sign(y)| - x") { implicit solver =>
+    val x = MPFloatVar("x", -100, 100)
+    val y = MPFloatVar("y", -100, 100)
+
+    minimize(abs(sign(x, -100, 100) - sign(y, -100, 100), -100, 100) - x)
+
+    solver.solve should equal(SolutionFound)
+
+    x.value should equalWithTolerance(Some(100))
+    y.value.get should be > 0.0
+
+    solver.objectiveValue.toOption should equalWithTolerance(Some(-100.0))
+    solver.solutionQuality should equal(Success(Optimal))
+  }
+
+  testForAllSolvers(MPSolverLib.mipSolvers, "Maximize |sign(x) - sign(y)| + x") { implicit solver =>
+    val x = MPFloatVar("x", -100, 100)
+    val y = MPFloatVar("y", -100, 100)
+
+    maximize(abs(sign(x, -100, 100) - sign(y, -100, 100), -100, 100) + x)
+
+    solver.solve should equal(SolutionFound)
+
+    x.value should equalWithTolerance(Some(100))
+    y.value.get should be < 0.0
+
+    solver.objectiveValue.toOption should equalWithTolerance(Some(102.0))
+    solver.solutionQuality should equal(Success(Optimal))
+  }
 }

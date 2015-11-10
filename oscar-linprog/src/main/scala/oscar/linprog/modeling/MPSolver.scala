@@ -20,6 +20,7 @@ import java.nio.file.Path
 import oscar.algebra.{Const, LinearExpression}
 import oscar.linprog.enums._
 import oscar.linprog.interface._
+import oscar.linprog.modeling.LinearConstraint
 
 import scala.util.{Failure, Success, Try}
 
@@ -391,7 +392,7 @@ class MPSolver[I <: MPSolverInterface](val solverInterface: I) {
    * The absolute value is modelled as a [[LinearExpression]]
    * by adding additional variables and constraints to the model.
    *
-   * The [[LinearExpression]] can be retrieved by calling [[MPSolver.linExprForPWLE()]]
+   * The [[LinearExpression]] can be retrieved by calling [[MPSolver.absLinearExpression()]]
    * with the name associated to this absolute value expression.
    *
    * @param linearExpression = f(x) the [[LinearExpression]] whose absolute value is to be computed
@@ -401,8 +402,8 @@ class MPSolver[I <: MPSolverInterface](val solverInterface: I) {
    * @return the name associated to the absolute value expression
    */
   def addAbsExpression[J <: MIPSolverInterface](linearExpression: LinearExpression, lowerBound: Double, upperBound: Double)(implicit ev: MPSolver[I] => MPSolver[J]): String = {
-    require(lowerBound <= 0, "The lower bound given to an absolute expression should be negative")
-    require(upperBound >= 0, "The upper bound given to an absolute expression should be positive")
+    require(lowerBound <= 0, "The lower bound given to an absolute expression should be negative.")
+    require(upperBound >= 0, "The upper bound given to an absolute expression should be positive.")
 
     setDirty()
 
@@ -417,8 +418,8 @@ class MPSolver[I <: MPSolverInterface](val solverInterface: I) {
 
     pwleVars += (name -> Seq(xPlus, xMinus, b))
 
-    val xDef     = LinearConstraint(s"${name}_xDef",    linearExpression =:= xPlus - xMinus                 )
-    val xPlusUB  = LinearConstraint(s"${name}_xPlusUB",            xPlus <:= upperBound * b                 )
+    val xDef     = LinearConstraint(s"${name}_xDef",    linearExpression =:= xPlus - xMinus                  )
+    val xPlusUB  = LinearConstraint(s"${name}_xPlusUB",            xPlus <:= upperBound * b                  )
     val xMinusUB = LinearConstraint(s"${name}_xMinusUB",           xMinus <:= math.abs(lowerBound) * (1 - b) )
 
     pwleConstraints += (name -> Seq(xDef, xPlusUB, xMinusUB))
@@ -438,6 +439,90 @@ class MPSolver[I <: MPSolverInterface](val solverInterface: I) {
    * Removes the absolute value expression with the given name from the model.
    */
   def removeAbsExpression(absExprName: String) = removePiecewiseLinearExpression(absExprName)
+
+  /* SIGN EXPRESSION */
+  protected var currentSignExprId: Int = 0
+  protected def nextSignExprId: Int = {
+    val i = currentSignExprId
+    currentSignExprId += 1
+    i
+  }
+
+  // Returns the name associated to the next absolute expression
+  protected def registerSignExpr: String = s"sign$nextSignExprId"
+
+  /**
+   * Adds a new sign expression to the solver.
+   *
+   * sign(x) = {
+   *    - 1  if f(x) is < 0
+   *      0  if f(x) is 0
+   *      1  if f(x) is > 0
+   * }
+   *
+   * The sign function is modelled as a [[LinearExpression]]
+   * by adding additional variables and constraints to the model.
+   *
+   * The [[LinearExpression]] can be retrieved by calling [[MPSolver.signLinearExpression()]]
+   * with the name associated to this sign expression.
+   *
+   * @param linearExpression = f(x) the [[LinearExpression]] whose sign is to be computed
+   * @param lowerBound the lower bound on f(x). It should be negative.
+   * @param upperBound the upper bound on f(x). It should be positive.
+   * @param eps defines a small interval around f(x) = 0 within which f(x) is considered null. Default is 1e-5.
+   *
+   * @return the name associated to the sign expression
+   */
+  def addSignExpression[J <: MIPSolverInterface](linearExpression: LinearExpression, lowerBound: Double, upperBound: Double, eps: Double = 1e-5)(implicit ev: MPSolver[I] => MPSolver[J]): String = {
+    require(lowerBound <= 0, "The lower bound given to a sign expression should be negative.")
+    require(upperBound >= 0, "The upper bound given to a sign expression should be positive.")
+
+    setDirty()
+
+    implicit val solver = ev(this)
+
+    val name = registerSignExpr
+
+    val xPlus = MPFloatVar(s"${name}_xPlus")   // the positive part of the linear expression (it is a positive value)
+    val xMinus = MPFloatVar(s"${name}_xMinus") // the negative part of the linear expression (it is a positive value)
+    val xZero = MPFloatVar(s"${name}_xZero")   // represents a small interval around zero, within which the linear expression is considered as zero.
+
+    val bPlus = MPBinaryVar(s"${name}_bPlus")   // bPlus  = 1 if the linear expression is strictly positive, 0 otherwise
+    val bMinus = MPBinaryVar(s"${name}_bMinus") // bMinus = 1 if the linear expression is strictly negative, 0 otherwise
+    val bZero = MPBinaryVar(s"${name}_bZero")   // bZero  = 1 if the linear expression is around zero,       0 otherwise
+
+    pwleVars += (name -> Seq(xPlus, xMinus, xZero, bPlus, bMinus, bZero))
+
+    val xDef     = LinearConstraint(s"${name}_xDef",           linearExpression =:= xPlus - xMinus + xZero        )
+    val xPlusLB  = LinearConstraint(s"${name}_xPlusLB",                   xPlus >:= eps * bPlus                   )
+    val xPlusUB  = LinearConstraint(s"${name}_xPlusUB",                   xPlus <:= upperBound * bPlus            )
+    val xMinusLB = LinearConstraint(s"${name}_xMinusLB",                 xMinus >:= eps * bMinus                  )
+    val xMinusUB = LinearConstraint(s"${name}_xMinusUB",                 xMinus <:= math.abs(lowerBound) * bMinus )
+    val xZeroLB  = LinearConstraint(s"${name}_xZeroLB",                   xZero >:= -eps * bZero                  )
+    val xZeroUB  = LinearConstraint(s"${name}_xZeroUB",                   xZero <:= eps * bZero                   )
+    val bDef     = LinearConstraint(s"${name}_bDef",     bPlus + bMinus + bZero =:= 1                             )
+
+    pwleConstraints += (name -> Seq(xDef, xPlusLB, xPlusUB, xMinusLB, xMinusUB, xZeroLB, xZeroUB, bDef))
+
+    // sign(x) = bPlus - bMinus
+    //  if x > eps         => bPlus = 1, bMinus = 0 => sign(x) = 1
+    //  if x < eps         => bPlus = 0, bMinus = 1 => sign(x) = -1
+    //  if -eps < x <- eps => bPlus = 0, bMinus = 0 => sign(x) = 0
+    pwleLinExpr += (name -> (bPlus - bMinus))
+
+    name
+  }
+
+  /**
+   * Returns the [[LinearExpression]] used in the model to represent the sign expression with the given name.
+   */
+  def signLinearExpression(signExprName: String) = linExprForPWLE(signExprName)
+
+  /**
+   * Removes the sign expression with the given name from the model.
+   */
+  def removeSignExpression(signExprName: String) = removePiecewiseLinearExpression(signExprName)
+
 
   /* SOLVE */
 

@@ -49,4 +49,10 @@ package object modeling {
 
     solver.linExprForPWLE(absName)
   }
+
+  def sign[I <: MIPSolverInterface](linearExpression: LinearExpression, lb: Double, ub: Double)(implicit solver: MPSolver[I]): LinearExpression = {
+    val absName = solver.addSignExpression(linearExpression, lb, ub)
+
+    solver.linExprForPWLE(absName)
+  }
 }
