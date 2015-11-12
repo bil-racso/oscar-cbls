@@ -111,6 +111,8 @@ abstract class Neighborhood{
   //this resets the internal state of the Neighborhood
   def reset(){}
 
+  def resetStatistics(){}
+
   override def toString: String = this.getClass.getSimpleName
 
   /** verbosity: 0: none

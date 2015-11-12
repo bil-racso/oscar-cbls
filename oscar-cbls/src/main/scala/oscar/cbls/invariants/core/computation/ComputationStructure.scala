@@ -105,10 +105,11 @@ case class Store(override val verbose:Boolean = false,
     var assignationInt:List[(ChangingIntValue,Int)] = List.empty
     var assignationIntSet:List[(ChangingSetValue,SortedSet[Int])] = List.empty
     for (v:Variable <- vars if v.isDecisionVariable){
-      if(v.isInstanceOf[CBLSIntVar]){
-        assignationInt = ((v.asInstanceOf[CBLSIntVar], v.asInstanceOf[CBLSIntVar].getValue(true))) :: assignationInt
-      }else if(v.isInstanceOf[CBLSSetVar]){
-        assignationIntSet = ((v.asInstanceOf[CBLSSetVar], v.asInstanceOf[CBLSSetVar].getValue(true))) :: assignationIntSet
+      v match{
+        case c:CBLSIntVar =>
+          assignationInt = ((c, c.getValue(true))) :: assignationInt
+        case s:CBLSSetVar =>
+          assignationIntSet = ((s, s.getValue(true))) :: assignationIntSet
       }
     }
     Solution(assignationInt,assignationIntSet,this)
@@ -161,7 +162,6 @@ case class Store(override val verbose:Boolean = false,
   def addToCallBeforeClose(toCallBeforeCloseProc : (()=>Unit)){
     toCallBeforeClose = (toCallBeforeCloseProc) :: toCallBeforeClose
   }
-
 
   protected def performCallsBeforeClose() {
     for (p <- toCallBeforeClose) p()

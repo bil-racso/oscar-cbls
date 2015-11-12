@@ -35,6 +35,10 @@ abstract class NeighborhoodCombinator(a: Neighborhood*) extends Neighborhood {
     for (n <- a) n.reset()
   }
 
+  override def resetStatistics(){
+    for (n <- a) n.resetStatistics()
+  }
+
   override def verbose_=(i: Int): Unit = {
     for (n <- a) n.verbose = i
     super.verbose_=(i)
@@ -718,7 +722,7 @@ class RoundRobin(l: List[Neighborhood], steps: Int = 1) extends NeighborhoodComb
     } else {
       //move to next robin
       moveToNextRobin()
-      myGetImprovingMove(obj, acceptanceCriteria, triedRobins + 1)
+      myGetImprovingMove(obj, acceptanceCriteria, triedRobins)
     }
   }
 
@@ -1244,11 +1248,12 @@ case class Statistics(a:Neighborhood,ignoreInitialObj:Boolean = false) extends N
   var totalGain = 0
   var totalTimeSpent: Long = 0
 
-  def resetStatistics(){
+  override def resetStatistics(){
     nbCalls = 0
     nbFound = 0
     totalGain = 0
     totalTimeSpent = 0
+    super.resetStatistics()
   }
 
   /**
@@ -1283,13 +1288,13 @@ case class Statistics(a:Neighborhood,ignoreInitialObj:Boolean = false) extends N
   def slope:String = if(totalTimeSpent == 0) "NA" else ("" + "%.3f".format(totalGain / totalTimeSpent.toDouble))
 
   override def collectStatistics: List[String] =
-    (padToLength("" + a,31) +
-      padToLength("" + nbCalls,6) +
-      padToLength("" + nbFound,6) +
-      padToLength("" + totalGain,8) +
-      padToLength("" + totalTimeSpent,12) +
-      padToLength("" + gainPerCall,8) +
-      padToLength("" + callDuration,12)+
+    (padToLength("" + a,31) + " " +
+      padToLength("" + nbCalls,6) + " " +
+      padToLength("" + nbFound,6) + " " +
+      padToLength("" + totalGain,8) + " " +
+      padToLength("" + totalTimeSpent,12) + " " +
+      padToLength("" + gainPerCall,8) + " " +
+      padToLength("" + callDuration,12)+ " " +
       slope) ::  super.collectStatistics
 
   private def padToLength(s: String, l: Int) = (s + nStrings(l, " ")).substring(0, l)
@@ -1303,6 +1308,6 @@ case class Statistics(a:Neighborhood,ignoreInitialObj:Boolean = false) extends N
 object Statistics{
   private def padToLength(s: String, l: Int) = (s + nStrings(l, " ")).substring(0, l)
   private def nStrings(n: Int, s: String): String = if (n <= 0) "" else s + nStrings(n - 1, s)
-  def statisticsHeader = padToLength("Neighborhood",30) + " calls found sumGain sumTime(ms) avgGain avgTime(ms) -slope(-Dobj/ms)"
+  def statisticsHeader = padToLength("Neighborhood",30) + "  calls  found  sumGain  sumTime(ms)  avgGain  avgTime(ms)  -slope(-Dobj/ms)"
 }
 

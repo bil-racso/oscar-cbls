@@ -459,8 +459,8 @@ case class Singleton(v: IntValue)
   finishInitialization()
 
   override def checkInternals(c: Checker) {
-    assert(this.getValue(true).size == 1)
-    assert(this.getValue(true).head == v.value)
+    assert(this.value.size == 1)
+    assert(this.value.head == v.value)
   }
 
   override def notifyIntChanged(v: ChangingIntValue, OldVal: Int, NewVal: Int) {

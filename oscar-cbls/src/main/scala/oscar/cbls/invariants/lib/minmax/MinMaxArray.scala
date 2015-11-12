@@ -173,6 +173,92 @@ abstract class MiaxArray(vars: Array[IntValue], cond: SetValue, default: Int)
 }
 
 
+
+/**
+ * Maintains Miax(Var(i) | i in cond)
+ * Exact ordering is specified by implementing abstract methods of the class.
+ * @param vars is an array of IntVar, which can be bulked
+ * @param cond is the condition, can be null
+ * update is O(log(n))
+ * @author renaud.delandtsheer@cetic.be
+ * */
+abstract class MiaxArrayLazy(vars: Array[IntValue], cond: SetValue, default: Int)
+  extends IntInvariant with Bulked[IntValue, Domain] with VaryingDependencies {
+
+  var keyForRemoval: Array[KeyForElementRemoval] = new Array(vars.length)
+  var h: BinomialHeapWithMoveExtMem[Int] = new BinomialHeapWithMoveExtMem[Int](i => Ord(vars(i)), vars.length, new ArrayMap(vars.length))
+
+  if (cond != null) {
+    registerStaticDependency(cond)
+    registerDeterminingDependency(cond)
+  }
+
+  /**
+   * since the value of the bulkcomputationResult depends on the presence or absence of cond,
+   * we register two bcr, so that you can join the correct bulk whataver happens.
+   */
+  restrictDomain(bulkRegister(vars,if (cond == null) 0 else 1).union(default))
+
+  if (cond != null) {
+    for (i <- cond.value) {
+      h.insert(i)
+      keyForRemoval(i) = registerDynamicDependency(vars(i), i)
+    }
+  } else {
+    for (i <- vars.indices) {
+      h.insert(i)
+      keyForRemoval(i) = registerDynamicDependency(vars(i), i)
+    }
+  }
+
+  finishInitialization()
+
+  override def performBulkComputation(bulkedVar: Array[IntValue]) =
+    InvariantHelper.getMinMaxBounds(bulkedVar)
+
+  def ExtremumName: String
+  def Ord(v: IntValue): Int
+
+  if (h.isEmpty) {
+    this := default
+  } else {
+    this := vars(h.getFirst).value
+  }
+
+  @inline
+  override def notifyIntChanged(v: ChangingIntValue, index: Int, OldVal: Int, NewVal: Int) {
+    //mettre a jour le heap
+    h.notifyChange(index)
+    this := vars(h.getFirst).value
+  }
+
+  @inline
+  override def notifyInsertOn(v: ChangingSetValue, value: Int) {
+    assert(v == cond)
+    keyForRemoval(value) = registerDynamicDependency(vars(value), value)
+
+    //mettre a jour le heap
+    h.insert(value)
+    this := vars(h.getFirst).value
+  }
+
+  @inline
+  override def notifyDeleteOn(v: ChangingSetValue, value: Int) {
+    assert(v == cond)
+
+    keyForRemoval(value).performRemove()
+    keyForRemoval(value) = null
+
+    //mettre a jour le heap
+    h.delete(value)
+    if (h.isEmpty) {
+      this := default
+    } else {
+      this := vars(h.getFirst).value
+    }
+  }
+}
+
 /**
  * Maintains Min(Var(i) | i in cond)
  * @param varss is an array of Int
@@ -183,7 +269,7 @@ abstract class MiaxArray(vars: Array[IntValue], cond: SetValue, default: Int)
 case class MinConstArray(varss: Array[Int], ccond: SetValue, default: Int = Int.MaxValue)
   extends MiaxConstArray(varss, ccond, default) {
 
-  override def Ord(v: IntValue): Int = v.value
+  override def Ord(v: Int): Int = v
 
   override def checkInternals(c: Checker) {
     for (v <- this.varss) {
@@ -204,7 +290,7 @@ case class MinConstArray(varss: Array[Int], ccond: SetValue, default: Int = Int.
 case class MaxConstArray(varss: Array[Int], ccond: SetValue, default: Int = Int.MinValue)
   extends MiaxConstArray(varss, ccond, default) {
 
-  override def Ord(v: IntValue): Int = -v.value
+  override def Ord(v: Int): Int = -v
 
   override def checkInternals(c: Checker) {
     for (v <- this.varss) {
@@ -223,14 +309,15 @@ case class MaxConstArray(varss: Array[Int], ccond: SetValue, default: Int = Int.
  * if it affects the output, it is performed
  * @param varss is an array of Int
  * @param ccond is the condition, supposed fully acceptant if not specified (must be specified if varss is bulked)
- * @param maxTODOSize is the maximal number of postponed updates (TODOlist is handled as a FIFO)
- * update is O(log(n))
+ * @param default the value if ccond is empty
+ * @param maxBackLogSize is the maximal number of postponed updates (TODOlist is handled as a FIFO)
+ * update is O(log(n)), faster (O(1) if you do updates and backtracks
  * @author renaud.delandtsheer@cetic.be
  * */
-case class MinConstArrayLazy(varss: Array[Int], ccond: SetValue, default: Int = Int.MaxValue, maxTODOSize:Int = 2)
-  extends MiaxConstArrayLazy(varss, ccond, default, maxTODOSize) {
+case class MinConstArrayLazy(varss: Array[Int], ccond: SetValue, default: Int = Int.MaxValue, maxBackLogSize:Int = 10)
+  extends MiaxConstArrayLazy(varss, ccond, default, maxBackLogSize) {
 
-  override def Ord(v: IntValue): Int = v.value
+  override def Ord(v: Int): Int = v
 
   override def checkInternals(c: Checker) {
     for (v <- this.varss) {
@@ -238,6 +325,8 @@ case class MinConstArrayLazy(varss: Array[Int], ccond: SetValue, default: Int = 
         Some("this.value (" + this.value + ") <= " + v + ".value (" + v + ")"))
     }
   }
+
+  override def equalOrNotImpactingMiax(potentialMiax: Int): Boolean = this.getValue(true) <= potentialMiax
 }
 
 
@@ -250,22 +339,26 @@ case class MinConstArrayLazy(varss: Array[Int], ccond: SetValue, default: Int = 
  * if it affects the output, it is performed
  * @param varss is an array of IntVar, which can be bulked
  * @param ccond is the condition, supposed fully acceptant if not specified (must be specified if varss is bulked)
- * @param maxTODOSize is the maximal number of postponed updates (TODOlist is handled as a FIFO)
- * update is O(log(n))
+ * @param default the value if ccond is empty
+ * @param maxBackLogSize is the maximal number of postponed updates (TODOlist is handled as a FIFO)
+ * update is O(log(n)), faster (O(1) if you do updates and backtracks
  * @author renaud.delandtsheer@cetic.be
  * */
-case class MaxConstArrayLazy(varss: Array[Int], ccond: SetValue, default: Int = Int.MinValue, maxTODOSize:Int = 2)
-  extends MiaxConstArrayLazy(varss, ccond, default, maxTODOSize) {
+case class MaxConstArrayLazy(varss: Array[Int], ccond: SetValue, default: Int = Int.MaxValue, maxBackLogSize:Int = 10)
+  extends MiaxConstArrayLazy(varss, ccond, default, maxBackLogSize) {
 
-  override def Ord(v: IntValue): Int = -v.value
+  override def Ord(v: Int): Int = -v
 
   override def checkInternals(c: Checker) {
     for (v <- this.varss) {
-      c.check(this.value >= v,
-        Some("output.value (" + this.value + ") >= " + v + ".value (" + v + ")"))
+      c.check(this.value <= v,
+        Some("this.value (" + this.value + ") <= " + v + ".value (" + v + ")"))
     }
   }
+
+  override def equalOrNotImpactingMiax(potentialMiax: Int): Boolean = this.getValue(true) >= potentialMiax
 }
+
 
 /**
  * Maintains Miax(Var(i) | i in cond)
@@ -289,7 +382,7 @@ abstract class MiaxConstArray(vars: Array[Int], cond: SetValue, default: Int)
     h.insert(i)
   }
 
-  def Ord(v: IntValue): Int
+  def Ord(v: Int): Int
 
   if (h.isEmpty) {
     this := default
@@ -325,14 +418,19 @@ abstract class MiaxConstArray(vars: Array[Int], cond: SetValue, default: Int)
  * Exact ordering is specified by implementing abstract methods of the class.
  * @param vars is an array of IntVar, which can be bulked
  * @param cond is the condition, cannot be null
- * update is O(log(n))
+ * update is O(log(n)), but probably faster if you do neighborhood exploration with moves and backtracks
  * @author renaud.delandtsheer@cetic.be
  * */
-abstract class MiaxConstArrayLazy(vars: Array[Int], cond: SetValue, default: Int, maxToDoSize:Int)
+abstract class MiaxConstArrayLazy(vars: Array[Int], cond: SetValue, default: Int, maxBacklog:Int)
   extends IntInvariant{
 
   val n = vars.length
   var h: BinomialHeapWithMoveExtMem[Int] = new BinomialHeapWithMoveExtMem[Int](i => Ord(vars(i)), vars.length, new ArrayMap(vars.length))
+
+  var backLog:QList[Int] = null
+  var backlogSize:Int = 0
+  val isBacklogged:Array[Boolean] = Array.fill(vars.size)(false)
+  val consideredValue:Array[Boolean] = Array.fill(vars.size)(false)
 
   registerStaticAndDynamicDependency(cond)
   finishInitialization()
@@ -341,100 +439,119 @@ abstract class MiaxConstArrayLazy(vars: Array[Int], cond: SetValue, default: Int
 
   for (i <- cond.value) {
     h.insert(i)
+    consideredValue(i) = true
   }
 
-  def Ord(v: IntValue): Int
+  def Ord(v: Int): Int
 
-  if (h.isEmpty) {
-    this := default
-  } else {
+  @inline
+  private[this] def updateFromHeap() {
+    if (h.isEmpty) {
+      this := default
+    } else {
+      updateFromNonEmptyHeap()
+    }
+  }
+
+  @inline
+  private[this] def updateFromNonEmptyHeap() {
     this := vars(h.getFirst)
   }
 
-  val self = this
+  updateFromHeap()
 
-  //an update is a couple: (value, bolean)
-  // where the boolean is true for an insert, false for a delete
+  def equalOrNotImpactingMiax(potentialMiax:Int):Boolean
 
-  private def isOpposite(a:(Int,Boolean),b:(Int,Boolean)):Boolean =
-    a._1 == b._1 && a._2 != b._2
+  @inline
+  private[this] def putIntoBackLog(cond:Int): Unit ={
+    if(!isBacklogged(cond)){
+      backLog = QList(cond,backLog)
+      isBacklogged(cond) = true
+      backlogSize += 1
+    }
+  }
 
-  private def  doIt(a:(Int,Boolean)) {
-    if (a._2) {
-      h.insert(a._1)
-      self := vars(h.getFirst)
-    } else {
-      h.delete(a._1)
-      if (h.isEmpty) {
-        self := default
-      } else {
-        self := vars(h.getFirst)
+  /**
+   * does not perform final update because was not supposed to be impacted
+   */
+  @inline
+  private[this] def trimBackLog(){
+    while(true){
+      if(backLog == null) return
+      if(!isBacklogged(backLog.head)){
+        backlogSize -=1
+        backLog = backLog.tail
+      } else if(backlogSize > maxBacklog){
+        val condValue = backLog.head
+        backlogSize -=1
+        backLog = backLog.tail
+        processThisRealBackLog(condValue)
+      }else{
+        return
       }
     }
   }
 
-  private def isMiaxImpacted(u:(Int,Boolean)): Boolean = {
-    if(u._2){
-      //inseret
-      Ord(vars(u._1)) < Ord(self.getValue(true))
-    }else{
-      //delete
-      vars(u._1) == self.getValue(true)
+  @inline
+  private[this] def processThisRealBackLog(condValue:Int): Unit ={
+    if(consideredValue(condValue)){ //should be removed
+      assert(!cond.value.contains(condValue))
+      h.delete(condValue)
+      consideredValue(condValue) = false
+    }else{ //should be added
+      assert(cond.value.contains(condValue))
+      h.insert(condValue)
+      consideredValue(condValue) = true
     }
+    isBacklogged(condValue) = false
   }
 
-  //they must be done in this order
-  var toDo:QList[(Int,Boolean)] = null
-  var toDoSize:Int = 0
+  @inline
+  private[this] def processBackLog(): Unit ={
+    while(backLog != null){
+      val condValue = backLog.head
+      backLog = backLog.tail
+      if(isBacklogged(condValue)) {
+        processThisRealBackLog(condValue)
+      }
+    }
+    backlogSize = 0
+  }
 
   @inline
   override def notifyInsertOn(v: ChangingSetValue, value: Int) {
     assert(v == cond)
-    processUpdate((value,true))
+    if(consideredValue(value)){ //anihilation
+      assert(isBacklogged(value))
+      isBacklogged(value) = false
+      return
+    }
+    if(equalOrNotImpactingMiax(vars(value))){//backlog
+      trimBackLog()
+      putIntoBackLog(value)
+    }else{//impacted
+      this := vars(value)
+      h.insert(value)
+      consideredValue(value) = true
+    }
   }
 
   @inline
   override def notifyDeleteOn(v: ChangingSetValue, value: Int) {
     assert(v == cond)
-    processUpdate((value,false))
-  }
-
-  def processUpdate(u:(Int,Boolean)){
-    if(isMiaxImpacted(u)){
-      //      println("done straight" + u)
-      doIt(u)
-      while(toDo != null){
-        doIt(toDo.head)
-        toDo = toDo.tail
-      }
-      toDoSize  = 0
-    }else{
-      postponeOrDo(u)
+    if(!consideredValue(value)){ //anihilation
+      assert(isBacklogged(value))
+      isBacklogged(value) = false
+      return
     }
-  }
-
-  //TODO this is a queue, but a stack might be faster.
-  def postponeOrDo(u:(Int,Boolean)) {
-    //    println("postponeOrDo:" + u)
-    def updateToDo(mToDo: QList[(Int,Boolean)]): QList[(Int,Boolean)] =
-      if (mToDo == null) {
-        toDoSize += 1;
-        //        println("postponed");
-        QList(u)
-      } else {
-        if (isOpposite(mToDo.head,u)) {
-          //          println("anihilation")
-          toDoSize -= 1
-          mToDo.tail
-        } else QList(mToDo.head, updateToDo(mToDo.tail))
-      }
-
-    toDo = updateToDo(toDo)
-    while(toDoSize > maxToDoSize){
-      //      println("popping")
-      doIt(toDo.head)
-      toDo = toDo.tail
-      toDoSize -=1
+    if(this.getValue(true) == vars(value)){//impacted, flush backLog
+      processBackLog()
+      h.delete(value)
+      consideredValue(value) = false
+      updateFromHeap()
+    }else{//not impacted, backlog
+      trimBackLog()
+      putIntoBackLog(value)
     }
   }
 }

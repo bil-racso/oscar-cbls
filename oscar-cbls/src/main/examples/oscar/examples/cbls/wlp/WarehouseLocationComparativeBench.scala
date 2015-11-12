@@ -2,7 +2,7 @@ package oscar.examples.cbls.wlp
 
 import oscar.cbls.invariants.core.computation.{CBLSIntVar, Store}
 import oscar.cbls.invariants.lib.logic.Filter
-import oscar.cbls.invariants.lib.minmax.MinConstArray
+import oscar.cbls.invariants.lib.minmax.{MinConstArrayLazy, MinConstArray}
 import oscar.cbls.invariants.lib.numeric.Sum
 import oscar.cbls.modeling.AlgebraTrait
 import oscar.cbls.objective.Objective
@@ -14,7 +14,7 @@ import scala.language.postfixOps
 object WarehouseLocationComparativeBench extends App with AlgebraTrait{
 
   //the number of warehouses
-  val W:Int = 15
+  val W:Int = 100
 
   //the number of delivery points
   val D:Int = 150
@@ -73,7 +73,9 @@ object WarehouseLocationComparativeBench extends App with AlgebraTrait{
     best SwapsNeighborhood(warehouseOpenArray, "SwapWarehouses")
     orElse (RandomizeNeighborhood(warehouseOpenArray, W/5) maxMoves 2) saveBest obj restoreBestOnExhaust)
 
-  val a = Benchmark.benchtoString(obj,10,neighborhood1,neighborhood2,neighborhood3,neighborhood4,neighborhood5,neighborhood6,neighborhood7)
+  val neighborhoods = List(neighborhood1,neighborhood2,neighborhood3,neighborhood4,neighborhood5,neighborhood6,neighborhood7)
+
+  val a = Benchmark.benchtoString(obj,10,neighborhoods,0)
 
   println(a)
 

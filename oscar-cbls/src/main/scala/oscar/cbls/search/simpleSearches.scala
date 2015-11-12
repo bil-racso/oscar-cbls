@@ -180,7 +180,7 @@ case class SwapsNeighborhood(vars:Array[CBLSIntVar],
       val jIterator = secondIterationScheme.iterator
       while (jIterator.hasNext) {
         val j = jIterator.next()
-        val secondVar = vars(j);
+        val secondVar = vars(j)
         val oldValOfSecondVar = secondVar.value
         if ((!symmetryCanBeBrokenOnIndices || i < j) //we break symmetry on variables
           && i != j
@@ -310,6 +310,7 @@ case class RandomSwapNeighborhood(vars:Array[CBLSIntVar],
  *                    at the position where it stopped, and consider the indices in increasing order
  *                    if false, consider the exploration range in natural order from the first position.
  **/
+@deprecated("actually, experimental, so use at your own risk","3.0")
 case class RollNeighborhood(vars:Array[CBLSIntVar],
                             name:String = "RollNeighborhood",
                             searchZone:()=>Set[Int] = null,
