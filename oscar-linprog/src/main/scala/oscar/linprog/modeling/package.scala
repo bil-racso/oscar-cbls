@@ -69,7 +69,7 @@ package object modeling {
   def abs[I <: MIPSolverInterface](linearExpression: LinearExpression, lb: Double, ub: Double)(implicit solver: MPSolver[I]): LinearExpression = {
     val absName = solver.addAbsExpression(linearExpression, lb, ub)
 
-    solver.linExprForPWLE(absName)
+    solver.piecewiseExpr(absName)
   }
 
   /**
@@ -78,6 +78,6 @@ package object modeling {
   def sign[I <: MIPSolverInterface](linearExpression: LinearExpression, lb: Double, ub: Double)(implicit solver: MPSolver[I]): LinearExpression = {
     val absName = solver.addSignExpression(linearExpression, lb, ub)
 
-    solver.linExprForPWLE(absName)
+    solver.piecewiseExpr(absName)
   }
 }
