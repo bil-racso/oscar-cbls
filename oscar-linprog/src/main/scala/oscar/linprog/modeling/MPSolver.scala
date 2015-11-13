@@ -20,6 +20,7 @@ import java.nio.file.Path
 import oscar.algebra.{Const, LinearExpression}
 import oscar.linprog.enums._
 import oscar.linprog.interface._
+import oscar.linprog.modeling.LinearConstraint
 
 import scala.util.{Failure, Success, Try}
 
@@ -30,8 +31,8 @@ import scala.util.{Failure, Success, Try}
  */
 class MPSolver[I <: MPSolverInterface](val solverInterface: I) {
 
-  protected def dirty: Boolean = solveStatus == NotSolved
-  protected def setDirty() = {
+  private def dirty: Boolean = solveStatus == NotSolved
+  private def setDirty() = {
     _solveStatus = NotSolved
     infeasibilitiesFound = false
   }
@@ -49,7 +50,7 @@ class MPSolver[I <: MPSolverInterface](val solverInterface: I) {
 
   /* OBJECTIVE */
 
-  protected var _objective: LinearExpression = Const(1)
+  private var _objective: LinearExpression = Const(1)
 
   /**
    * Returns the [[LinearExpression]] representing the current objective of the problem
@@ -79,8 +80,8 @@ class MPSolver[I <: MPSolverInterface](val solverInterface: I) {
 
   /* VARIABLES */
 
-  protected var variables = Map[String, MPVar[I]]()
-  protected var variableColumn = Map[String, Int]()
+  private var variables = Map[String, MPVar[I]]()
+  private var variableColumn = Map[String, Int]()
 
   def getNumberOfVariables = {
     assert(variables.size == solverInterface.getNumberOfVariables,
@@ -89,7 +90,7 @@ class MPSolver[I <: MPSolverInterface](val solverInterface: I) {
     variables.size
   }
 
-  protected def register(variable: MPVar[I], colId: Int): Unit = {
+  private def register(variable: MPVar[I], colId: Int): Unit = {
     setDirty()
 
     require(!variables.contains(variable.name), s"There exists already a variable with name ${variable.name}.")
@@ -263,8 +264,8 @@ class MPSolver[I <: MPSolverInterface](val solverInterface: I) {
   /* CONSTRAINTS */
 
   /* LINEAR CONSTRAINTS */
-  protected var linearConstraints = Map[String, LinearConstraint[I]]()
-  protected var linearConstraintRow = Map[String, Int]()
+  private var linearConstraints = Map[String, LinearConstraint[I]]()
+  private var linearConstraintRow = Map[String, Int]()
 
   def getNumberOfLinearConstraints = {
     assert(linearConstraints.size == solverInterface.getNumberOfLinearConstraints,
@@ -273,7 +274,7 @@ class MPSolver[I <: MPSolverInterface](val solverInterface: I) {
     linearConstraints.size
   }
 
-  protected def register(linearConstraint: LinearConstraint[I], rowId: Int): Unit = {
+  private def register(linearConstraint: LinearConstraint[I], rowId: Int): Unit = {
     setDirty()
 
     require(!linearConstraints.contains(linearConstraint.name), s"There exists already a linear constraint with name ${linearConstraint.name}.")
@@ -312,10 +313,10 @@ class MPSolver[I <: MPSolverInterface](val solverInterface: I) {
   }
 
   /* INDICATOR CONSTRAINTS */
-  protected var indicatorConstraints = Map[String, IndicatorConstraint[I]]()
-  protected var linearConstraintsPerIndicatorConstraint = Map[String, Seq[String]]()
+  private var indicatorConstraints = Map[String, IndicatorConstraint[I]]()
+  private var linearConstraintsPerIndicatorConstraint = Map[String, Seq[String]]()
 
-  protected def register(indicatorConstraint: IndicatorConstraint[I], relatedConstraints: Seq[LinearConstraint[I]]): Unit = {
+  private def register(indicatorConstraint: IndicatorConstraint[I], relatedConstraints: Seq[LinearConstraint[I]]): Unit = {
     setDirty()
 
     require(!indicatorConstraints.contains(indicatorConstraint.name), s"There exists already an indicator constraint with name ${indicatorConstraint.name}.")
@@ -334,6 +335,203 @@ class MPSolver[I <: MPSolverInterface](val solverInterface: I) {
 
     register(indicatorConstraint, constraints)
   }
+
+
+  /* PIECEWISE LINEAR EXPRESSIONS */
+  // The linear expression used to represent the piecewise linear expression.
+  private var _piecewiseExpr: Map[String, LinearExpression] = Map()
+  // The variables used to model the piecewise linear expression as a linear expression.
+  private var piecewiseVars: Map[String, Seq[MPVar[MIPSolverInterface]]] = Map()
+  // The additional constraints used to model the piecewise linear expression as a linear expression.
+  private var piecewiseConstraints: Map[String, Seq[LinearConstraint[MIPSolverInterface]]] = Map()
+
+  /**
+   * Returns the [[LinearExpression]] used in the model to represent the piecewise linear expression with the given name.
+   */
+  def piecewiseExpr(pwleName: String) = _piecewiseExpr(pwleName)
+
+  /**
+   * Removes the piecewise linear expression with the given name from the model (if any).
+   *
+   * It removes all the constraints and variables added to the model to represent the piecewise linear expression.
+   *
+   * It is not recursive, in case the PiecewiseLinearExpression is a composition of piecewise linear expression:
+   *  f(g(x)) with f and g piecewise linear expressions.
+   * it removes only the variables and constraints associated to the outer expression (f).
+   * The inner expression g should be removed explicitly by a call to [[MPSolver.removePiecewiseLinearExpression]].
+   */
+  def removePiecewiseLinearExpression(pwleName: String): Unit = {
+    _piecewiseExpr -= pwleName
+    // Constraints should be removed first in order to be able to remove the variables.
+    // Indeed to remove a variable, it should not be present in either the objective or the constraints.
+    piecewiseConstraints.get(pwleName).foreach(vOpt => vOpt.foreach(c => this.removeLinearConstraint(c.name)))
+    piecewiseConstraints -= pwleName
+    piecewiseVars.get(pwleName).foreach(vOpt => vOpt.foreach(v => this.removeVariable(v.name)))
+    piecewiseVars -= pwleName
+  }
+
+  /* ABSOLUTE VALUE EXPRESSION */
+  private var currentAbsExprId: Int = 0
+  private def nextAbsExprId: Int = {
+    val i = currentAbsExprId
+    currentAbsExprId += 1
+    i
+  }
+
+  /**
+   * Adds a new absolute value expression to the solver.
+   *
+   * |f(x)| = {
+   *    -f(x)  if f(x) is <= 0
+   *     f(x)  if f(x) is >= 0
+   * }
+   *
+   * The absolute value is modelled as a [[LinearExpression]]
+   * by adding additional variables and constraints to the model.
+   *
+   * The [[LinearExpression]] can be retrieved by calling [[MPSolver.absLinearExpression()]]
+   * with the name associated to this absolute value expression.
+   *
+   * @param linearExpression = f(x) the [[LinearExpression]] whose absolute value is to be computed
+   * @param lowerBound the lower bound on f(x).
+   * @param upperBound the upper bound on f(x). It should be greater or equal to the lowerBound.
+   *
+   * @return the name associated to the absolute value expression
+   */
+  def addAbsExpression[J <: MIPSolverInterface](linearExpression: LinearExpression, lowerBound: Double, upperBound: Double)(implicit ev: MPSolver[I] => MPSolver[J]): String = {
+    require(lowerBound <= upperBound, "The lower bound given to an absolute expression should be smaller or equal to the upper bound.")
+
+    setDirty()
+
+    val name = s"abs$nextAbsExprId"
+
+    if(lowerBound == upperBound) {
+      _piecewiseExpr += (name -> Const(math.abs(lowerBound)))
+    } else if(lowerBound < upperBound && lowerBound <= 0 && upperBound >= 0) {
+      implicit val solver = ev(this)
+
+      val xPlus = MPFloatVar(s"${name}_xPlus", lb = 0) // the positive part of the linear expression (it is a positive value)
+      val xMinus = MPFloatVar(s"${name}_xMinus", lb = 0) // the negative part of the linear expression (it is a positive value)
+
+      val b = MPBinaryVar(s"${name}_b") // b = 1 if the linear expression is positive, 0 otherwise
+
+      piecewiseVars += (name -> Seq(xPlus, xMinus, b))
+
+      val xDef = LinearConstraint(s"${name}_xDef", linearExpression =:= xPlus - xMinus)
+      val xPlusUB = LinearConstraint(s"${name}_xPlusUB", xPlus <:= upperBound * b)
+      val xMinusUB = LinearConstraint(s"${name}_xMinusUB", xMinus <:= math.abs(lowerBound) * (1 - b))
+
+      piecewiseConstraints += (name -> Seq(xDef, xPlusUB, xMinusUB))
+
+      // |x| = xPlus + xMinus
+      _piecewiseExpr += (name -> (xPlus + xMinus))
+    } else if(lowerBound < upperBound && upperBound <= 0) {
+      _piecewiseExpr += (name -> -linearExpression)
+    } else if(lowerBound < upperBound && lowerBound >= 0) {
+      _piecewiseExpr += (name -> linearExpression)
+    }
+
+    name
+  }
+
+  /**
+   * Returns the [[LinearExpression]] used in the model to represent the absolute value expression with the given name.
+   */
+  def absLinearExpression(absExprName: String) = piecewiseExpr(absExprName)
+
+  /**
+   * Removes the absolute value expression with the given name from the model.
+   */
+  def removeAbsExpression(absExprName: String) = removePiecewiseLinearExpression(absExprName)
+
+  /* SIGN EXPRESSION */
+  private var currentSignExprId: Int = 0
+  private def nextSignExprId: Int = {
+    val i = currentSignExprId
+    currentSignExprId += 1
+    i
+  }
+
+  /**
+   * Adds a new sign expression to the solver.
+   *
+   * sign(x) = {
+   *    - 1  if f(x) is < 0
+   *      0  if f(x) is 0
+   *      1  if f(x) is > 0
+   * }
+   *
+   * The sign function is modelled as a [[LinearExpression]]
+   * by adding additional variables and constraints to the model.
+   *
+   * The [[LinearExpression]] can be retrieved by calling [[MPSolver.signLinearExpression()]]
+   * with the name associated to this sign expression.
+   *
+   * @param linearExpression = f(x) the [[LinearExpression]] whose sign is to be computed
+   * @param lowerBound the lower bound on f(x).
+   * @param upperBound the upper bound on f(x). It should be greater or equal to the lowerBound.
+   * @param eps defines a small interval around f(x) = 0 within which f(x) is considered null.
+   *            It should be positive. Default is 1e-5.
+   *
+   * @return the name associated to the sign expression
+   */
+  def addSignExpression[J <: MIPSolverInterface](linearExpression: LinearExpression, lowerBound: Double, upperBound: Double, eps: Double = 1e-5)(implicit ev: MPSolver[I] => MPSolver[J]): String = {
+    require(lowerBound <= upperBound, "The lower bound given to a sign expression should be smaller or equal to the upper bound.")
+    require(eps >= 0, "The eps given to a sign expression should be positive.")
+
+    setDirty()
+
+    val name = s"sign$nextSignExprId"
+
+    if(lowerBound == upperBound) {
+      _piecewiseExpr += (name -> Const(math.signum(lowerBound)))
+    } else if(lowerBound < upperBound && lowerBound <= 0 && upperBound >= 0) {
+      implicit val solver = ev(this)
+
+      val xPlus = MPFloatVar(s"${name}_xPlus") // the positive part of the linear expression (it is a positive value)
+      val xMinus = MPFloatVar(s"${name}_xMinus") // the negative part of the linear expression (it is a positive value)
+      val xZero = MPFloatVar(s"${name}_xZero") // represents a small interval around zero, within which the linear expression is considered as zero.
+
+      val bPlus = MPBinaryVar(s"${name}_bPlus") // bPlus  = 1 if the linear expression is strictly positive, 0 otherwise
+      val bMinus = MPBinaryVar(s"${name}_bMinus") // bMinus = 1 if the linear expression is strictly negative, 0 otherwise
+      val bZero = MPBinaryVar(s"${name}_bZero") // bZero  = 1 if the linear expression is around zero,       0 otherwise
+
+      piecewiseVars += (name -> Seq(xPlus, xMinus, xZero, bPlus, bMinus, bZero))
+
+      val xDef = LinearConstraint(s"${name}_xDef", linearExpression =:= xPlus - xMinus + xZero)
+      val xPlusLB = LinearConstraint(s"${name}_xPlusLB", xPlus >:= eps * bPlus)
+      val xPlusUB = LinearConstraint(s"${name}_xPlusUB", xPlus <:= upperBound * bPlus)
+      val xMinusLB = LinearConstraint(s"${name}_xMinusLB", xMinus >:= eps * bMinus)
+      val xMinusUB = LinearConstraint(s"${name}_xMinusUB", xMinus <:= math.abs(lowerBound) * bMinus)
+      val xZeroLB = LinearConstraint(s"${name}_xZeroLB", xZero >:= -eps * bZero)
+      val xZeroUB = LinearConstraint(s"${name}_xZeroUB", xZero <:= eps * bZero)
+      val bDef = LinearConstraint(s"${name}_bDef", bPlus + bMinus + bZero =:= 1)
+
+      piecewiseConstraints += (name -> Seq(xDef, xPlusLB, xPlusUB, xMinusLB, xMinusUB, xZeroLB, xZeroUB, bDef))
+
+      // sign(x) = bPlus - bMinus
+      //  if x > eps         => bPlus = 1, bMinus = 0 => sign(x) = 1
+      //  if x < eps         => bPlus = 0, bMinus = 1 => sign(x) = -1
+      //  if -eps < x <- eps => bPlus = 0, bMinus = 0 => sign(x) = 0
+      _piecewiseExpr += (name -> (bPlus - bMinus))
+    } else if(lowerBound < upperBound && upperBound < 0) {
+      _piecewiseExpr += (name -> Const(-1.0))
+    } else if(lowerBound < upperBound && lowerBound > 0) {
+      _piecewiseExpr += (name -> Const(1.0))
+    }
+
+    name
+  }
+
+  /**
+   * Returns the [[LinearExpression]] used in the model to represent the sign expression with the given name.
+   */
+  def signLinearExpression(signExprName: String) = piecewiseExpr(signExprName)
+
+  /**
+   * Removes the sign expression with the given name from the model.
+   */
+  def removeSignExpression(signExprName: String) = removePiecewiseLinearExpression(signExprName)
 
 
   /* SOLVE */
@@ -383,7 +581,7 @@ class MPSolver[I <: MPSolverInterface](val solverInterface: I) {
    */
   def hasSolution: Boolean = solved && endStatus == Success(SolutionFound)
 
-  protected def asSuccessIfSolFound[B](value: B): Try[B] = endStatus.flatMap { status =>
+  private def asSuccessIfSolFound[B](value: B): Try[B] = endStatus.flatMap { status =>
     if (status == SolutionFound) Success(value)
     else                    Failure(NoSolutionFoundException(status))
   }
@@ -412,7 +610,7 @@ class MPSolver[I <: MPSolverInterface](val solverInterface: I) {
 
   private var infeasibilitiesFound = false
 
-  protected def asSuccessIfInfeasFound[B](value: B): Try[B] = {
+  private def asSuccessIfInfeasFound[B](value: B): Try[B] = {
     if (infeasibilitiesFound) Success(value)
     else                      Failure(NoInfeasibilityFoundException)
   }
