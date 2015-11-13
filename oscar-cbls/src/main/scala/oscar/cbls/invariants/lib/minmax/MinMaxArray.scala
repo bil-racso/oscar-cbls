@@ -424,6 +424,9 @@ abstract class MiaxConstArray(vars: Array[Int], cond: SetValue, default: Int)
 abstract class MiaxConstArrayLazy(vars: Array[Int], cond: SetValue, default: Int, maxBacklog:Int)
   extends IntInvariant{
 
+  var nbAnihilation = 0
+  var nbDoIt = 0
+
   val n = vars.length
   var h: BinomialHeapWithMoveExtMem[Int] = new BinomialHeapWithMoveExtMem[Int](i => Ord(vars(i)), vars.length, new ArrayMap(vars.length))
 
@@ -476,6 +479,21 @@ abstract class MiaxConstArrayLazy(vars: Array[Int], cond: SetValue, default: Int
    */
   @inline
   private[this] def trimBackLog(){
+
+/*    def quickTrim(l:QList[Int]):QList[Int] = {
+      if(l == null) null
+      else{
+        if(isBacklogged(l.head)){
+          QList(l.head,quickTrim(l.tail))
+        }else {
+          backlogSize -= 1
+          quickTrim(l.tail)
+        }
+      }
+    }
+
+    backLog = quickTrim(backLog)*/
+
     while(true){
       if(backLog == null) return
       if(!isBacklogged(backLog.head)){
@@ -498,10 +516,12 @@ abstract class MiaxConstArrayLazy(vars: Array[Int], cond: SetValue, default: Int
       assert(!cond.value.contains(condValue))
       h.delete(condValue)
       consideredValue(condValue) = false
+      nbDoIt +=1
     }else{ //should be added
       assert(cond.value.contains(condValue))
       h.insert(condValue)
       consideredValue(condValue) = true
+      nbDoIt +=1
     }
     isBacklogged(condValue) = false
   }
@@ -524,6 +544,7 @@ abstract class MiaxConstArrayLazy(vars: Array[Int], cond: SetValue, default: Int
     if(consideredValue(value)){ //anihilation
       assert(isBacklogged(value))
       isBacklogged(value) = false
+      nbAnihilation += 2
       return
     }
     if(equalOrNotImpactingMiax(vars(value))){//backlog
@@ -532,6 +553,7 @@ abstract class MiaxConstArrayLazy(vars: Array[Int], cond: SetValue, default: Int
     }else{//impacted
       this := vars(value)
       h.insert(value)
+      nbDoIt +=1
       consideredValue(value) = true
     }
   }
@@ -542,11 +564,13 @@ abstract class MiaxConstArrayLazy(vars: Array[Int], cond: SetValue, default: Int
     if(!consideredValue(value)){ //anihilation
       assert(isBacklogged(value))
       isBacklogged(value) = false
+      nbAnihilation += 2
       return
     }
     if(this.getValue(true) == vars(value)){//impacted, flush backLog
       processBackLog()
       h.delete(value)
+      nbDoIt +=1
       consideredValue(value) = false
       updateFromHeap()
     }else{//not impacted, backlog

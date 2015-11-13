@@ -737,6 +737,8 @@ class RoundRobin(l: List[Neighborhood], steps: Int = 1) extends NeighborhoodComb
 
   //this resets the internal state of the move combinators
   override def reset() {
+    remainingSteps = steps
+    tail = l
     super.reset()
   }
 
