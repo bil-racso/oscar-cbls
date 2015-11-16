@@ -53,58 +53,9 @@ import oscar.flatzinc.cbls.support.CBLSIntConstDom
 
 
 
-/*
-class FZCBLSObjective(cblsmodel:FZCBLSModel,log:Log){
-  private val opt = cblsmodel.model.search.obj
-  private val objectiveVar = cblsmodel.model.search.variable.map(cblsmodel.getCBLSVar(_)).getOrElse(null)
-  val violation = cblsmodel.c.violation;
-  val violationWeight = CBLSIntVar(cblsmodel.c.model, 1, 0 to (if(violation.max!=0)math.max(1,Int.MaxValue/violation.max/2) else 1) , "violation_weight")
-  //TODO: The division does not seem right... why max and not min?
-  val objectiveWeight = CBLSIntVar(cblsmodel.c.model, 1, 0 to (if(objectiveVar!=null && objectiveVar.max > 0)math.max(1,Int.MaxValue/objectiveVar.max/2) else 1) , "objective_weight")
-  private val objective2 = opt match {
-        case Objective.SATISFY => violation
-        case Objective.MAXIMIZE => Minus(Prod2(violation, violationWeight), Prod2(objectiveVar, objectiveWeight))
-        case Objective.MINIMIZE => Sum2(Prod2(violation, violationWeight), Prod2(objectiveVar, objectiveWeight))
-      }
-  val objective: CBLSObjective = new IntVarObjective(objective2.asInstanceOf[ChangingIntValue])
-  def apply() = objective
-  def getObjectiveValue(): Int = {
-   opt match {
-        case Objective.SATISFY => 0
-        case Objective.MAXIMIZE => -objectiveVar.value
-        case Objective.MINIMIZE => objectiveVar.value
-      }
-  }
-  def increaseViolationWeight(minViolationSinceBest: Int){
-    if (objectiveWeight.value > 1) {
-      correctWeights(objectiveWeight.value / 2,violationWeight.value)
-    } else {
-      correctWeights(objectiveWeight.value,violationWeight.value + Math.max(10, Math.abs(minViolationSinceBest / 2)))
-    }
-  }
-  def increaseObjectiveWeight(minObjectiveSinceBest: Int){
-    if (violationWeight.value > 1) {
-      correctWeights(objectiveWeight.value,violationWeight.value / 2)
-    } else {
-      correctWeights(objectiveWeight.value + Math.max(10, Math.abs(minObjectiveSinceBest / 2)),violationWeight.value)
-    }
-  }
-  def correctWeights(newObjW: Int,newVioW: Int){
-    val minWeight = math.min(newObjW, newVioW)
-    objectiveWeight := math.min(newObjW/minWeight,objectiveWeight.max)
-    violationWeight := math.min(newVioW/ minWeight,violationWeight.max)
-    //violationWeight := 1000 + RandomGenerator.nextInt(10)
-    log("Changed Violation Weight to "+violationWeight.value+(if(violationWeight.value==violationWeight.max)"(max)"else ""))
-    log("    And Objective Weight to "+objectiveWeight.value+(if(objective.value==objectiveWeight.max)"(max)"else ""))
-
-  }
-}
-*/
-
 class FZCBLSModel(val model: FZProblem, val c: ConstraintSystem, val m: Store, val log:Log, val getWatch: () => Long) {
   val cblsIntMap: MMap[String, IntValue] = MMap.empty[String, IntValue]
   var vars: List[CBLSIntVarDom] = createVariables();
-  //var objective = null.asInstanceOf[CBLSObjective]
   var objectiveVar = null.asInstanceOf[IntValue]
   var objectiveBound = null.asInstanceOf[CBLSIntVar]
   def createObjective(){
