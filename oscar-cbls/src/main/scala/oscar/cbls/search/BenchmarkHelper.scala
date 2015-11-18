@@ -14,11 +14,11 @@ object Benchmark extends StopWatch{
   val firstColumnForStatisticsString = 20
   def nSpace(n:Int):String = if(n <= 0) "" else " " + nSpace(n-1)
   private def padToLength(s: String, l: Int) = (s + nSpace(l)).substring(0, l)
-  def benchToStatistics(obj:Objective, nRuns:Int, strategies:(()=>(String,Neighborhood))*) =
-    benchToTrace(obj, nRuns, strategies:_*).map{case (s:String,t:IndexedSeq[RunValues]) => (s,aggregate(t.toList))}
+  def benchToStatistics(obj:Objective, nRuns:Int, strategies:Iterable[()=>(String,Neighborhood)],verbose:Int) =
+    benchToTrace(obj, nRuns, strategies,verbose).map{case (s:String,t:IndexedSeq[RunValues]) => (s,aggregate(t.toList))}
 
-  def benchtoString(obj:Objective, nRuns:Int, strategies:(()=>(String,Neighborhood))*):String = {
-    val stats = benchToStatistics(obj,nRuns,strategies:_*)
+  def benchtoString(obj:Objective, nRuns:Int, strategies:Iterable[()=>(String,Neighborhood)],verbose:Int = 0):String = {
+    val stats = benchToStatistics(obj,nRuns,strategies,verbose)
 
     nSpace(firstColumnForStatisticsString) + "|it                  |dur[ms]             |obj" + "\n" +
       nSpace(firstColumnForStatisticsString) + "|"+Statistics.statisticsHeader + "|" + Statistics.statisticsHeader + "|" + Statistics.statisticsHeader + "\n" +
@@ -26,7 +26,7 @@ object Benchmark extends StopWatch{
 
   }
 
-  def benchToTrace(obj:Objective, nRuns:Int, strategies:(()=>(String,Neighborhood))*)={
+  def benchToTrace(obj:Objective, nRuns:Int, strategies:Iterable[()=>(String,Neighborhood)],verbose:Int)={
     val m = obj.model
     val initialSolution = m.solution()
 
@@ -34,6 +34,7 @@ object Benchmark extends StopWatch{
       yield (n()._1,for(trial <- 0 to nRuns) yield {
         m.restoreSolution(initialSolution)
         val strategyInstance = n()
+        strategyInstance._2.verbose = if(verbose>0) verbose else 0
         this.startWatch()
         val it = strategyInstance._2.doAllMoves(_ => false, obj)
         val time = this.getWatch

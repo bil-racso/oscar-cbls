@@ -26,6 +26,7 @@ package oscar.cbls.routing.neighborhood
 
 import oscar.cbls.routing.model.VRP
 import oscar.cbls.search.algo.HotRestart
+import oscar.cbls.search.move.Move
 
 /**
  * Removes a point of route.
@@ -48,6 +49,8 @@ case class RemovePoint(predecessorsOfRoutedPointsToRemove:()=>Iterable[Int],
   //the indice to start with for the exploration
   var startIndice: Int = 0
 
+  var beforeRemovedPoint:Int = 0;
+
   override def exploreNeighborhood(): Unit = {
 
     val iterationSchemeOnZone =
@@ -56,7 +59,9 @@ case class RemovePoint(predecessorsOfRoutedPointsToRemove:()=>Iterable[Int],
 
     cleanRecordedMoves()
 
-    for (beforeRemovedPoint <- iterationSchemeOnZone) {
+    val it = iterationSchemeOnZone.iterator
+    while (it.hasNext) {
+      beforeRemovedPoint = it.next()
       assert(vrp.isRouted(beforeRemovedPoint),
         "The search zone should be restricted to before routed nodes when removing.")
       val removedPoint = vrp.next(beforeRemovedPoint).value
@@ -66,13 +71,15 @@ case class RemovePoint(predecessorsOfRoutedPointsToRemove:()=>Iterable[Int],
       encode(beforeRemovedPoint)
       val newObj = evalObjOnEncodedMove()
 
-      if (moveRequested(newObj)
-        && submitFoundMove(RemovePointMove(beforeRemovedPoint, newObj, this, neighborhoodNameToString))) {
+      if (evaluateCurrentMoveObjTrueIfStopRequired(newObj)) {
         startIndice = beforeRemovedPoint + 1
         return
       }
     }
   }
+
+  override def instantiateCurrentMove(newObj: Int): Move =
+    RemovePointMove(beforeRemovedPoint, newObj, this, neighborhoodNameToString)
 
   def encode(beforeRemovedPoint: Int) {
     unroute(cutNodeAfter(beforeRemovedPoint))

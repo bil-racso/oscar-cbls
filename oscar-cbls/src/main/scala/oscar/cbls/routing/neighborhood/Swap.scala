@@ -27,6 +27,7 @@ package oscar.cbls.routing.neighborhood
 import oscar.cbls.routing.model._
 import oscar.cbls.search.algo.HotRestart
 import oscar.cbls.search.core.EasyNeighborhood
+import oscar.cbls.search.move.Move
 
 /**
  * Swaps two points of the same or different routes.
@@ -60,6 +61,8 @@ case class Swap(nodesPrecedingNodesToMove:()=>Iterable[Int],
 
       val movedPoint = vrp.next(beforeMovedPoint).value
 
+      this.beforeMovedPoint = beforeMovedPoint
+
       for (
         insertionPoint <- relevantNeighborsNow(movedPoint)
         if (vrp.isRouted(insertionPoint)
@@ -71,17 +74,22 @@ case class Swap(nodesPrecedingNodesToMove:()=>Iterable[Int],
           || vrp.onTheSameRoute(movedPoint, insertionPoint))
       ) {
 
+        this.insertionPoint = insertionPoint
         encode(beforeMovedPoint, insertionPoint)
-        val newObj = evalObjOnEncodedMove()
 
-        if (moveRequested(newObj)
-          && submitFoundMove(SwapMove(beforeMovedPoint, insertionPoint, newObj, this, neighborhoodNameToString))) {
+        if (evaluateCurrentMoveObjTrueIfStopRequired(evalObjOnEncodedMove())) {
           startIndice = beforeMovedPoint + 1
           return
         }
       }
     }
   }
+
+  var beforeMovedPoint:Int = 0
+  var insertionPoint:Int = 0
+
+  override def instantiateCurrentMove(newObj: Int): Move =
+    SwapMove(beforeMovedPoint, insertionPoint, newObj, this, neighborhoodNameToString)
 
   def encode(fstPred: Int, sndPred: Int) {
     val fstSeg = cutNodeAfter(fstPred)

@@ -26,6 +26,7 @@ package oscar.cbls.routing.neighborhood
 
 import oscar.cbls.routing.model._
 import oscar.cbls.search.algo.{IdenticalAggregator, HotRestart}
+import oscar.cbls.search.move.Move
 
 /**
  * Inserts an unrouted point in a route. The size of the neighborhood is O(u*n).
@@ -62,6 +63,9 @@ case class InsertPoint(unroutedNodesToInsert: () => Iterable[Int],
   //the indice to start with for the exploration
   var startIndice: Int = 0
 
+  var beforeInsertedPoint:Int = 0
+  var insertedPoint:Int = 0
+
   override def exploreNeighborhood(): Unit = {
 
     val iterationSchemeOnZone =
@@ -77,30 +81,35 @@ case class InsertPoint(unroutedNodesToInsert: () => Iterable[Int],
 
     val iterationSchemeIterator = iterationScheme.iterator
     while(iterationSchemeIterator.hasNext){
-      val insertedPoint = iterationSchemeIterator.next
+      insertedPoint = iterationSchemeIterator.next
       assert(!vrp.isRouted(insertedPoint),
         "The search zone should be restricted to unrouted nodes when inserting.")
 
-      for (
-        beforeInsertedPoint <- relevantNeighborsNow(insertedPoint) if vrp.isRouted(beforeInsertedPoint)
-      ) {
-        assert(isRecording, "MoveDescription should be recording now")
+      val it2 = relevantNeighborsNow(insertedPoint).iterator
+      while(it2.hasNext){
+        beforeInsertedPoint =it2.next()
+        if (vrp.isRouted(beforeInsertedPoint)){
+          assert(isRecording, "MoveDescription should be recording now")
 
-        encode(beforeInsertedPoint, insertedPoint)
-        val newObj = evalObjOnEncodedMove()
+          encode(beforeInsertedPoint, insertedPoint)
+          val newObj = evalObjOnEncodedMove()
 
-        if (moveRequested(newObj)
-          && submitFoundMove(InsertPointMove(beforeInsertedPoint, insertedPoint, newObj, this, neighborhoodNameToString))) {
-          startIndice = if(hotRestartOnNextSymmetryClass){
-            if(iterationSchemeIterator.hasNext)
-              iterationSchemeIterator.next
-            else iterationScheme.head
-          } else insertedPoint + 1
-          return
+          if (evaluateCurrentMoveObjTrueIfStopRequired(newObj)){
+            startIndice = if(hotRestartOnNextSymmetryClass){
+              if(iterationSchemeIterator.hasNext)
+                iterationSchemeIterator.next
+              else iterationScheme.head
+            } else insertedPoint + 1
+            return
+          }
+
         }
       }
     }
   }
+
+  override def instantiateCurrentMove(newObj: Int): Move =
+    InsertPointMove(beforeInsertedPoint, insertedPoint, newObj, this, neighborhoodNameToString)
 
   def encode(beforeInsertedPoint: Int, insertedPoint: Int) {
     assert(!vrp.isRouted(insertedPoint))

@@ -26,6 +26,7 @@ package oscar.cbls.routing.neighborhood
 
 import oscar.cbls.routing.model._
 import oscar.cbls.search.algo.HotRestart
+import oscar.cbls.search.move.Move
 
 /**
  * Removes two edges of routes, and rebuilds routes from the segments.
@@ -71,17 +72,24 @@ case class TwoOpt(predecesorOfFirstMovedPoint:()=>Iterable[Int],
         && vrp.onTheSameRoute(fstPred, sndPred))
       ) {
 
-        encode(fstPred, sndPred)
-        val newObj = evalObjOnEncodedMove()
+        this.fstPred = fstPred
+        this.sndPred = sndPred
 
-        if (moveRequested(newObj)
-          && submitFoundMove(TwoOptMove(fstPred, sndPred, newObj, this, neighborhoodNameToString))) {
+        encode(fstPred, sndPred)
+
+        if (evaluateCurrentMoveObjTrueIfStopRequired(evalObjOnEncodedMove())) {
           startIndice = fstPred + 1
           return
         }
       }
     }
   }
+
+  var fstPred:Int = 0
+  var sndPred:Int = 0
+
+  override def instantiateCurrentMove(newObj: Int): Move =
+    TwoOptMove(fstPred, sndPred, newObj, this, neighborhoodNameToString)
 
   def encode(fstPred:Int, sndPred:Int) {
     val seg = cut(fstPred, sndPred)

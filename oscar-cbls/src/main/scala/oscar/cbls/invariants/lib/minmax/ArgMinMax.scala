@@ -206,7 +206,7 @@ abstract class ArgMiax(vars: Array[IntValue], cond: SetValue, default: Int)
     h.checkInternals(c: Checker)
     c.check(h.getFirsts.length == this.value.size, Some("h.getFirsts.length == this.value.size"))
     if (cond != null)
-      c.check(this.getValue(true).subsetOf(cond.value), Some("this.getValue(true).subsetOf(cond.getValue(true))"))
+      c.check(this.value.subsetOf(cond.value), Some("this.getValue(true).subsetOf(cond.getValue(true))"))
   }
 }
 

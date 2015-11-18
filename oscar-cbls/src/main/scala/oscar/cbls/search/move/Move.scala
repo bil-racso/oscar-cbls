@@ -59,7 +59,7 @@ abstract class Move(val objAfter:Int = Int.MaxValue, val neighborhoodName:String
     */
   def evaluate(obj:Objective):Int = {
     val model = obj.model
-    val snapshot = model.saveValues(touchedVariables:_*)
+    val snapshot = model.saveValues(touchedVariables)
     commit()
     val toReturn = obj.value
     model.restoreSolution(snapshot)
@@ -102,6 +102,19 @@ case class AssignMove(i:CBLSIntVar,v:Int, override val objAfter:Int, override va
 
   override def touchedVariables: List[Variable] = List(i)
 }
+
+case class RollMove(l:List[CBLSIntVar],offset:Int, override val objAfter:Int, override val neighborhoodName:String = null)
+  extends Move(objAfter,neighborhoodName){
+  /** to actually take the move */
+  override def commit(){
+    val variables = l.toArray
+    val initialValues:Array[Int] = variables.map(_.value)
+    for(i <- variables.indices){
+      variables(i) := initialValues((i+offset) % variables.length)
+    }
+  }
+}
+
 
 /** standard move that swaps the value of two CBLSIntVar
   *

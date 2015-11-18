@@ -45,13 +45,14 @@ abstract class ChangingSetValue(initialValue:SortedSet[Int], initialDomain:Domai
   private var privatedomain:Domain = initialDomain
   private var Value: SortedSet[Int] = initialValue
   private var OldValue:SortedSet[Int] = Value
-
+  private[this] var domainSizeDiv10 = privatedomain.size/10
   def domain:Domain = privatedomain
 
   /**this must be protected because invariants might rework this after isntanciation
     * for CBLSVars, no problems*/
   protected def restrictDomain(d:Domain): Unit ={
     privatedomain = privatedomain.restrict(d)
+    domainSizeDiv10 = privatedomain.size/10
   }
 
   private var ToPerform: List[(Int,Boolean)] = List.empty
@@ -81,11 +82,21 @@ abstract class ChangingSetValue(initialValue:SortedSet[Int], initialDomain:Domai
   /**The values that have bee impacted since last propagation was performed.
     * null if set was assigned
     */
-  var TouchedValues:List[(Int,Boolean)] = List.empty
+  private[this] var TouchedValues:List[(Int,Boolean)] = List.empty
+  private[this] var nbTouched:Int = 0
+
+  @inline
+  private[this] def recordAsTouched(value:Int,add:Boolean){
+    if (TouchedValues != null){
+      TouchedValues = (value,add) :: TouchedValues
+      nbTouched += 1
+      if(nbTouched > domainSizeDiv10) TouchedValues = null
+    }
+  }
 
   def insertValue(v:Int){
     if (!Value.contains(v)){
-      if (TouchedValues != null) TouchedValues = (v,true) :: TouchedValues
+      recordAsTouched(v,true)
       Value +=v
       notifyChanged()
     }
@@ -93,7 +104,7 @@ abstract class ChangingSetValue(initialValue:SortedSet[Int], initialDomain:Domai
 
   def deleteValue(v:Int){
     if (Value.contains(v)){
-      if (TouchedValues != null) TouchedValues = (v,false) :: TouchedValues
+      recordAsTouched(v,false)
       Value -=v
       notifyChanged()
     }
@@ -191,6 +202,7 @@ abstract class ChangingSetValue(initialValue:SortedSet[Int], initialDomain:Domai
       }
     }
     TouchedValues = List.empty
+    nbTouched = 0
   }
 
   def value:SortedSet[Int] = getValue(false)

@@ -16,7 +16,7 @@
  */
 package oscar.cbls.search.combinators
 
-import oscar.cbls.invariants.core.computation.{IntValue, SetValue}
+import oscar.cbls.invariants.core.computation._
 import oscar.cbls.objective.{CascadingObjective, Objective}
 import oscar.cbls.search.core.{NoMoveFound, _}
 import oscar.cbls.search.move.{CallBackMove, CompositeMove, InstrumentedMove, Move}
@@ -33,6 +33,10 @@ abstract class NeighborhoodCombinator(a: Neighborhood*) extends Neighborhood {
   //this resets the internal state of the move combinators
   override def reset() {
     for (n <- a) n.reset()
+  }
+
+  override def resetStatistics(){
+    for (n <- a) n.resetStatistics()
   }
 
   override def verbose_=(i: Int): Unit = {
@@ -718,7 +722,7 @@ class RoundRobin(l: List[Neighborhood], steps: Int = 1) extends NeighborhoodComb
     } else {
       //move to next robin
       moveToNextRobin()
-      myGetImprovingMove(obj, acceptanceCriteria, triedRobins + 1)
+      myGetImprovingMove(obj, acceptanceCriteria, triedRobins)
     }
   }
 
@@ -733,6 +737,8 @@ class RoundRobin(l: List[Neighborhood], steps: Int = 1) extends NeighborhoodComb
 
   //this resets the internal state of the move combinators
   override def reset() {
+    remainingSteps = steps
+    tail = l
     super.reset()
   }
 
@@ -839,6 +845,115 @@ class AndThen(a: Neighborhood, b: Neighborhood, maximalIntermediaryDegradation: 
     }
   }
 }
+
+case class DynAndThen(a:Neighborhood with SupportForAndThenChaining,
+                      b:(Move => Neighborhood),
+                      maximalIntermediaryDegradation: Int = Int.MaxValue)
+  extends NeighborhoodCombinator(a) with SupportForAndThenChaining{
+
+  var currentB:Neighborhood = null
+
+  override def getMove(obj: Objective, acceptanceCriteria: (Int, Int) => Boolean): SearchResult = {
+
+    var secondMove: Move = null //the move performed by b
+    val oldObj: Int = obj.value
+
+    //the acceptance criterion is on the diff between the oldObj and the newObj over the two consecutive moves
+    //it is evaluated for the second move
+    //the first move is about accepting all moves that are not maxVal, since the newObj is for the consecutive moves,
+    // and is already accepted by the time it is returned to the first neighrhood
+    def firstAcceptanceCriterion(oldObj: Int, newObj: Int): Boolean = {
+      newObj != Int.MaxValue
+    }
+
+    def secondAcceptanceCriteria(intermediaryObj: Int, newObj: Int): Boolean = {
+      //we ignore the intermediaryObj.
+      acceptanceCriteria(oldObj, newObj)
+    }
+
+    class InstrumentedObjective() extends Objective{
+
+      override def detailedString(short: Boolean, indent: Int = 0): String = nSpace(indent) + "AndThenInstrumentedObjective(initialObjective:" + obj.detailedString(short) + ")"
+
+      override def model = obj.model
+
+      override def value: Int = {
+
+        val intermediaryObjValue =
+          if (maximalIntermediaryDegradation != Int.MaxValue) {
+            //we need to ensure that intermediary step is admissible
+            val intermediaryVal = obj.value
+            val intermediaryDegradation = intermediaryVal - oldObj
+            if (intermediaryDegradation > maximalIntermediaryDegradation) {
+              return Int.MaxValue //we do not consider this first step
+            }else{
+              intermediaryVal
+            }
+          }else{
+            Int.MaxValue
+          }
+
+        //now, we need to check the other neighborhood
+        //first, let's instantiate it:
+        currentB = b(a.instantiateCurrentMove(intermediaryObjValue))
+
+        currentB.getMove(obj, secondAcceptanceCriteria) match {
+          case NoMoveFound => Int.MaxValue
+          case MoveFound(m: Move) =>
+            secondMove = m
+            m.objAfter
+        }
+      }
+    }
+
+    val tmp = a.getMove(new InstrumentedObjective(), firstAcceptanceCriterion)
+
+    tmp match {
+      case NoMoveFound => NoMoveFound
+      case MoveFound(m: Move) => CompositeMove(List(m, secondMove), m.objAfter, this.toString)
+    }
+  }
+
+
+  override def instantiateCurrentMove(newObj: Int): Move ={
+    currentB match{
+      case null => throw new Error("DynAndThen is not presently exploring something")
+      case s:SupportForAndThenChaining =>
+        CompositeMove(List(a.instantiateCurrentMove(Int.MaxValue),
+          s.instantiateCurrentMove(Int.MaxValue)),newObj,"DynAndThen(" + a + "," + currentB + ")")
+      case _ => throw new Error("DynAndThen: Neighborhood on the right cannot be chained")
+    }
+  }
+}
+
+case class DynAndThenWithPrev(x:Neighborhood with SupportForAndThenChaining,
+                              b:((Move,Solution) => Neighborhood),
+                              maximalIntermediaryDegradation:Int = Int.MaxValue,
+                              decisionVariablesToSave:Store => Iterable[Variable] = (s:Store) => s.decisionVariables()) extends NeighborhoodCombinator(x){
+
+  val instrumentedA = new SaveDecisionVarsOnEntry(x,decisionVariablesToSave) with SupportForAndThenChaining{
+    override def instantiateCurrentMove(newObj: Int): Move = x.instantiateCurrentMove(newObj)
+  }
+
+  val slave = DynAndThen(instrumentedA,
+    (m:Move) => b(m,instrumentedA.savedSolution),
+    maximalIntermediaryDegradation)
+
+  override def getMove(obj: Objective, acceptanceCriterion: (Int, Int) => Boolean): SearchResult = slave.getMove(obj,acceptanceCriterion)
+}
+
+case class SaveDecisionVarsOnEntry(a: Neighborhood, decisionVariablesToSave:Store => Iterable[Variable] = (s:Store) => s.decisionVariables())
+  extends NeighborhoodCombinator(a){
+
+  var savedSolution:Solution = null
+
+  override def getMove(obj: Objective, acceptanceCriterion: (Int, Int) => Boolean = (oldObj, newObj) => oldObj > newObj): SearchResult = {
+    val s = obj.model
+    savedSolution = s.saveValues(decisionVariablesToSave(s))
+    a.getMove(obj,acceptanceCriterion)
+  }
+}
+
 
 /**
  * bounds the number of tolerated moves without improvements over the best value
@@ -1135,11 +1250,12 @@ case class Statistics(a:Neighborhood,ignoreInitialObj:Boolean = false) extends N
   var totalGain = 0
   var totalTimeSpent: Long = 0
 
-  def resetStatistics(){
+  override def resetStatistics(){
     nbCalls = 0
     nbFound = 0
     totalGain = 0
     totalTimeSpent = 0
+    super.resetStatistics()
   }
 
   /**
@@ -1174,13 +1290,13 @@ case class Statistics(a:Neighborhood,ignoreInitialObj:Boolean = false) extends N
   def slope:String = if(totalTimeSpent == 0) "NA" else ("" + "%.3f".format(totalGain / totalTimeSpent.toDouble))
 
   override def collectStatistics: List[String] =
-    (padToLength("" + a,31) +
-      padToLength("" + nbCalls,6) +
-      padToLength("" + nbFound,6) +
-      padToLength("" + totalGain,8) +
-      padToLength("" + totalTimeSpent,12) +
-      padToLength("" + gainPerCall,8) +
-      padToLength("" + callDuration,12)+
+    (padToLength("" + a,31) + " " +
+      padToLength("" + nbCalls,6) + " " +
+      padToLength("" + nbFound,6) + " " +
+      padToLength("" + totalGain,8) + " " +
+      padToLength("" + totalTimeSpent,12) + " " +
+      padToLength("" + gainPerCall,8) + " " +
+      padToLength("" + callDuration,12)+ " " +
       slope) ::  super.collectStatistics
 
   private def padToLength(s: String, l: Int) = (s + nStrings(l, " ")).substring(0, l)
@@ -1194,6 +1310,6 @@ case class Statistics(a:Neighborhood,ignoreInitialObj:Boolean = false) extends N
 object Statistics{
   private def padToLength(s: String, l: Int) = (s + nStrings(l, " ")).substring(0, l)
   private def nStrings(n: Int, s: String): String = if (n <= 0) "" else s + nStrings(n - 1, s)
-  def statisticsHeader = padToLength("Neighborhood",30) + " calls found sumGain sumTime(ms) avgGain avgTime(ms) -slope(-Dobj/ms)"
+  def statisticsHeader = padToLength("Neighborhood",30) + "  calls  found  sumGain  sumTime(ms)  avgGain  avgTime(ms)  -slope(-Dobj/ms)"
 }
 
