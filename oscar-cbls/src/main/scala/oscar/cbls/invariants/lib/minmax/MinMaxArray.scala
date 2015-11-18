@@ -421,7 +421,7 @@ abstract class MiaxConstArray(vars: Array[Int], cond: SetValue, default: Int)
  * update is O(log(n)), but probably faster if you do neighborhood exploration with moves and backtracks
  * @author renaud.delandtsheer@cetic.be
  * */
-abstract class MiaxConstArrayLazy(vars: Array[Int], cond: SetValue, default: Int, maxBacklog:Int)
+abstract class MiaxConstArrayLazy(vars: Array[Int], cond: SetValue, default: Int, maxBacklog:Int = 100)
   extends IntInvariant{
 
   var nbAnihilation = 0
@@ -438,7 +438,20 @@ abstract class MiaxConstArrayLazy(vars: Array[Int], cond: SetValue, default: Int
   registerStaticAndDynamicDependency(cond)
   finishInitialization()
 
-  //TODO: restrict domain
+
+  def computeminMax():(Int,Int) = {
+    var myMin = Int.MaxValue
+    var myMax = Int.MinValue
+    for (i <- vars) {
+      if(i > myMax) myMax = i
+      if(i < myMin) myMin = i
+    }
+    if(default > myMax) myMax = default
+    if(default < myMin) myMin = default
+    (myMin,myMax)
+  }
+
+  restrictDomain(computeminMax())
 
   for (i <- cond.value) {
     h.insert(i)

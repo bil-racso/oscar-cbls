@@ -364,6 +364,8 @@ abstract class Neighborhood{
 
   def saveBest(o: Objective) = new SaveBest(this, o)
 
+  def saveBestAndRestoreOnExhaust(obj:Objective) = (new SaveBest(this,obj)) restoreBestOnExhaust
+
   /** retries the move before concluding to noMove can be found
     * @param cond condition that takes the number of consecutive NoMoveFound, and says if we should try again returns true if yes, false otherwise
     *             by default, we allow a single retry.
