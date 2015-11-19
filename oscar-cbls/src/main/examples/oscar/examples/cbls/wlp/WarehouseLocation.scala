@@ -31,7 +31,7 @@ object WarehouseLocation extends App with AlgebraTrait{
   val openWarehouses = Filter(warehouseOpenArray).setName("openWarehouses")
 
   val distanceToNearestOpenWarehouseLazy = Array.tabulate(D)(d =>
-    MinConstArray(distanceCost(d), openWarehouses, defaultCostForNoOpenWarehouse))
+    MinConstArrayLazy(distanceCost(d), openWarehouses, defaultCostForNoOpenWarehouse, W))
 
   val obj = Objective(Sum(distanceToNearestOpenWarehouseLazy) + Sum(costForOpeningWarehouse, openWarehouses))
 
