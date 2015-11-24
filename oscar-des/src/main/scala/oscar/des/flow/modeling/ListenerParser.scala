@@ -6,6 +6,8 @@ import oscar.des.flow.lib._
 import scala.collection.immutable.SortedMap
 import scala.util.parsing.combinator._
 
+import scala.language.implicitConversions
+
 abstract class QuickParseResult(val parseOK:Boolean)
 case class QuickParseError(s:String) extends QuickParseResult(false){
   override def toString: String = s
@@ -52,7 +54,17 @@ object ListenerParser{
 
     new ListenerParser(storagesMap, processMap)
   }
+
+  def processCostParser(process:ActivableProcess):ListenerParser = {
+    new ListenerParser(SortedMap.empty, SortedMap.empty[String,ActivableProcess]+(("this",process)))
+  }
+
+  def storageCostParser(storage:Storage):ListenerParser = {
+    new ListenerParser(SortedMap.empty[String,Storage]+(("this",storage)), SortedMap.empty)
+  }
 }
+
+
 /**
  * Created by rdl on 08-09-15.
  */

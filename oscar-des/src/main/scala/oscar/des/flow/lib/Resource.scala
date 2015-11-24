@@ -21,13 +21,24 @@ class CumulativeResource(size:Int,management:ResourceAllocationStrategy,usedBy:L
 }
 
 abstract class ResourceAllocationStrategy(m:Model){
+  /**
+   * the process call this to request the resoruce. the resorue grants itself by calling grant
+   * @param from the process requiring the resource
+   * @param amount the number of units required
+   * @param grant the method to call by the resource when it is granted to the requiring process
+   */
   def enqueueQuery(from:ActivableProcess,amount:Int,grant:()=>Unit)
+
+  /**
+   * the method that the process calls to release the resrouce once it has completed its task using it
+   * @param by the process that releases the resource
+   */
   def release(by:ActivableProcess)
 }
 
 class FirstComeFirstServeStrategy(m:Model,size:Int) extends ResourceAllocationStrategy(m){
   var remainingResources = size
-  var usedResources:SortedMap[String,(Int,Activable)] = SortedMap.empty
+  var usedResources:SortedMap[String,(Int,ActivableProcess)] = SortedMap.empty
   val waitingRequests:DoublyLinkedList[(ActivableProcess,Int,() => Unit)] = new DoublyLinkedList[(ActivableProcess,Int,() => Unit)]()
 
   override def enqueueQuery(from: ActivableProcess, amount: Int, grant: () => Unit){
@@ -49,7 +60,7 @@ class FirstComeFirstServeStrategy(m:Model,size:Int) extends ResourceAllocationSt
       if(head._2 <= remainingResources){
         remainingResources -= head._2
         waitingRequests.deleteFirst
-        usedResources += head._1.name -> (head._2,head._3)
+        usedResources += ((head._1.name, (head._2,head._1)))
         head._3()
         runIfPossible()
       }
@@ -57,6 +68,7 @@ class FirstComeFirstServeStrategy(m:Model,size:Int) extends ResourceAllocationSt
   }
 }
 
+/*
 class BatchRoundRobinStrategy(m:Model,sequence:List[(ActivableProcess,Int)], timeout:Double) extends ResourceAllocationStrategy(m){
   override def enqueueQuery(from: ActivableProcess, amount: ItemClass, grant: () => Unit): Unit = ???
 
@@ -72,3 +84,4 @@ class AbsolutePriorityStrategy(m:Model,priorities: List[(ActivableProcess,Int)])
 
 }
 
+*/
