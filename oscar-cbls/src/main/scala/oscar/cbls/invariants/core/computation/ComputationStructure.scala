@@ -318,7 +318,6 @@ trait VaryingDependencies extends Invariant with VaryingDependenciesPE{
 
 /**This is be base class for all invariants.
   * Invariants also register to the model, but they identify the model they are associated to by querying the variables they are monitoring.
-  *
   */
 trait Invariant extends PropagationElement{
 
@@ -429,20 +428,26 @@ trait Invariant extends PropagationElement{
   }
 
   //we are only notified for the variable we really want to listen (cfr. mGetReallyListenedElements, registerDynamicDependency, unregisterDynamicDependency)
+  @inline
   def notifyIntChangedAny(v: ChangingIntValue, i: Any, OldVal: Int, NewVal: Int) {notifyIntChanged(v, i.asInstanceOf[Int], OldVal, NewVal)}
 
+  @inline
   def notifyIntChanged(v: ChangingIntValue, i: Int, OldVal: Int, NewVal: Int) {notifyIntChanged(v, OldVal, NewVal)}
 
   def notifyIntChanged(v: ChangingIntValue, OldVal: Int, NewVal: Int) {}
 
+  @inline
   def notifyInsertOnAny(v: ChangingSetValue,i:Any,value:Int){notifyInsertOn(v,i.asInstanceOf[Int],value)}
 
+  @inline
   def notifyInsertOn(v: ChangingSetValue,i:Int,value:Int){notifyInsertOn(v,value)}
 
   def notifyInsertOn(v: ChangingSetValue,value:Int){}
 
+  @inline
   def notifyDeleteOnAny(v:ChangingSetValue,i:Any,value:Int){notifyDeleteOn(v,i.asInstanceOf[Int],value)}
 
+  @inline
   def notifyDeleteOn(v: ChangingSetValue,i:Int,value:Int){notifyDeleteOn(v,value)}
 
   def notifyDeleteOn(v: ChangingSetValue,value:Int){}

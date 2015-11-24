@@ -14,10 +14,10 @@ import scala.language.postfixOps
 object WarehouseLocationLazy extends App with AlgebraTrait{
 
   //the number of warehouses
-  val W:Int = 500
+  val W:Int = 1000
 
   //the number of delivery points
-  val D:Int = 150
+  val D:Int = 300
 
   println("WarehouseLocation(W:" + W + ", D:" + D + ")")
   //the cost per delivery point if no location is open
@@ -39,10 +39,9 @@ object WarehouseLocationLazy extends App with AlgebraTrait{
   val obj = Objective(Sum(distanceToNearestOpenWarehouse) + Sum(costForOpeningWarehouse, openWarehouses2))
 
   val distanceToNearestOpenWarehouseLazy = Array.tabulate(D)(d =>
-    MinConstArrayLazy(distanceCost(d), openWarehouses, defaultCostForNoOpenWarehouse,100))//.setName("distance_for_delivery_" + d))
+    MinConstArrayLazy(distanceCost(d), openWarehouses, defaultCostForNoOpenWarehouse))//.setName("distance_for_delivery_" + d))
 
   val objLazy = Objective(Sum(distanceToNearestOpenWarehouseLazy) + Sum(costForOpeningWarehouse, openWarehouses))
-
 
   m.close()
 
@@ -75,11 +74,11 @@ object WarehouseLocationLazy extends App with AlgebraTrait{
   println("non lazyStats:")
   println(nonLazyStats)
 
-  val nbAnihilation = distanceToNearestOpenWarehouseLazy.toList.map((a:MinConstArrayLazy) => a.nbAnihilation).sum
-  val nbDoIt = distanceToNearestOpenWarehouseLazy.toList.map((a:MinConstArrayLazy) => a.nbDoIt).sum
-  println("nbAnihilation : " + nbAnihilation)
-  println("nbDoIt: " + nbDoIt)
-  println("ratio:" + nbAnihilation.toDouble/(nbDoIt.toDouble + nbAnihilation.toDouble))
+//  val nbAnihilation = distanceToNearestOpenWarehouseLazy.toList.map((a:MinConstArrayLazy) => a.nbAnihilation).sum
+//  val nbDoIt = distanceToNearestOpenWarehouseLazy.toList.map((a:MinConstArrayLazy) => a.nbDoIt).sum
+//  println("nbAnihilation : " + nbAnihilation)
+//  println("nbDoIt: " + nbDoIt)
+//  println("ratio:" + nbAnihilation.toDouble/(nbDoIt.toDouble + nbAnihilation.toDouble))
   //  println("model stats:")
   //  println(m.stats)
 

@@ -14,10 +14,10 @@ import scala.language.postfixOps
 object WarehouseLocation extends App with AlgebraTrait{
 
   //the number of warehouses
-  val W:Int = 500
+  val W:Int = 1000
 
   //the number of delivery points
-  val D:Int = 150
+  val D:Int = 300
 
   println("WarehouseLocation(W:" + W + ", D:" + D + ")")
   //the cost per delivery point if no location is open
@@ -31,15 +31,15 @@ object WarehouseLocation extends App with AlgebraTrait{
   val openWarehouses = Filter(warehouseOpenArray).setName("openWarehouses")
 
   val distanceToNearestOpenWarehouseLazy = Array.tabulate(D)(d =>
-    MinConstArray(distanceCost(d), openWarehouses, defaultCostForNoOpenWarehouse))
+    MinConstArrayLazy(distanceCost(d), openWarehouses, defaultCostForNoOpenWarehouse))
 
   val obj = Objective(Sum(distanceToNearestOpenWarehouseLazy) + Sum(costForOpeningWarehouse, openWarehouses))
 
   m.close()
 
   val neighborhood = (AssignNeighborhood(warehouseOpenArray, "SwitchWarehouse")
-    random SwapsNeighborhood(warehouseOpenArray, "SwapWarehouses")
-    orElse (RandomizeNeighborhood(warehouseOpenArray, W/5) maxMoves 2)
+    exhaustBack SwapsNeighborhood(warehouseOpenArray, "SwapWarehouses")
+    orElse (RandomizeNeighborhood(warehouseOpenArray, W/10) maxMoves 2)
     saveBestAndRestoreOnExhaust obj)
 
   neighborhood.verbose = 1

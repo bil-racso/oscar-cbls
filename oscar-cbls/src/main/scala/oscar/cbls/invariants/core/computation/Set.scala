@@ -327,6 +327,11 @@ abstract class SetInvariant(initialValue:SortedSet[Int] = SortedSet.empty,
     performSetPropagation()
   }
 
+  //this seems to speeds up things, as it bypasses the method resolution of traits.
+  final override def notifyDeleteOnAny(v: ChangingSetValue, i: Any, value: Int): Unit = super.notifyDeleteOnAny(v, i, value)
+  //this seems to speeds up things, as it bypasses the method resolution of traits.
+  final override def notifyInsertOnAny(v: ChangingSetValue, i: Any, value: Int): Unit = super.notifyInsertOnAny(v, i, value)
+
   override def getDotNode:String = throw new Error("not implemented")
 }
 

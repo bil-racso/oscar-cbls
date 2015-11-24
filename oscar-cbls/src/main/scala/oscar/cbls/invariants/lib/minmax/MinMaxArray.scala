@@ -300,6 +300,7 @@ case class MaxConstArray(varss: Array[Int], ccond: SetValue, default: Int = Int.
   }
 }
 
+
 /**
  * Maintains Min(Var(i) | i in cond)
  * this is a variant that is lazy, and maintains a TODO-list of postponed updates.
@@ -314,7 +315,7 @@ case class MaxConstArray(varss: Array[Int], ccond: SetValue, default: Int = Int.
  * update is O(log(n)), faster (O(1) if you do updates and backtracks
  * @author renaud.delandtsheer@cetic.be
  * */
-case class MinConstArrayLazy(varss: Array[Int], ccond: SetValue, default: Int = Int.MaxValue, maxBackLogSize:Int = 10)
+case class MinConstArrayLazy(varss: Array[Int], ccond: SetValue, default: Int = Int.MaxValue, maxBackLogSize:Int = Int.MaxValue)
   extends MiaxConstArrayLazy(varss, ccond, default, maxBackLogSize) {
 
   override def Ord(v: Int): Int = v
@@ -326,6 +327,7 @@ case class MinConstArrayLazy(varss: Array[Int], ccond: SetValue, default: Int = 
     }
   }
 
+  @inline
   override def equalOrNotImpactingMiax(potentialMiax: Int): Boolean = this.getValue(true) <= potentialMiax
 }
 
@@ -347,6 +349,7 @@ case class MinConstArrayLazy(varss: Array[Int], ccond: SetValue, default: Int = 
 case class MaxConstArrayLazy(varss: Array[Int], ccond: SetValue, default: Int = Int.MaxValue, maxBackLogSize:Int = 10)
   extends MiaxConstArrayLazy(varss, ccond, default, maxBackLogSize) {
 
+  @inline
   override def Ord(v: Int): Int = -v
 
   override def checkInternals(c: Checker) {
@@ -356,6 +359,7 @@ case class MaxConstArrayLazy(varss: Array[Int], ccond: SetValue, default: Int = 
     }
   }
 
+  @inline
   override def equalOrNotImpactingMiax(potentialMiax: Int): Boolean = this.getValue(true) >= potentialMiax
 }
 
@@ -421,11 +425,11 @@ abstract class MiaxConstArray(vars: Array[Int], cond: SetValue, default: Int)
  * update is O(log(n)), but probably faster if you do neighborhood exploration with moves and backtracks
  * @author renaud.delandtsheer@cetic.be
  * */
-abstract class MiaxConstArrayLazy(vars: Array[Int], cond: SetValue, default: Int, maxBacklog:Int = 100)
+abstract class MiaxConstArrayLazy(vars: Array[Int], cond: SetValue, default: Int, maxBacklog:Int = Int.MaxValue)
   extends IntInvariant{
 
-  var nbAnihilation = 0
-  var nbDoIt = 0
+//  var nbAnihilation = 0
+//  var nbDoIt = 0
 
   val n = vars.length
   var h: BinomialHeapWithMoveExtMem[Int] = new BinomialHeapWithMoveExtMem[Int](i => Ord(vars(i)), vars.length, new ArrayMap(vars.length))
@@ -437,7 +441,6 @@ abstract class MiaxConstArrayLazy(vars: Array[Int], cond: SetValue, default: Int
 
   registerStaticAndDynamicDependency(cond)
   finishInitialization()
-
 
   def computeminMax():(Int,Int) = {
     var myMin = Int.MaxValue
@@ -476,6 +479,7 @@ abstract class MiaxConstArrayLazy(vars: Array[Int], cond: SetValue, default: Int
 
   updateFromHeap()
 
+  @inline
   def equalOrNotImpactingMiax(potentialMiax:Int):Boolean
 
   @inline
@@ -529,12 +533,12 @@ abstract class MiaxConstArrayLazy(vars: Array[Int], cond: SetValue, default: Int
       assert(!cond.value.contains(condValue))
       h.delete(condValue)
       consideredValue(condValue) = false
-      nbDoIt +=1
+//      nbDoIt +=1
     }else{ //should be added
       assert(cond.value.contains(condValue))
       h.insert(condValue)
       consideredValue(condValue) = true
-      nbDoIt +=1
+//      nbDoIt +=1
     }
     isBacklogged(condValue) = false
   }
@@ -557,7 +561,7 @@ abstract class MiaxConstArrayLazy(vars: Array[Int], cond: SetValue, default: Int
     if(consideredValue(value)){ //anihilation
       assert(isBacklogged(value))
       isBacklogged(value) = false
-      nbAnihilation += 2
+//      nbAnihilation += 2
       return
     }
     if(equalOrNotImpactingMiax(vars(value))){//backlog
@@ -566,7 +570,7 @@ abstract class MiaxConstArrayLazy(vars: Array[Int], cond: SetValue, default: Int
     }else{//impacted
       this := vars(value)
       h.insert(value)
-      nbDoIt +=1
+//      nbDoIt +=1
       consideredValue(value) = true
     }
   }
@@ -577,13 +581,13 @@ abstract class MiaxConstArrayLazy(vars: Array[Int], cond: SetValue, default: Int
     if(!consideredValue(value)){ //anihilation
       assert(isBacklogged(value))
       isBacklogged(value) = false
-      nbAnihilation += 2
+//      nbAnihilation += 2
       return
     }
     if(this.getValue(true) == vars(value)){//impacted, flush backLog
       processBackLog()
       h.delete(value)
-      nbDoIt +=1
+//      nbDoIt +=1
       consideredValue(value) = false
       updateFromHeap()
     }else{//not impacted, backlog
