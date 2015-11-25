@@ -618,16 +618,6 @@ trait AbstractVariable
     * @return a string similar to the toString method
     */
   def toStringNoPropagate:String
-
-  def getDotColor:String = {
-    if (getStaticallyListeningElements.isEmpty){
-      "blue"
-    }else if (getStaticallyListenedElements.isEmpty){
-      "green"
-    }else{
-      "black"
-    }
-  }
 }
 
 object AbstractVariable{

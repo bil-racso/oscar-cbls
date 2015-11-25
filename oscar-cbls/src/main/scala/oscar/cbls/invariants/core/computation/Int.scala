@@ -306,37 +306,6 @@ abstract class IntInvariant(initialValue:Int = 0, initialDomain:Domain = FullRan
   }
 
   override def getDotNode:String = throw new Error("not implemented")
-
-
-  //we are only notified for the variable we really want to listen (cfr. mGetReallyListenedElements, registerDynamicDependency, unregisterDynamicDependency)
-  @inline
-  override def notifyIntChangedAny(v: ChangingIntValue, i: Any, OldVal: Int, NewVal: Int) {notifyIntChanged(v, i.asInstanceOf[Int], OldVal, NewVal)}
-
-  @inline
-  override def notifyIntChanged(v: ChangingIntValue, i: Int, OldVal: Int, NewVal: Int) {notifyIntChanged(v, OldVal, NewVal)}
-
-  @inline
-  override def notifyIntChanged(v: ChangingIntValue, OldVal: Int, NewVal: Int) {}
-
-  //this seems to speeds up things, as it bypasses the method resolution of traits.
-  @inline
-  override def notifyDeleteOnAny(v: ChangingSetValue, i: Any, value: Int){notifyDeleteOn(v,i.asInstanceOf[Int],value)}
-
-  @inline
-  override def notifyDeleteOn(v: ChangingSetValue,i:Int,value:Int){notifyDeleteOn(v,value)}
-
-  @inline
-  override def notifyDeleteOn(v: ChangingSetValue,value:Int){}
-
-  //this seems to speeds up things, as it bypasses the method resolution of traits.
-  @inline
-  override def notifyInsertOnAny(v: ChangingSetValue, i: Any, value: Int){notifyInsertOn(v,i.asInstanceOf[Int],value)}
-
-  @inline
-  override def notifyInsertOn(v: ChangingSetValue,i:Int,value:Int){notifyInsertOn(v,value)}
-
-  @inline
-  override def notifyInsertOn(v: ChangingSetValue,value:Int){}
 }
 
 object IdentityInt{

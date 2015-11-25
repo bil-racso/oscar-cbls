@@ -1310,6 +1310,6 @@ case class Statistics(a:Neighborhood,ignoreInitialObj:Boolean = false) extends N
 object Statistics{
   private def padToLength(s: String, l: Int) = (s + nStrings(l, " ")).substring(0, l)
   private def nStrings(n: Int, s: String): String = if (n <= 0) "" else s + nStrings(n - 1, s)
-  def statisticsHeader = padToLength("Neighborhood",30) + "  calls  found  sumGain  sumTime(ms)  avgGain  avgTime(ms)  -slope(-Dobj/ms)"
+  def statisticsHeader = padToLength("Neighborhood",30) + "  calls  found  sumGain  sumTime(ms)  avgGain  avgTime(ms)  slope(-/ms)"
 }
 
