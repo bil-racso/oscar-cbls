@@ -7,7 +7,7 @@ import scala.language.implicitConversions
   */
 trait ListenersHelper{
 
-  def metricsStore(rootExpressions:List[(Expression,String)],verbosity:String=>Unit) =
+  def metricsStore(rootExpressions:List[(String, Expression)],verbosity:String=>Unit) =
     new MetricsStore(rootExpressions,verbosity)
 
   /**
@@ -304,5 +304,9 @@ trait ListenersHelper{
    * @param s a double expression
    */
   def avgOnHistory(s:DoubleExpr):DoubleExpr = Div(PonderateWithDuration(s),CurrentTime())
+
+  def boolSubExpression(name:String,expr:BoolExpr) = BoolSubExpression(name:String,expr:BoolExpr)
+
+  def doubleSubExpression(name:String,expr:DoubleExpr) = DoubleSubExpression(name:String,expr:DoubleExpr)
 }
 

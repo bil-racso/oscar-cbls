@@ -90,17 +90,17 @@ object FactoryExample extends App with FactorySimulationHelper {
       Array((()=>1,trashContainerStoragePlace))), choseZeroOne, "transportingOutputContainerFromForming", verbosity)
 
   val myStore = metricsStore(List(
-    (mult(completedBatchCount(dieCuttingPartA),totalPut(outputSlotOfDieCuttingPArtA)),"a stupid metric, to test the stuff"),
-    (cumulatedDuration(empty(rawMaterialStorage)),"duration of empty raw material storage"),
-    (cumulatedDuration(not(hasBeen(running(forming)))), "summed duration of forming being inactive at the start of the trace"),
-    (empty(rawMaterialStorage),"is raw material storage empty? (at the end of the trace)"),
-    (cumulatedDuration(not(running(forming))), "summed duration of forming being inactive"),
-    (culumatedDurationNotStart(not(running(forming))), "summed duration of forming being inactive, not counting initial"),
-    (maxOnHistory(stockLevel(rawMaterialStorage)),"max content of raw material storage"),
-    (minOnHistory(stockLevel(rawMaterialStorage)),"min content of raw material storage"),
-    (avgOnHistory(relativeStockLevel(rawMaterialStorage)), "avg relative stock level of raw material storage"),
-    (avgOnHistory(stockLevel(rawMaterialStorage)), "avg  stock level of raw material storage"),
-    (ponderateWithDuration(stockLevel(rawMaterialStorage)),"toto")
+    ("a stupid metric, to test the stuff",mult(completedBatchCount(dieCuttingPartA),totalPut(outputSlotOfDieCuttingPArtA))),
+    ("duration of empty raw material storage", cumulatedDuration(empty(rawMaterialStorage))),
+    ("summed duration of forming being inactive at the start of the trace", cumulatedDuration(not(hasBeen(running(forming))))),
+    ("is raw material storage empty? (at the end of the trace)",empty(rawMaterialStorage)),
+    ("summed duration of forming being inactive",cumulatedDuration(not(running(forming)))),
+    ("summed duration of forming being inactive, not counting initial",culumatedDurationNotStart(not(running(forming)))),
+    ("max content of raw material storage",maxOnHistory(stockLevel(rawMaterialStorage))),
+    ("min content of raw material storage",minOnHistory(stockLevel(rawMaterialStorage))),
+    ("avg relative stock level of raw material storage",avgOnHistory(relativeStockLevel(rawMaterialStorage))),
+    ("avg  stock level of raw material storage",avgOnHistory(stockLevel(rawMaterialStorage))),
+    ("toto",ponderateWithDuration(stockLevel(rawMaterialStorage)))
   ), verbosity)
 
   m.simulate(8*60*60, verbosity,()=>{myStore.updateMetricsIfNeeded(m.clock());false})

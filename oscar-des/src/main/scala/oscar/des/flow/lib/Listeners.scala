@@ -30,19 +30,19 @@ abstract class DoubleExpr(accumulating:Boolean, children:Expression*) extends Ex
   override def valueString: String = "" + value
 }
 
-class MetricsStore(rootExpressions:List[(Expression,String)],verbosity:String=>Unit){
+class MetricsStore(rootExpressions:List[(String, Expression)],verbosity:String=>Unit){
   var expressions:List[Expression] = List.empty
   var accumulatingExpressions:List[Expression] = List.empty
   var nonAccumulatingExpressions:List[Expression] = List.empty
   var isClosed = false
 
   for((e,s) <- rootExpressions){
-    addMetric(e)(s)
+    addMetric(s)(e)
   }
   close()
 
   override def toString: String = {
-    "MetricsStore{\n\t" + rootExpressions.map(es => es._2 + ":" + es._1.valueString).mkString("\n\t") + "\n}\n"
+    "MetricsStore{\n\t" + rootExpressions.map(es => es._1 + ":" + es._2.valueString).mkString("\n\t") + "\n}\n"
   }
 
   private def addMetric(e:Expression)(s:String = e.toString): Unit ={
@@ -452,6 +452,14 @@ case class EQ(a:DoubleExpr,b:DoubleExpr) extends BoolExpr(false,a,b){
   override def updatedValue(time:Double): Boolean = a.value == b.value
 }
 
+
+case class BoolSubExpression(name:String,expr:BoolExpr) extends BoolExpr(false,expr){
+  override def updatedValue(time: Double): Boolean = expr.value
+}
+
+case class DoubleSubExpression(name:String,expr:DoubleExpr) extends DoubleExpr(false,expr){
+  override def updatedValue(time: Double): Double = expr.value
+}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 //temporal on integers

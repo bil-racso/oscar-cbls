@@ -8,51 +8,34 @@ import scala.util.parsing.combinator._
 
 import scala.language.implicitConversions
 
-abstract class QuickParseResult(val parseOK:Boolean)
-case class QuickParseError(s:String) extends QuickParseResult(false){
-  override def toString: String = s
-}
-case object QuickParseOK extends QuickParseResult(true)
-
-/**
- * This is a wrapper over the parser that can evaluate whether an
- * expression is syntactly correct or not, given a set of storages and processes.
- *
- * @param storages
- * @param processes
- */
-class QuickParser(storages:Iterable[String],processes:Iterable[String]){
-  val m = new Model
-  val storagesMap = storages.foldLeft[SortedMap[String,Storage]](SortedMap.empty)(
-    (theMap,storageName) => theMap + ((storageName,new FIFOStorage(10,Nil,storageName,null,false))))
-  val processMap = processes.foldLeft[SortedMap[String,ActivableProcess]](SortedMap.empty)(
-    (theMap,processName) => theMap + ((processName,new SingleBatchProcess(m, () => 1.0 , Array(), Array(), null, processName, null))))
-
-  val myParser = new ListenerParser(storagesMap,processMap)
-
-  def checkSyntax(expression:String):QuickParseResult = {
-    myParser(expression) match{
-      case ParsingError(s) => QuickParseError(s)
-      case _ => QuickParseOK
-    }
-  }
-}
-
-sealed class ListenerParsingResult
-case class DoubleExpressionResult(d:DoubleExpr) extends ListenerParsingResult
-case class BooleanExpressionResult(b:BoolExpr) extends ListenerParsingResult
+sealed abstract class ListenerParsingResult
+sealed abstract class ParsingSuccess extends ListenerParsingResult
+case class DoubleExpressionResult(d:DoubleExpr) extends ParsingSuccess
+case class BooleanExpressionResult(b:BoolExpr) extends ParsingSuccess
 case class ParsingError(s:String) extends ListenerParsingResult {
   override def toString: String = "Parse Error:\n" + s + "\n"
 }
 
+sealed abstract class MultipleParsingResult
+case class MultipleParsingSuccess(expressions:List[(String,Expression)]) extends MultipleParsingResult{
+  override def toString: String = " MultipleParsingSuccess(\n\t" + expressions.mkString("\n\t") + ")"
+}
+case class MultipleParsingError(s:String) extends MultipleParsingResult
+
 object ListenerParser{
-  def apply(storages:Iterable[Storage],processes:Iterable[ActivableProcess]): ListenerParser ={
+
+  def apply(storages:Iterable[Storage],processes:Iterable[ActivableProcess]):ListenerParser = {
     val storagesMap = storages.foldLeft[SortedMap[String,Storage]](SortedMap.empty)(
       (theMap,storage) => theMap + ((storage.name,storage)))
     val processMap = processes.foldLeft[SortedMap[String,ActivableProcess]](SortedMap.empty)(
       (theMap,process) => theMap + ((process.name,process)))
-
     new ListenerParser(storagesMap, processMap)
+  }
+
+
+  def apply(storages:Iterable[Storage],processes:Iterable[ActivableProcess], expressions:List[(String,String)]): MultipleParsingResult ={
+    val myParser = ListenerParser(storages, processes)
+    myParser.parseAllListeners(expressions)
   }
 
   def processCostParser(process:ActivableProcess):ListenerParser = {
@@ -64,10 +47,6 @@ object ListenerParser{
   }
 }
 
-
-/**
- * Created by rdl on 08-09-15.
- */
 class ListenerParser(storages:Map[String,Storage],
                      processes:Map[String,ActivableProcess])
   extends ParserWithSymbolTable with ListenersHelper{
@@ -75,6 +54,24 @@ class ListenerParser(storages:Map[String,Storage],
   protected override val whiteSpace = """(\s|//.*|(?m)/\*(\*(?!/)|[^*])*\*/)+""".r
 
   override def skipWhitespace: Boolean = true
+
+  def parseAllListeners(expressions:List[(String,String)]):MultipleParsingResult = {
+    MultipleParsingSuccess(expressions.map({
+      case (name,expr) =>
+        this.apply(expr) match{
+          case BooleanExpressionResult(result) =>
+            declaredBoolExpr += ((name,result))
+            (name,result)
+          case DoubleExpressionResult(result) =>
+            declaredDoubleExpr += ((name,result))
+            (name,result)
+          case ParsingError(p) => return MultipleParsingError("Error while parsing " + name + "\n" + p)
+        }
+    }))
+  }
+
+  var declaredBoolExpr:SortedMap[String,BoolExpr] = SortedMap.empty
+  var declaredDoubleExpr:SortedMap[String,DoubleExpr] = SortedMap.empty
 
   def apply(input:String):ListenerParsingResult = {
     parseAll(expressionParser, input) match {
@@ -120,6 +117,7 @@ class ListenerParser(storages:Map[String,Storage],
       | processBoolProbe("anyBatchStarted",anyBatchStarted)
       | "true" ^^^ boolConst(true)
       | "false" ^^^ boolConst(false)
+      | boolListener
       | binaryOperatorBB2BParser("and",and)
       | binaryOperatorBB2BParser("or",or)
       | binaryOperatorBB2BParser("since",since)
@@ -164,6 +162,7 @@ class ListenerParser(storages:Map[String,Storage],
       | processDoubleProbe("startedBatchCount",startedBatchCount)
       | processDoubleProbe("totalWaitDuration",totalWaitDuration)
       | doubleParser ^^ {d:Double => doubleConst(d)}
+      | doubleListener
       | binaryOperatorDD2DParser("plus",plus)
       | binaryOperatorDD2DParser("minus",minus)
       | binaryOperatorDD2DParser("mult",mult)
@@ -188,6 +187,14 @@ class ListenerParser(storages:Map[String,Storage],
       | failure("expected arithmetic expression"))
 
   //generic code
+
+
+  def boolListener:Parser[BoolExpr] = {
+    identifier convertStringUsingSymbolTable(declaredBoolExpr, "delcared boolean expression") //^^ {boolSubExpression(_)}
+  }
+  def doubleListener:Parser[DoubleExpr] =
+    identifier convertStringUsingSymbolTable(declaredDoubleExpr, "declared double expression") //^^{doubleSubExpression(_)}
+
 
   //probes on storages
   def storageDoubleProbe(probeName:String,constructor:Storage=>DoubleExpr):Parser[DoubleExpr] =
@@ -273,6 +280,17 @@ object ParserTester extends App with FactoryHelper{
   testOn("avg(relativeStockLevel(bStorage))")
   testOn("avg(content(aStorage))")
   testOn("integral(content(bStorage))")
+
+
+  val expressionList = List(
+    ("a","completedBatchCount(aProcess) /*a comment in the middle*/ * totalPut(aStorage)"),
+    ("b","-(-(-completedBatchCount(aProcess)) * -totalPut(aStorage))"),
+    ("c","-(-(-completedBatchCount(aProcess)) + -totalPut(aStorage))"),
+    ("d","integral(content(bStorage))"),
+    ("e","b * c + d"))
+  println(myParser.parseAllListeners(expressionList))
+
+
 }
 
 trait ParserWithSymbolTable extends RegexParsers{

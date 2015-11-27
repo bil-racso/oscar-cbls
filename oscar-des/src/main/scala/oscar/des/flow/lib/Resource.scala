@@ -80,7 +80,7 @@ class TimeRoundRobinStrategy(m:Model,sequence:List[(ActivableProcess,Double)],ti
 }
 
 //equivalent priorities are handled as FIFO.
-class AbsolutePriorityStrategy(m:Model,priorities: List[(ActivableProcess,Int)]) extends ResourceAllocationStrategy(m){
+class StaticPriorityStrategy(m:Model,priorities: List[(ActivableProcess,Int)]) extends ResourceAllocationStrategy(m){
 
 }
 
