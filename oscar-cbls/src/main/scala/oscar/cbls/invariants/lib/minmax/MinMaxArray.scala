@@ -174,90 +174,6 @@ abstract class MiaxArray(vars: Array[IntValue], cond: SetValue, default: Int)
 
 
 
-/**
- * Maintains Miax(Var(i) | i in cond)
- * Exact ordering is specified by implementing abstract methods of the class.
- * @param vars is an array of IntVar, which can be bulked
- * @param cond is the condition, can be null
- * update is O(log(n))
- * @author renaud.delandtsheer@cetic.be
- * */
-abstract class MiaxArrayLazy(vars: Array[IntValue], cond: SetValue, default: Int)
-  extends IntInvariant with Bulked[IntValue, Domain] with VaryingDependencies {
-
-  var keyForRemoval: Array[KeyForElementRemoval] = new Array(vars.length)
-  var h: BinomialHeapWithMoveExtMem[Int] = new BinomialHeapWithMoveExtMem[Int](i => Ord(vars(i)), vars.length, new ArrayMap(vars.length))
-
-  if (cond != null) {
-    registerStaticDependency(cond)
-    registerDeterminingDependency(cond)
-  }
-
-  /**
-   * since the value of the bulkcomputationResult depends on the presence or absence of cond,
-   * we register two bcr, so that you can join the correct bulk whataver happens.
-   */
-  restrictDomain(bulkRegister(vars,if (cond == null) 0 else 1).union(default))
-
-  if (cond != null) {
-    for (i <- cond.value) {
-      h.insert(i)
-      keyForRemoval(i) = registerDynamicDependency(vars(i), i)
-    }
-  } else {
-    for (i <- vars.indices) {
-      h.insert(i)
-      keyForRemoval(i) = registerDynamicDependency(vars(i), i)
-    }
-  }
-
-  finishInitialization()
-
-  override def performBulkComputation(bulkedVar: Array[IntValue]) =
-    InvariantHelper.getMinMaxBounds(bulkedVar)
-
-  def ExtremumName: String
-  def Ord(v: IntValue): Int
-
-  if (h.isEmpty) {
-    this := default
-  } else {
-    this := vars(h.getFirst).value
-  }
-
-  @inline
-  override def notifyIntChanged(v: ChangingIntValue, index: Int, OldVal: Int, NewVal: Int) {
-    //mettre a jour le heap
-    h.notifyChange(index)
-    this := vars(h.getFirst).value
-  }
-
-  @inline
-  override def notifyInsertOn(v: ChangingSetValue, value: Int) {
-    assert(v == cond)
-    keyForRemoval(value) = registerDynamicDependency(vars(value), value)
-
-    //mettre a jour le heap
-    h.insert(value)
-    this := vars(h.getFirst).value
-  }
-
-  @inline
-  override def notifyDeleteOn(v: ChangingSetValue, value: Int) {
-    assert(v == cond)
-
-    keyForRemoval(value).performRemove()
-    keyForRemoval(value) = null
-
-    //mettre a jour le heap
-    h.delete(value)
-    if (h.isEmpty) {
-      this := default
-    } else {
-      this := vars(h.getFirst).value
-    }
-  }
-}
 
 /**
  * Maintains Min(Var(i) | i in cond)
@@ -271,11 +187,9 @@ case class MinConstArray(varss: Array[Int], ccond: SetValue, default: Int = Int.
 
   override def Ord(v: Int): Int = v
 
-  override def checkInternals(c: Checker) {
-    for (v <- this.varss) {
-      c.check(this.value <= v,
-        Some("this.value (" + this.value + ") <= " + v + ".value (" + v + ")"))
-    }
+  override def checkInternals(c: Checker): Unit = {
+    if(ccond.value.isEmpty) c.check(value == default)
+    else  c.check(value == ccond.value.minBy(varss(_)))
   }
 }
 
@@ -292,11 +206,9 @@ case class MaxConstArray(varss: Array[Int], ccond: SetValue, default: Int = Int.
 
   override def Ord(v: Int): Int = -v
 
-  override def checkInternals(c: Checker) {
-    for (v <- this.varss) {
-      c.check(this.value >= v,
-        Some("output.value (" + this.value + ") >= " + v + ".value (" + v + ")"))
-    }
+  override def checkInternals(c: Checker): Unit = {
+    if(ccond.value.isEmpty) c.check(value == default)
+    else  c.check(value == ccond.value.maxBy(varss(_)))
   }
 }
 
@@ -320,11 +232,9 @@ case class MinConstArrayLazy(varss: Array[Int], ccond: SetValue, default: Int = 
 
   override def Ord(v: Int): Int = v
 
-  override def checkInternals(c: Checker) {
-    for (v <- this.varss) {
-      c.check(this.value <= v,
-        Some("this.value (" + this.value + ") <= " + v + ".value (" + v + ")"))
-    }
+  override def checkInternals(c: Checker): Unit = {
+    if(ccond.value.isEmpty) c.check(value == default)
+    else  c.check(value == ccond.value.minBy(varss(_)))
   }
 
   @inline
@@ -352,11 +262,9 @@ case class MaxConstArrayLazy(varss: Array[Int], ccond: SetValue, default: Int = 
   @inline
   override def Ord(v: Int): Int = -v
 
-  override def checkInternals(c: Checker) {
-    for (v <- this.varss) {
-      c.check(this.value <= v,
-        Some("this.value (" + this.value + ") <= " + v + ".value (" + v + ")"))
-    }
+  override def checkInternals(c: Checker): Unit = {
+    if(ccond.value.isEmpty) c.check(value == default)
+    else  c.check(value == ccond.value.maxBy(varss(_)))
   }
 
   @inline
@@ -415,6 +323,11 @@ abstract class MiaxConstArray(vars: Array[Int], cond: SetValue, default: Int)
       this := vars(h.getFirst)
     }
   }
+
+  override def checkInternals(c: Checker): Unit = {
+    if(cond.value.isEmpty) c.check(value == default)
+    else  c.check(value == cond.value.maxBy(vars(_)))
+  }
 }
 
 /**
@@ -442,19 +355,17 @@ abstract class MiaxConstArrayLazy(vars: Array[Int], cond: SetValue, default: Int
   registerStaticAndDynamicDependency(cond)
   finishInitialization()
 
-  def computeminMax():(Int,Int) = {
-    var myMin = Int.MaxValue
-    var myMax = Int.MinValue
+  def computeMinMax():(Int,Int) = {
+    var myMin = default
+    var myMax = default
     for (i <- vars) {
       if(i > myMax) myMax = i
       if(i < myMin) myMin = i
     }
-    if(default > myMax) myMax = default
-    if(default < myMin) myMin = default
     (myMin,myMax)
   }
 
-  restrictDomain(computeminMax())
+  restrictDomain(computeMinMax())
 
   for (i <- cond.value) {
     h.insert(i)
@@ -543,6 +454,7 @@ abstract class MiaxConstArrayLazy(vars: Array[Int], cond: SetValue, default: Int
     isBacklogged(condValue) = false
   }
 
+
   @inline
   private[this] def processBackLog(): Unit ={
     while(backLog != null){
@@ -595,4 +507,6 @@ abstract class MiaxConstArrayLazy(vars: Array[Int], cond: SetValue, default: Int
       putIntoBackLog(value)
     }
   }
+
+
 }

@@ -99,7 +99,7 @@ case class MoveItem(p:BinPackingProblem,
     match{
       case (item, newBin) =>
         val objAfter = p.overallViolation.assignVal(item.bin, newBin.number)
-        if(acceptanceCriteria(oldViolation,objAfter)) AssignMove(item.bin,newBin.number,objAfter, "ItemMove")
+        if(acceptanceCriteria(oldViolation,objAfter)) AssignMove(item.bin,newBin.number,objAfter, item.number,"ItemMove")
         else{
           if (printPerformedSearches) println("ItemMove: no improvement found")
           NoMoveFound
@@ -244,7 +244,7 @@ case class EmptyMostViolatedBin(p:BinPackingProblem)
       bin1.items.value.toList.map(itemid => {
         val item = p.items(itemid)
         val newBin = selectFrom(binList, (bin:Bin) => bin.number != bin1.number)
-        AssignMove(item.bin,newBin.number,Int.MaxValue)
+        AssignMove(item.bin,newBin.number,item.number,Int.MaxValue)
       }), Int.MaxValue, "Jump, Emptying bin " + bin1.number
     )
   }

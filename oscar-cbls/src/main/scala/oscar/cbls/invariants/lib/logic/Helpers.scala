@@ -30,18 +30,35 @@ import oscar.cbls.invariants.core.propagation.Checker
   * @param a the parameter of the function
   * @param fun the function to maintain, it is supposed not to listen to any variable in the model
   * @param domain the expected domain of the output
+  * @param cached set to true to have a cache of size 1, zero to have no cache. cache can provide speedup if fun is time-consuming
   * @author renaud.delandtsheer@cetic.be
   * */
-class Int2Int(a:IntValue, fun:Int => Int, domain:Domain = FullRange) extends IntInvariant(fun(a.value),domain) {
+class Int2Int(a:IntValue, fun:Int => Int, domain:Domain = FullRange,cached:Boolean = false) extends IntInvariant(fun(a.value),domain) {
 
   registerStaticAndDynamicDependency(a)
   finishInitialization()
   this := fun(a.value)
 
+  var cachedIn:Int = a.value
+  var cachedOut:Int = this.getValue(true)
+
   @inline
   override def notifyIntChanged(v: ChangingIntValue, OldVal: Int, NewVal: Int) {
     assert(v == a)
-    this := fun(NewVal)
+    if(cached){
+      if(NewVal == cachedIn) {
+        val tmp = cachedOut
+        cachedIn = OldVal
+        cachedOut = this.getValue(true)
+        this := tmp
+      }else{
+        cachedIn = OldVal
+        cachedOut = this.getValue(true)
+        this := fun(NewVal)
+      }
+    }else{
+      this := fun(NewVal)
+    }
   }
 
   override def checkInternals(c:Checker){

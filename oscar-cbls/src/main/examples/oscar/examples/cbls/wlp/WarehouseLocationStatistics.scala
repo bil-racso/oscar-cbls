@@ -6,7 +6,7 @@ import oscar.cbls.invariants.lib.minmax.MinConstArray
 import oscar.cbls.invariants.lib.numeric.Sum
 import oscar.cbls.modeling.AlgebraTrait
 import oscar.cbls.objective.Objective
-import oscar.cbls.search.combinators.Statistics
+import oscar.cbls.search.combinators.Profile
 import oscar.cbls.search.{AssignNeighborhood, RandomizeNeighborhood, SwapsNeighborhood}
 
 import scala.language.postfixOps
@@ -37,13 +37,13 @@ object WarehouseLocationStatistics extends App with AlgebraTrait{
 
   m.close()
 
-  val neighborhood = (Statistics(AssignNeighborhood(warehouseOpenArray, "SwitchWarehouse"),true)
-    exhaustBack Statistics(SwapsNeighborhood(warehouseOpenArray, "SwapWarehouses"))
+  val neighborhood = (Profile(AssignNeighborhood(warehouseOpenArray, "SwitchWarehouse"),true)
+    exhaustBack Profile(SwapsNeighborhood(warehouseOpenArray, "SwapWarehouses"))
     orElse (RandomizeNeighborhood(warehouseOpenArray, W/5) maxMoves 2) saveBest obj restoreBestOnExhaust)
 
   neighborhood.verbose = 1
 
   neighborhood.doAllMoves(_>= W + D, obj)
 
-  println(neighborhood.statistics)
+  println(neighborhood.profilingStatistics)
 }

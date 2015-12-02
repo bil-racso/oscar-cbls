@@ -6,7 +6,7 @@ import oscar.cbls.invariants.lib.minmax.{MinConstArrayLazy, MinConstArray}
 import oscar.cbls.invariants.lib.numeric.Sum
 import oscar.cbls.modeling.AlgebraTrait
 import oscar.cbls.objective.Objective
-import oscar.cbls.search.combinators.{LearningRandom, BiasedRandom, Statistics}
+import oscar.cbls.search.combinators.{LearningRandom, BiasedRandom, Profile}
 import oscar.cbls.search.{Benchmark, AssignNeighborhood, RandomizeNeighborhood, SwapsNeighborhood}
 
 import scala.language.postfixOps
@@ -45,9 +45,9 @@ object WarehouseLocationLazy extends App with AlgebraTrait{
 
   m.close()
 
-  val neighborhood = (Statistics(
-    Statistics(AssignNeighborhood(warehouseOpenArray, "SwitchWarehouse"))
-      step Statistics(SwapsNeighborhood(warehouseOpenArray, "SwapWarehouses"))))
+  val neighborhood = (Profile(
+    Profile(AssignNeighborhood(warehouseOpenArray, "SwitchWarehouse"))
+      step Profile(SwapsNeighborhood(warehouseOpenArray, "SwapWarehouses"))))
 
   neighborhood.verbose = 0
 
@@ -57,8 +57,8 @@ object WarehouseLocationLazy extends App with AlgebraTrait{
   neighborhood.doAllMoves(obj=obj)
   println(openWarehouses2)
 
-  println(neighborhood.statistics)
-  val nonLazyStats = neighborhood.statistics
+  println(neighborhood.profilingStatistics)
+  val nonLazyStats = neighborhood.profilingStatistics
 
   m.restoreSolution(startSolution)
   m.propagate()
@@ -69,7 +69,7 @@ object WarehouseLocationLazy extends App with AlgebraTrait{
   println(openWarehouses)
 
   println("lazyStats:")
-  println(neighborhood.statistics)
+  println(neighborhood.profilingStatistics)
 
   println("non lazyStats:")
   println(nonLazyStats)

@@ -230,8 +230,6 @@ abstract class ChangingSetValue(initialValue:SortedSet[Int], initialDomain:Domai
   protected def :+=(i:Int) {this.insertValue(i)}
   protected def :-=(i:Int) {this.deleteValue(i)}
 
-  def getDotNode = "[label = \"IntSetVar(" + name + ")\" shape = oval color = " + getDotColor + "]"
-
   override def checkInternals(c:Checker){
     assert(this.definingInvariant == null || OldValue.intersect(Value).size == Value.size,
       "internal error: " + "Value: " + Value + " OldValue: " + OldValue)

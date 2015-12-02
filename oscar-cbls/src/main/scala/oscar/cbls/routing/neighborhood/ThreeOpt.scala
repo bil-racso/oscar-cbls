@@ -47,7 +47,7 @@ case class ThreeOpt(potentialInsertionPoints:()=>Iterable[Int],
                     neighborhoodName:String = null,
                     best:Boolean = false,
                     hotRestart:Boolean = true,
-                    KKIterationScheme:Boolean = true) extends EasyRoutingNeighborhood(best,vrp,neighborhoodName) {
+                    KKIterationScheme:Boolean = true) extends EasyRoutingNeighborhood[ThreeOptMove](best,vrp,neighborhoodName) {
 
   val REVERSE = true // this is a constant used for readability
 
@@ -217,7 +217,7 @@ case class ThreeOpt(potentialInsertionPoints:()=>Iterable[Int],
   var insertionPoint:Int = 0
   var reverse3Opt:Boolean = false
 
-  override def instantiateCurrentMove(newObj: Int): Move =
+  override def instantiateCurrentMove(newObj: Int) =
     ThreeOptMove(beforeStart, segEndPoint, insertionPoint,
       reverse3Opt, newObj, this, neighborhoodNameToString)
 

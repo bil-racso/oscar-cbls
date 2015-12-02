@@ -44,11 +44,12 @@ case class AssignNeighborhood(vars:Array[CBLSIntVar],
                               symmetryClassOfValues:Option[Int => Int => Int] = None,
                               domain:(CBLSIntVar,Int) => Iterable[Int] = (v,i) => v.domain,
                               hotRestart:Boolean = true)
-  extends EasyNeighborhood(best,name) with AlgebraTrait{
+  extends EasyNeighborhood[AssignMove](best,name) with AlgebraTrait{
   //the indice to start with for the exploration
   var startIndice:Int = 0
 
   var currentVar:CBLSIntVar = null
+  var currentIndice:Int = 0
   var newVal:Int = 0
 
   override def exploreNeighborhood() {
@@ -69,7 +70,7 @@ case class AssignNeighborhood(vars:Array[CBLSIntVar],
     //iterating over the variables to consider
     val indicesIterator = iterationSchemeOnSymmetryFreeZone.iterator
     while(indicesIterator.hasNext){
-      val currentIndice = indicesIterator.next()
+      currentIndice = indicesIterator.next()
       currentVar = vars(currentIndice)
       //now we have the current variable
 
@@ -97,7 +98,7 @@ case class AssignNeighborhood(vars:Array[CBLSIntVar],
   }
 
   override def instantiateCurrentMove(newObj:Int) =
-    AssignMove(currentVar, newVal, newObj, name)
+    AssignMove(currentVar, newVal, currentIndice, newObj, name)
 
   //this resets the internal state of the Neighborhood
   override def reset(): Unit = {
@@ -146,7 +147,7 @@ case class SwapsNeighborhood(vars:Array[CBLSIntVar],
                              symmetryClassOfVariables1:Option[Int => Int] = None,
                              symmetryClassOfVariables2:Option[Int => Int] = None,
                              hotRestart:Boolean = true)
-  extends EasyNeighborhood(best,name) with AlgebraTrait{
+  extends EasyNeighborhood[SwapMove](best,name) with AlgebraTrait{
   //the indice to start with for the exploration
   var startIndice:Int = 0
   override def exploreNeighborhood() {
@@ -204,7 +205,7 @@ case class SwapsNeighborhood(vars:Array[CBLSIntVar],
   var firstVar:CBLSIntVar = null
   var secondVar:CBLSIntVar = null
 
-  override def instantiateCurrentMove(newObj: Int): Move = SwapMove(firstVar, secondVar, newObj, name)
+  override def instantiateCurrentMove(newObj: Int) = SwapMove(firstVar, secondVar, newObj, name)
 
   //this resets the internal state of the Neighborhood
   override def reset(): Unit = {
@@ -239,7 +240,8 @@ case class RandomizeNeighborhood(vars:Array[CBLSIntVar],
     if(searchZone != null && searchZone.value.size <= degree){
       //We move everything
       for(i <- searchZone.value){
-        toReturn = AssignMove(vars(i),selectFrom(vars(i).domain),Int.MaxValue) :: toReturn
+
+        toReturn = AssignMove(vars(i),selectFrom(vars(i).domain),i,Int.MaxValue) :: toReturn
       }
     }else{
       var touchedVars:Set[Int] = SortedSet.empty
@@ -247,7 +249,7 @@ case class RandomizeNeighborhood(vars:Array[CBLSIntVar],
         val i = selectFrom(vars.indices,(j:Int) => (searchZone == null || searchZone.value.contains(j)) && !touchedVars.contains(j))
         touchedVars = touchedVars + i
         val oldVal = vars(i).value
-        toReturn = AssignMove(vars(i),selectFrom(valuesToConsider(vars(i),i), (_:Int) != oldVal),Int.MaxValue) :: toReturn
+        toReturn = AssignMove(vars(i),selectFrom(valuesToConsider(vars(i),i),(_:Int) != oldVal),i,Int.MaxValue) :: toReturn
       }
     }
     if(printPerformedSearches) println(name + ": move found")
@@ -318,7 +320,7 @@ case class RollNeighborhood(vars:Array[CBLSIntVar],
                             maxShiftSize:Int=>Int, //the max size of the roll, given the ID of the first variable
                             best:Boolean = false,
                             hotRestart:Boolean = true)
-  extends EasyNeighborhood(best,name) with AlgebraTrait{
+  extends EasyNeighborhood[RollMove](best,name) with AlgebraTrait{
   //the indice to start with for the exploration
   var startIndice:Int = 0
   override def exploreNeighborhood(){
@@ -417,7 +419,7 @@ case class RollNeighborhood(vars:Array[CBLSIntVar],
     }
   }
 
-  override def instantiateCurrentMove(newObj: Int): Move =
+  override def instantiateCurrentMove(newObj: Int) =
     RollMove(currentRollCluster,rollOffset,newObj,name)
 
   //this resets the internal state of the Neighborhood

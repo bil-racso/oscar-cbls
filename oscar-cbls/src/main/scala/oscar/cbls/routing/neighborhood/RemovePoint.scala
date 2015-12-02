@@ -44,7 +44,7 @@ case class RemovePoint(predecessorsOfRoutedPointsToRemove:()=>Iterable[Int],
                        vrp: VRP,
                        neighborhoodName:String = null,
                        best:Boolean = false,
-                       hotRestart:Boolean = true) extends EasyRoutingNeighborhood(best,vrp, neighborhoodName) {
+                       hotRestart:Boolean = true) extends EasyRoutingNeighborhood[RemovePointMove](best,vrp, neighborhoodName) {
 
   //the indice to start with for the exploration
   var startIndice: Int = 0
@@ -78,7 +78,7 @@ case class RemovePoint(predecessorsOfRoutedPointsToRemove:()=>Iterable[Int],
     }
   }
 
-  override def instantiateCurrentMove(newObj: Int): Move =
+  override def instantiateCurrentMove(newObj: Int) =
     RemovePointMove(beforeRemovedPoint, newObj, this, neighborhoodNameToString)
 
   def encode(beforeRemovedPoint: Int) {

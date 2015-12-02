@@ -42,7 +42,7 @@ case class TwoOpt(predecesorOfFirstMovedPoint:()=>Iterable[Int],
                   vrp: VRP with PositionInRouteAndRouteNr,
                   neighborhoodName:String = null,
                   best:Boolean = false,
-                  hotRestart:Boolean = true) extends EasyRoutingNeighborhood(best,vrp,neighborhoodName) {
+                  hotRestart:Boolean = true) extends EasyRoutingNeighborhood[TwoOptMove](best,vrp,neighborhoodName) {
 
   //the indice to start with for the exploration
   var startIndice: Int = 0
@@ -88,7 +88,7 @@ case class TwoOpt(predecesorOfFirstMovedPoint:()=>Iterable[Int],
   var fstPred:Int = 0
   var sndPred:Int = 0
 
-  override def instantiateCurrentMove(newObj: Int): Move =
+  override def instantiateCurrentMove(newObj: Int) =
     TwoOptMove(fstPred, sndPred, newObj, this, neighborhoodNameToString)
 
   def encode(fstPred:Int, sndPred:Int) {
