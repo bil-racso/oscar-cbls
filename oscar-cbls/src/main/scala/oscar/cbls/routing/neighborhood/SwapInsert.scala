@@ -61,7 +61,7 @@ object SwapInsert {
             relevantNeighborsForInsertion: () => Int => Iterable[Int],
             predecessorsOfRoutedPointsToRemove: () => Iterable[Int],
             vrp: VRP with NodesOfVehicle,
-            neighborhoodName: String = SwapInsert,
+            neighborhoodName: String = "SwapInsert",
             best: Boolean = false,
             symmetryClassesOnInsert: Option[Int => Int] = None,
             hotRestartOnInsert: Boolean = true,
