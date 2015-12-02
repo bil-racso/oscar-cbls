@@ -792,7 +792,7 @@ object RoundRobinNoParam {
  *
  * @author renaud.delandtsheer@cetic.be
  */
-class AndThen(a: Neighborhood, b: Neighborhood, maximalIntermediaryDegradation: Int = Int.MaxValue)
+case class AndThen(a: Neighborhood, b: Neighborhood, maximalIntermediaryDegradation: Int = Int.MaxValue)
   extends NeighborhoodCombinator(a, b) {
 
   override def getMove(obj: Objective, acceptanceCriteria: (Int, Int) => Boolean): SearchResult = {

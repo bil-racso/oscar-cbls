@@ -52,6 +52,7 @@ object SwapInsert {
    * @param predecessorsOfRoutedPointsToRemove: the predecessors of the points that we will try to remove
    * @param hotRestartOnInsert set to true fo a hot restart for the insertion, with symmetry elimination if present
    * @param hotRestartOnRemove true if hotRestart is needed, false otherwise
+   * @param maximalIntermediaryDegradation the maximal degradation for the intermediary step. Typically set it to Int.MaxValue-1
    * @author yoann.guyot@cetic.be
    * @author rdl@cetic.be
    *
@@ -65,8 +66,9 @@ object SwapInsert {
             best: Boolean = false,
             symmetryClassesOnInsert: Option[Int => Int] = None,
             hotRestartOnInsert: Boolean = true,
-            hotRestartOnRemove: Boolean = true): Neighborhood = (
-    InsertPoint(unroutedNodesToInsert, relevantNeighborsForInsertion, vrp, "SwapInsert.Insert", best, hotRestartOnInsert, symmetryClassesOnInsert, hotRestartOnInsert)
-      andThen RemovePoint(predecessorsOfRoutedPointsToRemove, vrp, "SwapInsert.Remove", best, hotRestartOnRemove)
-      name (neighborhoodName))
+            hotRestartOnRemove: Boolean = true,
+            maximalIntermediaryDegradation:Int = Int.MaxValue): Neighborhood = (
+    AndThen(RemovePoint(predecessorsOfRoutedPointsToRemove, vrp, "SwapInsert.Remove", best, hotRestartOnRemove),
+      InsertPoint(unroutedNodesToInsert, relevantNeighborsForInsertion, vrp, "SwapInsert.Insert", best, hotRestartOnInsert, symmetryClassesOnInsert, hotRestartOnInsert),
+      maximalIntermediaryDegradation) name (neighborhoodName))
 }
