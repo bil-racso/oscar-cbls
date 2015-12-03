@@ -596,6 +596,9 @@ class MPSolver[I <: MPSolverInterface](val solverInterface: I) {
    */
   def release() = solverInterface.release()
 
+
+  /* LOGGING */
+
   /**
    * Saves the problem to the file at the given path in the given format.
    */
@@ -604,6 +607,11 @@ class MPSolver[I <: MPSolverInterface](val solverInterface: I) {
 
     solverInterface.exportModel(filepath, format)
   }
+
+  /**
+   * Sets the log output of the solver to the given [[LogOutput]]
+   */
+  def setLogOutput(logOutput: LogOutput): Unit = solverInterface.setLogOutput(logOutput)
 
 
   /* INFEASIBILITY ANALYSIS */

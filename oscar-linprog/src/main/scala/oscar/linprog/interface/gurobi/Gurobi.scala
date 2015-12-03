@@ -157,15 +157,6 @@ class Gurobi(_env: Option[GRBEnv] = None) extends MPSolverInterface with MIPSolv
 
   def updateModel() = rawSolver.update()
 
-  // Gurobi's export file handling is a little different. The format is defined by the fileName
-  // passed to model.write for the LP format it's .lp and for MPS it's .mps
-  def exportModel(filepath: Path, format: ModelExportFormat): Unit =
-    format match {
-      case MPS => rawSolver.write(filepath + ".mps")
-      case LP => rawSolver.write(filepath + ".lp")
-      case _ => println(s"Unrecognised export format $format")
-    }
-
   def endStatus: EndStatus =
     rawSolver.get(GRB.IntAttr.Status) match {
       case GRB.OPTIMAL => SolutionFound
@@ -220,7 +211,7 @@ class Gurobi(_env: Option[GRBEnv] = None) extends MPSolverInterface with MIPSolv
 
   def abort(): Unit = aborted = true
 
-  var _released = false
+  private var _released = false
 
   def release(): Unit = {
     _released = true
@@ -231,10 +222,45 @@ class Gurobi(_env: Option[GRBEnv] = None) extends MPSolverInterface with MIPSolv
       env.release()
       env.dispose()
     }
+    _logOutput.close
   }
 
   def released: Boolean = _released
 
+
+  /* LOGGING */
+
+  // Gurobi's export file handling is a little different. The format is defined by the fileName
+  // passed to model.write for the LP format it's .lp and for MPS it's .mps
+  def exportModel(filepath: Path, format: ModelExportFormat): Unit =
+    format match {
+      case MPS => rawSolver.write(filepath + ".mps")
+      case LP => rawSolver.write(filepath + ".lp")
+      case _ => println(s"Unrecognised export format $format")
+    }
+
+  private var _logOutput: LogOutput = LogOutput.standard
+
+  def setLogOutput(logOutput: LogOutput): Unit = {
+    _logOutput.close
+    _logOutput = logOutput
+
+    logOutput match {
+      case o: DisabledLogOutput =>
+        env.set(GRB.IntParam.OutputFlag, 0)
+        env.set(GRB.IntParam.LogToConsole, 0)
+        env.set(GRB.StringParam.LogFile, "")
+      case StandardLogOutput =>
+        env.set(GRB.IntParam.OutputFlag, 1)
+        env.set(GRB.IntParam.LogToConsole, 1)
+        env.set(GRB.StringParam.LogFile, "")
+      case f: FileLogOutput =>
+        env.set(GRB.IntParam.OutputFlag, 1)
+        env.set(GRB.IntParam.LogToConsole, 0)
+        env.set(GRB.StringParam.LogFile, f.path.toString)
+      case _ => println(s"Unrecognised log output $logOutput")
+    }
+  }
 
   /* CONFIGURATION */
 

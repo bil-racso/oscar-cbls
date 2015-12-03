@@ -203,13 +203,6 @@ class LPSolve extends MPSolverInterface with MIPSolverInterface {
       s"$solverName: the number of constraints contained by the raw solver does not correspond to the number of constraints added.")
   }
 
-  def exportModel(filepath: Path, format: ModelExportFormat): Unit =
-    format match {
-      case LP => rawSolver.writeLp(filepath.toString) // Note: this is lp_solve's own lp format which is different from CPLEX's one.
-      case MPS => rawSolver.writeFreeMps(filepath.toString)
-      case _ => println(s"Unrecognised export format $format")
-    }
-
   private var _endStatus: Option[EndStatus] = None
 
   def endStatus: EndStatus = _endStatus match {
@@ -265,14 +258,43 @@ class LPSolve extends MPSolverInterface with MIPSolverInterface {
 
   def abort(): Unit = aborted = true
 
-  var _released = false
+  private var _released = false
 
   def release(): Unit = {
     _released = true
     rawSolver.deleteLp()
+    _logOutput.close
   }
 
   def released: Boolean = _released
+
+
+  /* LOGGING */
+
+  def exportModel(filepath: Path, format: ModelExportFormat): Unit =
+    format match {
+      case LP => rawSolver.writeLp(filepath.toString) // Note: this is lp_solve's own lp format which is different from CPLEX's one.
+      case MPS => rawSolver.writeFreeMps(filepath.toString)
+      case _ => println(s"Unrecognised export format $format")
+    }
+
+  private var _logOutput: LogOutput = LogOutput.standard
+
+  def setLogOutput(logOutput: LogOutput): Unit = {
+    _logOutput.close
+    _logOutput = logOutput
+
+    logOutput match {
+      case o: DisabledLogOutput =>
+        // It is not possible to fully disable the log output of lp_solve.
+        // Therefore, verbosity is set to the minimum.
+        println("Warning: not possible to disable the logging of lp_solve. Verbosity is set to the minimum.")
+        rawSolver.setVerbose(0)
+      case StandardLogOutput => rawSolver.setOutputfile("")
+      case f: FileLogOutput => rawSolver.setOutputfile(f.path.toString)
+      case _ => println(s"Unrecognised log output $logOutput")
+    }
+  }
 
 
   /* CONFIGURATION */
