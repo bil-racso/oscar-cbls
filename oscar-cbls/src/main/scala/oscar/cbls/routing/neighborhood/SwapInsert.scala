@@ -25,11 +25,8 @@
 package oscar.cbls.routing.neighborhood
 
 import oscar.cbls.routing.model._
-import oscar.cbls.search.combinators.AndThen
+import oscar.cbls.search.combinators.{DynAndThen, AndThen}
 import oscar.cbls.search.core.Neighborhood
-import oscar.cbls.search.move.Move
-
-import scala.collection.immutable.SortedSet
 
 object SwapInsert {
 
@@ -44,13 +41,13 @@ object SwapInsert {
    * @param vrp the routing problem
    * @param neighborhoodName the name of this neighborhood
    * @param best should we search for the best move or the first move?
-
    * @param symmetryClassesOnInsert a function that input the ID of an unrouted node and returns a symmetry class;
    *                                ony one of the unrouted node in each class will be considered for insert
    *                                Int.MinValue is considered different to itself
    *                                if you set to None this will not be used at all
-   * @param predecessorsOfRoutedPointsToRemove: the predecessors of the points that we will try to remove
-   * @param hotRestartOnInsert set to true fo a hot restart for the insertion, with symmetry elimination if present
+   *                                , inactive if samePlace
+   * @param predecessorsOfRoutedPointsToRemove: the predecessors of the points that we will try to remove, inactive if samePlace
+   * @param hotRestartOnInsert set to true fo a hot restart for the insertion, with symmetry elimination if present, inactive if samePlace
    * @param hotRestartOnRemove true if hotRestart is needed, false otherwise
    * @param maximalIntermediaryDegradation the maximal degradation for the intermediary step. Typically set it to Int.MaxValue-1
    * @author yoann.guyot@cetic.be
@@ -61,14 +58,22 @@ object SwapInsert {
   def apply(unroutedNodesToInsert: () => Iterable[Int],
             relevantNeighborsForInsertion: () => Int => Iterable[Int],
             predecessorsOfRoutedPointsToRemove: () => Iterable[Int],
-            vrp: VRP with NodesOfVehicle,
+            vrp: VRP,
             neighborhoodName: String = "SwapInsert",
             best: Boolean = false,
             symmetryClassesOnInsert: Option[Int => Int] = None,
             hotRestartOnInsert: Boolean = true,
             hotRestartOnRemove: Boolean = true,
-            maximalIntermediaryDegradation:Int = Int.MaxValue): Neighborhood = (
-    AndThen(RemovePoint(predecessorsOfRoutedPointsToRemove, vrp, "SwapInsert.Remove", best, hotRestartOnRemove),
-      InsertPoint(unroutedNodesToInsert, relevantNeighborsForInsertion, vrp, "SwapInsert.Insert", best, hotRestartOnInsert, symmetryClassesOnInsert, hotRestartOnInsert),
-      maximalIntermediaryDegradation) name (neighborhoodName))
+            maximalIntermediaryDegradation:Int = Int.MaxValue,
+            samePlace:Boolean): Neighborhood = {
+    if(samePlace){
+      DynAndThen(RemovePoint(predecessorsOfRoutedPointsToRemove, vrp, "SwapInsert.Remove", best, hotRestartOnRemove),
+        ((r:RemovePointMove) => InsertPoint(unroutedNodesToInsert, () => _ => List(r.beforeRemovedPoint), vrp, "SwapInsert.Insert", best, false, None, false)),
+        maximalIntermediaryDegradation) name (neighborhoodName)
+    }else{
+      AndThen(RemovePoint(predecessorsOfRoutedPointsToRemove, vrp, "SwapInsert.Remove", best, hotRestartOnRemove),
+        InsertPoint(unroutedNodesToInsert, relevantNeighborsForInsertion, vrp, "SwapInsert.Insert", best, hotRestartOnInsert, symmetryClassesOnInsert, hotRestartOnInsert),
+        maximalIntermediaryDegradation) name (neighborhoodName)
+    }
+  }
 }

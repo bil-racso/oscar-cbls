@@ -119,13 +119,22 @@ class VRP(val N: Int, val V: Int, val m: Store) {
    * @return the route of a vehicle as a String.
    */
   def routeToString(vehicle: Int): String = {
-    var toReturn = "Vehicle " + vehicle + ": " + vehicle
+    "Vehicle " + vehicle + ": " + getRouteOfVehicle(vehicle).mkString("->")
+  }
+
+  /**
+   * the route of the vehicle, starting at the vehicle node, and not including the last vehicle node
+   * @param vehicle
+   * @return
+   */
+  def getRouteOfVehicle(vehicle:Int):List[Int] = {
     var current = next(vehicle).value
+    var acc:List[Int] = List(vehicle)
     while (current != vehicle) {
-      toReturn += " -> " + current
-      current = next(current).getValue(true)
+      acc = current :: acc
+      current = next(current).getValue(true) //to avoid unnecessary propagation
     }
-    toReturn
+    acc.reverse
   }
 
   /**

@@ -27,7 +27,7 @@
 package oscar.cbls.routing.neighborhood
 
 import oscar.cbls.routing.model._
-import oscar.cbls.search.algo.HotRestart
+import oscar.cbls.search.algo.{Pairs, HotRestart}
 import oscar.cbls.search.move.Move
 
 /**
@@ -44,7 +44,7 @@ import oscar.cbls.search.move.Move
 case class ThreeOpt(potentialInsertionPoints:()=>Iterable[Int],
                     relevantNeighbors:()=>Int=>Iterable[Int],
                     vrp: VRP with PositionInRouteAndRouteNr,
-                    neighborhoodName:String = null,
+                    neighborhoodName:String = "ThreeOpt",
                     best:Boolean = false,
                     hotRestart:Boolean = true,
                     KKIterationScheme:Boolean = true) extends EasyRoutingNeighborhood[ThreeOptMove](best,vrp,neighborhoodName) {
@@ -83,7 +83,7 @@ case class ThreeOpt(potentialInsertionPoints:()=>Iterable[Int],
         .map(_._2.toList)
 
       for(nodeList <- otherNodes){
-        for((a,b) <- makeAllUnsortedPairs(nodeList)){
+        for((a,b) <- Pairs.makeAllUnsortedPairs(nodeList)){
           val (first,second) = if(vrp.positionInRoute(a).value < vrp.positionInRoute(b).value) (a,b) else (b,a)
 
           if(!vrp.isBetween(insertionPoint, first, second)
@@ -98,24 +98,6 @@ case class ThreeOpt(potentialInsertionPoints:()=>Iterable[Int],
           }
         }
       }
-    }
-  }
-
-  /**
-   * @param l a list
-   * @return a list of all pairs of element made from the elements in l
-   */
-  private def makeAllUnsortedPairs(l:List[Int]):List[(Int,Int)] = {
-    def makeAllUnsortedPairsWithHead(head:Int, tail:List[Int], toAppend:List[(Int,Int)]):List[(Int,Int)] = {
-      tail match{
-        case other :: newTail => makeAllUnsortedPairsWithHead(head, newTail, (head,other) :: toAppend)
-        case Nil => toAppend
-      }
-    }
-
-    l match{
-      case Nil => List.empty
-      case head :: tail => makeAllUnsortedPairsWithHead(head,tail,makeAllUnsortedPairs(tail))
     }
   }
 

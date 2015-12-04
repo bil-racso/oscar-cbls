@@ -128,7 +128,7 @@ class SaveBest(a: Neighborhood, o: Objective) extends BasicSaveBest(a: Neighborh
    * @param shouldSave
    * @return
    */
-  override def when(shouldSave: () => Boolean) = new SaveBestWhen(a, o, shouldSave)
+  def saveWhen(shouldSave: () => Boolean) = new SaveBestWhen(a, o, shouldSave)
 }
 
 class SaveBestWhen(a: Neighborhood, o: Objective, shouldSave: () => Boolean) extends BasicSaveBest(a, o) {
@@ -564,18 +564,6 @@ class ExhaustAndContinueIfMovesFound(a: Neighborhood, b: Neighborhood) extends N
 }
 
 /**
- * this combinator is stateless, it checks the condition on every invocation. If the condition is false,
- * it does not try the Neighborhood and finds no move.
- * @author renaud.delandtsheer@cetic.be
- */
-class Conditional(c: () => Boolean, b: Neighborhood) extends NeighborhoodCombinator(b) {
-  override def getMove(obj: Objective, acceptanceCriteria: (Int, Int) => Boolean): SearchResult = {
-    if (c()) b.getMove(obj, acceptanceCriteria)
-    else NoMoveFound
-  }
-}
-
-/**
  * this combinator bounds the number of time the search is actually performed
  * @author renaud.delandtsheer@cetic.be
  */
@@ -677,7 +665,7 @@ class MaxMoves(a: Neighborhood, val maxMove: Int, cond: Move => Boolean = null) 
  * @param cond a stop criterion
  * @author renaud.delandtsheer@cetic.be
  */
-class StopWhen(a: Neighborhood, cond: () => Boolean) extends NeighborhoodCombinator(a) {
+case class StopWhen(a: Neighborhood, cond: () => Boolean) extends NeighborhoodCombinator(a) {
   var isStopped: Boolean = false
   override def getMove(obj: Objective, acceptanceCriterion: (Int, Int) => Boolean): SearchResult = {
     if (isStopped || cond()) { isStopped = true; NoMoveFound }
@@ -688,6 +676,18 @@ class StopWhen(a: Neighborhood, cond: () => Boolean) extends NeighborhoodCombina
   override def reset() {
     isStopped = false
     super.reset()
+  }
+}
+
+/**
+ * this combinator is stateless, it checks the condition on every invocation. If the condition is false,
+ * it does not try the Neighborhood and finds no move.
+ * @author renaud.delandtsheer@cetic.be
+ */
+case class Guard(cond: () => Boolean, b: Neighborhood) extends NeighborhoodCombinator(b) {
+  override def getMove(obj: Objective, acceptanceCriteria: (Int, Int) => Boolean): SearchResult = {
+    if (cond()) b.getMove(obj, acceptanceCriteria)
+    else NoMoveFound
   }
 }
 

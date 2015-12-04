@@ -267,12 +267,6 @@ abstract class Neighborhood{
     */
   def exhaustAndContinueIfMovesFound(b:Neighborhood) = new ExhaustAndContinueIfMovesFound(this, b)
 
-  /**this combinator is stateless, it checks the condition on every invocation. If the condition is false,
-    * it does not try the Neighborhood and finds no move.
-    * @author renaud.delandtsheer@cetic.be
-    */
-  def when(c:()=>Boolean):Neighborhood = new Conditional(c, this)
-
   /**this one bounds the number of time the search is actually performed
     * notice that the count is reset by the reset operation
     * @author renaud.delandtsheer@cetic.be
@@ -290,6 +284,14 @@ abstract class Neighborhood{
    * @param cond a stop criterion
    */
   def stopWhen(cond:()=> Boolean) = new StopWhen(this,cond)
+
+  /**
+   * to guard the neighborhood by some condition. the neighborhod will only be explored if the condition is true.
+   * if it is false,it returns NoMovesFound without exploring the neighborhood at all.
+   * @param cond
+   * @return
+   */
+  def guard(cond:()=>Boolean) = Guard(cond,this)
 
   /** this is an alias for maxMoves 1
     * @return
