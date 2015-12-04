@@ -211,10 +211,9 @@ class Gurobi(_env: Option[GRBEnv] = None) extends MPSolverInterface with MIPSolv
 
   def abort(): Unit = aborted = true
 
-  private var _released = false
+  override def release(): Unit = {
+    super.release()
 
-  def release(): Unit = {
-    _released = true
     rawSolver.dispose()
     // If the environment was self-made, release it also.
     // Otherwise, it is the responsibility of the user to release it.
@@ -222,10 +221,7 @@ class Gurobi(_env: Option[GRBEnv] = None) extends MPSolverInterface with MIPSolv
       env.release()
       env.dispose()
     }
-    _logOutput.close
   }
-
-  def released: Boolean = _released
 
 
   /* LOGGING */
@@ -239,11 +235,8 @@ class Gurobi(_env: Option[GRBEnv] = None) extends MPSolverInterface with MIPSolv
       case _ => println(s"Unrecognised export format $format")
     }
 
-  private var _logOutput: LogOutput = LogOutput.standard
-
-  def setLogOutput(logOutput: LogOutput): Unit = {
-    _logOutput.close
-    _logOutput = logOutput
+  override def setLogOutput(logOutput: LogOutput): Unit = {
+    super.setLogOutput(logOutput)
 
     logOutput match {
       case o: DisabledLogOutput =>

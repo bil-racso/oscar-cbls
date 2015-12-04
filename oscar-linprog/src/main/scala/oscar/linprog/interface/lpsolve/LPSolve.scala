@@ -258,15 +258,11 @@ class LPSolve extends MPSolverInterface with MIPSolverInterface {
 
   def abort(): Unit = aborted = true
 
-  private var _released = false
+  override def release(): Unit = {
+    super.release()
 
-  def release(): Unit = {
-    _released = true
     rawSolver.deleteLp()
-    _logOutput.close
   }
-
-  def released: Boolean = _released
 
 
   /* LOGGING */
@@ -278,11 +274,8 @@ class LPSolve extends MPSolverInterface with MIPSolverInterface {
       case _ => println(s"Unrecognised export format $format")
     }
 
-  private var _logOutput: LogOutput = LogOutput.standard
-
-  def setLogOutput(logOutput: LogOutput): Unit = {
-    _logOutput.close
-    _logOutput = logOutput
+  override def setLogOutput(logOutput: LogOutput): Unit = {
+    super.setLogOutput(logOutput)
 
     logOutput match {
       case o: DisabledLogOutput =>

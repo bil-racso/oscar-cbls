@@ -12,15 +12,21 @@ sealed abstract class LogOutput(val stream: java.io.OutputStream) {
   def close(): Unit
 }
 
-// A [[java.io.OutputStream]] writing to nowhere
+/**
+ * A [[java.io.OutputStream]] writing to nowhere
+ */
 class NullOutputStream extends java.io.OutputStream {
   def write(b: Int) = ()
-
-  override def toString = "log disabled"
 }
 
+/**
+ * Basically wraps a [[NullOutputStream]]
+ * so that the log is not written.
+ */
 class DisabledLogOutput extends LogOutput(new NullOutputStream) {
   def close() = stream.close()
+
+  override def toString = "disabled"
 }
 
 /**
@@ -34,6 +40,7 @@ case object StandardLogOutput extends LogOutput(System.out) {
 
 /**
  * Basically wraps the [[java.io.File]] pointed by the given [[java.nio.file.Path]]
+ * so that the log is written to this file.
  */
 case class FileLogOutput(path: java.nio.file.Path) extends LogOutput(new FileOutputStream(path.toFile)) {
   val file = path.toFile

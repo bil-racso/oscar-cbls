@@ -236,15 +236,20 @@ abstract class MPSolverInterface {
    */
   def abort(): Unit
 
+  protected var _released = false
+
   /**
    * Releases the memory of this solver.
    */
-  def release(): Unit
+  def release(): Unit = {
+    _released = true
+    _logOutput.close
+  }
 
   /**
    * Returns true if the solver has been released.
    */
-  def released: Boolean
+  def released: Boolean = _released
 
   /**
    * Saves the problem to the file at the given path in the given format.
@@ -253,10 +258,15 @@ abstract class MPSolverInterface {
 
   // TODO exportSolution
 
+  protected var _logOutput: LogOutput = LogOutput.standard
+
   /**
    * Sets the log output of the solver to the given [[LogOutput]]
    */
-  def setLogOutput(logOutput: LogOutput): Unit
+  def setLogOutput(logOutput: LogOutput): Unit = {
+    _logOutput.close
+    _logOutput = logOutput
+  }
 
   /**
    * Configure the solver using the configuration file located at the given ''absolute'' path.
