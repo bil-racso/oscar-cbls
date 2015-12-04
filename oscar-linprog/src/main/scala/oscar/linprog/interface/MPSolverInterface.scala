@@ -45,6 +45,8 @@ abstract class MPSolverInterface {
    */
   def solverName: String
 
+  override def toString = solverName
+
   /**
    * Returns the name of the model.
    */
@@ -254,7 +256,7 @@ abstract class MPSolverInterface {
   /**
    * Saves the problem to the file at the given path in the given format.
    */
-  def exportModel(filepath: Path, format: ModelExportFormat): Unit
+  def exportModel(filePath: Path, format: ModelExportFormat): Unit
 
   // TODO exportSolution
 

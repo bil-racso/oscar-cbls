@@ -20,6 +20,7 @@ package oscar.linprog.interface.gurobi
 import java.nio.file.Path
 
 import gurobi._
+import oscar.linprog._
 import oscar.linprog.enums._
 import oscar.linprog.interface.{MIPSolverInterface, MPSolverInterface}
 
@@ -226,14 +227,22 @@ class Gurobi(_env: Option[GRBEnv] = None) extends MPSolverInterface with MIPSolv
 
   /* LOGGING */
 
-  // Gurobi's export file handling is a little different. The format is defined by the fileName
-  // passed to model.write for the LP format it's .lp and for MPS it's .mps
-  def exportModel(filepath: Path, format: ModelExportFormat): Unit =
+  /**
+   * Gurobi's export file handling is a little different. The format is defined by the fileName passed to model.write:
+   *  - for LP  the file should end with .lp
+   *  - for MPS the file should end with .mps
+   *
+   * Therefore, the file extension is checked against the given format to make sure it matches.
+   */
+  def exportModel(filePath: java.nio.file.Path, format: ModelExportFormat): Unit = {
+    require(format.checkExtension(filePath), s"Unexpected file extension (${filePath.extension}) for the given model export format ($format)")
+
     format match {
-      case MPS => rawSolver.write(filepath + ".mps")
-      case LP => rawSolver.write(filepath + ".lp")
-      case _ => println(s"Unrecognised export format $format")
+      case MPS => rawSolver.write(filePath.toString)
+      case LP => rawSolver.write(filePath.toString)
+      case _  => println(s"Unrecognised export format $format")
     }
+  }
 
   override def setLogOutput(logOutput: LogOutput): Unit = {
     super.setLogOutput(logOutput)
