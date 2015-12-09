@@ -98,14 +98,14 @@ trait Time extends VRP with Predecessors {
  */
 trait TravelTimeAsFunction extends VRP with Time {
 
-  var travelCosts: TravelTimeFunction = null
+  var travelDurationMatrix: TravelTimeFunction = null
 
   /**
    * sets the cost function
    * @param travelCosts
    */
   def setTravelTimeFunctions(travelCosts: TravelTimeFunction) {
-    this.travelCosts = travelCosts
+    this.travelDurationMatrix = travelCosts
     for (i <- 0 to N - 1) {
       travelOutDuration(i) <== new IntInt2Int(leaveTime(i), next(i),
         (leaveTime, successor) =>
@@ -174,7 +174,7 @@ trait WaitingDuration extends TimeWindow {
  */
 trait TimeClosestNeighbors extends ClosestNeighbors with TravelTimeAsFunction {
   final override protected def getDistance(from: Int, to: Int): Int = {
-    travelCosts.getMinTravelDuration(from, to)
+    travelDurationMatrix.getMinTravelDuration(from, to)
   }
 }
 
