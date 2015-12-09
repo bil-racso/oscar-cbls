@@ -445,7 +445,7 @@ class Exhaust(a: Neighborhood, b: Neighborhood) extends NeighborhoodCombinator(a
  * @author renaud.delandtsheer@cetic.be
  * @author yoann.guyot@cetic.be
  */
-class Retry(a: Neighborhood, cond: Int => Boolean) extends NeighborhoodCombinator(a) {
+class Retry(a: Neighborhood, cond: Int => Boolean = _ <= 1) extends NeighborhoodCombinator(a) {
   var consecutiveFails = 0
   override def getMove(obj: Objective, acceptanceCriteria: (Int, Int) => Boolean): SearchResult = {
     a.getMove(obj, acceptanceCriteria) match {
