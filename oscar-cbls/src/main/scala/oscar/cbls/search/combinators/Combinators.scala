@@ -926,33 +926,34 @@ case class DynAndThen[FirstMoveType<:Move](a:Neighborhood with SupportForAndThen
 }
 
 case class DynAndThenWithPrev[FirstMoveType<:Move](x:Neighborhood with SupportForAndThenChaining[FirstMoveType],
-                                                   b:((FirstMoveType,Solution) => Neighborhood),
+                                                   b:((FirstMoveType,Snapshot) => Neighborhood),
                                                    maximalIntermediaryDegradation:Int = Int.MaxValue,
-                                                   decisionVariablesToSave:Store => Iterable[Variable] = (s:Store) => s.decisionVariables()) extends NeighborhoodCombinator(x){
+                                                   intValuesToSave:Iterable[ChangingIntValue],
+                                                   setValuesToSave:Iterable[ChangingSetValue]) extends NeighborhoodCombinator(x){
 
-  val instrumentedA = new SaveDecisionVarsOnEntry(x,decisionVariablesToSave) with SupportForAndThenChaining[FirstMoveType]{
+  val instrumentedA = new SnapShotOnEntry(x,intValuesToSave,setValuesToSave) with SupportForAndThenChaining[FirstMoveType]{
     override def instantiateCurrentMove(newObj: Int): FirstMoveType = x.instantiateCurrentMove(newObj)
   }
 
   val slave = DynAndThen(instrumentedA,
-    (m:FirstMoveType) => b(m,instrumentedA.savedSolution),
+    (m:FirstMoveType) => b(m,instrumentedA.snapShot),
     maximalIntermediaryDegradation)
 
   override def getMove(obj: Objective, acceptanceCriterion: (Int, Int) => Boolean): SearchResult = slave.getMove(obj,acceptanceCriterion)
 }
 
-case class SaveDecisionVarsOnEntry(a: Neighborhood, decisionVariablesToSave:Store => Iterable[Variable] = (s:Store) => s.decisionVariables())
+
+case class SnapShotOnEntry(a: Neighborhood, intValuesToSave:Iterable[ChangingIntValue],setValuesToSave:Iterable[ChangingSetValue])
   extends NeighborhoodCombinator(a){
 
-  var savedSolution:Solution = null
+  var snapShot:Snapshot = null
 
   override def getMove(obj: Objective, acceptanceCriterion: (Int, Int) => Boolean = (oldObj, newObj) => oldObj > newObj): SearchResult = {
     val s = obj.model
-    savedSolution = s.saveValues(decisionVariablesToSave(s))
+    snapShot = s.snapShot(intValuesToSave,setValuesToSave)
     a.getMove(obj,acceptanceCriterion)
   }
 }
-
 
 /**
  * bounds the number of tolerated moves without improvements over the best value
