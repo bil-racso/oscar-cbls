@@ -625,7 +625,7 @@ abstract class EasyNeighborhood[M<:Move](best:Boolean = false, neighborhoodName:
 
 class ObjWithStringGenerator(obj:Objective,additionalStringGenerator:()=>String) extends Objective{
   override def detailedString(short: Boolean, indent: Int): String = {
-    obj.detailedString(short,indent)+ "\n" + nSpace(indent) + additionalStringGenerator()
+    obj.detailedString(short,indent)+ "\n" + nSpace(indent) + additionalStringGenerator().split("\\R",-1).mkString("\n" + nSpace(indent)) + "\n"
   }
 
   override def model: Store = obj.model
