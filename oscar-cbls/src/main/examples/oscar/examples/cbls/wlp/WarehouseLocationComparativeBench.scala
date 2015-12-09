@@ -7,6 +7,7 @@ import oscar.cbls.invariants.lib.numeric.Sum
 import oscar.cbls.modeling.AlgebraTrait
 import oscar.cbls.objective.Objective
 import oscar.cbls.search.combinators.LearningRandom
+import oscar.cbls.search.move.AssignMove
 import oscar.cbls.search.{AssignNeighborhood, Benchmark, RandomizeNeighborhood, SwapsNeighborhood}
 
 import scala.language.postfixOps
@@ -31,7 +32,7 @@ object WarehouseLocationComparativeBench extends App with AlgebraTrait{
   val openWarehouses = Filter(warehouseOpenArray).setName("openWarehouses")
 
   val distanceToNearestOpenWarehouse = Array.tabulate(D)(d =>
-    MinConstArray(distanceCost(d), openWarehouses, defaultCostForNoOpenWarehouse).setName("distance_for_delivery_" + d))
+    MinConstArrayLazy(distanceCost(d), openWarehouses, defaultCostForNoOpenWarehouse).setName("distance_for_delivery_" + d))
 
   val obj = Objective(Sum(distanceToNearestOpenWarehouse) + Sum(costForOpeningWarehouse, openWarehouses))
 
@@ -73,7 +74,17 @@ object WarehouseLocationComparativeBench extends App with AlgebraTrait{
     best SwapsNeighborhood(warehouseOpenArray, "SwapWarehouses")
     orElse (RandomizeNeighborhood(warehouseOpenArray, W/5) maxMoves 2) saveBest obj restoreBestOnExhaust)
 
-  val neighborhoods = List(neighborhood1,neighborhood2,neighborhood3,neighborhood4,neighborhood5,neighborhood6,neighborhood7)
+  val neighborhood8 = ()=>("DynAndThen",
+    (AssignNeighborhood(warehouseOpenArray, "SwitchWarehouse1") dynAndThen
+      {case AssignMove(variable,value,id,_,_) => AssignNeighborhood(warehouseOpenArray, searchZone = (()=> (id+1 until W)),name="SwitchWarehouse2")}
+    orElse (RandomizeNeighborhood(warehouseOpenArray, W/5) maxMoves 2) saveBest obj restoreBestOnExhaust))
+
+  val neighborhood9 = ()=>("AndThen",
+    (AssignNeighborhood(warehouseOpenArray, "SwitchWarehouse1") andThen AssignNeighborhood(warehouseOpenArray, "SwitchWarehouse2")
+      orElse (RandomizeNeighborhood(warehouseOpenArray, W/5) maxMoves 2) saveBest obj restoreBestOnExhaust))
+
+
+  val neighborhoods = List(neighborhood1,neighborhood2,neighborhood3,neighborhood4,neighborhood5,neighborhood6,neighborhood7,neighborhood8,neighborhood9)
 
   val a = Benchmark.benchtoString(obj,10,neighborhoods,0)
 

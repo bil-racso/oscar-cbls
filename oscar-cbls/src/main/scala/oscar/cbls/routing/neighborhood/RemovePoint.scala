@@ -44,12 +44,13 @@ case class RemovePoint(predecessorsOfRoutedPointsToRemove:()=>Iterable[Int],
                        vrp: VRP,
                        neighborhoodName:String = null,
                        best:Boolean = false,
-                       hotRestart:Boolean = true) extends EasyRoutingNeighborhood(best,vrp, neighborhoodName) {
+                       hotRestart:Boolean = true) extends EasyRoutingNeighborhood[RemovePointMove](best,vrp, neighborhoodName) {
 
   //the indice to start with for the exploration
   var startIndice: Int = 0
 
   var beforeRemovedPoint:Int = 0;
+  var removedPoint:Int = 0;
 
   override def exploreNeighborhood(): Unit = {
 
@@ -64,7 +65,7 @@ case class RemovePoint(predecessorsOfRoutedPointsToRemove:()=>Iterable[Int],
       beforeRemovedPoint = it.next()
       assert(vrp.isRouted(beforeRemovedPoint),
         "The search zone should be restricted to before routed nodes when removing.")
-      val removedPoint = vrp.next(beforeRemovedPoint).value
+      removedPoint = vrp.next(beforeRemovedPoint).value
       require(!vrp.isADepot(removedPoint),
         "a point to remove is a depot: beforeRemovedPoint:" + beforeRemovedPoint + " removedPoint:" + removedPoint)
 
@@ -78,8 +79,8 @@ case class RemovePoint(predecessorsOfRoutedPointsToRemove:()=>Iterable[Int],
     }
   }
 
-  override def instantiateCurrentMove(newObj: Int): Move =
-    RemovePointMove(beforeRemovedPoint, newObj, this, neighborhoodNameToString)
+  override def instantiateCurrentMove(newObj: Int) =
+    RemovePointMove(beforeRemovedPoint, removedPoint, newObj, this, neighborhoodNameToString)
 
   def encode(beforeRemovedPoint: Int) {
     unroute(cutNodeAfter(beforeRemovedPoint))
@@ -100,6 +101,7 @@ case class RemovePoint(predecessorsOfRoutedPointsToRemove:()=>Iterable[Int],
  */
 case class RemovePointMove(
                         beforeRemovedPoint: Int,
+                        removedPoint:Int,
                         override val objAfter: Int,
                         override val neighborhood:RemovePoint,
                         override val neighborhoodName:String = null)

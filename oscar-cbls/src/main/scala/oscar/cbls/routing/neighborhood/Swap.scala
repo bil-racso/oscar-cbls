@@ -41,7 +41,7 @@ case class Swap(nodesPrecedingNodesToMove:()=>Iterable[Int],
            val vrp: VRP with PositionInRouteAndRouteNr,
            neighborhoodName:String = null,
            val best:Boolean = false,
-           val hotRestart:Boolean = true) extends EasyRoutingNeighborhood(best,vrp,neighborhoodName) {
+           val hotRestart:Boolean = true) extends EasyRoutingNeighborhood[SwapMove](best,vrp,neighborhoodName) {
 
   //the indice to start with for the exploration
   var startIndice:Int = 0
@@ -88,7 +88,7 @@ case class Swap(nodesPrecedingNodesToMove:()=>Iterable[Int],
   var beforeMovedPoint:Int = 0
   var insertionPoint:Int = 0
 
-  override def instantiateCurrentMove(newObj: Int): Move =
+  override def instantiateCurrentMove(newObj: Int) =
     SwapMove(beforeMovedPoint, insertionPoint, newObj, this, neighborhoodNameToString)
 
   def encode(fstPred: Int, sndPred: Int) {

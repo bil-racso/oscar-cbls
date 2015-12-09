@@ -164,8 +164,6 @@ abstract class ChangingIntValue(initialValue:Int, initialDomain:Domain)
     setValue(1 + getValue(true))
   }
 
-  def getDotNode = "[label = \"IntVar(" + name + ")\" shape = oval color = " + getDotColor + "]"
-
   def compare(that: ChangingIntValue): Int = {
     assert(this.uniqueID != -1, "cannot compare non-registered PropagationElements this: [" + this + "] that: [" + that + "]")
     assert(that.uniqueID != -1, "cannot compare non-registered PropagationElements this: [" + this + "] that: [" + that + "]")

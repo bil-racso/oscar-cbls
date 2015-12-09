@@ -38,12 +38,12 @@ import oscar.cbls.search.move.Move
  * @param vrp the routing problem
  * @param neighborhoodName the name of this neighborhood
  * @param best should we search for the best move or the first move?
- * @param hotRestart set to true fo a hot restart fearture
+ * @param hotRestart set to true fo a hot restart fearture on the node to insert
  * @param nodeSymmetryClass a function that input the ID of an unrouted node and returns a symmetry class;
  *                      ony one of the unrouted node in each class will be considered for insert
  *                      Int.MinValue is considered different to itself
  *                      if you set to None this will not be used at all
- * @param hotRestartOnNextSymmetryClass when you have ymmetries among points to insert and hotRestart,
+ * @param hotRestartOnNextSymmetryClass when you have symmetries among points to insert and hotRestart,
  *                                  this option will try to have the hotRestart starting
  *                                  at a different symmetry class than the last one.
  * @author renaud.delandtsheer@cetic.be
@@ -58,7 +58,7 @@ case class InsertPoint(unroutedNodesToInsert: () => Iterable[Int],
                        hotRestart: Boolean = true,
                        nodeSymmetryClass:Option[Int => Int] = None,
                        hotRestartOnNextSymmetryClass:Boolean = false)
-  extends EasyRoutingNeighborhood(best, vrp, neighborhoodName) {
+  extends EasyRoutingNeighborhood[InsertPointMove](best, vrp, neighborhoodName) {
 
   //the indice to start with for the exploration
   var startIndice: Int = 0
@@ -108,7 +108,7 @@ case class InsertPoint(unroutedNodesToInsert: () => Iterable[Int],
     }
   }
 
-  override def instantiateCurrentMove(newObj: Int): Move =
+  override def instantiateCurrentMove(newObj: Int) =
     InsertPointMove(beforeInsertedPoint, insertedPoint, newObj, this, neighborhoodNameToString)
 
   def encode(beforeInsertedPoint: Int, insertedPoint: Int) {

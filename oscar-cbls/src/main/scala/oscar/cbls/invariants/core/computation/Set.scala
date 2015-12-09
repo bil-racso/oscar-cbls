@@ -102,6 +102,13 @@ abstract class ChangingSetValue(initialValue:SortedSet[Int], initialDomain:Domai
     }
   }
 
+  def insertValueNotPreviouslyIn(v:Int){
+    recordAsTouched(v,true)
+    Value +=v
+    notifyChanged()
+  }
+
+
   def deleteValue(v:Int){
     if (Value.contains(v)){
       recordAsTouched(v,false)
@@ -230,8 +237,6 @@ abstract class ChangingSetValue(initialValue:SortedSet[Int], initialDomain:Domai
   protected def :+=(i:Int) {this.insertValue(i)}
   protected def :-=(i:Int) {this.deleteValue(i)}
 
-  def getDotNode = "[label = \"IntSetVar(" + name + ")\" shape = oval color = " + getDotColor + "]"
-
   override def checkInternals(c:Checker){
     assert(this.definingInvariant == null || OldValue.intersect(Value).size == Value.size,
       "internal error: " + "Value: " + Value + " OldValue: " + OldValue)
@@ -326,6 +331,11 @@ abstract class SetInvariant(initialValue:SortedSet[Int] = SortedSet.empty,
     performInvariantPropagation()
     performSetPropagation()
   }
+
+  //this seems to speeds up things, as it bypasses the method resolution of traits.
+  final override def notifyDeleteOnAny(v: ChangingSetValue, i: Any, value: Int): Unit = super.notifyDeleteOnAny(v, i, value)
+  //this seems to speeds up things, as it bypasses the method resolution of traits.
+  final override def notifyInsertOnAny(v: ChangingSetValue, i: Any, value: Int): Unit = super.notifyInsertOnAny(v, i, value)
 
   override def getDotNode:String = throw new Error("not implemented")
 }

@@ -42,7 +42,7 @@ case class OnePointMove(nodesPrecedingNodesToMove: () => Iterable[Int],
                         vrp: VRP with PositionInRouteAndRouteNr,
                         neighborhoodName: String = null,
                         best: Boolean = false,
-                        hotRestart: Boolean = true) extends EasyRoutingNeighborhood(best, vrp, neighborhoodName) {
+                        hotRestart: Boolean = true) extends EasyRoutingNeighborhood[OnePointMoveMove](best, vrp, neighborhoodName) {
 
   //the indice to start with for the exploration
   var startIndice: Int = 0
@@ -88,7 +88,7 @@ case class OnePointMove(nodesPrecedingNodesToMove: () => Iterable[Int],
   var movedPoint:Int = 0
   var insertionPoint:Int = 0
 
-  override def instantiateCurrentMove(newObj: Int): Move =
+  override def instantiateCurrentMove(newObj: Int) =
     OnePointMoveMove(beforeMovedPoint, movedPoint, insertionPoint, newObj, this, neighborhoodNameToString)
 
   override def reset(): Unit = {

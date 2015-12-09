@@ -6,7 +6,7 @@ import oscar.cbls.invariants.lib.minmax.{MinConstArrayLazy, MinConstArray}
 import oscar.cbls.invariants.lib.numeric.Sum
 import oscar.cbls.modeling.AlgebraTrait
 import oscar.cbls.objective.Objective
-import oscar.cbls.search.combinators.{LearningRandom, BiasedRandom, Statistics}
+import oscar.cbls.search.combinators.{LearningRandom, BiasedRandom, Profile}
 import oscar.cbls.search.{Benchmark, AssignNeighborhood, RandomizeNeighborhood, SwapsNeighborhood}
 
 import scala.language.postfixOps
@@ -14,10 +14,10 @@ import scala.language.postfixOps
 object WarehouseLocationLazy extends App with AlgebraTrait{
 
   //the number of warehouses
-  val W:Int = 500
+  val W:Int = 1000
 
   //the number of delivery points
-  val D:Int = 150
+  val D:Int = 300
 
   println("WarehouseLocation(W:" + W + ", D:" + D + ")")
   //the cost per delivery point if no location is open
@@ -39,16 +39,15 @@ object WarehouseLocationLazy extends App with AlgebraTrait{
   val obj = Objective(Sum(distanceToNearestOpenWarehouse) + Sum(costForOpeningWarehouse, openWarehouses2))
 
   val distanceToNearestOpenWarehouseLazy = Array.tabulate(D)(d =>
-    MinConstArrayLazy(distanceCost(d), openWarehouses, defaultCostForNoOpenWarehouse,100))//.setName("distance_for_delivery_" + d))
+    MinConstArrayLazy(distanceCost(d), openWarehouses, defaultCostForNoOpenWarehouse))//.setName("distance_for_delivery_" + d))
 
   val objLazy = Objective(Sum(distanceToNearestOpenWarehouseLazy) + Sum(costForOpeningWarehouse, openWarehouses))
 
-
   m.close()
 
-  val neighborhood = (Statistics(
-    Statistics(AssignNeighborhood(warehouseOpenArray, "SwitchWarehouse"))
-      step Statistics(SwapsNeighborhood(warehouseOpenArray, "SwapWarehouses"))))
+  val neighborhood = (Profile(
+    Profile(AssignNeighborhood(warehouseOpenArray, "SwitchWarehouse"))
+      step Profile(SwapsNeighborhood(warehouseOpenArray, "SwapWarehouses"))))
 
   neighborhood.verbose = 0
 
@@ -58,8 +57,8 @@ object WarehouseLocationLazy extends App with AlgebraTrait{
   neighborhood.doAllMoves(obj=obj)
   println(openWarehouses2)
 
-  println(neighborhood.statistics)
-  val nonLazyStats = neighborhood.statistics
+  println(neighborhood.profilingStatistics)
+  val nonLazyStats = neighborhood.profilingStatistics
 
   m.restoreSolution(startSolution)
   m.propagate()
@@ -70,16 +69,16 @@ object WarehouseLocationLazy extends App with AlgebraTrait{
   println(openWarehouses)
 
   println("lazyStats:")
-  println(neighborhood.statistics)
+  println(neighborhood.profilingStatistics)
 
   println("non lazyStats:")
   println(nonLazyStats)
 
-  val nbAnihilation = distanceToNearestOpenWarehouseLazy.toList.map((a:MinConstArrayLazy) => a.nbAnihilation).sum
-  val nbDoIt = distanceToNearestOpenWarehouseLazy.toList.map((a:MinConstArrayLazy) => a.nbDoIt).sum
-  println("nbAnihilation : " + nbAnihilation)
-  println("nbDoIt: " + nbDoIt)
-  println("ratio:" + nbAnihilation.toDouble/(nbDoIt.toDouble + nbAnihilation.toDouble))
+//  val nbAnihilation = distanceToNearestOpenWarehouseLazy.toList.map((a:MinConstArrayLazy) => a.nbAnihilation).sum
+//  val nbDoIt = distanceToNearestOpenWarehouseLazy.toList.map((a:MinConstArrayLazy) => a.nbDoIt).sum
+//  println("nbAnihilation : " + nbAnihilation)
+//  println("nbDoIt: " + nbDoIt)
+//  println("ratio:" + nbAnihilation.toDouble/(nbDoIt.toDouble + nbAnihilation.toDouble))
   //  println("model stats:")
   //  println(m.stats)
 

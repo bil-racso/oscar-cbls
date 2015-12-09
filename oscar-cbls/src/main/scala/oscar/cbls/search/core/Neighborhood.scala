@@ -101,8 +101,8 @@ abstract class Neighborhood {
    * use the Statistics combinator to activate the collection of statistics
    * @return
    */
-  final def statistics: String = Statistics.statisticsHeader + "\n" + collectStatistics.mkString("\n")
-  def collectStatistics: List[String] = List.empty
+ final def profilingStatistics:String = Profile.statisticsHeader + "\n" + collectProfilingStatistics.mkString("\n")
+  def collectProfilingStatistics:List[String] = List.empty
 
   /**
    * the method that returns a move from the neighborhood.
@@ -148,6 +148,7 @@ abstract class Neighborhood {
   protected def printTakenMoves: Boolean = verbose >= 1
   protected def printPerformedSearches: Boolean = verbose >= 2
   protected def printExploredNeighbors: Boolean = verbose >= 3
+
 
   //the number of characters to display in case a verbose approach is deployed.
   var paddingLength: Int = 100
@@ -281,12 +282,6 @@ abstract class Neighborhood {
    */
   def exhaustAndContinueIfMovesFound(b: Neighborhood) = new ExhaustAndContinueIfMovesFound(this, b)
 
-  /**
-   * this combinator is stateless, it checks the condition on every invocation. If the condition is false,
-   * it does not try the Neighborhood and finds no move.
-   * @author renaud.delandtsheer@cetic.be
-   */
-  def when(c: () => Boolean): Neighborhood = new Conditional(c, this)
 
   /**
    * this one bounds the number of time the search is actually performed
@@ -309,8 +304,14 @@ abstract class Neighborhood {
   def stopWhen(cond: () => Boolean) = new StopWhen(this, cond)
 
   /**
-   * this is an alias for maxMoves 1
+   * if it is false,it returns NoMovesFound without exploring the neighborhood at all.
+   * @param cond
    * @return
+   */
+  def guard(cond:()=>Boolean) = Guard(cond,this)
+
+  /**
+   * this is an alias for maxMoves 1
    */
   def once = new MaxMoves(this, 1)
 
@@ -529,12 +530,12 @@ case class ConstantMoveNeighborhood(m: Move) extends Neighborhood {
   override def getMove(obj: Objective, acceptanceCriterion: (Int, Int) => Boolean): SearchResult = m
 }
 
-trait SupportForAndThenChaining extends Neighborhood {
+trait SupportForAndThenChaining[MoveType<:Move] extends Neighborhood{
 
-  def instantiateCurrentMove(newObj: Int): Move
+  def instantiateCurrentMove(newObj:Int):MoveType
 
-  def dynAndThen(other: Move => Neighborhood, maximalIntermediaryDegradation: Int = Int.MaxValue): DynAndThen = {
-    DynAndThen(this, other, maximalIntermediaryDegradation)
+  def dynAndThen(other:MoveType => Neighborhood,maximalIntermediaryDegradation: Int = Int.MaxValue):DynAndThen[MoveType] = {
+    DynAndThen[MoveType](this,other,maximalIntermediaryDegradation)
   }
 }
 
@@ -558,8 +559,8 @@ trait SupportForAndThenChaining extends Neighborhood {
  * @param best true if you want the best move false if you want the first acceptable move
  * @param neighborhoodName the name of the neighborhood, used for verbosities
  */
-abstract class EasyNeighborhood(best: Boolean = false, neighborhoodName: String = null)
-  extends Neighborhood with SupportForAndThenChaining {
+abstract class EasyNeighborhood[M<:Move](best:Boolean = false, neighborhoodName:String=null)
+  extends Neighborhood with SupportForAndThenChaining[M]{
 
   protected def neighborhoodNameToString: String = if (neighborhoodName != null) neighborhoodName else this.getClass().getSimpleName()
 
@@ -606,7 +607,7 @@ abstract class EasyNeighborhood(best: Boolean = false, neighborhoodName: String 
    */
   def exploreNeighborhood()
 
-  def instantiateCurrentMove(newObj: Int): Move
+  def instantiateCurrentMove(newObj: Int): M
 
   var tmpNewObj: Int = 0
 
@@ -657,7 +658,7 @@ abstract class EasyNeighborhood(best: Boolean = false, neighborhoodName: String 
 
 class ObjWithStringGenerator(obj: Objective, additionalStringGenerator: () => String) extends Objective {
   override def detailedString(short: Boolean, indent: Int): String = {
-    obj.detailedString(short, indent) + "\n" + nSpace(indent) + additionalStringGenerator()
+    obj.detailedString(short,indent)+ "\n" + nSpace(indent) + additionalStringGenerator().split("\\R",-1).mkString("\n" + nSpace(indent)) + "\n"
   }
 
   override def model: Store = obj.model
