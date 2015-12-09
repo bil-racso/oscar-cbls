@@ -134,7 +134,6 @@ case class SelectLESetQueue(values: Array[IntValue], boundary: IntValue)
 
   val QueueAbove: Queue[Int] = new Queue[Int]
 
-
   this := SortedSet.empty[Int]
   val HeapAbove: BinomialHeap[Int] = new BinomialHeap((i: Int) => values(i).value, values.size)
   for (v <- values.indices) {

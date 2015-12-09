@@ -15,7 +15,7 @@
 
 package oscar.cbls.search.move
 
-import oscar.cbls.invariants.core.computation.{CBLSIntVar, CBLSSetVar, Variable}
+import oscar.cbls.invariants.core.computation.{Solution, CBLSIntVar, CBLSSetVar, Variable}
 import oscar.cbls.objective.Objective
 
 /** standard move template
@@ -82,6 +82,24 @@ class EasyMove(override val objAfter:Int, override val neighborhoodName:String =
   override def toString: String = neighborhoodNameToString + "EasyMove"
 
 }
+
+/**
+ * this move loads solution s
+ * @param s the solution that is loaded when the move is comitted
+ * @param objAfter the objective after this assignation will be performed
+ *                 in case you degrade the objective because you make a jump, and you do not want to compute it,
+ *                 you must set it to Int.MaxValue or just do not specify it, as it is the default value
+ *                 we did not use an option there because there would anyway be a need
+ *                 for arithmetic on this option in combinators suh as [[oscar.cbls.search.combinators.Best]]
+ *                 Many combinators actually rely on this value to take decisions (eg: [[oscar.cbls.search.combinators.SaveBest]] and [[oscar.cbls.search.combinators.Best]]
+ * @param neighborhoodName the name of the neighborhood that generated this move, used for pretty printing purpose.
+ *                         Notice that the name is not the type of the neighborhood.
+ */
+case class LoadSolutionMove(s:Solution,override val objAfter:Int, override val neighborhoodName:String = null) extends Move(objAfter,neighborhoodName){
+  /** to actually take the move */
+  override def commit(): Unit = s.model.restoreSolution(s)
+}
+
 
 /** standard move that assigns an int value to a CBLSIntVar
   *

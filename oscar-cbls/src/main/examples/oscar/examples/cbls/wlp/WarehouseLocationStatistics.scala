@@ -2,7 +2,7 @@ package oscar.examples.cbls.wlp
 
 import oscar.cbls.invariants.core.computation.{CBLSIntVar, Store}
 import oscar.cbls.invariants.lib.logic.Filter
-import oscar.cbls.invariants.lib.minmax.MinConstArray
+import oscar.cbls.invariants.lib.minmax.{MinConstArrayLazy, MinConstArray}
 import oscar.cbls.invariants.lib.numeric.Sum
 import oscar.cbls.modeling.AlgebraTrait
 import oscar.cbls.objective.Objective
@@ -14,10 +14,10 @@ import scala.language.postfixOps
 object WarehouseLocationStatistics extends App with AlgebraTrait{
 
   //the number of warehouses
-  val W:Int = 15
+  val W:Int = 1000
 
   //the number of delivery points
-  val D:Int = 150
+  val D:Int = 300
 
   println("WarehouseLocation(W:" + W + ", D:" + D + ")")
   //the cost per delivery point if no location is open
@@ -31,7 +31,7 @@ object WarehouseLocationStatistics extends App with AlgebraTrait{
   val openWarehouses = Filter(warehouseOpenArray).setName("openWarehouses")
 
   val distanceToNearestOpenWarehouse = Array.tabulate(D)(d =>
-    MinConstArray(distanceCost(d), openWarehouses, defaultCostForNoOpenWarehouse).setName("distance_for_delivery_" + d))
+    MinConstArrayLazy(distanceCost(d), openWarehouses, defaultCostForNoOpenWarehouse).setName("distance_for_delivery_" + d))
 
   val obj = Objective(Sum(distanceToNearestOpenWarehouse) + Sum(costForOpeningWarehouse, openWarehouses))
 

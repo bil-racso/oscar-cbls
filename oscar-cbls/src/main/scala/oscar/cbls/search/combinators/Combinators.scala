@@ -19,9 +19,10 @@ package oscar.cbls.search.combinators
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.objective.{CascadingObjective, Objective}
 import oscar.cbls.search.core.{NoMoveFound, _}
-import oscar.cbls.search.move.{CallBackMove, CompositeMove, InstrumentedMove, Move}
+import oscar.cbls.search.move._
 
 import scala.language.implicitConversions
+import scala.util.control.Breaks._
 
 //TODO: les combinateurs devraient avoir une liste de voisinnages (ou neighborhood*), pas juste un seul.
 //TODO: proposer du benchmarking des voisinages (nombre de moves trouvés, gain moyen sur une fct objectif, temps de recherche, nombre de recherche effectuées, ...)
@@ -330,7 +331,6 @@ class BiasedRandom(a: (Neighborhood,Double)*)(noRetryOnExhaust:Boolean = false) 
   }
 }
 
-
 /**
  * @param l
  * @param weightUpdate a function that updates the weight of a neighborhood. if the function returns a negative number, the neighborhood gets the average weight thatthe other received.
@@ -404,7 +404,6 @@ class Best(a: Neighborhood, b: Neighborhood) extends NeighborhoodCombinator(a, b
       case (NoMoveFound, x) => x
       case (x, NoMoveFound) => x
       case (x: MoveFound, y: MoveFound) => if (x.objAfter < y.objAfter) x else y
-
     }
   }
 }
@@ -847,8 +846,8 @@ case class AndThen(a: Neighborhood, b: Neighborhood, maximalIntermediaryDegradat
 }
 
 case class DynAndThen[FirstMoveType<:Move](a:Neighborhood with SupportForAndThenChaining[FirstMoveType],
-                      b:(FirstMoveType => Neighborhood),
-                      maximalIntermediaryDegradation: Int = Int.MaxValue)
+                                           b:(FirstMoveType => Neighborhood),
+                                           maximalIntermediaryDegradation: Int = Int.MaxValue)
   extends NeighborhoodCombinator(a) with SupportForAndThenChaining[CompositeMove]{
 
   var currentB:Neighborhood = null
@@ -927,9 +926,9 @@ case class DynAndThen[FirstMoveType<:Move](a:Neighborhood with SupportForAndThen
 }
 
 case class DynAndThenWithPrev[FirstMoveType<:Move](x:Neighborhood with SupportForAndThenChaining[FirstMoveType],
-                              b:((FirstMoveType,Solution) => Neighborhood),
-                              maximalIntermediaryDegradation:Int = Int.MaxValue,
-                              decisionVariablesToSave:Store => Iterable[Variable] = (s:Store) => s.decisionVariables()) extends NeighborhoodCombinator(x){
+                                                   b:((FirstMoveType,Solution) => Neighborhood),
+                                                   maximalIntermediaryDegradation:Int = Int.MaxValue,
+                                                   decisionVariablesToSave:Store => Iterable[Variable] = (s:Store) => s.decisionVariables()) extends NeighborhoodCombinator(x){
 
   val instrumentedA = new SaveDecisionVarsOnEntry(x,decisionVariablesToSave) with SupportForAndThenChaining[FirstMoveType]{
     override def instantiateCurrentMove(newObj: Int): FirstMoveType = x.instantiateCurrentMove(newObj)
@@ -1117,13 +1116,29 @@ class Metropolis(a: Neighborhood, temperature: Int => Float = _ => 100, base: Fl
  * @param a
  * @param name
  */
-case class Atomic(a: Neighborhood, name: String = "Atomic", bound: Int = Int.MaxValue) extends Neighborhood {
+case class Atomic(a: Neighborhood, name: String = "Atomic", bound: Int = Int.MaxValue) extends NeighborhoodCombinator(a) {
   override def getMove(obj: Objective, acceptanceCriterion: (Int, Int) => Boolean = (oldObj, newObj) => oldObj > newObj): SearchResult = {
-    CallBackMove(() => a.doAllMoves(_ > bound, obj, acceptanceCriterion), Int.MaxValue, this.getClass.getSimpleName, () => ("Atomic(" + a + ")"))
+    CallBackMove(() => a.doAllMoves(_ > bound, obj, acceptanceCriterion), Int.MaxValue, this.getClass.getSimpleName, () => name)
   }
-
-  override def collectProfilingStatistics: List[String] = a.collectProfilingStatistics
 }
+
+case class Atomic2(a: Neighborhood, name: String = "Atomic", bound: Int = Int.MaxValue) extends NeighborhoodCombinator(a) {
+  override def getMove(obj: Objective, acceptanceCriterion: (Int, Int) => Boolean = (oldObj, newObj) => oldObj > newObj): SearchResult = {
+
+    val startSolution = obj.model.solution()
+
+    val nbSteps = a.doAllMoves(_ > bound, obj, acceptanceCriterion)
+
+    //restore the initial solution
+    val endSolution = obj.model.solution()
+    val endObj = obj.value
+    obj.model.restoreSolution(startSolution)
+
+    if(nbSteps == 0) NoMoveFound
+    else LoadSolutionMove(endSolution,endObj,name)
+  }
+}
+
 
 /**
  * This represents a guided local search where a series of objective criterion are optimized one after the other
@@ -1248,13 +1263,17 @@ case class Profile(a:Neighborhood,ignoreInitialObj:Boolean = false) extends Neig
   var nbCalls = 0
   var nbFound = 0
   var totalGain = 0
-  var totalTimeSpent: Long = 0
+  var totalTimeSpentMoveFound: Long = 0
+  var totalTimeSpentNoMoveFound:Long=0
+
+  def totalTimeSpent = totalTimeSpentMoveFound + totalTimeSpentNoMoveFound
 
   override def resetStatistics(){
     nbCalls = 0
     nbFound = 0
     totalGain = 0
-    totalTimeSpent = 0
+    totalTimeSpentMoveFound = 0
+    totalTimeSpentNoMoveFound = 0
     super.resetStatistics()
   }
 
@@ -1274,10 +1293,10 @@ case class Profile(a:Neighborhood,ignoreInitialObj:Boolean = false) extends Neig
 
     a.getMove(obj, acceptanceCriterion) match {
       case NoMoveFound =>
-        totalTimeSpent += (System.nanoTime() - startTime) / 1000000
+        totalTimeSpentNoMoveFound += (System.nanoTime() - startTime) / 1000000
         NoMoveFound
       case m: MoveFound =>
-        totalTimeSpent += (System.nanoTime() - startTime) / 1000000
+        totalTimeSpentMoveFound += (System.nanoTime() - startTime) / 1000000
         nbFound += 1
         if (!ignoreInitialObj || nbCalls > 1) totalGain += oldObj - m.objAfter
         m
@@ -1287,8 +1306,10 @@ case class Profile(a:Neighborhood,ignoreInitialObj:Boolean = false) extends Neig
   def gainPerCall:String = if(nbCalls ==0) "NA" else ("" + totalGain / nbCalls)
   def callDuration:String = if(nbCalls == 0 ) "NA" else ("" + totalTimeSpent / nbCalls)
   //gain in obj/100ms
-  def slope:String = if(totalTimeSpent == 0) "NA" else ("" + "%.3f".format(totalGain / totalTimeSpent.toDouble))
+  def slope:String = if(totalTimeSpent == 0) "NA" else ("" + (totalGain / totalTimeSpent.toDouble))
 
+  def avgTimeSpendNoMove = if(nbCalls - nbFound == 0) "NA" else ("" + (totalTimeSpentNoMoveFound / (nbCalls - nbFound)))
+  def avgTimeSpendMove = if(nbFound == 0) "NA" else ("" + (totalTimeSpentMoveFound / nbFound))
   override def collectProfilingStatistics: List[String] =
     (padToLength("" + a,31) + " " +
       padToLength("" + nbCalls,6) + " " +
@@ -1297,12 +1318,14 @@ case class Profile(a:Neighborhood,ignoreInitialObj:Boolean = false) extends Neig
       padToLength("" + totalTimeSpent,12) + " " +
       padToLength("" + gainPerCall,8) + " " +
       padToLength("" + callDuration,12)+ " " +
-      slope) ::  super.collectProfilingStatistics
+      padToLength("" + slope,11)+ " " +
+      padToLength("" + avgTimeSpendNoMove,13)+ " " +
+      avgTimeSpendMove) ::  super.collectProfilingStatistics
 
   private def padToLength(s: String, l: Int) = (s + nStrings(l, " ")).substring(0, l)
   private def nStrings(n: Int, s: String): String = if (n <= 0) "" else s + nStrings(n - 1, s)
 
-  override def toString: String = "Statistics(" + a + " nbCalls:" + nbCalls + " nbFound:" + nbFound + " totalGain:" + totalGain + " totalTimeSpent " + totalTimeSpent + " ms" + ")"
+  override def toString: String = "Statistics(" + a + " nbCalls:" + nbCalls + " nbFound:" + nbFound + " totalGain:" + totalGain + " totalTimeSpent " + totalTimeSpent + " ms timeSpendWithMove:" + totalTimeSpentMoveFound + " ms totalTimeSpentNoMoveFound " + totalTimeSpentNoMoveFound + " ms)"
 
   def slopeOrZero:Int = if(totalTimeSpent == 0) 0 else ((100 * totalGain) / totalTimeSpent).toInt
 }
@@ -1310,6 +1333,6 @@ case class Profile(a:Neighborhood,ignoreInitialObj:Boolean = false) extends Neig
 object Profile{
   private def padToLength(s: String, l: Int) = (s + nStrings(l, " ")).substring(0, l)
   private def nStrings(n: Int, s: String): String = if (n <= 0) "" else s + nStrings(n - 1, s)
-  def statisticsHeader = padToLength("Neighborhood",30) + "  calls  found  sumGain  sumTime(ms)  avgGain  avgTime(ms)  slope(-/ms)"
+  def statisticsHeader = padToLength("Neighborhood",30) + "  calls  found  sumGain  sumTime(ms)  avgGain  avgTime(ms)  slope(-/ms) avgTimeNoMove avgTimeMove"
 }
 

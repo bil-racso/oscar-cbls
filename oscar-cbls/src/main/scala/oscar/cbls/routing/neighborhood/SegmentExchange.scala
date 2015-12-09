@@ -6,13 +6,12 @@ import scala.collection.immutable.{SortedMap, SortedSet}
 
 /**
  * swaps segments of different vehicles
+ * THIS IS EXPERIMENTAL
  */
 class SegmentExchange(vrp: VRP with PositionInRouteAndRouteNr with NodesOfVehicle,
                       relevantNeighbors:()=>Int=>Iterable[Int],
                       vehicles:() => List[Int],
                       neighborhoodName:String = "SegmentExchange",
-                      firstSegmentStarts:()=> Int => Iterable[Int],
-                      secondSegmentStarts:()=> Int => Iterable[Int],
                       hotRestart:Boolean,
                       best:Boolean = false) extends EasyRoutingNeighborhood[SegmentExchangeMove](best,vrp,neighborhoodName) {
 
@@ -32,23 +31,26 @@ class SegmentExchange(vrp: VRP with PositionInRouteAndRouteNr with NodesOfVehicl
     val relevantNeighborsNow = relevantNeighbors()
 
     for ((vehicle1, otherVehicles) <- Pairs.makeAllHeadAndTails(iterationSchemeOnVehicles.toList)) {
-      val otherVehiclesSet = SortedSet.empty ++ otherVehicles
+      val otherVehiclesSet:SortedSet[Int] = SortedSet.empty[Int] ++ otherVehicles
       val routeOfVehicle1 = vrp.getRouteOfVehicle(vehicle1)
       //cluster the closest by the otherVehicles
-      val routeWithRelevantNeighborsGroupedByVehicles = routeOfVehicle1.map(node =>
-        (node, relevantNeighborsNow(node).filter(otherVehiclesSet.contains(_)).groupBy(vrp.routeNr(_).value)))
+      val routeWithRelevantNeighborsAndTheirPositionInTheirRouteGroupedByVehicles = routeOfVehicle1.map(node =>
+        (node, relevantNeighborsNow(node)
+          .filter(otherVehiclesSet.contains(_))
+          .map(node => (node,vrp.positionInRoute(node).value))
+          .groupBy(nodeAndPosition => vrp.routeNr(nodeAndPosition._1).value)))
 
       //iterating over the route to search the first segment beforeMovePoint
       for (((beforeFirstSegment, relevantNeighbors1GroupedByRoute), tail) <-
-           Pairs.makeAllHeadAndTails(routeWithRelevantNeighborsGroupedByVehicles)) {
+           Pairs.makeAllHeadAndTails(routeWithRelevantNeighborsAndTheirPositionInTheirRouteGroupedByVehicles)) {
         this.beforeFirstSegment = beforeFirstSegment
 
         for ((endFirstSegment, relevantNeighbours2GroupedByRoute) <- tail) {
           this.endFirstSegment = endFirstSegment
           val relevantVehicles = relevantNeighbors1GroupedByRoute.keySet.intersect(relevantNeighbours2GroupedByRoute.keySet)
           for (otherVehicle <- relevantVehicles) {
-            val relevantNeighborsForSeg1BeforeStart: List[(Int, Int)] = relevantNeighbors1GroupedByRoute(otherVehicle).toList.map(node => ((node, vrp.positionInRoute(node).value)))
-            val relevantNeighborsForSeg1End: List[(Int, Int)] = relevantNeighbours2GroupedByRoute(otherVehicle).toList.map(node => ((node, vrp.positionInRoute(node).value)))
+            val relevantNeighborsForSeg1BeforeStart: List[(Int, Int)] = relevantNeighbors1GroupedByRoute(otherVehicle).toList
+            val relevantNeighborsForSeg1End: List[(Int, Int)] = relevantNeighbours2GroupedByRoute(otherVehicle).toList
             //TODO: on devrait prendre .next en fait.
             val closestInPairs = Pairs.zipIntoAllPossiblePairs(relevantNeighborsForSeg1BeforeStart, relevantNeighborsForSeg1End).filter(
             { case ((node1: Int, position1: Int), (node2: Int, position2: Int)) => node1 != node2 })

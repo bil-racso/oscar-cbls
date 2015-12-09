@@ -38,7 +38,7 @@ import oscar.cbls.search.move.Move
  * @param vrp the routing problem
  * @param neighborhoodName the name of this neighborhood
  * @param best should we search for the best move or the first move?
- * @param hotRestart set to true fo a hot restart fearture
+ * @param hotRestart set to true fo a hot restart fearture on the node to insert
  * @param nodeSymmetryClass a function that input the ID of an unrouted node and returns a symmetry class;
  *                      ony one of the unrouted node in each class will be considered for insert
  *                      Int.MinValue is considered different to itself

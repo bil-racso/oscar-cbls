@@ -102,6 +102,13 @@ abstract class ChangingSetValue(initialValue:SortedSet[Int], initialDomain:Domai
     }
   }
 
+  def insertValueNotPreviouslyIn(v:Int){
+    recordAsTouched(v,true)
+    Value +=v
+    notifyChanged()
+  }
+
+
   def deleteValue(v:Int){
     if (Value.contains(v)){
       recordAsTouched(v,false)

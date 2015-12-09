@@ -50,6 +50,7 @@ case class RemovePoint(predecessorsOfRoutedPointsToRemove:()=>Iterable[Int],
   var startIndice: Int = 0
 
   var beforeRemovedPoint:Int = 0;
+  var removedPoint:Int = 0;
 
   override def exploreNeighborhood(): Unit = {
 
@@ -64,7 +65,7 @@ case class RemovePoint(predecessorsOfRoutedPointsToRemove:()=>Iterable[Int],
       beforeRemovedPoint = it.next()
       assert(vrp.isRouted(beforeRemovedPoint),
         "The search zone should be restricted to before routed nodes when removing.")
-      val removedPoint = vrp.next(beforeRemovedPoint).value
+      removedPoint = vrp.next(beforeRemovedPoint).value
       require(!vrp.isADepot(removedPoint),
         "a point to remove is a depot: beforeRemovedPoint:" + beforeRemovedPoint + " removedPoint:" + removedPoint)
 
@@ -79,7 +80,7 @@ case class RemovePoint(predecessorsOfRoutedPointsToRemove:()=>Iterable[Int],
   }
 
   override def instantiateCurrentMove(newObj: Int) =
-    RemovePointMove(beforeRemovedPoint, newObj, this, neighborhoodNameToString)
+    RemovePointMove(beforeRemovedPoint, removedPoint, newObj, this, neighborhoodNameToString)
 
   def encode(beforeRemovedPoint: Int) {
     unroute(cutNodeAfter(beforeRemovedPoint))
@@ -100,6 +101,7 @@ case class RemovePoint(predecessorsOfRoutedPointsToRemove:()=>Iterable[Int],
  */
 case class RemovePointMove(
                         beforeRemovedPoint: Int,
+                        removedPoint:Int,
                         override val objAfter: Int,
                         override val neighborhood:RemovePoint,
                         override val neighborhoodName:String = null)
