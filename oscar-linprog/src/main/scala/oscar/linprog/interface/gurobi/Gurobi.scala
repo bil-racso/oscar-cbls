@@ -20,6 +20,7 @@ package oscar.linprog.interface.gurobi
 import java.nio.file.Path
 
 import gurobi._
+import oscar.linprog._
 import oscar.linprog.enums._
 import oscar.linprog.interface.{MIPSolverInterface, MPSolverInterface}
 
@@ -157,15 +158,6 @@ class Gurobi(_env: Option[GRBEnv] = None) extends MPSolverInterface with MIPSolv
 
   def updateModel() = rawSolver.update()
 
-  // Gurobi's export file handling is a little different. The format is defined by the fileName
-  // passed to model.write for the LP format it's .lp and for MPS it's .mps
-  def exportModel(filepath: Path, format: ModelExportFormat): Unit =
-    format match {
-      case MPS => rawSolver.write(filepath + ".mps")
-      case LP => rawSolver.write(filepath + ".lp")
-      case _ => println(s"Unrecognised export format $format")
-    }
-
   def endStatus: EndStatus =
     rawSolver.get(GRB.IntAttr.Status) match {
       case GRB.OPTIMAL => SolutionFound
@@ -220,10 +212,7 @@ class Gurobi(_env: Option[GRBEnv] = None) extends MPSolverInterface with MIPSolv
 
   def abort(): Unit = aborted = true
 
-  var _released = false
-
-  def release(): Unit = {
-    _released = true
+  override def release(): Unit = {
     rawSolver.dispose()
     // If the environment was self-made, release it also.
     // Otherwise, it is the responsibility of the user to release it.
@@ -231,10 +220,48 @@ class Gurobi(_env: Option[GRBEnv] = None) extends MPSolverInterface with MIPSolv
       env.release()
       env.dispose()
     }
+    super.release()
   }
 
-  def released: Boolean = _released
 
+  /* LOGGING */
+
+  /**
+   * Gurobi's export file handling is a little different. The format is defined by the fileName passed to model.write:
+   *  - for LP  the file should end with .lp
+   *  - for MPS the file should end with .mps
+   *
+   * Therefore, the file extension is checked against the given format to make sure it matches.
+   */
+  def exportModel(filePath: java.nio.file.Path, format: ModelExportFormat): Unit = {
+    require(format.checkExtension(filePath), s"Unexpected file extension (${filePath.extension}) for the given model export format ($format)")
+
+    format match {
+      case MPS => rawSolver.write(filePath.toString)
+      case LP => rawSolver.write(filePath.toString)
+      case _  => println(s"Unrecognised export format $format")
+    }
+  }
+
+  override def setLogOutput(logOutput: LogOutput): Unit = {
+    super.setLogOutput(logOutput)
+
+    logOutput match {
+      case DisabledLogOutput =>
+        env.set(GRB.IntParam.OutputFlag, 0)
+        env.set(GRB.IntParam.LogToConsole, 0)
+        env.set(GRB.StringParam.LogFile, "")
+      case StandardLogOutput =>
+        env.set(GRB.IntParam.OutputFlag, 1)
+        env.set(GRB.IntParam.LogToConsole, 1)
+        env.set(GRB.StringParam.LogFile, "")
+      case FileLogOutput(path) =>
+        env.set(GRB.IntParam.OutputFlag, 1)
+        env.set(GRB.IntParam.LogToConsole, 0)
+        env.set(GRB.StringParam.LogFile, path.toString)
+      case _ => println(s"Unrecognised log output $logOutput")
+    }
+  }
 
   /* CONFIGURATION */
 

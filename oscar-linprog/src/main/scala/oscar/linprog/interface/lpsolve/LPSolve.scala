@@ -203,13 +203,6 @@ class LPSolve extends MPSolverInterface with MIPSolverInterface {
       s"$solverName: the number of constraints contained by the raw solver does not correspond to the number of constraints added.")
   }
 
-  def exportModel(filepath: Path, format: ModelExportFormat): Unit =
-    format match {
-      case LP => rawSolver.writeLp(filepath.toString) // Note: this is lp_solve's own lp format which is different from CPLEX's one.
-      case MPS => rawSolver.writeFreeMps(filepath.toString)
-      case _ => println(s"Unrecognised export format $format")
-    }
-
   private var _endStatus: Option[EndStatus] = None
 
   def endStatus: EndStatus = _endStatus match {
@@ -265,14 +258,31 @@ class LPSolve extends MPSolverInterface with MIPSolverInterface {
 
   def abort(): Unit = aborted = true
 
-  var _released = false
-
-  def release(): Unit = {
-    _released = true
+  override def release(): Unit = {
     rawSolver.deleteLp()
+    super.release()
   }
 
-  def released: Boolean = _released
+
+  /* LOGGING */
+
+  def exportModel(filepath: Path, format: ModelExportFormat): Unit =
+    format match {
+      case LP => rawSolver.writeLp(filepath.toString) // Note: this is lp_solve's own lp format which is different from CPLEX's one.
+      case MPS => rawSolver.writeFreeMps(filepath.toString)
+      case _ => println(s"Unrecognised export format $format")
+    }
+
+  override def setLogOutput(logOutput: LogOutput): Unit = {
+    super.setLogOutput(logOutput)
+
+    logOutput match {
+      case DisabledLogOutput => throw new IllegalArgumentException("Impossible to disable the log output of lp_solve. Try changing the verbosity.")
+      case StandardLogOutput => rawSolver.setOutputfile("")
+      case FileLogOutput(path) => rawSolver.setOutputfile(path.toString)
+      case _ => println(s"Unrecognised log output $logOutput")
+    }
+  }
 
 
   /* CONFIGURATION */
