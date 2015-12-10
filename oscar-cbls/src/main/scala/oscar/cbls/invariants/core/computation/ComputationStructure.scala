@@ -115,6 +115,10 @@ case class Store(override val verbose:Boolean = false,
     Solution(assignationInt,assignationIntSet,this)
   }
 
+  def snapShot(toRecordInt:Iterable[ChangingIntValue],
+               toRecordSet:Iterable[ChangingSetValue]) =
+    new Snapshot(toRecordInt,toRecordSet,this)
+
   /**To restore a saved solution
     * notice that only the variables that are not derived will be restored; others will be derived lazily at the next propagation wave.
     * This enables invariants to rebuild their internal data structure if needed.
@@ -275,6 +279,37 @@ case class Solution(assignationInt:List[(ChangingIntValue,Int)],
       acc += v._1.name + ":=" + (if (v._2.isEmpty){"null"}else{"{" + v._2.foldLeft("")((acc,intval) => if(acc.equalsIgnoreCase("")) ""+intval else acc+","+intval) + "}"})
     }
     acc + ")"
+  }
+}
+
+/**
+ * a snapshot is moreless the same as a solution, except that the snapshot can be queried for the value of the variables.
+ * there is an overhead in creating a snapshot because it cretes a dictionary to store the values.
+ * @param toRecordInt the Int values to save
+ * @param toRecordSet the set values to save
+ * @param model
+ */
+class Snapshot(toRecordInt:Iterable[ChangingIntValue],
+               toRecordSet:Iterable[ChangingSetValue],
+               val model:Store) {
+
+  val intDico: SortedMap[ChangingIntValue, Int] = SortedMap.empty[ChangingIntValue,Int] ++ toRecordInt.map(v => ((v, v.value)))
+  val setDico: SortedMap[ChangingSetValue, SortedSet[Int]] = SortedMap.empty[ChangingSetValue,SortedSet[Int]] ++ toRecordSet.map(v => ((v, v.value)))
+
+  def restoreDecisionVariables() {
+    for ((intVar, int) <- intDico) {
+      intVar match {
+        case i: CBLSIntVar if i.isDecisionVariable => i := int
+        case _ => ;
+      }
+    }
+
+    for ((setVar, set) <- setDico) {
+      setVar match {
+        case s: CBLSSetVar if s.isDecisionVariable => s := set
+        case _ => ;
+      }
+    }
   }
 }
 
