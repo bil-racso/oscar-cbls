@@ -213,8 +213,6 @@ class Gurobi(_env: Option[GRBEnv] = None) extends MPSolverInterface with MIPSolv
   def abort(): Unit = aborted = true
 
   override def release(): Unit = {
-    super.release()
-
     rawSolver.dispose()
     // If the environment was self-made, release it also.
     // Otherwise, it is the responsibility of the user to release it.
@@ -222,6 +220,7 @@ class Gurobi(_env: Option[GRBEnv] = None) extends MPSolverInterface with MIPSolv
       env.release()
       env.dispose()
     }
+    super.release()
   }
 
 
@@ -248,7 +247,7 @@ class Gurobi(_env: Option[GRBEnv] = None) extends MPSolverInterface with MIPSolv
     super.setLogOutput(logOutput)
 
     logOutput match {
-      case o: DisabledLogOutput =>
+      case DisabledLogOutput =>
         env.set(GRB.IntParam.OutputFlag, 0)
         env.set(GRB.IntParam.LogToConsole, 0)
         env.set(GRB.StringParam.LogFile, "")
@@ -256,10 +255,10 @@ class Gurobi(_env: Option[GRBEnv] = None) extends MPSolverInterface with MIPSolv
         env.set(GRB.IntParam.OutputFlag, 1)
         env.set(GRB.IntParam.LogToConsole, 1)
         env.set(GRB.StringParam.LogFile, "")
-      case f: FileLogOutput =>
+      case FileLogOutput(path) =>
         env.set(GRB.IntParam.OutputFlag, 1)
         env.set(GRB.IntParam.LogToConsole, 0)
-        env.set(GRB.StringParam.LogFile, f.path.toString)
+        env.set(GRB.StringParam.LogFile, path.toString)
       case _ => println(s"Unrecognised log output $logOutput")
     }
   }

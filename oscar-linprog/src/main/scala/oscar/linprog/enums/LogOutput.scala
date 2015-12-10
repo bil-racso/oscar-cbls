@@ -23,7 +23,7 @@ class NullOutputStream extends java.io.OutputStream {
  * Basically wraps a [[NullOutputStream]]
  * so that the log is not written.
  */
-class DisabledLogOutput extends LogOutput(new NullOutputStream) {
+case object DisabledLogOutput extends LogOutput(new NullOutputStream) {
   def close() = stream.close()
 
   override def toString = "disabled"
@@ -50,7 +50,7 @@ case class FileLogOutput(path: java.nio.file.Path) extends LogOutput(new FileOut
 }
 
 object LogOutput {
-  def disabled = new DisabledLogOutput
+  def disabled = DisabledLogOutput
 
   /**
    * Returns the "standard" log output, that is the console.
