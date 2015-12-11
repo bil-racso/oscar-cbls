@@ -390,6 +390,8 @@ abstract class BestNeighborhoodFirst(l:List[Neighborhood],
                                      tabuLength:Int,
                                      overrideTabuOnFullExhaust:Int)
   extends NeighborhoodCombinator(l:_*) {
+  require(overrideTabuOnFullExhaust < tabuLength)
+
   protected var it = 0
   protected def bestKey(p:Profile):Int
 
@@ -406,7 +408,7 @@ abstract class BestNeighborhoodFirst(l:List[Neighborhood],
   }
   private def updateTabu(): Unit ={
     it +=1
-    while(tabu(tabuNeighborhoods.getFirst) <= it){
+    while(tabuNeighborhoods.nonEmpty && tabu(tabuNeighborhoods.getFirst) <= it){
       neighborhoodHeap.insert(tabuNeighborhoods.popFirst())
     }
   }
@@ -427,7 +429,7 @@ abstract class BestNeighborhoodFirst(l:List[Neighborhood],
    */
   override def getMove(obj: Objective, acceptanceCriterion: (Int, Int) => Boolean): SearchResult = {
     updateTabu()
-    while(true){
+    while(!neighborhoodHeap.isEmpty){
       val headID = neighborhoodHeap.getFirst
       val headNeighborhood = neighborhoodArray(headID)
       headNeighborhood.getMove(obj,acceptanceCriterion) match{
@@ -442,6 +444,7 @@ abstract class BestNeighborhoodFirst(l:List[Neighborhood],
     //ok, we try again with tabu, overriding tabu as allowed
     if(tabuNeighborhoods.nonEmpty && tabu(tabuNeighborhoods.getFirst) <= it + overrideTabuOnFullExhaust){
       neighborhoodHeap.insert(tabuNeighborhoods.popFirst())
+      it -=1
       getMove(obj,acceptanceCriterion)
     }else{
       NoMoveFound
