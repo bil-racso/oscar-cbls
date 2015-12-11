@@ -16,7 +16,7 @@
  */
 package oscar.cbls.search.combinators
 
-import oscar.cbls.invariants.core.algo.heap.BinomialHeapWithMove
+import oscar.cbls.invariants.core.algo.heap.{BinomialHeap, BinomialHeapWithMove}
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.objective.{CascadingObjective, Objective}
 import oscar.cbls.search.core.{NoMoveFound, _}
@@ -49,6 +49,11 @@ abstract class NeighborhoodCombinator(a: Neighborhood*) extends Neighborhood {
   override def toString: String = this.getClass.getSimpleName + "(" + a.mkString(",") + ")"
 
   override def collectProfilingStatistics: List[String] = a.flatMap(_.collectProfilingStatistics).toList
+}
+
+abstract class NeighborhoodCombinatorNoProfile(a: Neighborhood*) extends NeighborhoodCombinator(a:_*){
+  override def collectProfilingStatistics: List[String] = List.empty
+  override def resetStatistics(){}
 }
 
 class BasicSaveBest(a: Neighborhood, o: Objective) extends NeighborhoodCombinator(a) {
@@ -365,6 +370,86 @@ class LearningRandom(l:List[Neighborhood],
     currentRandom.getMove(obj,acceptanceCriterion)
   }
 }
+
+
+class BestSlopeFirst(l:List[Neighborhood],
+                     tabuLength:Int,
+                     overrideTabuOnFullExhaust:Int)
+  extends BestNeighborhoodFirst(l, tabuLength, overrideTabuOnFullExhaust){
+  override protected def bestKey(p:Profile):Int = -(p.slopeForCombinators())
+}
+
+class FastestFirst(l:List[Neighborhood],
+                   tabuLength:Int,
+                   overrideTabuOnFullExhaust:Int)
+  extends BestNeighborhoodFirst(l, tabuLength, overrideTabuOnFullExhaust){
+  override protected def bestKey(p:Profile):Int = -(p.slopeForCombinators())
+}
+
+abstract class BestNeighborhoodFirst(l:List[Neighborhood],
+                                     tabuLength:Int,
+                                     overrideTabuOnFullExhaust:Int)
+  extends NeighborhoodCombinator(l:_*) {
+  protected var it = 0
+  protected def bestKey(p:Profile):Int
+
+  protected val neighborhoodArray: Array[Profile] = l.map(Profile(_)).toArray
+  protected val tabu:Array[Int] = Array.fill(neighborhoodArray.length)(0)
+  protected var tabuNeighborhoods = new BinomialHeap[Int](tabu(_),tabu.length)
+
+  protected val neighborhoodHeap = new BinomialHeapWithMove[Int]((neighborhoodID:Int) => bestKey(neighborhoodArray(neighborhoodID)), neighborhoodArray.length)
+  neighborhoodArray.indices.foreach(neighborhoodHeap.insert(_))
+
+  private def getBestNeighborhooID:Int = neighborhoodHeap.getFirst
+  private def updateNeighborhodPerformances(neighborhooID:Int){
+    neighborhoodHeap.notifyChange(neighborhooID)
+  }
+  private def updateTabu(): Unit ={
+    it +=1
+    while(tabu(tabuNeighborhoods.getFirst) <= it){
+      neighborhoodHeap.insert(tabuNeighborhoods.popFirst())
+    }
+  }
+
+  protected def makeTabu(neighborhooID:Int): Unit ={
+    neighborhoodHeap.delete(neighborhooID)
+    tabu(neighborhooID) = it + tabuLength
+    tabuNeighborhoods.insert(neighborhooID)
+  }
+
+  /**
+   * the method that returns a move from the neighborhood.
+   * The returned move should typically be accepted by the acceptance criterion over the objective function.
+   * Some neighborhoods are actually jumps, so that they might violate this basic rule however.
+   * @param obj the objective function. notice that it is actually a function. if you have an [[oscar.cbls.objective.Objective]] there is an implicit conversion available
+   * @param acceptanceCriterion
+   * @return
+   */
+  override def getMove(obj: Objective, acceptanceCriterion: (Int, Int) => Boolean): SearchResult = {
+    updateTabu()
+    while(true){
+      val headID = neighborhoodHeap.getFirst
+      val headNeighborhood = neighborhoodArray(headID)
+      headNeighborhood.getMove(obj,acceptanceCriterion) match{
+        case NoMoveFound =>
+          makeTabu(headID)
+        case MoveFound(m) =>
+          neighborhoodHeap.notifyChange(headID)
+          return MoveFound(m)
+      }
+    }
+
+    //ok, we try again with tabu, overriding tabu as allowed
+    if(tabuNeighborhoods.nonEmpty && tabu(tabuNeighborhoods.getFirst) <= it + overrideTabuOnFullExhaust){
+      neighborhoodHeap.insert(tabuNeighborhoods.popFirst())
+      getMove(obj,acceptanceCriterion)
+    }else{
+      NoMoveFound
+    }
+  }
+}
+
+
 
 /**
  * this combinator sequentially tries all neighborhoods until one move is found
@@ -788,10 +873,8 @@ object RoundRobinNoParam {
  * @author renaud.delandtsheer@cetic.be
  */
 case class AndThen(a: Neighborhood, b: Neighborhood, maximalIntermediaryDegradation: Int = Int.MaxValue)
-  extends NeighborhoodCombinator(a, b) {
+  extends NeighborhoodCombinatorNoProfile(a, b) {
 
-  override def collectProfilingStatistics: List[String] = List.empty
-  
   override def getMove(obj: Objective, acceptanceCriteria: (Int, Int) => Boolean): SearchResult = {
 
     var secondMove: Move = null //the move performed by b
@@ -846,11 +929,9 @@ case class AndThen(a: Neighborhood, b: Neighborhood, maximalIntermediaryDegradat
 case class DynAndThen[FirstMoveType<:Move](a:Neighborhood with SupportForAndThenChaining[FirstMoveType],
                                            b:(FirstMoveType => Neighborhood),
                                            maximalIntermediaryDegradation: Int = Int.MaxValue)
-  extends NeighborhoodCombinator(a) with SupportForAndThenChaining[CompositeMove]{
+  extends NeighborhoodCombinatorNoProfile(a) with SupportForAndThenChaining[CompositeMove]{
 
   var currentB:Neighborhood = null
-
-  override def collectProfilingStatistics: List[String] = List.empty
 
   override def getMove(obj: Objective, acceptanceCriteria: (Int, Int) => Boolean): SearchResult = {
 
@@ -929,7 +1010,7 @@ case class DynAndThenWithPrev[FirstMoveType<:Move](x:Neighborhood with SupportFo
                                                    b:((FirstMoveType,Snapshot) => Neighborhood),
                                                    maximalIntermediaryDegradation:Int = Int.MaxValue,
                                                    intValuesToSave:Iterable[ChangingIntValue],
-                                                   setValuesToSave:Iterable[ChangingSetValue]) extends NeighborhoodCombinator(x){
+                                                   setValuesToSave:Iterable[ChangingSetValue]) extends NeighborhoodCombinatorNoProfile(x){
 
   val instrumentedA = new SnapShotOnEntry(x,intValuesToSave,setValuesToSave) with SupportForAndThenChaining[FirstMoveType]{
     override def instantiateCurrentMove(newObj: Int): FirstMoveType = x.instantiateCurrentMove(newObj)
@@ -940,7 +1021,6 @@ case class DynAndThenWithPrev[FirstMoveType<:Move](x:Neighborhood with SupportFo
     maximalIntermediaryDegradation)
 
   override def getMove(obj: Objective, acceptanceCriterion: (Int, Int) => Boolean): SearchResult = slave.getMove(obj,acceptanceCriterion)
-  override def collectProfilingStatistics: List[String] = List.empty
 }
 
 
@@ -1267,7 +1347,7 @@ case class Profile(a:Neighborhood,ignoreInitialObj:Boolean = false) extends Neig
   var nbCalls = 0
   var nbFound = 0
   var totalGain = 0
-  var totalTimeSpentMoveFound = 0
+  var totalTimeSpentMoveFound:Long = 0
   var totalTimeSpentNoMoveFound:Long = 0
 
   def totalTimeSpent = totalTimeSpentMoveFound + totalTimeSpentNoMoveFound
@@ -1333,7 +1413,7 @@ case class Profile(a:Neighborhood,ignoreInitialObj:Boolean = false) extends Neig
 
   def slopeOrZero:Int = if(totalTimeSpent == 0) 0 else ((100 * totalGain) / totalTimeSpent).toInt
 
-  def slopeForCombinators:Float =  if(totalTimeSpent == 0) Int.MaxValue else ((100 * totalGain) / totalTimeSpent)
+  def slopeForCombinators(defaultIfNoCall:Int = Int.MaxValue):Int =  if(totalTimeSpent == 0) defaultIfNoCall else ((100 * totalGain) / totalTimeSpent).toInt
 }
 
 object Profile{
