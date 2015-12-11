@@ -371,17 +371,16 @@ class LearningRandom(l:List[Neighborhood],
   }
 }
 
-
 class BestSlopeFirst(l:List[Neighborhood],
-                     tabuLength:Int,
-                     overrideTabuOnFullExhaust:Int)
+                     tabuLength:Int = 10,
+                     overrideTabuOnFullExhaust:Int = 9)
   extends BestNeighborhoodFirst(l, tabuLength, overrideTabuOnFullExhaust){
   override protected def bestKey(p:Profile):Int = -(p.slopeForCombinators())
 }
 
 class FastestFirst(l:List[Neighborhood],
-                   tabuLength:Int,
-                   overrideTabuOnFullExhaust:Int)
+                   tabuLength:Int = 10,
+                   overrideTabuOnFullExhaust:Int = 9)
   extends BestNeighborhoodFirst(l, tabuLength, overrideTabuOnFullExhaust){
   override protected def bestKey(p:Profile):Int = -(p.slopeForCombinators())
 }
@@ -390,7 +389,7 @@ abstract class BestNeighborhoodFirst(l:List[Neighborhood],
                                      tabuLength:Int,
                                      overrideTabuOnFullExhaust:Int)
   extends NeighborhoodCombinator(l:_*) {
-  require(overrideTabuOnFullExhaust < tabuLength)
+  require(overrideTabuOnFullExhaust < tabuLength, "overrideTabuOnFullExhaust should be < tabuLength")
 
   protected var it = 0
   protected def bestKey(p:Profile):Int
@@ -409,7 +408,9 @@ abstract class BestNeighborhoodFirst(l:List[Neighborhood],
   private def updateTabu(): Unit ={
     it +=1
     while(tabuNeighborhoods.nonEmpty && tabu(tabuNeighborhoods.getFirst) <= it){
-      neighborhoodHeap.insert(tabuNeighborhoods.popFirst())
+      val newNonTabu = tabuNeighborhoods.popFirst()
+      neighborhoodArray(newNonTabu).reset()
+      neighborhoodHeap.insert(newNonTabu)
     }
   }
 
@@ -443,7 +444,9 @@ abstract class BestNeighborhoodFirst(l:List[Neighborhood],
 
     //ok, we try again with tabu, overriding tabu as allowed
     if(tabuNeighborhoods.nonEmpty && tabu(tabuNeighborhoods.getFirst) <= it + overrideTabuOnFullExhaust){
-      neighborhoodHeap.insert(tabuNeighborhoods.popFirst())
+      val newNonTabu = tabuNeighborhoods.popFirst()
+      neighborhoodArray(newNonTabu).reset()
+      neighborhoodHeap.insert(newNonTabu)
       it -=1
       getMove(obj,acceptanceCriterion)
     }else{
