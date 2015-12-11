@@ -16,6 +16,7 @@
  */
 package oscar.cbls.search.combinators
 
+import oscar.cbls.invariants.core.algo.heap.BinomialHeapWithMove
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.objective.{CascadingObjective, Objective}
 import oscar.cbls.search.core.{NoMoveFound, _}
@@ -362,11 +363,6 @@ class LearningRandom(l:List[Neighborhood],
     }
     stepsBeforeUpdate -=1
     currentRandom.getMove(obj,acceptanceCriterion)
-  }
-
-  //this resets the internal state of the move combinators
-  override def reset(): Unit ={
-    super.reset()
   }
 }
 
@@ -794,6 +790,8 @@ object RoundRobinNoParam {
 case class AndThen(a: Neighborhood, b: Neighborhood, maximalIntermediaryDegradation: Int = Int.MaxValue)
   extends NeighborhoodCombinator(a, b) {
 
+  override def collectProfilingStatistics: List[String] = List.empty
+  
   override def getMove(obj: Objective, acceptanceCriteria: (Int, Int) => Boolean): SearchResult = {
 
     var secondMove: Move = null //the move performed by b
@@ -851,6 +849,8 @@ case class DynAndThen[FirstMoveType<:Move](a:Neighborhood with SupportForAndThen
   extends NeighborhoodCombinator(a) with SupportForAndThenChaining[CompositeMove]{
 
   var currentB:Neighborhood = null
+
+  override def collectProfilingStatistics: List[String] = List.empty
 
   override def getMove(obj: Objective, acceptanceCriteria: (Int, Int) => Boolean): SearchResult = {
 
@@ -940,6 +940,7 @@ case class DynAndThenWithPrev[FirstMoveType<:Move](x:Neighborhood with SupportFo
     maximalIntermediaryDegradation)
 
   override def getMove(obj: Objective, acceptanceCriterion: (Int, Int) => Boolean): SearchResult = slave.getMove(obj,acceptanceCriterion)
+  override def collectProfilingStatistics: List[String] = List.empty
 }
 
 
@@ -1047,6 +1048,8 @@ class Name(a: Neighborhood, val name: String) extends NeighborhoodCombinator(a) 
       case MoveFound(m) => CompositeMove(List(m), m.objAfter, name)
     }
   }
+
+  override def toString: String = name
 }
 
 /**
@@ -1264,8 +1267,8 @@ case class Profile(a:Neighborhood,ignoreInitialObj:Boolean = false) extends Neig
   var nbCalls = 0
   var nbFound = 0
   var totalGain = 0
-  var totalTimeSpentMoveFound: Long = 0
-  var totalTimeSpentNoMoveFound:Long=0
+  var totalTimeSpentMoveFound:Long = 0
+  var totalTimeSpentNoMoveFound:Long = 0
 
   def totalTimeSpent = totalTimeSpentMoveFound + totalTimeSpentNoMoveFound
 
@@ -1329,6 +1332,8 @@ case class Profile(a:Neighborhood,ignoreInitialObj:Boolean = false) extends Neig
   override def toString: String = "Statistics(" + a + " nbCalls:" + nbCalls + " nbFound:" + nbFound + " totalGain:" + totalGain + " totalTimeSpent " + totalTimeSpent + " ms timeSpendWithMove:" + totalTimeSpentMoveFound + " ms totalTimeSpentNoMoveFound " + totalTimeSpentNoMoveFound + " ms)"
 
   def slopeOrZero:Int = if(totalTimeSpent == 0) 0 else ((100 * totalGain) / totalTimeSpent).toInt
+
+  def slopeForCombinators:Float =  if(totalTimeSpent == 0) Int.MaxValue else ((100 * totalGain) / totalTimeSpent)
 }
 
 object Profile{

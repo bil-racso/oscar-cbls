@@ -103,9 +103,9 @@ object SwapInsert {
                             symmetryClassesOnInsert: Option[Int => Int] = None,
                             hotRestartOnRemove: Boolean = true,
                             vrp:VRP with NodesOfVehicle with PositionInRouteAndRouteNr,
-                            neighborhoodName: String = "SwapInsert",
+                            neighborhoodName: String = "SwapInsertSameVehicle",
                             maximalIntermediaryDegradation: Int = Int.MaxValue){
-    DynAndThenWithPrev(RemovePoint(predecessorsOfRoutedPointsToRemove, vrp, "SwapInsert.Remove", best, hotRestartOnRemove),
+    DynAndThenWithPrev(RemovePoint(predecessorsOfRoutedPointsToRemove, vrp, "SwapInsertSameVehicle.Remove", best, hotRestartOnRemove),
       (r:RemovePointMove,snapShot:Snapshot) => {
         val removedPoint = r.removedPoint
         val vehicleTraversingRemovedPoint = snapShot.intDico(vrp.routeNr(removedPoint))
@@ -113,7 +113,7 @@ object SwapInsert {
         InsertPoint(()=>unroutedNodesToInsert(vehicleTraversingRemovedPoint),
           () => insertionPoints(remainingNodesOfThisVehicle), //where do you want to insert them?
           vrp,
-          "SwapInsert.Insert",
+          "SwapInsertSameVehicle.Insert",
           best,
           false,
           symmetryClassesOnInsert,
