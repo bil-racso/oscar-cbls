@@ -859,7 +859,9 @@ case object DummyKeyForElementRemoval extends KeyForElementRemoval(null, null) {
  */
 trait BasicPropagationElement {
 
-  protected[propagation] def registerStaticallyListeningElement(listening: PropagationElement) {}
+  protected[propagation] def registerStaticallyListeningElement(listening: PropagationElement): Unit = {
+    //TODO: here, we should add this to the listening in order to use our symmetry detction framework
+  }
 
   /**
    * only if the listening is not varying its dependencies
