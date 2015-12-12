@@ -86,7 +86,7 @@ class VRP(val N: Int, val V: Int, val m: Store) {
    * @param n the point queried.
    * @return true if the point is still routed, else false.
    */
-  def isRouted(n: Int): Boolean = { next(n).value != N }
+  def isRouted(n: Int): Boolean = { next(n).getValue(true) != N }
 
   /**
    * This function is intended to be used for testing only.

@@ -249,7 +249,11 @@ case class ThreeOptMove(beforeStart: Int,
                         override val objAfter: Int,
                         override val neighborhood:ThreeOpt,
                         override val neighborhoodName:String = null)
-  extends VRPMove(objAfter, neighborhood, neighborhoodName) {
+  extends VRPMove(objAfter, neighborhood, neighborhoodName) with HotSpottingInfo{
+
+  override def stablePointsOfImpactedVehicles: List[Int] = List(beforeStart,insertionPoint)
+
+  override def unroutedPoints: List[Int] = Nil
 
   // overriding methods
   override def encodeMove() {

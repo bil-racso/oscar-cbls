@@ -1,6 +1,6 @@
 package oscar.cbls.routing.neighborhood
 
-import oscar.cbls.routing.model.{NodesOfVehicle, PositionInRouteAndRouteNr, VRP}
+import oscar.cbls.routing.model.{HotSpottingInfo, NodesOfVehicle, PositionInRouteAndRouteNr, VRP}
 import oscar.cbls.search.algo.{Pairs, HotRestart}
 import scala.collection.immutable.{SortedMap, SortedSet}
 
@@ -110,7 +110,11 @@ case class SegmentExchangeMove(beforeFirstSegment: Int,endFirstSegment: Int,reve
                                beforeSecondSegment: Int, endSecondSegment: Int, reverseSecondSegment:Boolean,
                                override val objAfter: Int,override val neighborhood:SegmentExchange,
                                override val neighborhoodName:String = null)
-  extends VRPMove(objAfter, neighborhood, neighborhoodName) {
+  extends VRPMove(objAfter, neighborhood, neighborhoodName) with HotSpottingInfo{
+
+  override def stablePointsOfImpactedVehicles: List[Int] = List(beforeFirstSegment,beforeSecondSegment)
+
+  override def unroutedPoints: List[Int] = Nil
 
   // overriding methods
   override def encodeMove() {

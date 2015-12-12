@@ -103,7 +103,6 @@ case class TwoOpt(predecesorOfFirstMovedPoint:()=>Iterable[Int],
   }
 }
 
-
 /**
  * Models a two-opt-move operator of a given VRP problem.
  * @param fstPred the start of first edge that we remove.
@@ -120,8 +119,12 @@ case class TwoOptMove(
   override val objAfter: Int,
   override val neighborhood:TwoOpt,
   override val neighborhoodName:String = null)
-  extends VRPMove(objAfter, neighborhood, neighborhoodName) {
-  // overriding methods
+  extends VRPMove(objAfter, neighborhood, neighborhoodName) with HotSpottingInfo{
+
+  override def stablePointsOfImpactedVehicles: List[Int] = List(fstPred)
+
+  override def unroutedPoints: List[Int] = Nil
+
   override def encodeMove() {
     neighborhood.encode(fstPred, sndPred)
   }

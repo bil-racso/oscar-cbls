@@ -25,8 +25,7 @@
 
 package oscar.cbls.routing.neighborhood
 
-import oscar.cbls.routing.model.PositionInRouteAndRouteNr
-import oscar.cbls.routing.model.VRP
+import oscar.cbls.routing.model.{HotSpottingInfo, PositionInRouteAndRouteNr, VRP}
 import oscar.cbls.search.algo.HotRestart
 import oscar.cbls.search.move.Move
 
@@ -116,7 +115,12 @@ case class OnePointMoveMove(predOfMovedPoint: Int,
                             insertionPoint: Int,
                             override val objAfter: Int,
                             override val neighborhood: OnePointMove,
-                            override val neighborhoodName: String = null) extends VRPMove(objAfter, neighborhood, neighborhoodName) {
+                            override val neighborhoodName: String = null) extends VRPMove(objAfter, neighborhood, neighborhoodName) with HotSpottingInfo{
+
+
+  override def stablePointsOfImpactedVehicles: List[Int] = List(predOfMovedPoint,insertionPoint)
+
+  override def unroutedPoints: List[Int] = Nil
 
   override def encodeMove() {
     neighborhood.encode(predOfMovedPoint, insertionPoint)

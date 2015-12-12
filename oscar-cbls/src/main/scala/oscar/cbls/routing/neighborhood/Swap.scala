@@ -117,7 +117,11 @@ case class SwapMove(fstPred: Int,
                     sndPred: Int,
                     override val objAfter: Int,
                     override val neighborhood:Swap,
-                    override val neighborhoodName:String = null) extends VRPMove(objAfter, neighborhood, neighborhoodName) {
+                    override val neighborhoodName:String = null) extends VRPMove(objAfter, neighborhood, neighborhoodName) with HotSpottingInfo{
+
+  override def stablePointsOfImpactedVehicles: List[Int] = List(fstPred,sndPred)
+
+  override def unroutedPoints: List[Int] = Nil
 
   def encodeMove() {
     neighborhood.encode(fstPred, sndPred)
