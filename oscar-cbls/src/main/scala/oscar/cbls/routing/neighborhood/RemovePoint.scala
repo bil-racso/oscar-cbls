@@ -105,7 +105,7 @@ case class RemovePointMove(
                         override val objAfter: Int,
                         override val neighborhood:RemovePoint,
                         override val neighborhoodName:String = null)
-  extends VRPMove(objAfter, neighborhood, neighborhoodName) with HotSpottingInfo{
+  extends VRPMove(objAfter, neighborhood, neighborhoodName){
 
   override def stablePointsOfImpactedVehicles: List[Int] = List(beforeRemovedPoint)
 

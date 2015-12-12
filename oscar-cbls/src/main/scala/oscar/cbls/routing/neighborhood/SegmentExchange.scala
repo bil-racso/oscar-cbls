@@ -110,7 +110,7 @@ case class SegmentExchangeMove(beforeFirstSegment: Int,endFirstSegment: Int,reve
                                beforeSecondSegment: Int, endSecondSegment: Int, reverseSecondSegment:Boolean,
                                override val objAfter: Int,override val neighborhood:SegmentExchange,
                                override val neighborhoodName:String = null)
-  extends VRPMove(objAfter, neighborhood, neighborhoodName) with HotSpottingInfo{
+  extends VRPMove(objAfter, neighborhood, neighborhoodName){
 
   override def stablePointsOfImpactedVehicles: List[Int] = List(beforeFirstSegment,beforeSecondSegment)
 

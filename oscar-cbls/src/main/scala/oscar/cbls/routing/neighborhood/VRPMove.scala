@@ -1,14 +1,14 @@
 package oscar.cbls.routing.neighborhood
 
 import oscar.cbls.invariants.core.computation.{CBLSIntVar, Variable}
-import oscar.cbls.routing.model.VRP
+import oscar.cbls.routing.model.{HotSpottingInfo, VRP}
 import oscar.cbls.search.core.EasyNeighborhood
 import oscar.cbls.search.move.Move
 
 abstract class VRPMove(override val objAfter: Int,
                        val neighborhood: EasyRoutingNeighborhood[_],
                        override val neighborhoodName:String = null)
-  extends Move(objAfter, neighborhoodName) {
+  extends Move(objAfter, neighborhoodName) with HotSpottingInfo{
 
   /** to actually take the move */
   override def commit(){

@@ -207,7 +207,7 @@ case class InsertPointMove(beforeInsertedPoint: Int,
                            override val objAfter: Int,
                            override val neighborhood: BaseInsertPoint,
                            override val neighborhoodName: String = null)
-  extends VRPMove(objAfter, neighborhood, neighborhoodName) with HotSpottingInfo{
+  extends VRPMove(objAfter, neighborhood, neighborhoodName){
 
   override def stablePointsOfImpactedVehicles: List[Int] = List(beforeInsertedPoint)
 

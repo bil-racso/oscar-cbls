@@ -117,7 +117,7 @@ case class SwapMove(fstPred: Int,
                     sndPred: Int,
                     override val objAfter: Int,
                     override val neighborhood:Swap,
-                    override val neighborhoodName:String = null) extends VRPMove(objAfter, neighborhood, neighborhoodName) with HotSpottingInfo{
+                    override val neighborhoodName:String = null) extends VRPMove(objAfter, neighborhood, neighborhoodName){
 
   override def stablePointsOfImpactedVehicles: List[Int] = List(fstPred,sndPred)
 
