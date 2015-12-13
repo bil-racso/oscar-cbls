@@ -7,11 +7,12 @@ import oscar.algo.array.ArrayStackDouble
 import oscar.sat.constraints.Clause
 import oscar.sat.heuristics.Heuristic
 import oscar.sat.constraints.Constraint
+import oscar.algo.array.ArrayQueueInt
 
 /** @author Renaud Hartert ren.hartert@gmail.com */
 
 class CDCLStore {
-  
+
   protected var heuristic: Heuristic = null
 
   // Clauses and literals
@@ -26,14 +27,14 @@ class CDCLStore {
   protected var variableDecay: Double = 0.5
 
   // Watchers of each literal
-  private[this] val watchers: ArrayStack[ArrayQueue[Clause]] = new ArrayStack(128)
-  
+  private[this] val watchers: ArrayStack[Watchers] = new ArrayStack(128)
+
   // Trailing queue  
   private[this] val trail: ArrayStackInt = new ArrayStackInt(100)
   private[this] val trailLevels: ArrayStackInt = new ArrayStackInt(100)
 
   // Propagation queue
-  private[this] val queue: ArrayQueue[Int] = new ArrayQueue(128)
+  private[this] val queue: ArrayQueueInt = new ArrayQueueInt(128)
 
   // Variables structure
   private[this] var values: Array[LiftedBoolean] = new Array(128)
@@ -41,19 +42,19 @@ class CDCLStore {
   private[this] var levels: Array[Int] = new Array(128)
   private[this] var activities: Array[Double] = new Array(128)
   protected var varStoreSize: Int = 0
-  
+
   /** Returns the clause responsible of the assignment */
   @inline final def assignReason(varId: Int): Constraint = reasons(varId)
-  
+
   @inline final def isAssigned(varId: Int): Boolean = values(varId) != Unassigned
-  
+
   @inline final def isTrue(varId: Int): Boolean = values(varId) == True
-  
+
   @inline final def isFalse(varId: Int): Boolean = values(varId) == False
-  
+
   @inline final def varActivity(varId: Int): Double = activities(varId)
-  
-  final def newVar(name: String): Int = {
+
+  final def newVar(): Int = {
     if (varStoreSize == values.length) growVariableStore()
     val varId = varStoreSize
     values(varId) = Unassigned
@@ -61,26 +62,25 @@ class CDCLStore {
     levels(varId) = -1
     activities(varId) = 0.0
     varStoreSize += 1
-    watchers.append(new ArrayQueue[Clause](16))
-    watchers.append(new ArrayQueue[Clause](16))
+    watchers.append(new Watchers(16))
+    watchers.append(new Watchers(16))
     varId
   }
 
   @inline final def watch(clause: Clause, literal: Int): Unit = {
-    watchers(literal).addLast(clause)
+    watchers(literal).enqueue(clause)
   }
-  
+
   protected def recordNogood(literals: Array[Int]): Boolean = {
-    
+
     assert(literals != null)
     assert(literals.length > 0)
-    
+
     if (literals.length == 1) enqueue(literals(0), null) // Unit fact
     else {
       // Allocate clause
-      val clause = new Clause(this, literals, true)
-      
-      
+      val clause = Clause(this, literals, true)
+
       // Pick a second literal to watch
       var maxLit = 0
       var max = -1
@@ -104,10 +104,10 @@ class CDCLStore {
         varBumpActivity(literals(i))
         i += 1
       }
-      
-      watchers(literals(0) ^ 1).addLast(clause)
-      watchers(literals(1) ^ 1).addLast(clause)
-      
+
+      watchers(literals(0) ^ 1).enqueue(clause)
+      watchers(literals(1) ^ 1).enqueue(clause)
+
       // Add clause to learnt
       learntClauses.append(clause)
       enqueue(literals(0), clause)
@@ -115,22 +115,22 @@ class CDCLStore {
   }
 
   final def newClause(literals: Array[Int]): Boolean = {
-  
+
     // check for initial satisfiability
 
     if (literals.length == 0) true
     else if (literals.length == 1) enqueue(literals(0), null) // Unit fact
     else {
       // Allocate clause
-      val clause = new Clause(this, literals, false)
+      val clause = Clause(this, literals, false)
       constraints.append(clause)
-      watchers(literals(0) ^ 1).addLast(clause)
-      watchers(literals(1) ^ 1).addLast(clause)
+      watchers(literals(0) ^ 1).enqueue(clause)
+      watchers(literals(1) ^ 1).enqueue(clause)
       true
     }
   }
 
-  /** 
+  /**
    *  Empty the propagation queue
    *  Return the inconsistent clause if any
    */
@@ -139,11 +139,11 @@ class CDCLStore {
     while (!queue.isEmpty && failReason == null) {
       val literal = queue.removeFirst()
       val constraints = watchers(literal)
-      val nConstrains = constraints.size
+      val nConstrains = constraints.length
       var i = nConstrains
       while (i > 0 && failReason == null) {
         i -= 1
-        val constraint = constraints.removeFirst()
+        val constraint = constraints.dequeue()
         val consistent = constraint.propagate(literal)
         if (!consistent) failReason = constraint
       }
@@ -197,26 +197,28 @@ class CDCLStore {
   final def varBumpActivity(literal: Int): Unit = {
     val varId = literal / 2
     activities(varId) += variableStep
+    val before = activities(varId)
     heuristic.updateActivity(varId)
     if (activities(varId) >= scaleLimit) {
       varRescaleActivity()
+      println("before : " + before + " after : " + activities(varId) + " step : " + variableStep)
     }
   }
 
   final def varRescaleActivity(): Unit = {
     var i = 0
     while (i < varStoreSize) {
-      activities(i) /= scaleLimit    
+      activities(i) /= scaleLimit
       heuristic.updateActivity(i)
       i += 1
     }
   }
-  
+
   final def nAssigns(): Int = trail.size
   final def nVars(): Int = varStoreSize
 
   final def varDecayActivity(): Unit = variableStep *= variableDecay
-  
+
   final def decayActivities(): Unit = {
     varDecayActivity()
     claDecayActivity()
@@ -224,11 +226,10 @@ class CDCLStore {
 
   // ANALYZE
 
-  
   // These structures are used to build the nogood returned by a conflict analysis.
   private[this] val outLearnt: ArrayStackInt = new ArrayStackInt(16)
   private[this] val pReason: ArrayStackInt = new ArrayStackInt(16)
-  
+
   private[this] final var outBacktsLevel: Int = -1
 
   final def decisionLevel: Int = trailLevels.size
@@ -244,7 +245,7 @@ class CDCLStore {
     levels(varId) = -1
     heuristic.undo(varId)
   }
-  
+
   protected def analyze(initConflict: Constraint): Unit = {
 
     val seen: Array[Boolean] = new Array(values.size) // FIXME
@@ -282,11 +283,11 @@ class CDCLStore {
         conflict = reasons(p / 2)
         undoOne()
       } while (!seen(p / 2))
-        
+
       counter -= 1
-      
+
     } while (counter > 0)
-      
+
     outLearnt(0) = p ^ 1
   }
 
@@ -302,18 +303,18 @@ class CDCLStore {
       undoOne()
     }
   }
-  
+
   @inline protected def cancelUntil(level: Int): Unit = {
     while (trailLevels.size > level) cancel()
   }
-  
+
   protected def handleConflict(constraint: Constraint): Unit = {
     analyze(constraint)
     cancelUntil(outBacktsLevel)
     recordNogood(outLearnt.toArray)
     decayActivities()
   }
-  
+
   protected def untrailAll(): Unit = {
     while (trailLevels.size > 0) cancel()
   }
@@ -325,7 +326,7 @@ class CDCLStore {
       i += 1
     }
   }
-  
+
   // Used to adapt the length of inner structures.
   @inline private def growVariableStore(): Unit = {
     val newSize = varStoreSize * 2

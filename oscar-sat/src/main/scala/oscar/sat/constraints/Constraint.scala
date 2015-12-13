@@ -13,4 +13,6 @@ abstract class Constraint {
   def explainAll(outReason: ArrayStackInt): Unit
 
   def propagate(literal: Int): Boolean
+  
+  def isDeleted = false
 }

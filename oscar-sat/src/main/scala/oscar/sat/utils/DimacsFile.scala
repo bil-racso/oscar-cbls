@@ -10,7 +10,7 @@ class DimacsFile(final val nClauses: Int, final val nVariables: Int, final val c
   final def model: CDCLSolver = {
     val solver = new CDCLSolver()
     // Creates literals
-    val literals = Array.tabulate(nVariables)(i => solver.newVar((i+1).toString))
+    val literals = Array.tabulate(nVariables)(i => solver.newVar())
     // Creates clauses
     Array.tabulate(nClauses)(c => {
       val clause = clauses(c).map(i => {

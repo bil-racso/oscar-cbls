@@ -1,69 +1,37 @@
 package oscar.sat.constraints
 
-import oscar.sat.core.CDCLStore
-import oscar.sat.core.True
-import oscar.sat.core.False
-import oscar.algo.array.ArrayStack
 import oscar.algo.array.ArrayStackInt
+import oscar.sat.core.CDCLStore
 
-class Clause(solver: CDCLStore, literals: Array[Int], learnt: Boolean) extends Constraint {
+abstract class Clause extends Constraint {
 
-  var activity: Double = 0
+  def activity: Double
   
-  def locked: Boolean = solver.assignReason(literals(0) / 2) == this
+  def activity_=(d: Double): Unit
 
-  def remove(): Unit = Unit
+  def remove(): Unit
 
-  def simplify(): Boolean = true
+  def simplify(): Boolean
   
-  def explain(outReason: ArrayStackInt): Unit = {
-    var i = 1
-    while (i < literals.length) {
-      outReason.append(literals(i) ^ 1)
-      i += 1
-    }
-    if (learnt) solver.claBumpActivity(this)
+  def explain(outReason: ArrayStackInt): Unit
+  
+  def explainAll(outReason: ArrayStackInt): Unit
+
+  def propagate(literal: Int): Boolean
+}
+
+object Clause {
+  
+  def apply(solver: CDCLStore, literals: Array[Int], learnt: Boolean): Clause = {
+    if (literals.length == 2) binary(solver, literals(0), literals(1), learnt)
+    else watchLiterals(solver, literals, learnt)
   }
   
-  def explainAll(outReason: ArrayStackInt): Unit = {
-        var i = 0
-    while (i < literals.length) {
-      outReason.append(literals(i) ^ 1)
-      i += 1
-    }
-    if (learnt) solver.claBumpActivity(this)
-  }
-
-  def propagate(literal: Int): Boolean = {
-    // Make sure the false literal is literals(1)
-    if (literals(0) == (literal ^ 1)) {
-      literals(0) = literals(1)
-      literals(1) = literal ^ 1
-    }
-
-    // If 0th watch is true, then clause is already satisfied
-    if (solver.litValue(literals(0)) == True) {
-      solver.watch(this, literal)
-      return true
-    }
-
-    // Look for a new literal to watch
-    var i = 2
-    while (i < literals.length) {
-      if (solver.litValue(literals(i)) != False) {
-        literals(1) = literals(i)
-        literals(i) = literal ^ 1
-        solver.watch(this, literals(1) ^ 1)
-        return true
-      }
-      i += 1
-    }
-    
-    // Clause is unit under assignment
-    solver.watch(this, literal)
-    solver.enqueue(literals(0), this)
+  def watchLiterals(solver: CDCLStore, literals: Array[Int], learnt: Boolean): Clause = {
+    new WLClause(solver, literals, learnt)
   }
   
-  final override def toString: String = literals.mkString(" ")
-
+  def binary(solver: CDCLStore, lit1: Int, lit2: Int, learnt: Boolean): Clause = {
+    new BinaryClause(solver, lit1, lit2, learnt)
+  }
 }

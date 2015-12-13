@@ -15,22 +15,13 @@ object TestGraph extends App {
   val solved = solver.solve(heuristic)
   val t1 = System.nanoTime() - t0
 
-  // Out
-  val solution = solver.solution
-  println("satisfiable : " + solved)
-  println("verified    : " + instance.verify(solution))
-  println("#variables  : " + instance.nVariables)
-  println("#clauses    : " + instance.nClauses)
-  println("#conflicts  : " + solver.totalConfict)
-  println("time (ms)   : " + (t1 / 1000000))
   
   var nSols = 0
-
   while (solver.solve(heuristic)) {
     
     nSols += 1
 
-    for (j <- 0 to 90 by 10) {
+    /*for (j <- 0 to 90 by 10) {
       for (i <- 0 to 9) {
         if (solver.solution(j + i)) print("X ") else print(". ")
       }
@@ -39,7 +30,7 @@ object TestGraph extends App {
 
     println()
     println("--------------------")
-    println()
+    println()*/
 
     solver.newClause(Array.tabulate(100)(i => {
       if (solver.solution(i)) i * 2 + 1
@@ -47,6 +38,10 @@ object TestGraph extends App {
     }))
   }
   
+    // Out
+  println("#solutions  : " + nSols)
+  println("#variables  : " + instance.nVariables)
+  println("#clauses    : " + instance.nClauses)
   println("#conflicts  : " + solver.totalConfict)
-  println(nSols)
+  println("time (ms)   : " + (t1 / 1000000.0)) 
 }

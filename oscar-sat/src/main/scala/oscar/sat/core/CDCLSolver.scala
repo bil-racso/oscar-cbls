@@ -27,8 +27,8 @@ class CDCLSolver extends CDCLStore {
   final def search(nofConflict: Int, initVarDecay: Double, initClaDecay: Double): LiftedBoolean = {
     
     var conflictC = 0
-    variableDecay = 1 / initVarDecay
-    activityDecay = 1 / initClaDecay
+    variableDecay = initVarDecay
+    activityDecay = initClaDecay
     
     heuristic.init()
     
