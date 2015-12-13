@@ -4,10 +4,11 @@ import oscar.algo.array.ArrayQueue
 import oscar.algo.array.ArrayStack
 import oscar.algo.array.ArrayStackInt
 import oscar.algo.array.ArrayStackDouble
-import oscar.sat.constraints.Clause
+import oscar.sat.constraints.clauses.Clause
 import oscar.sat.heuristics.Heuristic
 import oscar.sat.constraints.Constraint
 import oscar.algo.array.ArrayQueueInt
+import oscar.sat.constraints.nogoods.Nogood
 
 /** @author Renaud Hartert ren.hartert@gmail.com */
 
@@ -17,7 +18,7 @@ class CDCLStore {
 
   // Clauses and literals
   protected[this] val constraints: ArrayStack[Constraint] = new ArrayStack(128)
-  private[this] val learntClauses: ArrayStack[Clause] = new ArrayStack(128)
+  private[this] val learntClauses: ArrayStack[Nogood] = new ArrayStack(128)
 
   // Activity and Decay
   private final val scaleLimit: Double = 1000000
@@ -26,7 +27,7 @@ class CDCLStore {
   protected var variableStep: Double = 0.5
   protected var variableDecay: Double = 0.5
 
-  // Watchers of each literal
+  // Watchers of each literal used by clause and nogoods
   private[this] val watchers: ArrayStack[Watchers] = new ArrayStack(128)
 
   // Trailing queue  
@@ -79,7 +80,7 @@ class CDCLStore {
     if (literals.length == 1) enqueue(literals(0), null) // Unit fact
     else {
       // Allocate clause
-      val clause = Clause(this, literals, true)
+      val clause = Nogood(this, literals)
 
       // Pick a second literal to watch
       var maxLit = 0
@@ -122,7 +123,7 @@ class CDCLStore {
     else if (literals.length == 1) enqueue(literals(0), null) // Unit fact
     else {
       // Allocate clause
-      val clause = Clause(this, literals, false)
+      val clause = Clause(this, literals)
       constraints.append(clause)
       watchers(literals(0) ^ 1).enqueue(clause)
       watchers(literals(1) ^ 1).enqueue(clause)
@@ -152,20 +153,21 @@ class CDCLStore {
     failReason
   }
 
-  final def enqueue(literal: Int, from: Clause): Boolean = {
-    val varId = literal / 2
-    val lboolean = litValue(literal)
-    if (lboolean != Unassigned) {
-      if (lboolean == False) false
-      else true
+  final def enqueue(litId: Int, from: Clause): Boolean = {
+    val varId = litId / 2
+    val value = values(varId)
+    val unsigned = (litId & 1) == 0
+    if (value != Unassigned) {
+      if (unsigned) value == True
+      else value == False
     } else {
       // new fact to store
-      if ((literal & 1) == 1) values(varId) = False
-      else values(varId) = True
+      if (unsigned) values(varId) = True
+      else values(varId) = False
       levels(varId) = trailLevels.size
       reasons(varId) = from
-      trail.push(literal)
-      queue.addLast(literal)
+      trail.push(litId)
+      queue.addLast(litId)
       true
     }
   }
@@ -177,9 +179,9 @@ class CDCLStore {
     else assigned
   }
 
-  final def claBumpActivity(clause: Clause): Unit = {
-    clause.activity += activityStep
-    if (clause.activity >= scaleLimit) {
+  final def claBumpActivity(nogood: Nogood): Unit = {
+    nogood.activity += activityStep
+    if (nogood.activity >= scaleLimit) {
       varRescaleActivity()
     }
   }
@@ -197,11 +199,9 @@ class CDCLStore {
   final def varBumpActivity(literal: Int): Unit = {
     val varId = literal / 2
     activities(varId) += variableStep
-    val before = activities(varId)
     heuristic.updateActivity(varId)
     if (activities(varId) >= scaleLimit) {
       varRescaleActivity()
-      println("before : " + before + " after : " + activities(varId) + " step : " + variableStep)
     }
   }
 
@@ -230,8 +230,6 @@ class CDCLStore {
   private[this] val outLearnt: ArrayStackInt = new ArrayStackInt(16)
   private[this] val pReason: ArrayStackInt = new ArrayStackInt(16)
 
-  private[this] final var outBacktsLevel: Int = -1
-
   final def decisionLevel: Int = trailLevels.size
 
   // TRAIL
@@ -246,16 +244,16 @@ class CDCLStore {
     heuristic.undo(varId)
   }
 
-  protected def analyze(initConflict: Constraint): Unit = {
+  protected def analyze(initConflict: Constraint): Int = {
 
     val seen: Array[Boolean] = new Array(values.size) // FIXME
     var counter = 0
     var p: Int = -1
     var conflict: Constraint = initConflict
+    var outBacktsLevel = 0
 
     outLearnt.clear()
     outLearnt.append(-1) // leave a room for the asserting literal
-    outBacktsLevel = 0
 
     do {
 
@@ -289,6 +287,7 @@ class CDCLStore {
     } while (counter > 0)
 
     outLearnt(0) = p ^ 1
+    outBacktsLevel
   }
 
   @inline def assume(literal: Int): Boolean = {
@@ -309,22 +308,14 @@ class CDCLStore {
   }
 
   protected def handleConflict(constraint: Constraint): Unit = {
-    analyze(constraint)
-    cancelUntil(outBacktsLevel)
+    val backtrackLevel = analyze(constraint)
+    cancelUntil(backtrackLevel)
     recordNogood(outLearnt.toArray)
     decayActivities()
   }
 
   protected def untrailAll(): Unit = {
     while (trailLevels.size > 0) cancel()
-  }
-
-  final def print: Unit = {
-    var i = 0
-    while (i < values.size) {
-      println(values(i))
-      i += 1
-    }
   }
 
   // Used to adapt the length of inner structures.

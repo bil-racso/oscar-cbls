@@ -1,19 +1,13 @@
-package oscar.sat.constraints
+package oscar.sat.constraints.clauses
 
 import oscar.sat.core.CDCLStore
 import oscar.sat.core.True
-import oscar.sat.core.False
-import oscar.algo.array.ArrayStack
 import oscar.algo.array.ArrayStackInt
 
-class BinaryClause(solver: CDCLStore, _lit1: Int, _lit2: Int, learnt: Boolean) extends Clause {
+class BinaryClause(solver: CDCLStore, _lit1: Int, _lit2: Int) extends Clause {
 
-  private[this] var lit1: Int = _lit1
+  private[this] var lit1: Int = _lit1 // the unit literal
   private[this] var lit2: Int = _lit2
-  
-  final override var activity: Double = 0
-  
-  final override def locked: Boolean = solver.assignReason(lit1 / 2) == this
 
   final override def remove(): Unit = Unit
 
@@ -21,13 +15,11 @@ class BinaryClause(solver: CDCLStore, _lit1: Int, _lit2: Int, learnt: Boolean) e
   
   final override def explain(outReason: ArrayStackInt): Unit = {
     outReason.append(lit2 ^ 1)
-    if (learnt) solver.claBumpActivity(this)
   }
   
   final override def explainAll(outReason: ArrayStackInt): Unit = {
     outReason.append(lit1 ^ 1)
     outReason.append(lit2 ^ 1)
-    if (learnt) solver.claBumpActivity(this)
   }
 
   final override def propagate(literal: Int): Boolean = {
@@ -41,9 +33,8 @@ class BinaryClause(solver: CDCLStore, _lit1: Int, _lit2: Int, learnt: Boolean) e
     // Keep watching the literal
     solver.watch(this, literal)
     
-    // Entailed or unit
-    if (solver.litValue(lit1) == True) true
-    else solver.enqueue(lit1, this)
+    // Propagate
+    solver.enqueue(lit1, this)
   }
   
   final override def toString: String = lit1 + " " + lit2
