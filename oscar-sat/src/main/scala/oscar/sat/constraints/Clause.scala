@@ -6,7 +6,7 @@ import oscar.sat.core.False
 import oscar.algo.array.ArrayStack
 import oscar.algo.array.ArrayStackInt
 
-class Clause(solver: CDCLStore, literals: Array[Int], learnt: Boolean) {
+class Clause(solver: CDCLStore, literals: Array[Int], learnt: Boolean) extends Constraint {
 
   var activity: Double = 0
   

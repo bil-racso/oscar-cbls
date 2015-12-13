@@ -6,7 +6,7 @@ import oscar.algo.array.ArrayStackInt
 import oscar.algo.array.ArrayStackDouble
 import oscar.sat.constraints.Clause
 import oscar.sat.heuristics.Heuristic
-import oscar.sat.heuristics.Heuristic
+import oscar.sat.constraints.Constraint
 
 /** @author Renaud Hartert ren.hartert@gmail.com */
 
@@ -15,7 +15,7 @@ class CDCLStore {
   private var heuristic: Heuristic = null
 
   // Clauses and literals
-  private[this] val problemClauses: ArrayStack[Clause] = new ArrayStack(128)
+  private[this] val constraints: ArrayStack[Constraint] = new ArrayStack(128)
   private[this] val learntClauses: ArrayStack[Clause] = new ArrayStack(128)
 
   // Activity and Decay
@@ -37,13 +37,13 @@ class CDCLStore {
 
   // Variables structure
   private[this] var values: Array[LiftedBoolean] = new Array(128)
-  private[this] var reasons: Array[Clause] = new Array(128)
+  private[this] var reasons: Array[Constraint] = new Array(128)
   private[this] var levels: Array[Int] = new Array(128)
   private[this] var activities: Array[Double] = new Array(128)
   private[this] var varStoreSize: Int = 0
   
   /** Returns the clause responsible of the assignment */
-  @inline final def assignReason(varId: Int): Clause = reasons(varId)
+  @inline final def assignReason(varId: Int): Constraint = reasons(varId)
   
   @inline final def isAssigned(varId: Int): Boolean = values(varId) != Unassigned
   
@@ -62,54 +62,64 @@ class CDCLStore {
     varId
   }
 
-  
   @inline final def watch(clause: Clause, literal: Int): Unit = {
     watchers(literal).addLast(clause)
   }
   
-  final def newClause(literals: Array[Int]): Boolean = newClause(literals, false)
+  private def recordNogood(literals: Array[Int]): Boolean = {
+    
+    assert(literals != null)
+    assert(literals.length > 0)
+    
+    if (literals.length == 1) enqueue(literals(0), null) // Unit fact
+    else {
+      // Allocate clause
+      val clause = new Clause(this, literals, true)
+      
+      
+      // Pick a second literal to watch
+      var maxLit = 0
+      var max = -1
+      var j = 1
+      while (j < literals.length) {
+        val level = levels(literals(j) / 2)
+        if (max < level) {
+          max = level
+          maxLit = j
+        }
+        j += 1
+      }
+      val tmp = literals(1)
+      literals(1) = literals(maxLit)
+      literals(maxLit) = tmp
 
-  final def newClause(literals: Array[Int], learnt: Boolean): Boolean = {
-
-    if (!learnt) {
-      // check for initial satisfiability
+      // Bumping
+      claBumpActivity(clause)
+      var i = 0
+      while (i < literals.length) {
+        varBumpActivity(literals(i))
+        i += 1
+      }
+      
+      watchers(literals(0) ^ 1).addLast(clause)
+      watchers(literals(1) ^ 1).addLast(clause)
+      
+      // Add clause to learnt
+      learntClauses.append(clause)
+      enqueue(literals(0), clause)
     }
+  }
+
+  final def newClause(literals: Array[Int]): Boolean = {
+  
+    // check for initial satisfiability
 
     if (literals.length == 0) true
     else if (literals.length == 1) enqueue(literals(0), null) // Unit fact
     else {
       // Allocate clause
-      val clause = new Clause(this, literals, learnt)
-      if (learnt) {
-        // Add clause to learnt
-        learntClauses.append(clause)
-        // Pick a second literal to watch
-        var maxLit = 0
-        var max = -1
-        var j = 1
-        while (j < literals.length) {
-          val level = levels(literals(j) / 2)
-          if (max < level) {
-            max = level
-            maxLit = j
-          }
-          j += 1
-        }
-        val tmp = literals(1)
-        literals(1) = literals(maxLit)
-        literals(maxLit) = tmp
-
-        // Bumping
-        claBumpActivity(clause)
-        var i = 0
-        while (i < literals.length) {
-          varBumpActivity(literals(i))
-          i += 1
-        }
-      }
-      else {
-        problemClauses.append(clause)
-      }
+      val clause = new Clause(this, literals, false)
+      constraints.append(clause)
       watchers(literals(0) ^ 1).addLast(clause)
       watchers(literals(1) ^ 1).addLast(clause)
       true
@@ -120,18 +130,18 @@ class CDCLStore {
    *  Empty the propagation queue
    *  Return the inconsistent clause if any
    */
-  final def propagate(): Clause = {
-    var failReason: Clause = null
-    while (!queue.isEmpty) {
-      val literal = queue.removeFirst
-      val clauses = watchers(literal)
-      val nClauses = clauses.size
-      var i = clauses.size
+  final def propagate(): Constraint = {
+    var failReason: Constraint = null
+    while (!queue.isEmpty && failReason == null) {
+      val literal = queue.removeFirst()
+      val constraints = watchers(literal)
+      val nConstrains = constraints.size
+      var i = nConstrains
       while (i > 0 && failReason == null) {
         i -= 1
-        val clause = clauses.removeFirst()
-        val consistent = clause.propagate(literal)
-        if (!consistent) failReason = clause
+        val constraint = constraints.removeFirst()
+        val consistent = constraint.propagate(literal)
+        if (!consistent) failReason = constraint
       }
     }
     queue.clear()
@@ -222,7 +232,7 @@ class CDCLStore {
         else {
           analyze(conflict)
           cancelUntil(outBacktsLevel)
-          record(outLearnt.toArray)
+          recordNogood(outLearnt.toArray)
           decayActivities()
         }
       }
@@ -273,12 +283,12 @@ class CDCLStore {
   
   private[this] final var outBacktsLevel: Int = -1
   
-  private def analyze(initConflict: Clause): Unit = {
+  private def analyze(initConflict: Constraint): Unit = {
 
     val seen: Array[Boolean] = new Array(values.size) // FIXME
     var counter = 0
     var p: Int = -1
-    var conflict: Clause = initConflict
+    var conflict: Constraint = initConflict
 
     outLearnt.clear()
     outLearnt.append(-1) // leave a room for the asserting literal
@@ -316,12 +326,6 @@ class CDCLStore {
     } while (counter > 0)
       
     outLearnt(0) = p ^ 1
-  }
-
-  final def record(literals: Array[Int]): Unit = {
-    newClause(literals, true)
-    val clause = learntClauses.top
-    enqueue(literals(0), clause)
   }
 
   final def decisionLevel: Int = trailLevels.size
@@ -366,7 +370,7 @@ class CDCLStore {
   final def solve(h: Heuristic): Boolean = {
     heuristic = h
     var nofConflicts = 100
-    var nofLearnts = problemClauses.size / 3
+    var nofLearnts = constraints.size / 3
     var status: LiftedBoolean = Unassigned
     
     while (status == Unassigned) {
@@ -383,7 +387,7 @@ class CDCLStore {
   @inline private def growVariableStore(): Unit = {
     val newSize = varStoreSize * 2
     val newValues = new Array[LiftedBoolean](newSize)
-    val newReasons = new Array[Clause](newSize)
+    val newReasons = new Array[Constraint](newSize)
     val newLevels = new Array[Int](newSize)
     val newActivities = new Array[Double](newSize)
     System.arraycopy(values, 0, newValues, 0, varStoreSize)
