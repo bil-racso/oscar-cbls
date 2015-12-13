@@ -9,13 +9,13 @@ import oscar.algo.array.ArrayStackInt
 final class WLNogood(solver: CDCLStore, literals: Array[Int]) extends Nogood {
 
   override var activity: Double = 0
-  
+
   override def locked: Boolean = solver.assignReason(literals(0) / 2) == this
 
   override def remove(): Unit = Unit
 
   override def simplify(): Boolean = true
-  
+
   override def explain(outReason: ArrayStackInt): Unit = {
     var i = 1
     while (i < literals.length) {
@@ -24,14 +24,47 @@ final class WLNogood(solver: CDCLStore, literals: Array[Int]) extends Nogood {
     }
     solver.claBumpActivity(this)
   }
-  
+
   override def explainAll(outReason: ArrayStackInt): Unit = {
-        var i = 0
+    var i = 0
     while (i < literals.length) {
       outReason.append(literals(i) ^ 1)
       i += 1
     }
     solver.claBumpActivity(this)
+  }
+
+  override def setup(): Boolean = {
+
+    // Pick a second literal to watch
+    var maxLit = 0
+    var max = -1
+    var j = 1
+    while (j < literals.length) {
+      val level = solver.level(literals(j) / 2)
+      if (max < level) {
+        max = level
+        maxLit = j
+      }
+      j += 1
+    }
+    val tmp = literals(1)
+    literals(1) = literals(maxLit)
+    literals(maxLit) = tmp
+
+    // Bumping
+    solver.claBumpActivity(this)
+    var i = 0
+    while (i < literals.length) {
+      solver.varBumpActivity(literals(i))
+      i += 1
+    }
+
+    solver.watch(this, literals(0) ^ 1)
+    solver.watch(this, literals(1) ^ 1)
+
+    // Propagate
+    solver.enqueue(literals(0), this)
   }
 
   override def propagate(literal: Int): Boolean = {
@@ -58,11 +91,11 @@ final class WLNogood(solver: CDCLStore, literals: Array[Int]) extends Nogood {
       }
       i += 1
     }
-    
+
     // Clause is unit under assignment
     solver.watch(this, literal)
     solver.enqueue(literals(0), this)
   }
-  
+
   override def toString: String = literals.mkString(" ")
 }

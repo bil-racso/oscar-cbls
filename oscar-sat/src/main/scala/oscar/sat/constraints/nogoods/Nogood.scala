@@ -1,10 +1,12 @@
 package oscar.sat.constraints.nogoods
 
-import oscar.sat.constraints.clauses.Clause
 import oscar.algo.array.ArrayStackInt
+import oscar.sat.constraints.clauses.Clause
 import oscar.sat.core.CDCLStore
 
 abstract class Nogood extends Clause {
+  
+  def setup(): Boolean
   
   def activity: Double
   
@@ -14,11 +16,6 @@ abstract class Nogood extends Clause {
 }
 
 object Nogood {
-  
-  def apply(solver: CDCLStore, literals: Array[Int]): Nogood = {
-    if (literals.length == 2) binary(solver, literals(0), literals(1))
-    else watchLiterals(solver, literals)
-  }
   
   def apply(solver: CDCLStore, literals: ArrayStackInt): Nogood = {
     if (literals.length == 2) binary(solver, literals(0), literals(1))

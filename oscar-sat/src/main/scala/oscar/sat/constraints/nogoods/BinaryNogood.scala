@@ -20,11 +20,25 @@ final class BinaryNogood(solver: CDCLStore, _lit1: Int, _lit2: Int) extends Nogo
     outReason.append(lit2 ^ 1)
   }
   
-  final override def explainAll(outReason: ArrayStackInt): Unit = {
+  override def explainAll(outReason: ArrayStackInt): Unit = {
     outReason.append(lit1 ^ 1)
     outReason.append(lit2 ^ 1)
   }
 
+  override def setup(): Boolean = {
+      // Bumping
+      solver.claBumpActivity(this)
+      solver.varBumpActivity(lit1)
+      solver.varBumpActivity(lit1)
+
+      // Watch   
+      solver.watch(this, lit1 ^ 1)
+      solver.watch(this, lit2 ^ 1)
+
+      // Propagate
+      solver.enqueue(lit1, this)
+  }
+  
   override def propagate(literal: Int): Boolean = {
     
     // Make sure the false literal is lit2

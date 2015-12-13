@@ -54,6 +54,8 @@ class CDCLStore {
   @inline final def isFalse(varId: Int): Boolean = values(varId) == False
 
   @inline final def varActivity(varId: Int): Double = activities(varId)
+  
+  @inline final def level(varId: Int): Int = levels(varId)
 
   final def newVar(): Int = {
     if (varStoreSize == values.length) growVariableStore()
@@ -72,46 +74,15 @@ class CDCLStore {
     watchers(literal).enqueue(clause)
   }
 
-  protected def recordNogood(literals: Array[Int]): Boolean = {
-
-    assert(literals != null)
-    assert(literals.length > 0)
-
-    if (literals.length == 1) enqueue(literals(0), null) // Unit fact
+  private def recordNogood(): Boolean = {
+    assert(outLearnt != null)
+    assert(outLearnt.length > 0)
+    if (outLearnt.length == 1) enqueue(outLearnt(0), null) // Unit fact
     else {
-      // Allocate clause
-      val clause = Nogood(this, literals)
-
-      // Pick a second literal to watch
-      var maxLit = 0
-      var max = -1
-      var j = 1
-      while (j < literals.length) {
-        val level = levels(literals(j) / 2)
-        if (max < level) {
-          max = level
-          maxLit = j
-        }
-        j += 1
-      }
-      val tmp = literals(1)
-      literals(1) = literals(maxLit)
-      literals(maxLit) = tmp
-
-      // Bumping
-      claBumpActivity(clause)
-      var i = 0
-      while (i < literals.length) {
-        varBumpActivity(literals(i))
-        i += 1
-      }
-
-      watchers(literals(0) ^ 1).enqueue(clause)
-      watchers(literals(1) ^ 1).enqueue(clause)
-
-      // Add clause to learnt
-      learntClauses.append(clause)
-      enqueue(literals(0), clause)
+      // Allocate nogood
+      val nogood = Nogood(this, outLearnt)
+      learntClauses.append(nogood)
+      nogood.setup()
     }
   }
 
@@ -310,7 +281,7 @@ class CDCLStore {
   protected def handleConflict(constraint: Constraint): Unit = {
     val backtrackLevel = analyze(constraint)
     cancelUntil(backtrackLevel)
-    recordNogood(outLearnt.toArray)
+    recordNogood()
     decayActivities()
   }
 
