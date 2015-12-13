@@ -12,18 +12,18 @@ import oscar.sat.constraints.Constraint
 
 class CDCLStore {
   
-  private var heuristic: Heuristic = null
+  protected var heuristic: Heuristic = null
 
   // Clauses and literals
-  private[this] val constraints: ArrayStack[Constraint] = new ArrayStack(128)
+  protected[this] val constraints: ArrayStack[Constraint] = new ArrayStack(128)
   private[this] val learntClauses: ArrayStack[Clause] = new ArrayStack(128)
 
   // Activity and Decay
   private final val scaleLimit: Double = 1000000
-  private[this] var activityStep: Double = 0.5
-  private[this] var activityDecay: Double = 0.5
-  private[this] var variableStep: Double = 0.5
-  private[this] var variableDecay: Double = 0.5
+  protected var activityStep: Double = 0.5
+  protected var activityDecay: Double = 0.5
+  protected var variableStep: Double = 0.5
+  protected var variableDecay: Double = 0.5
 
   // Watchers of each literal
   private[this] val watchers: ArrayStack[ArrayQueue[Clause]] = new ArrayStack(128)
@@ -40,12 +40,16 @@ class CDCLStore {
   private[this] var reasons: Array[Constraint] = new Array(128)
   private[this] var levels: Array[Int] = new Array(128)
   private[this] var activities: Array[Double] = new Array(128)
-  private[this] var varStoreSize: Int = 0
+  protected var varStoreSize: Int = 0
   
   /** Returns the clause responsible of the assignment */
   @inline final def assignReason(varId: Int): Constraint = reasons(varId)
   
   @inline final def isAssigned(varId: Int): Boolean = values(varId) != Unassigned
+  
+  @inline final def isTrue(varId: Int): Boolean = values(varId) == True
+  
+  @inline final def isFalse(varId: Int): Boolean = values(varId) == False
   
   @inline final def varActivity(varId: Int): Double = activities(varId)
   
@@ -66,7 +70,7 @@ class CDCLStore {
     watchers(literal).addLast(clause)
   }
   
-  private def recordNogood(literals: Array[Int]): Boolean = {
+  protected def recordNogood(literals: Array[Int]): Boolean = {
     
     assert(literals != null)
     assert(literals.length > 0)
@@ -208,62 +212,6 @@ class CDCLStore {
     }
   }
   
-  var solution: Array[Boolean] = null
-  var totalConfict = 0
-  
-  final def search(nofConflict: Int, initVarDecay: Double, initClaDecay: Double): LiftedBoolean = {
-    
-    var conflictC = 0
-    variableDecay = 1 / initVarDecay
-    activityDecay = 1 / initClaDecay
-    
-    heuristic.init()
-    
-    var complete = false
-    
-    while (!complete) {
-      val conflict = propagate()
-      
-      // Conflict to learn
-      if (conflict != null) {
-        conflictC += 1
-        totalConfict += 1
-        if (decisionLevel == 0) return False
-        else {
-          analyze(conflict)
-          cancelUntil(outBacktsLevel)
-          recordNogood(outLearnt.toArray)
-          decayActivities()
-        }
-      }
-      // No conflict
-      else {
-      
-        // No root simplification
-        // No filtering of learnt clause
-        
-        if (nAssigns() == nVars) {
-          // Model found
-          solution = Array.tabulate(varStoreSize)(i => values(i) == True)
-          cancelUntil(0)
-          return True
-        }
-        else if (conflictC >= nofConflict) {
-          // Reached bound on number of conflicts
-          cancelUntil(0)
-          return Unassigned
-        }
-        else {
-          // Search heuristic
-          val literal = heuristic.nextLiteral()
-          assume(literal)
-        } 
-      }
-    }
-    
-    Unassigned
-  }
-  
   final def nAssigns(): Int = trail.size
   final def nVars(): Int = varStoreSize
 
@@ -282,8 +230,22 @@ class CDCLStore {
   private[this] val pReason: ArrayStackInt = new ArrayStackInt(16)
   
   private[this] final var outBacktsLevel: Int = -1
+
+  final def decisionLevel: Int = trailLevels.size
+
+  // TRAIL
+
+  @inline private def undoOne(): Unit = {
+    assert(trail.size > 0)
+    val literal = trail.pop()
+    val varId = literal / 2
+    values(varId) = Unassigned // unasign
+    reasons(varId) = null
+    levels(varId) = -1
+    heuristic.undo(varId)
+  }
   
-  private def analyze(initConflict: Constraint): Unit = {
+  protected def analyze(initConflict: Constraint): Unit = {
 
     val seen: Array[Boolean] = new Array(values.size) // FIXME
     var counter = 0
@@ -328,21 +290,7 @@ class CDCLStore {
     outLearnt(0) = p ^ 1
   }
 
-  final def decisionLevel: Int = trailLevels.size
-
-  // TRAIL
-
-  @inline private def undoOne(): Unit = {
-    assert(trail.size > 0)
-    val literal = trail.pop()
-    val varId = literal / 2
-    values(varId) = Unassigned // unasign
-    reasons(varId) = null
-    levels(varId) = -1
-    heuristic.undo(varId)
-  }
-
-  @inline private def assume(literal: Int): Boolean = {
+  @inline def assume(literal: Int): Boolean = {
     trailLevels.push(trail.size)
     enqueue(literal, null)
   }
@@ -355,8 +303,19 @@ class CDCLStore {
     }
   }
   
-  @inline private def cancelUntil(level: Int): Unit = {
+  @inline protected def cancelUntil(level: Int): Unit = {
     while (trailLevels.size > level) cancel()
+  }
+  
+  protected def handleConflict(constraint: Constraint): Unit = {
+    analyze(constraint)
+    cancelUntil(outBacktsLevel)
+    recordNogood(outLearnt.toArray)
+    decayActivities()
+  }
+  
+  protected def untrailAll(): Unit = {
+    while (trailLevels.size > 0) cancel()
   }
 
   final def print: Unit = {
@@ -367,23 +326,7 @@ class CDCLStore {
     }
   }
   
-  final def solve(h: Heuristic): Boolean = {
-    heuristic = h
-    var nofConflicts = 100
-    var nofLearnts = constraints.size / 3
-    var status: LiftedBoolean = Unassigned
-    
-    while (status == Unassigned) {
-      status = search(nofConflicts, 0.98, 0.999)
-      nofConflicts += nofConflicts/2
-      nofLearnts += nofLearnts/10
-    }
-    
-    cancelUntil(0)
-    status == True
-  }
-  
-    // Used to adapt the length of inner structures.
+  // Used to adapt the length of inner structures.
   @inline private def growVariableStore(): Unit = {
     val newSize = varStoreSize * 2
     val newValues = new Array[LiftedBoolean](newSize)

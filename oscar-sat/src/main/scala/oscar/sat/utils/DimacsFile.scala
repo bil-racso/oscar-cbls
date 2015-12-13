@@ -3,11 +3,12 @@ package oscar.sat.utils
 import scala.io.Source
 import oscar.sat.core.CDCLStore
 import oscar.sat.heuristics.ActivityHeuristic
+import oscar.sat.core.CDCLSolver
 
 class DimacsFile(final val nClauses: Int, final val nVariables: Int, final val clauses: Array[Array[Int]]) {
   
-  final def model: CDCLStore = {
-    val solver = new CDCLStore()
+  final def model: CDCLSolver = {
+    val solver = new CDCLSolver()
     // Creates literals
     val literals = Array.tabulate(nVariables)(i => solver.newVar((i+1).toString))
     // Creates clauses
