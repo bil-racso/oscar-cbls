@@ -4,8 +4,6 @@ import oscar.algo.array.ArrayStackInt
 
 abstract class Constraint {
 
-  def locked: Boolean
-
   def simplify(): Boolean
   
   def explain(outReason: ArrayStackInt): Unit

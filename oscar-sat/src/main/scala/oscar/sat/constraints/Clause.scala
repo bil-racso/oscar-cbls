@@ -5,6 +5,8 @@ import oscar.sat.core.CDCLStore
 
 abstract class Clause extends Constraint {
 
+  def locked: Boolean
+  
   def activity: Double
   
   def activity_=(d: Double): Unit
