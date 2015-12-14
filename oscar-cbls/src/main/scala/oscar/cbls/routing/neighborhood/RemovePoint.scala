@@ -41,7 +41,7 @@ import oscar.cbls.search.move.Move
  * @author Florent Ghilain (UMONS)
  */
 case class RemovePoint(predecessorsOfRoutedPointsToRemove:()=>Iterable[Int],
-                       vrp: VRP,
+                       override val vrp: VRP,
                        neighborhoodName:String = null,
                        best:Boolean = false,
                        hotRestart:Boolean = true) extends EasyRoutingNeighborhood[RemovePointMove](best,vrp, neighborhoodName) {
@@ -107,9 +107,7 @@ case class RemovePointMove(
                         override val neighborhoodName:String = null)
   extends VRPMove(objAfter, neighborhood, neighborhoodName){
 
-  override def stablePointsOfImpactedVehicles: List[Int] = List(beforeRemovedPoint)
-
-  override def unroutedPoints: List[Int] = List(removedPoint)
+  override def impactedPoints: List[Int] = List(beforeRemovedPoint,removedPoint)
 
   override def encodeMove() {
     neighborhood.encode(beforeRemovedPoint)

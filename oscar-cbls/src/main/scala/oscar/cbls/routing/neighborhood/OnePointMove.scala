@@ -38,7 +38,7 @@ import oscar.cbls.search.move.Move
  */
 case class OnePointMove(nodesPrecedingNodesToMove: () => Iterable[Int],
                         relevantNeighbors: () => Int => Iterable[Int],
-                        vrp: VRP with PositionInRouteAndRouteNr,
+                        override val vrp: VRP with PositionInRouteAndRouteNr,
                         neighborhoodName: String = null,
                         best: Boolean = false,
                         hotRestart: Boolean = true) extends EasyRoutingNeighborhood[OnePointMoveMove](best, vrp, neighborhoodName) {
@@ -117,10 +117,7 @@ case class OnePointMoveMove(predOfMovedPoint: Int,
                             override val neighborhood: OnePointMove,
                             override val neighborhoodName: String = null) extends VRPMove(objAfter, neighborhood, neighborhoodName){
 
-
-  override def stablePointsOfImpactedVehicles: List[Int] = List(predOfMovedPoint,insertionPoint)
-
-  override def unroutedPoints: List[Int] = Nil
+  override def impactedPoints: List[Int] = List(predOfMovedPoint,movedPoint,insertionPoint)
 
   override def encodeMove() {
     neighborhood.encode(predOfMovedPoint, insertionPoint)

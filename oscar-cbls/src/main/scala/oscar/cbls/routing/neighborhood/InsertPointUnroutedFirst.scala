@@ -51,7 +51,7 @@ import oscar.cbls.search.algo.{HotRestart, IdenticalAggregator}
  */
 case class InsertPointUnroutedFirst(unroutedNodesToInsert: () => Iterable[Int],
                        relevantNeighbors: () => Int => Iterable[Int],
-                       vrp: VRP,
+                       override val vrp: VRP,
                        neighborhoodName: String = "InsertPointUnroutedFirst",
                        best: Boolean = false,
                        hotRestart: Boolean = true,
@@ -123,7 +123,7 @@ case class InsertPointUnroutedFirst(unroutedNodesToInsert: () => Iterable[Int],
  */
 case class InsertPointRoutedFirst(insertionPoints:()=>Iterable[Int],
                                   unroutedNodesToInsert: () => Int => Iterable[Int],
-                                  vrp: VRP,
+                                  override val vrp: VRP,
                                   neighborhoodName: String = "InsertPointRoutedFirst",
                                   best: Boolean = false,
                                   hotRestart: Boolean = true,
@@ -209,9 +209,7 @@ case class InsertPointMove(beforeInsertedPoint: Int,
                            override val neighborhoodName: String = null)
   extends VRPMove(objAfter, neighborhood, neighborhoodName){
 
-  override def stablePointsOfImpactedVehicles: List[Int] = List(beforeInsertedPoint)
-
-  override def unroutedPoints: List[Int] = Nil
+  override def impactedPoints: List[Int] = List(beforeInsertedPoint,insertedPoint)
 
   override def encodeMove() {
     neighborhood.encode(beforeInsertedPoint, insertedPoint)

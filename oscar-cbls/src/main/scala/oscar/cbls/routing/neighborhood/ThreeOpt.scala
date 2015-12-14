@@ -43,7 +43,7 @@ import oscar.cbls.search.move.Move
  */
 case class ThreeOpt(potentialInsertionPoints:()=>Iterable[Int],
                     relevantNeighbors:()=>Int=>Iterable[Int],
-                    vrp: VRP with PositionInRouteAndRouteNr,
+                    override val vrp: VRP with PositionInRouteAndRouteNr,
                     neighborhoodName:String = "ThreeOpt",
                     best:Boolean = false,
                     hotRestart:Boolean = true,
@@ -251,9 +251,7 @@ case class ThreeOptMove(beforeStart: Int,
                         override val neighborhoodName:String = null)
   extends VRPMove(objAfter, neighborhood, neighborhoodName){
 
-  override def stablePointsOfImpactedVehicles: List[Int] = List(beforeStart,insertionPoint)
-
-  override def unroutedPoints: List[Int] = Nil
+  override def impactedPoints: List[Int] = List(beforeStart,segEndPoint,insertionPoint)
 
   // overriding methods
   override def encodeMove() {

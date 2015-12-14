@@ -21,7 +21,14 @@ trait HotSpot extends VRP with RoutedAndUnrouted with PositionInRouteAndRouteNr{
   }
 
   def updateHotSpotAfterMove(m: VRPMove with HotSpottingInfo){
-    val newStep = new HotSpotHistoryStep(m.stablePointsOfImpactedVehicles.map(node => routeNr(node).value),m.unroutedPoints)
+    val impacted = m.impactedPoints
+    val (unrouted,impactedVehicles) = impacted.foldLeft((List.empty[Int],List.empty[Int]))((acc,node) => {
+      val routeOfPoint = routeNr(node).value
+      if(routeOfPoint == V) ((node :: acc._1),acc._2)         //unrouted
+      else (acc._1,routeOfPoint :: acc._2)        //routed, vehicle V
+    })
+
+    val newStep = new HotSpotHistoryStep(impactedVehicles,unrouted)
     lastHotSpotStep.nextStep = newStep
     lastHotSpotStep = newStep
   }
@@ -32,19 +39,18 @@ trait HotSpot extends VRP with RoutedAndUnrouted with PositionInRouteAndRouteNr{
     lastHotSpotStep = newStep
   }
 
-  def newHotSpotView = new HotSpotView(this)
+  def newHotSpotView(hotRestart:Boolean) = new HotSpotView(this,hotRestart)
 }
 
 trait HotSpottingInfo{
-  def stablePointsOfImpactedVehicles:List[Int]
-  def unroutedPoints:List[Int]
+  def impactedPoints:List[Int]
 }
 
 case class HotSpotHistoryStep(updatedVehicles:List[Int]=Nil,
                               unroutedPoints:List[Int]=Nil,
                               var nextStep:HotSpotHistoryStep = null)
 
-class HotSpotView(vrp:VRP with HotSpot){
+class HotSpotView(vrp:VRP with HotSpot, hotRestart:Boolean){
 
   var hotVehiclesSet:SortedSet[Int] = SortedSet.empty[Int] ++ vrp.vehicles
   val hotVehicleQueue:Queue[Int] = new Queue[Int]
@@ -80,7 +86,7 @@ class HotSpotView(vrp:VRP with HotSpot){
     new HotspotIterableOnUnroutedNodesWithConsumption(vrp, this)
 
   def hotNodesByVehicleWithConsumption:Iterable[Int] =
-    new HotspotIterableOnRoutedNodesByVehicleWithConsumption(vrp,this)
+    new HotspotIterableOnRoutedNodesByVehicleWithConsumption(vrp, this)
 
   def updateFromHotSpot{
     while(lastDigestedUpdate.nextStep != null){
@@ -88,26 +94,21 @@ class HotSpotView(vrp:VRP with HotSpot){
       lastDigestedUpdate.updatedVehicles.foreach(setVehicleHot)
       lastDigestedUpdate.unroutedPoints.foreach(setUnroutedNodeHot)
     }
-  }
-
-  def rollHotVehicleForHotRestart(): Unit ={
-    hotVehicleQueue.enqueue(hotVehicleQueue.dequeue())
-  }
-  def rollHotUnroutedForHotRestart(): Unit ={
-    hotUnroutedPointsQueue.enqueue(hotUnroutedPointsQueue.dequeue())
+    if(hotRestart){
+      hotVehicleQueue.enqueue(hotVehicleQueue.dequeue())
+      hotUnroutedPointsQueue.enqueue(hotUnroutedPointsQueue.dequeue())
+    }
   }
 }
 
 class HotspotIterableOnRoutedNodesByVehicleWithConsumption(vrp:VRP,origin:HotSpotView) extends Iterable[Int]{
   override def iterator: Iterator[Int] = {
-    origin.rollHotUnroutedForHotRestart()
     new RoutedNodeIteratorWithConsumption(vrp:VRP,origin:HotSpotView)
   }
 }
 
 class HotspotIterableOnUnroutedNodesWithConsumption(vrp:VRP,origin:HotSpotView) extends Iterable[Int]{
   override def iterator: Iterator[Int] = {
-    origin.rollHotVehicleForHotRestart()
     new UnroutedIteratorWithConsumption(vrp: VRP, origin: HotSpotView)
   }
 }

@@ -112,9 +112,7 @@ case class SegmentExchangeMove(beforeFirstSegment: Int,endFirstSegment: Int,reve
                                override val neighborhoodName:String = null)
   extends VRPMove(objAfter, neighborhood, neighborhoodName){
 
-  override def stablePointsOfImpactedVehicles: List[Int] = List(beforeFirstSegment,beforeSecondSegment)
-
-  override def unroutedPoints: List[Int] = Nil
+  override def impactedPoints: List[Int] = List(beforeFirstSegment,endFirstSegment,beforeSecondSegment,endSecondSegment)
 
   // overriding methods
   override def encodeMove() {

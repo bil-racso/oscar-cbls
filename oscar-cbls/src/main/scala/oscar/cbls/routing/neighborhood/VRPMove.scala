@@ -17,13 +17,7 @@ abstract class VRPMove(override val objAfter: Int,
     neighborhood.commit(false)
   }
 
-  override def touchedVariables: List[Variable] = {
-    neighborhood.cleanRecordedMoves()
-    encodeMove()
-    val toReturn = neighborhood.touchedVariablesByEncodedMove
-    neighborhood.cleanRecordedMoves()
-    toReturn
-  }
+  override def touchedVariables: List[Variable] = impactedPoints.map(neighborhood.vrp.next(_))
 
   def encodeMove()
 }
@@ -32,7 +26,7 @@ abstract class VRPMove(override val objAfter: Int,
  * describes moves in a spart way by use of segments
  * @author renaud.delandtsheer@cetic.be
  */
-abstract class EasyRoutingNeighborhood[M<:Move](best:Boolean, vrp:VRP, neighborhoodName:String) extends EasyNeighborhood[M](best,neighborhoodName) {
+abstract class EasyRoutingNeighborhood[M<:Move](best:Boolean, val vrp:VRP, neighborhoodName:String) extends EasyNeighborhood[M](best,neighborhoodName) {
   private var Recording = true //recording ou comitted
   protected def isRecording = Recording
   protected def noMoveRecorded = affects.isEmpty
@@ -68,7 +62,6 @@ abstract class EasyRoutingNeighborhood[M<:Move](best:Boolean, vrp:VRP, neighborh
       variable := takeValueFrom.value
       affectFromConst(variableNode, oldValue)
     }
-
   }
 
   case class affectFromConst(variableNode: Int, takeValue: Int) extends Affect(variableNode) {
@@ -196,4 +189,5 @@ abstract class EasyRoutingNeighborhood[M<:Move](best:Boolean, vrp:VRP, neighborh
   }
 
   def touchedVariablesByEncodedMove:List[CBLSIntVar] = affects.map(_.variable)
+  def touchedNodesByEncodedMove:List[Int] = affects.map(_.node)
 }
