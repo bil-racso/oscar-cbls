@@ -1,9 +1,10 @@
 package oscar.cbls.routing.model
 
 import oscar.cbls.routing.neighborhood.VRPMove
-import oscar.cbls.search.move.Move
+import oscar.cbls.search.move.{CompositeMove, Move}
 
 import scala.collection.immutable.SortedSet
+import scala.collection.mutable.Queue
 
 trait HotSpot extends VRP with RoutedAndUnrouted with PositionInRouteAndRouteNr{
 
@@ -13,6 +14,8 @@ trait HotSpot extends VRP with RoutedAndUnrouted with PositionInRouteAndRouteNr{
     m match{
       case i:VRPMove with HotSpottingInfo =>
         updateHotSpotAfterMove(i)
+      case CompositeMove(moves, _, _) =>
+        moves.foreach(updateHotSpotAnyMove)
       case _ => resetHotSpotState
     }
   }
@@ -29,10 +32,7 @@ trait HotSpot extends VRP with RoutedAndUnrouted with PositionInRouteAndRouteNr{
     lastHotSpotStep = newStep
   }
 
-  def newHotSpotView = new HotSpotView(
-    hotVehicles = SortedSet.empty[Int] ++ this.vehicles,
-    hotUnroutedPoints =  this.unrouted.value,
-    this)
+  def newHotSpotView = new HotSpotView(this)
 }
 
 trait HotSpottingInfo{
@@ -44,74 +44,110 @@ case class HotSpotHistoryStep(updatedVehicles:List[Int]=Nil,
                               unroutedPoints:List[Int]=Nil,
                               var nextStep:HotSpotHistoryStep = null)
 
-class HotSpotView(var hotVehicles:SortedSet[Int],
-                  var hotUnroutedPoints:SortedSet[Int],
-                  vrp:VRP with HotSpot){
+class HotSpotView(vrp:VRP with HotSpot){
+
+  var hotVehiclesSet:SortedSet[Int] = SortedSet.empty[Int] ++ vrp.vehicles
+  val hotVehicleQueue:Queue[Int] = new Queue[Int]
+  var hotUnroutedPointsSet:SortedSet[Int] = vrp.unrouted.value
+  val hotUnroutedPointsQueue:Queue[Int] = new Queue[Int]
 
   var lastDigestedUpdate = vrp.lastHotSpotStep
 
-  def hotNodesByVehicleWithConsumption:Iterable[Int] = new HotspotIterableOnRoutedNodesByVehicleWithConsumption(vrp,this)
 
-  def hotUnroutedWithConsumption:Iterable[Int] = new HotspotIterableOnUnroutedNodesWithConsumption(vrp,this)
+  def setFirstVehiceCold(): Unit ={
+    hotVehiclesSet -= hotVehicleQueue.dequeue()
+  }
+
+  def setUnroutedNodeCold(node:Int): Unit ={
+    require(node == hotUnroutedPointsQueue.head)
+    hotUnroutedPointsQueue.dequeue()
+    hotUnroutedPointsSet -= node
+  }
+  def setVehicleHot(v:Int): Unit ={
+    if(!hotVehiclesSet.contains(v)){
+      hotVehicleQueue.enqueue(v)
+      hotVehiclesSet += v
+    }
+  }
+  def setUnroutedNodeHot(node:Int): Unit ={
+    if(! hotUnroutedPointsSet.contains(node)){
+      hotUnroutedPointsQueue.enqueue(node)
+      hotUnroutedPointsSet += node
+    }
+  }
+
+  def hotUnroutedWithConsumption:Iterable[Int] =
+    new HotspotIterableOnUnroutedNodesWithConsumption(vrp, this)
+
+  def hotNodesByVehicleWithConsumption:Iterable[Int] =
+    new HotspotIterableOnRoutedNodesByVehicleWithConsumption(vrp,this)
+
   def updateFromHotSpot{
     while(lastDigestedUpdate.nextStep != null){
       lastDigestedUpdate = lastDigestedUpdate.nextStep
-      hotVehicles ++= lastDigestedUpdate.updatedVehicles
-      hotUnroutedPoints ++= lastDigestedUpdate.unroutedPoints
+      lastDigestedUpdate.updatedVehicles.foreach(setVehicleHot)
+      lastDigestedUpdate.unroutedPoints.foreach(setUnroutedNodeHot)
     }
+  }
+
+  def rollHotVehicleForHotRestart(): Unit ={
+    hotVehicleQueue.enqueue(hotVehicleQueue.dequeue())
+  }
+  def rollHotUnroutedForHotRestart(): Unit ={
+    hotUnroutedPointsQueue.enqueue(hotUnroutedPointsQueue.dequeue())
   }
 }
 
 class HotspotIterableOnRoutedNodesByVehicleWithConsumption(vrp:VRP,origin:HotSpotView) extends Iterable[Int]{
-  override def iterator: Iterator[Int] = new RoutedNodeIteratorWithConsumption(vrp:VRP,origin:HotSpotView)
+  override def iterator: Iterator[Int] = {
+    origin.rollHotUnroutedForHotRestart()
+    new RoutedNodeIteratorWithConsumption(vrp:VRP,origin:HotSpotView)
+  }
 }
 
 class HotspotIterableOnUnroutedNodesWithConsumption(vrp:VRP,origin:HotSpotView) extends Iterable[Int]{
-  override def iterator: Iterator[Int] = new UnroutedIteratorWithConsumption(vrp:VRP,origin:HotSpotView)
+  override def iterator: Iterator[Int] = {
+    origin.rollHotVehicleForHotRestart()
+    new UnroutedIteratorWithConsumption(vrp: VRP, origin: HotSpotView)
+  }
 }
 
 class UnroutedIteratorWithConsumption(vrp:VRP,origin:HotSpotView) extends Iterator[Int]{
-  val primaryIterator = origin.hotUnroutedPoints.iterator
-  var lastReturnedOne = Int.MinValue
+
+  val primaryIterator = origin.hotUnroutedPointsQueue.iterator
   override def hasNext: Boolean = primaryIterator.hasNext
 
   override def next(): Int = {
-    if(lastReturnedOne != Int.MinValue){
-      origin.hotUnroutedPoints -= lastReturnedOne
-    }
-    lastReturnedOne = primaryIterator.next()
-    lastReturnedOne
+    val toReturn = primaryIterator.next()
+    origin.setUnroutedNodeCold(toReturn)
+    toReturn
   }
 }
 
 class RoutedNodeIteratorWithConsumption(vrp:VRP,origin:HotSpotView) extends Iterator[Int]{
-  var remainingVehiclesIncludingCurrentOne:List[Int] = origin.hotVehicles.toList
-  var remainingPointsOfVehicle:List[Int] = remainingVehiclesIncludingCurrentOne match{
-    case Nil => Nil
-    case h::t => vrp.getRouteOfVehicle(h)
-  }
+  //HotRestart is implemented by rolling the vehicle at each update of the HotSpot
 
-  override def hasNext: Boolean = {
-    remainingPointsOfVehicle.nonEmpty ||
-      (remainingVehiclesIncludingCurrentOne.nonEmpty &&
-        remainingVehiclesIncludingCurrentOne.tail.nonEmpty)
-  }
+  var remainingPointsOfVehicle:List[Int] =
+    if(origin.hotVehicleQueue.isEmpty) Nil
+    else vrp.getRouteOfVehicle(origin.hotVehicleQueue.head)
+
+  override def hasNext: Boolean =
+    remainingPointsOfVehicle.nonEmpty || origin.hotVehicleQueue.nonEmpty
 
   override def next(): Int = {
     remainingPointsOfVehicle match{
-      case Nil =>
-        remainingVehiclesIncludingCurrentOne match{
-          case h::h2::t =>
-            origin.hotVehicles -= h
-            remainingVehiclesIncludingCurrentOne = h2::t
-            val newRoute = vrp.getRouteOfVehicle(h2)
-            remainingPointsOfVehicle = newRoute.tail
-            newRoute.head
-          case _ => throw new Error("")
-        }
+      case h::Nil =>
+        origin.setFirstVehiceCold()
+        remainingPointsOfVehicle = Nil
+        h
       case h::t =>
         remainingPointsOfVehicle = t
         h
+      case Nil =>
+        remainingPointsOfVehicle =
+          (if(origin.hotVehicleQueue.isEmpty) throw new Error("no next available, actually")
+          else vrp.getRouteOfVehicle(origin.hotVehicleQueue.head))
+        next()
     }
   }
 }
