@@ -2,6 +2,7 @@ package oscar.sat.examples
 
 import oscar.sat.utils.DimacsFile
 import oscar.sat.heuristics.ActivityHeuristic
+import oscar.sat.constraints.clauses.Clause
 
 object TestGraph extends App {
 
@@ -10,13 +11,17 @@ object TestGraph extends App {
   val solver = instance.model
   val heuristic = new ActivityHeuristic(instance.nVariables, solver)
 
+  // Out 1 
+  println("#variables  : " + instance.nVariables)
+  println("#clauses    : " + instance.nClauses)
+  
   // Solve
   val t0 = System.nanoTime()
   val solved = solver.solve(heuristic)
   val t1 = System.nanoTime() - t0
 
   
-  var nSols = 0
+  var nSols = 0  
   while (solver.solve(heuristic)) {
     
     nSols += 1
@@ -32,16 +37,14 @@ object TestGraph extends App {
     println("--------------------")
     println()*/
 
-    solver.newClause(Array.tabulate(100)(i => {
+    solver.add(Clause(solver, Array.tabulate(100)(i => {
       if (solver.solution(i)) i * 2 + 1
       else i * 2
-    }))
+    })))
   }
   
     // Out
   println("#solutions  : " + nSols)
-  println("#variables  : " + instance.nVariables)
-  println("#clauses    : " + instance.nClauses)
   println("#conflicts  : " + solver.totalConfict)
   println("time (ms)   : " + (t1 / 1000000.0)) 
 }

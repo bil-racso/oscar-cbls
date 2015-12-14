@@ -6,8 +6,6 @@ import oscar.sat.core.CDCLStore
 
 abstract class Nogood extends Clause {
   
-  def setup(): Boolean
-  
   def activity: Double
   
   def activity_=(d: Double): Unit

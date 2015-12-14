@@ -52,7 +52,7 @@ class CDCLSolver extends CDCLStore {
         
         if (nAssigns() == nVars) {
           // Model found
-          solution = Array.tabulate(varStoreSize)(i => isTrue(i))
+          solution = Array.tabulate(nVars)(i => isTrue(i))
           untrailAll()
           return True
         }

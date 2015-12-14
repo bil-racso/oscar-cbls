@@ -16,7 +16,8 @@ final class WLNogood(solver: CDCLStore, literals: Array[Int]) extends Nogood {
 
   override def simplify(): Boolean = true
 
-  override def explain(outReason: ArrayStackInt): Unit = {
+  override def explain(litId: Int, outReason: ArrayStackInt): Unit = {
+    assert(litId == literals(0), s"$litId has not been propagated by this clause.")
     var i = 1
     while (i < literals.length) {
       outReason.append(literals(i) ^ 1)
