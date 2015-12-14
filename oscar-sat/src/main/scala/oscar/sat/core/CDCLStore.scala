@@ -9,6 +9,7 @@ import oscar.sat.heuristics.Heuristic
 import oscar.sat.constraints.Constraint
 import oscar.algo.array.ArrayQueueInt
 import oscar.sat.constraints.nogoods.Nogood
+import oscar.algo.reversible.ReversibleContext
 
 /** @author Renaud Hartert ren.hartert@gmail.com */
 
@@ -30,14 +31,15 @@ class CDCLStore {
   // Watchers of each literal used by clause and nogoods
   private[this] val watchers: ArrayStack[Watchers] = new ArrayStack(128)
 
-  // Trailing queue  
+  // Trails
   private[this] val trail: ArrayStackInt = new ArrayStackInt(100)
   private[this] val trailLevels: ArrayStackInt = new ArrayStackInt(100)
+  private[this] val trailRev = new ReversibleContext()
 
   // Propagation queue
   private[this] val queue: ArrayQueueInt = new ArrayQueueInt(128)
 
-  // Variables structure
+  // Variables data (may be resized)
   private[this] var _values: Array[LiftedBoolean] = new Array(128)
   private[this] var _reasons: Array[Constraint] = new Array(128)
   private[this] var _levels: Array[Int] = new Array(128)
@@ -47,13 +49,8 @@ class CDCLStore {
   // Structures used for conflict analysis
   private[this] val outLearnt: ArrayStackInt = new ArrayStackInt(16)
   private[this] val explanation: ArrayStackInt = new ArrayStackInt(16)
-  
-  private[this] var _nogood: Array[Int] = new Array(16)
-  private[this] var _nogoodSize: Int = 0
-   
-  // Literals seen (seen if _seen(i) == _magic) 
   private[this] var _seen: Array[Int] = new Array(128)
-  private[this] var _magic: Int = 0
+  private[this] var _magic: Int = 0 // seen if _seen(i) == _magic
 
   /** Returns the clause responsible of the assignment */
   @inline final def assignReason(varId: Int): Constraint = _reasons(varId)
@@ -66,7 +63,14 @@ class CDCLStore {
 
   @inline final def varActivity(varId: Int): Double = _activities(varId)
   
-  @inline final def level(varId: Int): Int = _levels(varId)
+  @inline final def varLevel(varId: Int): Int = _levels(varId)
+  
+  // Reference to the inner array containing the levels
+  private[sat] def levels: Array[Int] = _levels
+  
+  @inline final def trailReversible: ReversibleContext = trailRev
+  
+  @inline final def level: Int = trailLevels.size
 
   final def newVar(): Int = {
     if (_varStoreSize == _values.length) growVariableStore()
@@ -85,6 +89,7 @@ class CDCLStore {
     watchers(litId).enqueue(constraint)
   }
 
+  // Record a new nogood based on the content of outLearnt
   private def recordNogood(): Boolean = {
     assert(outLearnt != null)
     assert(outLearnt.length > 0)
@@ -97,7 +102,9 @@ class CDCLStore {
     }
   }
 
+  // Add a new constraint to the store
   final def add(constraint: Constraint): Boolean = {
+    assert(level == 0)
     if (constraint == null) sys.error("null reference.")
     else {
       constraints.append(constraint)
@@ -205,8 +212,6 @@ class CDCLStore {
     claDecayActivity()
   }
 
-  final def decisionLevel: Int = trailLevels.size
-
   // TRAIL
 
   @inline private def undoOne(): Unit = {
@@ -221,12 +226,14 @@ class CDCLStore {
 
   protected def analyze(initConflict: Constraint): Int = {
 
+    val conflictLevel = level
+    
     var nPaths = 0
     var toExplainLit: Int = -1
     var conflict = initConflict
     var backtrackLevel = 0
     resetSeen()
-
+    
     // New nogood
     outLearnt.clear()
     outLearnt.append(-1) // leave a room for the asserting literal
@@ -249,7 +256,7 @@ class CDCLStore {
         if (_seen(varId) != _magic) {
           _seen(varId) = _magic
           val level = _levels(varId)
-          if (level == decisionLevel) nPaths += 1
+          if (level == conflictLevel) nPaths += 1
           else if (level > 0) {
             outLearnt.append(literal ^ 1)
             backtrackLevel = Math.max(backtrackLevel, level)
@@ -274,11 +281,18 @@ class CDCLStore {
   }
 
   @inline def assume(literal: Int): Boolean = {
-    trailLevels.push(trail.size)
+    newLevel()
     enqueue(literal, null)
+  }
+  
+  @inline private def newLevel(): Unit = {
+    trailLevels.push(trail.size)
+    trailRev.pushState()
   }
 
   @inline private def cancel(): Unit = {
+    trailRev.pop()
+    // Pop trail literal level
     var nLevels = trail.size - trailLevels.pop()
     while (nLevels > 0) {
       nLevels -= 1

@@ -41,7 +41,7 @@ class CDCLSolver extends CDCLStore {
       if (conflict != null) {
         conflictC += 1
         totalConfict += 1
-        if (decisionLevel == 0) return False
+        if (level == 0) return False
         else handleConflict(conflict) 
       }
       // No conflict

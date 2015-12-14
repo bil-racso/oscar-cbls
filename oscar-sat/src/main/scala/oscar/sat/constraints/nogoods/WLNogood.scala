@@ -6,11 +6,11 @@ import oscar.sat.core.False
 import oscar.algo.array.ArrayStack
 import oscar.algo.array.ArrayStackInt
 
-final class WLNogood(solver: CDCLStore, literals: Array[Int]) extends Nogood {
+final class WLNogood(store: CDCLStore, literals: Array[Int]) extends Nogood {
 
   override var activity: Double = 0
 
-  override def locked: Boolean = solver.assignReason(literals(0) / 2) == this
+  override def locked: Boolean = store.assignReason(literals(0) / 2) == this
 
   override def remove(): Unit = Unit
 
@@ -23,7 +23,7 @@ final class WLNogood(solver: CDCLStore, literals: Array[Int]) extends Nogood {
       outReason.append(literals(i) ^ 1)
       i += 1
     }
-    solver.claBumpActivity(this)
+    store.claBumpActivity(this)
   }
 
   override def explainAll(outReason: ArrayStackInt): Unit = {
@@ -32,40 +32,45 @@ final class WLNogood(solver: CDCLStore, literals: Array[Int]) extends Nogood {
       outReason.append(literals(i) ^ 1)
       i += 1
     }
-    solver.claBumpActivity(this)
+    store.claBumpActivity(this)
   }
 
   override def setup(): Boolean = {
+    
+    // Fast access
+    val levels = store.levels
 
-    // Pick a second literal to watch
     var maxLit = 0
     var max = -1
-    var j = 1
-    while (j < literals.length) {
-      val level = solver.level(literals(j) / 2)
+    var j = literals.length
+    
+    // Pick a second literal to watch
+    while (j > 1) {
+      j -= 1
+      val level = levels(literals(j) / 2)
       if (max < level) {
         max = level
         maxLit = j
       }
-      j += 1
     }
+    
     val tmp = literals(1)
     literals(1) = literals(maxLit)
     literals(maxLit) = tmp
 
     // Bumping
-    solver.claBumpActivity(this)
+    store.claBumpActivity(this)
     var i = 0
     while (i < literals.length) {
-      solver.varBumpActivity(literals(i))
+      store.varBumpActivity(literals(i))
       i += 1
     }
 
-    solver.watch(this, literals(0) ^ 1)
-    solver.watch(this, literals(1) ^ 1)
+    store.watch(this, literals(0) ^ 1)
+    store.watch(this, literals(1) ^ 1)
 
     // Propagate
-    solver.enqueue(literals(0), this)
+    store.enqueue(literals(0), this)
   }
 
   override def propagate(literal: Int): Boolean = {
@@ -76,26 +81,26 @@ final class WLNogood(solver: CDCLStore, literals: Array[Int]) extends Nogood {
     }
 
     // If 0th watch is true, then clause is already satisfied
-    if (solver.litValue(literals(0)) == True) {
-      solver.watch(this, literal)
+    if (store.litValue(literals(0)) == True) {
+      store.watch(this, literal)
       return true
     }
 
     // Look for a new literal to watch
     var i = 2
     while (i < literals.length) {
-      if (solver.litValue(literals(i)) != False) {
+      if (store.litValue(literals(i)) != False) {
         literals(1) = literals(i)
         literals(i) = literal ^ 1
-        solver.watch(this, literals(1) ^ 1)
+        store.watch(this, literals(1) ^ 1)
         return true
       }
       i += 1
     }
 
     // Clause is unit under assignment
-    solver.watch(this, literal)
-    solver.enqueue(literals(0), this)
+    store.watch(this, literal)
+    store.enqueue(literals(0), this)
   }
 
   override def toString: String = literals.mkString(" ")
