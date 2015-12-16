@@ -6,7 +6,7 @@ import oscar.cbls.invariants.lib.minmax.{MinConstArrayLazy, MinConstArray}
 import oscar.cbls.invariants.lib.numeric.Sum
 import oscar.cbls.modeling.AlgebraTrait
 import oscar.cbls.objective.Objective
-import oscar.cbls.search.combinators.LearningRandom
+import oscar.cbls.search.combinators.{FastestFirst, BestSlopeFirst, LearningRandom}
 import oscar.cbls.search.move.AssignMove
 import oscar.cbls.search.{AssignNeighborhood, Benchmark, RandomizeNeighborhood, SwapsNeighborhood}
 
@@ -83,11 +83,22 @@ object WarehouseLocationComparativeBench extends App with AlgebraTrait{
     (AssignNeighborhood(warehouseOpenArray, "SwitchWarehouse1") andThen AssignNeighborhood(warehouseOpenArray, "SwitchWarehouse2")
       orElse (RandomizeNeighborhood(warehouseOpenArray, W/5) maxMoves 2) saveBest obj restoreBestOnExhaust))
 
+  val neighborhood10 = ()=>("BestSlope",
+    (new BestSlopeFirst(List(
+      AssignNeighborhood(warehouseOpenArray, "SwitchWarehouse"),
+        SwapsNeighborhood(warehouseOpenArray, "SwapWarehouses")),10,9)
+      orElse (RandomizeNeighborhood(warehouseOpenArray, W/5) maxMoves 2) saveBest obj restoreBestOnExhaust))
 
-  val neighborhoods = List(neighborhood1,neighborhood2,neighborhood3,neighborhood4,neighborhood5,neighborhood6,neighborhood7,neighborhood8,neighborhood9)
+  val neighborhood11 = ()=>("Fastest",
+    (new FastestFirst(List(
+      AssignNeighborhood(warehouseOpenArray, "SwitchWarehouse"),
+      SwapsNeighborhood(warehouseOpenArray, "SwapWarehouses")),10,9)
+      orElse (RandomizeNeighborhood(warehouseOpenArray, W/5) maxMoves 2) saveBest obj restoreBestOnExhaust))
 
-  val a = Benchmark.benchtoString(obj,10,neighborhoods,0)
+
+  val neighborhoods = List(neighborhood1,neighborhood2,neighborhood4,neighborhood7,neighborhood10,neighborhood11)
+
+  val a = Benchmark.benchToStringFull(obj,5,neighborhoods,1)
 
   println(a)
-
 }

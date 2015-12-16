@@ -125,6 +125,6 @@ case class OnePointMoveMove(predOfMovedPoint: Int,
 
   override def toString: String = (
     neighborhoodNameToString + "OnePointMove(Moved point " + movedPoint
-      + " after " + insertionPoint + objToString + " )")
+      + " after " + insertionPoint + objToString + ")")
 }
 

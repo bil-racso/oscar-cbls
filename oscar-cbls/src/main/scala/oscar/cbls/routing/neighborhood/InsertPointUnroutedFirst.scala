@@ -217,5 +217,5 @@ case class InsertPointMove(beforeInsertedPoint: Int,
 
   override def toString: String =
     "InsertPoint(beforeInsertedPoint = " + beforeInsertedPoint +
-      ", insertedPoint = " + insertedPoint + " )"
+      ", insertedPoint = " + insertedPoint + objToString + ")"
 }

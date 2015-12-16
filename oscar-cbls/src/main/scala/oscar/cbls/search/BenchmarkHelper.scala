@@ -17,7 +17,11 @@ object Benchmark extends StopWatch{
   def benchToStatistics(obj:Objective, nRuns:Int, strategies:Iterable[()=>(String,Neighborhood)],verbose:Int) =
     benchToTrace(obj, nRuns, strategies,verbose).map{case (s:String,t:IndexedSeq[RunValues]) => (s,aggregate(t.toList))}
 
-  def benchtoString(obj:Objective, nRuns:Int, strategies:Iterable[()=>(String,Neighborhood)],verbose:Int = 0):String = {
+  def benchToStringSimple(obj:Objective, nRuns:Int, strategies:Iterable[Neighborhood],verbose:Int = 0):String = {
+    benchToStringFull(obj,nRuns,strategies.map(n => (() => (n.toString,n))),verbose)
+  }
+
+  def benchToStringFull(obj:Objective, nRuns:Int, strategies:Iterable[()=>(String,Neighborhood)],verbose:Int = 0):String = {
     val stats = benchToStatistics(obj,nRuns,strategies,verbose)
 
     nSpace(firstColumnForStatisticsString) + "|it                  |dur[ms]             |obj" + "\n" +

@@ -262,5 +262,5 @@ case class ThreeOptMove(beforeStart: Int,
     ("TreeOpt(point before segment start = " + beforeStart
       + ", segment end point = " + segEndPoint
       + ", insertion point = " + insertionPoint
-      + ", reverse segment = " + reverseSegment + ")")
+      + ", reverse segment = " + reverseSegment + objToString + ")")
 }

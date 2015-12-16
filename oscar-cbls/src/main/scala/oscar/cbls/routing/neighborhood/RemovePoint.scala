@@ -112,5 +112,5 @@ case class RemovePointMove(
   override def encodeMove() {
     neighborhood.encode(beforeRemovedPoint)
   }
-  override def toString: String = "RemovePoint(point = " + neighborhood.vrp.next(beforeRemovedPoint).value + " )"
+  override def toString: String = "RemovePoint(point = " + neighborhood.vrp.next(beforeRemovedPoint).value + objToString + ")"
 }
