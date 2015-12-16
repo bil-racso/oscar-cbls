@@ -104,7 +104,7 @@ object SwapInsert {
                             hotRestartOnRemove: Boolean = true,
                             vrp:VRP with NodesOfVehicle with PositionInRouteAndRouteNr,
                             neighborhoodName: String = "SwapInsertSameVehicle",
-                            maximalIntermediaryDegradation: Int = Int.MaxValue){
+                            maximalIntermediaryDegradation: Int = Int.MaxValue) = {
     DynAndThenWithPrev(RemovePoint(predecessorsOfRoutedPointsToRemove, vrp, "SwapInsertSameVehicle.Remove", best, hotRestartOnRemove),
       (r:RemovePointMove,snapShot:Snapshot) => {
         val removedPoint = r.removedPoint
