@@ -96,9 +96,9 @@ object WarehouseLocationComparativeBench extends App with AlgebraTrait{
       orElse (RandomizeNeighborhood(warehouseOpenArray, W/5) maxMoves 2) saveBest obj restoreBestOnExhaust))
 
 
-  val neighborhoods = List(neighborhood1,neighborhood2,neighborhood3,neighborhood4,neighborhood5,neighborhood10,neighborhood11) //,neighborhood6,neighborhood7,neighborhood8,neighborhood9,)
+  val neighborhoods = List(neighborhood1,neighborhood2,neighborhood4,neighborhood7,neighborhood10,neighborhood11)
 
-  val a = Benchmark.benchToStringFull(obj,10,neighborhoods,1)
+  val a = Benchmark.benchToStringFull(obj,5,neighborhoods,1)
 
   println(a)
 }

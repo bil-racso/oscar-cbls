@@ -53,7 +53,7 @@ import oscar.cbls.search.move.Move
 case class InsertPoint(unroutedNodesToInsert: () => Iterable[Int],
                        relevantNeighbors: () => Int => Iterable[Int],
                        vrp: VRP,
-                       neighborhoodName: String = null,
+                       neighborhoodName: String = "InsertPoint",
                        best: Boolean = false,
                        hotRestart: Boolean = true,
                        nodeSymmetryClass:Option[Int => Int] = None,
@@ -144,5 +144,5 @@ case class InsertPointMove(beforeInsertedPoint: Int,
 
   override def toString: String =
     "InsertPoint(beforeInsertedPoint = " + beforeInsertedPoint +
-      ", insertedPoint = " + insertedPoint + " )"
+      ", insertedPoint = " + insertedPoint + objToString + ")"
 }
