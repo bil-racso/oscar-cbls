@@ -37,10 +37,18 @@ object RoutingTest extends App with StopWatch{
 
   model.close()
   println("closed model " + getWatch + "ms")
-  val insertPoint = new InsertPoint(
-    unroutedNodesToInsert = vrp.unrouted,
-    relevantNeighbors= () => vrp.kNearest(20),
+  val insertPointRoutedFirst = new InsertPointRoutedFirst(
+    insertionPoints = vrp.routed,
+    unroutedNodesToInsert = () => vrp.kNearest(10,!vrp.isRouted(_)),
     vrp = vrp)
+
+  val insertPointUnroutedFirst = new InsertPointUnroutedFirst(
+    unroutedNodesToInsert= vrp.unrouted,
+    relevantNeighbors = () => vrp.kNearest(20,vrp.isRouted(_)),
+    vrp = vrp)
+
+  //the other insertion point strategy is less efficient, need to investigate why.
+  val insertPoint = insertPointUnroutedFirst
 
   val onePointMove = new OnePointMove(
     nodesPrecedingNodesToMove = vrp.routed,
