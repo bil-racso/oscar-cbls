@@ -24,7 +24,7 @@ object Benchmark extends StopWatch{
   def benchToStringFull(obj:Objective, nRuns:Int, strategies:Iterable[()=>(String,Neighborhood)],verbose:Int = 0):String = {
     val stats = benchToStatistics(obj,nRuns,strategies,verbose)
 
-    nSpace(firstColumnForStatisticsString) + "|it                  |dur[ms]             |obj" + "\n" +
+    nSpace(firstColumnForStatisticsString) + "|it                                  |dur[ms]                             |obj" + "\n" +
       nSpace(firstColumnForStatisticsString) + "|"+Statistics.statisticsHeader + "|" + Statistics.statisticsHeader + "|" + Statistics.statisticsHeader + "\n" +
       stats.map({case (s:String,stats:RunStatistics) => padToLength(s,firstColumnForStatisticsString) + "|" + stats.denseString}).mkString("\n")
 
@@ -56,7 +56,7 @@ object Benchmark extends StopWatch{
 
 case class Statistics(min:Int, max:Int, avg:Int, med:Int){
   override def toString: String = "(min:" + min + " max:" + max + " avg:" + avg + " med:" + med + ")"
-  def denseString:String = padToLength("" + min,4) + " " + padToLength("" + max,4) + " " + padToLength("" + avg,4) + " " + padToLength("" + med,5)
+  def denseString:String = padToLength("" + min,8) + " " + padToLength("" + max,8) + " " + padToLength("" + avg,8) + " " + padToLength("" + med,9)
   def nSpace(n:Int):String = if(n <= 0) "" else " " + nSpace(n-1)
   private def padToLength(s: String, l: Int) = (s + nSpace(l)).substring(0, l)
 }
@@ -69,5 +69,5 @@ object Statistics {
     Statistics(min=sorted.head, max = sorted.last, avg=l.sum/size, med= if(size ==1) sorted.head else sorted.apply( size/2 -1))
   }
 
-  val statisticsHeader = "min  max  avg  med  "
+  val statisticsHeader = "min      max      avg      med      "
 }
