@@ -35,7 +35,7 @@ object Benchmark extends StopWatch{
     val initialSolution = m.solution()
 
     for(n <- strategies)
-      yield (n()._1,for(trial <- 0 to nRuns) yield {
+      yield (n()._1,for(trial <- 1 to nRuns) yield {
         m.restoreSolution(initialSolution)
         val strategyInstance = n()
         strategyInstance._2.verbose = if(verbose>0) verbose else 0
@@ -66,7 +66,7 @@ object Statistics {
     require(l.nonEmpty)
     val sorted = l.sorted
     val size = l.size
-    Statistics(min=sorted.head, max = sorted.last, avg=l.sum/size, med=sorted.apply(size/2))
+    Statistics(min=sorted.head, max = sorted.last, avg=l.sum/size, med= if(size ==1) sorted.head else sorted.apply( size/2 -1))
   }
 
   val statisticsHeader = "min  max  avg  med  "
