@@ -175,6 +175,9 @@ abstract trait RoutedAndUnrouted extends VRP {
    */
   val routed = Filter(next, _ < N)
   m.registerForPartialPropagation(routed)
+  
+  val routedNotStartingPoint = routed.minus(SortedSet.empty[Int] ++ (0 to V-1))
+  m.registerForPartialPropagation(routedNotStartingPoint)
 
   /**
    * the data structure set which maintains the unrouted nodes.
