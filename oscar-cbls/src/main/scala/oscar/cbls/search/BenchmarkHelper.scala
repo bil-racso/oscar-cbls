@@ -11,7 +11,7 @@ object Benchmark extends StopWatch{
     def denseString:String = it.denseString + "|" + duration.denseString + "|" + quality.denseString
   }
 
-  val firstColumnForStatisticsString = 20
+  val firstColumnForStatisticsString = 40
   def nSpace(n:Int):String = if(n <= 0) "" else " " + nSpace(n-1)
   private def padToLength(s: String, l: Int) = (s + nSpace(l)).substring(0, l)
   def benchToStatistics(obj:Objective, nRuns:Int, strategies:Iterable[()=>(String,Neighborhood)],verbose:Int) =

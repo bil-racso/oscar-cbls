@@ -371,14 +371,14 @@ class LearningRandom(l:List[Neighborhood],
   }
 }
 
-class BestSlopeFirst(l:List[Neighborhood],
+case class BestSlopeFirst(l:List[Neighborhood],
                      tabuLength:Int = 10,
                      overrideTabuOnFullExhaust:Int = 9)
   extends BestNeighborhoodFirst(l, tabuLength, overrideTabuOnFullExhaust){
   override protected def bestKey(p:Profile):Int = -(p.slopeForCombinators())
 }
 
-class FastestFirst(l:List[Neighborhood],
+case class FastestFirst(l:List[Neighborhood],
                    tabuLength:Int = 10,
                    overrideTabuOnFullExhaust:Int = 9)
   extends BestNeighborhoodFirst(l, tabuLength, overrideTabuOnFullExhaust){
