@@ -259,8 +259,8 @@ case class ThreeOptMove(beforeStart: Int,
   }
 
   override def toString: String =
-    ("TreeOpt(point before segment start = " + beforeStart
-      + ", segment end point = " + segEndPoint
-      + ", insertion point = " + insertionPoint
-      + ", reverse segment = " + reverseSegment + objToString + ")")
+    ("TreeOpt(beforeSegStart:" + beforeStart
+      + "; end:" + segEndPoint
+      + "; insertAfter:" + insertionPoint
+      + "; reverse:" + reverseSegment + objToString + ")")
 }

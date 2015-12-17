@@ -127,7 +127,7 @@ case class TwoOptMove(
     neighborhood.encode(fstPred, sndPred)
   }
 
-  override def toString: String = (neighborhood.toString() + "(first predecessor = "
+  override def toString: String = (neighborhood.toString() + "(beforeSegStart:"
     + fstPred
-    + ", second predecessor = " + sndPred + objToString + ")")
+    + "; end:" + sndPred + objToString + ")")
 }

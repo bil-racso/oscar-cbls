@@ -24,7 +24,7 @@ object Benchmark extends StopWatch{
   def benchToStringFull(obj:Objective, nRuns:Int, strategies:Iterable[()=>(String,Neighborhood)],verbose:Int = 0):String = {
     val stats = benchToStatistics(obj,nRuns,strategies,verbose)
 
-    nSpace(firstColumnForStatisticsString) + "|it                  |dur[ms]             |obj" + "\n" +
+       padToLength("nbRuns:" + nRuns,firstColumnForStatisticsString) + "|it                  |dur[ms]             |obj" + "\n" +
       nSpace(firstColumnForStatisticsString) + "|"+Statistics.statisticsHeader + "|" + Statistics.statisticsHeader + "|" + Statistics.statisticsHeader + "\n" +
       stats.map({case (s:String,stats:RunStatistics) => padToLength(s,firstColumnForStatisticsString) + "|" + stats.denseString}).mkString("\n")
 
@@ -39,6 +39,7 @@ object Benchmark extends StopWatch{
         m.restoreSolution(initialSolution)
         val strategyInstance = n()
         strategyInstance._2.verbose = if(verbose>0) verbose else 0
+        println("Benchmarking " + strategyInstance._1 + "; run nr:" + trial + " of " + nRuns)
         this.startWatch()
         val it = strategyInstance._2.doAllMoves(_ => false, obj)
         val time = this.getWatch

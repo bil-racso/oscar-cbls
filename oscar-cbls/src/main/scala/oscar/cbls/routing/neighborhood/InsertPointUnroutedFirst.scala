@@ -216,6 +216,6 @@ case class InsertPointMove(beforeInsertedPoint: Int,
   }
 
   override def toString: String =
-    "InsertPoint(beforeInsertedPoint = " + beforeInsertedPoint +
+    neighborhoodName + ":InsertPoint(beforeInsertedPoint = " + beforeInsertedPoint +
       ", insertedPoint = " + insertedPoint + objToString + ")"
 }

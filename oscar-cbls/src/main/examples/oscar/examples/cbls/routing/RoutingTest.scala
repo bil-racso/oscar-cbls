@@ -5,7 +5,7 @@ import oscar.cbls.objective.Objective
 import oscar.cbls.routing.model._
 import oscar.cbls.routing.neighborhood._
 import oscar.cbls.search.StopWatch
-import oscar.cbls.search.combinators.BestSlopeFirst
+import oscar.cbls.search.combinators.{Profile, BestSlopeFirst}
 
 /**
  * Created by rdl on 15-12-15.
@@ -42,28 +42,34 @@ object RoutingTest extends App with StopWatch{
     unroutedNodesToInsert = () => vrp.kNearest(10,!vrp.isRouted(_)),
     vrp = vrp)
 
-  val insertPointUnroutedFirst = new InsertPointUnroutedFirst(
+  val insertPointUnroutedFirst = Profile(InsertPointUnroutedFirst(
     unroutedNodesToInsert= vrp.unrouted,
     relevantNeighbors = () => vrp.kNearest(20,vrp.isRouted(_)),
-    vrp = vrp)
+    vrp = vrp))
+
+  val pivot = vrp.N/2
+
+  val compositeInsertPoint = Profile((insertPointRoutedFirst guard(() => vrp.unrouted.value.size >= pivot)
+    orElse (insertPointUnroutedFirst guard(() => vrp.unrouted.value.size < pivot)))name("CompositeInsert"))
 
   //the other insertion point strategy is less efficient, need to investigate why.
-  val insertPoint = insertPointUnroutedFirst
+  val insertPoint = insertPointUnroutedFirst //compositeInsertPoint //insertPointUnroutedFirst
 
-  val onePointMove = new OnePointMove(
+
+  val onePointMove = Profile(OnePointMove(
     nodesPrecedingNodesToMove = vrp.routed,
     relevantNeighbors= () => vrp.kNearest(20),
-    vrp = vrp)
+    vrp = vrp))
 
-  val twoOpt = TwoOpt(
+  val twoOpt = Profile(TwoOpt(
     predecesorOfFirstMovedPoint = vrp.routed,
     relevantNeighbors = () => vrp.kNearest(20),
-    vrp = vrp)
+    vrp = vrp))
 
-  val threeOpt = ThreeOpt(
+  val threeOpt = Profile(ThreeOpt(
     potentialInsertionPoints = vrp.routed,
     relevantNeighbors = () => vrp.kNearest(20),
-    vrp = vrp)
+    vrp = vrp))
 
   val search = insertPoint exhaustBack (new BestSlopeFirst(List(onePointMove,twoOpt,threeOpt)))
 
@@ -75,4 +81,6 @@ object RoutingTest extends App with StopWatch{
   println("total time " + getWatch + "ms or  " + getWatchString)
 
   println("\nresult:\n" + vrp)
+
+  println(search.profilingStatistics)
 }

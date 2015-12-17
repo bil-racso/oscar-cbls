@@ -113,9 +113,10 @@ class Routes(V: Int,
       && ((positionInRoute(node).getValue(true) + 1) % next.length == positionInRoute(next(node).value).getValue(true)))
   }
 
+  //TODO how about an accumulating heap?
+  val heap = new BinomialHeap[(Int, Int)]((a: (Int, Int)) => a._2, next.length)
+
   override def performInvariantPropagation() {
-    //le numéro de noeud, son ancienne position dans le circuit
-    val heap = new BinomialHeap[(Int, Int)]((a: (Int, Int)) => a._2, ToUpdateCount)
     for (node <- ToUpdate) {
       if (next(node).value == UNROUTED) {
         //node is unrouted now
