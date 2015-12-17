@@ -23,8 +23,8 @@ object RoutingTestHotSpot extends App with StopWatch{
 
   this.startWatch()
 
-  val n = 300
-  val v = 10
+  val n = 100
+  val v = 5
 
   println("RoutingTest(n:" + n + " v:" + v + ")")
 
@@ -87,9 +87,9 @@ object RoutingTestHotSpot extends App with StopWatch{
     relevantNeighbors = () => vrp.kNearest(20),
     vrp = vrp))
 
-  val searchHot = () => {vrp.resetHotSpotState();("Hot",(insertPoint exhaustBack (new BestSlopeFirst(List(onePointHot,twoOptHot,threeOpt)))) afterMove(vrp.updateHotSpotAnyMove(_)))}
+  val searchHot = () => {vrp.resetHotSpotState();("Hot",(insertPoint exhaust (new BestSlopeFirst(List(onePointHot,twoOptHot,threeOpt)))) afterMove(vrp.updateHotSpotAnyMove(_)))}
 
-  val search = () => ("standard",(insertPoint exhaustBack (new BestSlopeFirst(List(onePointMove,twoOpt,threeOpt)))))
+  val search = () => ("standard",(insertPoint exhaust (new BestSlopeFirst(List(onePointMove,twoOpt,threeOpt)))))
 
   //  search.verbose = 1
   //  search.verboseWithExtraInfo(3,() => vrp.toString)
@@ -98,7 +98,8 @@ object RoutingTestHotSpot extends App with StopWatch{
 
   //  search.doAllMoves(_ > 10*n, vrp.objectiveFunction)
 
-  println(Benchmark.benchToStringFull(vrp.objectiveFunction,10,List(searchHot),0))
+
+  println(Benchmark.benchToStringFull(vrp.objectiveFunction,10,List(searchHot,search),0))
 
   //println("total time " + getWatch + "ms or  " + getWatchString)
 
