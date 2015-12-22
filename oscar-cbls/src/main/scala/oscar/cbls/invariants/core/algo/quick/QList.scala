@@ -35,11 +35,12 @@ object QList{
   implicit def toIterable[T](l:QList[T]):Iterable[T] = new IterableQList(l)
 
   def buildFromIterable[T](l:Iterable[T]):QList[T] = {
-    def buildFromIterator[T](l:Iterator[T]):QList[T] = {
-      if(l.hasNext) QList(l.next(),buildFromIterator(l))
-      else null
+    var acc:QList[T] = null
+    val it = l.toIterator
+    while(it.hasNext){
+      acc = QList(it.next(),acc)
     }
-    buildFromIterator(l.toIterator)
+    acc
   }
 }
 

@@ -5,7 +5,7 @@ package oscar.examples.cbls.routing
  */
 object RoutingMatrixGenerator {
 
-  def apply(N: Int, side: Int = 100): (Array[Array[Int]],Array[(Int,Int)]) = {
+  def apply(N: Int, side: Int = 10000): (Array[Array[Int]],Array[(Int,Int)]) = {
 
     //we generate te cost distance matrix
     def randomXY: Int = ((math.random * side)).toInt

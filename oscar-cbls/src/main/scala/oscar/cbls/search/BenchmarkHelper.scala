@@ -34,7 +34,6 @@ object Benchmark extends StopWatch{
     val m = obj.model
     val initialSolution = m.solution()
 
-
     // dry run
     for(n <- strategies){
         val strategyInstance = n()
@@ -46,6 +45,7 @@ object Benchmark extends StopWatch{
 
     for(n <- strategies)
       yield (n()._1,for(trial <- 1 to nRuns) yield {
+        m.restoreSolution(initialSolution)
         val strategyInstance = n()
         strategyInstance._2.verbose = if(verbose>0) verbose else 0
         println("Benchmarking " + strategyInstance._1 + "; run nr:" + trial + " of " + nRuns)
@@ -53,7 +53,6 @@ object Benchmark extends StopWatch{
         val it = strategyInstance._2.doAllMoves(_ => false, obj)
         val time = this.getWatch
         val quality = obj.value
-        m.restoreSolution(initialSolution)
         RunValues(it,time.toInt,quality)
       })
   }

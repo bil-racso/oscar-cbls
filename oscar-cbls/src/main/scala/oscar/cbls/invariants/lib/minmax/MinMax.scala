@@ -161,7 +161,7 @@ case class Min(vars: SortedSet[IntValue]) extends Miax(vars) {
 }
 
 object Min{
-  def apply(varss: Array[IntValue], ccond: SetValue, default: Int = Int.MaxValue) = MinArray(varss, ccond, default)
+  def apply(varss: Array[IntValue], ccond: SetValue = null, default: Int = Int.MaxValue) = MinArray(varss, ccond, default)
 }
 
 /**

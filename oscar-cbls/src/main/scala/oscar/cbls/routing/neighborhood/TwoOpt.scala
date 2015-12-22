@@ -89,7 +89,7 @@ case class TwoOpt(predecesorOfFirstMovedPoint:()=>Iterable[Int],
   var sndPred:Int = 0
 
   override def instantiateCurrentMove(newObj: Int) =
-    TwoOptMove(fstPred, sndPred, newObj, this, neighborhoodNameToString)
+    TwoOptMove(fstPred, sndPred, newObj, this, neighborhoodName)
 
   def encode(fstPred:Int, sndPred:Int) {
     val seg = cut(fstPred, sndPred)
@@ -127,7 +127,7 @@ case class TwoOptMove(
     neighborhood.encode(fstPred, sndPred)
   }
 
-  override def toString: String = (neighborhood.toString() + "(beforeSegStart:"
+  override def toString: String = (neighborhoodNameToString + "TwoOpt(beforeSegStart:"
     + fstPred
     + "; end:" + sndPred + objToString + ")")
 }

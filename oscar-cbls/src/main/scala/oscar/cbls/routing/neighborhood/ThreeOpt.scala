@@ -44,7 +44,7 @@ import oscar.cbls.search.move.Move
 case class ThreeOpt(potentialInsertionPoints:()=>Iterable[Int],
                     relevantNeighbors:()=>Int=>Iterable[Int],
                     override val vrp: VRP with PositionInRouteAndRouteNr,
-                    neighborhoodName:String = "ThreeOpt",
+                    neighborhoodName:String = null,
                     best:Boolean = false,
                     hotRestart:Boolean = true,
                     KKIterationScheme:Boolean = true) extends EasyRoutingNeighborhood[ThreeOptMove](best,vrp,neighborhoodName) {
@@ -76,16 +76,15 @@ case class ThreeOpt(potentialInsertionPoints:()=>Iterable[Int],
 
       require(isRecording, "VRP should be recording")
 
-      val otherNodes:List[List[Int]] = relevantNeighborsNow(insertionPoint)
+      //TODO: we should search for relevant neighbors of the next point of insertion point for the end of the segment!
+      val otherNodes:List[List[(Int,Int)]] = relevantNeighborsNow(insertionPoint)
         .filter((neighbor:Int) => vrp.isRouted(neighbor) && neighbor != insertionPoint)
         .groupBy(vrp.routeNr(_).value)
         .toList
-        .map(_._2.toList)
+        .map(RelevantNodesOfRoute => Pairs.makeAllUnsortedPairs(RelevantNodesOfRoute._2.toList).map({case (a,b) => if(vrp.positionInRoute(a).value < vrp.positionInRoute(b).value) (a,b) else (b,a)}))
 
-      for(nodeList <- otherNodes){
-        for((a,b) <- Pairs.makeAllUnsortedPairs(nodeList)){
-          val (first,second) = if(vrp.positionInRoute(a).value < vrp.positionInRoute(b).value) (a,b) else (b,a)
-
+      for(listOfPositionSortedPairsToExplore <- otherNodes){
+        for((first,second) <- listOfPositionSortedPairsToExplore){
           if(!vrp.isBetween(insertionPoint, first, second)
             && !(vrp.next(insertionPoint).value == first)){
 
@@ -201,7 +200,7 @@ case class ThreeOpt(potentialInsertionPoints:()=>Iterable[Int],
 
   override def instantiateCurrentMove(newObj: Int) =
     ThreeOptMove(beforeStart, segEndPoint, insertionPoint,
-      reverse3Opt, newObj, this, neighborhoodNameToString)
+      reverse3Opt, newObj, this, neighborhoodName)
 
   //this resets the internal state of the Neighborhood
   override def reset(){
@@ -259,7 +258,7 @@ case class ThreeOptMove(beforeStart: Int,
   }
 
   override def toString: String =
-    ("TreeOpt(beforeSegStart:" + beforeStart
+    (neighborhoodNameToString + "TreeOpt(beforeSegStart:" + beforeStart
       + "; end:" + segEndPoint
       + "; insertAfter:" + insertionPoint
       + "; reverse:" + reverseSegment + objToString + ")")

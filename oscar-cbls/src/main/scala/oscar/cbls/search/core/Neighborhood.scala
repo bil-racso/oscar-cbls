@@ -208,14 +208,15 @@ abstract class Neighborhood {
           }
 
           m.commit()
-          if (additionalStringGenerator != null) println(additionalStringGenerator())
+          if (additionalStringGenerator != null) println("after move is committed: " + additionalStringGenerator())
           if (obj.value == Int.MaxValue) println("Warning : objective == MaxInt, maybe you have some strong constraint violated?")
+          assert(obj.value == m.objAfter, "neighborhood was lying!:" + m + " got " + obj)
           true
       }
       toReturn += 1
       moveCount += 1
     }
-    if (printTakenMoves) println("stop criteria met after " + moveCount + " moves")
+    if (printTakenMoves) println("safety stop criteria met after " + moveCount + " moves (not the one of the neighborhood!)")
     toReturn
   }
 
@@ -583,7 +584,7 @@ abstract class EasyNeighborhood[M<:Move](best:Boolean = false, neighborhoodName:
     if (printPerformedSearches)
       println(neighborhoodNameToString + ": start exploration")
 
-    if (printExploredNeighbors) println(obj.detailedString(false, 2))
+//    if (printExploredNeighbors) println(obj.detailedString(false, 2))
 
     exploreNeighborhood()
 
