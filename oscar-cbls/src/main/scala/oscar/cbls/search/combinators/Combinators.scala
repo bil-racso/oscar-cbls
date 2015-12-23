@@ -372,22 +372,22 @@ class LearningRandom(l:List[Neighborhood],
 }
 
 case class BestSlopeFirst(l:List[Neighborhood],
-                     tabuLength:Int = 10,
-                     overrideTabuOnFullExhaust:Int = 9)
-  extends BestNeighborhoodFirst(l, tabuLength, overrideTabuOnFullExhaust){
+                          tabuLength:Int = 10,
+                          overrideTabuOnFullExhaust:Int = 9, refresh:Int = 100)
+  extends BestNeighborhoodFirst(l, tabuLength, overrideTabuOnFullExhaust, refresh){
   override protected def bestKey(p:Profile):Int = -(p.slopeForCombinators())
 }
 
 case class FastestFirst(l:List[Neighborhood],
-                   tabuLength:Int = 10,
-                   overrideTabuOnFullExhaust:Int = 9)
-  extends BestNeighborhoodFirst(l, tabuLength, overrideTabuOnFullExhaust){
+                        tabuLength:Int = 10,
+                        overrideTabuOnFullExhaust:Int = 9,  refresh:Int = 100)
+  extends BestNeighborhoodFirst(l, tabuLength, overrideTabuOnFullExhaust, refresh){
   override protected def bestKey(p:Profile):Int = -(p.slopeForCombinators())
 }
 
 abstract class BestNeighborhoodFirst(l:List[Neighborhood],
                                      tabuLength:Int,
-                                     overrideTabuOnFullExhaust:Int)
+                                     overrideTabuOnFullExhaust:Int, refresh:Int)
   extends NeighborhoodCombinator(l:_*) {
   require(overrideTabuOnFullExhaust < tabuLength, "overrideTabuOnFullExhaust should be < tabuLength")
 
@@ -429,6 +429,17 @@ abstract class BestNeighborhoodFirst(l:List[Neighborhood],
    * @return
    */
   override def getMove(obj: Objective, acceptanceCriterion: (Int, Int) => Boolean): SearchResult = {
+    if((it > 0) && ((it % refresh) == 0)){
+
+      if(printPerformedSearches){
+        println("refreshing knowledge on neighborhood; statistics since last refresh: ")
+        printStatus
+      }
+      for(p <- neighborhoodArray.indices){
+        neighborhoodArray(p).resetThisStatistics()
+        if(tabu(p) <= it) updateNeighborhodPerformances(p)
+      }
+    }
     updateTabu()
     while(!neighborhoodHeap.isEmpty){
       val headID = neighborhoodHeap.getFirst
@@ -452,6 +463,13 @@ abstract class BestNeighborhoodFirst(l:List[Neighborhood],
     }else{
       NoMoveFound
     }
+  }
+
+  /**
+   * prints the profile info for the neighborhoods, for verbosity purposes
+   */
+  def printStatus(){
+    println(Profile.selectedStatisticInfo(neighborhoodArray))
   }
 }
 
@@ -801,6 +819,7 @@ class RoundRobin(l: List[Neighborhood], steps: Int = 1) extends NeighborhoodComb
       remainingSteps -= 1
       tail.head.getMove(obj, acceptanceCriteria) match {
         case NoMoveFound =>
+          tail.head.reset()
           moveToNextRobin()
           myGetImprovingMove(obj, acceptanceCriteria, triedRobins + 1)
         case x: MoveFound => x
@@ -1359,12 +1378,16 @@ case class Profile(a:Neighborhood,ignoreInitialObj:Boolean = false) extends Neig
   def totalTimeSpent = totalTimeSpentMoveFound + totalTimeSpentNoMoveFound
 
   override def resetStatistics(){
+    resetThisStatistics()
+    super.resetStatistics()
+  }
+
+  def resetThisStatistics() {
     nbCalls = 0
     nbFound = 0
     totalGain = 0
     totalTimeSpentMoveFound = 0
     totalTimeSpentNoMoveFound = 0
-    super.resetStatistics()
   }
 
   /**
@@ -1395,22 +1418,27 @@ case class Profile(a:Neighborhood,ignoreInitialObj:Boolean = false) extends Neig
 
   def gainPerCall:String = if(nbCalls ==0) "NA" else ("" + totalGain / nbCalls)
   def callDuration:String = if(nbCalls == 0 ) "NA" else ("" + totalTimeSpent / nbCalls)
-  //gain in obj/100ms
-  def slope:String = if(totalTimeSpent == 0) "NA" else ("" + (totalGain / totalTimeSpent.toDouble))
+  //gain in obj/s
+  def slope:String = if(totalTimeSpent == 0) "NA" else ("" + (1000 * totalGain / totalTimeSpent.toDouble).toInt)
 
   def avgTimeSpendNoMove = if(nbCalls - nbFound == 0) "NA" else ("" + (totalTimeSpentNoMoveFound / (nbCalls - nbFound)))
   def avgTimeSpendMove = if(nbFound == 0) "NA" else ("" + (totalTimeSpentMoveFound / nbFound))
+  def waistedTime = if(nbCalls - nbFound == 0) "NA" else ("" + (totalTimeSpentNoMoveFound / (nbCalls - nbFound)))
+
   override def collectProfilingStatistics: List[String] =
-    (padToLength("" + a,31) + " " +
-      padToLength("" + nbCalls,6) + " " +
-      padToLength("" + nbFound,6) + " " +
-      padToLength("" + totalGain,8) + " " +
-      padToLength("" + totalTimeSpent,12) + " " +
-      padToLength("" + gainPerCall,8) + " " +
-      padToLength("" + callDuration,12)+ " " +
-      padToLength("" + slope,11)+ " " +
-      padToLength("" + avgTimeSpendNoMove,13)+ " " +
-      avgTimeSpendMove) ::  super.collectProfilingStatistics
+    collectThisProfileStatistics :: super.collectProfilingStatistics
+
+  def collectThisProfileStatistics:String = (padToLength("" + a,31) + " " +
+    padToLength("" + nbCalls,6) + " " +
+    padToLength("" + nbFound,6) + " " +
+    padToLength("" + totalGain,8) + " " +
+    padToLength("" + totalTimeSpent,12) + " " +
+    padToLength("" + gainPerCall,8) + " " +
+    padToLength("" + callDuration,12)+ " " +
+    padToLength("" + slope,11)+ " " +
+    padToLength("" + avgTimeSpendNoMove,13)+ " " +
+    padToLength("" + avgTimeSpendMove,12)+ " " +
+    totalTimeSpentNoMoveFound)
 
   private def padToLength(s: String, l: Int) = (s + nStrings(l, " ")).substring(0, l)
   private def nStrings(n: Int, s: String): String = if (n <= 0) "" else s + nStrings(n - 1, s)
@@ -1419,12 +1447,15 @@ case class Profile(a:Neighborhood,ignoreInitialObj:Boolean = false) extends Neig
 
   def slopeOrZero:Int = if(totalTimeSpent == 0) 0 else ((100 * totalGain) / totalTimeSpent).toInt
 
-  def slopeForCombinators(defaultIfNoCall:Int = Int.MaxValue):Int =  if(totalTimeSpent == 0) defaultIfNoCall else ((100 * totalGain) / totalTimeSpent).toInt
+  def slopeForCombinators(defaultIfNoCall:Int = Int.MaxValue):Int =  if(totalTimeSpent == 0) defaultIfNoCall else ((1000 * totalGain) / totalTimeSpent).toInt
 }
 
 object Profile{
   private def padToLength(s: String, l: Int) = (s + nStrings(l, " ")).substring(0, l)
   private def nStrings(n: Int, s: String): String = if (n <= 0) "" else s + nStrings(n - 1, s)
-  def statisticsHeader = padToLength("Neighborhood",30) + "  calls  found  sumGain  sumTime(ms)  avgGain  avgTime(ms)  slope(-/ms) avgTimeNoMove avgTimeMove"
+  def statisticsHeader = padToLength("Neighborhood",30) + "  calls  found  sumGain  sumTime(ms)  avgGain  avgTime(ms)  slope(-/s)  avgTimeNoMove avgTimeMove waistedTime"
+  def selectedStatisticInfo(i:Iterable[Profile]) = {
+    (statisticsHeader :: i.toList.map(_.collectThisProfileStatistics)).mkString("\n")
+  }
 }
 

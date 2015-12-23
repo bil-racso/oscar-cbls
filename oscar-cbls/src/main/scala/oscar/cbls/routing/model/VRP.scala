@@ -30,6 +30,7 @@ import oscar.cbls.invariants.lib.logic._
 import oscar.cbls.invariants.lib.numeric.Sum
 import oscar.cbls.invariants.lib.set.Cardinality
 import oscar.cbls.modeling.Algebra._
+import oscar.cbls.search.algo.KSmallest
 
 import scala.collection.immutable.{ SortedMap, SortedSet }
 import scala.math.min
@@ -86,7 +87,7 @@ class VRP(val N: Int, val V: Int, val m: Store) {
    * @param n the point queried.
    * @return true if the point is still routed, else false.
    */
-  def isRouted(n: Int): Boolean = { next(n).value != N }
+  def isRouted(n: Int): Boolean = { next(n).getValue(true) != N }
 
   /**
    * This function is intended to be used for testing only.
@@ -250,19 +251,17 @@ trait HopClosestNeighbors extends ClosestNeighbors with HopDistance {
 abstract trait ClosestNeighbors extends VRP {
 
   protected def getDistance(from: Int, to: Int): Int
-  /**
-   * This array contains, for each node, the list of neighbors,
-   * sorted by their distance to the node, in ascending order.
-   * TODO: implement a lazy sort which sorts the k nearest
-   */
-  var closestNeighbors: Array[List[Int]] = null
 
-  def computeClosestNeighbors() =
-    closestNeighbors = Array.tabulate(N)(node => {
-      reachableNeigbors(node).sortBy(neighbor =>
-        min(getDistance(neighbor, node), getDistance(node, neighbor)))
-    })
+  var closestNeighbors: Array[Iterable[Int]] = null
 
+  def computeClosestNeighbors() = {
+    println("computeClosestNeighbors")
+    def arrayOfAllNodes = Array.tabulate(N)(node => node)
+    closestNeighbors = Array.tabulate(N)(node =>
+      KSmallest.lazySort(arrayOfAllNodes,
+        neighbor => min(getDistance(neighbor, node), getDistance(node, neighbor))
+      ))
+  }
   /**
    * Filters the node itself and unreachable neighbors.
    */
@@ -285,19 +284,20 @@ abstract trait ClosestNeighbors extends VRP {
   def kNearest(k: Int, filter: (Int => Boolean) = (_ => true))(node: Int): Iterable[Int] = {
     if (k >= N - 1) return nodes.filter(filter)
 
-    def kNearestAccumulator(sortedNeighbors: List[Int], k: Int, kNearestAcc: List[Int]): List[Int] = {
+    def kNearestAccumulator(sortedNeighbors: Iterator[Int], k: Int, kNearestAcc: List[Int]): List[Int] = {
       require(k >= 0)
-      (sortedNeighbors, k) match {
-        case (Nil, _) | (_, 0) => kNearestAcc.reverse
-        case (neighbor :: remainingNeighbors, _) =>
-          if (filter(neighbor))
-            kNearestAccumulator(remainingNeighbors, k - 1, neighbor :: kNearestAcc)
-          else
-            kNearestAccumulator(remainingNeighbors, k, kNearestAcc)
+      if(k == 0 || !sortedNeighbors.hasNext){
+        kNearestAcc.reverse
+      }else{
+        val neighbor = sortedNeighbors.next()
+        if (filter(neighbor))
+          kNearestAccumulator(sortedNeighbors, k - 1, neighbor :: kNearestAcc)
+        else
+          kNearestAccumulator(sortedNeighbors, k, kNearestAcc)
       }
     }
 
-    kNearestAccumulator(closestNeighbors(node), k, Nil)
+    kNearestAccumulator(closestNeighbors(node).iterator, k, Nil)
   }
 }
 
@@ -363,6 +363,20 @@ trait HopDistance extends VRP {
    * @return the distance between the start and end node as an Int.
    */
   def getHop(from: Int, to: Int): Int = distanceFunction(from, to)
+}
+
+
+trait hopDistancePerVehicle extends HopDistance with NodesOfVehicle{
+  var hopDistancePerVehicle:Array[IntValue] = null
+  def installHopDistancePerVehicle(){
+    hopDistancePerVehicle = Array.tabulate(V)(v => Sum(hopDistance,nodesOfVehicle(v)).setName("totalDistance_" + v))
+    addToStringInfo(() => "hopDistancePerVehicle:" + hopDistancePerVehicle.mkString(";"))
+  }
+}
+
+trait hopsPerVehicle extends NodesOfVehicle{
+  var hopsPerVehicle:Array[IntValue] = Array.tabulate(V)(v => Cardinality(nodesOfVehicle(v)).setName("totalHops_" + v))
+  addToStringInfo(() => "hopsPerVehicle:" + hopsPerVehicle.mkString(";"))
 }
 
 /**

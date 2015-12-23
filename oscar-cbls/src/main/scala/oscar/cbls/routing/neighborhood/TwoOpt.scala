@@ -39,7 +39,7 @@ import oscar.cbls.search.move.Move
  * */
 case class TwoOpt(predecesorOfFirstMovedPoint:()=>Iterable[Int],
                   relevantNeighbors:()=>Int=>Iterable[Int],
-                  vrp: VRP with PositionInRouteAndRouteNr,
+                  override val vrp: VRP with PositionInRouteAndRouteNr,
                   neighborhoodName:String = null,
                   best:Boolean = false,
                   hotRestart:Boolean = true) extends EasyRoutingNeighborhood[TwoOptMove](best,vrp,neighborhoodName) {
@@ -89,7 +89,7 @@ case class TwoOpt(predecesorOfFirstMovedPoint:()=>Iterable[Int],
   var sndPred:Int = 0
 
   override def instantiateCurrentMove(newObj: Int) =
-    TwoOptMove(fstPred, sndPred, newObj, this, neighborhoodNameToString)
+    TwoOptMove(fstPred, sndPred, newObj, this, neighborhoodName)
 
   def encode(fstPred:Int, sndPred:Int) {
     val seg = cut(fstPred, sndPred)
@@ -102,7 +102,6 @@ case class TwoOpt(predecesorOfFirstMovedPoint:()=>Iterable[Int],
     startIndice = 0
   }
 }
-
 
 /**
  * Models a two-opt-move operator of a given VRP problem.
@@ -120,13 +119,15 @@ case class TwoOptMove(
   override val objAfter: Int,
   override val neighborhood:TwoOpt,
   override val neighborhoodName:String = null)
-  extends VRPMove(objAfter, neighborhood, neighborhoodName) {
-  // overriding methods
+  extends VRPMove(objAfter, neighborhood, neighborhoodName){
+
+  override def impactedPoints: List[Int] = List(fstPred,sndPred)
+
   override def encodeMove() {
     neighborhood.encode(fstPred, sndPred)
   }
 
-  override def toString: String = (neighborhood.toString() + "(first predecessor = "
+  override def toString: String = (neighborhoodNameToString + "TwoOpt(beforeSegStart:"
     + fstPred
-    + ", second predecessor = " + sndPred + objToString + ")")
+    + "; end:" + sndPred + objToString + ")")
 }

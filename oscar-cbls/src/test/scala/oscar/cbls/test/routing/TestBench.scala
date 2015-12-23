@@ -22,7 +22,7 @@ import oscar.cbls.routing.model.RoutedAndUnrouted
 import oscar.cbls.routing.model.UnroutedImpl
 import oscar.cbls.routing.model.VRP
 import oscar.cbls.routing.model.VRPObjective
-import oscar.cbls.routing.neighborhood.InsertPoint
+import oscar.cbls.routing.neighborhood.InsertPointUnroutedFirst
 import oscar.cbls.routing.neighborhood.OnePointMove
 import oscar.cbls.routing.neighborhood.OnePointMoveMove
 import oscar.cbls.routing.neighborhood.Swap
@@ -41,7 +41,7 @@ object RandomInsert {
    */
   def apply(vrp: VRP with RoutedAndUnrouted with VRPObjective with PositionInRouteAndRouteNr) {
     print("Applying random insert heuristic...")
-    InsertPoint(vrp.unrouted,
+    InsertPointUnroutedFirst(vrp.unrouted,
       () => (n: Int) => vrp.routed.value,
       vrp: VRP,
       "Random insert",

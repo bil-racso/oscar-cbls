@@ -25,8 +25,7 @@
 package oscar.cbls.routing.neighborhood
 
 import oscar.cbls.routing.model._
-import oscar.cbls.search.algo.{IdenticalAggregator, HotRestart}
-import oscar.cbls.search.move.Move
+import oscar.cbls.search.algo.{HotRestart, IdenticalAggregator}
 
 /**
  * Inserts an unrouted point in a route. The size of the neighborhood is O(u*n).
@@ -50,24 +49,23 @@ import oscar.cbls.search.move.Move
  * @author Florent Ghilain (UMONS)
  * @author yoann.guyot@cetic.be
  */
-case class InsertPoint(unroutedNodesToInsert: () => Iterable[Int],
+case class InsertPointUnroutedFirst(unroutedNodesToInsert: () => Iterable[Int],
                        relevantNeighbors: () => Int => Iterable[Int],
-                       vrp: VRP,
-                       neighborhoodName: String = "InsertPoint",
+                       override val vrp: VRP,
+                       neighborhoodName: String = "InsertPointUnroutedFirst",
                        best: Boolean = false,
                        hotRestart: Boolean = true,
                        nodeSymmetryClass:Option[Int => Int] = None,
                        hotRestartOnNextSymmetryClass:Boolean = false)
-  extends EasyRoutingNeighborhood[InsertPointMove](best, vrp, neighborhoodName) {
+  extends BaseInsertPoint(vrp, neighborhoodName, best) {
 
   //the indice to start with for the exploration
   var startIndice: Int = 0
 
-  var beforeInsertedPoint:Int = 0
-  var insertedPoint:Int = 0
-
   override def exploreNeighborhood(): Unit = {
 
+    //TODO: il faut itérer sur les points routés en premier, pas l'inverse.
+    //et il faut rectifier le facteur de proximité avc la pénalité de non routage dans le cas du InsertPoint!
     val iterationSchemeOnZone =
       if (hotRestart && !best) HotRestart(unroutedNodesToInsert(), startIndice)
       else unroutedNodesToInsert()
@@ -80,33 +78,111 @@ case class InsertPoint(unroutedNodesToInsert: () => Iterable[Int],
     val relevantNeighborsNow = relevantNeighbors()
 
     val iterationSchemeIterator = iterationScheme.iterator
-    while(iterationSchemeIterator.hasNext){
+    while (iterationSchemeIterator.hasNext) {
       insertedPoint = iterationSchemeIterator.next
       assert(!vrp.isRouted(insertedPoint),
         "The search zone should be restricted to unrouted nodes when inserting.")
 
       val it2 = relevantNeighborsNow(insertedPoint).iterator
-      while(it2.hasNext){
-        beforeInsertedPoint =it2.next()
-        if (vrp.isRouted(beforeInsertedPoint)){
+      while (it2.hasNext) {
+        beforeInsertedPoint = it2.next()
+        if (vrp.isRouted(beforeInsertedPoint)) {
           assert(isRecording, "MoveDescription should be recording now")
 
           encode(beforeInsertedPoint, insertedPoint)
           val newObj = evalObjOnEncodedMove()
 
-          if (evaluateCurrentMoveObjTrueIfStopRequired(newObj)){
-            startIndice = if(hotRestartOnNextSymmetryClass){
-              if(iterationSchemeIterator.hasNext)
+          if (evaluateCurrentMoveObjTrueIfStopRequired(newObj)) {
+            startIndice = if (hotRestartOnNextSymmetryClass) {
+              if (iterationSchemeIterator.hasNext)
                 iterationSchemeIterator.next
               else iterationScheme.head
             } else insertedPoint + 1
             return
           }
-
         }
       }
     }
   }
+}
+
+
+/**
+ * OnePoint insert neighborhood htat primarily iterates over insertion point,s and then over poitns that can be iserted.
+ * @param insertionPoints the positions where we can insert points
+ * @param unroutedNodesToInsert the points to insert, gven an insertion point (use K-nearest here for isntance
+ * @param vrp the routing problem
+ * @param neighborhoodName the name of the neighborhood
+ * @param best best or first move
+ * @param hotRestart hot restart on the insertion point
+ * @param insertedPointsSymetryClass a function that input the ID of an unrouted node and returns a symmetry class;
+ *                      ony one of the unrouted node in each class will be considered for insert
+ *                      Int.MinValue is considered different to itself
+ *                      if you set to None this will not be used at all
+ * @author renaud.delandtsheer@cetic.be
+ */
+case class InsertPointRoutedFirst(insertionPoints:()=>Iterable[Int],
+                                  unroutedNodesToInsert: () => Int => Iterable[Int],
+                                  override val vrp: VRP,
+                                  neighborhoodName: String = "InsertPointRoutedFirst",
+                                  best: Boolean = false,
+                                  hotRestart: Boolean = true,
+                                  insertedPointsSymetryClass:Option[Int => Int] = None)
+  extends BaseInsertPoint(vrp, neighborhoodName, best) {
+
+  //the indice to start with for the exploration
+  var startIndice: Int = 0
+
+  override def exploreNeighborhood(): Unit = {
+
+    //et il faut rectifier le facteur de proximité avc la pénalité de non routage dans le cas du InsertPoint!
+    val iterationSchemeOnInsertionPoint =
+      if (hotRestart && !best) HotRestart(insertionPoints(), startIndice)
+      else insertionPoints()
+
+    cleanRecordedMoves()
+    val unroutedNodesToInsertNow = unroutedNodesToInsert()
+
+    val iterationSchemeOnInsertionPointIterator = iterationSchemeOnInsertionPoint.iterator
+    while (iterationSchemeOnInsertionPointIterator.hasNext) {
+      beforeInsertedPoint = iterationSchemeOnInsertionPointIterator.next
+      assert(vrp.isRouted(insertedPoint), "insertion points shoud all be routed")
+
+      val iteratorOnPointsToInsert = (insertedPointsSymetryClass match {
+        case None => unroutedNodesToInsertNow(beforeInsertedPoint)
+        case Some(s) => IdenticalAggregator.removeIdenticalClassesLazily(unroutedNodesToInsertNow(beforeInsertedPoint), s)
+      }).iterator
+
+      while (iteratorOnPointsToInsert.hasNext) {
+        insertedPoint = iteratorOnPointsToInsert.next()
+        assert(!vrp.isRouted(insertedPoint))
+        assert(isRecording, "MoveDescription should be recording now")
+
+        encode(beforeInsertedPoint, insertedPoint)
+        val newObj = evalObjOnEncodedMove()
+
+        if (evaluateCurrentMoveObjTrueIfStopRequired(newObj)) {
+          startIndice = beforeInsertedPoint + 1
+          return
+        }
+      }
+    }
+  }
+}
+
+
+
+/**
+ * base class for point insertion moves
+ * @author renaud.delandtsheer@cetic.be
+ */
+abstract class BaseInsertPoint(vrp: VRP,
+                               neighborhoodName: String = null,
+                               best: Boolean = false)
+  extends EasyRoutingNeighborhood[InsertPointMove](best, vrp, neighborhoodName) {
+
+  var beforeInsertedPoint:Int = 0
+  var insertedPoint:Int = 0
 
   override def instantiateCurrentMove(newObj: Int) =
     InsertPointMove(beforeInsertedPoint, insertedPoint, newObj, this, neighborhoodNameToString)
@@ -116,11 +192,6 @@ case class InsertPoint(unroutedNodesToInsert: () => Iterable[Int],
     assert(vrp.isRouted(beforeInsertedPoint))
     val s = segmentFromUnrouted(insertedPoint)
     insert(s, beforeInsertedPoint)
-  }
-
-  //this resets the internal state of the Neighborhood
-  override def reset(): Unit = {
-    startIndice = 0
   }
 }
 
@@ -134,15 +205,17 @@ case class InsertPoint(unroutedNodesToInsert: () => Iterable[Int],
 case class InsertPointMove(beforeInsertedPoint: Int,
                            insertedPoint: Int,
                            override val objAfter: Int,
-                           override val neighborhood: InsertPoint,
+                           override val neighborhood: BaseInsertPoint,
                            override val neighborhoodName: String = null)
-  extends VRPMove(objAfter, neighborhood, neighborhoodName) {
+  extends VRPMove(objAfter, neighborhood, neighborhoodName){
+
+  override def impactedPoints: List[Int] = List(beforeInsertedPoint,insertedPoint)
 
   override def encodeMove() {
     neighborhood.encode(beforeInsertedPoint, insertedPoint)
   }
 
   override def toString: String =
-    "InsertPoint(beforeInsertedPoint = " + beforeInsertedPoint +
+    neighborhoodName + ":InsertPoint(beforeInsertedPoint = " + beforeInsertedPoint +
       ", insertedPoint = " + insertedPoint + objToString + ")"
 }

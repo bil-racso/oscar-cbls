@@ -24,7 +24,7 @@
 
 package oscar.cbls.routing.neighborhood
 
-import oscar.cbls.routing.model.VRP
+import oscar.cbls.routing.model.{HotSpottingInfo, VRP}
 import oscar.cbls.search.algo.HotRestart
 import oscar.cbls.search.move.Move
 
@@ -41,7 +41,7 @@ import oscar.cbls.search.move.Move
  * @author Florent Ghilain (UMONS)
  */
 case class RemovePoint(predecessorsOfRoutedPointsToRemove:()=>Iterable[Int],
-                       vrp: VRP,
+                       override val vrp: VRP,
                        neighborhoodName:String = null,
                        best:Boolean = false,
                        hotRestart:Boolean = true) extends EasyRoutingNeighborhood[RemovePointMove](best,vrp, neighborhoodName) {
@@ -105,7 +105,9 @@ case class RemovePointMove(
                         override val objAfter: Int,
                         override val neighborhood:RemovePoint,
                         override val neighborhoodName:String = null)
-  extends VRPMove(objAfter, neighborhood, neighborhoodName) {
+  extends VRPMove(objAfter, neighborhood, neighborhoodName){
+
+  override def impactedPoints: List[Int] = List(beforeRemovedPoint,removedPoint)
 
   override def encodeMove() {
     neighborhood.encode(beforeRemovedPoint)

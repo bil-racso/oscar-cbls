@@ -1,0 +1,130 @@
+package oscar.examples.cbls.routing
+
+import oscar.cbls.invariants.core.computation.Store
+import oscar.cbls.routing.model._
+import oscar.cbls.routing.neighborhood._
+import oscar.cbls.search.{Benchmark, StopWatch}
+import oscar.cbls.search.combinators.{Profile, BestSlopeFirst}
+
+class MyVRPHS(n:Int, v:Int, model:Store, distanceMatrix: Array[Array[Int]],unroutedPenalty:Int)
+  extends VRP(n,v,model)
+  with HopDistanceAsObjectiveTerm
+  with HopClosestNeighbors
+  with PositionInRouteAndRouteNr
+  with NodesOfVehicle
+  with PenaltyForUnroutedAsObjectiveTerm
+  with HotSpot {
+  installCostMatrix(distanceMatrix)
+  setUnroutedPenaltyWeight(unroutedPenalty)
+  computeClosestNeighbors()
+}
+
+object RoutingTestHotSpot extends App with StopWatch{
+
+  this.startWatch()
+
+  val n = 8000
+  val v = 1
+
+  println("RoutingTest(n:" + n + " v:" + v + ")")
+
+  val (distanceMatrix,positions) = RoutingMatrixGenerator(n,100000)
+
+  println("compozed matrix " + getWatch + "ms")
+
+  val model = new Store()
+
+  val vrp = new MyVRPHS(n,v,model,distanceMatrix,100000)
+
+  println("closing model")
+  model.close()
+
+  vrp.resetVehicleHotSpot()
+
+  println("closed model " + getWatch + "ms")
+
+  val insertPointRoutedFirst = new InsertPointRoutedFirst(
+    insertionPoints = vrp.routed,
+    unroutedNodesToInsert = () => vrp.kNearest(10,!vrp.isRouted(_)),
+    vrp = vrp)
+
+  val insertPointUnroutedFirst = Profile(InsertPointUnroutedFirst(
+    unroutedNodesToInsert = () => vrp.unrouted.value,
+    relevantNeighbors = () => vrp.kNearest(20,vrp.isRouted(_)),
+    vrp = vrp, hotRestart = false))
+
+  //the other insertion point strategy is less efficient, need to investigate why.
+  val insertPoint = insertPointUnroutedFirst
+
+  val onePointMove = Profile(OnePointMove(
+    nodesPrecedingNodesToMove = vrp.routed,
+    relevantNeighbors= () => vrp.kNearest(20),
+    vrp = vrp))
+
+  //the one point move with HotSpot. notice that it is smalle than without hotspot because the pirmary must be hot
+  //however, there could be move with primary cold and secondary hot; these are not explored (in the todo-list)
+  val onePointHotView = vrp.newVehicleHotSpotView(true)
+  val onePointHot = Profile(OnePointMove(
+    nodesPrecedingNodesToMove = () => onePointHotView.hotNodesByVehicleWithConsumption,
+    relevantNeighbors= () => vrp.kNearest(40),
+    vrp = vrp,
+    neighborhoodName = "OnePointMoveHot",
+    hotRestart = false))
+
+  val onePointHotView2 = vrp.newNodeHotSpotView(true)
+  val onePointHot2 = Profile(OnePointMove(
+    nodesPrecedingNodesToMove = () => onePointHotView2.hotNodesWithConsumption,
+    relevantNeighbors= () => vrp.kNearest(20),
+    vrp = vrp,
+    neighborhoodName = "OnePointMoveHot",
+    hotRestart = false))
+
+  val twoOpt = Profile(TwoOpt(
+    predecesorOfFirstMovedPoint = vrp.routed,
+    relevantNeighbors = () => vrp.kNearest(20),
+    vrp = vrp))
+
+  val twoOptMoveHotView = vrp.newVehicleHotSpotView(true)
+  val twoOptHot = Profile(TwoOpt(
+    predecesorOfFirstMovedPoint = () => twoOptMoveHotView.hotNodesByVehicleWithConsumption,
+    relevantNeighbors = () => vrp.kNearest(20),
+    vrp = vrp,
+    neighborhoodName = "TwoOptHot",
+    hotRestart = false))
+
+
+  val threeOpt = Profile(ThreeOpt(
+    potentialInsertionPoints = vrp.routed,
+    relevantNeighbors = () => vrp.kNearest(20),
+    vrp = vrp))
+
+
+  val searchHot = () => {vrp.resetVehicleHotSpot();("Hot",(insertPoint exhaust (new BestSlopeFirst(List(onePointHot2,twoOptHot,threeOpt)))) afterMove(vrp.updateVehicleHotSpotAnyMove(_)))}
+
+  val search = () => ("standard",(insertPoint exhaust (new BestSlopeFirst(List(onePointMove,twoOpt,threeOpt)))))
+  val searchNoRefresh = () => ("standard no refresh",(insertPoint exhaust (new BestSlopeFirst(List(onePointMove,twoOpt,threeOpt),refresh = 10000))))
+  val search3 = () => ("3-opt",(insertPoint exhaust threeOpt))
+  val search31 = () => ("3-opt AT 1-opt",(insertPoint exhaust threeOpt exhaust onePointMove))
+  //  search.verbose = 1
+  //  search.verboseWithExtraInfo(3,() => vrp.toString)
+
+  //  onePointMove.verboseWithExtraInfo(3,() => vrp.toString)
+
+
+
+  //val searchh =  (insertPoint exhaust (onePointHot2 exhaustBack threeOpt) afterMove(vrp.updateVehicleHotSpotAnyMove(_)))
+
+
+  //searchh.verbose = 1
+  //searchh.doAllMoves(_ > 10*n, vrp.objectiveFunction)
+
+  insertPointUnroutedFirst.doAllMoves(_ > 10*n, vrp.objectiveFunction)
+
+  println(Benchmark.benchToStringFull(vrp.objectiveFunction,5,List(() => ("OnePoint", onePointMove),() => {vrp.resetVehicleHotSpot(); ("OnePointHot",onePointHot2 afterMove(vrp.updateVehicleHotSpotAnyMove(_)))})))
+
+  println("total time " + getWatch + "ms or  " + getWatchString)
+
+  //println(search.profilingStatistics)
+
+    println("\nresult:\n" + vrp)
+}

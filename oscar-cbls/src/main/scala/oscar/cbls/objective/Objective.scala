@@ -241,6 +241,7 @@ class LoggingObjective(baseObjective:Objective) extends Objective{
   override def value: Int = {
     val toReturn = baseObjective.value
     evaluationsLog = baseObjective.detailedString(true) :: evaluationsLog
+//    throw new Error()
     toReturn
   }
 

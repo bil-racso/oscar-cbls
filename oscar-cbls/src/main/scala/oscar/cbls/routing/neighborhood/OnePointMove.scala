@@ -25,8 +25,7 @@
 
 package oscar.cbls.routing.neighborhood
 
-import oscar.cbls.routing.model.PositionInRouteAndRouteNr
-import oscar.cbls.routing.model.VRP
+import oscar.cbls.routing.model.{HotSpottingInfo, PositionInRouteAndRouteNr, VRP}
 import oscar.cbls.search.algo.HotRestart
 import oscar.cbls.search.move.Move
 
@@ -39,7 +38,7 @@ import oscar.cbls.search.move.Move
  */
 case class OnePointMove(nodesPrecedingNodesToMove: () => Iterable[Int],
                         relevantNeighbors: () => Int => Iterable[Int],
-                        vrp: VRP with PositionInRouteAndRouteNr,
+                        override val vrp: VRP with PositionInRouteAndRouteNr,
                         neighborhoodName: String = null,
                         best: Boolean = false,
                         hotRestart: Boolean = true) extends EasyRoutingNeighborhood[OnePointMoveMove](best, vrp, neighborhoodName) {
@@ -61,7 +60,7 @@ case class OnePointMove(nodesPrecedingNodesToMove: () => Iterable[Int],
     while (beforeMovedPointsIt.hasNext) {
       beforeMovedPoint = beforeMovedPointsIt.next()
       if (vrp.isRouted(beforeMovedPoint)) {
-        movedPoint = vrp.next(beforeMovedPoint).value
+        movedPoint = vrp.next(beforeMovedPoint).getValue(true)
 
         val insertionPointIt = relevantNeighborsNow(movedPoint).iterator
         while (insertionPointIt.hasNext) {
@@ -69,7 +68,7 @@ case class OnePointMove(nodesPrecedingNodesToMove: () => Iterable[Int],
           if (vrp.isRouted(insertionPoint)
             && beforeMovedPoint != insertionPoint
             && movedPoint != insertionPoint
-            && beforeMovedPoint != vrp.next(insertionPoint).value
+            && beforeMovedPoint != vrp.next(insertionPoint).getValue(true)
             && (!vrp.isADepot(movedPoint) || vrp.onTheSameRoute(movedPoint, insertionPoint))) {
 
             encode(beforeMovedPoint, insertionPoint)
@@ -89,7 +88,7 @@ case class OnePointMove(nodesPrecedingNodesToMove: () => Iterable[Int],
   var insertionPoint:Int = 0
 
   override def instantiateCurrentMove(newObj: Int) =
-    OnePointMoveMove(beforeMovedPoint, movedPoint, insertionPoint, newObj, this, neighborhoodNameToString)
+    OnePointMoveMove(beforeMovedPoint, movedPoint, insertionPoint, newObj, this, neighborhoodName)
 
   override def reset(): Unit = {
     startIndice = 0
@@ -116,7 +115,9 @@ case class OnePointMoveMove(predOfMovedPoint: Int,
                             insertionPoint: Int,
                             override val objAfter: Int,
                             override val neighborhood: OnePointMove,
-                            override val neighborhoodName: String = null) extends VRPMove(objAfter, neighborhood, neighborhoodName) {
+                            override val neighborhoodName: String = null) extends VRPMove(objAfter, neighborhood, neighborhoodName){
+
+  override def impactedPoints: List[Int] = List(predOfMovedPoint,movedPoint,insertionPoint)
 
   override def encodeMove() {
     neighborhood.encode(predOfMovedPoint, insertionPoint)

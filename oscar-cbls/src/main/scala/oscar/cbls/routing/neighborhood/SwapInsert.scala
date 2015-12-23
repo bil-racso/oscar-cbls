@@ -69,7 +69,7 @@ object SwapInsert {
             hotRestartOnRemove: Boolean = true,
             maximalIntermediaryDegradation: Int = Int.MaxValue): Neighborhood = {
     AndThen(RemovePoint(predecessorsOfRoutedPointsToRemove, vrp, "SwapInsert.Remove", best, hotRestartOnRemove),
-      InsertPoint(unroutedNodesToInsert, relevantNeighborsForInsertion, vrp, "SwapInsert.Insert", best, hotRestartOnInsert, symmetryClassesOnInsert, hotRestartOnInsert),
+      InsertPointUnroutedFirst(unroutedNodesToInsert, relevantNeighborsForInsertion, vrp, "SwapInsert.Insert", best, hotRestartOnInsert, symmetryClassesOnInsert, hotRestartOnInsert),
       maximalIntermediaryDegradation) name neighborhoodName
   }
 
@@ -85,7 +85,7 @@ object SwapInsert {
                           maximalIntermediaryDegradation: Int = Int.MaxValue): Neighborhood = {
     DynAndThen(RemovePoint(predecessorsOfRoutedPointsToRemove, vrp, "SwapInsert.Remove", best, hotRestartOnRemove),
       ((r: RemovePointMove) =>
-        InsertPoint(() => unroutedNodesToInsert(r.removedPoint),
+        InsertPointUnroutedFirst(() => unroutedNodesToInsert(r.removedPoint),
           () => _ => List(r.beforeRemovedPoint),
           vrp,
           "SwapInsert.Insert",
@@ -110,7 +110,34 @@ object SwapInsert {
         val removedPoint = r.removedPoint
         val vehicleTraversingRemovedPoint = snapShot.intDico(vrp.routeNr(removedPoint))
         val remainingNodesOfThisVehicle = snapShot.setDico(vrp.nodesOfVehicle(vehicleTraversingRemovedPoint))-removedPoint
-        InsertPoint(()=>unroutedNodesToInsert(vehicleTraversingRemovedPoint),
+        InsertPointUnroutedFirst(()=>unroutedNodesToInsert(vehicleTraversingRemovedPoint),
+          () => insertionPoints(remainingNodesOfThisVehicle), //where do you want to insert them?
+          vrp,
+          "SwapInsertSameVehicle.Insert",
+          best,
+          false,
+          symmetryClassesOnInsert,
+          false)},
+      maximalIntermediaryDegradation,
+      vrp.routeNr,
+      vrp.nodesOfVehicle) name neighborhoodName
+  }
+
+  def swapInsertSameVehicle2(predecessorsOfRoutedPointsToRemove: () => Iterable[Int],
+                            unroutedNodesToInsert: Int => Iterable[Int], //which nodedo you want to insert on this vehicle, and close to this point?
+                            insertionPoints:SortedSet[Int] => Int => Iterable[Int],//given remaining nodes of the vehice, and an insertion candidate, where do we put it?
+                            best: Boolean = false,
+                            symmetryClassesOnInsert: Option[Int => Int] = None,
+                            hotRestartOnRemove: Boolean = true,
+                            vrp:VRP with NodesOfVehicle with PositionInRouteAndRouteNr,
+                            neighborhoodName: String = "SwapInsertSameVehicle",
+                            maximalIntermediaryDegradation: Int = Int.MaxValue){
+    DynAndThenWithPrev(RemovePoint(predecessorsOfRoutedPointsToRemove, vrp, "SwapInsertSameVehicle.Remove", best, hotRestartOnRemove),
+      (r:RemovePointMove,snapShot:Snapshot) => {
+        val removedPoint = r.removedPoint
+        val vehicleTraversingRemovedPoint = snapShot.intDico(vrp.routeNr(removedPoint))
+        val remainingNodesOfThisVehicle = snapShot.setDico(vrp.nodesOfVehicle(vehicleTraversingRemovedPoint))-removedPoint
+        InsertPointUnroutedFirst(()=>unroutedNodesToInsert(vehicleTraversingRemovedPoint),
           () => insertionPoints(remainingNodesOfThisVehicle), //where do you want to insert them?
           vrp,
           "SwapInsertSameVehicle.Insert",
@@ -123,3 +150,5 @@ object SwapInsert {
       vrp.nodesOfVehicle) name neighborhoodName
   }
 }
+
+

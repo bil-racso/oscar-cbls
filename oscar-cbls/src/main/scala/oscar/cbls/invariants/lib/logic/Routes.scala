@@ -117,8 +117,6 @@ class Routes(V: Int,
   val heap = new BinomialHeap[(Int, Int)]((a: (Int, Int)) => a._2, next.length)
 
   override def performInvariantPropagation() {
-    //le numéro de noeud, son ancienne position dans le circuit
-
     for (node <- ToUpdate) {
       if (next(node).value == UNROUTED) {
         //node is unrouted now

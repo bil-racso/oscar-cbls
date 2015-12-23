@@ -1,6 +1,6 @@
 package oscar.cbls.routing.neighborhood
 
-import oscar.cbls.routing.model.{NodesOfVehicle, PositionInRouteAndRouteNr, VRP}
+import oscar.cbls.routing.model.{HotSpottingInfo, NodesOfVehicle, PositionInRouteAndRouteNr, VRP}
 import oscar.cbls.search.algo.{Pairs, HotRestart}
 import scala.collection.immutable.{SortedMap, SortedSet}
 
@@ -8,11 +8,11 @@ import scala.collection.immutable.{SortedMap, SortedSet}
  * swaps segments of different vehicles
  * THIS IS EXPERIMENTAL
  */
-class SegmentExchange(vrp: VRP with PositionInRouteAndRouteNr with NodesOfVehicle,
+case class SegmentExchange(override val vrp: VRP with PositionInRouteAndRouteNr with NodesOfVehicle,
                       relevantNeighbors:()=>Int=>Iterable[Int],
                       vehicles:() => List[Int],
-                      neighborhoodName:String = "SegmentExchange",
-                      hotRestart:Boolean,
+                      neighborhoodName:String = null,
+                      hotRestart:Boolean = true,
                       best:Boolean = false) extends EasyRoutingNeighborhood[SegmentExchangeMove](best,vrp,neighborhoodName) {
 
   var beforeFirstSegment: Int = 0
@@ -31,15 +31,22 @@ class SegmentExchange(vrp: VRP with PositionInRouteAndRouteNr with NodesOfVehicl
     val relevantNeighborsNow = relevantNeighbors()
 
     for ((vehicle1, otherVehicles) <- Pairs.makeAllHeadAndTails(iterationSchemeOnVehicles.toList)) {
+
+      //println("checking vehicle" + vehicle1, " others:" + otherVehicles)
+
       val otherVehiclesSet:SortedSet[Int] = SortedSet.empty[Int] ++ otherVehicles
+      val nodesToConsider:SortedSet[Int] = otherVehicles.foldLeft(SortedSet.empty[Int])((acc,vehicle) => acc ++ vrp.getRouteOfVehicle(vehicle))
       val routeOfVehicle1 = vrp.getRouteOfVehicle(vehicle1)
+      //println("route of checked vehicle:" + routeOfVehicle1)
       //cluster the closest by the otherVehicles
       val routeWithRelevantNeighborsAndTheirPositionInTheirRouteGroupedByVehicles = routeOfVehicle1.map(node =>
         (node, relevantNeighborsNow(node)
-          .filter(otherVehiclesSet.contains(_))
+          .filter((node:Int) => node >= vrp.V && nodesToConsider.contains(node))
           .map(node => (node,vrp.positionInRoute(node).value))
-          .groupBy(nodeAndPosition => vrp.routeNr(nodeAndPosition._1).value)))
+          .groupBy(nodeAndPosition => vrp.routeNr(nodeAndPosition._1).value))
+      ).filter(_._2.nonEmpty)
 
+      //println("routeWithRelevantNeighborsAndTheirPositionInTheirRouteGroupedByVehicles: " + routeWithRelevantNeighborsAndTheirPositionInTheirRouteGroupedByVehicles)
       //iterating over the route to search the first segment beforeMovePoint
       for (((beforeFirstSegment, relevantNeighbors1GroupedByRoute), tail) <-
            Pairs.makeAllHeadAndTails(routeWithRelevantNeighborsAndTheirPositionInTheirRouteGroupedByVehicles)) {
@@ -110,12 +117,19 @@ case class SegmentExchangeMove(beforeFirstSegment: Int,endFirstSegment: Int,reve
                                beforeSecondSegment: Int, endSecondSegment: Int, reverseSecondSegment:Boolean,
                                override val objAfter: Int,override val neighborhood:SegmentExchange,
                                override val neighborhoodName:String = null)
-  extends VRPMove(objAfter, neighborhood, neighborhoodName) {
+  extends VRPMove(objAfter, neighborhood, neighborhoodName){
+
+  override def impactedPoints: List[Int] = List(beforeFirstSegment,endFirstSegment,beforeSecondSegment,endSecondSegment)
 
   // overriding methods
   override def encodeMove() {
     neighborhood.encodeMove(
       beforeFirstSegment,endFirstSegment,reverseFirstSegment,
       beforeSecondSegment,endSecondSegment,reverseSecondSegment)
+  }
+
+  override def toString: String = {
+    neighborhoodNameToString + "SegmentExchange(beforeFirstSegment:" + beforeFirstSegment + "; endFirstSegment:" + endFirstSegment + "; reverseFirstSegment:" + reverseFirstSegment +
+      "; beforeSecondSegment:" + beforeSecondSegment + "; endSecondSegment:" + endSecondSegment + "; reverseSecondSegment:" + reverseSecondSegment + objToString + ")"
   }
 }
