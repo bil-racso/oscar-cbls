@@ -29,6 +29,7 @@ with PenaltyForEmptyRouteAsObjectiveTerm{ //just for the fun of it
 
   installCostMatrix(distanceMatrix)
   setUnroutedPenaltyWeight(unroutedPenalty)
+  closeUnroutedPenaltyWeight()
   computeClosestNeighbors()
   println("end compute closest, install matrix")
   installHopDistancePerVehicle()
@@ -108,7 +109,7 @@ object RoutingTest extends App with StopWatch{
 
   val threeOpt = Profile(ThreeOpt(
     potentialInsertionPoints = vrp.routed,
-    relevantNeighbors = () => vrp.kNearest(40),
+    relevantNeighbors = () => vrp.kNearest(20),
     vrp = vrp))
 
   val segExchange = Profile(SegmentExchange(vrp = vrp,

@@ -212,26 +212,32 @@ abstract trait PenaltyForUnrouted extends VRP with RoutedAndUnrouted {
 
   /**
    * the data structure array which maintains penalty of nodes.
+   * it is not supposed to be modified after model close, neither controlled by an invariant
    */
-  val weightUnroutedPenalty = Array.tabulate(N)(i => CBLSIntVar(m, 0, FullRange,
-    "penality of node " + i))
+  protected val weightUnroutedPenalty = Array.fill(N)(0)
   /**
    * the variable which maintains the sum of penalty of unrouted nodes, thanks to invariant SumElements.
    */
-  val unroutedPenalty = Sum(weightUnroutedPenalty, unrouted)
+  val unroutedPenalty = CBLSIntVar(m,name="TotalPenaltyForUnroutedNodes")
 
   /**
    * It allows you to set the penalty of a given point.
    * @param n the point.
    * @param p the penalty.
    */
-  def setUnroutedPenaltyWeight(n: Int, p: Int) { weightUnroutedPenalty(n) := p }
+  @deprecated("not deprecated, just, do not forget to call closeUnroutedPenaltyWeight afgter you are done with penalties","")
+  def setUnroutedPenaltyWeight(n: Int, p: Int) { weightUnroutedPenalty(n) = p }
 
   /**
    * It allows you to set a specific penalty for all points of the VRP.
    * @param p the penalty.
    */
-  def setUnroutedPenaltyWeight(p: Int) { weightUnroutedPenalty.foreach(penalty => penalty := p) }
+  def setUnroutedPenaltyWeight(p: Int) { weightUnroutedPenalty.indices.foreach(i => weightUnroutedPenalty(i) = p) }
+
+  def closeUnroutedPenaltyWeight(){
+    unroutedPenalty <== Sum(weightUnroutedPenalty, unrouted)
+  }
+
 }
 
 /**
@@ -239,6 +245,54 @@ abstract trait PenaltyForUnrouted extends VRP with RoutedAndUnrouted {
  */
 trait HopClosestNeighbors extends ClosestNeighbors with HopDistance {
   final override protected def getDistance(from: Int, to: Int): Int = getHop(from, to)
+}
+
+
+abstract trait ClosestNeighborsWithPenaltyForUnrouted extends VRP with PenaltyForUnrouted with ClosestNeighbors{
+
+  var closestNeighborsWithPenaltyForUnrouted: Array[Iterable[Int]] = null
+
+  override def computeClosestNeighbors(): Unit = {
+    super.computeClosestNeighbors()
+    computeClosestNeighborsWithPenalty()
+  }
+
+  private def computeClosestNeighborsWithPenalty() = {
+    def arrayOfAllNodes = Array.tabulate(N)(node => node)
+    closestNeighborsWithPenaltyForUnrouted = Array.tabulate(N)(node =>
+      KSmallest.lazySort(arrayOfAllNodes,
+        neighbor => (min(getDistance(neighbor, node), getDistance(node, neighbor)) - weightUnroutedPenalty(neighbor))
+      ))
+  }
+
+  /**
+   * Returns the k nearest nodes of a given node.
+   * It allows us to add a filter (optional) on the neighbor.
+   *
+   * Info : it uses the Currying feature.
+   * @param k the parameter k.
+   * @param filter the filter, should only return unrouted nodes
+   * @param node the given node.
+   * @return the k nearest neighbor as an iterable list of Int.
+   */
+  def kNearestWithPenaltyForUnrouted(k: Int, filter: (Int => Boolean) = (_ => true))(node: Int): Iterable[Int] = {
+    if (k >= N - 1) return nodes.filter(filter)
+
+    def kNearestAccumulator(sortedNeighbors: Iterator[Int], k: Int, kNearestAcc: List[Int]): List[Int] = {
+      require(k >= 0)
+      if(k == 0 || !sortedNeighbors.hasNext){
+        kNearestAcc.reverse
+      }else{
+        val neighbor = sortedNeighbors.next()
+        if (filter(neighbor))
+          kNearestAccumulator(sortedNeighbors, k - 1, neighbor :: kNearestAcc)
+        else
+          kNearestAccumulator(sortedNeighbors, k, kNearestAcc)
+      }
+    }
+
+    kNearestAccumulator(closestNeighbors(node).iterator, k, Nil)
+  }
 }
 
 /**

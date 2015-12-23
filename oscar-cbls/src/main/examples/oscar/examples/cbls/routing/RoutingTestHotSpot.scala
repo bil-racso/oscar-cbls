@@ -17,29 +17,30 @@ class MyVRPHS(n:Int, v:Int, model:Store, distanceMatrix: Array[Array[Int]],unrou
   installCostMatrix(distanceMatrix)
   setUnroutedPenaltyWeight(unroutedPenalty)
   computeClosestNeighbors()
+  closeUnroutedPenaltyWeight()
 }
 
 object RoutingTestHotSpot extends App with StopWatch{
 
   this.startWatch()
 
-  val n = 8000
+  val n = 5000
   val v = 1
 
   println("RoutingTest(n:" + n + " v:" + v + ")")
 
-  val (distanceMatrix,positions) = RoutingMatrixGenerator(n,100000)
+  val (distanceMatrix,positions) = RoutingMatrixGenerator(n,1000)
 
   println("compozed matrix " + getWatch + "ms")
 
   val model = new Store()
 
-  val vrp = new MyVRPHS(n,v,model,distanceMatrix,100000)
+  val vrp = new MyVRPHS(n,v,model,distanceMatrix,1000)
 
   println("closing model")
   model.close()
 
-  vrp.resetVehicleHotSpot()
+  vrp.makeEverythingHot()
 
   println("closed model " + getWatch + "ms")
 
@@ -66,7 +67,7 @@ object RoutingTestHotSpot extends App with StopWatch{
   val onePointHotView = vrp.newVehicleHotSpotView(true)
   val onePointHot = Profile(OnePointMove(
     nodesPrecedingNodesToMove = () => onePointHotView.hotNodesByVehicleWithConsumption,
-    relevantNeighbors= () => vrp.kNearest(40),
+    relevantNeighbors= () => vrp.kNearest(20),
     vrp = vrp,
     neighborhoodName = "OnePointMoveHot",
     hotRestart = false))
@@ -74,7 +75,7 @@ object RoutingTestHotSpot extends App with StopWatch{
   val onePointHotView2 = vrp.newNodeHotSpotView(true)
   val onePointHot2 = Profile(OnePointMove(
     nodesPrecedingNodesToMove = () => onePointHotView2.hotNodesWithConsumption,
-    relevantNeighbors= () => vrp.kNearest(20),
+    relevantNeighbors = () => vrp.kNearest(20),
     vrp = vrp,
     neighborhoodName = "OnePointMoveHot",
     hotRestart = false))
@@ -92,6 +93,13 @@ object RoutingTestHotSpot extends App with StopWatch{
     neighborhoodName = "TwoOptHot",
     hotRestart = false))
 
+  val twoOptMoveHotView2 = vrp.newNodeHotSpotView(true)
+  val twoOptHot2 = Profile(TwoOpt(
+    predecesorOfFirstMovedPoint = () => twoOptMoveHotView2.hotNodesWithConsumption,
+    relevantNeighbors = () => vrp.kNearest(20),
+    vrp = vrp,
+    neighborhoodName = "TwoOptHot",
+    hotRestart = false))
 
   val threeOpt = Profile(ThreeOpt(
     potentialInsertionPoints = vrp.routed,
@@ -99,9 +107,15 @@ object RoutingTestHotSpot extends App with StopWatch{
     vrp = vrp))
 
 
-  val searchHot = () => {vrp.resetVehicleHotSpot();("Hot",(insertPoint exhaust (new BestSlopeFirst(List(onePointHot2,twoOptHot,threeOpt)))) afterMove(vrp.updateVehicleHotSpotAnyMove(_)))}
+  val searchHot = () => {vrp.makeEverythingHot();("HotVehicles",(insertPoint exhaust (new BestSlopeFirst(List(onePointHot,twoOptHot,threeOpt)))) afterMove(vrp.updateHotSpotAfterMoveAnyMove(_)))}
+
+
+  val searchHot2 = () => {vrp.makeEverythingHot();("HotNodes",(insertPoint exhaust (new BestSlopeFirst(List(onePointHot2,twoOptHot2,threeOpt)))) afterMove(vrp.updateHotSpotAfterMoveAnyMove(_)))}
+
 
   val search = () => ("standard",(insertPoint exhaust (new BestSlopeFirst(List(onePointMove,twoOpt,threeOpt)))))
+
+
   val searchNoRefresh = () => ("standard no refresh",(insertPoint exhaust (new BestSlopeFirst(List(onePointMove,twoOpt,threeOpt),refresh = 10000))))
   val search3 = () => ("3-opt",(insertPoint exhaust threeOpt))
   val search31 = () => ("3-opt AT 1-opt",(insertPoint exhaust threeOpt exhaust onePointMove))
@@ -120,7 +134,10 @@ object RoutingTestHotSpot extends App with StopWatch{
 
   insertPointUnroutedFirst.doAllMoves(_ > 10*n, vrp.objectiveFunction)
 
-  println(Benchmark.benchToStringFull(vrp.objectiveFunction,5,List(() => ("OnePoint", onePointMove),() => {vrp.resetVehicleHotSpot(); ("OnePointHot",onePointHot2 afterMove(vrp.updateVehicleHotSpotAnyMove(_)))})))
+  println(Benchmark.benchToStringFull(vrp.objectiveFunction,3,
+    List(search, searchHot, searchHot2,() => ("OnePoint", onePointMove),
+     // () => {vrp.makeEverythingHot(); ("OnePointHotVehicles",onePointHot afterMove(vrp.updateHotSpotAfterMoveAnyMove(_)))},
+      () => {vrp.makeEverythingHot(); ("OnePointHotNodes",onePointHot2 afterMove(vrp.updateHotSpotAfterMoveAnyMove(_)))})))
 
   println("total time " + getWatch + "ms or  " + getWatchString)
 

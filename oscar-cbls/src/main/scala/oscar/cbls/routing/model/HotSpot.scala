@@ -10,16 +10,16 @@ import scala.collection.mutable.Queue
 
 trait HotSpot extends VRP with RoutedAndUnrouted with PositionInRouteAndRouteNr{
 
-  var lastVehicleHotSpotStep:HotSpotHistoryStep = new HotSpotHistoryStep()
+  var lastHotSpotStep:HotSpotHistoryStep = new HotSpotHistoryStep()
 
-  def updateVehicleHotSpotAnyMove(m:Move): Unit ={
+  def updateHotSpotAfterMoveAnyMove(m:Move): Unit ={
     //println("XXXXXXXXXXXXXXXXXXX update hotSpot")
     m match{
       case i:VRPMove with HotSpottingInfo =>
         updateHotSpotAfterMove(i)
       case CompositeMove(moves, _, _) =>
-        moves.foreach(updateVehicleHotSpotAnyMove)
-      case _ => resetVehicleHotSpot
+        moves.foreach(updateHotSpotAfterMoveAnyMove)
+      case _ => makeEverythingHot
     }
   }
 
@@ -36,14 +36,14 @@ trait HotSpot extends VRP with RoutedAndUnrouted with PositionInRouteAndRouteNr{
     })
 
     val newStep = new HotSpotHistoryStep(impactedVehicles,impactedPoints,unrouted)
-    lastVehicleHotSpotStep.nextStep = newStep
-    lastVehicleHotSpotStep = newStep
+    lastHotSpotStep.nextStep = newStep
+    lastHotSpotStep = newStep
   }
 
-  def resetVehicleHotSpot() {
+  def makeEverythingHot() {
     val newStep = new HotSpotHistoryStep(this.vehicles.toList,this.routed.value.toList,this.unrouted.value.toList)
-    lastVehicleHotSpotStep.nextStep = newStep
-    lastVehicleHotSpotStep = newStep
+    lastHotSpotStep.nextStep = newStep
+    lastHotSpotStep = newStep
   }
 
   def newVehicleHotSpotView(hotRestart:Boolean) = new HotSpotViewPerVehicle(this,hotRestart)
@@ -70,7 +70,7 @@ class HotSpotViewPerVehicle(vrp:VRP with HotSpot, hotRestart:Boolean){
   val hotVehicleArray:Array[Boolean] = Array.fill(vrp.V)(true)
   val hotVehicleQueue:Queue[Int] = new Queue[Int] ++ vrp.vehicles
 
-  var lastDigestedUpdate = vrp.lastVehicleHotSpotStep
+  var lastDigestedUpdate = vrp.lastHotSpotStep
 
   def setFirstVehiceCold(): Unit ={
     val vehicle = hotVehicleQueue.dequeue()
@@ -130,8 +130,9 @@ class HotSpotViewPerVehicle(vrp:VRP with HotSpot, hotRestart:Boolean){
     override def next(): Int = {
 
       if(!pointsOfVehicle.hasNext) {
-        pointsOfVehicle =  (if (origin.hotVehicleQueue.isEmpty) throw new Error("no next available, actually")
-        else HotRestart.hotRestartPreserveSequence(vrp.getRouteOfVehicle(origin.hotVehicleQueue.head),lastIteratedPoint).iterator)
+        pointsOfVehicle =
+          (if (origin.hotVehicleQueue.isEmpty) throw new Error("no next available, actually")
+          else vrp.getRouteOfVehicle(origin.hotVehicleQueue.head).iterator)
 
         return this.next()
       }
@@ -159,7 +160,6 @@ class HotSpotViewOfRoutedNodes(vrp:VRP with HotSpot, hotRestart:Boolean)
   extends HotSpotViewOfNodes(vrp, hotRestart) {
   override def digestHotSpotStep(hotSpotHistoryStep: HotSpotHistoryStep){
     hotSpotHistoryStep.impactedPoints.foreach(setNodeHot)
-
   }
 }
 
@@ -167,7 +167,7 @@ class HotSpotViewOfRoutedNodes(vrp:VRP with HotSpot, hotRestart:Boolean)
 abstract class HotSpotViewOfNodes(vrp:VRP with HotSpot, hotRestart:Boolean){
   var hotPointsArray:Array[Boolean] = Array.tabulate(vrp.N)(_ => false)
   val hotPointsQueue:Queue[Int] = new Queue[Int]
-  var lastDigestedUpdate = vrp.lastVehicleHotSpotStep
+  var lastDigestedUpdate = vrp.lastHotSpotStep
 
   def setNodeCold(node:Int){
     require(node == hotPointsQueue.head)
@@ -182,9 +182,6 @@ abstract class HotSpotViewOfNodes(vrp:VRP with HotSpot, hotRestart:Boolean){
     }
   }
 
-  def hotNodesWithConsumption:Iterable[Int] =
-    new HotSpotIterableOnNodesWithConsumption(vrp, this)
-
   def digestHotSpotStep(hotSpotHistoryStep: HotSpotHistoryStep)
 
   def updateFromHotSpot{
@@ -196,6 +193,16 @@ abstract class HotSpotViewOfNodes(vrp:VRP with HotSpot, hotRestart:Boolean){
       if (hotPointsQueue.nonEmpty) hotPointsQueue.enqueue(hotPointsQueue.dequeue())
     }
   }
+
+  /**
+   * before calling this, ensure that updateFromHotSpot was called since last update.
+   * @param node
+   * @return
+   */
+  def isNodeHot(node:Int):Boolean = hotPointsArray(node)
+
+  def hotNodesWithConsumption:Iterable[Int] =
+    new HotSpotIterableOnNodesWithConsumption(vrp, this)
 
   class HotSpotIterableOnNodesWithConsumption(vrp:VRP,origin:HotSpotViewOfNodes) extends Iterable[Int]{
     override def iterator: Iterator[Int] = {
