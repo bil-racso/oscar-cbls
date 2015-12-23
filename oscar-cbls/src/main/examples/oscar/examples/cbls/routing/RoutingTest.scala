@@ -2,13 +2,15 @@ package oscar.examples.cbls.routing
 
 import oscar.cbls.invariants.core.computation.Store
 import oscar.cbls.invariants.lib.minmax.{Max, Min}
-import oscar.cbls.invariants.lib.numeric.Sum
+import oscar.cbls.invariants.lib.numeric.{Abs, Sum}
 import oscar.cbls.objective.Objective
 import oscar.cbls.routing.model._
 import oscar.cbls.routing.neighborhood._
 import oscar.cbls.search.StopWatch
 import oscar.cbls.search.combinators.{RoundRobin, Profile, BestSlopeFirst}
 import oscar.cbls.modeling.Algebra._
+import scala.language.implicitConversions
+
 /**
  * Created by rdl on 15-12-15.
  */
@@ -32,11 +34,17 @@ with PenaltyForEmptyRouteAsObjectiveTerm{ //just for the fun of it
   installHopDistancePerVehicle()
   println("end install matrix, posting constraints")
   //evenly spreading the travel among vehicles
-  val shortedDistanceOnAllVehicles = Min(hopDistancePerVehicle)
-  val longestDistanceOnAllVehicle = Max(hopDistancePerVehicle)
-  val overshoot = longestDistanceOnAllVehicle - shortedDistanceOnAllVehicles
-  val penaltyForOvershoot = overshoot/3 //the multiplying factor must be < 1 (here: 0.5)
-  addObjectiveTerm(penaltyForOvershoot)
+
+  val averageDistanceOnAllVehicles = overallDistance / V
+  val spread = Sum(hopDistancePerVehicle.map(h => Abs(h - averageDistanceOnAllVehicles)))
+  addObjectiveTerm(spread/2)
+
+  //val shortedDistanceOnAllVehicles = Min(hopDistancePerVehicle)
+  //val longestDistanceOnAllVehicle = Max(hopDistancePerVehicle)
+  //val overshoot = longestDistanceOnAllVehicle - shortedDistanceOnAllVehicles
+  //val penaltyForOvershoot = overshoot/3 //the multiplying factor must be < 1 (here: 0.5)
+
+
   //addObjectiveTerm(lognestDistanceOnAllVehicle * 100)
   setEmptyRoutePenaltyWeight(100)
   //le carré de la distance pour tous les véhicules (bon, moyen hein!
@@ -48,8 +56,8 @@ object RoutingTest extends App with StopWatch{
 
   this.startWatch()
 
-  val n = 250
-  val v = 5
+  val n = 50
+  val v = 3
 
   println("RoutingTest(n:" + n + " v:" + v + ")")
 
@@ -90,7 +98,7 @@ object RoutingTest extends App with StopWatch{
 
   val onePointMove = Profile(OnePointMove(
     nodesPrecedingNodesToMove = vrp.routed,
-    relevantNeighbors= () => vrp.kNearest(40),
+    relevantNeighbors= () => vrp.kNearest(50),
     vrp = vrp))
 
   val twoOpt = Profile(TwoOpt(
@@ -100,11 +108,11 @@ object RoutingTest extends App with StopWatch{
 
   val threeOpt = Profile(ThreeOpt(
     potentialInsertionPoints = vrp.routed,
-    relevantNeighbors = () => vrp.kNearest(20),
+    relevantNeighbors = () => vrp.kNearest(40),
     vrp = vrp))
 
   val segExchange = Profile(SegmentExchange(vrp = vrp,
-    relevantNeighbors = () => vrp.kNearest(20),
+    relevantNeighbors = () => vrp.kNearest(40),
     vehicles=() => vrp.vehicles.toList))
 
   val search = new RoundRobin(List(insertPoint,onePointMove maxMoves 100),10) exhaust (new BestSlopeFirst(List(onePointMove,threeOpt,segExchange),refresh = n/2)) // exhaust onePointMove exhaust segExchange//threeOpt //(new BestSlopeFirst(List(onePointMove,twoOpt,threeOpt)))

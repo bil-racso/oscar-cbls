@@ -258,7 +258,9 @@ abstract trait ClosestNeighbors extends VRP {
     println("computeClosestNeighbors")
     def arrayOfAllNodes = Array.tabulate(N)(node => node)
     closestNeighbors = Array.tabulate(N)(node =>
-      KSmallest.lazySort(arrayOfAllNodes, neighbor => min(getDistance(neighbor, node), getDistance(node, neighbor))))
+      KSmallest.lazySort(arrayOfAllNodes,
+        neighbor => min(getDistance(neighbor, node), getDistance(node, neighbor))
+      ))
   }
   /**
    * Filters the node itself and unreachable neighbors.
