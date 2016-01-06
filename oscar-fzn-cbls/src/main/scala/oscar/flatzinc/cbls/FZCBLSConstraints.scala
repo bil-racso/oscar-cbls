@@ -333,6 +333,12 @@ class FZCBLSConstraintPoster(val c: ConstraintSystem, implicit val getCBLSVar: V
     IntElement(Sum2(y,dc.offset),cnts);
   }
   
+  def get_nvalue_inv(xs:Array[IntegerVariable], ann: List[Annotation]) = {
+    val inv = new Nvalue(xs.map(getCBLSVar(_)))
+    inv
+  }
+  
+  
   def get_at_least_int(n:IntegerVariable,xs: Array[IntegerVariable], v:IntegerVariable, ann: List[Annotation]) = {
     val cnt = new CBLSIntVar(m,0,0 to xs.length,"Count("+v.value+")")
     val sc = SparseCount(xs.map(getCBLSVar(_)),Map((v.value,cnt)))
@@ -442,6 +448,8 @@ class FZCBLSConstraintPoster(val c: ConstraintSystem, implicit val getCBLSVar: V
       case maximum_int(y,xs,ann)                      => EQ(y,get_maximum_inv(xs,ann))
      // case member_int(xs,y,ann)                       => get_member(xs,y) use the decomposition
       case minimum_int(y,xs,ann)                      => EQ(y,get_minimum_inv(xs,ann))
+      case nvalue_int(y,xs,ann)                      => EQ(y,get_nvalue_inv(xs,ann))
+      
       case notimplemented                             => throw new NoSuchConstraintException(notimplemented.toString(),"CBLS Solver");
     }
   }
@@ -478,6 +486,7 @@ class FZCBLSConstraintPoster(val c: ConstraintSystem, implicit val getCBLSVar: V
       case count_eq(xs,y,cnt,ann)                     => get_count_eq_inv(xs,y,cnt,id,ann)
       case maximum_int(y,xs,ann)                      => get_maximum_inv(xs,ann)//assumes that the id is y.
       case minimum_int(y,xs,ann)                      => get_minimum_inv(xs,ann)
+      case nvalue_int(y,xs,ann)                      => get_nvalue_inv(xs,ann)
       
       case notimplemented                             => throw new NoSuchConstraintException(notimplemented.toString(),"CBLS Solver");
     }

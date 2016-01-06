@@ -299,6 +299,9 @@ case class minimum_int(m:IntegerVariable, x:Array[IntegerVariable],ann: List[Ann
   extends SimpleDefiningConstraint(Array(m)++x,m,ann)
 case class member_int(x:Array[IntegerVariable],y:IntegerVariable, ann: List[Annotation] = List.empty[Annotation]) 
   extends Constraint(Array(y)++x,ann)
+case class nvalue_int(y:IntegerVariable, x:Array[IntegerVariable], ann: List[Annotation] = List.empty[Annotation])
+  extends SimpleDefiningConstraint(Array(y)++x,y,ann)
+
 
 case class sort(x:Array[IntegerVariable], y:Array[IntegerVariable],ann: List[Annotation] = List.empty[Annotation]) 
   extends Constraint(x++y,ann)

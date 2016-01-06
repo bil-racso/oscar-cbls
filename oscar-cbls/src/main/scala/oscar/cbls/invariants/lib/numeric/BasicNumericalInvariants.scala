@@ -29,6 +29,7 @@ import oscar.cbls.invariants.core.computation.ChangingIntValue
 import oscar.cbls.invariants.core.computation.Domain
 import oscar.cbls.invariants.core.computation.Domain.rangeToDomain
 import oscar.cbls.invariants.core.computation.DomainHelper
+import oscar.cbls.invariants.core.computation.InvariantHelper
 import oscar.cbls.invariants.core.computation.IntInvariant
 import oscar.cbls.invariants.core.computation.IntValue
 import oscar.cbls.invariants.core.computation.SetValue
@@ -98,6 +99,59 @@ class Linear(vars: Iterable[IntValue], coeffs: IndexedSeq[Int])
   override def checkInternals(c: Checker) {
     c.check(this.value == vars.zip(coeffs).foldLeft(0)((acc, intvar) => acc + intvar._1.value*intvar._2),
       Some("output.value == vars.zip(coeff).foldLeft(0)((acc, intvar) => acc + intvar._1.value*intvar._2)"))
+  }
+}
+
+/**
+ * nvalue(x)
+ * @param x is an iterable of IntVars
+ * @author juropolach@gmail.com
+ * */
+class Nvalue(x: Iterable[IntValue]) extends IntInvariant{
+  
+  registerStaticAndDynamicDependencyAllNoID(x)
+  finishInitialization()
+  
+  private val (minValueOfX,maxValueOfX) = InvariantHelper.getMinMaxBounds(x)
+
+  private val offset: Int = -minValueOfX
+
+  private val N = maxValueOfX + offset
+  private val range = 0 to N
+  
+  private val ValueCount: Array[Int] = (for (i <- 0 to N) yield 0).toArray
+  
+  this := 0
+  
+  for (element <- x){
+    ValueCount(element.value + offset) += 1
+    if (ValueCount(element.value + offset) == 1) {this :+= 1}
+  }
+  
+  //More efficient with @inline?
+  override def notifyIntChanged(v: ChangingIntValue, OldVal: Int, NewVal: Int) {
+    ValueCount(OldVal + offset) -= 1
+    ValueCount(NewVal + offset) += 1
+
+    if (ValueCount(OldVal + offset) == 0) {this :-= 1}
+    if (ValueCount(NewVal + offset) == 1) {this :+= 1}
+  }
+  
+  override def checkInternals(c: Checker) {
+    var MyValueCount: Array[Int] = (for (i <- 0 to N) yield 0).toArray
+    var Distinct: Int = 0
+    for (element <- x){
+      MyValueCount(element.value + offset) += 1
+      if (MyValueCount(element.value + offset) == 1) {this :+= 1}
+    }
+    for (v <- range) {
+      c.check(ValueCount(v) == MyValueCount(v),
+        Some("ValueCount(" + v + ") (" + ValueCount(v)
+          + ") == MyValueCount(" + v + ") (" + MyValueCount(v)))
+    }
+    c.check(Distinct == this.value,
+        Some("Count of distinct values in " + x + " (" + Distinct
+          + ") == output.value (" + this.value))
   }
 }
 

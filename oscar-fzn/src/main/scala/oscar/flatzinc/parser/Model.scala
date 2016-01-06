@@ -316,7 +316,8 @@ class Model(val log: Log, val acceptAnyCstr: Boolean) {
     "global_cardinality_closed" -> ((varList,ann) => global_cardinality_closed(getIntVarArray(varList(0)),getIntVarArray(varList(1)),getIntVarArray(varList(2)),ann)),
     "global_cardinality_low_up" -> ((varList,ann) => global_cardinality_low_up(getIntVarArray(varList(0)),getIntVarArray(varList(1)),getIntVarArray(varList(2)),getIntVarArray(varList(3)),ann)),
     "global_cardinality_low_up_closed" -> ((varList,ann) => global_cardinality_low_up_closed(getIntVarArray(varList(0)),getIntVarArray(varList(1)),getIntVarArray(varList(2)),getIntVarArray(varList(3)),ann)),
-    "cumulative" -> ((varList,ann) => cumulative(getIntVarArray(varList(0)),getIntVarArray(varList(1)),getIntVarArray(varList(2)),getIntVar(varList(3)),ann))
+    "cumulative" -> ((varList,ann) => cumulative(getIntVarArray(varList(0)),getIntVarArray(varList(1)),getIntVarArray(varList(2)),getIntVar(varList(3)),ann)),
+    "nvalue_int" -> ((varList,ann) => nvalue_int(getIntVar(varList(0)),getIntVarArray(varList(1)),ann))
   )
   
   
