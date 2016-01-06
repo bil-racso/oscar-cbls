@@ -255,7 +255,6 @@ abstract trait ClosestNeighbors extends VRP {
   var closestNeighbors: Array[Iterable[Int]] = null
 
   def computeClosestNeighbors() = {
-    println("computeClosestNeighbors")
     def arrayOfAllNodes = Array.tabulate(N)(node => node)
     closestNeighbors = Array.tabulate(N)(node =>
       KSmallest.lazySort(arrayOfAllNodes,
