@@ -131,7 +131,7 @@ class LPTester extends OscarLinprogTester {
 
     val endStatus = solver.solve
 
-    endStatus should equal(Unbounded)
+    endStatus should (equal(Unbounded) or equal(InfeasibleOrUnbounded))
 
     intercept[NoSolutionFoundException] {
       solver.solutionQuality
