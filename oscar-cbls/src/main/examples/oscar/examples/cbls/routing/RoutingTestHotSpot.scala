@@ -24,8 +24,8 @@ object RoutingTestHotSpot extends App with StopWatch{
 
   this.startWatch()
 
-  val n = 5000
-  val v = 1
+  val n = 500
+  val v = 5
 
   println("RoutingTest(n:" + n + " v:" + v + ")")
 
@@ -104,16 +104,16 @@ object RoutingTestHotSpot extends App with StopWatch{
   val threeOpt = Profile(ThreeOpt(
     potentialInsertionPoints = vrp.routed,
     relevantNeighbors = () => vrp.kNearest(20),
-    vrp = vrp))
+    vrp = vrp, skipOnePointMove = true))
 
 
-  val searchHot = () => {vrp.makeEverythingHot();("HotVehicles",(insertPoint exhaust (new BestSlopeFirst(List(onePointHot,twoOptHot,threeOpt)))) afterMove(vrp.updateHotSpotAfterMoveAnyMove(_)))}
+  val searchHot = () => {vrp.makeEverythingHot();("hotVehicles",(insertPoint exhaust (new BestSlopeFirst(List(onePointHot,twoOptHot,threeOpt),refresh = 10000))) afterMove(vrp.updateHotSpotAfterMoveAnyMove(_)))}
 
 
-  val searchHot2 = () => {vrp.makeEverythingHot();("HotNodes",(insertPoint exhaust (new BestSlopeFirst(List(onePointHot2,twoOptHot2,threeOpt)))) afterMove(vrp.updateHotSpotAfterMoveAnyMove(_)))}
+  val searchHot2 = () => {vrp.makeEverythingHot();("hotNodes",(insertPoint exhaust (new BestSlopeFirst(List(onePointHot2,threeOpt),refresh = n/10))) afterMove(vrp.updateHotSpotAfterMoveAnyMove(_)))}
 
 
-  val search = () => ("standard",(insertPoint exhaust (new BestSlopeFirst(List(onePointMove,twoOpt,threeOpt)))))
+  val search = () => ("standard",(insertPoint exhaust (new BestSlopeFirst(List(onePointMove,twoOpt,threeOpt),refresh = 10000))))
 
 
   val searchNoRefresh = () => ("standard no refresh",(insertPoint exhaust (new BestSlopeFirst(List(onePointMove,twoOpt,threeOpt),refresh = 10000))))
@@ -126,16 +126,21 @@ object RoutingTestHotSpot extends App with StopWatch{
 
 
 
-  //val searchh =  (insertPoint exhaust (onePointHot2 exhaustBack threeOpt) afterMove(vrp.updateVehicleHotSpotAnyMove(_)))
+  val searchh =  searchHot2()._2 //(insertPoint exhaust (onePointHot2 exhaustBack threeOpt). afterMove(vrp.updateHotSpotAfterMoveAnyMove(_)))
 
-
-  //searchh.verbose = 1
-  //searchh.doAllMoves(_ > 10*n, vrp.objectiveFunction)
+  searchh.verbose = 1
+  searchh.doAllMoves(_ > 10*n, vrp.objectiveFunction)
+  println(searchh.profilingStatistics)
+/*
 
   insertPointUnroutedFirst.doAllMoves(_ > 10*n, vrp.objectiveFunction)
 
-  println(Benchmark.benchToStringFull(vrp.objectiveFunction,3,
-    List(search, searchHot, searchHot2,() => ("OnePoint", onePointMove),
+  println(Benchmark.benchToStringFull(vrp.objectiveFunction,1,
+    List(
+      search,
+      searchHot,
+      searchHot2,
+      () => ("OnePoint", onePointMove),
      // () => {vrp.makeEverythingHot(); ("OnePointHotVehicles",onePointHot afterMove(vrp.updateHotSpotAfterMoveAnyMove(_)))},
       () => {vrp.makeEverythingHot(); ("OnePointHotNodes",onePointHot2 afterMove(vrp.updateHotSpotAfterMoveAnyMove(_)))})))
 
@@ -143,5 +148,6 @@ object RoutingTestHotSpot extends App with StopWatch{
 
   //println(search.profilingStatistics)
 
+ */
     println("\nresult:\n" + vrp)
 }

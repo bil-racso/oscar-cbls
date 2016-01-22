@@ -475,6 +475,94 @@ abstract class BestNeighborhoodFirst(l:List[Neighborhood],
 
 
 
+abstract class BestNeighborhoodFirstSlidingWindow(l:List[Neighborhood], windowsSize:Int,
+                                     tabuLength:Int,
+                                     overrideTabuOnFullExhaust:Int, refresh:Int)
+  extends NeighborhoodCombinator(l:_*) {
+  require(overrideTabuOnFullExhaust < tabuLength, "overrideTabuOnFullExhaust should be < tabuLength")
+
+  protected var it = 0
+  protected def bestKey(p:Profile):Int
+
+  protected val neighborhoodArray: Array[Profile] = l.map(Profile(_)).toArray
+  protected val tabu:Array[Int] = Array.fill(neighborhoodArray.length)(0)
+  protected var tabuNeighborhoods = new BinomialHeap[Int](tabu(_),tabu.length)
+
+  protected val neighborhoodHeap = new BinomialHeapWithMove[Int]((neighborhoodID:Int) => bestKey(neighborhoodArray(neighborhoodID)), neighborhoodArray.length)
+  neighborhoodArray.indices.foreach(neighborhoodHeap.insert(_))
+
+  private def getBestNeighborhooID:Int = neighborhoodHeap.getFirst
+  private def updateNeighborhodPerformances(neighborhooID:Int){
+    neighborhoodHeap.notifyChange(neighborhooID)
+  }
+  private def updateTabu(): Unit ={
+    it +=1
+    while(tabuNeighborhoods.nonEmpty && tabu(tabuNeighborhoods.getFirst) <= it){
+      val newNonTabu = tabuNeighborhoods.popFirst()
+      neighborhoodArray(newNonTabu).reset()
+      neighborhoodHeap.insert(newNonTabu)
+    }
+  }
+
+  protected def makeTabu(neighborhooID:Int): Unit ={
+    neighborhoodHeap.delete(neighborhooID)
+    tabu(neighborhooID) = it + tabuLength
+    tabuNeighborhoods.insert(neighborhooID)
+  }
+
+  /**
+   * the method that returns a move from the neighborhood.
+   * The returned move should typically be accepted by the acceptance criterion over the objective function.
+   * Some neighborhoods are actually jumps, so that they might violate this basic rule however.
+   * @param obj the objective function. notice that it is actually a function. if you have an [[oscar.cbls.objective.Objective]] there is an implicit conversion available
+   * @param acceptanceCriterion
+   * @return
+   */
+  override def getMove(obj: Objective, acceptanceCriterion: (Int, Int) => Boolean): SearchResult = {
+    if((it > 0) && ((it % refresh) == 0)){
+
+      if(printPerformedSearches){
+        println("refreshing knowledge on neighborhood; statistics since last refresh: ")
+        printStatus
+      }
+      for(p <- neighborhoodArray.indices){
+        neighborhoodArray(p).resetThisStatistics()
+        if(tabu(p) <= it) updateNeighborhodPerformances(p)
+      }
+    }
+    updateTabu()
+    while(!neighborhoodHeap.isEmpty){
+      val headID = neighborhoodHeap.getFirst
+      val headNeighborhood = neighborhoodArray(headID)
+      headNeighborhood.getMove(obj,acceptanceCriterion) match{
+        case NoMoveFound =>
+          makeTabu(headID)
+        case MoveFound(m) =>
+          neighborhoodHeap.notifyChange(headID)
+          return MoveFound(m)
+      }
+    }
+
+    //ok, we try again with tabu, overriding tabu as allowed
+    if(tabuNeighborhoods.nonEmpty && tabu(tabuNeighborhoods.getFirst) <= it + overrideTabuOnFullExhaust){
+      val newNonTabu = tabuNeighborhoods.popFirst()
+      neighborhoodArray(newNonTabu).reset()
+      neighborhoodHeap.insert(newNonTabu)
+      it -=1
+      getMove(obj,acceptanceCriterion)
+    }else{
+      NoMoveFound
+    }
+  }
+
+  /**
+   * prints the profile info for the neighborhoods, for verbosity purposes
+   */
+  def printStatus(){
+    println(Profile.selectedStatisticInfo(neighborhoodArray))
+  }
+}
+
 /**
  * this combinator sequentially tries all neighborhoods until one move is found
  * between calls, it will roll back to the first neighborhood
@@ -1150,7 +1238,7 @@ class Name(a: Neighborhood, val name: String) extends NeighborhoodCombinator(a) 
   override def getMove(obj: Objective, acceptanceCriterion: (Int, Int) => Boolean): SearchResult = {
     a.getMove(obj, acceptanceCriterion) match {
       case NoMoveFound => NoMoveFound
-      case MoveFound(m) => CompositeMove(List(m), m.objAfter, name)
+      case MoveFound(m) => NamedMove(m, name)
     }
   }
 
@@ -1358,6 +1446,8 @@ class OverrideObjective(a: Neighborhood, overridingObjective: Objective) extends
   override def getMove(obj: Objective, acceptanceCriterion: (Int, Int) => Boolean): SearchResult = getMove(overridingObjective, acceptanceCriterion)
 }
 
+class SlidingProfile(a:Neighborhood, windowsSize:Int)
+
 /**
  * collects statistics about the run time and progress achieved by neighborhood a
  * they can be obtained by querying this object with method toString
@@ -1419,7 +1509,7 @@ case class Profile(a:Neighborhood,ignoreInitialObj:Boolean = false) extends Neig
   def gainPerCall:String = if(nbCalls ==0) "NA" else ("" + totalGain / nbCalls)
   def callDuration:String = if(nbCalls == 0 ) "NA" else ("" + totalTimeSpent / nbCalls)
   //gain in obj/s
-  def slope:String = if(totalTimeSpent == 0) "NA" else ("" + (1000 * totalGain / totalTimeSpent.toDouble).toInt)
+  def slope:String = if(totalTimeSpent == 0) "NA" else ("" + (1000 * totalGain.toDouble / totalTimeSpent.toDouble).toInt)
 
   def avgTimeSpendNoMove = if(nbCalls - nbFound == 0) "NA" else ("" + (totalTimeSpentNoMoveFound / (nbCalls - nbFound)))
   def avgTimeSpendMove = if(nbFound == 0) "NA" else ("" + (totalTimeSpentMoveFound / nbFound))

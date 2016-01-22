@@ -121,6 +121,7 @@ abstract class Neighborhood {
 
   override def toString: String = this.getClass.getSimpleName
 
+  //TODO: ajouter un niveau qui montre les exhausted
   /**
    * verbosity: 0: none
    * 1: moves

@@ -220,6 +220,31 @@ case class CompositeMove(ml:List[Move], override val objAfter:Int, override val 
   override def touchedVariables: List[Variable] = ml.flatMap(_.touchedVariables)
 }
 
+/** a composition of a list of moves; the move will be taken in the order given by the list
+  *
+  * @param ml the list of moves constituting this one
+  * @param objAfter the objective after this assignation will be performed
+  * @param neighborhoodName a string describing the neighborhood hat found the move (for debug purposes)
+  * @author renaud.delandtsheer@cetic.be
+  */
+case class NamedMove(m:Move, override val neighborhoodName:String = null)
+  extends Move(m.objAfter, neighborhoodName){
+
+
+  override def commit(): Unit = {
+    m.commit()
+  }
+
+  override def toString: String  = {
+    neighborhoodNameToString + m.toString
+  }
+
+  override def touchedVariables: List[Variable] = m.touchedVariables
+
+  override def evaluate(obj: Objective): Int = m.evaluate(obj)
+}
+
+
 /** an instrumented move that performs a callBack before being taken
   * the move itself is given in parameter.
   *
