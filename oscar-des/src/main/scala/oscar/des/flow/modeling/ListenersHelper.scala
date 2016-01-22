@@ -147,6 +147,16 @@ trait ListenersHelper{
    */
   def since(a:BoolExpr,b:BoolExpr) = Since(a:BoolExpr,b:BoolExpr)
 
+
+  /** if i then t else e*/
+  def booleanITE(i:BoolExpr, t:BoolExpr, e:BoolExpr) = ITE(i,t,e)
+
+  /** if i then t else e*/
+  def doubleITE(i:BoolExpr, t:DoubleExpr, e:DoubleExpr) = new DoubleITE(i, t, e)
+
+  /**the duration for which b has been true since it was last false*/
+  def duration(b:BoolExpr) = new Duration(b)
+
   /**
    * true iff p is true now, and was false at the previous step in the trace
    * BEWARE that this is a dangerous epxressio, since time is event-based,

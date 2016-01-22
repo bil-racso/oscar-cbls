@@ -134,6 +134,7 @@ class ListenerParser(storages:Map[String,Storage],
       | binaryOperatorDD2BParser("eq",eq)
       | binaryOperatorDD2BParser("ne",neq)
       | "changed(" ~> (boolExprParser | doubleExprParser) <~")" ^^ {case e:Expression => changed(e)}
+      | "ite(" ~> boolExprParser~(","~>boolExprParser)~(","~>boolExprParser <~ ")") ^^{ case i~t~e => booleanITE(i,t,e)}
       | "("~>boolExprParser<~")"
       | failure("expected boolean expression"))
 
@@ -182,19 +183,18 @@ class ListenerParser(storages:Map[String,Storage],
       case (d~Some(cond:BoolExpr)) => minOnHistory(d,cond)}
       | unaryOperatorD2DParser("avg",avgOnHistory)
       | unaryOperatorD2DParser("avgOnHistory",avgOnHistory)
+      | "ite(" ~> boolExprParser~(","~>doubleExprParser)~(","~>doubleExprParser<~ ")") ^^{ case i~t~e => doubleITE(i,t,e)}
+      |"duration(" ~> boolExprParser <~")" ^^ {case e => duration(e)}
       | "-"~> doubleExprParser ^^ {opposite(_)}
       | "("~>doubleExprParser<~")"
       | failure("expected arithmetic expression"))
 
   //generic code
-
-
   def boolListener:Parser[BoolExpr] = {
     identifier convertStringUsingSymbolTable(declaredBoolExpr, "delcared boolean expression") //^^ {boolSubExpression(_)}
   }
   def doubleListener:Parser[DoubleExpr] =
     identifier convertStringUsingSymbolTable(declaredDoubleExpr, "declared double expression") //^^{doubleSubExpression(_)}
-
 
   //probes on storages
   def storageDoubleProbe(probeName:String,constructor:Storage=>DoubleExpr):Parser[DoubleExpr] =
@@ -241,7 +241,9 @@ class ListenerParser(storages:Map[String,Storage],
     }
 
 
-  def identifier:Parser[String] = """[a-zA-Z0-9]+""".r ^^ {_.toString}
+  def identifierNoSpaceAllowed:Parser[String] = """[a-zA-Z0-9]+""".r ^^ {_.toString}
+  def identifierSpaceAllowed:Parser[String] = """\"[a-zA-Z0-9 ]+\"""".r ^^ {_.toString.drop(1).dropRight(1)}
+  def identifier:Parser[String] = identifierSpaceAllowed | identifierNoSpaceAllowed
 
   def doubleParser:Parser[Double] = """[0-9]+(\.[0-9]+)?""".r ^^ {case s:String => println("converting" + s);s.toDouble}
 }
@@ -256,6 +258,9 @@ object ParserTester extends App with FactoryHelper{
   val bProcess = new SingleBatchProcess(m, 5000, Array(), Array((()=>1,aStorage)), null, "bProcess", null)
 
   val myParser = ListenerParser(List(aStorage,bStorage), List(aProcess,bProcess))
+
+  println("testParseIdentifierWithSpace:" + myParser.parseAll(myParser.identifierSpaceAllowed, "\"coucou gamin\""))
+  println("testParseIdentifier:" + myParser.parseAll(myParser.identifier, "\"coucou gamin\""))
 
   def testOn(s:String){
     println("testing on:" + s)
@@ -281,7 +286,6 @@ object ParserTester extends App with FactoryHelper{
   testOn("avg(content(aStorage))")
   testOn("integral(content(bStorage))")
 
-
   val expressionList = List(
     ("a","completedBatchCount(aProcess) /*a comment in the middle*/ * totalPut(aStorage)"),
     ("b","-(-(-completedBatchCount(aProcess)) * -totalPut(aStorage))"),
@@ -289,8 +293,6 @@ object ParserTester extends App with FactoryHelper{
     ("d","integral(content(bStorage))"),
     ("e","b * c + d"))
   println(myParser.parseAllListeners(expressionList))
-
-
 }
 
 trait ParserWithSymbolTable extends RegexParsers{
@@ -299,7 +301,7 @@ trait ParserWithSymbolTable extends RegexParsers{
       def apply(in: Input) = identifierParser(in) match {
         case Success(x, in1) => symbolTable.get(x) match {
           case Some(u: U) => Success(u, in1)
-          case None => Failure("" + x + " is not a known " + symbolType + ": (" + symbolTable.keys.mkString(",") + ")", in)
+          case None => Failure("" + x + " is not a known " + symbolType + ": (" + symbolTable.keys.mkString(",") + ") (add quotes around identifiers with white spaces)", in)
         }
         case f: Failure => f
         case e: Error => e

@@ -242,6 +242,9 @@ case class Or(f:BoolExpr, g:BoolExpr) extends BoolExpr(false,f,g){
   override def updatedValue(time:Double): Boolean = if(f.value) true else g.value
 }
 
+case class ITE(i:BoolExpr, t:BoolExpr, e:BoolExpr ) extends BoolExpr(false,i,t,e){
+  override def updatedValue(time: Double): Boolean = if(i.value) t.value else e.value
+}
 //////////////////////////////////////////////////////////////////////////////////////////////
 //temporal operators
 //we only consider temporal operators of the past, easy to evaluate
@@ -377,6 +380,27 @@ case class CumulatedDuration(b:BoolExpr) extends DoubleExpr(true,b){
   }
 }
 
+/**the duration for which b has been true since it was last false*/
+case class Duration(b:BoolExpr) extends DoubleExpr(true,b){
+  var bWasTrueOnLastCall:Boolean = b.value
+  var timeWhenBStartedToBeTrue:Double = 0
+  override def updatedValue(time: Double): Double = {
+    if(bWasTrueOnLastCall) {
+      if (b.value) {
+        time - timeWhenBStartedToBeTrue
+      } else {
+        bWasTrueOnLastCall = false
+        0
+      }
+    }else{
+      if (b.value) {
+        bWasTrueOnLastCall = true
+      }
+      0
+    }
+  }
+}
+
 /**
  * the duretion between the start of history (time zero) and the curret position in time
  */
@@ -452,6 +476,9 @@ case class EQ(a:DoubleExpr,b:DoubleExpr) extends BoolExpr(false,a,b){
   override def updatedValue(time:Double): Boolean = a.value == b.value
 }
 
+case class DoubleITE(i:BoolExpr, t:DoubleExpr, e:DoubleExpr) extends DoubleExpr(false,i,t,e){
+  override def updatedValue(time: Double): Double = if(i.value) t.value else e.value
+}
 
 case class BoolSubExpression(name:String,expr:BoolExpr) extends BoolExpr(false,expr){
   override def updatedValue(time: Double): Boolean = expr.value
