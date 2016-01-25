@@ -171,7 +171,6 @@ trait FactoryHelper {
     toReturn
   }
 
-
   /**
    *this type of storage acts in a FIFO-way.
    * it does matter to know this if you distinguish between different items.

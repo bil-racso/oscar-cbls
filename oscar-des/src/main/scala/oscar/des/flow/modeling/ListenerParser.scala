@@ -70,7 +70,9 @@ class ListenerParser(storages:Map[String,Storage],
   }
 
   var declaredBoolExpr:SortedMap[String,BoolExpr] = SortedMap.empty
-  var declaredDoubleExpr:SortedMap[String,DoubleExpr] = SortedMap.empty
+  var declaredDoubleExpr:SortedMap[String,DoubleExpr] = (SortedMap.empty
+  ++ storages.map(nameAndStorage => ("cost of " + nameAndStorage._1, nameAndStorage._2.cost))
+  ++ processes.map(nameAndProcess => ("cost of " + nameAndProcess._1, nameAndProcess._2.cost)))
 
   def apply(input:String):ListenerParsingResult = {
     parseAll(expressionParser, input) match {
@@ -167,6 +169,8 @@ class ListenerParser(storages:Map[String,Storage],
       | storageDoubleProbe("totalPut",totalPut)
       | storageDoubleProbe("totalFetch",totalFetch)
       | storageDoubleProbe("totalLosByOverflow",totalLosByOverflow)
+      | storageDoubleProbe("cost",(s:Storage) => s.cost)
+      | processDoubleProbe("cost",(p:ActivableProcess) => p.cost)
       | processDoubleProbe("completedBatchCount",completedBatchCount)
       | processDoubleProbe("startedBatchCount",startedBatchCount)
       | processDoubleProbe("totalWaitDuration",totalWaitDuration)
@@ -248,7 +252,6 @@ class ListenerParser(storages:Map[String,Storage],
       case param1~param2 => constructor(param1,param2)
     }
 
-
   def identifierNoSpaceAllowed:Parser[String] = """[a-zA-Z0-9]+""".r ^^ {_.toString}
   def identifierSpaceAllowed:Parser[String] = """\"[a-zA-Z0-9 ]+\"""".r ^^ {_.toString.drop(1).dropRight(1)}
   def identifier:Parser[String] = identifierSpaceAllowed | identifierNoSpaceAllowed
@@ -259,11 +262,11 @@ class ListenerParser(storages:Map[String,Storage],
 object ParserTester extends App with FactoryHelper{
 
   val m = new Model
-  val aStorage = new FIFOStorage(10,Nil,"aStorage",null,false)
-  val bStorage = new FIFOStorage(10,Nil,"bStorage",null,false)
+  val aStorage = fIFOStorage(10,Nil,"aStorage",null,false)
+  val bStorage = fIFOStorage(10,Nil,"bStorage",null,false)
 
-  val aProcess = new SingleBatchProcess(m, 5000, Array(), Array((()=>1,aStorage)), null, "aProcess", null)
-  val bProcess = new SingleBatchProcess(m, 5000, Array(), Array((()=>1,aStorage)), null, "bProcess", null)
+  val aProcess = singleBatchProcess(m, 5000, Array(), Array((()=>1,aStorage)), null, "aProcess", null, "completedBatchCount(this)")
+  val bProcess = singleBatchProcess(m, 5000, Array(), Array((()=>1,aStorage)), null, "bProcess", null)
 
   val myParser = ListenerParser(List(aStorage,bStorage), List(aProcess,bProcess))
 
@@ -275,7 +278,7 @@ object ParserTester extends App with FactoryHelper{
     println(myParser(s))
     println
   }
-
+  testOn("cost(aProcess) + cost(aStorage)")
   testOn("completedBatchCount(aProcess) /*a comment in the middle*/ * totalPut(aStorage)")
   testOn("-(-(-completedBatchCount(aProcess)) * -totalPut(aStorage))")
   testOn("-(-(-completedBatchCount(aProcess)) + -totalPut(aStorage))")
@@ -299,7 +302,7 @@ object ParserTester extends App with FactoryHelper{
     ("b","-(-(-completedBatchCount(aProcess)) * -totalPut(aStorage))"),
     ("c","-(-(-completedBatchCount(aProcess)) + -totalPut(aStorage))"),
     ("d","integral(content(bStorage))"),
-    ("e","b * c + d"))
+    ("e","b * c + d + cost(aProcess)"))
   println(myParser.parseAllListeners(expressionList))
 }
 
