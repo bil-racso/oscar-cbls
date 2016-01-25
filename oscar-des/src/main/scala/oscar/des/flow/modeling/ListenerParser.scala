@@ -199,6 +199,9 @@ class ListenerParser(storages:Map[String,Storage],
       |"duration(" ~> boolExprParser <~")" ^^ {case e => duration(e)}
       | "-"~> doubleExprParser ^^ {opposite(_)}
       | "("~>doubleExprParser<~")"
+      | "totalCost" ^^^ {
+      val costList = storages.toList.map(_._2.cost) ::: processes.toList.map(_._2.cost)
+      costList.foldLeft[DoubleExpr](0.0)(plus(_,_))}
       | failure("expected arithmetic expression"))
 
   //generic code
@@ -256,7 +259,7 @@ class ListenerParser(storages:Map[String,Storage],
   def identifierSpaceAllowed:Parser[String] = """\"[a-zA-Z0-9 ]+\"""".r ^^ {_.toString.drop(1).dropRight(1)}
   def identifier:Parser[String] = identifierSpaceAllowed | identifierNoSpaceAllowed
 
-  def doubleParser:Parser[Double] = """[0-9]+(\.[0-9]+)?""".r ^^ {case s:String => println("converting" + s);s.toDouble}
+  def doubleParser:Parser[Double] = """[0-9]+(\.[0-9]+)?""".r ^^ {case s:String => s.toDouble}
 }
 
 object ParserTester extends App with FactoryHelper{
@@ -265,7 +268,7 @@ object ParserTester extends App with FactoryHelper{
   val aStorage = fIFOStorage(10,Nil,"aStorage",null,false)
   val bStorage = fIFOStorage(10,Nil,"bStorage",null,false)
 
-  val aProcess = singleBatchProcess(m, 5000, Array(), Array((()=>1,aStorage)), null, "aProcess", null, "completedBatchCount(this)")
+  val aProcess = singleBatchProcess(m, 5000, Array(), Array((()=>1,aStorage)), null, "aProcess", null, "completedBatchCount(this) * 0.45")
   val bProcess = singleBatchProcess(m, 5000, Array(), Array((()=>1,aStorage)), null, "bProcess", null)
 
   val myParser = ListenerParser(List(aStorage,bStorage), List(aProcess,bProcess))
@@ -302,7 +305,8 @@ object ParserTester extends App with FactoryHelper{
     ("b","-(-(-completedBatchCount(aProcess)) * -totalPut(aStorage))"),
     ("c","-(-(-completedBatchCount(aProcess)) + -totalPut(aStorage))"),
     ("d","integral(content(bStorage))"),
-    ("e","b * c + d + cost(aProcess)"))
+    ("e","b * c + d + cost(aProcess)"),
+    ("totalCost","totalCost"))
   println(myParser.parseAllListeners(expressionList))
 }
 
