@@ -6,18 +6,21 @@ import oscar.des.flow.core._
 
 import scala.language.implicitConversions
 
+
 /**
  * represents a storage point, or a stock as you name it
- * @param maxSize the maximal content of the stock. attempting to put more items will block the putting operations
+ * @param maxCapacity the maximal content of the stock. attempting to put more items will block the putting operations
  * @param name the name of the stock
  * @param verbose true to print when stock is empty or overfull
  * @author renaud.delandtsheer@cetic.be
  * */
-abstract class Storage(val maxSize: Int,
+abstract class Storage(val maxCapacity: Int,
                        val name:String,
                        val verbosity:String=>Unit,
                        overflowOnInput:Boolean)
   extends RichPutable with RichFetchable {
+
+  var cost:DoubleExpr = null
 
   class BufferCompositeItem(var n:Int, val itemClass:ItemClass)
   implicit def coupleToComposite(c:(Int,ItemClass)):BufferCompositeItem = new BufferCompositeItem(c._1,c._2)
@@ -32,7 +35,7 @@ abstract class Storage(val maxSize: Int,
   private var notificationTo: List[StockNotificationTarget] = List.empty
 
   override def toString: String = {
-    name + " " + this.getClass.getSimpleName + ":: content:" + contentSize + " max:" + maxSize + " totalPut:" + totalPut + " totalFetch:" + totalFetch + (if(overflowOnInput) " totalOverflow:" + totalLosByOverflow else "")
+    name + " " + this.getClass.getSimpleName + ":: content:" + contentSize + " max:" + maxCapacity + " totalPut:" + totalPut + " totalFetch:" + totalFetch + (if(overflowOnInput) " totalOverflow:" + totalLosByOverflow else "")
   }
 
   protected def flow(): Boolean = {

@@ -12,15 +12,12 @@ import scala.language.implicitConversions
   */
 trait FactoryHelper {
 
-
   implicit def doubleToConstantDoubleFunction(f: Double): (() => Double) = () => f
   implicit def intToConstantDoubleFunction(f: Int): (() => Double) = () => f
   implicit def doubleToConstantIntFunction(f: Double): (() => Int) = () => f.toInt
   implicit def intToConstantIntFunction(f: Int): (() => Int) = () => f
   implicit def constantFetchableToFunctionFetchable(l: Array[(Int,Fetchable)]): Array[(()=>Int,Fetchable)] = l.map(v => (()=>v._1,v._2))
   implicit def constantPutableToFunctionPutable(l: Array[(Int,Putable)]): Array[(()=>Int,Putable)] = l.map(v => (()=>v._1,v._2))
-
-
 
   /**
    * a process inputs some inputs, and produces its outputs at a given rate.
@@ -40,9 +37,12 @@ trait FactoryHelper {
                          outputs:Array[(()=>Int,Putable)],
                          transformFunction:ItemClassTransformFunction,
                          name:String,
-                         verbosity:String=>Unit = null) =
-    SingleBatchProcess(m:Model,batchDuration,inputs,outputs,transformFunction,name,verbosity)
-
+                         verbosity:String=>Unit = null,
+                         costFunction:String = "0") = {
+    val toReturn = SingleBatchProcess(m:Model,batchDuration,inputs,outputs,transformFunction,name,verbosity)
+    toReturn.cost = ListenerParser.processCostParser(toReturn).applyAndExpectDouble(costFunction)
+    toReturn
+  }
 
   /**
    * This represents a batch process (see [[SingleBatchProcess]]) with multiple batch running in parallel.
@@ -62,9 +62,12 @@ trait FactoryHelper {
                    outputs:Array[(() => Int,Putable)],
                    name:String,
                    transformFunction:ItemClassTransformFunction,
-                   verbosity:String=>Unit = null) =
-    new BatchProcess(m,numberOfBatches,batchDuration,inputs,outputs,name,transformFunction,verbosity)
-
+                   verbosity:String=>Unit = null,
+                   costFunction:String = "0") ={
+    val toReturn = new BatchProcess(m,numberOfBatches,batchDuration,inputs,outputs,name,transformFunction,verbosity)
+    toReturn.cost = ListenerParser.processCostParser(toReturn).applyAndExpectDouble(costFunction)
+    toReturn
+  }
 
   /**
    *  A rolling (in a conveyor belt) Process means that if the output is blocked, no new batch is started
@@ -89,8 +92,12 @@ trait FactoryHelper {
                           outputs:Array[(() => Int, Putable)],
                           transformFunction:ItemClassTransformFunction,
                           name:String,
-                          verbosity:String=>Unit = null) =
-    new ConveyorBeltProcess(m:Model,processDuration,minimalSeparationBetweenBatches,inputs,outputs,transformFunction,name,verbosity)
+                          verbosity:String=>Unit = null,
+                          costFunction:String  = "0") = {
+    val toReturn = new ConveyorBeltProcess(m:Model,processDuration,minimalSeparationBetweenBatches,inputs,outputs,transformFunction,name,verbosity)
+    toReturn.cost = ListenerParser.processCostParser(toReturn).applyAndExpectDouble(costFunction)
+    toReturn
+  }
 
   /**
    * This represents a failing batch process (see [[oscar.des.flow.lib.SplittingBatchProcess]]) with multiple batch running in parallel.
@@ -110,8 +117,12 @@ trait FactoryHelper {
                             outputs:Array[Array[(()=>Int,Putable)]],
                             name:String,
                             transformFunction:ItemClassTransformWitAdditionalOutput,
-                            verbosity:String=>Unit = null) =
-    SplittingBatchProcess(m,numberOfBatches, batchDuration, inputs, outputs, name, transformFunction,verbosity)
+                            verbosity:String=>Unit = null,
+                            costFunction:String) = {
+    val toReturn = SplittingBatchProcess(m, numberOfBatches, batchDuration, inputs, outputs, name, transformFunction, verbosity)
+    toReturn.cost = ListenerParser.processCostParser(toReturn).applyAndExpectDouble(costFunction)
+    toReturn
+  }
 
   /**
    * A process inputs some inputs, and produces its outputs at a given rate.
@@ -133,9 +144,12 @@ trait FactoryHelper {
                                   outputs:Array[Array[(() => Int,Putable)]],
                                   transformFunction:ItemClassTransformWitAdditionalOutput,
                                   name:String,
-                                  verbosity:String=>Unit = null) =
-    SplittingSingleBatchProcess(m,batchDuration, inputs, outputs,transformFunction,name,verbosity)
-
+                                  verbosity:String=>Unit = null,
+                                  costFunction:String = "0") = {
+    val toReturn = SplittingSingleBatchProcess(m, batchDuration, inputs, outputs, transformFunction, name, verbosity)
+    toReturn.cost = ListenerParser.processCostParser(toReturn).applyAndExpectDouble(costFunction)
+    toReturn
+  }
 
   /**
    *this type of storage acts in a LIFO-way.
@@ -150,8 +164,12 @@ trait FactoryHelper {
                   initialContent:List[(Int,ItemClass)] = List.empty,
                   name:String,
                   verbosity:String=>Unit,
-                  overflowOnInput:Boolean) =
-    new LIFOStorage(maxSize,initialContent, name, verbosity, overflowOnInput)
+                  overflowOnInput:Boolean,
+                  costFunction:String = "0") = {
+    val toReturn = new LIFOStorage(maxSize, initialContent, name, verbosity, overflowOnInput)
+    toReturn.cost = ListenerParser.storageCostParser(toReturn).applyAndExpectDouble(costFunction)
+    toReturn
+  }
 
 
   /**
@@ -167,7 +185,10 @@ trait FactoryHelper {
                   initialContent:List[(Int,ItemClass)],
                   name:String,
                   verbosity:String=>Unit,
-                  overflowOnInput:Boolean) =
-    new FIFOStorage(maxSize, initialContent,name,verbosity,overflowOnInput)
-
+                  overflowOnInput:Boolean,
+                  costFunction:String = "0") = {
+    val toReturn = new FIFOStorage(maxSize, initialContent, name, verbosity, overflowOnInput)
+    toReturn.cost = ListenerParser.storageCostParser(toReturn).applyAndExpectDouble(costFunction)
+    toReturn
+  }
 }

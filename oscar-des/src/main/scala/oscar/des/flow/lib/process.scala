@@ -99,7 +99,7 @@ case class SingleBatchProcess(m:Model,
  * @param inputs the set of inputs (number of parts to input, storage)
  * @param outputs the set of outputs (number of parts, storage)
  * @param name the name of this process, for pretty printing, bath are named "name chain i" where i is the identifier of the batch process
- * @param verbose true if you want to see the start input, start batch, end batch start output, end output events on the console
+ * @param verbosity to dispatch verbosities of the object. can be null
  * @author renaud.delandtsheer@cetic.be
  * */
 case class BatchProcess(m:Model,

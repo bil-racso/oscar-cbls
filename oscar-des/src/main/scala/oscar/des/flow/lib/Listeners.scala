@@ -13,6 +13,7 @@ sealed abstract class Expression(val accumulating:Boolean, val children:Expressi
   def update(time:Double)
   var status:ExpressionStatus = Fresh
   def valueString:String
+  def reset()
 }
 
 //Variables have values at all time.
@@ -22,12 +23,29 @@ abstract class BoolExpr(accumulating:Boolean, children:Expression*) extends Expr
   var value:Boolean = updatedValue(0)
 
   override def valueString: String = "" + value
+  def reset() = {
+    if(accumulating) resetAccumulators()
+    value = updatedValue(0)
+  }
+
+  def resetAccumulators() {
+    throw new Error("accumulating expression must have reset accumulator method overriden")
+  }
 }
 abstract class DoubleExpr(accumulating:Boolean, children:Expression*) extends Expression(accumulating,children:_*){
   override def update(time:Double){value = updatedValue(time)}
   def updatedValue(time:Double):Double
   var value:Double = updatedValue(0)
   override def valueString: String = "" + value
+
+  def reset() = {
+    if(accumulating) resetAccumulators()
+    value = updatedValue(0)
+  }
+
+  def resetAccumulators(): Unit = {
+    throw new Error("accumulating expression must have reset accumulator method overriden")
+  }
 }
 
 class MetricsStore(rootExpressions:List[(String, Expression)],verbosity:String=>Unit){
@@ -91,10 +109,14 @@ class MetricsStore(rootExpressions:List[(String, Expression)],verbosity:String=>
   def finish(time:Double){
     nonAccumulatingExpressions.foreach(_.update(time))
   }
+
+  def reset(){
+    accumulatingExpressions.map(_.reset())
+  }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////
-//probe on simulation elements
+//probe on simulation element
 
 /**
  * true if the storage is empty, false otherwise
@@ -117,7 +139,7 @@ case class StockLevel(s:Storage) extends DoubleExpr(false){
  * @param s a storage
  */
 case class StockCapacity(s:Storage) extends DoubleExpr(false){
-  override def updatedValue(time:Double): Double = s.maxSize
+  override def updatedValue(time:Double): Double = s.maxCapacity
 }
 
 /**
@@ -125,7 +147,7 @@ case class StockCapacity(s:Storage) extends DoubleExpr(false){
  * @param s a storage
  */
 case class RelativeStockLevel(s:Storage) extends DoubleExpr(false){
-  override def updatedValue(time:Double): Double = s.contentSize.toDouble / s.maxSize.toDouble
+  override def updatedValue(time:Double): Double = s.contentSize.toDouble / s.maxCapacity.toDouble
 }
 
 /**
@@ -261,6 +283,10 @@ case class HasAlwaysBeen(f:BoolExpr) extends BoolExpr(true,f){
     hasAlwaysBeen &= f.value
     hasAlwaysBeen
   }else false
+
+  override def resetAccumulators(): Unit = {
+    hasAlwaysBeen = f.value
+  }
 }
 
 /**
@@ -273,6 +299,10 @@ case class HasBeen(f:BoolExpr) extends BoolExpr(true,f){
   override def updatedValue(time:Double): Boolean = if(hasBeen) true else{
     hasBeen |= f.value
     hasBeen
+  }
+
+  override def resetAccumulators(): Unit = {
+    hasBeen = f.value
   }
 }
 
@@ -299,6 +329,10 @@ case class Since(a:BoolExpr,b:BoolExpr) extends BoolExpr(true,a,b){
       }else false
     }
   }
+
+  override def resetAccumulators(): Unit = {
+    previousValue = a.value && b.value
+  }
 }
 
 /**
@@ -314,6 +348,10 @@ case class BecomesTrue(p:BoolExpr) extends BoolExpr(true,p){
     val oldPreviousValue = previousValue
     previousValue = p.value
     !oldPreviousValue & previousValue
+  }
+
+  override def resetAccumulators(): Unit = {
+    previousValue = p.value
   }
 }
 
@@ -335,6 +373,9 @@ case class Changed(p:Expression) extends BoolExpr(true,p){
     previousValue = prevValueNormalized
     oldPreviousValue != previousValue
   }
+  override def resetAccumulators(): Unit = {
+    previousValue = prevValueNormalized
+  }
 }
 
 /**
@@ -350,6 +391,9 @@ case class Delta(p:DoubleExpr) extends DoubleExpr(true,p){
     val oldPreviousValue = previousValue
     previousValue = p.value
     previousValue - oldPreviousValue
+  }
+  override def resetAccumulators(): Unit = {
+    previousValue = p.value
   }
 }
 
@@ -378,6 +422,11 @@ case class CumulatedDuration(b:BoolExpr) extends DoubleExpr(true,b){
     }
     acc
   }
+  override def resetAccumulators(): Unit = {
+    acc = 0
+    wasTrue = b.value
+    previousTime = 0
+  }
 }
 
 /**the duration for which b has been true since it was last false*/
@@ -398,6 +447,10 @@ case class Duration(b:BoolExpr) extends DoubleExpr(true,b){
       }
       0
     }
+  }
+  override def resetAccumulators(): Unit = {
+    bWasTrueOnLastCall = b.value
+    timeWhenBStartedToBeTrue = 0
   }
 }
 
@@ -510,6 +563,11 @@ case class PonderateWithDuration(s:DoubleExpr) extends DoubleExpr(true,s){
     prevValue = nowValue
     acc
   }
+  override def resetAccumulators(): Unit = {
+    acc = 0
+    prevTime = 0
+    prevValue = s.value
+  }
 }
 
 /**
@@ -533,6 +591,9 @@ case class MaxOnHistory(s:DoubleExpr, when:BoolExpr = null) extends DoubleExpr(t
     }else{
       MaxOnHistory(s, And(when,this.when))
     }
+  }
+  override def resetAccumulators(): Unit = {
+    maxOnHistory = s.value
   }
 }
 

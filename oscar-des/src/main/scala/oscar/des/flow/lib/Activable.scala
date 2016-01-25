@@ -14,6 +14,8 @@ abstract class ActivableProcess(val name:String, verbosity:String=>Unit) extends
   def startedBatchCount:Int
   def totalWaitDuration():Double
 
+  var cost:DoubleExpr = null
+
   var productionBatch:LIFOStorage = null;
 
   override def setUnderControl(){

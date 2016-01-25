@@ -32,7 +32,6 @@ object ListenerParser{
     new ListenerParser(storagesMap, processMap)
   }
 
-
   def apply(storages:Iterable[Storage],processes:Iterable[ActivableProcess], expressions:List[(String,String)]): MultipleParsingResult ={
     val myParser = ListenerParser(storages, processes)
     myParser.parseAllListeners(expressions)
@@ -78,6 +77,15 @@ class ListenerParser(storages:Map[String,Storage],
       case Success(result:BoolExpr, _) => BooleanExpressionResult(result)
       case Success(result:DoubleExpr, _) => DoubleExpressionResult(result)
       case n:NoSuccess => ParsingError(n.toString)
+    }
+  }
+
+  def applyAndExpectDouble(input:String):DoubleExpr = {
+    apply(input) match{
+      case DoubleExpressionResult(r) => r
+      case e:ListenerParsingResult =>
+        throw new Exception("expected double expression, got " + e.toString())
+        null
     }
   }
 
