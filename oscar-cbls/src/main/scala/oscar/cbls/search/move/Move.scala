@@ -143,7 +143,7 @@ case class RollMove(l:List[CBLSIntVar],offset:Int, override val objAfter:Int, ov
   * @param neighborhoodName a string describing the neighborhood hat found the move (for debug purposes)
   * @author renaud.delandtsheer@cetic.be
   */
-case class SwapMove(i:CBLSIntVar,j:CBLSIntVar, override val objAfter:Int, override val neighborhoodName:String = null)
+case class SwapMove(i:CBLSIntVar,j:CBLSIntVar, idI:Int, idJ:Int, override val objAfter:Int, override val neighborhoodName:String = null)
   extends Move(objAfter, neighborhoodName){
 
   override def commit() {i :=: j}

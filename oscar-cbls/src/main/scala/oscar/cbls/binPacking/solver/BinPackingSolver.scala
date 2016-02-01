@@ -171,7 +171,7 @@ case class SwapItems(p:BinPackingProblem,
     match {
       case (item1, item2) =>
         val newObj = p.overallViolation.swapVal(item1.bin, item2.bin)
-        if(acceptanceCriteria(oldViolation,newObj)) SwapMove(item1.bin, item2.bin, newObj, "ItemsSwap")
+        if(acceptanceCriteria(oldViolation,newObj)) SwapMove(item1.bin, item2.bin, item1.number,item2.number,newObj, "ItemsSwap")
         else{
           if (printPerformedSearches) println("ItemsSwap: no improvement found")
           NoMoveFound
@@ -213,7 +213,7 @@ case class JumpSwapItems(p:BinPackingProblem)
     match {
       case (item1,item2) =>
         if (printPerformedSearches) println("Jump: swapping bins of " + item1 + " and " + item2)
-        SwapMove(item1.bin, item2.bin, Int.MaxValue, "Jump")
+        SwapMove(item1.bin, item2.bin, item1.number,item2.number,Int.MaxValue, "Jump")
       case null =>
         if (printPerformedSearches) println("Jump: no move found")
         NoMoveFound

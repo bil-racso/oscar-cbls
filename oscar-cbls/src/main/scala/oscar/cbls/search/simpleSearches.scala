@@ -192,7 +192,8 @@ case class SwapsNeighborhood(vars:Array[CBLSIntVar],
 
           this.firstVar = firstVar
           this.secondVar = secondVar
-
+          this.firstVarIndice = i
+          this.secondVarIndice = j
           if (evaluateCurrentMoveObjTrueIfStopRequired(obj.swapVal(firstVar, secondVar))) {
             startIndice = i + 1
             return
@@ -204,8 +205,10 @@ case class SwapsNeighborhood(vars:Array[CBLSIntVar],
 
   var firstVar:CBLSIntVar = null
   var secondVar:CBLSIntVar = null
+  var firstVarIndice:Int = 0
+  var secondVarIndice:Int = 0
 
-  override def instantiateCurrentMove(newObj: Int) = SwapMove(firstVar, secondVar, newObj, name)
+  override def instantiateCurrentMove(newObj: Int) = SwapMove(firstVar, secondVar, firstVarIndice,secondVarIndice,newObj, name)
 
   //this resets the internal state of the Neighborhood
   override def reset(): Unit = {
@@ -285,7 +288,7 @@ case class RandomSwapNeighborhood(vars:Array[CBLSIntVar],
       touchedVars = touchedVars + i
       val j = selectFrom(vars.indices,(j:Int) => (searchZone == null || searchZone.value.contains(j)) && !touchedVars.contains(j))
       touchedVars = touchedVars + j
-      toReturn = SwapMove(vars(i), vars(j), Int.MaxValue) :: toReturn
+      toReturn = SwapMove(vars(i), vars(j), i,j,Int.MaxValue) :: toReturn
     }
 
     if(printPerformedSearches) println(name + ": move found")

@@ -217,7 +217,7 @@ abstract class Neighborhood {
       toReturn += 1
       moveCount += 1
     }
-    if (printTakenMoves) println("safety stop criteria met after " + moveCount + " moves (not the one of the neighborhood!)")
+    if (printTakenMoves) println("stop criteria of doAllMove met after " + moveCount + " moves (not the one of the neighborhood)")
     toReturn
   }
 
