@@ -3,6 +3,7 @@ package oscar.examples.cbls.car
 import oscar.cbls.invariants.core.computation.CBLSIntVar
 import oscar.cbls.modeling.CBLSModel
 import oscar.cbls.objective.Objective
+import oscar.cbls.search.RollNeighborhood
 import oscar.cbls.search.combinators.{Profile, DynAndThen}
 import oscar.cbls.search.move.SwapMove
 
@@ -15,7 +16,7 @@ import scala.util.Random
  */
 object carSequencer  extends CBLSModel with App {
 
-  val orderedCarsByType:SortedMap[Int,Int] = SortedMap(0 -> 13, 1 -> 6, 2 -> 10 , 3 -> 10, 4 -> 4, 5 -> 6)
+  val orderedCarsByType:SortedMap[Int,Int] = SortedMap(0 -> 130, 1 -> 60, 2 -> 110 , 3 -> 120, 4 -> 40, 5 -> 30)
 
   println("carSequencing")
   println("orderedCarTypes:" + orderedCarsByType)
@@ -48,16 +49,22 @@ object carSequencer  extends CBLSModel with App {
   val carSequence:Array[CBLSIntVar] = Array.tabulate(nbCars)(p => CBLSIntVar(orderedCarTypesIterator.next(),typeRange,"carClassAtPosition" + p)).toArray
 
   //airConditionner: max 2 out of 3
-  c.post(sequence(carSequence,3,2,airCoCarTypes.contains(_)))
+  c.post(sequence(carSequence,3,2,airCoCarTypes.contains))
 
   //automaticGearBox: max 3 out of 5
-  c.post(sequence(carSequence,5,3,automaticGearBoxCarTypes.contains(_)))
+  c.post(sequence(carSequence,5,3,automaticGearBoxCarTypes.contains))
 
   //diesel: max 3 out of 5
-  c.post(sequence(carSequence,5,3,dieselCarTypes.contains(_)))
+  c.post(sequence(carSequence,5,3,dieselCarTypes.contains))
 
   //esp: max 2 ouf of 3
-  c.post(sequence(carSequence,3,2,espCarTypes.contains(_)))
+  c.post(sequence(carSequence,3,2,espCarTypes.contains))
+
+  val impactZone = 5
+
+  val varViolation = c.violations(carSequence)
+  val violatedCars = filter(varViolation)
+  val mostViolatedCars = argMax(varViolation)
 
   println("closing model")
 
@@ -68,6 +75,9 @@ object carSequencer  extends CBLSModel with App {
 
   val swap = swapsNeighborhood(carSequence,"swapCars")
 
+  val roll = RollNeighborhood(carSequence, name = "RollCars", maxShiftSize = _ => 10)
+  val mostViolatedSwap = swapsNeighborhood(carSequence,"mostViolatedSwap", searchZone2 = mostViolatedCars, symmetryCanBeBrokenOnIndices = false)
+
   val linkedDoubleSwaps = DynAndThen(
     swapsNeighborhood(carSequence,"swapCars1"),
     ((swapMove:SwapMove) => {
@@ -77,19 +87,32 @@ object carSequencer  extends CBLSModel with App {
 
   val doubleSwaps = (swapsNeighborhood(carSequence,"swapCars1") andThen swapsNeighborhood(carSequence,"swapCars2")) name "doubleSwaps"
 
+  val looselyLinkedDoubleSwaps = DynAndThen(
+    swapsNeighborhood(carSequence,"swapCars1", symmetryCanBeBrokenOnIndices = false),
+    ((swapMove:SwapMove) => {
+      val firstSwappedCar = 0.max(swapMove.idI - impactZone) until (nbCars).min(swapMove.idI + impactZone)
+      val otherSwappedCar = (nbCars-1).min(swapMove.idJ+1) until nbCars
+      swapsNeighborhood(carSequence, "swapCars2", searchZone1 = () => firstSwappedCar, searchZone2 = () => otherSwappedCar, symmetryCanBeBrokenOnIndices = false)
+    })) name "looselyLinkedDoubleSwaps"
+
   val search = Profile(
-    Profile(swap)
-      orElse Profile(linkedDoubleSwaps) //orElse doubleSwaps
-      orElse (randomSwapNeighborhood(carSequence,nbCars/5,"smallRandomize") maxMoves (nbCars / 5))
-      orElse (randomSwapNeighborhood(carSequence,nbCars/2,"bigRandomize") maxMoves (nbCars / 5))
+    Profile(mostViolatedSwap random swap)
+      // orElse Profile(looselyLinkedDoubleSwaps)
+      orElse roll
+      orElse (shuffleNeighborhood(carSequence, mostViolatedCars, "shuffleMostViolatedCars") maxMoves (10))
+      orElse (shuffleNeighborhood(carSequence, violatedCars, "shuffleAllViolatedCars") maxMoves (10))
+      orElse (shuffleNeighborhood(carSequence, name = "globalShuffle") maxMoves (10))
+      maxMoves nbCars *2 withoutImprovementOver obj
       saveBestAndRestoreOnExhaust obj)
+    //.afterMove({println("most violated positions: " + mostViolatedCars.value + " car types: " + mostViolatedCars.value.toList.map(carSequence(_).value))})
 
   search.verbose = 1
-
+  search.paddingLength = 150
   search.doAllMoves(_ => c.isTrue,obj)
 
   println(search.profilingStatistics)
   println(c.violation)
   println("car sequence:" + carSequence.map(_.value).mkString(","))
 
+  println("grouped:" + carSequence.map(_.value).toList.groupBy[Int]((c:Int) => c).mapValues((l:List[Int]) => l.size))
 }

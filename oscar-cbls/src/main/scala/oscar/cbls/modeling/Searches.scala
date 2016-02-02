@@ -1,7 +1,9 @@
 package oscar.cbls.modeling
 
 import oscar.cbls.invariants.core.computation.{CBLSIntVar, CBLSSetVar}
-import oscar.cbls.search.{AssignNeighborhood, RandomSwapNeighborhood, RandomizeNeighborhood, SwapsNeighborhood}
+import oscar.cbls.search._
+
+import scala.collection.immutable.SortedSet
 
 /** A trait that interfaces some of the neighborhoods of OScaR.CBLS
   *
@@ -58,7 +60,7 @@ trait Search {
   def randomizeNeighborhood(vars:Array[CBLSIntVar],
                             degree:Int = 1,
                             name:String = "RandomizeNeighborhood",
-                            searchZone:CBLSSetVar = null,
+                            searchZone:() => SortedSet[Int],
                             valuesToConsider:(CBLSIntVar,Int) => Iterable[Int] = (variable,_) => variable.domain)
   = RandomizeNeighborhood(vars,degree,name,searchZone,valuesToConsider)
 
@@ -74,7 +76,7 @@ trait Search {
   def randomSwapNeighborhood(vars:Array[CBLSIntVar],
                              degree:Int = 1,
                              name:String = "RandomSwapNeighborhood",
-                             searchZone:CBLSSetVar = null)
+                             searchZone:() => SortedSet[Int] = null)
   = RandomSwapNeighborhood(vars,degree,name,searchZone)
 
   /**
@@ -121,5 +123,19 @@ trait Search {
   = SwapsNeighborhood(vars,name,searchZone1,searchZone2,
     symmetryCanBeBrokenOnIndices,symmetryCanBeBrokenOnValue,
     best,symmetryClassOfVariables1,symmetryClassOfVariables2,hotRestart)
+
+
+  /**
+   * will randomize the array, by performing shuffle on a subset of the variables
+   * This will not consider the objective function, even if it includes some strong constraints
+   *
+   * @param vars an array of [[oscar.cbls.invariants.core.computation.CBLSIntVar]] defining the search space
+   * @param indicesToConsider the positions to consider in the shuffle, all positions if not specified
+   * @param name the name of the neighborhood
+   */
+  def shuffleNeighborhood(vars:Array[CBLSIntVar],
+                          indicesToConsider:()=>Iterable[Int] = null,
+                          name:String = "ShuffleNeighborhood") =
+    ShuffleNeighborhood(vars, indicesToConsider, name)
 }
 

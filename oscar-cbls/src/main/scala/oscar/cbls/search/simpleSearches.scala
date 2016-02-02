@@ -1,7 +1,7 @@
 package oscar.cbls.search
 
 import oscar.cbls.constraints.core.ConstraintSystem
-import oscar.cbls.invariants.core.computation.{CBLSIntVar, CBLSSetVar, IntValue}
+import oscar.cbls.invariants.core.computation.{InvariantHelper, CBLSIntVar, CBLSSetVar, IntValue}
 import oscar.cbls.modeling.AlgebraTrait
 import oscar.cbls.objective.Objective
 import oscar.cbls.search.algo.{HotRestart, IdenticalAggregator}
@@ -9,6 +9,7 @@ import oscar.cbls.search.core._
 import oscar.cbls.search.move._
 
 import scala.collection.immutable.SortedSet
+import scala.util.Random
 
 /**
  * will find a variable in the array, and find a value from its range that improves the objective function
@@ -231,7 +232,7 @@ case class SwapsNeighborhood(vars:Array[CBLSIntVar],
 case class RandomizeNeighborhood(vars:Array[CBLSIntVar],
                                  degree:Int = 1,
                                  name:String = "RandomizeNeighborhood",
-                                 searchZone:CBLSSetVar = null,
+                                 searchZone:() => SortedSet[Int] = null,
                                  valuesToConsider:(CBLSIntVar,Int) => Iterable[Int] = (variable,_) => variable.domain)
   extends Neighborhood with AlgebraTrait with SearchEngineTrait{
 
@@ -240,16 +241,16 @@ case class RandomizeNeighborhood(vars:Array[CBLSIntVar],
 
     var toReturn:List[Move] = List.empty
 
-    if(searchZone != null && searchZone.value.size <= degree){
+    if(searchZone != null && searchZone().size <= degree){
       //We move everything
-      for(i <- searchZone.value){
+      for(i <- searchZone()){
 
         toReturn = AssignMove(vars(i),selectFrom(vars(i).domain),i,Int.MaxValue) :: toReturn
       }
     }else{
       var touchedVars:Set[Int] = SortedSet.empty
       for(r <- 1 to degree){
-        val i = selectFrom(vars.indices,(j:Int) => (searchZone == null || searchZone.value.contains(j)) && !touchedVars.contains(j))
+        val i = selectFrom(vars.indices,(j:Int) => (searchZone == null || searchZone().contains(j)) && !touchedVars.contains(j))
         touchedVars = touchedVars + i
         val oldVal = vars(i).value
         toReturn = AssignMove(vars(i),selectFrom(valuesToConsider(vars(i),i),(_:Int) != oldVal),i,Int.MaxValue) :: toReturn
@@ -273,7 +274,7 @@ case class RandomizeNeighborhood(vars:Array[CBLSIntVar],
 case class RandomSwapNeighborhood(vars:Array[CBLSIntVar],
                                   degree:Int = 1,
                                   name:String = "RandomSwapNeighborhood",
-                                  searchZone:CBLSSetVar = null)
+                                  searchZone:() => SortedSet[Int] = null)  //TODO: search zone does not work!
   extends Neighborhood with AlgebraTrait with SearchEngineTrait{
 
   override def getMove(obj: Objective, acceptanceCriteria: (Int, Int) => Boolean = null): SearchResult = {
@@ -282,11 +283,11 @@ case class RandomSwapNeighborhood(vars:Array[CBLSIntVar],
     var toReturn:List[Move] = List.empty
 
     var touchedVars:Set[Int] = SortedSet.empty
-    val varsToMove = if (searchZone == null) vars.length else searchZone.value.size
+    val varsToMove = if (searchZone == null) vars.length else searchZone().size
     for(r <- 1 to degree if varsToMove - touchedVars.size >= 2){
-      val i = selectFrom(vars.indices,(i:Int) => (searchZone == null || searchZone.value.contains(i)) && !touchedVars.contains(i))
+      val i = selectFrom(vars.indices,(i:Int) => (searchZone == null || searchZone().contains(i)) && !touchedVars.contains(i))
       touchedVars = touchedVars + i
-      val j = selectFrom(vars.indices,(j:Int) => (searchZone == null || searchZone.value.contains(j)) && !touchedVars.contains(j))
+      val j = selectFrom(vars.indices,(j:Int) => (searchZone == null || searchZone().contains(j)) && !touchedVars.contains(j))
       touchedVars = touchedVars + j
       toReturn = SwapMove(vars(i), vars(j), i,j,Int.MaxValue) :: toReturn
     }
@@ -296,6 +297,39 @@ case class RandomSwapNeighborhood(vars:Array[CBLSIntVar],
   }
 }
 
+/**
+ * will randomize the array, by performing shuffle on a subset of the variables
+ * This will not consider the objective function, even if it includes some strong constraints
+ *
+ * @param vars an array of [[oscar.cbls.invariants.core.computation.CBLSIntVar]] defining the search space
+ * @param indicesToConsider the positions to consider in the shuffle, all positions if not specified
+ * @param name the name of the neighborhood
+ */
+case class ShuffleNeighborhood(vars:Array[CBLSIntVar],
+                               indicesToConsider:()=>Iterable[Int] = null,
+                              numberOfShuffledPositions:Int = Int.MaxValue,
+                               name:String = "ShuffleNeighborhood")            //TODO: also add a number of variables to shuffle (if higher than indices, all indices, if smaller, only the number of indices
+  extends Neighborhood with AlgebraTrait with SearchEngineTrait{
+
+  override def getMove(obj: Objective, acceptanceCriteria: (Int, Int) => Boolean = null): SearchResult = {
+    if(printPerformedSearches) println("applying " + name)
+
+    val (realIndicesToConsider,numberOfIndicesToConsider) = (if(indicesToConsider == null) (vars.indices.toList,vars.length) else { val tmp = indicesToConsider(); (tmp,tmp.size))
+
+    if(numberOfShuffledPositions <= )
+    val values = realIndicesToConsider.map(vars(_).value)
+    //TODO: if all values are identical, return NoMoveFound
+    val (minValue,maxValue) = InvariantHelper.getMinMaxBoundsInt(values)
+    if(minValue == maxValue) return NoMoveFound
+
+    val newValues = Random.shuffle(values)
+    val moves:List[AssignMove] = realIndicesToConsider.zip(newValues).
+      map({case ((indice,newValue)) => AssignMove(vars(indice),newValue,indice,Int.MaxValue)})
+
+    if(printPerformedSearches) println(name + ": move found")
+    CompositeMove(moves, Int.MaxValue, name)
+  }
+}
 
 /**
  * This neighborhood will consider roll moves that roll the value of contiguous CBLSIntVar in the given array
@@ -316,11 +350,12 @@ case class RandomSwapNeighborhood(vars:Array[CBLSIntVar],
  *                    if false, consider the exploration range in natural order from the first position.
  **/
 @deprecated("actually, experimental, so use at your own risk","3.0")
+//TODO: also implement a shift, that moves a portion of the array left or right
 case class RollNeighborhood(vars:Array[CBLSIntVar],
                             name:String = "RollNeighborhood",
                             searchZone:()=>Set[Int] = null,
                             bridgeOverFrozenVariables:Boolean = false,
-                            maxShiftSize:Int=>Int, //the max size of the roll, given the ID of the first variable
+                            maxShiftSize:Int=>Int = _ => Int.MaxValue, //the max size of the roll, given the ID of the first variable
                             best:Boolean = false,
                             hotRestart:Boolean = true)
   extends EasyNeighborhood[RollMove](best,name) with AlgebraTrait{

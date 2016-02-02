@@ -58,7 +58,7 @@ case class Sequence(variables: Array[IntValue], length:Int, Max:Int, predicate:(
   /**the violation of a variable is the sum of the violation of each sequence it is involved in*/
   var Violations = SortedMap.empty[IntValue, IntValue]
 
-  for(i <- 0 to variables.length - length){
+  for(i <- 0 to variables.length - 1){
     Violations = Violations + ((variables(i),Sum(sequencesInvolving(i).map(violated(_)))))
   }
 
