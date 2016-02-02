@@ -125,17 +125,22 @@ trait Search {
     best,symmetryClassOfVariables1,symmetryClassOfVariables2,hotRestart)
 
 
+
   /**
    * will randomize the array, by performing shuffle on a subset of the variables
    * This will not consider the objective function, even if it includes some strong constraints
    *
    * @param vars an array of [[oscar.cbls.invariants.core.computation.CBLSIntVar]] defining the search space
    * @param indicesToConsider the positions to consider in the shuffle, all positions if not specified
+   * @param numberOfShuffledPositions the number of positions to shuffle, taken in indicesToConsider.
    * @param name the name of the neighborhood
+   * @param checkNoMoveFound checks that the variables to shuffle have different values, return NoMoveFound if this is not the case
    */
   def shuffleNeighborhood(vars:Array[CBLSIntVar],
                           indicesToConsider:()=>Iterable[Int] = null,
-                          name:String = "ShuffleNeighborhood") =
-    ShuffleNeighborhood(vars, indicesToConsider, name)
+                          numberOfShuffledPositions:Int = Int.MaxValue,
+                          name:String = "ShuffleNeighborhood",
+                          checkNoMoveFound:Boolean = true) =
+    ShuffleNeighborhood(vars, indicesToConsider, numberOfShuffledPositions, name, checkNoMoveFound)
 }
 

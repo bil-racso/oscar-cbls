@@ -99,8 +99,8 @@ object carSequencer  extends CBLSModel with App {
     Profile(mostViolatedSwap random swap)
       // orElse Profile(looselyLinkedDoubleSwaps)
       orElse roll
-      orElse (shuffleNeighborhood(carSequence, mostViolatedCars, "shuffleMostViolatedCars") maxMoves (10))
-      orElse (shuffleNeighborhood(carSequence, violatedCars, "shuffleAllViolatedCars") maxMoves (10))
+      orElse (shuffleNeighborhood(carSequence, mostViolatedCars, name = "shuffleMostViolatedCars") maxMoves (10))
+      orElse (shuffleNeighborhood(carSequence, violatedCars, name = "shuffleAllViolatedCars") maxMoves (10))
       orElse (shuffleNeighborhood(carSequence, name = "globalShuffle") maxMoves (10))
       maxMoves nbCars *2 withoutImprovementOver obj
       saveBestAndRestoreOnExhaust obj)

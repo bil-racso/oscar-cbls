@@ -303,27 +303,41 @@ case class RandomSwapNeighborhood(vars:Array[CBLSIntVar],
  *
  * @param vars an array of [[oscar.cbls.invariants.core.computation.CBLSIntVar]] defining the search space
  * @param indicesToConsider the positions to consider in the shuffle, all positions if not specified
+ * @param numberOfShuffledPositions the number of positions to shuffle, taken in indicesToConsider.
  * @param name the name of the neighborhood
+ * @param checkNoMoveFound checks that the variables to shuffle have different values, return NoMoveFound if this is not the case
  */
 case class ShuffleNeighborhood(vars:Array[CBLSIntVar],
                                indicesToConsider:()=>Iterable[Int] = null,
-                              numberOfShuffledPositions:Int = Int.MaxValue,
-                               name:String = "ShuffleNeighborhood")            //TODO: also add a number of variables to shuffle (if higher than indices, all indices, if smaller, only the number of indices
+                               numberOfShuffledPositions:Int = Int.MaxValue,
+                               name:String = "ShuffleNeighborhood",
+                               checkNoMoveFound:Boolean = true)
   extends Neighborhood with AlgebraTrait with SearchEngineTrait{
 
   override def getMove(obj: Objective, acceptanceCriteria: (Int, Int) => Boolean = null): SearchResult = {
     if(printPerformedSearches) println("applying " + name)
 
-    val (realIndicesToConsider,numberOfIndicesToConsider) = (if(indicesToConsider == null) (vars.indices.toList,vars.length) else { val tmp = indicesToConsider(); (tmp,tmp.size))
+    val (realIndicesToConsider:List[Int],numberOfIndicesToConsider:Int) =
+      (if(indicesToConsider == null) (vars.indices.toList,vars.length)
+      else { val tmp = indicesToConsider(); (tmp.toList,tmp.size)})
 
-    if(numberOfShuffledPositions <= )
-    val values = realIndicesToConsider.map(vars(_).value)
-    //TODO: if all values are identical, return NoMoveFound
-    val (minValue,maxValue) = InvariantHelper.getMinMaxBoundsInt(values)
-    if(minValue == maxValue) return NoMoveFound
+    if(checkNoMoveFound) {
+      val (minValue, maxValue) = InvariantHelper.getMinMaxBoundsInt(realIndicesToConsider.map(vars(_).value))
+      if (minValue == maxValue) return NoMoveFound
+    }
 
+    val subsetOfIndicesToConsider:List[Int] = if(numberOfShuffledPositions >= numberOfIndicesToConsider){
+      realIndicesToConsider
+    }else{
+      //shuffle only a subset; select it randomly
+      Random.shuffle(realIndicesToConsider).takeRight(numberOfIndicesToConsider)
+    }
+
+    //shuffle everything
+    val values = subsetOfIndicesToConsider.map(vars(_).value)
     val newValues = Random.shuffle(values)
-    val moves:List[AssignMove] = realIndicesToConsider.zip(newValues).
+
+    val moves:List[AssignMove] = subsetOfIndicesToConsider.zip(newValues).
       map({case ((indice,newValue)) => AssignMove(vars(indice),newValue,indice,Int.MaxValue)})
 
     if(printPerformedSearches) println(name + ": move found")
