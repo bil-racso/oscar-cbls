@@ -94,7 +94,7 @@ abstract class JumpNeighborhoodParam[T] extends Neighborhood {
 /**
  * @author renaud.delandtsheer@cetic.be
  */
-abstract class Neighborhood {
+abstract class Neighborhood(name:String = null) {
 
   /**
    * collects and returns the statistics that have been requested in the neighborhood.
@@ -119,7 +119,7 @@ abstract class Neighborhood {
 
   def resetStatistics() {}
 
-  override def toString: String = this.getClass.getSimpleName
+  override def toString: String = (if(name == null) this.getClass.getSimpleName else name)
 
   //TODO: ajouter un niveau qui montre les exhausted
   /**

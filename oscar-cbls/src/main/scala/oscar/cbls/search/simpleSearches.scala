@@ -234,7 +234,7 @@ case class RandomizeNeighborhood(vars:Array[CBLSIntVar],
                                  name:String = "RandomizeNeighborhood",
                                  searchZone:() => SortedSet[Int] = null,
                                  valuesToConsider:(CBLSIntVar,Int) => Iterable[Int] = (variable,_) => variable.domain)
-  extends Neighborhood with AlgebraTrait with SearchEngineTrait{
+  extends Neighborhood(name) with AlgebraTrait with SearchEngineTrait{
 
   override def getMove(obj: Objective, acceptanceCriteria: (Int, Int) => Boolean = null): SearchResult = {
     if(printPerformedSearches) println("applying " + name)
@@ -275,7 +275,7 @@ case class RandomSwapNeighborhood(vars:Array[CBLSIntVar],
                                   degree:Int = 1,
                                   name:String = "RandomSwapNeighborhood",
                                   searchZone:() => SortedSet[Int] = null)  //TODO: search zone does not work!
-  extends Neighborhood with AlgebraTrait with SearchEngineTrait{
+  extends Neighborhood(name) with AlgebraTrait with SearchEngineTrait{
 
   override def getMove(obj: Objective, acceptanceCriteria: (Int, Int) => Boolean = null): SearchResult = {
     if(printPerformedSearches) println("applying " + name)
@@ -312,7 +312,7 @@ case class ShuffleNeighborhood(vars:Array[CBLSIntVar],
                                numberOfShuffledPositions:Int = Int.MaxValue,
                                name:String = "ShuffleNeighborhood",
                                checkNoMoveFound:Boolean = true)
-  extends Neighborhood with AlgebraTrait with SearchEngineTrait{
+  extends Neighborhood(name) with AlgebraTrait with SearchEngineTrait{
 
   override def getMove(obj: Objective, acceptanceCriteria: (Int, Int) => Boolean = null): SearchResult = {
     if(printPerformedSearches) println("applying " + name)
@@ -479,3 +479,50 @@ case class RollNeighborhood(vars:Array[CBLSIntVar],
     startIndice = 0
   }
 }
+/*
+/**
+ * This neighborhood will consider shift moves that shift the value of contiguous CBLSIntVar in the given array,
+ * completing the hole with overriden values
+ * @param vars an array of [[oscar.cbls.invariants.core.computation.CBLSIntVar]] defining the search space
+ * @param shiftStarts a subset of the indices of vars to consider for the first indice of the shifted portion of the array
+ *                   If none is provided, all the array will be considered each time
+ * @param shiftEnds the different sizes to consider for the shift
+ * @param shiftDistances given the start and end, returns the distances to consider for shifting.
+ *                       positive means towards the right, negative means towards the left.
+ *                       if unspecified or null, will consider all shifts.
+ **/
+@deprecated("actually, experimental, so use at your own risk","3.0")
+case class ShiftNeighborhood(vars:Array[CBLSIntVar],
+                             name:String = "ShiftNeighborhood",
+                             shiftStarts:()=>Iterable[Int] = null,
+                             shiftEnds:Int=>Iterable[Int] = null,
+                             shiftDistances:(Int,Int)=>Iterable[Int] = null,
+                             best:Boolean = false,
+                             hotRestart:Boolean = true)
+  extends EasyNeighborhood[ShiftMove](best,name) with AlgebraTrait{
+  //the indice to start with for the exploration
+  var startIndice:Int = 0
+  override def exploreNeighborhood(){
+
+
+    val startSearchZone:Iterable[Int] = if (shiftStarts == null) vars.indices else shiftStarts()
+
+    val iterationSchemeOnStartZearchZone =
+      (if (hotRestart && !best)
+        HotRestart(startSearchZone,startIndice)
+      else startSearchZone)
+
+
+    for (firstIndice: Int <- iterationSchemeOnStartZearchZone) {
+
+
+
+  override def instantiateCurrentMove(newObj: Int) =
+    ShiftMove(start,end,vars,newObj,name)
+
+  //this resets the internal state of the Neighborhood
+  override def reset(): Unit = {
+    startIndice = 0
+  }
+}
+*/

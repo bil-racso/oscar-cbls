@@ -476,8 +476,8 @@ abstract class BestNeighborhoodFirst(l:List[Neighborhood],
 
 
 abstract class BestNeighborhoodFirstSlidingWindow(l:List[Neighborhood], windowsSize:Int,
-                                     tabuLength:Int,
-                                     overrideTabuOnFullExhaust:Int, refresh:Int)
+                                                  tabuLength:Int,
+                                                  overrideTabuOnFullExhaust:Int, refresh:Int)
   extends NeighborhoodCombinator(l:_*) {
   require(overrideTabuOnFullExhaust < tabuLength, "overrideTabuOnFullExhaust should be < tabuLength")
 
@@ -1024,7 +1024,8 @@ case class AndThen(a: Neighborhood, b: Neighborhood, maximalIntermediaryDegradat
 
         //now, we need to check the other neighborhood
         b.getMove(obj, secondAcceptanceCriteria) match {
-          case NoMoveFound => Int.MaxValue
+          case NoMoveFound =>
+            Int.MaxValue
           case MoveFound(m: Move) =>
             secondMove = m
             m.objAfter
@@ -1034,7 +1035,10 @@ case class AndThen(a: Neighborhood, b: Neighborhood, maximalIntermediaryDegradat
 
     a.getMove(new InstrumentedObjective(), firstAcceptanceCriterion) match {
       case NoMoveFound => NoMoveFound
-      case MoveFound(m: Move) => CompositeMove(List(m, secondMove), m.objAfter, this.toString)
+      case MoveFound(m: Move) => if(secondMove == null){
+        println("WARNING: " + this + " the neighborhood on the left returned a move without querying the objective value, the move of andThen is therefore not a composite")
+        m
+      }else CompositeMove(List(m, secondMove), m.objAfter, this.toString)
     }
   }
 }
@@ -1103,7 +1107,11 @@ case class DynAndThen[FirstMoveType<:Move](a:Neighborhood with SupportForAndThen
 
     tmp match {
       case NoMoveFound => NoMoveFound
-      case MoveFound(m: Move) => CompositeMove(List(m, secondMove), m.objAfter, this.toString)
+      case MoveFound(m: Move) => if(secondMove == null) {
+        println("WARNING: " + this + " the neighborhood on the left returned a move without querying the objective value, the move of andThen is therefore not a composite")
+        m
+      }else
+        CompositeMove(List(m, secondMove), m.objAfter, this.toString)
     }
   }
 
@@ -1461,7 +1469,7 @@ case class Profile(a:Neighborhood,ignoreInitialObj:Boolean = false) extends Neig
 
   var nbCalls = 0
   var nbFound = 0
-  var totalGain = 0
+  var totalGain:Double = 0
   var totalTimeSpentMoveFound:Long = 0
   var totalTimeSpentNoMoveFound:Long = 0
 

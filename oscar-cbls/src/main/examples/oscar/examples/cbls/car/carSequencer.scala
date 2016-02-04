@@ -16,7 +16,7 @@ import scala.util.Random
  */
 object carSequencer  extends CBLSModel with App {
 
-  val orderedCarsByType:SortedMap[Int,Int] = SortedMap(0 -> 130, 1 -> 60, 2 -> 110 , 3 -> 120, 4 -> 40, 5 -> 30)
+  val orderedCarsByType:SortedMap[Int,Int] = SortedMap(0 -> 90, 1 -> 60, 2 -> 110 , 3 -> 120, 4 -> 40, 5 -> 30)
 
   println("carSequencing")
   println("orderedCarTypes:" + orderedCarsByType)
@@ -41,6 +41,7 @@ object carSequencer  extends CBLSModel with App {
   def prependItems(acc:List[Int],n:Int,item:Int):List[Int] = (if(n == 0) acc else prependItems(item :: acc,n-1,item))
   val orderedCarTypes:List[Int] = orderedCarsByType.foldLeft(List.empty[Int])({case (accList,(carType,nbItems)) => prependItems(accList,nbItems,carType)})
   val nbCars = orderedCarTypes.size
+  val cars = 0 until nbCars
 
   println("totalNumberOfCars:" + nbCars)
 
@@ -75,8 +76,12 @@ object carSequencer  extends CBLSModel with App {
 
   val swap = swapsNeighborhood(carSequence,"swapCars")
 
-  val roll = RollNeighborhood(carSequence, name = "RollCars", maxShiftSize = _ => 10)
-  val mostViolatedSwap = swapsNeighborhood(carSequence,"mostViolatedSwap", searchZone2 = mostViolatedCars, symmetryCanBeBrokenOnIndices = false)
+  val roll = RollNeighborhood(carSequence, name = "rollCars", maxShiftSize = _ => 10)
+
+  val mostViolatedSwap = swapsNeighborhood(carSequence,"mostViolatedSwap", searchZone2 = mostViolatedCars, symmetryCanBeBrokenOnIndices = false,best=true)
+
+  val swapNotMostViolated = swapsNeighborhood(carSequence,"mostViolatedSwap", searchZone1 = () => {val m = mostViolatedCars.value
+    cars.filter(!m.contains(_))})
 
   val linkedDoubleSwaps = DynAndThen(
     swapsNeighborhood(carSequence,"swapCars1"),
@@ -96,13 +101,14 @@ object carSequencer  extends CBLSModel with App {
     })) name "looselyLinkedDoubleSwaps"
 
   val search = Profile(
-    Profile(mostViolatedSwap random swap)
+    Profile(mostViolatedSwap )
+      //orElse Profile(swapNotMostViolated)
       // orElse Profile(looselyLinkedDoubleSwaps)
-      orElse roll
-      orElse (shuffleNeighborhood(carSequence, mostViolatedCars, name = "shuffleMostViolatedCars") maxMoves (10))
-      orElse (shuffleNeighborhood(carSequence, violatedCars, name = "shuffleAllViolatedCars") maxMoves (10))
-      orElse (shuffleNeighborhood(carSequence, name = "globalShuffle") maxMoves (10))
-      maxMoves nbCars *2 withoutImprovementOver obj
+      orElse Profile(roll)
+      orElse (Profile(shuffleNeighborhood(carSequence, mostViolatedCars, name = "shuffleMostViolatedCars")) maxMoves 5)
+      orElse (Profile(shuffleNeighborhood(carSequence, violatedCars, name = "shuffleSomeViolatedCars", numberOfShuffledPositions = violatedCars.value.size/5)) maxMoves 2)
+      orElse (Profile(shuffleNeighborhood(carSequence, name = "partialGlobalShuffle", numberOfShuffledPositions = nbCars/10)) maxMoves 2)
+      orElse (Profile(shuffleNeighborhood(carSequence, name = "globalShuffle")) maxMoves 5)
       saveBestAndRestoreOnExhaust obj)
     //.afterMove({println("most violated positions: " + mostViolatedCars.value + " car types: " + mostViolatedCars.value.toList.map(carSequence(_).value))})
 
