@@ -13,10 +13,10 @@
   * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
   ******************************************************************************/
 /******************************************************************************
- * Contributors:
- *     This code has been initially developed by CETIC www.cetic.be
- *         by Renaud De Landtsheer
- ******************************************************************************/
+  * Contributors:
+  *     This code has been initially developed by CETIC www.cetic.be
+  *         by Renaud De Landtsheer
+  ******************************************************************************/
 
 
 package oscar.cbls.constraints.lib.global
@@ -30,13 +30,13 @@ import scala.collection.immutable.SortedMap
 ;
 
 /**implments the sequence constraint:
- *
- * @param variables the "history variables"
- * @param length the length of the sequence
- * @param Max the max number of elements matching pred in all sequences of the history
- * @param predicate a predicate to say which values belong to the constraint
+  *
+  * @param variables the "history variables"
+  * @param length the length of the sequence
+  * @param Max the max number of elements matching pred in all sequences of the history
+  * @param predicate a predicate to say which values belong to the constraint
   * @author renaud.delandtsheer@cetic.be
- */
+  */
 case class Sequence(variables: Array[IntValue], length:Int, Max:Int, predicate:(Int=>Boolean))
   extends Invariant with Constraint{
 
@@ -59,7 +59,8 @@ case class Sequence(variables: Array[IntValue], length:Int, Max:Int, predicate:(
   var Violations = SortedMap.empty[IntValue, IntValue]
 
   for(i <- 0 to variables.length - 1){
-    Violations = Violations + ((variables(i),Sum(sequencesInvolving(i).map(violated(_)))))
+    val (lb,ub) = sequencesInvolving(i)
+    Violations = Violations + ((variables(i),Sum((lb to ub).map(violated(_)))))
   }
 
   val Violation = CBLSIntVar(model,0, 0 to variables.length * length ,"sequence_violations")
@@ -67,7 +68,8 @@ case class Sequence(variables: Array[IntValue], length:Int, Max:Int, predicate:(
 
   for(i <- variables.indices){
     if(predicate(variables(i).value)){
-      for(j <- sequencesInvolving(i)){
+      val (lb,ub) = sequencesInvolving(i)
+      for(j <- (lb to ub)){
         count(j) += 1
         if(count(j) > Max){
           violated(j) :+=1
@@ -84,10 +86,11 @@ case class Sequence(variables: Array[IntValue], length:Int, Max:Int, predicate:(
     * @param i the position
     * @return
     */
-  private def sequencesInvolving(i:Int):Range = {
+  @inline
+  private def sequencesInvolving(i:Int):(Int,Int) = {
     val lb = 0 max 1+i-length
     val ub = i min variables.length - length
-    lb to ub
+    (lb,ub)
   }
 
   @inline
@@ -95,23 +98,29 @@ case class Sequence(variables: Array[IntValue], length:Int, Max:Int, predicate:(
     if (predicate(OldVal)){
       if(!predicate(NewVal)){
         //decrease the count
-        for(j <- sequencesInvolving(i)){
+        val (lb,ub) = sequencesInvolving(i)
+        var j = lb
+        while(j <= ub){
           count(j) -= 1
           if(count(j) >= Max){
             violated(j) :-=1
             Violation :-= 1
           }
+          j+=1
         }
       }
     }else{
-      if(predicate(variables(i).value)){
+      if(predicate(NewVal)){
         //increase the count
-        for(j <- sequencesInvolving(i)){
+        val (lb,ub) = sequencesInvolving(i)
+        var j = lb
+        while(j <= ub){
           count(j) += 1
           if(count(j) > Max){
             violated(j) :+=1
             Violation :+= 1
           }
+          j+=1
         }
       }
     }
@@ -135,7 +144,8 @@ case class Sequence(variables: Array[IntValue], length:Int, Max:Int, predicate:(
 
     for(i <- variables.indices){
       if(predicate(variables(i).value)){
-        for(j <- sequencesInvolving(i)){
+        val (lb,ub) = sequencesInvolving(i)
+        for(j <- (lb to ub)){
           countCheck(j) += 1
           if(countCheck(j) > Max){
             violatedCheck(j) +=1

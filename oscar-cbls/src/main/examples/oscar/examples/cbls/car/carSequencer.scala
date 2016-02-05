@@ -112,7 +112,7 @@ object carSequencer  extends CBLSModel with App {
       saveBestAndRestoreOnExhaust obj)
     //.afterMove({println("nb violated positions: " + violatedCars.value.size + " car types: " + violatedCars.value.toList.map(carSequence(_).value))})
 
-  search.verbose = 1
+  search.verbose = 0
   search.paddingLength = 150
   search.doAllMoves(_ => c.isTrue,obj)
 
