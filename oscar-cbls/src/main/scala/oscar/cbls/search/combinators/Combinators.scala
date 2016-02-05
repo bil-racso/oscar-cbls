@@ -1162,16 +1162,28 @@ case class SnapShotOnEntry(a: Neighborhood, intValuesToSave:Iterable[ChangingInt
  * the count is reset by the reset action.
  * @author renaud.delandtsheer@cetic.be
  */
-class MaxMovesWithoutImprovement(a: Neighborhood, val cond: Move => Boolean, val maxMovesWithoutImprovement: Int, obj: () => Int) extends NeighborhoodCombinator(a) {
+class MaxMovesWithoutImprovement(a: Neighborhood, val cond: Move => Boolean, val maxMovesWithoutImprovement: Int, obj: () => Int, countBeforeMove:Boolean = false) extends NeighborhoodCombinator(a) {
 
   var stepsSinceLastImprovement = 0
   var bestObj = Int.MaxValue
 
   override def getMove(obj: Objective, acceptanceCriteria: (Int, Int) => Boolean): SearchResult = {
     if (stepsSinceLastImprovement < maxMovesWithoutImprovement) {
-      a.getMove(obj, acceptanceCriteria) match {
-        case m: MoveFound => InstrumentedMove(m.m, afterMove = () => notifyMoveTaken(m.m))
-        case x => x
+      if (countBeforeMove) {
+        val startObj = obj()
+        if (startObj < bestObj) {
+          bestObj = startObj
+          stepsSinceLastImprovement = 1
+        } else {
+          stepsSinceLastImprovement += 1
+        }
+        a.getMove(obj, acceptanceCriteria)
+      }else{
+        //count after move
+        a.getMove(obj, acceptanceCriteria) match {
+          case m: MoveFound => InstrumentedMove(m.m, afterMove = () => notifyMoveTaken(m.m))
+          case x => x
+        }
       }
     } else {
       if (verbose >= 1) println("MaxStepsWithoutImprovement: reached " + maxMovesWithoutImprovement + " moves without improvement")
@@ -1182,6 +1194,7 @@ class MaxMovesWithoutImprovement(a: Neighborhood, val cond: Move => Boolean, val
   //this resets the internal state of the move combinators
   override def reset() {
     stepsSinceLastImprovement = 0
+    bestObj = Int.MaxValue
     super.reset()
   }
 
@@ -1196,6 +1209,8 @@ class MaxMovesWithoutImprovement(a: Neighborhood, val cond: Move => Boolean, val
       }
     }
   }
+
+  def improvementBeignMeasuredBeforeNeighborhoodExploration = new MaxMovesWithoutImprovement(a, null, maxMovesWithoutImprovement, obj, true)
 }
 
 /**

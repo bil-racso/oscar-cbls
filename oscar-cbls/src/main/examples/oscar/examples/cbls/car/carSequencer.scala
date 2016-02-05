@@ -10,7 +10,7 @@ import oscar.cbls.search.move.SwapMove
 import scala.collection.SortedSet
 import scala.collection.immutable.SortedMap
 import scala.util.Random
-
+import scala.language.postfixOps
 /**
  * Created by rdl on 29-01-16.
  */
@@ -105,12 +105,12 @@ object carSequencer  extends CBLSModel with App {
       //orElse Profile(swapNotMostViolated)
       // orElse Profile(looselyLinkedDoubleSwaps)
       orElse Profile(roll)
-      orElse (Profile(shuffleNeighborhood(carSequence, mostViolatedCars, name = "shuffleMostViolatedCars")) maxMoves 5)
-      orElse (Profile(shuffleNeighborhood(carSequence, violatedCars, name = "shuffleSomeViolatedCars", numberOfShuffledPositions = violatedCars.value.size/5)) maxMoves 2)
-      orElse (Profile(shuffleNeighborhood(carSequence, name = "partialGlobalShuffle", numberOfShuffledPositions = nbCars/10)) maxMoves 2)
+      orElse (Profile(shuffleNeighborhood(carSequence, mostViolatedCars, name = "shuffleMostViolatedCars")) maxMoves 5 withoutImprovementOver obj improvementBeignMeasuredBeforeNeighborhoodExploration)
+      orElse (Profile(shuffleNeighborhood(carSequence, violatedCars, name = "shuffleSomeViolatedCars", numberOfShuffledPositions = mostViolatedCars.value.size)) maxMoves 2)
+      orElse (Profile(shuffleNeighborhood(carSequence, name = "partialGlobalShuffle", numberOfShuffledPositions = nbCars/5)) maxMoves 2)
       orElse (Profile(shuffleNeighborhood(carSequence, name = "globalShuffle")) maxMoves 5)
       saveBestAndRestoreOnExhaust obj)
-    //.afterMove({println("most violated positions: " + mostViolatedCars.value + " car types: " + mostViolatedCars.value.toList.map(carSequence(_).value))})
+    //.afterMove({println("nb violated positions: " + violatedCars.value.size + " car types: " + violatedCars.value.toList.map(carSequence(_).value))})
 
   search.verbose = 1
   search.paddingLength = 150
