@@ -143,13 +143,19 @@ case class RollMove(l:List[CBLSIntVar],offset:Int, override val objAfter:Int, ov
   * @param objAfter the objective after this assignation will be performed
   * @param neighborhoodName the name of the neighborhood that generated this move, used for pretty printing purpose.
   *                         Notice that the name is not the type of the neighborhood.
-  */
-case class ShiftMove(l:List[CBLSIntVar],startIndice:Int,length:Int,offset:Int, override val objAfter:Int, override val neighborhoodName:String = null)
+  * @author fabian.germeau@student.vinci.be
+  * */
+case class ShiftMove(startIndice:Int,length:Int,offset:Int,variables:Array[CBLSIntVar], override val objAfter:Int, override val neighborhoodName:String = null)
   extends Move(objAfter,neighborhoodName){
+
+  override def toString: String = {
+    neighborhoodNameToString + "ShiftMove(startIndice:" + startIndice + "; length:" + length + "; offset:" + offset + objToString + ")"
+  }
+
+
   /** to actually take the move */
   override def commit() {
-    val variables = l.toArray
-    val initialValues: Array[Int] = l.toArray.map(_.value)
+    val initialValues: Array[Int] = Array.tabulate(variables.length)(variables(_).value)
     for (i <- startIndice to startIndice + offset + length - 1) {
       if (i < startIndice + offset) {
         variables(i) := initialValues(i + length)

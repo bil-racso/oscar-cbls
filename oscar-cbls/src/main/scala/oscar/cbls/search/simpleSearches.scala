@@ -234,7 +234,7 @@ case class RandomizeNeighborhood(vars:Array[CBLSIntVar],
                                  name:String = "RandomizeNeighborhood",
                                  searchZone:() => SortedSet[Int] = null,
                                  valuesToConsider:(CBLSIntVar,Int) => Iterable[Int] = (variable,_) => variable.domain)
-  extends Neighborhood with AlgebraTrait with SearchEngineTrait{
+  extends Neighborhood(name) with AlgebraTrait with SearchEngineTrait{
 
   override def getMove(obj: Objective, acceptanceCriteria: (Int, Int) => Boolean = null): SearchResult = {
     if(printPerformedSearches) println("applying " + name)
@@ -275,7 +275,7 @@ case class RandomSwapNeighborhood(vars:Array[CBLSIntVar],
                                   degree:Int = 1,
                                   name:String = "RandomSwapNeighborhood",
                                   searchZone:() => SortedSet[Int] = null)  //TODO: search zone does not work!
-  extends Neighborhood with AlgebraTrait with SearchEngineTrait{
+  extends Neighborhood(name) with AlgebraTrait with SearchEngineTrait{
 
   override def getMove(obj: Objective, acceptanceCriteria: (Int, Int) => Boolean = null): SearchResult = {
     if(printPerformedSearches) println("applying " + name)
@@ -312,7 +312,7 @@ case class ShuffleNeighborhood(vars:Array[CBLSIntVar],
                                numberOfShuffledPositions:Int = Int.MaxValue,
                                name:String = "ShuffleNeighborhood",
                                checkNoMoveFound:Boolean = true)
-  extends Neighborhood with AlgebraTrait with SearchEngineTrait{
+  extends Neighborhood(name) with AlgebraTrait with SearchEngineTrait{
 
   override def getMove(obj: Objective, acceptanceCriteria: (Int, Int) => Boolean = null): SearchResult = {
     if(printPerformedSearches) println("applying " + name)
@@ -573,7 +573,7 @@ case class ShiftNeighborhood(vars:Array[CBLSIntVar],
     }
   }
 
-  override def instantiateCurrentMove(newObj: Int) = ShiftMove(vars.toList,currentStart,currentShiftSize,currentShiftOffset,newObj,name)
+  override def instantiateCurrentMove(newObj: Int) = ShiftMove(currentStart,currentShiftSize,currentShiftOffset,vars,newObj,name)
 
   override def reset(): Unit = {
     startIndice = 0

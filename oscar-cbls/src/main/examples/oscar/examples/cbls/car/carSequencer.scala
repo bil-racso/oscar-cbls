@@ -10,7 +10,7 @@ import oscar.cbls.search.move.SwapMove
 import scala.collection.SortedSet
 import scala.collection.immutable.SortedMap
 import scala.util.Random
-
+import scala.language.postfixOps
 /**
  * Created by rdl on 29-01-16.
  */
@@ -97,23 +97,29 @@ object carSequencer  extends CBLSModel with App {
       swapsNeighborhood(carSequence, "swapCars2", searchZone1 = () => firstSwappedCar, searchZone2 = () => otherSwappedCar, symmetryCanBeBrokenOnIndices = false)
     })) name "looselyLinkedDoubleSwaps"
 
+  val search2 = (
+    Profile(mostViolatedSwap)
+      orElse (Profile(shuffleNeighborhood(carSequence, mostViolatedCars, name = "shuffleMostViolatedCars")) maxMoves 5 withoutImprovementOver obj improvementBeignMeasuredBeforeNeighborhoodExploration)
+      orElse (shuffleNeighborhood(carSequence, violatedCars, name = "shuffleAllViolatedCars") maxMoves (10))
+      saveBestAndRestoreOnExhaust obj
+      exhaust Profile(shiftNeighbor)
+    )
+
   val search = Profile(
     Profile(mostViolatedSwap random swap)
-      // orElse Profile(looselyLinkedDoubleSwaps)
-      //orElse roll
       orElse (Profile(shiftNeighbor))
       orElse (shuffleNeighborhood(carSequence, mostViolatedCars, name = "shuffleMostViolatedCars") maxMoves (10))
       orElse (shuffleNeighborhood(carSequence, violatedCars, name = "shuffleAllViolatedCars") maxMoves (10))
       orElse (shuffleNeighborhood(carSequence, name = "globalShuffle") maxMoves (10))
       maxMoves nbCars *2 withoutImprovementOver obj
       saveBestAndRestoreOnExhaust obj)
-    //.afterMove({println("most violated positions: " + mostViolatedCars.value + " car types: " + mostViolatedCars.value.toList.map(carSequence(_).value))})
+  //.afterMove({println("most violated positions: " + mostViolatedCars.value + " car types: " + mostViolatedCars.value.toList.map(carSequence(_).value))})
 
-  search.verbose = 1
-  search.paddingLength = 150
-  search.doAllMoves(_ => c.isTrue,obj)
+  search2.verbose = 1
+  search2.paddingLength = 150
+  search2.doAllMoves(_ => c.isTrue,obj)
 
-  println(search.profilingStatistics)
+  println(search2.profilingStatistics)
   println(c.violation)
   println("car sequence:" + carSequence.map(_.value).mkString(","))
 
