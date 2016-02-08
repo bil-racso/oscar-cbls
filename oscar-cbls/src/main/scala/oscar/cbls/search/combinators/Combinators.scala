@@ -1168,26 +1168,40 @@ class MaxMovesWithoutImprovement(a: Neighborhood, val cond: Move => Boolean, val
   var bestObj = Int.MaxValue
 
   override def getMove(obj: Objective, acceptanceCriteria: (Int, Int) => Boolean): SearchResult = {
-    if (stepsSinceLastImprovement < maxMovesWithoutImprovement) {
-      if (countBeforeMove) {
-        val startObj = obj()
-        if (startObj < bestObj) {
-          bestObj = startObj
-          stepsSinceLastImprovement = 1
-        } else {
-          stepsSinceLastImprovement += 1
+    if(countBeforeMove) {
+      val startObj = obj()
+      if (startObj < bestObj) {
+        bestObj = startObj
+        stepsSinceLastImprovement = 0
+      } else {
+        stepsSinceLastImprovement += 1
+      }
+
+      if (stepsSinceLastImprovement < maxMovesWithoutImprovement) {
+        //We can go on
+        a.getMove(obj, acceptanceCriteria) match {
+          case m: MoveFound => m
+          case NoMoveFound =>
+            stepsSinceLastImprovement = 0
+            NoMoveFound
         }
+
         a.getMove(obj, acceptanceCriteria)
-      }else{
-        //count after move
+      } else {
+        if (verbose >= 1) println("MaxStepsWithoutImprovement: reached " + maxMovesWithoutImprovement + " moves without improvement of " + a)
+        NoMoveFound
+      }
+    } else{ //count after move
+      if (stepsSinceLastImprovement < maxMovesWithoutImprovement) {
+        //we can go on
         a.getMove(obj, acceptanceCriteria) match {
           case m: MoveFound => InstrumentedMove(m.m, afterMove = () => notifyMoveTaken(m.m))
           case x => x
         }
+      } else{
+        if (verbose >= 1) println("MaxStepsWithoutImprovement: reached " + maxMovesWithoutImprovement + " moves without improvement of " + a)
+        NoMoveFound
       }
-    } else {
-      if (verbose >= 1) println("MaxStepsWithoutImprovement: reached " + maxMovesWithoutImprovement + " moves without improvement")
-      NoMoveFound
     }
   }
 
@@ -1556,7 +1570,8 @@ case class Profile(a:Neighborhood,ignoreInitialObj:Boolean = false) extends Neig
   private def padToLength(s: String, l: Int) = (s + nStrings(l, " ")).substring(0, l)
   private def nStrings(n: Int, s: String): String = if (n <= 0) "" else s + nStrings(n - 1, s)
 
-  override def toString: String = "Statistics(" + a + " nbCalls:" + nbCalls + " nbFound:" + nbFound + " totalGain:" + totalGain + " totalTimeSpent " + totalTimeSpent + " ms timeSpendWithMove:" + totalTimeSpentMoveFound + " ms totalTimeSpentNoMoveFound " + totalTimeSpentNoMoveFound + " ms)"
+//  override def toString: String = "Statistics(" + a + " nbCalls:" + nbCalls + " nbFound:" + nbFound + " totalGain:" + totalGain + " totalTimeSpent " + totalTimeSpent + " ms timeSpendWithMove:" + totalTimeSpentMoveFound + " ms totalTimeSpentNoMoveFound " + totalTimeSpentNoMoveFound + " ms)"
+  override def toString: String = "Profile(" + a + ")"
 
   def slopeOrZero:Int = if(totalTimeSpent == 0) 0 else ((100 * totalGain) / totalTimeSpent).toInt
 

@@ -100,10 +100,11 @@ object carSequencer  extends CBLSModel with App {
   val search2 = (
     Profile(mostViolatedSwap)
       orElse (Profile(shuffleNeighborhood(carSequence, mostViolatedCars, name = "shuffleMostViolatedCars")) maxMoves 5 withoutImprovementOver obj improvementBeignMeasuredBeforeNeighborhoodExploration)
-      orElse (shuffleNeighborhood(carSequence, violatedCars, name = "shuffleAllViolatedCars") maxMoves (10))
+      saveBestAndRestoreOnExhaust obj
+      orElse (shuffleNeighborhood(carSequence, violatedCars, name = "shuffleSomeViolatedCars", numberOfShuffledPositions = () => violatedCars.value.size/2) maxMoves (2) withoutImprovementOver obj improvementBeignMeasuredBeforeNeighborhoodExploration)
       saveBestAndRestoreOnExhaust obj
       exhaust Profile(shiftNeighbor)
-    )
+    ) afterMove(checkGrouped)
 
   val search = Profile(
     Profile(mostViolatedSwap random swap)
@@ -124,4 +125,11 @@ object carSequencer  extends CBLSModel with App {
   println("car sequence:" + carSequence.map(_.value).mkString(","))
 
   println("grouped:" + carSequence.map(_.value).toList.groupBy[Int]((c:Int) => c).mapValues((l:List[Int]) => l.size))
+
+  def checkGrouped(): Unit ={
+    val groupedValuesInSlution = carSequence.map(_.value).toList.groupBy[Int]((c:Int) => c).mapValues((l:List[Int]) => l.size)
+    for((carType,count) <- groupedValuesInSlution){
+      require(orderedCarsByType(carType) == count)
+    }
+  }
 }

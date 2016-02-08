@@ -171,6 +171,7 @@ abstract class Neighborhood(name:String = null) {
    * @return the number of moves performed
    */
   def doAllMoves(shouldStop: Int => Boolean = _ => false, obj: Objective, acceptanceCriterion: (Int, Int) => Boolean = (oldObj, newObj) => oldObj > newObj): Int = {
+    val startSearchNanotime = System.nanoTime()
     var bestObj = Int.MaxValue
     var prevObj = Int.MaxValue
     var toReturn = 0
@@ -179,7 +180,7 @@ abstract class Neighborhood(name:String = null) {
     while (!shouldStop(moveCount)) {
       getMove(enrichedObj, acceptanceCriterion) match {
         case NoMoveFound =>
-          if (printTakenMoves) println("no more move found after " + toReturn + " it")
+          if (printTakenMoves) println("no more move found after " + toReturn + " it, " + ((System.nanoTime() - startSearchNanotime)/1000000).toInt + " ms ")
           return toReturn;
         case m: MoveFound =>
           if (printTakenMoves) {
@@ -217,7 +218,9 @@ abstract class Neighborhood(name:String = null) {
       toReturn += 1
       moveCount += 1
     }
-    if (printTakenMoves) println("stop criteria of doAllMove met after " + moveCount + " moves (not the one of the neighborhood)")
+    if (printTakenMoves) {
+      println("stop criteria of doAllMove met after " + moveCount + " moves, " + ((System.nanoTime() - startSearchNanotime)/1000000).toInt + " ms (not the one of the neighborhood)")
+    }
     toReturn
   }
 

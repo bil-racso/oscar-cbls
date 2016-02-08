@@ -309,7 +309,7 @@ case class RandomSwapNeighborhood(vars:Array[CBLSIntVar],
  */
 case class ShuffleNeighborhood(vars:Array[CBLSIntVar],
                                indicesToConsider:()=>Iterable[Int] = null,
-                               numberOfShuffledPositions:Int = Int.MaxValue,
+                               numberOfShuffledPositions:() => Int = () => Int.MaxValue,
                                name:String = "ShuffleNeighborhood",
                                checkNoMoveFound:Boolean = true)
   extends Neighborhood(name) with AlgebraTrait with SearchEngineTrait{
@@ -326,11 +326,12 @@ case class ShuffleNeighborhood(vars:Array[CBLSIntVar],
       if (minValue == maxValue) return NoMoveFound
     }
 
-    val subsetOfIndicesToConsider:List[Int] = if(numberOfShuffledPositions >= numberOfIndicesToConsider){
+    val numberOfShuffledPositionsThisTime = numberOfShuffledPositions()
+    val subsetOfIndicesToConsider:List[Int] = if(numberOfShuffledPositionsThisTime >= numberOfIndicesToConsider){
       realIndicesToConsider
     }else{
       //shuffle only a subset; select it randomly
-      Random.shuffle(realIndicesToConsider).takeRight(numberOfIndicesToConsider)
+      Random.shuffle(realIndicesToConsider).takeRight(numberOfShuffledPositionsThisTime)
     }
 
     //shuffle everything

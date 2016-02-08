@@ -138,7 +138,7 @@ trait Search {
    */
   def shuffleNeighborhood(vars:Array[CBLSIntVar],
                           indicesToConsider:()=>Iterable[Int] = null,
-                          numberOfShuffledPositions:Int = Int.MaxValue,
+                          numberOfShuffledPositions:() => Int = () => Int.MaxValue,
                           name:String = "ShuffleNeighborhood",
                           checkNoMoveFound:Boolean = true) =
     ShuffleNeighborhood(vars, indicesToConsider, numberOfShuffledPositions, name, checkNoMoveFound)
