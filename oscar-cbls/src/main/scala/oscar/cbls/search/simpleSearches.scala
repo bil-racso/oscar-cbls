@@ -539,7 +539,7 @@ case class ShiftNeighborhood(vars:Array[CBLSIntVar],
         currentShiftSize = currentEnd-currentStart
         currentShiftOffset = 1
         while (currentShiftOffset < vars.length - currentEnd) {
-          val newObj = obj.doShiftNeighborhood(vars.toList,currentStart,currentShiftSize,currentShiftOffset)
+          val newObj = doShiftNeighborhood(vars.toList,currentStart,currentShiftSize,currentShiftOffset)
           if(evaluateCurrentMoveObjTrueIfStopRequired(newObj)){
             startIndice = (currentStart + 1)%vars.length
             return
@@ -547,6 +547,29 @@ case class ShiftNeighborhood(vars:Array[CBLSIntVar],
           currentShiftOffset += 1
         }
       }
+    }
+
+
+
+    /**returns the value of the objective variable if the block of value specified
+      * by startIndice and length is moved by offset positions to the right
+      * this process is efficiently performed as the objective Variable is registered for partial propagation
+      * @see registerForPartialPropagation() in [[oscar.cbls.invariants.core.computation.Store]]
+      */
+    def doShiftNeighborhood(l:List[CBLSIntVar],startIndice:Int,length:Int,offset:Int): Int ={
+      val variables = l.toArray
+      val initialValues: Array[Int] = l.toArray.map(_.value)
+      for (i <- startIndice to startIndice + offset + length - 1) {
+        if (i < startIndice + offset) {
+          variables(i) := initialValues(i + length)
+        }
+        else {
+          variables(i) := initialValues(i - offset)
+        }
+      }
+      val newVal = obj.value
+      for(i <- variables)i:=initialValues(variables.indexOf(i))
+      newVal
     }
   }
 
