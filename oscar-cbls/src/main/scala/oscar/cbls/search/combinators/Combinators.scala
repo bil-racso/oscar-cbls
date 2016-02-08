@@ -476,8 +476,8 @@ abstract class BestNeighborhoodFirst(l:List[Neighborhood],
 
 
 abstract class BestNeighborhoodFirstSlidingWindow(l:List[Neighborhood], windowsSize:Int,
-                                     tabuLength:Int,
-                                     overrideTabuOnFullExhaust:Int, refresh:Int)
+                                                  tabuLength:Int,
+                                                  overrideTabuOnFullExhaust:Int, refresh:Int)
   extends NeighborhoodCombinator(l:_*) {
   require(overrideTabuOnFullExhaust < tabuLength, "overrideTabuOnFullExhaust should be < tabuLength")
 
@@ -1024,7 +1024,8 @@ case class AndThen(a: Neighborhood, b: Neighborhood, maximalIntermediaryDegradat
 
         //now, we need to check the other neighborhood
         b.getMove(obj, secondAcceptanceCriteria) match {
-          case NoMoveFound => Int.MaxValue
+          case NoMoveFound =>
+            Int.MaxValue
           case MoveFound(m: Move) =>
             secondMove = m
             m.objAfter
@@ -1034,7 +1035,10 @@ case class AndThen(a: Neighborhood, b: Neighborhood, maximalIntermediaryDegradat
 
     a.getMove(new InstrumentedObjective(), firstAcceptanceCriterion) match {
       case NoMoveFound => NoMoveFound
-      case MoveFound(m: Move) => CompositeMove(List(m, secondMove), m.objAfter, this.toString)
+      case MoveFound(m: Move) => if(secondMove == null){
+        println("WARNING: " + this + " the neighborhood on the left returned a move without querying the objective value, the move of andThen is therefore not a composite")
+        m
+      }else CompositeMove(List(m, secondMove), m.objAfter, this.toString)
     }
   }
 }
@@ -1103,7 +1107,11 @@ case class DynAndThen[FirstMoveType<:Move](a:Neighborhood with SupportForAndThen
 
     tmp match {
       case NoMoveFound => NoMoveFound
-      case MoveFound(m: Move) => CompositeMove(List(m, secondMove), m.objAfter, this.toString)
+      case MoveFound(m: Move) => if(secondMove == null) {
+        println("WARNING: " + this + " the neighborhood on the left returned a move without querying the objective value, the move of andThen is therefore not a composite")
+        m
+      }else
+        CompositeMove(List(m, secondMove), m.objAfter, this.toString)
     }
   }
 
@@ -1154,16 +1162,28 @@ case class SnapShotOnEntry(a: Neighborhood, intValuesToSave:Iterable[ChangingInt
  * the count is reset by the reset action.
  * @author renaud.delandtsheer@cetic.be
  */
-class MaxMovesWithoutImprovement(a: Neighborhood, val cond: Move => Boolean, val maxMovesWithoutImprovement: Int, obj: () => Int) extends NeighborhoodCombinator(a) {
+class MaxMovesWithoutImprovement(a: Neighborhood, val cond: Move => Boolean, val maxMovesWithoutImprovement: Int, obj: () => Int, countBeforeMove:Boolean = false) extends NeighborhoodCombinator(a) {
 
   var stepsSinceLastImprovement = 0
   var bestObj = Int.MaxValue
 
   override def getMove(obj: Objective, acceptanceCriteria: (Int, Int) => Boolean): SearchResult = {
     if (stepsSinceLastImprovement < maxMovesWithoutImprovement) {
-      a.getMove(obj, acceptanceCriteria) match {
-        case m: MoveFound => InstrumentedMove(m.m, afterMove = () => notifyMoveTaken(m.m))
-        case x => x
+      if (countBeforeMove) {
+        val startObj = obj()
+        if (startObj < bestObj) {
+          bestObj = startObj
+          stepsSinceLastImprovement = 1
+        } else {
+          stepsSinceLastImprovement += 1
+        }
+        a.getMove(obj, acceptanceCriteria)
+      }else{
+        //count after move
+        a.getMove(obj, acceptanceCriteria) match {
+          case m: MoveFound => InstrumentedMove(m.m, afterMove = () => notifyMoveTaken(m.m))
+          case x => x
+        }
       }
     } else {
       if (verbose >= 1) println("MaxStepsWithoutImprovement: reached " + maxMovesWithoutImprovement + " moves without improvement")
@@ -1174,6 +1194,7 @@ class MaxMovesWithoutImprovement(a: Neighborhood, val cond: Move => Boolean, val
   //this resets the internal state of the move combinators
   override def reset() {
     stepsSinceLastImprovement = 0
+    bestObj = Int.MaxValue
     super.reset()
   }
 
@@ -1188,6 +1209,8 @@ class MaxMovesWithoutImprovement(a: Neighborhood, val cond: Move => Boolean, val
       }
     }
   }
+
+  def improvementBeignMeasuredBeforeNeighborhoodExploration = new MaxMovesWithoutImprovement(a, null, maxMovesWithoutImprovement, obj, true)
 }
 
 /**
@@ -1461,7 +1484,7 @@ case class Profile(a:Neighborhood,ignoreInitialObj:Boolean = false) extends Neig
 
   var nbCalls = 0
   var nbFound = 0
-  var totalGain = 0
+  var totalGain:Double = 0
   var totalTimeSpentMoveFound:Long = 0
   var totalTimeSpentNoMoveFound:Long = 0
 
