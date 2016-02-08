@@ -24,6 +24,7 @@ package oscar.cbls.constraints.lib.global
 import oscar.cbls.constraints.core.Constraint
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.core.propagation.Checker
+import oscar.cbls.invariants.lib.logic.LazyIntInt2Int
 import oscar.cbls.invariants.lib.numeric.Sum
 
 import scala.collection.immutable.SortedMap
@@ -35,12 +36,15 @@ import scala.collection.immutable.SortedMap
   * @param length the length of the sequence
   * @param Max the max number of elements matching pred in all sequences of the history
   * @param predicate a predicate to say which values belong to the constraint
+  * @param predicateIsToBeConsideredInVarViolation if false, the violation of a variable is the summed violation of all sequences it is involved in, if true,
+  *                                                the violation is dependent on whether the variable enforces the predicate; if it enforces it,
+  *                                                it is the other definition, if it does not, it is zero
   * @author renaud.delandtsheer@cetic.be
   */
-case class Sequence(variables: Array[IntValue], length:Int, Max:Int, predicate:(Int=>Boolean))
+case class Sequence(variables: Array[IntValue], length:Int, Max:Int, predicate:(Int=>Boolean), predicateIsToBeConsideredInVarViolation:Boolean = false)
   extends Invariant with Constraint{
 
-  assert(Max <= length, "Sequence: Max > length")
+  assert(Max <= length, "the specified maximum is bigger than the ength of the sequences to consider")
 
   registerStaticAndDynamicDependencyArrayIndex(variables)
   registerConstrainedVariables(variables)
@@ -60,7 +64,15 @@ case class Sequence(variables: Array[IntValue], length:Int, Max:Int, predicate:(
 
   for(i <- 0 to variables.length - 1){
     val (lb,ub) = sequencesInvolving(i)
-    Violations = Violations + ((variables(i),Sum((lb to ub).map(violated(_)))))
+    val summedViolationOfSequencesVarIIsInvolvedIn = Sum((lb to ub).map(violated(_)))
+    val violationOfVariableI = if(predicateIsToBeConsideredInVarViolation){
+      new LazyIntInt2Int(summedViolationOfSequencesVarIIsInvolvedIn,
+        variables(i),
+        (summedViol,varValue) => if (predicate(varValue)) summedViol else 0, summedViolationOfSequencesVarIIsInvolvedIn.domain)
+    }else{
+      summedViolationOfSequencesVarIIsInvolvedIn
+    }
+    Violations = Violations + ((variables(i),violationOfVariableI))
   }
 
   val Violation = CBLSIntVar(model,0, 0 to variables.length * length ,"sequence_violations")
@@ -158,6 +170,5 @@ case class Sequence(variables: Array[IntValue], length:Int, Max:Int, predicate:(
     for(s <- sequences)c.check(countCheck(s) == count(s),Some("countCheck(s) == count(s)"))
     for(s <- sequences)c.check(violatedCheck(s) == violated(s).value,Some("violatedCheck(s) == violated(s).value"))
     c.check(violationCheck == violation.value)
-
   }
 }

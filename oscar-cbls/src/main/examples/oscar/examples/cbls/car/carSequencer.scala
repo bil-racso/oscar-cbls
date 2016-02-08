@@ -49,17 +49,18 @@ object carSequencer  extends CBLSModel with App {
   val orderedCarTypesIterator = Random.shuffle(orderedCarTypes).toIterator
   val carSequence:Array[CBLSIntVar] = Array.tabulate(nbCars)(p => CBLSIntVar(orderedCarTypesIterator.next(),typeRange,"carClassAtPosition" + p)).toArray
 
+  val precise = false
   //airConditionner: max 2 out of 3
-  c.post(sequence(carSequence,3,2,airCoCarTypes.contains))
+  c.post(sequence(carSequence,3,2,airCoCarTypes.contains,precise))
 
   //automaticGearBox: max 3 out of 5
-  c.post(sequence(carSequence,5,3,automaticGearBoxCarTypes.contains))
+  c.post(sequence(carSequence,5,3,automaticGearBoxCarTypes.contains,precise))
 
   //diesel: max 3 out of 5
-  c.post(sequence(carSequence,5,3,dieselCarTypes.contains))
+  c.post(sequence(carSequence,5,3,dieselCarTypes.contains,precise))
 
   //esp: max 2 ouf of 3
-  c.post(sequence(carSequence,3,2,espCarTypes.contains))
+  c.post(sequence(carSequence,3,2,espCarTypes.contains,precise))
 
   val impactZone = 5
 
@@ -76,7 +77,7 @@ object carSequencer  extends CBLSModel with App {
 
   val swap = swapsNeighborhood(carSequence,"swapCars")
 
-  val roll = RollNeighborhood(carSequence, name = "rollCars", maxShiftSize = _ => 10)
+  val roll = RollNeighborhood(carSequence, name = "rollCars", maxShiftSize = _ => 20)
 
   val mostViolatedSwap = swapsNeighborhood(carSequence,"mostViolatedSwap", searchZone2 = mostViolatedCars, symmetryCanBeBrokenOnIndices = false,best=true)
 
@@ -112,7 +113,7 @@ object carSequencer  extends CBLSModel with App {
       saveBestAndRestoreOnExhaust obj)
     //.afterMove({println("nb violated positions: " + violatedCars.value.size + " car types: " + violatedCars.value.toList.map(carSequence(_).value))})
 
-  search.verbose = 0
+  search.verbose = 1
   search.paddingLength = 150
   search.doAllMoves(_ => c.isTrue,obj)
 
