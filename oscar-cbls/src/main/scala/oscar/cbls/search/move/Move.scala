@@ -134,6 +134,33 @@ case class RollMove(l:List[CBLSIntVar],offset:Int, override val objAfter:Int, ov
   }
 }
 
+/** standard move that switch a block of value to the right
+  *
+  * @param l the variable
+  * @param startIndice the indice of the item beginning the block to switch
+  * @param length the length of the block to switch
+  * @param offset the size off the movement that has to be performed to the right
+  * @param objAfter the objective after this assignation will be performed
+  * @param neighborhoodName the name of the neighborhood that generated this move, used for pretty printing purpose.
+  *                         Notice that the name is not the type of the neighborhood.
+  */
+case class ShiftMove(l:List[CBLSIntVar],startIndice:Int,length:Int,offset:Int, override val objAfter:Int, override val neighborhoodName:String = null)
+  extends Move(objAfter,neighborhoodName){
+  /** to actually take the move */
+  override def commit() {
+    val variables = l.toArray
+    val initialValues: Array[Int] = l.toArray.map(_.value)
+    for (i <- startIndice to startIndice + offset + length - 1) {
+      if (i < startIndice + offset) {
+        variables(i) := initialValues(i + length)
+      }
+      else {
+        variables(i) := initialValues(i - offset)
+      }
+    }
+  }
+}
+
 
 /** standard move that swaps the value of two CBLSIntVar
   *

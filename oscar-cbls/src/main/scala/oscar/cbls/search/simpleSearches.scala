@@ -479,3 +479,80 @@ case class RollNeighborhood(vars:Array[CBLSIntVar],
     startIndice = 0
   }
 }
+
+/**
+  * will shift a block of value to the right(doing it also to the left is redundant)
+  *
+  * @param vars an array of [[oscar.cbls.invariants.core.computation.CBLSIntVar]] defining the search space
+  * @param searchZone a subset of the indices of vars to consider in order to determine the block's extremities
+  *                   if none provided, all the array will be considered each time
+  * @param startShiftIndice the indice of the value that will start the shift block
+  *                         if no startShiftIndice value is given, the neighborhood will consider every possible value in the given array
+  * @param endShiftIndice the indice of the value that will end the shift bloc (similar to the previous setting)
+  * @param maxShiftSize the max size of the shift, given the first indice considered in the shift
+  * @param maxOffsetSize the max size of the offset
+  * @param best if true, the neighborhood will try to find the best solution possible
+  *             (not very usefull because browsing all the possibilities can be very long)
+  * @param name the name of the neighborhood
+  * @param hotRestart  if true, the exploration order in case you ar not going for the best
+  *                    is a hotRestart for the first swapped variable
+  *                    even if you specify a searchZone that is: the exploration starts again
+  *                    at the position where it stopped, and consider the indices in increasing order
+  *                    if false, consider the exploration range in natural order from the first position.
+  * @author fabian.germeau@student.vinci.be
+  **/
+case class ShiftNeighborhood(vars:Array[CBLSIntVar],
+                             name:String = "ShiftNeighborhood",
+                             searchZone:()=>Iterable[Int] = null,
+                             startShiftIndice:Int = -1,
+                             endShiftIndice:Int = -1,
+                             maxShiftSize:Int = Int.MaxValue,
+                             maxOffsetSize:Int = Int.MaxValue,
+                             best:Boolean = false,
+                             hotRestart: Boolean = true)
+  extends EasyNeighborhood[ShiftMove](best,name) with AlgebraTrait{
+  /**
+    * This is the method you must implement and that performs the search of your neighborhood.
+    * every time you explore a neighbor, you must perform the calls to notifyMoveExplored or moveRequested(newObj) && submitFoundMove(myMove)){
+    * as explained in the documentation of this class
+    */
+  var startIndice:Int = 0
+  var currentShiftOffset:Int = 0
+  var currentShiftSize:Int = 1
+  var currentDirection:Int = 1
+  var currentStart:Int = 0
+  override def exploreNeighborhood(){
+    val searchZoneObject = if(searchZone == null)null else searchZone()
+    val currentSearchZone = if(searchZone == null)vars.indices else searchZoneObject
+
+
+    val firstIndices =
+      if(hotRestart && !best)HotRestart(currentSearchZone, startIndice)
+      else if(startShiftIndice != -1)List(startShiftIndice)
+      else currentSearchZone
+
+    //We first determine the border of the shift block and then we determine the movement to perform
+    for(firstIndice: Int <- firstIndices){
+      currentStart = firstIndice
+      for(secondIndice: Int <- currentSearchZone){
+        val currentEnd = secondIndice
+        currentShiftSize = currentEnd-currentStart
+        currentShiftOffset = 1
+        while (currentShiftOffset < vars.length - currentEnd) {
+          val newObj = obj.doShiftNeighborhood(vars.toList,currentStart,currentShiftSize,currentShiftOffset)
+          if(evaluateCurrentMoveObjTrueIfStopRequired(newObj)){
+            startIndice = (currentStart + 1)%vars.length
+            return
+          }
+          currentShiftOffset += 1
+        }
+      }
+    }
+  }
+
+  override def instantiateCurrentMove(newObj: Int) = ShiftMove(vars.toList,currentStart,currentShiftSize,currentShiftOffset,newObj,name)
+
+  override def reset(): Unit = {
+    startIndice = 0
+  }
+}

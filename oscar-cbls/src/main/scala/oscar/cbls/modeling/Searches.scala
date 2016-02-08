@@ -142,5 +142,46 @@ trait Search {
                           name:String = "ShuffleNeighborhood",
                           checkNoMoveFound:Boolean = true) =
     ShuffleNeighborhood(vars, indicesToConsider, numberOfShuffledPositions, name, checkNoMoveFound)
+
+  /**
+    * will shift a block of value to the right(doing it also to the left is redundant)
+    *
+    * @param vars an array of [[oscar.cbls.invariants.core.computation.CBLSIntVar]] defining the search space
+    * @param searchZone a subset of the indices of vars to consider in order to determine the block's extremities
+    *                   if none provided, all the array will be considered each time
+    * @param startShiftIndice the indice of the value that will start the shift block
+    *                         if no startShiftIndice value is given, the neighborhood will consider every possible value in the given array
+    * @param endShiftIndice the indice of the value that will end the shift bloc (similar to the previous setting)
+    * @param maxShiftSize the max size of the shift, given the first indice considered in the shift
+    * @param maxOffsetSize the max size of the offset
+    * @param best if true, the neighborhood will try to find the best solution possible
+    *             (not very usefull because browsing all the possibilities can be very long)
+    * @param name the name of the neighborhood
+    * @param hotRestart  if true, the exploration order in case you ar not going for the best
+    *                    is a hotRestart for the first swapped variable
+    *                    even if you specify a searchZone that is: the exploration starts again
+    *                    at the position where it stopped, and consider the indices in increasing order
+    *                    if false, consider the exploration range in natural order from the first position.
+    */
+  def shiftNeighborhood(vars:Array[CBLSIntVar],
+                        name:String = "ShiftNeighborhood",
+                        searchZone:()=>Iterable[Int] = null,
+                        startShiftIndice:Int = -1,
+                        endShiftIndice:Int = -1,
+                        maxShiftSize:Int = Int.MaxValue,
+                        maxOffsetSize:Int = Int.MaxValue,
+                        best:Boolean = false,
+                        hotRestart:Boolean = true) =
+    ShiftNeighborhood(vars, name, searchZone, startShiftIndice, endShiftIndice, maxShiftSize, maxOffsetSize, best, hotRestart)
+
+  def rollNeighborhood(vars:Array[CBLSIntVar],
+                       name:String = "RollNeighborhood",
+                       searchZone:()=>Set[Int] = null,
+                       bridgeOverFrozenVariables:Boolean = false,
+                       maxShiftSize:Int=>Int = _ => Int.MaxValue, //the max size of the roll, given the ID of the first variable
+                       best:Boolean = false,
+                       hotRestart:Boolean = true) =
+    RollNeighborhood(vars, name, searchZone, bridgeOverFrozenVariables, maxShiftSize, best, hotRestart)
+
 }
 

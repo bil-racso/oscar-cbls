@@ -222,6 +222,27 @@ trait Objective {
     if(!a.value.contains(i)) return value
     removeValAssumeIn(a, i)
   }
+
+  /**returns the value of the objective variable if the block of value specified
+    * by startIndice and length is moved by offset positions to the right
+    * this process is efficiently performed as the objective Variable is registered for partial propagation
+    * @see registerForPartialPropagation() in [[oscar.cbls.invariants.core.computation.Store]]
+    */
+  def doShiftNeighborhood(l:List[CBLSIntVar],startIndice:Int,length:Int,offset:Int): Int ={
+    val variables = l.toArray
+    val initialValues: Array[Int] = l.toArray.map(_.value)
+    for (i <- startIndice to startIndice + offset + length - 1) {
+      if (i < startIndice + offset) {
+        variables(i) := initialValues(i + length)
+      }
+      else {
+        variables(i) := initialValues(i - offset)
+      }
+    }
+    val newVal = value
+    for(i <- variables)i:=initialValues(variables.indexOf(i))
+    newVal
+  }
 }
 
 /**
