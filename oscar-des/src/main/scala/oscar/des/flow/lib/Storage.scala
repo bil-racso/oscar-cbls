@@ -11,7 +11,7 @@ import scala.language.implicitConversions
  * represents a storage point, or a stock as you name it
  * @param maxCapacity the maximal content of the stock. attempting to put more items will block the putting operations
  * @param name the name of the stock
- * @param verbose true to print when stock is empty or overfull
+ * @param verbosity where verbosities should be sent, can be null
  * @author renaud.delandtsheer@cetic.be
  * */
 abstract class Storage(val maxCapacity: Int,
@@ -21,6 +21,7 @@ abstract class Storage(val maxCapacity: Int,
   extends RichPutable with RichFetchable {
 
   var cost:DoubleExpr = null
+
 
   class BufferCompositeItem(var n:Int, val itemClass:ItemClass)
   implicit def coupleToComposite(c:(Int,ItemClass)):BufferCompositeItem = new BufferCompositeItem(c._1,c._2)
@@ -33,6 +34,16 @@ abstract class Storage(val maxCapacity: Int,
   def contentSize:Int
 
   private var notificationTo: List[StockNotificationTarget] = List.empty
+
+  def reset()
+
+  protected def resetStorage(): Unit ={
+    resetRichFetchable()
+    resetRichPutable()
+    totalLosByOverflow = 0
+
+  }
+
 
   override def toString: String = {
     name + " " + this.getClass.getSimpleName + ":: content:" + contentSize + " max:" + maxCapacity + " totalPut:" + totalPut + " totalFetch:" + totalFetch + (if(overflowOnInput) " totalOverflow:" + totalLosByOverflow else "")
@@ -96,7 +107,7 @@ abstract class Storage(val maxCapacity: Int,
  * @param maxSize the maximal content of the stock. attempting to put more items will block the putting operations
  * @param initialContent the initial content of the stock
  * @param name the name of the stock
- * @param verbose true to print when stock is empty or overfull
+ * @param verbosity where verbosities should be sent, can be null
  * @param overflowOnInput true if the stock overflows when there are excessing input, false to have it blocking the puts when it is full
  */
 class FIFOStorage(maxSize:Int,
@@ -113,6 +124,16 @@ class FIFOStorage(maxSize:Int,
   override def contentSize: Int = internalSize
 
   private[this] var internalSize = content.foldLeft(0)({case (acc,bufferItem) => acc + bufferItem.n})
+
+
+  override def reset(){
+    resetStorage()
+    content.dropAll()
+    for(i <- initialContent){
+      content.append(coupleToComposite(i))
+    }
+    internalSize = content.foldLeft(0)({case (acc,bufferItem) => acc + bufferItem.n})
+  }
 
   /**
    * @param l
@@ -180,7 +201,7 @@ class FIFOStorage(maxSize:Int,
  * @param maxSize the maximal content of the stock. attempting to put more items will block the putting operations
  * @param initialContent the initial content of the stock
  * @param name the name of the stock
- * @param verbose true to print when stock is empty or overfull
+  * @param verbosity where verbosities should be sent, can be null
  * @param overflowOnInput true if the stock overflows when there are excessing input, false to have it blocking the puts when it is full
  */
 class LIFOStorage(maxSize:Int,
@@ -193,6 +214,13 @@ class LIFOStorage(maxSize:Int,
 
   override def contentSize: Int = internalSize
   private[this] var internalSize: Int = content.foldLeft(0)({case (acc,bufferItem) => acc + bufferItem.n})
+
+
+   override def reset(){
+     resetStorage()
+     content = initialContent.map(coupleToComposite)
+     internalSize = content.foldLeft(0)({case (acc,bufferItem) => acc + bufferItem.n})
+   }
 
   /**
    * @param l

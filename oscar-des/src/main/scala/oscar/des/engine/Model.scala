@@ -29,6 +29,10 @@ class Model {
 
   def clock() : Double = currentTime
 
+  def emptyQueue(): Unit ={
+    eventQueue.dequeueAll
+  }
+
   private def addEvent(e:SimEvent) = eventQueue += e
 
   /**

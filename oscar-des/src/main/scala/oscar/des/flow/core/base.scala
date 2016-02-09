@@ -57,6 +57,10 @@ trait RichFetchable extends Fetchable {
 
   def isThereAnyWaitingFetch:Boolean = waitingFetches.nonEmpty
 
+  protected def resetRichFetchable(){
+    waitingFetches.remove(waitingFetches.size)
+    mTotalFetch = 0
+  }
   /**
    * @param amount
    * @return what remains to be fetched, whas has been fetched
@@ -107,6 +111,11 @@ trait RichPutable extends Putable {
   protected val waitingPuts:ListBuffer[(List[(Int,ItemClass)], () => Unit)] = ListBuffer.empty
   var mTotalPut = 0
   def pTotalPut:Int = mTotalPut
+
+  protected def resetRichPutable(){
+    waitingPuts.remove(waitingPuts.size)
+    mTotalPut = 0
+  }
 
   def isThereAnyWaitingPut:Boolean = waitingPuts.nonEmpty
 

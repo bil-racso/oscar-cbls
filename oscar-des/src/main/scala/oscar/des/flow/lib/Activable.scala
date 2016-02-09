@@ -28,6 +28,8 @@ abstract class ActivableProcess(val name:String, verbosity:String=>Unit) extends
   }
 
   def addPreliminaryInput(preliminary:Storage)
+
+  def reset()
 }
 
 abstract class ActivableAtomicProcess(name:String, verbosity:String=>Unit) extends ActivableProcess(name,verbosity){

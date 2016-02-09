@@ -15,20 +15,29 @@ trait implicitConvertors {
   implicit def constantPutableToFunctionPutable(l: Array[(Int, Putable)]): Array[(() => Int, Putable)] = l.map(v => (() => v._1, v._2))
 }
 
+
+/**
+ *
+ * @param verbosity where verbosities should be sent, can be null
+ */
 class FactoryModel(verbosity:String=>Unit) {
 
   val m:Model = new Model
 
   var ms:MetricsStore = null
 
-  var storages:List[Storage] = List.empty
-  var processes:List[ActivableProcess] = List.empty
+  private var storages:List[Storage] = List.empty
+  private var processes:List[ActivableProcess] = List.empty
+
+  def getStorages:List[Storage] = storages
+  def getProcesses:List[ActivableProcess] = processes
 
   def simulate(horizon:Float, verbosity:String=>Unit, abort:()=>Boolean = ()=>false){
     m.simulate(horizon,verbosity,abort)
   }
 
   def reset(){
+    m.emptyQueue
 
   }
 
@@ -36,7 +45,6 @@ class FactoryModel(verbosity:String=>Unit) {
     require(ms == null)
     ms = new MetricsStore(rootExpressions:List[(String, Expression)],verbosity)
   }
-
 
   /**
    * a process inputs some inputs, and produces its outputs at a given rate.
@@ -46,7 +54,6 @@ class FactoryModel(verbosity:String=>Unit) {
    * @param inputs the set of inputs (number of parts to input, storage)
    * @param outputs the set of outputs (number of parts, storage)
    * @param name the name of this process, for pretty printing
-   * @param verbosity true if you want to see the start input, start batch, end batch start output, end output events on the console
    * @author renaud.delandtsheer@cetic.be
    * */
   def singleBatchProcess(batchDuration:() => Double,
@@ -54,7 +61,6 @@ class FactoryModel(verbosity:String=>Unit) {
                          outputs:Array[(()=>Int,Putable)],
                          transformFunction:ItemClassTransformFunction,
                          name:String,
-                         verbosity:String=>Unit = null,
                          costFunction:String = "0") = {
     val toReturn = SingleBatchProcess(m,batchDuration,inputs,outputs,transformFunction,name,verbosity)
     toReturn.cost = ListenerParser.processCostParser(toReturn).applyAndExpectDouble(costFunction)
@@ -69,7 +75,6 @@ class FactoryModel(verbosity:String=>Unit) {
    * @param inputs the set of inputs (number of parts to input, storage)
    * @param outputs the set of outputs (number of parts, storage)
    * @param name the name of this process, for pretty printing, bath are named "name chain i" where i is the identifier of the batch process
-   * @param verbosity true if you want to see the start input, start batch, end batch start output, end output events on the console
    * @author renaud.delandtsheer@cetic.be
    * */
   def batchProcess(numberOfBatches:Int,
@@ -78,7 +83,6 @@ class FactoryModel(verbosity:String=>Unit) {
                    outputs:Array[(() => Int,Putable)],
                    name:String,
                    transformFunction:ItemClassTransformFunction,
-                   verbosity:String=>Unit = null,
                    costFunction:String = "0") ={
     val toReturn = new BatchProcess(m,numberOfBatches,batchDuration,inputs,outputs,name,transformFunction,verbosity)
     toReturn.cost = ListenerParser.processCostParser(toReturn).applyAndExpectDouble(costFunction)
@@ -98,7 +102,6 @@ class FactoryModel(verbosity:String=>Unit) {
    * @param inputs the set of inputs (number of parts to input, storage)
    * @param outputs the set of outputs (number of parts, storage)
    * @param name the name of this process, for pretty printing
-   * @param verbosity true if you want to see the start input, start batch, end batch start output, end output events on the console
    * @author renaud.delandtsheer@cetic.be
    */
   def conveyorBeltProcess(processDuration:() => Double,
@@ -107,7 +110,6 @@ class FactoryModel(verbosity:String=>Unit) {
                           outputs:Array[(() => Int, Putable)],
                           transformFunction:ItemClassTransformFunction,
                           name:String,
-                          verbosity:String=>Unit = null,
                           costFunction:String  = "0") = {
     val toReturn = new ConveyorBeltProcess(m:Model,processDuration,minimalSeparationBetweenBatches,inputs,outputs,transformFunction,name,verbosity)
     toReturn.cost = ListenerParser.processCostParser(toReturn).applyAndExpectDouble(costFunction)
@@ -122,7 +124,6 @@ class FactoryModel(verbosity:String=>Unit) {
    * @param inputs the set of inputs (number of parts to input, storage)
    * @param outputs the set of outputs (number of parts, storage)
    * @param name the name of this process, for pretty printing
-   * @param verbosity true if you want to see the start input, start batch, end batch start output, end output events on the console
    * @author renaud.delandtsheer@cetic.be
    * */
   def splittingBatchProcess(numberOfBatches:Int,
@@ -131,7 +132,6 @@ class FactoryModel(verbosity:String=>Unit) {
                             outputs:Array[Array[(()=>Int,Putable)]],
                             name:String,
                             transformFunction:ItemClassTransformWitAdditionalOutput,
-                            verbosity:String=>Unit = null,
                             costFunction:String) = {
     val toReturn = SplittingBatchProcess(m, numberOfBatches, batchDuration, inputs, outputs, name, transformFunction, verbosity)
     toReturn.cost = ListenerParser.processCostParser(toReturn).applyAndExpectDouble(costFunction)
@@ -149,7 +149,6 @@ class FactoryModel(verbosity:String=>Unit) {
    * @param inputs the set of inputs (number of parts to input, storage)
    * @param outputs the set of outputs (number of parts, storage)
    * @param name the name of this process, for pretty printing
-   * @param verbosity true if you want to see the start input, start batch, end batch start output, end output events on the console
    * @author renaud.delandtsheer@cetic.be
    * */
   def splittingSingleBatchProcess(batchDuration:() => Double,
@@ -157,7 +156,6 @@ class FactoryModel(verbosity:String=>Unit) {
                                   outputs:Array[Array[(() => Int,Putable)]],
                                   transformFunction:ItemClassTransformWitAdditionalOutput,
                                   name:String,
-                                  verbosity:String=>Unit = null,
                                   costFunction:String = "0") = {
     val toReturn = SplittingSingleBatchProcess(m, batchDuration, inputs, outputs, transformFunction, name, verbosity)
     toReturn.cost = ListenerParser.processCostParser(toReturn).applyAndExpectDouble(costFunction)
@@ -171,13 +169,11 @@ class FactoryModel(verbosity:String=>Unit) {
    * @param maxSize the maximal content of the stock. attempting to put more items will block the putting operations
    * @param initialContent the initial content of the stock
    * @param name the name of the stock
-   * @param verbosity true to print when stock is empty or overfull
    * @param overflowOnInput true if the stock overflows when there are excessing input, false to have it blocking the puts when it is full
    */
   def lIFOStorage(maxSize:Int,
                   initialContent:List[(Int,ItemClass)] = List.empty,
                   name:String,
-                  verbosity:String=>Unit,
                   overflowOnInput:Boolean,
                   costFunction:String = "0") = {
     val toReturn = new LIFOStorage(maxSize, initialContent, name, verbosity, overflowOnInput)
@@ -192,13 +188,11 @@ class FactoryModel(verbosity:String=>Unit) {
    * @param maxSize the maximal content of the stock. attempting to put more items will block the putting operations
    * @param initialContent the initial content of the stock
    * @param name the name of the stock
-   * @param verbosity true to print when stock is empty or overfull
    * @param overflowOnInput true if the stock overflows when there are excessing input, false to have it blocking the puts when it is full
    */
   def fIFOStorage(maxSize:Int,
                   initialContent:List[(Int,ItemClass)],
                   name:String,
-                  verbosity:String=>Unit,
                   overflowOnInput:Boolean,
                   costFunction:String = "0") = {
     val toReturn = new FIFOStorage(maxSize, initialContent, name, verbosity, overflowOnInput)
