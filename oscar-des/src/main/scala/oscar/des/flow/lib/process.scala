@@ -33,13 +33,13 @@ import oscar.des.flow.core.ItemClassHelper._
  * @param inputs the set of inputs (number of parts to input, storage)
  * @param outputs the set of outputs (number of parts, storage)
  * @param name the name of this process, for pretty printing
- * @param verbose true if you want to see the start input, start batch, end batch start output, end output events on the console
+ * @param verbosity where verbosities should be sent, can be null
  * @author renaud.delandtsheer@cetic.be
  * */
 case class SingleBatchProcess(m:Model,
                               batchDuration:() => Double,
                               inputs:Array[(() => Int, Fetchable)],
-                              outputs:Array[(()=>Int,Putable)],
+                              outputs:Array[(()=>Int, Putable)],
                               transformFunction:ItemClassTransformFunction,
                               override val name:String,
                               verbosity:String=>Unit = null) extends ActivableAtomicProcess(name,verbosity){
@@ -138,7 +138,7 @@ case class BatchProcess(m:Model,
  * @param inputs the set of inputs (number of parts to input, storage)
  * @param outputs the set of outputs (number of parts, storage)
  * @param name the name of this process, for pretty printing
- * @param verbose true if you want to see the start input, start batch, end batch start output, end output events on the console
+ * @param verbosity where verbosities should be sent, can be null
  * @author renaud.delandtsheer@cetic.be
  * */
 case class SplittingSingleBatchProcess(m:Model,
@@ -214,7 +214,7 @@ case class SplittingSingleBatchProcess(m:Model,
  * @param inputs the set of inputs (number of parts to input, storage)
  * @param outputs the set of outputs (number of parts, storage)
  * @param name the name of this process, for pretty printing
- * @param verbose true if you want to see the start input, start batch, end batch start output, end output events on the console
+ * @param verbosity where verbosities should be sent, can be null
  * @author renaud.delandtsheer@cetic.be
  * */
 case class SplittingBatchProcess(m:Model,
@@ -255,7 +255,7 @@ case class SplittingBatchProcess(m:Model,
  * @param inputs the set of inputs (number of parts to input, storage)
  * @param outputs the set of outputs (number of parts, storage)
  * @param name the name of this process, for pretty printing
- * @param verbose true if you want to see the start input, start batch, end batch start output, end output events on the console
+ * @param verbosity where verbosities should be sent, can be null
  * @author renaud.delandtsheer@cetic.be
  */
 class ConveyorBeltProcess(m:Model,

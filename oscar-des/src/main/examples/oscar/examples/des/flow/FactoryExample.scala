@@ -22,7 +22,7 @@ object FactoryExample extends App with FactorySimulationHelper {
   }
 
   val m = new Model
-  val verbosity = null
+  val verbosity = (s:String) => println(s)
 
   val standardItemClass = zeroItemClass
   val allAttributes = new AttributeDefinitions("sampleAttribute", "anotherOne", "CheapSteel","expensiveSteel")

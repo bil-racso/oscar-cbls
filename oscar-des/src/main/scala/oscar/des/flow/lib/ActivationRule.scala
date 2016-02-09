@@ -29,7 +29,7 @@ class RegularActivation(m:Model, intensity:Int, delay:Float, initialDelay:Float,
 }
 
 /**
- * This rule activates the activeable "a" by intensity activationSize(s.content)
+ * This rule activates the activable "a" by intensity activationSize(s.content)
  * whenever s.content goes below "threshold"
  *
  * if period is specified, it only perform the activation when time is a multiple of period.
@@ -40,7 +40,7 @@ class RegularActivation(m:Model, intensity:Int, delay:Float, initialDelay:Float,
  * @param a the activeable that is activated by this activation
  * @param threshold the threshold for activation
  * @param activationSize a function that computes the level of activation, given the s.content
- * @param verbose true to have verbosities o nthe standard output
+ * @param verbosity where verbosities should be sent, can be null
  * @param period the period of activation, set to zero for immediate activation
  * @param name the name of this rule, for debugging purposes
  */

@@ -9,7 +9,7 @@ import oscar.des.flow.core.ItemClassHelper._
  * @param supplierDelay the delay of the supplier (random function)
  * @param deliveredPercentage the delivered percentage, when an order is placed
  * @param name the name of the supplier, for pretty printing purpose
- * @param verbose true to print order deliveries on the console
+ * @param verbosity where verbosities should be sent, can be null
  * @author renaud.delandtsheer@cetic.be
  * */
 class PartSupplier(m:Model,

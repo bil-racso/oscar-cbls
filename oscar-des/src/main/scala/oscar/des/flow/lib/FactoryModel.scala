@@ -4,7 +4,7 @@ import oscar.des.engine.Model
 import oscar.des.flow.core.ItemClassHelper._
 import oscar.des.flow.core.{ItemClassTransformWitAdditionalOutput, ItemClassTransformFunction, Putable, Fetchable}
 import oscar.des.flow.modeling.{MultipleParsingError, MultipleParsingSuccess, ListenerParser}
-
+import scala.language.implicitConversions
 
 trait implicitConvertors {
   implicit def doubleToConstantDoubleFunction(f: Double): (() => Double) = () => f
@@ -38,9 +38,10 @@ class FactoryModel(verbosity:String=>Unit) {
 
   def reset(){
     m.emptyQueue
-storages.foreach(_.block())
+    storages.foreach(_.block())
     processes.foreach(_.reset())
     storages.foreach(_.reset())
+    if(ms!= null) ms.reset()
   }
 
   def setQueriesToParse(queriesNameAndExpression:List[(String,String)]){
