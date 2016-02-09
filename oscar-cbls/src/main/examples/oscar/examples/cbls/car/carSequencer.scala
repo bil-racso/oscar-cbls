@@ -16,7 +16,7 @@ import scala.language.postfixOps
  */
 object carSequencer  extends CBLSModel with App {
 
-  val orderedCarsByType:SortedMap[Int,Int] = SortedMap(0 -> 130, 1 -> 60, 2 -> 110 , 3 -> 120, 4 -> 40, 5 -> 30)
+  val orderedCarsByType:SortedMap[Int,Int] = SortedMap(0 -> 90, 1 -> 60, 2 -> 110 , 3 -> 120, 4 -> 40, 5 -> 30)
 
   println("carSequencing")
   println("orderedCarTypes:" + orderedCarsByType)
@@ -77,7 +77,7 @@ object carSequencer  extends CBLSModel with App {
 
   val roll = RollNeighborhood(carSequence, name = "RollCars", maxShiftSize = _ => 10)
   val mostViolatedSwap = swapsNeighborhood(carSequence,"mostViolatedSwap", searchZone2 = mostViolatedCars, symmetryCanBeBrokenOnIndices = false)
-  val shiftNeighbor = shiftNeighborhood(carSequence, searchZone =() => violatedCars.value.toList, maxOffsetSize = 5, maxShiftSize = carSequence.length/10, hotRestart = true)
+  val shiftNeighbor = shiftNeighborhood(carSequence, searchZone =() => violatedCars.value.toList, maxShiftSize = carSequence.length/10, maxOffsetSize = carSequence.length/5, hotRestart = false)
   val rollNeighbor = rollNeighborhood(carSequence)
 
   val linkedDoubleSwaps = DynAndThen(
@@ -116,11 +116,17 @@ object carSequencer  extends CBLSModel with App {
       saveBestAndRestoreOnExhaust obj)
   //.afterMove({println("most violated positions: " + mostViolatedCars.value + " car types: " + mostViolatedCars.value.toList.map(carSequence(_).value))})
 
-  search2.verbose = 1
+  /*search2.verbose = 1
   search2.paddingLength = 150
   search2.doAllMoves(_ => c.isTrue,obj)
 
-  println(search2.profilingStatistics)
+  println(search2.profilingStatistics)*/
+
+  search.verbose = 1
+  search.paddingLength = 150
+  search.doAllMoves(_ => c.isTrue,obj)
+
+  println(search.profilingStatistics)
   println(c.violation)
   println("car sequence:" + carSequence.map(_.value).mkString(","))
 
