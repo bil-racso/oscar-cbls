@@ -37,13 +37,14 @@ abstract class Storage(val maxCapacity: Int,
 
   def reset()
 
+  //blocks all inputs and all outputs of the storage
+  def block()
+
   protected def resetStorage(): Unit ={
     resetRichFetchable()
     resetRichPutable()
     totalLosByOverflow = 0
-
   }
-
 
   override def toString: String = {
     name + " " + this.getClass.getSimpleName + ":: content:" + contentSize + " max:" + maxCapacity + " totalPut:" + totalPut + " totalFetch:" + totalFetch + (if(overflowOnInput) " totalOverflow:" + totalLosByOverflow else "")

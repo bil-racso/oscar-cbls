@@ -30,6 +30,8 @@ trait Putable {
    * @param block
    */
   def put(amount:Int,i:ItemClass)(block : () => Unit)
+
+  def blockPutable()
 }
 
 /** represents a process fragment from which one can fetch a part
@@ -43,6 +45,8 @@ trait Fetchable {
    * @param block the block to execute once the items are actually fetched. these are bigen to the block method
    */
   def fetch(amount:Int)(block : ItemClass => Unit)
+
+  def blockFetcheable()
 }
 
 /** This proposes a standard FIFO model behind the fetch operation,
@@ -61,6 +65,7 @@ trait RichFetchable extends Fetchable {
     waitingFetches.remove(waitingFetches.size)
     mTotalFetch = 0
   }
+
   /**
    * @param amount
    * @return what remains to be fetched, whas has been fetched

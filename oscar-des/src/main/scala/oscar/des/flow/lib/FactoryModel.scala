@@ -3,7 +3,7 @@ package oscar.des.flow.lib
 import oscar.des.engine.Model
 import oscar.des.flow.core.ItemClassHelper._
 import oscar.des.flow.core.{ItemClassTransformWitAdditionalOutput, ItemClassTransformFunction, Putable, Fetchable}
-import oscar.des.flow.modeling.ListenerParser
+import oscar.des.flow.modeling.{MultipleParsingError, MultipleParsingSuccess, ListenerParser}
 
 
 trait implicitConvertors {
@@ -38,12 +38,20 @@ class FactoryModel(verbosity:String=>Unit) {
 
   def reset(){
     m.emptyQueue
-
+storages.foreach(_.block())
+    processes.foreach(_.reset())
+    storages.foreach(_.reset())
   }
 
-  def setQueries(rootExpressions:List[(String, Expression)]){
+  def setQueriesToParse(queriesNameAndExpression:List[(String,String)]){
     require(ms == null)
-    ms = new MetricsStore(rootExpressions:List[(String, Expression)],verbosity)
+    val parser = ListenerParser(storages,processes)
+    parser.parseAllListeners(queriesNameAndExpression) match{
+      case  MultipleParsingSuccess(expressions:List[(String,Expression)]) =>
+        ms = new MetricsStore(expressions,verbosity)
+      case  MultipleParsingError(s:String) =>
+        throw new Error(s)
+    }
   }
 
   /**
