@@ -16,7 +16,7 @@ import scala.language.postfixOps
  */
 object carSequencer  extends CBLSModel with App {
 
-  val orderedCarsByType:SortedMap[Int,Int] = SortedMap(0 -> 90, 1 -> 60, 2 -> 110 , 3 -> 120, 4 -> 40, 5 -> 30)
+  val orderedCarsByType:SortedMap[Int,Int] = SortedMap(0 -> 130, 1 -> 60, 2 -> 110 , 3 -> 120, 4 -> 40, 5 -> 30)
 
   println("carSequencing")
   println("orderedCarTypes:" + orderedCarsByType)
@@ -125,6 +125,7 @@ object carSequencer  extends CBLSModel with App {
   search.doAllMoves(_ => c.isTrue,obj)
 
   println(search.profilingStatistics)*/
+
   println(c.violation)
   println("car sequence:" + carSequence.map(_.value).mkString(","))
 

@@ -504,12 +504,12 @@ case class RollNeighborhood(vars:Array[CBLSIntVar],
   **/
 case class ShiftNeighborhood(vars:Array[CBLSIntVar],
                              name:String = "ShiftNeighborhood",
-                             searchZone:()=>Iterable[Int] = null,
-                             searchZone2:()=>Iterable[Int] = null,
-                             startShiftIndice:Int = -1,
-                             endShiftIndice:Int = -1,
+                             searchZone:()=>Iterable[Int] = null, //TODO: rename it to "searchZone1"
+                             searchZone2:()=>Iterable[Int] = null, //TODO: document this
+                             startShiftIndice:Int = -1, //TODO: remove this
+                             endShiftIndice:Int = -1, //TODO: remove this
                              maxShiftSize:Int = Int.MaxValue,
-                             maxOffsetSize:Int = Int.MaxValue,
+                             maxOffsetSize:Int = Int.MaxValue, //TODO: document this (size is when you talk about sets); is this the max magniture of the offset? ow about shofting towards negative values? is there a minOffset?
                              best:Boolean = false,
                              hotRestart: Boolean = true)
   extends EasyNeighborhood[ShiftMove](best,name) with AlgebraTrait{
@@ -518,6 +518,8 @@ case class ShiftNeighborhood(vars:Array[CBLSIntVar],
     * every time you explore a neighbor, you must perform the calls to notifyMoveExplored or moveRequested(newObj) && submitFoundMove(myMove)){
     * as explained in the documentation of this class
     */
+
+  //TODO: currentDirection should be deleted; use currentShiftOffset with negative value.
   var startIndice:Int = 0
   var currentShiftOffset:Int = 0
   var currentShiftSize:Int = 1
@@ -534,10 +536,11 @@ case class ShiftNeighborhood(vars:Array[CBLSIntVar],
 
     val firstIndices =
       if(hotRestart && !best)HotRestart(currentSearchZone, startIndice)
-      else if(startShiftIndice != -1)List(startShiftIndice)
+      else if(startShiftIndice != -1)List(startShiftIndice)  //TODO: this is useless, we just need t ospecify searchZone1?
       else currentSearchZone
 
-    val initialValues: Array[Int] = vars.toArray.map(_.value)
+    val initialValues: Array[Int] = vars.map(_.value)
+
 
 
     //We first determine the border of the shift block and then we determine the movement to perform
@@ -547,9 +550,10 @@ case class ShiftNeighborhood(vars:Array[CBLSIntVar],
         if(secondIndice - firstIndice <= maxShiftSize) {
           val currentEnd = secondIndice
           currentShiftSize = currentEnd - currentStart
-          for (i <- -1 to 1 by 2) {
+          for (i <- -1 to 1 by 2) { //TODO: iterate on offset range instead of playing with booleans represented as integers.
             currentShiftOffset = 1
             currentDirection = i
+            //TODO: dropWhile.filer is heavy, and you seldom iterate on the full range; ow about putting this is inside the loop?
             for(currentShiftOffsetPosition:Int <- if(currentDirection > 0) currentSearchZone2.dropWhile(_<=currentEnd).filter(_<(maxOffsetSize+currentEnd))
             else currentSearchZone2.dropWhile(_<firstIndice-maxOffsetSize).dropRight(currentSearchZone2.size - currentSearchZone2.toArray.indexOf(firstIndice))){
               currentShiftOffset = if(currentDirection > 0) (currentDirection*currentShiftOffsetPosition)-currentEnd else firstIndice-currentShiftOffsetPosition
@@ -564,16 +568,9 @@ case class ShiftNeighborhood(vars:Array[CBLSIntVar],
       }
     }
 
-
-
-    /**returns the value of the objective variable if the block of value specified
-      * by startIndice and length is moved by offset positions to the right
-      * this process is efficiently performed as the objective Variable is registered for partial propagation
-      *
-      * @see registerForPartialPropagation() in [[oscar.cbls.invariants.core.computation.Store]]
-      */
     def doShiftNeighborhood(): Int ={
       if(currentDirection > 0) {
+        //TODO: can you iterate on impacted variables only?
         for (i <- currentStart to currentStart + currentShiftOffset + currentShiftSize - 1) {
           if (i < currentStart + currentShiftOffset) {
             vars(i) := initialValues(i + currentShiftSize)
@@ -583,6 +580,7 @@ case class ShiftNeighborhood(vars:Array[CBLSIntVar],
           }
         }
       }else{
+        //TODO: can you iterate on impacted variables only?
         for (i <- currentStart - currentShiftOffset to currentStart + currentShiftSize - 1) {
           if (i < currentStart - currentShiftOffset + currentShiftSize) {
             vars(i) := initialValues(i + currentShiftOffset)
@@ -593,6 +591,7 @@ case class ShiftNeighborhood(vars:Array[CBLSIntVar],
         }
       }
       val newVal = obj.value
+      //TODO: can you iterate on impacted variables only? (we are talking about copy-pasting the code here-above, or saving the list of impacted indices)
       for(i <- vars)i:=initialValues(vars.indexOf(i))
       newVal
     }
