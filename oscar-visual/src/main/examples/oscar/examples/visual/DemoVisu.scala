@@ -76,7 +76,7 @@ object DemoVisu {
     val rect = new VisualRectangle(d, 50, 50, 100, 50);
 
     Thread.sleep(1000);
-    rect.innerCol_$eq(Color.red);
+    rect.innerCol_$eq(Color.blue);
     Thread.sleep(1000);
     rect.width = 200;
     Thread.sleep(1000);
@@ -113,7 +113,7 @@ object DemoVisu {
     f.pack();
 
     try {
-      val citiesNames = List("Namur", "Bruxelles", "Antwerp", "Arlon", "Mons", "Ottignies", "London")
+      val citiesNames = List("Namur", "Bruxelles", "Antwerpen", "Arlon", "Mons", "Ottignies", "London")
       var citiesCoord = List[Location]()
       for (c <- citiesNames) {
 

@@ -552,7 +552,7 @@ case class ShiftNeighborhood(vars:Array[CBLSIntVar],
             for(currentShiftOffsetPosition:Int <- if(currentDirection > 0) currentSearchZone2.dropWhile(_<=currentEnd).filter(_<(maxOffsetSize+currentEnd))
             else currentSearchZone2.dropWhile(_<firstIndice-maxOffsetSize).dropRight(currentSearchZone2.size - currentSearchZone2.toArray.indexOf(firstIndice))){
               currentShiftOffset = if(currentDirection > 0) (currentDirection*currentShiftOffsetPosition)-currentEnd else firstIndice-currentShiftOffsetPosition
-              val newObj = doShiftNeighborhood(firstIndice)
+              val newObj = doShiftNeighborhood()
               if (evaluateCurrentMoveObjTrueIfStopRequired(newObj)) {
                 startIndice = (currentStart + 1) % vars.length
                 return
@@ -571,10 +571,10 @@ case class ShiftNeighborhood(vars:Array[CBLSIntVar],
       *
       * @see registerForPartialPropagation() in [[oscar.cbls.invariants.core.computation.Store]]
       */
-    def doShiftNeighborhood(firstIndice:Int): Int ={
+    def doShiftNeighborhood(): Int ={
       if(currentDirection > 0) {
-        for (i <- firstIndice to firstIndice + currentShiftOffset + currentShiftSize - 1) {
-          if (i < firstIndice + currentShiftOffset) {
+        for (i <- currentStart to currentStart + currentShiftOffset + currentShiftSize - 1) {
+          if (i < currentStart + currentShiftOffset) {
             vars(i) := initialValues(i + currentShiftSize)
           }
           else {
@@ -582,8 +582,8 @@ case class ShiftNeighborhood(vars:Array[CBLSIntVar],
           }
         }
       }else{
-        for (i <- firstIndice - currentShiftOffset to firstIndice + currentShiftSize - 1) {
-          if (i < firstIndice - currentShiftOffset + currentShiftSize) {
+        for (i <- currentStart - currentShiftOffset to currentStart + currentShiftSize - 1) {
+          if (i < currentStart - currentShiftOffset + currentShiftSize) {
             vars(i) := initialValues(i + currentShiftOffset)
           }
           else {

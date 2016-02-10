@@ -113,20 +113,20 @@ object carSequencer  extends CBLSModel with App {
       orElse (shuffleNeighborhood(carSequence, violatedCars, name = "shuffleAllViolatedCars") maxMoves (10))
       orElse (shuffleNeighborhood(carSequence, name = "globalShuffle") maxMoves (10))
       maxMoves nbCars *2 withoutImprovementOver obj
-      saveBestAndRestoreOnExhaust obj)
+      saveBestAndRestoreOnExhaust obj) afterMove(checkGrouped)
   //.afterMove({println("most violated positions: " + mostViolatedCars.value + " car types: " + mostViolatedCars.value.toList.map(carSequence(_).value))})
 
-  /*search2.verbose = 1
+  search2.verbose = 1
   search2.paddingLength = 150
   search2.doAllMoves(_ => c.isTrue,obj)
 
-  println(search2.profilingStatistics)*/
+  println(search2.profilingStatistics)
 
-  search.verbose = 1
+  /*search.verbose = 1
   search.paddingLength = 150
   search.doAllMoves(_ => c.isTrue,obj)
 
-  println(search.profilingStatistics)
+  println(search.profilingStatistics)*/
   println(c.violation)
   println("car sequence:" + carSequence.map(_.value).mkString(","))
 
