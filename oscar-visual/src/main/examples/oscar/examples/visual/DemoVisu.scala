@@ -76,7 +76,7 @@ object DemoVisu {
     val rect = new VisualRectangle(d, 50, 50, 100, 50);
 
     Thread.sleep(1000);
-    rect.innerCol_$eq(Color.blue);
+    rect.innerCol_$eq(Color.red);
     Thread.sleep(1000);
     rect.width = 200;
     Thread.sleep(1000);
