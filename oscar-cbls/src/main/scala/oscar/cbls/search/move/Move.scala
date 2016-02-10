@@ -39,7 +39,8 @@ abstract class Move(val objAfter:Int = Int.MaxValue, val neighborhoodName:String
    * use this to update a Tabu for instance
    * notice that is a variable is touched twice by the move, it will appear twice in this list
    * This can happen with a set where we add two elements in two distinct moves that are aggregated into a [[oscar.cbls.search.move.CompositeMove]]
-   * @return the list of touched variables.
+    *
+    * @return the list of touched variables.
    */
   def touchedVariables:List[Variable] = throw new Exception(this.getClass().getSimpleName + "cannot provide touched variables")
 
@@ -54,6 +55,7 @@ abstract class Move(val objAfter:Int = Int.MaxValue, val neighborhoodName:String
     *notice that the objAfter is supposed to carry the proper value, so you generally do not need to call this
     * since it is not an efficient way to proceed
     * notice that it relies on the touchedVariables method.
+    *
     * @param obj the objective function to evaluate
     * @return the value of the objective function if the move were taken
     */
@@ -85,7 +87,8 @@ class EasyMove(override val objAfter:Int, override val neighborhoodName:String =
 
 /**
  * this move loads solution s
- * @param s the solution that is loaded when the move is comitted
+  *
+  * @param s the solution that is loaded when the move is comitted
  * @param objAfter the objective after this assignation will be performed
  *                 in case you degrade the objective because you make a jump, and you do not want to compute it,
  *                 you must set it to Int.MaxValue or just do not specify it, as it is the default value
@@ -141,7 +144,6 @@ case class RollMove(l:List[CBLSIntVar],offset:Int, override val objAfter:Int, ov
 
 /** standard move that switch a block of value to the right
   *
-  * @param l the variable
   * @param startIndice the indice of the item beginning the block to switch
   * @param length the length of the block to switch
   * @param offset the size off the movement that has to be performed to the right
@@ -150,23 +152,33 @@ case class RollMove(l:List[CBLSIntVar],offset:Int, override val objAfter:Int, ov
   *                         Notice that the name is not the type of the neighborhood.
   * @author fabian.germeau@student.vinci.be
   * */
-case class ShiftMove(startIndice:Int,length:Int,offset:Int,variables:Array[CBLSIntVar], override val objAfter:Int, override val neighborhoodName:String = null)
+case class ShiftMove(startIndice:Int,length:Int,offset:Int,variables:Array[CBLSIntVar],direction:Int, override val objAfter:Int, override val neighborhoodName:String = null)
   extends Move(objAfter,neighborhoodName){
 
   override def toString: String = {
     neighborhoodNameToString + "ShiftMove(startIndice:" + startIndice + "; length:" + length + "; offset:" + offset + objToString + ")"
   }
 
-
   /** to actually take the move */
   override def commit() {
     val initialValues: Array[Int] = Array.tabulate(variables.length)(variables(_).value)
-    for (i <- startIndice to startIndice + offset + length - 1) {
-      if (i < startIndice + offset) {
-        variables(i) := initialValues(i + length)
+    if(direction > 0){
+      for (i <- startIndice to startIndice + offset + length - 1) {
+        if (i < startIndice + offset) {
+          variables(i) := initialValues(i + length)
+        }
+        else {
+         variables(i) := initialValues(i - offset)
+        }
       }
-      else {
-        variables(i) := initialValues(i - offset)
+    }else{
+      for (i <- startIndice - offset to startIndice + length - 1) {
+        if (i < startIndice - offset + length) {
+          variables(i) := initialValues(i + offset)
+        }
+        else {
+          variables(i) := initialValues(i - length)
+        }
       }
     }
   }
@@ -303,6 +315,7 @@ object CallBackMove{
 
 /** a callBackMove when committed calls some method
   * this is how it takes its move
+  *
   * @param callBack the method that is called when the move is committed it takes a parameter of type T, which is given in param
   * @param objAfter the objective after this assignation will be performed
   *                 in case you degrade the objective because you make a jump, and you do not want to compute it,

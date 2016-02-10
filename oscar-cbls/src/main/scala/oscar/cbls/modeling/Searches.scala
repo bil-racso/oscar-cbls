@@ -166,13 +166,14 @@ trait Search {
   def shiftNeighborhood(vars:Array[CBLSIntVar],
                         name:String = "ShiftNeighborhood",
                         searchZone:()=>Iterable[Int] = null,
+                        searchZone2:()=>Iterable[Int] = null,
                         startShiftIndice:Int = -1,
                         endShiftIndice:Int = -1,
                         maxShiftSize:Int = Int.MaxValue,
                         maxOffsetSize:Int = Int.MaxValue,
                         best:Boolean = false,
                         hotRestart:Boolean = true) =
-    ShiftNeighborhood(vars, name, searchZone, startShiftIndice, endShiftIndice, maxShiftSize, maxOffsetSize, best, hotRestart)
+    ShiftNeighborhood(vars, name, searchZone, searchZone2, startShiftIndice, endShiftIndice, maxShiftSize, maxOffsetSize, best, hotRestart)
 
   def rollNeighborhood(vars:Array[CBLSIntVar],
                        name:String = "RollNeighborhood",

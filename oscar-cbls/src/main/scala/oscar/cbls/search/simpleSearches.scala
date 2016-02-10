@@ -221,8 +221,7 @@ case class SwapsNeighborhood(vars:Array[CBLSIntVar],
  * Will randomize the array, typically to get out of a local minimal
  * This will not consider the objective function, even if it includes some strong constraints
  *
- *
- * @param vars an array of [[oscar.cbls.invariants.core.computation.CBLSIntVar]] defining the search space
+  * @param vars an array of [[oscar.cbls.invariants.core.computation.CBLSIntVar]] defining the search space
  * @param degree the number of variables to change randomly
  * @param searchZone a subset of the indices of vars to consider.
  *                   If none is provided, all the array will be considered each time
@@ -506,6 +505,7 @@ case class RollNeighborhood(vars:Array[CBLSIntVar],
 case class ShiftNeighborhood(vars:Array[CBLSIntVar],
                              name:String = "ShiftNeighborhood",
                              searchZone:()=>Iterable[Int] = null,
+                             searchZone2:()=>Iterable[Int] = null,
                              startShiftIndice:Int = -1,
                              endShiftIndice:Int = -1,
                              maxShiftSize:Int = Int.MaxValue,
@@ -523,9 +523,13 @@ case class ShiftNeighborhood(vars:Array[CBLSIntVar],
   var currentShiftSize:Int = 1
   var currentDirection:Int = 1
   var currentStart:Int = 0
+
   override def exploreNeighborhood(){
     val searchZoneObject = if(searchZone == null)null else searchZone()
     val currentSearchZone = if(searchZone == null)vars.indices else searchZoneObject
+
+    val searchZoneObject2 = if(searchZone2 == null)null else searchZone2()
+    val currentSearchZone2 = if(searchZone2 == null)vars.indices else searchZoneObject2
 
 
     val firstIndices =
@@ -533,20 +537,29 @@ case class ShiftNeighborhood(vars:Array[CBLSIntVar],
       else if(startShiftIndice != -1)List(startShiftIndice)
       else currentSearchZone
 
+    val initialValues: Array[Int] = vars.toArray.map(_.value)
+
+
     //We first determine the border of the shift block and then we determine the movement to perform
     for(firstIndice: Int <- firstIndices){
       currentStart = firstIndice
-      for(secondIndice: Int <- currentSearchZone){
-        val currentEnd = secondIndice
-        currentShiftSize = currentEnd-currentStart
-        currentShiftOffset = 1
-        while (currentShiftOffset < vars.length - currentEnd) {
-          val newObj = doShiftNeighborhood(vars.toList,currentStart,currentShiftSize,currentShiftOffset)
-          if(evaluateCurrentMoveObjTrueIfStopRequired(newObj)){
-            startIndice = (currentStart + 1)%vars.length
-            return
+      for(secondIndice: Int <- currentSearchZone.drop(currentSearchZone.toArray.indexOf(firstIndice)+1)){
+        if(secondIndice - firstIndice <= maxShiftSize) {
+          val currentEnd = secondIndice
+          currentShiftSize = currentEnd - currentStart
+          for (i <- -1 to 1 by 2) {
+            currentShiftOffset = 1
+            currentDirection = i
+            for(currentShiftOffsetPosition:Int <- if(currentDirection > 0) currentSearchZone2.dropWhile(_<=currentEnd).filter(_<(maxOffsetSize+currentEnd))
+            else currentSearchZone2.dropWhile(_<firstIndice-maxOffsetSize).dropRight(currentSearchZone2.size - currentSearchZone2.toArray.indexOf(firstIndice))){
+              currentShiftOffset = if(currentDirection > 0) (currentDirection*currentShiftOffsetPosition)-currentEnd else firstIndice-currentShiftOffsetPosition
+              val newObj = doShiftNeighborhood()
+              if (evaluateCurrentMoveObjTrueIfStopRequired(newObj)) {
+                startIndice = (currentStart + 1) % vars.length
+                return
+              }
+            }
           }
-          currentShiftOffset += 1
         }
       }
     }
@@ -556,26 +569,36 @@ case class ShiftNeighborhood(vars:Array[CBLSIntVar],
     /**returns the value of the objective variable if the block of value specified
       * by startIndice and length is moved by offset positions to the right
       * this process is efficiently performed as the objective Variable is registered for partial propagation
+      *
       * @see registerForPartialPropagation() in [[oscar.cbls.invariants.core.computation.Store]]
       */
-    def doShiftNeighborhood(l:List[CBLSIntVar],startIndice:Int,length:Int,offset:Int): Int ={
-      val variables = l.toArray
-      val initialValues: Array[Int] = l.toArray.map(_.value)
-      for (i <- startIndice to startIndice + offset + length - 1) {
-        if (i < startIndice + offset) {
-          variables(i) := initialValues(i + length)
+    def doShiftNeighborhood(): Int ={
+      if(currentDirection > 0) {
+        for (i <- currentStart to currentStart + currentShiftOffset + currentShiftSize - 1) {
+          if (i < currentStart + currentShiftOffset) {
+            vars(i) := initialValues(i + currentShiftSize)
+          }
+          else {
+            vars(i) := initialValues(i - currentShiftOffset)
+          }
         }
-        else {
-          variables(i) := initialValues(i - offset)
+      }else{
+        for (i <- currentStart - currentShiftOffset to currentStart + currentShiftSize - 1) {
+          if (i < currentStart - currentShiftOffset + currentShiftSize) {
+            vars(i) := initialValues(i + currentShiftOffset)
+          }
+          else {
+            vars(i) := initialValues(i - currentShiftSize)
+          }
         }
       }
       val newVal = obj.value
-      for(i <- variables)i:=initialValues(variables.indexOf(i))
+      for(i <- vars)i:=initialValues(vars.indexOf(i))
       newVal
     }
   }
 
-  override def instantiateCurrentMove(newObj: Int) = ShiftMove(currentStart,currentShiftSize,currentShiftOffset,vars,newObj,name)
+  override def instantiateCurrentMove(newObj: Int) = ShiftMove(currentStart,currentShiftSize,currentShiftOffset,vars,currentDirection,newObj,name)
 
   override def reset(): Unit = {
     startIndice = 0
