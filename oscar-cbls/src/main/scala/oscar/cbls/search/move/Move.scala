@@ -132,6 +132,11 @@ case class RollMove(l:List[CBLSIntVar],offset:Int, override val objAfter:Int, ov
       variables(i) := initialValues((i+offset) % variables.length)
     }
   }
+
+  override def toString: String = {
+    neighborhoodNameToString + "RollMove(" + l + ", offset:" + offset + objToString + ")"
+  }
+
 }
 
 /** standard move that switch a block of value to the right

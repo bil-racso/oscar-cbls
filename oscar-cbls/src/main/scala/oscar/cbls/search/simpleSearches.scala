@@ -365,12 +365,13 @@ case class ShuffleNeighborhood(vars:Array[CBLSIntVar],
  *                    if false, consider the exploration range in natural order from the first position.
  **/
 @deprecated("actually, experimental, so use at your own risk","3.0")
-//TODO: also implement a shift, that moves a portion of the array left or right
+//TODO: also implement minimal roll size (we prefer to use swap instead of roll)
 case class RollNeighborhood(vars:Array[CBLSIntVar],
                             name:String = "RollNeighborhood",
                             searchZone:()=>Set[Int] = null,
                             bridgeOverFrozenVariables:Boolean = false,
                             maxShiftSize:Int=>Int = _ => Int.MaxValue, //the max size of the roll, given the ID of the first variable
+                           //minRollSize:Int, //TODO
                             best:Boolean = false,
                             hotRestart:Boolean = true)
   extends EasyNeighborhood[RollMove](best,name) with AlgebraTrait{

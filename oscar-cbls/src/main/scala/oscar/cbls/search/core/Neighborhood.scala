@@ -101,7 +101,7 @@ abstract class Neighborhood(name:String = null) {
    * use the Statistics combinator to activate the collection of statistics
    * @return
    */
- final def profilingStatistics:String = Profile.statisticsHeader + "\n" + collectProfilingStatistics.mkString("\n")
+  final def profilingStatistics:String = Profile.statisticsHeader + "\n" + collectProfilingStatistics.mkString("\n")
   def collectProfilingStatistics:List[String] = List.empty
 
   /**
@@ -241,6 +241,29 @@ abstract class Neighborhood(name:String = null) {
    * @author renaud.delandtsheer@cetic.be
    */
   def orElse(b: Neighborhood): Neighborhood = new OrElse(this, b)
+
+  /**
+   * performs a restart of the search for a number of time.
+   * it queries neighborhood on the left every time (this is the search neighborhood)
+   * if the search neighborhood is exhausted, it queries the randomizationNeighborhood once (this is the randomization neighborhood, and resets the neighborhood on the left
+   * the process of restarting is allowed maxRestartWithoutImprovement time without improvement over the objective function obj,
+   * that is: every time the search neighborhood is exhausted, it checks if the search delivered an improvement over the objective function,
+   * and the restart is only performed if it could find an improvement at least once in the last "maxRestartWithoutImprovement" descents.
+   *
+   * the best solution is reloaded at exhaustion of this neighborhood.
+   *
+   *
+   * @param randomizationNeighborhood the neighborhood that will randomize the current solution
+   * @param maxRestartWithoutImprovement the stop criterion of the restarting
+   * @param obj the objective function
+   */
+  def onExhaustRestartAfter(randomizationNeighborhood:Neighborhood, maxRestartWithoutImprovement:Int, obj:Objective) = {
+
+    (this orElse (randomizationNeighborhood
+      maxMoves maxRestartWithoutImprovement
+      withoutImprovementOver obj improvementBeignMeasuredBeforeNeighborhoodExploration)) saveBestAndRestoreOnExhaust obj
+  }
+
 
   /**
    * alias for (this maxMoves 1) exhaust b
@@ -588,7 +611,7 @@ abstract class EasyNeighborhood[M<:Move](best:Boolean = false, neighborhoodName:
     if (printPerformedSearches)
       println(neighborhoodNameToString + ": start exploration")
 
-//    if (printExploredNeighbors) println(obj.detailedString(false, 2))
+    //    if (printExploredNeighbors) println(obj.detailedString(false, 2))
 
     exploreNeighborhood()
 
