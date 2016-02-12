@@ -16,7 +16,7 @@ import scala.language.postfixOps
  */
 object carSequencer  extends CBLSModel with App {
 
-  val orderedCarsByType:SortedMap[Int,Int] = SortedMap(0 -> 130, 1 -> 60, 2 -> 110 , 3 -> 120, 4 -> 40, 5 -> 30)
+  val orderedCarsByType:SortedMap[Int,Int] = SortedMap(0 -> 110, 1 -> 60, 2 -> 110 , 3 -> 120, 4 -> 40, 5 -> 30)
 
   println("carSequencing")
   println("orderedCarTypes:" + orderedCarsByType)
@@ -77,7 +77,7 @@ object carSequencer  extends CBLSModel with App {
 
   val roll = RollNeighborhood(carSequence, name = "RollCars", maxShiftSize = _ => 10)
   val mostViolatedSwap = swapsNeighborhood(carSequence,"mostViolatedSwap", searchZone2 = mostViolatedCars, symmetryCanBeBrokenOnIndices = false)
-  val shiftNeighbor = shiftNeighborhood(carSequence, searchZone =() => violatedCars.value.toList, maxShiftSize = carSequence.length/10, maxOffsetSize = carSequence.length/5, hotRestart = false)
+  val shiftNeighbor = shiftNeighborhood(carSequence, /*searchZone1 =() => violatedCars.value.toList,*/ maxShiftSize = carSequence.length/2/*, maxOffsetSize = carSequence.length/2*/, hotRestart = true)
   val rollNeighbor = rollNeighborhood(carSequence)
 
   val linkedDoubleSwaps = DynAndThen(

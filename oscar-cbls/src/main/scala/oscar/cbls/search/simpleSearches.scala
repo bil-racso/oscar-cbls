@@ -485,11 +485,8 @@ case class RollNeighborhood(vars:Array[CBLSIntVar],
   * will shift a block of value to the right(doing it also to the left is redundant)
   *
   * @param vars an array of [[oscar.cbls.invariants.core.computation.CBLSIntVar]] defining the search space
-  * @param searchZone a subset of the indices of vars to consider in order to determine the block's extremities
+  * @param searchZone1 a subset of the indices of vars to consider in order to determine the block's extremities
   *                   if none provided, all the array will be considered each time
-  * @param startShiftIndice the indice of the value that will start the shift block
-  *                         if no startShiftIndice value is given, the neighborhood will consider every possible value in the given array
-  * @param endShiftIndice the indice of the value that will end the shift bloc (similar to the previous setting)
   * @param maxShiftSize the max size of the shift, given the first indice considered in the shift
   * @param maxOffsetSize the max size of the offset
   * @param best if true, the neighborhood will try to find the best solution possible
@@ -504,10 +501,8 @@ case class RollNeighborhood(vars:Array[CBLSIntVar],
   **/
 case class ShiftNeighborhood(vars:Array[CBLSIntVar],
                              name:String = "ShiftNeighborhood",
-                             searchZone:()=>Iterable[Int] = null, //TODO: rename it to "searchZone1"
+                             searchZone1:()=>Iterable[Int] = null,
                              searchZone2:()=>Iterable[Int] = null, //TODO: document this
-                             startShiftIndice:Int = -1, //TODO: remove this
-                             endShiftIndice:Int = -1, //TODO: remove this
                              maxShiftSize:Int = Int.MaxValue,
                              maxOffsetSize:Int = Int.MaxValue, //TODO: document this (size is when you talk about sets); is this the max magniture of the offset? ow about shofting towards negative values? is there a minOffset?
                              best:Boolean = false,
@@ -519,16 +514,14 @@ case class ShiftNeighborhood(vars:Array[CBLSIntVar],
     * as explained in the documentation of this class
     */
 
-  //TODO: currentDirection should be deleted; use currentShiftOffset with negative value.
   var startIndice:Int = 0
   var currentShiftOffset:Int = 0
   var currentShiftSize:Int = 1
-  var currentDirection:Int = 1
   var currentStart:Int = 0
 
   override def exploreNeighborhood(){
-    val searchZoneObject = if(searchZone == null)null else searchZone()
-    val currentSearchZone = if(searchZone == null)vars.indices else searchZoneObject
+    val searchZoneObject = if(searchZone1 == null)null else searchZone1()
+    val currentSearchZone = if(searchZone1 == null)vars.indices else searchZoneObject
 
     val searchZoneObject2 = if(searchZone2 == null)null else searchZone2()
     val currentSearchZone2 = if(searchZone2 == null)vars.indices else searchZoneObject2
@@ -536,27 +529,99 @@ case class ShiftNeighborhood(vars:Array[CBLSIntVar],
 
     val firstIndices =
       if(hotRestart && !best)HotRestart(currentSearchZone, startIndice)
-      else if(startShiftIndice != -1)List(startShiftIndice)  //TODO: this is useless, we just need t ospecify searchZone1?
       else currentSearchZone
 
     val initialValues: Array[Int] = vars.map(_.value)
 
+    /*Test : we first determine the left border of the shift block, then we determine the offset value
+    * and finally the right border value.
+    * The next part of the idea is to go back to the original sequence only if we have found a suitable solution or
+    * if we have to augment the offset value.
+    * This way the complexity of augmenting the size of the block shifted is O(offset+1)
+    * rather than O((offset+length) * 2)*/
+
+    for(firstIndice: Int <- firstIndices){
+      currentStart = firstIndice
+      for(i <- Math.max(-currentStart,-maxOffsetSize) to Math.min(vars.length-2,maxOffsetSize)){
+        var modifHasOccured = false
+        if(i != 0) {
+          currentShiftOffset = i
+          for(secondIndice: Int <- firstIndice to currentSearchZone.size-1){
+            if(secondIndice - firstIndice <= Math.min(maxShiftSize-1,vars.length-1-currentShiftOffset-firstIndice)){
+              currentShiftSize = secondIndice - currentStart + 1
+              val newObj = doSmartShiftNeighborhood()
+              modifHasOccured = true
+              if (evaluateCurrentMoveObjTrueIfStopRequired(newObj)) {
+                startIndice = (currentStart + 1) % vars.length
+                undoSmartShiftNeighborhood
+                return
+              }
+            }
+          }
+          if(modifHasOccured) undoSmartShiftNeighborhood
+        }
+      }
+    }
+
+    def undoSmartShiftNeighborhood(): Unit ={
+      val temp1:Array[Int] = vars.map(_.value)
+      if(currentShiftOffset > 0) {
+        for (i <- currentStart to currentStart + currentShiftOffset + currentShiftSize - 1) {
+          vars(i) := initialValues(i)
+        }
+      }else{
+        for (i <- currentStart + currentShiftOffset to currentStart + currentShiftSize -1){
+          vars(i) := initialValues(i)
+        }
+      }
+      val temp2:Array[Int] = vars.map(_.value)
+    }
+
+    def doSmartShiftNeighborhood(): Int ={
+      //If the block is moved on the right
+      if(currentShiftOffset > 0){
+        //The values are changed
+        val tempVal = vars(currentStart + currentShiftOffset + currentShiftSize - 1).value
+        vars(currentStart + currentShiftOffset + currentShiftSize - 1) := vars(currentStart).value
+        if(currentShiftOffset != 1){
+          for (i <- currentStart to currentStart + currentShiftOffset - 2) {
+            vars(i) := vars(i + 1).value
+          }
+        }
+        vars(currentStart + currentShiftOffset - 1) := tempVal
+        val newVal = obj.value
+        return newVal
+      }
+      //If the block is moved on the left
+      else{
+        //The values are changed
+        val tempVal = vars(currentStart + currentShiftSize - 1).value
+        if(currentShiftOffset == -1){
+          vars(currentStart + currentShiftSize - 1) := vars(currentStart + currentShiftOffset + currentShiftSize -1).value
+          vars(currentStart + currentShiftOffset + currentShiftSize - 1) := tempVal
+        }else {
+          for (i <- currentStart + currentShiftOffset + currentShiftSize to currentStart + currentShiftSize - 1) {
+            vars(i) := vars(i - 1).value
+          }
+          vars(currentStart + currentShiftOffset + currentShiftSize - 1) := tempVal
+        }
+        val newVal = obj.value
+        return newVal
+      }
+    }
+
 
 
     //We first determine the border of the shift block and then we determine the movement to perform
-    for(firstIndice: Int <- firstIndices){
+    /*for(firstIndice: Int <- firstIndices){
       currentStart = firstIndice
-      for(secondIndice: Int <- currentSearchZone.drop(currentSearchZone.toArray.indexOf(firstIndice)+1)){
-        if(secondIndice - firstIndice <= maxShiftSize) {
+      for(secondIndice: Int <- firstIndice to currentSearchZone.size-1){
+        if(secondIndice - firstIndice <= maxShiftSize - 1) {
           val currentEnd = secondIndice
-          currentShiftSize = currentEnd - currentStart
-          for (i <- -1 to 1 by 2) { //TODO: iterate on offset range instead of playing with booleans represented as integers.
-            currentShiftOffset = 1
-            currentDirection = i
-            //TODO: dropWhile.filer is heavy, and you seldom iterate on the full range; ow about putting this is inside the loop?
-            for(currentShiftOffsetPosition:Int <- if(currentDirection > 0) currentSearchZone2.dropWhile(_<=currentEnd).filter(_<(maxOffsetSize+currentEnd))
-            else currentSearchZone2.dropWhile(_<firstIndice-maxOffsetSize).dropRight(currentSearchZone2.size - currentSearchZone2.toArray.indexOf(firstIndice))){
-              currentShiftOffset = if(currentDirection > 0) (currentDirection*currentShiftOffsetPosition)-currentEnd else firstIndice-currentShiftOffsetPosition
+          currentShiftSize = currentEnd - currentStart + 1
+          for(i <- Math.max(-currentStart,-maxOffsetSize) to Math.min(vars.length-currentEnd-1,maxOffsetSize)){
+            if(i != 0){
+              currentShiftOffset = i
               val newObj = doShiftNeighborhood()
               if (evaluateCurrentMoveObjTrueIfStopRequired(newObj)) {
                 startIndice = (currentStart + 1) % vars.length
@@ -566,38 +631,49 @@ case class ShiftNeighborhood(vars:Array[CBLSIntVar],
           }
         }
       }
-    }
+    }*/
 
     def doShiftNeighborhood(): Int ={
-      if(currentDirection > 0) {
-        //TODO: can you iterate on impacted variables only?
-        for (i <- currentStart to currentStart + currentShiftOffset + currentShiftSize - 1) {
-          if (i < currentStart + currentShiftOffset) {
+      //If the block is moved on the right
+      if(currentShiftOffset > 0){
+        //The values are changed
+        for(i <- currentStart to currentStart + currentShiftOffset + currentShiftSize-1){
+          if(i < currentStart + currentShiftOffset){
             vars(i) := initialValues(i + currentShiftSize)
           }
-          else {
+          else{
             vars(i) := initialValues(i - currentShiftOffset)
           }
         }
-      }else{
-        //TODO: can you iterate on impacted variables only?
-        for (i <- currentStart - currentShiftOffset to currentStart + currentShiftSize - 1) {
-          if (i < currentStart - currentShiftOffset + currentShiftSize) {
-            vars(i) := initialValues(i + currentShiftOffset)
+        val newVal = obj.value
+        //After calculating the new objective value we roll-back
+        for(i <- currentStart to currentStart + currentShiftOffset + currentShiftSize-1){
+          vars(i) := initialValues(i)
+        }
+        return newVal
+      }
+      //If the block is moved on the left
+      else{
+        //The values are changed
+        for(i <- currentStart + currentShiftOffset to currentStart + currentShiftSize-1){
+          if(i < currentStart + currentShiftOffset + currentShiftSize){
+            vars(i) := initialValues(i - currentShiftOffset)
           }
-          else {
+          else{
             vars(i) := initialValues(i - currentShiftSize)
           }
         }
+        val newVal = obj.value
+        //After calculating the new objective value we roll-back
+        for(i <- currentStart + currentShiftOffset to currentStart + currentShiftSize-1){
+          vars(i) := initialValues(i)
+        }
+        return newVal
       }
-      val newVal = obj.value
-      //TODO: can you iterate on impacted variables only? (we are talking about copy-pasting the code here-above, or saving the list of impacted indices)
-      for(i <- vars)i:=initialValues(vars.indexOf(i))
-      newVal
     }
   }
 
-  override def instantiateCurrentMove(newObj: Int) = ShiftMove(currentStart,currentShiftSize,currentShiftOffset,vars,currentDirection,newObj,name)
+  override def instantiateCurrentMove(newObj: Int) = ShiftMove(currentStart,currentShiftSize,currentShiftOffset,vars,newObj,name)
 
   override def reset(): Unit = {
     startIndice = 0
