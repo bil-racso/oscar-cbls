@@ -28,8 +28,6 @@ abstract class ActivableProcess(val name:String, verbosity:String=>Unit) extends
   }
 
   def addPreliminaryInput(preliminary:Storage)
-
-  def reset()
 }
 
 abstract class ActivableAtomicProcess(name:String, verbosity:String=>Unit) extends ActivableProcess(name,verbosity){
@@ -56,6 +54,5 @@ abstract class ActivableMultipleProcess(name:String, verbosity:String=>Unit) ext
   private def sumIntOnChildren(f:(ActivableAtomicProcess => Int)) = childProcesses.foldLeft(0)({case (i:Int,a:ActivableAtomicProcess) => i+f(a)})
   private def sumDoubleOnChildren(f:(ActivableAtomicProcess => Double)) = childProcesses.foldLeft(0.0)({case (i:Double,a:ActivableAtomicProcess) => i+f(a)})
 
-  override def reset(): Unit = childProcesses.foreach(_.reset())
 }
 

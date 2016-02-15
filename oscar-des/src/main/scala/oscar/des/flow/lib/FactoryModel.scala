@@ -36,14 +36,6 @@ class FactoryModel(verbosity:String=>Unit) {
     m.simulate(horizon,verbosity,abort)
   }
 
-  def reset(){
-    m.emptyQueue
-    storages.foreach(_.block())
-    processes.foreach(_.reset())
-    storages.foreach(_.reset())
-    if(ms!= null) ms.reset()
-  }
-
   def setQueriesToParse(queriesNameAndExpression:List[(String,String)]){
     require(ms == null)
     val parser = ListenerParser(storages,processes)

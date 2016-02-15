@@ -37,9 +37,6 @@ abstract class Storage(val maxCapacity: Int,
 
   def reset()
 
-  //blocks all inputs and all outputs of the storage
-  def block()
-
   protected def resetStorage(): Unit ={
     resetRichFetchable()
     resetRichPutable()
