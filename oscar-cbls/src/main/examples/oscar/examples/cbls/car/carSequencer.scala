@@ -80,8 +80,8 @@ object carSequencer  extends CBLSModel with App {
   s.close()
 
   val swap = swapsNeighborhood(carSequence,"swapCars")
-
-  val roll = RollNeighborhood(carSequence, name = "RollCars", maxShiftSize = _ => 10)
+  val rollViolated = RollNeighborhood(carSequence, name = "RollViolatedCars", maxShiftSize = _ => 20, searchZone = violatedCars)
+  val roll = RollNeighborhood(carSequence, name = "RollAllCars", maxShiftSize = _ => 10)
   val mostViolatedSwap = swapsNeighborhood(carSequence,"mostViolatedSwap", searchZone2 = mostViolatedCars, symmetryCanBeBrokenOnIndices = false)
   val shiftNeighbor = shiftNeighborhood(carSequence, searchZone1 =() => violatedCars.value.toList, maxShiftSize = carSequence.length/2/*, maxOffsetSize = carSequence.length/2*/, hotRestart = true)
   val rollNeighbor = rollNeighborhood(carSequence)
@@ -107,8 +107,9 @@ object carSequencer  extends CBLSModel with App {
     Profile(mostViolatedSwap)  orElse Profile(roll)
       onExhaustRestartAfter(Profile(shuffleNeighborhood(carSequence, mostViolatedCars, name = "shuffleMostViolatedCars")) guard(() => mostViolatedCars.value.size > 2), 5, obj)
       onExhaustRestartAfter(Profile(shuffleNeighborhood(carSequence, violatedCars, name = "shuffleSomeViolatedCars", numberOfShuffledPositions = () => violatedCars.value.size/2)), 2, obj)
+      orElse rollViolated
       orElse Profile(shiftNeighbor)
-      onExhaustRestartAfter(Profile(shuffleNeighborhood(carSequence, name = "shuffleAllCars")), 10, obj)
+      onExhaustRestartAfter(Profile(shuffleNeighborhood(carSequence, name = "shuffleAllCars")), 4, obj)
       //exhaust Profile(shiftNeighbor)
     )
 

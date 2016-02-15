@@ -362,6 +362,7 @@ case class ShuffleNeighborhood(vars:Array[CBLSIntVar],
  *                    even if you specify a searchZone that is: the exploration starts again
  *                    at the position where it stopped, and consider the indices in increasing order
  *                    if false, consider the exploration range in natural order from the first position.
+ *  @param checkForDifferentValues if true, will check that vars involved in roll have different values before exploring
  **/
 @deprecated("actually, experimental, so use at your own risk","3.0")
 //TODO: also implement minimal roll size (we prefer to use swap instead of roll)
@@ -371,6 +372,7 @@ case class RollNeighborhood(vars:Array[CBLSIntVar],
                             bridgeOverFrozenVariables:Boolean = false,
                             maxShiftSize:Int=>Int = _ => Int.MaxValue, //the max size of the roll, given the ID of the first variable
                            //minRollSize:Int, //TODO
+                            checkForDifferentValues:Boolean = false,
                             best:Boolean = false,
                             hotRestart:Boolean = true)
   extends EasyNeighborhood[RollMove](best,name) with AlgebraTrait{
@@ -420,20 +422,26 @@ case class RollNeighborhood(vars:Array[CBLSIntVar],
         currentRollCluster = vars(currentEnd) :: currentRollCluster
         initValue = vars(currentEnd).value :: initValue
 
-        //performing rolls
+        val shouldExplore = if (checkForDifferentValues){
+          val (minBound,maxBound) = InvariantHelper.getMinMaxBoundsInt(initValue)
+          (minBound != maxBound)
+        }else true
 
-        rollOffset = 1
-        while(rollOffset < currentRollSize){
-          //check this roll
-          doRollOneLeft()
-          if (evaluateCurrentMoveObjTrueIfStopRequired(obj.value)) {
-            startIndice = advance(firstIndice)._1
-            assignAll(currentRollCluster,initValue)
-            return
+        if(shouldExplore) {
+          //performing rolls
+          rollOffset = 1
+          while (rollOffset < currentRollSize) {
+            //check this roll
+            doRollOneLeft()
+            if (evaluateCurrentMoveObjTrueIfStopRequired(obj.value)) {
+              startIndice = advance(firstIndice)._1
+              assignAll(currentRollCluster, initValue)
+              return
+            }
+            rollOffset += 1
           }
-          rollOffset += 1
+          assignAll(currentRollCluster, initValue)
         }
-        assignAll(currentRollCluster,initValue)
 
         val tmp = advance(currentEnd)
         newEnd = tmp._1
