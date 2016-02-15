@@ -96,11 +96,12 @@ class DemoRoutingController extends StopWatch{
 
      val search = new RoundRobin(scala.collection.immutable.List(insertPoint,onePointMove),10).afterMove({
        val routesList:List[List[Int]] = (for(c <- 0 to carsAmong-1)yield myVRP.getRouteOfVehicle(c)).toList
-       DemoRoutingView.drawMove(routesList,(Int.MaxValue,Int.MaxValue))/*(myVRP.getObjective().value,getWatch))*/
+       DemoRoutingView.drawMove(routesList,(myVRP.getObjective().value-myVRP.unroutedPenalty.value,getWatch))
      }) exhaust
        (new BestSlopeFirst(List(onePointMove,threeOpt,segExchange),refresh = customersAmong/2)).afterMove({
          val routesList:List[List[Int]] = (for(c <- 0 to carsAmong-1)yield myVRP.getRouteOfVehicle(c)).toList
-         DemoRoutingView.drawMove(routesList,(myVRP.getObjective().value,getWatch))
+         DemoRoutingView.drawMove(routesList,(myVRP.getObjective().value-myVRP.unroutedPenalty.value,getWatch))
+         println()
        }) // exhaust onePointMove exhaust segExchange//threeOpt //(new BestSlopeFirst(List(onePointMove,twoOpt,threeOpt)))
 
      search.verbose = 1
@@ -113,6 +114,7 @@ class DemoRoutingController extends StopWatch{
      println("\nresult:\n" + myVRP)
 
      println(search.profilingStatistics)
+     DemoRoutingView.displayEndStatistics(Profile.statisticsHeader,search.collectProfilingStatistics)
 
      true
    }

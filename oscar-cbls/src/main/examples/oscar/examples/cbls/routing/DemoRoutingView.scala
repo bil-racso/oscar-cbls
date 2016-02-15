@@ -19,15 +19,18 @@ package oscar.examples.cbls.routing
 import java.awt._
 import java.awt.event.{MouseAdapter}
 import java.awt.geom.Line2D.Double
+import java.awt.geom.Rectangle2D
 import javax.swing._
+import javax.swing.border.EmptyBorder
 
 import oscar.cbls.invariants.lib.minmax.Max
 import oscar.cbls.search.StopWatch
-import oscar.visual.shapes.{VisualCircle, VisualLine, VisualRectangle}
+import oscar.cbls.search.core.Neighborhood
+import oscar.visual.shapes.{VisualText, VisualCircle, VisualLine, VisualRectangle}
 import oscar.visual.{VisualDrawing, VisualFrame}
 
 import scala.swing.{Dimension, Insets}
-import scala.swing.event.MouseEvent
+import scala.swing.event.{FontChanged, MouseEvent}
 
 object DemoRoutingView extends StopWatch{
 
@@ -49,14 +52,20 @@ object DemoRoutingView extends StopWatch{
   val movesBeforeRepaint:Int = 10
 
   val map = f.createFrame("Traveling Salesman Map")
-  val mapPanel = VisualDrawing(false)
+  val mapPanel = new VisualDrawing(false, false)
 
   val objective = f.createFrame("Evolution of the objective function")
-  val objGraphic = VisualDrawing(false)
+  val objGraphic = new VisualDrawing(false, false)
+
+  val result = f.createFrame("Results of the routing")
+  val carsPanel = new JPanel()
+  val routesPanel = new JPanel()
+  val neighborhoodsPanel = new JPanel()
 
   val jTextFields = new JTextField()::new JTextField()::new JTextField()::new JTextField()::Nil
   val jTextFieldsDefaultValue = "300"::"5"::"10000"::"100000"::Nil
   val jLabels = new JLabel("Among of customers : ")::new JLabel("Among of warehouses : ")::new JLabel("Size of the map : ")::new JLabel("Unrouted penality : ")::Nil
+  var routesValue:Array[JLabel] = null
 
   var customersAmong = 0
   var warehouseAmong = 0
@@ -112,12 +121,6 @@ object DemoRoutingView extends StopWatch{
     for(i <- 0 to jTextFields.size-1){
       jTextFields(i).setText(jTextFieldsDefaultValue(i))
       jTextFields(i).setHorizontalAlignment(SwingConstants.LEFT)
-      jTextFields(i).addMouseListener(new MouseAdapter {
-        def mouseClicked(e:MouseEvent): Unit ={
-          println("hello")
-          jTextFields(i).setText("")
-        }
-      })
     }
 
 
@@ -132,7 +135,8 @@ object DemoRoutingView extends StopWatch{
     map.add(mapPanel,BorderLayout.WEST)
 
     objective.setLocation(map.getWidth,0)
-    objective.setSize(new Dimension(f.getWidth - map.getWidth(),map.getHeight))
+    objective.setResizable(false)
+    objective.setSize(new Dimension(f.getWidth - map.getWidth(),220))
     objective.setLayout(new GridBagLayout())
     gbc.gridx = 0
     gbc.gridy = 0
@@ -152,6 +156,25 @@ object DemoRoutingView extends StopWatch{
     gbc.fill = GridBagConstraints.BOTH
     gbc.weighty = 1.0
     objective.add(objGraphic,gbc)
+
+    result.setLocation(map.getWidth,objective.getHeight)
+    result.setSize(new Dimension(f.getWidth - map.getWidth, f.getHeight - objective.getHeight - tb.getHeight - 38))
+    result.setLayout(new GridBagLayout)
+    result.setResizable(false)
+
+    carsPanel.setLayout(new BorderLayout)
+    carsPanel.add(new JScrollPane(routesPanel))
+    carsPanel.setMaximumSize(new Dimension(result.getWidth,result.getHeight/2))
+    gbc.gridx = 0
+    gbc.gridy = 0
+    gbc.insets = new Insets(5,5,5,5)
+    gbc.anchor = GridBagConstraints.WEST
+    gbc.fill = GridBagConstraints.BOTH
+    result.add(carsPanel,gbc)
+
+    neighborhoodsPanel.setMaximumSize(new Dimension(result.getWidth,result.getHeight/2))
+    gbc.gridy = 1
+    result.add(new JScrollPane(neighborhoodsPanel),gbc)
 
     f.pack()
 
@@ -178,10 +201,41 @@ object DemoRoutingView extends StopWatch{
     for(c <- 0 to colorValues.length-1){
       colorValues(c) = new Color((255*Math.random()).toInt,(255*Math.random()).toInt,(255*Math.random()).toInt)
     }
+
+    routesValue = new Array[JLabel](controller.carsAmong)
+    for(rv <- 0 to routesValue.length-1){
+      routesValue(rv) = new JLabel("0")
+    }
+
+    initiateCars()
     drawPoints()
-    //objValues = controller.myVRP.getObjective().value::objValues
-    objValues = 0::objValues
-    objTimes = 0::objTimes
+  }
+
+  def initiateCars(): Unit ={
+    routesPanel.setLayout(new GridLayout(controller.carsAmong/2,2))
+    for(j <- 0 to routesValue.length -1){
+      val tempPanel = new JPanel()
+      tempPanel.setBorder(new EmptyBorder(5,5,5,5))
+      tempPanel.setLayout(new GridLayout(1,2))
+      val tempLabel = new JLabel("Car number " + (j+1) + " : ")
+      tempLabel.setFont(new Font("Serif", Font.BOLD, 16))
+      tempLabel.setForeground(colorValues(j))
+      tempPanel.add(tempLabel)
+      tempPanel.add(routesValue(j))
+
+      routesPanel.add(tempPanel,gbc)
+    }
+    f.validate()
+  }
+
+  def drawMove(routes:scala.List[scala.List[Int]],objInfo:(Int,Long)): Unit ={
+    movesCounter += 1
+    objValues = objInfo._1::objValues
+    objTimes = objInfo._2::objTimes
+
+    if(movesCounter%movesBeforeRepaint == 0)drawRoutes(routes)
+    drawObjectiveCurve()
+    updateRoutes(routes)
   }
 
   def drawPoints(): Unit ={
@@ -197,21 +251,9 @@ object DemoRoutingView extends StopWatch{
     }
   }
 
-  def drawMove(routes:scala.List[scala.List[Int]],objInfo:(Int,Long)): Unit ={
-    movesCounter += 1
-    if(objInfo._1 != Int.MaxValue){
-      objValues = objInfo._1::objValues
-      objTimes = objInfo._2::objTimes
-    }
-    if(movesCounter%movesBeforeRepaint == 0) drawRoutes(routes)
-  }
-
   def drawRoutes(routes:scala.List[scala.List[Int]]): Unit ={
     mapPanel.clear()
     drawPoints()
-    drawObjectiveCurve()
-    println(controller.getWatch)
-
 
     for(r <- 0 to controller.carsAmong-1){
       val color:Color = colorValues(r)
@@ -229,21 +271,31 @@ object DemoRoutingView extends StopWatch{
 
   def drawObjectiveCurve() = {
     val graphWidth = objGraphic.getWidth*1.0
-    val graphHeight = objGraphic.getHeight-1*1.0
+    val graphHeight = objGraphic.getHeight-1*1.0 - 10
     objGraphic.clear()
     val time = controller.getWatch*1.0
-    val maxObjValue = Math.max(objValues.max*1.0,0)
     val timeUnit = time/graphWidth
+    val maxObjValue = objValues.max
 
-    val ordLine = new VisualLine(objGraphic,new Double(0,0,0,graphHeight))
-    ordLine.outerCol_$eq(Color.black)
-    val absLine = new VisualLine(objGraphic,new Double(0,graphHeight,graphWidth,graphHeight))
-    absLine.outerCol_$eq(Color.black)
+    val minObjValue = objValues.min
 
+    def getFloorValues(): (Int,Int) ={
+      var minFloor = 1
+      var maxFloor = 1
+      while(maxObjValue/maxFloor > 10){
+        if(minObjValue/minFloor > 10)
+          minFloor *=10
+        maxFloor *= 10
+      }
+      (minFloor,maxFloor)
+    }
+    val floorValues = getFloorValues
+
+    drawAxes(70,0,graphWidth.toInt,(graphHeight).toInt,floorValues._1,floorValues._2)
     var prec:(Long, scala.Double) = null
-    if(time < graphWidth){
+    if(time < graphWidth - 70){
       for(i <- 0 to objValues.size -1){
-        val pos = (objTimes(i),graphHeight-(graphHeight*objValues(i)/maxObjValue))
+        val pos = (objTimes(i)+70,graphHeight-(graphHeight*objValues(i)/maxObjValue))
         if(prec == null){
           new VisualLine(objGraphic,new Double(pos._1,pos._2,pos._1,pos._2))
         }else{
@@ -254,18 +306,18 @@ object DemoRoutingView extends StopWatch{
       }
     }else{
       var currentTimeUnit:Int = 0
-      var currentTimeUnitValue:Int = 0
-      var currentTimeUnitValuesAmong:Int = 0
-      var previousTimeUnitValue:Int = 0
-      var previousTimeUnit:Int = 0
-      for(i <- objValues.size-2 to 0 by -1){
+      var currentTimeUnitValue:scala.Double = 0.0
+      var currentTimeUnitValuesAmong:scala.Double = 0.0
+      var previousTimeUnitValue:scala.Double = 0.0
+      var previousTimeUnit:scala.Double = 0.0
+      for(i <- objValues.size-1 to 0 by -1){
         if((objTimes(i)/timeUnit).toInt == currentTimeUnit){
-          currentTimeUnitValue += (graphHeight*objValues(i)/maxObjValue).toInt
+          currentTimeUnitValue += objValues(i)
           currentTimeUnitValuesAmong += 1
         }else{
           if(currentTimeUnitValuesAmong != 0) {
-            currentTimeUnitValue = currentTimeUnitValue / currentTimeUnitValuesAmong
-            new VisualLine(objGraphic, new Double(previousTimeUnit, graphHeight - previousTimeUnitValue, currentTimeUnit, graphHeight - currentTimeUnitValue))
+            currentTimeUnitValue = (((graphHeight) * Math.log((currentTimeUnitValue / currentTimeUnitValuesAmong) / floorValues._1))/Math.log(maxObjValue/floorValues._1)).toInt
+            new VisualLine(objGraphic, new Double(previousTimeUnit+70, graphHeight - previousTimeUnitValue, currentTimeUnit+70, graphHeight - currentTimeUnitValue))
             previousTimeUnit = currentTimeUnit
             previousTimeUnitValue = currentTimeUnitValue
             currentTimeUnitValue = 0
@@ -276,8 +328,76 @@ object DemoRoutingView extends StopWatch{
           }
         }
       }
-      new VisualLine(objGraphic, new Double(previousTimeUnit,graphHeight,previousTimeUnit,0))
     }
+  }
+
+  def drawAxes(sW:Int,sH:Int,eW:Int,eH:Int,minF:Int,maxF:Int): Unit ={
+    val ordLine = new VisualLine(objGraphic,new Double(sW,0,sW,eH))
+    ordLine.outerCol_$eq(Color.black)
+    val absLine = new VisualLine(objGraphic,new Double(sW,eH,eW,eH))
+    absLine.outerCol_$eq(Color.black)
+
+    var f = maxF
+    var i = 0
+    while(f >= minF){
+      f /= 10
+      i += 1
+    }
+    var y = i
+    while(f <= maxF){
+      f *= 10
+      new VisualText(objGraphic,0,y*(eH/i),f.toString,false,new Rectangle2D.Double(0, 0, 1, 1))
+      y -= 1
+    }
+  }
+
+  def updateRoutes(routes:scala.List[scala.List[Int]]): Unit ={
+    for(r <- 0 to routes.length-1){
+      val tempVal = routes(r).foldLeft(0)((a,b)=>a+b)
+      routesValue(r).setText(tempVal.toString)
+    }
+  }
+
+  def displayEndStatistics(stats:String, neighborhoods:scala.List[String]): Unit ={
+    neighborhoodsPanel.setLayout(new GridBagLayout)
+    val strings = stats.split(" ").filter(_ != "")
+
+    gbc.gridx = 0
+    gbc.gridy = 0
+    gbc.anchor = GridBagConstraints.WEST
+    gbc.fill = GridBagConstraints.HORIZONTAL
+    gbc.weightx = 0.0
+    for(s <- 0 to strings.length-1){
+      if(strings(s) != ""){
+        if(s == 0){
+          gbc.gridwidth = 5
+          gbc.gridx = 0
+          neighborhoodsPanel.add(new JLabel(strings(s)),gbc)
+        }else{
+          gbc.gridx = s+4
+          gbc.gridwidth = 1
+          neighborhoodsPanel.add(new JLabel(strings(s)),gbc)
+        }
+      }
+    }
+    for(n <- 0 to neighborhoods.length-1){
+      val strings = neighborhoods(n).split(" ").filter(_ != "")
+      gbc.gridy = n+1
+      for(s <- 0 to strings.length-1){
+        if(strings(s) != ""){
+          if(s == 0){
+            gbc.gridx = 0
+            gbc.gridwidth = 5
+            neighborhoodsPanel.add(new JLabel(strings(s)),gbc)
+          }else{
+            gbc.gridx = s+4
+            gbc.gridwidth = 1
+            neighborhoodsPanel.add(new JLabel(strings(s)),gbc)
+          }
+        }
+      }
+    }
+    f.validate()
   }
 
   def resetProblem = {
@@ -287,14 +407,16 @@ object DemoRoutingView extends StopWatch{
     movesCounter = 0
     objValues = Nil
     mapPanel.clear()
+    objGraphic.clear()
     controller.resetProblem
+    routesPanel.removeAll()
   }
 
-   def resolveProblem:Unit = {
-      if(!controller.resolveProblem)JOptionPane.showMessageDialog(f, "Please first initiate the problem")
-      val routesList:scala.List[scala.List[Int]] = (for(c <- 0 to controller.carsAmong-1)yield controller.myVRP.getRouteOfVehicle(c)).toList
-      drawRoutes(routesList)
-     runInThread(drawObjectiveCurve())
-     println(objValues.toString())
-   }
+  def resolveProblem:Unit = {
+    if(!controller.resolveProblem)JOptionPane.showMessageDialog(f, "Please first initiate the problem")
+    val routesList:scala.List[scala.List[Int]] = (for(c <- 0 to controller.carsAmong-1)yield controller.myVRP.getRouteOfVehicle(c)).toList
+    drawRoutes(routesList)
+    drawObjectiveCurve()
+  }
+
 }
