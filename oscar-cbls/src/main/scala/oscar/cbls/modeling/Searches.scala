@@ -147,13 +147,10 @@ trait Search {
     * will shift a block of value to the right(doing it also to the left is redundant)
     *
     * @param vars an array of [[oscar.cbls.invariants.core.computation.CBLSIntVar]] defining the search space
-    * @param searchZone a subset of the indices of vars to consider in order to determine the block's extremities
+    * @param searchZone1 a subset of the indices of vars to consider in order to determine the block's extremities
     *                   if none provided, all the array will be considered each time
-    * @param startShiftIndice the indice of the value that will start the shift block
-    *                         if no startShiftIndice value is given, the neighborhood will consider every possible value in the given array
-    * @param endShiftIndice the indice of the value that will end the shift bloc (similar to the previous setting)
     * @param maxShiftSize the max size of the shift, given the first indice considered in the shift
-    * @param maxOffsetSize the max size of the offset
+    * @param maxOffsetLength the max size of the offset
     * @param best if true, the neighborhood will try to find the best solution possible
     *             (not very usefull because browsing all the possibilities can be very long)
     * @param name the name of the neighborhood
@@ -165,15 +162,12 @@ trait Search {
     */
   def shiftNeighborhood(vars:Array[CBLSIntVar],
                         name:String = "ShiftNeighborhood",
-                        searchZone:()=>Iterable[Int] = null,
-                        searchZone2:()=>Iterable[Int] = null,
-                        startShiftIndice:Int = -1,
-                        endShiftIndice:Int = -1,
+                        searchZone1:()=>Iterable[Int] = null,
                         maxShiftSize:Int = Int.MaxValue,
-                        maxOffsetSize:Int = Int.MaxValue,
+                        maxOffsetLength:Int = Int.MaxValue,
                         best:Boolean = false,
                         hotRestart:Boolean = true) =
-    ShiftNeighborhood(vars, name, searchZone, searchZone2, startShiftIndice, endShiftIndice, maxShiftSize, maxOffsetSize, best, hotRestart)
+    ShiftNeighborhood(vars, name, searchZone1, maxShiftSize, maxOffsetLength, best, hotRestart)
 
   def rollNeighborhood(vars:Array[CBLSIntVar],
                        name:String = "RollNeighborhood",

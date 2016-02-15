@@ -152,7 +152,7 @@ case class RollMove(l:List[CBLSIntVar],offset:Int, override val objAfter:Int, ov
   *                         Notice that the name is not the type of the neighborhood.
   * @author fabian.germeau@student.vinci.be
   * */
-case class ShiftMove(startIndice:Int,length:Int,offset:Int,variables:Array[CBLSIntVar],direction:Int, override val objAfter:Int, override val neighborhoodName:String = null)
+case class ShiftMove(startIndice:Int,length:Int,offset:Int,variables:Array[CBLSIntVar], override val objAfter:Int, override val neighborhoodName:String = null)
   extends Move(objAfter,neighborhoodName){
 
   override def toString: String = {
@@ -162,21 +162,26 @@ case class ShiftMove(startIndice:Int,length:Int,offset:Int,variables:Array[CBLSI
   /** to actually take the move */
   override def commit() {
     val initialValues: Array[Int] = Array.tabulate(variables.length)(variables(_).value)
-    if(direction > 0){
-      for (i <- startIndice to startIndice + offset + length - 1) {
-        if (i < startIndice + offset) {
+    //If the block is moved on the right
+    if(offset > 0){
+      //The values are changed
+      for(i <- startIndice to startIndice + offset + length - 1){
+        if(i < startIndice + offset){
           variables(i) := initialValues(i + length)
         }
-        else {
-         variables(i) := initialValues(i - offset)
+        else{
+          variables(i) := initialValues(i - offset)
         }
       }
-    }else{
-      for (i <- startIndice - offset to startIndice + length - 1) {
-        if (i < startIndice - offset + length) {
-          variables(i) := initialValues(i + offset)
+    }
+    //If the block is moved on the left
+    else{
+      //The values are changed (and don't forget, here offset is negative
+      for(i <- startIndice + offset to startIndice + length - 1){
+        if(i < startIndice + offset + length){
+          variables(i) := initialValues(i - offset)
         }
-        else {
+        else{
           variables(i) := initialValues(i - length)
         }
       }

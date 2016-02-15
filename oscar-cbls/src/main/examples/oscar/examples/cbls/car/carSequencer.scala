@@ -83,7 +83,7 @@ object carSequencer  extends CBLSModel with App {
 
   val roll = RollNeighborhood(carSequence, name = "RollCars", maxShiftSize = _ => 10)
   val mostViolatedSwap = swapsNeighborhood(carSequence,"mostViolatedSwap", searchZone2 = mostViolatedCars, symmetryCanBeBrokenOnIndices = false)
-  val shiftNeighbor = shiftNeighborhood(carSequence, searchZone =() => violatedCars.value.toList, maxShiftSize = carSequence.length/10, maxOffsetSize = carSequence.length/5, hotRestart = true)
+  val shiftNeighbor = shiftNeighborhood(carSequence, searchZone1 =() => violatedCars.value.toList, maxShiftSize = carSequence.length/2/*, maxOffsetSize = carSequence.length/2*/, hotRestart = true)
   val rollNeighbor = rollNeighborhood(carSequence)
 
   val linkedDoubleSwaps = DynAndThen(
