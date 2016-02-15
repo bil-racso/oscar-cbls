@@ -115,7 +115,7 @@ class InvariantTests extends FunSuite with Checkers {
       bench.genIntVarsArray(),
       Gen.choose(10, 20).sample.get,
       Gen.choose(2, 9).sample.get,
-      (x: Int) => x > 1)
+      Array.tabulate(101)(n => (n%3 == 0)))
     bench.run
   }
 

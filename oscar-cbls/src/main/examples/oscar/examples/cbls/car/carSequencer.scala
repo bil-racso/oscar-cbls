@@ -16,7 +16,8 @@ import scala.language.postfixOps
  */
 object carSequencer  extends CBLSModel with App {
 
-  val orderedCarsByType:SortedMap[Int,Int] = SortedMap(0 -> 130, 1 -> 60, 2 -> 110 , 3 -> 120, 4 -> 40, 5 -> 30)
+  val orderedCarsByType:SortedMap[Int,Int] = SortedMap(0 -> 90, 1 -> 60, 2 -> 110 , 3 -> 120, 4 -> 40, 5 -> 30)
+  val carTypes = 0 to 5
 
   println("carSequencing")
   println("orderedCarTypes:" + orderedCarsByType)
@@ -30,10 +31,15 @@ object carSequencer  extends CBLSModel with App {
   //4  T   T   F   T
   //5  F   T   F   T
 
-  val airCoCarTypes = SortedSet(0,2,4)
-  val automaticGearBoxCarTypes = SortedSet(0,1,4,5)
-  val dieselCarTypes = SortedSet(0,1,2)
-  val espCarTypes = SortedSet(3,4,5)
+  def makeBoolArray(values:Int*):Array[Boolean] = {
+    val toReturn = Array.fill(carTypes.end +1)(false)
+    values.foreach(toReturn(_) = true)
+    toReturn
+  }
+  val airCoCarTypes = makeBoolArray(0,2,4)
+  val automaticGearBoxCarTypes = makeBoolArray(0,1,4,5)
+  val dieselCarTypes = makeBoolArray(0,1,2)
+  val espCarTypes = makeBoolArray(3,4,5)
 
   val maxType = orderedCarsByType.keys.max
   val minType = orderedCarsByType.keys.min
@@ -49,16 +55,16 @@ object carSequencer  extends CBLSModel with App {
   val carSequence:Array[CBLSIntVar] = Array.tabulate(nbCars)(p => CBLSIntVar(orderedCarTypesIterator.next(),typeRange,"carClassAtPosition" + p)).toArray
 
   //airConditionner: max 2 out of 3
-  c.post(sequence(carSequence,3,2,airCoCarTypes.contains))
+  c.post(sequence(carSequence,3,2,airCoCarTypes))
 
   //automaticGearBox: max 3 out of 5
-  c.post(sequence(carSequence,5,3,automaticGearBoxCarTypes.contains))
+  c.post(sequence(carSequence,5,3,automaticGearBoxCarTypes))
 
   //diesel: max 3 out of 5
-  c.post(sequence(carSequence,5,3,dieselCarTypes.contains))
+  c.post(sequence(carSequence,5,3,dieselCarTypes))
 
   //esp: max 2 ouf of 3
-  c.post(sequence(carSequence,3,2,espCarTypes.contains))
+  c.post(sequence(carSequence,3,2,espCarTypes))
 
   val impactZone = 5
 
@@ -77,7 +83,7 @@ object carSequencer  extends CBLSModel with App {
 
   val roll = RollNeighborhood(carSequence, name = "RollCars", maxShiftSize = _ => 10)
   val mostViolatedSwap = swapsNeighborhood(carSequence,"mostViolatedSwap", searchZone2 = mostViolatedCars, symmetryCanBeBrokenOnIndices = false)
-  val shiftNeighbor = shiftNeighborhood(carSequence, searchZone =() => violatedCars.value.toList, maxShiftSize = carSequence.length/10, maxOffsetSize = carSequence.length/5, hotRestart = false)
+  val shiftNeighbor = shiftNeighborhood(carSequence, searchZone =() => violatedCars.value.toList, maxShiftSize = carSequence.length/10, maxOffsetSize = carSequence.length/5, hotRestart = true)
   val rollNeighbor = rollNeighborhood(carSequence)
 
   val linkedDoubleSwaps = DynAndThen(
@@ -98,38 +104,36 @@ object carSequencer  extends CBLSModel with App {
     })) name "looselyLinkedDoubleSwaps"
 
   val search2 = (
-    Profile(mostViolatedSwap) orElse Profile(roll)
-      onExhaustRestartAfter(Profile(shuffleNeighborhood(carSequence, mostViolatedCars, name = "shuffleMostViolatedCars")), 5, obj)
+    Profile(mostViolatedSwap) orElse Profile(roll) //Profile(shiftNeighbor)
+      onExhaustRestartAfter(Profile(shuffleNeighborhood(carSequence, mostViolatedCars, name = "shuffleMostViolatedCars")) guard(() => mostViolatedCars.value.size > 2), 5, obj)
       onExhaustRestartAfter(Profile(shuffleNeighborhood(carSequence, violatedCars, name = "shuffleSomeViolatedCars", numberOfShuffledPositions = () => violatedCars.value.size/2)), 2, obj)
       exhaust Profile(shiftNeighbor)
-    ) afterMove(checkGrouped)
+    )
 
-  val search = Profile(
+  val search1 = Profile(
     Profile(mostViolatedSwap random swap)
       orElse (Profile(shiftNeighbor))
-      orElse (shuffleNeighborhood(carSequence, mostViolatedCars, name = "shuffleMostViolatedCars") maxMoves (10))
+      orElse (shuffleNeighborhood(carSequence, mostViolatedCars, name = "shuffleMostViolatedCars")  maxMoves (10))
       orElse (shuffleNeighborhood(carSequence, violatedCars, name = "shuffleAllViolatedCars") maxMoves (10))
       orElse (shuffleNeighborhood(carSequence, name = "globalShuffle") maxMoves (10))
       maxMoves nbCars *2 withoutImprovementOver obj
-      saveBestAndRestoreOnExhaust obj) afterMove(checkGrouped)
-  //.afterMove({println("most violated positions: " + mostViolatedCars.value + " car types: " + mostViolatedCars.value.toList.map(carSequence(_).value))})
+      saveBestAndRestoreOnExhaust obj)
 
-  search2.verbose = 1
-  search2.paddingLength = 150
-  search2.doAllMoves(_ => c.isTrue,obj)
 
-  println(search2.profilingStatistics)
+  val search = search2
 
-  /*search.verbose = 1
+  search.verbose = 1
   search.paddingLength = 150
   search.doAllMoves(_ => c.isTrue,obj)
 
-  println(search.profilingStatistics)*/
+  println(search.profilingStatistics)
 
   println(c.violation)
   println("car sequence:" + carSequence.map(_.value).mkString(","))
 
   println("grouped:" + carSequence.map(_.value).toList.groupBy[Int]((c:Int) => c).mapValues((l:List[Int]) => l.size))
+
+  println(if(c.violation.value == 0) "problem solved" else "PROBLEM COULD NOT BE SOLVED")
 
   def checkGrouped(): Unit ={
     val groupedValuesInSlution = carSequence.map(_.value).toList.groupBy[Int]((c:Int) => c).mapValues((l:List[Int]) => l.size)

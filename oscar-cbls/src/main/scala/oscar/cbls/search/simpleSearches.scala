@@ -526,6 +526,8 @@ case class ShiftNeighborhood(vars:Array[CBLSIntVar],
   var currentDirection:Int = 1
   var currentStart:Int = 0
 
+  val nbVarsInArray = vars.length
+
   override def exploreNeighborhood(){
     val searchZoneObject = if(searchZone == null)null else searchZone()
     val currentSearchZone = if(searchZone == null)vars.indices else searchZoneObject
@@ -559,7 +561,7 @@ case class ShiftNeighborhood(vars:Array[CBLSIntVar],
               currentShiftOffset = if(currentDirection > 0) (currentDirection*currentShiftOffsetPosition)-currentEnd else firstIndice-currentShiftOffsetPosition
               val newObj = doShiftNeighborhood()
               if (evaluateCurrentMoveObjTrueIfStopRequired(newObj)) {
-                startIndice = (currentStart + 1) % vars.length
+                startIndice = (currentStart + 1) % nbVarsInArray
                 return
               }
             }
@@ -592,7 +594,7 @@ case class ShiftNeighborhood(vars:Array[CBLSIntVar],
       }
       val newVal = obj.value
       //TODO: can you iterate on impacted variables only? (we are talking about copy-pasting the code here-above, or saving the list of impacted indices)
-      for(i <- vars)i:=initialValues(vars.indexOf(i))
+      for(i <- vars.indices)vars(i):=initialValues(i)
       newVal
     }
   }
