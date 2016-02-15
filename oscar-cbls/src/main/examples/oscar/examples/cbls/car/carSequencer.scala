@@ -104,10 +104,12 @@ object carSequencer  extends CBLSModel with App {
     })) name "looselyLinkedDoubleSwaps"
 
   val search2 = (
-    Profile(mostViolatedSwap) orElse Profile(roll) //Profile(shiftNeighbor)
+    Profile(mostViolatedSwap)  orElse Profile(roll)
       onExhaustRestartAfter(Profile(shuffleNeighborhood(carSequence, mostViolatedCars, name = "shuffleMostViolatedCars")) guard(() => mostViolatedCars.value.size > 2), 5, obj)
       onExhaustRestartAfter(Profile(shuffleNeighborhood(carSequence, violatedCars, name = "shuffleSomeViolatedCars", numberOfShuffledPositions = () => violatedCars.value.size/2)), 2, obj)
-      exhaust Profile(shiftNeighbor)
+      orElse Profile(shiftNeighbor)
+      onExhaustRestartAfter(Profile(shuffleNeighborhood(carSequence, name = "shuffleAllCars")), 10, obj)
+      //exhaust Profile(shiftNeighbor)
     )
 
   val search1 = Profile(
