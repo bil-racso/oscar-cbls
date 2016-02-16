@@ -4,6 +4,7 @@ import oscar.des.engine.Model
 import oscar.des.flow.core.ItemClassHelper._
 import oscar.des.flow.core.{ItemClassTransformWitAdditionalOutput, ItemClassTransformFunction, Putable, Fetchable}
 import oscar.des.flow.modeling.{MultipleParsingError, MultipleParsingSuccess, ListenerParser}
+import scala.collection.immutable.SortedMap
 import scala.language.implicitConversions
 
 trait implicitConvertors {
@@ -35,6 +36,16 @@ class FactoryModel(verbosity:String=>Unit) {
   def simulate(horizon:Float, verbosity:String=>Unit, abort:()=>Boolean = ()=>false){
     m.simulate(horizon,verbosity,abort)
   }
+
+  /**
+   * creates a clone of this factory model where everything has been reset
+   * so that you can simulate the clone as well
+   * @return
+   */
+  def cloneReset:FactoryModel = {
+    SortedMap.empty[Storage,Storage] ++ storages.map((s:Storage) => (s,s.cloneReset))
+  }
+
 
   def setQueriesToParse(queriesNameAndExpression:List[(String,String)]){
     require(ms == null)

@@ -22,6 +22,7 @@ abstract class Storage(val maxCapacity: Int,
 
   var cost:DoubleExpr = null
 
+  def cloneReset
 
   class BufferCompositeItem(var n:Int, val itemClass:ItemClass)
   implicit def coupleToComposite(c:(Int,ItemClass)):BufferCompositeItem = new BufferCompositeItem(c._1,c._2)
