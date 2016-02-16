@@ -3,18 +3,19 @@ package oscar.examples.cbls.car
 import oscar.cbls.invariants.core.computation.CBLSIntVar
 import oscar.cbls.modeling.CBLSModel
 import oscar.cbls.objective.Objective
-import oscar.cbls.search.RollNeighborhood
-import oscar.cbls.search.combinators.{Profile, DynAndThen}
+import oscar.cbls.search.core.Neighborhood
+import oscar.cbls.search.{Benchmark, RollNeighborhood}
+import oscar.cbls.search.combinators.{DynAndThen, Profile}
 import oscar.cbls.search.move.SwapMove
 
-import scala.collection.SortedSet
 import scala.collection.immutable.SortedMap
-import scala.util.Random
 import scala.language.postfixOps
+import scala.util.Random
+
 /**
  * Created by rdl on 29-01-16.
  */
-object carSequencer  extends CBLSModel with App {
+object carSequencerBenchmarker  extends CBLSModel with App {
 
   val orderedCarsByType:SortedMap[Int,Int] = SortedMap(0 -> 90, 1 -> 60, 2 -> 110 , 3 -> 120, 4 -> 40, 5 -> 30)
   val carTypes = 0 to 5
@@ -104,50 +105,61 @@ object carSequencer  extends CBLSModel with App {
     })) name "looselyLinkedDoubleSwaps"
 
 
-  val search1 = Profile(
-    Profile(mostViolatedSwap random swap)
-      orElse (Profile(shiftNeighbor))
+  val search1 = (
+    (mostViolatedSwap random swap)
+      orElse (shiftNeighbor)
       orElse (shuffleNeighborhood(carSequence, mostViolatedCars, name = "shuffleMostViolatedCars")  maxMoves (10))
       orElse (shuffleNeighborhood(carSequence, violatedCars, name = "shuffleAllViolatedCars") maxMoves (10))
-      orElse (shuffleNeighborhood(carSequence, name = "globalShuffle") maxMoves (10))
+      orElse (shuffleNeighborhood(carSequence, name = "globalShuffle") maxMoves 5)
       maxMoves nbCars *2 withoutImprovementOver obj
+      guard (() => c.violation.value > 0)
       saveBestAndRestoreOnExhaust obj)
 
   val search2 = (
-    Profile(mostViolatedSwap) orElse Profile(roll)
+    mostViolatedSwap orElse roll
       onExhaustRestartAfter(Profile(shuffleNeighborhood(carSequence, mostViolatedCars, name = "shuffleMostViolatedCars")) guard(() => mostViolatedCars.value.size > 2), 5, obj)
-      orElse Profile(shiftNeighbor)
+      orElse shiftNeighbor
       onExhaustRestartAfter(Profile(shuffleNeighborhood(carSequence, violatedCars, name = "shuffleSomeViolatedCars", numberOfShuffledPositions = () => violatedCars.value.size/2)), 2, obj)
-      orElse (Profile(shuffleNeighborhood(carSequence, name = "shuffleAllCars")) maxMoves 4)
+      orElse (shuffleNeighborhood(carSequence, name = "shuffleAllCars") maxMoves 5)
+      guard (() => c.violation.value > 0)
       saveBestAndRestoreOnExhaust obj)
 
   val search3 = (
-    ((Profile(mostViolatedSwap) random swap) orElse Profile(rollViolated)
+    ((mostViolatedSwap random swap) orElse rollViolated
       onExhaustRestartAfter(Profile(shuffleNeighborhood(carSequence, mostViolatedCars, name = "shuffleMostViolatedCars")) guard(() => mostViolatedCars.value.size > 2), 5, obj)
-      exhaustBack Profile(shiftNeighbor))
+      exhaustBack shiftNeighbor)
       onExhaustRestartAfter(Profile(shuffleNeighborhood(carSequence, violatedCars, name = "shuffleSomeViolatedCars", numberOfShuffledPositions = () => violatedCars.value.size/2)), 2, obj)
-      orElse (Profile(shuffleNeighborhood(carSequence, name = "shuffleAllCars")) maxMoves 4)
+      orElse (shuffleNeighborhood(carSequence, name = "shuffleAllCars") maxMoves 5)
+      guard (() => c.violation.value > 0)
       saveBestAndRestoreOnExhaust obj)
 
-  val search = search2
+  val search4 = (
+    ((mostViolatedSwap random swap) orElse rollViolated
+      onExhaustRestartAfter(Profile(shuffleNeighborhood(carSequence, mostViolatedCars, name = "shuffleMostViolatedCars")) guard(() => mostViolatedCars.value.size > 2), 5, obj)
+      exhaustBack shiftNeighbor)
+      onExhaustRestartAfter(Profile(shuffleNeighborhood(carSequence, violatedCars, name = "shuffleSomeViolatedCars", numberOfShuffledPositions = () => violatedCars.value.size/2)), 2, obj)
+      orElse (shuffleNeighborhood(carSequence, name = "shuffleAllCars") maxMoves 5)
+      guard (() => c.violation.value > 0)
+      saveBestAndRestoreOnExhaust obj)
 
-  search.verbose = 1
-  search.paddingLength = 150
-  search.doAllMoves(_ => c.isTrue,obj)
+  val search5 = (
+    mostViolatedSwap random roll
+      onExhaustRestartAfter(Profile(shuffleNeighborhood(carSequence, mostViolatedCars, name = "shuffleMostViolatedCars")) guard(() => mostViolatedCars.value.size > 2), 5, obj)
+      orElse shiftNeighbor
+      onExhaustRestartAfter(Profile(shuffleNeighborhood(carSequence, violatedCars, name = "shuffleSomeViolatedCars", numberOfShuffledPositions = () => violatedCars.value.size/2)), 2, obj)
+      orElse (shuffleNeighborhood(carSequence, name = "shuffleAllCars") maxMoves 5)
+      guard (() => c.violation.value > 0)
+      saveBestAndRestoreOnExhaust obj)
 
-  println(search.profilingStatistics)
+  val search6 = (
+    mostViolatedSwap random roll
+      onExhaustRestartAfter(Profile(shuffleNeighborhood(carSequence, mostViolatedCars, name = "shuffleMostViolatedCars")) guard(() => mostViolatedCars.value.size > 2), 4, obj)
+      orElse shiftNeighbor
+      onExhaustRestartAfter(Profile(shuffleNeighborhood(carSequence, violatedCars, name = "shuffleSomeViolatedCars", numberOfShuffledPositions = () => violatedCars.value.size/2)), 1, obj)
+      orElse (shuffleNeighborhood(carSequence, name = "shuffleAllCars") maxMoves 6)
+      guard (() => c.violation.value > 0)
+      saveBestAndRestoreOnExhaust obj)
 
-  println(c.violation)
-  println("car sequence:" + carSequence.map(_.value).mkString(","))
+  println(Benchmark.benchToStringSimple(obj, 50, List(search1,search2,search3, search4,search5,search6),verbose = 0))
 
-  println("grouped:" + carSequence.map(_.value).toList.groupBy[Int]((c:Int) => c).mapValues((l:List[Int]) => l.size))
-
-  println(if(c.violation.value == 0) "problem solved" else "PROBLEM COULD NOT BE SOLVED")
-
-  def checkGrouped(): Unit ={
-    val groupedValuesInSlution = carSequence.map(_.value).toList.groupBy[Int]((c:Int) => c).mapValues((l:List[Int]) => l.size)
-    for((carType,count) <- groupedValuesInSlution){
-      require(orderedCarsByType(carType) == count, "car count changed on car type " + carType)
-    }
-  }
 }

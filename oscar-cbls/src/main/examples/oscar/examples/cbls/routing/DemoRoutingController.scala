@@ -34,7 +34,7 @@ class DemoRoutingController extends StopWatch{
     customersAmong = customers
     carsAmong = cars
     model = new Store()
-    myVRP = new MyVRP(customers,cars,model,generatedMatrix._1,u)
+    myVRP = new MyVRP(customers,cars,model,generatedMatrix._1,u,0.5)
     model.close()
     generatedMatrix._2.toList
   }

@@ -35,7 +35,7 @@ object DemoRoutingView extends StopWatch{
 
   val controller:DemoRoutingController = new DemoRoutingController
 
-  val f = new VisualFrame("The Traveling Salesman Problem")
+  val f = new VisualFrame("Vehicle routing with load balancing")
   val tb = f.createToolBar()
   //val param = f.createFrame("Traveling Salesman Problem's Parameters")
   val gbc = new GridBagConstraints()
@@ -48,15 +48,15 @@ object DemoRoutingView extends StopWatch{
   var objTimes:scala.List[Long] = Nil
   val movesBeforeRepaint:Int = 10
 
-  val map = f.createFrame("Traveling Salesman Map")
+  val map = f.createFrame("Map")
   val mapPanel = VisualDrawing(false)
 
-  val objective = f.createFrame("Evolution of the objective function")
+  val objective = f.createFrame("Objective function")
   val objGraphic = VisualDrawing(false)
 
   val jTextFields = new JTextField()::new JTextField()::new JTextField()::new JTextField()::Nil
   val jTextFieldsDefaultValue = "300"::"5"::"10000"::"100000"::Nil
-  val jLabels = new JLabel("Among of customers : ")::new JLabel("Among of warehouses : ")::new JLabel("Size of the map : ")::new JLabel("Unrouted penality : ")::Nil
+  val jLabels = new JLabel("Number of customers : ")::new JLabel("Number of vehicles : ")::new JLabel("Size of the map : ")::new JLabel("Unrouted penalty : ")::Nil
 
   var customersAmong = 0
   var warehouseAmong = 0
@@ -87,10 +87,10 @@ object DemoRoutingView extends StopWatch{
     gbc.gridx = 0
     gbc.gridy = 0
     gbc.weightx = 0.0
-    tempPanelCustomers.add(new JLabel("Among of customers : "),gbc)
-    tempPanelCars.add(new JLabel("Among of cars : "),gbc)
+    tempPanelCustomers.add(new JLabel("Number of customers : "),gbc)
+    tempPanelCars.add(new JLabel("Number of vehicles : "),gbc)
     tempPanelSize.add(new JLabel("Size of the map : "),gbc)
-    tempPanelPenality.add(new JLabel("Unrouted penality : "),gbc)
+    tempPanelPenality.add(new JLabel("Unrouted penalty : "),gbc)
 
     gbc.gridx = 1
     gbc.gridy = 0
@@ -105,16 +105,15 @@ object DemoRoutingView extends StopWatch{
     tb.add(tempPanelCars)
     tb.add(tempPanelSize)
     tb.add(tempPanelPenality)
-    tb.addButton("Inititiate the problem", { runInThread(initiateProblem) })
+    tb.addButton("Initialize the problem", { runInThread(initiateProblem) })
     tb.addButton("Reset", {runInThread(resetProblem)})
-    tb.addButton("Resolve", { runInThread(resolveProblem) })
+    tb.addButton("Optimize", { runInThread(resolveProblem) })
 
     for(i <- 0 to jTextFields.size-1){
       jTextFields(i).setText(jTextFieldsDefaultValue(i))
       jTextFields(i).setHorizontalAlignment(SwingConstants.LEFT)
       jTextFields(i).addMouseListener(new MouseAdapter {
         def mouseClicked(e:MouseEvent): Unit ={
-          println("hello")
           jTextFields(i).setText("")
         }
       })
@@ -291,7 +290,7 @@ object DemoRoutingView extends StopWatch{
   }
 
    def resolveProblem:Unit = {
-      if(!controller.resolveProblem)JOptionPane.showMessageDialog(f, "Please first initiate the problem")
+      if(!controller.resolveProblem)JOptionPane.showMessageDialog(f, "Please first initialize the problem")
       val routesList:scala.List[scala.List[Int]] = (for(c <- 0 to controller.carsAmong-1)yield controller.myVRP.getRouteOfVehicle(c)).toList
       drawRoutes(routesList)
      runInThread(drawObjectiveCurve())

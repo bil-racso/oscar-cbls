@@ -18,7 +18,7 @@ object Benchmark extends StopWatch{
     benchToTrace(obj, nRuns, strategies,verbose).map{case (s:String,t:IndexedSeq[RunValues]) => (s,aggregate(t.toList))}
 
   def benchToStringSimple(obj:Objective, nRuns:Int, strategies:Iterable[Neighborhood],verbose:Int = 0):String = {
-    benchToStringFull(obj,nRuns,strategies.map(n => (() => (n.toString,n))),verbose)
+    benchToStringFull(obj,nRuns,strategies.map(n => (() => {n.reset(); (n.toString,n)})),verbose)
   }
 
   def benchToStringFull(obj:Objective, nRuns:Int, strategies:Iterable[()=>(String,Neighborhood)],verbose:Int = 0):String = {
