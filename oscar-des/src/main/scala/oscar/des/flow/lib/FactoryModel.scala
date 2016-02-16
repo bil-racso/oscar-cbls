@@ -43,7 +43,16 @@ class FactoryModel(verbosity:String=>Unit) {
    * @return
    */
   def cloneReset:FactoryModel = {
-    SortedMap.empty[Storage,Storage] ++ storages.map((s:Storage) => (s,s.cloneReset))
+    val newStorages = SortedMap.empty[Storage,Storage] ++ storages.map((s:Storage) => (s,s.cloneReset))
+    //TODO: attention, il faut aussi pmodifier les cost des storages!!
+    val newProcesses = SortedMap.empty[ActivableProcess,ActivableProcess] ++ processes.map((p:ActivableProcess) => (p,p.cloneReset(newStorages)))
+
+    //cloner les expressions
+
+    //mettre les expressions clonées dans newProcesses et newStorages
+
+    //retourner le tout
+    null
   }
 
 
@@ -188,7 +197,7 @@ class FactoryModel(verbosity:String=>Unit) {
                   name:String,
                   overflowOnInput:Boolean,
                   costFunction:String = "0") = {
-    val toReturn = new LIFOStorage(maxSize, initialContent, name, verbosity, overflowOnInput)
+    val toReturn = new LIFOStorage(maxSize, initialContent, name, verbosity, overflowOnInput,0)
     toReturn.cost = ListenerParser.storageCostParser(toReturn).applyAndExpectDouble(costFunction)
     storages = toReturn :: storages
     toReturn
@@ -207,7 +216,7 @@ class FactoryModel(verbosity:String=>Unit) {
                   name:String,
                   overflowOnInput:Boolean,
                   costFunction:String = "0") = {
-    val toReturn = new FIFOStorage(maxSize, initialContent, name, verbosity, overflowOnInput)
+    val toReturn = new FIFOStorage(maxSize, initialContent, name, verbosity, overflowOnInput,0)
     toReturn.cost = ListenerParser.storageCostParser(toReturn).applyAndExpectDouble(costFunction)
     storages = toReturn :: storages
     toReturn

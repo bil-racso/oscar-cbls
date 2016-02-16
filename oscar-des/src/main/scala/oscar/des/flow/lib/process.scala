@@ -19,6 +19,7 @@ import oscar.des.engine.Model
 import oscar.des.flow.DoublyLinkedList
 import oscar.des.flow.core._
 
+import scala.collection.immutable.SortedMap
 import scala.language.implicitConversions
 import oscar.des.flow.core.ItemClassHelper._
 
@@ -54,6 +55,16 @@ case class SingleBatchProcess(m:Model,
   private var waiting = false
 
   def isWaiting = waiting
+
+  override def cloneReset(storages: SortedMap[Storage, Storage]): ActivableProcess = {
+    SingleBatchProcess(m,
+      batchDuration,
+      inputs.map({case (fun,fetchable) => (fun,storages(fetchable.asInstanceOf[Storage]))}),
+      outputs.map({case (fun,putable) => (fun,storages(putable.asInstanceOf[Storage]))}),
+      transformFunction,
+      name,
+      verbosity)
+  }
 
   override def isRunning: Boolean = !waiting
   override def completedBatchCount: Int = performedBatches
@@ -125,6 +136,14 @@ case class BatchProcess(m:Model,
       " totalWaitDuration:" + childProcesses.foldLeft(0.0)(_ + _.totalWaitDuration) +
       " waitingLines:" + childProcesses.foldLeft(0)((waitings:Int,p:SingleBatchProcess) => waitings + (if (p.isWaiting) 1 else 0))
   }
+
+  override def cloneReset(storages: SortedMap[Storage, Storage]): ActivableProcess = {
+    BatchProcess(m,numberOfBatches,batchDuration,inputs.map({case (fun,fetchable) => (fun,storages(fetchable.asInstanceOf[Storage]))}),
+      outputs.map({case (fun,putable) => (fun,storages(putable.asInstanceOf[Storage]))}),
+      name,
+      transformFunction,
+      verbosity)
+  }
 }
 
 /**
@@ -162,6 +181,16 @@ case class SplittingSingleBatchProcess(m:Model,
 
   def isWaiting = waiting
 
+
+  override def cloneReset(storages: SortedMap[Storage, Storage]): ActivableProcess = {
+    SplittingSingleBatchProcess(m,
+      batchDuration,
+      inputs.map({case (fun,fetchable) => (fun,storages(fetchable.asInstanceOf[Storage]))}),
+      outputs.map(_.map({case (fun,putable) => (fun,storages(putable.asInstanceOf[Storage]).asInstanceOf[Putable])})),
+      transformFunction,
+      name,
+      verbosity)
+  }
 
   override def isRunning: Boolean = !waiting
 
@@ -240,6 +269,17 @@ case class SplittingBatchProcess(m:Model,
       " totalWaitDuration:" + childProcesses.foldLeft(0.0)(_ + _.totalWaitDuration) +
       " waitingLines:" + childProcesses.foldLeft(0)((waitings:Int,p:SplittingSingleBatchProcess) => waitings + (if (p.isWaiting) 1 else 0))
   }
+
+  override def cloneReset(storages: SortedMap[Storage, Storage]): ActivableProcess = {
+    SplittingBatchProcess(m,
+      numberOfBatches,
+      batchDuration,
+      inputs.map({case (fun,fetchable) => (fun,storages(fetchable.asInstanceOf[Storage]))}),
+      outputs.map(_.map({case (fun,putable) => (fun,storages(putable.asInstanceOf[Storage]).asInstanceOf[Putable])})),
+      name,
+      transformFunction,
+      verbosity)
+  }
 }
 
 /**
@@ -277,6 +317,18 @@ class ConveyorBeltProcess(m:Model,
   override def completedBatchCount: Int = totalOutputBatches
 
   override def startedBatchCount: Int = totalInputBatches
+
+  override def cloneReset(storages: SortedMap[Storage, Storage]): ActivableProcess = {
+    new ConveyorBeltProcess(m,
+      processDuration,
+      minimalSeparationBetweenBatches,
+      inputs.map({case (fun,fetchable) => (fun,storages(fetchable.asInstanceOf[Storage]))}),
+      outputs.map({case (fun,putable) => (fun,storages(putable.asInstanceOf[Storage]))}),
+      transformFunction,
+      name,
+      verbosity)
+  }
+
 
   private var timeOfLastInput:Double = 0
 

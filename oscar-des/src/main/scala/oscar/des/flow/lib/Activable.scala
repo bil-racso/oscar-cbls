@@ -3,6 +3,8 @@ package oscar.des.flow.lib
 import oscar.des.flow.core.{Outputter, Inputter}
 import oscar.des.flow.core.ItemClassHelper._
 
+import scala.collection.immutable.SortedMap
+
 abstract class Activable{
   def setUnderControl()
   def activate(intensity:Int)
@@ -16,10 +18,10 @@ abstract class ActivableProcess(val name:String, verbosity:String=>Unit) extends
 
   var cost:DoubleExpr = null
 
-  var productionBatch:LIFOStorage = null;
+  var productionBatch:LIFOStorage = null
 
   override def setUnderControl(){
-    productionBatch = new LIFOStorage(Int.MaxValue,List.empty,"productionWindow_" + this.name, verbosity, false)
+    productionBatch = new LIFOStorage(Int.MaxValue,List.empty,"productionWindow_" + this.name, verbosity, false,-1)
     addPreliminaryInput(productionBatch)
   }
 
@@ -28,6 +30,8 @@ abstract class ActivableProcess(val name:String, verbosity:String=>Unit) extends
   }
 
   def addPreliminaryInput(preliminary:Storage)
+
+  def cloneReset(storages:SortedMap[Storage,Storage]):ActivableProcess
 }
 
 abstract class ActivableAtomicProcess(name:String, verbosity:String=>Unit) extends ActivableProcess(name,verbosity){
