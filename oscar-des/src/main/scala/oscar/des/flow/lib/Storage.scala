@@ -1,5 +1,6 @@
 package oscar.des.flow.lib
 
+import oscar.des.engine.Model
 import oscar.des.flow.DoublyLinkedList
 import oscar.des.flow.core.ItemClassHelper._
 import oscar.des.flow.core._
@@ -26,7 +27,7 @@ abstract class Storage(val maxCapacity: Int,
 
   var cost:DoubleExpr = null
 
-  def cloneReset:Storage
+  def cloneReset(newModel:Model):Storage
 
   class BufferCompositeItem(var n:Int, val itemClass:ItemClass)
   implicit def coupleToComposite(c:(Int,ItemClass)):BufferCompositeItem = new BufferCompositeItem(c._1,c._2)
@@ -126,7 +127,7 @@ class FIFOStorage(maxSize:Int,
 
   private[this] var internalSize = content.foldLeft(0)({case (acc,bufferItem) => acc + bufferItem.n})
 
-  override def cloneReset:Storage =
+  override def cloneReset(newModel:Model):Storage =
     new FIFOStorage(maxSize, initialContent, name, verbosity, overflowOnInput,id)
 
   /**
@@ -209,7 +210,7 @@ class LIFOStorage(maxSize:Int,
   override def contentSize: Int = internalSize
   private[this] var internalSize: Int = content.foldLeft(0)({case (acc,bufferItem) => acc + bufferItem.n})
 
-   override def cloneReset: Storage = new LIFOStorage(maxSize, initialContent,name,verbosity,overflowOnInput,id)
+   override def cloneReset(newModel:Model): Storage = new LIFOStorage(maxSize, initialContent,name,verbosity,overflowOnInput,id)
 
    /**
    * @param l

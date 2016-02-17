@@ -56,8 +56,9 @@ case class SingleBatchProcess(m:Model,
 
   def isWaiting = waiting
 
-  override def cloneReset(storages: SortedMap[Storage, Storage]): ActivableProcess = {
-    SingleBatchProcess(m,
+
+  override def cloneReset(newModel: Model, storages: SortedMap[Storage, Storage]): ActivableProcess = {
+    SingleBatchProcess(newModel,
       batchDuration,
       inputs.map({case (fun,fetchable) => (fun,storages(fetchable.asInstanceOf[Storage]))}),
       outputs.map({case (fun,putable) => (fun,storages(putable.asInstanceOf[Storage]))}),
@@ -137,8 +138,9 @@ case class BatchProcess(m:Model,
       " waitingLines:" + childProcesses.foldLeft(0)((waitings:Int,p:SingleBatchProcess) => waitings + (if (p.isWaiting) 1 else 0))
   }
 
-  override def cloneReset(storages: SortedMap[Storage, Storage]): ActivableProcess = {
-    BatchProcess(m,numberOfBatches,batchDuration,inputs.map({case (fun,fetchable) => (fun,storages(fetchable.asInstanceOf[Storage]))}),
+
+  override def cloneReset(newModel: Model, storages: SortedMap[Storage, Storage]): ActivableProcess = {
+    BatchProcess(newModel,numberOfBatches,batchDuration,inputs.map({case (fun,fetchable) => (fun,storages(fetchable.asInstanceOf[Storage]))}),
       outputs.map({case (fun,putable) => (fun,storages(putable.asInstanceOf[Storage]))}),
       name,
       transformFunction,
@@ -182,8 +184,8 @@ case class SplittingSingleBatchProcess(m:Model,
   def isWaiting = waiting
 
 
-  override def cloneReset(storages: SortedMap[Storage, Storage]): ActivableProcess = {
-    SplittingSingleBatchProcess(m,
+  override def cloneReset(newModel: Model, storages: SortedMap[Storage, Storage]): ActivableProcess = {
+    SplittingSingleBatchProcess(newModel,
       batchDuration,
       inputs.map({case (fun,fetchable) => (fun,storages(fetchable.asInstanceOf[Storage]))}),
       outputs.map(_.map({case (fun,putable) => (fun,storages(putable.asInstanceOf[Storage]).asInstanceOf[Putable])})),
@@ -270,8 +272,9 @@ case class SplittingBatchProcess(m:Model,
       " waitingLines:" + childProcesses.foldLeft(0)((waitings:Int,p:SplittingSingleBatchProcess) => waitings + (if (p.isWaiting) 1 else 0))
   }
 
-  override def cloneReset(storages: SortedMap[Storage, Storage]): ActivableProcess = {
-    SplittingBatchProcess(m,
+
+  override def cloneReset(newModel: Model, storages: SortedMap[Storage, Storage]): ActivableProcess = {
+    SplittingBatchProcess(newModel,
       numberOfBatches,
       batchDuration,
       inputs.map({case (fun,fetchable) => (fun,storages(fetchable.asInstanceOf[Storage]))}),
@@ -318,8 +321,8 @@ class ConveyorBeltProcess(m:Model,
 
   override def startedBatchCount: Int = totalInputBatches
 
-  override def cloneReset(storages: SortedMap[Storage, Storage]): ActivableProcess = {
-    new ConveyorBeltProcess(m,
+  override def cloneReset(newModel: Model, storages: SortedMap[Storage, Storage]): ActivableProcess = {
+    new ConveyorBeltProcess(newModel,
       processDuration,
       minimalSeparationBetweenBatches,
       inputs.map({case (fun,fetchable) => (fun,storages(fetchable.asInstanceOf[Storage]))}),
@@ -328,7 +331,6 @@ class ConveyorBeltProcess(m:Model,
       name,
       verbosity)
   }
-
 
   private var timeOfLastInput:Double = 0
 

@@ -43,9 +43,10 @@ class FactoryModel(verbosity:String=>Unit) {
    * @return
    */
   def cloneReset:FactoryModel = {
-    val newStorages = SortedMap.empty[Storage,Storage] ++ storages.map((s:Storage) => (s,s.cloneReset))
+    val newModel:Model = new Model
+    val newStorages = SortedMap.empty[Storage,Storage] ++ storages.map((s:Storage) => (s,s.cloneReset(newModel)))
     //TODO: attention, il faut aussi pmodifier les cost des storages!!
-    val newProcesses = SortedMap.empty[ActivableProcess,ActivableProcess] ++ processes.map((p:ActivableProcess) => (p,p.cloneReset(newStorages)))
+   // val newProcesses = SortedMap.empty[ActivableProcess,ActivableProcess] ++ processes.map((p:ActivableProcess) => (p,p.cloneReset(newModel,newStorages)))
 
     //cloner les expressions
 

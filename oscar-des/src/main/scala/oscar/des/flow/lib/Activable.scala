@@ -1,10 +1,12 @@
 package oscar.des.flow.lib
 
+import oscar.des.engine.Model
 import oscar.des.flow.core.{Outputter, Inputter}
 import oscar.des.flow.core.ItemClassHelper._
 
 import scala.collection.immutable.SortedMap
 
+//TODO: remove Activable, ActivableProcess is enough
 abstract class Activable{
   def setUnderControl()
   def activate(intensity:Int)
@@ -31,7 +33,7 @@ abstract class ActivableProcess(val name:String, verbosity:String=>Unit) extends
 
   def addPreliminaryInput(preliminary:Storage)
 
-  def cloneReset(storages:SortedMap[Storage,Storage]):ActivableProcess
+  def cloneReset(newModel:Model,storages:SortedMap[Storage,Storage]):ActivableProcess
 }
 
 abstract class ActivableAtomicProcess(name:String, verbosity:String=>Unit) extends ActivableProcess(name,verbosity){

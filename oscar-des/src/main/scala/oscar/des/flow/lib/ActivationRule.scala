@@ -3,6 +3,8 @@ package oscar.des.flow.lib
 import oscar.des.engine.Model
 import oscar.des.flow.core.StockNotificationTarget
 
+import scala.collection.immutable.SortedMap
+
 /**
  * a rule that activates a, based on its specific activation scheme
  * @param a the activeable that is activated by this activation
@@ -10,6 +12,8 @@ import oscar.des.flow.core.StockNotificationTarget
 abstract class ActivationRule(a:Activable){
   a.setUnderControl()
   def activate(intensity:Int) {a.activate(intensity)}
+
+  def cloneReset(newModel:Model,activableMapping:SortedMap[Activable,Activable], storageMapping:SortedMap[Storage,Storage]):ActivationRule
 }
 
 /**
@@ -26,6 +30,10 @@ class RegularActivation(m:Model, intensity:Int, delay:Float, initialDelay:Float,
     m.wait(delay){doActivate()}
   }
   m.wait(initialDelay){doActivate()}
+
+  override def cloneReset(newModel: Model, activableMapping: SortedMap[Activable, Activable], storageMapping:SortedMap[Storage,Storage]): ActivationRule = {
+    new RegularActivation(newModel, intensity, delay, initialDelay, activableMapping(a))
+  }
 }
 
 /**
@@ -82,4 +90,15 @@ class OnLowerThreshold(s:Storage,
   }
 
   override def toString: String = name + " " + this.getClass.getSimpleName + ":: placedOrders:" + placedOrders
+
+  override def cloneReset(newModel: Model, activableMapping: SortedMap[Activable, Activable], storageMapping:SortedMap[Storage,Storage]): ActivationRule = {
+    new OnLowerThreshold(storageMapping(s),
+      newModel,
+      activableMapping(a),
+      threshold,
+      activationSize,
+      verbosity,
+      period,
+      name)
+  }
 }
