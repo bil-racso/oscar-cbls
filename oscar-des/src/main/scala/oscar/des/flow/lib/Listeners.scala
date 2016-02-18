@@ -31,7 +31,9 @@ abstract class BoolExpr(accumulating:Boolean, children:Expression*) extends Expr
   def resetAccumulators() {
     throw new Error("accumulating expression must have reset accumulator method overriden")
   }
+  def cloneReset(boolMap:Map[BoolExpr,BoolExpr],doubleMap:Map[BoolExpr,BoolExpr], storeMap:Map[Storage,Storage],processMap:Map[ActivableProcess,ActivableProcess]):BoolExpr
 }
+
 abstract class DoubleExpr(accumulating:Boolean, children:Expression*) extends Expression(accumulating,children:_*){
   override def update(time:Double){value = updatedValue(time)}
   def updatedValue(time:Double):Double
@@ -44,9 +46,20 @@ abstract class DoubleExpr(accumulating:Boolean, children:Expression*) extends Ex
   }
 
   def resetAccumulators(): Unit = {
-    throw new Error("accumulating expression must have reset accumulator method overriden")
+    throw new Error("accumulating expressions must implement resetAccumulators")
   }
+  def cloneReset(boolMap:Map[BoolExpr,BoolExpr],doubleMap:Map[BoolExpr,BoolExpr], storeMap:Map[Storage,Storage],processMap:Map[ActivableProcess,ActivableProcess]):DoubleExpr
 }
+
+
+//class TimedDoubleExpr(child:DoubleExpr) extends Expression(true,child){
+//  override def update(time: Double): Unit = ???
+//
+//  override def valueString: String = ???
+//
+//  override def reset(): Unit = ???
+//}
+
 
 class MetricsStore(rootExpressions:List[(String, Expression)],verbosity:String=>Unit){
   var expressions:List[Expression] = List.empty
@@ -124,6 +137,9 @@ class MetricsStore(rootExpressions:List[(String, Expression)],verbosity:String=>
  */
 case class Empty(s:Storage) extends BoolExpr(false){
   override def updatedValue(time:Double) = s.contentSize == 0
+
+  override def cloneReset(boolMap: Map[BoolExpr, BoolExpr], doubleMap: Map[BoolExpr, BoolExpr], storeMap: Map[Storage, Storage], processMap: Map[ActivableProcess, ActivableProcess]): BoolExpr =
+  Empty(storeMap(s))
 }
 
 /**
@@ -132,6 +148,9 @@ case class Empty(s:Storage) extends BoolExpr(false){
  */
 case class StockLevel(s:Storage) extends DoubleExpr(false){
   override def updatedValue(time:Double): Double = s.contentSize
+
+  override def cloneReset(boolMap: Map[BoolExpr, BoolExpr], doubleMap: Map[BoolExpr, BoolExpr], storeMap: Map[Storage, Storage], processMap: Map[ActivableProcess, ActivableProcess]): DoubleExpr =
+    StockLevel(storeMap(s))
 }
 
 /**
@@ -140,6 +159,9 @@ case class StockLevel(s:Storage) extends DoubleExpr(false){
  */
 case class StockCapacity(s:Storage) extends DoubleExpr(false){
   override def updatedValue(time:Double): Double = s.maxCapacity
+
+  override def cloneReset(boolMap: Map[BoolExpr, BoolExpr], doubleMap: Map[BoolExpr, BoolExpr], storeMap: Map[Storage, Storage], processMap: Map[ActivableProcess, ActivableProcess]): DoubleExpr =
+  StockCapacity(storeMap(s))
 }
 
 /**
@@ -148,6 +170,9 @@ case class StockCapacity(s:Storage) extends DoubleExpr(false){
  */
 case class RelativeStockLevel(s:Storage) extends DoubleExpr(false){
   override def updatedValue(time:Double): Double = s.contentSize.toDouble / s.maxCapacity.toDouble
+
+  override def cloneReset(boolMap: Map[BoolExpr, BoolExpr], doubleMap: Map[BoolExpr, BoolExpr], storeMap: Map[Storage, Storage], processMap: Map[ActivableProcess, ActivableProcess]): DoubleExpr =
+  RelativeStockLevel(storeMap(s))
 }
 
 /**
@@ -156,6 +181,9 @@ case class RelativeStockLevel(s:Storage) extends DoubleExpr(false){
  */
 case class TotalPut(s:Storage) extends DoubleExpr(false){
   override def updatedValue(time:Double): Double = s.totalPut
+
+  override def cloneReset(boolMap: Map[BoolExpr, BoolExpr], doubleMap: Map[BoolExpr, BoolExpr], storeMap: Map[Storage, Storage], processMap: Map[ActivableProcess, ActivableProcess]): DoubleExpr =
+    TotalPut(storeMap(s))
 }
 
 /**
@@ -164,6 +192,9 @@ case class TotalPut(s:Storage) extends DoubleExpr(false){
  */
 case class TotalFetch(s:Storage) extends DoubleExpr(false){
   override def updatedValue(time:Double): Double = s.totalFetch
+
+  override def cloneReset(boolMap: Map[BoolExpr, BoolExpr], doubleMap: Map[BoolExpr, BoolExpr], storeMap: Map[Storage, Storage], processMap: Map[ActivableProcess, ActivableProcess]): DoubleExpr =
+  TotalFetch(storeMap(s))
 }
 
 /**
@@ -172,6 +203,9 @@ case class TotalFetch(s:Storage) extends DoubleExpr(false){
  */
 case class TotalLosByOverflow(s:Storage) extends DoubleExpr(false){
   override def updatedValue(time:Double): Double = s.totalLosByOverflow
+
+  override def cloneReset(boolMap: Map[BoolExpr, BoolExpr], doubleMap: Map[BoolExpr, BoolExpr], storeMap: Map[Storage, Storage], processMap: Map[ActivableProcess, ActivableProcess]): DoubleExpr =
+  TotalLosByOverflow(storeMap(s))
 }
 
 /**
@@ -182,6 +216,9 @@ case class TotalLosByOverflow(s:Storage) extends DoubleExpr(false){
  */
 case class Running(p:ActivableProcess) extends BoolExpr(false){
   override def updatedValue(time:Double) = p.isRunning
+
+  override def cloneReset(boolMap: Map[BoolExpr, BoolExpr], doubleMap: Map[BoolExpr, BoolExpr], storeMap: Map[Storage, Storage], processMap: Map[ActivableProcess, ActivableProcess]): BoolExpr =
+    Running(processMap(p))
 }
 
 /**
@@ -192,6 +229,9 @@ case class Running(p:ActivableProcess) extends BoolExpr(false){
  */
 case class CompletedBatchCount(p:ActivableProcess) extends DoubleExpr(false){
   override def updatedValue(time:Double): Double = p.completedBatchCount
+
+  override def cloneReset(boolMap: Map[BoolExpr, BoolExpr], doubleMap: Map[BoolExpr, BoolExpr], storeMap: Map[Storage, Storage], processMap: Map[ActivableProcess, ActivableProcess]): DoubleExpr =
+    CompletedBatchCount(processMap(p))
 }
 
 //TODO: distinguish batches from splitting process?
@@ -203,6 +243,9 @@ case class CompletedBatchCount(p:ActivableProcess) extends DoubleExpr(false){
  */
 case class StartedBatchCount(p:ActivableProcess) extends DoubleExpr(false){
   override def updatedValue(time:Double): Double = p.startedBatchCount
+
+  override def cloneReset(boolMap: Map[BoolExpr, BoolExpr], doubleMap: Map[BoolExpr, BoolExpr], storeMap: Map[Storage, Storage], processMap: Map[ActivableProcess, ActivableProcess]): DoubleExpr =
+  StartedBatchCount(processMap(p))
 }
 
 /**
@@ -212,6 +255,9 @@ case class StartedBatchCount(p:ActivableProcess) extends DoubleExpr(false){
  */
 case class TotalWaitDuration(p:ActivableProcess) extends DoubleExpr(false){
   override def updatedValue(time:Double): Double = p.totalWaitDuration
+
+  override def cloneReset(boolMap: Map[BoolExpr, BoolExpr], doubleMap: Map[BoolExpr, BoolExpr], storeMap: Map[Storage, Storage], processMap: Map[ActivableProcess, ActivableProcess]): DoubleExpr =
+  TotalWaitDuration(processMap(p))
 }
 
 
@@ -223,6 +269,8 @@ case class TotalWaitDuration(p:ActivableProcess) extends DoubleExpr(false){
  */
 case class BoolConst(b:Boolean) extends BoolExpr(false){
   override def updatedValue(time: Double): Boolean = b
+
+  override def cloneReset(boolMap: Map[BoolExpr, BoolExpr], doubleMap: Map[BoolExpr, BoolExpr], storeMap: Map[Storage, Storage], processMap: Map[ActivableProcess, ActivableProcess]): BoolExpr = this
 }
 
 /**
@@ -231,6 +279,8 @@ case class BoolConst(b:Boolean) extends BoolExpr(false){
  */
 case class DoubleConst(d:Double) extends DoubleExpr(false){
   override def updatedValue(time: Double): Double = d
+
+  override def cloneReset(boolMap: Map[BoolExpr, BoolExpr], doubleMap: Map[BoolExpr, BoolExpr], storeMap: Map[Storage, Storage], processMap: Map[ActivableProcess, ActivableProcess]): DoubleExpr = this
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////
@@ -243,6 +293,8 @@ case class DoubleConst(d:Double) extends DoubleExpr(false){
  */
 case class Not(f:BoolExpr) extends BoolExpr(false,f){
   override def updatedValue(time:Double): Boolean = !f.value
+
+  override def cloneReset(boolMap: Map[BoolExpr, BoolExpr], doubleMap: Map[BoolExpr, BoolExpr], storeMap: Map[Storage, Storage], processMap: Map[ActivableProcess, ActivableProcess]): BoolExpr = Not(boolMap(f))
 }
 
 /**
@@ -253,6 +305,9 @@ case class Not(f:BoolExpr) extends BoolExpr(false,f){
 case class And(f:BoolExpr, g:BoolExpr) extends BoolExpr(false,f,g){
   //We cannot be lazy here because all our expression might need to be updated due to side effect.
   override def updatedValue(time:Double): Boolean = if(f.value) g.value else false
+
+  override def cloneReset(boolMap: Map[BoolExpr, BoolExpr], doubleMap: Map[BoolExpr, BoolExpr], storeMap: Map[Storage, Storage], processMap: Map[ActivableProcess, ActivableProcess]): BoolExpr =
+  And(boolMap(f),boolMap(g))
 }
 
 /**
@@ -262,10 +317,14 @@ case class And(f:BoolExpr, g:BoolExpr) extends BoolExpr(false,f,g){
  */
 case class Or(f:BoolExpr, g:BoolExpr) extends BoolExpr(false,f,g){
   override def updatedValue(time:Double): Boolean = if(f.value) true else g.value
+  override def cloneReset(boolMap: Map[BoolExpr, BoolExpr], doubleMap: Map[BoolExpr, BoolExpr], storeMap: Map[Storage, Storage], processMap: Map[ActivableProcess, ActivableProcess]): BoolExpr =
+    Or(boolMap(f),boolMap(g))
 }
 
 case class ITE(i:BoolExpr, t:BoolExpr, e:BoolExpr ) extends BoolExpr(false,i,t,e){
   override def updatedValue(time: Double): Boolean = if(i.value) t.value else e.value
+  override def cloneReset(boolMap: Map[BoolExpr, BoolExpr], doubleMap: Map[BoolExpr, BoolExpr], storeMap: Map[Storage, Storage], processMap: Map[ActivableProcess, ActivableProcess]): BoolExpr =
+    ITE(boolMap(i),boolMap(t),boolMap(e))
 }
 //////////////////////////////////////////////////////////////////////////////////////////////
 //temporal operators
@@ -287,6 +346,9 @@ case class HasAlwaysBeen(f:BoolExpr) extends BoolExpr(true,f){
   override def resetAccumulators(): Unit = {
     hasAlwaysBeen = f.value
   }
+
+  override def cloneReset(boolMap: Map[BoolExpr, BoolExpr], doubleMap: Map[BoolExpr, BoolExpr], storeMap: Map[Storage, Storage], processMap: Map[ActivableProcess, ActivableProcess]): BoolExpr =
+  HasAlwaysBeen(boolMap(f))
 }
 
 /**
@@ -304,6 +366,8 @@ case class HasBeen(f:BoolExpr) extends BoolExpr(true,f){
   override def resetAccumulators(): Unit = {
     hasBeen = f.value
   }
+  override def cloneReset(boolMap: Map[BoolExpr, BoolExpr], doubleMap: Map[BoolExpr, BoolExpr], storeMap: Map[Storage, Storage], processMap: Map[ActivableProcess, ActivableProcess]): BoolExpr =
+    HasBeen(boolMap(f))
 }
 
 /**
@@ -333,6 +397,9 @@ case class Since(a:BoolExpr,b:BoolExpr) extends BoolExpr(true,a,b){
   override def resetAccumulators(): Unit = {
     previousValue = a.value && b.value
   }
+
+  override def cloneReset(boolMap: Map[BoolExpr, BoolExpr], doubleMap: Map[BoolExpr, BoolExpr], storeMap: Map[Storage, Storage], processMap: Map[ActivableProcess, ActivableProcess]): BoolExpr =
+  Since(boolMap(a),boolMap(b))
 }
 
 /**
@@ -353,6 +420,9 @@ case class BecomesTrue(p:BoolExpr) extends BoolExpr(true,p){
   override def resetAccumulators(): Unit = {
     previousValue = p.value
   }
+
+  override def cloneReset(boolMap: Map[BoolExpr, BoolExpr], doubleMap: Map[BoolExpr, BoolExpr], storeMap: Map[Storage, Storage], processMap: Map[ActivableProcess, ActivableProcess]): BoolExpr =
+  BecomesTrue(boolMap(p))
 }
 
 /**
@@ -396,7 +466,6 @@ case class Delta(p:DoubleExpr) extends DoubleExpr(true,p){
     previousValue = p.value
   }
 }
-
 
 /**
  * the sum of the time lapse between consecutive positions in the trace where b is true at both positions
