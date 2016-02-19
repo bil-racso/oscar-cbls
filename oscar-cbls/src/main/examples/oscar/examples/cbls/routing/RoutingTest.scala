@@ -9,7 +9,7 @@ import oscar.cbls.routing.neighborhood._
 import oscar.cbls.search.StopWatch
 import oscar.cbls.search.combinators.{Atomic, RoundRobin, Profile, BestSlopeFirst}
 import oscar.cbls.modeling.Algebra._
-import oscar.examples.cbls.routing.visual.FramedObjFunctionVisual
+import oscar.examples.cbls.routing.visual.{FramedRoutingMatrixVisual, FramedObjFunctionVisual}
 import scala.language.implicitConversions
 
 /**
@@ -49,8 +49,6 @@ object RoutingTest extends App with StopWatch{
 
   this.startWatch()
 
-  val objGraphic = new FramedObjFunctionVisual()
-
   val n = 300
   val v = 5
 
@@ -63,6 +61,9 @@ object RoutingTest extends App with StopWatch{
   val model = new Store()
 
   val vrp = new MyVRP(n,v,model,distanceMatrix,100000)
+
+  val objGraphic = new FramedObjFunctionVisual()
+  val routingMap = new FramedRoutingMatrixVisual(vrp,10000,positions.toList)
 
   model.close()
 
@@ -113,7 +114,8 @@ object RoutingTest extends App with StopWatch{
 
   val search = new RoundRobin(List(insertPoint,onePointMove),10) exhaust
                       (new BestSlopeFirst(List(onePointMove,threeOpt,segExchange),refresh = n/2)) afterMove({
-    objGraphic.saveObjValue(vrp.getObjective().value,getWatch)
+    objGraphic.notifyValue(vrp.getObjective().value,getWatch)
+    routingMap.drawRoutes
   }) // exhaust onePointMove exhaust segExchange//threeOpt //(new BestSlopeFirst(List(onePointMove,twoOpt,threeOpt)))
 
   search.verbose = 1

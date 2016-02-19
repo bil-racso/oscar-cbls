@@ -1,5 +1,22 @@
 package oscar.examples.cbls.routing.visual
 
+/**
+  * *****************************************************************************
+  * OscaR is free software: you can redistribute it and/or modify
+  * it under the terms of the GNU Lesser General Public License as published by
+  * the Free Software Foundation, either version 2.1 of the License, or
+  * (at your option) any later version.
+  *
+  * OscaR is distributed in the hope that it will be useful,
+  * but WITHOUT ANY WARRANTY; without even the implied warranty of
+  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  * GNU Lesser General Public License  for more details.
+  *
+  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
+  * ****************************************************************************
+  */
+
 import java.awt.event.{AdjustmentEvent, AdjustmentListener}
 import java.awt.{BorderLayout, Toolkit}
 import javax.swing._
@@ -9,12 +26,12 @@ import oscar.visual.VisualFrame
 import scala.swing.Dimension
 
 /**
-  * Created by fabian on 16-02-16.
+  * @author fabian.germeau@student.vinci.be
   */
 trait ObjFunctionVisual {
   val objGraphic = new ObjFunctionGraphic()
 
-  def saveObjValue(objValue:Int,objTime:Long): Unit = {
+  def notifyValue(objValue:Int, objTime:Long): Unit = {
     objGraphic.saveObjValue(objTime,objValue)
   }
 
@@ -50,13 +67,13 @@ class FramedObjFunctionVisual(title:String = "Evolution of the objective functio
     objGraphic.validate()
   }
 
-  override def saveObjValue(objValue:Int,objTime:Long): Unit ={
-    super.saveObjValue(objValue,objTime)
+  override def notifyValue(objValue:Int, objTime:Long): Unit ={
+    super.notifyValue(objValue,objTime)
     objGraphic.validate()
   }
 }
 
-class InternalObjFunctionVisual(title:String = "Evolution of the objective function", dimension:Dimension = null) extends JInternalFrame(title) with ObjFunctionVisual{
+class InternalObjFunctionVisual(title:String = "Evolution of the objective function") extends JInternalFrame(title) with ObjFunctionVisual{
   setLayout(new BorderLayout())
   add(objGraphic, BorderLayout.CENTER)
   setVisible(true)
@@ -80,7 +97,6 @@ class InternalObjFunctionVisual(title:String = "Evolution of the objective funct
   override def drawGlobalCurve(): Unit ={
     super.drawGlobalCurve()
     adjustScrollBarSize((objGraphic.minObjTime/100).toInt,(objGraphic.maxObjTime/100).toInt)
-    println(objGraphic.minObjTime + "     " + objGraphic.maxObjTime)
     validate()
   }
 
@@ -89,8 +105,8 @@ class InternalObjFunctionVisual(title:String = "Evolution of the objective funct
     validate()
   }
 
-  override def saveObjValue(objValue:Int,objTime:Long): Unit ={
-    super.saveObjValue(objValue,objTime)
+  override def notifyValue(objValue:Int, objTime:Long): Unit ={
+    super.notifyValue(objValue,objTime)
     validate()
   }
 

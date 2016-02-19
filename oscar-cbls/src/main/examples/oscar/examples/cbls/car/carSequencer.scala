@@ -109,7 +109,7 @@ object carSequencer  extends CBLSModel with App {
       exhaust Profile(shiftNeighbor)
     ) afterMove({
     checkGrouped
-    objGraph.saveObjValue(obj.value,getWatch)
+    objGraph.notifyValue(obj.value,getWatch)
   })
 
   val search = Profile(

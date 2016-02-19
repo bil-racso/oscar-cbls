@@ -14,6 +14,10 @@
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  * ****************************************************************************
  */
+
+/**
+  * @author fabian.germeau@student.vinci.be
+  */
 package oscar.examples.cbls.routing.visual
 
 import java.awt._
@@ -40,8 +44,7 @@ object DemoRoutingView extends StopWatch{
   var movesCounter:Int = 0
   val movesBeforeRepaint:Int = 10
 
-  val map = f.createFrame("Traveling Salesman Map")
-  val mapPanel = new VisualDrawing(false, false)
+  val routingMap = new InternalRoutingMatrixVisual()
 
   val objGraph = new InternalObjFunctionVisual()
 
@@ -111,26 +114,19 @@ object DemoRoutingView extends StopWatch{
       jTextFields(i).setHorizontalAlignment(SwingConstants.LEFT)
     }
 
+    routingMap.setLocation(0,0)
+    routingMap.setSize(new Dimension(f.getHeight - tb.getHeight - 38,f.getHeight - tb.getHeight - 38))
+    routingMap.setResizable(false)
+    f.desktop.add(routingMap)
 
-    map.setLocation(0,0)
-    map.setSize(new Dimension(f.getHeight - tb.getHeight - 38,f.getHeight - tb.getHeight - 38))
-    map.setLayout(new BorderLayout())
-    map.setResizable(false)
-
-    mapPanel.setPreferredSize(new Dimension(map.getHeight,map.getHeight))
-    mapPanel.setBorder(BorderFactory.createLineBorder(Color.black,5))
-
-    map.add(mapPanel,BorderLayout.WEST)
-
-
-    objGraph.setPreferredSize(new Dimension(f.getWidth-map.getWidth,248))
-    objGraph.setSize(new Dimension(f.getWidth-map.getWidth,248))
+    objGraph.setPreferredSize(new Dimension(f.getWidth-routingMap.getWidth,248))
+    objGraph.setSize(new Dimension(f.getWidth-routingMap.getWidth,248))
     objGraph.setResizable(false)
-    objGraph.setLocation(map.getWidth,0)
+    objGraph.setLocation(routingMap.getWidth,0)
     f.desktop.add(objGraph)
 
-    result.setLocation(map.getWidth,objGraph.getHeight)
-    result.setSize(new Dimension(f.getWidth - map.getWidth, f.getHeight - objGraph.getHeight - tb.getHeight - 38))
+    result.setLocation(routingMap.getWidth,objGraph.getHeight)
+    result.setSize(new Dimension(f.getWidth - routingMap.getWidth, f.getHeight - objGraph.getHeight - tb.getHeight - 38))
     result.setLayout(new GridLayout(2,1))
     result.setResizable(false)
 
@@ -143,11 +139,6 @@ object DemoRoutingView extends StopWatch{
     neighborhoodsPanel.setMaximumSize(new Dimension(result.getWidth,result.getHeight/2))
     neighborhoodsPanel.setBackground(Color.white)
     result.add(new JScrollPane(neighborhoodsPanel))
-
-
-    println(result.getSize())
-    println(carsPanel.getSize())
-    println(neighborhoodsPanel.getSize())
 
     f.pack()
   }
@@ -164,40 +155,15 @@ object DemoRoutingView extends StopWatch{
     val points = controller.initiateProblem(jTextFields.head.getText().toInt,jTextFields(1).getText().toInt,
       jTextFields(2).getText().toInt,jTextFields(3).getText().toInt)
 
-    for(p <- points.reverse){
-      val tempP = (p._1*mapPanel.getHeight/mapSize, p._2*mapPanel.getHeight/mapSize)
-      pointsList = tempP::pointsList
-    }
-
-    def getMaxColorNumber(exp:Int = 1):Int = {
-      println(exp)
-      if(Math.pow(exp,3) < controller.carsNumber)
-      getMaxColorNumber(exp+1)
-      else
-      exp
-    }
-    val maxColorNumber = getMaxColorNumber()
-    colorValues = new Array[Color](Math.pow(maxColorNumber,3).toInt)
-    for(c1 <- 0 until maxColorNumber){
-      val r = 255 / maxColorNumber*c1
-      for(c2 <- 0 until maxColorNumber){
-        val g = 255 / maxColorNumber*c2
-        for(c3 <- 0 until maxColorNumber){
-          val b = 255 / maxColorNumber*c3
-          val i = c1*maxColorNumber*maxColorNumber + c2*maxColorNumber + c3
-          colorValues(i) = new Color(r,g,b)
-          println(r + "  " + g + "  " + b)
-        }
-      }
-    }
-
     routesValue = new Array[JLabel](controller.carsNumber)
     for(rv <- routesValue.indices){
       routesValue(rv) = new JLabel("0")
     }
 
+    colorValues = RandomColorGenerator.generateRandomColors(controller.carsNumber)
+
     initiateCars()
-    drawPoints()
+    initiateMap(mapSize,points)
   }
 
   def initiateCars() ={
@@ -221,44 +187,26 @@ object DemoRoutingView extends StopWatch{
     f.validate()
   }
 
+  /**Initiate the different values needed to draw the map
+   DO NOT switch setMapSize and setPointsList (setPointsList needs the mapSize)
+    */
+  def initiateMap(mapSize:Int,points:scala.List[(Int,Int)]): Unit ={
+    println("Map initiated")
+    routingMap.setVRP(controller.myVRP)
+    routingMap.setColorValues(colorValues)
+    routingMap.setMapSize(mapSize)
+    routingMap.setPointsList(points)
+    routingMap.drawPoints()
+    f.validate()
+  }
+
   def drawMove(routes:scala.List[scala.List[Int]],objInfo:(Int,Long), hopDistances:Array[IntValue]): Unit ={
     movesCounter += 1
 
-    if(movesCounter%movesBeforeRepaint == 0)drawRoutes(routes)
-    objGraph.saveObjValue(objInfo._1,objInfo._2)
+    if(movesCounter%movesBeforeRepaint == 0)routingMap.drawRoutes()
+    objGraph.notifyValue(objInfo._1,objInfo._2)
     objGraph.validate()
     updateRoutes(hopDistances)
-  }
-
-  def drawPoints() ={
-    for(p <- pointsList){
-      if(pointsList.indexOf(p) < controller.carsNumber){
-        val tempPoint = new VisualCircle(mapPanel,p._1.toInt,p._2.toInt,5)
-        tempPoint.innerCol_$eq(colorValues(pointsList.indexOf(p)))
-      }
-      else{
-        val tempPoint = new VisualCircle(mapPanel,p._1.toInt,p._2.toInt,2)
-        tempPoint.innerCol_$eq(Color.black)
-      }
-    }
-  }
-
-  def drawRoutes(routes:scala.List[scala.List[Int]]): Unit ={
-    mapPanel.clear()
-    drawPoints()
-
-    for(r <- 0 until controller.carsNumber){
-      val color:Color = colorValues(r)
-      val points = routes(r)
-      var old = points.head
-      for(p <- points){
-        val tempRoute = new VisualLine(mapPanel,new Double(pointsList(old)._1, pointsList(old)._2,pointsList(p)._1,pointsList(p)._2))
-        tempRoute.outerCol_$eq(color)
-        old = p
-      }
-      val tempRoute = new VisualLine(mapPanel,new Double(pointsList(old)._1, pointsList(old)._2,pointsList(points.head)._1,pointsList(points.head)._2))
-      tempRoute.outerCol_$eq(color)
-    }
   }
 
   def updateRoutes(hopDistance:Array[IntValue]): Unit ={
@@ -304,9 +252,8 @@ object DemoRoutingView extends StopWatch{
   def resetProblem() = {
     mapSize = Int.MaxValue
     pointsList = Nil
-    colorValues = null
     movesCounter = 0
-    mapPanel.clear()
+    routingMap.clear()
     objGraph.clear()
     controller.resetProblem
     routesPanel.removeAll()
@@ -317,9 +264,8 @@ object DemoRoutingView extends StopWatch{
   def resolveProblem() = {
     if(!controller.resolveProblem)JOptionPane.showMessageDialog(f, "Please first initiate the problem")
     val routesList:scala.List[scala.List[Int]] = (for(c <- 0 until controller.carsNumber)yield controller.myVRP.getRouteOfVehicle(c)).toList
-    drawRoutes(routesList)
+    routingMap.drawRoutes()
     objGraph.drawGlobalCurve()
-    objGraph.validate()
   }
 
 }

@@ -11,7 +11,7 @@ import oscar.visual.VisualDrawing
 import scala.collection.mutable.ListBuffer
 
 /**
-  * Created by fabian on 16-02-16.
+  * @author fabian.germeau@student.vinci.be
   */
 
 class ObjFunctionGraphic(refreshTime:scala.Double = 100.0) extends VisualDrawing(false,false) with StopWatch{
@@ -39,6 +39,7 @@ class ObjFunctionGraphic(refreshTime:scala.Double = 100.0) extends VisualDrawing
     precTime = 0.0
   }
 
+  //Save the objectif value and the time value of the current state
   def saveObjValue(time:Long,objValue:Int): Unit ={
     maxHeight = getHeight - 30
     maxWidth = getWidth - 10
@@ -154,7 +155,7 @@ class ObjFunctionGraphic(refreshTime:scala.Double = 100.0) extends VisualDrawing
     (minWidth + (maxWidth - minWidth) * (value - minAbsValue)/Math.max(maxAbsValue - minAbsValue,1)).toInt
   }
 
-  //Determine the border of the Y axis
+  //Return the value of the Y axis's border
   def getOrdFloorValues(diffObjValue:Int, minObjValue:Int, maxObjValue:Int, diffFloor:Int = 1): (Int,Int) ={
     if(diffFloor <= diffObjValue){
       getOrdFloorValues(diffObjValue,minObjValue,maxObjValue,diffFloor*10)
@@ -168,7 +169,7 @@ class ObjFunctionGraphic(refreshTime:scala.Double = 100.0) extends VisualDrawing
     }
   }
 
-  //Determine the border of the X axis
+  //Return the value of the X axis's border
   def getAbsFloorValues(diffTimeValue:scala.Double, minTimeValue:scala.Double, maxTimeValue:scala.Double, diffFloor:scala.Double = 1): (scala.Double, scala.Double) ={
     if(diffFloor <= diffTimeValue){
       getAbsFloorValues(diffTimeValue,minTimeValue,maxTimeValue,diffFloor*10)
@@ -182,7 +183,7 @@ class ObjFunctionGraphic(refreshTime:scala.Double = 100.0) extends VisualDrawing
     }
   }
 
-  //Determine the list of elements that will be considered for the drawing of the curve
+  //Return the list of elements that will be considered for the drawing of the curve
   def getUsedLists: (scala.List[Int], scala.List[Long], scala.List[Int]) = {
     val usedObjValues: ListBuffer[Int] = new ListBuffer[Int]
     val usedObjTimes: ListBuffer[Long] = new ListBuffer[Long]

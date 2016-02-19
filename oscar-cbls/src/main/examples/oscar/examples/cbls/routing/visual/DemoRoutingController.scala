@@ -100,10 +100,8 @@ class DemoRoutingController extends StopWatch{
        DemoRoutingView.drawMove(routesList,(myVRP.getObjective().value,getWatch), myVRP.hopDistancePerVehicle)
      }) exhaust
        (new BestSlopeFirst(List(onePointMove,threeOpt,segExchange),refresh = customersNumber/2)).afterMove({
-         Thread.sleep(10)
          val routesList:List[List[Int]] = (for(c <- 0 to carsNumber-1)yield myVRP.getRouteOfVehicle(c)).toList
          DemoRoutingView.drawMove(routesList,(myVRP.getObjective().value,getWatch), myVRP.hopDistancePerVehicle)
-         println()
        }) // exhaust onePointMove exhaust segExchange//threeOpt //(new BestSlopeFirst(List(onePointMove,twoOpt,threeOpt)))
 
      search.verbose = 1
