@@ -86,8 +86,8 @@ object carSequencer  extends CBLSModel with App {
   val shiftNeighbor = shiftNeighborhood(carSequence, searchZone1 =() => violatedCars.value.toList, maxShiftSize = carSequence.length/2/*, maxOffsetSize = carSequence.length/2*/, hotRestart = true)
   val rollNeighbor = rollNeighborhood(carSequence)
 
-  val linkedDoubleSwaps = DynAndThen(
-    swapsNeighborhood(carSequence,"swapCars1"),
+  val linkedDoubleSwaps =
+    swapsNeighborhood(carSequence,"swapCars1") dynAndThen(
     ((swapMove:SwapMove) => {
       val indices = List(swapMove.idI, swapMove.idJ)
       swapsNeighborhood(carSequence, "swapCars2", searchZone1 = () => indices, symmetryCanBeBrokenOnIndices = false, symmetryCanBeBrokenOnValue = true)
@@ -95,36 +95,18 @@ object carSequencer  extends CBLSModel with App {
 
   val doubleSwaps = (swapsNeighborhood(carSequence,"swapCars1") andThen swapsNeighborhood(carSequence,"swapCars2")) name "doubleSwaps"
 
-  val looselyLinkedDoubleSwaps = DynAndThen(
-    swapsNeighborhood(carSequence,"swapCars1", symmetryCanBeBrokenOnIndices = false),
+  val looselyLinkedDoubleSwaps =
+    swapsNeighborhood(carSequence,"swapCars1", symmetryCanBeBrokenOnIndices = false) dynAndThen(
     ((swapMove:SwapMove) => {
       val firstSwappedCar = 0.max(swapMove.idI - impactZone) until (nbCars).min(swapMove.idI + impactZone)
       val otherSwappedCar = (nbCars-1).min(swapMove.idJ+1) until nbCars
       swapsNeighborhood(carSequence, "swapCars2", searchZone1 = () => firstSwappedCar, searchZone2 = () => otherSwappedCar, symmetryCanBeBrokenOnIndices = false)
     })) name "looselyLinkedDoubleSwaps"
 
-
-  val search1 = Profile(
-    Profile(mostViolatedSwap random swap)
-      orElse (Profile(shiftNeighbor))
-      orElse (shuffleNeighborhood(carSequence, mostViolatedCars, name = "shuffleMostViolatedCars")  maxMoves (10))
-      orElse (shuffleNeighborhood(carSequence, violatedCars, name = "shuffleAllViolatedCars") maxMoves (10))
-      orElse (shuffleNeighborhood(carSequence, name = "globalShuffle") maxMoves (10))
-      maxMoves nbCars *2 withoutImprovementOver obj
-      saveBestAndRestoreOnExhaust obj)
-
   val search2 = (
     Profile(mostViolatedSwap) orElse Profile(roll)
       onExhaustRestartAfter(Profile(shuffleNeighborhood(carSequence, mostViolatedCars, name = "shuffleMostViolatedCars")) guard(() => mostViolatedCars.value.size > 2), 5, obj)
       orElse Profile(shiftNeighbor)
-      onExhaustRestartAfter(Profile(shuffleNeighborhood(carSequence, violatedCars, name = "shuffleSomeViolatedCars", numberOfShuffledPositions = () => violatedCars.value.size/2)), 2, obj)
-      orElse (Profile(shuffleNeighborhood(carSequence, name = "shuffleAllCars")) maxMoves 4)
-      saveBestAndRestoreOnExhaust obj)
-
-  val search3 = (
-    ((Profile(mostViolatedSwap) random swap) orElse Profile(rollViolated)
-      onExhaustRestartAfter(Profile(shuffleNeighborhood(carSequence, mostViolatedCars, name = "shuffleMostViolatedCars")) guard(() => mostViolatedCars.value.size > 2), 5, obj)
-      exhaustBack Profile(shiftNeighbor))
       onExhaustRestartAfter(Profile(shuffleNeighborhood(carSequence, violatedCars, name = "shuffleSomeViolatedCars", numberOfShuffledPositions = () => violatedCars.value.size/2)), 2, obj)
       orElse (Profile(shuffleNeighborhood(carSequence, name = "shuffleAllCars")) maxMoves 4)
       saveBestAndRestoreOnExhaust obj)
