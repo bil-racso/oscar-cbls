@@ -6,6 +6,7 @@ import oscar.cbls.objective.Objective
 import oscar.cbls.search.RollNeighborhood
 import oscar.cbls.search.combinators.{Profile, DynAndThen}
 import oscar.cbls.search.move.SwapMove
+import oscar.examples.cbls.routing.visual.FramedObjFunctionVisual
 
 import scala.collection.SortedSet
 import scala.collection.immutable.SortedMap
@@ -16,7 +17,9 @@ import scala.language.postfixOps
  */
 object carSequencer  extends CBLSModel with App {
 
-  val orderedCarsByType:SortedMap[Int,Int] = SortedMap(0 -> 130, 1 -> 60, 2 -> 110, 3 -> 120, 4 -> 40, 5 -> 30)
+  val objGraph = new FramedObjFunctionVisual()
+
+  val orderedCarsByType:SortedMap[Int,Int] = SortedMap(0 -> 110, 1 -> 60, 2 -> 110, 3 -> 120, 4 -> 40, 5 -> 30)
 
   println("carSequencing")
   println("orderedCarTypes:" + orderedCarsByType)
@@ -73,11 +76,13 @@ object carSequencer  extends CBLSModel with App {
 
   s.close()
 
+  startWatch()
+
   val swap = swapsNeighborhood(carSequence,"swapCars")
 
   val roll = RollNeighborhood(carSequence, name = "RollCars", maxShiftSize = _ => 10)
   val mostViolatedSwap = swapsNeighborhood(carSequence,"mostViolatedSwap", searchZone2 = mostViolatedCars, symmetryCanBeBrokenOnIndices = false)
-  val shiftNeighbor = shiftNeighborhood(carSequence, searchZone1 =() => violatedCars.value.toList, maxShiftSize = carSequence.length/2/*, maxOffsetSize = carSequence.length/2*/, hotRestart = true)
+  val shiftNeighbor = shiftNeighborhood(carSequence, searchZone1 =() => violatedCars.value.toList/*, maxShiftSize = carSequence.length/2, maxOffsetSize = carSequence.length/2*/, hotRestart = true)
   val rollNeighbor = rollNeighborhood(carSequence)
 
   val linkedDoubleSwaps = DynAndThen(
@@ -102,7 +107,10 @@ object carSequencer  extends CBLSModel with App {
       onExhaustRestartAfter(Profile(shuffleNeighborhood(carSequence, mostViolatedCars, name = "shuffleMostViolatedCars")), 5, obj)
       onExhaustRestartAfter(Profile(shuffleNeighborhood(carSequence, violatedCars, name = "shuffleSomeViolatedCars", numberOfShuffledPositions = () => violatedCars.value.size/2)), 2, obj)
       exhaust Profile(shiftNeighbor)
-    ) afterMove(checkGrouped)
+    ) afterMove({
+    checkGrouped
+    objGraph.saveObjValue(obj.value,getWatch)
+  })
 
   val search = Profile(
     Profile(mostViolatedSwap random swap)
@@ -130,6 +138,8 @@ object carSequencer  extends CBLSModel with App {
   println("car sequence:" + carSequence.map(_.value).mkString(","))
 
   println("grouped:" + carSequence.map(_.value).toList.groupBy[Int]((c:Int) => c).mapValues((l:List[Int]) => l.size))
+
+  objGraph.drawGlobalCurve()
 
   def checkGrouped(): Unit ={
     val groupedValuesInSlution = carSequence.map(_.value).toList.groupBy[Int]((c:Int) => c).mapValues((l:List[Int]) => l.size)

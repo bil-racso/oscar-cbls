@@ -9,6 +9,7 @@ import oscar.cbls.routing.neighborhood._
 import oscar.cbls.search.StopWatch
 import oscar.cbls.search.combinators.{Atomic, RoundRobin, Profile, BestSlopeFirst}
 import oscar.cbls.modeling.Algebra._
+import oscar.examples.cbls.routing.visual.FramedObjFunctionVisual
 import scala.language.implicitConversions
 
 /**
@@ -47,6 +48,8 @@ with PenaltyForEmptyRouteAsObjectiveTerm{ //just for the fun of it
 object RoutingTest extends App with StopWatch{
 
   this.startWatch()
+
+  val objGraphic = new FramedObjFunctionVisual()
 
   val n = 300
   val v = 5
@@ -109,12 +112,15 @@ object RoutingTest extends App with StopWatch{
     vehicles=() => vrp.vehicles.toList))
 
   val search = new RoundRobin(List(insertPoint,onePointMove),10) exhaust
-                      (new BestSlopeFirst(List(onePointMove,threeOpt,segExchange),refresh = n/2)) // exhaust onePointMove exhaust segExchange//threeOpt //(new BestSlopeFirst(List(onePointMove,twoOpt,threeOpt)))
+                      (new BestSlopeFirst(List(onePointMove,threeOpt,segExchange),refresh = n/2)) afterMove({
+    objGraphic.saveObjValue(vrp.getObjective().value,getWatch)
+  }) // exhaust onePointMove exhaust segExchange//threeOpt //(new BestSlopeFirst(List(onePointMove,twoOpt,threeOpt)))
 
   search.verbose = 1
 //    search.verboseWithExtraInfo(3,() => vrp.toString)
   //segExchange.verbose = 3
   search.doAllMoves(_ > 10*n, vrp.objectiveFunction)
+  objGraphic.drawGlobalCurve()
 
   println("total time " + getWatch + "ms or  " + getWatchString)
 
