@@ -6,7 +6,6 @@ import oscar.cbls.objective.Objective
 import oscar.cbls.search.RollNeighborhood
 import oscar.cbls.search.combinators.{Profile, DynAndThen}
 import oscar.cbls.search.move.SwapMove
-import oscar.examples.cbls.routing.visual.FramedObjFunctionVisual
 
 import scala.collection.SortedSet
 import scala.collection.immutable.SortedMap
@@ -16,8 +15,6 @@ import scala.language.postfixOps
  * Created by rdl on 29-01-16.
  */
 object carSequencer  extends CBLSModel with App {
-
-  val objGraph = new FramedObjFunctionVisual()
 
   val orderedCarsByType:SortedMap[Int,Int] = SortedMap(0 -> 110, 1 -> 60, 2 -> 110, 3 -> 120, 4 -> 40, 5 -> 30)
 
@@ -107,10 +104,7 @@ object carSequencer  extends CBLSModel with App {
       onExhaustRestartAfter(Profile(shuffleNeighborhood(carSequence, mostViolatedCars, name = "shuffleMostViolatedCars")), 5, obj)
       onExhaustRestartAfter(Profile(shuffleNeighborhood(carSequence, violatedCars, name = "shuffleSomeViolatedCars", numberOfShuffledPositions = () => violatedCars.value.size/2)), 2, obj)
       exhaust Profile(shiftNeighbor)
-    ) afterMove({
-    checkGrouped
-    objGraph.notifyValue(obj.value,getWatch)
-  })
+    )
 
   val search = Profile(
     Profile(mostViolatedSwap random swap)
@@ -138,8 +132,6 @@ object carSequencer  extends CBLSModel with App {
   println("car sequence:" + carSequence.map(_.value).mkString(","))
 
   println("grouped:" + carSequence.map(_.value).toList.groupBy[Int]((c:Int) => c).mapValues((l:List[Int]) => l.size))
-
-  objGraph.drawGlobalCurve()
 
   def checkGrouped(): Unit ={
     val groupedValuesInSlution = carSequence.map(_.value).toList.groupBy[Int]((c:Int) => c).mapValues((l:List[Int]) => l.size)

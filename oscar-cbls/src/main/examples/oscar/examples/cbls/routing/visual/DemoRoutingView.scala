@@ -21,13 +21,13 @@
 package oscar.examples.cbls.routing.visual
 
 import java.awt._
-import java.awt.geom.Line2D.Double
 import javax.swing._
 
 import oscar.cbls.invariants.core.computation.IntValue
 import oscar.cbls.search.StopWatch
-import oscar.visual.shapes.{VisualCircle, VisualLine}
-import oscar.visual.{VisualDrawing, VisualFrame}
+import oscar.examples.cbls.routing.visual.MatrixMap.RoutingMatrixVisual
+import oscar.examples.cbls.routing.visual.ObjFunctionCurve.InternalObjFunctionVisual
+import oscar.visual.VisualFrame
 
 import scala.swing.{Dimension, Insets}
 
@@ -44,9 +44,9 @@ object DemoRoutingView extends StopWatch{
   var movesCounter:Int = 0
   val movesBeforeRepaint:Int = 10
 
-  val routingMap = new InternalRoutingMatrixVisual()
+  val routingMap = new RoutingMatrixVisual(pickupAndDeliveryPoints = true)
 
-  val objGraph = new InternalObjFunctionVisual()
+  val objGraph = new InternalObjFunctionVisual(rightLeftScrollbar = true,adjustDisplayedValue = true)
 
   val result = f.createFrame("Results of the routing")
   val carsPanel = new JPanel()
@@ -114,16 +114,9 @@ object DemoRoutingView extends StopWatch{
       jTextFields(i).setHorizontalAlignment(SwingConstants.LEFT)
     }
 
-    routingMap.setLocation(0,0)
-    routingMap.setSize(new Dimension(f.getHeight - tb.getHeight - 38,f.getHeight - tb.getHeight - 38))
-    routingMap.setResizable(false)
-    f.desktop.add(routingMap)
+    f.addFrame(routingMap, location = (0,0), size = (f.getHeight - tb.getHeight - 38,f.getHeight - tb.getHeight - 38), resizable = false)
 
-    objGraph.setPreferredSize(new Dimension(f.getWidth-routingMap.getWidth,248))
-    objGraph.setSize(new Dimension(f.getWidth-routingMap.getWidth,248))
-    objGraph.setResizable(false)
-    objGraph.setLocation(routingMap.getWidth,0)
-    f.desktop.add(objGraph)
+    f.addFrame(objGraph, location = (routingMap.getWidth,0), size = (f.getWidth-routingMap.getWidth,248), resizable = false)
 
     result.setLocation(routingMap.getWidth,objGraph.getHeight)
     result.setSize(new Dimension(f.getWidth - routingMap.getWidth, f.getHeight - objGraph.getHeight - tb.getHeight - 38))
@@ -188,7 +181,7 @@ object DemoRoutingView extends StopWatch{
   }
 
   /**Initiate the different values needed to draw the map
-   DO NOT switch setMapSize and setPointsList (setPointsList needs the mapSize)
+    * DO NOT switch setMapSize and setPointsList (setPointsList needs the mapSize)
     */
   def initiateMap(mapSize:Int,points:scala.List[(Int,Int)]): Unit ={
     println("Map initiated")
@@ -204,7 +197,7 @@ object DemoRoutingView extends StopWatch{
     movesCounter += 1
 
     if(movesCounter%movesBeforeRepaint == 0)routingMap.drawRoutes()
-    objGraph.notifyValue(objInfo._1,objInfo._2)
+    objGraph.notifyNewObjectiveValue(objInfo._1,objInfo._2)
     objGraph.validate()
     updateRoutes(hopDistances)
   }

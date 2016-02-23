@@ -1,4 +1,4 @@
-package oscar.examples.cbls.routing.visual
+package oscar.examples.cbls.routing.visual.MatrixMap
 
 /**
   * *****************************************************************************
@@ -28,8 +28,14 @@ import scala.swing._
 /**
   * @author fabian.germeau@student.vinci.be
   */
-trait RoutingMatrixVisual {
-  val routingMatrix = new RoutingMatrixMap
+
+
+class RoutingMatrixVisual(title:String = "Routing map", pickupAndDeliveryPoints: Boolean = false) extends JInternalFrame(title){
+  setLayout(new BorderLayout())
+
+  var routingMatrix:MatrixMap = null
+  if(pickupAndDeliveryPoints)
+    routingMatrix = new RoutingMatrixMap() with PickupAndDeliveryPoints
 
   def drawRoutes(): Unit ={
     routingMatrix.drawRoutes()
@@ -58,43 +64,19 @@ trait RoutingMatrixVisual {
   def clear(): Unit ={
     routingMatrix.clear()
   }
-}
 
-class FramedRoutingMatrixVisual(vrp:VRP, mapSize:Int, pointsList:scala.List[(Int,Int)], title:String = "Routing map", dimension:Dimension = null, colorValues:Array[Color] = null) extends VisualFrame(title) with RoutingMatrixVisual{
-  val sZ = Toolkit.getDefaultToolkit.getScreenSize
-  if(dimension == null)
-    setSize(new Dimension(sZ.getWidth.toInt/2,sZ.getHeight.toInt/2))
-  else
-    setSize(dimension)
-  setLayout(new BorderLayout())
-  add(routingMatrix, BorderLayout.CENTER)
-
-  /** DO NOT reverse this two lines (routingMatrix needs
-    *   the vrp to generate the colors if colorValues is null)
-    */
-  setVRP(vrp)
-  setColorValues(colorValues)
-  setMapSize(mapSize)
-  setPointsList(pointsList)
-
-  override def drawRoutes(): Unit ={
-    super.drawRoutes()
-    validate()
-  }
-}
-
-class InternalRoutingMatrixVisual(title:String = "Routing map") extends JInternalFrame(title) with RoutingMatrixVisual{
-  setLayout(new BorderLayout())
   add(routingMatrix, BorderLayout.CENTER)
   setVisible(true)
+}
 
-  /** DO NOT reverse this two lines (routingMatrix needs
-    *   the vrp to generate the colors if colorValues is null)
-    */
 
-  override def drawRoutes(): Unit ={
-    super.drawRoutes()
-    validate()
-  }
-
+class RoutingMatrixVisualWithAttribute(title:String = "Routing map",
+                                               vrp:VRP,
+                                               mapSize:Int,
+                                               pointsList:scala.List[(Int,Int)],
+                                               colorValues:Array[Color]) extends RoutingMatrixVisual{
+  routingMatrix.setVRP(vrp)
+  routingMatrix.setMapSize(mapSize)
+  routingMatrix.setPointsList(pointsList)
+  routingMatrix.setColorValues(colorValues)
 }

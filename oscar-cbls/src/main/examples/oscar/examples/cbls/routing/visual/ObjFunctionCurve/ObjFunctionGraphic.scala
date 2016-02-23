@@ -1,12 +1,28 @@
-package oscar.examples.cbls.routing.visual
+package oscar.examples.cbls.routing.visual.ObjFunctionCurve
 
+/**
+  * *****************************************************************************
+  * OscaR is free software: you can redistribute it and/or modify
+  * it under the terms of the GNU Lesser General Public License as published by
+  * the Free Software Foundation, either version 2.1 of the License, or
+  * (at your option) any later version.
+  *
+  * OscaR is distributed in the hope that it will be useful,
+  * but WITHOUT ANY WARRANTY; without even the implied warranty of
+  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  * GNU Lesser General Public License  for more details.
+  *
+  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
+  * ****************************************************************************
+  */
 import java.awt._
 import java.awt.geom.Line2D.Double
 import java.awt.geom.Rectangle2D
 
 import oscar.cbls.search.StopWatch
-import oscar.visual.shapes.{VisualText, VisualLine}
 import oscar.visual.VisualDrawing
+import oscar.visual.shapes.{VisualLine, VisualText}
 
 import scala.collection.mutable.ListBuffer
 
@@ -14,7 +30,8 @@ import scala.collection.mutable.ListBuffer
   * @author fabian.germeau@student.vinci.be
   */
 
-class ObjFunctionGraphic(refreshTime:scala.Double = 100.0) extends VisualDrawing(false,false) with StopWatch{
+abstract class ObjFunctionGraphic extends VisualDrawing(false,false) with StopWatch{
+
   val minWidth = 70
   val minHeight = 10
   var maxHeight = getHeight-30
@@ -24,38 +41,52 @@ class ObjFunctionGraphic(refreshTime:scala.Double = 100.0) extends VisualDrawing
   val objBestValues:ListBuffer[Int] = new ListBuffer[Int]
   var minObjTime:Long = 0
   var maxObjTime:Long = 0
-  var minObjValue:Int = 0
-  var maxObjValue:Int = 0
   var maxNumberOfObj:Int = 0
   var best = Int.MaxValue
-  var precTime = 0.0
 
-  def reset(): Unit ={
+  setLayout(new BorderLayout())
+
+  def notifyNewObjectiveValue(objValue:Int, objTime:Long)
+
+  def clear(): Unit ={
+    super.clear()
+  }
+
+  def drawGlobalCurve()
+
+  def drawObjectiveCurve()
+
+  def setTimeBorders(position:Int){}
+
+  def setMaxNumberOfObject(percentage:scala.Double){}
+}
+
+class ObjFunctionGraphicImpl extends ObjFunctionGraphic{
+
+
+  override def clear(): Unit ={
     super.clear()
     objValues.clear()
     objTimes.clear()
     objBestValues.clear()
     best = Int.MaxValue
-    precTime = 0.0
   }
 
   //Save the objectif value and the time value of the current state
-  def saveObjValue(time:Long,objValue:Int): Unit ={
+  def notifyNewObjectiveValue(objValue:Int, time:Long): Unit ={
     maxHeight = getHeight - 30
     maxWidth = getWidth - 10
     objTimes.append(time)
     objValues.append(objValue)
     best = Math.min(best,objValue)
     objBestValues.append(best)
-    minObjValue = best
-    maxObjValue = Math.max(maxObjValue,objValue)
     maxObjTime = time
     maxNumberOfObj = objValues.length
   }
 
   //Prepare the different values needed to draw the curve
   def drawObjectiveCurve() = {
-    clear()
+    super.clear()
 
     val usedLists = getUsedLists
 
@@ -76,8 +107,7 @@ class ObjFunctionGraphic(refreshTime:scala.Double = 100.0) extends VisualDrawing
 
   //Prepare the different values needed to draw the global curve
   def drawGlobalCurve() = {
-    clear()
-    println("in global curve")
+    super.clear()
     maxNumberOfObj = objValues.length
     val maxObjValue = objValues.max
     val minObjValue = objValues.min
@@ -96,7 +126,7 @@ class ObjFunctionGraphic(refreshTime:scala.Double = 100.0) extends VisualDrawing
 
   //Draw the global curve, including all the values
   def drawCurve(minOrdValue:Int,maxOrdValue:Int,maxObjValue:Int): Unit = {
-    val timeUnit:scala.Double = maxObjTime/(maxWidth-minWidth)
+    val timeUnit:scala.Double = Math.max(maxObjTime/(maxWidth-minWidth),1.0)
     var currentTimeUnit:Int = 0
     var currentTimeUnitValue:scala.Double = 0.0
     var currentTimeUnitValuesNumber:scala.Double = 0.0
@@ -246,21 +276,5 @@ class ObjFunctionGraphic(refreshTime:scala.Double = 100.0) extends VisualDrawing
       new VisualText(this,scaleWidth,maxHeight+20,((timeStep*i)+minT).toInt.toString,true,new Rectangle2D.Double(0, 0, 1, 1))
       new VisualLine(this,new Double(scaleWidth,maxHeight,scaleWidth,maxHeight+10))
     }
-  }
-
-  //Determine the number of values that will be displayed
-  def setMaxNumberOfObject(percentage:scala.Double = 0.9): Unit ={
-    maxNumberOfObj = (objValues.length*percentage).toInt
-    minObjTime = objTimes(objValues.length - maxNumberOfObj)
-    maxObjTime = minObjTime + maxWidth - minWidth
-    drawObjectiveCurve()
-  }
-
-  //Determine the border of the X axis
-  def setTimeBorders(position:Int): Unit ={
-    minObjTime = position*100
-    maxObjTime = minObjTime + maxWidth - minWidth
-    maxNumberOfObj = objValues.length - objTimes.indexWhere(_ > minObjTime)
-    drawObjectiveCurve()
   }
 }

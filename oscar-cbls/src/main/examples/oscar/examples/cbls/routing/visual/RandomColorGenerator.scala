@@ -24,9 +24,7 @@ import java.awt.Color
   */
 object RandomColorGenerator {
   def generateRandomColors(number:Int): Array[Color] ={
-    println(number)
     val maxColorNumber = getMaxColorNumber(number)
-    println(maxColorNumber)
     val colorValues = new Array[Color](Math.pow(maxColorNumber,3).toInt)
     for(c1 <- 0 until maxColorNumber){
       val r = 255 / maxColorNumber*c1
@@ -36,7 +34,6 @@ object RandomColorGenerator {
           val b = 255 / maxColorNumber*c3
           val i = c1*maxColorNumber*maxColorNumber + c2*maxColorNumber + c3
           colorValues(i) = new Color(r,g,b)
-          println(r + "  " + g + "  " + b)
         }
       }
     }
