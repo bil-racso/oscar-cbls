@@ -20,26 +20,37 @@ package oscar.examples.cbls.routing.visual
 import java.awt.Color
 
 /**
+  * The utility of this object is to generate a pseudo-random array of color.
+  * For the same amount of color needed, the returned array will always contain the same colors
+  * but in a different order.
   * @author fabian.germeau@student.vinci.be
   */
 object RandomColorGenerator {
   def generateRandomColors(number:Int): Array[Color] ={
     val maxColorNumber = getMaxColorNumber(number)
     val colorValues = new Array[Color](Math.pow(maxColorNumber,3).toInt)
-    for(c1 <- 0 until maxColorNumber){
-      val r = 255 / maxColorNumber*c1
-      for(c2 <- 0 until maxColorNumber){
-        val g = 255 / maxColorNumber*c2
-        for(c3 <- 0 until maxColorNumber){
-          val b = 255 / maxColorNumber*c3
-          val i = c1*maxColorNumber*maxColorNumber + c2*maxColorNumber + c3
+    var i = 0
+    for(c1 <- if(Math.random()<0.5)0 until maxColorNumber else maxColorNumber-1 until -1 by -1){
+      val r = c1*(255/maxColorNumber)
+      for(c2 <- if(Math.random()<0.5)0 until maxColorNumber else maxColorNumber-1 until -1 by -1){
+        val g = c2*(255/maxColorNumber)
+        for(c3 <- if(Math.random()<0.5)0 until maxColorNumber else maxColorNumber-1 until -1 by -1){
+          val b = c3*(255/maxColorNumber)
+          println(r,g,b)
           colorValues(i) = new Color(r,g,b)
+          i += 1
         }
       }
     }
     colorValues
   }
 
+  /**
+    *
+    * @param number the number of colors needed
+    * @param exp the current base value
+    * @return 
+    */
   def getMaxColorNumber(number:Int,exp:Int = 1):Int = {
     if(Math.pow(exp,3) < number)
       getMaxColorNumber(number,exp+1)

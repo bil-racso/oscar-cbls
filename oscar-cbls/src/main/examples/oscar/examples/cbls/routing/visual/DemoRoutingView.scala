@@ -180,7 +180,8 @@ object DemoRoutingView extends StopWatch{
     f.validate()
   }
 
-  /**Initiate the different values needed to draw the map
+  /**
+    * Initiate the different values needed to draw the map
     * DO NOT switch setMapSize and setPointsList (setPointsList needs the mapSize)
     */
   def initiateMap(mapSize:Int,points:scala.List[(Int,Int)]): Unit ={

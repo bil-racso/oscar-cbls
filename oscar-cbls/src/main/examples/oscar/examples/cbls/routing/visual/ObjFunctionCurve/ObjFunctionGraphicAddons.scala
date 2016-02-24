@@ -20,11 +20,23 @@ import java.awt.event.{AdjustmentEvent, AdjustmentListener}
 import javax.swing.{SwingConstants, JScrollBar}
 
 /**
-  * Created by fabian on 22-02-16.
+  * This file contains all the add-on modules that you could add to your ObjFunctionGraphic object.
+  * Each trait override one of the method used in ObjFunctionGraphic.
+  * This way you can build any ObjFunctionGraphic object you want just by adding the desired trait on the construction.
+  * @author fabian.germeau@student.vinci.be
   */
 
+/**
+  * This trait, associated with a scrollbar allow you to move left and right in the drawn curve.
+  * This way you can look the information more precisely
+  * (otherwise all the curve is drawn which is not very useful if the curve have a very lon X axis)
+  */
 trait RightLeftScrollbar extends ObjFunctionGraphic {
-  //Determine the border of the X axis
+  /**
+    * This method, called by the scrollbar adjust the minObjTime's and the maxObjTime's value
+    * in order to show only the objValue contained in this time window
+    * @param position the current position of the scrollbar
+    */
   override def setTimeBorders(position:Int = 0): Unit ={
     minObjTime = position*100
     maxObjTime = minObjTime + maxWidth - minWidth
@@ -33,8 +45,19 @@ trait RightLeftScrollbar extends ObjFunctionGraphic {
   }
 }
 
+/**
+  * This trait, associated with a scrollbar allow you to reduce/augment the number of value displayed on the curve.
+  * So if you reduce the number of value displayed to 90%,
+  * only the 90% values with the lower objTime value will be displayed.
+  */
 trait AdjustDisplayedValue extends ObjFunctionGraphic{
-  //Determine the number of values that will be displayed
+  /**
+    * This method, called by the scrollbar adjust the maxNumberOfObj's, the minObjTime's and the maxObjTime's value
+    * in order to reduce/augment the maximum objective value that may be displayed.
+    * MinObjTime and maxObjTime are adjusted so that there is always something displayed
+    * (otherwise you could have a blank)
+    * @param percentage the percentage of value that may be displayed
+    */
   override def setMaxNumberOfObject(percentage:scala.Double = 0.9): Unit ={
     maxNumberOfObj = (objValues.length*percentage).toInt
     minObjTime = objTimes(objValues.length - maxNumberOfObj)

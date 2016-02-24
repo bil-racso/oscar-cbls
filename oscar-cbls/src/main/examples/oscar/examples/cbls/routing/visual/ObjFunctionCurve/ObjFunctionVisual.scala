@@ -18,12 +18,19 @@ package oscar.examples.cbls.routing.visual.ObjFunctionCurve
   */
 
 import java.awt.event.{AdjustmentEvent, AdjustmentListener}
-import java.awt.{BorderLayout, Toolkit}
+import java.awt.BorderLayout
 import javax.swing._
 
 import scala.swing.Dimension
 
 /**
+  * This class create the JInternalFrame that will contain
+  * the ObjFunctionGraphic and all the add-on related to it.
+  * @param title The title of the JInternalFrame
+  * @param rightLeftScrollbar If true, a scrollBar will be added at the bottom of the JInternalFrame
+  *                           This scrollbar will call the setTimeBorder method defined in the trait RightLeftScrollBar
+  * @param adjustDisplayedValue If true, a scrollBar will be added on the right side of the JInternalFrame
+  *                             This scrollBar will call the setMaxNumberOfObject method defined in the trait AdjustDisplayedValue
   * @author fabian.germeau@student.vinci.be
   */
 
@@ -49,6 +56,7 @@ class InternalObjFunctionVisual(title:String = "Evolution of the objective funct
     }
   })
 
+  //TODO : Find a better way to create the desired object
   if(rightLeftScrollbar) {
     if(adjustDisplayedValue){
       objGraphic = new ObjFunctionGraphicImpl with RightLeftScrollbar with AdjustDisplayedValue
@@ -88,10 +96,14 @@ class InternalObjFunctionVisual(title:String = "Evolution of the objective funct
     validate()
   }
 
-  //Adjust the size of the ScrollBar
+  /**
+    * Adjust the size of the scrollbar with the minObjTime and maxObjTime value
+    * @param absMin The minObjTimeValue
+    * @param absMax The maxObjTimeValue
+    */
   def adjustScrollBarSize(absMin:Int,absMax:Int): Unit ={
     absScrollBar.setMinimum(absMin)
-    absScrollBar.setMaximum(absMax)
+    absScrollBar.setMaximum(Math.max(absMin,absMax-10))
     absScrollBar.setValue(absScrollBar.getMaximum)
   }
 }

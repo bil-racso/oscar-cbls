@@ -20,10 +20,14 @@ trait PickupAndDeliveryPoints extends  MatrixMap{
       else{
         val tempPoint = new VisualCircle(this,p._1.toInt,p._2.toInt,3)
         tempPoint.innerCol_$eq(Color.black)
-        tempPoint.toolTip_=("Some informations about the point")
+        tempPoint.toolTip_=(getPointInformation(p))
       }
       v -= 1
     }
+  }
+
+  def getPointInformation(point:(Int,Int)): String ={
+    "Some informations about the point"
   }
 
 }
