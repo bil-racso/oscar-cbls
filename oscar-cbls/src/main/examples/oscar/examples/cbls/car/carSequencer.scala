@@ -3,7 +3,7 @@ package oscar.examples.cbls.car
 import oscar.cbls.invariants.core.computation.CBLSIntVar
 import oscar.cbls.modeling.CBLSModel
 import oscar.cbls.objective.Objective
-import oscar.cbls.search.RollNeighborhood
+import oscar.cbls.search.{WideningFlipNeighborhood, RollNeighborhood}
 import oscar.cbls.search.combinators.{Profile, DynAndThen}
 import oscar.cbls.search.move.SwapMove
 
@@ -112,7 +112,7 @@ object carSequencer  extends CBLSModel with App {
       orElse (Profile(shuffleNeighborhood(carSequence, name = "shuffleAllCars")) maxMoves 4)
       saveBestAndRestoreOnExhaust obj)
 
-  val search = search2
+  val search = WideningFlipNeighborhood(carSequence) //search2
 
   search.verbose = 1
   search.paddingLength = 150

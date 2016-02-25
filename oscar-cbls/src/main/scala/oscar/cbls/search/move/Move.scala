@@ -206,6 +206,11 @@ case class FlipMove(fromPosition:Int,toPosition:Int,variables:Array[CBLSIntVar],
   override def commit(): Unit = {
     FlipMove.doFlip(fromPosition,toPosition,variables)
   }
+
+  override def toString: String = {
+    neighborhoodNameToString + "FlipMove(fromPosition:" + fromPosition + " toPosition:" + toPosition + objToString + ")"
+  }
+
 }
 
 
