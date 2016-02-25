@@ -107,6 +107,7 @@ object carSequencer  extends CBLSModel with App {
     Profile(mostViolatedSwap) orElse Profile(roll)
       onExhaustRestartAfter(Profile(shuffleNeighborhood(carSequence, mostViolatedCars, name = "shuffleMostViolatedCars")) guard(() => mostViolatedCars.value.size > 2), 5, obj)
       orElse Profile(shiftNeighbor)
+      orElse WideningFlipNeighborhood(carSequence)
       onExhaustRestartAfter(Profile(shuffleNeighborhood(carSequence, violatedCars, name = "shuffleSomeViolatedCars", numberOfShuffledPositions = () => violatedCars.value.size/2)), 2, obj)
       orElse (Profile(shuffleNeighborhood(carSequence, name = "shuffleAllCars")) maxMoves 4)
       saveBestAndRestoreOnExhaust obj)

@@ -15,6 +15,7 @@
 
 package oscar.cbls.search.move
 
+import oscar.cbls.invariants.core.algo.quick.QList
 import oscar.cbls.invariants.core.computation.{Solution, CBLSIntVar, CBLSSetVar, Variable}
 import oscar.cbls.objective.Objective
 
@@ -186,6 +187,24 @@ case class ShiftMove(startIndice:Int,length:Int,offset:Int,variables:Array[CBLSI
         }
       }
     }
+  }
+}
+
+object FlipMove{
+  def doFlip(fromPosition:Int,toPosition:Int,variables:Array[CBLSIntVar]){
+    if(fromPosition < toPosition){
+      variables(fromPosition) :=: variables(toPosition)
+      doFlip(fromPosition+1,toPosition-1,variables)
+    }
+  }
+}
+case class FlipMove(fromPosition:Int,toPosition:Int,variables:Array[CBLSIntVar], override val objAfter:Int, override val neighborhoodName:String = null)
+  extends Move(objAfter, neighborhoodName) {
+
+  require(fromPosition < toPosition)
+
+  override def commit(): Unit = {
+    FlipMove.doFlip(fromPosition,toPosition,variables)
   }
 }
 
