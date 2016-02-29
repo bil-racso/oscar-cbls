@@ -43,9 +43,9 @@ trait RightLeftScrollbar extends ObjFunctionGraphicContainer {
   val absScrollBar = new JScrollBar(SwingConstants.HORIZONTAL,0,1,0,500)
   absScrollBar.addAdjustmentListener(new AdjustmentListener {
     override def adjustmentValueChanged(e: AdjustmentEvent): Unit = {
-      graphic.minXValue = e.getValue*100
-      graphic.maxXValue = graphic.minXValue + graphic.maxWidth - graphic.minWidth
-      graphic.maxNumberOfXYValues = graphic.yValues.length - graphic.xValues.indexWhere(_ > graphic.minXValue)
+      graphic.minXValueDisplayed = e.getValue*100
+      graphic.maxXValueDisplayed = graphic.minXValueDisplayed + graphic.maxWidth - graphic.minWidth
+      graphic.maxNumberOfXYValues = graphic.yValues.length - graphic.xValues.indexWhere(_ > graphic.minXValueDisplayed)
       drawObjectiveCurve()
     }
   })
@@ -56,13 +56,13 @@ trait RightLeftScrollbar extends ObjFunctionGraphicContainer {
     */
   override def drawGlobalCurve(): Unit ={
     println("adjusting scrollbar ...")
-    adjustScrollBarSize((graphic.minXValue/100).toInt,(graphic.maxXValue/100).toInt)
+    adjustScrollBarSize((graphic.minXValueDisplayed/100).toInt,(graphic.maxXValueDisplayed/100).toInt)
     println("scrollbar adjusted")
     super.drawGlobalCurve()
   }
 
   override def drawObjectiveCurve(): Unit ={
-    adjustScrollBarPosition(graphic.minXValue)
+    adjustScrollBarPosition(graphic.minXValueDisplayed)
     super.drawObjectiveCurve()
   }
 
@@ -107,25 +107,28 @@ trait AdjustDisplayedValue extends ObjFunctionGraphicContainer{
     override def adjustmentValueChanged(e: AdjustmentEvent): Unit = {
       val percentage = (ordScrollBar.getMaximum - e.getValue)/ordScrollBar.getMaximum.toDouble
       graphic.maxNumberOfXYValues = (graphic.yValues.length*percentage).toInt
-      graphic.minXValue = graphic.xValues(graphic.yValues.length - graphic.maxNumberOfXYValues)
-      graphic.maxXValue = graphic.minXValue + graphic.maxWidth - graphic.minWidth
+      graphic.minXValueDisplayed = graphic.xValues(graphic.yValues.length - graphic.maxNumberOfXYValues)
+      graphic.maxXValueDisplayed = graphic.minXValueDisplayed + graphic.maxWidth - graphic.minWidth
 
       drawObjectiveCurve()
     }
   })
-  add(ordScrollBar, BorderLayout.EAST)
+  add(ordScrollBar, BorderLayout.WEST)
 }
 
 
-trait AdjustXAxisStepValue extends ObjFunctionGraphicContainer{
-
-  val stepValueTextField = new JFormattedTextField(xAxisStepValue)
-  stepValueTextField.setValue(100)
-  stepValueTextField.addFocusListener(new FocusListener {
-    override def focusGained(e: FocusEvent): Unit = {}
-
-    override def focusLost(e: FocusEvent): Unit = {
+trait Zoom extends ObjFunctionGraphicContainer{
+  val zoomScrollBar = new JScrollBar(SwingConstants.VERTICAL,0,1,0,100)
+  zoomScrollBar.addAdjustmentListener(new AdjustmentListener {
+    override def adjustmentValueChanged(e: AdjustmentEvent): Unit = {
+      graphic.heightAdapter = Math.max(1,(graphic.yValues.max/(graphic.maxHeight-graphic.minHeight))*zoomScrollBar.getValue/100)
+      graphic.timeUnit = Math.max(1,(graphic.xValues.max/(graphic.maxWidth-graphic.minWidth))*zoomScrollBar.getValue/100)
+      graphic.minXValueDisplayed = graphic.timeUnit.toLong
+      graphic.maxXValueDisplayed = graphic.timeUnit.toLong * (graphic.maxWidth-graphic.minWidth)
+      graphic.minYValueDisplayed = graphic.heightAdapter.toLong
+      graphic.maxYValueDisplayed = graphic.heightAdapter.toLong * (graphic.maxHeight - graphic.minHeight)
+      drawGlobalCurve()
     }
   })
-  add(stepValueTextField,BorderLayout.NORTH)
+  add(zoomScrollBar, BorderLayout.EAST)
 }

@@ -46,7 +46,7 @@ object DemoRoutingView extends StopWatch{
 
   val routingMap = new RoutingMatrixVisual(pickupAndDeliveryPoints = true)
 
-  val objGraph = new ObjFunctionGraphicContainer(dimension = new Dimension(f.getWidth-routingMap.getWidth,248)) with RightLeftScrollbar with AdjustDisplayedValue 
+  val objGraph = new ObjFunctionGraphicContainer(dimension = new Dimension(f.getWidth-routingMap.getWidth,248)) with Zoom
   val result = f.createFrame("Results of the routing")
   val carsPanel = new JPanel()
   val routesPanel = new JPanel()
