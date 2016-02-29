@@ -408,7 +408,7 @@ abstract class Neighborhood(name:String = null) {
    * @param procOnMove a procedure that inputs the move that is applied;
    *                   use this to update a Tabu for instance
    */
-  def afterMove(procOnMove: Move => Unit) = new DoOnMove(this, procAfterMove = procOnMove)
+  def afterMoveOnMove(procOnMove: Move => Unit) = new DoOnMove(this, procAfterMove = procOnMove)
 
   /**
    * this combinator attaches a custom code to a given neighborhood.

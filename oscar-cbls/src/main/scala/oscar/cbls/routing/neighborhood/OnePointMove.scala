@@ -39,7 +39,7 @@ import oscar.cbls.search.move.Move
 case class OnePointMove(nodesPrecedingNodesToMove: () => Iterable[Int],
                         relevantNeighbors: () => Int => Iterable[Int],
                         override val vrp: VRP with PositionInRouteAndRouteNr,
-                        neighborhoodName: String = null,
+                        neighborhoodName: String = "OnePointMove",
                         best: Boolean = false,
                         hotRestart: Boolean = true) extends EasyRoutingNeighborhood[OnePointMoveMove](best, vrp, neighborhoodName) {
 

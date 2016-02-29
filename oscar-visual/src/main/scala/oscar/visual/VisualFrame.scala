@@ -41,6 +41,7 @@ class VisualFrame(title: String, val nbLines: Int = 1, val nbCols: Int = 1, inte
   setMinimumSize(new Dimension(400, 300))
 
   for(internalFrame <- internalFrames){
+    println("boucle for",internalFrame.getClass().toString)
     addFrame(internalFrame)
   }
 
@@ -95,15 +96,18 @@ class VisualFrame(title: String, val nbLines: Int = 1, val nbCols: Int = 1, inte
     val l = n / nbCols
 
     if(location == null)
-      frame.setLocation(c * w,l * h)
+      frame.setLocation(c * size._1,l * size._2)
     else
       frame.setLocation(location._1, location._2)
 
+    println("w",w,"h",h,"c",c,"l",l,"size",size)
+    println("before",frame.getPreferredSize)
     frame.setPreferredSize(new Dimension(size._1,size._2))
     frame.setSize(size._1,size._2)
     frame.setBackground(bg)
     frame.setVisible(visible)
     frame.setResizable(resizable)
+    println(frame.getPreferredSize, frame.getSize())
     desktop.add(frame)
     frame.moveToFront()
     n += 1

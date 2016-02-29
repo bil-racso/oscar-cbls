@@ -107,10 +107,10 @@ object RoutingTestHotSpot extends App with StopWatch{
     vrp = vrp, skipOnePointMove = true))
 
 
-  val searchHot = () => {vrp.makeEverythingHot();("hotVehicles",(insertPoint exhaust (new BestSlopeFirst(List(onePointHot,twoOptHot,threeOpt),refresh = 10000))) afterMove(vrp.updateHotSpotAfterMoveAnyMove(_)))}
+  val searchHot = () => {vrp.makeEverythingHot();("hotVehicles",(insertPoint exhaust (new BestSlopeFirst(List(onePointHot,twoOptHot,threeOpt),refresh = 10000))) afterMoveOnMove(vrp.updateHotSpotAfterMoveAnyMove(_)))}
 
 
-  val searchHot2 = () => {vrp.makeEverythingHot();("hotNodes",(insertPoint exhaust (new BestSlopeFirst(List(onePointHot2,threeOpt),refresh = n/10))) afterMove(vrp.updateHotSpotAfterMoveAnyMove(_)))}
+  val searchHot2 = () => {vrp.makeEverythingHot();("hotNodes",(insertPoint exhaust (new BestSlopeFirst(List(onePointHot2,threeOpt),refresh = n/10))) afterMoveOnMove(vrp.updateHotSpotAfterMoveAnyMove(_)))}
 
 
   val search = () => ("standard",(insertPoint exhaust (new BestSlopeFirst(List(onePointMove,twoOpt,threeOpt),refresh = 10000))))

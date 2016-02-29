@@ -26,7 +26,7 @@ import javax.swing._
 import oscar.cbls.invariants.core.computation.IntValue
 import oscar.cbls.search.StopWatch
 import oscar.examples.cbls.routing.visual.MatrixMap.RoutingMatrixVisual
-import oscar.examples.cbls.routing.visual.ObjFunctionCurve.InternalObjFunctionVisual
+import oscar.examples.cbls.routing.visual.FunctionGraphic._
 import oscar.visual.VisualFrame
 
 import scala.swing.{Dimension, Insets}
@@ -46,8 +46,7 @@ object DemoRoutingView extends StopWatch{
 
   val routingMap = new RoutingMatrixVisual(pickupAndDeliveryPoints = true)
 
-  val objGraph = new InternalObjFunctionVisual(rightLeftScrollbar = true,adjustDisplayedValue = true)
-
+  val objGraph = new ObjFunctionGraphicContainer(dimension = new Dimension(f.getWidth-routingMap.getWidth,248)) with RightLeftScrollbar with AdjustDisplayedValue 
   val result = f.createFrame("Results of the routing")
   val carsPanel = new JPanel()
   val routesPanel = new JPanel()
@@ -72,7 +71,6 @@ object DemoRoutingView extends StopWatch{
 
     f.setMinimumSize(f.getSize)
     f.setResizable(false)
-
 
     tb.setLayout(new FlowLayout(FlowLayout.LEFT,10,1))
     val tempPanelCustomers = new JPanel(new GridBagLayout())
@@ -194,11 +192,11 @@ object DemoRoutingView extends StopWatch{
     f.validate()
   }
 
-  def drawMove(routes:scala.List[scala.List[Int]],objInfo:(Int,Long), hopDistances:Array[IntValue]): Unit ={
+  def drawMove(routes:scala.List[scala.List[Int]],objInfo:(Int,Long,Color), hopDistances:Array[IntValue]): Unit ={
     movesCounter += 1
 
     if(movesCounter%movesBeforeRepaint == 0)routingMap.drawRoutes()
-    objGraph.notifyNewObjectiveValue(objInfo._1,objInfo._2)
+    objGraph.notifyNewObjectiveValue(objInfo._1,objInfo._2,objInfo._3)
     objGraph.validate()
     updateRoutes(hopDistances)
   }

@@ -17,11 +17,10 @@ package oscar.examples.cbls.routing.visual.MatrixMap
   * ****************************************************************************
   */
 
-import java.awt.{BorderLayout, Toolkit}
+import java.awt.BorderLayout
 import javax.swing.JInternalFrame
 
 import oscar.cbls.routing.model.VRP
-import oscar.visual.VisualFrame
 
 import scala.swing._
 
@@ -36,13 +35,17 @@ class RoutingMatrixVisual(title:String = "Routing map", pickupAndDeliveryPoints:
   var routingMatrix:MatrixMap = null
   if(pickupAndDeliveryPoints)
     routingMatrix = new RoutingMatrixMap() with PickupAndDeliveryPoints
+  else
+    routingMatrix = new RoutingMatrixMap
 
   def drawRoutes(): Unit ={
     routingMatrix.drawRoutes()
+    validate()
   }
 
   def drawPoints(): Unit ={
     routingMatrix.drawPoints()
+    validate()
   }
 
   def setColorValues(colorValues:Array[Color]): Unit ={
@@ -63,18 +66,23 @@ class RoutingMatrixVisual(title:String = "Routing map", pickupAndDeliveryPoints:
 
   def clear(): Unit ={
     routingMatrix.clear()
+    validate()
   }
-
   add(routingMatrix, BorderLayout.CENTER)
   setVisible(true)
 }
 
 
 class RoutingMatrixVisualWithAttribute(title:String = "Routing map",
-                                               vrp:VRP,
-                                               mapSize:Int,
-                                               pointsList:scala.List[(Int,Int)],
-                                               colorValues:Array[Color]) extends RoutingMatrixVisual{
+                                       vrp:VRP,
+                                       mapSize:Int,
+                                       pointsList:scala.List[(Int,Int)],
+                                       colorValues:Array[Color],
+                                       dimension:Dimension = new Dimension(960,540)) extends RoutingMatrixVisual{
+  setPreferredSize(dimension)
+  setSize(dimension)
+  routingMatrix.setPreferredSize(dimension)
+  routingMatrix.setSize(dimension)
   routingMatrix.setVRP(vrp)
   routingMatrix.setMapSize(mapSize)
   routingMatrix.setPointsList(pointsList)

@@ -1,5 +1,8 @@
 package oscar.examples.cbls.routing
 
+import java.awt.{Color, Dimension}
+import javax.swing.SwingUtilities
+
 import oscar.cbls.invariants.core.computation.Store
 import oscar.cbls.invariants.lib.minmax.{Max, Min}
 import oscar.cbls.invariants.lib.numeric.{Abs, Sum}
@@ -9,8 +12,9 @@ import oscar.cbls.routing.neighborhood._
 import oscar.cbls.search.StopWatch
 import oscar.cbls.search.combinators.{Atomic, RoundRobin, Profile, BestSlopeFirst}
 import oscar.cbls.modeling.Algebra._
+import oscar.cbls.search.move.Move
 import oscar.examples.cbls.routing.visual.MatrixMap.RoutingMatrixVisualWithAttribute
-import oscar.examples.cbls.routing.visual.ObjFunctionCurve.{InternalObjFunctionVisual}
+import oscar.examples.cbls.routing.visual.FunctionGraphic.{AdjustDisplayedValue, RightLeftScrollbar, ObjFunctionGraphicContainer, FunctionGraphicContainer}
 import oscar.examples.cbls.routing.visual.RandomColorGenerator
 import oscar.visual.VisualFrame
 import scala.language.implicitConversions
@@ -65,9 +69,12 @@ object RoutingTest extends App with StopWatch{
 
   val vrp = new MyVRP(n,v,model,distanceMatrix,100000)
 
-  /*val routingMap = new RoutingMatrixVisualWithAttribute(vrp = vrp, mapSize = 10000, pointsList = positions.toList, colorValues = RandomColorGenerator.generateRandomColors(v))
-  val objGraphic = new InternalObjFunctionVisual()
-  val visualFrame = new VisualFrame("The Traveling Salesman Problem", internalFrames = routingMap::objGraphic::Nil)*/
+  val routingMap = new RoutingMatrixVisualWithAttribute(vrp = vrp, mapSize = 10000, pointsList = positions.toList, colorValues = RandomColorGenerator.generateRandomColors(v))
+  val objGraphic = new ObjFunctionGraphicContainer(dimension = new Dimension(960,540)) with RightLeftScrollbar with AdjustDisplayedValue
+  val visualFrame = new VisualFrame("The Traveling Salesman Problem")
+  visualFrame.addFrame(routingMap, size = (routingMap.getWidth,routingMap.getHeight))
+  visualFrame.addFrame(objGraphic, size = (960,540))
+  visualFrame.pack()
 
   model.close()
 
@@ -117,20 +124,37 @@ object RoutingTest extends App with StopWatch{
     vehicles=() => vrp.vehicles.toList))
 
   val search = new RoundRobin(List(insertPoint,onePointMove),10) exhaust
-                      new BestSlopeFirst(List(onePointMove, threeOpt, segExchange), refresh = n / 2) /*afterMove {
-    objGraphic.notifyNewObjectiveValue(vrp.getObjective().value, getWatch)
+                      new BestSlopeFirst(List(onePointMove, threeOpt, segExchange), refresh = n / 2) afterMoveOnMove((m:Move) => {
+    val hash = m.getClass.hashCode()
+    val r = hash%255
+    val g = (hash/255)%255
+    val b = ((hash/255)/255)%255
+    objGraphic.notifyNewObjectiveValue(vrp.getObjective().value, getWatch, color = new Color(r,g,b))
     routingMap.drawRoutes()
-  }*/ // exhaust onePointMove exhaust segExchange//threeOpt //(new BestSlopeFirst(List(onePointMove,twoOpt,threeOpt)))
+    visualFrame.revalidate()
+  }) // exhaust onePointMove exhaust segExchange//threeOpt //(new BestSlopeFirst(List(onePointMove,twoOpt,threeOpt)))
 
   search.verbose = 1
 //    search.verboseWithExtraInfo(3,() => vrp.toString)
   //segExchange.verbose = 3
-  search.doAllMoves(_ > 10*n, vrp.objectiveFunction)
-  //objGraphic.drawGlobalCurve()
 
-  println("total time " + getWatch + "ms or  " + getWatchString)
+  /*SwingUtilities.invokeAndWait(new Runnable(){
+    def run(): Unit = {
+      launchSearch()
+    }
+  })*/
 
-  println("\nresult:\n" + vrp)
+  def launchSearch(): Unit ={
+    search.doAllMoves(_ > 10*n, vrp.objectiveFunction)
+    println("go global curve")
+    objGraphic.drawGlobalCurve()
 
-  println(search.profilingStatistics)
+    println("total time " + getWatch + "ms or  " + getWatchString)
+
+    println("\nresult:\n" + vrp)
+
+    println(search.profilingStatistics)
+  }
+
+  launchSearch()
 }

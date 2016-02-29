@@ -1,4 +1,4 @@
-package oscar.examples.cbls.routing.visual.ObjFunctionCurve
+package oscar.examples.cbls.routing.visual.FunctionGraphic
 
 /**
   * *****************************************************************************
@@ -45,25 +45,34 @@ import scala.collection.mutable.ListBuffer
   * @author fabian.germeau@student.vinci.be
   */
 
-abstract class ObjFunctionGraphic extends VisualDrawing(false,false) with StopWatch{
+abstract class FunctionGraphic() extends VisualDrawing(false,false) with StopWatch{
+
 
   val minWidth = 70
   val minHeight = 10
-  var maxHeight = getHeight-30
-  var maxWidth = getWidth - 10
-  val objValues:ListBuffer[Int] = new ListBuffer[Int]
-  val objTimes:ListBuffer[Long] = new ListBuffer[Long]
-  val objBestValues:ListBuffer[Int] = new ListBuffer[Int]
-  var minObjTime:Long = 0
-  var maxObjTime:Long = 0
-  var maxNumberOfObj:Int = 0
-  var best = Int.MaxValue
+  var maxHeight = Int.MaxValue
+  var maxWidth = Int.MaxValue
+  val yValues:ListBuffer[Int] = new ListBuffer[Int]
+  val xValues:ListBuffer[Long] = new ListBuffer[Long]
+  val bestValues:ListBuffer[Int] = new ListBuffer[Int]
+  val xColorValues:ListBuffer[Color] = new ListBuffer[Color]
+  var minXValue:Long = 0
+  var maxXValue:Long = 0
+  var maxNumberOfXYValues:Int = 0
+  val best:Int ={
+    if(bestValues.nonEmpty)
+      bestValues.min
+    else
+      Int.MaxValue
+  }
 
   setLayout(new BorderLayout())
 
-  def notifyNewObjectiveValue(objValue:Int, objTime:Long)
+  def notifyNewObjectiveValue(objValue:Int, objTime:Long, color:Color)
 
   def clear(): Unit ={
+    maxHeight = getHeight - 30
+    maxWidth = getWidth - 10
     super.clear()
   }
 
@@ -74,8 +83,9 @@ abstract class ObjFunctionGraphic extends VisualDrawing(false,false) with StopWa
   def setTimeBorders(position:Int){}
 
   def setMaxNumberOfObject(percentage:scala.Double){}
-}
 
+
+}
 
 /** This class has the purpose to draw the objective function curve.
   * It firstly collect all the objective value.
@@ -85,31 +95,28 @@ abstract class ObjFunctionGraphic extends VisualDrawing(false,false) with StopWa
   * @author fabian.germeau@student.vinci.be
   */
 
-class ObjFunctionGraphicImpl extends ObjFunctionGraphic{
+class ObjFunctionGraphic(width:Int,height:Int) extends FunctionGraphic(){
 
   /**
     * Clear the graphic and reset the different ListBuffers in order to begin another research
     */
   override def clear(): Unit ={
     super.clear()
-    objValues.clear()
-    objTimes.clear()
-    objBestValues.clear()
-    best = Int.MaxValue
+    yValues.clear()
+    xValues.clear()
+    bestValues.clear()
   }
 
   /**
     * Save the objective value, the best value encountered so far and the time value of the current state
     */
-  def notifyNewObjectiveValue(objValue:Int, time:Long): Unit ={
-    maxHeight = getHeight - 30
-    maxWidth = getWidth - 10
-    objTimes.append(time)
-    objValues.append(objValue)
-    best = Math.min(best,objValue)
-    objBestValues.append(best)
-    maxObjTime = time
-    maxNumberOfObj = objValues.length
+  def notifyNewObjectiveValue(objValue:Int, time:Long, color:Color): Unit ={
+    xValues.append(time)
+    yValues.append(objValue)
+    bestValues.append(Math.min(best,objValue))
+    xColorValues.append(color)
+    maxXValue = time
+    maxNumberOfXYValues = yValues.length
   }
 
   /**
@@ -121,73 +128,78 @@ class ObjFunctionGraphicImpl extends ObjFunctionGraphic{
   def drawObjectiveCurve() = {
     super.clear()
 
-    val usedLists = getUsedLists
+    val (usedObjValues,usedObjTimes,usedObjBestValues,usedColorValues) = getUsedLists
 
-    val maxObjValue = usedLists._1.max
-    val minObjValue = Math.min(usedLists._1.min,best)
+    val maxObjValue = usedObjValues.max
+    val minObjValue = Math.min(usedObjValues.min,best)
     val diffObjValue = maxObjValue - minObjValue
 
-    val maxTimeValue = usedLists._2.max
-    val minTimeValue = usedLists._2.min
+    val maxTimeValue = usedObjTimes.max
+    val minTimeValue = usedObjTimes.min
     val diffTimeValue = maxTimeValue - minTimeValue
 
-    val ordFloorValues = getOrdFloorValues(diffObjValue,minObjValue,maxObjValue)
-    val absFloorValues = getAbsFloorValues(diffTimeValue,minTimeValue,maxTimeValue)
+    val (bottom,top) = getOrdFloorValues(diffObjValue,minObjValue,maxObjValue)
+    val (left,right) = getAbsFloorValues(diffTimeValue,minTimeValue,maxTimeValue)
 
-    drawAxis(ordFloorValues._1,ordFloorValues._2,absFloorValues._1,absFloorValues._2)
-    drawCurve(usedLists._1,usedLists._2,usedLists._3,ordFloorValues._1,ordFloorValues._2)
+    drawAxis(bottom,top,left,right)
+    drawCurve(usedObjValues,usedObjTimes,usedObjBestValues,usedColorValues,bottom,top)
   }
 
   /**
     * Prepare the different values needed to draw the global curve.
     * It's similar to the previous method but this time the goal is to draw the entire curve.
     */
-  def drawGlobalCurve() = {
+  override def drawGlobalCurve() = {
     super.clear()
-    maxNumberOfObj = objValues.length
-    val maxObjValue = objValues.max
-    val minObjValue = objValues.min
+    maxNumberOfXYValues = yValues.length
+    val maxObjValue = yValues.max
+    val minObjValue = yValues.min
     val diffObjValue = maxObjValue - minObjValue
 
-    val maxTimeValue = objTimes.max
-    val minTimeValue = objTimes.min
+    val maxTimeValue = xValues.max
+    val minTimeValue = xValues.min
     val diffTimeValue = maxTimeValue - minTimeValue
 
-    val ordFloorValues = getOrdFloorValues(diffObjValue,minObjValue,maxObjValue)
-    val absFloorValues = getAbsFloorValues(diffTimeValue,minTimeValue,maxTimeValue)
+    val (bottom,top) = getOrdFloorValues(diffObjValue,minObjValue,maxObjValue)
+    val (left,right) = getAbsFloorValues(diffTimeValue,minTimeValue,maxTimeValue)
 
-    drawAxis(ordFloorValues._1,ordFloorValues._2,absFloorValues._1,absFloorValues._2)
-    drawCurve(ordFloorValues._1,ordFloorValues._2)
+    drawAxis(bottom,top,left,right)
+    drawCurve(bottom,top)
   }
 
   /**
     * Draw the global curve, including all the values
+ *
     * @param minOrdValue the bottom border of the Y axis (needed to adapt the objValue in pixel)
     * @param maxOrdValue the top border of the Y axis (needed to adapt the objValue in pixel)
     */
   def drawCurve(minOrdValue:Int,maxOrdValue:Int): Unit = {
-    val timeUnit:scala.Double = Math.max(maxObjTime/(maxWidth-minWidth),1.0)
+    val timeUnit:scala.Double = Math.max(maxXValue/(maxWidth-minWidth),1.0)
     var currentTimeUnit:Int = 0
     var currentTimeUnitValue:scala.Double = 0.0
     var currentTimeUnitValuesNumber:scala.Double = 0.0
     var previousTimeUnitValue:scala.Double = 0.0
     var previousTimeUnit:scala.Double = 0.0
-    for(i <- objValues.indices){
-      if((objTimes(i)/timeUnit).toInt == currentTimeUnit){
-        currentTimeUnitValue += objValues(i)
+    for(i <- yValues.indices){
+      println(i)
+      println(xValues(i))
+      if((xValues(i)/timeUnit).toInt == currentTimeUnit){
+        currentTimeUnitValue += yValues(i)
         currentTimeUnitValuesNumber += 1
       }else{
         if(currentTimeUnitValuesNumber != 0) {
           currentTimeUnitValue = adjustHeight(currentTimeUnitValue/currentTimeUnitValuesNumber,minOrdValue,maxOrdValue)
           if(previousTimeUnitValue == 0)
             previousTimeUnitValue = currentTimeUnitValue
-          new VisualLine(this, new Double(previousTimeUnit+70, previousTimeUnitValue, currentTimeUnit+70, currentTimeUnitValue))
+          val line = new VisualLine(this, new Double(previousTimeUnit+70, previousTimeUnitValue, currentTimeUnit+70, currentTimeUnitValue))
+          line.outerCol_$eq(xColorValues(i))
           previousTimeUnit = currentTimeUnit
           previousTimeUnitValue = currentTimeUnitValue
           currentTimeUnitValue = 0
           currentTimeUnitValuesNumber = 0
         }
-        while(currentTimeUnit != (objTimes(i)/timeUnit).toInt){
+        while(currentTimeUnit != (xValues(i)/timeUnit).toInt){
+          println(currentTimeUnit, xValues(i) / timeUnit)
           currentTimeUnit += 1
         }
       }
@@ -198,33 +210,37 @@ class ObjFunctionGraphicImpl extends ObjFunctionGraphic{
 
   /**
     * Draw a part of the curve
+ *
     * @param usedObjValues the list of the objValues that will be drawn
     * @param usedObjTimes the list of the objTimes that will be drawn
     * @param usedObjBestValues the list of the objBestValues that will be drawn
     * @param minOrdValue the bottom border of the Y axis (needed to adapt the objValue in pixel)
     * @param maxOrdValue the top border of the Y axis (needed to adapt the objValue in pixel)
     */
-  def drawCurve(usedObjValues:scala.List[Int], usedObjTimes:scala.List[Long], usedObjBestValues:scala.List[Int],minOrdValue:Int,maxOrdValue:Int): Unit ={
-    var prev:(Int, Int) = null
+  def drawCurve(usedObjValues:scala.List[Int], usedObjTimes:scala.List[Long], usedObjBestValues:scala.List[Int], usedColorValues:scala.List[Color], minOrdValue:Int,maxOrdValue:Int): Unit ={
+    var (prevX, prevY) = (Int.MaxValue,Int.MaxValue)
     var prevBest:Int = 0
     for(i <- usedObjValues.indices) {
-      val x = adjustWidth(usedObjTimes(i),minObjTime,maxObjTime)
+      val x = adjustWidth(usedObjTimes(i),minXValue,maxXValue)
       val y = adjustHeight(usedObjValues(i), minOrdValue, maxOrdValue)
-      val pos = (x,y)
+      val (posX,posY) = (x,y)
       val yBest = adjustHeight(usedObjBestValues(i), minOrdValue, maxOrdValue)
-      if(prev != null){
-        val realLine = new VisualLine(this,new Double(prev._1,prev._2,pos._1,pos._2))
-        realLine.outerCol_$eq(Color.black)
-        val bestLine = new VisualLine(this,new Double(prev._1,prevBest,pos._1,yBest))
-        bestLine.outerCol_$eq(Color.green)
+      if(prevX != Int.MaxValue){
+        val realLine = new VisualLine(this,new Double(prevX,prevY,posX,posY))
+        realLine.outerCol_$eq(usedColorValues(i))
+        val bestLine = new VisualLine(this,new Double(prevX,prevBest,posX,yBest))
+        bestLine.outerCol_$eq(new Color(102,205,0))
+        bestLine.dashed_=(true)
       }
-      prev = pos
+      prevX = posX
+      prevY = posY
       prevBest = yBest
     }
   }
 
   /**
     * Adjust the value of an objValue to the size of the window
+ *
     * @param value The value that has to be adjusted
     * @param minOrdValue the bottom border of the Y axis
     * @param maxOrdValue the top border of the Y axis
@@ -236,6 +252,7 @@ class ObjFunctionGraphicImpl extends ObjFunctionGraphic{
 
   /**
     * Adjust the time of occurrence of an objectif to the size of the window
+ *
     * @param value The value that has to be adjusted
     * @param minAbsValue the left border of the X axis
     * @param maxAbsValue the right border of the X axis
@@ -247,25 +264,32 @@ class ObjFunctionGraphicImpl extends ObjFunctionGraphic{
 
   /**
     * Return the values of the Y axis's border
+ *
     * @param diffObjValue The difference between the minObjValue and the maxObjValue
     * @param minObjValue The minimum objective value that will be drawn
     * @param maxObjValue The maximum objective value that will be drawn
     * @return The bottom and top border of the Y axis
     */
   def getOrdFloorValues(diffObjValue:Int, minObjValue:Int, maxObjValue:Int): (Int,Int) ={
-    var diffFloor = 1
-    while(diffFloor <= diffObjValue)
-      diffFloor *= 10
-    var minFloor = 1
-    while(minObjValue/minFloor > 0){
-      minFloor *= 10
+    if(diffObjValue == 0){
+      (minObjValue - 5, minObjValue + 5)
+    }else {
+      var diffFloor = 1
+      while (diffFloor <= diffObjValue)
+        diffFloor *= 10
+      var minFloor = 1
+      //to prevent the case when the min and the max value are too different (like max = 15000 and min 100)
+      while (minObjValue / minFloor > 0) {
+        minFloor *= 10
+      }
+      val df = Math.max(diffFloor / 10, 10)
+      (Math.max((minObjValue / df) * df, (minObjValue / minFloor) * minFloor), ((maxObjValue / df) * df) + df)
     }
-    val df = Math.max(diffFloor / 10, 1)
-    (Math.max((minObjValue / df) * df, (minObjValue / minFloor) * minFloor), ((maxObjValue / df) * df) + df)
   }
 
   /**
     * Return the value of the X axis's border
+ *
     * @param diffTimeValue The difference between the minTimeValue and the maxTimeValue
     * @param minTimeValue The minimum objective's time of occurrence that will be drawn
     * @param maxTimeValue The maximum objective's time of occurrence that will be drawn
@@ -280,56 +304,67 @@ class ObjFunctionGraphicImpl extends ObjFunctionGraphic{
       minFloor *= 10
     }
     val df = Math.max(diffFloor / 10, 1)
-    (Math.max((minTimeValue / df) * df, (minTimeValue / minFloor) * minFloor), Math.min(((maxTimeValue / df) * df) + df,maxObjTime))
+    (Math.max((minTimeValue / df) * df, (minTimeValue / minFloor) * minFloor), Math.min(((maxTimeValue / df) * df) + df,maxXValue))
   }
 
   /**
     * @return The list of elements that will be considered for the drawing of the curve
     */
-  def getUsedLists: (scala.List[Int], scala.List[Long], scala.List[Int]) = {
+  def getUsedLists: (scala.List[Int], scala.List[Long], scala.List[Int], scala.List[Color]) = {
     val usedObjValues: ListBuffer[Int] = new ListBuffer[Int]
     val usedObjTimes: ListBuffer[Long] = new ListBuffer[Long]
     val usedObjBestValues: ListBuffer[Int] = new ListBuffer[Int]
+    val usedColorValues: ListBuffer[Color] = new ListBuffer[Color]
 
-    for(i <- objValues.length - maxNumberOfObj until objValues.length){
-      usedObjValues.append(objValues(i))
-      usedObjTimes.append(objTimes(i))
-      usedObjBestValues.append(objBestValues(i))
+    for(i <- yValues.length - maxNumberOfXYValues until yValues.length){
+      usedObjValues.append(yValues(i))
+      usedObjTimes.append(xValues(i))
+      usedObjBestValues.append(bestValues(i))
+      usedColorValues.append(xColorValues(i))
     }
 
     val tempObjTimesList = usedObjTimes.toList
     var removedElems = 0
     for(i <- tempObjTimesList.indices){
-      if(!(tempObjTimesList(i) > minObjTime && tempObjTimesList(i) < maxObjTime)) {
+      if(!(tempObjTimesList(i) > minXValue && tempObjTimesList(i) < maxXValue)) {
         usedObjValues.remove(i-removedElems)
         usedObjTimes.remove(i-removedElems)
         usedObjBestValues.remove(i-removedElems)
+        usedColorValues.remove(i-removedElems)
         removedElems += 1
       }
     }
     //To fill the blank when there is no registered value between the minObjTime and the maxObjTime
+    
     if(usedObjValues.isEmpty){
-      usedObjValues.append(objValues(objTimes.lastIndexWhere(_<minObjTime)))
-      usedObjTimes.append(minObjTime)
-      usedObjBestValues.append(objBestValues(objTimes.lastIndexWhere(_<minObjTime)))
-      usedObjValues.append(objValues(objTimes.indexWhere(_>maxObjTime)))
-      usedObjTimes.append(maxObjTime)
-      usedObjBestValues.append(objBestValues(objTimes.indexWhere(_>maxObjTime)))
+      val lastIndex = xValues.lastIndexWhere(_<minXValue)
+      val index = xValues.indexWhere(_>maxXValue)
+      usedObjValues.append(yValues(lastIndex))
+      usedObjTimes.append(minXValue)
+      usedObjBestValues.append(bestValues(lastIndex))
+      usedColorValues.append(xColorValues(lastIndex))
+      usedObjValues.append(yValues(index))
+      usedObjTimes.append(maxXValue)
+      usedObjBestValues.append(bestValues(index))
+      usedColorValues.append(xColorValues(index))
     }else {
       //To fill the blank at the end of the currently drawn curve
       usedObjValues.append(usedObjValues.last)
-      usedObjTimes.append(maxObjTime)
+      usedObjTimes.append(maxXValue)
       usedObjBestValues.append(usedObjBestValues.last)
+      usedColorValues.append(usedColorValues.last)
       //To fill the blank at the beginning of the currently drawn curve
       usedObjValues.insert(0,usedObjValues.head)
-      usedObjTimes.insert(0,minObjTime)
+      usedObjTimes.insert(0,minXValue)
       usedObjBestValues.insert(0,usedObjBestValues.head)
+      usedColorValues.insert(0,usedColorValues.head)
     }
-    (usedObjValues.toList,usedObjTimes.toList,usedObjBestValues.toList)
+    (usedObjValues.toList,usedObjTimes.toList,usedObjBestValues.toList,usedColorValues.toList)
   }
 
   /**
     * Draw the axis
+ *
     * @param minY The bottom border of the Y axis
     * @param maxY The top border of the Y axis
     * @param minX The left border of the X axis
