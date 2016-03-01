@@ -4,7 +4,7 @@ import oscar.cbls.invariants.core.computation.CBLSIntVar
 import oscar.cbls.modeling.CBLSModel
 import oscar.cbls.objective.Objective
 import oscar.cbls.search.{WideningFlipNeighborhood, RollNeighborhood}
-import oscar.cbls.search.combinators.{BestSlopeFirst, Profile, DynAndThen}
+import oscar.cbls.search.combinators.{Profile, BestSlopeFirst, DynAndThen}
 import oscar.cbls.search.move.SwapMove
 
 import scala.collection.SortedSet
@@ -88,31 +88,40 @@ object carSequencer  extends CBLSModel with App {
 
   val linkedDoubleSwaps =
     swapsNeighborhood(carSequence,"swapCars1") dynAndThen(
-    ((swapMove:SwapMove) => {
-      val indices = List(swapMove.idI, swapMove.idJ)
-      swapsNeighborhood(carSequence, "swapCars2", searchZone1 = () => indices, symmetryCanBeBrokenOnIndices = false, symmetryCanBeBrokenOnValue = true)
-    })) name "linkedDoubleSwaps"
+      ((swapMove:SwapMove) => {
+        val indices = List(swapMove.idI, swapMove.idJ)
+        swapsNeighborhood(carSequence, "swapCars2", searchZone1 = () => indices, symmetryCanBeBrokenOnIndices = false, symmetryCanBeBrokenOnValue = true)
+      })) name "linkedDoubleSwaps"
 
   val doubleSwaps = (swapsNeighborhood(carSequence,"swapCars1") andThen swapsNeighborhood(carSequence,"swapCars2")) name "doubleSwaps"
 
   val looselyLinkedDoubleSwaps =
     swapsNeighborhood(carSequence,"swapCars1", symmetryCanBeBrokenOnIndices = false) dynAndThen(
-    ((swapMove:SwapMove) => {
-      val firstSwappedCar = 0.max(swapMove.idI - impactZone) until (nbCars).min(swapMove.idI + impactZone)
-      val otherSwappedCar = (nbCars-1).min(swapMove.idJ+1) until nbCars
-      swapsNeighborhood(carSequence, "swapCars2", searchZone1 = () => firstSwappedCar, searchZone2 = () => otherSwappedCar, symmetryCanBeBrokenOnIndices = false)
-    })) name "looselyLinkedDoubleSwaps"
+      ((swapMove:SwapMove) => {
+        val firstSwappedCar = 0.max(swapMove.idI - impactZone) until (nbCars).min(swapMove.idI + impactZone)
+        val otherSwappedCar = (nbCars-1).min(swapMove.idJ+1) until nbCars
+        swapsNeighborhood(carSequence, "swapCars2", searchZone1 = () => firstSwappedCar, searchZone2 = () => otherSwappedCar, symmetryCanBeBrokenOnIndices = false)
+      })) name "looselyLinkedDoubleSwaps"
 
   val search2 = (
     BestSlopeFirst(List(Profile(mostViolatedSwap), Profile(roll), Profile(WideningFlipNeighborhood(carSequence, maxFlipSize = impactZone *2, name = "FlipMax10Cars", minFlipSize = 4))))
       onExhaustRestartAfter(Profile(shuffleNeighborhood(carSequence, mostViolatedCars, name = "shuffleMostViolatedCars")) guard(() => mostViolatedCars.value.size > 2), 5, obj)
       orElse Profile(shiftNeighbor)
-//      exhaust
+      //      exhaust
       onExhaustRestartAfter(Profile(shuffleNeighborhood(carSequence, violatedCars, name = "shuffleSomeViolatedCars", numberOfShuffledPositions = () => violatedCars.value.size/2)), 2, obj)
       orElse (Profile(shuffleNeighborhood(carSequence, name = "shuffleAllCars")) maxMoves 4)
       saveBestAndRestoreOnExhaust obj)
 
-  val search = Profile(WideningFlipNeighborhood(carSequence)) //search2
+
+  val search3 =
+    (Profile(mostViolatedSwap) exhaust Profile(WideningFlipNeighborhood(carSequence))
+  onExhaustRestartAfter(Profile(shuffleNeighborhood(carSequence, violatedCars, name = "shuffleSomeViolatedCars", numberOfShuffledPositions = () => violatedCars.value.size/2)), 2, obj)
+  orElse (Profile(shuffleNeighborhood(carSequence, name = "shuffleAllCars")) maxMoves 4)
+  saveBestAndRestoreOnExhaust obj)
+
+  val search4 = Profile(WideningFlipNeighborhood(carSequence))
+
+  val search = search3
 
   search.verbose = 1
   search.paddingLength = 150

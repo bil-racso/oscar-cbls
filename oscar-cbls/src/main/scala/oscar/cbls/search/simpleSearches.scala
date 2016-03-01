@@ -703,7 +703,7 @@ case class WideningFlipNeighborhood(vars:Array[CBLSIntVar],
 
     val flipCenterIterable:Iterable[(Int,Int,Int)] =
       (if(exploreLargerOpportunitiesFirst) computeFlipCentersLargestFirst(isAllowed)
-      else computeFlipCentersCanonicalHotRestart(isAllowed))
+      else computeFlipCentersLeftFirst(isAllowed))
 
     val flipCenterITerator = flipCenterIterable.iterator
     while(flipCenterITerator.hasNext){
@@ -718,7 +718,7 @@ case class WideningFlipNeighborhood(vars:Array[CBLSIntVar],
     throw new Error("not implemented") //TODO
   }
 
-  def computeFlipCentersLargestFirst(isAllowed:Array[Boolean]):Iterable[(Int,Int,Int)] = {
+  def computeFlipCenters(isAllowed:Array[Boolean]):Iterable[(Int,Int,Int)] = {
     //compute distance to and from unauthorized positions
     val distanceFromFirstUnauthorizedPosition = computeDistanceFromFirstUnauthorizedPosition(isAllowed)
     val distanceToFirstUnauthorizedPosition = computeDistanceToFirstUnauthorizedPosition(isAllowed)
@@ -754,11 +754,24 @@ case class WideningFlipNeighborhood(vars:Array[CBLSIntVar],
       }
       currentPosition += 1
     }
+    flipCenters
+  }
 
+  def computeFlipCentersLargestFirst(isAllowed:Array[Boolean]):Iterable[(Int,Int,Int)] = {
+    val flipCenters = computeFlipCenters(isAllowed)
     val allCentersInarray = flipCenters.toArray
     val referenceArray = Array.tabulate(allCentersInarray.length)(i => i)
     new LazyMap(KSmallest.lazySort(referenceArray,id => -allCentersInarray(id)._3),id => allCentersInarray(id))
   }
+
+  def computeFlipCentersLeftFirst(isAllowed:Array[Boolean]):Iterable[(Int,Int,Int)] = {
+    val flipCenters = computeFlipCenters(isAllowed)
+    val allCentersInArray = flipCenters.toArray
+    val flipCenterCount = allCentersInArray.length
+    val referenceArray = Array.tabulate(allCentersInArray.length)(i => i)
+    new LazyMap(KSmallest.lazySort(referenceArray,id => -(allCentersInArray(id)._1 * flipCenterCount + allCentersInArray(id)._2)),id => allCentersInArray(id))
+  }
+
 
   /**
    *  fromPosition and toPosition are different

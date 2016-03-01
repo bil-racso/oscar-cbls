@@ -223,7 +223,7 @@ abstract class Neighborhood(name:String = null) {
       moveCount += 1
     }
     if (printTakenMoves) {
-      println("stop criteria of doAllMove met after " + moveCount + " moves, " + ((System.nanoTime() - startSearchNanotime)/1000000).toInt + " ms (not the one of the neighborhood)")
+      println("stop criteria of doAllMove met after " + moveCount + " moves, " + ((System.nanoTime() - startSearchNanotime)/1000000).toInt + " ms")
     }
     toReturn
   }
