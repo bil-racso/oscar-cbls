@@ -66,7 +66,7 @@ class ObjFunctionGraphicContainer(title:String = "Evolution of the objective fun
     graphic.drawGlobalCurve()
   }
 
-  def notifyNewObjectiveValue(objValue:Int, objTime:Long, color: Color = defaultColor): Unit ={
+  def notifyNewObjectiveValue(objValue:Int, objTime:Long, color: String): Unit ={
     graphic.notifyNewObjectiveValue(objValue,objTime,color)
   }
 

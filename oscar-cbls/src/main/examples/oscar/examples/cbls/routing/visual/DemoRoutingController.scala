@@ -100,19 +100,11 @@ class DemoRoutingController extends StopWatch{
 
      val search = new RoundRobin(scala.collection.immutable.List(insertPoint,onePointMove),10).afterMoveOnMove((m:Move) =>{
        val routesList:List[List[Int]] = (for(c <- 0 to carsNumber-1)yield myVRP.getRouteOfVehicle(c)).toList
-       val hash = m.getClass.hashCode()
-       val r = hash%255
-       val g = (hash/255)%255
-       val b = ((hash/255)/255)%255
-       DemoRoutingView.drawMove(routesList,(myVRP.getObjective().value,getWatch, new Color(r,g,b)), myVRP.hopDistancePerVehicle)
+       DemoRoutingView.drawMove(routesList,(myVRP.getObjective().value,getWatch, m.neighborhoodName), myVRP.hopDistancePerVehicle)
      }) exhaust
        (new BestSlopeFirst(List(onePointMove,threeOpt,segExchange),refresh = customersNumber/2)).afterMoveOnMove((m:Move) =>{
          val routesList:List[List[Int]] = (for(c <- 0 to carsNumber-1)yield myVRP.getRouteOfVehicle(c)).toList
-         val hash = m.getClass.hashCode()
-         val r = hash%255
-         val g = (hash/255)%255
-         val b = ((hash/255)/255)%255
-         DemoRoutingView.drawMove(routesList,(myVRP.getObjective().value,getWatch, new Color(r,g,b)), myVRP.hopDistancePerVehicle)
+         DemoRoutingView.drawMove(routesList,(myVRP.getObjective().value,getWatch, m.neighborhoodName), myVRP.hopDistancePerVehicle)
        }) // exhaust onePointMove exhaust segExchange//threeOpt //(new BestSlopeFirst(List(onePointMove,twoOpt,threeOpt)))
 
      search.verbose = 1

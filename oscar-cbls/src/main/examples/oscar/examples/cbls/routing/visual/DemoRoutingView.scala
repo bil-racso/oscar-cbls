@@ -24,7 +24,9 @@ import java.awt._
 import javax.swing._
 
 import oscar.cbls.invariants.core.computation.IntValue
+import oscar.cbls.objective.Objective
 import oscar.cbls.search.StopWatch
+import oscar.cbls.search.core.{EasyNeighborhood, SearchResult, Neighborhood}
 import oscar.examples.cbls.routing.visual.MatrixMap.RoutingMatrixVisual
 import oscar.examples.cbls.routing.visual.FunctionGraphic._
 import oscar.visual.VisualFrame
@@ -46,7 +48,7 @@ object DemoRoutingView extends StopWatch{
 
   val routingMap = new RoutingMatrixVisual(pickupAndDeliveryPoints = true)
 
-  val objGraph = new ObjFunctionGraphicContainer(dimension = new Dimension(f.getWidth-routingMap.getWidth,248)) with Zoom
+  val objGraph = new ObjFunctionGraphicContainer(dimension = new Dimension(f.getWidth-routingMap.getWidth,360)) with Zoom
   val result = f.createFrame("Results of the routing")
   val carsPanel = new JPanel()
   val routesPanel = new JPanel()
@@ -114,7 +116,7 @@ object DemoRoutingView extends StopWatch{
 
     f.addFrame(routingMap, location = (0,0), size = (f.getHeight - tb.getHeight - 38,f.getHeight - tb.getHeight - 38), resizable = false)
 
-    f.addFrame(objGraph, location = (routingMap.getWidth,0), size = (f.getWidth-routingMap.getWidth,248), resizable = false)
+    f.addFrame(objGraph, location = (routingMap.getWidth,0), size = (f.getWidth-routingMap.getWidth,360), resizable = false)
 
     result.setLocation(routingMap.getWidth,objGraph.getHeight)
     result.setSize(new Dimension(f.getWidth - routingMap.getWidth, f.getHeight - objGraph.getHeight - tb.getHeight - 38))
@@ -151,7 +153,7 @@ object DemoRoutingView extends StopWatch{
       routesValue(rv) = new JLabel("0")
     }
 
-    colorValues = RandomColorGenerator.generateRandomColors(controller.carsNumber)
+    colorValues = ColorGenerator.generateRandomColors(controller.carsNumber)
 
     initiateCars()
     initiateMap(mapSize,points)
@@ -192,7 +194,7 @@ object DemoRoutingView extends StopWatch{
     f.validate()
   }
 
-  def drawMove(routes:scala.List[scala.List[Int]],objInfo:(Int,Long,Color), hopDistances:Array[IntValue]): Unit ={
+  def drawMove(routes:scala.List[scala.List[Int]],objInfo:(Int,Long,String), hopDistances:Array[IntValue]): Unit ={
     movesCounter += 1
 
     if(movesCounter%movesBeforeRepaint == 0)routingMap.drawRoutes()

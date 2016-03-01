@@ -115,7 +115,7 @@ case class OnePointMoveMove(predOfMovedPoint: Int,
                             insertionPoint: Int,
                             override val objAfter: Int,
                             override val neighborhood: OnePointMove,
-                            override val neighborhoodName: String = null) extends VRPMove(objAfter, neighborhood, neighborhoodName){
+                            override val neighborhoodName: String = "OnePointMoveMove") extends VRPMove(objAfter, neighborhood, neighborhoodName){
 
   override def impactedPoints: List[Int] = List(predOfMovedPoint,movedPoint,insertionPoint)
 

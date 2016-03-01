@@ -8,6 +8,7 @@ import oscar.cbls.objective.Objective
 import oscar.cbls.search.RollNeighborhood
 import oscar.cbls.search.combinators.{Profile, DynAndThen}
 import oscar.cbls.search.move.{Move, SwapMove}
+import oscar.examples.cbls.routing.visual.ColorGenerator
 import oscar.examples.cbls.routing.visual.FunctionGraphic.{Zoom, ObjFunctionGraphicContainer}
 import oscar.visual.VisualFrame
 
@@ -113,7 +114,7 @@ object carSequencer  extends CBLSModel with App {
       onExhaustRestartAfter(Profile(shuffleNeighborhood(carSequence, mostViolatedCars, name = "shuffleMostViolatedCars")), 5, obj)
       onExhaustRestartAfter(Profile(shuffleNeighborhood(carSequence, violatedCars, name = "shuffleSomeViolatedCars", numberOfShuffledPositions = () => violatedCars.value.size/2)), 2, obj)
       exhaust Profile(shiftNeighbor)afterMoveOnMove((m:Move) => {
-      objGraphic.notifyNewObjectiveValue(obj.value, getWatch)
+      objGraphic.notifyNewObjectiveValue(obj.value, getWatch, m.neighborhoodName)
       visualFrame.revalidate()
     })
     )

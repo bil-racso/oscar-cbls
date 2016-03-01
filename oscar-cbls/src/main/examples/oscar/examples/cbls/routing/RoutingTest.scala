@@ -15,7 +15,7 @@ import oscar.cbls.modeling.Algebra._
 import oscar.cbls.search.move.Move
 import oscar.examples.cbls.routing.visual.MatrixMap.RoutingMatrixVisualWithAttribute
 import oscar.examples.cbls.routing.visual.FunctionGraphic._
-import oscar.examples.cbls.routing.visual.RandomColorGenerator
+import oscar.examples.cbls.routing.visual.ColorGenerator
 import oscar.visual.VisualFrame
 import scala.language.implicitConversions
 
@@ -69,7 +69,7 @@ object RoutingTest extends App with StopWatch{
 
   val vrp = new MyVRP(n,v,model,distanceMatrix,100000)
 
-  val routingMap = new RoutingMatrixVisualWithAttribute(vrp = vrp, mapSize = 10000, pointsList = positions.toList, colorValues = RandomColorGenerator.generateRandomColors(v))
+  val routingMap = new RoutingMatrixVisualWithAttribute(vrp = vrp, mapSize = 10000, pointsList = positions.toList, colorValues = ColorGenerator.generateRandomColors(v))
   val objGraphic = new ObjFunctionGraphicContainer(dimension = new Dimension(960,540)) with Zoom
   val visualFrame = new VisualFrame("The Traveling Salesman Problem")
   visualFrame.addFrame(routingMap, size = (routingMap.getWidth,routingMap.getHeight))
@@ -125,11 +125,7 @@ object RoutingTest extends App with StopWatch{
 
   val search = new RoundRobin(List(insertPoint,onePointMove),10) exhaust
                       new BestSlopeFirst(List(onePointMove, threeOpt, segExchange), refresh = n / 2) afterMoveOnMove((m:Move) => {
-    val hash = m.getClass.hashCode()
-    val r = hash%255
-    val g = (hash/255)%255
-    val b = ((hash/255)/255)%255
-    objGraphic.notifyNewObjectiveValue(vrp.getObjective().value, getWatch, color = new Color(r,g,b))
+    objGraphic.notifyNewObjectiveValue(vrp.getObjective().value, getWatch, m.neighborhoodName)
     routingMap.drawRoutes()
     visualFrame.revalidate()
   }) // exhaust onePointMove exhaust segExchange//threeOpt //(new BestSlopeFirst(List(onePointMove,twoOpt,threeOpt)))

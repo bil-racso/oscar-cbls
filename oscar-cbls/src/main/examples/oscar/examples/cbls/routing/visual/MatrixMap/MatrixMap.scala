@@ -21,7 +21,7 @@ import java.awt.Color
 import java.awt.geom.Line2D.Double
 
 import oscar.cbls.routing.model.VRP
-import oscar.examples.cbls.routing.visual.RandomColorGenerator
+import oscar.examples.cbls.routing.visual.ColorGenerator
 import oscar.visual.VisualDrawing
 import oscar.visual.shapes.{VisualArrow, VisualCircle, VisualLine}
 
@@ -47,7 +47,7 @@ abstract class MatrixMap extends VisualDrawing(false,false){
 
   def setColorValues(colorValues:Array[Color]): Unit ={
     if(colorValues == null){
-      this.colorValues = RandomColorGenerator.generateRandomColors(vrp.V)
+      this.colorValues = ColorGenerator.generateRandomColors(vrp.V)
     }else{
       this.colorValues = colorValues
     }
@@ -98,11 +98,12 @@ class RoutingMatrixMap extends MatrixMap{
       val points = routes(r)
       var old = points.head
       for(p <- points){
-        val tempRoute = new VisualArrow(this,new Double(pointsList(old)._1, pointsList(old)._2,pointsList(p)._1,pointsList(p)._2),3)
+        val tempRoute = new VisualArrow(this,new Double(pointsList(old)._1, pointsList(old)._2,pointsList(p)._1,pointsList(p)._2),4)
         tempRoute.outerCol_$eq(color)
+        tempRoute.borderWidth = 2
         old = p
       }
-      val tempRoute = new VisualArrow(this,new Double(pointsList(old)._1, pointsList(old)._2,pointsList(points.head)._1,pointsList(points.head)._2),4)
+      val tempRoute = new VisualArrow(this,new Double(pointsList(old)._1, pointsList(old)._2,pointsList(points.head)._1,pointsList(points.head)._2),5)
       tempRoute.outerCol_$eq(color)
     }
   }

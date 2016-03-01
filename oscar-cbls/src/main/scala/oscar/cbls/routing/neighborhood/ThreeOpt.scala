@@ -44,7 +44,7 @@ import oscar.cbls.search.move.Move
 case class ThreeOpt(potentialInsertionPoints:()=>Iterable[Int],
                     relevantNeighbors:()=>Int=>Iterable[Int],
                     override val vrp: VRP with PositionInRouteAndRouteNr,
-                    neighborhoodName:String = null,
+                    neighborhoodName:String = "ThreeOpt",
                     best:Boolean = false,
                     hotRestart:Boolean = true,
                     KKIterationScheme:Boolean = true,
@@ -253,7 +253,7 @@ case class ThreeOptMove(beforeStart: Int,
                         reverseSegment: Boolean,
                         override val objAfter: Int,
                         override val neighborhood:ThreeOpt,
-                        override val neighborhoodName:String = null)
+                        override val neighborhoodName:String = "ThreeOptMove")
   extends VRPMove(objAfter, neighborhood, neighborhoodName){
 
   override def impactedPoints: List[Int] = List(beforeStart,segEndPoint,insertionPoint)

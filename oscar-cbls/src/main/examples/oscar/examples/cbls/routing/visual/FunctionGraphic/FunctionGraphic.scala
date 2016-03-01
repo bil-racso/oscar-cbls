@@ -22,9 +22,11 @@ import java.awt.geom.Line2D.Double
 import java.awt.geom.Rectangle2D
 
 import oscar.cbls.search.StopWatch
+import oscar.examples.cbls.routing.visual.ColorGenerator
 import oscar.visual.VisualDrawing
 import oscar.visual.shapes.{VisualLine, VisualText}
 
+import scala.collection.immutable.HashMap
 import scala.collection.mutable.ListBuffer
 
 /** This abstract class represent the base structure for
@@ -59,6 +61,7 @@ abstract class FunctionGraphic() extends VisualDrawing(false,false) with StopWat
   val xValues:ListBuffer[Long] = new ListBuffer[Long]
   val bestValues:ListBuffer[Int] = new ListBuffer[Int]
   val xColorValues:ListBuffer[Color] = new ListBuffer[Color]
+  var xColorMap:Map[String,Color] = new HashMap[String,Color]
 
   var minXValueDisplayed:Long = 0
   var maxXValueDisplayed:Long = 0
@@ -83,7 +86,7 @@ abstract class FunctionGraphic() extends VisualDrawing(false,false) with StopWat
 
   setLayout(new BorderLayout())
 
-  def notifyNewObjectiveValue(objValue:Int, objTime:Long, color:Color)
+  def notifyNewObjectiveValue(objValue:Int, objTime:Long, color:String)
 
   def clear(): Unit ={
     super.clear()
@@ -116,16 +119,21 @@ class ObjFunctionGraphic(width:Int,height:Int) extends FunctionGraphic(){
     yValues.clear()
     xValues.clear()
     bestValues.clear()
+    xColorMap.empty
+    xColorValues.clear()
   }
 
   /**
     * Save the objective value, the best value encountered so far and the time value of the current state
     */
-  def notifyNewObjectiveValue(objValue:Int, time:Long, color:Color): Unit ={
+  def notifyNewObjectiveValue(objValue:Int, time:Long, color:String): Unit ={
     xValues.append(time)
     yValues.append(objValue)
     bestValues.append(Math.min(best(),objValue))
-    xColorValues.append(color)
+    if(xColorMap.get(color) == None)
+      xColorMap = xColorMap + (color -> ColorGenerator.generateColorFromHash(color.hashCode))
+    println(xColorMap.toString())
+    xColorValues.append(xColorMap.get(color).get)
     maxXValueDisplayed = time
     maxYValueDisplayed = best()
   }
@@ -172,13 +180,16 @@ class ObjFunctionGraphic(width:Int,height:Int) extends FunctionGraphic(){
         if(currentTimeUnitValuesNumber != 0) {
           currentTimeUnitValue = maxHeight() - (currentTimeUnitValue/currentTimeUnitValuesNumber) + minYValueDisplayed/heightAdapter
           currentTimeUnitBestValue = maxHeight() - (currentTimeUnitBestValue/currentTimeUnitBestValuesNumber) + minYValueDisplayed/heightAdapter
-          if(previousTimeUnitValue == 0)
+          if(previousTimeUnitValue == 0.0) {
             previousTimeUnitValue = currentTimeUnitValue
+            previousTimeUnitBestValue = currentTimeUnitBestValue
+            previousTimeUnit = currentTimeUnit
+          }
           val line = new VisualLine(this, new Double(previousTimeUnit+70, previousTimeUnitValue, currentTimeUnit+70, currentTimeUnitValue))
           line.outerCol_$eq(xColorValues(i))
           line.borderWidth = 3
-          val bestLine = new VisualLine(this,new Double(previousTimeUnit+70, previousTimeUnitBestValue, currentTimeUnit+70, currentTimeUnitBestValue))
-          bestLine.outerCol_$eq(Color.green)
+          /*val bestLine = new VisualLine(this,new Double(previousTimeUnit+70, previousTimeUnitBestValue, currentTimeUnit+70, currentTimeUnitBestValue))
+          bestLine.outerCol_$eq(Color.green)*/
           previousTimeUnit = currentTimeUnit
           previousTimeUnitValue = currentTimeUnitValue
           previousTimeUnitBestValue = currentTimeUnitBestValue
@@ -192,11 +203,7 @@ class ObjFunctionGraphic(width:Int,height:Int) extends FunctionGraphic(){
         }
       }
     }
-
-    //new VisualLine(this,new Double(previousTimeUnit+70, previousTimeUnitValue, maxWidth, previousTimeUnitValue))
   }
-
-
 
   /**
     * Adjust the value of an objValue to the size of the window

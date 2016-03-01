@@ -18,7 +18,7 @@ trait PickupAndDeliveryPoints extends  MatrixMap{
         tempPoint.innerCol_$eq(colorValues(v))
       }
       else{
-        val tempPoint = new VisualCircle(this,p._1.toInt,p._2.toInt,3)
+        val tempPoint = new VisualCircle(this,p._1.toInt,p._2.toInt,4)
         tempPoint.innerCol_$eq(Color.black)
         tempPoint.toolTip_=(getPointInformation(p))
       }

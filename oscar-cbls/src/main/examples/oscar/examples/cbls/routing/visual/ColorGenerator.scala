@@ -25,7 +25,7 @@ import java.awt.Color
   * but in a different order.
   * @author fabian.germeau@student.vinci.be
   */
-object RandomColorGenerator {
+object ColorGenerator {
   def generateRandomColors(number:Int): Array[Color] ={
     val maxColorNumber = getMaxColorNumber(number)
     val colorValues = new Array[Color](Math.pow(maxColorNumber,3).toInt)
@@ -56,5 +56,13 @@ object RandomColorGenerator {
       getMaxColorNumber(number,exp+1)
     else
       exp
+  }
+
+  def generateColorFromHash(hash:Int): Color = {
+    val absHash = Math.abs(hash)
+    val r = absHash%255
+    val g = (absHash/255)%255
+    val b = ((absHash/255)/255)%255
+    new Color(r,g,b)
   }
 }
