@@ -208,7 +208,7 @@ case class FlipMove(fromPosition:Int,toPosition:Int,variables:Array[CBLSIntVar],
   }
 
   override def toString: String = {
-    neighborhoodNameToString + "FlipMove(fromPosition:" + fromPosition + " toPosition:" + toPosition + objToString + ")"
+    neighborhoodNameToString + "FlipMove(fromPosition:" + fromPosition + " toPosition:" + toPosition + " size:" + (toPosition - fromPosition) +  objToString + ")"
   }
 
 }

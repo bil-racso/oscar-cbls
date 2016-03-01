@@ -630,10 +630,10 @@ case class ShiftNeighborhood(vars:Array[CBLSIntVar],
  * also, we consider flip with an orr or even number of involved variables
  *
  * for each center of flip zone, taken as all flippeable positions in the array, sorted by decreasing maximal flip size
- *    for each width of the fliped zone, by increasing order, and interupted whenever a non-flippeable position is reached
+ *    for each width of the fliped zone, by increasing order, and interrupted whenever a non-flippeable position is reached
  *      test flipping
  */
-//TODO add the poibility to specify positions that must be in the limit of the flip?
+//TODO add the possibility to specify positions that must be in the limit of the flip?
 //TODO: hotRestart
 case class WideningFlipNeighborhood(vars:Array[CBLSIntVar],
                                     name:String = "WideningFlipNeighborhood",
@@ -705,7 +705,9 @@ case class WideningFlipNeighborhood(vars:Array[CBLSIntVar],
       (if(exploreLargerOpportunitiesFirst) computeFlipCentersLargestFirst(isAllowed)
       else computeFlipCentersCanonicalHotRestart(isAllowed))
 
-    for ((fromPosition, toPosition, _) <- flipCenterIterable) {
+    val flipCenterITerator = flipCenterIterable.iterator
+    while(flipCenterITerator.hasNext){
+      val (fromPosition, toPosition, maxReacheableFlipSize) = flipCenterITerator.next()
       if (exploreAndflipToMinimalFlipSize(fromPosition, toPosition, isAllowed)) {
         return
       }
@@ -713,7 +715,7 @@ case class WideningFlipNeighborhood(vars:Array[CBLSIntVar],
   }
 
   def computeFlipCentersCanonicalHotRestart(isAllowed:Array[Boolean]):Iterable[(Int,Int,Int)] = {
-    null
+    throw new Error("not implemented") //TODO
   }
 
   def computeFlipCentersLargestFirst(isAllowed:Array[Boolean]):Iterable[(Int,Int,Int)] = {
