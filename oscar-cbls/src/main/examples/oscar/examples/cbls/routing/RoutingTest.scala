@@ -14,7 +14,7 @@ import oscar.cbls.search.combinators.{Atomic, RoundRobin, Profile, BestSlopeFirs
 import oscar.cbls.modeling.Algebra._
 import oscar.cbls.search.move.Move
 import oscar.examples.cbls.routing.visual.MatrixMap.RoutingMatrixVisualWithAttribute
-import oscar.examples.cbls.routing.visual.FunctionGraphic.{AdjustDisplayedValue, RightLeftScrollbar, ObjFunctionGraphicContainer, FunctionGraphicContainer}
+import oscar.examples.cbls.routing.visual.FunctionGraphic._
 import oscar.examples.cbls.routing.visual.RandomColorGenerator
 import oscar.visual.VisualFrame
 import scala.language.implicitConversions
@@ -70,7 +70,7 @@ object RoutingTest extends App with StopWatch{
   val vrp = new MyVRP(n,v,model,distanceMatrix,100000)
 
   val routingMap = new RoutingMatrixVisualWithAttribute(vrp = vrp, mapSize = 10000, pointsList = positions.toList, colorValues = RandomColorGenerator.generateRandomColors(v))
-  val objGraphic = new ObjFunctionGraphicContainer(dimension = new Dimension(960,540)) with RightLeftScrollbar with AdjustDisplayedValue
+  val objGraphic = new ObjFunctionGraphicContainer(dimension = new Dimension(960,540)) with Zoom
   val visualFrame = new VisualFrame("The Traveling Salesman Problem")
   visualFrame.addFrame(routingMap, size = (routingMap.getWidth,routingMap.getHeight))
   visualFrame.addFrame(objGraphic, size = (960,540))

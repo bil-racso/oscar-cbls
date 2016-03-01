@@ -53,7 +53,7 @@ object DemoRoutingView extends StopWatch{
   val neighborhoodsPanel = new JPanel()
 
   val jTextFields = new JTextField()::new JTextField()::new JTextField()::new JTextField()::Nil
-  val jTextFieldsDefaultValue = "300"::"5"::"10000"::"100000"::Nil
+  val jTextFieldsDefaultValue = "150"::"5"::"10000"::"100000"::Nil
   val jLabels = new JLabel("Number of customers : ")::new JLabel("Number of warehouses : ")::new JLabel("Size of the map : ")::new JLabel("Unrouted penality : ")::Nil
   var routesValue:Array[JLabel] = null
 

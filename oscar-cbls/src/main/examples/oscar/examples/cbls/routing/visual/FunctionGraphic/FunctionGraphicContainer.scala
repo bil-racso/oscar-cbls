@@ -17,12 +17,8 @@ package oscar.examples.cbls.routing.visual.FunctionGraphic
   * ****************************************************************************
   */
 
-import java.awt.event.{AdjustmentEvent, AdjustmentListener}
 import java.awt.{Color, BorderLayout}
 import javax.swing._
-import javax.swing.text.NumberFormatter
-
-import oscar.cbls.invariants.core.computation.CBLSIntVar
 
 import scala.swing.Dimension
 
@@ -42,9 +38,6 @@ abstract class FunctionGraphicContainer(title:String,dimension: Dimension) exten
   setVisible(true)
 
   var graphic: FunctionGraphic = null
-  val xAxisStepValue: NumberFormatter = new NumberFormatter()
-  xAxisStepValue.setMinimum(1)
-  xAxisStepValue.setMaximum(100)
 
   validate()
 
@@ -71,10 +64,6 @@ class ObjFunctionGraphicContainer(title:String = "Evolution of the objective fun
 
   def drawGlobalCurve(): Unit ={
     graphic.drawGlobalCurve()
-  }
-
-  def drawObjectiveCurve(): Unit ={
-    graphic.drawObjectiveCurve()
   }
 
   def notifyNewObjectiveValue(objValue:Int, objTime:Long, color: Color = defaultColor): Unit ={

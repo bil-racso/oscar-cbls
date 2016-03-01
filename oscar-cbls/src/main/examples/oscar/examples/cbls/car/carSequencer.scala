@@ -8,7 +8,7 @@ import oscar.cbls.objective.Objective
 import oscar.cbls.search.RollNeighborhood
 import oscar.cbls.search.combinators.{Profile, DynAndThen}
 import oscar.cbls.search.move.{Move, SwapMove}
-import oscar.examples.cbls.routing.visual.FunctionGraphic.{AdjustDisplayedValue, RightLeftScrollbar, ObjFunctionGraphicContainer}
+import oscar.examples.cbls.routing.visual.FunctionGraphic.{Zoom, ObjFunctionGraphicContainer}
 import oscar.visual.VisualFrame
 
 import scala.collection.SortedSet
@@ -72,7 +72,7 @@ object carSequencer  extends CBLSModel with App {
 
   println("closing model")
 
-  val objGraphic = new ObjFunctionGraphicContainer(dimension = new Dimension(960,540)) with RightLeftScrollbar with AdjustDisplayedValue
+  val objGraphic = new ObjFunctionGraphicContainer(dimension = new Dimension(960,540)) with Zoom
   val visualFrame = new VisualFrame("The Traveling Salesman Problem")
   visualFrame.addFrame(objGraphic, size = (960,540))
   visualFrame.pack()
