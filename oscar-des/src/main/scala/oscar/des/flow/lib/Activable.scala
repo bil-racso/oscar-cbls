@@ -12,7 +12,7 @@ abstract class Activable{
   def activate(intensity:Int)
 }
 
-abstract class ActivableProcess(val name:String, verbosity:String=>Unit) extends Activable{
+abstract class ActivableProcess(val name:String, verbosity:String=>Unit, val id:Int) extends Activable{
   def isRunning:Boolean
   def completedBatchCount:Int
   def startedBatchCount:Int
@@ -36,7 +36,7 @@ abstract class ActivableProcess(val name:String, verbosity:String=>Unit) extends
   def cloneReset(newModel:Model,storages:SortedMap[Storage,Storage]):ActivableProcess
 }
 
-abstract class ActivableAtomicProcess(name:String, verbosity:String=>Unit) extends ActivableProcess(name,verbosity){
+abstract class ActivableAtomicProcess(name:String, verbosity:String=>Unit, id:Int) extends ActivableProcess(name,verbosity,id){
 
   def myInput:Inputter
 
@@ -45,7 +45,7 @@ abstract class ActivableAtomicProcess(name:String, verbosity:String=>Unit) exten
   }
 }
 
-abstract class ActivableMultipleProcess(name:String, verbosity:String=>Unit) extends ActivableProcess(name,verbosity){
+abstract class ActivableMultipleProcess(name:String, verbosity:String=>Unit, id:Int) extends ActivableProcess(name,verbosity,id){
   def childProcesses:Iterable[ActivableAtomicProcess]
 
   override def addPreliminaryInput(preliminary: Storage) {

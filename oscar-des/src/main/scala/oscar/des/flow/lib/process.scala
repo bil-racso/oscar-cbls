@@ -43,7 +43,7 @@ case class SingleBatchProcess(m:Model,
                               outputs:Array[(()=>Int, Putable)],
                               transformFunction:ItemClassTransformFunction,
                               override val name:String,
-                              verbosity:String=>Unit = null) extends ActivableAtomicProcess(name,verbosity){
+                              verbosity:String=>Unit = null, override val id:Int = -1) extends ActivableAtomicProcess(name,verbosity, id){
 
   private val myOutput = new Outputter(outputs)
   override val myInput = new Inputter(inputs)
@@ -56,7 +56,6 @@ case class SingleBatchProcess(m:Model,
 
   def isWaiting = waiting
 
-
   override def cloneReset(newModel: Model, storages: SortedMap[Storage, Storage]): ActivableProcess = {
     SingleBatchProcess(newModel,
       batchDuration,
@@ -64,7 +63,7 @@ case class SingleBatchProcess(m:Model,
       outputs.map({case (fun,putable) => (fun,storages(putable.asInstanceOf[Storage]))}),
       transformFunction,
       name,
-      verbosity)
+      verbosity, id)
   }
 
   override def isRunning: Boolean = !waiting
@@ -121,7 +120,7 @@ case class BatchProcess(m:Model,
                         outputs:Array[(() => Int,Putable)],
                         override val name:String,
                         transformFunction:ItemClassTransformFunction,
-                        verbosity:String=>Unit = null) extends ActivableMultipleProcess(name,verbosity){
+                        verbosity:String=>Unit = null,  override val id:Int = -1) extends ActivableMultipleProcess(name,verbosity, id){
 
   override val childProcesses:Iterable[SingleBatchProcess] =
     (1 to numberOfBatches) map((batchNumber:Int) => SingleBatchProcess(m:Model,
@@ -130,7 +129,7 @@ case class BatchProcess(m:Model,
       outputs,
       transformFunction,
       name + " chain " + batchNumber,
-      verbosity))
+      verbosity, id))
 
   override def toString: String = {
     name + " " + this.getClass.getSimpleName + ":: lines:" + numberOfBatches +" performedBatches:" + childProcesses.foldLeft(0)(_ + _.performedBatches) +
@@ -144,7 +143,7 @@ case class BatchProcess(m:Model,
       outputs.map({case (fun,putable) => (fun,storages(putable.asInstanceOf[Storage]))}),
       name,
       transformFunction,
-      verbosity)
+      verbosity, id)
   }
 }
 
@@ -168,7 +167,7 @@ case class SplittingSingleBatchProcess(m:Model,
                                        outputs:Array[Array[(() => Int,Putable)]],
                                        transformFunction:ItemClassTransformWitAdditionalOutput,
                                        override val name:String,
-                                       verbosity:String=>Unit = null) extends ActivableAtomicProcess(name,verbosity){
+                                       verbosity:String=>Unit = null, override val id:Int = -1) extends ActivableAtomicProcess(name,verbosity, id){
 
   private val myOutputs = outputs.map(o => new Outputter(o))
   override val myInput = new Inputter(inputs)
@@ -191,7 +190,7 @@ case class SplittingSingleBatchProcess(m:Model,
       outputs.map(_.map({case (fun,putable) => (fun,storages(putable.asInstanceOf[Storage]).asInstanceOf[Putable])})),
       transformFunction,
       name,
-      verbosity)
+      verbosity,id)
   }
 
   override def isRunning: Boolean = !waiting
@@ -255,7 +254,7 @@ case class SplittingBatchProcess(m:Model,
                                  outputs:Array[Array[(()=>Int,Putable)]],
                                  override val name:String,
                                  transformFunction:ItemClassTransformWitAdditionalOutput,
-                                 verbosity:String=>Unit = null) extends ActivableMultipleProcess(name,verbosity){
+                                 verbosity:String=>Unit = null, override val id:Int = -1) extends ActivableMultipleProcess(name,verbosity, id){
 
   override val childProcesses:Iterable[SplittingSingleBatchProcess] =
     (1 to numberOfBatches) map((batchNumber:Int) => SplittingSingleBatchProcess(m,
@@ -264,7 +263,7 @@ case class SplittingBatchProcess(m:Model,
       outputs,
       transformFunction,
       name + " chain " + batchNumber,
-      verbosity))
+      verbosity, id))
 
   override def toString: String = {
     name + ":: lines:" + numberOfBatches + " performedBatches: " + childProcesses.foldLeft(0)(_ + _.performedBatches) +
@@ -281,7 +280,7 @@ case class SplittingBatchProcess(m:Model,
       outputs.map(_.map({case (fun,putable) => (fun,storages(putable.asInstanceOf[Storage]).asInstanceOf[Putable])})),
       name,
       transformFunction,
-      verbosity)
+      verbosity, id)
   }
 }
 
@@ -308,7 +307,7 @@ class ConveyorBeltProcess(m:Model,
                           val outputs:Array[(() => Int, Putable)],
                           transformFunction:ItemClassTransformFunction,
                           name:String,
-                          verbosity:String=>Unit = null) extends ActivableAtomicProcess(name,verbosity){
+                          verbosity:String=>Unit = null, override val id:Int = -1) extends ActivableAtomicProcess(name,verbosity, id){
 
   private val myOutput = new Outputter(outputs)
   override val myInput = new Inputter(inputs)
@@ -329,7 +328,7 @@ class ConveyorBeltProcess(m:Model,
       outputs.map({case (fun,putable) => (fun,storages(putable.asInstanceOf[Storage]))}),
       transformFunction,
       name,
-      verbosity)
+      verbosity, id)
   }
 
   private var timeOfLastInput:Double = 0

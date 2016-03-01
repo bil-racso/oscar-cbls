@@ -1,20 +1,47 @@
 package oscar.des.flow.lib
 
-object ExpressionStatus extends Enumeration {
-  type ExpressionStatus = Value
-  val Fresh, RegisteredNonAccumulating, RegisteredAccumulating = Value
+sealed abstract class ExpressionStatus(val i:Int) extends Ordered[ExpressionStatus]
+case object Fresh extends ExpressionStatus(0) {
+  override def compare(that: ExpressionStatus): Int = {
+    if(that.i == 0) throw new Error("canot compare fresh Expressions")
+    1
+  }
 }
-
-import ExpressionStatus._
+case class RegisteredNonAccumulating(id:Int) extends ExpressionStatus(1){
+  override def compare(that: ExpressionStatus): Int = {
+    that match{
+      case Fresh => -1
+      case r:RegisteredNonAccumulating => id.compare(r.id)
+      case _:RegisteredAccumulating => 1
+    }
+  }
+}
+case class RegisteredAccumulating(id:Int) extends ExpressionStatus(2) {
+  override def compare(that: ExpressionStatus): Int = {
+    that match{
+      case Fresh => -1
+      case _:RegisteredNonAccumulating => -1
+      case r:RegisteredAccumulating => id.compare(r.id)
+    }
+  }
+}
 
 import scala.collection.immutable.SortedMap
 
 //This file is about thing we want to measure on the factory process
 
-sealed abstract class Expression(val accumulating:Boolean, val children:Expression*){
+class OrderingOnExpression[T<:Expression]() extends Ordering[T]{
+  override def compare(x: T, y: T): Int = x.compare(y)
+}
+
+sealed abstract class Expression(val accumulating:Boolean, val children:Expression*) extends Ordered[Expression]{
   def update(time:Double)
   var status:ExpressionStatus = Fresh
   def valueString:String
+
+  override def compare(that: Expression): Int = {
+    this.status.compare(that.status)
+  }
 }
 
 //Variables have values at all time.
@@ -28,7 +55,7 @@ abstract class BoolExpr(accumulating:Boolean, children:Expression*) extends Expr
   def cloneReset(boolMap:Map[BoolExpr,BoolExpr],doubleMap:Map[DoubleExpr,DoubleExpr], storeMap:Map[Storage,Storage],processMap:Map[ActivableProcess,ActivableProcess]):BoolExpr
 }
 
-abstract class DoubleExpr(accumulating:Boolean, children:Expression*) extends Expression(accumulating,children:_*){
+abstract class DoubleExpr(accumulating:Boolean, children:Expression*) extends Expression(accumulating,children:_*) {
   override def update(time:Double){value = updatedValue(time)}
   def updatedValue(time:Double):Double
   var value:Double = updatedValue(0)
@@ -47,16 +74,22 @@ abstract class DoubleExpr(accumulating:Boolean, children:Expression*) extends Ex
 //}
 
 
-class MetricsStore(val rootExpressions:List[(String, Expression)],verbosity:String=>Unit){
-  var expressions:List[Expression] = List.empty
-  var accumulatingExpressions:List[Expression] = List.empty
-  var nonAccumulatingExpressions:List[Expression] = List.empty
-  var isClosed = false
+class MetricsStore(val rootExpressions:List[(String, Expression)],verbosity:String=>Unit,
+                   var accumulatingExpressions:Array[Expression] = null,
+                   var nonAccumulatingExpressions:Array[Expression] = null,
+                   var expressions:List[Expression] = List.empty){
 
-  for((e,s) <- rootExpressions){
-    addMetric(s)(e)
+  var isClosed = false
+  if(accumulatingExpressions == null) {
+    require(nonAccumulatingExpressions == null)
+    require(expressions.isEmpty)
+    for ((e, s) <- rootExpressions) {
+      addMetric(s)(e)
+    }
+    close()
+  }else{
+    isClosed = true
   }
-  close()
 
   override def toString: String = {
     "MetricsStore{\n\t" + rootExpressions.map(es => es._1 + ":" + es._2.valueString).mkString("\n\t") + "\n}\n"
@@ -66,7 +99,7 @@ class MetricsStore(val rootExpressions:List[(String, Expression)],verbosity:Stri
     require(!isClosed)
 
     def registerSubExpressions(e:Expression, fatherAccumulating:Boolean){
-      if(e.status == RegisteredAccumulating ||  (e.status == RegisteredNonAccumulating && !fatherAccumulating))
+      if(e.status.isInstanceOf[RegisteredAccumulating] ||  (e.status.isInstanceOf[RegisteredNonAccumulating] && !fatherAccumulating))
         return
       //so now, either it is fresh, or was registered as non accumulating, and it is now with an accumulating gather
       val subtreeAccumulating = fatherAccumulating || e.accumulating
@@ -77,10 +110,9 @@ class MetricsStore(val rootExpressions:List[(String, Expression)],verbosity:Stri
 
       if(e.status == Fresh) expressions = e :: expressions
       if (subtreeAccumulating) {
-        accumulatingExpressions = e :: accumulatingExpressions
-        e.status = RegisteredAccumulating
+        e.status = RegisteredAccumulating(0)
       } else {
-        e.status = RegisteredNonAccumulating
+        e.status = RegisteredNonAccumulating(0)
       }
     }
 
@@ -90,8 +122,29 @@ class MetricsStore(val rootExpressions:List[(String, Expression)],verbosity:Stri
   private def close(){
     isClosed = true
     expressions = expressions.reverse
-    accumulatingExpressions = accumulatingExpressions.reverse
-    nonAccumulatingExpressions = expressions.filter(_.status == RegisteredNonAccumulating) //already reversed
+
+    //TODO: can be much faster, in 1 pass instead of 5
+    val accumulatingExpressionList = expressions.filter(_.status.isInstanceOf[RegisteredAccumulating])
+    var currentPos = accumulatingExpressionList
+    accumulatingExpressions = Array.fill(accumulatingExpressionList.size)(null)
+    var i = 0
+    while(currentPos.nonEmpty){
+      currentPos.head.status = RegisteredAccumulating(i)
+      accumulatingExpressions(i) = currentPos.head
+      i+=1
+      currentPos = currentPos.tail
+    }
+
+    val nonAccumulatingExpressionList = expressions.filter(_.status.isInstanceOf[RegisteredNonAccumulating])
+    currentPos = nonAccumulatingExpressionList
+    nonAccumulatingExpressions = Array.fill(nonAccumulatingExpressionList.size)(null)
+    i = 0
+    while(currentPos.nonEmpty){
+      currentPos.head.status = RegisteredNonAccumulating(i)
+      nonAccumulatingExpressions(i) = currentPos.head
+      i+=1
+      currentPos = currentPos.tail
+    }
   }
 
   //to be called at each step
@@ -104,14 +157,15 @@ class MetricsStore(val rootExpressions:List[(String, Expression)],verbosity:Stri
     }
   }
 
-  //the last updateMEtrics must have been performed o nthe last state
+  //the last updateMetrics must have been performed on the last state
   def finish(time:Double){
     nonAccumulatingExpressions.foreach(_.update(time))
   }
 
-  def cloneReset(storeMap: Map[Storage, Storage], processMap: Map[ActivableProcess, ActivableProcess]):MetricsStore = {
-    var translatedBoolExpr:SortedMap[BoolExpr,BoolExpr] = SortedMap.empty[BoolExpr,BoolExpr]
-    var translatedDoubleExpr:SortedMap[DoubleExpr,DoubleExpr] = SortedMap.empty[DoubleExpr,DoubleExpr]
+  def cloneReset(storeMap: Map[Storage, Storage], processMap: Map[ActivableProcess, ActivableProcess]):(MetricsStore,Map[DoubleExpr,DoubleExpr]) = {
+
+    var translatedBoolExpr:Map[BoolExpr,BoolExpr] = SortedMap.empty[BoolExpr,BoolExpr](new OrderingOnExpression[BoolExpr])
+    var translatedDoubleExpr:Map[DoubleExpr,DoubleExpr] = SortedMap.empty[DoubleExpr,DoubleExpr](new OrderingOnExpression[DoubleExpr])
 
     def getTranslated(e:Expression):Expression = {
       e match{
@@ -119,12 +173,14 @@ class MetricsStore(val rootExpressions:List[(String, Expression)],verbosity:Stri
         case d:DoubleExpr => translatedDoubleExpr(d)
       }
     }
+
     def setTranslated(e:Expression,translation:Expression) = {
       (e,translation) match{
         case (a:BoolExpr,b:BoolExpr) => translatedBoolExpr = translatedBoolExpr + ((a,b))
         case (a:DoubleExpr,b:DoubleExpr) => translatedDoubleExpr = translatedDoubleExpr + ((a,b))
       }
     }
+
     def performTranslation(e:Expression):Expression = {
       e match{
         case b:BoolExpr => b.cloneReset(translatedBoolExpr,translatedDoubleExpr,storeMap,processMap)
@@ -137,19 +193,27 @@ class MetricsStore(val rootExpressions:List[(String, Expression)],verbosity:Stri
       setTranslated(e,translated)
       translated
     })
+
+    var currentID = 0
     val translatedAccumulatingExpressions = accumulatingExpressions.map(e =>{
       val translated = getTranslated(e)
-      translated.status = RegisteredAccumulating
+      translated.status = RegisteredAccumulating(currentID)
+      currentID += 1
       translated
     })
+    currentID = 0
     val translatedNonAccumulatingExpressions = nonAccumulatingExpressions.map(e => {
       val translated = getTranslated(e)
-      translated.status = RegisteredNonAccumulating
+      translated.status = RegisteredNonAccumulating(currentID)
+      currentID += 1
       translated
     })
 
-    //TODO: how to put the digestion in the store??
-    new MetricsStore(rootExpressions.map({case (name,e) => (name,getTranslated(e))}),verbosity)
+    (new MetricsStore(rootExpressions.map({case (name,e) => (name,getTranslated(e))}),
+      verbosity,
+      translatedAccumulatingExpressions,
+      translatedNonAccumulatingExpressions,
+      translatedExpression),translatedDoubleExpr)
   }
 }
 
@@ -164,7 +228,7 @@ case class Empty(s:Storage) extends BoolExpr(false){
   override def updatedValue(time:Double) = s.contentSize == 0
 
   override def cloneReset(boolMap: Map[BoolExpr, BoolExpr], doubleMap: Map[DoubleExpr, DoubleExpr], storeMap: Map[Storage, Storage], processMap: Map[ActivableProcess, ActivableProcess]): BoolExpr =
-  Empty(storeMap(s))
+    Empty(storeMap(s))
 }
 
 /**
@@ -186,7 +250,7 @@ case class StockCapacity(s:Storage) extends DoubleExpr(false){
   override def updatedValue(time:Double): Double = s.maxCapacity
 
   override def cloneReset(boolMap: Map[BoolExpr, BoolExpr], doubleMap: Map[DoubleExpr, DoubleExpr], storeMap: Map[Storage, Storage], processMap: Map[ActivableProcess, ActivableProcess]): DoubleExpr =
-  StockCapacity(storeMap(s))
+    StockCapacity(storeMap(s))
 }
 
 /**
@@ -197,7 +261,7 @@ case class RelativeStockLevel(s:Storage) extends DoubleExpr(false){
   override def updatedValue(time:Double): Double = s.contentSize.toDouble / s.maxCapacity.toDouble
 
   override def cloneReset(boolMap: Map[BoolExpr, BoolExpr], doubleMap: Map[DoubleExpr, DoubleExpr], storeMap: Map[Storage, Storage], processMap: Map[ActivableProcess, ActivableProcess]): DoubleExpr =
-  RelativeStockLevel(storeMap(s))
+    RelativeStockLevel(storeMap(s))
 }
 
 /**
@@ -219,7 +283,7 @@ case class TotalFetch(s:Storage) extends DoubleExpr(false){
   override def updatedValue(time:Double): Double = s.totalFetch
 
   override def cloneReset(boolMap: Map[BoolExpr, BoolExpr], doubleMap: Map[DoubleExpr, DoubleExpr], storeMap: Map[Storage, Storage], processMap: Map[ActivableProcess, ActivableProcess]): DoubleExpr =
-  TotalFetch(storeMap(s))
+    TotalFetch(storeMap(s))
 }
 
 /**
@@ -230,7 +294,7 @@ case class TotalLosByOverflow(s:Storage) extends DoubleExpr(false){
   override def updatedValue(time:Double): Double = s.totalLosByOverflow
 
   override def cloneReset(boolMap: Map[BoolExpr, BoolExpr], doubleMap: Map[DoubleExpr, DoubleExpr], storeMap: Map[Storage, Storage], processMap: Map[ActivableProcess, ActivableProcess]): DoubleExpr =
-  TotalLosByOverflow(storeMap(s))
+    TotalLosByOverflow(storeMap(s))
 }
 
 /**
@@ -270,7 +334,7 @@ case class StartedBatchCount(p:ActivableProcess) extends DoubleExpr(false){
   override def updatedValue(time:Double): Double = p.startedBatchCount
 
   override def cloneReset(boolMap: Map[BoolExpr, BoolExpr], doubleMap: Map[DoubleExpr, DoubleExpr], storeMap: Map[Storage, Storage], processMap: Map[ActivableProcess, ActivableProcess]): DoubleExpr =
-  StartedBatchCount(processMap(p))
+    StartedBatchCount(processMap(p))
 }
 
 /**
@@ -282,7 +346,7 @@ case class TotalWaitDuration(p:ActivableProcess) extends DoubleExpr(false){
   override def updatedValue(time:Double): Double = p.totalWaitDuration
 
   override def cloneReset(boolMap: Map[BoolExpr, BoolExpr], doubleMap: Map[DoubleExpr, DoubleExpr], storeMap: Map[Storage, Storage], processMap: Map[ActivableProcess, ActivableProcess]): DoubleExpr =
-  TotalWaitDuration(processMap(p))
+    TotalWaitDuration(processMap(p))
 }
 
 
@@ -332,7 +396,7 @@ case class And(f:BoolExpr, g:BoolExpr) extends BoolExpr(false,f,g){
   override def updatedValue(time:Double): Boolean = if(f.value) g.value else false
 
   override def cloneReset(boolMap: Map[BoolExpr, BoolExpr], doubleMap: Map[DoubleExpr, DoubleExpr], storeMap: Map[Storage, Storage], processMap: Map[ActivableProcess, ActivableProcess]): BoolExpr =
-  And(boolMap(f),boolMap(g))
+    And(boolMap(f),boolMap(g))
 }
 
 /**
@@ -355,7 +419,6 @@ case class ITE(i:BoolExpr, t:BoolExpr, e:BoolExpr ) extends BoolExpr(false,i,t,e
 //temporal operators
 //we only consider temporal operators of the past, easy to evaluate
 
-
 /**
  * true if f has always been true since the start of the trace
  * @param f a boolean expression
@@ -369,7 +432,7 @@ case class HasAlwaysBeen(f:BoolExpr) extends BoolExpr(true,f){
   }else false
 
   override def cloneReset(boolMap: Map[BoolExpr, BoolExpr], doubleMap: Map[DoubleExpr, DoubleExpr], storeMap: Map[Storage, Storage], processMap: Map[ActivableProcess, ActivableProcess]): BoolExpr =
-  HasAlwaysBeen(boolMap(f))
+    HasAlwaysBeen(boolMap(f))
 }
 
 /**
@@ -413,7 +476,7 @@ case class Since(a:BoolExpr,b:BoolExpr) extends BoolExpr(true,a,b){
   }
 
   override def cloneReset(boolMap: Map[BoolExpr, BoolExpr], doubleMap: Map[DoubleExpr, DoubleExpr], storeMap: Map[Storage, Storage], processMap: Map[ActivableProcess, ActivableProcess]): BoolExpr =
-  Since(boolMap(a),boolMap(b))
+    Since(boolMap(a),boolMap(b))
 }
 
 /**
@@ -432,7 +495,7 @@ case class BecomesTrue(p:BoolExpr) extends BoolExpr(true,p){
   }
 
   override def cloneReset(boolMap: Map[BoolExpr, BoolExpr], doubleMap: Map[DoubleExpr, DoubleExpr], storeMap: Map[Storage, Storage], processMap: Map[ActivableProcess, ActivableProcess]): BoolExpr =
-  BecomesTrue(boolMap(p))
+    BecomesTrue(boolMap(p))
 }
 
 /**
@@ -455,10 +518,10 @@ case class Changed(p:Expression) extends BoolExpr(true,p){
   }
 
   override def cloneReset(boolMap: Map[BoolExpr, BoolExpr], doubleMap: Map[DoubleExpr, DoubleExpr], storeMap: Map[Storage, Storage], processMap: Map[ActivableProcess, ActivableProcess]): BoolExpr =
-  Changed(p match{
-    case b:BoolExpr => boolMap(b)
-    case d:DoubleExpr => doubleMap(d)
-  })
+    Changed(p match{
+      case b:BoolExpr => boolMap(b)
+      case d:DoubleExpr => doubleMap(d)
+    })
 }
 
 /**
@@ -477,7 +540,7 @@ case class Delta(p:DoubleExpr) extends DoubleExpr(true,p){
   }
 
   override def cloneReset(boolMap: Map[BoolExpr, BoolExpr], doubleMap: Map[DoubleExpr, DoubleExpr], storeMap: Map[Storage, Storage], processMap: Map[ActivableProcess, ActivableProcess]): DoubleExpr =
-  Delta(doubleMap(p))
+    Delta(doubleMap(p))
 }
 
 /**
@@ -506,7 +569,7 @@ case class CumulatedDuration(b:BoolExpr) extends DoubleExpr(true,b){
   }
 
   override def cloneReset(boolMap: Map[BoolExpr, BoolExpr], doubleMap: Map[DoubleExpr, DoubleExpr], storeMap: Map[Storage, Storage], processMap: Map[ActivableProcess, ActivableProcess]): DoubleExpr =
-  CumulatedDuration(boolMap(b))
+    CumulatedDuration(boolMap(b))
 }
 
 /**the duration for which b has been true since it was last false*/
@@ -530,7 +593,7 @@ case class Duration(b:BoolExpr) extends DoubleExpr(true,b){
   }
 
   override def cloneReset(boolMap: Map[BoolExpr, BoolExpr], doubleMap: Map[DoubleExpr, DoubleExpr], storeMap: Map[Storage, Storage], processMap: Map[ActivableProcess, ActivableProcess]): DoubleExpr =
-  Duration(boolMap(b))
+    Duration(boolMap(b))
 }
 
 /**
@@ -555,7 +618,7 @@ case class Mult(a:DoubleExpr,b:DoubleExpr) extends DoubleExpr(false,a,b){
   override def updatedValue(time:Double): Double = a.value * b.value
 
   override def cloneReset(boolMap: Map[BoolExpr, BoolExpr], doubleMap: Map[DoubleExpr, DoubleExpr], storeMap: Map[Storage, Storage], processMap: Map[ActivableProcess, ActivableProcess]): DoubleExpr =
-  Mult(doubleMap(a),doubleMap(b))
+    Mult(doubleMap(a),doubleMap(b))
 }
 
 /**
@@ -632,21 +695,21 @@ case class DoubleITE(i:BoolExpr, t:DoubleExpr, e:DoubleExpr) extends DoubleExpr(
   override def updatedValue(time: Double): Double = if(i.value) t.value else e.value
 
   override def cloneReset(boolMap: Map[BoolExpr, BoolExpr], doubleMap: Map[DoubleExpr, DoubleExpr], storeMap: Map[Storage, Storage], processMap: Map[ActivableProcess, ActivableProcess]): DoubleExpr =
-  DoubleITE(boolMap(i),doubleMap(t),doubleMap(e))
+    DoubleITE(boolMap(i),doubleMap(t),doubleMap(e))
 }
 
 case class BoolSubExpression(name:String,expr:BoolExpr) extends BoolExpr(false,expr){
   override def updatedValue(time: Double): Boolean = expr.value
 
   override def cloneReset(boolMap: Map[BoolExpr, BoolExpr], doubleMap: Map[DoubleExpr, DoubleExpr], storeMap: Map[Storage, Storage], processMap: Map[ActivableProcess, ActivableProcess]): BoolExpr =
-  BoolSubExpression(name,boolMap(expr))
+    BoolSubExpression(name,boolMap(expr))
 }
 
 case class DoubleSubExpression(name:String,expr:DoubleExpr) extends DoubleExpr(false,expr){
   override def updatedValue(time: Double): Double = expr.value
 
   override def cloneReset(boolMap: Map[BoolExpr, BoolExpr], doubleMap: Map[DoubleExpr, DoubleExpr], storeMap: Map[Storage, Storage], processMap: Map[ActivableProcess, ActivableProcess]): DoubleExpr =
-  DoubleSubExpression(name,doubleMap(expr))
+    DoubleSubExpression(name,doubleMap(expr))
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

@@ -16,19 +16,24 @@ trait implicitConvertors {
   implicit def constantPutableToFunctionPutable(l: Array[(Int, Putable)]): Array[(() => Int, Putable)] = l.map(v => (() => v._1, v._2))
 }
 
+class OrderingOnStorage() extends Ordering[Storage]{
+  override def compare(x: Storage, y: Storage): ItemClass = x.id.compare(y.id)
+}
 
+class OrderingOnActivableProcesses() extends Ordering[ActivableProcess]{
+  override def compare(x: ActivableProcess, y: ActivableProcess): ItemClass = x.id.compare(y.id)
+}
 /**
  *
  * @param verbosity where verbosities should be sent, can be null
  */
-class FactoryModel(verbosity:String=>Unit) {
+class FactoryModel(verbosity:String=>Unit,
+                   val m:Model = new Model,
+                   var ms:MetricsStore = null,
+                   private var storages:List[Storage] = List.empty,
+                   private var processes:List[ActivableProcess] = List.empty) {
 
-  val m:Model = new Model
-
-  var ms:MetricsStore = null
-
-  private var storages:List[Storage] = List.empty
-  private var processes:List[ActivableProcess] = List.empty
+  private var nextStorageID = 0
 
   def getStorages:List[Storage] = storages
   def getProcesses:List[ActivableProcess] = processes
@@ -44,18 +49,28 @@ class FactoryModel(verbosity:String=>Unit) {
    */
   def cloneReset:FactoryModel = {
     val newModel:Model = new Model
-    val newStorages = SortedMap.empty[Storage,Storage] ++ storages.map((s:Storage) => (s,s.cloneReset(newModel)))
-    //TODO: attention, il faut aussi pmodifier les cost des storages!!
-   // val newProcesses = SortedMap.empty[ActivableProcess,ActivableProcess] ++ processes.map((p:ActivableProcess) => (p,p.cloneReset(newModel,newStorages)))
+    val newStorages = SortedMap.empty[Storage,Storage](new OrderingOnStorage()) ++ storages.map((s:Storage) => (s,s.cloneReset(newModel)))
+    val newProcesses = SortedMap.empty[ActivableProcess,ActivableProcess](new OrderingOnActivableProcesses()) ++ processes.map((p:ActivableProcess) => (p,p.cloneReset(newModel,newStorages)))
 
     //cloner les expressions
+    val (newMetricStore,doubleExprTranslation) = ms.cloneReset(newStorages,newProcesses)
 
     //mettre les expressions clonées dans newProcesses et newStorages
+    for((oldS,newS) <- newStorages){
+      newS.cost = doubleExprTranslation(oldS.cost)
+    }
+
+    for((oldP,newP) <- newProcesses){
+      newP.cost = doubleExprTranslation(oldP.cost)
+    }
 
     //retourner le tout
-    null
+    new FactoryModel(verbosity,
+      newModel,
+      newMetricStore,
+      newStorages.values.toList,
+      newProcesses.values.toList)
   }
-
 
   def setQueriesToParse(queriesNameAndExpression:List[(String,String)]){
     require(ms == null)
@@ -198,7 +213,9 @@ class FactoryModel(verbosity:String=>Unit) {
                   name:String,
                   overflowOnInput:Boolean,
                   costFunction:String = "0") = {
-    val toReturn = new LIFOStorage(maxSize, initialContent, name, verbosity, overflowOnInput,0)
+
+    val toReturn = new LIFOStorage(maxSize, initialContent, name, verbosity, overflowOnInput,nextStorageID)
+    nextStorageID += 1
     toReturn.cost = ListenerParser.storageCostParser(toReturn).applyAndExpectDouble(costFunction)
     storages = toReturn :: storages
     toReturn
@@ -217,7 +234,8 @@ class FactoryModel(verbosity:String=>Unit) {
                   name:String,
                   overflowOnInput:Boolean,
                   costFunction:String = "0") = {
-    val toReturn = new FIFOStorage(maxSize, initialContent, name, verbosity, overflowOnInput,0)
+    val toReturn = new FIFOStorage(maxSize, initialContent, name, verbosity, overflowOnInput,nextStorageID)
+    nextStorageID += 1
     toReturn.cost = ListenerParser.storageCostParser(toReturn).applyAndExpectDouble(costFunction)
     storages = toReturn :: storages
     toReturn
