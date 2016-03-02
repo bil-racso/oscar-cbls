@@ -1,4 +1,4 @@
-package oscar.examples.cbls.routing.visual.FunctionGraphic;
+package oscar.examples.cbls.routing.visual.FunctionGraphic
 
 /**
  * *****************************************************************************
@@ -17,9 +17,12 @@ package oscar.examples.cbls.routing.visual.FunctionGraphic;
  * ****************************************************************************
  */
 
-import java.awt.{Color, BorderLayout}
-import java.awt.event.{FocusEvent, FocusListener, AdjustmentListener, AdjustmentEvent}
-import javax.swing.{JLabel, JFormattedTextField, SwingConstants, JScrollBar}
+import java.awt.BorderLayout
+import java.awt.event.{AdjustmentListener, AdjustmentEvent}
+import javax.swing.{SwingConstants, JScrollBar}
+
+import oscar.cbls.search.algo.LazyQuicksort
+
 
 /**
   * This file contains all the add-on modules that you could add to your FunctionGraphicContainer object.
@@ -27,6 +30,8 @@ import javax.swing.{JLabel, JFormattedTextField, SwingConstants, JScrollBar}
   *
   * @author fabian.germeau@student.vinci.be
   */
+
+
 
 //TODO: Javadoc
 trait Zoom extends ObjFunctionGraphicContainer{
@@ -43,7 +48,7 @@ trait Zoom extends ObjFunctionGraphicContainer{
       graphic.drawGlobalCurve()
 
       def getLogZoom(i:Double): Double ={
-        (100*Math.pow(Math.log(i),4)/Math.pow(Math.log(100),4))
+        100 * Math.pow(Math.log(i), 4) / Math.pow(Math.log(100), 4)
       }
     }
   })
@@ -69,10 +74,6 @@ trait Zoom extends ObjFunctionGraphicContainer{
   })
   add(upDownScrollBar, BorderLayout.WEST)
 
-  val neighborhoodColorLabel = new JLabel(" ")
-  neighborhoodColorLabel.setHorizontalAlignment(SwingConstants.CENTER)
-  add(neighborhoodColorLabel, BorderLayout.NORTH)
-
   //TODO: Javadoc
   def adjustScrollBar(): Unit ={
     rightLeftScrollBar.setMaximum(Math.max(
@@ -88,17 +89,34 @@ trait Zoom extends ObjFunctionGraphicContainer{
 
   //TODO: Javadoc
   override def drawGlobalCurve(): Unit ={
-    graphic.drawGlobalCurve()
     zoomScrollBar.setValue(100)
-    var labelText = "<html>"
-    for(k <- graphic.xColorMap.keys){
-      val r = graphic.xColorMap.get(k).get.getRed
-      val g = graphic.xColorMap.get(k).get.getGreen
-      val b = graphic.xColorMap.get(k).get.getBlue
-      labelText = labelText + "<font color=rgb("+r+","+g+","+b+")>" + k + "    " + "</font>"
-    }
-    labelText = labelText + "</html>"
-    neighborhoodColorLabel.setText(labelText)
+    super.drawGlobalCurve()
   }
 }
 
+trait AdjustMaxValue extends ObjFunctionGraphicContainer{
+  var sortedYValues:LazyQuicksort = null
+
+  val adjustMaxValueScrollBar = new JScrollBar(SwingConstants.VERTICAL,1,1,1,101)
+  adjustMaxValueScrollBar.addAdjustmentListener(new AdjustmentListener {
+    override def adjustmentValueChanged(e: AdjustmentEvent): Unit = {
+      sortedYValues.sortUntil(adjustMaxValueScrollBar.getValue/100 * sortedYValues.size)
+      val iteratorXValues = sortedYValues.iterator
+      for(i <- 0 until (adjustMaxValueScrollBar.getValue.toDouble/100 * sortedYValues.size).toInt){
+        val temp = iteratorXValues.next()
+        if(i == (adjustMaxValueScrollBar.getValue.toDouble/100 * sortedYValues.size).toInt-1) {
+          graphic.maxYValueDisplayed = temp
+        }
+      }
+      println(graphic.maxYValueDisplayed)
+      graphic.heightAdapter = ((graphic.maxYValueDisplayed - graphic.minYValue())/graphic.diffHeight())*(graphic.maxYValue()/graphic.maxYValueDisplayed)
+      graphic.drawGlobalCurve()
+    }
+  })
+  add(adjustMaxValueScrollBar, BorderLayout.EAST)
+
+  override def drawGlobalCurve(): Unit ={
+    sortedYValues = new LazyQuicksort(graphic.yValues.toArray,+_)
+    super.drawGlobalCurve()
+  }
+}

@@ -62,8 +62,21 @@ class ObjFunctionGraphicContainer(title:String = "Evolution of the objective fun
   graphic = new ObjFunctionGraphic(getWidth,getHeight)
   add(graphic, BorderLayout.CENTER)
 
+  val neighborhoodColorLabel = new JLabel(" ")
+  neighborhoodColorLabel.setHorizontalAlignment(SwingConstants.CENTER)
+  add(neighborhoodColorLabel, BorderLayout.NORTH)
+
   def drawGlobalCurve(): Unit ={
     graphic.drawGlobalCurve()
+    var labelText = "<html>"
+    for(k <- graphic.xColorMap.keys){
+      val r = graphic.xColorMap.get(k).get.getRed
+      val g = graphic.xColorMap.get(k).get.getGreen
+      val b = graphic.xColorMap.get(k).get.getBlue
+      labelText = labelText + "<font color=rgb("+r+","+g+","+b+")>" + k + "    " + "</font>"
+    }
+    labelText = labelText + "</html>"
+    neighborhoodColorLabel.setText(labelText)
   }
 
   def notifyNewObjectiveValue(objValue:Int, objTime:Long, color: String): Unit ={

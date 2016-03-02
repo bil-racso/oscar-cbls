@@ -135,7 +135,8 @@ class ObjFunctionGraphic(width:Int,height:Int) extends FunctionGraphic(){
     println(xColorMap.toString())
     xColorValues.append(xColorMap.get(color).get)
     maxXValueDisplayed = time
-    maxYValueDisplayed = best()
+    minYValueDisplayed = best()
+    maxYValueDisplayed = yValues.max
   }
 
   /**
@@ -145,6 +146,7 @@ class ObjFunctionGraphic(width:Int,height:Int) extends FunctionGraphic(){
   override def drawGlobalCurve() = {
     super.clear()
     val diffObjValue = maxYValueDisplayed - minYValueDisplayed
+    println("La totale : " + minXValueDisplayed + "    " + maxXValueDisplayed + "    " + minYValueDisplayed + "    " + maxYValueDisplayed + "    " + heightAdapter)
 
     val diffTimeValue = maxXValueDisplayed - minXValueDisplayed
 
