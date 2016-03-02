@@ -24,7 +24,7 @@ import java.awt.geom.Rectangle2D
 import oscar.cbls.search.StopWatch
 import oscar.examples.cbls.routing.visual.ColorGenerator
 import oscar.visual.VisualDrawing
-import oscar.visual.shapes.{VisualLine, VisualText}
+import oscar.visual.shapes.{VisualRectangle, VisualLine, VisualText}
 
 import scala.collection.immutable.HashMap
 import scala.collection.mutable.ListBuffer
@@ -151,8 +151,8 @@ class ObjFunctionGraphic(width:Int,height:Int) extends FunctionGraphic(){
     val (bottom,top) = getOrdFloorValues(diffObjValue,minYValueDisplayed,maxYValueDisplayed)
     val (left,right) = getAbsFloorValues(diffTimeValue,minXValueDisplayed,maxXValueDisplayed)
 
-    drawAxis(bottom,top,left,right)
     drawCurve(bottom,top)
+    drawAxis(bottom,top,left,right)
   }
 
   /**
@@ -285,6 +285,18 @@ class ObjFunctionGraphic(width:Int,height:Int) extends FunctionGraphic(){
     * @param maxX The right border of the X axis
     */
   def drawAxis(minY:Long, maxY:Long, minX:scala.Double, maxX:scala.Double): Unit ={
+    val rectLeft = new VisualRectangle(this, new Rectangle2D.Double(0,0,minWidth,getHeight))
+    rectLeft.innerCol_=(Color.white)
+    rectLeft.outerCol_=(Color.white)
+    val rectTop = new VisualRectangle(this, new Rectangle2D.Double(minWidth,0,getWidth,10))
+    rectTop.innerCol_=(Color.white)
+    rectTop.outerCol_=(Color.white)
+    val rectRight = new VisualRectangle(this, new Rectangle2D.Double(maxWidth(),0,getWidth,getHeight))
+    rectRight.innerCol_=(Color.white)
+    rectRight.outerCol_=(Color.white)
+    val rectBottom = new VisualRectangle(this, new Rectangle2D.Double(0,maxHeight(),getWidth,getHeight))
+    rectBottom.innerCol_=(Color.white)
+    rectBottom.outerCol_=(Color.white)
     val ordLine = new VisualLine(this,new Double(minWidth,minHeight,minWidth,maxHeight()))
     ordLine.outerCol_$eq(Color.black)
     val absLine = new VisualLine(this,new Double(minWidth,maxHeight(),maxWidth(),maxHeight()))
