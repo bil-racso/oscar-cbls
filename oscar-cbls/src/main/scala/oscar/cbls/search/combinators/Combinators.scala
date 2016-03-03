@@ -1185,8 +1185,6 @@ class MaxMovesWithoutImprovement(a: Neighborhood, val cond: Move => Boolean, val
             stepsSinceLastImprovement = 0
             NoMoveFound
         }
-
-        a.getMove(obj, acceptanceCriteria)
       } else {
         if (verbose >= 1) println("MaxStepsWithoutImprovement: reached " + maxMovesWithoutImprovement + " moves without improvement of " + a)
         NoMoveFound

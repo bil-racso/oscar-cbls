@@ -264,8 +264,8 @@ abstract class Neighborhood(name:String = null) {
   def onExhaustRestartAfter(randomizationNeighborhood:Neighborhood, maxRestartWithoutImprovement:Int, obj:Objective) = {
 
     (this orElse (randomizationNeighborhood
-      maxMoves maxRestartWithoutImprovement
-      withoutImprovementOver obj improvementBeignMeasuredBeforeNeighborhoodExploration)) saveBestAndRestoreOnExhaust obj
+      maxMoves maxRestartWithoutImprovement withoutImprovementOver obj improvementBeignMeasuredBeforeNeighborhoodExploration)
+      ) saveBestAndRestoreOnExhaust obj
   }
 
 

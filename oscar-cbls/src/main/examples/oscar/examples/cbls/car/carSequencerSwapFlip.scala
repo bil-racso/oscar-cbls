@@ -3,9 +3,8 @@ package oscar.examples.cbls.car
 import oscar.cbls.invariants.core.computation.CBLSIntVar
 import oscar.cbls.modeling.CBLSModel
 import oscar.cbls.objective.Objective
-import oscar.cbls.search.combinators.{BestSlopeFirst, Profile}
-import oscar.cbls.search.move.SwapMove
-import oscar.cbls.search.{RollNeighborhood, WideningFlipNeighborhood}
+import oscar.cbls.search.WideningFlipNeighborhood
+import oscar.cbls.search.combinators.Profile
 
 import scala.collection.immutable.SortedMap
 import scala.language.postfixOps
@@ -16,7 +15,7 @@ import scala.util.Random
  */
 object carSequencerSwapFlip  extends CBLSModel with App {
 
-  val orderedCarsByType:SortedMap[Int,Int] = SortedMap(0 -> 90, 1 -> 60, 2 -> 110 , 3 -> 120, 4 -> 40, 5 -> 30)
+  val orderedCarsByType:SortedMap[Int,Int] = SortedMap(0 -> 110, 1 -> 60, 2 -> 110 , 3 -> 120, 4 -> 40, 5 -> 30)
   val carTypes = 0 to 5
 
   println("carSequencing")
@@ -79,9 +78,11 @@ object carSequencerSwapFlip  extends CBLSModel with App {
   val search =
     (Profile(swapsNeighborhood(carSequence,"mostViolatedSwap", searchZone2 = mostViolatedCars, symmetryCanBeBrokenOnIndices = false))
       exhaust Profile(WideningFlipNeighborhood(carSequence)) //it seems useless to try swaps once flip is exhausted, so simple exhaust is used here
+      onExhaustRestartAfter(Profile(shuffleNeighborhood(carSequence, mostViolatedCars, name = "shuffleMostViolatedCars")) guard(() => mostViolatedCars.value.size > 2), 2, obj)
       onExhaustRestartAfter(Profile(shuffleNeighborhood(carSequence, violatedCars, name = "shuffleSomeViolatedCars", numberOfShuffledPositions = () => 5 max (violatedCars.value.size/2))), 2, obj)
+      onExhaustRestartAfter(Profile(shuffleNeighborhood(carSequence, name = "shuffleMostCars", numberOfShuffledPositions = () => nbCars/2)), 2, obj)
       orElse (Profile(shuffleNeighborhood(carSequence, name = "shuffleAllCars")) maxMoves 4)
-      saveBestAndRestoreOnExhaust obj)
+      saveBestAndRestoreOnExhaust obj) //in case we do not solve it, we want to restore the best solution anyway
 
   search.verbose = 1
   search.paddingLength = 150
