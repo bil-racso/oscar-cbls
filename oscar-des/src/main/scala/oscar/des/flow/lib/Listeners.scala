@@ -369,7 +369,10 @@ case class BoolConst(b:Boolean) extends BoolExpr(false){
 case class DoubleConst(d:Double) extends DoubleExpr(false){
   override def updatedValue(time: Double): Double = d
 
-  override def cloneReset(boolMap: Map[BoolExpr, BoolExpr], doubleMap: Map[DoubleExpr, DoubleExpr], storeMap: Map[Storage, Storage], processMap: Map[ActivableProcess, ActivableProcess]): DoubleExpr = this
+  override def cloneReset(boolMap: Map[BoolExpr, BoolExpr],
+                          doubleMap: Map[DoubleExpr, DoubleExpr],
+                          storeMap: Map[Storage, Storage],
+                          processMap: Map[ActivableProcess, ActivableProcess]): DoubleExpr = this
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////
@@ -383,7 +386,10 @@ case class DoubleConst(d:Double) extends DoubleExpr(false){
 case class Not(f:BoolExpr) extends BoolExpr(false,f){
   override def updatedValue(time:Double): Boolean = !f.value
 
-  override def cloneReset(boolMap: Map[BoolExpr, BoolExpr], doubleMap: Map[DoubleExpr, DoubleExpr], storeMap: Map[Storage, Storage], processMap: Map[ActivableProcess, ActivableProcess]): BoolExpr = Not(boolMap(f))
+  override def cloneReset(boolMap: Map[BoolExpr, BoolExpr],
+                          doubleMap: Map[DoubleExpr, DoubleExpr],
+                          storeMap: Map[Storage, Storage],
+                          processMap: Map[ActivableProcess, ActivableProcess]): BoolExpr = Not(boolMap(f))
 }
 
 /**

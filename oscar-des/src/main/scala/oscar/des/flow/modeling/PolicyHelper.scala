@@ -1,7 +1,7 @@
 package oscar.des.flow.modeling
 
 import oscar.des.engine.Model
-import oscar.des.flow.lib.{OnLowerThreshold, RegularActivation, Storage, Activable}
+import oscar.des.flow.lib._
 
 /**
  * Created by rdl on 31/08/2015.
@@ -16,8 +16,8 @@ trait PolicyHelper {
    * @param initialDelay the initial delay before the first activation
    * @param a the activeable that is activated by this activation
    */
-  def regularActivation(m:Model, intensity:Int, delay:Float, initialDelay:Float, a:Activable)
-  = new RegularActivation(m, intensity, delay, initialDelay, a)
+  def regularActivation(m:Model, intensity:Int, delay:Float, initialDelay:Float, a:ActivableProcess, verbosity:String=>Unit = null, name:String)
+  = new RegularActivation(m, intensity, delay, initialDelay, a,verbosity, name)
 
   /**
    * This rule activates the activeable "a" by intensity activationSize(s.content)
@@ -37,7 +37,7 @@ trait PolicyHelper {
    */
   def onLowerThreshold(s:Storage,
                        m:Model,
-                       a:Activable,
+                       a:ActivableProcess,
                        threshold:Int,
                        activationSize:Int=>Int,
                        verbosity:String=>Unit = null,

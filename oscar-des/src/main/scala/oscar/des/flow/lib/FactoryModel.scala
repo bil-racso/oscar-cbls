@@ -31,15 +31,20 @@ class FactoryModel(verbosity:String=>Unit,
                    val m:Model = new Model,
                    var ms:MetricsStore = null,
                    private var storages:List[Storage] = List.empty,
-                   private var processes:List[ActivableProcess] = List.empty) {
+                   private var processes:List[ActivableProcess] = List.empty,
+                   private var activationRules:List[ActivationRule] = List.empty) {
 
   private var nextStorageID = 0
+  private var nextProcessID = 0
+  private var nextActivationRuleID = 0
 
   def getStorages:List[Storage] = storages
   def getProcesses:List[ActivableProcess] = processes
 
-  def simulate(horizon:Float, verbosity:String=>Unit, abort:()=>Boolean = ()=>false){
+  def simulate(horizon:Float, abort:()=>Boolean = ()=>false){
     m.simulate(horizon,verbosity,abort)
+    ms.finish(m.clock())
+    if(verbosity != null) println(this)
   }
 
   /**
@@ -51,6 +56,9 @@ class FactoryModel(verbosity:String=>Unit,
     val newModel:Model = new Model
     val newStorages = SortedMap.empty[Storage,Storage](new OrderingOnStorage()) ++ storages.map((s:Storage) => (s,s.cloneReset(newModel)))
     val newProcesses = SortedMap.empty[ActivableProcess,ActivableProcess](new OrderingOnActivableProcesses()) ++ processes.map((p:ActivableProcess) => (p,p.cloneReset(newModel,newStorages)))
+
+    //activation rules:
+    val newActiationRules = activationRules.map(_.cloneReset(newModel,newProcesses, newStorages))
 
     //cloner les expressions
     val (newMetricStore,doubleExprTranslation) = ms.cloneReset(newStorages,newProcesses)
@@ -69,7 +77,8 @@ class FactoryModel(verbosity:String=>Unit,
       newModel,
       newMetricStore,
       newStorages.values.toList,
-      newProcesses.values.toList)
+      newProcesses.values.toList,
+      newActiationRules)
   }
 
   def setQueriesToParse(queriesNameAndExpression:List[(String,String)]){
@@ -99,7 +108,8 @@ class FactoryModel(verbosity:String=>Unit,
                          transformFunction:ItemClassTransformFunction,
                          name:String,
                          costFunction:String = "0") = {
-    val toReturn = SingleBatchProcess(m,batchDuration,inputs,outputs,transformFunction,name,verbosity)
+    val toReturn = SingleBatchProcess(m,batchDuration,inputs,outputs,transformFunction,name,verbosity, nextProcessID)
+    nextProcessID += 1
     toReturn.cost = ListenerParser.processCostParser(toReturn).applyAndExpectDouble(costFunction)
     processes = toReturn :: processes
     toReturn
@@ -121,7 +131,8 @@ class FactoryModel(verbosity:String=>Unit,
                    name:String,
                    transformFunction:ItemClassTransformFunction,
                    costFunction:String = "0") ={
-    val toReturn = new BatchProcess(m,numberOfBatches,batchDuration,inputs,outputs,name,transformFunction,verbosity)
+    val toReturn = new BatchProcess(m,numberOfBatches,batchDuration,inputs,outputs,name,transformFunction,verbosity, nextProcessID)
+    nextProcessID += 1
     toReturn.cost = ListenerParser.processCostParser(toReturn).applyAndExpectDouble(costFunction)
     processes = toReturn :: processes
     toReturn
@@ -148,7 +159,8 @@ class FactoryModel(verbosity:String=>Unit,
                           transformFunction:ItemClassTransformFunction,
                           name:String,
                           costFunction:String  = "0") = {
-    val toReturn = new ConveyorBeltProcess(m:Model,processDuration,minimalSeparationBetweenBatches,inputs,outputs,transformFunction,name,verbosity)
+    val toReturn = new ConveyorBeltProcess(m:Model,processDuration,minimalSeparationBetweenBatches,inputs,outputs,transformFunction,name,verbosity, nextProcessID)
+    nextProcessID += 1
     toReturn.cost = ListenerParser.processCostParser(toReturn).applyAndExpectDouble(costFunction)
     processes = toReturn :: processes
     toReturn
@@ -170,7 +182,8 @@ class FactoryModel(verbosity:String=>Unit,
                             name:String,
                             transformFunction:ItemClassTransformWitAdditionalOutput,
                             costFunction:String) = {
-    val toReturn = SplittingBatchProcess(m, numberOfBatches, batchDuration, inputs, outputs, name, transformFunction, verbosity)
+    val toReturn = SplittingBatchProcess(m, numberOfBatches, batchDuration, inputs, outputs, name, transformFunction, verbosity, nextProcessID)
+    nextProcessID += 1
     toReturn.cost = ListenerParser.processCostParser(toReturn).applyAndExpectDouble(costFunction)
     processes = toReturn :: processes
     toReturn
@@ -194,7 +207,8 @@ class FactoryModel(verbosity:String=>Unit,
                                   transformFunction:ItemClassTransformWitAdditionalOutput,
                                   name:String,
                                   costFunction:String = "0") = {
-    val toReturn = SplittingSingleBatchProcess(m, batchDuration, inputs, outputs, transformFunction, name, verbosity)
+    val toReturn = SplittingSingleBatchProcess(m, batchDuration, inputs, outputs, transformFunction, name, verbosity, nextProcessID)
+    nextProcessID += 1
     toReturn.cost = ListenerParser.processCostParser(toReturn).applyAndExpectDouble(costFunction)
     processes = toReturn :: processes
     toReturn
@@ -239,5 +253,52 @@ class FactoryModel(verbosity:String=>Unit,
     toReturn.cost = ListenerParser.storageCostParser(toReturn).applyAndExpectDouble(costFunction)
     storages = toReturn :: storages
     toReturn
+  }
+
+  /**
+   * This rule activates the activable "a" by intensity activationSize(s.content)
+   * whenever s.content goes below "threshold"
+   *
+   * if period is specified, it only perform the activation when time is a multiple of period.
+   * the intensity is computed at the time of activation of "a"
+   *
+   * @param s the stock that is monitored by this rule
+   * @param a the activeable that is activated by this activation
+   * @param threshold the threshold for activation
+   * @param activationSize a function that computes the level of activation, given the s.content
+   * @param period the period of activation, set to zero for immediate activation
+   * @param name the name of this rule, for debugging purposes
+   */
+  def onLowerThreshold(s:Storage,
+                       a:ActivableProcess,
+                       threshold:Int,
+                       activationSize:Int=>Int,
+                       period:Float,
+                       name:String) = {
+    val toReturn = new OnLowerThreshold(s,m, a, threshold, activationSize, verbosity, period, name)
+    activationRules = toReturn :: activationRules
+    toReturn
+  }
+
+
+  /**
+   * activates "a" with intensity "intensity" every "delay". the initial activation is performed after "offset"
+   * @param intensity the intensity if the activation
+   * @param delay the delay between consecutive activations
+   * @param initialDelay the initial delay before the first activation
+   * @param a the activeable that is activated by this activation
+   */
+  def regularActivation(intensity:Int, delay:Float, initialDelay:Float, a:ActivableProcess, name:String) = {
+    val toReturn = new RegularActivation(m, intensity, delay, initialDelay, a, verbosity, name)
+    activationRules = toReturn :: activationRules
+    toReturn
+  }
+
+  override def toString: String = {
+    ("FactoryModel \n" +
+      m.toString() + "\nProcesses:\n"
+    + processes.mkString("\n") + "\nstorages:\n"
+    + storages.mkString("\n") + "\nqueries:\n"
+      + ms.toString)
   }
 }

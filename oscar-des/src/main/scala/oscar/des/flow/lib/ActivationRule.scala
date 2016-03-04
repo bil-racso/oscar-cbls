@@ -9,11 +9,11 @@ import scala.collection.immutable.SortedMap
  * a rule that activates a, based on its specific activation scheme
  * @param a the activeable that is activated by this activation
  */
-abstract class ActivationRule(a:Activable){
+abstract class ActivationRule(a: ActivableProcess) {
   a.setUnderControl()
   def activate(intensity:Int) {a.activate(intensity)}
 
-  def cloneReset(newModel:Model,activableMapping:SortedMap[Activable,Activable], storageMapping:SortedMap[Storage,Storage]):ActivationRule
+  def cloneReset(newModel:Model,activableMapping:SortedMap[ActivableProcess,ActivableProcess], storageMapping:SortedMap[Storage,Storage]):ActivationRule
 }
 
 /**
@@ -24,15 +24,16 @@ abstract class ActivationRule(a:Activable){
  * @param initialDelay the initial delay before the first activation
  * @param a the activeable that is activated by this activation
  */
-class RegularActivation(m:Model, intensity:Int, delay:Float, initialDelay:Float, a:Activable) extends ActivationRule(a:Activable){
+class RegularActivation(m: Model, intensity: Int, delay: Float, initialDelay: Float, a: ActivableProcess, verbosity: (String) => Unit, name: String) extends ActivationRule(a){
   def doActivate(){
+    if(verbosity != null){verbosity("regular activation of:" + name)}
     activate(intensity)
     m.wait(delay){doActivate()}
   }
   m.wait(initialDelay){doActivate()}
 
-  override def cloneReset(newModel: Model, activableMapping: SortedMap[Activable, Activable], storageMapping:SortedMap[Storage,Storage]): ActivationRule = {
-    new RegularActivation(newModel, intensity, delay, initialDelay, activableMapping(a))
+  override def cloneReset(newModel: Model, activableMapping: SortedMap[ActivableProcess, ActivableProcess], storageMapping:SortedMap[Storage,Storage]): ActivationRule = {
+    new RegularActivation(newModel, intensity, delay, initialDelay, activableMapping(a), verbosity, name)
   }
 }
 
@@ -54,13 +55,13 @@ class RegularActivation(m:Model, intensity:Int, delay:Float, initialDelay:Float,
  */
 class OnLowerThreshold(s:Storage,
                        m:Model,
-                       a:Activable,
+                       a:ActivableProcess,
                        threshold:Int,
                        activationSize:Int=>Int,
                        verbosity:String=>Unit = null,
                        period:Float,
                        name:String)
-  extends ActivationRule(a:Activable) with StockNotificationTarget{
+  extends ActivationRule(a) with StockNotificationTarget{
   s.registerNotificationTarget(this)
 
   private var placedOrders = 0
@@ -91,7 +92,7 @@ class OnLowerThreshold(s:Storage,
 
   override def toString: String = name + " " + this.getClass.getSimpleName + ":: placedOrders:" + placedOrders
 
-  override def cloneReset(newModel: Model, activableMapping: SortedMap[Activable, Activable], storageMapping:SortedMap[Storage,Storage]): ActivationRule = {
+  override def cloneReset(newModel: Model, activableMapping: SortedMap[ActivableProcess, ActivableProcess], storageMapping:SortedMap[Storage,Storage]): ActivationRule = {
     new OnLowerThreshold(storageMapping(s),
       newModel,
       activableMapping(a),
