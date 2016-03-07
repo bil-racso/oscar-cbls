@@ -410,6 +410,8 @@ abstract class Neighborhood(name:String = null) {
    */
   def afterMoveOnMove(procOnMove: Move => Unit) = new DoOnMove(this, procAfterMove = procOnMove)
 
+  //def showObjectiveFunction(obj: Objective) = new ShowObjectiveFunction(this,obj)
+
   /**
    * this combinator attaches a custom code to a given neighborhood.
    * the code is called whenever a move from this neighborhood is taken for the first time.

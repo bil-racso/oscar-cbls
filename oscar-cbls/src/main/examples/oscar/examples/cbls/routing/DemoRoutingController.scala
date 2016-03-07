@@ -14,16 +14,13 @@
  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
  * ****************************************************************************
  */
-package oscar.examples.cbls.routing.visual
-
-import java.awt.Color
+package oscar.examples.cbls.routing
 
 import oscar.cbls.invariants.core.computation.Store
 import oscar.cbls.routing.neighborhood._
 import oscar.cbls.search.StopWatch
 import oscar.cbls.search.combinators.{BestSlopeFirst, Profile, RoundRobin}
 import oscar.cbls.search.move.Move
-import oscar.examples.cbls.routing.{MyVRP, RoutingMatrixGenerator}
 
 
 class DemoRoutingController extends StopWatch{

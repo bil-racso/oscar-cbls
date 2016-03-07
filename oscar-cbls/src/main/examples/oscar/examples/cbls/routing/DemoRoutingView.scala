@@ -18,17 +18,16 @@
 /**
   * @author fabian.germeau@student.vinci.be
   */
-package oscar.examples.cbls.routing.visual
+package oscar.examples.cbls.routing
 
 import java.awt._
 import javax.swing._
 
 import oscar.cbls.invariants.core.computation.IntValue
-import oscar.cbls.objective.Objective
 import oscar.cbls.search.StopWatch
-import oscar.cbls.search.core.{EasyNeighborhood, SearchResult, Neighborhood}
-import oscar.examples.cbls.routing.visual.MatrixMap.RoutingMatrixVisual
+import oscar.examples.cbls.routing.visual.ColorGenerator
 import oscar.examples.cbls.routing.visual.FunctionGraphic._
+import oscar.examples.cbls.routing.visual.MatrixMap.RoutingMatrixVisual
 import oscar.visual.VisualFrame
 
 import scala.swing.{Dimension, Insets}

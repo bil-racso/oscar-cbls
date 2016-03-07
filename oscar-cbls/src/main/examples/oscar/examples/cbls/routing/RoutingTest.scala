@@ -142,7 +142,6 @@ object RoutingTest extends App with StopWatch{
 
   def launchSearch(): Unit ={
     search.doAllMoves(_ > 10*n, vrp.objectiveFunction)
-    println("go global curve")
     objGraphic.drawGlobalCurve()
 
     println("total time " + getWatch + "ms or  " + getWatchString)
