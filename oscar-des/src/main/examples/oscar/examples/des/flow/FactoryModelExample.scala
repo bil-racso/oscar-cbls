@@ -90,7 +90,8 @@ object FactoryModelExample extends App with AttributeHelper with ListenersHelper
     Array(Array((()=>1,formedContainerStoragePlace)),
       Array((()=>1,trashContainerStoragePlace))), choseZeroOne, "transportingOutputContainerFromForming")
 
-  val myStore = metricsStore(List(
+
+  fm.setQueries(List(
     ("a stupid metric, to test the stuff",mult(completedBatchCount(dieCuttingPartA),totalPut(outputSlotOfDieCuttingPArtA))),
     ("duration of empty raw material storage", cumulatedDuration(empty(rawMaterialStorage))),
     ("summed duration of forming being inactive at the start of the trace", cumulatedDuration(not(hasBeen(running(forming))))),
@@ -102,15 +103,19 @@ object FactoryModelExample extends App with AttributeHelper with ListenersHelper
     ("avg relative stock level of raw material storage",avgOnHistory(relativeStockLevel(rawMaterialStorage))),
     ("avg  stock level of raw material storage",avgOnHistory(stockLevel(rawMaterialStorage))),
     ("toto",ponderateWithDuration(stockLevel(rawMaterialStorage)))
-  ), verbosity)
+  ))
 
-  fm.ms = myStore
+  println("end build, start run")
   fm.simulate(8*60*60)
 
   println("duration:" + (System.currentTimeMillis - starttime) + "ms")
   if(verbosity == null) println(fm)
 
+  println("start cloneReset")
+
   val other = fm.cloneReset
+
+  println("start ssecond run")
   other.simulate(8*60*60)
   if(verbosity == null) println(other)
 }

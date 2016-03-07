@@ -23,16 +23,15 @@ class OrderingOnStorage() extends Ordering[Storage]{
 class OrderingOnActivableProcesses() extends Ordering[ActivableProcess]{
   override def compare(x: ActivableProcess, y: ActivableProcess): ItemClass = x.id.compare(y.id)
 }
-/**
- *
- * @param verbosity where verbosities should be sent, can be null
- */
+
+
+
 class FactoryModel(verbosity:String=>Unit,
-                   val m:Model = new Model,
-                   var ms:MetricsStore = null,
+                   private val m:Model = new Model,
+                   private var ms:MetricsStore = null,
                    private var storages:List[Storage] = List.empty,
                    private var processes:List[ActivableProcess] = List.empty,
-                   private var activationRules:List[ActivationRule] = List.empty) {
+                   private var activationRules:List[ActivationRule] = List.empty){
 
   private var nextStorageID = 0
   private var nextProcessID = 0
@@ -42,7 +41,8 @@ class FactoryModel(verbosity:String=>Unit,
   def getProcesses:List[ActivableProcess] = processes
 
   def simulate(horizon:Float, abort:()=>Boolean = ()=>false){
-    m.simulate(horizon,verbosity,abort)
+    m.simulate(horizon,verbosity,()=>{ms.updateMetricsIfNeeded(m.clock());abort()})
+
     ms.finish(m.clock())
     if(verbosity != null) println(this)
   }
@@ -65,11 +65,11 @@ class FactoryModel(verbosity:String=>Unit,
 
     //mettre les expressions clonées dans newProcesses et newStorages
     for((oldS,newS) <- newStorages){
-      newS.cost = doubleExprTranslation(oldS.cost)
+      newS.cost = doubleExprTranslation.getOrElse(oldS.cost,null)
     }
 
     for((oldP,newP) <- newProcesses){
-      newP.cost = doubleExprTranslation(oldP.cost)
+      newP.cost = doubleExprTranslation.getOrElse(oldP.cost,null)
     }
 
     //retourner le tout
@@ -86,10 +86,14 @@ class FactoryModel(verbosity:String=>Unit,
     val parser = ListenerParser(storages,processes)
     parser.parseAllListeners(queriesNameAndExpression) match{
       case  MultipleParsingSuccess(expressions:List[(String,Expression)]) =>
-        ms = new MetricsStore(expressions,verbosity)
+        setQueries(expressions)
       case  MultipleParsingError(s:String) =>
         throw new Error(s)
     }
+  }
+
+  def setQueries(expressions:List[(String, Expression)]){
+    ms = new MetricsStore(expressions,verbosity)
   }
 
   /**
@@ -181,7 +185,7 @@ class FactoryModel(verbosity:String=>Unit,
                             outputs:Array[Array[(()=>Int,Putable)]],
                             name:String,
                             transformFunction:ItemClassTransformWitAdditionalOutput,
-                            costFunction:String) = {
+                            costFunction:String = "0") = {
     val toReturn = SplittingBatchProcess(m, numberOfBatches, batchDuration, inputs, outputs, name, transformFunction, verbosity, nextProcessID)
     nextProcessID += 1
     toReturn.cost = ListenerParser.processCostParser(toReturn).applyAndExpectDouble(costFunction)
