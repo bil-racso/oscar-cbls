@@ -94,6 +94,8 @@ class ListenerParser(storages:Map[String,Storage],
   def expressionParser:Parser[Expression] = (
     doubleExprParser
       | boolExprParser
+      | "record(" ~> boolExprParser <~ ")" ^^ {boolHistoryExpr(_)}
+      | "record(" ~> doubleExprParser <~ ")" ^^ {doubleHistoryExpr(_)}
       |failure("expected boolean or arithmetic expression"))
 
   def boolExprParser:Parser[BoolExpr] = (

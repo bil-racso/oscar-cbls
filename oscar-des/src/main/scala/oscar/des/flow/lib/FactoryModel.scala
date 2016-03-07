@@ -47,6 +47,10 @@ class FactoryModel(verbosity:String=>Unit,
     if(verbosity != null) println(this)
   }
 
+  def queries:SortedMap[String,Expression] = {
+    SortedMap.empty[String,Expression] ++ ms.rootExpressions
+  }
+
   /**
    * creates a clone of this factory model where everything has been reset
    * so that you can simulate the clone as well
@@ -283,7 +287,6 @@ class FactoryModel(verbosity:String=>Unit,
     activationRules = toReturn :: activationRules
     toReturn
   }
-
 
   /**
    * activates "a" with intensity "intensity" every "delay". the initial activation is performed after "offset"

@@ -7,8 +7,10 @@ import scala.language.implicitConversions
   */
 trait ListenersHelper{
 
-  def metricsStore(rootExpressions:List[(String, Expression)],verbosity:String=>Unit) =
-    new MetricsStore(rootExpressions,verbosity)
+
+  def boolHistoryExpr(b:BoolExpr) = new BoolHistoryExpr(b)
+
+  def doubleHistoryExpr(d:DoubleExpr) = new DoubleHistoryExpr(d)
 
   /**
    * true if the storage is empty, false otherwise

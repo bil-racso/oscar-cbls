@@ -2,6 +2,7 @@ package oscar.examples.des
 
 import oscar.des.engine.Model
 import oscar.des.flow.core.{AttributeSet, AttributeDefinitions}
+import oscar.des.flow.lib.MetricsStore
 import oscar.des.flow.modeling.FactorySimulationHelper
 import scala.collection.immutable.SortedSet
 import scala.language.implicitConversions
@@ -89,7 +90,7 @@ object FactoryExample extends App with FactorySimulationHelper {
     Array(Array((()=>1,formedContainerStoragePlace)),
       Array((()=>1,trashContainerStoragePlace))), choseZeroOne, "transportingOutputContainerFromForming", verbosity)
 
-  val myStore = metricsStore(List(
+  val myStore = new MetricsStore(List(
     ("a stupid metric, to test the stuff",mult(completedBatchCount(dieCuttingPartA),totalPut(outputSlotOfDieCuttingPArtA))),
     ("duration of empty raw material storage", cumulatedDuration(empty(rawMaterialStorage))),
     ("summed duration of forming being inactive at the start of the trace", cumulatedDuration(not(hasBeen(running(forming))))),
