@@ -24,8 +24,6 @@ class OrderingOnActivableProcesses() extends Ordering[ActivableProcess]{
   override def compare(x: ActivableProcess, y: ActivableProcess): ItemClass = x.id.compare(y.id)
 }
 
-
-
 class FactoryModel(verbosity:String=>Unit,
                    private val m:Model = new Model,
                    private var ms:MetricsStore = null,

@@ -2,7 +2,7 @@ package oscar.examples.des.flow
 
 import oscar.des.engine.Model
 import oscar.des.flow.core.{AttributeDefinitions, AttributeSet}
-import oscar.des.flow.lib.{implicitConvertors, FactoryModel}
+import oscar.des.flow.lib._
 import oscar.des.flow.modeling.{ListenersHelper, AttributeHelper}
 
 import scala.collection.immutable.SortedSet
@@ -102,8 +102,10 @@ object FactoryModelExample extends App with AttributeHelper with ListenersHelper
     ("min content of raw material storage",minOnHistory(stockLevel(rawMaterialStorage))),
     ("avg relative stock level of raw material storage",avgOnHistory(relativeStockLevel(rawMaterialStorage))),
     ("avg  stock level of raw material storage",avgOnHistory(stockLevel(rawMaterialStorage))),
-    ("toto",ponderateWithDuration(stockLevel(rawMaterialStorage)))
+    ("toto",ponderateWithDuration(stockLevel(rawMaterialStorage))),
+    ("stock history",doubleHistoryExpr(stockLevel(rawMaterialStorage)))
   ))
+
 
   println("end build, start run")
   fm.simulate(8*60*60)

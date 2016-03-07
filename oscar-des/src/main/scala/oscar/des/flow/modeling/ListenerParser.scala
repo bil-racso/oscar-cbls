@@ -10,8 +10,12 @@ import scala.language.implicitConversions
 
 sealed abstract class ListenerParsingResult
 sealed abstract class ParsingSuccess extends ListenerParsingResult
+
 case class DoubleExpressionResult(d:DoubleExpr) extends ParsingSuccess
 case class BooleanExpressionResult(b:BoolExpr) extends ParsingSuccess
+case class DoubleHistoryExpressionResult(dh:DoubleHistoryExpr) extends ParsingSuccess
+case class BoolHistoryExpressionResult(bh:BoolHistoryExpr) extends ParsingSuccess
+
 case class ParsingError(s:String) extends ListenerParsingResult {
   override def toString: String = "Parse Error:\n" + s + "\n"
 }
@@ -64,6 +68,10 @@ class ListenerParser(storages:Map[String,Storage],
           case DoubleExpressionResult(result) =>
             declaredDoubleExpr += ((name,result))
             (name,result)
+          case DoubleHistoryExpressionResult(result) =>
+            (name,result)
+          case BoolHistoryExpressionResult(result) =>
+            (name,result)
           case ParsingError(p) => return MultipleParsingError("Error while parsing " + name + "\n" + p)
         }
     }))
@@ -78,6 +86,8 @@ class ListenerParser(storages:Map[String,Storage],
     parseAll(expressionParser, input) match {
       case Success(result:BoolExpr, _) => BooleanExpressionResult(result)
       case Success(result:DoubleExpr, _) => DoubleExpressionResult(result)
+      case Success(result:DoubleHistoryExpr, _) => DoubleHistoryExpressionResult(result)
+      case Success(result:BoolHistoryExpr, _) => BoolHistoryExpressionResult(result)
       case n:NoSuccess => ParsingError(n.toString)
     }
   }
@@ -145,7 +155,9 @@ class ListenerParser(storages:Map[String,Storage],
       | binaryOperatorDD2BParser("le",le)
       | binaryOperatorDD2BParser("eq",eq)
       | binaryOperatorDD2BParser("ne",neq)
-      | "changed(" ~> (boolExprParser | doubleExprParser) <~")" ^^ {case e:Expression => changed(e)}
+      | "changed(" ~> (boolExprParser | doubleExprParser) <~")" ^^ {
+      case b:BoolExpr => boolChanged(b)
+      case d:DoubleExpr => doubleChanged(d)}
       | "ite(" ~> boolExprParser~(","~>boolExprParser)~(","~>boolExprParser <~ ")") ^^{ case i~t~e => booleanITE(i,t,e)}
       | "("~>boolExprParser<~")"
       | failure("expected boolean expression"))
@@ -303,6 +315,7 @@ object ParserTester extends App with FactoryHelper{
   testOn("avg(relativeStockLevel(bStorage))")
   testOn("avg(content(aStorage))")
   testOn("integral(content(bStorage))")
+  testOn("record(integral(content(bStorage)))")
 
   val expressionList = List(
     ("a","completedBatchCount(aProcess) /*a comment in the middle*/ * totalPut(aStorage)"),

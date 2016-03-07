@@ -89,7 +89,7 @@ trait ListenersHelper{
   /** shorthand for Changed(StartedBatchCount(p))
     * @param p a process
     */
-  def anyBatchStarted(p:ActivableProcess):BoolExpr = Changed(StartedBatchCount(p))
+  def anyBatchStarted(p:ActivableProcess):BoolExpr = doubleChanged(StartedBatchCount(p))
 
   /**
    * a boolean constant
@@ -181,9 +181,17 @@ trait ListenersHelper{
    * true whenever the value of p changes, that is, whenever it is different from its value at the previous itration step
    * BEWARE that this is a dangerous expression, since time is event-based,
    * so that an additional artifact in the model might introduce additional intermediary steps)
-   * @param p  an expression; it might be a boolean or a double expression
+   * @param p an expression; it might be a boolean or a double expression
    */
-  def changed(p:Expression) = Changed(p:Expression)
+  def boolChanged(b:BoolExpr) = BoolChanged(b:BoolExpr)
+
+  /**
+   * true whenever the value of p changes, that is, whenever it is different from its value at the previous itration step
+   * BEWARE that this is a dangerous expression, since time is event-based,
+   * so that an additional artifact in the model might introduce additional intermediary steps)
+   * @param p an expression; it might be a boolean or a double expression
+   */
+  def doubleChanged(p:DoubleExpr) = DoubleChanged(p:DoubleExpr)
 
   /**
    * the value of d now minus the value of p at the previous position in the trace.

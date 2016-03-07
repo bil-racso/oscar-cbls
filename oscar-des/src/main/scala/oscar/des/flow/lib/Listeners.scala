@@ -63,17 +63,18 @@ abstract class DoubleExpr(accumulating:Boolean, children:Expression*) extends Ex
   def cloneReset(boolMap:Map[BoolExpr,BoolExpr],doubleMap:Map[DoubleExpr,DoubleExpr], storeMap:Map[Storage,Storage],processMap:Map[ActivableProcess,ActivableProcess]):DoubleExpr
 }
 
-class DoubleHistoryExpr(child:DoubleExpr) extends Expression(true,child){
+case class DoubleHistoryExpr(child:DoubleExpr) extends Expression(true,child){
   private var history:List[(Double,Double)] = List.empty
   override def update(time: Double){
     val newValue = child.value
     history match{
-      case (t1,v1) :: (t2,v2) :: tail if newValue == v2 && v1 == newValue => history = (time,newValue) :: (t2,newValue) :: tail
-      case _ => history = (time,child.value) :: history
+      case (t1,v1) :: (t2,v2) :: tail if newValue == v2 && v1 == newValue =>
+        history = (time,newValue) :: (t2,newValue) :: tail
+      case _ => history = (time,newValue) :: history
     }
   }
 
-  override def valueString: String = "" + history.reverse
+  override def valueString: String = "(size:" + history.size + "):" + history.reverse
 
   def cloneReset(boolMap:Map[BoolExpr,BoolExpr],
                  doubleMap:Map[DoubleExpr,DoubleExpr],
@@ -81,7 +82,7 @@ class DoubleHistoryExpr(child:DoubleExpr) extends Expression(true,child){
                  processMap:Map[ActivableProcess,ActivableProcess]):DoubleHistoryExpr = new DoubleHistoryExpr(doubleMap(child))
 }
 
-class BoolHistoryExpr(child:BoolExpr) extends Expression(true,child){
+case class BoolHistoryExpr(child:BoolExpr) extends Expression(true,child){
   private var history:List[(Double,Boolean)] = List.empty
   override def update(time: Double){
     val newValue = child.value
@@ -191,11 +192,15 @@ class MetricsStore(val rootExpressions:List[(String, Expression)],verbosity:Stri
 
     var translatedBoolExpr:Map[BoolExpr,BoolExpr] = SortedMap.empty[BoolExpr,BoolExpr](new OrderingOnExpression[BoolExpr])
     var translatedDoubleExpr:Map[DoubleExpr,DoubleExpr] = SortedMap.empty[DoubleExpr,DoubleExpr](new OrderingOnExpression[DoubleExpr])
+    var translatedDH:Map[DoubleHistoryExpr,DoubleHistoryExpr] = SortedMap.empty[DoubleHistoryExpr,DoubleHistoryExpr](new OrderingOnExpression[DoubleHistoryExpr])
+    var translatedBH:Map[BoolHistoryExpr,BoolHistoryExpr]= SortedMap.empty[BoolHistoryExpr,BoolHistoryExpr](new OrderingOnExpression[BoolHistoryExpr])
 
     def getTranslated(e:Expression):Expression = {
       e match{
         case b:BoolExpr => translatedBoolExpr(b)
         case d:DoubleExpr => translatedDoubleExpr(d)
+        case dh:DoubleHistoryExpr => translatedDH(dh)
+        case bh:BoolHistoryExpr => translatedBH(bh)
       }
     }
 
@@ -203,6 +208,9 @@ class MetricsStore(val rootExpressions:List[(String, Expression)],verbosity:Stri
       (e,translation) match{
         case (a:BoolExpr,b:BoolExpr) => translatedBoolExpr = translatedBoolExpr + ((a,b))
         case (a:DoubleExpr,b:DoubleExpr) => translatedDoubleExpr = translatedDoubleExpr + ((a,b))
+        case (a:DoubleHistoryExpr,b:DoubleHistoryExpr) => translatedDH = translatedDH + ((a,b))
+        case (a:BoolHistoryExpr,b:BoolHistoryExpr) => translatedBH = translatedBH + ((a,b))
+        case _ => throw new Error("non-marching translation")
       }
     }
 
@@ -210,6 +218,8 @@ class MetricsStore(val rootExpressions:List[(String, Expression)],verbosity:Stri
       e match{
         case b:BoolExpr => b.cloneReset(translatedBoolExpr,translatedDoubleExpr,storeMap,processMap)
         case d:DoubleExpr => d.cloneReset(translatedBoolExpr,translatedDoubleExpr,storeMap,processMap)
+        case dh:DoubleHistoryExpr => dh.cloneReset(translatedBoolExpr,translatedDoubleExpr,storeMap,processMap)
+        case bh:BoolHistoryExpr => bh.cloneReset(translatedBoolExpr,translatedDoubleExpr,storeMap,processMap)
       }
     }
 
@@ -535,11 +545,8 @@ case class BecomesTrue(p:BoolExpr) extends BoolExpr(true,p){
  * so that an additional artifact in the model might introduce additional intermediary steps)
  * @param p an expression; it might be a boolean or a double expression
  */
-case class Changed(p:Expression) extends BoolExpr(true,p){
-  def prevValueNormalized:Double = p match{
-    case b:BoolExpr => if (b.value) 1.0 else 0.0
-    case f:DoubleExpr => f.value
-  }
+case class BoolChanged(b:BoolExpr) extends BoolExpr(true,b){
+  def prevValueNormalized:Double =if (b.value) 1.0 else 0.0
   var previousValue = prevValueNormalized
 
   override def updatedValue(time:Double): Boolean = {
@@ -549,10 +556,27 @@ case class Changed(p:Expression) extends BoolExpr(true,p){
   }
 
   override def cloneReset(boolMap: Map[BoolExpr, BoolExpr], doubleMap: Map[DoubleExpr, DoubleExpr], storeMap: Map[Storage, Storage], processMap: Map[ActivableProcess, ActivableProcess]): BoolExpr =
-    Changed(p match{
-      case b:BoolExpr => boolMap(b)
-      case d:DoubleExpr => doubleMap(d)
-    })
+    BoolChanged(boolMap(b))
+}
+
+/**
+ * true whenever the value of p changes, that is, whenever it is different from its value at the previous itration step
+ * BEWARE that this is a dangerous expression, since time is event-based,
+ * so that an additional artifact in the model might introduce additional intermediary steps)
+ * @param p an expression; it might be a boolean or a double expression
+ */
+case class DoubleChanged(p:DoubleExpr) extends BoolExpr(true,p){
+  def prevValueNormalized:Double = p.value
+  var previousValue = prevValueNormalized
+
+  override def updatedValue(time:Double): Boolean = {
+    val oldPreviousValue = previousValue
+    previousValue = prevValueNormalized
+    oldPreviousValue != previousValue
+  }
+
+  override def cloneReset(boolMap: Map[BoolExpr, BoolExpr], doubleMap: Map[DoubleExpr, DoubleExpr], storeMap: Map[Storage, Storage], processMap: Map[ActivableProcess, ActivableProcess]): BoolExpr =
+    DoubleChanged(doubleMap(p))
 }
 
 /**
