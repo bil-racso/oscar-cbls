@@ -166,7 +166,7 @@ trait FactoryHelper {
                   verbosity:String=>Unit,
                   overflowOnInput:Boolean,
                   costFunction:String = "0") = {
-    val toReturn = new LIFOStorage(maxSize, initialContent, name, verbosity, overflowOnInput)
+    val toReturn = new LIFOStorage(maxSize, initialContent, name, verbosity, overflowOnInput,0)
     toReturn.cost = ListenerParser.storageCostParser(toReturn).applyAndExpectDouble(costFunction)
     toReturn
   }
@@ -186,7 +186,7 @@ trait FactoryHelper {
                   verbosity:String=>Unit,
                   overflowOnInput:Boolean,
                   costFunction:String = "0") = {
-    val toReturn = new FIFOStorage(maxSize, initialContent, name, verbosity, overflowOnInput)
+    val toReturn = new FIFOStorage(maxSize, initialContent, name, verbosity, overflowOnInput,0)
     toReturn.cost = ListenerParser.storageCostParser(toReturn).applyAndExpectDouble(costFunction)
     toReturn
   }

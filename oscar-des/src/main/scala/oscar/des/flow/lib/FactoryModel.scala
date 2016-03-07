@@ -4,6 +4,7 @@ import oscar.des.engine.Model
 import oscar.des.flow.core.ItemClassHelper._
 import oscar.des.flow.core.{ItemClassTransformWitAdditionalOutput, ItemClassTransformFunction, Putable, Fetchable}
 import oscar.des.flow.modeling.{MultipleParsingError, MultipleParsingSuccess, ListenerParser}
+import scala.collection.immutable.SortedMap
 import scala.language.implicitConversions
 
 trait implicitConvertors {
@@ -15,25 +16,69 @@ trait implicitConvertors {
   implicit def constantPutableToFunctionPutable(l: Array[(Int, Putable)]): Array[(() => Int, Putable)] = l.map(v => (() => v._1, v._2))
 }
 
+class OrderingOnStorage() extends Ordering[Storage]{
+  override def compare(x: Storage, y: Storage): ItemClass = x.id.compare(y.id)
+}
 
-/**
- *
- * @param verbosity where verbosities should be sent, can be null
- */
-class FactoryModel(verbosity:String=>Unit) {
+class OrderingOnActivableProcesses() extends Ordering[ActivableProcess]{
+  override def compare(x: ActivableProcess, y: ActivableProcess): ItemClass = x.id.compare(y.id)
+}
 
-  val m:Model = new Model
 
-  var ms:MetricsStore = null
 
-  private var storages:List[Storage] = List.empty
-  private var processes:List[ActivableProcess] = List.empty
+class FactoryModel(verbosity:String=>Unit,
+                   private val m:Model = new Model,
+                   private var ms:MetricsStore = null,
+                   private var storages:List[Storage] = List.empty,
+                   private var processes:List[ActivableProcess] = List.empty,
+                   private var activationRules:List[ActivationRule] = List.empty){
+
+  private var nextStorageID = 0
+  private var nextProcessID = 0
+  private var nextActivationRuleID = 0
 
   def getStorages:List[Storage] = storages
   def getProcesses:List[ActivableProcess] = processes
 
-  def simulate(horizon:Float, verbosity:String=>Unit, abort:()=>Boolean = ()=>false){
-    m.simulate(horizon,verbosity,abort)
+  def simulate(horizon:Float, abort:()=>Boolean = ()=>false){
+    m.simulate(horizon,verbosity,()=>{ms.updateMetricsIfNeeded(m.clock());abort()})
+
+    ms.finish(m.clock())
+    if(verbosity != null) println(this)
+  }
+
+  /**
+   * creates a clone of this factory model where everything has been reset
+   * so that you can simulate the clone as well
+   * @return
+   */
+  def cloneReset:FactoryModel = {
+    val newModel:Model = new Model
+    val newStorages = SortedMap.empty[Storage,Storage](new OrderingOnStorage()) ++ storages.map((s:Storage) => (s,s.cloneReset(newModel)))
+    val newProcesses = SortedMap.empty[ActivableProcess,ActivableProcess](new OrderingOnActivableProcesses()) ++ processes.map((p:ActivableProcess) => (p,p.cloneReset(newModel,newStorages)))
+
+    //activation rules:
+    val newActiationRules = activationRules.map(_.cloneReset(newModel,newProcesses, newStorages))
+
+    //cloner les expressions
+    val (newMetricStore,doubleExprTranslation) = ms.cloneReset(newStorages,newProcesses)
+
+    //mettre les expressions clonées dans newProcesses et newStorages
+    for((oldS,newS) <- newStorages){
+      newS.cost = doubleExprTranslation.getOrElse(oldS.cost,null)
+    }
+
+    for((oldP,newP) <- newProcesses){
+      newP.cost = doubleExprTranslation.getOrElse(oldP.cost,null)
+    }
+
+    //retourner le tout
+    new FactoryModel(verbosity,
+      newModel,
+      newMetricStore,
+      newStorages.values.toList,
+      newProcesses.values.toList,
+      newActiationRules)
   }
 
   def setQueriesToParse(queriesNameAndExpression:List[(String,String)]){
@@ -41,10 +86,14 @@ class FactoryModel(verbosity:String=>Unit) {
     val parser = ListenerParser(storages,processes)
     parser.parseAllListeners(queriesNameAndExpression) match{
       case  MultipleParsingSuccess(expressions:List[(String,Expression)]) =>
-        ms = new MetricsStore(expressions,verbosity)
+        setQueries(expressions)
       case  MultipleParsingError(s:String) =>
         throw new Error(s)
     }
+  }
+
+  def setQueries(expressions:List[(String, Expression)]){
+    ms = new MetricsStore(expressions,verbosity)
   }
 
   /**
@@ -63,7 +112,8 @@ class FactoryModel(verbosity:String=>Unit) {
                          transformFunction:ItemClassTransformFunction,
                          name:String,
                          costFunction:String = "0") = {
-    val toReturn = SingleBatchProcess(m,batchDuration,inputs,outputs,transformFunction,name,verbosity)
+    val toReturn = SingleBatchProcess(m,batchDuration,inputs,outputs,transformFunction,name,verbosity, nextProcessID)
+    nextProcessID += 1
     toReturn.cost = ListenerParser.processCostParser(toReturn).applyAndExpectDouble(costFunction)
     processes = toReturn :: processes
     toReturn
@@ -85,7 +135,8 @@ class FactoryModel(verbosity:String=>Unit) {
                    name:String,
                    transformFunction:ItemClassTransformFunction,
                    costFunction:String = "0") ={
-    val toReturn = new BatchProcess(m,numberOfBatches,batchDuration,inputs,outputs,name,transformFunction,verbosity)
+    val toReturn = new BatchProcess(m,numberOfBatches,batchDuration,inputs,outputs,name,transformFunction,verbosity, nextProcessID)
+    nextProcessID += 1
     toReturn.cost = ListenerParser.processCostParser(toReturn).applyAndExpectDouble(costFunction)
     processes = toReturn :: processes
     toReturn
@@ -112,7 +163,8 @@ class FactoryModel(verbosity:String=>Unit) {
                           transformFunction:ItemClassTransformFunction,
                           name:String,
                           costFunction:String  = "0") = {
-    val toReturn = new ConveyorBeltProcess(m:Model,processDuration,minimalSeparationBetweenBatches,inputs,outputs,transformFunction,name,verbosity)
+    val toReturn = new ConveyorBeltProcess(m:Model,processDuration,minimalSeparationBetweenBatches,inputs,outputs,transformFunction,name,verbosity, nextProcessID)
+    nextProcessID += 1
     toReturn.cost = ListenerParser.processCostParser(toReturn).applyAndExpectDouble(costFunction)
     processes = toReturn :: processes
     toReturn
@@ -133,8 +185,9 @@ class FactoryModel(verbosity:String=>Unit) {
                             outputs:Array[Array[(()=>Int,Putable)]],
                             name:String,
                             transformFunction:ItemClassTransformWitAdditionalOutput,
-                            costFunction:String) = {
-    val toReturn = SplittingBatchProcess(m, numberOfBatches, batchDuration, inputs, outputs, name, transformFunction, verbosity)
+                            costFunction:String = "0") = {
+    val toReturn = SplittingBatchProcess(m, numberOfBatches, batchDuration, inputs, outputs, name, transformFunction, verbosity, nextProcessID)
+    nextProcessID += 1
     toReturn.cost = ListenerParser.processCostParser(toReturn).applyAndExpectDouble(costFunction)
     processes = toReturn :: processes
     toReturn
@@ -158,7 +211,8 @@ class FactoryModel(verbosity:String=>Unit) {
                                   transformFunction:ItemClassTransformWitAdditionalOutput,
                                   name:String,
                                   costFunction:String = "0") = {
-    val toReturn = SplittingSingleBatchProcess(m, batchDuration, inputs, outputs, transformFunction, name, verbosity)
+    val toReturn = SplittingSingleBatchProcess(m, batchDuration, inputs, outputs, transformFunction, name, verbosity, nextProcessID)
+    nextProcessID += 1
     toReturn.cost = ListenerParser.processCostParser(toReturn).applyAndExpectDouble(costFunction)
     processes = toReturn :: processes
     toReturn
@@ -177,7 +231,9 @@ class FactoryModel(verbosity:String=>Unit) {
                   name:String,
                   overflowOnInput:Boolean,
                   costFunction:String = "0") = {
-    val toReturn = new LIFOStorage(maxSize, initialContent, name, verbosity, overflowOnInput)
+
+    val toReturn = new LIFOStorage(maxSize, initialContent, name, verbosity, overflowOnInput,nextStorageID)
+    nextStorageID += 1
     toReturn.cost = ListenerParser.storageCostParser(toReturn).applyAndExpectDouble(costFunction)
     storages = toReturn :: storages
     toReturn
@@ -196,9 +252,57 @@ class FactoryModel(verbosity:String=>Unit) {
                   name:String,
                   overflowOnInput:Boolean,
                   costFunction:String = "0") = {
-    val toReturn = new FIFOStorage(maxSize, initialContent, name, verbosity, overflowOnInput)
+    val toReturn = new FIFOStorage(maxSize, initialContent, name, verbosity, overflowOnInput,nextStorageID)
+    nextStorageID += 1
     toReturn.cost = ListenerParser.storageCostParser(toReturn).applyAndExpectDouble(costFunction)
     storages = toReturn :: storages
     toReturn
+  }
+
+  /**
+   * This rule activates the activable "a" by intensity activationSize(s.content)
+   * whenever s.content goes below "threshold"
+   *
+   * if period is specified, it only perform the activation when time is a multiple of period.
+   * the intensity is computed at the time of activation of "a"
+   *
+   * @param s the stock that is monitored by this rule
+   * @param a the activeable that is activated by this activation
+   * @param threshold the threshold for activation
+   * @param activationSize a function that computes the level of activation, given the s.content
+   * @param period the period of activation, set to zero for immediate activation
+   * @param name the name of this rule, for debugging purposes
+   */
+  def onLowerThreshold(s:Storage,
+                       a:ActivableProcess,
+                       threshold:Int,
+                       activationSize:Int=>Int,
+                       period:Float,
+                       name:String) = {
+    val toReturn = new OnLowerThreshold(s,m, a, threshold, activationSize, verbosity, period, name)
+    activationRules = toReturn :: activationRules
+    toReturn
+  }
+
+
+  /**
+   * activates "a" with intensity "intensity" every "delay". the initial activation is performed after "offset"
+   * @param intensity the intensity if the activation
+   * @param delay the delay between consecutive activations
+   * @param initialDelay the initial delay before the first activation
+   * @param a the activeable that is activated by this activation
+   */
+  def regularActivation(intensity:Int, delay:Float, initialDelay:Float, a:ActivableProcess, name:String) = {
+    val toReturn = new RegularActivation(m, intensity, delay, initialDelay, a, verbosity, name)
+    activationRules = toReturn :: activationRules
+    toReturn
+  }
+
+  override def toString: String = {
+    ("FactoryModel \n" +
+      m.toString() + "\nProcesses:\n"
+    + processes.mkString("\n") + "\nstorages:\n"
+    + storages.mkString("\n") + "\nqueries:\n"
+      + ms.toString)
   }
 }

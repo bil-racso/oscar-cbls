@@ -1,12 +1,16 @@
 package oscar.des.flow.lib
 
+import oscar.des.engine.Model
 import oscar.des.flow.DoublyLinkedList
 import oscar.des.flow.core.ItemClassHelper._
 import oscar.des.flow.core._
 
 import scala.language.implicitConversions
 
-
+object Storage{
+  implicit def orderingById[A <: Storage]: Ordering[A] =
+    Ordering.by(e => e.id)
+}
 /**
  * represents a storage point, or a stock as you name it
  * @param maxCapacity the maximal content of the stock. attempting to put more items will block the putting operations
@@ -17,11 +21,13 @@ import scala.language.implicitConversions
 abstract class Storage(val maxCapacity: Int,
                        val name:String,
                        val verbosity:String=>Unit,
-                       overflowOnInput:Boolean)
-  extends RichPutable with RichFetchable {
+                       overflowOnInput:Boolean,
+                       val id:Int)
+  extends RichPutable with RichFetchable{
 
   var cost:DoubleExpr = null
 
+  def cloneReset(newModel:Model):Storage
 
   class BufferCompositeItem(var n:Int, val itemClass:ItemClass)
   implicit def coupleToComposite(c:(Int,ItemClass)):BufferCompositeItem = new BufferCompositeItem(c._1,c._2)
@@ -34,8 +40,6 @@ abstract class Storage(val maxCapacity: Int,
   def contentSize:Int
 
   private var notificationTo: List[StockNotificationTarget] = List.empty
-
-  def reset()
 
   protected def resetStorage(): Unit ={
     resetRichFetchable()
@@ -112,7 +116,7 @@ class FIFOStorage(maxSize:Int,
                   initialContent:List[(Int,ItemClass)],
                   name:String,
                   verbosity:String=>Unit,
-                  overflowOnInput:Boolean) extends Storage(maxSize,name,verbosity,overflowOnInput){
+                  overflowOnInput:Boolean,id:Int) extends Storage(maxSize,name,verbosity,overflowOnInput,id){
 
   val content:DoublyLinkedList[BufferCompositeItem] = new DoublyLinkedList[BufferCompositeItem]
   for(i <- initialContent){
@@ -123,15 +127,8 @@ class FIFOStorage(maxSize:Int,
 
   private[this] var internalSize = content.foldLeft(0)({case (acc,bufferItem) => acc + bufferItem.n})
 
-
-  override def reset(){
-    resetStorage()
-    content.dropAll()
-    for(i <- initialContent){
-      content.append(coupleToComposite(i))
-    }
-    internalSize = content.foldLeft(0)({case (acc,bufferItem) => acc + bufferItem.n})
-  }
+  override def cloneReset(newModel:Model):Storage =
+    new FIFOStorage(maxSize, initialContent, name, verbosity, overflowOnInput,id)
 
   /**
    * @param l
@@ -206,21 +203,16 @@ class LIFOStorage(maxSize:Int,
                   initialContent:List[(Int,ItemClass)] = List.empty,
                   name:String,
                   verbosity:String=>Unit,
-                  overflowOnInput:Boolean) extends Storage(maxSize,name,verbosity,overflowOnInput){
+                  overflowOnInput:Boolean,id:Int) extends Storage(maxSize,name,verbosity,overflowOnInput,id){
 
   var content:List[BufferCompositeItem] = initialContent.map(coupleToComposite)
 
   override def contentSize: Int = internalSize
   private[this] var internalSize: Int = content.foldLeft(0)({case (acc,bufferItem) => acc + bufferItem.n})
 
+   override def cloneReset(newModel:Model): Storage = new LIFOStorage(maxSize, initialContent,name,verbosity,overflowOnInput,id)
 
-   override def reset(){
-     resetStorage()
-     content = initialContent.map(coupleToComposite)
-     internalSize = content.foldLeft(0)({case (acc,bufferItem) => acc + bufferItem.n})
-   }
-
-  /**
+   /**
    * @param l
    * @return what remains to be pt after this put, and what has been put
    */

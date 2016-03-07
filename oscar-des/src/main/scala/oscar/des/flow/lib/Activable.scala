@@ -1,14 +1,18 @@
 package oscar.des.flow.lib
 
+import oscar.des.engine.Model
 import oscar.des.flow.core.{Outputter, Inputter}
 import oscar.des.flow.core.ItemClassHelper._
 
+import scala.collection.immutable.SortedMap
+
+//TODO: remove Activable, ActivableProcess is enough
 abstract class Activable{
   def setUnderControl()
   def activate(intensity:Int)
 }
 
-abstract class ActivableProcess(val name:String, verbosity:String=>Unit) extends Activable{
+abstract class ActivableProcess(val name:String, verbosity:String=>Unit, val id:Int) extends Activable{
   def isRunning:Boolean
   def completedBatchCount:Int
   def startedBatchCount:Int
@@ -16,10 +20,10 @@ abstract class ActivableProcess(val name:String, verbosity:String=>Unit) extends
 
   var cost:DoubleExpr = null
 
-  var productionBatch:LIFOStorage = null;
+  var productionBatch:LIFOStorage = null
 
   override def setUnderControl(){
-    productionBatch = new LIFOStorage(Int.MaxValue,List.empty,"productionWindow_" + this.name, verbosity, false)
+    productionBatch = new LIFOStorage(Int.MaxValue,List.empty,"productionWindow_" + this.name, verbosity, false,-1)
     addPreliminaryInput(productionBatch)
   }
 
@@ -28,9 +32,11 @@ abstract class ActivableProcess(val name:String, verbosity:String=>Unit) extends
   }
 
   def addPreliminaryInput(preliminary:Storage)
+
+  def cloneReset(newModel:Model,storages:SortedMap[Storage,Storage]):ActivableProcess
 }
 
-abstract class ActivableAtomicProcess(name:String, verbosity:String=>Unit) extends ActivableProcess(name,verbosity){
+abstract class ActivableAtomicProcess(name:String, verbosity:String=>Unit, id:Int) extends ActivableProcess(name,verbosity,id){
 
   def myInput:Inputter
 
@@ -39,7 +45,7 @@ abstract class ActivableAtomicProcess(name:String, verbosity:String=>Unit) exten
   }
 }
 
-abstract class ActivableMultipleProcess(name:String, verbosity:String=>Unit) extends ActivableProcess(name,verbosity){
+abstract class ActivableMultipleProcess(name:String, verbosity:String=>Unit, id:Int) extends ActivableProcess(name,verbosity,id){
   def childProcesses:Iterable[ActivableAtomicProcess]
 
   override def addPreliminaryInput(preliminary: Storage) {

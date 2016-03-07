@@ -69,8 +69,8 @@ class ListenerParser(storages:Map[String,Storage],
     }))
   }
 
-  var declaredBoolExpr:SortedMap[String,BoolExpr] = SortedMap.empty
-  var declaredDoubleExpr:SortedMap[String,DoubleExpr] = (SortedMap.empty
+  var declaredBoolExpr:SortedMap[String,BoolExpr] = SortedMap.empty[String,BoolExpr]
+  var declaredDoubleExpr:SortedMap[String,DoubleExpr] = (SortedMap.empty[String,DoubleExpr]
   ++ storages.map(nameAndStorage => ("cost of " + nameAndStorage._1, nameAndStorage._2.cost))
   ++ processes.map(nameAndProcess => ("cost of " + nameAndProcess._1, nameAndProcess._2.cost)))
 
