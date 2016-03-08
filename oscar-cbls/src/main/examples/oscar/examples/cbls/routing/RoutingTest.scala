@@ -56,7 +56,7 @@ object RoutingTest extends App with StopWatch{
 
   this.startWatch()
 
-  val n = 100
+  val n = 200
   val v = 5
 
   println("RoutingTest(n:" + n + " v:" + v + ")")
@@ -68,13 +68,6 @@ object RoutingTest extends App with StopWatch{
   val model = new Store()
 
   val vrp = new MyVRP(n,v,model,distanceMatrix,100000)
-
-  val routingMap = new RoutingMatrixVisualWithAttribute(vrp = vrp, mapSize = 10000, pointsList = positions.toList, colorValues = ColorGenerator.generateRandomColors(v))
-  val objGraphic = new ObjFunctionGraphicContainer(dimension = new Dimension(960,540)) with Zoom
-  val visualFrame = new VisualFrame("The Traveling Salesman Problem")
-  visualFrame.addFrame(routingMap, size = (routingMap.getWidth,routingMap.getHeight))
-  visualFrame.addFrame(objGraphic, size = (960,540))
-  visualFrame.pack()
 
   model.close()
 
@@ -124,11 +117,8 @@ object RoutingTest extends App with StopWatch{
     vehicles=() => vrp.vehicles.toList))
 
   val search = new RoundRobin(List(insertPoint,onePointMove),10) exhaust
-                      new BestSlopeFirst(List(onePointMove, threeOpt, segExchange), refresh = n / 2) afterMoveOnMove((m:Move) => {
-    objGraphic.notifyNewObjectiveValue(vrp.getObjective().value, getWatch, m.neighborhoodName)
-    routingMap.drawRoutes()
-    visualFrame.revalidate()
-  }) // exhaust onePointMove exhaust segExchange//threeOpt //(new BestSlopeFirst(List(onePointMove,twoOpt,threeOpt)))
+                      new BestSlopeFirst(List(onePointMove, threeOpt, segExchange), refresh = n / 2) showObjectiveFunction
+    (vrp.getObjective(),this) // exhaust onePointMove exhaust segExchange//threeOpt //(new BestSlopeFirst(List(onePointMove,twoOpt,threeOpt)))
 
   search.verbose = 1
 //    search.verboseWithExtraInfo(3,() => vrp.toString)
@@ -142,7 +132,6 @@ object RoutingTest extends App with StopWatch{
 
   def launchSearch(): Unit ={
     search.doAllMoves(_ > 10*n, vrp.objectiveFunction)
-    objGraphic.drawGlobalCurve()
 
     println("total time " + getWatch + "ms or  " + getWatchString)
 

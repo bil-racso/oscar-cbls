@@ -98,16 +98,18 @@ trait Zoom extends ObjFunctionGraphicContainer{
 trait AdjustMaxValue extends ObjFunctionGraphicContainer{
   var sortedYValues:LazyQuicksort = null
 
-  val adjustMaxValueScrollBar = new JScrollBar(SwingConstants.VERTICAL,1,1,1,101)
+  val adjustMaxValueScrollBar = new JScrollBar(SwingConstants.VERTICAL,100,1,2,101)
   adjustMaxValueScrollBar.addAdjustmentListener(new AdjustmentListener {
     override def adjustmentValueChanged(e: AdjustmentEvent): Unit = {
-      sortedYValues.sortUntil(Math.max(1,adjustMaxValueScrollBar.getValue/100 * sortedYValues.size))
+      sortedYValues.sortUntil(Math.max(1,(adjustMaxValueScrollBar.getValue.toDouble/100 * sortedYValues.size).toInt))
       val iteratorXValues = sortedYValues.iterator
       for(i <- 0 until Math.max(1, (adjustMaxValueScrollBar.getValue.toDouble / 100 * sortedYValues.size).toInt)){
+        println(i)
         val temp = iteratorXValues.next()
         if(i == (adjustMaxValueScrollBar.getValue.toDouble/100 * sortedYValues.size).toInt-1) {
           graphic.maxYValueDisplayed = temp
         }
+        println("max : " + graphic.maxYValueDisplayed)
       }
       graphic.drawGlobalCurve()
     }

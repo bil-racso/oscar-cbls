@@ -19,8 +19,9 @@ package oscar.cbls.search.core
 
 import oscar.cbls.invariants.core.computation.Store
 import oscar.cbls.objective.{ LoggingObjective, Objective }
+import oscar.cbls.search.StopWatch
 import oscar.cbls.search.combinators._
-import oscar.cbls.search.move.{ CallBackMove, Move }
+import oscar.cbls.search.move.{CallBackMove, Move}
 
 import scala.language.{ implicitConversions, postfixOps }
 
@@ -52,6 +53,7 @@ abstract class JumpNeighborhood extends Neighborhood {
    * notice that the doIt method is called only if canDoIt returned true.
    * override it if your jump might not be applicable
    * (and do not forget to handle this case in your search strategy)
+ *
    * @return
    */
   def canDoIt: Boolean = true
@@ -67,6 +69,7 @@ abstract class JumpNeighborhood extends Neighborhood {
    * returns the value after the move
    * called by getMove, by default, this is Int.MaxValue, which is the correct value for a jump
    * in case your jump does not modify the obj function and you want to include this in the move description, override this method
+ *
    * @return
    */
   def valueAfter = Int.MaxValue
@@ -99,6 +102,7 @@ abstract class Neighborhood(name:String = null) {
   /**
    * collects and returns the statistics that have been requested in the neighborhood.
    * use the Statistics combinator to activate the collection of statistics
+ *
    * @return
    */
   final def profilingStatistics:String = Profile.statisticsHeader + "\n" + collectProfilingStatistics.mkString("\n")
@@ -108,6 +112,7 @@ abstract class Neighborhood(name:String = null) {
    * the method that returns a move from the neighborhood.
    * The returned move should typically be accepted by the acceptance criterion over the objective function.
    * Some neighborhoods are actually jumps, so that they might violate this basic rule however.
+ *
    * @param obj the objective function. notice that it is actually a function. if you have an [[oscar.cbls.objective.Objective]] there is an implicit conversion available
    * @param acceptanceCriterion
    * @return
@@ -227,6 +232,7 @@ abstract class Neighborhood(name:String = null) {
   /**
    * this combinator randomly tries one neighborhood.
    * it tries the other if the first did not find any move
+ *
    * @param b another neighborhood
    * @author renaud.delandtsheer@cetic.be
    */
@@ -237,6 +243,7 @@ abstract class Neighborhood(name:String = null) {
    * between calls, it will roll back to the first neighborhood
    * it tries a first, and if no move it found, tries b
    * a is reset if it did not find anything.
+ *
    * @param b another neighborhood
    * @author renaud.delandtsheer@cetic.be
    */
@@ -251,7 +258,6 @@ abstract class Neighborhood(name:String = null) {
    * and the restart is only performed if it could find an improvement at least once in the last "maxRestartWithoutImprovement" descents.
    *
    * the best solution is reloaded at exhaustion of this neighborhood.
-   *
    *
    * @param randomizationNeighborhood the neighborhood that will randomize the current solution
    * @param maxRestartWithoutImprovement the stop criterion of the restarting
@@ -268,6 +274,7 @@ abstract class Neighborhood(name:String = null) {
   /**
    * alias for (this maxMoves 1) exhaust b
    * this wil be queried once, and then, queries will be forwarded to b.
+ *
    * @param b
    * @return
    */
@@ -278,6 +285,7 @@ abstract class Neighborhood(name:String = null) {
    * notice that this combinator makes more sense
    * if the two neighborhood return their best found move,
    * and not their first found move, as usually done.
+ *
    * @author renaud.delandtsheer@cetic.be
    */
   def best(b: Neighborhood): Neighborhood = new Best(this, b)
@@ -287,6 +295,7 @@ abstract class Neighborhood(name:String = null) {
    * it returns the result of the first Neighborhood until it returns NoMoveFound.
    * It then switches to the other Neighborhood.
    * it does not come back to the first one after the second one is exhausted
+ *
    * @author renaud.delandtsheer@cetic.be
    */
   def exhaust(b: Neighborhood): Neighborhood = new Exhaust(this, b)
@@ -296,6 +305,7 @@ abstract class Neighborhood(name:String = null) {
    * it returns the result of one Neighborhood until it returns NoMoveFound.
    * It then switches to the other Neighborhood.
    * it starts with Neighborhood a
+ *
    * @author renaud.delandtsheer@cetic.be
    */
   def exhaustBack(b: Neighborhood): Neighborhood = new ExhaustBack(this, b)
@@ -306,6 +316,7 @@ abstract class Neighborhood(name:String = null) {
    * It then switches to the other Neighborhood,
    * but only if a move was found by the first neighborhood
    * it does not come back to the first one after the second one is exhausted
+ *
    * @author renaud.delandtsheer@cetic.be
    */
   def exhaustAndContinueIfMovesFound(b: Neighborhood) = new ExhaustAndContinueIfMovesFound(this, b)
@@ -314,6 +325,7 @@ abstract class Neighborhood(name:String = null) {
   /**
    * this one bounds the number of time the search is actually performed
    * notice that the count is reset by the reset operation
+ *
    * @author renaud.delandtsheer@cetic.be
    */
   def maxSearches(maxMove: Int) = new BoundSearches(this, maxMove)
@@ -321,18 +333,21 @@ abstract class Neighborhood(name:String = null) {
   /**
    * this one bounds the number of moves done with this neighborhood
    * notice that the count is reset by the reset operation
+ *
    * @author renaud.delandtsheer@cetic.be
    */
   def maxMoves(maxMove: Int) = new MaxMoves(this, maxMove)
 
   /**
    * no move if cond evaluates to false, otherwise ,it forwards the search request to a
+ *
    * @param cond a stop criterion
    */
   def stopWhen(cond: () => Boolean) = new StopWhen(this, cond)
 
   /**
    * if it is false,it returns NoMovesFound without exploring the neighborhood at all.
+ *
    * @param cond
    * @return
    */
@@ -348,6 +363,7 @@ abstract class Neighborhood(name:String = null) {
    * the other times, it returns NoMovesFound.
    * if n finds no moves, depending on retryOnNoMoveFound,
    * it will either keep on querying n until a move is found, or continue its sequence of one out of n
+ *
    * @param n the size of teh sequence
    * @param retryOnNoMoveFound if true, keeps on querying n on NoMoveFound, otherwise, continues the sequence
    */
@@ -356,6 +372,7 @@ abstract class Neighborhood(name:String = null) {
   /**
    * bounds the number of tolerated moves without improvements over the best value
    * the count is reset by the reset action.
+ *
    * @author renaud.delandtsheer@cetic.be
    */
   def maxMovesWithoutImprovement(maxMove: Int, obj: () => Int) = new MaxMovesWithoutImprovement(this, null, maxMove, obj)
@@ -363,6 +380,7 @@ abstract class Neighborhood(name:String = null) {
   /**
    * makes a round robin on the neighborhood. it swaps as soon as one does not find a move
    * and swaps neighborhood after "step" invocations
+ *
    * @author renaud.delandtsheer@cetic.be
    */
   def roundRobin(b: Neighborhood): RoundRobinNoParam = new RoundRobinNoParam(this, b)
@@ -370,6 +388,7 @@ abstract class Neighborhood(name:String = null) {
   /**
    * this combinator attaches a custom code to a given neighborhood.
    * the code is called whenever a move is asked to the neighborhood.
+ *
    * @param proc the procedure to execute before the neighborhood is queried
    */
   def onQuery(proc: => Unit) = new DoOnQuery(this, () => proc)
@@ -378,6 +397,7 @@ abstract class Neighborhood(name:String = null) {
    * this combinator attaches a custom code to a given neighborhood.
    * the code is called whenever a move from this neighborhood is taken
    * The callBack is performed before the move is actually taken.
+ *
    * @param proc the procedure to execute when the move is taken
    */
   def beforeMove(proc: => Unit) = new DoOnMove(this, procBeforeMove = (_) => proc)
@@ -387,6 +407,7 @@ abstract class Neighborhood(name:String = null) {
    * the code is called whenever a move from this neighborhood is taken
    * is gets the applied move in input.
    * The callBack is performed before the move is actually taken.
+ *
    * @param procOnMove a procedure that inputs the move that is applied;
    *                   use this to update a Tabu for instance
    */
@@ -396,6 +417,7 @@ abstract class Neighborhood(name:String = null) {
    * this combinator attaches a custom code to a given neighborhood.
    * the code is called whenever a move from this neighborhood is taken
    * The callBack is performed after the move is actually taken.
+ *
    * @param proc the procedure to execute when the move is taken
    */
   def afterMove(proc: => Unit) = new DoOnMove(this, procAfterMove = (_) => proc)
@@ -405,17 +427,19 @@ abstract class Neighborhood(name:String = null) {
    * the code is called whenever a move from this neighborhood is taken
    * is gets the applied move in input.
    * The callBack is performed after the move is actually taken.
+ *
    * @param procOnMove a procedure that inputs the move that is applied;
    *                   use this to update a Tabu for instance
    */
   def afterMoveOnMove(procOnMove: Move => Unit) = new DoOnMove(this, procAfterMove = procOnMove)
 
-  //def showObjectiveFunction(obj: Objective) = new ShowObjectiveFunction(this,obj)
+  def showObjectiveFunction(obj: Objective, stopWatch: StopWatch) = new ShowObjectiveFunction(this,obj,stopWatch)
 
   /**
    * this combinator attaches a custom code to a given neighborhood.
    * the code is called whenever a move from this neighborhood is taken for the first time.
    * notice that this neighborhood is reset, so first time can occur several times.
+ *
    * @param proc the procedure to call on one first move that is performed from this neighborhood
    */
   def onFirstMove(proc: => Unit) = new DoOnFirstMove(this, () => proc)
@@ -426,6 +450,7 @@ abstract class Neighborhood(name:String = null) {
 
   /**
    * retries the move before concluding to noMove can be found
+ *
    * @param cond condition that takes the number of consecutive NoMoveFound, and says if we should try again returns true if yes, false otherwise
    *             by default, we allow a single retry.
    */
@@ -433,6 +458,7 @@ abstract class Neighborhood(name:String = null) {
 
   /**
    * to prevent resetting the internal state of this neighborhood
+ *
    * @return
    */
   def noReset: Neighborhood = new NoReset(this)
@@ -441,6 +467,7 @@ abstract class Neighborhood(name:String = null) {
    * defines a name wor this (composite) neighborhood
    * this will be used as prefix for each move returned by this neighborhood (the original name will still exist)
    * use this for debug and documentation purpose only
+ *
    * @param name the name that will prefix all returned moves, used for verbosities
    * @return
    */
@@ -465,7 +492,6 @@ abstract class Neighborhood(name:String = null) {
    * this move will reset the first neighborhood on every call, since it is probably bounded by the number of moves it can provide
    *
    * @param b given that the move returned by the first neighborhood is committed, we explore the globally improving moves of this one
-   *
    * @author renaud.delandtsheer@cetic.be
    */
   def andThen(b: Neighborhood) = new AndThen(this, b)
@@ -473,6 +499,7 @@ abstract class Neighborhood(name:String = null) {
   /**
    * tis combinator overrides the acceptance criterion given to the whole neighborhood
    * this can be necessary if you have a neighborhood with some phases only including simulated annealing
+ *
    * @param overridingAcceptanceCriterion the acceptance criterion that is used instead of the one given to the overall sear
    */
   def withAcceptanceCriterion(overridingAcceptanceCriterion: (Int, Int) => Boolean) = new WithAcceptanceCriterion(this, overridingAcceptanceCriterion)
@@ -485,6 +512,7 @@ abstract class Neighborhood(name:String = null) {
   /**
    * proposes a round-robin with that.
    * notice that you can chain steps; this will build a round-robin on the whole sequence (although this operation is not associative, so better not use parentheses)
+ *
    * @param b
    * @return
    */
@@ -493,6 +521,7 @@ abstract class Neighborhood(name:String = null) {
   /**
    * calls the neighborhood until an improvement over obj is achieved
    * the improvement is "since the last reset"
+ *
    * @param minMoves the min number of queries that will be forwarded to a (priority over the improvement)
    * @param maxMove the max number of queries that will be forwarded to a (priority over the improvement)
    * @param obj the obj that is looked for improvement
@@ -504,6 +533,7 @@ abstract class Neighborhood(name:String = null) {
    * this combinator injects a metropolis acceptation function.
    * the criterion accepts all improving moves, and for worsening moves, it applies the metropolis criterion:
    * accept if math.random(0.0; 1.0) < base exponent (-gain / temperatureValue)
+ *
    * @param temperature a function that inputs the number of moves taken, and outputs a temperature, for use in the criterion
    *                    the number of steps is reset to zero when the combinator is reset.
    *                    By default, the temperature is 100/the number of steps
@@ -515,6 +545,7 @@ abstract class Neighborhood(name:String = null) {
    * This is an atomic combinator, it represent that the neighborhood below should be considered as a single piece.
    * When you commit a move from this neighborhood, "a" is reset, and exhausted in a single move from Atomic(a)
    * Also, Atomic is a jump neighborhood as it cannot evaluate any objective function before the move is committed.
+ *
    * @param name a name for the atomic move
    */
   def atomic(name: String = "Atomic", bound: Int = Int.MaxValue) = new Atomic(this, name, bound)
@@ -522,6 +553,7 @@ abstract class Neighborhood(name:String = null) {
   /**
    * Forces the use of a given objetive function.
    * this overrides the one that you might pass in the higher level
+ *
    * @param overridingObjective the objective to use instead of the given one
    */
   def overrideObjective(a: Neighborhood, overridingObjective: Objective) = new OverrideObjective(a, overridingObjective)
@@ -530,6 +562,7 @@ abstract class Neighborhood(name:String = null) {
    * This represents a guided local search where a series of objective criterion are optimized one after the other
    * the switching is performed on exhaustion, and a is reset on switching.
    * Notice that if you want to use different neighborhoods depending on the objective function, you should rather use a series of neighborhood with the objectiveFucntion combinator
+ *
    * @param objectives the list of objective to consider
    * @param resetOnExhaust  on exhaustion of the current objective, restores the best value for this objective before switching to the next objective
    */
@@ -539,6 +572,7 @@ abstract class Neighborhood(name:String = null) {
    * This represents an accumulatingSearch: it searches on a given objective until this objective gets to zero,
    * then it switches to the second one, and rejects all update that would actually decrease the first objective
    * it will use the acceptance criterion, but extend it in the second phase
+ *
    * @param firstObjective the first objective function
    * @param secondObjective the second objective function
    */
@@ -554,6 +588,7 @@ case object NoMoveNeighborhood extends Neighborhood {
 
 /**
  * This neighborhood always returns the same move, given in the constructor
+ *
  * @param m the move to return when the neighborhood is queried for a move
  */
 case class ConstantMoveNeighborhood(m: Move) extends Neighborhood {

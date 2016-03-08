@@ -22,9 +22,10 @@ import oscar.cbls.invariants.core.algo.heap.{BinomialHeap, BinomialHeapWithMove}
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.objective.{CascadingObjective, Objective}
 import oscar.cbls.routing.model.VRP
+import oscar.cbls.search.StopWatch
 import oscar.cbls.search.core.{NoMoveFound, _}
 import oscar.cbls.search.move._
-import oscar.examples.cbls.routing.visual.FunctionGraphic.{ObjFunctionGraphicContainer, ObjFunctionGraphic}
+import oscar.examples.cbls.routing.visual.FunctionGraphic.{AdjustMaxValue, ObjFunctionGraphicContainer, ObjFunctionGraphic}
 import oscar.visual.VisualFrame
 
 import scala.language.implicitConversions
@@ -61,20 +62,42 @@ abstract class NeighborhoodCombinatorNoProfile(a: Neighborhood*) extends Neighbo
   override def resetStatistics(){}
 }
 
-/*class ShowObjectiveFunction(a: Neighborhood, obj: Objective, vrp:VRP) extends NeighborhoodCombinator(a){
-  val objGraphic = new ObjFunctionGraphicContainer(dimension = new Dimension(960,540))
+/**
+  * This combinator create a frame that draw the evolution curve of the objective function.
+  * The drawn curve possess a scrollbar on the right that allow the user to decrease or
+  * increase the number of value displayed.
+  * @param a a neighborhood
+  * @param obj the objective function
+  * @param stopWatch the StopWatch attached to the Test
+  *
+  * @author fabian.germeau@student.vinci.be
+  */
+class ShowObjectiveFunction(a: Neighborhood, obj: Objective, stopWatch: StopWatch) extends NeighborhoodCombinator(a){
+  //objGraphic is an internal frame that contains the curve itself and visualFrame is a basic frame that contains objGraphic
+  val objGraphic = new ObjFunctionGraphicContainer(dimension = new Dimension(960,540)) with AdjustMaxValue
   val visualFrame = new VisualFrame("The Objective Function")
-  visualFrame.addFrame(objGraphic, size = (960,540))
+  visualFrame.setPreferredSize(new Dimension(960,540))
+  visualFrame.addFrame(objGraphic, size = (940,500))
   visualFrame.pack()
+  visualFrame.revalidate()
 
   override def getMove(obj: Objective, acceptanceCriteria: (Int, Int) => Boolean): SearchResult ={
-
+    a.getMove(obj, acceptanceCriteria) match {
+      case m: MoveFound =>
+        InstrumentedMove(m.m, null, () => notifyNewObjValue(m.m))
+      case x => x
+    }
   }
 
-  def notifyNewObjValue(): Unit ={
-    //objGraphic.notifyNewObjectiveValue(obj.value,vrp.,)
+  /*
+    After each move we send the new value and time to objGraphic who will register the value
+    and then we write the curve
+   */
+  def notifyNewObjValue(m:Move): Unit ={
+    objGraphic.notifyNewObjectiveValue(obj.value,stopWatch.getWatch,m.neighborhoodName)
+    objGraphic.drawGlobalCurve()
   }
-}*/
+}
 
 class BasicSaveBest(a: Neighborhood, o: Objective) extends NeighborhoodCombinator(a) {
 
