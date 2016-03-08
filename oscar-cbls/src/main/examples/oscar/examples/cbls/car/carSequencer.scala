@@ -108,7 +108,7 @@ object carSequencer  extends CBLSModel with App {
     Profile(mostViolatedSwap) orElse Profile(roll)
       onExhaustRestartAfter(Profile(shuffleNeighborhood(carSequence, mostViolatedCars, name = "shuffleMostViolatedCars")), 5, obj)
       onExhaustRestartAfter(Profile(shuffleNeighborhood(carSequence, violatedCars, name = "shuffleSomeViolatedCars", numberOfShuffledPositions = () => violatedCars.value.size/2)), 2, obj)
-      exhaust Profile(shiftNeighbor)showObjectiveFunction(obj)
+      exhaust Profile(shiftNeighbor)showObjectiveFunction obj
     )
 
   val search = Profile(

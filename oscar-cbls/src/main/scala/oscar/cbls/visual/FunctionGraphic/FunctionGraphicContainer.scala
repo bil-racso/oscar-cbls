@@ -20,6 +20,9 @@ package oscar.examples.cbls.routing.visual.FunctionGraphic
 import java.awt.{Color, BorderLayout}
 import javax.swing._
 
+import oscar.examples.cbls.routing.visual.ColorGenerator
+
+import scala.collection.immutable.HashMap
 import scala.swing.Dimension
 
 /**
@@ -67,23 +70,29 @@ class ObjFunctionGraphicContainer(title:String = "Evolution of the objective fun
   neighborhoodColorLabel.setHorizontalAlignment(SwingConstants.CENTER)
   add(neighborhoodColorLabel, BorderLayout.NORTH)
 
+  //A map that contains the color of all neighborhood encountered during the search
+  //(useful for the functionGraphicContainer)
+  var xColorMap:Map[String,Color] = new HashMap[String,Color]
+
   /**
     * This method init the drawing of the cruve and add a legend for the neighborhood present in the graphic
     */
   def drawGlobalCurve(): Unit ={
     graphic.drawGlobalCurve()
     var labelText = "<html>"
-    for(k <- graphic.xColorMap.keys){
-      val r = graphic.xColorMap.get(k).get.getRed
-      val g = graphic.xColorMap.get(k).get.getGreen
-      val b = graphic.xColorMap.get(k).get.getBlue
+    for(k <- xColorMap.keys){
+      val r = xColorMap.get(k).get.getRed
+      val g = xColorMap.get(k).get.getGreen
+      val b = xColorMap.get(k).get.getBlue
       labelText = labelText + "<font color=rgb("+r+","+g+","+b+")>" + k + "    " + "</font>"
     }
     labelText = labelText + "</html>"
     neighborhoodColorLabel.setText(labelText)
   }
 
-  def notifyNewObjectiveValue(objValue:Int, objTime:Long, color: String): Unit ={
+  def notifyNewObjectiveValue(objValue:Int, objTime:Long, neighBorhood:String, color: Color): Unit ={
+    if(xColorMap.get(neighBorhood) == None)
+      xColorMap = xColorMap + (neighBorhood -> color)
     graphic.notifyNewObjectiveValue(objValue,objTime,color)
   }
 

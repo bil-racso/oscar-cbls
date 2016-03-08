@@ -17,11 +17,14 @@
 
 package oscar.cbls.search.core
 
+import java.awt.Color
+
 import oscar.cbls.invariants.core.computation.Store
 import oscar.cbls.objective.{ LoggingObjective, Objective }
 import oscar.cbls.search.StopWatch
 import oscar.cbls.search.combinators._
 import oscar.cbls.search.move.{CallBackMove, Move}
+import oscar.examples.cbls.routing.visual.ColorGenerator
 
 import scala.language.{ implicitConversions, postfixOps }
 
@@ -437,12 +440,19 @@ abstract class Neighborhood(name:String = null) {
     * This combinator create a frame that draw the evolution curve of the objective function.
     * The drawn curve possess a scrollbar on the right that allow the user to decrease or
     * increase the number of value displayed.
+ *
     * @param obj the objective function
     * @param stopWatch the StopWatch attached to the Test
-    *
+    * @param withZoom if true the Zoom thread will be used in stead of the AdjustMaxValues trait
+    * @param neighborhoodColors a function used to defined the color of each neighborhood encountered during the search
+    *                           the default function use the generateColorFromHash method of the ColorGenerator object.
     * @author fabian.germeau@student.vinci.be
     */
-  def showObjectiveFunction(obj: Objective, stopWatch: StopWatch = new StopWatch {startWatch()}) = new ShowObjectiveFunction(this,obj,stopWatch)
+  def showObjectiveFunction(obj: Objective,
+                            stopWatch: StopWatch = new StopWatch {startWatch()},
+                            withZoom:Boolean = false,
+                            neighborhoodColors: String => Color = (name:String)=>{ColorGenerator.generateColorFromHash(name.hashCode)}
+                           ) = new ShowObjectiveFunction(this,obj,stopWatch,withZoom,neighborhoodColors)
 
   /**
    * this combinator attaches a custom code to a given neighborhood.

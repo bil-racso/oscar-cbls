@@ -22,11 +22,9 @@ import java.awt.geom.Line2D.Double
 import java.awt.geom.Rectangle2D
 
 import oscar.cbls.search.StopWatch
-import oscar.examples.cbls.routing.visual.ColorGenerator
 import oscar.visual.VisualDrawing
 import oscar.visual.shapes.{VisualRectangle, VisualLine, VisualText}
 
-import scala.collection.immutable.HashMap
 import scala.collection.mutable.ListBuffer
 
 /** This abstract class represent the base structure for
@@ -95,13 +93,11 @@ abstract class FunctionGraphic() extends VisualDrawing(false,false) with StopWat
 
   //A list buffer that contains the color of the neighborhood that has found the current move
   val xColorValues:ListBuffer[Color] = new ListBuffer[Color]
-  //A map that contains the color of all neighborhood encountered during the search
-  //(useful for the functionGraphicContainer)
-  var xColorMap:Map[String,Color] = new HashMap[String,Color]
+
 
   setLayout(new BorderLayout())
 
-  def notifyNewObjectiveValue(objValue:Int, objTime:Long, color:String)
+  def notifyNewObjectiveValue(objValue:Int, objTime:Long, color:Color)
 
   def clear(): Unit ={
     super.clear()
@@ -152,13 +148,11 @@ class ObjFunctionGraphic(width:Int,height:Int) extends FunctionGraphic(){
     * Save the objective value, the best value encountered so far, the time value of the current state
     * and the color of the neighborhood encountered (also in the xColorMap if it is not already registered)
     */
-  def notifyNewObjectiveValue(objValue:Int, time:Long, color:String): Unit ={
+  def notifyNewObjectiveValue(objValue:Int, time:Long, color:Color): Unit ={
     xValues.append(time)
     yValues.append(objValue)
     bestValues.append(Math.min(best(),objValue))
-    if(xColorMap.get(color) == None)
-      xColorMap = xColorMap + (color -> ColorGenerator.generateColorFromHash(color.hashCode))
-    xColorValues.append(xColorMap.get(color).get)
+    xColorValues.append(color)
     maxXValueDisplayed = time
     minYValueDisplayed = best()
     maxYValueDisplayed = yValues.max

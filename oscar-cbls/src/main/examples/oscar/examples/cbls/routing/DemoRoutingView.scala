@@ -197,7 +197,7 @@ object DemoRoutingView extends StopWatch{
     movesCounter += 1
 
     if(movesCounter%movesBeforeRepaint == 0)routingMap.drawRoutes()
-    objGraph.notifyNewObjectiveValue(objInfo._1,objInfo._2,objInfo._3)
+    objGraph.notifyNewObjectiveValue(objInfo._1,objInfo._2,objInfo._3,ColorGenerator.generateColorFromHash(objInfo._3.hashCode))
     objGraph.validate()
     updateRoutes(hopDistances)
   }

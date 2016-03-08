@@ -58,6 +58,11 @@ object ColorGenerator {
       exp
   }
 
+  /**
+    * Generate a color from an hashcode
+    * @param hash the hashcode
+    * @return
+    */
   def generateColorFromHash(hash:Int): Color = {
     val absHash = Math.abs(hash)
     val r = absHash%255
