@@ -53,8 +53,8 @@ abstract class JumpNeighborhood extends Neighborhood {
    * notice that the doIt method is called only if canDoIt returned true.
    * override it if your jump might not be applicable
    * (and do not forget to handle this case in your search strategy)
- *
-   * @return
+    *
+    * @return
    */
   def canDoIt: Boolean = true
 
@@ -69,8 +69,8 @@ abstract class JumpNeighborhood extends Neighborhood {
    * returns the value after the move
    * called by getMove, by default, this is Int.MaxValue, which is the correct value for a jump
    * in case your jump does not modify the obj function and you want to include this in the move description, override this method
- *
-   * @return
+    *
+    * @return
    */
   def valueAfter = Int.MaxValue
 }
@@ -433,7 +433,16 @@ abstract class Neighborhood(name:String = null) {
    */
   def afterMoveOnMove(procOnMove: Move => Unit) = new DoOnMove(this, procAfterMove = procOnMove)
 
-  def showObjectiveFunction(obj: Objective, stopWatch: StopWatch) = new ShowObjectiveFunction(this,obj,stopWatch)
+  /**
+    * This combinator create a frame that draw the evolution curve of the objective function.
+    * The drawn curve possess a scrollbar on the right that allow the user to decrease or
+    * increase the number of value displayed.
+    * @param obj the objective function
+    * @param stopWatch the StopWatch attached to the Test
+    *
+    * @author fabian.germeau@student.vinci.be
+    */
+  def showObjectiveFunction(obj: Objective, stopWatch: StopWatch = new StopWatch {startWatch()}) = new ShowObjectiveFunction(this,obj,stopWatch)
 
   /**
    * this combinator attaches a custom code to a given neighborhood.

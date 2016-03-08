@@ -73,11 +73,6 @@ object carSequencer  extends CBLSModel with App {
 
   println("closing model")
 
-  val objGraphic = new ObjFunctionGraphicContainer(dimension = new Dimension(960,540)) with Zoom
-  val visualFrame = new VisualFrame("The Traveling Salesman Problem")
-  visualFrame.addFrame(objGraphic, size = (960,540))
-  visualFrame.pack()
-
   c.close
   val obj:Objective = c.violation
 
@@ -113,10 +108,7 @@ object carSequencer  extends CBLSModel with App {
     Profile(mostViolatedSwap) orElse Profile(roll)
       onExhaustRestartAfter(Profile(shuffleNeighborhood(carSequence, mostViolatedCars, name = "shuffleMostViolatedCars")), 5, obj)
       onExhaustRestartAfter(Profile(shuffleNeighborhood(carSequence, violatedCars, name = "shuffleSomeViolatedCars", numberOfShuffledPositions = () => violatedCars.value.size/2)), 2, obj)
-      exhaust Profile(shiftNeighbor)afterMoveOnMove((m:Move) => {
-      objGraphic.notifyNewObjectiveValue(obj.value, getWatch, m.neighborhoodName)
-      visualFrame.revalidate()
-    })
+      exhaust Profile(shiftNeighbor)showObjectiveFunction(obj)
     )
 
   val search = Profile(
@@ -134,7 +126,6 @@ object carSequencer  extends CBLSModel with App {
   search2.doAllMoves(_ => c.isTrue,obj)
 
   println(search2.profilingStatistics)
-  objGraphic.drawGlobalCurve()
 
   /*search.verbose = 1
   search.paddingLength = 150

@@ -30,25 +30,37 @@ import scala.collection.immutable.HashMap
 import scala.collection.mutable.ListBuffer
 
 /** This abstract class represent the base structure for
-  * the classes who'll have the purpose of drawing the curve of the objective function.
+  * the classes who'll have the purpose of drawing the curve of a function.
   * It has many variables :
-  * minWidth : it represents the left horizontal drawing limit of the curve
-  * minHeight : it represents the top vertical drawing limit of the curve
   * maxWidth : it represents the right horizontal drawing limit of the curve
+  * minWidth : it represents the left horizontal drawing limit of the curve
+  * diffWidth : the difference between the maxWidth and the minWidth
   * maxHeight : it represents the bottom vertical drawing limit of the curve
-  * objValues : a ListBuffer that contains all the objective value encountered so far
-  * objTimes : a ListBuffer that contains all the time at which the objective value as been encountered
-  * objBestValues : a ListBuffer that contains the best objective value encountered so far for each objTimes(i)
-  * minObjTime : it contains the min X value that will be drawn on the graphic
-  * maxObjTime : it contains the max X value that will be drawn on the graphic
-  * maxNumberOfObj : it contains the max number of object that could drawn on the graphic
-  * best : it contains the best value encountered so far
+  * minHeight : it represents the top vertical drawing limit of the curve
+  * diffHeight : the difference between the maxHeight and the minHeight
+  * xValues : a ListBuffer that contains all the X values encountered so far
+  * yValues : a ListBuffer that contains all the Y values encountered so far
+  * maxXValueDisplayed : the maximum X value that will be displayed on the graphic
+  * minXValueDisplayed : the minimum X value that will be displayed on the graphic
+  * diffXValueDisplayed : the difference between the maxXValueDisplayed and the minXValueDisplayed
+  * maxYValueDisplayed : the maximum Y value that will be displayed on the graphic
+  * minYValueDisplayed : the minimum Y value that will be displayed on the graphic
+  * diffYValueDisplayed : the difference between the maxYValueDisplayed and the minYValueDisplayed
+  * maxXValue :  the maximum X value registered so far
+  * minXValue : the minimum X value registered so far
+  * diffXValue : the difference between the maxXValue and the minXValue
+  * maxYValue : the maximum Y value registered so far
+  * minYValue : the minimum Y value registered so far
+  * diffYValue : the difference between the maxYValue and the minYValue
+  * widthAdapter : an anonymous function that return the X position of a point in pixel
+  *                based on the minXValueDisplayed and the maxXValueDisplayed values
+  * heightAdapter : an anonymous function that return the Y position of a point in pixel
+  *                based on the minYValueDisplayed and the maxYValueDisplayed
   *
   * @author fabian.germeau@student.vinci.be
   */
 
 abstract class FunctionGraphic() extends VisualDrawing(false,false) with StopWatch{
-
 
   val maxWidth = () => getWidth -10
   val minWidth = 70
@@ -57,16 +69,15 @@ abstract class FunctionGraphic() extends VisualDrawing(false,false) with StopWat
   val minHeight = 10
   val diffHeight = () => maxHeight() - minHeight
 
-  val yValues:ListBuffer[Int] = new ListBuffer[Int]
   val xValues:ListBuffer[Long] = new ListBuffer[Long]
-  val bestValues:ListBuffer[Int] = new ListBuffer[Int]
-  val xColorValues:ListBuffer[Color] = new ListBuffer[Color]
-  var xColorMap:Map[String,Color] = new HashMap[String,Color]
+  val yValues:ListBuffer[Int] = new ListBuffer[Int]
 
-  var minXValueDisplayed:Long = 0
   var maxXValueDisplayed:Long = 0
-  var minYValueDisplayed:Long = 0
+  var minXValueDisplayed:Long = 0
+  val diffXValueDisplayed = () => maxXValueDisplayed - minXValueDisplayed
   var maxYValueDisplayed:Long = 0
+  var minYValueDisplayed:Long = 0
+  val diffYValueDisplayed = () => maxYValueDisplayed - minYValueDisplayed
 
   val maxXValue = () => if(xValues.isEmpty)0 else xValues.max
   val minXValue = () => if(xValues.isEmpty)0 else xValues.min
@@ -75,18 +86,18 @@ abstract class FunctionGraphic() extends VisualDrawing(false,false) with StopWat
   val minYValue = () => if(yValues.isEmpty)0 else yValues.min
   val diffYValue = () => maxYValue() - minYValue()
 
-  var timeUnit = (value:Long) => {
+  val widthAdapter = (value:Long) => {
     ((value - minXValueDisplayed)*diffWidth().toDouble/(maxXValueDisplayed - minXValueDisplayed)).toInt
   }
-  var heightAdapter = (value:Long) => {
+  val heightAdapter = (value:Long) => {
     (value - minYValueDisplayed)*diffHeight().toDouble/(maxYValueDisplayed - minYValueDisplayed)
   }
-  val best = () => {
-    if(bestValues.nonEmpty)
-      bestValues.min
-    else
-      Int.MaxValue
-  }
+
+  //A list buffer that contains the color of the neighborhood that has found the current move
+  val xColorValues:ListBuffer[Color] = new ListBuffer[Color]
+  //A map that contains the color of all neighborhood encountered during the search
+  //(useful for the functionGraphicContainer)
+  var xColorMap:Map[String,Color] = new HashMap[String,Color]
 
   setLayout(new BorderLayout())
 
@@ -115,6 +126,17 @@ abstract class FunctionGraphic() extends VisualDrawing(false,false) with StopWat
 
 class ObjFunctionGraphic(width:Int,height:Int) extends FunctionGraphic(){
 
+  //A list buffer that contains all the bests objective values encountered during the search
+  val bestValues:ListBuffer[Int] = new ListBuffer[Int]
+
+  //The current best objective value of the search
+  val best = () => {
+    if(bestValues.nonEmpty)
+      bestValues.min
+    else
+      Int.MaxValue
+  }
+
   /**
     * Clear the graphic and reset the different ListBuffers in order to begin another research
     */
@@ -123,12 +145,12 @@ class ObjFunctionGraphic(width:Int,height:Int) extends FunctionGraphic(){
     yValues.clear()
     xValues.clear()
     bestValues.clear()
-    xColorMap.empty
     xColorValues.clear()
   }
 
   /**
-    * Save the objective value, the best value encountered so far and the time value of the current state
+    * Save the objective value, the best value encountered so far, the time value of the current state
+    * and the color of the neighborhood encountered (also in the xColorMap if it is not already registered)
     */
   def notifyNewObjectiveValue(objValue:Int, time:Long, color:String): Unit ={
     xValues.append(time)
@@ -148,12 +170,9 @@ class ObjFunctionGraphic(width:Int,height:Int) extends FunctionGraphic(){
     */
   override def drawGlobalCurve() = {
     super.clear()
-    val diffObjValue = maxYValueDisplayed - minYValueDisplayed
 
-    val diffTimeValue = maxXValueDisplayed - minXValueDisplayed
-
-    val (bottom,top) = getOrdFloorValues(diffObjValue,minYValueDisplayed,maxYValueDisplayed)
-    val (left,right) = getAbsFloorValues(diffTimeValue,minXValueDisplayed,maxXValueDisplayed)
+    val (bottom,top) = getOrdFloorValues(minYValueDisplayed,maxYValueDisplayed)
+    val (left,right) = getAbsFloorValues(minXValueDisplayed,maxXValueDisplayed)
 
     drawCurve()
     drawAxis(bottom,top,left,right)
@@ -163,7 +182,7 @@ class ObjFunctionGraphic(width:Int,height:Int) extends FunctionGraphic(){
     * Draw the global curve, including all the values
     */
   def drawCurve(): Unit = {
-    var currentTimeUnit:scala.Double = timeUnit(minXValueDisplayed)
+    var currentTimeUnit:scala.Double = widthAdapter(minXValueDisplayed)
     var currentTimeUnitValue:scala.Double = 0.0
     var currentTimeUnitValuesNumber:scala.Double = 0.0
     var currentTimeUnitBestValue:scala.Double = 0.0
@@ -172,8 +191,7 @@ class ObjFunctionGraphic(width:Int,height:Int) extends FunctionGraphic(){
     var previousTimeUnitBestValue:scala.Double = 0.0
     var previousTimeUnit:scala.Double = 0.0
     for(i <- yValues.indices){
-      //println("timeUnit : " + timeUnit(xValues(i)) + "    heighAdaptor : " + heightAdapter(yValues(i)))
-      if(timeUnit(xValues(i)) == currentTimeUnit){
+      if(widthAdapter(xValues(i)) == currentTimeUnit){
         currentTimeUnitValue += heightAdapter(yValues(i))
         currentTimeUnitValuesNumber += 1
         currentTimeUnitBestValue += heightAdapter(bestValues(i))
@@ -190,7 +208,6 @@ class ObjFunctionGraphic(width:Int,height:Int) extends FunctionGraphic(){
           val line = new VisualLine(this, new Double(previousTimeUnit+70, previousTimeUnitValue, currentTimeUnit+70, currentTimeUnitValue))
           line.outerCol_$eq(xColorValues(i))
           line.borderWidth = 3
-          //println(previousTimeUnit,previousTimeUnitValue,currentTimeUnit,currentTimeUnitValue)
           val bestLine = new VisualLine(this,new Double(previousTimeUnit+70, previousTimeUnitBestValue, currentTimeUnit+70, currentTimeUnitBestValue))
           bestLine.outerCol_$eq(Color.green)
           previousTimeUnit = currentTimeUnit
@@ -201,7 +218,7 @@ class ObjFunctionGraphic(width:Int,height:Int) extends FunctionGraphic(){
           currentTimeUnitBestValue = 0.0
           currentTimeUnitBestValuesNumber = 0.0
         }
-        while(currentTimeUnit < timeUnit(xValues(i))){
+        while(currentTimeUnit < widthAdapter(xValues(i))){
           currentTimeUnit += 1
         }
       }
@@ -209,20 +226,7 @@ class ObjFunctionGraphic(width:Int,height:Int) extends FunctionGraphic(){
   }
 
   /**
-    * Adjust the value of an objValue to the size of the window
- *
-    * @param value The value that has to be adjusted
-    * @param minOrdValue the bottom border of the Y axis
-    * @param maxOrdValue the top border of the Y axis
-    * @return The adjusted value
-    */
-  def adjustHeight(value:scala.Double, minOrdValue:Long, maxOrdValue:Long): Int ={
-    (maxHeight() - ((maxHeight()-minHeight) * (value - minOrdValue)/Math.max(maxOrdValue - minOrdValue,1))).toInt
-  }
-
-  /**
     * Adjust the time of occurrence of an objectif to the size of the window
- *
     * @param value The value that has to be adjusted
     * @param minAbsValue the left border of the X axis
     * @param maxAbsValue the right border of the X axis
@@ -234,18 +238,16 @@ class ObjFunctionGraphic(width:Int,height:Int) extends FunctionGraphic(){
 
   /**
     * Return the values of the Y axis's border
- *
-    * @param diffObjValue The difference between the minObjValue and the maxObjValue
     * @param minObjValue The minimum objective value that will be drawn
     * @param maxObjValue The maximum objective value that will be drawn
     * @return The bottom and top border of the Y axis
     */
-  def getOrdFloorValues(diffObjValue:Long, minObjValue:Long, maxObjValue:Long): (Long,Long) ={
-    if(diffObjValue == 0){
+  def getOrdFloorValues(minObjValue:Long, maxObjValue:Long): (Long,Long) ={
+    if(diffYValueDisplayed() == 0){
       (minObjValue - 5, minObjValue + 5)
     }else {
       var diffFloor:Long = 1
-      while (diffFloor <= diffObjValue){
+      while (diffFloor <= diffYValueDisplayed()){
         diffFloor *= 10
       }
       var minFloor = 1
@@ -261,14 +263,13 @@ class ObjFunctionGraphic(width:Int,height:Int) extends FunctionGraphic(){
   /**
     * Return the value of the X axis's border
  *
-    * @param diffTimeValue The difference between the minTimeValue and the maxTimeValue
     * @param minTimeValue The minimum objective's time of occurrence that will be drawn
     * @param maxTimeValue The maximum objective's time of occurrence that will be drawn
     * @return The left and right border of the X axis
     */
-  def getAbsFloorValues(diffTimeValue:scala.Double, minTimeValue:scala.Double, maxTimeValue:scala.Double): (scala.Double, scala.Double) ={
+  def getAbsFloorValues(minTimeValue:scala.Double, maxTimeValue:scala.Double): (scala.Double, scala.Double) ={
     var diffFloor = 1
-    while(diffFloor <= diffTimeValue)
+    while(diffFloor <= diffXValueDisplayed())
       diffFloor *= 10
     var minFloor = 1
     while(minTimeValue/minFloor > 0.0){

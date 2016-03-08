@@ -124,12 +124,6 @@ object RoutingTest extends App with StopWatch{
 //    search.verboseWithExtraInfo(3,() => vrp.toString)
   //segExchange.verbose = 3
 
-  /*SwingUtilities.invokeAndWait(new Runnable(){
-    def run(): Unit = {
-      launchSearch()
-    }
-  })*/
-
   def launchSearch(): Unit ={
     search.doAllMoves(_ > 10*n, vrp.objectiveFunction)
 

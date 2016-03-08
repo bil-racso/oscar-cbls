@@ -32,8 +32,15 @@ import oscar.cbls.search.algo.LazyQuicksort
   */
 
 
-
-//TODO: Javadoc
+/**
+  * This trait, attached to a ObjFunctionGraphicContainer add three scrollbar to the graphic.
+  * The scrollbar on the right allow the user to zoom in the graphic
+  * (quite useful if you want to look closer on specifics parts of the graphic).
+  * The scrollbar on the left allow the user to move up and down in the graphic (except when all the graphic is displayed)
+  * Similary the scrollbar on the bottom allow the user to move left and right
+  *
+  * @author fabian.germeau@student.vinci.be
+  */
 trait Zoom extends ObjFunctionGraphicContainer{
   val zoomScrollBar = new JScrollBar(SwingConstants.VERTICAL,0,1,0,9)
   zoomScrollBar.addAdjustmentListener(new AdjustmentListener {
@@ -68,7 +75,11 @@ trait Zoom extends ObjFunctionGraphicContainer{
   })
   add(upDownScrollBar, BorderLayout.WEST)
 
-  //TODO: Javadoc
+  /*
+    This method, called by the zoomScrollBar adjust the values of the rightLeftScrollBar and the upDownScrollBar
+    so that their values are adjusted to the new zoom level.
+    After adjusting the values, it sets the value of the scrollbar to 0 (bottom left of the graphic)
+   */
   def adjustScrollBar(): Unit ={
     rightLeftScrollBar.setVisibleAmount((graphic.maxXValue()/(2*getLogZoom(zoomScrollBar.getValue))).toInt)
     rightLeftScrollBar.setBlockIncrement(rightLeftScrollBar.getVisibleAmount)
@@ -80,7 +91,11 @@ trait Zoom extends ObjFunctionGraphicContainer{
     upDownScrollBar.setValue(0)
   }
 
-  //TODO: Javadoc
+  /*
+    This method set the maximum value of the moving scrollbar to the maximum value of their related axis.
+    This way at each position we can easily have the minimum X/Y value to display and, with the extent value
+    of the scrollbar, the maximum X/Y value.
+   */
   override def drawGlobalCurve(): Unit ={
     zoomScrollBar.setValue(0)
     rightLeftScrollBar.setMaximum(graphic.maxXValue().toInt+1)
@@ -88,28 +103,43 @@ trait Zoom extends ObjFunctionGraphicContainer{
     super.drawGlobalCurve()
   }
 
-
+  /**
+    * This method calculates the new zoom level based on a logarithmic calculation
+    * @param i the position of the zoomScrollBar
+    * @return the new zoom level
+    */
   def getLogZoom(i:Double): Double ={
     if(i == 0)0.5
     else Math.max(1.0,100*Math.pow(Math.log(i), 2) / Math.pow(Math.log(100), 2))
   }
 }
 
+/**
+  * This trait, attached to a ObjFunctionGraphicContainer add a scrollbar on the right side of the graphic.
+  * This scrollbar allow the user to increase or decrease the number of value displayed on the graphic.
+  * The number of displayed value is represented in percentages and always begin with the lower value.
+  * The minimum value is 2% and the maximum value 100%.
+  *
+  * @author fabian.germeau@student.vinci.be
+  */
 trait AdjustMaxValue extends ObjFunctionGraphicContainer{
   var sortedYValues:LazyQuicksort = null
 
   val adjustMaxValueScrollBar = new JScrollBar(SwingConstants.VERTICAL,100,1,2,101)
   adjustMaxValueScrollBar.addAdjustmentListener(new AdjustmentListener {
+    /*
+      This method starts by sorting a part of the yValues stocked in the graphic object using the LazyQuicksort method.
+      Then it selects the last value sorted and set it as the maxYValueDisplayed
+      so that only the wanted values will be displayed.
+     */
     override def adjustmentValueChanged(e: AdjustmentEvent): Unit = {
       sortedYValues.sortUntil(Math.max(1,(adjustMaxValueScrollBar.getValue.toDouble/100 * sortedYValues.size).toInt))
       val iteratorXValues = sortedYValues.iterator
       for(i <- 0 until Math.max(1, (adjustMaxValueScrollBar.getValue.toDouble / 100 * sortedYValues.size).toInt)){
-        println(i)
         val temp = iteratorXValues.next()
         if(i == (adjustMaxValueScrollBar.getValue.toDouble/100 * sortedYValues.size).toInt-1) {
           graphic.maxYValueDisplayed = temp
         }
-        println("max : " + graphic.maxYValueDisplayed)
       }
       graphic.drawGlobalCurve()
     }

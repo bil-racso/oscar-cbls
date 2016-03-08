@@ -55,9 +55,10 @@ abstract class FunctionGraphicContainer(title:String,dimension: Dimension) exten
   * the ObjFunctionGraphic and all the add-on related to it.
   *
   * @param title The title of the JInternalFrame
+  * @param dimension The dimension of the JInternalFrame
   * @author fabian.germeau@student.vinci.be
   */
-class ObjFunctionGraphicContainer(title:String = "Evolution of the objective function", dimension: Dimension, defaultColor:Color = Color.black) extends FunctionGraphicContainer(title, dimension){
+class ObjFunctionGraphicContainer(title:String = "Evolution of the objective function", dimension: Dimension) extends FunctionGraphicContainer(title, dimension){
 
   graphic = new ObjFunctionGraphic(getWidth,getHeight)
   add(graphic, BorderLayout.CENTER)
@@ -66,6 +67,9 @@ class ObjFunctionGraphicContainer(title:String = "Evolution of the objective fun
   neighborhoodColorLabel.setHorizontalAlignment(SwingConstants.CENTER)
   add(neighborhoodColorLabel, BorderLayout.NORTH)
 
+  /**
+    * This method init the drawing of the cruve and add a legend for the neighborhood present in the graphic
+    */
   def drawGlobalCurve(): Unit ={
     graphic.drawGlobalCurve()
     var labelText = "<html>"
