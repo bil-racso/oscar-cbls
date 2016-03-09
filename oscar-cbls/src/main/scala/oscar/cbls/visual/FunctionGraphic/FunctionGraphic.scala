@@ -85,7 +85,7 @@ abstract class FunctionGraphic() extends VisualDrawing(false,false) with StopWat
   val diffYValue = () => maxYValue() - minYValue()
 
   val widthAdapter = (value:Long) => {
-    ((value - minXValueDisplayed)*diffWidth().toDouble/(maxXValueDisplayed - minXValueDisplayed)).toInt
+    ((value - minXValueDisplayed)*diffWidth().toDouble/Math.max(diffWidth(),diffXValueDisplayed())).toInt
   }
   val heightAdapter = (value:Long) => {
     (value - minYValueDisplayed)*diffHeight().toDouble/(maxYValueDisplayed - minYValueDisplayed)
@@ -169,14 +169,14 @@ class ObjFunctionGraphic(width:Int,height:Int) extends FunctionGraphic(){
     val (left,right) = getAbsFloorValues(minXValueDisplayed,maxXValueDisplayed)
 
     drawCurve()
-    drawAxis(bottom,top,left,right)
+    drawAxis(bottom,top,left.toLong,right.toLong)
   }
 
   /**
     * Draw the global curve, including all the values
     */
   def drawCurve(): Unit = {
-    var currentTimeUnit:scala.Double = widthAdapter(minXValueDisplayed)
+    var currentTimeUnit:scala.Double = widthAdapter(0)
     var currentTimeUnitValue:scala.Double = 0.0
     var currentTimeUnitValuesNumber:scala.Double = 0.0
     var currentTimeUnitBestValue:scala.Double = 0.0
@@ -220,17 +220,6 @@ class ObjFunctionGraphic(width:Int,height:Int) extends FunctionGraphic(){
   }
 
   /**
-    * Adjust the time of occurrence of an objectif to the size of the window
-    * @param value The value that has to be adjusted
-    * @param minAbsValue the left border of the X axis
-    * @param maxAbsValue the right border of the X axis
-    * @return The adjusted value
-    */
-  def adjustWidth(value:scala.Double, minAbsValue:scala.Double, maxAbsValue:scala.Double): Int ={
-    (minWidth + (maxWidth() - minWidth) * (value - minAbsValue)/Math.max(maxAbsValue - minAbsValue,1)).toInt
-  }
-
-  /**
     * Return the values of the Y axis's border
     * @param minObjValue The minimum objective value that will be drawn
     * @param maxObjValue The maximum objective value that will be drawn
@@ -261,7 +250,7 @@ class ObjFunctionGraphic(width:Int,height:Int) extends FunctionGraphic(){
     * @param maxTimeValue The maximum objective's time of occurrence that will be drawn
     * @return The left and right border of the X axis
     */
-  def getAbsFloorValues(minTimeValue:scala.Double, maxTimeValue:scala.Double): (scala.Double, scala.Double) ={
+  def getAbsFloorValues(minTimeValue:scala.Long, maxTimeValue:scala.Long): (scala.Long, scala.Long) ={
     var diffFloor = 1
     while(diffFloor <= diffXValueDisplayed())
       diffFloor *= 10
@@ -270,7 +259,7 @@ class ObjFunctionGraphic(width:Int,height:Int) extends FunctionGraphic(){
       minFloor *= 10
     }
     val df = Math.max(diffFloor / 10, 1)
-    (Math.max((minTimeValue / df) * df, (minTimeValue / minFloor) * minFloor), Math.min(((maxTimeValue / df) * df) + df,Int.MaxValue))
+    (Math.max((minTimeValue / df) * df, (minTimeValue / minFloor) * minFloor), ((maxTimeValue / df) * df) + df)
   }
 
 
@@ -282,7 +271,7 @@ class ObjFunctionGraphic(width:Int,height:Int) extends FunctionGraphic(){
     * @param minX The left border of the X axis
     * @param maxX The right border of the X axis
     */
-  def drawAxis(minY:Long, maxY:Long, minX:scala.Double, maxX:scala.Double): Unit ={
+  def drawAxis(minY:Long, maxY:Long, minX:Long, maxX:Long): Unit ={
     val rectLeft = new VisualRectangle(this, new Rectangle2D.Double(0,0,minWidth,getHeight))
     rectLeft.innerCol_=(Color.white)
     rectLeft.outerCol_=(Color.white)
@@ -296,14 +285,14 @@ class ObjFunctionGraphic(width:Int,height:Int) extends FunctionGraphic(){
 
     val objStep = (maxY - minY)/10
     for(i <- 1 to 10){
-      val scaleHeight = maxHeight() - heightAdapter(i*objStep + minY)
-      new VisualText(this,5,scaleHeight,(minY+objStep*i).toString,false,new Rectangle2D.Double(0, 0, 1, 1))
+      val scaleHeight = maxHeight() - heightAdapter((i*objStep) + minY)
+      new VisualText(this,5,scaleHeight,(minY+(objStep*i)).toString,false,new Rectangle2D.Double(0, 0, 1, 1))
       new VisualLine(this,new Double(minWidth-10,scaleHeight,minWidth,scaleHeight))
     }
     val timeStep = (maxX - minX)/10
     for(i <- 1 to 10){
-      val scaleWidth = adjustWidth(i*timeStep + minX, minX,maxX)
-      new VisualText(this,scaleWidth,maxHeight()+20,((timeStep*i) + minX).toInt.toString,true,new Rectangle2D.Double(0, 0, 1, 1))
+      val scaleWidth = widthAdapter((i*timeStep) + minX)
+      new VisualText(this,scaleWidth,maxHeight()+20,((timeStep*i) + minX).toString,true,new Rectangle2D.Double(0, 0, 1, 1))
       new VisualLine(this,new Double(scaleWidth,maxHeight(),scaleWidth,maxHeight()+10))
     }
     val rectTop = new VisualRectangle(this, new Rectangle2D.Double(minWidth,0,getWidth,10))

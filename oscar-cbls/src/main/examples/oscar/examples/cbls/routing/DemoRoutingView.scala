@@ -47,7 +47,7 @@ object DemoRoutingView extends StopWatch{
 
   val routingMap = new RoutingMatrixVisual(pickupAndDeliveryPoints = true)
 
-  val objGraph = new ObjFunctionGraphicContainer(dimension = new Dimension(f.getWidth-routingMap.getWidth,360)) with AdjustMaxValue
+  val objGraph = new ObjFunctionGraphicContainer(dimension = new Dimension(f.getWidth-routingMap.getWidth,360)) with Zoom
   val result = f.createFrame("Results of the routing")
   val carsPanel = new JPanel()
   val routesPanel = new JPanel()
@@ -184,7 +184,6 @@ object DemoRoutingView extends StopWatch{
     * DO NOT switch setMapSize and setPointsList (setPointsList needs the mapSize)
     */
   def initiateMap(mapSize:Int,points:scala.List[(Int,Int)]): Unit ={
-    println("Map initiated")
     routingMap.setVRP(controller.myVRP)
     routingMap.setColorValues(colorValues)
     routingMap.setMapSize(mapSize)
