@@ -246,6 +246,13 @@ class ObjFunctionGraphic(width:Int,height:Int) extends FunctionGraphic(){
         currentTimeUnitBestValuesNumber += 1
       }
     }
+    val line = new VisualLine(this, new Double(previousTimeUnit+70, previousTimeUnitValue, currentTimeUnit+70, previousTimeUnitValue))
+    line.outerCol_$eq(xColorValues.last)
+    line.borderWidth = 3
+    if(displayBest){
+      val bestLine = new VisualLine(this,new Double(previousTimeUnit+70, previousTimeUnitBestValue, currentTimeUnit+70, previousTimeUnitBestValue))
+      bestLine.outerCol_$eq(Color.green)
+    }
   }
 
   /**

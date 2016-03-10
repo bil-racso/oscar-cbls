@@ -1,4 +1,4 @@
-package oscar.examples.cbls.routing.visual.FunctionGraphic
+package oscar.cbls.visual.FunctionGraphic
 
 /**
  * *****************************************************************************
@@ -22,6 +22,7 @@ import java.awt.event.{AdjustmentListener, AdjustmentEvent}
 import javax.swing.{SwingConstants, JScrollBar}
 
 import oscar.cbls.search.algo.LazyQuicksort
+import oscar.examples.cbls.routing.visual.FunctionGraphic.ObjFunctionGraphicContainer
 
 
 /**
@@ -37,7 +38,7 @@ import oscar.cbls.search.algo.LazyQuicksort
   * The scrollbar on the right allow the user to zoom in the graphic
   * (quite useful if you want to look closer on specifics parts of the graphic).
   * The scrollbar on the left allow the user to move up and down in the graphic (except when all the graphic is displayed)
-  * Similary the scrollbar on the bottom allow the user to move left and right
+  * Similarly the scrollbar on the bottom allow the user to move left and right
   *
   * @author fabian.germeau@student.vinci.be
   */
@@ -106,6 +107,7 @@ trait Zoom extends ObjFunctionGraphicContainer{
 
   /**
     * This method calculates the new zoom level based on a logarithmic calculation
+    *
     * @param i the position of the zoomScrollBar
     * @return the new zoom level
     */

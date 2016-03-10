@@ -25,6 +25,7 @@ import javax.swing._
 
 import oscar.cbls.invariants.core.computation.IntValue
 import oscar.cbls.search.StopWatch
+import oscar.cbls.visual.FunctionGraphic.Zoom
 import oscar.examples.cbls.routing.visual.ColorGenerator
 import oscar.examples.cbls.routing.visual.FunctionGraphic._
 import oscar.examples.cbls.routing.visual.MatrixMap.RoutingMatrixVisual
@@ -55,7 +56,7 @@ object DemoRoutingView extends StopWatch{
 
   val jTextFields = new JTextField()::new JTextField()::new JTextField()::new JTextField()::Nil
   val jTextFieldsDefaultValue = "150"::"5"::"10000"::"100000"::Nil
-  val jLabels = new JLabel("Number of customers : ")::new JLabel("Number of warehouses : ")::new JLabel("Size of the map : ")::new JLabel("Unrouted penality : ")::Nil
+  val jLabels = new JLabel("Number of customers : ")::new JLabel("Number of warehouses : ")::new JLabel("Size of the map : ")::new JLabel("Unrouted penalty : ")::Nil
   var routesValue:Array[JLabel] = null
 
   var customersNumber = 0
@@ -89,7 +90,7 @@ object DemoRoutingView extends StopWatch{
     tempPanelCustomers.add(new JLabel("Number of customers : "),gbc)
     tempPanelCars.add(new JLabel("Number of cars : "),gbc)
     tempPanelSize.add(new JLabel("Size of the map : "),gbc)
-    tempPanelPenality.add(new JLabel("Unrouted penality : "),gbc)
+    tempPanelPenality.add(new JLabel("Unrouted penalty : "),gbc)
 
     gbc.gridx = 1
     gbc.gridy = 0
@@ -104,7 +105,7 @@ object DemoRoutingView extends StopWatch{
     tb.add(tempPanelCars)
     tb.add(tempPanelSize)
     tb.add(tempPanelPenality)
-    tb.addButton("Inititiate the problem", { runInThread(initiateProblem()) })
+    tb.addButton("Initiate the problem", { runInThread(initiateProblem()) })
     tb.addButton("Reset", {runInThread(resetProblem())})
     tb.addButton("Resolve", { runInThread(resolveProblem()) })
 
@@ -255,7 +256,6 @@ object DemoRoutingView extends StopWatch{
 
   def resolveProblem() = {
     if(!controller.resolveProblem)JOptionPane.showMessageDialog(f, "Please first initiate the problem")
-    val routesList:scala.List[scala.List[Int]] = (for(c <- 0 until controller.carsNumber)yield controller.myVRP.getRouteOfVehicle(c)).toList
     routingMap.drawRoutes()
     objGraph.drawGlobalCurve()
   }
