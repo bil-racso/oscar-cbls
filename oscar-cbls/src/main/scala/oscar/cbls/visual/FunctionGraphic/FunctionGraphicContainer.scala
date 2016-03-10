@@ -20,7 +20,6 @@ package oscar.examples.cbls.routing.visual.FunctionGraphic
 import java.awt.{Color, BorderLayout}
 import javax.swing._
 
-import oscar.examples.cbls.routing.visual.ColorGenerator
 
 import scala.collection.immutable.HashMap
 import scala.swing.Dimension
@@ -75,7 +74,7 @@ class ObjFunctionGraphicContainer(title:String = "Evolution of the objective fun
   var xColorMap:Map[String,Color] = new HashMap[String,Color]
 
   /**
-    * This method init the drawing of the cruve and add a legend for the neighborhood present in the graphic
+    * This method init the drawing of the curve and add a legend for the neighborhood present in the graphic
     */
   def drawGlobalCurve(): Unit ={
     graphic.drawGlobalCurve()

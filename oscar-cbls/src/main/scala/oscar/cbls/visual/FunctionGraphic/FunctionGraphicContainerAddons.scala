@@ -42,7 +42,7 @@ import oscar.cbls.search.algo.LazyQuicksort
   * @author fabian.germeau@student.vinci.be
   */
 trait Zoom extends ObjFunctionGraphicContainer{
-  val zoomScrollBar = new JScrollBar(SwingConstants.VERTICAL,8,1,0,9)
+  val zoomScrollBar = new JScrollBar(SwingConstants.VERTICAL,10,10,0,101)
   zoomScrollBar.addAdjustmentListener(new AdjustmentListener {
     override def adjustmentValueChanged(e: AdjustmentEvent): Unit = {
       adjustScrollBar()
@@ -50,7 +50,6 @@ trait Zoom extends ObjFunctionGraphicContainer{
       graphic.maxXValueDisplayed = Math.min(graphic.minXValueDisplayed+rightLeftScrollBar.getVisibleAmount,graphic.maxXValue())
       graphic.minYValueDisplayed = Math.max(upDownScrollBar.getValue,graphic.minYValue())
       graphic.maxYValueDisplayed = Math.min(graphic.minYValueDisplayed+upDownScrollBar.getVisibleAmount,graphic.maxYValue())
-      println(graphic.minXValueDisplayed + rightLeftScrollBar.getVisibleAmount)
     }
   })
   add(zoomScrollBar, BorderLayout.EAST)
@@ -60,7 +59,7 @@ trait Zoom extends ObjFunctionGraphicContainer{
     override def adjustmentValueChanged(e: AdjustmentEvent): Unit = {
       graphic.minXValueDisplayed = rightLeftScrollBar.getValue
       graphic.maxXValueDisplayed = graphic.minXValueDisplayed + rightLeftScrollBar.getVisibleAmount
-      //graphic.drawGlobalCurve()
+      graphic.drawGlobalCurve()
     }
   })
   add(rightLeftScrollBar, BorderLayout.SOUTH)
@@ -70,7 +69,7 @@ trait Zoom extends ObjFunctionGraphicContainer{
     override def adjustmentValueChanged(e: AdjustmentEvent): Unit = {
       graphic.minYValueDisplayed = upDownScrollBar.getMaximum - upDownScrollBar.getVisibleAmount - upDownScrollBar.getValue
       graphic.maxYValueDisplayed = graphic.minYValueDisplayed + upDownScrollBar.getVisibleAmount
-      //graphic.drawGlobalCurve()
+      graphic.drawGlobalCurve()
     }
   })
   add(upDownScrollBar, BorderLayout.WEST)
@@ -86,7 +85,7 @@ trait Zoom extends ObjFunctionGraphicContainer{
     rightLeftScrollBar.setVisibleAmount(Math.max(graphic.diffWidth(), graphic.maxXValue() / (2 * getLogZoom(zoomScrollBar.getValue))).toInt)
     rightLeftScrollBar.setBlockIncrement(rightLeftScrollBar.getVisibleAmount)
     rightLeftScrollBar.setUnitIncrement(rightLeftScrollBar.getVisibleAmount)
-    upDownScrollBar.setVisibleAmount((graphic.maxYValue()/(2*getLogZoom(zoomScrollBar.getValue))).toInt)
+    upDownScrollBar.setVisibleAmount(Math.max(graphic.diffHeight(),(graphic.maxYValue()/(2*getLogZoom(zoomScrollBar.getValue))).toInt))
     upDownScrollBar.setBlockIncrement(upDownScrollBar.getVisibleAmount)
     upDownScrollBar.setUnitIncrement(upDownScrollBar.getVisibleAmount)
   }
@@ -97,13 +96,11 @@ trait Zoom extends ObjFunctionGraphicContainer{
     of the scrollbar, the maximum X/Y value.
    */
   override def drawGlobalCurve(): Unit ={
-    println(graphic.minXValueDisplayed,graphic.maxXValueDisplayed)
     rightLeftScrollBar.setMaximum(graphic.maxXValue().toInt+1)
     upDownScrollBar.setMaximum(graphic.maxYValue()+1)
     zoomScrollBar.setValue(0)
     rightLeftScrollBar.setValue(0)
     upDownScrollBar.setValue(0)
-    println(graphic.minXValueDisplayed,graphic.maxXValueDisplayed)
     super.drawGlobalCurve()
   }
 

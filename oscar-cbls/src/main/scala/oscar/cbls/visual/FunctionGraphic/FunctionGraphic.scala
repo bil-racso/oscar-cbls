@@ -17,9 +17,12 @@ package oscar.examples.cbls.routing.visual.FunctionGraphic
   * ****************************************************************************
   */
 
+import java.awt
 import java.awt._
+import java.awt.event.{MouseListener, MouseEvent, MouseMotionListener, ActionListener}
 import java.awt.geom.Line2D.Double
 import java.awt.geom.Rectangle2D
+import javax.swing.JButton
 
 import oscar.cbls.search.StopWatch
 import oscar.visual.VisualDrawing
@@ -133,6 +136,26 @@ class ObjFunctionGraphic(width:Int,height:Int) extends FunctionGraphic(){
       Int.MaxValue
   }
 
+  //A variable and a MouseListener used to allow the user to display or not the best curve
+  var displayBest = true
+  addMouseListener(new MouseListener{
+    override def mouseExited(e: MouseEvent): Unit = {}
+
+    override def mouseClicked(e: MouseEvent): Unit = {
+      if(e.getX <= minWidth && e.getY >= maxHeight()){
+        displayBest = !displayBest
+        drawGlobalCurve()
+      }
+    }
+
+    override def mouseEntered(e: MouseEvent): Unit = {}
+
+    override def mousePressed(e: MouseEvent): Unit = {}
+
+    override def mouseReleased(e: MouseEvent): Unit = {}
+  })
+
+
   /**
     * Clear the graphic and reset the different ListBuffers in order to begin another research
     */
@@ -202,8 +225,10 @@ class ObjFunctionGraphic(width:Int,height:Int) extends FunctionGraphic(){
           val line = new VisualLine(this, new Double(previousTimeUnit+70, previousTimeUnitValue, currentTimeUnit+70, currentTimeUnitValue))
           line.outerCol_$eq(xColorValues(i))
           line.borderWidth = 3
-          val bestLine = new VisualLine(this,new Double(previousTimeUnit+70, previousTimeUnitBestValue, currentTimeUnit+70, currentTimeUnitBestValue))
-          bestLine.outerCol_$eq(Color.green)
+          if(displayBest){
+            val bestLine = new VisualLine(this,new Double(previousTimeUnit+70, previousTimeUnitBestValue, currentTimeUnit+70, currentTimeUnitBestValue))
+            bestLine.outerCol_$eq(Color.green)
+          }
           previousTimeUnit = currentTimeUnit
           previousTimeUnitValue = currentTimeUnitValue
           previousTimeUnitBestValue = currentTimeUnitBestValue
@@ -215,12 +240,17 @@ class ObjFunctionGraphic(width:Int,height:Int) extends FunctionGraphic(){
         while(currentTimeUnit < widthAdapter(xValues(i))){
           currentTimeUnit += 1
         }
+        currentTimeUnitValue += heightAdapter(yValues(i))
+        currentTimeUnitValuesNumber += 1
+        currentTimeUnitBestValue += heightAdapter(bestValues(i))
+        currentTimeUnitBestValuesNumber += 1
       }
     }
   }
 
   /**
     * Return the values of the Y axis's border
+    *
     * @param minObjValue The minimum objective value that will be drawn
     * @param maxObjValue The maximum objective value that will be drawn
     * @return The bottom and top border of the Y axis
@@ -262,9 +292,8 @@ class ObjFunctionGraphic(width:Int,height:Int) extends FunctionGraphic(){
     (Math.max((minTimeValue / df) * df, (minTimeValue / minFloor) * minFloor), ((maxTimeValue / df) * df) + df)
   }
 
-
   /**
-    * Draw the axis
+    * Draw the axis. We draw blank rectangle to erase the parts of the curve that overstep the axes.
  *
     * @param minY The bottom border of the Y axis
     * @param maxY The top border of the Y axis
@@ -283,6 +312,7 @@ class ObjFunctionGraphic(width:Int,height:Int) extends FunctionGraphic(){
     val absLine = new VisualLine(this,new Double(minWidth,maxHeight(),maxWidth(),maxHeight()))
     absLine.outerCol_$eq(Color.black)
 
+    //We determine the step of the scale
     val objStep = (maxY - minY)/10
     for(i <- 1 to 10){
       val scaleHeight = maxHeight() - heightAdapter((i*objStep) + minY)
@@ -302,5 +332,7 @@ class ObjFunctionGraphic(width:Int,height:Int) extends FunctionGraphic(){
     rectRight.innerCol_=(Color.white)
     rectRight.outerCol_=(Color.white)
     val rectBottomLeft = new VisualRectangle(this, new Rectangle2D.Double(0,maxHeight(),minWidth,getHeight))
+    val bestText = new VisualText(this,minWidth/2,maxHeight()+20,"Best",true,new Rectangle2D.Double(0,0,1,1))
+    bestText.fontColor= if (displayBest) Color.green else Color.red
   }
 }
