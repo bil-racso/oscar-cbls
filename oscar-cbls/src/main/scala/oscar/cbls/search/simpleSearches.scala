@@ -567,7 +567,6 @@ case class ShiftNeighborhood(vars:Array[CBLSIntVar],
     }
 
     def undoSmartShiftNeighborhood(): Unit ={
-      val temp1:Array[Int] = vars.map(_.value)
       if(currentShiftOffset > 0) {
         for (i <- currentStart to currentStart + currentShiftOffset + currentShiftSize - 1) {
           vars(i) := initialValues(i)
@@ -577,15 +576,14 @@ case class ShiftNeighborhood(vars:Array[CBLSIntVar],
           vars(i) := initialValues(i)
         }
       }
-      val temp2:Array[Int] = vars.map(_.getValue(true))
     }
 
     def doSmartShiftNeighborhood(): Int ={
       //If the block is moved on the right
       if(currentShiftOffset > 0){
         //The values are changed
-        val tempVal = vars(currentStart + currentShiftOffset + currentShiftSize - 1).getValue(true)
-        vars(currentStart + currentShiftOffset + currentShiftSize - 1) := vars(currentStart).getValue(true)
+        val tempVal = vars(currentStart + currentShiftOffset + currentShiftSize - 1).value
+        vars(currentStart + currentShiftOffset + currentShiftSize - 1) := vars(currentStart).value
         if(currentShiftOffset != 1){
           for (i <- currentStart to currentStart + currentShiftOffset - 2) {
             vars(i) := vars(i + 1).value

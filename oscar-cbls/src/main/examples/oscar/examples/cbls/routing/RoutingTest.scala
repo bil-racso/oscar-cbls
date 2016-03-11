@@ -1,5 +1,8 @@
 package oscar.examples.cbls.routing
 
+import java.awt.{Color, Dimension}
+import javax.swing.SwingUtilities
+
 import oscar.cbls.invariants.core.computation.Store
 import oscar.cbls.invariants.lib.logic.Int2Int
 import oscar.cbls.invariants.lib.minmax.{Max, Min}
@@ -10,6 +13,11 @@ import oscar.cbls.routing.neighborhood._
 import oscar.cbls.search.StopWatch
 import oscar.cbls.search.combinators.{Atomic, RoundRobin, Profile, BestSlopeFirst}
 import oscar.cbls.modeling.Algebra._
+import oscar.cbls.search.move.Move
+import oscar.examples.cbls.routing.visual.MatrixMap.RoutingMatrixVisualWithAttribute
+import oscar.examples.cbls.routing.visual.FunctionGraphic._
+import oscar.examples.cbls.routing.visual.ColorGenerator
+import oscar.visual.VisualFrame
 import scala.language.implicitConversions
 
 /**
@@ -51,7 +59,7 @@ object RoutingTest extends App with StopWatch{
 
   this.startWatch()
 
-  val n = 300
+  val n = 200
   val v = 5
 
   println("RoutingTest(n:" + n + " v:" + v + ")")
@@ -85,8 +93,8 @@ object RoutingTest extends App with StopWatch{
 
   val pivot = vrp.N/2
 
-  val compositeInsertPoint = Profile((insertPointRoutedFirst guard(() => vrp.unrouted.value.size >= pivot)
-    orElse (insertPointUnroutedFirst guard(() => vrp.unrouted.value.size < pivot))))
+  val compositeInsertPoint = Profile(insertPointRoutedFirst guard (() => vrp.unrouted.value.size >= pivot)
+    orElse (insertPointUnroutedFirst guard (() => vrp.unrouted.value.size < pivot)))
 
   //the other insertion point strategy is less efficient, need to investigate why.
   val insertPoint = compositeInsertPoint //insertPointUnroutedFirstBest //new BestSlopeFirst(List(insertPointUnroutedFirst,insertPointRoutedFirst),refresh = 50) //compositeInsertPoint //insertPointUnroutedFirst
@@ -112,16 +120,22 @@ object RoutingTest extends App with StopWatch{
     vehicles=() => vrp.vehicles.toList))
 
   val search = new RoundRobin(List(insertPoint,onePointMove),10) exhaust
-                      (new BestSlopeFirst(List(onePointMove,threeOpt,segExchange),refresh = n/2)) // exhaust onePointMove exhaust segExchange//threeOpt //(new BestSlopeFirst(List(onePointMove,twoOpt,threeOpt)))
+                      new BestSlopeFirst(List(onePointMove, threeOpt, segExchange), refresh = n / 2) showObjectiveFunction
+    vrp.getObjective() // exhaust onePointMove exhaust segExchange//threeOpt //(new BestSlopeFirst(List(onePointMove,twoOpt,threeOpt)))
 
   search.verbose = 1
 //    search.verboseWithExtraInfo(3,() => vrp.toString)
   //segExchange.verbose = 3
-  search.doAllMoves(_ > 10*n, vrp.objectiveFunction)
 
-  println("total time " + getWatch + "ms or  " + getWatchString)
+  def launchSearch(): Unit ={
+    search.doAllMoves(_ > 10*n, vrp.objectiveFunction)
 
-  println("\nresult:\n" + vrp)
+    println("total time " + getWatch + "ms or  " + getWatchString)
 
-  println(search.profilingStatistics)
+    println("\nresult:\n" + vrp)
+
+    println(search.profilingStatistics)
+  }
+
+  launchSearch()
 }

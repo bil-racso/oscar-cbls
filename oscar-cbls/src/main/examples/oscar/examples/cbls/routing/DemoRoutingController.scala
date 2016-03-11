@@ -19,29 +19,30 @@ package oscar.examples.cbls.routing
 import oscar.cbls.invariants.core.computation.Store
 import oscar.cbls.routing.neighborhood._
 import oscar.cbls.search.StopWatch
-import oscar.cbls.search.combinators.{BestSlopeFirst, RoundRobin, Profile}
+import oscar.cbls.search.combinators.{BestSlopeFirst, Profile, RoundRobin}
+import oscar.cbls.search.move.Move
 
 
 class DemoRoutingController extends StopWatch{
 
-  var customersAmong = 0
-  var carsAmong = 0
+  var customersNumber = 0
+  var carsNumber = 0
   var myVRP:MyVRP = null
   var model:Store = null
 
   def initiateProblem(customers:Int, cars:Int, s:Int,u:Int):List[(Int,Int)]={
     val generatedMatrix = RoutingMatrixGenerator(customers,s)
-    customersAmong = customers
-    carsAmong = cars
+    customersNumber = customers
+    carsNumber = cars
     model = new Store()
-    myVRP = new MyVRP(customers,cars,model,generatedMatrix._1,u,0.5)
+    myVRP = new MyVRP(customers,cars,model,generatedMatrix._1,u)
     model.close()
     generatedMatrix._2.toList
   }
 
   def resetProblem = {
-    customersAmong = 0
-    carsAmong = 0
+    customersNumber = 0
+    carsNumber = 0
     myVRP = null
     model = null
   }
@@ -94,25 +95,26 @@ class DemoRoutingController extends StopWatch{
        relevantNeighbors = () => myVRP.kNearest(40),
        vehicles=() => myVRP.vehicles.toList))
 
-     val search = new RoundRobin(scala.collection.immutable.List(insertPoint,onePointMove),10).afterMove({
-       val routesList:List[List[Int]] = (for(c <- 0 to carsAmong-1)yield myVRP.getRouteOfVehicle(c)).toList
-       DemoRoutingView.drawMove(routesList,(Int.MaxValue,Int.MaxValue))/*(myVRP.getObjective().value,getWatch))*/
+     val search = new RoundRobin(scala.collection.immutable.List(insertPoint,onePointMove),10).afterMoveOnMove((m:Move) =>{
+       val routesList:List[List[Int]] = (for(c <- 0 to carsNumber-1)yield myVRP.getRouteOfVehicle(c)).toList
+       DemoRoutingView.drawMove(routesList,(myVRP.getObjective().value,getWatch, m.neighborhoodName), myVRP.hopDistancePerVehicle)
      }) exhaust
-       (new BestSlopeFirst(List(onePointMove,threeOpt,segExchange),refresh = customersAmong/2)).afterMove({
-         val routesList:List[List[Int]] = (for(c <- 0 to carsAmong-1)yield myVRP.getRouteOfVehicle(c)).toList
-         DemoRoutingView.drawMove(routesList,(myVRP.getObjective().value,getWatch))
+       (new BestSlopeFirst(List(onePointMove,threeOpt,segExchange),refresh = customersNumber/2)).afterMoveOnMove((m:Move) =>{
+         val routesList:List[List[Int]] = (for(c <- 0 to carsNumber-1)yield myVRP.getRouteOfVehicle(c)).toList
+         DemoRoutingView.drawMove(routesList,(myVRP.getObjective().value,getWatch, m.neighborhoodName), myVRP.hopDistancePerVehicle)
        }) // exhaust onePointMove exhaust segExchange//threeOpt //(new BestSlopeFirst(List(onePointMove,twoOpt,threeOpt)))
 
      search.verbose = 1
      //    search.verboseWithExtraInfo(3,() => myVRP.toString)
      //segExchange.verbose = 3
-     search.doAllMoves(_ > 10*customersAmong, myVRP.objectiveFunction)
+     search.doAllMoves(_ > 10*customersNumber, myVRP.objectiveFunction)
 
      println("total time " + getWatch + "ms or  " + getWatchString)
 
      println("\nresult:\n" + myVRP)
 
      println(search.profilingStatistics)
+     DemoRoutingView.displayEndStatistics(Profile.statisticsHeader,search.collectProfilingStatistics)
 
      true
    }

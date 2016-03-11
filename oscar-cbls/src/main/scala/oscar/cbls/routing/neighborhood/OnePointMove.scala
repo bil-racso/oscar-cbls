@@ -39,7 +39,7 @@ import oscar.cbls.search.move.Move
 case class OnePointMove(nodesPrecedingNodesToMove: () => Iterable[Int],
                         relevantNeighbors: () => Int => Iterable[Int],
                         override val vrp: VRP with PositionInRouteAndRouteNr,
-                        neighborhoodName: String = null,
+                        neighborhoodName: String = "OnePointMove",
                         best: Boolean = false,
                         hotRestart: Boolean = true) extends EasyRoutingNeighborhood[OnePointMoveMove](best, vrp, neighborhoodName) {
 
@@ -115,7 +115,7 @@ case class OnePointMoveMove(predOfMovedPoint: Int,
                             insertionPoint: Int,
                             override val objAfter: Int,
                             override val neighborhood: OnePointMove,
-                            override val neighborhoodName: String = null) extends VRPMove(objAfter, neighborhood, neighborhoodName){
+                            override val neighborhoodName: String = "OnePointMoveMove") extends VRPMove(objAfter, neighborhood, neighborhoodName){
 
   override def impactedPoints: List[Int] = List(predOfMovedPoint,movedPoint,insertionPoint)
 
