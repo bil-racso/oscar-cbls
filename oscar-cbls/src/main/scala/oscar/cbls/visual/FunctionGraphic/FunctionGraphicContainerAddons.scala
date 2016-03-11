@@ -100,8 +100,6 @@ trait Zoom extends ObjFunctionGraphicContainer{
     rightLeftScrollBar.setMaximum(graphic.maxXValue().toInt+1)
     upDownScrollBar.setMaximum(graphic.maxYValue()+1)
     zoomScrollBar.setValue(0)
-    rightLeftScrollBar.setValue(0)
-    upDownScrollBar.setValue(0)
     super.drawGlobalCurve()
   }
 

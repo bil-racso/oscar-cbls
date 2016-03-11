@@ -14,8 +14,8 @@ trait PickupAndDeliveryPoints extends  MatrixMap{
     var v = vrp.V
     for(p <- pointsList){
       if(v > 0){
-        val tempPoint = new VisualCircle(this,p._1.toInt,p._2.toInt,5)
-        tempPoint.innerCol_$eq(colorValues(v))
+        val tempPoint = new VisualCircle(this,p._1.toInt,p._2.toInt,6)
+        tempPoint.innerCol_$eq(colorValues(v-1))
       }
       else{
         val tempPoint = new VisualCircle(this,p._1.toInt,p._2.toInt,4)

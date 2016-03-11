@@ -77,7 +77,7 @@ class RoutingMatrixMap extends MatrixMap{
     var v = vrp.V
     for(p <- pointsList){
       if(v > 0){
-        val tempPoint = new VisualCircle(this,p._1.toInt,p._2.toInt,5)
+        val tempPoint = new VisualCircle(this,p._1.toInt,p._2.toInt,6)
         tempPoint.innerCol_$eq(colorValues(pointsList.indexOf(p)))
       }
       else{
@@ -103,8 +103,9 @@ class RoutingMatrixMap extends MatrixMap{
         tempRoute.borderWidth = 2
         old = p
       }
-      val tempRoute = new VisualArrow(this,new Double(pointsList(old)._1, pointsList(old)._2,pointsList(points.head)._1,pointsList(points.head)._2),5)
+      val tempRoute = new VisualArrow(this,new Double(pointsList(old)._1, pointsList(old)._2,pointsList(points.head)._1,pointsList(points.head)._2),4)
       tempRoute.outerCol_$eq(color)
+      tempRoute.borderWidth = 2
     }
   }
 }

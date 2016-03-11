@@ -203,49 +203,42 @@ class ObjFunctionGraphic(width:Int,height:Int) extends FunctionGraphic(){
     var currentTimeUnitValue:scala.Double = 0.0
     var currentTimeUnitValuesNumber:scala.Double = 0.0
     var currentTimeUnitBestValue:scala.Double = 0.0
-    var currentTimeUnitBestValuesNumber:scala.Double = 0.0
     var previousTimeUnitValue:scala.Double = 0.0
     var previousTimeUnitBestValue:scala.Double = 0.0
     var previousTimeUnit:scala.Double = 0.0
     for(i <- yValues.indices){
-      if(widthAdapter(xValues(i)) == currentTimeUnit){
-        currentTimeUnitValue += heightAdapter(yValues(i))
-        currentTimeUnitValuesNumber += 1
-        currentTimeUnitBestValue += heightAdapter(bestValues(i))
-        currentTimeUnitBestValuesNumber += 1
-      }else{
-        if(currentTimeUnitValuesNumber != 0) {
-          currentTimeUnitValue = maxHeight() - (currentTimeUnitValue/currentTimeUnitValuesNumber) + heightAdapter(minYValueDisplayed)
-          currentTimeUnitBestValue = maxHeight() - (currentTimeUnitBestValue/currentTimeUnitBestValuesNumber) + heightAdapter(minYValueDisplayed)
-          if(previousTimeUnitValue == 0.0) {
-            previousTimeUnitValue = currentTimeUnitValue
-            previousTimeUnitBestValue = currentTimeUnitBestValue
-            previousTimeUnit = currentTimeUnit
-          }
-          val line = new VisualLine(this, new Double(previousTimeUnit+70, previousTimeUnitValue, currentTimeUnit+70, currentTimeUnitValue))
-          line.outerCol_$eq(xColorValues(i))
-          line.borderWidth = 3
-          if(displayBest){
-            val bestLine = new VisualLine(this,new Double(previousTimeUnit+70, previousTimeUnitBestValue, currentTimeUnit+70, currentTimeUnitBestValue))
-            bestLine.outerCol_$eq(Color.green)
-          }
-          previousTimeUnit = currentTimeUnit
+      if(widthAdapter(xValues(i)) != currentTimeUnit && currentTimeUnitValuesNumber != 0) {
+        currentTimeUnitValue = maxHeight() - (currentTimeUnitValue/currentTimeUnitValuesNumber) + heightAdapter(minYValueDisplayed)
+        currentTimeUnitBestValue = maxHeight() - (currentTimeUnitBestValue/currentTimeUnitValuesNumber) + heightAdapter(minYValueDisplayed)
+        if(previousTimeUnitValue == 0.0) {
           previousTimeUnitValue = currentTimeUnitValue
           previousTimeUnitBestValue = currentTimeUnitBestValue
-          currentTimeUnitValue = 0.0
-          currentTimeUnitValuesNumber = 0.0
-          currentTimeUnitBestValue = 0.0
-          currentTimeUnitBestValuesNumber = 0.0
+          previousTimeUnit = currentTimeUnit
         }
-        while(currentTimeUnit < widthAdapter(xValues(i))){
-          currentTimeUnit += 1
+
+        val line = new VisualLine(this, new Double(previousTimeUnit+70, previousTimeUnitValue, currentTimeUnit+70, currentTimeUnitValue))
+        line.outerCol_$eq(xColorValues(i))
+        line.borderWidth = 3
+        if(displayBest){
+          val bestLine = new VisualLine(this,new Double(previousTimeUnit+70, previousTimeUnitBestValue, currentTimeUnit+70, currentTimeUnitBestValue))
+          bestLine.outerCol_$eq(Color.green)
         }
-        currentTimeUnitValue += heightAdapter(yValues(i))
-        currentTimeUnitValuesNumber += 1
-        currentTimeUnitBestValue += heightAdapter(bestValues(i))
-        currentTimeUnitBestValuesNumber += 1
+
+        previousTimeUnit = currentTimeUnit
+        previousTimeUnitValue = currentTimeUnitValue
+        previousTimeUnitBestValue = currentTimeUnitBestValue
+        currentTimeUnitValue = 0.0
+        currentTimeUnitValuesNumber = 0.0
+        currentTimeUnitBestValue = 0.0
       }
+      while(currentTimeUnit < widthAdapter(xValues(i)))
+        currentTimeUnit += 1
+      currentTimeUnitValue += heightAdapter(yValues(i))
+      currentTimeUnitValuesNumber += 1
+      currentTimeUnitBestValue += heightAdapter(bestValues(i))
     }
+
+    //We draw the last position
     val line = new VisualLine(this, new Double(previousTimeUnit+70, previousTimeUnitValue, currentTimeUnit+70, previousTimeUnitValue))
     line.outerCol_$eq(xColorValues.last)
     line.borderWidth = 3
