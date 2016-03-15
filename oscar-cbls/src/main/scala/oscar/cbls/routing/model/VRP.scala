@@ -23,8 +23,7 @@
 
 package oscar.cbls.routing.model
 
-import oscar.cbls.constraints.core.ConstraintSystem
-import oscar.cbls.invariants.core.algo.heap.BinomialHeap
+import oscar.cbls.constraints.lib.basic.{EQ, LE}
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.lib.logic._
 import oscar.cbls.invariants.lib.numeric.Sum
@@ -164,6 +163,17 @@ class VRP(val N: Int, val V: Int, val m: Store) {
   private var additionalStrings: List[() => String] = List.empty
   def addToStringInfo(a: () => String) {
     additionalStrings = a :: additionalStrings
+  }
+
+  private var nodeInformations:Array[String] = new Array[String](N)
+  def setNodeInformation(index:Int, info:String): Unit ={
+    assert(index < nodeInformations.length,"SetNodeInformation index to high")
+    nodeInformations(index) = info
+  }
+
+  def getNodeInformation(index:Int): String ={
+    assert(index < nodeInformations.length,"GetNodeInformation index to high")
+    nodeInformations(index)
   }
 }
 
@@ -754,15 +764,16 @@ trait VehicleWithCapacity extends  VRP with PickupAndDeliveryCustomers{
 /**
   * This trait maintains the
   */
-trait PickupAndDeliveryCustomers extends VRP{
+trait PickupAndDeliveryCustomers extends VRP with StrongConstraints with PositionInRouteAndRouteNr{
 
   /**
     * The variable that contains the pickup nodes.
-    * Each pickup nodes (the key) grants access to his related delivery node and to his value of cargo to pickup
+    * Each pickup node (the key) grants access to his related delivery node and to his value of load to pickup
     */
   private var pickupNodes:HashMap[CBLSIntConst,(CBLSIntConst,CBLSIntConst)] = new HashMap[CBLSIntConst,(CBLSIntConst,CBLSIntConst)]
   /**
-    * The variable that contains the delivery nodes
+    * The variable that contains the delivery nodes.
+    * Each delivery node (the key) grants access to his related pickup node and to his value of load to deliver
     */
   private var deliveryNodes:HashMap[CBLSIntConst,(CBLSIntConst,CBLSIntConst)] = new HashMap[CBLSIntConst,(CBLSIntConst,CBLSIntConst)]
 
@@ -772,10 +783,15 @@ trait PickupAndDeliveryCustomers extends VRP{
     *
     * @param p the pickup point
     * @param d the delivery point
+    * @param v the load value
     */
-  private def addPickupDeliveryCouple(p:Int, d:Int): Unit ={
-    pickupNodes += CBLSIntConst(p) -> CBLSIntConst(d)
-    deliveryNodes += CBLSIntConst(d) -> CBLSIntConst(p)
+  private def addPickupDeliveryCouple(p:Int, d:Int, v:Int): Unit ={
+    pickupNodes += CBLSIntConst(p) -> (CBLSIntConst(d),CBLSIntConst(v))
+    setNodeInformation(p,"Pickup node n°" + p + "\n" + "Load value : " + v + "")
+    deliveryNodes += CBLSIntConst(d) -> (CBLSIntConst(p),CBLSIntConst(-v))
+    setNodeInformation(d,"Delivery node n°" + d + "\n" + "Load value : " + -v + "")
+    strongConstraints.post(LE(positionInRoute(p),positionInRoute(d)))
+    //strongConstraints.post(EQ(routeNr(p),routeNr(d)))
   }
 
   /**
@@ -783,30 +799,22 @@ trait PickupAndDeliveryCustomers extends VRP{
     * We use the range of nodes to generate them. If we have more than nodes.length/2 couples to add,
     * we re-use the range of nodes. Doing that we are sure that all the nodes will be used
     * (if we have a minimum of nodes.length/2 couples to add)
+    *
     * @param numberOfCouple the number of couple to add. Default = the number of nodes divide by 2
     */
-  def addRandomPickupDeliveryCouples(numberOfCouple:Int = N/2): Unit ={
-    var tempNodes = nodes.toList
+  def addRandomPickupDeliveryCouples(numberOfCouple:Int = (N-V)/2): Unit ={
+    var tempNodes = nodes.toList.drop(5)
     Random.shuffle(tempNodes)
     for(i <- 0 until numberOfCouple){
-      if(tempNodes.isEmpty) {
-        tempNodes = nodes.toList
-        Random.shuffle(tempNodes)
-      }
       val p = tempNodes.head
       tempNodes = tempNodes.tail
 
-      /*We have to check the emptiness of the temporal list of nodes  before each assignments
-        in the case we have an odd amount of nodes
-       */
-      if(tempNodes.isEmpty) {
-        tempNodes = nodes.toList
-        Random.shuffle(tempNodes)
-      }
       val d = tempNodes.head
       tempNodes = tempNodes.tail
 
-      addPickupDeliveryCouple(p,d)
+      val v = Math.ceil(Math.random()*3)
+
+      addPickupDeliveryCouple(p,d,v.toInt)
     }
   }
 
@@ -814,39 +822,63 @@ trait PickupAndDeliveryCustomers extends VRP{
     * Add defined couples.
     * The user has to specify two arrays. One containing the pickup points and
     * another one containing the related delivery points. So pickup(1) is the pickup point of delivery(1).
+    *
     * @param pickup the pickup points array
     * @param delivery the delivery points array
     */
-  def addPickupDeliveryCouples(pickup:Array[Int],delivery:Array[Int]): Unit ={
-    assert(pickup.length == delivery.length, "The pickup array and the delivery array must have the same length.")
+  def addPickupDeliveryCouples(pickup:Array[Int],delivery:Array[Int],value:Array[Int]): Unit ={
+    assert(pickup.length == delivery.length && pickup.length == value.length,
+      "The pickup array and the delivery array must have the same length.")
     assert(!pickup.exists(_ >= N) || !delivery.exists(_ >= N),
       "The pickup and the delivery array may only contain values between 0 and the number of nodes")
 
     for(i <- pickup.indices){
-      addPickupDeliveryCouple(pickup(i),delivery(i))
+      addPickupDeliveryCouple(pickup(i),delivery(i),value(i))
     }
   }
 
+  def isPickup(index:Int): Boolean = pickupNodes.get(index).isDefined
+
+  def isDelivery(index:Int):Boolean = deliveryNodes.get(index).isDefined
+
+  /**
+    * @param d the index of a delivery node
+    * @return the index of the related pickup node
+    */
   def getRelatedPickup(d:Int): Int ={
-    deliveryNodes(d)._1.value
+    assert(!deliveryNodes.get(d).isEmpty,"The node can't be found in the deliveryNodes map")
+    deliveryNodes.get(d).get._1.value
   }
 
+  /**
+    * @param p the index of a pickup node
+    * @return the index of the related delivery node
+    */
   def getRelatedDelivery(p:Int): Int ={
-    pickupNodes(p)._1.value
+    assert(!pickupNodes.get(p).isEmpty,"The node can't be found in the pickupNodes map")
+    pickupNodes.get(p).get._1.value
   }
 
+  /**
+    * @param n the index of a node
+    * @return the load value of the node
+    */
   def getLoadValue(n:Int): Int ={
-    if(pickupNodes.get(n).isEmpty){
-      if(deliveryNodes.get(n).isEmpty){
-        assert(false,"The node referenced index is to high")
-      }else{
-
-      }
-    }
-    0
+    if(pickupNodes.get(n).isEmpty) {
+      if (deliveryNodes.get(n).isEmpty) {
+        assert(false, "The node can't be found")
+        0
+      }else
+        deliveryNodes.get(n).get._2.value
+    }else
+      pickupNodes.get(n).get._2.value
   }
 }
 
-trait PickupAndDeliveryCustomersWithTimeWindow extends PickupAndDeliveryCustomers {
+trait PickupAndDeliveryCustomersWithTimeWindow extends TimeWindow with PickupAndDeliveryCustomers {
 
+  override def setEndWindow(node:Int, endWindow:Int): Unit ={
+    setNodeInformation(node,getNodeInformation(node) + "\nEnd of time window : " + endWindow)
+    super.setEndWindow(node,endWindow)
+  }
 }

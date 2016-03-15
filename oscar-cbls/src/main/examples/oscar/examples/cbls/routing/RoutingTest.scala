@@ -7,6 +7,7 @@ import oscar.cbls.routing.neighborhood._
 import oscar.cbls.search.StopWatch
 import oscar.cbls.search.combinators.{RoundRobin, Profile, BestSlopeFirst}
 import oscar.cbls.modeling.Algebra._
+import oscar.visual.VisualFrame
 import scala.language.implicitConversions
 
 /**
@@ -62,6 +63,7 @@ object RoutingTest extends App with StopWatch{
   model.close()
 
   println("closed model " + getWatch + "ms")
+
   val insertPointRoutedFirst = Profile(InsertPointRoutedFirst(
     insertionPoints = vrp.routed,
     unroutedNodesToInsert = () => vrp.kNearest(10,!vrp.isRouted(_)),

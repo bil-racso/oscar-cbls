@@ -20,10 +20,10 @@ package oscar.examples.cbls.routing.visual.MatrixMap
 import java.awt.Color
 import java.awt.geom.Line2D.Double
 
-import oscar.cbls.routing.model.VRP
+import oscar.cbls.routing.model.{PickupAndDeliveryCustomers, VRP}
 import oscar.examples.cbls.routing.visual.ColorGenerator
 import oscar.visual.VisualDrawing
-import oscar.visual.shapes.{VisualArrow, VisualCircle, VisualLine}
+import oscar.visual.shapes.{VisualArrow, VisualCircle}
 
 import scala.collection.mutable.ListBuffer
 
@@ -74,6 +74,7 @@ abstract class MatrixMap extends VisualDrawing(false,false){
 class RoutingMatrixMap extends MatrixMap{
 
   def drawPoints() ={
+    println("Original Draw Points")
     var v = vrp.V
     for(p <- pointsList){
       if(v > 0){
@@ -81,7 +82,7 @@ class RoutingMatrixMap extends MatrixMap{
         tempPoint.innerCol_$eq(colorValues(pointsList.indexOf(p)))
       }
       else{
-        val tempPoint = new VisualCircle(this,p._1.toInt,p._2.toInt,3)
+        val tempPoint = new VisualCircle(this,p._1.toInt,p._2.toInt,4)
         tempPoint.innerCol_$eq(Color.black)
       }
       v -= 1

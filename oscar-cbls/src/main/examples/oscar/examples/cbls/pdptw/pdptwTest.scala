@@ -3,6 +3,13 @@ package oscar.examples.cbls.pdptw
 import oscar.cbls.invariants.core.computation.Store
 import oscar.cbls.invariants.lib.numeric.{Abs, Sum}
 import oscar.cbls.routing.model._
+import oscar.cbls.routing.neighborhood._
+import oscar.cbls.search.StopWatch
+import oscar.cbls.search.combinators.{BestSlopeFirst, RoundRobin, Profile}
+import oscar.examples.cbls.routing.RoutingMatrixGenerator
+import oscar.examples.cbls.routing.visual.ColorGenerator
+import oscar.examples.cbls.routing.visual.MatrixMap.{PickupAndDeliveryPoints, RoutingMatrixVisualWithAttribute, RoutingMatrixVisual}
+import oscar.visual.VisualFrame
 
 /**
   * *****************************************************************************
@@ -25,7 +32,7 @@ import oscar.cbls.routing.model._
   * @author fabian.germeau@student.vinci.be
   */
 
-class MyVRP(n:Int, v:Int, model:Store, distanceMatrix: Array[Array[Int]],unroutedPenalty:Int)
+class MyPDPTWVRP(n:Int, v:Int, model:Store, distanceMatrix: Array[Array[Int]],unroutedPenalty:Int)
   extends VRP(n,v,model)
     with HopDistanceAsObjectiveTerm
     with HopClosestNeighbors
@@ -33,7 +40,8 @@ class MyVRP(n:Int, v:Int, model:Store, distanceMatrix: Array[Array[Int]],unroute
     with NodesOfVehicle
     with PenaltyForUnrouted
     with hopDistancePerVehicle
-    with VehicleWithCapacity{
+    with VehicleWithCapacity
+    with PickupAndDeliveryCustomers{
 
   installCostMatrix(distanceMatrix)
   setUnroutedPenaltyWeight(unroutedPenalty)
@@ -44,16 +52,112 @@ class MyVRP(n:Int, v:Int, model:Store, distanceMatrix: Array[Array[Int]],unroute
   println("end install matrix, posting constraints")
   setVehiclesMaxCargo(4)
   setVehiclesCargo(0)
+  addRandomPickupDeliveryCouples()
 
   //evenly spreading the travel among vehicles
-  val averageDistanceOnAllVehicles = overallDistance / V
-  val spread = Sum(hopDistancePerVehicle.map(h => Abs(h - averageDistanceOnAllVehicles)))
+  val averageDistanceOnAllVehicles = overallDistance.value / V
+  val spread = Sum(hopDistancePerVehicle.map(h => Abs(h.value - averageDistanceOnAllVehicles)))
   addObjectiveTerm(spread)
   addObjectiveTerm(unroutedPenalty)
 
   println("vrp done")
 }
 
-object pdptwTest {
+object pdptwTest extends App with StopWatch {
 
+  this.startWatch()
+
+  val n = 20
+  val v = 5
+
+  println("PDPTWTest(n:" + n + " v:" + v + ")")
+
+  val (distanceMatrix,positions) = RoutingMatrixGenerator(n,10000)
+
+  println("compozed matrix " + getWatch + "ms")
+
+  val model = new Store()
+
+  val vrp = new MyPDPTWVRP(n,v,model,distanceMatrix,100000)
+
+  model.close()
+
+
+
+  val f = new VisualFrame("PDPTWTest - Routing Map")
+  val rm = new RoutingMatrixVisualWithAttribute("Routing Map",vrp,10000,positions.toList,ColorGenerator.generateRandomColors(5),pickupAndDeliveryPoints = true)
+  f.addFrame(rm)
+
+  println("closed model " + getWatch + "ms")
+  val insertPointRoutedFirst = Profile(InsertPointRoutedFirst(
+    insertionPoints = vrp.routed,
+    unroutedNodesToInsert = () => vrp.kNearest(10,!vrp.isRouted(_)),
+    vrp = vrp) guard(() => vrp.unrouted.value.nonEmpty))
+
+  val insertPointUnroutedFirst = Profile(InsertPointUnroutedFirst(
+    unroutedNodesToInsert= vrp.unrouted,
+    relevantNeighbors = () => vrp.kNearest(10,vrp.isRouted(_)),
+    vrp = vrp))
+
+  val insertPointUnroutedFirstBest = Profile(InsertPointUnroutedFirst(
+    unroutedNodesToInsert= vrp.unrouted,
+    relevantNeighbors = () => vrp.kNearest(1,vrp.isRouted(_)),
+    neighborhoodName = "insertPointUnroutedFirstBest",
+    vrp = vrp, best = true))
+
+  val pivot = vrp.N/2
+
+  val compositeInsertPoint = Profile(insertPointRoutedFirst guard (() => vrp.unrouted.value.size >= pivot)
+    orElse (insertPointUnroutedFirst guard (() => vrp.unrouted.value.size < pivot)))
+
+  //the other insertion point strategy is less efficient, need to investigate why.
+  val insertPoint = compositeInsertPoint //insertPointUnroutedFirstBest //new BestSlopeFirst(List(insertPointUnroutedFirst,insertPointRoutedFirst),refresh = 50) //compositeInsertPoint //insertPointUnroutedFirst
+
+  val onePointMove = Profile(OnePointMove(
+    nodesPrecedingNodesToMove = vrp.routed,
+    relevantNeighbors= () => vrp.kNearest(50),
+    vrp = vrp))
+
+  val twoOpt = Profile(TwoOpt(
+    predecesorOfFirstMovedPoint = vrp.routed,
+    relevantNeighbors = () => vrp.kNearest(20),
+    vrp = vrp))
+
+  val threeOpt = Profile(ThreeOpt(
+    potentialInsertionPoints = vrp.routed,
+    relevantNeighbors = () => vrp.kNearest(20),
+    vrp = vrp,
+    skipOnePointMove = true))
+
+  val segExchange = Profile(SegmentExchange(vrp = vrp,
+    relevantNeighbors = () => vrp.kNearest(40),
+    vehicles=() => vrp.vehicles.toList))
+
+  val search = new RoundRobin(List(insertPoint,onePointMove),10) exhaust
+    new BestSlopeFirst(List(onePointMove, threeOpt, segExchange), refresh = n / 2) showObjectiveFunction
+    vrp.getObjective() afterMove {
+    rm.drawRoutes()
+    println(vrp.strongConstraints.violatedConstraints)
+  } // exhaust onePointMove exhaust segExchange//threeOpt //(new BestSlopeFirst(List(onePointMove,twoOpt,threeOpt)))
+
+  search.verbose = 1
+  //    search.verboseWithExtraInfo(3,() => vrp.toString)
+  //segExchange.verbose = 3
+
+  def launchSearch(): Unit ={
+    println(vrp.strongConstraints.violatedConstraints)
+    println(vrp.asInstanceOf[VRP with PositionInRouteAndRouteNr].routeNr.toList.toString())
+    println(vrp.asInstanceOf[VRP with PositionInRouteAndRouteNr].positionInRoute.toList.toString())
+
+    search.verboseWithExtraInfo(1,vrp.toString)
+    search.doAllMoves(_ > 10*n, vrp.objectiveFunction)
+
+    println("total time " + getWatch + "ms or  " + getWatchString)
+
+    println("\nresult:\n" + vrp)
+
+    println(search.profilingStatistics)
+  }
+
+  launchSearch()
 }
