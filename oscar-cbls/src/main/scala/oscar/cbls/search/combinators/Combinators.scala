@@ -1143,6 +1143,8 @@ case class DynAndThen[FirstMoveType<:Move](a:Neighborhood with SupportForAndThen
 
       override def model = obj.model
 
+      override def valueNoSideEffect: Int = 0
+
       override def value: Int = {
 
         val intermediaryObjValue =
@@ -1562,7 +1564,7 @@ class OverrideObjective(a: Neighborhood, overridingObjective: Objective) extends
   override def getMove(obj: Objective, acceptanceCriterion: (Int, Int) => Boolean): SearchResult = getMove(overridingObjective, acceptanceCriterion)
 }
 
-class SlidingProfile(a:Neighborhood, windowsSize:Int)
+//class SlidingProfile(a:Neighborhood, windowsSize:Int)
 
 /**
  * collects statistics about the run time and progress achieved by neighborhood a

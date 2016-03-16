@@ -63,7 +63,7 @@ object Reagan extends App {
 //  val Pray = NonMoveableActivity(5, 2, planning, "pray")
 //  Pray uses 2 ofResource Reagan
 
-  val Digest = SuperActivity(Eat, Sleep, "digest")
+  val Digest:Activity = SuperActivity(Eat, Sleep, "digest")
   Digest uses 1 ofResource Reagan
 
   Think precedes Drink
