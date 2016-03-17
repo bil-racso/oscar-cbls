@@ -100,6 +100,10 @@ abstract class FunctionGraphic() extends VisualDrawing(false,false) with StopWat
 
   setLayout(new BorderLayout())
 
+  //We remove the unwanted listener inherited from VisualDrawing
+  removeMouseListener(getMouseListeners.head)
+  removeMouseMotionListener(getMouseMotionListeners.head)
+
   def notifyNewObjectiveValue(objValue:Int, objTime:Long, color:Color)
 
   def clear(): Unit ={
@@ -135,6 +139,7 @@ class ObjFunctionGraphic(width:Int,height:Int) extends FunctionGraphic(){
     else
       Int.MaxValue
   }
+
 
   //A variable and a MouseListener used to allow the user to display or not the best curve
   var displayBest = true
@@ -239,13 +244,13 @@ class ObjFunctionGraphic(width:Int,height:Int) extends FunctionGraphic(){
     }
 
     //We draw the last position
-    val line = new VisualLine(this, new Double(previousTimeUnit+70, previousTimeUnitValue, currentTimeUnit+70, previousTimeUnitValue))
-    line.outerCol_$eq(xColorValues.last)
-    line.borderWidth = 3
     if(displayBest){
-      val bestLine = new VisualLine(this,new Double(previousTimeUnit+70, previousTimeUnitBestValue, currentTimeUnit+70, previousTimeUnitBestValue))
+      val bestLine = new VisualLine(this,new Double(previousTimeUnit+70, previousTimeUnitBestValue, currentTimeUnit+70, maxHeight() - (currentTimeUnitBestValue/currentTimeUnitValuesNumber) + heightAdapter(minYValueDisplayed)))
       bestLine.outerCol_$eq(Color.green)
     }
+    val line = new VisualLine(this, new Double(previousTimeUnit+70, previousTimeUnitValue, currentTimeUnit+70, maxHeight() - (currentTimeUnitValue/currentTimeUnitValuesNumber) + heightAdapter(minYValueDisplayed)))
+    line.outerCol_$eq(xColorValues.last)
+    line.borderWidth = 3
   }
 
   /**

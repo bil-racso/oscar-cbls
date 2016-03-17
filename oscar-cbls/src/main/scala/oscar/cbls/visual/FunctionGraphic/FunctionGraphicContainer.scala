@@ -65,6 +65,8 @@ class ObjFunctionGraphicContainer(title:String = "Evolution of the objective fun
   graphic = new ObjFunctionGraphic(getWidth,getHeight)
   add(graphic, BorderLayout.CENTER)
 
+  println(this.getMouseListeners)
+
   val neighborhoodColorLabel = new JLabel(" ")
   neighborhoodColorLabel.setHorizontalAlignment(SwingConstants.CENTER)
   add(neighborhoodColorLabel, BorderLayout.NORTH)

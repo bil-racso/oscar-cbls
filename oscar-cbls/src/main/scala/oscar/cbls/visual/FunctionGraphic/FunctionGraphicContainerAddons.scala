@@ -86,7 +86,7 @@ trait Zoom extends ObjFunctionGraphicContainer{
     rightLeftScrollBar.setVisibleAmount(Math.max(graphic.diffWidth(), graphic.maxXValue() / (2 * getLogZoom(zoomScrollBar.getValue))).toInt)
     rightLeftScrollBar.setBlockIncrement(rightLeftScrollBar.getVisibleAmount)
     rightLeftScrollBar.setUnitIncrement(rightLeftScrollBar.getVisibleAmount)
-    upDownScrollBar.setVisibleAmount(Math.max(graphic.diffHeight(),(graphic.maxYValue()/(2*getLogZoom(zoomScrollBar.getValue))).toInt))
+    upDownScrollBar.setVisibleAmount(Math.max(20,(graphic.maxYValue()/(2*getLogZoom(zoomScrollBar.getValue))).toInt))
     upDownScrollBar.setBlockIncrement(upDownScrollBar.getVisibleAmount)
     upDownScrollBar.setUnitIncrement(upDownScrollBar.getVisibleAmount)
   }

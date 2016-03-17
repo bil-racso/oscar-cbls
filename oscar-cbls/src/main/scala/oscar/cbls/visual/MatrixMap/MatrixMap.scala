@@ -37,6 +37,10 @@ abstract class MatrixMap extends VisualDrawing(false,false){
   var vrp:VRP = null
   var mapSize = 0
 
+  //We remove the unwanted listener inherited from VisualDrawing
+  removeMouseListener(getMouseListeners.head)
+  removeMouseMotionListener(getMouseMotionListeners.head)
+
   def drawPoints()
 
   def drawRoutes()
