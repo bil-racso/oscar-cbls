@@ -29,7 +29,7 @@ import oscar.cbls.invariants.lib.logic._
 import oscar.cbls.invariants.lib.numeric.Sum
 import oscar.cbls.invariants.lib.set.Cardinality
 import oscar.cbls.modeling.Algebra._
-import oscar.cbls.search.algo.KSmallest
+import oscar.cbls.search.algo.{LazyQuicksort, KSmallest}
 
 import scala.collection.immutable.{HashMap, SortedMap, SortedSet}
 import scala.math.min
@@ -589,7 +589,7 @@ trait PenaltyForEmptyRoute extends VRP with PositionInRouteAndRouteNr {
    * The variable which maintains the set of empty routes.
    * (that is: routes containing no other node than the vehicle node)
    */
-  val emptyRoutes = Filter(routeLength, _ <= (1))
+  val emptyRoutes = Filter(routeLength, _ <= 1)
 
   /**
    * The variable which maintains the sum of route penalties,
@@ -625,7 +625,7 @@ trait PenaltyForEmptyRouteWithException extends VRP with NodesOfVehicle {
     Array.tabulate(V)(v =>
       CBLSIntVar(m, name = "penality of vehicule " + v))
 
-  val exceptionNodes: CBLSSetVar = new CBLSSetVar(m, SortedSet.empty, 0 to N - 1, "NodesNotToConsiderForEmptyRoutes")
+  val exceptionNodes: CBLSSetVar = new CBLSSetVar(m, SortedSet.empty, 0 until N, "NodesNotToConsiderForEmptyRoutes")
 
   private val nodesOfRealVehicles = Array.tabulate(V)(nodesOfVehicle)
 
@@ -908,41 +908,52 @@ trait PickupAndDeliveryCustomers extends VRP with StrongConstraints with Positio
     resRoute
   }
 
-  def getPerfectSegment(routeNumber:Int): Unit ={
-    var perfectSegmentMap:HashMap[Int,Set[Int]] = new HashMap[Int,Set[Int]]
+  def getCompleteSegments(routeNumber:Int): List[(Int,Int)] ={
+    var completeSegmentsMap:HashMap[Int,Set[Int]] = new HashMap[Int,Set[Int]]
     val route = getRouteOfVehicle(routeNumber)
 
     for(node <- route){
       if(isPickup(node)){
-        for(key <- perfectSegmentMap.keys){
-          if(perfectSegmentMap.get(key).get.nonEmpty) {
-            val currentSet = perfectSegmentMap.get(key).get + node
-            perfectSegmentMap += key -> currentSet
+        for(key <- completeSegmentsMap.keys){
+          if(completeSegmentsMap.get(key).get.nonEmpty) {
+            val currentSet = completeSegmentsMap.get(key).get + node
+            completeSegmentsMap += key -> currentSet
           }
         }
-        var nodeSet:Set[Int] = Set(node)
-        perfectSegmentMap += node -> nodeSet
+        val nodeSet:Set[Int] = Set(node)
+        completeSegmentsMap += node -> nodeSet
       }
       else{
-        for(key <- perfectSegmentMap.keys){
-          if(perfectSegmentMap.get(key).get.nonEmpty) {
-            if (!perfectSegmentMap.get(key).get.contains(getRelatedPickup(node))) {
-              perfectSegmentMap -= key
-            }else if(key == getRelatedPickup(node) && perfectSegmentMap.get(key).get.size > 1){
-              perfectSegmentMap -= key
+        for(key <- completeSegmentsMap.keys){
+          if(completeSegmentsMap.get(key).get.nonEmpty) {
+            if (!completeSegmentsMap.get(key).get.contains(getRelatedPickup(node))) {
+              completeSegmentsMap -= key
+            }else if(key == getRelatedPickup(node) && completeSegmentsMap.get(key).get.size > 1){
+              completeSegmentsMap -= key
             }
             else {
-              val currentSet = perfectSegmentMap.get(key).get - getRelatedPickup(node)
-              perfectSegmentMap += key -> currentSet
+              val currentSet = completeSegmentsMap.get(key).get - getRelatedPickup(node)
+              completeSegmentsMap += key -> currentSet
             }
           }
         }
       }
     }
 
-    println(perfectSegmentMap)
+    if(completeSegmentsMap.keys.nonEmpty) {
+      val sortedKeys = completeSegmentsMap.keys.toList.sortWith(positionInRoute(_) < positionInRoute(_))
+      var completeSegments: List[(Int, Int)] = Nil
+      for (key1 <- sortedKeys.indices) {
+        completeSegments = (sortedKeys(key1), getRelatedDelivery(sortedKeys(key1))) :: completeSegments
+        for (key2 <- 0 until key1) {
+          completeSegments = (sortedKeys(key2), getRelatedDelivery(sortedKeys(key1))) :: completeSegments
+        }
+      }
+      completeSegments
+    }else{
+      Nil
+    }
   }
-
 }
 
 trait PickupAndDeliveryCustomersWithTimeWindow extends TimeWindow with PickupAndDeliveryCustomers {

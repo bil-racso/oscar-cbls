@@ -134,6 +134,7 @@ trait AdjustMaxValue extends ObjFunctionGraphicContainer{
       so that only the wanted values will be displayed.
      */
     override def adjustmentValueChanged(e: AdjustmentEvent): Unit = {
+      sortedYValues = new LazyQuicksort(graphic.yValues.toArray,+_)
       sortedYValues.sortUntil(Math.max(1,(adjustMaxValueScrollBar.getValue.toDouble/100 * sortedYValues.size).toInt))
       val iteratorXValues = sortedYValues.iterator
       for(i <- 0 until Math.max(1, (adjustMaxValueScrollBar.getValue.toDouble / 100 * sortedYValues.size).toInt)){
@@ -148,7 +149,6 @@ trait AdjustMaxValue extends ObjFunctionGraphicContainer{
   add(adjustMaxValueScrollBar, BorderLayout.EAST)
 
   override def drawGlobalCurve(): Unit ={
-    sortedYValues = new LazyQuicksort(graphic.yValues.toArray,+_)
     super.drawGlobalCurve()
   }
 }

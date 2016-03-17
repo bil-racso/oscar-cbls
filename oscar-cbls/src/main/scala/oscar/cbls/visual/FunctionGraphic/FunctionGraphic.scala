@@ -22,13 +22,14 @@ import java.awt._
 import java.awt.event.{MouseListener, MouseEvent, MouseMotionListener, ActionListener}
 import java.awt.geom.Line2D.Double
 import java.awt.geom.Rectangle2D
-import javax.swing.JButton
+import javax.swing.{Timer, JButton}
 
 import oscar.cbls.search.StopWatch
 import oscar.visual.VisualDrawing
 import oscar.visual.shapes.{VisualRectangle, VisualLine, VisualText}
 
 import scala.collection.mutable.ListBuffer
+import scala.swing.event.ActionEvent
 
 /** This abstract class represent the base structure for
   * the classes who'll have the purpose of drawing the curve of a function.
@@ -61,7 +62,7 @@ import scala.collection.mutable.ListBuffer
   * @author fabian.germeau@student.vinci.be
   */
 
-abstract class FunctionGraphic() extends VisualDrawing(false,false) with StopWatch{
+abstract class FunctionGraphic() extends VisualDrawing(false,false) with StopWatch with ActionListener{
 
   val maxWidth = () => getWidth -10
   val minWidth = 70
@@ -97,6 +98,8 @@ abstract class FunctionGraphic() extends VisualDrawing(false,false) with StopWat
   //A list buffer that contains the color of the neighborhood that has found the current move
   val xColorValues:ListBuffer[Color] = new ListBuffer[Color]
 
+  val timer:Timer = new Timer(1000,this)
+
 
   setLayout(new BorderLayout())
 
@@ -116,7 +119,11 @@ abstract class FunctionGraphic() extends VisualDrawing(false,false) with StopWat
 
   def setMaxNumberOfObject(percentage:scala.Double){}
 
-
+  override def actionPerformed(e:event.ActionEvent): Unit ={
+    if(e.getSource == timer){
+      drawGlobalCurve()
+    }
+  }
 }
 
 /** This class has the purpose to draw the objective function curve.
@@ -184,6 +191,8 @@ class ObjFunctionGraphic(width:Int,height:Int) extends FunctionGraphic(){
     maxXValueDisplayed = time
     minYValueDisplayed = best()
     maxYValueDisplayed = yValues.max
+    if(!timer.isRunning)
+      timer.start
   }
 
   /**

@@ -71,7 +71,7 @@ object pdptwTest extends App with StopWatch {
 
   this.startWatch()
 
-  val n = 85
+  val n = 255
   val v = 5
 
   println("PDPTWTest(n:" + n + " v:" + v + ")")
@@ -171,8 +171,10 @@ object pdptwTest extends App with StopWatch {
     relevantNeighbors = () => vrp.getAuthorizedInsertionPositionForDelivery(),
     vrp = vrp))))
 
+  val segExchangePD = Profile(SegmentExchangePickupAndDelivery(vrp = vrp))
+
   val search = new RoundRobin(List(insertCouple,oneCoupleMove),10) exhaust
-    new BestSlopeFirst(List(onePointMovePD, threeOpt, segExchange), refresh = n / 2) showObjectiveFunction
+    new BestSlopeFirst(List(onePointMovePD, threeOpt, segExchangePD), refresh = n / 2) showObjectiveFunction
     vrp.getObjective() afterMove {
     rm.drawRoutes()
     println(vrp.strongConstraints.violatedConstraints)
@@ -192,12 +194,6 @@ object pdptwTest extends App with StopWatch {
     println("\nresult:\n" + vrp)
 
     println(search.profilingStatistics)
-
-    vrp.getPerfectSegment(0)
-    vrp.getPerfectSegment(1)
-    vrp.getPerfectSegment(2)
-    vrp.getPerfectSegment(3)
-    vrp.getPerfectSegment(4)
   }
 
   launchSearch()

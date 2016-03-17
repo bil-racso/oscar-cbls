@@ -97,6 +97,8 @@ class ObjFunctionGraphicContainer(title:String = "Evolution of the objective fun
     graphic.notifyNewObjectiveValue(objValue,objTime,color)
   }
 
+
+
   override def clear(): Unit ={
     super.clear()
   }

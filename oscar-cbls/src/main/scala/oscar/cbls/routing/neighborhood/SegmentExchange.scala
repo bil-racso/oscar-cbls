@@ -1,8 +1,8 @@
 package oscar.cbls.routing.neighborhood
 
-import oscar.cbls.routing.model.{HotSpottingInfo, NodesOfVehicle, PositionInRouteAndRouteNr, VRP}
+import oscar.cbls.routing.model._
 import oscar.cbls.search.algo.{Pairs, HotRestart}
-import scala.collection.immutable.{SortedMap, SortedSet}
+import scala.collection.immutable.{HashMap, SortedMap, SortedSet}
 
 /**
  * swaps segments of different vehicles
@@ -130,6 +130,89 @@ case class SegmentExchangeMove(beforeFirstSegment: Int,endFirstSegment: Int,reve
 
   override def toString: String = {
     neighborhoodNameToString + "SegmentExchange(beforeFirstSegment:" + beforeFirstSegment + "; endFirstSegment:" + endFirstSegment + "; reverseFirstSegment:" + reverseFirstSegment +
+      "; beforeSecondSegment:" + beforeSecondSegment + "; endSecondSegment:" + endSecondSegment + "; reverseSecondSegment:" + reverseSecondSegment + objToString + ")"
+  }
+}
+
+
+
+case class SegmentExchangePickupAndDelivery(override val vrp: VRP with PositionInRouteAndRouteNr with NodesOfVehicle with PickupAndDeliveryCustomers,
+                                            val neighborhoodName:String = "SegmentExchangePickupAndDelivery",
+                                            val hotRestart:Boolean = true,
+                                            val best:Boolean = false) extends EasyRoutingNeighborhood[SegmentExchangePickupAndDeliveryMove](best,vrp,neighborhoodName) {
+
+  var beforeFirstSegment: Int = 0
+  var endFirstSegment: Int = 0
+  var reverseFirstSegment:Boolean = false
+  var beforeSecondSegment: Int = 0
+  var endSecondSegment: Int = 0
+  var reverseSecondSegment:Boolean = false
+  var startVehicle = 0
+
+  override def exploreNeighborhood(): Unit = {
+    var completeSegments:List[List[(Int,Int)]] = Nil
+    for(v <- 0 until vrp.V){
+      completeSegments = vrp.getCompleteSegments(v) :: completeSegments
+    }
+
+    for(route1 <- 0 until vrp.V){
+      for(segment1 <- completeSegments(route1)) {
+        for (route2 <- route1+1 until vrp.V) {
+          for(segment2 <- completeSegments(route2)){
+            beforeFirstSegment = vrp.preds(segment1._1).value
+            endFirstSegment = segment1._2
+            beforeSecondSegment = vrp.preds(segment2._1).value
+            endSecondSegment = segment2._2
+
+            encodeMove(beforeFirstSegment,endFirstSegment,reverseFirstSegment,beforeSecondSegment,endSecondSegment,reverseSecondSegment)
+            if (evaluateCurrentMoveObjTrueIfStopRequired(evalObjOnEncodedMove())) {
+              return
+            }
+          }
+        }
+      }
+    }
+  }
+
+  override def instantiateCurrentMove(newObj: Int): SegmentExchangePickupAndDeliveryMove = {
+    SegmentExchangePickupAndDeliveryMove(
+      beforeFirstSegment, endFirstSegment,reverseFirstSegment,
+      beforeSecondSegment, endSecondSegment, reverseSecondSegment,
+      newObj, this,neighborhoodName)
+  }
+
+  def encodeMove(beforeFirstSegment: Int,endFirstSegment: Int, reverseFirstSegment:Boolean,
+                 beforeSecondSegment: Int,endSecondSegment: Int,reverseSecondSegment:Boolean) ={
+    assert(vrp.routeNr(beforeFirstSegment).value != vrp.routeNr(beforeSecondSegment).value)
+    assert(vrp.positionInRoute(beforeFirstSegment).value < vrp.positionInRoute(endFirstSegment).value)
+    assert(vrp.positionInRoute(beforeSecondSegment).value < vrp.positionInRoute(endSecondSegment).value)
+
+    val firstSegment = cut(beforeFirstSegment,endFirstSegment)
+    val secondSegment = cut(beforeSecondSegment,endSecondSegment)
+    val correctedFirstSegment = if(reverseFirstSegment) reverse(firstSegment) else firstSegment
+    val correctedSecondSegment = if(reverseSecondSegment) reverse(secondSegment) else secondSegment
+    insert(correctedFirstSegment,beforeSecondSegment)
+    insert(correctedSecondSegment,beforeFirstSegment)
+  }
+}
+
+case class SegmentExchangePickupAndDeliveryMove(beforeFirstSegment: Int,endFirstSegment: Int,reverseFirstSegment:Boolean,
+                               beforeSecondSegment: Int, endSecondSegment: Int, reverseSecondSegment:Boolean,
+                               override val objAfter: Int,override val neighborhood:SegmentExchangePickupAndDelivery,
+                               override val neighborhoodName:String = "SegmentExchangePickupAndDeliveryMove")
+  extends VRPMove(objAfter, neighborhood, neighborhoodName){
+
+  override def impactedPoints: List[Int] = List(beforeFirstSegment,endFirstSegment,beforeSecondSegment,endSecondSegment)
+
+  // overriding methods
+  override def encodeMove() {
+    neighborhood.encodeMove(
+      beforeFirstSegment,endFirstSegment,reverseFirstSegment,
+      beforeSecondSegment,endSecondSegment,reverseSecondSegment)
+  }
+
+  override def toString: String = {
+    neighborhoodNameToString + "SegmentExchangePickupAndDelivery(beforeFirstSegment:" + beforeFirstSegment + "; endFirstSegment:" + endFirstSegment + "; reverseFirstSegment:" + reverseFirstSegment +
       "; beforeSecondSegment:" + beforeSecondSegment + "; endSecondSegment:" + endSecondSegment + "; reverseSecondSegment:" + reverseSecondSegment + objToString + ")"
   }
 }
