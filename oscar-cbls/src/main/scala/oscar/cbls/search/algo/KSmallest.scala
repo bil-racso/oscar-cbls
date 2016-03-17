@@ -180,8 +180,17 @@ class NextIterator[T](base:Iterator[T]) extends Iterator[T]{
   }
 }
 
+class LazyMap[T](over:Iterable[Int],map:Int => T) extends Iterable[T]{
+  override def iterator: Iterator[T] = new LazyMapIterator(over.iterator,map)
+}
+
+class LazyMapIterator[T](over:Iterator[Int],map:Int => T) extends Iterator[T] {
+  override def hasNext: Boolean = over.hasNext
+  override def next(): T = map(over.next())
+}
+
 class LazyFilter(over:Iterable[Int],filter:Int => Boolean) extends Iterable[Int]{
-  override def iterator: Iterator[Int] = null
+  override def iterator: Iterator[Int] = new LazyFilteredIterator(over.iterator,filter)
 }
 
 class LazyFilteredIterator(over:Iterator[Int],filter:Int => Boolean) extends Iterator[Int] {

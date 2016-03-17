@@ -6,7 +6,7 @@ import oscar.cbls.routing.neighborhood._
 import oscar.cbls.search.{Benchmark, StopWatch}
 import oscar.cbls.search.combinators.{Profile, BestSlopeFirst}
 
-class MyVRPHS(n:Int, v:Int, model:Store, distanceMatrix: Array[Array[Int]],unroutedPenalty:Int)
+class MyVRPHS(n:Int, v:Int, model:Store, distanceMatrix: Array[Array[Int]],unroutedPenaltyWeight:Int)
   extends VRP(n,v,model)
   with HopDistanceAsObjectiveTerm
   with HopClosestNeighbors
@@ -15,7 +15,7 @@ class MyVRPHS(n:Int, v:Int, model:Store, distanceMatrix: Array[Array[Int]],unrou
   with PenaltyForUnroutedAsObjectiveTerm
   with HotSpot {
   installCostMatrix(distanceMatrix)
-  setUnroutedPenaltyWeight(unroutedPenalty)
+  setUnroutedPenaltyWeight(unroutedPenaltyWeight)
   computeClosestNeighbors()
   closeUnroutedPenaltyWeight()
 }

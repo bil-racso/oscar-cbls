@@ -1,6 +1,7 @@
 package oscar.examples.cbls.routing
 
 import oscar.cbls.invariants.core.computation.Store
+import oscar.cbls.invariants.lib.logic.Int2Int
 import oscar.cbls.invariants.lib.numeric.{Abs, Sum}
 import oscar.cbls.routing.model._
 import oscar.cbls.routing.neighborhood._
@@ -15,7 +16,7 @@ import scala.language.implicitConversions
  */
 
 
-class MyVRP(n:Int, v:Int, model:Store, distanceMatrix: Array[Array[Int]],unroutedPenalty:Int)
+class MyVRP(n:Int, v:Int, model:Store, distanceMatrix: Array[Array[Int]],unroutedPenaltyWeight:Int, loadBalancing:Double = 1.0)
   extends VRP(n,v,model)
   with HopDistanceAsObjectiveTerm
   with HopClosestNeighbors
@@ -26,7 +27,7 @@ class MyVRP(n:Int, v:Int, model:Store, distanceMatrix: Array[Array[Int]],unroute
 with PenaltyForEmptyRouteAsObjectiveTerm{ //just for the fun of it
 
   installCostMatrix(distanceMatrix)
-  setUnroutedPenaltyWeight(unroutedPenalty)
+  setUnroutedPenaltyWeight(unroutedPenaltyWeight)
   closeUnroutedPenaltyWeight()
   computeClosestNeighbors()
   println("end compute closest, install matrix")
@@ -36,7 +37,9 @@ with PenaltyForEmptyRouteAsObjectiveTerm{ //just for the fun of it
   //evenly spreading the travel among vehicles
   val averageDistanceOnAllVehicles = overallDistance / V
   val spread = Sum(hopDistancePerVehicle.map(h => Abs(h - averageDistanceOnAllVehicles)))
-  addObjectiveTerm(spread)
+  val weightedSpread = new Int2Int(spread,(spreadValue:Int) => (spreadValue * loadBalancing).toInt)
+
+  addObjectiveTerm(weightedSpread)
   addObjectiveTerm(unroutedPenalty)
 
   setEmptyRoutePenaltyWeight(100)

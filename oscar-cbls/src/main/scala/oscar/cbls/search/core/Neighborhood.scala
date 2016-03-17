@@ -179,6 +179,10 @@ abstract class Neighborhood(name:String = null) {
    * @return the number of moves performed
    */
   def doAllMoves(shouldStop: Int => Boolean = _ => false, obj: Objective, acceptanceCriterion: (Int, Int) => Boolean = (oldObj, newObj) => oldObj > newObj): Int = {
+    if (verbose != 0){
+      println("start doAllMove at " + java.time.LocalDateTime.now)
+      println("initial objective function:" + obj)
+    }
     val startSearchNanotime = System.nanoTime()
     var bestObj = Int.MaxValue
     var prevObj = Int.MaxValue
@@ -227,7 +231,7 @@ abstract class Neighborhood(name:String = null) {
       moveCount += 1
     }
     if (printTakenMoves) {
-      println("stop criteria of doAllMove met after " + moveCount + " moves, " + ((System.nanoTime() - startSearchNanotime)/1000000).toInt + " ms (not the one of the neighborhood)")
+      println("stop criteria of doAllMove met after " + moveCount + " moves, " + ((System.nanoTime() - startSearchNanotime)/1000000).toInt + " ms")
     }
     toReturn
   }
@@ -269,8 +273,8 @@ abstract class Neighborhood(name:String = null) {
   def onExhaustRestartAfter(randomizationNeighborhood:Neighborhood, maxRestartWithoutImprovement:Int, obj:Objective) = {
 
     (this orElse (randomizationNeighborhood
-      maxMoves maxRestartWithoutImprovement
-      withoutImprovementOver obj improvementBeignMeasuredBeforeNeighborhoodExploration)) saveBestAndRestoreOnExhaust obj
+      maxMoves maxRestartWithoutImprovement withoutImprovementOver obj improvementBeignMeasuredBeforeNeighborhoodExploration)
+      ) saveBestAndRestoreOnExhaust obj
   }
 
 

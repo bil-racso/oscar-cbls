@@ -1254,8 +1254,6 @@ class MaxMovesWithoutImprovement(a: Neighborhood, val cond: Move => Boolean, val
             stepsSinceLastImprovement = 0
             NoMoveFound
         }
-
-        a.getMove(obj, acceptanceCriteria)
       } else {
         if (verbose >= 1) println("MaxStepsWithoutImprovement: reached " + maxMovesWithoutImprovement + " moves without improvement of " + a)
         NoMoveFound
@@ -1625,8 +1623,8 @@ case class Profile(a:Neighborhood,ignoreInitialObj:Boolean = false) extends Neig
     }
   }
 
-  def gainPerCall:String = if(nbCalls ==0) "NA" else ("" + totalGain / nbCalls)
-  def callDuration:String = if(nbCalls == 0 ) "NA" else ("" + totalTimeSpent / nbCalls)
+  def gainPerCall:String = if(nbCalls ==0) "NA" else ("" + (totalGain / nbCalls).toInt)
+  def callDuration:String = if(nbCalls == 0 ) "NA" else ("" + (totalTimeSpent / nbCalls).toInt)
   //gain in obj/s
   def slope:String = if(totalTimeSpent == 0) "NA" else ("" + (1000 * totalGain.toDouble / totalTimeSpent.toDouble).toInt)
 
@@ -1640,7 +1638,7 @@ case class Profile(a:Neighborhood,ignoreInitialObj:Boolean = false) extends Neig
   def collectThisProfileStatistics:String = (padToLength("" + a,31) + " " +
     padToLength("" + nbCalls,6) + " " +
     padToLength("" + nbFound,6) + " " +
-    padToLength("" + totalGain,8) + " " +
+    padToLength("" + totalGain.toInt,8) + " " +
     padToLength("" + totalTimeSpent,12) + " " +
     padToLength("" + gainPerCall,8) + " " +
     padToLength("" + callDuration,12)+ " " +

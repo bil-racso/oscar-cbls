@@ -35,13 +35,13 @@ import scala.collection.immutable.SortedMap
   * @param variables the "history variables"
   * @param length the length of the sequence
   * @param Max the max number of elements matching pred in all sequences of the history
-  * @param predicate a predicate to say which values belong to the constraint
+  * @param predicate an array of bolean, covering all the values of the varaibles, and ith true or false if the value enforces the predicate or not, respectively
   * @param predicateIsToBeConsideredInVarViolation if false, the violation of a variable is the summed violation of all sequences it is involved in, if true,
   *                                                the violation is dependent on whether the variable enforces the predicate; if it enforces it,
   *                                                it is the other definition, if it does not, it is zero
   * @author renaud.delandtsheer@cetic.be
   */
-case class Sequence(variables: Array[IntValue], length:Int, Max:Int, predicate:(Int=>Boolean), predicateIsToBeConsideredInVarViolation:Boolean = false)
+case class Sequence(variables: Array[IntValue], length:Int, Max:Int, predicate:Array[Boolean], predicateIsToBeConsideredInVarViolation:Boolean = false)
   extends Invariant with Constraint{
 
   assert(Max <= length, "the specified maximum is bigger than the ength of the sequences to consider")
@@ -81,12 +81,14 @@ case class Sequence(variables: Array[IntValue], length:Int, Max:Int, predicate:(
   for(i <- variables.indices){
     if(predicate(variables(i).value)){
       val (lb,ub) = sequencesInvolving(i)
-      for(j <- (lb to ub)){
+      var j = lb
+      while(j <= ub){
         count(j) += 1
         if(count(j) > Max){
           violated(j) :+=1
           Violation :+= 1
         }
+        j += 1
       }
     }
   }
@@ -107,7 +109,7 @@ case class Sequence(variables: Array[IntValue], length:Int, Max:Int, predicate:(
 
   @inline
   override def notifyIntChanged(v: ChangingIntValue, i: Int, OldVal: Int, NewVal: Int){
-    if (predicate(OldVal)){
+    if (predicate(OldVal)){ //TODO: on peut éventuellement conserver predicate(OldVal) dans un tableau de booléens
       if(!predicate(NewVal)){
         //decrease the count
         val (lb,ub) = sequencesInvolving(i)
