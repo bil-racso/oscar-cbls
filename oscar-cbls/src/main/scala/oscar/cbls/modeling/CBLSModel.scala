@@ -37,7 +37,6 @@ class CBLSModel(val verbose:Boolean = false,
   implicit val s = new Store(verbose, checker, noCycle, topologicalSort,propagateOnToString)
   implicit val c = new ConstraintSystem(s)
 
-
   def close()(implicit s:Store) {s.close()}
 
   def add(c:Constraint)(implicit cs:ConstraintSystem) {cs.post(c)}

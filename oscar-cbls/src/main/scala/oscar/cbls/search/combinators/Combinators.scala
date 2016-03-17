@@ -16,11 +16,17 @@
  */
 package oscar.cbls.search.combinators
 
+import java.awt.{Color, Dimension}
+
 import oscar.cbls.invariants.core.algo.heap.{BinomialHeap, BinomialHeapWithMove}
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.objective.{CascadingObjective, Objective}
+import oscar.cbls.routing.model.VRP
+import oscar.cbls.search.StopWatch
 import oscar.cbls.search.core.{NoMoveFound, _}
 import oscar.cbls.search.move._
+import oscar.examples.cbls.routing.visual.FunctionGraphic.{Zoom, AdjustMaxValue, ObjFunctionGraphicContainer, ObjFunctionGraphic}
+import oscar.visual.VisualFrame
 
 import scala.language.implicitConversions
 import scala.util.control.Breaks._
@@ -54,6 +60,47 @@ abstract class NeighborhoodCombinator(a: Neighborhood*) extends Neighborhood {
 abstract class NeighborhoodCombinatorNoProfile(a: Neighborhood*) extends NeighborhoodCombinator(a:_*){
   override def collectProfilingStatistics: List[String] = List.empty
   override def resetStatistics(){}
+}
+
+/**
+  * This combinator create a frame that draw the evolution curve of the objective function.
+  * The drawn curve possess a scrollbar on the right that allow the user to decrease or
+  * increase the number of value displayed.
+  * @param a a neighborhood
+  * @param obj the objective function
+  * @param stopWatch the StopWatch attached to the Test
+  * @param withZoom if true the Zoom thread will be used in stead of the AdjustMaxValues trait
+  * @param neighborhoodColors a function used to defined the color of each neighborhood encountered during the search
+  *                           the default function use the generateColorFromHash method of the ColorGenerator object.
+  *
+  * @author fabian.germeau@student.vinci.be
+  */
+class ShowObjectiveFunction(a: Neighborhood, obj: Objective, stopWatch: StopWatch, withZoom:Boolean, neighborhoodColors: String => Color) extends NeighborhoodCombinator(a){
+  //objGraphic is an internal frame that contains the curve itself and visualFrame is a basic frame that contains objGraphic
+  val objGraphic = if(withZoom) new ObjFunctionGraphicContainer(dimension = new Dimension(940,500)) with Zoom
+                    else new ObjFunctionGraphicContainer(dimension = new Dimension(960,540)) with AdjustMaxValue
+  val visualFrame = new VisualFrame("The Objective Function")
+  visualFrame.setPreferredSize(new Dimension(960,540))
+  visualFrame.addFrame(objGraphic, size = (940,500))
+  visualFrame.pack()
+  visualFrame.revalidate()
+
+  override def getMove(obj: Objective, acceptanceCriteria: (Int, Int) => Boolean): SearchResult ={
+    a.getMove(obj, acceptanceCriteria) match {
+      case m: MoveFound =>
+        InstrumentedMove(m.m, null, () => notifyNewObjValue(m.m))
+      case x => x
+    }
+  }
+
+  /*
+    After each move we send the new value and time to objGraphic who will register the value
+    and then we write the curve
+   */
+  def notifyNewObjValue(m:Move): Unit ={
+    objGraphic.notifyNewObjectiveValue(obj.value,stopWatch.getWatch,m.neighborhoodName,neighborhoodColors(m.neighborhoodName))
+    objGraphic.drawGlobalCurve()
+  }
 }
 
 class BasicSaveBest(a: Neighborhood, o: Objective) extends NeighborhoodCombinator(a) {
@@ -106,7 +153,8 @@ class BasicSaveBest(a: Neighborhood, o: Objective) extends NeighborhoodCombinato
 
   /**
    * same as doAllImprovingMoves and calling restoreBest after.
-   * @param shouldStop a function that takes the iteration number and returns true if search should be stopped
+    *
+    * @param shouldStop a function that takes the iteration number and returns true if search should be stopped
    *                   eg if the problem is considered as solved
    *                   you can evaluate some objective function there such as a violation degree
    *                   notice that although you can use it to stop your algorithm, the primary purpose is to avoid blow-up.
@@ -132,7 +180,8 @@ class SaveBest(a: Neighborhood, o: Objective) extends BasicSaveBest(a: Neighborh
   /**
    * this method restricts the save operation to only the situation where "shouldSave" returns true
    * notice that this is an override of the "when" method found in neighborhood.
-   * @param shouldSave
+    *
+    * @param shouldSave
    * @return
    */
   def saveWhen(shouldSave: () => Boolean) = new SaveBestWhen(a, o, shouldSave)
@@ -150,7 +199,8 @@ class RestoreBestOnExhaust(a: BasicSaveBest) extends NeighborhoodCombinator(a) {
 
   /**
    * same as doAllImprovingMoves and calling restoreBest after.
-   * @param shouldStop a function that takes the iteration number and returns true if search should be stopped
+    *
+    * @param shouldStop a function that takes the iteration number and returns true if search should be stopped
    *                   eg if the problem is considered as solved
    *                   you can evaluate some objective function there such as a violation degree
    * @param acceptanceCriterion a criterion for accepting a move
@@ -174,7 +224,8 @@ class RestoreBestOnExhaust(a: BasicSaveBest) extends NeighborhoodCombinator(a) {
 /**
  * this combinator attaches a custom code to a given neighborhood.
  * the code is called whenever a move is asked to the neighborhood.
- * @param a a neighborhood
+  *
+  * @param a a neighborhood
  * @param proc the procedure to execute before the neighborhood is queried
  */
 case class DoOnQuery(a: Neighborhood, proc: () => Unit) extends NeighborhoodCombinator(a) {
@@ -188,7 +239,8 @@ case class DoOnQuery(a: Neighborhood, proc: () => Unit) extends NeighborhoodComb
  * this combinator attaches a custom code to a given neighborhood.
  * the code is called whenever a move from this neighborhood is taken
  * The callBack is performed before the move is actually taken.
- * @param a a neighborhood
+  *
+  * @param a a neighborhood
  * @param procBeforeMove the procedure to execute when the move is taken, , with the move as input parameter
  *                   use this to update a Tabu for instance
  * @param procAfterMove a procedure to execute after the move is taken, with the move as input parameter
@@ -217,7 +269,8 @@ case class DoOnMove(a: Neighborhood,
  * this combinator attaches a custom code to a given neighborhood.
  * the code is called whenever a move from this neighborhood is taken for the first time.
  * notice that this neighborhood is reset, so first time can occur several times.
- * @param a a neighborhood
+  *
+  * @param a a neighborhood
  * @param proc the procedure to call on one first move that is performed from this neighborhood
  */
 class DoOnFirstMove(a: Neighborhood, proc: () => Unit) extends NeighborhoodCombinator(a) {
@@ -248,7 +301,8 @@ class DoOnFirstMove(a: Neighborhood, proc: () => Unit) extends NeighborhoodCombi
 /**
  * this combinator randomly tries one neighborhood.
  * it tries the other if the first did not find any move
- * @param a a neighborhood
+  *
+  * @param a a neighborhood
  * @author renaud.delandtsheer@cetic.be
  */
 class Random(a: Neighborhood*) extends NeighborhoodCombinator(a:_*) {
@@ -270,7 +324,8 @@ class Random(a: Neighborhood*) extends NeighborhoodCombinator(a:_*) {
 /**
  * this combinator randomly tries one neighborhood.
  * it tries the other if the first did not find any move
- * @param a a neighborhood
+  *
+  * @param a a neighborhood
  * @author renaud.delandtsheer@cetic.be
  */
 class BiasedRandom(a: (Neighborhood,Double)*)(noRetryOnExhaust:Boolean = false) extends NeighborhoodCombinator(a.map(_._1):_*) {
@@ -424,7 +479,8 @@ abstract class BestNeighborhoodFirst(l:List[Neighborhood],
    * the method that returns a move from the neighborhood.
    * The returned move should typically be accepted by the acceptance criterion over the objective function.
    * Some neighborhoods are actually jumps, so that they might violate this basic rule however.
-   * @param obj the objective function. notice that it is actually a function. if you have an [[oscar.cbls.objective.Objective]] there is an implicit conversion available
+    *
+    * @param obj the objective function. notice that it is actually a function. if you have an [[oscar.cbls.objective.Objective]] there is an implicit conversion available
    * @param acceptanceCriterion
    * @return
    */
@@ -475,12 +531,102 @@ abstract class BestNeighborhoodFirst(l:List[Neighborhood],
 
 
 
+abstract class BestNeighborhoodFirstSlidingWindow(l:List[Neighborhood], windowsSize:Int,
+                                                  tabuLength:Int,
+                                                  overrideTabuOnFullExhaust:Int, refresh:Int)
+  extends NeighborhoodCombinator(l:_*) {
+  require(overrideTabuOnFullExhaust < tabuLength, "overrideTabuOnFullExhaust should be < tabuLength")
+
+  protected var it = 0
+  protected def bestKey(p:Profile):Int
+
+  protected val neighborhoodArray: Array[Profile] = l.map(Profile(_)).toArray
+  protected val tabu:Array[Int] = Array.fill(neighborhoodArray.length)(0)
+  protected var tabuNeighborhoods = new BinomialHeap[Int](tabu(_),tabu.length)
+
+  protected val neighborhoodHeap = new BinomialHeapWithMove[Int]((neighborhoodID:Int) => bestKey(neighborhoodArray(neighborhoodID)), neighborhoodArray.length)
+  neighborhoodArray.indices.foreach(neighborhoodHeap.insert(_))
+
+  private def getBestNeighborhooID:Int = neighborhoodHeap.getFirst
+  private def updateNeighborhodPerformances(neighborhooID:Int){
+    neighborhoodHeap.notifyChange(neighborhooID)
+  }
+  private def updateTabu(): Unit ={
+    it +=1
+    while(tabuNeighborhoods.nonEmpty && tabu(tabuNeighborhoods.getFirst) <= it){
+      val newNonTabu = tabuNeighborhoods.popFirst()
+      neighborhoodArray(newNonTabu).reset()
+      neighborhoodHeap.insert(newNonTabu)
+    }
+  }
+
+  protected def makeTabu(neighborhooID:Int): Unit ={
+    neighborhoodHeap.delete(neighborhooID)
+    tabu(neighborhooID) = it + tabuLength
+    tabuNeighborhoods.insert(neighborhooID)
+  }
+
+  /**
+   * the method that returns a move from the neighborhood.
+   * The returned move should typically be accepted by the acceptance criterion over the objective function.
+   * Some neighborhoods are actually jumps, so that they might violate this basic rule however.
+    *
+    * @param obj the objective function. notice that it is actually a function. if you have an [[oscar.cbls.objective.Objective]] there is an implicit conversion available
+   * @param acceptanceCriterion
+   * @return
+   */
+  override def getMove(obj: Objective, acceptanceCriterion: (Int, Int) => Boolean): SearchResult = {
+    if((it > 0) && ((it % refresh) == 0)){
+
+      if(printPerformedSearches){
+        println("refreshing knowledge on neighborhood; statistics since last refresh: ")
+        printStatus
+      }
+      for(p <- neighborhoodArray.indices){
+        neighborhoodArray(p).resetThisStatistics()
+        if(tabu(p) <= it) updateNeighborhodPerformances(p)
+      }
+    }
+    updateTabu()
+    while(!neighborhoodHeap.isEmpty){
+      val headID = neighborhoodHeap.getFirst
+      val headNeighborhood = neighborhoodArray(headID)
+      headNeighborhood.getMove(obj,acceptanceCriterion) match{
+        case NoMoveFound =>
+          makeTabu(headID)
+        case MoveFound(m) =>
+          neighborhoodHeap.notifyChange(headID)
+          return MoveFound(m)
+      }
+    }
+
+    //ok, we try again with tabu, overriding tabu as allowed
+    if(tabuNeighborhoods.nonEmpty && tabu(tabuNeighborhoods.getFirst) <= it + overrideTabuOnFullExhaust){
+      val newNonTabu = tabuNeighborhoods.popFirst()
+      neighborhoodArray(newNonTabu).reset()
+      neighborhoodHeap.insert(newNonTabu)
+      it -=1
+      getMove(obj,acceptanceCriterion)
+    }else{
+      NoMoveFound
+    }
+  }
+
+  /**
+   * prints the profile info for the neighborhoods, for verbosity purposes
+   */
+  def printStatus(){
+    println(Profile.selectedStatisticInfo(neighborhoodArray))
+  }
+}
+
 /**
  * this combinator sequentially tries all neighborhoods until one move is found
  * between calls, it will roll back to the first neighborhood
  * it tries a first, and if no move it found, tries b
  * a is reset if it did not find anything.
- * @param a a neighborhood
+  *
+  * @param a a neighborhood
  * @param b another neighborhood
  * @author renaud.delandtsheer@cetic.be
  */
@@ -500,7 +646,8 @@ class OrElse(a: Neighborhood, b: Neighborhood) extends NeighborhoodCombinator(a,
  * notice that this combinator makes more sense
  * if the two neighborhood return their best found move,
  * and not their first found move, as usually done.
- * @author renaud.delandtsheer@cetic.be
+  *
+  * @author renaud.delandtsheer@cetic.be
  */
 class Best(a: Neighborhood, b: Neighborhood) extends NeighborhoodCombinator(a, b) {
 
@@ -518,7 +665,8 @@ class Best(a: Neighborhood, b: Neighborhood) extends NeighborhoodCombinator(a, b
  * it returns the result of the first Neighborhood until it returns NoMoveFound.
  * It then switches to the other Neighborhood.
  * it does not come back to the first one after the second one is exhausted
- * @author renaud.delandtsheer@cetic.be
+  *
+  * @author renaud.delandtsheer@cetic.be
  */
 class Exhaust(a: Neighborhood, b: Neighborhood) extends NeighborhoodCombinator(a, b) {
   var currentIsA = true
@@ -544,7 +692,8 @@ class Exhaust(a: Neighborhood, b: Neighborhood) extends NeighborhoodCombinator(a
  * once given condition has turned true,
  * retries n times the move before concluding to noMove can be found
  * resets on the first found move, or on reset
- * @param a the neighborhood on which we will perform retries
+  *
+  * @param a the neighborhood on which we will perform retries
  * @param cond condition that takes the number of consecutive NoMoveFound, and says if we should try again returns true if yes, false otherwise
  * @author renaud.delandtsheer@cetic.be
  * @author yoann.guyot@cetic.be
@@ -585,7 +734,8 @@ case class NoReset(a: Neighborhood) extends NeighborhoodCombinator(a) {
  * it returns the result of one Neighborhood until it returns NoMoveFound.
  * It then switches to the other Neighborhood.
  * it starts with Neighborhood a
- * @author renaud.delandtsheer@cetic.be
+  *
+  * @author renaud.delandtsheer@cetic.be
  */
 class ExhaustBack(a: Neighborhood, b: Neighborhood) extends NeighborhoodCombinator(a, b) {
   var currentIsA = true
@@ -636,7 +786,8 @@ class ResetOnExhausted(a: Neighborhood) extends NeighborhoodCombinator(a) {
  * It then switches to the other Neighborhood,
  * but only if a move was found by the first neighborhood
  * it does not come back to the first one after the second one is exhausted
- * @author renaud.delandtsheer@cetic.be
+  *
+  * @author renaud.delandtsheer@cetic.be
  */
 class ExhaustAndContinueIfMovesFound(a: Neighborhood, b: Neighborhood) extends NeighborhoodCombinator(a, b) {
   var currentIsA = true
@@ -669,7 +820,8 @@ class ExhaustAndContinueIfMovesFound(a: Neighborhood, b: Neighborhood) extends N
 
 /**
  * this combinator bounds the number of time the search is actually performed
- * @author renaud.delandtsheer@cetic.be
+  *
+  * @author renaud.delandtsheer@cetic.be
  */
 class BoundSearches(a: Neighborhood, val maxMove: Int) extends NeighborhoodCombinator(a) {
   var remainingMoves = maxMove
@@ -692,7 +844,8 @@ class BoundSearches(a: Neighborhood, val maxMove: Int) extends NeighborhoodCombi
  * the other times, it returns NoMovesFound.
  * if n finds no moves, depending on retryOnNoMoveFound,
  * it will either keep on querying n until a move is found, or continue its sequence of one out of n
- * @param a the initial neighborhood
+  *
+  * @param a the initial neighborhood
  * @param n the size of the sequence
  * @param retryOnNoMoveFound if true, keeps on querying a on NoMoveFound, otherwise, continues the sequence
  */
@@ -725,7 +878,8 @@ class OnceEvery(a: Neighborhood, n: Int, retryOnNoMoveFound: Boolean = false) ex
 /**
  * this combinator bounds the number of moves done with this neighborhood
  * notice that the count is reset by the reset operation
- * @author renaud.delandtsheer@cetic.be
+  *
+  * @author renaud.delandtsheer@cetic.be
  */
 class MaxMoves(a: Neighborhood, val maxMove: Int, cond: Move => Boolean = null) extends NeighborhoodCombinator(a) {
   var remainingMoves = maxMove
@@ -765,7 +919,8 @@ class MaxMoves(a: Neighborhood, val maxMove: Int, cond: Move => Boolean = null) 
  * This combinator finds no move starting from the point where cond evaluates to false,
  * otherwise, it forwards the search request to "a"
  * this combinator is reset on reset
- * @param a a neighborhood
+  *
+  * @param a a neighborhood
  * @param cond a stop criterion
  * @author renaud.delandtsheer@cetic.be
  */
@@ -786,7 +941,8 @@ case class StopWhen(a: Neighborhood, cond: () => Boolean) extends NeighborhoodCo
 /**
  * this combinator is stateless, it checks the condition on every invocation. If the condition is false,
  * it does not try the Neighborhood and finds no move.
- * @author renaud.delandtsheer@cetic.be
+  *
+  * @author renaud.delandtsheer@cetic.be
  */
 case class Guard(cond: () => Boolean, b: Neighborhood) extends NeighborhoodCombinator(b) {
   override def getMove(obj: Objective, acceptanceCriteria: (Int, Int) => Boolean): SearchResult = {
@@ -802,7 +958,8 @@ object RoundRobin {
 /**
  * makes a round robin on the neighborhood. it swaps as soon as one does not find a move
  * and swaps neighborhood after "step" invocations
- * @author renaud.delandtsheer@cetic.be
+  *
+  * @author renaud.delandtsheer@cetic.be
  */
 class RoundRobin(l: List[Neighborhood], steps: Int = 1) extends NeighborhoodCombinator(l: _*) {
   val robins = l.length
@@ -850,7 +1007,8 @@ class RoundRobin(l: List[Neighborhood], steps: Int = 1) extends NeighborhoodComb
   /**
    * proposes a round-robin with that.
    * notice that you can chain steps; this will build a round-robin on the whole sequence (although this operation is not associative)
-   * @param b
+    *
+    * @param b
    * @return
    */
   override def step(b: Neighborhood): RoundRobin = new RoundRobin(l ::: List(b))
@@ -894,8 +1052,7 @@ object RoundRobinNoParam {
  * @param a the first neighborhood, all moves delivered by this one will be considered
  * @param b given that the move returned by the first neighborhood is committed, we explore the globally improving moves of this one
  * @param maximalIntermediaryDegradation the maximal degradation that is admitted for the intermediary step; the higher, the more moves will be considered
- *
- * @author renaud.delandtsheer@cetic.be
+  * @author renaud.delandtsheer@cetic.be
  */
 case class AndThen(a: Neighborhood, b: Neighborhood, maximalIntermediaryDegradation: Int = Int.MaxValue)
   extends NeighborhoodCombinatorNoProfile(a, b) {
@@ -936,7 +1093,8 @@ case class AndThen(a: Neighborhood, b: Neighborhood, maximalIntermediaryDegradat
 
         //now, we need to check the other neighborhood
         b.getMove(obj, secondAcceptanceCriteria) match {
-          case NoMoveFound => Int.MaxValue
+          case NoMoveFound =>
+            Int.MaxValue
           case MoveFound(m: Move) =>
             secondMove = m
             m.objAfter
@@ -946,7 +1104,10 @@ case class AndThen(a: Neighborhood, b: Neighborhood, maximalIntermediaryDegradat
 
     a.getMove(new InstrumentedObjective(), firstAcceptanceCriterion) match {
       case NoMoveFound => NoMoveFound
-      case MoveFound(m: Move) => CompositeMove(List(m, secondMove), m.objAfter, this.toString)
+      case MoveFound(m: Move) => if(secondMove == null){
+        println("WARNING: " + this + " the neighborhood on the left returned a move without querying the objective value, the move of andThen is therefore not a composite")
+        m
+      }else CompositeMove(List(m, secondMove), m.objAfter, this.toString)
     }
   }
 }
@@ -982,6 +1143,8 @@ case class DynAndThen[FirstMoveType<:Move](a:Neighborhood with SupportForAndThen
 
       override def model = obj.model
 
+      override def valueNoSideEffect: Int = 0
+
       override def value: Int = {
 
         val intermediaryObjValue =
@@ -1015,7 +1178,11 @@ case class DynAndThen[FirstMoveType<:Move](a:Neighborhood with SupportForAndThen
 
     tmp match {
       case NoMoveFound => NoMoveFound
-      case MoveFound(m: Move) => CompositeMove(List(m, secondMove), m.objAfter, this.toString)
+      case MoveFound(m: Move) => if(secondMove == null) {
+        println("WARNING: " + this + " the neighborhood on the left returned a move without querying the objective value, the move of andThen is therefore not a composite")
+        m
+      }else
+        CompositeMove(List(m, secondMove), m.objAfter, this.toString)
     }
   }
 
@@ -1064,28 +1231,54 @@ case class SnapShotOnEntry(a: Neighborhood, intValuesToSave:Iterable[ChangingInt
 /**
  * bounds the number of tolerated moves without improvements over the best value
  * the count is reset by the reset action.
- * @author renaud.delandtsheer@cetic.be
+  *
+  * @author renaud.delandtsheer@cetic.be
  */
-class MaxMovesWithoutImprovement(a: Neighborhood, val cond: Move => Boolean, val maxMovesWithoutImprovement: Int, obj: () => Int) extends NeighborhoodCombinator(a) {
+class MaxMovesWithoutImprovement(a: Neighborhood, val cond: Move => Boolean, val maxMovesWithoutImprovement: Int, obj: () => Int, countBeforeMove:Boolean = false) extends NeighborhoodCombinator(a) {
 
   var stepsSinceLastImprovement = 0
   var bestObj = Int.MaxValue
 
   override def getMove(obj: Objective, acceptanceCriteria: (Int, Int) => Boolean): SearchResult = {
-    if (stepsSinceLastImprovement < maxMovesWithoutImprovement) {
-      a.getMove(obj, acceptanceCriteria) match {
-        case m: MoveFound => InstrumentedMove(m.m, afterMove = () => notifyMoveTaken(m.m))
-        case x => x
+    if(countBeforeMove) {
+      val startObj = obj()
+      if (startObj < bestObj) {
+        bestObj = startObj
+        stepsSinceLastImprovement = 0
+      } else {
+        stepsSinceLastImprovement += 1
       }
-    } else {
-      if (verbose >= 1) println("MaxStepsWithoutImprovement: reached " + maxMovesWithoutImprovement + " moves without improvement")
-      NoMoveFound
+
+      if (stepsSinceLastImprovement < maxMovesWithoutImprovement) {
+        //We can go on
+        a.getMove(obj, acceptanceCriteria) match {
+          case m: MoveFound => m
+          case NoMoveFound =>
+            stepsSinceLastImprovement = 0
+            NoMoveFound
+        }
+      } else {
+        if (verbose >= 1) println("MaxStepsWithoutImprovement: reached " + maxMovesWithoutImprovement + " moves without improvement of " + a)
+        NoMoveFound
+      }
+    } else{ //count after move
+      if (stepsSinceLastImprovement < maxMovesWithoutImprovement) {
+        //we can go on
+        a.getMove(obj, acceptanceCriteria) match {
+          case m: MoveFound => InstrumentedMove(m.m, afterMove = () => notifyMoveTaken(m.m))
+          case x => x
+        }
+      } else{
+        if (verbose >= 1) println("MaxStepsWithoutImprovement: reached " + maxMovesWithoutImprovement + " moves without improvement of " + a)
+        NoMoveFound
+      }
     }
   }
 
   //this resets the internal state of the move combinators
   override def reset() {
     stepsSinceLastImprovement = 0
+    bestObj = Int.MaxValue
     super.reset()
   }
 
@@ -1100,12 +1293,15 @@ class MaxMovesWithoutImprovement(a: Neighborhood, val cond: Move => Boolean, val
       }
     }
   }
+
+  def improvementBeignMeasuredBeforeNeighborhoodExploration = new MaxMovesWithoutImprovement(a, null, maxMovesWithoutImprovement, obj, true)
 }
 
 /**
  * calls the neighborhood until an improvement over obj is achieved
  * the improvement is "since the last reset"
- * @param a
+  *
+  * @param a
  * @param minMoves the min number of queries that will be forwarded to a (priority over the improvement)
  * @param maxMove the max number of queries that will be forwarded to a (priority over the improvement)
  * @param over the obj that is looked for improvement
@@ -1138,7 +1334,8 @@ class UntilImprovement(a: Neighborhood, over: () => Int, val minMoves: Int = 0, 
  * the purpose of this combinator is to change the name of the neighborhood it is given as parameter.
  * it will add a prefix to all moves sent back by this combinator
  * the only purposes are documentation and debug
- * @param a
+  *
+  * @param a
  * @param name
  */
 class Name(a: Neighborhood, val name: String) extends NeighborhoodCombinator(a) {
@@ -1150,7 +1347,7 @@ class Name(a: Neighborhood, val name: String) extends NeighborhoodCombinator(a) 
   override def getMove(obj: Objective, acceptanceCriterion: (Int, Int) => Boolean): SearchResult = {
     a.getMove(obj, acceptanceCriterion) match {
       case NoMoveFound => NoMoveFound
-      case MoveFound(m) => CompositeMove(List(m), m.objAfter, name)
+      case MoveFound(m) => NamedMove(m, name)
     }
   }
 
@@ -1163,7 +1360,8 @@ class Name(a: Neighborhood, val name: String) extends NeighborhoodCombinator(a) 
  * notice that the actual acceptance criteria is the one that you give,
  * with a slight modification: it will reject moves that lead to MaxInt, except if we are already at MaxInt.
  * Since MaxInt is used to represent that a strong constraint is violated, we cannot tolerate such moves at all.
- * @param a the neighborhood
+  *
+  * @param a the neighborhood
  * @param overridingAcceptanceCriterion the acceptance criterion that is used instead of the one given to the overall search
  *                                      with the addition that moves leading to MaxInt will be rejected anyway, except if we are already at MaxInt
  *
@@ -1181,7 +1379,8 @@ class WithAcceptanceCriterion(a: Neighborhood, overridingAcceptanceCriterion: (I
  * this combinator injects a metropolis acceptation function.
  * the criterion accepts all improving moves, and for worsening moves, it applies the metropolis criterion:
  * accept if math.random(0.0; 1.0) < base exponent (-gain / temperatureValue)
- * @param a the original neighborhood
+  *
+  * @param a the original neighborhood
  * @param temperature a function that inputs the number of moves of a that have been actually taken,
  *                    and outputs a temperature, for use in the criterion
  *                    the number of steps is reset to zero when the combinator is reset
@@ -1222,7 +1421,8 @@ class Metropolis(a: Neighborhood, temperature: Int => Float = _ => 100, base: Fl
  * This is an atomic combinator, it represent that the neighborhood below should be considered as a single piece.
  * When you commit a move from this neighborhood, "a" is reset, and exhausted in a single move from Atomic(a)
  * Also, Atomic is a jump neighborhood as it cannot evaluate any objective function before the move is committed.
- * @param a
+  *
+  * @param a
  * @param name
  */
 case class Atomic(a: Neighborhood, name: String = "Atomic", bound: Int = Int.MaxValue) extends NeighborhoodCombinator(a) {
@@ -1253,7 +1453,8 @@ case class Atomic2(a: Neighborhood, name: String = "Atomic", bound: Int = Int.Ma
  * This represents a guided local search where a series of objective criterion are optimized one after the other
  * the switching is performed on exhaustion, and a is reset on switching.
  * Notice that if you want to use different neighborhoods depending on the objective function, you should rather use a series of neighborhood with the objectiveFucntion combinator
- * @param a the neighborhood to consider
+  *
+  * @param a the neighborhood to consider
  * @param objectives the list of objective to consider
  * @param resetOnExhaust  on exhaustion of the current objective, restores the best value for this objective before switching to the next objective
  */
@@ -1284,7 +1485,8 @@ class GuidedLocalSearch(a: Neighborhood, objectives: List[Objective], resetOnExh
    * the method that returns a move from the neighborhood.
    * The returned move should typically be accepted by the acceptance criterion over the objective function.
    * Some neighborhoods are actually jumps, so that they might violate this basic rule however.
-   * @param obj the objective function. notice that it is actually a function. if you have an [[oscar.cbls.objective.Objective]] there is an implicit conversion available
+    *
+    * @param obj the objective function. notice that it is actually a function. if you have an [[oscar.cbls.objective.Objective]] there is an implicit conversion available
    * @param acceptanceCriterion
    * @return
    */
@@ -1315,7 +1517,8 @@ class GuidedLocalSearch(a: Neighborhood, objectives: List[Objective], resetOnExh
  * This represents an accumulatingSearch: it searches on a given objective until this objective gets to zero,
  * then it switches to the second one, and rejects all update that would actually decrease the first objective
  * it will use the acceptance criterion, but extend it in the second phase
- * @param a the neighborhood
+  *
+  * @param a the neighborhood
  * @param firstObjective the first objective function
  * @param secondObjective the second objective function
  */
@@ -1327,7 +1530,8 @@ class AccumulatingSearch(a: Neighborhood, firstObjective: Objective, secondObjec
    * the method that returns a move from the neighborhood.
    * The returned move should typically be accepted by the acceptance criterion over the objective function.
    * Some neighborhoods are actually jumps, so that they might violate this basic rule however.
-   * @param obj the objective function. notice that it is actually a function. if you have an [[oscar.cbls.objective.Objective]] there is an implicit conversion available
+    *
+    * @param obj the objective function. notice that it is actually a function. if you have an [[oscar.cbls.objective.Objective]] there is an implicit conversion available
    * @param acceptanceCriterion
    * @return
    */
@@ -1343,7 +1547,8 @@ class AccumulatingSearch(a: Neighborhood, firstObjective: Objective, secondObjec
 /**
  * Forces the use of a given objective function.
  * this overrides the one that you might pass in the higher level
- * @param a the combined neighborhood
+  *
+  * @param a the combined neighborhood
  * @param overridingObjective the objective to use instead of the given one
  */
 class OverrideObjective(a: Neighborhood, overridingObjective: Objective) extends NeighborhoodCombinator(a) {
@@ -1351,12 +1556,15 @@ class OverrideObjective(a: Neighborhood, overridingObjective: Objective) extends
    * the method that returns a move from the neighborhood.
    * The returned move should typically be accepted by the acceptance criterion over the objective function.
    * Some neighborhoods are actually jumps, so that they might violate this basic rule however.
-   * @param obj the objective function. notice that it is actually a function. if you have an [[oscar.cbls.objective.Objective]] there is an implicit conversion available
+    *
+    * @param obj the objective function. notice that it is actually a function. if you have an [[oscar.cbls.objective.Objective]] there is an implicit conversion available
    * @param acceptanceCriterion
    * @return
    */
   override def getMove(obj: Objective, acceptanceCriterion: (Int, Int) => Boolean): SearchResult = getMove(overridingObjective, acceptanceCriterion)
 }
+
+//class SlidingProfile(a:Neighborhood, windowsSize:Int)
 
 /**
  * collects statistics about the run time and progress achieved by neighborhood a
@@ -1364,14 +1572,15 @@ class OverrideObjective(a: Neighborhood, overridingObjective: Objective) extends
  * or globally on the whole neighborhood using the method statistics
  * WARNING: do not use this inside an AndThen,
  *          since the objective function is instrumented by this combinator, so the statistics will be counter-intuitive
- * @param a
+  *
+  * @param a
  * @param ignoreInitialObj
  */
 case class Profile(a:Neighborhood,ignoreInitialObj:Boolean = false) extends NeighborhoodCombinator(a){
 
   var nbCalls = 0
   var nbFound = 0
-  var totalGain = 0
+  var totalGain:Double = 0
   var totalTimeSpentMoveFound:Long = 0
   var totalTimeSpentNoMoveFound:Long = 0
 
@@ -1394,7 +1603,8 @@ case class Profile(a:Neighborhood,ignoreInitialObj:Boolean = false) extends Neig
    * the method that returns a move from the neighborhood.
    * The returned move should typically be accepted by the acceptance criterion over the objective function.
    * Some neighborhoods are actually jumps, so that they might violate this basic rule however.
-   * @param obj the objective function. notice that it is actually a function. if you have an [[oscar.cbls.objective.Objective]] there is an implicit conversion available
+    *
+    * @param obj the objective function. notice that it is actually a function. if you have an [[oscar.cbls.objective.Objective]] there is an implicit conversion available
    * @param acceptanceCriterion
    * @return
    */
@@ -1416,10 +1626,10 @@ case class Profile(a:Neighborhood,ignoreInitialObj:Boolean = false) extends Neig
     }
   }
 
-  def gainPerCall:String = if(nbCalls ==0) "NA" else ("" + totalGain / nbCalls)
-  def callDuration:String = if(nbCalls == 0 ) "NA" else ("" + totalTimeSpent / nbCalls)
+  def gainPerCall:String = if(nbCalls ==0) "NA" else ("" + (totalGain / nbCalls).toInt)
+  def callDuration:String = if(nbCalls == 0 ) "NA" else ("" + (totalTimeSpent / nbCalls).toInt)
   //gain in obj/s
-  def slope:String = if(totalTimeSpent == 0) "NA" else ("" + (1000 * totalGain / totalTimeSpent.toDouble).toInt)
+  def slope:String = if(totalTimeSpent == 0) "NA" else ("" + (1000 * totalGain.toDouble / totalTimeSpent.toDouble).toInt)
 
   def avgTimeSpendNoMove = if(nbCalls - nbFound == 0) "NA" else ("" + (totalTimeSpentNoMoveFound / (nbCalls - nbFound)))
   def avgTimeSpendMove = if(nbFound == 0) "NA" else ("" + (totalTimeSpentMoveFound / nbFound))
@@ -1431,7 +1641,7 @@ case class Profile(a:Neighborhood,ignoreInitialObj:Boolean = false) extends Neig
   def collectThisProfileStatistics:String = (padToLength("" + a,31) + " " +
     padToLength("" + nbCalls,6) + " " +
     padToLength("" + nbFound,6) + " " +
-    padToLength("" + totalGain,8) + " " +
+    padToLength("" + totalGain.toInt,8) + " " +
     padToLength("" + totalTimeSpent,12) + " " +
     padToLength("" + gainPerCall,8) + " " +
     padToLength("" + callDuration,12)+ " " +
@@ -1443,7 +1653,8 @@ case class Profile(a:Neighborhood,ignoreInitialObj:Boolean = false) extends Neig
   private def padToLength(s: String, l: Int) = (s + nStrings(l, " ")).substring(0, l)
   private def nStrings(n: Int, s: String): String = if (n <= 0) "" else s + nStrings(n - 1, s)
 
-  override def toString: String = "Statistics(" + a + " nbCalls:" + nbCalls + " nbFound:" + nbFound + " totalGain:" + totalGain + " totalTimeSpent " + totalTimeSpent + " ms timeSpendWithMove:" + totalTimeSpentMoveFound + " ms totalTimeSpentNoMoveFound " + totalTimeSpentNoMoveFound + " ms)"
+//  override def toString: String = "Statistics(" + a + " nbCalls:" + nbCalls + " nbFound:" + nbFound + " totalGain:" + totalGain + " totalTimeSpent " + totalTimeSpent + " ms timeSpendWithMove:" + totalTimeSpentMoveFound + " ms totalTimeSpentNoMoveFound " + totalTimeSpentNoMoveFound + " ms)"
+  override def toString: String = "Profile(" + a + ")"
 
   def slopeOrZero:Int = if(totalTimeSpent == 0) 0 else ((100 * totalGain) / totalTimeSpent).toInt
 

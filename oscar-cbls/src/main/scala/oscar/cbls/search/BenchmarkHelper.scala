@@ -22,7 +22,7 @@ object Benchmark extends StopWatch{
     }
 
   def benchToStringSimple(obj:Objective, nRuns:Int, strategies:Iterable[Neighborhood],verbose:Int = 0):String = {
-    benchToStringFull(obj,nRuns,strategies.map(n => (() => (n.toString,n))),verbose)
+    benchToStringFull(obj,nRuns,strategies.map(n => (() => {n.reset(); (n.toString,n)})),verbose)
   }
 
   def statsToString(stats: Iterable[(String, RunStatistics)]) = {
@@ -95,7 +95,7 @@ object Statistics {
     require(l.nonEmpty)
     val sorted = l.sorted
     val size = l.size
-    Statistics(min=sorted.head, max = sorted.last, avg=l.sum/size, med= if(size ==1) sorted.head else sorted.apply( size/2 -1))
+    Statistics(min=sorted.head, max = sorted.last, avg=l.sum/size, med= if(size ==1) sorted.head else sorted.apply( size/2))
   }
 
   val statisticsHeader = "min      max      avg      med      "

@@ -82,7 +82,7 @@ trait ClusterInvariants{
    * @param cond is a function that selects values to be includes in the output set.
    * This ''cond'' function cannot depend on any IntVar, as updates to these IntVars will not trigger propagation of this invariant.
    */
-  def filter(values:Array[IntValue], cond:(Int=>Boolean)) = Filter(values:Array[IntValue], cond:(Int=>Boolean))
+  def filter(values:Array[IntValue], cond:(Int=>Boolean) = _ != 0) = Filter(values:Array[IntValue], cond:(Int=>Boolean))
 
   /** {i in index of values | values[i] <= boundary}
    * It is based on two heap data structure, hence updates are log(n) and all updates are allowed

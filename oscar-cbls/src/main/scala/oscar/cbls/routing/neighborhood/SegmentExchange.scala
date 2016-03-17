@@ -11,7 +11,7 @@ import scala.collection.immutable.{SortedMap, SortedSet}
 case class SegmentExchange(override val vrp: VRP with PositionInRouteAndRouteNr with NodesOfVehicle,
                       relevantNeighbors:()=>Int=>Iterable[Int],
                       vehicles:() => List[Int],
-                      neighborhoodName:String = null,
+                      neighborhoodName:String = "SegmentExchange",
                       hotRestart:Boolean = true,
                       best:Boolean = false) extends EasyRoutingNeighborhood[SegmentExchangeMove](best,vrp,neighborhoodName) {
 
@@ -116,7 +116,7 @@ case class SegmentExchange(override val vrp: VRP with PositionInRouteAndRouteNr 
 case class SegmentExchangeMove(beforeFirstSegment: Int,endFirstSegment: Int,reverseFirstSegment:Boolean,
                                beforeSecondSegment: Int, endSecondSegment: Int, reverseSecondSegment:Boolean,
                                override val objAfter: Int,override val neighborhood:SegmentExchange,
-                               override val neighborhoodName:String = null)
+                               override val neighborhoodName:String = "SegmentExchangeMove")
   extends VRPMove(objAfter, neighborhood, neighborhoodName){
 
   override def impactedPoints: List[Int] = List(beforeFirstSegment,endFirstSegment,beforeSecondSegment,endSecondSegment)

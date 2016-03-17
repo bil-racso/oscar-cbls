@@ -28,6 +28,8 @@ import oscar.cbls.routing.model._
 import oscar.cbls.search.algo.HotRestart
 import oscar.cbls.search.move.Move
 
+import scala.collection.immutable.SortedSet
+
 /**
  * Removes two edges of routes, and rebuilds routes from the segments.
  * (with one reverse required)
@@ -40,7 +42,7 @@ import oscar.cbls.search.move.Move
 case class TwoOpt(predecesorOfFirstMovedPoint:()=>Iterable[Int],
                   relevantNeighbors:()=>Int=>Iterable[Int],
                   override val vrp: VRP with PositionInRouteAndRouteNr,
-                  neighborhoodName:String = null,
+                  neighborhoodName:String = "TwoOpt",
                   best:Boolean = false,
                   hotRestart:Boolean = true) extends EasyRoutingNeighborhood[TwoOptMove](best,vrp,neighborhoodName) {
 
@@ -65,11 +67,13 @@ case class TwoOpt(predecesorOfFirstMovedPoint:()=>Iterable[Int],
       assert(vrp.isRouted(fstPred),
         "The search zone should be restricted to routed.")
 
+      val nodesOnTheSameRouteAsFstPred = SortedSet.empty[Int] ++ vrp.getRouteOfVehicle(vrp.routeNr(fstPred).value)
+
       for (
         sndPred <- relevantNeighborsNow(fstPred) if (vrp.isRouted(sndPred)
         && sndPred != fstPred
-        && fstPred != vrp.next(sndPred).value
-        && vrp.onTheSameRoute(fstPred, sndPred))
+        && fstPred != vrp.next(sndPred).getValue(true)
+        && nodesOnTheSameRouteAsFstPred.contains(sndPred))
       ) {
 
         this.fstPred = fstPred
@@ -118,7 +122,7 @@ case class TwoOptMove(
   sndPred: Int,
   override val objAfter: Int,
   override val neighborhood:TwoOpt,
-  override val neighborhoodName:String = null)
+  override val neighborhoodName:String = "TwoOptMove")
   extends VRPMove(objAfter, neighborhood, neighborhoodName){
 
   override def impactedPoints: List[Int] = List(fstPred,sndPred)

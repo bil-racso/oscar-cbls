@@ -177,7 +177,7 @@ case class InsertPointRoutedFirst(insertionPoints:()=>Iterable[Int],
  * @author renaud.delandtsheer@cetic.be
  */
 abstract class BaseInsertPoint(vrp: VRP,
-                               neighborhoodName: String = null,
+                               neighborhoodName: String = "BaseInsertPoint",
                                best: Boolean = false)
   extends EasyRoutingNeighborhood[InsertPointMove](best, vrp, neighborhoodName) {
 
@@ -206,7 +206,7 @@ case class InsertPointMove(beforeInsertedPoint: Int,
                            insertedPoint: Int,
                            override val objAfter: Int,
                            override val neighborhood: BaseInsertPoint,
-                           override val neighborhoodName: String = null)
+                           override val neighborhoodName: String = "InsertPointMove")
   extends VRPMove(objAfter, neighborhood, neighborhoodName){
 
   override def impactedPoints: List[Int] = List(beforeInsertedPoint,insertedPoint)

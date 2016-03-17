@@ -23,7 +23,7 @@ import oscar.cbls.invariants.lib.minmax.{MinConstArrayLazy, MinConstArray}
 import oscar.cbls.invariants.lib.numeric.Sum
 import oscar.cbls.modeling.AlgebraTrait
 import oscar.cbls.objective.Objective
-import oscar.cbls.search.combinators.{LearningRandom, BiasedRandom, Profile}
+import oscar.cbls.search.combinators.{BestSlopeFirst, LearningRandom, BiasedRandom, Profile}
 import oscar.cbls.search._
 
 import scala.language.postfixOps
@@ -54,9 +54,9 @@ object WarehouseLocation extends App with AlgebraTrait{
 
   m.close()
 
-  val neighborhood = (AssignNeighborhood(warehouseOpenArray, "SwitchWarehouse")
-    exhaustBack SwapsNeighborhood(warehouseOpenArray, "SwapWarehouses")
-    orElse (RandomizeNeighborhood(warehouseOpenArray, W/10) maxMoves 2)
+  val neighborhood = (BestSlopeFirst(List(AssignNeighborhood(warehouseOpenArray, "SwitchWarehouse"),
+    SwapsNeighborhood(warehouseOpenArray, "SwapWarehouses")),refresh = W/10)
+    onExhaustRestartAfter(RandomizeNeighborhood(warehouseOpenArray, W/10), 2, obj)
     saveBestAndRestoreOnExhaust obj)
 
   neighborhood.verbose = 1
@@ -64,9 +64,4 @@ object WarehouseLocation extends App with AlgebraTrait{
   neighborhood.doAllMoves(obj=obj)
 
   println(openWarehouses)
-
-  //  println("model stats:")
-//  println(m.stats)
-
-  //TODO: how about a k-nearest for the swap, in a first fast version of the neighborhood?
 }

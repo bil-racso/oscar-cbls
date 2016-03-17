@@ -44,10 +44,11 @@ import oscar.cbls.search.move.Move
 case class ThreeOpt(potentialInsertionPoints:()=>Iterable[Int],
                     relevantNeighbors:()=>Int=>Iterable[Int],
                     override val vrp: VRP with PositionInRouteAndRouteNr,
-                    neighborhoodName:String = null,
+                    neighborhoodName:String = "ThreeOpt",
                     best:Boolean = false,
                     hotRestart:Boolean = true,
-                    KKIterationScheme:Boolean = true) extends EasyRoutingNeighborhood[ThreeOptMove](best,vrp,neighborhoodName) {
+                    KKIterationScheme:Boolean = true,
+                     skipOnePointMove:Boolean = false) extends EasyRoutingNeighborhood[ThreeOptMove](best,vrp,neighborhoodName) {
 
   val REVERSE = true // this is a constant used for readability
 
@@ -81,7 +82,12 @@ case class ThreeOpt(potentialInsertionPoints:()=>Iterable[Int],
         .filter((neighbor:Int) => vrp.isRouted(neighbor) && neighbor != insertionPoint)
         .groupBy(vrp.routeNr(_).value)
         .toList
-        .map(RelevantNodesOfRoute => Pairs.makeAllUnsortedPairs(RelevantNodesOfRoute._2.toList).map({case (a,b) => if(vrp.positionInRoute(a).value < vrp.positionInRoute(b).value) (a,b) else (b,a)}))
+        .map(RelevantNodesOfRoute =>{
+          val pairsOfNodes = Pairs.makeAllUnsortedPairs(RelevantNodesOfRoute._2.toList)
+            .map({case (a,b) => if(vrp.positionInRoute(a).value < vrp.positionInRoute(b).value) (a,b) else (b,a)})
+            if(skipOnePointMove) pairsOfNodes.filter({case (a,b) => vrp.next(a).getValue(true) != b})
+            else pairsOfNodes
+        })
 
       for(listOfPositionSortedPairsToExplore <- otherNodes){
         for((first,second) <- listOfPositionSortedPairsToExplore){
@@ -247,7 +253,7 @@ case class ThreeOptMove(beforeStart: Int,
                         reverseSegment: Boolean,
                         override val objAfter: Int,
                         override val neighborhood:ThreeOpt,
-                        override val neighborhoodName:String = null)
+                        override val neighborhoodName:String = "ThreeOptMove")
   extends VRPMove(objAfter, neighborhood, neighborhoodName){
 
   override def impactedPoints: List[Int] = List(beforeStart,segEndPoint,insertionPoint)

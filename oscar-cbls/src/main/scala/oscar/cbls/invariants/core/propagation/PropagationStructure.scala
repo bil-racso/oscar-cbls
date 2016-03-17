@@ -1105,18 +1105,14 @@ class PropagationElement extends BasicPropagationElement with DAGNode {
    *    it only propagates the ones that come in the predecessors of the targeted propagation element
    *  overriding this method is optional, so an empty body is provided by default
    */
-  def performPropagation() {
-    ;
-  }
+  def performPropagation() {}
 
   /**
    * This is the debug procedure through which propagation element can redundantly check
    * that the incremental computation they perform through the performPropagation method is correct
    * overriding this method is optional, so an empty body is provided by default
    */
-  def checkInternals(c: Checker) {
-    ;
-  }
+  def checkInternals(c: Checker) {}
 
   /**
    * This returns the dot node to display on the DOT output for the node. Only the argument of the nodes

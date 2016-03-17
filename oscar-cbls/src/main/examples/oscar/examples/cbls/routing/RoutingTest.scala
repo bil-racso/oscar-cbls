@@ -1,14 +1,23 @@
 package oscar.examples.cbls.routing
 
+import java.awt.{Color, Dimension}
+import javax.swing.SwingUtilities
+
 import oscar.cbls.invariants.core.computation.Store
+import oscar.cbls.invariants.lib.logic.Int2Int
 import oscar.cbls.invariants.lib.minmax.{Max, Min}
 import oscar.cbls.invariants.lib.numeric.{Abs, Sum}
 import oscar.cbls.objective.Objective
 import oscar.cbls.routing.model._
 import oscar.cbls.routing.neighborhood._
 import oscar.cbls.search.StopWatch
-import oscar.cbls.search.combinators.{RoundRobin, Profile, BestSlopeFirst}
+import oscar.cbls.search.combinators.{Atomic, RoundRobin, Profile, BestSlopeFirst}
 import oscar.cbls.modeling.Algebra._
+import oscar.cbls.search.move.Move
+import oscar.examples.cbls.routing.visual.MatrixMap.RoutingMatrixVisualWithAttribute
+import oscar.examples.cbls.routing.visual.FunctionGraphic._
+import oscar.examples.cbls.routing.visual.ColorGenerator
+import oscar.visual.VisualFrame
 import scala.language.implicitConversions
 
 /**
@@ -16,48 +25,42 @@ import scala.language.implicitConversions
  */
 
 
-class MyVRP(n:Int, v:Int, model:Store, distanceMatrix: Array[Array[Int]],unroutedPenalty:Int)
+class MyVRP(n:Int, v:Int, model:Store, distanceMatrix: Array[Array[Int]],unroutedPenaltyWeight:Int, loadBalancing:Double = 1.0)
   extends VRP(n,v,model)
   with HopDistanceAsObjectiveTerm
   with HopClosestNeighbors
   with PositionInRouteAndRouteNr
   with NodesOfVehicle
-  with PenaltyForUnroutedAsObjectiveTerm
+  with PenaltyForUnrouted
   with hopDistancePerVehicle
-  with hopsPerVehicle
 with PenaltyForEmptyRouteAsObjectiveTerm{ //just for the fun of it
 
   installCostMatrix(distanceMatrix)
-  setUnroutedPenaltyWeight(unroutedPenalty)
+  setUnroutedPenaltyWeight(unroutedPenaltyWeight)
+  closeUnroutedPenaltyWeight()
   computeClosestNeighbors()
   println("end compute closest, install matrix")
   installHopDistancePerVehicle()
   println("end install matrix, posting constraints")
-  //evenly spreading the travel among vehicles
 
+  //evenly spreading the travel among vehicles
   val averageDistanceOnAllVehicles = overallDistance / V
   val spread = Sum(hopDistancePerVehicle.map(h => Abs(h - averageDistanceOnAllVehicles)))
-  addObjectiveTerm(spread/2)
+  val weightedSpread = new Int2Int(spread,(spreadValue:Int) => (spreadValue * loadBalancing).toInt)
 
-  //val shortedDistanceOnAllVehicles = Min(hopDistancePerVehicle)
-  //val longestDistanceOnAllVehicle = Max(hopDistancePerVehicle)
-  //val overshoot = longestDistanceOnAllVehicle - shortedDistanceOnAllVehicles
-  //val penaltyForOvershoot = overshoot/3 //the multiplying factor must be < 1 (here: 0.5)
+  addObjectiveTerm(weightedSpread)
+  addObjectiveTerm(unroutedPenalty)
 
-
-  //addObjectiveTerm(lognestDistanceOnAllVehicle * 100)
   setEmptyRoutePenaltyWeight(100)
-  //le carré de la distance pour tous les véhicules (bon, moyen hein!
   println("vrp done")
 }
-
 
 object RoutingTest extends App with StopWatch{
 
   this.startWatch()
 
-  val n = 50
-  val v = 3
+  val n = 200
+  val v = 5
 
   println("RoutingTest(n:" + n + " v:" + v + ")")
 
@@ -79,7 +82,7 @@ object RoutingTest extends App with StopWatch{
 
   val insertPointUnroutedFirst = Profile(InsertPointUnroutedFirst(
     unroutedNodesToInsert= vrp.unrouted,
-    relevantNeighbors = () => vrp.kNearest(20,vrp.isRouted(_)),
+    relevantNeighbors = () => vrp.kNearest(10,vrp.isRouted(_)),
     vrp = vrp))
 
   val insertPointUnroutedFirstBest = Profile(InsertPointUnroutedFirst(
@@ -90,11 +93,11 @@ object RoutingTest extends App with StopWatch{
 
   val pivot = vrp.N/2
 
-  val compositeInsertPoint = Profile((insertPointRoutedFirst guard(() => vrp.unrouted.value.size >= pivot)
-    orElse (insertPointUnroutedFirst guard(() => vrp.unrouted.value.size < pivot)))name("CompositeInsert"))
+  val compositeInsertPoint = Profile(insertPointRoutedFirst guard (() => vrp.unrouted.value.size >= pivot)
+    orElse (insertPointUnroutedFirst guard (() => vrp.unrouted.value.size < pivot)))
 
   //the other insertion point strategy is less efficient, need to investigate why.
-  val insertPoint = insertPointUnroutedFirstBest //new BestSlopeFirst(List(insertPointUnroutedFirst,insertPointRoutedFirst),refresh = 50) //compositeInsertPoint //insertPointUnroutedFirst
+  val insertPoint = compositeInsertPoint //insertPointUnroutedFirstBest //new BestSlopeFirst(List(insertPointUnroutedFirst,insertPointRoutedFirst),refresh = 50) //compositeInsertPoint //insertPointUnroutedFirst
 
   val onePointMove = Profile(OnePointMove(
     nodesPrecedingNodesToMove = vrp.routed,
@@ -108,23 +111,31 @@ object RoutingTest extends App with StopWatch{
 
   val threeOpt = Profile(ThreeOpt(
     potentialInsertionPoints = vrp.routed,
-    relevantNeighbors = () => vrp.kNearest(40),
-    vrp = vrp))
+    relevantNeighbors = () => vrp.kNearest(20),
+    vrp = vrp,
+    skipOnePointMove = true))
 
   val segExchange = Profile(SegmentExchange(vrp = vrp,
     relevantNeighbors = () => vrp.kNearest(40),
     vehicles=() => vrp.vehicles.toList))
 
-  val search = new RoundRobin(List(insertPoint,onePointMove maxMoves 100),10) exhaust (new BestSlopeFirst(List(onePointMove,threeOpt,segExchange),refresh = n/2)) // exhaust onePointMove exhaust segExchange//threeOpt //(new BestSlopeFirst(List(onePointMove,twoOpt,threeOpt)))
+  val search = new RoundRobin(List(insertPoint,onePointMove),10) exhaust
+                      new BestSlopeFirst(List(onePointMove, threeOpt, segExchange), refresh = n / 2) showObjectiveFunction
+    vrp.getObjective() // exhaust onePointMove exhaust segExchange//threeOpt //(new BestSlopeFirst(List(onePointMove,twoOpt,threeOpt)))
 
   search.verbose = 1
 //    search.verboseWithExtraInfo(3,() => vrp.toString)
   //segExchange.verbose = 3
-  search.doAllMoves(_ > 10*n, vrp.objectiveFunction)
 
-  println("total time " + getWatch + "ms or  " + getWatchString)
+  def launchSearch(): Unit ={
+    search.doAllMoves(_ > 10*n, vrp.objectiveFunction)
 
-  println("\nresult:\n" + vrp)
+    println("total time " + getWatch + "ms or  " + getWatchString)
 
-  println(search.profilingStatistics)
+    println("\nresult:\n" + vrp)
+
+    println(search.profilingStatistics)
+  }
+
+  launchSearch()
 }
