@@ -23,7 +23,7 @@
 
 package oscar.cbls.routing.model
 
-import oscar.cbls.constraints.lib.basic.{EQ, LE}
+import oscar.cbls.constraints.lib.basic.{NE, EQ, LE}
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.lib.logic._
 import oscar.cbls.invariants.lib.numeric.Sum
@@ -764,7 +764,7 @@ trait VehicleWithCapacity extends  VRP with PickupAndDeliveryCustomers{
 /**
   * This trait maintains the
   */
-trait PickupAndDeliveryCustomers extends VRP with StrongConstraints with PositionInRouteAndRouteNr{
+trait PickupAndDeliveryCustomers extends VRP with StrongConstraints with PositionInRouteAndRouteNr with Predecessors{
 
   /**
     * The variable that contains the pickup nodes.
@@ -791,7 +791,7 @@ trait PickupAndDeliveryCustomers extends VRP with StrongConstraints with Positio
     deliveryNodes += CBLSIntConst(d) -> (CBLSIntConst(p),CBLSIntConst(-v))
     setNodeInformation(d,"Delivery node n°" + d + "\n" + "Load value : " + -v + "")
     strongConstraints.post(LE(positionInRoute(p),positionInRoute(d)))
-    //strongConstraints.post(EQ(routeNr(p),routeNr(d)))
+    strongConstraints.post(EQ(routeNr(p),routeNr(d)))
   }
 
   /**
@@ -846,7 +846,7 @@ trait PickupAndDeliveryCustomers extends VRP with StrongConstraints with Positio
     * @return the index of the related pickup node
     */
   def getRelatedPickup(d:Int): Int ={
-    assert(!deliveryNodes.get(d).isEmpty,"The node can't be found in the deliveryNodes map")
+    assert(deliveryNodes.get(d).isDefined,"The node can't be found in the deliveryNodes map")
     deliveryNodes.get(d).get._1.value
   }
 
@@ -855,8 +855,12 @@ trait PickupAndDeliveryCustomers extends VRP with StrongConstraints with Positio
     * @return the index of the related delivery node
     */
   def getRelatedDelivery(p:Int): Int ={
-    assert(!pickupNodes.get(p).isEmpty,"The node can't be found in the pickupNodes map")
-    pickupNodes.get(p).get._1.value
+    assert(pickupNodes.get(p) == None,"The node can't be found in the pickupNodes map")
+    if(pickupNodes.get(p) == None){
+      0
+    }else {
+      pickupNodes.get(p).get._1.value
+    }
   }
 
   /**
@@ -873,6 +877,72 @@ trait PickupAndDeliveryCustomers extends VRP with StrongConstraints with Positio
     }else
       pickupNodes.get(n).get._2.value
   }
+
+  def getPickups: Iterable[Int] = pickupNodes.keys.foldLeft(List[Int]())((a,b) => b.value::a)
+
+  def getRoutedPickups: Iterable[Int] = pickupNodes.keys.foldLeft(List[Int]())((a,b) => if(isRouted(b.value)) b.value::a else a)
+
+  def getRoutedPickupsPredecessors: Iterable[Int] = pickupNodes.keys.foldLeft(List[Int]())((a,b) => if(isRouted(b.value)) preds(b.value).value::a else a)
+
+  def getUnroutedPickups: Iterable[Int] = pickupNodes.keys.foldLeft(List[Int]())((a,b) => if(!isRouted(b.value)) b.value::a else a)
+
+  def getDeliverys: Iterable[Int] = deliveryNodes.keys.foldLeft(List[Int]())((a,b) => b.value::a)
+
+  def getRoutedDeliverys: Iterable[Int] = deliveryNodes.keys.foldLeft(List[Int]())((a,b) => if(isRouted(b.value)) b.value::a else a)
+
+  def getRoutedDeliverysPredecessors: Iterable[Int] = deliveryNodes.keys.foldLeft(List[Int]())((a,b) => if(isRouted(b.value)) preds(b.value).value::a else a)
+
+  def getUnroutedDeliverys: Iterable[Int] = deliveryNodes.keys.foldLeft(List[Int]())((a,b) => if(!isRouted(b.value)) b.value::a else a)
+
+  def getAuthorizedInsertionPositionForPickup()(node: Int): Iterable[Int] = {
+    val routeOfNode = routeNr(node)
+    var resRoute = getRouteOfVehicle(routeOfNode.value)
+    resRoute = resRoute.takeWhile(_ != node)
+    resRoute
+  }
+
+  def getAuthorizedInsertionPositionForDelivery()(node: Int): Iterable[Int] = {
+    val routeOfNode = routeNr(node)
+    var resRoute = getRouteOfVehicle(routeOfNode.value)
+    resRoute = resRoute.dropWhile(_ != node)
+    resRoute
+  }
+
+  def getPerfectSegment(routeNumber:Int): Unit ={
+    var perfectSegmentMap:HashMap[Int,Set[Int]] = new HashMap[Int,Set[Int]]
+    val route = getRouteOfVehicle(routeNumber)
+
+    for(node <- route){
+      if(isPickup(node)){
+        for(key <- perfectSegmentMap.keys){
+          if(perfectSegmentMap.get(key).get.nonEmpty) {
+            val currentSet = perfectSegmentMap.get(key).get + node
+            perfectSegmentMap += key -> currentSet
+          }
+        }
+        var nodeSet:Set[Int] = Set(node)
+        perfectSegmentMap += node -> nodeSet
+      }
+      else{
+        for(key <- perfectSegmentMap.keys){
+          if(perfectSegmentMap.get(key).get.nonEmpty) {
+            if (!perfectSegmentMap.get(key).get.contains(getRelatedPickup(node))) {
+              perfectSegmentMap -= key
+            }else if(key == getRelatedPickup(node) && perfectSegmentMap.get(key).get.size > 1){
+              perfectSegmentMap -= key
+            }
+            else {
+              val currentSet = perfectSegmentMap.get(key).get - getRelatedPickup(node)
+              perfectSegmentMap += key -> currentSet
+            }
+          }
+        }
+      }
+    }
+
+    println(perfectSegmentMap)
+  }
+
 }
 
 trait PickupAndDeliveryCustomersWithTimeWindow extends TimeWindow with PickupAndDeliveryCustomers {

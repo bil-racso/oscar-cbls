@@ -74,7 +74,6 @@ abstract class MatrixMap extends VisualDrawing(false,false){
 class RoutingMatrixMap extends MatrixMap{
 
   def drawPoints() ={
-    println("Original Draw Points")
     var v = vrp.V
     for(p <- pointsList){
       if(v > 0){

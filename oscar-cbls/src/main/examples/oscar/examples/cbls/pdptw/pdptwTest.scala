@@ -5,7 +5,7 @@ import oscar.cbls.invariants.lib.numeric.{Abs, Sum}
 import oscar.cbls.routing.model._
 import oscar.cbls.routing.neighborhood._
 import oscar.cbls.search.StopWatch
-import oscar.cbls.search.combinators.{BestSlopeFirst, RoundRobin, Profile}
+import oscar.cbls.search.combinators._
 import oscar.examples.cbls.routing.RoutingMatrixGenerator
 import oscar.examples.cbls.routing.visual.ColorGenerator
 import oscar.examples.cbls.routing.visual.MatrixMap.{PickupAndDeliveryPoints, RoutingMatrixVisualWithAttribute, RoutingMatrixVisual}
@@ -39,12 +39,16 @@ class MyPDPTWVRP(n:Int, v:Int, model:Store, distanceMatrix: Array[Array[Int]],un
     with PositionInRouteAndRouteNr
     with NodesOfVehicle
     with PenaltyForUnrouted
+    with PenaltyForUnroutedAsObjectiveTerm
+    with PenaltyForEmptyRoute
+    with PenaltyForEmptyRouteAsObjectiveTerm
     with hopDistancePerVehicle
     with VehicleWithCapacity
     with PickupAndDeliveryCustomers{
 
   installCostMatrix(distanceMatrix)
   setUnroutedPenaltyWeight(unroutedPenalty)
+  setEmptyRoutePenaltyWeight(unroutedPenalty)
   closeUnroutedPenaltyWeight()
   computeClosestNeighbors()
   println("end compute closest, install matrix")
@@ -67,7 +71,7 @@ object pdptwTest extends App with StopWatch {
 
   this.startWatch()
 
-  val n = 20
+  val n = 85
   val v = 5
 
   println("PDPTWTest(n:" + n + " v:" + v + ")")
@@ -133,8 +137,42 @@ object pdptwTest extends App with StopWatch {
     relevantNeighbors = () => vrp.kNearest(40),
     vehicles=() => vrp.vehicles.toList))
 
-  val search = new RoundRobin(List(insertPoint,onePointMove),10) exhaust
-    new BestSlopeFirst(List(onePointMove, threeOpt, segExchange), refresh = n / 2) showObjectiveFunction
+  val insertCouple = Profile(AndThen(
+    InsertPointUnroutedFirst(
+    unroutedNodesToInsert = () => vrp.getUnroutedPickups,
+    relevantNeighbors = () => vrp.kNearest(10,vrp.isRouted),
+    vrp = vrp),
+    InsertPointUnroutedFirst(
+    unroutedNodesToInsert = () => vrp.getUnroutedDeliverys,
+    relevantNeighbors = () => vrp.kNearest(10,vrp.isRouted),
+    vrp = vrp)))
+
+  val oneCoupleMove = Profile(DynAndThen(OnePointMove(
+    nodesPrecedingNodesToMove = () => vrp.getRoutedPickupsPredecessors,
+    relevantNeighbors= () => vrp.kNearest(10),
+    vrp = vrp),
+    (onePointMove:OnePointMoveMove) => OnePointMove(
+    nodesPrecedingNodesToMove = () => {
+      /*println("Routed Pickups : " + vrp.getRoutedPickups.toList)
+      println("Routed Pickups Predecessors : " + vrp.getRoutedPickupsPredecessors.toList)
+      println("Moved Point : " + onePointMove.movedPoint)
+      println("Impacted points : " + onePointMove.impactedPoints.toList.toString)
+      println("Index of moved point : " + vrp.getRoutedPickups.toList.indexOf(onePointMove.movedPoint))*/
+      List(vrp.preds(vrp.getRelatedDelivery(onePointMove.movedPoint)).value)
+    },
+    relevantNeighbors= () => vrp.kNearest(10),
+    vrp = vrp)))
+
+  val onePointMovePD = Profile(new RoundRobin(List(OnePointMove(
+    nodesPrecedingNodesToMove = () => vrp.getRoutedPickupsPredecessors,
+    relevantNeighbors = () => vrp.getAuthorizedInsertionPositionForPickup(),
+    vrp = vrp),OnePointMove(
+    nodesPrecedingNodesToMove = () => vrp.getRoutedDeliverysPredecessors,
+    relevantNeighbors = () => vrp.getAuthorizedInsertionPositionForDelivery(),
+    vrp = vrp))))
+
+  val search = new RoundRobin(List(insertCouple,oneCoupleMove),10) exhaust
+    new BestSlopeFirst(List(onePointMovePD, threeOpt, segExchange), refresh = n / 2) showObjectiveFunction
     vrp.getObjective() afterMove {
     rm.drawRoutes()
     println(vrp.strongConstraints.violatedConstraints)
@@ -146,17 +184,20 @@ object pdptwTest extends App with StopWatch {
 
   def launchSearch(): Unit ={
     println(vrp.strongConstraints.violatedConstraints)
-    println(vrp.asInstanceOf[VRP with PositionInRouteAndRouteNr].routeNr.toList.toString())
-    println(vrp.asInstanceOf[VRP with PositionInRouteAndRouteNr].positionInRoute.toList.toString())
-
     search.verboseWithExtraInfo(1,vrp.toString)
-    search.doAllMoves(_ > 10*n, vrp.objectiveFunction)
+    search.doAllMoves(_ > 10*n, vrp.getObjective())
 
     println("total time " + getWatch + "ms or  " + getWatchString)
 
     println("\nresult:\n" + vrp)
 
     println(search.profilingStatistics)
+
+    vrp.getPerfectSegment(0)
+    vrp.getPerfectSegment(1)
+    vrp.getPerfectSegment(2)
+    vrp.getPerfectSegment(3)
+    vrp.getPerfectSegment(4)
   }
 
   launchSearch()

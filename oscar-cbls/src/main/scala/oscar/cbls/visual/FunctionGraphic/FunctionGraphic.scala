@@ -216,13 +216,13 @@ class ObjFunctionGraphic(width:Int,height:Int) extends FunctionGraphic(){
           previousTimeUnit = currentTimeUnit
         }
 
-        val line = new VisualLine(this, new Double(previousTimeUnit+70, previousTimeUnitValue, currentTimeUnit+70, currentTimeUnitValue))
-        line.outerCol_$eq(xColorValues(i))
-        line.borderWidth = 3
         if(displayBest){
           val bestLine = new VisualLine(this,new Double(previousTimeUnit+70, previousTimeUnitBestValue, currentTimeUnit+70, currentTimeUnitBestValue))
           bestLine.outerCol_$eq(Color.green)
         }
+        val line = new VisualLine(this, new Double(previousTimeUnit+70, previousTimeUnitValue, currentTimeUnit+70, currentTimeUnitValue))
+        line.outerCol_$eq(xColorValues(i))
+        line.borderWidth = 3
 
         previousTimeUnit = currentTimeUnit
         previousTimeUnitValue = currentTimeUnitValue
