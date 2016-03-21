@@ -96,8 +96,8 @@ case class DenseCount(values: Array[IntValue], counts: Array[CBLSIntVar], offset
     }
 
     for (j <- counts.indices) {
-      c.check(counts(j+offset).getValue(false) == myCounts(j+offset),
-        Some("counts(" + j + "+offset).getValue(false) (" + counts(j+offset).getValue(false)
+      c.check(counts(j+offset).value == myCounts(j+offset),
+        Some("counts(" + j + "+offset).getValue(false) (" + counts(j+offset).value
           + ") == myCounts(" + j + "+offset) (" + myCounts(j+offset) + ")"))
     }
   }

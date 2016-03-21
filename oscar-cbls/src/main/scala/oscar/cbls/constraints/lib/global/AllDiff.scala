@@ -67,7 +67,7 @@ case class AllDiff(variables: Iterable[IntValue]) extends Invariant with Constra
   }
 
   for (i <- range) {
-    val tmp = ValueCount(i).getValue(true) - 1
+    val tmp = ValueCount(i).newValue - 1
     if (tmp > 0) Violation :+= tmp
   }
 
@@ -91,8 +91,8 @@ case class AllDiff(variables: Iterable[IntValue]) extends Invariant with Constra
     ValueCount(OldVal + offset) :-= 1
     ValueCount(NewVal + offset) :+= 1
 
-    val DeltaOldVal = (if (ValueCount(OldVal + offset).getValue(true) == 0) 0 else -1)
-    val DeltaNewVal = (if (ValueCount(NewVal + offset).getValue(true) == 1) 0 else 1)
+    val DeltaOldVal = (if (ValueCount(OldVal + offset).newValue == 0) 0 else -1)
+    val DeltaNewVal = (if (ValueCount(NewVal + offset).newValue == 1) 0 else 1)
     Violation :+= (DeltaNewVal + DeltaOldVal)
   }
 
@@ -117,8 +117,8 @@ case class AllDiff(variables: Iterable[IntValue]) extends Invariant with Constra
     var MyValueCount: Array[Int] = (for (i <- 0 to N) yield 0).toArray
     for (v <- variables) MyValueCount(v.value + offset) += 1
     for (v <- range) {
-      c.check(ValueCount(v).getValue(true) == MyValueCount(v),
-        Some("ValueCount(" + v + ").getValue(true) (" + ValueCount(v).getValue(true)
+      c.check(ValueCount(v).newValue == MyValueCount(v),
+        Some("ValueCount(" + v + ").newValue (" + ValueCount(v).newValue
           + ") == MyValueCount(" + v + ") (" + MyValueCount(v)))
     }
 

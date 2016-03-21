@@ -107,9 +107,9 @@ case class Store(override val verbose:Boolean = false,
     for (v:Variable <- vars if v.isDecisionVariable){
       v match{
         case c:CBLSIntVar =>
-          assignationInt = ((c, c.getValue(true))) :: assignationInt
+          assignationInt = ((c, c.newValue)) :: assignationInt
         case s:CBLSSetVar =>
-          assignationIntSet = ((s, s.getValue(true))) :: assignationIntSet
+          assignationIntSet = ((s, s.newValue)) :: assignationIntSet
       }
     }
     Solution(assignationInt,assignationIntSet,this)

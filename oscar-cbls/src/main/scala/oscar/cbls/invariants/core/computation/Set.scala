@@ -160,7 +160,9 @@ abstract class ChangingSetValue(initialValue:SortedSet[Int], initialDomain:Domai
 
   def value:SortedSet[Int] = getValue(false)
 
-  def getValue(NewValue:Boolean=false):SortedSet[Int] = {
+  def newValue:SortedSet[Int] = getValue(true)
+
+  private def getValue(NewValue:Boolean=false):SortedSet[Int] = {
     if (NewValue){
       assert(model.checkExecutingInvariantOK(definingInvariant),
         "variable [" + this + "] queried for latest val by non-controlling invariant")

@@ -36,21 +36,27 @@ import scala.collection.immutable.{ SortedMap, SortedSet };
  * @author renaud.delandtsheer@cetic.be
  */
 case class Union(left: SetValue, right: SetValue)
-  extends SetInvariant(left.value.union(right.value), left.min.min(right.min) to left.max.max(right.max)) {
+  extends SetInvariant(left.value.union(right.value), left.min.min(right.min) to left.max.max(right.max))
+with SetNotificationTarget{
   assert(left != right)
 
   registerStaticAndDynamicDependency(left)
   registerStaticAndDynamicDependency(right)
   finishInitialization()
 
+  override def notifySetChanges(v: ChangingSetValue, d: Int, addedValues: Iterable[Int], removedValues: Iterable[Int], oldValue: Set[Int], newValue: Set[Int]): Unit = {
+    for (added <- addedValues) notifyInsertOn(v: ChangingSetValue, added)
+    for(deleted <- removedValues) notifyDeleteOn(v: ChangingSetValue, deleted)
+  }
+
   @inline
-  override def notifyInsertOn(v: ChangingSetValue, value: Int) {
+  def notifyInsertOn(v: ChangingSetValue, value: Int) {
     assert(left == v || right == v)
     this.insertValue(value)
   }
 
   @inline
-  override def notifyDeleteOn(v: ChangingSetValue, value: Int) {
+  def notifyDeleteOn(v: ChangingSetValue, value: Int) {
     assert(left == v || right == v)
     if (v == left) {
       if (!right.value.contains(value)) {
@@ -77,7 +83,9 @@ case class Union(left: SetValue, right: SetValue)
  * @author yoann.guyot@cetic.be
  */
 case class UnionAll(sets: Iterable[SetValue])
-  extends SetInvariant(initialDomain = InvariantHelper.getMinMaxBoundsSet(sets)) {
+  extends SetInvariant(initialDomain = InvariantHelper.getMinMaxBoundsSet(sets))
+  with SetNotificationTarget{
+
   val count: Array[Int] = Array.fill(this.max - this.min + 1)(0)
   val offset = -this.min
 
@@ -92,8 +100,13 @@ case class UnionAll(sets: Iterable[SetValue])
   sets foreach (registerStaticAndDynamicDependency(_))
   finishInitialization()
 
+  override def notifySetChanges(v: ChangingSetValue, d: Int, addedValues: Iterable[Int], removedValues: Iterable[Int], oldValue: Set[Int], newValue: Set[Int]): Unit = {
+    for (added <- addedValues) notifyInsertOn(v: ChangingSetValue, added)
+    for(deleted <- removedValues) notifyDeleteOn(v: ChangingSetValue, deleted)
+  }
+
   @inline
-  override def notifyInsertOn(v: ChangingSetValue, value: Int) {
+  def notifyInsertOn(v: ChangingSetValue, value: Int) {
     assert(sets.exists(_ == v))
     
     val i = value + offset
@@ -105,7 +118,7 @@ case class UnionAll(sets: Iterable[SetValue])
   }
 
   @inline
-  override def notifyDeleteOn(v: ChangingSetValue, value: Int) {
+  def notifyDeleteOn(v: ChangingSetValue, value: Int) {
     assert(sets.exists(_ == v))
     
     val i = value + offset
@@ -132,14 +145,20 @@ case class UnionAll(sets: Iterable[SetValue])
  */
 case class Inter(left: SetValue, right: SetValue)
   extends SetInvariant(left.value.intersect(right.value),
-    left.min.max(right.min) to left.max.min(right.max)) {
+    left.min.max(right.min) to left.max.min(right.max))
+with SetNotificationTarget{
 
   registerStaticAndDynamicDependency(left)
   registerStaticAndDynamicDependency(right)
   finishInitialization()
 
+  override def notifySetChanges(v: ChangingSetValue, d: Int, addedValues: Iterable[Int], removedValues: Iterable[Int], oldValue: Set[Int], newValue: Set[Int]): Unit = {
+    for (added <- addedValues) notifyInsertOn(v: ChangingSetValue, added)
+    for(deleted <- removedValues) notifyDeleteOn(v: ChangingSetValue, deleted)
+  }
+
   @inline
-  override def notifyInsertOn(v: ChangingSetValue, value: Int) {
+  def notifyInsertOn(v: ChangingSetValue, value: Int) {
     if (v == left) {
       if (right.value.contains(value)) {
         this.insertValue(value)
@@ -154,7 +173,7 @@ case class Inter(left: SetValue, right: SetValue)
   }
 
   @inline
-  override def notifyDeleteOn(v: ChangingSetValue, value: Int) {
+  def notifyDeleteOn(v: ChangingSetValue, value: Int) {
     assert(left == v || right == v)
     this.deleteValue(value)
   }
@@ -167,7 +186,8 @@ case class Inter(left: SetValue, right: SetValue)
 
 case class SetMap(a: SetValue, fun: Int => Int,
                   initialDomain: Domain = FullRange)
-  extends SetInvariant(SortedSet.empty, initialDomain) {
+  extends SetInvariant(SortedSet.empty, initialDomain)
+with SetNotificationTarget{
 
   registerStaticAndDynamicDependency(a)
   finishInitialization()
@@ -183,8 +203,13 @@ case class SetMap(a: SetValue, fun: Int => Int,
     outputCount += ((mappedV, oldCount + 1))
   }
 
+  override def notifySetChanges(v: ChangingSetValue, d: Int, addedValues: Iterable[Int], removedValues: Iterable[Int], oldValue: Set[Int], newValue: Set[Int]): Unit = {
+    for (added <- addedValues) notifyInsertOn(v: ChangingSetValue, added)
+    for(deleted <- removedValues) notifyDeleteOn(v: ChangingSetValue, deleted)
+  }
+
   @inline
-  override def notifyInsertOn(v: ChangingSetValue, value: Int) {
+  def notifyInsertOn(v: ChangingSetValue, value: Int) {
     val mappedV = fun(value)
     val oldCount = outputCount.getOrElse(mappedV, 0)
     if (oldCount == 0) {
@@ -194,7 +219,7 @@ case class SetMap(a: SetValue, fun: Int => Int,
   }
 
   @inline
-  override def notifyDeleteOn(v: ChangingSetValue, value: Int) {
+  def notifyDeleteOn(v: ChangingSetValue, value: Int) {
     val mappedV = fun(value)
     val oldCount = outputCount.getOrElse(mappedV, 0)
     if (oldCount == 1) {
@@ -216,14 +241,20 @@ case class SetMap(a: SetValue, fun: Int => Int,
  * @author renaud.delandtsheer@cetic.be
  */
 case class Diff(left: SetValue, right: SetValue)
-  extends SetInvariant(left.value.diff(right.value), left.min to left.max) {
+  extends SetInvariant(left.value.diff(right.value), left.min to left.max)
+with SetNotificationTarget{
 
   registerStaticAndDynamicDependency(left)
   registerStaticAndDynamicDependency(right)
   finishInitialization()
 
+  override def notifySetChanges(v: ChangingSetValue, d: Int, addedValues: Iterable[Int], removedValues: Iterable[Int], oldValue: Set[Int], newValue: Set[Int]): Unit = {
+    for (added <- addedValues) notifyInsertOn(v: ChangingSetValue, added)
+    for(deleted <- removedValues) notifyDeleteOn(v: ChangingSetValue, deleted)
+  }
+
   @inline
-  override def notifyInsertOn(v: ChangingSetValue, value: Int) {
+  def notifyInsertOn(v: ChangingSetValue, value: Int) {
     if (v == left) {
       if (!right.value.contains(value)) {
         this.insertValue(value)
@@ -238,7 +269,7 @@ case class Diff(left: SetValue, right: SetValue)
   }
 
   @inline
-  override def notifyDeleteOn(v: ChangingSetValue, value: Int) {
+  def notifyDeleteOn(v: ChangingSetValue, value: Int) {
     if (v == left) {
       if (!right.value.contains(value)) {
         this.deleteValue(value)
@@ -264,21 +295,14 @@ case class Diff(left: SetValue, right: SetValue)
  * @author renaud.delandtsheer@cetic.be
  */
 case class Cardinality(v: SetValue)
-  extends IntInvariant(v.value.size, 0 to (v.max - v.min +1)) {
+  extends IntInvariant(v.value.size, 0 to (v.max - v.min +1))
+  with SetNotificationTarget{
 
   registerStaticAndDynamicDependency(v)
   finishInitialization()
 
-  @inline
-  override def notifyInsertOn(v: ChangingSetValue, value: Int) {
-    assert(v == this.v)
-    this :+= 1
-  }
-
-  @inline
-  override def notifyDeleteOn(v: ChangingSetValue, value: Int) {
-    assert(v == this.v)
-    this :-= 1
+  override def notifySetChanges(v: ChangingSetValue, d: Int, addedValues: Iterable[Int], removedValues: Iterable[Int], oldValue: Set[Int], newValue: Set[Int]): Unit = {
+   this := newValue.size
   }
 
   override def checkInternals(c: Checker) {
@@ -406,7 +430,8 @@ case class Interval(lb: IntValue, ub: IntValue)
  * @author renaud.delandtsheer@cetic.be
  */
 case class TakeAny(from: SetValue, default: Int)
-  extends IntInvariant(default, from.min to from.max) {
+  extends IntInvariant(default, from.min to from.max)
+with SetNotificationTarget{
 
   registerStaticAndDynamicDependency(from)
   finishInitialization()
@@ -420,15 +445,20 @@ case class TakeAny(from: SetValue, default: Int)
     this := from.value.head
   }
 
-  override def notifyInsertOn(v: ChangingSetValue, value: Int) {
+  override def notifySetChanges(v: ChangingSetValue, d: Int, addedValues: Iterable[Int], removedValues: Iterable[Int], oldValue: Set[Int], newValue: Set[Int]): Unit = {
+    for (added <- addedValues) notifyInsertOn(v: ChangingSetValue, added)
+    for(deleted <- removedValues) notifyDeleteOn(v: ChangingSetValue, deleted)
+  }
+
+  def notifyInsertOn(v: ChangingSetValue, value: Int) {
     if (wasEmpty) {
       this := value
       wasEmpty = false
     }
   }
 
-  override def notifyDeleteOn(v: ChangingSetValue, value: Int) {
-    if (value == this.getValue(true)) {
+  def notifyDeleteOn(v: ChangingSetValue, value: Int) {
+    if (value == this.newValue) {
       if (v.value.isEmpty) {
         this := default
         wasEmpty = true
@@ -481,7 +511,8 @@ case class Singleton(v: IntValue)
  * @author renaud.delandtsheer@cetic.be
  */
 case class TakeAnyToSet(from: SetValue)
-  extends SetInvariant(SortedSet.empty, from.min to from.max) {
+  extends SetInvariant(SortedSet.empty, from.min to from.max)
+  with SetNotificationTarget{
 
   registerStaticAndDynamicDependency(from)
   finishInitialization()
@@ -495,15 +526,20 @@ case class TakeAnyToSet(from: SetValue)
     this := SortedSet(from.value.head)
   }
 
-  override def notifyInsertOn(v: ChangingSetValue, value: Int) {
+  override def notifySetChanges(v: ChangingSetValue, d: Int, addedValues: Iterable[Int], removedValues: Iterable[Int], oldValue: Set[Int], newValue: Set[Int]): Unit = {
+    for (added <- addedValues) notifyInsertOn(v: ChangingSetValue, added)
+    for(deleted <- removedValues) notifyDeleteOn(v: ChangingSetValue, deleted)
+  }
+
+  def notifyInsertOn(v: ChangingSetValue, value: Int) {
     if (wasEmpty) {
       this :+= from.value.head
       wasEmpty = false
     }
   }
 
-  override def notifyDeleteOn(v: ChangingSetValue, value: Int) {
-    if (value == this.getValue(true).head) {
+  def notifyDeleteOn(v: ChangingSetValue, value: Int) {
+    if (value == this.newValue.head) {
       if (v.value.isEmpty) {
         this := SortedSet.empty
         wasEmpty = true

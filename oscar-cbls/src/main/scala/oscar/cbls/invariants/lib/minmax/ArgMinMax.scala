@@ -69,7 +69,8 @@ abstract class ArgMiax(vars: Array[IntValue], cond: SetValue, default: Int)
   extends SetInvariant(initialDomain = vars.indices.start to vars.indices.last)
   with Bulked[IntValue, Unit]
   with VaryingDependencies
-  with IntNotificationTarget{
+  with IntNotificationTarget
+  with SetNotificationTarget{
 
   override def toString:String = {
     name + "(" + InvariantHelper.arrayToString(vars) + "," + cond + "," + default + ")"
@@ -115,13 +116,13 @@ abstract class ArgMiax(vars: Array[IntValue], cond: SetValue, default: Int)
       this := h.getFirsts.foldLeft(SortedSet.empty[Int])((acc, index) => acc + index)
     } else if (OldVal == Miax) {
       this.deleteValue(index)
-      if (this.getValue(true).isEmpty) {
+      if (this.newValue.isEmpty) {
 
         for(first <- h.getFirsts){
           this :+= first
         }
 
-        if (this.getValue(true).isEmpty) {
+        if (this.newValue.isEmpty) {
           Miax = default
         } else {
           Miax = vars(h.getFirst).value
@@ -132,8 +133,13 @@ abstract class ArgMiax(vars: Array[IntValue], cond: SetValue, default: Int)
     }
   }
 
+  override def notifySetChanges(v: ChangingSetValue, d: Int, addedValues: Iterable[Int], removedValues: Iterable[Int], oldValue: Set[Int], newValue: Set[Int]): Unit = {
+    for (added <- addedValues) notifyInsertOn(v: ChangingSetValue, added)
+    for(deleted <- removedValues) notifyDeleteOn(v: ChangingSetValue, deleted)
+  }
+
   @inline
-  override def notifyInsertOn(v: ChangingSetValue, value: Int) {
+  def notifyInsertOn(v: ChangingSetValue, value: Int) {
     assert(v == cond && cond != null)
     keyForRemoval(value) = registerDynamicDependency(vars(value), value)
 
@@ -150,7 +156,7 @@ abstract class ArgMiax(vars: Array[IntValue], cond: SetValue, default: Int)
   }
 
   @inline
-  override def notifyDeleteOn(v: ChangingSetValue, value: Int) {
+  def notifyDeleteOn(v: ChangingSetValue, value: Int) {
     assert(v == cond && cond != null)
 
     keyForRemoval(value).performRemove()
@@ -167,7 +173,7 @@ abstract class ArgMiax(vars: Array[IntValue], cond: SetValue, default: Int)
       this := h.getFirsts.foldLeft(SortedSet.empty[Int])((acc, index) => acc + index)
     } else if (vars(value).value == Miax) {
       this.deleteValue(value)
-      if (this.getValue(true).isEmpty) {
+      if (this.newValue.isEmpty) {
         for(first <- h.getFirsts){
           this :+= first
         }
@@ -196,7 +202,7 @@ abstract class ArgMiax(vars: Array[IntValue], cond: SetValue, default: Int)
     h.checkInternals(c: Checker)
     c.check(h.getFirsts.length == this.value.size, Some("h.getFirsts.length == this.value.size"))
     if (cond != null)
-      c.check(this.value.subsetOf(cond.value), Some("this.getValue(true).subsetOf(cond.getValue(true))"))
+      c.check(this.value.subsetOf(cond.value), Some("this.newValue.subsetOf(cond.newValue)"))
   }
 }
 

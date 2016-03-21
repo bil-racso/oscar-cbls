@@ -67,7 +67,7 @@ case class Predecessor(next:Array[IntValue],V:Int)
   override def toString ={
     var toReturn = ""
     toReturn +="\npreds array: ["
-    for (v <- preds){toReturn += (""+v.getValue(true) +",")}
+    for (v <- preds){toReturn += (""+v.newValue +",")}
     toReturn = toReturn.substring(0, toReturn.length - 1)+"]\n"
     toReturn
   }

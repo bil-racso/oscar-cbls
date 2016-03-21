@@ -67,7 +67,7 @@ abstract class MiaxLin(vars: SortedSet[IntValue])
 
   override def notifyIntChanged(v: ChangingIntValue, id:Int, OldVal: Int, NewVal: Int) {
     assert(vars.contains(v), this + " notified for not interesting var")
-    val MiaxVal = this.getValue(true)
+    val MiaxVal = this.newValue
     if (OldVal == MiaxVal && better(MiaxVal, NewVal)) {
       MiaxCount -= 1
       if (MiaxCount == 0) LoadNewMiax() //this is where we pay the price.

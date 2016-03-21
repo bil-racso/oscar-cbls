@@ -40,7 +40,7 @@ class Int2Int(a:IntValue, fun:Int => Int, domain:Domain = FullRange,cached:Boole
   this := fun(a.value)
 
   var cachedIn:Int = a.value
-  var cachedOut:Int = this.getValue(true)
+  var cachedOut:Int = this.newValue
 
   @inline
   override def notifyIntChanged(v: ChangingIntValue, id:Int, OldVal: Int, NewVal: Int) {
@@ -49,11 +49,11 @@ class Int2Int(a:IntValue, fun:Int => Int, domain:Domain = FullRange,cached:Boole
       if(NewVal == cachedIn) {
         val tmp = cachedOut
         cachedIn = OldVal
-        cachedOut = this.getValue(true)
+        cachedOut = this.newValue
         this := tmp
       }else{
         cachedIn = OldVal
-        cachedOut = this.getValue(true)
+        cachedOut = this.newValue
         this := fun(NewVal)
       }
     }else{

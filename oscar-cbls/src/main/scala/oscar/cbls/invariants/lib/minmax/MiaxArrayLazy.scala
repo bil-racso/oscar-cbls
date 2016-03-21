@@ -16,7 +16,8 @@ abstract class MiaxArrayLazy(vars: Array[IntValue], cond: SetValue, default: Int
   extends IntInvariant
   with Bulked[IntValue, Domain]
   with VaryingDependencies
-  with IntNotificationTarget{
+  with IntNotificationTarget
+  with SetNotificationTarget{
 
   var keyForRemoval: Array[KeyForElementRemoval] = new Array(vars.length)
   var h: BinomialHeapWithMoveExtMem[Int] = new BinomialHeapWithMoveExtMem[Int](i => Ord(vars(i)), vars.length, new ArrayMap(vars.length))
@@ -73,8 +74,13 @@ abstract class MiaxArrayLazy(vars: Array[IntValue], cond: SetValue, default: Int
     this := vars(h.getFirst).value
   }
 
+  override def notifySetChanges(v: ChangingSetValue, d: Int, addedValues: Iterable[Int], removedValues: Iterable[Int], oldValue: Set[Int], newValue: Set[Int]): Unit = {
+    for (added <- addedValues) notifyInsertOn(v: ChangingSetValue, added)
+    for(deleted <- removedValues) notifyDeleteOn(v: ChangingSetValue, deleted)
+  }
+
   @inline
-  override def notifyInsertOn(v: ChangingSetValue, value: Int) {
+  def notifyInsertOn(v: ChangingSetValue, value: Int) {
     assert(v == cond)
     keyForRemoval(value) = registerDynamicDependency(vars(value), value)
 
@@ -84,7 +90,7 @@ abstract class MiaxArrayLazy(vars: Array[IntValue], cond: SetValue, default: Int
   }
 
   @inline
-  override def notifyDeleteOn(v: ChangingSetValue, value: Int) {
+  def notifyDeleteOn(v: ChangingSetValue, value: Int) {
     assert(v == cond)
 
     keyForRemoval(value).performRemove()

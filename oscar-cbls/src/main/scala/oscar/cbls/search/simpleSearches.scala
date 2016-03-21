@@ -176,13 +176,13 @@ case class SwapsNeighborhood(vars:Array[CBLSIntVar],
     while (iIterator.hasNext) {
       val i = iIterator.next()
       val firstVar = vars(i)
-      val oldValOfFirstVar = firstVar.value
+      val oldValOfFirstVar = firstVar.newValue
 
       val jIterator = secondIterationScheme.iterator
       while (jIterator.hasNext) {
         val j = jIterator.next()
         val secondVar = vars(j)
-        val oldValOfSecondVar = secondVar.value
+        val oldValOfSecondVar = secondVar.newValue
         if ((!symmetryCanBeBrokenOnIndices || i < j) //we break symmetry on variables
           && i != j
           && (!symmetryCanBeBrokenOnValue || oldValOfFirstVar < oldValOfSecondVar) //we break symmetry on values
@@ -595,9 +595,9 @@ case class ShiftNeighborhood(vars:Array[CBLSIntVar],
       //If the block is moved on the left
       else{
         //The values are changed
-        val tempVal = vars(currentStart + currentShiftSize - 1).getValue(true)
+        val tempVal = vars(currentStart + currentShiftSize - 1).newValue
         if(currentShiftOffset == -1){
-          vars(currentStart + currentShiftSize - 1) := vars(currentStart + currentShiftOffset + currentShiftSize -1).getValue(true)
+          vars(currentStart + currentShiftSize - 1) := vars(currentStart + currentShiftOffset + currentShiftSize -1).newValue
           vars(currentStart + currentShiftOffset + currentShiftSize - 1) := tempVal
         }else {
           for (i <- currentStart + currentShiftSize - 1 to currentStart + currentShiftSize + currentShiftOffset by -1) {
