@@ -134,37 +134,23 @@ abstract class ChangingSetValue(initialValue:SortedSet[Int], initialDomain:Domai
       //no need to do it gradually
       OldValue=Value
     }else{
-      if (TouchedValues == null){
+      val (addedValues,deletedValues) = if (TouchedValues == null) {
         //need to calll every listening one, so gradual approach required
-        OldValue.diff(Value).foreach(v => {
-          OldValue -=v
-          val dynListElements = getDynamicallyListeningElements
-          val headPhantom = dynListElements.headPhantom
-          var currentElement = headPhantom.next
-          while(currentElement != headPhantom){
-            val e = currentElement.elem
-            currentElement = currentElement.next
-            val inv:Invariant = e._1.asInstanceOf[Invariant]
-            assert({this.model.NotifiedInvariant=inv; true})
-            inv.notifyDeleteOnAny(this,e._2,v)
-            assert({this.model.NotifiedInvariant=null; true})
-          }
-        })
-        //puis on fait partir tous les insert
-        Value.diff(OldValue).foreach(v => {
-          OldValue += v
-          val dynListElements = getDynamicallyListeningElements
-          val headPhantom = dynListElements.headPhantom
-          var currentElement = headPhantom.next
-          while(currentElement != headPhantom){
-            val e = currentElement.elem
-            currentElement = currentElement.next
-            val inv:Invariant = e._1.asInstanceOf[Invariant]
-            assert({this.model.NotifiedInvariant=inv; true})
-            inv.notifyInsertOnAny(this,e._2,v)
-            assert({this.model.NotifiedInvariant=null; true})
-          }
-        })
+        (Value.diff(OldValue),OldValue.diff(Value))
+      }else {
+        for ((v,inserted) <- TouchedValues.reverse){
+      }
+        val dynListElements = getDynamicallyListeningElements
+        val headPhantom = dynListElements.headPhantom
+        var currentElement = headPhantom.next
+        while(currentElement != headPhantom){
+          val e = currentElement.elem
+          currentElement = currentElement.next
+          val inv:SetNotificationTarget = e._1.asInstanceOf[SetNotificationTarget]
+          assert({this.model.NotifiedInvariant=inv.asInstanceOf[Invariant]; true})
+          inv.notifySetChanges(this,e._2,addedValues,deletedValues,OldValue,Value)
+          assert({this.model.NotifiedInvariant=null; true})
+        }
         //puis, on fait une affectation en plus, pour garbage collecter l'ancienne structure de donnees.
         assert(OldValue.intersect(Value).size == Value.size, "mismatch: OLD" + OldValue + " New:" + Value)
         OldValue=Value
@@ -241,6 +227,9 @@ abstract class ChangingSetValue(initialValue:SortedSet[Int], initialDomain:Domai
     assert(this.definingInvariant == null || OldValue.intersect(Value).size == Value.size,
       "internal error: " + "Value: " + Value + " OldValue: " + OldValue)
   }
+}
+trait SetNotificationTarget {
+  def notifySetChanges(v: ChangingSetValue, d: Int, addedValues: Iterable[Int], removedValues: Iterable[Int], oldValue: Set[Int], newValue: Set[Int])
 }
 
 object ChangingSetValue{

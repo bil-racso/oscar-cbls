@@ -462,21 +462,7 @@ trait Invariant extends PropagationElement{
     null
   }
 
-  @inline
-  def notifyInsertOnAny(v: ChangingSetValue,i:Any,value:Int){notifyInsertOn(v,i.asInstanceOf[Int],value)}
 
-  @inline
-  def notifyInsertOn(v: ChangingSetValue,i:Int,value:Int){notifyInsertOn(v,value)}
-
-  def notifyInsertOn(v: ChangingSetValue,value:Int){}
-
-  @inline
-  def notifyDeleteOnAny(v:ChangingSetValue,i:Any,value:Int){notifyDeleteOn(v,i.asInstanceOf[Int],value)}
-
-  @inline
-  def notifyDeleteOn(v: ChangingSetValue,i:Int,value:Int){notifyDeleteOn(v,value)}
-
-  def notifyDeleteOn(v: ChangingSetValue,value:Int){}
 
   /**To override whenever possible to spot errors in invariants.
     * this will be called for each invariant after propagation is performed.
