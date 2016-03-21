@@ -36,7 +36,7 @@ import scala.collection.immutable.SortedMap
  * @param variables the variable whose values should all be different.
  * @author renaud.delandtsheer@cetic.be
  */
-case class AllDiff(variables: Iterable[IntValue]) extends Invariant with Constraint{
+case class AllDiff(variables: Iterable[IntValue]) extends Invariant with Constraint with IntNotificationTarget{
 
   registerStaticAndDynamicDependencyAllNoID(variables)
   registerConstrainedVariables(variables)
@@ -87,7 +87,7 @@ case class AllDiff(variables: Iterable[IntValue]) extends Invariant with Constra
   }
 
   @inline
-  override def notifyIntChanged(v: ChangingIntValue, OldVal: Int, NewVal: Int) {
+  override def notifyIntChanged(v: ChangingIntValue, id:Int, OldVal: Int, NewVal: Int) {
     ValueCount(OldVal + offset) :-= 1
     ValueCount(NewVal + offset) :+= 1
 

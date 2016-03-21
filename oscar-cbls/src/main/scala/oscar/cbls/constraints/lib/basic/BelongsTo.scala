@@ -8,7 +8,7 @@ import oscar.cbls.invariants.core.propagation.Checker
  * implements v \in set
  * @author renaud.delandtsheer@cetic.be
  */
-case class BelongsTo(v: IntValue, set: SetValue) extends Invariant with Constraint {
+case class BelongsTo(v: IntValue, set: SetValue) extends Invariant with Constraint with IntNotificationTarget{
   registerConstrainedVariables(v, set)
   registerStaticAndDynamicDependenciesNoID(v, set)
   finishInitialization()
@@ -19,7 +19,7 @@ case class BelongsTo(v: IntValue, set: SetValue) extends Invariant with Constrai
   violation.setDefiningInvariant(this)
 
   @inline
-  override def notifyIntChanged(v: ChangingIntValue, OldVal: Int, NewVal: Int) {
+  override def notifyIntChanged(v: ChangingIntValue, id:Int, OldVal: Int, NewVal: Int) {
     violation := (if (set.value.contains(v.value)) 0 else 1)
   }
 

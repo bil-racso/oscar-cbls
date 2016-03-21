@@ -292,7 +292,8 @@ case class Cardinality(v: SetValue)
  * @author renaud.delandtsheer@cetic.be
  */
 case class MakeSet(on: SortedSet[IntValue])
-  extends SetInvariant {
+  extends SetInvariant
+  with IntNotificationTarget{
 
   var counts: SortedMap[Int, Int] = on.foldLeft(SortedMap.empty[Int, Int])((acc: SortedMap[Int, Int], intvar: IntValue) => acc + ((intvar.value, acc.getOrElse(intvar.value, 0) + 1)))
 
@@ -302,7 +303,7 @@ case class MakeSet(on: SortedSet[IntValue])
   this := SortedSet.empty[Int] ++ counts.keySet
 
   @inline
-  override def notifyIntChanged(v: ChangingIntValue, OldVal: Int, NewVal: Int) {
+  override def notifyIntChanged(v: ChangingIntValue, id:Int, OldVal: Int, NewVal: Int) {
     assert(on.contains(v), "MakeSet notified for non interesting var :" + on.toList.exists(_ == v) + " " + on.toList)
 
     assert(OldVal != NewVal)
@@ -347,7 +348,8 @@ case class MakeSet(on: SortedSet[IntValue])
  * @author renaud.delandtsheer@cetic.be
  */
 case class Interval(lb: IntValue, ub: IntValue)
-  extends SetInvariant(initialDomain = lb.min to ub.max) {
+  extends SetInvariant(initialDomain = lb.min to ub.max)
+  with IntNotificationTarget{
   assert(ub != lb)
 
   registerStaticAndDynamicDependency(lb)
@@ -358,7 +360,7 @@ case class Interval(lb: IntValue, ub: IntValue)
     for (i <- lb.value to ub.value) this.insertValue(i)
 
   @inline
-  override def notifyIntChanged(v: ChangingIntValue, OldVal: Int, NewVal: Int) {
+  override def notifyIntChanged(v: ChangingIntValue, id:Int, OldVal: Int, NewVal: Int) {
     if (v == lb) {
       if (OldVal < NewVal) {
         //intervale reduit
@@ -453,7 +455,8 @@ case class TakeAny(from: SetValue, default: Int)
  * @author renaud.delandtsheer@cetic.be
  */
 case class Singleton(v: IntValue)
-  extends SetInvariant(SortedSet(v.value), v.domain) {
+  extends SetInvariant(SortedSet(v.value), v.domain)
+  with IntNotificationTarget{
 
   registerStaticAndDynamicDependency(v)
   finishInitialization()
@@ -463,7 +466,7 @@ case class Singleton(v: IntValue)
     assert(this.value.head == v.value)
   }
 
-  override def notifyIntChanged(v: ChangingIntValue, OldVal: Int, NewVal: Int) {
+  override def notifyIntChanged(v: ChangingIntValue, id:Int, OldVal: Int, NewVal: Int) {
     assert(v == this.v)
     //ici, on propage tout de suite, c'est les variables qui font le stop and go.
     this.deleteValue(OldVal)

@@ -32,7 +32,10 @@ import oscar.cbls.invariants.core.propagation.Checker
  * see method GetForwardPerm() for the forward permutation: ReversePerm(ForwardPerm(i)) == i
  * @author renaud.delandtsheer@cetic.be
  * */
-class Sort(var values:Array[IntValue], ReversePerm:Array[CBLSIntVar]) extends Invariant {
+class Sort(var values:Array[IntValue], ReversePerm:Array[CBLSIntVar])
+  extends Invariant
+  with IntNotificationTarget{
+
   for (v <- values.indices) registerStaticAndDynamicDependency(values(v),v)
 
   finishInitialization()

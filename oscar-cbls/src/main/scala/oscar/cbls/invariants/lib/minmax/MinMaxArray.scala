@@ -96,7 +96,9 @@ case class MinArray(varss: Array[IntValue], cond: SetValue = null, default: Int 
  * @author renaud.delandtsheer@cetic.be
  * */
 abstract class MiaxArray(vars: Array[IntValue], cond: SetValue, default: Int)
-  extends IntInvariant with Bulked[IntValue, Domain] with VaryingDependencies {
+  extends IntInvariant with Bulked[IntValue, Domain]
+  with VaryingDependencies
+  with IntNotificationTarget{
 
   var keyForRemoval: Array[KeyForElementRemoval] = new Array(vars.length)
   var h: BinomialHeapWithMoveExtMem[Int] = new BinomialHeapWithMoveExtMem[Int](i => Ord(vars(i)), vars.length, new ArrayMap(vars.length))

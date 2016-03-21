@@ -34,7 +34,7 @@ import oscar.cbls.invariants.core.propagation.{Checker, KeyForElementRemoval}
  * */
 case class IntITE(ifVar: IntValue, thenVar: IntValue, elseVar: IntValue, pivot: Int = 0)
   extends IntInvariant(if(ifVar.value > pivot) thenVar.value else elseVar.value, thenVar.domain union elseVar.domain)
-  with VaryingDependencies {
+  with VaryingDependencies with IntNotificationTarget{
 
   var KeyToCurrentVar: KeyForElementRemoval = null
 
@@ -44,7 +44,7 @@ case class IntITE(ifVar: IntValue, thenVar: IntValue, elseVar: IntValue, pivot: 
   finishInitialization()
 
   @inline
-  override def notifyIntChanged(v: ChangingIntValue, OldVal: Int, NewVal: Int) {
+  override def notifyIntChanged(v: ChangingIntValue, id:Int, OldVal: Int, NewVal: Int) {
     if (v == ifVar) {
       if (NewVal > pivot && OldVal <= pivot) {
         //modifier le graphe de dependances
@@ -86,7 +86,8 @@ case class ConstantIntElement(index: IntValue, inputArray: Array[Int])
 case class IntElement(index: IntValue, inputarray: Array[IntValue])
   extends IntInvariant(initialValue = inputarray(index.value).value)
   with Bulked[IntValue, Domain]
-  with VaryingDependencies {
+  with VaryingDependencies
+  with IntNotificationTarget{
 
   registerStaticDependency(index)
   registerDeterminingDependency(index)
@@ -102,7 +103,7 @@ case class IntElement(index: IntValue, inputarray: Array[IntValue])
   }
 
   @inline
-  override def notifyIntChanged(v: ChangingIntValue, OldVal: Int, NewVal: Int) {
+  override def notifyIntChanged(v: ChangingIntValue, id:Int, OldVal: Int, NewVal: Int) {
     if (v == index) {
       //modifier le graphe de dependances
       KeyToCurrentVar.performRemove()
@@ -138,13 +139,14 @@ case class IntElement(index: IntValue, inputarray: Array[IntValue])
  * @author jean-noel.monette@it.uu.se
  * */
 case class IntElementNoVar(index: IntValue, inputarray: Array[Int])
-  extends IntInvariant(initialValue = inputarray(index.value),DomainRange(inputarray.min,inputarray.max)) {
+  extends IntInvariant(initialValue = inputarray(index.value),DomainRange(inputarray.min,inputarray.max))
+  with IntNotificationTarget{
 
   registerStaticAndDynamicDependency(index)
   finishInitialization()
 
   @inline
-  override def notifyIntChanged(v: ChangingIntValue, OldVal: Int, NewVal: Int) {
+  override def notifyIntChanged(v: ChangingIntValue, id:Int, OldVal: Int, NewVal: Int) {
    // println(OldVal + " "+ NewVal)
     this := inputarray(NewVal)
   }
@@ -174,7 +176,8 @@ case class IntElementNoVar(index: IntValue, inputarray: Array[Int])
 case class Elements[T <:IntValue](index: SetValue, inputarray: Array[T])
   extends SetInvariant
   with Bulked[T, Domain]
-  with VaryingDependencies {
+  with VaryingDependencies
+  with IntNotificationTarget{
 
   val KeysToInputArray: Array[KeyForElementRemoval] = new Array(inputarray.length)
 
@@ -199,7 +202,7 @@ case class Elements[T <:IntValue](index: SetValue, inputarray: Array[T])
     InvariantHelper.getMinMaxRange(bulkedVar)
 
   @inline
-  override def notifyIntChanged(v: ChangingIntValue, OldVal: Int, NewVal: Int) {
+  override def notifyIntChanged(v: ChangingIntValue, id:Int, OldVal: Int, NewVal: Int) {
     internalDelete(OldVal)
     internalInsert(NewVal)
   }
@@ -273,7 +276,10 @@ case class Elements[T <:IntValue](index: SetValue, inputarray: Array[T])
  * @author renaud.delandtsheer@cetic.be
  * */
 case class SetElement(index: IntValue, inputarray: Array[SetValue])
-  extends SetInvariant(inputarray.apply(index.value).value) with Bulked[SetValue, Domain] with VaryingDependencies {
+  extends SetInvariant(inputarray.apply(index.value).value)
+  with Bulked[SetValue, Domain]
+  with VaryingDependencies
+  with IntNotificationTarget{
 
   var KeyToCurrentVar: KeyForElementRemoval = null
 
@@ -290,7 +296,7 @@ case class SetElement(index: IntValue, inputarray: Array[SetValue])
     InvariantHelper.getMinMaxBoundsSet(bulkedVar)
 
   @inline
-  override def notifyIntChanged(v: ChangingIntValue, OldVal: Int, NewVal: Int) {
+  override def notifyIntChanged(v: ChangingIntValue, id:Int, OldVal: Int, NewVal: Int) {
     assert(v == index)
     //modifier le graphe de dependances
     KeyToCurrentVar.performRemove()

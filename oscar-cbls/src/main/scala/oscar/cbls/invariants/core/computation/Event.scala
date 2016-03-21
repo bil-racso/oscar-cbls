@@ -111,7 +111,7 @@ object Event{
 }
 
 /**Use the apply method in the companion object for building this*/
-class Event(v:Value, w:Variable, ModifiedVars:Iterable[Variable]) extends Invariant{
+class Event(v:Value, w:Variable, ModifiedVars:Iterable[Variable]) extends Invariant with IntNotificationTarget{
   //unfortunately, it is not possible to pass a type "=>Unit" as parameter to a case class.
 
   private var action: (()=>Unit)=null
