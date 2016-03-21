@@ -3,18 +3,20 @@ package oscar.examples.cbls.flowShop
 import oscar.cbls.invariants.core.computation.{CBLSIntConst, CBLSIntVar, IntValue}
 import oscar.cbls.modeling.CBLSModel
 import oscar.cbls.objective.Objective
+import oscar.cbls.search.combinators.BestSlopeFirst
+import oscar.cbls.search.{SwapsNeighborhood, RollNeighborhood, WideningFlipNeighborhood}
 
 object flowShopShiftRestart  extends CBLSModel with App {
 
   val machineToJobToDuration:Array[Array[Int]] =
     Array(
-      Array(1,2,1,7,2,5,5,6),
-      Array(4,5,3,1,8,3,7,8),
-      Array(6,8,2,5,3,1,2,2),
-      Array(4,1,7,2,5,5,6,4))
+      Array(1,2,1,7,2,5,5,6,7),
+      Array(4,5,3,1,8,3,7,8,4),
+      Array(6,8,2,5,3,1,2,2,8),
+      Array(4,1,7,2,5,5,6,4,5))
 
-  val nbMachines = 4
-  val nbJobs = 7
+  val nbMachines = machineToJobToDuration.length
+  val nbJobs = machineToJobToDuration(0).length
   val jobs = 0 until nbJobs
   val machines = 0 until nbMachines
 
@@ -43,8 +45,9 @@ object flowShopShiftRestart  extends CBLSModel with App {
   println("closing model")
   s.close()
 
-  val search = (shiftNeighborhood(jobSequence)
-    onExhaustRestartAfter (shuffleNeighborhood(jobSequence, numberOfShuffledPositions=() => nbJobs/2),5,obj))
+  val search = (BestSlopeFirst(List(shiftNeighborhood(jobSequence), rollNeighborhood(jobSequence), SwapsNeighborhood(jobSequence)))
+    onExhaustRestartAfter (shuffleNeighborhood(jobSequence, numberOfShuffledPositions=() => nbJobs/2),3,obj)
+  onExhaustRestartAfter (shuffleNeighborhood(jobSequence),2,obj))
 
   search.verbose = 1
 
