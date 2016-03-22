@@ -50,6 +50,8 @@ trait SchedulingHandler {
    * @return the propagation structure that contains this, itself if it is a PS
    */
   def propagationStructure: PropagationStructure
+
+
 }
 
 /**
@@ -188,7 +190,7 @@ abstract class PropagationStructure(val verbose: Boolean, val checker: Option[Ch
 
     //variables are already able to propagate immediately before model close and if not monitored yet.
 
-    firstScheduledElements = null
+    scheduledElements = null
 
     val it = getPropagationElements.toIterator
     while (it.hasNext) {
@@ -269,7 +271,7 @@ abstract class PropagationStructure(val verbose: Boolean, val checker: Option[Ch
     for (p <- getPropagationElements) p.dropStaticGraph()
   }
 
-  private[this] var firstScheduledElements: PropagationElement = null
+  private[this] var scheduledElements: QList[PropagationElement] = null
   private[this] var executionQueue: AbstractHeap[PropagationElement] = null
 
   //I'v been thinking about using a BitArray here, but although this would slightly decrease memory
@@ -381,7 +383,7 @@ abstract class PropagationStructure(val verbose: Boolean, val checker: Option[Ch
     }
   }
 
-  private var firstPostponedElements: PropagationElement = null
+  private var postponedElements: QList[PropagationElement] = null
 
   /**
    * performs a propagation on a propagation track
@@ -394,54 +396,64 @@ abstract class PropagationStructure(val verbose: Boolean, val checker: Option[Ch
 
     if (SameAsBefore) {
       //initialize the heap with the scheduled elements that are on the track
-      while (firstScheduledElements != null) {
-        val nextScheduledElement = firstScheduledElements.nextScheduledElement
-        if (Track(firstScheduledElements.uniqueID)) {
-          executionQueue.insert(firstScheduledElements)
+      var currentPos = scheduledElements
+      while (currentPos != null) {
+        val e = currentPos.head
+        currentPos = currentPos.tail
+        if (Track(e.uniqueID)) {
+          executionQueue.insert(e)
         } else {
-          firstScheduledElements.nextScheduledElement = firstPostponedElements
-          firstPostponedElements = firstScheduledElements
+          postponedElements = QList(e, postponedElements)
         }
-        firstScheduledElements = nextScheduledElement
       }
+      scheduledElements = null
     } else if (Track == null) {
       //all elements are to be put on the heap, included postponed ones
-      while (firstScheduledElements != null) {
-        executionQueue.insert(firstScheduledElements)
-        firstScheduledElements = firstScheduledElements.nextScheduledElement
+      var currentPos = postponedElements
+      while (currentPos != null) {
+        val e = currentPos.head
+        currentPos = currentPos.tail
+        executionQueue.insert(e)
       }
-      while (firstPostponedElements != null) {
-        executionQueue.insert(firstPostponedElements)
-        firstPostponedElements = firstPostponedElements.nextScheduledElement
+      postponedElements = null
+
+      currentPos = scheduledElements
+      while (currentPos != null) {
+        val e = currentPos.head
+        currentPos = currentPos.tail
+        executionQueue.insert(e)
       }
+      scheduledElements = null
+
     } else {
       //there is a track, and we need to check postponed elements because they might be on this track
-      var newPostponed: PropagationElement = null
-      while (firstPostponedElements != null) {
-        val nextPostponedElements = firstPostponedElements.nextScheduledElement
-        if (Track(firstPostponedElements.uniqueID)) {
-          executionQueue.insert(firstPostponedElements)
+      var newPostponed: QList[PropagationElement] = null
+      var currentPos = postponedElements
+      while (currentPos != null) {
+        val e = currentPos.head
+        currentPos = currentPos.tail
+        if (Track(e.uniqueID)) {
+          executionQueue.insert(e)
         } else {
-          firstPostponedElements.nextScheduledElement = newPostponed
-          newPostponed = firstPostponedElements
+          newPostponed = QList(e, newPostponed)
         }
-        firstPostponedElements = nextPostponedElements
       }
-      firstPostponedElements = newPostponed
+      postponedElements = newPostponed
 
-      while (firstScheduledElements != null) {
-        val nextScheduledElement = firstScheduledElements.nextScheduledElement
-        if (Track(firstScheduledElements.uniqueID)) {
-          executionQueue.insert(firstScheduledElements)
+      currentPos = scheduledElements
+      while (currentPos != null) {
+        val e = currentPos.head
+        currentPos = currentPos.tail
+        if (Track(e.uniqueID)) {
+          executionQueue.insert(e)
         } else {
-          firstScheduledElements.nextScheduledElement = firstPostponedElements
-          firstPostponedElements = firstScheduledElements
+          postponedElements = QList(e, postponedElements)
         }
-        firstScheduledElements = nextScheduledElement
       }
+      scheduledElements = null
     }
 
-    var previousLayer = 0
+    var previousLayer = 0 //ExecutionQueue.head.position
 
     while (!executionQueue.isEmpty) {
       val first = executionQueue.popFirst()
@@ -450,15 +462,14 @@ abstract class PropagationStructure(val verbose: Boolean, val checker: Option[Ch
       assert({
         previousLayer = first.position; true
       })
-      while (firstScheduledElements != null) {
-        val nextScheduledElement = firstScheduledElements.nextScheduledElement
-        if (Track == null || Track(firstScheduledElements.uniqueID)) {
-          executionQueue.insert(firstScheduledElements)
+      while (scheduledElements != null) {
+        val e = scheduledElements.head
+        scheduledElements = scheduledElements.tail
+        if (Track == null || Track(e.uniqueID)) {
+          executionQueue.insert(e)
         } else {
-          firstScheduledElements.nextScheduledElement = firstPostponedElements
-          firstPostponedElements = firstScheduledElements
+          postponedElements = QList(e, postponedElements)
         }
-        firstScheduledElements = nextScheduledElement
       }
     }
 
@@ -476,8 +487,7 @@ abstract class PropagationStructure(val verbose: Boolean, val checker: Option[Ch
 
   /**this method is used by propagationComponents to schedule themselves for propagation. */
   def scheduleForPropagation(p: PropagationElement) {
-    p.nextScheduledElement = firstScheduledElements
-    firstScheduledElements = p
+    scheduledElements = QList(p, scheduledElements)
   }
 
   /**
@@ -650,11 +660,10 @@ abstract class StronglyConnectedComponent(val propagationElements: Iterable[Prop
     ""
   }
 
-  var firstScheduledElement: PropagationElement = null
+  var scheduledElements: QList[PropagationElement] = null
 
   def scheduleForPropagation(element: PropagationElement) {
-    element.nextScheduledElement = firstScheduledElement
-    firstScheduledElement = element
+    scheduledElements = QList(element, scheduledElements)
     super.scheduleForPropagation()
   }
 
@@ -687,10 +696,10 @@ class StronglyConnectedComponentNoSort(Elements: Iterable[PropagationElement],
                                        core: PropagationStructure, _UniqueID: Int) extends StronglyConnectedComponent(Elements, core, _UniqueID) {
 
   override def performPropagation() {
-    while (firstScheduledElement != null) {
-      val currentElement = firstScheduledElement
-      firstScheduledElement = firstScheduledElement.nextScheduledElement
-      currentElement.propagate()
+    while (scheduledElements != null) {
+      val x = scheduledElements.head
+      scheduledElements = scheduledElements.tail
+      x.propagate()
     }
   }
 
@@ -796,11 +805,12 @@ class StronglyConnectedComponentTopologicalSort(
     injectWaitingNewDependencies(autoSort)
     autoSort = true
 
-
-    while (firstScheduledElement!= null) {
-      h.insert(firstScheduledElement)
-      firstScheduledElement = firstScheduledElement.nextScheduledElement
+    var currentPos = scheduledElements
+    while (currentPos != null) {
+      h.insert(currentPos.head)
+      currentPos = currentPos.tail
     }
+    scheduledElements = null
 
     var maxposition: Int = -1
 
@@ -810,10 +820,12 @@ class StronglyConnectedComponentTopologicalSort(
       assert(x.position >= maxposition, "non monotonic propagation detected in SCC")
       assert({ maxposition = x.position; true })
 
-      while (firstScheduledElement!= null) {
-        h.insert(firstScheduledElement)
-        firstScheduledElement = firstScheduledElement.nextScheduledElement
+      var currentPos = scheduledElements
+      while (currentPos != null) {
+        h.insert(currentPos.head)
+        currentPos = currentPos.tail
       }
+      scheduledElements = null
     }
   }
 
@@ -881,9 +893,6 @@ trait BasicPropagationElement {
  * however, its listening elements might change, and a proper list must therefore be kept.
  */
 class PropagationElement extends BasicPropagationElement with DAGNode {
-
-
-  protected[propagation] var nextScheduledElement:PropagationElement = null
 
   def dropStaticGraph() {
     staticallyListenedElements = null

@@ -22,7 +22,7 @@
 package oscar.cbls.invariants.core.computation
 
 import oscar.cbls.invariants.core.algo.quick.QList
-import oscar.cbls.invariants.core.propagation.{Checker, PropagationElement}
+import oscar.cbls.invariants.core.propagation.Checker
 
 import scala.collection.immutable.SortedSet
 import scala.language.implicitConversions
@@ -69,24 +69,20 @@ abstract class ChangingSetValue(initialValue:SortedSet[Int], initialDomain:Domai
   /**The values that have bee impacted since last propagation was performed.
     * null if set was assigned
     */
-  private[this] var TouchedValues:QList[(Int,Boolean)] = null
+  private[this] var addedValues:QList[Int] = null
+  private[this] var removedValues:QList[Int] = null
   private[this] var nbTouched:Int = 0
-
-  @inline
-  private[this] def recordAsTouched(value:Int,add:Boolean){
-    if (nbTouched != -1){
-      TouchedValues = QList((value,add),TouchedValues)
-      nbTouched += 1
-      if(nbTouched > domainSizeDiv10) nbTouched = -1
-    }
-  }
 
   def insertValue(v:Int){
     if (!Value.contains(v)) insertValueNotPreviouslyIn(v)
   }
 
   def insertValueNotPreviouslyIn(v:Int){
-    recordAsTouched(v,true)
+    if (nbTouched != -1){
+      addedValues = QList(v,addedValues)
+      nbTouched += 1
+      if(nbTouched > domainSizeDiv10) nbTouched = -1
+    }
     Value +=v
     notifyChanged()
   }
@@ -97,9 +93,13 @@ abstract class ChangingSetValue(initialValue:SortedSet[Int], initialDomain:Domai
   }
 
   def deleteValuePreviouslyIn(v:Int){
-      recordAsTouched(v,false)
-      Value -=v
-      notifyChanged()
+    if (nbTouched != -1){
+      removedValues = QList(v,removedValues)
+      nbTouched += 1
+      if(nbTouched > domainSizeDiv10) nbTouched = -1
+    }
+    Value -=v
+    notifyChanged()
   }
 
   /**We suppose that the new value is not the same as the actual value.
@@ -107,7 +107,8 @@ abstract class ChangingSetValue(initialValue:SortedSet[Int], initialDomain:Domai
     * @param v the new value to set to the variable
     */
   def setValue(v:SortedSet[Int]){
-    TouchedValues = null
+    removedValues = null
+    addedValues = null
     nbTouched = -1
     Value = v
     notifyChanged()
@@ -127,22 +128,10 @@ abstract class ChangingSetValue(initialValue:SortedSet[Int], initialDomain:Domai
         //need to calll every listening one, so gradual approach required
         (Value.diff(OldValue),OldValue.diff(Value))
       }else {
-        var added:QList[Int] = null
-        var deleted:QList[Int] = null
-        while(TouchedValues != null){
-          val (v,inserted) = TouchedValues.head
-          TouchedValues = TouchedValues.tail
-          if(inserted){
-            added = QList(v,added)
-          }else{
-            deleted = QList(v,deleted)
-          }
-        }
-        (added,deleted)
+        ((this.addedValues,this.removedValues))
       }
 
-      val theOldValue = Value
-      OldValue=Value
+
 
       val dynListElements = getDynamicallyListeningElements
       val headPhantom = dynListElements.headPhantom
@@ -152,14 +141,15 @@ abstract class ChangingSetValue(initialValue:SortedSet[Int], initialDomain:Domai
         currentElement = currentElement.next
         val inv:SetNotificationTarget = e._1.asInstanceOf[SetNotificationTarget]
         assert({this.model.NotifiedInvariant=inv.asInstanceOf[Invariant]; true})
-        inv.notifySetChanges(this,e._2,addedValues,deletedValues,theOldValue,Value)
+        inv.notifySetChanges(this,e._2,addedValues,deletedValues,OldValue,Value)
         assert({this.model.NotifiedInvariant=null; true})
       }
       //puis, on fait une affectation en plus, pour garbage collecter l'ancienne structure de donnees.
       assert(OldValue.intersect(Value).size == Value.size, "mismatch: OLD" + OldValue + " New:" + Value)
-
+      OldValue=Value
     }
-    TouchedValues = null
+    this.addedValues = null
+    this.removedValues = null
     nbTouched = 0
   }
 
@@ -195,6 +185,15 @@ abstract class ChangingSetValue(initialValue:SortedSet[Int], initialDomain:Domai
   }
 }
 trait SetNotificationTarget {
+  /**
+   * this method will be called just before the variable "v" is actually updated.
+   * @param v
+   * @param d
+   * @param addedValues
+   * @param removedValues
+   * @param oldValue
+   * @param newValue
+   */
   def notifySetChanges(v: ChangingSetValue, d: Int, addedValues: Iterable[Int], removedValues: Iterable[Int], oldValue: Set[Int], newValue: Set[Int])
 }
 
@@ -212,9 +211,9 @@ object ChangingSetValue{
   * */
 class CBLSSetVar(givenModel: Store, initialValue: SortedSet[Int], initialDomain:Domain, n: String = null)
   extends ChangingSetValue(initialValue, initialDomain) with Variable{
-  
+
   require(givenModel != null)
-  
+
   model = givenModel
 
   override def restrictDomain(d:Domain) = super.restrictDomain(d)

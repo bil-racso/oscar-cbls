@@ -38,12 +38,13 @@ import scala.collection.immutable.{ SortedMap, SortedSet };
 case class Union(left: SetValue, right: SetValue)
   extends SetInvariant(left.value.union(right.value), left.min.min(right.min) to left.max.max(right.max))
 with SetNotificationTarget{
-  assert(left != right)
+  require(left != right, "left and right canot be the same instance for Union!")
 
   registerStaticAndDynamicDependency(left)
   registerStaticAndDynamicDependency(right)
   finishInitialization()
 
+  //TODO: not obvious at all, if left == right!!
   override def notifySetChanges(v: ChangingSetValue, d: Int, addedValues: Iterable[Int], removedValues: Iterable[Int], oldValue: Set[Int], newValue: Set[Int]): Unit = {
     for (added <- addedValues) notifyInsertOn(v: ChangingSetValue, added)
     for(deleted <- removedValues) notifyDeleteOn(v: ChangingSetValue, deleted)
@@ -147,11 +148,12 @@ case class Inter(left: SetValue, right: SetValue)
   extends SetInvariant(left.value.intersect(right.value),
     left.min.max(right.min) to left.max.min(right.max))
 with SetNotificationTarget{
-
+  require(left != right,"left and right cannot hte the same instance for Inter")
   registerStaticAndDynamicDependency(left)
   registerStaticAndDynamicDependency(right)
   finishInitialization()
 
+  //TODO: handle left == right!
   override def notifySetChanges(v: ChangingSetValue, d: Int, addedValues: Iterable[Int], removedValues: Iterable[Int], oldValue: Set[Int], newValue: Set[Int]): Unit = {
     for (added <- addedValues) notifyInsertOn(v: ChangingSetValue, added)
     for(deleted <- removedValues) notifyDeleteOn(v: ChangingSetValue, deleted)
@@ -243,11 +245,12 @@ with SetNotificationTarget{
 case class Diff(left: SetValue, right: SetValue)
   extends SetInvariant(left.value.diff(right.value), left.min to left.max)
 with SetNotificationTarget{
-
+  require(left != right,"left and right cannot he the same ionstance for Diff")
   registerStaticAndDynamicDependency(left)
   registerStaticAndDynamicDependency(right)
   finishInitialization()
 
+  //TODO: handle left == right
   override def notifySetChanges(v: ChangingSetValue, d: Int, addedValues: Iterable[Int], removedValues: Iterable[Int], oldValue: Set[Int], newValue: Set[Int]): Unit = {
     for (added <- addedValues) notifyInsertOn(v: ChangingSetValue, added)
     for(deleted <- removedValues) notifyDeleteOn(v: ChangingSetValue, deleted)
@@ -446,24 +449,19 @@ with SetNotificationTarget{
   }
 
   override def notifySetChanges(v: ChangingSetValue, d: Int, addedValues: Iterable[Int], removedValues: Iterable[Int], oldValue: Set[Int], newValue: Set[Int]): Unit = {
-    for (added <- addedValues) notifyInsertOn(v: ChangingSetValue, added)
-    for(deleted <- removedValues) notifyDeleteOn(v: ChangingSetValue, deleted)
-  }
-
-  def notifyInsertOn(v: ChangingSetValue, value: Int) {
     if (wasEmpty) {
-      this := value
-      wasEmpty = false
-    }
-  }
-
-  def notifyDeleteOn(v: ChangingSetValue, value: Int) {
-    if (value == this.newValue) {
-      if (v.value.isEmpty) {
+      if(newValue.nonEmpty){
+        wasEmpty = false
+        this := newValue.head
+      }
+    }else{
+      if(newValue.isEmpty){
         this := default
         wasEmpty = true
-      } else {
-        this := from.value.head
+      }else{
+        if (!newValue.contains(this.newValue)){
+          this := newValue.head
+        }
       }
     }
   }
@@ -527,24 +525,19 @@ case class TakeAnyToSet(from: SetValue)
   }
 
   override def notifySetChanges(v: ChangingSetValue, d: Int, addedValues: Iterable[Int], removedValues: Iterable[Int], oldValue: Set[Int], newValue: Set[Int]): Unit = {
-    for (added <- addedValues) notifyInsertOn(v: ChangingSetValue, added)
-    for(deleted <- removedValues) notifyDeleteOn(v: ChangingSetValue, deleted)
-  }
-
-  def notifyInsertOn(v: ChangingSetValue, value: Int) {
     if (wasEmpty) {
-      this :+= from.value.head
-      wasEmpty = false
-    }
-  }
-
-  def notifyDeleteOn(v: ChangingSetValue, value: Int) {
-    if (value == this.newValue.head) {
-      if (v.value.isEmpty) {
+      if(newValue.nonEmpty){
+        wasEmpty = false
+        this :+= newValue.head
+      }
+    }else{
+      if(newValue.isEmpty){
         this := SortedSet.empty
         wasEmpty = true
-      } else {
-        this := SortedSet(from.value.head)
+      }else{
+        if (!newValue.contains(this.newValue.head)){
+          this := SortedSet(newValue.head)
+        }
       }
     }
   }
