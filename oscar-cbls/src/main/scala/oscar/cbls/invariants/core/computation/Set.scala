@@ -21,6 +21,7 @@
 
 package oscar.cbls.invariants.core.computation
 
+import oscar.cbls.invariants.core.algo.quick.QList
 import oscar.cbls.invariants.core.propagation.{Checker, PropagationElement}
 
 import scala.collection.immutable.SortedSet
@@ -68,15 +69,15 @@ abstract class ChangingSetValue(initialValue:SortedSet[Int], initialDomain:Domai
   /**The values that have bee impacted since last propagation was performed.
     * null if set was assigned
     */
-  private[this] var TouchedValues:List[(Int,Boolean)] = List.empty
+  private[this] var TouchedValues:QList[(Int,Boolean)] = null
   private[this] var nbTouched:Int = 0
 
   @inline
   private[this] def recordAsTouched(value:Int,add:Boolean){
-    if (TouchedValues != null){
-      TouchedValues = (value,add) :: TouchedValues
+    if (nbTouched != -1){
+      TouchedValues = QList((value,add),TouchedValues)
       nbTouched += 1
-      if(nbTouched > domainSizeDiv10) TouchedValues = null
+      if(nbTouched > domainSizeDiv10) nbTouched = -1
     }
   }
 
@@ -107,30 +108,34 @@ abstract class ChangingSetValue(initialValue:SortedSet[Int], initialDomain:Domai
     */
   def setValue(v:SortedSet[Int]){
     TouchedValues = null
+    nbTouched = -1
     Value = v
     notifyChanged()
   }
 
   override def performPropagation(){performSetPropagation()}
 
+  //TODO: il faut modifier le paradigme: on notifie AVANT de changer la valeur, ainsi on est correct si il y a multiple listening de la même variable par un invariant.
+
+  @inline
   final protected def performSetPropagation(){
     if(getDynamicallyListeningElements.isEmpty){
       //no need to do it gradually
       OldValue=Value
     }else{
-      val (addedValues,deletedValues) = if (TouchedValues == null) {
+      val (addedValues,deletedValues):(Iterable[Int],Iterable[Int]) = if (nbTouched == -1) {
         //need to calll every listening one, so gradual approach required
         (Value.diff(OldValue),OldValue.diff(Value))
       }else {
-        var added = List.empty[Int]
-        var deleted = List.empty[Int]
-        while(TouchedValues.nonEmpty){
+        var added:QList[Int] = null
+        var deleted:QList[Int] = null
+        while(TouchedValues != null){
           val (v,inserted) = TouchedValues.head
           TouchedValues = TouchedValues.tail
           if(inserted){
-            added = v :: added
+            added = QList(v,added)
           }else{
-            deleted = v :: deleted
+            deleted = QList(v,deleted)
           }
         }
         (added,deleted)
@@ -154,7 +159,7 @@ abstract class ChangingSetValue(initialValue:SortedSet[Int], initialDomain:Domai
       assert(OldValue.intersect(Value).size == Value.size, "mismatch: OLD" + OldValue + " New:" + Value)
 
     }
-    TouchedValues = List.empty
+    TouchedValues = null
     nbTouched = 0
   }
 
