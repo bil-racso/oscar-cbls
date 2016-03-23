@@ -60,6 +60,7 @@ case class OnePointMove(nodesPrecedingNodesToMove: () => Iterable[Int],
     val relevantNeighborsNow = relevantNeighbors()
 
     val beforeMovedPointsIt = iterationSchemeOnZone.iterator
+    println(nodesPrecedingNodesToMove().toList)
     while (beforeMovedPointsIt.hasNext) {
       beforeMovedPoint = beforeMovedPointsIt.next()
       if (vrp.isRouted(beforeMovedPoint)) {

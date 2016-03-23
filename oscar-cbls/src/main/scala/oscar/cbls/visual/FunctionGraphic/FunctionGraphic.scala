@@ -100,7 +100,6 @@ abstract class FunctionGraphic() extends VisualDrawing(false,false) with StopWat
 
   val timer:Timer = new Timer(1000,this)
 
-
   setLayout(new BorderLayout())
 
   //We remove the unwanted listener inherited from VisualDrawing
@@ -134,7 +133,7 @@ abstract class FunctionGraphic() extends VisualDrawing(false,false) with StopWat
   * @author fabian.germeau@student.vinci.be
   */
 
-class ObjFunctionGraphic(width:Int,height:Int) extends FunctionGraphic(){
+class ObjFunctionGraphic() extends FunctionGraphic(){
 
   //A list buffer that contains all the bests objective values encountered during the search
   val bestValues:ListBuffer[Int] = new ListBuffer[Int]
@@ -191,6 +190,7 @@ class ObjFunctionGraphic(width:Int,height:Int) extends FunctionGraphic(){
     maxXValueDisplayed = time
     minYValueDisplayed = best()
     maxYValueDisplayed = yValues.max
+
     if(!timer.isRunning)
       timer.start
   }

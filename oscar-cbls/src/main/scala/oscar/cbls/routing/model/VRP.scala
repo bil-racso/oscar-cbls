@@ -26,8 +26,8 @@ package oscar.cbls.routing.model
 import oscar.cbls.constraints.lib.basic.{NE, EQ, LE}
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.lib.logic._
-import oscar.cbls.invariants.lib.numeric.Sum
-import oscar.cbls.invariants.lib.set.Cardinality
+import oscar.cbls.invariants.lib.numeric.{Sum2, Sum}
+import oscar.cbls.invariants.lib.set.{SetSum, Cardinality}
 import oscar.cbls.modeling.Algebra._
 import oscar.cbls.search.algo.{LazyQuicksort, KSmallest}
 
@@ -165,7 +165,7 @@ class VRP(val N: Int, val V: Int, val m: Store) {
     additionalStrings = a :: additionalStrings
   }
 
-  private var nodeInformations:Array[String] = new Array[String](N)
+  private val nodeInformations:Array[String] = Array.tabulate(N)(n => "")
   def setNodeInformation(index:Int, info:String): Unit ={
     assert(index < nodeInformations.length,"SetNodeInformation index to high")
     nodeInformations(index) = info
@@ -679,45 +679,52 @@ trait Predecessors extends VRP {
 /**
   * This trait maintains the current carrying capacity of each vehicle of the VRP and all the useful related information
   */
-trait VehicleWithCapacity extends  VRP with PickupAndDeliveryCustomers{
+trait VehicleWithCapacity extends VRP with PickupAndDeliveryCustomers{
+
+  /**
+    * @return the load of the specified vehicle at the specified point
+    */
+  val currentLoad = (n:Int) => {
+    var current = routeNr(n).value
+    var currentValue = 0
+    if(routeNr(n).value == V)
+      0
+    else {
+      while (next(current).value != n) {
+        current = next(current).value
+        currentValue += getLoadValue(current).value
+      }
+      currentValue
+    }
+  }
+
+  val defaultArrivalLoadValue = new CBLSIntConst(0)
 
   /**
     * The variable that maintains the current cargo of each vehicle
     */
-  private val vehicleCurrentLoad:Array[CBLSIntVar] = Array.tabulate(V)(v => CBLSIntVar(m, getCurrentLoad(v), name = "current load of vehicle " + v))
+  //private val vehicleCurrentLoad:Array[CBLSIntVar] = Array.tabulate(V)(v => )
 
   /**
     * The variable that maintains the maximum cargo of each vehicle
     */
-  private val vehicleMaxCapacity:Array[CBLSIntVar] = Array.tabulate(V) (v => CBLSIntVar(m, 0, FullRange, "maximum capacity of vehicle " + v))
+  val vehicleMaxCapacity:Array[CBLSIntVar] = Array.tabulate(V) (v => CBLSIntVar(m, 0, 0 to N, "maximum capacity of vehicle " + v))
 
-  /**
-    * The variable which maintains the set of empty vehicle
-    */
-  val emptyVehicles = Filter(vehicleCurrentLoad, _==0)
+  val arrivalLoadValue = Array.tabulate(N){ (n:Int) => CBLSIntVar(m, 0, 0 to N, "Arrival load at node " + n) }
+  var leaveLoadValue:Array[IntValue] = null
 
-  /**
-    * The variable which maintains the set of full vehicle
-    */
-  val fullVehicles:Array[Int] = {
-    var temp:scala.List[Int] = Nil
-    for(i <- vehicleCurrentLoad.indices)
-      if(vehicleCurrentLoad(i) == vehicleMaxCapacity(i))temp = i :: temp
-    temp.toArray
-  }
-
-  /**
-    * The variable that maintains the sum of the cargo of all vehicle
-    */
-  val totalCargo = Sum(vehicleCurrentLoad,emptyVehicles)
-
-  def getCurrentLoad(v:Int): Int ={
-    var current = next(v).value
-    var currentValue = 0
-    while (current != v) {
-       currentValue = 0
+  def setArrivalLeaveLoadValue(): Unit ={
+    leaveLoadValue = Array.tabulate(N+1) {
+      (n :Int) =>
+        if(n == N || n < V)
+          defaultArrivalLoadValue
+        else{
+          arrivalLoadValue(n) + getLoadValue(n)
+        }
     }
-    0
+    for(n <- 0 until N){
+      arrivalLoadValue(n) <== leaveLoadValue.element(preds(n))
+    }
   }
 
   /**
@@ -740,24 +747,9 @@ trait VehicleWithCapacity extends  VRP with PickupAndDeliveryCustomers{
       setVehicleMaxCargo(max,v)
   }
 
-  /**
-    * Allow client to set the current cargo value of a vehicle
-    *
-    * @param c the cargo value
-    * @param v the vehicle
-    */
-  def setVehicleCargo(c:Int, v:Int): Unit ={
-    vehicleCurrentLoad(v) := c
-  }
-
-  /**
-    * Allow client to set a current cargo value for all the vehicle
-    *
-    * @param c the cargo value
-    */
-  def setVehiclesCargo(c:Int): Unit ={
-    for(v <- vehicleCurrentLoad.indices)
-      setVehicleCargo(c,v)
+  def setVehiclesCargoStrongConstraint(): Unit ={
+    for(n <- arrivalLoadValue.indices)
+      strongConstraints.post(LE(arrivalLoadValue(n),vehicleMaxCapacity(0)))
   }
 }
 
@@ -783,13 +775,12 @@ trait PickupAndDeliveryCustomers extends VRP with StrongConstraints with Positio
     *
     * @param p the pickup point
     * @param d the delivery point
-    * @param v the load value
     */
-  private def addPickupDeliveryCouple(p:Int, d:Int, v:Int): Unit ={
-    pickupNodes += CBLSIntConst(p) -> (CBLSIntConst(d),CBLSIntConst(v))
-    setNodeInformation(p,"Pickup node n°" + p + "\n" + "Load value : " + v + "")
-    deliveryNodes += CBLSIntConst(d) -> (CBLSIntConst(p),CBLSIntConst(-v))
-    setNodeInformation(d,"Delivery node n°" + d + "\n" + "Load value : " + -v + "")
+  private def addPickupDeliveryCouple(p:Int, d:Int): Unit ={
+    pickupNodes += CBLSIntConst(p) -> (CBLSIntConst(d),1)
+    setNodeInformation(p,getNodeInformation(p) + "Pickup node n°" + p + "\n" + "Load value : 1")
+    deliveryNodes += CBLSIntConst(d) -> (CBLSIntConst(p),-1)
+    setNodeInformation(d,getNodeInformation(d) + "Delivery node n°" + d + "\n" + "Load value : -1")
     strongConstraints.post(LE(positionInRoute(p),positionInRoute(d)))
     strongConstraints.post(EQ(routeNr(p),routeNr(d)))
   }
@@ -803,8 +794,8 @@ trait PickupAndDeliveryCustomers extends VRP with StrongConstraints with Positio
     * @param numberOfCouple the number of couple to add. Default = the number of nodes divide by 2
     */
   def addRandomPickupDeliveryCouples(numberOfCouple:Int = (N-V)/2): Unit ={
-    var tempNodes = nodes.toList.drop(5)
-    Random.shuffle(tempNodes)
+    var tempNodes = nodes.toList.drop(V)
+    tempNodes = Random.shuffle(tempNodes)
     for(i <- 0 until numberOfCouple){
       val p = tempNodes.head
       tempNodes = tempNodes.tail
@@ -812,9 +803,7 @@ trait PickupAndDeliveryCustomers extends VRP with StrongConstraints with Positio
       val d = tempNodes.head
       tempNodes = tempNodes.tail
 
-      val v = Math.ceil(Math.random()*3)
-
-      addPickupDeliveryCouple(p,d,v.toInt)
+      addPickupDeliveryCouple(p,d)
     }
   }
 
@@ -826,14 +815,14 @@ trait PickupAndDeliveryCustomers extends VRP with StrongConstraints with Positio
     * @param pickup the pickup points array
     * @param delivery the delivery points array
     */
-  def addPickupDeliveryCouples(pickup:Array[Int],delivery:Array[Int],value:Array[Int]): Unit ={
-    assert(pickup.length == delivery.length && pickup.length == value.length,
+  def addPickupDeliveryCouples(pickup:Array[Int],delivery:Array[Int]): Unit ={
+    assert(pickup.length == delivery.length,
       "The pickup array and the delivery array must have the same length.")
     assert(!pickup.exists(_ >= N) || !delivery.exists(_ >= N),
       "The pickup and the delivery array may only contain values between 0 and the number of nodes")
 
     for(i <- pickup.indices){
-      addPickupDeliveryCouple(pickup(i),delivery(i),value(i))
+      addPickupDeliveryCouple(pickup(i),delivery(i))
     }
   }
 
@@ -867,15 +856,17 @@ trait PickupAndDeliveryCustomers extends VRP with StrongConstraints with Positio
     * @param n the index of a node
     * @return the load value of the node
     */
-  def getLoadValue(n:Int): Int ={
+  def getLoadValue(n:Int): CBLSIntConst ={
     if(pickupNodes.get(n).isEmpty) {
       if (deliveryNodes.get(n).isEmpty) {
         assert(false, "The node can't be found")
         0
-      }else
+      }else {
         deliveryNodes.get(n).get._2.value
-    }else
+      }
+    }else{
       pickupNodes.get(n).get._2.value
+    }
   }
 
   def getPickups: Iterable[Int] = pickupNodes.keys.foldLeft(List[Int]())((a,b) => b.value::a)
@@ -945,8 +936,15 @@ trait PickupAndDeliveryCustomers extends VRP with StrongConstraints with Positio
       var completeSegments: List[(Int, Int)] = Nil
       for (key1 <- sortedKeys.indices) {
         completeSegments = (sortedKeys(key1), getRelatedDelivery(sortedKeys(key1))) :: completeSegments
-        for (key2 <- 0 until key1) {
-          completeSegments = (sortedKeys(key2), getRelatedDelivery(sortedKeys(key1))) :: completeSegments
+        var tempKey = key1-1
+        var linked = true
+        while(linked && tempKey != -1){
+          if(preds(tempKey+1).value != getRelatedDelivery(sortedKeys(tempKey)))
+            linked = false
+          else {
+            completeSegments = (sortedKeys(tempKey), getRelatedDelivery(sortedKeys(key1))) :: completeSegments
+            tempKey -= 1
+          }
         }
       }
       completeSegments

@@ -18,7 +18,9 @@ package oscar.examples.cbls.routing.visual.MatrixMap
   */
 
 import java.awt.Color
+import java.awt.event.{MouseMotionListener, MouseEvent, MouseListener}
 import java.awt.geom.Line2D.Double
+import javax.swing.SwingUtilities
 
 import oscar.cbls.routing.model.{PickupAndDeliveryCustomers, VRP}
 import oscar.examples.cbls.routing.visual.ColorGenerator
@@ -39,7 +41,16 @@ abstract class MatrixMap extends VisualDrawing(false,false){
 
   //We remove the unwanted listener inherited from VisualDrawing
   removeMouseListener(getMouseListeners.head)
-  removeMouseMotionListener(getMouseMotionListeners.head)
+  addMouseListener(new MouseListener {override def mouseExited(e: MouseEvent): Unit = {}
+    override def mouseClicked(e: MouseEvent): Unit = {
+      if (SwingUtilities.isLeftMouseButton(e)) {
+        shapes.foreach(_.clicked(e.getPoint()))
+      }
+    }
+    override def mouseEntered(e: MouseEvent): Unit = {}
+    override def mousePressed(e: MouseEvent): Unit = {}
+    override def mouseReleased(e: MouseEvent): Unit = {}
+  })
 
   def drawPoints()
 

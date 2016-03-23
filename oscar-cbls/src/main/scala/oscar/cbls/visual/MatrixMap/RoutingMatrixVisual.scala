@@ -18,7 +18,7 @@ package oscar.examples.cbls.routing.visual.MatrixMap
   */
 
 import java.awt.BorderLayout
-import javax.swing.JInternalFrame
+import javax.swing.{JPanel, JInternalFrame}
 
 import oscar.cbls.routing.model.{PickupAndDeliveryCustomers, VRP}
 
@@ -29,7 +29,7 @@ import scala.swing._
   */
 
 
-class RoutingMatrixVisual(title:String = "Routing map", pickupAndDeliveryPoints: Boolean = false) extends JInternalFrame(title){
+class RoutingMatrixVisual(title:String = "Routing map", pickupAndDeliveryPoints: Boolean = false) extends JPanel{
   setLayout(new BorderLayout())
 
   val routingMatrix = {

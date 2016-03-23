@@ -1,5 +1,8 @@
 package oscar.examples.cbls.pdptw
 
+import java.awt.Toolkit
+import javax.swing.JFrame
+
 import oscar.cbls.invariants.core.computation.Store
 import oscar.cbls.invariants.lib.numeric.{Abs, Sum}
 import oscar.cbls.routing.model._
@@ -8,7 +11,7 @@ import oscar.cbls.search.StopWatch
 import oscar.cbls.search.combinators._
 import oscar.examples.cbls.routing.RoutingMatrixGenerator
 import oscar.examples.cbls.routing.visual.ColorGenerator
-import oscar.examples.cbls.routing.visual.MatrixMap.{PickupAndDeliveryPoints, RoutingMatrixVisualWithAttribute, RoutingMatrixVisual}
+import oscar.examples.cbls.routing.visual.MatrixMap.{PickupAndDeliveryMatrixVisualWithAttribute, PickupAndDeliveryPoints, RoutingMatrixVisualWithAttribute, RoutingMatrixVisual}
 import oscar.visual.VisualFrame
 
 /**
@@ -44,7 +47,7 @@ class MyPDPTWVRP(n:Int, v:Int, model:Store, distanceMatrix: Array[Array[Int]],un
     with PenaltyForEmptyRouteAsObjectiveTerm
     with hopDistancePerVehicle
     with VehicleWithCapacity
-    with PickupAndDeliveryCustomers{
+    with PickupAndDeliveryCustomersWithTimeWindow{
 
   installCostMatrix(distanceMatrix)
   setUnroutedPenaltyWeight(unroutedPenalty)
@@ -54,43 +57,49 @@ class MyPDPTWVRP(n:Int, v:Int, model:Store, distanceMatrix: Array[Array[Int]],un
   println("end compute closest, install matrix")
   installHopDistancePerVehicle()
   println("end install matrix, posting constraints")
-  setVehiclesMaxCargo(4)
-  setVehiclesCargo(0)
   addRandomPickupDeliveryCouples()
+  setArrivalLeaveLoadValue()
+  setVehiclesMaxCargo(4)
+  setVehiclesCargoStrongConstraint()
 
   //evenly spreading the travel among vehicles
   val averageDistanceOnAllVehicles = overallDistance.value / V
   val spread = Sum(hopDistancePerVehicle.map(h => Abs(h.value - averageDistanceOnAllVehicles)))
   addObjectiveTerm(spread)
-  addObjectiveTerm(unroutedPenalty)
+  addObjectiveTerm(emptyRoutePenalty)
 
   println("vrp done")
+  println(strongConstraints)
 }
 
 object pdptwTest extends App with StopWatch {
 
   this.startWatch()
 
-  val n = 255
-  val v = 5
+  val n = 65
+  val v = 15
 
   println("PDPTWTest(n:" + n + " v:" + v + ")")
 
-  val (distanceMatrix,positions) = RoutingMatrixGenerator(n,10000)
+  val mapSize = 10000
 
+  val (distanceMatrix,positions) = RoutingMatrixGenerator(n,mapSize)
   println("compozed matrix " + getWatch + "ms")
 
-  val model = new Store()
 
-  val vrp = new MyPDPTWVRP(n,v,model,distanceMatrix,100000)
+  val model = new Store(noCycle = false)
+
+  val vrp = new MyPDPTWVRP(n,v,model,distanceMatrix,mapSize)
 
   model.close()
 
 
-
-  val f = new VisualFrame("PDPTWTest - Routing Map")
-  val rm = new RoutingMatrixVisualWithAttribute("Routing Map",vrp,10000,positions.toList,ColorGenerator.generateRandomColors(5),pickupAndDeliveryPoints = true)
-  f.addFrame(rm)
+  val f = new JFrame("PDPTWTest - Routing Map")
+  f.setSize(Toolkit.getDefaultToolkit.getScreenSize.getWidth.toInt,(11*Toolkit.getDefaultToolkit().getScreenSize().getHeight/12).toInt)
+  val rm = new PickupAndDeliveryMatrixVisualWithAttribute("Routing Map",vrp,mapSize,positions.toList,ColorGenerator.generateRandomColors(v),dimension = f.getSize)
+  f.add(rm)
+  f.pack()
+  f.setVisible(true)
 
   println("closed model " + getWatch + "ms")
   val insertPointRoutedFirst = Profile(InsertPointRoutedFirst(
@@ -140,27 +149,22 @@ object pdptwTest extends App with StopWatch {
   val insertCouple = Profile(AndThen(
     InsertPointUnroutedFirst(
     unroutedNodesToInsert = () => vrp.getUnroutedPickups,
-    relevantNeighbors = () => vrp.kNearest(10,vrp.isRouted),
+    relevantNeighbors = () => vrp.kNearest(n,vrp.isADepot),
     vrp = vrp),
     InsertPointUnroutedFirst(
     unroutedNodesToInsert = () => vrp.getUnroutedDeliverys,
-    relevantNeighbors = () => vrp.kNearest(10,vrp.isRouted),
-    vrp = vrp)))
+    relevantNeighbors = () => vrp.kNearest(n,vrp.isRouted),
+    vrp = vrp, best = true)))
 
   val oneCoupleMove = Profile(DynAndThen(OnePointMove(
     nodesPrecedingNodesToMove = () => vrp.getRoutedPickupsPredecessors,
-    relevantNeighbors= () => vrp.kNearest(10),
+    relevantNeighbors= () => vrp.kNearest(1000),
     vrp = vrp),
     (onePointMove:OnePointMoveMove) => OnePointMove(
     nodesPrecedingNodesToMove = () => {
-      /*println("Routed Pickups : " + vrp.getRoutedPickups.toList)
-      println("Routed Pickups Predecessors : " + vrp.getRoutedPickupsPredecessors.toList)
-      println("Moved Point : " + onePointMove.movedPoint)
-      println("Impacted points : " + onePointMove.impactedPoints.toList.toString)
-      println("Index of moved point : " + vrp.getRoutedPickups.toList.indexOf(onePointMove.movedPoint))*/
       List(vrp.preds(vrp.getRelatedDelivery(onePointMove.movedPoint)).value)
     },
-    relevantNeighbors= () => vrp.kNearest(10),
+    relevantNeighbors= () => vrp.kNearest(1000),
     vrp = vrp)))
 
   val onePointMovePD = Profile(new RoundRobin(List(OnePointMove(
@@ -173,11 +177,13 @@ object pdptwTest extends App with StopWatch {
 
   val segExchangePD = Profile(SegmentExchangePickupAndDelivery(vrp = vrp))
 
-  val search = new RoundRobin(List(insertCouple,oneCoupleMove),10) exhaust
-    new BestSlopeFirst(List(onePointMovePD, threeOpt, segExchangePD), refresh = n / 2) showObjectiveFunction
+  val orOpt = Profile(OrOpt(vrp = vrp))
+
+  val search = new RoundRobin(List(insertCouple,oneCoupleMove, orOpt),1) exhaust
+    new BestSlopeFirst(List(onePointMovePD, threeOpt, orOpt, segExchangePD, oneCoupleMove), refresh = n / 2) showObjectiveFunction
     vrp.getObjective() afterMove {
     rm.drawRoutes()
-    println(vrp.strongConstraints.violatedConstraints)
+    println(vrp.objectiveFunction)
   } // exhaust onePointMove exhaust segExchange//threeOpt //(new BestSlopeFirst(List(onePointMove,twoOpt,threeOpt)))
 
   search.verbose = 1
@@ -185,8 +191,7 @@ object pdptwTest extends App with StopWatch {
   //segExchange.verbose = 3
 
   def launchSearch(): Unit ={
-    println(vrp.strongConstraints.violatedConstraints)
-    search.verboseWithExtraInfo(1,vrp.toString)
+    //search.verboseWithExtraInfo(1,vrp.toString)
     search.doAllMoves(_ > 10*n, vrp.getObjective())
 
     println("total time " + getWatch + "ms or  " + getWatchString)

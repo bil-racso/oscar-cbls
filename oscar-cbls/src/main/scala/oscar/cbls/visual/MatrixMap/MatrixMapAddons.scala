@@ -3,7 +3,7 @@ package oscar.examples.cbls.routing.visual.MatrixMap
 import java.awt.Color
 import javax.swing.JOptionPane
 
-import oscar.cbls.routing.model.{VRP, PickupAndDeliveryCustomers}
+import oscar.cbls.routing.model.{VehicleWithCapacity, VRP, PickupAndDeliveryCustomers}
 import oscar.visual.shapes.VisualCircle
 
 /**
@@ -11,7 +11,7 @@ import oscar.visual.shapes.VisualCircle
   */
 trait PickupAndDeliveryPoints extends  MatrixMap{
 
-  var pdptwVRP:VRP with PickupAndDeliveryCustomers = null
+  var pdptwVRP:VRP with PickupAndDeliveryCustomers with VehicleWithCapacity = null
   var relatedNodeCircle:VisualCircle = null
 
   override def drawPoints(): Unit ={
@@ -34,14 +34,14 @@ trait PickupAndDeliveryPoints extends  MatrixMap{
 
   override def setVRP(vrp:VRP): Unit ={
     vrp match{
-      case pdptwVRP:VRP with PickupAndDeliveryCustomers => this.pdptwVRP = pdptwVRP
+      case pdptwVRP:VRP with PickupAndDeliveryCustomers with VehicleWithCapacity => this.pdptwVRP = pdptwVRP
       case _ => assert(false,"If you use this trait, the vrp set has to be instantiate with the PickupAndDeliveryCustomers trait")
     }
     super.setVRP(vrp)
   }
 
   private def getPointInformation(index:Int): String ={
-    vrp.getNodeInformation(index)
+    vrp.getNodeInformation(index) + "\n " + pdptwVRP.currentLoad(index)
   }
 
   private def onClickAction(index:Int): Unit ={
