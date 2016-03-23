@@ -101,8 +101,9 @@ abstract class ChangingIntValue(initialValue:Int, initialDomain:Domain)
 
   override def value: Int = {
     if (model == null) return Value
-    if (definingInvariant == null && !model.propagating) return Value
-    model.propagate(this)
+    val propagating = model.propagating
+    if (definingInvariant == null && !propagating) return Value
+    if(!propagating) model.propagate(this)
     OldValue
   }
 
@@ -117,7 +118,7 @@ abstract class ChangingIntValue(initialValue:Int, initialDomain:Domain)
   final protected def performIntPropagation(){
     if(OldValue!=Value){
       val old=OldValue
-      OldValue=Value
+      OldValue=Value  //TODO: the change should be made AFTER the notification
 
       val dynListElements = getDynamicallyListeningElements
       val headPhantom = dynListElements.headPhantom
@@ -130,13 +131,6 @@ abstract class ChangingIntValue(initialValue:Int, initialDomain:Domain)
         inv.notifyIntChanged(this,e._2,old,Value)
         assert({this.model.NotifiedInvariant=null; true})
       }
-      /*
-      for (e:((PropagationElement,Any)) <- getDynamicallyListeningElements){
-      val inv:Invariant = e._1.asInstanceOf[Invariant]
-        assert({this.model.NotifiedInvariant=inv; true})
-        inv.notifyIntChangedAny(this,e._2,old,Value)
-        assert({this.model.NotifiedInvariant=null; true})
-      }*/
     }
   }
 
