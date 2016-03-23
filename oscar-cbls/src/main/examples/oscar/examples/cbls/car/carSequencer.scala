@@ -16,7 +16,7 @@ import scala.language.postfixOps
  */
 object carSequencer  extends CBLSModel with App {
 
-  val orderedCarsByType:SortedMap[Int,Int] = SortedMap(0 -> 100, 1 -> 60, 2 -> 110 , 3 -> 120, 4 -> 40, 5 -> 30)
+  val orderedCarsByType:SortedMap[Int,Int] = SortedMap(0 -> 90, 1 -> 60, 2 -> 110 , 3 -> 120, 4 -> 40, 5 -> 30)
   val carTypes = 0 to 5
 
   println("carSequencing")
@@ -121,15 +121,7 @@ object carSequencer  extends CBLSModel with App {
 
   val search4 = Profile(WideningFlipNeighborhood(carSequence))
 
-  val search5 =    (Profile(mostViolatedSwap random swap)
-  orElse (Profile(shiftNeighbor))
-  orElse (shuffleNeighborhood(carSequence, mostViolatedCars, name = "shuffleMostViolatedCars") maxMoves (10))
-  orElse (shuffleNeighborhood(carSequence, violatedCars, name = "shuffleAllViolatedCars") maxMoves (10))
-  orElse (shuffleNeighborhood(carSequence, name = "globalShuffle") maxMoves (10))
-  maxMoves nbCars *2 withoutImprovementOver obj
-    saveBestAndRestoreOnExhaust obj) afterMove(checkGrouped)
-
-  val search = search5
+  val search = search3
 
   search.verbose = 1
   search.paddingLength = 150
