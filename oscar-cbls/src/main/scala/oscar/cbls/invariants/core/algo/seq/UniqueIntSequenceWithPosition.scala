@@ -44,6 +44,12 @@ object TestUpdateableFunction extends App{
 
   println("init:" + fn)
 
+  fn.updateFunction(6, 20, new LinearPositionTransform(-3,true))
+  println(fn)
+  println
+  println
+
+
   fn.updateFunction(7, 14, new LinearPositionTransform(3,false))
   println(fn)
   println
@@ -54,12 +60,19 @@ object TestUpdateableFunction extends App{
   println
   println
 
+
+
   fn.updateFunction(7, 14, new LinearPositionTransform(-3,false))
   println(fn)
   println
   println
-}
 
+  fn.updateFunction(6, 20, new LinearPositionTransform(-3,true))
+  println(fn)
+  println
+  println
+
+}
 
 class UpdateableFunction() {
   //external position => internal position
@@ -71,17 +84,15 @@ class UpdateableFunction() {
       (transformation.getSmallestBigger(Int.MinValue) match{
       case None => "identity"
       case Some((_,minPivot)) => minPivot.toStringAll
-    })+ "\n" + transformation
+    })
   }
 
   def updateFunction(correctedFrom: Int, correctedTo: Int, correctedToUncorrectedCorrection: LinearPositionTransform): Unit = {
-    println("updateFunction(from" + correctedFrom + ", to:" + correctedTo + ", fct:" + correctedToUncorrectedCorrection + ")")
+    println("updateFunction(from:" + correctedFrom + ", to:" + correctedTo + ", fct:" + correctedToUncorrectedCorrection + ")")
     transformation.getBiggestLower(correctedFrom) match {
       case Some((_,pivot)) if (pivot.value == correctedFrom) =>
-        println("exists pivot at update start")
         updateFromPivot(pivot, correctedTo, correctedToUncorrectedCorrection)
       case Some((_,pivot)) =>
-        println("exists pivot below update start, add intermediary pivot")
         //there is a pivot below the point
       //need to add an intermediary pivot, ans relink to this one
         val next = pivot.next
@@ -91,16 +102,13 @@ class UpdateableFunction() {
         newPivot.setNextAndRelink(next)
         updateFromPivot(newPivot, correctedTo, correctedToUncorrectedCorrection)
       case None =>
-        println("no pivot below or at update start")
         transformation.getSmallestBigger(correctedFrom) match{
           case None =>
-            println("no pivot at all, inert, and start inserting")
             //need to add a first pivot from this point
             val newPivot = new Pivot(correctedFrom, null, null, LinearPositionTransform.identity)
             transformation = transformation.insert(correctedFrom, newPivot)
             updateFromPivot(newPivot, correctedTo, correctedToUncorrectedCorrection)
           case Some((_,next)) =>
-            println("some pivot, above, insert starting one, and relink")
             val newPivot = new Pivot(correctedFrom, null, null, LinearPositionTransform.identity)
             transformation = transformation.insert(correctedFrom, newPivot)
             newPivot.setNextAndRelink(next)
@@ -117,44 +125,49 @@ class UpdateableFunction() {
   }
 
   def updateFromPivot(pivot: Pivot, correctedTo: Int, correctedToUncorrectedCorrection: LinearPositionTransform) {
-    println("updateFromPivot(" + pivot + ", to:" + correctedTo + ", fct:" + correctedToUncorrectedCorrection + ")")
-
     val next = pivot.next
     val prev = pivot.prev
     val previousCorrection = pivot.correction
     val newPrev = if (pivot.update(correctedToUncorrectedCorrection)) {
       //should be removed
       pivot.removeFromDLL()
-      println("removing pivot" + pivot)
       transformation = transformation.remove(pivot.value)
       prev
     } else {
       pivot
     }
-    if (pivot.value == correctedTo) return //finished the correction //TODO: exit condition seems wrong
+    if (pivot.value == correctedTo+1) return //finished the correction //TODO: exit condition seems wrong
     if (next == null) {
-      println("next = null, need to add a finishing pivot")
       //need to add a finishing pivot, to finish from correction from before
       if (newPrev == null) return
       //We have an open correction, and need to close it with the previous value previousCorrection
      //TODO: handle one more case of identity function properly
-      val newPivot = new Pivot(correctedTo, null, null, previousCorrection)
-      transformation = transformation.insert(correctedTo, newPivot)
+      val newPivot = new Pivot(correctedTo+1, null, null, previousCorrection)
+      transformation = transformation.insert(correctedTo+1, newPivot)
       newPrev.setNextAndRelink(newPivot)
       return
-    } else if (next.value > correctedTo) {
-      if (newPrev == null) return
+    } else if (next.value > correctedTo +1) {
       //need to add a new intermediary pivot
+      if (newPrev == null) return
       if (newPrev.correction.equals(previousCorrection)) return
-      val newPivot = new Pivot(correctedTo, null, null, previousCorrection)
-      transformation = transformation.insert(correctedTo, newPivot)
+      val newPivot = new Pivot(correctedTo+1, null, null, previousCorrection)
+      transformation = transformation.insert(correctedTo+1, newPivot)
       newPrev.setNextAndRelink(newPivot)
       newPivot.setNextAndRelink(next)
       return
-    } else {
+    } else if (next.value < correctedTo+1){
       //there is a next such that next.value is <= correctedTo
       //so recurse to it
       updateFromPivot(next, correctedTo, correctedToUncorrectedCorrection)
+    }else{
+      //check that nexnextt pivot should not be removed, actually
+
+      if((newPrev == null && next.correction.isIdentity)
+        || next.correction.equals(newPrev.correction)){
+        //next can be removed
+        next.removeFromDLL()
+        transformation = transformation.remove(next.value)
+      }
     }
   }
 }
