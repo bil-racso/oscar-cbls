@@ -74,6 +74,7 @@ abstract class ChangingSetValue(initialValue:SortedSet[Int], initialDomain:Domai
   private[this] var nbTouched:Int = 0
 
   def insertValue(v:Int){
+    //TODO: O(1) contains
     if (!Value.contains(v)) insertValueNotPreviouslyIn(v)
   }
 
@@ -87,8 +88,8 @@ abstract class ChangingSetValue(initialValue:SortedSet[Int], initialDomain:Domai
     notifyChanged()
   }
 
-
   def deleteValue(v:Int){
+    //TODO: O(1) contains
     if (Value.contains(v)) deleteValuePreviouslyIn(v)
   }
 
@@ -116,8 +117,6 @@ abstract class ChangingSetValue(initialValue:SortedSet[Int], initialDomain:Domai
 
   override def performPropagation(){performSetPropagation()}
 
-  //TODO: il faut modifier le paradigme: on notifie AVANT de changer la valeur, ainsi on est correct si il y a multiple listening de la même variable par un invariant.
-
   @inline
   final protected def performSetPropagation(){
     if(getDynamicallyListeningElements.isEmpty){
@@ -126,12 +125,12 @@ abstract class ChangingSetValue(initialValue:SortedSet[Int], initialDomain:Domai
     }else{
       val (addedValues,deletedValues):(Iterable[Int],Iterable[Int]) = if (nbTouched == -1) {
         //need to calll every listening one, so gradual approach required
+        //TODO: this delta is not always needed, make it lazy
         (Value.diff(OldValue),OldValue.diff(Value))
       }else {
+        //TODO: AVOID DO-UNDO in this list, make the synthesis (lazy also)
         ((this.addedValues,this.removedValues))
       }
-
-
 
       val dynListElements = getDynamicallyListeningElements
       val headPhantom = dynListElements.headPhantom

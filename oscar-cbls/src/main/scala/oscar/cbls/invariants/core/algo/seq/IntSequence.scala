@@ -1,5 +1,15 @@
 package oscar.cbls.invariants.core.algo.seq
 
+/*
+sealed abstract class SeqOperation
+case class SeqInsert(value:Int, after:SeqPosition) extends SeqOperation
+case class SeqInsertBetween(value:Int, a:Int,b:Int) extends SeqOperation
+case class SeqRemove(value:Int) extends SeqOperation
+case class SeqMoveAfter(start:SeqPosition, end:SeqPosition, moveAfter:SeqPosition, flip:Boolean) extends SeqOperation
+case class SeqMoveOneAfter(moved:Int, moveAfter:Int) extends SeqOperation
+case class SeqMoveBetween(moved:Int, a:Int, b:Int) extends SeqOperation
+*/
+
 class IntSequence extends Iterable[SeqPosition]{
   var headPhantom = SymSeqPosition(null,null,-1)
   var tailPhantom = SymSeqPosition(null,null,-2)
@@ -30,7 +40,7 @@ class IntSequence extends Iterable[SeqPosition]{
   override def iterator: Iterator[SeqPosition] = new IntSequenceIterator(SeqPosition(headPhantom,true))
   def toIntList:List[Int] = this.map(x => x.pos.value).toList //TODO: reduce overhead
 
-  def insertAfter(pos:SeqPosition,value:Int):SeqPosition = {
+  def insertAfter(value:Int, pos:SeqPosition):SeqPosition = {
     val oldNext = pos.next
     val newPos = SeqPosition(createNewSymPos(value))
     pos.setNextAndRelink(newPos)
@@ -39,7 +49,7 @@ class IntSequence extends Iterable[SeqPosition]{
     newPos
   }
 
-  def insertBefore(pos:SeqPosition,value:Int):SeqPosition = {
+  def insertBefore(value:Int, pos:SeqPosition):SeqPosition = {
     val oldPrev = pos.prev
     val newPos = SeqPosition(createNewSymPos(value))
     oldPrev.setNextAndRelink(newPos)
@@ -47,6 +57,17 @@ class IntSequence extends Iterable[SeqPosition]{
     mSize += 1
     newPos
   }
+
+  def insertBetween(value:Int, ba:SymSeqPosition,bb:SymSeqPosition):SymSeqPosition = {
+    val newPos = createNewSymPos(value)
+    ba.replace(bb,newPos)
+    bb.replace(ba,newPos)
+    newPos.a = ba
+    newPos.b = bb
+    mSize += 1
+    newPos
+  }
+
 
   def delete(pos:SeqPosition){delete(pos.pos)}
   def delete(pos:SymSeqPosition){
@@ -107,23 +128,23 @@ class IntSequence extends Iterable[SeqPosition]{
   }
 }
 
-class UniqueIntSequence(val maxSize:Int) extends IntSequence{
+class UniqueIntSequence(maxSize:Int) extends IntSequence{
 
-  private val allElments:Array[SymSeqPosition] = Array.fill[SymSeqPosition](maxSize)(null)
+  private val valuesTopos:Array[SymSeqPosition] = Array.fill[SymSeqPosition](maxSize)(null)
 
   override def freeSymPos(pos:SymSeqPosition){
-    assert(allElments(pos.value) != null)
-    allElments(pos.value) = null
+    assert(valuesTopos(pos.value) != null)
+    valuesTopos(pos.value) = null
   }
 
   override def createNewSymPos(value:Int): SymSeqPosition ={
-    require(allElments(value) == null,"UniqueIntSequence requires that each value appears at most once, duplicate use of " + value)
+    require(valuesTopos(value) == null,"UniqueIntSequence requires that each value appears at most once, duplicate use of " + value)
     val newSymPos = SymSeqPosition(null,null,value)
-    allElments(value) = newSymPos
+    valuesTopos(value) = newSymPos
     newSymPos
   }
 
-  def symPosAt(value:Int):SymSeqPosition = allElments(value)
+  def symPosAt(value:Int):SymSeqPosition = valuesTopos(value)
 }
 
 class IntSequenceIterator(var currentPosition:SeqPosition) extends Iterator[SeqPosition]{

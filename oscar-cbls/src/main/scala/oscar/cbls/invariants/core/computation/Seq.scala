@@ -18,12 +18,11 @@ object SeqValue{
 //  implicit def tist2IntSeqVar(a:List[Int]):SeqValue = CBLSSeqConst(a)
 }
 
-
 sealed abstract class SeqOperation
-case class SeqInsert(AtPosition:SeqPosition,value:Int) extends SeqOperation
-case class SeqRemove(position:SeqPosition) extends SeqOperation
-case class SeqMoveAfter(start:SeqPosition,end:SeqPosition,moveAfter:SeqPosition, flip:Boolean) extends SeqOperation
-
+class SeqInsert(value:Int,after:Int) extends SeqOperation//after is -1 for start position
+class SeqMove(from:Int,to:Int,after:Int,flip:Boolean) extends SeqOperation
+class SeqRemove(value:Int) extends SeqOperation
+class SeqSet(value:QList[Int]) extends SeqOperation
 
 trait SeqNotificationTarget {
   def notifySeqChanges(v: ChangingSeqValue, d: Int, changes:QList[SeqOperation], oldValue: IntSequence, newValue: IntSequence)
@@ -32,7 +31,6 @@ trait SeqNotificationTarget {
 abstract class ChangingSeqValue(initialValue:Iterable[Int], initialDomain:Domain)
   extends AbstractVariable with SeqValue{
 
-  //TODO: the Sequences should be coordinated somehow, just like PFDLL
   val mNewValue:IntSequence = new IntSequence()
   val mOldValue:IntSequence = new IntSequence()
 
@@ -53,21 +51,10 @@ abstract class ChangingSeqValue(initialValue:Iterable[Int], initialDomain:Domain
   var updates:QList[SeqOperation] = null
 
   /**these can be expressed on the newValue only (oldValue should trigger an exception*/
-  def insertAfter(pos:SeqPosition,value:Int):SeqPosition = {
-    val toReturn = mNewValue.insertAfter(pos,value)
-    updates = QList(SeqInsert(pos,value),updates)
-    toReturn
-  }
-
-  def delete(pos:SeqPosition){
-    mNewValue.delete(pos)
-    updates = QList(SeqRemove(pos),updates)
-  }
-
-  def moveAfter(start:SeqPosition, end:SeqPosition, moveAfterTarget:SeqPosition, flip:Boolean){
-    mNewValue.moveAfter(start,end,moveAfterTarget,flip)
-    updates = QList(SeqMoveAfter(start,end,moveAfterTarget,flip),updates)
-  }
+  def insertAfter(pos:Int,value:Int)
+  def delete(value:Int)
+  def move(from:Int,to:Int,after:Int,flip:Boolean)
+  def set(seq:QList[Int])
 
   final protected def performSeqPropagation(): Unit = {
     if(updates!=null){
@@ -88,24 +75,3 @@ abstract class ChangingSeqValue(initialValue:Iterable[Int], initialDomain:Domain
     updates = null
   }
 }
-
-/*
-object ChangingSetValue{
-  implicit val ord:Ordering[ChangingSetValue] = new Ordering[ChangingSetValue]{
-    def compare(o1: ChangingSetValue, o2: ChangingSetValue) = o1.compare(o2)
-  }
-}
-
-/**An IntSetVar is a variable managed by the [[oscar.cbls.invariants.core.computation.Store]] whose type is set of integer.
-  * @param givenModel is the model in s-which the variable is declared, can be null if the variable is actually a constant, see [[oscar.cbls.invariants.core.computation.CBLSSetConst]]
-  * @param initialDomain is the domain value of the variable. Some invariants exploit this value to declare fixed size arrays
-  * @param initialValue is the initial value of the variable
-  * @param n is the name of the variable, used for pretty printing only. if not set, a default will be used, based on the variable number
-  * */
-class CBLSSetVar(givenModel: Store, initialValue: SortedSet[Int], initialDomain:Domain, n: String = null)
-
-case class CBLSSeqConst(override val value:Iterable[Int])
-  extends SeqValue {
-}
-  }
-*/
