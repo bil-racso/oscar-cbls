@@ -4,7 +4,7 @@ import oscar.cbls.invariants.core.algo.rb.RedBlackTree
 
 class UpdateableFunction() {
   //external position => internal position
-  private var transformation: RedBlackTree[Pivot] = RedBlackTree.empty
+  protected var transformation: RedBlackTree[Pivot] = RedBlackTree.empty
 
   override def toString: String = {
     "nbPivots:" + transformation.size + " \n" +
@@ -21,6 +21,11 @@ class UpdateableFunction() {
     }
   }
 
+  protected def updatedPivot(p:Pivot){}
+  protected def deletedPivot(p:Pivot){}
+  protected def insertedPivot(p:Pivot){}
+  protected def createNewPivot(value:Int, next:Pivot = null, prev:Pivot, f: LinearPositionTransform):Pivot = new Pivot(value, next, prev, f)
+
   def update(fromIncluded: Int, toIncluded: Int, additionalF: LinearPositionTransform): Unit = {
     println("updateFunction(from:" + fromIncluded + ", to:" + toIncluded + ", fct:" + additionalF + ")")
     transformation.getBiggestLower(fromIncluded) match {
@@ -30,22 +35,25 @@ class UpdateableFunction() {
         //there is a pivot below the point
         //need to add an intermediary pivot, ans relink to this one
         val next = pivot.next
-        val newPivot = new Pivot(fromIncluded, null, null, pivot.f)
+        val newPivot = createNewPivot(fromIncluded, null, null, pivot.f)
         transformation = transformation.insert(fromIncluded, newPivot)
         pivot.setNextAndRelink(newPivot)
         newPivot.setNextAndRelink(next)
+        insertedPivot(newPivot)
         updateFromPivot(newPivot, toIncluded, additionalF)
       case None =>
         transformation.getSmallestBigger(fromIncluded) match{
           case None =>
             //need to add a first pivot from this point
-            val newPivot = new Pivot(fromIncluded, null, null, LinearPositionTransform.identity)
+            val newPivot = createNewPivot(fromIncluded, null, null, LinearPositionTransform.identity)
             transformation = transformation.insert(fromIncluded, newPivot)
+            insertedPivot(newPivot)
             updateFromPivot(newPivot, toIncluded, additionalF)
           case Some((_,next)) =>
-            val newPivot = new Pivot(fromIncluded, null, null, LinearPositionTransform.identity)
+            val newPivot = createNewPivot(fromIncluded, null, null, LinearPositionTransform.identity)
             transformation = transformation.insert(fromIncluded, newPivot)
             newPivot.setNextAndRelink(next)
+            insertedPivot(newPivot)
             updateFromPivot(newPivot, toIncluded, additionalF)
         }
     }
@@ -59,8 +67,10 @@ class UpdateableFunction() {
       //should be removed
       pivot.removeFromDLL()
       transformation = transformation.remove(pivot.value)
+      deletedPivot(pivot)
       prev
     } else {
+      updatedPivot(pivot)
       pivot
     }
     if (pivot.value == toIncluded+1)return //finished the correction
@@ -68,18 +78,20 @@ class UpdateableFunction() {
       //need to add a finishing pivot, to finish from correction from before
       if (newPrev == null) return
       //We have an open correction, and need to close it with the previous value previousCorrection
-      val newPivot = new Pivot(toIncluded+1, null, null, previousCorrection)
+      val newPivot = createNewPivot(toIncluded+1, null, null, previousCorrection)
       transformation = transformation.insert(toIncluded+1, newPivot)
       newPrev.setNextAndRelink(newPivot)
+      insertedPivot(newPivot)
       return
     } else if (next.value > toIncluded +1) {
       //need to add a new intermediary pivot
       if (newPrev == null) return
       if (newPrev.f.equals(previousCorrection)) return
-      val newPivot = new Pivot(toIncluded+1, null, null, previousCorrection)
+      val newPivot = createNewPivot(toIncluded+1, null, null, previousCorrection)
       transformation = transformation.insert(toIncluded+1, newPivot)
       newPrev.setNextAndRelink(newPivot)
       newPivot.setNextAndRelink(next)
+      insertedPivot(newPivot)
       return
     } else if (next.value < toIncluded+1){
       //there is a next such that next.value is <= correctedTo
@@ -93,6 +105,7 @@ class UpdateableFunction() {
         //next can be removed
         next.removeFromDLL()
         transformation = transformation.remove(next.value)
+        deletedPivot(next)
       }
     }
   }
@@ -129,6 +142,10 @@ class LinearPositionTransform(val offset:Int,val minus:Boolean){
       if (minus) "(x=>-x)"
       else "(x=>x)"
     }else "(x=>" + offset + (if (minus) "-" else "+") + "x)")
+
+  //this: if minus y = offset - x else y = offset + x
+  //that : if minus x = offset - y else x = - offset + y
+  def invert:LinearPositionTransform = new LinearPositionTransform(if(minus) offset else (-offset),minus)
 }
 
 class Pivot(val value:Int, var next:Pivot = null, var prev:Pivot, var f: LinearPositionTransform){
