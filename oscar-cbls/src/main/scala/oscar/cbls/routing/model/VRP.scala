@@ -1025,6 +1025,7 @@ trait PickupAndDeliveryCustomersWithTimeWindow extends TimeWindow with PickupAnd
     }
     var resList:List[Int] = Nil
     for(n <- 0 until res.size)resList = res.popFirst() :: resList
+    println(resList)
     resList.toIterable
   }
 }
