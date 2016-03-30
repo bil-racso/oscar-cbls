@@ -510,7 +510,7 @@ case class ShiftNeighborhood(vars:Array[CBLSIntVar],
                              name:String = "ShiftNeighborhood",
                              searchZone1:()=>Iterable[Int] = null,
                              maxShiftSize:Int = Int.MaxValue,
-                             maxOffsetLength:Int = Int.MaxValue, //TODO: document this (size is when you talk about sets); is this the max magniture of the offset? ow about shofting towards negative values? is there a minOffset?
+                             maxOffsetLength:Int = Int.MaxValue,
                              best:Boolean = false,
                              hotRestart: Boolean = true)
   extends EasyNeighborhood[ShiftMove](best,name) with AlgebraTrait{

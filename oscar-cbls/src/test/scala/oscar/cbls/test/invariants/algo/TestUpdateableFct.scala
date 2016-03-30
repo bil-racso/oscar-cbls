@@ -35,7 +35,7 @@ object TestUpdateableFunction extends App{
 
   def compare(): Unit ={
     for(i <- 0 to maxVal){
-      println("checking " + i + ": " + fn(i))
+      //println("checking " + i + ": " + fn(i))
       if(fn(i) != fn2(i)) throw new Error("mismatch " + i)
     }
   }

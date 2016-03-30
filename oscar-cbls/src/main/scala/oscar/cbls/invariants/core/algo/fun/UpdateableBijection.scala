@@ -1,11 +1,40 @@
 package oscar.cbls.invariants.core.algo.fun
 
 
+class UpdateableBijectionNaive extends UpdateableFunction{
+  val reverseFunction:UpdateableFunction = new UpdateableFunction
+
+  private var upToDate = true
+
+  def unApply(value:Int):Int = {
+    if(!upToDate) buildReverse()
+    reverseFunction.apply(value)
+  }
+
+  def buildReverse(){
+    if(upToDate) return
+    reverseFunction.setAsIdentity()
+    this.firstPivot match{
+      case Some((_,p)) =>
+        reverseFunction.clearAndSetPivots(computeInvertedPivots(p))
+    }
+    upToDate = true
+  }
+
+  private def computeInvertedPivots(p:Pivot, newPivots:List[Pivot] = List.empty):List[Pivot] = {
+    if(p == null) return newPivots
+    val reverseF = p.f.invert
+    val firstValueAsPivot = !p.f.minus
+    val value = if(firstValueAsPivot) p.value else p.next.value
+    computeInvertedPivots(p.next, new Pivot(value,null,null,reverseF) :: newPivots)
+  }
+}
+
 class UpdateableBijection extends UpdateableFunction{
 
   val reverseFunction:UpdateableFunction = new UpdateableFunction
 
-// UpdateableFunction
+  // UpdateableFunction
   def unApply(value:Int):Int = reverseFunction(value)
 
   override def update(fromIncluded: Int, toIncluded: Int, additionalF: LinearPositionTransform): Unit =
@@ -32,9 +61,9 @@ class UpdateableBijection extends UpdateableFunction{
     for(change <- changes){
       change match{
         case InsertChange(p) =>
-          //also handle update case here!
+        //also handle update case here!
         case DeleteChange(p) =>
-        //update the pivot Before the reverse
+          //update the pivot Before the reverse
           if(p.prevF.minus){
             //was a negative slope
           }
@@ -51,9 +80,9 @@ case class DeleteChange(e:EnrichedPivot) extends Change
 case class UpdateChange(e:EnrichedPivot) extends Change
 
 class EnrichedPivot(override val value:Int,
-                    override var next:Pivot = null,
-                    override var prev:Pivot,
-                    override var f: LinearPositionTransform)
+                    next:Pivot = null,
+                    prev:Pivot,
+                    f: LinearPositionTransform)
   extends Pivot(value:Int, next:Pivot, prev:Pivot, f){
   var prevF:LinearPositionTransform = null
   var counterpart:Pivot = null

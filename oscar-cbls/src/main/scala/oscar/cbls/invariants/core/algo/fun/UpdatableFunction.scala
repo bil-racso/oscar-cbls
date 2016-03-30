@@ -6,9 +6,31 @@ class UpdateableFunction() {
   //external position => internal position
   protected var transformation: RedBlackTree[Pivot] = RedBlackTree.empty
 
+  def firstPivot:Option[(Int,Pivot)] = transformation.getSmallestBigger(Int.MinValue)
+
+  def lastPivot:Option[(Int,Pivot)] = transformation.getBiggestLower((Int.MaxValue))
+
+  def clearAndSetPivots(l:List[Pivot]){
+    setAsIdentity()
+    val sortedPivots = l.sortBy(_.value)
+    var sortedPivotForRelink = sortedPivots
+    while(sortedPivotForRelink.nonEmpty){
+      sortedPivotForRelink match {
+        case h1 :: h2 :: t =>
+          h1.setNextAndRelink(h2)
+          sortedPivotForRelink = h2 :: t
+        case _ => sortedPivotForRelink = List.empty
+      }
+    }
+    for(p <- sortedPivots){
+      transformation.insert(p.value,p)
+    }
+  }
+
+
   override def toString: String = {
     "nbPivots:" + transformation.size + " \n" +
-      (transformation.getSmallestBigger(Int.MinValue) match{
+      (firstPivot match{
         case None => "identity"
         case Some((_,minPivot)) => minPivot.toStringAll
       })
@@ -25,6 +47,10 @@ class UpdateableFunction() {
   protected def deletedPivot(p:Pivot){}
   protected def insertedPivot(p:Pivot){}
   protected def createNewPivot(value:Int, next:Pivot = null, prev:Pivot, f: LinearPositionTransform):Pivot = new Pivot(value, next, prev, f)
+
+  def setAsIdentity(){
+    transformation = RedBlackTree.empty
+  }
 
   def update(fromIncluded: Int, toIncluded: Int, additionalF: LinearPositionTransform): Unit = {
     println("updateFunction(from:" + fromIncluded + ", to:" + toIncluded + ", fct:" + additionalF + ")")
@@ -98,8 +124,7 @@ class UpdateableFunction() {
       //so recurse to it
       updateFromPivot(next, toIncluded, additionalF)
     }else{
-      //check that nexnextt pivot should not be removed, actually
-
+      //check that next pivot should not be removed, actually
       if((newPrev == null && next.f.isIdentity)
         || next.f.equals(newPrev.f)){
         //next can be removed
@@ -121,6 +146,7 @@ object LinearPositionTransform{
  */
 class LinearPositionTransform(val offset:Int,val minus:Boolean){
   def apply(value:Int) = if(minus) offset - value else offset + value
+  def unApply(value:Int) = if(minus) offset - value else value - offset
 
   /**
    * delivers a new linear transform that is equal to this(that(value))
@@ -177,6 +203,3 @@ class Pivot(val value:Int, var next:Pivot = null, var prev:Pivot, var f: LinearP
     return prev.f.equals(f)
   }
 }
-
-
-
