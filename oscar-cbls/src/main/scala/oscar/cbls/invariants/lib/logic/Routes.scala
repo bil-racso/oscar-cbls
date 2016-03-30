@@ -47,7 +47,9 @@ class Routes(V: Int,
   val positionInRoute: Array[CBLSIntVar],
   val routeNr: Array[CBLSIntVar],
   val routeLength: Array[CBLSIntVar],
-  val lastInRoute: Array[CBLSIntVar]) extends Invariant {
+  val lastInRoute: Array[CBLSIntVar])
+  extends Invariant
+  with IntNotificationTarget{
 
   val UNROUTED = externalNext.length
 
@@ -68,16 +70,16 @@ class Routes(V: Int,
     for (v <- next) { toReturn += ("" + v + ",") }
     toReturn = toReturn.substring(0, toReturn.length - 1) + "]\n"
     toReturn += "Position array: ["
-    for (v <- positionInRoute) { toReturn += ("" + v.getValue(true) + ",") }
+    for (v <- positionInRoute) { toReturn += ("" + v.newValue + ",") }
     toReturn = toReturn.substring(0, toReturn.length - 1) + "]\n"
     toReturn += "RouteNr array: ["
-    for (v <- routeNr) { toReturn += ("" + v.getValue(true) + ",") }
+    for (v <- routeNr) { toReturn += ("" + v.newValue + ",") }
     toReturn = toReturn.substring(0, toReturn.length - 1) + "]\n"
     toReturn += "RouteLength array: ["
-    for (v <- routeLength) { toReturn += ("" + v.getValue(true) + ",") }
+    for (v <- routeLength) { toReturn += ("" + v.newValue + ",") }
     toReturn = toReturn.substring(0, toReturn.length - 1) + "]\n"
     toReturn += "LastInRoute array: ["
-    for (v <- lastInRoute) { toReturn += ("" + v.getValue(true) + ",") }
+    for (v <- lastInRoute) { toReturn += ("" + v.newValue + ",") }
     toReturn = toReturn.substring(0, toReturn.length - 1) + "]\n"
     toReturn
   }
@@ -97,7 +99,7 @@ class Routes(V: Int,
       currentPosition += 1
     }
     lastInRoute(v) := currentID
-    routeLength(v) := positionInRoute(currentID).getValue(true) + 1
+    routeLength(v) := positionInRoute(currentID).newValue + 1
   }
 
   var ToUpdate: List[Int] = List.empty
@@ -113,8 +115,8 @@ class Routes(V: Int,
 
   @inline
   final def isUpToDate(node: Int): Boolean = {
-    ((routeNr(node).getValue(true) == routeNr(next(node)).getValue(true))
-      && ((positionInRoute(node).getValue(true) + 1) % UNROUTED == positionInRoute(next(node)).getValue(true)))
+    ((routeNr(node).newValue == routeNr(next(node)).newValue)
+      && ((positionInRoute(node).newValue + 1) % UNROUTED == positionInRoute(next(node)).newValue))
   }
 
   //TODO how about an accumulating heap?
@@ -129,7 +131,7 @@ class Routes(V: Int,
       } else if (isUpToDate(node)) {
         ;
       } else {
-        heap.insert((node, positionInRoute(node).getValue(true)))
+        heap.insert((node, positionInRoute(node).newValue))
       }
     }
     ToUpdate = List.empty
@@ -149,8 +151,8 @@ class Routes(V: Int,
     var nextNode:Int = next(currentNode)
     var maxIt:Int = UNROUTED
     while (!isUpToDate(currentNode) && nextNode >= V) {
-      positionInRoute(nextNode) := (positionInRoute(currentNode).getValue(true) + 1)
-      routeNr(nextNode) := routeNr(currentNode).getValue(true)
+      positionInRoute(nextNode) := (positionInRoute(currentNode).newValue + 1)
+      routeNr(nextNode) := routeNr(currentNode).newValue
       currentNode = nextNode
       nextNode = next(currentNode)
       if (maxIt == 0) throw new Error("Route invariant not converging. Cycle involving node " + currentNode)
@@ -158,7 +160,7 @@ class Routes(V: Int,
     }
     if (nextNode < V) {
       lastInRoute(nextNode) := currentNode
-      routeLength(nextNode) := positionInRoute(currentNode).getValue(true) + 1
+      routeLength(nextNode) := positionInRoute(currentNode).newValue + 1
     }
   }
 

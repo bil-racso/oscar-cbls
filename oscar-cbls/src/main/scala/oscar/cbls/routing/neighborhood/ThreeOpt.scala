@@ -85,7 +85,7 @@ case class ThreeOpt(potentialInsertionPoints:()=>Iterable[Int],
         .map(RelevantNodesOfRoute =>{
           val pairsOfNodes = Pairs.makeAllUnsortedPairs(RelevantNodesOfRoute._2.toList)
             .map({case (a,b) => if(vrp.positionInRoute(a).value < vrp.positionInRoute(b).value) (a,b) else (b,a)})
-            if(skipOnePointMove) pairsOfNodes.filter({case (a,b) => vrp.next(a).getValue(true) != b})
+            if(skipOnePointMove) pairsOfNodes.filter({case (a,b) => vrp.next(a).newValue != b})
             else pairsOfNodes
         })
 
