@@ -51,33 +51,48 @@ object NQueensBench extends SearchEngine(true) with StopWatch{
   def nStrings(N: Int, C: String): String = if (N <= 0) "" else "" + C + nStrings(N - 1, C)
   def padToLength(s: String, l: Int) = (s + nStrings(l, " ")).substring(0, l)
 
+  val help = "Benchmarking NQueen \n" +
+    "advise: specify -Xms1000M -Xmx1000M (eg. 2000M if going for 50k Queens)\n" +
+    "takes four parameters or zero\n"+
+    "if zero parameters, solves 1k, 2k ... 10k queens, with an extra dry run of 1k queen at the beginning\n"+
+    "if four parameters: nQueen nRun random dryRun (they must all be present)\n"+
+    "example: 50000 10 0 0\n"+
+    "nQueen is the number of queens to test\n"+
+    "nRun is the number of time this should be tested\n"+
+    "dryRun: 0 for no dry run, 1 for a dry run\n"+
+    "random 1 for a real random, 0 for a pseudo-random. pseudo-random it will exhibit the same trajectory every time you call the bench\n"
+
   def main(args: Array[String]) {
 
+    println(help)
     if (args.length<1) {
       println("Benchmarking NQueen - this takes time")
-      println("advise: put -Xms1000M -Xmx1000M (eg. 2000M if going for 50k Queens)")
       println(padToLength("N", 15) + padToLength("tClose[ms]", 15) + padToLength("tTotal[ms]", 15) + "it")
 
       // first run could have some overhead so ignoring it
-      SolveNQueen(1000)
+      SolveNQueen(1000,Random)
 
       // multiple runs
       for (n <- 1000 to 10000 by 1000){
-        SolveNQueen(n)
+        SolveNQueen(n,Random)
         System.gc()
       }
 
     } else {
       val N:Int=args(0).toInt
-      println("Runing NQueen - this takes time depending on N")
+      val nRun = args(1).toInt
+      val pseudoRandom = args(2).toInt == 0
+      val r:Random = (if(args(2).toInt == 0) new Random(0) else new Random(System.currentTimeMillis()))
+      val dryRun = (args(3).toInt !=0)
+      println("nQueen:" + N + " nRun:" + nRun + (if (dryRun) " withDryRun" else " noDryRun") + (if(pseudoRandom) " deterministicRandom" else " realRandom"))
       println(padToLength("N", 15) + padToLength("tClose[ms]", 15) + padToLength("tTotal[ms]", 15) + "it")
-      SolveNQueen(1000)
-      for(i <- 1 to 5)
-        SolveNQueen(N)
+      if(dryRun) SolveNQueen(1000,r)
+      for(i <- 1 to nRun)
+        SolveNQueen(N,r)
     }
   }
 
-  def SolveNQueen(N:Int){
+  def SolveNQueen(N:Int, r:Random){
     print(padToLength("" + N, 15))
 
     startWatch()
