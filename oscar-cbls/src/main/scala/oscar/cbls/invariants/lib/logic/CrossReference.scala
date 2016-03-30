@@ -45,7 +45,7 @@ case class DenseRef(references:Array[SetValue], referencing:Array[CBLSSetVar])
     }
   }
 
-  override def notifySetChanges(v: ChangingSetValue, d: Int, addedValues: Iterable[Int], removedValues: Iterable[Int], oldValue: Set[Int], newValue: Set[Int]): Unit = {
+  override def notifySetChanges(v: ChangingSetValue, d: Int, addedValues: Iterable[Int], removedValues: Iterable[Int], oldValue: SortedSet[Int], newValue: SortedSet[Int]) : Unit = {
     for (added <- addedValues) referencing(added).insertValue(d)
     for (deleted <- removedValues)  referencing(deleted).deleteValue(d)
   }

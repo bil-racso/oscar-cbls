@@ -28,6 +28,8 @@ package oscar.cbls.invariants.lib.set
 import oscar.cbls.invariants.core.computation.{SetNotificationTarget, ChangingSetValue, IntInvariant, SetValue}
 import oscar.cbls.invariants.core.propagation.Checker
 
+import scala.collection.immutable.SortedSet
+
 /**
  * Sum(i in on)(fun(i))
  * @param on is the set of integers to add
@@ -41,7 +43,7 @@ case class SetSum(on: SetValue, fun: (Int => Int) = (a: Int) => a)
   registerStaticAndDynamicDependency(on)
   finishInitialization()
 
-  override def notifySetChanges(v: ChangingSetValue, d: Int, addedValues: Iterable[Int], removedValues: Iterable[Int], oldValue: Set[Int], newValue: Set[Int]): Unit = {
+  override def notifySetChanges(v: ChangingSetValue, d: Int, addedValues: Iterable[Int], removedValues: Iterable[Int], oldValue: SortedSet[Int], newValue: SortedSet[Int]) : Unit = {
     for (added <- addedValues) notifyInsertOn(v: ChangingSetValue, added)
     for(deleted <- removedValues) notifyDeleteOn(v: ChangingSetValue, deleted)
   }
@@ -87,7 +89,7 @@ case class SetProd(on: SetValue, fun: (Int => Int) = (a: Int) => a)
     this := NonZeroProduct
   }
 
-  override def notifySetChanges(v: ChangingSetValue, d: Int, addedValues: Iterable[Int], removedValues: Iterable[Int], oldValue: Set[Int], newValue: Set[Int]): Unit = {
+  override def notifySetChanges(v: ChangingSetValue, d: Int, addedValues: Iterable[Int], removedValues: Iterable[Int], oldValue: SortedSet[Int], newValue: SortedSet[Int]) : Unit = {
     for (added <- addedValues) notifyInsertOn(v: ChangingSetValue, added)
     for(deleted <- removedValues) notifyDeleteOn(v: ChangingSetValue, deleted)
   }
