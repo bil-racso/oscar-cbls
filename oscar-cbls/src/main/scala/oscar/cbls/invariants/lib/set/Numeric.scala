@@ -25,7 +25,7 @@
 
 package oscar.cbls.invariants.lib.set
 
-import oscar.cbls.invariants.core.computation.{ChangingSetValue, IntInvariant, SetValue}
+import oscar.cbls.invariants.core.computation.{SetNotificationTarget, ChangingSetValue, IntInvariant, SetValue}
 import oscar.cbls.invariants.core.propagation.Checker
 
 /**
@@ -35,19 +35,24 @@ import oscar.cbls.invariants.core.propagation.Checker
  * @author renaud.delandtsheer@cetic.be
  * */
 case class SetSum(on: SetValue, fun: (Int => Int) = (a: Int) => a)
-  extends IntInvariant(on.value.foldLeft(0)((a, b) => a + fun(b))) {
+  extends IntInvariant(on.value.foldLeft(0)((a, b) => a + fun(b)))
+  with SetNotificationTarget{
 
   registerStaticAndDynamicDependency(on)
   finishInitialization()
 
+  override def notifySetChanges(v: ChangingSetValue, d: Int, addedValues: Iterable[Int], removedValues: Iterable[Int], oldValue: Set[Int], newValue: Set[Int]): Unit = {
+    for (added <- addedValues) notifyInsertOn(v: ChangingSetValue, added)
+    for(deleted <- removedValues) notifyDeleteOn(v: ChangingSetValue, deleted)
+  }
   @inline
-  override def notifyInsertOn(v: ChangingSetValue, value: Int) {
+  def notifyInsertOn(v: ChangingSetValue, value: Int) {
     assert(v == on)
     this :+= fun(value)
   }
 
   @inline
-  override def notifyDeleteOn(v: ChangingSetValue, value: Int) {
+  def notifyDeleteOn(v: ChangingSetValue, value: Int) {
     assert(v == on)
     this :-= fun(value)
   }
@@ -65,7 +70,9 @@ case class SetSum(on: SetValue, fun: (Int => Int) = (a: Int) => a)
  * @param fun is an optional function Int -> Int to apply before multiplying elements. It is expected not to rely on any variable of the model.
  * @author renaud.delandtsheer@cetic.be
  * */
-case class SetProd(on: SetValue, fun: (Int => Int) = (a: Int) => a) extends IntInvariant {
+case class SetProd(on: SetValue, fun: (Int => Int) = (a: Int) => a)
+  extends IntInvariant
+  with SetNotificationTarget{
 
   var NonZeroProduct: Int = 0
 
@@ -80,8 +87,13 @@ case class SetProd(on: SetValue, fun: (Int => Int) = (a: Int) => a) extends IntI
     this := NonZeroProduct
   }
 
+  override def notifySetChanges(v: ChangingSetValue, d: Int, addedValues: Iterable[Int], removedValues: Iterable[Int], oldValue: Set[Int], newValue: Set[Int]): Unit = {
+    for (added <- addedValues) notifyInsertOn(v: ChangingSetValue, added)
+    for(deleted <- removedValues) notifyDeleteOn(v: ChangingSetValue, deleted)
+  }
+
   @inline
-  override def notifyInsertOn(v: ChangingSetValue, value: Int) {
+  def notifyInsertOn(v: ChangingSetValue, value: Int) {
     assert(v == on)
     if (value != 0) {
       NonZeroProduct *= fun(value)
@@ -94,7 +106,7 @@ case class SetProd(on: SetValue, fun: (Int => Int) = (a: Int) => a) extends IntI
   }
 
   @inline
-  override def notifyDeleteOn(v: ChangingSetValue, value: Int) {
+  def notifyDeleteOn(v: ChangingSetValue, value: Int) {
     assert(v == on, "The given set (IntSetVar) should be SetProd.on.")
     if (value != 0) {
       NonZeroProduct /= fun(value)

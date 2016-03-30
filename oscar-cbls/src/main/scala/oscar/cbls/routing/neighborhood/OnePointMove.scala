@@ -64,7 +64,7 @@ case class OnePointMove(nodesPrecedingNodesToMove: () => Iterable[Int],
     while (beforeMovedPointsIt.hasNext) {
       beforeMovedPoint = beforeMovedPointsIt.next()
       if (vrp.isRouted(beforeMovedPoint)) {
-        movedPoint = vrp.next(beforeMovedPoint).getValue(true)
+        movedPoint = vrp.next(beforeMovedPoint).newValue
 
         val insertionPointIt = relevantNeighborsNow(movedPoint).iterator
         while (insertionPointIt.hasNext) {
@@ -72,7 +72,7 @@ case class OnePointMove(nodesPrecedingNodesToMove: () => Iterable[Int],
           if (vrp.isRouted(insertionPoint)
             && beforeMovedPoint != insertionPoint
             && movedPoint != insertionPoint
-            && beforeMovedPoint != vrp.next(insertionPoint).getValue(true)
+            && beforeMovedPoint != vrp.next(insertionPoint).newValue
             && (!vrp.isADepot(movedPoint) || vrp.onTheSameRoute(movedPoint, insertionPoint))) {
 
             encode(beforeMovedPoint, insertionPoint)

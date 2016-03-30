@@ -156,6 +156,7 @@ case class RollMove(l:List[CBLSIntVar],offset:Int, override val objAfter:Int, ov
 case class ShiftMove(startIndice:Int,length:Int,offset:Int,variables:Array[CBLSIntVar], override val objAfter:Int, override val neighborhoodName:String = null)
   extends Move(objAfter,neighborhoodName){
 
+  def shiftedElements = startIndice to startIndice + length
   override def toString: String = {
     neighborhoodNameToString + "ShiftMove(startIndice:" + startIndice + "; length:" + length + "; offset:" + offset + objToString + ")"
   }

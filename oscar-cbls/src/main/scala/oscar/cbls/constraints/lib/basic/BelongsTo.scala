@@ -8,7 +8,12 @@ import oscar.cbls.invariants.core.propagation.Checker
  * implements v \in set
  * @author renaud.delandtsheer@cetic.be
  */
-case class BelongsTo(v: IntValue, set: SetValue) extends Invariant with Constraint {
+case class BelongsTo(v: IntValue, set: SetValue)
+  extends Invariant
+  with Constraint
+  with IntNotificationTarget
+  with SetNotificationTarget{
+
   registerConstrainedVariables(v, set)
   registerStaticAndDynamicDependenciesNoID(v, set)
   finishInitialization()
@@ -19,21 +24,14 @@ case class BelongsTo(v: IntValue, set: SetValue) extends Invariant with Constrai
   violation.setDefiningInvariant(this)
 
   @inline
-  override def notifyIntChanged(v: ChangingIntValue, OldVal: Int, NewVal: Int) {
+  override def notifyIntChanged(v: ChangingIntValue, id:Int, OldVal: Int, NewVal: Int) {
     violation := (if (set.value.contains(v.value)) 0 else 1)
   }
 
-  @inline
-  override def notifyInsertOn(v: ChangingSetValue, value: Int) {
-    if (this.v.value == value) violation := 0
+  override def notifySetChanges(v: ChangingSetValue, d: Int, addedValues: Iterable[Int], removedValues: Iterable[Int], oldValue: Set[Int], newValue: Set[Int]): Unit = {
+    if (newValue.contains(this.v.value)) violation := 0
+    else   violation := 1
   }
-
-  @inline
-  override def notifyDeleteOn(v: ChangingSetValue, value: Int) {
-    if (this.v.value == value) violation := 1
-  }
-
-
 
   /** the violation is 1 v is not is set, 0 otherwise*/
   override def violation(v: Value): IntValue = { if (this.v == v || this.set == v) violation else 0 }
