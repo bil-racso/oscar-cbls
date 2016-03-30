@@ -23,26 +23,28 @@
 
 package oscar.cbls.routing.model
 
-import oscar.cbls.constraints.core.ConstraintSystem
+import oscar.cbls.constraints.lib.basic.{NE, EQ, LE}
 import oscar.cbls.invariants.core.algo.heap.BinomialHeap
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.lib.logic._
-import oscar.cbls.invariants.lib.numeric.Sum
-import oscar.cbls.invariants.lib.set.Cardinality
+import oscar.cbls.invariants.lib.numeric.{Sum2, Sum}
+import oscar.cbls.invariants.lib.set.{SetSum, Cardinality}
 import oscar.cbls.modeling.Algebra._
-import oscar.cbls.search.algo.KSmallest
+import oscar.cbls.search.algo.{LazyQuicksort, KSmallest}
 
-import scala.collection.immutable.{ SortedMap, SortedSet }
+import scala.collection.immutable.{HashMap, SortedMap, SortedSet}
 import scala.math.min
+import scala.util.Random
 
 /**
- * The class constructor models a VRP problem with N points (deposits and customers)
- * and V vehicles.
+  * The class constructor models a VRP problem with N points (deposits and customers)
+  * and V vehicles.
  *
  * Vehicles are supposed to leave from their depot, and come back to it.
  * they all have a different depot (but yo ucan put them at the same place if you want)
  *
  * Info: after instantiation, each customer point is unrouted, and each vehicle loop on his deposit.
+ *
  * @param N the number of points (deposits and customers) in the problem.
  * @param V the number of vehicles.
  * @param m the model.
@@ -77,14 +79,16 @@ class VRP(val N: Int, val V: Int, val m: Store) {
 
   /**
    * Returns if a given point is a depot.
-   * @param n the point queried.
+    *
+    * @param n the point queried.
    * @return true if the point is a depot, else false.
    */
   def isADepot(n: Int): Boolean = { n < V }
 
   /**
    * Returns if a given point is still routed.
-   * @param n the point queried.
+    *
+    * @param n the point queried.
    * @return true if the point is still routed, else false.
    */
   def isRouted(n: Int): Boolean = { next(n).getValue(true) != N }
@@ -125,7 +129,8 @@ class VRP(val N: Int, val V: Int, val m: Store) {
 
   /**
    * the route of the vehicle, starting at the vehicle node, and not including the last vehicle node
-   * @param vehicle
+    *
+    * @param vehicle
    * @return
    */
   def getRouteOfVehicle(vehicle:Int):List[Int] = {
@@ -140,7 +145,8 @@ class VRP(val N: Int, val V: Int, val m: Store) {
 
   /**
    * Redefine the toString method.
-   * @return the VRP problem as a String.
+    *
+    * @return the VRP problem as a String.
    */
   override def toString: String = {
     var toReturn = unroutedToString
@@ -159,6 +165,17 @@ class VRP(val N: Int, val V: Int, val m: Store) {
   def addToStringInfo(a: () => String) {
     additionalStrings = a :: additionalStrings
   }
+
+  private val nodeInformations:Array[String] = Array.tabulate(N)(n => "")
+  def setNodeInformation(index:Int, info:String): Unit ={
+    assert(index < nodeInformations.length,"SetNodeInformation index to high")
+    nodeInformations(index) = info
+  }
+
+  def getNodeInformation(index:Int): String ={
+    assert(index < nodeInformations.length,"GetNodeInformation index to high")
+    nodeInformations(index)
+  }
 }
 
 /**
@@ -166,7 +183,8 @@ class VRP(val N: Int, val V: Int, val m: Store) {
  * Info : unrouted nodes are those whose next is N.
  * This trait is abstract, since unrouted can be implemented either stand alone,
  * or as a side effect of other traits
- * @author renaud.delandtsheer@cetic.be
+  *
+  * @author renaud.delandtsheer@cetic.be
  * @author Florent Ghilain (UMONS)
  * @author yoann.guyot@cetic.be
  */
@@ -189,7 +207,8 @@ abstract trait RoutedAndUnrouted extends VRP {
 /**
  * Maintains the set of unrouted nodes.
  * Info : those whose next is N.
- * @author renaud.delandtsheer@cetic.be
+  *
+  * @author renaud.delandtsheer@cetic.be
  * @author Florent Ghilain (UMONS)
  * @author yoann.guyot@cetic.be
  */
@@ -203,7 +222,8 @@ trait UnroutedImpl extends VRP with RoutedAndUnrouted {
 
 /**
  * Maintains and fixes a penalty weight of unrouted nodes.
- * @author renaud.delandtsheer@cetic.be
+  *
+  * @author renaud.delandtsheer@cetic.be
  * @author Florent Ghilain (UMONS)
  * @author yoann.guyot@cetic.be
  */
@@ -222,7 +242,8 @@ abstract trait PenaltyForUnrouted extends VRP with RoutedAndUnrouted {
 
   /**
    * It allows you to set the penalty of a given point.
-   * @param n the point.
+    *
+    * @param n the point.
    * @param p the penalty.
    */
   @deprecated("not deprecated, just, do not forget to call closeUnroutedPenaltyWeight afgter you are done with penalties","")
@@ -230,7 +251,8 @@ abstract trait PenaltyForUnrouted extends VRP with RoutedAndUnrouted {
 
   /**
    * It allows you to set a specific penalty for all points of the VRP.
-   * @param p the penalty.
+    *
+    * @param p the penalty.
    */
   def setUnroutedPenaltyWeight(p: Int) { weightUnroutedPenalty.indices.foreach(i => weightUnroutedPenalty(i) = p) }
 
@@ -270,7 +292,8 @@ abstract trait ClosestNeighborsWithPenaltyForUnrouted extends VRP with PenaltyFo
    * It allows us to add a filter (optional) on the neighbor.
    *
    * Info : it uses the Currying feature.
-   * @param k the parameter k.
+    *
+    * @param k the parameter k.
    * @param filter the filter, should only return unrouted nodes
    * @param node the given node.
    * @return the k nearest neighbor as an iterable list of Int.
@@ -298,7 +321,8 @@ abstract trait ClosestNeighborsWithPenaltyForUnrouted extends VRP with PenaltyFo
 /**
  * Computes the nearest neighbors of each point.
  * Used by some neighborhood searches.
- * @author renaud.delandtsheer@cetic.be
+  *
+  * @author renaud.delandtsheer@cetic.be
  * @author Florent Ghilain (UMONS)
  * @author yoann.guyot@cetic.be
  */
@@ -330,7 +354,8 @@ abstract trait ClosestNeighbors extends VRP {
    * It allows us to add a filter (optional) on the neighbor.
    *
    * Info : it uses the Currying feature.
-   * @param k the parameter k.
+    *
+    * @param k the parameter k.
    * @param filter the filter.
    * @param node the given node.
    * @return the k nearest neighbor as an iterable list of Int.
@@ -359,7 +384,8 @@ abstract trait ClosestNeighbors extends VRP {
  * Maintains the hop distance in the VRP, based either on a matrix, or on another mechanism.
  * We consider that a hop distance of Int.MaxVal is unreachable.
  * HopDistance is only handling simple cost functions such as cost matrices
- * @author renaud.delandtsheer@cetic.be
+  *
+  * @author renaud.delandtsheer@cetic.be
  * @author Florent Ghilain (UMONS)
  */
 trait HopDistance extends VRP {
@@ -387,7 +413,8 @@ trait HopDistance extends VRP {
    * This method sets the function distance with a distance matrix.
    * If a more complex function is to be used, set a controlling invariant to the hopDistances yourself.
    * It considers distance from a node to itself as zero.
-   * @param DistanceMatrix the distance between each point.
+    *
+    * @param DistanceMatrix the distance between each point.
    */
   def installCostMatrix(DistanceMatrix: Array[Array[Int]]) {
     distanceFunction = (i: Int, j: Int) => DistanceMatrix(i)(j)
@@ -398,7 +425,8 @@ trait HopDistance extends VRP {
   /**
    * This method sets the distance to use for the hop between points thanks
    * to a given function.
-   * @param fun the function which defines the distance between two points.
+    *
+    * @param fun the function which defines the distance between two points.
    */
   def installCostFunction(fun: (Int, Int) => Int) {
     distanceFunction = fun
@@ -412,7 +440,8 @@ trait HopDistance extends VRP {
   }
   /**
    * Returns the distance from a given node (start node) to another given node (end node) of the VRP.
-   * @param from the start node
+    *
+    * @param from the start node
    * @param to the end node
    * @return the distance between the start and end node as an Int.
    */
@@ -435,7 +464,8 @@ trait hopsPerVehicle extends NodesOfVehicle{
 
 /**
  * Maintains the set of nodes reached by each vehicle
- * @author renaud.delandtsheer@cetic.be
+  *
+  * @author renaud.delandtsheer@cetic.be
  */
 trait NodesOfVehicle extends PositionInRouteAndRouteNr with RoutedAndUnrouted {
   val nodesOfVehicle = Cluster.MakeDense(routeNr).clusters
@@ -447,7 +477,8 @@ trait NodesOfVehicle extends PositionInRouteAndRouteNr with RoutedAndUnrouted {
  * the length of each route and their last node.
  * that these output variables are registered for a grouped partial propagation
  * to ensure some efficiency in the queries proposed by this trait.
- * @author renaud.delandtsheer@cetic.be
+  *
+  * @author renaud.delandtsheer@cetic.be
  * @author Florent Ghilain (UMONS)
  */
 trait PositionInRouteAndRouteNr extends VRP {
@@ -478,7 +509,8 @@ trait PositionInRouteAndRouteNr extends VRP {
 
   /**
    * Tells if twos given nodes form a segment of route of n minimum length.
-   * @param fromNode the start of potential segment.
+    *
+    * @param fromNode the start of potential segment.
    * @param toNode the end of potential segment.
    * @param n the minimum length of segment.
    * @return true if "fromNode" to "toNode" forms a segment of route of n minimum length, else false.
@@ -490,7 +522,8 @@ trait PositionInRouteAndRouteNr extends VRP {
 
   /**
    * Tells if two given nodes form a segment of route of n maximum length.
-   * @param fromNode the start of potential segment.
+    *
+    * @param fromNode the start of potential segment.
    * @param toNode the end of potential segment.
    * @param n the maximum length of route.
    * @return true if "fromNode" to "toNode" forms a segment of route of n maximum length, else false.
@@ -502,7 +535,8 @@ trait PositionInRouteAndRouteNr extends VRP {
 
   /**
    * Tells if two given nodes form a segment of route.
-   * @param fromNode the start of potential segment.
+    *
+    * @param fromNode the start of potential segment.
    * @param toNode the end of potential segment.
    * @return true if "fromNode" to "toNode" form a segment of route, else false.
    */
@@ -512,7 +546,8 @@ trait PositionInRouteAndRouteNr extends VRP {
 
   /**
    * Tells if a given node is in a segment of route between fromNode and toNode.
-   * @param node the given node queried.
+    *
+    * @param node the given node queried.
    * @param fromNode the start of the segment of route.
    * @param toNode the end of the segment of route.
    * @return true if node is in a segment of route between "fromNode" and "toNode", else false.
@@ -528,10 +563,15 @@ trait PositionInRouteAndRouteNr extends VRP {
   /**
    * Tells if two given nodes are on the same route.
    * ( i.e. they have the same route number)
-   * @param n the first given node.
+    *
+    * @param n the first given node.
    * @param m the second given node.
    */
   def onTheSameRoute(n: Int, m: Int): Boolean = {
+    routeNr(n).value == routeNr(m).value
+  }
+
+  def onTheSameRouteAfter(m:Int)(n:Int): Boolean = {
     routeNr(n).value == routeNr(m).value
   }
 }
@@ -539,7 +579,8 @@ trait PositionInRouteAndRouteNr extends VRP {
 /**
  * Maintains a penalty weight for routes which do not contain task nodes.
  * That is: they only contain the vehicle node.
- * @author yoann.guyot@cetic.be
+  *
+  * @author yoann.guyot@cetic.be
  */
 trait PenaltyForEmptyRoute extends VRP with PositionInRouteAndRouteNr {
   /**
@@ -553,7 +594,7 @@ trait PenaltyForEmptyRoute extends VRP with PositionInRouteAndRouteNr {
    * The variable which maintains the set of empty routes.
    * (that is: routes containing no other node than the vehicle node)
    */
-  val emptyRoutes = Filter(routeLength, _ <= (1))
+  val emptyRoutes = Filter(routeLength, _ <= 1)
 
   /**
    * The variable which maintains the sum of route penalties,
@@ -563,7 +604,8 @@ trait PenaltyForEmptyRoute extends VRP with PositionInRouteAndRouteNr {
 
   /**
    * Allows client to set the penalty of a given vehicle route.
-   * @param n the node.
+    *
+    * @param n the node.
    * @param p the penalty.
    */
   def setEmptyRoutePenaltyWeight(n: Int, p: Int) {
@@ -572,7 +614,8 @@ trait PenaltyForEmptyRoute extends VRP with PositionInRouteAndRouteNr {
 
   /**
    * Allows client to set a specific penalty for all the VRP routes.
-   * @param p the penalty.
+    *
+    * @param p the penalty.
    */
   def setEmptyRoutePenaltyWeight(p: Int) {
     emptyRoutePenaltyWeight.foreach(penalty => penalty := p)
@@ -587,7 +630,7 @@ trait PenaltyForEmptyRouteWithException extends VRP with NodesOfVehicle {
     Array.tabulate(V)(v =>
       CBLSIntVar(m, name = "penality of vehicule " + v))
 
-  val exceptionNodes: CBLSSetVar = new CBLSSetVar(m, SortedSet.empty, 0 to N - 1, "NodesNotToConsiderForEmptyRoutes")
+  val exceptionNodes: CBLSSetVar = new CBLSSetVar(m, SortedSet.empty, 0 until N, "NodesNotToConsiderForEmptyRoutes")
 
   private val nodesOfRealVehicles = Array.tabulate(V)(nodesOfVehicle)
 
@@ -606,7 +649,8 @@ trait PenaltyForEmptyRouteWithException extends VRP with NodesOfVehicle {
 
   /**
    * Allows client to set the penalty of a given vehicle route.
-   * @param n the node.
+    *
+    * @param n the node.
    * @param p the penalty.
    */
   def setEmptyRoutePenaltyWeight(n: Int, p: Int) {
@@ -615,7 +659,8 @@ trait PenaltyForEmptyRouteWithException extends VRP with NodesOfVehicle {
 
   /**
    * Allows client to set a specific penalty for all the VRP routes.
-   * @param p the penalty.
+    *
+    * @param p the penalty.
    */
   def setEmptyRoutePenaltyWeight(p: Int) {
     emptyRoutePenaltyWeight.foreach(penalty => penalty := p)
@@ -625,7 +670,8 @@ trait PenaltyForEmptyRouteWithException extends VRP with NodesOfVehicle {
 /**
  * This trait maintains the predecessors of each node of the VRP.
  * It uses the Predecessor invariant.
- * @author renaud.delandtsheer@cetic.be
+  *
+  * @author renaud.delandtsheer@cetic.be
  * @author Florent Ghilain (UMONS)
  */
 trait Predecessors extends VRP {
@@ -635,3 +681,350 @@ trait Predecessors extends VRP {
   val preds: Array[IntValue] = Predecessor(next, V).preds
 }
 
+/**
+  * This trait maintains the current carrying capacity of each vehicle of the VRP and all the useful related information
+  */
+trait VehicleWithCapacity extends VRP with PickupAndDeliveryCustomers{
+
+  /**
+    * @return the load of the specified vehicle at the specified point
+    */
+  val currentLoad = (n:Int) => {
+    var current = routeNr(n).value
+    var currentValue = 0
+    if(routeNr(n).value == V)
+      0
+    else {
+      while (next(current).value != n) {
+        current = next(current).value
+        currentValue += getLoadValue(current).value
+      }
+      currentValue
+    }
+  }
+
+  val defaultArrivalLoadValue = new CBLSIntConst(0)
+
+  /**
+    * The variable that maintains the current cargo of each vehicle
+    */
+  //private val vehicleCurrentLoad:Array[CBLSIntVar] = Array.tabulate(V)(v => )
+
+  /**
+    * The variable that maintains the maximum cargo of each vehicle
+    */
+  val vehicleMaxCapacity:Array[CBLSIntVar] = Array.tabulate(V) (v => CBLSIntVar(m, 0, 0 to N, "maximum capacity of vehicle " + v))
+
+  val arrivalLoadValue = Array.tabulate(N){ (n:Int) => CBLSIntVar(m, 0, 0 to N, "Arrival load at node " + n) }
+  var leaveLoadValue:Array[IntValue] = null
+
+  def setArrivalLeaveLoadValue(): Unit ={
+    leaveLoadValue = Array.tabulate(N+1) {
+      (n :Int) =>
+        if(n == N || n < V)
+          defaultArrivalLoadValue
+        else{
+          arrivalLoadValue(n) + getLoadValue(n)
+        }
+    }
+    for(n <- 0 until N){
+      arrivalLoadValue(n) <== leaveLoadValue.element(preds(n))
+    }
+  }
+
+  /**
+    * Allow client to set the max cargo value of a vehicle
+    *
+    * @param max the maximum cargo value
+    * @param v the vehicle
+    */
+  def setVehicleMaxCargo(max:Int, v:Int): Unit ={
+    vehicleMaxCapacity(v) := max
+  }
+
+  /**
+    * Allow client to set a max cargo value to all the vehicle
+    *
+    * @param max the maximum cargo value
+    */
+  def setVehiclesMaxCargo(max:Int): Unit ={
+    for(v <- vehicleMaxCapacity.indices)
+      setVehicleMaxCargo(max,v)
+  }
+
+  def setVehiclesCargoStrongConstraint(): Unit ={
+    for(n <- arrivalLoadValue.indices)
+      strongConstraints.post(LE(arrivalLoadValue(n),vehicleMaxCapacity(0)))
+  }
+}
+
+/**
+  * This trait maintains the
+  */
+trait PickupAndDeliveryCustomers extends VRP with StrongConstraints with PositionInRouteAndRouteNr with Predecessors{
+
+  /**
+    * The variable that contains the pickup nodes.
+    * Each pickup node (the key) grants access to his related delivery node and to his value of load to pickup
+    */
+  private var pickupNodes:HashMap[CBLSIntConst,(CBLSIntConst,CBLSIntConst)] = new HashMap[CBLSIntConst,(CBLSIntConst,CBLSIntConst)]
+  /**
+    * The variable that contains the delivery nodes.
+    * Each delivery node (the key) grants access to his related pickup node and to his value of load to deliver
+    */
+  private var deliveryNodes:HashMap[CBLSIntConst,(CBLSIntConst,CBLSIntConst)] = new HashMap[CBLSIntConst,(CBLSIntConst,CBLSIntConst)]
+
+
+  /**
+    * Add a new PickupAndDelivery couple
+    *
+    * @param p the pickup point
+    * @param d the delivery point
+    */
+  private def addPickupDeliveryCouple(p:Int, d:Int): Unit ={
+    pickupNodes += CBLSIntConst(p) -> (CBLSIntConst(d),1)
+    setNodeInformation(p,getNodeInformation(p) + "Pickup node n°" + p + "\n" + "Load value : 1")
+    deliveryNodes += CBLSIntConst(d) -> (CBLSIntConst(p),-1)
+    setNodeInformation(d,getNodeInformation(d) + "Delivery node n°" + d + "\n" + "Load value : -1")
+    strongConstraints.post(LE(positionInRoute(p),positionInRoute(d)))
+    strongConstraints.post(EQ(routeNr(p),routeNr(d)))
+  }
+
+  /**
+    * Add a defined number of random PickupAndDelivery couples.
+    * We use the range of nodes to generate them. If we have more than nodes.length/2 couples to add,
+    * we re-use the range of nodes. Doing that we are sure that all the nodes will be used
+    * (if we have a minimum of nodes.length/2 couples to add)
+    *
+    * @param numberOfCouple the number of couple to add. Default = the number of nodes divide by 2
+    */
+  def addRandomPickupDeliveryCouples(numberOfCouple:Int = (N-V)/2): Unit ={
+    var tempNodes = nodes.toList.drop(V)
+    tempNodes = Random.shuffle(tempNodes)
+    for(i <- 0 until numberOfCouple){
+      val p = tempNodes.head
+      tempNodes = tempNodes.tail
+
+      val d = tempNodes.head
+      tempNodes = tempNodes.tail
+
+      addPickupDeliveryCouple(p,d)
+    }
+  }
+
+  /**
+    * Add defined couples.
+    * The user has to specify two arrays. One containing the pickup points and
+    * another one containing the related delivery points. So pickup(1) is the pickup point of delivery(1).
+    *
+    * @param pickup the pickup points array
+    * @param delivery the delivery points array
+    */
+  def addPickupDeliveryCouples(pickup:Array[Int],delivery:Array[Int]): Unit ={
+    assert(pickup.length == delivery.length,
+      "The pickup array and the delivery array must have the same length.")
+    assert(!pickup.exists(_ >= N) || !delivery.exists(_ >= N),
+      "The pickup and the delivery array may only contain values between 0 and the number of nodes")
+
+    for(i <- pickup.indices){
+      addPickupDeliveryCouple(pickup(i),delivery(i))
+    }
+  }
+
+  def isPickup(index:Int): Boolean = pickupNodes.get(index).isDefined
+
+  def isDelivery(index:Int):Boolean = deliveryNodes.get(index).isDefined
+
+  def getRelatedUnroutedDelivery():Int = {for(d <- deliveryNodes) {
+    if (isRouted(d._2._1.value) && !isRouted(d._1.value)) return d._1.value
+    }
+    assert(false,"Expecting a unrouted delivery or bad use of the method")
+    return 0
+  }
+
+  /**
+    * @param d the index of a delivery node
+    * @return the index of the related pickup node
+    */
+  def getRelatedPickup(d:Int): Int ={
+    assert(deliveryNodes.get(d).isDefined,"The node can't be found in the deliveryNodes map")
+    deliveryNodes.get(d).get._1.value
+  }
+
+  /**
+    * @param p the index of a pickup node
+    * @return the index of the related delivery node
+    */
+  def getRelatedDelivery(p:Int): Int ={
+    assert(pickupNodes.get(p) == None,"The node can't be found in the pickupNodes map")
+    if(pickupNodes.get(p) == None){
+      0
+    }else {
+      pickupNodes.get(p).get._1.value
+    }
+  }
+
+  /**
+    * @param n the index of a node
+    * @return the load value of the node
+    */
+  def getLoadValue(n:Int): CBLSIntConst ={
+    if(pickupNodes.get(n).isEmpty) {
+      if (deliveryNodes.get(n).isEmpty) {
+        assert(false, "The node can't be found")
+        0
+      }else {
+        deliveryNodes.get(n).get._2.value
+      }
+    }else{
+      pickupNodes.get(n).get._2.value
+    }
+  }
+
+  def getPickups: Iterable[Int] = pickupNodes.keys.foldLeft(List[Int]())((a,b) => b.value::a)
+
+  def getRoutedPickups: Iterable[Int] = pickupNodes.keys.foldLeft(List[Int]())((a,b) => if(isRouted(b.value)) b.value::a else a)
+
+  def getRoutedPickupsPredecessors: Iterable[Int] = pickupNodes.keys.foldLeft(List[Int]())((a,b) => if(isRouted(b.value)) preds(b.value).value::a else a)
+
+  def getUnroutedPickups: Iterable[Int] = pickupNodes.keys.foldLeft(List[Int]())((a,b) => if(!isRouted(b.value)) b.value::a else a)
+
+  def getDeliverys: Iterable[Int] = deliveryNodes.keys.foldLeft(List[Int]())((a,b) => b.value::a)
+
+  def getRoutedDeliverys: Iterable[Int] = deliveryNodes.keys.foldLeft(List[Int]())((a,b) => if(isRouted(b.value)) b.value::a else a)
+
+  def getRoutedDeliverysPredecessors: Iterable[Int] = deliveryNodes.keys.foldLeft(List[Int]())((a,b) => if(isRouted(b.value)) preds(b.value).value::a else a)
+
+  def getUnroutedDeliverys: Iterable[Int] = deliveryNodes.keys.foldLeft(List[Int]())((a,b) => if(!isRouted(b.value)) b.value::a else a)
+
+  def getAuthorizedInsertionPositionForPickup()(node: Int): Iterable[Int] = {
+    if(node < V)return Iterable()
+    val routeOfNode = routeNr(node)
+    var resRoute = getRouteOfVehicle(routeOfNode.value)
+    resRoute = resRoute.takeWhile(_ != getRelatedDelivery(node))
+    resRoute
+  }
+
+  def getAuthorizedInsertionPositionForDelivery()(node: Int): Iterable[Int] = {
+    if(node < V)return Iterable()
+    val routeOfNode = routeNr(node)
+    getRelatedDelivery(node)
+    getRelatedPickup(node)
+    var resRoute = getRouteOfVehicle(routeOfNode.value)
+    resRoute = resRoute.dropWhile(_ != getRelatedPickup(node))
+    resRoute.drop(1)
+  }
+
+  def getCompleteSegments(routeNumber:Int): List[(Int,Int)] ={
+    var completeSegmentsMap:HashMap[Int,Set[Int]] = new HashMap[Int,Set[Int]]
+    val route = getRouteOfVehicle(routeNumber)
+
+    for(node <- route){
+      if(isPickup(node)){
+        for(key <- completeSegmentsMap.keys){
+          if(completeSegmentsMap.get(key).get.nonEmpty) {
+            val currentSet = completeSegmentsMap.get(key).get + node
+            completeSegmentsMap += key -> currentSet
+          }
+        }
+        val nodeSet:Set[Int] = Set(node)
+        completeSegmentsMap += node -> nodeSet
+      }
+      else{
+        for(key <- completeSegmentsMap.keys){
+          if(completeSegmentsMap.get(key).get.nonEmpty) {
+            if (!completeSegmentsMap.get(key).get.contains(getRelatedPickup(node))) {
+              completeSegmentsMap -= key
+            }else if(key == getRelatedPickup(node) && completeSegmentsMap.get(key).get.size > 1){
+              completeSegmentsMap -= key
+            }
+            else {
+              val currentSet = completeSegmentsMap.get(key).get - getRelatedPickup(node)
+              completeSegmentsMap += key -> currentSet
+            }
+          }
+        }
+      }
+    }
+
+    if(completeSegmentsMap.keys.nonEmpty) {
+      val sortedKeys = completeSegmentsMap.keys.toList.sortWith(positionInRoute(_) < positionInRoute(_))
+      var completeSegments: List[(Int, Int)] = Nil
+      for (key1 <- sortedKeys.indices) {
+        completeSegments = (sortedKeys(key1), getRelatedDelivery(sortedKeys(key1))) :: completeSegments
+        var tempKey = key1-1
+        var linked = true
+        while(linked && tempKey != -1){
+          if(preds(tempKey+1).value != getRelatedDelivery(sortedKeys(tempKey)))
+            linked = false
+          else {
+            completeSegments = (sortedKeys(tempKey), getRelatedDelivery(sortedKeys(key1))) :: completeSegments
+            tempKey -= 1
+          }
+        }
+      }
+      completeSegments
+    }else{
+      Nil
+    }
+  }
+}
+
+trait PickupAndDeliveryCustomersWithTimeWindow extends TimeWindow with PickupAndDeliveryCustomers {
+
+  def setEndWindow(node:Int, endWindow:Int, startWindow:Int, nodeDuration:Int): Unit ={
+    setNodeInformation(node,getNodeInformation(node) + "\nEnd of time window : " + endWindow)
+    setEndWindow(node,endWindow)
+    super.setNodeDuration(node,nodeDuration,startWindow)
+  }
+
+  def endWindowGenerator(): Unit ={
+    val currentArray:Array[Int] = new Array[Int](N-V)
+    val randomIncValues:List[Int] = 2::3::4::5::Nil
+    val currentSum = (pos:Int) => {
+      var res = 0
+      for(i <- 0 to pos) res += currentArray(i)
+      res
+    }
+    val currentPickup:Array[Int] = new Array[Int](N-V)
+    val currentSumPickup = (pos:Int) => {
+      var res = 0
+      for(i <- 0 to pos) res += currentPickup(i)
+      res
+    }
+    var currentTimeUnit = 1
+    val nodesOrderedByType = getPickups.toArray
+    while(currentSum(currentTimeUnit) < N-V){
+      val current = currentSum(currentTimeUnit)
+      val currentPick = currentSumPickup(currentTimeUnit)
+      val nbOfNodeToAdd = if(N - V - (N-V)/2 - currentPick < V) N-currentPick - (N-V)/2 -V else (Math.random()*(V*currentTimeUnit - current)).toInt
+      for(inc <- 0 until nbOfNodeToAdd){
+        val deliveryInc = randomIncValues(scala.util.Random.nextInt(4))
+        setEndWindow(nodesOrderedByType(currentPick+inc), 500*(currentTimeUnit+1), 500*currentTimeUnit,50)
+        setEndWindow(getRelatedDelivery(nodesOrderedByType(currentPick+inc)),500*(currentTimeUnit+5), 500*(currentTimeUnit+deliveryInc),0)
+        currentArray(currentTimeUnit+deliveryInc) += 1
+      }
+      currentArray(currentTimeUnit) += nbOfNodeToAdd
+      currentPickup(currentTimeUnit) += nbOfNodeToAdd
+      currentTimeUnit += 1
+    }
+  }
+
+  def getRoutedNodesBeforeTime()(node:Int): Iterable[Int] ={
+    val res:BinomialHeap[Int] = new BinomialHeap[Int](a => a,N-V)
+    val time = leaveTime(node).value
+    for(v <- 0 until V){
+      val route = getRouteOfVehicle(v)
+      var index = 0
+      while(index < route.length){
+        if(arrivalTimeToNext(route(index)).value <= time) {
+          res.insert(route(index))
+        }
+        index += 1
+      }
+    }
+    var resList:List[Int] = Nil
+    for(n <- 0 until res.size)resList = res.popFirst() :: resList
+    resList.toIterable
+  }
+}

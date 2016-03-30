@@ -17,19 +17,19 @@
 package oscar.cbls.search.combinators
 
 import java.awt.{Color, Dimension}
+import javax.swing.JFrame
 
 import oscar.cbls.invariants.core.algo.heap.{BinomialHeap, BinomialHeapWithMove}
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.objective.{CascadingObjective, Objective}
-import oscar.cbls.routing.model.VRP
 import oscar.cbls.search.StopWatch
 import oscar.cbls.search.core.{NoMoveFound, _}
 import oscar.cbls.search.move._
-import oscar.examples.cbls.routing.visual.FunctionGraphic.{Zoom, AdjustMaxValue, ObjFunctionGraphicContainer, ObjFunctionGraphic}
+import oscar.cbls.visual.FunctionGraphic.{AdjustMaxValue, Zoom}
+import oscar.examples.cbls.routing.visual.FunctionGraphic.{ObjFunctionGraphicContainer, ObjFunctionGraphic}
 import oscar.visual.VisualFrame
 
 import scala.language.implicitConversions
-import scala.util.control.Breaks._
 
 //TODO: les combinateurs devraient avoir une liste de voisinnages (ou neighborhood*), pas juste un seul.
 //TODO: proposer du benchmarking des voisinages (nombre de moves trouvés, gain moyen sur une fct objectif, temps de recherche, nombre de recherche effectuées, ...)
@@ -66,24 +66,24 @@ abstract class NeighborhoodCombinatorNoProfile(a: Neighborhood*) extends Neighbo
   * This combinator create a frame that draw the evolution curve of the objective function.
   * The drawn curve possess a scrollbar on the right that allow the user to decrease or
   * increase the number of value displayed.
+  *
   * @param a a neighborhood
   * @param obj the objective function
   * @param stopWatch the StopWatch attached to the Test
   * @param withZoom if true the Zoom thread will be used in stead of the AdjustMaxValues trait
   * @param neighborhoodColors a function used to defined the color of each neighborhood encountered during the search
   *                           the default function use the generateColorFromHash method of the ColorGenerator object.
-  *
   * @author fabian.germeau@student.vinci.be
   */
 class ShowObjectiveFunction(a: Neighborhood, obj: Objective, stopWatch: StopWatch, withZoom:Boolean, neighborhoodColors: String => Color) extends NeighborhoodCombinator(a){
   //objGraphic is an internal frame that contains the curve itself and visualFrame is a basic frame that contains objGraphic
   val objGraphic = if(withZoom) new ObjFunctionGraphicContainer(dimension = new Dimension(940,500)) with Zoom
                     else new ObjFunctionGraphicContainer(dimension = new Dimension(960,540)) with AdjustMaxValue
-  val visualFrame = new VisualFrame("The Objective Function")
-  visualFrame.setPreferredSize(new Dimension(960,540))
-  visualFrame.addFrame(objGraphic, size = (940,500))
-  visualFrame.pack()
-  visualFrame.revalidate()
+  val f = new JFrame("The Objective Function")
+  f.setPreferredSize(new Dimension(960,540))
+  f.add(objGraphic)
+  f.pack()
+  f.setVisible(true)
 
   override def getMove(obj: Objective, acceptanceCriteria: (Int, Int) => Boolean): SearchResult ={
     a.getMove(obj, acceptanceCriteria) match {
@@ -1143,8 +1143,6 @@ case class DynAndThen[FirstMoveType<:Move](a:Neighborhood with SupportForAndThen
 
       override def model = obj.model
 
-      override def valueNoSideEffect: Int = 0
-
       override def value: Int = {
 
         val intermediaryObjValue =
@@ -1564,7 +1562,7 @@ class OverrideObjective(a: Neighborhood, overridingObjective: Objective) extends
   override def getMove(obj: Objective, acceptanceCriterion: (Int, Int) => Boolean): SearchResult = getMove(overridingObjective, acceptanceCriterion)
 }
 
-//class SlidingProfile(a:Neighborhood, windowsSize:Int)
+class SlidingProfile(a:Neighborhood, windowsSize:Int)
 
 /**
  * collects statistics about the run time and progress achieved by neighborhood a
