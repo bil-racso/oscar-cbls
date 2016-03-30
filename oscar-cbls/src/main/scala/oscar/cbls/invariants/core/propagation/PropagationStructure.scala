@@ -453,7 +453,7 @@ abstract class PropagationStructure(val verbose: Boolean, val checker: Option[Ch
       scheduledElements = null
     }
 
-    var previousLayer = 0 //ExecutionQueue.head.position
+    var previousLayer = 0
 
     while (!executionQueue.isEmpty) {
       val first = executionQueue.popFirst()

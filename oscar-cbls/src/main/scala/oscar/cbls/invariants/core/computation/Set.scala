@@ -180,7 +180,7 @@ abstract class ChangingSetValue(initialValue:SortedSet[Int], initialDomain:Domai
       Value
     }else{
       if (model == null) return Value
-      if (definingInvariant == null && !model.propagating) return Value
+      //if (definingInvariant == null && !model.propagating) return Value
       model.propagate(this)
       OldValue
     }
