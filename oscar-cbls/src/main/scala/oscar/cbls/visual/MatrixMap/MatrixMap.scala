@@ -89,17 +89,17 @@ abstract class MatrixMap extends VisualDrawing(false,false){
 class RoutingMatrixMap extends MatrixMap{
 
   def drawPoints() ={
-    var v = vrp.V
+    var v = 0
     for(p <- pointsList){
-      if(v > 0){
+      if(v < vrp.V){
         val tempPoint = new VisualCircle(this,p._1.toInt,p._2.toInt,6)
-        tempPoint.innerCol_$eq(colorValues(pointsList.indexOf(p)))
+        tempPoint.innerCol_$eq(colorValues(v))
       }
       else{
         val tempPoint = new VisualCircle(this,p._1.toInt,p._2.toInt,4)
         tempPoint.innerCol_$eq(Color.black)
       }
-      v -= 1
+      v += 1
     }
   }
 

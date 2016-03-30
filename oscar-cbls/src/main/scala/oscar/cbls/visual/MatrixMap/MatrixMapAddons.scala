@@ -12,15 +12,16 @@ import oscar.visual.shapes.VisualCircle
 trait PickupAndDeliveryPoints extends  MatrixMap{
 
   var pdptwVRP:VRP with PickupAndDeliveryCustomers with VehicleWithCapacity = null
-  var relatedNodeCircle:VisualCircle = null
+  var pickupNodeCircle:VisualCircle = null
+  var deliveryNodeCircle:VisualCircle = null
 
   override def drawPoints(): Unit ={
-    initRelatedNode()
-    var v = vrp.V
+    initNodeCircles()
+    var v = 0
     for(p <- pointsList){
-      if(v > 0){
+      if(v < pdptwVRP.V){
         val tempPoint = new VisualCircle(this,p._1.toInt,p._2.toInt,6)
-        tempPoint.innerCol_$eq(colorValues(v-1))
+        tempPoint.innerCol_$eq(colorValues(v))
       }
       else{
         val tempPoint = new VisualCircle(this,p._1.toInt,p._2.toInt,4)
@@ -28,7 +29,7 @@ trait PickupAndDeliveryPoints extends  MatrixMap{
         tempPoint.onClick(onClickAction(pointsList.indexOf(p)))
         tempPoint.toolTip_=(getPointInformation(pointsList.indexOf(p)))
       }
-      v -= 1
+      v += 1
     }
   }
 
@@ -46,18 +47,29 @@ trait PickupAndDeliveryPoints extends  MatrixMap{
 
   private def onClickAction(index:Int): Unit ={
     var point:(Int,Int) = (-10,-10)
-    if(pdptwVRP.isPickup(index))
+    if(pdptwVRP.isPickup(index)) {
       point = pointsList(pdptwVRP.getRelatedDelivery(index))
-    else if(pdptwVRP.isDelivery(index))
+      deliveryNodeCircle.move(point._1,point._2)
+      pickupNodeCircle.move(pointsList(index)._1,pointsList(index)._2)
+    }
+    else if(pdptwVRP.isDelivery(index)) {
       point = pointsList(pdptwVRP.getRelatedPickup(index))
-    relatedNodeCircle.move(point._1,point._2)
+      pickupNodeCircle.move(point._1,point._2)
+      deliveryNodeCircle.move(pointsList(index)._1,pointsList(index)._2)
+    }else{
+      assert(pdptwVRP.isADepot(index),"The node is neither a pickup node nor a delivery node nor a depot")
+    }
   }
 
-  private def initRelatedNode(): Unit ={
-    relatedNodeCircle = new VisualCircle(this,-10,-10,10)
-    relatedNodeCircle.borderWidth = 2
-    relatedNodeCircle.outerCol_$eq(Color.BLUE)
-    relatedNodeCircle.fill = false
+  private def initNodeCircles(): Unit ={
+    pickupNodeCircle = new VisualCircle(this,-10,-10,10)
+    pickupNodeCircle.borderWidth = 2
+    pickupNodeCircle.outerCol_$eq(Color.BLUE)
+    pickupNodeCircle.fill = false
+    deliveryNodeCircle = new VisualCircle(this,-10,-10,10)
+    deliveryNodeCircle.borderWidth = 2
+    deliveryNodeCircle.outerCol_$eq(Color.RED)
+    deliveryNodeCircle.fill = false
   }
 
 }

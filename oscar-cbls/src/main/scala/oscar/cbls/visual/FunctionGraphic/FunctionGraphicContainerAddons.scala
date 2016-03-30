@@ -42,8 +42,9 @@ import oscar.examples.cbls.routing.visual.FunctionGraphic.ObjFunctionGraphicCont
   *
   * @author fabian.germeau@student.vinci.be
   */
+//TODO : Check the problem when the curve is drawn during the research
 trait Zoom extends ObjFunctionGraphicContainer{
-  val zoomScrollBar = new JScrollBar(SwingConstants.VERTICAL,10,10,0,101)
+  val zoomScrollBar = new JScrollBar(SwingConstants.VERTICAL,0,10,0,101)
   zoomScrollBar.addAdjustmentListener(new AdjustmentListener {
     override def adjustmentValueChanged(e: AdjustmentEvent): Unit = {
       adjustScrollBar()
@@ -58,6 +59,7 @@ trait Zoom extends ObjFunctionGraphicContainer{
   val rightLeftScrollBar = new JScrollBar(SwingConstants.HORIZONTAL,0,1,0,100)
   rightLeftScrollBar.addAdjustmentListener(new AdjustmentListener {
     override def adjustmentValueChanged(e: AdjustmentEvent): Unit = {
+      println("rightLeftAdj")
       graphic.minXValueDisplayed = rightLeftScrollBar.getValue
       graphic.maxXValueDisplayed = graphic.minXValueDisplayed + rightLeftScrollBar.getVisibleAmount
       graphic.drawGlobalCurve()
@@ -68,6 +70,7 @@ trait Zoom extends ObjFunctionGraphicContainer{
   val upDownScrollBar = new JScrollBar(SwingConstants.VERTICAL,0,1,0,100)
   upDownScrollBar.addAdjustmentListener(new AdjustmentListener {
     override def adjustmentValueChanged(e: AdjustmentEvent): Unit = {
+      println("upDownAdj")
       graphic.minYValueDisplayed = upDownScrollBar.getMaximum - upDownScrollBar.getVisibleAmount - upDownScrollBar.getValue
       graphic.maxYValueDisplayed = graphic.minYValueDisplayed + upDownScrollBar.getVisibleAmount
       graphic.drawGlobalCurve()
@@ -78,7 +81,7 @@ trait Zoom extends ObjFunctionGraphicContainer{
   /*
     This method, called by the zoomScrollBar adjust the values of the rightLeftScrollBar and the upDownScrollBar
     so that their values are adjusted to the new zoom level.
-    After adjusting the values, it sets the value of the scrollbar to 0 (bottom left of the graphic)
+    After adjusting the values, it sets the value of the scrollbar to 0 (top left of the graphic)
    */
   def adjustScrollBar(): Unit ={
     rightLeftScrollBar.setValue(0)
@@ -99,7 +102,6 @@ trait Zoom extends ObjFunctionGraphicContainer{
   override def drawGlobalCurve(): Unit ={
     rightLeftScrollBar.setMaximum(graphic.maxXValue().toInt+1)
     upDownScrollBar.setMaximum(graphic.maxYValue()+1)
-    zoomScrollBar.setValue(0)
     super.drawGlobalCurve()
   }
 

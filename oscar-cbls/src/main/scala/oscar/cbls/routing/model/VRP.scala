@@ -24,6 +24,7 @@
 package oscar.cbls.routing.model
 
 import oscar.cbls.constraints.lib.basic.{NE, EQ, LE}
+import oscar.cbls.invariants.core.algo.heap.BinomialHeap
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.lib.logic._
 import oscar.cbls.invariants.lib.numeric.{Sum2, Sum}
@@ -569,6 +570,10 @@ trait PositionInRouteAndRouteNr extends VRP {
   def onTheSameRoute(n: Int, m: Int): Boolean = {
     routeNr(n).value == routeNr(m).value
   }
+
+  def onTheSameRouteAfter(m:Int)(n:Int): Boolean = {
+    routeNr(n).value == routeNr(m).value
+  }
 }
 
 /**
@@ -830,6 +835,13 @@ trait PickupAndDeliveryCustomers extends VRP with StrongConstraints with Positio
 
   def isDelivery(index:Int):Boolean = deliveryNodes.get(index).isDefined
 
+  def getRelatedUnroutedDelivery():Int = {for(d <- deliveryNodes) {
+    if (isRouted(d._2._1.value) && !isRouted(d._1.value)) return d._1.value
+    }
+    assert(false,"Expecting a unrouted delivery or bad use of the method")
+    return 0
+  }
+
   /**
     * @param d the index of a delivery node
     * @return the index of the related pickup node
@@ -886,17 +898,21 @@ trait PickupAndDeliveryCustomers extends VRP with StrongConstraints with Positio
   def getUnroutedDeliverys: Iterable[Int] = deliveryNodes.keys.foldLeft(List[Int]())((a,b) => if(!isRouted(b.value)) b.value::a else a)
 
   def getAuthorizedInsertionPositionForPickup()(node: Int): Iterable[Int] = {
+    if(node < V)return Iterable()
     val routeOfNode = routeNr(node)
     var resRoute = getRouteOfVehicle(routeOfNode.value)
-    resRoute = resRoute.takeWhile(_ != node)
+    resRoute = resRoute.takeWhile(_ != getRelatedDelivery(node))
     resRoute
   }
 
   def getAuthorizedInsertionPositionForDelivery()(node: Int): Iterable[Int] = {
+    if(node < V)return Iterable()
     val routeOfNode = routeNr(node)
+    getRelatedDelivery(node)
+    getRelatedPickup(node)
     var resRoute = getRouteOfVehicle(routeOfNode.value)
-    resRoute = resRoute.dropWhile(_ != node)
-    resRoute
+    resRoute = resRoute.dropWhile(_ != getRelatedPickup(node))
+    resRoute.drop(1)
   }
 
   def getCompleteSegments(routeNumber:Int): List[(Int,Int)] ={
@@ -956,8 +972,60 @@ trait PickupAndDeliveryCustomers extends VRP with StrongConstraints with Positio
 
 trait PickupAndDeliveryCustomersWithTimeWindow extends TimeWindow with PickupAndDeliveryCustomers {
 
-  override def setEndWindow(node:Int, endWindow:Int): Unit ={
+  def setEndWindow(node:Int, endWindow:Int, startWindow:Int, nodeDuration:Int): Unit ={
     setNodeInformation(node,getNodeInformation(node) + "\nEnd of time window : " + endWindow)
-    super.setEndWindow(node,endWindow)
+    setEndWindow(node,endWindow)
+    super.setNodeDuration(node,nodeDuration,startWindow)
+  }
+
+  def endWindowGenerator(): Unit ={
+    val currentArray:Array[Int] = new Array[Int](N-V)
+    val randomIncValues:List[Int] = 2::3::4::5::Nil
+    val currentSum = (pos:Int) => {
+      var res = 0
+      for(i <- 0 to pos) res += currentArray(i)
+      res
+    }
+    val currentPickup:Array[Int] = new Array[Int](N-V)
+    val currentSumPickup = (pos:Int) => {
+      var res = 0
+      for(i <- 0 to pos) res += currentPickup(i)
+      res
+    }
+    var currentTimeUnit = 1
+    val nodesOrderedByType = getPickups.toArray
+    while(currentSum(currentTimeUnit) < N-V){
+      val current = currentSum(currentTimeUnit)
+      val currentPick = currentSumPickup(currentTimeUnit)
+      val nbOfNodeToAdd = if(N - V - (N-V)/2 - currentPick < V) N-currentPick - (N-V)/2 -V else (Math.random()*(V*currentTimeUnit - current)).toInt
+      for(inc <- 0 until nbOfNodeToAdd){
+        val deliveryInc = randomIncValues(scala.util.Random.nextInt(4))
+        setEndWindow(nodesOrderedByType(currentPick+inc), 500*(currentTimeUnit+1), 500*currentTimeUnit,50)
+        setEndWindow(getRelatedDelivery(nodesOrderedByType(currentPick+inc)),500*(currentTimeUnit+5), 500*(currentTimeUnit+deliveryInc),0)
+        currentArray(currentTimeUnit+deliveryInc) += 1
+      }
+      currentArray(currentTimeUnit) += nbOfNodeToAdd
+      currentPickup(currentTimeUnit) += nbOfNodeToAdd
+      currentTimeUnit += 1
+    }
+  }
+
+  def getRoutedNodesBeforeTime()(node:Int): Iterable[Int] ={
+    val res:BinomialHeap[Int] = new BinomialHeap[Int](a => a,N-V)
+    val time = leaveTime(node).value
+    for(v <- 0 until V){
+      val route = getRouteOfVehicle(v)
+      var index = 0
+      while(index < route.length){
+        if(arrivalTimeToNext(route(index)).value <= time) {
+          res.insert(route(index))
+        }
+        index += 1
+      }
+    }
+    var resList:List[Int] = Nil
+    for(n <- 0 until res.size)resList = res.popFirst() :: resList
+    println(resList)
+    resList.toIterable
   }
 }
