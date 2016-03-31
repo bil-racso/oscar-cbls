@@ -42,7 +42,8 @@ trait PickupAndDeliveryPoints extends  MatrixMap{
   }
 
   private def getPointInformation(index:Int): String ={
-    vrp.getNodeInformation(index) + "\n " + pdptwVRP.currentLoad(index)
+    val info = vrp.getNodeInformation(index).split("\n").foldLeft("")((a,b)=>if(a == "") b else a+"<br>"+b)
+    "<html>" + info + "<br>Arrival load : " + pdptwVRP.currentLoad(index) + "</html>"
   }
 
   private def onClickAction(index:Int): Unit ={

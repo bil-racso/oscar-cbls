@@ -47,7 +47,8 @@ class MyPDPTWVRP(n:Int, v:Int, model:Store, distanceMatrix: Array[Array[Int]],un
     with PenaltyForEmptyRouteAsObjectiveTerm
     with hopDistancePerVehicle
     with VehicleWithCapacity
-    with PickupAndDeliveryCustomersWithTimeWindow{
+    with PickupAndDeliveryCustomersWithTimeWindow
+    with MaxTravelDistancePDConstraint{
 
   installCostMatrix(distanceMatrix)
   setUnroutedPenaltyWeight(unroutedPenalty)
@@ -58,9 +59,11 @@ class MyPDPTWVRP(n:Int, v:Int, model:Store, distanceMatrix: Array[Array[Int]],un
   installHopDistancePerVehicle()
   println("end install matrix, posting constraints")
   addRandomPickupDeliveryCouples()
+  setMaxTravelDistancePDConstraint()
   setArrivalLeaveLoadValue()
   setVehiclesMaxCargo(4)
   setVehiclesCargoStrongConstraint()
+  //setLinearTravelTimeFunction(distanceMatrix)
   endWindowGenerator()
 
   //evenly spreading the travel among vehicles
@@ -82,7 +85,7 @@ object pdptwTest extends App with StopWatch {
 
   println("PDPTWTest(n:" + n + " v:" + v + ")")
 
-  val mapSize = 10000
+  val mapSize = 500
 
   val (distanceMatrix,positions) = RoutingMatrixGenerator(n,mapSize)
   println("compozed matrix " + getWatch + "ms")
@@ -194,6 +197,7 @@ object pdptwTest extends App with StopWatch {
   def launchSearch(): Unit ={
     //search.verboseWithExtraInfo(1,vrp.toString)
     search.doAllMoves(_ > 10*n, vrp.getObjective())
+    println(vrp.strongConstraints)
 
     println("total time " + getWatch + "ms or  " + getWatchString)
 

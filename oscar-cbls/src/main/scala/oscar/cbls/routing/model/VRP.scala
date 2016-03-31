@@ -696,7 +696,7 @@ trait VehicleWithCapacity extends VRP with PickupAndDeliveryCustomers{
     else {
       while (next(current).value != n) {
         current = next(current).value
-        currentValue += getLoadValue(current).value
+        currentValue += getLoadValue(current)
       }
       currentValue
     }
@@ -762,18 +762,8 @@ trait VehicleWithCapacity extends VRP with PickupAndDeliveryCustomers{
   */
 trait PickupAndDeliveryCustomers extends VRP with StrongConstraints with PositionInRouteAndRouteNr with Predecessors{
 
-  /**
-    * The variable that contains the pickup nodes.
-    * Each pickup node (the key) grants access to his related delivery node and to his value of load to pickup
-    */
-  private var pickupNodes:HashMap[CBLSIntConst,(CBLSIntConst,CBLSIntConst)] = new HashMap[CBLSIntConst,(CBLSIntConst,CBLSIntConst)]
-  /**
-    * The variable that contains the delivery nodes.
-    * Each delivery node (the key) grants access to his related pickup node and to his value of load to deliver
-    */
-  private var deliveryNodes:HashMap[CBLSIntConst,(CBLSIntConst,CBLSIntConst)] = new HashMap[CBLSIntConst,(CBLSIntConst,CBLSIntConst)]
-
-
+  private val pickupDeliveryNodes:Array[(Int,Int)] = new Array[(Int, Int)](N)
+  for(i <- 0 until V)pickupDeliveryNodes(i) = (0,i)
   /**
     * Add a new PickupAndDelivery couple
     *
@@ -781,9 +771,9 @@ trait PickupAndDeliveryCustomers extends VRP with StrongConstraints with Positio
     * @param d the delivery point
     */
   private def addPickupDeliveryCouple(p:Int, d:Int): Unit ={
-    pickupNodes += CBLSIntConst(p) -> (CBLSIntConst(d),1)
+    pickupDeliveryNodes(p) = (1,d)
     setNodeInformation(p,getNodeInformation(p) + "Pickup node n°" + p + "\n" + "Load value : 1")
-    deliveryNodes += CBLSIntConst(d) -> (CBLSIntConst(p),-1)
+    pickupDeliveryNodes(d) = (-1,p)
     setNodeInformation(d,getNodeInformation(d) + "Delivery node n°" + d + "\n" + "Load value : -1")
     strongConstraints.post(LE(positionInRoute(p),positionInRoute(d)))
     strongConstraints.post(EQ(routeNr(p),routeNr(d)))
@@ -830,15 +820,15 @@ trait PickupAndDeliveryCustomers extends VRP with StrongConstraints with Positio
     }
   }
 
-  def isPickup(index:Int): Boolean = pickupNodes.get(index).isDefined
+  def isPickup(index:Int): Boolean = pickupDeliveryNodes(index)._1 > 0
 
-  def isDelivery(index:Int):Boolean = deliveryNodes.get(index).isDefined
+  def isDelivery(index:Int):Boolean = pickupDeliveryNodes(index)._1 < 0
 
-  def getRelatedUnroutedDelivery():Int = {for(d <- deliveryNodes) {
-    if (isRouted(d._2._1.value) && !isRouted(d._1.value)) return d._1.value
+  def getRelatedUnroutedDelivery():Int = {for(d <- pickupDeliveryNodes.indices) {
+    if (isDelivery(d) && !isRouted(d) && isRouted(pickupDeliveryNodes(d)._2)) return d
     }
-    assert(false,"Expecting a unrouted delivery or bad use of the method")
-    return 0
+    assert(false,"Expecting an unrouted delivery or bad use of the method")
+    0
   }
 
   /**
@@ -846,8 +836,8 @@ trait PickupAndDeliveryCustomers extends VRP with StrongConstraints with Positio
     * @return the index of the related pickup node
     */
   def getRelatedPickup(d:Int): Int ={
-    assert(deliveryNodes.get(d).isDefined,"The node can't be found in the deliveryNodes map")
-    deliveryNodes.get(d).get._1.value
+    assert(pickupDeliveryNodes(d)._1 < 0,"This node isn't a delivery node")
+    pickupDeliveryNodes(d)._2
   }
 
   /**
@@ -855,46 +845,41 @@ trait PickupAndDeliveryCustomers extends VRP with StrongConstraints with Positio
     * @return the index of the related delivery node
     */
   def getRelatedDelivery(p:Int): Int ={
-    assert(pickupNodes.get(p) == None,"The node can't be found in the pickupNodes map")
-    if(pickupNodes.get(p) == None){
-      0
-    }else {
-      pickupNodes.get(p).get._1.value
-    }
+    assert(pickupDeliveryNodes(p)._1 > 0,"This node isn't a pickup node")
+    pickupDeliveryNodes(p)._2
   }
 
   /**
     * @param n the index of a node
     * @return the load value of the node
     */
-  def getLoadValue(n:Int): CBLSIntConst ={
-    if(pickupNodes.get(n).isEmpty) {
-      if (deliveryNodes.get(n).isEmpty) {
-        assert(false, "The node can't be found")
-        0
-      }else {
-        deliveryNodes.get(n).get._2.value
-      }
-    }else{
-      pickupNodes.get(n).get._2.value
-    }
+  def getLoadValue(n:Int): Int ={
+    pickupDeliveryNodes(n)._1
   }
 
-  def getPickups: Iterable[Int] = pickupNodes.keys.foldLeft(List[Int]())((a,b) => b.value::a)
+  //O(N)
+  def getPickups: Iterable[Int] = pickupDeliveryNodes.indices.foldLeft(List[Int]())((a,b) => if(pickupDeliveryNodes(b)._1 > 0)b :: a else a)
 
-  def getRoutedPickups: Iterable[Int] = pickupNodes.keys.foldLeft(List[Int]())((a,b) => if(isRouted(b.value)) b.value::a else a)
+  //O(N)
+  def getRoutedPickups: Iterable[Int] = pickupDeliveryNodes.indices.foldLeft(List[Int]())((a,b) => if(pickupDeliveryNodes(b)._1 > 0 && isRouted(b))b :: a else a)
 
-  def getRoutedPickupsPredecessors: Iterable[Int] = pickupNodes.keys.foldLeft(List[Int]())((a,b) => if(isRouted(b.value)) preds(b.value).value::a else a)
+  //O(N)
+  def getRoutedPickupsPredecessors: Iterable[Int] = pickupDeliveryNodes.indices.foldLeft(List[Int]())((a,b) => if(pickupDeliveryNodes(b)._1 > 0 && isRouted(b))preds(b).value :: a else a)
 
-  def getUnroutedPickups: Iterable[Int] = pickupNodes.keys.foldLeft(List[Int]())((a,b) => if(!isRouted(b.value)) b.value::a else a)
+  //O(N)
+  def getUnroutedPickups: Iterable[Int] = pickupDeliveryNodes.indices.foldLeft(List[Int]())((a,b) => if(pickupDeliveryNodes(b)._1 > 0 && !isRouted(b))b :: a else a)
 
-  def getDeliverys: Iterable[Int] = deliveryNodes.keys.foldLeft(List[Int]())((a,b) => b.value::a)
+  //O(N)
+  def getDeliverys: Iterable[Int] = pickupDeliveryNodes.indices.foldLeft(List[Int]())((a,b) => if(pickupDeliveryNodes(b)._1 < 0)b :: a else a)
 
-  def getRoutedDeliverys: Iterable[Int] = deliveryNodes.keys.foldLeft(List[Int]())((a,b) => if(isRouted(b.value)) b.value::a else a)
+  //O(N)
+  def getRoutedDeliverys: Iterable[Int] = pickupDeliveryNodes.indices.foldLeft(List[Int]())((a,b) => if(pickupDeliveryNodes(b)._1 < 0 && isRouted(b))b :: a else a)
 
-  def getRoutedDeliverysPredecessors: Iterable[Int] = deliveryNodes.keys.foldLeft(List[Int]())((a,b) => if(isRouted(b.value)) preds(b.value).value::a else a)
+  //O(N)
+  def getRoutedDeliverysPredecessors: Iterable[Int] = pickupDeliveryNodes.indices.foldLeft(List[Int]())((a,b) => if(pickupDeliveryNodes(b)._1 < 0 && isRouted(b))preds(b).value :: a else a)
 
-  def getUnroutedDeliverys: Iterable[Int] = deliveryNodes.keys.foldLeft(List[Int]())((a,b) => if(!isRouted(b.value)) b.value::a else a)
+  //O(N)
+  def getUnroutedDeliverys: Iterable[Int] = pickupDeliveryNodes.indices.foldLeft(List[Int]())((a,b) => if(pickupDeliveryNodes(b)._1 < 0 && !isRouted(b))b :: a else a)
 
   def getAuthorizedInsertionPositionForPickup()(node: Int): Iterable[Int] = {
     if(node < V)return Iterable()
@@ -912,68 +897,104 @@ trait PickupAndDeliveryCustomers extends VRP with StrongConstraints with Positio
     resRoute.drop(1)
   }
 
-  //TODO : Check if this method return ALL the possible completeSegment (verify all the cases)
+  /**
+    * This method search all the complete segments contained in a specified route.
+    * A segment is considered as complete when you can move it to another branch
+    * without breaking the precedence constraint.
+    * It runs through the specified route and try to create the first complete segment possible
+    * After that it try to combine adjacent segment
+    *
+    * @param routeNumber the number of the route
+    * @return the list of all the complete segment present in the route
+    */
   def getCompleteSegments(routeNumber:Int): List[(Int,Int)] ={
-    var completeSegmentsMap:HashMap[Int,Set[Int]] = new HashMap[Int,Set[Int]]
     val route = getRouteOfVehicle(routeNumber)
+    /**
+      * Each value of segmentsArray represent a possible complete segment.
+      * The Int value represents the number of pickup node whose related delivery node isn't currently in the segment
+      * The List[Int] value represents the segment
+      */
+    val segmentsArray:Array[(Int,List[Int])] = new Array[(Int, List[Int])](route.size)
 
-    for(node <- route){
-      if(isPickup(node)){
-        for(key <- completeSegmentsMap.keys){
-          if(completeSegmentsMap.get(key).get.nonEmpty) {
-            val currentSet = completeSegmentsMap.get(key).get + node
-            completeSegmentsMap += key -> currentSet
+    for(n <- route.indices){
+      if(isPickup(route(n))){
+        //If the node is a pickup one, we add the node to all the active segment and we create a new one
+        for(i <- segmentsArray.indices){
+          if(segmentsArray(i) != null) {
+            if (segmentsArray(i)._1 != 0) {
+              val currentSegment = segmentsArray(i)._2 :+ route(n)
+              val nbOfSinglePickup = segmentsArray(i)._1 + 1
+              segmentsArray(i) = (nbOfSinglePickup, currentSegment)
+            }
           }
         }
-        val nodeSet:Set[Int] = Set(node)
-        completeSegmentsMap += node -> nodeSet
+        val nodeList:List[Int] = route(n)::Nil
+        segmentsArray(n) = (1,nodeList)
       }
       else{
-        for(key <- completeSegmentsMap.keys){
-          if(completeSegmentsMap.get(key).get.nonEmpty) {
-            if (!completeSegmentsMap.get(key).get.contains(getRelatedPickup(node))) {
-              completeSegmentsMap -= key
-            }else if(key == getRelatedPickup(node) && completeSegmentsMap.get(key).get.size > 1){
-              completeSegmentsMap -= key
-            }
-            else {
-              val currentSet = completeSegmentsMap.get(key).get - getRelatedPickup(node)
-              completeSegmentsMap += key -> currentSet
+        for(i <- segmentsArray.indices){
+          if(segmentsArray(i) != null) {
+            if (segmentsArray(i)._1 != 0) {
+              /**
+                * If the segment doesn't contain the related pickup node it means that the related pickup node is before
+                * the beginning of the segment and thus this is not possible to create a complete segment beginning
+                * at this position.
+                */
+              if (!segmentsArray(i)._2.contains(getRelatedPickup(route(n)))) {
+                segmentsArray(i) = null
+
+                /**
+                  * Else we decrement the number of single pickup
+                  */
+              }else {
+                val currentSegment = segmentsArray(i)._2 :+ route(n)
+                val nbOfSinglePickup = segmentsArray(i)._1 - 1
+                segmentsArray(i) = (nbOfSinglePickup, currentSegment)
+              }
             }
           }
         }
       }
     }
 
-    if(completeSegmentsMap.keys.nonEmpty) {
-      val sortedKeys = completeSegmentsMap.keys.toList.sortWith(positionInRoute(_) < positionInRoute(_))
-      var completeSegments: List[(Int, Int)] = Nil
-      for (key1 <- sortedKeys.indices) {
-        completeSegments = (sortedKeys(key1), getRelatedDelivery(sortedKeys(key1))) :: completeSegments
-        var tempKey = key1-1
-        var linked = true
-        while(linked && tempKey != -1){
-          if(preds(tempKey+1).value != getRelatedDelivery(sortedKeys(tempKey)))
-            linked = false
-          else {
-            completeSegments = (sortedKeys(tempKey), getRelatedDelivery(sortedKeys(key1))) :: completeSegments
-            tempKey -= 1
-          }
+    var completeSegments: List[(Int, Int)] = Nil
+
+    /**
+      * We loop only on the segment that are not null and whose the number of single pickup is equals to 0
+      */
+    for(i <- segmentsArray.indices)if(segmentsArray(i) != null && segmentsArray(i)._1 == 0){
+      val currentSegment = segmentsArray(i)._2
+      completeSegments = (currentSegment.head, currentSegment.last) :: completeSegments
+      var j = i-1
+      var currentPreds = preds(route(i)).value
+      while(j != -1){
+        if(segmentsArray(j) != null && currentPreds == segmentsArray(j)._2.last){
+          completeSegments = (segmentsArray(j)._2.head, currentSegment.last) :: completeSegments
+          currentPreds = preds(route(j)).value
         }
+        j -= 1
       }
-      completeSegments
-    }else{
-      Nil
     }
+    completeSegments
   }
 }
 
-trait PickupAndDeliveryCustomersWithTimeWindow extends TimeWindow with PickupAndDeliveryCustomers {
+trait PickupAndDeliveryCustomersWithTimeWindow extends TimeWindow with TravelTimeAsFunction with PickupAndDeliveryCustomers {
 
   def setEndWindow(node:Int, endWindow:Int, startWindow:Int, nodeDuration:Int): Unit ={
     setNodeInformation(node,getNodeInformation(node) + "\nEnd of time window : " + endWindow)
     setEndWindow(node,endWindow)
     super.setNodeDuration(node,nodeDuration,startWindow)
+  }
+
+  def setLinearTravelTimeFunction(distanceMatrix: Array[Array[Int]]): Unit ={
+    val ttf = new TTFMatrix(N,new TTFConst(500))
+    for(i <- 0 until N){
+      for(j <- 0 until N){
+        ttf.setTTF(i,j,new TTFConst(distanceMatrix(i)(j)))
+      }
+    }
+    setTravelTimeFunctions(ttf)
   }
 
   //TODO : Refactor this method, actually it's quite ugly and not very comprehensive
@@ -985,6 +1006,7 @@ trait PickupAndDeliveryCustomersWithTimeWindow extends TimeWindow with PickupAnd
       for(i <- 0 to pos) res += currentArray(i)
       res
     }
+
     val currentPickup:Array[Int] = new Array[Int](N-V)
     val currentSumPickup = (pos:Int) => {
       var res = 0
@@ -1026,5 +1048,36 @@ trait PickupAndDeliveryCustomersWithTimeWindow extends TimeWindow with PickupAnd
     var resList:List[Int] = Nil
     for(n <- 0 until res.size)resList = res.popFirst() :: resList
     resList.toIterable
+  }
+}
+
+trait MaxTravelDistancePDConstraint extends VRP with HopDistance with PickupAndDeliveryCustomers{
+  var travelDistances:Array[IntValue] = null
+  val arrivalTravelDistance = Array.tabulate(N){ (n:Int) => CBLSIntVar(m, 0, 0 to N, "Arrival load at node " + n) }
+
+  def setMaxTravelDistancePDConstraint() {
+    assert(distanceFunction != null,"In order to use this constraint you must install the cost matrix")
+    initTravelDistances
+    val pickups = getPickups.toArray
+    for (p <- pickups.indices) {
+      val d = getRelatedDelivery(pickups(p))
+      strongConstraints.post(LE(travelDistances(d)-travelDistances(p),distanceFunction(pickups(p),d)))
+    }
+  }
+
+  //TODO : Find a solution to maintain the current travel cost between each point
+  private def initTravelDistances(): Unit ={
+    travelDistances = Array.tabulate(N){
+      (n:Int)=>
+        if(n == N || n < V){
+          0
+        }else{
+          println(preds(n)value)
+          arrivalTravelDistance(n) + distanceFunction(n,preds(n).value)
+        }
+    }
+    for(n <- 0 until N){
+      arrivalTravelDistance(n) <== travelDistances.element(preds(n))
+    }
   }
 }

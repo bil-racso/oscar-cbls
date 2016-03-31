@@ -25,7 +25,7 @@ import javax.swing.SwingUtilities
 import oscar.cbls.routing.model.{PickupAndDeliveryCustomers, VRP}
 import oscar.examples.cbls.routing.visual.ColorGenerator
 import oscar.visual.VisualDrawing
-import oscar.visual.shapes.{VisualArrow, VisualCircle}
+import oscar.visual.shapes.{VisualLine, VisualArrow, VisualCircle}
 
 import scala.collection.mutable.ListBuffer
 

@@ -19,7 +19,8 @@ package oscar.cbls.visual.FunctionGraphic
 
 import java.awt.BorderLayout
 import java.awt.event.{AdjustmentListener, AdjustmentEvent}
-import javax.swing.{SwingConstants, JScrollBar}
+import javax.swing.event.{ChangeEvent, ChangeListener}
+import javax.swing.{JSlider, SwingConstants, JScrollBar}
 
 import oscar.cbls.search.algo.LazyQuicksort
 import oscar.examples.cbls.routing.visual.FunctionGraphic.ObjFunctionGraphicContainer
@@ -121,34 +122,37 @@ trait Zoom extends ObjFunctionGraphicContainer{
   * This trait, attached to a ObjFunctionGraphicContainer add a scrollbar on the right side of the graphic.
   * This scrollbar allow the user to increase or decrease the number of value displayed on the graphic.
   * The number of displayed value is represented in percentages and always begin with the lower value.
-  * The minimum value is 2% and the maximum value 100%.
+  * The minimum value is 1% and the maximum value 100%.
   *
   * @author fabian.germeau@student.vinci.be
   */
 trait AdjustMaxValue extends ObjFunctionGraphicContainer{
   var sortedYValues:LazyQuicksort = null
 
-  val adjustMaxValueScrollBar = new JScrollBar(SwingConstants.VERTICAL,100,1,2,101)
-  adjustMaxValueScrollBar.addAdjustmentListener(new AdjustmentListener {
+  val adjustMaxValueSlider = new JSlider(SwingConstants.VERTICAL,1,100,100)
+  adjustMaxValueSlider.setMajorTickSpacing(10)
+  adjustMaxValueSlider.setMinorTickSpacing(1)
+  adjustMaxValueSlider.setPaintTicks(true)
+  adjustMaxValueSlider.addChangeListener(new ChangeListener {
     /*
       This method starts by sorting a part of the yValues stocked in the graphic object using the LazyQuicksort method.
       Then it selects the last value sorted and set it as the maxYValueDisplayed
       so that only the wanted values will be displayed.
      */
-    override def adjustmentValueChanged(e: AdjustmentEvent): Unit = {
+    override def stateChanged(e: ChangeEvent): Unit = {
       sortedYValues = new LazyQuicksort(graphic.yValues.toArray,+_)
-      sortedYValues.sortUntil(Math.max(1,(adjustMaxValueScrollBar.getValue.toDouble/100 * sortedYValues.size).toInt))
+      sortedYValues.sortUntil(Math.max(1,(adjustMaxValueSlider.getValue.toDouble/100 * sortedYValues.size).toInt))
       val iteratorXValues = sortedYValues.iterator
-      for(i <- 0 until Math.max(1, (adjustMaxValueScrollBar.getValue.toDouble / 100 * sortedYValues.size).toInt)){
+      for(i <- 0 until Math.max(1, (adjustMaxValueSlider.getValue.toDouble / 100 * sortedYValues.size).toInt)){
         val temp = iteratorXValues.next()
-        if(i == (adjustMaxValueScrollBar.getValue.toDouble/100 * sortedYValues.size).toInt-1) {
+        if(i == (adjustMaxValueSlider.getValue.toDouble/100 * sortedYValues.size).toInt-1) {
           graphic.maxYValueDisplayed = temp
         }
       }
       graphic.drawGlobalCurve()
     }
   })
-  add(adjustMaxValueScrollBar, BorderLayout.EAST)
+  add(adjustMaxValueSlider, BorderLayout.EAST)
 
   override def drawGlobalCurve(): Unit ={
     super.drawGlobalCurve()
