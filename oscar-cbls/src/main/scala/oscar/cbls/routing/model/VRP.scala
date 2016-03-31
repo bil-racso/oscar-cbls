@@ -91,7 +91,7 @@ class VRP(val N: Int, val V: Int, val m: Store) {
     * @param n the point queried.
    * @return true if the point is still routed, else false.
    */
-  def isRouted(n: Int): Boolean = { next(n).getValue(true) != N }
+  def isRouted(n: Int): Boolean = { next(n).newValue != N }
 
   /**
    * This function is intended to be used for testing only.
@@ -138,7 +138,7 @@ class VRP(val N: Int, val V: Int, val m: Store) {
     var acc:List[Int] = List(vehicle)
     while (current != vehicle) {
       acc = current :: acc
-      current = next(current).getValue(true) //to avoid unnecessary propagation
+      current = next(current).newValue //to avoid unnecessary propagation
     }
     acc.reverse
   }
@@ -333,7 +333,6 @@ abstract trait ClosestNeighbors extends VRP {
   var closestNeighbors: Array[Iterable[Int]] = null
 
   def computeClosestNeighbors() = {
-    println("computeClosestNeighbors")
     def arrayOfAllNodes = Array.tabulate(N)(node => node)
     closestNeighbors = Array.tabulate(N)(node =>
       KSmallest.lazySort(arrayOfAllNodes,

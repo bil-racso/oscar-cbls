@@ -401,7 +401,6 @@ trait SetInvariants{
 
   /** PRod(i in on)(fun(i))
    * @param on is the set of integers to multiply
-   * @param fun is an optional function Int -> Int to apply before multiplying elements. It is expected not to rely on any variable of the model.
    * */
-  def setProd(on:SetValue, fun:(Int => Int) = ((a:Int) => a)) = SetProd(on, fun)
+  def setProd(on:SetValue) = SetProd(on)
 }

@@ -123,7 +123,7 @@ case class G(l: IntValue, r: IntValue) extends LA(r, l)
  * implements left != right
  * @author renaud.delandtsheer@cetic.be
  */
-case class NE(left: IntValue, right: IntValue) extends Invariant with Constraint {
+case class NE(left: IntValue, right: IntValue) extends Invariant with Constraint with IntNotificationTarget{
   registerConstrainedVariables(left, right)
   registerStaticAndDynamicDependenciesNoID(left, right)
   finishInitialization()
@@ -134,7 +134,7 @@ case class NE(left: IntValue, right: IntValue) extends Invariant with Constraint
   violation.setDefiningInvariant(this)
 
   @inline
-  override def notifyIntChanged(v: ChangingIntValue, OldVal: Int, NewVal: Int) {
+  override def notifyIntChanged(v: ChangingIntValue, id:Int, OldVal: Int, NewVal: Int) {
     violation := (if (left.value == right.value) 1 else 0)
   }
 

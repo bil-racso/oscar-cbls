@@ -2,6 +2,7 @@ package oscar.cbls.search
 
 import oscar.cbls.objective.Objective
 import oscar.cbls.search.core.Neighborhood
+import scala.util.control.Breaks._
 
 object Benchmark extends StopWatch{
 
@@ -9,52 +10,69 @@ object Benchmark extends StopWatch{
   case class RunStatistics(it:Statistics,duration:Statistics,quality:Statistics){
     override def toString: String = "(it:" + it + " dur:" + duration + " obj:" + quality+")"
     def denseString:String = it.denseString + "|" + duration.denseString + "|" + quality.denseString
+    def csvString: String = it.csvString + ";" + duration.csvString + ";" + quality.csvString
   }
 
   val firstColumnForStatisticsString = 40
   def nSpace(n:Int):String = if(n <= 0) "" else " " + nSpace(n-1)
   private def padToLength(s: String, l: Int) = (s + nSpace(l)).substring(0, l)
-  def benchToStatistics(obj:Objective, nRuns:Int, strategies:Iterable[()=>(String,Neighborhood)],verbose:Int) =
-    benchToTrace(obj, nRuns, strategies,verbose).map{case (s:String,t:IndexedSeq[RunValues]) => (s,aggregate(t.toList))}
+  def benchToStatistics(obj: Objective, nRuns: Int, strategies: Iterable[() => (String, Neighborhood)], warmupTimeInSeconds: Int, verbose: Int) =
+    benchToTrace(obj, nRuns, strategies, warmupTimeInSeconds, verbose).map {
+      case (s: String, t: IndexedSeq[RunValues]) => (s, aggregate(t.toList))
+    }
 
   def benchToStringSimple(obj:Objective, nRuns:Int, strategies:Iterable[Neighborhood],verbose:Int = 0):String = {
     benchToStringFull(obj,nRuns,strategies.map(n => (() => {n.reset(); (n.toString,n)})),verbose)
   }
 
-  def benchToStringFull(obj:Objective, nRuns:Int, strategies:Iterable[()=>(String,Neighborhood)],verbose:Int = 0):String = {
-    val stats = benchToStatistics(obj,nRuns,strategies,verbose)
-
-       padToLength("nbRuns:" + nRuns,firstColumnForStatisticsString) + "|it                                  |dur[ms]                             |obj" + "\n" +
-      nSpace(firstColumnForStatisticsString) + "|"+Statistics.statisticsHeader + "|" + Statistics.statisticsHeader + "|" + Statistics.statisticsHeader + "\n" +
-      stats.map({case (s:String,stats:RunStatistics) => padToLength(s,firstColumnForStatisticsString) + "|" + stats.denseString}).mkString("\n")
-
+  def statsToString(stats: Iterable[(String, RunStatistics)]) = {
+    padToLength("nbRuns:" + stats.size,firstColumnForStatisticsString) + "|it                                  |dur[ms]                             |obj" + "\n" +
+      nSpace(firstColumnForStatisticsString) + "|" + Statistics.statisticsHeader + "|" + Statistics.statisticsHeader + "|" + Statistics.statisticsHeader + "\n" +
+      stats.map({ case (s: String, stats: RunStatistics) => padToLength(s, firstColumnForStatisticsString) + "|" + stats.denseString }).mkString("\n")
   }
 
-  def benchToTrace(obj:Objective, nRuns:Int, strategies:Iterable[()=>(String,Neighborhood)],verbose:Int)={
+  def benchToStringFull(obj: Objective, nRuns: Int, strategies: Iterable[() => (String, Neighborhood)], warmup: Int = 1, verbose: Int = 0): String = {
+    val stats = benchToStatistics(obj, nRuns, strategies, warmup, verbose)
+
+    statsToString(stats)
+  }
+
+  def benchToTrace(obj: Objective, nRuns: Int, strategies: Iterable[() => (String, Neighborhood)], warmupTimeInSeconds: Int, verbose: Int) = {
     val m = obj.model
     val initialSolution = m.solution()
 
-    // dry run
-    for(n <- strategies){
-        val strategyInstance = n()
-        strategyInstance._2.verbose =  0
-        println("Warm up run of " + strategyInstance._1)
-        val it = strategyInstance._2.doAllMoves(_ => false, obj)
-        m.restoreSolution(initialSolution)
+    // warm run
+    if (verbose > 1) println("Warming up for " + warmupTimeInSeconds + " seconds...")
+    val warmupInMs = warmupTimeInSeconds * 1000
+    this.startWatch()
+    breakable {
+      while (this.getWatch < warmupInMs) {
+        for (n <- strategies) {
+          m.restoreSolution(initialSolution)
+          val strategyInstance = n()
+          strategyInstance._2.verbose = 0
+          if (verbose > 1) println("Warm up run of " + strategyInstance._1)
+          strategyInstance._2.doAllMoves(_ => false, obj)
+          if (this.getWatch >= warmupInMs) break
+        }
       }
+    }
 
-    for(n <- strategies)
-      yield (n()._1,for(trial <- 1 to nRuns) yield {
-        m.restoreSolution(initialSolution)
-        val strategyInstance = n()
-        strategyInstance._2.verbose = if(verbose>0) verbose else 0
-        println("Benchmarking " + strategyInstance._1 + "; run nr:" + trial + " of " + nRuns)
-        this.startWatch()
-        val it = strategyInstance._2.doAllMoves(_ => false, obj)
-        val time = this.getWatch
-        val quality = obj.value
-        RunValues(it,time.toInt,quality)
-      })
+    for (n <- strategies) yield {
+      if (verbose > 1) println("Benchmarking " + n()._1)
+      (n()._1,
+        for (trial <- 1 to nRuns) yield {
+          m.restoreSolution(initialSolution)
+          val strategyInstance = n()
+          strategyInstance._2.verbose = if (verbose > 0) verbose else 0
+          if (verbose > 1) println("Benchmarking " + strategyInstance._1 + " run " + trial + " of " + nRuns)
+          this.startWatch()
+          val it = strategyInstance._2.doAllMoves(_ => false, obj)
+          val time = this.getWatch
+          val quality = obj.value
+          RunValues(it, time.toInt, quality)
+        })
+    }
   }
 
   def aggregate(l:List[RunValues]):RunStatistics = {
@@ -67,6 +85,7 @@ object Benchmark extends StopWatch{
 case class Statistics(min:Int, max:Int, avg:Int, med:Int){
   override def toString: String = "(min:" + min + " max:" + max + " avg:" + avg + " med:" + med + ")"
   def denseString:String = padToLength("" + min,8) + " " + padToLength("" + max,8) + " " + padToLength("" + avg,8) + " " + padToLength("" + med,9)
+  def csvString:String = min + ";" + max + ";" + avg + ";" + med
   def nSpace(n:Int):String = if(n <= 0) "" else " " + nSpace(n-1)
   private def padToLength(s: String, l: Int) = (s + nSpace(l)).substring(0, l)
 }

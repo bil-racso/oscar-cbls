@@ -24,7 +24,7 @@ trait HotSpot extends VRP with RoutedAndUnrouted with PositionInRouteAndRouteNr{
   }
 
   def widenImpactedPoints(node:Int, acc:List[Int]):List[Int] = {
-    node::next(node).getValue(true)::acc
+    node::next(node).newValue::acc
   }
 
   def updateHotSpotAfterMove(m: VRPMove with HotSpottingInfo){

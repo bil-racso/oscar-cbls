@@ -42,7 +42,7 @@ import scala.collection.immutable.SortedMap
   * @author renaud.delandtsheer@cetic.be
   */
 case class Sequence(variables: Array[IntValue], length:Int, Max:Int, predicate:Array[Boolean], predicateIsToBeConsideredInVarViolation:Boolean = false)
-  extends Invariant with Constraint{
+  extends Invariant with Constraint with IntNotificationTarget{
 
   assert(Max <= length, "the specified maximum is bigger than the ength of the sequences to consider")
 
