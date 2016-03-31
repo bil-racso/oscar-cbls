@@ -4,12 +4,12 @@ import oscar.cbls.invariants.core.algo.fun.UpdateableFunction
 import oscar.cbls.invariants.core.algo.rb.RedBlackTree
 
 /*
-abstract class UniqueIntSequenceWithPosition(maxSize:Int) extends UniqueIntSequence(maxSize){
+abstract class UniqueIntSequenceWithPosition(maxVal:Int) extends UniqueIntSequence(maxVal){
 
 
-  private val valueToUncorrectedPosition:Array[Int] = Array.fill[Int](maxSize)(-1)
+  private val valueToUncorrectedPosition:Array[Int] = Array.fill[Int](maxVal+1)(-1)
 
-  private val uncorrectedPositionToValue:Array[Int] = Array.fill[Int](maxSize)(-1)
+  private val uncorrectedPositionToValue:Array[Int] = Array.fill[Int](maxVal+1)(-1)
 
 
   //internal position => external position

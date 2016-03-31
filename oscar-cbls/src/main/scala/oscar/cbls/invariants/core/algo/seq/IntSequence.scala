@@ -1,61 +1,97 @@
 package oscar.cbls.invariants.core.algo.seq
 
-/*
-sealed abstract class SeqOperation
-case class SeqInsert(value:Int, after:SeqPosition) extends SeqOperation
-case class SeqInsertBetween(value:Int, a:Int,b:Int) extends SeqOperation
-case class SeqRemove(value:Int) extends SeqOperation
-case class SeqMoveAfter(start:SeqPosition, end:SeqPosition, moveAfter:SeqPosition, flip:Boolean) extends SeqOperation
-case class SeqMoveOneAfter(moved:Int, moveAfter:Int) extends SeqOperation
-case class SeqMoveBetween(moved:Int, a:Int, b:Int) extends SeqOperation
-*/
-
 class IntSequence extends Iterable[SeqPosition]{
-  var headPhantom = SymSeqPosition(null,null,-1)
-  var tailPhantom = SymSeqPosition(null,null,-2)
+  var headPhantom = new SymSeqPosition(null,null,-1){
+    override def toString : String = "headPhantom" + super.toString
+  }
+  var tailPhantom = new SymSeqPosition(null,null,-2){
+    override def toString : String = "tailPhantom" + super.toString
+  }
 
-  headPhantom.b = tailPhantom
-  tailPhantom.a = headPhantom
+  headPhantom.a = tailPhantom
+  tailPhantom.b = headPhantom
+
+  def headPhantomPosition = new SeqPosition(headPhantom,false)
+  def tailPhantomPosition = new SeqPosition(tailPhantom,false)
 
   protected[this] var mSize = 0
   override def size:Int = mSize
 
-  protected def createNewSymPos(value:Int):SymSeqPosition = SymSeqPosition(null,null,value)
+  protected def createNewSymPos(value:Int):SymSeqPosition = new SymSeqPosition(null,null,value)
   protected def freeSymPos(pos:SymSeqPosition){}
 
   override def head:SeqPosition = {
     if(isEmpty) throw new Error(".head on empty Int Sequence")
-    val theNeighbor = headPhantom.b
-    SeqPosition(theNeighbor, (theNeighbor.a == headPhantom))
+    val theNeighbor = headPhantom.a
+    new SeqPosition(theNeighbor, (theNeighbor.a == headPhantom))
   }
 
   override def last:SeqPosition= {
     if(isEmpty) throw new Error(".last on empty Int Sequence")
-    val theNeighbor = tailPhantom.a
-    SeqPosition(theNeighbor, (theNeighbor.b == tailPhantom))
+    val theNeighbor = tailPhantom.b
+    new SeqPosition(theNeighbor, (theNeighbor.b == tailPhantom))
   }
 
   override def isEmpty: Boolean = (mSize == 0)
 
-  override def iterator: Iterator[SeqPosition] = new IntSequenceIterator(SeqPosition(headPhantom,true))
-  def toIntList:List[Int] = this.map(x => x.pos.value).toList //TODO: reduce overhead
 
-  def insertAfter(value:Int, pos:SeqPosition):SeqPosition = {
-    val oldNext = pos.next
-    val newPos = SeqPosition(createNewSymPos(value))
-    pos.setNextAndRelink(newPos)
-    newPos.setNextAndRelink(oldNext)
-    mSize +=1
-    newPos
+  override def toString() : String = {
+    this.getClass.getSimpleName + "(size:" + this.size + ")(" + this.toIntList + ")"
   }
 
-  def insertBefore(value:Int, pos:SeqPosition):SeqPosition = {
-    val oldPrev = pos.prev
-    val newPos = SeqPosition(createNewSymPos(value))
-    oldPrev.setNextAndRelink(newPos)
-    newPos.setNextAndRelink(pos)
-    mSize += 1
-    newPos
+  override def iterator: Iterator[SeqPosition] = new IntSequenceIterator(headPhantomPosition)
+  def toIntList:List[Int] = this.map(x => x.pos.value).toList //TODO: reduce overhead
+
+  /**
+   *
+   * @param value
+   * @param pos is pos is null, inserts at the first position in the seq (useful for inserting the first element...)
+   * @return
+   */
+  def insertAfter(value:Int, pos:SeqPosition = null):SeqPosition = {
+    if(pos == null){
+      val oldNext = headPhantom.a
+      val newPos = new SeqPosition(createNewSymPos(value))
+      newPos.pos.a = oldNext
+      newPos.pos.b = headPhantom
+      headPhantom.replace(oldNext,newPos.pos)
+      oldNext.replace(headPhantom,newPos.pos)
+      mSize += 1
+      newPos
+    }else {
+      val oldNext = pos.next
+      val newPos = new SeqPosition(createNewSymPos(value))
+      pos.setNextAndRelink(newPos)
+      newPos.setNextAndRelink(oldNext)
+      mSize += 1
+      newPos
+    }
+  }
+
+  /**
+   *
+   * @param value
+   * @param pos is pos is null, inserts at the last position in the seq (useful for inserting the first element...)
+   * @return
+   */
+  def insertBefore(value:Int, pos:SeqPosition = null):SeqPosition = {
+    if (pos == null) {
+      val oldPrev = tailPhantom.b
+      val newPos = new SeqPosition(createNewSymPos(value))
+      newPos.pos.a = tailPhantom
+      newPos.pos.b = oldPrev
+      tailPhantom.replace(oldPrev,newPos.pos)
+      oldPrev.replace(tailPhantom,newPos.pos)
+      mSize += 1
+      newPos
+    } else {
+      val oldPrev = pos.prev
+      val newPos = new SeqPosition(createNewSymPos(value))
+      oldPrev.setNextAndRelink(newPos)
+      newPos.setNextAndRelink(pos)
+      mSize += 1
+      newPos
+    }
   }
 
   def insertBetween(value:Int, ba:SymSeqPosition,bb:SymSeqPosition):SymSeqPosition = {
@@ -128,18 +164,18 @@ class IntSequence extends Iterable[SeqPosition]{
   }
 }
 
-class UniqueIntSequence(maxSize:Int) extends IntSequence{
+class UniqueIntSequence(maxVal:Int) extends IntSequence{
 
-  private val valuesTopos:Array[SymSeqPosition] = Array.fill[SymSeqPosition](maxSize)(null)
+  private val valuesTopos:Array[SymSeqPosition] = Array.fill[SymSeqPosition](maxVal+1)(null)
 
-  override def freeSymPos(pos:SymSeqPosition){
+  override protected def freeSymPos(pos:SymSeqPosition){
     assert(valuesTopos(pos.value) != null)
     valuesTopos(pos.value) = null
   }
 
-  override def createNewSymPos(value:Int): SymSeqPosition ={
+  override protected def createNewSymPos(value:Int): SymSeqPosition ={
     require(valuesTopos(value) == null,"UniqueIntSequence requires that each value appears at most once, duplicate use of " + value)
-    val newSymPos = SymSeqPosition(null,null,value)
+    val newSymPos = new SymSeqPosition(null,null,value)
     valuesTopos(value) = newSymPos
     newSymPos
   }
@@ -156,7 +192,7 @@ class IntSequenceIterator(var currentPosition:SeqPosition) extends Iterator[SeqP
   }
 }
 
-case class SymSeqPosition(var a:SymSeqPosition, var b:SymSeqPosition, val value:Int){
+class SymSeqPosition(var a:SymSeqPosition, var b:SymSeqPosition, val value:Int){
   def replace(oldPos:SymSeqPosition,newPos:SymSeqPosition){
     if(oldPos == a){
       a = newPos
@@ -164,9 +200,11 @@ case class SymSeqPosition(var a:SymSeqPosition, var b:SymSeqPosition, val value:
       b = newPos
     }
   }
+
+  override def toString : String = "SymSeqPosition(a,b," + value + ")"
 }
 
-case class SeqPosition(pos:SymSeqPosition, var headIsOnA:Boolean = true){
+class SeqPosition(val pos:SymSeqPosition, var headIsOnA:Boolean = true){
   implicit def toPos:SymSeqPosition = pos
 
   def flip {headIsOnA = !headIsOnA}
@@ -186,23 +224,48 @@ case class SeqPosition(pos:SymSeqPosition, var headIsOnA:Boolean = true){
   def next:SeqPosition = {
     val theNeighbor = if (headIsOnA) pos.b else pos.a
     if(theNeighbor.b == null) return null
-    SeqPosition(theNeighbor, (theNeighbor.a == pos))
+    new SeqPosition(theNeighbor, (theNeighbor.a == pos))
   }
 
   def hasNext:Boolean = {
     val theNeighbor = if (headIsOnA) pos.b else pos.a
-    (theNeighbor.b != null)
+    (theNeighbor.a != null)
   }
 
   //null if no such position exist
   def prev:SeqPosition = {
     val theNeighbor = if (headIsOnA) pos.a else pos.b
     if(theNeighbor.a == null) return null
-    SeqPosition(theNeighbor, (theNeighbor.b == pos))
+    new SeqPosition(theNeighbor, (theNeighbor.b == pos))
   }
 
   def hasPrev:Boolean = {
     val theNeighbor = if (headIsOnA) pos.a else pos.b
-    (theNeighbor.a != null)
+    (theNeighbor.b != null)
   }
+
+  override def toString : String = "SeqPosition(pos:" + pos + " headIsOnA:" + headIsOnA + ")"
+}
+
+
+object testSeq extends App{
+  val a = new IntSequence
+
+  println(a)
+
+  for(i <- 0 to 10){
+    a.insertBefore(i)
+  }
+
+  println(a)
+
+  val pos3 = a.head.next.next.next
+  println(pos3)
+
+  val pos6 = pos3.next.next.next
+  println(pos6)
+
+  a.moveAfter(pos3,pos6,a.head,true)
+
+  println(a)
 }
