@@ -184,7 +184,6 @@ object pdptwTest extends App with StopWatch {
     new BestSlopeFirst(List(insertCouple, onePointMovePD, threeOpt, orOpt, segExchangePD, oneCoupleMove), refresh = n / 2) showObjectiveFunction
     vrp.getObjective() afterMove {
     rm.drawRoutes()
-    println(vrp.objectiveFunction)
   } // exhaust onePointMove exhaust segExchange//threeOpt //(new BestSlopeFirst(List(onePointMove,twoOpt,threeOpt)))
 
   search.verbose = 1

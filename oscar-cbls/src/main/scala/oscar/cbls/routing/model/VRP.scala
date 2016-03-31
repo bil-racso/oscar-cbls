@@ -24,7 +24,7 @@
 package oscar.cbls.routing.model
 
 import oscar.cbls.constraints.lib.basic.{NE, EQ, LE}
-import oscar.cbls.invariants.core.algo.heap.BinomialHeap
+import oscar.cbls.invariants.core.algo.heap.{BinomialHeapIterator, BinomialHeap}
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.lib.logic._
 import oscar.cbls.invariants.lib.numeric.{Sum2, Sum}
@@ -908,13 +908,12 @@ trait PickupAndDeliveryCustomers extends VRP with StrongConstraints with Positio
   def getAuthorizedInsertionPositionForDelivery()(node: Int): Iterable[Int] = {
     if(node < V)return Iterable()
     val routeOfNode = routeNr(node)
-    getRelatedDelivery(node)
-    getRelatedPickup(node)
     var resRoute = getRouteOfVehicle(routeOfNode.value)
     resRoute = resRoute.dropWhile(_ != getRelatedPickup(node))
     resRoute.drop(1)
   }
 
+  //TODO : Check if this method return ALL the possible completeSegment (verify all the cases)
   def getCompleteSegments(routeNumber:Int): List[(Int,Int)] ={
     var completeSegmentsMap:HashMap[Int,Set[Int]] = new HashMap[Int,Set[Int]]
     val route = getRouteOfVehicle(routeNumber)
@@ -978,6 +977,7 @@ trait PickupAndDeliveryCustomersWithTimeWindow extends TimeWindow with PickupAnd
     super.setNodeDuration(node,nodeDuration,startWindow)
   }
 
+  //TODO : Refactor this method, actually it's quite ugly and not very comprehensive
   def endWindowGenerator(): Unit ={
     val currentArray:Array[Int] = new Array[Int](N-V)
     val randomIncValues:List[Int] = 2::3::4::5::Nil
@@ -997,7 +997,7 @@ trait PickupAndDeliveryCustomersWithTimeWindow extends TimeWindow with PickupAnd
     while(currentSum(currentTimeUnit) < N-V){
       val current = currentSum(currentTimeUnit)
       val currentPick = currentSumPickup(currentTimeUnit)
-      val nbOfNodeToAdd = if(N - V - (N-V)/2 - currentPick < V) N-currentPick - (N-V)/2 -V else (Math.random()*(V*currentTimeUnit - current)).toInt
+      val nbOfNodeToAdd = if(N - V - (N-V)/2 - currentPick < V) N-currentPick - (N-V)/2 -V else Math.min(N-V - (N-V)/2 -currentPick,Math.random()*(V*currentTimeUnit - current)).toInt
       for(inc <- 0 until nbOfNodeToAdd){
         val deliveryInc = randomIncValues(scala.util.Random.nextInt(4))
         setEndWindow(nodesOrderedByType(currentPick+inc), 500*(currentTimeUnit+1), 500*currentTimeUnit,50)
@@ -1010,6 +1010,7 @@ trait PickupAndDeliveryCustomersWithTimeWindow extends TimeWindow with PickupAnd
     }
   }
 
+  //TODO : Try to find a better solution than using BinomialHeap and then turning it to a List
   def getRoutedNodesBeforeTime()(node:Int): Iterable[Int] ={
     val res:BinomialHeap[Int] = new BinomialHeap[Int](a => a,N-V)
     val time = leaveTime(node).value
@@ -1025,7 +1026,6 @@ trait PickupAndDeliveryCustomersWithTimeWindow extends TimeWindow with PickupAnd
     }
     var resList:List[Int] = Nil
     for(n <- 0 until res.size)resList = res.popFirst() :: resList
-    println(resList)
     resList.toIterable
   }
 }
