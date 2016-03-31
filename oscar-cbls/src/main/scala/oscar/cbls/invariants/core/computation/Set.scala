@@ -74,7 +74,6 @@ abstract class ChangingSetValue(initialValue:SortedSet[Int], initialDomain:Domai
   private[this] var nbTouched:Int = 0
 
   def insertValue(v:Int){
-    //TODO: O(1) contains
     if (!Value.contains(v)) insertValueNotPreviouslyIn(v)
   }
 
@@ -88,8 +87,8 @@ abstract class ChangingSetValue(initialValue:SortedSet[Int], initialDomain:Domai
     notifyChanged()
   }
 
+
   def deleteValue(v:Int){
-    //TODO: O(1) contains
     if (Value.contains(v)) deleteValuePreviouslyIn(v)
   }
 
@@ -125,23 +124,41 @@ abstract class ChangingSetValue(initialValue:SortedSet[Int], initialDomain:Domai
     }else{
       val (addedValues,deletedValues):(Iterable[Int],Iterable[Int]) = if (nbTouched == -1) {
         //need to calll every listening one, so gradual approach required
-        //TODO: this delta is not always needed, make it lazy
         (Value.diff(OldValue),OldValue.diff(Value))
       }else {
-        //TODO: AVOID DO-UNDO in this list, make the synthesis (lazy also)
-        ((this.addedValues,this.removedValues))
+        var addedUnique = SortedSet.empty[Int] ++ this.addedValues
+        var removedUnique = SortedSet.empty[Int] ++ this.removedValues
+        for(inter <- addedUnique.intersect(removedUnique)){
+          val inNew = Value.contains(inter)
+          val inOld = OldValue.contains(inter)
+          if(!inOld || inNew) {
+            removedUnique = removedUnique - inter
+          }
+          if(!inNew || inOld) {
+            addedUnique = addedUnique - inter
+          }
+        }
+        (addedUnique,removedUnique)
       }
 
-      val dynListElements = getDynamicallyListeningElements
-      val headPhantom = dynListElements.headPhantom
-      var currentElement = headPhantom.next
-      while(currentElement != headPhantom){
-        val e = currentElement.elem
-        currentElement = currentElement.next
-        val inv:SetNotificationTarget = e._1.asInstanceOf[SetNotificationTarget]
-        assert({this.model.NotifiedInvariant=inv.asInstanceOf[Invariant]; true})
-        inv.notifySetChanges(this,e._2,addedValues,deletedValues,OldValue,Value)
-        assert({this.model.NotifiedInvariant=null; true})
+      assert((OldValue ++ addedValues -- deletedValues).equals(Value))
+
+      if(addedValues.nonEmpty || deletedValues.nonEmpty) {
+        val dynListElements = getDynamicallyListeningElements
+        val headPhantom = dynListElements.headPhantom
+        var currentElement = headPhantom.next
+        while (currentElement != headPhantom) {
+          val e = currentElement.elem
+          currentElement = currentElement.next
+          val inv : SetNotificationTarget = e._1.asInstanceOf[SetNotificationTarget]
+          assert({
+            this.model.NotifiedInvariant = inv.asInstanceOf[Invariant]; true
+          })
+          inv.notifySetChanges(this, e._2, addedValues, deletedValues, OldValue, Value)
+          assert({
+            this.model.NotifiedInvariant = null; true
+          })
+        }
       }
       //puis, on fait une affectation en plus, pour garbage collecter l'ancienne structure de donnees.
       assert(OldValue.intersect(Value).size == Value.size, "mismatch: OLD" + OldValue + " New:" + Value)
@@ -163,7 +180,7 @@ abstract class ChangingSetValue(initialValue:SortedSet[Int], initialDomain:Domai
       Value
     }else{
       if (model == null) return Value
-      if (definingInvariant == null && !model.propagating) return Value
+      //if (definingInvariant == null && !model.propagating) return Value
       model.propagate(this)
       OldValue
     }
@@ -193,7 +210,7 @@ trait SetNotificationTarget {
    * @param oldValue
    * @param newValue
    */
-  def notifySetChanges(v: ChangingSetValue, d: Int, addedValues: Iterable[Int], removedValues: Iterable[Int], oldValue: Set[Int], newValue: Set[Int])
+  def notifySetChanges(v: ChangingSetValue, d: Int, addedValues: Iterable[Int], removedValues: Iterable[Int], oldValue: SortedSet[Int], newValue: SortedSet[Int])
 }
 
 object ChangingSetValue{
@@ -310,11 +327,7 @@ class IdentitySet(toValue:CBLSSetVar, fromValue:ChangingSetValue)
 
   toValue := fromValue.value
 
-  override def notifySetChanges(v: ChangingSetValue, d: Int,
-                                addedValues: Iterable[Int],
-                                removedValues: Iterable[Int],
-                                oldValue: Set[Int],
-                                newValue: Set[Int]): Unit = {
+  override def notifySetChanges(v: ChangingSetValue, d: Int, addedValues: Iterable[Int], removedValues: Iterable[Int], oldValue: SortedSet[Int], newValue: SortedSet[Int]) : Unit = {
     assert(v == this.fromValue)
     for(added <- addedValues)toValue.insertValueNotPreviouslyIn(added)
     for(deleted <- removedValues) toValue.deleteValuePreviouslyIn(deleted)

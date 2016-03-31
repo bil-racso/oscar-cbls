@@ -5,6 +5,8 @@ import oscar.cbls.invariants.core.algo.quick.QList
 import oscar.cbls.invariants.core.computation.{ChangingSetValue, SetNotificationTarget, IntInvariant, SetValue}
 import oscar.cbls.invariants.core.propagation.Checker
 
+import scala.collection.immutable.SortedSet
+
 /**
  * Maintains Min(Var(i) | i in cond)
  * @param varss is an array of Int
@@ -133,7 +135,7 @@ abstract class MiaxConstArray(vars: Array[Int], cond: SetValue, default: Int)
     this := vars(h.getFirst)
   }
 
-  override def notifySetChanges(v: ChangingSetValue, d: Int, addedValues: Iterable[Int], removedValues: Iterable[Int], oldValue: Set[Int], newValue: Set[Int]): Unit = {
+  override def notifySetChanges(v: ChangingSetValue, d: Int, addedValues: Iterable[Int], removedValues: Iterable[Int], oldValue: SortedSet[Int], newValue: SortedSet[Int]) : Unit = {
     for (added <- addedValues) notifyInsertOn(v: ChangingSetValue, added)
     for(deleted <- removedValues) notifyDeleteOn(v: ChangingSetValue, deleted)
   }
@@ -286,8 +288,7 @@ abstract class MiaxConstArrayLazy(vars: Array[Int], cond: SetValue, default: Int
     backlogSize = 0
   }
 
-  override def notifySetChanges(v: ChangingSetValue, d: Int, addedValues: Iterable[Int],
-                                removedValues: Iterable[Int], oldValue: Set[Int], newValue: Set[Int]): Unit = {
+  override def notifySetChanges(v: ChangingSetValue, d: Int, addedValues: Iterable[Int], removedValues: Iterable[Int], oldValue: SortedSet[Int], newValue: SortedSet[Int]) : Unit = {
     //insert first because reduces chances of flush
     val itAdded = addedValues.iterator
     while(itAdded.hasNext){

@@ -172,9 +172,7 @@ class Event(v:Value, w:Variable, ModifiedVars:Iterable[Variable]) extends Invari
 
   override def notifyIntChanged(v: ChangingIntValue, i: Int, OldVal: Int, NewVal: Int) {scheduleForPropagation()}
 
-  override def notifySetChanges(v: ChangingSetValue, d: Int, addedValues: Iterable[Int],
-                                removedValues: Iterable[Int], oldValue: Set[Int],
-                                newValue: Set[Int]){scheduleForPropagation()}
+  override def notifySetChanges(v: ChangingSetValue, d: Int, addedValues: Iterable[Int], removedValues: Iterable[Int], oldValue: SortedSet[Int], newValue: SortedSet[Int]) {scheduleForPropagation()}
 
   override def performInvariantPropagation(){
     if (action != null) action()

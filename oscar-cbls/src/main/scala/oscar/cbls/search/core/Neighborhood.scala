@@ -742,6 +742,8 @@ abstract class EasyNeighborhood[M<:Move](best:Boolean = false, neighborhoodName:
       }
     }
   }
+
+  def afterMoveOnMove(proc:M => Unit):Neighborhood = super.afterMoveOnMove((m:Move) => proc(m.asInstanceOf[M]))
 }
 
 class ObjWithStringGenerator(obj: Objective, additionalStringGenerator: () => String) extends Objective {

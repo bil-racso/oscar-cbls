@@ -24,6 +24,8 @@ package oscar.cbls.invariants.lib.minmax
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.core.propagation.Checker
 
+import scala.collection.immutable.SortedSet
+
 //Log
 abstract class MiaxSet(v: SetValue)
   extends IntInvariant(initialDomain = v.min to v.max)
@@ -40,7 +42,7 @@ abstract class MiaxSet(v: SetValue)
 
   var wasEmpty:Boolean = v.value.isEmpty
 
-  override def notifySetChanges(v: ChangingSetValue, d: Int, addedValues: Iterable[Int], removedValues: Iterable[Int], oldValue: Set[Int], newValue: Set[Int]): Unit = {
+  override def notifySetChanges(v: ChangingSetValue, d: Int, addedValues: Iterable[Int], removedValues: Iterable[Int], oldValue: SortedSet[Int], newValue: SortedSet[Int]) : Unit = {
     for (added <- addedValues) notifyInsertOn(v: ChangingSetValue, added)
     for(deleted <- removedValues) notifyDeleteOn(v: ChangingSetValue, deleted)
   }

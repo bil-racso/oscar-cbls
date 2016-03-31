@@ -3,7 +3,6 @@ package oscar.cbls.search
 import oscar.cbls.search.core.Neighborhood
 import oscar.cbls.search.Benchmark.benchToStatistics
 import oscar.cbls.routing.model.VRPObjective
-import scala.reflect.io.File
 
 object BenchmarkHelperHelper {
 
@@ -27,8 +26,7 @@ object BenchmarkHelperHelper {
         println(problemName)
         println("strategy;it;dur[ms];obj")
         println(statsToCsv(s))
-        File("dataSample/csv_results/" + problemName + "_" + System.currentTimeMillis / 1000 + ".csv").writeAll(
-          "strategy;it;dur[ms];obj\n" + statsToCsv(s))
+//        File("dataSample/csv_results/" + problemName + "_" + System.currentTimeMillis / 1000 + ".csv").writeAll("strategy;it;dur[ms];obj\n" + statsToCsv(s))
     }
   }
 

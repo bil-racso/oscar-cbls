@@ -25,6 +25,8 @@ package oscar.cbls.invariants.lib.logic
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.core.propagation.{Checker, KeyForElementRemoval}
 
+import scala.collection.immutable.SortedSet
+
 /**
  * if (ifVar > pivot) then thenVar else elveVar
  * @param ifVar the condition (IntVar)
@@ -209,7 +211,7 @@ case class Elements[T <:IntValue](index: SetValue, inputarray: Array[T])
   }
 
 
-  override def notifySetChanges(v: ChangingSetValue, d: Int, addedValues: Iterable[Int], removedValues: Iterable[Int], oldValue: Set[Int], newValue: Set[Int]): Unit = {
+  override def notifySetChanges(v: ChangingSetValue, d: Int, addedValues: Iterable[Int], removedValues: Iterable[Int], oldValue: SortedSet[Int], newValue: SortedSet[Int]) : Unit = {
     assert(index == v)
     for(value <- addedValues){
       KeysToInputArray(value) = registerDynamicDependency(inputarray(value))
@@ -305,10 +307,9 @@ case class SetElement(index: IntValue, inputarray: Array[SetValue])
     this := inputarray(NewVal).value
   }
 
-  override def notifySetChanges(v: ChangingSetValue, d: Int, addedValues: Iterable[Int], removedValues: Iterable[Int], oldValue: Set[Int], newValue: Set[Int]): Unit = {
+  override def notifySetChanges(v: ChangingSetValue, d: Int, addedValues: Iterable[Int], removedValues: Iterable[Int], oldValue: SortedSet[Int], newValue: SortedSet[Int]) : Unit = {
     assert(v == inputarray.apply(index.value))
-    for(value <- removedValues)  this.deleteValue(value)
-    for(value <- removedValues)  this.insertValue(value)
+    this := newValue
   }
 
   override def checkInternals(c: Checker) {

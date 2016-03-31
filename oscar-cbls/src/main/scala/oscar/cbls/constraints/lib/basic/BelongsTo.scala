@@ -4,6 +4,8 @@ import oscar.cbls.constraints.core.Constraint
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.core.propagation.Checker
 
+import scala.collection.immutable.SortedSet
+
 /**
  * implements v \in set
  * @author renaud.delandtsheer@cetic.be
@@ -28,7 +30,7 @@ case class BelongsTo(v: IntValue, set: SetValue)
     violation := (if (set.value.contains(v.value)) 0 else 1)
   }
 
-  override def notifySetChanges(v: ChangingSetValue, d: Int, addedValues: Iterable[Int], removedValues: Iterable[Int], oldValue: Set[Int], newValue: Set[Int]): Unit = {
+  override def notifySetChanges(v: ChangingSetValue, d: Int, addedValues: Iterable[Int], removedValues: Iterable[Int], oldValue: SortedSet[Int], newValue: SortedSet[Int]) : Unit = {
     if (newValue.contains(this.v.value)) violation := 0
     else   violation := 1
   }
