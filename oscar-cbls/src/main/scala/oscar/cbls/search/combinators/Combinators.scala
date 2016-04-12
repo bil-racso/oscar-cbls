@@ -80,11 +80,6 @@ class ShowObjectiveFunction(a: Neighborhood, obj: Objective, stopWatch: StopWatc
   //objGraphic is an internal frame that contains the curve itself and visualFrame is a basic frame that contains objGraphic
   val objGraphic = if(withZoom) new ObjFunctionGraphicContainer(dimension = new Dimension(940,500)) with Zoom
                     else new ObjFunctionGraphicContainer(dimension = new Dimension(960,540)) with AdjustMaxValue
-  val visualFrame = new VisualFrame("The Objective Function")
-  visualFrame.setPreferredSize(new Dimension(960,540))
-  visualFrame.addFrame(objGraphic, size = (940,500))
-  visualFrame.pack()
-  visualFrame.revalidate()
   val f = new JFrame("The Objective Function")
   f.setPreferredSize(new Dimension(960,540))
   f.add(objGraphic)

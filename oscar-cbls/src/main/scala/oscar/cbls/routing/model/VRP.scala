@@ -857,18 +857,6 @@ trait PickupAndDeliveryCustomers extends VRP with StrongConstraints with Positio
   def isDelivery(index:Int):Boolean = pickupDeliveryNodes(index)._1 < 0
 
   /**
-    * This method return de related delivery node of the pickup node we are trying to insert.
-    * @return
-    */
-  //TODO : Delete this method and implement/or adapt a new andThen combinator that remember information of the last movement done (like the dynAndThen combinator)
-  def getRelatedUnroutedDelivery():Int = {for(d <- pickupDeliveryNodes.indices) {
-    if (isDelivery(d) && !isRouted(d) && isRouted(pickupDeliveryNodes(d)._2)) return d
-    }
-    assert(false,"Expecting an unrouted delivery or bad use of the method")
-    0
-  }
-
-  /**
     * @param d the index of a delivery node
     * @return the index of the related pickup node
     */

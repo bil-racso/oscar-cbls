@@ -73,7 +73,6 @@ class MyPDPTWVRP(n:Int, v:Int, model:Store, distanceMatrix: Array[Array[Int]],un
   addObjectiveTerm(emptyRoutePenalty)
 
   println("vrp done")
-  println(strongConstraints)
 }
 
 object pdptwTest extends App with StopWatch {
@@ -152,34 +151,20 @@ object pdptwTest extends App with StopWatch {
 
   val insertCouple = Profile(DynAndThen(
     InsertPointUnroutedFirst(
-    unroutedNodesToInsert = () => vrp.getUnroutedPickups,
+    unroutedNodesToInsert = () => if(vrp.getUnroutedPickups.isEmpty) Nil else Iterable(vrp.getUnroutedPickups.head),
     relevantNeighbors = () => vrp.getRoutedNodesBeforeTime(),
-    vrp = vrp),
+    vrp = vrp, best = true),
     (moveResult:InsertPointMove) => InsertPointUnroutedFirst(
-    unroutedNodesToInsert = () => {
-      println(vrp.preds(moveResult.insertedPoint))
-      println(moveResult.insertedPoint, moveResult.beforeInsertedPoint)
-      println(vrp.getRelatedDelivery(moveResult.insertedPoint))
-      println(vrp.next(moveResult.insertedPoint))
-      for(v <- 0 until vrp.V)
-        println(vrp.next(v))
-      println(vrp.next(vrp.getRelatedDelivery(moveResult.insertedPoint)))
-      println(vrp.getRelatedDelivery(moveResult.insertedPoint),vrp.getRelatedUnroutedDelivery())
-      //TODO : Continuer à chercher le problème ... gros WTF !!!
-      Iterable(vrp.getRelatedDelivery(moveResult.insertedPoint))
-      //Iterable(vrp.getRelatedUnroutedDelivery())
-    },
+    unroutedNodesToInsert = () => Iterable(vrp.getRelatedDelivery(moveResult.insertedPoint)),
     relevantNeighbors = () => vrp.kNearest(n,vrp.onTheSameRouteAfter(moveResult.insertedPoint)),
-    vrp = vrp, best = true))afterMove(println("movement done ...")))
+    vrp = vrp, best = true)))
 
   val oneCoupleMove = Profile(DynAndThen(OnePointMove(
     nodesPrecedingNodesToMove = () => vrp.getRoutedPickupsPredecessors,
     relevantNeighbors= () => vrp.kNearest(1000,vrp.isRouted),
     vrp = vrp),
     (moveResult:OnePointMoveMove) => OnePointMove(
-    nodesPrecedingNodesToMove = () => {
-      List(vrp.preds(vrp.getRelatedDelivery(moveResult.movedPoint)).value)
-    },
+    nodesPrecedingNodesToMove = () => List(vrp.preds(vrp.getRelatedDelivery(moveResult.movedPoint)).value),
     relevantNeighbors= () => vrp.kNearest(1000,vrp.onTheSameRouteAfter(moveResult.movedPoint)),
     vrp = vrp)))
 
@@ -202,15 +187,14 @@ object pdptwTest extends App with StopWatch {
   } // exhaust onePointMove exhaust segExchange//threeOpt //(new BestSlopeFirst(List(onePointMove,twoOpt,threeOpt)))
 
   search.verbose = 1
-  search.paddingLength = 400
-  insertCouple.verbose = 3
+  //search.paddingLength = 400
+  //insertCouple.verbose = 3
   //    search.verboseWithExtraInfo(3,() => vrp.toString)
   //segExchange.verbose = 3
 
   def launchSearch(): Unit ={
     //search.verboseWithExtraInfo(1,vrp.toString)
     search.doAllMoves(_ > 10*n, vrp.getObjective())
-    println(vrp.strongConstraints)
 
     println("total time " + getWatch + "ms or  " + getWatchString)
 
