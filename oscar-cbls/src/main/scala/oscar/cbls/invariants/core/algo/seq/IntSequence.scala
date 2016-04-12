@@ -162,6 +162,24 @@ class IntSequence extends Iterable[SeqPosition]{
     moved.a = ba
     moved.b = bb
   }
+
+  def checkInternals{
+    var prevElement:SymSeqPosition = headPhantom
+    var currentElement:SymSeqPosition = headPhantom.a
+    while(currentElement!= null){
+      require(prevElement == currentElement.a || prevElement == currentElement.b)
+      require(prevElement.a == currentElement || prevElement.b == currentElement)
+      val tmp1 = prevElement
+      prevElement = currentElement
+      currentElement = currentElement.otherAdjacent(tmp1)
+    }
+    require(prevElement == tailPhantom)
+    require(headPhantom.b == null)
+    require(tailPhantom.a == null)
+    require(headPhantom.a != null)
+    require(tailPhantom.b != null)
+    require(this.toList.size == this.size)
+  }
 }
 
 class UniqueIntSequence(maxVal:Int) extends IntSequence{
@@ -202,6 +220,10 @@ class SymSeqPosition(var a:SymSeqPosition, var b:SymSeqPosition, val value:Int){
   }
 
   override def toString : String = "SymSeqPosition(a,b," + value + ")"
+
+  def otherAdjacent(that:SymSeqPosition):SymSeqPosition = {
+    if(a == that) b else a
+  }
 }
 
 class SeqPosition(val pos:SymSeqPosition, var headIsOnA:Boolean = true){
@@ -247,7 +269,6 @@ class SeqPosition(val pos:SymSeqPosition, var headIsOnA:Boolean = true){
   override def toString : String = "SeqPosition(pos:" + pos + " headIsOnA:" + headIsOnA + ")"
 }
 
-
 object testSeq extends App{
   val a = new IntSequence
 
@@ -259,6 +280,8 @@ object testSeq extends App{
 
   println(a)
 
+  a.checkInternals
+
   val pos3 = a.head.next.next.next
   println(pos3)
 
@@ -266,6 +289,14 @@ object testSeq extends App{
   println(pos6)
 
   a.moveAfter(pos3,pos6,a.head,true)
+  println(a)
+  a.checkInternals
+
+  val posa = a.head.next.next.next
+  val posb = pos3.next.next.next
+  a.moveAfter(posa,posb,a.head.next,true)
+  a.checkInternals
 
   println(a)
 }
+

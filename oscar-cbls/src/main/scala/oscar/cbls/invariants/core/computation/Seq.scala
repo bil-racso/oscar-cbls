@@ -1,10 +1,11 @@
 package oscar.cbls.invariants.core.computation
 
 import oscar.cbls.invariants.core.algo.quick.QList
-import oscar.cbls.invariants.core.algo.seq.IntSequence
+import oscar.cbls.invariants.core.algo.seq.{ImmutableIntSequence, UniqueIntSequenceWithPosition, IntSequence}
 
 sealed trait SeqValue extends Value{
   def value:IntSequence
+  def immutableValue:ImmutableIntSequence
   def domain:Domain
   def min = domain.min
   def max = domain.max
@@ -26,11 +27,11 @@ trait SeqNotificationTarget {
   def notifySeqChanges(v: ChangingSeqValue, d: Int, change:SeqUpdate, oldValue: IntSequence, newValue: IntSequence)
 }
 
-abstract class ChangingSeqValue(initialValue:Iterable[Int], initialDomain:Domain)
+abstract class ChangingSeqValue(initialValue:Iterable[Int], maxValue:Int)
   extends AbstractVariable with SeqValue{
 
-  val mNewValue:IntSequence = new IntSequence()
-  val mOldValue:IntSequence = new IntSequence()
+  val mNewValue:IntSequence = new UniqueIntSequenceWithPosition(maxValue)
+  val mOldValue:IntSequence = new UniqueIntSequenceWithPosition(maxValue)
 
   override def value: IntSequence = {
     if (model == null) return mNewValue
@@ -49,10 +50,12 @@ abstract class ChangingSeqValue(initialValue:Iterable[Int], initialDomain:Domain
   var updates:QList[SeqUpdate] = null
 
   /**these can be expressed on the newValue only (oldValue should trigger an exception*/
-  def insertAfter(pos:Int,value:Int)
+
+  def insertBeforeValue(value:Int,beforeValue:Int) //-1 for last position
+  def insertAfterValue(value:Int,afterValue:Int) //-1 for first position
   def delete(value:Int)
-  def move(from:Int,to:Int,after:Int,flip:Boolean)
-  def set(seq:QList[Int])
+  def move(fromIncludedValue:Int,toIncludedValue:Int,afterValue:Int,flip:Boolean) //-1 for first position
+  def set(seq:Iterable[Int])
 
   final protected def performSeqPropagation(): Unit = {
     if(updates != null) for(update <- updates.reverse) {

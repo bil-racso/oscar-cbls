@@ -53,6 +53,8 @@ abstract class RedBlackTree[V]{
 
   def getSmallestBigger(k:Int):Option[(Int,V)]
 
+  def getSmallest:Option[(Int,V)] = getSmallestBigger(Int.MinValue)
+
   protected[rb] def getSmallestBiggerAcc(k:Int, bestSoFar:(Int,V)):Option[(Int,V)]
 
   // insert: Insert a value at a key.
@@ -95,9 +97,9 @@ private case class T[V](c : Boolean, l : RedBlackTree[V], k : Int, v : Option[V]
   override def isEmpty = false
 
   def get(k : Int) : Option[V] = {
-    if (k < this.k) l.get(k) else
-    if (k > this.k) r.get(k) else
-      v
+    if (k < this.k) l.get(k)
+    else if (k > this.k) r.get(k)
+    else v
   }
 
   def getBiggestLower(k:Int):Option[(Int,V)] = {
@@ -132,10 +134,9 @@ private case class T[V](c : Boolean, l : RedBlackTree[V], k : Int, v : Option[V]
           if(l.isEmpty) r
           else if (r.isEmpty) l
           else{
-           r.getSmallestBigger(Int.MinValue) match {
-             case None => throw new Error("internal eror")
-             case Some((k, v)) => T(c, l, k, Some(v), r.remove(k))
-           }}
+            val (k,v) = r.getSmallest.head
+            T(c, l, k, Some(v), r.remove(k))
+          }
         case x => T(c, l, k, x, r)
       }
     }else {
@@ -143,7 +144,6 @@ private case class T[V](c : Boolean, l : RedBlackTree[V], k : Int, v : Option[V]
     }
   }
 }
-
 
 // A helper object.
 object RedBlackTree {

@@ -32,6 +32,8 @@ class UpdateableBijectionNaive extends UpdateableFunction{
 
 class UpdateableBijection extends UpdateableFunction{
 
+
+
   val reverseFunction:UpdateableFunction = new UpdateableFunction
 
   // UpdateableFunction
@@ -72,19 +74,19 @@ class UpdateableBijection extends UpdateableFunction{
       }
     }
   }
-}
 
-sealed abstract class Change
-case class InsertChange(e:EnrichedPivot) extends Change
-case class DeleteChange(e:EnrichedPivot) extends Change
-case class UpdateChange(e:EnrichedPivot) extends Change
+  sealed abstract class Change
+  case class InsertChange(e:EnrichedPivot) extends Change
+  case class DeleteChange(e:EnrichedPivot) extends Change
+  case class UpdateChange(e:EnrichedPivot) extends Change
 
-class EnrichedPivot(override val value:Int,
-                    next:Pivot = null,
-                    prev:Pivot,
-                    f: LinearPositionTransform)
-  extends Pivot(value:Int, next:Pivot, prev:Pivot, f){
-  var prevF:LinearPositionTransform = null
-  var counterpart:Pivot = null
+  class EnrichedPivot(override val value:Int,
+                      next:Pivot = null,
+                      prev:Pivot,
+                      f: LinearPositionTransform)
+    extends Pivot(value:Int, next:Pivot, prev:Pivot, f){
+    var prevF:LinearPositionTransform = null
+    var counterpart:Pivot = null
+  }
 }
 

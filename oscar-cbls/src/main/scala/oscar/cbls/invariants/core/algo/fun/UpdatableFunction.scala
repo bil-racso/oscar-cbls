@@ -27,7 +27,6 @@ class UpdateableFunction() {
     }
   }
 
-
   override def toString: String = {
     "nbPivots:" + transformation.size + " \n" +
       (firstPivot match{
@@ -42,6 +41,8 @@ class UpdateableFunction() {
       case Some((_,pivot)) => pivot.f(value)
     }
   }
+
+
 
   protected def updatedPivot(p:Pivot){}
   protected def deletedPivot(p:Pivot){}
