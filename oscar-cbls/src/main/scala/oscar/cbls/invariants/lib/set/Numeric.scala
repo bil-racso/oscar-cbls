@@ -44,19 +44,10 @@ case class SetSum(on: SetValue, fun: (Int => Int) = (a: Int) => a)
   finishInitialization()
 
   override def notifySetChanges(v: ChangingSetValue, d: Int, addedValues: Iterable[Int], removedValues: Iterable[Int], oldValue: SortedSet[Int], newValue: SortedSet[Int]) : Unit = {
-    for (added <- addedValues) notifyInsertOn(v: ChangingSetValue, added)
-    for(deleted <- removedValues) notifyDeleteOn(v: ChangingSetValue, deleted)
-  }
-  @inline
-  def notifyInsertOn(v: ChangingSetValue, value: Int) {
-    assert(v == on)
-    this :+= fun(value)
-  }
-
-  @inline
-  def notifyDeleteOn(v: ChangingSetValue, value: Int) {
-    assert(v == on)
-    this :-= fun(value)
+    var delta = 0
+    for (added <- addedValues) delta += fun(added)
+    for (deleted <- removedValues) delta -= fun(deleted)
+    this :+= delta
   }
 
   override def checkInternals(c: Checker) {
