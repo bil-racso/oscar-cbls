@@ -33,27 +33,27 @@ import oscar.cbls.invariants.core.propagation.Checker
   * @param cached set to true to have a cache of size 1, zero to have no cache. cache can provide speedup if fun is time-consuming
   * @author renaud.delandtsheer@cetic.be
   * */
-class Int2Int(a:IntValue, fun:Int => Int, domain:Domain = FullRange,cached:Boolean = false) extends IntInvariant(fun(a.value),domain) {
+class Int2Int(a:IntValue, fun:Int => Int, domain:Domain = FullRange,cached:Boolean = false) extends IntInvariant(fun(a.value),domain) with IntNotificationTarget{
 
   registerStaticAndDynamicDependency(a)
   finishInitialization()
   this := fun(a.value)
 
   var cachedIn:Int = a.value
-  var cachedOut:Int = this.getValue(true)
+  var cachedOut:Int = this.newValue
 
   @inline
-  override def notifyIntChanged(v: ChangingIntValue, OldVal: Int, NewVal: Int) {
+  override def notifyIntChanged(v: ChangingIntValue, id:Int, OldVal: Int, NewVal: Int) {
     assert(v == a)
     if(cached){
       if(NewVal == cachedIn) {
         val tmp = cachedOut
         cachedIn = OldVal
-        cachedOut = this.getValue(true)
+        cachedOut = this.newValue
         this := tmp
       }else{
         cachedIn = OldVal
-        cachedOut = this.getValue(true)
+        cachedOut = this.newValue
         this := fun(NewVal)
       }
     }else{
@@ -75,13 +75,15 @@ class Int2Int(a:IntValue, fun:Int => Int, domain:Domain = FullRange,cached:Boole
   * @param domain the expected domain of the output
   * @author renaud.delandtsheer@cetic.be
   * */
-class IntInt2Int(a:IntValue, b:IntValue, fun:((Int, Int) => Int), domain:Domain = FullRange) extends IntInvariant(fun(a.value,b.value),domain) {
+class IntInt2Int(a:IntValue, b:IntValue, fun:((Int, Int) => Int), domain:Domain = FullRange)
+  extends IntInvariant(fun(a.value,b.value),domain)
+  with IntNotificationTarget{
 
   registerStaticAndDynamicDependenciesNoID(a,b)
   finishInitialization()
 
   @inline
-  override def notifyIntChanged(v: ChangingIntValue, OldVal: Int, NewVal: Int) {
+  override def notifyIntChanged(v: ChangingIntValue, id:Int, OldVal: Int, NewVal: Int) {
     this := fun(a.value,b.value)
   }
 
@@ -99,13 +101,15 @@ class IntInt2Int(a:IntValue, b:IntValue, fun:((Int, Int) => Int), domain:Domain 
   * @param domain the expected domain of the output
   * @author renaud.delandtsheer@cetic.be
   * */
-class LazyIntInt2Int(a:IntValue, b:IntValue, fun:((Int, Int) => Int), domain:Domain = FullRange) extends IntInvariant(fun(a.value,b.value),domain) {
+class LazyIntInt2Int(a:IntValue, b:IntValue, fun:((Int, Int) => Int), domain:Domain = FullRange)
+  extends IntInvariant(fun(a.value,b.value),domain)
+  with IntNotificationTarget{
 
   registerStaticAndDynamicDependenciesNoID(a,b)
   finishInitialization()
 
   @inline
-  override def notifyIntChanged(v: ChangingIntValue, OldVal: Int, NewVal: Int) {
+  override def notifyIntChanged(v: ChangingIntValue, id:Int, OldVal: Int, NewVal: Int) {
     scheduleForPropagation()
   }
 

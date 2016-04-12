@@ -446,7 +446,7 @@ class InvariantTests extends FunSuite with Checkers {
   /**
    * Won't pass when the product products an overflow.
    */
-  test("SetProd maintains the product of variables (after optionnaly appliying a function).") {
+  test("SetProd maintains the product of variables") {
     val bench = new InvBench(verbose)
     new SetProd(bench.genIntSetVar(10, -3 to 3))
     bench.run

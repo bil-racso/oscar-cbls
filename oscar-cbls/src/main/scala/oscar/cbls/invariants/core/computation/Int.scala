@@ -59,6 +59,10 @@ object IntValue {
   }
 }
 
+trait IntNotificationTarget{
+  def notifyIntChanged(v: ChangingIntValue, id: Int, OldVal: Int, NewVal: Int)
+}
+
 /**An IntVar is a variable managed by the [[oscar.cbls.invariants.core.computation.Store]] whose type is integer.
   *
   * @param initialDomain is the domain value of the variable. Some invariants exploit this value to declare fixed size arrays
@@ -95,19 +99,17 @@ abstract class ChangingIntValue(initialValue:Int, initialDomain:Domain)
     }
   }
 
-  override def value: Int = getValue()
+  override def value: Int = {
+    if (model == null) return Value
+    if (definingInvariant == null && !model.propagating) return Value
+    model.propagate(this)
+    OldValue
+  }
 
-  def getValue(NewValue: Boolean = false): Int = {
-    if(NewValue){
-      assert(model.checkExecutingInvariantOK(definingInvariant),"variable [" + this
-        + "] queried for latest val by non-controlling invariant")
-      Value
-    } else{
-      if (model == null) return Value
-      if (definingInvariant == null && !model.propagating) return Value
-      model.propagate(this)
-      OldValue
-    }
+  def newValue:Int = {
+    assert(model.checkExecutingInvariantOK(definingInvariant),"variable [" + this
+      + "] queried for latest val by non-controlling invariant")
+    Value
   }
 
   override def performPropagation(){performIntPropagation()}
@@ -123,9 +125,9 @@ abstract class ChangingIntValue(initialValue:Int, initialDomain:Domain)
       while(currentElement != headPhantom){
         val e = currentElement.elem
         currentElement = currentElement.next
-        val inv:Invariant = e._1.asInstanceOf[Invariant]
-        assert({this.model.NotifiedInvariant=inv; true})
-        inv.notifyIntChangedAny(this,e._2,old,Value)
+        val inv:IntNotificationTarget = e._1.asInstanceOf[IntNotificationTarget]
+        assert({this.model.NotifiedInvariant=inv.asInstanceOf[Invariant]; true})
+        inv.notifyIntChanged(this,e._2,old,Value)
         assert({this.model.NotifiedInvariant=null; true})
       }
       /*
@@ -147,21 +149,21 @@ abstract class ChangingIntValue(initialValue:Int, initialDomain:Domain)
   }
 
   protected def :+=(v: Int) {
-    setValue(v + getValue(true))
+    setValue(v + newValue)
   }
 
   protected def :*=(v: Int) {
-    setValue(v * getValue(true))
+    setValue(v * newValue)
   }
 
   protected def :-=(v:Int) {
-    setValue(getValue(true) - v)
+    setValue(newValue - v)
   }
 
   /** increments the variable by one
     */
   protected def ++ {
-    setValue(1 + getValue(true))
+    setValue(1 + newValue)
   }
 
   def compare(that: ChangingIntValue): Int = {
@@ -198,21 +200,21 @@ class CBLSIntVar(givenModel: Store, initialValue: Int, initialDomain:Domain, n: 
   }
 
   override def :+=(v: Int) {
-    setValue(v + getValue(true))
+    setValue(v + newValue)
   }
 
   override def :*=(v: Int) {
-    setValue(v * getValue(true))
+    setValue(v * newValue)
   }
 
   override def :-=(v:Int) {
-    setValue(getValue(true) - v)
+    setValue(newValue - v)
   }
 
   /** increments the variable by one
     */
   override def ++ {
-    setValue(1 + getValue(true))
+    setValue(1 + newValue)
   }
 
   /**this operator swaps the value of two IntVar*/
@@ -318,14 +320,14 @@ object IdentityInt{
 /** an invariant that is the identity function
   * @author renaud.delandtsheer@cetic.be
   */
-class IdentityInt(toValue:CBLSIntVar, fromValue:IntValue) extends Invariant{
+class IdentityInt(toValue:CBLSIntVar, fromValue:IntValue) extends Invariant with IntNotificationTarget{
   registerStaticAndDynamicDependency(fromValue)
   toValue.setDefiningInvariant(this)
   finishInitialization()
 
   toValue := fromValue.value
 
-  override def notifyIntChanged(v: ChangingIntValue, OldVal: Int, NewVal: Int) {
+  override def notifyIntChanged(v: ChangingIntValue, id:Int, OldVal: Int, NewVal: Int) {
     toValue := NewVal
   }
 

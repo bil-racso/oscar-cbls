@@ -25,14 +25,8 @@
 
 package oscar.cbls.invariants.lib.numeric
 
-import oscar.cbls.invariants.core.computation.ChangingIntValue
-import oscar.cbls.invariants.core.computation.Domain
+import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.core.computation.Domain.rangeToDomain
-import oscar.cbls.invariants.core.computation.DomainHelper
-import oscar.cbls.invariants.core.computation.IntInvariant
-import oscar.cbls.invariants.core.computation.IntValue
-import oscar.cbls.invariants.core.computation.SetValue
-import oscar.cbls.invariants.core.computation.Store
 import oscar.cbls.invariants.core.propagation.Checker
 import oscar.cbls.invariants.lib.logic.Int2Int
 import oscar.cbls.invariants.lib.logic.IntInt2Int
@@ -56,13 +50,14 @@ object Prod {
  */
 class Sum(vars: Iterable[IntValue])
   extends IntInvariant(
-    vars.foldLeft(0)((a: Int, b: IntValue) => a + b.value), 
-	vars.foldLeft(0)((acc, intvar) => DomainHelper.safeAddMin(acc, intvar.min)) to vars.foldLeft(0)((acc, intvar) => DomainHelper.safeAddMax(acc, intvar.max))) {
+    vars.foldLeft(0)((a: Int, b: IntValue) => a + b.value),
+	vars.foldLeft(0)((acc, intvar) => DomainHelper.safeAddMin(acc, intvar.min)) to vars.foldLeft(0)((acc, intvar) => DomainHelper.safeAddMax(acc, intvar.max)))
+  with IntNotificationTarget{
 
   for (v <- vars) registerStaticAndDynamicDependency(v)
   finishInitialization()
 
-  override def notifyIntChanged(v: ChangingIntValue, OldVal: Int, NewVal: Int) {
+  override def notifyIntChanged(v: ChangingIntValue, id:Int, OldVal: Int, NewVal: Int) {
     this :+= NewVal - OldVal
   }
 
@@ -83,7 +78,9 @@ class Linear(vars: Iterable[IntValue], coeffs: IndexedSeq[Int])
   extends IntInvariant(
 		  vars.zip(coeffs).foldLeft(0)((acc, intvar) => acc + intvar._1.value*intvar._2), 
 		  vars.zip(coeffs).foldLeft(0)((acc, intvar) => DomainHelper.safeAddMin(acc,DomainHelper2.getMinProd(intvar._1.min,intvar._1.max,intvar._2,intvar._2))) to 
-		  vars.zip(coeffs).foldLeft(0)((acc, intvar) => DomainHelper.safeAddMax(acc,DomainHelper2.getMaxProd(intvar._1.min,intvar._1.max,intvar._2,intvar._2)))){
+		  vars.zip(coeffs).foldLeft(0)((acc, intvar) => DomainHelper.safeAddMax(acc,DomainHelper2.getMaxProd(intvar._1.min,intvar._1.max,intvar._2,intvar._2))))
+  with IntNotificationTarget {
+
   //coeffs needs to be indexed as we need to access it be index from the index of vars (as given in notifyIntChanged)
   //TODO: There is still the risk of adding plus and minus "infinity" and get absurd results. But at least we avoid overflows...
 			   
@@ -107,7 +104,8 @@ class Linear(vars: Iterable[IntValue], coeffs: IndexedSeq[Int])
  * @author renaud.delandtsheer@cetic.be
  */
 class ExtendableSum(model: Store, domain: Domain)
-  extends IntInvariant(initialDomain = domain) {
+  extends IntInvariant(initialDomain = domain)
+  with IntNotificationTarget{
 
   finishInitialization(model)
 
@@ -122,7 +120,7 @@ class ExtendableSum(model: Store, domain: Domain)
     }
   }
 
-  override def notifyIntChanged(v: ChangingIntValue, OldVal: Int, NewVal: Int) {
+  override def notifyIntChanged(v: ChangingIntValue, id:Int, OldVal: Int, NewVal: Int) {
     this :+= NewVal - OldVal
   }
 
@@ -137,7 +135,9 @@ class ExtendableSum(model: Store, domain: Domain)
  * @param vars is a set of IntVars
  * @author renaud.delandtsheer@cetic.be
  */
-class Prod(vars: Iterable[IntValue]) extends IntInvariant {
+class Prod(vars: Iterable[IntValue])
+  extends IntInvariant
+with IntNotificationTarget{
   assert(vars.size > 0, "Invariant prod declared with zero vars to multiply")
 
   for (v <- vars) registerStaticAndDynamicDependency(v)
@@ -159,7 +159,7 @@ class Prod(vars: Iterable[IntValue]) extends IntInvariant {
     -myMax to myMax})
 
   @inline
-  override def notifyIntChanged(v: ChangingIntValue, OldVal: Int, NewVal: Int) {
+  override def notifyIntChanged(v: ChangingIntValue, id:Int, OldVal: Int, NewVal: Int) {
     assert(OldVal != NewVal)
     if (OldVal == 0 && NewVal != 0) {
       NullVarCount -= 1
