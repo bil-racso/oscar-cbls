@@ -66,6 +66,9 @@ abstract class RedBlackTree[V]{
 
   def size:Int
   def isEmpty:Boolean
+
+  def values:List[V] = valuesAcc(List.empty)
+  protected [rb] def valuesAcc(valuesAfter:List[V]):List[V]
 }
 
 
@@ -88,6 +91,8 @@ private case class L[V]() extends RedBlackTree[V]  {
 
   override def size: Int = 0
   override def isEmpty = true
+
+  protected [rb] def valuesAcc(valuesAfter:List[V]):List[V] = valuesAfter
 }
 
 
@@ -143,6 +148,8 @@ private case class T[V](c : Boolean, l : RedBlackTree[V], k : Int, v : Option[V]
       balance(c)(l)(this.k)(this.v)(r.modWith(k, f))
     }
   }
+
+  override protected[rb] def valuesAcc(valuesAfter : List[V]) : List[V] = l.valuesAcc(v.head :: r.valuesAcc(valuesAfter))
 }
 
 // A helper object.
