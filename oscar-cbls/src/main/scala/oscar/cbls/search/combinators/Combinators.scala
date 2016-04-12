@@ -1143,7 +1143,7 @@ case class DynAndThen[FirstMoveType<:Move](a:Neighborhood with SupportForAndThen
 
       override def model = obj.model
 
-      override def valueNoSideEffect: Int = 0
+      override def valueNoSearch: Int = 0
 
       override def value: Int = {
 
@@ -1165,7 +1165,14 @@ case class DynAndThen[FirstMoveType<:Move](a:Neighborhood with SupportForAndThen
         //first, let's instantiate it:
         currentB = b(a.instantiateCurrentMove(intermediaryObjValue))
 
-        currentB.getMove(obj, secondAcceptanceCriteria) match {
+        class secondInstrumentedObjective(obj:Objective) extends Objective{
+          override def detailedString(short : Boolean, indent : Int) : String = obj.detailedString(short,indent)
+          override def model : Store = obj.model
+          override def value : Int = obj.value
+          override def valueNoSearch : Int = 0
+        }
+
+        currentB.getMove(new secondInstrumentedObjective(obj), secondAcceptanceCriteria) match {
           case NoMoveFound => Int.MaxValue
           case MoveFound(m: Move) =>
             secondMove = m
