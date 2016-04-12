@@ -290,6 +290,7 @@ case class CompositeMove(ml:List[Move], override val objAfter:Int, override val 
   }
 
   override def commit() {
+    println("COMMITING ........")
     for(m <- ml) m.commit()
   }
 

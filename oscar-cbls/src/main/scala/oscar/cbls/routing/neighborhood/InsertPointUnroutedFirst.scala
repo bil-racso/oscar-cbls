@@ -75,7 +75,7 @@ case class InsertPointUnroutedFirst(unroutedNodesToInsert: () => Iterable[Int],
     }
     cleanRecordedMoves()
     val relevantNeighborsNow = relevantNeighbors()
-
+    println(iterationScheme.toList)
     val iterationSchemeIterator = iterationScheme.iterator
     while (iterationSchemeIterator.hasNext) {
       insertedPoint = iterationSchemeIterator.next

@@ -123,6 +123,7 @@ class Routes(V: Int,
   val heap = new BinomialHeap[(Int, Int)]((a: (Int, Int)) => a._2, UNROUTED)
 
   override def performInvariantPropagation() {
+    println("TOUPDATE : " + ToUpdate)
     for (node <- ToUpdate) {
       if (next(node) == UNROUTED) {
         //node is unrouted now
@@ -136,6 +137,7 @@ class Routes(V: Int,
     }
     ToUpdate = List.empty
     ToUpdateCount = 0
+    println("HEAP : " + heap.toList)
 
     while (!heap.isEmpty) {
       val currentNodeForUpdate = heap.popFirst()._1
@@ -150,6 +152,10 @@ class Routes(V: Int,
     var currentNode:Int = nodeID
     var nextNode:Int = next(currentNode)
     var maxIt:Int = UNROUTED
+    println("nodeId : " + nodeID)
+    println(currentNode,nextNode,maxIt)
+    println(isUpToDate(currentNode),nextNode >= V)
+    println(toString)
     while (!isUpToDate(currentNode) && nextNode >= V) {
       positionInRoute(nextNode) := (positionInRoute(currentNode).newValue + 1)
       routeNr(nextNode) := routeNr(currentNode).newValue

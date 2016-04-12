@@ -73,7 +73,6 @@ trait Time extends VRP with Predecessors {
     (i: Int) =>
       if (i == N) defaultArrivalTime
       else {
-        println(travelOutDuration(i))
         (travelOutDuration(i) + leaveTime(i))
       }
   }

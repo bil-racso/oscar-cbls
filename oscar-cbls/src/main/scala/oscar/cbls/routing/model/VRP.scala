@@ -686,7 +686,7 @@ trait Predecessors extends VRP {
 trait VehicleWithCapacity extends VRP with PickupAndDeliveryCustomers{
 
   /**
-    * @return the load of the specified vehicle at the specified point
+    * @return the current load of the vehicle at the specified point
     */
   val currentLoad = (n:Int) => {
     var current = routeNr(n).value
@@ -705,18 +705,23 @@ trait VehicleWithCapacity extends VRP with PickupAndDeliveryCustomers{
   val defaultArrivalLoadValue = new CBLSIntConst(0)
 
   /**
-    * The variable that maintains the current cargo of each vehicle
-    */
-  //private val vehicleCurrentLoad:Array[CBLSIntVar] = Array.tabulate(V)(v => )
-
-  /**
     * The variable that maintains the maximum cargo of each vehicle
     */
   val vehicleMaxCapacity:Array[CBLSIntVar] = Array.tabulate(V) (v => CBLSIntVar(m, 0, 0 to N, "maximum capacity of vehicle " + v))
 
+  /**
+    * The variable that maintain the current arrival load of a vehicle at each point
+    */
   val arrivalLoadValue = Array.tabulate(N){ (n:Int) => CBLSIntVar(m, 0, 0 to N, "Arrival load at node " + n) }
+
+  /**
+    * The variable that maintain the current leave load of a vehicle at each point
+    */
   var leaveLoadValue:Array[IntValue] = null
 
+  /**
+    * This method set the arrival and leave load value of each point (using invariant)
+    */
   def setArrivalLeaveLoadValue(): Unit ={
     leaveLoadValue = Array.tabulate(N+1) {
       (n :Int) =>
@@ -751,26 +756,41 @@ trait VehicleWithCapacity extends VRP with PickupAndDeliveryCustomers{
       setVehicleMaxCargo(max,v)
   }
 
-  def setVehiclesCargoStrongConstraint(): Unit ={
+  /**
+    * This method set a strong constraint on the capacity of each vehicle.
+    */
+  def setVehiclesCapacityStrongConstraint(): Unit ={
     for(n <- arrivalLoadValue.indices)
       strongConstraints.post(LE(arrivalLoadValue(n),vehicleMaxCapacity(0)))
   }
 }
 
 /**
-  * This trait maintains the
+  * This trait add a new feature for each node that's not a depot.
+  * Now each node is either a Pickup node or a Delivery node.
+  * This trait maintains the list of pickup and delivery nodes and provides several methods to use them.
   */
 trait PickupAndDeliveryCustomers extends VRP with StrongConstraints with PositionInRouteAndRouteNr with Predecessors{
 
+  assert((N-V)%2 == 0,"In order to use this trait you must have an even number of nodes which are not a depot")
+
+  /**
+    * The array that maintains pickup and delivery node.
+    * Each value (representing a node) contains the load value of the node
+    * (-1 for a delivery node and 1 for a pickup node)
+    * and the value of the related node.
+    */
   private val pickupDeliveryNodes:Array[(Int,Int)] = new Array[(Int, Int)](N)
   for(i <- 0 until V)pickupDeliveryNodes(i) = (0,i)
+
   /**
-    * Add a new PickupAndDelivery couple
-    *
+    * Add a new PickupAndDelivery couple and set this two basic constraints :
+    * A strong constraint that specified that each pickup node has to be before his related delivery node
+    * A strong constraint that specified that each couple of point (pickup and delivery) has to be in the same route.
     * @param p the pickup point
     * @param d the delivery point
     */
-  private def addPickupDeliveryCouple(p:Int, d:Int): Unit ={
+  def addPickupDeliveryCouple(p:Int, d:Int): Unit ={
     pickupDeliveryNodes(p) = (1,d)
     setNodeInformation(p,getNodeInformation(p) + "Pickup node n°" + p + "\n" + "Load value : 1")
     pickupDeliveryNodes(d) = (-1,p)
@@ -814,16 +834,33 @@ trait PickupAndDeliveryCustomers extends VRP with StrongConstraints with Positio
       "The pickup array and the delivery array must have the same length.")
     assert(!pickup.exists(_ >= N) || !delivery.exists(_ >= N),
       "The pickup and the delivery array may only contain values between 0 and the number of nodes")
+    assert(pickup.intersect(delivery).length == 0,
+      "One node can't be a pickup node and a delivery node at the same time")
 
     for(i <- pickup.indices){
       addPickupDeliveryCouple(pickup(i),delivery(i))
     }
   }
 
+  /**
+    * This method check if the given node is a pickup one. (if his load value is > 0 it's a pickup node)
+    * @param index the index of the node
+    * @return
+    */
   def isPickup(index:Int): Boolean = pickupDeliveryNodes(index)._1 > 0
 
+  /**
+    * This method check if the given node is a delivery one. (if his load value is < 0 it's a delivery node)
+    * @param index the index of the node
+    * @return
+    */
   def isDelivery(index:Int):Boolean = pickupDeliveryNodes(index)._1 < 0
 
+  /**
+    * This method return de related delivery node of the pickup node we are trying to insert.
+    * @return
+    */
+  //TODO : Delete this method and implement/or adapt a new andThen combinator that remember information of the last movement done (like the dynAndThen combinator)
   def getRelatedUnroutedDelivery():Int = {for(d <- pickupDeliveryNodes.indices) {
     if (isDelivery(d) && !isRouted(d) && isRouted(pickupDeliveryNodes(d)._2)) return d
     }
@@ -857,30 +894,59 @@ trait PickupAndDeliveryCustomers extends VRP with StrongConstraints with Positio
     pickupDeliveryNodes(n)._1
   }
 
-  //O(N)
+  /**
+    * O(N)
+    * @return All the pickup nodes
+    */
   def getPickups: Iterable[Int] = pickupDeliveryNodes.indices.foldLeft(List[Int]())((a,b) => if(pickupDeliveryNodes(b)._1 > 0)b :: a else a)
 
-  //O(N)
+  /**
+    * O(N)
+    * @return All the routed pickup nodes
+    */
   def getRoutedPickups: Iterable[Int] = pickupDeliveryNodes.indices.foldLeft(List[Int]())((a,b) => if(pickupDeliveryNodes(b)._1 > 0 && isRouted(b))b :: a else a)
 
-  //O(N)
+  /**
+    * O(N)
+    * @return The predecessor of each routed pickup node
+    */
   def getRoutedPickupsPredecessors: Iterable[Int] = pickupDeliveryNodes.indices.foldLeft(List[Int]())((a,b) => if(pickupDeliveryNodes(b)._1 > 0 && isRouted(b))preds(b).value :: a else a)
 
-  //O(N)
+  /**
+    * O(N)
+    * @return All the unrouted pickup nodes
+    */
   def getUnroutedPickups: Iterable[Int] = pickupDeliveryNodes.indices.foldLeft(List[Int]())((a,b) => if(pickupDeliveryNodes(b)._1 > 0 && !isRouted(b))b :: a else a)
 
-  //O(N)
+  /**
+    * O(N)
+    * @return All the delivery nodes
+    */
   def getDeliverys: Iterable[Int] = pickupDeliveryNodes.indices.foldLeft(List[Int]())((a,b) => if(pickupDeliveryNodes(b)._1 < 0)b :: a else a)
 
-  //O(N)
+  /**
+    * O(N)
+    * @return All the routed delivery nodes
+    */
   def getRoutedDeliverys: Iterable[Int] = pickupDeliveryNodes.indices.foldLeft(List[Int]())((a,b) => if(pickupDeliveryNodes(b)._1 < 0 && isRouted(b))b :: a else a)
 
-  //O(N)
+  /**
+    * O(N)
+    * @return The predecessor of each routed delivery nodes
+    */
   def getRoutedDeliverysPredecessors: Iterable[Int] = pickupDeliveryNodes.indices.foldLeft(List[Int]())((a,b) => if(pickupDeliveryNodes(b)._1 < 0 && isRouted(b))preds(b).value :: a else a)
 
-  //O(N)
+  /**
+    * O(N)
+    * @return All the unrouted delivery nodes
+    */
   def getUnroutedDeliverys: Iterable[Int] = pickupDeliveryNodes.indices.foldLeft(List[Int]())((a,b) => if(pickupDeliveryNodes(b)._1 < 0 && !isRouted(b))b :: a else a)
 
+  /**
+    * This method is mainly used when you want to move a pickup node on his route
+    * @param node the pickup node
+    * @return All the nodes preceding the related delivery node
+    */
   def getAuthorizedInsertionPositionForPickup()(node: Int): Iterable[Int] = {
     if(node < V)return Iterable()
     val routeOfNode = routeNr(node)
@@ -889,6 +955,11 @@ trait PickupAndDeliveryCustomers extends VRP with StrongConstraints with Positio
     resRoute
   }
 
+  /**
+    * This method is mainly used when you want to move a delivery node on his route
+    * @param node the delivery node
+    * @return All the nodes following the related pickup node
+    */
   def getAuthorizedInsertionPositionForDelivery()(node: Int): Iterable[Int] = {
     if(node < V)return Iterable()
     val routeOfNode = routeNr(node)
@@ -979,6 +1050,10 @@ trait PickupAndDeliveryCustomers extends VRP with StrongConstraints with Positio
   }
 }
 
+/**
+  * This trait is an extension of the PickupAndDeliveryCustomers trait.
+  * It adds the concept of time window. Now a pickup time/delivery time is specified for each node
+  */
 trait PickupAndDeliveryCustomersWithTimeWindow extends TimeWindow with TravelTimeAsFunction with PickupAndDeliveryCustomers {
 
   def setEndWindow(node:Int, endWindow:Int, startWindow:Int, nodeDuration:Int): Unit ={
@@ -987,6 +1062,10 @@ trait PickupAndDeliveryCustomersWithTimeWindow extends TimeWindow with TravelTim
     super.setNodeDuration(node,nodeDuration,startWindow)
   }
 
+  /**
+    * This method set a linear travel time function. The time function is entirely based on the distanceMatrix
+    * @param distanceMatrix the distance matrix of the map
+    */
   def setLinearTravelTimeFunction(distanceMatrix: Array[Array[Int]]): Unit ={
     val ttf = new TTFMatrix(N,new TTFConst(500))
     for(i <- 0 until N){
@@ -998,6 +1077,11 @@ trait PickupAndDeliveryCustomersWithTimeWindow extends TimeWindow with TravelTim
   }
 
   //TODO : Refactor this method, actually it's quite ugly and not very comprehensive
+  /**
+    *This method generate the time window for each point of the problem.
+    * It ensures that the arrival time of a pickup node is before the arrival time of his related delivery node
+    * And it tries to randomises the problem (with all the differents constraints, the problem is often unsolvable)
+    */
   def endWindowGenerator(): Unit ={
     val currentArray:Array[Int] = new Array[Int](N-V)
     val randomIncValues:List[Int] = 2::3::4::5::Nil
@@ -1032,16 +1116,20 @@ trait PickupAndDeliveryCustomersWithTimeWindow extends TimeWindow with TravelTim
   }
 
   //TODO : Try to find a better solution than using BinomialHeap and then turning it to a List
+  /**
+    * This method generate all the nodes whose arrival time is before the specified node
+    * (mainly used during the insertion phase)
+    * @param node the index of the node
+    * @return
+    */
   def getRoutedNodesBeforeTime()(node:Int): Iterable[Int] ={
     val res:BinomialHeap[Int] = new BinomialHeap[Int](a => a,N-V)
     val time = leaveTime(node).value
     for(v <- 0 until V){
       val route = getRouteOfVehicle(v)
       var index = 0
-      while(index < route.length){
-        if(arrivalTimeToNext(route(index)).value <= time) {
-          res.insert(route(index))
-        }
+      while(index < route.length && arrivalTimeToNext(route(index)).value <= time){
+        res.insert(route(index))
         index += 1
       }
     }
@@ -1051,33 +1139,16 @@ trait PickupAndDeliveryCustomersWithTimeWindow extends TimeWindow with TravelTim
   }
 }
 
-trait MaxTravelDistancePDConstraint extends VRP with HopDistance with PickupAndDeliveryCustomers{
-  var travelDistances:Array[IntValue] = null
-  val arrivalTravelDistance = Array.tabulate(N){ (n:Int) => CBLSIntVar(m, 0, 0 to N, "Arrival load at node " + n) }
+/**
+  * This trait add a constraint that ensures that the travel time between a pickup node and his related delivery node
+  * is lower than twice the perfect travel time
+  */
+trait MaxTravelDistancePDConstraint extends VRP with HopDistance with PickupAndDeliveryCustomersWithTimeWindow{
 
-  def setMaxTravelDistancePDConstraint() {
-    assert(distanceFunction != null,"In order to use this constraint you must install the cost matrix")
-    initTravelDistances
-    val pickups = getPickups.toArray
-    for (p <- pickups.indices) {
-      val d = getRelatedDelivery(pickups(p))
-      strongConstraints.post(LE(travelDistances(d)-travelDistances(p),distanceFunction(pickups(p),d)))
-    }
-  }
-
-  //TODO : Find a solution to maintain the current travel cost between each point
-  private def initTravelDistances(): Unit ={
-    travelDistances = Array.tabulate(N){
-      (n:Int)=>
-        if(n == N || n < V){
-          0
-        }else{
-          println(preds(n)value)
-          arrivalTravelDistance(n) + distanceFunction(n,preds(n).value)
-        }
-    }
-    for(n <- 0 until N){
-      arrivalTravelDistance(n) <== travelDistances.element(preds(n))
+  def setMaxTravelDistancePDConstraint(){
+    for(p <- getPickups) {
+      val d = getRelatedDelivery(p)
+      strongConstraints.post(LE(arrivalTime(d) - leaveTime(p), 2*travelDurationMatrix.getTravelDuration(p, leaveTime(p).value, d)))
     }
   }
 }

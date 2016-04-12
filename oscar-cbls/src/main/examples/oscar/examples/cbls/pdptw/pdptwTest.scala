@@ -59,12 +59,12 @@ class MyPDPTWVRP(n:Int, v:Int, model:Store, distanceMatrix: Array[Array[Int]],un
   installHopDistancePerVehicle()
   println("end install matrix, posting constraints")
   addRandomPickupDeliveryCouples()
-  setMaxTravelDistancePDConstraint()
   setArrivalLeaveLoadValue()
   setVehiclesMaxCargo(4)
-  setVehiclesCargoStrongConstraint()
-  //setLinearTravelTimeFunction(distanceMatrix)
+  setVehiclesCapacityStrongConstraint()
+  setLinearTravelTimeFunction(distanceMatrix)
   endWindowGenerator()
+  setMaxTravelDistancePDConstraint()
 
   //evenly spreading the travel among vehicles
   val averageDistanceOnAllVehicles = overallDistance.value / V
@@ -150,15 +150,27 @@ object pdptwTest extends App with StopWatch {
     relevantNeighbors = () => vrp.kNearest(40),
     vehicles=() => vrp.vehicles.toList))
 
-  val insertCouple = Profile(AndThen(
+  val insertCouple = Profile(DynAndThen(
     InsertPointUnroutedFirst(
     unroutedNodesToInsert = () => vrp.getUnroutedPickups,
     relevantNeighbors = () => vrp.getRoutedNodesBeforeTime(),
     vrp = vrp),
-    InsertPointUnroutedFirst(
-    unroutedNodesToInsert = () => Iterable(vrp.getRelatedUnroutedDelivery()),
-    relevantNeighbors = () => vrp.kNearest(n,vrp.isRouted),
-    vrp = vrp, best = true)))
+    (moveResult:InsertPointMove) => InsertPointUnroutedFirst(
+    unroutedNodesToInsert = () => {
+      println(vrp.preds(moveResult.insertedPoint))
+      println(moveResult.insertedPoint, moveResult.beforeInsertedPoint)
+      println(vrp.getRelatedDelivery(moveResult.insertedPoint))
+      println(vrp.next(moveResult.insertedPoint))
+      for(v <- 0 until vrp.V)
+        println(vrp.next(v))
+      println(vrp.next(vrp.getRelatedDelivery(moveResult.insertedPoint)))
+      println(vrp.getRelatedDelivery(moveResult.insertedPoint),vrp.getRelatedUnroutedDelivery())
+      //TODO : Continuer à chercher le problème ... gros WTF !!!
+      Iterable(vrp.getRelatedDelivery(moveResult.insertedPoint))
+      //Iterable(vrp.getRelatedUnroutedDelivery())
+    },
+    relevantNeighbors = () => vrp.kNearest(n,vrp.onTheSameRouteAfter(moveResult.insertedPoint)),
+    vrp = vrp, best = true))afterMove(println("movement done ...")))
 
   val oneCoupleMove = Profile(DynAndThen(OnePointMove(
     nodesPrecedingNodesToMove = () => vrp.getRoutedPickupsPredecessors,
@@ -190,7 +202,8 @@ object pdptwTest extends App with StopWatch {
   } // exhaust onePointMove exhaust segExchange//threeOpt //(new BestSlopeFirst(List(onePointMove,twoOpt,threeOpt)))
 
   search.verbose = 1
-  //insertCouple.verbose = 2
+  search.paddingLength = 400
+  insertCouple.verbose = 3
   //    search.verboseWithExtraInfo(3,() => vrp.toString)
   //segExchange.verbose = 3
 

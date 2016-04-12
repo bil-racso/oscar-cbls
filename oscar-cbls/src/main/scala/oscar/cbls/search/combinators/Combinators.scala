@@ -1166,6 +1166,7 @@ case class DynAndThen[FirstMoveType<:Move](a:Neighborhood with SupportForAndThen
         currentB.getMove(obj, secondAcceptanceCriteria) match {
           case NoMoveFound => Int.MaxValue
           case MoveFound(m: Move) =>
+            println(m.toString)
             secondMove = m
             m.objAfter
         }
