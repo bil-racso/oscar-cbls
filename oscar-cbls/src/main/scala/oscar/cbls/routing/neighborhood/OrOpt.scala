@@ -81,3 +81,4 @@ case class OrOptMove(beforeStart: Int,
       + "; insertAfter:" + insertionPoint
       + "; reverse:" + reverseSegment + objToString + ")")
 }
+
