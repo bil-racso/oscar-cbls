@@ -1,6 +1,6 @@
-package oscar.cbls.invariants.core.algo.seq
+package oscar.cbls.invariants.core.algo.seq.mutable
 
-import oscar.cbls.invariants.core.algo.fun.{LinearPositionTransform, UpdateableBijection}
+import oscar.cbls.invariants.core.algo.fun.mutable.{LinearPositionTransform, UpdateableBijection}
 
 class UniqueIntSequenceWithPosition(maxVal:Int) extends UniqueIntSequence(maxVal){
 

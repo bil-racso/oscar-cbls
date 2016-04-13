@@ -1,8 +1,8 @@
-package oscar.cbls.invariants.core.algo.fun
+package oscar.cbls.invariants.core.algo.fun.mutable
 
 
-class UpdateableBijectionNaive extends UpdateableFunction{
-  val reverseFunction:UpdateableFunction = new UpdateableFunction
+class UpdateableBijectionNaive extends PiecewiseLinearFunction{
+  val reverseFunction:PiecewiseLinearFunction = new PiecewiseLinearFunction
 
   private var upToDate = true
 
@@ -30,11 +30,11 @@ class UpdateableBijectionNaive extends UpdateableFunction{
   }
 }
 
-class UpdateableBijection extends UpdateableFunction{
+class UpdateableBijection extends PiecewiseLinearFunction{
 
 
 
-  val reverseFunction:UpdateableFunction = new UpdateableFunction
+  val reverseFunction:PiecewiseLinearFunction = new PiecewiseLinearFunction
 
   // UpdateableFunction
   def unApply(value:Int):Int = reverseFunction(value)

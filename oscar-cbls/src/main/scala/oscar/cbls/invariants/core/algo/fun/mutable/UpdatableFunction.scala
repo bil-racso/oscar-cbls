@@ -1,14 +1,14 @@
-package oscar.cbls.invariants.core.algo.fun
+package oscar.cbls.invariants.core.algo.fun.mutable
 
 import oscar.cbls.invariants.core.algo.rb.RedBlackTree
 
-class UpdateableFunction() {
+class PiecewiseLinearFunction() {
   //external position => internal position
   protected var transformation: RedBlackTree[Pivot] = RedBlackTree.empty
 
-  def firstPivot:Option[(Int,Pivot)] = transformation.getSmallestBigger(Int.MinValue)
+  def firstPivot:Option[(Int,Pivot)] = transformation.getSmallestBiggerOrEqual(Int.MinValue)
 
-  def lastPivot:Option[(Int,Pivot)] = transformation.getBiggestLower((Int.MaxValue))
+  def lastPivot:Option[(Int,Pivot)] = transformation.getBiggestLowerOrEqual((Int.MaxValue))
 
   def clearAndSetPivots(l:List[Pivot]){
     setAsIdentity()
@@ -36,7 +36,7 @@ class UpdateableFunction() {
   }
 
   def apply(value:Int):Int = {
-    transformation.getBiggestLower(value) match {
+    transformation.getBiggestLowerOrEqual(value) match {
       case None => value
       case Some((_,pivot)) => pivot.f(value)
     }
@@ -55,7 +55,7 @@ class UpdateableFunction() {
 
   def update(fromIncluded: Int, toIncluded: Int, additionalF: LinearPositionTransform): Unit = {
     println("updateFunction(from:" + fromIncluded + ", to:" + toIncluded + ", fct:" + additionalF + ")")
-    transformation.getBiggestLower(fromIncluded) match {
+    transformation.getBiggestLowerOrEqual(fromIncluded) match {
       case Some((_,pivot)) if (pivot.value == fromIncluded) =>
         updateFromPivot(pivot, toIncluded, additionalF)
       case Some((_,pivot)) =>
@@ -69,7 +69,7 @@ class UpdateableFunction() {
         insertedPivot(newPivot)
         updateFromPivot(newPivot, toIncluded, additionalF)
       case None =>
-        transformation.getSmallestBigger(fromIncluded) match{
+        transformation.getSmallestBiggerOrEqual(fromIncluded) match{
           case None =>
             //need to add a first pivot from this point
             val newPivot = createNewPivot(fromIncluded, null, null, LinearPositionTransform.identity)

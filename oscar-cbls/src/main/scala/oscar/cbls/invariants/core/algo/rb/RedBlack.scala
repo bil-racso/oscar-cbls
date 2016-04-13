@@ -1,5 +1,7 @@
 package oscar.cbls.invariants.core.algo.rb
 
+import oscar.cbls.invariants.core.algo.quick.QList
+
 /*** Okasaki-style red-black tree maps. ***/
 
 abstract class RedBlackTree[V]{
@@ -47,13 +49,13 @@ abstract class RedBlackTree[V]{
   // get: Retrieve a value for a key.
   def get(k : Int) : Option[V]
 
-  def getBiggestLower(k:Int):Option[(Int,V)]
+  def getBiggestLowerOrEqual(k:Int):Option[(Int,V)]
 
   protected[rb] def getBiggestLowerAcc(k:Int, bestoFar:(Int,V)):Option[(Int,V)]
 
-  def getSmallestBigger(k:Int):Option[(Int,V)]
+  def getSmallestBiggerOrEqual(k:Int):Option[(Int,V)]
 
-  def getSmallest:Option[(Int,V)] = getSmallestBigger(Int.MinValue)
+  def getSmallest:Option[(Int,V)] = getSmallestBiggerOrEqual(Int.MinValue)
 
   protected[rb] def getSmallestBiggerAcc(k:Int, bestSoFar:(Int,V)):Option[(Int,V)]
 
@@ -69,6 +71,9 @@ abstract class RedBlackTree[V]{
 
   def values:List[V] = valuesAcc(List.empty)
   protected [rb] def valuesAcc(valuesAfter:List[V]):List[V]
+
+  def positionOf(k: Int):Option[RBPosition[V]] = positionOfAcc(k:Int,null)
+  def positionOfAcc(k:Int,positionAcc:QList[(T[V],Boolean)]):Option[RBPosition[V]]
 }
 
 
@@ -80,12 +85,12 @@ private case class L[V]() extends RedBlackTree[V]  {
     T(R, this, k, f(k,None), this)
   }
 
-  def getBiggestLower(k:Int):Option[(Int,V)] = None
+  def getBiggestLowerOrEqual(k:Int):Option[(Int,V)] = None
 
   override protected[rb] def getBiggestLowerAcc(k:Int, bestSoFar:(Int,V)) = Some(bestSoFar)
 
 
-  override def getSmallestBigger(k: Int):Option[(Int,V)] = None
+  override def getSmallestBiggerOrEqual(k: Int):Option[(Int,V)] = None
 
   override protected[rb] def getSmallestBiggerAcc(k: Int, bestSoFar: (Int, V)) = Some(bestSoFar)
 
@@ -93,6 +98,8 @@ private case class L[V]() extends RedBlackTree[V]  {
   override def isEmpty = true
 
   protected [rb] def valuesAcc(valuesAfter:List[V]):List[V] = valuesAfter
+
+  override def positionOfAcc(k : Int, positionAcc : QList[(T[V],Boolean)]) : Option[RBPosition[V]] = None
 }
 
 
@@ -107,8 +114,8 @@ private case class T[V](c : Boolean, l : RedBlackTree[V], k : Int, v : Option[V]
     else v
   }
 
-  def getBiggestLower(k:Int):Option[(Int,V)] = {
-    if (k < this.k) l.getBiggestLower(k)
+  def getBiggestLowerOrEqual(k:Int):Option[(Int,V)] = {
+    if (k < this.k) l.getBiggestLowerOrEqual(k)
     else if (this.k < k) r.getBiggestLowerAcc(k,(this.k,v.head))
     else Some(k,v.head)
   }
@@ -119,9 +126,9 @@ private case class T[V](c : Boolean, l : RedBlackTree[V], k : Int, v : Option[V]
     else Some(k,v.head)
   }
 
-  override def getSmallestBigger(k: Int):Option[(Int,V)] = {
+  override def getSmallestBiggerOrEqual(k: Int):Option[(Int,V)] = {
     if (k < this.k) l.getSmallestBiggerAcc(k, (this.k, v.head))
-    else if (this.k < k) r.getSmallestBigger(k)
+    else if (this.k < k) r.getSmallestBiggerOrEqual(k)
     else Some(k,v.head)
   }
 
@@ -150,6 +157,15 @@ private case class T[V](c : Boolean, l : RedBlackTree[V], k : Int, v : Option[V]
   }
 
   override protected[rb] def valuesAcc(valuesAfter : List[V]) : List[V] = l.valuesAcc(v.head :: r.valuesAcc(valuesAfter))
+
+  override def positionOfAcc(k : Int, positionAcc : QList[(T[V],Boolean)]) : Option[RBPosition[V]] = {
+    if (k < this.k) l.positionOfAcc(k, QList((this,false),positionAcc))
+    else if (k > this.k) r.positionOfAcc(k, QList((this,true),positionAcc))
+    else Some(new RBPosition[V](QList((this,true),positionAcc)))
+  }
+
+  def hasLeft:Boolean = l.isInstanceOf[T[V]]
+  def hasRight:Boolean = r.isInstanceOf[T[V]]
 }
 
 // A helper object.
@@ -166,4 +182,41 @@ object RedBlackTree {
     }
     currentMap
   }
+}
+
+//le booléen: true le noeud a déjà été montré (dans un parcour gauche à droite)
+class RBPosition[V](position:QList[(T[V],Boolean)]){
+  def key:Int = position.head._1.k
+  def value:V = position.head._1.v.head
+  def next():Option[RBPosition[V]] = {
+
+    def unstack1(position:QList[(T[V],Boolean)]):QList[(T[V],Boolean)] = {
+      if (position == null) return null
+      val head = position.head
+      if (!head._2){
+        //not presented yet, so we present this one
+        QList((head._1,true),position.tail)
+      }else{
+        //already presented, so unstack
+        unstack1(position.tail)
+      }
+    }
+
+    def descendToLeftMost(position:QList[(T[V],Boolean)]):QList[(T[V],Boolean)] = {
+      val headTree = position.head._1
+      headTree.l match{
+        case t:T[V] => descendToLeftMost(QList((t,false),position))
+        case _ => QList((headTree,true),position.tail)
+      }
+    }
+
+    val newStack = position.head._1.r match {
+      case t : T[V] => descendToLeftMost(QList((t,false),position))
+      case _ => unstack1(position)
+    }
+
+    if(newStack == null) None
+    else Some(new RBPosition[V](newStack))
+  }
+
 }

@@ -1,7 +1,8 @@
 package oscar.cbls.invariants.core.computation
 
 import oscar.cbls.invariants.core.algo.quick.QList
-import oscar.cbls.invariants.core.algo.seq.{ImmutableIntSequence, UniqueIntSequenceWithPosition, IntSequence}
+import oscar.cbls.invariants.core.algo.seq.mutable.{ImmutableIntSequence, UniqueIntSequenceWithPosition, IntSequence}
+import oscar.cbls.invariants.core.algo.seq.ImmutableIntSequence
 
 sealed trait SeqValue extends Value{
   def value:IntSequence

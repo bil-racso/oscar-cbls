@@ -1,4 +1,4 @@
-package oscar.cbls.invariants.core.algo.seq
+package oscar.cbls.invariants.core.algo.seq.mutable
 
 class IntSequence extends Iterable[SeqPosition]{
   var headPhantom = new SymSeqPosition(null,null,-1){

@@ -1,6 +1,7 @@
 package oscar.cbls.test.invariants.algo
 
-import oscar.cbls.invariants.core.algo.fun.{UpdateableFunction, LinearPositionTransform}
+import oscar.cbls.invariants.core.algo.fun.LinearPositionTransform
+import oscar.cbls.invariants.core.algo.fun.mutable.{LinearPositionTransform, PiecewiseLinearFunction}
 
 class UpdateableFunctionNaive(maxVal:Int) {
   //external position => internal position
@@ -30,7 +31,7 @@ le bon index linéaire est celui après transformation
 
 object TestUpdateableFunction extends App{
   val maxVal = 100
-  val fn = new UpdateableFunction()
+  val fn = new PiecewiseLinearFunction()
   val fn2 = new UpdateableFunctionNaive(maxVal)
 
   def compare(): Unit ={

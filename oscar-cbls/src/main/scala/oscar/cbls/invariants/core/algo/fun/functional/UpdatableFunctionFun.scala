@@ -1,21 +1,22 @@
-package oscar.cbls.invariants.core.algo.fun
+package oscar.cbls.invariants.core.algo.fun.functional
 
+import oscar.cbls.invariants.core.algo.fun.mutable.{LinearPositionTransform, Pivot}
 import oscar.cbls.invariants.core.algo.rb.RedBlackTree
 
 object PiecewiseLinearFun{
   def identity = new PiecewiseLinearFun()
 }
 
-class PiecewiseLinearFun(transformation: RedBlackTree[Segment] = RedBlackTree.empty) {
+class PiecewiseLinearFun(transformation: RedBlackTree[Pivot] = RedBlackTree.empty) {
 
-  def firstPivot:Option[(Int,Segment)] = transformation.getSmallestBigger(Int.MinValue)
+  def firstPivot:Option[(Int,Pivot)] = transformation.getSmallestBiggerOrEqual(Int.MinValue)
 
   override def toString: String = {
     "PiecewiseLinearFun(nbSegments:" + transformation.size + ", " + (if(transformation.isEmpty) "identity" else ("segments:" + transformation.values.mkString(",")))+")"
   }
 
   def apply(value:Int):Int = {
-    transformation.getBiggestLower(value) match {
+    transformation.getBiggestLowerOrEqual(value) match {
       case None => value
       case Some((_,pivot)) => pivot.f(value)
     }
@@ -23,7 +24,7 @@ class PiecewiseLinearFun(transformation: RedBlackTree[Segment] = RedBlackTree.em
 
   def update(fromIncluded: Int, toIncluded: Int, additionalF: LinearPositionTransform): PiecewiseLinearFun = {
     println("updateFunction(from:" + fromIncluded + ", to:" + toIncluded + ", fct:" + additionalF + ")")
-    transformation.getBiggestLower(fromIncluded) match {
+    transformation.getBiggestLowerOrEqual(fromIncluded) match {
       case Some((_,pivot)) if (pivot.value == fromIncluded) =>
         updateFromPivot(pivot, toIncluded, additionalF)
       case Some((_,pivot)) =>
@@ -37,7 +38,7 @@ class PiecewiseLinearFun(transformation: RedBlackTree[Segment] = RedBlackTree.em
         insertedPivot(newPivot)
         updateFromPivot(newPivot, toIncluded, additionalF)
       case None =>
-        transformation.getSmallestBigger(fromIncluded) match{
+        transformation.getSmallestBiggerOrEqual(fromIncluded) match{
           case None =>
             //need to add a first pivot from this point
             val newPivot = createNewPivot(fromIncluded, null, null, LinearPositionTransform.identity)
@@ -105,30 +106,6 @@ class PiecewiseLinearFun(transformation: RedBlackTree[Segment] = RedBlackTree.em
   }
 }
 
-class Segment(val fromValue:Int, var f: LinearPositionTransform){
-
-  override def toString = "Pivot(from:" + value + " f:" + f + ")"
-
-  def firstPivot:Pivot = if(prev == null) this else prev.firstPivot
-
-  def removeFromDLL(){
-    if(next!= null) next.prev = prev
-    if(prev != null) prev.next = next
-  }
-
-  def setNextAndRelink(that:Pivot): Unit ={
-    this.next = that
-    if(that != null) that.prev = this
-  }
-
-  /**
-   * @param transformPerformedAfter
-   * @return true if should be removed, with respect to prev if exists, false otherwise
-   *         so you must first update the prev to take this into account!
-   */
-  def update(transformPerformedAfter: LinearPositionTransform):Boolean = {
-    f = transformPerformedAfter(f)
-    if(prev == null) return (f.isIdentity)
-    return prev.f.equals(f)
-  }
+class Pivot(val fromValue:Int, val f: LinearPositionTransform){
+  override def toString = "Pivot(from:" + fromValue + " f:" + f + ")"
 }
