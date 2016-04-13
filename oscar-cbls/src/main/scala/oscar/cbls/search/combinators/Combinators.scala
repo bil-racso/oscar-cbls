@@ -1116,7 +1116,7 @@ case class AndThen(a: Neighborhood, b: Neighborhood, maximalIntermediaryDegradat
 case class DynAndThen[FirstMoveType<:Move](a:Neighborhood with SupportForAndThenChaining[FirstMoveType],
                                            b:(FirstMoveType => Neighborhood),
                                            maximalIntermediaryDegradation: Int = Int.MaxValue)
-  extends NeighborhoodCombinatorNoProfile(a) with SupportForAndThenChaining[CompositeMove]{
+extends NeighborhoodCombinatorNoProfile(a) with SupportForAndThenChaining[CompositeMove]{
 
   var currentB:Neighborhood = null
 
@@ -1149,7 +1149,7 @@ case class DynAndThen[FirstMoveType<:Move](a:Neighborhood with SupportForAndThen
       override def value: Int = {
 
         val intermediaryObjValue =
-          if (maximalIntermediaryDegradation != Int.MaxValue) {
+        if (maximalIntermediaryDegradation != Int.MaxValue) {
             //we need to ensure that intermediary step is admissible
             val intermediaryVal = obj.value
             val intermediaryDegradation = intermediaryVal - oldObj
@@ -1167,7 +1167,8 @@ case class DynAndThen[FirstMoveType<:Move](a:Neighborhood with SupportForAndThen
         currentB = b(a.instantiateCurrentMove(intermediaryObjValue))
 
         currentB.getMove(obj, secondAcceptanceCriteria) match {
-          case NoMoveFound => Int.MaxValue
+          case NoMoveFound =>
+            Int.MaxValue
           case MoveFound(m: Move) =>
             secondMove = m
             m.objAfter
@@ -1178,7 +1179,8 @@ case class DynAndThen[FirstMoveType<:Move](a:Neighborhood with SupportForAndThen
     val tmp = a.getMove(new InstrumentedObjective(), firstAcceptanceCriterion)
 
     tmp match {
-      case NoMoveFound => NoMoveFound
+      case NoMoveFound =>
+        NoMoveFound
       case MoveFound(m: Move) => if(secondMove == null) {
         println("WARNING: " + this + " the neighborhood on the left returned a move without querying the objective value, the move of andThen is therefore not a composite")
         m

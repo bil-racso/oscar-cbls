@@ -705,9 +705,7 @@ abstract class EasyNeighborhood[M<:Move](best:Boolean = false, neighborhoodName:
     //andThen (pas utile de l'instancier sns obj pq on va de tt façons propager en commençant le voisinage suivant.
     //normal
     //pour l'instant, cas normal uniquement (en fait le AndThen sera géré par le combinateur idoine)
-
     val myPrintExploredNeighbors = printExploredNeighbors
-
     if (best) {
       if (newObj < bestNewObj) {
         bestNewObj = newObj

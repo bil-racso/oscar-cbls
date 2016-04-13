@@ -32,13 +32,10 @@ object ColorGenerator {
     var i = 0
     println(maxColorNumber)
     for(c1 <- if(Math.random()<0.5)0 until maxColorNumber else maxColorNumber-1 until -1 by -1){
-      println("c1 : " + c1)
       val r = c1*(255/maxColorNumber)
       for(c2 <- if(Math.random()<0.5)0 until maxColorNumber else maxColorNumber-1 until -1 by -1){
-        println("c2 : " + c2)
         val g = c2*(255/maxColorNumber)
         for(c3 <- if(Math.random()<0.5)0 until maxColorNumber else maxColorNumber-1 until -1 by -1){
-          println("c3 : " + c3)
           val b = c3*(255/maxColorNumber)
           colorValues(i) = new Color(r,g,b)
           i += 1

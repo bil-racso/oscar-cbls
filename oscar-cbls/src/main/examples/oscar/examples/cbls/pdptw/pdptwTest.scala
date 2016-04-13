@@ -9,6 +9,7 @@ import oscar.cbls.routing.model._
 import oscar.cbls.routing.neighborhood._
 import oscar.cbls.search.StopWatch
 import oscar.cbls.search.combinators._
+import oscar.cbls.search.move.CompositeMove
 import oscar.examples.cbls.routing.RoutingMatrixGenerator
 import oscar.examples.cbls.routing.visual.ColorGenerator
 import oscar.examples.cbls.routing.visual.MatrixMap.{PickupAndDeliveryMatrixVisualWithAttribute, PickupAndDeliveryPoints, RoutingMatrixVisualWithAttribute, RoutingMatrixVisual}
@@ -64,7 +65,7 @@ class MyPDPTWVRP(n:Int, v:Int, model:Store, distanceMatrix: Array[Array[Int]],un
   setVehiclesCapacityStrongConstraint()
   setLinearTravelTimeFunction(distanceMatrix)
   endWindowGenerator()
-  setMaxTravelDistancePDConstraint()
+  //setMaxTravelDistancePDConstraint()
 
   //evenly spreading the travel among vehicles
   val averageDistanceOnAllVehicles = overallDistance.value / V
@@ -151,9 +152,9 @@ object pdptwTest extends App with StopWatch {
 
   val insertCouple = Profile(DynAndThen(
     InsertPointUnroutedFirst(
-    unroutedNodesToInsert = () => if(vrp.getUnroutedPickups.isEmpty) Nil else Iterable(vrp.getUnroutedPickups.head),
+    unroutedNodesToInsert = () => vrp.getUnroutedPickups,
     relevantNeighbors = () => vrp.getRoutedNodesBeforeTime(),
-    vrp = vrp, best = true),
+    vrp = vrp),
     (moveResult:InsertPointMove) => InsertPointUnroutedFirst(
     unroutedNodesToInsert = () => Iterable(vrp.getRelatedDelivery(moveResult.insertedPoint)),
     relevantNeighbors = () => vrp.kNearest(n,vrp.onTheSameRouteAfter(moveResult.insertedPoint)),
@@ -166,7 +167,7 @@ object pdptwTest extends App with StopWatch {
     (moveResult:OnePointMoveMove) => OnePointMove(
     nodesPrecedingNodesToMove = () => List(vrp.preds(vrp.getRelatedDelivery(moveResult.movedPoint)).value),
     relevantNeighbors= () => vrp.kNearest(1000,vrp.onTheSameRouteAfter(moveResult.movedPoint)),
-    vrp = vrp)))
+    vrp = vrp, best = true)))
 
   val onePointMovePD = Profile(new RoundRobin(List(OnePointMove(
     nodesPrecedingNodesToMove = () => vrp.getRoutedPickupsPredecessors,
@@ -180,13 +181,54 @@ object pdptwTest extends App with StopWatch {
 
   val orOpt = Profile(OrOpt(vrp = vrp))
 
-  val search = insertCouple exhaust
-    new BestSlopeFirst(List(insertCouple, onePointMovePD, threeOpt, orOpt, segExchangePD, oneCoupleMove), refresh = n / 2) showObjectiveFunction
+  val pickupDeliveryCoupleExchange = Profile(PickupDeliveryCoupleExchange(vrp = vrp))
+  val dynAndThenCoupleExchange = Profile(
+    DynAndThen(
+      //We first remove a PD couple from a first route
+      DynAndThen(RemovePoint(
+        predecessorsOfRoutedPointsToRemove = () => vrp.getRoutedPickupsPredecessors,
+        vrp = vrp),
+        (moveResult1:RemovePointMove) =>
+        RemovePoint(
+          predecessorsOfRoutedPointsToRemove = () => List(vrp.preds(vrp.getRelatedDelivery(moveResult1.removedPoint)).value),
+          vrp = vrp)
+      )
+      ,(moveResult2:CompositeMove) =>
+        //Then we move a PD couple from a second route to the first route
+        DynAndThen(
+          DynAndThen(OnePointMove(
+            nodesPrecedingNodesToMove = () => vrp.getRoutedPickupsPredecessors.filter(vrp.routeNr(_).value != vrp.routeNr(moveResult2.touchedVariables.head.asInstanceOf[Int]).value),
+            relevantNeighbors= () => vrp.getRoutedNodesBeforeTimeOfRoute(vrp.routeNr(moveResult2.touchedVariables.head.asInstanceOf[Int]).value),
+            vrp = vrp),(moveResult3:OnePointMoveMove) =>
+            OnePointMove(
+              nodesPrecedingNodesToMove = () => List(vrp.preds(vrp.getRelatedDelivery(moveResult3.movedPoint)).value),
+              relevantNeighbors= () => vrp.kNearest(1000,vrp.onTheSameRouteAfter(moveResult3.movedPoint)),
+              vrp = vrp, best = true)
+          )
+          ,(moveResult3:CompositeMove) =>
+            //And finally we insert the first couple in the second route
+            DynAndThen(InsertPointUnroutedFirst(
+              unroutedNodesToInsert = () => Iterable(moveResult2.touchedVariables.apply(1).asInstanceOf[Int]),
+              relevantNeighbors = () => vrp.getRoutedNodesBeforeTimeOfRoute(vrp.routeNr(moveResult3.touchedVariables.head.asInstanceOf[Int]).value),
+              vrp = vrp),(moveResult5:InsertPointMove) =>
+              InsertPointUnroutedFirst(
+                unroutedNodesToInsert = () => Iterable(moveResult2.touchedVariables.apply(2).asInstanceOf[Int]),
+                relevantNeighbors = () => vrp.kNearest(n,vrp.onTheSameRouteAfter(moveResult5.insertedPoint)),
+                vrp = vrp, best = true)
+            )
+          , maximalIntermediaryDegradation = Int.MaxValue/2
+        )
+      )
+  )
+
+  val search = BestSlopeFirst(List(insertCouple, onePointMovePD)) exhaust
+    new BestSlopeFirst(List(insertCouple,  onePointMovePD, threeOpt, orOpt, segExchangePD, oneCoupleMove), refresh = n / 2) showObjectiveFunction
     vrp.getObjective() afterMove {
     rm.drawRoutes()
   } // exhaust onePointMove exhaust segExchange//threeOpt //(new BestSlopeFirst(List(onePointMove,twoOpt,threeOpt)))
 
   search.verbose = 1
+  //pickupDeliveryCoupleExchange.verboseWithExtraInfo(3,() => vrp.routes.next.toList.toString)
   //search.paddingLength = 400
   //insertCouple.verbose = 3
   //    search.verboseWithExtraInfo(3,() => vrp.toString)

@@ -1125,6 +1125,13 @@ trait PickupAndDeliveryCustomersWithTimeWindow extends TimeWindow with TravelTim
     for(n <- 0 until res.size)resList = res.popFirst() :: resList
     resList.toIterable
   }
+
+  def getRoutedNodesBeforeTimeOfRoute(r:Int)(node:Int):Iterable[Int] ={
+    val res = getRoutedNodesBeforeTime()(node)
+    //println("getRoutedNodesBeforeTimeOfRoute" + res)
+    //println("getRoutedNodesBeforeTimeOfRoute after" + res.filter(routeNr(_).value == r))
+    res.filter(routeNr(_).value == r)
+  }
 }
 
 /**
