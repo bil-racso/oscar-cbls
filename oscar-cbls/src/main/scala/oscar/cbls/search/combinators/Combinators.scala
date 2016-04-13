@@ -1138,22 +1138,24 @@ case class DynAndThen[FirstMoveType<:Move](a:Neighborhood with SupportForAndThen
       acceptanceCriteria(oldObj, newObj)
     }
 
+    var compositeMove: Move = null //the composite move performed by "a andThen b"
+
     class InstrumentedObjectiveForFirstNeighborhood() extends Objective{
+
+      compositeMove = null
 
       override def detailedString(short: Boolean, indent: Int = 0): String = nSpace(indent) + "AndThenInstrumentedObjective(initialObjective:" + obj.detailedString(short) + ")"
 
       override def model = obj.model
 
-      override def valueNoSearch: Int = 0
-
-      var compositeMove: Move = null //the composite move performed by "a andThen b"
+      override def valueNoSearch: Int = obj.valueNoSearch
 
       override def value: Int = {
 
         val intermediaryObjValue =
           if (maximalIntermediaryDegradation != Int.MaxValue) {
             //we need to ensure that intermediary step is admissible
-            val intermediaryVal = obj.value
+            val intermediaryVal = obj.valueNoSearch
             val intermediaryDegradation = intermediaryVal - oldObj
             if (intermediaryDegradation > maximalIntermediaryDegradation) {
               return Int.MaxValue //we do not consider this first step
@@ -1173,7 +1175,7 @@ case class DynAndThen[FirstMoveType<:Move](a:Neighborhood with SupportForAndThen
           override def detailedString(short : Boolean, indent : Int) : String = obj.detailedString(short,indent)
           override def model : Store = obj.model
           override def value : Int = obj.value
-          override def valueNoSearch : Int = 0
+          override def valueNoSearch : Int = obj.valueNoSearch
         }
 
         currentB.getMove(new secondInstrumentedObjective(obj), secondAcceptanceCriteria) match {
@@ -1189,11 +1191,11 @@ case class DynAndThen[FirstMoveType<:Move](a:Neighborhood with SupportForAndThen
 
     tmp match {
       case NoMoveFound => NoMoveFound
-      case MoveFound(m: Move) => if(secondMove == null) {
+      case MoveFound(m: Move) => if(compositeMove == null) {
         println("WARNING: " + this + " the neighborhood on the left returned a move without querying the objective value, the move of andThen is therefore not a composite")
         m
       }else
-        CompositeMove(List(m, secondMove), m.objAfter, this.toString)
+        compositeMove
     }
   }
 
