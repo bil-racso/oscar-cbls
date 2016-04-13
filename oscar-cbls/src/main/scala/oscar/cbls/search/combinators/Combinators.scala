@@ -17,16 +17,15 @@
 package oscar.cbls.search.combinators
 
 import java.awt.{Color, Dimension}
-import javax.swing.JFrame
 
 import oscar.cbls.invariants.core.algo.heap.{BinomialHeap, BinomialHeapWithMove}
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.objective.{CascadingObjective, Objective}
+import oscar.cbls.routing.model.VRP
 import oscar.cbls.search.StopWatch
 import oscar.cbls.search.core.{NoMoveFound, _}
 import oscar.cbls.search.move._
-import oscar.cbls.visual.FunctionGraphic.{AdjustMaxValue, Zoom}
-import oscar.examples.cbls.routing.visual.FunctionGraphic.{ObjFunctionGraphicContainer, ObjFunctionGraphic}
+import oscar.examples.cbls.routing.visual.FunctionGraphic.{Zoom, AdjustMaxValue, ObjFunctionGraphicContainer, ObjFunctionGraphic}
 import oscar.visual.VisualFrame
 
 import scala.language.implicitConversions
@@ -80,11 +79,11 @@ class ShowObjectiveFunction(a: Neighborhood, obj: Objective, stopWatch: StopWatc
   //objGraphic is an internal frame that contains the curve itself and visualFrame is a basic frame that contains objGraphic
   val objGraphic = if(withZoom) new ObjFunctionGraphicContainer(dimension = new Dimension(940,500)) with Zoom
                     else new ObjFunctionGraphicContainer(dimension = new Dimension(960,540)) with AdjustMaxValue
-  val f = new JFrame("The Objective Function")
-  f.setPreferredSize(new Dimension(960,540))
-  f.add(objGraphic)
-  f.pack()
-  f.setVisible(true)
+  val visualFrame = new VisualFrame("The Objective Function")
+  visualFrame.setPreferredSize(new Dimension(960,540))
+  visualFrame.addFrame(objGraphic, size = (940,500))
+  visualFrame.pack()
+  visualFrame.revalidate()
 
   override def getMove(obj: Objective, acceptanceCriteria: (Int, Int) => Boolean): SearchResult ={
     a.getMove(obj, acceptanceCriteria) match {
@@ -1113,16 +1112,17 @@ case class AndThen(a: Neighborhood, b: Neighborhood, maximalIntermediaryDegradat
   }
 }
 
+//TODO: does not work if "a" is doing best search.
 case class DynAndThen[FirstMoveType<:Move](a:Neighborhood with SupportForAndThenChaining[FirstMoveType],
                                            b:(FirstMoveType => Neighborhood),
                                            maximalIntermediaryDegradation: Int = Int.MaxValue)
-extends NeighborhoodCombinatorNoProfile(a) with SupportForAndThenChaining[CompositeMove]{
+  extends NeighborhoodCombinatorNoProfile(a) with SupportForAndThenChaining[CompositeMove]{
 
   var currentB:Neighborhood = null
 
   override def getMove(obj: Objective, acceptanceCriteria: (Int, Int) => Boolean): SearchResult = {
 
-    var secondMove: Move = null //the move performed by b
+
     val oldObj: Int = obj.value
 
     //the acceptance criterion is on the diff between the oldObj and the newObj over the two consecutive moves
@@ -1138,20 +1138,24 @@ extends NeighborhoodCombinatorNoProfile(a) with SupportForAndThenChaining[Compos
       acceptanceCriteria(oldObj, newObj)
     }
 
-    class InstrumentedObjective() extends Objective{
+    var compositeMove: Move = null //the composite move performed by "a andThen b"
+
+    class InstrumentedObjectiveForFirstNeighborhood() extends Objective{
+
+      compositeMove = null
 
       override def detailedString(short: Boolean, indent: Int = 0): String = nSpace(indent) + "AndThenInstrumentedObjective(initialObjective:" + obj.detailedString(short) + ")"
 
       override def model = obj.model
 
-      override def valueNoSideEffect: Int = 0
+      override def valueNoSearch: Int = obj.valueNoSearch
 
       override def value: Int = {
 
         val intermediaryObjValue =
-        if (maximalIntermediaryDegradation != Int.MaxValue) {
+          if (maximalIntermediaryDegradation != Int.MaxValue) {
             //we need to ensure that intermediary step is admissible
-            val intermediaryVal = obj.value
+            val intermediaryVal = obj.valueNoSearch
             val intermediaryDegradation = intermediaryVal - oldObj
             if (intermediaryDegradation > maximalIntermediaryDegradation) {
               return Int.MaxValue //we do not consider this first step
@@ -1164,31 +1168,36 @@ extends NeighborhoodCombinatorNoProfile(a) with SupportForAndThenChaining[Compos
 
         //now, we need to check the other neighborhood
         //first, let's instantiate it:
-        currentB = b(a.instantiateCurrentMove(intermediaryObjValue))
+        val currentMoveFromA = a.instantiateCurrentMove(intermediaryObjValue)
+        currentB = b(currentMoveFromA)
 
-        currentB.getMove(obj, secondAcceptanceCriteria) match {
-          case NoMoveFound =>
-            Int.MaxValue
+        class secondInstrumentedObjective(obj:Objective) extends Objective{
+          override def detailedString(short : Boolean, indent : Int) : String = obj.detailedString(short,indent)
+          override def model : Store = obj.model
+          override def value : Int = obj.value
+          override def valueNoSearch : Int = obj.valueNoSearch
+        }
+
+        currentB.getMove(new secondInstrumentedObjective(obj), secondAcceptanceCriteria) match {
+          case NoMoveFound => Int.MaxValue
           case MoveFound(m: Move) =>
-            secondMove = m
+            if(compositeMove == null || m.objAfter < compositeMove.objAfter) compositeMove = CompositeMove(List(currentMoveFromA, m), m.objAfter, this.toString)
             m.objAfter
         }
       }
     }
 
-    val tmp = a.getMove(new InstrumentedObjective(), firstAcceptanceCriterion)
+    val tmp = a.getMove(new InstrumentedObjectiveForFirstNeighborhood(), firstAcceptanceCriterion)
 
     tmp match {
-      case NoMoveFound =>
-        NoMoveFound
-      case MoveFound(m: Move) => if(secondMove == null) {
+      case NoMoveFound => NoMoveFound
+      case MoveFound(m: Move) => if(compositeMove == null) {
         println("WARNING: " + this + " the neighborhood on the left returned a move without querying the objective value, the move of andThen is therefore not a composite")
         m
       }else
-        CompositeMove(List(m, secondMove), m.objAfter, this.toString)
+        compositeMove
     }
   }
-
 
   override def instantiateCurrentMove(newObj: Int): CompositeMove ={
     currentB match{

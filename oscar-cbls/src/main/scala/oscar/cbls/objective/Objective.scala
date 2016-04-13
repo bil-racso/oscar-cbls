@@ -136,7 +136,13 @@ trait Objective {
 
   def model:Store
 
-  def valueNoSideEffect:Int = value
+  /**
+   * this one is to get the value of the obhjective function, and tell that it is not in the context
+   * of neighborhood exploration
+   * basically, there will be "no" backtrack from the move that is propagated upon call of this method.
+   * @return
+   */
+  def valueNoSearch:Int = value
 
   /**
    * This method returns the actual objective value.
