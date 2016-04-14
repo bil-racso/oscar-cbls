@@ -18,12 +18,14 @@ package oscar.examples.cbls.routing.visual.MatrixMap
   */
 
 import java.awt.Color
+import java.awt.event.{MouseMotionListener, MouseEvent, MouseListener}
 import java.awt.geom.Line2D.Double
+import javax.swing.SwingUtilities
 
-import oscar.cbls.routing.model.VRP
+import oscar.cbls.routing.model.{PickupAndDeliveryCustomers, VRP}
 import oscar.examples.cbls.routing.visual.ColorGenerator
 import oscar.visual.VisualDrawing
-import oscar.visual.shapes.{VisualArrow, VisualCircle, VisualLine}
+import oscar.visual.shapes.{VisualArrow, VisualCircle}
 
 import scala.collection.mutable.ListBuffer
 
@@ -36,6 +38,19 @@ abstract class MatrixMap extends VisualDrawing(false,false){
   var colorValues:Array[Color] = null
   var vrp:VRP = null
   var mapSize = 0
+
+  //We remove the unwanted listener inherited from VisualDrawing
+  removeMouseListener(getMouseListeners.head)
+  addMouseListener(new MouseListener {override def mouseExited(e: MouseEvent): Unit = {}
+    override def mouseClicked(e: MouseEvent): Unit = {
+      if (SwingUtilities.isLeftMouseButton(e)) {
+        shapes.foreach(_.clicked(e.getPoint()))
+      }
+    }
+    override def mouseEntered(e: MouseEvent): Unit = {}
+    override def mousePressed(e: MouseEvent): Unit = {}
+    override def mouseReleased(e: MouseEvent): Unit = {}
+  })
 
   def drawPoints()
 
@@ -74,17 +89,17 @@ abstract class MatrixMap extends VisualDrawing(false,false){
 class RoutingMatrixMap extends MatrixMap{
 
   def drawPoints() ={
-    var v = vrp.V
+    var v = 0
     for(p <- pointsList){
-      if(v > 0){
-        val tempPoint = new VisualCircle(this,p._1.toInt,p._2.toInt,5)
-        tempPoint.innerCol_$eq(colorValues(pointsList.indexOf(p)))
+      if(v < vrp.V){
+        val tempPoint = new VisualCircle(this,p._1.toInt,p._2.toInt,6)
+        tempPoint.innerCol_$eq(colorValues(v))
       }
       else{
-        val tempPoint = new VisualCircle(this,p._1.toInt,p._2.toInt,3)
+        val tempPoint = new VisualCircle(this,p._1.toInt,p._2.toInt,4)
         tempPoint.innerCol_$eq(Color.black)
       }
-      v -= 1
+      v += 1
     }
   }
 
@@ -103,8 +118,9 @@ class RoutingMatrixMap extends MatrixMap{
         tempRoute.borderWidth = 2
         old = p
       }
-      val tempRoute = new VisualArrow(this,new Double(pointsList(old)._1, pointsList(old)._2,pointsList(points.head)._1,pointsList(points.head)._2),5)
+      val tempRoute = new VisualArrow(this,new Double(pointsList(old)._1, pointsList(old)._2,pointsList(points.head)._1,pointsList(points.head)._2),4)
       tempRoute.outerCol_$eq(color)
+      tempRoute.borderWidth = 2
     }
   }
 }

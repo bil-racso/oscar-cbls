@@ -21,10 +21,12 @@
 package oscar.examples.cbls.routing
 
 import java.awt._
+import java.awt.event.{ActionEvent, ActionListener}
 import javax.swing._
 
 import oscar.cbls.invariants.core.computation.IntValue
 import oscar.cbls.search.StopWatch
+import oscar.cbls.visual.FunctionGraphic.Zoom
 import oscar.examples.cbls.routing.visual.ColorGenerator
 import oscar.examples.cbls.routing.visual.FunctionGraphic._
 import oscar.examples.cbls.routing.visual.MatrixMap.RoutingMatrixVisual
@@ -35,8 +37,9 @@ import scala.swing.{Dimension, Insets}
 object DemoRoutingView extends StopWatch{
   val controller:DemoRoutingController = new DemoRoutingController
 
-  val f = new VisualFrame("The Traveling Salesman Problem")
-  val tb = f.createToolBar()
+  val f = new JFrame("The Traveling Salesman Problem")
+  val tb = new JToolBar()
+  val mainPanel = new JPanel()
   val gbc = new GridBagConstraints()
 
   var mapSize:Int = Int.MaxValue
@@ -45,17 +48,17 @@ object DemoRoutingView extends StopWatch{
   var movesCounter:Int = 0
   val movesBeforeRepaint:Int = 10
 
-  val routingMap = new RoutingMatrixVisual(pickupAndDeliveryPoints = true)
+  val routingMap = new RoutingMatrixVisual(pickupAndDeliveryPoints = false)
 
   val objGraph = new ObjFunctionGraphicContainer(dimension = new Dimension(f.getWidth-routingMap.getWidth,360)) with Zoom
-  val result = f.createFrame("Results of the routing")
+  val result = new JPanel()
   val carsPanel = new JPanel()
   val routesPanel = new JPanel()
   val neighborhoodsPanel = new JPanel()
 
   val jTextFields = new JTextField()::new JTextField()::new JTextField()::new JTextField()::Nil
   val jTextFieldsDefaultValue = "150"::"5"::"10000"::"100000"::Nil
-  val jLabels = new JLabel("Number of customers : ")::new JLabel("Number of warehouses : ")::new JLabel("Size of the map : ")::new JLabel("Unrouted penality : ")::Nil
+  val jLabels = new JLabel("Number of customers : ")::new JLabel("Number of warehouses : ")::new JLabel("Size of the map : ")::new JLabel("Unrouted penalty : ")::Nil
   var routesValue:Array[JLabel] = null
 
   var customersNumber = 0
@@ -70,18 +73,23 @@ object DemoRoutingView extends StopWatch{
 
   def main(args: Array[String]): Unit = {
 
-    f.setMinimumSize(f.getSize)
+    val dim = Toolkit.getDefaultToolkit.getScreenSize
+    f.setPreferredSize(new Dimension(dim.getWidth.toInt,(14*dim.getHeight/15).toInt))
+    f.setSize(new Dimension(dim.getWidth.toInt,(14*dim.getHeight/15).toInt))
+    f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE)
     f.setResizable(false)
+
+    mainPanel.setLayout(new BorderLayout())
 
     tb.setLayout(new FlowLayout(FlowLayout.LEFT,10,1))
     val tempPanelCustomers = new JPanel(new GridBagLayout())
     val tempPanelCars = new JPanel(new GridBagLayout())
     val tempPanelSize = new JPanel(new GridBagLayout())
-    val tempPanelPenality = new JPanel(new GridBagLayout())
-    tempPanelCustomers.setPreferredSize(new Dimension(tb.getWidth/7,26))
-    tempPanelCars.setPreferredSize(new Dimension(tb.getWidth/7,26))
-    tempPanelSize.setPreferredSize(new Dimension(tb.getWidth/7,26))
-    tempPanelPenality.setPreferredSize(new Dimension(tb.getWidth/7,26))
+    val tempPanelPenalty = new JPanel(new GridBagLayout())
+    tempPanelCustomers.setPreferredSize(new Dimension(f.getWidth/7,34))
+    tempPanelCars.setPreferredSize(new Dimension(f.getWidth/7,34))
+    tempPanelSize.setPreferredSize(new Dimension(f.getWidth/7,34))
+    tempPanelPenalty.setPreferredSize(new Dimension(f.getWidth/7,34))
 
     gbc.gridx = 0
     gbc.gridy = 0
@@ -89,7 +97,7 @@ object DemoRoutingView extends StopWatch{
     tempPanelCustomers.add(new JLabel("Number of customers : "),gbc)
     tempPanelCars.add(new JLabel("Number of cars : "),gbc)
     tempPanelSize.add(new JLabel("Size of the map : "),gbc)
-    tempPanelPenality.add(new JLabel("Unrouted penality : "),gbc)
+    tempPanelPenalty.add(new JLabel("Unrouted penalty : "),gbc)
 
     gbc.gridx = 1
     gbc.gridy = 0
@@ -98,41 +106,58 @@ object DemoRoutingView extends StopWatch{
     tempPanelCustomers.add(jTextFields.head,gbc)
     tempPanelCars.add(jTextFields(1),gbc)
     tempPanelSize.add(jTextFields(2),gbc)
-    tempPanelPenality.add(jTextFields(3),gbc)
+    tempPanelPenalty.add(jTextFields(3),gbc)
 
     tb.add(tempPanelCustomers)
     tb.add(tempPanelCars)
     tb.add(tempPanelSize)
-    tb.add(tempPanelPenality)
-    tb.addButton("Inititiate the problem", { runInThread(initiateProblem()) })
-    tb.addButton("Reset", {runInThread(resetProblem())})
-    tb.addButton("Resolve", { runInThread(resolveProblem()) })
+    tb.add(tempPanelPenalty)
+    val initButton = new JButton("Initiate the problem")
+    initButton.addActionListener(new ActionListener{
+      override def actionPerformed(e: ActionEvent): Unit = runInThread(initiateProblem())
+    })
+    val resetButton = new JButton("Reset")
+    resetButton.addActionListener(new ActionListener {
+      override def actionPerformed(e: ActionEvent): Unit = runInThread(resetProblem())
+    })
+    val resolveButton = new JButton("Resolve")
+    resolveButton.addActionListener(new ActionListener {
+      override def actionPerformed(e: ActionEvent): Unit = runInThread(resolveProblem())
+    })
+    tb.add(initButton)
+    tb.add(resetButton)
+    tb.add(resolveButton)
+    mainPanel.add(tb, BorderLayout.NORTH)
 
     for(i <- jTextFields.indices){
       jTextFields(i).setText(jTextFieldsDefaultValue(i))
       jTextFields(i).setHorizontalAlignment(SwingConstants.LEFT)
     }
 
-    f.addFrame(routingMap, location = (0,0), size = (f.getHeight - tb.getHeight - 38,f.getHeight - tb.getHeight - 38), resizable = false)
+    routingMap.setPreferredSize(new Dimension(f.getHeight - tb.getHeight,f.getHeight - tb.getHeight))
+    routingMap.setSize(new Dimension(f.getHeight - tb.getHeight,f.getHeight - tb.getHeight))
+    mainPanel.add(routingMap,BorderLayout.WEST)
 
-    f.addFrame(objGraph, location = (routingMap.getWidth,0), size = (f.getWidth-routingMap.getWidth,360), resizable = false)
+    result.setSize(new Dimension(f.getWidth - routingMap.getWidth, f.getHeight - tb.getHeight))
+    result.setLayout(new GridLayout(3,1))
 
-    result.setLocation(routingMap.getWidth,objGraph.getHeight)
-    result.setSize(new Dimension(f.getWidth - routingMap.getWidth, f.getHeight - objGraph.getHeight - tb.getHeight - 38))
-    result.setLayout(new GridLayout(2,1))
-    result.setResizable(false)
+    objGraph.setSize(f.getWidth-routingMap.getWidth,360)
+    result.add(objGraph)
 
     carsPanel.setLayout(new BorderLayout())
-    carsPanel.setMaximumSize(new Dimension(result.getWidth,result.getHeight/2))
+    carsPanel.setSize(new Dimension(result.getWidth,(result.getHeight - 360)/2))
     routesPanel.setBackground(Color.white)
     carsPanel.add(new JScrollPane(routesPanel))
     result.add(carsPanel)
 
-    neighborhoodsPanel.setMaximumSize(new Dimension(result.getWidth,result.getHeight/2))
+    neighborhoodsPanel.setSize(new Dimension(result.getWidth,(result.getHeight - 360)/2))
     neighborhoodsPanel.setBackground(Color.white)
     result.add(new JScrollPane(neighborhoodsPanel))
+    mainPanel.add(result, BorderLayout.CENTER)
 
+    f.add(mainPanel)
     f.pack()
+    f.setVisible(true)
   }
 
   def initiateProblem():Unit={
@@ -255,7 +280,6 @@ object DemoRoutingView extends StopWatch{
 
   def resolveProblem() = {
     if(!controller.resolveProblem)JOptionPane.showMessageDialog(f, "Please first initiate the problem")
-    val routesList:scala.List[scala.List[Int]] = (for(c <- 0 until controller.carsNumber)yield controller.myVRP.getRouteOfVehicle(c)).toList
     routingMap.drawRoutes()
     objGraph.drawGlobalCurve()
   }
