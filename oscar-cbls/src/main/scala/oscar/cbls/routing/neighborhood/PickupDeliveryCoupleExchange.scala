@@ -37,10 +37,10 @@ case class PickupDeliveryCoupleExchange(override val vrp: VRP with PositionInRou
           for(pickup2 <- vrp.getRoutedPickups.filter(vrp.routeNr(_).value == secondRoute)){
             secondPickupRemoved = pickup2
             secondDeliveryRemoved = vrp.getRelatedDelivery(pickup2)
-            val filteredSecondRoute = vrp.getRoutedNodesBeforeTimeOfRoute(secondRoute)(firstPickupRemoved).filter(!List(secondDeliveryRemoved,secondPickupRemoved).contains(_))
-            val filteredFirstRoute = vrp.getRoutedNodesBeforeTimeOfRoute(firstRoute)(secondPickupRemoved).filter(!List(firstDeliveryRemoved,firstPickupRemoved).contains(_))
-            println(vrp.getRoutedNodesBeforeTimeOfRoute(firstRoute)(secondPickupRemoved))
-            println(vrp.getRoutedNodesBeforeTimeOfRoute(secondRoute)(firstPickupRemoved))
+            val filteredSecondRoute = vrp.getRoutedNodesBeforeTimeOfRoute(List(secondRoute))(firstPickupRemoved).filter(!List(secondDeliveryRemoved,secondPickupRemoved).contains(_))
+            val filteredFirstRoute = vrp.getRoutedNodesBeforeTimeOfRoute(List(firstRoute))(secondPickupRemoved).filter(!List(firstDeliveryRemoved,firstPickupRemoved).contains(_))
+            println(vrp.getRoutedNodesBeforeTimeOfRoute(List(firstRoute))(secondPickupRemoved))
+            println(vrp.getRoutedNodesBeforeTimeOfRoute(List(secondRoute))(firstPickupRemoved))
             for(insertPickup1 <- filteredSecondRoute){
               for(insertDelivery1 <- filteredSecondRoute.dropWhile(_ != insertPickup1).drop(1)){
                 for(insertPickup2 <- filteredFirstRoute){

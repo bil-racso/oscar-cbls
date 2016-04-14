@@ -71,7 +71,6 @@ case class RemovePoint(predecessorsOfRoutedPointsToRemove:()=>Iterable[Int],
 
       encode(beforeRemovedPoint)
       val newObj = evalObjOnEncodedMove()
-
       if (evaluateCurrentMoveObjTrueIfStopRequired(newObj)) {
         startIndice = beforeRemovedPoint + 1
         return

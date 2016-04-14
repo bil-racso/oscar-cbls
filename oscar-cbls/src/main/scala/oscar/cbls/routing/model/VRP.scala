@@ -936,11 +936,10 @@ trait PickupAndDeliveryCustomers extends VRP with StrongConstraints with Positio
     * @return All the nodes preceding the related delivery node
     */
   def getAuthorizedInsertionPositionForPickup()(node: Int): Iterable[Int] = {
-    if(node < V)return Iterable()
+    assert(isPickup(node), "The referenced node must be a pickup one !")
     val routeOfNode = routeNr(node)
-    var resRoute = getRouteOfVehicle(routeOfNode.value)
-    resRoute = resRoute.takeWhile(_ != getRelatedDelivery(node))
-    resRoute
+    val resRoute = getRouteOfVehicle(routeOfNode.value)
+    resRoute.takeWhile(_ != getRelatedDelivery(node))
   }
 
   /**
@@ -949,7 +948,7 @@ trait PickupAndDeliveryCustomers extends VRP with StrongConstraints with Positio
     * @return All the nodes following the related pickup node
     */
   def getAuthorizedInsertionPositionForDelivery()(node: Int): Iterable[Int] = {
-    if(node < V)return Iterable()
+    assert(isDelivery(node), "The referenced node must be a delivery one !")
     val routeOfNode = routeNr(node)
     var resRoute = getRouteOfVehicle(routeOfNode.value)
     resRoute = resRoute.dropWhile(_ != getRelatedPickup(node))
@@ -970,7 +969,7 @@ trait PickupAndDeliveryCustomers extends VRP with StrongConstraints with Positio
     val route = getRouteOfVehicle(routeNumber)
     /**
       * Each value of segmentsArray represent a possible complete segment.
-      * The Int value represents the number of pickup node whose related delivery node isn't currently in the segment
+      * The Int value represents the amount of pickup nodes whose related delivery node isn't currently in the segment
       * The List[Int] value represents the segment
       */
     val segmentsArray:Array[(Int,List[Int])] = new Array[(Int, List[Int])](route.size)
@@ -1106,6 +1105,8 @@ trait PickupAndDeliveryCustomersWithTimeWindow extends TimeWindow with TravelTim
   //TODO : Try to find a better solution than using BinomialHeap and then turning it to a List
   /**
     * This method generate all the nodes whose arrival time is before the specified node
+    * It's similar to the getAuthorizedInsertionPositionForPickup/delivery
+    * excepts that this one take account of the time window
     * (mainly used during the insertion phase)
     * @param node the index of the node
     * @return
@@ -1126,11 +1127,14 @@ trait PickupAndDeliveryCustomersWithTimeWindow extends TimeWindow with TravelTim
     resList.toIterable
   }
 
-  def getRoutedNodesBeforeTimeOfRoute(r:Int)(node:Int):Iterable[Int] ={
+  def getRoutedNodesBeforeTimeOfRoute(r:List[Int])(node:Int):Iterable[Int] ={
     val res = getRoutedNodesBeforeTime()(node)
-    //println("getRoutedNodesBeforeTimeOfRoute" + res)
-    //println("getRoutedNodesBeforeTimeOfRoute after" + res.filter(routeNr(_).value == r))
-    res.filter(routeNr(_).value == r)
+    res.foldLeft(List.empty[Int])((a,b) => if(r.contains(routeNr(node).value))node::a else a)
+  }
+
+  def getRoutedNodesBeforeTimeNotSameRoute()(node:Int):Iterable[Int] ={
+    val res = getRoutedNodesBeforeTime()(node)
+    res.foldLeft(List.empty[Int])((a,b) => if(routeNr(b).value != routeNr(node).value)node::a else a)
   }
 }
 

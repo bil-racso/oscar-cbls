@@ -3,7 +3,7 @@ package oscar.examples.cbls.pdptw
 import java.awt.Toolkit
 import javax.swing.JFrame
 
-import oscar.cbls.invariants.core.computation.Store
+import oscar.cbls.invariants.core.computation.{IntValue, Store}
 import oscar.cbls.invariants.lib.numeric.{Abs, Sum}
 import oscar.cbls.routing.model._
 import oscar.cbls.routing.neighborhood._
@@ -197,8 +197,9 @@ object pdptwTest extends App with StopWatch {
         //Then we move a PD couple from a second route to the first route
         DynAndThen(
           DynAndThen(OnePointMove(
-            nodesPrecedingNodesToMove = () => vrp.getRoutedPickupsPredecessors.filter(vrp.routeNr(_).value != vrp.routeNr(moveResult2.touchedVariables.head.asInstanceOf[Int]).value),
-            relevantNeighbors= () => vrp.getRoutedNodesBeforeTimeOfRoute(vrp.routeNr(moveResult2.touchedVariables.head.asInstanceOf[Int]).value),
+            nodesPrecedingNodesToMove = () =>
+              vrp.getRoutedPickupsPredecessors.filter(vrp.routeNr(_).value != vrp.routeNr(moveResult2.ml.head.asInstanceOf[RemovePointMove].beforeRemovedPoint).value),
+            relevantNeighbors= () => vrp.getRoutedNodesBeforeTimeOfRoute(List(vrp.routeNr(moveResult2.ml.head.asInstanceOf[RemovePointMove].beforeRemovedPoint).value)),
             vrp = vrp),(moveResult3:OnePointMoveMove) =>
             OnePointMove(
               nodesPrecedingNodesToMove = () => List(vrp.preds(vrp.getRelatedDelivery(moveResult3.movedPoint)).value),
@@ -208,11 +209,11 @@ object pdptwTest extends App with StopWatch {
           ,(moveResult3:CompositeMove) =>
             //And finally we insert the first couple in the second route
             DynAndThen(InsertPointUnroutedFirst(
-              unroutedNodesToInsert = () => Iterable(moveResult2.touchedVariables.apply(1).asInstanceOf[Int]),
-              relevantNeighbors = () => vrp.getRoutedNodesBeforeTimeOfRoute(vrp.routeNr(moveResult3.touchedVariables.head.asInstanceOf[Int]).value),
+              unroutedNodesToInsert = () => Iterable(moveResult2.ml.head.asInstanceOf[RemovePointMove].removedPoint),
+              relevantNeighbors = () => vrp.getRoutedNodesBeforeTimeOfRoute(List(vrp.routeNr(moveResult3.ml.head.asInstanceOf[OnePointMoveMove].predOfMovedPoint).value)),
               vrp = vrp),(moveResult5:InsertPointMove) =>
               InsertPointUnroutedFirst(
-                unroutedNodesToInsert = () => Iterable(moveResult2.touchedVariables.apply(2).asInstanceOf[Int]),
+                unroutedNodesToInsert = () => Iterable(moveResult2.ml.apply(1).asInstanceOf[RemovePointMove].removedPoint),
                 relevantNeighbors = () => vrp.kNearest(n,vrp.onTheSameRouteAfter(moveResult5.insertedPoint)),
                 vrp = vrp, best = true)
             )
@@ -221,8 +222,55 @@ object pdptwTest extends App with StopWatch {
       )
   )
 
+  val pickupDeliveryCoupleShift = Profile(DynAndThen(OnePointMove(
+    nodesPrecedingNodesToMove = () => vrp.getRoutedPickupsPredecessors,
+    relevantNeighbors = () => vrp.getRoutedNodesBeforeTimeNotSameRoute(),
+    vrp = vrp),
+    (moveResult:OnePointMoveMove) => OnePointMove(
+      nodesPrecedingNodesToMove = () => List(vrp.preds(vrp.getRelatedDelivery(moveResult.movedPoint)).value),
+      relevantNeighbors = () => vrp.kNearest(n,vrp.onTheSameRouteAfter(moveResult.movedPoint)),
+      vrp = vrp, best = true)))
+
+  //TODO : Take the best value of the used neighborhoods(need to fix dynAndThen first)
+  var simulatedAnnealingValue = 1
+  val simulatedAnnealingValueImpr = 2
+  val liLimBaseLoop = AndThen(
+    new Best(
+      new Retry(pickupDeliveryCoupleShift),
+      new Retry(dynAndThenCoupleExchange)
+    ),
+    new Retry(onePointMovePD)
+  )
+  val liLimMetaHeuristique = insertCouple exhaust new MaxMovesWithoutImprovement(
+    new BasicSaveBest(
+      AndThen(
+        liLimBaseLoop,
+        new MaxMovesWithoutImprovement(
+          AndThen(
+            new WithAcceptanceCriterion(
+              new Random(
+                pickupDeliveryCoupleShift,
+                dynAndThenCoupleExchange
+              ),
+              (a:Int,b:Int) => {if(b < a) true else if(Math.random() < Math.pow(Math.E,-(b-a)/simulatedAnnealingValue)) true else false}
+            )afterMove(simulatedAnnealingValue *= simulatedAnnealingValueImpr),
+            liLimBaseLoop
+          ),
+          null,
+          5,
+          () => vrp.getObjective().value
+        )
+      ),
+      vrp.getObjective()
+    ),
+    null,
+    5,
+    () => vrp.getObjective().value
+  ) showObjectiveFunction vrp.getObjective() afterMove rm.drawRoutes()
+
+
   val search = BestSlopeFirst(List(insertCouple, onePointMovePD)) exhaust
-    new BestSlopeFirst(List(insertCouple,  onePointMovePD, threeOpt, orOpt, segExchangePD, oneCoupleMove), refresh = n / 2) showObjectiveFunction
+    BestSlopeFirst(List(insertCouple, dynAndThenCoupleExchange, onePointMovePD, threeOpt, orOpt, segExchangePD, oneCoupleMove), refresh = n / 2) showObjectiveFunction
     vrp.getObjective() afterMove {
     rm.drawRoutes()
   } // exhaust onePointMove exhaust segExchange//threeOpt //(new BestSlopeFirst(List(onePointMove,twoOpt,threeOpt)))
