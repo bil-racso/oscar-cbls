@@ -1225,7 +1225,7 @@ case class SnapShotOnEntry(a: Neighborhood, intValuesToSave:Iterable[ChangingInt
     val s = obj.model
     snapShot = s.snapShot(intValuesToSave,setValuesToSave)
     a.getMove(obj,acceptanceCriterion)
-  }
+}
 }
 
 /**

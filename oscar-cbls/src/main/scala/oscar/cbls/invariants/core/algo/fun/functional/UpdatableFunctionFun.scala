@@ -55,7 +55,8 @@ class PiecewiseLinearFun(transformation: RedBlackTree[Pivot] = RedBlackTree.empt
     val previousCorrection = pivot.f
     val newCorrection = additionalF(previousCorrection) //TODO: vérifier que c'est pas l'inverse
 
-    val transformWithNewPivot = transformation.insert(pivot.fromValue,new Pivot(pivot.fromValue,newCorrection))
+    val newPivot = new Pivot(pivot.fromValue,newCorrection)
+    val transformWithNewPivot = transformation.insert(pivot.fromValue,newPivot)
 
     val prevPivot = transformWithNewPivot.getBiggestLowerOrEqual(pivot.fromValue-1)
 
@@ -68,7 +69,7 @@ class PiecewiseLinearFun(transformation: RedBlackTree[Pivot] = RedBlackTree.empt
     val(newPrev,newTransform) = if(removeCurrentPivot){
       (prevPivot,transformWithNewPivot.remove(pivot.fromValue))
     }else{
-      (Some(pivot.fromValue,pivot),transformWithNewPivot)
+      (Some(pivot.fromValue,newPivot),transformWithNewPivot)
     }
 
     newTransform.getSmallestBiggerOrEqual(pivot.fromValue+1) match{
