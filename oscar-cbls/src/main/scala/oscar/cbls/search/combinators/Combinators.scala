@@ -1123,6 +1123,8 @@ case class DynAndThen[FirstMoveType<:Move](a:Neighborhood with SupportForAndThen
   override def getMove(obj: Objective, acceptanceCriteria: (Int, Int) => Boolean): SearchResult = {
 
 
+    val enclosingDynAndthen = this
+
     val oldObj: Int = obj.valueNoSearch
 
     //the acceptance criterion is on the diff between the oldObj and the newObj over the two consecutive moves
@@ -1181,7 +1183,7 @@ case class DynAndThen[FirstMoveType<:Move](a:Neighborhood with SupportForAndThen
         currentB.getMove(new secondInstrumentedObjective(obj), secondAcceptanceCriteria) match {
           case NoMoveFound => Int.MaxValue
           case MoveFound(m: Move) =>
-            if(compositeMove == null || m.objAfter < compositeMove.objAfter) compositeMove = CompositeMove(List(currentMoveFromA, m), m.objAfter, this.toString)
+            if(compositeMove == null || m.objAfter < compositeMove.objAfter) compositeMove = CompositeMove(List(currentMoveFromA, m), m.objAfter,enclosingDynAndthen.toString)
             m.objAfter
         }
       }
