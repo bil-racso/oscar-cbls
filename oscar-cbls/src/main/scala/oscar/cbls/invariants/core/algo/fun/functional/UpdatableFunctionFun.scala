@@ -1,6 +1,6 @@
 package oscar.cbls.invariants.core.algo.fun.functional
 
-import oscar.cbls.invariants.core.algo.fun.mutable.{LinearPositionTransform, Pivot}
+import oscar.cbls.invariants.core.algo.fun.mutable.LinearPositionTransform
 import oscar.cbls.invariants.core.algo.rb.RedBlackTree
 
 object PiecewiseLinearFun{
@@ -23,85 +23,89 @@ class PiecewiseLinearFun(transformation: RedBlackTree[Pivot] = RedBlackTree.empt
   }
 
   def update(fromIncluded: Int, toIncluded: Int, additionalF: LinearPositionTransform): PiecewiseLinearFun = {
-    println("updateFunction(from:" + fromIncluded + ", to:" + toIncluded + ", fct:" + additionalF + ")")
+    new PiecewiseLinearFun(updatePivots(fromIncluded, toIncluded, additionalF))
+  }
+
+  private def updatePivots(fromIncluded: Int, toIncluded: Int, additionalF: LinearPositionTransform): RedBlackTree[Pivot] = {
+    println("updatePivots(from:" + fromIncluded + ", to:" + toIncluded + ", fct:" + additionalF + ")")
     transformation.getBiggestLowerOrEqual(fromIncluded) match {
-      case Some((_,pivot)) if (pivot.value == fromIncluded) =>
-        updateFromPivot(pivot, toIncluded, additionalF)
+      case Some((_,pivot)) if (pivot.fromValue == fromIncluded) =>
+        updateFromPivot(pivot, toIncluded, additionalF, transformation)
       case Some((_,pivot)) =>
         //there is a pivot below the point
-        //need to add an intermediary pivot, ans relink to this one
-        val next = pivot.next
-        val newPivot = createNewPivot(fromIncluded, null, null, pivot.f)
-        transformation = transformation.insert(fromIncluded, newPivot)
-        pivot.setNextAndRelink(newPivot)
-        newPivot.setNextAndRelink(next)
-        insertedPivot(newPivot)
-        updateFromPivot(newPivot, toIncluded, additionalF)
+        //need to add an intermediary pivot, with same transform as previous one
+        val newPivot = new Pivot(fromIncluded, pivot.f)
+        updateFromPivot(newPivot, toIncluded, additionalF, transformation.insert(fromIncluded, newPivot))
       case None =>
         transformation.getSmallestBiggerOrEqual(fromIncluded) match{
           case None =>
             //need to add a first pivot from this point
-            val newPivot = createNewPivot(fromIncluded, null, null, LinearPositionTransform.identity)
-            transformation = transformation.insert(fromIncluded, newPivot)
-            insertedPivot(newPivot)
-            updateFromPivot(newPivot, toIncluded, additionalF)
+            val newPivot = new Pivot(fromIncluded, LinearPositionTransform.identity)
+            updateFromPivot(newPivot, toIncluded, additionalF, transformation.insert(fromIncluded, newPivot))
           case Some((_,next)) =>
-            val newPivot = createNewPivot(fromIncluded, null, null, LinearPositionTransform.identity)
-            transformation = transformation.insert(fromIncluded, newPivot)
-            newPivot.setNextAndRelink(next)
-            insertedPivot(newPivot)
-            updateFromPivot(newPivot, toIncluded, additionalF)
+            val newPivot = new Pivot(fromIncluded, LinearPositionTransform.identity)
+            updateFromPivot(newPivot, toIncluded, additionalF,transformation.insert(fromIncluded, newPivot))
         }
     }
   }
 
-  private def updateFromPivot(pivot: Pivot, toIncluded: Int, additionalF: LinearPositionTransform) {
-    val next = pivot.next
-    val prev = pivot.prev
+  private def updateFromPivot(pivot: Pivot, toIncluded: Int, additionalF: LinearPositionTransform, transformation: RedBlackTree[Pivot]):RedBlackTree[Pivot] = {
+    if (pivot.fromValue == toIncluded+1) return transformation //finished the correction
+
     val previousCorrection = pivot.f
-    val newPrev = if (pivot.update(additionalF)) {
-      //should be removed
-      pivot.removeFromDLL()
-      transformation = transformation.remove(pivot.value)
-      deletedPivot(pivot)
-      prev
-    } else {
-      updatedPivot(pivot)
-      pivot
+    val newCorrection = additionalF(previousCorrection) //TODO: vérifier que c'est pas l'inverse
+
+    val transformWithNewPivot = transformation.insert(pivot.fromValue,new Pivot(pivot.fromValue,newCorrection))
+
+    val prevPivot = transformWithNewPivot.getBiggestLowerOrEqual(pivot.fromValue-1)
+
+    val removeCurrentPivot = prevPivot match{
+      case None => newCorrection.isIdentity
+      case Some((fromValue,pivot)) =>
+        pivot.f.equals(newCorrection)
     }
-    if (pivot.value == toIncluded+1)return //finished the correction
-    if (next == null) {
-      //need to add a finishing pivot, to finish from correction from before
-      if (newPrev == null) return
-      //We have an open correction, and need to close it with the previous value previousCorrection
-      val newPivot = createNewPivot(toIncluded+1, null, null, previousCorrection)
-      transformation = transformation.insert(toIncluded+1, newPivot)
-      newPrev.setNextAndRelink(newPivot)
-      insertedPivot(newPivot)
-      return
-    } else if (next.value > toIncluded +1) {
-      //need to add a new intermediary pivot
-      if (newPrev == null) return
-      if (newPrev.f.equals(previousCorrection)) return
-      val newPivot = createNewPivot(toIncluded+1, null, null, previousCorrection)
-      transformation = transformation.insert(toIncluded+1, newPivot)
-      newPrev.setNextAndRelink(newPivot)
-      newPivot.setNextAndRelink(next)
-      insertedPivot(newPivot)
-      return
-    } else if (next.value < toIncluded+1){
-      //there is a next such that next.value is <= correctedTo
-      //so recurse to it
-      updateFromPivot(next, toIncluded, additionalF)
+
+    val(newPrev,newTransform) = if(removeCurrentPivot){
+      (prevPivot,transformWithNewPivot.remove(pivot.fromValue))
     }else{
-      //check that next pivot should not be removed, actually
-      if((newPrev == null && next.f.isIdentity)
-        || next.f.equals(newPrev.f)){
-        //next can be removed
-        next.removeFromDLL()
-        transformation = transformation.remove(next.value)
-        deletedPivot(next)
-      }
+      (Some(pivot.fromValue,pivot),transformWithNewPivot)
+    }
+
+    newTransform.getSmallestBiggerOrEqual(pivot.fromValue+1) match{
+      case None =>
+        if (newPrev == null) newTransform
+        //We have an open correction, and need to close it with the previous value previousCorrection
+        else newTransform.insert(toIncluded+1, new Pivot(toIncluded+1, previousCorrection))
+      case Some((nextFromValue,nextPivot)) =>
+        if (nextFromValue > toIncluded + 1) {
+          //need to add a new intermediary pivot
+          println("coucou")
+          newPrev match{
+            case None =>
+              println("no new prev")
+              newTransform
+            case Some((newPrevFromValue,newPrevPivot)) =>
+              println("some new prev:" + newPrevPivot)
+              if (newPrevPivot.f.equals(previousCorrection)) {
+                println("case 1")
+                newTransform
+              }else {
+                println("case2")
+                newTransform.insert(toIncluded + 1, new Pivot(toIncluded + 1, previousCorrection))
+              }
+          }
+        } else if (nextFromValue < toIncluded+1){
+          //there is a next such that next.value is <= correctedTo
+          //so recurse to it
+          updateFromPivot(nextPivot, toIncluded, additionalF,newTransform)
+        }else {
+          //check that next pivot should not be removed, actually
+          newPrev match {
+            case None if nextPivot.f.isIdentity => newTransform.remove(nextFromValue)
+            case Some((newPrevFromValue, newPrevPivot)) if nextPivot.f.equals(newPrevPivot.f) => newTransform.remove(nextFromValue)
+            case _ => newTransform
+          }
+        }
     }
   }
 }

@@ -17,6 +17,7 @@ class UpdateableBijectionNaive extends PiecewiseLinearFunction{
     this.firstPivot match{
       case Some((_,p)) =>
         reverseFunction.clearAndSetPivots(computeInvertedPivots(p))
+      case _ =>
     }
     upToDate = true
   }
@@ -31,9 +32,6 @@ class UpdateableBijectionNaive extends PiecewiseLinearFunction{
 }
 
 class UpdateableBijection extends PiecewiseLinearFunction{
-
-
-
   val reverseFunction:PiecewiseLinearFunction = new PiecewiseLinearFunction
 
   // UpdateableFunction

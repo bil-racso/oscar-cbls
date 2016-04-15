@@ -5,7 +5,8 @@ import oscar.cbls.invariants.core.algo.rb.RedBlackTree
 /**
  * Created by rdl on 14-04-16.
  */
-class IntSequence(internalPositionToValue:RedBlackTree[Int], valueToInternalPosition:RedBlackTree[Int], internalToExternalPosition:FunctionalBijection)
+/*
+class IntSequence(internalPositionToValue:RedBlackTree[Int], valueToInternalPosition:RedBlackTree[Int], internalToExternalPosition:Any)
   extends Iterable[Int] {
 
   def valueAtPosition(position:Int):Int
@@ -26,3 +27,4 @@ class IntSequenceCrawler(sequence:IntSequence){
   def position:Int
   def value:Int
 }
+*/

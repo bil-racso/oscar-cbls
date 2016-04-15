@@ -1,7 +1,7 @@
 package oscar.cbls.test.invariants.algo
 
-import oscar.cbls.invariants.core.algo.fun.LinearPositionTransform
 import oscar.cbls.invariants.core.algo.fun.mutable.{LinearPositionTransform, PiecewiseLinearFunction}
+import oscar.cbls.invariants.core.algo.fun.functional.PiecewiseLinearFun
 
 class UpdateableFunctionNaive(maxVal:Int) {
   //external position => internal position
@@ -32,18 +32,30 @@ le bon index linéaire est celui après transformation
 object TestUpdateableFunction extends App{
   val maxVal = 100
   val fn = new PiecewiseLinearFunction()
+  var fnFun = new PiecewiseLinearFun()
   val fn2 = new UpdateableFunctionNaive(maxVal)
 
   def compare(): Unit ={
     for(i <- 0 to maxVal){
       //println("checking " + i + ": " + fn(i))
-      if(fn(i) != fn2(i)) throw new Error("mismatch " + i)
+      if(fn(i) != fn2(i)) throw new Error("mismatch " + i +  " fn(i)" + fn(i) + " naiveFn(i):" + fn2(i))
+      if(fnFun(i) != fn2(i)) throw new Error("mismatch " + i + " fnFun(i)" + fnFun(i) + " naiveFn(i):" + fn2(i))
     }
   }
 
-  def update(fromIncludes:Int,toIncluded:Int,add:LinearPositionTransform): Unit ={
-    fn.update(fromIncludes,toIncluded,add)
-    fn2.update(fromIncludes,toIncluded,add)
+  def update(fromIncluded:Int,toIncluded:Int,add:LinearPositionTransform): Unit ={
+    println("BEFORE:"+
+    "\nnaive:" + fn2 +
+    "\nmutable:" + fn +
+    "\nfunctional" + fnFun + "\n")
+
+    fn.update(fromIncluded,toIncluded,add)
+    fn2.update(fromIncluded,toIncluded,add)
+    fnFun = fnFun.update(fromIncluded,toIncluded,add)
+    println("AFTER:"+
+      "\nnaive:" + fn2 +
+      "\nmutable:" + fn +
+      "\nfunctional" + fnFun + "\n")
     compare()
   }
 
