@@ -1203,8 +1203,9 @@ case class DynAndThen[FirstMoveType<:Move](a:Neighborhood with SupportForAndThen
     currentB match{
       case null => throw new Error("DynAndThen is not presently exploring something")
       case s:SupportForAndThenChaining[_] =>
-        CompositeMove(List(a.instantiateCurrentMove(Int.MaxValue),
-          s.instantiateCurrentMove(Int.MaxValue)),newObj,"DynAndThen(" + a + "," + currentB + ")")
+        val moveFromB = s.instantiateCurrentMove(Int.MaxValue)
+        val moveFromA = a.instantiateCurrentMove(Int.MaxValue)
+        CompositeMove(List(moveFromA,moveFromB),newObj,"DynAndThen(" + moveFromA + "," + moveFromB + ")")
       case _ => throw new Error("DynAndThen: Neighborhood on the right cannot be chained")
     }
   }
