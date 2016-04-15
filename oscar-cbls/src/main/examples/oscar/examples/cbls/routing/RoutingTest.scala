@@ -111,9 +111,10 @@ object RoutingTest extends App with StopWatch{
     relevantNeighbors = () => vrp.kNearest(40),
     vehicles=() => vrp.vehicles.toList))
 
+  println("yeay : " + Thread.currentThread())
   val search = new RoundRobin(List(insertPoint,onePointMove),10) exhaust
-                      new BestSlopeFirst(List(onePointMove, threeOpt, segExchange), refresh = n / 2) showObjectiveFunction
-    vrp.getObjective() // exhaust onePointMove exhaust segExchange//threeOpt //(new BestSlopeFirst(List(onePointMove,twoOpt,threeOpt)))
+                      new BestSlopeFirst(List(onePointMove, threeOpt, segExchange), refresh = n / 2) showObjectiveFunction vrp.getObjective()
+  // exhaust onePointMove exhaust segExchange//threeOpt //(new BestSlopeFirst(List(onePointMove,twoOpt,threeOpt)))
 
   search.verbose = 1
 //    search.verboseWithExtraInfo(3,() => vrp.toString)

@@ -17,7 +17,7 @@
 package oscar.cbls.search.combinators
 
 import java.awt.{Color, Dimension}
-import javax.swing.JFrame
+import javax.swing.{SwingUtilities, JFrame}
 
 import oscar.cbls.invariants.core.algo.heap.{BinomialHeap, BinomialHeapWithMove}
 import oscar.cbls.invariants.core.computation._
@@ -30,6 +30,7 @@ import oscar.cbls.visual.FunctionGraphic.{AdjustMaxValue, Zoom}
 import oscar.examples.cbls.routing.visual.FunctionGraphic.{ObjFunctionGraphicContainer, ObjFunctionGraphic}
 import oscar.visual.VisualFrame
 
+import scala.collection.mutable.ListBuffer
 import scala.language.implicitConversions
 import scala.util.control.Breaks._
 
@@ -78,11 +79,14 @@ abstract class NeighborhoodCombinatorNoProfile(a: Neighborhood*) extends Neighbo
   * @author fabian.germeau@student.vinci.be
   */
 class ShowObjectiveFunction(a: Neighborhood, obj: Objective, stopWatch: StopWatch, withZoom:Boolean, neighborhoodColors: String => Color) extends NeighborhoodCombinator(a){
-  //objGraphic is an internal frame that contains the curve itself and visualFrame is a basic frame that contains objGraphic
+  //objGraphic is a panel that contains the curve itself and f is a basic frame that contains objGraphic
   val objGraphic = if(withZoom) new ObjFunctionGraphicContainer(dimension = new Dimension(940,500)) with Zoom
-                    else new ObjFunctionGraphicContainer(dimension = new Dimension(960,540)) with AdjustMaxValue
+  else new ObjFunctionGraphicContainer(dimension = new Dimension(960,540)) with AdjustMaxValue
+
+  new Thread(objGraphic,"Graphic Thread").start()
+
   val f = new JFrame("The Objective Function")
-  f.setPreferredSize(new Dimension(960,540))
+  f.setPreferredSize(new Dimension(960, 540))
   f.add(objGraphic)
   f.pack()
   f.setVisible(true)
@@ -100,8 +104,7 @@ class ShowObjectiveFunction(a: Neighborhood, obj: Objective, stopWatch: StopWatc
     and then we write the curve
    */
   def notifyNewObjValue(m:Move): Unit ={
-    objGraphic.notifyNewObjectiveValue(obj.value,stopWatch.getWatch,m.neighborhoodName,neighborhoodColors(m.neighborhoodName))
-    objGraphic.drawGlobalCurve()
+    objGraphic.notifyNewObjectiveValue(obj.value, stopWatch.getWatch, m.neighborhoodName, neighborhoodColors(m.neighborhoodName))
   }
 }
 
@@ -1196,8 +1199,10 @@ case class DynAndThen[FirstMoveType<:Move](a:Neighborhood with SupportForAndThen
       case MoveFound(m: Move) => if(compositeMove == null) {
         println("WARNING: " + this + " the neighborhood on the left returned a move without querying the objective value, the move of andThen is therefore not a composite")
         m
-      }else
+      }else{
+        println("NeighborhoodName: " + compositeMove.neighborhoodName)
         compositeMove
+      }
     }
   }
 

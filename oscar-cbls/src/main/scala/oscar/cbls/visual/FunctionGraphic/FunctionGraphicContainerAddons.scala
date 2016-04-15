@@ -60,7 +60,6 @@ trait Zoom extends ObjFunctionGraphicContainer{
   val rightLeftScrollBar = new JScrollBar(SwingConstants.HORIZONTAL,0,1,0,100)
   rightLeftScrollBar.addAdjustmentListener(new AdjustmentListener {
     override def adjustmentValueChanged(e: AdjustmentEvent): Unit = {
-      println("rightLeftAdj")
       graphic.minXValueDisplayed = rightLeftScrollBar.getValue
       graphic.maxXValueDisplayed = graphic.minXValueDisplayed + rightLeftScrollBar.getVisibleAmount
       graphic.drawGlobalCurve()
@@ -71,7 +70,6 @@ trait Zoom extends ObjFunctionGraphicContainer{
   val upDownScrollBar = new JScrollBar(SwingConstants.VERTICAL,0,1,0,100)
   upDownScrollBar.addAdjustmentListener(new AdjustmentListener {
     override def adjustmentValueChanged(e: AdjustmentEvent): Unit = {
-      println("upDownAdj")
       graphic.minYValueDisplayed = upDownScrollBar.getMaximum - upDownScrollBar.getVisibleAmount - upDownScrollBar.getValue
       graphic.maxYValueDisplayed = graphic.minYValueDisplayed + upDownScrollBar.getVisibleAmount
       graphic.drawGlobalCurve()

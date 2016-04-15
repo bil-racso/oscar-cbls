@@ -570,7 +570,7 @@ trait PositionInRouteAndRouteNr extends VRP {
     routeNr(n).value == routeNr(m).value
   }
 
-  def onTheSameRouteAfter(m:Int)(n:Int): Boolean = {
+  def onTheSameRouteMultArg(m:Int)(n:Int): Boolean = {
     routeNr(n).value == routeNr(m).value
   }
 }

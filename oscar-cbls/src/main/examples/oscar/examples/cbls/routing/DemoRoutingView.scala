@@ -142,6 +142,7 @@ object DemoRoutingView extends StopWatch{
     result.setLayout(new GridLayout(3,1))
 
     objGraph.setSize(f.getWidth-routingMap.getWidth,360)
+    new Thread(objGraph,"Graphic Thread").start()
     result.add(objGraph)
 
     carsPanel.setLayout(new BorderLayout())
@@ -220,9 +221,8 @@ object DemoRoutingView extends StopWatch{
   def drawMove(routes:scala.List[scala.List[Int]],objInfo:(Int,Long,String), hopDistances:Array[IntValue]): Unit ={
     movesCounter += 1
 
-    if(movesCounter%movesBeforeRepaint == 0)routingMap.drawRoutes()
+    routingMap.drawRoutes()
     objGraph.notifyNewObjectiveValue(objInfo._1,objInfo._2,objInfo._3,ColorGenerator.generateColorFromHash(objInfo._3.hashCode))
-    objGraph.validate()
     updateRoutes(hopDistances)
   }
 
@@ -281,7 +281,6 @@ object DemoRoutingView extends StopWatch{
   def resolveProblem() = {
     if(!controller.resolveProblem)JOptionPane.showMessageDialog(f, "Please first initiate the problem")
     routingMap.drawRoutes()
-    objGraph.drawGlobalCurve()
   }
 
 }
