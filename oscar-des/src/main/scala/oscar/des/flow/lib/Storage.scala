@@ -101,6 +101,41 @@ abstract class Storage(val maxCapacity: Int,
     if (isThereAnyWaitingPut && verbosity!=null)
       verbosity("Full storage on " + name)
   }
+
+  var attributeCounters:List[AttributeConditionCounter] = List.empty
+  def measureCondition(a:AttributeCondition):AttributeConditionCounter = {
+    val newCounter = new AttributeConditionCounter(a,this.contentAndClass)
+    attributeCounters = newCounter :: attributeCounters
+    newCounter
+  }
+}
+
+class AttributeConditionCounter(a:AttributeCondition, initContent:Iterable[ItemClass]){
+  val initContentCount = initContent.foldLeft(0)((acc,itemClass) => if(a.evaluate(itemClass)) acc + 1 else acc)
+
+  var puts:Int = 0
+  var gets:Int = 0
+  def content:Int = initContentCount + puts - gets - overflow
+  var overflow:Int = 0
+
+  def notifyPut(itemClass:ItemClass){
+    if(a.evaluate(itemClass)){
+      puts+=1
+      content +=1
+    }
+  }
+  def notifyGet(itemClass:Int){
+    if(a.evaluate(itemClass)){
+      gets+=1
+      content -=1
+    }
+  }
+  def notifyOverflow(itemClass:Int){
+    if(a.evaluate(itemClass)){
+      overflow +=1
+      content -=1
+    }
+  }
 }
 
 /**
