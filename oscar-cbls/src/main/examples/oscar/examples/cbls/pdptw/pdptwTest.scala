@@ -158,7 +158,7 @@ object pdptwTest extends App with StopWatch {
     (moveResult:InsertPointMove) => InsertPointUnroutedFirst(
     unroutedNodesToInsert = () => Iterable(vrp.getRelatedDelivery(moveResult.insertedPoint)),
     relevantNeighbors = () => vrp.kNearest(n,vrp.onTheSameRouteMultArg(moveResult.insertedPoint)),
-    vrp = vrp, best = true)))
+    vrp = vrp, best = true)))name "insertCouple"
 
   val oneCoupleMove = Profile(DynAndThen(OnePointMove(
     nodesPrecedingNodesToMove = () => vrp.getRoutedPickupsPredecessors,
@@ -167,7 +167,7 @@ object pdptwTest extends App with StopWatch {
     (moveResult:OnePointMoveMove) => OnePointMove(
     nodesPrecedingNodesToMove = () => List(vrp.preds(vrp.getRelatedDelivery(moveResult.movedPoint)).value),
     relevantNeighbors= () => vrp.kNearest(1000,vrp.onTheSameRouteMultArg(moveResult.movedPoint)),
-    vrp = vrp, best = true)))
+    vrp = vrp, best = true)))name "oneCoupleMove"
 
   val onePointMovePD = Profile(new RoundRobin(List(OnePointMove(
     nodesPrecedingNodesToMove = () => vrp.getRoutedPickupsPredecessors,
@@ -175,7 +175,7 @@ object pdptwTest extends App with StopWatch {
     vrp = vrp,best = true),OnePointMove(
     nodesPrecedingNodesToMove = () => vrp.getRoutedDeliverysPredecessors,
     relevantNeighbors = () => vrp.getAuthorizedInsertionPositionForDelivery(),
-    vrp = vrp, best = true))))
+    vrp = vrp, best = true))))name "OnePointMove PickupDelivery"
 
   val segExchangePD = Profile(SegmentExchangePickupAndDelivery(vrp = vrp))
 
@@ -220,7 +220,7 @@ object pdptwTest extends App with StopWatch {
           , maximalIntermediaryDegradation = Int.MaxValue/2
         )
       )
-  )
+  )name "dynAndThenCoupleExchange"
 
   val pickupDeliveryCoupleShift = Profile(DynAndThen(OnePointMove(
     nodesPrecedingNodesToMove = () => vrp.getRoutedPickupsPredecessors,
@@ -229,7 +229,7 @@ object pdptwTest extends App with StopWatch {
     (moveResult:OnePointMoveMove) => OnePointMove(
       nodesPrecedingNodesToMove = () => List(vrp.preds(vrp.getRelatedDelivery(moveResult.movedPoint)).value),
       relevantNeighbors = () => vrp.kNearest(n,vrp.onTheSameRouteMultArg(moveResult.movedPoint)),
-      vrp = vrp, best = true)))
+      vrp = vrp, best = true)))name "pickupDeliveryCoupleShift"
 
   //TODO : Take the best value of the used neighborhoods(need to fix dynAndThen first)
   var simulatedAnnealingValue = 1

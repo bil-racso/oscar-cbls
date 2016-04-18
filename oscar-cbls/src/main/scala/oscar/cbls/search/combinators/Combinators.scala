@@ -1186,7 +1186,7 @@ case class DynAndThen[FirstMoveType<:Move](a:Neighborhood with SupportForAndThen
         currentB.getMove(new secondInstrumentedObjective(obj), secondAcceptanceCriteria) match {
           case NoMoveFound => Int.MaxValue
           case MoveFound(m: Move) =>
-            if(compositeMove == null || m.objAfter < compositeMove.objAfter) compositeMove = CompositeMove(List(currentMoveFromA, m), m.objAfter, this.toString)
+            if(compositeMove == null || m.objAfter < compositeMove.objAfter) compositeMove = CompositeMove(List(currentMoveFromA, m), m.objAfter,"DynAndThen")
             m.objAfter
         }
       }
@@ -1200,7 +1200,6 @@ case class DynAndThen[FirstMoveType<:Move](a:Neighborhood with SupportForAndThen
         println("WARNING: " + this + " the neighborhood on the left returned a move without querying the objective value, the move of andThen is therefore not a composite")
         m
       }else{
-        println("NeighborhoodName: " + compositeMove.neighborhoodName)
         compositeMove
       }
     }
