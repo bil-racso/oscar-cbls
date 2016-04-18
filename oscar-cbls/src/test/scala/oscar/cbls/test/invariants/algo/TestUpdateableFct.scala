@@ -1,7 +1,9 @@
 package oscar.cbls.test.invariants.algo
 
-import oscar.cbls.invariants.core.algo.fun.mutable.{LinearPositionTransform, PiecewiseLinearFunction}
-import oscar.cbls.invariants.core.algo.fun.functional.PiecewiseLinearFun
+import oscar.cbls.invariants.core.algo.fun.mutable.{LinearPositionTransform, PiecewiseLinearFun}
+import oscar.cbls.invariants.core.algo.fun.functional.{PiecewiseLinearBijectionNaive, PiecewiseLinearFun}
+
+import scala.collection.parallel.mutable
 
 class UpdateableFunctionNaive(maxVal:Int) {
   //external position => internal position
@@ -31,8 +33,8 @@ le bon index linéaire est celui après transformation
 
 object TestUpdateableFunction extends App{
   val maxVal = 100
-  val fn = new PiecewiseLinearFunction()
-  var fnFun = new PiecewiseLinearFun()
+  val fn = new oscar.cbls.invariants.core.algo.fun.mutable.PiecewiseLinearFun()
+  var fnFun = new oscar.cbls.invariants.core.algo.fun.functional.PiecewiseLinearFun()
   val fn2 = new UpdateableFunctionNaive(maxVal)
 
   def compare(): Unit ={
@@ -45,21 +47,34 @@ object TestUpdateableFunction extends App{
 
   def update(fromIncluded:Int,toIncluded:Int,add:LinearPositionTransform): Unit ={
     println("BEFORE:"+
-    "\nnaive:" + fn2 +
-    "\nmutable:" + fn +
-    "\nfunctional" + fnFun + "\n")
+    "\nnaive:     " + fn2 +
+    "\nmutable:   " + fn +
+    "\nfunctional:" + fnFun + "\n")
+
+    fn2.update(fromIncluded,toIncluded,add)
+    println("AFTER:"+
+      "\nnaive:     " + fn2)
 
     fn.update(fromIncluded,toIncluded,add)
-    fn2.update(fromIncluded,toIncluded,add)
+    println("mutable:   " + fn)
+
     fnFun = fnFun.update(fromIncluded,toIncluded,add)
-    println("AFTER:"+
-      "\nnaive:" + fn2 +
-      "\nmutable:" + fn +
-      "\nfunctional" + fnFun + "\n")
+    println("functional:" + fnFun)
+
     compare()
   }
 
   println("init:" + fn)
+
+  update(6, 20, new LinearPositionTransform(26,true))
+  println(fn)
+  println("f(10) = " +fn(10))
+  println
+
+  update(7, 14, new LinearPositionTransform(31,true))
+  println(fn)
+  println("f(10) = " +fn(10))
+  println
 
   update(6, 20, new LinearPositionTransform(-3,true))
   println(fn)
@@ -67,10 +82,6 @@ object TestUpdateableFunction extends App{
   println
 
 
-  update(7, 14, new LinearPositionTransform(3,false))
-  println(fn)
-  println("f(10) = " +fn(10))
-  println
 
   update(16, 19, new LinearPositionTransform(5,true))
   println(fn)

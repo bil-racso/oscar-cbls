@@ -2,7 +2,7 @@ package oscar.cbls.invariants.core.algo.fun.mutable
 
 import oscar.cbls.invariants.core.algo.rb.RedBlackTree
 
-class PiecewiseLinearFunction() {
+class PiecewiseLinearFun() {
   //external position => internal position
   protected var transformation: RedBlackTree[Pivot] = RedBlackTree.empty
 
@@ -28,11 +28,7 @@ class PiecewiseLinearFunction() {
   }
 
   override def toString: String = {
-    "nbPivots:" + transformation.size + " \n" +
-      (firstPivot match{
-        case None => "identity"
-        case Some((_,minPivot)) => minPivot.toStringAll
-      })
+    "PiecewiseLinearFun(nbSegments:" + transformation.size + ", " + (if(transformation.isEmpty) "identity" else ("segments:" + transformation.values.mkString(",")))+")"
   }
 
   def apply(value:Int):Int = {
@@ -41,8 +37,6 @@ class PiecewiseLinearFunction() {
       case Some((_,pivot)) => pivot.f(value)
     }
   }
-
-
 
   protected def updatedPivot(p:Pivot){}
   protected def deletedPivot(p:Pivot){}
@@ -177,7 +171,7 @@ class LinearPositionTransform(val offset:Int,val minus:Boolean){
 
 class Pivot(val value:Int, var next:Pivot = null, var prev:Pivot, var f: LinearPositionTransform){
 
-  override def toString = "Pivot(from:" + value + " f:" + f + ")"
+  override def toString = "Pivot(from:" + value + " " + f + ")"
 
   def toStringAll:String = this.toString + (if(next==null) "" else "\n" + next.toStringAll)
 

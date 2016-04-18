@@ -73,7 +73,7 @@ abstract class RedBlackTree[V]{
   protected [rb] def valuesAcc(valuesAfter:List[V]):List[V]
 
   def positionOf(k: Int):Option[RBPosition[V]] = positionOfAcc(k:Int,null)
-  def positionOfAcc(k:Int,positionAcc:QList[(T[V],Boolean)]):Option[RBPosition[V]]
+  protected[rb] def positionOfAcc(k:Int,positionAcc:QList[(T[V],Boolean)]):Option[RBPosition[V]]
 }
 
 
@@ -99,7 +99,7 @@ private case class L[V]() extends RedBlackTree[V]  {
 
   protected [rb] def valuesAcc(valuesAfter:List[V]):List[V] = valuesAfter
 
-  override def positionOfAcc(k : Int, positionAcc : QList[(T[V],Boolean)]) : Option[RBPosition[V]] = None
+  protected[rb] override def positionOfAcc(k : Int, positionAcc : QList[(T[V],Boolean)]) : Option[RBPosition[V]] = None
 }
 
 
@@ -158,7 +158,7 @@ private case class T[V](c : Boolean, l : RedBlackTree[V], k : Int, v : Option[V]
 
   override protected[rb] def valuesAcc(valuesAfter : List[V]) : List[V] = l.valuesAcc(v.head :: r.valuesAcc(valuesAfter))
 
-  override def positionOfAcc(k : Int, positionAcc : QList[(T[V],Boolean)]) : Option[RBPosition[V]] = {
+  protected[rb] override def positionOfAcc(k : Int, positionAcc : QList[(T[V],Boolean)]) : Option[RBPosition[V]] = {
     if (k < this.k) l.positionOfAcc(k, QList((this,false),positionAcc))
     else if (k > this.k) r.positionOfAcc(k, QList((this,true),positionAcc))
     else Some(new RBPosition[V](QList((this,true),positionAcc)))

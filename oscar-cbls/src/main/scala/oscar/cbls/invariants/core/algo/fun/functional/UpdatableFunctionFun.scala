@@ -1,15 +1,33 @@
 package oscar.cbls.invariants.core.algo.fun.functional
 
 import oscar.cbls.invariants.core.algo.fun.mutable.LinearPositionTransform
-import oscar.cbls.invariants.core.algo.rb.RedBlackTree
+import oscar.cbls.invariants.core.algo.rb.{RBPosition, RedBlackTree}
 
 object PiecewiseLinearFun{
   def identity = new PiecewiseLinearFun()
+  implicit def toIterable(f:PiecewiseLinearFun):Iterable[Pivot] = f.transformation.values
+  def createFromPivots(pivots:Iterable[Pivot]):PiecewiseLinearFun = {
+    var acc = RedBlackTree.empty[Pivot]
+    val pivotIt = pivots.toIterator
+    while(pivotIt.hasNext){
+      val currentPivot = pivotIt.next()
+      acc =  acc.insert(currentPivot.fromValue,currentPivot)
+    }
+    new PiecewiseLinearFun(acc)
+  }
 }
 
-class PiecewiseLinearFun(transformation: RedBlackTree[Pivot] = RedBlackTree.empty) {
+class PiecewiseLinearFun(private[fun] val transformation: RedBlackTree[Pivot] = RedBlackTree.empty) {
 
   def firstPivot:Option[(Int,Pivot)] = transformation.getSmallestBiggerOrEqual(Int.MinValue)
+
+  def positionOfValue(value:Int):Option[RBPosition[(Pivot)]] = transformation.positionOf(value)
+
+  def isIdentity = transformation.isEmpty
+
+  def nbPivot = transformation.size
+
+  def pivots:List[Pivot] = transformation.values
 
   override def toString: String = {
     "PiecewiseLinearFun(nbSegments:" + transformation.size + ", " + (if(transformation.isEmpty) "identity" else ("segments:" + transformation.values.mkString(",")))+")"
@@ -27,7 +45,7 @@ class PiecewiseLinearFun(transformation: RedBlackTree[Pivot] = RedBlackTree.empt
   }
 
   private def updatePivots(fromIncluded: Int, toIncluded: Int, additionalF: LinearPositionTransform): RedBlackTree[Pivot] = {
-    println("updatePivots(from:" + fromIncluded + ", to:" + toIncluded + ", fct:" + additionalF + ")")
+    //println("updatePivots(from:" + fromIncluded + ", to:" + toIncluded + ", fct:" + additionalF + ")")
     transformation.getBiggestLowerOrEqual(fromIncluded) match {
       case Some((_,pivot)) if (pivot.fromValue == fromIncluded) =>
         updateFromPivot(pivot, toIncluded, additionalF, transformation)
@@ -80,20 +98,12 @@ class PiecewiseLinearFun(transformation: RedBlackTree[Pivot] = RedBlackTree.empt
       case Some((nextFromValue,nextPivot)) =>
         if (nextFromValue > toIncluded + 1) {
           //need to add a new intermediary pivot
-          println("coucou")
           newPrev match{
             case None =>
-              println("no new prev")
               newTransform
             case Some((newPrevFromValue,newPrevPivot)) =>
-              println("some new prev:" + newPrevPivot)
-              if (newPrevPivot.f.equals(previousCorrection)) {
-                println("case 1")
-                newTransform
-              }else {
-                println("case2")
-                newTransform.insert(toIncluded + 1, new Pivot(toIncluded + 1, previousCorrection))
-              }
+              if (newPrevPivot.f.equals(previousCorrection)) newTransform
+              else newTransform.insert(toIncluded + 1, new Pivot(toIncluded + 1, previousCorrection))
           }
         } else if (nextFromValue < toIncluded+1){
           //there is a next such that next.value is <= correctedTo
@@ -109,8 +119,15 @@ class PiecewiseLinearFun(transformation: RedBlackTree[Pivot] = RedBlackTree.empt
         }
     }
   }
+
+  def pivotApplyingTo(value:Int):Option[RBPosition[Pivot]] = {
+    transformation.getBiggestLowerOrEqual(value) match{
+      case None => None
+      case Some((fromValueOfPivot,_)) => transformation.positionOf(fromValueOfPivot)
+    }
+  }
 }
 
 class Pivot(val fromValue:Int, val f: LinearPositionTransform){
-  override def toString = "Pivot(from:" + fromValue + " f:" + f + ")"
+  override def toString = "Pivot(from:" + fromValue + " " + f + ")"
 }
