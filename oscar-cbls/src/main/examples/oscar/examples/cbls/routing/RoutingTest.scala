@@ -1,5 +1,8 @@
 package oscar.examples.cbls.routing
 
+import java.awt.Toolkit
+import javax.swing.JFrame
+
 import oscar.cbls.invariants.core.computation.Store
 import oscar.cbls.invariants.lib.logic.Int2Int
 import oscar.cbls.invariants.lib.numeric.{Abs, Sum}
@@ -8,6 +11,8 @@ import oscar.cbls.routing.neighborhood._
 import oscar.cbls.search.StopWatch
 import oscar.cbls.search.combinators.{RoundRobin, Profile, BestSlopeFirst}
 import oscar.cbls.modeling.Algebra._
+import oscar.examples.cbls.routing.visual.ColorGenerator
+import oscar.examples.cbls.routing.visual.MatrixMap.{RoutingMatrixVisualWithAttribute, PickupAndDeliveryMatrixVisualWithAttribute}
 import oscar.visual.VisualFrame
 import scala.language.implicitConversions
 
@@ -24,6 +29,7 @@ class MyVRP(n:Int, v:Int, model:Store, distanceMatrix: Array[Array[Int]],unroute
   with NodesOfVehicle
   with PenaltyForUnrouted
   with hopDistancePerVehicle
+  with Predecessors
 with PenaltyForEmptyRouteAsObjectiveTerm{ //just for the fun of it
 
   installCostMatrix(distanceMatrix)
@@ -50,8 +56,8 @@ object RoutingTest extends App with StopWatch{
 
   this.startWatch()
 
-  val n = 500
-  val v = 5
+  val n = 10
+  val v = 1
 
   println("RoutingTest(n:" + n + " v:" + v + ")")
 
@@ -66,6 +72,13 @@ object RoutingTest extends App with StopWatch{
   model.close()
 
   println("closed model " + getWatch + "ms")
+
+  val f = new JFrame("ROUTING - Routing Map")
+  f.setSize(Toolkit.getDefaultToolkit.getScreenSize.getWidth.toInt,(11*Toolkit.getDefaultToolkit().getScreenSize().getHeight/12).toInt)
+  val rm = new RoutingMatrixVisualWithAttribute("Routing Map",vrp,10000,positions.toList,ColorGenerator.generateRandomColors(v),dimension = f.getSize)
+  f.add(rm)
+  f.pack()
+  f.setVisible(true)
 
   val insertPointRoutedFirst = Profile(InsertPointRoutedFirst(
     insertionPoints = vrp.routed,
@@ -111,23 +124,28 @@ object RoutingTest extends App with StopWatch{
     relevantNeighbors = () => vrp.kNearest(40),
     vehicles=() => vrp.vehicles.toList))
 
-  println("yeay : " + Thread.currentThread())
-  val search = new RoundRobin(List(insertPoint,onePointMove),10) exhaust
+  val linKernighan = Profile(LinKernighan(0,vrp))
+
+  val kernighanSearch = insertPoint exhaust linKernighan showObjectiveFunction(vrp.objectiveFunction) afterMove {
+    rm.drawRoutes()
+  }
+  kernighanSearch.verbose = 1
+  /*val search = new RoundRobin(List(insertPoint,onePointMove),10) exhaust
                       new BestSlopeFirst(List(onePointMove, threeOpt, segExchange), refresh = n / 2) showObjectiveFunction vrp.getObjective()
   // exhaust onePointMove exhaust segExchange//threeOpt //(new BestSlopeFirst(List(onePointMove,twoOpt,threeOpt)))
 
-  search.verbose = 1
+  search.verbose = 1*/
 //    search.verboseWithExtraInfo(3,() => vrp.toString)
   //segExchange.verbose = 3
 
   def launchSearch(): Unit ={
-    search.doAllMoves(_ > 10*n, vrp.objectiveFunction)
+    kernighanSearch.doAllMoves(_ > 10*n, vrp.objectiveFunction)
 
     println("total time " + getWatch + "ms or  " + getWatchString)
 
     println("\nresult:\n" + vrp)
 
-    println(search.profilingStatistics)
+    println(kernighanSearch.profilingStatistics)
   }
 
   launchSearch()

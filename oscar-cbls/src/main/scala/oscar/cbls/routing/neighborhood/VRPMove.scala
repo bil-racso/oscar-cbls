@@ -32,7 +32,7 @@ abstract class EasyRoutingNeighborhood[M<:Move](best:Boolean, val vrp:VRP, neigh
   protected def isRecording = Recording
   protected def noMoveRecorded = affects.isEmpty
 
-  private var affects: List[Affect] = List.empty
+  var affects: List[Affect] = List.empty
 
   @inline
   protected def evalObjOnEncodedMove():Int = {
