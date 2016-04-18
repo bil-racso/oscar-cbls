@@ -143,7 +143,6 @@ trait Objective {
    * @return
    */
   def valueNoSearch:Int = value
-
   /**
    * This method returns the actual objective value.
    * It is easy to override it, and perform a smarter propagation if needed.

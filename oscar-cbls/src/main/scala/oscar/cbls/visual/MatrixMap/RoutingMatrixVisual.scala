@@ -18,9 +18,9 @@ package oscar.examples.cbls.routing.visual.MatrixMap
   */
 
 import java.awt.BorderLayout
-import javax.swing.JInternalFrame
+import javax.swing.{JPanel, JInternalFrame}
 
-import oscar.cbls.routing.model.VRP
+import oscar.cbls.routing.model.{PickupAndDeliveryCustomers, VRP}
 
 import scala.swing._
 
@@ -29,14 +29,14 @@ import scala.swing._
   */
 
 
-class RoutingMatrixVisual(title:String = "Routing map", pickupAndDeliveryPoints: Boolean = false) extends JInternalFrame(title){
+class RoutingMatrixVisual(title:String = "Routing map", pickupAndDeliveryPoints: Boolean = false) extends JPanel{
   setLayout(new BorderLayout())
 
-  var routingMatrix:MatrixMap = null
-  if(pickupAndDeliveryPoints)
-    routingMatrix = new RoutingMatrixMap() with PickupAndDeliveryPoints
-  else
-    routingMatrix = new RoutingMatrixMap
+  val routingMatrix = {
+    if(pickupAndDeliveryPoints)
+      new RoutingMatrixMap with PickupAndDeliveryPoints
+    else
+      new RoutingMatrixMap}
 
   def drawRoutes(): Unit ={
     routingMatrix.drawRoutes()
@@ -61,7 +61,10 @@ class RoutingMatrixVisual(title:String = "Routing map", pickupAndDeliveryPoints:
   }
 
   def setVRP(vrp:VRP): Unit ={
-    routingMatrix.setVRP(vrp)
+    vrp match{
+      case pdptwVRP:VRP with PickupAndDeliveryCustomers => routingMatrix.setVRP(pdptwVRP)
+      case _ => routingMatrix.setVRP(vrp)
+    }
   }
 
   def clear(): Unit ={
@@ -78,7 +81,26 @@ class RoutingMatrixVisualWithAttribute(title:String = "Routing map",
                                        mapSize:Int,
                                        pointsList:scala.List[(Int,Int)],
                                        colorValues:Array[Color],
-                                       dimension:Dimension = new Dimension(960,540)) extends RoutingMatrixVisual{
+                                       pickupAndDeliveryPoints: Boolean = false,
+                                       dimension:Dimension = new Dimension(960,540))
+  extends RoutingMatrixVisual(pickupAndDeliveryPoints = pickupAndDeliveryPoints){
+  setPreferredSize(dimension)
+  setSize(dimension)
+  routingMatrix.setPreferredSize(dimension)
+  routingMatrix.setSize(dimension)
+  routingMatrix.setVRP(vrp)
+  routingMatrix.setMapSize(mapSize)
+  routingMatrix.setPointsList(pointsList)
+  routingMatrix.setColorValues(colorValues)
+}
+
+class PickupAndDeliveryMatrixVisualWithAttribute(title:String = "Pickup And Delivery map",
+                                                 vrp:VRP,
+                                                 mapSize:Int,
+                                                 pointsList:scala.List[(Int,Int)],
+                                                 colorValues:Array[Color],
+                                                 dimension:Dimension = new Dimension(960,540))
+  extends RoutingMatrixVisual(pickupAndDeliveryPoints = true){
   setPreferredSize(dimension)
   setSize(dimension)
   routingMatrix.setPreferredSize(dimension)

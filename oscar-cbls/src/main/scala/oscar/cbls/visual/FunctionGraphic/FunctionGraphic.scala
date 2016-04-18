@@ -22,13 +22,14 @@ import java.awt._
 import java.awt.event.{MouseListener, MouseEvent, MouseMotionListener, ActionListener}
 import java.awt.geom.Line2D.Double
 import java.awt.geom.Rectangle2D
-import javax.swing.JButton
+import javax.swing.{Timer, JButton}
 
 import oscar.cbls.search.StopWatch
 import oscar.visual.VisualDrawing
 import oscar.visual.shapes.{VisualRectangle, VisualLine, VisualText}
 
 import scala.collection.mutable.ListBuffer
+import scala.swing.event.ActionEvent
 
 /** This abstract class represent the base structure for
   * the classes who'll have the purpose of drawing the curve of a function.
@@ -61,7 +62,7 @@ import scala.collection.mutable.ListBuffer
   * @author fabian.germeau@student.vinci.be
   */
 
-abstract class FunctionGraphic() extends VisualDrawing(false,false) with StopWatch{
+abstract class FunctionGraphic() extends VisualDrawing(false,false) with StopWatch with ActionListener{
 
   val maxWidth = () => getWidth -10
   val minWidth = 70
@@ -97,8 +98,13 @@ abstract class FunctionGraphic() extends VisualDrawing(false,false) with StopWat
   //A list buffer that contains the color of the neighborhood that has found the current move
   val xColorValues:ListBuffer[Color] = new ListBuffer[Color]
 
+  val timer:Timer = new Timer(1000,this)
 
   setLayout(new BorderLayout())
+
+  //We remove the unwanted listener inherited from VisualDrawing
+  removeMouseListener(getMouseListeners.head)
+  removeMouseMotionListener(getMouseMotionListeners.head)
 
   def notifyNewObjectiveValue(objValue:Int, objTime:Long, color:Color)
 
@@ -112,7 +118,11 @@ abstract class FunctionGraphic() extends VisualDrawing(false,false) with StopWat
 
   def setMaxNumberOfObject(percentage:scala.Double){}
 
-
+  override def actionPerformed(e:event.ActionEvent): Unit ={
+    if(e.getSource == timer){
+      drawGlobalCurve()
+    }
+  }
 }
 
 /** This class has the purpose to draw the objective function curve.
@@ -123,7 +133,7 @@ abstract class FunctionGraphic() extends VisualDrawing(false,false) with StopWat
   * @author fabian.germeau@student.vinci.be
   */
 
-class ObjFunctionGraphic(width:Int,height:Int) extends FunctionGraphic(){
+class ObjFunctionGraphic() extends FunctionGraphic(){
 
   //A list buffer that contains all the bests objective values encountered during the search
   val bestValues:ListBuffer[Int] = new ListBuffer[Int]
@@ -135,6 +145,7 @@ class ObjFunctionGraphic(width:Int,height:Int) extends FunctionGraphic(){
     else
       Int.MaxValue
   }
+
 
   //A variable and a MouseListener used to allow the user to display or not the best curve
   var displayBest = true
@@ -179,6 +190,9 @@ class ObjFunctionGraphic(width:Int,height:Int) extends FunctionGraphic(){
     maxXValueDisplayed = time
     minYValueDisplayed = best()
     maxYValueDisplayed = yValues.max
+
+    if(!timer.isRunning)
+      timer.start
   }
 
   /**
@@ -203,49 +217,49 @@ class ObjFunctionGraphic(width:Int,height:Int) extends FunctionGraphic(){
     var currentTimeUnitValue:scala.Double = 0.0
     var currentTimeUnitValuesNumber:scala.Double = 0.0
     var currentTimeUnitBestValue:scala.Double = 0.0
-    var currentTimeUnitBestValuesNumber:scala.Double = 0.0
     var previousTimeUnitValue:scala.Double = 0.0
     var previousTimeUnitBestValue:scala.Double = 0.0
     var previousTimeUnit:scala.Double = 0.0
     for(i <- yValues.indices){
-      if(widthAdapter(xValues(i)) == currentTimeUnit){
-        currentTimeUnitValue += heightAdapter(yValues(i))
-        currentTimeUnitValuesNumber += 1
-        currentTimeUnitBestValue += heightAdapter(bestValues(i))
-        currentTimeUnitBestValuesNumber += 1
-      }else{
-        if(currentTimeUnitValuesNumber != 0) {
-          currentTimeUnitValue = maxHeight() - (currentTimeUnitValue/currentTimeUnitValuesNumber) + heightAdapter(minYValueDisplayed)
-          currentTimeUnitBestValue = maxHeight() - (currentTimeUnitBestValue/currentTimeUnitBestValuesNumber) + heightAdapter(minYValueDisplayed)
-          if(previousTimeUnitValue == 0.0) {
-            previousTimeUnitValue = currentTimeUnitValue
-            previousTimeUnitBestValue = currentTimeUnitBestValue
-            previousTimeUnit = currentTimeUnit
-          }
-          val line = new VisualLine(this, new Double(previousTimeUnit+70, previousTimeUnitValue, currentTimeUnit+70, currentTimeUnitValue))
-          line.outerCol_$eq(xColorValues(i))
-          line.borderWidth = 3
-          if(displayBest){
-            val bestLine = new VisualLine(this,new Double(previousTimeUnit+70, previousTimeUnitBestValue, currentTimeUnit+70, currentTimeUnitBestValue))
-            bestLine.outerCol_$eq(Color.green)
-          }
-          previousTimeUnit = currentTimeUnit
+      if(widthAdapter(xValues(i)) != currentTimeUnit && currentTimeUnitValuesNumber != 0) {
+        currentTimeUnitValue = maxHeight() - (currentTimeUnitValue/currentTimeUnitValuesNumber) + heightAdapter(minYValueDisplayed)
+        currentTimeUnitBestValue = maxHeight() - (currentTimeUnitBestValue/currentTimeUnitValuesNumber) + heightAdapter(minYValueDisplayed)
+        if(previousTimeUnitValue == 0.0) {
           previousTimeUnitValue = currentTimeUnitValue
           previousTimeUnitBestValue = currentTimeUnitBestValue
-          currentTimeUnitValue = 0.0
-          currentTimeUnitValuesNumber = 0.0
-          currentTimeUnitBestValue = 0.0
-          currentTimeUnitBestValuesNumber = 0.0
+          previousTimeUnit = currentTimeUnit
         }
-        while(currentTimeUnit < widthAdapter(xValues(i))){
-          currentTimeUnit += 1
+
+        if(displayBest){
+          val bestLine = new VisualLine(this,new Double(previousTimeUnit+70, previousTimeUnitBestValue, currentTimeUnit+70, currentTimeUnitBestValue))
+          bestLine.outerCol_$eq(Color.green)
         }
-        currentTimeUnitValue += heightAdapter(yValues(i))
-        currentTimeUnitValuesNumber += 1
-        currentTimeUnitBestValue += heightAdapter(bestValues(i))
-        currentTimeUnitBestValuesNumber += 1
+        val line = new VisualLine(this, new Double(previousTimeUnit+70, previousTimeUnitValue, currentTimeUnit+70, currentTimeUnitValue))
+        line.outerCol_$eq(xColorValues(i))
+        line.borderWidth = 3
+
+        previousTimeUnit = currentTimeUnit
+        previousTimeUnitValue = currentTimeUnitValue
+        previousTimeUnitBestValue = currentTimeUnitBestValue
+        currentTimeUnitValue = 0.0
+        currentTimeUnitValuesNumber = 0.0
+        currentTimeUnitBestValue = 0.0
       }
+      while(currentTimeUnit < widthAdapter(xValues(i)))
+        currentTimeUnit += 1
+      currentTimeUnitValue += heightAdapter(yValues(i))
+      currentTimeUnitValuesNumber += 1
+      currentTimeUnitBestValue += heightAdapter(bestValues(i))
     }
+
+    //We draw the last position
+    if(displayBest){
+      val bestLine = new VisualLine(this,new Double(previousTimeUnit+70, previousTimeUnitBestValue, currentTimeUnit+70, maxHeight() - (currentTimeUnitBestValue/currentTimeUnitValuesNumber) + heightAdapter(minYValueDisplayed)))
+      bestLine.outerCol_$eq(Color.green)
+    }
+    val line = new VisualLine(this, new Double(previousTimeUnit+70, previousTimeUnitValue, currentTimeUnit+70, maxHeight() - (currentTimeUnitValue/currentTimeUnitValuesNumber) + heightAdapter(minYValueDisplayed)))
+    line.outerCol_$eq(xColorValues.last)
+    line.borderWidth = 3
   }
 
   /**
