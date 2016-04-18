@@ -32,11 +32,10 @@ import scala.swing.Dimension
   * @author fabian.germeau@student.vinci.be
   */
 
-abstract class FunctionGraphicContainer(title:String,dimension: Dimension) extends JInternalFrame(title){
+abstract class FunctionGraphicContainer(title:String,dimension: Dimension) extends JPanel{
 
-  setSize(dimension)
-  setPreferredSize(dimension)
   setLayout(new BorderLayout())
+  setSize(dimension)
   setVisible(true)
 
   var graphic: FunctionGraphic = null
@@ -62,8 +61,9 @@ abstract class FunctionGraphicContainer(title:String,dimension: Dimension) exten
   */
 class ObjFunctionGraphicContainer(title:String = "Evolution of the objective function", dimension: Dimension) extends FunctionGraphicContainer(title, dimension){
 
-  graphic = new ObjFunctionGraphic(getWidth,getHeight)
+  graphic = new ObjFunctionGraphic()
   add(graphic, BorderLayout.CENTER)
+
 
   val neighborhoodColorLabel = new JLabel(" ")
   neighborhoodColorLabel.setHorizontalAlignment(SwingConstants.CENTER)
@@ -94,6 +94,8 @@ class ObjFunctionGraphicContainer(title:String = "Evolution of the objective fun
       xColorMap = xColorMap + (neighBorhood -> color)
     graphic.notifyNewObjectiveValue(objValue,objTime,color)
   }
+
+
 
   override def clear(): Unit ={
     super.clear()

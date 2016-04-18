@@ -63,7 +63,6 @@ case class InsertPointUnroutedFirst(unroutedNodesToInsert: () => Iterable[Int],
   var startIndice: Int = 0
 
   override def exploreNeighborhood(): Unit = {
-
     //TODO: il faut itérer sur les points routés en premier, pas l'inverse.
     //et il faut rectifier le facteur de proximité avc la pénalité de non routage dans le cas du InsertPoint!
     val iterationSchemeOnZone =
@@ -91,7 +90,6 @@ case class InsertPointUnroutedFirst(unroutedNodesToInsert: () => Iterable[Int],
 
           encode(beforeInsertedPoint, insertedPoint)
           val newObj = evalObjOnEncodedMove()
-
           if (evaluateCurrentMoveObjTrueIfStopRequired(newObj)) {
             startIndice = if (hotRestartOnNextSymmetryClass) {
               if (iterationSchemeIterator.hasNext)

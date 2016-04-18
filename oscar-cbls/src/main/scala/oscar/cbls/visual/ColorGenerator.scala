@@ -36,7 +36,6 @@ object ColorGenerator {
         val g = c2*(255/maxColorNumber)
         for(c3 <- if(Math.random()<0.5)0 until maxColorNumber else maxColorNumber-1 until -1 by -1){
           val b = c3*(255/maxColorNumber)
-          println(r,g,b)
           colorValues(i) = new Color(r,g,b)
           i += 1
         }
@@ -66,7 +65,7 @@ object ColorGenerator {
   def generateColorFromHash(hash:Int): Color = {
     val absHash = Math.abs(hash)
     val r = absHash%255
-    val g = 255 - (absHash/255)%255
+    val g = (absHash/255)%255
     val b = ((absHash/255)/255)%255
     new Color(r,g,b)
   }

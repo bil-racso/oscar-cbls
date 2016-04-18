@@ -1,4 +1,4 @@
-package oscar.examples.cbls.routing.visual.FunctionGraphic
+package oscar.cbls.visual.FunctionGraphic
 
 /**
  * *****************************************************************************
@@ -22,6 +22,7 @@ import java.awt.event.{AdjustmentListener, AdjustmentEvent}
 import javax.swing.{SwingConstants, JScrollBar}
 
 import oscar.cbls.search.algo.LazyQuicksort
+import oscar.examples.cbls.routing.visual.FunctionGraphic.ObjFunctionGraphicContainer
 
 
 /**
@@ -37,12 +38,13 @@ import oscar.cbls.search.algo.LazyQuicksort
   * The scrollbar on the right allow the user to zoom in the graphic
   * (quite useful if you want to look closer on specifics parts of the graphic).
   * The scrollbar on the left allow the user to move up and down in the graphic (except when all the graphic is displayed)
-  * Similary the scrollbar on the bottom allow the user to move left and right
+  * Similarly the scrollbar on the bottom allow the user to move left and right
   *
   * @author fabian.germeau@student.vinci.be
   */
+//TODO : Check the problem when the curve is drawn during the research
 trait Zoom extends ObjFunctionGraphicContainer{
-  val zoomScrollBar = new JScrollBar(SwingConstants.VERTICAL,10,10,0,101)
+  val zoomScrollBar = new JScrollBar(SwingConstants.VERTICAL,0,10,0,101)
   zoomScrollBar.addAdjustmentListener(new AdjustmentListener {
     override def adjustmentValueChanged(e: AdjustmentEvent): Unit = {
       adjustScrollBar()
@@ -57,6 +59,7 @@ trait Zoom extends ObjFunctionGraphicContainer{
   val rightLeftScrollBar = new JScrollBar(SwingConstants.HORIZONTAL,0,1,0,100)
   rightLeftScrollBar.addAdjustmentListener(new AdjustmentListener {
     override def adjustmentValueChanged(e: AdjustmentEvent): Unit = {
+      println("rightLeftAdj")
       graphic.minXValueDisplayed = rightLeftScrollBar.getValue
       graphic.maxXValueDisplayed = graphic.minXValueDisplayed + rightLeftScrollBar.getVisibleAmount
       graphic.drawGlobalCurve()
@@ -67,6 +70,7 @@ trait Zoom extends ObjFunctionGraphicContainer{
   val upDownScrollBar = new JScrollBar(SwingConstants.VERTICAL,0,1,0,100)
   upDownScrollBar.addAdjustmentListener(new AdjustmentListener {
     override def adjustmentValueChanged(e: AdjustmentEvent): Unit = {
+      println("upDownAdj")
       graphic.minYValueDisplayed = upDownScrollBar.getMaximum - upDownScrollBar.getVisibleAmount - upDownScrollBar.getValue
       graphic.maxYValueDisplayed = graphic.minYValueDisplayed + upDownScrollBar.getVisibleAmount
       graphic.drawGlobalCurve()
@@ -77,7 +81,7 @@ trait Zoom extends ObjFunctionGraphicContainer{
   /*
     This method, called by the zoomScrollBar adjust the values of the rightLeftScrollBar and the upDownScrollBar
     so that their values are adjusted to the new zoom level.
-    After adjusting the values, it sets the value of the scrollbar to 0 (bottom left of the graphic)
+    After adjusting the values, it sets the value of the scrollbar to 0 (top left of the graphic)
    */
   def adjustScrollBar(): Unit ={
     rightLeftScrollBar.setValue(0)
@@ -85,7 +89,7 @@ trait Zoom extends ObjFunctionGraphicContainer{
     rightLeftScrollBar.setVisibleAmount(Math.max(graphic.diffWidth(), graphic.maxXValue() / (2 * getLogZoom(zoomScrollBar.getValue))).toInt)
     rightLeftScrollBar.setBlockIncrement(rightLeftScrollBar.getVisibleAmount)
     rightLeftScrollBar.setUnitIncrement(rightLeftScrollBar.getVisibleAmount)
-    upDownScrollBar.setVisibleAmount(Math.max(graphic.diffHeight(),(graphic.maxYValue()/(2*getLogZoom(zoomScrollBar.getValue))).toInt))
+    upDownScrollBar.setVisibleAmount(Math.max(20,(graphic.maxYValue()/(2*getLogZoom(zoomScrollBar.getValue))).toInt))
     upDownScrollBar.setBlockIncrement(upDownScrollBar.getVisibleAmount)
     upDownScrollBar.setUnitIncrement(upDownScrollBar.getVisibleAmount)
   }
@@ -98,14 +102,12 @@ trait Zoom extends ObjFunctionGraphicContainer{
   override def drawGlobalCurve(): Unit ={
     rightLeftScrollBar.setMaximum(graphic.maxXValue().toInt+1)
     upDownScrollBar.setMaximum(graphic.maxYValue()+1)
-    zoomScrollBar.setValue(0)
-    rightLeftScrollBar.setValue(0)
-    upDownScrollBar.setValue(0)
     super.drawGlobalCurve()
   }
 
   /**
     * This method calculates the new zoom level based on a logarithmic calculation
+    *
     * @param i the position of the zoomScrollBar
     * @return the new zoom level
     */
@@ -134,6 +136,7 @@ trait AdjustMaxValue extends ObjFunctionGraphicContainer{
       so that only the wanted values will be displayed.
      */
     override def adjustmentValueChanged(e: AdjustmentEvent): Unit = {
+      sortedYValues = new LazyQuicksort(graphic.yValues.toArray,+_)
       sortedYValues.sortUntil(Math.max(1,(adjustMaxValueScrollBar.getValue.toDouble/100 * sortedYValues.size).toInt))
       val iteratorXValues = sortedYValues.iterator
       for(i <- 0 until Math.max(1, (adjustMaxValueScrollBar.getValue.toDouble / 100 * sortedYValues.size).toInt)){
@@ -148,7 +151,6 @@ trait AdjustMaxValue extends ObjFunctionGraphicContainer{
   add(adjustMaxValueScrollBar, BorderLayout.EAST)
 
   override def drawGlobalCurve(): Unit ={
-    sortedYValues = new LazyQuicksort(graphic.yValues.toArray,+_)
     super.drawGlobalCurve()
   }
 }

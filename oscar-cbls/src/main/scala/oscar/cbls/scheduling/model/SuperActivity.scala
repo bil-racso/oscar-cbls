@@ -37,7 +37,7 @@ import scala.collection.immutable.SortedSet
  * @param name
  * @author renaud.delandtsheer@cetic.be
  */
-class SuperActivity(start: Activity, end: Activity,  override val name: String = "")
+class SuperActivity(start: Activity, end: Activity, override val name: String = "")
   extends Activity(CBLSIntVar(start.planning.model, start.duration.value, 0 to start.planning.maxDuration
     , "duration of " + name), start.planning, name) {
 

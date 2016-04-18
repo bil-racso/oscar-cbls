@@ -119,7 +119,7 @@ class VisualDrawing(flipped: Boolean, scalable: Boolean) extends JPanel {
         val translateY: Int = ((if (flipped) marginB else marginT) - minY).toInt 
         transform.translate(translateX,translateY)
       }
-	  g2d.transform(transform)
+	    g2d.transform(transform)
       for (s <- shapes) {
         s.draw(g2d);
       }
