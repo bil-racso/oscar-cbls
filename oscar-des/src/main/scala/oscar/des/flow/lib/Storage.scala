@@ -102,16 +102,17 @@ abstract class Storage(val maxCapacity: Int,
       verbosity("Full storage on " + name)
   }
 
+  protected def initialContent:List[(Int,ItemClass)]
   var attributeCounters:List[AttributeConditionCounter] = List.empty
   def measureCondition(a:AttributeCondition):AttributeConditionCounter = {
-    val newCounter = new AttributeConditionCounter(a,this.contentAndClass)
+    val newCounter = new AttributeConditionCounter(a,initialContent)
     attributeCounters = newCounter :: attributeCounters
     newCounter
   }
 }
 
-class AttributeConditionCounter(a:AttributeCondition, initContent:Iterable[ItemClass]){
-  val initContentCount = initContent.foldLeft(0)((acc,itemClass) => if(a.evaluate(itemClass)) acc + 1 else acc)
+class AttributeConditionCounter(a:AttributeCondition, initContent:Iterable[(Int,ItemClass)]){
+  val initContentCount = initContent.foldLeft(0)({case (acc,(n,itemClass)) => if(a.evaluate(itemClass)) acc + n else acc})
 
   var puts:Int = 0
   var gets:Int = 0
@@ -148,7 +149,7 @@ class AttributeConditionCounter(a:AttributeCondition, initContent:Iterable[ItemC
  * @param overflowOnInput true if the stock overflows when there are excessing input, false to have it blocking the puts when it is full
  */
 class FIFOStorage(maxSize:Int,
-                  initialContent:List[(Int,ItemClass)],
+                  protected val initialContent:List[(Int,ItemClass)],
                   name:String,
                   verbosity:String=>Unit,
                   overflowOnInput:Boolean,id:Int) extends Storage(maxSize,name,verbosity,overflowOnInput,id){
@@ -203,7 +204,6 @@ class FIFOStorage(maxSize:Int,
     }
   }
 
-
   override protected def internalFetch(remainsToFetch: Int, hasBeenFetch:ItemClass = ItemClassHelper.zeroItemClass): (Int,ItemClass) = {
     if(remainsToFetch == 0){
       (0,hasBeenFetch)
@@ -235,7 +235,7 @@ class FIFOStorage(maxSize:Int,
  * @param overflowOnInput true if the stock overflows when there are excessing input, false to have it blocking the puts when it is full
  */
 class LIFOStorage(maxSize:Int,
-                  initialContent:List[(Int,ItemClass)] = List.empty,
+                  protected val initialContent:List[(Int,ItemClass)] = List.empty,
                   name:String,
                   verbosity:String=>Unit,
                   overflowOnInput:Boolean,id:Int) extends Storage(maxSize,name,verbosity,overflowOnInput,id){
