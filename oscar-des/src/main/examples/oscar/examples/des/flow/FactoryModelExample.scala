@@ -101,7 +101,7 @@ object FactoryModelExample extends App with AttributeHelper with ListenersHelper
     ("max content of raw material storage",maxOnHistory(stockLevel(rawMaterialStorage,None))),
     ("min content of raw material storage",minOnHistory(stockLevel(rawMaterialStorage,None))),
     ("avg relative stock level of raw material storage",avgOnHistory(relativeStockLevel(rawMaterialStorage))),
-    ("avg  stock level of raw material storage",avgOnHistory(stockLevel(rawMaterialStorage,None))),
+    ("avg stock level of raw material storage",avgOnHistory(stockLevel(rawMaterialStorage,None))),
     ("toto",ponderateWithDuration(stockLevel(rawMaterialStorage,None))),
     ("stock history",doubleHistoryExpr(stockLevel(rawMaterialStorage,None)))
   ))
