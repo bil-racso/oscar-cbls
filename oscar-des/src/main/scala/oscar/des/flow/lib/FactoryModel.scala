@@ -2,8 +2,8 @@ package oscar.des.flow.lib
 
 import oscar.des.engine.Model
 import oscar.des.flow.core.ItemClassHelper._
-import oscar.des.flow.core.{ItemClassTransformWitAdditionalOutput, ItemClassTransformFunction, Putable, Fetchable}
-import oscar.des.flow.modeling.{MultipleParsingError, MultipleParsingSuccess, ListenerParser}
+import oscar.des.flow.core._
+import oscar.des.flow.modeling.{AttributeHelper, MultipleParsingError, MultipleParsingSuccess, ListenerParser}
 import scala.collection.immutable.SortedMap
 import scala.language.implicitConversions
 
@@ -29,7 +29,7 @@ class FactoryModel(verbosity:String=>Unit,
                    private var ms:MetricsStore = null,
                    private var storages:List[Storage] = List.empty,
                    private var processes:List[ActivableProcess] = List.empty,
-                   private var activationRules:List[ActivationRule] = List.empty){
+                   private var activationRules:List[ActivationRule] = List.empty) extends AttributeHelper{
 
   private var nextStorageID = 0
   private var nextProcessID = 0
@@ -83,9 +83,9 @@ class FactoryModel(verbosity:String=>Unit,
       newActiationRules)
   }
 
-  def setQueriesToParse(queriesNameAndExpression:List[(String,String)]){
+  def setQueriesToParse(queriesNameAndExpression:List[(String,String)],attributes:AttributeDefinitions){
     require(ms == null)
-    val parser = ListenerParser(storages,processes)
+    val parser = ListenerParser(storages,processes,attributes)
     parser.parseAllListeners(queriesNameAndExpression) match{
       case  MultipleParsingSuccess(expressions:List[(String,Expression)]) =>
         setQueries(expressions)
@@ -116,7 +116,7 @@ class FactoryModel(verbosity:String=>Unit,
                          costFunction:String = "0") = {
     val toReturn = SingleBatchProcess(m,batchDuration,inputs,outputs,transformFunction,name,verbosity, nextProcessID)
     nextProcessID += 1
-    toReturn.cost = ListenerParser.processCostParser(toReturn).applyAndExpectDouble(costFunction)
+    toReturn.cost = ListenerParser.processCostParser(toReturn,attributeDefinitions()).applyAndExpectDouble(costFunction)
     processes = toReturn :: processes
     toReturn
   }
@@ -139,7 +139,7 @@ class FactoryModel(verbosity:String=>Unit,
                    costFunction:String = "0") ={
     val toReturn = new BatchProcess(m,numberOfBatches,batchDuration,inputs,outputs,name,transformFunction,verbosity, nextProcessID)
     nextProcessID += 1
-    toReturn.cost = ListenerParser.processCostParser(toReturn).applyAndExpectDouble(costFunction)
+    toReturn.cost = ListenerParser.processCostParser(toReturn,attributeDefinitions()).applyAndExpectDouble(costFunction)
     processes = toReturn :: processes
     toReturn
   }
@@ -167,7 +167,7 @@ class FactoryModel(verbosity:String=>Unit,
                           costFunction:String  = "0") = {
     val toReturn = new ConveyorBeltProcess(m:Model,processDuration,minimalSeparationBetweenBatches,inputs,outputs,transformFunction,name,verbosity, nextProcessID)
     nextProcessID += 1
-    toReturn.cost = ListenerParser.processCostParser(toReturn).applyAndExpectDouble(costFunction)
+    toReturn.cost = ListenerParser.processCostParser(toReturn,attributeDefinitions()).applyAndExpectDouble(costFunction)
     processes = toReturn :: processes
     toReturn
   }
@@ -190,7 +190,7 @@ class FactoryModel(verbosity:String=>Unit,
                             costFunction:String = "0") = {
     val toReturn = SplittingBatchProcess(m, numberOfBatches, batchDuration, inputs, outputs, name, transformFunction, verbosity, nextProcessID)
     nextProcessID += 1
-    toReturn.cost = ListenerParser.processCostParser(toReturn).applyAndExpectDouble(costFunction)
+    toReturn.cost = ListenerParser.processCostParser(toReturn,attributeDefinitions()).applyAndExpectDouble(costFunction)
     processes = toReturn :: processes
     toReturn
   }
@@ -215,7 +215,7 @@ class FactoryModel(verbosity:String=>Unit,
                                   costFunction:String = "0") = {
     val toReturn = SplittingSingleBatchProcess(m, batchDuration, inputs, outputs, transformFunction, name, verbosity, nextProcessID)
     nextProcessID += 1
-    toReturn.cost = ListenerParser.processCostParser(toReturn).applyAndExpectDouble(costFunction)
+    toReturn.cost = ListenerParser.processCostParser(toReturn,attributeDefinitions()).applyAndExpectDouble(costFunction)
     processes = toReturn :: processes
     toReturn
   }
@@ -232,11 +232,12 @@ class FactoryModel(verbosity:String=>Unit,
                   initialContent:List[(Int,ItemClass)] = List.empty,
                   name:String,
                   overflowOnInput:Boolean,
-                  costFunction:String = "0") = {
+                  costFunction:String = "0",
+                  attributes:AttributeDefinitions) = {
 
     val toReturn = new LIFOStorage(maxSize, initialContent, name, verbosity, overflowOnInput,nextStorageID)
     nextStorageID += 1
-    toReturn.cost = ListenerParser.storageCostParser(toReturn).applyAndExpectDouble(costFunction)
+    toReturn.cost = ListenerParser.storageCostParser(toReturn,attributes).applyAndExpectDouble(costFunction)
     storages = toReturn :: storages
     toReturn
   }
@@ -253,10 +254,11 @@ class FactoryModel(verbosity:String=>Unit,
                   initialContent:List[(Int,ItemClass)],
                   name:String,
                   overflowOnInput:Boolean,
-                  costFunction:String = "0") = {
+                  costFunction:String = "0",
+                  attributes:AttributeDefinitions) = {
     val toReturn = new FIFOStorage(maxSize, initialContent, name, verbosity, overflowOnInput,nextStorageID)
     nextStorageID += 1
-    toReturn.cost = ListenerParser.storageCostParser(toReturn).applyAndExpectDouble(costFunction)
+    toReturn.cost = ListenerParser.storageCostParser(toReturn,attributes).applyAndExpectDouble(costFunction)
     storages = toReturn :: storages
     toReturn
   }
@@ -302,8 +304,8 @@ class FactoryModel(verbosity:String=>Unit,
   override def toString: String = {
     ("FactoryModel \n" +
       m.toString() + "\nProcesses:\n"
-    + processes.mkString("\n") + "\nstorages:\n"
-    + storages.mkString("\n") + "\nqueries:\n"
+      + processes.mkString("\n") + "\nstorages:\n"
+      + storages.mkString("\n") + "\nqueries:\n"
       + ms.toString)
   }
 }

@@ -2,7 +2,7 @@ package oscar.des.flow.modeling
 
 import oscar.des.engine.Model
 import oscar.des.flow.core.ItemClassHelper._
-import oscar.des.flow.core.{ItemClassTransformWitAdditionalOutput, ItemClassTransformFunction, Putable, Fetchable}
+import oscar.des.flow.core._
 import oscar.des.flow.lib._
 import scala.language.implicitConversions
 
@@ -10,7 +10,7 @@ import scala.language.implicitConversions
   * and ou might not need this dimension in your model,
   * this trait provides implicit translation eg. from Float to function to Float
   */
-trait FactoryHelper {
+trait FactoryHelper extends AttributeHelper{
 
   implicit def doubleToConstantDoubleFunction(f: Double): (() => Double) = () => f
   implicit def intToConstantDoubleFunction(f: Int): (() => Double) = () => f
@@ -40,7 +40,7 @@ trait FactoryHelper {
                          verbosity:String=>Unit = null,
                          costFunction:String = "0") = {
     val toReturn = SingleBatchProcess(m:Model,batchDuration,inputs,outputs,transformFunction,name,verbosity)
-    toReturn.cost = ListenerParser.processCostParser(toReturn).applyAndExpectDouble(costFunction)
+    toReturn.cost = ListenerParser.processCostParser(toReturn,attributeDefinitions()).applyAndExpectDouble(costFunction)
     toReturn
   }
 
@@ -65,7 +65,7 @@ trait FactoryHelper {
                    verbosity:String=>Unit = null,
                    costFunction:String = "0") ={
     val toReturn = new BatchProcess(m,numberOfBatches,batchDuration,inputs,outputs,name,transformFunction,verbosity)
-    toReturn.cost = ListenerParser.processCostParser(toReturn).applyAndExpectDouble(costFunction)
+    toReturn.cost = ListenerParser.processCostParser(toReturn,attributeDefinitions()).applyAndExpectDouble(costFunction)
     toReturn
   }
 
@@ -95,7 +95,7 @@ trait FactoryHelper {
                           verbosity:String=>Unit = null,
                           costFunction:String  = "0") = {
     val toReturn = new ConveyorBeltProcess(m:Model,processDuration,minimalSeparationBetweenBatches,inputs,outputs,transformFunction,name,verbosity)
-    toReturn.cost = ListenerParser.processCostParser(toReturn).applyAndExpectDouble(costFunction)
+    toReturn.cost = ListenerParser.processCostParser(toReturn,attributeDefinitions()).applyAndExpectDouble(costFunction)
     toReturn
   }
 
@@ -120,7 +120,7 @@ trait FactoryHelper {
                             verbosity:String=>Unit = null,
                             costFunction:String) = {
     val toReturn = SplittingBatchProcess(m, numberOfBatches, batchDuration, inputs, outputs, name, transformFunction, verbosity)
-    toReturn.cost = ListenerParser.processCostParser(toReturn).applyAndExpectDouble(costFunction)
+    toReturn.cost = ListenerParser.processCostParser(toReturn,attributeDefinitions()).applyAndExpectDouble(costFunction)
     toReturn
   }
 
@@ -147,7 +147,7 @@ trait FactoryHelper {
                                   verbosity:String=>Unit = null,
                                   costFunction:String = "0") = {
     val toReturn = SplittingSingleBatchProcess(m, batchDuration, inputs, outputs, transformFunction, name, verbosity)
-    toReturn.cost = ListenerParser.processCostParser(toReturn).applyAndExpectDouble(costFunction)
+    toReturn.cost = ListenerParser.processCostParser(toReturn,attributeDefinitions()).applyAndExpectDouble(costFunction)
     toReturn
   }
 
@@ -165,9 +165,10 @@ trait FactoryHelper {
                   name:String,
                   verbosity:String=>Unit,
                   overflowOnInput:Boolean,
-                  costFunction:String = "0") = {
+                  costFunction:String = "0",
+                  attributes:AttributeDefinitions) = {
     val toReturn = new LIFOStorage(maxSize, initialContent, name, verbosity, overflowOnInput,0)
-    toReturn.cost = ListenerParser.storageCostParser(toReturn).applyAndExpectDouble(costFunction)
+    toReturn.cost = ListenerParser.storageCostParser(toReturn,attributes).applyAndExpectDouble(costFunction)
     toReturn
   }
 
@@ -185,9 +186,10 @@ trait FactoryHelper {
                   name:String,
                   verbosity:String=>Unit,
                   overflowOnInput:Boolean,
-                  costFunction:String = "0") = {
+                  costFunction:String = "0",
+                  attributes:AttributeDefinitions) = {
     val toReturn = new FIFOStorage(maxSize, initialContent, name, verbosity, overflowOnInput,0)
-    toReturn.cost = ListenerParser.storageCostParser(toReturn).applyAndExpectDouble(costFunction)
+    toReturn.cost = ListenerParser.storageCostParser(toReturn,attributes).applyAndExpectDouble(costFunction)
     toReturn
   }
 }

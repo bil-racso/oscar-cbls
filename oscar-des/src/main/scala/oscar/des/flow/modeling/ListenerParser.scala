@@ -1,6 +1,7 @@
 package oscar.des.flow.modeling
 
 import oscar.des.engine.Model
+import oscar.des.flow.core.{AttributeDefinitions, Attribute, AttributeCondition}
 import oscar.des.flow.lib._
 
 import scala.collection.immutable.SortedMap
@@ -28,31 +29,32 @@ case class MultipleParsingError(s:String) extends MultipleParsingResult
 
 object ListenerParser{
 
-  def apply(storages:Iterable[Storage],processes:Iterable[ActivableProcess]):ListenerParser = {
+  def apply(storages:Iterable[Storage],processes:Iterable[ActivableProcess],a:AttributeDefinitions):ListenerParser = {
     val storagesMap = storages.foldLeft[SortedMap[String,Storage]](SortedMap.empty)(
       (theMap,storage) => theMap + ((storage.name,storage)))
     val processMap = processes.foldLeft[SortedMap[String,ActivableProcess]](SortedMap.empty)(
       (theMap,process) => theMap + ((process.name,process)))
-    new ListenerParser(storagesMap, processMap)
+    new ListenerParser(storagesMap, processMap,a)
   }
 
-  def apply(storages:Iterable[Storage],processes:Iterable[ActivableProcess], expressions:List[(String,String)]): MultipleParsingResult ={
-    val myParser = ListenerParser(storages, processes)
+  def apply(storages:Iterable[Storage],processes:Iterable[ActivableProcess], expressions:List[(String,String)],a:AttributeDefinitions): MultipleParsingResult ={
+    val myParser = ListenerParser(storages, processes,a)
     myParser.parseAllListeners(expressions)
   }
 
-  def processCostParser(process:ActivableProcess):ListenerParser = {
-    new ListenerParser(SortedMap.empty, SortedMap.empty[String,ActivableProcess]+(("this",process)))
+  def processCostParser(process:ActivableProcess,a:AttributeDefinitions):ListenerParser = {
+    new ListenerParser(SortedMap.empty, SortedMap.empty[String,ActivableProcess]+(("this",process)),a)
   }
 
-  def storageCostParser(storage:Storage):ListenerParser = {
-    new ListenerParser(SortedMap.empty[String,Storage]+(("this",storage)), SortedMap.empty)
+  def storageCostParser(storage:Storage,a:AttributeDefinitions):ListenerParser = {
+    new ListenerParser(SortedMap.empty[String,Storage]+(("this",storage)), SortedMap.empty,a)
   }
 }
 
 class ListenerParser(storages:Map[String,Storage],
-                     processes:Map[String,ActivableProcess])
-  extends ParserWithSymbolTable with ListenersHelper{
+                     processes:Map[String,ActivableProcess],
+                     attributes:AttributeDefinitions)
+  extends ParserWithSymbolTable with ListenersHelper with AttributeHelper{
 
   protected override val whiteSpace = """(\s|//.*|(?m)/\*(\*(?!/)|[^*])*\*/)+""".r
 
@@ -79,8 +81,8 @@ class ListenerParser(storages:Map[String,Storage],
 
   var declaredBoolExpr:SortedMap[String,BoolExpr] = SortedMap.empty[String,BoolExpr]
   var declaredDoubleExpr:SortedMap[String,DoubleExpr] = (SortedMap.empty[String,DoubleExpr]
-  ++ storages.map(nameAndStorage => ("cost of " + nameAndStorage._1, nameAndStorage._2.cost))
-  ++ processes.map(nameAndProcess => ("cost of " + nameAndProcess._1, nameAndProcess._2.cost)))
+    ++ storages.map(nameAndStorage => ("cost of " + nameAndStorage._1, nameAndStorage._2.cost))
+    ++ processes.map(nameAndProcess => ("cost of " + nameAndProcess._1, nameAndProcess._2.cost)))
 
   def apply(input:String):ListenerParsingResult = {
     parseAll(expressionParser, input) match {
@@ -121,7 +123,7 @@ class ListenerParser(storages:Map[String,Storage],
         case "=" => eq(a,b)
         case "!=" => neq(a,b)
       }}
-    | disjunctionParser)
+      | disjunctionParser)
 
   def disjunctionParser:Parser[BoolExpr] =
     conjunctionParser ~ opt("|"~>disjunctionParser) ^^ {
@@ -177,12 +179,12 @@ class ListenerParser(storages:Map[String,Storage],
       case a~Some("/"~b) => div(a,b)}
 
   def atomicDoubleExprParser:Parser[DoubleExpr] = (
-    storageDoubleProbe("content",stockLevel)
+    "content"~>"("~>storageParser ~opt(","~>attributeConditionParser) <~")" ^^ {case storage~cond => stockLevel(storage,cond)}
       | storageDoubleProbe("capacity",stockCapacity)
       | storageDoubleProbe("relativeStockLevel",relativeStockLevel)
-      | storageDoubleProbe("totalPut",totalPut)
-      | storageDoubleProbe("totalFetch",totalFetch)
-      | storageDoubleProbe("totalLosByOverflow",totalLosByOverflow)
+      | "totalPut"~>"("~>storageParser ~opt(","~>attributeConditionParser) <~")" ^^ {case storage~cond => totalPut(storage,cond)}
+      | "totalFetch"~>"("~>storageParser ~opt(","~>attributeConditionParser) <~")" ^^ {case storage~cond => totalFetch(storage,cond)}
+      | "totalLosByOverflow"~>"("~>storageParser ~opt(","~>attributeConditionParser) <~")" ^^ {case storage~cond => totalLosByOverflow(storage,cond)}
       | storageDoubleProbe("cost",(s:Storage) => s.cost)
       | processDoubleProbe("cost",(p:ActivableProcess) => p.cost)
       | processDoubleProbe("completedBatchCount",completedBatchCount)
@@ -274,19 +276,41 @@ class ListenerParser(storages:Map[String,Storage],
   def identifier:Parser[String] = identifierSpaceAllowed | identifierNoSpaceAllowed
 
   def doubleParser:Parser[Double] = """[0-9]+(\.[0-9]+)?""".r ^^ {case s:String => s.toDouble}
+
+
+  def attributeConditionParser:Parser[AttributeCondition] = disjunctionAttributeParser
+  def disjunctionAttributeParser:Parser[AttributeCondition] =
+    conjunctionAttributeParser ~ opt("|"~>disjunctionAttributeParser) ^^ {
+      case a~None => a
+      case a~Some(b) => or(a,b)}
+
+  def conjunctionAttributeParser:Parser[AttributeCondition]  =
+    atomicBoolExprAttributeParser ~ opt("&"~>conjunctionAttributeParser) ^^ {
+      case a~None => a
+      case a~Some(b) => and(a,b)}
+
+  def atomicBoolExprAttributeParser:Parser[AttributeCondition] = (
+    "!"~>disjunctionAttributeParser^^{case (b:AttributeCondition) => not(b)}
+      | "("~>disjunctionAttributeParser<~")"
+      |attribute^^{attributeTerminal(_)}
+    )
+
+  private def attribute: Parser[Attribute] =
+    identifier convertStringUsingSymbolTable(attributes.attributeMap, "attribute")
 }
 
-object ParserTester extends App with FactoryHelper{
+object ParserTester extends App with FactoryHelper with AttributeHelper{
 
   val m = new Model
-  val aStorage = fIFOStorage(10,Nil,"aStorage",null,false)
-  val bStorage = fIFOStorage(10,Nil,"bStorage",null,false)
-  val xStorage = fIFOStorage(10,Nil,"x-_ Storage",null,false)
+  val attributes = attributeDefinitions("poorQualityStuffInside")
+  val aStorage = fIFOStorage(10,Nil,"aStorage",null,false,"0",attributes)
+  val bStorage = fIFOStorage(10,Nil,"bStorage",null,false,"0",attributes)
+  val xStorage = fIFOStorage(10,Nil,"x-_ Storage",null,false,"0",attributes)
 
   val aProcess = singleBatchProcess(m, 5000, Array(), Array((()=>1,aStorage)), null, "aProcess", null, "completedBatchCount(this) * 0.45")
   val bProcess = singleBatchProcess(m, 5000, Array(), Array((()=>1,aStorage)), null, "bProcess", null)
 
-  val myParser = ListenerParser(List(aStorage,bStorage,xStorage), List(aProcess,bProcess))
+  val myParser = ListenerParser(List(aStorage,bStorage,xStorage), List(aProcess,bProcess),attributes)
 
   println("testParseIdentifierWithSpace:" + myParser.parseAll(myParser.identifierSpaceAllowed, "\"coucou gamin\""))
   println("testParseIdentifier:" + myParser.parseAll(myParser.identifier, "\"coucou gamin\""))
@@ -298,6 +322,7 @@ object ParserTester extends App with FactoryHelper{
   }
   testOn("cost(\"x-_ Storage\")")
   testOn("cost(aProcess) + cost(aStorage)")
+  testOn("content(aStorage,poorQualityStuffInside)")
   testOn("completedBatchCount(aProcess) /*a comment in the middle*/ * totalPut(aStorage)")
   testOn("-(-(-completedBatchCount(aProcess)) * -totalPut(aStorage))")
   testOn("-(-(-completedBatchCount(aProcess)) + -totalPut(aStorage))")

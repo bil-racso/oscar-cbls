@@ -26,6 +26,8 @@ case class RegisteredAccumulating(id:Int) extends ExpressionStatus(2) {
   }
 }
 
+import oscar.des.flow.core.AttributeCondition
+
 import scala.collection.immutable.SortedMap
 
 //This file is about thing we want to measure on the factory process
@@ -270,11 +272,17 @@ case class Empty(s:Storage) extends BoolExpr(false){
  * the level of the storage s in number of units
  * @param s a storage
  */
-case class StockLevel(s:Storage) extends DoubleExpr(false){
-  override def updatedValue(time:Double): Double = s.contentSize
+case class StockLevel(s:Storage, a:Option[AttributeCondition]) extends DoubleExpr(false){
+  val specificCondition:Boolean = a match{case None => false case Some(_) => true}
+  val measurer = if(specificCondition) s.measureCondition(a.head) else null
 
-  override def cloneReset(boolMap: Map[BoolExpr, BoolExpr], doubleMap: Map[DoubleExpr, DoubleExpr], storeMap: Map[Storage, Storage], processMap: Map[ActivableProcess, ActivableProcess]): DoubleExpr =
-    StockLevel(storeMap(s))
+  override def updatedValue(time:Double): Double = if(specificCondition) measurer.content else s.contentSize
+
+  override def cloneReset(boolMap: Map[BoolExpr, BoolExpr],
+                          doubleMap: Map[DoubleExpr, DoubleExpr],
+                          storeMap: Map[Storage, Storage],
+                          processMap: Map[ActivableProcess, ActivableProcess]): DoubleExpr =
+    StockLevel(storeMap(s),a)
 }
 
 /**
@@ -303,33 +311,43 @@ case class RelativeStockLevel(s:Storage) extends DoubleExpr(false){
  * the number of items that have been put in the storage since the beginning of the simulation, not counting the initial ones
  * @param s a storage
  */
-case class TotalPut(s:Storage) extends DoubleExpr(false){
-  override def updatedValue(time:Double): Double = s.totalPut
+case class TotalPut(s:Storage, a:Option[AttributeCondition]) extends DoubleExpr(false){
+  val specificCondition:Boolean = a match{case None => false case Some(_) => true}
+  val measurer = if(specificCondition) s.measureCondition(a.head) else null
+
+  override def updatedValue(time:Double): Double = if(specificCondition) measurer.puts else s.totalPut
 
   override def cloneReset(boolMap: Map[BoolExpr, BoolExpr], doubleMap: Map[DoubleExpr, DoubleExpr], storeMap: Map[Storage, Storage], processMap: Map[ActivableProcess, ActivableProcess]): DoubleExpr =
-    TotalPut(storeMap(s))
+    TotalPut(storeMap(s),a)
 }
 
 /**
  * the number of items that have been taken out of the storage since the beginning of the trace
  * @param s a storage
  */
-case class TotalFetch(s:Storage) extends DoubleExpr(false){
-  override def updatedValue(time:Double): Double = s.totalFetch
+case class TotalFetch(s:Storage, a:Option[AttributeCondition]) extends DoubleExpr(false){
+  val specificCondition:Boolean = a match{case None => false case Some(_) => true}
+  val measurer = if(specificCondition) s.measureCondition(a.head) else null
+
+  override def updatedValue(time:Double): Double = if(specificCondition) measurer.gets else s.totalFetch
+
 
   override def cloneReset(boolMap: Map[BoolExpr, BoolExpr], doubleMap: Map[DoubleExpr, DoubleExpr], storeMap: Map[Storage, Storage], processMap: Map[ActivableProcess, ActivableProcess]): DoubleExpr =
-    TotalFetch(storeMap(s))
+    TotalFetch(storeMap(s),a)
 }
 
 /**
  * the number of items that have been lost by the storage through overflow. obviously zero if the storage does not overflow.
  * @param s a storage
  */
-case class TotalLosByOverflow(s:Storage) extends DoubleExpr(false){
-  override def updatedValue(time:Double): Double = s.totalLosByOverflow
+case class TotalLosByOverflow(s:Storage, a:Option[AttributeCondition]) extends DoubleExpr(false){
+  val specificCondition:Boolean = a match{case None => false case Some(_) => true}
+  val measurer = if(specificCondition) s.measureCondition(a.head) else null
+
+  override def updatedValue(time:Double): Double = if(specificCondition) measurer.overflow else s.totalLosByOverflow
 
   override def cloneReset(boolMap: Map[BoolExpr, BoolExpr], doubleMap: Map[DoubleExpr, DoubleExpr], storeMap: Map[Storage, Storage], processMap: Map[ActivableProcess, ActivableProcess]): DoubleExpr =
-    TotalLosByOverflow(storeMap(s))
+    TotalLosByOverflow(storeMap(s),a)
 }
 
 /**
@@ -522,9 +540,9 @@ case class Since(a:BoolExpr,b:BoolExpr) extends BoolExpr(true,a,b){
 
 /**
  * true iff p is true now, and was false at the previous step in the trace
- * BEWARE that this is a dangerous epxression, since time is event-based,
+ * BEWARE that this is a dangerous expression, since time is event-based,
  * so that an additional artifact in the model might introduce additional intermediary steps)
- * @param p
+ * @param p a boolean expression
  */
 case class BecomesTrue(p:BoolExpr) extends BoolExpr(true,p){
   var previousValue = p.value
@@ -543,7 +561,7 @@ case class BecomesTrue(p:BoolExpr) extends BoolExpr(true,p){
  * true whenever the value of p changes, that is, whenever it is different from its value at the previous itration step
  * BEWARE that this is a dangerous expression, since time is event-based,
  * so that an additional artifact in the model might introduce additional intermediary steps)
- * @param p an expression; it might be a boolean or a double expression
+ * @param b an expression; it might be a boolean or a double expression
  */
 case class BoolChanged(b:BoolExpr) extends BoolExpr(true,b){
   def prevValueNormalized:Double =if (b.value) 1.0 else 0.0
@@ -706,7 +724,7 @@ case class Minus(a:DoubleExpr,b:DoubleExpr) extends DoubleExpr(false,a,b){
  * @param defaultValueIfDividerIsZero the default value for this if b is zero
  */
 case class Div(a:DoubleExpr,b:DoubleExpr,defaultValueIfDividerIsZero:Double = Double.NaN) extends DoubleExpr(false,a,b){
-  override def updatedValue(time:Double): Double = if(b.value == 0 && !defaultValueIfDividerIsZero.isNaN) defaultValueIfDividerIsZero else (a.value / b.value)
+  override def updatedValue(time:Double): Double = if(b.value == 0 && !defaultValueIfDividerIsZero.isNaN) defaultValueIfDividerIsZero else a.value / b.value
 
   override def cloneReset(boolMap: Map[BoolExpr, BoolExpr], doubleMap: Map[DoubleExpr, DoubleExpr], storeMap: Map[Storage, Storage], processMap: Map[ActivableProcess, ActivableProcess])=
     Div(doubleMap(a),doubleMap(b),defaultValueIfDividerIsZero)
@@ -818,7 +836,7 @@ case class MaxOnHistory(s:DoubleExpr, when:BoolExpr = null) extends DoubleExpr(t
   }
 
   override def cloneReset(boolMap: Map[BoolExpr, BoolExpr], doubleMap: Map[DoubleExpr, DoubleExpr], storeMap: Map[Storage, Storage], processMap: Map[ActivableProcess, ActivableProcess])=
-    MaxOnHistory(doubleMap(s),(if (when == null) null else boolMap(when)))
+    MaxOnHistory(doubleMap(s),if (when == null) null else boolMap(when))
 }
 
 

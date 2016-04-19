@@ -1,5 +1,6 @@
 package oscar.des.flow.modeling
 
+import oscar.des.flow.core.AttributeCondition
 import oscar.des.flow.lib._
 import scala.language.implicitConversions
 
@@ -22,7 +23,7 @@ trait ListenersHelper{
    * the level of the storage s in number of units
    * @param s a storage
    */
-  def stockLevel(s:Storage) = StockLevel(s:Storage)
+  def stockLevel(s:Storage, a:Option[AttributeCondition]) = StockLevel(s:Storage,a)
 
   /**
    * the maximal number of item that can be put in the storage s
@@ -40,19 +41,19 @@ trait ListenersHelper{
    * the number of items that have been put in the storage since the beginning of the simulation, not counting the initial ones
    * @param s a storage
    */
-  def totalPut(s:Storage) = TotalPut(s:Storage)
+  def totalPut(s:Storage, a:Option[AttributeCondition]) = TotalPut(s:Storage,a)
 
   /**
    * the number of items that have been taken out of the storage since the beginning of the trace
    * @param s a storage
    */
-  def totalFetch(s:Storage) = TotalFetch(s:Storage)
+  def totalFetch(s:Storage, a:Option[AttributeCondition]) = TotalFetch(s:Storage,a)
 
   /**
    * the number of items that have been lost by the storage through overflow. obviously zero if the storage does not overflow.
    * @param s a storage
    */
-  def totalLosByOverflow(s:Storage) = TotalLosByOverflow(s:Storage)
+  def totalLosByOverflow(s:Storage, a:Option[AttributeCondition]) = TotalLosByOverflow(s:Storage,a)
 
   /**
    * true if the process is running, false otherwise. a process might not be running if it is blocked by lack of input material or output storage blocking the outputting of items at the output of the process.
@@ -181,7 +182,7 @@ trait ListenersHelper{
    * true whenever the value of p changes, that is, whenever it is different from its value at the previous itration step
    * BEWARE that this is a dangerous expression, since time is event-based,
    * so that an additional artifact in the model might introduce additional intermediary steps)
-   * @param p an expression; it might be a boolean or a double expression
+   * @param b an expression; it might be a boolean or a double expression
    */
   def boolChanged(b:BoolExpr) = BoolChanged(b:BoolExpr)
 

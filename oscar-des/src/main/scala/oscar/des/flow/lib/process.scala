@@ -69,7 +69,7 @@ case class SingleBatchProcess(m:Model,
   override def isRunning: Boolean = !waiting
   override def completedBatchCount: Int = performedBatches
   override def startedBatchCount: Int = startedBatches
-  override def totalWaitDuration():Double = if (waiting) mTotalWaitDuration + m.clock() - startWaitTime else mTotalWaitDuration
+  override def totalWaitDuration:Double = if (waiting) mTotalWaitDuration + m.clock() - startWaitTime else mTotalWaitDuration
 
   startBatches()
 
@@ -199,7 +199,7 @@ case class SplittingSingleBatchProcess(m:Model,
 
   override def startedBatchCount: Int = startedBatches
 
-  override def totalWaitDuration():Double = if (waiting) mTotalWaitDuration + m.clock() - startWaitTime else mTotalWaitDuration
+  override def totalWaitDuration:Double = if (waiting) mTotalWaitDuration + m.clock() - startWaitTime else mTotalWaitDuration
 
   startBatches()
 
@@ -345,7 +345,7 @@ class ConveyorBeltProcess(m:Model,
   private var mTotalBlockedTime:Double = 0.0
   restartInputtingIfNeeded()
 
-  override def totalWaitDuration():Double = if (blocked) mTotalBlockedTime + m.clock() - startBlockingTime else mTotalBlockedTime
+  override def totalWaitDuration:Double = if (blocked) mTotalBlockedTime + m.clock() - startBlockingTime else mTotalBlockedTime
 
   override def toString: String = {
     name + " " + this.getClass.getSimpleName + ":: content:" + belt.size + " totalInputBatches:" + totalInputBatches + " totalOutputBatches:" + totalOutputBatches + " totalBlockedTime:" + totalWaitDuration + (if (blocked) " blocked" else " running")

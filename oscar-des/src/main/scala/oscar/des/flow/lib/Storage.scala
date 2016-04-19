@@ -122,19 +122,16 @@ class AttributeConditionCounter(a:AttributeCondition, initContent:Iterable[(Int,
   def notifyPut(itemClass:ItemClass){
     if(a.evaluate(itemClass)){
       puts+=1
-      content +=1
     }
   }
   def notifyGet(itemClass:Int){
     if(a.evaluate(itemClass)){
       gets+=1
-      content -=1
     }
   }
   def notifyOverflow(itemClass:Int){
     if(a.evaluate(itemClass)){
       overflow +=1
-      content -=1
     }
   }
 }

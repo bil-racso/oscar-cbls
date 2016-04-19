@@ -1,7 +1,7 @@
 package oscar.des.flow.lib
 
 import oscar.des.engine.Model
-import oscar.des.flow.core.{Outputter, Inputter}
+import oscar.des.flow.core.Inputter
 import oscar.des.flow.core.ItemClassHelper._
 
 import scala.collection.immutable.SortedMap
@@ -16,7 +16,7 @@ abstract class ActivableProcess(val name:String, verbosity:String=>Unit, val id:
   def isRunning:Boolean
   def completedBatchCount:Int
   def startedBatchCount:Int
-  def totalWaitDuration():Double
+  def totalWaitDuration:Double
 
   var cost:DoubleExpr = null
 
@@ -55,7 +55,7 @@ abstract class ActivableMultipleProcess(name:String, verbosity:String=>Unit, id:
   override def isRunning: Boolean = childProcesses.exists(_.isRunning)
   override def completedBatchCount: Int = sumIntOnChildren(_.completedBatchCount)
   override def startedBatchCount: Int = sumIntOnChildren(_.startedBatchCount)
-  override def totalWaitDuration():Double = sumDoubleOnChildren(_.totalWaitDuration)
+  override def totalWaitDuration:Double = sumDoubleOnChildren(_.totalWaitDuration)
 
   private def sumIntOnChildren(f:(ActivableAtomicProcess => Int)) = childProcesses.foldLeft(0)({case (i:Int,a:ActivableAtomicProcess) => i+f(a)})
   private def sumDoubleOnChildren(f:(ActivableAtomicProcess => Double)) = childProcesses.foldLeft(0.0)({case (i:Double,a:ActivableAtomicProcess) => i+f(a)})
