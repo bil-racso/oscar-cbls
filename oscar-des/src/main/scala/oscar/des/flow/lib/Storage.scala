@@ -23,35 +23,37 @@ abstract class Storage(val maxCapacity: Int,
                        val verbosity:String=>Unit,
                        overflowOnInput:Boolean,
                        val id:Int)
-  extends RichPutable with RichFetchable{
+  extends RichPutable with RichFetchable {
 
-  var cost:DoubleExpr = null
+  var cost : DoubleExpr = null
 
-  def cloneReset(newModel:Model):Storage
+  def cloneReset(newModel : Model) : Storage
 
-  class BufferCompositeItem(var n:Int, val itemClass:ItemClass)
-  implicit def coupleToComposite(c:(Int,ItemClass)):BufferCompositeItem = new BufferCompositeItem(c._1,c._2)
+  class BufferCompositeItem(var n : Int, val itemClass : ItemClass)
 
-  def totalFetch:Int = pTotalFetch
-  def totalPut:Int = pTotalPut
+  implicit def coupleToComposite(c : (Int, ItemClass)) : BufferCompositeItem = new BufferCompositeItem(c._1, c._2)
+
+  def totalFetch : Int = pTotalFetch
+
+  def totalPut : Int = pTotalPut
 
   var totalLosByOverflow = 0
 
-  def contentSize:Int
+  def contentSize : Int
 
-  private var notificationTo: List[StockNotificationTarget] = List.empty
+  private var notificationTo : List[StockNotificationTarget] = List.empty
 
-  protected def resetStorage(): Unit ={
+  protected def resetStorage() : Unit = {
     resetRichFetchable()
     resetRichPutable()
     totalLosByOverflow = 0
   }
 
-  override def toString: String = {
-    name + " " + this.getClass.getSimpleName + ":: content:" + contentSize + " max:" + maxCapacity + " totalPut:" + totalPut + " totalFetch:" + totalFetch + (if(overflowOnInput) " totalOverflow:" + totalLosByOverflow else "")
+  override def toString : String = {
+    name + " " + this.getClass.getSimpleName + ":: content:" + contentSize + " max:" + maxCapacity + " totalPut:" + totalPut + " totalFetch:" + totalFetch + (if (overflowOnInput) " totalOverflow:" + totalLosByOverflow else "")
   }
 
-  protected def flow(): Boolean = {
+  protected def flow() : Boolean = {
     var somethingCouldBeDone = false
     var finished = false
     while (!finished) {
@@ -66,10 +68,10 @@ abstract class Storage(val maxCapacity: Int,
       }
     }
 
-    if (somethingCouldBeDone){
+    if (somethingCouldBeDone) {
       //dirty but faster
       var tmp = notificationTo
-      while(tmp.nonEmpty){
+      while (tmp.nonEmpty) {
         tmp.head.notifyStockLevel(contentSize)
         tmp = tmp.tail
       }
@@ -78,36 +80,52 @@ abstract class Storage(val maxCapacity: Int,
     if (overflowOnInput) {
       val lostByOverflow = flushBlockedPuts()
       totalLosByOverflow += lostByOverflow
-      if (lostByOverflow != 0 && verbosity!=null) verbosity(name + ": overflow, lost " + lostByOverflow)
+      if (lostByOverflow != 0 && verbosity != null) verbosity(name + ": overflow, lost " + lostByOverflow)
       somethingCouldBeDone || (lostByOverflow != 0)
-    }else {
+    } else {
       somethingCouldBeDone
     }
   }
 
-  def registerNotificationTarget(t: StockNotificationTarget): Unit = {
+  def registerNotificationTarget(t : StockNotificationTarget) : Unit = {
     notificationTo = t :: notificationTo
   }
 
-  def fetch(amount: Int)(block: ItemClass => Unit) {
+  def fetch(amount : Int)(block : ItemClass => Unit) {
     appendFetch(amount)(block)
     flow()
-    if (isThereAnyWaitingFetch && verbosity!=null) verbosity("Empty storage on " + name)
+    if (isThereAnyWaitingFetch && verbosity != null) verbosity("Empty storage on " + name)
   }
 
-  def put(amount: Int, i:ItemClass)(block: () => Unit): Unit = {
-    appendPut(List((amount,i)))(block)
+  def put(amount : Int, i : ItemClass)(block : () => Unit) : Unit = {
+    appendPut(List((amount, i)))(block)
     flow()
-    if (isThereAnyWaitingPut && verbosity!=null)
+    if (isThereAnyWaitingPut && verbosity != null)
       verbosity("Full storage on " + name)
   }
 
-  protected def initialContent:List[(Int,ItemClass)]
-  var attributeCounters:List[AttributeConditionCounter] = List.empty
-  def measureCondition(a:AttributeCondition):AttributeConditionCounter = {
-    val newCounter = new AttributeConditionCounter(a,initialContent)
+  protected def initialContent : List[(Int, ItemClass)]
+
+  var attributeCounters : List[AttributeConditionCounter] = List.empty
+
+  def measureCondition(a : AttributeCondition) : AttributeConditionCounter = {
+    val newCounter = new AttributeConditionCounter(a, initialContent)
     attributeCounters = newCounter :: attributeCounters
     newCounter
+  }
+
+  override def recordFetch(nbFetched : ItemClass, itemClass : ItemClass) {
+    for (a <- attributeCounters) {
+      a.notifyGet(nbFetched, itemClass)
+    }
+  }
+
+  override def recordPut(put : List[(Int, ItemClass)]) {
+    for (a <- attributeCounters) {
+      for ((n, c) <- put) {
+        a.notifyPut(n, c)
+      }
+    }
   }
 }
 
@@ -119,19 +137,19 @@ class AttributeConditionCounter(a:AttributeCondition, initContent:Iterable[(Int,
   def content:Int = initContentCount + puts - gets - overflow
   var overflow:Int = 0
 
-  def notifyPut(itemClass:ItemClass){
+  def notifyPut(n:Int,itemClass:ItemClass){
     if(a.evaluate(itemClass)){
-      puts+=1
+      puts += n
     }
   }
-  def notifyGet(itemClass:Int){
+  def notifyGet(n:Int,itemClass:Int){
     if(a.evaluate(itemClass)){
-      gets+=1
+      gets += n
     }
   }
-  def notifyOverflow(itemClass:Int){
+  def notifyOverflow(n:Int,itemClass:Int){
     if(a.evaluate(itemClass)){
-      overflow +=1
+      overflow += n
     }
   }
 }
@@ -222,13 +240,13 @@ class FIFOStorage(maxSize:Int,
   }
 }
 
- /**
+/**
  *this type of storage acts in a LIFO-way.
  * it does matter to know this if you distinguish between different items.
  * @param maxSize the maximal content of the stock. attempting to put more items will block the putting operations
  * @param initialContent the initial content of the stock
  * @param name the name of the stock
-  * @param verbosity where verbosities should be sent, can be null
+ * @param verbosity where verbosities should be sent, can be null
  * @param overflowOnInput true if the stock overflows when there are excessing input, false to have it blocking the puts when it is full
  */
 class LIFOStorage(maxSize:Int,
@@ -242,9 +260,9 @@ class LIFOStorage(maxSize:Int,
   override def contentSize: Int = internalSize
   private[this] var internalSize: Int = content.foldLeft(0)({case (acc,bufferItem) => acc + bufferItem.n})
 
-   override def cloneReset(newModel:Model): Storage = new LIFOStorage(maxSize, initialContent,name,verbosity,overflowOnInput,id)
+  override def cloneReset(newModel:Model): Storage = new LIFOStorage(maxSize, initialContent,name,verbosity,overflowOnInput,id)
 
-   /**
+  /**
    * @param l
    * @return what remains to be pt after this put, and what has been put
    */

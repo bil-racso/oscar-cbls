@@ -85,6 +85,7 @@ trait RichFetchable extends Fetchable {
         val (remainingToFetch,fetched) = internalFetch(toFetch,alreadyFetched)
         val nbFetched = toFetch - remainingToFetch
         mTotalFetch += nbFetched
+        recordFetch(nbFetched,alreadyFetched)
         if (remainingToFetch == 0) {
           block(fetched)
           finished = false
@@ -100,6 +101,8 @@ trait RichFetchable extends Fetchable {
     }
     somethingDone
   }
+
+  def recordFetch(nbFetched:Int,itemClass:Int){}
 }
 
 /** This proposes a standard FIFO model behind the put operation,
@@ -148,6 +151,7 @@ trait RichPutable extends Putable {
         val (toPut, block) = waitingPuts.remove(0)
         val (remainingToPut,put) = internalPut(toPut)
         mTotalPut += put
+        recordPut(toPut)
         if (remainingToPut.isEmpty) {
           block()
           finished = false
@@ -179,6 +183,8 @@ trait RichPutable extends Putable {
     }
     flushedUnits
   }
+
+  def recordPut(put:List[(Int,ItemClass)]){}
 }
 
 /** This class counts a set of event,and calls a callback method
