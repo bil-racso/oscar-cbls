@@ -4,7 +4,8 @@ import oscar.cbls.invariants.core.algo.quick.QList
 
 /*** Okasaki-style red-black tree maps. ***/
 
-abstract class RedBlackTree[V]{
+//must use trait here because of specialization :-(
+trait RedBlackTree[@specialized(Int) V]{
 
   protected val R = true
   protected val B = false
@@ -82,7 +83,7 @@ abstract class RedBlackTree[V]{
 
 
 // A leaf node.
-private case class L[V]() extends RedBlackTree[V]  {
+private case class L[@specialized(Int) V]() extends RedBlackTree[V]  {
 
   def get(k : Int) : Option[V] = None
 
@@ -101,7 +102,7 @@ private case class L[V]() extends RedBlackTree[V]  {
 
   override protected[rb] def getSmallestBiggerAcc(k: Int, bestSoFar: (Int, V)) = Some(bestSoFar)
 
-  override def size: Int = 0
+  override val size: Int = 0
   override def isEmpty = true
 
   protected [rb] def valuesAcc(valuesAfter:List[V]):List[V] = valuesAfter
@@ -111,8 +112,9 @@ private case class L[V]() extends RedBlackTree[V]  {
 
 
 // A tree node.
-private case class T[V](c : Boolean, l : RedBlackTree[V], k : Int, v : Option[V], r : RedBlackTree[V]) extends RedBlackTree[V] {
-  val size = l.size + r.size + 1
+private case class T[@specialized(Int) V](c : Boolean, l : RedBlackTree[V], k : Int, v : Option[V], r : RedBlackTree[V]) extends RedBlackTree[V] {
+  private val mSize = l.size + r.size + 1
+  override def size = mSize
   override def isEmpty = false
 
   def get(k : Int) : Option[V] = {
@@ -185,10 +187,10 @@ private case class T[V](c : Boolean, l : RedBlackTree[V], k : Int, v : Option[V]
 object RedBlackTree {
 
   // empty: Converts an orderable type into an empty RBMap.
-  def empty[V] : RedBlackTree[V] = L()
+  def empty[@specialized(Int) V] : RedBlackTree[V] = L[V]()
 
   // apply: Assumes an implicit conversion.
-  def apply[V](args : (Int,V)*) : RedBlackTree[V] = {
+  def apply[@specialized(Int) V](args : (Int,V)*) : RedBlackTree[V] = {
     var currentMap : RedBlackTree[V] = L()
     for ((k,v) <- args) {
       currentMap = currentMap.insert(k,v)
@@ -198,7 +200,7 @@ object RedBlackTree {
 }
 
 //le booléen: true le noeud a déjà été montré (dans un parcour gauche à droite)
-class RBPosition[V](position:QList[(T[V],Boolean)]){
+class RBPosition[@specialized(Int) V](position:QList[(T[V],Boolean)]){
   def key:Int = position.head._1.k
   def value:V = position.head._1.v.head
   def next:Option[RBPosition[V]] = {

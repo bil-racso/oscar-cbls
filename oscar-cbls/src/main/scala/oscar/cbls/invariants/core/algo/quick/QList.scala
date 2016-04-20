@@ -22,14 +22,14 @@ class QList[@specialized T](val head:T, val tail:QList[T] = null){
     }
     toReturn
   }
-  //@deprecated("really, you should not do this","ever")
+
   def toIterable:Iterable[T] = new IterableQList(this)
 
   def toIterator:Iterator[T] = new QListIterator[T](this)
 }
 
 object QList{
-  @inline
+
   def apply[T](head:T,tail:QList[T] = null):QList[T] = new QList(head,tail)
   //@deprecated("really, you should not do this","ever")
   implicit def toIterable[T](l:QList[T]):Iterable[T] = new IterableQList(l)
