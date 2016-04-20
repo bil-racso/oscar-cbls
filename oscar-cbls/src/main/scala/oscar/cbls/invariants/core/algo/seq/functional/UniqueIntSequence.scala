@@ -27,11 +27,11 @@ class UniqueIntSequence(private[seq] val internalPositionToValue:RedBlackTree[In
 
   def valueAtPosition(position : Int) : Option[Int] = {
     val internalPosition:Int = externalToInternalPosition.forward(position)
-    internalPositionToValue(internalPosition)
+    internalPositionToValue.get(internalPosition)
   }
 
   def positionOfValue(value : Int) : Option[Int] = {
-    valueToInternalPosition(value) match{
+    valueToInternalPosition.get(value) match{
       case None => None
       case Some(internalPosition) => Some(externalToInternalPosition.backward(internalPosition))
     }

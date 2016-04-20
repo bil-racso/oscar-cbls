@@ -4,11 +4,35 @@ import oscar.cbls.invariants.core.algo.quick.QList
 
 /*** Okasaki-style red-black tree maps. ***/
 
-//must use trait here because of specialization :-(
-trait RedBlackTree[@specialized(Int) V]{
+private object RedBlackTreeLib{
+  val R = true
+  val B = false
 
-  protected val R = true
-  protected val B = false
+  // blacken: Turn a node black.
+  def blacken[V] (n : RedBlackTree[V])  : RedBlackTree[V] = {
+    n match {
+      case L() => n
+      case T(_,l,k,v,r) => T(B,l,k,v,r)
+    }
+  }
+
+  // balance: Balance a tree with balanced subtrees.
+  def balance[V] (c : Boolean) (l : RedBlackTree[V]) (k : Int) (v : Option[V]) (r : RedBlackTree[V]) : RedBlackTree[V] = {
+    (c,l,k,v,r) match {
+      case (B,T(R,T(R,a,xK,xV,b),yK,yV,c),zK,zV,d) => T(R,T(B,a,xK,xV,b),yK,yV,T(B,c,zK,zV,d))
+      case (B,T(R,a,xK,xV,T(R,b,yK,yV,c)),zK,zV,d) => T(R,T(B,a,xK,xV,b),yK,yV,T(B,c,zK,zV,d))
+      case (B,a,xK,xV,T(R,T(R,b,yK,yV,c),zK,zV,d)) => T(R,T(B,a,xK,xV,b),yK,yV,T(B,c,zK,zV,d))
+      case (B,a,xK,xV,T(R,b,yK,yV,T(R,c,zK,zV,d))) => T(R,T(B,a,xK,xV,b),yK,yV,T(B,c,zK,zV,d))
+      case (c,a,xK,xV,b) => T(c,a,xK,xV,b)
+    }
+  }
+}
+
+import RedBlackTreeLib._
+
+//must use trait here because of specialization, so we ensure that this trait is compiled into a java interface by avoiding method code altogether. in the trait.
+//as a consequence, there are duplicates in the classes implementing this trait.
+sealed trait RedBlackTree[@specialized(Int) V]{
 
   /* We could have required that K be <: Ordered[K], but this is
   actually less general than requiring an implicit parameter that can
@@ -21,36 +45,11 @@ trait RedBlackTree[@specialized(Int) V]{
   In fact, the standard prelude already defines just such an implicit:
   intWrapper. */
 
-  // blacken: Turn a node black.
-  protected def blacken (n : RedBlackTree[V])  : RedBlackTree[V] = {
-    n match {
-      case L() => n
-      case T(_,l,k,v,r) => T(B,l,k,v,r)
-    }
-  }
-
-  // balance: Balance a tree with balanced subtrees.
-  protected def balance (c : Boolean) (l : RedBlackTree[V]) (k : Int) (v : Option[V]) (r : RedBlackTree[V]) : RedBlackTree[V] = {
-    (c,l,k,v,r) match {
-      case (B,T(R,T(R,a,xK,xV,b),yK,yV,c),zK,zV,d) => T(R,T(B,a,xK,xV,b),yK,yV,T(B,c,zK,zV,d))
-      case (B,T(R,a,xK,xV,T(R,b,yK,yV,c)),zK,zV,d) => T(R,T(B,a,xK,xV,b),yK,yV,T(B,c,zK,zV,d))
-      case (B,a,xK,xV,T(R,T(R,b,yK,yV,c),zK,zV,d)) => T(R,T(B,a,xK,xV,b),yK,yV,T(B,c,zK,zV,d))
-      case (B,a,xK,xV,T(R,b,yK,yV,T(R,c,zK,zV,d))) => T(R,T(B,a,xK,xV,b),yK,yV,T(B,c,zK,zV,d))
-      case (c,a,xK,xV,b) => T(c,a,xK,xV,b)
-    }
-  }
-
   // modWith: Helper method; top node could be red.
   protected[rb] def modWith (k : Int, f : (Int, Option[V]) => Option[V]) : RedBlackTree[V]
 
-  // modifiedWith: Insert, update and delete all in one.
-  def modifiedWith (k : Int, f : (Int, Option[V]) => Option[V]) : RedBlackTree[V] =
-    blacken(modWith(k,f))
-
   // get: Retrieve a value for a key.
   def get(k : Int) : Option[V]
-
-  def apply(k:Int):Option[V] = get(k)
 
   def contains(k:Int):Boolean
 
@@ -65,28 +64,26 @@ trait RedBlackTree[@specialized(Int) V]{
   protected[rb] def getSmallestBiggerAcc(k:Int, bestSoFar:(Int,V)):Option[(Int,V)]
 
   // insert: Insert a value at a key.
-  def insert (k : Int, v : V) = modifiedWith (k, (_,_) => Some(v))
+  def insert (k : Int, v : V) : RedBlackTree[V]
 
   // remove: Delete a key.
-  //TODO: dos not actually deletes the key!!! sets NONE to the value, the tree should be pruned, actually.
-  def remove (k : Int) = modifiedWith (k, (_,_) => None)
+  def remove (k : Int) : RedBlackTree[V]
 
   def size:Int
   def isEmpty:Boolean
 
-  def values:List[V] = valuesAcc(List.empty)
+  def values:List[V]
   protected [rb] def valuesAcc(valuesAfter:List[V]):List[V]
 
-  def positionOf(k: Int):Option[RBPosition[V]] = positionOfAcc(k:Int,null)
+  def positionOf(k: Int):Option[RBPosition[V]]
   protected[rb] def positionOfAcc(k:Int,positionAcc:QList[(T[V],Boolean)]):Option[RBPosition[V]]
 }
-
 
 // A leaf node.
 private case class L[@specialized(Int) V]() extends RedBlackTree[V]  {
 
-  def get(k : Int) : Option[V] = None
 
+  def get(k : Int) : Option[V] = None
 
   override def contains(k : Int) : Boolean = false
 
@@ -108,8 +105,19 @@ private case class L[@specialized(Int) V]() extends RedBlackTree[V]  {
   protected [rb] def valuesAcc(valuesAfter:List[V]):List[V] = valuesAfter
 
   protected[rb] override def positionOfAcc(k : Int, positionAcc : QList[(T[V],Boolean)]) : Option[RBPosition[V]] = None
-}
 
+
+  //duplicates
+  def values:List[V] = valuesAcc(List.empty)
+
+  override def positionOf(k: Int):Option[RBPosition[V]] = positionOfAcc(k:Int,null)
+
+  // insert: Insert a value at a key.
+  override def insert (k : Int, v : V) = blacken(modWith(k, (_,_) => Some(v)))
+
+  // remove: Delete a key.
+  override def remove (k : Int) = blacken(modWith(k, (_,_) => None))
+}
 
 // A tree node.
 private case class T[@specialized(Int) V](c : Boolean, l : RedBlackTree[V], k : Int, v : Option[V], r : RedBlackTree[V]) extends RedBlackTree[V] {
@@ -181,6 +189,17 @@ private case class T[@specialized(Int) V](c : Boolean, l : RedBlackTree[V], k : 
 
   def hasLeft:Boolean = l.isInstanceOf[T[V]]
   def hasRight:Boolean = r.isInstanceOf[T[V]]
+
+  //duplicates
+  def values:List[V] = valuesAcc(List.empty)
+
+  override def positionOf(k: Int):Option[RBPosition[V]] = positionOfAcc(k:Int,null)
+
+  // insert: Insert a value at a key.
+  override def insert (k : Int, v : V) = blacken(modWith(k, (_,_) => Some(v)))
+
+  // remove: Delete a key.
+  override def remove (k : Int) = blacken(modWith(k, (_,_) => None))
 }
 
 // A helper object.
