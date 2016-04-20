@@ -1,12 +1,12 @@
 package oscar.cbls.invariants.core.computation
 
 import oscar.cbls.invariants.core.algo.quick.QList
+import oscar.cbls.invariants.core.algo.seq.functional.UniqueIntSequence
 import oscar.cbls.invariants.core.algo.seq.mutable.{ImmutableIntSequence, UniqueIntSequenceWithPosition, IntSequence}
 //import oscar.cbls.invariants.core.algo.seq.functional.ImmutableIntSequence
 
 sealed trait SeqValue extends Value{
-  def value:IntSequence
-  def immutableValue:ImmutableIntSequence
+  def value:UniqueIntSequence
   def domain:Domain
   def min = domain.min
   def max = domain.max
@@ -25,16 +25,16 @@ class SeqRemove(value:Int) extends SeqUpdate
 class SeqSet(value:QList[Int]) extends SeqUpdate
 
 trait SeqNotificationTarget {
-  def notifySeqChanges(v: ChangingSeqValue, d: Int, change:SeqUpdate, oldValue: IntSequence, newValue: IntSequence)
+  def notifySeqChanges(v: ChangingSeqValue, d: Int, change:SeqUpdate, oldValue: UniqueIntSequence, newValue: UniqueIntSequence)
 }
 
 abstract class ChangingSeqValue(initialValue:Iterable[Int], maxValue:Int)
   extends AbstractVariable with SeqValue{
 
-  val mNewValue:IntSequence = new UniqueIntSequenceWithPosition(maxValue)
-  val mOldValue:IntSequence = new UniqueIntSequenceWithPosition(maxValue)
+  val mNewValue:UniqueIntSequence = UniqueIntSequence(maxValue)
+  val mOldValue:UniqueIntSequence = UniqueIntSequence(maxValue)
 
-  override def value: IntSequence = {
+  override def value: UniqueIntSequence = {
     if (model == null) return mNewValue
     val propagating = model.propagating
     if (definingInvariant == null && !propagating) return mNewValue
@@ -42,7 +42,7 @@ abstract class ChangingSeqValue(initialValue:Iterable[Int], maxValue:Int)
     mOldValue
   }
 
-  def newValue:IntSequence = {
+  def newValue:UniqueIntSequence = {
     assert(model.checkExecutingInvariantOK(definingInvariant),"variable [" + this
       + "] queried for latest val by non-controlling invariant")
     mNewValue

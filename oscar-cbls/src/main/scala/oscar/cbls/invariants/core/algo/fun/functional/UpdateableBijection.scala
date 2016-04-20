@@ -3,6 +3,9 @@ package oscar.cbls.invariants.core.algo.fun.functional
 import oscar.cbls.invariants.core.algo.fun.mutable.LinearPositionTransform
 import oscar.cbls.invariants.core.algo.quick.QList
 
+object PiecewiseLinearBijectionNaive{
+  def identity:PiecewiseLinearBijectionNaive =  new PiecewiseLinearBijectionNaive(PiecewiseLinearFun.identity)
+}
 /**
  * Created by rdl on 15-04-16.
  */
@@ -44,6 +47,8 @@ class PiecewiseLinearBijectionNaive(val forward:PiecewiseLinearFun) {
       "Bijection.forward: " + forward + "\n"+
       "Bijection.backward:" + backward + "\n"
   }
+
+  def update(updates:(Int,Int,LinearPositionTransform)*):PiecewiseLinearBijectionNaive = null
 }
 
 class PivotWithTo(fromValue:Int,f:LinearPositionTransform, val toValue:Int) extends Pivot(fromValue,f) {

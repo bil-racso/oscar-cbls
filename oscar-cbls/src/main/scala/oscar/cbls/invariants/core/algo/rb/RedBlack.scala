@@ -49,6 +49,10 @@ abstract class RedBlackTree[V]{
   // get: Retrieve a value for a key.
   def get(k : Int) : Option[V]
 
+  def apply(k:Int):Option[V] = get(k)
+
+  def contains(k:Int):Boolean
+
   def getBiggestLowerOrEqual(k:Int):Option[(Int,V)]
 
   protected[rb] def getBiggestLowerAcc(k:Int, bestoFar:(Int,V)):Option[(Int,V)]
@@ -79,7 +83,11 @@ abstract class RedBlackTree[V]{
 
 // A leaf node.
 private case class L[V]() extends RedBlackTree[V]  {
+
   def get(k : Int) : Option[V] = None
+
+
+  override def contains(k : Int) : Boolean = false
 
   override protected[rb] def modWith (k : Int, f : (Int, Option[V]) => Option[V]) : RedBlackTree[V] = {
     T(R, this, k, f(k,None), this)
@@ -88,7 +96,6 @@ private case class L[V]() extends RedBlackTree[V]  {
   def getBiggestLowerOrEqual(k:Int):Option[(Int,V)] = None
 
   override protected[rb] def getBiggestLowerAcc(k:Int, bestSoFar:(Int,V)) = Some(bestSoFar)
-
 
   override def getSmallestBiggerOrEqual(k: Int):Option[(Int,V)] = None
 
@@ -112,6 +119,12 @@ private case class T[V](c : Boolean, l : RedBlackTree[V], k : Int, v : Option[V]
     if (k < this.k) l.get(k)
     else if (k > this.k) r.get(k)
     else v
+  }
+
+  override def contains(k : Int) : Boolean = {
+    if (k < this.k) l.contains(k)
+    else if (k > this.k) r.contains(k)
+    else true
   }
 
   def getBiggestLowerOrEqual(k:Int):Option[(Int,V)] = {
@@ -188,7 +201,7 @@ object RedBlackTree {
 class RBPosition[V](position:QList[(T[V],Boolean)]){
   def key:Int = position.head._1.k
   def value:V = position.head._1.v.head
-  def next():Option[RBPosition[V]] = {
+  def next:Option[RBPosition[V]] = {
 
     def unstack1(position:QList[(T[V],Boolean)]):QList[(T[V],Boolean)] = {
       if (position == null) return null
@@ -219,4 +232,34 @@ class RBPosition[V](position:QList[(T[V],Boolean)]){
     else Some(new RBPosition[V](newStack))
   }
 
+  def prev:Option[RBPosition[V]] = {
+
+    def unstack1(position:QList[(T[V],Boolean)]):QList[(T[V],Boolean)] = {
+      if (position == null) return null
+      val head = position.head
+      if (head._2){
+        //already presented, so roll back to it.
+        QList((head._1,true),position.tail)
+      }else{
+        //already presented, so unstack
+        unstack1(position.tail)
+      }
+    }
+
+    def descendToRightMost(position:QList[(T[V],Boolean)]):QList[(T[V],Boolean)] = {
+      val headTree = position.head._1
+      headTree.r match{
+        case t:T[V] => descendToRightMost(QList((t,true),position))
+        case _ => QList((headTree,true),position.tail)
+      }
+    }
+
+    val newStack = position.head._1.l match {
+      case t : T[V] => descendToRightMost(QList((t,false),position))
+      case _ => unstack1(position)
+    }
+
+    if(newStack == null) None
+    else Some(new RBPosition[V](newStack))
+  }
 }

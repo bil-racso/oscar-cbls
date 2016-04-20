@@ -133,6 +133,7 @@ class PiecewiseLinearFun() {
 
 object LinearPositionTransform{
   val identity = new LinearPositionTransform(0,false)
+  def apply(offset:Int,minus:Boolean) = new LinearPositionTransform(offset,minus)
 }
 
 /**
