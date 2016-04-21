@@ -1,6 +1,6 @@
 package oscar.cbls.invariants.core.algo.seq.mutable
 
-import oscar.cbls.invariants.core.algo.fun.mutable.{LinearPositionTransform, UpdateableBijection}
+import oscar.cbls.invariants.core.algo.fun.mutable.{LinearTransform$, UpdateableBijection}
 
 class UniqueIntSequenceWithPosition(maxVal:Int) extends UniqueIntSequence(maxVal){
 
@@ -48,7 +48,7 @@ class UniqueIntSequenceWithPosition(maxVal:Int) extends UniqueIntSequence(maxVal
       externalToInternalPosition.update(
         fromIncludedPosition,
         toIncludedPosition,
-        new LinearPositionTransform(fromIncludedPosition + toIncludedPosition,true))
+        new LinearTransform(fromIncludedPosition + toIncludedPosition,true))
     }else if(afterPosition<fromIncludedPosition){
       //moving the segment towards beginning of sequence
       val startOtherSegmentExternalPosition = afterPosition+1
@@ -57,12 +57,12 @@ class UniqueIntSequenceWithPosition(maxVal:Int) extends UniqueIntSequence(maxVal
       externalToInternalPosition.update(
         startOtherSegmentExternalPosition,
         endOtherSegmentExternalPosition,
-        new LinearPositionTransform(toIncludedPosition - fromIncludedPosition,false))
+        new LinearTransform(toIncludedPosition - fromIncludedPosition,false))
 
       externalToInternalPosition.update(
         fromIncludedPosition,
         toIncludedPosition,
-        new LinearPositionTransform(fromIncludedPosition - afterPosition,flip))
+        new LinearTransform(fromIncludedPosition - afterPosition,flip))
 
     }else{
       //moving the segment towards the endof the sequence

@@ -1,6 +1,6 @@
 package oscar.cbls.test.invariants.algo
 
-import oscar.cbls.invariants.core.algo.fun.mutable.{LinearPositionTransform, PiecewiseLinearFun}
+import oscar.cbls.invariants.core.algo.fun.mutable.{LinearTransform$, PiecewiseLinearFun}
 import oscar.cbls.invariants.core.algo.fun.functional.{PiecewiseLinearBijectionNaive, PiecewiseLinearFun}
 
 import scala.collection.parallel.mutable
@@ -20,7 +20,7 @@ object TestUpdateableBijection extends App{
     }
   }
 
-  def update(fromIncluded:Int,toIncluded:Int,add:LinearPositionTransform): Unit ={
+  def update(fromIncluded:Int,toIncluded:Int,add:LinearTransform): Unit ={
     println("BEFORE:"+
     "\nnaive:     " + fn +
     "\nfunctional:" + fnFun +
@@ -45,17 +45,17 @@ object TestUpdateableBijection extends App{
 
   println("init:" + fn)
 
-  update(6, 20, new LinearPositionTransform(26,true))
+  update(6, 20, new LinearTransform(26,true))
   println(fn)
   println("f(10) = " +fn(10))
   println
 
-  update(7, 14, new LinearPositionTransform(31,true))
+  update(7, 14, new LinearTransform(31,true))
   println(fn)
   println("f(10) = " +fn(10))
   println
 
-  update(22,40, new LinearPositionTransform(62,true))
+  update(22,40, new LinearTransform(62,true))
   println(fn)
   println("f(10) = " +fn(10))
   println

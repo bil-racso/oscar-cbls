@@ -37,7 +37,7 @@ class UpdateableBijection extends PiecewiseLinearFun{
   // UpdateableFunction
   def unApply(value:Int):Int = reverseFunction(value)
 
-  override def update(fromIncluded: Int, toIncluded: Int, additionalF: LinearPositionTransform): Unit =
+  override def update(fromIncluded: Int, toIncluded: Int, additionalF: LinearTransform): Unit =
     super.update(fromIncluded, toIncluded, additionalF)
 
   var changes:List[Change] = List.empty
@@ -54,7 +54,7 @@ class UpdateableBijection extends PiecewiseLinearFun{
     changes = new InsertChange(p.asInstanceOf[EnrichedPivot]) :: changes
   }
 
-  override protected def createNewPivot(value : Int, next : Pivot, prev : Pivot, f : LinearPositionTransform) : Pivot =
+  override protected def createNewPivot(value : Int, next : Pivot, prev : Pivot, f : LinearTransform) : Pivot =
     new EnrichedPivot(value,next,prev,f)
 
   def performReverseUpdate(){
@@ -81,9 +81,9 @@ class UpdateableBijection extends PiecewiseLinearFun{
   class EnrichedPivot(override val value:Int,
                       next:Pivot = null,
                       prev:Pivot,
-                      f: LinearPositionTransform)
+                      f: LinearTransform)
     extends Pivot(value:Int, next:Pivot, prev:Pivot, f){
-    var prevF:LinearPositionTransform = null
+    var prevF:LinearTransform = null
     var counterpart:Pivot = null
   }
 }

@@ -41,13 +41,13 @@ class PiecewiseLinearFun() {
   protected def updatedPivot(p:Pivot){}
   protected def deletedPivot(p:Pivot){}
   protected def insertedPivot(p:Pivot){}
-  protected def createNewPivot(value:Int, next:Pivot = null, prev:Pivot, f: LinearPositionTransform):Pivot = new Pivot(value, next, prev, f)
+  protected def createNewPivot(value:Int, next:Pivot = null, prev:Pivot, f: LinearTransform):Pivot = new Pivot(value, next, prev, f)
 
   def setAsIdentity(){
     transformation = RedBlackTree.empty
   }
 
-  def update(fromIncluded: Int, toIncluded: Int, additionalF: LinearPositionTransform): Unit = {
+  def update(fromIncluded: Int, toIncluded: Int, additionalF: LinearTransform): Unit = {
     println("updateFunction(from:" + fromIncluded + ", to:" + toIncluded + ", fct:" + additionalF + ")")
     transformation.getBiggestLowerOrEqual(fromIncluded) match {
       case Some((_,pivot)) if (pivot.value == fromIncluded) =>
@@ -66,12 +66,12 @@ class PiecewiseLinearFun() {
         transformation.getSmallestBiggerOrEqual(fromIncluded) match{
           case None =>
             //need to add a first pivot from this point
-            val newPivot = createNewPivot(fromIncluded, null, null, LinearPositionTransform.identity)
+            val newPivot = createNewPivot(fromIncluded, null, null, LinearTransform.identity)
             transformation = transformation.insert(fromIncluded, newPivot)
             insertedPivot(newPivot)
             updateFromPivot(newPivot, toIncluded, additionalF)
           case Some((_,next)) =>
-            val newPivot = createNewPivot(fromIncluded, null, null, LinearPositionTransform.identity)
+            val newPivot = createNewPivot(fromIncluded, null, null, LinearTransform.identity)
             transformation = transformation.insert(fromIncluded, newPivot)
             newPivot.setNextAndRelink(next)
             insertedPivot(newPivot)
@@ -80,7 +80,7 @@ class PiecewiseLinearFun() {
     }
   }
 
-  private def updateFromPivot(pivot: Pivot, toIncluded: Int, additionalF: LinearPositionTransform) {
+  private def updateFromPivot(pivot: Pivot, toIncluded: Int, additionalF: LinearTransform) {
     val next = pivot.next
     val prev = pivot.prev
     val previousCorrection = pivot.f
@@ -131,16 +131,16 @@ class PiecewiseLinearFun() {
   }
 }
 
-object LinearPositionTransform{
-  val identity = new LinearPositionTransform(0,false)
-  def apply(offset:Int,minus:Boolean) = new LinearPositionTransform(offset,minus)
+object LinearTransform{
+  val identity = new LinearTransform(0,false)
+  def apply(offset:Int,minus:Boolean) = new LinearTransform(offset,minus)
 }
 
 /**
  * linear transformer of position.
  * value => offset op value where op is + or minus, according to "boolean flip": true => - fase => +
  */
-class LinearPositionTransform(val offset:Int,val minus:Boolean){
+class LinearTransform(val offset:Int,val minus:Boolean){
   def apply(value:Int) = if(minus) offset - value else offset + value
   def unApply(value:Int) = if(minus) offset - value else value - offset
 
@@ -149,11 +149,11 @@ class LinearPositionTransform(val offset:Int,val minus:Boolean){
    * @param that
    * @return
    */
-  def apply(that: LinearPositionTransform):LinearPositionTransform = {
-    new LinearPositionTransform(this(that.offset),this.minus != that.minus)
+  def apply(that: LinearTransform):LinearTransform = {
+    new LinearTransform(this(that.offset),this.minus != that.minus)
   }
 
-  def equals(that:LinearPositionTransform):Boolean = {
+  def equals(that:LinearTransform):Boolean = {
     this.offset == that.offset && this.minus == that.minus
   }
 
@@ -167,10 +167,10 @@ class LinearPositionTransform(val offset:Int,val minus:Boolean){
 
   //this: if minus y = offset - x else y = offset + x
   //that : if minus x = offset - y else x = - offset + y
-  def invert:LinearPositionTransform = new LinearPositionTransform(if(minus) offset else (-offset),minus)
+  def invert:LinearTransform = new LinearTransform(if(minus) offset else (-offset),minus)
 }
 
-class Pivot(val value:Int, var next:Pivot = null, var prev:Pivot, var f: LinearPositionTransform){
+class Pivot(val value:Int, var next:Pivot = null, var prev:Pivot, var f: LinearTransform){
 
   override def toString = "Pivot(from:" + value + " " + f + ")"
 
@@ -193,7 +193,7 @@ class Pivot(val value:Int, var next:Pivot = null, var prev:Pivot, var f: LinearP
    * @return true if should be removed, with respect to prev if exists, false otherwise
    *         so you must first update the prev to take this into account!
    */
-  def update(transformPerformedAfter: LinearPositionTransform):Boolean = {
+  def update(transformPerformedAfter: LinearTransform):Boolean = {
     f = transformPerformedAfter(f)
     if(prev == null) return (f.isIdentity)
     return prev.f.equals(f)

@@ -59,7 +59,9 @@ trait RedBlackTree[@specialized(Int) V]{
 
   def getSmallestBiggerOrEqual(k:Int):Option[(Int,V)]
 
-  def getSmallest:Option[(Int,V)] = getSmallestBiggerOrEqual(Int.MinValue)
+  def getSmallest:Option[(Int,V)]
+
+  def getBiggest:Option[(Int,V)]
 
   protected[rb] def getSmallestBiggerAcc(k:Int, bestSoFar:(Int,V)):Option[(Int,V)]
 
@@ -123,6 +125,10 @@ case class L[@specialized(Int) V]() extends RedBlackTree[V]  {
 
   // remove: Delete a key.
   override def remove (k : Int) = blacken(modWith(k, (_,_) => None))
+
+  override def getSmallest:Option[(Int,V)] = getSmallestBiggerOrEqual(Int.MinValue)
+
+  override def getBiggest:Option[(Int,V)] = getBiggestLowerOrEqual(Int.MaxValue)
 }
 
 // A tree node.
@@ -211,6 +217,10 @@ case class T[@specialized(Int) V](c : Boolean, l : RedBlackTree[V], k : Int, v :
 
   // remove: Delete a key.
   override def remove (k : Int) = blacken(modWith(k, (_,_) => None))
+
+  override def getSmallest:Option[(Int,V)] = getSmallestBiggerOrEqual(Int.MinValue)
+
+  override def getBiggest:Option[(Int,V)] = getBiggestLowerOrEqual(Int.MaxValue)
 }
 
 // A helper object.

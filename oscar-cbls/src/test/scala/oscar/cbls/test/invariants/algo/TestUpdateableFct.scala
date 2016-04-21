@@ -1,6 +1,6 @@
 package oscar.cbls.test.invariants.algo
 
-import oscar.cbls.invariants.core.algo.fun.mutable.{LinearPositionTransform, PiecewiseLinearFun}
+import oscar.cbls.invariants.core.algo.fun.mutable.{LinearTransform$, PiecewiseLinearFun}
 import oscar.cbls.invariants.core.algo.fun.functional.{PiecewiseLinearBijectionNaive, PiecewiseLinearFun}
 
 import scala.collection.parallel.mutable
@@ -17,7 +17,7 @@ class UpdateableFunctionNaive(maxVal:Int) {
     transformation(value)
   }
 
-  def update(fromIncluded: Int, toIncluded: Int, additionalF: LinearPositionTransform): Unit = {
+  def update(fromIncluded: Int, toIncluded: Int, additionalF: LinearTransform): Unit = {
     for(i <- fromIncluded to toIncluded){
       transformation(i) = additionalF(transformation(i))
     }
@@ -45,7 +45,7 @@ object TestUpdateableFunction extends App{
     }
   }
 
-  def update(fromIncluded:Int,toIncluded:Int,add:LinearPositionTransform): Unit ={
+  def update(fromIncluded:Int,toIncluded:Int,add:LinearTransform): Unit ={
     println("BEFORE:"+
     "\nnaive:     " + fn2 +
     "\nmutable:   " + fn +
@@ -66,71 +66,71 @@ object TestUpdateableFunction extends App{
 
   println("init:" + fn)
 
-  update(6, 20, new LinearPositionTransform(26,true))
+  update(6, 20, new LinearTransform(26,true))
   println(fn)
   println("f(10) = " +fn(10))
   println
 
-  update(7, 14, new LinearPositionTransform(31,true))
+  update(7, 14, new LinearTransform(31,true))
   println(fn)
   println("f(10) = " +fn(10))
   println
 
-  update(6, 20, new LinearPositionTransform(-3,true))
-  println(fn)
-  println("f(10) = " +fn(10))
-  println
-
-
-
-  update(16, 19, new LinearPositionTransform(5,true))
-  println(fn)
-  println("f(10) = " +fn(10))
-  println
-
-  update(6, 16, new LinearPositionTransform(7,true))
+  update(6, 20, new LinearTransform(-3,true))
   println(fn)
   println("f(10) = " +fn(10))
   println
 
 
-  update(7, 14, new LinearPositionTransform(-3,false))
+
+  update(16, 19, new LinearTransform(5,true))
   println(fn)
   println("f(10) = " +fn(10))
   println
 
-  update(6, 20, new LinearPositionTransform(-3,true))
-  println(fn)
-  println("f(10) = " +fn(10))
-  println
-
-  update(2, 80, new LinearPositionTransform(-30,true))
-  update(10, 94, new LinearPositionTransform(10,false))
-  update(3, 70, new LinearPositionTransform(-7,true))
-
-  update(6, 19, new LinearPositionTransform(-13,true))
-  println(fn)
-  println("f(10) = " +fn(10))
-  println
-
-  update(7, 19, new LinearPositionTransform(2,false))
+  update(6, 16, new LinearTransform(7,true))
   println(fn)
   println("f(10) = " +fn(10))
   println
 
 
-  update(7, 16, new LinearPositionTransform(4,false))
+  update(7, 14, new LinearTransform(-3,false))
+  println(fn)
+  println("f(10) = " +fn(10))
+  println
+
+  update(6, 20, new LinearTransform(-3,true))
+  println(fn)
+  println("f(10) = " +fn(10))
+  println
+
+  update(2, 80, new LinearTransform(-30,true))
+  update(10, 94, new LinearTransform(10,false))
+  update(3, 70, new LinearTransform(-7,true))
+
+  update(6, 19, new LinearTransform(-13,true))
+  println(fn)
+  println("f(10) = " +fn(10))
+  println
+
+  update(7, 19, new LinearTransform(2,false))
   println(fn)
   println("f(10) = " +fn(10))
   println
 
 
-  update(15, 16, new LinearPositionTransform(-6,false))
+  update(7, 16, new LinearTransform(4,false))
   println(fn)
   println("f(10) = " +fn(10))
   println
 
-  update(16, 16, new LinearPositionTransform(-11,true))
+
+  update(15, 16, new LinearTransform(-6,false))
+  println(fn)
+  println("f(10) = " +fn(10))
+  println
+
+  update(16, 16, new LinearTransform(-11,true))
   println(fn)
   println("f(10) = " +fn(10))
   println

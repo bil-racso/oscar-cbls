@@ -1,6 +1,6 @@
 package oscar.cbls.invariants.core.algo.fun.functional
 
-import oscar.cbls.invariants.core.algo.fun.mutable.LinearPositionTransform
+import oscar.cbls.invariants.core.algo.fun.mutable.{LinearTransform}
 import oscar.cbls.invariants.core.algo.rb.{RBPosition, RedBlackTree}
 import scala.language.implicitConversions
 
@@ -41,12 +41,12 @@ class PiecewiseLinearFun(private[fun] val transformation: RedBlackTree[Pivot] = 
     }
   }
 
-  def composeAfter(fromIncluded: Int, toIncluded: Int, additionalFAppliedAfter: LinearPositionTransform): PiecewiseLinearFun = {
+  def composeAfter(fromIncluded: Int, toIncluded: Int, additionalFAppliedAfter: LinearTransform): PiecewiseLinearFun = {
     if(additionalFAppliedAfter.isIdentity) this
     else new PiecewiseLinearFun(updatePivotsForCompositionAfter(fromIncluded, toIncluded, additionalFAppliedAfter))
   }
 
-  private def updatePivotsForCompositionAfter(fromIncluded: Int, toIncluded: Int, additionalFAppliedAfter: LinearPositionTransform): RedBlackTree[Pivot] = {
+  private def updatePivotsForCompositionAfter(fromIncluded: Int, toIncluded: Int, additionalFAppliedAfter: LinearTransform): RedBlackTree[Pivot] = {
     //println("updatePivotsForCompositionAfter(from:" + fromIncluded + ", to:" + toIncluded + ", fct:" + additionalFAppliedAfter + ")")
 
     transformation.getBiggestLowerOrEqual(fromIncluded) match {
@@ -61,16 +61,16 @@ class PiecewiseLinearFun(private[fun] val transformation: RedBlackTree[Pivot] = 
         transformation.getSmallestBiggerOrEqual(fromIncluded) match{
           case None =>
             //need to add a first pivot from this point
-            val newPivot = new Pivot(fromIncluded, LinearPositionTransform.identity)
+            val newPivot = new Pivot(fromIncluded, LinearTransform.identity)
             updateFromPivotForCompositionAfter(newPivot, toIncluded, additionalFAppliedAfter, transformation.insert(fromIncluded, newPivot))
           case Some((_,next)) =>
-            val newPivot = new Pivot(fromIncluded, LinearPositionTransform.identity)
+            val newPivot = new Pivot(fromIncluded, LinearTransform.identity)
             updateFromPivotForCompositionAfter(newPivot, toIncluded, additionalFAppliedAfter,transformation.insert(fromIncluded, newPivot))
         }
     }
   }
 
-  private def updateFromPivotForCompositionAfter(pivot: Pivot, toIncluded: Int, additionalFAppliedAfter: LinearPositionTransform, transformation: RedBlackTree[Pivot]):RedBlackTree[Pivot] = {
+  private def updateFromPivotForCompositionAfter(pivot: Pivot, toIncluded: Int, additionalFAppliedAfter: LinearTransform, transformation: RedBlackTree[Pivot]):RedBlackTree[Pivot] = {
     if (pivot.fromValue == toIncluded+1) return transformation //finished the correction
 
     val previousCorrection = pivot.f
@@ -124,11 +124,44 @@ class PiecewiseLinearFun(private[fun] val transformation: RedBlackTree[Pivot] = 
   }
 
 
-  def updateForCompositionBefore(fromIncluded:Int, toIncluded: Int, additionalFAppliedBefore: LinearPositionTransform):RedBlackTree[Pivot] = {
+  def updateForCompositionBefore(fromIncluded:Int, toIncluded: Int, additionalFAppliedBefore: LinearTransform):RedBlackTree[Pivot] = {
+    //step1: remove all pivots between fromIncluded and toIncluded
+    //step2: recall the linear transform that was at the end, because we will need to re-put this one with an additional pivot, except if we get the same function with our new pivots
+    //Step3: generate, and store all the new pivots
+    //step4: add a finishing pivot if necessary (cfr. step2)
+
+    //remove all the pivots between fromIncluded and ToIncluded
+    val previousFinichingTransform:Option[Pivot] = pivotApplyingTo(toIncluded)
+    val (cleanedTransformation,previousPivot) = removePivotsBetween(fromIncluded,previousFinichingTransform)
+
+    //generate, and store all the new pivots
+
+    var currentPositionAfterAdditionalF = additionalFAppliedBefore(fromIncluded)
+    var currentPivotWithPosition:Option[RBPosition[Pivot]] = pivotWithPositionApplyingTo(currentPositionAfterAdditionalF)
+    while(true){
+      currentPivotWithPosition match{
+        case None =>
+        case Some(pivot) =>
+
+      }
+    }
+
 
   }
 
-  private def updateFromPivotForCompositionBefore(prevUpdatedPivot:Pivot, nextPivotToUpdate:Pivot, toIncluded: Int, additionalFAppliedBefore: LinearPositionTransform, accumulatingTransformation: RedBlackTree[Pivot]):RedBlackTree[Pivot] = {
+  def removePivotsBetween(fromIncluded:Int,firstPivotToRemove:Option[Pivot]):(RedBlackTree[Pivot],Option[Pivot]) = {
+    var currentPivotToRemove = firstPivotToRemove
+    var currentCleanedTransform = transformation
+    while (currentPivotToRemove match {
+      case None => false
+      case Some(p) if p.fromValue >= fromIncluded
+    }) {
+      currentCleanedTransform = currentCleanedTransform.remove(currentPivotToRemove.head.fromValue)
+    }
+    (currentCleanedTransform,currentPivotToRemove)
+  }
+
+  private def updateFromPivotForCompositionBefore(prevUpdatedPivot:Pivot, nextPivotToUpdate:Pivot, toIncluded: Int, additionalFAppliedBefore: LinearTransform, accumulatingTransformation: RedBlackTree[Pivot]):RedBlackTree[Pivot] = {
     if (nextPivotToUpdate.fromValue == toIncluded+1) return accumulatingTransformation //finished the correction
 
     val applyingOriginalPivot = pivotWithPositionApplyingTo(nextPivotToUpdate.fromValue).head.value
@@ -153,8 +186,22 @@ class PiecewiseLinearFun(private[fun] val transformation: RedBlackTree[Pivot] = 
       case Some(_, p) => Some(p)
     }
   }
+
+  def firstPivotAndPosition:Option[RBPosition[Pivot]] = {
+    transformation.getSmallest match{
+      case None => None
+      case Some((fromValueOfPivot,_)) => transformation.positionOf(fromValueOfPivot)
+    }
+  }
+
+  def lastPivotAndPosition:Option[RBPosition[Pivot]] = {
+    transformation.getBiggest match{
+      case None => None
+      case Some((fromValueOfPivot,_)) => transformation.positionOf(fromValueOfPivot)
+    }
+  }
 }
 
-class Pivot(val fromValue:Int, val f: LinearPositionTransform){
+class Pivot(val fromValue:Int, val f: LinearTransform){
   override def toString = "Pivot(from:" + fromValue + " " + f + ")"
 }
