@@ -25,11 +25,32 @@ class OrderingOnActivableProcesses() extends Ordering[ActivableProcess]{
 }
 
 class FactoryModel(verbosity:String=>Unit,
-                   private val m:Model = new Model,
-                   private var ms:MetricsStore = null,
-                   private var storages:List[Storage] = List.empty,
-                   private var processes:List[ActivableProcess] = List.empty,
-                   private var activationRules:List[ActivationRule] = List.empty) extends AttributeHelper{
+                   val attributes:AttributeDefinitions,
+                   private val m:Model,
+                   private var ms:MetricsStore,
+                   private var storages:List[Storage],
+                   private var processes:List[ActivableProcess],
+                   private var activationRules:List[ActivationRule]){
+
+  def this(verbosity:String=>Unit,attributes:AttributeDefinitions){
+    this(verbosity,
+      attributes,
+      m = new Model,
+      ms = null,
+      storages = List.empty,
+      processes = List.empty,
+      activationRules = List.empty)
+  }
+
+  def this(verbosity:String=>Unit){
+    this(verbosity,
+      attributes = AttributeHelper.attributeDefinitions(),
+      m = new Model,
+      ms = null,
+      storages = List.empty,
+      processes = List.empty,
+      activationRules = List.empty)
+  }
 
   private var nextStorageID = 0
   private var nextProcessID = 0
@@ -76,6 +97,7 @@ class FactoryModel(verbosity:String=>Unit,
 
     //retourner le tout
     new FactoryModel(verbosity,
+      attributes,
       newModel,
       newMetricStore,
       newStorages.values.toList,
@@ -83,7 +105,7 @@ class FactoryModel(verbosity:String=>Unit,
       newActiationRules)
   }
 
-  def setQueriesToParse(queriesNameAndExpression:List[(String,String)],attributes:AttributeDefinitions){
+  def setQueriesToParse(queriesNameAndExpression:List[(String,String)]){
     require(ms == null)
     val parser = ListenerParser(storages,processes,attributes)
     parser.parseAllListeners(queriesNameAndExpression) match{
@@ -116,7 +138,7 @@ class FactoryModel(verbosity:String=>Unit,
                          costFunction:String = "0") = {
     val toReturn = SingleBatchProcess(m,batchDuration,inputs,outputs,transformFunction,name,verbosity, nextProcessID)
     nextProcessID += 1
-    toReturn.cost = ListenerParser.processCostParser(toReturn,attributeDefinitions()).applyAndExpectDouble(costFunction)
+    toReturn.cost = ListenerParser.processCostParser(toReturn,attributes).applyAndExpectDouble(costFunction)
     processes = toReturn :: processes
     toReturn
   }
@@ -139,7 +161,7 @@ class FactoryModel(verbosity:String=>Unit,
                    costFunction:String = "0") ={
     val toReturn = new BatchProcess(m,numberOfBatches,batchDuration,inputs,outputs,name,transformFunction,verbosity, nextProcessID)
     nextProcessID += 1
-    toReturn.cost = ListenerParser.processCostParser(toReturn,attributeDefinitions()).applyAndExpectDouble(costFunction)
+    toReturn.cost = ListenerParser.processCostParser(toReturn,attributes).applyAndExpectDouble(costFunction)
     processes = toReturn :: processes
     toReturn
   }
@@ -167,7 +189,7 @@ class FactoryModel(verbosity:String=>Unit,
                           costFunction:String  = "0") = {
     val toReturn = new ConveyorBeltProcess(m:Model,processDuration,minimalSeparationBetweenBatches,inputs,outputs,transformFunction,name,verbosity, nextProcessID)
     nextProcessID += 1
-    toReturn.cost = ListenerParser.processCostParser(toReturn,attributeDefinitions()).applyAndExpectDouble(costFunction)
+    toReturn.cost = ListenerParser.processCostParser(toReturn,attributes).applyAndExpectDouble(costFunction)
     processes = toReturn :: processes
     toReturn
   }
@@ -190,7 +212,7 @@ class FactoryModel(verbosity:String=>Unit,
                             costFunction:String = "0") = {
     val toReturn = SplittingBatchProcess(m, numberOfBatches, batchDuration, inputs, outputs, name, transformFunction, verbosity, nextProcessID)
     nextProcessID += 1
-    toReturn.cost = ListenerParser.processCostParser(toReturn,attributeDefinitions()).applyAndExpectDouble(costFunction)
+    toReturn.cost = ListenerParser.processCostParser(toReturn,attributes).applyAndExpectDouble(costFunction)
     processes = toReturn :: processes
     toReturn
   }
@@ -215,7 +237,7 @@ class FactoryModel(verbosity:String=>Unit,
                                   costFunction:String = "0") = {
     val toReturn = SplittingSingleBatchProcess(m, batchDuration, inputs, outputs, transformFunction, name, verbosity, nextProcessID)
     nextProcessID += 1
-    toReturn.cost = ListenerParser.processCostParser(toReturn,attributeDefinitions()).applyAndExpectDouble(costFunction)
+    toReturn.cost = ListenerParser.processCostParser(toReturn,attributes).applyAndExpectDouble(costFunction)
     processes = toReturn :: processes
     toReturn
   }
@@ -232,8 +254,7 @@ class FactoryModel(verbosity:String=>Unit,
                   initialContent:List[(Int,ItemClass)] = List.empty,
                   name:String,
                   overflowOnInput:Boolean,
-                  costFunction:String = "0",
-                  attributes:AttributeDefinitions) = {
+                  costFunction:String = "0") = {
 
     val toReturn = new LIFOStorage(maxSize, initialContent, name, verbosity, overflowOnInput,nextStorageID)
     nextStorageID += 1
@@ -254,8 +275,7 @@ class FactoryModel(verbosity:String=>Unit,
                   initialContent:List[(Int,ItemClass)],
                   name:String,
                   overflowOnInput:Boolean,
-                  costFunction:String = "0",
-                  attributes:AttributeDefinitions) = {
+                  costFunction:String = "0") = {
     val toReturn = new FIFOStorage(maxSize, initialContent, name, verbosity, overflowOnInput,nextStorageID)
     nextStorageID += 1
     toReturn.cost = ListenerParser.storageCostParser(toReturn,attributes).applyAndExpectDouble(costFunction)

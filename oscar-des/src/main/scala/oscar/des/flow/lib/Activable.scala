@@ -14,7 +14,7 @@ abstract class Activable{
 
 abstract class ActivableProcess(val name:String, verbosity:String=>Unit, val id:Int) extends Activable{
   def isRunning:Boolean
-  def completedBatchCount:Int
+  def completedBatchCount(outputPort:Int = -1):Int
   def startedBatchCount:Int
   def totalWaitDuration:Double
 
@@ -53,7 +53,7 @@ abstract class ActivableMultipleProcess(name:String, verbosity:String=>Unit, id:
   }
 
   override def isRunning: Boolean = childProcesses.exists(_.isRunning)
-  override def completedBatchCount: Int = sumIntOnChildren(_.completedBatchCount)
+  override def completedBatchCount(outputPort:Int = -1): Int = sumIntOnChildren(_.completedBatchCount(outputPort))
   override def startedBatchCount: Int = sumIntOnChildren(_.startedBatchCount)
   override def totalWaitDuration:Double = sumDoubleOnChildren(_.totalWaitDuration)
 

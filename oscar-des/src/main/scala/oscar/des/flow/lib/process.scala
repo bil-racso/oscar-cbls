@@ -67,7 +67,7 @@ case class SingleBatchProcess(m:Model,
   }
 
   override def isRunning: Boolean = !waiting
-  override def completedBatchCount: Int = performedBatches
+  override def completedBatchCount(outputPort:Int = -1): Int = performedBatches
   override def startedBatchCount: Int = startedBatches
   override def totalWaitDuration:Double = if (waiting) mTotalWaitDuration + m.clock() - startWaitTime else mTotalWaitDuration
 
@@ -195,7 +195,7 @@ case class SplittingSingleBatchProcess(m:Model,
 
   override def isRunning: Boolean = !waiting
 
-  override def completedBatchCount: Int = performedBatches
+  override def completedBatchCount(outputPort:Int = -1): Int = if(outputPort == -1) performedBatches else completedBatches(outputPort)
 
   override def startedBatchCount: Int = startedBatches
 
@@ -316,7 +316,7 @@ class ConveyorBeltProcess(m:Model,
   private val belt: DoublyLinkedList[(Double,ItemClass)] = new DoublyLinkedList[(Double,ItemClass)]()
 
   override def isRunning: Boolean = !blocked
-  override def completedBatchCount: Int = totalOutputBatches
+  override def completedBatchCount(outputPort:Int = -1): Int = totalOutputBatches
 
   override def startedBatchCount: Int = totalInputBatches
 

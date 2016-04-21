@@ -159,7 +159,8 @@ class ListenerParser(storages:Map[String,Storage],
       | binaryOperatorDD2BParser("ne",neq)
       | "changed(" ~> (boolExprParser | doubleExprParser) <~")" ^^ {
       case b:BoolExpr => boolChanged(b)
-      case d:DoubleExpr => doubleChanged(d)}
+      case d:DoubleExpr => doubleChanged(d)
+      case _ => {throw new Exception("internal parser error"); null}}
       | "ite(" ~> boolExprParser~(","~>boolExprParser)~(","~>boolExprParser <~ ")") ^^{ case i~t~e => booleanITE(i,t,e)}
       | "("~>boolExprParser<~")"
       | failure("expected boolean expression"))
@@ -187,7 +188,9 @@ class ListenerParser(storages:Map[String,Storage],
       | "totalLosByOverflow"~>"("~>storageParser ~opt(","~>attributeConditionParser) <~")" ^^ {case storage~cond => totalLosByOverflow(storage,cond)}
       | storageDoubleProbe("cost",(s:Storage) => s.cost)
       | processDoubleProbe("cost",(p:ActivableProcess) => p.cost)
-      | processDoubleProbe("completedBatchCount",completedBatchCount)
+      | "completedBatchCount"~>"("~>processParser ~opt(","~>naturalParser)<~")" ^^ {
+      case process~None => completedBatchCount(process,-1)
+      case process~Some(portNumber) => completedBatchCount(process,portNumber)}
       | processDoubleProbe("startedBatchCount",startedBatchCount)
       | processDoubleProbe("totalWaitDuration",totalWaitDuration)
       | doubleParser ^^ {d:Double => doubleConst(d)}
@@ -276,7 +279,7 @@ class ListenerParser(storages:Map[String,Storage],
   def identifier:Parser[String] = identifierSpaceAllowed | identifierNoSpaceAllowed
 
   def doubleParser:Parser[Double] = """[0-9]+(\.[0-9]+)?""".r ^^ {case s:String => s.toDouble}
-
+  def naturalParser:Parser[Int] = """[0-9]+""".r ^^ {case s:String => s.toInt}
 
   def attributeConditionParser:Parser[AttributeCondition] = disjunctionAttributeParser
   def disjunctionAttributeParser:Parser[AttributeCondition] =

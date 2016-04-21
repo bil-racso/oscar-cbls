@@ -23,7 +23,7 @@ trait ListenersHelper{
    * the level of the storage s in number of units
    * @param s a storage
    */
-  def stockLevel(s:Storage, a:Option[AttributeCondition]) = StockLevel(s:Storage,a)
+  def stockLevel(s:Storage, a:Option[AttributeCondition]=None) = StockLevel(s:Storage,a)
 
   /**
    * the maximal number of item that can be put in the storage s
@@ -41,19 +41,19 @@ trait ListenersHelper{
    * the number of items that have been put in the storage since the beginning of the simulation, not counting the initial ones
    * @param s a storage
    */
-  def totalPut(s:Storage, a:Option[AttributeCondition]) = TotalPut(s:Storage,a)
+  def totalPut(s:Storage, a:Option[AttributeCondition]=None) = TotalPut(s:Storage,a)
 
   /**
    * the number of items that have been taken out of the storage since the beginning of the trace
    * @param s a storage
    */
-  def totalFetch(s:Storage, a:Option[AttributeCondition]) = TotalFetch(s:Storage,a)
+  def totalFetch(s:Storage, a:Option[AttributeCondition]=None) = TotalFetch(s:Storage,a)
 
   /**
    * the number of items that have been lost by the storage through overflow. obviously zero if the storage does not overflow.
    * @param s a storage
    */
-  def totalLosByOverflow(s:Storage, a:Option[AttributeCondition]) = TotalLosByOverflow(s:Storage,a)
+  def totalLosByOverflow(s:Storage, a:Option[AttributeCondition]=None) = TotalLosByOverflow(s:Storage,a)
 
   /**
    * true if the process is running, false otherwise. a process might not be running if it is blocked by lack of input material or output storage blocking the outputting of items at the output of the process.
@@ -69,7 +69,7 @@ trait ListenersHelper{
    * for a process with multiple lines, it sums up the completed batches of each line.
    * @param p a process
    */
-  def completedBatchCount(p:ActivableProcess) = CompletedBatchCount(p:ActivableProcess)
+  def completedBatchCount(p:ActivableProcess,outputPort:Int = -1) = CompletedBatchCount(p:ActivableProcess,outputPort)
 
   /**
    * the number of batches started by the process since the beginning of the trace

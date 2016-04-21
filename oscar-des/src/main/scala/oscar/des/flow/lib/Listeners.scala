@@ -368,12 +368,15 @@ case class Running(p:ActivableProcess) extends BoolExpr(false){
  * a splitting process sums up the batches delivered to each of its outputs
  * for a process with multiple lines, it sums up the completed batches of each line.
  * @param p a process
+ * @param outputPortNumber the port number to consider. If -1 it will consider the sum over all ports.
  */
-case class CompletedBatchCount(p:ActivableProcess) extends DoubleExpr(false){
-  override def updatedValue(time:Double): Double = p.completedBatchCount
+case class CompletedBatchCount(p:ActivableProcess, outputPortNumber:Int) extends DoubleExpr(false){
+  require(outputPortNumber == -1 || p.isInstanceOf[SplittingBatchProcess] || p.isInstanceOf[SplittingSingleBatchProcess])
+
+  override def updatedValue(time:Double): Double = p.completedBatchCount(outputPortNumber)
 
   override def cloneReset(boolMap: Map[BoolExpr, BoolExpr], doubleMap: Map[DoubleExpr, DoubleExpr], storeMap: Map[Storage, Storage], processMap: Map[ActivableProcess, ActivableProcess]): DoubleExpr =
-    CompletedBatchCount(processMap(p))
+    CompletedBatchCount(processMap(p),outputPortNumber)
 }
 
 //TODO: distinguish batches from splitting process?

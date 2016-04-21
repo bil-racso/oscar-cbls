@@ -1,5 +1,6 @@
 package oscar.des.flow.core
 
+import oscar.des.flow.core.AttributeSet
 import oscar.des.flow.core.ItemClassHelper.ItemClass
 
 import scala.collection.SortedSet
@@ -38,11 +39,19 @@ class AttributeDefinitions(l:String*){
   def getN(i:Int) = attributeArray(i)
 }
 
+object Attribute{
+  implicit def toSet(a:Attribute):AttributeSet = AttributeSet(SortedSet(a), a.convention)
+  implicit def toItemClass(a:Attribute):ItemClass = a.mask
+}
+
 class Attribute(val name:String, val id:Int,val convention:AttributeDefinitions) extends Ordered[Attribute]{
   def mask:Int = 1 << id
   override def compare(that: Attribute): Int = this.id.compare(that.id)
 
   override def toString: String = "Attribute(" + name + " id:" + id + ")"
+
+  def toSet:AttributeSet = AttributeSet(SortedSet(this), convention)
+  def toItemClass:ItemClass = mask
 }
 
 object AttributeSet{

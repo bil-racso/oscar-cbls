@@ -6,9 +6,8 @@ import oscar.des.flow.core._
 import scala.collection.SortedSet
 import scala.language.implicitConversions
 
-/**
- * Created by rdl on 31/08/2015.
- */
+object AttributeHelper extends AttributeHelper
+
 trait AttributeHelper {
   /**
    * defines an attribute symbol table.
