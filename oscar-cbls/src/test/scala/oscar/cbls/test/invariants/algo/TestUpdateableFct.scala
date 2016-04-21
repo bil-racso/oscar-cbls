@@ -58,7 +58,7 @@ object TestUpdateableFunction extends App{
     fn.update(fromIncluded,toIncluded,add)
     println("mutable:   " + fn)
 
-    fnFun = fnFun.update(fromIncluded,toIncluded,add)
+    fnFun = fnFun.composeAfter(fromIncluded,toIncluded,add)
     println("functional:" + fnFun)
 
     compare()

@@ -2,6 +2,7 @@ package oscar.cbls.invariants.core.algo.fun.functional
 
 import oscar.cbls.invariants.core.algo.fun.mutable.LinearPositionTransform
 import oscar.cbls.invariants.core.algo.rb.{RBPosition, RedBlackTree}
+import scala.language.implicitConversions
 
 object PiecewiseLinearFun{
   def identity = new PiecewiseLinearFun()
@@ -40,38 +41,40 @@ class PiecewiseLinearFun(private[fun] val transformation: RedBlackTree[Pivot] = 
     }
   }
 
-  def update(fromIncluded: Int, toIncluded: Int, additionalF: LinearPositionTransform): PiecewiseLinearFun = {
-    new PiecewiseLinearFun(updatePivots(fromIncluded, toIncluded, additionalF))
+  def composeAfter(fromIncluded: Int, toIncluded: Int, additionalFAppliedAfter: LinearPositionTransform): PiecewiseLinearFun = {
+    if(additionalFAppliedAfter.isIdentity) this
+    else new PiecewiseLinearFun(updatePivotsForCompositionAfter(fromIncluded, toIncluded, additionalFAppliedAfter))
   }
 
-  private def updatePivots(fromIncluded: Int, toIncluded: Int, additionalF: LinearPositionTransform): RedBlackTree[Pivot] = {
-    //println("updatePivots(from:" + fromIncluded + ", to:" + toIncluded + ", fct:" + additionalF + ")")
+  private def updatePivotsForCompositionAfter(fromIncluded: Int, toIncluded: Int, additionalFAppliedAfter: LinearPositionTransform): RedBlackTree[Pivot] = {
+    //println("updatePivotsForCompositionAfter(from:" + fromIncluded + ", to:" + toIncluded + ", fct:" + additionalFAppliedAfter + ")")
+
     transformation.getBiggestLowerOrEqual(fromIncluded) match {
       case Some((_,pivot)) if (pivot.fromValue == fromIncluded) =>
-        updateFromPivot(pivot, toIncluded, additionalF, transformation)
+        updateFromPivotForCompositionAfter(pivot, toIncluded, additionalFAppliedAfter, transformation)
       case Some((_,pivot)) =>
         //there is a pivot below the point
         //need to add an intermediary pivot, with same transform as previous one
         val newPivot = new Pivot(fromIncluded, pivot.f)
-        updateFromPivot(newPivot, toIncluded, additionalF, transformation.insert(fromIncluded, newPivot))
+        updateFromPivotForCompositionAfter(newPivot, toIncluded, additionalFAppliedAfter, transformation.insert(fromIncluded, newPivot))
       case None =>
         transformation.getSmallestBiggerOrEqual(fromIncluded) match{
           case None =>
             //need to add a first pivot from this point
             val newPivot = new Pivot(fromIncluded, LinearPositionTransform.identity)
-            updateFromPivot(newPivot, toIncluded, additionalF, transformation.insert(fromIncluded, newPivot))
+            updateFromPivotForCompositionAfter(newPivot, toIncluded, additionalFAppliedAfter, transformation.insert(fromIncluded, newPivot))
           case Some((_,next)) =>
             val newPivot = new Pivot(fromIncluded, LinearPositionTransform.identity)
-            updateFromPivot(newPivot, toIncluded, additionalF,transformation.insert(fromIncluded, newPivot))
+            updateFromPivotForCompositionAfter(newPivot, toIncluded, additionalFAppliedAfter,transformation.insert(fromIncluded, newPivot))
         }
     }
   }
 
-  private def updateFromPivot(pivot: Pivot, toIncluded: Int, additionalF: LinearPositionTransform, transformation: RedBlackTree[Pivot]):RedBlackTree[Pivot] = {
+  private def updateFromPivotForCompositionAfter(pivot: Pivot, toIncluded: Int, additionalFAppliedAfter: LinearPositionTransform, transformation: RedBlackTree[Pivot]):RedBlackTree[Pivot] = {
     if (pivot.fromValue == toIncluded+1) return transformation //finished the correction
 
     val previousCorrection = pivot.f
-    val newCorrection = additionalF(previousCorrection) //TODO: vérifier que c'est pas l'inverse
+    val newCorrection = additionalFAppliedAfter(previousCorrection)
 
     val newPivot = new Pivot(pivot.fromValue,newCorrection)
     val transformWithNewPivot = transformation.insert(pivot.fromValue,newPivot)
@@ -108,7 +111,7 @@ class PiecewiseLinearFun(private[fun] val transformation: RedBlackTree[Pivot] = 
         } else if (nextFromValue < toIncluded+1){
           //there is a next such that next.value is <= correctedTo
           //so recurse to it
-          updateFromPivot(nextPivot, toIncluded, additionalF,newTransform)
+          updateFromPivotForCompositionAfter(nextPivot, toIncluded, additionalFAppliedAfter,newTransform)
         }else {
           //check that next pivot should not be removed, actually
           newPrev match {
@@ -120,10 +123,34 @@ class PiecewiseLinearFun(private[fun] val transformation: RedBlackTree[Pivot] = 
     }
   }
 
-  def pivotApplyingTo(value:Int):Option[RBPosition[Pivot]] = {
+
+  def updateForCompositionBefore(fromIncluded:Int, toIncluded: Int, additionalFAppliedBefore: LinearPositionTransform):RedBlackTree[Pivot] = {
+
+  }
+
+  private def updateFromPivotForCompositionBefore(prevUpdatedPivot:Pivot, nextPivotToUpdate:Pivot, toIncluded: Int, additionalFAppliedBefore: LinearPositionTransform, accumulatingTransformation: RedBlackTree[Pivot]):RedBlackTree[Pivot] = {
+    if (nextPivotToUpdate.fromValue == toIncluded+1) return accumulatingTransformation //finished the correction
+
+    val applyingOriginalPivot = pivotWithPositionApplyingTo(nextPivotToUpdate.fromValue).head.value
+
+    val updatedPivot = Pivot(nextPivotToUpdate.fromValue, applyingOriginalPivot.f)
+
+
+
+
+    null
+  }
+
+  def pivotWithPositionApplyingTo(value:Int):Option[RBPosition[Pivot]] = {
     transformation.getBiggestLowerOrEqual(value) match{
       case None => None
       case Some((fromValueOfPivot,_)) => transformation.positionOf(fromValueOfPivot)
+    }
+  }
+  def pivotApplyingTo(value:Int):Option[Pivot] = {
+    transformation.getBiggestLowerOrEqual(value)  match {
+      case None => None
+      case Some(_, p) => Some(p)
     }
   }
 }

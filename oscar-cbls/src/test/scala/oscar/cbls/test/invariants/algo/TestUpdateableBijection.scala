@@ -31,7 +31,7 @@ object TestUpdateableBijection extends App{
     fn.update(fromIncluded,toIncluded,add)
     println("mutable:   " + fn)
 
-    fnFun = fnFun.update(fromIncluded,toIncluded,add)
+    fnFun = fnFun.composeAfter(fromIncluded,toIncluded,add)
     println("functional:" + fnFun)
 
     reverse = new PiecewiseLinearBijectionNaive(fnFun)

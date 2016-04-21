@@ -5,12 +5,13 @@ import oscar.cbls.invariants.core.algo.fun.mutable.LinearPositionTransform
 import oscar.cbls.invariants.core.algo.rb.{RBPosition, RedBlackTree}
 
 object UniqueIntSequence{
-  def apply(maxValue:Int, maxPivot:Int = 10):UniqueIntSequence = new UniqueIntSequence(
+  def apply(maxPivot:Int = 10, maxSize:Int = 1000):UniqueIntSequence = new UniqueIntSequence(
     RedBlackTree.empty[Int],
     RedBlackTree.empty[Int],
     PiecewiseLinearBijectionNaive.identity,
     0,
-    maxPivot
+    maxPivot,
+  maxSize
   )
 }
 
@@ -18,12 +19,17 @@ class UniqueIntSequence(private[seq] val internalPositionToValue:RedBlackTree[In
                         private[seq] val valueToInternalPosition:RedBlackTree[Int],
                         private[seq] val externalToInternalPosition:PiecewiseLinearBijectionNaive,
                         private[seq] val startFreeRangeForInternalPosition:Int,
-                        maxPivot:Int = 10)
-  extends Iterable[Int] {
+                        maxPivot:Int = 10, maxSize:Int = 1000) {
 
-  override def size : Int = valueToInternalPosition.size
+  override def toString : String = {
+    "UniqueIntSequence(\n\tinternalPositionToValue:" + internalPositionToValue.content +
+    "\n\tvalueToInternalPosition:" + valueToInternalPosition.content +
+      "\n\texternalToInternalPosition:" + externalToInternalPosition + "\n)"
+  }
 
-  override def iterator : Iterator[Int] = new UniqueIntsequenceIterator(this)
+  def size : Int = valueToInternalPosition.size
+
+  def iterator : Iterator[Int] = new UniqueIntSequenceIterator(this)
 
   def valueAtPosition(position : Int) : Option[Int] = {
     val internalPosition:Int = externalToInternalPosition.forward(position)
@@ -42,7 +48,7 @@ class UniqueIntSequence(private[seq] val internalPositionToValue:RedBlackTree[In
   def crawlerAtPosition(position : Int) : Option[IntSequenceCrawler] = {
     if (position >= this.size) None
     else {
-      val currentPivotPosition = externalToInternalPosition.forward.pivotApplyingTo(position)
+      val currentPivotPosition = externalToInternalPosition.forward.pivotWithPositionApplyingTo(position)
       val (pivotAbovePosition,internalPosition) = currentPivotPosition match {
         case None => (None,position)
         case Some(p) => (p.next,p.value.f(position))
@@ -64,47 +70,43 @@ class UniqueIntSequence(private[seq] val internalPositionToValue:RedBlackTree[In
     }
   }
 
-  def insertAfter(value:Int, pos:Int):UniqueIntSequence = {
+  def insertAtPosition(value:Int, pos:Int):UniqueIntSequence = {
+    require(pos<=size,"inserting past the end of the sequence (size:" + size + " pos:" + pos + ")")
     //insert into red blacks
     val newInternalPositionToValue = internalPositionToValue.insert(startFreeRangeForInternalPosition,value)
     val newValueToInternalPosition = valueToInternalPosition.insert(value,startFreeRangeForInternalPosition)
 
-    //move sequence after position one upward
+    //move sequence after position, one upward
     //move inserted point at its position
-    val newExternalToInternalPosition = externalToInternalPosition.update(
-      (pos+1,Int.MaxValue,LinearPositionTransform(-1,false)),
-      (pos+1,pos+1,LinearPositionTransform(pos-startFreeRangeForInternalPosition,false)))
+    val oldExternalPosRelatedToFreeInternalPos = externalToInternalPosition.backward(startFreeRangeForInternalPosition)
 
-    new UniqueIntSequence(newInternalPositionToValue,
+    println("old external pointing to internalFreeValue:" + oldExternalPosRelatedToFreeInternalPos)
+    println("startFreeRangeForInternalPosition:" + startFreeRangeForInternalPosition)
+    val newExternalToInternalPosition = if(pos == size) {
+      //inserting at end of the sequence
+      println("inserting at end of the sequence")
+      externalToInternalPosition.updateAfter(
+        (startFreeRangeForInternalPosition,startFreeRangeForInternalPosition,LinearPositionTransform(pos - oldExternalPosRelatedToFreeInternalPos,false)))
+    }else{
+      //inserting somewhere within the sequence, need to shift upper part
+      externalToInternalPosition.updateAfter(
+        (pos+1,size,LinearPositionTransform(+1,false)),
+        (startFreeRangeForInternalPosition,startFreeRangeForInternalPosition,LinearPositionTransform(pos - oldExternalPosRelatedToFreeInternalPos,false)))
+    }
+
+    new UniqueIntSequence(
+      newInternalPositionToValue,
       newValueToInternalPosition,
       newExternalToInternalPosition,
       startFreeRangeForInternalPosition+1,
-      maxPivot)
-  }
-
-  def insertBefore(value:Int, pos:Int):UniqueIntSequence = {
-    //insert into red blacks
-    val newInternalPositionToValue = internalPositionToValue.insert(startFreeRangeForInternalPosition,value)
-    val newValueToInternalPosition = valueToInternalPosition.insert(value,startFreeRangeForInternalPosition)
-
-    //move sequence after position one upward
-    //move inserted point at its position
-    val newExternalToInternalPosition = externalToInternalPosition.update(
-      (pos+1,Int.MaxValue,LinearPositionTransform(-1,false)),
-      (pos+1,pos+1,LinearPositionTransform(pos-startFreeRangeForInternalPosition,false)))
-
-    new UniqueIntSequence(newInternalPositionToValue,
-      newValueToInternalPosition,
-      newExternalToInternalPosition,
-      startFreeRangeForInternalPosition+1,
-      maxPivot)
+      maxPivot,maxSize)
   }
 
   def moveAfter(startPosition:Int, endPosition:Int, moveAfterPosition:Int, flip:Boolean):UniqueIntSequence = null
   def regularize:UniqueIntSequence = null
 }
 
-class UniqueIntsequenceIterator(s:UniqueIntSequence) extends Iterator[Int] {
+class UniqueIntSequenceIterator(s:UniqueIntSequence) extends Iterator[Int] {
   var crawler = s.crawlerAtPosition(0)
 
   override def hasNext : Boolean =
@@ -118,7 +120,6 @@ class UniqueIntsequenceIterator(s:UniqueIntSequence) extends Iterator[Int] {
     position.value
   }
 }
-
 
 class IntSequenceCrawler(sequence:UniqueIntSequence,
                          val position:Int,

@@ -11,7 +11,7 @@ sealed trait SeqValue extends Value{
   def min = domain.min
   def max = domain.max
   def name:String
-  override final def valueString: String = "{" + value.mkString(",") + "}"
+//  override final def valueString: String = "{" + value.mkString(",") + "}"
 }
 
 object SeqValue{

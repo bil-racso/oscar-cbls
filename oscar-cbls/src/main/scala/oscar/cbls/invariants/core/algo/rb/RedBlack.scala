@@ -32,7 +32,7 @@ import RedBlackTreeLib._
 
 //must use trait here because of specialization, so we ensure that this trait is compiled into a java interface by avoiding method code altogether. in the trait.
 //as a consequence, there are duplicates in the classes implementing this trait.
-sealed trait RedBlackTree[@specialized(Int) V]{
+trait RedBlackTree[@specialized(Int) V]{
 
   /* We could have required that K be <: Ordered[K], but this is
   actually less general than requiring an implicit parameter that can
@@ -74,13 +74,16 @@ sealed trait RedBlackTree[@specialized(Int) V]{
 
   def values:List[V]
   protected [rb] def valuesAcc(valuesAfter:List[V]):List[V]
+  def content:List[(Int,V)]
+  protected [rb] def contentAcc(valuesAfter:List[(Int,V)]):List[(Int,V)]
+
 
   def positionOf(k: Int):Option[RBPosition[V]]
   protected[rb] def positionOfAcc(k:Int,positionAcc:QList[(T[V],Boolean)]):Option[RBPosition[V]]
 }
 
 // A leaf node.
-private case class L[@specialized(Int) V]() extends RedBlackTree[V]  {
+case class L[@specialized(Int) V]() extends RedBlackTree[V]  {
 
 
   def get(k : Int) : Option[V] = None
@@ -99,16 +102,19 @@ private case class L[@specialized(Int) V]() extends RedBlackTree[V]  {
 
   override protected[rb] def getSmallestBiggerAcc(k: Int, bestSoFar: (Int, V)) = Some(bestSoFar)
 
-  override val size: Int = 0
+  override def size: Int = 0
   override def isEmpty = true
 
   protected [rb] def valuesAcc(valuesAfter:List[V]):List[V] = valuesAfter
+  protected [rb] def contentAcc(valuesAfter:List[(Int,V)]):List[(Int,V)] = valuesAfter
 
   protected[rb] override def positionOfAcc(k : Int, positionAcc : QList[(T[V],Boolean)]) : Option[RBPosition[V]] = None
 
 
   //duplicates
   def values:List[V] = valuesAcc(List.empty)
+
+  def content:List[(Int,V)] = contentAcc(List.empty)
 
   override def positionOf(k: Int):Option[RBPosition[V]] = positionOfAcc(k:Int,null)
 
@@ -120,8 +126,8 @@ private case class L[@specialized(Int) V]() extends RedBlackTree[V]  {
 }
 
 // A tree node.
-private case class T[@specialized(Int) V](c : Boolean, l : RedBlackTree[V], k : Int, v : Option[V], r : RedBlackTree[V]) extends RedBlackTree[V] {
-  private val mSize = l.size + r.size + 1
+case class T[@specialized(Int) V](c : Boolean, l : RedBlackTree[V], k : Int, v : Option[V], r : RedBlackTree[V]) extends RedBlackTree[V] {
+  val mSize = l.size + r.size + 1
   override def size = mSize
   override def isEmpty = false
 
@@ -181,6 +187,8 @@ private case class T[@specialized(Int) V](c : Boolean, l : RedBlackTree[V], k : 
 
   override protected[rb] def valuesAcc(valuesAfter : List[V]) : List[V] = l.valuesAcc(v.head :: r.valuesAcc(valuesAfter))
 
+  protected [rb] def contentAcc(valuesAfter:List[(Int,V)]):List[(Int,V)] = l.contentAcc((k,v.head) :: r.contentAcc(valuesAfter))
+
   protected[rb] override def positionOfAcc(k : Int, positionAcc : QList[(T[V],Boolean)]) : Option[RBPosition[V]] = {
     if (k < this.k) l.positionOfAcc(k, QList((this,false),positionAcc))
     else if (k > this.k) r.positionOfAcc(k, QList((this,true),positionAcc))
@@ -192,6 +200,9 @@ private case class T[@specialized(Int) V](c : Boolean, l : RedBlackTree[V], k : 
 
   //duplicates
   def values:List[V] = valuesAcc(List.empty)
+
+
+  override def content : List[(Int, V)] = contentAcc(List.empty)
 
   override def positionOf(k: Int):Option[RBPosition[V]] = positionOfAcc(k:Int,null)
 
