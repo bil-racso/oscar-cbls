@@ -56,7 +56,7 @@ object RoutingTest extends App with StopWatch{
 
   this.startWatch()
 
-  val n = 10
+  val n = 1000
   val v = 1
 
   println("RoutingTest(n:" + n + " v:" + v + ")")
@@ -126,8 +126,9 @@ object RoutingTest extends App with StopWatch{
 
   val linKernighan = Profile(LinKernighan(0,vrp))
 
-  val kernighanSearch = insertPoint exhaust linKernighan showObjectiveFunction(vrp.objectiveFunction) afterMove {
+  val kernighanSearch = insertPoint exhaust linKernighan showObjectiveFunction vrp.objectiveFunction afterMove {
     rm.drawRoutes()
+    println(getWatch)
   }
   kernighanSearch.verbose = 1
   /*val search = new RoundRobin(List(insertPoint,onePointMove),10) exhaust

@@ -1053,6 +1053,7 @@ trait PickupAndDeliveryCustomersWithTimeWindow extends TimeWindow with TravelTim
     * This method set a linear travel time function. The time function is entirely based on the distanceMatrix
     * @param distanceMatrix the distance matrix of the map
     */
+  //TODO : Repenser la méthode (TTFConst, ...)
   def setLinearTravelTimeFunction(distanceMatrix: Array[Array[Int]]): Unit ={
     val ttf = new TTFMatrix(N,new TTFConst(500))
     for(i <- 0 until N){
@@ -1069,6 +1070,7 @@ trait PickupAndDeliveryCustomersWithTimeWindow extends TimeWindow with TravelTim
     * It ensures that the arrival time of a pickup node is before the arrival time of his related delivery node
     * And it tries to randomises the problem (with all the differents constraints, the problem is often unsolvable)
     */
+  //TODO : mettre dans un test et pas dans le thread
   def endWindowGenerator(): Unit ={
     val currentArray:Array[Int] = new Array[Int](N-V)
     val randomIncValues:List[Int] = 2::3::4::5::Nil
@@ -1111,6 +1113,7 @@ trait PickupAndDeliveryCustomersWithTimeWindow extends TimeWindow with TravelTim
     * @param node the index of the node
     * @return
     */
+  //TODO : remplacer node par time + mettre dans Time + remplacer heap par liste (+sort)
   def getRoutedNodesBeforeTime()(node:Int): Iterable[Int] ={
     val res:BinomialHeap[Int] = new BinomialHeap[Int](a => a,N-V)
     val time = leaveTime(node).value

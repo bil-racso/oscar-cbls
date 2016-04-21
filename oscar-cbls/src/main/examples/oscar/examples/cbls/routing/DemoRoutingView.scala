@@ -26,7 +26,7 @@ import javax.swing._
 
 import oscar.cbls.invariants.core.computation.IntValue
 import oscar.cbls.search.StopWatch
-import oscar.cbls.visual.FunctionGraphic.Zoom
+import oscar.cbls.visual.FunctionGraphic.{AdjustMaxValue, Zoom}
 import oscar.examples.cbls.routing.visual.ColorGenerator
 import oscar.examples.cbls.routing.visual.FunctionGraphic._
 import oscar.examples.cbls.routing.visual.MatrixMap.RoutingMatrixVisual
@@ -50,7 +50,7 @@ object DemoRoutingView extends StopWatch{
 
   val routingMap = new RoutingMatrixVisual(pickupAndDeliveryPoints = false)
 
-  val objGraph = new ObjFunctionGraphicContainer(dimension = new Dimension(f.getWidth-routingMap.getWidth,360)) with Zoom
+  val objGraph = new ObjFunctionGraphicContainer(dimension = new Dimension(f.getWidth-routingMap.getWidth,360)) with AdjustMaxValue
   val result = new JPanel()
   val carsPanel = new JPanel()
   val routesPanel = new JPanel()

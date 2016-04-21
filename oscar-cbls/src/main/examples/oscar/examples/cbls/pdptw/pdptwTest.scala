@@ -80,7 +80,7 @@ object pdptwTest extends App with StopWatch {
 
   this.startWatch()
 
-  val n = 65
+  val n = 25
   val v = 5
 
   println("PDPTWTest(n:" + n + " v:" + v + ")")
@@ -241,6 +241,7 @@ object pdptwTest extends App with StopWatch {
     ),
     new Retry(onePointMovePD)
   )
+  /*
   val liLimMetaHeuristique = insertCouple exhaust new MaxMovesWithoutImprovement(
     new BasicSaveBest(
       new AndThen(
@@ -267,15 +268,15 @@ object pdptwTest extends App with StopWatch {
     5,
     () => vrp.getObjective().value
   ) showObjectiveFunction vrp.getObjective() afterMove rm.drawRoutes()
-  liLimMetaHeuristique.verbose = 1
+  liLimMetaHeuristique.verbose = 1*/
 
 
-  /*val search = BestSlopeFirst(List(insertCouple, onePointMovePD)) exhaust
+  val search = BestSlopeFirst(List(insertCouple, onePointMovePD)) exhaust
     BestSlopeFirst(List(insertCouple, dynAndThenCoupleExchange, onePointMovePD, threeOpt, orOpt, segExchangePD, oneCoupleMove), refresh = n / 2) showObjectiveFunction
     vrp.getObjective() afterMove {
     rm.drawRoutes()
   } // exhaust onePointMove exhaust segExchange//threeOpt //(new BestSlopeFirst(List(onePointMove,twoOpt,threeOpt)))
-  search.verbose = 1*/
+  search.verbose = 1
 
   //pickupDeliveryCoupleExchange.verboseWithExtraInfo(3,() => vrp.routes.next.toList.toString)
   //search.paddingLength = 400
@@ -285,13 +286,13 @@ object pdptwTest extends App with StopWatch {
 
   def launchSearch(): Unit ={
     //search.verboseWithExtraInfo(1,vrp.toString)
-    liLimMetaHeuristique.doAllMoves(_ > 10*n, vrp.getObjective())
+    search.doAllMoves(_ > 10*n, vrp.getObjective())
 
     println("total time " + getWatch + "ms or  " + getWatchString)
 
     println("\nresult:\n" + vrp)
 
-    println(liLimMetaHeuristique.profilingStatistics)
+    println(search.profilingStatistics)
   }
 
   launchSearch()
