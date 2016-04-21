@@ -131,25 +131,31 @@ class PiecewiseLinearFun(private[fun] val transformation: RedBlackTree[Pivot] = 
     //step4: add a finishing pivot if necessary (cfr. step2)
 
     //remove all the pivots between fromIncluded and ToIncluded
-    val previousFinichingTransform:Option[Pivot] = pivotApplyingTo(toIncluded)
-    val (cleanedTransformation,previousPivot) = removePivotsBetween(fromIncluded,previousFinichingTransform)
+    val previousFinishingPivot:Option[Pivot] = pivotApplyingTo(toIncluded)
+    val cleanedTransformation = removePivotsBetween(fromIncluded,previousFinishingPivot)
 
     //generate, and store all the new pivots
+    if(additionalFAppliedBefore.minus){
+      //negative slope for the additional transform
+    }else{
+      //positive slope for the additional transform
+      var currentPositionAfterAdditionalF = additionalFAppliedBefore(fromIncluded)
+      var currentPivotWithPosition:Option[RBPosition[Pivot]] = pivotWithPositionApplyingTo(currentPositionAfterAdditionalF)
+      while(true){
+        currentPivotWithPosition match{
+          case None =>
 
-    var currentPositionAfterAdditionalF = additionalFAppliedBefore(fromIncluded)
-    var currentPivotWithPosition:Option[RBPosition[Pivot]] = pivotWithPositionApplyingTo(currentPositionAfterAdditionalF)
-    while(true){
-      currentPivotWithPosition match{
-        case None =>
-        case Some(pivot) =>
+          case Some(pivot) =>
 
+        }
       }
     }
 
-
   }
 
-  def removePivotsBetween(fromIncluded:Int,firstPivotToRemove:Option[Pivot]):(RedBlackTree[Pivot],Option[Pivot]) = {
+
+
+  def removePivotsBetween(fromIncluded:Int,firstPivotToRemove:Option[Pivot]):RedBlackTree[Pivot] = {
     var currentPivotToRemove = firstPivotToRemove
     var currentCleanedTransform = transformation
     while (currentPivotToRemove match {
@@ -158,7 +164,7 @@ class PiecewiseLinearFun(private[fun] val transformation: RedBlackTree[Pivot] = 
     }) {
       currentCleanedTransform = currentCleanedTransform.remove(currentPivotToRemove.head.fromValue)
     }
-    (currentCleanedTransform,currentPivotToRemove)
+    (currentCleanedTransform)
   }
 
   private def updateFromPivotForCompositionBefore(prevUpdatedPivot:Pivot, nextPivotToUpdate:Pivot, toIncluded: Int, additionalFAppliedBefore: LinearTransform, accumulatingTransformation: RedBlackTree[Pivot]):RedBlackTree[Pivot] = {
