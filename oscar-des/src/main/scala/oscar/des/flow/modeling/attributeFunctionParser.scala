@@ -44,7 +44,7 @@ class AttributeFunctionParser(attributes:AttributeDefinitions)
       case l:List[(Int,Double)] => discreteChoice(l)
       }
 
-  def doubleParser:Parser[Double] = """[0-9]+(\.[0-9]+)?""".r ^^ {case s:String => println("converting" + s);s.toDouble}
+  def doubleParser:Parser[Double] = """[0-9]+(\.[0-9]+)?""".r ^^ {case s:String => s.toDouble}
 
   private def attributeTransformFunctionParser: Parser[ItemClassTransformFunction] =
     rep(atomicAttributeTransformFunctionParser) ^^ {

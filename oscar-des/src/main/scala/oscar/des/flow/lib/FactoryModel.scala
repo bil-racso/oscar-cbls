@@ -3,7 +3,8 @@ package oscar.des.flow.lib
 import oscar.des.engine.Model
 import oscar.des.flow.core.ItemClassHelper._
 import oscar.des.flow.core._
-import oscar.des.flow.modeling.{AttributeHelper, MultipleParsingError, MultipleParsingSuccess, ListenerParser}
+import oscar.des.flow.modeling.AttributeHelper
+import oscar.des.flow.modeling._
 import scala.collection.immutable.SortedMap
 import scala.language.implicitConversions
 
@@ -51,6 +52,8 @@ class FactoryModel(verbosity:String=>Unit,
       processes = List.empty,
       activationRules = List.empty)
   }
+
+  def attributeFunctionParser = new AttributeFunctionParser(attributes)
 
   private var nextStorageID = 0
   private var nextProcessID = 0
@@ -133,10 +136,16 @@ class FactoryModel(verbosity:String=>Unit,
   def singleBatchProcess(batchDuration:() => Double,
                          inputs:Array[(() => Int, Fetchable)],
                          outputs:Array[(()=>Int,Putable)],
-                         transformFunction:ItemClassTransformFunction,
+                         transformFunction:String = "identity",
                          name:String,
                          costFunction:String = "0") = {
-    val toReturn = SingleBatchProcess(m,batchDuration,inputs,outputs,transformFunction,name,verbosity, nextProcessID)
+
+    val parsedTransform = attributeFunctionParser.parseTransformFunction(transformFunction) match{
+      case ParsedTransformFuntion(f) => f
+      case ParseErrorTransformFunction(s) => throw new Exception(s)
+    }
+
+    val toReturn = SingleBatchProcess(m,batchDuration,inputs,outputs,parsedTransform,name,verbosity, nextProcessID)
     nextProcessID += 1
     toReturn.cost = ListenerParser.processCostParser(toReturn,attributes).applyAndExpectDouble(costFunction)
     processes = toReturn :: processes
@@ -157,9 +166,15 @@ class FactoryModel(verbosity:String=>Unit,
                    inputs:Array[(() => Int, Fetchable)],
                    outputs:Array[(() => Int,Putable)],
                    name:String,
-                   transformFunction:ItemClassTransformFunction,
+                   transformFunction:String,
                    costFunction:String = "0") ={
-    val toReturn = new BatchProcess(m,numberOfBatches,batchDuration,inputs,outputs,name,transformFunction,verbosity, nextProcessID)
+
+    val parsedTransform = attributeFunctionParser.parseTransformFunction(transformFunction) match{
+      case ParsedTransformFuntion(f) => f
+      case ParseErrorTransformFunction(s) => throw new Exception(s)
+    }
+
+    val toReturn = new BatchProcess(m,numberOfBatches,batchDuration,inputs,outputs,name,parsedTransform,verbosity, nextProcessID)
     nextProcessID += 1
     toReturn.cost = ListenerParser.processCostParser(toReturn,attributes).applyAndExpectDouble(costFunction)
     processes = toReturn :: processes
@@ -184,10 +199,16 @@ class FactoryModel(verbosity:String=>Unit,
                           minimalSeparationBetweenBatches:Double,
                           inputs:Array[(() => Int, Fetchable)],
                           outputs:Array[(() => Int, Putable)],
-                          transformFunction:ItemClassTransformFunction,
+                          transformFunction:String,
                           name:String,
                           costFunction:String  = "0") = {
-    val toReturn = new ConveyorBeltProcess(m:Model,processDuration,minimalSeparationBetweenBatches,inputs,outputs,transformFunction,name,verbosity, nextProcessID)
+
+    val parsedTransform = attributeFunctionParser.parseTransformFunction(transformFunction) match{
+      case ParsedTransformFuntion(f) => f
+      case ParseErrorTransformFunction(s) => throw new Exception(s)
+    }
+
+    val toReturn = new ConveyorBeltProcess(m:Model,processDuration,minimalSeparationBetweenBatches,inputs,outputs,parsedTransform,name,verbosity, nextProcessID)
     nextProcessID += 1
     toReturn.cost = ListenerParser.processCostParser(toReturn,attributes).applyAndExpectDouble(costFunction)
     processes = toReturn :: processes
@@ -208,9 +229,15 @@ class FactoryModel(verbosity:String=>Unit,
                             inputs:Array[(() => Int, Fetchable)],
                             outputs:Array[Array[(()=>Int,Putable)]],
                             name:String,
-                            transformFunction:ItemClassTransformWitAdditionalOutput,
+                            transformFunction:String,
                             costFunction:String = "0") = {
-    val toReturn = SplittingBatchProcess(m, numberOfBatches, batchDuration, inputs, outputs, name, transformFunction, verbosity, nextProcessID)
+
+    val parsedTransform = attributeFunctionParser.parseTransformFunctionWithAdditionalOutput(transformFunction) match{
+      case ParsedItemClassTransformWitAdditionalOutput(f) => f
+      case ParseErrorItemClassTransformWitAdditionalOutput(s) => throw new Exception(s)
+    }
+
+    val toReturn = SplittingBatchProcess(m, numberOfBatches, batchDuration, inputs, outputs, name, parsedTransform, verbosity, nextProcessID)
     nextProcessID += 1
     toReturn.cost = ListenerParser.processCostParser(toReturn,attributes).applyAndExpectDouble(costFunction)
     processes = toReturn :: processes
@@ -232,10 +259,16 @@ class FactoryModel(verbosity:String=>Unit,
   def splittingSingleBatchProcess(batchDuration:() => Double,
                                   inputs:Array[(() => Int, Fetchable)],
                                   outputs:Array[Array[(() => Int,Putable)]],
-                                  transformFunction:ItemClassTransformWitAdditionalOutput,
+                                  transformFunction:String,
                                   name:String,
                                   costFunction:String = "0") = {
-    val toReturn = SplittingSingleBatchProcess(m, batchDuration, inputs, outputs, transformFunction, name, verbosity, nextProcessID)
+
+    val parsedTransform = attributeFunctionParser.parseTransformFunctionWithAdditionalOutput(transformFunction) match{
+      case ParsedItemClassTransformWitAdditionalOutput(f) => f
+      case ParseErrorItemClassTransformWitAdditionalOutput(s) => throw new Exception(s)
+    }
+
+    val toReturn = SplittingSingleBatchProcess(m, batchDuration, inputs, outputs, parsedTransform, name, verbosity, nextProcessID)
     nextProcessID += 1
     toReturn.cost = ListenerParser.processCostParser(toReturn,attributes).applyAndExpectDouble(costFunction)
     processes = toReturn :: processes
