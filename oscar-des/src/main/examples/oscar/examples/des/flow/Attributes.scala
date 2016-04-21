@@ -19,11 +19,11 @@ object Attributes extends App with AttributeHelper with ListenersHelper with imp
   val identityFunctionString  = ""
   val verbosity = null //(s:String) => println(s)
 
-  val fm = new FactoryModel(verbosity,attributes = new AttributeDefinitions("sampleAttribute", "anotherOne", "CheapSteel","expensiveSteel"))
+  val fm = new FactoryModel(verbosity,attributes = new AttributeDefinitions("sampleAttribute", "anotherOne", "CheapSteel","expensiveSteel","addedAttribute"))
 
   val standardItemClass = zeroItemClass
   val choseZeroOne = iTE(attributeTerminal(fm.attributes.get("CheapSteel")),outputValue(discreteChoice(List((0,0.5),(1,0.5)))),outputValue(discreteChoice(List((0,0.9),(1,0.1)))))
-  val choseZeroOneString = "if CheapSteel then outputPort 0 weight 0.5 outputPort 1 weight 0.5 else outputPort 0 weight 0.9 outputPort 1 weight 0.1"
+  val choseZeroOneString = "if CheapSteel | anotherOne then outputPort 0 weight 0.5 outputPort 1 weight 0.5 else outputPort 0 weight 0.9 outputPort 1 weight 0.1"
 
   //time unit is the second
   val rawMaterialStorage = fm.fIFOStorage(200,List((40,fm.attributes.getN(0).toItemClass)),"rawMaterialStorage",false,"0")
@@ -40,7 +40,7 @@ object Attributes extends App with AttributeHelper with ListenersHelper with imp
   //takes 15 minutes to transport a coil, and install it
   //we suppose that hte coil is decomposed into parts during the transportation, because we have no model of "cutting process"
   //we consider here individual "already cut" dies although they are still aggregated into a single coil
-  val transportingToDieCutterA = fm.singleBatchProcess(15*60, Array((()=>1, rawMaterialStorage)), Array((()=>100,inputFeederOfDieCuttingPartA)), identityFunctionString, "transportingToDieCutterA")
+  val transportingToDieCutterA = fm.singleBatchProcess(15*60, Array((()=>1, rawMaterialStorage)), Array((()=>100,inputFeederOfDieCuttingPartA)), "+ addedAttribute", "transportingToDieCutterA")
   //  fm.setQueriesToParse()
 
   val outputSlotOfDieCuttingPArtA = fm.lIFOStorage(400,Nil,"outputSlotOfDieCuttingPArtA",false,"0")
