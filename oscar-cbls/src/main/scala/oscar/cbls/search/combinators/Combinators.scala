@@ -1112,7 +1112,7 @@ case class AndThen(a: Neighborhood, b: Neighborhood, maximalIntermediaryDegradat
   }
 }
 
-//TODO: does not work if "a" is doing best search.
+//TODO: does not work if "a"  is doing best search.
 case class DynAndThen[FirstMoveType<:Move](a:Neighborhood with SupportForAndThenChaining[FirstMoveType],
                                            b:(FirstMoveType => Neighborhood),
                                            maximalIntermediaryDegradation: Int = Int.MaxValue)
