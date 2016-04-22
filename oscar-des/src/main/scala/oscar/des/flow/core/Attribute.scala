@@ -15,6 +15,7 @@ import scala.util.Random
  * @param l
  */
 class AttributeDefinitions(l:String*){
+  require(l.length <= 31, "maximum 31 attributes can be declared in a simulation model")
   def size:Int = l.length
   val attributeArray:Array[Attribute] = {
     val numbering = l.toArray

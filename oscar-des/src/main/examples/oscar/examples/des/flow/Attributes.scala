@@ -58,7 +58,7 @@ object Attributes extends App with AttributeHelper with ListenersHelper with imp
     ("is raw material storage empty? (at the end of the trace)","empty(rawMaterialStorage)"),
     ("max content of raw material storage","max(content(rawMaterialStorage))"),
     ("min content of raw material storage","min(content(rawMaterialStorage))"),
-    ("max content of cheap steel in the raw material storage","max(content(rawMaterialStorage,CheapSteel))"),
+    ("max content of cheap steel in the raw material storage","max(content(rawMaterialStorage,CheapSteel&!sampleAttribute))"),
     ("min content of cheap steel in the raw material storage","min(content(rawMaterialStorage,CheapSteel))"),
     ("avg relative stock level of raw material storage","avg(relativeStockLevel(rawMaterialStorage))"),
     ("avg stock level of raw material storage","avg(content(rawMaterialStorage))"),
