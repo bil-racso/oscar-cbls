@@ -42,11 +42,11 @@ object ListenerParser{
     myParser.parseAllListeners(expressions)
   }
 
-  def processCostParser(process:ActivableProcess,a:AttributeDefinitions):ListenerParser = {
+  def processPropertyParser(process:ActivableProcess,a:AttributeDefinitions):ListenerParser = {
     new ListenerParser(SortedMap.empty, SortedMap.empty[String,ActivableProcess]+(("this",process)),a)
   }
 
-  def storageCostParser(storage:Storage,a:AttributeDefinitions):ListenerParser = {
+  def storagePropertyParser(storage:Storage,a:AttributeDefinitions):ListenerParser = {
     new ListenerParser(SortedMap.empty[String,Storage]+(("this",storage)), SortedMap.empty,a)
   }
 }
@@ -97,6 +97,15 @@ class ListenerParser(storages:Map[String,Storage],
   def applyAndExpectDouble(input:String):DoubleExpr = {
     apply(input) match{
       case DoubleExpressionResult(r) => r
+      case e:ListenerParsingResult =>
+        throw new Exception("expected double expression, got " + e.toString())
+        null
+    }
+  }
+
+  def applyAndExpectBool(input:String):BoolExpr = {
+    apply(input) match{
+      case BooleanExpressionResult(r) => r
       case e:ListenerParsingResult =>
         throw new Exception("expected double expression, got " + e.toString())
         null

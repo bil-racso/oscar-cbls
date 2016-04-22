@@ -40,7 +40,7 @@ trait FactoryHelper extends AttributeHelper{
                          verbosity:String=>Unit = null,
                          costFunction:String = "0") = {
     val toReturn = SingleBatchProcess(m:Model,batchDuration,inputs,outputs,transformFunction,name,verbosity)
-    toReturn.cost = ListenerParser.processCostParser(toReturn,attributeDefinitions()).applyAndExpectDouble(costFunction)
+    toReturn.cost = ListenerParser.processPropertyParser(toReturn,attributeDefinitions()).applyAndExpectDouble(costFunction)
     toReturn
   }
 
@@ -65,7 +65,7 @@ trait FactoryHelper extends AttributeHelper{
                    verbosity:String=>Unit = null,
                    costFunction:String = "0") ={
     val toReturn = new BatchProcess(m,numberOfBatches,batchDuration,inputs,outputs,name,transformFunction,verbosity)
-    toReturn.cost = ListenerParser.processCostParser(toReturn,attributeDefinitions()).applyAndExpectDouble(costFunction)
+    toReturn.cost = ListenerParser.processPropertyParser(toReturn,attributeDefinitions()).applyAndExpectDouble(costFunction)
     toReturn
   }
 
@@ -95,7 +95,7 @@ trait FactoryHelper extends AttributeHelper{
                           verbosity:String=>Unit = null,
                           costFunction:String  = "0") = {
     val toReturn = new ConveyorBeltProcess(m:Model,processDuration,minimalSeparationBetweenBatches,inputs,outputs,transformFunction,name,verbosity)
-    toReturn.cost = ListenerParser.processCostParser(toReturn,attributeDefinitions()).applyAndExpectDouble(costFunction)
+    toReturn.cost = ListenerParser.processPropertyParser(toReturn,attributeDefinitions()).applyAndExpectDouble(costFunction)
     toReturn
   }
 
@@ -120,7 +120,7 @@ trait FactoryHelper extends AttributeHelper{
                             verbosity:String=>Unit = null,
                             costFunction:String) = {
     val toReturn = SplittingBatchProcess(m, numberOfBatches, batchDuration, inputs, outputs, name, transformFunction, verbosity)
-    toReturn.cost = ListenerParser.processCostParser(toReturn,attributeDefinitions()).applyAndExpectDouble(costFunction)
+    toReturn.cost = ListenerParser.processPropertyParser(toReturn,attributeDefinitions()).applyAndExpectDouble(costFunction)
     toReturn
   }
 
@@ -147,7 +147,7 @@ trait FactoryHelper extends AttributeHelper{
                                   verbosity:String=>Unit = null,
                                   costFunction:String = "0") = {
     val toReturn = SplittingSingleBatchProcess(m, batchDuration, inputs, outputs, transformFunction, name, verbosity)
-    toReturn.cost = ListenerParser.processCostParser(toReturn,attributeDefinitions()).applyAndExpectDouble(costFunction)
+    toReturn.cost = ListenerParser.processPropertyParser(toReturn,attributeDefinitions()).applyAndExpectDouble(costFunction)
     toReturn
   }
 
@@ -168,7 +168,7 @@ trait FactoryHelper extends AttributeHelper{
                   costFunction:String = "0",
                   attributes:AttributeDefinitions) = {
     val toReturn = new LIFOStorage(maxSize, initialContent, name, verbosity, overflowOnInput,0)
-    toReturn.cost = ListenerParser.storageCostParser(toReturn,attributes).applyAndExpectDouble(costFunction)
+    toReturn.cost = ListenerParser.storagePropertyParser(toReturn,attributes).applyAndExpectDouble(costFunction)
     toReturn
   }
 
@@ -189,7 +189,7 @@ trait FactoryHelper extends AttributeHelper{
                   costFunction:String = "0",
                   attributes:AttributeDefinitions) = {
     val toReturn = new FIFOStorage(maxSize, initialContent, name, verbosity, overflowOnInput,0)
-    toReturn.cost = ListenerParser.storageCostParser(toReturn,attributes).applyAndExpectDouble(costFunction)
+    toReturn.cost = ListenerParser.storagePropertyParser(toReturn,attributes).applyAndExpectDouble(costFunction)
     toReturn
   }
 }

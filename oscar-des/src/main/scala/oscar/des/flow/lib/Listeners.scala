@@ -190,7 +190,7 @@ class MetricsStore(val rootExpressions:List[(String, Expression)],verbosity:Stri
     nonAccumulatingExpressions.foreach(_.update(time))
   }
 
-  def cloneReset(storeMap: Map[Storage, Storage], processMap: Map[ActivableProcess, ActivableProcess]):(MetricsStore,Map[DoubleExpr,DoubleExpr]) = {
+  def cloneReset(storeMap: Map[Storage, Storage], processMap: Map[ActivableProcess, ActivableProcess]):(MetricsStore,Map[DoubleExpr,DoubleExpr],Map[BoolExpr,BoolExpr]) = {
 
     var translatedBoolExpr:Map[BoolExpr,BoolExpr] = SortedMap.empty[BoolExpr,BoolExpr](new OrderingOnExpression[BoolExpr])
     var translatedDoubleExpr:Map[DoubleExpr,DoubleExpr] = SortedMap.empty[DoubleExpr,DoubleExpr](new OrderingOnExpression[DoubleExpr])
@@ -250,7 +250,7 @@ class MetricsStore(val rootExpressions:List[(String, Expression)],verbosity:Stri
       verbosity,
       translatedAccumulatingExpressions,
       translatedNonAccumulatingExpressions,
-      translatedExpression),translatedDoubleExpr)
+      translatedExpression),translatedDoubleExpr,translatedBoolExpr)
   }
 }
 

@@ -87,15 +87,29 @@ class FactoryModel(verbosity:String=>Unit,
     val newActiationRules = activationRules.map(_.cloneReset(newModel,newProcesses, newStorages))
 
     //cloner les expressions
-    val (newMetricStore,doubleExprTranslation) = ms.cloneReset(newStorages,newProcesses)
+    val (newMetricStore,doubleExprTranslation,boolExprTranslation) = ms.cloneReset(newStorages,newProcesses)
 
     //mettre les expressions clonées dans newProcesses et newStorages
     for((oldS,newS) <- newStorages){
-      newS.cost = doubleExprTranslation.getOrElse(oldS.cost,null)
+      for((name,prop) <- oldS.properties.boolProperties){
+        val newP = boolExprTranslation.getOrElse(prop,null)
+        if(newP != null) newS.properties.addBoolProperty(name,newP)
+      }
+      for((name,prop) <- oldS.properties.doubleProperties){
+        val newP = doubleExprTranslation.getOrElse(prop,null)
+        if(newP != null) newS.properties.addDoubleProperty(name,newP)
+      }
     }
 
     for((oldP,newP) <- newProcesses){
-      newP.cost = doubleExprTranslation.getOrElse(oldP.cost,null)
+      for((name,prop) <- oldP.properties.boolProperties){
+        val newP = boolExprTranslation.getOrElse(prop,null)
+        if(newP != null) newP.properties.addBoolProperty(name,newP)
+      }
+      for((name,prop) <- oldP.properties.doubleProperties){
+        val newP = doubleExprTranslation.getOrElse(prop,null)
+        if(newP != null) newP.properties.addDoubleProperty(name,newP)
+      }
     }
 
     //retourner le tout
@@ -138,7 +152,7 @@ class FactoryModel(verbosity:String=>Unit,
                          outputs:Array[(()=>Int,Putable)],
                          transformFunction:String = "identity",
                          name:String,
-                         costFunction:String = "0") = {
+                         properties:List[(String,String,Boolean)] = List(("cost","0",false))) = {
 
     val parsedTransform = attributeFunctionParser.parseTransformFunction(transformFunction) match{
       case ParsedTransformFuntion(f) => f
@@ -147,7 +161,13 @@ class FactoryModel(verbosity:String=>Unit,
 
     val toReturn = SingleBatchProcess(m,batchDuration,inputs,outputs,parsedTransform,name,verbosity, nextProcessID)
     nextProcessID += 1
-    toReturn.cost = ListenerParser.processCostParser(toReturn,attributes).applyAndExpectDouble(costFunction)
+
+    val attributeParser = ListenerParser.processPropertyParser(toReturn,attributes)
+    for((name,expr,isBoolean) <- properties){
+      if(isBoolean) toReturn.properties.addBoolProperty(name,attributeParser.applyAndExpectBool(expr))
+      else toReturn.properties.addDoubleProperty(name,attributeParser.applyAndExpectDouble(expr))
+    }
+
     processes = toReturn :: processes
     toReturn
   }
@@ -167,7 +187,7 @@ class FactoryModel(verbosity:String=>Unit,
                    outputs:Array[(() => Int,Putable)],
                    name:String,
                    transformFunction:String,
-                   costFunction:String = "0") ={
+                   properties:List[(String,String,Boolean)] = List(("cost","0",false))) ={
 
     val parsedTransform = attributeFunctionParser.parseTransformFunction(transformFunction) match{
       case ParsedTransformFuntion(f) => f
@@ -176,7 +196,13 @@ class FactoryModel(verbosity:String=>Unit,
 
     val toReturn = new BatchProcess(m,numberOfBatches,batchDuration,inputs,outputs,name,parsedTransform,verbosity, nextProcessID)
     nextProcessID += 1
-    toReturn.cost = ListenerParser.processCostParser(toReturn,attributes).applyAndExpectDouble(costFunction)
+
+    val attributeParser = ListenerParser.processPropertyParser(toReturn,attributes)
+    for((name,expr,isBoolean) <- properties){
+      if(isBoolean) toReturn.properties.addBoolProperty(name,attributeParser.applyAndExpectBool(expr))
+      else toReturn.properties.addDoubleProperty(name,attributeParser.applyAndExpectDouble(expr))
+    }
+
     processes = toReturn :: processes
     toReturn
   }
@@ -201,7 +227,7 @@ class FactoryModel(verbosity:String=>Unit,
                           outputs:Array[(() => Int, Putable)],
                           transformFunction:String,
                           name:String,
-                          costFunction:String  = "0") = {
+                          properties:List[(String,String,Boolean)] = List(("cost","0",false))) = {
 
     val parsedTransform = attributeFunctionParser.parseTransformFunction(transformFunction) match{
       case ParsedTransformFuntion(f) => f
@@ -210,7 +236,13 @@ class FactoryModel(verbosity:String=>Unit,
 
     val toReturn = new ConveyorBeltProcess(m:Model,processDuration,minimalSeparationBetweenBatches,inputs,outputs,parsedTransform,name,verbosity, nextProcessID)
     nextProcessID += 1
-    toReturn.cost = ListenerParser.processCostParser(toReturn,attributes).applyAndExpectDouble(costFunction)
+
+    val attributeParser = ListenerParser.processPropertyParser(toReturn,attributes)
+    for((name,expr,isBoolean) <- properties){
+      if(isBoolean) toReturn.properties.addBoolProperty(name,attributeParser.applyAndExpectBool(expr))
+      else toReturn.properties.addDoubleProperty(name,attributeParser.applyAndExpectDouble(expr))
+    }
+
     processes = toReturn :: processes
     toReturn
   }
@@ -230,7 +262,7 @@ class FactoryModel(verbosity:String=>Unit,
                             outputs:Array[Array[(()=>Int,Putable)]],
                             name:String,
                             transformFunction:String,
-                            costFunction:String = "0") = {
+                            properties:List[(String,String,Boolean)] = List(("cost","0",false))) = {
 
     val parsedTransform = attributeFunctionParser.parseTransformFunctionWithAdditionalOutput(transformFunction) match{
       case ParsedItemClassTransformWitAdditionalOutput(f) => f
@@ -239,7 +271,13 @@ class FactoryModel(verbosity:String=>Unit,
 
     val toReturn = SplittingBatchProcess(m, numberOfBatches, batchDuration, inputs, outputs, name, parsedTransform, verbosity, nextProcessID)
     nextProcessID += 1
-    toReturn.cost = ListenerParser.processCostParser(toReturn,attributes).applyAndExpectDouble(costFunction)
+
+    val attributeParser = ListenerParser.processPropertyParser(toReturn,attributes)
+    for((name,expr,isBoolean) <- properties){
+      if(isBoolean) toReturn.properties.addBoolProperty(name,attributeParser.applyAndExpectBool(expr))
+      else toReturn.properties.addDoubleProperty(name,attributeParser.applyAndExpectDouble(expr))
+    }
+
     processes = toReturn :: processes
     toReturn
   }
@@ -261,7 +299,7 @@ class FactoryModel(verbosity:String=>Unit,
                                   outputs:Array[Array[(() => Int,Putable)]],
                                   transformFunction:String,
                                   name:String,
-                                  costFunction:String = "0") = {
+                                  properties:List[(String,String,Boolean)] = List(("cost","0",false))) = {
 
     val parsedTransform = attributeFunctionParser.parseTransformFunctionWithAdditionalOutput(transformFunction) match{
       case ParsedItemClassTransformWitAdditionalOutput(f) => f
@@ -270,7 +308,13 @@ class FactoryModel(verbosity:String=>Unit,
 
     val toReturn = SplittingSingleBatchProcess(m, batchDuration, inputs, outputs, parsedTransform, name, verbosity, nextProcessID)
     nextProcessID += 1
-    toReturn.cost = ListenerParser.processCostParser(toReturn,attributes).applyAndExpectDouble(costFunction)
+
+    val attributeParser = ListenerParser.processPropertyParser(toReturn,attributes)
+    for((name,expr,isBoolean) <- properties){
+      if(isBoolean) toReturn.properties.addBoolProperty(name,attributeParser.applyAndExpectBool(expr))
+      else toReturn.properties.addDoubleProperty(name,attributeParser.applyAndExpectDouble(expr))
+    }
+
     processes = toReturn :: processes
     toReturn
   }
@@ -287,11 +331,17 @@ class FactoryModel(verbosity:String=>Unit,
                   initialContent:List[(Int,ItemClass)] = List.empty,
                   name:String,
                   overflowOnInput:Boolean,
-                  costFunction:String = "0") = {
+                  properties:List[(String,String,Boolean)] = List(("cost","0",false))) = {
 
     val toReturn = new LIFOStorage(maxSize, initialContent, name, verbosity, overflowOnInput,nextStorageID)
     nextStorageID += 1
-    toReturn.cost = ListenerParser.storageCostParser(toReturn,attributes).applyAndExpectDouble(costFunction)
+
+    val attributeParser = ListenerParser.storagePropertyParser(toReturn,attributes)
+    for((name,expr,isBoolean) <- properties){
+      if(isBoolean) toReturn.properties.addBoolProperty(name,attributeParser.applyAndExpectBool(expr))
+      else toReturn.properties.addDoubleProperty(name,attributeParser.applyAndExpectDouble(expr))
+    }
+
     storages = toReturn :: storages
     toReturn
   }
@@ -308,10 +358,16 @@ class FactoryModel(verbosity:String=>Unit,
                   initialContent:List[(Int,ItemClass)],
                   name:String,
                   overflowOnInput:Boolean,
-                  costFunction:String = "0") = {
+                  properties:List[(String,String,Boolean)] = List(("cost","0",false))) = {
     val toReturn = new FIFOStorage(maxSize, initialContent, name, verbosity, overflowOnInput,nextStorageID)
     nextStorageID += 1
-    toReturn.cost = ListenerParser.storageCostParser(toReturn,attributes).applyAndExpectDouble(costFunction)
+
+    val attributeParser = ListenerParser.storagePropertyParser(toReturn,attributes)
+    for((name,expr,isBoolean) <- properties){
+      if(isBoolean) toReturn.properties.addBoolProperty(name,attributeParser.applyAndExpectBool(expr))
+      else toReturn.properties.addDoubleProperty(name,attributeParser.applyAndExpectDouble(expr))
+    }
+
     storages = toReturn :: storages
     toReturn
   }

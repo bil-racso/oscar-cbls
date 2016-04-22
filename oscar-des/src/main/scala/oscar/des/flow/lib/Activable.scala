@@ -1,7 +1,7 @@
 package oscar.des.flow.lib
 
 import oscar.des.engine.Model
-import oscar.des.flow.core.Inputter
+import oscar.des.flow.core.{Properties, Inputter}
 import oscar.des.flow.core.ItemClassHelper._
 
 import scala.collection.immutable.SortedMap
@@ -18,7 +18,7 @@ abstract class ActivableProcess(val name:String, verbosity:String=>Unit, val id:
   def startedBatchCount:Int
   def totalWaitDuration:Double
 
-  var cost:DoubleExpr = null
+  var properties:Properties = new Properties
 
   var productionBatch:LIFOStorage = null
 
