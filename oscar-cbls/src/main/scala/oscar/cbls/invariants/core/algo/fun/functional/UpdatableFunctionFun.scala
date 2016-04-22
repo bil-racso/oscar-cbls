@@ -137,22 +137,46 @@ class PiecewiseLinearFun(private[fun] val transformation: RedBlackTree[Pivot] = 
     //generate, and store all the new pivots
     if(additionalFAppliedBefore.minus){
       //negative slope for the additional transform
+      null
     }else{
       //positive slope for the additional transform
-      var currentPositionAfterAdditionalF = additionalFAppliedBefore(fromIncluded)
-      var currentPivotWithPosition:Option[RBPosition[Pivot]] = pivotWithPositionApplyingTo(currentPositionAfterAdditionalF)
+      val includedFromAfterAdditionalF = additionalFAppliedBefore(fromIncluded)
+      val firstApplyingPivotPosition = pivotWithPositionApplyingTo(includedFromAfterAdditionalF)
+      val secondApplyingPivotPosition = firstApplyingPivotPosition match{
+        case None => pivotWithPositionAfter(includedFromAfterAdditionalF)
+        case Some(p) => p.next
+      }
+
+      secondApplyingPivotPosition match{
+        case None => //there is no pivot at all here
+        case Some(p) => //there are pivots, so we need to iterate
+
+      }
+      pivotWithPositionApplyingTo(includedFromAfterAdditionalF) match{
+        case None =>
+          //checking for the next applying pivot (only for the first iteration, actually)
+          val firstApplyingPivot = pivotWithPositionAfter(currentPositionAfterAdditionalF)
+          firstApplyingPivot match{
+            case Some(positionOfFirstApplyingPivot) =>
+              //identity until some point
+            case None =>
+              //there is absolutely no pivot in the transform at all
+              return cleanedTransformation
+                .insert(fromIncluded,new Pivot(fromIncluded,additionalFAppliedBefore))
+                .insert(toIncluded+1,new Pivot(toIncluded+1,LinearTransform.identity))
+          }
+
+
+        case Some(positionOfPivot) =>
+
+      }
+
+
       while(true){
-        currentPivotWithPosition match{
-          case None =>
-
-          case Some(pivot) =>
-
-        }
       }
     }
 
   }
-
 
 
   def removePivotsBetween(fromIncluded:Int,firstPivotToRemove:Option[Pivot]):RedBlackTree[Pivot] = {
@@ -186,8 +210,23 @@ class PiecewiseLinearFun(private[fun] val transformation: RedBlackTree[Pivot] = 
       case Some((fromValueOfPivot,_)) => transformation.positionOf(fromValueOfPivot)
     }
   }
+
+  def pivotWithPositionAfter(value:Int):Option[RBPosition[Pivot]] = {
+    transformation.getSmallestBiggerOrEqual(value) match{
+      case None => None
+      case Some((fromValueOfPivot,_)) => transformation.positionOf(fromValueOfPivot)
+    }
+  }
+
   def pivotApplyingTo(value:Int):Option[Pivot] = {
     transformation.getBiggestLowerOrEqual(value)  match {
+      case None => None
+      case Some(_, p) => Some(p)
+    }
+  }
+
+  def pivotAfter(value:Int):Option[Pivot] = {
+    transformation.getSmallestBiggerOrEqual(value)  match {
       case None => None
       case Some(_, p) => Some(p)
     }
