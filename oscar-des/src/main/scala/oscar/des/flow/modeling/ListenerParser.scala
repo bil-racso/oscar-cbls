@@ -80,9 +80,7 @@ class ListenerParser(storages:Map[String,Storage],
   }
 
   var declaredBoolExpr:SortedMap[String,BoolExpr] = SortedMap.empty[String,BoolExpr]
-  var declaredDoubleExpr:SortedMap[String,DoubleExpr] = (SortedMap.empty[String,DoubleExpr]
-    ++ storages.map(nameAndStorage => ("cost of " + nameAndStorage._1, nameAndStorage._2.cost))
-    ++ processes.map(nameAndProcess => ("cost of " + nameAndProcess._1, nameAndProcess._2.cost)))
+  var declaredDoubleExpr:SortedMap[String,DoubleExpr] = SortedMap.empty[String,DoubleExpr]
 
   def apply(input:String):ListenerParsingResult = {
     parseAll(expressionParser, input) match {
@@ -151,6 +149,8 @@ class ListenerParser(storages:Map[String,Storage],
       | "true" ^^^ boolConst(true)
       | "false" ^^^ boolConst(false)
       | boolListener
+      | storageParser ~ "." ~ identifier ^^{case storage~"."~property => storage.properties.getBoolProperty(property)}
+      | processParser~ "." ~ identifier ^^{case process~"."~property => process.properties.getBoolProperty(property)}
       | binaryOperatorBB2BParser("and",and)
       | binaryOperatorBB2BParser("or",or)
       | binaryOperatorBB2BParser("since",since)
@@ -195,8 +195,8 @@ class ListenerParser(storages:Map[String,Storage],
       | "totalPut"~>"("~>storageParser ~opt(","~>attributeConditionParser) <~")" ^^ {case storage~cond => totalPut(storage,cond)}
       | "totalFetch"~>"("~>storageParser ~opt(","~>attributeConditionParser) <~")" ^^ {case storage~cond => totalFetch(storage,cond)}
       | "totalLosByOverflow"~>"("~>storageParser ~opt(","~>attributeConditionParser) <~")" ^^ {case storage~cond => totalLosByOverflow(storage,cond)}
-      | storageDoubleProbe("cost",(s:Storage) => s.cost)
-      | processDoubleProbe("cost",(p:ActivableProcess) => p.cost)
+      | storageParser ~ "." ~ identifier ^^{case storage~"."~property => storage.properties.getDoubleProperty(property)}
+      | processParser~ "." ~ identifier ^^{case process~"."~property => process.properties.getDoubleProperty(property)}
       | "completedBatchCount"~>"("~>processParser ~opt(","~>naturalParser)<~")" ^^ {
       case process~None => completedBatchCount(process,-1)
       case process~Some(portNumber) => completedBatchCount(process,portNumber)}
@@ -228,7 +228,7 @@ class ListenerParser(storages:Map[String,Storage],
       | "-"~> doubleExprParser ^^ {opposite(_)}
       | "("~>doubleExprParser<~")"
       | "totalCost" ^^^ {
-      val costList = storages.toList.map(_._2.cost) ::: processes.toList.map(_._2.cost)
+      val costList = storages.toList.map(_._2.properties.getDoubleProperty("cost")) ::: processes.toList.map(_._2.properties.getDoubleProperty("cost"))
       costList.foldLeft[DoubleExpr](0.0)(plus(_,_))}
       | failure("expected arithmetic expression"))
 
@@ -315,12 +315,12 @@ object ParserTester extends App with FactoryHelper with AttributeHelper{
 
   val m = new Model
   val attributes = attributeDefinitions("poorQualityStuffInside")
-  val aStorage = fIFOStorage(10,Nil,"aStorage",null,false,"0",attributes)
-  val bStorage = fIFOStorage(10,Nil,"bStorage",null,false,"0",attributes)
-  val xStorage = fIFOStorage(10,Nil,"x-_ Storage",null,false,"0",attributes)
+  val aStorage = fIFOStorage(10,Nil,"aStorage",null,false,attributes=attributes)
+  val bStorage = fIFOStorage(10,Nil,"bStorage",null,false,attributes=attributes)
+  val xStorage = fIFOStorage(10,Nil,"x-_ Storage",null,false,attributes=attributes)
 
-  val aProcess = singleBatchProcess(m, 5000, Array(), Array((()=>1,aStorage)), null, "aProcess", null, "completedBatchCount(this) * 0.45")
-  val bProcess = singleBatchProcess(m, 5000, Array(), Array((()=>1,aStorage)), null, "bProcess", null)
+  val aProcess = singleBatchProcess(m, 5000, Array(), Array((()=>1,aStorage)), null, "aProcess", null, List(("cost","completedBatchCount(this) * 0.45",true)),attributes=attributes)
+  val bProcess = singleBatchProcess(m, 5000, Array(), Array((()=>1,aStorage)), null, "bProcess", null,attributes=attributes)
 
   val myParser = ListenerParser(List(aStorage,bStorage,xStorage), List(aProcess,bProcess),attributes)
 

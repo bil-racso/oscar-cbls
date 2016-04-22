@@ -96,19 +96,19 @@ class FactoryModel(verbosity:String=>Unit,
         if(newP != null) newS.properties.addBoolProperty(name,newP)
       }
       for((name,prop) <- oldS.properties.doubleProperties){
-        val newP = doubleExprTranslation.getOrElse(prop,null)
-        if(newP != null) newS.properties.addDoubleProperty(name,newP)
+        val newProp = doubleExprTranslation.getOrElse(prop,null)
+        if(newProp != null) newS.properties.addDoubleProperty(name,newProp)
       }
     }
 
     for((oldP,newP) <- newProcesses){
       for((name,prop) <- oldP.properties.boolProperties){
-        val newP = boolExprTranslation.getOrElse(prop,null)
-        if(newP != null) newP.properties.addBoolProperty(name,newP)
+        val newProp = boolExprTranslation.getOrElse(prop,null)
+        if(newProp != null) newP.properties.addBoolProperty(name,newProp)
       }
       for((name,prop) <- oldP.properties.doubleProperties){
-        val newP = doubleExprTranslation.getOrElse(prop,null)
-        if(newP != null) newP.properties.addDoubleProperty(name,newP)
+        val newProp = doubleExprTranslation.getOrElse(prop,null)
+        if(newP != null) newP.properties.addDoubleProperty(name,newProp)
       }
     }
 

@@ -26,7 +26,7 @@ object Attributes extends App with AttributeHelper with ListenersHelper with imp
   val choseZeroOneString = "if CheapSteel | anotherOne then outputPort 0 weight 0.5 outputPort 1 weight 0.5 else outputPort 0 weight 0.9 outputPort 1 weight 0.1"
 
   //time unit is the second
-  val rawMaterialStorage = fm.fIFOStorage(200,List((40,fm.attributes.getN(0).toItemClass)),"rawMaterialStorage",false,"0")
+  val rawMaterialStorage = fm.fIFOStorage(200,List((40,fm.attributes.getN(0).toItemClass)),"rawMaterialStorage",false)
 
   val rawSupplier = fm.singleBatchProcess(5000, Array(), Array((()=>1,rawMaterialStorage)), identityFunctionString, "rawSupplier")
   val ordering = fm.onLowerThreshold(rawMaterialStorage,
@@ -36,18 +36,18 @@ object Attributes extends App with AttributeHelper with ListenersHelper with imp
     0,
     "orderingPolicy")
 
-  val inputFeederOfDieCuttingPartA = fm.fIFOStorage(100,Nil,"inputFeederOfDieCuttingPartA",false,"0")
+  val inputFeederOfDieCuttingPartA = fm.fIFOStorage(100,Nil,"inputFeederOfDieCuttingPartA",false)
   //takes 15 minutes to transport a coil, and install it
   //we suppose that hte coil is decomposed into parts during the transportation, because we have no model of "cutting process"
   //we consider here individual "already cut" dies although they are still aggregated into a single coil
   val transportingToDieCutterA = fm.singleBatchProcess(15*60, Array((()=>1, rawMaterialStorage)), Array((()=>100,inputFeederOfDieCuttingPartA)), "+ addedAttribute", "transportingToDieCutterA")
   //  fm.setQueriesToParse()
 
-  val outputSlotOfDieCuttingPArtA = fm.lIFOStorage(400,Nil,"outputSlotOfDieCuttingPArtA",false,"0")
+  val outputSlotOfDieCuttingPArtA = fm.lIFOStorage(400,Nil,"outputSlotOfDieCuttingPArtA",false)
   val dieCuttingPartA = fm.singleBatchProcess(10, Array((()=>1, inputFeederOfDieCuttingPartA)), Array((()=>4,outputSlotOfDieCuttingPArtA)), identityFunctionString, "dieCuttingPartA")
 
-  val globalOutput = fm.fIFOStorage(100000,Nil,"globalOutput",false,"0")
-  val trashContainerForRejectedCutItems = fm.lIFOStorage(1000000000, Nil, "trashContainerForRejectedCutItems", false,"0")
+  val globalOutput = fm.fIFOStorage(100000,Nil,"globalOutput",false)
+  val trashContainerForRejectedCutItems = fm.lIFOStorage(1000000000, Nil, "trashContainerForRejectedCutItems", false)
   val qAOnInputFeeder = fm.splittingSingleBatchProcess(30,
     Array((()=>1, outputSlotOfDieCuttingPArtA)),
     Array(Array((()=>1,globalOutput)),

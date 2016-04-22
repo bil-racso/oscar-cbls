@@ -28,6 +28,4 @@ class Properties {
       case Some(e) => e
     }
   }
-
-  def
 }

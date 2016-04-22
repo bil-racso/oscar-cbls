@@ -38,9 +38,14 @@ trait FactoryHelper extends AttributeHelper{
                          transformFunction:ItemClassTransformFunction,
                          name:String,
                          verbosity:String=>Unit = null,
-                         costFunction:String = "0") = {
+                         properties:List[(String,String,Boolean)] = List(("cost","0",false)),
+                         attributes:AttributeDefinitions) = {
     val toReturn = SingleBatchProcess(m:Model,batchDuration,inputs,outputs,transformFunction,name,verbosity)
-    toReturn.cost = ListenerParser.processPropertyParser(toReturn,attributeDefinitions()).applyAndExpectDouble(costFunction)
+    val attributeParser = ListenerParser.processPropertyParser(toReturn,attributes)
+    for((name,expr,isBoolean) <- properties){
+      if(isBoolean) toReturn.properties.addBoolProperty(name,attributeParser.applyAndExpectBool(expr))
+      else toReturn.properties.addDoubleProperty(name,attributeParser.applyAndExpectDouble(expr))
+    }
     toReturn
   }
 
@@ -63,9 +68,14 @@ trait FactoryHelper extends AttributeHelper{
                    name:String,
                    transformFunction:ItemClassTransformFunction,
                    verbosity:String=>Unit = null,
-                   costFunction:String = "0") ={
+                   properties:List[(String,String,Boolean)] = List(("cost","0",false)),
+                   attributes:AttributeDefinitions) ={
     val toReturn = new BatchProcess(m,numberOfBatches,batchDuration,inputs,outputs,name,transformFunction,verbosity)
-    toReturn.cost = ListenerParser.processPropertyParser(toReturn,attributeDefinitions()).applyAndExpectDouble(costFunction)
+    val attributeParser = ListenerParser.processPropertyParser(toReturn,attributes)
+    for((name,expr,isBoolean) <- properties){
+      if(isBoolean) toReturn.properties.addBoolProperty(name,attributeParser.applyAndExpectBool(expr))
+      else toReturn.properties.addDoubleProperty(name,attributeParser.applyAndExpectDouble(expr))
+    }
     toReturn
   }
 
@@ -93,9 +103,14 @@ trait FactoryHelper extends AttributeHelper{
                           transformFunction:ItemClassTransformFunction,
                           name:String,
                           verbosity:String=>Unit = null,
-                          costFunction:String  = "0") = {
+                          properties:List[(String,String,Boolean)] = List(("cost","0",false)),
+                          attributes:AttributeDefinitions) = {
     val toReturn = new ConveyorBeltProcess(m:Model,processDuration,minimalSeparationBetweenBatches,inputs,outputs,transformFunction,name,verbosity)
-    toReturn.cost = ListenerParser.processPropertyParser(toReturn,attributeDefinitions()).applyAndExpectDouble(costFunction)
+    val attributeParser = ListenerParser.processPropertyParser(toReturn,attributes)
+    for((name,expr,isBoolean) <- properties){
+      if(isBoolean) toReturn.properties.addBoolProperty(name,attributeParser.applyAndExpectBool(expr))
+      else toReturn.properties.addDoubleProperty(name,attributeParser.applyAndExpectDouble(expr))
+    }
     toReturn
   }
 
@@ -118,9 +133,14 @@ trait FactoryHelper extends AttributeHelper{
                             name:String,
                             transformFunction:ItemClassTransformWitAdditionalOutput,
                             verbosity:String=>Unit = null,
-                            costFunction:String) = {
+                            properties:List[(String,String,Boolean)] = List(("cost","0",false)),
+                            attributes:AttributeDefinitions) = {
     val toReturn = SplittingBatchProcess(m, numberOfBatches, batchDuration, inputs, outputs, name, transformFunction, verbosity)
-    toReturn.cost = ListenerParser.processPropertyParser(toReturn,attributeDefinitions()).applyAndExpectDouble(costFunction)
+    val attributeParser = ListenerParser.processPropertyParser(toReturn,attributes)
+    for((name,expr,isBoolean) <- properties){
+      if(isBoolean) toReturn.properties.addBoolProperty(name,attributeParser.applyAndExpectBool(expr))
+      else toReturn.properties.addDoubleProperty(name,attributeParser.applyAndExpectDouble(expr))
+    }
     toReturn
   }
 
@@ -145,9 +165,14 @@ trait FactoryHelper extends AttributeHelper{
                                   transformFunction:ItemClassTransformWitAdditionalOutput,
                                   name:String,
                                   verbosity:String=>Unit = null,
-                                  costFunction:String = "0") = {
+                                  properties:List[(String,String,Boolean)] = List(("cost","0",false)),
+                                  attributes:AttributeDefinitions) = {
     val toReturn = SplittingSingleBatchProcess(m, batchDuration, inputs, outputs, transformFunction, name, verbosity)
-    toReturn.cost = ListenerParser.processPropertyParser(toReturn,attributeDefinitions()).applyAndExpectDouble(costFunction)
+    val attributeParser = ListenerParser.processPropertyParser(toReturn,attributes)
+    for((name,expr,isBoolean) <- properties){
+      if(isBoolean) toReturn.properties.addBoolProperty(name,attributeParser.applyAndExpectBool(expr))
+      else toReturn.properties.addDoubleProperty(name,attributeParser.applyAndExpectDouble(expr))
+    }
     toReturn
   }
 
@@ -165,10 +190,14 @@ trait FactoryHelper extends AttributeHelper{
                   name:String,
                   verbosity:String=>Unit,
                   overflowOnInput:Boolean,
-                  costFunction:String = "0",
+                  properties:List[(String,String,Boolean)] = List(("cost","0",false)),
                   attributes:AttributeDefinitions) = {
     val toReturn = new LIFOStorage(maxSize, initialContent, name, verbosity, overflowOnInput,0)
-    toReturn.cost = ListenerParser.storagePropertyParser(toReturn,attributes).applyAndExpectDouble(costFunction)
+    val attributeParser = ListenerParser.storagePropertyParser(toReturn,attributes)
+    for((name,expr,isBoolean) <- properties){
+      if(isBoolean) toReturn.properties.addBoolProperty(name,attributeParser.applyAndExpectBool(expr))
+      else toReturn.properties.addDoubleProperty(name,attributeParser.applyAndExpectDouble(expr))
+    }
     toReturn
   }
 
@@ -186,10 +215,15 @@ trait FactoryHelper extends AttributeHelper{
                   name:String,
                   verbosity:String=>Unit,
                   overflowOnInput:Boolean,
-                  costFunction:String = "0",
+                  properties:List[(String,String,Boolean)] = List(("cost","0",false)),
                   attributes:AttributeDefinitions) = {
     val toReturn = new FIFOStorage(maxSize, initialContent, name, verbosity, overflowOnInput,0)
-    toReturn.cost = ListenerParser.storagePropertyParser(toReturn,attributes).applyAndExpectDouble(costFunction)
+
+    val attributeParser = ListenerParser.storagePropertyParser(toReturn,attributes)
+    for((name,expr,isBoolean) <- properties){
+      if(isBoolean) toReturn.properties.addBoolProperty(name,attributeParser.applyAndExpectBool(expr))
+      else toReturn.properties.addDoubleProperty(name,attributeParser.applyAndExpectDouble(expr))
+    }
     toReturn
   }
 }
