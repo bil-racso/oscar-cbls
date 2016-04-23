@@ -56,7 +56,7 @@ object RoutingTest extends App with StopWatch{
 
   this.startWatch()
 
-  val n = 1000
+  val n = 50
   val v = 1
 
   println("RoutingTest(n:" + n + " v:" + v + ")")
@@ -124,13 +124,15 @@ object RoutingTest extends App with StopWatch{
     relevantNeighbors = () => vrp.kNearest(40),
     vehicles=() => vrp.vehicles.toList))
 
-  val linKernighan = Profile(LinKernighan(0,vrp))
-
-  val kernighanSearch = insertPoint exhaust linKernighan showObjectiveFunction vrp.objectiveFunction afterMove {
+  //val linKernighanMulti = Profile(BestSlopeFirst(List(LinKernighan(0,vrp), LinKernighan(1,vrp), LinKernighan(2,vrp), LinKernighan(3,vrp), LinKernighan(4,vrp))))
+  val linKernighanOne = Profile(LinKernighan(0,vrp))
+  /*val kernighanSearchMulti = insertPoint exhaust BestSlopeFirst(List(linKernighan, segExchange)) showObjectiveFunction vrp.objectiveFunction afterMove {
     rm.drawRoutes()
-    println(getWatch)
   }
-  kernighanSearch.verbose = 1
+  kernighanSearchMulti.verbose = 1*/
+
+  val kernighanSearchOne = insertPoint exhaust linKernighanOne showObjectiveFunction vrp.objectiveFunction afterMove rm.drawRoutes()
+  kernighanSearchOne.verbose = 1
   /*val search = new RoundRobin(List(insertPoint,onePointMove),10) exhaust
                       new BestSlopeFirst(List(onePointMove, threeOpt, segExchange), refresh = n / 2) showObjectiveFunction vrp.getObjective()
   // exhaust onePointMove exhaust segExchange//threeOpt //(new BestSlopeFirst(List(onePointMove,twoOpt,threeOpt)))
@@ -140,13 +142,13 @@ object RoutingTest extends App with StopWatch{
   //segExchange.verbose = 3
 
   def launchSearch(): Unit ={
-    kernighanSearch.doAllMoves(_ > 10*n, vrp.objectiveFunction)
+    kernighanSearchOne.doAllMoves(_ > 10*n, vrp.objectiveFunction)
 
     println("total time " + getWatch + "ms or  " + getWatchString)
 
     println("\nresult:\n" + vrp)
 
-    println(kernighanSearch.profilingStatistics)
+    println(kernighanSearchOne.profilingStatistics)
   }
 
   launchSearch()

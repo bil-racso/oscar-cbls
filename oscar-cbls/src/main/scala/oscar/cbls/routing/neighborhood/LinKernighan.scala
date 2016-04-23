@@ -9,13 +9,15 @@ import oscar.cbls.search.algo.HotRestart
   */
 case class LinKernighan(routeNr:Int,
                         override val vrp: VRP with PositionInRouteAndRouteNr with Predecessors with HopClosestNeighbors,
-                        k:Int = 10,
+                        k:Int = 2,
                         neighborhoodName: String = "LinKernighan",
                         best: Boolean = false,
-                        hotRestart: Boolean = false) extends EasyRoutingNeighborhood[LinKernighanMove](best, vrp, neighborhoodName) {
+                        hotRestart: Boolean = true) extends EasyRoutingNeighborhood[LinKernighanMove](best, vrp, neighborhoodName) {
 
   vrp.computeClosestNeighbors()
   var selectedRoute = vrp.getRouteOfVehicle(routeNr).toArray
+  var positionInRoute : Array[Int] = new Array[Int](selectedRoute.length)
+  var distanceMatrix : Array[Array[Int]] = new Array[Array[Int]](selectedRoute.length)
   var routeLength = selectedRoute.length
   /*
    * This variable contains the state of each node of the selected route.
@@ -36,14 +38,6 @@ case class LinKernighan(routeNr:Int,
   var currentDelta = 0
   var firstNode = 0
   var firstBeforeSecond = false
-
-  val isAvailable:(Int,Int)=>Boolean = (node:Int, toNode:Int) =>{
-    if(vrp.routeNr(node).value == routeNr && node != toNode) {
-      availableNode(vrp.positionInRoute(node).value)
-    }
-    else
-      false
-  }
 
   def linkNode(n1:Int,n2:Int,old:Boolean): Unit ={
     if(old) {
@@ -91,6 +85,15 @@ case class LinKernighan(routeNr:Int,
     newLink = Array.tabulate(routeLength)(n => vrp.N)
     currentDelta = 0
     firstBeforeSecond = false
+    positionInRoute = Array.tabulate(vrp.N)(n => -1)
+    distanceMatrix = Array.tabulate(routeLength)(n => Array.tabulate(routeLength)(n2 => 0))
+    for(n <- selectedRoute.indices){
+      positionInRoute(selectedRoute(n)) = n
+      for(n2 <- selectedRoute.indices){
+        distanceMatrix(n)(n2) = vrp.distanceFunction(selectedRoute(n),selectedRoute(n2))
+      }
+    }
+
 
     val iterationSchemeOnZone =
     if (hotRestart && !best) HotRestart(selectedRoute, startIndice).toArray
@@ -110,12 +113,15 @@ case class LinKernighan(routeNr:Int,
     }
   }
 
-  def internalExploration(node:Int): Boolean ={
+  var depth = 0
 
+  def internalExploration(node:Int): Boolean ={
+    depth += 1
+    //println(depth,"in")
     def checkDelta(predsNode:Int, baseNode:Int,promisingNode:Int): Boolean ={
-      if(currentDelta + (vrp.distanceFunction(baseNode,promisingNode) -
-        vrp.distanceFunction(predsNode,baseNode)) < 0) {
-        currentDelta += vrp.distanceFunction(baseNode, promisingNode) - vrp.distanceFunction(predsNode, baseNode)
+      if(currentDelta + (distanceMatrix(baseNode)(promisingNode) -
+        distanceMatrix(predsNode)(baseNode)) < 0) {
+        currentDelta += distanceMatrix(baseNode)(promisingNode) - distanceMatrix(predsNode)(baseNode)
         true
       }
       else
@@ -155,7 +161,7 @@ case class LinKernighan(routeNr:Int,
       var res:List[Int] = List.empty
       if(availableNode(preds) && isAllowed(preds,pos,newNode))
         res = preds :: res
-      if (availableNode(next) && isAllowed(next,pos,newNode))
+      if(availableNode(next) && isAllowed(next,pos,newNode))
         res = next :: res
       res
     }
@@ -193,26 +199,27 @@ case class LinKernighan(routeNr:Int,
     }
 
     def getKPromisingNodes(node:Int): List[Int] ={
+      val nodesList = Array.tabulate(routeLength)(n => n)
+      val res = nodesList.filter(availableNode(_)).sortWith(distanceMatrix(node)(_) < distanceMatrix(node)(_)).take(k).toList
+      res
+
+      /*
       val promisingNodes = vrp.closestNeighbors(node).iterator
       var counter = 0
       var res:List[Int] = Nil
       while(promisingNodes.hasNext && counter < k){
-        val current = promisingNodes.next()
-        val index = selectedRoute.indexOf(current)
+        val index = positionInRoute(promisingNodes.next())
         if(index != -1 && availableNode(index)) {
           res = index :: res
           counter += 1
         }
       }
-      res
+      res*/
     }
-
-
-    //val promisingNodes = vrp.kNearest(k,isAvailable(_,selectedRoute(node)))(selectedRoute(node))
     //we browse the promising nodes
     for(positionPN <- getKPromisingNodes(node)){
       //If the the length of the link cut is longer than the link we want to create we keep the move
-      if(checkDelta(selectedRoute(oldLink(node)),selectedRoute(node),selectedRoute(positionPN))) {
+      if(checkDelta(oldLink(node),node,positionPN)) {
         linkNode(node,positionPN,false)
 
         //We select the next node to proceed (either the prev or the next of the current node)
@@ -223,6 +230,9 @@ case class LinKernighan(routeNr:Int,
            */
           unLinkNode(positionPN,oldNode,true)
           linkNode(oldNode,firstNode,false)
+          /*println(availableNode.toList)
+          println(oldLink.toList)
+          println(newLink.toList)*/
           if(!isCycling(oldNode)){
             encode(oldLink, newLink, selectedRoute, firstNode, availableNode)
             if (evaluateCurrentMoveObjTrueIfStopRequired(evalObjOnEncodedMove())) {
@@ -238,12 +248,14 @@ case class LinKernighan(routeNr:Int,
           //If we are here that means that no solution has been discovered by going this way so we backtrack
           linkNode(positionPN,oldNode,true)
         }
-        unLinkNode(node,positionPN,false)
         currentDelta -=
-          vrp.distanceFunction(selectedRoute(node), selectedRoute(positionPN)) -
-            vrp.distanceFunction(selectedRoute(oldLink(node)), selectedRoute(node))
+        distanceMatrix(node)(positionPN) -
+        distanceMatrix(oldLink(node))(node)
+        unLinkNode(node,positionPN,false)
       }
     }
+    depth -= 1
+    //println(depth,"out")
     false
   }
 
