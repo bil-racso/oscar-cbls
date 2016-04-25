@@ -41,6 +41,15 @@ class PiecewiseLinearFun(private[fun] val transformation: RedBlackTree[Pivot] = 
     }
   }
 
+  def updateForCompositionBefore(updates:(Int,Int,LinearTransform)*):PiecewiseLinearFun = {
+    var updatedTransform=transformation
+    for((fromIncluded,toIncluded,update) <- updates) {
+      updatedTransform = myUpdateForCompositionBefore(fromIncluded, toIncluded, update, removePivotsBetween(fromIncluded, toIncluded, updatedTransform))
+    }
+    new PiecewiseLinearFun(updatedTransform)
+  }
+
+
   def updateForCompositionBefore(fromIncluded:Int, toIncluded: Int, additionalFAppliedBefore: LinearTransform):PiecewiseLinearFun = {
     //step1: remove all pivots between fromIncluded and toIncluded
     //step2: recall the linear transform that was at the end, because we will need to re-put this one with an additional pivot, except if we get the same function with our new pivots
@@ -48,7 +57,11 @@ class PiecewiseLinearFun(private[fun] val transformation: RedBlackTree[Pivot] = 
     //step4: add a finishing pivot if necessary (cfr. step2)
 
     //remove all the pivots between fromIncluded and ToIncluded
-    val cleanedTransformation = removePivotsBetween(fromIncluded,toIncluded,transformation)
+    val cleanedTransformation = removePivotsBetween(fromIncluded, toIncluded, transformation)
+    new PiecewiseLinearFun(myUpdateForCompositionBefore(fromIncluded, toIncluded, additionalFAppliedBefore,cleanedTransformation))
+  }
+
+  def myUpdateForCompositionBefore(fromIncluded:Int, toIncluded: Int, additionalFAppliedBefore: LinearTransform,cleanedTransformation:RedBlackTree[Pivot]):RedBlackTree[Pivot] = {
     val isAdditionaFNegativeSlope = additionalFAppliedBefore.minus
 
     var currentFromIncluded = fromIncluded
@@ -113,7 +126,7 @@ class PiecewiseLinearFun(private[fun] val transformation: RedBlackTree[Pivot] = 
         //compute end of this section
       }
     }
-    new PiecewiseLinearFun(currentTransformation)
+    currentTransformation
   }
 
 

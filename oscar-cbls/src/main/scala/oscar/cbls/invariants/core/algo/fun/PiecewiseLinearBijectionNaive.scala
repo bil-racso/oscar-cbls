@@ -52,13 +52,8 @@ class PiecewiseLinearBijectionNaive(val forward:PiecewiseLinearFun, val backward
   }
 
   def updateBefore(updates:(Int,Int,LinearTransform)*):PiecewiseLinearBijectionNaive ={
-    var updatedForward = forward
-    println("updating bijection with:" + updates)
-    for((fromPos,toPos,update) <- updates){
-      updatedForward = updatedForward.updateForCompositionBefore(fromPos,toPos,update)
-      println("intermediary:" + updatedForward)
-    }
-    new PiecewiseLinearBijectionNaive(updatedForward)
+    println("update before:" + updates)
+    new PiecewiseLinearBijectionNaive(forward.updateForCompositionBefore(updates:_*))
   }
 
   def apply(value:Int) = forward(value)

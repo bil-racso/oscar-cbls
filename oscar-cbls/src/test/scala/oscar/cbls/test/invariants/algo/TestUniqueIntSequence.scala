@@ -20,7 +20,7 @@ object TestUniqueIntSequence extends App{
 
   val d = c.insertAtPosition(7,0)//insert at head
   println(d)
-  require(d.positionOfValue(7).head == 0)
+  require(d.positionOfValue(7).head == 0,"d.positionOfValue(7).head:" + d.positionOfValue(7).head)
   require(d.positionOfValue(5).head == 1)
   require(d.positionOfValue(6).head == 2)
 
@@ -30,4 +30,13 @@ object TestUniqueIntSequence extends App{
   require(e.positionOfValue(5).head == 1)
   require(e.positionOfValue(8).head == 2)
   require(e.positionOfValue(6).head == 3)
+
+  val f = e.insertAtPosition(9,2)//insert inside
+  println(f)
+  require(f.positionOfValue(7).head == 0)
+  require(f.positionOfValue(5).head == 1)
+  require(f.positionOfValue(9).head == 2)
+  require(f.positionOfValue(8).head == 3)
+  require(f.positionOfValue(6).head == 4)
+
 }

@@ -85,12 +85,12 @@ class UniqueIntSequence(private[seq] val internalPositionToValue:RedBlackTree[In
       //inserting at end of the sequence
       println("inserting at end of the sequence")
       externalToInternalPosition.updateBefore(
-        (startFreeRangeForInternalPosition,startFreeRangeForInternalPosition,LinearTransform(pos - oldExternalPosRelatedToFreeInternalPos,false)))
+        (size,size,LinearTransform(oldExternalPosRelatedToFreeInternalPos-pos,false)))
     }else{
       //inserting somewhere within the sequence, need to shift upper part
       externalToInternalPosition.updateBefore(
-        (pos+1,size,LinearTransform(+1,false)),
-        (startFreeRangeForInternalPosition,startFreeRangeForInternalPosition,LinearTransform(pos - oldExternalPosRelatedToFreeInternalPos,false)))
+        (pos+1,size,LinearTransform(-1,false)),
+        (pos,pos,LinearTransform(oldExternalPosRelatedToFreeInternalPos-pos,false)))
     }
 
     new UniqueIntSequence(
