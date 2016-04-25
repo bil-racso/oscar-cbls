@@ -53,13 +53,15 @@ object ListenerParser{
 
 class ListenerParser(storages:Map[String,Storage],
                      processes:Map[String,ActivableProcess],
-                     attributes:AttributeDefinitions)
+                     attributes:AttributeDefinitions,
+                     var declaredBoolExpr:SortedMap[String,BoolExpr] = SortedMap.empty[String,BoolExpr],
+                     var declaredDoubleExpr:SortedMap[String,DoubleExpr] = SortedMap.empty[String,DoubleExpr])
   extends ParserWithSymbolTable with ListenersHelper with AttributeHelper{
 
   protected override val whiteSpace = """(\s|//.*|(?m)/\*(\*(?!/)|[^*])*\*/)+""".r
 
   override def skipWhitespace: Boolean = true
-
+  
   def parseAllListeners(expressions:List[(String,String)]):MultipleParsingResult = {
     MultipleParsingSuccess(expressions.map({
       case (name,expr) =>
@@ -79,8 +81,7 @@ class ListenerParser(storages:Map[String,Storage],
     }))
   }
 
-  var declaredBoolExpr:SortedMap[String,BoolExpr] = SortedMap.empty[String,BoolExpr]
-  var declaredDoubleExpr:SortedMap[String,DoubleExpr] = SortedMap.empty[String,DoubleExpr]
+
 
   def apply(input:String):ListenerParsingResult = {
     parseAll(expressionParser, input) match {
@@ -169,7 +170,7 @@ class ListenerParser(storages:Map[String,Storage],
       | "changed(" ~> (boolExprParser | doubleExprParser) <~")" ^^ {
       case b:BoolExpr => boolChanged(b)
       case d:DoubleExpr => doubleChanged(d)
-      case _ => {throw new Exception("internal parser error"); null}}
+      case _ => {throw new Exception("can only use changed on bool or arithmetic expression"); null}}
       | "ite(" ~> boolExprParser~(","~>boolExprParser)~(","~>boolExprParser <~ ")") ^^{ case i~t~e => booleanITE(i,t,e)}
       | "("~>boolExprParser<~")"
       | failure("expected boolean expression"))
@@ -227,6 +228,7 @@ class ListenerParser(storages:Map[String,Storage],
       |"duration(" ~> boolExprParser <~")" ^^ {case e => duration(e)}
       | "-"~> doubleExprParser ^^ {opposite(_)}
       | "("~>doubleExprParser<~")"
+  //    | ("sumAll(" ~> processParser <~ ":Process,") >>> {case (p:Process) => addProcessAndCreateDoubleParser(name:String,process:ActivableProcess)
       | "totalCost" ^^^ {
       val costList = storages.toList.map(_._2.properties.getDoubleProperty("cost")) ::: processes.toList.map(_._2.properties.getDoubleProperty("cost"))
       costList.foldLeft[DoubleExpr](0.0)(plus(_,_))}
