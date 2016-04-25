@@ -124,8 +124,8 @@ class PiecewiseLinearFun(private[fun] val transformation: RedBlackTree[Pivot] = 
   def removePivotsBetween(fromIncluded:Int,toIncluded:Int, transformToClean:RedBlackTree[Pivot]):RedBlackTree[Pivot] = {
 
     val transformWithAddedFinishingPivot = transformToClean.biggestLowerOrEqual(toIncluded + 1) match {
-      case Some((key, pivot)) if key < toIncluded + 1 => transformToClean.insert(toIncluded + 1, new Pivot(toIncluded + 1, pivot.f))
-      case _ => transformToClean
+      case Some((key, pivot)) => transformToClean.insert(toIncluded + 1, new Pivot(toIncluded + 1, pivot.f))
+      case _ => transformToClean.insert(toIncluded + 1, new Pivot(toIncluded + 1, LinearTransform.identity))
     }
 
     var currentCleanedTransform = transformWithAddedFinishingPivot
