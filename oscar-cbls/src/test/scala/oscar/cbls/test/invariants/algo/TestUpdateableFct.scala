@@ -1,18 +1,6 @@
 package oscar.cbls.test.invariants.algo
 
-import oscar.cbls.invariants.core.algo.fun.{PiecewiseLinearFun, LinearTransform}
-
-sealed abstract class UpdateableFunctionNaive{
-  def apply(value:Int):Int
-  def updateBefore(fromIncuded:Int,toIncluded:Int,update:LinearTransform):UpdateableFunctionNaive =
-    new UpdatedFunctionNaive(fromIncuded,toIncluded,update:LinearTransform,this)
-}
-case object IdentityNaive extends UpdateableFunctionNaive{
-  override def apply(value:Int):Int = value
-}
-case class UpdatedFunctionNaive(fromIncuded:Int,toIncluded:Int,update:LinearTransform,base:UpdateableFunctionNaive) extends UpdateableFunctionNaive{
-  override def apply(value:Int):Int = if(value >= fromIncuded && value <= toIncluded) base(update(value)) else base(value)
-}
+import oscar.cbls.invariants.core.algo.fun.{PiecewiseLinearFunNaive, IdentityNaive, PiecewiseLinearFun, LinearTransform}
 
 
 
@@ -25,7 +13,7 @@ le bon index linéaire est celui après transformation
 object TestUpdateableFunction extends App{
   val maxVal = 100
   var fnFun = new PiecewiseLinearFun()
-  var fnNaive:UpdateableFunctionNaive = IdentityNaive
+  var fnNaive:PiecewiseLinearFunNaive = IdentityNaive
 
   def compare(): Unit ={
     for(i <- 0 to maxVal){
