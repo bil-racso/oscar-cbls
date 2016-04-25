@@ -91,7 +91,7 @@ class PiecewiseLinearFun(private[fun] val transformation: RedBlackTree[Pivot] = 
             (additionalFAppliedBefore.unApply(position.value.fromValue - 1), position.prev)
           } else {
             val nextPivotPosition = position.next
-            (additionalFAppliedBefore.unApply(nextPivotPosition.head.value.fromValue),
+            (nextPivotPosition match{case None => toIncluded+1 case Some(position) => additionalFAppliedBefore.unApply(position.value.fromValue)},
               nextPivotPosition)
           }
 
