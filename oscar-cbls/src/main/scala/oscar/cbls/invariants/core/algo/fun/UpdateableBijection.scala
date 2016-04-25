@@ -1,15 +1,11 @@
-package oscar.cbls.invariants.core.algo.fun.functional
+package oscar.cbls.invariants.core.algo.fun
 
-import oscar.cbls.invariants.core.algo.fun.mutable.LinearTransform$
 import oscar.cbls.invariants.core.algo.quick.QList
 
 
 object PiecewiseLinearBijectionNaive{
-  def identity:PiecewiseLinearBijectionNaive = PiecewiseLinearBijectionNaive(PiecewiseLinearFun.identity)
+  def identity:PiecewiseLinearBijectionNaive = new PiecewiseLinearBijectionNaive(PiecewiseLinearFun.identity)
 
-  def apply(forward:PiecewiseLinearFun):PiecewiseLinearBijectionNaive = {
-    new PiecewiseLinearBijectionNaive(forward,PiecewiseLinearFun.createFromPivots(computeInvertedPivots(null, forward.pivots, null)))
-  }
   def computeInvertedPivots(prevPivot : Pivot, remainingPivots : List[Pivot], newPivots : QList[Pivot] = null) : QList[Pivot] = {
     remainingPivots match {
       case Nil => newPivots
@@ -27,9 +23,14 @@ object PiecewiseLinearBijectionNaive{
   }
 
   def apply(forward:PiecewiseLinearFun, backward:PiecewiseLinearFun):PiecewiseLinearBijectionNaive = new PiecewiseLinearBijectionNaive(forward,backward)
+  def apply(forward:PiecewiseLinearFun) = new PiecewiseLinearBijectionNaive(forward)
 }
 
 class PiecewiseLinearBijectionNaive(val forward:PiecewiseLinearFun, val backward:PiecewiseLinearFun){
+
+  def this(forward:PiecewiseLinearFun)= {
+    this(forward,PiecewiseLinearFun.createFromPivots(PiecewiseLinearBijectionNaive.computeInvertedPivots(null, forward.pivots, null)))
+  }
 
   def invert:PiecewiseLinearBijectionNaive = new PiecewiseLinearBijectionNaive(backward,forward)
 
@@ -50,14 +51,14 @@ class PiecewiseLinearBijectionNaive(val forward:PiecewiseLinearFun, val backward
       "Bijection.backward:" + backward + "\n"
   }
 
-  def updateAfter(updates:(Int,Int,LinearTransform)*):PiecewiseLinearBijectionNaive ={
+  def updateBefore(updates:(Int,Int,LinearTransform)*):PiecewiseLinearBijectionNaive ={
     var updatedForward = forward
     println("updating bijection with:" + updates)
     for((fromPos,toPos,update) <- updates){
-      updatedForward = updatedForward.composeAfter(fromPos,toPos,update)
+      updatedForward = updatedForward.updateForCompositionBefore(fromPos,toPos,update)
       println("intermediary:" + updatedForward)
     }
-    PiecewiseLinearBijectionNaive(updatedForward)
+    new PiecewiseLinearBijectionNaive(updatedForward)
   }
 
   def apply(value:Int) = forward(value)

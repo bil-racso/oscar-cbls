@@ -53,16 +53,20 @@ trait RedBlackTree[@specialized(Int) V]{
 
   def contains(k:Int):Boolean
 
-  def getBiggestLowerOrEqual(k:Int):Option[(Int,V)]
+  def biggestLowerOrEqual(k:Int):Option[(Int,V)]
 
   protected[rb] def getBiggestLowerAcc(k:Int, bestoFar:(Int,V)):Option[(Int,V)]
 
-  def getSmallestBiggerOrEqual(k:Int):Option[(Int,V)]
+  def smallestBiggerOrEqual(k:Int):Option[(Int,V)]
 
-  def getSmallest:Option[(Int,V)]
+  def smallest:Option[(Int,V)]
 
-  def getBiggest:Option[(Int,V)]
+  def biggest:Option[(Int,V)]
 
+  def biggestPosition:Option[RBPosition[V]]
+
+  def smallestPosition:Option[RBPosition[V]]
+  
   protected[rb] def getSmallestBiggerAcc(k:Int, bestSoFar:(Int,V)):Option[(Int,V)]
 
   // insert: Insert a value at a key.
@@ -78,7 +82,6 @@ trait RedBlackTree[@specialized(Int) V]{
   protected [rb] def valuesAcc(valuesAfter:List[V]):List[V]
   def content:List[(Int,V)]
   protected [rb] def contentAcc(valuesAfter:List[(Int,V)]):List[(Int,V)]
-
 
   def positionOf(k: Int):Option[RBPosition[V]]
   protected[rb] def positionOfAcc(k:Int,positionAcc:QList[(T[V],Boolean)]):Option[RBPosition[V]]
@@ -96,11 +99,11 @@ case class L[@specialized(Int) V]() extends RedBlackTree[V]  {
     T(R, this, k, f(k,None), this)
   }
 
-  def getBiggestLowerOrEqual(k:Int):Option[(Int,V)] = None
+  def biggestLowerOrEqual(k:Int):Option[(Int,V)] = None
 
   override protected[rb] def getBiggestLowerAcc(k:Int, bestSoFar:(Int,V)) = Some(bestSoFar)
 
-  override def getSmallestBiggerOrEqual(k: Int):Option[(Int,V)] = None
+  override def smallestBiggerOrEqual(k: Int):Option[(Int,V)] = None
 
   override protected[rb] def getSmallestBiggerAcc(k: Int, bestSoFar: (Int, V)) = Some(bestSoFar)
 
@@ -126,9 +129,13 @@ case class L[@specialized(Int) V]() extends RedBlackTree[V]  {
   // remove: Delete a key.
   override def remove (k : Int) = blacken(modWith(k, (_,_) => None))
 
-  override def getSmallest:Option[(Int,V)] = getSmallestBiggerOrEqual(Int.MinValue)
+  override def smallest:Option[(Int,V)] = smallestBiggerOrEqual(Int.MinValue)
 
-  override def getBiggest:Option[(Int,V)] = getBiggestLowerOrEqual(Int.MaxValue)
+  override def biggest:Option[(Int,V)] = biggestLowerOrEqual(Int.MaxValue)
+
+  override def biggestPosition:Option[RBPosition[V]] = None
+
+  override def smallestPosition:Option[RBPosition[V]] = None
 }
 
 // A tree node.
@@ -149,8 +156,8 @@ case class T[@specialized(Int) V](c : Boolean, l : RedBlackTree[V], k : Int, v :
     else true
   }
 
-  def getBiggestLowerOrEqual(k:Int):Option[(Int,V)] = {
-    if (k < this.k) l.getBiggestLowerOrEqual(k)
+  def biggestLowerOrEqual(k:Int):Option[(Int,V)] = {
+    if (k < this.k) l.biggestLowerOrEqual(k)
     else if (this.k < k) r.getBiggestLowerAcc(k,(this.k,v.head))
     else Some(k,v.head)
   }
@@ -161,9 +168,9 @@ case class T[@specialized(Int) V](c : Boolean, l : RedBlackTree[V], k : Int, v :
     else Some(k,v.head)
   }
 
-  override def getSmallestBiggerOrEqual(k: Int):Option[(Int,V)] = {
+  override def smallestBiggerOrEqual(k: Int):Option[(Int,V)] = {
     if (k < this.k) l.getSmallestBiggerAcc(k, (this.k, v.head))
-    else if (this.k < k) r.getSmallestBiggerOrEqual(k)
+    else if (this.k < k) r.smallestBiggerOrEqual(k)
     else Some(k,v.head)
   }
 
@@ -181,7 +188,7 @@ case class T[@specialized(Int) V](c : Boolean, l : RedBlackTree[V], k : Int, v :
           if(l.isEmpty) r
           else if (r.isEmpty) l
           else{
-            val (k,v) = r.getSmallest.head
+            val (k,v) = r.smallest.head
             T(c, l, k, Some(v), r.remove(k))
           }
         case x => T(c, l, k, x, r)
@@ -218,9 +225,24 @@ case class T[@specialized(Int) V](c : Boolean, l : RedBlackTree[V], k : Int, v :
   // remove: Delete a key.
   override def remove (k : Int) = blacken(modWith(k, (_,_) => None))
 
-  override def getSmallest:Option[(Int,V)] = getSmallestBiggerOrEqual(Int.MinValue)
+  override def smallest:Option[(Int,V)] = smallestBiggerOrEqual(Int.MinValue)
 
-  override def getBiggest:Option[(Int,V)] = getBiggestLowerOrEqual(Int.MaxValue)
+  override def biggest:Option[(Int,V)] = biggestLowerOrEqual(Int.MaxValue)
+
+  override def biggestPosition:Option[RBPosition[V]] = {
+    biggestLowerOrEqual(Int.MaxValue) match{
+      case Some((k,_)) => positionOf(k)
+      case None => None
+    }
+  }
+
+  override def smallestPosition:Option[RBPosition[V]] = {
+    smallestBiggerOrEqual(Int.MinValue) match{
+      case Some((k,_)) => positionOf(k)
+      case None => None
+    }
+  }
+
 }
 
 // A helper object.

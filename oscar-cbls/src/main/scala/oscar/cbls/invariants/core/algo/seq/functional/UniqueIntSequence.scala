@@ -1,7 +1,6 @@
 package oscar.cbls.invariants.core.algo.seq.functional
 
-import oscar.cbls.invariants.core.algo.fun.functional.{PiecewiseLinearBijectionNaive, Pivot}
-import oscar.cbls.invariants.core.algo.fun.mutable.LinearTransform$
+import oscar.cbls.invariants.core.algo.fun.{PiecewiseLinearBijectionNaive, Pivot, LinearTransform}
 import oscar.cbls.invariants.core.algo.rb.{RBPosition, RedBlackTree}
 
 object UniqueIntSequence{
@@ -85,11 +84,11 @@ class UniqueIntSequence(private[seq] val internalPositionToValue:RedBlackTree[In
     val newExternalToInternalPosition = if(pos == size) {
       //inserting at end of the sequence
       println("inserting at end of the sequence")
-      externalToInternalPosition.updateAfter(
+      externalToInternalPosition.updateBefore(
         (startFreeRangeForInternalPosition,startFreeRangeForInternalPosition,LinearTransform(pos - oldExternalPosRelatedToFreeInternalPos,false)))
     }else{
       //inserting somewhere within the sequence, need to shift upper part
-      externalToInternalPosition.updateAfter(
+      externalToInternalPosition.updateBefore(
         (pos+1,size,LinearTransform(+1,false)),
         (startFreeRangeForInternalPosition,startFreeRangeForInternalPosition,LinearTransform(pos - oldExternalPosRelatedToFreeInternalPos,false)))
     }

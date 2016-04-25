@@ -1,15 +1,12 @@
 package oscar.cbls.test.invariants.algo
 
-import oscar.cbls.invariants.core.algo.fun.mutable.{LinearTransform$, PiecewiseLinearFun}
-import oscar.cbls.invariants.core.algo.fun.functional.{PiecewiseLinearBijectionNaive, PiecewiseLinearFun}
+import oscar.cbls.invariants.core.algo.fun.{PiecewiseLinearBijectionNaive, PiecewiseLinearFun, LinearTransform}
 
-import scala.collection.parallel.mutable
-
-
+/*
 object TestUpdateableBijection extends App{
   val maxVal = 100
   val fn = new oscar.cbls.invariants.core.algo.fun.mutable.PiecewiseLinearFun()
-  var fnFun = new oscar.cbls.invariants.core.algo.fun.functional.PiecewiseLinearFun()
+  var fnFun = new PiecewiseLinearFun()
   var reverse = new PiecewiseLinearBijectionNaive(fnFun)
 
   def compare(): Unit ={
@@ -61,3 +58,4 @@ object TestUpdateableBijection extends App{
   println
 
 }
+*/
