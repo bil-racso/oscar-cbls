@@ -20,11 +20,28 @@ class UniqueIntSequence(private[seq] val internalPositionToValue:RedBlackTree[In
                         private[seq] val startFreeRangeForInternalPosition:Int,
                         maxPivot:Int = 10, maxSize:Int = 1000) {
 
+
+  def check {
+    require(internalPositionToValue.content.sortBy(_._1) equals valueToInternalPosition.content.map({case (a,b) => (b,a)}).sortBy(_._1))
+  }
+
+  private def swapInternalPositions(internalPosition1:Int,
+                                    internalPosition2:Int,
+                                    internalPositionToValue:RedBlackTree[Int],
+                                    valueToInternalPosition:RedBlackTree[Int]): (RedBlackTree[Int],RedBlackTree[Int]) = {
+
+    val value1 = internalPositionToValue.get(internalPosition1).head
+    val value2 = internalPositionToValue.get(internalPosition2).head
+
+    (internalPositionToValue.insert(internalPosition1,value2).insert(internalPosition2,value2),
+      valueToInternalPosition.insert(value1,internalPosition2).insert(value2, internalPosition1))
+  }
+
   override def toString : String = {
-    "[" + this.iterator.toList.mkString(",") + "]" /* (\n" +
+    "(size:" + size + ")[" + this.iterator.toList.mkString(",") + "] (\n" +
       "internalPositionToValue:" + internalPositionToValue.content +
       "\nvalueToInternalPosition:" + valueToInternalPosition.content +
-      "\nexternalToInternalPosition:" + externalToInternalPosition + ")"*/
+      "\nexternalToInternalPosition:" + externalToInternalPosition + ")"
   }
 
   def size : Int = valueToInternalPosition.size
@@ -71,6 +88,7 @@ class UniqueIntSequence(private[seq] val internalPositionToValue:RedBlackTree[In
   }
 
   def insertAtPosition(value:Int, pos:Int):UniqueIntSequence = {
+    println("insertAtPosition(value:" + value + " pos:" + pos + ")")
     require(pos<=size,"inserting past the end of the sequence (size:" + size + " pos:" + pos + ")")
     //insert into red blacks
     val newInternalPositionToValue = internalPositionToValue.insert(startFreeRangeForInternalPosition,value)
@@ -100,21 +118,39 @@ class UniqueIntSequence(private[seq] val internalPositionToValue:RedBlackTree[In
   }
 
   def delete(pos:Int):UniqueIntSequence = {
+    println("delete(pos:" + pos + ")")
     require(pos<size,"deleting past the end of the sequence (size:" + size + " pos:" + pos + ")")
     require(pos>=0,"deleting at negative pos:" + pos)
 
     val internalPosition = externalToInternalPosition(pos)
     val value = internalPositionToValue.get(internalPosition).head
+    val largestInternalPosition = startFreeRangeForInternalPosition-1
 
-    val newInternalPositionToValue = internalPositionToValue.remove(internalPosition)
-    val newValueToInternalPosition = valueToInternalPosition.remove(value)
+    val valueAtLargestInternalPosition = internalPositionToValue.get(largestInternalPosition).head
+
+    val newInternalPositionToValue = internalPositionToValue.
+      insert(internalPosition,valueAtLargestInternalPosition).
+      remove(largestInternalPosition)
+
+    val newValueToInternalPosition = valueToInternalPosition.
+      insert(valueAtLargestInternalPosition,internalPosition).
+      remove(value)
+
+    //now, update the fct knowing the move and remove
+    val externalPositionAssociatedToLargestInternalPosition = externalToInternalPosition.backward(largestInternalPosition)
+
     val newExternalToInternalPosition = externalToInternalPosition.updateBefore(
-        (pos,size,LinearTransform(+1,false)))
+      (externalPositionAssociatedToLargestInternalPosition,
+        externalPositionAssociatedToLargestInternalPosition,
+        LinearTransform(pos-largestInternalPosition,false)),
+      (pos,pos,LinearTransform(largestInternalPosition - pos,false)))
+
+
     new UniqueIntSequence(
       newInternalPositionToValue,
       newValueToInternalPosition,
       newExternalToInternalPosition,
-      if(pos == startFreeRangeForInternalPosition-1) pos else startFreeRangeForInternalPosition,
+      startFreeRangeForInternalPosition -1,
       maxPivot,maxSize)
   }
 
@@ -138,20 +174,20 @@ class UniqueIntSequenceIterator(s:UniqueIntSequence) extends Iterator[Int] {
 }
 
 class IntSequenceExplorer(sequence:UniqueIntSequence,
-                         val position:Int,
-                         positionInRB:RBPosition[Int],
-                         currentPivotPosition:Option[RBPosition[Pivot]],
-                         pivotAbovePosition:Option[RBPosition[Pivot]])(
-                          limitAboveForCurrentPivot:Int = pivotAbovePosition match{
-                            case None => sequence.externalToInternalPosition.forward.firstPivot.head._1
-                            case Some(p) => p.value.fromValue-1},
-                          limitBelowForCurrentPivot:Int = currentPivotPosition match{
-                            case None => Int.MinValue
-                            case Some(p) => p.value.fromValue},
-                          slopeIsPositive:Boolean = currentPivotPosition match{
-                            case None => true
-                            case Some(p) => !p.value.f.minus}
-                          ) {
+                          val position:Int,
+                          positionInRB:RBPosition[Int],
+                          currentPivotPosition:Option[RBPosition[Pivot]],
+                          pivotAbovePosition:Option[RBPosition[Pivot]])(
+                           limitAboveForCurrentPivot:Int = pivotAbovePosition match{
+                             case None => sequence.externalToInternalPosition.forward.firstPivot.head._1
+                             case Some(p) => p.value.fromValue-1},
+                           limitBelowForCurrentPivot:Int = currentPivotPosition match{
+                             case None => Int.MinValue
+                             case Some(p) => p.value.fromValue},
+                           slopeIsPositive:Boolean = currentPivotPosition match{
+                             case None => true
+                             case Some(p) => !p.value.f.minus}
+                           ) {
 
   override def toString : String = "IntSequenceExplorer(position:" + position + " value:" + value + " positionInRB:" + positionInRB + ")"
 
