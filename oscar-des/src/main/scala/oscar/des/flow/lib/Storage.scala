@@ -29,6 +29,8 @@ abstract class Storage(val maxCapacity: Int,
 
   def cloneReset(newModel : Model) : Storage
 
+  def cloneStorage:(Storage,Boolean)
+
   class BufferCompositeItem(var n : Int, val itemClass : ItemClass)
 
   implicit def coupleToComposite(c : (Int, ItemClass)) : BufferCompositeItem = new BufferCompositeItem(c._1, c._2)

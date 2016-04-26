@@ -61,7 +61,7 @@ class ListenerParser(storages:Map[String,Storage],
   protected override val whiteSpace = """(\s|//.*|(?m)/\*(\*(?!/)|[^*])*\*/)+""".r
 
   override def skipWhitespace: Boolean = true
-  
+
   def parseAllListeners(expressions:List[(String,String)]):MultipleParsingResult = {
     MultipleParsingSuccess(expressions.map({
       case (name,expr) =>
@@ -228,11 +228,48 @@ class ListenerParser(storages:Map[String,Storage],
       |"duration(" ~> boolExprParser <~")" ^^ {case e => duration(e)}
       | "-"~> doubleExprParser ^^ {opposite(_)}
       | "("~>doubleExprParser<~")"
-  //    | ("sumAll(" ~> processParser <~ ":Process,") >>> {case (p:Process) => addProcessAndCreateDoubleParser(name:String,process:ActivableProcess)
+      | (("sumAll(" ~> (identifier <~ ":Process,")) .into {case (name:String) => processQuantifiedDoubleExpr(name)} <~ ")") ^^{case (name,expr) => sumAllProcess(name,expr,this.processes)}
       | "totalCost" ^^^ {
       val costList = storages.toList.map(_._2.properties.getDoubleProperty("cost")) ::: processes.toList.map(_._2.properties.getDoubleProperty("cost"))
       costList.foldLeft[DoubleExpr](0.0)(plus(_,_))}
       | failure("expected arithmetic expression"))
+
+  class ProcessPlaceHolder(name:String) extends ActivableProcess(name, null, 0){
+    var processToCloneTo:ActivableProcess = null
+    override def isRunning : Boolean = false
+    override def addPreliminaryInput(preliminary : Storage){}
+    override def totalWaitDuration : Double = 0
+    override def cloneReset(newModel : Model, storages : SortedMap[Storage, Storage]) : ActivableProcess = {throw new Exception("not for cloneReset"); null}
+    override def completedBatchCount(outputPort : Int) : Int = 0
+    override def startedBatchCount : Int = 0
+
+    override def cloneProcess : (ActivableProcess, Boolean) = if(processToCloneTo == null) (this,false) else (processToCloneTo,true)
+  }
+
+  def sumAllProcess(placeHolder:ProcessPlaceHolder,expr:DoubleExpr,processes:Map[String,ActivableProcess]):DoubleExpr = {
+    processes.values.toList.map((p:ActivableProcess) => {
+      placeHolder.processToCloneTo = p
+      expr.clone
+
+    })
+  }
+
+  val outernParser=this
+  def processQuantifiedDoubleExpr(quantifiedVariable:String): Parser[(ProcessPlaceHolder,DoubleExpr)] = new Parser[(ProcessPlaceHolder,DoubleExpr)] {
+    def apply(in: Input) = {
+      val placeHolder = new ProcessPlaceHolder(quantifiedVariable)
+      val nested = new ListenerParser(storages,
+        processes+((quantifiedVariable,placeHolder)),
+        attributes,
+        declaredBoolExpr,
+        declaredDoubleExpr)
+      nested.doubleExprParser.apply(in) match{
+        case nested.Success(x:DoubleExpr, in1) => Success((placeHolder,x),in1)
+        case f: nested.Failure => Failure(f.msg,f.next)
+        case e: nested.Error => Error(e.msg,e.next)
+      }
+    }
+  }
 
   //generic code
   def boolListener:Parser[BoolExpr] = {

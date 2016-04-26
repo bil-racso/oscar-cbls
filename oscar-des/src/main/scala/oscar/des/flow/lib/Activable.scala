@@ -34,6 +34,8 @@ abstract class ActivableProcess(val name:String, verbosity:String=>Unit, val id:
   def addPreliminaryInput(preliminary:Storage)
 
   def cloneReset(newModel:Model,storages:SortedMap[Storage,Storage]):ActivableProcess
+
+  def cloneProcess:(ActivableProcess,Boolean) = (this,false)
 }
 
 abstract class ActivableAtomicProcess(name:String, verbosity:String=>Unit, id:Int) extends ActivableProcess(name,verbosity,id){
