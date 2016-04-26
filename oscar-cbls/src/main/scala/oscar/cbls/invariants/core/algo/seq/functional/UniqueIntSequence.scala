@@ -10,7 +10,7 @@ object UniqueIntSequence{
     PiecewiseLinearBijectionNaive.identity,
     0,
     maxPivot,
-  maxSize
+    maxSize
   )
 }
 
@@ -21,10 +21,13 @@ class UniqueIntSequence(private[seq] val internalPositionToValue:RedBlackTree[In
                         maxPivot:Int = 10, maxSize:Int = 1000) {
 
   override def toString : String = {
-    "UniqueIntSequence(\n\tinternalPositionToValue:" + internalPositionToValue.content +
-    "\n\tvalueToInternalPosition:" + valueToInternalPosition.content +
+    "UniqueIntSequence(\n\t" +
+      "sequence:[" + this.iterator.toList.mkString(",") + "]\n\t"+
+      "internalPositionToValue:" + internalPositionToValue.content +
+      "\n\tvalueToInternalPosition:" + valueToInternalPosition.content +
       "\n\texternalToInternalPosition:" + externalToInternalPosition + "\n)"
   }
+
 
   def size : Int = valueToInternalPosition.size
 
@@ -136,6 +139,7 @@ class IntSequenceCrawler(sequence:UniqueIntSequence,
                             case Some(p) => !p.value.f.minus}
                           ) {
 
+  println("created crawler(position:" + position + " positionInRB:" + positionInRB + " currentPivotPosition:" + currentPivotPosition + " slopeIsPositive:" + slopeIsPositive + " limitAboveForCurrentPivot:" + limitAboveForCurrentPivot + " pivotAbovePosition:" + pivotAbovePosition)
   val value : Int = positionInRB.value
 
   def next : Option[IntSequenceCrawler] = {
@@ -144,14 +148,16 @@ class IntSequenceCrawler(sequence:UniqueIntSequence,
 
       val newPivotAbovePosition = pivotAbovePosition.head.next
       val newPosition = position + 1
-      val newPositionInRB = sequence.internalPositionToValue.positionOf(newPosition).head
-
-      Some(new IntSequenceCrawler(sequence,
-        newPosition,
-        newPositionInRB,
-        pivotAbovePosition,
-        newPivotAbovePosition)(limitBelowForCurrentPivot = newPosition))
-
+      val newPositionInRBOpt = sequence.internalPositionToValue.positionOf(pivotAbovePosition.head.value.f(newPosition))
+      newPositionInRBOpt match{
+        case None => None
+        case Some(newPositionInRB) =>
+          Some(new IntSequenceCrawler(sequence,
+            newPosition,
+            newPositionInRB,
+            pivotAbovePosition,
+            newPivotAbovePosition)(limitBelowForCurrentPivot = newPosition))
+      }
     }else{
       //do not change pivot
 

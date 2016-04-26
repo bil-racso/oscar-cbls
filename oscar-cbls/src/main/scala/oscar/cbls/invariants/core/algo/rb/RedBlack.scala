@@ -265,6 +265,9 @@ object RedBlackTree {
 class RBPosition[@specialized(Int) V](position:QList[(T[V],Boolean)]){
   def key:Int = position.head._1.k
   def value:V = position.head._1.v.head
+
+  override def toString : String = "RBPosition(key:" + key + " value:" + value + ")"
+
   def next:Option[RBPosition[V]] = {
 
     def unstack1(position:QList[(T[V],Boolean)]):QList[(T[V],Boolean)] = {
