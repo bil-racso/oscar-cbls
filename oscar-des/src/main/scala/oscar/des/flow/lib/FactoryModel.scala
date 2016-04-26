@@ -31,7 +31,8 @@ class FactoryModel(verbosity:String=>Unit,
                    private var ms:MetricsStore,
                    private var storages:List[Storage],
                    private var processes:List[ActivableProcess],
-                   private var activationRules:List[ActivationRule]){
+                   private var activationRules:List[ActivationRule],
+                   private var delays:List[Delay]){
 
   def this(verbosity:String=>Unit,attributes:AttributeDefinitions){
     this(verbosity,
@@ -40,7 +41,8 @@ class FactoryModel(verbosity:String=>Unit,
       ms = null,
       storages = List.empty,
       processes = List.empty,
-      activationRules = List.empty)
+      activationRules = List.empty,
+      delays = List.empty)
   }
 
   def this(verbosity:String=>Unit){
@@ -50,7 +52,8 @@ class FactoryModel(verbosity:String=>Unit,
       ms = null,
       storages = List.empty,
       processes = List.empty,
-      activationRules = List.empty)
+      activationRules = List.empty,
+      delays = List.empty)
   }
 
   def attributeFunctionParser = new AttributeFunctionParser(attributes)
@@ -58,9 +61,10 @@ class FactoryModel(verbosity:String=>Unit,
   private var nextStorageID = 0
   private var nextProcessID = 0
   private var nextActivationRuleID = 0
-
+  private var newDelayID = 0
   def getStorages:List[Storage] = storages
   def getProcesses:List[ActivableProcess] = processes
+  def getDelays:List[Delay] = delays
 
   def simulate(horizon:Float, abort:()=>Boolean = ()=>false){
     m.simulate(horizon,verbosity,()=>{ms.updateMetricsIfNeeded(m.clock());abort()})
@@ -82,7 +86,7 @@ class FactoryModel(verbosity:String=>Unit,
     val newModel:Model = new Model
     val newStorages = SortedMap.empty[Storage,Storage](new OrderingOnStorage()) ++ storages.map((s:Storage) => (s,s.cloneReset(newModel)))
     val newProcesses = SortedMap.empty[ActivableProcess,ActivableProcess](new OrderingOnActivableProcesses()) ++ processes.map((p:ActivableProcess) => (p,p.cloneReset(newModel,newStorages)))
-
+    val newDelays = newActiationRules
     //activation rules:
     val newActiationRules = activationRules.map(_.cloneReset(newModel,newProcesses, newStorages))
 
@@ -151,6 +155,14 @@ class FactoryModel(verbosity:String=>Unit,
     processes = toReturn :: processes
     toReturn
   }
+
+  def delay(s:Storage, delay:Double):Delay = {
+    val toReturn = new Delay(s:Storage,m:Model,delay:Double,newDelayID)
+    newDelayID += 1
+    delays = toReturn :: delays
+    toReturn
+  }
+
 
   /**
    * This represents a batch process (see [[SingleBatchProcess]]) with multiple batch running in parallel.
