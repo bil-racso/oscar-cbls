@@ -38,4 +38,6 @@ class Delay(s:Storage,m:Model,delay:Double,val id:Int) extends Putable with Fetc
   def cloneReset(newModel:Model,storages:SortedMap[Storage,Storage]):Delay = {
     new Delay(storages(s),newModel,delay,id)
   }
+
+  override def toString : String = "DelayToStorage(" + s + " delay:" + delay + ")"
 }
