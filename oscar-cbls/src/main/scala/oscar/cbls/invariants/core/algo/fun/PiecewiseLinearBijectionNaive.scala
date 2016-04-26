@@ -52,7 +52,7 @@ class PiecewiseLinearBijectionNaive(val forward:PiecewiseLinearFun, val backward
   }
 
   def updateBefore(updates:(Int,Int,LinearTransform)*):PiecewiseLinearBijectionNaive ={
-    println("update before:" + updates)
+    //println("update before:" + updates)
     new PiecewiseLinearBijectionNaive(forward.updateForCompositionBefore(updates:_*))
   }
 

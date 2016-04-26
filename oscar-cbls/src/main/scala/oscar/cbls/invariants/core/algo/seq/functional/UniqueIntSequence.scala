@@ -21,13 +21,11 @@ class UniqueIntSequence(private[seq] val internalPositionToValue:RedBlackTree[In
                         maxPivot:Int = 10, maxSize:Int = 1000) {
 
   override def toString : String = {
-    "UniqueIntSequence(\n\t" +
-      "sequence:[" + this.iterator.toList.mkString(",") + "]\n\t"+
+    "[" + this.iterator.toList.mkString(",") + "]" /* (\n" +
       "internalPositionToValue:" + internalPositionToValue.content +
-      "\n\tvalueToInternalPosition:" + valueToInternalPosition.content +
-      "\n\texternalToInternalPosition:" + externalToInternalPosition + "\n)"
+      "\nvalueToInternalPosition:" + valueToInternalPosition.content +
+      "\nexternalToInternalPosition:" + externalToInternalPosition + ")"*/
   }
-
 
   def size : Int = valueToInternalPosition.size
 
@@ -47,7 +45,7 @@ class UniqueIntSequence(private[seq] val internalPositionToValue:RedBlackTree[In
 
   def isValueIncluded(value:Int):Boolean = valueToInternalPosition.contains(value)
 
-  def crawlerAtPosition(position : Int) : Option[IntSequenceCrawler] = {
+  def crawlerAtPosition(position : Int) : Option[IntSequenceExplorer] = {
     if (position >= this.size) None
     else {
       val currentPivotPosition = externalToInternalPosition.forward.pivotWithPositionApplyingTo(position)
@@ -56,7 +54,7 @@ class UniqueIntSequence(private[seq] val internalPositionToValue:RedBlackTree[In
         case Some(p) => (p.next,p.value.f(position))
       }
 
-      Some(new IntSequenceCrawler(this,
+      Some(new IntSequenceExplorer(this,
         position,
         internalPositionToValue.positionOf(internalPosition).head,
         currentPivotPosition,
@@ -65,7 +63,7 @@ class UniqueIntSequence(private[seq] val internalPositionToValue:RedBlackTree[In
     }
   }
 
-  def crawlerAtValue(value: Int) : Option[IntSequenceCrawler] = {
+  def crawlerAtValue(value: Int) : Option[IntSequenceExplorer] = {
     positionOfValue(value) match{
       case None => None
       case Some(position) => crawlerAtPosition(position)
@@ -82,11 +80,8 @@ class UniqueIntSequence(private[seq] val internalPositionToValue:RedBlackTree[In
     //move inserted point at its position
     val oldExternalPosRelatedToFreeInternalPos = externalToInternalPosition.backward(startFreeRangeForInternalPosition)
 
-    println("old external pointing to internalFreeValue:" + oldExternalPosRelatedToFreeInternalPos)
-    println("startFreeRangeForInternalPosition:" + startFreeRangeForInternalPosition)
     val newExternalToInternalPosition = if(pos == size) {
       //inserting at end of the sequence
-      println("inserting at end of the sequence")
       externalToInternalPosition.updateBefore(
         (size,size,LinearTransform(oldExternalPosRelatedToFreeInternalPos-pos,false)))
     }else{
@@ -101,6 +96,25 @@ class UniqueIntSequence(private[seq] val internalPositionToValue:RedBlackTree[In
       newValueToInternalPosition,
       newExternalToInternalPosition,
       startFreeRangeForInternalPosition+1,
+      maxPivot,maxSize)
+  }
+
+  def delete(pos:Int):UniqueIntSequence = {
+    require(pos<size,"deleting past the end of the sequence (size:" + size + " pos:" + pos + ")")
+    require(pos>=0,"deleting at negative pos:" + pos)
+
+    val internalPosition = externalToInternalPosition(pos)
+    val value = internalPositionToValue.get(internalPosition).head
+
+    val newInternalPositionToValue = internalPositionToValue.remove(internalPosition)
+    val newValueToInternalPosition = valueToInternalPosition.remove(value)
+    val newExternalToInternalPosition = externalToInternalPosition.updateBefore(
+        (pos,size,LinearTransform(+1,false)))
+    new UniqueIntSequence(
+      newInternalPositionToValue,
+      newValueToInternalPosition,
+      newExternalToInternalPosition,
+      if(pos == startFreeRangeForInternalPosition-1) pos else startFreeRangeForInternalPosition,
       maxPivot,maxSize)
   }
 
@@ -123,7 +137,7 @@ class UniqueIntSequenceIterator(s:UniqueIntSequence) extends Iterator[Int] {
   }
 }
 
-class IntSequenceCrawler(sequence:UniqueIntSequence,
+class IntSequenceExplorer(sequence:UniqueIntSequence,
                          val position:Int,
                          positionInRB:RBPosition[Int],
                          currentPivotPosition:Option[RBPosition[Pivot]],
@@ -139,10 +153,11 @@ class IntSequenceCrawler(sequence:UniqueIntSequence,
                             case Some(p) => !p.value.f.minus}
                           ) {
 
-  println("created crawler(position:" + position + " positionInRB:" + positionInRB + " currentPivotPosition:" + currentPivotPosition + " slopeIsPositive:" + slopeIsPositive + " limitAboveForCurrentPivot:" + limitAboveForCurrentPivot + " pivotAbovePosition:" + pivotAbovePosition)
+  override def toString : String = "IntSequenceExplorer(position:" + position + " value:" + value + " positionInRB:" + positionInRB + ")"
+
   val value : Int = positionInRB.value
 
-  def next : Option[IntSequenceCrawler] = {
+  def next : Option[IntSequenceExplorer] = {
     if(position == limitAboveForCurrentPivot){
       //change pivot, we are also sure that there is a next, so use .head
 
@@ -152,7 +167,7 @@ class IntSequenceCrawler(sequence:UniqueIntSequence,
       newPositionInRBOpt match{
         case None => None
         case Some(newPositionInRB) =>
-          Some(new IntSequenceCrawler(sequence,
+          Some(new IntSequenceExplorer(sequence,
             newPosition,
             newPositionInRB,
             pivotAbovePosition,
@@ -164,7 +179,7 @@ class IntSequenceCrawler(sequence:UniqueIntSequence,
       (if(slopeIsPositive) positionInRB.next else positionInRB.prev) match{
         case None => None
         case Some(newPositionInRB) =>
-          Some(new IntSequenceCrawler(sequence,
+          Some(new IntSequenceExplorer(sequence,
             position + 1,
             newPositionInRB,
             currentPivotPosition,
@@ -176,15 +191,15 @@ class IntSequenceCrawler(sequence:UniqueIntSequence,
     }
   }
 
-  def prev : Option[IntSequenceCrawler] = {
+  def prev : Option[IntSequenceExplorer] = {
     if (position == 0) None
     else if (position  == limitBelowForCurrentPivot) {
       //change pivot
-      val newPosition = position -1
+      val newPosition = position - 1
       val newCurrentPivotPosition = currentPivotPosition.head.prev
       val newInternalPosition = newCurrentPivotPosition.head.value.f(newPosition)
       val newCurrentPositionInRB = sequence.internalPositionToValue.positionOf(newInternalPosition).head
-      Some(new IntSequenceCrawler(sequence,
+      Some(new IntSequenceExplorer(sequence,
         newPosition,
         newCurrentPositionInRB,
         newCurrentPivotPosition,
@@ -192,7 +207,7 @@ class IntSequenceCrawler(sequence:UniqueIntSequence,
       ))
     }else{
       //do not change pivot
-      Some(new IntSequenceCrawler(sequence,
+      Some(new IntSequenceExplorer(sequence,
         position-1,
         if(slopeIsPositive) positionInRB.prev.head else positionInRB.next.head,
         currentPivotPosition,

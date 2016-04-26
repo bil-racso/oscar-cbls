@@ -66,7 +66,7 @@ trait RedBlackTree[@specialized(Int) V]{
   def biggestPosition:Option[RBPosition[V]]
 
   def smallestPosition:Option[RBPosition[V]]
-  
+
   protected[rb] def getSmallestBiggerAcc(k:Int, bestSoFar:(Int,V)):Option[(Int,V)]
 
   // insert: Insert a value at a key.
@@ -300,7 +300,6 @@ class RBPosition[@specialized(Int) V](position:QList[(T[V],Boolean)]){
   }
 
   def prev:Option[RBPosition[V]] = {
-
     def unstack1(position:QList[(T[V],Boolean)]):QList[(T[V],Boolean)] = {
       if (position == null) return null
       val head = position.head
@@ -322,8 +321,8 @@ class RBPosition[@specialized(Int) V](position:QList[(T[V],Boolean)]){
     }
 
     val newStack = position.head._1.l match {
-      case t : T[V] => descendToRightMost(QList((t,false),position))
-      case _ => unstack1(position)
+      case t : T[V] => descendToRightMost(QList((t,true),position))
+      case _ => unstack1(position.tail)
     }
 
     if(newStack == null) None
