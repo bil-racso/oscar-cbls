@@ -56,7 +56,7 @@ object RoutingTest extends App with StopWatch{
 
   this.startWatch()
 
-  val n = 50
+  val n = 200
   val v = 1
 
   println("RoutingTest(n:" + n + " v:" + v + ")")
