@@ -25,18 +25,6 @@ class UniqueIntSequence(private[seq] val internalPositionToValue:RedBlackTree[In
     require(internalPositionToValue.content.sortBy(_._1) equals valueToInternalPosition.content.map({case (a,b) => (b,a)}).sortBy(_._1))
   }
 
-  private def swapInternalPositions(internalPosition1:Int,
-                                    internalPosition2:Int,
-                                    internalPositionToValue:RedBlackTree[Int],
-                                    valueToInternalPosition:RedBlackTree[Int]): (RedBlackTree[Int],RedBlackTree[Int]) = {
-
-    val value1 = internalPositionToValue.get(internalPosition1).head
-    val value2 = internalPositionToValue.get(internalPosition2).head
-
-    (internalPositionToValue.insert(internalPosition1,value2).insert(internalPosition2,value2),
-      valueToInternalPosition.insert(value1,internalPosition2).insert(value2, internalPosition1))
-  }
-
   override def toString : String = {
     "(size:" + size + ")[" + this.iterator.toList.mkString(",") + "] (\n" +
       "internalPositionToValue:" + internalPositionToValue.content +
@@ -142,15 +130,15 @@ class UniqueIntSequence(private[seq] val internalPositionToValue:RedBlackTree[In
     val newExternalToInternalPosition = externalToInternalPosition.updateBefore(
       (externalPositionAssociatedToLargestInternalPosition,
         externalPositionAssociatedToLargestInternalPosition,
-        LinearTransform(pos-largestInternalPosition,false)),
-      (pos,pos,LinearTransform(largestInternalPosition - pos,false)))
-
+        LinearTransform(pos-externalPositionAssociatedToLargestInternalPosition,false)),
+      (pos,pos,LinearTransform(externalPositionAssociatedToLargestInternalPosition - pos,false))).updateBefore(
+      (pos,size-2,LinearTransform(1,false)),(size-1,size-1,LinearTransform(pos - size + 1,false)))
 
     new UniqueIntSequence(
       newInternalPositionToValue,
       newValueToInternalPosition,
       newExternalToInternalPosition,
-      startFreeRangeForInternalPosition -1,
+      startFreeRangeForInternalPosition - 1,
       maxPivot,maxSize)
   }
 
