@@ -25,6 +25,10 @@ class OrderingOnActivableProcesses() extends Ordering[ActivableProcess]{
   override def compare(x: ActivableProcess, y: ActivableProcess): ItemClass = x.id.compare(y.id)
 }
 
+class OrderingOnDelays() extends Ordering[Delay]{
+  override def compare(x: Delay, y: Delay): ItemClass = x.id.compare(y.id)
+}
+
 class FactoryModel(verbosity:String=>Unit,
                    val attributes:AttributeDefinitions,
                    private val m:Model,
@@ -86,7 +90,7 @@ class FactoryModel(verbosity:String=>Unit,
     val newModel:Model = new Model
     val newStorages = SortedMap.empty[Storage,Storage](new OrderingOnStorage()) ++ storages.map((s:Storage) => (s,s.cloneReset(newModel)))
     val newProcesses = SortedMap.empty[ActivableProcess,ActivableProcess](new OrderingOnActivableProcesses()) ++ processes.map((p:ActivableProcess) => (p,p.cloneReset(newModel,newStorages)))
-    val newDelays = newActiationRules
+    val newDelays = SortedMap.empty[Delay,Delay](new OrderingOnDelays()) ++ delays.map((d:Delay) => (d,d.cloneReset(newModel,newStorages)))
     //activation rules:
     val newActiationRules = activationRules.map(_.cloneReset(newModel,newProcesses, newStorages))
 
@@ -109,7 +113,8 @@ class FactoryModel(verbosity:String=>Unit,
       newMetricStore,
       newStorages.values.toList,
       newProcesses.values.toList,
-      newActiationRules)
+      newActiationRules,
+      newDelays.values.toList)
   }
 
   def setQueriesToParse(queriesNameAndExpression:List[(String,String)]){

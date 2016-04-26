@@ -4,11 +4,13 @@ import oscar.des.engine.Model
 import oscar.des.flow.core.ItemClassHelper.ItemClass
 import oscar.des.flow.core.{Fetchable, Putable}
 
+import scala.collection.immutable.SortedMap
+
 /**
  * this is a delay that can be added on a put.
  * so the proces takes an extra time putting to the sorage, or fetching from it.
  */
-class Delay(s:Storage,m:Model,delay:Double) extends Putable with Fetchable{
+class Delay(s:Storage,m:Model,delay:Double,val id:Int) extends Putable with Fetchable{
   /**
    * put the amount of goods into the putable.
    * This is potentially blocking
@@ -31,5 +33,9 @@ class Delay(s:Storage,m:Model,delay:Double) extends Putable with Fetchable{
     m.wait(delay){
       s.fetch(amount)(block)
     }
+  }
+
+  def cloneReset(newModel:Model,storages:SortedMap[Storage,Storage]):Delay = {
+    new Delay(storages(s),newModel,delay,id)
   }
 }
