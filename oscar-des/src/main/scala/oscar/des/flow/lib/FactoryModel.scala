@@ -89,8 +89,9 @@ class FactoryModel(verbosity:String=>Unit,
   def cloneReset:FactoryModel = {
     val newModel:Model = new Model
     val newStorages = SortedMap.empty[Storage,Storage](new OrderingOnStorage()) ++ storages.map((s:Storage) => (s,s.cloneReset(newModel)))
-    val newProcesses = SortedMap.empty[ActivableProcess,ActivableProcess](new OrderingOnActivableProcesses()) ++ processes.map((p:ActivableProcess) => (p,p.cloneReset(newModel,newStorages)))
-    val newDelays = SortedMap.empty[Delay,Delay](new OrderingOnDelays()) ++ delays.map((d:Delay) => (d,d.cloneReset(newModel,newStorages)))
+    val newDelays = SortedMap.empty[Delay,Delay](new OrderingOnDelays()) ++ delays.map((d:Delay) => (d,d.cloneReset(new Migrator(newModel,newStorages,null,null))))
+    val newProcesses = SortedMap.empty[ActivableProcess,ActivableProcess](new OrderingOnActivableProcesses()) ++ processes.map((p:ActivableProcess) => (p,p.cloneReset(new Migrator(newModel,newStorages,null,newDelays))))
+
     //activation rules:
     val newActiationRules = activationRules.map(_.cloneReset(newModel,newProcesses, newStorages))
 
@@ -378,4 +379,26 @@ class FactoryModel(verbosity:String=>Unit,
       + storages.mkString("\n") + "\nqueries:\n"
       + ms.toString)
   }
+}
+
+
+class Migrator(val newModel:Model,
+               storages:Map[Storage, Storage],
+               newProcesses:Map[ActivableProcess,ActivableProcess],
+               newDelays:Map[Delay,Delay]){
+
+  def apply(p:ActivableProcess):ActivableProcess = newProcesses(p)
+  def apply(p:Putable):Putable = {
+    p match{
+      case s:Storage => storages(s)
+      case d:Delay => newDelays(d)
+    }
+  }
+  def apply(f:Fetchable):Fetchable = {
+    f match{
+      case s:Storage => storages(s)
+      case d:Delay => newDelays(d)
+    }
+  }
+  def apply(s:Storage):Storage = storages(s)
 }

@@ -56,11 +56,11 @@ case class SingleBatchProcess(m:Model,
 
   def isWaiting = waiting
 
-  override def cloneReset(newModel: Model, storages: SortedMap[Storage, Storage]): ActivableProcess = {
-    SingleBatchProcess(newModel,
+  override def cloneReset(m:Migrator): ActivableProcess = {
+    SingleBatchProcess(m.newModel,
       batchDuration,
-      inputs.map({case (fun,fetchable) => (fun,storages(fetchable.asInstanceOf[Storage]))}),
-      outputs.map({case (fun,putable) => (fun,storages(putable.asInstanceOf[Storage]))}),
+      inputs.map({case (fun,fetchable) => (fun,m(fetchable))}),
+      outputs.map({case (fun,putable) => (fun,m(putable))}),
       transformFunction,
       name,
       verbosity, id)
@@ -138,9 +138,10 @@ case class BatchProcess(m:Model,
   }
 
 
-  override def cloneReset(newModel: Model, storages: SortedMap[Storage, Storage]): ActivableProcess = {
-    BatchProcess(newModel,numberOfBatches,batchDuration,inputs.map({case (fun,fetchable) => (fun,storages(fetchable.asInstanceOf[Storage]))}),
-      outputs.map({case (fun,putable) => (fun,storages(putable.asInstanceOf[Storage]))}),
+  override def cloneReset(m:Migrator): ActivableProcess = {
+    BatchProcess(m.newModel,numberOfBatches,batchDuration,
+      inputs.map({case (fun,fetchable) => (fun,m(fetchable))}),
+      outputs.map({case (fun,putable) => (fun,m(putable))}),
       name,
       transformFunction,
       verbosity, id)
@@ -183,11 +184,11 @@ case class SplittingSingleBatchProcess(m:Model,
   def isWaiting = waiting
 
 
-  override def cloneReset(newModel: Model, storages: SortedMap[Storage, Storage]): ActivableProcess = {
-    SplittingSingleBatchProcess(newModel,
+  override def cloneReset(m:Migrator): ActivableProcess = {
+    SplittingSingleBatchProcess(m.newModel,
       batchDuration,
-      inputs.map({case (fun,fetchable) => (fun,storages(fetchable.asInstanceOf[Storage]))}),
-      outputs.map(_.map({case (fun,putable) => (fun,storages(putable.asInstanceOf[Storage]).asInstanceOf[Putable])})),
+      inputs.map({case (fun,fetchable) => (fun,m(fetchable))}),
+      outputs.map(_.map({case (fun,putable) => (fun,m(putable))})),
       transformFunction,
       name,
       verbosity,id)
@@ -272,12 +273,12 @@ case class SplittingBatchProcess(m:Model,
   }
 
 
-  override def cloneReset(newModel: Model, storages: SortedMap[Storage, Storage]): ActivableProcess = {
-    SplittingBatchProcess(newModel,
+  override def cloneReset(m:Migrator): ActivableProcess = {
+    SplittingBatchProcess(m.newModel,
       numberOfBatches,
       batchDuration,
-      inputs.map({case (fun,fetchable) => (fun,storages(fetchable.asInstanceOf[Storage]))}),
-      outputs.map(_.map({case (fun,putable) => (fun,storages(putable.asInstanceOf[Storage]).asInstanceOf[Putable])})),
+      inputs.map({case (fun,fetchable) => (fun,m(fetchable))}),
+      outputs.map(_.map({case (fun,putable) => (fun,m(putable))})),
       name,
       transformFunction,
       verbosity, id)
@@ -320,12 +321,12 @@ class ConveyorBeltProcess(m:Model,
 
   override def startedBatchCount: Int = totalInputBatches
 
-  override def cloneReset(newModel: Model, storages: SortedMap[Storage, Storage]): ActivableProcess = {
-    new ConveyorBeltProcess(newModel,
+  override def cloneReset(m:Migrator): ActivableProcess = {
+    new ConveyorBeltProcess(m.newModel,
       processDuration,
       minimalSeparationBetweenBatches,
-      inputs.map({case (fun,fetchable) => (fun,storages(fetchable.asInstanceOf[Storage]))}),
-      outputs.map({case (fun,putable) => (fun,storages(putable.asInstanceOf[Storage]))}),
+      inputs.map({case (fun,fetchable) => (fun,m(fetchable))}),
+      outputs.map({case (fun,putable) => (fun,m(putable))}),
       transformFunction,
       name,
       verbosity, id)
