@@ -24,6 +24,8 @@ object TestUniqueIntSequence extends App{
     var acc:List[Int] = List.empty
     while(crawlerAtEnd match{case Some(c) => acc = c.value :: acc; crawlerAtEnd = c.prev; true case None => false}){}
     require(acc equals values.toList, "acc:" + acc)
+
+    require(seq.regularize.iterator.toList equals values.toList)
   }
 
   val b = a.insertAtPosition(5,0) //insert first

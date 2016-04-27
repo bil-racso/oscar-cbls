@@ -34,7 +34,9 @@ class UniqueIntSequence(private[seq] val internalPositionToValue:RedBlackTree[In
 
   def size : Int = valueToInternalPosition.size
 
-  def iterator : Iterator[Int] = new UniqueIntSequenceIterator(this)
+  def isEmpty:Boolean = internalPositionToValue.isEmpty
+
+  def iterator : Iterator[Int] = if(this.isEmpty) List.empty[Int].iterator else new UniqueIntSequenceIterator(this)
 
   def valueAtPosition(position : Int) : Option[Int] = {
     val internalPosition:Int = externalToInternalPosition.forward(position)
@@ -152,7 +154,7 @@ class UniqueIntSequence(private[seq] val internalPositionToValue:RedBlackTree[In
     if(moveAfterPosition + 1 == startPositionIncluded) {
       //not moving
       if(flip) { //just flipping
-        val newExternalToInternalPosition = externalToInternalPosition.updateBefore(
+      val newExternalToInternalPosition = externalToInternalPosition.updateBefore(
           (startPositionIncluded,endPositionIncluded,LinearTransform(endPositionIncluded + startPositionIncluded,true)))
 
         new UniqueIntSequence(
@@ -168,7 +170,7 @@ class UniqueIntSequence(private[seq] val internalPositionToValue:RedBlackTree[In
       }
     }else{
       if(moveAfterPosition > startPositionIncluded){ //move upwards
-        val newExternalToInternalPosition = externalToInternalPosition.updateBefore(
+      val newExternalToInternalPosition = externalToInternalPosition.updateBefore(
           (startPositionIncluded,
             moveAfterPosition + startPositionIncluded - endPositionIncluded -1,
             LinearTransform(endPositionIncluded + 1 - startPositionIncluded,false)),
@@ -186,10 +188,12 @@ class UniqueIntSequence(private[seq] val internalPositionToValue:RedBlackTree[In
           maxSize)
 
       }else{ //move downwards
-        val newExternalToInternalPosition = externalToInternalPosition.updateBefore(
-          (moveAfterPosition+1, moveAfterPosition + endPositionIncluded  - startPositionIncluded + 1,
+      val newExternalToInternalPosition = externalToInternalPosition.updateBefore(
+          (moveAfterPosition+1,
+            moveAfterPosition + endPositionIncluded  - startPositionIncluded + 1,
             LinearTransform(if(flip) endPositionIncluded + moveAfterPosition + 1 else startPositionIncluded - moveAfterPosition - 1,flip)),
-          (moveAfterPosition + endPositionIncluded  - startPositionIncluded + 2,endPositionIncluded,
+          (moveAfterPosition + endPositionIncluded  - startPositionIncluded + 2,
+            endPositionIncluded,
             LinearTransform(startPositionIncluded - endPositionIncluded - 1,false)))
 
         new UniqueIntSequence(
@@ -203,7 +207,23 @@ class UniqueIntSequence(private[seq] val internalPositionToValue:RedBlackTree[In
     }
   }
   def regularize:UniqueIntSequence = {
-    null
+    var explorer = this.crawlerAtPosition(0)
+    var newInternalPositionToValues = RedBlackTree.empty[Int]
+    var newValueToInternalPosition = RedBlackTree.empty[Int]
+    while(explorer match{
+      case None => false
+      case Some(position) =>
+        newInternalPositionToValues = newInternalPositionToValues.insert(position.position,position.value)
+        newValueToInternalPosition = newValueToInternalPosition.insert(position.value,position.position)
+        explorer = position.next
+        true
+    }){}
+
+    new UniqueIntSequence(newInternalPositionToValues,
+      newValueToInternalPosition,
+      PiecewiseLinearBijectionNaive.identity,
+      newInternalPositionToValues.size,
+      maxPivot, maxSize)
   }
 }
 
@@ -228,7 +248,7 @@ class IntSequenceExplorer(sequence:UniqueIntSequence,
                           currentPivotPosition:Option[RBPosition[Pivot]],
                           pivotAbovePosition:Option[RBPosition[Pivot]])(
                            limitAboveForCurrentPivot:Int = pivotAbovePosition match{
-                             case None => sequence.externalToInternalPosition.forward.firstPivot.head._1
+                             case None => sequence.externalToInternalPosition.forward.firstPivot match{case Some(p) => p._1 case None => Int.MaxValue}
                              case Some(p) => p.value.fromValue-1},
                            limitBelowForCurrentPivot:Int = currentPivotPosition match{
                              case None => Int.MinValue
