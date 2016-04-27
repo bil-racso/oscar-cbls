@@ -62,4 +62,39 @@ object TestUniqueIntSequence extends App{
   println(j)
   checkSeq(j,10,7,54,5,6)
 
+  //println("flip")
+  val kk = j.moveAfter(1,2,0,true)//flip
+  println(kk)
+  checkSeq(kk,10,54,7,5,6)
+
+  val k = j.moveAfter(1,2,4,false)//move upwards
+  println(k)
+  checkSeq(k,10,5,6,7,54)
+
+  val kkk = j.moveAfter(1,2,4,true)//move upwards with flip
+  println(kkk)
+  checkSeq(kkk,10,5,6,54,7)
+
+  val l = kkk.moveAfter(0,2,3,true)//move upwards with flip
+  println(l)
+  checkSeq(l,54,6,5,10,7)
+
+  val m = kkk.moveAfter(1,4,0,true)//flip
+  println(m)
+  checkSeq(m,10,7,54,6,5)
+
+  val n = kkk.moveAfter(1,4,0,false)//nop
+  println(n)
+  checkSeq(n,10,5,6,54,7)
+
+
+  val nd = n.moveAfter(2,4,0,false)//move downwards no flip
+  println(nd)
+  checkSeq(nd,10,6,54,7,5)
+
+
+  val ndf = n.moveAfter(2,4,0,true)//move downwards flip
+  println(ndf)
+  checkSeq(ndf,10,7,54,6,5)
+
 }

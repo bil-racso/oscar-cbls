@@ -266,7 +266,7 @@ class RBPosition[@specialized(Int) V](position:QList[(T[V],Boolean)]){
   def key:Int = position.head._1.k
   def value:V = position.head._1.v.head
 
-  override def toString : String = "RBPosition(key:" + key + " value:" + value + ")"
+  override def toString : String = "RBPosition(key:" + key + " value:" + value + " stack:" + position.toList + ")"
 
   def next:Option[RBPosition[V]] = {
 
@@ -321,11 +321,14 @@ class RBPosition[@specialized(Int) V](position:QList[(T[V],Boolean)]){
     }
 
     val newStack = position.head._1.l match {
-      case t : T[V] => descendToRightMost(QList((t,true),position))
+      case t : T[V] => descendToRightMost(QList((t,true),QList((position.head._1,false),position.tail)))
       case _ => unstack1(position.tail)
     }
 
     if(newStack == null) None
-    else Some(new RBPosition[V](newStack))
+    else {
+      assert(new RBPosition[V](newStack).next.head.key == this.key, "prev.next.key != this.key; this:" + this + " prev:" + new RBPosition[V](newStack))
+      Some(new RBPosition[V](newStack))
+    }
   }
 }

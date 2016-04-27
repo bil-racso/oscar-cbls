@@ -26,10 +26,10 @@ class UniqueIntSequence(private[seq] val internalPositionToValue:RedBlackTree[In
   }
 
   override def toString : String = {
-    "(size:" + size + ")[" + this.iterator.toList.mkString(",") + "] (\n" +
+    "(size:" + size + ")[" + this.iterator.toList.mkString(",") + "]" /* (\n" +
       "internalPositionToValue:" + internalPositionToValue.content +
       "\nvalueToInternalPosition:" + valueToInternalPosition.content +
-      "\nexternalToInternalPosition:" + externalToInternalPosition + ")"
+      "\nexternalToInternalPosition:" + externalToInternalPosition + ")"*/
   }
 
   def size : Int = valueToInternalPosition.size
@@ -76,7 +76,7 @@ class UniqueIntSequence(private[seq] val internalPositionToValue:RedBlackTree[In
   }
 
   def insertAtPosition(value:Int, pos:Int):UniqueIntSequence = {
-    println("insertAtPosition(value:" + value + " pos:" + pos + ")")
+    println(this + ".insertAtPosition(value:" + value + " pos:" + pos + ")")
     require(pos<=size,"inserting past the end of the sequence (size:" + size + " pos:" + pos + ")")
     //insert into red blacks
     val newInternalPositionToValue = internalPositionToValue.insert(startFreeRangeForInternalPosition,value)
@@ -106,7 +106,7 @@ class UniqueIntSequence(private[seq] val internalPositionToValue:RedBlackTree[In
   }
 
   def delete(pos:Int):UniqueIntSequence = {
-    println("delete(pos:" + pos + ")")
+    println(this + ".delete(pos:" + pos + ")")
     require(pos<size,"deleting past the end of the sequence (size:" + size + " pos:" + pos + ")")
     require(pos>=0,"deleting at negative pos:" + pos)
 
@@ -142,8 +142,69 @@ class UniqueIntSequence(private[seq] val internalPositionToValue:RedBlackTree[In
       maxPivot,maxSize)
   }
 
-  def moveAfter(startPosition:Int, endPosition:Int, moveAfterPosition:Int, flip:Boolean):UniqueIntSequence = null
-  def regularize:UniqueIntSequence = null
+  def moveAfter(startPositionIncluded:Int, endPositionIncluded:Int, moveAfterPosition:Int, flip:Boolean):UniqueIntSequence = {
+    println(this + ".moveAfter(startPositionIncluded:" + startPositionIncluded + " endPositionIncluded:" + endPositionIncluded + " moveAfterPosition:" + moveAfterPosition + " flip:" + flip + ")")
+    require(
+      moveAfterPosition < startPositionIncluded || moveAfterPosition>endPositionIncluded,
+      "moveAfterPosition=" +  moveAfterPosition + " cannot be between startPositionIncluded=" + startPositionIncluded + " and endPositionIncluded=" + endPositionIncluded)
+    require(startPositionIncluded <= endPositionIncluded, "startPositionIncluded=" + startPositionIncluded + " should be <= endPositionIncluded=" + endPositionIncluded)
+
+    if(moveAfterPosition + 1 == startPositionIncluded) {
+      //not moving
+      if(flip) { //just flipping
+        val newExternalToInternalPosition = externalToInternalPosition.updateBefore(
+          (startPositionIncluded,endPositionIncluded,LinearTransform(endPositionIncluded + startPositionIncluded,true)))
+
+        new UniqueIntSequence(
+          internalPositionToValue,
+          valueToInternalPosition,
+          newExternalToInternalPosition,
+          startFreeRangeForInternalPosition,
+          maxPivot,
+          maxSize)
+
+      }else{
+        this //nop
+      }
+    }else{
+      if(moveAfterPosition > startPositionIncluded){ //move upwards
+        val newExternalToInternalPosition = externalToInternalPosition.updateBefore(
+          (startPositionIncluded,
+            moveAfterPosition + startPositionIncluded - endPositionIncluded -1,
+            LinearTransform(endPositionIncluded + 1 - startPositionIncluded,false)),
+          (startPositionIncluded + moveAfterPosition - endPositionIncluded,
+            moveAfterPosition,
+            LinearTransform((if(flip) (startPositionIncluded + moveAfterPosition)
+            else (endPositionIncluded - moveAfterPosition)),flip)))
+
+        new UniqueIntSequence(
+          internalPositionToValue,
+          valueToInternalPosition,
+          newExternalToInternalPosition,
+          startFreeRangeForInternalPosition,
+          maxPivot,
+          maxSize)
+
+      }else{ //move downwards
+        val newExternalToInternalPosition = externalToInternalPosition.updateBefore(
+          (moveAfterPosition+1, moveAfterPosition + endPositionIncluded  - startPositionIncluded + 1,
+            LinearTransform(if(flip) endPositionIncluded + moveAfterPosition + 1 else startPositionIncluded - moveAfterPosition - 1,flip)),
+          (moveAfterPosition + endPositionIncluded  - startPositionIncluded + 2,endPositionIncluded,
+            LinearTransform(startPositionIncluded - endPositionIncluded - 1,false)))
+
+        new UniqueIntSequence(
+          internalPositionToValue,
+          valueToInternalPosition,
+          newExternalToInternalPosition,
+          startFreeRangeForInternalPosition,
+          maxPivot,
+          maxSize)
+      }
+    }
+  }
+  def regularize:UniqueIntSequence = {
+    null
+  }
 }
 
 class UniqueIntSequenceIterator(s:UniqueIntSequence) extends Iterator[Int] {
@@ -179,7 +240,10 @@ class IntSequenceExplorer(sequence:UniqueIntSequence,
 
   override def toString : String = "IntSequenceExplorer(position:" + position + " value:" + value + " positionInRB:" + positionInRB + ")"
 
+
   val value : Int = positionInRB.value
+
+  // println("created " + this)
 
   def next : Option[IntSequenceExplorer] = {
     if(position == limitAboveForCurrentPivot){
@@ -219,10 +283,12 @@ class IntSequenceExplorer(sequence:UniqueIntSequence,
     if (position == 0) None
     else if (position  == limitBelowForCurrentPivot) {
       //change pivot
+
       val newPosition = position - 1
       val newCurrentPivotPosition = currentPivotPosition.head.prev
       val newInternalPosition = newCurrentPivotPosition.head.value.f(newPosition)
       val newCurrentPositionInRB = sequence.internalPositionToValue.positionOf(newInternalPosition).head
+      //println("change pivot newPosition:" + newPosition + " newCurrentPivotPosition:" + newCurrentPivotPosition + " oldPosition:" + currentPivotPosition)
       Some(new IntSequenceExplorer(sequence,
         newPosition,
         newCurrentPositionInRB,
@@ -231,6 +297,7 @@ class IntSequenceExplorer(sequence:UniqueIntSequence,
       ))
     }else{
       //do not change pivot
+      //println("not change pivot")
       Some(new IntSequenceExplorer(sequence,
         position-1,
         if(slopeIsPositive) positionInRB.prev.head else positionInRB.next.head,
