@@ -58,8 +58,23 @@ class PiecewiseLinearFun(private[fun] val transformation: RedBlackTree[Pivot] = 
 
     //remove all the pivots between fromIncluded and ToIncluded
     val cleanedTransformation = removePivotsBetween(fromIncluded, toIncluded, transformation)
-    new PiecewiseLinearFun(myUpdateForCompositionBefore(fromIncluded, toIncluded, additionalFAppliedBefore,cleanedTransformation))
+    val updatedTransform = myUpdateForCompositionBefore(fromIncluded, toIncluded, additionalFAppliedBefore,cleanedTransformation)
+    val updatedTransformDeletedExtraPivot = deleteUnnecessaryPivotStartingAt(toIncluded,updatedTransform)
+    new PiecewiseLinearFun(updatedTransformDeletedExtraPivot)
   }
+
+  def deleteUnnecessaryPivotStartingAt(toIncluded:Int,updatedTransform:RedBlackTree[Pivot]):RedBlackTree[Pivot] = {
+    updatedTransform.get(toIncluded+1) match{
+      case None => updatedTransform
+      case Some(pivotStartingJustAfterToIncluded) =>
+        updatedTransform.biggestLowerOrEqual(toIncluded) match{
+          case None => if (pivotStartingJustAfterToIncluded.f.isIdentity) updatedTransform.remove(toIncluded+1) else updatedTransform
+          case Some((_,pivotApplyingAtToIncluded)) =>
+            if (pivotStartingJustAfterToIncluded.f equals pivotApplyingAtToIncluded.f) updatedTransform.remove(toIncluded+1) else updatedTransform
+        }
+    }
+  }
+
 
   def myUpdateForCompositionBefore(fromIncluded:Int, toIncluded: Int, additionalFAppliedBefore: LinearTransform,cleanedTransformation:RedBlackTree[Pivot]):RedBlackTree[Pivot] = {
     val isAdditionaFNegativeSlope = additionalFAppliedBefore.minus

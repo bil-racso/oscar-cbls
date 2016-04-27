@@ -54,4 +54,12 @@ object TestUniqueIntSequence extends App{
   println(h)
   checkSeq(h,10,7,8,5,6)
 
+  val i = h.insertAtPosition(54,3)//insert inside
+  println(i)
+  checkSeq(i,10,7,8,54,5,6)
+
+  val j = i.delete(2)//insert inside
+  println(j)
+  checkSeq(j,10,7,54,5,6)
+
 }
