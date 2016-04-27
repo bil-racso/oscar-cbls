@@ -25,7 +25,7 @@ object TestUniqueIntSequence extends App{
     while(crawlerAtEnd match{case Some(c) => acc = c.value :: acc; crawlerAtEnd = c.prev; true case None => false}){}
     require(acc equals values.toList, "acc:" + acc)
 
-    require(seq.regularize.iterator.toList equals values.toList)
+    require(seq.regularize.iterator.toList equals values.toList, "seq.regularize.iterator.toList:" + seq.regularize.iterator.toList + " != values.toList:" + values.toList)
   }
 
   val b = a.insertAtPosition(5,0) //insert first
@@ -44,7 +44,7 @@ object TestUniqueIntSequence extends App{
   println(e)
   checkSeq(e,7,5,8,6)
 
-  val f = e.delete(1)//delete inside
+  val f = e.delete(1).regularize//delete inside
   println(f)
   checkSeq(f,7,8,6)
 

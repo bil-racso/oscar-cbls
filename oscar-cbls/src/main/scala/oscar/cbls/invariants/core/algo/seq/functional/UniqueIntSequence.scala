@@ -20,16 +20,15 @@ class UniqueIntSequence(private[seq] val internalPositionToValue:RedBlackTree[In
                         private[seq] val startFreeRangeForInternalPosition:Int,
                         maxPivot:Int = 10, maxSize:Int = 1000) {
 
-
   def check {
     require(internalPositionToValue.content.sortBy(_._1) equals valueToInternalPosition.content.map({case (a,b) => (b,a)}).sortBy(_._1))
   }
 
   override def toString : String = {
-    "(size:" + size + ")[" + this.iterator.toList.mkString(",") + "]" /* (\n" +
+    "(size:" + size + ")[" + this.iterator.toList.mkString(",") + "] (\n" +
       "internalPositionToValue:" + internalPositionToValue.content +
       "\nvalueToInternalPosition:" + valueToInternalPosition.content +
-      "\nexternalToInternalPosition:" + externalToInternalPosition + ")"*/
+      "\nexternalToInternalPosition:" + externalToInternalPosition + ")"
   }
 
   def size : Int = valueToInternalPosition.size
@@ -56,8 +55,8 @@ class UniqueIntSequence(private[seq] val internalPositionToValue:RedBlackTree[In
     if (position >= this.size) None
     else {
       val currentPivotPosition = externalToInternalPosition.forward.pivotWithPositionApplyingTo(position)
-      val (pivotAbovePosition,internalPosition) = currentPivotPosition match {
-        case None => (None,position)
+      val (pivotAbovePosition:Option[RBPosition[Pivot]],internalPosition) = currentPivotPosition match {
+        case None => (externalToInternalPosition.forward.firstPivotAndPosition,position)
         case Some(p) => (p.next,p.value.f(position))
       }
 
@@ -206,7 +205,9 @@ class UniqueIntSequence(private[seq] val internalPositionToValue:RedBlackTree[In
       }
     }
   }
+
   def regularize:UniqueIntSequence = {
+    println("regularize")
     var explorer = this.crawlerAtPosition(0)
     var newInternalPositionToValues = RedBlackTree.empty[Int]
     var newValueToInternalPosition = RedBlackTree.empty[Int]
@@ -248,7 +249,7 @@ class IntSequenceExplorer(sequence:UniqueIntSequence,
                           currentPivotPosition:Option[RBPosition[Pivot]],
                           pivotAbovePosition:Option[RBPosition[Pivot]])(
                            limitAboveForCurrentPivot:Int = pivotAbovePosition match{
-                             case None => sequence.externalToInternalPosition.forward.firstPivot match{case Some(p) => p._1 case None => Int.MaxValue}
+                             case None => Int.MaxValue
                              case Some(p) => p.value.fromValue-1},
                            limitBelowForCurrentPivot:Int = currentPivotPosition match{
                              case None => Int.MinValue
@@ -258,17 +259,17 @@ class IntSequenceExplorer(sequence:UniqueIntSequence,
                              case Some(p) => !p.value.f.minus}
                            ) {
 
-  override def toString : String = "IntSequenceExplorer(position:" + position + " value:" + value + " positionInRB:" + positionInRB + ")"
+  override def toString : String = "IntSequenceExplorer(position:" + position + " value:" + value + " currentPivotPosition:" + currentPivotPosition + " pivotAbovePosition:" + pivotAbovePosition + " positionInRB:" + positionInRB + ")"
 
 
   val value : Int = positionInRB.value
 
-  // println("created " + this)
+//   println("created " + this)
 
   def next : Option[IntSequenceExplorer] = {
+    if(position == sequence.size-1) return None
     if(position == limitAboveForCurrentPivot){
       //change pivot, we are also sure that there is a next, so use .head
-
       val newPivotAbovePosition = pivotAbovePosition.head.next
       val newPosition = position + 1
       val newPositionInRBOpt = sequence.internalPositionToValue.positionOf(pivotAbovePosition.head.value.f(newPosition))
@@ -306,7 +307,7 @@ class IntSequenceExplorer(sequence:UniqueIntSequence,
 
       val newPosition = position - 1
       val newCurrentPivotPosition = currentPivotPosition.head.prev
-      val newInternalPosition = newCurrentPivotPosition.head.value.f(newPosition)
+      val newInternalPosition = newCurrentPivotPosition match{case None => newPosition case Some(position) => position.value.f(newPosition)}
       val newCurrentPositionInRB = sequence.internalPositionToValue.positionOf(newInternalPosition).head
       //println("change pivot newPosition:" + newPosition + " newCurrentPivotPosition:" + newCurrentPivotPosition + " oldPosition:" + currentPivotPosition)
       Some(new IntSequenceExplorer(sequence,
