@@ -29,7 +29,7 @@ abstract class Storage(val maxCapacity: Int,
 
   def cloneReset(newModel : Model) : Storage
 
-  def cloneStorage:(Storage,Boolean)
+  def cloneStorage:(Storage,Boolean) = (this,false)
 
   class BufferCompositeItem(var n : Int, val itemClass : ItemClass)
 

@@ -247,11 +247,12 @@ class ListenerParser(storages:Map[String,Storage],
   }
 
   def sumAllProcess(placeHolder:ProcessPlaceHolder,expr:DoubleExpr,processes:Map[String,ActivableProcess]):DoubleExpr = {
-    processes.values.toList.map((p:ActivableProcess) => {
+    SumAll(processes.values.toList.map((p:ActivableProcess) => {
       placeHolder.processToCloneTo = p
-      expr.clone
-
-    })
+      val toReturn:DoubleExpr = expr.cloneExpr._1
+      placeHolder.processToCloneTo = null
+      toReturn
+    }):_*)
   }
 
   val outernParser=this

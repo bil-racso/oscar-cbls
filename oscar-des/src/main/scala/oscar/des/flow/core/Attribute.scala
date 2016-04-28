@@ -1,10 +1,9 @@
 package oscar.des.flow.core
 
-import oscar.des.flow.core.AttributeSet
 import oscar.des.flow.core.ItemClassHelper.ItemClass
 
 import scala.collection.SortedSet
-import scala.collection.immutable.{SortedMap, BitSet}
+import scala.collection.immutable.SortedMap
 import scala.language.implicitConversions
 import scala.util.Random
 

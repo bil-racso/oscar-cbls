@@ -279,7 +279,11 @@ case class Empty(s:Storage) extends BoolExpr(false){
   override def cloneReset(boolMap: Map[BoolExpr, BoolExpr], doubleMap: Map[DoubleExpr, DoubleExpr], storeMap: Map[Storage, Storage], processMap: Map[ActivableProcess, ActivableProcess]): BoolExpr =
     Empty(storeMap(s))
 
-
+  /**
+   *
+   * @return the clone, true if it is cloned, false if not cloned because nothing modified
+   */
+  override def cloneExpr : (BoolExpr, Boolean) = s.cloneStorage match{case (t,true) => (Empty(t),true) case _ => (this,false)}
 }
 
 /**
@@ -298,8 +302,7 @@ case class StockLevel(s:Storage, a:Option[AttributeCondition]) extends DoubleExp
                           processMap: Map[ActivableProcess, ActivableProcess]): DoubleExpr =
     StockLevel(storeMap(s),a)
 
-
-  }
+  override def cloneExpr : (DoubleExpr, Boolean) = s.cloneStorage match{case (t,true) => (StockLevel(t,a),true) case _ => (this,false)}
 }
 
 /**
@@ -312,7 +315,7 @@ case class StockCapacity(s:Storage) extends DoubleExpr(false){
   override def cloneReset(boolMap: Map[BoolExpr, BoolExpr], doubleMap: Map[DoubleExpr, DoubleExpr], storeMap: Map[Storage, Storage], processMap: Map[ActivableProcess, ActivableProcess]): DoubleExpr =
     StockCapacity(storeMap(s))
 
-
+  override def cloneExpr : (DoubleExpr, Boolean) = s.cloneStorage match{case (t,true) => (StockCapacity(t),true) case _ => (this,false)}
 }
 
 /**
@@ -325,7 +328,7 @@ case class RelativeStockLevel(s:Storage) extends DoubleExpr(false){
   override def cloneReset(boolMap: Map[BoolExpr, BoolExpr], doubleMap: Map[DoubleExpr, DoubleExpr], storeMap: Map[Storage, Storage], processMap: Map[ActivableProcess, ActivableProcess]): DoubleExpr =
     RelativeStockLevel(storeMap(s))
 
-
+  override def cloneExpr : (DoubleExpr, Boolean) = s.cloneStorage match{case (t,true) => (RelativeStockLevel(t),true) case _ => (this,false)}
 }
 
 /**
@@ -341,7 +344,7 @@ case class TotalPut(s:Storage, a:Option[AttributeCondition]) extends DoubleExpr(
   override def cloneReset(boolMap: Map[BoolExpr, BoolExpr], doubleMap: Map[DoubleExpr, DoubleExpr], storeMap: Map[Storage, Storage], processMap: Map[ActivableProcess, ActivableProcess]): DoubleExpr =
     TotalPut(storeMap(s),a)
 
-
+  override def cloneExpr : (DoubleExpr, Boolean) = s.cloneStorage match{case (t,true) => (TotalPut(t,a),true) case _ => (this,false)}
 }
 
 /**
@@ -358,7 +361,7 @@ case class TotalFetch(s:Storage, a:Option[AttributeCondition]) extends DoubleExp
   override def cloneReset(boolMap: Map[BoolExpr, BoolExpr], doubleMap: Map[DoubleExpr, DoubleExpr], storeMap: Map[Storage, Storage], processMap: Map[ActivableProcess, ActivableProcess]): DoubleExpr =
     TotalFetch(storeMap(s),a)
 
-
+  override def cloneExpr : (DoubleExpr, Boolean) = s.cloneStorage match{case (t,true) => (TotalFetch(t,a),true) case _ => (this,false)}
 }
 
 /**
@@ -374,7 +377,7 @@ case class TotalLosByOverflow(s:Storage, a:Option[AttributeCondition]) extends D
   override def cloneReset(boolMap: Map[BoolExpr, BoolExpr], doubleMap: Map[DoubleExpr, DoubleExpr], storeMap: Map[Storage, Storage], processMap: Map[ActivableProcess, ActivableProcess]): DoubleExpr =
     TotalLosByOverflow(storeMap(s),a)
 
-
+  override def cloneExpr : (DoubleExpr, Boolean) = s.cloneStorage match{case (t,true) => (TotalLosByOverflow(t,a),true) case _ => (this,false)}
 }
 
 /**
@@ -473,6 +476,12 @@ case class BoolConst(b:Boolean) extends BoolExpr(false){
   override def updatedValue(time: Double): Boolean = b
 
   override def cloneReset(boolMap: Map[BoolExpr, BoolExpr], doubleMap: Map[DoubleExpr, DoubleExpr], storeMap: Map[Storage, Storage], processMap: Map[ActivableProcess, ActivableProcess]): BoolExpr = this
+
+  /**
+   *
+   * @return the clone, true if it is cloned, false if not cloned because nothing modified
+   */
+  override def cloneExpr : (BoolExpr, Boolean) = (this,false)
 }
 
 /**
@@ -505,6 +514,12 @@ case class Not(f:BoolExpr) extends BoolExpr(false,f){
                           doubleMap: Map[DoubleExpr, DoubleExpr],
                           storeMap: Map[Storage, Storage],
                           processMap: Map[ActivableProcess, ActivableProcess]): BoolExpr = Not(boolMap(f))
+
+  /**
+   *
+   * @return the clone, true if it is cloned, false if not cloned because nothing modified
+   */
+  override def cloneExpr : (BoolExpr, Boolean) = f.cloneExpr match{case (g,true) => (Not(g),true) case _ => (this,false)}
 }
 
 /**
@@ -518,6 +533,15 @@ case class And(f:BoolExpr, g:BoolExpr) extends BoolExpr(false,f,g){
 
   override def cloneReset(boolMap: Map[BoolExpr, BoolExpr], doubleMap: Map[DoubleExpr, DoubleExpr], storeMap: Map[Storage, Storage], processMap: Map[ActivableProcess, ActivableProcess]): BoolExpr =
     And(boolMap(f),boolMap(g))
+
+  /**
+   *
+   * @return the clone, true if it is cloned, false if not cloned because nothing modified
+   */
+  override def cloneExpr : (BoolExpr, Boolean) = (f.cloneExpr,g.cloneExpr) match{
+    case ((ff,false),(gg,false)) => (this,false)
+    case (a,b) => (And(a._1,b._1),true)
+  }
 }
 
 /**
@@ -529,12 +553,23 @@ case class Or(f:BoolExpr, g:BoolExpr) extends BoolExpr(false,f,g){
   override def updatedValue(time:Double): Boolean = if(f.value) true else g.value
   override def cloneReset(boolMap: Map[BoolExpr, BoolExpr], doubleMap: Map[DoubleExpr, DoubleExpr], storeMap: Map[Storage, Storage], processMap: Map[ActivableProcess, ActivableProcess]): BoolExpr =
     Or(boolMap(f),boolMap(g))
+
+  override def cloneExpr : (BoolExpr, Boolean) = (f.cloneExpr,g.cloneExpr) match{
+    case ((ff,false),(gg,false)) => (this,false)
+    case (a,b) => (Or(a._1,b._1),true)
+  }
 }
 
 case class ITE(i:BoolExpr, t:BoolExpr, e:BoolExpr ) extends BoolExpr(false,i,t,e){
   override def updatedValue(time: Double): Boolean = if(i.value) t.value else e.value
   override def cloneReset(boolMap: Map[BoolExpr, BoolExpr], doubleMap: Map[DoubleExpr, DoubleExpr], storeMap: Map[Storage, Storage], processMap: Map[ActivableProcess, ActivableProcess]): BoolExpr =
     ITE(boolMap(i),boolMap(t),boolMap(e))
+
+  override def cloneExpr : (BoolExpr, Boolean) = (i.cloneExpr,t.cloneExpr,e.cloneExpr) match{
+    case ((ii,false),(tt,false),(ee,false)) => (this,false)
+    case (ii,tt,ee) => (ITE(ii._1,tt._1,ee._1),true)
+  }
+
 }
 //////////////////////////////////////////////////////////////////////////////////////////////
 //temporal operators
@@ -554,6 +589,12 @@ case class HasAlwaysBeen(f:BoolExpr) extends BoolExpr(true,f){
 
   override def cloneReset(boolMap: Map[BoolExpr, BoolExpr], doubleMap: Map[DoubleExpr, DoubleExpr], storeMap: Map[Storage, Storage], processMap: Map[ActivableProcess, ActivableProcess]): BoolExpr =
     HasAlwaysBeen(boolMap(f))
+
+  /**
+   *
+   * @return the clone, true if it is cloned, false if not cloned because nothing modified
+   */
+  override def cloneExpr : (BoolExpr, Boolean) = f.cloneExpr match{case (g,true) => (HasAlwaysBeen(g),true) case _ => (this,false)}
 }
 
 /**
@@ -570,6 +611,8 @@ case class HasBeen(f:BoolExpr) extends BoolExpr(true,f){
 
   override def cloneReset(boolMap: Map[BoolExpr, BoolExpr], doubleMap: Map[DoubleExpr, DoubleExpr], storeMap: Map[Storage, Storage], processMap: Map[ActivableProcess, ActivableProcess]): BoolExpr =
     HasBeen(boolMap(f))
+
+  override def cloneExpr : (BoolExpr, Boolean) = f.cloneExpr match{case (g,true) => (HasBeen(g),true) case _ => (this,false)}
 }
 
 /**
@@ -598,6 +641,11 @@ case class Since(a:BoolExpr,b:BoolExpr) extends BoolExpr(true,a,b){
 
   override def cloneReset(boolMap: Map[BoolExpr, BoolExpr], doubleMap: Map[DoubleExpr, DoubleExpr], storeMap: Map[Storage, Storage], processMap: Map[ActivableProcess, ActivableProcess]): BoolExpr =
     Since(boolMap(a),boolMap(b))
+
+  override def cloneExpr : (BoolExpr, Boolean) = (a.cloneExpr,a.cloneExpr) match{
+    case ((ff,false),(gg,false)) => (this,false)
+    case (a,b) => (Since(a._1,b._1),true)
+  }
 }
 
 /**
@@ -617,6 +665,8 @@ case class BecomesTrue(p:BoolExpr) extends BoolExpr(true,p){
 
   override def cloneReset(boolMap: Map[BoolExpr, BoolExpr], doubleMap: Map[DoubleExpr, DoubleExpr], storeMap: Map[Storage, Storage], processMap: Map[ActivableProcess, ActivableProcess]): BoolExpr =
     BecomesTrue(boolMap(p))
+
+  override def cloneExpr : (BoolExpr, Boolean) = p.cloneExpr match{case (g,true) => (BecomesTrue(g),true) case _ => (this,false)}
 }
 
 /**
@@ -637,6 +687,8 @@ case class BoolChanged(b:BoolExpr) extends BoolExpr(true,b){
 
   override def cloneReset(boolMap: Map[BoolExpr, BoolExpr], doubleMap: Map[DoubleExpr, DoubleExpr], storeMap: Map[Storage, Storage], processMap: Map[ActivableProcess, ActivableProcess]): BoolExpr =
     BoolChanged(boolMap(b))
+
+  override def cloneExpr : (BoolExpr, Boolean) = b.cloneExpr match{case (g,true) => (BoolChanged(g),true) case _ => (this,false)}
 }
 
 /**
@@ -657,6 +709,8 @@ case class DoubleChanged(p:DoubleExpr) extends BoolExpr(true,p){
 
   override def cloneReset(boolMap: Map[BoolExpr, BoolExpr], doubleMap: Map[DoubleExpr, DoubleExpr], storeMap: Map[Storage, Storage], processMap: Map[ActivableProcess, ActivableProcess]): BoolExpr =
     DoubleChanged(doubleMap(p))
+
+  override def cloneExpr : (BoolExpr, Boolean) = p.cloneExpr match{case (g,true) => (DoubleChanged(g),true) case _ => (this,false)}
 }
 
 /**
@@ -714,6 +768,12 @@ case class CumulatedDuration(b:BoolExpr) extends DoubleExpr(true,b){
 
   override def cloneReset(boolMap: Map[BoolExpr, BoolExpr], doubleMap: Map[DoubleExpr, DoubleExpr], storeMap: Map[Storage, Storage], processMap: Map[ActivableProcess, ActivableProcess]): DoubleExpr =
     CumulatedDuration(boolMap(b))
+
+  override def cloneExpr : (DoubleExpr, Boolean) = b.cloneExpr match{
+    case (q,true) => (CumulatedDuration(q),true)
+    case (_,false) => (this,false)
+  }
+
 }
 
 /**the duration for which b has been true since it was last false*/
@@ -746,7 +806,7 @@ case class Duration(b:BoolExpr) extends DoubleExpr(true,b){
   override def cloneExpr : (DoubleExpr, Boolean) = {
     b.cloneExpr match{
       case (b,true) => (Duration(b),true)
-      case (_,false) => this
+      case (_,false) => (this,false)
     }
   }
 }
@@ -759,6 +819,12 @@ case class CurrentTime() extends DoubleExpr(false){
 
   override def cloneReset(boolMap: Map[BoolExpr, BoolExpr], doubleMap: Map[DoubleExpr, DoubleExpr], storeMap: Map[Storage, Storage], processMap: Map[ActivableProcess, ActivableProcess]): DoubleExpr =
     CurrentTime()
+
+  /**
+   *
+   * @return the clone, true if it is cloned, false if not cloned because nothing modified
+   */
+  override def cloneExpr : (DoubleExpr, Boolean) = (this,false)
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -774,6 +840,12 @@ case class Mult(a:DoubleExpr,b:DoubleExpr) extends DoubleExpr(false,a,b){
 
   override def cloneReset(boolMap: Map[BoolExpr, BoolExpr], doubleMap: Map[DoubleExpr, DoubleExpr], storeMap: Map[Storage, Storage], processMap: Map[ActivableProcess, ActivableProcess]): DoubleExpr =
     Mult(doubleMap(a),doubleMap(b))
+
+  override def cloneExpr : (DoubleExpr, Boolean) = (a.cloneExpr,b.cloneExpr) match{
+    case ((ff,false),(gg,false)) => (this,false)
+    case (a,b) => (Mult(a._1,b._1),true)
+  }
+
 }
 
 /**
@@ -785,6 +857,28 @@ case class Plus(a:DoubleExpr,b:DoubleExpr) extends DoubleExpr(false,a,b){
   override def updatedValue(time:Double): Double = a.value + b.value
   override def cloneReset(boolMap: Map[BoolExpr, BoolExpr], doubleMap: Map[DoubleExpr, DoubleExpr], storeMap: Map[Storage, Storage], processMap: Map[ActivableProcess, ActivableProcess]): DoubleExpr =
     Plus(doubleMap(a),doubleMap(b))
+
+  override def cloneExpr : (DoubleExpr, Boolean) = (a.cloneExpr,b.cloneExpr) match{
+    case ((ff,false),(gg,false)) => (this,false)
+    case (a,b) => (Plus(a._1,b._1),true)
+  }
+}
+
+case class SumAll(a:DoubleExpr*) extends DoubleExpr(false,a:_*){
+  override def updatedValue(time:Double): Double = a.foldLeft(0.0)({case (acc,term) => acc + term.value})
+  override def cloneReset(boolMap: Map[BoolExpr, BoolExpr], doubleMap: Map[DoubleExpr, DoubleExpr], storeMap: Map[Storage, Storage], processMap: Map[ActivableProcess, ActivableProcess]): DoubleExpr =
+    SumAll(a.map(doubleMap(_)):_*)
+
+  /**
+   *
+   * @return the clone, true if it is cloned, false if not cloned because nothing modified
+   */
+  override def cloneExpr : (DoubleExpr, Boolean) = {
+    val clones = a.map(_.cloneExpr)
+    val anyRealClone = clones.exists(_._2)
+    if(anyRealClone) (SumAll(clones.map(_._1):_*),true)
+    else (this,false)
+  }
 }
 
 /**
@@ -796,6 +890,11 @@ case class Minus(a:DoubleExpr,b:DoubleExpr) extends DoubleExpr(false,a,b){
   override def updatedValue(time:Double): Double = a.value - b.value
   override def cloneReset(boolMap: Map[BoolExpr, BoolExpr], doubleMap: Map[DoubleExpr, DoubleExpr], storeMap: Map[Storage, Storage], processMap: Map[ActivableProcess, ActivableProcess]): DoubleExpr =
     Minus(doubleMap(a),doubleMap(b))
+
+  override def cloneExpr : (DoubleExpr, Boolean) = (a.cloneExpr,b.cloneExpr) match{
+    case ((ff,false),(gg,false)) => (this,false)
+    case (a,b) => (Minus(a._1,b._1),true)
+  }
 }
 
 /**
@@ -811,6 +910,10 @@ case class Div(a:DoubleExpr,b:DoubleExpr,defaultValueIfDividerIsZero:Double = Do
   override def cloneReset(boolMap: Map[BoolExpr, BoolExpr], doubleMap: Map[DoubleExpr, DoubleExpr], storeMap: Map[Storage, Storage], processMap: Map[ActivableProcess, ActivableProcess])=
     Div(doubleMap(a),doubleMap(b),defaultValueIfDividerIsZero)
 
+  override def cloneExpr : (DoubleExpr, Boolean) = (a.cloneExpr,b.cloneExpr) match{
+    case ((ff,false),(gg,false)) => (this,false)
+    case (a,b) => (Div(a._1,b._1,defaultValueIfDividerIsZero),true)
+  }
 }
 
 /**
@@ -822,6 +925,11 @@ case class G(a:DoubleExpr,b:DoubleExpr) extends BoolExpr(false,a,b) {
   override def updatedValue(time:Double): Boolean = a.value > b.value
   override def cloneReset(boolMap: Map[BoolExpr, BoolExpr], doubleMap: Map[DoubleExpr, DoubleExpr], storeMap: Map[Storage, Storage], processMap: Map[ActivableProcess, ActivableProcess]) =
     G(doubleMap(a),doubleMap(b))
+
+  override def cloneExpr : (BoolExpr, Boolean) = (a.cloneExpr,b.cloneExpr) match{
+    case ((ff,false),(gg,false)) => (this,false)
+    case (a,b) => (G(a._1,b._1),true)
+  }
 }
 
 /**
@@ -833,6 +941,11 @@ case class GE(a:DoubleExpr,b:DoubleExpr) extends BoolExpr(false,a,b){
   override def updatedValue(time:Double): Boolean = a.value >= b.value
   override def cloneReset(boolMap: Map[BoolExpr, BoolExpr], doubleMap: Map[DoubleExpr, DoubleExpr], storeMap: Map[Storage, Storage], processMap: Map[ActivableProcess, ActivableProcess]) =
     GE(doubleMap(a),doubleMap(b))
+
+  override def cloneExpr : (BoolExpr, Boolean) = (a.cloneExpr,b.cloneExpr) match{
+    case ((ff,false),(gg,false)) => (this,false)
+    case (a,b) => (GE(a._1,b._1),true)
+  }
 }
 
 /**
@@ -844,6 +957,11 @@ case class EQ(a:DoubleExpr,b:DoubleExpr) extends BoolExpr(false,a,b){
   override def updatedValue(time:Double): Boolean = a.value == b.value
   override def cloneReset(boolMap: Map[BoolExpr, BoolExpr], doubleMap: Map[DoubleExpr, DoubleExpr], storeMap: Map[Storage, Storage], processMap: Map[ActivableProcess, ActivableProcess]) =
     EQ(doubleMap(a),doubleMap(b))
+
+  override def cloneExpr : (BoolExpr, Boolean) = (a.cloneExpr,b.cloneExpr) match{
+    case ((ff,false),(gg,false)) => (this,false)
+    case (a,b) => (EQ(a._1,b._1),true)
+  }
 }
 
 case class DoubleITE(i:BoolExpr, t:DoubleExpr, e:DoubleExpr) extends DoubleExpr(false,i,t,e){
@@ -851,6 +969,13 @@ case class DoubleITE(i:BoolExpr, t:DoubleExpr, e:DoubleExpr) extends DoubleExpr(
 
   override def cloneReset(boolMap: Map[BoolExpr, BoolExpr], doubleMap: Map[DoubleExpr, DoubleExpr], storeMap: Map[Storage, Storage], processMap: Map[ActivableProcess, ActivableProcess]): DoubleExpr =
     DoubleITE(boolMap(i),doubleMap(t),doubleMap(e))
+
+  override def cloneExpr : (DoubleExpr, Boolean) = (i.cloneExpr,t.cloneExpr,e.cloneExpr) match{
+    case ((ii,false),(tt,false),(ee,false)) => (this,false)
+    case (ii,tt,ee) => (DoubleITE(ii._1,tt._1,ee._1),true)
+  }
+
+
 }
 
 case class BoolSubExpression(name:String,expr:BoolExpr) extends BoolExpr(false,expr){
@@ -858,6 +983,12 @@ case class BoolSubExpression(name:String,expr:BoolExpr) extends BoolExpr(false,e
 
   override def cloneReset(boolMap: Map[BoolExpr, BoolExpr], doubleMap: Map[DoubleExpr, DoubleExpr], storeMap: Map[Storage, Storage], processMap: Map[ActivableProcess, ActivableProcess]): BoolExpr =
     BoolSubExpression(name,boolMap(expr))
+
+  /**
+   *
+   * @return the clone, true if it is cloned, false if not cloned because nothing modified
+   */
+  override def cloneExpr : (BoolExpr, Boolean) = expr.cloneExpr match{case (e,true) => (BoolSubExpression(name,e),true) case _ => (this,false)}
 }
 
 case class DoubleSubExpression(name:String,expr:DoubleExpr) extends DoubleExpr(false,expr){
@@ -865,6 +996,8 @@ case class DoubleSubExpression(name:String,expr:DoubleExpr) extends DoubleExpr(f
 
   override def cloneReset(boolMap: Map[BoolExpr, BoolExpr], doubleMap: Map[DoubleExpr, DoubleExpr], storeMap: Map[Storage, Storage], processMap: Map[ActivableProcess, ActivableProcess]): DoubleExpr =
     DoubleSubExpression(name,doubleMap(expr))
+
+  override def cloneExpr : (DoubleExpr, Boolean) = expr.cloneExpr match{case (e,true) => (DoubleSubExpression(name,e),true) case _ => (this,false)}
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -892,6 +1025,8 @@ case class PonderateWithDuration(s:DoubleExpr) extends DoubleExpr(true,s){
 
   override def cloneReset(boolMap: Map[BoolExpr, BoolExpr], doubleMap: Map[DoubleExpr, DoubleExpr], storeMap: Map[Storage, Storage], processMap: Map[ActivableProcess, ActivableProcess]) =
     PonderateWithDuration(doubleMap(s))
+
+  override def cloneExpr : (DoubleExpr, Boolean) = s.cloneExpr match{case (e,true) => (PonderateWithDuration(e),true) case _ => (this,false)}
 }
 
 /**
@@ -919,6 +1054,16 @@ case class MaxOnHistory(s:DoubleExpr, when:BoolExpr = null) extends DoubleExpr(t
 
   override def cloneReset(boolMap: Map[BoolExpr, BoolExpr], doubleMap: Map[DoubleExpr, DoubleExpr], storeMap: Map[Storage, Storage], processMap: Map[ActivableProcess, ActivableProcess])=
     MaxOnHistory(doubleMap(s),if (when == null) null else boolMap(when))
+
+
+  override def cloneExpr : (DoubleExpr, Boolean) = if(when == null){
+    s.cloneExpr match{case (e,true) => (MaxOnHistory(e),true) case _ => (this,false)}
+  }else{
+    (s.cloneExpr,when.cloneExpr) match{
+      case ((ff,false),(gg,false)) => (this,false)
+      case (a,b) => (MaxOnHistory(a._1,b._1),true)
+    }
+  }
 }
 
 
