@@ -38,6 +38,7 @@ abstract class MatrixMap extends VisualDrawing(false,false){
   var colorValues:Array[Color] = null
   var vrp:VRP = null
   var mapSize = 0
+  var routes:List[List[Int]] = null
 
   //We remove the unwanted listener inherited from VisualDrawing
   removeMouseListener(getMouseListeners.head)
@@ -107,7 +108,6 @@ class RoutingMatrixMap extends MatrixMap{
     clear()
     drawPoints()
 
-    val routes = (for(c <- 0 until vrp.V)yield vrp.getRouteOfVehicle(c)).toList
     for(r <- 0 until vrp.V){
       val color:Color = colorValues(r)
       val points = routes(r)

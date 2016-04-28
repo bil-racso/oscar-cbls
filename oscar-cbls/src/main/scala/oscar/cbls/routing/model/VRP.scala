@@ -23,6 +23,9 @@
 
 package oscar.cbls.routing.model
 
+import java.awt.{Dimension, Toolkit}
+import javax.swing.JFrame
+
 import oscar.cbls.constraints.lib.basic.{NE, EQ, LE}
 import oscar.cbls.invariants.core.algo.heap.{BinomialHeapIterator, BinomialHeap}
 import oscar.cbls.invariants.core.computation._
@@ -31,6 +34,8 @@ import oscar.cbls.invariants.lib.numeric.{Sum2, Sum}
 import oscar.cbls.invariants.lib.set.{SetSum, Cardinality}
 import oscar.cbls.modeling.Algebra._
 import oscar.cbls.search.algo.{LazyQuicksort, KSmallest}
+import oscar.examples.cbls.routing.visual.ColorGenerator
+import oscar.examples.cbls.routing.visual.MatrixMap.{RoutingMatrixVisual, RoutingMatrixVisualWithAttribute}
 
 import scala.collection.immutable.{HashMap, SortedMap, SortedSet}
 import scala.math.min
@@ -787,6 +792,7 @@ trait PickupAndDeliveryCustomers extends VRP with StrongConstraints with Positio
     * Add a new PickupAndDelivery couple and set this two basic constraints :
     * A strong constraint that specified that each pickup node has to be before his related delivery node
     * A strong constraint that specified that each couple of point (pickup and delivery) has to be in the same route.
+    *
     * @param p the pickup point
     * @param d the delivery point
     */
@@ -844,6 +850,7 @@ trait PickupAndDeliveryCustomers extends VRP with StrongConstraints with Positio
 
   /**
     * This method check if the given node is a pickup one. (if his load value is > 0 it's a pickup node)
+    *
     * @param index the index of the node
     * @return
     */
@@ -851,6 +858,7 @@ trait PickupAndDeliveryCustomers extends VRP with StrongConstraints with Positio
 
   /**
     * This method check if the given node is a delivery one. (if his load value is < 0 it's a delivery node)
+    *
     * @param index the index of the node
     * @return
     */
@@ -884,54 +892,63 @@ trait PickupAndDeliveryCustomers extends VRP with StrongConstraints with Positio
 
   /**
     * O(N)
+    *
     * @return All the pickup nodes
     */
   def getPickups: Iterable[Int] = pickupDeliveryNodes.indices.foldLeft(List[Int]())((a,b) => if(pickupDeliveryNodes(b)._1 > 0)b :: a else a)
 
   /**
     * O(N)
+    *
     * @return All the routed pickup nodes
     */
   def getRoutedPickups: Iterable[Int] = pickupDeliveryNodes.indices.foldLeft(List[Int]())((a,b) => if(pickupDeliveryNodes(b)._1 > 0 && isRouted(b))b :: a else a)
 
   /**
     * O(N)
+    *
     * @return The predecessor of each routed pickup node
     */
   def getRoutedPickupsPredecessors: Iterable[Int] = pickupDeliveryNodes.indices.foldLeft(List[Int]())((a,b) => if(pickupDeliveryNodes(b)._1 > 0 && isRouted(b))preds(b).value :: a else a)
 
   /**
     * O(N)
+    *
     * @return All the unrouted pickup nodes
     */
   def getUnroutedPickups: Iterable[Int] = pickupDeliveryNodes.indices.foldLeft(List[Int]())((a,b) => if(pickupDeliveryNodes(b)._1 > 0 && !isRouted(b))b :: a else a)
 
   /**
     * O(N)
+    *
     * @return All the delivery nodes
     */
   def getDeliverys: Iterable[Int] = pickupDeliveryNodes.indices.foldLeft(List[Int]())((a,b) => if(pickupDeliveryNodes(b)._1 < 0)b :: a else a)
 
   /**
     * O(N)
+    *
     * @return All the routed delivery nodes
     */
   def getRoutedDeliverys: Iterable[Int] = pickupDeliveryNodes.indices.foldLeft(List[Int]())((a,b) => if(pickupDeliveryNodes(b)._1 < 0 && isRouted(b))b :: a else a)
 
   /**
     * O(N)
+    *
     * @return The predecessor of each routed delivery nodes
     */
   def getRoutedDeliverysPredecessors: Iterable[Int] = pickupDeliveryNodes.indices.foldLeft(List[Int]())((a,b) => if(pickupDeliveryNodes(b)._1 < 0 && isRouted(b))preds(b).value :: a else a)
 
   /**
     * O(N)
+    *
     * @return All the unrouted delivery nodes
     */
   def getUnroutedDeliverys: Iterable[Int] = pickupDeliveryNodes.indices.foldLeft(List[Int]())((a,b) => if(pickupDeliveryNodes(b)._1 < 0 && !isRouted(b))b :: a else a)
 
   /**
     * This method is mainly used when you want to move a pickup node on his route
+    *
     * @param node the pickup node
     * @return All the nodes preceding the related delivery node
     */
@@ -944,6 +961,7 @@ trait PickupAndDeliveryCustomers extends VRP with StrongConstraints with Positio
 
   /**
     * This method is mainly used when you want to move a delivery node on his route
+    *
     * @param node the delivery node
     * @return All the nodes following the related pickup node
     */
@@ -1051,6 +1069,7 @@ trait PickupAndDeliveryCustomersWithTimeWindow extends TimeWindow with TravelTim
 
   /**
     * This method set a linear travel time function. The time function is entirely based on the distanceMatrix
+    *
     * @param distanceMatrix the distance matrix of the map
     */
   //TODO : Repenser la méthode (TTFConst, ...)
@@ -1110,6 +1129,7 @@ trait PickupAndDeliveryCustomersWithTimeWindow extends TimeWindow with TravelTim
     * It's similar to the getAuthorizedInsertionPositionForPickup/delivery
     * excepts that this one take account of the time window
     * (mainly used during the insertion phase)
+    *
     * @param node the index of the node
     * @return
     */
@@ -1152,5 +1172,32 @@ trait MaxTravelDistancePDConstraint extends VRP with HopDistance with PickupAndD
       val d = getRelatedDelivery(p)
       strongConstraints.post(LE(arrivalTime(d) - leaveTime(p), 2*travelDurationMatrix.getTravelDuration(p, leaveTime(p).value, d)))
     }
+  }
+}
+
+
+trait RoutingMap extends VRP{
+  val rm = new RoutingMatrixVisual("Routing Map")
+  rm.setVRP(this)
+  rm.setColorValues(ColorGenerator.generateRandomColors(V))
+
+  val routingMapThread = new Thread(rm,"Routin Map Thread")
+  routingMapThread.start()
+
+  val f = new JFrame("ROUTING - Routing Map")
+  f.setSize(Toolkit.getDefaultToolkit.getScreenSize.getWidth.toInt,(11*Toolkit.getDefaultToolkit().getScreenSize().getHeight/12).toInt)
+  rm.setPreferredSize(new Dimension(f.getHeight,f.getHeight))
+  f.add(rm)
+  f.pack()
+  f.setVisible(true)
+
+  def setMapInfo(pointsList:Array[(Int,Int)],mapSize:Int): Unit ={
+    rm.setMapSize(mapSize)
+    rm.setPointsList(pointsList.toList)
+    rm.drawPoints()
+  }
+
+  def drawRoutes(): Unit ={
+    rm.setMustRefresh(true,(for(c <- 0 until V)yield getRouteOfVehicle(c)).toList)
   }
 }

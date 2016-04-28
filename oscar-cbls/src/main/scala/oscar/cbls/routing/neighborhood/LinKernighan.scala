@@ -27,8 +27,8 @@ import oscar.cbls.search.algo.HotRestart
   */
 case class LinKernighan(routeNr:Int,
                         override val vrp: VRP with PositionInRouteAndRouteNr with Predecessors with HopClosestNeighbors,
-                        k:Int = 20,
-                        p:Int = 6,
+                        k:Int = 10,
+                        p:Int = 5,
                         neighborhoodName: String = "LinKernighan",
                         best: Boolean = false,
                         hotRestart: Boolean = true) extends EasyRoutingNeighborhood[LinKernighanMove](best, vrp, neighborhoodName) {
@@ -38,7 +38,7 @@ case class LinKernighan(routeNr:Int,
   var selectedRoute = vrp.getRouteOfVehicle(routeNr).toArray
   var routeLength = selectedRoute.length
   //An array that keep the position of each node
-  var positionInRoute : Array[Int] = new Array[Int](selectedRoute.length)
+  var positionInRoute : Array[Int] = new Array[Int](vrp.N)
   //A copy of the distanceMatrix
   var distanceMatrix : Array[Array[Int]] = new Array[Array[Int]](selectedRoute.length)
 
@@ -142,13 +142,13 @@ case class LinKernighan(routeNr:Int,
       right = prevNode(current)
       left = segmentExtremities(right)
     }
-    if(node1 == 0 && node2 == vrp.N-1){
+    if(node1 == 0 && node2 == routeLength - 1){
       segmentExtremities(left) = node2
       segmentExtremities(node2) = left
       segmentExtremities(node1) = right
       segmentExtremities(right) = node1
     }
-    else if (node1 < node2 || (node1 == vrp.N-1 && node2 == 0)) {
+    else if (node1 < node2 || (node1 == routeLength - 1 && node2 == 0)) {
       segmentExtremities(left) = node1
       segmentExtremities(node1) = left
       segmentExtremities(node2) = right
@@ -200,7 +200,7 @@ case class LinKernighan(routeNr:Int,
     currentDelta = 0
     currentP = 1
     firstBeforeSecond = false
-    positionInRoute = Array.tabulate(routeLength)(n => -1)
+    positionInRoute = Array.tabulate(vrp.N)(n => -1)
     distanceMatrix = Array.tabulate(routeLength)(n => Array.tabulate(routeLength)(n1 => Int.MaxValue))
     for(n <- selectedRoute.indices){
       positionInRoute(selectedRoute(n)) = n
@@ -240,6 +240,7 @@ case class LinKernighan(routeNr:Int,
   def internalExploration(node:Int): Boolean ={
     /**
       * This method check if
+      *
       * @param predsNode
       * @param baseNode
       * @param promisingNode
@@ -347,7 +348,7 @@ case class LinKernighan(routeNr:Int,
 
     def getKPromisingNodes(node:Int): List[Int] ={
       val nodesList = Array.tabulate(routeLength)(n => n)
-      val res = nodesList.sortWith(distanceMatrix(node)(_) < distanceMatrix(node)(_)).take(k).toList.filter(availableNode(_))
+      val res = nodesList.filter(availableNode(_)).sortWith(distanceMatrix(node)(_) < distanceMatrix(node)(_)).take(k).toList
       res
     }
 
@@ -369,21 +370,19 @@ case class LinKernighan(routeNr:Int,
            */
           unLinkNode(positionPN,oldNode,true)
           addSegmentExtremities(positionPN,oldNode)
-          assert(segmentExtremities(node) == positionPN || segmentExtremities(node) == oldNode,"Error")
-          linkNode(oldNode,firstNode,false)
-          /*println(availableNode.toList)
-          println(oldLink.toList)
-          println(newLink.toList)*/
-          if(!isCycling(oldNode)){
-            encode(oldLink, newLink, selectedRoute, firstNode, availableNode)
-            if (evaluateCurrentMoveObjTrueIfStopRequired(evalObjOnEncodedMove())) {
-              return true
+          if(currentDelta + distanceMatrix(oldNode)(firstNode) - distanceMatrix(oldNode)(positionPN) < 0) {
+            linkNode(oldNode, firstNode, false)
+            if (!isCycling(oldNode)) {
+              encode(oldLink, newLink, selectedRoute, firstNode, availableNode)
+              if (evaluateCurrentMoveObjTrueIfStopRequired(evalObjOnEncodedMove())) {
+                return true
+              }
             }
-          }
-          /*
+            /*
            * Else we check for other solution by searching deeper (we increase the level of the Lin-Kernighan algorithm)
            */
-          unLinkNode(oldNode,firstNode,false)
+            unLinkNode(oldNode, firstNode, false)
+          }
           if(currentP < p && internalExploration(oldNode))
             return true
           //If we are here that means that no solution has been discovered by going this way so we backtrack
@@ -442,6 +441,11 @@ case class LinKernighan(routeNr:Int,
       else
         reverseSegment = false
     }
+
+   /* println(oldLink.toList)
+    println(newLink.toList)
+    println(segmentExtremities.toList)
+    println(selectedRoute.toList)*/
 
     //We
     toReverseList.sortWith(_._1 > _._1)

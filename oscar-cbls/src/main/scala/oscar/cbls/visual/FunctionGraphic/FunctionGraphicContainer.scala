@@ -67,10 +67,15 @@ class ObjFunctionGraphicContainer(title:String = "Evolution of the objective fun
   def run(): Unit ={
     var ancientNumberOfMove = 0
     while(true){
-      Thread.sleep(100)
-      if(graphic.xValues.length > ancientNumberOfMove){
-        ancientNumberOfMove = graphic.xValues.length
-        drawGlobalCurve()
+      try {
+        Thread.sleep(100)
+        if (graphic.xValues.length > ancientNumberOfMove) {
+          ancientNumberOfMove = graphic.xValues.length
+          drawGlobalCurve()
+        }
+      }catch{
+        case ie:InterruptedException => return
+        case e:Exception => e.printStackTrace()
       }
     }
   }
@@ -109,6 +114,7 @@ class ObjFunctionGraphicContainer(title:String = "Evolution of the objective fun
 
 
   override def clear(): Unit ={
+    graphic.clear()
     super.clear()
   }
 }

@@ -29,7 +29,7 @@ import scala.swing._
   */
 
 
-class RoutingMatrixVisual(title:String = "Routing map", pickupAndDeliveryPoints: Boolean = false) extends JPanel{
+class RoutingMatrixVisual(title:String = "Routing map", pickupAndDeliveryPoints: Boolean = false) extends JPanel with Runnable{
   setLayout(new BorderLayout())
 
   val routingMatrix = {
@@ -37,6 +37,31 @@ class RoutingMatrixVisual(title:String = "Routing map", pickupAndDeliveryPoints:
       new RoutingMatrixMap with PickupAndDeliveryPoints
     else
       new RoutingMatrixMap}
+
+  var mustRefresh = false
+
+  def run(): Unit ={
+    while (true) {
+      try {
+        Thread.sleep(100)
+        if (mustRefresh) {
+          routingMatrix.drawRoutes()
+          setMustRefresh(false)
+        }
+      }catch{
+        case ie:InterruptedException => return
+        case e:Exception => e.printStackTrace()
+      }
+    }
+  }
+
+  def setMustRefresh(newVal:Boolean,routes:List[List[Int]] = null): Unit=synchronized{
+    assert(routingMatrix.pointsList != Nil,"The list of points is not set")
+    assert(routingMatrix.mapSize != 0,"The map size is not set")
+    mustRefresh = newVal
+    if(newVal)
+      routingMatrix.routes = routes
+  }
 
   def drawRoutes(): Unit ={
     routingMatrix.drawRoutes()
