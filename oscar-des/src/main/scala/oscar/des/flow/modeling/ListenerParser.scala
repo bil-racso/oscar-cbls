@@ -1,7 +1,8 @@
 package oscar.des.flow.modeling
 
 import oscar.des.engine.Model
-import oscar.des.flow.core.{AttributeDefinitions, Attribute, AttributeCondition}
+import oscar.des.flow.core.ItemClassHelper.ItemClass
+import oscar.des.flow.core.{Properties, AttributeDefinitions, Attribute, AttributeCondition}
 import oscar.des.flow.lib._
 
 import scala.collection.immutable.SortedMap
@@ -150,7 +151,9 @@ class ListenerParser(storages:Map[String,Storage],
       | "true" ^^^ boolConst(true)
       | "false" ^^^ boolConst(false)
       | boolListener
-      | storageParser ~ "." ~ identifier ^^{case storage~"."~property => storage.properties.getBoolProperty(property)}
+      | storageParser ~ "." ~ identifier ^^{case storage~"."~property => storage match{
+      case p:StoragePlaceHolder => new BoolPropertyPlaceHolder(property,p)
+      case _ => storage.properties.getBoolProperty(property)}}
       | processParser~ "." ~ identifier ^^{case process~"."~property => process match{
       case p:ProcessPlaceHolder => new BoolPropertyPlaceHolder(property,p)
       case _ => process.properties.getBoolProperty(property)}}
@@ -203,9 +206,11 @@ class ListenerParser(storages:Map[String,Storage],
       case process~Some(portNumber) => completedBatchCount(process,portNumber)}
       | processDoubleProbe("startedBatchCount",startedBatchCount)
       | processDoubleProbe("totalWaitDuration",totalWaitDuration)
-      | storageParser ~ "." ~ identifier ^^{case storage~"."~property => storage.properties.getDoubleProperty(property)}
+      | storageParser ~ "." ~ identifier ^^{case storage~"."~property =>
+      storage match{
+        case p:StoragePlaceHolder => new DoublePropertyPlaceHolder(property,p)
+        case _ => storage.properties.getDoubleProperty(property)}}
       | processParser~ "." ~ identifier ^^{case process~"."~property =>
-      println(process)
       process match{
       case p:ProcessPlaceHolder => new DoublePropertyPlaceHolder(property,p)
       case _ => process.properties.getDoubleProperty(property)}}
@@ -235,6 +240,7 @@ class ListenerParser(storages:Map[String,Storage],
       | "-"~> doubleExprParser ^^ {opposite(_)}
       | "("~>doubleExprParser<~")"
       | (("sumAllProcess(" ~> (identifier <~ ",")) .into {case (name:String) => processQuantifiedDoubleExpr(name)} <~ ")") ^^{case (name,expr) => sumAllProcess(name,expr,this.processes)}
+      | (("sumAllStorages(" ~> (identifier <~ ",")) .into {case (name:String) => storageQuantifiedDoubleExpr(name)} <~ ")") ^^{case (name,expr) => sumAllStorages(name,expr,this.processes)}
       | "totalCost" ^^^ {
       val costList = storages.toList.map(_._2.properties.getDoubleProperty("cost")) ::: processes.toList.map(_._2.properties.getDoubleProperty("cost"))
       SumAll(costList:_*)}
@@ -247,6 +253,15 @@ class ListenerParser(storages:Map[String,Storage],
       placeHolder.processToCloneTo = p
       val toReturn:DoubleExpr = expr.cloneExpr._1
       placeHolder.processToCloneTo = null
+      toReturn
+    }):_*)
+  }
+
+  def sumAllStorages(placeHolder:StoragePlaceHolder,expr:DoubleExpr,processes:Map[String,ActivableProcess]):DoubleExpr = {
+    SumAll(storages.values.toList.map((p:Storage) => {
+      placeHolder.storageToCloneTo = p
+      val toReturn:DoubleExpr = expr.cloneExpr._1
+      placeHolder.storageToCloneTo = null
       toReturn
     }):_*)
   }
@@ -268,9 +283,25 @@ class ListenerParser(storages:Map[String,Storage],
     }
   }
 
+  def storageQuantifiedDoubleExpr(quantifiedVariable:String): Parser[(StoragePlaceHolder,DoubleExpr)] = new Parser[(StoragePlaceHolder,DoubleExpr)] {
+    def apply(in: Input) = {
+      val placeHolder = new StoragePlaceHolder(quantifiedVariable)
+      val nested = new ListenerParser(storages+((quantifiedVariable,placeHolder)),
+        processes,
+        attributes,
+        declaredBoolExpr,
+        declaredDoubleExpr)
+      nested.doubleExprParser.apply(in) match{
+        case nested.Success(x:DoubleExpr, in1) => Success((placeHolder,x),in1)
+        case f: nested.Failure => Failure(f.msg,f.next)
+        case e: nested.Error => Error(e.msg,e.next)
+      }
+    }
+  }
+
   //generic code
   def boolListener:Parser[BoolExpr] = {
-    identifier convertStringUsingSymbolTable(declaredBoolExpr, "delcared boolean expression") //^^ {boolSubExpression(_)}
+    identifier convertStringUsingSymbolTable(declaredBoolExpr, "declared boolean expression") //^^ {boolSubExpression(_)}
   }
   def doubleListener:Parser[DoubleExpr] =
     identifier convertStringUsingSymbolTable(declaredDoubleExpr, "declared double expression") //^^{doubleSubExpression(_)}
@@ -347,7 +378,11 @@ class ListenerParser(storages:Map[String,Storage],
     identifier convertStringUsingSymbolTable(attributes.attributeMap, "attribute")
 }
 
-class ProcessPlaceHolder(name:String) extends ActivableProcess(name, null, 0){
+trait placeHolder{
+ def clonedProperties:(Properties,Boolean)
+}
+
+class ProcessPlaceHolder(name:String) extends ActivableProcess(name, null, 0) with placeHolder{
   var processToCloneTo:ActivableProcess = null
   override def isRunning : Boolean = false
   override def addPreliminaryInput(preliminary : Storage){}
@@ -356,12 +391,27 @@ class ProcessPlaceHolder(name:String) extends ActivableProcess(name, null, 0){
   override def completedBatchCount(outputPort : Int) : Int = 0
   override def startedBatchCount : Int = 0
 
-  override def cloneProcess : (ActivableProcess, Boolean) = if(processToCloneTo == null) (this,false) else (processToCloneTo,true)
+  override def clonedProperties=if(processToCloneTo == null) (null,false) else (processToCloneTo.properties,true)
 }
 
-class DoublePropertyPlaceHolder(propertyName:String,process:ProcessPlaceHolder) extends DoubleExpr(false){
+class StoragePlaceHolder(name:String) extends Storage(0,"storagePlaceHolder" + name, null,true,0) with placeHolder{
+  var storageToCloneTo:Storage = null
+
+  override def cloneReset(newModel : Model) : Storage = {throw new Exception("not for cloneReset"); null}
+
+  override def clonedProperties=if(storageToCloneTo == null) (null,false) else (storageToCloneTo.properties,true)
+
+  override def contentSize : Int = 0
+
+  override protected def initialContent : List[(ItemClass, ItemClass)] = List.empty
+  override protected def internalFetch(amount : ItemClass, hasBeenFetch : ItemClass) : (ItemClass, ItemClass) =  {throw new Exception("not for internalFetch"); null}
+  override protected def internalPut(l : List[(Int, ItemClass)], hasBeenPut : ItemClass) : (List[(ItemClass, ItemClass)], ItemClass) =  {throw new Exception("not for internalPut"); null}
+}
+
+
+class DoublePropertyPlaceHolder(propertyName:String,process:placeHolder) extends DoubleExpr(false){
   override def updatedValue(time : Double) : Double = {0.0}
-  override def cloneExpr : (DoubleExpr, Boolean) = if(process.processToCloneTo == null) (this,false) else (process.processToCloneTo.properties.getDoubleProperty(propertyName),true)
+  override def cloneExpr : (DoubleExpr, Boolean) = process.clonedProperties match{case (p,true) => (p.getDoubleProperty(propertyName),true) case _ => (this,false)}
 
   override def cloneReset(boolMap : Map[BoolExpr, BoolExpr],
                           doubleMap : Map[DoubleExpr, DoubleExpr],
@@ -369,11 +419,10 @@ class DoublePropertyPlaceHolder(propertyName:String,process:ProcessPlaceHolder) 
                           processMap : Map[ActivableProcess, ActivableProcess]) : DoubleExpr = {throw new Exception("no cloneReset for this");null}
 }
 
-class BoolPropertyPlaceHolder(propertyName:String,process:ProcessPlaceHolder) extends BoolExpr(false){
+class BoolPropertyPlaceHolder(propertyName:String,process:placeHolder) extends BoolExpr(false){
 
   override def updatedValue(time : Double) : Boolean = {false}
-  override def cloneExpr : (BoolExpr, Boolean) = if(process.processToCloneTo == null) (this,false) else (process.processToCloneTo.properties.getBoolProperty(propertyName),true)
-
+  override def cloneExpr : (BoolExpr, Boolean) = process.clonedProperties match{case (p,true) => (p.getBoolProperty(propertyName),true) case _ => (this,false)}
   override def cloneReset(boolMap : Map[BoolExpr, BoolExpr],
                           doubleMap : Map[DoubleExpr, DoubleExpr],
                           storeMap : Map[Storage, Storage],
