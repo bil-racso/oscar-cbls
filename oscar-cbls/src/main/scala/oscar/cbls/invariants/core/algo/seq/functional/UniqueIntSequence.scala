@@ -2,6 +2,7 @@ package oscar.cbls.invariants.core.algo.seq.functional
 
 import oscar.cbls.invariants.core.algo.fun.{PiecewiseLinearBijectionNaive, Pivot, LinearTransform}
 import oscar.cbls.invariants.core.algo.rb.{RBPosition, RedBlackTree}
+import scala.language.implicitConversions
 
 object UniqueIntSequence{
   def apply(maxPivot:Int = 10, maxSize:Int = 1000):UniqueIntSequence = new UniqueIntSequence(
@@ -12,6 +13,20 @@ object UniqueIntSequence{
     maxPivot,
     maxSize
   )
+
+  implicit def toIterable(seq:UniqueIntSequence):IterableUniqueIntSequence = new IterableUniqueIntSequence(seq)
+}
+
+class IterableUniqueIntSequence(sequence:UniqueIntSequence) extends Iterable[Int]{
+  override def iterator : Iterator[Int] = sequence.iterator
+
+  override def head : Int = sequence.valueAtPosition(0).head
+
+  override def headOption : Option[Int] = sequence.valueAtPosition(0)
+
+  override def last : Int = sequence.valueAtPosition(sequence.size-1).head
+
+  override def lastOption : Option[Int] = sequence.valueAtPosition(sequence.size-1)
 }
 
 class UniqueIntSequence(private[seq] val internalPositionToValue:RedBlackTree[Int],
@@ -25,17 +40,16 @@ class UniqueIntSequence(private[seq] val internalPositionToValue:RedBlackTree[In
   }
 
   override def toString : String = {
-    "(size:" + size + ")[" + this.iterator.toList.mkString(",") + "] (\n" +
+    "(size:" + size + ")[" + this.iterator.toList.mkString(",") + "]" /* (\n" +
       "internalPositionToValue:" + internalPositionToValue.content +
       "\nvalueToInternalPosition:" + valueToInternalPosition.content +
-      "\nexternalToInternalPosition:" + externalToInternalPosition + ")"
+      "\nexternalToInternalPosition:" + externalToInternalPosition + ")"*/
   }
 
   def size : Int = valueToInternalPosition.size
-
   def isEmpty:Boolean = internalPositionToValue.isEmpty
-
-  def iterator : Iterator[Int] = if(this.isEmpty) List.empty[Int].iterator else new UniqueIntSequenceIterator(this)
+  def iterator : Iterator[Int] = new UniqueIntSequenceIterator(this)
+  def values:Iterable[Int] = new IterableUniqueIntSequence(this)
 
   def valueAtPosition(position : Int) : Option[Int] = {
     val internalPosition:Int = externalToInternalPosition.forward(position)
@@ -51,7 +65,7 @@ class UniqueIntSequence(private[seq] val internalPositionToValue:RedBlackTree[In
 
   def isValueIncluded(value:Int):Boolean = valueToInternalPosition.contains(value)
 
-  def crawlerAtPosition(position : Int) : Option[IntSequenceExplorer] = {
+  def explorerAtPosition(position : Int) : Option[IntSequenceExplorer] = {
     if (position >= this.size) None
     else {
       val currentPivotPosition = externalToInternalPosition.forward.pivotWithPositionApplyingTo(position)
@@ -69,10 +83,10 @@ class UniqueIntSequence(private[seq] val internalPositionToValue:RedBlackTree[In
     }
   }
 
-  def crawlerAtValue(value: Int) : Option[IntSequenceExplorer] = {
+  def explorerAtValue(value: Int) : Option[IntSequenceExplorer] = {
     positionOfValue(value) match{
       case None => None
-      case Some(position) => crawlerAtPosition(position)
+      case Some(position) => explorerAtPosition(position)
     }
   }
 
@@ -208,7 +222,7 @@ class UniqueIntSequence(private[seq] val internalPositionToValue:RedBlackTree[In
 
   def regularize:UniqueIntSequence = {
     println("regularize")
-    var explorer = this.crawlerAtPosition(0)
+    var explorer = this.explorerAtPosition(0)
     var newInternalPositionToValues = RedBlackTree.empty[Int]
     var newValueToInternalPosition = RedBlackTree.empty[Int]
     while(explorer match{
@@ -229,7 +243,7 @@ class UniqueIntSequence(private[seq] val internalPositionToValue:RedBlackTree[In
 }
 
 class UniqueIntSequenceIterator(s:UniqueIntSequence) extends Iterator[Int] {
-  var crawler = s.crawlerAtPosition(0)
+  var crawler = s.explorerAtPosition(0)
 
   override def hasNext : Boolean =
     crawler match{
