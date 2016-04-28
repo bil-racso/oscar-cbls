@@ -275,10 +275,7 @@ class IntSequenceExplorer(sequence:UniqueIntSequence,
 
   override def toString : String = "IntSequenceExplorer(position:" + position + " value:" + value + " currentPivotPosition:" + currentPivotPosition + " pivotAbovePosition:" + pivotAbovePosition + " positionInRB:" + positionInRB + ")"
 
-
   val value : Int = positionInRB.value
-
-//   println("created " + this)
 
   def next : Option[IntSequenceExplorer] = {
     if(position == sequence.size-1) return None
