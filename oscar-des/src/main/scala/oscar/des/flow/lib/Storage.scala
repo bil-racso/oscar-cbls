@@ -25,7 +25,7 @@ abstract class Storage(val maxCapacity: Int,
                        val id:Int)
   extends RichPutable with RichFetchable {
 
-  var properties:Properties = new Properties
+  var properties:Properties = new Properties("storage " + name)
 
   def cloneReset(newModel : Model) : Storage
 

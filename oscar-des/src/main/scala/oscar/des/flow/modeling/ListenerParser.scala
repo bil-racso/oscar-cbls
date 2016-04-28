@@ -151,7 +151,9 @@ class ListenerParser(storages:Map[String,Storage],
       | "false" ^^^ boolConst(false)
       | boolListener
       | storageParser ~ "." ~ identifier ^^{case storage~"."~property => storage.properties.getBoolProperty(property)}
-      | processParser~ "." ~ identifier ^^{case process~"."~property => process.properties.getBoolProperty(property)}
+      | processParser~ "." ~ identifier ^^{case process~"."~property => process match{
+      case p:ProcessPlaceHolder => new BoolPropertyPlaceHolder(property,p)
+      case _ => process.properties.getBoolProperty(property)}}
       | binaryOperatorBB2BParser("and",and)
       | binaryOperatorBB2BParser("or",or)
       | binaryOperatorBB2BParser("since",since)
@@ -196,13 +198,17 @@ class ListenerParser(storages:Map[String,Storage],
       | "totalPut"~>"("~>storageParser ~opt(","~>attributeConditionParser) <~")" ^^ {case storage~cond => totalPut(storage,cond)}
       | "totalFetch"~>"("~>storageParser ~opt(","~>attributeConditionParser) <~")" ^^ {case storage~cond => totalFetch(storage,cond)}
       | "totalLosByOverflow"~>"("~>storageParser ~opt(","~>attributeConditionParser) <~")" ^^ {case storage~cond => totalLosByOverflow(storage,cond)}
-      | storageParser ~ "." ~ identifier ^^{case storage~"."~property => storage.properties.getDoubleProperty(property)}
-      | processParser~ "." ~ identifier ^^{case process~"."~property => process.properties.getDoubleProperty(property)}
       | "completedBatchCount"~>"("~>processParser ~opt(","~>naturalParser)<~")" ^^ {
       case process~None => completedBatchCount(process,-1)
       case process~Some(portNumber) => completedBatchCount(process,portNumber)}
       | processDoubleProbe("startedBatchCount",startedBatchCount)
       | processDoubleProbe("totalWaitDuration",totalWaitDuration)
+      | storageParser ~ "." ~ identifier ^^{case storage~"."~property => storage.properties.getDoubleProperty(property)}
+      | processParser~ "." ~ identifier ^^{case process~"."~property =>
+      println(process)
+      process match{
+      case p:ProcessPlaceHolder => new DoublePropertyPlaceHolder(property,p)
+      case _ => process.properties.getDoubleProperty(property)}}
       | doubleParser ^^ {d:Double => doubleConst(d)}
       | doubleListener
       | binaryOperatorDD2DParser("plus",plus)
@@ -228,23 +234,13 @@ class ListenerParser(storages:Map[String,Storage],
       |"duration(" ~> boolExprParser <~")" ^^ {case e => duration(e)}
       | "-"~> doubleExprParser ^^ {opposite(_)}
       | "("~>doubleExprParser<~")"
-      | (("sumAll(" ~> (identifier <~ ":Process,")) .into {case (name:String) => processQuantifiedDoubleExpr(name)} <~ ")") ^^{case (name,expr) => sumAllProcess(name,expr,this.processes)}
+      | (("sumAllProcess(" ~> (identifier <~ ",")) .into {case (name:String) => processQuantifiedDoubleExpr(name)} <~ ")") ^^{case (name,expr) => sumAllProcess(name,expr,this.processes)}
       | "totalCost" ^^^ {
       val costList = storages.toList.map(_._2.properties.getDoubleProperty("cost")) ::: processes.toList.map(_._2.properties.getDoubleProperty("cost"))
-      costList.foldLeft[DoubleExpr](0.0)(plus(_,_))}
+      SumAll(costList:_*)}
       | failure("expected arithmetic expression"))
 
-  class ProcessPlaceHolder(name:String) extends ActivableProcess(name, null, 0){
-    var processToCloneTo:ActivableProcess = null
-    override def isRunning : Boolean = false
-    override def addPreliminaryInput(preliminary : Storage){}
-    override def totalWaitDuration : Double = 0
-    override def cloneReset(newModel : Model, storages : SortedMap[Storage, Storage]) : ActivableProcess = {throw new Exception("not for cloneReset"); null}
-    override def completedBatchCount(outputPort : Int) : Int = 0
-    override def startedBatchCount : Int = 0
 
-    override def cloneProcess : (ActivableProcess, Boolean) = if(processToCloneTo == null) (this,false) else (processToCloneTo,true)
-  }
 
   def sumAllProcess(placeHolder:ProcessPlaceHolder,expr:DoubleExpr,processes:Map[String,ActivableProcess]):DoubleExpr = {
     SumAll(processes.values.toList.map((p:ActivableProcess) => {
@@ -351,6 +347,39 @@ class ListenerParser(storages:Map[String,Storage],
     identifier convertStringUsingSymbolTable(attributes.attributeMap, "attribute")
 }
 
+class ProcessPlaceHolder(name:String) extends ActivableProcess(name, null, 0){
+  var processToCloneTo:ActivableProcess = null
+  override def isRunning : Boolean = false
+  override def addPreliminaryInput(preliminary : Storage){}
+  override def totalWaitDuration : Double = 0
+  override def cloneReset(newModel : Model, storages : SortedMap[Storage, Storage]) : ActivableProcess = {throw new Exception("not for cloneReset"); null}
+  override def completedBatchCount(outputPort : Int) : Int = 0
+  override def startedBatchCount : Int = 0
+
+  override def cloneProcess : (ActivableProcess, Boolean) = if(processToCloneTo == null) (this,false) else (processToCloneTo,true)
+}
+
+class DoublePropertyPlaceHolder(propertyName:String,process:ProcessPlaceHolder) extends DoubleExpr(false){
+  override def updatedValue(time : Double) : Double = {0.0}
+  override def cloneExpr : (DoubleExpr, Boolean) = if(process.processToCloneTo == null) (this,false) else (process.processToCloneTo.properties.getDoubleProperty(propertyName),true)
+
+  override def cloneReset(boolMap : Map[BoolExpr, BoolExpr],
+                          doubleMap : Map[DoubleExpr, DoubleExpr],
+                          storeMap : Map[Storage, Storage],
+                          processMap : Map[ActivableProcess, ActivableProcess]) : DoubleExpr = {throw new Exception("no cloneReset for this");null}
+}
+
+class BoolPropertyPlaceHolder(propertyName:String,process:ProcessPlaceHolder) extends BoolExpr(false){
+
+  override def updatedValue(time : Double) : Boolean = {false}
+  override def cloneExpr : (BoolExpr, Boolean) = if(process.processToCloneTo == null) (this,false) else (process.processToCloneTo.properties.getBoolProperty(propertyName),true)
+
+  override def cloneReset(boolMap : Map[BoolExpr, BoolExpr],
+                          doubleMap : Map[DoubleExpr, DoubleExpr],
+                          storeMap : Map[Storage, Storage],
+                          processMap : Map[ActivableProcess, ActivableProcess]) : BoolExpr = {throw new Exception("no cloneReset for this");null}
+}
+
 object ParserTester extends App with FactoryHelper with AttributeHelper{
 
   val m = new Model
@@ -359,7 +388,7 @@ object ParserTester extends App with FactoryHelper with AttributeHelper{
   val bStorage = fIFOStorage(10,Nil,"bStorage",null,false,attributes=attributes)
   val xStorage = fIFOStorage(10,Nil,"x-_ Storage",null,false,attributes=attributes)
 
-  val aProcess = singleBatchProcess(m, 5000, Array(), Array((()=>1,aStorage)), null, "aProcess", null, List(("cost","completedBatchCount(this) * 0.45",true)),attributes=attributes)
+  val aProcess = singleBatchProcess(m, 5000, Array(), Array((()=>1,aStorage)), null, "aProcess", null, List(("cost","completedBatchCount(this) * 0.45",false)),attributes=attributes)
   val bProcess = singleBatchProcess(m, 5000, Array(), Array((()=>1,aStorage)), null, "bProcess", null,attributes=attributes)
 
   val myParser = ListenerParser(List(aStorage,bStorage,xStorage), List(aProcess,bProcess),attributes)
@@ -394,12 +423,13 @@ object ParserTester extends App with FactoryHelper with AttributeHelper{
   testOn("integral(content(bStorage))")
   testOn("record(integral(content(bStorage)))")
 
+  testOn("sumAllProcess(toto,toto.cost)")
   val expressionList = List(
     ("a","completedBatchCount(aProcess) /*a comment in the middle*/ * totalPut(aStorage)"),
     ("b","-(-(-completedBatchCount(aProcess)) * -totalPut(aStorage))"),
     ("c","-(-(-completedBatchCount(aProcess)) + -totalPut(aStorage))"),
     ("d","integral(content(bStorage))"),
-    ("e","b * c + d + cost(aProcess)"),
+    ("e","b * c + d + aProcess.cost"),
     ("totalCost","totalCost"))
   println(myParser.parseAllListeners(expressionList))
 }

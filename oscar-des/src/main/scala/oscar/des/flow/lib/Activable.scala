@@ -18,7 +18,7 @@ abstract class ActivableProcess(val name:String, verbosity:String=>Unit, val id:
   def startedBatchCount:Int
   def totalWaitDuration:Double
 
-  var properties:Properties = new Properties
+  var properties:Properties = new Properties("process " + name)
 
   var productionBatch:LIFOStorage = null
 

@@ -4,7 +4,7 @@ import oscar.des.flow.lib.{BoolExpr, DoubleExpr}
 
 import scala.collection.immutable.SortedMap
 
-class Properties {
+class Properties(objectName:String) {
   var doubleProperties:SortedMap[String,DoubleExpr] = SortedMap.empty
   var boolProperties:SortedMap[String,BoolExpr]= SortedMap.empty
 
@@ -17,14 +17,14 @@ class Properties {
 
   def getDoubleProperty(name:String):DoubleExpr = {
     doubleProperties.get(name) match{
-      case None => throw new Exception("cannot find arithmetic property " + name)
+      case None => throw new Exception("cannot find arithmetic property \"" + name + "\" of " + objectName + " declared properties:" + doubleProperties.toList)
       case Some(e) => e
     }
   }
 
   def getBoolProperty(name:String):BoolExpr= {
     boolProperties.get(name) match{
-      case None => throw new Exception("cannot find boolean property " + name)
+      case None => throw new Exception("cannot find boolean property \"" + name + "\"" )
       case Some(e) => e
     }
   }
