@@ -26,6 +26,9 @@ import scala.util.Random
 //TODO: remplacer çà par Option(Int,Int)
 
 object Domain{
+
+  def empty:Domain = Domain(0 to 0)  //TODO: improve!
+
   implicit def rangeToDomain(r:Range):Domain = {
     DomainRange(r.head,r.last)
   }

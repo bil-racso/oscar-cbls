@@ -5,7 +5,15 @@ import oscar.cbls.invariants.core.algo.rb.{RBPosition, RedBlackTree}
 import scala.language.implicitConversions
 
 object UniqueIntSequence{
-  def apply(maxPivot:Int = 10, maxSize:Int = 1000):UniqueIntSequence = new UniqueIntSequence(
+  def apply(values:Iterable[Int], maxPivot:Int = 10, maxSize:Int = 1000):UniqueIntSequence = {
+    var toReturn = empty(maxPivot, maxSize)
+    for (i <- values) {
+      toReturn = toReturn.insertAtPosition(i, toReturn.size)
+    }
+    toReturn
+  }
+
+  def empty(maxPivot:Int = 10, maxSize:Int = 1000):UniqueIntSequence = new UniqueIntSequence(
     RedBlackTree.empty[Int],
     RedBlackTree.empty[Int],
     PiecewiseLinearBijectionNaive.identity,
@@ -14,7 +22,14 @@ object UniqueIntSequence{
     maxSize
   )
 
+
   implicit def toIterable(seq:UniqueIntSequence):IterableUniqueIntSequence = new IterableUniqueIntSequence(seq)
+
+  private var myNextUniqueID = Int.MinValue
+  def nextUniqueID:Int = {
+    myNextUniqueID +=1
+    myNextUniqueID
+  }
 }
 
 class IterableUniqueIntSequence(sequence:UniqueIntSequence) extends Iterable[Int]{
@@ -35,21 +50,26 @@ class UniqueIntSequence(private[seq] val internalPositionToValue:RedBlackTree[In
                         private[seq] val startFreeRangeForInternalPosition:Int,
                         maxPivot:Int = 10, maxSize:Int = 1000) {
 
+  val uniqueID:Int = UniqueIntSequence.nextUniqueID
+
   def check {
     require(internalPositionToValue.content.sortBy(_._1) equals valueToInternalPosition.content.map({case (a,b) => (b,a)}).sortBy(_._1))
   }
 
   override def toString : String = {
-    "(size:" + size + ")[" + this.iterator.toList.mkString(",") + "]" /* (\n" +
+    "(size:" + size + ")[" + this.iterator.toList.mkString(",") + "] (\n" +
       "internalPositionToValue:" + internalPositionToValue.content +
       "\nvalueToInternalPosition:" + valueToInternalPosition.content +
-      "\nexternalToInternalPosition:" + externalToInternalPosition + ")"*/
+      "\nexternalToInternalPosition:" + externalToInternalPosition + ")"
   }
 
   def size : Int = valueToInternalPosition.size
   def isEmpty:Boolean = internalPositionToValue.isEmpty
   def iterator : Iterator[Int] = new UniqueIntSequenceIterator(this)
   def values:Iterable[Int] = new IterableUniqueIntSequence(this)
+  def largestValue:Option[Int] = valueToInternalPosition.biggest match{case None => None case Some((k,_)) => Some(k)}
+  def smallestValue:Option[Int] = valueToInternalPosition.smallest match{case None => None case Some((k,_)) => Some(k)}
+  def contains(value:Int):Boolean = valueToInternalPosition.contains(value)
 
   def valueAtPosition(position : Int) : Option[Int] = {
     val internalPosition:Int = externalToInternalPosition.forward(position)
@@ -105,6 +125,7 @@ class UniqueIntSequence(private[seq] val internalPositionToValue:RedBlackTree[In
       //inserting at end of the sequence
       externalToInternalPosition.updateBefore(
         (size,size,LinearTransform(oldExternalPosRelatedToFreeInternalPos-pos,false)))
+      //TODO: this migfht be always identity, actually, so useless!
     }else{
       //inserting somewhere within the sequence, need to shift upper part
       externalToInternalPosition.updateBefore(

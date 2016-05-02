@@ -249,7 +249,7 @@ class CBLSIntConst(override val value:Int)
   override def domain: SingleValueDomain = new SingleValueDomain(value)
   override def min: Int = value
   override def max: Int = value
-  override def name = "" + value
+  override def name = value.toString
   override def restrictDomain(d:Domain){
     require(d.contains(value))
   }

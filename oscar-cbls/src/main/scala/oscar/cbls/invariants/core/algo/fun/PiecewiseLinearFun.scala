@@ -44,7 +44,7 @@ class PiecewiseLinearFun(private[fun] val transformation: RedBlackTree[Pivot] = 
   def updateForCompositionBefore(updates:(Int,Int,LinearTransform)*):PiecewiseLinearFun = {
     var updatedTransform=transformation
     for((fromIncluded,toIncluded,update) <- updates) {
-      updatedTransform = myUpdateForCompositionBefore(fromIncluded, toIncluded, update, removePivotsBetween(fromIncluded, toIncluded, updatedTransform))
+      updatedTransform = deleteUnnecessaryPivotStartingJustAfter(toIncluded,myUpdateForCompositionBefore(fromIncluded, toIncluded, update, removePivotsBetween(fromIncluded, toIncluded, updatedTransform)))
     }
     new PiecewiseLinearFun(updatedTransform)
   }
@@ -59,11 +59,11 @@ class PiecewiseLinearFun(private[fun] val transformation: RedBlackTree[Pivot] = 
     //remove all the pivots between fromIncluded and ToIncluded
     val cleanedTransformation = removePivotsBetween(fromIncluded, toIncluded, transformation)
     val updatedTransform = myUpdateForCompositionBefore(fromIncluded, toIncluded, additionalFAppliedBefore,cleanedTransformation)
-    val updatedTransformDeletedExtraPivot = deleteUnnecessaryPivotStartingAt(toIncluded,updatedTransform)
+    val updatedTransformDeletedExtraPivot = deleteUnnecessaryPivotStartingJustAfter(toIncluded,updatedTransform)
     new PiecewiseLinearFun(updatedTransformDeletedExtraPivot)
   }
 
-  def deleteUnnecessaryPivotStartingAt(toIncluded:Int,updatedTransform:RedBlackTree[Pivot]):RedBlackTree[Pivot] = {
+  def deleteUnnecessaryPivotStartingJustAfter(toIncluded:Int,updatedTransform:RedBlackTree[Pivot]):RedBlackTree[Pivot] = {
     updatedTransform.get(toIncluded+1) match{
       case None => updatedTransform
       case Some(pivotStartingJustAfterToIncluded) =>

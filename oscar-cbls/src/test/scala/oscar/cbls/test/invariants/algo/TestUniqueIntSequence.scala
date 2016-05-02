@@ -6,7 +6,7 @@ import oscar.cbls.invariants.core.algo.seq.functional.UniqueIntSequence
  * Created by rdl on 20-04-16.
  */
 object TestUniqueIntSequence extends App{
-  val a = UniqueIntSequence()
+  val a = UniqueIntSequence.empty()
   println(a)
 
   def check(seq:UniqueIntSequence,pos:Int,value:Int){
@@ -69,7 +69,7 @@ object TestUniqueIntSequence extends App{
   checkSeq(j,10,7,54,5,6)
 
   //println("flip")
-  val kk = j.moveAfter(1,2,0,true)//flip
+  val kk = j.moveAfter(1,2,0,true).regularize//flip
   println(kk)
   checkSeq(kk,10,54,7,5,6)
 
@@ -103,4 +103,11 @@ object TestUniqueIntSequence extends App{
   println(ndf)
   checkSeq(ndf,10,7,54,6,5)
 
+
+
+println("before")
+  val test = i.moveAfter(1,2,4,true)//move upwards with flip
+  println("after" + test)
+  val test2 = test.moveAfter(3,4,0,true)//move upwards with flip
+  println(test2)
 }
