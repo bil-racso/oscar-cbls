@@ -2,6 +2,8 @@ package oscar.cbls.invariants.core.computation
 
 import oscar.cbls.invariants.core.algo.quick.QList
 import oscar.cbls.invariants.core.algo.seq.functional.UniqueIntSequence
+import scala.language.implicitConversions
+
 
 sealed trait SeqValue extends Value{
   def value:UniqueIntSequence
@@ -62,7 +64,8 @@ case class UpdateAndSeqAfter(seqBefore:Option[UpdateAndSeqAfter],update:SeqUpdat
   }
 
   def positionOfValueNew(value:Int):Option[Int] = {
-    update match{
+    if(mySeqAfter != null) mySeqAfter.positionOfValue(value)
+    else update match{
       case SetORRestore(s) => s.positionOfValue(value)
       case SeqInsert(value2,pos) => if(value == value2) Some(pos) else seqBefore.head.positionOfValueNew(value) match{
         case None => None
@@ -72,13 +75,15 @@ case class UpdateAndSeqAfter(seqBefore:Option[UpdateAndSeqAfter],update:SeqUpdat
         case None => None
         case Some(p) => if (p < seqBefore.head.positionOfValueNew(value2).head) Some(p) else Some(p-1)
       }
-      case SeqRemovePos(pos) => throw new Error("TODO");null
-      case _:SeqMove => throw new Error("TODO");null
+      case SeqRemovePos(pos) => valueAfterThisUpdate.positionOfValue(value) //TODO improve this
+      case _:SeqMove => valueAfterThisUpdate.positionOfValue(value) //TODO improve this
     }
   }
-  def valueAtPositionNew(pos:Int):Option[Int] = throw new Error("TODO")
+  def valueAtPositionNew(pos:Int):Option[Int] = valueAfterThisUpdate.valueAtPosition(pos) //TODO improve this
+
   def containsNew(value:Int):Boolean = {
-    update match{
+    if(mySeqAfter != null) mySeqAfter.contains(value)
+    else update match{
       case SetORRestore(s) => s.contains(value)
       case SeqInsert(value2,pos) => value == value2 || seqBefore.head.containsNew(value)
       case SeqRemoveValue(value2) => value != value2 && seqBefore.head.containsNew(value)
@@ -90,7 +95,8 @@ case class UpdateAndSeqAfter(seqBefore:Option[UpdateAndSeqAfter],update:SeqUpdat
   }
 
   def sizeNew:Int =
-    update match{
+    if(mySeqAfter != null) mySeqAfter.size
+    else update match{
       case SetORRestore(v) => v.size
       case _:SeqInsert => seqBefore.size +1
       case _:SeqRemoveValue => seqBefore.size -1
