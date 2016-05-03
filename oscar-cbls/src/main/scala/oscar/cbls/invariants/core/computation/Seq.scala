@@ -1,7 +1,7 @@
 package oscar.cbls.invariants.core.computation
 
-import oscar.cbls.invariants.core.algo.quick.QList
 import oscar.cbls.invariants.core.algo.seq.functional.UniqueIntSequence
+
 import scala.language.implicitConversions
 
 
@@ -19,94 +19,128 @@ object SeqValue{
 }
 
 sealed abstract class SeqUpdate{
-  def apply(s:UniqueIntSequence):UniqueIntSequence
+  def valueAfterThisUpdate:UniqueIntSequence
+  def positionOfValueNew(value:Int):Option[Int]
+  def valueAtPositionNew(pos:Int):Option[Int] = valueAfterThisUpdate.valueAtPosition(pos) //TODO improve this
+  def containsNew(value:Int):Boolean
+  def sizeNew:Int
+  def nbUpdatesBeforeAvailable:Int
+
+  /**
+   * @return MAxInt is a load was done,
+   */
+  def nbUpdatesFromPreviousValue:Int
+}
+
+sealed abstract class SeqUpdateWithPrev(prev:SeqUpdate) extends SeqUpdate{
+  override def nbUpdatesBeforeAvailable:Int = if(mySeqAfter == null) prev.nbUpdatesBeforeAvailable+1 else 0
+  protected var mySeqAfter:UniqueIntSequence = null
+
+  final override def valueAfterThisUpdate:UniqueIntSequence = {
+    if(mySeqAfter == null) mySeqAfter = computeValueAfterThisUpdate()
+    mySeqAfter
+  }
+
+  def computeValueAfterThisUpdate():UniqueIntSequence
+
+  def valueBeforeThisUpdate:UniqueIntSequence = prev.valueAfterThisUpdate
+
+  def nbUpdatesFromPreviousValue:Int = {
+    val tmp = prev.nbUpdatesFromPreviousValue
+    if(tmp == Int.MaxValue) tmp else tmp+1
+  }
 }
 
 //after is -1 for start position
-case class SeqInsert(value:Int,pos:Int) extends SeqUpdate {
-  override def apply(s : UniqueIntSequence) : UniqueIntSequence = s.insertAtPosition(value,pos)
-}
-case class SeqMove(fromIncluded:Int,toIncluded:Int,after:Int,flip:Boolean) extends SeqUpdate{
-  override def apply(s : UniqueIntSequence) : UniqueIntSequence = s.moveAfter(fromIncluded,toIncluded,after,flip)
-}
-case class SeqRemoveValue(value:Int) extends SeqUpdate {
-  override def apply(s : UniqueIntSequence) : UniqueIntSequence = s.delete(s.positionOfValue(value).head)
-}
-case class SeqRemovePos(pos:Int) extends SeqUpdate {
-  override def apply(s : UniqueIntSequence) : UniqueIntSequence = s.delete(pos)
-}
-case class SetORRestore(val value:UniqueIntSequence) extends SeqUpdate {
-  //TODO: add some unique ID to the sequence value
-  override def apply(s : UniqueIntSequence) : UniqueIntSequence = value
-}
+case class SeqInsert(value:Int,pos:Int,prev:SeqUpdate) extends SeqUpdateWithPrev(prev:SeqUpdate) {
 
-case class UpdateAndSeqAfter(seqBefore:Option[UpdateAndSeqAfter],update:SeqUpdate){
-  private var mySeqAfter:UniqueIntSequence = null
-
-  def valueAfterThisUpdate:UniqueIntSequence = {
-    update match{
-      case s:SetORRestore => s.value
-      case _ =>
-        if(mySeqAfter == null) mySeqAfter = update(seqBefore.head.valueAfterThisUpdate)
-        mySeqAfter
-    }
-  }
-
-  def valueBeforeAllUpdates:Option[UniqueIntSequence] =
-    update match{
-      case s:SetORRestore => None
-      case _ => seqBefore.head.valueBeforeAllUpdates
-  }
-
-  def valueBeforeThisUpdate:Option[UniqueIntSequence] = seqBefore match{
-    case None => None
-    case Some(s) => Some(s.valueAfterThisUpdate)
-  }
+  override def computeValueAfterThisUpdate:UniqueIntSequence = valueBeforeThisUpdate.insertAtPosition(value,pos)
 
   def positionOfValueNew(value:Int):Option[Int] = {
-    if(mySeqAfter != null) mySeqAfter.positionOfValue(value)
-    else update match{
-      case SetORRestore(s) => s.positionOfValue(value)
-      case SeqInsert(value2,pos) => if(value == value2) Some(pos) else seqBefore.head.positionOfValueNew(value) match{
-        case None => None
-        case Some(p) => if (p < pos) Some(p) else Some(p+1)
-      }
-      case SeqRemoveValue(value2) => if(value == value2) None else seqBefore.head.positionOfValueNew(value) match{
-        case None => None
-        case Some(p) => if (p < seqBefore.head.positionOfValueNew(value2).head) Some(p) else Some(p-1)
-      }
-      case SeqRemovePos(pos) => valueAfterThisUpdate.positionOfValue(value) //TODO improve this
-      case _:SeqMove => valueAfterThisUpdate.positionOfValue(value) //TODO improve this
+    if(mySeqAfter != null) return mySeqAfter.positionOfValue(value)
+    if(value == this.value) Some(pos)
+    else prev.positionOfValueNew(value) match{
+      case None => None
+      case Some(p) => if (p < pos) Some(p) else Some(p+1)
     }
   }
-  def valueAtPositionNew(pos:Int):Option[Int] = valueAfterThisUpdate.valueAtPosition(pos) //TODO improve this
 
   def containsNew(value:Int):Boolean = {
     if(mySeqAfter != null) mySeqAfter.contains(value)
-    else update match{
-      case SetORRestore(s) => s.contains(value)
-      case SeqInsert(value2,pos) => value == value2 || seqBefore.head.containsNew(value)
-      case SeqRemoveValue(value2) => value != value2 && seqBefore.head.containsNew(value)
-      case SeqRemovePos(pos) => seqBefore.head.valueAtPositionNew(pos) match{
-        case None => false
-        case Some(value2) => value != value2 && seqBefore.head.containsNew(value)}
-      case _:SeqMove => seqBefore.head.containsNew(value)
-    }
+    else value == this.value || prev.containsNew(value)
   }
 
   def sizeNew:Int =
     if(mySeqAfter != null) mySeqAfter.size
-    else update match{
-      case SetORRestore(v) => v.size
-      case _:SeqInsert => seqBefore.size +1
-      case _:SeqRemoveValue => seqBefore.size -1
-      case _:SeqRemovePos => seqBefore.size -1
-      case _:SeqMove => seqBefore.size
+    else prev.sizeNew +1
+}
+
+case class SeqMove(fromIncluded:Int,toIncluded:Int,after:Int,flip:Boolean,prev:SeqUpdate) extends SeqUpdateWithPrev(prev:SeqUpdate){
+  def isSimpleFlip:Boolean = after+1 == fromIncluded && flip
+  def isNop = after+1 == fromIncluded && !flip
+
+  override def computeValueAfterThisUpdate() : UniqueIntSequence = if(isNop) valueBeforeThisUpdate else valueBeforeThisUpdate.moveAfter(fromIncluded,toIncluded,after,flip)
+
+  override def positionOfValueNew(value:Int):Option[Int] = {
+    if(mySeqAfter != null) mySeqAfter.positionOfValue(value)
+    else valueAfterThisUpdate.positionOfValue(value) //TODO improve this
+  }
+
+  def containsNew(value:Int):Boolean = {
+    if(mySeqAfter != null) mySeqAfter.contains(value)
+    else prev.containsNew(value)
+  }
+
+  def sizeNew:Int = {
+    if (mySeqAfter != null) mySeqAfter.size
+    else prev.sizeNew
+  }
+}
+
+case class SeqRemoveValue(value:Int,prev:SeqUpdate) extends SeqUpdateWithPrev(prev:SeqUpdate) {
+
+  override def computeValueAfterThisUpdate() : UniqueIntSequence = {
+    val p = valueBeforeThisUpdate
+    p.delete(p.positionOfValue(value).head)
+  }
+
+  def positionOfValueNew(value:Int):Option[Int] = {
+    if(mySeqAfter != null) mySeqAfter.positionOfValue(value)
+    else if(value == this.value) None
+    else prev.positionOfValueNew(value) match{
+      case None => None
+      case Some(p) => if (p < prev.positionOfValueNew(value).head) Some(p) else Some(p-1)
     }
+  }
+
+  def containsNew(value:Int):Boolean = {
+    if(mySeqAfter != null) mySeqAfter.contains(value)
+    else prev.containsNew(value)
+  }
+
+  def sizeNew:Int =
+    if(mySeqAfter != null) mySeqAfter.size
+    else prev.sizeNew -1
+}
+
+sealed abstract class SeqUpdateNoPrev(val value:UniqueIntSequence) extends SeqUpdate{
+  override def nbUpdatesBeforeAvailable:Int = 0
+  override def valueAfterThisUpdate:UniqueIntSequence = value
+  override def positionOfValueNew(value:Int):Option[Int] = this.value.positionOfValue(value)
+  override def valueAtPositionNew(pos:Int):Option[Int] = value.valueAtPosition(pos)
+  override def containsNew(value:Int):Boolean = this.value.contains(value)
+  override def sizeNew:Int = this.value.size
+}
+
+case class SetORRestore(override val value:UniqueIntSequence) extends SeqUpdateNoPrev(value){
+  def nbUpdatesFromPreviousValue:Int = Int.MaxValue
+}
+case class StartingPoint(override val value:UniqueIntSequence) extends SeqUpdateNoPrev(value){
+  def nbUpdatesFromPreviousValue:Int = 0
 }
 
 trait SeqNotificationTarget {
-  def notifySeqChanges(v: ChangingSeqValue, d: Int, changes:UpdateAndSeqAfter)
+  def notifySeqChanges(v: ChangingSeqValue, d: Int, changes:SeqUpdate,stableCheckpoint:Boolean)
 }
 
 class CBLSSeqConst(override val value:UniqueIntSequence) extends SeqValue{
@@ -124,8 +158,10 @@ object CBLSSeqConst{
 abstract class ChangingSeqValue(initialValue:Iterable[Int], maxPivot:Int, maxValue:Int)
   extends AbstractVariable with SeqValue{
 
+  var cachedValue:UniqueIntSequence
+
   val mOldValue:UniqueIntSequence = UniqueIntSequence(initialValue,maxPivot,maxValue)
-  var updates:UpdateAndSeqAfter = null
+  var updates:SeqUpdate = StartingPoint(mOldValue)
 
   override def value: UniqueIntSequence = {
     if (model == null) return mOldValue
@@ -145,27 +181,24 @@ abstract class ChangingSeqValue(initialValue:Iterable[Int], maxPivot:Int, maxVal
 
   //-1 for first position
   def insertAtPosition(value:Int,pos:Int){
-    recordUpdate(SeqInsert(value,pos))
+    updates = SeqInsert(value,pos,updates)
   }
   def deleteValue(value:Int){
-    recordUpdate(SeqRemoveValue(value))
-  }
-  def deleteAtPosition(pos:Int){
-    recordUpdate(SeqRemovePos(pos))
+    updates = SeqRemoveValue(value,updates )
   }
   //-1 for first position
   def move(fromIncludedPosition:Int,toIncludedPosition:Int,afterPosition:Int,flip:Boolean){
-    recordUpdate(SeqMove(fromIncludedPosition,toIncludedPosition,afterPosition,flip))
+    updates  = SeqMove(fromIncludedPosition,toIncludedPosition,afterPosition,flip,updates)
   }
   def setORRestore(seq:UniqueIntSequence){
-    updates = new UpdateAndSeqAfter(None,SetORRestore(value))
+    if(cachedValue == seq){
+      updates = SetORRestore(value)
+    }else{
+      ???
+    }
   }
 
-  private def recordUpdate(update: SeqUpdate){
-    updates =  new UpdateAndSeqAfter(Some(updates),update)
-  }
-
-  final protected def performSeqPropagation(): Unit = {
+  final protected def performSeqPropagation(stableCheckpoint:Boolean): Unit = {
     val dynListElements = getDynamicallyListeningElements
     val headPhantom = dynListElements.headPhantom
     var currentElement = headPhantom.next
@@ -176,12 +209,13 @@ abstract class ChangingSeqValue(initialValue:Iterable[Int], maxPivot:Int, maxVal
       assert({
         this.model.NotifiedInvariant = inv.asInstanceOf[Invariant]; true
       })
-      inv.notifySeqChanges(this, e._2, updates)
+      inv.notifySeqChanges(this, e._2, updates,stableCheckpoint)
       assert({
         this.model.NotifiedInvariant = null; true
       })
     }
-    //perfom the changes on the mNewValue
+    //perfoms the changes on the mNewValue
+    val mOldValue:UniqueIntSequence = UniqueIntSequence(initialValue,maxPivot,maxValue)
     updates = null
   }
 }

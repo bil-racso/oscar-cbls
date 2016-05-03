@@ -123,8 +123,8 @@ abstract class ChangingSetValue(initialValue:SortedSet[Int], initialDomain:Domai
       OldValue=Value
     }else{
       val (addedValues,deletedValues):(Iterable[Int],Iterable[Int]) = if (nbTouched == -1) {
-        //need to calll every listening one, so gradual approach required
-        (Value.diff(OldValue),OldValue.diff(Value))
+        //need to call every listening one, so gradual approach required
+        if(Value == OldValue) (List.empty,List.empty) else (Value.diff(OldValue),OldValue.diff(Value))
       }else {
         var addedUnique = SortedSet.empty[Int] ++ this.addedValues
         var removedUnique = SortedSet.empty[Int] ++ this.removedValues

@@ -24,12 +24,6 @@ object UniqueIntSequence{
 
 
   implicit def toIterable(seq:UniqueIntSequence):IterableUniqueIntSequence = new IterableUniqueIntSequence(seq)
-
-  private var myNextUniqueID = Int.MinValue
-  def nextUniqueID:Int = {
-    myNextUniqueID +=1
-    myNextUniqueID
-  }
 }
 
 class IterableUniqueIntSequence(sequence:UniqueIntSequence) extends Iterable[Int]{
@@ -49,8 +43,6 @@ class UniqueIntSequence(private[seq] val internalPositionToValue:RedBlackTree[In
                         private[seq] val externalToInternalPosition:PiecewiseLinearBijectionNaive,
                         private[seq] val startFreeRangeForInternalPosition:Int,
                         maxPivot:Int = 10, maxSize:Int = 1000) {
-
-  val uniqueID:Int = UniqueIntSequence.nextUniqueID
 
   def check {
     require(internalPositionToValue.content.sortBy(_._1) equals valueToInternalPosition.content.map({case (a,b) => (b,a)}).sortBy(_._1))
