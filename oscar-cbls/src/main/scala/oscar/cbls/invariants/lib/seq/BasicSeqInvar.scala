@@ -93,25 +93,24 @@ case class Partition(v:SeqValue,pivots:Array[Int])
       case SeqInsert(value:Int,pos:Int,prev) => if(digestChanges(prev)){
         //it has been performed, and we must go incremental
         //search for startng pivot
-        pivotValues.get(value) match{
+        pivotValues.get(value) match {
           case Some(id) =>
           //this is a pivot, actually, and id is its ID
+            //So we must partition the pivot below
           case None =>
             //this is not a pivot, let's look for a pivot
-            pivots.indices.minBy(pivotId => if(pivotValues(pivotId) <= value) value - pivotValues(pivotId) <= )
-
-
-
+            pivots.indices.minBy(pivotId => if (pivotValues(pivotId) <= value) value - pivotValues(pivotId) <=)
+        }
         }else{
+        //it has not been digested, no incremental update is possible.
           for(id <- pivots.length){
             if()
           }
         }
-      }else{
-        //not incremental,
-        return false
-      }
       case SeqMove(fromIncluded:Int,toIncluded:Int,after:Int,flip:Boolean) =>
+        val (smallest,largest) = InvariantHelper.getMinMaxBoundsInt(List(fromIncluded,toIncluded,after))
+        val largestPivotIDBelow = pivots.indices.maxBy(pivotId => if (pivotValues(pivotId) <= smallest) pivotValues(pivotId) else Int.MinValue)
+        if(u.positionOfValueNew(pivots(largestPivotIDBelow)))
       case SeqRemoveValue(value:Int) =>
     }
 

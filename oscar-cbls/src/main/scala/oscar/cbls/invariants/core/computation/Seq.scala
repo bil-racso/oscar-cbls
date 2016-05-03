@@ -132,7 +132,7 @@ sealed abstract class SeqUpdateNoPrev(val value:UniqueIntSequence) extends SeqUp
   override def sizeNew:Int = this.value.size
 }
 
-case class SetORRestore(override val value:UniqueIntSequence) extends SeqUpdateNoPrev(value){
+case class SetORRestore(override val value:UniqueIntSequence, val isRestore:Boolean) extends SeqUpdateNoPrev(value){
   def nbUpdatesFromPreviousValue:Int = Int.MaxValue
 }
 case class StartingPoint(override val value:UniqueIntSequence) extends SeqUpdateNoPrev(value){
@@ -158,17 +158,16 @@ object CBLSSeqConst{
 abstract class ChangingSeqValue(initialValue:Iterable[Int], maxPivot:Int, maxValue:Int)
   extends AbstractVariable with SeqValue{
 
-  var cachedValue:UniqueIntSequence
-
-  val mOldValue:UniqueIntSequence = UniqueIntSequence(initialValue,maxPivot,maxValue)
-  var updates:SeqUpdate = StartingPoint(mOldValue)
+  var cachedValue:UniqueIntSequence = UniqueIntSequence(initialValue,maxPivot,maxValue)
+  var mOldValue:SeqUpdate = StartingPoint(cachedValue)
+  var updates:SeqUpdate = mOldValue
 
   override def value: UniqueIntSequence = {
-    if (model == null) return mOldValue
+    if (model == null) return mOldValue.valueAfterThisUpdate
     val propagating = model.propagating
-    if (definingInvariant == null && !propagating) return mOldValue
+    if (definingInvariant == null && !propagating) return mOldValue.valueAfterThisUpdate
     model.propagate(this)
-    mOldValue
+    mOldValue.valueAfterThisUpdate
   }
 
   def newValue:UniqueIntSequence = {
@@ -191,17 +190,14 @@ abstract class ChangingSeqValue(initialValue:Iterable[Int], maxPivot:Int, maxVal
     updates  = SeqMove(fromIncludedPosition,toIncludedPosition,afterPosition,flip,updates)
   }
   def setORRestore(seq:UniqueIntSequence){
-    if(cachedValue == seq){
-      updates = SetORRestore(value)
-    }else{
-      ???
-    }
+      updates = SetORRestore(value,(value == cachedValue))
   }
 
   final protected def performSeqPropagation(stableCheckpoint:Boolean): Unit = {
     val dynListElements = getDynamicallyListeningElements
     val headPhantom = dynListElements.headPhantom
     var currentElement = headPhantom.next
+    if(stableCheckpoint) cachedValue = updates.valueAfterThisUpdate //force computation for stable checkpoints
     while (currentElement != headPhantom) {
       val e = currentElement.elem
       currentElement = currentElement.next
@@ -215,8 +211,15 @@ abstract class ChangingSeqValue(initialValue:Iterable[Int], maxPivot:Int, maxVal
       })
     }
     //perfoms the changes on the mNewValue
-    val mOldValue:UniqueIntSequence = UniqueIntSequence(initialValue,maxPivot,maxValue)
-    updates = null
+    //when it is a stable checkpoint, we save a cached value
+    if(stableCheckpoint){
+      val start = StartingPoint(updates.valueAfterThisUpdate)
+      cachedValue = start.value
+      mOldValue = start
+      updates = start
+    }else{
+      //TODO
+    }
   }
 }
 
