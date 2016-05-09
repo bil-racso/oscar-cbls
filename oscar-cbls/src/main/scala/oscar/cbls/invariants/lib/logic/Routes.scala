@@ -54,6 +54,7 @@ class Routes(V: Int,
   val UNROUTED = externalNext.length
 
   registerStaticAndDynamicDependencyArrayIndex(externalNext)
+
   finishInitialization()
   for (v <- positionInRoute) { v.setDefiningInvariant(this) }
   for (v <- routeNr) { v.setDefiningInvariant(this) }
@@ -102,14 +103,18 @@ class Routes(V: Int,
     routeLength(v) := positionInRoute(currentID).newValue + 1
   }
 
+  val inToUpdate:Array[Boolean] = Array.fill(UNROUTED)(false)
   var ToUpdate: List[Int] = List.empty
   var ToUpdateCount: Int = 0
 
   override def notifyIntChanged(v: ChangingIntValue, i: Int, OldVal: Int, NewVal: Int) {
-    ToUpdate = i :: ToUpdate
-    ToUpdateCount += 1
-    scheduleForPropagation()
-    assert(next(i) == OldVal)
+    if(!inToUpdate(i)) {
+      ToUpdate = i :: ToUpdate
+      ToUpdateCount += 1
+      scheduleForPropagation()
+      require(next(i) == OldVal)
+      inToUpdate(i) = true
+    }
     next(i) = NewVal
   }
 
@@ -124,6 +129,7 @@ class Routes(V: Int,
 
   override def performInvariantPropagation() {
     for (node <- ToUpdate) {
+      inToUpdate(node) = false
       if (next(node) == UNROUTED) {
         //node is unrouted now
         routeNr(node) := V
@@ -131,7 +137,11 @@ class Routes(V: Int,
       } else if (isUpToDate(node)) {
         ;
       } else {
+
+        println("inserting " + node)
+        println("     before insert: " + heap)
         heap.insert((node, positionInRoute(node).newValue))
+        println("     after insert: " + heap)
       }
     }
     ToUpdate = List.empty
