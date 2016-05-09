@@ -24,9 +24,9 @@
 
 package oscar.cbls.routing.neighborhood
 
-import oscar.cbls.invariants.core.computation.{ChangingSetValue, Snapshot}
+import oscar.cbls.invariants.core.computation.Snapshot
 import oscar.cbls.routing.model._
-import oscar.cbls.search.combinators.{DynAndThenWithPrev, DynAndThen, AndThen}
+import oscar.cbls.search.combinators.{AndThen, DynAndThen, DynAndThenWithPrev}
 import oscar.cbls.search.core.Neighborhood
 
 import scala.collection.immutable.SortedSet

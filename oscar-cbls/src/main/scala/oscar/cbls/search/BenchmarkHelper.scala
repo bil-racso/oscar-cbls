@@ -2,6 +2,7 @@ package oscar.cbls.search
 
 import oscar.cbls.objective.Objective
 import oscar.cbls.search.core.Neighborhood
+
 import scala.util.control.Breaks._
 
 object Benchmark extends StopWatch{

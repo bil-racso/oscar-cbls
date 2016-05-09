@@ -1,6 +1,6 @@
 package oscar.examples.cbls.wlp
 
-import oscar.cbls.invariants.core.computation.{CBLSIntConst, CBLSIntVar, Store}
+import oscar.cbls.invariants.core.computation.{CBLSIntVar, Store}
 import oscar.cbls.invariants.lib.logic.{Filter, SelectLESetQueue}
 import oscar.cbls.invariants.lib.minmax.MinConstArray
 import oscar.cbls.invariants.lib.numeric.Sum

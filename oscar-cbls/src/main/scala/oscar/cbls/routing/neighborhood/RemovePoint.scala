@@ -24,9 +24,8 @@
 
 package oscar.cbls.routing.neighborhood
 
-import oscar.cbls.routing.model.{HotSpottingInfo, VRP}
+import oscar.cbls.routing.model.VRP
 import oscar.cbls.search.algo.HotRestart
-import oscar.cbls.search.move.Move
 
 /**
  * Removes a point of route.

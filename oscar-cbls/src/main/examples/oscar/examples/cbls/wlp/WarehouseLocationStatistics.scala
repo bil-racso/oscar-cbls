@@ -2,7 +2,7 @@ package oscar.examples.cbls.wlp
 
 import oscar.cbls.invariants.core.computation.{CBLSIntVar, Store}
 import oscar.cbls.invariants.lib.logic.Filter
-import oscar.cbls.invariants.lib.minmax.{MinConstArrayLazy, MinConstArray}
+import oscar.cbls.invariants.lib.minmax.MinConstArrayLazy
 import oscar.cbls.invariants.lib.numeric.Sum
 import oscar.cbls.modeling.AlgebraTrait
 import oscar.cbls.objective.Objective

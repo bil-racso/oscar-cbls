@@ -27,7 +27,7 @@ package oscar.cbls.invariants.lib.set
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.core.propagation.Checker
 
-import scala.collection.immutable.{ SortedMap, SortedSet };
+import scala.collection.immutable.{SortedMap, SortedSet};
 
 /**
  * left UNION right

@@ -2,7 +2,7 @@ package oscar.cbls.invariants.lib.minmax
 
 import oscar.cbls.invariants.core.algo.heap.{ArrayMap, BinomialHeapWithMoveExtMem}
 import oscar.cbls.invariants.core.algo.quick.QList
-import oscar.cbls.invariants.core.computation.{ChangingSetValue, SetNotificationTarget, IntInvariant, SetValue}
+import oscar.cbls.invariants.core.computation.{ChangingSetValue, IntInvariant, SetNotificationTarget, SetValue}
 import oscar.cbls.invariants.core.propagation.Checker
 
 import scala.collection.immutable.SortedSet

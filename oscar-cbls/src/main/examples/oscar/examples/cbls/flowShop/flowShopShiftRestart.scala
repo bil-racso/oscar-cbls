@@ -3,8 +3,8 @@ package oscar.examples.cbls.flowShop
 import oscar.cbls.invariants.core.computation.{CBLSIntConst, CBLSIntVar, IntValue}
 import oscar.cbls.modeling.CBLSModel
 import oscar.cbls.objective.Objective
+import oscar.cbls.search.SwapsNeighborhood
 import oscar.cbls.search.combinators.BestSlopeFirst
-import oscar.cbls.search.{SwapsNeighborhood, RollNeighborhood, WideningFlipNeighborhood}
 
 object flowShopShiftRestart  extends CBLSModel with App {
 

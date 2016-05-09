@@ -1,11 +1,10 @@
 package oscar.examples.cbls.flowShop
 
-import oscar.cbls.invariants.core.computation.{CBLSSetVar, CBLSIntConst, CBLSIntVar, IntValue}
+import oscar.cbls.invariants.core.computation.{CBLSIntConst, CBLSIntVar, IntValue}
 import oscar.cbls.invariants.lib.logic.SelectLESetQueue
 import oscar.cbls.modeling.CBLSModel
 import oscar.cbls.objective.Objective
 import oscar.cbls.search.move.ShiftMove
-import oscar.examples.cbls.flowShop.flowShopShiftRestart._
 
 object flowShop  extends CBLSModel with App {
 

@@ -24,14 +24,13 @@
 
 package oscar.cbls.invariants.core.propagation
 
-import oscar.cbls.invariants.core.algo.quick.QList
 import oscar.cbls.invariants.core.algo.dag._
 import oscar.cbls.invariants.core.algo.dll._
-import oscar.cbls.invariants.core.algo.heap.{ AbstractHeap, AggregatedBinomialHeapQList, BinomialHeap }
+import oscar.cbls.invariants.core.algo.heap.{AbstractHeap, AggregatedBinomialHeapQList, BinomialHeap}
+import oscar.cbls.invariants.core.algo.quick.QList
 import oscar.cbls.invariants.core.algo.tarjan._
 
-import scala.collection.immutable.SortedMap
-import scala.collection.mutable.Queue;
+import scala.collection.immutable.SortedMap;
 
 /**
  * a schedulingHandler handles the scheduling for a set of PE.

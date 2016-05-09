@@ -23,8 +23,6 @@
 
 package oscar.cbls.routing.model
 
-import oscar.cbls.constraints.core.ConstraintSystem
-import oscar.cbls.invariants.core.algo.heap.BinomialHeap
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.lib.logic._
 import oscar.cbls.invariants.lib.numeric.Sum
@@ -32,7 +30,7 @@ import oscar.cbls.invariants.lib.set.Cardinality
 import oscar.cbls.modeling.Algebra._
 import oscar.cbls.search.algo.KSmallest
 
-import scala.collection.immutable.{ SortedMap, SortedSet }
+import scala.collection.immutable.SortedSet
 import scala.math.min
 
 /**
@@ -49,6 +47,7 @@ import scala.math.min
  * @author renaud.delandtsheer@cetic.be
  * @author Florent Ghilain (UMONS)
  */
+@deprecated("this routing model is inefficient for large moves. A faster model will be released in septembre 2016","spring 2016")
 class VRP(val N: Int, val V: Int, val m: Store) {
   /**
    * the data structure array which maintains the successors.

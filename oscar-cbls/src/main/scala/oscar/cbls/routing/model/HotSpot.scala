@@ -1,6 +1,5 @@
 package oscar.cbls.routing.model
 
-import oscar.cbls.invariants.core.algo.quick.QList
 import oscar.cbls.routing.neighborhood.VRPMove
 import oscar.cbls.search.algo.HotRestart
 import oscar.cbls.search.move.{CompositeMove, Move}

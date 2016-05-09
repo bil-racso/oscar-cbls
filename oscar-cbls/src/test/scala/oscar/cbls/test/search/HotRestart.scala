@@ -1,6 +1,6 @@
 package oscar.cbls.test.search
 
-import oscar.cbls.search.algo.{InstrumentedRange, ShiftedRange}
+import oscar.cbls.search.algo.InstrumentedRange
 
 import scala.collection.immutable.SortedSet
 

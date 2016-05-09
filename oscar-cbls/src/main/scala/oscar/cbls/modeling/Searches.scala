@@ -1,6 +1,6 @@
 package oscar.cbls.modeling
 
-import oscar.cbls.invariants.core.computation.{CBLSIntVar, CBLSSetVar}
+import oscar.cbls.invariants.core.computation.CBLSIntVar
 import oscar.cbls.search._
 
 import scala.collection.immutable.SortedSet

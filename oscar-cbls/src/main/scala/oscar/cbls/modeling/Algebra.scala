@@ -25,7 +25,7 @@ package oscar.cbls.modeling
  * ****************************************************************************
  */
 
-import oscar.cbls.constraints.lib.basic.{ BelongsTo, EQ, G, GE, L, LE, NE }
+import oscar.cbls.constraints.lib.basic.{BelongsTo, EQ, G, GE, L, LE, NE}
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.lib.logic._
 import oscar.cbls.invariants.lib.numeric._

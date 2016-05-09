@@ -1,9 +1,10 @@
 package oscar.cbls.test.invariants.bench
 
 import org.scalacheck.{Gen, Prop}
-import oscar.cbls.invariants.core.computation.{Variable, CBLSSetVar, CBLSIntVar, Store}
-import scala.collection.immutable.{SortedMap, SortedSet}
 import org.scalatest.prop.Checkers
+import oscar.cbls.invariants.core.computation.{CBLSIntVar, CBLSSetVar, Store, Variable}
+
+import scala.collection.immutable.{SortedMap, SortedSet}
 
 /**
  * This class represents a move in the model, that is, one or several

@@ -25,9 +25,8 @@
 
 package oscar.cbls.routing.neighborhood
 
-import oscar.cbls.routing.model.{HotSpottingInfo, PositionInRouteAndRouteNr, VRP}
+import oscar.cbls.routing.model.{PositionInRouteAndRouteNr, VRP}
 import oscar.cbls.search.algo.HotRestart
-import oscar.cbls.search.move.Move
 
 /**
  * Moves a point of a route to another place in the same or in an other route.

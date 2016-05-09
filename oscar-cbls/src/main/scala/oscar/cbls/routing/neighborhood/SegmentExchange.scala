@@ -1,8 +1,9 @@
 package oscar.cbls.routing.neighborhood
 
-import oscar.cbls.routing.model.{HotSpottingInfo, NodesOfVehicle, PositionInRouteAndRouteNr, VRP}
-import oscar.cbls.search.algo.{Pairs, HotRestart}
-import scala.collection.immutable.{SortedMap, SortedSet}
+import oscar.cbls.routing.model.{NodesOfVehicle, PositionInRouteAndRouteNr, VRP}
+import oscar.cbls.search.algo.{HotRestart, Pairs}
+
+import scala.collection.immutable.SortedSet
 
 /**
  * swaps segments of different vehicles

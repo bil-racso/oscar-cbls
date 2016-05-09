@@ -1,23 +1,14 @@
 package oscar.examples.cbls.routing
 
-import java.awt.{Color, Dimension}
-import javax.swing.SwingUtilities
-
 import oscar.cbls.invariants.core.computation.Store
 import oscar.cbls.invariants.lib.logic.Int2Int
-import oscar.cbls.invariants.lib.minmax.{Max, Min}
 import oscar.cbls.invariants.lib.numeric.{Abs, Sum}
-import oscar.cbls.objective.Objective
+import oscar.cbls.modeling.Algebra._
 import oscar.cbls.routing.model._
 import oscar.cbls.routing.neighborhood._
 import oscar.cbls.search.StopWatch
-import oscar.cbls.search.combinators.{Atomic, RoundRobin, Profile, BestSlopeFirst}
-import oscar.cbls.modeling.Algebra._
-import oscar.cbls.search.move.Move
-import oscar.examples.cbls.routing.visual.MatrixMap.RoutingMatrixVisualWithAttribute
-import oscar.examples.cbls.routing.visual.FunctionGraphic._
-import oscar.examples.cbls.routing.visual.ColorGenerator
-import oscar.visual.VisualFrame
+import oscar.cbls.search.combinators.{BestSlopeFirst, Profile, RoundRobin}
+
 import scala.language.implicitConversions
 
 /**
@@ -55,6 +46,13 @@ with PenaltyForEmptyRouteAsObjectiveTerm{ //just for the fun of it
   println("vrp done")
 }
 
+/**
+ * This is a routing test with fair sharing of the travel among all vehicles.
+ * This fair sharing is achieved by minimizing the travel cost plus the spread of each vehicle.
+ * The spread of a vehicle is the distance between his travel and the average travel of all vehicles.
+ * The result is therefore sub-opimal if one only looks at te total travel distance
+ *
+ */
 object RoutingTest extends App with StopWatch{
 
   this.startWatch()
@@ -120,8 +118,8 @@ object RoutingTest extends App with StopWatch{
     vehicles=() => vrp.vehicles.toList))
 
   val search = new RoundRobin(List(insertPoint,onePointMove),10) exhaust
-                      new BestSlopeFirst(List(onePointMove, threeOpt, segExchange), refresh = n / 2) showObjectiveFunction
-    vrp.getObjective() // exhaust onePointMove exhaust segExchange//threeOpt //(new BestSlopeFirst(List(onePointMove,twoOpt,threeOpt)))
+                      new BestSlopeFirst(List(onePointMove, threeOpt, segExchange), refresh = n / 2)
+    vrp.getObjective()
 
   search.verbose = 1
 //    search.verboseWithExtraInfo(3,() => vrp.toString)

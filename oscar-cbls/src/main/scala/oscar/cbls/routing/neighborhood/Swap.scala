@@ -26,8 +26,6 @@ package oscar.cbls.routing.neighborhood
 
 import oscar.cbls.routing.model._
 import oscar.cbls.search.algo.HotRestart
-import oscar.cbls.search.core.EasyNeighborhood
-import oscar.cbls.search.move.Move
 
 /**
  * Swaps two points of the same or different routes.

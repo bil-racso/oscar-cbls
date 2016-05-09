@@ -20,7 +20,8 @@
 
 package oscar.cbls.invariants.core.computation
 
-import oscar.cbls.invariants.core.propagation.{Checker, PropagationElement}
+import oscar.cbls.invariants.core.propagation.Checker
+
 import scala.collection.mutable.{Map => MMap}
 import scala.language.implicitConversions
 
