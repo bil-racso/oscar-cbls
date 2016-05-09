@@ -112,7 +112,7 @@ class Routes(V: Int,
       ToUpdate = i :: ToUpdate
       ToUpdateCount += 1
       scheduleForPropagation()
-      require(next(i) == OldVal)
+      assert(next(i) == OldVal)
       inToUpdate(i) = true
     }
     next(i) = NewVal
@@ -137,11 +137,7 @@ class Routes(V: Int,
       } else if (isUpToDate(node)) {
         ;
       } else {
-
-        println("inserting " + node)
-        println("     before insert: " + heap)
         heap.insert((node, positionInRoute(node).newValue))
-        println("     after insert: " + heap)
       }
     }
     ToUpdate = List.empty
