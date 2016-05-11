@@ -4,7 +4,6 @@ import oscar.cbls.invariants.core.algo.seq.functional.{ConcreteUniqueIntSequence
 
 import scala.language.implicitConversions
 
-
 sealed trait SeqValue extends Value{
   def value:UniqueIntSequence
   def domain:Domain
@@ -40,19 +39,18 @@ case class SeqMove(fromIncluded:Int,toIncluded:Int,after:Int,flip:Boolean,prev:S
   extends SeqUpdateWithPrev(prev,prev.newValue.moveAfter(fromIncluded,toIncluded,after,flip,fast=true)){
   def isSimpleFlip:Boolean = after+1 == fromIncluded && flip
   def isNop = after+1 == fromIncluded && !flip
+  def fromValue:Int = prev.newValue.valueAtPosition(fromIncluded).head
+  def toValue:Int = prev.newValue.valueAtPosition(toIncluded).head
+  def afterValue:Int = prev.newValue.valueAtPosition(after).head
 }
 
 case class SeqRemoveValue(value:Int,prev:SeqUpdate)
   extends SeqUpdateWithPrev(prev,prev.newValue.delete(prev.newValue.positionOfValue(value).head,fast=true))
 
-sealed abstract class SeqUpdateNoPrev(val value:UniqueIntSequence) extends SeqUpdate(value)
-
-case class SetORRestore(override val value:UniqueIntSequence, val isRestore:Boolean) extends SeqUpdateNoPrev(value){
+case class Set(val value:UniqueIntSequence) extends SeqUpdate(value){
   def nbUpdatesFromPreviousValue:Int = Int.MaxValue
 }
-case class StartingPoint(override val value:UniqueIntSequence) extends SeqUpdateNoPrev(value){
-  def nbUpdatesFromPreviousValue:Int = 0
-}
+
 
 trait SeqNotificationTarget {
   def notifySeqChanges(v: ChangingSeqValue, d: Int, changes:SeqUpdate,stableCheckpoint:Boolean)
@@ -64,17 +62,22 @@ class CBLSSeqConst(override val value:ConcreteUniqueIntSequence) extends SeqValu
 }
 
 object CBLSSeqConst{
-  implicit def seq2SeqValue(seq: UniqueIntSequence): CBLSSeqConst = new CBLSSeqConst(seq.regularize)
-  implicit def seq2SeqConst(seq: UniqueIntSequence): CBLSSeqConst = new CBLSSeqConst(seq.regularize)
+  implicit def seq2SeqValue(seq: UniqueIntSequence): CBLSSeqConst = new CBLSSeqConst(seq.regularize())
+  implicit def seq2SeqConst(seq: UniqueIntSequence): CBLSSeqConst = new CBLSSeqConst(seq.regularize())
 
-  def apply(seq:UniqueIntSequence):CBLSSeqConst = new CBLSSeqConst(seq.regularize)
+  def apply(seq:UniqueIntSequence):CBLSSeqConst = new CBLSSeqConst(seq.regularize())
+}
+
+abstract class SeqVar(initialValue:Iterable[Int], maxPivot:Int, maxValue:Int)
+  extends ChangingSeqValue(initialValue, maxPivot, maxValue){
+
 }
 
 abstract class ChangingSeqValue(initialValue:Iterable[Int], maxPivot:Int, maxValue:Int)
   extends AbstractVariable with SeqValue{
 
   var cachedValue:UniqueIntSequence = UniqueIntSequence(initialValue,maxPivot,maxValue)
-  var mOldValue:SeqUpdate = StartingPoint(cachedValue)
+  var mOldValue:SeqUpdate = Set(cachedValue)
   var updates:SeqUpdate = mOldValue
 
   override def value: UniqueIntSequence = {
@@ -106,8 +109,8 @@ abstract class ChangingSeqValue(initialValue:Iterable[Int], maxPivot:Int, maxVal
     updates  = SeqMove(fromIncludedPosition,toIncludedPosition,afterPosition,flip,updates)
   }
 
-  def setORRestore(seq:UniqueIntSequence){
-      updates = SetORRestore(value,(value == cachedValue))
+  def set(seq:UniqueIntSequence){
+      updates = Set(value)
   }
 
   final protected def performSeqPropagation(stableCheckpoint:Boolean): Unit = {
@@ -130,7 +133,7 @@ abstract class ChangingSeqValue(initialValue:Iterable[Int], maxPivot:Int, maxVal
     //perfoms the changes on the mNewValue
     //when it is a stable checkpoint, we save a cached value
     if(stableCheckpoint){
-      val start = StartingPoint(updates.newValue.regularize) //TODO: the regularize here looses pointer equality!!
+      val start = Set(updates.newValue.regularize())
       cachedValue = start.value
       mOldValue = start
       updates = start

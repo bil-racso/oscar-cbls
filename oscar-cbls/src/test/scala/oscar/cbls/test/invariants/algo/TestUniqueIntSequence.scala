@@ -29,7 +29,7 @@ object TestUniqueIntSequence extends App{
     while(crawlerAtEnd match{case Some(c) => acc = c.value :: acc; crawlerAtEnd = c.prev; true case None => false}){}
     require(acc equals values.toList, "acc:" + acc)
 
-    require(seq.regularize.iterator.toList equals values.toList, "seq.regularize.iterator.toList:" + seq.regularize.iterator.toList + " != values.toList:" + values.toList)
+    require(seq.regularize().iterator.toList equals values.toList, "seq.regularize.iterator.toList:" + seq.regularize().iterator.toList + " != values.toList:" + values.toList)
   }
 
   val b = a.insertAtPosition(5,0) //insert first
@@ -48,11 +48,11 @@ object TestUniqueIntSequence extends App{
   println(e)
   checkSeq(e,7,5,8,6)
 
-  val f = e.delete(1).regularize//delete inside
+  val f = e.delete(1).regularize()//delete inside
   println(f)
   checkSeq(f,7,8,6)
 
-  val g = f.insertAtPosition(5,2).regularize//insert inside
+  val g = f.insertAtPosition(5,2).regularize()//insert inside
   println(g)
   checkSeq(g,7,8,5,6)
 
@@ -60,7 +60,7 @@ object TestUniqueIntSequence extends App{
   println(h)
   checkSeq(h,10,7,8,5,6)
 
-  val i = h.insertAtPosition(54,3).regularize//insert inside
+  val i = h.insertAtPosition(54,3).regularize()//insert inside
   println(i)
   checkSeq(i,10,7,8,54,5,6)
 
@@ -69,11 +69,11 @@ object TestUniqueIntSequence extends App{
   checkSeq(j,10,7,54,5,6)
 
   //println("flip")
-  val kk = j.moveAfter(1,2,0,true).regularize//flip
+  val kk = j.moveAfter(1,2,0,true).regularize()//flip
   println(kk)
   checkSeq(kk,10,54,7,5,6)
 
-  val k = j.moveAfter(1,2,4,false).regularize//move upwards
+  val k = j.moveAfter(1,2,4,false).regularize()//move upwards
   println(k)
   checkSeq(k,10,5,6,7,54)
 
@@ -89,7 +89,7 @@ object TestUniqueIntSequence extends App{
   println(m)
   checkSeq(m,10,7,54,6,5)
 
-  val n = kkk.moveAfter(1,4,0,false).regularize//nop
+  val n = kkk.moveAfter(1,4,0,false).regularize()//nop
   println(n)
   checkSeq(n,10,5,6,54,7)
 

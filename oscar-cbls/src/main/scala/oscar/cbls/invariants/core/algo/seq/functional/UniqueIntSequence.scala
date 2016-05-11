@@ -1,6 +1,7 @@
 package oscar.cbls.invariants.core.algo.seq.functional
 
 import oscar.cbls.invariants.core.algo.fun.{PiecewiseLinearBijectionNaive, Pivot, LinearTransform}
+import oscar.cbls.invariants.core.algo.lazyIt.LazyFilter
 import oscar.cbls.invariants.core.algo.rb.{RBPosition, RedBlackTree}
 import scala.language.implicitConversions
 
@@ -24,6 +25,12 @@ object UniqueIntSequence{
 
 
   implicit def toIterable(seq:UniqueIntSequence):IterableUniqueIntSequence = new IterableUniqueIntSequence(seq)
+
+  private var nextUniqueID:Int = Int.MinValue
+  def getNewUniqueID():Int = {
+    nextUniqueID +=1
+    nextUniqueID
+  }
 }
 
 class IterableUniqueIntSequence(sequence:UniqueIntSequence) extends Iterable[Int]{
@@ -38,12 +45,13 @@ class IterableUniqueIntSequence(sequence:UniqueIntSequence) extends Iterable[Int
   override def lastOption : Option[Int] = sequence.valueAtPosition(sequence.size-1)
 }
 
-abstract class UniqueIntSequence() {
+abstract class UniqueIntSequence(protected[seq] val uniqueID:Int = UniqueIntSequence.getNewUniqueID()) {
 
   def size : Int
   def isEmpty:Boolean
   def iterator : Iterator[Int] = new UniqueIntSequenceIterator(this)
   def iterable : Iterable[Int] = new IterableUniqueIntSequence(this)
+  def content:Iterable[Int]
 //  def largestValue:Option[Int]
 //  def smallestValue:Option[Int]
 
@@ -59,21 +67,23 @@ abstract class UniqueIntSequence() {
     }
   }
 
-  def insertAtPosition(value:Int, pos:Int, fast:Boolean = false,autoRework:Boolean = true):UniqueIntSequence
+  def insertAtPosition(value:Int, pos:Int, fast:Boolean = false, autoRework:Boolean = true):UniqueIntSequence
   def delete(pos:Int, fast:Boolean=false,autoRework:Boolean = false):UniqueIntSequence
   def moveAfter(startPositionIncluded:Int, endPositionIncluded:Int, moveAfterPosition:Int, flip:Boolean, fast:Boolean = false, autoRework:Boolean = true):UniqueIntSequence
 
-  def regularize:ConcreteUniqueIntSequence
+  def regularize(targetUniqueID:Int = this.uniqueID):ConcreteUniqueIntSequence
   def comitPendingMoves:UniqueIntSequence
 
   def check{}
+
+  def quickSame(u:UniqueIntSequence):Boolean = u != null && this.uniqueID == u.uniqueID
 }
 
 class ConcreteUniqueIntSequence(private[seq] val internalPositionToValue:RedBlackTree[Int],
                                 private[seq] val valueToInternalPosition:RedBlackTree[Int],
                                 private[seq] val externalToInternalPosition:PiecewiseLinearBijectionNaive,
                                 private[seq] val startFreeRangeForInternalPosition:Int,
-                                maxPivot:Int = 10, maxSize:Int = 1000) extends UniqueIntSequence(){
+                                maxPivot:Int = 10, maxSize:Int = 1000, uniqueID:Int = UniqueIntSequence.getNewUniqueID()) extends UniqueIntSequence(uniqueID){
 
   override def check {
     require(internalPositionToValue.content.sortBy(_._1) equals valueToInternalPosition.content.map({case (a,b) => (b,a)}).sortBy(_._1))
@@ -124,8 +134,12 @@ class ConcreteUniqueIntSequence(private[seq] val internalPositionToValue:RedBlac
   }
 
   def insertAtPosition(value:Int, pos:Int, fast:Boolean,autoRework:Boolean):UniqueIntSequence = {
-    println(this + ".insertAtPosition(value:" + value + " pos:" + pos + ")")
+
+    //println(this + ".insertAtPosition(value:" + value + " pos:" + pos + ")")
     require(pos<=size,"inserting past the end of the sequence (size:" + size + " pos:" + pos + ")")
+
+    if(fast) return new InsertedUniqueIntSequence(this,value,pos)
+
     //insert into red blacks
     val newInternalPositionToValue = internalPositionToValue.insert(startFreeRangeForInternalPosition,value)
     val newValueToInternalPosition = valueToInternalPosition.insert(value,startFreeRangeForInternalPosition)
@@ -155,9 +169,11 @@ class ConcreteUniqueIntSequence(private[seq] val internalPositionToValue:RedBlac
   }
 
   def delete(pos:Int, fast:Boolean,autoRework:Boolean):UniqueIntSequence = {
-    println(this + ".delete(pos:" + pos + ")")
+    //println(this + ".delete(pos:" + pos + ")")
     require(pos<size,"deleting past the end of the sequence (size:" + size + " pos:" + pos + ")")
     require(pos>=0,"deleting at negative pos:" + pos)
+
+    if(fast) return new DeletedUniqueIntSequence(this,pos)
 
     val internalPosition = externalToInternalPosition(pos)
     val value = internalPositionToValue.get(internalPosition).head
@@ -192,13 +208,13 @@ class ConcreteUniqueIntSequence(private[seq] val internalPositionToValue:RedBlac
   }
 
   def moveAfter(startPositionIncluded:Int, endPositionIncluded:Int, moveAfterPosition:Int, flip:Boolean, fast:Boolean,autoRework:Boolean):UniqueIntSequence = {
-    if(fast) return new MovedUniqueIntSequence(this,startPositionIncluded,endPositionIncluded,moveAfterPosition,flip)
-
-    println(this + ".moveAfter(startPositionIncluded:" + startPositionIncluded + " endPositionIncluded:" + endPositionIncluded + " moveAfterPosition:" + moveAfterPosition + " flip:" + flip + ")")
+    //println(this + ".moveAfter(startPositionIncluded:" + startPositionIncluded + " endPositionIncluded:" + endPositionIncluded + " moveAfterPosition:" + moveAfterPosition + " flip:" + flip + ")")
     require(
       moveAfterPosition < startPositionIncluded || moveAfterPosition>endPositionIncluded,
       "moveAfterPosition=" +  moveAfterPosition + " cannot be between startPositionIncluded=" + startPositionIncluded + " and endPositionIncluded=" + endPositionIncluded)
     require(startPositionIncluded <= endPositionIncluded, "startPositionIncluded=" + startPositionIncluded + " should be <= endPositionIncluded=" + endPositionIncluded)
+
+    if(fast) return new MovedUniqueIntSequence(this,startPositionIncluded,endPositionIncluded,moveAfterPosition,flip)
 
     if(moveAfterPosition + 1 == startPositionIncluded) {
       //not moving
@@ -256,7 +272,7 @@ class ConcreteUniqueIntSequence(private[seq] val internalPositionToValue:RedBlac
     }
   }
 
-  def regularize:ConcreteUniqueIntSequence = {
+  def regularize(targetUniqueID:Int = this.uniqueID):ConcreteUniqueIntSequence = {
     println("regularize")
     var explorer = this.explorerAtPosition(0)
     var newInternalPositionToValues = RedBlackTree.empty[Int]
@@ -274,10 +290,12 @@ class ConcreteUniqueIntSequence(private[seq] val internalPositionToValue:RedBlac
       newValueToInternalPosition,
       PiecewiseLinearBijectionNaive.identity,
       newInternalPositionToValues.size,
-      maxPivot, maxSize)
+      maxPivot, maxSize,targetUniqueID)
   }
 
   override def comitPendingMoves : UniqueIntSequence = this
+
+  override def content : Iterable[Int] = internalPositionToValue.values
 }
 
 class UniqueIntSequenceIterator(s:UniqueIntSequence) extends Iterator[Int] {
@@ -388,8 +406,7 @@ class ConcreteIntSequenceExplorer(sequence:ConcreteUniqueIntSequence,
   }
 }
 
-
-abstract class StackedUpdateUniqueIntSequence extends UniqueIntSequence{
+abstract class StackedUpdateUniqueIntSequence extends UniqueIntSequence(){
   override def delete(pos : Int, fast:Boolean,autoRework:Boolean) : UniqueIntSequence = new DeletedUniqueIntSequence(this,pos)
 
   override def moveAfter(startPositionIncluded : Int, endPositionIncluded : Int, moveAfterPosition : Int, flip : Boolean, fast:Boolean,autoRework:Boolean) : UniqueIntSequence =
@@ -398,7 +415,7 @@ abstract class StackedUpdateUniqueIntSequence extends UniqueIntSequence{
   override def insertAtPosition(value : Int, pos : Int, fast:Boolean,autoRework:Boolean) : UniqueIntSequence =
     new InsertedUniqueIntSequence(this,value:Int,pos:Int)
 
-  override def regularize : ConcreteUniqueIntSequence = comitPendingMoves.regularize
+  override def regularize(targetUniqueID:Int = this.uniqueID) : ConcreteUniqueIntSequence = comitPendingMoves.regularize(targetUniqueID)
 }
 
 class MovedUniqueIntSequence(seq:UniqueIntSequence,
@@ -407,6 +424,8 @@ class MovedUniqueIntSequence(seq:UniqueIntSequence,
                              moveAfterPosition:Int,
                              flip:Boolean)
   extends StackedUpdateUniqueIntSequence{
+
+  override def content : Iterable[Int] = seq.content
 
   val localBijection =
     if(moveAfterPosition + 1 == startPositionIncluded) {
@@ -560,6 +579,8 @@ class InsertedUniqueIntSequence(seq:UniqueIntSequence,
   extends StackedUpdateUniqueIntSequence {
   override def size : Int = seq.size + 1
 
+  override def content : Iterable[Int] = seq.content ++ List(value)
+
   override def positionOfValue(value : Int) : Option[Int] = {
     seq.positionOfValue(value) match {
       case None => if (value == this.value) Some(pos) else None
@@ -681,6 +702,8 @@ class DeletedUniqueIntSequence(seq:UniqueIntSequence,
                                val position:Int)
   extends StackedUpdateUniqueIntSequence{
   val value = seq.valueAtPosition(position).head
+
+  override def content : Iterable[Int] = new LazyFilter(seq.content,_ != value)
 
   override def size : Int = seq.size - 1
 
