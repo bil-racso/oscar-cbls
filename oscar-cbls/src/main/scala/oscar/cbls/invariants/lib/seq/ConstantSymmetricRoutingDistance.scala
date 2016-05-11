@@ -5,13 +5,16 @@ import oscar.cbls.invariants.core.algo.seq.functional.UniqueIntSequence
 import oscar.cbls.invariants.core.computation._
 
 
-case class ConstantSymmetricRoutingDistancePerVehicle(routes:ChangingSeqValue, v:Int, distanceMatrix:Array[Array[Int]],distancePerVehicle:Array[CBLSIntVar])
+case class ConstantSymmetricRoutingDistance(routes:ChangingSeqValue,
+                                            v:Int,
+                                            distanceMatrix:Array[Array[Int]],
+                                            distancePerVehicle:Array[CBLSIntVar],
+                                            perVehicle:Boolean)
   extends Invariant() with SeqNotificationTarget{
 
   registerStaticAndDynamicDependency(routes)
   finishInitialization()
 
-  //TODO: do something smarter than saving all these values
   val savedValues:Array[Int] = computeValueFromScratch(routes.value)
   var savedCheckpoint = routes.value
   val touchedRoutesSinceCheckpointArray:Array[Boolean] = Array.fill(v)(false)
@@ -21,7 +24,7 @@ case class ConstantSymmetricRoutingDistancePerVehicle(routes:ChangingSeqValue, v
 
   override def notifySeqChanges(v: ChangingSeqValue, d: Int, changes:SeqUpdate,stableCheckpoint:Boolean){
     if(!digestUpdates(changes)) {
-      affect(savedValues)
+      affect(computeValueFromScratch(changes.newValue))
       savedCheckpoint = null
     }
     if(stableCheckpoint){
@@ -68,8 +71,9 @@ case class ConstantSymmetricRoutingDistancePerVehicle(routes:ChangingSeqValue, v
         val oldSucc = if(oldSuccIfNoLoop == vehicle+1 && oldSuccIfNoLoop < v) vehicle else oldSuccIfNoLoop
         val oldDistance = distanceMatrix(oldPrev)(oldSucc)
         val newDistance = distanceMatrix(oldPrev)(value) + distanceMatrix(value)(oldSucc)
+
         recordTouchedVehicle(vehicle)
-        distancePerVehicle(vehicle) :+= (newDistance - oldDistance)
+        distancePerVehicle(if(perVehicle) vehicle else 0) :+= (newDistance - oldDistance)
         true
       case x@SeqMove(fromIncluded : Int, toIncluded : Int, after : Int, flip : Boolean, prev : SeqUpdate) =>
         //on which vehicle did we move?
@@ -93,38 +97,81 @@ case class ConstantSymmetricRoutingDistancePerVehicle(routes:ChangingSeqValue, v
           val newHopBeforeMovedSegment = distanceMatrix(oldPrevFromValue)(toValue)
           val newHopAfterMovedSegment = distanceMatrix(fromValue)(oldSuccToValue)
 
-          distancePerVehicle(vehicleOfMovedSegment) :+= (newHopBeforeMovedSegment + newHopAfterMovedSegment
+          recordTouchedVehicle(vehicleOfMovedSegment)
+          distancePerVehicle(if(perVehicle) vehicleOfMovedSegment else 0) :+= (newHopBeforeMovedSegment + newHopAfterMovedSegment
             - (oldHopBeforeMovedSegment + oldHopAfterMovedSegment))
 
           true
         }else {
           val vehicleOfMovedSegment = searchVehicleReachingPosition(fromIncluded, prev.newValue)
           val targetVehicleOfMove = searchVehicleReachingPosition(after, prev.newValue)
-
-          //summing the moved segment (this is slow, but this invar computes the cost per vehicle) //TODO: can we do better?
-          val costInSegment = computeValueBetween(prev.newValue, fromIncluded, toIncluded)
+          assert(vehicleOfMovedSegment == searchVehicleReachingPosition(toIncluded, prev.newValue))
 
           val oldPrevFromValue = prev.newValue.valueAtPosition(fromIncluded - 1).head
           val oldSuccToIfNoLoop = prev.newValue.valueAtPosition(toIncluded + 1).head
           val oldSuccToValue = if (oldSuccToIfNoLoop == vehicleOfMovedSegment + 1 && oldSuccToIfNoLoop < v) vehicleOfMovedSegment else oldSuccToIfNoLoop
 
-
           val fromValue = x.fromValue
           val toValue = x.toValue
           val afterValue = x.afterValue
 
+          val oldSuccAfterValue = prev.newValue.valueAtPosition(after + 1) match{
+            case None => targetVehicleOfMove
+            case Some(x) => if (x == vehicleOfMovedSegment + 1 && x < v) targetVehicleOfMove else x
+          }
+
           val oldHopBeforeMovedSegment = distanceMatrix(oldPrevFromValue)(fromValue)
           val oldHopAfterMovedSegment = distanceMatrix(toValue)(oldSuccToValue)
-          val newHopBeforeMovedSegment = distanceMatrix(oldPrevFromValue)(toValue)
-          val newHopAfterMovedSegment = distanceMatrix(fromValue)(oldSuccToValue)
+          val oldHopAfterAfter = distanceMatrix(afterValue)(oldSuccAfterValue)
 
-          distancePerVehicle(vehicleOfMovedSegment) :+= (newHopBeforeMovedSegment + newHopAfterMovedSegment
-            - (oldHopBeforeMovedSegment + oldHopAfterMovedSegment))
+          val newHopBeforeMovedSegment = distanceMatrix(afterValue)(if(flip) toValue else fromValue)
+          val newHopAfterMovedSegment = distanceMatrix(if(flip) toValue else fromValue)(oldSuccAfterValue)
+          val newHopReplacingSegment = distanceMatrix(oldPrevFromValue)(oldSuccToValue)
 
+          if(!perVehicle || vehicleOfMovedSegment == targetVehicleOfMove){
+
+            recordTouchedVehicle(vehicleOfMovedSegment)
+            distancePerVehicle(if(perVehicle) vehicleOfMovedSegment else 0) :+= (
+              newHopReplacingSegment + newHopBeforeMovedSegment + newHopAfterMovedSegment
+                - (oldHopBeforeMovedSegment + oldHopAfterMovedSegment + oldHopAfterAfter))
+
+          }else {
+            //summing the moved segment (this is slow, but this invar computes the cost per vehicle) //TODO: can we do better?
+            val costInSegment = computeValueBetween(prev.newValue, fromIncluded, toIncluded)
+
+            recordTouchedVehicle(vehicleOfMovedSegment)
+            distancePerVehicle(vehicleOfMovedSegment) :+= (
+              newHopReplacingSegment - (oldHopBeforeMovedSegment + oldHopAfterMovedSegment + costInSegment))
+
+            recordTouchedVehicle(targetVehicleOfMove)
+            distancePerVehicle(targetVehicleOfMove) :+= (
+              newHopBeforeMovedSegment + costInSegment + newHopAfterMovedSegment - oldHopAfterAfter)
+          }
+          true
         }
-        false
-      case SeqRemoveValue(value : Int, prev : SeqUpdate) =>
+      case x@SeqRemoveValue(value : Int, prev : SeqUpdate) =>
       //on which vehicle did we remove?
+        //on which vehicle did we insert?
+        if(!digestUpdates(prev)) return false
+
+        val positionOfDelete = x.position
+
+        val vehicle = searchVehicleReachingPosition(positionOfDelete, prev.newValue)
+
+        val oldPrevValue = prev.newValue.valueAtPosition(positionOfDelete-1).head
+
+        val oldSuccValue = prev.newValue.valueAtPosition(positionOfDelete) match{
+          case None => vehicle
+          case Some(x) => if(x == vehicle+1 && x < v) vehicle else x
+        }
+
+        val newDistance = distanceMatrix(oldPrevValue)(oldSuccValue)
+        val oldDistanceBefore = distanceMatrix(oldPrevValue)(value)
+        val oldDistanceAfter = distanceMatrix(value)(oldSuccValue)
+
+        recordTouchedVehicle(vehicle)
+        distancePerVehicle(if(perVehicle) vehicle else 0) :+= (newDistance - (oldDistanceBefore + oldDistanceAfter))
+        true
 
       case Set(value : UniqueIntSequence) =>
         if(value quickSame savedCheckpoint){
@@ -140,26 +187,36 @@ case class ConstantSymmetricRoutingDistancePerVehicle(routes:ChangingSeqValue, v
 
   def saveCurrentCheckpoint(s:UniqueIntSequence){
     savedCheckpoint = s
-    while(touchedRoutesSinceCheckpointList!=null){
-      touchedRoutesSinceCheckpointArray(touchedRoutesSinceCheckpointList.head) = false
-      touchedRoutesSinceCheckpointList = touchedRoutesSinceCheckpointList.tail
+    if(perVehicle) {
+      while (touchedRoutesSinceCheckpointList != null) {
+        touchedRoutesSinceCheckpointArray(touchedRoutesSinceCheckpointList.head) = false
+        touchedRoutesSinceCheckpointList = touchedRoutesSinceCheckpointList.tail
+      }
+    }else{
+      savedValues(0) = distancePerVehicle(0).newValue
     }
   }
 
   def restoreCheckpoint(){
-    while(touchedRoutesSinceCheckpointList!=null){
-      val v = touchedRoutesSinceCheckpointList.head
-      distancePerVehicle(v) := savedValues(v)
-      touchedRoutesSinceCheckpointArray(v) = false
-      touchedRoutesSinceCheckpointList = touchedRoutesSinceCheckpointList.tail
+    if(perVehicle) {
+      while (touchedRoutesSinceCheckpointList != null) {
+        val v = touchedRoutesSinceCheckpointList.head
+        distancePerVehicle(v) := savedValues(v)
+        touchedRoutesSinceCheckpointArray(v) = false
+        touchedRoutesSinceCheckpointList = touchedRoutesSinceCheckpointList.tail
+      }
+    }else{
+      distancePerVehicle(0) := savedValues(0)
     }
   }
 
   def recordTouchedVehicle(v:Int){
-    if(savedCheckpoint!= null && !touchedRoutesSinceCheckpointArray(v)){
-      savedValues(v) = distancePerVehicle(v).value
-      touchedRoutesSinceCheckpointArray(v) = true
-      touchedRoutesSinceCheckpointList = QList(v,touchedRoutesSinceCheckpointList)
+    if(perVehicle){
+      if(savedCheckpoint!= null && !touchedRoutesSinceCheckpointArray(v)){
+        savedValues(v) = distancePerVehicle(v).value
+        touchedRoutesSinceCheckpointArray(v) = true
+        touchedRoutesSinceCheckpointList = QList(v,touchedRoutesSinceCheckpointList)
+      }
     }
   }
 
@@ -207,6 +264,7 @@ case class ConstantSymmetricRoutingDistancePerVehicle(routes:ChangingSeqValue, v
       }
       prevNode = node
     }
-    toReturn
+    if(perVehicle) toReturn
+    else Array.fill(1)(toReturn.sum)
   }
 }

@@ -45,7 +45,9 @@ case class SeqMove(fromIncluded:Int,toIncluded:Int,after:Int,flip:Boolean,prev:S
 }
 
 case class SeqRemoveValue(value:Int,prev:SeqUpdate)
-  extends SeqUpdateWithPrev(prev,prev.newValue.delete(prev.newValue.positionOfValue(value).head,fast=true))
+  extends SeqUpdateWithPrev(prev,prev.newValue.delete(prev.newValue.positionOfValue(value).head,fast=true)){
+  def position:Int = prev.newValue.positionOfValue(value).head
+}
 
 case class Set(val value:UniqueIntSequence) extends SeqUpdate(value){
   def nbUpdatesFromPreviousValue:Int = Int.MaxValue
