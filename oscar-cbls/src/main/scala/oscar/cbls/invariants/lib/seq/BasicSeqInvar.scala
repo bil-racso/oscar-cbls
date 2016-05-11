@@ -19,7 +19,7 @@ case class Cardinality(v: SeqValue)
   finishInitialization()
 
   override def notifySeqChanges(v: ChangingSeqValue, d: Int, changes:SeqUpdate,stableCheckpoint:Boolean){
-    this := changes.sizeNew
+    this := changes.newValue.size
   }
 
   override def checkInternals(c: Checker) {
@@ -27,6 +27,7 @@ case class Cardinality(v: SeqValue)
   }
 }
 
+/*
 //tout ce qui vient après
 case class Partition(v:SeqValue,pivots:Array[Int])
   extends Invariant
@@ -116,3 +117,4 @@ case class Partition(v:SeqValue,pivots:Array[Int])
 
   }
 }
+*/
