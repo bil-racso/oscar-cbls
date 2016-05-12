@@ -5,13 +5,12 @@ import oscar.cbls.invariants.core.algo.seq.functional.UniqueIntSequence
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.core.propagation.Checker
 
+import scala.collection.immutable.SortedSet
+
+/*
 /**
  * @param routes the routes of all the vehicles
  * @param v the number of vehicles in the model
- * @param distanceMatrix the matrix of distance, which is expected to be symmetric
- * @param distance it is either an array of one value, in which case it is the total distance run by all vehicle
- *                 or it can also be an array of size v. in this case it is the distance run by each vehicle, respectively.
- *                 the second option is computationally more expensive
  *
  * This invariant relies on the vehicle model assumption:
  * there are v vehicles
@@ -19,14 +18,10 @@ import oscar.cbls.invariants.core.propagation.Checker
  * These values must always be present in the sequence in increasing order
  * they cannot be included within a moved segment
  */
-class ConstantSymmetricRoutingDistance(routes:ChangingSeqValue,
-                                       v:Int,
-                                       distanceMatrix:Array[Array[Int]],
-                                       distance:Array[CBLSIntVar])
+class RouteHops(routes:ChangingSeqValue,
+               v:Int,
+               hopsPerVehicle:Array[CBLSIntVar])
   extends Invariant() with SeqNotificationTarget{
-
-  val perVehicle:Boolean = distance.size >1
-  require(distance.length == 0 || distance.length == v)
 
   registerStaticAndDynamicDependency(routes)
   finishInitialization()
@@ -48,28 +43,23 @@ class ConstantSymmetricRoutingDistance(routes:ChangingSeqValue,
     }
   }
 
+
+
   private def digestUpdates(changes:SeqUpdate):Boolean = {
     changes match {
       case SeqInsert(value : Int, pos : Int, prev : SeqUpdate) =>
         //on which vehicle did we insert?
         if(!digestUpdates(prev)) return false
         val newSeq = changes.newValue
-
+        val vehicle = RoutingConventionMethods.searchVehicleReachingPosition(pos, newSeq,v)
         val oldPrev = prev.newValue.valueAtPosition(pos-1).head
-
         val oldSuccIfNoLoop = prev.newValue.valueAtPosition(pos).head
-        val oldSucc = if(oldSuccIfNoLoop < v) oldSuccIfNoLoop-1 else oldSuccIfNoLoop
-
+        val oldSucc = if(oldSuccIfNoLoop == vehicle+1 && oldSuccIfNoLoop < v) vehicle else oldSuccIfNoLoop
         val oldDistance = distanceMatrix(oldPrev)(oldSucc)
         val newDistance = distanceMatrix(oldPrev)(value) + distanceMatrix(value)(oldSucc)
 
-        if(perVehicle) {
-          val vehicle = RoutingConventionMethods.searchVehicleReachingPosition(pos, newSeq, v)
-          recordTouchedVehicle(vehicle)
-          distance(vehicle) :+= (newDistance - oldDistance)
-        }else{
-          distance(0) :+= (newDistance - oldDistance)
-        }
+        recordTouchedVehicle(vehicle)
+        distance(if(perVehicle) vehicle else 0) :+= (newDistance - oldDistance)
         true
       case x@SeqMove(fromIncluded : Int, toIncluded : Int, after : Int, flip : Boolean, prev : SeqUpdate) =>
         //on which vehicle did we move?
@@ -78,9 +68,11 @@ class ConstantSymmetricRoutingDistance(routes:ChangingSeqValue,
         else if(x.isNop) true
         else if(x.isSimpleFlip){
           //this is a simple flip
+          val vehicleOfMovedSegment = searchVehicleReachingPosition(fromIncluded, prev.newValue)
 
           val oldPrevFromValue = prev.newValue.valueAtPosition(fromIncluded - 1).head
-          val oldSuccToValue = RoutingConventionMethods.routingSuccPos2Val(toIncluded,prev.newValue,v)
+          val oldSuccToIfNoLoop = prev.newValue.valueAtPosition(toIncluded + 1).head
+          val oldSuccToValue = if (oldSuccToIfNoLoop == vehicleOfMovedSegment + 1 && oldSuccToIfNoLoop < v) vehicleOfMovedSegment else oldSuccToIfNoLoop
 
           val fromValue = x.fromValue
           val toValue = x.toValue
@@ -90,27 +82,28 @@ class ConstantSymmetricRoutingDistance(routes:ChangingSeqValue,
           val newHopBeforeMovedSegment = distanceMatrix(oldPrevFromValue)(toValue)
           val newHopAfterMovedSegment = distanceMatrix(fromValue)(oldSuccToValue)
 
-          if(perVehicle) {
-            val vehicleOfMovedSegment = RoutingConventionMethods.searchVehicleReachingPosition(fromIncluded, prev.newValue, v)
-            recordTouchedVehicle(vehicleOfMovedSegment)
-            distance(vehicleOfMovedSegment) :+= (newHopBeforeMovedSegment + newHopAfterMovedSegment
-              - (oldHopBeforeMovedSegment + oldHopAfterMovedSegment))
-          }else{
-            distance(0) :+= (newHopBeforeMovedSegment + newHopAfterMovedSegment
-              - (oldHopBeforeMovedSegment + oldHopAfterMovedSegment))
-          }
+          recordTouchedVehicle(vehicleOfMovedSegment)
+          distance(if(perVehicle) vehicleOfMovedSegment else 0) :+= (newHopBeforeMovedSegment + newHopAfterMovedSegment
+            - (oldHopBeforeMovedSegment + oldHopAfterMovedSegment))
+
           true
         }else {
+          val vehicleOfMovedSegment = searchVehicleReachingPosition(fromIncluded, prev.newValue)
+          val targetVehicleOfMove = searchVehicleReachingPosition(after, prev.newValue)
+          assert(vehicleOfMovedSegment == searchVehicleReachingPosition(toIncluded, prev.newValue))
 
           val oldPrevFromValue = prev.newValue.valueAtPosition(fromIncluded - 1).head
           val oldSuccToIfNoLoop = prev.newValue.valueAtPosition(toIncluded + 1).head
-          val oldSuccToValue = if (oldSuccToIfNoLoop < v) oldSuccToIfNoLoop-1 else oldSuccToIfNoLoop
+          val oldSuccToValue = if (oldSuccToIfNoLoop == vehicleOfMovedSegment + 1 && oldSuccToIfNoLoop < v) vehicleOfMovedSegment else oldSuccToIfNoLoop
 
           val fromValue = x.fromValue
           val toValue = x.toValue
           val afterValue = x.afterValue
 
-          val oldSuccAfterValue = RoutingConventionMethods.routingSuccPos2Val(after, prev.newValue, v)
+          val oldSuccAfterValue = prev.newValue.valueAtPosition(after + 1) match{
+            case None => targetVehicleOfMove
+            case Some(x) => if (x == vehicleOfMovedSegment + 1 && x < v) targetVehicleOfMove else x
+          }
 
           val oldHopBeforeMovedSegment = distanceMatrix(oldPrevFromValue)(fromValue)
           val oldHopAfterMovedSegment = distanceMatrix(toValue)(oldSuccToValue)
@@ -120,37 +113,25 @@ class ConstantSymmetricRoutingDistance(routes:ChangingSeqValue,
           val newHopAfterMovedSegment = distanceMatrix(if(flip) toValue else fromValue)(oldSuccAfterValue)
           val newHopReplacingSegment = distanceMatrix(oldPrevFromValue)(oldSuccToValue)
 
-          if(!perVehicle){
+          if(!perVehicle || vehicleOfMovedSegment == targetVehicleOfMove){
 
-            distance(0) :+= (
+            recordTouchedVehicle(vehicleOfMovedSegment)
+            distance(if(perVehicle) vehicleOfMovedSegment else 0) :+= (
               newHopReplacingSegment + newHopBeforeMovedSegment + newHopAfterMovedSegment
                 - (oldHopBeforeMovedSegment + oldHopAfterMovedSegment + oldHopAfterAfter))
 
-          }else {
-            val vehicleOfMovedSegment = RoutingConventionMethods.searchVehicleReachingPosition(fromIncluded, prev.newValue, v)
-            val targetVehicleOfMove = RoutingConventionMethods.searchVehicleReachingPosition(after, prev.newValue, v)
-            assert(vehicleOfMovedSegment == RoutingConventionMethods.searchVehicleReachingPosition(toIncluded, prev.newValue,v))
+          }else{
+            //summing the moved segment (this is slow, but it is requested to compute the cost per vehicle)
+            //TODO: check if a better (read: O(1)) solution can be found with this paradigm.
+            val costInSegment = computeValueBetween(prev.newValue, fromIncluded, toIncluded)
 
-            if (vehicleOfMovedSegment == targetVehicleOfMove) {
+            recordTouchedVehicle(vehicleOfMovedSegment)
+            distance(vehicleOfMovedSegment) :+= (
+              newHopReplacingSegment - (oldHopBeforeMovedSegment + oldHopAfterMovedSegment + costInSegment))
 
-              recordTouchedVehicle(vehicleOfMovedSegment)
-              distance(vehicleOfMovedSegment) :+= (
-                newHopReplacingSegment + newHopBeforeMovedSegment + newHopAfterMovedSegment
-                  - (oldHopBeforeMovedSegment + oldHopAfterMovedSegment + oldHopAfterAfter))
-
-            } else {
-              //summing the moved segment (this is slow, but it is requested to compute the cost per vehicle)
-              //TODO: check if a better (read: O(1)) solution can be found with this paradigm.
-              val costInSegment = computeValueBetween(prev.newValue, fromIncluded, toIncluded)
-
-              recordTouchedVehicle(vehicleOfMovedSegment)
-              distance(vehicleOfMovedSegment) :+= (
-                newHopReplacingSegment - (oldHopBeforeMovedSegment + oldHopAfterMovedSegment + costInSegment))
-
-              recordTouchedVehicle(targetVehicleOfMove)
-              distance(targetVehicleOfMove) :+= (
-                newHopBeforeMovedSegment + costInSegment + newHopAfterMovedSegment - oldHopAfterAfter)
-            }
+            recordTouchedVehicle(targetVehicleOfMove)
+            distance(targetVehicleOfMove) :+= (
+              newHopBeforeMovedSegment + costInSegment + newHopAfterMovedSegment - oldHopAfterAfter)
           }
           true
         }
@@ -162,23 +143,21 @@ class ConstantSymmetricRoutingDistance(routes:ChangingSeqValue,
 
         val positionOfDelete = x.position
 
+        val vehicle = searchVehicleReachingPosition(positionOfDelete, prev.newValue)
 
+        val oldPrevValue = prev.newValue.valueAtPosition(positionOfDelete-1).head
 
-        val oldPrevValue = prev.newValue.valueAtPosition(positionOfDelete-1).head //vehicles are never deleted
-
-        val oldSuccValue = RoutingConventionMethods.routingSuccPos2Val(positionOfDelete-1, prev.newValue,v)
+        val oldSuccValue = prev.newValue.valueAtPosition(positionOfDelete) match{
+          case None => vehicle
+          case Some(x) => if(x == vehicle+1 && x < v) vehicle else x
+        }
 
         val newDistance = distanceMatrix(oldPrevValue)(oldSuccValue)
         val oldDistanceBefore = distanceMatrix(oldPrevValue)(value)
         val oldDistanceAfter = distanceMatrix(value)(oldSuccValue)
 
-        if(perVehicle){
-          val vehicle = RoutingConventionMethods.searchVehicleReachingPosition(positionOfDelete, prev.newValue,v)
-          recordTouchedVehicle(vehicle)
-          distance(vehicle) :+= (newDistance - (oldDistanceBefore + oldDistanceAfter))
-        }else{
-          distance(0) :+= (newDistance - (oldDistanceBefore + oldDistanceAfter))
-        }
+        recordTouchedVehicle(vehicle)
+        distance(if(perVehicle) vehicle else 0) :+= (newDistance - (oldDistanceBefore + oldDistanceAfter))
         true
 
       case Set(value : UniqueIntSequence) =>
@@ -300,3 +279,4 @@ class ConstantSymmetricRoutingDistance(routes:ChangingSeqValue,
     }
   }
 }
+*/

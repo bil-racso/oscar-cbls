@@ -1,6 +1,6 @@
 package oscar.cbls.invariants.core.computation
 
-import oscar.cbls.invariants.core.algo.seq.functional.{ConcreteUniqueIntSequence, UniqueIntSequence}
+import oscar.cbls.invariants.core.algo.seq.functional.{StackedUpdateUniqueIntSequence, InsertedUniqueIntSequence, ConcreteUniqueIntSequence, UniqueIntSequence}
 
 import scala.language.implicitConversions
 
@@ -33,7 +33,8 @@ sealed abstract class SeqUpdateWithPrev(prev:SeqUpdate,newValue:UniqueIntSequenc
 
 //after is -1 for start position
 case class SeqInsert(value:Int,pos:Int,prev:SeqUpdate)
-  extends SeqUpdateWithPrev(prev:SeqUpdate, prev.newValue.insertAtPosition(value,pos,fast=true))
+  extends SeqUpdateWithPrev(prev:SeqUpdate, prev.newValue.insertAtPosition(value,pos,fast=true)){
+}
 
 case class SeqMove(fromIncluded:Int,toIncluded:Int,after:Int,flip:Boolean,prev:SeqUpdate)
   extends SeqUpdateWithPrev(prev,prev.newValue.moveAfter(fromIncluded,toIncluded,after,flip,fast=true)){

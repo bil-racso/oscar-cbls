@@ -1,15 +1,20 @@
 package oscar.cbls.invariants.lib.seq
 
+import oscar.cbls.invariants.core.algo.quick.QList
+import oscar.cbls.invariants.core.algo.seq.functional.UniqueIntSequence
 import oscar.cbls.invariants.core.computation._
 
+import scala.collection.immutable.SortedMap
 
 
 
 
-case class PositionOf(s:ChangingSeqValue, values:Array[Int], positions:Array[CBLSIntVar])
-/*  extends Invariant() with SeqNotificationTarget{
+
+case class RoutePredecessor(s:ChangingSeqValue, v:Int, values:Array[Int], predecessorValues:Array[CBLSIntVar], defaultPosition:Int)
+  extends Invariant() with SeqNotificationTarget with IntNotificationTarget{
 
   registerStaticAndDynamicDependency(s)
+  registerStaticAndDynamicDependencyArrayIndex(values)
   finishInitialization()
 
   val savedValues:Array[Int] = computeValueFromScratch(routes.value)
@@ -36,7 +41,16 @@ case class PositionOf(s:ChangingSeqValue, values:Array[Int], positions:Array[CBL
       case SeqRemoveValue(value : Int, prev : SeqUpdate) =>
 
       case Set(value : UniqueIntSequence) =>
-}*/
+    }
+  }
+
+  def computeFromScratch(){
+    val seq = s.value
+    for(i <- values.indices){
+      positions(i) := (seq.positionOfValue(values(i).value) match{case None => defaultPosition case Some(x) => x})
+    }
+  }
+}
 
 case class ElementsBetween(s:ChangingSeqValue, values:Array[Int], positions:Array[CBLSIntVar])
 /*  extends Invariant() with SeqNotificationTarget{
