@@ -416,9 +416,6 @@ abstract class StackedUpdateUniqueIntSequence extends UniqueIntSequence(){
     new InsertedUniqueIntSequence(this,value:Int,pos:Int)
 
   override def regularize(targetUniqueID:Int = this.uniqueID) : ConcreteUniqueIntSequence = comitPendingMoves.regularize(targetUniqueID)
-
-  def oldPositionToNewPosition(oldPosition:Int):Option[Int]
-  def newPositionToOldPosition(newPosition:Int):Option[Int]
 }
 
 class MovedUniqueIntSequence(seq:UniqueIntSequence,

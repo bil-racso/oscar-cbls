@@ -1,14 +1,12 @@
-package oscar.cbls.invariants.lib.seq
+package oscar.cbls.invariants.lib.seq.draft
 
 import oscar.cbls.invariants.core.algo.quick.QList
 import oscar.cbls.invariants.core.algo.seq.functional.UniqueIntSequence
 import oscar.cbls.invariants.core.computation._
 
-import scala.collection.immutable.SortedMap
 
 
-
-
+/*
 
 case class RoutePredecessor(s:ChangingSeqValue, v:Int, values:Array[Int], predecessorValues:Array[CBLSIntVar], defaultPosition:Int)
   extends Invariant() with SeqNotificationTarget with IntNotificationTarget{
@@ -116,3 +114,5 @@ case class Partition(s:ChangingSeqValue, values:Array[Int], positions:Array[CBLS
 
       case Set(value : UniqueIntSequence) =>
 }*/
+
+*/
