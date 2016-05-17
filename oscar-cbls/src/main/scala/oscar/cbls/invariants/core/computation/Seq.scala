@@ -86,8 +86,8 @@ class CBLSSeqVar(givenModel:Store, initialValue:UniqueIntSequence, val domain:Do
     super.insertAtPosition(value,pos)
   }
 
-  override  def deleteValue(value:Int){
-    super.deleteValue(value)
+  override  def removeValue(value:Int){
+    super.removeValue(value)
   }
 
   //-1 for first position
@@ -112,8 +112,8 @@ object CBLSSeqVar{
 abstract class ChangingSeqValue(initialValue:Iterable[Int], maxPivot:Int, maxValue:Int)
   extends AbstractVariable with SeqValue{
 
-  var cachedValue:UniqueIntSequence = UniqueIntSequence(initialValue,maxPivot,maxValue)
-  var mOldValue:SeqUpdate = SeqUpdateSet(cachedValue)
+  var latestCheckpoint:UniqueIntSequence = UniqueIntSequence(initialValue,maxPivot,maxValue)
+  var mOldValue:SeqUpdate = SeqUpdateSet(latestCheckpoint)
   var updates:SeqUpdate = mOldValue
 
   override def value: UniqueIntSequence = {
@@ -141,7 +141,7 @@ abstract class ChangingSeqValue(initialValue:Iterable[Int], maxPivot:Int, maxVal
     updates = SeqUpdateInsert(value,pos,updates)
   }
 
-  protected def deleteValue(value:Int){
+  protected def removeValue(value:Int){
     updates = SeqUpdateRemoveValue(value,updates)
   }
   //-1 for first position
@@ -150,25 +150,28 @@ abstract class ChangingSeqValue(initialValue:Iterable[Int], maxPivot:Int, maxVal
   }
 
   protected def setValue(seq:UniqueIntSequence){
-      updates = SeqUpdateSet(value)
+    updates = SeqUpdateSet(value)
   }
 
   protected def :=(seq:UniqueIntSequence){
     setValue(seq)
   }
 
-  def setAsStableCheckpoint()
+  def setAsStableCheckpoint(){
+    latestCheckpoint = newValue
+  }
 
-
-
-  def rollbackToLatestCheckpoint():UniqueIntSequence
-
+  def rollbackToLatestCheckpoint():UniqueIntSequence = {
+    setValue(latestCheckpoint)
+    latestCheckpoint
+  }
 
   final protected def performSeqPropagation(stableCheckpoint:Boolean): Unit = {
+    //TODO: manage the stableCheckpoint!!
     val dynListElements = getDynamicallyListeningElements
     val headPhantom = dynListElements.headPhantom
     var currentElement = headPhantom.next
-    if(stableCheckpoint) cachedValue = updates.newValue //force computation for stable checkpoints
+    if(stableCheckpoint) latestCheckpoint = updates.newValue //force computation for stable checkpoints
     while (currentElement != headPhantom) {
       val e = currentElement.elem
       currentElement = currentElement.next
@@ -185,7 +188,7 @@ abstract class ChangingSeqValue(initialValue:Iterable[Int], maxPivot:Int, maxVal
     //when it is a stable checkpoint, we save a cached value
     if(stableCheckpoint){
       val start = SeqUpdateSet(updates.newValue.regularize())
-      cachedValue = start.value
+      latestCheckpoint = start.value
       mOldValue = start
       updates = start
     }else{
@@ -214,8 +217,24 @@ class IdentitySeq(toValue:CBLSSeqVar, fromValue:ChangingSeqValue)
   toValue := fromValue.value
 
   override def notifySeqChanges(v : ChangingSeqValue, d : Int, changes : SeqUpdate, stableCheckpoint : Boolean){
+    assert(v == fromValue)
+    digestChanges(changes)
+  }
 
-
+  def digestChanges(changes:SeqUpdate){
+    changes match{
+      case SeqUpdateInsert(value:Int,pos:Int,prev:SeqUpdate) =>
+        digestChanges(prev)
+        toValue.insertAtPosition(value,pos)
+      case SeqUpdateMove(fromIncluded:Int,toIncluded:Int,after:Int,flip:Boolean,prev:SeqUpdate) =>
+        digestChanges(prev)
+        toValue.move(fromIncluded,toIncluded,after,flip)
+      case SeqUpdateRemoveValue(value:Int,prev:SeqUpdate) =>
+        digestChanges(prev)
+        toValue.removeValue(value)
+      case SeqUpdateSet(s) =>
+        toValue.setValue(s)
+    }
   }
 
   override def checkInternals(c:Checker){
