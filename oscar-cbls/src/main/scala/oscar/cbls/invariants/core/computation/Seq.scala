@@ -1,7 +1,9 @@
 package oscar.cbls.invariants.core.computation
 
 import oscar.cbls.invariants.core.algo.seq.functional.{StackedUpdateUniqueIntSequence, InsertedUniqueIntSequence, ConcreteUniqueIntSequence, UniqueIntSequence}
+import oscar.cbls.invariants.core.propagation.Checker
 
+import scala.collection.immutable.SortedSet
 import scala.language.implicitConversions
 
 sealed trait SeqValue extends Value{
@@ -32,11 +34,11 @@ sealed abstract class SeqUpdateWithPrev(prev:SeqUpdate,newValue:UniqueIntSequenc
 }
 
 //after is -1 for start position
-case class SeqInsert(value:Int,pos:Int,prev:SeqUpdate)
+case class SeqUpdateInsert(value:Int,pos:Int,prev:SeqUpdate)
   extends SeqUpdateWithPrev(prev:SeqUpdate, prev.newValue.insertAtPosition(value,pos,fast=true)){
 }
 
-case class SeqMove(fromIncluded:Int,toIncluded:Int,after:Int,flip:Boolean,prev:SeqUpdate)
+case class SeqUpdateMove(fromIncluded:Int,toIncluded:Int,after:Int,flip:Boolean,prev:SeqUpdate)
   extends SeqUpdateWithPrev(prev,prev.newValue.moveAfter(fromIncluded,toIncluded,after,flip,fast=true)){
   def isSimpleFlip:Boolean = after+1 == fromIncluded && flip
   def isNop = after+1 == fromIncluded && !flip
@@ -45,15 +47,14 @@ case class SeqMove(fromIncluded:Int,toIncluded:Int,after:Int,flip:Boolean,prev:S
   def afterValue:Int = prev.newValue.valueAtPosition(after).head
 }
 
-case class SeqRemoveValue(value:Int,prev:SeqUpdate)
+case class SeqUpdateRemoveValue(value:Int,prev:SeqUpdate)
   extends SeqUpdateWithPrev(prev,prev.newValue.delete(prev.newValue.positionOfValue(value).head,fast=true)){
   def position:Int = prev.newValue.positionOfValue(value).head
 }
 
-case class Set(val value:UniqueIntSequence) extends SeqUpdate(value){
+case class SeqUpdateSet(val value:UniqueIntSequence) extends SeqUpdate(value){
   def nbUpdatesFromPreviousValue:Int = Int.MaxValue
 }
-
 
 trait SeqNotificationTarget {
   def notifySeqChanges(v: ChangingSeqValue, d: Int, changes:SeqUpdate,stableCheckpoint:Boolean)
@@ -71,16 +72,48 @@ object CBLSSeqConst{
   def apply(seq:UniqueIntSequence):CBLSSeqConst = new CBLSSeqConst(seq.regularize())
 }
 
-abstract class SeqVar(initialValue:Iterable[Int], maxPivot:Int, maxValue:Int)
-  extends ChangingSeqValue(initialValue, maxPivot, maxValue){
+class CBLSSeqVar(givenModel:Store, initialValue:UniqueIntSequence, val domain:Domain, n: String = null, maxPivot:Int = 10)
+  extends ChangingSeqValue(initialValue, maxPivot, domain.max) with Variable{
+  require(domain.min == 0)
+  require(givenModel != null)
 
+  model = givenModel
+
+  override def name: String = if (n == null) defaultName else n
+
+  //-1 for first position
+  override def insertAtPosition(value:Int,pos:Int){
+    super.insertAtPosition(value,pos)
+  }
+
+  override  def deleteValue(value:Int){
+    super.deleteValue(value)
+  }
+
+  //-1 for first position
+  override  def move(fromIncludedPosition:Int,toIncludedPosition:Int,afterPosition:Int,flip:Boolean){
+    super.move(fromIncludedPosition:Int,toIncludedPosition:Int,afterPosition:Int,flip:Boolean)
+  }
+
+  override  def setValue(seq:UniqueIntSequence) {super.setValue(seq)}
+
+  override  def :=(seq:UniqueIntSequence) {super.setValue(seq)}
+
+  def <==(i: SeqValue) {IdentitySeq(this,i)}
+}
+
+
+object CBLSSeqVar{
+  implicit val ord:Ordering[CBLSSetVar] = new Ordering[CBLSSetVar]{
+    def compare(o1: CBLSSetVar, o2: CBLSSetVar) = o1.compare(o2)
+  }
 }
 
 abstract class ChangingSeqValue(initialValue:Iterable[Int], maxPivot:Int, maxValue:Int)
   extends AbstractVariable with SeqValue{
 
   var cachedValue:UniqueIntSequence = UniqueIntSequence(initialValue,maxPivot,maxValue)
-  var mOldValue:SeqUpdate = Set(cachedValue)
+  var mOldValue:SeqUpdate = SeqUpdateSet(cachedValue)
   var updates:SeqUpdate = mOldValue
 
   override def value: UniqueIntSequence = {
@@ -97,24 +130,39 @@ abstract class ChangingSeqValue(initialValue:Iterable[Int], maxPivot:Int, maxVal
     updates.newValue
   }
 
+  override def toString:String = name + ":={" + (if(model.propagateOnToString) value else updates.newValue).mkString(",") + "}"
+
+  def toStringNoPropagate: String = name + ":=" + updates.newValue.toString()
+
   /**these can be expressed on the newValue only (oldValue should trigger an exception*/
 
   //-1 for first position
-  def insertAtPosition(value:Int,pos:Int){
-    updates = SeqInsert(value,pos,updates)
+  protected def insertAtPosition(value:Int,pos:Int){
+    updates = SeqUpdateInsert(value,pos,updates)
   }
 
-  def deleteValue(value:Int){
-    updates = SeqRemoveValue(value,updates)
+  protected def deleteValue(value:Int){
+    updates = SeqUpdateRemoveValue(value,updates)
   }
   //-1 for first position
-  def move(fromIncludedPosition:Int,toIncludedPosition:Int,afterPosition:Int,flip:Boolean){
-    updates  = SeqMove(fromIncludedPosition,toIncludedPosition,afterPosition,flip,updates)
+  protected def move(fromIncludedPosition:Int,toIncludedPosition:Int,afterPosition:Int,flip:Boolean){
+    updates  = SeqUpdateMove(fromIncludedPosition,toIncludedPosition,afterPosition,flip,updates)
   }
 
-  def set(seq:UniqueIntSequence){
-      updates = Set(value)
+  protected def setValue(seq:UniqueIntSequence){
+      updates = SeqUpdateSet(value)
   }
+
+  protected def :=(seq:UniqueIntSequence){
+    setValue(seq)
+  }
+
+  def setAsStableCheckpoint()
+
+
+
+  def rollbackToLatestCheckpoint():UniqueIntSequence
+
 
   final protected def performSeqPropagation(stableCheckpoint:Boolean): Unit = {
     val dynListElements = getDynamicallyListeningElements
@@ -136,12 +184,41 @@ abstract class ChangingSeqValue(initialValue:Iterable[Int], maxPivot:Int, maxVal
     //perfoms the changes on the mNewValue
     //when it is a stable checkpoint, we save a cached value
     if(stableCheckpoint){
-      val start = Set(updates.newValue.regularize())
+      val start = SeqUpdateSet(updates.newValue.regularize())
       cachedValue = start.value
       mOldValue = start
       updates = start
     }else{
       //TODO
     }
+  }
+}
+
+object IdentitySeq{
+  def apply(toValue:CBLSSeqVar, fromValue:SeqValue){
+    fromValue match{
+      case c:CBLSSeqConst => toValue := c.value
+      case c:ChangingSeqValue => new IdentitySeq(toValue, c)
+    }
+  }
+}
+
+class IdentitySeq(toValue:CBLSSeqVar, fromValue:ChangingSeqValue)
+  extends Invariant
+  with SeqNotificationTarget{
+
+  registerStaticAndDynamicDependency(fromValue)
+  toValue.setDefiningInvariant(this)
+  finishInitialization()
+
+  toValue := fromValue.value
+
+  override def notifySeqChanges(v : ChangingSeqValue, d : Int, changes : SeqUpdate, stableCheckpoint : Boolean){
+
+
+  }
+
+  override def checkInternals(c:Checker){
+    c.check(toValue.value equals fromValue.value)
   }
 }

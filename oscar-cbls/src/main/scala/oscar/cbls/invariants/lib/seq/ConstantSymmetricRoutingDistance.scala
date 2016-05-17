@@ -50,7 +50,7 @@ class ConstantSymmetricRoutingDistance(routes:ChangingSeqValue,
 
   private def digestUpdates(changes:SeqUpdate):Boolean = {
     changes match {
-      case SeqInsert(value : Int, pos : Int, prev : SeqUpdate) =>
+      case SeqUpdateInsert(value : Int, pos : Int, prev : SeqUpdate) =>
         //on which vehicle did we insert?
         if(!digestUpdates(prev)) return false
         val newSeq = changes.newValue
@@ -71,7 +71,7 @@ class ConstantSymmetricRoutingDistance(routes:ChangingSeqValue,
           distance(0) :+= (newDistance - oldDistance)
         }
         true
-      case x@SeqMove(fromIncluded : Int, toIncluded : Int, after : Int, flip : Boolean, prev : SeqUpdate) =>
+      case x@SeqUpdateMove(fromIncluded : Int, toIncluded : Int, after : Int, flip : Boolean, prev : SeqUpdate) =>
         //on which vehicle did we move?
         //also from --> to cannot include a vehicle start.
         if(!digestUpdates(prev)) false
@@ -155,7 +155,7 @@ class ConstantSymmetricRoutingDistance(routes:ChangingSeqValue,
           true
         }
 
-      case x@SeqRemoveValue(value : Int, prev : SeqUpdate) =>
+      case x@SeqUpdateRemoveValue(value : Int, prev : SeqUpdate) =>
         //on which vehicle did we remove?
         //on which vehicle did we insert?
         if(!digestUpdates(prev)) return false
@@ -181,7 +181,7 @@ class ConstantSymmetricRoutingDistance(routes:ChangingSeqValue,
         }
         true
 
-      case Set(value : UniqueIntSequence) =>
+      case SeqUpdateSet(value : UniqueIntSequence) =>
         if(value quickSame savedCheckpoint){
           restoreCheckpoint()
           true

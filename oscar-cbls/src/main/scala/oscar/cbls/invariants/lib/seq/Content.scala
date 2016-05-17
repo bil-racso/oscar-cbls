@@ -37,21 +37,21 @@ case class Content(v:SeqValue)
   //true if could be incremental, false otherwise
   def digestUpdates(changes : SeqUpdate):Boolean = {
     changes match{
-      case SeqInsert(value:Int,pos:Int,prev:SeqUpdate) =>
+      case SeqUpdateInsert(value:Int,pos:Int,prev:SeqUpdate) =>
         if(digestUpdates(prev)) {
           updatesFromThisCheckpointInReverseOrder = QList((value,true),updatesFromThisCheckpointInReverseOrder)
           this :+= value
           true
         }else false
-      case SeqMove(fromIncluded:Int,toIncluded:Int,after:Int,flip:Boolean,prev:SeqUpdate) =>
+      case SeqUpdateMove(fromIncluded:Int,toIncluded:Int,after:Int,flip:Boolean,prev:SeqUpdate) =>
         digestUpdates(prev)
-      case SeqRemoveValue(value:Int,prev:SeqUpdate) =>
+      case SeqUpdateRemoveValue(value:Int,prev:SeqUpdate) =>
         if(digestUpdates(prev)) {
           updatesFromThisCheckpointInReverseOrder = QList((value,false),updatesFromThisCheckpointInReverseOrder)
           this :-= value
           true
         }else false
-      case Set(value:UniqueIntSequence) =>
+      case SeqUpdateSet(value:UniqueIntSequence) =>
         if(value quickSame savedCheckpoint) {
           //undo since last checkpoint
           comeBackToSavedCheckPoint()

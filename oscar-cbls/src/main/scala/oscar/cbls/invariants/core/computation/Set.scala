@@ -44,8 +44,8 @@ object SetValue{
 abstract class ChangingSetValue(initialValue:SortedSet[Int], initialDomain:Domain)
   extends AbstractVariable with SetValue{
   private var privatedomain:Domain = initialDomain
-  private var Value: SortedSet[Int] = initialValue
-  private var OldValue:SortedSet[Int] = Value
+  private var m_NewValue: SortedSet[Int] = initialValue
+  private var OldValue:SortedSet[Int] = m_NewValue
   private[this] var domainSizeDiv10 = privatedomain.size/10
   def domain:Domain = privatedomain
 
@@ -56,14 +56,14 @@ abstract class ChangingSetValue(initialValue:SortedSet[Int], initialDomain:Domai
     domainSizeDiv10 = privatedomain.size/10
   }
 
-  override def toString:String = name + ":={" + (if(model.propagateOnToString) value else Value).mkString(",") + "}"
+  override def toString:String = name + ":={" + (if(model.propagateOnToString) value else m_NewValue).mkString(",") + "}"
 
   /** this method is a toString that does not trigger a propagation.
     * use this when debugguing your software.
     * you should specify to your IDE to render variable objects using this method isntead of the toString method
     * @return a string similar to the toString method
     */
-  def toStringNoPropagate: String = name + ":={" + Value.foldLeft("")(
+  def toStringNoPropagate: String = name + ":={" + m_NewValue.foldLeft("")(
     (acc,intval) => if(acc.equalsIgnoreCase("")) ""+intval else acc+","+intval) + "}"
 
   /**The values that have bee impacted since last propagation was performed.
@@ -74,7 +74,7 @@ abstract class ChangingSetValue(initialValue:SortedSet[Int], initialDomain:Domai
   private[this] var nbTouched:Int = 0
 
   def insertValue(v:Int){
-    if (!Value.contains(v)) insertValueNotPreviouslyIn(v)
+    if (!m_NewValue.contains(v)) insertValueNotPreviouslyIn(v)
   }
 
   def insertValueNotPreviouslyIn(v:Int){
@@ -83,13 +83,13 @@ abstract class ChangingSetValue(initialValue:SortedSet[Int], initialDomain:Domai
       nbTouched += 1
       if(nbTouched > domainSizeDiv10) nbTouched = -1
     }
-    Value +=v
+    m_NewValue +=v
     notifyChanged()
   }
 
 
   def deleteValue(v:Int){
-    if (Value.contains(v)) deleteValuePreviouslyIn(v)
+    if (m_NewValue.contains(v)) deleteValuePreviouslyIn(v)
   }
 
   def deleteValuePreviouslyIn(v:Int){
@@ -98,7 +98,7 @@ abstract class ChangingSetValue(initialValue:SortedSet[Int], initialDomain:Domai
       nbTouched += 1
       if(nbTouched > domainSizeDiv10) nbTouched = -1
     }
-    Value -=v
+    m_NewValue -=v
     notifyChanged()
   }
 
@@ -110,7 +110,7 @@ abstract class ChangingSetValue(initialValue:SortedSet[Int], initialDomain:Domai
     removedValues = null
     addedValues = null
     nbTouched = -1
-    Value = v
+    m_NewValue = v
     notifyChanged()
   }
 
@@ -120,16 +120,16 @@ abstract class ChangingSetValue(initialValue:SortedSet[Int], initialDomain:Domai
   final protected def performSetPropagation(){
     if(getDynamicallyListeningElements.isEmpty){
       //no need to do it gradually
-      OldValue=Value
+      OldValue=m_NewValue
     }else{
       val (addedValues,deletedValues):(Iterable[Int],Iterable[Int]) = if (nbTouched == -1) {
         //need to call every listening one, so gradual approach required
-        if(Value == OldValue) (List.empty,List.empty) else (Value.diff(OldValue),OldValue.diff(Value))
+        if(m_NewValue == OldValue) (List.empty,List.empty) else (m_NewValue.diff(OldValue),OldValue.diff(m_NewValue))
       }else {
         var addedUnique = SortedSet.empty[Int] ++ this.addedValues
         var removedUnique = SortedSet.empty[Int] ++ this.removedValues
         for(inter <- addedUnique.intersect(removedUnique)){
-          val inNew = Value.contains(inter)
+          val inNew = m_NewValue.contains(inter)
           val inOld = OldValue.contains(inter)
           if(!inOld || inNew) {
             removedUnique = removedUnique - inter
@@ -141,7 +141,7 @@ abstract class ChangingSetValue(initialValue:SortedSet[Int], initialDomain:Domai
         (addedUnique,removedUnique)
       }
 
-      assert((OldValue ++ addedValues -- deletedValues).equals(Value))
+      assert((OldValue ++ addedValues -- deletedValues).equals(m_NewValue))
 
       if(addedValues.nonEmpty || deletedValues.nonEmpty) {
         val dynListElements = getDynamicallyListeningElements
@@ -154,15 +154,15 @@ abstract class ChangingSetValue(initialValue:SortedSet[Int], initialDomain:Domai
           assert({
             this.model.NotifiedInvariant = inv.asInstanceOf[Invariant]; true
           })
-          inv.notifySetChanges(this, e._2, addedValues, deletedValues, OldValue, Value)
+          inv.notifySetChanges(this, e._2, addedValues, deletedValues, OldValue, m_NewValue)
           assert({
             this.model.NotifiedInvariant = null; true
           })
         }
       }
       //puis, on fait une affectation en plus, pour garbage collecter l'ancienne structure de donnees.
-      assert(OldValue.intersect(Value).size == Value.size, "mismatch: OLD" + OldValue + " New:" + Value)
-      OldValue=Value
+      assert(OldValue.intersect(m_NewValue).size == m_NewValue.size, "mismatch: OLD" + OldValue + " New:" + m_NewValue)
+      OldValue=m_NewValue
     }
     this.addedValues = null
     this.removedValues = null
@@ -177,9 +177,9 @@ abstract class ChangingSetValue(initialValue:SortedSet[Int], initialDomain:Domai
     if (NewValue){
       assert(model.checkExecutingInvariantOK(definingInvariant),
         "variable [" + this + "] queried for latest val by non-controlling invariant")
-      Value
+      m_NewValue
     }else{
-      if (model == null) return Value
+      if (model == null) return m_NewValue
       //if (definingInvariant == null && !model.propagating) return Value
       model.propagate(this)
       OldValue
@@ -196,8 +196,8 @@ abstract class ChangingSetValue(initialValue:SortedSet[Int], initialDomain:Domai
   protected def :-=(i:Int) {this.deleteValue(i)}
 
   override def checkInternals(c:Checker){
-    assert(this.definingInvariant == null || OldValue.intersect(Value).size == Value.size,
-      "internal error: " + "Value: " + Value + " OldValue: " + OldValue)
+    assert(this.definingInvariant == null || OldValue.intersect(m_NewValue).size == m_NewValue.size,
+      "internal error: " + "Value: " + m_NewValue + " OldValue: " + OldValue)
   }
 }
 trait SetNotificationTarget {

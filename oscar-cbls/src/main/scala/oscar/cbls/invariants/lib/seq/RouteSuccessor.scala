@@ -22,13 +22,13 @@ case class RouteSuccessor(routes:ChangingSeqValue, v:Int, successorValues:Array[
 
   def computeStartValuesOfImpactedZone(changes:SeqUpdate):Option[SortedSet[Int]] = {
     changes match {
-      case s@SeqInsert(value : Int, pos : Int, prev : SeqUpdate) =>
+      case s@SeqUpdateInsert(value : Int, pos : Int, prev : SeqUpdate) =>
         computeStartValuesOfImpactedZone(prev) match{
           case None => None
           case Some(startsOfImpactedZone) => Some(startsOfImpactedZone + value + RoutingConventionMethods.routingPredVal2Val(value,changes.newValue,v))
         }
 
-      case SeqMove(fromIncluded : Int, toIncluded : Int, after : Int, flip : Boolean, prev : SeqUpdate) =>
+      case SeqUpdateMove(fromIncluded : Int, toIncluded : Int, after : Int, flip : Boolean, prev : SeqUpdate) =>
         computeStartValuesOfImpactedZone(prev) match{
           case None => None
           case Some(startsOfImpactedZone) => Some(
@@ -39,7 +39,7 @@ case class RouteSuccessor(routes:ChangingSeqValue, v:Int, successorValues:Array[
               changes.newValue.valueAtPosition(after).head)
         }
 
-      case SeqRemoveValue(value : Int, prev : SeqUpdate) =>
+      case SeqUpdateRemoveValue(value : Int, prev : SeqUpdate) =>
         computeStartValuesOfImpactedZone(prev) match{
           case None => None
           case Some(startsOfImpactedZone) => Some(
@@ -47,7 +47,7 @@ case class RouteSuccessor(routes:ChangingSeqValue, v:Int, successorValues:Array[
               RoutingConventionMethods.routingPredPos2Val(value,changes.newValue,v) + value)
         }
 
-      case Set(value : UniqueIntSequence) =>
+      case SeqUpdateSet(value : UniqueIntSequence) =>
         if (value quickSame routes.value){
           Some(SortedSet.empty[Int]) //we are starting from the previous value
         }else{
