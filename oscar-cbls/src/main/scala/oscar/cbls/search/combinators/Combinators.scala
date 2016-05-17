@@ -17,11 +17,12 @@
 package oscar.cbls.search.combinators
 
 import java.awt.{Color, Dimension}
-import javax.swing.JFrame
+import javax.swing.{SwingUtilities, JFrame}
 
 import oscar.cbls.invariants.core.algo.heap.{BinomialHeap, BinomialHeapWithMove}
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.objective.{CascadingObjective, Objective}
+import oscar.cbls.routing.model.VRP
 import oscar.cbls.search.StopWatch
 import oscar.cbls.search.core.{NoMoveFound, _}
 import oscar.cbls.search.move._
@@ -29,7 +30,9 @@ import oscar.cbls.visual.FunctionGraphic.{AdjustMaxValue, Zoom}
 import oscar.examples.cbls.routing.visual.FunctionGraphic.{ObjFunctionGraphicContainer, ObjFunctionGraphic}
 import oscar.visual.VisualFrame
 
+import scala.collection.mutable.ListBuffer
 import scala.language.implicitConversions
+import scala.util.control.Breaks._
 
 //TODO: les combinateurs devraient avoir une liste de voisinnages (ou neighborhood*), pas juste un seul.
 //TODO: proposer du benchmarking des voisinages (nombre de moves trouvés, gain moyen sur une fct objectif, temps de recherche, nombre de recherche effectuées, ...)
@@ -76,11 +79,14 @@ abstract class NeighborhoodCombinatorNoProfile(a: Neighborhood*) extends Neighbo
   * @author fabian.germeau@student.vinci.be
   */
 class ShowObjectiveFunction(a: Neighborhood, obj: Objective, stopWatch: StopWatch, withZoom:Boolean, neighborhoodColors: String => Color) extends NeighborhoodCombinator(a){
-  //objGraphic is an internal frame that contains the curve itself and visualFrame is a basic frame that contains objGraphic
+  //objGraphic is a panel that contains the curve itself and f is a basic frame that contains objGraphic
   val objGraphic = if(withZoom) new ObjFunctionGraphicContainer(dimension = new Dimension(940,500)) with Zoom
-                    else new ObjFunctionGraphicContainer(dimension = new Dimension(960,540)) with AdjustMaxValue
+  else new ObjFunctionGraphicContainer(dimension = new Dimension(960,540)) with AdjustMaxValue
+
+  new Thread(objGraphic,"Graphic Thread").start()
+
   val f = new JFrame("The Objective Function")
-  f.setPreferredSize(new Dimension(960,540))
+  f.setPreferredSize(new Dimension(960, 540))
   f.add(objGraphic)
   f.pack()
   f.setVisible(true)
@@ -98,8 +104,7 @@ class ShowObjectiveFunction(a: Neighborhood, obj: Objective, stopWatch: StopWatc
     and then we write the curve
    */
   def notifyNewObjValue(m:Move): Unit ={
-    objGraphic.notifyNewObjectiveValue(obj.value,stopWatch.getWatch,m.neighborhoodName,neighborhoodColors(m.neighborhoodName))
-    objGraphic.drawGlobalCurve()
+    objGraphic.notifyNewObjectiveValue(obj.value, stopWatch.getWatch, m.neighborhoodName, neighborhoodColors(m.neighborhoodName))
   }
 }
 
@@ -1123,8 +1128,6 @@ case class DynAndThen[FirstMoveType<:Move](a:Neighborhood with SupportForAndThen
   override def getMove(obj: Objective, acceptanceCriteria: (Int, Int) => Boolean): SearchResult = {
 
 
-    val enclosingDynAndthen = this
-
     val oldObj: Int = obj.valueNoSearch
 
     //the acceptance criterion is on the diff between the oldObj and the newObj over the two consecutive moves
@@ -1151,6 +1154,7 @@ case class DynAndThen[FirstMoveType<:Move](a:Neighborhood with SupportForAndThen
       override def model = obj.model
 
       override def valueNoSearch: Int = obj.valueNoSearch
+
       override def value: Int = {
 
         val intermediaryObjValue =
@@ -1182,7 +1186,7 @@ case class DynAndThen[FirstMoveType<:Move](a:Neighborhood with SupportForAndThen
         currentB.getMove(new secondInstrumentedObjective(obj), secondAcceptanceCriteria) match {
           case NoMoveFound => Int.MaxValue
           case MoveFound(m: Move) =>
-            if(compositeMove == null || m.objAfter < compositeMove.objAfter) compositeMove = CompositeMove(List(currentMoveFromA, m), m.objAfter,enclosingDynAndthen.toString)
+            if(compositeMove == null || m.objAfter < compositeMove.objAfter) compositeMove = CompositeMove(List(currentMoveFromA, m), m.objAfter,"DynAndThen")
             m.objAfter
         }
       }
@@ -1195,8 +1199,9 @@ case class DynAndThen[FirstMoveType<:Move](a:Neighborhood with SupportForAndThen
       case MoveFound(m: Move) => if(compositeMove == null) {
         println("WARNING: " + this + " the neighborhood on the left returned a move without querying the objective value, the move of andThen is therefore not a composite")
         m
-      }else
+      }else{
         compositeMove
+      }
     }
   }
 
@@ -1578,7 +1583,7 @@ class OverrideObjective(a: Neighborhood, overridingObjective: Objective) extends
   override def getMove(obj: Objective, acceptanceCriterion: (Int, Int) => Boolean): SearchResult = getMove(overridingObjective, acceptanceCriterion)
 }
 
-class SlidingProfile(a:Neighborhood, windowsSize:Int)
+//class SlidingProfile(a:Neighborhood, windowsSize:Int)
 
 /**
  * collects statistics about the run time and progress achieved by neighborhood a

@@ -131,7 +131,7 @@ class FunctionObjective(f:()=>Int, m:Store = null) extends Objective{
 trait Objective {
 
   protected def nSpace(n:Int):String = if(n <= 0) "" else " " + nSpace(n-1)
-  override def toString: String = detailedString(true)
+  override def toString: String = detailedString(false)
   def detailedString(short:Boolean, indent:Int = 0):String
 
   def model:Store
@@ -143,7 +143,6 @@ trait Objective {
    * @return
    */
   def valueNoSearch:Int = value
-
   /**
    * This method returns the actual objective value.
    * It is easy to override it, and perform a smarter propagation if needed.

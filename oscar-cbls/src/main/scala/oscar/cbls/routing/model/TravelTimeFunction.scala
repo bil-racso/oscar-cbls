@@ -123,6 +123,7 @@ trait TimeWindow extends Time with StrongConstraints {
 
   def setEndWindow(node: Int, endWindow: Int) {
     require(node >= V, "only for specifying time windows on nodes, not on vehicles")
+    setNodeInformation(node,getNodeInformation(node) + "\nEnd of time window : " + endWindow)
     strongConstraints.post(LE(IntITE(next(node), 0, leaveTime(node), N - 1), endWindow).nameConstraint("end of time window on node " + node))
   }
 
@@ -175,6 +176,57 @@ trait WaitingDuration extends TimeWindow {
 trait TimeClosestNeighbors extends ClosestNeighbors with TravelTimeAsFunction {
   final override protected def getDistance(from: Int, to: Int): Int = {
     travelDurationMatrix.getMinTravelDuration(from, to)
+  }
+}
+
+/**
+  * @author fabian.germeau@student.vinci.be
+  */
+trait PositionInTime extends Time with PositionInRouteAndRouteNr{
+  /**
+    * This method generate all the nodes whose arrival time is before the specified node
+    * It's similar to the getAuthorizedInsertionPositionForPickup/delivery
+    * excepts that this one take account of the time window
+    * (mainly used during the insertion phase)
+    *
+    * @param node the index of the node
+    * @return a list of node
+    */
+  def getRoutedNodesBeforeTime()(node:Int): Iterable[Int] ={
+    var res:List[Int] = Nil
+    val time = leaveTime(node).value
+    for(v <- 0 until V){
+      val route = getRouteOfVehicle(v)
+      var index = 0
+      while(index < route.length && arrivalTimeToNext(route(index)).value <= time){
+        res = route(index) :: res
+        index += 1
+      }
+    }
+    res
+  }
+
+  /**
+    * This method generate all the nodes whose arrival time is before the specified node
+    * and whose route is contained in the list in parameter
+    * @param r a list of valid route
+    * @param node the index of the node
+    * @return a list of node
+    */
+  def getRoutedNodesBeforeTimeOfRoute(r:List[Int])(node:Int):Iterable[Int] ={
+    val res = getRoutedNodesBeforeTime()(node)
+    res.foldLeft(List.empty[Int])((a,b) => if(r.contains(routeNr(b).value))b::a else a)
+  }
+
+  /**
+    * This method generate all the nodes whose arrival time is before the specified node
+    * and whose route isn't the same as the node's one
+    * @param node the index of the node
+    * @return a list of node
+    */
+  def getRoutedNodesBeforeTimeNotSameRoute()(node:Int):Iterable[Int] ={
+    val res = getRoutedNodesBeforeTime()(node)
+    res.foldLeft(List.empty[Int])((a,b) => if(routeNr(b).value != routeNr(node).value)b::a else a)
   }
 }
 

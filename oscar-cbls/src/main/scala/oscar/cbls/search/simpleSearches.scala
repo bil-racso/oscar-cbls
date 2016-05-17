@@ -1,10 +1,9 @@
 package oscar.cbls.search
 
-import oscar.cbls.constraints.core.ConstraintSystem
-import oscar.cbls.invariants.core.computation.{InvariantHelper, CBLSIntVar, CBLSSetVar, IntValue}
+import oscar.cbls.invariants.core.computation.{CBLSIntVar, InvariantHelper}
 import oscar.cbls.modeling.AlgebraTrait
 import oscar.cbls.objective.Objective
-import oscar.cbls.search.algo.{LazyMap, KSmallest, HotRestart, IdenticalAggregator}
+import oscar.cbls.search.algo.{HotRestart, IdenticalAggregator, KSmallest, LazyMap}
 import oscar.cbls.search.core._
 import oscar.cbls.search.move._
 

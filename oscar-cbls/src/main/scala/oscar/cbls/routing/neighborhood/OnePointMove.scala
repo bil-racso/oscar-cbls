@@ -46,11 +46,8 @@ case class OnePointMove(nodesPrecedingNodesToMove: () => Iterable[Int],
   //the indice to start with for the exploration
   var startIndice: Int = 0
 
-
-  var beforeMovedPoint:Int = 0
-  var movedPoint:Int = 0
-  var insertionPoint:Int = 0
   override def exploreNeighborhood() {
+
     val iterationSchemeOnZone =
       if (hotRestart && !best) HotRestart(nodesPrecedingNodesToMove(), startIndice)
       else nodesPrecedingNodesToMove()
@@ -60,7 +57,6 @@ case class OnePointMove(nodesPrecedingNodesToMove: () => Iterable[Int],
     val relevantNeighborsNow = relevantNeighbors()
 
     val beforeMovedPointsIt = iterationSchemeOnZone.iterator
-    println(nodesPrecedingNodesToMove().toList)
     while (beforeMovedPointsIt.hasNext) {
       beforeMovedPoint = beforeMovedPointsIt.next()
       if (vrp.isRouted(beforeMovedPoint)) {
@@ -87,6 +83,9 @@ case class OnePointMove(nodesPrecedingNodesToMove: () => Iterable[Int],
     }
   }
 
+  var beforeMovedPoint:Int = 0
+  var movedPoint:Int = 0
+  var insertionPoint:Int = 0
 
   override def instantiateCurrentMove(newObj: Int) =
     OnePointMoveMove(beforeMovedPoint, movedPoint, insertionPoint, newObj, this, neighborhoodName)

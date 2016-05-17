@@ -6,17 +6,17 @@ import oscar.cbls.invariants.lib.numeric.{Abs, Sum}
 import oscar.cbls.routing.model._
 import oscar.cbls.routing.neighborhood._
 import oscar.cbls.search.StopWatch
-import oscar.cbls.search.combinators.{RoundRobin, Profile, BestSlopeFirst}
+import oscar.cbls.search.combinators._
 import oscar.cbls.modeling.Algebra._
-import oscar.visual.VisualFrame
 import scala.language.implicitConversions
+import scala.io.StdIn.readLine
 
 /**
  * Created by rdl on 15-12-15.
  */
 
 
-class MyVRP(n:Int, v:Int, model:Store, distanceMatrix: Array[Array[Int]],unroutedPenaltyWeight:Int, loadBalancing:Double = 1.0)
+class MyVRP(n:Int, v:Int, model:Store, distanceMatrix: Array[Array[Int]], positions:Array[(Int,Int)], mapSize:Int, unroutedPenaltyWeight:Int, loadBalancing:Double = 1.0)
   extends VRP(n,v,model)
   with HopDistanceAsObjectiveTerm
   with HopClosestNeighbors
@@ -24,12 +24,15 @@ class MyVRP(n:Int, v:Int, model:Store, distanceMatrix: Array[Array[Int]],unroute
   with NodesOfVehicle
   with PenaltyForUnrouted
   with hopDistancePerVehicle
+  with Predecessors
+  with RoutingMap
 with PenaltyForEmptyRouteAsObjectiveTerm{ //just for the fun of it
 
   installCostMatrix(distanceMatrix)
   setUnroutedPenaltyWeight(unroutedPenaltyWeight)
   closeUnroutedPenaltyWeight()
   computeClosestNeighbors()
+  setMapInfo(positions,mapSize)
   println("end compute closest, install matrix")
   installHopDistancePerVehicle()
   println("end install matrix, posting constraints")
@@ -50,18 +53,19 @@ object RoutingTest extends App with StopWatch{
 
   this.startWatch()
 
-  val n = 200
+  val n = 300
   val v = 5
 
   println("RoutingTest(n:" + n + " v:" + v + ")")
 
-  val (distanceMatrix,positions) = RoutingMatrixGenerator(n,10000)
+  val mapSize = 10000
+  val (distanceMatrix,positions) = RoutingMatrixGenerator(n,mapSize)
 
   println("compozed matrix " + getWatch + "ms")
 
   val model = new Store()
 
-  val vrp = new MyVRP(n,v,model,distanceMatrix,100000)
+  val vrp = new MyVRP(n,v,model,distanceMatrix,positions,mapSize,100000)
 
   model.close()
 
@@ -111,12 +115,22 @@ object RoutingTest extends App with StopWatch{
     relevantNeighbors = () => vrp.kNearest(40),
     vehicles=() => vrp.vehicles.toList))
 
+  val linKernighanOneVehicle = (nb:Int) => Profile(new LinKernighan(nb,vrp))
+  val linKernighanMultiVehicle = Profile(new RoundRobin(List.tabulate(v)(route => new LinKernighan(route,vrp))))
+  /*val kernighanSearchMultiVehicle = insertPoint exhaust new BestSlopeFirst (List(linKernighanMulti, new MaxMoves(segExchange,5), new MaxMoves(threeOpt,5), onePointMove)) showObjectiveFunction vrp.objectiveFunction afterMove {
+    vrp.drawRoutes()
+  }
+  kernighanSearchMulti.verbose = 1*/
+
+  /*val kernighanSearchOne = insertPoint exhaust linKernighanOneVehicle(0) showObjectiveFunction(vrp.objectiveFunction,withZoom = true) afterMove vrp.drawRoutes()
+  kernighanSearchOne.verbose = 1*/
+
   val search = new RoundRobin(List(insertPoint,onePointMove),10) exhaust
-                      new BestSlopeFirst(List(onePointMove, threeOpt, segExchange), refresh = n / 2) showObjectiveFunction
-    vrp.getObjective() // exhaust onePointMove exhaust segExchange//threeOpt //(new BestSlopeFirst(List(onePointMove,twoOpt,threeOpt)))
+    new BestSlopeFirst(List(onePointMove,twoOpt,threeOpt,segExchange), refresh = n / 2) showObjectiveFunction vrp.getObjective() afterMove vrp.drawRoutes()
+  // exhaust onePointMove exhaust segExchange//threeOpt //(new BestSlopeFirst(List(onePointMove,twoOpt,threeOpt)))
 
   search.verbose = 1
-//    search.verboseWithExtraInfo(3,() => vrp.toString)
+  //search.verboseWithExtraInfo(3,() => vrp.toString)
   //segExchange.verbose = 3
 
   def launchSearch(): Unit ={
@@ -129,5 +143,10 @@ object RoutingTest extends App with StopWatch{
     println(search.profilingStatistics)
   }
 
-  launchSearch()
+  new Thread(new Runnable {
+    override def run(): Unit = {
+      launchSearch()
+    }
+  },"Search Thread").start()
+
 }

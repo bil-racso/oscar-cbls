@@ -26,7 +26,7 @@ import javax.swing._
 
 import oscar.cbls.invariants.core.computation.IntValue
 import oscar.cbls.search.StopWatch
-import oscar.cbls.visual.FunctionGraphic.Zoom
+import oscar.cbls.visual.FunctionGraphic.{AdjustMaxValue, Zoom}
 import oscar.examples.cbls.routing.visual.ColorGenerator
 import oscar.examples.cbls.routing.visual.FunctionGraphic._
 import oscar.examples.cbls.routing.visual.MatrixMap.RoutingMatrixVisual
@@ -45,12 +45,13 @@ object DemoRoutingView extends StopWatch{
   var mapSize:Int = Int.MaxValue
   var pointsList:scala.List[(Int, Int)] = Nil
   var colorValues:Array[Color] = null
-  var movesCounter:Int = 0
-  val movesBeforeRepaint:Int = 10
 
   val routingMap = new RoutingMatrixVisual(pickupAndDeliveryPoints = false)
+  val routingMapThread = new Thread(routingMap, "Routing map Thread")
 
-  val objGraph = new ObjFunctionGraphicContainer(dimension = new Dimension(f.getWidth-routingMap.getWidth,360)) with Zoom
+  val objGraph = new ObjFunctionGraphicContainer(dimension = new Dimension(f.getWidth-routingMap.getWidth,360)) with AdjustMaxValue
+  val objGraphThread = new Thread(objGraph,"Graphic Thread")
+
   val result = new JPanel()
   val carsPanel = new JPanel()
   val routesPanel = new JPanel()
@@ -136,12 +137,14 @@ object DemoRoutingView extends StopWatch{
 
     routingMap.setPreferredSize(new Dimension(f.getHeight - tb.getHeight,f.getHeight - tb.getHeight))
     routingMap.setSize(new Dimension(f.getHeight - tb.getHeight,f.getHeight - tb.getHeight))
+
+
     mainPanel.add(routingMap,BorderLayout.WEST)
 
     result.setSize(new Dimension(f.getWidth - routingMap.getWidth, f.getHeight - tb.getHeight))
     result.setLayout(new GridLayout(3,1))
 
-    objGraph.setSize(f.getWidth-routingMap.getWidth,360)
+    objGraph.setSize(new Dimension(f.getWidth-routingMap.getWidth,360))
     result.add(objGraph)
 
     carsPanel.setLayout(new BorderLayout())
@@ -218,11 +221,8 @@ object DemoRoutingView extends StopWatch{
   }
 
   def drawMove(routes:scala.List[scala.List[Int]],objInfo:(Int,Long,String), hopDistances:Array[IntValue]): Unit ={
-    movesCounter += 1
-
-    if(movesCounter%movesBeforeRepaint == 0)routingMap.drawRoutes()
+    routingMap.setMustRefresh(true,routes)
     objGraph.notifyNewObjectiveValue(objInfo._1,objInfo._2,objInfo._3,ColorGenerator.generateColorFromHash(objInfo._3.hashCode))
-    objGraph.validate()
     updateRoutes(hopDistances)
   }
 
@@ -264,12 +264,15 @@ object DemoRoutingView extends StopWatch{
       }
     }
     f.validate()
+
+    Thread.sleep(200)
+    routingMapThread.interrupt()
+    objGraphThread.interrupt()
   }
 
   def resetProblem() = {
     mapSize = Int.MaxValue
     pointsList = Nil
-    movesCounter = 0
     routingMap.clear()
     objGraph.clear()
     controller.resetProblem
@@ -279,9 +282,9 @@ object DemoRoutingView extends StopWatch{
   }
 
   def resolveProblem() = {
+    objGraphThread.start()
+    routingMapThread.start()
     if(!controller.resolveProblem)JOptionPane.showMessageDialog(f, "Please first initiate the problem")
-    routingMap.drawRoutes()
-    objGraph.drawGlobalCurve()
   }
 
 }

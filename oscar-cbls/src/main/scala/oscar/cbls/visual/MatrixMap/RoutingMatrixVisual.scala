@@ -20,16 +20,16 @@ package oscar.examples.cbls.routing.visual.MatrixMap
 import java.awt.BorderLayout
 import javax.swing.{JPanel, JInternalFrame}
 
-import oscar.cbls.routing.model.{PickupAndDeliveryCustomers, VRP}
+import oscar.cbls.routing.model.{PDP,VRP}
 
 import scala.swing._
 
 /**
+  * This class is directly used by the DemoRoutingView object and indirectly used by the trait in VRP/PDP
+  *
   * @author fabian.germeau@student.vinci.be
   */
-
-
-class RoutingMatrixVisual(title:String = "Routing map", pickupAndDeliveryPoints: Boolean = false) extends JPanel{
+class RoutingMatrixVisual(title:String = "Routing map", pickupAndDeliveryPoints: Boolean = false) extends JPanel with Runnable{
   setLayout(new BorderLayout())
 
   val routingMatrix = {
@@ -37,6 +37,36 @@ class RoutingMatrixVisual(title:String = "Routing map", pickupAndDeliveryPoints:
       new RoutingMatrixMap with PickupAndDeliveryPoints
     else
       new RoutingMatrixMap}
+
+  var mustRefresh = false
+
+  /**
+    * The run method of the thread, it refresh the map every 100 milli sec
+    * If you think that's too much do not hesitate to change it
+    */
+  def run(): Unit ={
+    while (true) {
+      try {
+        Thread.sleep(100)
+        if (mustRefresh) {
+          routingMatrix.drawRoutes()
+          setMustRefresh(false)
+        }
+      }catch{
+        case ie:InterruptedException => return
+        case e:Exception => e.printStackTrace()
+      }
+    }
+  }
+
+  //This method tells whether or not we have to refresh the map
+  def setMustRefresh(newVal:Boolean,routes:List[List[Int]] = null): Unit=synchronized{
+    assert(routingMatrix.pointsList != Nil,"The list of points is not set")
+    assert(routingMatrix.mapSize != 0,"The map size is not set")
+    mustRefresh = newVal
+    if(newVal)
+      routingMatrix.routes = routes
+  }
 
   def drawRoutes(): Unit ={
     routingMatrix.drawRoutes()
@@ -62,7 +92,7 @@ class RoutingMatrixVisual(title:String = "Routing map", pickupAndDeliveryPoints:
 
   def setVRP(vrp:VRP): Unit ={
     vrp match{
-      case pdptwVRP:VRP with PickupAndDeliveryCustomers => routingMatrix.setVRP(pdptwVRP)
+      case pdptwVRP:PDP => routingMatrix.setVRP(pdptwVRP)
       case _ => routingMatrix.setVRP(vrp)
     }
   }
@@ -73,40 +103,4 @@ class RoutingMatrixVisual(title:String = "Routing map", pickupAndDeliveryPoints:
   }
   add(routingMatrix, BorderLayout.CENTER)
   setVisible(true)
-}
-
-
-class RoutingMatrixVisualWithAttribute(title:String = "Routing map",
-                                       vrp:VRP,
-                                       mapSize:Int,
-                                       pointsList:scala.List[(Int,Int)],
-                                       colorValues:Array[Color],
-                                       pickupAndDeliveryPoints: Boolean = false,
-                                       dimension:Dimension = new Dimension(960,540))
-  extends RoutingMatrixVisual(pickupAndDeliveryPoints = pickupAndDeliveryPoints){
-  setPreferredSize(dimension)
-  setSize(dimension)
-  routingMatrix.setPreferredSize(dimension)
-  routingMatrix.setSize(dimension)
-  routingMatrix.setVRP(vrp)
-  routingMatrix.setMapSize(mapSize)
-  routingMatrix.setPointsList(pointsList)
-  routingMatrix.setColorValues(colorValues)
-}
-
-class PickupAndDeliveryMatrixVisualWithAttribute(title:String = "Pickup And Delivery map",
-                                                 vrp:VRP,
-                                                 mapSize:Int,
-                                                 pointsList:scala.List[(Int,Int)],
-                                                 colorValues:Array[Color],
-                                                 dimension:Dimension = new Dimension(960,540))
-  extends RoutingMatrixVisual(pickupAndDeliveryPoints = true){
-  setPreferredSize(dimension)
-  setSize(dimension)
-  routingMatrix.setPreferredSize(dimension)
-  routingMatrix.setSize(dimension)
-  routingMatrix.setVRP(vrp)
-  routingMatrix.setMapSize(mapSize)
-  routingMatrix.setPointsList(pointsList)
-  routingMatrix.setColorValues(colorValues)
 }

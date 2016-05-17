@@ -20,12 +20,17 @@ package oscar.examples.cbls.routing.visual
 import java.awt.Color
 
 /**
-  * The utility of this object is to generate a pseudo-random array of color.
-  * For the same amount of color needed, the returned array will always contain the same colors
-  * but in a different order.
+  * The utility of this object is to generate color(s).
   * @author fabian.germeau@student.vinci.be
   */
 object ColorGenerator {
+  /**
+    * This method generate random colors
+    * For the same amount of color needed, the returned array will always contain the same colors
+    * but in a different order.
+    * @param number the number of color to generate
+    * @return
+    */
   def generateRandomColors(number:Int): Array[Color] ={
     val maxColorNumber = getMaxColorNumber(number)
     val colorValues = new Array[Color](Math.pow(maxColorNumber,3).toInt)

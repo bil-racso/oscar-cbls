@@ -26,7 +26,7 @@ import javax.swing.{Timer, JButton}
 
 import oscar.cbls.search.StopWatch
 import oscar.visual.VisualDrawing
-import oscar.visual.shapes.{VisualRectangle, VisualLine, VisualText}
+import oscar.visual.shapes.{VisualShape, VisualRectangle, VisualLine, VisualText}
 
 import scala.collection.mutable.ListBuffer
 import scala.swing.event.ActionEvent
@@ -62,7 +62,7 @@ import scala.swing.event.ActionEvent
   * @author fabian.germeau@student.vinci.be
   */
 
-abstract class FunctionGraphic() extends VisualDrawing(false,false) with StopWatch with ActionListener{
+abstract class FunctionGraphic() extends VisualDrawing(false,false) with StopWatch{
 
   val maxWidth = () => getWidth -10
   val minWidth = 70
@@ -98,8 +98,6 @@ abstract class FunctionGraphic() extends VisualDrawing(false,false) with StopWat
   //A list buffer that contains the color of the neighborhood that has found the current move
   val xColorValues:ListBuffer[Color] = new ListBuffer[Color]
 
-  val timer:Timer = new Timer(1000,this)
-
   setLayout(new BorderLayout())
 
   //We remove the unwanted listener inherited from VisualDrawing
@@ -112,17 +110,17 @@ abstract class FunctionGraphic() extends VisualDrawing(false,false) with StopWat
     super.clear()
   }
 
-  def drawGlobalCurve()
+  override def addShape(shape: VisualShape, repaintAfter: Boolean = true): Unit ={
+    super.addShape(shape,false)
+  }
+
+  def drawGlobalCurve(): Unit ={
+    repaint()
+  }
 
   def setTimeBorders(position:Int){}
 
   def setMaxNumberOfObject(percentage:scala.Double){}
-
-  override def actionPerformed(e:event.ActionEvent): Unit ={
-    if(e.getSource == timer){
-      drawGlobalCurve()
-    }
-  }
 }
 
 /** This class has the purpose to draw the objective function curve.
@@ -166,7 +164,6 @@ class ObjFunctionGraphic() extends FunctionGraphic(){
     override def mouseReleased(e: MouseEvent): Unit = {}
   })
 
-
   /**
     * Clear the graphic and reset the different ListBuffers in order to begin another research
     */
@@ -190,9 +187,6 @@ class ObjFunctionGraphic() extends FunctionGraphic(){
     maxXValueDisplayed = time
     minYValueDisplayed = best()
     maxYValueDisplayed = yValues.max
-
-    if(!timer.isRunning)
-      timer.start
   }
 
   /**
@@ -207,6 +201,7 @@ class ObjFunctionGraphic() extends FunctionGraphic(){
 
     drawCurve()
     drawAxis(bottom,top,left.toLong,right.toLong)
+    super.drawGlobalCurve()
   }
 
   /**

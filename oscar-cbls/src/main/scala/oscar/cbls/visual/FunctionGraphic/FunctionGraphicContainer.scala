@@ -59,10 +59,26 @@ abstract class FunctionGraphicContainer(title:String,dimension: Dimension) exten
   * @param dimension The dimension of the JInternalFrame
   * @author fabian.germeau@student.vinci.be
   */
-class ObjFunctionGraphicContainer(title:String = "Evolution of the objective function", dimension: Dimension) extends FunctionGraphicContainer(title, dimension){
+class ObjFunctionGraphicContainer(title:String = "Evolution of the objective function", dimension: Dimension) extends FunctionGraphicContainer(title, dimension) with Runnable{
 
   graphic = new ObjFunctionGraphic()
   add(graphic, BorderLayout.CENTER)
+
+  def run(): Unit ={
+    var ancientNumberOfMove = 0
+    while(true){
+      try {
+        Thread.sleep(100)
+        if (graphic.xValues.length > ancientNumberOfMove) {
+          ancientNumberOfMove = graphic.xValues.length
+          drawGlobalCurve()
+        }
+      }catch{
+        case ie:InterruptedException => return
+        case e:Exception => e.printStackTrace()
+      }
+    }
+  }
 
 
   val neighborhoodColorLabel = new JLabel(" ")
@@ -98,6 +114,7 @@ class ObjFunctionGraphicContainer(title:String = "Evolution of the objective fun
 
 
   override def clear(): Unit ={
+    graphic.clear()
     super.clear()
   }
 }

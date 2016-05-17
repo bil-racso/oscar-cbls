@@ -17,17 +17,52 @@
 package oscar.examples.cbls.routing
 
 import oscar.cbls.invariants.core.computation.Store
+import oscar.cbls.invariants.lib.logic.Int2Int
+import oscar.cbls.invariants.lib.numeric.{Abs, Sum}
+import oscar.cbls.routing.model._
 import oscar.cbls.routing.neighborhood._
 import oscar.cbls.search.StopWatch
+import oscar.cbls.modeling.Algebra._
 import oscar.cbls.search.combinators.{BestSlopeFirst, Profile, RoundRobin}
 import oscar.cbls.search.move.Move
 
+
+class MyDemoVRP(n:Int, v:Int, model:Store, distanceMatrix: Array[Array[Int]], unroutedPenaltyWeight:Int, loadBalancing:Double = 1.0)
+  extends VRP(n,v,model)
+    with HopDistanceAsObjectiveTerm
+    with HopClosestNeighbors
+    with PositionInRouteAndRouteNr
+    with NodesOfVehicle
+    with PenaltyForUnrouted
+    with hopDistancePerVehicle
+    with Predecessors
+    with PenaltyForEmptyRouteAsObjectiveTerm{ //just for the fun of it
+
+  installCostMatrix(distanceMatrix)
+  setUnroutedPenaltyWeight(unroutedPenaltyWeight)
+  closeUnroutedPenaltyWeight()
+  computeClosestNeighbors()
+  println("end compute closest, install matrix")
+  installHopDistancePerVehicle()
+  println("end install matrix, posting constraints")
+
+  //evenly spreading the travel among vehicles
+  val averageDistanceOnAllVehicles = overallDistance / V
+  val spread = Sum(hopDistancePerVehicle.map(h => Abs(h - averageDistanceOnAllVehicles)))
+  val weightedSpread = new Int2Int(spread,(spreadValue:Int) => (spreadValue * loadBalancing).toInt)
+
+  addObjectiveTerm(weightedSpread)
+  addObjectiveTerm(unroutedPenalty)
+
+  setEmptyRoutePenaltyWeight(100)
+  println("vrp done")
+}
 
 class DemoRoutingController extends StopWatch{
 
   var customersNumber = 0
   var carsNumber = 0
-  var myVRP:MyVRP = null
+  var myVRP:MyDemoVRP = null
   var model:Store = null
 
   def initiateProblem(customers:Int, cars:Int, s:Int,u:Int):List[(Int,Int)]={
@@ -35,7 +70,7 @@ class DemoRoutingController extends StopWatch{
     customersNumber = customers
     carsNumber = cars
     model = new Store()
-    myVRP = new MyVRP(customers,cars,model,generatedMatrix._1,u)
+    myVRP = new MyDemoVRP(customers,cars,model,generatedMatrix._1,u)
     model.close()
     generatedMatrix._2.toList
   }
@@ -102,7 +137,8 @@ class DemoRoutingController extends StopWatch{
        (new BestSlopeFirst(List(onePointMove,threeOpt,segExchange),refresh = customersNumber/2)).afterMoveOnMove((m:Move) =>{
          val routesList:List[List[Int]] = (for(c <- 0 to carsNumber-1)yield myVRP.getRouteOfVehicle(c)).toList
          DemoRoutingView.drawMove(routesList,(myVRP.getObjective().value,getWatch, m.neighborhoodName), myVRP.hopDistancePerVehicle)
-       }) // exhaust onePointMove exhaust segExchange//threeOpt //(new BestSlopeFirst(List(onePointMove,twoOpt,threeOpt)))
+       })
+     // exhaust onePointMove exhaust segExchange//threeOpt //(new BestSlopeFirst(List(onePointMove,twoOpt,threeOpt)))
 
      search.verbose = 1
      //    search.verboseWithExtraInfo(3,() => myVRP.toString)
