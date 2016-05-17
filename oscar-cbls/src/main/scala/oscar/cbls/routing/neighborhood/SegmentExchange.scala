@@ -136,7 +136,7 @@ case class SegmentExchangeMove(beforeFirstSegment: Int,endFirstSegment: Int,reve
 
 
 
-case class SegmentExchangePickupAndDelivery(override val vrp: VRP with PositionInRouteAndRouteNr with NodesOfVehicle with PickupAndDeliveryCustomers,
+case class SegmentExchangePickupAndDelivery(override val vrp: PDP with PositionInRouteAndRouteNr with NodesOfVehicle,
                                             val neighborhoodName:String = "SegmentExchangePickupAndDelivery",
                                             val hotRestart:Boolean = true,
                                             val best:Boolean = false) extends EasyRoutingNeighborhood[SegmentExchangePickupAndDeliveryMove](best,vrp,neighborhoodName) {

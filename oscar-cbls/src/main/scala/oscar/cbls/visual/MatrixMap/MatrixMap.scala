@@ -18,14 +18,14 @@ package oscar.examples.cbls.routing.visual.MatrixMap
   */
 
 import java.awt.Color
-import java.awt.event.{MouseMotionListener, MouseEvent, MouseListener}
+import java.awt.event.{MouseEvent, MouseListener}
 import java.awt.geom.Line2D.Double
 import javax.swing.SwingUtilities
 
-import oscar.cbls.routing.model.{PickupAndDeliveryCustomers, VRP}
+import oscar.cbls.routing.model.VRP
 import oscar.examples.cbls.routing.visual.ColorGenerator
 import oscar.visual.VisualDrawing
-import oscar.visual.shapes.{VisualLine, VisualArrow, VisualCircle}
+import oscar.visual.shapes.{VisualShape, VisualArrow, VisualCircle}
 
 import scala.collection.mutable.ListBuffer
 
@@ -53,9 +53,16 @@ abstract class MatrixMap extends VisualDrawing(false,false){
     override def mouseReleased(e: MouseEvent): Unit = {}
   })
 
+  //We specify that we don't want to redraw the map after each shape added
+  override def addShape(shape: VisualShape, repaintAfter: Boolean = true): Unit ={
+    super.addShape(shape,false)
+  }
+
   def drawPoints()
 
-  def drawRoutes()
+  def drawRoutes(): Unit ={
+    repaint()
+  }
 
   def setVRP(vrp:VRP): Unit ={
     this.vrp = vrp
@@ -104,7 +111,7 @@ class RoutingMatrixMap extends MatrixMap{
     }
   }
 
-  def drawRoutes(): Unit ={
+  override def drawRoutes(): Unit ={
     clear()
     drawPoints()
 
@@ -122,5 +129,6 @@ class RoutingMatrixMap extends MatrixMap{
       tempRoute.outerCol_$eq(color)
       tempRoute.borderWidth = 2
     }
+    super.drawRoutes()
   }
 }

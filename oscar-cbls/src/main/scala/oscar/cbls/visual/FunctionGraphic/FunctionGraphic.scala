@@ -26,7 +26,7 @@ import javax.swing.{Timer, JButton}
 
 import oscar.cbls.search.StopWatch
 import oscar.visual.VisualDrawing
-import oscar.visual.shapes.{VisualRectangle, VisualLine, VisualText}
+import oscar.visual.shapes.{VisualShape, VisualRectangle, VisualLine, VisualText}
 
 import scala.collection.mutable.ListBuffer
 import scala.swing.event.ActionEvent
@@ -110,7 +110,13 @@ abstract class FunctionGraphic() extends VisualDrawing(false,false) with StopWat
     super.clear()
   }
 
-  def drawGlobalCurve()
+  override def addShape(shape: VisualShape, repaintAfter: Boolean = true): Unit ={
+    super.addShape(shape,false)
+  }
+
+  def drawGlobalCurve(): Unit ={
+    repaint()
+  }
 
   def setTimeBorders(position:Int){}
 
@@ -195,6 +201,7 @@ class ObjFunctionGraphic() extends FunctionGraphic(){
 
     drawCurve()
     drawAxis(bottom,top,left.toLong,right.toLong)
+    super.drawGlobalCurve()
   }
 
   /**

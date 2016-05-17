@@ -5,7 +5,7 @@ import oscar.cbls.routing.model._
 /**
   * Created by fabian on 12-04-16.
   */
-case class PickupDeliveryCoupleExchange(override val vrp: VRP with PositionInRouteAndRouteNr with NodesOfVehicle with PickupAndDeliveryCustomersWithTimeWindow,
+case class PickupDeliveryCoupleExchange(override val vrp: PDP with PositionInRouteAndRouteNr with NodesOfVehicle with PositionInTime,
                                         val neighborhoodName:String = "PickupDeliveryCoupleExchange",
                                         val hotRestart:Boolean = true,
                                         val best:Boolean = false) extends EasyRoutingNeighborhood[PickupDeliveryCoupleExchangeMove](best,vrp,neighborhoodName) {
@@ -39,8 +39,6 @@ case class PickupDeliveryCoupleExchange(override val vrp: VRP with PositionInRou
             secondDeliveryRemoved = vrp.getRelatedDelivery(pickup2)
             val filteredSecondRoute = vrp.getRoutedNodesBeforeTimeOfRoute(List(secondRoute))(firstPickupRemoved).filter(!List(secondDeliveryRemoved,secondPickupRemoved).contains(_))
             val filteredFirstRoute = vrp.getRoutedNodesBeforeTimeOfRoute(List(firstRoute))(secondPickupRemoved).filter(!List(firstDeliveryRemoved,firstPickupRemoved).contains(_))
-            println(vrp.getRoutedNodesBeforeTimeOfRoute(List(firstRoute))(secondPickupRemoved))
-            println(vrp.getRoutedNodesBeforeTimeOfRoute(List(secondRoute))(firstPickupRemoved))
             for(insertPickup1 <- filteredSecondRoute){
               for(insertDelivery1 <- filteredSecondRoute.dropWhile(_ != insertPickup1).drop(1)){
                 for(insertPickup2 <- filteredFirstRoute){
@@ -49,8 +47,6 @@ case class PickupDeliveryCoupleExchange(override val vrp: VRP with PositionInRou
                     beforeFirstDeliveryInsertion = insertDelivery1
                     beforeSecondPickupInsertion = insertPickup2
                     beforeSecondDeliveryInsertion = insertDelivery2
-                    println(firstPickupRemoved,firstDeliveryRemoved,beforeFirstPickupInsertion,beforeFirstDeliveryInsertion,
-                      secondPickupRemoved,secondDeliveryRemoved,beforeSecondPickupInsertion,beforeSecondDeliveryInsertion)
                     encodeMove(firstPickupRemoved,beforeFirstPickupInsertion,
                       firstDeliveryRemoved,beforeFirstDeliveryInsertion,firstRoute,
                       secondPickupRemoved,beforeSecondPickupInsertion,
@@ -89,14 +85,14 @@ case class PickupDeliveryCoupleExchange(override val vrp: VRP with PositionInRou
     assert(vrp.routeNr(beforeSecondPickupInsertion).value == firstRoute, "The second pickup insertion location must be on the first route")
     assert(vrp.routeNr(beforeSecondDeliveryInsertion).value == firstRoute, "The second delivery insertion location must be on the first route")
 
-    firstPickupSegment = cutNodeAfter(vrp.preds(firstPickupRemoved).value)
-    firstDeliverySegment = cutNodeAfter(vrp.preds(firstDeliveryRemoved).value)
-    secondPickupSegment = cutNodeAfter(vrp.preds(secondPickupRemoved).value)
-    secondDeliverySegment = cutNodeAfter(vrp.preds(secondDeliveryRemoved).value)
-    insert(firstPickupSegment,beforeFirstPickupInsertion)
-    insert(firstDeliverySegment,beforeFirstDeliveryInsertion)
-    insert(secondPickupSegment,beforeSecondPickupInsertion)
-    insert(secondDeliverySegment,beforeSecondDeliveryInsertion)
+    cutNodeAfter(vrp.preds(firstDeliveryRemoved).value)
+    cutNodeAfter(vrp.preds(firstPickupRemoved).value)
+    cutNodeAfter(vrp.preds(secondDeliveryRemoved).value)
+    cutNodeAfter(vrp.preds(secondPickupRemoved).value)
+    insert(new Segment(firstPickupRemoved,firstPickupRemoved),beforeFirstPickupInsertion)
+    insert(new Segment(firstDeliveryRemoved,firstDeliveryRemoved),beforeFirstDeliveryInsertion)
+    insert(new Segment(secondPickupRemoved,secondPickupRemoved),beforeSecondPickupInsertion)
+    insert(new Segment(secondDeliveryRemoved,secondDeliveryRemoved),beforeSecondDeliveryInsertion)
   }
 }
 

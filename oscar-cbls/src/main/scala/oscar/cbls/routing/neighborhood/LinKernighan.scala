@@ -1,3 +1,19 @@
+/**
+  * *****************************************************************************
+  * OscaR is free software: you can redistribute it and/or modify
+  * it under the terms of the GNU Lesser General Public License as published by
+  * the Free Software Foundation, either version 2.1 of the License, or
+  * (at your option) any later version.
+  *
+  * OscaR is distributed in the hope that it will be useful,
+  * but WITHOUT ANY WARRANTY; without even the implied warranty of
+  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  * GNU Lesser General Public License  for more details.
+  *
+  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
+  * ****************************************************************************
+  */
 package oscar.cbls.routing.neighborhood
 
 import oscar.cbls.routing.model._
@@ -27,11 +43,11 @@ import oscar.cbls.search.algo.HotRestart
   */
 case class LinKernighan(routeNr:Int,
                         override val vrp: VRP with PositionInRouteAndRouteNr with Predecessors with HopClosestNeighbors,
-                        k:Int = 10,
+                        k:Int = 20,
                         p:Int = 5,
                         neighborhoodName: String = "LinKernighan",
                         best: Boolean = false,
-                        hotRestart: Boolean = true) extends EasyRoutingNeighborhood[LinKernighanMove](best, vrp, neighborhoodName) {
+                        hotRestart: Boolean = false) extends EasyRoutingNeighborhood[LinKernighanMove](best, vrp, neighborhoodName) {
 
   vrp.computeClosestNeighbors()
   //A copy of the route we are working on and his length
@@ -59,7 +75,6 @@ case class LinKernighan(routeNr:Int,
    * If the value is vrp.N, it means that this node has no newly created links
    */
   var newLink : Array[Int] = new Array[Int](selectedRoute.length)
-  //TODO : Recomment this variable
   /*
    * This variable contains the extremities of each newly created segment.
    * A newly created segment is an untouched sub-segment of the original route
@@ -116,9 +131,11 @@ case class LinKernighan(routeNr:Int,
     }
   }
 
-  /*
-   * This method maintains the segmentExtremities variable by inserting a new couple of nodes.
-   */
+  /**
+    * This method maintains the segmentExtremities variable by inserting a new couple of nodes.
+    * @param node1 the first node of the segment
+    * @param node2 the second node of the segment
+    */
   def addSegmentExtremities(node1:Int,node2:Int): Unit ={
     var current = firstNode
     var right = 0
@@ -190,7 +207,7 @@ case class LinKernighan(routeNr:Int,
   }
 
   override def exploreNeighborhood(): Unit = {
-    //We first reset all the value
+    //We first reset all the used values
     selectedRoute = vrp.getRouteOfVehicle(routeNr).toArray
     routeLength = selectedRoute.length
     availableNode = Array.tabulate(routeLength)(n => true)
@@ -239,7 +256,8 @@ case class LinKernighan(routeNr:Int,
     */
   def internalExploration(node:Int): Boolean ={
     /**
-      * This method check if
+      * This method check if the sum of all the links's length we have created is smaller than
+      * the sum of all links's length we have removed
       *
       * @param predsNode
       * @param baseNode
@@ -256,6 +274,13 @@ case class LinKernighan(routeNr:Int,
         false
     }
 
+    /**
+      * This method check if the removal of the link linking
+      * @param node
+      * @param baseNode
+      * @param newNode
+      * @return
+      */
     def isAllowed(node:Int, baseNode:Int, newNode:Int): Boolean ={
       if(prevNode(newNode) == oldLink(newNode)){
         if(nextNode(baseNode) == node) {
@@ -328,8 +353,12 @@ case class LinKernighan(routeNr:Int,
       res
     }
 
+    /**
+      * This method check if the route containing the node is cycling.
+      * @param node
+      * @return
+      */
     def isCycling(node:Int): Boolean ={
-
       var counter = 0
       var currentNode = node
       var linkedNode = node
@@ -346,6 +375,11 @@ case class LinKernighan(routeNr:Int,
         false
     }
 
+    /**
+      * This method return the K promissing nodes of the in parameter
+      * @param node
+      * @return
+      */
     def getKPromisingNodes(node:Int): List[Int] ={
       val nodesList = Array.tabulate(routeLength)(n => n)
       val res = nodesList.filter(availableNode(_)).sortWith(distanceMatrix(node)(_) < distanceMatrix(node)(_)).take(k).toList
@@ -441,15 +475,6 @@ case class LinKernighan(routeNr:Int,
       else
         reverseSegment = false
     }
-
-   /* println(oldLink.toList)
-    println(newLink.toList)
-    println(segmentExtremities.toList)
-    println(selectedRoute.toList)*/
-
-    //We
-    toReverseList.sortWith(_._1 > _._1)
-    //Then we cut and reverse all the segments contains in toReverseList
     var cuttedSegments:List[(Segment,Int)] = Nil
     for(r <- toReverseList)
       cuttedSegments = (cut(selectedRoute(r._1),r._2),r._3)::cuttedSegments

@@ -1,20 +1,41 @@
+/**
+  * *****************************************************************************
+  * OscaR is free software: you can redistribute it and/or modify
+  * it under the terms of the GNU Lesser General Public License as published by
+  * the Free Software Foundation, either version 2.1 of the License, or
+  * (at your option) any later version.
+  *
+  * OscaR is distributed in the hope that it will be useful,
+  * but WITHOUT ANY WARRANTY; without even the implied warranty of
+  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  * GNU Lesser General Public License  for more details.
+  *
+  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
+  * ****************************************************************************
+  */
 package oscar.examples.cbls.routing.visual.MatrixMap
 
 import java.awt.Color
 import javax.swing.JOptionPane
 
-import oscar.cbls.routing.model.{VehicleWithCapacity, VRP, PickupAndDeliveryCustomers}
+import oscar.cbls.routing.model.{PDP, VehicleWithCapacity, VRP}
 import oscar.visual.shapes.VisualCircle
 
 /**
-  * Created by fabian on 23-02-16.
+  * @author fabian.germeau@student.vinci.be
   */
 trait PickupAndDeliveryPoints extends  MatrixMap{
 
-  var pdptwVRP:VRP with PickupAndDeliveryCustomers with VehicleWithCapacity = null
+  var pdptwVRP:PDP with VehicleWithCapacity = null
   var pickupNodeCircle:VisualCircle = null
   var deliveryNodeCircle:VisualCircle = null
 
+
+  /*
+   * In order to get information by moving the mouse over a node
+   * we have to overrride the drawPoints method
+   */
   override def drawPoints(): Unit ={
     initNodeCircles()
     var v = 0
@@ -35,7 +56,7 @@ trait PickupAndDeliveryPoints extends  MatrixMap{
 
   override def setVRP(vrp:VRP): Unit ={
     vrp match{
-      case pdptwVRP:VRP with PickupAndDeliveryCustomers with VehicleWithCapacity => this.pdptwVRP = pdptwVRP
+      case pdptwVRP:PDP with VehicleWithCapacity => this.pdptwVRP = pdptwVRP
       case _ => assert(false,"If you use this trait, the vrp set has to be instantiate with the PickupAndDeliveryCustomers trait")
     }
     super.setVRP(vrp)
@@ -43,9 +64,14 @@ trait PickupAndDeliveryPoints extends  MatrixMap{
 
   private def getPointInformation(index:Int): String ={
     val info = vrp.getNodeInformation(index).split("\n").foldLeft("")((a,b)=>if(a == "") b else a+"<br>"+b)
-    "<html>" + info + "<br>Arrival load : " + pdptwVRP.currentLoad(index) + "</html>"
+    "<html>" + info + "</html>"
   }
 
+  /**
+    * Each time we clicked on a node of the map, the related delivery/pickup
+    * of this node and this node will be circled
+    * @param index
+    */
   private def onClickAction(index:Int): Unit ={
     var point:(Int,Int) = (-10,-10)
     if(pdptwVRP.isPickup(index)) {
@@ -62,6 +88,9 @@ trait PickupAndDeliveryPoints extends  MatrixMap{
     }
   }
 
+  /**
+    * This method initiate the node circle (used to show where the pickup and delivery nodes are)
+    */
   private def initNodeCircles(): Unit ={
     pickupNodeCircle = new VisualCircle(this,-10,-10,10)
     pickupNodeCircle.borderWidth = 2

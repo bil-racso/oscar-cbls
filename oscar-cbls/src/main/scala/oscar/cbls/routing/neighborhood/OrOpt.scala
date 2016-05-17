@@ -5,7 +5,7 @@ import oscar.cbls.routing.model._
 /**
   * Created by fabian on 17-03-16.
   */
-case class OrOpt(override val vrp: VRP with PositionInRouteAndRouteNr  with PickupAndDeliveryCustomers with HopDistance,
+case class OrOpt(override val vrp: PDP with PositionInRouteAndRouteNr with HopDistance,
                  potentialInsertionPoints:()=>Iterable[Int] = null,
                  neighborhoodName:String = "OrOpt",
                  best:Boolean = false,

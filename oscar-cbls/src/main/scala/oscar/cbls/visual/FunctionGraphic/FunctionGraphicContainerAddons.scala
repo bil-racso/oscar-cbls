@@ -43,39 +43,43 @@ import oscar.examples.cbls.routing.visual.FunctionGraphic.ObjFunctionGraphicCont
   *
   * @author fabian.germeau@student.vinci.be
   */
-//TODO : Check the problem when the curve is drawn during the research
 trait Zoom extends ObjFunctionGraphicContainer{
-  val zoomScrollBar = new JScrollBar(SwingConstants.VERTICAL,0,10,0,101)
-  zoomScrollBar.addAdjustmentListener(new AdjustmentListener {
-    override def adjustmentValueChanged(e: AdjustmentEvent): Unit = {
+  val zoomSlider = new JSlider(SwingConstants.VERTICAL,1,100,1)
+  zoomSlider.setMajorTickSpacing(10)
+  zoomSlider.setMinorTickSpacing(1)
+  zoomSlider.setPaintTicks(true)
+  zoomSlider.addChangeListener(new ChangeListener{
+    override def stateChanged(e: ChangeEvent): Unit = {
       adjustScrollBar()
-      graphic.minXValueDisplayed = Math.max(rightLeftScrollBar.getValue,graphic.minXValue())
-      graphic.maxXValueDisplayed = Math.min(graphic.minXValueDisplayed+rightLeftScrollBar.getVisibleAmount,graphic.maxXValue())
-      graphic.minYValueDisplayed = Math.max(upDownScrollBar.getValue,graphic.minYValue())
-      graphic.maxYValueDisplayed = Math.min(graphic.minYValueDisplayed+upDownScrollBar.getVisibleAmount,graphic.maxYValue())
+      graphic.minXValueDisplayed = Math.max(Math.floor((graphic.maxXValue()/rightLeftSlider.getMaximum)*(rightLeftSlider.getValue-1)).toLong,graphic.minXValue())
+      graphic.maxXValueDisplayed = Math.max(Math.ceil((graphic.maxXValue()/rightLeftSlider.getMaximum)*rightLeftSlider.getValue).toLong,graphic.diffWidth()+graphic.minXValue())
+      graphic.minYValueDisplayed = Math.max(Math.floor((graphic.maxYValue()/upDownSlider.getMaximum)*(upDownSlider.getValue-1)).toLong,graphic.minYValue())
+      graphic.maxYValueDisplayed = Math.min(Math.ceil((graphic.maxYValue()/upDownSlider.getMaximum)*upDownSlider.getValue).toLong,graphic.maxYValue())
     }
   })
-  add(zoomScrollBar, BorderLayout.EAST)
+  add(zoomSlider, BorderLayout.EAST)
 
-  val rightLeftScrollBar = new JScrollBar(SwingConstants.HORIZONTAL,0,1,0,100)
-  rightLeftScrollBar.addAdjustmentListener(new AdjustmentListener {
-    override def adjustmentValueChanged(e: AdjustmentEvent): Unit = {
-      graphic.minXValueDisplayed = rightLeftScrollBar.getValue
-      graphic.maxXValueDisplayed = graphic.minXValueDisplayed + rightLeftScrollBar.getVisibleAmount
+  val rightLeftSlider = new JSlider(SwingConstants.HORIZONTAL,1,1,1)
+  rightLeftSlider.setPaintTicks(true)
+  rightLeftSlider.addChangeListener(new ChangeListener {
+    override def stateChanged(e: ChangeEvent): Unit = {
+      graphic.minXValueDisplayed = Math.max(Math.floor((graphic.maxXValue()/rightLeftSlider.getMaximum)*(rightLeftSlider.getValue-1)).toLong,graphic.minXValue())
+      graphic.maxXValueDisplayed = Math.max(Math.ceil((graphic.maxXValue()/rightLeftSlider.getMaximum)*rightLeftSlider.getValue).toLong,graphic.diffWidth()+graphic.minXValue())
       graphic.drawGlobalCurve()
     }
   })
-  add(rightLeftScrollBar, BorderLayout.SOUTH)
+  add(rightLeftSlider, BorderLayout.SOUTH)
 
-  val upDownScrollBar = new JScrollBar(SwingConstants.VERTICAL,0,1,0,100)
-  upDownScrollBar.addAdjustmentListener(new AdjustmentListener {
-    override def adjustmentValueChanged(e: AdjustmentEvent): Unit = {
-      graphic.minYValueDisplayed = upDownScrollBar.getMaximum - upDownScrollBar.getVisibleAmount - upDownScrollBar.getValue
-      graphic.maxYValueDisplayed = graphic.minYValueDisplayed + upDownScrollBar.getVisibleAmount
+  val upDownSlider = new JSlider(SwingConstants.VERTICAL,1,1,1)
+  upDownSlider.setPaintTicks(true)
+  upDownSlider.addChangeListener(new ChangeListener{
+    override def stateChanged(e: ChangeEvent): Unit = {
+      graphic.minYValueDisplayed = Math.max(Math.floor((graphic.maxYValue()/upDownSlider.getMaximum)*(upDownSlider.getValue-1)).toLong,graphic.minYValue())
+      graphic.maxYValueDisplayed = Math.min(Math.ceil((graphic.maxYValue()/upDownSlider.getMaximum)*upDownSlider.getValue).toLong,graphic.maxYValue())
       graphic.drawGlobalCurve()
     }
   })
-  add(upDownScrollBar, BorderLayout.WEST)
+  add(upDownSlider, BorderLayout.WEST)
 
   /*
     This method, called by the zoomScrollBar adjust the values of the rightLeftScrollBar and the upDownScrollBar
@@ -83,14 +87,14 @@ trait Zoom extends ObjFunctionGraphicContainer{
     After adjusting the values, it sets the value of the scrollbar to 0 (top left of the graphic)
    */
   def adjustScrollBar(): Unit ={
-    rightLeftScrollBar.setValue(0)
-    upDownScrollBar.setValue(0)
-    rightLeftScrollBar.setVisibleAmount(Math.max(graphic.diffWidth(), graphic.maxXValue() / (2 * getLogZoom(zoomScrollBar.getValue))).toInt)
-    rightLeftScrollBar.setBlockIncrement(rightLeftScrollBar.getVisibleAmount)
-    rightLeftScrollBar.setUnitIncrement(rightLeftScrollBar.getVisibleAmount)
-    upDownScrollBar.setVisibleAmount(Math.max(20,(graphic.maxYValue()/(2*getLogZoom(zoomScrollBar.getValue))).toInt))
-    upDownScrollBar.setBlockIncrement(upDownScrollBar.getVisibleAmount)
-    upDownScrollBar.setUnitIncrement(upDownScrollBar.getVisibleAmount)
+    rightLeftSlider.setValue(1)
+    upDownSlider.setValue(1)
+    rightLeftSlider.setMaximum(Math.min(graphic.diffXValue(), getLogZoom(zoomSlider.getValue)).toInt)
+    rightLeftSlider.setMajorTickSpacing(rightLeftSlider.getMaximum/100)
+    rightLeftSlider.setMinorTickSpacing(rightLeftSlider.getMaximum/10)
+    upDownSlider.setMaximum(Math.min(graphic.diffYValue(),getLogZoom(zoomSlider.getValue)).toInt)
+    upDownSlider.setMajorTickSpacing(upDownSlider.getMaximum/100)
+    upDownSlider.setMinorTickSpacing(upDownSlider.getMaximum/10)
   }
 
   /*
@@ -99,8 +103,6 @@ trait Zoom extends ObjFunctionGraphicContainer{
     of the scrollbar, the maximum X/Y value.
    */
   override def drawGlobalCurve(): Unit ={
-    rightLeftScrollBar.setMaximum(graphic.maxXValue().toInt+1)
-    upDownScrollBar.setMaximum(graphic.maxYValue()+1)
     super.drawGlobalCurve()
   }
 
@@ -111,7 +113,7 @@ trait Zoom extends ObjFunctionGraphicContainer{
     * @return the new zoom level
     */
   def getLogZoom(i:Double): Double ={
-    if(i == 0)0.5
+    if(i == 0)1
     else Math.max(1.0,100*Math.pow(Math.log(i), 2) / Math.pow(Math.log(100), 2))
   }
 }

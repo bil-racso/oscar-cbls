@@ -5,11 +5,11 @@ import oscar.cbls.invariants.lib.logic.Int2Int
 import oscar.cbls.invariants.lib.numeric.{Abs, Sum}
 import oscar.cbls.routing.model._
 import oscar.cbls.routing.neighborhood._
-import oscar.cbls.search.{combinators, StopWatch}
+import oscar.cbls.search.StopWatch
 import oscar.cbls.search.combinators._
 import oscar.cbls.modeling.Algebra._
-import oscar.examples.cbls.routing.visual.MatrixMap.{RoutingMatrixVisualWithAttribute, PickupAndDeliveryMatrixVisualWithAttribute}
 import scala.language.implicitConversions
+import scala.io.StdIn.readLine
 
 /**
  * Created by rdl on 15-12-15.
@@ -53,8 +53,8 @@ object RoutingTest extends App with StopWatch{
 
   this.startWatch()
 
-  val n = 200
-  val v = 1
+  val n = 300
+  val v = 5
 
   println("RoutingTest(n:" + n + " v:" + v + ")")
 
@@ -115,18 +115,18 @@ object RoutingTest extends App with StopWatch{
     relevantNeighbors = () => vrp.kNearest(40),
     vehicles=() => vrp.vehicles.toList))
 
-  val linKernighanOne = (nb:Int) => Profile(new LinKernighan(nb,vrp))
-  val linKernighanMulti = Profile(new RoundRobin(List.tabulate(v)(route => new LinKernighan(route,vrp))))
-  /*val kernighanSearchMulti = insertPoint exhaust new BestSlopeFirst (List(linKernighanMulti, new MaxMoves(segExchange,5), new MaxMoves(threeOpt,5), onePointMove)) showObjectiveFunction vrp.objectiveFunction afterMove {
+  val linKernighanOneVehicle = (nb:Int) => Profile(new LinKernighan(nb,vrp))
+  val linKernighanMultiVehicle = Profile(new RoundRobin(List.tabulate(v)(route => new LinKernighan(route,vrp))))
+  /*val kernighanSearchMultiVehicle = insertPoint exhaust new BestSlopeFirst (List(linKernighanMulti, new MaxMoves(segExchange,5), new MaxMoves(threeOpt,5), onePointMove)) showObjectiveFunction vrp.objectiveFunction afterMove {
     vrp.drawRoutes()
   }
   kernighanSearchMulti.verbose = 1*/
 
-  /*val kernighanSearchOne = insertPoint exhaust linKernighanOne(0) showObjectiveFunction vrp.objectiveFunction afterMove vrp.drawRoutes()
+  /*val kernighanSearchOne = insertPoint exhaust linKernighanOneVehicle(0) showObjectiveFunction(vrp.objectiveFunction,withZoom = true) afterMove vrp.drawRoutes()
   kernighanSearchOne.verbose = 1*/
 
   val search = new RoundRobin(List(insertPoint,onePointMove),10) exhaust
-                      new BestSlopeFirst(List(onePointMove, linKernighanOne(0)), refresh = n / 2) showObjectiveFunction vrp.getObjective() afterMove vrp.drawRoutes()
+    new BestSlopeFirst(List(onePointMove,twoOpt,threeOpt,segExchange), refresh = n / 2) showObjectiveFunction vrp.getObjective() afterMove vrp.drawRoutes()
   // exhaust onePointMove exhaust segExchange//threeOpt //(new BestSlopeFirst(List(onePointMove,twoOpt,threeOpt)))
 
   search.verbose = 1
