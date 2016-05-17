@@ -73,7 +73,7 @@ object CBLSSeqConst{
 }
 
 class CBLSSeqVar(givenModel:Store, initialValue:UniqueIntSequence, val domain:Domain, n: String = null, maxPivot:Int = 10)
-  extends ChangingSeqValue(initialValue, maxPivot, domain.max) with Variable{
+  extends ChangingSeqValue(initialValue, domain.max, maxPivot) with Variable{
   require(domain.min == 0)
   require(givenModel != null)
 
@@ -99,9 +99,12 @@ class CBLSSeqVar(givenModel:Store, initialValue:UniqueIntSequence, val domain:Do
 
   override  def :=(seq:UniqueIntSequence) {super.setValue(seq)}
 
+  override def setAsStableCheckpoint() {super.setAsStableCheckpoint()}
+
+  override def rollbackToLatestCheckpoint():UniqueIntSequence = super.rollbackToLatestCheckpoint()
+
   def <==(i: SeqValue) {IdentitySeq(this,i)}
 }
-
 
 object CBLSSeqVar{
   implicit val ord:Ordering[CBLSSetVar] = new Ordering[CBLSSetVar]{
@@ -109,12 +112,14 @@ object CBLSSeqVar{
   }
 }
 
-abstract class ChangingSeqValue(initialValue:Iterable[Int], maxPivot:Int, maxValue:Int)
+abstract class ChangingSeqValue(initialValue: Iterable[Int], maxValue: Int, maxPivot: Int)
   extends AbstractVariable with SeqValue{
 
-  var latestCheckpoint:UniqueIntSequence = UniqueIntSequence(initialValue,maxPivot,maxValue)
-  var mOldValue:SeqUpdate = SeqUpdateSet(latestCheckpoint)
-  var updates:SeqUpdate = mOldValue
+  private var latestCheckpoint:UniqueIntSequence = UniqueIntSequence(initialValue,maxPivot,maxValue)
+  private var stableCheckpointNotified:Boolean = false
+  private var updatesToCheckpoint:SeqUpdate = mOldValue
+  private var mOldValue:SeqUpdate = SeqUpdateSet(latestCheckpoint)
+  private var updates:SeqUpdate = mOldValue
 
   override def value: UniqueIntSequence = {
     if (model == null) return mOldValue.newValue
@@ -157,11 +162,12 @@ abstract class ChangingSeqValue(initialValue:Iterable[Int], maxPivot:Int, maxVal
     setValue(seq)
   }
 
-  def setAsStableCheckpoint(){
+  protected def setAsStableCheckpoint(){
     latestCheckpoint = newValue
+    stableCheckpointNotified = false
   }
 
-  def rollbackToLatestCheckpoint():UniqueIntSequence = {
+  protected def rollbackToLatestCheckpoint():UniqueIntSequence = {
     setValue(latestCheckpoint)
     latestCheckpoint
   }
@@ -187,6 +193,7 @@ abstract class ChangingSeqValue(initialValue:Iterable[Int], maxPivot:Int, maxVal
     //perfoms the changes on the mNewValue
     //when it is a stable checkpoint, we save a cached value
     if(stableCheckpoint){
+      //TODO: probably the other way round
       val start = SeqUpdateSet(updates.newValue.regularize())
       latestCheckpoint = start.value
       mOldValue = start
@@ -196,6 +203,40 @@ abstract class ChangingSeqValue(initialValue:Iterable[Int], maxPivot:Int, maxVal
     }
   }
 }
+
+/** this is a special case of invariant that has a single output variable, that is a Seq
+  * @author renaud.delandtsheer@cetic.be
+  */
+abstract class SeqInvariant(initialValue:UniqueIntSequence, maxValue:Int = Int.MaxValue, maxPivot:Int = 10)
+  extends ChangingSeqValue(initialValue, maxValue:Int, maxPivot)
+  with Invariant{
+
+  override def definingInvariant: Invariant = this
+  override def isControlledVariable:Boolean = true
+  override def isDecisionVariable:Boolean = false
+
+  override def model = propagationStructure.asInstanceOf[Store]
+
+  override def hasModel:Boolean = schedulingHandler != null
+
+  private var customName:String = null
+  /**use this if you want to give a particular name to this concept, to be used in toString*/
+  def setName(n:String):SeqInvariant = {
+    customName = n
+    this
+  }
+
+  override final def name: String = if(customName == null) this.getClass.getSimpleName else customName
+
+  override final def performPropagation(){
+    performInvariantPropagation()
+    performSeqPropagation()
+  }
+
+  override def getDotNode:String = throw new Error("not implemented")
+}
+
+
 
 object IdentitySeq{
   def apply(toValue:CBLSSeqVar, fromValue:SeqValue){
