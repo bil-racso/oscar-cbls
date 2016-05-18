@@ -81,6 +81,12 @@ abstract class UniqueIntSequence(protected[seq] val uniqueID:Int = UniqueIntSequ
   def equals(that:UniqueIntSequence):Boolean = {
     quickEquals(that) || (that != null && (this.iterable equals that.iterable))
   }
+
+  override def toString : String = {
+    "UniqueIntSequence(size:" + size + ")[" + this.iterator.toList.mkString(",") + "]" + descriptorString
+  }
+
+  def descriptorString : String
 }
 
 class ConcreteUniqueIntSequence(private[seq] val internalPositionToValue:RedBlackTree[Int],
@@ -89,15 +95,10 @@ class ConcreteUniqueIntSequence(private[seq] val internalPositionToValue:RedBlac
                                 private[seq] val startFreeRangeForInternalPosition:Int,
                                 maxPivot:Int = 10, maxSize:Int = 1000, uniqueID:Int = UniqueIntSequence.getNewUniqueID()) extends UniqueIntSequence(uniqueID){
 
+  override def descriptorString : String = "(concrete)"
+
   override def check {
     require(internalPositionToValue.content.sortBy(_._1) equals valueToInternalPosition.content.map({case (a,b) => (b,a)}).sortBy(_._1))
-  }
-
-  override def toString : String = {
-    "(size:" + size + ")[" + this.iterator.toList.mkString(",") + "] (\n" +
-      "internalPositionToValue:" + internalPositionToValue.content +
-      "\nvalueToInternalPosition:" + valueToInternalPosition.content +
-      "\nexternalToInternalPosition:" + externalToInternalPosition + ")"
   }
 
   def size : Int = valueToInternalPosition.size
@@ -431,6 +432,8 @@ class MovedUniqueIntSequence(val seq:UniqueIntSequence,
 
   override def content : Iterable[Int] = seq.content
 
+  override def descriptorString : String = seq.descriptorString + ".moved(startPos:" + startPositionIncluded + " endPos:" + endPositionIncluded + " targetPos:" + moveAfterPosition + " flip:" + flip + ")"
+
   val localBijection =
     if(moveAfterPosition + 1 == startPositionIncluded) {
       //not moving
@@ -583,6 +586,8 @@ class InsertedUniqueIntSequence(seq:UniqueIntSequence,
   extends StackedUpdateUniqueIntSequence {
   override def size : Int = seq.size + 1
 
+  override def descriptorString : String = seq.descriptorString + ".inserted(val:" + value + " pos:" + pos + ")"
+
   override def content : Iterable[Int] = seq.content ++ List(value)
 
   override def positionOfValue(value : Int) : Option[Int] = {
@@ -697,7 +702,10 @@ class InsertedIntSequenceExplorer(seq:InsertedUniqueIntSequence,
 class DeletedUniqueIntSequence(seq:UniqueIntSequence,
                                val position:Int)
   extends StackedUpdateUniqueIntSequence{
+
   val value = seq.valueAtPosition(position).head
+
+  override def descriptorString : String = seq.descriptorString + ".deleted(pos:" + position + " val:" + value + ")"
 
   override def content : Iterable[Int] = new LazyFilter(seq.content,_ != value)
 

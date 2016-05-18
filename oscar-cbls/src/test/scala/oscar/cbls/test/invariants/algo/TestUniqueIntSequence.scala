@@ -74,23 +74,23 @@ object TestUniqueIntSequence extends App{
   println(kk)
   checkSeq(kk,10,54,7,5,6)
 
-  val k = j.moveAfter(1,2,4,false).regularize()//move upwards
+  val k = j.moveAfter(1,2,4,false,fast=true)//move upwards
   println(k)
   checkSeq(k,10,5,6,7,54)
 
-  val kkk = j.moveAfter(1,2,4,true)//move upwards with flip
+  val kkk = j.moveAfter(1,2,4,true,fast=true)//move upwards with flip
   println(kkk)
   checkSeq(kkk,10,5,6,54,7)
 
-  val l = kkk.moveAfter(0,2,3,true)//move upwards with flip
+  val l = kkk.moveAfter(0,2,3,true,fast=true)//move upwards with flip
   println(l)
   checkSeq(l,54,6,5,10,7)
 
-  val m = kkk.moveAfter(1,4,0,true)//flip
+  val m = kkk.moveAfter(1,4,0,true,fast=true)//flip
   println(m)
   checkSeq(m,10,7,54,6,5)
 
-  val n = kkk.moveAfter(1,4,0,false).regularize()//nop
+  val n = kkk.moveAfter(1,4,0,false)//nop
   println(n)
   checkSeq(n,10,5,6,54,7)
 
@@ -107,4 +107,9 @@ object TestUniqueIntSequence extends App{
   val test = i.moveAfter(1,2,4,true)//move upwards with flip
   val test2 = test.moveAfter(3,4,0,true)//move upwards with flip
   println(test2)
+  val test3 = test2.regularize()
+  println(test3)
+
+  require(test3 equals test2)
+
 }
