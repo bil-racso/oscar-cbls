@@ -53,6 +53,7 @@ case class Store(override val verbose:Boolean = false,
   extends PropagationStructure(verbose,checker,noCycle,topologicalSort, sortScc)
   with Bulker with StorageUtilityManager{
 
+
   assert({println("You are using a CBLS store with asserts activated. It makes the engine slower. Recompile it with -Xdisable-assertions"); true})
 
   private[this] var variables:QList[AbstractVariable] = null
@@ -206,7 +207,7 @@ case class Store(override val verbose:Boolean = false,
 
   var NotifiedInvariant:Invariant=null
 
-  override def toString:String = variables.toString()
+  override def toString:String = "Store(vars:{" + variables.toIterable.mkString(";") + "})"
 
   //returns the set of source variable that define this one.
   // This exploration procedure explores passed dynamic invariants,

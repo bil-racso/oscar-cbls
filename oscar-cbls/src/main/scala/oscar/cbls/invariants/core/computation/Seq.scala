@@ -90,6 +90,7 @@ class CBLSSeqVar(givenModel:Store, initialValue:UniqueIntSequence, val maxVal:In
   require(domain.min == 0)
   require(givenModel != null)
 
+
   model = givenModel
 
   override def domain : Domain = 0 to maxVal
@@ -119,6 +120,8 @@ class CBLSSeqVar(givenModel:Store, initialValue:UniqueIntSequence, val maxVal:In
   override def rollbackToCheckpoint(c:UniqueIntSequence) = super.rollbackToCheckpoint(c:UniqueIntSequence)
 
   def <==(i: SeqValue) {IdentitySeq(this,i)}
+
+  override def performPropagation(){performSeqPropagation()}
 }
 
 object CBLSSeqVar{
@@ -150,7 +153,7 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], maxValue: Int, maxP
     updates.newValue
   }
 
-  override def toString:String = name + ":={" + (if(model.propagateOnToString) value else updates.newValue)+ "}" //TODO: .mkString(",")
+  override def toString:String = name + ":=" + (if(model.propagateOnToString) value else updates.newValue)
 
   def toStringNoPropagate: String = name + ":=" + updates.newValue.toString()
 
@@ -159,27 +162,34 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], maxValue: Int, maxP
   //-1 for first position
   protected def insertAtPosition(value:Int,pos:Int){
     updates = SeqUpdateInsert(value,pos,updates)()
+    notifyChanged()
   }
 
   protected def removeValue(value:Int){
     updates = SeqUpdateRemoveValue(value,updates)()
+    notifyChanged()
   }
+
   //-1 for first position
   protected def move(fromIncludedPosition:Int,toIncludedPosition:Int,afterPosition:Int,flip:Boolean){
     updates  = SeqUpdateMove(fromIncludedPosition,toIncludedPosition,afterPosition,flip,updates)()
+    notifyChanged()
   }
 
   protected def setValue(seq:UniqueIntSequence){
     updates = SeqUpdateSet(value)
+    notifyChanged()
   }
 
   protected def :=(seq:UniqueIntSequence){
     setValue(seq)
+    notifyChanged()
   }
 
   protected def setAsStableCheckpoint(){
     latestCheckpoint = newValue
     stableCheckpointNotified = false
+    notifyChanged()
   }
 
   protected def rollbackToCheckpoint(c:UniqueIntSequence){
@@ -190,6 +200,7 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], maxValue: Int, maxP
       //the checkpoint is not the latest one
       //so wee must compute a path to it.
     }
+    notifyChanged()
   }
 
   //TODO

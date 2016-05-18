@@ -9,7 +9,7 @@ import oscar.cbls.invariants.core.propagation.Checker
  * @author renaud.delandtsheer@cetic.be
  */
 case class Size(v: SeqValue)
-  extends IntInvariant(v.value.size, 0 to (v.max - v.min +1))
+  extends IntInvariant(v.value.size, 0 to DomainHelper.safeAddMax(v.max,1))
   with SeqNotificationTarget{
 
   registerStaticAndDynamicDependency(v)
