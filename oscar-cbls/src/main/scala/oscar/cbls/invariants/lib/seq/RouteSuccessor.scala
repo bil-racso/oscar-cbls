@@ -48,7 +48,7 @@ case class RouteSuccessor(routes:ChangingSeqValue, v:Int, successorValues:Array[
         }
 
       case SeqUpdateSet(value : UniqueIntSequence) =>
-        if (value quickSame routes.value){
+        if (value quickEquals routes.value){
           Some(SortedSet.empty[Int]) //we are starting from the previous value
         }else{
           None //impossible to go incremental

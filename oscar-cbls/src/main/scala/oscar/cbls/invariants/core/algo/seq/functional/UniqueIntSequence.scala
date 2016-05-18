@@ -1,8 +1,9 @@
 package oscar.cbls.invariants.core.algo.seq.functional
 
-import oscar.cbls.invariants.core.algo.fun.{PiecewiseLinearBijectionNaive, Pivot, LinearTransform}
+import oscar.cbls.invariants.core.algo.fun.{LinearTransform, PiecewiseLinearBijectionNaive, Pivot}
 import oscar.cbls.invariants.core.algo.lazyIt.LazyFilter
 import oscar.cbls.invariants.core.algo.rb.{RBPosition, RedBlackTree}
+
 import scala.language.implicitConversions
 
 object UniqueIntSequence{
@@ -52,8 +53,8 @@ abstract class UniqueIntSequence(protected[seq] val uniqueID:Int = UniqueIntSequ
   def iterator : Iterator[Int] = new UniqueIntSequenceIterator(this)
   def iterable : Iterable[Int] = new IterableUniqueIntSequence(this)
   def content:Iterable[Int]
-//  def largestValue:Option[Int]
-//  def smallestValue:Option[Int]
+  //  def largestValue:Option[Int]
+  //  def smallestValue:Option[Int]
 
   def valueAtPosition(position : Int) : Option[Int]
   def positionOfValue(value : Int) : Option[Int]
@@ -76,7 +77,10 @@ abstract class UniqueIntSequence(protected[seq] val uniqueID:Int = UniqueIntSequ
 
   def check{}
 
-  def quickSame(u:UniqueIntSequence):Boolean = u != null && this.uniqueID == u.uniqueID
+  def quickEquals(that:UniqueIntSequence):Boolean = that != null && this.uniqueID == that.uniqueID
+  def equals(that:UniqueIntSequence):Boolean = {
+    quickEquals(that) || (that != null && (this.iterable equals that.iterable))
+  }
 }
 
 class ConcreteUniqueIntSequence(private[seq] val internalPositionToValue:RedBlackTree[Int],
@@ -273,7 +277,7 @@ class ConcreteUniqueIntSequence(private[seq] val internalPositionToValue:RedBlac
   }
 
   def regularize(targetUniqueID:Int = this.uniqueID):ConcreteUniqueIntSequence = {
-    println("regularize")
+    //println("regularize")
     var explorer = this.explorerAtPosition(0)
     var newInternalPositionToValues = RedBlackTree.empty[Int]
     var newValueToInternalPosition = RedBlackTree.empty[Int]
@@ -418,7 +422,7 @@ abstract class StackedUpdateUniqueIntSequence extends UniqueIntSequence(){
   override def regularize(targetUniqueID:Int = this.uniqueID) : ConcreteUniqueIntSequence = comitPendingMoves.regularize(targetUniqueID)
 }
 
-class MovedUniqueIntSequence(seq:UniqueIntSequence,
+class MovedUniqueIntSequence(val seq:UniqueIntSequence,
                              startPositionIncluded:Int,
                              endPositionIncluded:Int,
                              moveAfterPosition:Int,
@@ -467,7 +471,7 @@ class MovedUniqueIntSequence(seq:UniqueIntSequence,
         Some(new MovedIntSequenceExplorer(this,position,
           explorerInBasicSequence,
           positionOfCurrentPivot,
-          positionOfCurrentPivot match{case None => None case Some(x) => x.next})())
+          positionOfCurrentPivot match{case None => localBijection.forward.firstPivotAndPosition case Some(x) => x.next})())
     }
   }
 
@@ -503,8 +507,8 @@ class MovedIntSequenceExplorer(sequence:MovedUniqueIntSequence,
                                   case Some(p) => !p.value.f.minus}
                                 ) extends IntSequenceExplorer{
 
-  override def toString : String = "MovedIntSequenceExplorer(position:" + position + " value:" + value + " currentPivotPosition:" + currentPivotPosition + " pivotAbovePosition:" +
-    pivotAbovePosition + " basicPositionn:" + positionInBasicSequence + ")"
+  //  override def toString : String = "MovedIntSequenceExplorer(position:" + position + " value:" + value + " currentPivotPosition:" + currentPivotPosition + " pivotAbovePosition:" +
+  //    pivotAbovePosition + " basicPositionn:" + positionInBasicSequence + ")"
 
   override val value : Int = positionInBasicSequence.value
 
@@ -514,7 +518,7 @@ class MovedIntSequenceExplorer(sequence:MovedUniqueIntSequence,
       //change pivot, we are also sure that there is a next, so use .head
       val newPivotAbovePosition = pivotAbovePosition.head.next
       val newPosition = position + 1
-      val newPositionInBasicSequence = sequence.explorerAtPosition(pivotAbovePosition.head.value.f(newPosition))
+      val newPositionInBasicSequence = sequence.seq.explorerAtPosition(pivotAbovePosition.head.value.f(newPosition))
       newPositionInBasicSequence match{
         case None => None
         case Some(newPositionInRB) =>
@@ -550,11 +554,11 @@ class MovedIntSequenceExplorer(sequence:MovedUniqueIntSequence,
       val newPosition = position - 1
       val newCurrentPivotPosition = currentPivotPosition.head.prev
       val newInternalPosition = newCurrentPivotPosition match{case None => newPosition case Some(position2) => position2.value.f(newPosition)}
-      val newCurrentPositionInBasicSequence = sequence.explorerAtPosition(newInternalPosition).head
+
       //println("change pivot newPosition:" + newPosition + " newCurrentPivotPosition:" + newCurrentPivotPosition + " oldPosition:" + currentPivotPosition)
       Some(new MovedIntSequenceExplorer(sequence,
         newPosition,
-        newCurrentPositionInBasicSequence,
+        sequence.seq.explorerAtPosition(newInternalPosition).head,
         newCurrentPivotPosition,
         currentPivotPosition)(limitAboveForCurrentPivot = limitBelowForCurrentPivot-1
       ))
@@ -641,13 +645,9 @@ class InsertedIntSequenceExplorer(seq:InsertedUniqueIntSequence,
             p.next match {
               case None => None
               case Some(next1) =>
-                next1.next match {
-                  case None => None
-                  case Some(next2) => Some(new InsertedIntSequenceExplorer(seq, position + 1, Some(next2), atInsertedValue = false, originalExplorerIsAbove = false))
-                }
+                Some(new InsertedIntSequenceExplorer(seq, position + 1, Some(next1), atInsertedValue = false, originalExplorerIsAbove = false))
             }
           }
-
       }
     }else {
       val nextPosition = position + 1
@@ -674,11 +674,7 @@ class InsertedIntSequenceExplorer(seq:InsertedUniqueIntSequence,
           else {
             p.prev match {
               case None => None
-              case Some(prev1) =>
-                prev1.prev match {
-                  case None => None
-                  case Some(prev2) => Some(new InsertedIntSequenceExplorer(seq, position - 1, Some(prev2), atInsertedValue = false, originalExplorerIsAbove = false))
-                }
+              case Some(prev1) => Some(new InsertedIntSequenceExplorer(seq, position - 1, Some(prev1), atInsertedValue = false, originalExplorerIsAbove = false))
             }
           }
       }
@@ -708,7 +704,7 @@ class DeletedUniqueIntSequence(seq:UniqueIntSequence,
   override def size : Int = seq.size - 1
 
   override def explorerAtPosition(position : Int) : Option[IntSequenceExplorer] = {
-    seq.explorerAtPosition(if (position <= this.position) position else position + 1) match {
+    seq.explorerAtPosition(if (position < this.position) position else position + 1) match {
       case None => None
       case Some(e) => Some(new DeletedIntSequenceExplorer(this, position, e))
     }

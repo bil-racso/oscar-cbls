@@ -20,40 +20,53 @@ object SeqValue{
 }
 
 sealed abstract class SeqUpdate(val newValue:UniqueIntSequence){
-  /**
-   * @return MAxInt is a load was done,
-   */
-  def nbUpdatesFromPreviousValue:Int
+  protected[computation] def reverseTo(target:UniqueIntSequence):SeqUpdate = this.reverseAcc(target,SeqUpdateSet(newValue))
+  protected[computation] def reverseAcc(target:UniqueIntSequence, newPrev:SeqUpdate):SeqUpdate
 }
 
-sealed abstract class SeqUpdateWithPrev(prev:SeqUpdate,newValue:UniqueIntSequence) extends SeqUpdate(newValue){
-  def nbUpdatesFromPreviousValue:Int = {
-    val tmp = prev.nbUpdatesFromPreviousValue
-    if(tmp == Int.MaxValue) tmp else tmp+1
-  }
-}
+sealed abstract class SeqUpdateWithPrev(prev:SeqUpdate,newValue:UniqueIntSequence) extends SeqUpdate(newValue)
 
 //after is -1 for start position
 case class SeqUpdateInsert(value:Int,pos:Int,prev:SeqUpdate)
-  extends SeqUpdateWithPrev(prev:SeqUpdate, prev.newValue.insertAtPosition(value,pos,fast=true)){
+                          (seq:UniqueIntSequence=prev.newValue.insertAtPosition(value,pos,fast=true))
+  extends SeqUpdateWithPrev(prev:SeqUpdate, seq){
+  assert(seq equals prev.newValue.insertAtPosition(value,pos,fast=true))
+  override protected[computation] def reverseAcc(target:UniqueIntSequence, newPrev:SeqUpdate) : SeqUpdate = {
+    prev.reverseAcc(target,SeqUpdateRemoveValue(value,newPrev)(prev.newValue))
+  }
 }
 
 case class SeqUpdateMove(fromIncluded:Int,toIncluded:Int,after:Int,flip:Boolean,prev:SeqUpdate)
-  extends SeqUpdateWithPrev(prev,prev.newValue.moveAfter(fromIncluded,toIncluded,after,flip,fast=true)){
+                        (seq:UniqueIntSequence=prev.newValue.moveAfter(fromIncluded,toIncluded,after,flip,fast=true))
+  extends SeqUpdateWithPrev(prev,seq){
+  assert(seq equals prev.newValue.moveAfter(fromIncluded,toIncluded,after,flip,fast=true))
   def isSimpleFlip:Boolean = after+1 == fromIncluded && flip
   def isNop = after+1 == fromIncluded && !flip
   def fromValue:Int = prev.newValue.valueAtPosition(fromIncluded).head
   def toValue:Int = prev.newValue.valueAtPosition(toIncluded).head
   def afterValue:Int = prev.newValue.valueAtPosition(after).head
+
+  override protected[computation] def reverseAcc(target:UniqueIntSequence, newPrev:SeqUpdate) : SeqUpdate = {
+    //TODO: chek this!!!
+    prev.reverseAcc(target,SeqUpdateMove(after - (toIncluded - fromIncluded), after, fromIncluded-1, flip, newPrev)(prev.newValue))
+  }
 }
 
 case class SeqUpdateRemoveValue(value:Int,prev:SeqUpdate)
-  extends SeqUpdateWithPrev(prev,prev.newValue.delete(prev.newValue.positionOfValue(value).head,fast=true)){
+                               (seq:UniqueIntSequence=prev.newValue.delete(prev.newValue.positionOfValue(value).head,fast=true))
+  extends SeqUpdateWithPrev(prev,seq){
+  assert(seq equals prev.newValue.delete(prev.newValue.positionOfValue(value).head,fast=true))
+
   def position:Int = prev.newValue.positionOfValue(value).head
+
+  override protected[computation] def reverseAcc(target:UniqueIntSequence, newPrev:SeqUpdate) : SeqUpdate = {
+    prev.reverseAcc(target,SeqUpdateInsert(value, position, newPrev)(prev.newValue))
+  }
 }
 
-case class SeqUpdateSet(val value:UniqueIntSequence) extends SeqUpdate(value){
-  def nbUpdatesFromPreviousValue:Int = Int.MaxValue
+case class SeqUpdateSet(value:UniqueIntSequence) extends SeqUpdate(value){
+  override protected[computation] def reverseAcc(target : UniqueIntSequence, newPrev:SeqUpdate) : SeqUpdate =
+    if(target quickEquals this.newValue) newPrev else SeqUpdateSet(target)
 }
 
 trait SeqNotificationTarget {
@@ -72,12 +85,14 @@ object CBLSSeqConst{
   def apply(seq:UniqueIntSequence):CBLSSeqConst = new CBLSSeqConst(seq.regularize())
 }
 
-class CBLSSeqVar(givenModel:Store, initialValue:UniqueIntSequence, val domain:Domain, n: String = null, maxPivot:Int = 10)
-  extends ChangingSeqValue(initialValue, domain.max, maxPivot) with Variable{
+class CBLSSeqVar(givenModel:Store, initialValue:UniqueIntSequence, val maxVal:Int = Int.MaxValue, n: String = null, maxPivot:Int = 10)
+  extends ChangingSeqValue(initialValue, maxVal, maxPivot) with Variable{
   require(domain.min == 0)
   require(givenModel != null)
 
   model = givenModel
+
+  override def domain : Domain = 0 to maxVal
 
   override def name: String = if (n == null) defaultName else n
 
@@ -101,7 +116,7 @@ class CBLSSeqVar(givenModel:Store, initialValue:UniqueIntSequence, val domain:Do
 
   override def setAsStableCheckpoint() {super.setAsStableCheckpoint()}
 
-  override def rollbackToLatestCheckpoint():UniqueIntSequence = super.rollbackToLatestCheckpoint()
+  override def rollbackToCheckpoint(c:UniqueIntSequence) = super.rollbackToCheckpoint(c:UniqueIntSequence)
 
   def <==(i: SeqValue) {IdentitySeq(this,i)}
 }
@@ -117,14 +132,14 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], maxValue: Int, maxP
 
   private var latestCheckpoint:UniqueIntSequence = UniqueIntSequence(initialValue,maxPivot,maxValue)
   private var stableCheckpointNotified:Boolean = false
-  private var updatesToCheckpoint:SeqUpdate = mOldValue
   private var mOldValue:SeqUpdate = SeqUpdateSet(latestCheckpoint)
+  private var updatesToCheckpoint:SeqUpdate = mOldValue
   private var updates:SeqUpdate = mOldValue
 
   override def value: UniqueIntSequence = {
     if (model == null) return mOldValue.newValue
     val propagating = model.propagating
-    if (definingInvariant == null && !propagating) return mOldValue.newValue
+    if (definingInvariant == null && !propagating) return updates.newValue
     model.propagate(this)
     mOldValue.newValue
   }
@@ -135,7 +150,7 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], maxValue: Int, maxP
     updates.newValue
   }
 
-  override def toString:String = name + ":={" + (if(model.propagateOnToString) value else updates.newValue).mkString(",") + "}"
+  override def toString:String = name + ":={" + (if(model.propagateOnToString) value else updates.newValue)+ "}" //TODO: .mkString(",")
 
   def toStringNoPropagate: String = name + ":=" + updates.newValue.toString()
 
@@ -143,15 +158,15 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], maxValue: Int, maxP
 
   //-1 for first position
   protected def insertAtPosition(value:Int,pos:Int){
-    updates = SeqUpdateInsert(value,pos,updates)
+    updates = SeqUpdateInsert(value,pos,updates)()
   }
 
   protected def removeValue(value:Int){
-    updates = SeqUpdateRemoveValue(value,updates)
+    updates = SeqUpdateRemoveValue(value,updates)()
   }
   //-1 for first position
   protected def move(fromIncludedPosition:Int,toIncludedPosition:Int,afterPosition:Int,flip:Boolean){
-    updates  = SeqUpdateMove(fromIncludedPosition,toIncludedPosition,afterPosition,flip,updates)
+    updates  = SeqUpdateMove(fromIncludedPosition,toIncludedPosition,afterPosition,flip,updates)()
   }
 
   protected def setValue(seq:UniqueIntSequence){
@@ -167,13 +182,43 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], maxValue: Int, maxP
     stableCheckpointNotified = false
   }
 
-  protected def rollbackToLatestCheckpoint():UniqueIntSequence = {
-    setValue(latestCheckpoint)
-    latestCheckpoint
+  protected def rollbackToCheckpoint(c:UniqueIntSequence){
+    if(c quickEquals latestCheckpoint){
+      setValue(latestCheckpoint)
+    }else{
+      //TODO
+      //the checkpoint is not the latest one
+      //so wee must compute a path to it.
+    }
   }
 
-  final protected def performSeqPropagation(stableCheckpoint:Boolean): Unit = {
+  //TODO
+///  protected def releaseCheckpoint(c:UniqueIntSequence)
+
+  /**
+   *  checkpoints are managed in a stack fashion.
+   *  you can basically set a checkpoint (= push)
+   *  and release a checkpoint (=pop until the relesed checkpoint is reached)
+   *  a checkpoint is defined by the new value of the sequence hen it is defined.
+   *
+   *  a checkpoint enables the use of rollBack to latest checkpoint (which must be the latest defined one)
+   *  you cannot rollback to an earlier checkpoint if you have not released a more recent one.
+   *
+   * upon propagation, invariants are notified if the new value is a stable checkpoint, or not.
+   *
+   * we consider that invariants have a single checkpoint.
+   * when moving from one checkpoint to an older one, the invariant is therefore
+   * notified about incremental updates to reach the older checkpoint
+   * (these can actually be non-incremental as well,
+   * if the search procedure used the "set" update at some point).
+   *
+   * this variable is therefore able to reverse a forward sequence of udpate.
+   *
+   */
+
+  final protected def performSeqPropagation(): Unit = {
     //TODO: manage the stableCheckpoint!!
+    val stableCheckpoint = false
     val dynListElements = getDynamicallyListeningElements
     val headPhantom = dynListElements.headPhantom
     var currentElement = headPhantom.next
@@ -199,6 +244,7 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], maxValue: Int, maxP
       mOldValue = start
       updates = start
     }else{
+      mOldValue = SeqUpdateSet(updates.newValue)
       //TODO
     }
   }

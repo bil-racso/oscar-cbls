@@ -52,11 +52,11 @@ case class Content(v:SeqValue)
           true
         }else false
       case SeqUpdateSet(value:UniqueIntSequence) =>
-        if(value quickSame savedCheckpoint) {
+        if(value quickEquals savedCheckpoint) {
           //undo since last checkpoint
           comeBackToSavedCheckPoint()
           true
-        }else if (value quickSame v.value){
+        }else if (value quickEquals v.value){
           //start at the previous value; easy game.
           true
         }else{

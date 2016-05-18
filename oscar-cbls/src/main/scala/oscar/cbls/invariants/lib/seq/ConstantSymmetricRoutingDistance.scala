@@ -182,10 +182,10 @@ class ConstantSymmetricRoutingDistance(routes:ChangingSeqValue,
         true
 
       case SeqUpdateSet(value : UniqueIntSequence) =>
-        if(value quickSame savedCheckpoint){
+        if(value quickEquals savedCheckpoint){
           restoreCheckpoint()
           true
-        }else if (value quickSame routes.value){
+        }else if (value quickEquals routes.value){
           true //we are starting from the previous value
         }else{
           false //impossible to go incremental

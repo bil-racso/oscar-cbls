@@ -74,51 +74,51 @@ abstract class ChangingIntValue(initialValue:Int, initialDomain:Domain)
   assert(initialDomain.contains(initialValue),initialValue+ " is not in the domain of "+this.name+"("+initialDomain+"). This might indicate an integer overflow.")
   
   private var privatedomain:Domain = initialDomain
-  private var Value: Int = initialValue
-  private var OldValue = Value
+  private var mNewValue: Int = initialValue
+  private var mOldValue = mNewValue
 
   def domain:Domain = privatedomain
 
   def restrictDomain(d:Domain): Unit = {
     privatedomain = privatedomain.restrict(d)
-    if(!privatedomain.contains(Value)){
+    if(!privatedomain.contains(mNewValue)){
         this := privatedomain.min
       }
   }
 
   override def toString = {
-    if(model != null && model.propagateOnToString) s"$name:=$value" else s"$name:=$Value"
+    if(model != null && model.propagateOnToString) s"$name:=$value" else s"$name:=$mNewValue"
   }
-  override def toStringNoPropagate = s"$name:=$Value"
+  override def toStringNoPropagate = s"$name:=$mNewValue"
 
   def setValue(v:Int){
-    if (v != Value){
+    if (v != mNewValue){
       assert(domain.contains(v),v+ " is not in the domain of "+this+"("+min+".."+max+"). This might indicate an integer overflow.")
-      Value = v
+      mNewValue = v
       notifyChanged()
     }
   }
 
   override def value: Int = {
-    if (model == null) return Value
+    if (model == null) return mNewValue
     val propagating = model.propagating
-    if (definingInvariant == null && !propagating) return Value
+    if (definingInvariant == null && !propagating) return mNewValue //the new value, actually!
     if(!propagating) model.propagate(this)
-    OldValue
+    mOldValue
   }
 
   def newValue:Int = {
     assert(model.checkExecutingInvariantOK(definingInvariant),"variable [" + this
       + "] queried for latest val by non-controlling invariant")
-    Value
+    mNewValue
   }
 
   override def performPropagation(){performIntPropagation()}
 
   final protected def performIntPropagation(){
-    if(OldValue!=Value){
-      val old=OldValue
-      OldValue=Value  //TODO: the change should be made AFTER the notification
+    if(mOldValue!=mNewValue){
+      val old=mOldValue
+      mOldValue=mNewValue  //TODO: the change should be made AFTER the notification
 
       val dynListElements = getDynamicallyListeningElements
       val headPhantom = dynListElements.headPhantom
@@ -128,14 +128,14 @@ abstract class ChangingIntValue(initialValue:Int, initialDomain:Domain)
         currentElement = currentElement.next
         val inv:IntNotificationTarget = e._1.asInstanceOf[IntNotificationTarget]
         assert({this.model.NotifiedInvariant=inv.asInstanceOf[Invariant]; true})
-        inv.notifyIntChanged(this,e._2,old,Value)
+        inv.notifyIntChanged(this,e._2,old,mNewValue)
         assert({this.model.NotifiedInvariant=null; true})
       }
     }
   }
 
   override def checkInternals(c:Checker){
-    c.check(OldValue == Value)
+    c.check(mOldValue == mNewValue)
   }
 
   protected def :=(v: Int) {
