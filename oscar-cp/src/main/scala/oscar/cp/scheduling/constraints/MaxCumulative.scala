@@ -18,7 +18,7 @@ class MaxCumulative(starts: Array[CPIntVar], durations: Array[CPIntVar], ends: A
     l match {
       case Weak =>
         if (s.post(TTPerTask(starts,durations,ends,demands,resources,capacity,id)) == Failure) return Failure
-      // steven, stop adding things here, weak = time-table only
+        // steven, stop adding things here, weak = time-table only
       case Automatic =>
         if (s.post(TTPerTask(starts,durations,ends,demands,resources,capacity,id)) == Failure) return Failure
         if (s.post(TimeTableOverloadChecker(starts,durations,ends,demands,resources,capacity,id)) == Failure) return Failure
