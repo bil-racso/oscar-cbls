@@ -26,6 +26,13 @@ sealed abstract class SeqUpdate(val newValue:UniqueIntSequence){
 
 sealed abstract class SeqUpdateWithPrev(prev:SeqUpdate,newValue:UniqueIntSequence) extends SeqUpdate(newValue)
 
+class SeqUpdateCheckpointDefined(prev:SeqUpdate,newValue:UniqueIntSequence)
+  extends SeqUpdateWithPrev(prev:SeqUpdate,newValue:UniqueIntSequence){
+
+  override protected[computation] def reverseAcc(target : UniqueIntSequence, newPrev : SeqUpdate) : SeqUpdate =
+    prev.reverseAcc(target,newPrev)
+}
+
 //after is -1 for start position
 case class SeqUpdateInsert(value:Int,pos:Int,prev:SeqUpdate)
                           (seq:UniqueIntSequence=prev.newValue.insertAtPosition(value,pos,fast=true))
@@ -161,6 +168,8 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], maxValue: Int, maxP
 
   //-1 for first position
   protected def insertAtPosition(value:Int,pos:Int){
+    assert(pos < updates.newValue.size)
+    assert(pos >= 0)
     updates = SeqUpdateInsert(value,pos,updates)()
     notifyChanged()
   }
@@ -189,22 +198,29 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], maxValue: Int, maxP
   protected def setAsStableCheckpoint(){
     latestCheckpoint = newValue
     stableCheckpointNotified = false
+    //TODO: faut-il notifier as changed? boff
+  }
+
+  /**
+   * rolls back to the latest checkpoint.
+   * if c is not null, it checks that c is indeed the latest checkpoint
+   * @param c
+   */
+  protected def rollbackToLatestCheckpoint(c:UniqueIntSequence){
+    if(c != null) require(c quickEquals latestCheckpoint)
+    //TODO: what is le checkpoint n'a pas encore été communiqué
+    setValue(latestCheckpoint)
     notifyChanged()
   }
 
-  protected def rollbackToCheckpoint(c:UniqueIntSequence){
-    if(c quickEquals latestCheckpoint){
-      setValue(latestCheckpoint)
-    }else{
-      //TODO
-      //the checkpoint is not the latest one
-      //so wee must compute a path to it.
-    }
-    notifyChanged()
+  /**
+   * releases the latest checkpoint
+   * @param c the checkpoint to release. if not null, checks that the latest checkpoint is c
+   */
+  protected def releaseLatestCheckpoint(c:UniqueIntSequence){
+    if(c != null) require(c quickEquals latestCheckpoint)
+    //TODO: what is le checkpoint n'a pas encore été communiqué
   }
-
-  //TODO
-///  protected def releaseCheckpoint(c:UniqueIntSequence)
 
   /**
    *  checkpoints are managed in a stack fashion.
@@ -224,6 +240,8 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], maxValue: Int, maxP
    * if the search procedure used the "set" update at some point).
    *
    * this variable is therefore able to reverse a forward sequence of udpate.
+   *
+   * also, you can only release checkpoint in a stack fashion, and revert to the latestCheckpoint.
    *
    */
 

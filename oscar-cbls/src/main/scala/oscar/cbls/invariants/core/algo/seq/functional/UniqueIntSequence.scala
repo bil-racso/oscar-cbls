@@ -83,7 +83,7 @@ abstract class UniqueIntSequence(protected[seq] val uniqueID:Int = UniqueIntSequ
   }
 
   override def toString : String = {
-    "UniqueIntSequence(size:" + size + ")[" + this.iterator.toList.mkString(",") + "]" + descriptorString
+    "UniqueIntSequence(size:" + size + ")[" + this.iterator.toList.mkString(",") + "]      impl:" + descriptorString
   }
 
   def descriptorString : String
@@ -95,7 +95,11 @@ class ConcreteUniqueIntSequence(private[seq] val internalPositionToValue:RedBlac
                                 private[seq] val startFreeRangeForInternalPosition:Int,
                                 maxPivot:Int = 10, maxSize:Int = 1000, uniqueID:Int = UniqueIntSequence.getNewUniqueID()) extends UniqueIntSequence(uniqueID){
 
-  override def descriptorString : String = "(concrete)"
+  override def descriptorString : String = "[" + this.content.mkString(",") + "]"
+
+  override def toString : String = {
+    "UniqueIntSequence(size:" + size + ")[" + this.iterator.toList.mkString(",") + "]"
+  }
 
   override def check {
     require(internalPositionToValue.content.sortBy(_._1) equals valueToInternalPosition.content.map({case (a,b) => (b,a)}).sortBy(_._1))
