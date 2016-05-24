@@ -5,10 +5,10 @@ import oscar.cbls.invariants.core.computation._
 
 import scala.collection.immutable.SortedSet
 
-case class RouteSuccessor(routes:ChangingSeqValue, v:Int, successorValues:Array[CBLSIntVar], defaultWhenNotInSequence:Int)
+case class Successor(sequence:ChangingSeqValue, successorValues:Array[CBLSIntVar], defaultWhenNotInSequence:Int, defaultWhenNoSuccessor:Int)
   extends Invariant() with SeqNotificationTarget {
 
-  registerStaticAndDynamicDependency(routes)
+  registerStaticAndDynamicDependency(sequence)
   for(i <- successorValues) i.setDefiningInvariant(this)
   finishInitialization()
 
@@ -31,15 +31,15 @@ case class RouteSuccessor(routes:ChangingSeqValue, v:Int, successorValues:Array[
       case s@SeqUpdateInsert(value : Int, pos : Int, prev : SeqUpdate) =>
         computeStartValuesOfImpactedZone(prev) match{
           case None => None
-          case Some(startsOfImpactedZone) => Some(startsOfImpactedZone + value + RoutingConventionMethods.routingPredVal2Val(value,changes.newValue,v))
+          case Some(startsOfImpactedZone) => Some(startsOfImpactedZone + value ++ changes.newValue.predecessorVal2Val(value))
         }
 
       case SeqUpdateMove(fromIncluded : Int, toIncluded : Int, after : Int, flip : Boolean, prev : SeqUpdate) =>
         computeStartValuesOfImpactedZone(prev) match{
           case None => None
           case Some(startsOfImpactedZone) => Some(
-            startsOfImpactedZone +
-              RoutingConventionMethods.routingPredPos2Val(fromIncluded,changes.newValue,v) +
+            startsOfImpactedZone ++
+              changes.newValue.predecessorPos2Val(fromIncluded) +
               changes.newValue.valueAtPosition(fromIncluded).head +
               changes.newValue.valueAtPosition(toIncluded).head +
               changes.newValue.valueAtPosition(after).head)
@@ -49,15 +49,14 @@ case class RouteSuccessor(routes:ChangingSeqValue, v:Int, successorValues:Array[
         computeStartValuesOfImpactedZone(prev) match{
           case None => None
           case Some(startsOfImpactedZone) => Some(
-            startsOfImpactedZone +
-              RoutingConventionMethods.routingPredPos2Val(value,changes.newValue,v) + value)
+            startsOfImpactedZone ++
+              changes.newValue.predecessorVal2Val(value) + value)
         }
 
       case SeqUpdateSet(value : UniqueIntSequence) =>
-        if (value quickEquals routes.value){
+        if (value quickEquals sequence.value){
           Some(SortedSet.empty[Int]) //we are starting from the previous value
         }else{
-          //TODO: how about a cache to handle rollbacks? possibly a cache per vehicle?
           None //impossible to go incremental
         }
     }
@@ -69,14 +68,10 @@ case class RouteSuccessor(routes:ChangingSeqValue, v:Int, successorValues:Array[
     var explorer = seq.explorerAtPosition(0).head
     while(explorer.next match{
       case None =>
-        successorValues(explorer.value) := v-1
+        successorValues(explorer.value) := defaultWhenNoSuccessor
         false
       case Some(next) =>
-        if(next.value < v){
-          successorValues(explorer.value) := next.value - 1
-        }else{
-          successorValues(explorer.value) := next.value
-        }
+        successorValues(explorer.value) := next.value
         explorer = next
         true
     }){}
@@ -89,14 +84,11 @@ case class RouteSuccessor(routes:ChangingSeqValue, v:Int, successorValues:Array[
         var explorer = startExplorer
         while(explorer.next match{
           case None =>
-            successorValues(explorer.value) := v-1
+            successorValues(explorer.value) := defaultWhenNoSuccessor
             false
           case Some(next) =>
-            val newValueForSuccValue =
-              if(next.value < v) next.value - 1
-              else next.value
-            if(successorValues(explorer.value).newValue != newValueForSuccValue){
-              successorValues(explorer.value) := newValueForSuccValue
+            if(successorValues(explorer.value).newValue != next.value){
+              successorValues(explorer.value) := next.value
               explorer = next
               true
             }else false

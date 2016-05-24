@@ -25,7 +25,8 @@ sealed abstract class SeqUpdate(val newValue:UniqueIntSequence){
 }
 
 sealed abstract class SeqUpdateWithPrev(prev:SeqUpdate,newValue:UniqueIntSequence) extends SeqUpdate(newValue) {
-  def oldPosToNewPos(oldPos:Int):Int
+  def oldPosToNewPos(oldPos:Int):Option[Int]
+  def newPos2OldPos(newPos:Int):Option[Int]
 }
 
 //after is -1 for start position
@@ -35,6 +36,17 @@ case class SeqUpdateInsert(value:Int,pos:Int,prev:SeqUpdate)
   assert(seq equals prev.newValue.insertAtPosition(value,pos,fast=true))
   override protected[computation] def reverseAcc(target:UniqueIntSequence, newPrev:SeqUpdate) : SeqUpdate = {
     prev.reverseAcc(target,SeqUpdateRemoveValue(value,newPrev)(prev.newValue))
+  }
+
+  override def oldPosToNewPos(oldPos : Int) : Option[Int] = {
+    if (oldPos < pos) Some(oldPos)
+    else Some(oldPos + 1)
+  }
+
+  override def newPos2OldPos(newPos : Int) : Option[Int] = {
+    if(newPos == pos) None
+    else if (newPos < pos) Some(newPos)
+    else Some(newPos-1)
   }
 }
 
@@ -47,8 +59,6 @@ case class SeqUpdateMove(fromIncluded:Int,toIncluded:Int,after:Int,flip:Boolean,
   def fromValue:Int = prev.newValue.valueAtPosition(fromIncluded).head
   def toValue:Int = prev.newValue.valueAtPosition(toIncluded).head
   def afterValue:Int = prev.newValue.valueAtPosition(after).head
-
-
 
   override protected[computation] def reverseAcc(target:UniqueIntSequence, newPrev:SeqUpdate) : SeqUpdate = {
     //TODO: chek this!!!

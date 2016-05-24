@@ -1,9 +1,10 @@
-package oscar.cbls.invariants.lib.seq
+package oscar.cbls.invariants.lib.seq.draft
 
 import oscar.cbls.invariants.core.algo.quick.QList
 import oscar.cbls.invariants.core.algo.seq.functional.UniqueIntSequence
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.core.propagation.Checker
+import oscar.cbls.invariants.lib.seq.RoutingConventionMethods
 
 /**
  * @param routes the routes of all the vehicles
@@ -20,16 +21,17 @@ import oscar.cbls.invariants.core.propagation.Checker
  * These values must always be present in the sequence in increasing order
  * they cannot be included within a moved segment
  */
-case class ConstantRoutingDistance(routes:ChangingSeqValue,
+case class ConstantRoutingDistancePrecompute(routes:ChangingSeqValue,
                                    v:Int,
                                    distanceMatrix:Array[Array[Int]],
                                    distance:Array[CBLSIntVar],
                                    symmetricDistance:Boolean)
   extends Invariant() with SeqNotificationTarget{
 
-  //TODO: add diagonal as transit cost!
   val perVehicle:Boolean = distance.size >1
   require(distance.length == 0 || distance.length == v)
+
+  val n = distance.length
 
   registerStaticAndDynamicDependency(routes)
   for(i <- distance) i.setDefiningInvariant(this)
@@ -96,7 +98,7 @@ case class ConstantRoutingDistance(routes:ChangingSeqValue,
 
           val deltaDistance = if(symmetricDistance) 0 else {
             //there is a flip and distance is asymmetric
-            computeValueBetween(x.newValue, x.oldPosToNewPos(toIncluded).head,x.oldPosToNewPos(fromIncluded).head) - computeValueBetween(prev.newValue, fromIncluded, toIncluded)
+            computeValueBetween(x.newValue, x.oldPosToNewPos(toIncluded),x.oldPosToNewPos(fromIncluded)) - computeValueBetween(prev.newValue, fromIncluded, toIncluded)
           }
 
           if(perVehicle) {
@@ -133,7 +135,7 @@ case class ConstantRoutingDistance(routes:ChangingSeqValue,
           if(!perVehicle){
             val (deltaDistance) = if(symmetricDistance || !flip) 0 else {
               //there is a flip and distance is asymmetric
-              computeValueBetween(x.newValue, x.oldPosToNewPos(toIncluded).head,x.oldPosToNewPos(fromIncluded).head) - computeValueBetween(prev.newValue, fromIncluded, toIncluded)
+              computeValueBetween(x.newValue, x.oldPosToNewPos(toIncluded),x.oldPosToNewPos(fromIncluded)) - computeValueBetween(prev.newValue, fromIncluded, toIncluded)
             }
 
             distance(0) :+= (
@@ -150,7 +152,7 @@ case class ConstantRoutingDistance(routes:ChangingSeqValue,
 
               val (deltaDistance) = if(symmetricDistance || !flip) 0 else {
                 //there is a flip and distance is asymmetric
-                computeValueBetween(x.newValue, x.oldPosToNewPos(toIncluded).head,x.oldPosToNewPos(fromIncluded).head) - computeValueBetween(prev.newValue, fromIncluded, toIncluded)
+                computeValueBetween(x.newValue, x.oldPosToNewPos(toIncluded),x.oldPosToNewPos(fromIncluded)) - computeValueBetween(prev.newValue, fromIncluded, toIncluded)
               }
 
               recordTouchedVehicle(vehicleOfMovedSegment)
@@ -163,7 +165,7 @@ case class ConstantRoutingDistance(routes:ChangingSeqValue,
               val oldCostInSegment = computeValueBetween(prev.newValue, fromIncluded, toIncluded)
               val newCostInSegment = if(symmetricDistance || !flip) oldCostInSegment else{
                 //there is a flip and distance is asymmetric
-                computeValueBetween(x.newValue, x.oldPosToNewPos(toIncluded).head,x.oldPosToNewPos(fromIncluded).head)
+                computeValueBetween(x.newValue, x.oldPosToNewPos(toIncluded),x.oldPosToNewPos(fromIncluded))
               }
 
               recordTouchedVehicle(vehicleOfMovedSegment)
@@ -261,9 +263,7 @@ case class ConstantRoutingDistance(routes:ChangingSeqValue,
     }
   }
 
-  //TODO: there is a O(1) way: labeled forward and backward nodes with their cumulated distance and use invalidation per vehicle in case more than one move is performed
-  private def computeValueBetween(s:UniqueIntSequence, fromPosIncluded:Int, toPosIncluded:Int):Int = {
-    assert(fromPosIncluded <= toPosIncluded)
+  private def computeValueFromScratchBetween(s:UniqueIntSequence, fromPosIncluded:Int, toPosIncluded:Int, forward:Boolean):Int = {
     var toReturn = 0
     var e = s.explorerAtPosition(fromPosIncluded).head
 

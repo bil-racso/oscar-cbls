@@ -85,6 +85,34 @@ abstract class UniqueIntSequence(protected[seq] val uniqueID:Int = UniqueIntSequ
   }
 
   def descriptorString : String
+
+  def predecessorVal2Val(value:Int):Option[Int] = {
+    explorerAtValue(value) match{
+      case None => None
+      case Some(x) => x.prev match{
+        case Some(y) => Some(y.value)
+        case None => None
+      }
+    }
+  }
+
+  def predecessorPos2Val(position:Int):Option[Int] = {
+    valueAtPosition(position-1)
+  }
+
+  def successorVal2Val(value:Int):Option[Int] = {
+    explorerAtValue(value) match{
+      case None => None
+      case Some(x) => x.next match{
+        case Some(y) => Some(y.value)
+        case None => None
+      }
+    }
+  }
+
+  def successorPos2Val(position:Int):Option[Int] = {
+    valueAtPosition(position+1)
+  }
 }
 
 class ConcreteUniqueIntSequence(private[seq] val internalPositionToValue:RedBlackTree[Int],
@@ -427,7 +455,6 @@ abstract class StackedUpdateUniqueIntSequence extends UniqueIntSequence(){
     require(pos >= 0 && pos <= size , "pos=" + pos + " should be in [0,size="+size+"] in UniqueIntSequence.insertAt")
     new InsertedUniqueIntSequence(this,value:Int,pos:Int)
   }
-
 
   override def regularize(targetUniqueID:Int = this.uniqueID) : ConcreteUniqueIntSequence = comitPendingMoves.regularize(targetUniqueID)
 }
