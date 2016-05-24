@@ -259,6 +259,32 @@ object RedBlackTree {
     }
     currentMap
   }
+
+  //TODO: check this
+  def makeFromSorted[@specialized(Int) V](args:Iterable [(Int,V)]): RedBlackTree[V] = {
+    //root is to be black, beside alternate red and black
+    val a = args.toArray
+    myMakeFromSorted(a,0,a.length-1,false)
+  }
+
+  private def myMakeFromSorted[@specialized(Int) V](args:Array[(Int,V)],fromIncluded:Int,toIncluded:Int,targetIsRed:Boolean): RedBlackTree[V] = {
+    //root is to be black, beside alternate red and black
+    if(fromIncluded == toIncluded){
+      val(key,value) = args(fromIncluded)
+      T(targetIsRed, L(),  key, Some(value), L())
+    }else if (fromIncluded + 1 == toIncluded) {
+      val(keyL,valueL) = args(fromIncluded)
+      val(keyH,valueH) = args(toIncluded)
+      T(targetIsRed, T(!targetIsRed, L(),  keyL, Some(valueL), L()),  keyH, Some(valueH), L())
+    }else{
+      //there is a midlde point
+      val middlePoint = (fromIncluded + toIncluded)/2
+      val left = myMakeFromSorted(args,fromIncluded,middlePoint-1,!targetIsRed)
+      val right = myMakeFromSorted(args,middlePoint+1,toIncluded,!targetIsRed)
+      val(key,value) = args(middlePoint)
+      T(targetIsRed, left,  key, Some(value), right)
+    }
+  }
 }
 
 //le booléen: true le noeud a déjà été montré (dans un parcour gauche à droite)

@@ -271,7 +271,11 @@ case class ConstantRoutingDistance(routes:ChangingSeqValue,
     }
   }
 
-  //TODO: there is a O(1) way: labeled forward and backward nodes with their cumulated distance and use invalidation per vehicle in case more than one move is performed
+  //TODO: there is a O(1) way
+  // labeled forward and backward nodes with their cumulated distance
+  // use invalidation per vehicle in case more than one move is performed
+  // just one thing: backtrack is only performed through checkpoint; star mode will lead to recomputation of the vehicles from scratch
+  //datastruct for checkpoint: forward et bw labeling per vehicle. labeling: node -> (forward,backward) in a redBlack
   private def computeValueBetween(s:UniqueIntSequence, fromPosIncluded:Int, toPosIncluded:Int,addNodeCost:Boolean = false):Int = {
     assert(fromPosIncluded <= toPosIncluded)
 
