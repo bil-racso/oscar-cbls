@@ -14,6 +14,8 @@ import oscar.cbls.invariants.core.propagation.Checker
  *                 the second option is computationally more expensive
  * @param symmetricDistance true if you swear that the distance matrix is symmetric, false and it will be considered as asymmetric (slower!)
  *
+ * The distance computed by this invariant considers the values o the diagonal as part of the cost (node cost are added to the distance)
+ *
  * This invariant relies on the vehicle model assumption:
  * there are v vehicles
  * They are supposed to start from point of values 0 to v-1
@@ -27,7 +29,6 @@ case class ConstantRoutingDistance(routes:ChangingSeqValue,
                                    symmetricDistance:Boolean)
   extends Invariant() with SeqNotificationTarget{
 
-  //TODO: add diagonal as transit cost!
   val perVehicle:Boolean = distance.size >1
   require(distance.length == 0 || distance.length == v)
 
@@ -66,13 +67,14 @@ case class ConstantRoutingDistance(routes:ChangingSeqValue,
 
         val oldDistance = distanceMatrix(oldPrev)(oldSucc)
         val newDistance = distanceMatrix(oldPrev)(value) + distanceMatrix(value)(oldSucc)
+        val nodeCost = distanceMatrix(value)(value)
 
         if(perVehicle) {
           val vehicle = RoutingConventionMethods.searchVehicleReachingPosition(pos, newSeq, v)
           recordTouchedVehicle(vehicle)
-          distance(vehicle) :+= (newDistance - oldDistance)
+          distance(vehicle) :+= (newDistance + nodeCost - oldDistance)
         }else{
-          distance(0) :+= (newDistance - oldDistance)
+          distance(0) :+= (newDistance + nodeCost - oldDistance)
         }
         true
       case x@SeqUpdateMove(fromIncluded : Int, toIncluded : Int, after : Int, flip : Boolean, prev : SeqUpdate) =>
@@ -99,6 +101,7 @@ case class ConstantRoutingDistance(routes:ChangingSeqValue,
             computeValueBetween(x.newValue, x.oldPosToNewPos(toIncluded).head,x.oldPosToNewPos(fromIncluded).head) - computeValueBetween(prev.newValue, fromIncluded, toIncluded)
           }
 
+          //for simple flip, there is no node cost to consider
           if(perVehicle) {
             val vehicleOfMovedSegment = RoutingConventionMethods.searchVehicleReachingPosition(fromIncluded, prev.newValue, v)
             recordTouchedVehicle(vehicleOfMovedSegment)
@@ -110,7 +113,7 @@ case class ConstantRoutingDistance(routes:ChangingSeqValue,
           }
           true
         }else {
-
+          //actually moving, not si:ple flip
           val oldPrevFromValue = prev.newValue.valueAtPosition(fromIncluded - 1).head
           val oldSuccToIfNoLoop = prev.newValue.valueAtPosition(toIncluded + 1).head
           val oldSuccToValue = if (oldSuccToIfNoLoop < v) oldSuccToIfNoLoop-1 else oldSuccToIfNoLoop
@@ -131,6 +134,7 @@ case class ConstantRoutingDistance(routes:ChangingSeqValue,
 
 
           if(!perVehicle){
+            //not per vehicle, so no node cost to consider
             val (deltaDistance) = if(symmetricDistance || !flip) 0 else {
               //there is a flip and distance is asymmetric
               computeValueBetween(x.newValue, x.oldPosToNewPos(toIncluded).head,x.oldPosToNewPos(fromIncluded).head) - computeValueBetween(prev.newValue, fromIncluded, toIncluded)
@@ -141,12 +145,13 @@ case class ConstantRoutingDistance(routes:ChangingSeqValue,
                 - (oldHopBeforeMovedSegment + oldHopAfterMovedSegment + oldHopAfterAfter) + deltaDistance)
 
           }else {
+            //per vehicle, there might be some node cost to consider
             val vehicleOfMovedSegment = RoutingConventionMethods.searchVehicleReachingPosition(fromIncluded, prev.newValue, v)
             val targetVehicleOfMove = RoutingConventionMethods.searchVehicleReachingPosition(after, prev.newValue, v)
             assert(vehicleOfMovedSegment == RoutingConventionMethods.searchVehicleReachingPosition(toIncluded, prev.newValue,v))
 
             if (vehicleOfMovedSegment == targetVehicleOfMove) {
-              //the segment is moved to the same vehicle
+              //the segment is moved to the same vehicle, so we do not consider node cost here
 
               val (deltaDistance) = if(symmetricDistance || !flip) 0 else {
                 //there is a flip and distance is asymmetric
@@ -159,11 +164,13 @@ case class ConstantRoutingDistance(routes:ChangingSeqValue,
                   - (oldHopBeforeMovedSegment + oldHopAfterMovedSegment + oldHopAfterAfter) + deltaDistance)
 
             } else {
+              //moving a segment to another vehicle, and per vehicle required.
+
               //summing the moved segment (this is slow, but it is requested to compute the cost per vehicle)
-              val oldCostInSegment = computeValueBetween(prev.newValue, fromIncluded, toIncluded)
+              val oldCostInSegment = computeValueBetween(prev.newValue, fromIncluded, toIncluded,true)
               val newCostInSegment = if(symmetricDistance || !flip) oldCostInSegment else{
                 //there is a flip and distance is asymmetric
-                computeValueBetween(x.newValue, x.oldPosToNewPos(toIncluded).head,x.oldPosToNewPos(fromIncluded).head)
+                computeValueBetween(x.newValue, x.oldPosToNewPos(toIncluded).head,x.oldPosToNewPos(fromIncluded).head,true)
               }
 
               recordTouchedVehicle(vehicleOfMovedSegment)
@@ -181,6 +188,8 @@ case class ConstantRoutingDistance(routes:ChangingSeqValue,
       case x@SeqUpdateRemoveValue(value : Int, prev : SeqUpdate) =>
         //on which vehicle did we remove?
         //on which vehicle did we insert?
+
+        //node cost to be considered
         if(!digestUpdates(prev)) return false
 
         val positionOfDelete = x.position
@@ -192,13 +201,14 @@ case class ConstantRoutingDistance(routes:ChangingSeqValue,
         val newDistance = distanceMatrix(oldPrevValue)(oldSuccValue)
         val oldDistanceBefore = distanceMatrix(oldPrevValue)(value)
         val oldDistanceAfter = distanceMatrix(value)(oldSuccValue)
+        val nodeCost = distanceMatrix(value)(value)
 
         if(perVehicle){
           val vehicle = RoutingConventionMethods.searchVehicleReachingPosition(positionOfDelete, prev.newValue,v)
           recordTouchedVehicle(vehicle)
-          distance(vehicle) :+= (newDistance - (oldDistanceBefore + oldDistanceAfter))
+          distance(vehicle) :+= (newDistance - (oldDistanceBefore + oldDistanceAfter + nodeCost))
         }else{
-          distance(0) :+= (newDistance - (oldDistanceBefore + oldDistanceAfter))
+          distance(0) :+= (newDistance - (oldDistanceBefore + oldDistanceAfter + nodeCost))
         }
         true
 
@@ -262,20 +272,23 @@ case class ConstantRoutingDistance(routes:ChangingSeqValue,
   }
 
   //TODO: there is a O(1) way: labeled forward and backward nodes with their cumulated distance and use invalidation per vehicle in case more than one move is performed
-  private def computeValueBetween(s:UniqueIntSequence, fromPosIncluded:Int, toPosIncluded:Int):Int = {
+  private def computeValueBetween(s:UniqueIntSequence, fromPosIncluded:Int, toPosIncluded:Int,addNodeCost:Boolean = false):Int = {
     assert(fromPosIncluded <= toPosIncluded)
-    var toReturn = 0
+
     var e = s.explorerAtPosition(fromPosIncluded).head
+    var toReturn = 0
+    if(addNodeCost) toReturn +=  distanceMatrix(e.value)(e.value)
 
     while(e.position < toPosIncluded){
       val nextPos = e.next.head
       toReturn += distanceMatrix(e.value)(nextPos.value)
+      if(addNodeCost) toReturn += distanceMatrix(nextPos.value)(nextPos.value)
     }
     toReturn
   }
 
   private def computeValueFromScratch(s:UniqueIntSequence):Array[Int] = {
-    val toReturn = Array.fill(v)(0)
+    val toReturn = Array.tabulate(v)(v => distanceMatrix(v)(v))
     val it = s.iterator
 
     var prevNode:Int = it.next()
@@ -285,15 +298,17 @@ case class ConstantRoutingDistance(routes:ChangingSeqValue,
       val node = it.next()
       if(node < v){
         //reaching a new vehicle start
-        //finishing the circle
+        //finishing the circle (cost of vehicle node already added)
         toReturn(currentVehicle) = toReturn(currentVehicle) + distanceMatrix(prevNode)(currentVehicle)
         currentVehicle = node
       }else{
         //continuing on the same vehicle
-        toReturn(currentVehicle) = toReturn(currentVehicle) + distanceMatrix(prevNode)(node)
+        toReturn(currentVehicle) = toReturn(currentVehicle) + distanceMatrix(prevNode)(node) +  distanceMatrix(node)(node)
+
       }
       prevNode = node
     }
+    //for the last vehicle, the finishing operation in the loop will not be executed, so we have to add one here
     toReturn(currentVehicle) = toReturn(currentVehicle) + distanceMatrix(prevNode)(currentVehicle)
 
     if(perVehicle) toReturn
