@@ -24,13 +24,8 @@ sealed abstract class SeqUpdate(val newValue:UniqueIntSequence){
   protected[computation] def reverseAcc(target:UniqueIntSequence, newPrev:SeqUpdate):SeqUpdate
 }
 
-sealed abstract class SeqUpdateWithPrev(prev:SeqUpdate,newValue:UniqueIntSequence) extends SeqUpdate(newValue)
-
-class SeqUpdateCheckpointDefined(prev:SeqUpdate,newValue:UniqueIntSequence)
-  extends SeqUpdateWithPrev(prev:SeqUpdate,newValue:UniqueIntSequence){
-
-  override protected[computation] def reverseAcc(target : UniqueIntSequence, newPrev : SeqUpdate) : SeqUpdate =
-    prev.reverseAcc(target,newPrev)
+sealed abstract class SeqUpdateWithPrev(prev:SeqUpdate,newValue:UniqueIntSequence) extends SeqUpdate(newValue) {
+  def oldPosToNewPos(oldPos:Int):Int
 }
 
 //after is -1 for start position
@@ -52,6 +47,8 @@ case class SeqUpdateMove(fromIncluded:Int,toIncluded:Int,after:Int,flip:Boolean,
   def fromValue:Int = prev.newValue.valueAtPosition(fromIncluded).head
   def toValue:Int = prev.newValue.valueAtPosition(toIncluded).head
   def afterValue:Int = prev.newValue.valueAtPosition(after).head
+
+
 
   override protected[computation] def reverseAcc(target:UniqueIntSequence, newPrev:SeqUpdate) : SeqUpdate = {
     //TODO: chek this!!!
@@ -97,7 +94,6 @@ class CBLSSeqVar(givenModel:Store, initialValue:UniqueIntSequence, val maxVal:In
   require(domain.min == 0)
   require(givenModel != null)
 
-
   model = givenModel
 
   override def domain : Domain = 0 to maxVal
@@ -122,9 +118,10 @@ class CBLSSeqVar(givenModel:Store, initialValue:UniqueIntSequence, val maxVal:In
 
   override  def :=(seq:UniqueIntSequence) {super.setValue(seq)}
 
-  override def setAsStableCheckpoint() {super.setAsStableCheckpoint()}
+  override def setCheckpointStatus(willOftenRollBackToCurrentValue:Boolean) {super.setCheckpointStatus(willOftenRollBackToCurrentValue:Boolean)}
 
-  override def rollbackToCheckpoint(c:UniqueIntSequence) = super.rollbackToCheckpoint(c:UniqueIntSequence)
+  override def rollbackToLatestCheckpoint(c:UniqueIntSequence,releaseCheckpoint:Boolean) =
+    super.rollbackToLatestCheckpoint(c:UniqueIntSequence,releaseCheckpoint:Boolean)
 
   def <==(i: SeqValue) {IdentitySeq(this,i)}
 
@@ -140,10 +137,7 @@ object CBLSSeqVar{
 abstract class ChangingSeqValue(initialValue: Iterable[Int], maxValue: Int, maxPivot: Int)
   extends AbstractVariable with SeqValue{
 
-  private var latestCheckpoint:UniqueIntSequence = UniqueIntSequence(initialValue,maxPivot,maxValue)
-  private var stableCheckpointNotified:Boolean = false
-  private var mOldValue:SeqUpdate = SeqUpdateSet(latestCheckpoint)
-  private var updatesToCheckpoint:SeqUpdate = mOldValue
+  private var mOldValue:SeqUpdate = SeqUpdateSet(UniqueIntSequence(initialValue))
   private var updates:SeqUpdate = mOldValue
 
   override def value: UniqueIntSequence = {
@@ -195,37 +189,58 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], maxValue: Int, maxP
     notifyChanged()
   }
 
-  protected def setAsStableCheckpoint(){
-    latestCheckpoint = newValue
-    stableCheckpointNotified = false
-    //TODO: faut-il notifier as changed? boff
+
+  //stack does not include top checkpoint
+  private var checkpointStack:List[(UniqueIntSequence,SeqUpdate,Boolean)] = List.empty
+
+  protected def pushTopCheckpointToStackIfSome(){
+    topCheckpoint match {
+      case Some(c) =>
+        checkpointStack = (c,committedSinceTopCheckpoint,willOftenRollBackToTopCheckpoint) :: checkpointStack
+        topCheckpoint = None
+      case None => ;
+    }
+  }
+
+  protected def popTopCheckpointFromStack(){
+    val (top :: tail) = checkpointStack
+    checkpointStack = tail
+    topCheckpoint = Some(top._1)
+    committedSinceTopCheckpoint = top._2
+    willOftenRollBackToTopCheckpoint = top._3
+  }
+
+  private var willOftenRollBackToTopCheckpoint:Boolean = false
+  private var topCheckpoint:Option[UniqueIntSequence] = None
+  private var committedSinceTopCheckpoint:SeqUpdate = null
+
+
+  //immediately triggers a notification to listening invariants
+  protected def setCheckpointStatus(willOftenRollBackToCurrentValue:Boolean){
+    pushTopCheckpointToStackIfSome()
+    this.willOftenRollBackToTopCheckpoint = willOftenRollBackToCurrentValue
+    val v = this.newValue
+    this.topCheckpoint = Some(v)
+    this.committedSinceTopCheckpoint = SeqUpdateSet(v)
   }
 
   /**
    * rolls back to the latest checkpoint.
    * if c is not null, it checks that c is indeed the latest checkpoint
+   * this will re-enable checkpoint if if was disabled, and if a checkpoint is recorded
    * @param c
    */
-  protected def rollbackToLatestCheckpoint(c:UniqueIntSequence){
+  protected def rollbackToLatestCheckpoint(c:UniqueIntSequence, releaseCheckpoint:Boolean){
     if(c != null) require(c quickEquals latestCheckpoint)
-    //TODO: what is le checkpoint n'a pas encore été communiqué
+    //TODO: what if le checkpoint n'a pas encore été communiqué
     setValue(latestCheckpoint)
     notifyChanged()
   }
 
   /**
-   * releases the latest checkpoint
-   * @param c the checkpoint to release. if not null, checks that the latest checkpoint is c
-   */
-  protected def releaseLatestCheckpoint(c:UniqueIntSequence){
-    if(c != null) require(c quickEquals latestCheckpoint)
-    //TODO: what is le checkpoint n'a pas encore été communiqué
-  }
-
-  /**
    *  checkpoints are managed in a stack fashion.
    *  you can basically set a checkpoint (= push)
-   *  and release a checkpoint (=pop until the relesed checkpoint is reached)
+   *  and release a checkpoint (=pop, and chack that head == specified checkpoint)
    *  a checkpoint is defined by the new value of the sequence hen it is defined.
    *
    *  a checkpoint enables the use of rollBack to latest checkpoint (which must be the latest defined one)
@@ -242,12 +257,12 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], maxValue: Int, maxP
    * this variable is therefore able to reverse a forward sequence of udpate.
    *
    * also, you can only release checkpoint in a stack fashion, and revert to the latestCheckpoint.
-   *
    */
 
-  final protected def performSeqPropagation(): Unit = {
-    //TODO: manage the stableCheckpoint!!
-    val stableCheckpoint = false
+
+  final protected def performSeqPropagation() = privatePerformSeqPropagation(false)
+
+  private def privatePerformSeqPropagation(stableCheckpoint:Boolean ): Unit = {
     val dynListElements = getDynamicallyListeningElements
     val headPhantom = dynListElements.headPhantom
     var currentElement = headPhantom.next

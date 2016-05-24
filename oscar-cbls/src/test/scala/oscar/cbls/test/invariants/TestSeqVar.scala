@@ -4,6 +4,8 @@ import oscar.cbls.invariants.core.algo.seq.functional.UniqueIntSequence
 import oscar.cbls.invariants.core.computation.{Store, CBLSSeqVar}
 import oscar.cbls.invariants.lib.seq.{Content, Size}
 
+import scala.collection.immutable.SortedSet
+
 /**
  * Created by rdl on 18-05-16.
  */
@@ -25,7 +27,8 @@ object TestSeqVar extends App{
   println("insertAtPosition(45,3)")
 
   a.insertAtPosition(45,3)
-  println(s)
+  require(s.value == 5)
+  require(content.value equals SortedSet(1,2,3,5,45))
   println(content)
   println(a)
 

@@ -7,21 +7,19 @@ import oscar.cbls.invariants.core.algo.rb.{RBPosition, RedBlackTree}
 import scala.language.implicitConversions
 
 object UniqueIntSequence{
-  def apply(values:Iterable[Int], maxPivot:Int = 10, maxSize:Int = 1000):UniqueIntSequence = {
-    var toReturn = empty(maxPivot, maxSize)
+  def apply(values:Iterable[Int]):UniqueIntSequence = {
+    var toReturn = empty()
     for (i <- values) {
       toReturn = toReturn.insertAtPosition(i, toReturn.size, false, false)
     }
     toReturn
   }
 
-  def empty(maxPivot:Int = 10, maxSize:Int = 1000):UniqueIntSequence = new ConcreteUniqueIntSequence(
+  def empty():UniqueIntSequence = new ConcreteUniqueIntSequence(
     RedBlackTree.empty[Int],
     RedBlackTree.empty[Int],
     PiecewiseLinearBijectionNaive.identity,
-    0,
-    maxPivot,
-    maxSize
+    0
   )
 
 
@@ -93,7 +91,7 @@ class ConcreteUniqueIntSequence(private[seq] val internalPositionToValue:RedBlac
                                 private[seq] val valueToInternalPosition:RedBlackTree[Int],
                                 private[seq] val externalToInternalPosition:PiecewiseLinearBijectionNaive,
                                 private[seq] val startFreeRangeForInternalPosition:Int,
-                                maxPivot:Int = 10, maxSize:Int = 1000, uniqueID:Int = UniqueIntSequence.getNewUniqueID()) extends UniqueIntSequence(uniqueID){
+                                uniqueID:Int = UniqueIntSequence.getNewUniqueID()) extends UniqueIntSequence(uniqueID){
 
   override def descriptorString : String = "[" + this.content.mkString(",") + "]"
 
@@ -173,8 +171,7 @@ class ConcreteUniqueIntSequence(private[seq] val internalPositionToValue:RedBlac
       newInternalPositionToValue,
       newValueToInternalPosition,
       newExternalToInternalPosition,
-      startFreeRangeForInternalPosition+1,
-      maxPivot,maxSize)
+      startFreeRangeForInternalPosition+1)
   }
 
   def delete(pos:Int, fast:Boolean,autoRework:Boolean):UniqueIntSequence = {
@@ -212,12 +209,15 @@ class ConcreteUniqueIntSequence(private[seq] val internalPositionToValue:RedBlac
       newInternalPositionToValue,
       newValueToInternalPosition,
       newExternalToInternalPosition,
-      startFreeRangeForInternalPosition - 1,
-      maxPivot,maxSize)
+      startFreeRangeForInternalPosition - 1)
   }
 
   def moveAfter(startPositionIncluded:Int, endPositionIncluded:Int, moveAfterPosition:Int, flip:Boolean, fast:Boolean,autoRework:Boolean):UniqueIntSequence = {
     //println(this + ".moveAfter(startPositionIncluded:" + startPositionIncluded + " endPositionIncluded:" + endPositionIncluded + " moveAfterPosition:" + moveAfterPosition + " flip:" + flip + ")")
+    require(startPositionIncluded >= 0 && startPositionIncluded < size , "startPositionIncluded should be in [0,size[ in UniqueIntSequence.moveAfter")
+    require(endPositionIncluded >= 0 && endPositionIncluded < size , "endPositionIncluded should be in [0,size[ in UniqueIntSequence.moveAfter")
+    require(moveAfterPosition >= 0 && moveAfterPosition < size , "moveAfterPosition should be in [0,size[ in UniqueIntSequence.moveAfter")
+
     require(
       moveAfterPosition < startPositionIncluded || moveAfterPosition>endPositionIncluded,
       "moveAfterPosition=" +  moveAfterPosition + " cannot be between startPositionIncluded=" + startPositionIncluded + " and endPositionIncluded=" + endPositionIncluded)
@@ -235,9 +235,7 @@ class ConcreteUniqueIntSequence(private[seq] val internalPositionToValue:RedBlac
           internalPositionToValue,
           valueToInternalPosition,
           newExternalToInternalPosition,
-          startFreeRangeForInternalPosition,
-          maxPivot,
-          maxSize)
+          startFreeRangeForInternalPosition)
 
       }else{
         this //nop
@@ -257,9 +255,7 @@ class ConcreteUniqueIntSequence(private[seq] val internalPositionToValue:RedBlac
           internalPositionToValue,
           valueToInternalPosition,
           newExternalToInternalPosition,
-          startFreeRangeForInternalPosition,
-          maxPivot,
-          maxSize)
+          startFreeRangeForInternalPosition)
 
       }else{ //move downwards
       val newExternalToInternalPosition = externalToInternalPosition.updateBefore(
@@ -274,9 +270,7 @@ class ConcreteUniqueIntSequence(private[seq] val internalPositionToValue:RedBlac
           internalPositionToValue,
           valueToInternalPosition,
           newExternalToInternalPosition,
-          startFreeRangeForInternalPosition,
-          maxPivot,
-          maxSize)
+          startFreeRangeForInternalPosition)
       }
     }
   }
@@ -298,8 +292,7 @@ class ConcreteUniqueIntSequence(private[seq] val internalPositionToValue:RedBlac
     new ConcreteUniqueIntSequence(newInternalPositionToValues,
       newValueToInternalPosition,
       PiecewiseLinearBijectionNaive.identity,
-      newInternalPositionToValues.size,
-      maxPivot, maxSize,targetUniqueID)
+      newInternalPositionToValues.size,targetUniqueID)
   }
 
   override def comitPendingMoves : UniqueIntSequence = this
@@ -416,13 +409,25 @@ class ConcreteIntSequenceExplorer(sequence:ConcreteUniqueIntSequence,
 }
 
 abstract class StackedUpdateUniqueIntSequence extends UniqueIntSequence(){
-  override def delete(pos : Int, fast:Boolean,autoRework:Boolean) : UniqueIntSequence = new DeletedUniqueIntSequence(this,pos)
+  override def delete(pos : Int, fast:Boolean,autoRework:Boolean) : UniqueIntSequence = {
+    require(pos >= 0, "pos=" + pos + " for delete on UniqueIntSequence should be >= 0")
+    require(pos < size, "cannot delete past end of sequence in UniqueIntSequence")
+    new DeletedUniqueIntSequence(this,pos)
+  }
 
-  override def moveAfter(startPositionIncluded : Int, endPositionIncluded : Int, moveAfterPosition : Int, flip : Boolean, fast:Boolean,autoRework:Boolean) : UniqueIntSequence =
+  override def moveAfter(startPositionIncluded : Int, endPositionIncluded : Int, moveAfterPosition : Int, flip : Boolean, fast:Boolean,autoRework:Boolean) : UniqueIntSequence = {
+    require(startPositionIncluded >= 0 && startPositionIncluded < size , "startPositionIncluded=" + startPositionIncluded + " should be in [0,size" + size + "[ in UniqueIntSequence.moveAfter")
+    require(endPositionIncluded >= 0 && endPositionIncluded < size , "endPositionIncluded=" + endPositionIncluded +" should be in [0,size"+size+"[ in UniqueIntSequence.moveAfter")
+    require(moveAfterPosition >= 0 && moveAfterPosition < size , "moveAfterPosition=" + moveAfterPosition + " should be in [0,size="+size+"[ in UniqueIntSequence.moveAfter")
+
     new MovedUniqueIntSequence(this,startPositionIncluded,endPositionIncluded,moveAfterPosition,flip)
+  }
 
-  override def insertAtPosition(value : Int, pos : Int, fast:Boolean,autoRework:Boolean) : UniqueIntSequence =
+  override def insertAtPosition(value : Int, pos : Int, fast:Boolean,autoRework:Boolean) : UniqueIntSequence = {
+    require(pos >= 0 && pos <= size , "pos=" + pos + " should be in [0,size="+size+"] in UniqueIntSequence.insertAt")
     new InsertedUniqueIntSequence(this,value:Int,pos:Int)
+  }
+
 
   override def regularize(targetUniqueID:Int = this.uniqueID) : ConcreteUniqueIntSequence = comitPendingMoves.regularize(targetUniqueID)
 }
@@ -466,7 +471,7 @@ class MovedUniqueIntSequence(val seq:UniqueIntSequence,
       }
     }
 
-  override def size : Int = seq.size
+  override val size : Int = seq.size
 
   override def comitPendingMoves:UniqueIntSequence = seq.comitPendingMoves.moveAfter(startPositionIncluded,endPositionIncluded,moveAfterPosition,flip,fast=false,autoRework = false)
 
@@ -588,7 +593,7 @@ class InsertedUniqueIntSequence(seq:UniqueIntSequence,
                                 val value:Int,
                                 val pos:Int)
   extends StackedUpdateUniqueIntSequence {
-  override def size : Int = seq.size + 1
+  override val size : Int = seq.size + 1
 
   override def descriptorString : String = seq.descriptorString + ".inserted(val:" + value + " pos:" + pos + ")"
 
@@ -713,7 +718,7 @@ class DeletedUniqueIntSequence(seq:UniqueIntSequence,
 
   override def content : Iterable[Int] = new LazyFilter(seq.content,_ != value)
 
-  override def size : Int = seq.size - 1
+  override val size : Int = seq.size - 1
 
   override def explorerAtPosition(position : Int) : Option[IntSequenceExplorer] = {
     seq.explorerAtPosition(if (position < this.position) position else position + 1) match {
