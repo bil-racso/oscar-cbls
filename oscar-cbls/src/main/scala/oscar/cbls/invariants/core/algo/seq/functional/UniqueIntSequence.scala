@@ -305,6 +305,7 @@ class ConcreteUniqueIntSequence(private[seq] val internalPositionToValue:RedBlac
 
   def regularize(targetUniqueID:Int = this.uniqueID):ConcreteUniqueIntSequence = {
     //println("regularize")
+    var content = this.iterator
     var explorer = this.explorerAtPosition(0)
     var newInternalPositionToValues = RedBlackTree.empty[Int]
     var newValueToInternalPosition = RedBlackTree.empty[Int]

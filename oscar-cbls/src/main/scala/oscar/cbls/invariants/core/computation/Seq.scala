@@ -64,6 +64,8 @@ case class SeqUpdateMove(fromIncluded:Int,toIncluded:Int,after:Int,flip:Boolean,
     //TODO: chek this!!!
     prev.reverseAcc(target,SeqUpdateMove(after - (toIncluded - fromIncluded), after, fromIncluded-1, flip, newPrev)(prev.newValue))
   }
+
+
 }
 
 case class SeqUpdateRemoveValue(value:Int,prev:SeqUpdate)
@@ -75,6 +77,17 @@ case class SeqUpdateRemoveValue(value:Int,prev:SeqUpdate)
 
   override protected[computation] def reverseAcc(target:UniqueIntSequence, newPrev:SeqUpdate) : SeqUpdate = {
     prev.reverseAcc(target,SeqUpdateInsert(value, position, newPrev)(prev.newValue))
+  }
+
+  override def oldPosToNewPos(oldPos : Int) : Option[Int] = {
+    if (oldPos == position) None
+    else if (oldPos < position) Some(oldPos)
+    else Some(oldPos-1)
+  }
+
+  override def newPos2OldPos(newPos : Int) : Option[Int] = {
+    if(newPos <= position) Some(newPos)
+    else Some(newPos +1)
   }
 }
 
@@ -241,9 +254,9 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], maxValue: Int, maxP
    * @param c
    */
   protected def rollbackToLatestCheckpoint(c:UniqueIntSequence, releaseCheckpoint:Boolean){
-    if(c != null) require(c quickEquals latestCheckpoint)
+//    if(c != null) require(c quickEquals latestCheckpoint)
     //TODO: what if le checkpoint n'a pas encore été communiqué
-    setValue(latestCheckpoint)
+//    setValue(latestCheckpoint)
     notifyChanged()
   }
 
@@ -276,7 +289,7 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], maxValue: Int, maxP
     val dynListElements = getDynamicallyListeningElements
     val headPhantom = dynListElements.headPhantom
     var currentElement = headPhantom.next
-    if(stableCheckpoint) latestCheckpoint = updates.newValue //force computation for stable checkpoints
+  //  if(stableCheckpoint) latestCheckpoint = updates.newValue //force computation for stable checkpoints
     while (currentElement != headPhantom) {
       val e = currentElement.elem
       currentElement = currentElement.next
@@ -294,7 +307,7 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], maxValue: Int, maxP
     if(stableCheckpoint){
       //TODO: probably the other way round
       val start = SeqUpdateSet(updates.newValue.regularize())
-      latestCheckpoint = start.value
+ //     latestCheckpoint = start.value
       mOldValue = start
       updates = start
     }else{

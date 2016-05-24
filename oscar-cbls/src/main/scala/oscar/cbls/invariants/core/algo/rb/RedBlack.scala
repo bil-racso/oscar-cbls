@@ -252,7 +252,7 @@ object RedBlackTree {
   def empty[@specialized(Int) V] : RedBlackTree[V] = L[V]()
 
   // apply: Assumes an implicit conversion.
-  def apply[@specialized(Int) V](args : (Int,V)*) : RedBlackTree[V] = {
+  def apply[@specialized(Int) V](args : Iterable[(Int,V)]) : RedBlackTree[V] = {
     var currentMap : RedBlackTree[V] = L()
     for ((k,v) <- args) {
       currentMap = currentMap.insert(k,v)
@@ -263,8 +263,10 @@ object RedBlackTree {
   //TODO: check this
   def makeFromSorted[@specialized(Int) V](args:Iterable [(Int,V)]): RedBlackTree[V] = {
     //root is to be black, beside alternate red and black
+
     val a = args.toArray
-    myMakeFromSorted(a,0,a.length-1,false)
+    if(args.size <=3) this.apply(args)
+    else myMakeFromSorted(a,0,a.length-1,false)
   }
 
   private def myMakeFromSorted[@specialized(Int) V](args:Array[(Int,V)],fromIncluded:Int,toIncluded:Int,targetIsRed:Boolean): RedBlackTree[V] = {
