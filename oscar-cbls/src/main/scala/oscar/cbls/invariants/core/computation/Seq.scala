@@ -1,6 +1,6 @@
 package oscar.cbls.invariants.core.computation
 
-import oscar.cbls.invariants.core.algo.seq.functional.{StackedUpdateUniqueIntSequence, InsertedUniqueIntSequence, ConcreteUniqueIntSequence, UniqueIntSequence}
+import oscar.cbls.invariants.core.algo.seq.functional._
 import oscar.cbls.invariants.core.propagation.Checker
 
 import scala.collection.immutable.SortedSet
@@ -65,7 +65,9 @@ case class SeqUpdateMove(fromIncluded:Int,toIncluded:Int,after:Int,flip:Boolean,
     prev.reverseAcc(target,SeqUpdateMove(after - (toIncluded - fromIncluded), after, fromIncluded-1, flip, newPrev)(prev.newValue))
   }
 
+  override def oldPosToNewPos(oldPos : Int) : Option[Int] = Some(seq.asInstanceOf[MovedUniqueIntSequence].localBijection.backward(oldPos))
 
+  override def newPos2OldPos(newPos : Int) : Option[Int] = Some(seq.asInstanceOf[MovedUniqueIntSequence].localBijection.forward(newPos))
 }
 
 case class SeqUpdateRemoveValue(value:Int,prev:SeqUpdate)
@@ -97,7 +99,7 @@ case class SeqUpdateSet(value:UniqueIntSequence) extends SeqUpdate(value){
 }
 
 trait SeqNotificationTarget {
-  def notifySeqChanges(v: ChangingSeqValue, d: Int, changes:SeqUpdate,stableCheckpoint:Boolean)
+  def notifySeqChanges(v: ChangingSeqValue, d: Int, changes: SeqUpdate, willOftenRollBackToCurrentValue: Boolean)
 }
 
 class CBLSSeqConst(override val value:ConcreteUniqueIntSequence) extends SeqValue{
@@ -141,9 +143,11 @@ class CBLSSeqVar(givenModel:Store, initialValue:UniqueIntSequence, val maxVal:In
 
   override  def :=(seq:UniqueIntSequence) {super.setValue(seq)}
 
-  override def setCheckpointStatus(willOftenRollBackToCurrentValue:Boolean) {super.setCheckpointStatus(willOftenRollBackToCurrentValue:Boolean)}
+  override def setCheckpointStatus(willOftenRollBackToCurrentValue:Boolean):UniqueIntSequence = {
+    super.setCheckpointStatus(willOftenRollBackToCurrentValue:Boolean)
+  }
 
-  override def rollbackToLatestCheckpoint(c:UniqueIntSequence,releaseCheckpoint:Boolean) =
+  override def rollbackToLatestCheckpoint(c:UniqueIntSequence,releaseCheckpoint:Boolean = false) =
     super.rollbackToLatestCheckpoint(c:UniqueIntSequence,releaseCheckpoint:Boolean)
 
   def <==(i: SeqValue) {IdentitySeq(this,i)}
@@ -239,12 +243,13 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], maxValue: Int, maxP
 
 
   //immediately triggers a notification to listening invariants
-  protected def setCheckpointStatus(willOftenRollBackToCurrentValue:Boolean){
+  protected def setCheckpointStatus(willOftenRollBackToCurrentValue:Boolean):UniqueIntSequence = {
     pushTopCheckpointToStackIfSome()
     this.willOftenRollBackToTopCheckpoint = willOftenRollBackToCurrentValue
     val v = this.newValue
     this.topCheckpoint = Some(v)
     this.committedSinceTopCheckpoint = SeqUpdateSet(v)
+    v
   }
 
   /**
@@ -297,7 +302,7 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], maxValue: Int, maxP
       assert({
         this.model.NotifiedInvariant = inv.asInstanceOf[Invariant]; true
       })
-      inv.notifySeqChanges(this, e._2, updates,stableCheckpoint)
+      inv.notifySeqChanges(this, e._2, updates, stableCheckpoint)
       assert({
         this.model.NotifiedInvariant = null; true
       })
@@ -370,9 +375,10 @@ class IdentitySeq(toValue:CBLSSeqVar, fromValue:ChangingSeqValue)
 
   toValue := fromValue.value
 
-  override def notifySeqChanges(v : ChangingSeqValue, d : Int, changes : SeqUpdate, stableCheckpoint : Boolean){
+  override def notifySeqChanges(v: ChangingSeqValue, d: Int, changes: SeqUpdate, willOftenRollBackToCurrentValue: Boolean) {
     assert(v == fromValue)
     digestChanges(changes)
+    if(willOftenRollBackToCurrentValue) toValue.setCheckpointStatus(willOftenRollBackToCurrentValue)
   }
 
   def digestChanges(changes:SeqUpdate){

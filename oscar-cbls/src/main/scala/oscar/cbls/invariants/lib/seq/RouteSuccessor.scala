@@ -12,7 +12,7 @@ case class RouteSuccessor(routes:ChangingSeqValue, v:Int, successorValues:Array[
   for(i <- successorValues) i.setDefiningInvariant(this)
   finishInitialization()
 
-  override def notifySeqChanges(v: ChangingSeqValue, d: Int, changes:SeqUpdate,stableCheckpoint:Boolean){
+  override def notifySeqChanges(v: ChangingSeqValue, d: Int, changes: SeqUpdate, willOftenRollBackToCurrentValue: Boolean) {
     computeStartValuesOfImpactedZone(changes:SeqUpdate) match{
       case None =>  computeAllFromScratch(changes.newValue)
       case Some(startUpdateValues) =>

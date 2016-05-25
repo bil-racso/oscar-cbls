@@ -22,13 +22,13 @@ case class Content(v:SeqValue)
   var savedCheckpoint:UniqueIntSequence = v.value
   var updatesFromThisCheckpointInReverseOrder:QList[(Int,Boolean)]=null
 
-  override def notifySeqChanges(v : ChangingSeqValue, d : Int, changes : SeqUpdate, stableCheckpoint : Boolean) : Unit = {
+  override def notifySeqChanges(v: ChangingSeqValue, d: Int, changes: SeqUpdate, willOftenRollBackToCurrentValue: Boolean) : Unit = {
     if(!digestUpdates(changes)) {
       this := (SortedSet.empty[Int] ++ changes.newValue.content)
       savedCheckpoint = null
       updatesFromThisCheckpointInReverseOrder = null
     }
-    if(stableCheckpoint){
+    if(willOftenRollBackToCurrentValue){
       savedCheckpoint = changes.newValue
       updatesFromThisCheckpointInReverseOrder = null
     }

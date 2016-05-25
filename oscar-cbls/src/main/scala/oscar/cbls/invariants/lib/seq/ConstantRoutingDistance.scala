@@ -5,6 +5,43 @@ import oscar.cbls.invariants.core.algo.seq.functional.UniqueIntSequence
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.core.propagation.Checker
 
+
+object ConstantRoutingDistance {
+
+  def apply(routes : ChangingSeqValue,
+            v : Int,
+            perVehicle:Boolean,
+            distanceMatrix : Array[Array[Int]],
+            distanceIsSymmetric : Boolean):Array[CBLSIntVar] = {
+
+    val distance:Array[CBLSIntVar] =
+      if(perVehicle) Array.tabulate(v)(v => CBLSIntVar(routes.model,name="distanceOfVehicle" + v))
+      else Array.fill(1)(CBLSIntVar(routes.model,name="overallDistance"))
+
+    ConstantRoutingDistance(routes,
+      v,
+      distanceMatrix,
+      distance,
+      distanceIsSymmetric)
+
+    distance
+  }
+
+  def isDistanceSymmetric(distanceMatrix : Array[Array[Int]]):Boolean = {
+    val n = distanceMatrix.size
+    var i = 0
+    while(i < n){
+      var j = 0
+      while(j <= i){
+        if (distanceMatrix(i)(j) != distanceMatrix(j)(i)) return false
+        j += 1
+      }
+      i += 1
+    }
+    true
+  }
+}
+
 /**
  * @param routes the routes of all the vehicles
  * @param v the number of vehicles in the model
@@ -12,7 +49,7 @@ import oscar.cbls.invariants.core.propagation.Checker
  * @param distance it is either an array of one value, in which case it is the total distance run by all vehicle
  *                 or it can also be an array of size v. in this case it is the distance run by each vehicle, respectively.
  *                 the second option is computationally more expensive
- * @param symmetricDistance true if you swear that the distance matrix is symmetric, false and it will be considered as asymmetric (slower!)
+ * @param distanceIsSymmetric true if you swear that the distance matrix is symmetric, false and it will be considered as asymmetric (slower!)
  *
  * The distance computed by this invariant considers the values o the diagonal as part of the cost (node cost are added to the distance)
  *
@@ -26,7 +63,7 @@ case class ConstantRoutingDistance(routes:ChangingSeqValue,
                                    v:Int,
                                    distanceMatrix:Array[Array[Int]],
                                    distance:Array[CBLSIntVar],
-                                   symmetricDistance:Boolean)
+                                   distanceIsSymmetric:Boolean)
   extends Invariant() with SeqNotificationTarget{
 
   val perVehicle:Boolean = distance.size >1
@@ -43,12 +80,12 @@ case class ConstantRoutingDistance(routes:ChangingSeqValue,
 
   affect(savedValues)
 
-  override def notifySeqChanges(v: ChangingSeqValue, d: Int, changes:SeqUpdate,stableCheckpoint:Boolean){
+  override def notifySeqChanges(v: ChangingSeqValue, d: Int, changes: SeqUpdate, willOftenRollBackToCurrentValue: Boolean) {
     if(!digestUpdates(changes)) {
       affect(computeValueFromScratch(changes.newValue))
       savedCheckpoint = null
     }
-    if(stableCheckpoint){
+    if(willOftenRollBackToCurrentValue){
       saveCurrentCheckpoint(changes.newValue)
     }
   }
@@ -96,7 +133,7 @@ case class ConstantRoutingDistance(routes:ChangingSeqValue,
           val newHopBeforeMovedSegment = distanceMatrix(oldPrevFromValue)(toValue)
           val newHopAfterMovedSegment = distanceMatrix(fromValue)(oldSuccToValue)
 
-          val deltaDistance = if(symmetricDistance) 0 else {
+          val deltaDistance = if(distanceIsSymmetric) 0 else {
             //there is a flip and distance is asymmetric
             computeValueBetween(x.newValue, x.oldPosToNewPos(toIncluded).head,x.oldPosToNewPos(fromIncluded).head) - computeValueBetween(prev.newValue, fromIncluded, toIncluded)
           }
@@ -135,7 +172,7 @@ case class ConstantRoutingDistance(routes:ChangingSeqValue,
 
           if(!perVehicle){
             //not per vehicle, so no node cost to consider
-            val (deltaDistance) = if(symmetricDistance || !flip) 0 else {
+            val (deltaDistance) = if(distanceIsSymmetric || !flip) 0 else {
               //there is a flip and distance is asymmetric
               computeValueBetween(x.newValue, x.oldPosToNewPos(toIncluded).head,x.oldPosToNewPos(fromIncluded).head) - computeValueBetween(prev.newValue, fromIncluded, toIncluded)
             }
@@ -153,7 +190,7 @@ case class ConstantRoutingDistance(routes:ChangingSeqValue,
             if (vehicleOfMovedSegment == targetVehicleOfMove) {
               //the segment is moved to the same vehicle, so we do not consider node cost here
 
-              val (deltaDistance) = if(symmetricDistance || !flip) 0 else {
+              val (deltaDistance) = if(distanceIsSymmetric || !flip) 0 else {
                 //there is a flip and distance is asymmetric
                 computeValueBetween(x.newValue, x.oldPosToNewPos(toIncluded).head,x.oldPosToNewPos(fromIncluded).head) - computeValueBetween(prev.newValue, fromIncluded, toIncluded)
               }
@@ -168,7 +205,7 @@ case class ConstantRoutingDistance(routes:ChangingSeqValue,
 
               //summing the moved segment (this is slow, but it is requested to compute the cost per vehicle)
               val oldCostInSegment = computeValueBetween(prev.newValue, fromIncluded, toIncluded,true)
-              val newCostInSegment = if(symmetricDistance || !flip) oldCostInSegment else{
+              val newCostInSegment = if(distanceIsSymmetric || !flip) oldCostInSegment else{
                 //there is a flip and distance is asymmetric
                 computeValueBetween(x.newValue, x.oldPosToNewPos(toIncluded).head,x.oldPosToNewPos(fromIncluded).head,true)
               }
@@ -320,7 +357,7 @@ case class ConstantRoutingDistance(routes:ChangingSeqValue,
   }
 
   override def checkInternals(c : Checker) : Unit = {
-    c.check(checkSymmetry,Some("distance matrix should be symmetric if invariant told so"))
+    c.check(distanceIsSymmetric && !ConstantRoutingDistance.isDistanceSymmetric(distanceMatrix),Some("distance matrix should be symmetric if invariant told so"))
 
     if(perVehicle){
       val values = computeValueFromScratch(routes.value)
@@ -342,16 +379,5 @@ case class ConstantRoutingDistance(routes:ChangingSeqValue,
         c.check(distance(0).value == computeValueFromScratch(savedCheckpoint)(0))
       }
     }
-  }
-
-  def checkSymmetry:Boolean = {
-    if(!symmetricDistance) return true
-    val pointRange = distanceMatrix.indices
-    for(i <- pointRange){
-      for(j <- pointRange){
-        if(distanceMatrix(i)(j) != distanceMatrix(j)(i)) return false
-      }
-    }
-    true
   }
 }
