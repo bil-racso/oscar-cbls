@@ -23,6 +23,7 @@ case class Content(v:SeqValue)
   var updatesFromThisCheckpointInReverseOrder:QList[(Int,Boolean)]=null
 
   override def notifySeqChanges(v: ChangingSeqValue, d: Int, changes: SeqUpdate, willOftenRollBackToCurrentValue: Boolean) : Unit = {
+    println("content notified " + changes)
     if(!digestUpdates(changes)) {
       this := (SortedSet.empty[Int] ++ changes.newValue.content)
       savedCheckpoint = null

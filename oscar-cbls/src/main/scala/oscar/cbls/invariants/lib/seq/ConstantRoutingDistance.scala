@@ -82,8 +82,8 @@ case class ConstantRoutingDistance(routes:ChangingSeqValue,
 
   override def notifySeqChanges(v: ChangingSeqValue, d: Int, changes: SeqUpdate, willOftenRollBackToCurrentValue: Boolean) {
     if(!digestUpdates(changes)) {
+      for(v <- 0 until this.v) recordTouchedVehicle(v)
       affect(computeValueFromScratch(changes.newValue))
-      savedCheckpoint = null
     }
     if(willOftenRollBackToCurrentValue){
       saveCurrentCheckpoint(changes.newValue)

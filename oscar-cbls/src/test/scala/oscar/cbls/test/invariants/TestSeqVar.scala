@@ -15,7 +15,6 @@ object TestSeqVar extends App{
   val a = new CBLSSeqVar(m,UniqueIntSequence(List(1,2,3,5)), n = "toto")
   val s = Size(a)
 
-
   val content = Content(a)
   m.close()
 

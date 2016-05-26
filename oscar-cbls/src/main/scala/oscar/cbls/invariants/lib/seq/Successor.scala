@@ -5,6 +5,21 @@ import oscar.cbls.invariants.core.computation._
 
 import scala.collection.immutable.SortedSet
 
+object Successor {
+
+  def apply(seq : ChangingSeqValue,
+            defaultWhenNotInSequence:Int,
+            defaultWhenNoSuccessor:Int) : Array[CBLSIntVar] = {
+
+    val succ: Array[CBLSIntVar] =
+      Array.tabulate(seq.max - 1)(v => CBLSIntVar(seq.model, name = "next Value of" + v))
+
+    Successor(seq, succ, defaultWhenNotInSequence, defaultWhenNoSuccessor)
+
+    succ
+  }
+}
+
 case class Successor(sequence:ChangingSeqValue, successorValues:Array[CBLSIntVar], defaultWhenNotInSequence:Int, defaultWhenNoSuccessor:Int)
   extends Invariant() with SeqNotificationTarget {
 
