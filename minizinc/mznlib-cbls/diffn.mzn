@@ -6,7 +6,9 @@
 predicate diffn(array[int] of var int: x,
                 array[int] of var int: y,
                 array[int] of var int: dx,
-                array[int] of var int: dy);
+                array[int] of var int: dy)
+          = diffn_decomp(x,y,dx,dy);
+          
 predicate diffn_decomp(array[int] of var int: x,
                 array[int] of var int: y,
                 array[int] of var int: dx,
