@@ -15,7 +15,7 @@
 /**
  * @author Jean-Noël Monette
  */
-package oscar.flatzinc.anal
+package oscar.flatzinc.analyser
 
 import oscar.flatzinc._
 import oscar.flatzinc.parser.FZParser
@@ -24,10 +24,10 @@ import oscar.flatzinc.model.BooleanVariable
 import oscar.flatzinc.parser.Model
 import oscar.flatzinc.transfo.FZModelTransfo
 
-object FznOscarAnal extends FznOscarMain{
+object FznOscarAnalyser extends FznOscarMain{
   checkAntlr()
   withCheck{
-    val opts = options("fzn-oscar-anal",cbls=false)
+    val opts = options("fzn-oscar-analyser",cbls=false)
     val log = opts.log()
     log("start")
     val fname = opts.fileName

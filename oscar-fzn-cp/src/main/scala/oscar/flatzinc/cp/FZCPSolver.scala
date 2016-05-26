@@ -41,6 +41,7 @@ class FZCPModel(val model:oscar.flatzinc.model.FZProblem, val pstrength: oscar.c
         dicoVars += v.id -> c;
         c
 	  case Some(c) => c;
+
 	}
   }
   def getBoolVar(v:Variable):CPBoolVar = {
