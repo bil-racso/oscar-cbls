@@ -20,8 +20,7 @@ object SeqValue{
 }
 
 sealed abstract class SeqUpdate(val newValue:UniqueIntSequence){
-  protected[computation] def reverseTo(target:UniqueIntSequence):SeqUpdate = this.reverseAcc(target,SeqUpdateSet(newValue))
-  protected[computation] def reverseAcc(target:UniqueIntSequence, newPrev:SeqUpdate):SeqUpdate
+  protected[computation] def reverse(target:UniqueIntSequence, from:SeqUpdate = SeqUpdateSet(newValue)):SeqUpdate
   protected[computation] def regularize:SeqUpdate
 }
 
@@ -35,8 +34,8 @@ case class SeqUpdateInsert(value:Int,pos:Int,prev:SeqUpdate)
                           (seq:UniqueIntSequence=prev.newValue.insertAtPosition(value,pos,fast=true))
   extends SeqUpdateWithPrev(prev:SeqUpdate, seq){
   assert(seq equals prev.newValue.insertAtPosition(value,pos,fast=true))
-  override protected[computation] def reverseAcc(target:UniqueIntSequence, newPrev:SeqUpdate) : SeqUpdate = {
-    prev.reverseAcc(target,SeqUpdateRemoveValue(value,newPrev)(prev.newValue))
+  override protected[computation] def reverse(target:UniqueIntSequence, newPrev:SeqUpdate) : SeqUpdate = {
+    prev.reverse(target,SeqUpdateRemoveValue(value,newPrev)(prev.newValue))
   }
 
   override def oldPosToNewPos(oldPos : Int) : Option[Int] = {
@@ -63,9 +62,9 @@ case class SeqUpdateMove(fromIncluded:Int,toIncluded:Int,after:Int,flip:Boolean,
   def toValue:Int = prev.newValue.valueAtPosition(toIncluded).head
   def afterValue:Int = prev.newValue.valueAtPosition(after).head
 
-  override protected[computation] def reverseAcc(target:UniqueIntSequence, newPrev:SeqUpdate) : SeqUpdate = {
+  override protected[computation] def reverse(target:UniqueIntSequence, newPrev:SeqUpdate) : SeqUpdate = {
     //TODO: chek this!!!
-    prev.reverseAcc(target,SeqUpdateMove(after - (toIncluded - fromIncluded), after, fromIncluded-1, flip, newPrev)(prev.newValue))
+    prev.reverse(target,SeqUpdateMove(after - (toIncluded - fromIncluded), after, fromIncluded-1, flip, newPrev)(prev.newValue))
   }
 
   override def oldPosToNewPos(oldPos : Int) : Option[Int] = Some(seq.asInstanceOf[MovedUniqueIntSequence].localBijection.backward(oldPos))
@@ -82,8 +81,8 @@ case class SeqUpdateRemoveValue(value:Int,prev:SeqUpdate)
 
   def position:Int = prev.newValue.positionOfValue(value).head
 
-  override protected[computation] def reverseAcc(target:UniqueIntSequence, newPrev:SeqUpdate) : SeqUpdate = {
-    prev.reverseAcc(target,SeqUpdateInsert(value, position, newPrev)(prev.newValue))
+  override protected[computation] def reverse(target:UniqueIntSequence, newPrev:SeqUpdate) : SeqUpdate = {
+    prev.reverse(target,SeqUpdateInsert(value, position, newPrev)(prev.newValue))
   }
 
   override def oldPosToNewPos(oldPos : Int) : Option[Int] = {
@@ -101,11 +100,21 @@ case class SeqUpdateRemoveValue(value:Int,prev:SeqUpdate)
 }
 
 case class SeqUpdateSet(value:UniqueIntSequence) extends SeqUpdate(value){
-  override protected[computation] def reverseAcc(target : UniqueIntSequence, newPrev:SeqUpdate) : SeqUpdate =
-    if(target quickEquals this.newValue) newPrev else SeqUpdateSet(target)
+  override protected[computation] def reverse(target : UniqueIntSequence, newPrev:SeqUpdate) : SeqUpdate = {
+    if (target quickEquals this.newValue) newPrev
+    else SeqUpdateSet (target)
+  }
 
   override protected[computation] def regularize : SeqUpdate = SeqUpdateSet(value.regularize())
 }
+
+
+
+
+
+
+
+
 
 trait SeqNotificationTarget {
   def notifySeqChanges(v: ChangingSeqValue, d: Int, changes: SeqUpdate, willOftenRollBackToCurrentValue: Boolean)
@@ -131,7 +140,6 @@ class CBLSSeqVar(givenModel:Store, initialValue:UniqueIntSequence, val maxVal:In
   model = givenModel
 
 
-
   override def name: String = if (n == null) defaultName else n
 
   //-1 for first position
@@ -152,12 +160,16 @@ class CBLSSeqVar(givenModel:Store, initialValue:UniqueIntSequence, val maxVal:In
 
   override  def :=(seq:UniqueIntSequence) {super.setValue(seq)}
 
-  override def setCheckpointStatus(willOftenRollBackToCurrentValue:Boolean):UniqueIntSequence = {
-    super.setCheckpointStatus(willOftenRollBackToCurrentValue:Boolean)
+  override def setCheckpoint(checkPointIsActive:Boolean){
+    super.setCheckpoint(checkPointIsActive:Boolean)
   }
 
-  override def rollbackToLatestCheckpoint(c:UniqueIntSequence,releaseCheckpoint:Boolean = false) =
-    super.rollbackToLatestCheckpoint(c:UniqueIntSequence,releaseCheckpoint:Boolean)
+  override def rollbackToCurrentCheckpoint(optionalValueForCheck:UniqueIntSequence) =
+    super.rollbackToCurrentCheckpoint(optionalValueForCheck)
+
+  override def releaseCurrentCheckpointAtCheckpoint(performCheck:Boolean){
+    super.releaseCurrentCheckpointAtCheckpoint(performCheck:Boolean)
+  }
 
   def <==(i: SeqValue) {IdentitySeq(this,i)}
 
@@ -172,14 +184,119 @@ object CBLSSeqVar{
 
 
 
+class SeqCheckpointStack(c:ChangingSeqValue){
+  //stack does not include top checkpoint
+  private var checkpointStack:List[(UniqueIntSequence,SeqUpdate,Boolean)] = List.empty
+
+  var topCheckpointIsActive:Boolean = false
+  var topCheckpoint:UniqueIntSequence = null //can be null if no checkpoint
+  private var committedSinceTopCheckpoint:SeqUpdate = null //wha has been done after the current checkpoint (not maintained if checkpoint is not active)
+
+  private def pushTopCheckpointToStackIfSome(){
+    if(topCheckpoint != null){
+      checkpointStack = (topCheckpoint,committedSinceTopCheckpoint,topCheckpointIsActive) :: checkpointStack
+      topCheckpoint = null //this is useless since pucing should only be performed if a new checkpoint is defined
+    }
+  }
+
+  protected def popTopCheckpointFromStack(){
+    val (top :: tail) = checkpointStack
+    checkpointStack = tail
+    topCheckpoint = top._1
+    committedSinceTopCheckpoint = top._2
+    topCheckpointIsActive = top._3
+  }
+
+  def recordCommunicatedChangesForCheckpoint(changes1:SeqUpdate){
+    //true if could be logged incrementally, false otherwise
+    if (topCheckpointIsActive){
+      //we have to record how to come back to the checkpoint
+      if(!logChanges(changes1)){
+        committedSinceTopCheckpoint = SeqUpdateSet(changes1.newValue)
+      }
+    }
+  }
+
+  private def logChanges(changes:SeqUpdate):Boolean = {
+    changes match {
+      case SeqUpdateInsert(value : Int, pos : Int, prev : SeqUpdate) =>
+        if (!logChanges(prev)) return false
+        committedSinceTopCheckpoint = new SeqUpdateInsert(value, pos, committedSinceTopCheckpoint)(changes.newValue)
+        true
+      case SeqUpdateMove(fromIncluded : Int, toIncluded : Int, after : Int, flip : Boolean, prev : SeqUpdate) =>
+        if (!logChanges(prev)) return false
+        committedSinceTopCheckpoint = new SeqUpdateMove(fromIncluded, toIncluded, after, flip, committedSinceTopCheckpoint)(changes.newValue)
+        false
+      case SeqUpdateRemoveValue(value : Int, prev : SeqUpdate) =>
+        if (!logChanges(prev)) return false
+        committedSinceTopCheckpoint = new SeqUpdateRemoveValue(value, committedSinceTopCheckpoint)(changes.newValue)
+        false
+      case SeqUpdateSet(value : UniqueIntSequence) =>
+        //a set can be the starting point, a rollback to the checkpoint,
+        // or a set to an arbitrary new value (exceptional when checkpoint is used...)
+        if (value quickEquals topCheckpoint) {
+          //this is a rollback
+          committedSinceTopCheckpoint = changes
+          true
+        } else if (committedSinceTopCheckpoint.newValue quickEquals value) {
+          //starting from the previous value of the logged updates
+          true
+        } else {
+          //this is an arbitrary set
+          false
+        }
+    }
+  }
+
+  var topCheckpointCommunicated = false
+
+  //this will immediately trigger a propagation of this seqValue to notify the listening invariant about the checkpoint.
+  def pushNewValueAsNewActiveCheckpoint(){
+    //we communicate it immediately to the listening invariants
+    val theNewValue = c.privatePerformSeqPropagation(true)
+    topCheckpointCommunicated = true
+    pushTopCheckpointToStackIfSome()
+    this.topCheckpointIsActive = true
+    this.topCheckpoint = theNewValue
+    this.committedSinceTopCheckpoint = SeqUpdateSet(theNewValue)
+  }
 
 
+  def pushNewValueAsNewInactiveCheckpoint(){
+    //the new checkpoint is inactive, so we do not notify it as a new checkpoint
+    // (since the outern checkpoint might still be used for rollbacks)
+    val theNewValue = c.newValue
+    topCheckpointCommunicated = false
+    pushTopCheckpointToStackIfSome()
+    this.topCheckpointIsActive = false
+    this.topCheckpoint = theNewValue
+    this.committedSinceTopCheckpoint = null
+  }
 
+  //this will perform an assign
+  def rollBackToTopCheckpoint(optionalValueForCheck:UniqueIntSequence){
+    require(optionalValueForCheck == null || (topCheckpoint equals optionalValueForCheck))
 
+    if(topCheckpointIsActive){
+      if(!topCheckpointCommunicated){
+        this.committedSinceTopCheckpoint.reverse(topCheckpoint,c.updates)
+        val theNewValue = c.privatePerformSeqPropagation(true)
+        topCheckpointCommunicated = true
+        this.committedSinceTopCheckpoint = SeqUpdateSet(theNewValue)
+      }else{
+        c.setValue(topCheckpoint)
+      }
+    }else {
+      c.setValue(topCheckpoint)
+    }
+  }
 
-
-
-
+  def releaseTopCheckpointAtCheckpoint(performCheck:Boolean){
+    require(!performCheck || (c.newValue equals topCheckpoint))
+    topCheckpointCommunicated = false
+    popTopCheckpointFromStack()
+  }
+}
 
 
 
@@ -187,8 +304,10 @@ object CBLSSeqVar{
 abstract class ChangingSeqValue(initialValue: Iterable[Int], val maxValue: Int, maxPivot: Int)
   extends AbstractVariable with SeqValue{
 
+  private val checkpointStack = new SeqCheckpointStack(this)
+
   private var mOldValue:SeqUpdate = SeqUpdateSet(UniqueIntSequence(initialValue))
-  private var updates:SeqUpdate = mOldValue
+  protected[computation] var updates:SeqUpdate = mOldValue
 
   override def domain : Domain = 0 to maxValue
   override def max : Int = maxValue
@@ -233,7 +352,7 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], val maxValue: Int, 
     notifyChanged()
   }
 
-  protected def setValue(seq:UniqueIntSequence){
+  protected [computation] def setValue(seq:UniqueIntSequence){
     updates = SeqUpdateSet(value)
     notifyChanged()
   }
@@ -243,129 +362,18 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], val maxValue: Int, 
     notifyChanged()
   }
 
-  //stack does not include top checkpoint
-  private var checkpointStack:List[(UniqueIntSequence,SeqUpdate,Boolean)] = List.empty
-
-  protected def pushTopCheckpointToStackIfSome(){
-    topCheckpoint match {
-      case Some(c) =>
-        checkpointStack = (c,committedSinceTopCheckpoint,willOftenRollBackToTopCheckpoint) :: checkpointStack
-        topCheckpoint = None
-      case None => ;
-    }
-  }
-
-  protected def popTopCheckpointFromStack(){
-    val (top :: tail) = checkpointStack
-    checkpointStack = tail
-    topCheckpoint = Some(top._1)
-    committedSinceTopCheckpoint = top._2
-    willOftenRollBackToTopCheckpoint = top._3
-  }
-
-  private var willOftenRollBackToTopCheckpoint:Boolean = false
-  private var topCheckpoint:Option[UniqueIntSequence] = None
-  private var committedSinceTopCheckpoint:SeqUpdate = null
-
-  private def recordCommunicatedChangesForCheckpointIfNeeded(changes1:SeqUpdate){
-
-    //true if could be logged incrementally, false otherwise
-    def logChanges(changes:SeqUpdate):Boolean = {
-      changes match {
-        case SeqUpdateInsert(value : Int, pos : Int, prev : SeqUpdate) =>
-          if (!logChanges(prev)) return false
-          committedSinceTopCheckpoint = new SeqUpdateInsert(value, pos, committedSinceTopCheckpoint)(changes.newValue)
-          true
-        case SeqUpdateMove(fromIncluded : Int, toIncluded : Int, after : Int, flip : Boolean, prev : SeqUpdate) =>
-          if (!logChanges(prev)) return false
-          committedSinceTopCheckpoint = new SeqUpdateMove(fromIncluded, toIncluded, after, flip, committedSinceTopCheckpoint)(changes.newValue)
-          false
-        case SeqUpdateRemoveValue(value : Int, prev : SeqUpdate) =>
-          if (!logChanges(prev)) return false
-          committedSinceTopCheckpoint = new SeqUpdateRemoveValue(value, committedSinceTopCheckpoint)(changes.newValue)
-          false
-        case SeqUpdateSet(value : UniqueIntSequence) =>
-          //a set can be the starting point, a rollback to the checkpoint,
-          // or a set to an arbitrary new value (exceptional when checkpoint is used...)
-          if (value quickEquals topCheckpoint.head) {
-            //this is a rollback
-            committedSinceTopCheckpoint = changes
-            true
-          } else if (committedSinceTopCheckpoint.newValue quickEquals value) {
-            //starting from the previous value of the logged updates
-            true
-          } else {
-            //this is an arbitrary set
-            false
-          }
-      }
-    }
-
-    if (willOftenRollBackToTopCheckpoint){
-      //we have to record how to come back to the checkpoint
-      if(!logChanges(changes1)){
-        committedSinceTopCheckpoint = SeqUpdateSet(changes1.newValue)
-      }
-    }
-  }
-
-  //this will immediately trigger a propagation of this seqValue to notify the listening invariant about the checkpoint.
-  protected def setCheckpointStatus(willOftenRollBackToCurrentValue:Boolean):UniqueIntSequence = {
-    privatePerformSeqPropagation(true)
-    pushTopCheckpointToStackIfSome()
-    this.willOftenRollBackToTopCheckpoint = willOftenRollBackToCurrentValue
-    val v = this.newValue
-    this.topCheckpoint = Some(v)
-    this.topCheckpoint = Some(v)
-    this.committedSinceTopCheckpoint = SeqUpdateSet(v)
-    v
-  }
-
-  /**
-   * rolls back to the latest checkpoint.
-   * if c is not null, it checks that c is indeed the latest checkpoint
-   * this will re-enable checkpoint if if was disabled, and if a checkpoint is recorded
-   * @param c
-   */
-  protected def rollbackToLatestCheckpoint(c:UniqueIntSequence, releaseCheckpoint:Boolean){
-    //    if(c != null) require(c quickEquals latestCheckpoint)
-    //TODO: what if le checkpoint n'a pas encore été communiqué
-    //    setValue(latestCheckpoint)
-    notifyChanged()
-  }
-
-  /**
-   *  checkpoints are managed in a stack fashion.
-   *  you can basically set a checkpoint (= push)
-   *  and release a checkpoint (=pop, and check that head == specified checkpoint)
-   *  a checkpoint is defined by the new value of the sequence hen it is defined.
-   *
-   *  a checkpoint enables the use of rollBack to latest checkpoint (which must be the latest defined one)
-   *  you cannot rollback to an earlier checkpoint if you have not released a more recent one.
-   *
-   * upon propagation, invariants are notified if the new value is a stable checkpoint, or not.
-   *
-   * we consider that invariants have a single checkpoint.
-   * when moving from one checkpoint to an older one, the invariant is therefore
-   * notified about incremental updates to reach the older checkpoint
-   * (these can actually be non-incremental as well,
-   * if the search procedure used the "set" update at some point).
-   *
-   * this variable is therefore able to reverse a forward sequence of udpate.
-   *
-   * also, you can only release checkpoint in a stack fashion, and revert to the latestCheckpoint.
-   */
 
   final protected def performSeqPropagation() = {
     privatePerformSeqPropagation(false)
   }
 
-  private def privatePerformSeqPropagation(stableCheckpoint:Boolean): Unit = {
+  //returns the new value
+  protected[computation] def privatePerformSeqPropagation(stableCheckpoint:Boolean): UniqueIntSequence = {
     val dynListElements = getDynamicallyListeningElements
     val headPhantom = dynListElements.headPhantom
     var currentElement = headPhantom.next
 
-    if(stableCheckpoint || !willOftenRollBackToTopCheckpoint) updates = updates.regularize
+    if(stableCheckpoint || !checkpointStack.topCheckpointIsActive) updates = updates.regularize
 
     while (currentElement != headPhantom) {
       val e = currentElement.elem
@@ -380,13 +388,34 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], val maxValue: Int, 
       })
     }
 
-    if(!stableCheckpoint) recordCommunicatedChangesForCheckpointIfNeeded(updates)
+    if(!stableCheckpoint) checkpointStack.recordCommunicatedChangesForCheckpoint(updates)
 
-    //TODO: regularize can be made earlier because it will be faster for notification handling by listening invariants
-    val start = SeqUpdateSet(updates.newValue)
+    val theNewValue = updates.newValue
+    val start = SeqUpdateSet(theNewValue)
     mOldValue = start
     updates = start
+
+    theNewValue
   }
+
+
+  protected def setCheckpoint(checkPointIsActive:Boolean) = {
+    if(checkPointIsActive) {
+      checkpointStack.pushNewValueAsNewActiveCheckpoint()
+    }else{
+      checkpointStack.pushNewValueAsNewInactiveCheckpoint()
+    }
+  }
+
+  protected def rollbackToCurrentCheckpoint(optionalValueForCheck:UniqueIntSequence) = {
+    checkpointStack.rollBackToTopCheckpoint(optionalValueForCheck)
+  }
+
+
+  protected def releaseCurrentCheckpointAtCheckpoint(performCheck:Boolean){
+    checkpointStack.releaseTopCheckpointAtCheckpoint(performCheck)
+  }
+
 }
 
 /** this is a special case of invariant that has a single output variable, that is a Seq
@@ -445,7 +474,7 @@ class IdentitySeq(toValue:CBLSSeqVar, fromValue:ChangingSeqValue)
   override def notifySeqChanges(v: ChangingSeqValue, d: Int, changes: SeqUpdate, willOftenRollBackToCurrentValue: Boolean) {
     assert(v == fromValue)
     digestChanges(changes)
-    if(willOftenRollBackToCurrentValue) toValue.setCheckpointStatus(willOftenRollBackToCurrentValue)
+    if(willOftenRollBackToCurrentValue) toValue.setCheckpoint(willOftenRollBackToCurrentValue)
   }
 
   def digestChanges(changes:SeqUpdate){
