@@ -56,11 +56,12 @@ case class OnePointMoveS(nodesToMove: () => Iterable[Int],
       if (hotRestart && !best) HotRestart(nodesToMove(), startIndice)
       else nodesToMove()
 
-    val explorationStart = vrp.seq.setCheckpointStatus(true)
+    vrp.seq.setCheckpoint(true)
+    val explorationStart = vrp.seq.value
 
     def evalObjAndRollBack() : Int = {
       val a = obj.value
-      vrp.seq.rollbackToLatestCheckpoint(explorationStart, false)
+      vrp.seq.rollbackToCurrentCheckpoint(explorationStart)
       a
     }
 
@@ -99,7 +100,7 @@ case class OnePointMoveS(nodesToMove: () => Iterable[Int],
         }
       }
     }
-    vrp.seq.rollbackToLatestCheckpoint(explorationStart, true)
+    vrp.seq.rollbackToCurrentCheckpoint(explorationStart)
   }
   var movedPoint:Int = 0
   var newPredecessor:Int = 0
