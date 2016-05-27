@@ -67,7 +67,7 @@ trait Constraints {
    * @param itemsizes the size of the items
    * @param binsizes the max size of the available bins
    */
-  def multiKnapsack(items: Array[CBLSIntVar], itemsizes: Array[IntValue], binsizes:Array[IntValue]) = MultiKnapsack(items, itemsizes, binsizes)
+  def multiKnapsack(items: Array[IntValue], itemsizes: Array[IntValue], binsizes:Array[IntValue]) = MultiKnapsack(items, itemsizes, binsizes)
 
 
   /**implements the sequence constraint:

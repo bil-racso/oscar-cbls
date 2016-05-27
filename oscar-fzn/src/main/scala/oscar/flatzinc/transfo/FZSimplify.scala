@@ -126,7 +126,6 @@ object FZSimplify{
       case set_in(x,y,_) => y.contains(x.value)
       case array_bool_and(x,y,_) => (x.exists(_.isFalse) && y.isFalse) || (x.forall(_.isTrue) && y.isTrue)
       case array_bool_or(x,y,_) => (x.exists(_.isTrue) && y.isTrue) || (x.forall(_.isFalse) && y.isFalse)
-      case bool_clause(x,y,_) => (x.exists(_.isTrue) || y.exists(_.isFalse))
       case int_max(x,y,z,_) => x.value.max(y.value) == z .value
       case int_min(x,y,z,_) => x.value.min(y.value) == z .value
       case _ => false

@@ -383,7 +383,16 @@ class FZCBLSConstraintPoster(val c: ConstraintSystem, implicit val getCBLSVar: V
        if(closed) domains(xs,vs.map(_.min)) ++ eqs else eqs
      }
   }
-  
+
+  def get_bin_packing_load(load: Array[IntegerVariable], bin: Array[IntegerVariable], w: Array[IntegerVariable], ann: List[Annotation]): CBLSConstraint = {
+    MultiKnapsackLoad(bin.map(v => Sum2(getCBLSVar(v),-1)),w.map(getCBLSVar(_)),load.map(getCBLSVar(_)))
+  }
+  def get_bin_packing_load_inv(load: Array[IntegerVariable], bin: Array[IntegerVariable], w: Array[IntegerVariable], ann: List[Annotation]): IntValue = {
+
+  }
+
+
+
   implicit def cstrListToCstr(cstrs: List[CBLSConstraint]): CBLSConstraint = {
     val cs = new ConstraintSystem(m)
     for(cstr <- cstrs){
@@ -392,7 +401,8 @@ class FZCBLSConstraintPoster(val c: ConstraintSystem, implicit val getCBLSVar: V
     cs.close()
     cs
   }
-  
+
+
   def constructCBLSConstraint(constraint: Constraint):CBLSConstraint = {
     constraint match {
       case reif(cstr,r) => EQ(r,constructCBLSConstraint(cstr).truthValue)
@@ -449,11 +459,13 @@ class FZCBLSConstraintPoster(val c: ConstraintSystem, implicit val getCBLSVar: V
      // case member_int(xs,y,ann)                       => get_member(xs,y) use the decomposition
       case minimum_int(y,xs,ann)                      => EQ(y,get_minimum_inv(xs,ann))
       case nvalue_int(y,xs,ann)                      => EQ(y,get_nvalue_inv(xs,ann))
-      
+      case bin_packing_load(load,bin,w,ann)           => get_bin_packing_load(load,bin,w,ann)
       case notimplemented                             => throw new NoSuchConstraintException(notimplemented.toString(),"CBLS Solver");
     }
   }
-  def constructCBLSIntInvariant(constraint: Constraint,id:String): IntValue = {
+
+
+  def constructCBLSIntInvariant(constraint: Constraint, id:String): IntValue = {
     constraint match {
       case reif(cstr,r) => constructCBLSConstraint(cstr).truthValue//.asInstanceOf[Invariant]
       
@@ -487,7 +499,8 @@ class FZCBLSConstraintPoster(val c: ConstraintSystem, implicit val getCBLSVar: V
       case maximum_int(y,xs,ann)                      => get_maximum_inv(xs,ann)//assumes that the id is y.
       case minimum_int(y,xs,ann)                      => get_minimum_inv(xs,ann)
       case nvalue_int(y,xs,ann)                      => get_nvalue_inv(xs,ann)
-      
+      //case bin_packing_load(load,bin,w,ann)           => get_bin_packing_load_inv(load,bin,w,ann) //defining multiple variables is not supported by the fzn backend yet.
+
       case notimplemented                             => throw new NoSuchConstraintException(notimplemented.toString(),"CBLS Solver");
     }
   }
