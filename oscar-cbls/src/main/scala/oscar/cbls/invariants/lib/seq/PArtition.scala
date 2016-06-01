@@ -8,7 +8,7 @@ import scala.collection.immutable.SortedSet
 
 
 //one more partition for values that are not present, but belong to PartitionOf
-
+/*
 /**
  * respects the route conditions: you cannot cut on parttions
  * @param s
@@ -63,3 +63,4 @@ case class RoutePartition(s:ChangingSeqValue, v:Int, nodesOfVehicle:Array[CBLSSe
     }
   }
 }
+*/

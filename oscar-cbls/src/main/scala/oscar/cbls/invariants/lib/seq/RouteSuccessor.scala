@@ -60,8 +60,8 @@ case class RouteSuccessor(routes:ChangingSeqValue, v:Int, successorValues:Array[
         None //impossible to go incremental
       case SeqUpdateDefineCheckpoint(prev:SeqUpdate,_) =>
         computeStartValuesOfImpactedZone(prev)
-      case SeqUpdateRollBackToCheckpoint(_,prev:SeqUpdate) =>
-        computeStartValuesOfImpactedZone(prev)
+      case u@SeqUpdateRollBackToCheckpoint(checkpoint:UniqueIntSequence) =>
+        computeStartValuesOfImpactedZone(u.howToRollBack)
     }
   }
 

@@ -194,18 +194,27 @@ case class SeqUpdateLastNotified(value:UniqueIntSequence) extends SeqUpdate(valu
 
 case class SeqUpdateDefineCheckpoint(mprev:SeqUpdate,activeCheckpoint:Boolean)
   extends SeqUpdateWithPrev(mprev,mprev.newValue.regularize()){
-  protected[computation] override def reverse(target : UniqueIntSequence, from : SeqUpdate) : SeqUpdate = mprev.reverse(target,from)
+  protected[computation]  def reverse(target : UniqueIntSequence, from : SeqUpdate) : SeqUpdate = mprev.reverse(target,from)
 
-  protected[computation] override def regularize : SeqUpdate = this
+  protected[computation] def regularize : SeqUpdate = this
 
-  protected[computation] override def oldPosToNewPos(oldPos : Int) : Option[Int] = throw new Error("SeqUpdateDefineCheckpoint should not be queried for delta on moves")
+  protected[computation] def oldPosToNewPos(oldPos : Int) : Option[Int] = throw new Error("SeqUpdateDefineCheckpoint should not be queried for delta on moves")
 
-  protected[computation] override def newPos2OldPos(newPos : Int) : Option[Int] = throw new Error("SeqUpdateDefineCheckpoint should not be queried for delta on moves")
+  protected[computation] def newPos2OldPos(newPos : Int) : Option[Int] = throw new Error("SeqUpdateDefineCheckpoint should not be queried for delta on moves")
 
-  protected[computation] override def prepend(u : SeqUpdate) : SeqUpdate = SeqUpdateDefineCheckpoint(prev.prepend(u),activeCheckpoint)
+  protected[computation] def prepend(u : SeqUpdate) : SeqUpdate = SeqUpdateDefineCheckpoint(mprev.prepend(u),activeCheckpoint)
 }
 
-case class SeqUpdateRollBackToCheckpoint(checkpointValue:UniqueIntSequence) extends SeqUpdate(checkpointValue){
+
+object SeqUpdateRollBackToCheckpoint{
+  def apply(checkpointValue:UniqueIntSequence,instructionsThatMustBeUndone:SeqUpdate):SeqUpdateRollBackToCheckpoint = {
+    new SeqUpdateRollBackToCheckpoint(checkpointValue, instructionsThatMustBeUndone)
+  }
+
+  def unapply(u:SeqUpdateRollBackToCheckpoint):Option[UniqueIntSequence] = Some(u.checkpointValue)
+}
+
+class SeqUpdateRollBackToCheckpoint(val checkpointValue:UniqueIntSequence,instructionsThatMustBeUndone:SeqUpdate) extends SeqUpdate(checkpointValue){
   override protected[computation] def regularize : SeqUpdate = this
 
   override protected[computation] def reverse(target : UniqueIntSequence, newPrev:SeqUpdate) : SeqUpdate = {
@@ -214,6 +223,15 @@ case class SeqUpdateRollBackToCheckpoint(checkpointValue:UniqueIntSequence) exte
   }
 
   override protected[computation] def prepend(u : SeqUpdate) : SeqUpdate = this
+
+  private var reversedInstructions:SeqUpdate = null
+  def howToRollBack:SeqUpdate = {
+    if (reversedInstructions != null) reversedInstructions
+    else {
+      reversedInstructions = instructionsThatMustBeUndone.reverse(checkpointValue)
+      reversedInstructions
+    }
+  }
 }
 
 
@@ -313,7 +331,7 @@ class SeqCheckpointStack(){
   var topCheckpointIsActive:Boolean = false
   var topCheckpointIsActiveDeactivated:Boolean = false
   var topCheckpoint:UniqueIntSequence = null //can be null if no checkpoint
-  private var notifiedSinceTopCheckpoint:SeqUpdate = null //what has been done after the current checkpoint (not maintained if checkpoint is not active)
+  var notifiedSinceTopCheckpoint:SeqUpdate = null //what has been done after the current checkpoint (not maintained if checkpoint is not active)
 
   def recordNotifiedChangesForCheckpoint(toNotify:SeqUpdate){
     if(topCheckpoint==null) return
@@ -462,9 +480,8 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], val maxValue: Int, 
 
         require(updates.newValue quickEquals updatesSincePrevCheckpoint.newValue)
         SeqUpdateLastNotified(updates.newValue)
-      case SeqUpdateRollBackToCheckpoint(checkpointValue:UniqueIntSequence, prev:SeqUpdate) =>
+      case SeqUpdateRollBackToCheckpoint(checkpointValue:UniqueIntSequence) =>
         //must be the top checkpoint of the stack!
-        pushCheckPoints(prev,false)
         require(checkpointValue quickEquals checkpointStack.topCheckpoint)
         SeqUpdateLastNotified(checkpointValue)
     }
@@ -487,7 +504,7 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], val maxValue: Int, 
           //it has been deactivated, so it must be performed by inverting the instructions
           toNotify = checkpointStack.instructionsToRollBackToTopCheckpoint(checkpoint, this.mOldValue)
         } else {
-          toNotify = SeqUpdateRollBackToCheckpoint(checkpoint)
+          toNotify = SeqUpdateRollBackToCheckpoint(checkpoint,checkpointStack.notifiedSinceTopCheckpoint)
         }
       }else{
         //Asking for rollback on an inactive checkpoint, we go for a set...
@@ -532,7 +549,7 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], val maxValue: Int, 
         }else{
           null
         }
-      case x@SeqUpdateDefineCheckpoint(prev:SeqUpdate) =>
+      case x@SeqUpdateDefineCheckpoint(prev:SeqUpdate,isActive:Boolean) =>
         //here
         require(updates.newValue quickEquals checkpoint)
         updates

@@ -90,11 +90,11 @@ case class ConstantRoutingDistance(routes:ChangingSeqValue,
   private def digestUpdates(changes:SeqUpdate,skipNewCheckpoints:Boolean):Boolean = {
     changes match {
 
-      case SeqUpdateDefineCheckpoint(checkpoint:UniqueIntSequence,prev:SeqUpdate) =>
+      case SeqUpdateDefineCheckpoint(prev:SeqUpdate,isActive:Boolean) =>
         if(!digestUpdates(prev,true)){
-          affect(computeValueFromScratch(checkpoint))
+          affect(computeValueFromScratch(changes.newValue))
         }
-        saveCurrentCheckpoint(checkpoint)
+        saveCurrentCheckpoint(changes.newValue)
         true
       case SeqUpdateRollBackToCheckpoint(checkpoint:UniqueIntSequence) =>
         require (checkpoint quickEquals savedCheckpoint)

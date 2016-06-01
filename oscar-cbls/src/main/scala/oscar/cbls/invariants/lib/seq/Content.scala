@@ -57,7 +57,7 @@ case class Content(v:SeqValue)
           this :-= value
           true
         }else false
-      case SeqUpdateRollBackToCheckpoint(checkpoint:UniqueIntSequence,howTo) =>
+      case SeqUpdateRollBackToCheckpoint(checkpoint:UniqueIntSequence) =>
         require(checkpoint quickEquals savedCheckpoint)
         comeBackToSavedCheckPoint()
         true

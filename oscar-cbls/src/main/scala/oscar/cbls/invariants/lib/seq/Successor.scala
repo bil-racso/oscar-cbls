@@ -75,10 +75,10 @@ case class Successor(sequence:ChangingSeqValue, successorValues:Array[CBLSIntVar
               changes.newValue.predecessorVal2Val(value) + value)
         }
 
-      case SeqUpdateRollBackToCheckpoint(_,prev:SeqUpdate) =>
-        computeStartValuesOfImpactedZone(prev)
+      case u@SeqUpdateRollBackToCheckpoint(checkpoint) =>
+        computeStartValuesOfImpactedZone(u.howToRollBack)
 
-      case SeqUpdateDefineCheckpoint(checkpoint,prev:SeqUpdate) =>
+      case SeqUpdateDefineCheckpoint(prev:SeqUpdate,isActive) =>
         computeStartValuesOfImpactedZone(prev)
 
       case SeqUpdateLastNotified(value) =>
