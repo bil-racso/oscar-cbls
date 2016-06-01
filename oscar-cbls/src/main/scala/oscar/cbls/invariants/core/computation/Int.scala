@@ -20,6 +20,7 @@
 
 package oscar.cbls.invariants.core.computation
 
+import oscar.cbls.invariants.core.algo.seq.functional.UniqueIntSequence
 import oscar.cbls.invariants.core.propagation.{Checker, PropagationElement}
 import scala.collection.mutable.{Map => MMap}
 import scala.language.implicitConversions
@@ -72,7 +73,10 @@ abstract class ChangingIntValue(initialValue:Int, initialDomain:Domain)
   extends AbstractVariable with IntValue{
 
   assert(initialDomain.contains(initialValue),initialValue+ " is not in the domain of "+this.name+"("+initialDomain+"). This might indicate an integer overflow.")
-  
+
+
+  override def snapshot : AbstractVariableSnapShot = ???
+
   private var privatedomain:Domain = initialDomain
   private var mNewValue: Int = initialValue
   private var mOldValue = mNewValue
@@ -171,6 +175,10 @@ object ChangingIntValue{
   implicit val ord:Ordering[ChangingIntValue] = new Ordering[ChangingIntValue]{
     def compare(o1: ChangingIntValue, o2: ChangingIntValue) = o1.compare(o2)
   }
+}
+
+class ChangingIntValueSnapShot(val variable:ChangingIntValue,val savedValue:Int) extends AbstractVariableSnapShot(variable){
+  override protected def doRestore() : Unit = {variable.asInstanceOf[CBLSIntVar] := savedValue}
 }
 
 /**An IntVar is a variable managed by the [[oscar.cbls.invariants.core.computation.Store]] whose type is integer.

@@ -41,6 +41,11 @@ object SetValue{
   implicit def toFunction(i:SetValue):()=>SortedSet[Int] = () => i.value
 }
 
+class ChangingSetValueSnapShot(val variable:ChangingSetValue,val savedValue:SortedSet[Int]) extends AbstractVariableSnapShot(variable){
+  override protected def doRestore() : Unit = {variable.asInstanceOf[CBLSSetVar] := savedValue}
+}
+
+
 abstract class ChangingSetValue(initialValue:SortedSet[Int], initialDomain:Domain)
   extends AbstractVariable with SetValue{
   private var privatedomain:Domain = initialDomain
@@ -48,6 +53,8 @@ abstract class ChangingSetValue(initialValue:SortedSet[Int], initialDomain:Domai
   private var OldValue:SortedSet[Int] = m_NewValue
   private[this] var domainSizeDiv10 = privatedomain.size/10
   def domain:Domain = privatedomain
+
+  override def snapshot : ChangingSetValueSnapShot = new ChangingSetValueSnapShot(this,this.value)
 
   /**this must be protected because invariants might rework this after isntanciation
     * for CBLSVars, no problems*/
@@ -231,6 +238,8 @@ class CBLSSetVar(givenModel: Store, initialValue: SortedSet[Int], initialDomain:
   require(givenModel != null)
 
   model = givenModel
+
+
 
   override def restrictDomain(d:Domain) = super.restrictDomain(d)
 
