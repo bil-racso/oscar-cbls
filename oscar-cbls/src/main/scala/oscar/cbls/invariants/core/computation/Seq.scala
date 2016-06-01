@@ -1,6 +1,7 @@
 package oscar.cbls.invariants.core.computation
 
 import oscar.cbls.invariants.core.algo.seq.functional._
+import oscar.cbls.invariants.core.propagation.Checker
 
 import scala.language.implicitConversions
 
@@ -297,8 +298,8 @@ class CBLSSeqVar(givenModel:Store, initialValue:UniqueIntSequence, val maxVal:In
 
   override  def :=(seq:UniqueIntSequence) {super.setValue(seq)}
 
-  override def setCheckpoint(checkPointIsActive:Boolean){
-    super.setCheckpoint(checkPointIsActive:Boolean)
+  override def defineCurrentValueAsCheckpoint(checkPointIsActive:Boolean){
+    super.defineCurrentValueAsCheckpoint(checkPointIsActive:Boolean)
   }
 
   override def rollbackToCurrentCheckpoint(checkpoint:UniqueIntSequence) =
@@ -308,7 +309,13 @@ class CBLSSeqVar(givenModel:Store, initialValue:UniqueIntSequence, val maxVal:In
     super.releaseCurrentCheckpointAtCheckpoint()
   }
 
-  //def <==(i: SeqValue) {IdentitySeq(this,i)}
+  def <==(i: SeqValue) {IdentitySeq(this,i)}
+
+  def createClone:CBLSSeqVar = {
+    val clone = new CBLSSeqVar(model,this.value,this.maxValue,"clone_of_" + this.name,maxPivot)
+    IdentitySeq(this,clone)
+    clone
+  }
 
   override def performPropagation(){performSeqPropagation()}
 }
@@ -318,11 +325,6 @@ object CBLSSeqVar{
     def compare(o1: CBLSSetVar, o2: CBLSSetVar) = o1.compare(o2)
   }
 }
-
-
-
-
-
 
 class SeqCheckpointStack(){
   //stack does not include top checkpoint
@@ -487,7 +489,7 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], val maxValue: Int, 
     }
   }
 
-  protected def setCheckpoint(checkPointIsActive:Boolean) = {
+  protected def defineCurrentValueAsCheckpoint(checkPointIsActive:Boolean) = {
     toNotify = SeqUpdateDefineCheckpoint(toNotify.regularize,checkPointIsActive)
     notifyChanged()
   }
@@ -588,8 +590,6 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], val maxValue: Int, 
     }
   }
 
-
-
   final protected def performSeqPropagation() = {
     privatePerformSeqPropagation(false)
   }
@@ -624,9 +624,6 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], val maxValue: Int, 
 
     theNewValue
   }
-
-
-
 
   protected def :=(seq:UniqueIntSequence){
     setValue(seq)
@@ -666,8 +663,6 @@ abstract class SeqInvariant(initialValue:UniqueIntSequence, maxValue:Int = Int.M
   override def getDotNode:String = throw new Error("not implemented")
 }
 
-
-/*
 object IdentitySeq{
   def apply(toValue:CBLSSeqVar, fromValue:SeqValue){
     fromValue match{
@@ -687,10 +682,9 @@ class IdentitySeq(toValue:CBLSSeqVar, fromValue:ChangingSeqValue)
 
   toValue := fromValue.value
 
-  override def notifySeqChanges(v: ChangingSeqValue, d: Int, changes: SeqUpdate, willOftenRollBackToCurrentValue: Boolean) {
+  override def notifySeqChanges(v: ChangingSeqValue, d: Int, changes: SeqUpdate) {
     assert(v == fromValue)
     digestChanges(changes)
-    if(willOftenRollBackToCurrentValue) toValue.setCheckpoint(willOftenRollBackToCurrentValue)
   }
 
   def digestChanges(changes:SeqUpdate){
@@ -706,6 +700,13 @@ class IdentitySeq(toValue:CBLSSeqVar, fromValue:ChangingSeqValue)
         toValue.removeValue(value)
       case SeqUpdateSet(s) =>
         toValue.setValue(s)
+      case SeqUpdateLastNotified(value:UniqueIntSequence) =>
+        //nothing to do here
+      case SeqUpdateRollBackToCheckpoint(value:UniqueIntSequence) =>
+        toValue.rollbackToCurrentCheckpoint(value)
+      case SeqUpdateDefineCheckpoint(prev:SeqUpdate,activeCheckpoint:Boolean) =>
+        digestChanges(prev)
+        toValue.defineCurrentValueAsCheckpoint(activeCheckpoint)
     }
   }
 
@@ -713,4 +714,3 @@ class IdentitySeq(toValue:CBLSSeqVar, fromValue:ChangingSeqValue)
     c.check(toValue.value equals fromValue.value)
   }
 }
-*/
