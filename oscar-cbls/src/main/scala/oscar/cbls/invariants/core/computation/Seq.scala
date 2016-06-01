@@ -326,16 +326,18 @@ object CBLSSeqVar{
   }
 }
 
-class SeqCheckpointStack(){
+abstract class ChangingSeqValue(initialValue: Iterable[Int], val maxValue: Int, maxPivot: Int)
+  extends AbstractVariable with SeqValue{
+
+  //This section of code is for maintining the checkpoint stack.
   //stack does not include top checkpoint
   private var checkpointStackNotTop:List[(UniqueIntSequence,SeqUpdate,Boolean)] = List.empty
+  private var topCheckpointIsActive:Boolean = false
+  private var topCheckpointIsActiveDeactivated:Boolean = false
+  private var topCheckpoint:UniqueIntSequence = null //can be null if no checkpoint
+  private var notifiedSinceTopCheckpoint:SeqUpdate = null //what has been done after the current checkpoint (not maintained if checkpoint is not active)
 
-  var topCheckpointIsActive:Boolean = false
-  var topCheckpointIsActiveDeactivated:Boolean = false
-  var topCheckpoint:UniqueIntSequence = null //can be null if no checkpoint
-  var notifiedSinceTopCheckpoint:SeqUpdate = null //what has been done after the current checkpoint (not maintained if checkpoint is not active)
-
-  def recordNotifiedChangesForCheckpoint(toNotify:SeqUpdate){
+  private def recordNotifiedChangesForCheckpoint(toNotify:SeqUpdate){
     if(topCheckpoint==null) return
     //includes checkpoint declaration, so we have to browse through them when concatenating the sequences
     toNotify match{
@@ -368,13 +370,16 @@ class SeqCheckpointStack(){
     }
   }
 
-  def popTopCheckpoint(checkpoint:UniqueIntSequence){
+  private def popTopCheckpoint(checkpoint:UniqueIntSequence){
+    assert(toNotify.newValue equals topCheckpoint)
+    require(!topCheckpointIsActive || topCheckpointIsActiveDeactivated || (toNotify.newValue quickEquals topCheckpoint))
+
     checkpointStackNotTop match{
       case top :: tail =>
         checkpointStackNotTop = tail
         topCheckpoint = top._1
-        notifiedSinceTopCheckpoint = notifiedSinceTopCheckpoint.prepend(top._2)
         topCheckpointIsActive = top._3
+        notifiedSinceTopCheckpoint = if(topCheckpointIsActive) notifiedSinceTopCheckpoint.prepend(top._2) else null
         topCheckpointIsActiveDeactivated = topCheckpointIsActive
       case Nil =>
         //there is no upper checkpoint
@@ -382,21 +387,17 @@ class SeqCheckpointStack(){
         notifiedSinceTopCheckpoint = null
         topCheckpointIsActive = false
         topCheckpointIsActiveDeactivated = false
-
     }
   }
 
-  def instructionsToRollBackToTopCheckpoint(checkpoint:UniqueIntSequence, startingFrom:UniqueIntSequence):SeqUpdate = {
+  private def instructionsToRollBackToTopCheckpoint(checkpoint:UniqueIntSequence, startingFrom:UniqueIntSequence):SeqUpdate = {
     require(topCheckpoint!=null)
     require(startingFrom quickEquals notifiedSinceTopCheckpoint.newValue)
     notifiedSinceTopCheckpoint.reverse(checkpoint)
   }
-}
 
-abstract class ChangingSeqValue(initialValue: Iterable[Int], val maxValue: Int, maxPivot: Int)
-  extends AbstractVariable with SeqValue{
+  //end of the checkpoint stack stuff
 
-  private val checkpointStack = new SeqCheckpointStack()
 
   private var mOldValue:UniqueIntSequence = UniqueIntSequence(initialValue)
   protected[computation] var toNotify:SeqUpdate = SeqUpdateSet(mOldValue)
@@ -477,14 +478,14 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], val maxValue: Int, 
         //We have to push a checkpoint here!
         val updatesSincePrevCheckpoint = pushCheckPoints(prev,true)
 
-        checkpointStack.recordNotifiedChangesForCheckpoint(updatesSincePrevCheckpoint)
-        checkpointStack.recordNotifiedChangesForCheckpoint(SeqUpdateDefineCheckpoint(SeqUpdateLastNotified(updatesSincePrevCheckpoint.newValue),isActiveCheckpoint))
+        recordNotifiedChangesForCheckpoint(updatesSincePrevCheckpoint)
+        recordNotifiedChangesForCheckpoint(SeqUpdateDefineCheckpoint(SeqUpdateLastNotified(updatesSincePrevCheckpoint.newValue),isActiveCheckpoint))
 
         require(updates.newValue quickEquals updatesSincePrevCheckpoint.newValue)
         SeqUpdateLastNotified(updates.newValue)
       case SeqUpdateRollBackToCheckpoint(checkpointValue:UniqueIntSequence) =>
         //must be the top checkpoint of the stack!
-        require(checkpointValue quickEquals checkpointStack.topCheckpoint)
+        require(checkpointValue quickEquals topCheckpoint)
         SeqUpdateLastNotified(checkpointValue)
     }
   }
@@ -500,13 +501,13 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], val maxValue: Int, 
     val attemptByCleaningToNotify = popToNotifyUntilCheckpointDeclaration(toNotify,checkpoint)
     if(attemptByCleaningToNotify == null){
       //it means that the checkpont has been communicated :-)
-      if(checkpointStack.topCheckpointIsActive) {
+      if(topCheckpointIsActive) {
         //we must do it incrementally, or through rollBack update
-        if (checkpointStack.topCheckpointIsActiveDeactivated) {
+        if (topCheckpointIsActiveDeactivated) {
           //it has been deactivated, so it must be performed by inverting the instructions
-          toNotify = checkpointStack.instructionsToRollBackToTopCheckpoint(checkpoint, this.mOldValue)
+          toNotify = instructionsToRollBackToTopCheckpoint(checkpoint, this.mOldValue)
         } else {
-          toNotify = SeqUpdateRollBackToCheckpoint(checkpoint,checkpointStack.notifiedSinceTopCheckpoint)
+          toNotify = SeqUpdateRollBackToCheckpoint(checkpoint,notifiedSinceTopCheckpoint)
         }
       }else{
         //Asking for rollback on an inactive checkpoint, we go for a set...
@@ -564,29 +565,35 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], val maxValue: Int, 
   protected def releaseCurrentCheckpointAtCheckpoint(){
 
     val checkpoint = toNotify.newValue
+    assert(toNotify.newValue equals topCheckpoint)
+    require(!topCheckpointIsActive || topCheckpointIsActiveDeactivated || (toNotify.newValue quickEquals topCheckpoint))
+    notifiedSinceTopCheckpoint = SeqUpdateLastNotified(checkpoint)
 
-    popToNotifyUntilCheckpointDeclaration(toNotify,checkpoint) match{
+    val attemptToCleanToNotify:SeqUpdate = popToNotifyUntilCheckpointDeclaration(toNotify,checkpoint)
+    attemptToCleanToNotify match{
       case SeqUpdateDefineCheckpoint(prev:SeqUpdate,active) =>
-        //we have found the checkpoint declaration (it has never been communicated, actually)
+        //we have found the checkpoint declaration, we can just remove it as it has never been communicated, actually
         toNotify = prev
-      //nothing more to do
       case null =>
-      //no declaration was found, we need to impact the stack
-
+        //no declaration was found, we need to impact the checkpoint stack
+        popTopCheckpoint(checkpoint)
       case SeqUpdateSet(value) =>
         //this is a set to the checkpoint
         require(value quickEquals checkpoint)
-      //no declaration was found, we need to impact the stack
-
+        //no declaration was found, we need to impact the checkpoint stack
+        toNotify = attemptToCleanToNotify
+        popTopCheckpoint(checkpoint)
       case SeqUpdateLastNotified(value) =>
         //we just notified about getting to this checkpoint
+        //we need to impact the checkpoint stack
         require(value quickEquals checkpoint)
-      //no declaration was found, we need to impact the stack
-
+        toNotify = attemptToCleanToNotify
+        popTopCheckpoint(checkpoint)
       case SeqUpdateRollBackToCheckpoint(value) =>
         require(value quickEquals checkpoint)
-      //no declaration was found, we need to impact the stack
-
+        //no declaration was found, we need to impact the checkpoint stack
+        toNotify = attemptToCleanToNotify
+        popTopCheckpoint(checkpoint)
     }
   }
 
@@ -600,7 +607,7 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], val maxValue: Int, 
     val headPhantom = dynListElements.headPhantom
     var currentElement = headPhantom.next
 
-    if(stableCheckpoint || !checkpointStack.topCheckpointIsActive) toNotify = toNotify.regularize
+    if(stableCheckpoint || !topCheckpointIsActive) toNotify = toNotify.regularize
 
     while (currentElement != headPhantom) {
       val e = currentElement.elem
@@ -615,7 +622,7 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], val maxValue: Int, 
       })
     }
 
-    checkpointStack.recordNotifiedChangesForCheckpoint(toNotify)
+    recordNotifiedChangesForCheckpoint(toNotify)
 
     val theNewValue = toNotify.newValue
     val start = SeqUpdateSet(theNewValue)
@@ -701,7 +708,7 @@ class IdentitySeq(toValue:CBLSSeqVar, fromValue:ChangingSeqValue)
       case SeqUpdateSet(s) =>
         toValue.setValue(s)
       case SeqUpdateLastNotified(value:UniqueIntSequence) =>
-        //nothing to do here
+      //nothing to do here
       case SeqUpdateRollBackToCheckpoint(value:UniqueIntSequence) =>
         toValue.rollbackToCurrentCheckpoint(value)
       case SeqUpdateDefineCheckpoint(prev:SeqUpdate,activeCheckpoint:Boolean) =>
