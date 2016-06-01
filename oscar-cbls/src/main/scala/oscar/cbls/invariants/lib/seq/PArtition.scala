@@ -6,9 +6,17 @@ import oscar.cbls.invariants.core.computation._
 
 import scala.collection.immutable.SortedSet
 
-/*
+
 //one more partition for values that are not present, but belong to PartitionOf
-case class Partition(s:ChangingSeqValue, pivot:Array[Int], partitions:Array[CBLSSetVar], partitionOf:Array[CBLSIntVar])
+
+/**
+ * respects the route conditions: you cannot cut on parttions
+ * @param s
+ * @param pivot
+ * @param partitions
+ * @param partitionOf
+ */
+case class RoutePartition(s:ChangingSeqValue, v:Int, nodesOfVehicle:Array[CBLSSetVar], vehicleOfNode:Array[CBLSIntVar])
   extends Invariant() with SeqNotificationTarget{
 
   val nbPivot = pivot.length
@@ -55,4 +63,3 @@ case class Partition(s:ChangingSeqValue, pivot:Array[Int], partitions:Array[CBLS
     }
   }
 }
-*/

@@ -15,7 +15,7 @@ case class Size(v: SeqValue)
   registerStaticAndDynamicDependency(v)
   finishInitialization()
 
-  override def notifySeqChanges(v: ChangingSeqValue, d: Int, changes: SeqUpdate, willOftenRollBackToCurrentValue: Boolean) {
+  override def notifySeqChanges(v: ChangingSeqValue, d: Int, changes: SeqUpdate) {
     this := changes.newValue.size
   }
 

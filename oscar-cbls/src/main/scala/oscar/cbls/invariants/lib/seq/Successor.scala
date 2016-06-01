@@ -23,11 +23,17 @@ object Successor {
 case class Successor(sequence:ChangingSeqValue, successorValues:Array[CBLSIntVar], defaultWhenNotInSequence:Int, defaultWhenNoSuccessor:Int)
   extends Invariant() with SeqNotificationTarget {
 
+  //this one does not use checkpoint at all, so just skipping them.
+
   registerStaticAndDynamicDependency(sequence)
   for(i <- successorValues) i.setDefiningInvariant(this)
   finishInitialization()
 
-  override def notifySeqChanges(v: ChangingSeqValue, d: Int, changes: SeqUpdate, willOftenRollBackToCurrentValue: Boolean) {
+  override def notifySeqChanges(v: ChangingSeqValue, d: Int, changes: SeqUpdate) {
+    performUpdate(changes:SeqUpdate)
+  }
+
+  private def performUpdate(changes:SeqUpdate){
     computeStartValuesOfImpactedZone(changes:SeqUpdate) match{
       case None =>  computeAllFromScratch(changes.newValue)
       case Some(startUpdateValues) =>
@@ -40,6 +46,7 @@ case class Successor(sequence:ChangingSeqValue, successorValues:Array[CBLSIntVar
         startUpdateExplorersAndValSortedByPos.foreach(startValueAndExplorer => updateStartFrom(startValueAndExplorer._1,startValueAndExplorer._2,changes.newValue))
     }
   }
+
 
   def computeStartValuesOfImpactedZone(changes:SeqUpdate):Option[SortedSet[Int]] = {
     changes match {
@@ -68,12 +75,18 @@ case class Successor(sequence:ChangingSeqValue, successorValues:Array[CBLSIntVar
               changes.newValue.predecessorVal2Val(value) + value)
         }
 
+      case SeqUpdateRollBackToCheckpoint(_,prev:SeqUpdate) =>
+        computeStartValuesOfImpactedZone(prev)
+
+      case SeqUpdateDefineCheckpoint(checkpoint,prev:SeqUpdate) =>
+        computeStartValuesOfImpactedZone(prev)
+
+      case SeqUpdateLastNotified(value) =>
+        require(value quickEquals sequence.value)
+        Some(SortedSet.empty[Int]) //we are starting from the previous value
+
       case SeqUpdateSet(value : UniqueIntSequence) =>
-        if (value quickEquals sequence.value){
-          Some(SortedSet.empty[Int]) //we are starting from the previous value
-        }else{
-          None //impossible to go incremental
-        }
+        None //impossible to go incremental
     }
   }
 

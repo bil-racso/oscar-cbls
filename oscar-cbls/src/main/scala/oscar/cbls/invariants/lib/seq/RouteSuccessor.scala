@@ -12,7 +12,7 @@ case class RouteSuccessor(routes:ChangingSeqValue, v:Int, successorValues:Array[
   for(i <- successorValues) i.setDefiningInvariant(this)
   finishInitialization()
 
-  override def notifySeqChanges(v: ChangingSeqValue, d: Int, changes: SeqUpdate, willOftenRollBackToCurrentValue: Boolean) {
+  override def notifySeqChanges(v: ChangingSeqValue, d: Int, changes: SeqUpdate) {
     computeStartValuesOfImpactedZone(changes:SeqUpdate) match{
       case None =>  computeAllFromScratch(changes.newValue)
       case Some(startUpdateValues) =>
@@ -53,13 +53,15 @@ case class RouteSuccessor(routes:ChangingSeqValue, v:Int, successorValues:Array[
               RoutingConventionMethods.routingPredPos2Val(value,changes.newValue,v) + value)
         }
 
+      case SeqUpdateLastNotified(value) =>
+        require (value quickEquals routes.value)
+        Some(SortedSet.empty[Int]) //we are starting from the previous value
       case SeqUpdateSet(value : UniqueIntSequence) =>
-        if (value quickEquals routes.value){
-          Some(SortedSet.empty[Int]) //we are starting from the previous value
-        }else{
-          //TODO: how about a cache to handle rollbacks? possibly a cache per vehicle?
-          None //impossible to go incremental
-        }
+        None //impossible to go incremental
+      case SeqUpdateDefineCheckpoint(prev:SeqUpdate,_) =>
+        computeStartValuesOfImpactedZone(prev)
+      case SeqUpdateRollBackToCheckpoint(_,prev:SeqUpdate) =>
+        computeStartValuesOfImpactedZone(prev)
     }
   }
 

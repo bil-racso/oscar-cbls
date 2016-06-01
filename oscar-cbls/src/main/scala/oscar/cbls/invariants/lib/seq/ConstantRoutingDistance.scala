@@ -80,21 +80,29 @@ case class ConstantRoutingDistance(routes:ChangingSeqValue,
 
   affect(savedValues)
 
-  override def notifySeqChanges(v: ChangingSeqValue, d: Int, changes: SeqUpdate, willOftenRollBackToCurrentValue: Boolean) {
-    if(!digestUpdates(changes)) {
+  override def notifySeqChanges(v: ChangingSeqValue, d: Int, changes: SeqUpdate) {
+    if(!digestUpdates(changes,false)) {
       for(v <- 0 until this.v) recordTouchedVehicle(v)
       affect(computeValueFromScratch(changes.newValue))
     }
-    if(willOftenRollBackToCurrentValue){
-      saveCurrentCheckpoint(changes.newValue)
-    }
   }
 
-  private def digestUpdates(changes:SeqUpdate):Boolean = {
+  private def digestUpdates(changes:SeqUpdate,skipNewCheckpoints:Boolean):Boolean = {
     changes match {
+
+      case SeqUpdateDefineCheckpoint(checkpoint:UniqueIntSequence,prev:SeqUpdate) =>
+        if(!digestUpdates(prev,true)){
+          affect(computeValueFromScratch(checkpoint))
+        }
+        saveCurrentCheckpoint(checkpoint)
+        true
+      case SeqUpdateRollBackToCheckpoint(checkpoint:UniqueIntSequence) =>
+        require (checkpoint quickEquals savedCheckpoint)
+        restoreCheckpoint()
+        true
       case SeqUpdateInsert(value : Int, pos : Int, prev : SeqUpdate) =>
         //on which vehicle did we insert?
-        if(!digestUpdates(prev)) return false
+        if(!digestUpdates(prev,skipNewCheckpoints)) return false
         val newSeq = changes.newValue
 
         val oldPrev = prev.newValue.valueAtPosition(pos-1).head
@@ -117,7 +125,7 @@ case class ConstantRoutingDistance(routes:ChangingSeqValue,
       case x@SeqUpdateMove(fromIncluded : Int, toIncluded : Int, after : Int, flip : Boolean, prev : SeqUpdate) =>
         //on which vehicle did we move?
         //also from --> to cannot include a vehicle start.
-        if(!digestUpdates(prev)) false
+        if(!digestUpdates(prev,skipNewCheckpoints)) false
         else if(x.isNop) true
         else if(x.isSimpleFlip){
           //this is a simple flip
@@ -227,7 +235,7 @@ case class ConstantRoutingDistance(routes:ChangingSeqValue,
         //on which vehicle did we insert?
 
         //node cost to be considered
-        if(!digestUpdates(prev)) return false
+        if(!digestUpdates(prev,skipNewCheckpoints)) return false
 
         val positionOfDelete = x.position
 
@@ -249,15 +257,11 @@ case class ConstantRoutingDistance(routes:ChangingSeqValue,
         }
         true
 
+      case SeqUpdateLastNotified(value:UniqueIntSequence) =>
+        require(value quickEquals routes.value)
+        true //we are starting from the previous value
       case SeqUpdateSet(value : UniqueIntSequence) =>
-        if(value quickEquals savedCheckpoint){
-          restoreCheckpoint()
-          true
-        }else if (value quickEquals routes.value){
-          true //we are starting from the previous value
-        }else{
-          false //impossible to go incremental
-        }
+        false //impossible to go incremental
     }
   }
 

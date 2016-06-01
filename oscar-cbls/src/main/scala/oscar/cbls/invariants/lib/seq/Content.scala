@@ -22,46 +22,62 @@ case class Content(v:SeqValue)
   var savedCheckpoint:UniqueIntSequence = v.value
   var updatesFromThisCheckpointInReverseOrder:QList[(Int,Boolean)]=null
 
-  override def notifySeqChanges(v: ChangingSeqValue, d: Int, changes: SeqUpdate, willOftenRollBackToCurrentValue: Boolean) : Unit = {
+  private def saveNewCheckpoint(u:UniqueIntSequence){
+    savedCheckpoint = u
+    updatesFromThisCheckpointInReverseOrder = null
+  }
+
+  override def notifySeqChanges(v: ChangingSeqValue, d: Int, changes: SeqUpdate) : Unit = {
     println("content notified " + changes)
-    if(!digestUpdates(changes)) {
-      this := (SortedSet.empty[Int] ++ changes.newValue.content)
+    if(!digestUpdates(changes,false)) {
+      updateFromScratch(changes.newValue)
       savedCheckpoint = null
-      updatesFromThisCheckpointInReverseOrder = null
-    }
-    if(willOftenRollBackToCurrentValue){
-      savedCheckpoint = changes.newValue
       updatesFromThisCheckpointInReverseOrder = null
     }
   }
 
+  private def updateFromScratch(u:UniqueIntSequence){
+    this := (SortedSet.empty[Int] ++ u.content)
+  }
+
   //true if could be incremental, false otherwise
-  def digestUpdates(changes : SeqUpdate):Boolean = {
+  def digestUpdates(changes : SeqUpdate, skipNewCheckpoints:Boolean):Boolean = {
     changes match{
       case SeqUpdateInsert(value:Int,pos:Int,prev:SeqUpdate) =>
-        if(digestUpdates(prev)) {
+        if(digestUpdates(prev,skipNewCheckpoints)) {
           updatesFromThisCheckpointInReverseOrder = QList((value,true),updatesFromThisCheckpointInReverseOrder)
           this :+= value
           true
         }else false
       case SeqUpdateMove(fromIncluded:Int,toIncluded:Int,after:Int,flip:Boolean,prev:SeqUpdate) =>
-        digestUpdates(prev)
+        digestUpdates(prev,skipNewCheckpoints)
       case SeqUpdateRemoveValue(value:Int,prev:SeqUpdate) =>
-        if(digestUpdates(prev)) {
+        if(digestUpdates(prev,skipNewCheckpoints)) {
           updatesFromThisCheckpointInReverseOrder = QList((value,false),updatesFromThisCheckpointInReverseOrder)
           this :-= value
           true
         }else false
+      case SeqUpdateRollBackToCheckpoint(checkpoint:UniqueIntSequence,howTo) =>
+        require(checkpoint quickEquals savedCheckpoint)
+        comeBackToSavedCheckPoint()
+        true
+      case SeqUpdateLastNotified(value) =>
+        require(value quickEquals v.value)
+        //start at the previous value; easy game.
+        true
       case SeqUpdateSet(value:UniqueIntSequence) =>
-        if(value quickEquals savedCheckpoint) {
-          //undo since last checkpoint
-          comeBackToSavedCheckPoint()
+        //raw assign, no incremental possible
+        false
+      case SeqUpdateDefineCheckpoint(prev:SeqUpdate,isActive:Boolean) =>
+        if(skipNewCheckpoints || !isActive) {
+          digestUpdates(prev,true)
+        } else {
+          if(!digestUpdates(prev,true)){
+            //update was not incremental, do the computation now
+            updateFromScratch(prev.newValue)
+          }
+          saveNewCheckpoint(prev.newValue)
           true
-        }else if (value quickEquals v.value){
-          //start at the previous value; easy game.
-          true
-        }else{
-          false
         }
     }
   }
