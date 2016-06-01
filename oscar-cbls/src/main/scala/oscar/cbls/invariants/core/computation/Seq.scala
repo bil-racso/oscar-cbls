@@ -326,8 +326,14 @@ object CBLSSeqVar{
   }
 }
 
+class ChangingSeqValueSnapShot(val variable:ChangingSeqValue,val savedValue:UniqueIntSequence) extends AbstractVariableSnapShot(variable){
+  override protected def doRestore() : Unit = {variable.asInstanceOf[CBLSSeqVar] := savedValue}
+}
+
 abstract class ChangingSeqValue(initialValue: Iterable[Int], val maxValue: Int, maxPivot: Int)
   extends AbstractVariable with SeqValue{
+
+  override def snapshot : ChangingSeqValueSnapShot = new ChangingSeqValueSnapShot(this,this.value)
 
   //This section of code is for maintining the checkpoint stack.
   //stack does not include top checkpoint
@@ -563,7 +569,7 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], val maxValue: Int, 
   }
 
   protected def releaseCurrentCheckpointAtCheckpoint(){
-
+    //TODO: test this extensively
     val checkpoint = toNotify.newValue
     assert(toNotify.newValue equals topCheckpoint)
     require(!topCheckpointIsActive || topCheckpointIsActiveDeactivated || (toNotify.newValue quickEquals topCheckpoint))

@@ -1201,10 +1201,9 @@ case class DynAndThen[FirstMoveType<:Move](a:Neighborhood with SupportForAndThen
 case class DynAndThenWithPrev[FirstMoveType<:Move](x:Neighborhood with SupportForAndThenChaining[FirstMoveType],
                                                    b:((FirstMoveType,Snapshot) => Neighborhood),
                                                    maximalIntermediaryDegradation:Int = Int.MaxValue,
-                                                   intValuesToSave:Iterable[ChangingIntValue],
-                                                   setValuesToSave:Iterable[ChangingSetValue]) extends NeighborhoodCombinatorNoProfile(x){
+                                                   valuesToSave:Iterable[AbstractVariable]) extends NeighborhoodCombinatorNoProfile(x){
 
-  val instrumentedA = new SnapShotOnEntry(x,intValuesToSave,setValuesToSave) with SupportForAndThenChaining[FirstMoveType]{
+  val instrumentedA = new SnapShotOnEntry(x,valuesToSave) with SupportForAndThenChaining[FirstMoveType]{
     override def instantiateCurrentMove(newObj: Int): FirstMoveType = x.instantiateCurrentMove(newObj)
   }
 
@@ -1216,14 +1215,14 @@ case class DynAndThenWithPrev[FirstMoveType<:Move](x:Neighborhood with SupportFo
 }
 
 
-case class SnapShotOnEntry(a: Neighborhood, intValuesToSave:Iterable[ChangingIntValue],setValuesToSave:Iterable[ChangingSetValue])
+case class SnapShotOnEntry(a: Neighborhood, valuesToSave:Iterable[AbstractVariable])
   extends NeighborhoodCombinator(a){
 
   var snapShot:Snapshot = null
 
   override def getMove(obj: Objective, acceptanceCriterion: (Int, Int) => Boolean = (oldObj, newObj) => oldObj > newObj): SearchResult = {
     val s = obj.model
-    snapShot = s.snapShot(intValuesToSave,setValuesToSave)
+    snapShot = s.snapShot(valuesToSave)
     a.getMove(obj,acceptanceCriterion)
 }
 }
