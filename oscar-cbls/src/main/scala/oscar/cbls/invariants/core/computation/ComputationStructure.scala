@@ -250,6 +250,8 @@ class Snapshot(toRecord:Iterable[AbstractVariable], val model:Store) {
   def restoreDecisionVariables() {
     for(snapshot <- varDico.values) snapshot.restoreIfDecisionVariable()
   }
+
+  def apply(a:AbstractVariable):AbstractVariableSnapShot = varDico(a)
 }
 
 object Invariant{

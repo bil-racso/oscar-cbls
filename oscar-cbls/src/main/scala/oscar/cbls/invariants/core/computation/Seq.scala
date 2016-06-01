@@ -335,6 +335,8 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], val maxValue: Int, 
 
   override def snapshot : ChangingSeqValueSnapShot = new ChangingSeqValueSnapShot(this,this.value)
 
+  def valueAtSnapShot(s:Snapshot):UniqueIntSequence = s(this) match{case s:ChangingSeqValueSnapShot => s.savedValue case _ => throw new Error("cannot find value of " + this + " in snapshot")}
+
   //This section of code is for maintining the checkpoint stack.
   //stack does not include top checkpoint
   private var checkpointStackNotTop:List[(UniqueIntSequence,SeqUpdate,Boolean)] = List.empty

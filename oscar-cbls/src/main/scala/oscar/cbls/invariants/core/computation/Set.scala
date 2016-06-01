@@ -55,6 +55,7 @@ abstract class ChangingSetValue(initialValue:SortedSet[Int], initialDomain:Domai
   def domain:Domain = privatedomain
 
   override def snapshot : ChangingSetValueSnapShot = new ChangingSetValueSnapShot(this,this.value)
+  def valueAtSnapShot(s:Snapshot):SortedSet[Int] = s(this) match{case s:ChangingSetValueSnapShot => s.savedValue case _ => throw new Error("cannot find value of " + this + " in snapshot")}
 
   /**this must be protected because invariants might rework this after isntanciation
     * for CBLSVars, no problems*/

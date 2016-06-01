@@ -74,8 +74,8 @@ abstract class ChangingIntValue(initialValue:Int, initialDomain:Domain)
 
   assert(initialDomain.contains(initialValue),initialValue+ " is not in the domain of "+this.name+"("+initialDomain+"). This might indicate an integer overflow.")
 
-
-  override def snapshot : AbstractVariableSnapShot = ???
+  override def snapshot : ChangingIntValueSnapShot = new ChangingIntValueSnapShot(this,this.value)
+  def valueAtSnapShot(s:Snapshot):Int = s(this) match{case s:ChangingIntValueSnapShot => s.savedValue case _ => throw new Error("cannot find value of " + this + " in snapshot")}
 
   private var privatedomain:Domain = initialDomain
   private var mNewValue: Int = initialValue
