@@ -12,6 +12,8 @@ case class Size(v: SeqValue)
   extends IntInvariant(v.value.size, 0 to DomainHelper.safeAddMax(v.max,1))
   with SeqNotificationTarget{
 
+  setName("Size(" + v.name + ")")
+
   registerStaticAndDynamicDependency(v)
   finishInitialization()
 
