@@ -77,7 +77,7 @@ abstract class UniqueIntSequence(protected[seq] val uniqueID:Int = UniqueIntSequ
 
   def quickEquals(that:UniqueIntSequence):Boolean = that != null && this.uniqueID == that.uniqueID
   def equals(that:UniqueIntSequence):Boolean = {
-    quickEquals(that) || (that != null && (this.iterable equals that.iterable))
+    quickEquals(that) || (that != null && (this.toList equals that.toList))
   }
 
   override def toString : String = {

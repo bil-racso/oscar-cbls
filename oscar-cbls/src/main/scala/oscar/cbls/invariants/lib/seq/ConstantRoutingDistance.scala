@@ -73,6 +73,7 @@ case class ConstantRoutingDistance(routes:ChangingSeqValue,
   for(i <- distance) i.setDefiningInvariant(this)
   finishInitialization()
 
+  //TODO: handle inactive checkpoints
   private val savedValues:Array[Int] = computeValueFromScratch(routes.value)
   private var savedCheckpoint = routes.value
   private val touchedRoutesSinceCheckpointArray:Array[Boolean] = Array.fill(v)(false)

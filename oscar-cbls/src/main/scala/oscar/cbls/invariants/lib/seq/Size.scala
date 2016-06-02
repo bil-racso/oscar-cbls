@@ -17,6 +17,7 @@ case class Size(v: SeqValue)
 
   override def notifySeqChanges(v: ChangingSeqValue, d: Int, changes: SeqUpdate) {
     this := changes.newValue.size
+    println("size notified " + changes)
   }
 
   override def checkInternals(c: Checker) {

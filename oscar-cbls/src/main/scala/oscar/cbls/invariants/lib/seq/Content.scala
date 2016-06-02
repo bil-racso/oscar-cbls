@@ -19,6 +19,8 @@ case class Content(v:SeqValue)
   registerStaticAndDynamicDependency(v)
   finishInitialization()
 
+  //TODO: handle inactitve checkpoints as well.
+  //note sure that such checkpoint actually help...
   var savedCheckpoint:UniqueIntSequence = v.value
   var updatesFromThisCheckpointInReverseOrder:QList[(Int,Boolean)]=null
 
@@ -44,19 +46,17 @@ case class Content(v:SeqValue)
   def digestUpdates(changes : SeqUpdate, skipNewCheckpoints:Boolean):Boolean = {
     changes match{
       case SeqUpdateInsert(value:Int,pos:Int,prev:SeqUpdate) =>
-        if(digestUpdates(prev,skipNewCheckpoints)) {
-          updatesFromThisCheckpointInReverseOrder = QList((value,true),updatesFromThisCheckpointInReverseOrder)
-          this :+= value
-          true
-        }else false
+        if(!digestUpdates(prev,skipNewCheckpoints)) return false
+        updatesFromThisCheckpointInReverseOrder = QList((value,true),updatesFromThisCheckpointInReverseOrder)
+        this :+= value
+        true
       case SeqUpdateMove(fromIncluded:Int,toIncluded:Int,after:Int,flip:Boolean,prev:SeqUpdate) =>
         digestUpdates(prev,skipNewCheckpoints)
       case SeqUpdateRemoveValue(value:Int,prev:SeqUpdate) =>
-        if(digestUpdates(prev,skipNewCheckpoints)) {
-          updatesFromThisCheckpointInReverseOrder = QList((value,false),updatesFromThisCheckpointInReverseOrder)
-          this :-= value
-          true
-        }else false
+        if(!digestUpdates(prev,skipNewCheckpoints)) return false
+        updatesFromThisCheckpointInReverseOrder = QList((value,false),updatesFromThisCheckpointInReverseOrder)
+        this :-= value
+        true
       case SeqUpdateRollBackToCheckpoint(checkpoint:UniqueIntSequence) =>
         require(checkpoint quickEquals savedCheckpoint)
         comeBackToSavedCheckPoint()
