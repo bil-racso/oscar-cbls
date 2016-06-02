@@ -42,6 +42,7 @@ object TestSeqVar extends App{
 
   val checkpoint = a.defineCurrentValueAsCheckpoint(true)
 
+  println("defined checkpoint " + checkpoint)
   println("insert&Move")
 
 

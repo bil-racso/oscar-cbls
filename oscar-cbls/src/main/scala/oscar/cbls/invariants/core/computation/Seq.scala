@@ -467,7 +467,7 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], val maxValue: Int, 
   protected [computation] def setValue(seq:UniqueIntSequence){
     //since we will override and lose the content of the toNotify, we have to ensure that there is no checkpoint delcared in this before
     pushCheckPoints(toNotify,false)
-    toNotify = SeqUpdateSet(value)
+    toNotify = SeqUpdateSet(seq)
     notifyChanged()
   }
 

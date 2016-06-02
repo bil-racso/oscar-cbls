@@ -81,7 +81,7 @@ abstract class UniqueIntSequence(protected[seq] val uniqueID:Int = UniqueIntSequ
   }
 
   override def toString : String = {
-    "UniqueIntSequence(size:" + size + ")[" + this.iterator.toList.mkString(",") + "]      impl:" + descriptorString
+    "UniqueIntSequence(size:" + size + ")[" + this.iterator.toList.mkString(",") + "]_impl:" + descriptorString
   }
 
   def descriptorString : String
@@ -124,7 +124,7 @@ class ConcreteUniqueIntSequence(private[seq] val internalPositionToValue:RedBlac
   override def descriptorString : String = "[" + this.content.mkString(",") + "]"
 
   override def toString : String = {
-    "UniqueIntSequence(size:" + size + ")[" + this.iterator.toList.mkString(",") + "]"
+    "UniqueIntSequence(size:" + size + ")[" + this.iterator.toList.mkString(",") + "]_impl:concrete"
   }
 
   override def check {
