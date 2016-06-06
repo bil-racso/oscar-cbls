@@ -1,7 +1,7 @@
 package oscar.cbls.invariants.lib.seq
 
 import oscar.cbls.invariants.core.algo.quick.QList
-import oscar.cbls.invariants.core.algo.seq.functional.UniqueIntSequence
+import oscar.cbls.invariants.core.algo.seq.functional.IntSequence
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.core.propagation.Checker
 
@@ -13,18 +13,18 @@ import scala.collection.immutable.SortedSet
  * @author renaud.delandtsheer@cetic.be
  */
 case class Content(v:SeqValue)
-  extends SetInvariant(SortedSet.empty[Int] ++ v.value.unorderedContent,v.domain)
+  extends SetInvariant(SortedSet.empty[Int] ++ v.value.unorderedContentNoDuplicate,v.domain)
   with SeqNotificationTarget{
 
   registerStaticAndDynamicDependency(v)
   finishInitialization()
 
-  //TODO: handle inactitve checkpoints as well.
+  //TODO: handle inactive checkpoints as well.
   //note sure that such checkpoint actually help...
-  var savedCheckpoint:UniqueIntSequence = v.value
+  var savedCheckpoint:IntSequence = v.value
   var updatesFromThisCheckpointInReverseOrder:QList[(Int,Boolean)]=null
 
-  private def saveNewCheckpoint(u:UniqueIntSequence){
+  private def saveNewCheckpoint(u:IntSequence){
     savedCheckpoint = u
     updatesFromThisCheckpointInReverseOrder = null
   }
@@ -38,26 +38,29 @@ case class Content(v:SeqValue)
     }
   }
 
-  private def updateFromScratch(u:UniqueIntSequence){
-    this := (SortedSet.empty[Int] ++ u.unorderedContent)
+  private def updateFromScratch(u:IntSequence){
+    this := (SortedSet.empty[Int] ++ u.unorderedContentNoDuplicate)
   }
 
   //true if could be incremental, false otherwise
   def digestUpdates(changes : SeqUpdate, skipNewCheckpoints:Boolean):Boolean = {
-    changes match{
-      case SeqUpdateInsert(value:Int,pos:Int,prev:SeqUpdate) =>
-        if(!digestUpdates(prev,skipNewCheckpoints)) return false
-        updatesFromThisCheckpointInReverseOrder = QList((value,true),updatesFromThisCheckpointInReverseOrder)
+    changes match {
+      case SeqUpdateInsert(value : Int, pos : Int, prev : SeqUpdate) =>
+        if (!digestUpdates(prev, skipNewCheckpoints)) return false
+        updatesFromThisCheckpointInReverseOrder = QList((value, true), updatesFromThisCheckpointInReverseOrder)
         this :+= value
         true
-      case SeqUpdateMove(fromIncluded:Int,toIncluded:Int,after:Int,flip:Boolean,prev:SeqUpdate) =>
-        digestUpdates(prev,skipNewCheckpoints)
-      case SeqUpdateRemoveValue(value:Int,prev:SeqUpdate) =>
-        if(!digestUpdates(prev,skipNewCheckpoints)) return false
-        updatesFromThisCheckpointInReverseOrder = QList((value,false),updatesFromThisCheckpointInReverseOrder)
-        this :-= value
+      case SeqUpdateMove(fromIncluded : Int, toIncluded : Int, after : Int, flip : Boolean, prev : SeqUpdate) =>
+        digestUpdates(prev, skipNewCheckpoints)
+      case r@SeqUpdateRemove(position : Int, prev : SeqUpdate) =>
+        if (!digestUpdates(prev, skipNewCheckpoints)) return false
+        val value = r.value
+        if (changes.newValue.nbOccurrence(value) == 0){
+          this :-= value
+          updatesFromThisCheckpointInReverseOrder = QList((value, false), updatesFromThisCheckpointInReverseOrder)
+        }
         true
-      case SeqUpdateRollBackToCheckpoint(checkpoint:UniqueIntSequence) =>
+      case SeqUpdateRollBackToCheckpoint(checkpoint:IntSequence) =>
         require(checkpoint quickEquals savedCheckpoint)
         comeBackToSavedCheckPoint()
         true
@@ -65,7 +68,7 @@ case class Content(v:SeqValue)
         require(value quickEquals v.value)
         //start at the previous value; easy game.
         true
-      case SeqUpdateSet(value:UniqueIntSequence) =>
+      case SeqUpdateSet(value:IntSequence) =>
         //raw assign, no incremental possible
         false
       case SeqUpdateDefineCheckpoint(prev:SeqUpdate,isActive:Boolean) =>
@@ -95,6 +98,7 @@ case class Content(v:SeqValue)
   }
 
   override def checkInternals(c: Checker) {
-    c.check(this.value.toList.sorted equals v.value.unorderedContent.toList.sorted, Some("this.value == v.value.content"))
+    c.check(this.value.toList.sorted equals v.value.unorderedContentNoDuplicate.sorted,
+      Some("this.value:" + this.value + " == v.value.content:" + v.value.unorderedContentNoDuplicate + " v:" + v))
   }
 }

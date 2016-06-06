@@ -26,3 +26,4 @@ case class Size(v: SeqValue)
     c.check(this.value == v.value.size, Some("this.value == v.value.size"))
   }
 }
+

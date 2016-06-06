@@ -1,5 +1,6 @@
 package oscar.cbls.invariants.lib.seq
 
+/*
 import oscar.cbls.invariants.core.algo.seq.functional.{UniqueIntSequenceExplorer, UniqueIntSequence}
 import oscar.cbls.invariants.core.computation._
 
@@ -106,3 +107,5 @@ case class RouteSuccessor(routes:ChangingSeqValue, v:Int, successorValues:Array[
     }
   }
 }
+
+*/

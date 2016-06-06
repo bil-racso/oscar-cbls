@@ -1,6 +1,6 @@
 package oscar.cbls.test.invariants
 
-import oscar.cbls.invariants.core.algo.seq.functional.UniqueIntSequence
+import oscar.cbls.invariants.core.algo.seq.functional.{IntSequence, UniqueIntSequence}
 import oscar.cbls.invariants.core.computation.{IntValue, SeqValue, Store, CBLSSeqVar}
 import oscar.cbls.invariants.core.propagation.ErrorChecker
 import oscar.cbls.invariants.lib.seq.{PositionOf, Content, Size}
@@ -13,7 +13,7 @@ import scala.collection.immutable.SortedSet
 object TestSeqVar extends App{
 
   val m = new Store(verbose = true,propagateOnToString = true, checker = Some(new ErrorChecker()))
-  val a = new CBLSSeqVar(m,UniqueIntSequence(List(1,2,3,5)), n = "toto")
+  val a = new CBLSSeqVar(m,IntSequence(List(1,2,3,5)), n = "toto")
 
   val size1 = Size(a.createClone)
   val size2 = Size(a)
@@ -38,12 +38,12 @@ object TestSeqVar extends App{
 
   a.move(1,3,4,false)
   a.insertAtPosition(12,5)
-  a.removeValue(2)
+  a.remove(a.value.positionOfFirstOccurrence(2).head)
   a.move(1,3,4,true)
   a.move(1,3,4,true)
 
   println(size2)
-  println(content)
+  println(content)//fail ici
   println(a)
   println(pos2)
 

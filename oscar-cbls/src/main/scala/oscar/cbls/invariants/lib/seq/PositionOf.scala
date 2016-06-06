@@ -10,10 +10,7 @@ import oscar.cbls.invariants.core.propagation.Checker
  * @param defaultIfNotInSequence the value of this invariant in case a is not in the sequence.
  */
 case class PositionOf(v: SeqValue, a:IntValue, defaultIfNotInSequence:Int)
-  extends IntInvariant((v.value.positionOfValue(a.value) match{
-    case Some(x) => x
-    case None => defaultIfNotInSequence
-  }), 0 to DomainHelper.safeAddMax(v.max,1))
+  extends SetInvariant(v.value.positionsOfValue(a.value), 0 to DomainHelper.safeAddMax(v.max,1))
   with SeqNotificationTarget with IntNotificationTarget{
 
   setName("PositionOf(" + a.name + " in " + v.name + ")")
@@ -31,17 +28,11 @@ case class PositionOf(v: SeqValue, a:IntValue, defaultIfNotInSequence:Int)
     scheduleForPropagation()
   }
 
-  override def performInvariantPropagation(){
-    this := (v.value.positionOfValue(a.value) match{
-      case Some(x) => x
-      case None => defaultIfNotInSequence
-    })
+  override def performInvariantPropagation() {
+    this := v.value.positionsOfValue(a.value)
   }
 
   override def checkInternals(c: Checker) {
-    c.check(this.value == (v.value.positionOfValue(a.value) match{
-      case Some(x) => x
-      case None => defaultIfNotInSequence
-    }))
+    c.check(this.value equals v.value.positionsOfValue(a.value))
   }
 }

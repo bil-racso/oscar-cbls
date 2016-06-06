@@ -1,6 +1,6 @@
 package oscar.cbls.routing.neighborhoodS
 
-import oscar.cbls.invariants.core.algo.seq.functional.UniqueIntSequence
+import oscar.cbls.invariants.core.algo.seq.functional.{IntSequence, UniqueIntSequence}
 import oscar.cbls.invariants.core.computation.{CBLSSeqVar, Store}
 
 /**
@@ -19,11 +19,11 @@ import oscar.cbls.invariants.core.computation.{CBLSSeqVar, Store}
  */
 class VRPS(val N: Int, val V: Int, val m: Store) {
 
-  val seq = new CBLSSeqVar(m, UniqueIntSequence(0 until V), N-1, "routes")
+  val seq = new CBLSSeqVar(m, IntSequence(0 until V), N-1, "routes")
 
   /**unroutes all points of the VRP*/
   def unroute() {
-    seq := UniqueIntSequence(0 until V)
+    seq := IntSequence(0 until V)
   }
 
   /**
@@ -56,7 +56,7 @@ class VRPS(val N: Int, val V: Int, val m: Store) {
    * 1 -> 2 -> 3 -> 4 (-> 1)
    */
   def setCircuit(nodes: Iterable[Int]): Unit = {
-    seq := UniqueIntSequence(nodes)
+    seq := IntSequence(nodes)
     for(v <- 0 until V) require(seq.newValue.contains(v))
   }
 
@@ -81,7 +81,7 @@ class VRPS(val N: Int, val V: Int, val m: Store) {
    */
   def getRouteOfVehicle(vehicle:Int):List[Int] = {
     require(vehicle < V)
-    var currentVExplorer = seq.newValue.explorerAtValue(vehicle).head.next
+    var currentVExplorer = seq.newValue.explorerAtAnyOccurrence(vehicle).head.next
     var acc:List[Int] = List(vehicle)
     while (currentVExplorer match{
       case Some(x) if x.value >= V =>

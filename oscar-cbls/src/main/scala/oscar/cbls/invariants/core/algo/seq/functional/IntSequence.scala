@@ -49,17 +49,19 @@ abstract class IntSequence(protected[seq] val uniqueID:Int = IntSequence.getNewU
 
   def size : Int
 
-  def isEmpty : Boolean
+  def isEmpty : Boolean = size > 0
 
   def iterator : Iterator[Int] = new IntSequenceIterator(this)
 
   def iterable : Iterable[Int] = new IterableIntSequence(this)
 
-  def unorderedContentNoDuplicate : Iterable[Int]
+  def nbOccurrence(value:Int):Int
+
+  def unorderedContentNoDuplicate : List[Int]
 
   def valueAtPosition(position : Int) : Option[Int]
 
-  def positionsOfValue(value : Int) : Set[Int]
+  def positionsOfValue(value : Int) : SortedSet[Int]
 
   def contains(value : Int) : Boolean
 
@@ -140,7 +142,7 @@ class ConcreteIntSequence(private[seq] val internalPositionToValue:RedBlackTreeM
                           private[seq] val valueToInternalPositions:RedBlackTreeMap[RedBlackTreeMap[Int]],
                           private[seq] val externalToInternalPosition:PiecewiseLinearBijectionNaive,
                           private[seq] val startFreeRangeForInternalPosition:Int,
-                          uniqueID:Int = IntSequence.getNewUniqueID()) extends IntSequence(uniqueID){
+                          uniqueID:Int = IntSequence.getNewUniqueID()) extends IntSequence(uniqueID) {
 
   override def descriptorString : String = "[" + this.unorderedContentNoDuplicate.mkString(",") + "]"
 
@@ -150,23 +152,37 @@ class ConcreteIntSequence(private[seq] val internalPositionToValue:RedBlackTreeM
 
   override def check {
     externalToInternalPosition.checkBijection()
-    require(internalPositionToValue.content.sortBy(_._1) equals valueToInternalPositions.content.flatMap({case (a,b) => b.keys.map(x => (x,a))}).sortBy(_._1))
+    require(internalPositionToValue.content.sortBy(_._1) equals valueToInternalPositions.content.flatMap({case (a, b) => b.keys.map(x => (x, a))}).sortBy(_._1))
   }
 
-  def size : Int = valueToInternalPositions.size
-  def isEmpty:Boolean = internalPositionToValue.isEmpty
+  def size : Int = internalPositionToValue.size
 
-  def largestValue:Option[Int] = valueToInternalPositions.biggest match{case None => None case Some((k,_)) => Some(k)}
-  def smallestValue:Option[Int] = valueToInternalPositions.smallest match{case None => None case Some((k,_)) => Some(k)}
-  def contains(value:Int):Boolean = valueToInternalPositions.contains(value)
+  override def isEmpty : Boolean = internalPositionToValue.isEmpty
+
+  override def nbOccurrence(value : Int) : Int = valueToInternalPositions.get(value) match {
+    case None => 0
+    case Some(p) => p.size
+  }
+
+  def largestValue : Option[Int] = valueToInternalPositions.biggest match {
+    case None => None
+    case Some((k, _)) => Some(k)
+  }
+
+  def smallestValue : Option[Int] = valueToInternalPositions.smallest match {
+    case None => None
+    case Some((k, _)) => Some(k)
+  }
+
+  def contains(value : Int) : Boolean = valueToInternalPositions.contains(value)
 
   def valueAtPosition(position : Int) : Option[Int] = {
-    val internalPosition:Int = externalToInternalPosition.forward(position)
+    val internalPosition : Int = externalToInternalPosition.forward(position)
     internalPositionToValue.get(internalPosition)
   }
 
-  def positionsOfValue(value : Int) : Set[Int] = {
-    valueToInternalPositions.get(value) match{
+  def positionsOfValue(value : Int) : SortedSet[Int] = {
+    valueToInternalPositions.get(value) match {
       case None => SortedSet.empty
       case Some(internalPositions) =>
         SortedSet.empty ++ internalPositions.values.map(externalToInternalPosition.backward(_))
@@ -177,9 +193,9 @@ class ConcreteIntSequence(private[seq] val internalPositionToValue:RedBlackTreeM
     if (position >= this.size) None
     else {
       val currentPivotPosition = externalToInternalPosition.forward.pivotWithPositionApplyingTo(position)
-      val (pivotAbovePosition:Option[RBTMPosition[Pivot]],internalPosition) = currentPivotPosition match {
-        case None => (externalToInternalPosition.forward.firstPivotAndPosition,position)
-        case Some(p) => (p.next,p.value.f(position))
+      val (pivotAbovePosition : Option[RBTMPosition[Pivot]], internalPosition) = currentPivotPosition match {
+        case None => (externalToInternalPosition.forward.firstPivotAndPosition, position)
+        case Some(p) => (p.next, p.value.f(position))
       }
 
       Some(new ConcreteIntSequenceExplorer(this,
@@ -191,77 +207,79 @@ class ConcreteIntSequence(private[seq] val internalPositionToValue:RedBlackTreeM
     }
   }
 
-  private def internalInsertToValueToInternalPositions(value:Int,internalPosition:Int,internalPositionToValue:RedBlackTreeMap[RedBlackTreeMap[Int]]):RedBlackTreeMap[RedBlackTreeMap[Int]] = {
-    valueToInternalPositions.get(value) match{
-      case None => valueToInternalPositions.insert(value,RedBlackTreeMap(List((internalPosition,internalPosition))))
-      case Some(l) => valueToInternalPositions.insert(value,l.insert(internalPosition,internalPosition))
+  private def internalInsertToValueToInternalPositions(value : Int, internalPosition : Int, valueToInternalPositions : RedBlackTreeMap[RedBlackTreeMap[Int]]) : RedBlackTreeMap[RedBlackTreeMap[Int]] = {
+    valueToInternalPositions.get(value) match {
+      case None => valueToInternalPositions.insert(value, RedBlackTreeMap(List((internalPosition, internalPosition))))
+      case Some(l) => valueToInternalPositions.insert(value, l.insert(internalPosition, internalPosition))
     }
   }
 
-  private def internalRemoveFromValueToInternalPositions(value:Int,internalPosition:Int,internalPositionToValue:RedBlackTreeMap[RedBlackTreeMap[Int]]):RedBlackTreeMap[RedBlackTreeMap[Int]] = {
-    valueToInternalPositions.get(value) match{
+  private def internalRemoveFromValueToInternalPositions(value : Int, internalPosition : Int,
+                                                         valueToInternalPositions : RedBlackTreeMap[RedBlackTreeMap[Int]])
+  : RedBlackTreeMap[RedBlackTreeMap[Int]] = {
+    valueToInternalPositions.get(value) match {
       case None => valueToInternalPositions
       case Some(l) =>
         val newSet = l.remove(internalPosition)
-        if(newSet.isEmpty) valueToInternalPositions.remove(value)
-        else valueToInternalPositions.insert(value,newSet)
+        if (newSet.isEmpty) valueToInternalPositions.remove(value)
+        else valueToInternalPositions.insert(value, newSet)
     }
   }
 
-  def insertAtPosition(value:Int, pos:Int, fast:Boolean,autoRework:Boolean):IntSequence = {
+  def insertAtPosition(value : Int, pos : Int, fast : Boolean, autoRework : Boolean) : IntSequence = {
 
     //println(this + ".insertAtPosition(value:" + value + " pos:" + pos + ")")
-    require(pos<=size,"inserting past the end of the sequence (size:" + size + " pos:" + pos + ")")
+    require(pos <= size, "inserting past the end of the sequence (size:" + size + " pos:" + pos + ")")
 
-    if(fast) return new InsertedIntSequence(this,value,pos)
+    if (fast) return new InsertedIntSequence(this, value, pos)
 
     //insert into red blacks
-    val newInternalPositionToValue = internalPositionToValue.insert(startFreeRangeForInternalPosition,value)
-    val newValueToInternalPosition = internalInsertToValueToInternalPositions(value,startFreeRangeForInternalPosition,valueToInternalPositions)
+    val newInternalPositionToValue = internalPositionToValue.insert(startFreeRangeForInternalPosition, value)
+    val newValueToInternalPosition = internalInsertToValueToInternalPositions(value, startFreeRangeForInternalPosition, valueToInternalPositions)
 
     //move sequence after position, one upward
     //move inserted point at its position
     val oldExternalPosRelatedToFreeInternalPos = externalToInternalPosition.backward(startFreeRangeForInternalPosition)
 
-    val newExternalToInternalPosition = if(pos == size) {
+    val newExternalToInternalPosition = if (pos == size) {
       //inserting at end of the sequence
       externalToInternalPosition.updateBefore(
-        (size,size,LinearTransform(oldExternalPosRelatedToFreeInternalPos-pos,false)))
+        (size, size, LinearTransform(oldExternalPosRelatedToFreeInternalPos - pos, false)))
       //TODO: this migfht be always identity, actually, so useless!
-    }else{
+    } else {
       //inserting somewhere within the sequence, need to shift upper part
       externalToInternalPosition.updateBefore(
-        (pos+1,size,LinearTransform(-1,false)),
-        (pos,pos,LinearTransform(oldExternalPosRelatedToFreeInternalPos-pos,false)))
+        (pos + 1, size, LinearTransform(-1, false)),
+        (pos, pos, LinearTransform(oldExternalPosRelatedToFreeInternalPos - pos, false)))
     }
 
     new ConcreteIntSequence(
       newInternalPositionToValue,
       newValueToInternalPosition,
       newExternalToInternalPosition,
-      startFreeRangeForInternalPosition+1)
+      startFreeRangeForInternalPosition + 1)
   }
 
-  def delete(pos:Int, fast:Boolean,autoRework:Boolean):IntSequence = {
+  def delete(pos : Int, fast : Boolean, autoRework : Boolean) : IntSequence = {
     //println(this + ".delete(pos:" + pos + ")")
-    require(pos<size,"deleting past the end of the sequence (size:" + size + " pos:" + pos + ")")
-    require(pos>=0,"deleting at negative pos:" + pos)
+    require(pos < size, "deleting past the end of the sequence (size:" + size + " pos:" + pos + ")")
+    require(pos >= 0, "deleting at negative pos:" + pos)
 
-    if(fast) return new DeletedIntSequence(this,pos)
+    if (fast) return new DeletedIntSequence(this, pos)
 
     val internalPosition = externalToInternalPosition(pos)
     val value = internalPositionToValue.get(internalPosition).head
-    val largestInternalPosition = startFreeRangeForInternalPosition-1
+    val largestInternalPosition = startFreeRangeForInternalPosition - 1
 
-    val valueAtLargestInternalPosition:Int = internalPositionToValue.get(largestInternalPosition).head
+    val valueAtLargestInternalPosition : Int = internalPositionToValue.get(largestInternalPosition).head
 
     val newInternalPositionToValue = internalPositionToValue.
-      insert(internalPosition,valueAtLargestInternalPosition).
+      insert(internalPosition, valueAtLargestInternalPosition).
       remove(largestInternalPosition)
 
-    val newValueToInternalPosition =
-      internalInsertToValueToInternalPositions(valueAtLargestInternalPosition,internalPosition,
-        internalRemoveFromValueToInternalPositions(value,largestInternalPosition,valueToInternalPositions))
+    val newValueToInternalPositions =
+      internalInsertToValueToInternalPositions(valueAtLargestInternalPosition, internalPosition,
+        internalRemoveFromValueToInternalPositions(value, largestInternalPosition, valueToInternalPositions))
 
     //now, update the fct knowing the move and remove
     val externalPositionAssociatedToLargestInternalPosition = externalToInternalPosition.backward(largestInternalPosition)
@@ -269,35 +287,36 @@ class ConcreteIntSequence(private[seq] val internalPositionToValue:RedBlackTreeM
     val newExternalToInternalPosition = externalToInternalPosition.updateBefore(
       (externalPositionAssociatedToLargestInternalPosition,
         externalPositionAssociatedToLargestInternalPosition,
-        LinearTransform(pos-externalPositionAssociatedToLargestInternalPosition,false)),
-      (pos,pos,LinearTransform(externalPositionAssociatedToLargestInternalPosition - pos,false))).updateBefore(
-      (pos,size-2,LinearTransform(1,false)),(size-1,size-1,LinearTransform(pos - size + 1,false)))
+        LinearTransform(pos - externalPositionAssociatedToLargestInternalPosition, false)),
+      (pos, pos, LinearTransform(externalPositionAssociatedToLargestInternalPosition - pos, false))).updateBefore(
+      (pos, size - 2, LinearTransform(1, false)), (size - 1, size - 1, LinearTransform(pos - size + 1, false)))
 
     new ConcreteIntSequence(
       newInternalPositionToValue,
-      newValueToInternalPosition,
+      newValueToInternalPositions,
       newExternalToInternalPosition,
       startFreeRangeForInternalPosition - 1)
   }
 
-  def moveAfter(startPositionIncluded:Int, endPositionIncluded:Int, moveAfterPosition:Int, flip:Boolean, fast:Boolean,autoRework:Boolean):IntSequence = {
+  def moveAfter(startPositionIncluded : Int, endPositionIncluded : Int, moveAfterPosition : Int, flip : Boolean, fast : Boolean, autoRework : Boolean) : IntSequence = {
     //println(this + ".moveAfter(startPositionIncluded:" + startPositionIncluded + " endPositionIncluded:" + endPositionIncluded + " moveAfterPosition:" + moveAfterPosition + " flip:" + flip + ")")
-    require(startPositionIncluded >= 0 && startPositionIncluded < size , "startPositionIncluded should be in [0,size[ in UniqueIntSequence.moveAfter")
-    require(endPositionIncluded >= 0 && endPositionIncluded < size , "endPositionIncluded should be in [0,size[ in UniqueIntSequence.moveAfter")
-    require(moveAfterPosition >= 0 && moveAfterPosition < size , "moveAfterPosition should be in [0,size[ in UniqueIntSequence.moveAfter")
+    require(startPositionIncluded >= 0 && startPositionIncluded < size, "startPositionIncluded should be in [0,size[ in UniqueIntSequence.moveAfter")
+    require(endPositionIncluded >= 0 && endPositionIncluded < size, "endPositionIncluded should be in [0,size[ in UniqueIntSequence.moveAfter")
+    require(moveAfterPosition >= 0 && moveAfterPosition < size, "moveAfterPosition should be in [0,size[ in UniqueIntSequence.moveAfter")
 
     require(
-      moveAfterPosition < startPositionIncluded || moveAfterPosition>endPositionIncluded,
-      "moveAfterPosition=" +  moveAfterPosition + " cannot be between startPositionIncluded=" + startPositionIncluded + " and endPositionIncluded=" + endPositionIncluded)
+      moveAfterPosition < startPositionIncluded || moveAfterPosition > endPositionIncluded,
+      "moveAfterPosition=" + moveAfterPosition + " cannot be between startPositionIncluded=" + startPositionIncluded + " and endPositionIncluded=" + endPositionIncluded)
     require(startPositionIncluded <= endPositionIncluded, "startPositionIncluded=" + startPositionIncluded + " should be <= endPositionIncluded=" + endPositionIncluded)
 
-    if(fast) return new MovedIntSequence(this,startPositionIncluded,endPositionIncluded,moveAfterPosition,flip)
+    if (fast) return new MovedIntSequence(this, startPositionIncluded, endPositionIncluded, moveAfterPosition, flip)
 
-    if(moveAfterPosition + 1 == startPositionIncluded) {
+    if (moveAfterPosition + 1 == startPositionIncluded) {
       //not moving
-      if(flip) { //just flipping
-      val newExternalToInternalPosition = externalToInternalPosition.updateBefore(
-          (startPositionIncluded,endPositionIncluded,LinearTransform(endPositionIncluded + startPositionIncluded,true)))
+      if (flip) {
+        //just flipping
+        val newExternalToInternalPosition = externalToInternalPosition.updateBefore(
+          (startPositionIncluded, endPositionIncluded, LinearTransform(endPositionIncluded + startPositionIncluded, true)))
 
         new ConcreteIntSequence(
           internalPositionToValue,
@@ -305,19 +324,20 @@ class ConcreteIntSequence(private[seq] val internalPositionToValue:RedBlackTreeM
           newExternalToInternalPosition,
           startFreeRangeForInternalPosition)
 
-      }else{
+      } else {
         this //nop
       }
-    }else{
-      if(moveAfterPosition > startPositionIncluded){ //move upwards
-      val newExternalToInternalPosition = externalToInternalPosition.updateBefore(
+    } else {
+      if (moveAfterPosition > startPositionIncluded) {
+        //move upwards
+        val newExternalToInternalPosition = externalToInternalPosition.updateBefore(
           (startPositionIncluded,
-            moveAfterPosition + startPositionIncluded - endPositionIncluded -1,
-            LinearTransform(endPositionIncluded + 1 - startPositionIncluded,false)),
+            moveAfterPosition + startPositionIncluded - endPositionIncluded - 1,
+            LinearTransform(endPositionIncluded + 1 - startPositionIncluded, false)),
           (startPositionIncluded + moveAfterPosition - endPositionIncluded,
             moveAfterPosition,
-            LinearTransform(if(flip) startPositionIncluded + moveAfterPosition
-            else endPositionIncluded - moveAfterPosition,flip)))
+            LinearTransform(if (flip) startPositionIncluded + moveAfterPosition
+            else endPositionIncluded - moveAfterPosition, flip)))
 
         new ConcreteIntSequence(
           internalPositionToValue,
@@ -325,14 +345,15 @@ class ConcreteIntSequence(private[seq] val internalPositionToValue:RedBlackTreeM
           newExternalToInternalPosition,
           startFreeRangeForInternalPosition)
 
-      }else{ //move downwards
-      val newExternalToInternalPosition = externalToInternalPosition.updateBefore(
-          (moveAfterPosition+1,
-            moveAfterPosition + endPositionIncluded  - startPositionIncluded + 1,
-            LinearTransform(if(flip) endPositionIncluded + moveAfterPosition + 1 else startPositionIncluded - moveAfterPosition - 1,flip)),
-          (moveAfterPosition + endPositionIncluded  - startPositionIncluded + 2,
+      } else {
+        //move downwards
+        val newExternalToInternalPosition = externalToInternalPosition.updateBefore(
+          (moveAfterPosition + 1,
+            moveAfterPosition + endPositionIncluded - startPositionIncluded + 1,
+            LinearTransform(if (flip) endPositionIncluded + moveAfterPosition + 1 else startPositionIncluded - moveAfterPosition - 1, flip)),
+          (moveAfterPosition + endPositionIncluded - startPositionIncluded + 2,
             endPositionIncluded,
-            LinearTransform(startPositionIncluded - endPositionIncluded - 1,false)))
+            LinearTransform(startPositionIncluded - endPositionIncluded - 1, false)))
 
         new ConcreteIntSequence(
           internalPositionToValue,
@@ -343,29 +364,29 @@ class ConcreteIntSequence(private[seq] val internalPositionToValue:RedBlackTreeM
     }
   }
 
-  def regularize(targetUniqueID:Int = this.uniqueID):ConcreteIntSequence = {
+  def regularize(targetUniqueID : Int = this.uniqueID) : ConcreteIntSequence = {
     //println("regularize")
     var explorer = this.explorerAtPosition(0)
     var newInternalPositionToValues = RedBlackTreeMap.empty[Int]
     var newValueToInternalPositions = RedBlackTreeMap.empty[RedBlackTreeMap[Int]]
-    while(explorer match{
+    while (explorer match {
       case None => false
       case Some(position) =>
-        newInternalPositionToValues = newInternalPositionToValues.insert(position.position,position.value)
-        newValueToInternalPositions = internalInsertToValueToInternalPositions(position.value,position.position,newValueToInternalPositions)
+        newInternalPositionToValues = newInternalPositionToValues.insert(position.position, position.value)
+        newValueToInternalPositions = internalInsertToValueToInternalPositions(position.value, position.position, newValueToInternalPositions)
         explorer = position.next
         true
-    }){}
+    }) {}
 
     new ConcreteIntSequence(newInternalPositionToValues,
       newValueToInternalPositions,
       PiecewiseLinearBijectionNaive.identity,
-      newInternalPositionToValues.size,targetUniqueID)
+      newInternalPositionToValues.size, targetUniqueID)
   }
 
   override def commitPendingMoves : IntSequence = this
 
-  override def unorderedContentNoDuplicate : Iterable[Int] = internalPositionToValue.values
+  override def unorderedContentNoDuplicate : List[Int] = valueToInternalPositions.keys
 }
 
 class IntSequenceIterator(s:IntSequence) extends Iterator[Int] {
@@ -384,7 +405,7 @@ class IntSequenceIterator(s:IntSequence) extends Iterator[Int] {
 }
 
 abstract class IntSequenceExplorer{
-  def value:Int
+  val value:Int
   def position:Int
   def next:Option[IntSequenceExplorer]
   def prev:Option[IntSequenceExplorer]
@@ -506,7 +527,7 @@ class MovedIntSequence(val seq:IntSequence,
                        flip:Boolean)
   extends StackedUpdateIntSequence{
 
-  override def unorderedContentNoDuplicate : Iterable[Int] = seq.unorderedContentNoDuplicate
+  override def unorderedContentNoDuplicate : List[Int] = seq.unorderedContentNoDuplicate
 
   override def descriptorString : String = seq.descriptorString + ".moved(startPos:" + startPositionIncluded + " endPos:" + endPositionIncluded + " targetPos:" + moveAfterPosition + " flip:" + flip + ")"
 
@@ -540,6 +561,8 @@ class MovedIntSequence(val seq:IntSequence,
 
   override val size : Int = seq.size
 
+  override def nbOccurrence(value : Int) : Int = seq.nbOccurrence(value)
+
   override def commitPendingMoves:IntSequence = seq.commitPendingMoves.moveAfter(startPositionIncluded,endPositionIncluded,moveAfterPosition,flip,fast=false,autoRework = false)
 
   override def explorerAtPosition(position : Int) : Option[IntSequenceExplorer] = {
@@ -554,7 +577,7 @@ class MovedIntSequence(val seq:IntSequence,
     }
   }
 
-  override def positionsOfValue(value : Int) : Set[Int] = {
+  override def positionsOfValue(value : Int) : SortedSet[Int] = {
     seq.positionsOfValue(value).map(localBijection.backward(_))
   }
 
@@ -659,14 +682,16 @@ class InsertedIntSequence(seq:IntSequence,
   extends StackedUpdateIntSequence {
   override val size : Int = seq.size + 1
 
+  override def nbOccurrence(value : Int) : Int = if(value == this.value) seq.nbOccurrence(value) + 1 else seq.nbOccurrence(value)
+
   override def descriptorString : String = seq.descriptorString + ".inserted(val:" + value + " pos:" + pos + ")"
 
-  override def unorderedContentNoDuplicate : Iterable[Int] = seq.unorderedContentNoDuplicate ++ List(value)
+  override def unorderedContentNoDuplicate : List[Int] = if(seq.nbOccurrence(value) == 0) value :: seq.unorderedContentNoDuplicate else seq.unorderedContentNoDuplicate
 
-  override def positionsOfValue(value : Int) : Set[Int] = {
-    val transaltedPos:Set[Int] = seq.positionsOfValue(value).map(oldPOsition => oldPos2NewPos(oldPOsition))
-    if(value == this.value) transaltedPos.+(pos)
-    else transaltedPos
+  override def positionsOfValue(value : Int) : SortedSet[Int] = {
+    val translatedPos:SortedSet[Int] = seq.positionsOfValue(value).map(oldPOsition => oldPos2NewPos(oldPOsition))
+    if(value == this.value) translatedPos.+(pos)
+    else translatedPos
   }
 
   private def oldPos2NewPos(oldPOs:Int):Int = {
@@ -706,14 +731,13 @@ class InsertedIntSequence(seq:IntSequence,
   }
 }
 
-
 class InsertedIntSequenceExplorer(seq:InsertedIntSequence,
                                   val position:Int,
                                   explorerInOriginalSeq:Option[IntSequenceExplorer],
                                   atInsertedValue:Boolean,
                                   originalExplorerIsAbove:Boolean)
   extends IntSequenceExplorer {
-  override def value : Int = if(atInsertedValue) seq.value else explorerInOriginalSeq.head.value
+  override val value : Int = if(atInsertedValue) seq.value else explorerInOriginalSeq.head.value
 
   override def next : Option[IntSequenceExplorer] = {
     if (atInsertedValue) {
@@ -783,7 +807,12 @@ class DeletedIntSequence(seq:IntSequence,
 
   override def descriptorString : String = seq.descriptorString + ".deleted(pos:" + position + " val:" + value + ")"
 
-  override def unorderedContentNoDuplicate : Iterable[Int] = new LazyFilter(seq.unorderedContentNoDuplicate,_ != value)
+
+  override def nbOccurrence(value : Int) : Int = if(value == this.value) seq.nbOccurrence(value) - 1 else seq.nbOccurrence(value)
+
+  override def unorderedContentNoDuplicate : List[Int] =
+    if(nbOccurrence(value) != 0) seq.unorderedContentNoDuplicate
+    else seq.unorderedContentNoDuplicate.filter(_ != value)
 
   override val size : Int = seq.size - 1
 
@@ -794,7 +823,7 @@ class DeletedIntSequence(seq:IntSequence,
     }
   }
 
-  override def positionsOfValue(value : Int) : Set[Int] = {
+  override def positionsOfValue(value : Int) : SortedSet[Int] = {
     val oldPosSet = seq.positionsOfValue(value).-(position)
     oldPosSet.map(oldPos2NewPos)
   }
@@ -803,11 +832,12 @@ class DeletedIntSequence(seq:IntSequence,
     if (oldPos < this.position) oldPos else oldPos - 1
   }
 
-  override def contains(value : Int) : Boolean = value != this.value && seq.contains(value)
+  override def contains(value : Int) : Boolean = {
+    val positions = seq.positionsOfValue(value)
+    positions.size>1
+  }
 
   override def commitPendingMoves : IntSequence = seq.commitPendingMoves.delete(this.position,fast=false,autoRework=false)
-
-  override def isEmpty : Boolean = false
 
   override def valueAtPosition(position : Int) : Option[Int] = {
     if(position >= this.position) seq.valueAtPosition(position+1)
@@ -819,7 +849,7 @@ class DeletedIntSequenceExplorer(seq:DeletedIntSequence,
                                  val position:Int,
                                  explorerInOriginalSeq:IntSequenceExplorer)
   extends IntSequenceExplorer{
-  override def value : Int = explorerInOriginalSeq.value
+  override val value : Int = explorerInOriginalSeq.value
 
   override def prev : Option[IntSequenceExplorer] = {
     explorerInOriginalSeq.prev match {

@@ -73,7 +73,7 @@ case class OnePointMoveS(nodesToMove: () => Iterable[Int],
 
       if(!vrp.isADepot(movedPoint)) {
         //depots cannot be moved at all.
-        seq.newValue.positionOfValue(movedPoint) match {
+        seq.newValue.positionOfAnyOccurrence(movedPoint) match {
           case None => ;
           case Some(positionOfMovedPoint) =>
             this.positionOfMovedPoint = positionOfMovedPoint
@@ -83,7 +83,7 @@ case class OnePointMoveS(nodesToMove: () => Iterable[Int],
               newPredecessor = insertionPointIt.next()
               if (movedPoint != newPredecessor) {
 
-                seq.newValue.positionOfValue(newPredecessor) match {
+                seq.newValue.positionOfAnyOccurrence(newPredecessor) match {
                   case None => ;
                   case Some(positionOfNewPredecessor) =>
                     this.positionOfNewPredecessor = positionOfNewPredecessor

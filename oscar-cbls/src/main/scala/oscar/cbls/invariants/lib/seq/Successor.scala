@@ -1,9 +1,11 @@
 package oscar.cbls.invariants.lib.seq
 
-import oscar.cbls.invariants.core.algo.seq.functional.{UniqueIntSequenceExplorer, UniqueIntSequence}
+/*
+import oscar.cbls.invariants.core.algo.seq.functional.IntSequence
 import oscar.cbls.invariants.core.computation._
 
 import scala.collection.immutable.SortedSet
+
 
 object Successor {
 
@@ -67,12 +69,12 @@ case class Successor(sequence:ChangingSeqValue, successorValues:Array[CBLSIntVar
               changes.newValue.valueAtPosition(after).head)
         }
 
-      case SeqUpdateRemoveValue(value : Int, prev : SeqUpdate) =>
+      case r@SeqUpdateRemove(position: Int, prev : SeqUpdate) =>
         computeStartValuesOfImpactedZone(prev) match{
           case None => None
           case Some(startsOfImpactedZone) => Some(
             startsOfImpactedZone ++
-              changes.newValue.predecessorVal2Val(value) + value)
+              changes.newValue.predecessorPos2Val(position) + r.value ++ changes.newValue.successorPos2Val(position))
         }
 
       case u@SeqUpdateRollBackToCheckpoint(checkpoint) =>
@@ -85,12 +87,12 @@ case class Successor(sequence:ChangingSeqValue, successorValues:Array[CBLSIntVar
         require(value quickEquals sequence.value)
         Some(SortedSet.empty[Int]) //we are starting from the previous value
 
-      case SeqUpdateSet(value : UniqueIntSequence) =>
+      case SeqUpdateSet(value : IntSequence) =>
         None //impossible to go incremental
     }
   }
 
-  def computeAllFromScratch(seq:UniqueIntSequence){
+  def computeAllFromScratch(seq:IntSequence){
     successorValues.foreach(node => node := defaultWhenNotInSequence)
 
     var explorer = seq.explorerAtPosition(0).head
@@ -124,3 +126,4 @@ case class Successor(sequence:ChangingSeqValue, successorValues:Array[CBLSIntVar
     }
   }
 }
+*/

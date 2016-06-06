@@ -1219,6 +1219,7 @@ trait Checker {
  */
 case class ErrorChecker() extends Checker {
   def check(verity: Boolean, traceOption: Option[String]) = {
-    if (!verity) throw new Error("Error in checker, debug: " + traceOption)
+    if (!verity)
+      throw new Error("Error in checker, debug: " + traceOption)
   }
 }
