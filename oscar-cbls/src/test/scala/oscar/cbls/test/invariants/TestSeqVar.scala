@@ -1,9 +1,9 @@
 package oscar.cbls.test.invariants
 
 import oscar.cbls.invariants.core.algo.seq.functional.UniqueIntSequence
-import oscar.cbls.invariants.core.computation.{Store, CBLSSeqVar}
+import oscar.cbls.invariants.core.computation.{IntValue, SeqValue, Store, CBLSSeqVar}
 import oscar.cbls.invariants.core.propagation.ErrorChecker
-import oscar.cbls.invariants.lib.seq.{Content, Size}
+import oscar.cbls.invariants.lib.seq.{PositionOf, Content, Size}
 
 import scala.collection.immutable.SortedSet
 
@@ -17,7 +17,7 @@ object TestSeqVar extends App{
 
   val size1 = Size(a.createClone)
   val size2 = Size(a)
-
+  val pos2 = PositionOf(a, 2, 1000)
   val content = Content(a)
   m.registerForPartialPropagation(size2)
   m.close()
@@ -33,18 +33,21 @@ object TestSeqVar extends App{
   require(size2.value == 5, "size2 " + size2 + " should==5 " + a.toStringNoPropagate)
 
   val checkpoint = a.defineCurrentValueAsCheckpoint(true)
-
   println("defined checkpoint " + checkpoint)
   println("insert&Move")
 
-  a.move(1,3,4,true)
+  a.move(1,3,4,false)
   a.insertAtPosition(12,5)
+  a.removeValue(2)
+  a.move(1,3,4,true)
+  a.move(1,3,4,true)
 
   println(size2)
   println(content)
   println(a)
+  println(pos2)
 
-  require(6 == size2.value)
+  require(5 == size2.value)
 
   println("\n\n")
   a.rollbackToCurrentCheckpoint(checkpoint)
@@ -52,7 +55,7 @@ object TestSeqVar extends App{
   require(content.value equals SortedSet(1,2,3,5,45))
   println(content)
   require(a.value equals checkpoint)
-
+  println(pos2)
   require(size1.value == size2.value)
 
 }

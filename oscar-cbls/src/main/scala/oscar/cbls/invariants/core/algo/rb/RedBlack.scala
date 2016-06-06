@@ -4,12 +4,12 @@ import oscar.cbls.invariants.core.algo.quick.QList
 
 /*** Okasaki-style red-black tree maps. ***/
 
-private object RedBlackTreeLib{
+private object RedBlackTreeMapLib{
   val R = true
   val B = false
 
   // blacken: Turn a node black.
-  def blacken[V] (n : RedBlackTree[V])  : RedBlackTree[V] = {
+  def blacken[V] (n : RedBlackTreeMap[V])  : RedBlackTreeMap[V] = {
     n match {
       case L() => n
       case T(_,l,k,v,r) => T(B,l,k,v,r)
@@ -17,7 +17,7 @@ private object RedBlackTreeLib{
   }
 
   // balance: Balance a tree with balanced subtrees.
-  def balance[V] (c : Boolean) (l : RedBlackTree[V]) (k : Int) (v : Option[V]) (r : RedBlackTree[V]) : RedBlackTree[V] = {
+  def balance[V] (c : Boolean) (l : RedBlackTreeMap[V]) (k : Int) (v : Option[V]) (r : RedBlackTreeMap[V]) : RedBlackTreeMap[V] = {
     (c,l,k,v,r) match {
       case (B,T(R,T(R,a,xK,xV,b),yK,yV,c),zK,zV,d) => T(R,T(B,a,xK,xV,b),yK,yV,T(B,c,zK,zV,d))
       case (B,T(R,a,xK,xV,T(R,b,yK,yV,c)),zK,zV,d) => T(R,T(B,a,xK,xV,b),yK,yV,T(B,c,zK,zV,d))
@@ -28,11 +28,11 @@ private object RedBlackTreeLib{
   }
 }
 
-import RedBlackTreeLib._
+import RedBlackTreeMapLib._
 
 //must use trait here because of specialization, so we ensure that this trait is compiled into a java interface by avoiding method code altogether. in the trait.
 //as a consequence, there are duplicates in the classes implementing this trait.
-trait RedBlackTree[@specialized(Int) V]{
+trait RedBlackTreeMap[@specialized(Int) V]{
 
   /* We could have required that K be <: Ordered[K], but this is
   actually less general than requiring an implicit parameter that can
@@ -46,7 +46,7 @@ trait RedBlackTree[@specialized(Int) V]{
   intWrapper. */
 
   // modWith: Helper method; top node could be red.
-  protected[rb] def modWith (k : Int, f : (Int, Option[V]) => Option[V]) : RedBlackTree[V]
+  protected[rb] def modWith (k : Int, f : (Int, Option[V]) => Option[V]) : RedBlackTreeMap[V]
 
   // get: Retrieve a value for a key.
   def get(k : Int) : Option[V]
@@ -63,17 +63,17 @@ trait RedBlackTree[@specialized(Int) V]{
 
   def biggest:Option[(Int,V)]
 
-  def biggestPosition:Option[RBPosition[V]]
+  def biggestPosition:Option[RBTMPosition[V]]
 
-  def smallestPosition:Option[RBPosition[V]]
+  def smallestPosition:Option[RBTMPosition[V]]
 
   protected[rb] def getSmallestBiggerAcc(k:Int, bestSoFar:(Int,V)):Option[(Int,V)]
 
   // insert: Insert a value at a key.
-  def insert (k : Int, v : V) : RedBlackTree[V]
+  def insert (k : Int, v : V) : RedBlackTreeMap[V]
 
   // remove: Delete a key.
-  def remove (k : Int) : RedBlackTree[V]
+  def remove (k : Int) : RedBlackTreeMap[V]
 
   def size:Int
   def isEmpty:Boolean
@@ -83,19 +83,22 @@ trait RedBlackTree[@specialized(Int) V]{
   def content:List[(Int,V)]
   protected [rb] def contentAcc(valuesAfter:List[(Int,V)]):List[(Int,V)]
 
-  def positionOf(k: Int):Option[RBPosition[V]]
-  protected[rb] def positionOfAcc(k:Int,positionAcc:QList[(T[V],Boolean)]):Option[RBPosition[V]]
+  def keys:List[Int]
+  protected [rb] def keysAcc(keysAfter:List[Int]):List[Int]
+
+  def positionOf(k: Int):Option[RBTMPosition[V]]
+  protected[rb] def positionOfAcc(k:Int,positionAcc:QList[(T[V],Boolean)]):Option[RBTMPosition[V]]
 }
 
 // A leaf node.
-case class L[@specialized(Int) V]() extends RedBlackTree[V]  {
+case class L[@specialized(Int) V]() extends RedBlackTreeMap[V]  {
 
 
   def get(k : Int) : Option[V] = None
 
   override def contains(k : Int) : Boolean = false
 
-  override protected[rb] def modWith (k : Int, f : (Int, Option[V]) => Option[V]) : RedBlackTree[V] = {
+  override protected[rb] def modWith (k : Int, f : (Int, Option[V]) => Option[V]) : RedBlackTreeMap[V] = {
     T(R, this, k, f(k,None), this)
   }
 
@@ -112,8 +115,9 @@ case class L[@specialized(Int) V]() extends RedBlackTree[V]  {
 
   protected [rb] def valuesAcc(valuesAfter:List[V]):List[V] = valuesAfter
   protected [rb] def contentAcc(valuesAfter:List[(Int,V)]):List[(Int,V)] = valuesAfter
+  protected [rb] def keysAcc(keysAfter:List[Int]):List[Int] = keysAfter
 
-  protected[rb] override def positionOfAcc(k : Int, positionAcc : QList[(T[V],Boolean)]) : Option[RBPosition[V]] = None
+  protected[rb] override def positionOfAcc(k : Int, positionAcc : QList[(T[V],Boolean)]) : Option[RBTMPosition[V]] = None
 
 
   //duplicates
@@ -121,7 +125,9 @@ case class L[@specialized(Int) V]() extends RedBlackTree[V]  {
 
   def content:List[(Int,V)] = contentAcc(List.empty)
 
-  override def positionOf(k: Int):Option[RBPosition[V]] = positionOfAcc(k:Int,null)
+  override def keys : List[Int] = keysAcc(List.empty)
+
+  override def positionOf(k: Int):Option[RBTMPosition[V]] = positionOfAcc(k:Int,null)
 
   // insert: Insert a value at a key.
   override def insert (k : Int, v : V) = blacken(modWith(k, (_,_) => Some(v)))
@@ -133,13 +139,13 @@ case class L[@specialized(Int) V]() extends RedBlackTree[V]  {
 
   override def biggest:Option[(Int,V)] = biggestLowerOrEqual(Int.MaxValue)
 
-  override def biggestPosition:Option[RBPosition[V]] = None
+  override def biggestPosition:Option[RBTMPosition[V]] = None
 
-  override def smallestPosition:Option[RBPosition[V]] = None
+  override def smallestPosition:Option[RBTMPosition[V]] = None
 }
 
 // A tree node.
-case class T[@specialized(Int) V](c : Boolean, l : RedBlackTree[V], k : Int, v : Option[V], r : RedBlackTree[V]) extends RedBlackTree[V] {
+case class T[@specialized(Int) V](c : Boolean, l : RedBlackTreeMap[V], k : Int, v : Option[V], r : RedBlackTreeMap[V]) extends RedBlackTreeMap[V] {
   val mSize = l.size + r.size + 1
   override def size = mSize
   override def isEmpty = false
@@ -180,7 +186,7 @@ case class T[@specialized(Int) V](c : Boolean, l : RedBlackTree[V], k : Int, v :
     else Some(k,v.head)
   }
 
-  override protected[rb] def modWith (k : Int, f : (Int, Option[V]) => Option[V]) : RedBlackTree[V] = {
+  override protected[rb] def modWith (k : Int, f : (Int, Option[V]) => Option[V]) : RedBlackTreeMap[V] = {
     if (k <  this.k) balance (c) (l.modWith(k,f)) (this.k) (this.v) (r)
     else if (k == this.k) {
       f(this.k, this.v) match{
@@ -202,22 +208,25 @@ case class T[@specialized(Int) V](c : Boolean, l : RedBlackTree[V], k : Int, v :
 
   protected [rb] def contentAcc(valuesAfter:List[(Int,V)]):List[(Int,V)] = l.contentAcc((k,v.head) :: r.contentAcc(valuesAfter))
 
-  protected[rb] override def positionOfAcc(k : Int, positionAcc : QList[(T[V],Boolean)]) : Option[RBPosition[V]] = {
+  protected [rb] def keysAcc(keysAfter:List[Int]):List[Int] = l.keysAcc(k :: r.keysAcc(keysAfter))
+
+  protected[rb] override def positionOfAcc(k : Int, positionAcc : QList[(T[V],Boolean)]) : Option[RBTMPosition[V]] = {
     if (k < this.k) l.positionOfAcc(k, QList((this,false),positionAcc))
     else if (k > this.k) r.positionOfAcc(k, QList((this,true),positionAcc))
-    else Some(new RBPosition[V](QList((this,true),positionAcc)))
+    else Some(new RBTMPosition[V](QList((this,true),positionAcc)))
   }
 
   def hasLeft:Boolean = l.isInstanceOf[T[V]]
   def hasRight:Boolean = r.isInstanceOf[T[V]]
 
   //duplicates
-  def values:List[V] = valuesAcc(List.empty)
-
+  override def values:List[V] = valuesAcc(List.empty)
 
   override def content : List[(Int, V)] = contentAcc(List.empty)
 
-  override def positionOf(k: Int):Option[RBPosition[V]] = positionOfAcc(k:Int,null)
+  override def keys : List[Int] = keysAcc(List.empty)
+
+  override def positionOf(k: Int):Option[RBTMPosition[V]] = positionOfAcc(k:Int,null)
 
   // insert: Insert a value at a key.
   override def insert (k : Int, v : V) = blacken(modWith(k, (_,_) => Some(v)))
@@ -229,14 +238,14 @@ case class T[@specialized(Int) V](c : Boolean, l : RedBlackTree[V], k : Int, v :
 
   override def biggest:Option[(Int,V)] = biggestLowerOrEqual(Int.MaxValue)
 
-  override def biggestPosition:Option[RBPosition[V]] = {
+  override def biggestPosition:Option[RBTMPosition[V]] = {
     biggestLowerOrEqual(Int.MaxValue) match{
       case Some((k,_)) => positionOf(k)
       case None => None
     }
   }
 
-  override def smallestPosition:Option[RBPosition[V]] = {
+  override def smallestPosition:Option[RBTMPosition[V]] = {
     smallestBiggerOrEqual(Int.MinValue) match{
       case Some((k,_)) => positionOf(k)
       case None => None
@@ -246,30 +255,38 @@ case class T[@specialized(Int) V](c : Boolean, l : RedBlackTree[V], k : Int, v :
 }
 
 // A helper object.
-object RedBlackTree {
+object RedBlackTreeMap {
 
   // empty: Converts an orderable type into an empty RBMap.
-  def empty[@specialized(Int) V] : RedBlackTree[V] = L[V]()
+  def empty[@specialized(Int) V] : RedBlackTreeMap[V] = L[V]()
 
   // apply: Assumes an implicit conversion.
-  def apply[@specialized(Int) V](args : Iterable[(Int,V)]) : RedBlackTree[V] = {
-    var currentMap : RedBlackTree[V] = L()
+  def apply[@specialized(Int) V](args : Iterable[(Int,V)]) : RedBlackTreeMap[V] = {
+    var currentMap : RedBlackTreeMap[V] = L()
     for ((k,v) <- args) {
       currentMap = currentMap.insert(k,v)
     }
     currentMap
   }
 
-  //TODO: check this
-  def makeFromSorted[@specialized(Int) V](args:Iterable [(Int,V)]): RedBlackTree[V] = {
-    //root is to be black, beside alternate red and black
 
+  /**
+   * make the red black tree out of already sorted couples (key,value)
+   * they must be sorted by increasing order of key, and a key can only be present once.
+   * There is no check of these properties
+   * This is O(n); thus faster than a n*log(n) if you were building it from unsorted pairs
+   * @param args
+   * @tparam V
+   * @return
+   */
+  def makeFromSorted[@specialized(Int) V](args:Iterable [(Int,V)]): RedBlackTreeMap[V] = {
+    //root is to be black, beside alternate red and black
     val a = args.toArray
     if(args.size <=3) this.apply(args)
     else myMakeFromSorted(a,0,a.length-1,false)
   }
 
-  private def myMakeFromSorted[@specialized(Int) V](args:Array[(Int,V)],fromIncluded:Int,toIncluded:Int,targetIsRed:Boolean): RedBlackTree[V] = {
+  private def myMakeFromSorted[@specialized(Int) V](args:Array[(Int,V)],fromIncluded:Int,toIncluded:Int,targetIsRed:Boolean): RedBlackTreeMap[V] = {
     //root is to be black, beside alternate red and black
     if(fromIncluded == toIncluded){
       val(key,value) = args(fromIncluded)
@@ -279,7 +296,7 @@ object RedBlackTree {
       val(keyH,valueH) = args(toIncluded)
       T(targetIsRed, T(!targetIsRed, L(),  keyL, Some(valueL), L()),  keyH, Some(valueH), L())
     }else{
-      //there is a midlde point
+      //there is a middle point
       val middlePoint = (fromIncluded + toIncluded)/2
       val left = myMakeFromSorted(args,fromIncluded,middlePoint-1,!targetIsRed)
       val right = myMakeFromSorted(args,middlePoint+1,toIncluded,!targetIsRed)
@@ -290,13 +307,13 @@ object RedBlackTree {
 }
 
 //le booléen: true le noeud a déjà été montré (dans un parcour gauche à droite)
-class RBPosition[@specialized(Int) V](position:QList[(T[V],Boolean)]){
+class RBTMPosition[@specialized(Int) V](position:QList[(T[V],Boolean)]){
   def key:Int = position.head._1.k
   def value:V = position.head._1.v.head
 
   override def toString : String = "RBPosition(key:" + key + " value:" + value + " stack:" + position.toList + ")"
 
-  def next:Option[RBPosition[V]] = {
+  def next:Option[RBTMPosition[V]] = {
 
     def unstack1(position:QList[(T[V],Boolean)]):QList[(T[V],Boolean)] = {
       if (position == null) return null
@@ -324,10 +341,10 @@ class RBPosition[@specialized(Int) V](position:QList[(T[V],Boolean)]){
     }
 
     if(newStack == null) None
-    else Some(new RBPosition[V](newStack))
+    else Some(new RBTMPosition[V](newStack))
   }
 
-  def prev:Option[RBPosition[V]] = {
+  def prev:Option[RBTMPosition[V]] = {
     def unstack1(position:QList[(T[V],Boolean)]):QList[(T[V],Boolean)] = {
       if (position == null) return null
       val head = position.head
@@ -355,8 +372,8 @@ class RBPosition[@specialized(Int) V](position:QList[(T[V],Boolean)]){
 
     if(newStack == null) None
     else {
-      assert(new RBPosition[V](newStack).next.head.key == this.key, "prev.next.key != this.key; this:" + this + " prev:" + new RBPosition[V](newStack))
-      Some(new RBPosition[V](newStack))
+      assert(new RBTMPosition[V](newStack).next.head.key == this.key, "prev.next.key != this.key; this:" + this + " prev:" + new RBTMPosition[V](newStack))
+      Some(new RBTMPosition[V](newStack))
     }
   }
 }

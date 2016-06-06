@@ -26,6 +26,8 @@ class QList[@specialized T](val head:T, val tail:QList[T] = null){
   def toIterable:Iterable[T] = new IterableQList(this)
 
   def toIterator:Iterator[T] = new QListIterator[T](this)
+
+  def qMap[X](fun:T => X):QList[X] = new QList(fun(head),if(tail == null) null else tail.qMap(fun))
 }
 
 object QList{

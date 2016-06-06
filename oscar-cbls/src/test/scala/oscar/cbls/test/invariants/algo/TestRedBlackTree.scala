@@ -1,6 +1,6 @@
 package oscar.cbls.test.invariants.algo
 
-import oscar.cbls.invariants.core.algo.rb.RedBlackTree
+import oscar.cbls.invariants.core.algo.rb.RedBlackTreeMap
 
 import scala.collection.immutable.SortedMap
 import scala.util.Random
@@ -10,7 +10,7 @@ import scala.util.Random
  */
 object TestRedBlackTree extends App{
 
-  def checkEqual(a:SortedMap[Int,Boolean],b:RedBlackTree[Boolean]){
+  def checkEqual(a:SortedMap[Int,Boolean],b:RedBlackTreeMap[Boolean]){
     require(a.size == b.size)
     for((key,value) <- a){
       require(b.get(key).head == value)
@@ -26,7 +26,7 @@ object TestRedBlackTree extends App{
 
 
   var reference:SortedMap[Int,Boolean] = SortedMap.empty
-  var sut = RedBlackTree.empty[Boolean]
+  var sut = RedBlackTreeMap.empty[Boolean]
   val random = new Random()
 
   for(it <- 0 to 10000){
@@ -47,7 +47,7 @@ object TestRedBlackTree extends App{
     checkEqual(reference,sut)
     //create set from sorted
 
-    checkEqual(reference,RedBlackTree.makeFromSorted(reference.toList.sortBy(_._1)))
+    checkEqual(reference,RedBlackTreeMap.makeFromSorted(reference.toList.sortBy(_._1)))
   }
 
 }

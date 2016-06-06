@@ -13,7 +13,7 @@ import scala.collection.immutable.SortedSet
  * @author renaud.delandtsheer@cetic.be
  */
 case class Content(v:SeqValue)
-  extends SetInvariant(SortedSet.empty[Int] ++ v.value.content,v.domain)
+  extends SetInvariant(SortedSet.empty[Int] ++ v.value.unorderedContent,v.domain)
   with SeqNotificationTarget{
 
   registerStaticAndDynamicDependency(v)
@@ -39,7 +39,7 @@ case class Content(v:SeqValue)
   }
 
   private def updateFromScratch(u:UniqueIntSequence){
-    this := (SortedSet.empty[Int] ++ u.content)
+    this := (SortedSet.empty[Int] ++ u.unorderedContent)
   }
 
   //true if could be incremental, false otherwise
@@ -95,6 +95,6 @@ case class Content(v:SeqValue)
   }
 
   override def checkInternals(c: Checker) {
-    c.check(this.value.toList.sorted equals v.value.content.toList.sorted, Some("this.value == v.value.content"))
+    c.check(this.value.toList.sorted equals v.value.unorderedContent.toList.sorted, Some("this.value == v.value.content"))
   }
 }
