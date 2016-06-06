@@ -46,7 +46,7 @@ object SeqUpdateInsert {
   def apply(value : Int, pos : Int, prev : SeqUpdate) : SeqUpdate = {
     prev match {
       //here, since there is no seq given, we compare on the move itself to anihilate the moves
-      case x@SeqUpdateRemove(removedPosition : Int, prevOfDelete : SeqUpdate) if pos == removedPosition && value == x.value => prevOfDelete
+      case x@SeqUpdateRemove(removedPosition : Int, prevOfDelete : SeqUpdate) if pos == removedPosition && value == x.removedValue => prevOfDelete
       case _ => new SeqUpdateInsert(value,pos,prev,prev.newValue.insertAtPosition(value, pos, fast = true))
     }
   }
@@ -107,6 +107,8 @@ class SeqUpdateMove(val fromIncluded:Int,val toIncluded:Int,val after:Int, val f
   def toValue:Int = prev.newValue.valueAtPosition(toIncluded).head
   def afterValue:Int = prev.newValue.valueAtPosition(after).head
 
+  def movedValues = prev.newValue.valuesBetweenPositions(fromIncluded,toIncluded)
+
   override protected[computation] def reverse(target:IntSequence, newPrev:SeqUpdate) : SeqUpdate = {
     val (intFromIncluded,intToIncluded) = if(flip) (toIncluded,fromIncluded) else (fromIncluded,toIncluded)
     prev.reverse(target,new SeqUpdateMove(oldPosToNewPos(intFromIncluded).head, oldPosToNewPos(intToIncluded).head, oldPosToNewPos(after).head-1, flip, newPrev,prev.newValue))
@@ -148,10 +150,10 @@ class SeqUpdateRemove(val position:Int,prev:SeqUpdate,seq:IntSequence)
 
   assert(seq equals prev.newValue.delete(position,fast=true))
 
-  def value:Int = prev.newValue.valueAtPosition(position).head
+  val removedValue:Int = seq match{case d:RemovedIntSequence => d.removedValue case _ => prev.newValue.valueAtPosition(position).head}
 
   override protected[computation] def reverse(target:IntSequence, newPrev:SeqUpdate) : SeqUpdate = {
-    prev.reverse(target,SeqUpdateInsert(value, position, newPrev, prev.newValue))
+    prev.reverse(target,SeqUpdateInsert(removedValue, position, newPrev, prev.newValue))
   }
 
   override def oldPosToNewPos(oldPos : Int) : Option[Int] = {
@@ -170,7 +172,7 @@ class SeqUpdateRemove(val position:Int,prev:SeqUpdate,seq:IntSequence)
   override protected[computation] def prepend(u : SeqUpdate) : SeqUpdate =
     SeqUpdateRemove(position,prev.prepend(u),seq)
 
-  override def toString : String =  "SeqUpdateRemove(value:" + value + " position:" + position + " prev:" + prev + ")"
+  override def toString : String =  "SeqUpdateRemove(value:" + removedValue + " position:" + position + " prev:" + prev + ")"
 }
 
 case class SeqUpdateSet(value:IntSequence) extends SeqUpdate(value){

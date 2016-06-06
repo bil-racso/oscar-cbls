@@ -81,11 +81,11 @@ abstract class ChangingSetValue(initialValue:SortedSet[Int], initialDomain:Domai
   private[this] var removedValues:QList[Int] = null
   private[this] var nbTouched:Int = 0
 
-  def insertValue(v:Int){
+  protected def insertValue(v:Int){
     if (!m_NewValue.contains(v)) insertValueNotPreviouslyIn(v)
   }
 
-  def insertValueNotPreviouslyIn(v:Int){
+  protected def insertValueNotPreviouslyIn(v:Int){
     if (nbTouched != -1){
       addedValues = QList(v,addedValues)
       nbTouched += 1
@@ -96,11 +96,19 @@ abstract class ChangingSetValue(initialValue:SortedSet[Int], initialDomain:Domai
   }
 
 
-  def deleteValue(v:Int){
+  protected def deleteValue(v:Int){
     if (m_NewValue.contains(v)) deleteValuePreviouslyIn(v)
   }
 
-  def deleteValuePreviouslyIn(v:Int){
+  protected def deleteValues(values:Iterable[Int]){
+    values.map(deleteValue)
+  }
+
+  protected def insertValues(values:Iterable[Int]){
+    values.map(insertValue)
+  }
+
+  protected def deleteValuePreviouslyIn(v:Int){
     if (nbTouched != -1){
       removedValues = QList(v,removedValues)
       nbTouched += 1
@@ -114,7 +122,7 @@ abstract class ChangingSetValue(initialValue:SortedSet[Int], initialDomain:Domai
     * otherwise, there is a huge waste of time.
     * @param v the new value to set to the variable
     */
-  def setValue(v:SortedSet[Int]){
+  protected def setValue(v:SortedSet[Int]){
     removedValues = null
     addedValues = null
     nbTouched = -1
@@ -179,7 +187,7 @@ abstract class ChangingSetValue(initialValue:SortedSet[Int], initialDomain:Domai
 
   def value:SortedSet[Int] = getValue(false)
 
-  def newValue:SortedSet[Int] = getValue(true)
+  protected def newValue:SortedSet[Int] = getValue(true)
 
   private def getValue(NewValue:Boolean=false):SortedSet[Int] = {
     if (NewValue){
@@ -240,8 +248,6 @@ class CBLSSetVar(givenModel: Store, initialValue: SortedSet[Int], initialDomain:
 
   model = givenModel
 
-
-
   override def restrictDomain(d:Domain) = super.restrictDomain(d)
 
   override def name: String = if (n == null) defaultName else n
@@ -252,6 +258,26 @@ class CBLSSetVar(givenModel: Store, initialValue: SortedSet[Int], initialDomain:
   override def :-=(i:Int) {this.deleteValue(i)}
 
   def <==(i: SetValue) {IdentitySet(this,i)}
+
+  override def insertValue(v : Int) : Unit = super.insertValue(v)
+
+  override def insertValueNotPreviouslyIn(v : Int) : Unit = super.insertValueNotPreviouslyIn(v)
+
+  override def deleteValue(v : Int) : Unit = super.deleteValue(v)
+
+  override def deleteValues(values : Iterable[Int]) : Unit = super.deleteValues(values)
+
+  override def insertValues(values : Iterable[Int]) : Unit = super.insertValues(values)
+
+  override def deleteValuePreviouslyIn(v : Int) : Unit = super.deleteValuePreviouslyIn(v)
+
+  /** We suppose that the new value is not the same as the actual value.
+    * otherwise, there is a huge waste of time.
+    * @param v the new value to set to the variable
+    */
+  override def setValue(v : SortedSet[Int]) : Unit = super.setValue(v)
+
+  override def value : SortedSet[Int] = super.value
 }
 
 object CBLSSetVar{

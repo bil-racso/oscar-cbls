@@ -280,7 +280,7 @@ class ConcreteIntSequence(private[seq] val internalPositionToValue:RedBlackTreeM
     require(pos < size, "deleting past the end of the sequence (size:" + size + " pos:" + pos + ")")
     require(pos >= 0, "deleting at negative pos:" + pos)
 
-    if (fast) return new DeletedIntSequence(this, pos)
+    if (fast) return new RemovedIntSequence(this, pos)
 
     val internalPosition = externalToInternalPosition(pos)
     val value = internalPositionToValue.get(internalPosition).head
@@ -516,7 +516,7 @@ abstract class StackedUpdateIntSequence extends IntSequence(){
   override def delete(pos : Int, fast:Boolean,autoRework:Boolean) : IntSequence = {
     require(pos >= 0, "pos=" + pos + " for delete on UniqueIntSequence should be >= 0")
     require(pos < size, "cannot delete past end of sequence in UniqueIntSequence")
-    new DeletedIntSequence(this,pos)
+    new RemovedIntSequence(this,pos)
   }
 
   override def moveAfter(startPositionIncluded : Int, endPositionIncluded : Int, moveAfterPosition : Int, flip : Boolean, fast:Boolean,autoRework:Boolean) : IntSequence = {
@@ -814,20 +814,19 @@ class InsertedIntSequenceExplorer(seq:InsertedIntSequence,
   }
 }
 
-class DeletedIntSequence(seq:IntSequence,
+class RemovedIntSequence(seq:IntSequence,
                          val position:Int)
   extends StackedUpdateIntSequence{
 
-  val value = seq.valueAtPosition(position).head
+  val removedValue = seq.valueAtPosition(position).head
 
-  override def descriptorString : String = seq.descriptorString + ".deleted(pos:" + position + " val:" + value + ")"
-
-
-  override def nbOccurrence(value : Int) : Int = if(value == this.value) seq.nbOccurrence(value) - 1 else seq.nbOccurrence(value)
+  override def descriptorString : String = seq.descriptorString + ".removed(pos:" + position + " val:" + removedValue + ")"
+  
+  override def nbOccurrence(value : Int) : Int = if(value == this.removedValue) seq.nbOccurrence(value) - 1 else seq.nbOccurrence(value)
 
   override def unorderedContentNoDuplicate : List[Int] =
-    if(nbOccurrence(value) != 0) seq.unorderedContentNoDuplicate
-    else seq.unorderedContentNoDuplicate.filter(_ != value)
+    if(nbOccurrence(removedValue) != 0) seq.unorderedContentNoDuplicate
+    else seq.unorderedContentNoDuplicate.filter(_ != removedValue)
 
   override val size : Int = seq.size - 1
 
@@ -860,7 +859,7 @@ class DeletedIntSequence(seq:IntSequence,
   }
 }
 
-class DeletedIntSequenceExplorer(seq:DeletedIntSequence,
+class DeletedIntSequenceExplorer(seq:RemovedIntSequence,
                                  val position:Int,
                                  explorerInOriginalSeq:IntSequenceExplorer)
   extends IntSequenceExplorer{

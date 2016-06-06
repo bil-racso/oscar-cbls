@@ -54,7 +54,7 @@ case class Content(v:SeqValue)
         digestUpdates(prev, skipNewCheckpoints)
       case r@SeqUpdateRemove(position : Int, prev : SeqUpdate) =>
         if (!digestUpdates(prev, skipNewCheckpoints)) return false
-        val value = r.value
+        val value = r.removedValue
         if (changes.newValue.nbOccurrence(value) == 0){
           this :-= value
           updatesFromThisCheckpointInReverseOrder = QList((value, false), updatesFromThisCheckpointInReverseOrder)

@@ -3,7 +3,7 @@ package oscar.cbls.test.invariants
 import oscar.cbls.invariants.core.algo.seq.functional.{IntSequence, UniqueIntSequence}
 import oscar.cbls.invariants.core.computation.{IntValue, SeqValue, Store, CBLSSeqVar}
 import oscar.cbls.invariants.core.propagation.ErrorChecker
-import oscar.cbls.invariants.lib.seq.{PositionOf, Content, Size}
+import oscar.cbls.invariants.lib.seq.{PositionsOf, Content, Size}
 
 import scala.collection.immutable.SortedSet
 
@@ -17,7 +17,7 @@ object TestSeqVar extends App{
 
   val size1 = Size(a.createClone)
   val size2 = Size(a)
-  val pos2 = PositionOf(a, 2, 1000)
+  val pos2 = PositionsOf(a, 2)
   val content = Content(a)
   m.registerForPartialPropagation(size2)
   m.close()

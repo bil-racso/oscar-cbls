@@ -7,9 +7,8 @@ import oscar.cbls.invariants.core.propagation.Checker
  * the position of value a in sequence v; default if not in the sequence
  * @param v is a SeqValue
  * @param a is the value that is to locate in the sequence
- * @param defaultIfNotInSequence the value of this invariant in case a is not in the sequence.
  */
-case class PositionOf(v: SeqValue, a:IntValue, defaultIfNotInSequence:Int)
+case class PositionsOf(v: SeqValue, a:IntValue)
   extends SetInvariant(v.value.positionsOfValue(a.value), 0 to DomainHelper.safeAddMax(v.max,1))
   with SeqNotificationTarget with IntNotificationTarget{
 

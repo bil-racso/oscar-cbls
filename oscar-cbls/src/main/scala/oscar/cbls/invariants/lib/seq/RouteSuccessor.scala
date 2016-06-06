@@ -47,7 +47,7 @@ case class RouteSuccessor(routes:ChangingSeqValue, v:Int, successorValues:Array[
         }
 
       case r@SeqUpdateRemove(position : Int, prev : SeqUpdate) =>
-        val value = r.value
+        val value = r.removedValue
         computeStartValuesOfImpactedZone(prev) match{
           case None => None
           case Some(startsOfImpactedZone) => Some(

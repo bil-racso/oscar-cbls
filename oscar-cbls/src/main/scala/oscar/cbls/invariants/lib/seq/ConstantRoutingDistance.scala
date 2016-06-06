@@ -1,8 +1,7 @@
 package oscar.cbls.invariants.lib.seq
 
-/*
 import oscar.cbls.invariants.core.algo.quick.QList
-import oscar.cbls.invariants.core.algo.seq.functional.UniqueIntSequence
+import oscar.cbls.invariants.core.algo.seq.functional.IntSequence
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.core.propagation.Checker
 
@@ -29,7 +28,7 @@ object ConstantRoutingDistance {
   }
 
   def isDistanceSymmetric(distanceMatrix : Array[Array[Int]]):Boolean = {
-    val n = distanceMatrix.size
+    val n = distanceMatrix.length
     var i = 0
     while(i < n){
       var j = 0
@@ -67,7 +66,7 @@ case class ConstantRoutingDistance(routes:ChangingSeqValue,
                                    distanceIsSymmetric:Boolean)
   extends Invariant() with SeqNotificationTarget{
 
-  val perVehicle:Boolean = distance.size >1
+  val perVehicle:Boolean = distance.length >1
   require(distance.length == 0 || distance.length == v)
 
   registerStaticAndDynamicDependency(routes)
@@ -98,7 +97,7 @@ case class ConstantRoutingDistance(routes:ChangingSeqValue,
         }
         saveCurrentCheckpoint(changes.newValue)
         true
-      case SeqUpdateRollBackToCheckpoint(checkpoint:UniqueIntSequence) =>
+      case SeqUpdateRollBackToCheckpoint(checkpoint:IntSequence) =>
         require (checkpoint quickEquals savedCheckpoint)
         restoreCheckpoint()
         true
@@ -232,10 +231,10 @@ case class ConstantRoutingDistance(routes:ChangingSeqValue,
           true
         }
 
-      case x@SeqUpdateRemoveValue(value : Int, prev : SeqUpdate) =>
+      case x@SeqUpdateRemove(position : Int, prev : SeqUpdate) =>
         //on which vehicle did we remove?
         //on which vehicle did we insert?
-
+        val removedValue = x.removedValue
         //node cost to be considered
         if(!digestUpdates(prev,skipNewCheckpoints)) return false
 
@@ -246,9 +245,9 @@ case class ConstantRoutingDistance(routes:ChangingSeqValue,
         val oldSuccValue = RoutingConventionMethods.routingSuccPos2Val(positionOfDelete-1, prev.newValue,v)
 
         val newDistance = distanceMatrix(oldPrevValue)(oldSuccValue)
-        val oldDistanceBefore = distanceMatrix(oldPrevValue)(value)
-        val oldDistanceAfter = distanceMatrix(value)(oldSuccValue)
-        val nodeCost = distanceMatrix(value)(value)
+        val oldDistanceBefore = distanceMatrix(oldPrevValue)(removedValue)
+        val oldDistanceAfter = distanceMatrix(removedValue)(oldSuccValue)
+        val nodeCost = distanceMatrix(removedValue)(removedValue)
 
         if(perVehicle){
           val vehicle = RoutingConventionMethods.searchVehicleReachingPosition(positionOfDelete, prev.newValue,v)
@@ -259,15 +258,15 @@ case class ConstantRoutingDistance(routes:ChangingSeqValue,
         }
         true
 
-      case SeqUpdateLastNotified(value:UniqueIntSequence) =>
+      case SeqUpdateLastNotified(value:IntSequence) =>
         require(value quickEquals routes.value)
         true //we are starting from the previous value
-      case SeqUpdateSet(value : UniqueIntSequence) =>
+      case SeqUpdateSet(value : IntSequence) =>
         false //impossible to go incremental
     }
   }
 
-  private def saveCurrentCheckpoint(s:UniqueIntSequence){
+  private def saveCurrentCheckpoint(s:IntSequence){
     savedCheckpoint = s
     if(perVehicle) {
       while (touchedRoutesSinceCheckpointList != null) {
@@ -302,10 +301,6 @@ case class ConstantRoutingDistance(routes:ChangingSeqValue,
     }
   }
 
-  private def forgetCheckpoint(){
-    saveCurrentCheckpoint(null)
-  }
-
   private def affect(value:Array[Int]){
     var currentV = 0
     while(currentV < v){
@@ -319,7 +314,7 @@ case class ConstantRoutingDistance(routes:ChangingSeqValue,
   // use invalidation per vehicle in case more than one move is performed
   // just one thing: backtrack is only performed through checkpoint; star mode will lead to recomputation of the vehicles from scratch
   //datastruct for checkpoint: forward et bw labeling per vehicle. labeling: node -> (forward,backward) in a redBlack
-  private def computeValueBetween(s:UniqueIntSequence, fromPosIncluded:Int, toPosIncluded:Int,addNodeCost:Boolean = false):Int = {
+  private def computeValueBetween(s:IntSequence, fromPosIncluded:Int, toPosIncluded:Int,addNodeCost:Boolean = false):Int = {
     assert(fromPosIncluded <= toPosIncluded)
 
     var e = s.explorerAtPosition(fromPosIncluded).head
@@ -330,11 +325,12 @@ case class ConstantRoutingDistance(routes:ChangingSeqValue,
       val nextPos = e.next.head
       toReturn += distanceMatrix(e.value)(nextPos.value)
       if(addNodeCost) toReturn += distanceMatrix(nextPos.value)(nextPos.value)
+      e = nextPos
     }
     toReturn
   }
 
-  private def computeValueFromScratch(s:UniqueIntSequence):Array[Int] = {
+  private def computeValueFromScratch(s:IntSequence):Array[Int] = {
     val toReturn = Array.tabulate(v)(v => distanceMatrix(v)(v))
     val it = s.iterator
 
@@ -387,4 +383,3 @@ case class ConstantRoutingDistance(routes:ChangingSeqValue,
     }
   }
 }
-*/

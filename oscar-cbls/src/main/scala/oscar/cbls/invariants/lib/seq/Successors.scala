@@ -76,7 +76,7 @@ case class Successors(sequence:ChangingSeqValue, successorValues:Array[CBLSSetVa
           case None => None
           case Some(impactedValues) =>
             val oldSeq = prev.newValue
-            Some(impactedValues + r.value ++ oldSeq.predecessorPos2Val(position))
+            Some(impactedValues + r.removedValue ++ oldSeq.predecessorPos2Val(position))
         }
 
       case u@SeqUpdateRollBackToCheckpoint(checkpoint) =>
