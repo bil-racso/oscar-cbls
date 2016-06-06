@@ -1,6 +1,6 @@
 package oscar.cbls.invariants.lib.seq
 
-import oscar.cbls.invariants.core.algo.seq.functional.{IntSequenceExplorer, UniqueIntSequence}
+import oscar.cbls.invariants.core.algo.seq.functional.{UniqueIntSequenceExplorer, UniqueIntSequence}
 import oscar.cbls.invariants.core.computation._
 
 import scala.collection.immutable.SortedSet
@@ -105,7 +105,7 @@ case class Successor(sequence:ChangingSeqValue, successorValues:Array[CBLSIntVar
     }){}
   }
 
-  def updateStartFrom(startValue:Int,startExplorer:Option[IntSequenceExplorer],seq:UniqueIntSequence){
+  def updateStartFrom(startValue:Int,startExplorer:Option[UniqueIntSequenceExplorer],seq:UniqueIntSequence){
     startExplorer match{
       case None => successorValues(startValue) := defaultWhenNotInSequence
       case Some(startExplorer) =>

@@ -57,5 +57,5 @@ object TestSeqVar extends App{
   require(a.value equals checkpoint)
   println(pos2)
   require(size1.value == size2.value)
-
 }
+

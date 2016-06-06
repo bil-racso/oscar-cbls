@@ -1,4 +1,4 @@
-package oscar.cbls.invariants.core.algo.seq.functionalNonUnique
+package oscar.cbls.invariants.core.algo.seq.functional
 
 import oscar.cbls.invariants.core.algo.fun.{LinearTransform, PiecewiseLinearBijectionNaive, Pivot}
 import oscar.cbls.invariants.core.algo.lazyIt.LazyFilter
@@ -150,7 +150,7 @@ class ConcreteIntSequence(private[seq] val internalPositionToValue:RedBlackTreeM
 
   override def check {
     externalToInternalPosition.checkBijection()
-    require(internalPositionToValue.content.sortBy(_._1) equals valueToInternalPositions.content.map({case (a,b) => b.keys.map(x => (x,a))}).flatten.sortBy(_._1))
+    require(internalPositionToValue.content.sortBy(_._1) equals valueToInternalPositions.content.flatMap({case (a,b) => b.keys.map(x => (x,a))}).sortBy(_._1))
   }
 
   def size : Int = valueToInternalPositions.size
@@ -345,7 +345,6 @@ class ConcreteIntSequence(private[seq] val internalPositionToValue:RedBlackTreeM
 
   def regularize(targetUniqueID:Int = this.uniqueID):ConcreteIntSequence = {
     //println("regularize")
-    var content = this.iterator
     var explorer = this.explorerAtPosition(0)
     var newInternalPositionToValues = RedBlackTreeMap.empty[Int]
     var newValueToInternalPositions = RedBlackTreeMap.empty[RedBlackTreeMap[Int]]
@@ -797,11 +796,11 @@ class DeletedIntSequence(seq:IntSequence,
 
   override def positionsOfValue(value : Int) : Set[Int] = {
     val oldPosSet = seq.positionsOfValue(value).-(position)
-    oldPosSet.map(oldPos2NewPos(_))
+    oldPosSet.map(oldPos2NewPos)
   }
 
   def oldPos2NewPos(oldPos:Int) = {
-    if (oldPos < this.position) oldPos else (oldPos - 1)
+    if (oldPos < this.position) oldPos else oldPos - 1
   }
 
   override def contains(value : Int) : Boolean = value != this.value && seq.contains(value)

@@ -58,8 +58,8 @@ abstract class UniqueIntSequence(protected[seq] val uniqueID:Int = UniqueIntSequ
   def positionOfValue(value : Int) : Option[Int]
   def contains(value:Int):Boolean
 
-  def explorerAtPosition(position : Int) : Option[IntSequenceExplorer]
-  def explorerAtValue(value: Int) : Option[IntSequenceExplorer] =  {
+  def explorerAtPosition(position : Int) : Option[UniqueIntSequenceExplorer]
+  def explorerAtValue(value: Int) : Option[UniqueIntSequenceExplorer] =  {
     positionOfValue(value) match{
       case None => None
       case Some(pos) => explorerAtPosition(pos)
@@ -150,7 +150,7 @@ class ConcreteUniqueIntSequence(private[seq] val internalPositionToValue:RedBlac
     }
   }
 
-  def explorerAtPosition(position : Int) : Option[IntSequenceExplorer] = {
+  def explorerAtPosition(position : Int) : Option[UniqueIntSequenceExplorer] = {
     if (position >= this.size) None
     else {
       val currentPivotPosition = externalToInternalPosition.forward.pivotWithPositionApplyingTo(position)
@@ -344,11 +344,11 @@ class UniqueIntSequenceIterator(s:UniqueIntSequence) extends Iterator[Int] {
   }
 }
 
-abstract class IntSequenceExplorer{
+abstract class UniqueIntSequenceExplorer{
   def value:Int
   def position:Int
-  def next:Option[IntSequenceExplorer]
-  def prev:Option[IntSequenceExplorer]
+  def next:Option[UniqueIntSequenceExplorer]
+  def prev:Option[UniqueIntSequenceExplorer]
 }
 
 
@@ -366,13 +366,13 @@ class ConcreteUniqueIntSequenceExplorer(sequence:ConcreteUniqueIntSequence,
                                    slopeIsPositive:Boolean = currentPivotPosition match{
                                      case None => true
                                      case Some(p) => !p.value.f.minus}
-                                   ) extends IntSequenceExplorer{
+                                   ) extends UniqueIntSequenceExplorer{
 
   override def toString : String = "ConcreteIntSequenceExplorer(position:" + position + " value:" + value + " currentPivotPosition:" + currentPivotPosition + " pivotAbovePosition:" + pivotAbovePosition + " positionInRB:" + positionInRB + ")"
 
   override val value : Int = positionInRB.value
 
-  override def next : Option[IntSequenceExplorer] = {
+  override def next : Option[UniqueIntSequenceExplorer] = {
     if(position == sequence.size-1) return None
     if(position == limitAboveForCurrentPivot){
       //change pivot, we are also sure that there is a next, so use .head
@@ -406,7 +406,7 @@ class ConcreteUniqueIntSequenceExplorer(sequence:ConcreteUniqueIntSequence,
     }
   }
 
-  override def prev : Option[IntSequenceExplorer] = {
+  override def prev : Option[UniqueIntSequenceExplorer] = {
     if (position == 0) None
     else if (position  == limitBelowForCurrentPivot) {
       //change pivot
@@ -503,7 +503,7 @@ class MovedUniqueIntSequence(val seq:UniqueIntSequence,
 
   override def commitPendingMoves:UniqueIntSequence = seq.commitPendingMoves.moveAfter(startPositionIncluded,endPositionIncluded,moveAfterPosition,flip,fast=false,autoRework = false)
 
-  override def explorerAtPosition(position : Int) : Option[IntSequenceExplorer] = {
+  override def explorerAtPosition(position : Int) : Option[UniqueIntSequenceExplorer] = {
     val positionOfCurrentPivot = localBijection.forward.pivotWithPositionApplyingTo(position)
     seq.explorerAtPosition(localBijection.forward(position)) match{
       case None => None
@@ -533,7 +533,7 @@ class MovedUniqueIntSequence(val seq:UniqueIntSequence,
 
 class MovedUniqueIntSequenceExplorer(sequence:MovedUniqueIntSequence,
                                override val position:Int,
-                               positionInBasicSequence:IntSequenceExplorer,
+                               positionInBasicSequence:UniqueIntSequenceExplorer,
                                currentPivotPosition:Option[RBTMPosition[Pivot]],
                                pivotAbovePosition:Option[RBTMPosition[Pivot]])(
                                 limitAboveForCurrentPivot:Int = pivotAbovePosition match{
@@ -545,14 +545,14 @@ class MovedUniqueIntSequenceExplorer(sequence:MovedUniqueIntSequence,
                                 slopeIsPositive:Boolean = currentPivotPosition match{
                                   case None => true
                                   case Some(p) => !p.value.f.minus}
-                                ) extends IntSequenceExplorer{
+                                ) extends UniqueIntSequenceExplorer{
 
   //  override def toString : String = "MovedIntSequenceExplorer(position:" + position + " value:" + value + " currentPivotPosition:" + currentPivotPosition + " pivotAbovePosition:" +
   //    pivotAbovePosition + " basicPositionn:" + positionInBasicSequence + ")"
 
   override val value : Int = positionInBasicSequence.value
 
-  override def next : Option[IntSequenceExplorer] = {
+  override def next : Option[UniqueIntSequenceExplorer] = {
     if(position == sequence.size-1) return None
     if(position == limitAboveForCurrentPivot){
       //change pivot, we are also sure that there is a next, so use .head
@@ -586,7 +586,7 @@ class MovedUniqueIntSequenceExplorer(sequence:MovedUniqueIntSequence,
     }
   }
 
-  override def prev : Option[IntSequenceExplorer] = {
+  override def prev : Option[UniqueIntSequenceExplorer] = {
     if (position == 0) None
     else if (position  == limitBelowForCurrentPivot) {
       //change pivot
@@ -634,7 +634,7 @@ class InsertedUniqueIntSequence(seq:UniqueIntSequence,
     }
   }
 
-  override def explorerAtPosition(position : Int) : Option[IntSequenceExplorer] = {
+  override def explorerAtPosition(position : Int) : Option[UniqueIntSequenceExplorer] = {
     if (position == this.pos) {
       if (position == 0) {
         Some(new InsertedUniqueIntSequenceExplorer(this, position, seq.explorerAtPosition(0), true, true))
@@ -670,13 +670,13 @@ class InsertedUniqueIntSequence(seq:UniqueIntSequence,
 
 class InsertedUniqueIntSequenceExplorer(seq:InsertedUniqueIntSequence,
                                   val position:Int,
-                                  explorerInOriginalSeq:Option[IntSequenceExplorer],
+                                  explorerInOriginalSeq:Option[UniqueIntSequenceExplorer],
                                   atInsertedValue:Boolean,
                                   originalExplorerIsAbove:Boolean)
-  extends IntSequenceExplorer {
+  extends UniqueIntSequenceExplorer {
   override def value : Int = if(atInsertedValue) seq.value else explorerInOriginalSeq.head.value
 
-  override def next : Option[IntSequenceExplorer] = {
+  override def next : Option[UniqueIntSequenceExplorer] = {
     if (atInsertedValue) {
       //we are leaving the inserted position
       explorerInOriginalSeq match{
@@ -706,7 +706,7 @@ class InsertedUniqueIntSequenceExplorer(seq:InsertedUniqueIntSequence,
     }
   }
 
-  override def prev : Option[IntSequenceExplorer] = {
+  override def prev : Option[UniqueIntSequenceExplorer] = {
     if (atInsertedValue) {
       explorerInOriginalSeq match {
         case None => None
@@ -748,7 +748,7 @@ class DeletedUniqueIntSequence(seq:UniqueIntSequence,
 
   override val size : Int = seq.size - 1
 
-  override def explorerAtPosition(position : Int) : Option[IntSequenceExplorer] = {
+  override def explorerAtPosition(position : Int) : Option[UniqueIntSequenceExplorer] = {
     seq.explorerAtPosition(if (position < this.position) position else position + 1) match {
       case None => None
       case Some(e) => Some(new DeletedUniqueIntSequenceExplorer(this, position, e))
@@ -777,11 +777,11 @@ class DeletedUniqueIntSequence(seq:UniqueIntSequence,
 
 class DeletedUniqueIntSequenceExplorer(seq:DeletedUniqueIntSequence,
                                  val position:Int,
-                                 explorerInOriginalSeq:IntSequenceExplorer)
-  extends IntSequenceExplorer{
+                                 explorerInOriginalSeq:UniqueIntSequenceExplorer)
+  extends UniqueIntSequenceExplorer{
   override def value : Int = explorerInOriginalSeq.value
 
-  override def prev : Option[IntSequenceExplorer] = {
+  override def prev : Option[UniqueIntSequenceExplorer] = {
     explorerInOriginalSeq.prev match {
       case None => None
       case Some(tentativePos) =>
@@ -794,7 +794,7 @@ class DeletedUniqueIntSequenceExplorer(seq:DeletedUniqueIntSequence,
     }
   }
 
-  override def next : Option[IntSequenceExplorer] = {
+  override def next : Option[UniqueIntSequenceExplorer] = {
     explorerInOriginalSeq.next match {
       case None => None
       case Some(tentativePos) =>
