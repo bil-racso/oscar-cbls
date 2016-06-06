@@ -1,28 +1,24 @@
 package oscar.cbls.invariants.lib.seq
 
-/*
 import oscar.cbls.invariants.core.algo.seq.functional.IntSequence
 import oscar.cbls.invariants.core.computation._
 
 import scala.collection.immutable.SortedSet
 
 
-object Successor {
+object Successors {
+  def apply(seq : ChangingSeqValue) : Array[CBLSSetVar] = {
 
-  def apply(seq : ChangingSeqValue,
-            defaultWhenNotInSequence:Int,
-            defaultWhenNoSuccessor:Int) : Array[CBLSIntVar] = {
+    val succ: Array[CBLSSetVar] =
+      Array.tabulate(seq.max - 1)(v => CBLSSetVar(seq.model, name = "next Value of" + v))
 
-    val succ: Array[CBLSIntVar] =
-      Array.tabulate(seq.max - 1)(v => CBLSIntVar(seq.model, name = "next Value of" + v))
-
-    Successor(seq, succ, defaultWhenNotInSequence, defaultWhenNoSuccessor)
+    Successors(seq, succ)
 
     succ
   }
 }
 
-case class Successor(sequence:ChangingSeqValue, successorValues:Array[CBLSIntVar], defaultWhenNotInSequence:Int, defaultWhenNoSuccessor:Int)
+case class Successors(sequence:ChangingSeqValue, successorValues:Array[CBLSSetVar])
   extends Invariant() with SeqNotificationTarget {
 
   //this one does not use checkpoint at all, so just skipping them.
@@ -36,52 +32,58 @@ case class Successor(sequence:ChangingSeqValue, successorValues:Array[CBLSIntVar
   }
 
   private def performUpdate(changes:SeqUpdate){
-    computeStartValuesOfImpactedZone(changes:SeqUpdate) match{
-      case None =>  computeAllFromScratch(changes.newValue)
-      case Some(startUpdateValues) =>
-        val startUpdateExplorersAndVal = startUpdateValues.toList.map(value => (value,changes.newValue.explorerAtValue(value)))
-        val startUpdateExplorersAndValSortedByPos =
-          startUpdateExplorersAndVal.sortBy(valueAndExplorer => valueAndExplorer._2 match{
-            case None => -valueAndExplorer._1
-            case Some(explorer) => explorer.position})
+    computeImpactedValues(changes) match{
+      case None =>
+      computeAllFromScratch(changes.newValue)
+      case Some(values) =>
 
-        startUpdateExplorersAndValSortedByPos.foreach(startValueAndExplorer => updateStartFrom(startValueAndExplorer._1,startValueAndExplorer._2,changes.newValue))
     }
   }
 
-
-  def computeStartValuesOfImpactedZone(changes:SeqUpdate):Option[SortedSet[Int]] = {
+  def computeImpactedValues(changes:SeqUpdate):Option[SortedSet[Int]] = {
     changes match {
       case s@SeqUpdateInsert(value : Int, pos : Int, prev : SeqUpdate) =>
-        computeStartValuesOfImpactedZone(prev) match{
+        //removing next val from pred
+
+        computeImpactedValues(prev) match{
           case None => None
-          case Some(startsOfImpactedZone) => Some(startsOfImpactedZone + value ++ changes.newValue.predecessorVal2Val(value))
-        }
+          case Some(impactedValue) =>
+            val oldSeq = prev.newValue
+            Some(impactedValue ++ oldSeq.predecessorPos2Val(pos) + value)
+          }
 
       case SeqUpdateMove(fromIncluded : Int, toIncluded : Int, after : Int, flip : Boolean, prev : SeqUpdate) =>
-        computeStartValuesOfImpactedZone(prev) match{
+        computeImpactedValues(prev) match{
           case None => None
-          case Some(startsOfImpactedZone) => Some(
-            startsOfImpactedZone ++
-              changes.newValue.predecessorPos2Val(fromIncluded) +
-              changes.newValue.valueAtPosition(fromIncluded).head +
-              changes.newValue.valueAtPosition(toIncluded).head +
-              changes.newValue.valueAtPosition(after).head)
+          case Some(impactedValues) =>
+            val oldSeq = prev.newValue
+            if(flip){
+              //O(n) stuff
+              Some(impactedValues
+                ++ changes.newValue.predecessorPos2Val(fromIncluded)
+                ++ changes.newValue.valueAtPosition(after)
+                ++ oldSeq.valuesBetweenPositions(fromIncluded, toIncluded))
+            }else{
+              Some(impactedValues ++
+                changes.newValue.predecessorPos2Val(fromIncluded) +
+                toIncluded ++
+                changes.newValue.valueAtPosition(after))
+            }
         }
 
       case r@SeqUpdateRemove(position: Int, prev : SeqUpdate) =>
-        computeStartValuesOfImpactedZone(prev) match{
+        computeImpactedValues(prev) match {
           case None => None
-          case Some(startsOfImpactedZone) => Some(
-            startsOfImpactedZone ++
-              changes.newValue.predecessorPos2Val(position) + r.value ++ changes.newValue.successorPos2Val(position))
+          case Some(impactedValues) =>
+            val oldSeq = prev.newValue
+            Some(impactedValues + r.value ++ oldSeq.predecessorPos2Val(position))
         }
 
       case u@SeqUpdateRollBackToCheckpoint(checkpoint) =>
-        computeStartValuesOfImpactedZone(u.howToRollBack)
+        computeImpactedValues(u.howToRollBack)
 
       case SeqUpdateDefineCheckpoint(prev:SeqUpdate,isActive) =>
-        computeStartValuesOfImpactedZone(prev)
+        computeImpactedValues(prev)
 
       case SeqUpdateLastNotified(value) =>
         require(value quickEquals sequence.value)
@@ -92,38 +94,24 @@ case class Successor(sequence:ChangingSeqValue, successorValues:Array[CBLSIntVar
     }
   }
 
+  def computeForValues(seq:IntSequence, values:SortedSet[Int]){
+    for(value <- values){
+      successorValues(value) := seq.positionsOfValue(value).flatMap(position => seq.successorPos2Val(position))
+    }
+  }
+
   def computeAllFromScratch(seq:IntSequence){
-    successorValues.foreach(node => node := defaultWhenNotInSequence)
+    val emptySet = SortedSet.empty[Int]
+    successorValues.foreach(node => node := emptySet)
 
     var explorer = seq.explorerAtPosition(0).head
     while(explorer.next match{
       case None =>
-        successorValues(explorer.value) := defaultWhenNoSuccessor
         false
       case Some(next) =>
-        successorValues(explorer.value) := next.value
+        successorValues(explorer.value) :+= next.value
         explorer = next
         true
     }){}
   }
-
-  def updateStartFrom(startValue:Int,startExplorer:Option[UniqueIntSequenceExplorer],seq:UniqueIntSequence){
-    startExplorer match{
-      case None => successorValues(startValue) := defaultWhenNotInSequence
-      case Some(startExplorer) =>
-        var explorer = startExplorer
-        while(explorer.next match{
-          case None =>
-            successorValues(explorer.value) := defaultWhenNoSuccessor
-            false
-          case Some(next) =>
-            if(successorValues(explorer.value).newValue != next.value){
-              successorValues(explorer.value) := next.value
-              explorer = next
-              true
-            }else false
-        }){}
-    }
-  }
 }
-*/

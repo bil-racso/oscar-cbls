@@ -58,7 +58,7 @@ case class BinPackingStandardized(itemSizes: Array[Int], binSizes: Array[Int], i
    * Assigned items for each bin
    */
   val binAssignments = DenseCluster(itemAssignments, Array.tabulate(binsCount)(x =>
-    CBLSSetVar(itemsRange, name = "Contents of bin %d".format(x))(s))).clusters
+    CBLSSetVar(s,itemsRange, name = "Contents of bin %d".format(x)))).clusters
 
   /**
    * Amount of space used for each bin
