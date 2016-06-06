@@ -1,6 +1,6 @@
 package oscar.cbls.invariants.core.algo.seq.mutable
 
-class IntSequence extends Iterable[SeqPosition]{
+class MutableIntSequence extends Iterable[SeqPosition]{
   var headPhantom = new SymSeqPosition(null,null,-1){
     override def toString : String = "headPhantom" + super.toString
   }
@@ -39,7 +39,7 @@ class IntSequence extends Iterable[SeqPosition]{
     this.getClass.getSimpleName + "(size:" + this.size + ")(" + this.toIntList + ")"
   }
 
-  override def iterator: Iterator[SeqPosition] = new IntSequenceIterator(headPhantomPosition)
+  override def iterator: Iterator[SeqPosition] = new MutableIntSequenceIterator(headPhantomPosition)
   def toIntList:List[Int] = this.map(x => x.pos.value).toList //TODO: reduce overhead
 
   /**
@@ -182,7 +182,7 @@ class IntSequence extends Iterable[SeqPosition]{
   }
 }
 
-class UniqueIntSequence(maxVal:Int) extends IntSequence{
+class MutableUniqueIntSequence(maxVal:Int) extends MutableIntSequence{
 
   private val valuesTopos:Array[SymSeqPosition] = Array.fill[SymSeqPosition](maxVal+1)(null)
 
@@ -201,7 +201,7 @@ class UniqueIntSequence(maxVal:Int) extends IntSequence{
   def symPosAt(value:Int):SymSeqPosition = valuesTopos(value)
 }
 
-class IntSequenceIterator(var currentPosition:SeqPosition) extends Iterator[SeqPosition]{
+class MutableIntSequenceIterator(var currentPosition:SeqPosition) extends Iterator[SeqPosition]{
   override def hasNext: Boolean = currentPosition.hasNext
 
   override def next(): SeqPosition = {
@@ -270,7 +270,7 @@ class SeqPosition(val pos:SymSeqPosition, var headIsOnA:Boolean = true){
 }
 
 object testSeq extends App{
-  val a = new IntSequence
+  val a = new MutableIntSequence
 
   println(a)
 

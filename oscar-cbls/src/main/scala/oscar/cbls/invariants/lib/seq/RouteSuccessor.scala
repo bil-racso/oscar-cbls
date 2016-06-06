@@ -1,7 +1,7 @@
 package oscar.cbls.invariants.lib.seq
 
-/*
-import oscar.cbls.invariants.core.algo.seq.functional.{UniqueIntSequenceExplorer, UniqueIntSequence}
+
+import oscar.cbls.invariants.core.algo.seq.functional.{IntSequenceExplorer, IntSequence}
 import oscar.cbls.invariants.core.computation._
 
 import scala.collection.immutable.SortedSet
@@ -17,7 +17,7 @@ case class RouteSuccessor(routes:ChangingSeqValue, v:Int, successorValues:Array[
     computeStartValuesOfImpactedZone(changes:SeqUpdate) match{
       case None =>  computeAllFromScratch(changes.newValue)
       case Some(startUpdateValues) =>
-        val startUpdateExplorersAndVal = startUpdateValues.toList.map(value => (value,changes.newValue.explorerAtValue(value)))
+        val startUpdateExplorersAndVal = startUpdateValues.toList.map(value => (value,changes.newValue.explorerAtAnyOccurrence(value)))
         val startUpdateExplorersAndValSortedByPos =
           startUpdateExplorersAndVal.sortBy(valueAndExplorer => valueAndExplorer._2 match{
             case None => -valueAndExplorer._1
@@ -46,7 +46,8 @@ case class RouteSuccessor(routes:ChangingSeqValue, v:Int, successorValues:Array[
               changes.newValue.valueAtPosition(after).head)
         }
 
-      case SeqUpdateRemoveValue(value : Int, prev : SeqUpdate) =>
+      case r@SeqUpdateRemove(position : Int, prev : SeqUpdate) =>
+        val value = r.value
         computeStartValuesOfImpactedZone(prev) match{
           case None => None
           case Some(startsOfImpactedZone) => Some(
@@ -57,16 +58,16 @@ case class RouteSuccessor(routes:ChangingSeqValue, v:Int, successorValues:Array[
       case SeqUpdateLastNotified(value) =>
         require (value quickEquals routes.value)
         Some(SortedSet.empty[Int]) //we are starting from the previous value
-      case SeqUpdateSet(value : UniqueIntSequence) =>
+      case SeqUpdateSet(value : IntSequence) =>
         None //impossible to go incremental
       case SeqUpdateDefineCheckpoint(prev:SeqUpdate,_) =>
         computeStartValuesOfImpactedZone(prev)
-      case u@SeqUpdateRollBackToCheckpoint(checkpoint:UniqueIntSequence) =>
+      case u@SeqUpdateRollBackToCheckpoint(checkpoint:IntSequence) =>
         computeStartValuesOfImpactedZone(u.howToRollBack)
     }
   }
 
-  def computeAllFromScratch(seq:UniqueIntSequence){
+  def computeAllFromScratch(seq:IntSequence){
     successorValues.foreach(node => node := defaultWhenNotInSequence)
 
     var explorer = seq.explorerAtPosition(0).head
@@ -85,8 +86,8 @@ case class RouteSuccessor(routes:ChangingSeqValue, v:Int, successorValues:Array[
     }){}
   }
 
-  def updateStartFrom(startValue:Int,startExplorer:Option[UniqueIntSequenceExplorer],seq:UniqueIntSequence){
-    startExplorer match{
+  def updateStartFrom(startValue:Int,startExplorerOpt:Option[IntSequenceExplorer],seq:IntSequence){
+    startExplorerOpt match{
       case None => successorValues(startValue) := defaultWhenNotInSequence
       case Some(startExplorer) =>
         var explorer = startExplorer
@@ -107,5 +108,3 @@ case class RouteSuccessor(routes:ChangingSeqValue, v:Int, successorValues:Array[
     }
   }
 }
-
-*/
