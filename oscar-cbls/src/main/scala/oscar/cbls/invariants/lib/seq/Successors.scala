@@ -12,20 +12,21 @@ object Successors {
     val succ: Array[CBLSSetVar] =
       Array.tabulate(seq.max - 1)(v => CBLSSetVar(seq.model, name = "next Value of" + v))
 
-    Successors(seq, succ)
+    new Successors(seq, succ)
 
     succ
   }
 }
 
-case class Successors(sequence:ChangingSeqValue, successorValues:Array[CBLSSetVar])
+class Successors(sequence:ChangingSeqValue, successorValues:Array[CBLSSetVar])
   extends Invariant() with SeqNotificationTarget {
 
   //this one does not use checkpoint at all, so just skipping them.
 
   registerStaticAndDynamicDependency(sequence)
-  for(i <- successorValues) i.setDefiningInvariant(this)
   finishInitialization()
+  for(i <- successorValues) i.setDefiningInvariant(this)
+
 
   override def notifySeqChanges(v: ChangingSeqValue, d: Int, changes: SeqUpdate) {
     performUpdate(changes:SeqUpdate)

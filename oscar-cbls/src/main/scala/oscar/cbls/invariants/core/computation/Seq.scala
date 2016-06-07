@@ -26,11 +26,16 @@ sealed abstract class SeqUpdate(val newValue:IntSequence){
   protected[computation] def reverse(target:IntSequence, from:SeqUpdate = SeqUpdateLastNotified(newValue)):SeqUpdate
   protected[computation] def regularize:SeqUpdate
   protected[computation] def prepend(u:SeqUpdate):SeqUpdate
+  def depth:Int
 }
 
 sealed abstract class SeqUpdateWithPrev(val prev:SeqUpdate,newValue:IntSequence) extends SeqUpdate(newValue) {
   def oldPosToNewPos(oldPos:Int):Option[Int]
   def newPos2OldPos(newPos:Int):Option[Int]
+  override val depth:Int = {
+    val pd = prev.depth
+    if(pd >=0) pd+1 else pd-1
+  }
 }
 
 object SeqUpdateInsert {
@@ -184,6 +189,8 @@ case class SeqUpdateSet(value:IntSequence) extends SeqUpdate(value){
   override protected[computation] def regularize : SeqUpdate = SeqUpdateSet(value.regularize())
 
   override protected[computation] def prepend(u : SeqUpdate) : SeqUpdate = this
+
+  override def depth : Int = -1
 }
 
 case class SeqUpdateLastNotified(value:IntSequence) extends SeqUpdate(value){
@@ -198,6 +205,8 @@ case class SeqUpdateLastNotified(value:IntSequence) extends SeqUpdate(value){
     require(u.newValue quickEquals value)
     u
   }
+
+  override def depth : Int = 0
 }
 
 
@@ -243,6 +252,8 @@ class SeqUpdateRollBackToCheckpoint(val checkpointValue:IntSequence,instructions
 
   override def toString : String =
     "SeqUpdateRollBackToCheckpoint(checkpoint:" + checkpointValue + " howTo:" +  howToRollBack + ")"
+
+  override def depth : Int = 0
 }
 
 /**

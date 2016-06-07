@@ -70,8 +70,9 @@ case class ConstantRoutingDistance(routes:ChangingSeqValue,
   require(distance.length == 0 || distance.length == v)
 
   registerStaticAndDynamicDependency(routes)
-  for(i <- distance) i.setDefiningInvariant(this)
   finishInitialization()
+  for(i <- distance) i.setDefiningInvariant(this)
+
 
   //TODO: handle inactive checkpoints
   private val savedValues:Array[Int] = computeValueFromScratch(routes.value)

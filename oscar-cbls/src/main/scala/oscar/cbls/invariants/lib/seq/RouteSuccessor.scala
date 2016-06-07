@@ -10,8 +10,9 @@ case class RouteSuccessor(routes:ChangingSeqValue, v:Int, successorValues:Array[
   extends Invariant() with SeqNotificationTarget {
 
   registerStaticAndDynamicDependency(routes)
-  for(i <- successorValues) i.setDefiningInvariant(this)
   finishInitialization()
+  for(i <- successorValues) i.setDefiningInvariant(this)
+
 
   override def notifySeqChanges(v: ChangingSeqValue, d: Int, changes: SeqUpdate) {
     computeStartValuesOfImpactedZone(changes:SeqUpdate) match{

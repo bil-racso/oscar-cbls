@@ -23,17 +23,14 @@ class QList[@specialized T](val head:T, val tail:QList[T] = null){
     toReturn
   }
 
-  def toIterable:Iterable[T] = new IterableQList(this)
-
-  def toIterator:Iterator[T] = new QListIterator[T](this)
-
   def qMap[X](fun:T => X):QList[X] = new QList(fun(head),if(tail == null) null else tail.qMap(fun))
 }
 
 object QList{
 
   def apply[T](head:T,tail:QList[T] = null):QList[T] = new QList(head,tail)
-  //@deprecated("really, you should not do this","ever")
+
+
   implicit def toIterable[T](l:QList[T]):Iterable[T] = new IterableQList(l)
 
   def buildFromIterable[T](l:Iterable[T]):QList[T] = {
