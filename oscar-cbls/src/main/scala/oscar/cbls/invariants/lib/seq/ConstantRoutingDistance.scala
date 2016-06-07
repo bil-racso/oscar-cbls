@@ -348,7 +348,6 @@ case class ConstantRoutingDistance(routes:ChangingSeqValue,
       }else{
         //continuing on the same vehicle
         toReturn(currentVehicle) = toReturn(currentVehicle) + distanceMatrix(prevNode)(node) +  distanceMatrix(node)(node)
-
       }
       prevNode = node
     }

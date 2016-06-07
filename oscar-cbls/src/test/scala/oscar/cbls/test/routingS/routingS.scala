@@ -14,20 +14,19 @@ class MyRouting(n:Int,v:Int,symmetricDistance:Array[Array[Int]],m:Store)
   setSymmetricDistanceMatrix(symmetricDistance)
 
   addObjectiveTerm(totalDistance)
-
-  closeObjectiveFunction()
 }
 
 object routingS extends App{
 
-  val n = 1000
-  val nodes = 0 to n
+  val n = 10
+  val nodes = 0 until n
 
   val symmetricDistanceMatrix = RoutingMatrixGenerator(n)._1
 
   val model = new Store()
   val myVRP = new MyRouting(n,1,symmetricDistanceMatrix,model)
 
+  myVRP.setCircuit(nodes)
   model.close()
 
   val onePtMove = new OnePointMoveS(() => nodes, ()=>_=>nodes, myVRP)

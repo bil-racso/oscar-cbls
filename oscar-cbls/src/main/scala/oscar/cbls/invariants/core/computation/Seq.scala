@@ -116,8 +116,10 @@ class SeqUpdateMove(val fromIncluded:Int,val toIncluded:Int,val after:Int, val f
 
   override protected[computation] def reverse(target:IntSequence, newPrev:SeqUpdate) : SeqUpdate = {
     val (intFromIncluded,intToIncluded) = if(flip) (toIncluded,fromIncluded) else (fromIncluded,toIncluded)
-    prev.reverse(target,new SeqUpdateMove(oldPosToNewPos(intFromIncluded).head, oldPosToNewPos(intToIncluded).head, oldPosToNewPos(after).head-1, flip, newPrev,prev.newValue))
+    prev.reverse(target,new SeqUpdateMove(oldPosToNewPos(intFromIncluded).head, oldPosToNewPos(intToIncluded).head, oldPosToNewPos(fromIncluded-1).head, flip, newPrev,prev.newValue))
   }
+
+  assert({seq match{case m:MovedIntSequence => m.localBijection.checkBijection() case _ => ;};true})
 
   override def oldPosToNewPos(oldPos : Int) : Option[Int] = Some(seq.asInstanceOf[MovedIntSequence].localBijection.backward(oldPos))
 
@@ -363,7 +365,8 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], val maxValue: Int, 
     toNotify match{
       case SeqUpdateLastNotified(value:IntSequence) =>
         //nothing to do :-)
-        if(notifiedSinceTopCheckpoint != null) require(notifiedSinceTopCheckpoint.newValue quickEquals value)
+        if(notifiedSinceTopCheckpoint != null)
+          require(notifiedSinceTopCheckpoint.newValue quickEquals value, "notifiedSinceTopCheckpoint.newValue=" + notifiedSinceTopCheckpoint.newValue  + " got " + value)
       case c@SeqUpdateDefineCheckpoint(prev:SeqUpdate,isActive:Boolean) =>
         //we have to push the current checkpoint, and create a new one
         recordNotifiedChangesForCheckpoint(prev)
@@ -378,13 +381,13 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], val maxValue: Int, 
 
       case SeqUpdateInsert(value,pos,prev:SeqUpdate) =>
         recordNotifiedChangesForCheckpoint(prev)
-        if(notifiedSinceTopCheckpoint != null) notifiedSinceTopCheckpoint = SeqUpdateInsert(value,pos,notifiedSinceTopCheckpoint)
+        if(notifiedSinceTopCheckpoint != null) notifiedSinceTopCheckpoint = SeqUpdateInsert(value,pos,notifiedSinceTopCheckpoint,toNotify.newValue)
       case SeqUpdateMove(fromIncluded:Int,toIncluded:Int,after:Int,flip:Boolean,prev:SeqUpdate) =>
         recordNotifiedChangesForCheckpoint(prev)
-        if(notifiedSinceTopCheckpoint != null) notifiedSinceTopCheckpoint = SeqUpdateMove(fromIncluded,toIncluded,after,flip,notifiedSinceTopCheckpoint)
+        if(notifiedSinceTopCheckpoint != null) notifiedSinceTopCheckpoint = SeqUpdateMove(fromIncluded,toIncluded,after,flip,notifiedSinceTopCheckpoint,toNotify.newValue)
       case SeqUpdateRemove(position:Int,prev:SeqUpdate) =>
         recordNotifiedChangesForCheckpoint(prev)
-        if(notifiedSinceTopCheckpoint != null) notifiedSinceTopCheckpoint = SeqUpdateRemove(position,notifiedSinceTopCheckpoint)
+        if(notifiedSinceTopCheckpoint != null) notifiedSinceTopCheckpoint = SeqUpdateRemove(position,notifiedSinceTopCheckpoint,toNotify.newValue)
       case SeqUpdateRollBackToCheckpoint(checkpoint:IntSequence) =>
         require(checkpoint quickEquals topCheckpoint)
         if(notifiedSinceTopCheckpoint != null) notifiedSinceTopCheckpoint = SeqUpdateLastNotified(checkpoint)

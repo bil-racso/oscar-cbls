@@ -102,7 +102,7 @@ case class OnePointMoveS(nodesToMove: () => Iterable[Int],
         }
       }
     }
-    vrp.seq.rollbackToCurrentCheckpoint(explorationStart)
+    //vrp.seq.rollbackToCurrentCheckpoint(explorationStart)
   }
   var movedPoint:Int = 0
   var newPredecessor:Int = 0

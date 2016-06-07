@@ -522,7 +522,7 @@ abstract class StackedUpdateIntSequence extends IntSequence(){
   override def moveAfter(startPositionIncluded : Int, endPositionIncluded : Int, moveAfterPosition : Int, flip : Boolean, fast:Boolean,autoRework:Boolean) : IntSequence = {
     require(startPositionIncluded >= 0 && startPositionIncluded < size , "startPositionIncluded=" + startPositionIncluded + " should be in [0,size" + size + "[ in UniqueIntSequence.moveAfter")
     require(endPositionIncluded >= 0 && endPositionIncluded < size , "endPositionIncluded=" + endPositionIncluded +" should be in [0,size"+size+"[ in UniqueIntSequence.moveAfter")
-    require(moveAfterPosition >= 0 && moveAfterPosition < size , "moveAfterPosition=" + moveAfterPosition + " should be in [0,size="+size+"[ in UniqueIntSequence.moveAfter")
+    require(moveAfterPosition >= -1 && moveAfterPosition < size , "moveAfterPosition=" + moveAfterPosition + " should be in [-1,size="+size+"[ in UniqueIntSequence.moveAfter")
 
     new MovedIntSequence(this,startPositionIncluded,endPositionIncluded,moveAfterPosition,flip)
   }
