@@ -30,8 +30,7 @@ class LinearTransform(val offset:Int,val minus:Boolean){
 
   override def toString: String = (
     if(offset == 0) {
-      if (minus) "(x=>-x)"
-      else "(x=>x)"
+      if (minus) "(x=>-x)" else "(x=>x)"
     }else "(x=>" + offset + (if (minus) "-" else "+") + "x)")
 
   //this: if minus y = offset - x else y = offset + x

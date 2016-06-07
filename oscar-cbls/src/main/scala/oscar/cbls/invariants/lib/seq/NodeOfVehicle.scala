@@ -7,9 +7,26 @@ import oscar.cbls.invariants.core.propagation.Checker
 
 import scala.collection.immutable.SortedSet
 
+object NodeOfVehicle{
+  def apply(routes:ChangingSeqValue,v:Int):Array[CBLSSetVar] = {
+    val model = routes.model
+    val emptySet = SortedSet.empty
+    val domain = routes.domain
+
+    val nodesOfVehicle = Array.tabulate(v+1)((vehicle:Int) =>
+      CBLSSetVar(model,
+        emptySet,
+        domain,
+        if(vehicle== v) "unrouted nodes" else "nodes_o_vehicle_" + vehicle))
+
+    new NodeOfVehicle(routes, nodesOfVehicle)
+
+    nodesOfVehicle
+  }
+}
+
 /**
  * @param routes the routes of all the vehicles
- * @param v the number of vehicles in the model
  *
  * This invariant relies on the vehicle model assumption:
  * there are v vehicles
@@ -17,11 +34,11 @@ import scala.collection.immutable.SortedSet
  * These values must always be present in the sequence in increasing order
  * they cannot be included within a moved segment
  */
-class RouteNodes(routes:ChangingSeqValue,
-                 v:Int,
-                 nodesOfVehicle:Array[CBLSSetVar])  //there is actually one more vehicle, for unrouted nodes.
+class NodeOfVehicle(routes:ChangingSeqValue,
+                    nodesOfVehicleOrUnrouted:Array[CBLSSetVar])  //there is actually one more vehicle, for unrouted nodes.
   extends Invariant() with SeqNotificationTarget{
 
+  val v = nodesOfVehicleOrUnrouted.length+1
   val n = routes.maxValue
 
   registerStaticAndDynamicDependency(routes)
@@ -50,8 +67,8 @@ class RouteNodes(routes:ChangingSeqValue,
         //on which vehicle did we insert?
         if(!digestUpdates(prev)) return false
         val insertedVehicle = RoutingConventionMethods.searchVehicleReachingPosition(pos,newValue,v)
-        nodesOfVehicle(insertedVehicle) :+= value
-        nodesOfVehicle(v) :-= value
+        nodesOfVehicleOrUnrouted(insertedVehicle) :+= value
+        nodesOfVehicleOrUnrouted(v) :-= value
         recordMovedPoint(value, v, insertedVehicle)
 
         true
@@ -69,8 +86,8 @@ class RouteNodes(routes:ChangingSeqValue,
           if(vehicleOfMovedSegment != targetVehicleOfMove){
             //we moved all the points to another vehicle
             for(movedValue <- x.movedValues) {
-              nodesOfVehicle(vehicleOfMovedSegment) :-= movedValue
-              nodesOfVehicle(targetVehicleOfMove) :+= movedValue
+              nodesOfVehicleOrUnrouted(vehicleOfMovedSegment) :-= movedValue
+              nodesOfVehicleOrUnrouted(targetVehicleOfMove) :+= movedValue
               recordMovedPoint(movedValue, vehicleOfMovedSegment, targetVehicleOfMove)
             }
           }
@@ -84,22 +101,28 @@ class RouteNodes(routes:ChangingSeqValue,
         val oldValue = prev.newValue
         val impactedVehicle = RoutingConventionMethods.searchVehicleReachingPosition(position,oldValue,v)
         val removedValue = x.removedValue
-        nodesOfVehicle(impactedVehicle) :-= removedValue
-        nodesOfVehicle(v) :+= removedValue
+        nodesOfVehicleOrUnrouted(impactedVehicle) :-= removedValue
+        nodesOfVehicleOrUnrouted(v) :+= removedValue
         recordMovedPoint(removedValue, impactedVehicle, v)
         true
       case SeqUpdateSet(value : IntSequence) =>
-        //TODO: foireux si checkpoit!!
+        dropCheckpoint()
         false //impossible to go incremental
       case SeqUpdateLastNotified(value:IntSequence) =>
         true //we are starting from the previous value
       case SeqUpdateRollBackToCheckpoint(checkpoint) =>
-        require(checkpoint quickEquals savedCheckpoint)
-        restoreCheckpoint()
-        true
+        if(checkpoint == null) false //it has been dropped following a Set
+        else {
+          require(checkpoint quickEquals savedCheckpoint)
+          restoreCheckpoint()
+          true
+        }
     }
   }
 
+  private def dropCheckpoint(){
+    saveCurrentCheckpoint(null)
+  }
   private def saveCurrentCheckpoint(s:IntSequence){
     savedCheckpoint = s
     while (movedNodesSinceCheckpointList!= null) {
@@ -113,8 +136,8 @@ class RouteNodes(routes:ChangingSeqValue,
       val node= movedNodesSinceCheckpointList.head
       movedNodesSinceCheckpointArray(movedNodesSinceCheckpointList.head) = false
       movedNodesSinceCheckpointList = movedNodesSinceCheckpointList.tail
-      nodesOfVehicle(vehicleOfNodeAfterMoveForMovedPoints(node)) :-= node
-      nodesOfVehicle(vehicleOfNodeAtCheckpointForMovedPoints(node)) :+= node
+      nodesOfVehicleOrUnrouted(vehicleOfNodeAfterMoveForMovedPoints(node)) :-= node
+      nodesOfVehicleOrUnrouted(vehicleOfNodeAtCheckpointForMovedPoints(node)) :+= node
     }
   }
 
@@ -133,7 +156,7 @@ class RouteNodes(routes:ChangingSeqValue,
   private def affect(value:Array[SortedSet[Int]]){
     var currentV = 0
     while(currentV < v){
-      nodesOfVehicle(currentV) := value(currentV)
+      nodesOfVehicleOrUnrouted(currentV) := value(currentV)
       currentV += 1
     }
   }
@@ -160,7 +183,7 @@ class RouteNodes(routes:ChangingSeqValue,
   override def checkInternals(c : Checker) : Unit = {
     val values = computeValueFromScratch(routes.value)
     for (vehicle <- 0 to v-1){
-      c.check(nodesOfVehicle(vehicle) equals values(vehicle))
+      c.check(nodesOfVehicleOrUnrouted(vehicle) equals values(vehicle))
     }
 
     if(savedCheckpoint != null) {
