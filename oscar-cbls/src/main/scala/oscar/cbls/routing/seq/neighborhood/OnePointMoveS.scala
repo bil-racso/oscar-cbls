@@ -23,8 +23,9 @@
  * ****************************************************************************
  */
 
-package oscar.cbls.routing.neighborhoodS
+package oscar.cbls.routing.seq.neighborhood
 
+import oscar.cbls.routing.seq.model.VRP
 import oscar.cbls.search.algo.HotRestart
 import oscar.cbls.search.core.EasyNeighborhood
 
@@ -37,15 +38,16 @@ import oscar.cbls.search.core.EasyNeighborhood
  */
 case class OnePointMoveS(nodesToMove: () => Iterable[Int],
                          relevantNeighbors: () => Int => Iterable[Int],
-                         vrp:VRPS,
+                         vrp:VRP,
                          neighborhoodName: String = "OnePointMove",
                          best: Boolean = false,
                          hotRestart: Boolean = true,
-                         allPointsToMoveAreRouted:Boolean, allRelevantNeighborsAreRouted:Boolean) extends EasyNeighborhood[OnePointMoveSMove](best, neighborhoodName) {
+                         allPointsToMoveAreRouted:Boolean = true,
+                         allRelevantNeighborsAreRouted:Boolean = true) extends EasyNeighborhood[OnePointMoveSMove](best, neighborhoodName) {
 
   val seq = vrp.seq
-  val v = vrp.V
-  val n = vrp.N
+  val v = vrp.v
+  val n = vrp.n
 
   //the indice to start with for the exploration
   var startIndice: Int = 0
