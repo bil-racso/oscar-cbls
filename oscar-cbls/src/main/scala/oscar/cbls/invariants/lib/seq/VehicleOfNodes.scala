@@ -5,6 +5,24 @@ import oscar.cbls.invariants.core.algo.seq.functional.IntSequence
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.core.propagation.Checker
 
+
+object VehicleOfNodes{
+  def apply(routes:ChangingSeqValue,v:Int):Array[CBLSIntVar] = {
+    val model = routes.model
+    val domain = routes.domain
+
+    val vehicleOrUnroutedOfNode = Array.tabulate(routes.maxValue)((node:Int) =>
+      CBLSIntVar(model,
+        v,
+        domain,
+        "vehicle_or_unrouted_of_node_" + node))
+
+    new VehicleOfNodes(routes, v, vehicleOrUnroutedOfNode)
+
+    vehicleOrUnroutedOfNode
+  }
+}
+
 /**
  * @param routes the routes of all the vehicles
  *
