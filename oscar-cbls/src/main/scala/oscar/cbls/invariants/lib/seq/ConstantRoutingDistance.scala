@@ -33,7 +33,8 @@ object ConstantRoutingDistance {
     while(i < n){
       var j = 0
       while(j <= i){
-        if (distanceMatrix(i)(j) != distanceMatrix(j)(i)) return false
+        if (distanceMatrix(i)(j) != distanceMatrix(j)(i))
+          return false
         j += 1
       }
       i += 1
@@ -362,7 +363,7 @@ case class ConstantRoutingDistance(routes:ChangingSeqValue,
   }
 
   override def checkInternals(c : Checker) : Unit = {
-    c.check(distanceIsSymmetric && !ConstantRoutingDistance.isDistanceSymmetric(distanceMatrix),Some("distance matrix should be symmetric if invariant told so"))
+    c.check(!distanceIsSymmetric || ConstantRoutingDistance.isDistanceSymmetric(distanceMatrix),Some("distance matrix should be symmetric if invariant told so"))
 
     if(perVehicle){
       val values = computeValueFromScratch(routes.value)
@@ -374,14 +375,14 @@ case class ConstantRoutingDistance(routes:ChangingSeqValue,
         val values = computeValueFromScratch(savedCheckpoint)
         for (vehicle <- 0 to v - 1) {
           if(touchedRoutesSinceCheckpointArray(vehicle))
-            c.check(distance(vehicle).value == values(vehicle))
+            c.check(savedValues(vehicle) == values(vehicle))
         }
       }
 
     }else{
       c.check(distance(0).value == computeValueFromScratch(routes.value)(0))
       if(savedCheckpoint != null){
-        c.check(distance(0).value == computeValueFromScratch(savedCheckpoint)(0))
+        c.check(savedValues(0) == computeValueFromScratch(savedCheckpoint)(0))
       }
     }
   }

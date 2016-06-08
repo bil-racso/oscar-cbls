@@ -1,9 +1,11 @@
 package oscar.cbls.test.routingS
 
 import oscar.cbls.invariants.core.computation.Store
+import oscar.cbls.invariants.core.propagation.ErrorChecker
 import oscar.cbls.routing.seq.model.{TotalConstantDistance, VRP, VRPObjective}
 import oscar.cbls.routing.seq.neighborhood.{TwoOpt, OnePointMove}
-import oscar.cbls.search.combinators.BestSlopeFirst
+import oscar.cbls.search.Statistics
+import oscar.cbls.search.combinators.{Profile, BestSlopeFirst}
 import oscar.cbls.search.core.EasyNeighborhood
 
 /**
@@ -21,26 +23,31 @@ class MyRouting(n:Int,v:Int,symmetricDistance:Array[Array[Int]],m:Store)
 object routingS extends App{
 
   val n = 1000
+  val v = 1
+
+  println("VRP(n:" + n + " n:" + v + ")")
+
   val nodes = 0 until n
 
   val symmetricDistanceMatrix = RoutingMatrixGenerator(n)._1
 
-  val model = new Store() //checker = Some(new ErrorChecker()))
+  val model = new Store()//checker = Some(new ErrorChecker()))
 
-  val myVRP = new MyRouting(n,1,symmetricDistanceMatrix,model)
+  val myVRP = new MyRouting(n,v,symmetricDistanceMatrix,model)
 
   myVRP.setCircuit(nodes)
   model.close()
 
-  val onePtMove = new OnePointMove(() => nodes, ()=>_=>nodes, myVRP)
+  val onePtMove = Profile(new OnePointMove(() => nodes, ()=>_=>nodes, myVRP))
 
-  val twoOpt = new TwoOpt(() => nodes, ()=>_=>nodes, myVRP)
+  val twoOpt = Profile(new TwoOpt(() => nodes, ()=>_=>nodes, myVRP))
 
-  val search = BestSlopeFirst(List(onePtMove,twoOpt))
+  val search = BestSlopeFirst(List(onePtMove,twoOpt)).afterMove(model.propagate())
   search.verbose = 1
 
   search.doAllMoves(obj=myVRP.getObjective())
 
+  println(search.profilingStatistics)
 }
 
 

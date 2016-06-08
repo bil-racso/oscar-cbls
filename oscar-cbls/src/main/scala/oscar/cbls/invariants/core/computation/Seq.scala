@@ -1,5 +1,6 @@
 package oscar.cbls.invariants.core.computation
 
+import oscar.cbls.invariants.core.algo.fun.PiecewiseLinearBijectionNaive
 import oscar.cbls.invariants.core.algo.seq.functional._
 import oscar.cbls.invariants.core.propagation.Checker
 
@@ -122,10 +123,19 @@ class SeqUpdateMove(val fromIncluded:Int,val toIncluded:Int,val after:Int, val f
   assert({seq match{case m:MovedIntSequence => m.localBijection.checkBijection() case _ => ;};true})
 
   //TODO: find O(1) solution
-  private val localBijection = MovedIntSequence.bijectionForMove(fromIncluded, toIncluded, after, flip)
+  private var localBijection:PiecewiseLinearBijectionNaive = null
+  private def ensureBijection(){
+    if(localBijection == null) localBijection = MovedIntSequence.bijectionForMove(fromIncluded, toIncluded, after, flip)
+  }
 
-  override def oldPosToNewPos(oldPos : Int) : Option[Int] = Some(localBijection.backward(oldPos))
-  override def newPos2OldPos(newPos : Int) : Option[Int] = Some(localBijection.forward(newPos))
+  override def oldPosToNewPos(oldPos : Int) : Option[Int] = {
+    ensureBijection()
+    Some(localBijection.backward(oldPos))
+  }
+  override def newPos2OldPos(newPos : Int) : Option[Int] = {
+    ensureBijection()
+    Some(localBijection.forward(newPos))
+  }
 
   override protected[computation] def regularize : SeqUpdate = SeqUpdateMove(fromIncluded,toIncluded,after,flip,prev,seq.regularize())
 
