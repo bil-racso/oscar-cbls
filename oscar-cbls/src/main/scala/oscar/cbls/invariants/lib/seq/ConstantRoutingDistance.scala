@@ -160,10 +160,13 @@ case class ConstantRoutingDistance(routes:ChangingSeqValue,
           }
           true
         }else {
-          //actually moving, not si:ple flip
+          //actually moving, not simple flip
           val oldPrevFromValue = prev.newValue.valueAtPosition(fromIncluded - 1).head
-          val oldSuccToIfNoLoop = prev.newValue.valueAtPosition(toIncluded + 1).head
-          val oldSuccToValue = if (oldSuccToIfNoLoop < v) oldSuccToIfNoLoop-1 else oldSuccToIfNoLoop
+          val oldSuccToIfNoLoopOpt = prev.newValue.valueAtPosition(toIncluded + 1)
+          val oldSuccToValue = oldSuccToIfNoLoopOpt match {
+            case None => v - 1
+            case Some(value) => if (value < v) value - 1 else value
+          }
 
           val fromValue = x.fromValue
           val toValue = x.toValue

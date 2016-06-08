@@ -535,18 +535,11 @@ abstract class StackedUpdateIntSequence extends IntSequence(){
   override def regularize(targetUniqueID:Int = this.uniqueID) : ConcreteIntSequence = commitPendingMoves.regularize(targetUniqueID)
 }
 
-class MovedIntSequence(val seq:IntSequence,
-                       startPositionIncluded:Int,
-                       endPositionIncluded:Int,
-                       moveAfterPosition:Int,
-                       flip:Boolean)
-  extends StackedUpdateIntSequence{
-
-  override def unorderedContentNoDuplicate : List[Int] = seq.unorderedContentNoDuplicate
-
-  override def descriptorString : String = seq.descriptorString + ".moved(startPos:" + startPositionIncluded + " endPos:" + endPositionIncluded + " targetPos:" + moveAfterPosition + " flip:" + flip + ")"
-
-  val localBijection =
+object MovedIntSequence{
+  def bijectionForMove(startPositionIncluded:Int,
+                      endPositionIncluded:Int,
+                      moveAfterPosition:Int,
+                      flip:Boolean):PiecewiseLinearBijectionNaive = {
     if(moveAfterPosition + 1 == startPositionIncluded) {
       //not moving
       if(flip) { //just flipping
@@ -573,6 +566,21 @@ class MovedIntSequence(val seq:IntSequence,
             LinearTransform(startPositionIncluded - endPositionIncluded - 1, false)))
       }
     }
+  }
+}
+
+class MovedIntSequence(val seq:IntSequence,
+                       startPositionIncluded:Int,
+                       endPositionIncluded:Int,
+                       moveAfterPosition:Int,
+                       flip:Boolean)
+  extends StackedUpdateIntSequence{
+
+  override def unorderedContentNoDuplicate : List[Int] = seq.unorderedContentNoDuplicate
+
+  override def descriptorString : String = seq.descriptorString + ".moved(startPos:" + startPositionIncluded + " endPos:" + endPositionIncluded + " targetPos:" + moveAfterPosition + " flip:" + flip + ")"
+
+  val localBijection = MovedIntSequence.bijectionForMove(startPositionIncluded, endPositionIncluded, moveAfterPosition, flip)
 
   override val size : Int = seq.size
 

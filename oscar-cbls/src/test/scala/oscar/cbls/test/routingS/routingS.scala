@@ -1,6 +1,7 @@
 package oscar.cbls.test.routingS
 
 import oscar.cbls.invariants.core.computation.Store
+import oscar.cbls.invariants.core.propagation.{ErrorChecker, Checker}
 import oscar.cbls.routing.seq.model.{VRPObjective, TotalConstantDistance, VRP}
 import oscar.cbls.routing.seq.neighborhood.OnePointMoveS
 
@@ -18,12 +19,13 @@ class MyRouting(n:Int,v:Int,symmetricDistance:Array[Array[Int]],m:Store)
 
 object routingS extends App{
 
-  val n = 10
+  val n = 1000
   val nodes = 0 until n
 
   val symmetricDistanceMatrix = RoutingMatrixGenerator(n)._1
 
-  val model = new Store()
+  val model = new Store() //checker = Some(new ErrorChecker()))
+
   val myVRP = new MyRouting(n,1,symmetricDistanceMatrix,model)
 
   myVRP.setCircuit(nodes)
@@ -31,7 +33,7 @@ object routingS extends App{
 
   val onePtMove = new OnePointMoveS(() => nodes, ()=>_=>nodes, myVRP)
 
-  onePtMove.verbose = 2
+  onePtMove.verbose = 1
 
   onePtMove.doAllMoves(obj=myVRP.getObjective())
 

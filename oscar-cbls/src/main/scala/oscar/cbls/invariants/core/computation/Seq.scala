@@ -121,9 +121,11 @@ class SeqUpdateMove(val fromIncluded:Int,val toIncluded:Int,val after:Int, val f
 
   assert({seq match{case m:MovedIntSequence => m.localBijection.checkBijection() case _ => ;};true})
 
-  override def oldPosToNewPos(oldPos : Int) : Option[Int] = Some(seq.asInstanceOf[MovedIntSequence].localBijection.backward(oldPos))
+  //TODO: find O(1) solution
+  private val localBijection = MovedIntSequence.bijectionForMove(fromIncluded, toIncluded, after, flip)
 
-  override def newPos2OldPos(newPos : Int) : Option[Int] = Some(seq.asInstanceOf[MovedIntSequence].localBijection.forward(newPos))
+  override def oldPosToNewPos(oldPos : Int) : Option[Int] = Some(localBijection.backward(oldPos))
+  override def newPos2OldPos(newPos : Int) : Option[Int] = Some(localBijection.forward(newPos))
 
   override protected[computation] def regularize : SeqUpdate = SeqUpdateMove(fromIncluded,toIncluded,after,flip,prev,seq.regularize())
 
@@ -526,7 +528,7 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], val maxValue: Int, 
   protected def rollbackToCurrentCheckpoint(checkpoint:IntSequence) = {
     //check that the checkpoint is declared in the toNotify, actually.
 
-    println("notified of rollBack toNotify:" + toNotify + " currentCheckpoint:" + topCheckpoint + " notifiedSinceTopCheckpoint:" + notifiedSinceTopCheckpoint)
+    //println("notified of rollBack toNotify:" + toNotify + " currentCheckpoint:" + topCheckpoint + " notifiedSinceTopCheckpoint:" + notifiedSinceTopCheckpoint)
 
     val attemptByCleaningToNotify = popToNotifyUntilCheckpointDeclaration(toNotify,checkpoint)
     if(attemptByCleaningToNotify == null){
@@ -554,7 +556,7 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], val maxValue: Int, 
         case _ => notifyChanged()
       }
     }
-    println("after notified of rollBack toNotify:" + toNotify + " currentCheckpoint:" + topCheckpoint + " notifiedSinceTopCheckpoint:" + notifiedSinceTopCheckpoint)
+    //println("after notified of rollBack toNotify:" + toNotify + " currentCheckpoint:" + topCheckpoint + " notifiedSinceTopCheckpoint:" + notifiedSinceTopCheckpoint)
 
   }
 
@@ -724,7 +726,7 @@ class IdentitySeq(fromValue:ChangingSeqValue, toValue:CBLSSeqVar)
   override def notifySeqChanges(v: ChangingSeqValue, d: Int, changes: SeqUpdate) {
     assert(v == fromValue)
     digestChanges(changes)
-    println("IdentitySeq notified " + changes)
+    //println("IdentitySeq notified " + changes)
   }
 
   private var currentCheckpoint:IntSequence = null
