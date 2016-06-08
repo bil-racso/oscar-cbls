@@ -30,7 +30,7 @@ case class Content(v:SeqValue)
   }
 
   override def notifySeqChanges(v: ChangingSeqValue, d: Int, changes: SeqUpdate) : Unit = {
-    println("content notified " + changes)
+
     if(!digestUpdates(changes,false)) {
       updateFromScratch(changes.newValue)
       savedCheckpoint = null

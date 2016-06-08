@@ -25,7 +25,7 @@ object SeqValue{
 
 sealed abstract class SeqUpdate(val newValue:IntSequence){
   protected[computation] def reverse(target:IntSequence, from:SeqUpdate = SeqUpdateLastNotified(newValue)):SeqUpdate
-  protected[computation] def regularize:SeqUpdate
+  protected[computation] def regularize(maxPivot:Int):SeqUpdate
   protected[computation] def prepend(u:SeqUpdate):SeqUpdate
   def depth:Int
 }
@@ -81,8 +81,8 @@ class SeqUpdateInsert(val value:Int,val pos:Int,prev:SeqUpdate, seq:IntSequence)
     else Some(newPos-1)
   }
 
-  override protected[computation] def regularize : SeqUpdate =
-    SeqUpdateInsert(value,pos,prev,seq.regularize())
+  override protected[computation] def regularize(maxPivot:Int) : SeqUpdate =
+    SeqUpdateInsert(value,pos,prev,seq.regularizeToMaxPivot(maxPivot))
 
   override protected[computation] def prepend(u : SeqUpdate) : SeqUpdate =
     SeqUpdateInsert(value,pos,prev.prepend(u),seq)
@@ -137,7 +137,7 @@ class SeqUpdateMove(val fromIncluded:Int,val toIncluded:Int,val after:Int, val f
     Some(localBijection.forward(newPos))
   }
 
-  override protected[computation] def regularize : SeqUpdate = SeqUpdateMove(fromIncluded,toIncluded,after,flip,prev,seq.regularize())
+  override protected[computation] def regularize(maxPivot:Int) : SeqUpdate = SeqUpdateMove(fromIncluded,toIncluded,after,flip,prev,seq.regularizeToMaxPivot(maxPivot))
 
   override protected[computation] def prepend(u : SeqUpdate) : SeqUpdate =
     SeqUpdateMove(fromIncluded,toIncluded,after,flip,prev.prepend(u),seq)
@@ -186,7 +186,7 @@ class SeqUpdateRemove(val position:Int,prev:SeqUpdate,seq:IntSequence)
     else Some(newPos +1)
   }
 
-  override protected[computation] def regularize : SeqUpdate = SeqUpdateRemove(position,prev,seq.regularize())
+  override protected[computation] def regularize(maxPivot:Int) : SeqUpdate = SeqUpdateRemove(position,prev,seq.regularizeToMaxPivot(maxPivot))
 
   override protected[computation] def prepend(u : SeqUpdate) : SeqUpdate =
     SeqUpdateRemove(position,prev.prepend(u),seq)
@@ -200,7 +200,7 @@ case class SeqUpdateSet(value:IntSequence) extends SeqUpdate(value){
     else SeqUpdateSet (target)
   }
 
-  override protected[computation] def regularize : SeqUpdate = SeqUpdateSet(value.regularize())
+  override protected[computation] def regularize(maxPivot:Int) : SeqUpdate = SeqUpdateSet(value.regularizeToMaxPivot(maxPivot))
 
   override protected[computation] def prepend(u : SeqUpdate) : SeqUpdate = this
 
@@ -213,7 +213,7 @@ case class SeqUpdateLastNotified(value:IntSequence) extends SeqUpdate(value){
     else SeqUpdateSet (target)
   }
 
-  override protected[computation] def regularize : SeqUpdate = SeqUpdateLastNotified(value.regularize())
+  override protected[computation] def regularize(maxPivot:Int) : SeqUpdate = SeqUpdateLastNotified(value.regularizeToMaxPivot(maxPivot))
 
   override protected[computation] def prepend(u : SeqUpdate) : SeqUpdate = {
     require(u.newValue quickEquals value)
@@ -223,12 +223,20 @@ case class SeqUpdateLastNotified(value:IntSequence) extends SeqUpdate(value){
   override def depth : Int = 0
 }
 
+object SeqUpdateDefineCheckpoint{
 
-case class SeqUpdateDefineCheckpoint(mprev:SeqUpdate,activeCheckpoint:Boolean)
-  extends SeqUpdateWithPrev(mprev,mprev.newValue.regularize()){
+  def apply(prev:SeqUpdate,activeCheckpoint:Boolean, maxPivot:Int = 10):SeqUpdateDefineCheckpoint = {
+    new SeqUpdateDefineCheckpoint(prev,activeCheckpoint, maxPivot)
+  }
+
+  def unapply(u:SeqUpdateDefineCheckpoint):Option[(SeqUpdate,Boolean)] = Some(u.prev,u.activeCheckpoint)
+}
+
+class SeqUpdateDefineCheckpoint(mprev:SeqUpdate,val activeCheckpoint:Boolean, maxPivot:Int)
+  extends SeqUpdateWithPrev(mprev,mprev.newValue.regularizeToMaxPivot(maxPivot)){  //TODO: regularize not good here!
   protected[computation]  def reverse(target : IntSequence, from : SeqUpdate) : SeqUpdate = mprev.reverse(target,from)
 
-  protected[computation] def regularize : SeqUpdate = this
+  protected[computation] def regularize(maxPivot:Int) : SeqUpdate = this
 
   def oldPosToNewPos(oldPos : Int) : Option[Int] = throw new Error("SeqUpdateDefineCheckpoint should not be queried for delta on moves")
 
@@ -246,7 +254,7 @@ object SeqUpdateRollBackToCheckpoint{
 }
 
 class SeqUpdateRollBackToCheckpoint(val checkpointValue:IntSequence,instructionsThatMustBeUndone:SeqUpdate) extends SeqUpdate(checkpointValue){
-  override protected[computation] def regularize : SeqUpdate = this
+  override protected[computation] def regularize(maxPivot:Int) : SeqUpdate = this
 
   override protected[computation] def reverse(target : IntSequence, newPrev:SeqUpdate) : SeqUpdate = {
     if (target quickEquals this.newValue) newPrev
@@ -537,7 +545,7 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], val maxValue: Int, 
   }
 
   protected def defineCurrentValueAsCheckpoint(checkPointIsActive:Boolean):IntSequence = {
-    toNotify = SeqUpdateDefineCheckpoint(toNotify.regularize,checkPointIsActive)
+    toNotify = SeqUpdateDefineCheckpoint(toNotify.regularize(maxPivot),checkPointIsActive)
     notifyChanged()
     toNotify.newValue
   }
@@ -658,7 +666,7 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], val maxValue: Int, 
     val headPhantom = dynListElements.headPhantom
     var currentElement = headPhantom.next
 
-    if(stableCheckpoint || !topCheckpointIsActive) toNotify = toNotify.regularize
+    if(stableCheckpoint || !topCheckpointIsActive) toNotify = toNotify.regularize(maxPivot)
 
     while (currentElement != headPhantom) {
       val e = currentElement.elem

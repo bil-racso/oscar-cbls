@@ -80,6 +80,8 @@ case class TwoOpt(segmentStartValues:()=>Iterable[Int],
       val nodesOnTheSameRouteAsSegmentStart = SortedSet.empty[Int] ++
         vrp.getRouteOfVehicle(vrp.getVehicleOfNode(segmentStartValue))
 
+      //TODO: this is not hte best choice of segmentEndValue.
+      //we want the start to be close to its new successor, so the segment end should be the sucessor of the k-nearest point to the segment start
       for (
         segmentEndValue <- relevantNeighborsNow(segmentStartValue) if (
         segmentEndValue > segmentStartValue

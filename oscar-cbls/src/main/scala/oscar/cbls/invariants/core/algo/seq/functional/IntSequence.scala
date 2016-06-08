@@ -128,6 +128,8 @@ abstract class IntSequence(protected[seq] val uniqueID:Int = IntSequence.getNewU
   def delete(pos:Int, fast:Boolean=false,autoRework:Boolean = false):IntSequence
   def moveAfter(startPositionIncluded:Int, endPositionIncluded:Int, moveAfterPosition:Int, flip:Boolean, fast:Boolean = false, autoRework:Boolean = true):IntSequence
 
+  def regularizeToMaxPivot(maxPivot: Int, targetUniqueID: Int = this.uniqueID) :ConcreteIntSequence
+
   def regularize(targetUniqueID:Int = this.uniqueID):ConcreteIntSequence
   def commitPendingMoves:IntSequence
 
@@ -379,6 +381,19 @@ class ConcreteIntSequence(private[seq] val internalPositionToValue:RedBlackTreeM
     }
   }
 
+  override def regularizeToMaxPivot(maxPivot: Int, targetUniqueID: Int = this.uniqueID) :ConcreteIntSequence = {
+    if(this.externalToInternalPosition.forward.nbPivot > maxPivot){
+      regularize(targetUniqueID)
+    }else{
+      if (targetUniqueID != this.uniqueID){
+        new ConcreteIntSequence(internalPositionToValue,
+          valueToInternalPositions,
+          externalToInternalPosition,
+          size, targetUniqueID)
+      }else this
+    }
+  }
+
   def regularize(targetUniqueID : Int = this.uniqueID) : ConcreteIntSequence = {
     //println("regularize")
     var explorer = this.explorerAtPosition(0)
@@ -531,6 +546,10 @@ abstract class StackedUpdateIntSequence extends IntSequence(){
     require(pos >= 0 && pos <= size , "pos=" + pos + " should be in [0,size="+size+"] in UniqueIntSequence.insertAt")
     new InsertedIntSequence(this,value:Int,pos:Int)
   }
+
+
+  override def regularizeToMaxPivot(maxPivot: Int, targetUniqueID: Int = this.uniqueID) : ConcreteIntSequence =
+    commitPendingMoves.regularizeToMaxPivot(maxPivot : Int, targetUniqueID : Int)
 
   override def regularize(targetUniqueID:Int = this.uniqueID) : ConcreteIntSequence = commitPendingMoves.regularize(targetUniqueID)
 }

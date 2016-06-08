@@ -75,7 +75,7 @@ case class OnePointMove(nodesToMove: () => Iterable[Int],
       if(!vrp.isADepot(movedPoint)) {
         //depots cannot be moved at all.
         seq.newValue.positionOfAnyOccurrence(movedPoint) match {
-          case None => ;
+          case None => ;//was not routed, actually
           case Some(positionOfMovedPoint) =>
             this.positionOfMovedPoint = positionOfMovedPoint
 

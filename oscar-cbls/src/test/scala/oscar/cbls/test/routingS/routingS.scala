@@ -1,23 +1,22 @@
 package oscar.cbls.test.routingS
 
 import oscar.cbls.invariants.core.computation.Store
-import oscar.cbls.invariants.core.propagation.ErrorChecker
-import oscar.cbls.routing.seq.model.{TotalConstantDistance, VRP, VRPObjective}
-import oscar.cbls.routing.seq.neighborhood.{TwoOpt, OnePointMove}
-import oscar.cbls.search.Statistics
-import oscar.cbls.search.combinators.{Profile, BestSlopeFirst}
-import oscar.cbls.search.core.EasyNeighborhood
+import oscar.cbls.routing.seq.model._
+import oscar.cbls.routing.seq.neighborhood.{OnePointMove, TwoOpt}
+import oscar.cbls.search.combinators.{BestSlopeFirst, Profile}
 
-/**
- * Created by rdl on 07-06-16.
- */
 
 class MyRouting(n:Int,v:Int,symmetricDistance:Array[Array[Int]],m:Store)
-  extends VRP(n,v,m) with TotalConstantDistance with VRPObjective{
+  extends VRP(n,v,m) with TotalConstantDistance with VRPObjective with ClosestNeighbors{
+
 
   setSymmetricDistanceMatrix(symmetricDistance)
 
   addObjectiveTerm(totalDistance)
+
+  override protected def getDistance(from : Int, to : Int) : Int = symmetricDistance(from)(to)
+
+  computeClosestNeighbors()
 }
 
 object routingS extends App{
@@ -25,7 +24,7 @@ object routingS extends App{
   val n = 1000
   val v = 1
 
-  println("VRP(n:" + n + " n:" + v + ")")
+  println("VRP(n:" + n + " v:" + v + ")")
 
   val nodes = 0 until n
 
@@ -38,15 +37,16 @@ object routingS extends App{
   myVRP.setCircuit(nodes)
   model.close()
 
-  val onePtMove = Profile(new OnePointMove(() => nodes, ()=>_=>nodes, myVRP))
+  val onePtMove = Profile(new OnePointMove(() => nodes, ()=>myVRP.kNearest(400), myVRP))
 
-  val twoOpt = Profile(new TwoOpt(() => nodes, ()=>_=>nodes, myVRP))
+  val twoOpt = Profile(new TwoOpt(() => nodes, ()=>myVRP.kNearest(400), myVRP))
 
   val search = BestSlopeFirst(List(onePtMove,twoOpt))
   search.verbose = 1
 
-  search.doAllMoves(obj=myVRP.getObjective())
+  search.doAllMoves(obj=myVRP.getObjective)
 
+  println(myVRP)
   println(search.profilingStatistics)
 }
 
@@ -56,7 +56,7 @@ object RoutingMatrixGenerator {
   def apply(N: Int, side: Int = 10000): (Array[Array[Int]],Array[(Int,Int)]) = {
 
     //we generate te cost distance matrix
-    def randomXY: Int = ((math.random * side)).toInt
+    def randomXY: Int = (math.random * side).toInt
     val pointPosition: Array[(Int, Int)] = Array.tabulate(N)(w => (randomXY, randomXY))
 
     def distance(from: (Int, Int), to: (Int, Int)) =

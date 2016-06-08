@@ -2,16 +2,15 @@ package oscar.cbls.routing.seq.model
 
 import oscar.cbls.invariants.core.algo.seq.functional.IntSequence
 import oscar.cbls.invariants.core.computation._
-import oscar.cbls.invariants.lib.logic.Filter
 import oscar.cbls.invariants.lib.numeric.Sum
-import oscar.cbls.invariants.lib.seq.{Size, Content, RoutingConventionMethods, ConstantRoutingDistance}
+import oscar.cbls.invariants.lib.seq.{ConstantRoutingDistance, Content, RoutingConventionMethods, Size}
 import oscar.cbls.invariants.lib.set.Diff
+import oscar.cbls.modeling.Algebra._
 import oscar.cbls.objective.Objective
 import oscar.cbls.search.algo.KSmallest
 
 import scala.collection.immutable.SortedSet
 import scala.math._
-import oscar.cbls.modeling.Algebra._
 
 /**
  * The class constructor models a VRP problem with N points (deposits and customers)
@@ -57,7 +56,6 @@ class VRP(val n: Int, val v: Int, val m: Store) {
    * @param n the point queried.
    * @return true if the point is still routed, else false.
    */
-  //TODO: have a O(1) algo in a trait based on partition
   def isRouted(n: Int): Boolean = {seq.value.contains(n)}
 
   /**
@@ -74,8 +72,10 @@ class VRP(val n: Int, val v: Int, val m: Store) {
    * @return the list of unrouted nodes as a String.
    */
   def unroutedToString: String = {
-    "unrouted: " + nodes.filterNot(isRouted(_)).toList + "\n"
+    "unrouted: " + unroutedNodes.toList + "\n"
   }
+
+  def unroutedNodes:Iterable[Int] = nodes.filterNot(isRouted)
 
   /**
    * @return the route of a vehicle as a String.
@@ -197,10 +197,9 @@ trait TotalConstantDistance extends VRP{
  */
 trait VRPObjective extends VRP {
 
-  val accumulationVariable = CBLSIntVar(m, 0, FullRange, "objective of VRP")
-  val objectiveFunction = Objective(accumulationVariable)
-
-  var objectiveFunctionTerms: List[IntValue] = List.empty
+  private val accumulationVariable = CBLSIntVar(m, 0, FullRange, "objective of VRP")
+  protected val objectiveFunction = Objective(accumulationVariable)
+  private var objectiveFunctionTerms: List[IntValue] = List.empty
 
   /** adds a term top the objective function*/
   def addObjectiveTerm(o: IntValue) {
@@ -214,12 +213,12 @@ trait VRPObjective extends VRP {
    * You should not call this, actually.
    * it is called by the model on close
    */
-  def closeObjectiveFunction() {
+  def closeObjectiveFunction {
     if (objectiveFunctionTerms.isEmpty) throw new Error("you have set an Objective function to your VRP, but did not specify any term for it, call vrp.addObjectiveTerm, or add an objective trait to your VRP")
     accumulationVariable <== Sum(objectiveFunctionTerms)
   }
 
-  def getObjective(): Objective = objectiveFunction
+  def getObjective: Objective = objectiveFunction
 }
 
 /**
@@ -229,7 +228,7 @@ trait VRPObjective extends VRP {
  * @author Florent Ghilain (UMONS)
  * @author yoann.guyot@cetic.be
  */
-abstract trait ClosestNeighbors extends VRP {
+trait ClosestNeighbors extends VRP {
 
   protected def getDistance(from: Int, to: Int): Int
 
@@ -261,7 +260,7 @@ abstract trait ClosestNeighbors extends VRP {
    * @param node the given node.
    * @return the k nearest neighbor as an iterable list of Int.
    */
-  def kNearest(k: Int, filter: (Int => Boolean) = (_ => true))(node: Int): Iterable[Int] = {
+  def kNearest(k: Int, filter: (Int => Boolean) = _ => true)(node: Int): Iterable[Int] = {
     if (k >= n - 1) return nodes.filter(filter)
 
     def kNearestAccumulator(sortedNeighbors: Iterator[Int], k: Int, kNearestAcc: List[Int]): List[Int] = {
@@ -293,16 +292,18 @@ trait Unrouted extends VRP{
   /**
    * the data structure set which maintains the unrouted nodes.
    */
-  val unrouted = Diff(CBLSSetConst(SortedSet(nodes:_*)),Content(seq))
+  val unrouted = Diff(CBLSSetConst(SortedSet(nodes:_*)),Content(seq)).setName("unrouted nodes")
   m.registerForPartialPropagation(unrouted)
+
+  override def unroutedNodes : Iterable[Int] = unrouted.value
 }
 
-
-abstract trait AbstractPenaltyForUnrouted extends VRP{
+trait AbstractPenaltyForUnrouted extends VRP{
   /**
    * the variable which maintains the sum of penalty of unrouted nodes, thanks to invariant SumElements.
    */
   var unroutedPenalty:ChangingIntValue=null
+  addToStringInfo(() => ""+unroutedPenalty)
 }
 
 /**
@@ -314,13 +315,13 @@ abstract trait AbstractPenaltyForUnrouted extends VRP{
 trait DetailedPenaltyForUnrouted extends AbstractPenaltyForUnrouted with Unrouted{
   def setDetailedUnroutedPenaltyWeights(penalties : Array[Int]) {
     require(unroutedPenalty == null)
-    unroutedPenalty = Sum(penalties, unrouted).setName("TotalPenaltyForUnroutedNodes")
+    unroutedPenalty = Sum(penalties, unrouted).setName("TotalPenaltyForUnroutedNodes (detailed penalties)")
   }
 }
 
 trait StandardPenaltyForUnrouted extends AbstractPenaltyForUnrouted {
   def setStandardUnroutedPenaltyWeight(standardWeight:Int){
     require(unroutedPenalty == null)
-    unroutedPenalty = (standardWeight * (n - Size(seq))).setName("TotalPenaltyForUnroutedNodes")
+    unroutedPenalty = (standardWeight * (n - Size(seq))).setName("TotalPenaltyForUnroutedNodes (standard penalties)")
   }
 }
