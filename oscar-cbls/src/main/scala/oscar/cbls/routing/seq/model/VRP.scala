@@ -2,9 +2,16 @@ package oscar.cbls.routing.seq.model
 
 import oscar.cbls.invariants.core.algo.seq.functional.IntSequence
 import oscar.cbls.invariants.core.computation._
+import oscar.cbls.invariants.lib.logic.Filter
 import oscar.cbls.invariants.lib.numeric.Sum
-import oscar.cbls.invariants.lib.seq.{RoutingConventionMethods, ConstantRoutingDistance}
+import oscar.cbls.invariants.lib.seq.{Size, Content, RoutingConventionMethods, ConstantRoutingDistance}
+import oscar.cbls.invariants.lib.set.Diff
 import oscar.cbls.objective.Objective
+import oscar.cbls.search.algo.KSmallest
+
+import scala.collection.immutable.SortedSet
+import scala.math._
+import oscar.cbls.modeling.Algebra._
 
 /**
  * The class constructor models a VRP problem with N points (deposits and customers)
@@ -140,12 +147,16 @@ trait ConstantDistancePerVehicle extends TotalConstantDistance{
   var distancePerVehicle:Array[CBLSIntVar] = null
 
   override def setSymmetricDistanceMatrix(symmetricDistanceMatrix:Array[Array[Int]]){
+    this.distanceMatrix = distanceMatrix
+    this.matrixIsSymmetric = true
     require(distancePerVehicle == null)
     distancePerVehicle = ConstantRoutingDistance(seq, v ,false,symmetricDistanceMatrix,true)
     totalDistance = Sum(distancePerVehicle)
   }
 
   override def setAsymmetricDistanceMatrix(asymetricDistanceMatrix:Array[Array[Int]]){
+    this.distanceMatrix = distanceMatrix
+    this.matrixIsSymmetric = false
     require(distancePerVehicle == null)
     distancePerVehicle = ConstantRoutingDistance(seq, v ,false,asymetricDistanceMatrix,false)
     totalDistance = Sum(distancePerVehicle)
@@ -154,14 +165,28 @@ trait ConstantDistancePerVehicle extends TotalConstantDistance{
 
 trait TotalConstantDistance extends VRP{
   var totalDistance:IntValue = null
+  var distanceMatrix:Array[Array[Int]] = null
+  var matrixIsSymmetric = false
+
+  def setDistanceMatrix(distanceMatrix:Array[Array[Int]]){
+    if(ConstantRoutingDistance.isDistanceSymmetric(distanceMatrix)){
+      setSymmetricDistanceMatrix(distanceMatrix)
+    }else{
+      setAsymmetricDistanceMatrix(distanceMatrix)
+    }
+  }
 
   def setSymmetricDistanceMatrix(symmetricDistanceMatrix:Array[Array[Int]]){
     require(totalDistance == null)
+    this.distanceMatrix = distanceMatrix
+    this.matrixIsSymmetric = true
     totalDistance = ConstantRoutingDistance(seq, v ,false,symmetricDistanceMatrix,true)(0)
   }
 
   def setAsymmetricDistanceMatrix(asymetricDistanceMatrix:Array[Array[Int]]){
     require(totalDistance == null)
+    this.distanceMatrix = distanceMatrix
+    this.matrixIsSymmetric = false
     totalDistance = ConstantRoutingDistance(seq, v ,false,asymetricDistanceMatrix,false)(0)
   }
 }
@@ -195,4 +220,107 @@ trait VRPObjective extends VRP {
   }
 
   def getObjective(): Objective = objectiveFunction
+}
+
+/**
+ * Computes the nearest neighbors of each point.
+ * Used by some neighborhood searches.
+ * @author renaud.delandtsheer@cetic.be
+ * @author Florent Ghilain (UMONS)
+ * @author yoann.guyot@cetic.be
+ */
+abstract trait ClosestNeighbors extends VRP {
+
+  protected def getDistance(from: Int, to: Int): Int
+
+  var closestNeighbors: Array[Iterable[Int]] = null
+
+  def computeClosestNeighbors() = {
+    def arrayOfAllNodes = Array.tabulate(n)(node => node)
+    closestNeighbors = Array.tabulate(n)(node =>
+      KSmallest.lazySort(arrayOfAllNodes,
+        neighbor => min(getDistance(neighbor, node), getDistance(node, neighbor))
+      ))
+  }
+  /**
+   * Filters the node itself and unreachable neighbors.
+   */
+  def reachableNeigbors(node: Int) =
+    nodes.filter((node2: Int) =>
+      node != node2
+        && (getDistance(node, node2) != Int.MaxValue
+        || getDistance(node2, node) != Int.MaxValue)).toList
+
+  /**
+   * Returns the k nearest nodes of a given node.
+   * It allows us to add a filter (optional) on the neighbor.
+   *
+   * Info : it uses the Currying feature.
+   * @param k the parameter k.
+   * @param filter the filter.
+   * @param node the given node.
+   * @return the k nearest neighbor as an iterable list of Int.
+   */
+  def kNearest(k: Int, filter: (Int => Boolean) = (_ => true))(node: Int): Iterable[Int] = {
+    if (k >= n - 1) return nodes.filter(filter)
+
+    def kNearestAccumulator(sortedNeighbors: Iterator[Int], k: Int, kNearestAcc: List[Int]): List[Int] = {
+      require(k >= 0)
+      if(k == 0 || !sortedNeighbors.hasNext){
+        kNearestAcc.reverse
+      }else{
+        val neighbor = sortedNeighbors.next()
+        if (filter(neighbor))
+          kNearestAccumulator(sortedNeighbors, k - 1, neighbor :: kNearestAcc)
+        else
+          kNearestAccumulator(sortedNeighbors, k, kNearestAcc)
+      }
+    }
+
+    kNearestAccumulator(closestNeighbors(node).iterator, k, Nil)
+  }
+}
+
+
+/**
+ * Maintains the set of unrouted nodes.
+ * Info : those whose next is N.
+ * @author renaud.delandtsheer@cetic.be
+ * @author Florent Ghilain (UMONS)
+ * @author yoann.guyot@cetic.be
+ */
+trait Unrouted extends VRP{
+  /**
+   * the data structure set which maintains the unrouted nodes.
+   */
+  val unrouted = Diff(CBLSSetConst(SortedSet(nodes:_*)),Content(seq))
+  m.registerForPartialPropagation(unrouted)
+}
+
+
+abstract trait AbstractPenaltyForUnrouted extends VRP{
+  /**
+   * the variable which maintains the sum of penalty of unrouted nodes, thanks to invariant SumElements.
+   */
+  var unroutedPenalty:ChangingIntValue=null
+}
+
+/**
+ * Maintains and fixes a penalty weight of unrouted nodes.
+ * @author renaud.delandtsheer@cetic.be
+ * @author Florent Ghilain (UMONS)
+ * @author yoann.guyot@cetic.be
+ */
+trait DetailedPenaltyForUnrouted extends AbstractPenaltyForUnrouted with Unrouted{
+  def setDetailedUnroutedPenaltyWeights(penalties : Array[Int]) {
+    require(unroutedPenalty == null)
+    unroutedPenalty = Sum(penalties, unrouted).setName("TotalPenaltyForUnroutedNodes")
+  }
+}
+
+trait StandardPenaltyForUnrouted extends AbstractPenaltyForUnrouted {
+  def setStandardUnroutedPenaltyWeight(standardWeight:Int){
+    require(unroutedPenalty == null)
+    unroutedPenalty = (standardWeight * (n - Size(seq))).setName("TotalPenaltyForUnroutedNodes")
+  }
 }

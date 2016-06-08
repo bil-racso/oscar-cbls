@@ -42,7 +42,7 @@ object routingS extends App{
 
   val twoOpt = Profile(new TwoOpt(() => nodes, ()=>_=>nodes, myVRP))
 
-  val search = BestSlopeFirst(List(onePtMove,twoOpt)).afterMove(model.propagate())
+  val search = BestSlopeFirst(List(onePtMove,twoOpt))
   search.verbose = 1
 
   search.doAllMoves(obj=myVRP.getObjective())
