@@ -54,7 +54,7 @@ trait HotSpot extends VRP with RoutedAndUnrouted with PositionInRouteAndRouteNr{
 }
 
 trait HotSpottingInfo{
-  def impactedPoints:List[Int]
+  def impactedPoints:Iterable[Int]
 }
 
 case class HotSpotHistoryStep(updatedVehicles:List[Int]=Nil,

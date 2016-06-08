@@ -3,7 +3,7 @@ package oscar.cbls.routing.seq.model
 import oscar.cbls.invariants.core.algo.seq.functional.IntSequence
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.lib.numeric.Sum
-import oscar.cbls.invariants.lib.seq.ConstantRoutingDistance
+import oscar.cbls.invariants.lib.seq.{RoutingConventionMethods, ConstantRoutingDistance}
 import oscar.cbls.objective.Objective
 
 /**
@@ -94,6 +94,21 @@ class VRP(val n: Int, val v: Int, val m: Store) {
       case _ => false}) {}
     acc.reverse
   }
+
+
+  /**
+   *
+   * @param node a node
+   * @return the vehicle reachingthe node, v is it is unrouted
+   */
+  def getVehicleOfNode(node:Int):Int = {
+    val routes = seq.value
+    routes.positionOfAnyOccurrence(node) match{
+      case None => v
+      case Some(position) => RoutingConventionMethods.searchVehicleReachingPosition(position,routes,v)
+    }
+  }
+
 
   /**
    * Redefine the toString method.

@@ -310,6 +310,9 @@ class CBLSSeqVar(givenModel:Store, initialValue:IntSequence, val maxVal:Int = In
     super.move(fromIncludedPosition:Int,toIncludedPosition:Int,afterPosition:Int,flip:Boolean)
   }
 
+  override def flip(fromIncludedPosition:Int,toIncludedPosition:Int){
+    super.flip(fromIncludedPosition,toIncludedPosition)
+  }
   override  def setValue(seq:IntSequence) {super.setValue(seq)}
 
   override  def :=(seq:IntSequence) {super.setValue(seq)}
@@ -465,6 +468,10 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], val maxValue: Int, 
     require(toNotify.newValue.size > position && position >=0, "removing at position " + position + " size is " + newValue.size)
     toNotify = SeqUpdateRemove(position,toNotify)
     notifyChanged()
+  }
+
+  protected def flip(fromIncludedPosition:Int,toIncludedPosition:Int){
+    move(fromIncludedPosition,toIncludedPosition,fromIncludedPosition-1,true)
   }
 
   //-1 for first position

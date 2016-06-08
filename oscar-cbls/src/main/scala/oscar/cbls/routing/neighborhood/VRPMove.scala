@@ -17,7 +17,7 @@ abstract class VRPMove(override val objAfter: Int,
     neighborhood.commit(false)
   }
 
-  override def touchedVariables: List[Variable] = impactedPoints.map(neighborhood.vrp.next(_))
+  override def touchedVariables: Iterable[Variable] = impactedPoints.map(neighborhood.vrp.next(_))
 
   def encodeMove()
 }

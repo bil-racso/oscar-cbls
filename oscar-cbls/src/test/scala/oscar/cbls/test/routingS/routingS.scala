@@ -1,9 +1,10 @@
 package oscar.cbls.test.routingS
 
 import oscar.cbls.invariants.core.computation.Store
-import oscar.cbls.invariants.core.propagation.{ErrorChecker, Checker}
-import oscar.cbls.routing.seq.model.{VRPObjective, TotalConstantDistance, VRP}
-import oscar.cbls.routing.seq.neighborhood.OnePointMoveS
+import oscar.cbls.routing.seq.model.{TotalConstantDistance, VRP, VRPObjective}
+import oscar.cbls.routing.seq.neighborhood.{TwoOpt, OnePointMove}
+import oscar.cbls.search.combinators.BestSlopeFirst
+import oscar.cbls.search.core.EasyNeighborhood
 
 /**
  * Created by rdl on 07-06-16.
@@ -31,11 +32,14 @@ object routingS extends App{
   myVRP.setCircuit(nodes)
   model.close()
 
-  val onePtMove = new OnePointMoveS(() => nodes, ()=>_=>nodes, myVRP)
+  val onePtMove = new OnePointMove(() => nodes, ()=>_=>nodes, myVRP)
 
-  onePtMove.verbose = 1
+  val twoOpt = new TwoOpt(() => nodes, ()=>_=>nodes, myVRP)
 
-  onePtMove.doAllMoves(obj=myVRP.getObjective())
+  val search = BestSlopeFirst(List(onePtMove,twoOpt))
+  search.verbose = 1
+
+  search.doAllMoves(obj=myVRP.getObjective())
 
 }
 

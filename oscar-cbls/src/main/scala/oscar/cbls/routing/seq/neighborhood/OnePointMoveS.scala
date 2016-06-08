@@ -36,14 +36,14 @@ import oscar.cbls.search.core.EasyNeighborhood
  * @author yoann.guyot@cetic.be
  * @author Florent Ghilain (UMONS)
  */
-case class OnePointMoveS(nodesToMove: () => Iterable[Int],
-                         relevantNeighbors: () => Int => Iterable[Int],
-                         vrp:VRP,
-                         neighborhoodName: String = "OnePointMove",
-                         best: Boolean = false,
-                         hotRestart: Boolean = true,
-                         allPointsToMoveAreRouted:Boolean = true,
-                         allRelevantNeighborsAreRouted:Boolean = true) extends EasyNeighborhood[OnePointMoveSMove](best, neighborhoodName) {
+case class OnePointMove(nodesToMove: () => Iterable[Int],
+                        relevantNeighbors: () => Int => Iterable[Int],
+                        vrp:VRP,
+                        neighborhoodName: String = "OnePointMove",
+                        best: Boolean = false,
+                        hotRestart: Boolean = true,
+                        allPointsToMoveAreRouted:Boolean = true,
+                        allRelevantNeighborsAreRouted:Boolean = true) extends EasyNeighborhood[OnePointMoveMove](best, neighborhoodName) {
 
   val seq = vrp.seq
   val v = vrp.v
@@ -58,8 +58,7 @@ case class OnePointMoveS(nodesToMove: () => Iterable[Int],
       if (hotRestart && !best) HotRestart(nodesToMove(), startIndice)
       else nodesToMove()
 
-    vrp.seq.defineCurrentValueAsCheckpoint(true)
-    val explorationStart = vrp.seq.value
+    val explorationStart = vrp.seq.defineCurrentValueAsCheckpoint(true)
 
     def evalObjAndRollBack() : Int = {
       val a = obj.value
@@ -90,7 +89,7 @@ case class OnePointMoveS(nodesToMove: () => Iterable[Int],
                   case Some(positionOfNewPredecessor) =>
                     this.positionOfNewPredecessor = positionOfNewPredecessor
 
-                    encode(positionOfMovedPoint, positionOfNewPredecessor,true)
+                    doMove(positionOfMovedPoint, positionOfNewPredecessor)
 
                     if (evaluateCurrentMoveObjTrueIfStopRequired(evalObjAndRollBack())) {
                       startIndice = movedPoint + 1
@@ -110,14 +109,14 @@ case class OnePointMoveS(nodesToMove: () => Iterable[Int],
   var positionOfNewPredecessor:Int = 0
 
   override def instantiateCurrentMove(newObj: Int) =
-    OnePointMoveSMove(movedPoint, positionOfMovedPoint, newPredecessor, positionOfNewPredecessor, newObj, this, neighborhoodName)
+    OnePointMoveMove(movedPoint, positionOfMovedPoint, newPredecessor, positionOfNewPredecessor, newObj, this, neighborhoodName)
 
   override def reset(): Unit = {
     startIndice = 0
   }
 
-  def encode(positionOfMovedPoint:Int, positionOfNewPredecessor:Int, fast:Boolean) {
-    seq.move(positionOfMovedPoint,positionOfMovedPoint,positionOfNewPredecessor,fast)
+  def doMove(positionOfMovedPoint:Int, positionOfNewPredecessor:Int) {
+    seq.move(positionOfMovedPoint,positionOfMovedPoint,positionOfNewPredecessor,false)
   }
 }
 
@@ -130,16 +129,17 @@ case class OnePointMoveS(nodesToMove: () => Iterable[Int],
  * @author yoann.guyot@cetic.be
  * @author Florent Ghilain (UMONS)
  */
-case class OnePointMoveSMove(movedPoint: Int,movedPointPosition:Int,
-                             newPredecessor: Int,newPredecessorPosition:Int,
-                             override val objAfter: Int,
-                             override val neighborhood: OnePointMoveS,
-                             override val neighborhoodName: String = "OnePointMoveMove") extends VRPSMove(objAfter, neighborhood, neighborhoodName, neighborhood.vrp){
+case class OnePointMoveMove(movedPoint: Int,movedPointPosition:Int,
+                            newPredecessor: Int,newPredecessorPosition:Int,
+                            override val objAfter: Int,
+                            override val neighborhood: OnePointMove,
+                            override val neighborhoodName: String = "OnePointMoveMove")
+  extends VRPSMove(objAfter, neighborhood, neighborhoodName, neighborhood.vrp){
 
-  override def impactedPoints: List[Int] = List(movedPoint,newPredecessor)
+  override def impactedPoints: Iterable[Int] = List(movedPoint,newPredecessor)
 
   override def commit() {
-    neighborhood.encode(movedPointPosition, newPredecessorPosition,false)
+    neighborhood.doMove(movedPointPosition, newPredecessorPosition)
   }
 
   override def toString: String = (
