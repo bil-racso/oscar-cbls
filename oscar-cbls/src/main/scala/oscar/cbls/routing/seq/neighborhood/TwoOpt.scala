@@ -73,12 +73,17 @@ case class TwoOpt(segmentStartValues:()=>Iterable[Int],
 
     val relevantNeighborsNow = segmentEndValues()
 
+    val nodesOfVehicle:Array[SortedSet[Int]] = Array.fill(v)(null)
     for (segmentStartValue <- iterationSchemeOnZone if segmentStartValue >= v) {
       assert(vrp.isRouted(segmentStartValue),
         "The search zone should be restricted to routed.")
 
-      val nodesOnTheSameRouteAsSegmentStart = SortedSet.empty[Int] ++
-        vrp.getRouteOfVehicle(vrp.getVehicleOfNode(segmentStartValue))
+      val vehicleReachingSegmentStart = vrp.getVehicleOfNode(segmentStartValue)
+      if(nodesOfVehicle(vehicleReachingSegmentStart) == null){
+        nodesOfVehicle(vehicleReachingSegmentStart) = vrp.getNodesOfVehicle(vehicleReachingSegmentStart)
+      }
+
+      val nodesOnTheSameRouteAsSegmentStart = nodesOfVehicle(vehicleReachingSegmentStart)
 
       //TODO: this is not hte best choice of segmentEndValue.
       //we want the start to be close to its new successor, so the segment end should be the sucessor of the k-nearest point to the segment start

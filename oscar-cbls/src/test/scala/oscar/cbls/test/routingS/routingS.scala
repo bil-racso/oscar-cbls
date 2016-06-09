@@ -6,9 +6,8 @@ import oscar.cbls.routing.seq.neighborhood.{OnePointMove, TwoOpt}
 import oscar.cbls.search.combinators.{BestSlopeFirst, Profile}
 
 
-class MyRouting(n:Int,v:Int,symmetricDistance:Array[Array[Int]],m:Store)
-  extends VRP(n,v,m) with TotalConstantDistance with VRPObjective with ClosestNeighbors{
-
+class MyRouting(n:Int,v:Int,symmetricDistance:Array[Array[Int]],m:Store, maxPivot:Int)
+  extends VRP(n,v,m,maxPivot) with TotalConstantDistance with VRPObjective with ClosestNeighbors  with NodesOfVehicle{
 
   setSymmetricDistanceMatrix(symmetricDistance)
 
@@ -24,6 +23,8 @@ object routingS extends App{
   val n = 1000
   val v = 1
 
+  val maxPivot = 100
+
   println("VRP(n:" + n + " v:" + v + ")")
 
   val nodes = 0 until n
@@ -32,14 +33,14 @@ object routingS extends App{
 
   val model = new Store()//checker = Some(new ErrorChecker()))
 
-  val myVRP = new MyRouting(n,v,symmetricDistanceMatrix,model)
+  val myVRP = new MyRouting(n,v,symmetricDistanceMatrix,model,maxPivot)
 
   myVRP.setCircuit(nodes)
   model.close()
 
-  val onePtMove = Profile(new OnePointMove(() => nodes, ()=>myVRP.kNearest(400), myVRP))
+  val onePtMove = Profile(new OnePointMove(() => nodes, ()=>myVRP.kNearest(40), myVRP))
 
-  val twoOpt = Profile(new TwoOpt(() => nodes, ()=>myVRP.kNearest(400), myVRP))
+  val twoOpt = Profile(new TwoOpt(() => nodes, ()=>myVRP.kNearest(40), myVRP))
 
   val search = BestSlopeFirst(List(onePtMove,twoOpt))
   search.verbose = 1

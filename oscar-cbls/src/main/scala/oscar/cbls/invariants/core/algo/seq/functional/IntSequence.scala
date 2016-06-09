@@ -395,7 +395,7 @@ class ConcreteIntSequence(private[seq] val internalPositionToValue:RedBlackTreeM
   }
 
   def regularize(targetUniqueID : Int = this.uniqueID) : ConcreteIntSequence = {
-    //println("regularize")
+    //TODO: this could be much faster!
     var explorer = this.explorerAtPosition(0)
     var newInternalPositionToValues = RedBlackTreeMap.empty[Int]
     var newValueToInternalPositions = RedBlackTreeMap.empty[RedBlackTreeMap[Int]]

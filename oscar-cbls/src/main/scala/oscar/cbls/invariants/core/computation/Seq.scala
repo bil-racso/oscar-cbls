@@ -225,7 +225,7 @@ case class SeqUpdateLastNotified(value:IntSequence) extends SeqUpdate(value){
 
 object SeqUpdateDefineCheckpoint{
 
-  def apply(prev:SeqUpdate,activeCheckpoint:Boolean, maxPivot:Int = 10):SeqUpdateDefineCheckpoint = {
+  def apply(prev:SeqUpdate,activeCheckpoint:Boolean, maxPivot:Int):SeqUpdateDefineCheckpoint = {
     new SeqUpdateDefineCheckpoint(prev,activeCheckpoint, maxPivot)
   }
 
@@ -233,7 +233,7 @@ object SeqUpdateDefineCheckpoint{
 }
 
 class SeqUpdateDefineCheckpoint(mprev:SeqUpdate,val activeCheckpoint:Boolean, maxPivot:Int)
-  extends SeqUpdateWithPrev(mprev,mprev.newValue.regularizeToMaxPivot(maxPivot)){  //TODO: regularize not good here!
+  extends SeqUpdateWithPrev(mprev,mprev.newValue.regularizeToMaxPivot(maxPivot)){
   protected[computation]  def reverse(target : IntSequence, from : SeqUpdate) : SeqUpdate = mprev.reverse(target,from)
 
   protected[computation] def regularize(maxPivot:Int) : SeqUpdate = this
@@ -242,7 +242,7 @@ class SeqUpdateDefineCheckpoint(mprev:SeqUpdate,val activeCheckpoint:Boolean, ma
 
   def newPos2OldPos(newPos : Int) : Option[Int] = throw new Error("SeqUpdateDefineCheckpoint should not be queried for delta on moves")
 
-  protected[computation] def prepend(u : SeqUpdate) : SeqUpdate = SeqUpdateDefineCheckpoint(mprev.prepend(u),activeCheckpoint)
+  protected[computation] def prepend(u : SeqUpdate) : SeqUpdate = SeqUpdateDefineCheckpoint(mprev.prepend(u),activeCheckpoint,maxPivot)
 }
 
 object SeqUpdateRollBackToCheckpoint{
@@ -305,7 +305,7 @@ object CBLSSeqConst{
   def apply(seq:IntSequence):CBLSSeqConst = new CBLSSeqConst(seq.regularize())
 }
 
-class CBLSSeqVar(givenModel:Store, initialValue:IntSequence, val maxVal:Int = Int.MaxValue, n: String = null, maxPivot:Int = 10)
+class CBLSSeqVar(givenModel:Store, initialValue:IntSequence, val maxVal:Int = Int.MaxValue, n: String = null, maxPivot:Int = 150)
   extends ChangingSeqValue(initialValue, maxVal, maxPivot) with Variable{
   require(domain.min == 0)
   require(givenModel != null)
@@ -533,7 +533,7 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], val maxValue: Int, 
         val updatesSincePrevCheckpoint = pushCheckPoints(prev,true)
 
         recordNotifiedChangesForCheckpoint(updatesSincePrevCheckpoint)
-        recordNotifiedChangesForCheckpoint(SeqUpdateDefineCheckpoint(SeqUpdateLastNotified(updatesSincePrevCheckpoint.newValue),isActiveCheckpoint))
+        recordNotifiedChangesForCheckpoint(SeqUpdateDefineCheckpoint(SeqUpdateLastNotified(updatesSincePrevCheckpoint.newValue),isActiveCheckpoint,maxPivot))
 
         require(updates.newValue quickEquals updatesSincePrevCheckpoint.newValue)
         SeqUpdateLastNotified(updates.newValue)
@@ -545,7 +545,7 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], val maxValue: Int, 
   }
 
   protected def defineCurrentValueAsCheckpoint(checkPointIsActive:Boolean):IntSequence = {
-    toNotify = SeqUpdateDefineCheckpoint(toNotify.regularize(maxPivot),checkPointIsActive)
+    toNotify = SeqUpdateDefineCheckpoint(toNotify.regularize(maxPivot),checkPointIsActive,maxPivot)
     notifyChanged()
     toNotify.newValue
   }

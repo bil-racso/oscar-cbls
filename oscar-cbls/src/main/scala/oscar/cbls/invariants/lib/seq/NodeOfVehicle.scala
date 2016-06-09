@@ -38,7 +38,7 @@ class NodeOfVehicle(routes:ChangingSeqValue,
                     nodesOfVehicleOrUnrouted:Array[CBLSSetVar])  //there is actually one more vehicle, for unrouted nodes.
   extends Invariant() with SeqNotificationTarget{
 
-  val v = nodesOfVehicleOrUnrouted.length+1
+  val v = nodesOfVehicleOrUnrouted.length-1
   val n = routes.maxValue
 
   registerStaticAndDynamicDependency(routes)
@@ -111,6 +111,12 @@ class NodeOfVehicle(routes:ChangingSeqValue,
         false //impossible to go incremental
       case SeqUpdateLastNotified(value:IntSequence) =>
         true //we are starting from the previous value
+      case SeqUpdateDefineCheckpoint(prev,activeCheckpoint) =>
+        if(!digestUpdates(prev)) {
+          affect(computeValueFromScratch(changes.newValue))
+        }
+        saveCurrentCheckpoint(prev.newValue)
+        true
       case SeqUpdateRollBackToCheckpoint(checkpoint) =>
         if(checkpoint == null) false //it has been dropped following a Set
         else {

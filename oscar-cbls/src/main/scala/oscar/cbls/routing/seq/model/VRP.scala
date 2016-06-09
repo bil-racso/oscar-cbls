@@ -26,9 +26,9 @@ import scala.math._
  * @author renaud.delandtsheer@cetic.be
  * @author Florent Ghilain (UMONS)
  */
-class VRP(val n: Int, val v: Int, val m: Store) {
+class VRP(val n: Int, val v: Int, val m: Store, maxPivot:Int = 50) {
 
-  val seq = new CBLSSeqVar(m, IntSequence(0 until v), n-1, "routes")
+  val seq = new CBLSSeqVar(m, IntSequence(0 until v), n-1, "routes", maxPivot=maxPivot)
 
   /**unroutes all points of the VRP*/
   def unroute() {
@@ -102,6 +102,7 @@ class VRP(val n: Int, val v: Int, val m: Store) {
     acc.reverse
   }
 
+  def getNodesOfVehicle(vehicle:Int):SortedSet[Int] = SortedSet.empty[Int] ++ getRouteOfVehicle(vehicle)
 
   /**
    *
@@ -219,6 +220,8 @@ trait VRPObjective extends VRP {
   }
 
   def getObjective: Objective = objectiveFunction
+
+  this.addToStringInfo(()=>""+getObjective)
 }
 
 /**
@@ -325,3 +328,13 @@ trait StandardPenaltyForUnrouted extends AbstractPenaltyForUnrouted {
     unroutedPenalty = (standardWeight * (n - Size(seq))).setName("TotalPenaltyForUnroutedNodes (standard penalties)")
   }
 }
+
+trait NodesOfVehicle extends VRP{
+  val nodesOfVehicle=oscar.cbls.invariants.lib.seq.NodeOfVehicle(seq,v)
+
+  override def getNodesOfVehicle(vehicle:Int):SortedSet[Int] = nodesOfVehicle(vehicle).value
+}
+
+
+
+
