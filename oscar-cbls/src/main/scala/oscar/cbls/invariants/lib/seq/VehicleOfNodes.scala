@@ -11,7 +11,7 @@ object VehicleOfNodes{
     val model = routes.model
     val domain = routes.domain
 
-    val vehicleOrUnroutedOfNode = Array.tabulate(routes.maxValue)((node:Int) =>
+    val vehicleOrUnroutedOfNode = Array.tabulate(routes.maxValue+1)((node:Int) =>
       CBLSIntVar(model,
         v,
         domain,
@@ -37,7 +37,7 @@ class VehicleOfNodes(routes:ChangingSeqValue,
                      vehicleOrUnroutedOfNode:Array[CBLSIntVar])
   extends Invariant() with SeqNotificationTarget{
 
-  val n = routes.maxValue
+  val n = routes.maxValue + 1
 
   registerStaticAndDynamicDependency(routes)
   finishInitialization()
@@ -104,6 +104,12 @@ class VehicleOfNodes(routes:ChangingSeqValue,
         false //impossible to go incremental
       case SeqUpdateLastNotified(value:IntSequence) =>
         true //we are starting from the previous value
+      case SeqUpdateDefineCheckpoint(prev,activeCheckpoint) =>
+        if(!digestUpdates(prev)) {
+          computeAndAffectValueFromScratch(changes.newValue)
+        }
+        saveCurrentCheckpoint(prev.newValue)
+        true
       case SeqUpdateRollBackToCheckpoint(checkpoint) =>
         if(checkpoint == null) false //it has been dropped following a Set
         else {
@@ -191,7 +197,7 @@ class VehicleOfNodes(routes:ChangingSeqValue,
 
     if(savedCheckpoint != null) {
       val vehicleOfNodeFromScratch = computeValueFromScratch(savedCheckpoint)
-      for (node <- 0 to n) {
+      for (node <- 0 to n-1) {
         if(movedNodesSinceCheckpointArray(node)) {
           c.check(vehicleOfNodeFromScratch(node) == vehicleOfNodeAtCheckpointForMovedPoints(node))
         }

@@ -1,13 +1,14 @@
 package oscar.cbls.test.routingS
 
 import oscar.cbls.invariants.core.computation.Store
+import oscar.cbls.invariants.core.propagation.ErrorChecker
 import oscar.cbls.routing.seq.model._
 import oscar.cbls.routing.seq.neighborhood.{OnePointMove, TwoOpt}
 import oscar.cbls.search.combinators.{BestSlopeFirst, Profile}
 
 
 class MyRouting(n:Int,v:Int,symmetricDistance:Array[Array[Int]],m:Store, maxPivot:Int)
-  extends VRP(n,v,m,maxPivot) with TotalConstantDistance with VRPObjective with ClosestNeighbors  with NodesOfVehicle{
+  extends VRP(n,v,m,maxPivot) with TotalConstantDistance with VRPObjective with ClosestNeighbors  with NodesOfVehicle with VehicleOfNode{
 
   setSymmetricDistanceMatrix(symmetricDistance)
 
@@ -23,7 +24,7 @@ object routingS extends App{
   val n = 1000
   val v = 1
 
-  val maxPivot = 100
+  val maxPivot = 40
 
   println("VRP(n:" + n + " v:" + v + ")")
 
@@ -31,7 +32,7 @@ object routingS extends App{
 
   val symmetricDistanceMatrix = RoutingMatrixGenerator(n)._1
 
-  val model = new Store()//checker = Some(new ErrorChecker()))
+  val model = new Store() //checker = Some(new ErrorChecker()))
 
   val myVRP = new MyRouting(n,v,symmetricDistanceMatrix,model,maxPivot)
 
@@ -47,7 +48,9 @@ object routingS extends App{
 
   search.doAllMoves(obj=myVRP.getObjective)
 
+  println
   println(myVRP)
+  println
   println(search.profilingStatistics)
 }
 

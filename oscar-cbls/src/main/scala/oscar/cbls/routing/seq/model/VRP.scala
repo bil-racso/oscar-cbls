@@ -140,8 +140,10 @@ class VRP(val n: Int, val v: Int, val m: Store, maxPivot:Int = 50) {
     additionalStrings = a :: additionalStrings
   }
 
-  def onTheSameRoute(node1:Int,node2:Int):Boolean = false
+  def onTheSameRoute(node1:Int,node2:Int):Boolean = getVehicleOfNode(node1) == getVehicleOfNode(node2)
 
+  def next(node:Int):Int = RoutingConventionMethods.routingSuccVal2Val(node, seq.value, v)
+  def prev(node:Int):Int = RoutingConventionMethods.routingPredVal2Val(node, seq.value, v)
 }
 
 trait ConstantDistancePerVehicle extends TotalConstantDistance{
@@ -335,6 +337,10 @@ trait NodesOfVehicle extends VRP{
   override def getNodesOfVehicle(vehicle:Int):SortedSet[Int] = nodesOfVehicle(vehicle).value
 }
 
+trait VehicleOfNode extends VRP{
+  val vehicleOfNode = oscar.cbls.invariants.lib.seq.VehicleOfNodes(seq,v)
 
+  override def getVehicleOfNode(node:Int):Int = vehicleOfNode(node).value
+}
 
 

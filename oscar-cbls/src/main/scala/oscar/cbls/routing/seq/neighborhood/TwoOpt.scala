@@ -24,6 +24,7 @@
 
 package oscar.cbls.routing.seq.neighborhood
 
+import oscar.cbls.invariants.lib.seq.RoutingConventionMethods
 import oscar.cbls.routing.seq.model.VRP
 import oscar.cbls.search.algo.HotRestart
 import oscar.cbls.search.core.EasyNeighborhood
@@ -41,7 +42,7 @@ import scala.collection.immutable.SortedSet
  * @author Florent Ghilain (UMONS)
  * */
 case class TwoOpt(segmentStartValues:()=>Iterable[Int],
-                  segmentEndValues:()=>Int=>Iterable[Int],
+                  closeNeighbors:()=>Int=>Iterable[Int],
                   vrp: VRP,
                   neighborhoodName:String = "TwoOpt",
                   best:Boolean = false,
@@ -71,12 +72,14 @@ case class TwoOpt(segmentStartValues:()=>Iterable[Int],
       a
     }
 
-    val relevantNeighborsNow = segmentEndValues()
+    val relevantNeighborsNow = closeNeighbors()
 
     val nodesOfVehicle:Array[SortedSet[Int]] = Array.fill(v)(null)
     for (segmentStartValue <- iterationSchemeOnZone if segmentStartValue >= v) {
       assert(vrp.isRouted(segmentStartValue),
         "The search zone should be restricted to routed.")
+
+      val predecessorOfSegmentStartValue = vrp.prev(segmentStartValue)
 
       val vehicleReachingSegmentStart = vrp.getVehicleOfNode(segmentStartValue)
       if(nodesOfVehicle(vehicleReachingSegmentStart) == null){
@@ -85,10 +88,8 @@ case class TwoOpt(segmentStartValues:()=>Iterable[Int],
 
       val nodesOnTheSameRouteAsSegmentStart = nodesOfVehicle(vehicleReachingSegmentStart)
 
-      //TODO: this is not hte best choice of segmentEndValue.
-      //we want the start to be close to its new successor, so the segment end should be the sucessor of the k-nearest point to the segment start
       for (
-        segmentEndValue <- relevantNeighborsNow(segmentStartValue) if (
+        segmentEndValue <- relevantNeighborsNow(predecessorOfSegmentStartValue) if (
         segmentEndValue > segmentStartValue
           &&segmentEndValue >= v
           && vrp.isRouted(segmentEndValue)

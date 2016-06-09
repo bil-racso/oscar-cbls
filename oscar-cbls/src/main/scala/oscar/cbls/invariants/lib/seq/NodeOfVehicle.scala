@@ -163,14 +163,15 @@ class NodeOfVehicle(routes:ChangingSeqValue,
 
   private def affect(value:Array[SortedSet[Int]]){
     var currentV = 0
-    while(currentV < v){
+    while(currentV <= v){
       nodesOfVehicleOrUnrouted(currentV) := value(currentV)
       currentV += 1
     }
   }
 
   private def computeValueFromScratch(s:IntSequence):Array[SortedSet[Int]] = {
-    val toReturn = Array.fill(v)(SortedSet.empty[Int])
+    val toReturn = Array.fill(v+1)(SortedSet.empty[Int])
+    toReturn(v) = toReturn(v) ++ (v to n-1)
     val it = s.iterator
     var currentVehicle:Int = it.next()
     require(currentVehicle == 0)
@@ -184,19 +185,20 @@ class NodeOfVehicle(routes:ChangingSeqValue,
       }
       //continuing on the same vehicle
       toReturn(currentVehicle) = toReturn(currentVehicle) + node
+      toReturn(v) = toReturn(v) - node
     }
     toReturn
   }
 
   override def checkInternals(c : Checker) : Unit = {
     val values = computeValueFromScratch(routes.value)
-    for (vehicle <- 0 to v-1){
-      c.check(nodesOfVehicleOrUnrouted(vehicle) equals values(vehicle))
+    for (vehicle <- 0 to v){
+      c.check(nodesOfVehicleOrUnrouted(vehicle).value equals values(vehicle), Some("error on vehicle " + v + " output-correct:" + (nodesOfVehicleOrUnrouted(vehicle).value.diff(values(vehicle))) + " correct-output:" + (values(vehicle).diff(nodesOfVehicleOrUnrouted(vehicle).value))))
     }
 
     if(savedCheckpoint != null) {
       val nodesOfVehicleFromScratch = computeValueFromScratch(savedCheckpoint)
-      for (node <- 0 to n) {
+      for (node <- 0 to n-1) {
         if(movedNodesSinceCheckpointArray(node))
           c.check(nodesOfVehicleFromScratch(vehicleOfNodeAtCheckpointForMovedPoints(node)).contains(node))
       }
