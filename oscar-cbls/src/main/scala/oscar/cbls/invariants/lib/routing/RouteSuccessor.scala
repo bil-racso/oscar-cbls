@@ -1,7 +1,6 @@
-package oscar.cbls.invariants.lib.seq
+package oscar.cbls.invariants.lib.routing
 
-
-import oscar.cbls.invariants.core.algo.seq.functional.{IntSequenceExplorer, IntSequence}
+import oscar.cbls.invariants.core.algo.seq.functional.{IntSequence, IntSequenceExplorer}
 import oscar.cbls.invariants.core.computation._
 
 import scala.collection.immutable.SortedSet

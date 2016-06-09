@@ -1,4 +1,4 @@
-package oscar.cbls.invariants.lib.seq
+package oscar.cbls.invariants.lib.routing
 
 import oscar.cbls.invariants.core.algo.quick.QList
 import oscar.cbls.invariants.core.algo.seq.functional.IntSequence

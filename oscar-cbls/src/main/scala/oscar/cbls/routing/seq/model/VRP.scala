@@ -3,7 +3,8 @@ package oscar.cbls.routing.seq.model
 import oscar.cbls.invariants.core.algo.seq.functional.IntSequence
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.lib.numeric.Sum
-import oscar.cbls.invariants.lib.seq.{ConstantRoutingDistance, Content, RoutingConventionMethods, Size}
+import oscar.cbls.invariants.lib.routing.{VehicleOfNodes, RoutingConventionMethods, NodeOfVehicle, ConstantRoutingDistance}
+import oscar.cbls.invariants.lib.seq.{Content, Size}
 import oscar.cbls.invariants.lib.set.Diff
 import oscar.cbls.modeling.Algebra._
 import oscar.cbls.objective.Objective
@@ -332,13 +333,13 @@ trait StandardPenaltyForUnrouted extends AbstractPenaltyForUnrouted {
 }
 
 trait NodesOfVehicle extends VRP{
-  val nodesOfVehicle=oscar.cbls.invariants.lib.seq.NodeOfVehicle(seq,v)
+  val nodesOfVehicle=NodeOfVehicle(seq,v)
 
   override def getNodesOfVehicle(vehicle:Int):SortedSet[Int] = nodesOfVehicle(vehicle).value
 }
 
 trait VehicleOfNode extends VRP{
-  val vehicleOfNode = oscar.cbls.invariants.lib.seq.VehicleOfNodes(seq,v)
+  val vehicleOfNode = VehicleOfNodes(seq,v)
 
   override def getVehicleOfNode(node:Int):Int = vehicleOfNode(node).value
 }
