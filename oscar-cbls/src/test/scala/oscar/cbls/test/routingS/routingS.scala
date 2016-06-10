@@ -1,7 +1,6 @@
 package oscar.cbls.test.routingS
 
 import oscar.cbls.invariants.core.computation.Store
-import oscar.cbls.invariants.core.propagation.ErrorChecker
 import oscar.cbls.routing.seq.model._
 import oscar.cbls.routing.seq.neighborhood.{OnePointMove, TwoOpt}
 import oscar.cbls.search.combinators.{BestSlopeFirst, Profile}
@@ -28,13 +27,12 @@ object routingS extends App{
 
   println("VRP(n:" + n + " v:" + v + ")")
 
-  val nodes = 0 until n
-
   val symmetricDistanceMatrix = RoutingMatrixGenerator(n)._1
 
   val model = new Store() //checker = Some(new ErrorChecker()))
 
   val myVRP = new MyRouting(n,v,symmetricDistanceMatrix,model,maxPivot)
+  val nodes = myVRP.nodes
 
   myVRP.setCircuit(nodes)
   model.close()
@@ -53,7 +51,6 @@ object routingS extends App{
   println
   println(search.profilingStatistics)
 }
-
 
 object RoutingMatrixGenerator {
 

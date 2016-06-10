@@ -92,6 +92,7 @@ case class OnePointMove(nodesToMove: () => Iterable[Int],
                     doMove(positionOfMovedPoint, positionOfNewPredecessor)
 
                     if (evaluateCurrentMoveObjTrueIfStopRequired(evalObjAndRollBack())) {
+                      vrp.seq.releaseCurrentCheckpointAtCheckpoint()
                       startIndice = movedPoint + 1
                       return
                     }
@@ -101,7 +102,7 @@ case class OnePointMove(nodesToMove: () => Iterable[Int],
         }
       }
     }
-    //vrp.seq.rollbackToCurrentCheckpoint(explorationStart)
+    vrp.seq.releaseCurrentCheckpointAtCheckpoint()
   }
   var movedPoint:Int = 0
   var newPredecessor:Int = 0

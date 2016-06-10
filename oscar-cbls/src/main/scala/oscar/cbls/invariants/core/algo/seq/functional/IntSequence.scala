@@ -395,20 +395,20 @@ class ConcreteIntSequence(private[seq] val internalPositionToValue:RedBlackTreeM
   }
 
   def regularize(targetUniqueID : Int = this.uniqueID) : ConcreteIntSequence = {
-    //TODO: this could be much faster!
+    //TODO: maybe we can go faster with newValueToInternalPositions?
     var explorer = this.explorerAtPosition(0)
-    var newInternalPositionToValues = RedBlackTreeMap.empty[Int]
+    var newInternalPositionToValues:Array[(Int,Int)] = Array.fill[(Int,Int)](this.size)(null)
     var newValueToInternalPositions = RedBlackTreeMap.empty[RedBlackTreeMap[Int]]
     while (explorer match {
       case None => false
       case Some(position) =>
-        newInternalPositionToValues = newInternalPositionToValues.insert(position.position, position.value)
+        newInternalPositionToValues(position.position) = (position.position,position.value)
         newValueToInternalPositions = internalInsertToValueToInternalPositions(position.value, position.position, newValueToInternalPositions)
         explorer = position.next
         true
     }) {}
 
-    new ConcreteIntSequence(newInternalPositionToValues,
+    new ConcreteIntSequence(RedBlackTreeMap.makeFromSorted(newInternalPositionToValues),
       newValueToInternalPositions,
       PiecewiseLinearBijectionNaive.identity,
       newInternalPositionToValues.size, targetUniqueID)

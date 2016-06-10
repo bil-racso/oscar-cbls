@@ -412,7 +412,6 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], val maxValue: Int, 
         recordNotifiedChangesForCheckpoint(prev)
         if(notifiedSinceTopCheckpoint != null) notifiedSinceTopCheckpoint = SeqUpdateRemove(position,notifiedSinceTopCheckpoint,toNotify.newValue)
       case SeqUpdateRollBackToCheckpoint(checkpoint:IntSequence) =>
-        require(checkpoint quickEquals topCheckpoint)
         if(notifiedSinceTopCheckpoint != null) notifiedSinceTopCheckpoint = SeqUpdateLastNotified(checkpoint)
       case SeqUpdateSet(value:IntSequence) =>
         if(notifiedSinceTopCheckpoint != null) notifiedSinceTopCheckpoint = SeqUpdateSet(value)

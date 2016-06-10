@@ -102,11 +102,13 @@ case class TwoOpt(segmentStartValues:()=>Iterable[Int],
         doMove(segmentStartValue, segmentEndValue)
 
         if (evaluateCurrentMoveObjTrueIfStopRequired(evalObjAndRollBack())) {
+          vrp.seq.releaseCurrentCheckpointAtCheckpoint()
           startIndice = segmentStartValue + 1
           return
         }
       }
     }
+    vrp.seq.releaseCurrentCheckpointAtCheckpoint()
   }
 
   var segmentStartValueForInstantiate:Int = 0

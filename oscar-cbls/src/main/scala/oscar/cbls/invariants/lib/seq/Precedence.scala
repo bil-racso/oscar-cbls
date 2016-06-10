@@ -1,8 +1,6 @@
 package oscar.cbls.invariants.lib.seq
 
 /*
-
-
 import oscar.cbls.invariants.core.algo.quick.QList
 import oscar.cbls.invariants.core.algo.seq.functional.IntSequence
 import oscar.cbls.invariants.core.computation._
@@ -161,5 +159,4 @@ class Precedence(seq:ChangingSeqValue,
     }
   }
 }
-
 */
