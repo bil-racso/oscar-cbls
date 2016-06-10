@@ -39,7 +39,7 @@ class NodeOfVehicle(routes:ChangingSeqValue,
   extends Invariant() with SeqNotificationTarget{
 
   val v = nodesOfVehicleOrUnrouted.length-1
-  val n = routes.maxValue
+  val n = routes.maxValue+1
 
   registerStaticAndDynamicDependency(routes)
   finishInitialization()

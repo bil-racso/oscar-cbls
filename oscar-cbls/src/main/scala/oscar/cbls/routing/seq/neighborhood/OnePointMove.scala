@@ -58,11 +58,11 @@ case class OnePointMove(nodesToMove: () => Iterable[Int],
       if (hotRestart && !best) HotRestart(nodesToMove(), startIndice)
       else nodesToMove()
 
-    val explorationStart = vrp.seq.defineCurrentValueAsCheckpoint(true)
+    val startValue = seq.defineCurrentValueAsCheckpoint(true)
 
     def evalObjAndRollBack() : Int = {
       val a = obj.value
-      vrp.seq.rollbackToCurrentCheckpoint(explorationStart)
+      seq.rollbackToCurrentCheckpoint(startValue)
       a
     }
 
@@ -74,7 +74,7 @@ case class OnePointMove(nodesToMove: () => Iterable[Int],
 
       if(!vrp.isADepot(movedPoint)) {
         //depots cannot be moved at all.
-        seq.newValue.positionOfAnyOccurrence(movedPoint) match {
+        startValue.positionOfAnyOccurrence(movedPoint) match {
           case None => ;//was not routed, actually
           case Some(positionOfMovedPoint) =>
             this.positionOfMovedPoint = positionOfMovedPoint
@@ -84,7 +84,7 @@ case class OnePointMove(nodesToMove: () => Iterable[Int],
               newPredecessor = insertionPointIt.next()
               if (movedPoint != newPredecessor) {
 
-                seq.newValue.positionOfAnyOccurrence(newPredecessor) match {
+                startValue.positionOfAnyOccurrence(newPredecessor) match {
                   case None => ;
                   case Some(positionOfNewPredecessor) =>
                     this.positionOfNewPredecessor = positionOfNewPredecessor
@@ -92,7 +92,7 @@ case class OnePointMove(nodesToMove: () => Iterable[Int],
                     doMove(positionOfMovedPoint, positionOfNewPredecessor)
 
                     if (evaluateCurrentMoveObjTrueIfStopRequired(evalObjAndRollBack())) {
-                      vrp.seq.releaseCurrentCheckpointAtCheckpoint()
+                      seq.releaseCurrentCheckpointAtCheckpoint()
                       startIndice = movedPoint + 1
                       return
                     }
@@ -102,7 +102,7 @@ case class OnePointMove(nodesToMove: () => Iterable[Int],
         }
       }
     }
-    vrp.seq.releaseCurrentCheckpointAtCheckpoint()
+    seq.releaseCurrentCheckpointAtCheckpoint()
   }
   var movedPoint:Int = 0
   var newPredecessor:Int = 0

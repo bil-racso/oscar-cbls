@@ -3,7 +3,7 @@ package oscar.cbls.invariants.lib.routing
 import oscar.cbls.invariants.core.algo.quick.QList
 import oscar.cbls.invariants.core.algo.seq.functional.IntSequence
 import oscar.cbls.invariants.core.computation._
-import oscar.cbls.invariants.core.propagation.Checker
+import oscar.cbls.invariants.core.propagation.{ErrorChecker, Checker}
 
 object ConstantRoutingDistance {
 
@@ -67,7 +67,7 @@ case class ConstantRoutingDistance(routes:ChangingSeqValue,
   extends Invariant() with SeqNotificationTarget{
 
   val perVehicle:Boolean = distance.length >1
-  require(distance.length == 0 || distance.length == v)
+  require(distance.length == 1 || distance.length == v)
 
   registerStaticAndDynamicDependency(routes)
   finishInitialization()
@@ -91,7 +91,6 @@ case class ConstantRoutingDistance(routes:ChangingSeqValue,
 
   private def digestUpdates(changes:SeqUpdate,skipNewCheckpoints:Boolean):Boolean = {
     changes match {
-
       case SeqUpdateDefineCheckpoint(prev:SeqUpdate,isActive:Boolean) =>
         if(!digestUpdates(prev,true)){
           affect(computeValueFromScratch(changes.newValue))
@@ -306,10 +305,10 @@ case class ConstantRoutingDistance(routes:ChangingSeqValue,
   }
 
   private def affect(value:Array[Int]){
-    var currentV = 0
-    while(currentV < v){
+    var currentV = distance.length
+    while(currentV >0){
+      currentV -= 1
       distance(currentV) := value(currentV)
-      currentV += 1
     }
   }
 
@@ -379,7 +378,7 @@ case class ConstantRoutingDistance(routes:ChangingSeqValue,
       }
 
     }else{
-      c.check(distance(0).value == computeValueFromScratch(routes.value)(0))
+      c.check(distance(0).value == computeValueFromScratch(routes.value)(0),Some("distance(0).value="+distance(0).value + "should== computeValueFromScratch(routes.value)(0)" + computeValueFromScratch(routes.value)(0)))
       if(savedCheckpoint != null){
         c.check(savedValues(0) == computeValueFromScratch(savedCheckpoint)(0))
       }

@@ -342,6 +342,9 @@ trait VehicleOfNode extends VRP{
   val vehicleOfNode = VehicleOfNodes(seq,v)
 
   override def getVehicleOfNode(node:Int):Int = vehicleOfNode(node).value
+
+  override def isRouted(node: Int): Boolean = vehicleOfNode(node).value!=v
+
 }
 
 

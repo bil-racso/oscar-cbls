@@ -60,15 +60,15 @@ case class TwoOpt(segmentStartValues:()=>Iterable[Int],
    */
   override def exploreNeighborhood(): Unit = {
 
+    val seqValue = seq.defineCurrentValueAsCheckpoint(true)
+
     val iterationSchemeOnZone =
       if (hotRestart && !best) HotRestart(segmentStartValues(), startIndice)
       else segmentStartValues()
 
-    val explorationStart = vrp.seq.defineCurrentValueAsCheckpoint(true)
-
     def evalObjAndRollBack() : Int = {
       val a = obj.value
-      vrp.seq.rollbackToCurrentCheckpoint(explorationStart)
+      seq.rollbackToCurrentCheckpoint(seqValue)
       a
     }
 
@@ -79,9 +79,11 @@ case class TwoOpt(segmentStartValues:()=>Iterable[Int],
       assert(vrp.isRouted(segmentStartValue),
         "The search zone should be restricted to routed.")
 
-      val predecessorOfSegmentStartValue = vrp.prev(segmentStartValue)
+      val segmentStartPositionExplorer =seqValue.explorerAtAnyOccurrence(segmentStartValue).head
+      val segmentStartPosition = segmentStartPositionExplorer.position
+      val predecessorOfSegmentStartValue = segmentStartPositionExplorer.prev.head.value
 
-      val vehicleReachingSegmentStart = vrp.getVehicleOfNode(segmentStartValue)
+      val vehicleReachingSegmentStart = RoutingConventionMethods.searchVehicleReachingPosition(segmentStartPosition,seqValue,v)
       if(nodesOfVehicle(vehicleReachingSegmentStart) == null){
         nodesOfVehicle(vehicleReachingSegmentStart) = vrp.getNodesOfVehicle(vehicleReachingSegmentStart)
       }
@@ -89,33 +91,36 @@ case class TwoOpt(segmentStartValues:()=>Iterable[Int],
       val nodesOnTheSameRouteAsSegmentStart = nodesOfVehicle(vehicleReachingSegmentStart)
 
       for (
-        segmentEndValue <- relevantNeighborsNow(predecessorOfSegmentStartValue) if (
-        segmentEndValue > segmentStartValue
-          &&segmentEndValue >= v
-          && vrp.isRouted(segmentEndValue)
+        segmentEndValue <- relevantNeighborsNow(predecessorOfSegmentStartValue)
+        if (segmentEndValue >= v
           && nodesOnTheSameRouteAsSegmentStart.contains(segmentEndValue))
       ) {
 
-        segmentStartValueForInstantiate = segmentStartValue
-        segmentEndValueForInstantiate = segmentEndValue
+        val segmentEndPosition = seqValue.positionOfAnyOccurrence(segmentEndValue).head
 
-        doMove(segmentStartValue, segmentEndValue)
+        if(segmentEndPosition > segmentStartPosition) {
 
-        if (evaluateCurrentMoveObjTrueIfStopRequired(evalObjAndRollBack())) {
-          vrp.seq.releaseCurrentCheckpointAtCheckpoint()
-          startIndice = segmentStartValue + 1
-          return
+          segmentStartPositionForInstantiate = segmentStartPosition
+          segmentEndPositionForInstantiate = segmentEndPosition
+
+          doMove(segmentStartPosition, segmentEndPosition)
+
+          if (evaluateCurrentMoveObjTrueIfStopRequired(evalObjAndRollBack())) {
+            seq.releaseCurrentCheckpointAtCheckpoint()
+            startIndice = segmentStartValue + 1
+            return
+          }
         }
       }
     }
-    vrp.seq.releaseCurrentCheckpointAtCheckpoint()
+    seq.releaseCurrentCheckpointAtCheckpoint()
   }
 
-  var segmentStartValueForInstantiate:Int = 0
-  var segmentEndValueForInstantiate:Int = 0
+  var segmentStartPositionForInstantiate:Int = 0
+  var segmentEndPositionForInstantiate:Int = 0
 
   override def instantiateCurrentMove(newObj: Int) =
-    TwoOptMove(segmentStartValueForInstantiate, segmentEndValueForInstantiate, newObj, this, neighborhoodName)
+    TwoOptMove(segmentStartPositionForInstantiate, segmentEndPositionForInstantiate, newObj, this, neighborhoodName)
 
   def doMove(fromPositionIncluded:Int,toPositionIncluded:Int) {
     seq.flip(fromPositionIncluded,toPositionIncluded)
@@ -135,8 +140,7 @@ case class TwoOpt(segmentStartValues:()=>Iterable[Int],
  * @author yoann.guyot@cetic.be
  * @author Florent Ghilain (UMONS)
  * */
-case class TwoOptMove(
-                       segmentStartPosition:Int,
+case class TwoOptMove(segmentStartPosition:Int,
                        segmentEndPosition:Int,
                        override val objAfter: Int,
                        override val neighborhood:TwoOpt,

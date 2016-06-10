@@ -1,9 +1,12 @@
 package oscar.cbls.test.routingS
 
 import oscar.cbls.invariants.core.computation.Store
+import oscar.cbls.invariants.core.propagation.ErrorChecker
 import oscar.cbls.routing.seq.model._
 import oscar.cbls.routing.seq.neighborhood.{OnePointMove, TwoOpt}
 import oscar.cbls.search.combinators.{BestSlopeFirst, Profile}
+
+import scala.util.Random
 
 
 class MyRouting(n:Int,v:Int,symmetricDistance:Array[Array[Int]],m:Store, maxPivot:Int)
@@ -20,7 +23,7 @@ class MyRouting(n:Int,v:Int,symmetricDistance:Array[Array[Int]],m:Store, maxPivo
 
 object routingS extends App{
 
-  val n = 1000
+  val n = 10000
   val v = 1
 
   val maxPivot = 40
@@ -29,7 +32,7 @@ object routingS extends App{
 
   val symmetricDistanceMatrix = RoutingMatrixGenerator(n)._1
 
-  val model = new Store() //checker = Some(new ErrorChecker()))
+  val model = new Store()//checker = Some(new ErrorChecker()))
 
   val myVRP = new MyRouting(n,v,symmetricDistanceMatrix,model,maxPivot)
   val nodes = myVRP.nodes
@@ -42,7 +45,7 @@ object routingS extends App{
   val twoOpt = Profile(new TwoOpt(() => nodes, ()=>myVRP.kNearest(40), myVRP))
 
   val search = BestSlopeFirst(List(onePtMove,twoOpt))
-  search.verbose = 1
+  search.verbose = 1//verboseWithExtraInfo(1,()=>myVRP.toString)
 
   search.doAllMoves(obj=myVRP.getObjective)
 
@@ -56,8 +59,9 @@ object RoutingMatrixGenerator {
 
   def apply(N: Int, side: Int = 10000): (Array[Array[Int]],Array[(Int,Int)]) = {
 
+    val random = new Random(0)
     //we generate te cost distance matrix
-    def randomXY: Int = (math.random * side).toInt
+    def randomXY: Int = (random.nextFloat() * side).toInt
     val pointPosition: Array[(Int, Int)] = Array.tabulate(N)(w => (randomXY, randomXY))
 
     def distance(from: (Int, Int), to: (Int, Int)) =
