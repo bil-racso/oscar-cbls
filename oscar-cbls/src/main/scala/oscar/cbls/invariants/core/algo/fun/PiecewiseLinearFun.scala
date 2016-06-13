@@ -18,6 +18,41 @@ object PiecewiseLinearFun{
   }
 }
 
+class CachedPiecewiseLinearFun(f:PiecewiseLinearFun) extends PiecewiseLinearFun(f.transformation){
+
+  var cachedPivotF:LinearTransform = null
+  var cachedPivotStart:Int = 0
+  var cachedPivotEnd:Int = -1
+
+  override def apply(value:Int):Int = {
+    val toReturn = if(cachedPivotF != null && (cachedPivotStart <= value) && (value <= cachedPivotEnd)){
+      cachedPivotF(value)
+    }else if(cachedPivotF == null && cachedPivotEnd>=value){
+      value
+    }else {
+      transformation.biggestLowerOrEqual(value) match {
+        case None =>
+          cachedPivotEnd = transformation.smallestBiggerOrEqual(value) match {
+            case None => Int.MaxValue
+            case Some((kAbove, _)) => kAbove-1
+          }
+          value
+        case Some((k,pivot)) =>
+          cachedPivotStart = k
+          cachedPivotEnd = transformation.smallestBiggerOrEqual(value) match {
+            case None => Int.MaxValue
+            case Some((kAbove, _)) => kAbove-1
+          }
+          cachedPivotF = pivot.f
+          cachedPivotF(value)
+      }
+    }
+    assert(toReturn == super.apply(value))
+    toReturn
+  }
+}
+
+
 class PiecewiseLinearFun(private[fun] val transformation: RedBlackTreeMap[Pivot] = RedBlackTreeMap.empty) {
 
   def firstPivot:Option[(Int,Pivot)] = transformation.smallestBiggerOrEqual(Int.MinValue)

@@ -32,7 +32,7 @@ import RedBlackTreeMapLib._
 
 //must use trait here because of specialization, so we ensure that this trait is compiled into a java interface by avoiding method code altogether. in the trait.
 //as a consequence, there are duplicates in the classes implementing this trait.
-trait RedBlackTreeMap[@specialized(Int) V]{
+abstract class RedBlackTreeMap[@specialized(Int) V]{
 
   /* We could have required that K be <: Ordered[K], but this is
   actually less general than requiring an implicit parameter that can

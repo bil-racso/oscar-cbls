@@ -23,10 +23,10 @@ class MyRouting(n:Int,v:Int,symmetricDistance:Array[Array[Int]],m:Store, maxPivo
 
 object routingS extends App{
 
-  val n = 10000
+  val n = 1000
   val v = 1
 
-  val maxPivot = 40
+  val maxPivot = 50
 
   println("VRP(n:" + n + " v:" + v + ")")
 
@@ -73,3 +73,4 @@ object RoutingMatrixGenerator {
         n2 => distance(pointPosition(n1), pointPosition(n2)))),pointPosition)
   }
 }
+

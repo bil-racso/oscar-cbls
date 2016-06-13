@@ -1,7 +1,6 @@
 package oscar.cbls.invariants.core.algo.seq.functional
 
 import oscar.cbls.invariants.core.algo.fun.{LinearTransform, PiecewiseLinearBijectionNaive, Pivot}
-import oscar.cbls.invariants.core.algo.lazyIt.LazyFilter
 import oscar.cbls.invariants.core.algo.rb.{RBTMPosition, RedBlackTreeMap}
 
 import scala.collection.immutable.SortedSet
@@ -22,7 +21,6 @@ object IntSequence{
     PiecewiseLinearBijectionNaive.identity,
     0
   )
-
 
   implicit def toIterable(seq:IntSequence):IterableIntSequence = new IterableIntSequence(seq)
 
@@ -397,7 +395,7 @@ class ConcreteIntSequence(private[seq] val internalPositionToValue:RedBlackTreeM
   def regularize(targetUniqueID : Int = this.uniqueID) : ConcreteIntSequence = {
     //TODO: maybe we can go faster with newValueToInternalPositions?
     var explorer = this.explorerAtPosition(0)
-    var newInternalPositionToValues:Array[(Int,Int)] = Array.fill[(Int,Int)](this.size)(null)
+    val newInternalPositionToValues:Array[(Int,Int)] = Array.fill[(Int,Int)](this.size)(null)
     var newValueToInternalPositions = RedBlackTreeMap.empty[RedBlackTreeMap[Int]]
     while (explorer match {
       case None => false
@@ -411,7 +409,7 @@ class ConcreteIntSequence(private[seq] val internalPositionToValue:RedBlackTreeM
     new ConcreteIntSequence(RedBlackTreeMap.makeFromSorted(newInternalPositionToValues),
       newValueToInternalPositions,
       PiecewiseLinearBijectionNaive.identity,
-      newInternalPositionToValues.size, targetUniqueID)
+      newInternalPositionToValues.length, targetUniqueID)
   }
 
   override def commitPendingMoves : IntSequence = this
