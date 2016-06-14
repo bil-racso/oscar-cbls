@@ -63,7 +63,9 @@ abstract class IntSequence(protected[seq] val uniqueID:Int = IntSequence.getNewU
 
   def isEmpty : Boolean = size > 0
 
-  def iterator : Iterator[Int] = new IntSequenceIterator(this)
+  def iterator : Iterator[Int] = new IntSequenceIterator(this.explorerAtPosition(0))
+
+  def iterateFromAnyOcurrenceOfValue(value:Int):Iterator[Int] = new IntSequenceIterator(this.explorerAtAnyOccurrence(value))
 
   def iterable : Iterable[Int] = new IterableIntSequence(this)
 
@@ -431,8 +433,7 @@ class ConcreteIntSequence(private[seq] val internalPositionToValue:RedBlackTreeM
   override def unorderedContentNoDuplicate : List[Int] = valueToInternalPositions.keys
 }
 
-class IntSequenceIterator(s:IntSequence) extends Iterator[Int] {
-  var crawler = s.explorerAtPosition(0)
+class IntSequenceIterator(var crawler:Option[IntSequenceExplorer]) extends Iterator[Int] {
 
   override def hasNext : Boolean =
     crawler match{

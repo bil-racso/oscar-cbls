@@ -193,16 +193,14 @@ case class ConstantRoutingDistance(routes:ChangingSeqValue,
           val oldHopAfterAfter = distanceMatrix(afterValue)(oldSuccAfterValue)
 
           val newHopBeforeMovedSegment = distanceMatrix(afterValue)(if(flip) toValue else fromValue)
-          val newHopAfterMovedSegment = distanceMatrix(if(flip) toValue else fromValue)(oldSuccAfterValue)
+          val newHopAfterMovedSegment = distanceMatrix(if(flip) fromValue else toValue)(oldSuccAfterValue)
           val newHopReplacingSegment = distanceMatrix(oldPrevFromValue)(oldSuccToValue)
-
 
           if(!perVehicle){
             //not per vehicle, so no node cost to consider
-            val (deltaDistance) = if(distanceIsSymmetric || !flip) 0 else {
-              //there is a flip and distance is asymmetric
-              computeValueBetween(x.newValue, x.oldPosToNewPos(toIncluded).head,x.oldPosToNewPos(fromIncluded).head) - computeValueBetween(prev.newValue, fromIncluded, toIncluded)
-            }
+            val deltaDistance = if(distanceIsSymmetric || !flip) 0 //no delta on distance
+            else computeValueBetween(x.newValue, x.oldPosToNewPos(toIncluded).head,x.oldPosToNewPos(fromIncluded).head) - computeValueBetween(prev.newValue, fromIncluded, toIncluded)
+            //there is a flip and distance is asymmetric
 
             distance(0) :+= (
               newHopReplacingSegment + newHopBeforeMovedSegment + newHopAfterMovedSegment
@@ -393,7 +391,7 @@ case class ConstantRoutingDistance(routes:ChangingSeqValue,
       }
 
     }else{
-      c.check(distance(0).value == computeValueFromScratch(routes.value)(0),Some("distance(0).value="+distance(0).value + "should== computeValueFromScratch(routes.value)(0)" + computeValueFromScratch(routes.value)(0)))
+      c.check(distance(0).value == computeValueFromScratch(routes.value)(0),Some("distance(0).value="+distance(0).value + " should== computeValueFromScratch(routes.value)(0)" + computeValueFromScratch(routes.value)(0)))
       if(savedCheckpoint != null){
         c.check(savedValues(0) == computeValueFromScratch(savedCheckpoint)(0))
       }

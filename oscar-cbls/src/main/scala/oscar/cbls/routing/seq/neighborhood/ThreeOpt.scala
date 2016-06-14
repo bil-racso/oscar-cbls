@@ -24,11 +24,13 @@
  * ****************************************************************************
  */
 
-/*
+
 package oscar.cbls.routing.seq.neighborhood
 
-import oscar.cbls.routing.model._
-import oscar.cbls.search.algo.{HotRestart, Pairs}
+import oscar.cbls.invariants.lib.routing.RoutingConventionMethods
+import oscar.cbls.routing.seq.model.VRP
+import oscar.cbls.search.algo.{Pairs, HotRestart}
+import oscar.cbls.search.core.EasyNeighborhood
 
 /**
  * Removes three edges of routes, and rebuilds routes from the segments.
@@ -41,232 +43,146 @@ import oscar.cbls.search.algo.{HotRestart, Pairs}
  * @author yoann.guyot@cetic.be
  * @author Florent Ghilain (UMONS)
  */
-case class ThreeOpt(potentialInsertionPoints:()=>Iterable[Int],
-                    relevantNeighbors:()=>Int=>Iterable[Int],
-                    override val vrp: VRP with PositionInRouteAndRouteNr,
+case class ThreeOpt(potentialInsertionPoints:()=>Iterable[Int], //must be routed
+                    relevantNeighbors:()=>Int=>Iterable[Int], //must be routed
+                    vrp: VRP,
                     neighborhoodName:String = "ThreeOpt",
                     best:Boolean = false,
                     hotRestart:Boolean = true,
-                    KKIterationScheme:Boolean = true,
-                     skipOnePointMove:Boolean = false) extends EasyRoutingNeighborhood[ThreeOptMove](best,vrp,neighborhoodName) {
-
-  val REVERSE = true // this is a constant used for readability
+                    skipOnePointMove:Boolean = false,
+                    breakSymmetry:Boolean = true) extends EasyNeighborhood[ThreeOptMove](best,neighborhoodName) {
 
   //the indice to start with for the exploration
   var startIndice: Int = 0
 
-  override def exploreNeighborhood() {
-    if (KKIterationScheme) {
-      exploreNeighborhoodKK()
-    } else {
-      exploreNeighborhoodRouteExtension()
-    }
-  }
+  val v = vrp.v
+  val seq = vrp.seq
 
-  def exploreNeighborhoodKK(): Unit ={
+  def exploreNeighborhood(): Unit = {
+    val seqValue = seq.defineCurrentValueAsCheckpoint(true)
+
     val iterationSchemeOnZone =
       if (hotRestart && !best) HotRestart(potentialInsertionPoints(), startIndice)
       else potentialInsertionPoints()
 
-    cleanRecordedMoves()
-
-    val relevantNeighborsNow = relevantNeighbors()
-
-    for (insertionPoint <- iterationSchemeOnZone
-         if vrp.isRouted(insertionPoint)) {
-
-      require(isRecording, "VRP should be recording")
-
-      //TODO: we should search for relevant neighbors of the next point of insertion point for the end of the segment!
-      val otherNodes:List[List[(Int,Int)]] = relevantNeighborsNow(insertionPoint)
-        .filter((neighbor:Int) => vrp.isRouted(neighbor) && neighbor != insertionPoint)
-        .groupBy(vrp.routeNr(_).value)
-        .toList
-        .map(RelevantNodesOfRoute =>{
-          val pairsOfNodes = Pairs.makeAllUnsortedPairs(RelevantNodesOfRoute._2.toList)
-            .map({case (a,b) => if(vrp.positionInRoute(a).value < vrp.positionInRoute(b).value) (a,b) else (b,a)})
-            if(skipOnePointMove) pairsOfNodes.filter({case (a,b) => vrp.next(a).newValue != b})
-            else pairsOfNodes
-        })
-
-      for(listOfPositionSortedPairsToExplore <- otherNodes){
-        for((first,second) <- listOfPositionSortedPairsToExplore){
-          if(!vrp.isBetween(insertionPoint, first, second)
-            && !(vrp.next(insertionPoint).value == first)){
-
-            //TODO: this approach is slow, since we will reverse segments a lots of time.
-            //better to to segment moves alltogehter,and reversed segment moves afterwards
-            if(chooseBest3Opt(first, vrp.next(first).value, second, insertionPoint)){
-              startIndice = insertionPoint + 1
-              return
-            }
-          }
-        }
-      }
+    def evalObjAndRollBack() : Int = {
+      val a = obj.value
+      seq.rollbackToCurrentCheckpoint(seqValue)
+      a
     }
-  }
-
-  def exploreNeighborhoodRouteExtension(){
-    val iterationSchemeOnZone =
-      if (hotRestart && !best) HotRestart(potentialInsertionPoints(), startIndice)
-      else potentialInsertionPoints()
-
-    cleanRecordedMoves()
 
     val relevantNeighborsNow = relevantNeighbors()
 
-    // The insertion point is picked from the primaryNodeIterator.
-    for (insertionPoint <- iterationSchemeOnZone
-         if vrp.isRouted(insertionPoint)) {
+    val nodeToVehicle = vrp.getVehicleOfAllNodes
 
-      /*
-       * The segment predecessor point (beforeStart) is picked from the insertion point
-       * neighbors. It must not be the same as the insertion point, because the move would
-       * not change the route.
-       * 
-       * The segment start point is the successor of beforeStart, it must not be a depot, neither
-       * the same point.
-       */
-      for (beforeStart <- relevantNeighborsNow(insertionPoint)) {
-        if (beforeStart != insertionPoint) {
-          val segStartPoint = vrp.next(beforeStart).value
-          if (segStartPoint != beforeStart && !vrp.isADepot(segStartPoint)) {
+    for (insertionPoint <- iterationSchemeOnZone){
+      seqValue.positionOfAnyOccurrence(insertionPoint) match{
+        case None => //not routed?!
+        case Some(insertionPosition) =>
 
-            /**
-             * The segment end point is picked from the next nodes of its start point route.
-             */
-            var segEndPoint = vrp.next(segStartPoint).value
-            var afterEnd = vrp.next(segEndPoint).value
-            while (segEndPoint != beforeStart && !vrp.isADepot(segEndPoint)) {
-              // isBetween(i, b, a) checks i:[b, a[  (and i is in the same route as b and a)
-              // we can't test with afterEnd instead of segEndPoint because it would not work
-              // when afterEnd = beforeStart
-              if (!vrp.isBetween(insertionPoint, beforeStart, segEndPoint)
-                && insertionPoint != segEndPoint) {
+          val vehicleForInsertion = nodeToVehicle(insertionPoint)
 
-                if (chooseBest3Opt(beforeStart, segStartPoint, segEndPoint, insertionPoint)){
+          val relevantNeighbors = relevantNeighborsNow(insertionPoint)
+          val routedRelevantNeighbors = relevantNeighbors.filter((neighbor : Int) => nodeToVehicle(neighbor) != -1 && neighbor != insertionPoint && neighbor > v)
+
+          val routedRelevantNeighborsByVehicle = routedRelevantNeighbors.groupBy(nodeToVehicle).toList
+
+          for((vehicleOfMovedSegment,relevantNodes) <- routedRelevantNeighborsByVehicle){
+
+            val pairsOfNodesWithPosition = Pairs.makeAllSortedPairs(relevantNodes.map(node => (node,seqValue.positionOfAnyOccurrence(node).head)).toList)
+            val orderedPairsOfNode = pairsOfNodesWithPosition.map({case (a, b) => if (a._2 < b._2) (a, b) else (b, a)})
+
+            val relevantPairsToExplore = if (skipOnePointMove) orderedPairsOfNode.filter({case (a, b) => a._1 != b._1})
+            else orderedPairsOfNode
+
+            for (((segmentStart,segmentStartPosition), (segmentEnd,segmentEndPosition)) <- relevantPairsToExplore) {
+
+              if (nodeToVehicle(segmentStart) != vehicleForInsertion || insertionPosition < segmentStartPosition || segmentEndPosition < insertionPosition) {
+
+                segmentStartPositionForInstantiation = segmentStartPosition
+                segmentEndPositionForInstantiation = segmentEndPosition
+                insertionPointPositionForInstantiation = insertionPosition
+                insertionPointForInstantiation = insertionPoint
+
+                //skip this if same vehicle, no flip, and to the left
+
+                if(!breakSymmetry || vehicleForInsertion != vehicleOfMovedSegment || insertionPosition > segmentStartPosition){
+                  //try move no flip
+                  flipForInstantiation = false
+                  doMove(insertionPosition, segmentStartPosition, segmentEndPosition, false)
+
+                  if (evaluateCurrentMoveObjTrueIfStopRequired(evalObjAndRollBack())) {
+                    seq.releaseCurrentCheckpointAtCheckpoint()
+                    startIndice = insertionPoint + 1
+                    return
+                  }
+                }
+
+                //try move with flip
+                flipForInstantiation = true
+                doMove(insertionPosition, segmentStartPosition, segmentEndPosition, true)
+
+                if (evaluateCurrentMoveObjTrueIfStopRequired(evalObjAndRollBack())) {
+                  seq.releaseCurrentCheckpointAtCheckpoint()
                   startIndice = insertionPoint + 1
                   return
                 }
               }
-
-              segEndPoint = afterEnd
-              afterEnd = vrp.next(segEndPoint).value
             }
           }
-        }
       }
     }
+    seq.releaseCurrentCheckpointAtCheckpoint()
   }
 
-  /**
-   * returns true if search can be stopped
-   */
-  def chooseBest3Opt(beforeStart: Int, segStartPoint: Int, segEndPoint: Int,
-                     insertionPoint: Int): Boolean = {
-
-    this.beforeStart = beforeStart
-    this.segEndPoint = segEndPoint
-    this.insertionPoint = insertionPoint
-    this.reverse3Opt = false
-
-    /**
-     * FIRST, we do a simple 3-opt move,
-     * with UNDO DEACTIVATED,
-     * and we save if such a move is improving.
-     */
-    encodeMove(beforeStart, segEndPoint, insertionPoint, !REVERSE)
-    commit(false)
-    val objAfterFirstMove = obj()
-
-    /**
-     * SECOND, we reverse the moved segment, in place,
-     * with UNDO ACTIVATED, so that we can go back to the previous move if necessary
-     */
-    reverseSegmentInPlace(insertionPoint, segEndPoint) // REVERSE
-    commit(false)
-    this.reverse3Opt = true
-    val objAfterSecondMove = obj()
-
-    val FirstMoveIsBestMove = objAfterFirstMove < objAfterSecondMove
-    val bestObjAfter = if(FirstMoveIsBestMove) objAfterFirstMove else objAfterSecondMove
-    reverse3Opt = !FirstMoveIsBestMove
-
-    //put everything back to place, since we three-opted and reversed, the rollback performs the reverse
-    encodeMove(insertionPoint, segStartPoint, beforeStart, REVERSE)
-    commit(false)
-
-    evaluateCurrentMoveObjTrueIfStopRequired(bestObjAfter)
-  }
-
-  var beforeStart:Int = 0
-  var segEndPoint:Int = 0
-  var insertionPoint:Int = 0
-  var reverse3Opt:Boolean = false
+  var segmentStartPositionForInstantiation:Int = 0
+  var segmentEndPositionForInstantiation:Int = 0
+  var insertionPointPositionForInstantiation:Int = 0
+  var insertionPointForInstantiation:Int = 0
+  var flipForInstantiation:Boolean = false
 
   override def instantiateCurrentMove(newObj: Int) =
-    ThreeOptMove(beforeStart, segEndPoint, insertionPoint,
-      reverse3Opt, newObj, this, neighborhoodName)
+    ThreeOptMove(segmentStartPositionForInstantiation,
+      segmentEndPositionForInstantiation,
+      insertionPointPositionForInstantiation,
+      insertionPointForInstantiation,
+      flipForInstantiation,
+      newObj,
+      this,
+      neighborhoodName)
 
   //this resets the internal state of the Neighborhood
   override def reset(){
     startIndice = 0
   }
 
-  /**
-   * Do a 3-opt move which is : cuts a segment and inserts it (reversed if necessary)
-   * in another place.
-   *
-   * beforeStart->[...->segEndPoint]
-   * becomes
-   * insertionPoint->[...->segEndPoint]
-   * or
-   * insertionPoint->[segEndPoint->...]
-   */
-  def encodeMove(beforeStart: Int, segEndPoint: Int, insertionPoint: Int,
-                 reverseSegment: Boolean) {
-    cleanRecordedMoves()
-    var seg = cut(beforeStart, segEndPoint)
-    if (reverseSegment) {
-      seg = reverse(seg)
-    }
-    insert(seg, insertionPoint)
+  def doMove(insertionPosition: Int, segmentStartPosition: Int, segmentEndPosition: Int, flip: Boolean) {
+    seq.move(segmentStartPosition,segmentEndPosition,insertionPosition,flip)
   }
 }
 
 
-/**
- * Models a three-opt-move operator of a given VRP problem.
- * @param beforeStart the predecessor of the moved segment.
- * @param segEndPoint the end of the moved segment.
- * @param insertionPoint the place where to insert the moved segment.
- * @param reverseSegment true if the segment will be inverted before being inserted
- * @param objAfter the objective value if we performed this three-opt-move operator.
- * @param neighborhood the originating neighborhood
- * @author renaud.delandtsheer@cetic.be
- * @author yoann.guyot@cetic.be
- * @author Florent Ghilain (UMONS)
- */
-case class ThreeOptMove(beforeStart: Int,
-                        segEndPoint: Int,
-                        insertionPoint: Int,
-                        reverseSegment: Boolean,
+case class ThreeOptMove(segmentStartPosition:Int,
+                        segmentEndPosition:Int,
+                        insertionPointPosition: Int,
+                        insertionPoint:Int,
+                        flipSegment: Boolean,
                         override val objAfter: Int,
                         override val neighborhood:ThreeOpt,
                         override val neighborhoodName:String = "ThreeOptMove")
-  extends VRPMove(objAfter, neighborhood, neighborhoodName){
+  extends VRPSMove(objAfter, neighborhood, neighborhoodName,neighborhood.vrp){
 
-  override def impactedPoints: List[Int] = List(beforeStart,segEndPoint,insertionPoint)
+  override def impactedPoints: Iterable[Int] =  neighborhood.vrp.seq.value.valuesBetweenPositions(segmentStartPosition,segmentEndPosition) + insertionPoint
 
   // overriding methods
-  override def encodeMove() {
-    neighborhood.encodeMove(beforeStart, segEndPoint, insertionPoint, reverseSegment)
+  override def commit() {
+    neighborhood.doMove(insertionPointPosition, segmentStartPosition, segmentEndPosition, flipSegment)
   }
 
   override def toString: String =
-    (neighborhoodNameToString + "TreeOpt(beforeSegStart:" + beforeStart
-      + "; end:" + segEndPoint
-      + "; insertAfter:" + insertionPoint
-      + "; reverse:" + reverseSegment + objToString + ")")
+    neighborhoodNameToString + "TreeOpt(segmentStartPosition:" + segmentStartPosition +
+      " segmentEndPosition:" + segmentEndPosition +
+      " insertionPointPosition:" + insertionPointPosition +
+      " insertionPoint:" + insertionPoint +
+      (if(flipSegment) " flip" else " noFlip") + objToString + ")"
 }
-*/

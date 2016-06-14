@@ -18,8 +18,9 @@ package oscar.cbls.test.routingS
 import oscar.cbls.invariants.core.computation.Store
 import oscar.cbls.invariants.core.propagation.ErrorChecker
 import oscar.cbls.routing.seq.model._
-import oscar.cbls.routing.seq.neighborhood.{OnePointMove, TwoOpt}
+import oscar.cbls.routing.seq.neighborhood.{ThreeOpt, OnePointMove, TwoOpt}
 import oscar.cbls.search.combinators.{BestSlopeFirst, Profile}
+import oscar.cbls.search.core.EasyNeighborhood
 
 import scala.util.Random
 
@@ -42,13 +43,13 @@ object routingS extends App{
   val n = 1000
   val v = 1
 
-  val maxPivot = 50
+  val maxPivot = 40
 
   println("VRP(n:" + n + " v:" + v + ")")
 
   val symmetricDistanceMatrix = RoutingMatrixGenerator(n)._1
 
-  val model = new Store()//checker = Some(new ErrorChecker()))
+  val model = new Store() //checker = Some(new ErrorChecker()))
 
   val myVRP = new MyRouting(n,v,symmetricDistanceMatrix,model,maxPivot)
   val nodes = myVRP.nodes
@@ -60,8 +61,11 @@ object routingS extends App{
 
   val twoOpt = Profile(new TwoOpt(() => nodes, ()=>myVRP.kNearest(40), myVRP))
 
-  val search = BestSlopeFirst(List(onePtMove,twoOpt))
-  search.verbose = 1//verboseWithExtraInfo(1,()=>myVRP.toString)
+  def threeOpt(k:Int, breakSym:Boolean) = Profile(new ThreeOpt(() => nodes, ()=>myVRP.kNearest(k), myVRP,breakSymmetry = breakSym, neighborhoodName = "ThreeOpt(k=" + k + ")"))
+
+  val search = BestSlopeFirst(List(onePtMove,twoOpt,threeOpt(10,false))) exhaust threeOpt(40,true)
+  search.verbose = 1 //verboseWithExtraInfo(1,()=>myVRP.toString)
+  search.paddingLength = 200
 
   search.doAllMoves(obj=myVRP.getObjective)
 

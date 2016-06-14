@@ -133,6 +133,38 @@ class VRP(val n: Int, val v: Int, val m: Store, maxPivot:Int = 50) {
     }
   }
 
+  def getVehicleOfAllNodes:Array[Int] = {
+    val nodeToVehicle = Array.fill(n)(v)
+    val it = seq.value.iterator
+    var currentVehicle = it.next
+    nodeToVehicle(0) = 0
+    while(it.hasNext){
+      val node = it.next()
+      if(node < v){
+        currentVehicle = node
+      }
+      nodeToVehicle(node) = currentVehicle
+    }
+    nodeToVehicle
+  }
+
+  def getRoutePositionOfAllNode:Array[Int] = {
+    val routePosition = Array.fill(n)(-1)
+    val it = seq.value.iterator
+    routePosition(0) = 0
+    var currentRoutePosition = 0
+    it.next
+    while(it.hasNext){
+      val node = it.next()
+      if(node < v){
+        currentRoutePosition = 0
+      }else {
+        currentRoutePosition += 1
+      }
+      routePosition(node) = currentRoutePosition
+    }
+    routePosition
+  }
 
   /**
    * Redefine the toString method.
@@ -197,6 +229,7 @@ trait TotalConstantDistance extends VRP{
 
   def setSymmetricDistanceMatrix(symmetricDistanceMatrix:Array[Array[Int]]){
     require(totalDistance == null)
+    assert(ConstantRoutingDistance.isDistanceSymmetric(symmetricDistanceMatrix))
     this.distanceMatrix = distanceMatrix
     this.matrixIsSymmetric = true
     totalDistance = ConstantRoutingDistance(seq, v ,false,symmetricDistanceMatrix,true)(0)

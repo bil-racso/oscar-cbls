@@ -15,12 +15,28 @@ package oscar.cbls.invariants.lib.routing
   * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
   ******************************************************************************/
 
+import oscar.cbls.invariants.core.algo.rb.RedBlackTreeMap
 import oscar.cbls.invariants.core.algo.seq.functional.IntSequence
 
 /**
  * Created by rdl on 11-05-16.
  */
 object RoutingConventionMethods {
+
+  def batchVehicleReachingPosition(seq:IntSequence,v:Int):(Int=>Option[Int]) = {
+    val vehiclePositionArray:Array[(Int,Int)] =
+      Array.tabulate(v)(vehicle => (seq.positionOfAnyOccurrence(vehicle).head, vehicle))
+
+    val vehiclePositionRB = RedBlackTreeMap.makeFromSorted(vehiclePositionArray)
+
+    def findVehicleReachingPosition(position:Int):Option[Int] = {
+      vehiclePositionRB.biggestLowerOrEqual(position) match{
+        case None => None
+        case Some((vpostion,vehicle)) => Some(vehicle)
+      }
+    }
+    findVehicleReachingPosition
+  }
 
   def searchVehicleReachingPosition(position:Int, seq:IntSequence, v:Int):Int = {
     var upperVehicle = v-1
