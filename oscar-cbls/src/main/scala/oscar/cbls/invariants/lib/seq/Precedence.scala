@@ -1,5 +1,5 @@
 package oscar.cbls.invariants.lib.seq
-
+/*
 /*******************************************************************************
   * OscaR is free software: you can redistribute it and/or modify
   * it under the terms of the GNU Lesser General Public License as published by
@@ -15,8 +15,6 @@ package oscar.cbls.invariants.lib.seq
   * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
   ******************************************************************************/
 
-
-/*
 import oscar.cbls.invariants.core.algo.quick.QList
 import oscar.cbls.invariants.core.algo.seq.functional.IntSequence
 import oscar.cbls.invariants.core.computation._
@@ -36,13 +34,11 @@ import scala.collection.immutable.{SortedMap, SortedSet}
  */
 class Precedence(seq:ChangingSeqValue,
                  beforeAfter:List[(Int,Int)],
-                 valuesInvolvedInViolation:CBLSSetVar,
                  violation:CBLSIntVar)
   extends Invariant()
   with SeqNotificationTarget{
 
   registerStaticAndDynamicDependency(seq)
-  valuesInvolvedInViolation.setDefiningInvariant(this)
   violation.setDefiningInvariant(this)
   finishInitialization()
 
@@ -175,5 +171,4 @@ class Precedence(seq:ChangingSeqValue,
     }
   }
 }
-
 */

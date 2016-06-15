@@ -56,7 +56,7 @@ case class ThreeOpt(potentialInsertionPoints:()=>Iterable[Int], //must be routed
   var startIndice: Int = 0
 
   val v = vrp.v
-  val seq = vrp.seq
+  val seq = vrp.routes
 
   def exploreNeighborhood(): Unit = {
     val seqValue = seq.defineCurrentValueAsCheckpoint(true)
@@ -172,7 +172,7 @@ case class ThreeOptMove(segmentStartPosition:Int,
                         override val neighborhoodName:String = "ThreeOptMove")
   extends VRPSMove(objAfter, neighborhood, neighborhoodName,neighborhood.vrp){
 
-  override def impactedPoints: Iterable[Int] =  neighborhood.vrp.seq.value.valuesBetweenPositions(segmentStartPosition,segmentEndPosition) + insertionPoint
+  override def impactedPoints: Iterable[Int] =  neighborhood.vrp.routes.value.valuesBetweenPositions(segmentStartPosition,segmentEndPosition) + insertionPoint
 
   // overriding methods
   override def commit() {

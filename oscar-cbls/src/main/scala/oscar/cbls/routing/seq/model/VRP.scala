@@ -44,11 +44,11 @@ import scala.math._
  */
 class VRP(val n: Int, val v: Int, val m: Store, maxPivot:Int = 50) {
 
-  val seq = new CBLSSeqVar(m, IntSequence(0 until v), n-1, "routes", maxPivot=maxPivot)
+  val routes = new CBLSSeqVar(m, IntSequence(0 until v), n-1, "routes", maxPivot=maxPivot)
 
   /**unroutes all points of the VRP*/
   def unroute() {
-    seq := IntSequence(0 until v)
+    routes := IntSequence(0 until v)
   }
 
   /**
@@ -72,7 +72,7 @@ class VRP(val n: Int, val v: Int, val m: Store, maxPivot:Int = 50) {
    * @param n the point queried.
    * @return true if the point is still routed, else false.
    */
-  def isRouted(n: Int): Boolean = {seq.value.contains(n)}
+  def isRouted(n: Int): Boolean = {routes.value.contains(n)}
 
   /**
    * This function is intended to be used for testing only.
@@ -80,8 +80,8 @@ class VRP(val n: Int, val v: Int, val m: Store, maxPivot:Int = 50) {
    * 1 -> 2 -> 3 -> 4 (-> 1)
    */
   def setCircuit(nodes: Iterable[Int]): Unit = {
-    seq := IntSequence(nodes)
-    for(v <- 0 until v) require(seq.newValue.contains(v))
+    routes := IntSequence(nodes)
+    for(v <- 0 until v) require(routes.newValue.contains(v))
   }
 
   /**
@@ -107,7 +107,7 @@ class VRP(val n: Int, val v: Int, val m: Store, maxPivot:Int = 50) {
    */
   def getRouteOfVehicle(vehicle:Int):List[Int] = {
     require(vehicle < v)
-    var currentVExplorer = seq.newValue.explorerAtAnyOccurrence(vehicle).head.next
+    var currentVExplorer = routes.newValue.explorerAtAnyOccurrence(vehicle).head.next
     var acc:List[Int] = List(vehicle)
     while (currentVExplorer match{
       case Some(x) if x.value >= v =>
@@ -127,16 +127,16 @@ class VRP(val n: Int, val v: Int, val m: Store, maxPivot:Int = 50) {
    * @return the vehicle reachingthe node, v is it is unrouted
    */
   def getVehicleOfNode(node:Int):Int = {
-    val routes = seq.value
-    routes.positionOfAnyOccurrence(node) match{
+    val routeValue = routes.value
+    routeValue.positionOfAnyOccurrence(node) match{
       case None => v
-      case Some(position) => RoutingConventionMethods.searchVehicleReachingPosition(position,routes,v)
+      case Some(position) => RoutingConventionMethods.searchVehicleReachingPosition(position,routeValue,v)
     }
   }
 
   def getVehicleOfAllNodes:Array[Int] = {
     val nodeToVehicle = Array.fill(n)(v)
-    val it = seq.value.iterator
+    val it = routes.value.iterator
     var currentVehicle = it.next
     nodeToVehicle(0) = 0
     while(it.hasNext){
@@ -151,7 +151,7 @@ class VRP(val n: Int, val v: Int, val m: Store, maxPivot:Int = 50) {
 
   def getRoutePositionOfAllNode:Array[Int] = {
     val routePosition = Array.fill(n)(-1)
-    val it = seq.value.iterator
+    val it = routes.value.iterator
     routePosition(0) = 0
     var currentRoutePosition = 0
     it.next
@@ -191,8 +191,8 @@ class VRP(val n: Int, val v: Int, val m: Store, maxPivot:Int = 50) {
 
   def onTheSameRoute(node1:Int,node2:Int):Boolean = getVehicleOfNode(node1) == getVehicleOfNode(node2)
 
-  def next(node:Int):Int = RoutingConventionMethods.routingSuccVal2Val(node, seq.value, v)
-  def prev(node:Int):Int = RoutingConventionMethods.routingPredVal2Val(node, seq.value, v)
+  def next(node:Int):Int = RoutingConventionMethods.routingSuccVal2Val(node, routes.value, v)
+  def prev(node:Int):Int = RoutingConventionMethods.routingPredVal2Val(node, routes.value, v)
 }
 
 trait ConstantDistancePerVehicle extends TotalConstantDistance{
@@ -202,7 +202,7 @@ trait ConstantDistancePerVehicle extends TotalConstantDistance{
     this.distanceMatrix = distanceMatrix
     this.matrixIsSymmetric = true
     require(distancePerVehicle == null)
-    distancePerVehicle = ConstantRoutingDistance(seq, v ,false,symmetricDistanceMatrix,true)
+    distancePerVehicle = ConstantRoutingDistance(routes, v ,false,symmetricDistanceMatrix,true)
     totalDistance = Sum(distancePerVehicle)
   }
 
@@ -210,7 +210,7 @@ trait ConstantDistancePerVehicle extends TotalConstantDistance{
     this.distanceMatrix = distanceMatrix
     this.matrixIsSymmetric = false
     require(distancePerVehicle == null)
-    distancePerVehicle = ConstantRoutingDistance(seq, v ,false,asymetricDistanceMatrix,false)
+    distancePerVehicle = ConstantRoutingDistance(routes, v ,false,asymetricDistanceMatrix,false)
     totalDistance = Sum(distancePerVehicle)
   }
 }
@@ -233,14 +233,14 @@ trait TotalConstantDistance extends VRP{
     assert(ConstantRoutingDistance.isDistanceSymmetric(symmetricDistanceMatrix))
     this.distanceMatrix = distanceMatrix
     this.matrixIsSymmetric = true
-    totalDistance = ConstantRoutingDistance(seq, v ,false,symmetricDistanceMatrix,true)(0)
+    totalDistance = ConstantRoutingDistance(routes, v ,false,symmetricDistanceMatrix,true)(0)
   }
 
   def setAsymmetricDistanceMatrix(asymetricDistanceMatrix:Array[Array[Int]]){
     require(totalDistance == null)
     this.distanceMatrix = distanceMatrix
     this.matrixIsSymmetric = false
-    totalDistance = ConstantRoutingDistance(seq, v ,false,asymetricDistanceMatrix,false)(0)
+    totalDistance = ConstantRoutingDistance(routes, v ,false,asymetricDistanceMatrix,false)(0)
   }
 }
 
@@ -347,7 +347,7 @@ trait Unrouted extends VRP{
   /**
    * the data structure set which maintains the unrouted nodes.
    */
-  val unrouted = Diff(CBLSSetConst(SortedSet(nodes:_*)),Content(seq)).setName("unrouted nodes")
+  val unrouted = Diff(CBLSSetConst(SortedSet(nodes:_*)),Content(routes)).setName("unrouted nodes")
   m.registerForPartialPropagation(unrouted)
 
   override def unroutedNodes : Iterable[Int] = unrouted.value
@@ -377,18 +377,22 @@ trait DetailedPenaltyForUnrouted extends AbstractPenaltyForUnrouted with Unroute
 trait StandardPenaltyForUnrouted extends AbstractPenaltyForUnrouted {
   def setStandardUnroutedPenaltyWeight(standardWeight:Int){
     require(unroutedPenalty == null)
-    unroutedPenalty = (standardWeight * (n - Size(seq))).setName("TotalPenaltyForUnroutedNodes (standard penalties)")
+    unroutedPenalty = (standardWeight * (n - Size(routes))).setName("TotalPenaltyForUnroutedNodes (standard penalties)")
   }
 }
 
-trait NodesOfVehicle extends VRP{
-  val nodesOfVehicle=NodeOfVehicle(seq.createClone(),v)
+trait CloneOfRouteForLightPartialPropagation extends VRP{
+  val cloneOfRoute = routes.createClone()
+}
+
+trait NodesOfVehicle extends CloneOfRouteForLightPartialPropagation{
+  val nodesOfVehicle=NodeOfVehicle(cloneOfRoute,v)
 
   override def getNodesOfVehicle(vehicle:Int):SortedSet[Int] = nodesOfVehicle(vehicle).value
 }
 
-trait VehicleOfNode extends VRP{
-  val vehicleOfNode = VehicleOfNodes(seq.createClone(),v)
+trait VehicleOfNode extends CloneOfRouteForLightPartialPropagation{
+  val vehicleOfNode = VehicleOfNodes(cloneOfRoute,v)
 
   override def getVehicleOfNode(node:Int):Int = vehicleOfNode(node).value
 

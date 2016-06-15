@@ -26,7 +26,7 @@ abstract class VRPSMove(override val objAfter: Int,
                        override val neighborhoodName:String = null, vrp:VRP)
   extends Move(objAfter, neighborhoodName) with HotSpottingInfo{
 
-  override def touchedVariables: List[Variable] = List(vrp.seq)
+  override def touchedVariables: List[Variable] = List(vrp.routes)
 }
 
 abstract class EasyRoutingSNeighborhood extends EasyNeighborhood{

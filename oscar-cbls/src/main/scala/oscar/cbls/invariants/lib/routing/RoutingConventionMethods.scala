@@ -18,9 +18,6 @@ package oscar.cbls.invariants.lib.routing
 import oscar.cbls.invariants.core.algo.rb.RedBlackTreeMap
 import oscar.cbls.invariants.core.algo.seq.functional.IntSequence
 
-/**
- * Created by rdl on 11-05-16.
- */
 object RoutingConventionMethods {
 
   def batchVehicleReachingPosition(seq:IntSequence,v:Int):(Int=>Option[Int]) = {

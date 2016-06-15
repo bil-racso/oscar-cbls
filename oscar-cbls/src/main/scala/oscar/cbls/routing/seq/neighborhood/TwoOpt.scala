@@ -32,9 +32,25 @@ import oscar.cbls.search.core.EasyNeighborhood
 
 import scala.collection.immutable.SortedSet
 
-trait TwoOpt{
-  def doMove(fromPositionIncluded:Int,toPositionIncluded:Int)
+abstract class TwoOpt(vrp: VRP,
+                      neighborhoodName:String = "TwoOpt",
+                      best:Boolean = false) extends EasyNeighborhood[TwoOptMove](best,neighborhoodName){
+
+  val v = vrp.v
+  val seq = vrp.routes
+
+  def doMove(fromPositionIncluded:Int,toPositionIncluded:Int) {
+    seq.flip(fromPositionIncluded,toPositionIncluded)
+  }
+
+  var segmentStartPositionForInstantiate:Int = 0
+  var segmentEndPositionForInstantiate:Int = 0
+
+  override def instantiateCurrentMove(newObj: Int) =
+    TwoOptMove(segmentStartPositionForInstantiate, segmentEndPositionForInstantiate, newObj, this, vrp, neighborhoodName)
 }
+
+
 
 
 /**
@@ -47,14 +63,12 @@ trait TwoOpt{
  * @author Florent Ghilain (UMONS)
  * */
 case class TwoOpt1(segmentStartValues:()=>Iterable[Int],
-                  closeNeighbors:()=>Int=>Iterable[Int],
-                  vrp: VRP,
-                  neighborhoodName:String = "TwoOpt",
-                  best:Boolean = false,
-                  hotRestart:Boolean = true) extends EasyNeighborhood[TwoOptMove](best,neighborhoodName) with TwoOpt{
+                   closeNeighbors:()=>Int=>Iterable[Int],
+                   vrp: VRP,
+                   neighborhoodName:String = "TwoOpt",
+                   best:Boolean = false,
+                   hotRestart:Boolean = true) extends TwoOpt(vrp,neighborhoodName,best){
 
-  val v = vrp.v
-  val seq = vrp.seq
   //the indice to start with for the exploration
   var startIndice: Int = 0
 
@@ -67,15 +81,15 @@ case class TwoOpt1(segmentStartValues:()=>Iterable[Int],
 
     val seqValue = seq.defineCurrentValueAsCheckpoint(true)
 
-    val iterationSchemeOnZone =
-      if (hotRestart && !best) HotRestart(segmentStartValues(), startIndice)
-      else segmentStartValues()
-
     def evalObjAndRollBack() : Int = {
       val a = obj.value
       seq.rollbackToCurrentCheckpoint(seqValue)
       a
     }
+
+    val iterationSchemeOnZone =
+      if (hotRestart && !best) HotRestart(segmentStartValues(), startIndice)
+      else segmentStartValues()
 
     val relevantNeighborsNow = closeNeighbors()
 
@@ -117,16 +131,6 @@ case class TwoOpt1(segmentStartValues:()=>Iterable[Int],
     seq.releaseCurrentCheckpointAtCheckpoint()
   }
 
-  var segmentStartPositionForInstantiate:Int = 0
-  var segmentEndPositionForInstantiate:Int = 0
-
-  override def instantiateCurrentMove(newObj: Int) =
-    TwoOptMove(segmentStartPositionForInstantiate, segmentEndPositionForInstantiate, newObj, this, vrp, neighborhoodName)
-
-  def doMove(fromPositionIncluded:Int,toPositionIncluded:Int) {
-    seq.flip(fromPositionIncluded,toPositionIncluded)
-  }
-
   //this resets the internal state of the Neighborhood
   override def reset(): Unit = {
     startIndice = 0
@@ -143,14 +147,12 @@ case class TwoOpt1(segmentStartValues:()=>Iterable[Int],
  * @author Florent Ghilain (UMONS)
  * */
 case class TwoOpt2(segmentStartValues:()=>Iterable[Int],
-                  closeNeighbors:()=>Int=>Iterable[Int],
-                  vrp: VRP,
-                  neighborhoodName:String = "TwoOpt",
-                  best:Boolean = false,
-                  hotRestart:Boolean = true) extends EasyNeighborhood[TwoOptMove](best,neighborhoodName) with TwoOpt{
+                   closeNeighbors:()=>Int=>Iterable[Int],
+                   vrp: VRP,
+                   neighborhoodName:String = "TwoOpt",
+                   best:Boolean = false,
+                   hotRestart:Boolean = true)  extends TwoOpt(vrp,neighborhoodName,best){
 
-  val v = vrp.v
-  val seq = vrp.seq
   //the indice to start with for the exploration
   var startIndice: Int = 0
 
@@ -217,16 +219,6 @@ case class TwoOpt2(segmentStartValues:()=>Iterable[Int],
     seq.releaseCurrentCheckpointAtCheckpoint()
   }
 
-  var segmentStartPositionForInstantiate:Int = 0
-  var segmentEndPositionForInstantiate:Int = 0
-
-  override def instantiateCurrentMove(newObj: Int) =
-    TwoOptMove(segmentStartPositionForInstantiate, segmentEndPositionForInstantiate, newObj, this, vrp, neighborhoodName)
-
-  def doMove(fromPositionIncluded:Int,toPositionIncluded:Int) {
-    seq.flip(fromPositionIncluded,toPositionIncluded)
-  }
-
   //this resets the internal state of the Neighborhood
   override def reset(): Unit = {
     startIndice = 0
@@ -242,14 +234,14 @@ case class TwoOpt2(segmentStartValues:()=>Iterable[Int],
  * @author Florent Ghilain (UMONS)
  * */
 case class TwoOptMove(segmentStartPosition:Int,
-                       segmentEndPosition:Int,
-                       override val objAfter: Int,
-                       override val neighborhood:EasyNeighborhood[TwoOptMove] with TwoOpt,
-                     vrp:VRP,
-                       override val neighborhoodName:String = "TwoOptMove")
+                      segmentEndPosition:Int,
+                      override val objAfter: Int,
+                      override val neighborhood:TwoOpt,
+                      vrp:VRP,
+                      override val neighborhoodName:String = "TwoOptMove")
   extends VRPSMove(objAfter, neighborhood, neighborhoodName, vrp){
 
-  override def impactedPoints: Iterable[Int] = vrp.seq.value.valuesBetweenPositions(segmentStartPosition,segmentEndPosition)
+  override def impactedPoints: Iterable[Int] = vrp.routes.value.valuesBetweenPositions(segmentStartPosition,segmentEndPosition)
 
   override def commit() {
     neighborhood.doMove(segmentStartPosition, segmentEndPosition)

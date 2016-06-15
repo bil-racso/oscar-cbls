@@ -45,7 +45,7 @@ case class OnePointMove(nodesToMove: () => Iterable[Int],
                         allPointsToMoveAreRouted:Boolean = true,
                         allRelevantNeighborsAreRouted:Boolean = true) extends EasyNeighborhood[OnePointMoveMove](best, neighborhoodName) {
 
-  val seq = vrp.seq
+  val seq = vrp.routes
   val v = vrp.v
   val n = vrp.n
 

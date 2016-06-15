@@ -15,7 +15,8 @@ package oscar.cbls.test.routingS
   * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
   ******************************************************************************/
 
-import oscar.cbls.invariants.core.computation.Store
+import oscar.cbls.invariants.core.computation.{SeqValue, Store}
+import oscar.cbls.invariants.lib.seq.{Size, PositionsOfConst}
 import oscar.cbls.routing.seq.model._
 import oscar.cbls.routing.seq.neighborhood.{OnePointMove, ThreeOpt, TwoOpt1}
 import oscar.cbls.search.combinators.{BestSlopeFirst, Profile}
@@ -25,13 +26,20 @@ import scala.util.Random
 
 class MyRouting(n:Int,v:Int,symmetricDistance:Array[Array[Int]],m:Store, maxPivot:Int)
   extends VRP(n,v,m,maxPivot) with TotalConstantDistance with VRPObjective
-  with ClosestNeighbors{//} with VehicleOfNode { //with NodesOfVehicle with {
+  with ClosestNeighbors with VehicleOfNode with NodesOfVehicle {
 
   setSymmetricDistanceMatrix(symmetricDistance)
 
   addObjectiveTerm(totalDistance)
 
   override protected def getDistance(from : Int, to : Int) : Int = symmetricDistance(from)(to)
+
+  //this is useless, but it makes some fun.
+  val positionOf48 = PositionsOfConst(cloneOfRoute, 48)
+  this.addToStringInfo(()=>"" + positionOf48)
+
+  val size = Size(cloneOfRoute)
+  this.addToStringInfo(()=>"" + size)
 
   computeClosestNeighbors()
 }

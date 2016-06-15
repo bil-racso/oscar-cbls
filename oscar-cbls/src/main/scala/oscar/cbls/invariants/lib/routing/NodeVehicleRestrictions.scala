@@ -265,25 +265,25 @@ class NodeVehicleRestrictions(routes:ChangingSeqValue,
         false //impossible to go incremental
     }
   }
-  
+
   override def checkInternals(c : Checker) : Unit = {
 
     val seq = routes.value
     for(vehicle <- vehicles){
       c.check(violationPerVehicle(vehicle).value == violationOnVehicle(vehicle,seq))
 
-      val oldupToDate = vehicleChangedSinceCheckpoint(vehicle)
+      val oldUpToDate = vehicleChangedSinceCheckpoint(vehicle)
       vehicleChangedSinceCheckpoint(vehicle) = true
       c.check(violationPerVehicle(vehicle).value == violationOnVehicle(vehicle,seq))
-      vehicleChangedSinceCheckpoint(vehicle) = oldupToDate
+      vehicleChangedSinceCheckpoint(vehicle) = oldUpToDate
     }
 
     if(checkpoint != null){
       for(vehicle <- vehicles){
-        val oldupToDate = vehicleChangedSinceCheckpoint(vehicle)
+        val oldUpToDate = vehicleChangedSinceCheckpoint(vehicle)
         vehicleChangedSinceCheckpoint(vehicle) = true
         c.check(violationAtCheckpoint(vehicle) == violationOnVehicle(vehicle,checkpoint))
-        vehicleChangedSinceCheckpoint(vehicle) = oldupToDate
+        vehicleChangedSinceCheckpoint(vehicle) = oldUpToDate
       }
     }
   }
