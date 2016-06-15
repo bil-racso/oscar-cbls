@@ -91,12 +91,11 @@ case class InsertPointUnroutedFirst(unroutedNodesToInsert: () => Iterable[Int],
 
       val it2 = relevantNeighborsNow(insertedPoint).iterator
       while (it2.hasNext) {
-        val pointToInsertAfter = it2.next()
-        seqValue.positionOfAnyOccurrence(pointToInsertAfter) match{
+        val pointWhereToInsertBefore = it2.next() //TODO: also consider inserting before this node, actually?
+        seqValue.positionOfAnyOccurrence(pointWhereToInsertBefore) match{
           case None => //not routed?!
           case Some(position) =>
             insertAtPosition = position
-
 
             doMove(insertedPoint, insertAtPosition)
 
@@ -111,6 +110,89 @@ case class InsertPointUnroutedFirst(unroutedNodesToInsert: () => Iterable[Int],
             }
         }
       }
+    }
+    seq.releaseCurrentCheckpointAtCheckpoint()
+  }
+
+  //this resets the internal state of the Neighborhood
+  override def reset(): Unit = {
+    startIndice = 0
+  }
+}
+
+
+
+/**
+ * OnePoint insert neighborhood htat primarily iterates over insertion point,s and then over poitns that can be iserted.
+ * @param insertionPoints the positions where we can insert points
+ * @param unroutedNodesToInsert the points to insert, gven an insertion point (use K-nearest here for isntance
+ * @param vrp the routing problem
+ * @param neighborhoodName the name of the neighborhood
+ * @param best best or first move
+ * @param hotRestart hot restart on the insertion point
+ * @param insertedPointsSymetryClass a function that input the ID of an unrouted node and returns a symmetry class;
+ *                      ony one of the unrouted node in each class will be considered for insert
+ *                      Int.MinValue is considered different to itself
+ *                      if you set to None this will not be used at all
+ * @author renaud.delandtsheer@cetic.be
+ */
+case class InsertPointRoutedFirst(insertionPoints:()=>Iterable[Int],
+                                  unroutedNodesToInsert: () => Int => Iterable[Int],
+                                  vrp: VRP,
+                                  neighborhoodName: String = "InsertPointRoutedFirst",
+                                  best: Boolean = false,
+                                  hotRestart: Boolean = true,
+                                  insertedPointsSymetryClass:Option[Int => Int] = None)
+  extends InsertPoint(vrp: VRP,neighborhoodName, best) {
+
+  //the indice to start with for the exploration
+  var startIndice: Int = 0
+
+  override def exploreNeighborhood(): Unit = {
+
+    val seqValue = seq.defineCurrentValueAsCheckpoint(true)
+
+    def evalObjAndRollBack() : Int = {
+      val a = obj.value
+      seq.rollbackToCurrentCheckpoint(seqValue)
+      a
+    }
+
+    //et il faut rectifier le facteur de proximité avc la pénalité de non routage dans le cas du InsertPoint!
+    val iterationSchemeOnInsertionPoint =
+      if (hotRestart && !best) HotRestart(insertionPoints(), startIndice)
+      else insertionPoints()
+
+    val unroutedNodesToInsertNow = unroutedNodesToInsert()
+
+    val iterationSchemeOnInsertionPointIterator = iterationSchemeOnInsertionPoint.iterator
+    while (iterationSchemeOnInsertionPointIterator.hasNext) {
+      val pointWhereToInsertBefore = iterationSchemeOnInsertionPointIterator.next()
+      seqValue.positionOfAnyOccurrence(pointWhereToInsertBefore) match{
+        case None => //not routed?
+        case Some(position) =>
+          insertAtPosition = position
+
+          val iteratorOnPointsToInsert = (insertedPointsSymetryClass match {
+            case None => unroutedNodesToInsertNow(pointWhereToInsertBefore)
+            case Some(s) => IdenticalAggregator.removeIdenticalClassesLazily(unroutedNodesToInsertNow(pointWhereToInsertBefore), s)
+          }).iterator
+
+          while (iteratorOnPointsToInsert.hasNext) {
+            insertedPoint = iteratorOnPointsToInsert.next()
+
+            doMove(insertedPoint, insertAtPosition)
+
+            if (evaluateCurrentMoveObjTrueIfStopRequired(evalObjAndRollBack())) {
+              seq.releaseCurrentCheckpointAtCheckpoint()
+              startIndice = pointWhereToInsertBefore + 1
+              return
+            }
+
+          }
+      }
+
+
     }
     seq.releaseCurrentCheckpointAtCheckpoint()
   }
