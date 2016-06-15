@@ -42,7 +42,7 @@ object RoutingConventionMethods {
     var upperVehicle = v-1
     var upperVehiclePosition = seq.positionOfAnyOccurrence(upperVehicle).head
 
-    if(position > upperVehiclePosition) return upperVehicle
+    if(position >= upperVehiclePosition) return upperVehicle
 
     var lowerVehicle = 0
     var lowerVehiclePosition = 0
@@ -53,7 +53,9 @@ object RoutingConventionMethods {
     while(lowerVehicle + 1 < upperVehicle){
       val midVehicle = (lowerVehicle + upperVehicle) /2
       val midVehiclePosition = seq.positionOfAnyOccurrence(midVehicle).head
-      if(midVehiclePosition == position) return midVehicle
+      if(midVehiclePosition == position){
+        return midVehicle
+      }
       if(midVehiclePosition <= position){
         lowerVehicle = midVehicle
         lowerVehiclePosition = midVehiclePosition

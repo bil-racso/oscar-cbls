@@ -27,7 +27,7 @@ import scala.util.Random
 
 class MyRouting(n:Int,v:Int,symmetricDistance:Array[Array[Int]],m:Store, maxPivot:Int)
   extends VRP(n,v,m,maxPivot) with TotalConstantDistance with VRPObjective
-  with ClosestNeighbors  with NodesOfVehicle with VehicleOfNode{
+  with ClosestNeighbors{//} with VehicleOfNode { //with NodesOfVehicle with {
 
   setSymmetricDistanceMatrix(symmetricDistance)
 
@@ -49,7 +49,7 @@ object routingS extends App{
 
   val symmetricDistanceMatrix = RoutingMatrixGenerator(n)._1
 
-  val model = new Store() //checker = Some(new ErrorChecker()))
+  val model = new Store()//checker = Some(new ErrorChecker()))
 
   val myVRP = new MyRouting(n,v,symmetricDistanceMatrix,model,maxPivot)
   val nodes = myVRP.nodes
@@ -63,11 +63,17 @@ object routingS extends App{
 
   def threeOpt(k:Int, breakSym:Boolean) = Profile(new ThreeOpt(() => nodes, ()=>myVRP.kNearest(k), myVRP,breakSymmetry = breakSym, neighborhoodName = "ThreeOpt(k=" + k + ")"))
 
-  val search = BestSlopeFirst(List(onePtMove,twoOpt,threeOpt(10,false))) exhaust threeOpt(40,true)
-  search.verbose = 1 //verboseWithExtraInfo(1,()=>myVRP.toString)
+  val search = BestSlopeFirst(List(onePtMove,twoOpt)) //,threeOpt(10,false))) exhaust threeOpt(20,true) //afterMove model.propagate() //exhaust threeOpt(40,true)
+
+//  val search = threeOpt(10,false)// afterMove model.propagate() //exhaust threeOpt(40,true)
+
+  search.verbose = 1
+  //search.verboseWithExtraInfo(1,()=>myVRP.toString)
   search.paddingLength = 200
 
   search.doAllMoves(obj=myVRP.getObjective)
+
+  model.propagate()
 
   println
   println(myVRP)

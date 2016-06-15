@@ -320,8 +320,8 @@ object CBLSSeqConst{
   def apply(seq:IntSequence):CBLSSeqConst = new CBLSSeqConst(seq.regularize())
 }
 
-class CBLSSeqVar(givenModel:Store, initialValue:IntSequence, val maxVal:Int = Int.MaxValue, n: String = null, maxPivot:Int = 150)
-  extends ChangingSeqValue(initialValue, maxVal, maxPivot) with Variable{
+class CBLSSeqVar(givenModel:Store, initialValue:IntSequence, val maxVal:Int = Int.MaxValue, n: String = null, maxPivot:Int = 150, maxHistorySize:Int = 50)
+  extends ChangingSeqValue(initialValue, maxVal, maxPivot, maxHistorySize) with Variable{
   require(domain.min == 0)
   require(givenModel != null)
 
@@ -364,8 +364,8 @@ class CBLSSeqVar(givenModel:Store, initialValue:IntSequence, val maxVal:Int = In
 
   def <==(i: SeqValue) {IdentitySeq(i,this)}
 
-  def createClone:CBLSSeqVar = {
-    val clone = new CBLSSeqVar(model,this.value,this.maxValue,"clone_of_" + this.name,maxPivot)
+  def createClone(maxDepth:Int=50):CBLSSeqVar = {
+    val clone = new CBLSSeqVar(model,this.value,this.maxValue,"clone_of_" + this.name,maxPivot,maxDepth)
     IdentitySeq(this,clone)
     clone
   }
@@ -383,7 +383,7 @@ class ChangingSeqValueSnapShot(val variable:ChangingSeqValue,val savedValue:IntS
   override protected def doRestore() : Unit = {variable.asInstanceOf[CBLSSeqVar] := savedValue}
 }
 
-abstract class ChangingSeqValue(initialValue: Iterable[Int], val maxValue: Int, maxPivot: Int)
+abstract class ChangingSeqValue(initialValue: Iterable[Int], val maxValue: Int, maxPivot: Int, maxHistorySize:Int)
   extends AbstractVariable with SeqValue{
 
   override def snapshot : ChangingSeqValueSnapShot = new ChangingSeqValueSnapShot(this,this.value)
@@ -462,7 +462,6 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], val maxValue: Int, 
 
   //end of the checkpoint stack stuff
 
-
   private var mOldValue:IntSequence = IntSequence(initialValue)
   protected[computation] var toNotify:SeqUpdate = SeqUpdateLastNotified(mOldValue)
 
@@ -488,313 +487,342 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], val maxValue: Int, 
 
   def toStringNoPropagate: String = name + ":=" + toNotify.newValue.toString()
 
-  //TODO: -1 for first position
-  protected def insertAtPosition(value:Int,pos:Int){
-    assert(pos <= toNotify.newValue.size)
-    assert(pos >= 0)
-    toNotify = SeqUpdateInsert(value,pos,toNotify)
-    notifyChanged()
-  }
-
-  protected def remove(position:Int){
-    require(toNotify.newValue.size > position && position >=0, "removing at position " + position + " size is " + newValue.size)
-    toNotify = SeqUpdateRemove(position,toNotify)
-    notifyChanged()
-  }
-
-  protected def flip(fromIncludedPosition:Int,toIncludedPosition:Int){
-    move(fromIncludedPosition,toIncludedPosition,fromIncludedPosition-1,true)
-  }
-
-  //-1 for first position
-  protected def move(fromIncludedPosition:Int,toIncludedPosition:Int,afterPosition:Int,flip:Boolean){
-    require(toNotify.newValue.size > fromIncludedPosition)
-    require(toNotify.newValue.size > toIncludedPosition)
-    require(toNotify.newValue.size > afterPosition)
-    require(0 <= fromIncludedPosition)
-    require(0<=toIncludedPosition)
-    require(-1<=afterPosition)
-    require(fromIncludedPosition <= toIncludedPosition)
-    toNotify  = SeqUpdateMove(fromIncludedPosition,toIncludedPosition,afterPosition,flip,toNotify)
-    notifyChanged()
-  }
-
-  protected [computation] def setValue(seq:IntSequence){
-    //since we will override and lose the content of the toNotify, we have to ensure that there is no checkpoint delcared in this before
-    pushCheckPoints(toNotify,false)
-    toNotify = SeqUpdateSet(seq)
-    notifyChanged()
-  }
-
-  //returns the update since the last defined checkpoint
-  private def pushCheckPoints(updates:SeqUpdate,outputNeeded:Boolean):SeqUpdate = {
-    updates match{
-      case x@SeqUpdateInsert(value:Int,pos:Int,prev:SeqUpdate) =>
-        if(outputNeeded) SeqUpdateInsert(value,pos,pushCheckPoints(prev,true),x.newValue)
-        else pushCheckPoints(prev,false)
-      case x@SeqUpdateMove(fromIncluded:Int,toIncluded:Int,after:Int,flip:Boolean,prev:SeqUpdate) =>
-        if(outputNeeded) SeqUpdateMove(fromIncluded,toIncluded,after,flip,pushCheckPoints(prev,true),x.newValue)
-        else pushCheckPoints(prev,false)
-      case x@SeqUpdateRemove(position:Int,prev:SeqUpdate) =>
-        if(outputNeeded) SeqUpdateRemove(position,pushCheckPoints(prev,true),x.newValue)
-        else pushCheckPoints(prev,false)
-      case SeqUpdateSet(value:IntSequence) =>
-        updates
-      case SeqUpdateLastNotified(value:IntSequence) =>
-        updates
-      case x@SeqUpdateDefineCheckpoint(prev:SeqUpdate,isActiveCheckpoint:Boolean) =>
-        //We have to push a checkpoint here!
-        val updatesSincePrevCheckpoint = pushCheckPoints(prev,true)
-
-        recordNotifiedChangesForCheckpoint(updatesSincePrevCheckpoint)
-        recordNotifiedChangesForCheckpoint(SeqUpdateDefineCheckpoint(SeqUpdateLastNotified(updatesSincePrevCheckpoint.newValue),isActiveCheckpoint,maxPivot))
-
-        require(updates.newValue quickEquals updatesSincePrevCheckpoint.newValue)
-        SeqUpdateLastNotified(updates.newValue)
-      case SeqUpdateRollBackToCheckpoint(checkpointValue:IntSequence) =>
-        //must be the top checkpoint of the stack!
-        require(checkpointValue quickEquals topCheckpoint)
-        SeqUpdateLastNotified(checkpointValue)
+  def trimToNotifyIfNeeded(){
+    if(math.abs(toNotify.depth) > maxHistorySize){
+      toNotify = trimToLatestCheckpoint(toNotify)
     }
   }
 
-  protected def defineCurrentValueAsCheckpoint(checkPointIsActive:Boolean):IntSequence = {
-    toNotify = SeqUpdateDefineCheckpoint(toNotify.regularize(maxPivot),checkPointIsActive,maxPivot)
-    notifyChanged()
-    toNotify.newValue
+  def trimToLatestCheckpoint(updates:SeqUpdate):SeqUpdate = {
+    updates match {
+      case SeqUpdateInsert(value : Int, pos : Int, prev : SeqUpdate) =>
+        SeqUpdateInsert(value, pos, trimToLatestCheckpoint(prev), updates.newValue)
+      case SeqUpdateMove(fromIncluded : Int, toIncluded : Int, after : Int, flip : Boolean, prev : SeqUpdate) =>
+        SeqUpdateMove(fromIncluded, toIncluded, after, flip, trimToLatestCheckpoint(prev), updates.newValue)
+      case SeqUpdateRemove(position : Int, prev : SeqUpdate) =>
+        SeqUpdateRemove(position, trimToLatestCheckpoint(prev), updates.newValue)
+      case SeqUpdateDefineCheckpoint(prev : SeqUpdate, isActiveCheckpoint : Boolean) =>
+        SeqUpdateDefineCheckpoint(SeqUpdateSet(updates.newValue), isActiveCheckpoint, maxPivot)
+
+      case SeqUpdateRollBackToCheckpoint(checkpointValue : IntSequence) => updates
+      case SeqUpdateSet(value : IntSequence) => updates
+      case SeqUpdateLastNotified(value : IntSequence) => updates
+    }
   }
 
-  protected def rollbackToCurrentCheckpoint(checkpoint:IntSequence) = {
-    //check that the checkpoint is declared in the toNotify, actually.
 
-    //println("notified of rollBack toNotify:" + toNotify + " currentCheckpoint:" + topCheckpoint + " notifiedSinceTopCheckpoint:" + notifiedSinceTopCheckpoint)
-
-    val attemptByCleaningToNotify = popToNotifyUntilCheckpointDeclaration(toNotify,checkpoint)
-    if(attemptByCleaningToNotify == null){
-      //it means that the checkpont has been communicated :-)
-      if(topCheckpointIsActive) {
-        //we must do it incrementally, or through rollBack update
-        if (topCheckpointIsActiveDeactivated) {
-          //it has been deactivated, so it must be performed by inverting the instructions
-          toNotify = instructionsToRollBackToTopCheckpoint(checkpoint, this.mOldValue)
-        } else {
-          toNotify = SeqUpdateRollBackToCheckpoint(checkpoint,notifiedSinceTopCheckpoint)
-        }
-      }else{
-        //Asking for rollback on an inactive checkpoint, we go for a set...
-        toNotify = SeqUpdateSet(checkpoint)
-      }
+    //TODO: -1 for first position
+    protected def insertAtPosition(value:Int,pos:Int){
+      assert(pos <= toNotify.newValue.size)
+      assert(pos >= 0)
+      toNotify = SeqUpdateInsert(value,pos,toNotify)
+      trimToNotifyIfNeeded()
       notifyChanged()
-    }else{
-      //we could roll back to a set to the checkpoint, the checkpoint define,
-      // or whatever actually gets to the checkpoint, so nothing to do, actually.
-      toNotify = attemptByCleaningToNotify
-      require(toNotify.newValue quickEquals checkpoint)
-      toNotify match{
-        case u:SeqUpdateLastNotified => ;
-        case _ => notifyChanged()
+    }
+
+    protected def remove(position:Int){
+      require(toNotify.newValue.size > position && position >=0, "removing at position " + position + " size is " + newValue.size)
+      toNotify = SeqUpdateRemove(position,toNotify)
+      trimToNotifyIfNeeded()
+      notifyChanged()
+    }
+
+    protected def flip(fromIncludedPosition:Int,toIncludedPosition:Int){
+      move(fromIncludedPosition,toIncludedPosition,fromIncludedPosition-1,true)
+    }
+
+    //-1 for first position
+    protected def move(fromIncludedPosition:Int,toIncludedPosition:Int,afterPosition:Int,flip:Boolean){
+      require(toNotify.newValue.size > fromIncludedPosition)
+      require(toNotify.newValue.size > toIncludedPosition)
+      require(toNotify.newValue.size > afterPosition)
+      require(0 <= fromIncludedPosition)
+      require(0<=toIncludedPosition)
+      require(-1<=afterPosition)
+      require(fromIncludedPosition <= toIncludedPosition)
+      toNotify  = SeqUpdateMove(fromIncludedPosition,toIncludedPosition,afterPosition,flip,toNotify)
+      trimToNotifyIfNeeded()
+      notifyChanged()
+    }
+
+    protected [computation] def setValue(seq:IntSequence){
+      //since we will override and lose the content of the toNotify, we have to ensure that there is no checkpoint delcared in this before
+      pushCheckPoints(toNotify,false)
+      toNotify = SeqUpdateSet(seq)
+      trimToNotifyIfNeeded()
+      notifyChanged()
+    }
+
+    //returns the update since the last defined checkpoint
+    private def pushCheckPoints(updates:SeqUpdate,outputNeeded:Boolean):SeqUpdate = {
+      updates match{
+        case x@SeqUpdateInsert(value:Int,pos:Int,prev:SeqUpdate) =>
+          if(outputNeeded) SeqUpdateInsert(value,pos,pushCheckPoints(prev,true),x.newValue)
+          else pushCheckPoints(prev,false)
+        case x@SeqUpdateMove(fromIncluded:Int,toIncluded:Int,after:Int,flip:Boolean,prev:SeqUpdate) =>
+          if(outputNeeded) SeqUpdateMove(fromIncluded,toIncluded,after,flip,pushCheckPoints(prev,true),x.newValue)
+          else pushCheckPoints(prev,false)
+        case x@SeqUpdateRemove(position:Int,prev:SeqUpdate) =>
+          if(outputNeeded) SeqUpdateRemove(position,pushCheckPoints(prev,true),x.newValue)
+          else pushCheckPoints(prev,false)
+        case SeqUpdateSet(value:IntSequence) =>
+          updates
+        case SeqUpdateLastNotified(value:IntSequence) =>
+          updates
+        case x@SeqUpdateDefineCheckpoint(prev:SeqUpdate,isActiveCheckpoint:Boolean) =>
+          //We have to push a checkpoint here!
+          val updatesSincePrevCheckpoint = pushCheckPoints(prev,true)
+
+          recordNotifiedChangesForCheckpoint(updatesSincePrevCheckpoint)
+          recordNotifiedChangesForCheckpoint(SeqUpdateDefineCheckpoint(SeqUpdateLastNotified(updatesSincePrevCheckpoint.newValue),isActiveCheckpoint,maxPivot))
+
+          require(updates.newValue quickEquals updatesSincePrevCheckpoint.newValue)
+          SeqUpdateLastNotified(updates.newValue)
+        case SeqUpdateRollBackToCheckpoint(checkpointValue:IntSequence) =>
+          //must be the top checkpoint of the stack!
+          require(checkpointValue quickEquals topCheckpoint)
+          SeqUpdateLastNotified(checkpointValue)
       }
     }
-    //println("after notified of rollBack toNotify:" + toNotify + " currentCheckpoint:" + topCheckpoint + " notifiedSinceTopCheckpoint:" + notifiedSinceTopCheckpoint)
 
-  }
+    protected def defineCurrentValueAsCheckpoint(checkPointIsActive:Boolean):IntSequence = {
+      toNotify = SeqUpdateDefineCheckpoint(toNotify.regularize(maxPivot),checkPointIsActive,maxPivot)
+      trimToNotifyIfNeeded()
+      notifyChanged()
+      toNotify.newValue
+    }
 
-  /**
-   * @param updates
-   * @param checkpoint
-   * @return the cleaned sequence, null if cleaning the sequence could not rollback to the checkpoint
-   */
-  private def popToNotifyUntilCheckpointDeclaration(updates:SeqUpdate,checkpoint:IntSequence):SeqUpdate = {
-    updates match{
-      case x@SeqUpdateInsert(value:Int,pos:Int,prev:SeqUpdate) =>
-        popToNotifyUntilCheckpointDeclaration(prev,checkpoint)
-      case x@SeqUpdateMove(fromIncluded:Int,toIncluded:Int,after:Int,flip:Boolean,prev:SeqUpdate) =>
-        popToNotifyUntilCheckpointDeclaration(prev,checkpoint)
-      case x@SeqUpdateRemove(position:Int,prev:SeqUpdate) =>
-        popToNotifyUntilCheckpointDeclaration(prev,checkpoint)
-      case SeqUpdateSet(value:IntSequence) =>
-        if(value quickEquals checkpoint){
-          updates
+    protected def rollbackToCurrentCheckpoint(checkpoint:IntSequence) = {
+      //check that the checkpoint is declared in the toNotify, actually.
+
+      //println("notified of rollBack toNotify:" + toNotify + " currentCheckpoint:" + topCheckpoint + " notifiedSinceTopCheckpoint:" + notifiedSinceTopCheckpoint)
+
+      val attemptByCleaningToNotify = popToNotifyUntilCheckpointDeclaration(toNotify,checkpoint)
+      if(attemptByCleaningToNotify == null){
+        //it means that the checkpont has been communicated :-)
+        if(topCheckpointIsActive) {
+          //we must do it incrementally, or through rollBack update
+          if (topCheckpointIsActiveDeactivated) {
+            //it has been deactivated, so it must be performed by inverting the instructions
+            toNotify = instructionsToRollBackToTopCheckpoint(checkpoint, this.mOldValue)
+          } else {
+            toNotify = SeqUpdateRollBackToCheckpoint(checkpoint,notifiedSinceTopCheckpoint)
+          }
         }else{
-          null
+          //Asking for rollback on an inactive checkpoint, we go for a set...
+          toNotify = SeqUpdateSet(checkpoint)
         }
-      case SeqUpdateLastNotified(value:IntSequence) =>
-        //check for equality
-        if(value quickEquals checkpoint){
+        notifyChanged()
+      }else{
+        //we could roll back to a set to the checkpoint, the checkpoint define,
+        // or whatever actually gets to the checkpoint, so nothing to do, actually.
+        toNotify = attemptByCleaningToNotify
+        require(toNotify.newValue quickEquals checkpoint)
+        toNotify match{
+          case u:SeqUpdateLastNotified => ;
+          case _ => notifyChanged()
+        }
+      }
+      //println("after notified of rollBack toNotify:" + toNotify + " currentCheckpoint:" + topCheckpoint + " notifiedSinceTopCheckpoint:" + notifiedSinceTopCheckpoint)
+
+    }
+
+    /**
+     * @param updates
+     * @param checkpoint
+     * @return the cleaned sequence, null if cleaning the sequence could not rollback to the checkpoint
+     */
+    private def popToNotifyUntilCheckpointDeclaration(updates:SeqUpdate,checkpoint:IntSequence):SeqUpdate = {
+      updates match{
+        case x@SeqUpdateInsert(value:Int,pos:Int,prev:SeqUpdate) =>
+          popToNotifyUntilCheckpointDeclaration(prev,checkpoint)
+        case x@SeqUpdateMove(fromIncluded:Int,toIncluded:Int,after:Int,flip:Boolean,prev:SeqUpdate) =>
+          popToNotifyUntilCheckpointDeclaration(prev,checkpoint)
+        case x@SeqUpdateRemove(position:Int,prev:SeqUpdate) =>
+          popToNotifyUntilCheckpointDeclaration(prev,checkpoint)
+        case SeqUpdateSet(value:IntSequence) =>
+          if(value quickEquals checkpoint){
+            updates
+          }else{
+            null
+          }
+        case SeqUpdateLastNotified(value:IntSequence) =>
+          //check for equality
+          if(value quickEquals checkpoint){
+            updates
+          }else{
+            null
+          }
+        case x@SeqUpdateDefineCheckpoint(prev:SeqUpdate,isActive:Boolean) =>
+          //here
+          require(updates.newValue quickEquals checkpoint)
           updates
-        }else{
-          null
-        }
-      case x@SeqUpdateDefineCheckpoint(prev:SeqUpdate,isActive:Boolean) =>
-        //here
-        require(updates.newValue quickEquals checkpoint)
-        updates
-      case SeqUpdateRollBackToCheckpoint(checkpointValue:IntSequence) =>
-        require(checkpointValue quickEquals checkpoint)
-        updates
+        case SeqUpdateRollBackToCheckpoint(checkpointValue:IntSequence) =>
+          require(checkpointValue quickEquals checkpoint)
+          updates
+      }
+    }
+
+    protected def releaseCurrentCheckpointAtCheckpoint(){
+      //TODO: test this extensively
+      val checkpoint = toNotify.newValue
+      assert(toNotify.newValue equals topCheckpoint)
+      require(!topCheckpointIsActive || topCheckpointIsActiveDeactivated || (toNotify.newValue quickEquals topCheckpoint))
+      notifiedSinceTopCheckpoint = SeqUpdateLastNotified(checkpoint)
+
+      val attemptToCleanToNotify:SeqUpdate = popToNotifyUntilCheckpointDeclaration(toNotify,checkpoint)
+      attemptToCleanToNotify match{
+        case SeqUpdateDefineCheckpoint(prev:SeqUpdate,active) =>
+          //we have found the checkpoint declaration, we can just remove it as it has never been communicated, actually
+          toNotify = prev
+        case null =>
+          //no declaration was found, we need to impact the checkpoint stack
+          popTopCheckpoint(checkpoint)
+        case SeqUpdateSet(value) =>
+          //this is a set to the checkpoint
+          require(value quickEquals checkpoint)
+          //no declaration was found, we need to impact the checkpoint stack
+          toNotify = attemptToCleanToNotify
+          popTopCheckpoint(checkpoint)
+        case SeqUpdateLastNotified(value) =>
+          //we just notified about getting to this checkpoint
+          //we need to impact the checkpoint stack
+          require(value quickEquals checkpoint)
+          toNotify = attemptToCleanToNotify
+          popTopCheckpoint(checkpoint)
+        case SeqUpdateRollBackToCheckpoint(value) =>
+          require(value quickEquals checkpoint)
+          //no declaration was found, we need to impact the checkpoint stack
+          toNotify = attemptToCleanToNotify
+          popTopCheckpoint(checkpoint)
+      }
+    }
+
+    final protected def performSeqPropagation() = {
+      privatePerformSeqPropagation(false)
+    }
+
+    //returns the new value
+    protected[computation] def privatePerformSeqPropagation(stableCheckpoint:Boolean): IntSequence = {
+      val dynListElements = getDynamicallyListeningElements
+      val headPhantom = dynListElements.headPhantom
+      var currentElement = headPhantom.next
+
+      if(stableCheckpoint || !topCheckpointIsActive) toNotify = toNotify.regularize(maxPivot)
+
+      while (currentElement != headPhantom) {
+        val e = currentElement.elem
+        currentElement = currentElement.next
+        val inv : SeqNotificationTarget = e._1.asInstanceOf[SeqNotificationTarget]
+        assert({
+          this.model.NotifiedInvariant = inv.asInstanceOf[Invariant]; true
+        })
+        inv.notifySeqChanges(this, e._2, toNotify)
+        assert({
+          this.model.NotifiedInvariant = null; true
+        })
+      }
+
+      recordNotifiedChangesForCheckpoint(toNotify)
+
+      val theNewValue = toNotify.newValue
+      val start = SeqUpdateLastNotified(theNewValue)
+      mOldValue = theNewValue
+      toNotify = start
+
+      theNewValue
+    }
+
+    protected def :=(seq:IntSequence){
+      setValue(seq)
+      notifyChanged()
     }
   }
 
-  protected def releaseCurrentCheckpointAtCheckpoint(){
-    //TODO: test this extensively
-    val checkpoint = toNotify.newValue
-    assert(toNotify.newValue equals topCheckpoint)
-    require(!topCheckpointIsActive || topCheckpointIsActiveDeactivated || (toNotify.newValue quickEquals topCheckpoint))
-    notifiedSinceTopCheckpoint = SeqUpdateLastNotified(checkpoint)
+  /** this is a special case of invariant that has a single output variable, that is a Seq
+    * @author renaud.delandtsheer@cetic.be
+    */
+  abstract class SeqInvariant(initialValue:IntSequence, maxValue:Int = Int.MaxValue, maxPivot:Int = 10, maxHistorySize:Int = 10)
+    extends ChangingSeqValue(initialValue, maxValue:Int, maxPivot, maxHistorySize)
+    with Invariant{
 
-    val attemptToCleanToNotify:SeqUpdate = popToNotifyUntilCheckpointDeclaration(toNotify,checkpoint)
-    attemptToCleanToNotify match{
-      case SeqUpdateDefineCheckpoint(prev:SeqUpdate,active) =>
-        //we have found the checkpoint declaration, we can just remove it as it has never been communicated, actually
-        toNotify = prev
-      case null =>
-        //no declaration was found, we need to impact the checkpoint stack
-        popTopCheckpoint(checkpoint)
-      case SeqUpdateSet(value) =>
-        //this is a set to the checkpoint
-        require(value quickEquals checkpoint)
-        //no declaration was found, we need to impact the checkpoint stack
-        toNotify = attemptToCleanToNotify
-        popTopCheckpoint(checkpoint)
-      case SeqUpdateLastNotified(value) =>
-        //we just notified about getting to this checkpoint
-        //we need to impact the checkpoint stack
-        require(value quickEquals checkpoint)
-        toNotify = attemptToCleanToNotify
-        popTopCheckpoint(checkpoint)
-      case SeqUpdateRollBackToCheckpoint(value) =>
-        require(value quickEquals checkpoint)
-        //no declaration was found, we need to impact the checkpoint stack
-        toNotify = attemptToCleanToNotify
-        popTopCheckpoint(checkpoint)
+    override def definingInvariant: Invariant = this
+    override def isControlledVariable:Boolean = true
+    override def isDecisionVariable:Boolean = false
+
+    override def model = propagationStructure.asInstanceOf[Store]
+
+    override def hasModel:Boolean = schedulingHandler != null
+
+    private var customName:String = null
+    /**use this if you want to give a particular name to this concept, to be used in toString*/
+    def setName(n:String):SeqInvariant = {
+      customName = n
+      this
+    }
+
+    override final def name: String = if(customName == null) this.getClass.getSimpleName else customName
+
+    override final def performPropagation(){
+      performInvariantPropagation()
+      performSeqPropagation()
+    }
+
+    override def getDotNode:String = throw new Error("not implemented")
+  }
+
+  object IdentitySeq{
+    def apply(fromValue:SeqValue,toValue:CBLSSeqVar){
+      fromValue match{
+        case c:CBLSSeqConst => toValue := c.value
+        case c:ChangingSeqValue => new IdentitySeq(c,toValue)
+      }
     }
   }
 
-  final protected def performSeqPropagation() = {
-    privatePerformSeqPropagation(false)
-  }
+  class IdentitySeq(fromValue:ChangingSeqValue, toValue:CBLSSeqVar)
+    extends Invariant
+    with SeqNotificationTarget{
 
-  //returns the new value
-  protected[computation] def privatePerformSeqPropagation(stableCheckpoint:Boolean): IntSequence = {
-    val dynListElements = getDynamicallyListeningElements
-    val headPhantom = dynListElements.headPhantom
-    var currentElement = headPhantom.next
+    registerStaticAndDynamicDependency(fromValue)
+    toValue.setDefiningInvariant(this)
+    finishInitialization()
 
-    if(stableCheckpoint || !topCheckpointIsActive) toNotify = toNotify.regularize(maxPivot)
+    toValue := fromValue.value
 
-    while (currentElement != headPhantom) {
-      val e = currentElement.elem
-      currentElement = currentElement.next
-      val inv : SeqNotificationTarget = e._1.asInstanceOf[SeqNotificationTarget]
-      assert({
-        this.model.NotifiedInvariant = inv.asInstanceOf[Invariant]; true
-      })
-      inv.notifySeqChanges(this, e._2, toNotify)
-      assert({
-        this.model.NotifiedInvariant = null; true
-      })
+    override def notifySeqChanges(v: ChangingSeqValue, d: Int, changes: SeqUpdate) {
+      assert(v == fromValue)
+      digestChanges(changes)
+      //println("IdentitySeq notified " + changes)
     }
 
-    recordNotifiedChangesForCheckpoint(toNotify)
+    private var currentCheckpoint:IntSequence = null
 
-    val theNewValue = toNotify.newValue
-    val start = SeqUpdateLastNotified(theNewValue)
-    mOldValue = theNewValue
-    toNotify = start
+    def digestChanges(changes:SeqUpdate){
+      changes match{
+        case SeqUpdateInsert(value:Int,pos:Int,prev:SeqUpdate) =>
+          digestChanges(prev)
+          toValue.insertAtPosition(value,pos)
+        case SeqUpdateMove(fromIncluded:Int,toIncluded:Int,after:Int,flip:Boolean,prev:SeqUpdate) =>
+          digestChanges(prev)
+          toValue.move(fromIncluded,toIncluded,after,flip)
+        case SeqUpdateRemove(position:Int,prev:SeqUpdate) =>
+          digestChanges(prev)
+          toValue.remove(position)
+        case SeqUpdateSet(s) =>
+          toValue.setValue(s)
+        case SeqUpdateLastNotified(value:IntSequence) =>
+          //nothing to do here
+          assert(value equals toValue.newValue)
+        case SeqUpdateRollBackToCheckpoint(value:IntSequence) =>
+          toValue.rollbackToCurrentCheckpoint(currentCheckpoint)
+        case SeqUpdateDefineCheckpoint(prev:SeqUpdate,activeCheckpoint:Boolean) =>
+          digestChanges(prev)
+          currentCheckpoint = toValue.defineCurrentValueAsCheckpoint(activeCheckpoint)
+      }
+    }
 
-    theNewValue
-  }
-
-  protected def :=(seq:IntSequence){
-    setValue(seq)
-    notifyChanged()
-  }
-}
-
-/** this is a special case of invariant that has a single output variable, that is a Seq
-  * @author renaud.delandtsheer@cetic.be
-  */
-abstract class SeqInvariant(initialValue:IntSequence, maxValue:Int = Int.MaxValue, maxPivot:Int = 10)
-  extends ChangingSeqValue(initialValue, maxValue:Int, maxPivot)
-  with Invariant{
-
-  override def definingInvariant: Invariant = this
-  override def isControlledVariable:Boolean = true
-  override def isDecisionVariable:Boolean = false
-
-  override def model = propagationStructure.asInstanceOf[Store]
-
-  override def hasModel:Boolean = schedulingHandler != null
-
-  private var customName:String = null
-  /**use this if you want to give a particular name to this concept, to be used in toString*/
-  def setName(n:String):SeqInvariant = {
-    customName = n
-    this
-  }
-
-  override final def name: String = if(customName == null) this.getClass.getSimpleName else customName
-
-  override final def performPropagation(){
-    performInvariantPropagation()
-    performSeqPropagation()
-  }
-
-  override def getDotNode:String = throw new Error("not implemented")
-}
-
-object IdentitySeq{
-  def apply(fromValue:SeqValue,toValue:CBLSSeqVar){
-    fromValue match{
-      case c:CBLSSeqConst => toValue := c.value
-      case c:ChangingSeqValue => new IdentitySeq(c,toValue)
+    override def checkInternals(c:Checker){
+      c.check(toValue.value equals fromValue.value, Some("IdentitySeq: toValue.value=" +toValue.value + " should equal fromValue.value=" + fromValue.value))
     }
   }
-}
-
-class IdentitySeq(fromValue:ChangingSeqValue, toValue:CBLSSeqVar)
-  extends Invariant
-  with SeqNotificationTarget{
-
-  registerStaticAndDynamicDependency(fromValue)
-  toValue.setDefiningInvariant(this)
-  finishInitialization()
-
-  toValue := fromValue.value
-
-  override def notifySeqChanges(v: ChangingSeqValue, d: Int, changes: SeqUpdate) {
-    assert(v == fromValue)
-    digestChanges(changes)
-    //println("IdentitySeq notified " + changes)
-  }
-
-  private var currentCheckpoint:IntSequence = null
-
-  def digestChanges(changes:SeqUpdate){
-    changes match{
-      case SeqUpdateInsert(value:Int,pos:Int,prev:SeqUpdate) =>
-        digestChanges(prev)
-        toValue.insertAtPosition(value,pos)
-      case SeqUpdateMove(fromIncluded:Int,toIncluded:Int,after:Int,flip:Boolean,prev:SeqUpdate) =>
-        digestChanges(prev)
-        toValue.move(fromIncluded,toIncluded,after,flip)
-      case SeqUpdateRemove(position:Int,prev:SeqUpdate) =>
-        digestChanges(prev)
-        toValue.remove(position)
-      case SeqUpdateSet(s) =>
-        toValue.setValue(s)
-      case SeqUpdateLastNotified(value:IntSequence) =>
-      //nothing to do here
-        assert(value equals toValue.newValue)
-      case SeqUpdateRollBackToCheckpoint(value:IntSequence) =>
-        toValue.rollbackToCurrentCheckpoint(currentCheckpoint)
-      case SeqUpdateDefineCheckpoint(prev:SeqUpdate,activeCheckpoint:Boolean) =>
-        digestChanges(prev)
-        currentCheckpoint = toValue.defineCurrentValueAsCheckpoint(activeCheckpoint)
-    }
-  }
-
-  override def checkInternals(c:Checker){
-    c.check(toValue.value equals fromValue.value, Some("IdentitySeq: toValue.value=" +toValue.value + " should equal fromValue.value=" + fromValue.value))
-  }
-}

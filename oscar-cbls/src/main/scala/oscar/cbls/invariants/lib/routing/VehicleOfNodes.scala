@@ -93,7 +93,6 @@ class VehicleOfNodes(routes:ChangingSeqValue,
         }else {
           val oldValue = prev.newValue
           val vehicleOfMovedSegment = RoutingConventionMethods.searchVehicleReachingPosition(fromIncluded,oldValue,v)
-          //TODO:           val vehicleOfMovedSegment = this.vehicleOrUnroutedOfNode(oldValue.valueAtPosition(fromIncluded).head).newValue
           assert(vehicleOfMovedSegment == RoutingConventionMethods.searchVehicleReachingPosition(toIncluded,oldValue,v))
           val targetVehicleOfMove = RoutingConventionMethods.searchVehicleReachingPosition(after,oldValue,v)
           if(vehicleOfMovedSegment != targetVehicleOfMove){
@@ -209,7 +208,7 @@ class VehicleOfNodes(routes:ChangingSeqValue,
   override def checkInternals(c : Checker) : Unit = {
     val values = computeValueFromScratch(routes.value)
     for (node <- 0 to n-1){
-      c.check(vehicleOrUnroutedOfNode(node).value == values(node), Some("vehicleOrUnroutedOfNode(node).value=" +vehicleOrUnroutedOfNode(node).value + " should== values(node)=" + values(node) + " node:" + node))
+      c.check(vehicleOrUnroutedOfNode(node).value == values(node), Some("vehicleOrUnroutedOfNode(node).value=" +vehicleOrUnroutedOfNode(node).value + " should== valuesFromScratch(node)=" + values(node) + " node:" + node))
     }
 
     if(savedCheckpoint != null) {

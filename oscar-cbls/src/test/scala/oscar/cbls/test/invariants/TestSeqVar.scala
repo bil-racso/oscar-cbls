@@ -30,7 +30,7 @@ object TestSeqVar extends App{
   val m = new Store(verbose = true,propagateOnToString = true, checker = Some(new ErrorChecker()))
   val a = new CBLSSeqVar(m,IntSequence(List(1,2,3,5)), n = "toto")
 
-  val size1 = Size(a.createClone)
+  val size1 = Size(a.createClone())
   val size2 = Size(a)
   val pos2 = PositionsOf(a, 2)
   val content = Content(a)

@@ -118,8 +118,9 @@ class VRP(val n: Int, val v: Int, val m: Store, maxPivot:Int = 50) {
     acc.reverse
   }
 
-  def getNodesOfVehicle(vehicle:Int):SortedSet[Int] = SortedSet.empty[Int] ++ getRouteOfVehicle(vehicle)
+  def getNodesOfVehicle(vehicle:Int):SortedSet[Int] = getNodesOfVehicleFromScratch(vehicle)
 
+  def getNodesOfVehicleFromScratch(vehicle:Int):SortedSet[Int] = SortedSet.empty[Int] ++ getRouteOfVehicle(vehicle)
   /**
    *
    * @param node a node
@@ -381,13 +382,13 @@ trait StandardPenaltyForUnrouted extends AbstractPenaltyForUnrouted {
 }
 
 trait NodesOfVehicle extends VRP{
-  val nodesOfVehicle=NodeOfVehicle(seq,v)
+  val nodesOfVehicle=NodeOfVehicle(seq.createClone(),v)
 
   override def getNodesOfVehicle(vehicle:Int):SortedSet[Int] = nodesOfVehicle(vehicle).value
 }
 
 trait VehicleOfNode extends VRP{
-  val vehicleOfNode = VehicleOfNodes(seq,v)
+  val vehicleOfNode = VehicleOfNodes(seq.createClone(),v)
 
   override def getVehicleOfNode(node:Int):Int = vehicleOfNode(node).value
 

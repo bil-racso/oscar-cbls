@@ -208,11 +208,11 @@ abstract class Neighborhood(name:String = null) {
 
               prevObj = m.objAfter
 
-              val secondPostfix = if (m.objAfter < bestObj) {
+              val secondPostfix = (if (m.objAfter < bestObj) {
                 bestObj = m.objAfter
-                " #"
-              } else if (m.objAfter == bestObj) " °"
-              else ""
+                " # "
+              } else if (m.objAfter == bestObj) " ° "
+              else "   ") + m.objAfter
 
               println(padToLength(m.toString(), paddingLength) + " " + firstPostfix + secondPostfix)
             } else {

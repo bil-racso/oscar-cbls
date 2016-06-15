@@ -1,5 +1,4 @@
 package oscar.cbls.invariants.lib.routing
-
 /*
 /*******************************************************************************
   * OscaR is free software: you can redistribute it and/or modify
@@ -27,11 +26,7 @@ class NodeVehicleRestrictionsNaive(routes:ChangingSeqValue,
                                    nodeVehicleRestrictions:List[(Int,Int)], useSimplePrecomputation:Boolean) extends SetInvariant() with SeqNotificationTarget {
 
   val n = routes.maxValue+1
-
-  //TODO: test this, and go for O(1) implem
-  //this is a naive implem. the O51) implem is for next round and will use:
-  //  array node n => SortedMap vehicle v => number of node from start of vehicle reaching n that cannot be reached by vehicle v
-
+val vehicles
   registerStaticAndDynamicDependency(routes)
   finishInitialization()
 
@@ -67,7 +62,7 @@ class NodeVehicleRestrictionsNaive(routes:ChangingSeqValue,
   var checkpoint : IntSequence = null
   var violatedNodesAtCheckpoint : SortedSet[Int] = SortedSet.empty
 
-  val isPrecomputationValieForVehicle:Array[Boolean] = Array.fill(v)(false)
+  val isPrecomputationValidForVehicle:Array[Boolean] = Array.fill(v)(false)
 
   //node n => vehicle v => number of node from start of vehicle reaching n that cannot be reached by vehicle v
   val precomputationAtCheckpoint:Array[Array[Int]] = if(useSimplePrecomputation){
@@ -75,14 +70,19 @@ class NodeVehicleRestrictionsNaive(routes:ChangingSeqValue,
   }else null
 
   def updatePrecomputation(vehicle:Int,seq:IntSequence){
-    var it =  seq.explorerAtAnyOccurrence(vehicle)
 
-    var currentRestrictionCount:SortedMap[Int,Int] = SortedMap.empty[Int,Int]
-
-    while(it match{
+    val explorerAtVehicleStart = seq.explorerAtAnyOccurrence(vehicle).head
+    var restrictionsForPrev = precomputationAtCheckpoint(explorerAtVehicleStart.value)
+    var explorerAtCurrentNode = explorerAtVehicleStart.next
+    while(explorerAtCurrentNode match{
       case None => false
       case Some(position) =>
-        for(forbiddenVehicle <- forbiddenVehicles(position.value)) {
+        val node = position.value
+        for(vehicle <- ){
+
+        }
+
+        for(forbiddenVehicle <- ) {
           currentRestrictionCount = addRestrictionToRestrictionAccumulator(currentRestrictionCount, forbiddenVehicle)
         }
         //now set this as the cumulative restriction for this position
