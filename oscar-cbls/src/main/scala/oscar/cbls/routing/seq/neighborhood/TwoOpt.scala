@@ -32,6 +32,11 @@ import oscar.cbls.search.core.EasyNeighborhood
 
 import scala.collection.immutable.SortedSet
 
+trait TwoOpt{
+  def doMove(fromPositionIncluded:Int,toPositionIncluded:Int)
+}
+
+
 /**
  * Removes two edges of routes, and rebuilds routes from the segments.
  * (with one reverse required)
@@ -41,12 +46,108 @@ import scala.collection.immutable.SortedSet
  * @author yoann.guyot@cetic.be
  * @author Florent Ghilain (UMONS)
  * */
-case class TwoOpt(segmentStartValues:()=>Iterable[Int],
+case class TwoOpt1(segmentStartValues:()=>Iterable[Int],
                   closeNeighbors:()=>Int=>Iterable[Int],
                   vrp: VRP,
                   neighborhoodName:String = "TwoOpt",
                   best:Boolean = false,
-                  hotRestart:Boolean = true) extends EasyNeighborhood[TwoOptMove](best,neighborhoodName) {
+                  hotRestart:Boolean = true) extends EasyNeighborhood[TwoOptMove](best,neighborhoodName) with TwoOpt{
+
+  val v = vrp.v
+  val seq = vrp.seq
+  //the indice to start with for the exploration
+  var startIndice: Int = 0
+
+  /**
+   * Removes two edges of a route and flips the obtained segment before
+   * reconnecting it.
+   * The search complexity is O(n²).
+   */
+  override def exploreNeighborhood(): Unit = {
+
+    val seqValue = seq.defineCurrentValueAsCheckpoint(true)
+
+    val iterationSchemeOnZone =
+      if (hotRestart && !best) HotRestart(segmentStartValues(), startIndice)
+      else segmentStartValues()
+
+    def evalObjAndRollBack() : Int = {
+      val a = obj.value
+      seq.rollbackToCurrentCheckpoint(seqValue)
+      a
+    }
+
+    val relevantNeighborsNow = closeNeighbors()
+
+    val nodesToVehicle = vrp.getVehicleOfAllNodes
+
+    for (segmentStartValue <- iterationSchemeOnZone if segmentStartValue >= v) {
+      assert(vrp.isRouted(segmentStartValue),
+        "The search zone should be restricted to routed.")
+
+      val segmentStartPositionExplorer =seqValue.explorerAtAnyOccurrence(segmentStartValue).head
+      val segmentStartPosition = segmentStartPositionExplorer.position
+      val predecessorOfSegmentStartValue = segmentStartPositionExplorer.prev.head.value
+
+      val vehicleReachingSegmentStart = RoutingConventionMethods.searchVehicleReachingPosition(segmentStartPosition,seqValue,v)
+
+      for (
+        segmentEndValue <- relevantNeighborsNow(predecessorOfSegmentStartValue)
+        if (segmentEndValue >= v
+          && nodesToVehicle(segmentEndValue) == vehicleReachingSegmentStart)
+      ) {
+
+        val segmentEndPosition = seqValue.positionOfAnyOccurrence(segmentEndValue).head
+
+        if(segmentEndPosition > segmentStartPosition) {
+
+          segmentStartPositionForInstantiate = segmentStartPosition
+          segmentEndPositionForInstantiate = segmentEndPosition
+
+          doMove(segmentStartPosition, segmentEndPosition)
+
+          if (evaluateCurrentMoveObjTrueIfStopRequired(evalObjAndRollBack())) {
+            seq.releaseCurrentCheckpointAtCheckpoint()
+            startIndice = segmentStartValue + 1
+            return
+          }
+        }
+      }
+    }
+    seq.releaseCurrentCheckpointAtCheckpoint()
+  }
+
+  var segmentStartPositionForInstantiate:Int = 0
+  var segmentEndPositionForInstantiate:Int = 0
+
+  override def instantiateCurrentMove(newObj: Int) =
+    TwoOptMove(segmentStartPositionForInstantiate, segmentEndPositionForInstantiate, newObj, this, vrp, neighborhoodName)
+
+  def doMove(fromPositionIncluded:Int,toPositionIncluded:Int) {
+    seq.flip(fromPositionIncluded,toPositionIncluded)
+  }
+
+  //this resets the internal state of the Neighborhood
+  override def reset(): Unit = {
+    startIndice = 0
+  }
+}
+
+/**
+ * Removes two edges of routes, and rebuilds routes from the segments.
+ * (with one reverse required)
+ *
+ * The search complexity is O(n²).
+ * @author renaud.delandtsheer@cetic.be
+ * @author yoann.guyot@cetic.be
+ * @author Florent Ghilain (UMONS)
+ * */
+case class TwoOpt2(segmentStartValues:()=>Iterable[Int],
+                  closeNeighbors:()=>Int=>Iterable[Int],
+                  vrp: VRP,
+                  neighborhoodName:String = "TwoOpt",
+                  best:Boolean = false,
+                  hotRestart:Boolean = true) extends EasyNeighborhood[TwoOptMove](best,neighborhoodName) with TwoOpt{
 
   val v = vrp.v
   val seq = vrp.seq
@@ -120,7 +221,7 @@ case class TwoOpt(segmentStartValues:()=>Iterable[Int],
   var segmentEndPositionForInstantiate:Int = 0
 
   override def instantiateCurrentMove(newObj: Int) =
-    TwoOptMove(segmentStartPositionForInstantiate, segmentEndPositionForInstantiate, newObj, this, neighborhoodName)
+    TwoOptMove(segmentStartPositionForInstantiate, segmentEndPositionForInstantiate, newObj, this, vrp, neighborhoodName)
 
   def doMove(fromPositionIncluded:Int,toPositionIncluded:Int) {
     seq.flip(fromPositionIncluded,toPositionIncluded)
@@ -143,11 +244,12 @@ case class TwoOpt(segmentStartValues:()=>Iterable[Int],
 case class TwoOptMove(segmentStartPosition:Int,
                        segmentEndPosition:Int,
                        override val objAfter: Int,
-                       override val neighborhood:TwoOpt,
+                       override val neighborhood:EasyNeighborhood[TwoOptMove] with TwoOpt,
+                     vrp:VRP,
                        override val neighborhoodName:String = "TwoOptMove")
-  extends VRPSMove(objAfter, neighborhood, neighborhoodName, neighborhood.vrp){
+  extends VRPSMove(objAfter, neighborhood, neighborhoodName, vrp){
 
-  override def impactedPoints: Iterable[Int] = neighborhood.vrp.seq.value.valuesBetweenPositions(segmentStartPosition,segmentEndPosition)
+  override def impactedPoints: Iterable[Int] = vrp.seq.value.valuesBetweenPositions(segmentStartPosition,segmentEndPosition)
 
   override def commit() {
     neighborhood.doMove(segmentStartPosition, segmentEndPosition)

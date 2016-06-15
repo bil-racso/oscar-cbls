@@ -16,11 +16,9 @@ package oscar.cbls.test.routingS
   ******************************************************************************/
 
 import oscar.cbls.invariants.core.computation.Store
-import oscar.cbls.invariants.core.propagation.ErrorChecker
 import oscar.cbls.routing.seq.model._
-import oscar.cbls.routing.seq.neighborhood.{ThreeOpt, OnePointMove, TwoOpt}
+import oscar.cbls.routing.seq.neighborhood.{OnePointMove, ThreeOpt, TwoOpt1}
 import oscar.cbls.search.combinators.{BestSlopeFirst, Profile}
-import oscar.cbls.search.core.EasyNeighborhood
 
 import scala.util.Random
 
@@ -41,7 +39,7 @@ class MyRouting(n:Int,v:Int,symmetricDistance:Array[Array[Int]],m:Store, maxPivo
 object routingS extends App{
 
   val n = 1000
-  val v = 1
+  val v = 11
 
   val maxPivot = 40
 
@@ -59,11 +57,11 @@ object routingS extends App{
 
   val onePtMove = Profile(new OnePointMove(() => nodes, ()=>myVRP.kNearest(40), myVRP))
 
-  val twoOpt = Profile(new TwoOpt(() => nodes, ()=>myVRP.kNearest(40), myVRP))
+  val twoOpt = Profile(new TwoOpt1(() => nodes, ()=>myVRP.kNearest(40), myVRP))
 
   def threeOpt(k:Int, breakSym:Boolean) = Profile(new ThreeOpt(() => nodes, ()=>myVRP.kNearest(k), myVRP,breakSymmetry = breakSym, neighborhoodName = "ThreeOpt(k=" + k + ")"))
 
-  val search = BestSlopeFirst(List(onePtMove,twoOpt)) //,threeOpt(10,false))) exhaust threeOpt(20,true) //afterMove model.propagate() //exhaust threeOpt(40,true)
+  val search = BestSlopeFirst(List(onePtMove,twoOpt, threeOpt(10,false))) exhaust threeOpt(20,true) //afterMove model.propagate() //exhaust threeOpt(40,true)
 
 //  val search = threeOpt(10,false)// afterMove model.propagate() //exhaust threeOpt(40,true)
 
