@@ -65,6 +65,11 @@ abstract class RedBlackTreeMap[@specialized(Int) V]{
   // get: Retrieve a value for a key.
   def get(k : Int) : Option[V]
 
+  def getOrElse(k:Int,default: =>V):V = get(k) match{
+    case None => default
+    case Some(x) => x
+  }
+  
   def contains(k:Int):Boolean
 
   def biggestLowerOrEqual(k:Int):Option[(Int,V)]

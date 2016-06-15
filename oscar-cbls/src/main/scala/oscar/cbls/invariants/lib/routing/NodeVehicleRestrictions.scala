@@ -16,10 +16,12 @@ package oscar.cbls.invariants.lib.routing
   ******************************************************************************/
 
 import oscar.cbls.invariants.core.algo.quick.QList
+import oscar.cbls.invariants.core.algo.rb.RedBlackTreeMap
 import oscar.cbls.invariants.core.algo.seq.functional.IntSequence
 import oscar.cbls.invariants.core.computation._
+import oscar.cbls.invariants.core.propagation.Checker
 
-import scala.collection.immutable.{SortedMap, SortedSet}
+import scala.collection.immutable.SortedSet
 
 
 class NodeVehicleRestrictions(routes:ChangingSeqValue,
@@ -27,7 +29,7 @@ class NodeVehicleRestrictions(routes:ChangingSeqValue,
                               nodeVehicleRestrictions:List[(Int,Int)],
                               violationPerVehicle:Array[CBLSIntVar])
   extends Invariant() with SeqNotificationTarget {
-  
+
   val n = routes.maxValue+1
   val vehicles = 0 until v
 
@@ -35,11 +37,11 @@ class NodeVehicleRestrictions(routes:ChangingSeqValue,
   finishInitialization()
   for(v <- violationPerVehicle) v.setDefiningInvariant(this)
 
-  private val nodeToVehiclesRestriction : SortedMap[Int, SortedSet[Int]] = {
-    var current = SortedMap.empty[Int, SortedSet[Int]]
+  private val nodeToVehiclesRestriction : RedBlackTreeMap[SortedSet[Int]] = {
+    var current = RedBlackTreeMap.empty[SortedSet[Int]]
     for ((node, vehicle) <- nodeVehicleRestrictions) {
       val currentVehiclesForNode = current.getOrElse(node, SortedSet.empty[Int])
-      current = current + ((node, currentVehiclesForNode + vehicle))
+      current = current.insert(node, currentVehiclesForNode + vehicle)
     }
     current
   }
@@ -66,43 +68,41 @@ class NodeVehicleRestrictions(routes:ChangingSeqValue,
 
   var checkpoint : IntSequence = null
   var violationAtCheckpoint:Array[Int] = Array.fill(v)(-1)
+
+  //node n => vehicle v => number of node from start of vehicle reaching n that cannot be reached by vehicle v
+  val precomputationAtCheckpoint:Array[Array[Int]] = Array.tabulate(n)(_=>Array.fill(v)(0))
   val vehicleChangedSinceCheckpoint:Array[Boolean] = Array.fill(v)(true)
   var changedVehicleSinceCheckpoint:QList[Int] = vehicles.foldLeft[QList[Int]](null)((acc,v) => QList(v,acc))
 
-  def invalidatePrecomputationForVehicle(vehicle:Int) {
+  def setVehicleChangedSinceCheckpoint(vehicle:Int) {
     if(!vehicleChangedSinceCheckpoint(vehicle)){
       vehicleChangedSinceCheckpoint(vehicle) = true
       changedVehicleSinceCheckpoint = QList(vehicle,changedVehicleSinceCheckpoint)
     }
   }
 
-  def invalidateAllPrecomputations(){
+  def setAllVehicleChangedSinceCheckpoint(){
     for (vehicle <- vehicles) {
-      invalidatePrecomputationForVehicle(vehicle)
+      setVehicleChangedSinceCheckpoint(vehicle)
     }
   }
-
-  //node n => vehicle v => number of node from start of vehicle reaching n that cannot be reached by vehicle v
-  val precomputationAtCheckpoint:Array[Array[Int]] = Array.tabulate(n)(_=>Array.fill(v)(0))
-
+  
   def updateAllInvalidPrecomputationsToCheckpoint(){
     while(changedVehicleSinceCheckpoint != null){
       val vehicle = changedVehicleSinceCheckpoint.head
       changedVehicleSinceCheckpoint = changedVehicleSinceCheckpoint.tail
-      if (vehicleChangedSinceCheckpoint(vehicle)) {
-        doUpdatePrecomputationAtCheckpoint(vehicle)
-      }
+      doUpdatePrecomputationToCheckpoint(vehicle)
     }
   }
 
-  def doUpdateAllPrecomputationsAtCheckpoint(){
+  def doUpdateAllPrecomputationsToCheckpoint(){
     for (vehicle <- vehicles) {
-      doUpdatePrecomputationAtCheckpoint(vehicle)
+      doUpdatePrecomputationToCheckpoint(vehicle)
     }
     changedVehicleSinceCheckpoint = null
   }
 
-  def doUpdatePrecomputationAtCheckpoint(vehicle:Int){
+  def doUpdatePrecomputationToCheckpoint(vehicle:Int){
     vehicleChangedSinceCheckpoint(vehicle) = false
     val explorerAtVehicleStart = checkpoint.explorerAtAnyOccurrence(vehicle).head
     var restrictionsForPrev = precomputationAtCheckpoint(explorerAtVehicleStart.value)
@@ -129,36 +129,46 @@ class NodeVehicleRestrictions(routes:ChangingSeqValue,
     require(!vehicleChangedSinceCheckpoint(vehicle))
     val nbRejectionFrom = precomputationAtCheckpoint(fromValue)(vehicle)
     val nbRejectionTo = precomputationAtCheckpoint(toValue)(vehicle)
-    (nbRejectionTo - nbRejectionFrom)
+    nbRejectionTo - nbRejectionFrom
   }
 
-  def violationOnSegmentFromScratch(fromValue:Int,toValue:Int,vehicle:Int,seq:IntSequence):Int = {
-    var explorer = seq.explorerAtAnyOccurrence(fromValue).head
+  def violationOnNodesFromScratch(nodes:Iterable[Int],vehicle:Int):Int = {
     var toReturn = 0
-    while(explorer.value != toValue){
-      if(isForbidden(explorer.value,vehicle)) toReturn += 1
-      explorer = explorer.next.head
+    val it = nodes.iterator
+    while(it.hasNext){
+      val node = it.next()
+      if(isForbidden(node,vehicle)) toReturn += 1
     }
-    if (isForbidden(toValue,vehicle)) toReturn += 1
     toReturn
   }
 
   def violationOnSegment(seqWithSegment:IntSequence, fromValue:Int, toValue:Int, vehicle:Int):Int = {
     if(vehicleChangedSinceCheckpoint(vehicle)){
-      violationOnSegmentFromScratch(fromValue,toValue,vehicle,seqWithSegment)
+      violationOnNodesFromScratch(
+        seqWithSegment.valuesBetweenPositions(
+          seqWithSegment.positionOfAnyOccurrence(fromValue).head,
+          seqWithSegment.positionOfAnyOccurrence(toValue).head),vehicle)
     }else{
       violationOnSegmentFromPrecomputation(fromValue,toValue,vehicle)
     }
   }
 
   def violationOnVehicle(vehicle:Int,seq:IntSequence):Int = {
-    violationOnSegment(seq, vehicle, if(vehicle == v-1) seq.last else vehicle+1, vehicle)
+    if(vehicleChangedSinceCheckpoint(vehicle)){
+      violationOnNodesFromScratch(
+        seq.valuesBetweenPositions(
+          seq.positionOfAnyOccurrence(vehicle).head,
+          if(vehicle == v-1) seq.size-1 else seq.positionOfAnyOccurrence(vehicle+1).head),
+        vehicle)
+    }else{
+      violationOnSegmentFromPrecomputation(vehicle,if(vehicle == v-1) seq.last else vehicle+1,vehicle)
+    }
   }
 
   override def notifySeqChanges(v : ChangingSeqValue, d : Int, changes : SeqUpdate) {
     if (!digestUpdates(changes, false)) {
+      setAllVehicleChangedSinceCheckpoint()
       for (vehicle <- vehicles) {
-        invalidatePrecomputationForVehicle(vehicle)
         violationPerVehicle(vehicle) := violationOnVehicle(vehicle:Int,changes.newValue)
       }
     }
@@ -172,7 +182,7 @@ class NodeVehicleRestrictions(routes:ChangingSeqValue,
         }else{
           if (!digestUpdates(prev, true)) {
             this.checkpoint = prev.newValue
-            doUpdateAllPrecomputationsAtCheckpoint
+            doUpdateAllPrecomputationsToCheckpoint()
             for(vehicle <- vehicles) violationPerVehicle(vehicle) := violationOnVehicle(vehicle,checkpoint)
           }else {
             this.checkpoint = prev.newValue
@@ -198,7 +208,7 @@ class NodeVehicleRestrictions(routes:ChangingSeqValue,
         if (isForbidden(value, vehicleOfInsert)) {
           violationPerVehicle(vehicleOfInsert) :+= 1
         }
-        invalidatePrecomputationForVehicle(vehicleOfInsert)
+        setVehicleChangedSinceCheckpoint(vehicleOfInsert)
 
         true
       case x@SeqUpdateMove(fromIncluded : Int, toIncluded : Int, after : Int, flip : Boolean, prev : SeqUpdate) =>
@@ -209,7 +219,7 @@ class NodeVehicleRestrictions(routes:ChangingSeqValue,
         else if (x.isSimpleFlip) {
           //this is a simple flip, no change on vehicle violation, since obeys routing rule!
           val vehicleOfMovedSegment = RoutingConventionMethods.searchVehicleReachingPosition(fromIncluded, prev.newValue, v)
-          invalidatePrecomputationForVehicle(vehicleOfMovedSegment)
+          setVehicleChangedSinceCheckpoint(vehicleOfMovedSegment)
           true
         } else {
           //per vehicle, there might be some node cost to consider
@@ -219,7 +229,7 @@ class NodeVehicleRestrictions(routes:ChangingSeqValue,
 
           if (vehicleOfMovedSegment == targetVehicleOfMove) {
             //moving within the vehicle; same as flip, actually
-            invalidatePrecomputationForVehicle(vehicleOfMovedSegment)
+            setVehicleChangedSinceCheckpoint(vehicleOfMovedSegment)
           }else {
             //moving accross vehicles
 
@@ -233,8 +243,8 @@ class NodeVehicleRestrictions(routes:ChangingSeqValue,
 
             violationPerVehicle(targetVehicleOfMove) :-= violationOnSegment(prev.newValue, fromValue, toValue, targetVehicleOfMove)
 
-            invalidatePrecomputationForVehicle(vehicleOfMovedSegment)
-            invalidatePrecomputationForVehicle(targetVehicleOfMove)
+            setVehicleChangedSinceCheckpoint(vehicleOfMovedSegment)
+            setVehicleChangedSinceCheckpoint(targetVehicleOfMove)
           }
           true
         }
@@ -246,7 +256,7 @@ class NodeVehicleRestrictions(routes:ChangingSeqValue,
         if(isForbidden(x.removedValue,vehicleOfMovedSegment)){
           violationPerVehicle(vehicleOfMovedSegment) :-= 1
         }
-        invalidatePrecomputationForVehicle(vehicleOfMovedSegment)
+        setVehicleChangedSinceCheckpoint(vehicleOfMovedSegment)
         true
 
       case SeqUpdateLastNotified(value : IntSequence) =>
@@ -255,4 +265,27 @@ class NodeVehicleRestrictions(routes:ChangingSeqValue,
         false //impossible to go incremental
     }
   }
+  
+  override def checkInternals(c : Checker) : Unit = {
+
+    val seq = routes.value
+    for(vehicle <- vehicles){
+      c.check(violationPerVehicle(vehicle).value == violationOnVehicle(vehicle,seq))
+
+      val oldupToDate = vehicleChangedSinceCheckpoint(vehicle)
+      vehicleChangedSinceCheckpoint(vehicle) = true
+      c.check(violationPerVehicle(vehicle).value == violationOnVehicle(vehicle,seq))
+      vehicleChangedSinceCheckpoint(vehicle) = oldupToDate
+    }
+
+    if(checkpoint != null){
+      for(vehicle <- vehicles){
+        val oldupToDate = vehicleChangedSinceCheckpoint(vehicle)
+        vehicleChangedSinceCheckpoint(vehicle) = true
+        c.check(violationAtCheckpoint(vehicle) == violationOnVehicle(vehicle,checkpoint))
+        vehicleChangedSinceCheckpoint(vehicle) = oldupToDate
+      }
+    }
+  }
 }
+
