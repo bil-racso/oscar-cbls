@@ -15,16 +15,20 @@ package oscar.cbls.test.routingS
   * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
   ******************************************************************************/
 
-import oscar.cbls.invariants.core.computation.{SeqValue, Store}
+import oscar.cbls.invariants.core.computation.{ChangingSeqValue, SeqValue, Store}
+import oscar.cbls.invariants.core.propagation.ErrorChecker
+import oscar.cbls.invariants.lib.numeric.Sum
+import oscar.cbls.invariants.lib.routing.NodeVehicleRestrictions
 import oscar.cbls.invariants.lib.seq.{Size, PositionsOfConst}
 import oscar.cbls.routing.seq.model._
 import oscar.cbls.routing.seq.neighborhood.{OnePointMove, ThreeOpt, TwoOpt1}
 import oscar.cbls.search.combinators.{BestSlopeFirst, Profile}
+import oscar.cbls.modeling.Algebra._
 
 import scala.util.Random
 
 
-class MyRouting(n:Int,v:Int,symmetricDistance:Array[Array[Int]],m:Store, maxPivot:Int)
+class MyRouting(n:Int,v:Int,symmetricDistance:Array[Array[Int]],m:Store, maxPivot:Int, nodeVehicleRestrictionNotLastOne:Iterable[(Int,Int)])
   extends VRP(n,v,m,maxPivot) with TotalConstantDistance with VRPObjective
   with ClosestNeighbors with VehicleOfNode with NodesOfVehicle {
 
@@ -41,27 +45,40 @@ class MyRouting(n:Int,v:Int,symmetricDistance:Array[Array[Int]],m:Store, maxPivo
   val size = Size(cloneOfRoute)
   this.addToStringInfo(()=>"" + size)
 
+  //initializes to something simple
+  setCircuit(nodes)
+
+  val violationOfRestriction = NodeVehicleRestrictions(routes,v, nodeVehicleRestrictionNotLastOne)
+
+  this.addToStringInfo(() => "violationOfRestriction:[" + violationOfRestriction.toList.map(_.value).mkString(",") + "]")
+
+  addObjectiveTerm(1000*Sum(violationOfRestriction))
+
   computeClosestNeighbors()
 }
 
 object routingS extends App{
 
-  val n = 1000
-  val v = 10
+  val n = 10
+  val v = 3
+  val nbRestrictions = 6
 
   val maxPivot = 40
 
   println("VRP(n:" + n + " v:" + v + ")")
 
   val symmetricDistanceMatrix = RoutingMatrixGenerator(n)._1
+  val restrictions = RoutingMatrixGenerator.generateRestrictions(n,v,nbRestrictions)
 
-  val model = new Store()//checker = Some(new ErrorChecker()))
+  println("restrictions:" + restrictions)
+  val model = new Store(checker = Some(new ErrorChecker()))
 
-  val myVRP = new MyRouting(n,v,symmetricDistanceMatrix,model,maxPivot)
+  val myVRP = new MyRouting(n,v,symmetricDistanceMatrix,model,maxPivot,restrictions)
   val nodes = myVRP.nodes
 
-  myVRP.setCircuit(nodes)
   model.close()
+
+  println(myVRP)
 
   val onePtMove = Profile(new OnePointMove(() => nodes, ()=>myVRP.kNearest(40), myVRP))
 
@@ -69,9 +86,9 @@ object routingS extends App{
 
   def threeOpt(k:Int, breakSym:Boolean) = Profile(new ThreeOpt(() => nodes, ()=>myVRP.kNearest(k), myVRP,breakSymmetry = breakSym, neighborhoodName = "ThreeOpt(k=" + k + ")"))
 
-  val search = BestSlopeFirst(List(onePtMove,twoOpt, threeOpt(10,true))) exhaust threeOpt(20,true)
+  val search = (BestSlopeFirst(List(onePtMove,twoOpt, threeOpt(10,true))) exhaust threeOpt(20,true)) afterMove model.propagate()
 
-  search.verbose = 1
+  search.verbose = 2
   //search.verboseWithExtraInfo(1,()=>myVRP.toString)
   search.paddingLength = 100
 
@@ -86,10 +103,10 @@ object routingS extends App{
 }
 
 object RoutingMatrixGenerator {
+  val random = new Random(0)
 
   def apply(N: Int, side: Int = 10000): (Array[Array[Int]],Array[(Int,Int)]) = {
 
-    val random = new Random(0)
     //we generate te cost distance matrix
     def randomXY: Int = (random.nextFloat() * side).toInt
     val pointPosition: Array[(Int, Int)] = Array.tabulate(N)(w => (randomXY, randomXY))
@@ -102,5 +119,19 @@ object RoutingMatrixGenerator {
       n1 => Array.tabulate(N)(
         n2 => distance(pointPosition(n1), pointPosition(n2)))),pointPosition)
   }
+
+  def generateRestrictions(n:Int,v:Int,nbRestrictions:Int):Iterable[(Int,Int)] = {
+    var toReturn = List.empty[(Int,Int)]
+
+    var toGenerate = nbRestrictions
+    while(toGenerate !=0){
+      val vehicle = (random.nextFloat()*(v-1)).toInt
+      val node = ((random.nextFloat()*(n-v))+v).toInt
+      toReturn = (node,vehicle) :: toReturn
+      toGenerate -= 1
+    }
+    toReturn
+  }
 }
+
 

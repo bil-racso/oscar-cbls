@@ -14,6 +14,7 @@ package oscar.cbls.invariants.lib.seq
   * You should have received a copy of the GNU Lesser General Public License along with OscaR.
   * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
   ******************************************************************************/
+/*
 
 import oscar.cbls.invariants.core.algo.quick.QList
 import oscar.cbls.invariants.core.algo.seq.functional.IntSequence
@@ -169,3 +170,4 @@ class Precedence(seq:ChangingSeqValue,
     }
   }
 }
+*/

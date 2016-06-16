@@ -247,9 +247,9 @@ object SeqUpdateDefineCheckpoint{
   def unapply(u:SeqUpdateDefineCheckpoint):Option[(SeqUpdate,Boolean)] = Some(u.prev,u.activeCheckpoint)
 }
 
-class SeqUpdateDefineCheckpoint(mprev:SeqUpdate,val activeCheckpoint:Boolean, maxPivot:Int)
-  extends SeqUpdateWithPrev(mprev,mprev.newValue.regularizeToMaxPivot(maxPivot)){
-  protected[computation]  def reverse(target : IntSequence, from : SeqUpdate) : SeqUpdate = mprev.reverse(target,from)
+class SeqUpdateDefineCheckpoint(prev:SeqUpdate,val activeCheckpoint:Boolean, maxPivot:Int)
+  extends SeqUpdateWithPrev(prev,prev.newValue.regularizeToMaxPivot(maxPivot)){
+  protected[computation]  def reverse(target : IntSequence, from : SeqUpdate) : SeqUpdate = prev.reverse(target,from)
 
   protected[computation] def regularize(maxPivot:Int) : SeqUpdate = this
 
@@ -257,7 +257,7 @@ class SeqUpdateDefineCheckpoint(mprev:SeqUpdate,val activeCheckpoint:Boolean, ma
 
   def newPos2OldPos(newPos : Int) : Option[Int] = throw new Error("SeqUpdateDefineCheckpoint should not be queried for delta on moves")
 
-  protected[computation] def prepend(u : SeqUpdate) : SeqUpdate = SeqUpdateDefineCheckpoint(mprev.prepend(u),activeCheckpoint,maxPivot)
+  protected[computation] def prepend(u : SeqUpdate) : SeqUpdate = SeqUpdateDefineCheckpoint(prev.prepend(u),activeCheckpoint,maxPivot)
 }
 
 object SeqUpdateRollBackToCheckpoint{

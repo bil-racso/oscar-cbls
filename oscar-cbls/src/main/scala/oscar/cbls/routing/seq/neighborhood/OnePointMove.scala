@@ -87,14 +87,16 @@ case class OnePointMove(nodesToMove: () => Iterable[Int],
                 startValue.positionOfAnyOccurrence(newPredecessor) match {
                   case None => ;
                   case Some(positionOfNewPredecessor) =>
-                    this.positionOfNewPredecessor = positionOfNewPredecessor
+                    if(positionOfNewPredecessor+1 != positionOfMovedPoint) {
+                      this.positionOfNewPredecessor = positionOfNewPredecessor
 
-                    doMove(positionOfMovedPoint, positionOfNewPredecessor)
+                      doMove(positionOfMovedPoint, positionOfNewPredecessor)
 
-                    if (evaluateCurrentMoveObjTrueIfStopRequired(evalObjAndRollBack())) {
-                      seq.releaseCurrentCheckpointAtCheckpoint()
-                      startIndice = movedPoint + 1
-                      return
+                      if (evaluateCurrentMoveObjTrueIfStopRequired(evalObjAndRollBack())) {
+                        seq.releaseCurrentCheckpointAtCheckpoint()
+                        startIndice = movedPoint + 1
+                        return
+                      }
                     }
                 }
               }
