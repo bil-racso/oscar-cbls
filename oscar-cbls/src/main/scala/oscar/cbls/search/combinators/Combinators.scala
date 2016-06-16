@@ -265,6 +265,22 @@ case class DoOnMove(a: Neighborhood,
   }
 }
 
+case class OnExhaust(a:Neighborhood, proc:(()=>Unit),onlyFirst:Boolean) extends NeighborhoodCombinator(a) {
+
+  var alreadyExhaustedOnce = false
+  override def getMove(obj : Objective, acceptanceCriterion : (Int, Int) => Boolean) : SearchResult =
+    a.getMove(obj,acceptanceCriterion) match{
+      case NoMoveFound =>
+        if(!onlyFirst || !alreadyExhaustedOnce){
+          alreadyExhaustedOnce = true
+          proc()
+        }
+        NoMoveFound
+      case x:MoveFound => x
+
+    }
+}
+
 /**
  * this combinator attaches a custom code to a given neighborhood.
  * the code is called whenever a move from this neighborhood is taken for the first time.

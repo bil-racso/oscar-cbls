@@ -192,6 +192,7 @@ abstract class Neighborhood(name:String = null) {
       println("initial objective function:" + obj)
     }
     var moveSynthesis = SortedMap.empty[String,Int]
+    val neighborhoodNameToCol=SortedMap.empty[String,Int]
 
     val startSearchNanotime = System.nanoTime()
     var nanoTimeAtNextSynthesis = startSearchNanotime + (1000*1000*100) //100ms
@@ -409,6 +410,10 @@ abstract class Neighborhood(name:String = null) {
    * @param retryOnNoMoveFound if true, keeps on querying n on NoMoveFound, otherwise, continues the sequence
    */
   def onceEvery(n: Int, retryOnNoMoveFound: Boolean = false) = new OnceEvery(this, n, retryOnNoMoveFound)
+
+  def onExhaust(proc:()=>Unit) = OnExhaust(this,proc,false)
+
+  def onFirstExhaust(proc:()=>Unit) = OnExhaust(this,proc,true)
 
   /**
    * bounds the number of tolerated moves without improvements over the best value

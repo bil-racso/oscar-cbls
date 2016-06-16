@@ -15,7 +15,7 @@ package oscar.cbls.test.routingS
   * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
   ******************************************************************************/
 
-import oscar.cbls.invariants.core.computation.{ChangingSeqValue, SeqValue, Store}
+import oscar.cbls.invariants.core.computation.{Event, ChangingSeqValue, SeqValue, Store}
 import oscar.cbls.invariants.core.propagation.ErrorChecker
 import oscar.cbls.invariants.lib.numeric.Sum
 import oscar.cbls.invariants.lib.routing.NodeVehicleRestrictions
@@ -50,17 +50,20 @@ class MyRouting(n:Int,v:Int,symmetricDistance:Array[Array[Int]],m:Store, maxPivo
 
   val violationOfRestriction = NodeVehicleRestrictions(routes,v, nodeVehicleRestrictionNotLastOne)
 
+  val totalViolationOnRestriction = Sum(violationOfRestriction)
+  addObjectiveTerm(10000*totalViolationOnRestriction)
+
   this.addToStringInfo(() => "violationOfRestriction:[" + violationOfRestriction.toList.map(_.value).mkString(",") + "]")
 
-  addObjectiveTerm(10000*Sum(violationOfRestriction))
+
 
   computeClosestNeighbors()
 }
 
 object routingS extends App{
 
-  val n = 1000
-  val v = 10
+  val n = 10000
+  val v = 100
   val nbRestrictions = 3000
 
   val maxPivot = 40
@@ -70,7 +73,7 @@ object routingS extends App{
   val symmetricDistanceMatrix = RoutingMatrixGenerator(n)._1
   val restrictions = RoutingMatrixGenerator.generateRestrictions(n,v,nbRestrictions)
 
-//  println("restrictions:" + restrictions)
+  //  println("restrictions:" + restrictions)
   val model = new Store() //checker = Some(new ErrorChecker()))
 
   val myVRP = new MyRouting(n,v,symmetricDistanceMatrix,model,maxPivot,restrictions)
@@ -78,16 +81,24 @@ object routingS extends App{
 
   model.close()
 
+  println(myVRP)
+
   val onePtMove = Profile(new OnePointMove(() => nodes, ()=>myVRP.kNearest(40), myVRP))
+
+  val onePtMoveSolvingRestrictions = Profile(
+    new OnePointMove(() => nodes, ()=>myVRP.kNearest(100), myVRP)
+      guard(() => myVRP.totalViolationOnRestriction.value >0)
+      onFirstExhaust (() => println("MoveForRestr exhausted"))
+      name "MoveForRestr")
 
   val twoOpt = Profile(new TwoOpt1(() => nodes, ()=>myVRP.kNearest(40), myVRP))
 
   def threeOpt(k:Int, breakSym:Boolean) = Profile(new ThreeOpt(() => nodes, ()=>myVRP.kNearest(k), myVRP,breakSymmetry = breakSym, neighborhoodName = "ThreeOpt(k=" + k + ")"))
 
-  val search = (BestSlopeFirst(List(onePtMove,twoOpt, threeOpt(10,true))) exhaust threeOpt(20,true)) afterMove model.propagate()
+  val search = BestSlopeFirst(List(onePtMove,twoOpt, threeOpt(10,true),onePtMoveSolvingRestrictions)) exhaust threeOpt(20,true)
 
-  search.verbose = 2
-//  search.verboseWithExtraInfo(4,()=>myVRP.toString)
+  search.verbose = 1
+  //  search.verboseWithExtraInfo(4,()=>myVRP.toString)
   search.paddingLength = 100
 
   search.doAllMoves(obj=myVRP.getObjective)
