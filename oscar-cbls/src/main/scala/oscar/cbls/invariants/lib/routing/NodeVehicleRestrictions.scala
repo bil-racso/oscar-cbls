@@ -23,6 +23,15 @@ import oscar.cbls.invariants.core.propagation.Checker
 
 import scala.collection.immutable.SortedSet
 
+object NodeVehicleRestrictions{
+  def apply(routes:ChangingSeqValue,v:Int, nodeVehicleRestrictions:List[(Int,Int)]):Array[CBLSIntVar] = {
+    val violationPerVehicle =  Array.tabulate(v)(vehicle => CBLSIntVar(routes.model,name="violation_of_nodeRoute restriction_vehicle:" + vehicle))
+
+    new NodeVehicleRestrictions(routes, v, nodeVehicleRestrictions, violationPerVehicle)
+
+    violationPerVehicle
+  }
+}
 
 class NodeVehicleRestrictions(routes:ChangingSeqValue,
                               v:Int,
@@ -37,34 +46,37 @@ class NodeVehicleRestrictions(routes:ChangingSeqValue,
   finishInitialization()
   for(v <- violationPerVehicle) v.setDefiningInvariant(this)
 
-  private val nodeToVehiclesRestriction : RedBlackTreeMap[SortedSet[Int]] = {
-    var current = RedBlackTreeMap.empty[SortedSet[Int]]
-    for ((node, vehicle) <- nodeVehicleRestrictions) {
-      val currentVehiclesForNode = current.getOrElse(node, SortedSet.empty[Int])
-      current = current.insert(node, currentVehiclesForNode + vehicle)
+  private val nodeToVehiclesRestriction : Array[(Array[Boolean],QList[Int])] = Array.fill(n)(null)
+
+  for ((node, vehicle) <- nodeVehicleRestrictions) {
+    nodeToVehiclesRestriction(node) match{
+      case null =>
+        val restrictionArray = Array.fill(v)(false)
+        restrictionArray(vehicle) = true
+        nodeToVehiclesRestriction(node) = (restrictionArray,QList(vehicle))
+      case (restrictionArray,restrictionList) =>
+        if(!restrictionArray(vehicle)){
+          restrictionArray(vehicle) = true
+          nodeToVehiclesRestriction(node) = (restrictionArray,QList(vehicle,restrictionList))
+        }
     }
-    current
   }
 
   def isAllowed(node : Int, vehicle : Int) = {
-    nodeToVehiclesRestriction.get(node) match {
-      case None => true
-      case Some(vehicles) => !vehicles.contains(vehicle)
-    }
+    val nodeRestrictions =nodeToVehiclesRestriction(node)
+    nodeRestrictions == null || !nodeRestrictions._1(vehicle)
   }
 
   def isForbidden(node : Int, vehicle : Int) = {
-    nodeToVehiclesRestriction.get(node) match {
-      case None => false
-      case Some(vehicles) => vehicles.contains(vehicle)
-    }
+    val nodeRestrictions =nodeToVehiclesRestriction(node)
+    nodeRestrictions != null && nodeRestrictions._1(vehicle)
   }
 
-  def forbiddenVehicles(node:Int):Iterable[Int] =
-    nodeToVehiclesRestriction.get(node) match {
-      case None => None
-      case Some(vehicles) => vehicles
-    }
+  def forbiddenVehicles(node:Int):Iterable[Int] = {
+    val nodeRestrictions =nodeToVehiclesRestriction(node)
+    if(nodeRestrictions == null) None
+    else nodeRestrictions._2
+  }
 
   var checkpoint : IntSequence = null
   var violationAtCheckpoint:Array[Int] = Array.fill(v)(-1)
@@ -86,7 +98,7 @@ class NodeVehicleRestrictions(routes:ChangingSeqValue,
       setVehicleChangedSinceCheckpoint(vehicle)
     }
   }
-  
+
   def updateAllInvalidPrecomputationsToCheckpoint(){
     while(changedVehicleSinceCheckpoint != null){
       val vehicle = changedVehicleSinceCheckpoint.head

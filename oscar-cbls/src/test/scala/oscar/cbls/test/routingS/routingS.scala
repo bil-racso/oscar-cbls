@@ -47,7 +47,7 @@ class MyRouting(n:Int,v:Int,symmetricDistance:Array[Array[Int]],m:Store, maxPivo
 object routingS extends App{
 
   val n = 1000
-  val v = 11
+  val v = 10
 
   val maxPivot = 40
 
@@ -69,13 +69,11 @@ object routingS extends App{
 
   def threeOpt(k:Int, breakSym:Boolean) = Profile(new ThreeOpt(() => nodes, ()=>myVRP.kNearest(k), myVRP,breakSymmetry = breakSym, neighborhoodName = "ThreeOpt(k=" + k + ")"))
 
-  val search = BestSlopeFirst(List(onePtMove,twoOpt, threeOpt(10,false))) exhaust threeOpt(20,true) //afterMove model.propagate() //exhaust threeOpt(40,true)
-
-//  val search = threeOpt(10,false)// afterMove model.propagate() //exhaust threeOpt(40,true)
+  val search = BestSlopeFirst(List(onePtMove,twoOpt, threeOpt(10,true))) exhaust threeOpt(20,true)
 
   search.verbose = 1
   //search.verboseWithExtraInfo(1,()=>myVRP.toString)
-  search.paddingLength = 200
+  search.paddingLength = 100
 
   search.doAllMoves(obj=myVRP.getObjective)
 

@@ -1,5 +1,5 @@
 package oscar.cbls.invariants.lib.seq
-/*
+
 /*******************************************************************************
   * OscaR is free software: you can redistribute it and/or modify
   * it under the terms of the GNU Lesser General Public License as published by
@@ -52,9 +52,7 @@ class Precedence(seq:ChangingSeqValue,
     aftersToPrecedences(toValue) = QList(precedenceID,aftersToPrecedences(toValue))
   }
 
-
   private var violatedPrecedencesToPositions=SortedMap.empty[Int,(Int,Int)]
-
   {
     val (viol,violated) = computeViolatedFromScratch(seq.value)
     violatedPrecedencesToPositions = violated
@@ -171,4 +169,3 @@ class Precedence(seq:ChangingSeqValue,
     }
   }
 }
-*/
