@@ -81,13 +81,13 @@ abstract class IntSequence(protected[seq] val uniqueID:Int = IntSequence.getNewU
 
   def explorerAtPosition(position : Int) : Option[IntSequenceExplorer]
 
-  def valuesBetweenPositions(fromIncluded:Int,toIncluded:Int):SortedSet[Int] = {
+  def valuesBetweenPositions(fromPositionIncluded:Int,toPositionIncluded:Int):SortedSet[Int] = {
     var toReturn = SortedSet.empty[Int]
-    var e = explorerAtPosition(fromIncluded)
+    var e = explorerAtPosition(fromPositionIncluded)
     while(e match{
       case None => false
       case Some(explorer) =>
-        if (explorer.position <= toIncluded){
+        if (explorer.position <= toPositionIncluded){
           toReturn = toReturn + explorer.value
           e = explorer.next
           true

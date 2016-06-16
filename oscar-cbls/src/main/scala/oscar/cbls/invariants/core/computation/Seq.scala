@@ -258,6 +258,8 @@ class SeqUpdateDefineCheckpoint(prev:SeqUpdate,val activeCheckpoint:Boolean, max
   def newPos2OldPos(newPos : Int) : Option[Int] = throw new Error("SeqUpdateDefineCheckpoint should not be queried for delta on moves")
 
   protected[computation] def prepend(u : SeqUpdate) : SeqUpdate = SeqUpdateDefineCheckpoint(prev.prepend(u),activeCheckpoint,maxPivot)
+
+  override def toString : String = "SeqUpdateDefineCheckpoint(prev:" + prev + ")"
 }
 
 object SeqUpdateRollBackToCheckpoint{
@@ -288,7 +290,7 @@ class SeqUpdateRollBackToCheckpoint(val checkpointValue:IntSequence,instructions
   }
 
   override def toString : String =
-    "SeqUpdateRollBackToCheckpoint(checkpoint:" + checkpointValue + " howTo:" +  howToRollBack + ")"
+    "SeqUpdateRollBackToCheckpoint(checkpoint:" + checkpointValue + ")" //+ " howTo:" +  howToRollBack + ")"
 
   override def depth : Int = 0
 }

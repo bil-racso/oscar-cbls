@@ -52,16 +52,16 @@ class MyRouting(n:Int,v:Int,symmetricDistance:Array[Array[Int]],m:Store, maxPivo
 
   this.addToStringInfo(() => "violationOfRestriction:[" + violationOfRestriction.toList.map(_.value).mkString(",") + "]")
 
-  addObjectiveTerm(1000*Sum(violationOfRestriction))
+  addObjectiveTerm(10000*Sum(violationOfRestriction))
 
   computeClosestNeighbors()
 }
 
 object routingS extends App{
 
-  val n = 10
-  val v = 3
-  val nbRestrictions = 6
+  val n = 1000
+  val v = 10
+  val nbRestrictions = 3000
 
   val maxPivot = 40
 
@@ -70,15 +70,13 @@ object routingS extends App{
   val symmetricDistanceMatrix = RoutingMatrixGenerator(n)._1
   val restrictions = RoutingMatrixGenerator.generateRestrictions(n,v,nbRestrictions)
 
-  println("restrictions:" + restrictions)
-  val model = new Store(checker = Some(new ErrorChecker()))
+//  println("restrictions:" + restrictions)
+  val model = new Store() //checker = Some(new ErrorChecker()))
 
   val myVRP = new MyRouting(n,v,symmetricDistanceMatrix,model,maxPivot,restrictions)
   val nodes = myVRP.nodes
 
   model.close()
-
-  println(myVRP)
 
   val onePtMove = Profile(new OnePointMove(() => nodes, ()=>myVRP.kNearest(40), myVRP))
 
@@ -89,7 +87,7 @@ object routingS extends App{
   val search = (BestSlopeFirst(List(onePtMove,twoOpt, threeOpt(10,true))) exhaust threeOpt(20,true)) afterMove model.propagate()
 
   search.verbose = 2
-  //search.verboseWithExtraInfo(1,()=>myVRP.toString)
+//  search.verboseWithExtraInfo(4,()=>myVRP.toString)
   search.paddingLength = 100
 
   search.doAllMoves(obj=myVRP.getObjective)
@@ -125,7 +123,7 @@ object RoutingMatrixGenerator {
 
     var toGenerate = nbRestrictions
     while(toGenerate !=0){
-      val vehicle = (random.nextFloat()*(v-1)).toInt
+      val vehicle = (random.nextFloat()*(v)).toInt
       val node = ((random.nextFloat()*(n-v))+v).toInt
       toReturn = (node,vehicle) :: toReturn
       toGenerate -= 1
