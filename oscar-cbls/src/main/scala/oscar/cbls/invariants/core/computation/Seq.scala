@@ -240,15 +240,15 @@ case class SeqUpdateLastNotified(value:IntSequence) extends SeqUpdate(value){
 
 object SeqUpdateDefineCheckpoint{
 
-  def apply(prev:SeqUpdate,activeCheckpoint:Boolean, maxPivot:Int):SeqUpdateDefineCheckpoint = {
-    new SeqUpdateDefineCheckpoint(prev,activeCheckpoint, maxPivot)
+  def apply(prev:SeqUpdate,activeCheckpoint:Boolean, maxPivotPerValuePercent:Int):SeqUpdateDefineCheckpoint = {
+    new SeqUpdateDefineCheckpoint(prev,activeCheckpoint, maxPivotPerValuePercent)
   }
 
   def unapply(u:SeqUpdateDefineCheckpoint):Option[(SeqUpdate,Boolean)] = Some(u.prev,u.activeCheckpoint)
 }
 
-class SeqUpdateDefineCheckpoint(prev:SeqUpdate,val activeCheckpoint:Boolean, maxPivot:Int)
-  extends SeqUpdateWithPrev(prev,prev.newValue.regularizeToMaxPivot(maxPivot)){
+class SeqUpdateDefineCheckpoint(prev:SeqUpdate,val activeCheckpoint:Boolean, maxPivotPerValuePercent:Int)
+  extends SeqUpdateWithPrev(prev,prev.newValue.regularizeToMaxPivot(maxPivotPerValuePercent)){
   protected[computation]  def reverse(target : IntSequence, from : SeqUpdate) : SeqUpdate = prev.reverse(target,from)
 
   protected[computation] def regularize(maxPivot:Int) : SeqUpdate = this
@@ -257,7 +257,7 @@ class SeqUpdateDefineCheckpoint(prev:SeqUpdate,val activeCheckpoint:Boolean, max
 
   def newPos2OldPos(newPos : Int) : Option[Int] = throw new Error("SeqUpdateDefineCheckpoint should not be queried for delta on moves")
 
-  protected[computation] def prepend(u : SeqUpdate) : SeqUpdate = SeqUpdateDefineCheckpoint(prev.prepend(u),activeCheckpoint,maxPivot)
+  protected[computation] def prepend(u : SeqUpdate) : SeqUpdate = SeqUpdateDefineCheckpoint(prev.prepend(u),activeCheckpoint,maxPivotPerValuePercent)
 
   override def toString : String = "SeqUpdateDefineCheckpoint(prev:" + prev + ")"
 }
@@ -322,8 +322,8 @@ object CBLSSeqConst{
   def apply(seq:IntSequence):CBLSSeqConst = new CBLSSeqConst(seq.regularize())
 }
 
-class CBLSSeqVar(givenModel:Store, initialValue:IntSequence, val maxVal:Int = Int.MaxValue, n: String = null, maxPivot:Int = 150, maxHistorySize:Int = 50)
-  extends ChangingSeqValue(initialValue, maxVal, maxPivot, maxHistorySize) with Variable{
+class CBLSSeqVar(givenModel:Store, initialValue:IntSequence, val maxVal:Int = Int.MaxValue, n: String = null, maxPivotPerValuePercent:Int = 4, maxHistorySize:Int = 50)
+  extends ChangingSeqValue(initialValue, maxVal, maxPivotPerValuePercent, maxHistorySize) with Variable{
   require(domain.min == 0)
   require(givenModel != null)
 
@@ -367,7 +367,7 @@ class CBLSSeqVar(givenModel:Store, initialValue:IntSequence, val maxVal:Int = In
   def <==(i: SeqValue) {IdentitySeq(i,this)}
 
   def createClone(maxDepth:Int=50):CBLSSeqVar = {
-    val clone = new CBLSSeqVar(model,this.value,this.maxValue,"clone_of_" + this.name,maxPivot,maxDepth)
+    val clone = new CBLSSeqVar(model,this.value,this.maxValue,"clone_of_" + this.name,maxPivotPerValuePercent,maxDepth)
     IdentitySeq(this,clone)
     clone
   }
@@ -385,7 +385,7 @@ class ChangingSeqValueSnapShot(val variable:ChangingSeqValue,val savedValue:IntS
   override protected def doRestore() : Unit = {variable.asInstanceOf[CBLSSeqVar] := savedValue}
 }
 
-abstract class ChangingSeqValue(initialValue: Iterable[Int], val maxValue: Int, maxPivot: Int, maxHistorySize:Int)
+abstract class ChangingSeqValue(initialValue: Iterable[Int], val maxValue: Int, maxPivotPerValuePercent: Int, maxHistorySize:Int)
   extends AbstractVariable with SeqValue{
 
   override def snapshot : ChangingSeqValueSnapShot = new ChangingSeqValueSnapShot(this,this.value)
@@ -504,7 +504,7 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], val maxValue: Int, 
       case SeqUpdateRemove(position : Int, prev : SeqUpdate) =>
         SeqUpdateRemove(position, trimToLatestCheckpoint(prev), updates.newValue)
       case SeqUpdateDefineCheckpoint(prev : SeqUpdate, isActiveCheckpoint : Boolean) =>
-        SeqUpdateDefineCheckpoint(SeqUpdateSet(updates.newValue), isActiveCheckpoint, maxPivot)
+        SeqUpdateDefineCheckpoint(SeqUpdateSet(updates.newValue), isActiveCheckpoint, maxPivotPerValuePercent)
 
       case SeqUpdateRollBackToCheckpoint(checkpointValue : IntSequence) => updates
       case SeqUpdateSet(value : IntSequence) => updates
@@ -576,7 +576,7 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], val maxValue: Int, 
           val updatesSincePrevCheckpoint = pushCheckPoints(prev,true)
 
           recordNotifiedChangesForCheckpoint(updatesSincePrevCheckpoint)
-          recordNotifiedChangesForCheckpoint(SeqUpdateDefineCheckpoint(SeqUpdateLastNotified(updatesSincePrevCheckpoint.newValue),isActiveCheckpoint,maxPivot))
+          recordNotifiedChangesForCheckpoint(SeqUpdateDefineCheckpoint(SeqUpdateLastNotified(updatesSincePrevCheckpoint.newValue),isActiveCheckpoint,maxPivotPerValuePercent))
 
           require(updates.newValue quickEquals updatesSincePrevCheckpoint.newValue)
           SeqUpdateLastNotified(updates.newValue)
@@ -588,7 +588,7 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], val maxValue: Int, 
     }
 
     protected def defineCurrentValueAsCheckpoint(checkPointIsActive:Boolean):IntSequence = {
-      toNotify = SeqUpdateDefineCheckpoint(toNotify.regularize(maxPivot),checkPointIsActive,maxPivot)
+      toNotify = SeqUpdateDefineCheckpoint(toNotify.regularize(maxPivotPerValuePercent),checkPointIsActive,maxPivotPerValuePercent)
       trimToNotifyIfNeeded()
       notifyChanged()
       toNotify.newValue
@@ -710,7 +710,7 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], val maxValue: Int, 
       val headPhantom = dynListElements.headPhantom
       var currentElement = headPhantom.next
 
-      if(stableCheckpoint || !topCheckpointIsActive) toNotify = toNotify.regularize(maxPivot)
+      if(stableCheckpoint || !topCheckpointIsActive) toNotify = toNotify.regularize(maxPivotPerValuePercent)
 
       while (currentElement != headPhantom) {
         val e = currentElement.elem

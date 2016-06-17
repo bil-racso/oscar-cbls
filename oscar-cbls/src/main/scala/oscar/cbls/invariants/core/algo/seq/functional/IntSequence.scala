@@ -17,7 +17,7 @@ package oscar.cbls.invariants.core.algo.seq.functional
 import oscar.cbls.invariants.core.algo.fun.{LinearTransform, PiecewiseLinearBijectionNaive, Pivot}
 import oscar.cbls.invariants.core.algo.rb.{RBTMPosition, RedBlackTreeMap}
 
-import scala.collection.immutable.SortedSet
+import scala.collection.immutable.{SortedMap, SortedSet}
 import scala.language.implicitConversions
 
 object IntSequence{
@@ -96,6 +96,22 @@ abstract class IntSequence(protected[seq] val uniqueID:Int = IntSequence.getNewU
     toReturn
   }
 
+  //position to value
+  def positionsBetweenFromToAndTheirValues(fromPositionIncluded:Int,toPositionIncluded:Int):List[(Int,Int)] = {
+    var toReturn:List[(Int,Int)] = List.empty
+    var e = explorerAtPosition(fromPositionIncluded)
+    while(e match{
+      case None => false
+      case Some(explorer) =>
+        if (explorer.position <= toPositionIncluded){
+          toReturn = ((explorer.position,explorer.value)) :: toReturn
+          e = explorer.next
+          true
+        }else false
+    }){}
+    toReturn
+  }
+
   def explorerAtFirstOccurrence(value : Int) : Option[IntSequenceExplorer] = {
     positionOfFirstOccurrence(value : Int) match {
       case None => None
@@ -142,7 +158,7 @@ abstract class IntSequence(protected[seq] val uniqueID:Int = IntSequence.getNewU
   def delete(pos:Int, fast:Boolean=false,autoRework:Boolean = false):IntSequence
   def moveAfter(startPositionIncluded:Int, endPositionIncluded:Int, moveAfterPosition:Int, flip:Boolean, fast:Boolean = false, autoRework:Boolean = true):IntSequence
 
-  def regularizeToMaxPivot(maxPivot: Int, targetUniqueID: Int = this.uniqueID) :ConcreteIntSequence
+  def regularizeToMaxPivot(maxPivotPerValuePercent: Int, targetUniqueID: Int = this.uniqueID) :ConcreteIntSequence
 
   def regularize(targetUniqueID:Int = this.uniqueID):ConcreteIntSequence
   def commitPendingMoves:IntSequence
@@ -395,8 +411,8 @@ class ConcreteIntSequence(private[seq] val internalPositionToValue:RedBlackTreeM
     }
   }
 
-  override def regularizeToMaxPivot(maxPivot: Int, targetUniqueID: Int = this.uniqueID) :ConcreteIntSequence = {
-    if(this.externalToInternalPosition.forward.nbPivot > maxPivot){
+  override def regularizeToMaxPivot(maxPivotPerValuePercent: Int, targetUniqueID: Int = this.uniqueID) :ConcreteIntSequence = {
+    if(this.externalToInternalPosition.forward.nbPivot * 100 > maxPivotPerValuePercent * this.size){
       regularize(targetUniqueID)
     }else{
       if (targetUniqueID != this.uniqueID){
@@ -561,8 +577,8 @@ abstract class StackedUpdateIntSequence extends IntSequence(){
   }
 
 
-  override def regularizeToMaxPivot(maxPivot: Int, targetUniqueID: Int = this.uniqueID) : ConcreteIntSequence =
-    commitPendingMoves.regularizeToMaxPivot(maxPivot : Int, targetUniqueID : Int)
+  override def regularizeToMaxPivot(maxPivotPerValuePercent: Int, targetUniqueID: Int = this.uniqueID) : ConcreteIntSequence =
+    commitPendingMoves.regularizeToMaxPivot(maxPivotPerValuePercent : Int, targetUniqueID : Int)
 
   override def regularize(targetUniqueID:Int = this.uniqueID) : ConcreteIntSequence = commitPendingMoves.regularize(targetUniqueID)
 }

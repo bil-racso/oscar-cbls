@@ -89,6 +89,8 @@ case class ConstantRoutingDistance(routes:ChangingSeqValue,
   for(i <- distance) i.setDefiningInvariant(this)
 
 
+  //TODO: improve pre-computation for non-symetric and multi-vehicle distance!
+
   //TODO: handle inactive checkpoints
   private val savedValues:Array[Int] = computeValueFromScratch(routes.value)
   private var savedCheckpoint = routes.value

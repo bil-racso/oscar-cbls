@@ -14,9 +14,9 @@ package oscar.cbls.invariants.lib.seq
   * You should have received a copy of the GNU Lesser General Public License along with OscaR.
   * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
   ******************************************************************************/
-/*
 
 import oscar.cbls.invariants.core.algo.quick.QList
+import oscar.cbls.invariants.core.algo.rb.RedBlackTreeMap
 import oscar.cbls.invariants.core.algo.seq.functional.IntSequence
 import oscar.cbls.invariants.core.computation._
 
@@ -30,144 +30,327 @@ import scala.collection.immutable.{SortedMap, SortedSet}
  * "any" being chosen arbitrarily by tne invariant, and the choice an of course change at any time.
  * also if one of the two value of a precedence is not present in the sequence,
  * it is considered that the precedence is enforced.
+ *
+ * maintains the number of violated precedences.
+ *
  * @param seq
  * @param beforeAfter
  */
 class Precedence(seq:ChangingSeqValue,
-                 beforeAfter:List[(Int,Int)],
-                 violation:CBLSIntVar)
-  extends Invariant()
-  with SeqNotificationTarget{
+                 beforeAfter:List[(Int,Int)]) //supposed to have zero redundancies.
+  extends IntInvariant()
+  with SeqNotificationTarget {
 
   registerStaticAndDynamicDependency(seq)
-  violation.setDefiningInvariant(this)
   finishInitialization()
 
   //saving precedences into arrays
-  private val precedencesArray:Array[(Int,Int)] = beforeAfter.toArray
-  private val beforesToPrecedences:Array[QList[Int]] = Array.fill(seq.maxValue+1)(null)
-  private val aftersToPrecedences:Array[QList[Int]]  = Array.fill(seq.maxValue+1)(null)
-  for(precedenceID <- precedencesArray.indices){
-    val (fromValue,toValue) = precedencesArray(precedenceID)
-    beforesToPrecedences(fromValue) = QList(precedenceID,beforesToPrecedences(fromValue))
-    aftersToPrecedences(toValue) = QList(precedenceID,aftersToPrecedences(toValue))
+  private val precedencesArray : Array[(Int, Int)] = beforeAfter.toArray
+  val nbPecedences = precedencesArray.length
+  private val beforesToPrecedences : Array[QList[Int]] = Array.fill(seq.maxValue + 1)(null)
+  private val aftersToPrecedences : Array[QList[Int]] = Array.fill(seq.maxValue + 1)(null)
+  for (precedenceID <- precedencesArray.indices) {
+    val (fromValue, toValue) = precedencesArray(precedenceID)
+    beforesToPrecedences(fromValue) = QList(precedenceID, beforesToPrecedences(fromValue))
+    aftersToPrecedences(toValue) = QList(precedenceID, aftersToPrecedences(toValue))
   }
 
-  private var violatedPrecedencesToPositions=SortedMap.empty[Int,(Int,Int)]
-  {
-    val (viol,violated) = computeViolatedFromScratch(seq.value)
-    violatedPrecedencesToPositions = violated
-    violation := viol
-  }
+  //this is the exact info
+  private val isPrecedenceViolated : Array[Boolean] = Array.fill(nbPecedences)(false)
+  //TODO: initialize this!
+  private var valueToViolatedPrecedencesOverApproximated : RedBlackTreeMap[QList[Int]] = RedBlackTreeMap.empty //this over-approximates, to speed up cleaning
 
-  var tmpArrayOfValueToIntM1WhenNotInUse = Array.fill[Int](seq.maxValue+1)(-1)
-  /**
-   * @param seq
-   * @return the degree of violation, and the set of violated Precedences ID to the position of the before and after values
-   */
-  def computeViolatedFromScratch(seq:IntSequence):(Int,SortedMap[Int,(Int,Int)]) = {
-    var explorer = seq.explorerAtPosition(0)
-    //where the precedences have been closed
 
-    val valueToPositionM1IfNotSeen = tmpArrayOfValueToIntM1WhenNotInUse
-    var toClean:QList[Int] = null
+  def computeAndAffectViolationsFromScratch(seq : IntSequence) {
+    //this assumes that we have lots of precedence constraints, so that we can afford crawling through the sequence (instead of iterating through the precedences)
+    var totalViolation = 0
+    val hasValueBeenSeen = Array.fill(this.seq.maxValue + 1)(false)
 
-    var violationDegree:Int = 0
-    var violatedPrecedences=SortedMap.empty[Int,(Int,Int)]
+    for (violatedPrecedenceList <- valueToViolatedPrecedencesOverApproximated.values) {
+      for (precedenceID <- violatedPrecedenceList) {
+        isPrecedenceViolated(precedenceID) = false
+      }
+    }
+    valueToViolatedPrecedencesOverApproximated = RedBlackTreeMap.empty
 
-    while(explorer match{
+    var explorerOpt = seq.explorerAtPosition(0)
+
+    while (explorerOpt match {
       case None => false
-      case Some(seqPosition) =>
-        val value = seqPosition.value
-        val position = seqPosition.position
-        explorer = seqPosition.next
-        //check that all values are in open, and close them all.
-        //for values that are not in open,
+      case Some(explorer) =>
 
-        //does it open some already closed precedences?
-        for(precedenceIDOpenedByValue <- beforesToPrecedences(value)){
-          val valueShouldComeAfter = precedencesArray(precedenceIDOpenedByValue)._2
-          val positionOfValueShouldComeAfter = valueToPositionM1IfNotSeen(valueShouldComeAfter)
-          if(positionOfValueShouldComeAfter != -1){
-            //value has already been encountered, so it is a bug!
-            val violationOfPrecedence = (position - positionOfValueShouldComeAfter)
-            violationDegree += violationOfPrecedence
-            violatedPrecedences = violatedPrecedences + ((precedenceIDOpenedByValue,(position,positionOfValueShouldComeAfter)))
+        val value = explorer.value
+        val position = explorer.position
+        //we
+        hasValueBeenSeen(value) = true
+
+        var precedencesThatShouldOpenNow = beforesToPrecedences(value)
+        while (precedencesThatShouldOpenNow != null) {
+          val precedenceID = precedencesThatShouldOpenNow.head
+          precedencesThatShouldOpenNow = precedencesThatShouldOpenNow.tail
+          val shouldBeAfter = precedencesArray(precedenceID)._2
+          if (hasValueBeenSeen(shouldBeAfter)) {
+            //the precedence is violated!
+
+            registerViolationIntoMaps(precedenceID)
+
+            isPrecedenceViolated(precedenceID) = true
+            totalViolation += 1
           }
         }
-        require(valueToPositionM1IfNotSeen(value) == -1)
-        valueToPositionM1IfNotSeen(value) = position
-        toClean = QList(value,toClean)
+        explorerOpt = explorer.next
         true
-    }){}
+    }) {}
 
-    //now, we clean the array
-    for(value <- toClean) valueToPositionM1IfNotSeen(value) = -1
-
-    (violationDegree,violatedPrecedences)
+    this := totalViolation
   }
 
-  /**
-   * @param violatedPrecedences
-   * @return value -> precedences where it appears
-   */
-  def violatedPrecedencesToViolatedValues(violatedPrecedences:SortedMap[Int,(Int,Int)]):SortedMap[Int,Int] = {
-    var toReturn = SortedMap.empty[Int,Int]
-    def addToViolatedValueToToReturn(value:Int){
-      toReturn = toReturn + ((value,toReturn.getOrElse(value,0)))
+
+  def registerViolationIntoMaps(precedenceID:Int) {
+    //might insert duplicates!
+
+    val (startValue,endValue) = precedencesArray(precedenceID)
+    valueToViolatedPrecedencesOverApproximated.insert(startValue,
+      QList(precedenceID, valueToViolatedPrecedencesOverApproximated.getOrElse(startValue, null)))
+
+    valueToViolatedPrecedencesOverApproximated.insert(endValue,
+      QList(precedenceID, valueToViolatedPrecedencesOverApproximated.getOrElse(endValue, null)))
+  }
+
+
+
+  override def notifySeqChanges(v : ChangingSeqValue, d : Int, changes : SeqUpdate) {
+    if (!digestUpdates(changes, false)) {
+      computeAndAffectViolationsFromScratch(changes.newValue)
     }
-    for(precedenceID <- violatedPrecedences.keys){
-      val prec = this.precedencesArray(precedenceID)
-      addToViolatedValueToToReturn(prec._1)
-      addToViolatedValueToToReturn(prec._2)
-    }
-    toReturn
   }
 
-  override def notifySeqChanges(v : ChangingSeqValue, d : Int, changes : SeqUpdate){
-
-
-  }
-
-
-  private def movedValues(changes:SeqUpdate):Option[SortedSet]= {
-    val newValue = changes.newValue
-
+  private def digestUpdates(changes : SeqUpdate, skipNewCheckpoints : Boolean) : Boolean = {
     changes match {
+      case SeqUpdateDefineCheckpoint(prev : SeqUpdate, isActive : Boolean) =>
+        digestUpdates(prev, true)
+      //TODO
+
+      case x@SeqUpdateRollBackToCheckpoint(checkpoint) =>
+        digestUpdates(x.howToRollBack, true)
+      //TODO
+
       case SeqUpdateInsert(value : Int, pos : Int, prev : SeqUpdate) =>
-        if(!digestUpdates(prev)) return false
+        if (!digestUpdates(prev, skipNewCheckpoints)) return false
 
+        var precedencesStartingAtInsertedValue = beforesToPrecedences(value)
+        while (precedencesStartingAtInsertedValue != null) {
+          val precedenceToCheck = precedencesStartingAtInsertedValue.head
+          precedencesStartingAtInsertedValue = precedencesStartingAtInsertedValue.tail
+
+          //searching for end of precedence that is already in
+
+          val endValueOfPrecedence = this.precedencesArray(precedenceToCheck)._2
+
+          prev.newValue.positionOfAnyOccurrence(endValueOfPrecedence) match {
+            case None => ; //the precedence is fine
+            case Some(positionOfEndValueOfPrecedence) =>
+              if (positionOfEndValueOfPrecedence < pos) {
+                //precedence is violated!
+                isPrecedenceViolated(precedenceToCheck) = true
+                this :+= 1
+
+                registerViolationIntoMaps(precedenceToCheck)
+
+              } // else precedence is not violated
+
+          }
+        }
+
+        var precedencesEndingAtInsertedValue = aftersToPrecedences(value)
+
+        while (precedencesEndingAtInsertedValue != null) {
+          val precedenceToCheck = precedencesEndingAtInsertedValue.head
+          precedencesEndingAtInsertedValue = precedencesEndingAtInsertedValue.tail
+
+          //searching for end of precedence that is already in
+
+          val startValueOfPrecedence = this.precedencesArray(precedenceToCheck)._1
+
+          prev.newValue.positionOfAnyOccurrence(startValueOfPrecedence) match {
+            case None => ; //the precedence is fine
+            case Some(positionOfStartValueOfPrecedence) =>
+              if (pos < positionOfStartValueOfPrecedence) {
+                //precedence is violated!
+                require(isPrecedenceViolated(precedenceToCheck) == false) //because was not in!
+                isPrecedenceViolated(precedenceToCheck) = true
+                this :+= 1
+                registerViolationIntoMaps(precedenceToCheck)
+
+              } // else precedence is not violated
+          }
+        }
         true
+
+      case x@SeqUpdateRemove(position : Int, prev : SeqUpdate) =>
+        if (!digestUpdates(prev, skipNewCheckpoints)) return false
+
+        valueToViolatedPrecedencesOverApproximated.get(value) match {
+          case None => //no precedence to check there
+          case Some(x) =>
+            valueToViolatedPrecedencesOverApproximated = valueToViolatedPrecedencesOverApproximated.remove(value)
+            //they are all fine now
+            require(x != null)
+            var precedencesInvolvingRemovedThatMustBeChecked = x
+            while (x != null) {
+              val precedenceToClean = precedencesInvolvingRemovedThatMustBeChecked.head
+              precedencesInvolvingRemovedThatMustBeChecked = precedencesInvolvingRemovedThatMustBeChecked.tail
+              if (isPrecedenceViolated(precedenceToClean)) {
+                isPrecedenceViolated(precedenceToClean) = false
+                this :-= 1
+              }
+            }
+        }
+        true
+
       case x@SeqUpdateMove(fromIncluded : Int, toIncluded : Int, after : Int, flip : Boolean, prev : SeqUpdate) =>
-        if(!digestUpdates(prev)) false
-        else if(x.isNop) true
-        else if(x.isSimpleFlip){
+        //on which vehicle did we move?
+        //also from --> to cannot include a vehicle start.
+        if (!digestUpdates(prev, skipNewCheckpoints)) false
+        else if (x.isNop) true
+        else if (x.isSimpleFlip) {
+          //this is a simple flip
 
-          true
-        }else {
+          //violation is only impacted if the other value of the precedence is also in the flip.
+          //in this case, it inverts the truth value of the violation.
+          //two inversions will happen,
+          //that'w why there is only the loop on precedences considering the precedences started at the flipped values,
+          // not the ones ended at the flipped values
 
+          val valuesInFlip:SortedSet[Int] = prev.newValue.valuesBetweenPositions(fromIncluded,toIncluded)
+          for(value <- valuesInFlip){
+            //violations involved in value
+            var precedencesStartedAtValue:QList[Int] = this.beforesToPrecedences(value)
+            while(precedencesStartedAtValue != null){
+              val precedenceToCheck = precedencesStartedAtValue.head
+              precedencesStartedAtValue = precedencesStartedAtValue.tail
+              val endValueOfPrecedence = precedencesArray(precedenceToCheck)._2
+
+              if(valuesInFlip.contains(endValueOfPrecedence)){
+                //the violation of this precedence is inverted
+
+                if(isPrecedenceViolated(precedenceToCheck)){
+                  //was violated, so flip to false
+                  isPrecedenceViolated(precedenceToCheck) = false
+                  this :-=1
+                }else{
+                  //was not violated, now it is violated
+                  isPrecedenceViolated(precedenceToCheck) = true
+                  registerViolationIntoMaps(precedenceToCheck)
+                  this :+=1
+                }
+              }//else we do not have to check anything :-)
+            }
+          }
           true
+        } else {
+          //move with flip
+
+          //TODO: also get the positions straight!
+          val valuesInMovedSegment : SortedSet[Int] = prev.newValue.valuesBetweenPositions(fromIncluded, toIncluded)
+          for (value <- valuesInMovedSegment) {
+
+            //violations involved in value
+            var precedencesStartedAtValue : QList[Int] = this.beforesToPrecedences(value)
+            while (precedencesStartedAtValue != null) {
+              val precedenceToCheck = precedencesStartedAtValue.head
+              precedencesStartedAtValue = precedencesStartedAtValue.tail
+              val endValueOfPrecedence = precedencesArray(precedenceToCheck)._2
+
+              if (valuesInMovedSegment.contains(endValueOfPrecedence)) {
+                //the violation of this precedence is inverted (only do this for one half of the precedence)
+
+                if (flip) {
+                  if (isPrecedenceViolated(precedenceToCheck)) {
+                    //was violated, so flip to false
+                    isPrecedenceViolated(precedenceToCheck) = false
+                    this :-= 1
+                  } else {
+                    //was not violated, now it is violated
+                    isPrecedenceViolated(precedenceToCheck) = true
+                    registerViolationIntoMaps(precedenceToCheck)
+                    this :+= 1
+                  }
+                }
+              } else {
+                //the other one is not in the flipped move, so we have to check the impact of the move on this precedence
+
+                changes.newValue.positionOfAnyOccurrence(endValueOfPrecedence) match {
+                  case None => //other not present in the sequence, nothing to do
+                  case Some(newPositionOfEndValueOfPrecedence) =>
+                    val newPositionOfStartValueOfPrecedence = changes.newValue.positionOfAnyOccurrence(value).head
+
+                    if (newPositionOfStartValueOfPrecedence < newPositionOfEndValueOfPrecedence) {
+                      //no violation after move
+                      if (isPrecedenceViolated(precedenceToCheck)) {
+                        //was violated, so flip to false
+                        isPrecedenceViolated(precedenceToCheck) = false
+                        this :-= 1
+                      } //was not violated, nothing to do
+
+                    } else {
+                      //violation after move
+                      if (!isPrecedenceViolated(precedenceToCheck)) {
+                        //was not violated, now it is violated
+                        isPrecedenceViolated(precedenceToCheck) = true
+                        registerViolationIntoMaps(precedenceToCheck)
+                        this :+= 1
+                      }
+                    }
+                }
+              }
+            }
+
+            var precedencesEndedAtValue = this.aftersToPrecedences(value)
+            while (precedencesEndedAtValue != null) {
+              val precedenceToCheck = precedencesEndedAtValue.head
+              precedencesEndedAtValue = precedencesEndedAtValue.tail
+              val startValueOfPrecedence = precedencesArray(precedenceToCheck)._1
+
+              if (!valuesInMovedSegment.contains(startValueOfPrecedence)) {
+
+                //the other one is not in the flipped move, so we have to check the impact of the move on this precedence
+
+                changes.newValue.positionOfAnyOccurrence(startValueOfPrecedence) match {
+                  case None => //other not present in the sequence, nothing to do
+                  case Some(newPositionOfStartValueOfPrecedence) =>
+                    val newPositionOfEndValueOfPrecedence = changes.newValue.positionOfAnyOccurrence(value).head
+
+                    if (newPositionOfStartValueOfPrecedence < newPositionOfEndValueOfPrecedence) {
+                      //no violation after move
+                      if (isPrecedenceViolated(precedenceToCheck)) {
+                        //was violated, so flip to false
+                        isPrecedenceViolated(precedenceToCheck) = false
+                        this :-= 1
+                      } //was not violated, nothing to do
+
+                    } else {
+                      //violation after move
+                      if (!isPrecedenceViolated(precedenceToCheck)) {
+                        //was not violated, now it is violated
+                        isPrecedenceViolated(precedenceToCheck) = true
+                        registerViolationIntoMaps(precedenceToCheck)
+                        this :+= 1
+                      }
+                    }
+                }
+              }
+            }
+          }
         }
-
-      case x@SeqUpdateRemove(position: Int, prev : SeqUpdate) =>
-        //on which vehicle did we remove?
-        //on which vehicle did we insert?
-        if(!digestUpdates(prev)) return false
-
         true
-      case SeqUpdateSet(value : IntSequence) =>
 
 
-        false //impossible to go incremental
-      case SeqUpdateLastNotified(value:IntSequence) =>
+      case SeqUpdateLastNotified(value : IntSequence) =>
         true //we are starting from the previous value
-      case SeqUpdateRollBackToCheckpoint(checkpoint) =>
-        if(checkpoint == null) false //it has been dropped following a Set
-        else {
 
-          true
-        }
+      case SeqUpdateSet(value : IntSequence) =>
+        false //impossible to go incremental
     }
   }
 }
-*/

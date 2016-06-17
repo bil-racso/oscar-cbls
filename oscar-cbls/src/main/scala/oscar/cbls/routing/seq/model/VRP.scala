@@ -42,9 +42,9 @@ import scala.math._
  * @author renaud.delandtsheer@cetic.be
  * @author Florent Ghilain (UMONS)
  */
-class VRP(val n: Int, val v: Int, val m: Store, maxPivot:Int = 50) {
+class VRP(val n: Int, val v: Int, val m: Store, maxPivotPerValuePercent:Int = 4) {
 
-  val routes = new CBLSSeqVar(m, IntSequence(0 until v), n-1, "routes", maxPivot=maxPivot)
+  val routes = new CBLSSeqVar(m, IntSequence(0 until v), n-1, "routes", maxPivotPerValuePercent=maxPivotPerValuePercent)
 
   /**unroutes all points of the VRP*/
   def unroute() {
@@ -242,38 +242,6 @@ trait TotalConstantDistance extends VRP{
     this.matrixIsSymmetric = false
     totalDistance = ConstantRoutingDistance(routes, v ,false,asymetricDistanceMatrix,false)(0)
   }
-}
-
-/**
- * @author renaud.delandtsheer@cetic.be
- * @author Florent Ghilain (UMONS)
- */
-trait VRPObjective extends VRP {
-
-  private val accumulationVariable = CBLSIntVar(m, 0, FullRange, "objective of VRP")
-  protected val objectiveFunction = Objective(accumulationVariable)
-  private var objectiveFunctionTerms: List[IntValue] = List.empty
-
-  /** adds a term top the objective function*/
-  def addObjectiveTerm(o: IntValue) {
-    objectiveFunctionTerms = o :: objectiveFunctionTerms
-  }
-
-  m.addToCallBeforeClose(() => closeObjectiveFunction)
-
-  /**
-   * This finished the accumulation of terms in the objective unction.
-   * You should not call this, actually.
-   * it is called by the model on close
-   */
-  def closeObjectiveFunction {
-    if (objectiveFunctionTerms.isEmpty) throw new Error("you have set an Objective function to your VRP, but did not specify any term for it, call vrp.addObjectiveTerm, or add an objective trait to your VRP")
-    accumulationVariable <== Sum(objectiveFunctionTerms)
-  }
-
-  def getObjective: Objective = objectiveFunction
-
-  this.addToStringInfo(()=>""+getObjective)
 }
 
 /**

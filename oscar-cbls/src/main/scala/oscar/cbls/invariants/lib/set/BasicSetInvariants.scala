@@ -556,3 +556,31 @@ case class TakeAnyToSet(from: SetValue)
   }
 }
 
+
+/**
+ * implements v \in set
+ * @author renaud.delandtsheer@cetic.be
+ */
+case class BelongsTo(v: IntValue, set: SetValue)
+  extends IntInvariant(0,0 to 1)
+  with IntNotificationTarget
+  with SetNotificationTarget{
+
+  registerStaticAndDynamicDependenciesNoID(v, set)
+  finishInitialization()
+
+  override def notifyIntChanged(v: ChangingIntValue, id:Int, OldVal: Int, NewVal: Int) {
+    this := (if (set.value.contains(NewVal)) 1 else 0)
+  }
+
+  override def notifySetChanges(v: ChangingSetValue, d: Int, addedValues: Iterable[Int],
+                                removedValues: Iterable[Int], oldValue: SortedSet[Int], newValue: SortedSet[Int]) : Unit = {
+    if((removedValues.nonEmpty && this.newValue == 1) || (addedValues.nonEmpty && this.newValue == 0)){
+      this := (if (newValue.contains(this.v.value)) 1 else 0)
+    }
+  }
+
+  override def checkInternals(c: Checker) {
+    c.check(this.value == (if (set.value.contains(v.value)) 1 else 0))
+  }
+}

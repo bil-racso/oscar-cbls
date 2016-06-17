@@ -18,12 +18,20 @@ package oscar.cbls.invariants.lib.seq
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.core.propagation.Checker
 
+
+object PositionsOf{
+  def apply(v: SeqValue, a:IntValue):ChangingSetValue =
+    new PositionsOf(v, a)
+
+  def apply(v: SeqValue, a:Int):ChangingSetValue  =
+    new PositionsOfConst(v, a)
+}
 /**
  * the position of value a in sequence v; default if not in the sequence
  * @param v is a SeqValue
  * @param a is the value that is to locate in the sequence
  */
-case class PositionsOf(v: SeqValue, a:IntValue)
+class PositionsOf(v: SeqValue, a:IntValue)
   extends SetInvariant(v.value.positionsOfValue(a.value), 0 to DomainHelper.safeAddMax(v.max,1))
   with SeqNotificationTarget with IntNotificationTarget{
 
@@ -57,7 +65,7 @@ case class PositionsOf(v: SeqValue, a:IntValue)
  * @param v is a SeqValue
  * @param a is the value that is to locate in the sequence
  */
-case class PositionsOfConst(v: SeqValue, a:Int)
+class PositionsOfConst(v: SeqValue, a:Int)
   extends SetInvariant(v.value.positionsOfValue(a), 0 to DomainHelper.safeAddMax(v.max,1))
   with SeqNotificationTarget{
 

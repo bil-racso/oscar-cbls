@@ -16,10 +16,11 @@ package oscar.cbls.invariants.lib.routing
   ******************************************************************************/
 
 import oscar.cbls.invariants.core.algo.quick.QList
-import oscar.cbls.invariants.core.algo.rb.RedBlackTreeMap
 import oscar.cbls.invariants.core.algo.seq.functional.IntSequence
 import oscar.cbls.invariants.core.computation._
-import oscar.cbls.invariants.core.propagation.{ErrorChecker, Checker}
+import oscar.cbls.invariants.core.propagation.Checker
+import oscar.cbls.invariants.lib.logic.Filter
+import oscar.cbls.invariants.lib.set.BelongsTo
 
 import scala.collection.immutable.SortedSet
 
@@ -30,6 +31,32 @@ object NodeVehicleRestrictions{
     new NodeVehicleRestrictions(routes, v, nodeVehicleRestrictions, violationPerVehicle)
 
     violationPerVehicle
+  }
+
+  def violatedNodes(routes:ChangingSeqValue,v:Int,nodeVehicleRestrictions:Iterable[(Int,Int)]):SetValue = {
+    violatedNodes(VehicleOfNodes(routes,v).asInstanceOf[Array[IntValue]],v,nodeVehicleRestrictions)
+  }
+
+  def violatedNodes(vehicleOfNode:Array[IntValue],v:Int,nodeVehicleRestrictions:Iterable[(Int,Int)]):SetValue = {
+
+    val n = vehicleOfNode.length
+
+    val noForbidden = SortedSet.empty[Int]
+    val forbiddenVehicleForNodes: Array[SortedSet[Int]] = Array.fill(n)(null)
+
+    for ((node, vehicle) <- nodeVehicleRestrictions) {
+      if(forbiddenVehicleForNodes(node) == null){
+        forbiddenVehicleForNodes(node) = noForbidden + vehicle
+      }else{
+        forbiddenVehicleForNodes(node) = forbiddenVehicleForNodes(node) + vehicle
+      }
+    }
+
+    Filter(Array.tabulate(n)(node => {
+      val forbiddenVehicleForNode = forbiddenVehicleForNodes(node)
+      if(forbiddenVehicleForNode == null) 0
+      else BelongsTo(vehicleOfNode(node),forbiddenVehicleForNode)}
+    ))
   }
 }
 
@@ -97,10 +124,10 @@ class NodeVehicleRestrictions(routes:ChangingSeqValue,
   var checkpoint : IntSequence = null
   var violationAtCheckpoint:Array[Int] = Array.fill(v)(-1)
 
+  //TODO: improve complexity of the pre-computation!
   //node n => vehicle v => number of node from start of vehicle reaching n that cannot be reached by vehicle v
   val precomputationAtCheckpoint:Array[Array[Int]] = Array.tabulate(n)(_=>Array.fill(v)(0))
   val vehicleChangedSinceCheckpoint:Array[Boolean] = Array.fill(v)(true)
-  val vehicleCheckpointPostponed:Array[Boolean] = Array.fill(v)(true)
   var changedVehicleSinceCheckpoint:QList[Int] = vehicles.foldLeft[QList[Int]](null)((acc,v) => QList(v,acc))
 
   def setVehicleChangedSinceCheckpoint(vehicle:Int) {
