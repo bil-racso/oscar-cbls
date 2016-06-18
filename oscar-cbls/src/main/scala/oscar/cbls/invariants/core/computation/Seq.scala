@@ -72,6 +72,11 @@ object SeqUpdateInsert {
     }
   }
 
+  /**
+   *
+   * @param i
+   * @return value, position, prev
+   */
   def unapply(i:SeqUpdateInsert):Option[(Int,Int,SeqUpdate)] = Some(i.value,i.pos,i.prev)
 }
 
@@ -115,6 +120,12 @@ object SeqUpdateMove{
       case _ => new SeqUpdateMove(fromIncluded,toIncluded,after, flip, prev, seq)
     }
   }
+
+  /**
+   *
+   * @param move
+   * @return fromIncluded,toIncluded,after,flip,prev
+   */
   def unapply(move:SeqUpdateMove):Option[(Int,Int,Int,Boolean,SeqUpdate)] = Some(move.fromIncluded,move.toIncluded,move.after,move.flip,move.prev)
 }
 
@@ -176,6 +187,11 @@ object SeqUpdateRemove {
     }
   }
 
+  /**
+   *
+   * @param r
+   * @return position,prev
+   */
   def unapply(r:SeqUpdateRemove):Option[(Int,SeqUpdate)] = Some(r.position,r.prev)
 }
 
@@ -385,7 +401,7 @@ class ChangingSeqValueSnapShot(val variable:ChangingSeqValue,val savedValue:IntS
   override protected def doRestore() : Unit = {variable.asInstanceOf[CBLSSeqVar] := savedValue}
 }
 
-abstract class ChangingSeqValue(initialValue: Iterable[Int], val maxValue: Int, maxPivotPerValuePercent: Int, maxHistorySize:Int)
+abstract class ChangingSeqValue(initialValue: Iterable[Int], val maxValue: Int, val maxPivotPerValuePercent: Int, val maxHistorySize:Int)
   extends AbstractVariable with SeqValue{
 
   override def snapshot : ChangingSeqValueSnapShot = new ChangingSeqValueSnapShot(this,this.value)
@@ -744,8 +760,8 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], val maxValue: Int, 
   /** this is a special case of invariant that has a single output variable, that is a Seq
     * @author renaud.delandtsheer@cetic.be
     */
-  abstract class SeqInvariant(initialValue:IntSequence, maxValue:Int = Int.MaxValue, maxPivot:Int = 10, maxHistorySize:Int = 10)
-    extends ChangingSeqValue(initialValue, maxValue:Int, maxPivot, maxHistorySize)
+  abstract class SeqInvariant(initialValue:IntSequence, maxValue:Int = Int.MaxValue, maxPivotPerValuePercent:Int = 10, maxHistorySize:Int = 10)
+    extends ChangingSeqValue(initialValue, maxValue:Int, maxPivotPerValuePercent, maxHistorySize)
     with Invariant{
 
     override def definingInvariant: Invariant = this

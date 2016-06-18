@@ -27,4 +27,7 @@ class FunctionCumulativeRouting(routes:ChangingSeqValue,
 
 
 }
+
+class Map(seq:ChangingSeqValue,
+          transform:Array[Int]) extends SeqInvriant
 */

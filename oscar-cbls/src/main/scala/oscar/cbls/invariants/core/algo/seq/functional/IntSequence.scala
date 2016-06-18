@@ -81,6 +81,11 @@ abstract class IntSequence(protected[seq] val uniqueID:Int = IntSequence.getNewU
 
   def explorerAtPosition(position : Int) : Option[IntSequenceExplorer]
 
+  def map(fun:Int=>Int):IntSequence = {
+    IntSequence(this.map(fun))
+  }
+
+
   def valuesBetweenPositions(fromPositionIncluded:Int,toPositionIncluded:Int):SortedSet[Int] = {
     var toReturn = SortedSet.empty[Int]
     var e = explorerAtPosition(fromPositionIncluded)
