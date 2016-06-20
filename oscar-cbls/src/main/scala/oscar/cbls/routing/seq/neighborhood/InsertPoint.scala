@@ -167,15 +167,15 @@ case class InsertPointRoutedFirst(insertionPoints:()=>Iterable[Int],
 
     val iterationSchemeOnInsertionPointIterator = iterationSchemeOnInsertionPoint.iterator
     while (iterationSchemeOnInsertionPointIterator.hasNext) {
-      val pointWhereToInsertBefore = iterationSchemeOnInsertionPointIterator.next()
-      seqValue.positionOfAnyOccurrence(pointWhereToInsertBefore) match{
+      val pointWhereToInsertAfter = iterationSchemeOnInsertionPointIterator.next()
+      seqValue.positionOfAnyOccurrence(pointWhereToInsertAfter) match{
         case None => //not routed?
         case Some(position) =>
-          insertAtPosition = position
+          insertAtPosition = position + 1
 
           val iteratorOnPointsToInsert = (insertedPointsSymetryClass match {
-            case None => unroutedNodesToInsertNow(pointWhereToInsertBefore)
-            case Some(s) => IdenticalAggregator.removeIdenticalClassesLazily(unroutedNodesToInsertNow(pointWhereToInsertBefore), s)
+            case None => unroutedNodesToInsertNow(pointWhereToInsertAfter)
+            case Some(s) => IdenticalAggregator.removeIdenticalClassesLazily(unroutedNodesToInsertNow(pointWhereToInsertAfter), s)
           }).iterator
 
           while (iteratorOnPointsToInsert.hasNext) {
@@ -185,10 +185,9 @@ case class InsertPointRoutedFirst(insertionPoints:()=>Iterable[Int],
 
             if (evaluateCurrentMoveObjTrueIfStopRequired(evalObjAndRollBack())) {
               seq.releaseCurrentCheckpointAtCheckpoint()
-              startIndice = pointWhereToInsertBefore + 1
+              startIndice = pointWhereToInsertAfter + 1
               return
             }
-
           }
       }
 

@@ -99,7 +99,7 @@ case class TwoOpt1(segmentStartValues:()=>Iterable[Int],
       assert(vrp.isRouted(segmentStartValue),
         "The search zone should be restricted to routed.")
 
-      val segmentStartPositionExplorer =seqValue.explorerAtAnyOccurrence(segmentStartValue).head
+      val segmentStartPositionExplorer = seqValue.explorerAtAnyOccurrence(segmentStartValue).head
       val segmentStartPosition = segmentStartPositionExplorer.position
       val predecessorOfSegmentStartValue = segmentStartPositionExplorer.prev.head.value
 

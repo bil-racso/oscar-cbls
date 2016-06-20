@@ -16,17 +16,12 @@ package oscar.cbls.test.routingS
   ******************************************************************************/
 
 import oscar.cbls.invariants.core.computation.Store
-import oscar.cbls.invariants.lib.numeric.Sum
-import oscar.cbls.invariants.lib.routing.NodeVehicleRestrictions
-import oscar.cbls.invariants.lib.seq.{PositionsOf, Size}
-import oscar.cbls.invariants.lib.set.Cardinality
+import oscar.cbls.invariants.lib.seq.Size
 import oscar.cbls.modeling.Algebra._
-import oscar.cbls.objective.{CascadingObjective, Objective}
+import oscar.cbls.objective.Objective
 import oscar.cbls.routing.seq.model._
-import oscar.cbls.routing.seq.neighborhood.{InsertPointUnroutedFirst, OnePointMove, ThreeOpt, TwoOpt1}
-import oscar.cbls.search.combinators.{BestSlopeFirst, Profile}
-
-import scala.util.Random
+import oscar.cbls.routing.seq.neighborhood._
+import oscar.cbls.search.combinators.{BestSlopeFirst, Profile, RoundRobin}
 
 
 class MySimpleRoutingWithUnroutedPoints(n:Int,v:Int,symmetricDistance:Array[Array[Int]],m:Store, maxPivot:Int)
@@ -37,8 +32,10 @@ class MySimpleRoutingWithUnroutedPoints(n:Int,v:Int,symmetricDistance:Array[Arra
 
   override protected def getDistance(from : Int, to : Int) : Int = symmetricDistance(from)(to)
 
+  val penaltyForUnrouted  = 10000
+  val nPenaltyForUnrouted = penaltyForUnrouted * (n-v)
   //val obj = new CascadingObjective(totalViolationOnRestriction, totalDistance)
-  val obj = Objective(totalDistance + (1000000 - Size(routes)*10000))
+  val obj = Objective(totalDistance + (nPenaltyForUnrouted - Size(routes)*penaltyForUnrouted))
 
   this.addToStringInfo(() => "objective: " + obj.value)
   this.addToStringInfo(() => "n:" + n + " v:" + v)
@@ -48,8 +45,8 @@ class MySimpleRoutingWithUnroutedPoints(n:Int,v:Int,symmetricDistance:Array[Arra
 
 object TSProutePoints extends App{
 
-  val n = 5
-  val v = 1
+  val n = 1000
+  val v = 10
 
   val maxPivotPerValuePercent = 4
 
@@ -67,21 +64,24 @@ object TSProutePoints extends App{
 
   println(myVRP)
 
-  val routeUnroutdPoint =  Profile(new InsertPointUnroutedFirst(myVRP.unrouted,()=>myVRP.kNearest(100,myVRP.isRouted), myVRP))
+  val routeUnroutdPoint =  Profile(new InsertPointUnroutedFirst(myVRP.unrouted,()=>myVRP.kNearest(10,myVRP.isRouted), myVRP,neighborhoodName = "InsertUF"))
+
+  //TODO: using post-filters on k-nearest is probably crap!
+  val routeUnroutdPoint2 =  Profile(new InsertPointRoutedFirst(myVRP.routed,()=>myVRP.kNearest(10,x => !myVRP.isRouted(x)),myVRP,neighborhoodName = "InsertRF"))
 
 
-  val onePtMove = Profile(new OnePointMove(() => nodes, ()=>myVRP.kNearest(40,myVRP.isRouted), myVRP))
+  def onePtMove(k:Int) = Profile(new OnePointMove(myVRP.routed, ()=>myVRP.kNearest(k,myVRP.isRouted), myVRP))
 
-  val twoOpt = Profile(new TwoOpt1(() => nodes, ()=>myVRP.kNearest(40,myVRP.isRouted), myVRP))
+  val twoOpt = Profile(new TwoOpt1(myVRP.routed, ()=>myVRP.kNearest(40,myVRP.isRouted), myVRP))
 
   def threeOpt(k:Int, breakSym:Boolean) = Profile(new ThreeOpt(myVRP.routed, ()=>myVRP.kNearest(k,myVRP.isRouted), myVRP,breakSymmetry = breakSym, neighborhoodName = "ThreeOpt(k=" + k + ")"))
 
   //val search = BestSlopeFirst(List(onePtMove,twoOpt, threeOpt(10,true))) exhaust threeOpt(20,true)
 
-  val search = routeUnroutdPoint exhaust threeOpt(20,true)
+  val search = (new RoundRobin(List(routeUnroutdPoint2,onePtMove(10) guard (() => myVRP.unrouted.value.size != 0)),10)) exhaust BestSlopeFirst(List(onePtMove(20),twoOpt, threeOpt(10,true))) exhaust threeOpt(20,true)
 
   search.verbose = 1
-  search.verboseWithExtraInfo(4,myVRP.toString)
+  //search.verboseWithExtraInfo(4,myVRP.toString)
   search.paddingLength = 100
 
   search.doAllMoves(obj=myVRP.obj)
