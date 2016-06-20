@@ -311,11 +311,13 @@ trait ClosestNeighbors extends VRP {
  * @author Florent Ghilain (UMONS)
  * @author yoann.guyot@cetic.be
  */
-trait Unrouted extends VRP{
+trait RoutedAndUnrouted extends VRP{
   /**
    * the data structure set which maintains the unrouted nodes.
    */
-  val unrouted = Diff(CBLSSetConst(SortedSet(nodes:_*)),Content(routes)).setName("unrouted nodes")
+  val routed = Content(routes.createClone(50)).setName("routed nodes")
+  val unrouted = Diff(CBLSSetConst(SortedSet(nodes:_*)),routed).setName("unrouted nodes")
+
   m.registerForPartialPropagation(unrouted)
 
   override def unroutedNodes : Iterable[Int] = unrouted.value
@@ -335,7 +337,7 @@ trait AbstractPenaltyForUnrouted extends VRP{
  * @author Florent Ghilain (UMONS)
  * @author yoann.guyot@cetic.be
  */
-trait DetailedPenaltyForUnrouted extends AbstractPenaltyForUnrouted with Unrouted{
+trait DetailedPenaltyForUnrouted extends AbstractPenaltyForUnrouted with RoutedAndUnrouted{
   def setDetailedUnroutedPenaltyWeights(penalties : Array[Int]) {
     require(unroutedPenalty == null)
     unroutedPenalty = Sum(penalties, unrouted).setName("TotalPenaltyForUnroutedNodes (detailed penalties)")

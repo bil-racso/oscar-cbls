@@ -58,18 +58,19 @@ class Precedence(seq:ChangingSeqValue,
     aftersToPrecedences(toValue) = QList(precedenceID, aftersToPrecedences(toValue))
   }
 
-  //this is the exact info
+
+
   private val isPrecedenceViolated : Array[Boolean] = Array.fill(nbPecedences)(false)
 
-  private val isViolationChengedSinceCheckpoint:Array[Boolean] = Array.fill(nbPecedences)(false)
+  private val isViolationChangedSinceCheckpoint:Array[Boolean] = Array.fill(nbPecedences)(false)
   private var changedPrecedenceViolationsSinceCheckpoint:QList[Int] = null
   private val savedViolationAtCheckpoint:Array[Boolean] = Array.fill(nbPecedences)(false)
   private var checkpoint:IntSequence = null
   var violationAtCheckpoint:Int = -1
 
   def saveViolationForCheckpoint(precedence:Int){
-    if(!isViolationChengedSinceCheckpoint(precedence)){
-      isViolationChengedSinceCheckpoint(precedence) = true
+    if(!isViolationChangedSinceCheckpoint(precedence)){
+      isViolationChangedSinceCheckpoint(precedence) = true
       changedPrecedenceViolationsSinceCheckpoint = QList(precedence,changedPrecedenceViolationsSinceCheckpoint)
       savedViolationAtCheckpoint(precedence) = isPrecedenceViolated(precedence)
     }
@@ -77,7 +78,7 @@ class Precedence(seq:ChangingSeqValue,
 
   def reloadViolationsAtCheckpoint(){
     for(precedence <- changedPrecedenceViolationsSinceCheckpoint){
-      isViolationChengedSinceCheckpoint(precedence) = false
+      isViolationChangedSinceCheckpoint(precedence) = false
       isPrecedenceViolated(precedence) = savedViolationAtCheckpoint(precedence)
     }
     changedPrecedenceViolationsSinceCheckpoint = null
@@ -86,7 +87,7 @@ class Precedence(seq:ChangingSeqValue,
 
   def defineCheckpoint(i:IntSequence){
     for(precedence <- changedPrecedenceViolationsSinceCheckpoint) {
-      isViolationChengedSinceCheckpoint(precedence) = false
+      isViolationChangedSinceCheckpoint(precedence) = false
     }
     changedPrecedenceViolationsSinceCheckpoint = null
     checkpoint = i
@@ -126,7 +127,7 @@ class Precedence(seq:ChangingSeqValue,
             isPrecedenceViolated(precedenceID) = true
             totalViolation += 1
           }
-          isViolationChengedSinceCheckpoint(precedenceID) = true
+          isViolationChangedSinceCheckpoint(precedenceID) = true
         }
         explorerOpt = explorer.next
         true

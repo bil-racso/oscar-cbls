@@ -155,6 +155,7 @@ abstract class IntSequence(protected[seq] val uniqueID:Int = IntSequence.getNewU
   def positionOfAnyOccurrence(value:Int):Option[Int] = {
     positionsOfValue(value) match {
       case null => None
+      case x if x.isEmpty => None
       case x => Some(x.head)
     }
   }

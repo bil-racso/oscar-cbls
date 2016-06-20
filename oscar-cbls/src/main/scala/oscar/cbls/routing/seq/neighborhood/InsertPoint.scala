@@ -91,11 +91,11 @@ case class InsertPointUnroutedFirst(unroutedNodesToInsert: () => Iterable[Int],
 
       val it2 = relevantNeighborsNow(insertedPoint).iterator
       while (it2.hasNext) {
-        val pointWhereToInsertBefore = it2.next() //TODO: also consider inserting before this node, actually?
-        seqValue.positionOfAnyOccurrence(pointWhereToInsertBefore) match{
+        val pointWhereToInsertAfter = it2.next() //TODO: also consider inserting before this node, actually?
+        seqValue.positionOfAnyOccurrence(pointWhereToInsertAfter) match{
           case None => //not routed?!
           case Some(position) =>
-            insertAtPosition = position
+            insertAtPosition = position + 1
 
             doMove(insertedPoint, insertAtPosition)
 

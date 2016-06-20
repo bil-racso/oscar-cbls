@@ -125,8 +125,10 @@ case class ConstantRoutingDistance(routes:ChangingSeqValue,
 
         val oldPrev = prev.newValue.valueAtPosition(pos-1).head
 
-        val oldSuccIfNoLoop = prev.newValue.valueAtPosition(pos).head
-        val oldSucc = if(oldSuccIfNoLoop < v) oldSuccIfNoLoop-1 else oldSuccIfNoLoop
+        val oldSucc =prev.newValue.valueAtPosition(pos) match{
+          case None => v-1 //at the end
+          case Some(oldSuccIfNoLoop) =>  if(oldSuccIfNoLoop < v) oldSuccIfNoLoop-1 else oldSuccIfNoLoop
+        }
 
         val oldDistance = distanceMatrix(oldPrev)(oldSucc)
         val newDistance = distanceMatrix(oldPrev)(value) + distanceMatrix(value)(oldSucc)

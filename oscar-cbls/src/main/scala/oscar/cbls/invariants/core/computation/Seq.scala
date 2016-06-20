@@ -424,7 +424,7 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], val maxValue: Int, 
       case SeqUpdateLastNotified(value:IntSequence) =>
         //nothing to do :-)
         if(notifiedSinceTopCheckpoint != null)
-          require(notifiedSinceTopCheckpoint.newValue quickEquals value, "notifiedSinceTopCheckpoint.newValue=" + notifiedSinceTopCheckpoint.newValue  + " got " + value)
+          require(notifiedSinceTopCheckpoint.newValue quickEquals value, "differing quickEquals on lastNotified: notifiedSinceTopCheckpoint.newValue=" + notifiedSinceTopCheckpoint.newValue  + " got " + value)
       case c@SeqUpdateDefineCheckpoint(prev:SeqUpdate,isActive:Boolean) =>
         //we have to push the current checkpoint, and create a new one
         recordNotifiedChangesForCheckpoint(prev)
