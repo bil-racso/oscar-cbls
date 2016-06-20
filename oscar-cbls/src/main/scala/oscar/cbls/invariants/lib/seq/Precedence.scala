@@ -51,27 +51,28 @@ class Precedence(seq:ChangingSeqValue,
   private val aftersToPrecedences : Array[QList[Int]] = Array.fill(seq.maxValue + 1)(null)
   for (precedenceID <- precedencesArray.indices) {
     val (fromValue, toValue) = precedencesArray(precedenceID)
+    require(fromValue != toValue, "there should be no self precedence!")
     beforesToPrecedences(fromValue) = QList(precedenceID, beforesToPrecedences(fromValue))
     aftersToPrecedences(toValue) = QList(precedenceID, aftersToPrecedences(toValue))
   }
 
   //this is the exact info
   private val isPrecedenceViolated : Array[Boolean] = Array.fill(nbPecedences)(false)
-  //TODO: initialize this!
-  private var valueToViolatedPrecedencesOverApproximated : RedBlackTreeMap[QList[Int]] = RedBlackTreeMap.empty //this over-approximates, to speed up cleaning
 
+  val precedences = 0 until nbPecedences
+
+  def clearAllViolatedPrecedences(){
+    for (precedence <- precedences) {
+      isPrecedenceViolated(precedence) = false
+    }
+  }
 
   def computeAndAffectViolationsFromScratch(seq : IntSequence) {
     //this assumes that we have lots of precedence constraints, so that we can afford crawling through the sequence (instead of iterating through the precedences)
     var totalViolation = 0
     val hasValueBeenSeen = Array.fill(this.seq.maxValue + 1)(false)
 
-    for (violatedPrecedenceList <- valueToViolatedPrecedencesOverApproximated.values) {
-      for (precedenceID <- violatedPrecedenceList) {
-        isPrecedenceViolated(precedenceID) = false
-      }
-    }
-    valueToViolatedPrecedencesOverApproximated = RedBlackTreeMap.empty
+    clearAllViolatedPrecedences()
 
     var explorerOpt = seq.explorerAtPosition(0)
 
@@ -80,8 +81,7 @@ class Precedence(seq:ChangingSeqValue,
       case Some(explorer) =>
 
         val value = explorer.value
-        val position = explorer.position
-        //we
+
         hasValueBeenSeen(value) = true
 
         var precedencesThatShouldOpenNow = beforesToPrecedences(value)
@@ -91,9 +91,6 @@ class Precedence(seq:ChangingSeqValue,
           val shouldBeAfter = precedencesArray(precedenceID)._2
           if (hasValueBeenSeen(shouldBeAfter)) {
             //the precedence is violated!
-
-            registerViolationIntoMaps(precedenceID)
-
             isPrecedenceViolated(precedenceID) = true
             totalViolation += 1
           }
@@ -104,20 +101,6 @@ class Precedence(seq:ChangingSeqValue,
 
     this := totalViolation
   }
-
-
-  def registerViolationIntoMaps(precedenceID:Int) {
-    //might insert duplicates!
-
-    val (startValue,endValue) = precedencesArray(precedenceID)
-    valueToViolatedPrecedencesOverApproximated.insert(startValue,
-      QList(precedenceID, valueToViolatedPrecedencesOverApproximated.getOrElse(startValue, null)))
-
-    valueToViolatedPrecedencesOverApproximated.insert(endValue,
-      QList(precedenceID, valueToViolatedPrecedencesOverApproximated.getOrElse(endValue, null)))
-  }
-
-
 
   override def notifySeqChanges(v : ChangingSeqValue, d : Int, changes : SeqUpdate) {
     if (!digestUpdates(changes, false)) {
@@ -144,44 +127,32 @@ class Precedence(seq:ChangingSeqValue,
           precedencesStartingAtInsertedValue = precedencesStartingAtInsertedValue.tail
 
           //searching for end of precedence that is already in
-
           val endValueOfPrecedence = this.precedencesArray(precedenceToCheck)._2
-
           prev.newValue.positionOfAnyOccurrence(endValueOfPrecedence) match {
             case None => ; //the precedence is fine
             case Some(positionOfEndValueOfPrecedence) =>
               if (positionOfEndValueOfPrecedence < pos) {
                 //precedence is violated!
-                isPrecedenceViolated(precedenceToCheck) = true
                 this :+= 1
-
-                registerViolationIntoMaps(precedenceToCheck)
-
+                isPrecedenceViolated(precedenceToCheck) = true
               } // else precedence is not violated
-
           }
         }
 
         var precedencesEndingAtInsertedValue = aftersToPrecedences(value)
-
         while (precedencesEndingAtInsertedValue != null) {
           val precedenceToCheck = precedencesEndingAtInsertedValue.head
           precedencesEndingAtInsertedValue = precedencesEndingAtInsertedValue.tail
 
           //searching for end of precedence that is already in
-
           val startValueOfPrecedence = this.precedencesArray(precedenceToCheck)._1
-
           prev.newValue.positionOfAnyOccurrence(startValueOfPrecedence) match {
             case None => ; //the precedence is fine
             case Some(positionOfStartValueOfPrecedence) =>
               if (pos < positionOfStartValueOfPrecedence) {
                 //precedence is violated!
-                require(isPrecedenceViolated(precedenceToCheck) == false) //because was not in!
-                isPrecedenceViolated(precedenceToCheck) = true
                 this :+= 1
-                registerViolationIntoMaps(precedenceToCheck)
-
+                isPrecedenceViolated(precedenceToCheck) = true
               } // else precedence is not violated
           }
         }
@@ -190,22 +161,20 @@ class Precedence(seq:ChangingSeqValue,
       case x@SeqUpdateRemove(position : Int, prev : SeqUpdate) =>
         if (!digestUpdates(prev, skipNewCheckpoints)) return false
 
-        valueToViolatedPrecedencesOverApproximated.get(value) match {
-          case None => //no precedence to check there
-          case Some(x) =>
-            valueToViolatedPrecedencesOverApproximated = valueToViolatedPrecedencesOverApproximated.remove(value)
-            //they are all fine now
-            require(x != null)
-            var precedencesInvolvingRemovedThatMustBeChecked = x
-            while (x != null) {
-              val precedenceToClean = precedencesInvolvingRemovedThatMustBeChecked.head
-              precedencesInvolvingRemovedThatMustBeChecked = precedencesInvolvingRemovedThatMustBeChecked.tail
-              if (isPrecedenceViolated(precedenceToClean)) {
-                isPrecedenceViolated(precedenceToClean) = false
-                this :-= 1
-              }
-            }
+        for(precedencesThatShouldOpenAtValue <- beforesToPrecedences(value)){
+          if (isPrecedenceViolated(precedencesThatShouldOpenAtValue)) {
+            isPrecedenceViolated(precedencesThatShouldOpenAtValue) = false
+            this :-= 1
+          }
         }
+
+        for(precedenceThatShouldCloseAtValue <- aftersToPrecedences(value)){
+          if (isPrecedenceViolated(precedenceThatShouldCloseAtValue)) {
+            isPrecedenceViolated(precedenceThatShouldCloseAtValue) = false
+            this :-= 1
+          }
+        }
+
         true
 
       case x@SeqUpdateMove(fromIncluded : Int, toIncluded : Int, after : Int, flip : Boolean, prev : SeqUpdate) =>
@@ -223,128 +192,115 @@ class Precedence(seq:ChangingSeqValue,
           // not the ones ended at the flipped values
 
           val valuesInFlip:SortedSet[Int] = prev.newValue.valuesBetweenPositions(fromIncluded,toIncluded)
+
           for(value <- valuesInFlip){
             //violations involved in value
-            var precedencesStartedAtValue:QList[Int] = this.beforesToPrecedences(value)
-            while(precedencesStartedAtValue != null){
-              val precedenceToCheck = precedencesStartedAtValue.head
-              precedencesStartedAtValue = precedencesStartedAtValue.tail
-              val endValueOfPrecedence = precedencesArray(precedenceToCheck)._2
-
+            for(precedenceThatShouldOpenAtValue <- this.beforesToPrecedences(value)){
+              val endValueOfPrecedence = precedencesArray(precedenceThatShouldOpenAtValue)._2
               if(valuesInFlip.contains(endValueOfPrecedence)){
                 //the violation of this precedence is inverted
-
-                if(isPrecedenceViolated(precedenceToCheck)){
+                if(isPrecedenceViolated(precedenceThatShouldOpenAtValue)){
                   //was violated, so flip to false
-                  isPrecedenceViolated(precedenceToCheck) = false
+                  isPrecedenceViolated(precedenceThatShouldOpenAtValue) = false
                   this :-=1
                 }else{
                   //was not violated, now it is violated
-                  isPrecedenceViolated(precedenceToCheck) = true
-                  registerViolationIntoMaps(precedenceToCheck)
+                  isPrecedenceViolated(precedenceThatShouldOpenAtValue) = true
                   this :+=1
                 }
               }//else we do not have to check anything :-)
             }
           }
           true
-        } else {
-          //move with flip
 
-          //TODO: also get the positions straight!
+        }else{ //move with/without flip
+
+          val moveDownwards = x.moveDownwards
+          val moveUpwards = x.moveUpwards
+
           val valuesInMovedSegment : SortedSet[Int] = prev.newValue.valuesBetweenPositions(fromIncluded, toIncluded)
           for (value <- valuesInMovedSegment) {
 
             //violations involved in value
-            var precedencesStartedAtValue : QList[Int] = this.beforesToPrecedences(value)
-            while (precedencesStartedAtValue != null) {
-              val precedenceToCheck = precedencesStartedAtValue.head
-              precedencesStartedAtValue = precedencesStartedAtValue.tail
-              val endValueOfPrecedence = precedencesArray(precedenceToCheck)._2
+            for (precedenceStartedAtValue <- this.beforesToPrecedences(value)) {
+              if (isPrecedenceViolated(precedenceStartedAtValue)) {
+                //it was violated.
+                //it will become non-violated if moved downwards and the other value passes up
+                //or if there is a flip and the other value is in the flip
 
-              if (valuesInMovedSegment.contains(endValueOfPrecedence)) {
-                //the violation of this precedence is inverted (only do this for one half of the precedence)
-
-                if (flip) {
-                  if (isPrecedenceViolated(precedenceToCheck)) {
-                    //was violated, so flip to false
-                    isPrecedenceViolated(precedenceToCheck) = false
+                if (moveDownwards) {
+                  val endValueOfPrecedence = precedencesArray(precedenceStartedAtValue)._2
+                  if (prev.newValue.positionOfAnyOccurrence(endValueOfPrecedence).head < fromIncluded) {
+                    isPrecedenceViolated(precedenceStartedAtValue) = false
                     this :-= 1
-                  } else {
-                    //was not violated, now it is violated
-                    isPrecedenceViolated(precedenceToCheck) = true
-                    registerViolationIntoMaps(precedenceToCheck)
-                    this :+= 1
+                  }
+                } else if (flip) {
+                  val endValueOfPrecedence = precedencesArray(precedenceStartedAtValue)._2
+                  if (valuesInMovedSegment.contains(endValueOfPrecedence)) {
+                    //the violation of this precedence is inverted (only do this for one half of the precedence)
+                    if (flip) {
+                      //was violated, so flip to false
+                      isPrecedenceViolated(precedenceStartedAtValue) = false
+                      this :-= 1
+                    }
                   }
                 }
+
               } else {
-                //the other one is not in the flipped move, so we have to check the impact of the move on this precedence
+                //it was not violated, thus is can only get violated is the segment moved upwards
+                // of if the other value is also in the segment and there is a flip
 
-                changes.newValue.positionOfAnyOccurrence(endValueOfPrecedence) match {
-                  case None => //other not present in the sequence, nothing to do
-                  case Some(newPositionOfEndValueOfPrecedence) =>
-                    val newPositionOfStartValueOfPrecedence = changes.newValue.positionOfAnyOccurrence(value).head
-
-                    if (newPositionOfStartValueOfPrecedence < newPositionOfEndValueOfPrecedence) {
-                      //no violation after move
-                      if (isPrecedenceViolated(precedenceToCheck)) {
-                        //was violated, so flip to false
-                        isPrecedenceViolated(precedenceToCheck) = false
-                        this :-= 1
-                      } //was not violated, nothing to do
-
-                    } else {
-                      //violation after move
-                      if (!isPrecedenceViolated(precedenceToCheck)) {
-                        //was not violated, now it is violated
-                        isPrecedenceViolated(precedenceToCheck) = true
-                        registerViolationIntoMaps(precedenceToCheck)
-                        this :+= 1
-                      }
+                if (moveUpwards) {
+                  val endValueOfPrecedence = precedencesArray(precedenceStartedAtValue)._2
+                  if (prev.newValue.positionOfAnyOccurrence(endValueOfPrecedence).head <= after) {
+                    isPrecedenceViolated(precedenceStartedAtValue) = true
+                    this :+= 1
+                  }
+                } else if (flip) {
+                  val endValueOfPrecedence = precedencesArray(precedenceStartedAtValue)._2
+                  if (valuesInMovedSegment.contains(endValueOfPrecedence)) {
+                    //the violation of this precedence is inverted (only do this for one half of the precedence)
+                    if (flip) {
+                      //was not violated, now it is violated
+                      isPrecedenceViolated(precedenceStartedAtValue) = true
+                      this :+= 1
                     }
+                  }
                 }
+
               }
             }
 
-            var precedencesEndedAtValue = this.aftersToPrecedences(value)
-            while (precedencesEndedAtValue != null) {
-              val precedenceToCheck = precedencesEndedAtValue.head
-              precedencesEndedAtValue = precedencesEndedAtValue.tail
-              val startValueOfPrecedence = precedencesArray(precedenceToCheck)._1
+            for (precedenceEndingAtValue <- this.aftersToPrecedences(value)) {
+              if (isPrecedenceViolated(precedenceEndingAtValue)) {
+                //it was violated.
+                //it will become non-violated if moved upwards and the other value passes down
+                //or if there is a flip and the other value is in the flip, but the flip case is handled in the precedenceStarted at value
 
-              if (!valuesInMovedSegment.contains(startValueOfPrecedence)) {
+                if (moveUpwards) {
+                  val startValueOfPrecedence = precedencesArray(precedenceEndingAtValue)._1
+                  if (prev.newValue.positionOfAnyOccurrence(startValueOfPrecedence).head < after) {
+                    isPrecedenceViolated(precedenceEndingAtValue) = false
+                    this :-= 1
+                  }
+                }
 
-                //the other one is not in the flipped move, so we have to check the impact of the move on this precedence
+              } else {
+                //it was not violated, thus is can only get violated is the segment moves downwards and the other value passes up
+                // of if the other value is also in the segment and there is a flip, but the flip case is handled in the precedenceStarted at value
 
-                changes.newValue.positionOfAnyOccurrence(startValueOfPrecedence) match {
-                  case None => //other not present in the sequence, nothing to do
-                  case Some(newPositionOfStartValueOfPrecedence) =>
-                    val newPositionOfEndValueOfPrecedence = changes.newValue.positionOfAnyOccurrence(value).head
-
-                    if (newPositionOfStartValueOfPrecedence < newPositionOfEndValueOfPrecedence) {
-                      //no violation after move
-                      if (isPrecedenceViolated(precedenceToCheck)) {
-                        //was violated, so flip to false
-                        isPrecedenceViolated(precedenceToCheck) = false
-                        this :-= 1
-                      } //was not violated, nothing to do
-
-                    } else {
-                      //violation after move
-                      if (!isPrecedenceViolated(precedenceToCheck)) {
-                        //was not violated, now it is violated
-                        isPrecedenceViolated(precedenceToCheck) = true
-                        registerViolationIntoMaps(precedenceToCheck)
-                        this :+= 1
-                      }
-                    }
+                if (moveDownwards) {
+                  val startValueOfPrecedence = precedencesArray(precedenceEndingAtValue)._1
+                  if (prev.newValue.positionOfAnyOccurrence(startValueOfPrecedence).head > after) {
+                    isPrecedenceViolated(precedenceEndingAtValue) = true
+                    this :+= 1
+                  }
                 }
               }
             }
           }
+          true
         }
-        true
-
 
       case SeqUpdateLastNotified(value : IntSequence) =>
         true //we are starting from the previous value
@@ -353,5 +309,7 @@ class Precedence(seq:ChangingSeqValue,
         false //impossible to go incremental
     }
   }
+
+  
 }
 

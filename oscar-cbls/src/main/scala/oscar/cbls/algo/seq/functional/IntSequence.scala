@@ -101,7 +101,7 @@ abstract class IntSequence(protected[seq] val uniqueID:Int = IntSequence.getNewU
     toReturn
   }
 
-  //position to value
+  //List[(position,value)]
   def positionsBetweenFromToAndTheirValues(fromPositionIncluded:Int,toPositionIncluded:Int):List[(Int,Int)] = {
     var toReturn:List[(Int,Int)] = List.empty
     var e = explorerAtPosition(fromPositionIncluded)

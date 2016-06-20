@@ -138,6 +138,8 @@ class SeqUpdateMove(val fromIncluded:Int,val toIncluded:Int,val after:Int, val f
   def fromValue:Int = prev.newValue.valueAtPosition(fromIncluded).head
   def toValue:Int = prev.newValue.valueAtPosition(toIncluded).head
   def afterValue:Int = prev.newValue.valueAtPosition(after).head
+  def moveDownwards:Boolean = fromIncluded > after
+  def moveUpwards:Boolean = fromIncluded < after
 
   def movedValues = prev.newValue.valuesBetweenPositions(fromIncluded,toIncluded)
 
