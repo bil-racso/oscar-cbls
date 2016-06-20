@@ -16,11 +16,11 @@ package oscar.cbls.invariants.lib.seq
   ******************************************************************************/
 
 import oscar.cbls.algo.quick.QList
-import oscar.cbls.algo.rb.RedBlackTreeMap
 import oscar.cbls.algo.seq.functional.IntSequence
 import oscar.cbls.invariants.core.computation._
+import oscar.cbls.invariants.core.propagation.Checker
 
-import scala.collection.immutable.{SortedMap, SortedSet}
+import scala.collection.immutable.SortedSet
 
 //CBLSSetVar(model,name="values involved in violation of precedence")
 
@@ -47,6 +47,8 @@ class Precedence(seq:ChangingSeqValue,
   //saving precedences into arrays
   private val precedencesArray : Array[(Int, Int)] = beforeAfter.toArray
   val nbPecedences = precedencesArray.length
+  val precedences = 0 until nbPecedences
+
   private val beforesToPrecedences : Array[QList[Int]] = Array.fill(seq.maxValue + 1)(null)
   private val aftersToPrecedences : Array[QList[Int]] = Array.fill(seq.maxValue + 1)(null)
   for (precedenceID <- precedencesArray.indices) {
@@ -59,7 +61,37 @@ class Precedence(seq:ChangingSeqValue,
   //this is the exact info
   private val isPrecedenceViolated : Array[Boolean] = Array.fill(nbPecedences)(false)
 
-  val precedences = 0 until nbPecedences
+  private val isViolationChengedSinceCheckpoint:Array[Boolean] = Array.fill(nbPecedences)(false)
+  private var changedPrecedenceViolationsSinceCheckpoint:QList[Int] = null
+  private var savedViolationAtCheckpoint:Array[Boolean] = Array.fill(nbPecedences)(false)
+  private var checkpoint:IntSequence = null
+  var violationAtCheckpoint:Int = -1
+
+  def saveViolationForCheckpoint(precedence:Int){
+    if(!isViolationChengedSinceCheckpoint(precedence)){
+      isViolationChengedSinceCheckpoint(precedence) = true
+      changedPrecedenceViolationsSinceCheckpoint = QList(precedence,changedPrecedenceViolationsSinceCheckpoint)
+      savedViolationAtCheckpoint(precedence) = isPrecedenceViolated(precedence)
+    }
+  }
+
+  def reloadViolationsAtCheckpoint(){
+    for(precedence <- changedPrecedenceViolationsSinceCheckpoint){
+      isViolationChengedSinceCheckpoint(precedence) = false
+      isPrecedenceViolated(precedence) = savedViolationAtCheckpoint(precedence)
+    }
+    changedPrecedenceViolationsSinceCheckpoint = null
+    this := violationAtCheckpoint
+  }
+
+  def defineCheckpoint(i:IntSequence){
+    for(precedence <- changedPrecedenceViolationsSinceCheckpoint) {
+      isViolationChengedSinceCheckpoint(precedence) = false
+    }
+    changedPrecedenceViolationsSinceCheckpoint = null
+    checkpoint = i
+    violationAtCheckpoint = this.newValue
+  }
 
   def clearAllViolatedPrecedences(){
     for (precedence <- precedences) {
@@ -94,6 +126,7 @@ class Precedence(seq:ChangingSeqValue,
             isPrecedenceViolated(precedenceID) = true
             totalViolation += 1
           }
+          isViolationChengedSinceCheckpoint(precedenceID) = true
         }
         explorerOpt = explorer.next
         true
@@ -105,18 +138,26 @@ class Precedence(seq:ChangingSeqValue,
   override def notifySeqChanges(v : ChangingSeqValue, d : Int, changes : SeqUpdate) {
     if (!digestUpdates(changes, false)) {
       computeAndAffectViolationsFromScratch(changes.newValue)
+      //this also updates checkpoint links
     }
   }
 
   private def digestUpdates(changes : SeqUpdate, skipNewCheckpoints : Boolean) : Boolean = {
     changes match {
       case SeqUpdateDefineCheckpoint(prev : SeqUpdate, isActive : Boolean) =>
-        digestUpdates(prev, true)
-      //TODO
-
+        if(!skipNewCheckpoints) {
+          if(!digestUpdates(prev, true)){
+            computeAndAffectViolationsFromScratch(changes.newValue)
+          }
+          defineCheckpoint(changes.newValue)
+          true
+        }else{
+          digestUpdates(prev, true)
+        }
       case x@SeqUpdateRollBackToCheckpoint(checkpoint) =>
-        digestUpdates(x.howToRollBack, true)
-      //TODO
+        require(this.checkpoint quickEquals checkpoint)
+        reloadViolationsAtCheckpoint()
+        true
 
       case SeqUpdateInsert(value : Int, pos : Int, prev : SeqUpdate) =>
         if (!digestUpdates(prev, skipNewCheckpoints)) return false
@@ -133,6 +174,7 @@ class Precedence(seq:ChangingSeqValue,
             case Some(positionOfEndValueOfPrecedence) =>
               if (positionOfEndValueOfPrecedence < pos) {
                 //precedence is violated!
+                saveViolationForCheckpoint(precedenceToCheck)
                 this :+= 1
                 isPrecedenceViolated(precedenceToCheck) = true
               } // else precedence is not violated
@@ -151,6 +193,7 @@ class Precedence(seq:ChangingSeqValue,
             case Some(positionOfStartValueOfPrecedence) =>
               if (pos < positionOfStartValueOfPrecedence) {
                 //precedence is violated!
+                saveViolationForCheckpoint(precedenceToCheck)
                 this :+= 1
                 isPrecedenceViolated(precedenceToCheck) = true
               } // else precedence is not violated
@@ -163,6 +206,7 @@ class Precedence(seq:ChangingSeqValue,
 
         for(precedencesThatShouldOpenAtValue <- beforesToPrecedences(value)){
           if (isPrecedenceViolated(precedencesThatShouldOpenAtValue)) {
+            saveViolationForCheckpoint(precedencesThatShouldOpenAtValue)
             isPrecedenceViolated(precedencesThatShouldOpenAtValue) = false
             this :-= 1
           }
@@ -170,6 +214,7 @@ class Precedence(seq:ChangingSeqValue,
 
         for(precedenceThatShouldCloseAtValue <- aftersToPrecedences(value)){
           if (isPrecedenceViolated(precedenceThatShouldCloseAtValue)) {
+            saveViolationForCheckpoint(precedenceThatShouldCloseAtValue)
             isPrecedenceViolated(precedenceThatShouldCloseAtValue) = false
             this :-= 1
           }
@@ -231,6 +276,7 @@ class Precedence(seq:ChangingSeqValue,
                 if (moveDownwards) {
                   val endValueOfPrecedence = precedencesArray(precedenceStartedAtValue)._2
                   if (prev.newValue.positionOfAnyOccurrence(endValueOfPrecedence).head < fromIncluded) {
+                    saveViolationForCheckpoint(precedenceStartedAtValue)
                     isPrecedenceViolated(precedenceStartedAtValue) = false
                     this :-= 1
                   }
@@ -240,6 +286,7 @@ class Precedence(seq:ChangingSeqValue,
                     //the violation of this precedence is inverted (only do this for one half of the precedence)
                     if (flip) {
                       //was violated, so flip to false
+                      saveViolationForCheckpoint(precedenceStartedAtValue)
                       isPrecedenceViolated(precedenceStartedAtValue) = false
                       this :-= 1
                     }
@@ -253,6 +300,7 @@ class Precedence(seq:ChangingSeqValue,
                 if (moveUpwards) {
                   val endValueOfPrecedence = precedencesArray(precedenceStartedAtValue)._2
                   if (prev.newValue.positionOfAnyOccurrence(endValueOfPrecedence).head <= after) {
+                    saveViolationForCheckpoint(precedenceStartedAtValue)
                     isPrecedenceViolated(precedenceStartedAtValue) = true
                     this :+= 1
                   }
@@ -262,12 +310,12 @@ class Precedence(seq:ChangingSeqValue,
                     //the violation of this precedence is inverted (only do this for one half of the precedence)
                     if (flip) {
                       //was not violated, now it is violated
+                      saveViolationForCheckpoint(precedenceStartedAtValue)
                       isPrecedenceViolated(precedenceStartedAtValue) = true
                       this :+= 1
                     }
                   }
                 }
-
               }
             }
 
@@ -280,6 +328,7 @@ class Precedence(seq:ChangingSeqValue,
                 if (moveUpwards) {
                   val startValueOfPrecedence = precedencesArray(precedenceEndingAtValue)._1
                   if (prev.newValue.positionOfAnyOccurrence(startValueOfPrecedence).head < after) {
+                    saveViolationForCheckpoint(precedenceEndingAtValue)
                     isPrecedenceViolated(precedenceEndingAtValue) = false
                     this :-= 1
                   }
@@ -292,6 +341,7 @@ class Precedence(seq:ChangingSeqValue,
                 if (moveDownwards) {
                   val startValueOfPrecedence = precedencesArray(precedenceEndingAtValue)._1
                   if (prev.newValue.positionOfAnyOccurrence(startValueOfPrecedence).head > after) {
+                    saveViolationForCheckpoint(precedenceEndingAtValue)
                     isPrecedenceViolated(precedenceEndingAtValue) = true
                     this :+= 1
                   }
@@ -310,6 +360,32 @@ class Precedence(seq:ChangingSeqValue,
     }
   }
 
-  
+  /** To override whenever possible to spot errors in invariants.
+    * this will be called for each invariant after propagation is performed.
+    * It requires that the Model is instantiated with the variable debug set to true.
+    */
+  override def checkInternals(c : Checker) : Unit = {
+    for(precedenceID <- precedences){
+      val (startValue,endValue) = precedencesArray(precedenceID)
+
+      val s = seq.value
+
+      var nbViol = 0
+      s.positionOfAnyOccurrence(startValue) match {
+        case None => ;
+          c.check(!isPrecedenceViolated(precedenceID))
+        case Some(positionOfStartValue) =>
+          s.positionOfAnyOccurrence(endValue) match {
+            case None => ;
+              c.check(!isPrecedenceViolated(precedenceID))
+            case Some(positionOfEndValue) =>
+              c.check(isPrecedenceViolated(precedenceID) == (positionOfStartValue < positionOfEndValue))
+              nbViol += 1
+          }
+      }
+
+      c.check(this.value == nbViol)
+    }
+  }
 }
 
