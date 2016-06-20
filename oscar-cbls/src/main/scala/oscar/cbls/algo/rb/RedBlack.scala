@@ -305,6 +305,22 @@ object RedBlackTreeMap {
     else myMakeFromSorted(a,0,a.length-1,false)
   }
 
+  /**
+   * make the red black tree out of already sorted couples (key,value)
+   * they must be sorted by increasing order of key, and a key can only be present once.
+   * There is no check of these properties
+   * This is O(n); thus faster than a n*log(n) if you were building it from unsorted pairs
+   * @param args
+   * @tparam V
+   * @return
+   */
+  def makeFromSortedArray[@specialized(Int) V](args:Array[(Int,V)]): RedBlackTreeMap[V] = {
+    //root is to be black, beside alternate red and black
+    if(args.length <=3) this.apply(args)
+    else myMakeFromSorted(args,0,args.length-1,false)
+  }
+
+
   private def myMakeFromSorted[@specialized(Int) V](args:Array[(Int,V)],fromIncluded:Int,toIncluded:Int,targetIsRed:Boolean): RedBlackTreeMap[V] = {
     //root is to be black, beside alternate red and black
     if(fromIncluded == toIncluded){

@@ -433,18 +433,33 @@ class ConcreteIntSequence(private[seq] val internalPositionToValue:RedBlackTreeM
     //TODO: maybe we can go faster with newValueToInternalPositions?
     var explorer = this.explorerAtPosition(0)
     val newInternalPositionToValues:Array[(Int,Int)] = Array.fill[(Int,Int)](this.size)(null)
-    var newValueToInternalPositions = RedBlackTreeMap.empty[RedBlackTreeMap[Int]]
+
+    class Accumulator(var positions:RedBlackTreeMap[Int] = RedBlackTreeMap.empty[Int]){
+      def addPosition(position:Int){
+        positions = positions.insert(position,position)
+      }
+    }
+
+    var sortedValuesList = valueToInternalPositions.keys
+    val sortedValuesAndEmptyAccumulatorsArray = Array.fill(valueToInternalPositions.size)({
+      val tmp = sortedValuesList.head
+      sortedValuesList = sortedValuesList.tail
+      (tmp,new Accumulator)
+    })
+
+    var valuesToPositionAccumulators = RedBlackTreeMap.makeFromSortedArray(sortedValuesAndEmptyAccumulatorsArray)
+
     while (explorer match {
       case None => false
       case Some(position) =>
         newInternalPositionToValues(position.position) = (position.position,position.value)
-        newValueToInternalPositions = internalInsertToValueToInternalPositions(position.value, position.position, newValueToInternalPositions)
+        valuesToPositionAccumulators.get(position.value).head.addPosition(position.position)
         explorer = position.next
         true
     }) {}
 
-    new ConcreteIntSequence(RedBlackTreeMap.makeFromSorted(newInternalPositionToValues),
-      newValueToInternalPositions,
+    new ConcreteIntSequence(RedBlackTreeMap.makeFromSortedArray(newInternalPositionToValues),
+      RedBlackTreeMap.makeFromSortedArray(sortedValuesAndEmptyAccumulatorsArray.map({case (value,accumulator) => (value,accumulator.positions)})),
       PiecewiseLinearBijectionNaive.identity,
       newInternalPositionToValues.length, targetUniqueID)
   }
