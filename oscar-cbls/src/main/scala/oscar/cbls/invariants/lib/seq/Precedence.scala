@@ -63,7 +63,7 @@ class Precedence(seq:ChangingSeqValue,
 
   private val isViolationChengedSinceCheckpoint:Array[Boolean] = Array.fill(nbPecedences)(false)
   private var changedPrecedenceViolationsSinceCheckpoint:QList[Int] = null
-  private var savedViolationAtCheckpoint:Array[Boolean] = Array.fill(nbPecedences)(false)
+  private val savedViolationAtCheckpoint:Array[Boolean] = Array.fill(nbPecedences)(false)
   private var checkpoint:IntSequence = null
   var violationAtCheckpoint:Int = -1
 
@@ -154,8 +154,8 @@ class Precedence(seq:ChangingSeqValue,
         }else{
           digestUpdates(prev, true)
         }
-      case x@SeqUpdateRollBackToCheckpoint(checkpoint) =>
-        require(this.checkpoint quickEquals checkpoint)
+      case x@SeqUpdateRollBackToCheckpoint(rollBackCheckpoint) =>
+        require(checkpoint quickEquals rollBackCheckpoint)
         reloadViolationsAtCheckpoint()
         true
 
