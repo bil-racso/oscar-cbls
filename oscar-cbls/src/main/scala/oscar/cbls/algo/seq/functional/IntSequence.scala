@@ -57,7 +57,7 @@ class IterableIntSequence(sequence:IntSequence) extends Iterable[Int]{
   override def lastOption : Option[Int] = sequence.valueAtPosition(sequence.size-1)
 }
 
-abstract class IntSequence(protected[seq] val uniqueID:Int = IntSequence.getNewUniqueID()) {
+abstract class IntSequence(protected[cbls] val uniqueID:Int = IntSequence.getNewUniqueID()) {
 
   def size : Int
 

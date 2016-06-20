@@ -60,7 +60,7 @@ object SeqUpdateInsert {
       //we compare the seq here because seq equality is used for checkpointing stuff to anihilate the moves
       case x@SeqUpdateRemove(removedPosition : Int, prevOfDelete : SeqUpdate)
         if prev.newValue quickEquals seq => prevOfDelete
-      case _ => new SeqUpdateInsert(value,pos,prev,prev.newValue.insertAtPosition(value, pos, fast = true))
+      case _ => new SeqUpdateInsert(value,pos,prev,seq)
     }
   }
 
@@ -105,7 +105,7 @@ class SeqUpdateInsert(val value:Int,val pos:Int,prev:SeqUpdate, seq:IntSequence)
     SeqUpdateInsert(value,pos,prev,seq.regularizeToMaxPivot(maxPivot))
 
   override protected[computation] def prepend(u : SeqUpdate) : SeqUpdate =
-    SeqUpdateInsert(value,pos,prev.prepend(u),seq)
+    SeqUpdateInsert(value, pos, prev.prepend(u), seq)
 
   override def toString : String = "SeqUpdateInsert(value:" + value + " pos:" + pos + " prev:" + prev + ")"
 }
@@ -424,10 +424,10 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], val maxValue: Int, 
       case SeqUpdateLastNotified(value:IntSequence) =>
         //nothing to do :-)
         if(notifiedSinceTopCheckpoint != null)
-          require(notifiedSinceTopCheckpoint.newValue quickEquals value, "differing quickEquals on lastNotified: notifiedSinceTopCheckpoint.newValue=" + notifiedSinceTopCheckpoint.newValue  + " got " + value)
+          require(notifiedSinceTopCheckpoint.newValue quickEquals value, "differing quickEquals on lastNotified: notifiedSinceTopCheckpoint.newValue=" + notifiedSinceTopCheckpoint.newValue   + "(" + notifiedSinceTopCheckpoint.newValue.uniqueID + ") got " + value + "(" + value.uniqueID + ")" + this.getClass.getSimpleName)
       case c@SeqUpdateDefineCheckpoint(prev:SeqUpdate,isActive:Boolean) =>
         //we have to push the current checkpoint, and create a new one
-        recordNotifiedChangesForCheckpoint(prev)
+         recordNotifiedChangesForCheckpoint(prev)
         val checkpoint = toNotify.newValue
         if(topCheckpoint != null){
           checkpointStackNotTop = (topCheckpoint,notifiedSinceTopCheckpoint,topCheckpointIsActive) :: checkpointStackNotTop
@@ -643,7 +643,7 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], val maxValue: Int, 
           case _ => notifyChanged()
         }
       }
-      //println("after notified of rollBack toNotify:" + toNotify + " currentCheckpoint:" + topCheckpoint + " notifiedSinceTopCheckpoint:" + notifiedSinceTopCheckpoint)
+      //printlnprintln("after notified of rollBack toNotify:" + toNotify + " currentCheckpoint:" + topCheckpoint + " notifiedSinceTopCheckpoint:" + notifiedSinceTopCheckpoint)
 
     }
 
