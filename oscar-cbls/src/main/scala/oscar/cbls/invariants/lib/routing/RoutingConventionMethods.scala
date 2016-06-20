@@ -15,8 +15,8 @@ package oscar.cbls.invariants.lib.routing
   * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
   ******************************************************************************/
 
-import oscar.cbls.invariants.core.algo.rb.RedBlackTreeMap
-import oscar.cbls.invariants.core.algo.seq.functional.IntSequence
+import oscar.cbls.algo.rb.RedBlackTreeMap
+import oscar.cbls.algo.seq.functional.IntSequence
 
 object RoutingConventionMethods {
 

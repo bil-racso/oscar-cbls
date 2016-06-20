@@ -15,7 +15,7 @@ package oscar.cbls.test.invariants.algo
   * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
   ******************************************************************************/
 
-import oscar.cbls.invariants.core.algo.fun.{PiecewiseLinearBijectionNaive, PiecewiseLinearFun, LinearTransform}
+import oscar.cbls.algo.fun.{PiecewiseLinearBijectionNaive, PiecewiseLinearFun, LinearTransform}
 
 /*
 object TestUpdateableBijection extends App{

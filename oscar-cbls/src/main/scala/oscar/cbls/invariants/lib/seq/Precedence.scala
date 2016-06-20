@@ -15,9 +15,9 @@ package oscar.cbls.invariants.lib.seq
   * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
   ******************************************************************************/
 
-import oscar.cbls.invariants.core.algo.quick.QList
-import oscar.cbls.invariants.core.algo.rb.RedBlackTreeMap
-import oscar.cbls.invariants.core.algo.seq.functional.IntSequence
+import oscar.cbls.algo.quick.QList
+import oscar.cbls.algo.rb.RedBlackTreeMap
+import oscar.cbls.algo.seq.functional.IntSequence
 import oscar.cbls.invariants.core.computation._
 
 import scala.collection.immutable.{SortedMap, SortedSet}

@@ -15,7 +15,7 @@ package oscar.cbls.invariants.lib.routing
   * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
   ******************************************************************************/
 
-import oscar.cbls.invariants.core.algo.seq.functional.{IntSequence, IntSequenceExplorer}
+import oscar.cbls.algo.seq.functional.{IntSequence, IntSequenceExplorer}
 import oscar.cbls.invariants.core.computation._
 
 import scala.collection.immutable.SortedSet

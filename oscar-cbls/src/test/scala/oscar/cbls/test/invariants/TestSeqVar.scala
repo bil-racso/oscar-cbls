@@ -15,7 +15,7 @@ package oscar.cbls.test.invariants
   * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
   ******************************************************************************/
 
-import oscar.cbls.invariants.core.algo.seq.functional.{IntSequence, UniqueIntSequence}
+import oscar.cbls.algo.seq.functional.{IntSequence, UniqueIntSequence}
 import oscar.cbls.invariants.core.computation.{IntValue, SeqValue, Store, CBLSSeqVar}
 import oscar.cbls.invariants.core.propagation.ErrorChecker
 import oscar.cbls.invariants.lib.seq.{PositionsOf, Content, Size}

@@ -25,7 +25,7 @@
 package oscar.cbls.invariants.lib.minmax
 /**This package proposes a set of logic invariants, which are used to define the structure of the problem*/
 
-import oscar.cbls.invariants.core.algo.heap._
+import oscar.cbls.algo.heap._
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.core.propagation.Checker
 import oscar.cbls.invariants.lib.logic._

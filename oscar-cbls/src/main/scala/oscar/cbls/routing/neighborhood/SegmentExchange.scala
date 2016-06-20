@@ -16,7 +16,7 @@ package oscar.cbls.routing.neighborhood
   ******************************************************************************/
 
 import oscar.cbls.routing.model.{HotSpottingInfo, NodesOfVehicle, PositionInRouteAndRouteNr, VRP}
-import oscar.cbls.search.algo.{Pairs, HotRestart}
+import oscar.cbls.algo.search.{Pairs, HotRestart}
 import scala.collection.immutable.{SortedMap, SortedSet}
 
 /**

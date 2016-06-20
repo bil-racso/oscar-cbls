@@ -21,8 +21,8 @@
 
 package oscar.cbls.invariants.lib.minmax
 
-import oscar.cbls.invariants.core.algo.heap.{ArrayMap, BinomialHeapWithMoveExtMem}
-import oscar.cbls.invariants.core.algo.quick.QList
+import oscar.cbls.algo.heap.{ArrayMap, BinomialHeapWithMoveExtMem}
+import oscar.cbls.algo.quick.QList
 import oscar.cbls.invariants.core.computation.Invariant._
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.core.propagation.{Checker, KeyForElementRemoval}

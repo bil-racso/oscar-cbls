@@ -15,8 +15,8 @@ package oscar.cbls.invariants.lib.minmax
   * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
   ******************************************************************************/
 
-import oscar.cbls.invariants.core.algo.heap.{ArrayMap, BinomialHeapWithMoveExtMem}
-import oscar.cbls.invariants.core.algo.quick.QList
+import oscar.cbls.algo.heap.{ArrayMap, BinomialHeapWithMoveExtMem}
+import oscar.cbls.algo.quick.QList
 import oscar.cbls.invariants.core.computation.{ChangingSetValue, SetNotificationTarget, IntInvariant, SetValue}
 import oscar.cbls.invariants.core.propagation.Checker
 

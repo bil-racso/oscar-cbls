@@ -15,9 +15,9 @@ package oscar.cbls.routing.model
   * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
   ******************************************************************************/
 
-import oscar.cbls.invariants.core.algo.quick.QList
+import oscar.cbls.algo.quick.QList
 import oscar.cbls.routing.neighborhood.VRPMove
-import oscar.cbls.search.algo.HotRestart
+import oscar.cbls.algo.search.HotRestart
 import oscar.cbls.search.move.{CompositeMove, Move}
 
 import scala.collection.immutable.SortedSet

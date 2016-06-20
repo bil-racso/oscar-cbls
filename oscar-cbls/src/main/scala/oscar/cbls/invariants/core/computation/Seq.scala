@@ -15,8 +15,8 @@ package oscar.cbls.invariants.core.computation
   * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
   ******************************************************************************/
 
-import oscar.cbls.invariants.core.algo.fun.PiecewiseLinearBijectionNaive
-import oscar.cbls.invariants.core.algo.seq.functional._
+import oscar.cbls.algo.fun.PiecewiseLinearBijectionNaive
+import oscar.cbls.algo.seq.functional._
 import oscar.cbls.invariants.core.propagation.Checker
 
 import scala.language.implicitConversions

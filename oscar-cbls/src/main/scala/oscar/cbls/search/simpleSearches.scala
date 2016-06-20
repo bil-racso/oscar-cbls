@@ -15,11 +15,11 @@ package oscar.cbls.search
   * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
   ******************************************************************************/
 
-import oscar.cbls.invariants.core.algo.lazyIt.LazyMap
+import oscar.cbls.algo.lazyIt.LazyMap
 import oscar.cbls.invariants.core.computation.{CBLSIntVar, InvariantHelper}
 import oscar.cbls.modeling.AlgebraTrait
 import oscar.cbls.objective.Objective
-import oscar.cbls.search.algo.{HotRestart, IdenticalAggregator, KSmallest}
+import oscar.cbls.algo.search.{HotRestart, IdenticalAggregator, KSmallest}
 import oscar.cbls.search.core._
 import oscar.cbls.search.move._
 

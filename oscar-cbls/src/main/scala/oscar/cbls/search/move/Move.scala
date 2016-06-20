@@ -15,7 +15,7 @@
 
 package oscar.cbls.search.move
 
-import oscar.cbls.invariants.core.algo.quick.QList
+import oscar.cbls.algo.quick.QList
 import oscar.cbls.invariants.core.computation.{Solution, CBLSIntVar, CBLSSetVar, Variable}
 import oscar.cbls.objective.Objective
 

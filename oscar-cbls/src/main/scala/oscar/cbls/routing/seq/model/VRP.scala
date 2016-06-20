@@ -15,7 +15,7 @@ package oscar.cbls.routing.seq.model
   * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
   ******************************************************************************/
 
-import oscar.cbls.invariants.core.algo.seq.functional.IntSequence
+import oscar.cbls.algo.seq.functional.IntSequence
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.lib.numeric.Sum
 import oscar.cbls.invariants.lib.routing.{VehicleOfNodes, RoutingConventionMethods, NodeOfVehicle, ConstantRoutingDistance}
@@ -23,7 +23,7 @@ import oscar.cbls.invariants.lib.seq.{Content, Size}
 import oscar.cbls.invariants.lib.set.Diff
 import oscar.cbls.modeling.Algebra._
 import oscar.cbls.objective.Objective
-import oscar.cbls.search.algo.KSmallest
+import oscar.cbls.algo.search.KSmallest
 
 import scala.collection.immutable.SortedSet
 import scala.math._

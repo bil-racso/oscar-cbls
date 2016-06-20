@@ -15,7 +15,7 @@ package oscar.cbls.test.invariants.algo
   * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
   ******************************************************************************/
 
-import oscar.cbls.invariants.core.algo.rb.RedBlackTreeMap
+import oscar.cbls.algo.rb.RedBlackTreeMap
 
 import scala.collection.immutable.SortedMap
 import scala.util.Random

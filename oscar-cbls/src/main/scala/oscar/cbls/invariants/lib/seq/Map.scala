@@ -1,6 +1,22 @@
 package oscar.cbls.invariants.lib.seq
 
-import oscar.cbls.invariants.core.algo.seq.functional.IntSequence
+/*******************************************************************************
+  * OscaR is free software: you can redistribute it and/or modify
+  * it under the terms of the GNU Lesser General Public License as published by
+  * the Free Software Foundation, either version 2.1 of the License, or
+  * (at your option) any later version.
+  *
+  * OscaR is distributed in the hope that it will be useful,
+  * but WITHOUT ANY WARRANTY; without even the implied warranty of
+  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  * GNU Lesser General Public License  for more details.
+  *
+  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
+  ******************************************************************************/
+
+
+import oscar.cbls.algo.seq.functional.IntSequence
 import oscar.cbls.invariants.core.computation._
 
 object Map {
@@ -25,11 +41,13 @@ with SeqNotificationTarget{
     digestUdpate(changes : SeqUpdate)
   }
 
+  var inputCheckpoint:IntSequence = null
   var checkpoint:IntSequence = null
   def digestUdpate(changes : SeqUpdate) {
     changes match {
       case SeqUpdateDefineCheckpoint(prev, isActive) =>
         digestUdpate(prev)
+        inputCheckpoint = prev.newValue
         checkpoint = this.newValue
         defineCurrentValueAsCheckpoint(isActive)
       case SeqUpdateInsert(value, position, prev) =>
@@ -43,6 +61,7 @@ with SeqNotificationTarget{
         digestUdpate(prev)
         remove(position)
       case x@SeqUpdateRollBackToCheckpoint(checkpoint) =>
+        require(checkpoint quickEquals inputCheckpoint)
         rollbackToCurrentCheckpoint(this.checkpoint)
       case SeqUpdateSet(seq) =>
         this := seq.map(transform)

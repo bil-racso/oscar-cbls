@@ -18,7 +18,7 @@ package oscar.cbls.search.combinators
 
 import java.awt.{Color, Dimension}
 
-import oscar.cbls.invariants.core.algo.heap.{BinomialHeap, BinomialHeapWithMove}
+import oscar.cbls.algo.heap.{BinomialHeap, BinomialHeapWithMove}
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.objective.{CascadingObjective, Objective}
 import oscar.cbls.routing.model.VRP

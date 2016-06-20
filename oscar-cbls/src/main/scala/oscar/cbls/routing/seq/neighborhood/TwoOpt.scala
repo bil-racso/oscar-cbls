@@ -26,7 +26,7 @@ package oscar.cbls.routing.seq.neighborhood
 
 import oscar.cbls.invariants.lib.routing.RoutingConventionMethods
 import oscar.cbls.routing.seq.model.VRP
-import oscar.cbls.search.algo.HotRestart
+import oscar.cbls.algo.search.HotRestart
 import oscar.cbls.search.core.EasyNeighborhood
 
 

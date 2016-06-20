@@ -25,7 +25,7 @@
 package oscar.cbls.routing.neighborhood
 
 import oscar.cbls.routing.model.{HotSpottingInfo, VRP}
-import oscar.cbls.search.algo.HotRestart
+import oscar.cbls.algo.search.HotRestart
 import oscar.cbls.search.move.Move
 
 /**

@@ -1,6 +1,6 @@
 package oscar.cbls.invariants.lib.seq
 
-import oscar.cbls.invariants.core.algo.fun.PiecewiseLinearFun
+import oscar.cbls.algo.fun.PiecewiseLinearFun
 import oscar.cbls.invariants.core.computation._
 
 
@@ -28,6 +28,4 @@ class FunctionCumulativeRouting(routes:ChangingSeqValue,
 
 }
 
-class Map(seq:ChangingSeqValue,
-          transform:Array[Int]) extends SeqInvriant
 */

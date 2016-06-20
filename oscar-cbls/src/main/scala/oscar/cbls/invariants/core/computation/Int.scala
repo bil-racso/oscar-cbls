@@ -20,7 +20,7 @@
 
 package oscar.cbls.invariants.core.computation
 
-import oscar.cbls.invariants.core.algo.seq.functional.UniqueIntSequence
+import oscar.cbls.algo.seq.functional.UniqueIntSequence
 import oscar.cbls.invariants.core.propagation.{Checker, PropagationElement}
 import scala.collection.mutable.{Map => MMap}
 import scala.language.implicitConversions
