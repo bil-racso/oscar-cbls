@@ -33,20 +33,21 @@ class MySimpleRoutingWithUnroutedPoints(n:Int,v:Int,symmetricDistance:Array[Arra
   override protected def getDistance(from : Int, to : Int) : Int = symmetricDistance(from)(to)
 
   val penaltyForUnrouted  = 10000
-  val nPenaltyForUnrouted = penaltyForUnrouted * (n-v)
-  //val obj = new CascadingObjective(totalViolationOnRestriction, totalDistance)
-  val obj = Objective(totalDistance + (nPenaltyForUnrouted - Size(routes)*penaltyForUnrouted))
+
+  val obj = Objective(totalDistance + (penaltyForUnrouted*(n - Size(routes))))
 
   this.addToStringInfo(() => "objective: " + obj.value)
   this.addToStringInfo(() => "n:" + n + " v:" + v)
 
   computeClosestNeighbors()
+
+  def size = routes.value.size
 }
 
 object TSProutePoints extends App{
 
-  val n = 1000
-  val v = 10
+  val n = 10000
+  val v = 100
 
   val maxPivotPerValuePercent = 4
 
@@ -66,9 +67,8 @@ object TSProutePoints extends App{
 
   val routeUnroutdPoint =  Profile(new InsertPointUnroutedFirst(myVRP.unrouted,()=>myVRP.kNearest(10,myVRP.isRouted), myVRP,neighborhoodName = "InsertUF"))
 
-  //TODO: using post-filters on k-nearest is probably crap!
-  val routeUnroutdPoint2 =  Profile(new InsertPointRoutedFirst(myVRP.routed,()=>myVRP.kNearest(10,x => !myVRP.isRouted(x)),myVRP,neighborhoodName = "InsertRF"))
-
+  //TODO: using post-filters on k-nearest is probably crap
+  val routeUnroutdPoint2 =  Profile(new InsertPointRoutedFirst(myVRP.routed,()=>myVRP.kNearest(10,x => !myVRP.isRouted(x)),myVRP,neighborhoodName = "InsertRF")  guard(() => myVRP.size < n/2))
 
   def onePtMove(k:Int) = Profile(new OnePointMove(myVRP.routed, ()=>myVRP.kNearest(k,myVRP.isRouted), myVRP))
 
@@ -76,12 +76,12 @@ object TSProutePoints extends App{
 
   def threeOpt(k:Int, breakSym:Boolean) = Profile(new ThreeOpt(myVRP.routed, ()=>myVRP.kNearest(k,myVRP.isRouted), myVRP,breakSymmetry = breakSym, neighborhoodName = "ThreeOpt(k=" + k + ")"))
 
-  //val search = BestSlopeFirst(List(onePtMove,twoOpt, threeOpt(10,true))) exhaust threeOpt(20,true)
+  val search = (BestSlopeFirst(List(routeUnroutdPoint2, routeUnroutdPoint, onePtMove(10),twoOpt, threeOpt(10,true))) exhaust threeOpt(20,true))
 
-  val search = (new RoundRobin(List(routeUnroutdPoint2,onePtMove(10) guard (() => myVRP.unrouted.value.size != 0)),10)) exhaust BestSlopeFirst(List(onePtMove(20),twoOpt, threeOpt(10,true))) exhaust threeOpt(20,true)
+ // val search = (new RoundRobin(List(routeUnroutdPoint2,onePtMove(10) guard (() => myVRP.unrouted.value.size != 0)),10)) exhaust BestSlopeFirst(List(onePtMove(20),twoOpt, threeOpt(10,true))) exhaust threeOpt(20,true)
 
   search.verbose = 1
-  //search.verboseWithExtraInfo(4,myVRP.toString)
+  //search.verboseWithExtraInfo(1, ()=> "" + myVRP)
   search.paddingLength = 100
 
   search.doAllMoves(obj=myVRP.obj)

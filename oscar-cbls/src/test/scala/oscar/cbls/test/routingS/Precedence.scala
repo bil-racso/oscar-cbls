@@ -16,21 +16,17 @@ package oscar.cbls.test.routingS
   ******************************************************************************/
 
 import oscar.cbls.invariants.core.computation.Store
-import oscar.cbls.invariants.lib.numeric.Sum
-import oscar.cbls.invariants.lib.routing.NodeVehicleRestrictions
-import oscar.cbls.invariants.lib.seq.{PositionsOf, Size}
-import oscar.cbls.modeling.Algebra._
-import oscar.cbls.objective.{CascadingObjective, Objective}
+import oscar.cbls.invariants.core.propagation.ErrorChecker
+import oscar.cbls.invariants.lib.seq.Precedence
+import oscar.cbls.objective.{CascadingObjective, IntVarObjective}
 import oscar.cbls.routing.seq.model._
 import oscar.cbls.routing.seq.neighborhood.{OnePointMove, ThreeOpt, TwoOpt1}
 import oscar.cbls.search.combinators.{BestSlopeFirst, Profile}
 
-import scala.util.Random
 
-
-class MySimpleRouting(n:Int,v:Int,symmetricDistance:Array[Array[Int]],m:Store, maxPivot:Int)
+class MySimpleRoutingP(n:Int,v:Int,symmetricDistance:Array[Array[Int]],m:Store, maxPivot:Int ,precedences:List[(Int,Int)])
   extends VRP(n,v,m,maxPivot)
-  with TotalConstantDistance with ClosestNeighbors {
+  with TotalConstantDistance with ClosestNeighbors{
 
   setSymmetricDistanceMatrix(symmetricDistance)
 
@@ -39,30 +35,35 @@ class MySimpleRouting(n:Int,v:Int,symmetricDistance:Array[Array[Int]],m:Store, m
   //initializes to something simple; vehicle v-1 does all nodes (but other vehicles)
   setCircuit(nodes)
 
-  //val obj = new CascadingObjective(totalViolationOnRestriction, totalDistance)
-  val obj = Objective(totalDistance)
+  val obj = new CascadingObjective(new IntVarObjective(new Precedence(routes,precedences)), totalDistance)
+  //val obj = Objective(totalDistance)
 
-  this.addToStringInfo(() => "objective: " + obj.value)
+  this.addToStringInfo(() => "precedences: " + precedences)
+  this.addToStringInfo(() => "objective: " + obj)
   this.addToStringInfo(() => "n:" + n + " v:" + v)
 
   computeClosestNeighbors()
 }
 
-object TSPsym extends App{
+object PrecedenceRouting extends App{
 
-  val n = 1000
-  val v = 10
+  val n = 100
+  val v = 1
+  val nbPRecedences = (n - v) / 4
 
   val maxPivotPerValuePercent = 4
 
-  println("VRP(n:" + n + " v:" + v + ")")
+  println("VRPPrecedence(n:" + n + " v:" + v + ")")
 
   val symmetricDistanceMatrix = RoutingMatrixGenerator(n)._1
+
+  val precedences = RoutingMatrixGenerator.generatePrecedence(n,v,nbPRecedences)
+
 
   //  println("restrictions:" + restrictions)
   val model = new Store() //checker = Some(new ErrorChecker()))
 
-  val myVRP = new MySimpleRouting(n,v,symmetricDistanceMatrix,model,maxPivotPerValuePercent)
+  val myVRP = new MySimpleRoutingP(n,v,symmetricDistanceMatrix,model,maxPivotPerValuePercent,precedences)
   val nodes = myVRP.nodes
 
   model.close()
@@ -75,11 +76,11 @@ object TSPsym extends App{
 
   def threeOpt(k:Int, breakSym:Boolean) = Profile(new ThreeOpt(() => nodes, ()=>myVRP.kNearest(k), myVRP,breakSymmetry = breakSym, neighborhoodName = "ThreeOpt(k=" + k + ")"))
 
-  //val search = BestSlopeFirst(List(onePtMove,twoOpt, threeOpt(10,true))) exhaust threeOpt(20,true)
+  val search = (BestSlopeFirst(List(onePtMove)) exhaust threeOpt(20,true))  afterMove(model.propagate())
 
-  val search = threeOpt(20,true)
-
-  search.verbose = 1
+  //val search = threeOpt(20,true)
+  //search.verboseWithExtraInfo(2, ()=> "" + myVRP)
+  search.verbose = 2
   search.paddingLength = 100
 
   search.doAllMoves(obj=myVRP.obj)
