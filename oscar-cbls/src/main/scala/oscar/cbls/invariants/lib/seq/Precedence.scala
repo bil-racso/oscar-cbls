@@ -281,7 +281,7 @@ class Precedence(seq:ChangingSeqValue,
                   saveViolationForCheckpoint(precedenceStartedAtValue)
                   isPrecedenceViolated(precedenceStartedAtValue) = false
                   this :-= 1
-                } else if (flip && valuesInMovedSegment.contains(endValueOfPrecedence)) {
+                } else if (flip && fromIncluded <= positionOfEndValue && positionOfEndValue <= toIncluded) {
                   //the violation of this precedence is inverted (only do this for one half of the precedence)
                   //was violated, so flip to false
                   saveViolationForCheckpoint(precedenceStartedAtValue)
@@ -298,8 +298,7 @@ class Precedence(seq:ChangingSeqValue,
                   saveViolationForCheckpoint(precedenceStartedAtValue)
                   isPrecedenceViolated(precedenceStartedAtValue) = true
                   this :+= 1
-                } else if (flip && valuesInMovedSegment.contains(endValueOfPrecedence)) {
-                  //TODO: improve based on positions!
+                } else if (flip && fromIncluded <= positionOfEndValue && positionOfEndValue <= toIncluded) {
                   //the violation of this precedence is inverted (only do this for one half of the precedence)
                   //was not violated, now it is violated
                   saveViolationForCheckpoint(precedenceStartedAtValue)

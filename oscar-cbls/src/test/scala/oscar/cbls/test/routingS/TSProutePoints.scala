@@ -21,8 +21,7 @@ import oscar.cbls.modeling.Algebra._
 import oscar.cbls.objective.Objective
 import oscar.cbls.routing.seq.model._
 import oscar.cbls.routing.seq.neighborhood._
-import oscar.cbls.search.combinators.{BestSlopeFirst, Profile, RoundRobin}
-
+import oscar.cbls.search.combinators.{BestSlopeFirst, Profile}
 
 class MySimpleRoutingWithUnroutedPoints(n:Int,v:Int,symmetricDistance:Array[Array[Int]],m:Store, maxPivot:Int)
   extends VRP(n,v,m,maxPivot)
@@ -82,7 +81,7 @@ object TSProutePoints extends App{
 
   search.verbose = 1
   //search.verboseWithExtraInfo(1, ()=> "" + myVRP)
-  search.paddingLength = 100
+  search.paddingLength = 1000
 
   search.doAllMoves(obj=myVRP.obj)
 

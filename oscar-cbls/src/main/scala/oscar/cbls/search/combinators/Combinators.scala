@@ -1097,6 +1097,8 @@ case class AndThen(a: Neighborhood, b: Neighborhood, maximalIntermediaryDegradat
 
       override def model = obj.model
 
+      override def valueNoSideEffect:Int = obj.value
+
       override def value: Int = {
 
         if (maximalIntermediaryDegradation != Int.MaxValue) {
@@ -1626,7 +1628,7 @@ case class Profile(a:Neighborhood,ignoreInitialObj:Boolean = false) extends Neig
   override def getMove(obj: Objective, acceptanceCriterion: (Int, Int) => Boolean): SearchResult = {
 
     nbCalls += 1
-    val oldObj = obj.value
+    val oldObj = obj.valueNoSideEffect
     val startTime = System.nanoTime()
 
     a.getMove(obj, acceptanceCriterion) match {

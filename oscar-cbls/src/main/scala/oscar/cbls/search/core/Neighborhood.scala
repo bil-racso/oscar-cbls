@@ -213,7 +213,9 @@ abstract class Neighborhood(name:String = null) {
             val neighborhoodName = m.m.neighborhoodName
             moveSynthesis = moveSynthesis + ((neighborhoodName,moveSynthesis.getOrElse(neighborhoodName,0)+1))
 
-            if(System.nanoTime() >= nanoTimeAtNextSynthesis){
+            val printSynthesis = (System.nanoTime() >= nanoTimeAtNextSynthesis)
+
+            if(printSynthesis){
 
               val firstPostfix = if (m.objAfter < prevObj) "-"
               else if (m.objAfter == prevObj) "="
@@ -234,6 +236,13 @@ abstract class Neighborhood(name:String = null) {
               nanoTimeAtNextSynthesis = System.nanoTime() + (1000*1000*100) //100ms
 
             }
+
+            m.commit()
+            //TODO: additionalString shuld be handled with synthesis!
+            if (printSynthesis && additionalStringGenerator != null) println("after move is committed: " + additionalStringGenerator())
+            if (obj.value == Int.MaxValue) println("Warning : objective == MaxInt, maybe you have some strong constraint violated?")
+            assert(obj.value == m.objAfter, "neighborhood was lying!:" + m + " got " + obj)
+
           }else if (printTakenMoves) {
 
             if (m.objAfter != Int.MaxValue) {
@@ -254,12 +263,20 @@ abstract class Neighborhood(name:String = null) {
               prevObj = m.objAfter
               println(trimToLength(m.toString(), paddingLength))
             }
+
+            m.commit()
+            if (additionalStringGenerator != null) println("after move is committed: " + additionalStringGenerator())
+            if (obj.value == Int.MaxValue) println("Warning : objective == MaxInt, maybe you have some strong constraint violated?")
+            assert(obj.value == m.objAfter, "neighborhood was lying!:" + m + " got " + obj)
+
+          }else{
+            m.commit()
+            if (additionalStringGenerator != null) println("after move is committed: " + additionalStringGenerator())
+            if (obj.value == Int.MaxValue) println("Warning : objective == MaxInt, maybe you have some strong constraint violated?")
+            assert(obj.value == m.objAfter, "neighborhood was lying!:" + m + " got " + obj)
           }
 
-          m.commit()
-          if (additionalStringGenerator != null) println("after move is committed: " + additionalStringGenerator())
-          if (obj.value == Int.MaxValue) println("Warning : objective == MaxInt, maybe you have some strong constraint violated?")
-          assert(obj.value == m.objAfter, "neighborhood was lying!:" + m + " got " + obj)
+
           true
       }
       toReturn += 1

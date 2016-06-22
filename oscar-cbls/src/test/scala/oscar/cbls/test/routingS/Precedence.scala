@@ -18,7 +18,7 @@ package oscar.cbls.test.routingS
 import oscar.cbls.invariants.core.computation.Store
 import oscar.cbls.invariants.core.propagation.ErrorChecker
 import oscar.cbls.invariants.lib.seq.Precedence
-import oscar.cbls.objective.{CascadingObjective, IntVarObjective}
+import oscar.cbls.objective.{Objective, CascadingObjective, IntVarObjective}
 import oscar.cbls.routing.seq.model._
 import oscar.cbls.routing.seq.neighborhood.{OnePointMove, ThreeOpt, TwoOpt1}
 import oscar.cbls.search.combinators.{BestSlopeFirst, Profile}
@@ -35,8 +35,8 @@ class MySimpleRoutingP(n:Int,v:Int,symmetricDistance:Array[Array[Int]],m:Store, 
   //initializes to something simple; vehicle v-1 does all nodes (but other vehicles)
   setCircuit(nodes)
 
-  val obj = new CascadingObjective(new IntVarObjective(new Precedence(routes,precedences)), totalDistance)
-  //val obj = Objective(totalDistance)
+  //val obj = totalDistance // new CascadingObjective(new IntVarObjective(new Precedence(routes,precedences)), totalDistance)
+  val obj = Objective(totalDistance)
 
   this.addToStringInfo(() => "precedences: " + precedences)
   this.addToStringInfo(() => "objective: " + obj)
@@ -47,9 +47,9 @@ class MySimpleRoutingP(n:Int,v:Int,symmetricDistance:Array[Array[Int]],m:Store, 
 
 object PrecedenceRouting extends App{
 
-  val n = 100
+  val n = 10
   val v = 1
-  val nbPRecedences = (n - v) / 4
+  val nbPRecedences = (n - v) / 2
 
   val maxPivotPerValuePercent = 4
 
@@ -70,13 +70,16 @@ object PrecedenceRouting extends App{
 
   println(myVRP)
 
-  val onePtMove = Profile(new OnePointMove(() => nodes, ()=>myVRP.kNearest(40), myVRP))
+  def onePtMove = Profile(new OnePointMove(() => nodes, ()=>myVRP.kNearest(4), myVRP))
 
   val twoOpt = Profile(new TwoOpt1(() => nodes, ()=>myVRP.kNearest(40), myVRP))
 
   def threeOpt(k:Int, breakSym:Boolean) = Profile(new ThreeOpt(() => nodes, ()=>myVRP.kNearest(k), myVRP,breakSymmetry = breakSym, neighborhoodName = "ThreeOpt(k=" + k + ")"))
 
-  val search = (BestSlopeFirst(List(onePtMove)) exhaust threeOpt(20,true))  afterMove(model.propagate())
+  //
+  //val search = (BestSlopeFirst(List(onePtMove,threeOpt(10,false),twoOpt,onePtMove andThen onePtMove)) exhaust threeOpt(20,true))
+
+  val search = onePtMove andThen onePtMove
 
   //val search = threeOpt(20,true)
   //search.verboseWithExtraInfo(2, ()=> "" + myVRP)
