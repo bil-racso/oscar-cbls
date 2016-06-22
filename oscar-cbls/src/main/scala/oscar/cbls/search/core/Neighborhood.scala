@@ -230,7 +230,7 @@ abstract class Neighborhood(name:String = null) {
               else "   ") + m.objAfter
 
               val smallPaddingLength = 20
-              println(padToLength(moveSynthesis.toList.map({case ((name,n)) => padToLength(name + ":"+n, smallPaddingLength)}).mkString(" "), paddingLength) + " " + firstPostfix + secondPostfix)
+              println(padToLength(moveSynthesis.toList.map({case ((name,n)) => padToLength(trimToLength(name, smallPaddingLength-4)+ ":"+n, smallPaddingLength)}).mkString(" "), paddingLength) + " " + firstPostfix + secondPostfix)
 
               moveSynthesis = SortedMap.empty[String,Int]
               nanoTimeAtNextSynthesis = System.nanoTime() + (1000*1000*100) //100ms
@@ -810,6 +810,8 @@ class ObjWithStringGenerator(obj: Objective, additionalStringGenerator: () => St
   override def model: Store = obj.model
 
   override def value: Int = obj.value
+
+  override def valueNoSideEffect : Int = obj.valueNoSideEffect
 }
 
 

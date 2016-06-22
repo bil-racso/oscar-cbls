@@ -20,11 +20,13 @@ import oscar.cbls.invariants.core.propagation.ErrorChecker
 import oscar.cbls.invariants.lib.seq.Precedence
 import oscar.cbls.objective.{Objective, CascadingObjective, IntVarObjective}
 import oscar.cbls.routing.seq.model._
-import oscar.cbls.routing.seq.neighborhood.{OnePointMove, ThreeOpt, TwoOpt1}
+import oscar.cbls.routing.seq.neighborhood.{OnePointMoveMove, OnePointMove, ThreeOpt, TwoOpt1}
 import oscar.cbls.search.combinators.{BestSlopeFirst, Profile}
 
+import scala.collection.immutable.SortedSet
 
-class MySimpleRoutingP(n:Int,v:Int,symmetricDistance:Array[Array[Int]],m:Store, maxPivot:Int ,precedences:List[(Int,Int)])
+
+class MySimpleRoutingP(n:Int,v:Int,symmetricDistance:Array[Array[Int]],m:Store, maxPivot:Int, precedences:List[(Int,Int)])
   extends VRP(n,v,m,maxPivot)
   with TotalConstantDistance with ClosestNeighbors{
 
@@ -35,8 +37,14 @@ class MySimpleRoutingP(n:Int,v:Int,symmetricDistance:Array[Array[Int]],m:Store, 
   //initializes to something simple; vehicle v-1 does all nodes (but other vehicles)
   setCircuit(nodes)
 
-  //val obj = totalDistance // new CascadingObjective(new IntVarObjective(new Precedence(routes,precedences)), totalDistance)
-  val obj = Objective(totalDistance)
+
+  val precedenceInvar = new Precedence(routes,precedences)
+
+  val nodesStartingAPrecedence:SortedSet[Int] = precedenceInvar.nodesStartingAPrecedence
+  val nodesEndingAPrecedenceStartedAt:(Int => Iterable[Int]) = precedenceInvar.nodesEndingAPrecedenceStartedAt
+
+  val obj = new CascadingObjective(new IntVarObjective(precedenceInvar), totalDistance)
+  //val obj = Objective(totalDistance)
 
   this.addToStringInfo(() => "precedences: " + precedences)
   this.addToStringInfo(() => "objective: " + obj)
@@ -47,7 +55,7 @@ class MySimpleRoutingP(n:Int,v:Int,symmetricDistance:Array[Array[Int]],m:Store, 
 
 object PrecedenceRouting extends App{
 
-  val n = 10
+  val n = 1000
   val v = 1
   val nbPRecedences = (n - v) / 2
 
@@ -59,9 +67,8 @@ object PrecedenceRouting extends App{
 
   val precedences = RoutingMatrixGenerator.generatePrecedence(n,v,nbPRecedences)
 
-
   //  println("restrictions:" + restrictions)
-  val model = new Store() //checker = Some(new ErrorChecker()))
+  val model = new Store() //checker = Some() //new ErrorChecker()))
 
   val myVRP = new MySimpleRoutingP(n,v,symmetricDistanceMatrix,model,maxPivotPerValuePercent,precedences)
   val nodes = myVRP.nodes
@@ -70,20 +77,22 @@ object PrecedenceRouting extends App{
 
   println(myVRP)
 
-  def onePtMove = Profile(new OnePointMove(() => nodes, ()=>myVRP.kNearest(4), myVRP))
+  def onePtMove = Profile(OnePointMove(() => nodes, ()=>myVRP.kNearest(40), myVRP))
+
+  val twoPointMove = (OnePointMove(() => nodes, ()=>myVRP.kNearest(40), myVRP,"firstPointMove") andThen OnePointMove(() => nodes, ()=>myVRP.kNearest(40), myVRP,"secondPointMove")) name("TwoPointMove")
+  val twoPointMoveSmart = Profile((OnePointMove(() => myVRP.nodesStartingAPrecedence, ()=>myVRP.kNearest(40), myVRP,"firstPointMove") dynAndThen ((o:OnePointMoveMove) => {
+    OnePointMove(() => myVRP.nodesEndingAPrecedenceStartedAt(o.movedPoint), ()=>myVRP.kNearest(40), myVRP,"secondPointMove")})) name("TwoPointMoveSmart"))
 
   val twoOpt = Profile(new TwoOpt1(() => nodes, ()=>myVRP.kNearest(40), myVRP))
 
   def threeOpt(k:Int, breakSym:Boolean) = Profile(new ThreeOpt(() => nodes, ()=>myVRP.kNearest(k), myVRP,breakSymmetry = breakSym, neighborhoodName = "ThreeOpt(k=" + k + ")"))
 
-  //
-  //val search = (BestSlopeFirst(List(onePtMove,threeOpt(10,false),twoOpt,onePtMove andThen onePtMove)) exhaust threeOpt(20,true))
-
-  val search = onePtMove andThen onePtMove
+  //,,(onePtMove andThen onePtMove) name ("twoPointMove")
+  val search = new BestSlopeFirst(List(threeOpt(10,false),onePtMove,twoOpt,twoPointMoveSmart))
 
   //val search = threeOpt(20,true)
   //search.verboseWithExtraInfo(2, ()=> "" + myVRP)
-  search.verbose = 2
+  search.verbose = 1
   search.paddingLength = 100
 
   search.doAllMoves(obj=myVRP.obj)

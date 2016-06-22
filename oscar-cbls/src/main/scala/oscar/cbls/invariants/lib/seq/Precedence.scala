@@ -20,7 +20,7 @@ import oscar.cbls.algo.seq.functional.IntSequence
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.core.propagation.{ErrorChecker, Checker}
 
-import scala.collection.immutable.SortedSet
+import scala.collection.immutable.{SortedMap, SortedSet}
 
 //CBLSSetVar(model,name="values involved in violation of precedence")
 
@@ -65,6 +65,9 @@ class Precedence(seq:ChangingSeqValue,
   private val savedViolationAtCheckpoint:Array[Boolean] = Array.fill(nbPecedences)(false)
   private var checkpoint:IntSequence = null
   var violationAtCheckpoint:Int = -1
+
+  def nodesStartingAPrecedence:SortedSet[Int] = SortedSet.empty[Int] ++ beforeAfter.map(_._1)
+  def nodesEndingAPrecedenceStartedAt:(Int => Iterable[Int]) = (before:Int) => beforesToPrecedences(before).map(p => precedencesArray(p)._2)
 
   def saveViolationForCheckpoint(precedence:Int){
     if(!isViolationChangedSinceCheckpoint(precedence)){
@@ -136,15 +139,26 @@ class Precedence(seq:ChangingSeqValue,
   }
 
   override def notifySeqChanges(v : ChangingSeqValue, d : Int, changes : SeqUpdate) {
+
+    //checkInternals(new ErrorChecker())
+
+    //println("notified of " + changes)
+    //println("sequence BEFORE:" + v.value)
+
+
     if (!digestUpdates(changes, false)) {
       computeAndAffectViolationsFromScratch(changes.newValue)
       //this also updates checkpoint links
     }
+    //println(this.beforeAfter)
+    //println("violation after: " + isPrecedenceViolated.mkString(","))
+    //println("sequence after: " + changes.newValue)
   }
 
   private def digestUpdates(changes : SeqUpdate, skipNewCheckpoints : Boolean) : Boolean = {
     changes match {
       case SeqUpdateDefineCheckpoint(prev : SeqUpdate, isActive : Boolean) =>
+        //println("define checkpoint")
         if(!skipNewCheckpoints) {
           if(!digestUpdates(prev, true)){
             computeAndAffectViolationsFromScratch(changes.newValue)
@@ -223,13 +237,14 @@ class Precedence(seq:ChangingSeqValue,
         true
 
       case x@SeqUpdateMove(fromIncluded : Int, toIncluded : Int, after : Int, flip : Boolean, prev : SeqUpdate) =>
+        //println("move")
         //on which vehicle did we move?
         //also from --> to cannot include a vehicle start.
         if (!digestUpdates(prev, skipNewCheckpoints)) false
         else if (x.isNop) true
         else if (x.isSimpleFlip) {
           //this is a simple flip
-
+          //println("simple flip")
           //violation is only impacted if the other value of the precedence is also in the flip.
           //in this case, it inverts the truth value of the violation.
           //two inversions will happen,
@@ -265,6 +280,8 @@ class Precedence(seq:ChangingSeqValue,
           val moveDownwards = x.moveDownwards
           val moveUpwards = x.moveUpwards
 
+          //println("full move moveDownwards:" + moveDownwards + " moveUpwards:" + moveUpwards)
+
           val valuesInMovedSegment : SortedSet[Int] = prev.newValue.valuesBetweenPositions(fromIncluded, toIncluded)
           for (value <- valuesInMovedSegment) {
 
@@ -277,7 +294,7 @@ class Precedence(seq:ChangingSeqValue,
 
                 val endValueOfPrecedence = precedencesArray(precedenceStartedAtValue)._2
                 val positionOfEndValue = prev.newValue.positionOfAnyOccurrence(endValueOfPrecedence).head
-                if (moveDownwards && positionOfEndValue < fromIncluded) {
+                if (moveDownwards && positionOfEndValue > after && positionOfEndValue < fromIncluded) {
                   saveViolationForCheckpoint(precedenceStartedAtValue)
                   isPrecedenceViolated(precedenceStartedAtValue) = false
                   this :-= 1
@@ -370,13 +387,14 @@ class Precedence(seq:ChangingSeqValue,
             case None => ;
               c.check(!isPrecedenceViolated(precedenceID))
             case Some(positionOfEndValue) =>
-              c.check(isPrecedenceViolated(precedenceID) == (positionOfStartValue > positionOfEndValue), Some("error on violation of precedence " + precedenceID))
+              c.check(isPrecedenceViolated(precedenceID) == (positionOfStartValue > positionOfEndValue),
+                Some("error on violation of precedence " + precedenceID + ":(" + precedencesArray(precedenceID) + ")"))
               if(isPrecedenceViolated(precedenceID)) nbViol += 1
           }
       }
     }
     c.check(this.value == nbViol,
-      Some("this.value=" + this.value
+      Some("this.value=" + this.newValue
         + " should== nbViol=" + nbViol))
   }
 }

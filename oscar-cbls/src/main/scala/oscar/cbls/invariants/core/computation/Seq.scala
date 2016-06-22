@@ -612,6 +612,7 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], val maxValue: Int, 
 
   protected def defineCurrentValueAsCheckpoint(checkPointIsActive:Boolean):IntSequence = {
     //println("notify define checkpoint " + this.toNotify.newValue)
+    //TODO: regularize not to be done when stacking checkpoints!
     toNotify = SeqUpdateDefineCheckpoint(toNotify.regularize(maxPivotPerValuePercent),checkPointIsActive,maxPivotPerValuePercent)
     trimToNotifyIfNeeded()
     notifyChanged()
@@ -856,6 +857,6 @@ class IdentitySeq(fromValue:ChangingSeqValue, toValue:CBLSSeqVar)
   }
 
   override def checkInternals(c:Checker){
-    c.check(toValue.value equals fromValue.value, Some("IdentitySeq: toValue.value=" +toValue.value + " should equal fromValue.value=" + fromValue.value))
+    c.check(toValue.value quickEquals fromValue.value, Some("IdentitySeq: toValue.value=" +toValue.value + " should equal fromValue.value=" + fromValue.value))
   }
 }

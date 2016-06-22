@@ -113,6 +113,13 @@ class CascadingObjective(mustBeZeroObjective: Objective, secondObjective:Objecti
     else secondObjective.value
   }
 
+
+  override def valueNoSideEffect : Int = {
+    val firstObjectiveValue = mustBeZeroObjective.valueNoSideEffect
+    if (firstObjectiveValue!=0) cascadeSize + firstObjectiveValue
+    else secondObjective.valueNoSideEffect
+  }
+
   override def model: Store = mustBeZeroObjective.model
 }
 
@@ -247,6 +254,8 @@ class LoggingObjective(baseObjective:Objective) extends Objective{
 //    throw new Error()
     toReturn
   }
+
+  override def valueNoSideEffect : Int = baseObjective.valueNoSideEffect
 
   def getAndCleanEvaluationLog:List[String] = {
     val toReturn = evaluationsLog
