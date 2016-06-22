@@ -81,14 +81,14 @@ object PrecedenceRouting extends App{
 
   val twoPointMove = (OnePointMove(() => nodes, ()=>myVRP.kNearest(40), myVRP,"firstPointMove") andThen OnePointMove(() => nodes, ()=>myVRP.kNearest(40), myVRP,"secondPointMove")) name("TwoPointMove")
   val twoPointMoveSmart = Profile((OnePointMove(() => myVRP.nodesStartingAPrecedence, ()=>myVRP.kNearest(40), myVRP,"firstPointMove") dynAndThen ((o:OnePointMoveMove) => {
-    OnePointMove(() => myVRP.nodesEndingAPrecedenceStartedAt(o.movedPoint), ()=>myVRP.kNearest(40), myVRP,"secondPointMove")})) name("TwoPointMoveSmart"))
+    OnePointMove(() => myVRP.nodesEndingAPrecedenceStartedAt(o.movedPoint), ()=>myVRP.kNearest(40), myVRP,"secondPointMove")})) name("SmartTwoPtMove"))
 
   val twoOpt = Profile(new TwoOpt1(() => nodes, ()=>myVRP.kNearest(40), myVRP))
 
   def threeOpt(k:Int, breakSym:Boolean) = Profile(new ThreeOpt(() => nodes, ()=>myVRP.kNearest(k), myVRP,breakSymmetry = breakSym, neighborhoodName = "ThreeOpt(k=" + k + ")"))
 
   //,,(onePtMove andThen onePtMove) name ("twoPointMove")
-  val search = new BestSlopeFirst(List(threeOpt(10,false),onePtMove,twoOpt,twoPointMoveSmart))
+  val search = new BestSlopeFirst(List(threeOpt(10,true),onePtMove,twoOpt,twoPointMoveSmart)) exhaust threeOpt(20,true)
 
   //val search = threeOpt(20,true)
   //search.verboseWithExtraInfo(2, ()=> "" + myVRP)

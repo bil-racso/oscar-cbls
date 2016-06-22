@@ -282,8 +282,8 @@ class Precedence(seq:ChangingSeqValue,
 
           //println("full move moveDownwards:" + moveDownwards + " moveUpwards:" + moveUpwards)
 
-          val valuesInMovedSegment : SortedSet[Int] = prev.newValue.valuesBetweenPositions(fromIncluded, toIncluded)
-          for (value <- valuesInMovedSegment) {
+          val valuesInMovedSegment : List[(Int,Int)] = prev.newValue.positionsBetweenFromToAndTheirValues(fromIncluded, toIncluded)
+          for ((_,value) <- valuesInMovedSegment) {
 
             //violations involved in value
             for (precedenceStartedAtValue <- this.beforesToPrecedences(value)) {

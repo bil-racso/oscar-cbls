@@ -258,15 +258,15 @@ case class SeqUpdateLastNotified(value:IntSequence) extends SeqUpdate(value){
 
 object SeqUpdateDefineCheckpoint{
 
-  def apply(prev:SeqUpdate,activeCheckpoint:Boolean, maxPivotPerValuePercent:Int):SeqUpdateDefineCheckpoint = {
-    new SeqUpdateDefineCheckpoint(prev,activeCheckpoint, maxPivotPerValuePercent)
+  def apply(prev:SeqUpdate,activeCheckpoint:Boolean, maxPivotPerValuePercent:Int,doRegularize:Boolean):SeqUpdateDefineCheckpoint = {
+    new SeqUpdateDefineCheckpoint(prev,activeCheckpoint, maxPivotPerValuePercent,doRegularize:Boolean)
   }
 
   def unapply(u:SeqUpdateDefineCheckpoint):Option[(SeqUpdate,Boolean)] = Some(u.prev,u.activeCheckpoint)
 }
 
-class SeqUpdateDefineCheckpoint(prev:SeqUpdate,val activeCheckpoint:Boolean, maxPivotPerValuePercent:Int)
-  extends SeqUpdateWithPrev(prev,prev.newValue.regularizeToMaxPivot(maxPivotPerValuePercent)){
+class SeqUpdateDefineCheckpoint(prev:SeqUpdate,val activeCheckpoint:Boolean, maxPivotPerValuePercent:Int,val doRegularize:Boolean)
+  extends SeqUpdateWithPrev(prev,if(doRegularize) prev.newValue.regularizeToMaxPivot(maxPivotPerValuePercent) else prev.newValue){
   protected[computation]  def reverse(target : IntSequence, from : SeqUpdate) : SeqUpdate = prev.reverse(target,from)
 
   protected[computation] def regularize(maxPivot:Int) : SeqUpdate = this
@@ -275,7 +275,7 @@ class SeqUpdateDefineCheckpoint(prev:SeqUpdate,val activeCheckpoint:Boolean, max
 
   def newPos2OldPos(newPos : Int) : Option[Int] = throw new Error("SeqUpdateDefineCheckpoint should not be queried for delta on moves")
 
-  protected[computation] def prepend(u : SeqUpdate) : SeqUpdate = SeqUpdateDefineCheckpoint(prev.prepend(u),activeCheckpoint,maxPivotPerValuePercent)
+  protected[computation] def prepend(u : SeqUpdate) : SeqUpdate = SeqUpdateDefineCheckpoint(prev.prepend(u),activeCheckpoint,maxPivotPerValuePercent,doRegularize)
 
   override def toString : String = "SeqUpdateDefineCheckpoint(prev:" + prev + ")"
 }
@@ -523,7 +523,7 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], val maxValue: Int, 
       case SeqUpdateRemove(position : Int, prev : SeqUpdate) =>
         SeqUpdateRemove(position, trimToLatestCheckpoint(prev), updates.newValue)
       case SeqUpdateDefineCheckpoint(prev : SeqUpdate, isActiveCheckpoint : Boolean) =>
-        SeqUpdateDefineCheckpoint(SeqUpdateSet(updates.newValue), isActiveCheckpoint, maxPivotPerValuePercent)
+        SeqUpdateDefineCheckpoint(SeqUpdateSet(updates.newValue), isActiveCheckpoint, maxPivotPerValuePercent,false)
 
       case SeqUpdateRollBackToCheckpoint(checkpointValue : IntSequence) => updates
       case SeqUpdateSet(value : IntSequence) => updates
@@ -599,7 +599,7 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], val maxValue: Int, 
         val updatesSincePrevCheckpoint = pushCheckPoints(prev,true)
 
         recordNotifiedChangesForCheckpoint(updatesSincePrevCheckpoint)
-        recordNotifiedChangesForCheckpoint(SeqUpdateDefineCheckpoint(SeqUpdateLastNotified(updatesSincePrevCheckpoint.newValue),isActiveCheckpoint,maxPivotPerValuePercent))
+        recordNotifiedChangesForCheckpoint(SeqUpdateDefineCheckpoint(SeqUpdateLastNotified(updatesSincePrevCheckpoint.newValue),isActiveCheckpoint,maxPivotPerValuePercent,false))
 
         require(updates.newValue quickEquals updatesSincePrevCheckpoint.newValue)
         SeqUpdateLastNotified(updates.newValue)
@@ -613,7 +613,9 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], val maxValue: Int, 
   protected def defineCurrentValueAsCheckpoint(checkPointIsActive:Boolean):IntSequence = {
     //println("notify define checkpoint " + this.toNotify.newValue)
     //TODO: regularize not to be done when stacking checkpoints!
-    toNotify = SeqUpdateDefineCheckpoint(toNotify.regularize(maxPivotPerValuePercent),checkPointIsActive,maxPivotPerValuePercent)
+    val doRegularize = (this.topCheckpoint != null)
+
+    toNotify = SeqUpdateDefineCheckpoint(toNotify,checkPointIsActive,maxPivotPerValuePercent,doRegularize)
     trimToNotifyIfNeeded()
     notifyChanged()
     toNotify.newValue
