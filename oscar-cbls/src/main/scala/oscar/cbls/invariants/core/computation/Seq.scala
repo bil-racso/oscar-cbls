@@ -531,13 +531,11 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], val maxValue: Int, 
     }
   }
 
-
-  //TODO: -1 for first position
   protected def insertAtPosition(value:Int,pos:Int){
     assert(pos <= toNotify.newValue.size)
     assert(pos >= 0)
     toNotify = SeqUpdateInsert(value,pos,toNotify)
-    println(" notify insert " + toNotify)
+   // println(" notify insert " + toNotify)
     trimToNotifyIfNeeded()
     notifyChanged()
   }
@@ -546,7 +544,7 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], val maxValue: Int, 
 
     require(toNotify.newValue.size > position && position >=0, "removing at position " + position + " size is " + newValue.size)
     toNotify = SeqUpdateRemove(position,toNotify)
-    println(" notify remove " + toNotify)
+    //println(" notify remove " + toNotify)
     trimToNotifyIfNeeded()
     notifyChanged()
   }
@@ -566,13 +564,13 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], val maxValue: Int, 
     require(-1<=afterPosition)
     require(fromIncludedPosition <= toIncludedPosition)
     toNotify  = SeqUpdateMove(fromIncludedPosition,toIncludedPosition,afterPosition,flip,toNotify)
-    println("notified move " + toNotify)
+    //println("notified move " + toNotify)
     trimToNotifyIfNeeded()
     notifyChanged()
   }
 
   protected [computation] def setValue(seq:IntSequence){
-    println("setValue:" + seq)
+   // println("setValue:" + seq)
     //since we will override and lose the content of the toNotify, we have to ensure that there is no checkpoint delcared in this before
     pushCheckPoints(toNotify,false)
     toNotify = SeqUpdateSet(seq)
@@ -613,7 +611,7 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], val maxValue: Int, 
   }
 
   protected def defineCurrentValueAsCheckpoint(checkPointIsActive:Boolean):IntSequence = {
-    println("notify define checkpoint " + this.toNotify.newValue)
+    //println("notify define checkpoint " + this.toNotify.newValue)
     toNotify = SeqUpdateDefineCheckpoint(toNotify.regularize(maxPivotPerValuePercent),checkPointIsActive,maxPivotPerValuePercent)
     trimToNotifyIfNeeded()
     notifyChanged()
@@ -623,9 +621,7 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], val maxValue: Int, 
   protected def rollbackToCurrentCheckpoint(checkpoint:IntSequence) = {
     //check that the checkpoint is declared in the toNotify, actually.
 
-    println("notified of rollBack toNotify before:" + toNotify + " currentCheckpoint:" + topCheckpoint + " notifiedSinceTopCheckpoint:" + notifiedSinceTopCheckpoint)
-
-    require(topCheckpoint quickEquals checkpoint)
+    //println("notified of rollBack toNotify before:" + toNotify + " currentCheckpoint:" + topCheckpoint + " notifiedSinceTopCheckpoint:" + notifiedSinceTopCheckpoint)
 
     popToNotifyUntilCheckpointDeclarationAtCheckpoint(toNotify,checkpoint,removeDeclaration = false) match{
       case CheckpointDeclarationReachedAndRemoved(newToNotify:SeqUpdate) =>
@@ -639,7 +635,6 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], val maxValue: Int, 
           case u:SeqUpdateLastNotified => ;
           case _ => notifyChanged()
         }
-        println("case 1")
       case NoSimplificationPerformed =>
         //checkpoint value could not be found in sequence, we have to add rollBack instructions
 
@@ -656,11 +651,10 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], val maxValue: Int, 
           toNotify = SeqUpdateSet(checkpoint)
         }
         notifyChanged()
-        println("case 2")
     }
 
     require(toNotify.newValue quickEquals checkpoint,toNotify.newValue + "not quickEquals " + checkpoint)
-    println("notified of rollBack toNotify after:" + toNotify + " currentCheckpoint:" + topCheckpoint + " notifiedSinceTopCheckpoint:" + notifiedSinceTopCheckpoint)
+    //println("notified of rollBack toNotify after:" + toNotify + " currentCheckpoint:" + topCheckpoint + " notifiedSinceTopCheckpoint:" + notifiedSinceTopCheckpoint)
   }
 
 
@@ -718,7 +712,7 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], val maxValue: Int, 
   }
 
   protected def releaseCurrentCheckpointAtCheckpoint(){
-    println("drop checkpoint")
+   // println("drop checkpoint")
     val checkpoint = toNotify.newValue
     assert(toNotify.newValue equals topCheckpoint)
     require(!topCheckpointIsActive || topCheckpointIsActiveDeactivated || (toNotify.newValue quickEquals topCheckpoint))
