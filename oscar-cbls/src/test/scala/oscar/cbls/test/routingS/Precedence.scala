@@ -50,7 +50,7 @@ class MySimpleRoutingP(n:Int,v:Int,symmetricDistance:Array[Array[Int]],m:Store, 
   this.addToStringInfo(() => "objective: " + obj)
   this.addToStringInfo(() => "n:" + n + " v:" + v)
 
-  computeClosestNeighbors()
+  val nearestForward:Array[Iterable[Int]] = computeClosestNeighborsForward()
 }
 
 object PrecedenceRouting extends App{
@@ -77,15 +77,15 @@ object PrecedenceRouting extends App{
 
   println(myVRP)
 
-  def onePtMove = Profile(OnePointMove(() => nodes, ()=>myVRP.kNearest(40), myVRP))
+  def onePtMove = Profile(OnePointMove(() => nodes, ()=>myVRP.kFirst(10,myVRP.nearestForward), myVRP))
 
-  val twoPointMove = (OnePointMove(() => nodes, ()=>myVRP.kNearest(40), myVRP,"firstPointMove") andThen OnePointMove(() => nodes, ()=>myVRP.kNearest(40), myVRP,"secondPointMove")) name("TwoPointMove")
-  val twoPointMoveSmart = Profile((OnePointMove(() => myVRP.nodesStartingAPrecedence, ()=>myVRP.kNearest(40), myVRP,"firstPointMove") dynAndThen ((o:OnePointMoveMove) => {
-    OnePointMove(() => myVRP.nodesEndingAPrecedenceStartedAt(o.movedPoint), ()=>myVRP.kNearest(40), myVRP,"secondPointMove")})) name("SmartTwoPtMove"))
+  val twoPointMove = (OnePointMove(() => nodes, ()=>myVRP.kFirst(40,myVRP.nearestForward), myVRP,"firstPointMove") andThen OnePointMove(() => nodes, ()=>myVRP.kFirst(40,myVRP.nearestForward), myVRP,"secondPointMove")) name("TwoPointMove")
+  val twoPointMoveSmart = Profile((OnePointMove(() => myVRP.nodesStartingAPrecedence, ()=>myVRP.kFirst(40,myVRP.nearestForward), myVRP,"firstPointMove") dynAndThen ((o:OnePointMoveMove) => {
+    OnePointMove(() => myVRP.nodesEndingAPrecedenceStartedAt(o.movedPoint), ()=>myVRP.kFirst(40,myVRP.nearestForward), myVRP,"secondPointMove")})) name("SmartTwoPtMove"))
 
-  val twoOpt = Profile(new TwoOpt1(() => nodes, ()=>myVRP.kNearest(40), myVRP))
+  val twoOpt = Profile(new TwoOpt1(() => nodes, ()=>myVRP.kFirst(40,myVRP.nearestForward), myVRP))
 
-  def threeOpt(k:Int, breakSym:Boolean) = Profile(new ThreeOpt(() => nodes, ()=>myVRP.kNearest(k), myVRP,breakSymmetry = breakSym, neighborhoodName = "ThreeOpt(k=" + k + ")"))
+  def threeOpt(k:Int, breakSym:Boolean) = Profile(new ThreeOpt(() => nodes, ()=>myVRP.kFirst(k,myVRP.nearestForward), myVRP,breakSymmetry = breakSym, neighborhoodName = "ThreeOpt(k=" + k + ")"))
 
   //,,(onePtMove andThen onePtMove) name ("twoPointMove")
   val search = new BestSlopeFirst(List(threeOpt(10,true),onePtMove,twoOpt,twoPointMoveSmart)) exhaust threeOpt(20,true)

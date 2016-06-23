@@ -255,15 +255,30 @@ trait ClosestNeighbors extends VRP {
 
   protected def getDistance(from: Int, to: Int): Int
 
-  var closestNeighbors: Array[Iterable[Int]] = null
-
-  def computeClosestNeighbors() = {
+  def computeClosestNeighborsForward():Array[Iterable[Int]] = {
     def arrayOfAllNodes = Array.tabulate(n)(node => node)
-    closestNeighbors = Array.tabulate(n)(node =>
+    Array.tabulate(n)(node =>
+      KSmallest.lazySort(arrayOfAllNodes,
+        neighbor => getDistance(node, neighbor)
+      ))
+  }
+
+  def computeClosestNeighborsBackward(): Array[Iterable[Int]] = {
+    def arrayOfAllNodes = Array.tabulate(n)(node => node)
+    Array.tabulate(n)(node =>
+      KSmallest.lazySort(arrayOfAllNodes,
+        neighbor => getDistance(neighbor, node)
+      ))
+  }
+
+  def computeClosestNeighborsMinFWBW(): Array[Iterable[Int]] = {
+    def arrayOfAllNodes = Array.tabulate(n)(node => node)
+    Array.tabulate(n)(node =>
       KSmallest.lazySort(arrayOfAllNodes,
         neighbor => min(getDistance(neighbor, node), getDistance(node, neighbor))
       ))
   }
+
   /**
    * Filters the node itself and unreachable neighbors.
    */
@@ -283,7 +298,7 @@ trait ClosestNeighbors extends VRP {
    * @param node the given node.
    * @return the k nearest neighbor as an iterable list of Int.
    */
-  def kNearest(k: Int, filter: (Int => Boolean) = _ => true)(node: Int): Iterable[Int] = {
+  def kFirst(k: Int, values:Array[Iterable[Int]], filter: (Int => Boolean) = _ => true)(node: Int): Iterable[Int] = {
     if (k >= n - 1) return nodes.filter(filter)
 
     def kNearestAccumulator(sortedNeighbors: Iterator[Int], k: Int, kNearestAcc: List[Int]): List[Int] = {
@@ -299,7 +314,7 @@ trait ClosestNeighbors extends VRP {
       }
     }
 
-    kNearestAccumulator(closestNeighbors(node).iterator, k, Nil)
+    kNearestAccumulator(values(node).iterator, k, Nil)
   }
 }
 
