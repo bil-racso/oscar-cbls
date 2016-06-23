@@ -32,7 +32,7 @@ abstract class InsertPoint(vrp: VRP,
  * where u is the numberof unrouted points, and n is the number of routed points
  * it can be cut down to u*k by using the relevant neighbors, and specifying k neighbors for each unrouted point
  * @param unroutedNodesToInsert the nodes that this neighborhood will try to insert SHOULD BE NOT ROUTED
- * @param relevantNeighbors a function that, for each unrouted node gives a list of routed node
+ * @param relevantPredecessor a function that, for each unrouted node gives a list of routed node
  *                          such that it is relevant to insert the unrouted node after this routed node
  * @param vrp the routing problem
  * @param neighborhoodName the name of this neighborhood
@@ -50,7 +50,7 @@ abstract class InsertPoint(vrp: VRP,
  * @author yoann.guyot@cetic.be
  */
 case class InsertPointUnroutedFirst(unroutedNodesToInsert: () => Iterable[Int],
-                                    relevantNeighbors: () => Int => Iterable[Int],
+                                    relevantPredecessor: () => Int => Iterable[Int],
                                     vrp: VRP,
                                     neighborhoodName: String = "InsertPointUnroutedFirst",
                                     best: Boolean = false,
@@ -81,7 +81,7 @@ case class InsertPointUnroutedFirst(unroutedNodesToInsert: () => Iterable[Int],
       case Some(s) => IdenticalAggregator.removeIdenticalClassesLazily(iterationSchemeOnZone, s)
     }
 
-    val relevantNeighborsNow = relevantNeighbors()
+    val relevantNeighborsNow = relevantPredecessor()
 
     val iterationSchemeIterator = iterationScheme.iterator
     while (iterationSchemeIterator.hasNext) {
@@ -124,8 +124,8 @@ case class InsertPointUnroutedFirst(unroutedNodesToInsert: () => Iterable[Int],
 
 /**
  * OnePoint insert neighborhood htat primarily iterates over insertion point,s and then over poitns that can be iserted.
- * @param insertionPoints the positions where we can insert points
- * @param unroutedNodesToInsert the points to insert, gven an insertion point (use K-nearest here for isntance
+ * @param insertionPoints the positions where we can insert points, can be unrouted, in this case it is ignored (but time is wasted)
+ * @param relevantSuccessorsToInsert the points to insert, given an insertion point
  * @param vrp the routing problem
  * @param neighborhoodName the name of the neighborhood
  * @param best best or first move
@@ -137,7 +137,7 @@ case class InsertPointUnroutedFirst(unroutedNodesToInsert: () => Iterable[Int],
  * @author renaud.delandtsheer@cetic.be
  */
 case class InsertPointRoutedFirst(insertionPoints:()=>Iterable[Int],
-                                  unroutedNodesToInsert: () => Int => Iterable[Int],
+                                  relevantSuccessorsToInsert: () => Int => Iterable[Int],
                                   vrp: VRP,
                                   neighborhoodName: String = "InsertPointRoutedFirst",
                                   best: Boolean = false,
@@ -163,7 +163,7 @@ case class InsertPointRoutedFirst(insertionPoints:()=>Iterable[Int],
       if (hotRestart && !best) HotRestart(insertionPoints(), startIndice)
       else insertionPoints()
 
-    val unroutedNodesToInsertNow = unroutedNodesToInsert()
+    val unroutedNodesToInsertNow = relevantSuccessorsToInsert()
 
     val iterationSchemeOnInsertionPointIterator = iterationSchemeOnInsertionPoint.iterator
     while (iterationSchemeOnInsertionPointIterator.hasNext) {

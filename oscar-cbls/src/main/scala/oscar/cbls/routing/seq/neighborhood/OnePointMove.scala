@@ -37,7 +37,7 @@ import oscar.cbls.search.core.EasyNeighborhood
  * @author Florent Ghilain (UMONS)
  */
 case class OnePointMove(nodesToMove: () => Iterable[Int],
-                        relevantNeighbors: () => Int => Iterable[Int],
+                        relevantNewPredecessors: () => Int => Iterable[Int],
                         vrp:VRP,
                         neighborhoodName: String = "OnePointMove",
                         best: Boolean = false,
@@ -66,7 +66,7 @@ case class OnePointMove(nodesToMove: () => Iterable[Int],
       a
     }
 
-    val relevantNeighborsNow = relevantNeighbors()
+    val relevantNeighborsNow = relevantNewPredecessors()
 
     val movedPointsIt = iterationSchemeOnZone.iterator
     while (movedPointsIt.hasNext) {

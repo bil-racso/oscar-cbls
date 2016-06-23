@@ -63,7 +63,7 @@ abstract class TwoOpt(vrp: VRP,
  * @author Florent Ghilain (UMONS)
  * */
 case class TwoOpt1(segmentStartValues:()=>Iterable[Int],
-                   closeNeighbors:()=>Int=>Iterable[Int],
+                   relevantNewSuccessors:()=>Int=>Iterable[Int],
                    vrp: VRP,
                    neighborhoodName:String = "TwoOpt",
                    best:Boolean = false,
@@ -91,7 +91,7 @@ case class TwoOpt1(segmentStartValues:()=>Iterable[Int],
       if (hotRestart && !best) HotRestart(segmentStartValues(), startIndice)
       else segmentStartValues()
 
-    val relevantNeighborsNow = closeNeighbors()
+    val relevantNeighborsNow = relevantNewSuccessors()
 
     val nodesToVehicle = vrp.getVehicleOfAllNodes
 
