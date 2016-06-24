@@ -19,6 +19,7 @@ import oscar.cbls.algo.quick.QList
 import oscar.cbls.algo.seq.functional.IntSequence
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.core.propagation.{ErrorChecker, Checker}
+import oscar.cbls.invariants.lib.routing.CachedValuePerNode
 
 import scala.collection.immutable.{SortedMap, SortedSet}
 
@@ -139,20 +140,10 @@ class Precedence(seq:ChangingSeqValue,
   }
 
   override def notifySeqChanges(v : ChangingSeqValue, d : Int, changes : SeqUpdate) {
-
-    //checkInternals(new ErrorChecker())
-
-    //println("notified of " + changes)
-    //println("sequence BEFORE:" + v.value)
-
-
     if (!digestUpdates(changes, false)) {
-      computeAndAffectViolationsFromScratch(changes.newValue)
       //this also updates checkpoint links
+      computeAndAffectViolationsFromScratch(changes.newValue)
     }
-    //println(this.beforeAfter)
-    //println("violation after: " + isPrecedenceViolated.mkString(","))
-    //println("sequence after: " + changes.newValue)
   }
 
   private def digestUpdates(changes : SeqUpdate, skipNewCheckpoints : Boolean) : Boolean = {

@@ -606,9 +606,9 @@ abstract class StackedUpdateIntSequence extends IntSequence(){
 
 object MovedIntSequence{
   def bijectionForMove(startPositionIncluded:Int,
-                      endPositionIncluded:Int,
-                      moveAfterPosition:Int,
-                      flip:Boolean):PiecewiseLinearBijectionNaive = {
+                       endPositionIncluded:Int,
+                       moveAfterPosition:Int,
+                       flip:Boolean):PiecewiseLinearBijectionNaive = {
     if(moveAfterPosition + 1 == startPositionIncluded) {
       //not moving
       if(flip) { //just flipping
@@ -636,6 +636,48 @@ object MovedIntSequence{
       }
     }
   }
+
+/*
+  def bijectionForMoveArray(startPositionIncluded:Int,
+                            endPositionIncluded:Int,
+                            moveAfterPosition:Int,
+                            flip:Boolean):Array[Pivot]= {
+    if(moveAfterPosition + 1 == startPositionIncluded) {
+      //not moving
+      if(flip) { //just flipping
+        if(startPositionIncluded == 0){
+          Array(
+            new Pivot(0,new LinearTransform(endPositionIncluded,true)),
+            new Pivot(endPositionIncluded+1,LinearTransform.identity))
+        }else{
+          Array(
+            new Pivot(0,LinearTransform.identity),
+            new Pivot(startPositionIncluded,new LinearTransform(endPositionIncluded + startPositionIncluded,true)),
+            new Pivot(endPositionIncluded+1,LinearTransform.identity))
+        }
+      }else{
+        Array.fill(0)(null)
+      }
+    }else {
+      if (moveAfterPosition > startPositionIncluded) {
+        //move upwards
+        Array(
+          new Pivot(0,LinearTransform.identity), //TODO: pas sûr su'ils soient ordonnés correctement
+          new Pivot(startPositionIncluded, LinearTransform(endPositionIncluded + 1 - startPositionIncluded, false)),
+          new Pivot(moveAfterPosition + startPositionIncluded - endPositionIncluded,
+            LinearTransform(if (flip) startPositionIncluded + moveAfterPosition else endPositionIncluded - moveAfterPosition, flip)),
+          new Pivot(moveAfterPosition + 1,LinearTransform.identity))
+      } else {
+        //move downwards
+        PiecewiseLinearBijectionNaive.identity.updateBefore(
+          (moveAfterPosition + 1, moveAfterPosition + endPositionIncluded - startPositionIncluded + 1,
+            LinearTransform(if (flip) endPositionIncluded + moveAfterPosition + 1 else startPositionIncluded - moveAfterPosition - 1, flip)),
+          (moveAfterPosition + endPositionIncluded - startPositionIncluded + 2, endPositionIncluded,
+            LinearTransform(startPositionIncluded - endPositionIncluded - 1, false)))
+      }
+    }
+  }
+  */
 }
 
 class MovedIntSequence(val seq:IntSequence,
@@ -898,7 +940,7 @@ class RemovedIntSequence(seq:IntSequence,
   val removedValue = seq.valueAtPosition(position).head
 
   override def descriptorString : String = seq.descriptorString + ".removed(pos:" + position + " val:" + removedValue + ")"
-  
+
   override def nbOccurrence(value : Int) : Int = if(value == this.removedValue) seq.nbOccurrence(value) - 1 else seq.nbOccurrence(value)
 
   override def unorderedContentNoDuplicate : List[Int] =

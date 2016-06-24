@@ -32,7 +32,7 @@ import oscar.cbls.search.move.Move
 /**
  * Removes a point of route.
  * The search complexity is O(n).
- * @param predecessorsOfRoutedPointsToRemove: the predecessors ofthe points that we will try to remove
+ * @param relevantPointsToRemove: the predecessors ofthe points that we will try to remove
  * @param vrp the routing problem
  * @param neighborhoodName the name of the neighborhood, for verbosities
  * @param best true for the best move, false for the first move
@@ -106,20 +106,19 @@ case class RemovePoint(relevantPointsToRemove:()=>Iterable[Int],
 
 /**
  * Models a remove-point operator of a given VRP problem.
- * @param beforeRemovedPoint the predecessor of the point that will be removed.
+ * @param positionOfPointToRemove the predecessor of the point that will be removed.
  * @param objAfter the objective value if we performed this remove-point operator.
  * @param neighborhood the originating neighborhood
  * @author renaud.delandtsheer@cetic.be
  * @author yoann.guyot@cetic.be
  * @author Florent Ghilain (UMONS)
  */
-case class RemovePointMove(
-                        positionOfPointToRemove: Int,
-                        pointToRemove:Int,
-                          vrp:VRP,
-                          override val objAfter:Int,
-                        override val neighborhood:RemovePoint,
-                        override val neighborhoodName:String = null)
+case class RemovePointMove(positionOfPointToRemove: Int,
+                           pointToRemove:Int,
+                           vrp:VRP,
+                           override val objAfter:Int,
+                           override val neighborhood:RemovePoint,
+                           override val neighborhoodName:String = null)
   extends VRPSMove(objAfter, neighborhood, neighborhoodName, vrp){
 
   override def impactedPoints: List[Int] = List(pointToRemove)
@@ -127,5 +126,5 @@ case class RemovePointMove(
   override def commit() {
     neighborhood.doMove(positionOfPointToRemove)
   }
-  override def toString: String = "RemovePoint(point = " + pointToRemove + objToString + ")"
+  override def toString: String = "RemovePoint(point:" + pointToRemove + objToString + ")"
 }

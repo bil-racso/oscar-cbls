@@ -15,70 +15,19 @@ package oscar.cbls.invariants.lib.routing
   * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
   ******************************************************************************/
 
+
 import oscar.cbls.algo.quick.QList
 import oscar.cbls.algo.seq.functional.IntSequence
 import oscar.cbls.invariants.core.computation._
-import oscar.cbls.invariants.core.propagation.{ErrorChecker, Checker}
+import oscar.cbls.invariants.core.propagation.Checker
 
-object ConstantRoutingDistance {
-
-  def apply(routes : ChangingSeqValue,
-            v : Int,
-            perVehicle:Boolean,
-            distanceMatrix : Array[Array[Int]],
-            distanceIsSymmetric : Boolean):Array[CBLSIntVar] = {
-
-    val distance:Array[CBLSIntVar] =
-      if(perVehicle) Array.tabulate(v)(v => CBLSIntVar(routes.model,name="distanceOfVehicle" + v))
-      else Array.fill(1)(CBLSIntVar(routes.model,name="overallDistance"))
-
-    new ConstantRoutingDistance(routes,
-      v,
-      distanceMatrix,
-      distance,
-      distanceIsSymmetric)
-
-    distance
-  }
-
-  def isDistanceSymmetric(distanceMatrix : Array[Array[Int]]):Boolean = {
-    val n = distanceMatrix.length
-    var i = 0
-    while(i < n){
-      var j = 0
-      while(j <= i){
-        if (distanceMatrix(i)(j) != distanceMatrix(j)(i))
-          return false
-        j += 1
-      }
-      i += 1
-    }
-    true
-  }
-}
-
-/**
- * @param routes the routes of all the vehicles
- * @param v the number of vehicles in the model
- * @param distanceMatrix the matrix of distance, which is expected to be symmetric
- * @param distance it is either an array of one value, in which case it is the total distance run by all vehicle
- *                 or it can also be an array of size v. in this case it is the distance run by each vehicle, respectively.
- *                 the second option is computationally more expensive
- * @param distanceIsSymmetric true if you swear that the distance matrix is symmetric, false and it will be considered as asymmetric (slower!)
- *
- * The distance computed by this invariant considers the values o the diagonal as part of the cost (node cost are added to the distance)
- *
- * This invariant relies on the vehicle model assumption:
- * there are v vehicles
- * They are supposed to start from point of values 0 to v-1
- * These values must always be present in the sequence in increasing order
- * they cannot be included within a moved segment
- */
-class ConstantRoutingDistance(routes:ChangingSeqValue,
-                                   v:Int,
-                                   distanceMatrix:Array[Array[Int]],
-                                   distance:Array[CBLSIntVar],
-                                   distanceIsSymmetric:Boolean)
+class ConstantCumulative(routes:ChangingSeqValue,
+                         v:Int,
+                         cumulativeCost:Array[Array[Int]],
+                         isCumulativeCostSymmetric:Boolean,
+                         hardMaxAtNode:Array[Int],
+                         slippingMinAtNode:Array[Int],
+                         maxIncreaseBeforeNode:Int)
   extends Invariant() with SeqNotificationTarget{
 
   val perVehicle:Boolean = distance.length >1
@@ -93,7 +42,7 @@ class ConstantRoutingDistance(routes:ChangingSeqValue,
 
   //TODO: handle inactive checkpoints
   private val savedValues:Array[Int] = computeValueFromScratch(routes.value)
-  protected var checkpoint = routes.value
+  private var savedCheckpoint = routes.value
   private val touchedRoutesSinceCheckpointArray:Array[Boolean] = Array.fill(v)(false)
   private var touchedRoutesSinceCheckpointList:QList[Int] = null
 
@@ -115,7 +64,7 @@ class ConstantRoutingDistance(routes:ChangingSeqValue,
         saveCurrentCheckpoint(changes.newValue)
         true
       case SeqUpdateRollBackToCheckpoint(checkpoint:IntSequence) =>
-        require (checkpoint quickEquals checkpoint)
+        require (checkpoint quickEquals savedCheckpoint)
         restoreCheckpoint()
         true
       case SeqUpdateInsert(value : Int, pos : Int, prev : SeqUpdate) =>
@@ -233,10 +182,10 @@ class ConstantRoutingDistance(routes:ChangingSeqValue,
               //moving a segment to another vehicle, and per vehicle required.
 
               //summing the moved segment (this is slow, but it is requested to compute the cost per vehicle)
-              val oldCostInSegment = computeValueBetween(prev.newValue, fromIncluded, toIncluded)
+              val oldCostInSegment = computeValueBetween(prev.newValue, fromIncluded, toIncluded,true)
               val newCostInSegment = if(distanceIsSymmetric || !flip) oldCostInSegment else{
                 //there is a flip and distance is asymmetric
-                computeValueBetween(x.newValue, x.oldPosToNewPos(toIncluded).head,x.oldPosToNewPos(fromIncluded).head)
+                computeValueBetween(x.newValue, x.oldPosToNewPos(toIncluded).head,x.oldPosToNewPos(fromIncluded).head,true)
               }
 
               recordTouchedVehicle(vehicleOfMovedSegment)
@@ -286,8 +235,8 @@ class ConstantRoutingDistance(routes:ChangingSeqValue,
     }
   }
 
-  protected def saveCurrentCheckpoint(s:IntSequence){
-    checkpoint = s
+  private def saveCurrentCheckpoint(s:IntSequence){
+    savedCheckpoint = s
     if(perVehicle) {
       while (touchedRoutesSinceCheckpointList != null) {
         touchedRoutesSinceCheckpointArray(touchedRoutesSinceCheckpointList.head) = false
@@ -313,7 +262,7 @@ class ConstantRoutingDistance(routes:ChangingSeqValue,
 
   private def recordTouchedVehicle(v:Int){
     if(perVehicle){
-      if(checkpoint!= null && !touchedRoutesSinceCheckpointArray(v)){
+      if(savedCheckpoint!= null && !touchedRoutesSinceCheckpointArray(v)){
         savedValues(v) = distance(v).value
         touchedRoutesSinceCheckpointArray(v) = true
         touchedRoutesSinceCheckpointList = QList(v,touchedRoutesSinceCheckpointList)
@@ -334,29 +283,20 @@ class ConstantRoutingDistance(routes:ChangingSeqValue,
   // use invalidation per vehicle in case more than one move is performed
   // just one thing: backtrack is only performed through checkpoint; star mode will lead to recomputation of the vehicles from scratch
   //datastruct for checkpoint: forward et bw labeling per vehicle. labeling: node -> (forward,backward) in a redBlack
-  protected def computeValueBetween(s:IntSequence, fromPosIncluded:Int, toPosIncluded:Int):Int = {
+  private def computeValueBetween(s:IntSequence, fromPosIncluded:Int, toPosIncluded:Int,addNodeCost:Boolean = false):Int = {
     assert(fromPosIncluded <= toPosIncluded)
-    if(fromPosIncluded <= toPosIncluded) {
-      var e = s.explorerAtPosition(fromPosIncluded).head
-      var toReturn = distanceMatrix(e.value)(e.value)
 
-      while (e.position < toPosIncluded) {
-        val nextPos = e.next.head
-        toReturn += distanceMatrix(e.value)(nextPos.value) + distanceMatrix(nextPos.value)(nextPos.value)
-        e = nextPos
-      }
-      toReturn
-    }else{
-      var e = s.explorerAtPosition(toPosIncluded).head
-      var toReturn = distanceMatrix(e.value)(e.value)
+    var e = s.explorerAtPosition(fromPosIncluded).head
+    var toReturn = 0
+    if(addNodeCost) toReturn +=  distanceMatrix(e.value)(e.value)
 
-      while (e.position > fromPosIncluded) {
-        val prevPos = e.prev.head
-        toReturn += distanceMatrix(e.value)(prevPos.value) + distanceMatrix(prevPos.value)(prevPos.value)
-        e = prevPos
-      }
-      toReturn
+    while(e.position < toPosIncluded){
+      val nextPos = e.next.head
+      toReturn += distanceMatrix(e.value)(nextPos.value)
+      if(addNodeCost) toReturn += distanceMatrix(nextPos.value)(nextPos.value)
+      e = nextPos
     }
+    toReturn
   }
 
   private def computeValueFromScratch(s:IntSequence):Array[Int] = {
@@ -395,8 +335,8 @@ class ConstantRoutingDistance(routes:ChangingSeqValue,
         c.check(distance(vehicle).value == values(vehicle))
       }
 
-      if(checkpoint != null) {
-        val values = computeValueFromScratch(checkpoint)
+      if(savedCheckpoint != null) {
+        val values = computeValueFromScratch(savedCheckpoint)
         for (vehicle <- 0 to v - 1) {
           if(touchedRoutesSinceCheckpointArray(vehicle))
             c.check(savedValues(vehicle) == values(vehicle))
@@ -405,8 +345,8 @@ class ConstantRoutingDistance(routes:ChangingSeqValue,
 
     }else{
       c.check(distance(0).value == computeValueFromScratch(routes.value)(0),Some("distance(0).value="+distance(0).value + " should== computeValueFromScratch(routes.value)(0)" + computeValueFromScratch(routes.value)(0)))
-      if(checkpoint != null){
-        c.check(savedValues(0) == computeValueFromScratch(checkpoint)(0))
+      if(savedCheckpoint != null){
+        c.check(savedValues(0) == computeValueFromScratch(savedCheckpoint)(0))
       }
     }
   }

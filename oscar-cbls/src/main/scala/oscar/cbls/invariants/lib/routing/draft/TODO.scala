@@ -7,15 +7,7 @@ import oscar.cbls.invariants.core.computation._
 
 
 /*
-class ConstantCumulativeRouting(routes:ChangingSeqValue,
-                                v:Int,
-                                cumulativeCost:Array[Array[Int]],
-                                isCumulativeCostSymmetric:Boolean,
-                                hardMaxAtNode:Array[Int],
-                                slippingMinAtNode:Array[Int],
-                                maxIncreaseBeforeNode:Int){
 
-}
 
 
 class FunctionCumulativeRouting(routes:ChangingSeqValue,
