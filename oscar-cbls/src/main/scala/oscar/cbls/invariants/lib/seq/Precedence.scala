@@ -23,8 +23,6 @@ import oscar.cbls.invariants.lib.routing.CachedValuePerNode
 
 import scala.collection.immutable.{SortedMap, SortedSet}
 
-//CBLSSetVar(model,name="values involved in violation of precedence")
-
 /**
  * precedence assumes that number can occur only once in the sequence
  * so that the constraint is to be enforced from any occurrence to any occurrence,

@@ -32,12 +32,13 @@ class MySimpleRouting(n:Int,v:Int,symmetricDistance:Array[Array[Int]],m:Store, m
   extends VRP(n,v,m,maxPivot)
   with TotalConstantDistance with ClosestNeighbors {
 
+  //initializes to something simple; vehicle v-1 does all nodes (but other vehicles)
+  //initialization must be done ASAP, to encure that invariants will initialize straight based on this value
+  setCircuit(nodes)
+
   setSymmetricDistanceMatrix(symmetricDistance)
 
   override protected def getDistance(from : Int, to : Int) : Int = symmetricDistance(from)(to)
-
-  //initializes to something simple; vehicle v-1 does all nodes (but other vehicles)
-  setCircuit(nodes)
 
   //val obj = new CascadingObjective(totalViolationOnRestriction, totalDistance)
   val obj = Objective(totalDistance)

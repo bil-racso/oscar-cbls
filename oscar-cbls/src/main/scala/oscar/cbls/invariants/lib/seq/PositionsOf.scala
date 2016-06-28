@@ -18,7 +18,6 @@ package oscar.cbls.invariants.lib.seq
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.core.propagation.Checker
 
-
 object PositionsOf{
   def apply(v: SeqValue, a:IntValue):ChangingSetValue =
     new PositionsOf(v, a)
@@ -58,7 +57,6 @@ class PositionsOf(v: SeqValue, a:IntValue)
     c.check(this.value equals v.value.positionsOfValue(a.value))
   }
 }
-
 
 /**
  * the position of value a in sequence v; default if not in the sequence

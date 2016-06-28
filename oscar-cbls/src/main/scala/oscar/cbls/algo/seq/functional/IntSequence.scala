@@ -15,6 +15,7 @@ package oscar.cbls.algo.seq.functional
   ******************************************************************************/
 
 import oscar.cbls.algo.fun.{LinearTransform, PiecewiseLinearBijectionNaive, Pivot}
+import oscar.cbls.algo.quick.QList
 import oscar.cbls.algo.rb.{RBTMPosition, RedBlackTreeMap}
 
 import scala.collection.immutable.{SortedMap, SortedSet}

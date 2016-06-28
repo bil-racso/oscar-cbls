@@ -84,6 +84,9 @@ class NodeVehicleRestrictions(routes:ChangingSeqValue,
   finishInitialization()
   for(v <- violationPerVehicle) v.setDefiningInvariant(this)
 
+  protected var vehicleSearcher:((IntSequence,Int)=>Int) = if(v == 1) ((_,_) => 0) else
+    RoutingConventionMethods.cachedVehicleReachingPosition(routes.value, v)
+
   private val nodeToVehiclesRestriction : Array[(Array[Boolean],QList[Int])] = Array.fill(n)(null)
 
   for ((node, vehicle) <- nodeVehicleRestrictions) {
@@ -110,12 +113,12 @@ class NodeVehicleRestrictions(routes:ChangingSeqValue,
   }
 
   def isForbidden(node : Int, vehicle : Int) = {
-    val nodeRestrictions =nodeToVehiclesRestriction(node)
+    val nodeRestrictions = nodeToVehiclesRestriction(node)
     nodeRestrictions != null && nodeRestrictions._1(vehicle)
   }
 
   def forbiddenVehicles(node:Int):Iterable[Int] = {
-    val nodeRestrictions =nodeToVehiclesRestriction(node)
+    val nodeRestrictions = nodeToVehiclesRestriction(node)
     if(nodeRestrictions == null) None
     else nodeRestrictions._2
   }
@@ -124,7 +127,7 @@ class NodeVehicleRestrictions(routes:ChangingSeqValue,
   var checkpoint : IntSequence = null
   var violationAtCheckpoint:Array[Int] = Array.fill(v)(-1)
 
-  //TODO: improve complexity of the pre-computation!
+  //TODO: improve complexity of the pre-computation: make them lazy per vehicle, only pre-compute when needed
   //node n => vehicle v => number of node from start of vehicle reaching n that cannot be reached by vehicle v
   val precomputationAtCheckpoint:Array[Array[Int]] = Array.tabulate(n)(_=>Array.fill(v)(0))
   val vehicleChangedSinceCheckpoint:Array[Boolean] = Array.fill(v)(true)
@@ -211,6 +214,7 @@ class NodeVehicleRestrictions(routes:ChangingSeqValue,
   }
 
   def violationOnSegment(seqWithSegment:IntSequence, fromValue:Int, toValue:Int, vehicle:Int):Int = {
+    //TODO: propose something more incremental that supports a few vehicle changes before reverting to inefficient update
     if(vehicleChangedSinceCheckpoint(vehicle)){
       violationOnNodesFromScratch(
         seqWithSegment.valuesBetweenPositions(
@@ -283,7 +287,7 @@ class NodeVehicleRestrictions(routes:ChangingSeqValue,
         //on which vehicle did we insert?
         if (!digestUpdates(prev, skipNewCheckpoints)) return false
 
-        val vehicleOfInsert = RoutingConventionMethods.searchVehicleReachingPosition(pos, prev.newValue, v)
+        val vehicleOfInsert = vehicleSearcher(prev.newValue, pos)
         if (isForbidden(value, vehicleOfInsert)) {
           violationPerVehicle(vehicleOfInsert) :+= 1
         }
@@ -297,13 +301,13 @@ class NodeVehicleRestrictions(routes:ChangingSeqValue,
         else if (x.isNop) true
         else if (x.isSimpleFlip) {
           //this is a simple flip, no change on vehicle violation, since obeys routing rule!
-          val vehicleOfMovedSegment = RoutingConventionMethods.searchVehicleReachingPosition(fromIncluded, prev.newValue, v)
+          val vehicleOfMovedSegment = vehicleSearcher(prev.newValue,fromIncluded)
           setVehicleChangedSinceCheckpoint(vehicleOfMovedSegment)
           true
         } else if(fromIncluded == toIncluded) {
           //per vehicle, there might be some node cost to consider
-          val vehicleOfMovedSegment = RoutingConventionMethods.searchVehicleReachingPosition(fromIncluded, prev.newValue, v)
-          val targetVehicleOfMove = RoutingConventionMethods.searchVehicleReachingPosition(after, prev.newValue, v)
+          val vehicleOfMovedSegment = vehicleSearcher(prev.newValue, fromIncluded)
+          val targetVehicleOfMove = vehicleSearcher(prev.newValue, after)
 
           if (vehicleOfMovedSegment == targetVehicleOfMove) {
             //moving within the vehicle; same as flip, actually
@@ -329,8 +333,8 @@ class NodeVehicleRestrictions(routes:ChangingSeqValue,
           true
         }else {
           //per vehicle, there might be some node cost to consider
-          val vehicleOfMovedSegment = RoutingConventionMethods.searchVehicleReachingPosition(fromIncluded, prev.newValue, v)
-          val targetVehicleOfMove = RoutingConventionMethods.searchVehicleReachingPosition(after, prev.newValue, v)
+          val vehicleOfMovedSegment = vehicleSearcher(prev.newValue, fromIncluded)
+          val targetVehicleOfMove = vehicleSearcher(prev.newValue, after)
           assert(vehicleOfMovedSegment == RoutingConventionMethods.searchVehicleReachingPosition(toIncluded, prev.newValue, v))
 
           if (vehicleOfMovedSegment == targetVehicleOfMove) {
@@ -359,7 +363,7 @@ class NodeVehicleRestrictions(routes:ChangingSeqValue,
         //on which vehicle did we remove?
         if (!digestUpdates(prev, skipNewCheckpoints)) return false
         val removedNode = x.removedValue
-        val vehicleOfMovedSegment = RoutingConventionMethods.searchVehicleReachingPosition(position, prev.newValue, v)
+        val vehicleOfMovedSegment = vehicleSearcher(prev.newValue, position)
         if(isForbidden(removedNode,vehicleOfMovedSegment)){
           violationPerVehicle(vehicleOfMovedSegment) :-= 1
         }

@@ -20,16 +20,27 @@ import oscar.cbls.algo.seq.functional.IntSequence
 
 object RoutingConventionMethods {
 
-  def batchVehicleReachingPosition(seq:IntSequence,v:Int):(Int=>Option[Int]) = {
+  def cachedVehicleReachingPosition(checkpoint:IntSequence,v:Int):((IntSequence,Int) => Int) = {
+
+    val batch = batchVehicleReachingPosition(checkpoint,v:Int)
+    def getVehicleReachingPosition(seq:IntSequence,position:Int):Int = {
+      if(seq quickEquals checkpoint) batch(position)
+      else searchVehicleReachingPosition(position, seq, v)
+    }
+
+    getVehicleReachingPosition
+  }
+
+  def batchVehicleReachingPosition(seq:IntSequence,v:Int):(Int=>Int) = {
     val vehiclePositionArray:Array[(Int,Int)] =
       Array.tabulate(v)(vehicle => (seq.positionOfAnyOccurrence(vehicle).head, vehicle))
 
     val vehiclePositionRB = RedBlackTreeMap.makeFromSorted(vehiclePositionArray)
 
-    def findVehicleReachingPosition(position:Int):Option[Int] = {
-      vehiclePositionRB.biggestLowerOrEqual(position) match{
-        case None => None
-        case Some((vpostion,vehicle)) => Some(vehicle)
+    def findVehicleReachingPosition(position:Int):Int = {
+      vehiclePositionRB.biggestLowerOrEqual(position) match {
+        case None => v - 1
+        case Some((_, vehicle)) => vehicle
       }
     }
     findVehicleReachingPosition
