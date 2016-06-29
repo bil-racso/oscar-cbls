@@ -28,6 +28,7 @@ import oscar.cbls.algo.quick.QList
 import oscar.cbls.algo.dag._
 import oscar.cbls.algo.dll._
 import oscar.cbls.algo.heap.{ AbstractHeap, AggregatedBinomialHeapQList, BinomialHeap }
+import oscar.cbls.algo.rb.RedBlackTreeMap
 import oscar.cbls.algo.tarjan._
 
 import scala.collection.immutable.SortedMap
@@ -276,8 +277,7 @@ abstract class PropagationStructure(val verbose: Boolean, val checker: Option[Ch
 
   //I'v been thinking about using a BitArray here, but although this would slightly decrease memory
   // (think, relative to all the rest of the stored data), it would increase runtime
-  private[this] var fastPropagationTracks: SortedMap[PropagationElement, Array[Boolean]] =
-    SortedMap.empty[PropagationElement, Array[Boolean]]
+  private[this] var fastPropagationTracks: RedBlackTreeMap[Array[Boolean]] =  RedBlackTreeMap.empty
 
   private var partialPropagationTargets: List[QList[PropagationElement]] = List.empty
 
@@ -312,7 +312,7 @@ abstract class PropagationStructure(val verbose: Boolean, val checker: Option[Ch
   final def propagate(UpTo: PropagationElement = null) {
     if (!propagating) {
       if (UpTo != null) {
-        val Track = fastPropagationTracks.getOrElse(UpTo, null)
+        val Track = fastPropagationTracks.getOrElse(UpTo.uniqueID, null)
         val SameAsBefore = Track != null && previousPropagationTrack == Track
         propagating = true
         if (verbose) {
@@ -334,11 +334,11 @@ abstract class PropagationStructure(val verbose: Boolean, val checker: Option[Ch
   /**Builds and stores the partial propagation tracks*/
   private def addFastPropagationTracks() {
     for (propagationGroup <- partialPropagationTargets) {
-      val propagationGroupWithoutTrack = QList.buildFromIterable(propagationGroup.filter(!fastPropagationTracks.isDefinedAt(_)))
+      val propagationGroupWithoutTrack = QList.buildFromIterable(propagationGroup.filter(p => !fastPropagationTracks.contains(p.uniqueID)))
       if (propagationGroupWithoutTrack != null) {
         val track = BuildFastPropagationTrack(propagationGroupWithoutTrack)
         for (singleTarget <- propagationGroupWithoutTrack) {
-          fastPropagationTracks += ((singleTarget, track))
+          fastPropagationTracks = fastPropagationTracks.insert(singleTarget.uniqueID, track)
         }
       }
     }

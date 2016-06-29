@@ -1,5 +1,6 @@
 package oscar.cbls.invariants.lib.routing
 
+/*
 import oscar.cbls.algo.quick.QList
 import oscar.cbls.algo.rb.RedBlackTreeMap
 import oscar.cbls.algo.seq.functional.IntSequence
@@ -23,7 +24,10 @@ class VehicleCapacity(routes:ChangingSeqValue,
 
   var checkpoint:IntSequence = null
   val contentOutAtCheckpoint:Array[Int] = Array.fill(n)(0)
-  val nodeToLevelToNumberOfReachOutAtCheckpoint:Array[RedBlackTreeMap[Int]] = Array.fill(n)(null)
+  val nodeToLevelToNumberOfReachOutForwardAtCheckpoint:Array[RedBlackTreeMap[Int]] = Array.fill(n)(null)
+
+  val backwardContentIntAtCheckpoint:Array[Int] = Array.fill(n)(0)
+  val nodeToLevelToNumberOfReachIntBackwardAtCheckpoint:Array[RedBlackTreeMap[Int]] = Array.fill(n)(null)
 
   var changedVehiclesSinceCheckpoint:QList[Int] = vehicles.foldLeft[QList[Int]](null)((acc,v) => QList(v,acc))
   val isVehicleChangedSinceCheckpoint:Array[Boolean] = Array.fill(v)(true)
@@ -36,7 +40,7 @@ class VehicleCapacity(routes:ChangingSeqValue,
     checkpoint = newCheckpoint
     for(vehicle <- changedVehiclesSinceCheckpoint){
       isVehicleChangedSinceCheckpoint(vehicle) = false
-      doPrecomputeAtCheckpoint(vehicle:Int)
+      doPrecomputeAtCheckpoint(vehicle)
       violationsAtCheckpoint(vehicle) = violation(vehicle).newValue
     }
     changedVehiclesSinceCheckpoint = null
@@ -94,7 +98,7 @@ class VehicleCapacity(routes:ChangingSeqValue,
   def doPrecomputeAtCheckpoint(vehicle:Int){
     val explorerAtVehicleStart = checkpoint.explorerAtAnyOccurrence(vehicle).head
     contentOutAtCheckpoint(vehicle) = deltaAtNode(vehicle)
-    nodeToLevelToNumberOfReachOutAtCheckpoint(vehicle) = RedBlackTreeMap(List((deltaAtNode(vehicle),1)))
+    nodeToLevelToNumberOfReachOutForwardAtCheckpoint(vehicle) = RedBlackTreeMap(List((deltaAtNode(vehicle),1)))
 
     var explorerOpt = explorerAtVehicleStart.next
     var prevNode = vehicle
@@ -107,9 +111,9 @@ class VehicleCapacity(routes:ChangingSeqValue,
           //continuing the same vehicle
 
           contentOutAtCheckpoint(node) = contentOutAtCheckpoint(prevNode) + deltaAtNode(node)
-          nodeToLevelToNumberOfReachOutAtCheckpoint(node) = addToReachCount(
+          nodeToLevelToNumberOfReachOutForwardAtCheckpoint(node) = addToReachCount(
             contentOutAtCheckpoint(node),
-            nodeToLevelToNumberOfReachOutAtCheckpoint(prevNode))
+            nodeToLevelToNumberOfReachOutForwardAtCheckpoint(prevNode))
 
           prevNode = node
           explorerOpt = explorer.next
@@ -156,7 +160,24 @@ class VehicleCapacity(routes:ChangingSeqValue,
     viol
   }
 
-  def computeViolationFromScratchOnSegment(seq:Int,vehicle:Int,fromNodeInluded:Int,toNodeIncluded:Int):Int
+  def computeViolationFromScratchOnSegment(seq:IntSequence,incomingContentAtFromNodeIncluded:Int,fromNodeIncluded:Int,toNodeIncluded:Int):Int = {
+    var currentContent = incomingContentAtFromNodeIncluded
+    var currentViolation = 0
+    var explorer = seq.explorerAtAnyOccurrence(fromNodeIncluded).head
+    while({
+      val node = explorer.value
+      currentContent += this.deltaAtNode(node)
+      if(currentContent > maxCapacity){
+        currentViolation += (currentContent - maxCapacity)
+      }
+      if(node != toNodeIncluded){
+        explorer = explorer.next.head
+        true
+      } else false
+    }){}
+
+    currentViolation
+  }
 
 
   override def notifySeqChanges(v: ChangingSeqValue, d: Int, changes: SeqUpdate) {
@@ -178,7 +199,7 @@ class VehicleCapacity(routes:ChangingSeqValue,
         require (checkpoint quickEquals checkpoint)
         restoreCheckpoint()
         true
-        //TODO: handle the doubleInsert here!
+      //TODO: handle the doubleInsert here!
       case SeqUpdateInsert(value : Int, pos : Int, prev : SeqUpdate) =>
         if(!digestUpdates(prev,skipNewCheckpoints)) return false
         val newSeq = changes.newValue
@@ -194,8 +215,7 @@ class VehicleCapacity(routes:ChangingSeqValue,
           //we can evaluate incrementally
 
         }else{
-          //TODO: propoze something better here, use the pre-computations
-          // need to use from scratch proceure
+          // need to use from scratch procedure :(
 
         }
 
@@ -207,6 +227,7 @@ class VehicleCapacity(routes:ChangingSeqValue,
         else if(x.isNop) true
         else if(x.isSimpleFlip){
           //this is a simple flip
+          //but we need to use another integral, actually.
 
           val oldPrevFromValue = prev.newValue.valueAtPosition(fromIncluded - 1).head
           val oldSuccToValue = RoutingConventionMethods.routingSuccPos2Val(toIncluded,prev.newValue,v)
@@ -385,3 +406,5 @@ class VehicleCapacity(routes:ChangingSeqValue,
   }
 
 }
+
+*/

@@ -20,6 +20,7 @@ import oscar.cbls.algo.seq.functional.IntSequence
 
 object RoutingConventionMethods {
 
+
   def cachedVehicleReachingPosition(checkpoint:IntSequence,v:Int):((IntSequence,Int) => Int) = {
 
     val batch = batchVehicleReachingPosition(checkpoint,v:Int)
@@ -106,3 +107,47 @@ object RoutingConventionMethods {
     routingPredVal2Val(seq.valueAtPosition(position).head, seq, v)
   }
 }
+
+
+
+class CachedPositionOf(maxValue:Int){
+
+  private var currentCheckpointID:Int = Int.MaxValue
+  private val checkpointIDOfSavedValue:Array[Int] = Array.fill(maxValue+1)(Int.MinValue)
+  //-1 stands for NONE, -2 is an error
+  private val cachedAnyPosition:Array[Int] = Array.fill(maxValue+1)(-2)
+
+  def updateToCheckpoint(checkpoint:IntSequence){
+    currentCheckpointID = checkpoint.uniqueID
+  }
+  def positionOfAnyOccurrence(seq:IntSequence,value:Int):Option[Int] = {
+    val seqID = seq.uniqueID
+    if(currentCheckpointID == seqID){
+      if(checkpointIDOfSavedValue(value) == seqID){
+        val pos = cachedAnyPosition(value)
+        if (pos == -1) None else Some(pos)
+      }else{
+        val pos = seq.positionOfAnyOccurrence(value)
+        checkpointIDOfSavedValue(value) = currentCheckpointID
+        pos match{
+          case None => cachedAnyPosition(value) = -1
+          case Some(x) => cachedAnyPosition(value) = x
+        }
+        pos
+      }
+    }else{
+      seq.positionOfAnyOccurrence(value)
+    }
+  }
+
+  def savePos(seq:IntSequence,value:Int,position:Option[Int]){
+    if(seq.uniqueID == currentCheckpointID){
+      checkpointIDOfSavedValue(value) = currentCheckpointID
+      position match{
+        case None => cachedAnyPosition(value) = -1
+        case Some(x) => cachedAnyPosition(value) = x
+      }
+    }
+  }
+}
+

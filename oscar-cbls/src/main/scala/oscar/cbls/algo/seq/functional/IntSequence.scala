@@ -103,19 +103,21 @@ abstract class IntSequence(protected[cbls] val uniqueID:Int = IntSequence.getNew
   }
 
   //List[(position,value)]
-  def positionsBetweenFromToAndTheirValues(fromPositionIncluded:Int,toPositionIncluded:Int):List[(Int,Int)] = {
-    var toReturn:List[(Int,Int)] = List.empty
+  def positionsBetweenFromToAndTheirValues(fromPositionIncluded:Int,toPositionIncluded:Int):QList[(Int,Int)] = {
+    var toReturn:QList[(Int,Int)] = null
     var e = explorerAtPosition(fromPositionIncluded)
-    while(e match{
-      case None => false
-      case Some(explorer) =>
-        if (explorer.position <= toPositionIncluded){
-          toReturn = ((explorer.position,explorer.value)) :: toReturn
+    while(true){  //TODO: maybe this approach has less overhead than the "while" above?
+      e match{
+        case None => return toReturn
+        case Some(explorer) =>
+          if (explorer.position > toPositionIncluded) {
+            return toReturn
+          }
+          toReturn = QList(((explorer.position,explorer.value)),toReturn)
           e = explorer.next
-          true
-        }else false
-    }){}
-    toReturn
+      }
+    }
+    return null
   }
 
   def explorerAtFirstOccurrence(value : Int) : Option[IntSequenceExplorer] = {

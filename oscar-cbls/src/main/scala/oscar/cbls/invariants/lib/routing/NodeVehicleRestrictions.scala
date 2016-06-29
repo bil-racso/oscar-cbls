@@ -77,6 +77,7 @@ class NodeVehicleRestrictions(routes:ChangingSeqValue,
                               violationPerVehicle:Array[CBLSIntVar])
   extends Invariant() with SeqNotificationTarget {
 
+  require(v>1,"cannot have vehicle restrictions with only one vehicle")
   val n = routes.maxValue+1
   val vehicles = 0 until v
 
@@ -84,8 +85,7 @@ class NodeVehicleRestrictions(routes:ChangingSeqValue,
   finishInitialization()
   for(v <- violationPerVehicle) v.setDefiningInvariant(this)
 
-  protected var vehicleSearcher:((IntSequence,Int)=>Int) = if(v == 1) ((_,_) => 0) else
-    RoutingConventionMethods.cachedVehicleReachingPosition(routes.value, v)
+  protected var vehicleSearcher = RoutingConventionMethods.cachedVehicleReachingPosition(routes.value, v)
 
   private val nodeToVehiclesRestriction : Array[(Array[Boolean],QList[Int])] = Array.fill(n)(null)
 
@@ -271,6 +271,7 @@ class NodeVehicleRestrictions(routes:ChangingSeqValue,
             this.checkpoint = prev.newValue
             updateAllInvalidPrecomputationsToCheckpointAndSaveCheckpoint()
           }
+          vehicleSearcher = RoutingConventionMethods.cachedVehicleReachingPosition(checkpoint, v)
           true
         }
       case SeqUpdateRollBackToCheckpoint(checkpoint : IntSequence) =>

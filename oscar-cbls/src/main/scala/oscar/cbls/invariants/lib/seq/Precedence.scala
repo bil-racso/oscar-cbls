@@ -19,7 +19,7 @@ import oscar.cbls.algo.quick.QList
 import oscar.cbls.algo.seq.functional.IntSequence
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.core.propagation.{ErrorChecker, Checker}
-import oscar.cbls.invariants.lib.routing.CachedValuePerNode
+import oscar.cbls.invariants.lib.routing.{CachedPositionOf, CachedValuePerNode}
 
 import scala.collection.immutable.{SortedMap, SortedSet}
 
@@ -62,6 +62,7 @@ class Precedence(seq:ChangingSeqValue,
   private val isViolationChangedSinceCheckpoint:Array[Boolean] = Array.fill(nbPecedences)(false)
   private var changedPrecedenceViolationsSinceCheckpoint:QList[Int] = null
   private val savedViolationAtCheckpoint:Array[Boolean] = Array.fill(nbPecedences)(false)
+  private val cachedPositionFinderAtCheckpoint = new CachedPositionOf(seq.maxValue)
   private var checkpoint:IntSequence = null
   var violationAtCheckpoint:Int = -1
 
@@ -92,6 +93,7 @@ class Precedence(seq:ChangingSeqValue,
     changedPrecedenceViolationsSinceCheckpoint = null
     checkpoint = i
     violationAtCheckpoint = this.newValue
+    cachedPositionFinderAtCheckpoint.updateToCheckpoint(i)
   }
 
   def clearAllViolatedPrecedences(){
@@ -172,7 +174,7 @@ class Precedence(seq:ChangingSeqValue,
 
           //searching for end of precedence that is already in
           val endValueOfPrecedence = this.precedencesArray(precedenceToCheck)._2
-          prev.newValue.positionOfAnyOccurrence(endValueOfPrecedence) match {
+          cachedPositionFinderAtCheckpoint.positionOfAnyOccurrence(prev.newValue,endValueOfPrecedence) match {
             case None => ; //the precedence is fine
             case Some(positionOfEndValueOfPrecedence) =>
               if (positionOfEndValueOfPrecedence < pos) {
@@ -191,7 +193,7 @@ class Precedence(seq:ChangingSeqValue,
 
           //searching for end of precedence that is already in
           val startValueOfPrecedence = this.precedencesArray(precedenceToCheck)._1
-          prev.newValue.positionOfAnyOccurrence(startValueOfPrecedence) match {
+          cachedPositionFinderAtCheckpoint.positionOfAnyOccurrence(prev.newValue,startValueOfPrecedence) match {
             case None => ; //the precedence is fine
             case Some(positionOfStartValueOfPrecedence) =>
               if (pos < positionOfStartValueOfPrecedence) {
@@ -206,8 +208,10 @@ class Precedence(seq:ChangingSeqValue,
 
       case x@SeqUpdateRemove(position : Int, prev : SeqUpdate) =>
         if (!digestUpdates(prev, skipNewCheckpoints)) return false
+        val removedValue = x.removedValue
+        cachedPositionFinderAtCheckpoint.savePos(prev.newValue,removedValue,Some(position))
 
-        for(precedencesThatShouldOpenAtValue <- beforesToPrecedences(value)){
+        for(precedencesThatShouldOpenAtValue <- beforesToPrecedences(removedValue)){
           if (isPrecedenceViolated(precedencesThatShouldOpenAtValue)) {
             saveViolationForCheckpoint(precedencesThatShouldOpenAtValue)
             isPrecedenceViolated(precedencesThatShouldOpenAtValue) = false
@@ -215,7 +219,7 @@ class Precedence(seq:ChangingSeqValue,
           }
         }
 
-        for(precedenceThatShouldCloseAtValue <- aftersToPrecedences(value)){
+        for(precedenceThatShouldCloseAtValue <- aftersToPrecedences(removedValue)){
           if (isPrecedenceViolated(precedenceThatShouldCloseAtValue)) {
             saveViolationForCheckpoint(precedenceThatShouldCloseAtValue)
             isPrecedenceViolated(precedenceThatShouldCloseAtValue) = false
@@ -240,6 +244,7 @@ class Precedence(seq:ChangingSeqValue,
           //that'w why there is only the loop on precedences considering the precedences started at the flipped values,
           // not the ones ended at the flipped values
 
+          //TODO: making and querying this set costs more-less 1/2 of the run time
           val valuesInFlip:SortedSet[Int] = prev.newValue.valuesBetweenPositions(fromIncluded,toIncluded)
 
           for(value <- valuesInFlip){
@@ -271,9 +276,19 @@ class Precedence(seq:ChangingSeqValue,
 
           //println("full move moveDownwards:" + moveDownwards + " moveUpwards:" + moveUpwards)
 
-          val valuesInMovedSegment : List[(Int,Int)] = prev.newValue.positionsBetweenFromToAndTheirValues(fromIncluded, toIncluded)
-          for ((_,value) <- valuesInMovedSegment) {
+          var valuesInMovedSegment : QList[(Int,Int)] = prev.newValue.positionsBetweenFromToAndTheirValues(fromIncluded, toIncluded)
+          if(prev.newValue quickEquals checkpoint) {
+            var toDo = valuesInMovedSegment
+            while(toDo != null){
+              val (position, value) = toDo.head
+              toDo = toDo.tail
+              cachedPositionFinderAtCheckpoint.savePos(prev.newValue, value, Some(position))
+            }
+          }
 
+          while(valuesInMovedSegment != null){
+            val value = valuesInMovedSegment.head._2
+            valuesInMovedSegment = valuesInMovedSegment.tail
             //violations involved in value
             for (precedenceStartedAtValue <- this.beforesToPrecedences(value)) {
               if (isPrecedenceViolated(precedenceStartedAtValue)) {
@@ -282,7 +297,8 @@ class Precedence(seq:ChangingSeqValue,
                 //or if there is a flip and the other value is in the flip
 
                 val endValueOfPrecedence = precedencesArray(precedenceStartedAtValue)._2
-                val positionOfEndValue = prev.newValue.positionOfAnyOccurrence(endValueOfPrecedence).head
+
+                val positionOfEndValue = cachedPositionFinderAtCheckpoint.positionOfAnyOccurrence(prev.newValue,endValueOfPrecedence).head
                 if (moveDownwards && positionOfEndValue > after && positionOfEndValue < fromIncluded) {
                   saveViolationForCheckpoint(precedenceStartedAtValue)
                   isPrecedenceViolated(precedenceStartedAtValue) = false
@@ -299,7 +315,7 @@ class Precedence(seq:ChangingSeqValue,
                 //it was not violated, thus is can only get violated is the segment moved upwards
                 // of if the other value is also in the segment and there is a flip
                 val endValueOfPrecedence = precedencesArray(precedenceStartedAtValue)._2
-                val positionOfEndValue = prev.newValue.positionOfAnyOccurrence(endValueOfPrecedence).head
+                val positionOfEndValue = cachedPositionFinderAtCheckpoint.positionOfAnyOccurrence(prev.newValue,endValueOfPrecedence).head
                 if (moveUpwards && positionOfEndValue <= after && positionOfEndValue > toIncluded) {
                   saveViolationForCheckpoint(precedenceStartedAtValue)
                   isPrecedenceViolated(precedenceStartedAtValue) = true
@@ -322,7 +338,7 @@ class Precedence(seq:ChangingSeqValue,
 
                 if (moveUpwards) {
                   val startValueOfPrecedence = precedencesArray(precedenceEndingAtValue)._1
-                  val positionOfStartValue = prev.newValue.positionOfAnyOccurrence(startValueOfPrecedence).head
+                  val positionOfStartValue = cachedPositionFinderAtCheckpoint.positionOfAnyOccurrence(prev.newValue,startValueOfPrecedence).head
                   if (positionOfStartValue <= after && positionOfStartValue > toIncluded) {
                     saveViolationForCheckpoint(precedenceEndingAtValue)
                     isPrecedenceViolated(precedenceEndingAtValue) = false
@@ -336,7 +352,7 @@ class Precedence(seq:ChangingSeqValue,
 
                 if (moveDownwards) {
                   val startValueOfPrecedence = precedencesArray(precedenceEndingAtValue)._1
-                  val positionOfStartValue = prev.newValue.positionOfAnyOccurrence(startValueOfPrecedence).head
+                  val positionOfStartValue = cachedPositionFinderAtCheckpoint.positionOfAnyOccurrence(prev.newValue,startValueOfPrecedence).head
                   if (after < positionOfStartValue && positionOfStartValue < fromIncluded) {
                     saveViolationForCheckpoint(precedenceEndingAtValue)
                     isPrecedenceViolated(precedenceEndingAtValue) = true
