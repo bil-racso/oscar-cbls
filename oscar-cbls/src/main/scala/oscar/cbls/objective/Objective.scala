@@ -114,10 +114,10 @@ class CascadingObjective(mustBeZeroObjective: Objective, secondObjective:Objecti
   }
 
 
-  override def valueNoSideEffect : Int = {
-    val firstObjectiveValue = mustBeZeroObjective.valueNoSideEffect
+  override def valueNoSearch : Int = {
+    val firstObjectiveValue = mustBeZeroObjective.valueNoSearch
     if (firstObjectiveValue!=0) cascadeSize + firstObjectiveValue
-    else secondObjective.valueNoSideEffect
+    else secondObjective.valueNoSearch
   }
 
   override def model: Store = mustBeZeroObjective.model
@@ -144,7 +144,13 @@ trait Objective {
 
   def model:Store
 
-  def valueNoSideEffect:Int = value
+  /**
+   * this one is to get the value of the obhjective function, and tell that it is not in the context
+   * of neighborhood exploration
+   * basically, there will be "no" backtrack from the move that is propagated upon call of this method.
+   * @return
+   */
+  def valueNoSearch:Int = value
 
   /**
    * This method returns the actual objective value.
@@ -255,7 +261,7 @@ class LoggingObjective(baseObjective:Objective) extends Objective{
     toReturn
   }
 
-  override def valueNoSideEffect : Int = baseObjective.valueNoSideEffect
+  override def valueNoSearch : Int = baseObjective.valueNoSearch
 
   def getAndCleanEvaluationLog:List[String] = {
     val toReturn = evaluationsLog

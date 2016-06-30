@@ -16,7 +16,6 @@ package oscar.cbls.test.routingS
   ******************************************************************************/
 
 import oscar.cbls.invariants.core.computation.Store
-import oscar.cbls.invariants.lib.routing.RouteSuccessor
 import oscar.cbls.invariants.lib.seq.Size
 import oscar.cbls.modeling.Algebra._
 import oscar.cbls.objective.Objective

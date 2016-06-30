@@ -719,7 +719,7 @@ abstract class EasyNeighborhood[M<:Move](best:Boolean = false, neighborhoodName:
 
   override final def getMove(obj: Objective, acceptanceCriterion: (Int, Int) => Boolean): SearchResult = {
 
-    oldObj = obj.valueNoSideEffect
+    oldObj = obj.valueNoSearch
     this.acceptanceCriterion = acceptanceCriterion
     toReturnMove = null
     bestNewObj = Int.MaxValue
@@ -811,7 +811,7 @@ class ObjWithStringGenerator(obj: Objective, additionalStringGenerator: () => St
 
   override def value: Int = obj.value
 
-  override def valueNoSideEffect : Int = obj.valueNoSideEffect
+  override def valueNoSearch : Int = obj.valueNoSearch
 }
 
 
