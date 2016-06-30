@@ -23,6 +23,11 @@ import oscar.cbls.invariants.lib.routing.{CachedPositionOf, CachedValuePerNode}
 
 import scala.collection.immutable.{SortedMap, SortedSet}
 
+object Precedence{
+  def apply(seq:ChangingSeqValue,
+            beforeAfter:List[(Int,Int)]):Precedence = new Precedence(seq,beforeAfter)
+  //TODO: maintain set of nodes involved in precedence violation
+}
 /**
  * precedence assumes that number can occur only once in the sequence
  * so that the constraint is to be enforced from any occurrence to any occurrence,
@@ -65,6 +70,10 @@ class Precedence(seq:ChangingSeqValue,
   private val cachedPositionFinderAtCheckpoint = new CachedPositionOf(seq.maxValue)
   private var checkpoint:IntSequence = null
   var violationAtCheckpoint:Int = -1
+
+  //we set a frist checkpoint since we are computing everything from scratch here.
+  cachedPositionFinderAtCheckpoint.updateToCheckpoint(seq.value)
+  computeAndAffectViolationsFromScratch(seq.value)
 
   def nodesStartingAPrecedence:SortedSet[Int] = SortedSet.empty[Int] ++ beforeAfter.map(_._1)
   def nodesEndingAPrecedenceStartedAt:(Int => Iterable[Int]) = (before:Int) => beforesToPrecedences(before).map(p => precedencesArray(p)._2)

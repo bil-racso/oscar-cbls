@@ -30,15 +30,14 @@ class MySimpleRoutingP(n:Int,v:Int,symmetricDistance:Array[Array[Int]],m:Store, 
   extends VRP(n,v,m,maxPivot)
   with TotalConstantDistance with ClosestNeighbors{
 
-  setSymmetricDistanceMatrix(symmetricDistance)
-
   override protected def getDistance(from : Int, to : Int) : Int = symmetricDistance(from)(to)
 
   //initializes to something simple; vehicle v-1 does all nodes (but other vehicles)
   setCircuit(nodes)
 
+  setSymmetricDistanceMatrix(symmetricDistance)
 
-  val precedenceInvar = new Precedence(routes,precedences)
+  val precedenceInvar = Precedence(routes,precedences)
 
   val nodesStartingAPrecedence:SortedSet[Int] = precedenceInvar.nodesStartingAPrecedence
   val nodesEndingAPrecedenceStartedAt:(Int => Iterable[Int]) = precedenceInvar.nodesEndingAPrecedenceStartedAt
@@ -55,7 +54,7 @@ class MySimpleRoutingP(n:Int,v:Int,symmetricDistance:Array[Array[Int]],m:Store, 
 
 object PrecedenceRouting extends App{
 
-  val n = 1000
+  val n = 100
   val v = 1
   val nbPRecedences = (n - v) / 2
 

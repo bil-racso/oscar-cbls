@@ -17,7 +17,7 @@ package oscar.cbls.invariants.lib.routing
 
 import oscar.cbls.algo.seq.functional.{IntSequence, IntSequenceExplorer}
 import oscar.cbls.invariants.core.computation._
-import oscar.cbls.invariants.core.propagation.{ErrorChecker, Checker}
+import oscar.cbls.invariants.core.propagation.Checker
 
 import scala.collection.immutable.SortedSet
 

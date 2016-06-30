@@ -69,7 +69,7 @@ with SeqNotificationTarget{
   }
 }
 
-class MapChangingFun(seq:ChangingSeqValue,
+class MapThroughArray(seq:ChangingSeqValue,
                      transform:Array[IntValue])
   extends SeqInvariant(seq.value.map(v => transform(v).value),
     InvariantHelper.getMinMaxBounds(transform)._2,
