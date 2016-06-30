@@ -1,5 +1,4 @@
 package oscar.cbls.invariants.lib.routing
-
 /*
 import oscar.cbls.algo.quick.QList
 import oscar.cbls.algo.rb.RedBlackTreeMap
@@ -89,6 +88,31 @@ class VehicleCapacity(routes:ChangingSeqValue,
     integral
   }
 
+  def integralOfFreeSpaceBelowThreshold(numberOfOccurrences:RedBlackTreeMap[Int],threshold:Int,maxWidth:Int):Int = {
+    var integral = 0
+    var width = 0
+    var positionOfIntegrator = Int.MaxValue
+    var nextPosition = numberOfOccurrences.biggestPosition
+
+    while(nextPosition match{
+      case None => false
+      case Some(position) =>
+        val newPivot = position.key
+        if(newPivot < threshold) {
+          if (positionOfIntegrator > threshold) {
+            integral += width * (threshold - newPivot)
+          } else {
+            integral += width * (positionOfIntegrator - newPivot)
+          }
+        }
+        width -= position.value
+        positionOfIntegrator = newPivot
+        nextPosition = position.prev
+        width > 0 //continue if not full width reached
+    }){}
+    integral
+  }
+
   def integralOfDeltaAboveThreshold(integralFrom:RedBlackTreeMap[Int],
                                     integralTo:RedBlackTreeMap[Int],
                                     threshold:Int):Int = {
@@ -127,11 +151,11 @@ class VehicleCapacity(routes:ChangingSeqValue,
 
   def computeAndAffectViolationsFromScratch(seq:IntSequence){
     for(vehicle <- vehicles){
-      violation(vehicle) := computeViolationFromScratch(routes.value,vehicle)
+      violation(vehicle) := computeViolationFromScratchNoPrecompute(routes.value,vehicle)
     }
   }
 
-  def computeViolationFromScratch(seq:IntSequence,vehicle:Int):Int = {
+  def computeViolationFromScratchNoPrecompute(seq:IntSequence,vehicle:Int):Int = {
 
     var viol = 0
     var currentContent = deltaAtNode(vehicle)
@@ -178,7 +202,6 @@ class VehicleCapacity(routes:ChangingSeqValue,
 
     currentViolation
   }
-
 
   override def notifySeqChanges(v: ChangingSeqValue, d: Int, changes: SeqUpdate) {
     if(!digestUpdates(changes,false)) {
@@ -406,5 +429,4 @@ class VehicleCapacity(routes:ChangingSeqValue,
   }
 
 }
-
 */

@@ -17,19 +17,45 @@ package oscar.cbls.invariants.lib.routing
 
 import oscar.cbls.algo.seq.functional.{IntSequence, IntSequenceExplorer}
 import oscar.cbls.invariants.core.computation._
+import oscar.cbls.invariants.core.propagation.{ErrorChecker, Checker}
 
 import scala.collection.immutable.SortedSet
 
-case class RouteSuccessor(routes:ChangingSeqValue, v:Int, successorValues:Array[CBLSIntVar], defaultWhenNotInSequence:Int)
+object RouteSuccessorAndPredecessors{
+  def apply(routes:ChangingSeqValue,
+            v:Int,
+            defaultWhenNotInSequence:Int):(Array[CBLSIntVar],Array[CBLSIntVar]) = {
+    val n = routes.maxValue + 1
+    val model = routes.model
+    val successorVars = Array.tabulate(n)(node =>  CBLSIntVar(model,defaultWhenNotInSequence,name="successor of node" + node))
+    val predecessorVars = Array.tabulate(n)(node =>  CBLSIntVar(model,defaultWhenNotInSequence,name="predecessor of node" + node))
+
+    new RouteSuccessorAndPredecessors(routes, v, successorVars,predecessorVars,defaultWhenNotInSequence)
+
+    (successorVars,predecessorVars)
+  }
+}
+
+class RouteSuccessorAndPredecessors(routes:ChangingSeqValue,
+                     v:Int,
+                     successorValues:Array[CBLSIntVar],
+                     predecessorValues:Array[CBLSIntVar],
+                     defaultWhenNotInSequence:Int)
   extends Invariant() with SeqNotificationTarget {
 
+  val n = routes.maxValue + 1
   registerStaticAndDynamicDependency(routes)
   finishInitialization()
   for(i <- successorValues) i.setDefiningInvariant(this)
+  for(i <- predecessorValues) i.setDefiningInvariant(this)
 
+  computeAllFromScratch(routes.value)
 
   override def notifySeqChanges(v: ChangingSeqValue, d: Int, changes: SeqUpdate) {
-    computeStartValuesOfImpactedZone(changes:SeqUpdate) match{
+
+    val startValuesOfImpactedZone = computeStartValuesOfImpactedZone(changes:SeqUpdate)
+
+    startValuesOfImpactedZone match{
       case None =>  computeAllFromScratch(changes.newValue)
       case Some(startUpdateValues) =>
         val startUpdateExplorersAndVal = startUpdateValues.toList.map(value => (value,changes.newValue.explorerAtAnyOccurrence(value)))
@@ -38,7 +64,8 @@ case class RouteSuccessor(routes:ChangingSeqValue, v:Int, successorValues:Array[
             case None => -valueAndExplorer._1
             case Some(explorer) => explorer.position})
 
-        startUpdateExplorersAndValSortedByPos.foreach(startValueAndExplorer => updateStartFrom(startValueAndExplorer._1,startValueAndExplorer._2,changes.newValue))
+        startUpdateExplorersAndValSortedByPos.foreach(startValueAndExplorer =>
+          updateStartFrom(startValueAndExplorer._1,startValueAndExplorer._2,changes.newValue))
     }
   }
 
@@ -47,27 +74,26 @@ case class RouteSuccessor(routes:ChangingSeqValue, v:Int, successorValues:Array[
       case s@SeqUpdateInsert(value : Int, pos : Int, prev : SeqUpdate) =>
         computeStartValuesOfImpactedZone(prev) match{
           case None => None
-          case Some(startsOfImpactedZone) => Some(startsOfImpactedZone + value + RoutingConventionMethods.routingPredVal2Val(value,changes.newValue,v))
+          case Some(startsOfImpactedZone) =>
+            Some(startsOfImpactedZone + value + RoutingConventionMethods.routingPredVal2Val(value,s.newValue,v))
         }
 
-      case SeqUpdateMove(fromIncluded : Int, toIncluded : Int, after : Int, flip : Boolean, prev : SeqUpdate) =>
+      case m@SeqUpdateMove(fromIncluded : Int, toIncluded : Int, after : Int, flip : Boolean, prev : SeqUpdate) =>
         computeStartValuesOfImpactedZone(prev) match{
           case None => None
           case Some(startsOfImpactedZone) => Some(
             startsOfImpactedZone +
-              RoutingConventionMethods.routingPredPos2Val(fromIncluded,changes.newValue,v) +
-              changes.newValue.valueAtPosition(fromIncluded).head +
-              changes.newValue.valueAtPosition(toIncluded).head +
-              changes.newValue.valueAtPosition(after).head)
+              RoutingConventionMethods.routingPredPos2Val(fromIncluded,prev.newValue,v) +
+              m.fromValue + m.toValue + m.afterValue)
         }
 
       case r@SeqUpdateRemove(position : Int, prev : SeqUpdate) =>
-        val value = r.removedValue
+        val removedValue = r.removedValue
         computeStartValuesOfImpactedZone(prev) match{
           case None => None
           case Some(startsOfImpactedZone) => Some(
-            startsOfImpactedZone +
-              RoutingConventionMethods.routingPredPos2Val(value,changes.newValue,v) + value)
+            startsOfImpactedZone + removedValue +
+              RoutingConventionMethods.routingPredPos2Val(position,prev.newValue,v) )
         }
 
       case SeqUpdateLastNotified(value) =>
@@ -84,17 +110,20 @@ case class RouteSuccessor(routes:ChangingSeqValue, v:Int, successorValues:Array[
 
   def computeAllFromScratch(seq:IntSequence){
     successorValues.foreach(node => node := defaultWhenNotInSequence)
-
+    predecessorValues.foreach(node => node := defaultWhenNotInSequence)
     var explorer = seq.explorerAtPosition(0).head
     while(explorer.next match{
       case None =>
         successorValues(explorer.value) := v-1
+        predecessorValues(v-1) := explorer.value
         false
       case Some(next) =>
         if(next.value < v){
           successorValues(explorer.value) := next.value - 1
+          predecessorValues(next.value - 1) := explorer.value
         }else{
           successorValues(explorer.value) := next.value
+          predecessorValues(next.value) := explorer.value
         }
         explorer = next
         true
@@ -103,12 +132,15 @@ case class RouteSuccessor(routes:ChangingSeqValue, v:Int, successorValues:Array[
 
   def updateStartFrom(startValue:Int,startExplorerOpt:Option[IntSequenceExplorer],seq:IntSequence){
     startExplorerOpt match{
-      case None => successorValues(startValue) := defaultWhenNotInSequence
+      case None =>
+        successorValues(startValue) := defaultWhenNotInSequence
+        predecessorValues(startValue) := defaultWhenNotInSequence
       case Some(startExplorer) =>
         var explorer = startExplorer
         while(explorer.next match{
           case None =>
             successorValues(explorer.value) := v-1
+            predecessorValues(v-1) := explorer.value
             false
           case Some(next) =>
             val newValueForSuccValue =
@@ -116,10 +148,47 @@ case class RouteSuccessor(routes:ChangingSeqValue, v:Int, successorValues:Array[
               else next.value
             if(successorValues(explorer.value).newValue != newValueForSuccValue){
               successorValues(explorer.value) := newValueForSuccValue
+              predecessorValues(newValueForSuccValue) := explorer.value
               explorer = next
               true
             }else false
         }){}
+    }
+  }
+
+  def computeSuccessorsFromScratchNoAffect(seq:IntSequence):Array[Int] = {
+    val successorValues = Array.fill(n)(defaultWhenNotInSequence)
+
+    var explorer = seq.explorerAtPosition(0).head
+    while(explorer.next match{
+      case None =>
+        successorValues(explorer.value) = v-1
+        false
+      case Some(next) =>
+        if(next.value < v){
+          successorValues(explorer.value) = next.value - 1
+        }else{
+          successorValues(explorer.value) = next.value
+        }
+        explorer = next
+        true
+    }){}
+    successorValues
+  }
+
+  override def checkInternals(c : Checker){
+    val fromScratch = computeSuccessorsFromScratchNoAffect(routes.value)
+    for(node <- 0 until n){
+      c.check(successorValues(node).newValue == fromScratch(node),
+        Some("error on next for node " + node + ": " + successorValues(node) + " should== " + fromScratch(node)))
+
+      if(fromScratch(node)== defaultWhenNotInSequence){
+        c.check(predecessorValues(node).newValue == defaultWhenNotInSequence,
+          Some("error on predecessor for node " + node))
+      }else {
+        c.check(predecessorValues(fromScratch(node)).newValue == node,
+          Some("error on predecessor for node " + node))
+      }
     }
   }
 }

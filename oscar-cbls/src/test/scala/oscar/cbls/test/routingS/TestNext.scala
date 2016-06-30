@@ -16,7 +16,8 @@ package oscar.cbls.test.routingS
   ******************************************************************************/
 
 import oscar.cbls.invariants.core.computation.Store
-import oscar.cbls.invariants.lib.routing.RouteSuccessor
+import oscar.cbls.invariants.core.propagation.ErrorChecker
+import oscar.cbls.invariants.lib.routing.RouteSuccessorAndPredecessors
 import oscar.cbls.invariants.lib.seq.Size
 import oscar.cbls.modeling.Algebra._
 import oscar.cbls.objective.Objective
@@ -24,7 +25,7 @@ import oscar.cbls.routing.seq.model._
 import oscar.cbls.routing.seq.neighborhood._
 import oscar.cbls.search.combinators.{BestSlopeFirst, Profile}
 
-class MySimpleRoutingWithUnroutedPoints(n:Int,v:Int,symmetricDistance:Array[Array[Int]],m:Store, maxPivot:Int)
+class MySimpleRoutingWithUnroutedPointsAndNext(n:Int,v:Int,symmetricDistance:Array[Array[Int]],m:Store, maxPivot:Int)
   extends VRP(n,v,m,maxPivot)
   with TotalConstantDistance with ClosestNeighbors with RoutedAndUnrouted{
 
@@ -42,12 +43,17 @@ class MySimpleRoutingWithUnroutedPoints(n:Int,v:Int,symmetricDistance:Array[Arra
   val closestNeighboursForward = computeClosestNeighborsForward()
 
   def size = routes.value.size
+
+  val (next,prev) = RouteSuccessorAndPredecessors(routes,v,n)
+
+  this.addToStringInfo(() => "next:" + next.map(_.value).mkString(","))
+  this.addToStringInfo(() => "prev:" + prev.map(_.value).mkString(","))
 }
 
-object TSProutePoints extends App{
+object TestNext extends App{
 
-  val n = 10000
-  val v = 100
+  val n = 20
+  val v = 5
 
   val maxPivotPerValuePercent = 4
 
@@ -56,9 +62,9 @@ object TSProutePoints extends App{
   val symmetricDistanceMatrix = RoutingMatrixGenerator(n)._1
 
   //  println("restrictions:" + restrictions)
-  val model = new Store() //checker = Some(new ErrorChecker()))
+  val model = new Store(checker = Some(new ErrorChecker()))
 
-  val myVRP = new MySimpleRoutingWithUnroutedPoints(n,v,symmetricDistanceMatrix,model,maxPivotPerValuePercent)
+  val myVRP = new MySimpleRoutingWithUnroutedPointsAndNext(n,v,symmetricDistanceMatrix,model,maxPivotPerValuePercent)
   val nodes = myVRP.nodes
 
   model.close()

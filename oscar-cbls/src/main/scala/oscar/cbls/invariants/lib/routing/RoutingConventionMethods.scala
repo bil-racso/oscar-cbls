@@ -88,7 +88,7 @@ object RoutingConventionMethods {
 
   def routingPredVal2Val(value:Int, seq:IntSequence, v:Int):Int = {
     if(value < v) {
-      //looking for the end node of vehicle value
+        //looking for the end node of vehicle value
         if(value == v-1) {
           //it is the last vehicle
           seq.valueAtPosition(seq.size-1).head
