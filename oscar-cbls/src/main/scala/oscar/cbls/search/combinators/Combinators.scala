@@ -1112,6 +1112,7 @@ case class AndThen(a: Neighborhood, b: Neighborhood, maximalIntermediaryDegradat
   }
 }
 
+//TODO: does not work if "a"  is doing best search.
 case class DynAndThen[FirstMoveType<:Move](a:Neighborhood with SupportForAndThenChaining[FirstMoveType],
                                            b:(FirstMoveType => Neighborhood),
                                            maximalIntermediaryDegradation: Int = Int.MaxValue)
@@ -1121,8 +1122,10 @@ case class DynAndThen[FirstMoveType<:Move](a:Neighborhood with SupportForAndThen
 
   override def getMove(obj: Objective, acceptanceCriteria: (Int, Int) => Boolean): SearchResult = {
 
-    var secondMove: Move = null //the move performed by b
-    val oldObj: Int = obj.value
+
+    val enclosingDynAndthen = this
+
+    val oldObj: Int = obj.valueNoSearch
 
     //the acceptance criterion is on the diff between the oldObj and the newObj over the two consecutive moves
     //it is evaluated for the second move
@@ -1137,20 +1140,24 @@ case class DynAndThen[FirstMoveType<:Move](a:Neighborhood with SupportForAndThen
       acceptanceCriteria(oldObj, newObj)
     }
 
-    class InstrumentedObjective() extends Objective{
+    var compositeMove: Move = null //the composite move performed by "a andThen b"
+
+    class InstrumentedObjectiveForFirstNeighborhood() extends Objective{
+
+      compositeMove = null
 
       override def detailedString(short: Boolean, indent: Int = 0): String = nSpace(indent) + "AndThenInstrumentedObjective(initialObjective:" + obj.detailedString(short) + ")"
 
       override def model = obj.model
 
-      override def valueNoSearch: Int = 0
+      override def valueNoSearch: Int = obj.valueNoSearch
 
       override def value: Int = {
 
         val intermediaryObjValue =
           if (maximalIntermediaryDegradation != Int.MaxValue) {
             //we need to ensure that intermediary step is admissible
-            val intermediaryVal = obj.value
+            val intermediaryVal = obj.valueNoSearch
             val intermediaryDegradation = intermediaryVal - oldObj
             if (intermediaryDegradation > maximalIntermediaryDegradation) {
               return Int.MaxValue //we do not consider this first step
@@ -1163,43 +1170,44 @@ case class DynAndThen[FirstMoveType<:Move](a:Neighborhood with SupportForAndThen
 
         //now, we need to check the other neighborhood
         //first, let's instantiate it:
-        currentB = b(a.instantiateCurrentMove(intermediaryObjValue))
+        val currentMoveFromA = a.instantiateCurrentMove(intermediaryObjValue)
+        currentB = b(currentMoveFromA)
 
         class secondInstrumentedObjective(obj:Objective) extends Objective{
           override def detailedString(short : Boolean, indent : Int) : String = obj.detailedString(short,indent)
           override def model : Store = obj.model
           override def value : Int = obj.value
-          override def valueNoSearch : Int = 0
+          override def valueNoSearch : Int = obj.valueNoSearch
         }
 
         currentB.getMove(new secondInstrumentedObjective(obj), secondAcceptanceCriteria) match {
           case NoMoveFound => Int.MaxValue
           case MoveFound(m: Move) =>
-            secondMove = m
+            if(compositeMove == null || m.objAfter < compositeMove.objAfter) compositeMove = CompositeMove(List(currentMoveFromA, m), m.objAfter,enclosingDynAndthen.toString)
             m.objAfter
         }
       }
     }
 
-    val tmp = a.getMove(new InstrumentedObjective(), firstAcceptanceCriterion)
+    val tmp = a.getMove(new InstrumentedObjectiveForFirstNeighborhood(), firstAcceptanceCriterion)
 
     tmp match {
       case NoMoveFound => NoMoveFound
-      case MoveFound(m: Move) => if(secondMove == null) {
+      case MoveFound(m: Move) => if(compositeMove == null) {
         println("WARNING: " + this + " the neighborhood on the left returned a move without querying the objective value, the move of andThen is therefore not a composite")
         m
       }else
-        CompositeMove(List(m, secondMove), m.objAfter, this.toString)
+        compositeMove
     }
   }
-
 
   override def instantiateCurrentMove(newObj: Int): CompositeMove ={
     currentB match{
       case null => throw new Error("DynAndThen is not presently exploring something")
       case s:SupportForAndThenChaining[_] =>
-        CompositeMove(List(a.instantiateCurrentMove(Int.MaxValue),
-          s.instantiateCurrentMove(Int.MaxValue)),newObj,"DynAndThen(" + a + "," + currentB + ")")
+        val moveFromB = s.instantiateCurrentMove(Int.MaxValue)
+        val moveFromA = a.instantiateCurrentMove(Int.MaxValue)
+        CompositeMove(List(moveFromA,moveFromB),newObj,"DynAndThen(" + moveFromA + "," + moveFromB + ")")
       case _ => throw new Error("DynAndThen: Neighborhood on the right cannot be chained")
     }
   }
