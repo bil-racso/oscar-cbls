@@ -21,7 +21,7 @@ import java.awt.BorderLayout
 import java.awt.event.{AdjustmentListener, AdjustmentEvent}
 import javax.swing.{SwingConstants, JScrollBar}
 
-import oscar.cbls.search.algo.LazyQuicksort
+import oscar.cbls.algo.search.LazyQuicksort
 
 
 /**

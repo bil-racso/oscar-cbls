@@ -1,9 +1,25 @@
 package oscar.cbls.search
 
+/*******************************************************************************
+  * OscaR is free software: you can redistribute it and/or modify
+  * it under the terms of the GNU Lesser General Public License as published by
+  * the Free Software Foundation, either version 2.1 of the License, or
+  * (at your option) any later version.
+  *
+  * OscaR is distributed in the hope that it will be useful,
+  * but WITHOUT ANY WARRANTY; without even the implied warranty of
+  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  * GNU Lesser General Public License  for more details.
+  *
+  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
+  ******************************************************************************/
+
+import oscar.cbls.algo.lazyIt.LazyMap
 import oscar.cbls.invariants.core.computation.{CBLSIntVar, InvariantHelper}
 import oscar.cbls.modeling.AlgebraTrait
 import oscar.cbls.objective.Objective
-import oscar.cbls.search.algo.{HotRestart, IdenticalAggregator, KSmallest, LazyMap}
+import oscar.cbls.algo.search.{HotRestart, IdenticalAggregator, KSmallest}
 import oscar.cbls.search.core._
 import oscar.cbls.search.move._
 
@@ -510,7 +526,7 @@ case class ShiftNeighborhood(vars:Array[CBLSIntVar],
                              name:String = "ShiftNeighborhood",
                              searchZone1:()=>Iterable[Int] = null,
                              maxShiftSize:Int = Int.MaxValue,
-                             maxOffsetLength:Int = Int.MaxValue, //TODO: document this (size is when you talk about sets); is this the max magniture of the offset? ow about shofting towards negative values? is there a minOffset?
+                             maxOffsetLength:Int = Int.MaxValue,
                              best:Boolean = false,
                              hotRestart: Boolean = true)
   extends EasyNeighborhood[ShiftMove](best,name) with AlgebraTrait{

@@ -18,7 +18,7 @@ package oscar.cbls.search.combinators
 
 import java.awt.{Color, Dimension}
 
-import oscar.cbls.invariants.core.algo.heap.{BinomialHeap, BinomialHeapWithMove}
+import oscar.cbls.algo.heap.{BinomialHeap, BinomialHeapWithMove}
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.objective.{CascadingObjective, Objective}
 import oscar.cbls.routing.model.VRP
@@ -263,6 +263,22 @@ case class DoOnMove(a: Neighborhood,
   def callBackAfterMove(m: Move)() {
     if (procAfterMove != null) procAfterMove(m)
   }
+}
+
+case class OnExhaust(a:Neighborhood, proc:(()=>Unit),onlyFirst:Boolean) extends NeighborhoodCombinator(a) {
+
+  var alreadyExhaustedOnce = false
+  override def getMove(obj : Objective, acceptanceCriterion : (Int, Int) => Boolean) : SearchResult =
+    a.getMove(obj,acceptanceCriterion) match{
+      case NoMoveFound =>
+        if(!onlyFirst || !alreadyExhaustedOnce){
+          alreadyExhaustedOnce = true
+          proc()
+        }
+        NoMoveFound
+      case x:MoveFound => x
+
+    }
 }
 
 /**
@@ -1081,6 +1097,8 @@ case class AndThen(a: Neighborhood, b: Neighborhood, maximalIntermediaryDegradat
 
       override def model = obj.model
 
+      override def valueNoSearch:Int = obj.valueNoSearch
+
       override def value: Int = {
 
         if (maximalIntermediaryDegradation != Int.MaxValue) {
@@ -1216,10 +1234,9 @@ case class DynAndThen[FirstMoveType<:Move](a:Neighborhood with SupportForAndThen
 case class DynAndThenWithPrev[FirstMoveType<:Move](x:Neighborhood with SupportForAndThenChaining[FirstMoveType],
                                                    b:((FirstMoveType,Snapshot) => Neighborhood),
                                                    maximalIntermediaryDegradation:Int = Int.MaxValue,
-                                                   intValuesToSave:Iterable[ChangingIntValue],
-                                                   setValuesToSave:Iterable[ChangingSetValue]) extends NeighborhoodCombinatorNoProfile(x){
+                                                   valuesToSave:Iterable[AbstractVariable]) extends NeighborhoodCombinatorNoProfile(x){
 
-  val instrumentedA = new SnapShotOnEntry(x,intValuesToSave,setValuesToSave) with SupportForAndThenChaining[FirstMoveType]{
+  val instrumentedA = new SnapShotOnEntry(x,valuesToSave) with SupportForAndThenChaining[FirstMoveType]{
     override def instantiateCurrentMove(newObj: Int): FirstMoveType = x.instantiateCurrentMove(newObj)
   }
 
@@ -1231,16 +1248,16 @@ case class DynAndThenWithPrev[FirstMoveType<:Move](x:Neighborhood with SupportFo
 }
 
 
-case class SnapShotOnEntry(a: Neighborhood, intValuesToSave:Iterable[ChangingIntValue],setValuesToSave:Iterable[ChangingSetValue])
+case class SnapShotOnEntry(a: Neighborhood, valuesToSave:Iterable[AbstractVariable])
   extends NeighborhoodCombinator(a){
 
   var snapShot:Snapshot = null
 
   override def getMove(obj: Objective, acceptanceCriterion: (Int, Int) => Boolean = (oldObj, newObj) => oldObj > newObj): SearchResult = {
     val s = obj.model
-    snapShot = s.snapShot(intValuesToSave,setValuesToSave)
+    snapShot = s.snapShot(valuesToSave)
     a.getMove(obj,acceptanceCriterion)
-  }
+}
 }
 
 /**
@@ -1626,7 +1643,7 @@ case class Profile(a:Neighborhood,ignoreInitialObj:Boolean = false) extends Neig
   override def getMove(obj: Objective, acceptanceCriterion: (Int, Int) => Boolean): SearchResult = {
 
     nbCalls += 1
-    val oldObj = obj.value
+    val oldObj = obj.valueNoSearch
     val startTime = System.nanoTime()
 
     a.getMove(obj, acceptanceCriterion) match {

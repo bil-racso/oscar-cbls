@@ -24,7 +24,7 @@
 package oscar.cbls.routing.model
 
 import oscar.cbls.constraints.core.ConstraintSystem
-import oscar.cbls.invariants.core.algo.heap.BinomialHeap
+import oscar.cbls.algo.heap.BinomialHeap
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.lib.logic._
 import oscar.cbls.invariants.lib.numeric.Sum

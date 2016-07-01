@@ -24,7 +24,7 @@
 
 package oscar.cbls.invariants.lib.logic
 
-import oscar.cbls.invariants.core.algo.heap.BinomialHeap
+import oscar.cbls.algo.heap.BinomialHeap
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.core.propagation.Checker
 

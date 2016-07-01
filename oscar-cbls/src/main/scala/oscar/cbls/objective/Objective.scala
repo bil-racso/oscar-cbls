@@ -75,13 +75,13 @@ class IntVarObjective(val objective: ChangingIntValue) extends Objective {
 }
 
 /**
- * if (objective1.value > 0) Int.MaxValue
+ * if (objective1.value > 0) Int.MaxValue/2 + objective1.value
  *   else objective2.value
  *
  *   this is computed partially both for objective and mustBeZeroObjective
  * @param mustBeZeroObjective
  */
-class CascadingObjective(mustBeZeroObjective: Objective, secondObjective:Objective) extends Objective {
+class CascadingObjective(mustBeZeroObjective: Objective, secondObjective:Objective,cascadeSize:Int = Int.MaxValue/10) extends Objective {
 
   override def detailedString(short: Boolean, indent:Int = 0): String =
     (if(short) {
@@ -108,8 +108,16 @@ class CascadingObjective(mustBeZeroObjective: Objective, secondObjective:Objecti
    * @return the actual objective value.
    */
   override def value = {
-    if (!mustBeZeroObjective.isZero) Int.MaxValue
+    val firstObjectiveValue = mustBeZeroObjective.value
+    if (firstObjectiveValue!=0) cascadeSize + firstObjectiveValue
     else secondObjective.value
+  }
+
+
+  override def valueNoSearch : Int = {
+    val firstObjectiveValue = mustBeZeroObjective.valueNoSearch
+    if (firstObjectiveValue!=0) cascadeSize + firstObjectiveValue
+    else secondObjective.valueNoSearch
   }
 
   override def model: Store = mustBeZeroObjective.model
@@ -252,6 +260,8 @@ class LoggingObjective(baseObjective:Objective) extends Objective{
 //    throw new Error()
     toReturn
   }
+
+  override def valueNoSearch : Int = baseObjective.valueNoSearch
 
   def getAndCleanEvaluationLog:List[String] = {
     val toReturn = evaluationsLog

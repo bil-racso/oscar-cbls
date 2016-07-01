@@ -20,7 +20,7 @@ package oscar.cbls.binPacking.solver
 import oscar.cbls.binPacking.model.{Bin, BinPackingProblem, Item}
 import oscar.cbls.objective.Objective
 import oscar.cbls.search.SearchEngineTrait
-import oscar.cbls.search.algo.IdenticalAggregator
+import oscar.cbls.algo.search.IdenticalAggregator
 import oscar.cbls.search.core.{Neighborhood, NoMoveFound, SearchResult}
 import oscar.cbls.search.move.{AssignMove, CompositeMove, SwapMove}
 

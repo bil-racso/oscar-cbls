@@ -30,7 +30,7 @@ import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.lib.logic._
 import oscar.cbls.invariants.lib.numeric._
 import oscar.cbls.invariants.lib.set._
-import oscar.cbls.search.algo.InstrumentedRange
+import oscar.cbls.algo.search.InstrumentedRange
 
 import scala.collection.immutable.SortedSet
 import scala.language.implicitConversions

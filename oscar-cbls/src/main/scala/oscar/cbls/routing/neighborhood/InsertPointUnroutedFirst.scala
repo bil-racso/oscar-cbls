@@ -25,7 +25,7 @@
 package oscar.cbls.routing.neighborhood
 
 import oscar.cbls.routing.model._
-import oscar.cbls.search.algo.{HotRestart, IdenticalAggregator}
+import oscar.cbls.algo.search.{HotRestart, IdenticalAggregator}
 
 /**
  * Inserts an unrouted point in a route. The size of the neighborhood is O(u*n).

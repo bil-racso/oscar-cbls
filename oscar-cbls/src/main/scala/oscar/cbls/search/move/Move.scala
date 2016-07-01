@@ -15,7 +15,7 @@
 
 package oscar.cbls.search.move
 
-import oscar.cbls.invariants.core.algo.quick.QList
+import oscar.cbls.algo.quick.QList
 import oscar.cbls.invariants.core.computation.{Solution, CBLSIntVar, CBLSSetVar, Variable}
 import oscar.cbls.objective.Objective
 
@@ -43,7 +43,7 @@ abstract class Move(val objAfter:Int = Int.MaxValue, val neighborhoodName:String
     *
     * @return the list of touched variables.
    */
-  def touchedVariables:List[Variable] = throw new Exception(this.getClass().getSimpleName + "cannot provide touched variables")
+  def touchedVariables:Iterable[Variable] = throw new Exception(this.getClass().getSimpleName + "cannot provide touched variables")
 
   /**
    * @return a readable string of the objective after wit ha space before, or an empty string
@@ -313,7 +313,7 @@ case class NamedMove(m:Move, override val neighborhoodName:String = null)
     neighborhoodNameToString + m.toString
   }
 
-  override def touchedVariables: List[Variable] = m.touchedVariables
+  override def touchedVariables: Iterable[Variable] = m.touchedVariables
 
   override def evaluate(obj: Objective): Int = m.evaluate(obj)
 }
@@ -335,7 +335,7 @@ case class InstrumentedMove(initialMove:Move, callBack: () => Unit = null, after
 
   override def toString: String = initialMove.toString
 
-  override def touchedVariables: List[Variable] = initialMove.touchedVariables
+  override def touchedVariables: Iterable[Variable] = initialMove.touchedVariables
 }
 
 object CallBackMove{

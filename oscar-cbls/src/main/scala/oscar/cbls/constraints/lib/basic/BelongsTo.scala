@@ -1,4 +1,20 @@
 package oscar.cbls.constraints.lib.basic
+/**
+ * *****************************************************************************
+ * OscaR is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 2.1 of the License, or
+ * (at your option) any later version.
+ *
+ * OscaR is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License  for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+ * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
+ * ****************************************************************************
+ */
 
 import oscar.cbls.constraints.core.Constraint
 import oscar.cbls.invariants.core.computation._
@@ -32,7 +48,7 @@ case class BelongsTo(v: IntValue, set: SetValue)
 
   override def notifySetChanges(v: ChangingSetValue, d: Int, addedValues: Iterable[Int], removedValues: Iterable[Int], oldValue: SortedSet[Int], newValue: SortedSet[Int]) : Unit = {
     if (newValue.contains(this.v.value)) violation := 0
-    else   violation := 1
+    else violation := 1
   }
 
   /** the violation is 1 v is not is set, 0 otherwise*/
