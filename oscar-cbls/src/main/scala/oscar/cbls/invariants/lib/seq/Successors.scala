@@ -22,6 +22,14 @@ import scala.collection.immutable.SortedSet
 
 
 object Successors {
+  /**
+   * Maintains and array telling, for each value (indice of the array) the set of value that can succeed it in the sequence.
+   * There are multiple successors although we only consider the next value
+   * because a value can appear several time in the sequence, it can therefore have several successors.
+   * @param seq
+   * @return the array of SetVar that mention the set of successor for each possible value.
+   * @author renaud.delandtsheer@cetic.be
+   */
   def apply(seq : ChangingSeqValue) : Array[CBLSSetVar] = {
 
     val succ: Array[CBLSSetVar] =
@@ -33,6 +41,14 @@ object Successors {
   }
 }
 
+/**
+ * Maintains and array telling, for each value (indice of the array) the set of value that can succeed it in the sequence.
+ * There are multiple successors although we only consider the next value
+ * because a value can appear several time in the sequence, it can therefore have several successors.
+ * @param sequence
+ * @param successorValues
+ * @author renaud.delandtsheer@cetic.be
+ */
 class Successors(sequence:ChangingSeqValue, successorValues:Array[CBLSSetVar])
   extends Invariant() with SeqNotificationTarget {
 

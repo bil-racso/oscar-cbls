@@ -28,6 +28,7 @@ object Precedence{
             beforeAfter:List[(Int,Int)]):Precedence = new Precedence(seq,beforeAfter)
   //TODO: maintain set of nodes involved in precedence violation
 }
+
 /**
  * precedence assumes that number can occur only once in the sequence
  * so that the constraint is to be enforced from any occurrence to any occurrence,
@@ -39,6 +40,7 @@ object Precedence{
  *
  * @param seq
  * @param beforeAfter
+ * @author renaud.delandtsheer@cetic.be
  */
 class Precedence(seq:ChangingSeqValue,
                  beforeAfter:List[(Int,Int)]) //supposed to have zero redundancies.
