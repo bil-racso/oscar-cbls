@@ -3,10 +3,10 @@ package oscar.cbls.routing.seq.model
 import oscar.cbls.constraints.core.ConstraintSystem
 import oscar.cbls.constraints.lib.basic.{EQ, LE}
 import oscar.cbls.invariants.core.computation.{CBLSIntVar, FullRange, IntValue, Store}
-import oscar.cbls.invariants.lib.routing.RouteSuccessorAndPredecessors
+import oscar.cbls.invariants.lib.routing.{VehicleOfNodes, RouteSuccessorAndPredecessors}
 import oscar.cbls.invariants.lib.seq.Precedence
 import oscar.cbls.modeling.Algebra._
-import oscar.cbls.objective.{CascadingObjective, Objective}
+import oscar.cbls.objective.{IntVarObjective, CascadingObjective, Objective}
 
 /**
   * Created by fabian on 04-07-16.
@@ -27,21 +27,11 @@ class PDP(override val n:Int, override val v:Int, override val m:Store, maxPivot
   private val deliveryNodes:Array[Int] = new Array[Int]((n-v)/2)
 
   val (next,prev) = RouteSuccessorAndPredecessors(routes,v,n)
+  val vehicleOfNodes = VehicleOfNodes(routes,v)
 
   val fastConstraints = new ConstraintSystem(m)
   val slowConstraints = new ConstraintSystem(m)
-  var obj:Objective = null
-  var globalObj:Objective = null
-
-  def setObjectif(obj:Objective): Unit ={
-    this.obj = obj
-    println(obj.value)
-    globalObj = new CascadingObjective(fastConstraints, new CascadingObjective(slowConstraints, obj))
-  }
-
-  def getObjective(): Objective = {
-    globalObj
-  }
+  var precedenceObj:IntVarObjective = null
 
 
   /**
@@ -57,8 +47,7 @@ class PDP(override val n:Int, override val v:Int, override val m:Store, maxPivot
     pickupDeliveryNodes(d) = (-value,p)
     pickupNodes(coupleNumber) = p
     deliveryNodes(coupleNumber) = d
-    Precedence(routes,List((p,d)))
-    fastConstraints.post(EQ(getVehicleOfNode(p),getVehicleOfNode(d)))
+    fastConstraints.post(EQ(vehicleOfNodes(p),vehicleOfNodes(d)))
   }
 
   /**
@@ -77,9 +66,14 @@ class PDP(override val n:Int, override val v:Int, override val m:Store, maxPivot
     assert(pickups.intersect(deliverys).length == 0,
       "One node can't be a pickup node and a delivery node at the same time")
 
+    var precedenceList = List.tabulate((n-v)/2)(c => (pickups(c),deliverys(c)))
+    println(precedenceList)
+    precedenceObj = new IntVarObjective(Precedence(routes,precedenceList))
+    println(precedenceObj.detailedString(false,100))
     for(i <- pickups.indices){
       addPickupDeliveryCouple(pickups(i),deliverys(i),i)
     }
+
   }
 
   /**
@@ -261,6 +255,6 @@ class PDP(override val n:Int, override val v:Int, override val m:Store, maxPivot
 
   def setVehiclesCapacityStrongConstraint(): Unit ={
     for(i <- arrivalLoadValue.indices)
-      slowConstraints.post(LE(arrivalLoadValue(i),vehicleMaxCapacity.element(getVehicleOfNode(i))))
+      slowConstraints.post(LE(arrivalLoadValue(i), vehicleMaxCapacity.element(vehicleOfNodes(i))))
   }
 }
