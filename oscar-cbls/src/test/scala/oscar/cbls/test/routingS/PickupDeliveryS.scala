@@ -51,7 +51,7 @@ object PickupDeliveryS extends App{
 
   val symmetricDistanceMatrix = RoutingMatrixGenerator(n)._1
 
-  val model = new Store(checker = Some(new ErrorChecker()))
+  val model = new Store(checker = Some(new ErrorChecker()), noCycle = false)
 
   val myPDP = new MyPDP(n,v,model,symmetricDistanceMatrix,maxPivotPerValuePercent)
   val nodes = myPDP.nodes
@@ -69,10 +69,16 @@ object PickupDeliveryS extends App{
       vrp = myPDP),
     (moveResult:InsertPointMove) => InsertPointUnroutedFirst(
       unroutedNodesToInsert = () => Iterable(myPDP.getRelatedDelivery(moveResult.insertedPoint)),
-      relevantPredecessor = () => myPDP.getNodesAfterRelatedPickup(),
-      vrp = myPDP, best = true))name "insertCouple")
+      relevantPredecessor = () => myPDP.getNodesBeforePosition(),
+      vrp = myPDP))name "insertCouple")
 
-  val search = insertCouple.exhaust(insertCouple)
+  val search = insertCouple
+
+  search.verbose = 4
+  //  search.verboseWithExtraInfo(4,()=>myVRP.toString)
+  search.paddingLength = 100
+
+  search.doAllMoves(obj=myPDP.obj)
 
   println(myPDP)
   println(myPDP.obj)
