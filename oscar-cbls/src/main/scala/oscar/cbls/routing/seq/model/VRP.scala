@@ -126,14 +126,23 @@ class VRP(val n: Int, val v: Int, val m: Store, maxPivotPerValuePercent:Int = 4)
 
   def getNodesOfVehicleFromScratch(vehicle:Int):SortedSet[Int] = SortedSet.empty[Int] ++ getRouteOfVehicle(vehicle)
 
-  def getNodesBeforePosition()(pos:Int): List[Int] ={
+  /**
+    * This method generate all the nodes preceding a specific position
+    * You can either give a node or give the position of the node (usefull when using combinator DynAndThen)
+    * @param pos the position of the node
+    * @param node the node
+    * @return
+    */
+  def getNodesBeforePosition(pos:Int = -1)(node:Int): List[Int] ={
+    val position = if(pos == -1)routes.newValue.positionOfFirstOccurrence(node).head else pos
+
     var i = v-1
-    while(routes.newValue.explorerAtAnyOccurrence(v-i).head.position > pos)
+    while(routes.newValue.explorerAtAnyOccurrence(i).head.position > position)
       i -= 1
     var currentVExplorer = routes.newValue.explorerAtAnyOccurrence(i).head.next
     var acc:List[Int] = List(i)
     while (currentVExplorer match{
-      case Some(x) if x.position < pos && x.value >= v =>
+      case Some(x) if x.position < position && x.value >= v =>
         acc = x.value :: acc
         currentVExplorer = x.next
         true
@@ -141,13 +150,22 @@ class VRP(val n: Int, val v: Int, val m: Store, maxPivotPerValuePercent:Int = 4)
     acc.reverse
   }
 
-  def getNodesAfterPosition()(pos:Int, isNodeInserted:Boolean = true): List[Int] ={
-    var i = 0
-    while(routes.newValue.explorerAtAnyOccurrence(v-i).head.position < pos)
-      i += 1
-    i -= 1
+  /**
+    * This method generate all the nodes following a specific position
+    * You can either give a node or give the position of the node (usefull when using combinator DynAndThen)
+    * @param pos the position of the node
+    * @param node the node
+    * @return
+    */
+  def getNodesAfterPosition(isNodeInserted:Boolean = true, pos:Int = -1)(node:Int): List[Int] ={
+    val position = if(pos == -1)routes.newValue.positionOfFirstOccurrence(node).head else pos
+
+    var i = v-1
+    while(routes.newValue.explorerAtAnyOccurrence(i).head.position > pos)
+      i -= 1
+
     var currentVExplorer = routes.newValue.explorerAtAnyOccurrence(i).head.next
-    var acc:List[Int] = List(i)
+    var acc:List[Int] = List()
     while (currentVExplorer match{
       case Some(x) if x.position > pos && x.value >= v =>
         acc = x.value :: acc
@@ -160,6 +178,7 @@ class VRP(val n: Int, val v: Int, val m: Store, maxPivotPerValuePercent:Int = 4)
       case _ => false}) {}
     acc.reverse
   }
+
   /**
    *
    * @param node a node
@@ -230,9 +249,6 @@ class VRP(val n: Int, val v: Int, val m: Store, maxPivotPerValuePercent:Int = 4)
   }
 
   def onTheSameRoute(node1:Int,node2:Int):Boolean = getVehicleOfNode(node1) == getVehicleOfNode(node2)
-
-  def next(node:Int):Int = RoutingConventionMethods.routingSuccVal2Val(node, routes.value, v)
-  def prev(node:Int):Int = RoutingConventionMethods.routingPredVal2Val(node, routes.value, v)
 }
 
 trait ConstantDistancePerVehicle extends TotalConstantDistance{

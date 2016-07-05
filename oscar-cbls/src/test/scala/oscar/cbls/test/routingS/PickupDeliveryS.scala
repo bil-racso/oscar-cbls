@@ -2,12 +2,11 @@ package oscar.cbls.test.routingS
 
 import oscar.cbls.invariants.core.computation.Store
 import oscar.cbls.invariants.core.propagation.ErrorChecker
-import oscar.cbls.invariants.lib.routing.RouteSuccessorAndPredecessors
 import oscar.cbls.invariants.lib.seq.Size
 import oscar.cbls.modeling.Algebra._
 import oscar.cbls.objective.{CascadingObjective, Objective}
 import oscar.cbls.routing.seq.model.{RoutedAndUnrouted, ClosestNeighbors, ConstantDistancePerVehicle, PDP}
-import oscar.cbls.routing.seq.neighborhood.{InsertPointMove, InsertPointUnroutedFirst}
+import oscar.cbls.routing.seq.neighborhood.{OnePointMoveMove, OnePointMove, InsertPointMove, InsertPointUnroutedFirst}
 import oscar.cbls.search.combinators.{DynAndThen, Profile}
 
 /**
@@ -23,9 +22,7 @@ class MyPDP(n:Int,v:Int,m:Store,symmetricDistance:Array[Array[Int]],maxPivot:Int
 
   val penaltyForUnrouted  = 10000
 
-  setObjectif(Objective(totalDistance + (penaltyForUnrouted*(n - Size(routes)))))
-
-  this.addToStringInfo(() => "objective: " + getObjective().value)
+  this.addToStringInfo(() => "objective: " + obj.value)
   this.addToStringInfo(() => "n:" + n + " v:" + v)
 
   val closestNeighboursForward = computeClosestNeighborsForward()
@@ -39,6 +36,10 @@ class MyPDP(n:Int,v:Int,m:Store,symmetricDistance:Array[Array[Int]],maxPivot:Int
   setArrivalLeaveLoadValue()
   setVehiclesMaxCargo(5)
   setVehiclesCapacityStrongConstraint()
+
+  val obj = new CascadingObjective(fastConstraints,
+    new CascadingObjective(slowConstraints,
+      new CascadingObjective(precedenceObj, Objective(totalDistance + (penaltyForUnrouted*(n - Size(routes)))))))
 }
 
 object PickupDeliveryS extends App{
@@ -49,7 +50,9 @@ object PickupDeliveryS extends App{
 
   println("PDP(n:" + n + " v:" + v + ")")
 
-  val symmetricDistanceMatrix = RoutingMatrixGenerator(n)._1
+  val routingMatrix = RoutingMatrixGenerator(n)
+
+  val symmetricDistanceMatrix = routingMatrix._1
 
   val model = new Store(checker = Some(new ErrorChecker()), noCycle = false)
 
@@ -69,10 +72,19 @@ object PickupDeliveryS extends App{
       vrp = myPDP),
     (moveResult:InsertPointMove) => InsertPointUnroutedFirst(
       unroutedNodesToInsert = () => Iterable(myPDP.getRelatedDelivery(moveResult.insertedPoint)),
-      relevantPredecessor = () => myPDP.getNodesBeforePosition(),
+      relevantPredecessor = () => myPDP.getNodesAfterPosition(isNodeInserted = false,moveResult.insertAtPosition),
       vrp = myPDP))name "insertCouple")
 
-  val search = insertCouple
+  val oneCoupleMove = Profile(DynAndThen(OnePointMove(
+    nodesToMove = () => myPDP.getRoutedPickupsPredecessors,
+    relevantNewPredecessors= () => myPDP.kFirst(10,myPDP.closestNeighboursForward,myPDP.isRouted),
+    vrp = myPDP),
+    (moveResult:OnePointMoveMove) => OnePointMove(
+      nodesToMove = () => List(myPDP.prev(myPDP.getRelatedDelivery(moveResult.movedPoint)).value),
+      relevantNewPredecessors= () => myPDP.getNodesAfterPosition(pos = moveResult.movedPointPosition),
+      vrp = myPDP, best = true))name "oneCoupleMove")
+
+  val search = insertCouple exhaust oneCoupleMove
 
   search.verbose = 4
   //  search.verboseWithExtraInfo(4,()=>myVRP.toString)
