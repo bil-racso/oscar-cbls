@@ -108,7 +108,7 @@ case class Store(override val verbose:Boolean = false,
     * @return a unique identifier that will be used to distinguish variables. basically, variables use this value to set up an arbitrary ordering for use in dictionnaries.
     */
   def registerVariable(v:AbstractVariable):Int = {
-    assert(!closed,"model is closed, cannot add variables")
+    require(!closed,"model is closed, cannot add variables")
     //ici on utilise des listes parce-que on ne peut pas utiliser des dictionnaires
     // vu que les variables n'ont pas encore recu leur unique ID.
     variables = QList(v,variables)
@@ -121,7 +121,7 @@ case class Store(override val verbose:Boolean = false,
     * @return a unique identifier that will be used to distinguish invariants. basically, invariants use this value to set up an arbitrary ordering for use in dictionnaries.
     */
   def registerInvariant(i:Invariant):Int = {
-    assert(!closed,"model is closed, cannot add invariant")
+    require(!closed,"model is closed, cannot add invariant")
     propagationElements = QList(i,propagationElements)
     GetNextID()
   }

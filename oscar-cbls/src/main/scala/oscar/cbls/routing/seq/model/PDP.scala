@@ -118,8 +118,10 @@ class PDP(override val n:Int, override val v:Int, override val m:Store, maxPivot
 
   def getRoutedDeliverys: Iterable[Int] = deliveryNodes.filter(isRouted(_))
 
+  //TODO: you CANNOT create new invariats on demand!
   def getRoutedPickupsPredecessors: Iterable[Int] = getRoutedPickups.map(prev.element(_).value)
 
+  //TODO: you CANNOT create new invariats on demand!
   def getRoutedDeliverysPredecessors: Iterable[Int] = getRoutedDeliverys.map(prev.element(_).value)
 
   def getUnroutedPickups: Iterable[Int] = pickupNodes.filter(!isRouted(_))
