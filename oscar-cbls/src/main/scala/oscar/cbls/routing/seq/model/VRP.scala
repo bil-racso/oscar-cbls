@@ -128,13 +128,11 @@ class VRP(val n: Int, val v: Int, val m: Store, maxPivotPerValuePercent:Int = 4)
 
   /**
     * This method generate all the nodes preceding a specific position
-    * You can either give a node or give the position of the node (usefull when using combinator DynAndThen)
-    * @param pos the position of the node
     * @param node the node
     * @return
     */
-  def getNodesBeforePosition(pos:Int = -1)(node:Int): List[Int] ={
-    val position = if(pos == -1)routes.newValue.positionOfFirstOccurrence(node).head else pos
+  def getNodesBeforePosition()(node:Int): List[Int] ={
+    val position = routes.newValue.positionOfAnyOccurrence(node).head
 
     var i = v-1
     while(routes.newValue.explorerAtAnyOccurrence(i).head.position > position)
@@ -152,28 +150,22 @@ class VRP(val n: Int, val v: Int, val m: Store, maxPivotPerValuePercent:Int = 4)
 
   /**
     * This method generate all the nodes following a specific position
-    * You can either give a node or give the position of the node (usefull when using combinator DynAndThen)
-    * @param pos the position of the node
     * @param node the node
     * @return
     */
-  def getNodesAfterPosition(isNodeInserted:Boolean = true, pos:Int = -1)(node:Int): List[Int] ={
-    val position = if(pos == -1)routes.newValue.positionOfFirstOccurrence(node).head else pos
+  def getNodesAfterPosition()(node:Int): List[Int] ={
+    val position = routes.newValue.positionOfAnyOccurrence(node).head
 
     var i = v-1
-    while(routes.newValue.explorerAtAnyOccurrence(i).head.position > pos)
+    while(routes.newValue.explorerAtAnyOccurrence(i).head.position > position)
       i -= 1
 
     var currentVExplorer = routes.newValue.explorerAtAnyOccurrence(i).head.next
     var acc:List[Int] = List()
     while (currentVExplorer match{
-      case Some(x) if x.position > pos && x.value >= v =>
+      case Some(x) if x.position >= position && x.value >= v =>
         acc = x.value :: acc
         currentVExplorer = x.next
-        true
-      case Some(x) if x.position == pos && !isNodeInserted =>
-        acc = x.value :: acc
-        currentVExplorer  = x.next
         true
       case _ => false}) {}
     acc.reverse

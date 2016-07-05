@@ -67,9 +67,7 @@ class PDP(override val n:Int, override val v:Int, override val m:Store, maxPivot
       "One node can't be a pickup node and a delivery node at the same time")
 
     var precedenceList = List.tabulate((n-v)/2)(c => (pickups(c),deliverys(c)))
-    println(precedenceList)
     precedenceObj = new IntVarObjective(Precedence(routes,precedenceList))
-    println(precedenceObj.detailedString(false,100))
     for(i <- pickups.indices){
       addPickupDeliveryCouple(pickups(i),deliverys(i),i)
     }
@@ -118,9 +116,9 @@ class PDP(override val n:Int, override val v:Int, override val m:Store, maxPivot
 
   def getRoutedDeliverys: Iterable[Int] = deliveryNodes.filter(isRouted(_))
 
-  def getRoutedPickupsPredecessors: Iterable[Int] = getRoutedPickups.map(prev.element(_).value)
+  def getRoutedPickupsPredecessors: Iterable[Int] = getRoutedPickups.map(prev(_).value)
 
-  def getRoutedDeliverysPredecessors: Iterable[Int] = getRoutedDeliverys.map(prev.element(_).value)
+  def getRoutedDeliverysPredecessors: Iterable[Int] = getRoutedDeliverys.map(prev(_).value)
 
   def getUnroutedPickups: Iterable[Int] = pickupNodes.filter(!isRouted(_))
 
@@ -128,15 +126,12 @@ class PDP(override val n:Int, override val v:Int, override val m:Store, maxPivot
 
   def getNodesBeforeRelatedDelivery()(node:Int):Iterable[Int] = {
     assert(isPickup(node), "The referenced node must be a pickup one !")
-    val route = getRouteOfVehicle(getVehicleOfNode(node))
-    route.takeWhile(_ != getRelatedDelivery(node))
+    getNodesBeforePosition()(getRelatedDelivery(node))
   }
 
   def getNodesAfterRelatedPickup()(node: Int): Iterable[Int] = {
     assert(isDelivery(node), "The referenced node must be a delivery one !")
-    var route = getRouteOfVehicle(getVehicleOfNode(node))
-    route = route.dropWhile(_ != getRelatedPickup(node))
-    route.drop(1)
+    getNodesAfterPosition()(getRelatedPickup(node))
   }
 
   /**

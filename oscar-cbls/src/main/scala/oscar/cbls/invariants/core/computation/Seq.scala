@@ -771,7 +771,8 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], val maxValue: Int, 
    // println("drop checkpoint")
     val checkpoint = toNotify.newValue
     assert(toNotify.newValue equals topCheckpoint)
-//    require(!topCheckpointIsActive || topCheckpointIsActiveDeactivated || (toNotify.newValue quickEquals topCheckpoint))
+    //require(!topCheckpointIsActive || topCheckpointIsActiveDeactivated || (toNotify.newValue quickEquals topCheckpoint),
+   // "failure topCheckpointIsActive:" + topCheckpointIsActive + " topCheckpointIsActiveDeactivated:" + topCheckpointIsActiveDeactivated + " toNotify.newValue:" + toNotify.newValue + " shouldQ=" + topCheckpoint)
     notifiedSinceTopCheckpoint = SeqUpdateLastNotified(checkpoint)
 
     //the checkpint might not have been communicated yet, so we look for newValue, since we are at the checkpoint.

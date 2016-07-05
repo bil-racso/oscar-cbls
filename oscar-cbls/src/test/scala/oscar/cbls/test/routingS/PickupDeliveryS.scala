@@ -7,13 +7,13 @@ import oscar.cbls.modeling.Algebra._
 import oscar.cbls.objective.{CascadingObjective, Objective}
 import oscar.cbls.routing.seq.model.{RoutedAndUnrouted, ClosestNeighbors, ConstantDistancePerVehicle, PDP}
 import oscar.cbls.routing.seq.neighborhood._
-import oscar.cbls.search.combinators.{RoundRobin, DynAndThen, Profile}
+import oscar.cbls.search.combinators.{BestSlopeFirst, RoundRobin, DynAndThen, Profile}
 
 /**
   * Created by fabian on 04-07-16.
   */
 
-class MyPDP(n:Int,v:Int,m:Store,symmetricDistance:Array[Array[Int]],maxPivot:Int)
+class MyPDP(n:Int,v:Int,m:Store,symmetricDistance:Array[Array[Int]],maxPivot:Int,pickups:Array[Int] = null, deliverys:Array[Int] = null)
   extends PDP(n,v,m,maxPivot) with ConstantDistancePerVehicle with ClosestNeighbors with RoutedAndUnrouted{
 
   setSymmetricDistanceMatrix(symmetricDistance)
@@ -32,7 +32,12 @@ class MyPDP(n:Int,v:Int,m:Store,symmetricDistance:Array[Array[Int]],maxPivot:Int
   this.addToStringInfo(() => "next:" + next.map(_.value).mkString(","))
   this.addToStringInfo(() => "prev:" + prev.map(_.value).mkString(","))
 
-  addPickupDeliveryCouples(Array.tabulate((n-v)/2)(p => p+v), Array.tabulate((n-v)/2)(d => d+v+((n-v)/2)))
+  if(pickups == null || deliverys == null){
+    require((n-v)%2 == 0,"You must have a pair number of nodes")
+    addPickupDeliveryCouples(Array.tabulate((n-v)/2)(p => p+v), Array.tabulate((n-v)/2)(d => d+v+((n-v)/2)))
+  }else{
+    addPickupDeliveryCouples(pickups,deliverys)
+  }
   setArrivalLeaveLoadValue()
   setVehiclesMaxCargo(5)
   setVehiclesCapacityStrongConstraint()
@@ -43,8 +48,8 @@ class MyPDP(n:Int,v:Int,m:Store,symmetricDistance:Array[Array[Int]],maxPivot:Int
 }
 
 object PickupDeliveryS extends App{
-  val n = 100
-  val v = 4
+  val n = 105
+  val v = 5
 
   val maxPivotPerValuePercent = 4
 
@@ -65,11 +70,11 @@ object PickupDeliveryS extends App{
   val insertCouple = Profile(DynAndThen(
     InsertPointUnroutedFirst(
       unroutedNodesToInsert = () => myPDP.getUnroutedPickups,
-      relevantPredecessor = ()=>myPDP.kFirst(10,myPDP.closestNeighboursForward,myPDP.isRouted),
+      relevantPredecessor = ()=>myPDP.kFirst(20,myPDP.closestNeighboursForward,myPDP.isRouted),
       vrp = myPDP),
     (moveResult:InsertPointMove) => InsertPointUnroutedFirst(
       unroutedNodesToInsert = () => Iterable(myPDP.getRelatedDelivery(moveResult.insertedPoint)),
-      relevantPredecessor = () => myPDP.getNodesAfterPosition(isNodeInserted = false,moveResult.insertAtPosition),
+      relevantPredecessor = () => myPDP.getNodesAfterRelatedPickup(),
       vrp = myPDP))name "insertCouple")
 
   val oneCoupleMove = Profile(DynAndThen(OnePointMove(
@@ -78,7 +83,7 @@ object PickupDeliveryS extends App{
     vrp = myPDP),
     (moveResult:OnePointMoveMove) => OnePointMove(
       nodesToMove = () => List(myPDP.prev(myPDP.getRelatedDelivery(moveResult.movedPoint)).value),
-      relevantNewPredecessors= () => myPDP.getNodesAfterPosition(pos = moveResult.movedPointPosition),
+      relevantNewPredecessors= () => myPDP.getNodesAfterRelatedPickup(),
       vrp = myPDP, best = true))name "oneCoupleMove")
 
   val onePointMovePD = Profile(new RoundRobin(List(OnePointMove(
@@ -91,9 +96,10 @@ object PickupDeliveryS extends App{
 
   def threeOpt(k:Int, breakSym:Boolean) = Profile(new ThreeOpt(() => nodes, ()=>myPDP.kFirst(k,myPDP.closestNeighboursForward), myPDP,breakSymmetry = breakSym, neighborhoodName = "ThreeOpt(k=" + k + ")"))
 
-  val search = insertCouple exhaust threeOpt(10,false) afterMove(println(myPDP))
+  val search = insertCouple exhaust new BestSlopeFirst(List(oneCoupleMove,insertCouple,onePointMovePD)) showObjectiveFunction(myPDP.obj)
 
-  search.verbose = 3
+  search.verbose = 2
+
   //  search.verboseWithExtraInfo(4,()=>myVRP.toString)
   search.paddingLength = 100
 
