@@ -810,7 +810,7 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], val maxValue: Int, 
     require(!topCheckpointIsActive || topCheckpointIsActiveDeactivated || (toNotify.newValue quickEquals topCheckpoint))
     notifiedSinceTopCheckpoint = SeqUpdateLastNotified(checkpoint)
 
-    popToNotifyUntilCheckpointDeclarationAtCheckpoint(toNotify,topCheckpoint,true) match{
+    popToNotifyUntilCheckpointDeclarationAtCheckpoint(toNotify,toNotify.newValue,true) match{
       case CheckpointDeclarationReachedAndRemoved(newToNotify:SeqUpdate) =>
         //we could wipe out this checkpoint from history
         toNotify = newToNotify
