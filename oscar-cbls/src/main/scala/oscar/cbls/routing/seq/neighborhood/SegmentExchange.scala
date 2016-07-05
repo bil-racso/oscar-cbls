@@ -1,5 +1,5 @@
 package oscar.cbls.routing.seq.neighborhood
-/*
+
 /*******************************************************************************
   * OscaR is free software: you can redistribute it and/or modify
   * it under the terms of the GNU Lesser General Public License as published by
@@ -26,6 +26,7 @@ import scala.collection.immutable.{SortedMap, SortedSet}
  * swaps segments of different vehicles
  * THIS IS EXPERIMENTAL
  */
+//TODO: add the possibilioty to inbhibit exchange with seg flip.
 case class SegmentExchange(val vrp: VRP,
                            relevantNeighbors:()=>Int=>Iterable[Int], //must be routed
                            vehicles:() => List[Int],
@@ -34,11 +35,11 @@ case class SegmentExchange(val vrp: VRP,
                            best:Boolean = false)
   extends EasyNeighborhood[ThreeOptMove](best,neighborhoodName) {
 
-  var firstSegmentStartPosition:Int = 0
-  var firstSegmentEndPosition:Int = 0
+  var firstSegmentStartPosition:Int = -1
+  var firstSegmentEndPosition:Int = -1
   var flipFirstSegment:Boolean = false
-  var secondSegmentStartPosition: Int = 0
-  var secondSegmentEndPosition: Int = 0
+  var secondSegmentStartPosition: Int = -1
+  var secondSegmentEndPosition: Int = -1
   var flipSecondSegment:Boolean = false
   var startVehicle = 0
 
@@ -77,70 +78,75 @@ case class SegmentExchange(val vrp: VRP,
           .groupBy(nodeAndRoute => nodeAndRoute._2))
       )
 
-      while(routeWithRelevantNeighborsTheirVehicleAndPositionGroupedByVehicles.nonEmpty){
-        val (firstNode,positionOfFistNode,firstNodeVehicleToNodeRoutePosition) = routeWithRelevantNeighborsTheirVehicleAndPositionGroupedByVehicles.head
+      while(routeWithRelevantNeighborsTheirVehicleAndPositionGroupedByVehicles.nonEmpty) {
+        val (firstNode, positionOfFistNode, firstNodeVehicleToNodeRoutePosition) = routeWithRelevantNeighborsTheirVehicleAndPositionGroupedByVehicles.head
         var candidateForAfterEndOfFirstSegment = routeWithRelevantNeighborsTheirVehicleAndPositionGroupedByVehicles.tail
         routeWithRelevantNeighborsTheirVehicleAndPositionGroupedByVehicles = candidateForAfterEndOfFirstSegment
 
 
-        while(candidateForAfterEndOfFirstSegment.nonEmpty){
-          val (secondNode,positionOfSecondNode,secondNodeVehicleToNodeRoutePosition) = candidateForAfterEndOfFirstSegment.head
+        while (candidateForAfterEndOfFirstSegment.nonEmpty) {
+          val (secondNode, positionOfSecondNode, secondNodeVehicleToNodeRoutePosition) = candidateForAfterEndOfFirstSegment.head
           candidateForAfterEndOfFirstSegment = candidateForAfterEndOfFirstSegment.tail
 
-          //now we search for nodes in other vehicles
-          val otherVehicles:Iterable[Int] = firstNodeVehicleToNodeRoutePosition.keys.filter((v:Int) => secondNodeVehicleToNodeRoutePosition.isDefinedAt(v))
+          //we define the first segment
 
-          for(otherVehicle <- otherVehicles) {
-            val relevantNeighborsForFirstNodeNodeVPos : Iterable[(Int, Int,Int)] = firstNodeVehicleToNodeRoutePosition(otherVehicle)
-            val relevantNeighborsForSecondNodeNodeVPos : Iterable[(Int, Int,Int)] = secondNodeVehicleToNodeRoutePosition(otherVehicle)
-
-            for((relevantFirstNode,relevantFirstPos,_) <- relevantNeighborsForFirstNodeNodeVPos){
-              for((relevantSecondNode,relevantSecondPos,_) <- relevantNeighborsForSecondNodeNodeVPos){
-
-
-
+          val isReversedFromFirstSecondNodesFirstSegment =
+            if (positionOfFistNode < positionOfSecondNode) {
+              firstSegmentStartPosition = positionOfFistNode + 1
+              firstSegmentEndPosition = positionOfSecondNode - 1
+              false
+            } else {
+              firstSegmentStartPosition = positionOfSecondNode + 1
+              firstSegmentEndPosition = positionOfFistNode - 1
+              true
             }
-          }
-        }
 
-        for ((afterEndOfFirstSegment, positionAfterEndOfFirstSegment, relevantNeighbours2GroupedByRoute) <- candicatedForAfterEndOfFirstSegment) {
-          this.endFirstSegment = endFirstSegment
-          val relevantVehicles = relevantNeighbors1GroupedByRoute.keySet.intersect(relevantNeighbours2GroupedByRoute.keySet)
-          for (otherVehicle <- relevantVehicles) {
-            val relevantNeighborsForSeg1BeforeStart: List[(Int, Int)] = relevantNeighbors1GroupedByRoute(otherVehicle).toList
-            val relevantNeighborsForSeg1End: List[(Int, Int)] = relevantNeighbours2GroupedByRoute(otherVehicle).toList
-            //TODO: on devrait prendre .next en fait.
-            val closestInPairs = Pairs.zipIntoAllPossiblePairs(relevantNeighborsForSeg1BeforeStart, relevantNeighborsForSeg1End).filter(
-            { case ((node1: Int, position1: Int), (node2: Int, position2: Int)) => node1 != node2 })
+          if (firstSegmentStartPosition <= firstSegmentEndPosition) {
 
-            //node1,node2,true if swapped, false otherwise
-            val closestInPairsInCorrectOrderSwapInfo = closestInPairs.map(
-            { case ((node1: Int, position1: Int), (node2: Int, position2: Int)) =>
-              if (position1 < position2) (node1, node2, false)
-              else (node2, node1, true)
-            })
+            //now we search for nodes in other vehicles
+            val otherVehicles : Iterable[Int] = firstNodeVehicleToNodeRoutePosition.keys.filter((v : Int) => secondNodeVehicleToNodeRoutePosition.isDefinedAt(v))
 
-            for ((node1, node2, swapped) <- closestInPairsInCorrectOrderSwapInfo) {
+            for (otherVehicle <- otherVehicles) {
+              val relevantNeighborsForFirstNodeNodeVPos : Iterable[(Int, Int, Int)] = firstNodeVehicleToNodeRoutePosition(otherVehicle)
+              val relevantNeighborsForSecondNodeNodeVPos : Iterable[(Int, Int, Int)] = secondNodeVehicleToNodeRoutePosition(otherVehicle)
 
-              beforeSecondSegment = node1
-              endSecondSegment = node2
-              reverseSecondSegment = swapped
-              reverseFirstSegment = swapped
+              for ((relevantFirstNode, relevantFirstPos, _) <- relevantNeighborsForFirstNodeNodeVPos) {
+                for ((relevantSecondNode, relevantSecondPos, _) <- relevantNeighborsForSecondNodeNodeVPos) {
 
+                  val isReversedFromFirstSecondNodesSecondSegment =
+                    if (relevantFirstPos < relevantSecondPos) {
+                      secondSegmentStartPosition = relevantFirstPos + 1
+                      secondSegmentEndPosition = relevantSecondPos - 1
+                      false
+                    } else {
+                      secondSegmentStartPosition = relevantSecondPos + 1
+                      secondSegmentEndPosition = relevantFirstPos - 1
+                      true
+                    }
 
-              encodeMove(beforeFirstSegment: Int, endFirstSegment: Int, reverseFirstSegment: Boolean,
-                beforeSecondSegment: Int, endSecondSegment: Int, reverseSecondSegment: Boolean)
+                  val shouldFlipSegments = isReversedFromFirstSecondNodesSecondSegment != isReversedFromFirstSecondNodesFirstSegment
+                  flipFirstSegment = shouldFlipSegments
+                  flipFirstSegment = shouldFlipSegments
 
-              if (evaluateCurrentMoveObjTrueIfStopRequired(evalObjOnEncodedMove())) {
-                startVehicle = vehicle1 + 1
-                return
+                  doMove(firstSegmentStartPosition, firstSegmentEndPosition, flipFirstSegment,
+                    secondSegmentStartPosition, secondSegmentEndPosition, flipSecondSegment)
+
+                  if (evaluateCurrentMoveObjTrueIfStopRequired(evalObjAndRollBack())) {
+                    seq.releaseCurrentCheckpointAtCheckpoint()
+                    startVehicle = firstVehicle +1
+                    return
+                  }
+
+                }
               }
-            }
-          }
-        }
-      }
-    }
-  }
+            } //end for otherVehicle
+          } //end if (firstSegmentFomPosIncluded <= firstSegmentToPosIncluded)
+        }//end loop on second node first segment
+      }//end loop on first node first segment
+
+    }//end loop on vehicles
+    seq.releaseCurrentCheckpointAtCheckpoint()
+  } //end def
 
   override def instantiateCurrentMove(newObj: Int): SegmentExchangeMove = {
     SegmentExchangeMove(
@@ -185,4 +191,3 @@ case class SegmentExchangeMove(firstSegmentStartPosition:Int,
       " secondSegmentStartPosition:" + secondSegmentStartPosition + " secondSegmentEndPosition:" + secondSegmentEndPosition + " flipSecondSegment:" + flipSecondSegment + objToString + ")"
   }
 }
-*/
