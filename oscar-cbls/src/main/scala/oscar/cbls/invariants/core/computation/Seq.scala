@@ -725,38 +725,38 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], val maxValue: Int, 
    * @param checkpoint
    * @return CleaningResult according to the performed cleaning
    */
-  private def popToNotifyUntilCheckpointDeclarationAtCheckpoint(updates:SeqUpdate,checkpoint:IntSequence,removeDeclaration:Boolean):CleaningResult = {
+  private def popToNotifyUntilCheckpointDeclarationAtCheckpoint(updates:SeqUpdate,searchedCheckpoint:IntSequence,removeDeclaration:Boolean):CleaningResult = {
     updates match{
       case SeqUpdateInsert(value:Int,pos:Int,prev:SeqUpdate) =>
-        popToNotifyUntilCheckpointDeclarationAtCheckpoint(prev,checkpoint,removeDeclaration) match{
+        popToNotifyUntilCheckpointDeclarationAtCheckpoint(prev,searchedCheckpoint,removeDeclaration) match{
           case NoSimplificationPerformed => NoSimplificationPerformed
           case x => x
         }
 
       case SeqUpdateMove(fromIncluded:Int,toIncluded:Int,after:Int,flip:Boolean,prev:SeqUpdate) =>
-        popToNotifyUntilCheckpointDeclarationAtCheckpoint(prev,checkpoint,removeDeclaration) match{
+        popToNotifyUntilCheckpointDeclarationAtCheckpoint(prev,searchedCheckpoint,removeDeclaration) match{
           case NoSimplificationPerformed => NoSimplificationPerformed
           case x => x
         }
 
       case SeqUpdateRemove(position:Int,prev:SeqUpdate) =>
-        popToNotifyUntilCheckpointDeclarationAtCheckpoint(prev,checkpoint,removeDeclaration) match{
+        popToNotifyUntilCheckpointDeclarationAtCheckpoint(prev,searchedCheckpoint,removeDeclaration) match{
           case NoSimplificationPerformed => NoSimplificationPerformed
           case x => x
         }
 
       case SeqUpdateSet(value:IntSequence) =>
-        if(value quickEquals checkpoint) CheckpointDeclarationNotRemovedAndSequenceSimplified(updates)
+        if(value quickEquals searchedCheckpoint) CheckpointDeclarationNotRemovedAndSequenceSimplified(updates)
         else NoSimplificationPerformed
 
       case SeqUpdateLastNotified(value:IntSequence) =>
         //check for equality
-        if(value quickEquals checkpoint) CheckpointDeclarationNotRemovedAndSequenceSimplified(updates)
+        if(value quickEquals searchedCheckpoint) CheckpointDeclarationNotRemovedAndSequenceSimplified(updates)
         else NoSimplificationPerformed
 
       case SeqUpdateDefineCheckpoint(prev:SeqUpdate,isActive:Boolean) =>
         //here
-        require(updates.newValue quickEquals checkpoint, "require fail on quick equals: " + updates.newValue + "should== " + checkpoint)
+        require(updates.newValue quickEquals searchedCheckpoint, "require fail on quick equals: " + updates.newValue + "should== " + searchedCheckpoint)
         if(removeDeclaration) {
           CheckpointDeclarationReachedAndRemoved(prev)
         }else{
@@ -774,7 +774,8 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], val maxValue: Int, 
     require(!topCheckpointIsActive || topCheckpointIsActiveDeactivated || (toNotify.newValue quickEquals topCheckpoint))
     notifiedSinceTopCheckpoint = SeqUpdateLastNotified(checkpoint)
 
-    popToNotifyUntilCheckpointDeclarationAtCheckpoint(toNotify,topCheckpoint,true) match{
+    //the checkpint might not have been communicated yet, so we look for newValue, since we are at the checkpoint.
+    popToNotifyUntilCheckpointDeclarationAtCheckpoint(toNotify,toNotify.newValue,true) match{
       case CheckpointDeclarationReachedAndRemoved(newToNotify:SeqUpdate) =>
         //we could wipe out this checkpoint from history
         toNotify = newToNotify
