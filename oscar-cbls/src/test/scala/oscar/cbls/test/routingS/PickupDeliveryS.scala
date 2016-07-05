@@ -6,8 +6,8 @@ import oscar.cbls.invariants.lib.seq.Size
 import oscar.cbls.modeling.Algebra._
 import oscar.cbls.objective.{CascadingObjective, Objective}
 import oscar.cbls.routing.seq.model.{RoutedAndUnrouted, ClosestNeighbors, ConstantDistancePerVehicle, PDP}
-import oscar.cbls.routing.seq.neighborhood.{OnePointMoveMove, OnePointMove, InsertPointMove, InsertPointUnroutedFirst}
-import oscar.cbls.search.combinators.{DynAndThen, Profile}
+import oscar.cbls.routing.seq.neighborhood._
+import oscar.cbls.search.combinators.{RoundRobin, DynAndThen, Profile}
 
 /**
   * Created by fabian on 04-07-16.
@@ -20,7 +20,7 @@ class MyPDP(n:Int,v:Int,m:Store,symmetricDistance:Array[Array[Int]],maxPivot:Int
 
   override protected def getDistance(from : Int, to : Int) : Int = symmetricDistance(from)(to)
 
-  val penaltyForUnrouted  = 10000
+  val penaltyForUnrouted  = 100000
 
   this.addToStringInfo(() => "objective: " + obj.value)
   this.addToStringInfo(() => "n:" + n + " v:" + v)
@@ -43,7 +43,7 @@ class MyPDP(n:Int,v:Int,m:Store,symmetricDistance:Array[Array[Int]],maxPivot:Int
 }
 
 object PickupDeliveryS extends App{
-  val n = 20
+  val n = 100
   val v = 4
 
   val maxPivotPerValuePercent = 4
@@ -60,9 +60,6 @@ object PickupDeliveryS extends App{
   val nodes = myPDP.nodes
 
   model.close()
-
-  println(myPDP)
-
 
 
   val insertCouple = Profile(DynAndThen(
@@ -84,13 +81,25 @@ object PickupDeliveryS extends App{
       relevantNewPredecessors= () => myPDP.getNodesAfterPosition(pos = moveResult.movedPointPosition),
       vrp = myPDP, best = true))name "oneCoupleMove")
 
-  val search = insertCouple exhaust oneCoupleMove
+  val onePointMovePD = Profile(new RoundRobin(List(OnePointMove(
+    nodesToMove = () => myPDP.getRoutedPickupsPredecessors,
+    relevantNewPredecessors = () => myPDP.getNodesBeforeRelatedDelivery(),
+    vrp = myPDP,best = true),OnePointMove(
+    nodesToMove = () => myPDP.getRoutedDeliverysPredecessors,
+    relevantNewPredecessors = () => myPDP.getNodesAfterRelatedPickup(),
+    vrp = myPDP, best = true)))name "OnePointMove PickupDelivery")
 
-  search.verbose = 4
+  def threeOpt(k:Int, breakSym:Boolean) = Profile(new ThreeOpt(() => nodes, ()=>myPDP.kFirst(k,myPDP.closestNeighboursForward), myPDP,breakSymmetry = breakSym, neighborhoodName = "ThreeOpt(k=" + k + ")"))
+
+  val search = insertCouple exhaust threeOpt(10,false) afterMove(println(myPDP))
+
+  search.verbose = 3
   //  search.verboseWithExtraInfo(4,()=>myVRP.toString)
   search.paddingLength = 100
 
   search.doAllMoves(obj=myPDP.obj)
+
+  search.profilingStatistics
 
   println(myPDP)
   println(myPDP.obj)
