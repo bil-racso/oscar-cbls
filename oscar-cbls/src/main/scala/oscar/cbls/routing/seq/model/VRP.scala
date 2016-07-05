@@ -36,7 +36,8 @@ import scala.math._
  * they all have a different depot (but yo ucan put them at the same place if you want)
  *
  * Info: after instantiation, each customer point is unrouted, and each vehicle loop on his deposit.
- * @param n the number of points (deposits and customers) in the problem.
+  *
+  * @param n the number of points (deposits and customers) in the problem.
  * @param v the number of vehicles.
  * @param m the model.
  * @author renaud.delandtsheer@cetic.be
@@ -62,14 +63,16 @@ class VRP(val n: Int, val v: Int, val m: Store, maxPivotPerValuePercent:Int = 4)
 
   /**
    * Returns if a given point is a depot.
-   * @param n the point queried.
+    *
+    * @param n the point queried.
    * @return true if the point is a depot, else false.
    */
   def isADepot(n: Int): Boolean = { n < v }
 
   /**
    * Returns if a given point is still routed.
-   * @param n the point queried.
+    *
+    * @param n the point queried.
    * @return true if the point is still routed, else false.
    */
   def isRouted(n: Int): Boolean = {routes.value.contains(n)}
@@ -102,7 +105,8 @@ class VRP(val n: Int, val v: Int, val m: Store, maxPivotPerValuePercent:Int = 4)
 
   /**
    * the route of the vehicle, starting at the vehicle node, and not including the last vehicle node
-   * @param vehicle
+    *
+    * @param vehicle
    * @return
    */
   def getRouteOfVehicle(vehicle:Int):List[Int] = {
@@ -121,6 +125,41 @@ class VRP(val n: Int, val v: Int, val m: Store, maxPivotPerValuePercent:Int = 4)
   def getNodesOfVehicle(vehicle:Int):SortedSet[Int] = getNodesOfVehicleFromScratch(vehicle)
 
   def getNodesOfVehicleFromScratch(vehicle:Int):SortedSet[Int] = SortedSet.empty[Int] ++ getRouteOfVehicle(vehicle)
+
+  def getNodesBeforePosition()(pos:Int): List[Int] ={
+    var i = v-1
+    while(routes.newValue.explorerAtAnyOccurrence(v-i).head.position > pos)
+      i -= 1
+    var currentVExplorer = routes.newValue.explorerAtAnyOccurrence(i).head.next
+    var acc:List[Int] = List(i)
+    while (currentVExplorer match{
+      case Some(x) if x.position < pos && x.value >= v =>
+        acc = x.value :: acc
+        currentVExplorer = x.next
+        true
+      case _ => false}) {}
+    acc.reverse
+  }
+
+  def getNodesAfterPosition()(pos:Int, isNodeInserted:Boolean = true): List[Int] ={
+    var i = 0
+    while(routes.newValue.explorerAtAnyOccurrence(v-i).head.position < pos)
+      i += 1
+    i -= 1
+    var currentVExplorer = routes.newValue.explorerAtAnyOccurrence(i).head.next
+    var acc:List[Int] = List(i)
+    while (currentVExplorer match{
+      case Some(x) if x.position > pos && x.value >= v =>
+        acc = x.value :: acc
+        currentVExplorer = x.next
+        true
+      case Some(x) if x.position == pos && !isNodeInserted =>
+        acc = x.value :: acc
+        currentVExplorer  = x.next
+        true
+      case _ => false}) {}
+    acc.reverse
+  }
   /**
    *
    * @param node a node
@@ -169,7 +208,8 @@ class VRP(val n: Int, val v: Int, val m: Store, maxPivotPerValuePercent:Int = 4)
 
   /**
    * Redefine the toString method.
-   * @return the VRP problem as a String.
+    *
+    * @return the VRP problem as a String.
    */
   override def toString: String = {
     var toReturn = unroutedToString
@@ -247,7 +287,8 @@ trait TotalConstantDistance extends VRP{
 /**
  * Computes the nearest neighbors of each point.
  * Used by some neighborhood searches.
- * @author renaud.delandtsheer@cetic.be
+  *
+  * @author renaud.delandtsheer@cetic.be
  * @author Florent Ghilain (UMONS)
  * @author yoann.guyot@cetic.be
  */
@@ -293,7 +334,8 @@ trait ClosestNeighbors extends VRP {
    * It allows us to add a filter (optional) on the neighbor.
    *
    * Info : it uses the Currying feature.
-   * @param k the parameter k.
+    *
+    * @param k the parameter k.
    * @param filter the filter.
    * @param node the given node.
    * @return the k nearest neighbor as an iterable list of Int.
@@ -322,7 +364,8 @@ trait ClosestNeighbors extends VRP {
 /**
  * Maintains the set of unrouted nodes.
  * Info : those whose next is N.
- * @author renaud.delandtsheer@cetic.be
+  *
+  * @author renaud.delandtsheer@cetic.be
  * @author Florent Ghilain (UMONS)
  * @author yoann.guyot@cetic.be
  */
@@ -348,7 +391,8 @@ trait AbstractPenaltyForUnrouted extends VRP{
 
 /**
  * Maintains and fixes a penalty weight of unrouted nodes.
- * @author renaud.delandtsheer@cetic.be
+  *
+  * @author renaud.delandtsheer@cetic.be
  * @author Florent Ghilain (UMONS)
  * @author yoann.guyot@cetic.be
  */

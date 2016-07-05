@@ -756,7 +756,7 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], val maxValue: Int, 
 
       case SeqUpdateDefineCheckpoint(prev:SeqUpdate,isActive:Boolean) =>
         //here
-        require(updates.newValue quickEquals checkpoint)
+        require(updates.newValue quickEquals checkpoint, "require fail on quick equals: " + updates.newValue + "should== " + checkpoint)
         if(removeDeclaration) {
           CheckpointDeclarationReachedAndRemoved(prev)
         }else{

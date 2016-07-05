@@ -46,7 +46,7 @@ import RedBlackTreeMapLib._
 
 //must use trait here because of specialization, so we ensure that this trait is compiled into a java interface by avoiding method code altogether. in the trait.
 //as a consequence, there are duplicates in the classes implementing this trait.
-abstract class RedBlackTreeMap[@specialized(Int) V]{
+trait RedBlackTreeMap[@specialized(Int) V]{
 
   /* We could have required that K be <: Ordered[K], but this is
   actually less general than requiring an implicit parameter that can
@@ -165,7 +165,7 @@ case class L[@specialized(Int) V]() extends RedBlackTreeMap[V]  {
 
 // A tree node.
 case class T[@specialized(Int) V](c : Boolean, l : RedBlackTreeMap[V], k : Int, v : Option[V], r : RedBlackTreeMap[V]) extends RedBlackTreeMap[V] {
-  val mSize = l.size + r.size + 1
+  lazy val mSize = l.size + r.size + 1
   override def size = mSize
   override def isEmpty = false
 
