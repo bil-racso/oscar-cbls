@@ -22,7 +22,7 @@ import oscar.cbls.invariants.lib.seq.{PositionsOf, Size}
 import oscar.cbls.modeling.Algebra._
 import oscar.cbls.objective.{CascadingObjective, Objective}
 import oscar.cbls.routing.seq.model._
-import oscar.cbls.routing.seq.neighborhood.{OnePointMove, ThreeOpt, TwoOpt1}
+import oscar.cbls.routing.seq.neighborhood.{SegmentExchange, OnePointMove, ThreeOpt, TwoOpt1}
 import oscar.cbls.search.combinators.{BestSlopeFirst, Profile}
 
 import scala.util.Random
@@ -99,7 +99,13 @@ object routingS extends App{
 
   def threeOpt(k:Int, breakSym:Boolean) = Profile(new ThreeOpt(() => nodes, ()=>myVRP.kFirst(k,myVRP.closestNeighboursForward), myVRP,breakSymmetry = breakSym, neighborhoodName = "ThreeOpt(k=" + k + ")"))
 
-  val search = BestSlopeFirst(List(onePtMove,twoOpt, threeOpt(10,true),onePtMoveSolvingRestrictions)) exhaust threeOpt(20,true)
+  val segExchange = SegmentExchange(myVRP,
+    ()=>myVRP.kFirst(40,myVRP.computeClosestNeighborsMinFWBW()), //must be routed
+    vehicles=() => myVRP.vehicles)
+
+  val search = BestSlopeFirst(List(onePtMove,twoOpt, threeOpt(10,true),onePtMoveSolvingRestrictions)) exhaust threeOpt(20,true) exhaust segExchange
+
+
 
   search.verbose = 1
   //  search.verboseWithExtraInfo(4,()=>myVRP.toString)

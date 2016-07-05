@@ -16,24 +16,24 @@ package oscar.cbls.routing.seq.neighborhood
   ******************************************************************************/
 
 import oscar.cbls.algo.rb.RedBlackTreeMap
-import oscar.cbls.algo.search.{HotRestart, Pairs}
+import oscar.cbls.algo.search.HotRestart
 import oscar.cbls.routing.seq.model.VRP
 import oscar.cbls.search.core.EasyNeighborhood
 
-import scala.collection.immutable.{SortedMap, SortedSet}
+import scala.collection.immutable.SortedSet
 
 /**
  * swaps segments of different vehicles
  * THIS IS EXPERIMENTAL
  */
-//TODO: add the possibilioty to inbhibit exchange with seg flip.
 case class SegmentExchange(val vrp: VRP,
                            relevantNeighbors:()=>Int=>Iterable[Int], //must be routed
-                           vehicles:() => List[Int],
+                           vehicles:() => Iterable[Int],
                            neighborhoodName:String = "SegmentExchange",
                            hotRestart:Boolean = true,
-                           best:Boolean = false)
-  extends EasyNeighborhood[ThreeOptMove](best,neighborhoodName) {
+                           best:Boolean = false,
+                           tryFlip:Boolean = true)
+  extends EasyNeighborhood[SegmentExchangeMove](best,neighborhoodName) {
 
   var firstSegmentStartPosition:Int = -1
   var firstSegmentEndPosition:Int = -1
@@ -101,30 +101,31 @@ case class SegmentExchange(val vrp: VRP,
               true
             }
 
-          if (firstSegmentStartPosition <= firstSegmentEndPosition) {
+          //now we search for nodes in other vehicles
+          val otherVehicles : Iterable[Int] = firstNodeVehicleToNodeRoutePosition.keys.filter((v : Int) => secondNodeVehicleToNodeRoutePosition.isDefinedAt(v))
 
-            //now we search for nodes in other vehicles
-            val otherVehicles : Iterable[Int] = firstNodeVehicleToNodeRoutePosition.keys.filter((v : Int) => secondNodeVehicleToNodeRoutePosition.isDefinedAt(v))
+          for (otherVehicle <- otherVehicles) {
+            val relevantNeighborsForFirstNodeNodeVPos : Iterable[(Int, Int, Int)] = firstNodeVehicleToNodeRoutePosition(otherVehicle)
+            val relevantNeighborsForSecondNodeNodeVPos : Iterable[(Int, Int, Int)] = secondNodeVehicleToNodeRoutePosition(otherVehicle)
 
-            for (otherVehicle <- otherVehicles) {
-              val relevantNeighborsForFirstNodeNodeVPos : Iterable[(Int, Int, Int)] = firstNodeVehicleToNodeRoutePosition(otherVehicle)
-              val relevantNeighborsForSecondNodeNodeVPos : Iterable[(Int, Int, Int)] = secondNodeVehicleToNodeRoutePosition(otherVehicle)
+            for ((relevantFirstNode, relevantFirstPos, _) <- relevantNeighborsForFirstNodeNodeVPos) {
+              for ((relevantSecondNode, relevantSecondPos, _) <- relevantNeighborsForSecondNodeNodeVPos) {
 
-              for ((relevantFirstNode, relevantFirstPos, _) <- relevantNeighborsForFirstNodeNodeVPos) {
-                for ((relevantSecondNode, relevantSecondPos, _) <- relevantNeighborsForSecondNodeNodeVPos) {
+                val isReversedFromFirstSecondNodesSecondSegment =
+                  if (relevantFirstPos < relevantSecondPos) {
+                    secondSegmentStartPosition = relevantFirstPos + 1
+                    secondSegmentEndPosition = relevantSecondPos - 1
+                    false
+                  } else {
+                    secondSegmentStartPosition = relevantSecondPos + 1
+                    secondSegmentEndPosition = relevantFirstPos - 1
+                    true
+                  }
 
-                  val isReversedFromFirstSecondNodesSecondSegment =
-                    if (relevantFirstPos < relevantSecondPos) {
-                      secondSegmentStartPosition = relevantFirstPos + 1
-                      secondSegmentEndPosition = relevantSecondPos - 1
-                      false
-                    } else {
-                      secondSegmentStartPosition = relevantSecondPos + 1
-                      secondSegmentEndPosition = relevantFirstPos - 1
-                      true
-                    }
+                val shouldFlipSegments = isReversedFromFirstSecondNodesSecondSegment != isReversedFromFirstSecondNodesFirstSegment
 
-                  val shouldFlipSegments = isReversedFromFirstSecondNodesSecondSegment != isReversedFromFirstSecondNodesFirstSegment
+                if(tryFlip || !shouldFlipSegments) {
+
                   flipFirstSegment = shouldFlipSegments
                   flipFirstSegment = shouldFlipSegments
 
@@ -133,14 +134,13 @@ case class SegmentExchange(val vrp: VRP,
 
                   if (evaluateCurrentMoveObjTrueIfStopRequired(evalObjAndRollBack())) {
                     seq.releaseCurrentCheckpointAtCheckpoint()
-                    startVehicle = firstVehicle +1
+                    startVehicle = firstVehicle + 1
                     return
                   }
-
                 }
               }
-            } //end for otherVehicle
-          } //end if (firstSegmentFomPosIncluded <= firstSegmentToPosIncluded)
+            }
+          } //end for otherVehicle
         }//end loop on second node first segment
       }//end loop on first node first segment
 
