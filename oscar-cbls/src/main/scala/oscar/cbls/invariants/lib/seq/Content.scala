@@ -83,7 +83,7 @@ case class Content(v:SeqValue)
         require(value quickEquals v.value)
         //start at the previous value; easy game.
         true
-      case SeqUpdateSet(value:IntSequence) =>
+      case SeqUpdateAssign(value:IntSequence) =>
         //raw assign, no incremental possible
         false
       case SeqUpdateDefineCheckpoint(prev:SeqUpdate,isActive:Boolean) =>

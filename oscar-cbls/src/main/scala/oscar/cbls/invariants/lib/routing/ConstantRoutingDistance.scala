@@ -331,7 +331,7 @@ class ConstantRoutingDistance(routes:ChangingSeqValue,
       case SeqUpdateLastNotified(value:IntSequence) =>
         require(value quickEquals routes.value)
         true //we are starting from the previous value
-      case SeqUpdateSet(value : IntSequence) =>
+      case SeqUpdateAssign(value : IntSequence) =>
         false //impossible to go incremental
     }
   }
