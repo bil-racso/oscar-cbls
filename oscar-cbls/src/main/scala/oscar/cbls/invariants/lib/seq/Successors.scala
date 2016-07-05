@@ -121,7 +121,7 @@ class Successors(sequence:ChangingSeqValue, successorValues:Array[CBLSSetVar])
         require(value quickEquals sequence.value)
         Some(SortedSet.empty[Int]) //we are starting from the previous value
 
-      case SeqUpdateSet(value : IntSequence) =>
+      case SeqUpdateAssign(value : IntSequence) =>
         None //impossible to go incremental
     }
   }

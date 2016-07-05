@@ -379,7 +379,7 @@ class Precedence(seq:ChangingSeqValue,
       case SeqUpdateLastNotified(value : IntSequence) =>
         true //we are starting from the previous value
 
-      case SeqUpdateSet(value : IntSequence) =>
+      case SeqUpdateAssign(value : IntSequence) =>
         false //impossible to go incremental
     }
   }

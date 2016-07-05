@@ -16,11 +16,11 @@ abstract class InsertPoint(vrp: VRP,
   val v = vrp.v
   val seq = vrp.routes
 
-  var insertAtPosition:Int = 0
-  var insertedPoint:Int = 0
+  var insertAtPositionForInstantiation:Int = -1
+  var insertedPointForInstantiation:Int = -1
 
   override def instantiateCurrentMove(newObj: Int) =
-    InsertPointMove(insertedPoint, insertAtPosition, newObj, this, vrp, neighborhoodNameToString)
+    InsertPointMove(insertedPointForInstantiation, insertAtPositionForInstantiation, newObj, this, vrp, neighborhoodNameToString)
 
   def doMove(insertedPoint: Int, insertAtPosition:Int) {
     seq.insertAtPosition(insertedPoint, insertAtPosition)
@@ -85,19 +85,19 @@ case class InsertPointUnroutedFirst(unroutedNodesToInsert: () => Iterable[Int],
 
     val iterationSchemeIterator = iterationScheme.iterator
     while (iterationSchemeIterator.hasNext) {
-      insertedPoint = iterationSchemeIterator.next()
-      assert(!vrp.isRouted(insertedPoint),
+      insertedPointForInstantiation = iterationSchemeIterator.next()
+      assert(!vrp.isRouted(insertedPointForInstantiation),
         "The search zone should be restricted to unrouted nodes when inserting.")
 
-      val it2 = relevantNeighborsNow(insertedPoint).iterator
+      val it2 = relevantNeighborsNow(insertedPointForInstantiation).iterator
       while (it2.hasNext) {
         val pointWhereToInsertAfter = it2.next() //TODO: also consider inserting before this node, actually?
         seqValue.positionOfAnyOccurrence(pointWhereToInsertAfter) match{
           case None => //not routed?!
           case Some(position) =>
-            insertAtPosition = position + 1
+            insertAtPositionForInstantiation = position + 1
 
-            doMove(insertedPoint, insertAtPosition)
+            doMove(insertedPointForInstantiation, insertAtPositionForInstantiation)
 
             if (evaluateCurrentMoveObjTrueIfStopRequired(evalObjAndRollBack())) {
               seq.releaseCurrentCheckpointAtCheckpoint()
@@ -105,13 +105,16 @@ case class InsertPointUnroutedFirst(unroutedNodesToInsert: () => Iterable[Int],
                 if (iterationSchemeIterator.hasNext)
                   iterationSchemeIterator.next()
                 else iterationScheme.head
-              } else insertedPoint + 1
+              } else insertedPointForInstantiation + 1
+              insertAtPositionForInstantiation = -1
               return
             }
         }
       }
     }
+
     seq.releaseCurrentCheckpointAtCheckpoint()
+    insertAtPositionForInstantiation = -1
   }
 
   //this resets the internal state of the Neighborhood
@@ -171,7 +174,7 @@ case class InsertPointRoutedFirst(insertionPoints:()=>Iterable[Int],
       seqValue.positionOfAnyOccurrence(pointWhereToInsertAfter) match{
         case None => //not routed?
         case Some(position) =>
-          insertAtPosition = position + 1
+          insertAtPositionForInstantiation = position + 1
 
           val iteratorOnPointsToInsert = (insertedPointsSymetryClass match {
             case None => unroutedNodesToInsertNow(pointWhereToInsertAfter)
@@ -179,13 +182,14 @@ case class InsertPointRoutedFirst(insertionPoints:()=>Iterable[Int],
           }).iterator
 
           while (iteratorOnPointsToInsert.hasNext) {
-            insertedPoint = iteratorOnPointsToInsert.next()
+            insertedPointForInstantiation = iteratorOnPointsToInsert.next()
 
-            doMove(insertedPoint, insertAtPosition)
+            doMove(insertedPointForInstantiation, insertAtPositionForInstantiation)
 
             if (evaluateCurrentMoveObjTrueIfStopRequired(evalObjAndRollBack())) {
               seq.releaseCurrentCheckpointAtCheckpoint()
               startIndice = pointWhereToInsertAfter + 1
+              insertAtPositionForInstantiation = -1
               return
             }
           }
@@ -194,6 +198,7 @@ case class InsertPointRoutedFirst(insertionPoints:()=>Iterable[Int],
 
     }
     seq.releaseCurrentCheckpointAtCheckpoint()
+    insertAtPositionForInstantiation = -1
   }
 
   //this resets the internal state of the Neighborhood
