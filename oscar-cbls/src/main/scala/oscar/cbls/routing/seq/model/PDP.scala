@@ -26,7 +26,6 @@ class PDP(override val n:Int, override val v:Int, override val m:Store, maxPivot
   private val pickupNodes:Array[Int] = new Array[Int]((n-v)/2)
   private val deliveryNodes:Array[Int] = new Array[Int]((n-v)/2)
 
-  val (next,prev) = RouteSuccessorAndPredecessors(routes,v,n)
   val vehicleOfNodes = VehicleOfNodes(routes,v)
 
   val fastConstraints = new ConstraintSystem(m)

@@ -18,7 +18,7 @@ package oscar.cbls.routing.seq.model
 import oscar.cbls.algo.seq.functional.IntSequence
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.lib.numeric.Sum
-import oscar.cbls.invariants.lib.routing.{VehicleOfNodes, RoutingConventionMethods, NodeOfVehicle, ConstantRoutingDistance}
+import oscar.cbls.invariants.lib.routing._
 import oscar.cbls.invariants.lib.seq.{Content, Size}
 import oscar.cbls.invariants.lib.set.Diff
 import oscar.cbls.modeling.Algebra._
@@ -60,6 +60,8 @@ class VRP(val n: Int, val v: Int, val m: Store, maxPivotPerValuePercent:Int = 4)
    * the range vehicle of the problem.
    */
   val vehicles = 0 until v
+
+  val (next,prev) = RouteSuccessorAndPredecessors(routes,v,n)
 
   /**
    * Returns if a given point is a depot.
@@ -247,7 +249,7 @@ trait ConstantDistancePerVehicle extends TotalConstantDistance{
   var distancePerVehicle:Array[CBLSIntVar] = null
 
   override def setSymmetricDistanceMatrix(symmetricDistanceMatrix:Array[Array[Int]]){
-    this.distanceMatrix = distanceMatrix
+    this.distanceMatrix = symmetricDistanceMatrix
     this.matrixIsSymmetric = true
     require(distancePerVehicle == null)
     distancePerVehicle = ConstantRoutingDistance(routes, v ,false,symmetricDistanceMatrix,true)
@@ -255,7 +257,7 @@ trait ConstantDistancePerVehicle extends TotalConstantDistance{
   }
 
   override def setAsymmetricDistanceMatrix(asymetricDistanceMatrix:Array[Array[Int]]){
-    this.distanceMatrix = distanceMatrix
+    this.distanceMatrix = asymetricDistanceMatrix
     this.matrixIsSymmetric = false
     require(distancePerVehicle == null)
     distancePerVehicle = ConstantRoutingDistance(routes, v ,false,asymetricDistanceMatrix,false)
@@ -279,14 +281,14 @@ trait TotalConstantDistance extends VRP{
   def setSymmetricDistanceMatrix(symmetricDistanceMatrix:Array[Array[Int]]){
     require(totalDistance == null)
     assert(ConstantRoutingDistance.isDistanceSymmetric(symmetricDistanceMatrix))
-    this.distanceMatrix = distanceMatrix
+    this.distanceMatrix = symmetricDistanceMatrix
     this.matrixIsSymmetric = true
     totalDistance = ConstantRoutingDistance(routes, v ,false,symmetricDistanceMatrix,true)(0)
   }
 
   def setAsymmetricDistanceMatrix(asymetricDistanceMatrix:Array[Array[Int]]){
     require(totalDistance == null)
-    this.distanceMatrix = distanceMatrix
+    this.distanceMatrix = asymetricDistanceMatrix
     this.matrixIsSymmetric = false
     totalDistance = ConstantRoutingDistance(routes, v ,false,asymetricDistanceMatrix,false)(0)
   }
