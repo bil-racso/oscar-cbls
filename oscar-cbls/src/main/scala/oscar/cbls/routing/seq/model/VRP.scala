@@ -18,7 +18,7 @@ package oscar.cbls.routing.seq.model
 import oscar.cbls.algo.seq.functional.IntSequence
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.lib.numeric.Sum
-import oscar.cbls.invariants.lib.routing.{VehicleOfNodes, RoutingConventionMethods, NodeOfVehicle, ConstantRoutingDistance}
+import oscar.cbls.invariants.lib.routing._
 import oscar.cbls.invariants.lib.seq.{Content, Size}
 import oscar.cbls.invariants.lib.set.Diff
 import oscar.cbls.modeling.Algebra._
@@ -60,6 +60,8 @@ class VRP(val n: Int, val v: Int, val m: Store, maxPivotPerValuePercent:Int = 4)
    * the range vehicle of the problem.
    */
   val vehicles = 0 until v
+
+  val (next,prev) = RouteSuccessorAndPredecessors(routes,v,n)
 
   /**
    * Returns if a given point is a depot.
@@ -128,13 +130,11 @@ class VRP(val n: Int, val v: Int, val m: Store, maxPivotPerValuePercent:Int = 4)
 
   /**
     * This method generate all the nodes preceding a specific position
-    * You can either give a node or give the position of the node (usefull when using combinator DynAndThen)
-    * @param pos the position of the node
     * @param node the node
     * @return
     */
-  def getNodesBeforePosition(pos:Int = -1)(node:Int): List[Int] ={
-    val position = if(pos == -1)routes.newValue.positionOfFirstOccurrence(node).head else pos
+  def getNodesBeforePosition()(node:Int): List[Int] ={
+    val position = routes.newValue.positionOfAnyOccurrence(node).head
 
     var i = v-1
     while(routes.newValue.explorerAtAnyOccurrence(i).head.position > position)
@@ -152,28 +152,22 @@ class VRP(val n: Int, val v: Int, val m: Store, maxPivotPerValuePercent:Int = 4)
 
   /**
     * This method generate all the nodes following a specific position
-    * You can either give a node or give the position of the node (usefull when using combinator DynAndThen)
-    * @param pos the position of the node
     * @param node the node
     * @return
     */
-  def getNodesAfterPosition(isNodeInserted:Boolean = true, pos:Int = -1)(node:Int): List[Int] ={
-    val position = if(pos == -1)routes.newValue.positionOfFirstOccurrence(node).head else pos
+  def getNodesAfterPosition()(node:Int): List[Int] ={
+    val position = routes.newValue.positionOfAnyOccurrence(node).head
 
     var i = v-1
-    while(routes.newValue.explorerAtAnyOccurrence(i).head.position > pos)
+    while(routes.newValue.explorerAtAnyOccurrence(i).head.position > position)
       i -= 1
 
     var currentVExplorer = routes.newValue.explorerAtAnyOccurrence(i).head.next
     var acc:List[Int] = List()
     while (currentVExplorer match{
-      case Some(x) if x.position > pos && x.value >= v =>
+      case Some(x) if x.position >= position && x.value >= v =>
         acc = x.value :: acc
         currentVExplorer = x.next
-        true
-      case Some(x) if x.position == pos && !isNodeInserted =>
-        acc = x.value :: acc
-        currentVExplorer  = x.next
         true
       case _ => false}) {}
     acc.reverse
@@ -255,7 +249,7 @@ trait ConstantDistancePerVehicle extends TotalConstantDistance{
   var distancePerVehicle:Array[CBLSIntVar] = null
 
   override def setSymmetricDistanceMatrix(symmetricDistanceMatrix:Array[Array[Int]]){
-    this.distanceMatrix = distanceMatrix
+    this.distanceMatrix = symmetricDistanceMatrix
     this.matrixIsSymmetric = true
     require(distancePerVehicle == null)
     distancePerVehicle = ConstantRoutingDistance(routes, v ,false,symmetricDistanceMatrix,true)
@@ -263,7 +257,7 @@ trait ConstantDistancePerVehicle extends TotalConstantDistance{
   }
 
   override def setAsymmetricDistanceMatrix(asymetricDistanceMatrix:Array[Array[Int]]){
-    this.distanceMatrix = distanceMatrix
+    this.distanceMatrix = asymetricDistanceMatrix
     this.matrixIsSymmetric = false
     require(distancePerVehicle == null)
     distancePerVehicle = ConstantRoutingDistance(routes, v ,false,asymetricDistanceMatrix,false)
@@ -287,14 +281,14 @@ trait TotalConstantDistance extends VRP{
   def setSymmetricDistanceMatrix(symmetricDistanceMatrix:Array[Array[Int]]){
     require(totalDistance == null)
     assert(ConstantRoutingDistance.isDistanceSymmetric(symmetricDistanceMatrix))
-    this.distanceMatrix = distanceMatrix
+    this.distanceMatrix = symmetricDistanceMatrix
     this.matrixIsSymmetric = true
     totalDistance = ConstantRoutingDistance(routes, v ,false,symmetricDistanceMatrix,true)(0)
   }
 
   def setAsymmetricDistanceMatrix(asymetricDistanceMatrix:Array[Array[Int]]){
     require(totalDistance == null)
-    this.distanceMatrix = distanceMatrix
+    this.distanceMatrix = asymetricDistanceMatrix
     this.matrixIsSymmetric = false
     totalDistance = ConstantRoutingDistance(routes, v ,false,asymetricDistanceMatrix,false)(0)
   }
