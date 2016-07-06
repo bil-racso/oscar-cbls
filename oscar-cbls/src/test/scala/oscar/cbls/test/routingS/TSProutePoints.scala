@@ -91,4 +91,5 @@ object TSProutePoints extends App{
   println(myVRP)
   println
   println(search.profilingStatistics)
+  println(model.stats)
 }

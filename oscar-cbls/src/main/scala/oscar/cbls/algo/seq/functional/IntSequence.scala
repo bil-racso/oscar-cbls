@@ -14,7 +14,7 @@ package oscar.cbls.algo.seq.functional
   * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
   ******************************************************************************/
 
-import oscar.cbls.algo.fun.{LinearTransform, PiecewiseLinearBijectionNaive, Pivot}
+import oscar.cbls.algo.fun.{PiecewiseLinearFun, LinearTransform, PiecewiseLinearBijectionNaive, Pivot}
 import oscar.cbls.algo.quick.QList
 import oscar.cbls.algo.rb.{RBTMPosition, RedBlackTreeMap}
 
@@ -611,7 +611,16 @@ object MovedIntSequence{
   def bijectionForMove(startPositionIncluded:Int,
                        endPositionIncluded:Int,
                        moveAfterPosition:Int,
-                       flip:Boolean):PiecewiseLinearBijectionNaive = {
+                       flip:Boolean):PiecewiseLinearBijectionNaive =
+    bijectionForMoveNaive(startPositionIncluded:Int,
+      endPositionIncluded:Int,
+      moveAfterPosition:Int,
+      flip:Boolean)
+
+  def bijectionForMoveNaive(startPositionIncluded:Int,
+                            endPositionIncluded:Int,
+                            moveAfterPosition:Int,
+                            flip:Boolean):PiecewiseLinearBijectionNaive = {
     if(moveAfterPosition + 1 == startPositionIncluded) {
       //not moving
       if(flip) { //just flipping
@@ -640,29 +649,38 @@ object MovedIntSequence{
     }
   }
 
-/*
+
+  //this is another impleme of the above method, supposedly faster because using arrays and not requiring log(n) inserts into the redBlack.
+  //This is not as efficient as possible because there is another sort performed anyway since it is a bijection.
   def bijectionForMoveArray(startPositionIncluded:Int,
                             endPositionIncluded:Int,
                             moveAfterPosition:Int,
-                            flip:Boolean):Array[Pivot]= {
-    if(moveAfterPosition + 1 == startPositionIncluded) {
+                            flip:Boolean):PiecewiseLinearBijectionNaive= {
+    if (moveAfterPosition + 1 == startPositionIncluded) {
       //not moving
-      if(flip) { //just flipping
-        if(startPositionIncluded == 0){
-          Array(
-            new Pivot(0,new LinearTransform(endPositionIncluded,true)),
-            new Pivot(endPositionIncluded+1,LinearTransform.identity))
-        }else{
-          Array(
-            new Pivot(0,LinearTransform.identity),
-            new Pivot(startPositionIncluded,new LinearTransform(endPositionIncluded + startPositionIncluded,true)),
-            new Pivot(endPositionIncluded+1,LinearTransform.identity))
+      if (flip) {
+        //just flipping
+        if (startPositionIncluded == 0) {
+          PiecewiseLinearBijectionNaive(new PiecewiseLinearFun(RedBlackTreeMap.makeFromSortedArray(Array(
+            (0, new Pivot(0, new LinearTransform(endPositionIncluded, true))),
+            (endPositionIncluded + 1, new Pivot(endPositionIncluded + 1, LinearTransform.identity))))))
+        } else {
+          PiecewiseLinearBijectionNaive(new PiecewiseLinearFun(RedBlackTreeMap.makeFromSortedArray(Array(
+            (0, new Pivot(0, LinearTransform.identity)),
+            (startPositionIncluded, new Pivot(startPositionIncluded, new LinearTransform(endPositionIncluded + startPositionIncluded, true))),
+            (endPositionIncluded + 1, new Pivot(endPositionIncluded + 1, LinearTransform.identity))))))
         }
-      }else{
-        Array.fill(0)(null)
+      } else {
+        PiecewiseLinearBijectionNaive.identity
       }
-    }else {
-      if (moveAfterPosition > startPositionIncluded) {
+    } else {
+
+      bijectionForMoveNaive(startPositionIncluded : Int,
+        endPositionIncluded : Int,
+        moveAfterPosition : Int,
+        flip : Boolean)
+
+      /*        if (moveAfterPosition > startPositionIncluded) {
         //move upwards
         Array(
           new Pivot(0,LinearTransform.identity), //TODO: pas sûr su'ils soient ordonnés correctement
@@ -679,8 +697,9 @@ object MovedIntSequence{
             LinearTransform(startPositionIncluded - endPositionIncluded - 1, false)))
       }
     }
+    */
+    }
   }
-  */
 }
 
 class MovedIntSequence(val seq:IntSequence,
