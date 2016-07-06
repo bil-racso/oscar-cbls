@@ -101,25 +101,12 @@ class ShiftedRange(val start:Int, val end:Int, val startBy:Int, val step:Int = 1
   if((start > startBy) || (startBy > end)) throw new Exception("ShiftedRange must contain startBy value ")
   if(step != 1) throw new Exception("only step of 1 is supported in ShirtedRange")
 
-  //include the at Value
-  private def unfold(at:Int):List[Int] = {
-    if(at == end){
-      unfold (start)
-    }else if(getNextValue(at) == startBy){
-      List(at)
-    }else{
-      at :: unfold(at+1)
-    }
-  }
-
   def getNextValue(a:Int) = {
     if(a == end) start
     else a+1
   }
 
   override def iterator: Iterator[Int] = new ShiftedRangeIterator(this)
-
-  override def toList: List[Int] = unfold(startBy)
 
   override def toArray[B >: Int](implicit evidence$1: scala.reflect.ClassTag[B]): Array[B] = toList.toArray
 
