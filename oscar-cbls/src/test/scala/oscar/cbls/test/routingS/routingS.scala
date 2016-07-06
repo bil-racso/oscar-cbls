@@ -90,8 +90,8 @@ object routingS extends App{
   val onePtMove = Profile(new OnePointMove(() => nodes, ()=>myVRP.kFirst(40,myVRP.closestNeighboursForward), myVRP))
 
   val onePtMoveSolvingRestrictions = Profile(
-    new OnePointMove(myVRP.nodesThanShouldBeMovedToOtherVehicle, ()=>myVRP.kFirst(20,myVRP.closestNeighboursForward), myVRP)
-      exhaust OnePointMove(myVRP.nodesThanShouldBeMovedToOtherVehicle, ()=>myVRP.kFirst(100,myVRP.closestNeighboursForward), myVRP)
+    (OnePointMove(myVRP.nodesThanShouldBeMovedToOtherVehicle, ()=>myVRP.kFirst(20,myVRP.closestNeighboursForward), myVRP)
+      exhaust OnePointMove(myVRP.nodesThanShouldBeMovedToOtherVehicle, ()=>myVRP.kFirst(100,myVRP.closestNeighboursForward), myVRP))
       guard(() => myVRP.totalViolationOnRestriction.value >0)
       name "MoveForRestr")
 
@@ -104,8 +104,8 @@ object routingS extends App{
     ()=>myVRP.kFirst(40,myVRP.computeClosestNeighborsMinFWBW()), //must be routed
     vehicles=() => myVRP.vehicles)
 
-    val search = BestSlopeFirst(List(onePtMove,twoOpt, threeOpt(10,true),onePtMoveSolvingRestrictions)) exhaust threeOpt(20,true)
-  
+  val search = BestSlopeFirst(List(onePtMove,twoOpt, threeOpt(10,true),onePtMoveSolvingRestrictions)) exhaust threeOpt(20,true)
+
   search.verbose = 1
   //  search.verboseWithExtraInfo(4,()=>myVRP.toString)
   search.paddingLength = 100
