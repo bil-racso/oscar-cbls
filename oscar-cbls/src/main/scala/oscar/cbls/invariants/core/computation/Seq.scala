@@ -601,7 +601,7 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], val maxValue: Int, 
     require(0 <= fromIncludedPosition)
     require(0<=toIncludedPosition)
     require(-1<=afterPosition)
-    require(fromIncludedPosition <= toIncludedPosition)
+    require(fromIncludedPosition <= toIncludedPosition, "fromIncludedPosition=" + fromIncludedPosition + "should <= toIncludedPosition=" + toIncludedPosition)
     toNotify  = SeqUpdateMove(fromIncludedPosition,toIncludedPosition,afterPosition,flip,toNotify)
     //println("notified move " + toNotify)
     trimToNotifyIfNeeded()
@@ -630,6 +630,10 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], val maxValue: Int, 
                              secondSegmentStartPosition:Int,
                              secondSegmentEndPosition:Int,
                              flipSecondSegment:Boolean){
+
+    require(firstSegmentStartPosition <= firstSegmentEndPosition)
+    require(secondSegmentStartPosition <= secondSegmentEndPosition)
+
     if(firstSegmentEndPosition < secondSegmentStartPosition){
       //do it
 
@@ -642,12 +646,9 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], val maxValue: Int, 
     }else{
       require(secondSegmentEndPosition < firstSegmentStartPosition)
       //swap them
-      swapSegments(firstSegmentStartPosition:Int,
-        firstSegmentEndPosition:Int,
-        flipFirstSegment:Boolean,
-        secondSegmentStartPosition:Int,
-        secondSegmentEndPosition:Int,
-        flipSecondSegment:Boolean)
+      swapSegments(
+        secondSegmentStartPosition, secondSegmentEndPosition, flipSecondSegment,
+        firstSegmentStartPosition, firstSegmentEndPosition, flipFirstSegment)
     }
   }
 

@@ -99,14 +99,13 @@ object routingS extends App{
 
   def threeOpt(k:Int, breakSym:Boolean) = Profile(new ThreeOpt(() => nodes, ()=>myVRP.kFirst(k,myVRP.closestNeighboursForward), myVRP,breakSymmetry = breakSym, neighborhoodName = "ThreeOpt(k=" + k + ")"))
 
+  //This neighborhood is useless given the other one, and for this kind of routing problem, yet we leave it for doc purpose
   val segExchange = SegmentExchange(myVRP,
     ()=>myVRP.kFirst(40,myVRP.computeClosestNeighborsMinFWBW()), //must be routed
     vehicles=() => myVRP.vehicles)
 
-  val search = BestSlopeFirst(List(onePtMove,twoOpt, threeOpt(10,true),onePtMoveSolvingRestrictions)) exhaust threeOpt(20,true) exhaust segExchange
-
-
-
+    val search = BestSlopeFirst(List(onePtMove,twoOpt, threeOpt(10,true),onePtMoveSolvingRestrictions)) exhaust threeOpt(20,true)
+  
   search.verbose = 1
   //  search.verboseWithExtraInfo(4,()=>myVRP.toString)
   search.paddingLength = 100
