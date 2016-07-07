@@ -972,8 +972,9 @@ class RemovedIntSequence(seq:IntSequence,
   }
 
   override def contains(value : Int) : Boolean = {
-    val positions = seq.positionsOfValue(value)
-    positions.size>1
+    val nbOcc = seq.nbOccurrence(value)
+    if(value == removedValue) nbOcc>1
+    else nbOcc >= 1
   }
 
   override def commitPendingMoves : IntSequence = seq.commitPendingMoves.delete(this.position,fast=false,autoRework=false)

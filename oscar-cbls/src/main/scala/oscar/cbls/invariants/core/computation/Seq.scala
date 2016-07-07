@@ -251,7 +251,6 @@ class SeqUpdateRemove(val position:Int,prev:SeqUpdate,seq:IntSequence)
 }
 
 case class SeqUpdateSet(value:IntSequence) extends SeqUpdate(value){
-  println("created set")
   override protected[computation] def reverse(target : IntSequence, newPrev:SeqUpdate) : SeqUpdate = {
     if (target quickEquals this.newValue) newPrev
     else SeqUpdateSet (target)
@@ -268,8 +267,6 @@ case class SeqUpdateSet(value:IntSequence) extends SeqUpdate(value){
 
 case class SeqUpdateLastNotified(value:IntSequence) extends SeqUpdate(value){
   override protected[computation] def reverse(target : IntSequence, newPrev:SeqUpdate) : SeqUpdate = {
-    println("target:" + target)
-    println("this:" + this)
     require(target quickEquals this.newValue,"not proper reverse target on " + this + " target:" + target)
     newPrev
   }
@@ -305,7 +302,6 @@ class SeqUpdateDefineCheckpoint(mprev:SeqUpdate,val activeCheckpoint:Boolean, ma
   def newPos2OldPos(newPos : Int) : Option[Int] = throw new Error("SeqUpdateDefineCheckpoint should not be queried for delta on moves")
 
   protected[computation] def prepend(u : SeqUpdate) : SeqUpdate = {
-    println("you should not prepend on checkpoint definition")
     SeqUpdateDefineCheckpoint(prev.prepend(u), activeCheckpoint, maxPivotPerValuePercent, doRegularize)
   }
 
@@ -330,7 +326,6 @@ class SeqUpdateRollBackToCheckpoint(val checkpointValue:IntSequence,howToRollBac
   }
 
   override protected[computation] def prepend(u : SeqUpdate) : SeqUpdate = {
-    println("you should not prepend on a rollback!")
     this
   }
 
@@ -646,8 +641,6 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], val maxValue: Int, 
             val stillToNotify = toNotify
             val performedSinceCheckpointAndToReverse = performedSinceTopCheckpoint
 
-            println("BOUM?")
-            println("reversed:" + performedSinceCheckpointAndToReverse.reverse(topCheckpoint,stillToNotify))
             require(performedSinceCheckpointAndToReverse.reverse(topCheckpoint,stillToNotify).newValue equals checkpoint)
 
              toNotify = SeqUpdateRollBackToCheckpoint(checkpoint,() => {
@@ -772,25 +765,20 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], val maxValue: Int, 
     val checkpoint = toNotify.newValue
     assert(toNotify.newValue equals topCheckpoint)
 
-    println("releaseCurrentCheckpointAtCheckpoint")
     //the checkpoint might not have been communicated yet, so we look for newValue, since we are at the checkpoint.
     popToNotifyUntilCheckpointDeclaration(toNotify,toNotify.newValue,true) match{
       case CheckpointDeclarationReachedAndRemoved(newToNotify:SeqUpdate) =>
         //we could wipe out this checkpoint from history
-        println("checkpoint could be removed from toNotify " + newToNotify)
         toNotify = newToNotify
       case CheckpointDeclarationNotRemovedAndSequencePoppedToDeclare(newToNotify:SeqUpdate) =>
         //checkpoint could not be removed, but a part of history could be simplified
-        println("checkpoint could not be removed from toNotify, but simplification performed " + newToNotify)
         toNotify = newToNotify
       case NoSimplificationPerformed =>
-        println("no simplifiaion performed on toNotify:" + toNotify)
     }
 
     //in all cases, we must pop the checkpoint from the checkpoint stack since it is working on the NewValues
     checkpointStackNotTop match{
       case top :: tail =>
-        println("pop")
         checkpointStackNotTop = tail
         topCheckpoint = top._1
         topCheckpointIsActive = top._3
@@ -798,7 +786,6 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], val maxValue: Int, 
         topCheckpointIsActiveDeactivated = topCheckpointIsActive
       case Nil =>
         //there is no upper checkpoint
-        println("popZero")
         topCheckpoint = null
         performedSinceTopCheckpoint = null
         topCheckpointIsActive = false

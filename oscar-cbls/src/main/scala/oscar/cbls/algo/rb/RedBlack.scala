@@ -69,7 +69,7 @@ trait RedBlackTreeMap[@specialized(Int) V]{
     case None => default
     case Some(x) => x
   }
-  
+
   def contains(k:Int):Boolean
 
   def biggestLowerOrEqual(k:Int):Option[(Int,V)]
@@ -292,14 +292,14 @@ object RedBlackTreeMap {
 
 
   /**
-   * make the red black tree out of already sorted couples (key,value)
-   * they must be sorted by increasing order of key, and a key can only be present once.
-   * There is no check of these properties
-   * This is O(n); thus faster than a n*log(n) if you were building it from unsorted pairs
-   * @param args
-   * @tparam V
-   * @return
-   */
+    * make the red black tree out of already sorted couples (key,value)
+    * they must be sorted by increasing order of key, and a key can only be present once.
+    * There is no check of these properties
+    * This is O(n); thus faster than a n*log(n) if you were building it from unsorted pairs
+    * @param args
+    * @tparam V
+    * @return
+    */
   def makeFromSorted[@specialized(Int) V](args:Iterable [(Int,V)]): RedBlackTreeMap[V] = {
     //root is to be black, beside alternate red and black
     val a = args.toArray
@@ -308,14 +308,14 @@ object RedBlackTreeMap {
   }
 
   /**
-   * make the red black tree out of already sorted couples (key,value)
-   * they must be sorted by increasing order of key, and a key can only be present once.
-   * There is no check of these properties
-   * This is O(n); thus faster than a n*log(n) if you were building it from unsorted pairs
-   * @param args
-   * @tparam V
-   * @return
-   */
+    * make the red black tree out of already sorted couples (key,value)
+    * they must be sorted by increasing order of key, and a key can only be present once.
+    * There is no check of these properties
+    * This is O(n); thus faster than a n*log(n) if you were building it from unsorted pairs
+    * @param args
+    * @tparam V
+    * @return
+    */
   def makeFromSortedArray[@specialized(Int) V](args:Array[(Int,V)]): RedBlackTreeMap[V] = {
     //root is to be black, beside alternate red and black
     if(args.length <=3) this.apply(args)

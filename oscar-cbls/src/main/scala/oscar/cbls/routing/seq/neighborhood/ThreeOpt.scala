@@ -87,8 +87,7 @@ case class ThreeOpt(potentialInsertionPoints:()=>Iterable[Int], //must be routed
 
           val routedRelevantNeighborsByVehicle = routedRelevantNeighbors.groupBy(nodeToVehicle).toList
 
-          for((vehicleOfMovedSegment,relevantNodes) <- routedRelevantNeighborsByVehicle){
-
+          for((vehicleOfMovedSegment,relevantNodes) <- routedRelevantNeighborsByVehicle if vehicleOfMovedSegment != v){
             val pairsOfNodesWithPosition = Pairs.makeAllSortedPairs(relevantNodes.map(node => (node,seqValue.positionOfAnyOccurrence(node).head)).toList)
             val orderedPairsOfNode = pairsOfNodesWithPosition.map({case (a, b) => if (a._2 < b._2) (a, b) else (b, a)})
 

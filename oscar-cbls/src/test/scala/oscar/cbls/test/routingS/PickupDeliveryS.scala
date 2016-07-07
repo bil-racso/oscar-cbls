@@ -8,6 +8,9 @@ import oscar.cbls.objective.{CascadingObjective, Objective}
 import oscar.cbls.routing.seq.model._
 import oscar.cbls.routing.seq.neighborhood._
 import oscar.cbls.search.combinators.{BestSlopeFirst, RoundRobin, DynAndThen, Profile}
+import oscar.cbls.search.move.CompositeMove
+
+import scala.util.Random
 
 import scala.util.Random
 
@@ -15,58 +18,15 @@ import scala.util.Random
   * Created by fabian on 04-07-16.
   */
 
-class MyPDP(n:Int,v:Int,m:Store,symmetricDistance:Array[Array[Int]],maxPivot:Int,pickups:Array[Int] = null, deliveries:Array[Int] = null)
-  extends PDP(n,v,m,maxPivot) with ConstantDistancePerVehicle with ClosestNeighbors with RoutedAndUnrouted with TimeWindow with TravelTimeAsFunction{
+class MyPDP(n:Int, v:Int, m:Store,
+            symmetricDistance:Array[Array[Int]], maxPivot:Int,
+            pickups:Array[Int], deliveries:Array[Int],
+            timeWindows:Array[(Int,(Int,Int))], ttf:TTFMatrix)
+  extends PDP(n,v,m,maxPivot) with ConstantDistancePerVehicle with ClosestNeighbors with RoutedAndUnrouted {
 
   setSymmetricDistanceMatrix(symmetricDistance)
 
   override protected def getDistance(from : Int, to : Int) : Int = symmetricDistance(from)(to)
-
-  def setLinearTravelTimeFunction(distanceMatrix: Array[Array[Int]]): Unit ={
-    val ttf = new TTFMatrix(n,new TTFConst(500))
-    for(i <- 0 until n){
-      for(j <- 0 until n){
-        ttf.setTTF(i,j,new TTFConst(distanceMatrix(i)(j)))
-      }
-    }
-    setTravelTimeFunctions(ttf)
-  }
-
-  def endWindowGenerator(): Unit ={
-    val random = new Random(0)
-    val currentArray:Array[Int] = new Array[Int](n-v)
-    val randomIncValues:List[Int] = 2::3::4::5::Nil
-    val currentSum = (pos:Int) => {
-      var res = 0
-      for(i <- 0 to pos) res += currentArray(i)
-      res
-    }
-
-    val currentPickup:Array[Int] = new Array[Int](n-v)
-    val currentSumPickup = (pos:Int) => {
-      var res = 0
-      for(i <- 0 to pos) res += currentPickup(i)
-      res
-    }
-    var currentTimeUnit = 1
-    val nodesOrderedByType = getPickups.toArray
-    while(currentSum(currentTimeUnit) < n-v){
-      val current = currentSum(currentTimeUnit)
-      val currentPick = currentSumPickup(currentTimeUnit)
-      val nbOfNodeToAdd = if(n - v - (n-v)/2 - currentPick < v) n-currentPick - (n-v)/2 -v else Math.min(n-v - (n-v)/2 -currentPick,random.nextFloat()*(v*currentTimeUnit - current)).toInt
-      for(inc <- 0 until nbOfNodeToAdd){
-        val deliveryInc = randomIncValues(random.nextInt(4))
-        setEndWindow(nodesOrderedByType(currentPick+inc), 500*(currentTimeUnit+1), slowConstraints)
-        setNodeDuration(nodesOrderedByType(currentPick+inc),50,500*currentTimeUnit)
-        setEndWindow(getRelatedDelivery(nodesOrderedByType(currentPick+inc)),500*(currentTimeUnit+5),slowConstraints)
-        setNodeDuration(getRelatedDelivery(nodesOrderedByType(currentPick+inc)), 0, 500*(currentTimeUnit+deliveryInc))
-        currentArray(currentTimeUnit+deliveryInc) += 1
-      }
-      currentArray(currentTimeUnit) += nbOfNodeToAdd
-      currentPickup(currentTimeUnit) += nbOfNodeToAdd
-      currentTimeUnit += 1
-    }
-  }
 
   val penaltyForUnrouted  = 100000
 
@@ -80,18 +40,13 @@ class MyPDP(n:Int,v:Int,m:Store,symmetricDistance:Array[Array[Int]],maxPivot:Int
   this.addToStringInfo(() => "next:" + next.map(_.value).mkString(","))
   this.addToStringInfo(() => "prev:" + prev.map(_.value).mkString(","))
 
-  if(pickups == null || deliveries == null){
-    require((n-v)%2 == 0,"You must have a pair number of nodes")
-    addPickupDeliveryCouples(Array.tabulate((n-v)/2)(p => p+v), Array.tabulate((n-v)/2)(d => d+v+((n-v)/2)))
-  }else{
-    addPickupDeliveryCouples(pickups,deliveries)
-  }
 
+  addPickupDeliveryCouples(pickups,deliveries)
   setArrivalLeaveLoadValue()
   setVehiclesMaxCargo(5)
   setVehiclesCapacityStrongConstraint()
-  endWindowGenerator()
-  setLinearTravelTimeFunction(distanceMatrix)
+  //setTimeWindows(timeWindows)
+  //setTravelTimeFunctions(ttf)
 
   val obj = new CascadingObjective(fastConstraints,
     new CascadingObjective(slowConstraints,
@@ -110,9 +65,15 @@ object PickupDeliveryS extends App{
 
   val symmetricDistanceMatrix = routingMatrix._1
 
-  val model = new Store(checker = Some(new ErrorChecker()), noCycle = false,propagateOnToString = false)
+  val model = new Store(noCycle = false)
 
-  val myPDP = new MyPDP(n,v,model,symmetricDistanceMatrix,maxPivotPerValuePercent)
+  val (pickups,deliveries) = RoutingMatrixGenerator.generatePickupDeliveryCouples(n,v)
+
+  val timeWindows = RoutingMatrixGenerator.generateTimeWindows(n, v, pickups, deliveries)
+
+  val ttf = RoutingMatrixGenerator.generateLinearTravelTimeFunction(n,symmetricDistanceMatrix)
+
+  val myPDP = new MyPDP(n,v,model,symmetricDistanceMatrix,maxPivotPerValuePercent,pickups,deliveries,timeWindows,ttf)
   val nodes = myPDP.nodes
 
   model.close()
@@ -120,7 +81,7 @@ object PickupDeliveryS extends App{
   val insertCoupleFast = Profile(DynAndThen(
     InsertPointUnroutedFirst(
       unroutedNodesToInsert = () => myPDP.getUnroutedPickups,
-      relevantPredecessor = ()=>myPDP.kFirst(5,myPDP.closestNeighboursForward,myPDP.isRouted),
+      relevantPredecessor = ()=>myPDP.kFirst(n/10,myPDP.closestNeighboursForward,myPDP.isRouted),
       vrp = myPDP),
     (moveResult:InsertPointMove) => InsertPointUnroutedFirst(
       unroutedNodesToInsert = () => Iterable(myPDP.getRelatedDelivery(moveResult.insertedPoint)),
@@ -130,7 +91,7 @@ object PickupDeliveryS extends App{
   val insertCoupleSlow = Profile(DynAndThen(
     InsertPointUnroutedFirst(
       unroutedNodesToInsert = () => myPDP.getUnroutedPickups,
-      relevantPredecessor = ()=>myPDP.kFirst(n/10,myPDP.closestNeighboursForward,myPDP.isRouted),
+      relevantPredecessor = ()=>myPDP.kFirst(n/2,myPDP.closestNeighboursForward,myPDP.isRouted),
       vrp = myPDP),
     (moveResult:InsertPointMove) => InsertPointUnroutedFirst(
       unroutedNodesToInsert = () => Iterable(myPDP.getRelatedDelivery(moveResult.insertedPoint)),
@@ -138,38 +99,92 @@ object PickupDeliveryS extends App{
       vrp = myPDP))name "insertCoupleSlow")
 
   val oneCoupleMove = Profile(DynAndThen(OnePointMove(
-    nodesToMove = () => myPDP.getRoutedPickupsPredecessors,
+    nodesToMove = () => myPDP.getRoutedPickups,
     relevantNewPredecessors= () => myPDP.kFirst(20,myPDP.closestNeighboursForward,myPDP.isRouted),
     vrp = myPDP, best = true),
     (moveResult:OnePointMoveMove) => OnePointMove(
-      nodesToMove = () => List(myPDP.prev(myPDP.getRelatedDelivery(moveResult.movedPoint)).value),
+      nodesToMove = () => List(myPDP.getRelatedDelivery(moveResult.movedPoint)),
       relevantNewPredecessors= () => myPDP.getNodesAfterRelatedPickup(),
       vrp = myPDP, best = true))name "oneCoupleMove")
 
   val onePointMovePD = Profile(new RoundRobin(List(OnePointMove(
-    nodesToMove = () => myPDP.getRoutedPickupsPredecessors,
+    nodesToMove = () => myPDP.getRoutedPickups,
     relevantNewPredecessors = () => myPDP.getNodesBeforeRelatedDelivery(),
     vrp = myPDP,best = true),OnePointMove(
-    nodesToMove = () => myPDP.getRoutedDeliverysPredecessors,
+    nodesToMove = () => myPDP.getRoutedDeliverys,
     relevantNewPredecessors = () => myPDP.getNodesAfterRelatedPickup(),
     vrp = myPDP, best = true)))name "OnePointMove PickupDelivery")
 
   val pickupDeliveryCoupleShift = Profile(DynAndThen(OnePointMove(
-    nodesToMove = () => myPDP.getRoutedPickupsPredecessors,
+    nodesToMove = () => myPDP.getRoutedPickups,
     relevantNewPredecessors = () => myPDP.kFirst(n/10,myPDP.closestNeighboursForward,myPDP.isRouted),
     vrp = myPDP),
     (moveResult:OnePointMoveMove) => OnePointMove(
-      nodesToMove = () => List(myPDP.prev(myPDP.getRelatedDelivery(moveResult.movedPoint)).value),
+      nodesToMove = () => List(myPDP.getRelatedDelivery(moveResult.movedPoint)),
       relevantNewPredecessors = () => myPDP.getNodesAfterRelatedPickup(),
       vrp = myPDP, best = true))name "pickupDeliveryCoupleShift")
 
+
+
+  def dynAndThenCoupleExchange = {
+    var firstVehicle = 10
+    var secondVehicle = 10
+    Profile(
+      new DynAndThen(
+        //We first remove a PD couple from a first route
+        new DynAndThen(new RemovePoint(
+          relevantPointsToRemove = () => {
+            println(myPDP)
+            myPDP.getRoutedPickups
+          },
+          vrp = myPDP, best = true),
+          (moveResult1:RemovePointMove) =>{
+            println(moveResult1.toString)
+            firstVehicle = myPDP.getVehicleOfNode(myPDP.getRelatedDelivery(moveResult1.pointToRemove))
+            new RemovePoint(
+              relevantPointsToRemove = () => List(myPDP.getRelatedDelivery(moveResult1.pointToRemove)),
+              vrp = myPDP, best = true)}
+        )
+        ,(moveResult2:CompositeMove) =>{
+          //Then we move a PD couple from a second route to the first route
+          println(firstVehicle)
+          new DynAndThen(
+            new DynAndThen(OnePointMove(
+              nodesToMove = () => myPDP.notOnSameVehicle(myPDP.getRoutedPickups,firstVehicle),
+              relevantNewPredecessors = () => (i:Int) => myPDP.getNodesOfVehicle(firstVehicle),
+              vrp = myPDP), (moveResult3:OnePointMoveMove) =>{
+              println(moveResult3.toString)
+              secondVehicle = myPDP.getVehicleOfNode(myPDP.getRelatedDelivery(moveResult3.movedPoint))
+              OnePointMove(
+                nodesToMove = () => List(myPDP.getRelatedDelivery(moveResult3.movedPoint)),
+                relevantNewPredecessors= () => myPDP.getNodesAfterRelatedPickup(),
+                vrp = myPDP, best = true)}
+            )
+            ,(moveResult4:CompositeMove) =>{
+              //And finally we insert the first couple in the second route
+              new DynAndThen(InsertPointUnroutedFirst(
+                  unroutedNodesToInsert = () => {
+                    println(moveResult2.ml.head.asInstanceOf[RemovePointMove].pointToRemove)
+                    println(secondVehicle)
+                    Iterable(moveResult2.ml.head.asInstanceOf[RemovePointMove].pointToRemove)
+                  },
+                  relevantPredecessor = () => (i:Int) => myPDP.getNodesOfVehicle(secondVehicle),
+                  vrp = myPDP), (moveResult5:InsertPointMove) =>{
+                InsertPointUnroutedFirst(
+                  unroutedNodesToInsert = () => Iterable(myPDP.getRelatedDelivery(moveResult5.insertedPoint)),
+                  relevantPredecessor = () => myPDP.getNodesAfterRelatedPickup(),
+                  vrp = myPDP, best = true)}
+              )}
+            , maximalIntermediaryDegradation = Int.MaxValue/2
+          )}
+      )name "dynAndThenCoupleExchange"
+    )
+  }
+
   def threeOpt(k:Int, breakSym:Boolean) = Profile(new ThreeOpt(() => nodes, ()=>myPDP.kFirst(k,myPDP.closestNeighboursForward), myPDP,breakSymmetry = breakSym, neighborhoodName = "ThreeOpt(k=" + k + ")"))
 
-  val search = insertCoupleFast exhaust new BestSlopeFirst(List(pickupDeliveryCoupleShift,oneCoupleMove,insertCoupleSlow,onePointMovePD))
+  val search = insertCoupleFast exhaust (new BestSlopeFirst(List(pickupDeliveryCoupleShift,oneCoupleMove,insertCoupleSlow,onePointMovePD, threeOpt(20,true))))
 
-  for(d <- symmetricDistanceMatrix)
-    println(d.toList)
-  println(myPDP)
   search.verbose = 2
 
   //  search.verboseWithExtraInfo(4,()=>myVRP.toString)
