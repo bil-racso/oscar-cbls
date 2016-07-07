@@ -1,6 +1,7 @@
 package oscar.cbls.test.routingS
 
 import oscar.cbls.invariants.core.computation.Store
+import oscar.cbls.invariants.core.propagation.ErrorChecker
 import oscar.cbls.invariants.lib.seq.Size
 import oscar.cbls.modeling.Algebra._
 import oscar.cbls.objective.{CascadingObjective, Objective}
@@ -109,7 +110,7 @@ object PickupDeliveryS extends App{
 
   val symmetricDistanceMatrix = routingMatrix._1
 
-  val model = new Store(noCycle = false,propagateOnToString = false)
+  val model = new Store(checker = Some(new ErrorChecker()), noCycle = false,propagateOnToString = false)
 
   val myPDP = new MyPDP(n,v,model,symmetricDistanceMatrix,maxPivotPerValuePercent)
   val nodes = myPDP.nodes
