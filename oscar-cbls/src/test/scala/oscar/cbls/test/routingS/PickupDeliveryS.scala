@@ -8,11 +8,13 @@ import oscar.cbls.routing.seq.model._
 import oscar.cbls.routing.seq.neighborhood._
 import oscar.cbls.search.combinators.{BestSlopeFirst, RoundRobin, DynAndThen, Profile}
 
+import scala.util.Random
+
 /**
   * Created by fabian on 04-07-16.
   */
 
-class MyPDP(n:Int,v:Int,m:Store,symmetricDistance:Array[Array[Int]],maxPivot:Int,pickups:Array[Int] = null, deliverys:Array[Int] = null)
+class MyPDP(n:Int,v:Int,m:Store,symmetricDistance:Array[Array[Int]],maxPivot:Int,pickups:Array[Int] = null, deliveries:Array[Int] = null)
   extends PDP(n,v,m,maxPivot) with ConstantDistancePerVehicle with ClosestNeighbors with RoutedAndUnrouted with TimeWindow with TravelTimeAsFunction{
 
   setSymmetricDistanceMatrix(symmetricDistance)
@@ -30,6 +32,7 @@ class MyPDP(n:Int,v:Int,m:Store,symmetricDistance:Array[Array[Int]],maxPivot:Int
   }
 
   def endWindowGenerator(): Unit ={
+    val random = new Random(0)
     val currentArray:Array[Int] = new Array[Int](n-v)
     val randomIncValues:List[Int] = 2::3::4::5::Nil
     val currentSum = (pos:Int) => {
@@ -49,9 +52,9 @@ class MyPDP(n:Int,v:Int,m:Store,symmetricDistance:Array[Array[Int]],maxPivot:Int
     while(currentSum(currentTimeUnit) < n-v){
       val current = currentSum(currentTimeUnit)
       val currentPick = currentSumPickup(currentTimeUnit)
-      val nbOfNodeToAdd = if(n - v - (n-v)/2 - currentPick < v) n-currentPick - (n-v)/2 -v else Math.min(n-v - (n-v)/2 -currentPick,Math.random()*(v*currentTimeUnit - current)).toInt
+      val nbOfNodeToAdd = if(n - v - (n-v)/2 - currentPick < v) n-currentPick - (n-v)/2 -v else Math.min(n-v - (n-v)/2 -currentPick,random.nextFloat()*(v*currentTimeUnit - current)).toInt
       for(inc <- 0 until nbOfNodeToAdd){
-        val deliveryInc = randomIncValues(scala.util.Random.nextInt(4))
+        val deliveryInc = randomIncValues(random.nextInt(4))
         setEndWindow(nodesOrderedByType(currentPick+inc), 500*(currentTimeUnit+1), slowConstraints)
         setNodeDuration(nodesOrderedByType(currentPick+inc),50,500*currentTimeUnit)
         setEndWindow(getRelatedDelivery(nodesOrderedByType(currentPick+inc)),500*(currentTimeUnit+5),slowConstraints)
@@ -76,11 +79,11 @@ class MyPDP(n:Int,v:Int,m:Store,symmetricDistance:Array[Array[Int]],maxPivot:Int
   this.addToStringInfo(() => "next:" + next.map(_.value).mkString(","))
   this.addToStringInfo(() => "prev:" + prev.map(_.value).mkString(","))
 
-  if(pickups == null || deliverys == null){
+  if(pickups == null || deliveries == null){
     require((n-v)%2 == 0,"You must have a pair number of nodes")
     addPickupDeliveryCouples(Array.tabulate((n-v)/2)(p => p+v), Array.tabulate((n-v)/2)(d => d+v+((n-v)/2)))
   }else{
-    addPickupDeliveryCouples(pickups,deliverys)
+    addPickupDeliveryCouples(pickups,deliveries)
   }
 
   setArrivalLeaveLoadValue()
@@ -106,13 +109,12 @@ object PickupDeliveryS extends App{
 
   val symmetricDistanceMatrix = routingMatrix._1
 
-  val model = new Store(noCycle = false)
+  val model = new Store(noCycle = false,propagateOnToString = false)
 
   val myPDP = new MyPDP(n,v,model,symmetricDistanceMatrix,maxPivotPerValuePercent)
   val nodes = myPDP.nodes
 
   model.close()
-
 
   val insertCoupleFast = Profile(DynAndThen(
     InsertPointUnroutedFirst(

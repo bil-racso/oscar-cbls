@@ -61,6 +61,7 @@ case class Content(v:SeqValue)
   def digestUpdates(changes : SeqUpdate, skipNewCheckpoints:Boolean):Boolean = {
     changes match {
       case SeqUpdateInsert(value : Int, pos : Int, prev : SeqUpdate) =>
+        println("digesting " + changes)
         if (!digestUpdates(prev, skipNewCheckpoints)) return false
         updatesFromThisCheckpointInReverseOrder = QList((value, true), updatesFromThisCheckpointInReverseOrder)
         this :+= value
@@ -68,6 +69,7 @@ case class Content(v:SeqValue)
       case SeqUpdateMove(fromIncluded : Int, toIncluded : Int, after : Int, flip : Boolean, prev : SeqUpdate) =>
         digestUpdates(prev, skipNewCheckpoints)
       case r@SeqUpdateRemove(position : Int, prev : SeqUpdate) =>
+        println("digesting " + changes)
         if (!digestUpdates(prev, skipNewCheckpoints)) return false
         val value = r.removedValue
         if (changes.newValue.nbOccurrence(value) == 0){
@@ -87,6 +89,7 @@ case class Content(v:SeqValue)
         //raw assign, no incremental possible
         false
       case SeqUpdateDefineCheckpoint(prev:SeqUpdate,isActive:Boolean) =>
+        println("digesting " + changes)
         if(skipNewCheckpoints || !isActive) {
           digestUpdates(prev,true)
         } else {

@@ -200,10 +200,10 @@ class ConcreteIntSequence(private[seq] val internalPositionToValue:RedBlackTreeM
                           private[seq] val startFreeRangeForInternalPosition:Int,
                           uniqueID:Int = IntSequence.getNewUniqueID()) extends IntSequence(uniqueID) {
 
-  override def descriptorString : String = "[" + this.unorderedContentNoDuplicate.mkString(",") + "]"
+  override def descriptorString : String = "[" + this.iterator.toList.mkString(",") + "]_impl:concrete"
 
   override def toString : String = {
-    "UniqueIntSequence(size:" + size + ")[" + this.iterator.toList.mkString(",") + "]_impl:concrete"
+    "ConcreteIntSequence(size:" + size + ")" + descriptorString
   }
 
   override def check {
@@ -451,7 +451,7 @@ class ConcreteIntSequence(private[seq] val internalPositionToValue:RedBlackTreeM
       (tmp,new Accumulator)
     })
 
-    var valuesToPositionAccumulators = RedBlackTreeMap.makeFromSortedArray(sortedValuesAndEmptyAccumulatorsArray)
+    val valuesToPositionAccumulators = RedBlackTreeMap.makeFromSortedArray(sortedValuesAndEmptyAccumulatorsArray)
 
     while (explorer match {
       case None => false
@@ -690,6 +690,7 @@ class MovedIntSequence(val seq:IntSequence,
                        flip:Boolean)
   extends StackedUpdateIntSequence{
 
+
   override def unorderedContentNoDuplicate : List[Int] = seq.unorderedContentNoDuplicate
 
   override def descriptorString : String = seq.descriptorString + ".moved(startPos:" + startPositionIncluded + " endPos:" + endPositionIncluded + " targetPos:" + moveAfterPosition + " flip:" + flip + ")"
@@ -725,6 +726,8 @@ class MovedIntSequence(val seq:IntSequence,
   override def valueAtPosition(position : Int) : Option[Int] = {
     seq.valueAtPosition(localBijection.forward(position))
   }
+
+  assert(this equals seq.moveAfter(startPositionIncluded,endPositionIncluded,moveAfterPosition,flip,fast=false))
 }
 
 class MovedIntSequenceExplorer(sequence:MovedIntSequence,
