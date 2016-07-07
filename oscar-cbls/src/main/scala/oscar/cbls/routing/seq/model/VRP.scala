@@ -86,7 +86,7 @@ class VRP(val n: Int, val v: Int, val m: Store, maxPivotPerValuePercent:Int = 4)
    */
   def setCircuit(nodes: Iterable[Int]): Unit = {
     routes := IntSequence(nodes)
-    for(v <- 0 until v) require(routes.newValue.contains(v))
+    for(v <- 0 until v) require(routes.value.contains(v))
   }
 
   /**
@@ -113,7 +113,7 @@ class VRP(val n: Int, val v: Int, val m: Store, maxPivotPerValuePercent:Int = 4)
    */
   def getRouteOfVehicle(vehicle:Int):List[Int] = {
     require(vehicle < v)
-    var currentVExplorer = routes.newValue.explorerAtAnyOccurrence(vehicle).head.next
+    var currentVExplorer = routes.value.explorerAtAnyOccurrence(vehicle).head.next
     var acc:List[Int] = List(vehicle)
     while (currentVExplorer match{
       case Some(x) if x.value >= v =>
@@ -134,12 +134,12 @@ class VRP(val n: Int, val v: Int, val m: Store, maxPivotPerValuePercent:Int = 4)
     * @return
     */
   def getNodesBeforePosition()(node:Int): List[Int] ={
-    val position = routes.newValue.positionOfAnyOccurrence(node).head
+    val position = routes.value.positionOfAnyOccurrence(node).head
 
     var i = v-1
-    while(routes.newValue.explorerAtAnyOccurrence(i).head.position > position)
+    while(routes.value.explorerAtAnyOccurrence(i).head.position > position)
       i -= 1
-    var currentVExplorer = routes.newValue.explorerAtAnyOccurrence(i).head.next
+    var currentVExplorer = routes.value.explorerAtAnyOccurrence(i).head.next
     var acc:List[Int] = List(i)
     while (currentVExplorer match{
       case Some(x) if x.position < position && x.value >= v =>
@@ -156,13 +156,13 @@ class VRP(val n: Int, val v: Int, val m: Store, maxPivotPerValuePercent:Int = 4)
     * @return
     */
   def getNodesAfterPosition()(node:Int): List[Int] ={
-    val position = routes.newValue.positionOfAnyOccurrence(node).head
+    val position = routes.value.positionOfAnyOccurrence(node).head
 
     var i = v-1
-    while(routes.newValue.explorerAtAnyOccurrence(i).head.position > position)
+    while(routes.value.explorerAtAnyOccurrence(i).head.position > position)
       i -= 1
 
-    var currentVExplorer = routes.newValue.explorerAtAnyOccurrence(i).head.next
+    var currentVExplorer = routes.value.explorerAtAnyOccurrence(i).head.next
     var acc:List[Int] = List()
     while (currentVExplorer match{
       case Some(x) if x.position >= position && x.value >= v =>
@@ -171,6 +171,19 @@ class VRP(val n: Int, val v: Int, val m: Store, maxPivotPerValuePercent:Int = 4)
         true
       case _ => false}) {}
     acc.reverse
+  }
+
+  def notOnSameVehicle(nodes: Iterable[Int], vehicle:Int): Iterable[Int]={
+    nodes.filterNot(getVehicleOfNode(_) == vehicle)
+  }
+
+  def notOnSameVehicle(nodes: Array[Iterable[Int]])(vehicle:Int): Array[Iterable[Int]]={
+    val resNodes = nodes.clone()
+    for(i <- resNodes.indices){
+      resNodes(i) = nodes(i).filterNot(getVehicleOfNode(_) == vehicle)
+    }
+    require(nodes != resNodes,"ERROR")
+    resNodes
   }
 
   /**
@@ -421,7 +434,7 @@ trait StandardPenaltyForUnrouted extends AbstractPenaltyForUnrouted {
 }
 
 trait CloneOfRouteForLightPartialPropagation extends VRP{
-  val cloneOfRoute = routes.createClone()
+  val cloneOfRoute = routes
 }
 
 trait NodesOfVehicle extends CloneOfRouteForLightPartialPropagation{

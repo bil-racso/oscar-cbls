@@ -69,7 +69,7 @@ trait RedBlackTreeMap[@specialized(Int) V]{
     case None => default
     case Some(x) => x
   }
-  
+
   def contains(k:Int):Boolean
 
   def biggestLowerOrEqual(k:Int):Option[(Int,V)]
@@ -140,23 +140,23 @@ case class L[@specialized(Int) V]() extends RedBlackTreeMap[V]  {
 
 
   //duplicates
-  def values:List[V] = valuesAcc(List.empty)
+  def values:List[V] = List.empty
 
-  def content:List[(Int,V)] = contentAcc(List.empty)
+  def content:List[(Int,V)] = List.empty
 
-  override def keys : List[Int] = keysAcc(List.empty)
+  override def keys : List[Int] = List.empty
 
-  override def positionOf(k: Int):Option[RBTMPosition[V]] = positionOfAcc(k:Int,null)
+  override def positionOf(k: Int):Option[RBTMPosition[V]] = None
 
   // insert: Insert a value at a key.
-  override def insert (k : Int, v : V) = blacken(modWith(k, (_,_) => Some(v)))
+  override def insert (k : Int, v : V) =  T(B, L(), k , Some(v), L())
 
   // remove: Delete a key.
-  override def remove (k : Int) = blacken(modWith(k, (_,_) => None))
+  override def remove (k : Int) = this
 
-  override def smallest:Option[(Int,V)] = smallestBiggerOrEqual(Int.MinValue)
+  override def smallest:Option[(Int,V)] = None
 
-  override def biggest:Option[(Int,V)] = biggestLowerOrEqual(Int.MaxValue)
+  override def biggest:Option[(Int,V)] = None
 
   override def biggestPosition:Option[RBTMPosition[V]] = None
 
@@ -213,8 +213,10 @@ case class T[@specialized(Int) V](c : Boolean, l : RedBlackTreeMap[V], k : Int, 
           if(l.isEmpty) r
           else if (r.isEmpty) l
           else{
-            val (k,v) = r.smallest.head
-            T(c, l, k, Some(v), r.remove(k))
+            r.smallest match{
+              case Some((k,v)) => T(c, l, k, Some(v), r.remove(k))
+              case None => throw new Error("non smallest on non-empty RB?")
+            }
           }
         case x => T(c, l, k, x, r)
       }
@@ -290,14 +292,14 @@ object RedBlackTreeMap {
 
 
   /**
-   * make the red black tree out of already sorted couples (key,value)
-   * they must be sorted by increasing order of key, and a key can only be present once.
-   * There is no check of these properties
-   * This is O(n); thus faster than a n*log(n) if you were building it from unsorted pairs
-   * @param args
-   * @tparam V
-   * @return
-   */
+    * make the red black tree out of already sorted couples (key,value)
+    * they must be sorted by increasing order of key, and a key can only be present once.
+    * There is no check of these properties
+    * This is O(n); thus faster than a n*log(n) if you were building it from unsorted pairs
+    * @param args
+    * @tparam V
+    * @return
+    */
   def makeFromSorted[@specialized(Int) V](args:Iterable [(Int,V)]): RedBlackTreeMap[V] = {
     //root is to be black, beside alternate red and black
     val a = args.toArray
@@ -306,14 +308,14 @@ object RedBlackTreeMap {
   }
 
   /**
-   * make the red black tree out of already sorted couples (key,value)
-   * they must be sorted by increasing order of key, and a key can only be present once.
-   * There is no check of these properties
-   * This is O(n); thus faster than a n*log(n) if you were building it from unsorted pairs
-   * @param args
-   * @tparam V
-   * @return
-   */
+    * make the red black tree out of already sorted couples (key,value)
+    * they must be sorted by increasing order of key, and a key can only be present once.
+    * There is no check of these properties
+    * This is O(n); thus faster than a n*log(n) if you were building it from unsorted pairs
+    * @param args
+    * @tparam V
+    * @return
+    */
   def makeFromSortedArray[@specialized(Int) V](args:Array[(Int,V)]): RedBlackTreeMap[V] = {
     //root is to be black, beside alternate red and black
     if(args.length <=3) this.apply(args)

@@ -1,8 +1,10 @@
 package oscar.cbls.routing.seq.model
 
 import oscar.cbls.constraints.core.ConstraintSystem
-import oscar.cbls.constraints.lib.basic.{EQ, LE}
-import oscar.cbls.invariants.core.computation.{CBLSIntVar, FullRange, IntValue, Store}
+import oscar.cbls.constraints.lib.basic.{GE, EQ, LE}
+import oscar.cbls.invariants.core.computation._
+import oscar.cbls.invariants.lib.logic.{IntInt2Int, IntITE}
+import oscar.cbls.invariants.lib.minmax.Max2
 import oscar.cbls.invariants.lib.routing.{VehicleOfNodes, RouteSuccessorAndPredecessors}
 import oscar.cbls.invariants.lib.seq.Precedence
 import oscar.cbls.modeling.Algebra._
@@ -23,7 +25,7 @@ class PDP(override val n:Int, override val v:Int, override val m:Store, maxPivot
   private val pickupDeliveryNodes:Array[(Int,Int)] = new Array[(Int, Int)](n)
   for(i <- 0 until v)pickupDeliveryNodes(i) = (0,i)
 
-  private val pickupNodes:Array[Int] = new Array[Int]((n-v)/2)
+  val pickupNodes:Array[Int] = new Array[Int]((n-v)/2)
   private val deliveryNodes:Array[Int] = new Array[Int]((n-v)/2)
 
   val vehicleOfNodes = VehicleOfNodes(routes,v)
@@ -55,22 +57,21 @@ class PDP(override val n:Int, override val v:Int, override val m:Store, maxPivot
     * another one containing the related delivery points. So pickup(1) is the pickup point of delivery(1).
     *
     * @param pickups the pickup points array
-    * @param deliverys the delivery points array
+    * @param deliveries the delivery points array
     */
-  def addPickupDeliveryCouples(pickups:Array[Int], deliverys:Array[Int]): Unit ={
-    assert(pickups.length == deliverys.length,
+  def addPickupDeliveryCouples(pickups:Array[Int], deliveries:Array[Int]): Unit ={
+    assert(pickups.length == deliveries.length,
       "The pickup array and the delivery array must have the same length.")
-    assert(!pickups.exists(_ >= n) || !deliverys.exists(_ >= n),
+    assert(!pickups.exists(_ >= n) || !deliveries.exists(_ >= n),
       "The pickup and the delivery array may only contain values between 0 and the number of nodes")
-    assert(pickups.intersect(deliverys).length == 0,
+    assert(pickups.intersect(deliveries).length == 0,
       "One node can't be a pickup node and a delivery node at the same time")
 
-    var precedenceList = List.tabulate((n-v)/2)(c => (pickups(c),deliverys(c)))
+    var precedenceList = List.tabulate((n-v)/2)(c => (pickups(c),deliveries(c)))
     precedenceObj = new IntVarObjective(Precedence(routes,precedenceList))
     for(i <- pickups.indices){
-      addPickupDeliveryCouple(pickups(i),deliverys(i),i)
+      addPickupDeliveryCouple(pickups(i),deliveries(i),i)
     }
-
   }
 
   /**
@@ -90,12 +91,12 @@ class PDP(override val n:Int, override val v:Int, override val m:Store, maxPivot
   def isDelivery(index:Int):Boolean = pickupDeliveryNodes(index)._1 < 0
 
   def getRelatedPickup(d:Int): Int ={
-    assert(pickupDeliveryNodes(d)._1 < 0,"This node isn't a delivery node")
+    require(pickupDeliveryNodes(d)._1 < 0,"This node isn't a delivery node")
     pickupDeliveryNodes(d)._2
   }
 
   def getRelatedDelivery(p:Int): Int ={
-    assert(pickupDeliveryNodes(p)._1 > 0,"This node isn't a pickup node")
+    require(pickupDeliveryNodes(p)._1 > 0,"This node isn't a pickup node")
     pickupDeliveryNodes(p)._2
   }
 
@@ -250,5 +251,97 @@ class PDP(override val n:Int, override val v:Int, override val m:Store, maxPivot
   def setVehiclesCapacityStrongConstraint(): Unit ={
     for(i <- arrivalLoadValue.indices)
       slowConstraints.post(LE(arrivalLoadValue(i), vehicleMaxCapacity.element(vehicleOfNodes(i))))
+  }
+
+  //---- Time Windows ----//
+
+  var defaultArrivalTime:CBLSIntConst = null
+
+  var arrivalTime:Array[CBLSIntVar] = null
+
+  var leaveTime:Array[CBLSIntVar] = null
+
+  var travelOutDuration:Array[CBLSIntVar] = null
+
+  var arrivalTimeToNext:Array[IntValue] = null
+
+  var travelDurationMatrix: TravelTimeFunction = null
+
+  def initiateTimeWindowInvariants(): Unit ={
+    defaultArrivalTime = new CBLSIntConst(0)
+
+    arrivalTime = Array.tabulate(n) {
+      (i: Int) => CBLSIntVar(m, 0, 0 to Int.MaxValue / n, "arrivalTimeAtNode" + i)
+    }
+    leaveTime = Array.tabulate(n) {
+      (i: Int) => CBLSIntVar(m, 0, 0 to Int.MaxValue / n, "leaveTimeAtNode" + i)
+    }
+    travelOutDuration = Array.tabulate(n) {
+      (i: Int) => CBLSIntVar(m, 0, 0 to Int.MaxValue / n, "travelDurationToLeave" + i)
+    }
+    arrivalTimeToNext = Array.tabulate(n + 1) {
+      (i: Int) =>
+        if (i == n) defaultArrivalTime
+        else travelOutDuration(i) + leaveTime(i)
+    }
+
+    for (i <- 0 until n) {
+      arrivalTime(i) <== arrivalTimeToNext.element(prev(i))
+    }
+  }
+
+  def addTimeWidowStringInfo() {
+    addToStringInfo(() => "arrivalTime:      " + arrivalTime.toList.mkString(","))
+    addToStringInfo(() => "leaveTime:        " + leaveTime.toList.mkString(","))
+    addToStringInfo(() => "travelOutDuration:" + travelOutDuration.toList.mkString(","))
+    addToStringInfo(() => "arrivalTimeToNext:" + arrivalTimeToNext.toList.mkString(","))
+  }
+
+  def setEndWindow(node: Int, endWindow: Int) {
+    require(node >= v, "only for specifying time windows on nodes, not on vehicles")
+    slowConstraints.post(LE(IntITE(next(node), 0, leaveTime(node), n - 1), endWindow).nameConstraint("end of time window on node " + node))
+  }
+
+  def setVehicleEnd(vehicle: Int, endTime: Int) {
+    require(vehicle < v, "only for specifying end time of vehicles")
+    slowConstraints.post(LE(arrivalTime(vehicle), endTime).nameConstraint("end of time for vehicle " + vehicle))
+  }
+
+
+  def setNodeDuration(node: Int, duration: IntValue) {
+    assert(node >= v)
+    leaveTime(node) <== arrivalTime(node) + duration
+  }
+
+  def setNodeDuration(node: Int, durationWithoutWait: IntValue, startWindow: Int) {
+    leaveTime(node) <== Max2(arrivalTime(node), startWindow) + durationWithoutWait
+  }
+
+  def setNodeDuration(node: Int, durationWithoutWait: IntValue, startWindow: Int, maxWaiting: Int) {
+    setNodeDuration(node, durationWithoutWait, startWindow)
+    slowConstraints.post(GE(arrivalTime(node), startWindow - maxWaiting).nameConstraint("end of time window on node (with duration)" + node))
+  }
+
+
+
+  def setTravelTimeFunctions(travelCosts: TravelTimeFunction) {
+    travelDurationMatrix = travelCosts
+    for (i <- 0 until n) {
+      travelOutDuration(i) <== new IntInt2Int(leaveTime(i), next(i),
+        (leaveTime, successor) =>
+          if (successor == n) 0
+          else travelCosts.getTravelDuration(i, leaveTime, successor))
+    }
+  }
+
+
+  def setTimeWindows(timeWindows: Array[(Int,(Int,Int))]): Unit ={
+    initiateTimeWindowInvariants()
+    addTimeWidowStringInfo()
+
+    for(i <- timeWindows.indices if i >= v) {
+      setEndWindow(i,timeWindows(i)._1)
+      setNodeDuration(i,timeWindows(i)._2._1, timeWindows(i)._2._2)
+    }
   }
 }
