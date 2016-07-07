@@ -1,6 +1,7 @@
 package oscar.cbls.test.routingS
 
 import oscar.cbls.invariants.core.computation.Store
+import oscar.cbls.invariants.core.propagation
 import oscar.cbls.invariants.core.propagation.ErrorChecker
 import oscar.cbls.invariants.lib.seq.Size
 import oscar.cbls.modeling.Algebra._
@@ -65,7 +66,7 @@ object PickupDeliveryS extends App{
 
   val symmetricDistanceMatrix = routingMatrix._1
 
-  val model = new Store(noCycle = false)
+  val model = new Store(noCycle = false)//, checker = Some(new ErrorChecker()))
 
   val (pickups,deliveries) = RoutingMatrixGenerator.generatePickupDeliveryCouples(n,v)
 
@@ -184,6 +185,8 @@ object PickupDeliveryS extends App{
   def threeOpt(k:Int, breakSym:Boolean) = Profile(new ThreeOpt(() => nodes, ()=>myPDP.kFirst(k,myPDP.closestNeighboursForward), myPDP,breakSymmetry = breakSym, neighborhoodName = "ThreeOpt(k=" + k + ")"))
 
   val search = insertCoupleFast exhaust (new BestSlopeFirst(List(pickupDeliveryCoupleShift,oneCoupleMove,insertCoupleSlow,onePointMovePD, threeOpt(20,true))))
+
+//  val search = insertCoupleFast exhaust (new BestSlopeFirst(List(pickupDeliveryCoupleShift,oneCoupleMove,insertCoupleSlow,onePointMovePD, dynAndThenCoupleExchange, threeOpt(20,true))))
 
   search.verbose = 2
 

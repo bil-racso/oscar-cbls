@@ -112,13 +112,15 @@ trait RedBlackTreeMap[@specialized(Int) V]{
 // A leaf node.
 case class L[@specialized(Int) V]() extends RedBlackTreeMap[V]  {
 
-
   def get(k : Int) : Option[V] = None
 
   override def contains(k : Int) : Boolean = false
 
   override protected[rb] def modWith (k : Int, f : (Int, Option[V]) => Option[V]) : RedBlackTreeMap[V] = {
-    T(R, this, k, f(k,None), this)
+    f(k,None) match{
+      case None => this
+      case something => T(R, this, k, something, this)
+    }
   }
 
   def biggestLowerOrEqual(k:Int):Option[(Int,V)] = None
@@ -165,6 +167,8 @@ case class L[@specialized(Int) V]() extends RedBlackTreeMap[V]  {
 
 // A tree node.
 case class T[@specialized(Int) V](c : Boolean, l : RedBlackTreeMap[V], k : Int, v : Option[V], r : RedBlackTreeMap[V]) extends RedBlackTreeMap[V] {
+  assert(v.nonEmpty)
+
   lazy val mSize = l.size + r.size + 1
   override def size = mSize
   override def isEmpty = false
