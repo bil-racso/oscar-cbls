@@ -10,6 +10,10 @@ import oscar.cbls.routing.seq.neighborhood._
 import oscar.cbls.search.combinators.{BestSlopeFirst, RoundRobin, DynAndThen, Profile}
 import oscar.cbls.search.move.CompositeMove
 
+import scala.util.Random
+
+import scala.util.Random
+
 /**
   * Created by fabian on 04-07-16.
   */
@@ -41,8 +45,8 @@ class MyPDP(n:Int, v:Int, m:Store,
   setArrivalLeaveLoadValue()
   setVehiclesMaxCargo(5)
   setVehiclesCapacityStrongConstraint()
-  setTimeWindows(timeWindows)
-  setTravelTimeFunctions(ttf)
+  //setTimeWindows(timeWindows)
+  //setTravelTimeFunctions(ttf)
 
   val obj = new CascadingObjective(fastConstraints,
     new CascadingObjective(slowConstraints,
@@ -61,7 +65,7 @@ object PickupDeliveryS extends App{
 
   val symmetricDistanceMatrix = routingMatrix._1
 
-  val model = new Store(checker = Some(new ErrorChecker()), noCycle = false)
+  val model = new Store(noCycle = false)
 
   val (pickups,deliveries) = RoutingMatrixGenerator.generatePickupDeliveryCouples(n,v)
 
@@ -73,7 +77,6 @@ object PickupDeliveryS extends App{
   val nodes = myPDP.nodes
 
   model.close()
-
 
   val insertCoupleFast = Profile(DynAndThen(
     InsertPointUnroutedFirst(

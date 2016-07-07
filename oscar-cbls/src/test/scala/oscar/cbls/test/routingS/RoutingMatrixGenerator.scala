@@ -50,7 +50,7 @@ object RoutingMatrixGenerator {
     toReturn
   }
 
-  def generateTimeWindows(n:Int, v:Int, pickups:Array[Int], deliveries:Array[Int], timeUnitDelta:Int = 10000/2): Array[(Int,(Int,Int))] ={
+  def generateTimeWindows(n:Int, v:Int, pickups:Array[Int], deliveries:Array[Int], timeUnitDelta:Int = 10000): Array[(Int,(Int,Int))] ={
     val maxNodes = n-v
     val maxCouples = maxNodes/2
     val random = new Random(0)

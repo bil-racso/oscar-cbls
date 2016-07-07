@@ -125,7 +125,7 @@ class ConstantRoutingDistance(routes:ChangingSeqValue,
         saveCurrentCheckpoint(changes.newValue)
         true
       case SeqUpdateRollBackToCheckpoint(checkpoint:IntSequence) =>
-        require (checkpoint quickEquals checkpoint)
+        require (checkpoint quickEquals this.checkpoint)
         restoreCheckpoint()
         true
       case SeqUpdateInsert(value : Int, pos : Int, prev : SeqUpdate) =>
@@ -311,9 +311,7 @@ class ConstantRoutingDistance(routes:ChangingSeqValue,
         val positionOfDelete = x.position
 
         val oldPrevValue = prev.newValue.valueAtPosition(positionOfDelete-1).head //vehicles are never deleted
-
-        val oldSuccValue = RoutingConventionMethods.routingSuccPos2Val(positionOfDelete-1, prev.newValue,v)
-
+        val oldSuccValue = RoutingConventionMethods.routingSuccPos2Val(positionOfDelete, prev.newValue,v)
         val newDistance = distanceMatrix(oldPrevValue)(oldSuccValue)
         val oldDistanceBefore = distanceMatrix(oldPrevValue)(removedValue)
         val oldDistanceAfter = distanceMatrix(removedValue)(oldSuccValue)
@@ -455,7 +453,7 @@ class ConstantRoutingDistance(routes:ChangingSeqValue,
       }
 
     }else{
-      c.check(distance(0).value == computeValueFromScratch(routes.value)(0),Some("distance(0).value="+distance(0).value + " should== computeValueFromScratch(routes.value)(0)" + computeValueFromScratch(routes.value)(0)))
+      c.check(distance(0).newValue == computeValueFromScratch(routes.value)(0),Some("distance(0).value=" + distance(0).newValue + " should== computeValueFromScratch(routes.value)(0)" + computeValueFromScratch(routes.value)(0)))
       if(checkpoint != null){
         c.check(savedValues(0) == computeValueFromScratch(checkpoint)(0))
       }

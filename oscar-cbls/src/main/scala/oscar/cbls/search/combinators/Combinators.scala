@@ -1076,7 +1076,7 @@ case class AndThen(a: Neighborhood, b: Neighborhood, maximalIntermediaryDegradat
   override def getMove(obj: Objective, acceptanceCriteria: (Int, Int) => Boolean): SearchResult = {
 
     var secondMove: Move = null //the move performed by b
-    val oldObj: Int = obj.value
+    val oldObj: Int = obj.valueNoSearch
 
     //the acceptance criterion is on the diff between the oldObj and the newObj over the two consecutive moves
     //it is evaluated for the second move
@@ -1103,7 +1103,7 @@ case class AndThen(a: Neighborhood, b: Neighborhood, maximalIntermediaryDegradat
 
         if (maximalIntermediaryDegradation != Int.MaxValue) {
           //we need to ensure that intermediary step is admissible
-          val intermediaryVal = obj.value
+          val intermediaryVal = obj.valueNoSearch
           val intermediaryDegradation = intermediaryVal - oldObj
           if (intermediaryDegradation > maximalIntermediaryDegradation)
             return Int.MaxValue //we do not consider this first step
@@ -1130,7 +1130,7 @@ case class AndThen(a: Neighborhood, b: Neighborhood, maximalIntermediaryDegradat
   }
 }
 
-//TODO: does not work if "a"  is doing best search.
+//TODO: does not work if "a"  is doing best search?
 case class DynAndThen[FirstMoveType<:Move](a:Neighborhood with SupportForAndThenChaining[FirstMoveType],
                                            b:(FirstMoveType => Neighborhood),
                                            maximalIntermediaryDegradation: Int = Int.MaxValue)
@@ -1139,7 +1139,6 @@ case class DynAndThen[FirstMoveType<:Move](a:Neighborhood with SupportForAndThen
   var currentB:Neighborhood = null
 
   override def getMove(obj: Objective, acceptanceCriteria: (Int, Int) => Boolean): SearchResult = {
-
 
     val enclosingDynAndthen = this
 
