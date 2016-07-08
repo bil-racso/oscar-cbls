@@ -8,7 +8,7 @@ import oscar.cbls.modeling.Algebra._
 import oscar.cbls.objective.{CascadingObjective, Objective}
 import oscar.cbls.routing.seq.model._
 import oscar.cbls.routing.seq.neighborhood._
-import oscar.cbls.search.combinators.{BestSlopeFirst, RoundRobin, DynAndThen, Profile}
+import oscar.cbls.search.combinators._
 import oscar.cbls.search.move.CompositeMove
 
 import scala.util.Random
@@ -16,8 +16,8 @@ import scala.util.Random
 import scala.util.Random
 
 /**
-  * Created by fabian on 04-07-16.
-  */
+ * Created by fabian on 04-07-16.
+ */
 
 class MyPDP(n:Int, v:Int, m:Store,
             symmetricDistance:Array[Array[Int]], maxPivot:Int,
@@ -66,7 +66,7 @@ object PickupDeliveryS extends App{
 
   val symmetricDistanceMatrix = routingMatrix._1
 
-  val model = new Store(noCycle = false)//, checker = Some(new ErrorChecker()))
+  val model = new Store(checker = Some(new ErrorChecker),noCycle = false)
 
   val (pickups,deliveries) = RoutingMatrixGenerator.generatePickupDeliveryCouples(n,v)
 
@@ -164,13 +164,13 @@ object PickupDeliveryS extends App{
             ,(moveResult4:CompositeMove) =>{
               //And finally we insert the first couple in the second route
               new DynAndThen(InsertPointUnroutedFirst(
-                  unroutedNodesToInsert = () => {
-                    println(moveResult2.ml.head.asInstanceOf[RemovePointMove].pointToRemove)
-                    println(secondVehicle)
-                    Iterable(moveResult2.ml.head.asInstanceOf[RemovePointMove].pointToRemove)
-                  },
-                  relevantPredecessor = () => (i:Int) => myPDP.getNodesOfVehicle(secondVehicle),
-                  vrp = myPDP), (moveResult5:InsertPointMove) =>{
+                unroutedNodesToInsert = () => {
+                  println(moveResult2.ml.head.asInstanceOf[RemovePointMove].pointToRemove)
+                  println(secondVehicle)
+                  Iterable(moveResult2.ml.head.asInstanceOf[RemovePointMove].pointToRemove)
+                },
+                relevantPredecessor = () => (i:Int) => myPDP.getNodesOfVehicle(secondVehicle),
+                vrp = myPDP), (moveResult5:InsertPointMove) =>{
                 InsertPointUnroutedFirst(
                   unroutedNodesToInsert = () => Iterable(myPDP.getRelatedDelivery(moveResult5.insertedPoint)),
                   relevantPredecessor = () => myPDP.getNodesAfterRelatedPickup(),
@@ -186,10 +186,12 @@ object PickupDeliveryS extends App{
 
   val search = insertCoupleFast exhaust (new BestSlopeFirst(List(pickupDeliveryCoupleShift,oneCoupleMove,insertCoupleSlow,onePointMovePD, threeOpt(20,true))))
 
-//  val search = insertCoupleFast exhaust (new BestSlopeFirst(List(pickupDeliveryCoupleShift,oneCoupleMove,insertCoupleSlow,onePointMovePD, dynAndThenCoupleExchange, threeOpt(20,true))))
+  val searchWithRrestart = search onExhaustRestartAfter(Atomic(removeCouple maxMoves((n-v)/2)),5,myPDP.obj)
 
-  search.verbose = 2
 
+  searchWithRrestart.verbose = 2
+  removeCouple.verbose = 4
+  
   //  search.verboseWithExtraInfo(4,()=>myVRP.toString)
   search.paddingLength = 300
 
