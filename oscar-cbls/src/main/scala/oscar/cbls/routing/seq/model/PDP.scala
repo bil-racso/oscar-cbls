@@ -218,6 +218,27 @@ class PDP(override val n:Int, override val v:Int, override val m:Store, maxPivot
   }
 
 
+  def getUnCompleteSegments(routeNumber:Int): List[List[Int]] ={
+    var unCompleteSegmentsList:List[List[Int]] = Nil
+    var currentList:List[Int] = Nil
+    val route = getRouteOfVehicle(routeNumber)
+    for(node <- route){
+      if(isPickup(node))
+        currentList = node :: currentList
+      else if(isDelivery(node)){
+        if(!currentList.contains(getRelatedPickup(node)))
+          currentList = node :: currentList
+        else{
+          val pos = currentList.indexOf(getRelatedPickup(node))
+          unCompleteSegmentsList = currentList.reverse :: unCompleteSegmentsList
+          currentList = node :: currentList.dropRight(currentList.size-pos)
+        }
+      }
+    }
+    currentList.reverse :: unCompleteSegmentsList
+  }
+
+
   //---- Vehicle capacity ----//
 
   val defaultArrivalLoadValue = 0
