@@ -185,13 +185,8 @@ object PickupDeliveryS extends App{
   def threeOpt(k:Int, breakSym:Boolean) = Profile(new ThreeOpt(() => nodes, ()=>myPDP.kFirst(k,myPDP.closestNeighboursForward), myPDP,breakSymmetry = breakSym, neighborhoodName = "ThreeOpt(k=" + k + ")"))
 
   val search = insertCoupleFast exhaust (new BestSlopeFirst(List(pickupDeliveryCoupleShift,oneCoupleMove,insertCoupleSlow,onePointMovePD, threeOpt(20,true))))
-
-  val searchWithRrestart = search onExhaustRestartAfter(Atomic(removeCouple maxMoves((n-v)/2)),5,myPDP.obj)
-
-
-  searchWithRrestart.verbose = 2
-  removeCouple.verbose = 4
   
+
   //  search.verboseWithExtraInfo(4,()=>myVRP.toString)
   search.paddingLength = 300
 
