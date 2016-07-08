@@ -1,7 +1,6 @@
 package oscar.cbls.test.routingS
 
 import oscar.cbls.invariants.core.computation.Store
-import oscar.cbls.invariants.core.propagation
 import oscar.cbls.invariants.core.propagation.ErrorChecker
 import oscar.cbls.invariants.lib.seq.Size
 import oscar.cbls.modeling.Algebra._
@@ -46,8 +45,8 @@ class MyPDP(n:Int, v:Int, m:Store,
   setArrivalLeaveLoadValue()
   setVehiclesMaxCargo(5)
   setVehiclesCapacityStrongConstraint()
-  //setTimeWindows(timeWindows)
-  //setTravelTimeFunctions(ttf)
+  setTimeWindows(timeWindows)
+  setTravelTimeFunctions(ttf)
 
   val obj = new CascadingObjective(fastConstraints,
     new CascadingObjective(slowConstraints,
@@ -125,7 +124,17 @@ object PickupDeliveryS extends App{
       relevantNewPredecessors = () => myPDP.getNodesAfterRelatedPickup(),
       vrp = myPDP, best = true))name "pickupDeliveryCoupleShift")
 
-
+  val removeCouple = Profile(new DynAndThen(new RemovePoint(
+    relevantPointsToRemove = () => myPDP.getRoutedPickups,
+    vrp = myPDP),
+    (moveResult1:RemovePointMove) =>{
+      println(moveResult1.pointToRemove)
+      println(myPDP.getRelatedDelivery(moveResult1.pointToRemove))
+      new RemovePoint(
+        relevantPointsToRemove = () => List(myPDP.getRelatedDelivery(moveResult1.pointToRemove)),
+        vrp = myPDP)
+    }, maximalIntermediaryDegradation = Int.MaxValue)
+  )
 
   def dynAndThenCoupleExchange = {
     var firstVehicle = 10
@@ -182,16 +191,22 @@ object PickupDeliveryS extends App{
     )
   }
 
-  def threeOpt(k:Int, breakSym:Boolean) = Profile(new ThreeOpt(() => nodes, ()=>myPDP.kFirst(k,myPDP.closestNeighboursForward), myPDP,breakSymmetry = breakSym, neighborhoodName = "ThreeOpt(k=" + k + ")"))
+  def threeOpt(k:Int, breakSym:Boolean) = Profile(new ThreeOpt(() => nodes, ()=>myPDP.kFirst(k,myPDP.closestNeighboursForward), myPDP,breakSymmetry = breakSym,neighborhoodName = "ThreeOpt(k=" + k + ")"))
 
-  val search = insertCoupleFast exhaust (new BestSlopeFirst(List(pickupDeliveryCoupleShift,oneCoupleMove,insertCoupleSlow,onePointMovePD, threeOpt(20,true))))
-  
+  val search = insertCoupleFast exhaust
+    new BestSlopeFirst(List(pickupDeliveryCoupleShift,oneCoupleMove,insertCoupleSlow,onePointMovePD, threeOpt(20,true)))
+
+  val searchWithRrestart = search onExhaustRestartAfter(Atomic(removeCouple maxMoves((n-v)/2)),5,myPDP.obj)
+
+
+  searchWithRrestart.verbose = 2
+  removeCouple.verbose = 4
 
   //  search.verboseWithExtraInfo(4,()=>myVRP.toString)
-  search.paddingLength = 300
+  searchWithRrestart.paddingLength = 300
 
-  search.doAllMoves(obj=myPDP.obj)
+  searchWithRrestart.doAllMoves(obj=myPDP.obj)
 
   println(myPDP)
-  println(search.profilingStatistics)
+  println(searchWithRrestart.profilingStatistics)
 }
