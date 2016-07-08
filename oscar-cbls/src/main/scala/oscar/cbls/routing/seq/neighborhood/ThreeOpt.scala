@@ -116,7 +116,7 @@ case class ThreeOpt(potentialInsertionPoints:()=>Iterable[Int], //must be routed
                     return
                   }
                 }
-
+                /*
                 //try move with flip
                 flipForInstantiation = true
                 doMove(insertionPosition, segmentStartPosition, segmentEndPosition, true)
@@ -125,7 +125,7 @@ case class ThreeOpt(potentialInsertionPoints:()=>Iterable[Int], //must be routed
                   seq.releaseCurrentCheckpointAtCheckpoint()
                   startIndice = insertionPoint + 1
                   return
-                }
+                }*/
               }
             }
           }

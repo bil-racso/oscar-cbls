@@ -50,15 +50,16 @@ object RoutingMatrixGenerator {
     toReturn
   }
 
-  def generateTimeWindows(n:Int, v:Int, pickups:Array[Int], deliveries:Array[Int], timeUnitDelta:Int = 10000): Array[(Int,(Int,Int))] ={
+  def generateTimeWindows(n:Int, v:Int, pickups:Array[Int], deliveries:Array[Int], timeUnitDelta:Int = 50): Array[(Int,(Int,Int))] ={
+
     val maxNodes = n-v
     val maxCouples = maxNodes/2
     val random = new Random(0)
     val timeWindows = Array.tabulate(n)(tw => (0,(0,0)))
-    val nbOfNodesPerTimeUnit = Array.tabulate(n)(i => 0)
+    val nbOfNodesPerTimeUnit = Array.tabulate(8000)(i => 0)
     var tWGenerated = 0
     var tWCoupleGenerated = 0
-    var currentTimeUnit = 1
+    var currentTimeUnit = 0
 
     def currentTWGenerated(): Int ={
       var res = 0
@@ -70,22 +71,20 @@ object RoutingMatrixGenerator {
       res
     }
 
-    while(tWGenerated < maxNodes){
-      val nbOfCouplesToAdd =
-        if(maxCouples - tWCoupleGenerated < v)
-          maxCouples - tWCoupleGenerated
-        else
-          Math.min(maxCouples - tWCoupleGenerated,random.nextFloat()*(v*currentTimeUnit - currentTWGenerated())).toInt
+
+    while(tWCoupleGenerated < maxCouples){
+      val nbOfCouplesToAdd = Math.min(maxCouples - tWCoupleGenerated,random.nextInt(v))
+      println(nbOfCouplesToAdd)
       for(inc <- 0 until nbOfCouplesToAdd){
-        val deliveryInc = random.nextInt(4) + 2
-        timeWindows(pickups(tWCoupleGenerated+inc)) = (timeUnitDelta*(currentTimeUnit+1),(50,timeUnitDelta*currentTimeUnit))
-        timeWindows(deliveries(tWCoupleGenerated+inc)) = (timeUnitDelta*(currentTimeUnit+5),(0, timeUnitDelta*(currentTimeUnit+deliveryInc)))
-        nbOfNodesPerTimeUnit(currentTimeUnit+deliveryInc) += 1
+        val incDelivery = random.nextInt(50)
+        timeWindows(pickups(tWCoupleGenerated+inc)) = (timeUnitDelta*(currentTimeUnit+1),(0,timeUnitDelta*currentTimeUnit))
+        timeWindows(deliveries(tWCoupleGenerated+inc)) = (timeUnitDelta*(currentTimeUnit+1+incDelivery),(0, timeUnitDelta*(currentTimeUnit+incDelivery)))
+        nbOfNodesPerTimeUnit(currentTimeUnit+incDelivery) += 1
       }
       nbOfNodesPerTimeUnit(currentTimeUnit) += nbOfCouplesToAdd
       tWGenerated = currentTWGenerated()
       tWCoupleGenerated += nbOfCouplesToAdd
-      currentTimeUnit += 1
+      currentTimeUnit += random.nextInt(10000/timeUnitDelta)
     }
     timeWindows
   }

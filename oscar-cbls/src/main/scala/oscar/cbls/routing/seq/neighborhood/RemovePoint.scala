@@ -80,9 +80,7 @@ case class RemovePoint(relevantPointsToRemove:()=>Iterable[Int],
         case None => ;
         case Some(p) =>
           positionOfPointToRemove = p
-
           doMove(positionOfPointToRemove)
-
           if (evaluateCurrentMoveObjTrueIfStopRequired(evalObjAndRollBack())) {
             seq.releaseCurrentCheckpointAtCheckpoint()
             startIndice = pointToRemove + 1
