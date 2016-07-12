@@ -23,11 +23,12 @@ import oscar.cbls.modeling.Algebra._
 import oscar.cbls.objective.Objective
 import oscar.cbls.routing.seq.model._
 import oscar.cbls.routing.seq.neighborhood._
-import oscar.cbls.search.combinators.{BestSlopeFirst, Profile}
+import oscar.cbls.search.combinators.{DoOnMove, BestSlopeFirst, Profile}
 
-class MySimpleRoutingWithUnroutedPointsAndNext(n:Int,v:Int,symmetricDistance:Array[Array[Int]],m:Store, maxPivot:Int)
+class MySimpleRoutingWithUnroutedPointsAndNext(n:Int,v:Int,symmetricDistance:Array[Array[Int]],m:Store, maxPivot:Int, pointsList:Array[(Int,Int)] = null)
   extends VRP(n,v,m,maxPivot)
-  with TotalConstantDistance with ClosestNeighbors with RoutedAndUnrouted{
+  with TotalConstantDistance with ClosestNeighbors with RoutedAndUnrouted
+{
 
   setSymmetricDistanceMatrix(symmetricDistance)
 
@@ -48,28 +49,29 @@ class MySimpleRoutingWithUnroutedPointsAndNext(n:Int,v:Int,symmetricDistance:Arr
 
   this.addToStringInfo(() => "next:" + next.map(_.value).mkString(","))
   this.addToStringInfo(() => "prev:" + prev.map(_.value).mkString(","))
+
+  /*if(pointsList != null)
+    setPointsList(pointsList)*/
+
+
 }
 
 object TestNext extends App{
 
-  val n = 20
-  val v = 5
+  val n = 1000
+  val v = 1
 
   val maxPivotPerValuePercent = 4
 
   println("VRP(n:" + n + " v:" + v + ")")
 
-  val symmetricDistanceMatrix = RoutingMatrixGenerator(n)._1
-
+  val (symmetricDistanceMatrix,pointsList) = RoutingMatrixGenerator(n)
   //  println("restrictions:" + restrictions)
-  val model = new Store(checker = Some(new ErrorChecker()))
+  val model = new Store()
 
-  val myVRP = new MySimpleRoutingWithUnroutedPointsAndNext(n,v,symmetricDistanceMatrix,model,maxPivotPerValuePercent)
-  val nodes = myVRP.nodes
+  val myVRP = new MySimpleRoutingWithUnroutedPointsAndNext(n,v,symmetricDistanceMatrix,model,maxPivotPerValuePercent,pointsList)
 
   model.close()
-
-  println(myVRP)
 
   val routeUnroutdPoint =  Profile(new InsertPointUnroutedFirst(myVRP.unrouted,()=>myVRP.kFirst(10,myVRP.closestNeighboursForward,myVRP.isRouted), myVRP,neighborhoodName = "InsertUF"))
 
@@ -82,7 +84,7 @@ object TestNext extends App{
 
   def threeOpt(k:Int, breakSym:Boolean) = Profile(new ThreeOpt(myVRP.routed, ()=>myVRP.kFirst(k,myVRP.closestNeighboursForward,myVRP.isRouted), myVRP,breakSymmetry = breakSym, neighborhoodName = "ThreeOpt(k=" + k + ")"))
 
-  val search = (BestSlopeFirst(List(routeUnroutdPoint2, routeUnroutdPoint, onePtMove(10),twoOpt, threeOpt(10,true))) exhaust threeOpt(20,true))
+  val search = (BestSlopeFirst(List(routeUnroutdPoint2, routeUnroutdPoint, onePtMove(10),twoOpt, threeOpt(10,true))) exhaust threeOpt(20,true)) showObjectiveFunction(myVRP.obj,withZoom = true) //afterMove(myVRP.drawRoutes())
 
  // val search = (new RoundRobin(List(routeUnroutdPoint2,onePtMove(10) guard (() => myVRP.unrouted.value.size != 0)),10)) exhaust BestSlopeFirst(List(onePtMove(20),twoOpt, threeOpt(10,true))) exhaust threeOpt(20,true)
 
@@ -90,12 +92,13 @@ object TestNext extends App{
   //search.verboseWithExtraInfo(1, ()=> "" + myVRP)
   search.paddingLength = 100
 
-  search.doAllMoves(obj=myVRP.obj)
+  print("Doing all moves ...")
 
+
+  search.doAllMoves(obj = myVRP.obj)
   model.propagate()
-
-  println
-  println(myVRP)
-  println
   println(search.profilingStatistics)
+
+
+
 }

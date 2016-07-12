@@ -54,7 +54,7 @@ class MyPDP(n:Int, v:Int, m:Store,
 }
 
 object PickupDeliveryS extends App{
-  val n = 410
+  val n = 1010
   val v = 10
 
   val maxPivotPerValuePercent = 4
@@ -203,9 +203,6 @@ object PickupDeliveryS extends App{
   search.paddingLength = 300
 
   search.doAllMoves(obj=myPDP.obj)
-
-  for(i <- 0 until 10)
-    println(myPDP.getUnCompleteSegments(i))
 
   println(myPDP)
   println(search.profilingStatistics)

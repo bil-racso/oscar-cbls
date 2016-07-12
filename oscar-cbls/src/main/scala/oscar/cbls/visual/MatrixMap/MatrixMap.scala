@@ -34,26 +34,23 @@ abstract class MatrixMap extends VisualDrawing(false,false){
 
   var pointsList:scala.List[(Int, Int)] = Nil
   var colorValues:Array[Color] = null
-  var vrp:VRP = null
-  var mapSize = 0
+  var V:Int = 0
+  var mapSize = 10000
 
   def drawPoints()
 
-  def drawRoutes()
-
-  def setVRP(vrp:VRP): Unit ={
-    this.vrp = vrp
-  }
+  def drawRoutes(routes:List[List[Int]])
 
   def setColorValues(colorValues:Array[Color]): Unit ={
     if(colorValues == null){
-      this.colorValues = ColorGenerator.generateRandomColors(vrp.V)
+      this.colorValues = ColorGenerator.generateRandomColors(V)
     }else{
       this.colorValues = colorValues
     }
   }
 
-  def setPointsList(pointsList:scala.List[(Int,Int)]): Unit ={
+  def setPointsList(pointsList:scala.List[(Int,Int)],V:Int): Unit ={
+    this.V = V
     val tempList:ListBuffer[(Int,Int)] = new ListBuffer[(Int,Int)]
     for(p <- pointsList){
       val tempP = (p._1*getHeight/mapSize, p._2*getHeight/mapSize)
@@ -74,7 +71,7 @@ abstract class MatrixMap extends VisualDrawing(false,false){
 class RoutingMatrixMap extends MatrixMap{
 
   def drawPoints() ={
-    var v = vrp.V
+    var v = V
     for(p <- pointsList){
       if(v > 0){
         val tempPoint = new VisualCircle(this,p._1.toInt,p._2.toInt,5)
@@ -88,12 +85,11 @@ class RoutingMatrixMap extends MatrixMap{
     }
   }
 
-  def drawRoutes(): Unit ={
+  def drawRoutes(routes:List[List[Int]]): Unit ={
     clear()
     drawPoints()
 
-    val routes = (for(c <- 0 until vrp.V)yield vrp.getRouteOfVehicle(c)).toList
-    for(r <- 0 until vrp.V){
+    for(r <- 0 until V){
       val color:Color = colorValues(r)
       val points = routes(r)
       var old = points.head

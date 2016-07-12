@@ -1,4 +1,4 @@
-package oscar.examples.cbls.routing.visual.FunctionGraphic
+package oscar.cbls.visual.FunctionGraphic
 
 /**
   * *****************************************************************************
@@ -17,17 +17,16 @@ package oscar.examples.cbls.routing.visual.FunctionGraphic
   * ****************************************************************************
   */
 
-import java.awt
 import java.awt._
-import java.awt.event.{MouseListener, MouseEvent, MouseMotionListener, ActionListener}
+import java.awt.event.{MouseListener, MouseEvent}
 import java.awt.geom.Line2D.Double
 import java.awt.geom.Rectangle2D
-import javax.swing.JButton
 
 import oscar.cbls.search.StopWatch
 import oscar.visual.VisualDrawing
-import oscar.visual.shapes.{VisualRectangle, VisualLine, VisualText}
+import oscar.visual.shapes.{VisualShape, VisualRectangle, VisualLine, VisualText}
 
+import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 
 /** This abstract class represent the base structure for
@@ -70,6 +69,7 @@ abstract class FunctionGraphic() extends VisualDrawing(false,false) with StopWat
   val minHeight = 10
   val diffHeight = () => maxHeight() - minHeight
 
+
   val xValues:ListBuffer[Long] = new ListBuffer[Long]
   val yValues:ListBuffer[Int] = new ListBuffer[Int]
 
@@ -79,6 +79,13 @@ abstract class FunctionGraphic() extends VisualDrawing(false,false) with StopWat
   var maxYValueDisplayed:Long = 0
   var minYValueDisplayed:Long = 0
   val diffYValueDisplayed = () => maxYValueDisplayed - minYValueDisplayed
+
+  var minAbs:Long = 0
+  var maxAbs:Long = 0
+  val diffAbs = () => maxAbs - minAbs
+  var minOrd:Long = 0
+  var maxOrd:Long = 0
+  val diffOrd = () => maxOrd - minOrd
 
   val maxXValue = () => if(xValues.isEmpty)0 else xValues.max
   val minXValue = () => if(xValues.isEmpty)0 else xValues.min
@@ -91,14 +98,17 @@ abstract class FunctionGraphic() extends VisualDrawing(false,false) with StopWat
     ((value - minXValueDisplayed)*diffWidth().toDouble/Math.max(diffWidth(),diffXValueDisplayed())).toInt
   }
   val heightAdapter = (value:Long) => {
-    (value - minYValueDisplayed)*diffHeight().toDouble/(maxYValueDisplayed - minYValueDisplayed)
+    (value - minYValueDisplayed)*diffHeight().toDouble/Math.max(diffHeight(),diffYValueDisplayed())
   }
 
   //A list buffer that contains the color of the neighborhood that has found the current move
   val xColorValues:ListBuffer[Color] = new ListBuffer[Color]
 
-
   setLayout(new BorderLayout())
+
+  //We remove the unwanted listener inherited from VisualDrawing
+  removeMouseListener(getMouseListeners.head)
+  removeMouseMotionListener(getMouseMotionListeners.head)
 
   def notifyNewObjectiveValue(objValue:Int, objTime:Long, color:Color)
 
@@ -106,13 +116,17 @@ abstract class FunctionGraphic() extends VisualDrawing(false,false) with StopWat
     super.clear()
   }
 
-  def drawGlobalCurve()
+  override def addShape(shape: VisualShape, repaintAfter: Boolean = true): Unit ={
+    super.addShape(shape,false)
+  }
+
+  def drawGlobalCurve(): Unit ={
+    repaint()
+  }
 
   def setTimeBorders(position:Int){}
 
   def setMaxNumberOfObject(percentage:scala.Double){}
-
-
 }
 
 /** This class has the purpose to draw the objective function curve.
@@ -123,7 +137,7 @@ abstract class FunctionGraphic() extends VisualDrawing(false,false) with StopWat
   * @author fabian.germeau@student.vinci.be
   */
 
-class ObjFunctionGraphic(width:Int,height:Int) extends FunctionGraphic(){
+class ObjFunctionGraphic() extends FunctionGraphic(){
 
   //A list buffer that contains all the bests objective values encountered during the search
   val bestValues:ListBuffer[Int] = new ListBuffer[Int]
@@ -135,6 +149,7 @@ class ObjFunctionGraphic(width:Int,height:Int) extends FunctionGraphic(){
     else
       Int.MaxValue
   }
+
 
   //A variable and a MouseListener used to allow the user to display or not the best curve
   var displayBest = true
@@ -154,7 +169,6 @@ class ObjFunctionGraphic(width:Int,height:Int) extends FunctionGraphic(){
 
     override def mouseReleased(e: MouseEvent): Unit = {}
   })
-
 
   /**
     * Clear the graphic and reset the different ListBuffers in order to begin another research
@@ -191,8 +205,15 @@ class ObjFunctionGraphic(width:Int,height:Int) extends FunctionGraphic(){
     val (bottom,top) = getOrdFloorValues(minYValueDisplayed,maxYValueDisplayed)
     val (left,right) = getAbsFloorValues(minXValueDisplayed,maxXValueDisplayed)
 
+    minAbs = left
+    maxAbs = right
+    minOrd = bottom
+    maxOrd = top
+
+    drawStatistics()
     drawCurve()
-    drawAxis(bottom,top,left.toLong,right.toLong)
+    drawAxis()
+    super.drawGlobalCurve()
   }
 
   /**
@@ -203,49 +224,49 @@ class ObjFunctionGraphic(width:Int,height:Int) extends FunctionGraphic(){
     var currentTimeUnitValue:scala.Double = 0.0
     var currentTimeUnitValuesNumber:scala.Double = 0.0
     var currentTimeUnitBestValue:scala.Double = 0.0
-    var currentTimeUnitBestValuesNumber:scala.Double = 0.0
     var previousTimeUnitValue:scala.Double = 0.0
     var previousTimeUnitBestValue:scala.Double = 0.0
     var previousTimeUnit:scala.Double = 0.0
     for(i <- yValues.indices){
-      if(widthAdapter(xValues(i)) == currentTimeUnit){
-        currentTimeUnitValue += heightAdapter(yValues(i))
-        currentTimeUnitValuesNumber += 1
-        currentTimeUnitBestValue += heightAdapter(bestValues(i))
-        currentTimeUnitBestValuesNumber += 1
-      }else{
-        if(currentTimeUnitValuesNumber != 0) {
-          currentTimeUnitValue = maxHeight() - (currentTimeUnitValue/currentTimeUnitValuesNumber) + heightAdapter(minYValueDisplayed)
-          currentTimeUnitBestValue = maxHeight() - (currentTimeUnitBestValue/currentTimeUnitBestValuesNumber) + heightAdapter(minYValueDisplayed)
-          if(previousTimeUnitValue == 0.0) {
-            previousTimeUnitValue = currentTimeUnitValue
-            previousTimeUnitBestValue = currentTimeUnitBestValue
-            previousTimeUnit = currentTimeUnit
-          }
-          val line = new VisualLine(this, new Double(previousTimeUnit+70, previousTimeUnitValue, currentTimeUnit+70, currentTimeUnitValue))
-          line.outerCol_$eq(xColorValues(i))
-          line.borderWidth = 3
-          if(displayBest){
-            val bestLine = new VisualLine(this,new Double(previousTimeUnit+70, previousTimeUnitBestValue, currentTimeUnit+70, currentTimeUnitBestValue))
-            bestLine.outerCol_$eq(Color.green)
-          }
-          previousTimeUnit = currentTimeUnit
+      if(widthAdapter(xValues(i)) != currentTimeUnit && currentTimeUnitValuesNumber != 0) {
+        currentTimeUnitValue = maxHeight() - (currentTimeUnitValue/currentTimeUnitValuesNumber) + heightAdapter(minYValueDisplayed)
+        currentTimeUnitBestValue = maxHeight() - (currentTimeUnitBestValue/currentTimeUnitValuesNumber) + heightAdapter(minYValueDisplayed)
+        if(previousTimeUnitValue == 0.0) {
           previousTimeUnitValue = currentTimeUnitValue
           previousTimeUnitBestValue = currentTimeUnitBestValue
-          currentTimeUnitValue = 0.0
-          currentTimeUnitValuesNumber = 0.0
-          currentTimeUnitBestValue = 0.0
-          currentTimeUnitBestValuesNumber = 0.0
+          previousTimeUnit = currentTimeUnit
         }
-        while(currentTimeUnit < widthAdapter(xValues(i))){
-          currentTimeUnit += 1
+
+        if(displayBest){
+          val bestLine = new VisualLine(this,new Double(previousTimeUnit+70, previousTimeUnitBestValue, currentTimeUnit+70, currentTimeUnitBestValue))
+          bestLine.outerCol_$eq(Color.green)
         }
-        currentTimeUnitValue += heightAdapter(yValues(i))
-        currentTimeUnitValuesNumber += 1
-        currentTimeUnitBestValue += heightAdapter(bestValues(i))
-        currentTimeUnitBestValuesNumber += 1
+        val line = new VisualLine(this, new Double(previousTimeUnit+70, previousTimeUnitValue, currentTimeUnit+70, currentTimeUnitValue))
+        //line.outerCol_$eq(xColorValues(i))
+        line.borderWidth = 3
+
+        previousTimeUnit = currentTimeUnit
+        previousTimeUnitValue = currentTimeUnitValue
+        previousTimeUnitBestValue = currentTimeUnitBestValue
+        currentTimeUnitValue = 0.0
+        currentTimeUnitValuesNumber = 0.0
+        currentTimeUnitBestValue = 0.0
       }
+      while(currentTimeUnit < widthAdapter(xValues(i)))
+        currentTimeUnit += 1
+      currentTimeUnitValue += heightAdapter(yValues(i))
+      currentTimeUnitValuesNumber += 1
+      currentTimeUnitBestValue += heightAdapter(bestValues(i))
     }
+
+    //We draw the last position
+    if(displayBest){
+      val bestLine = new VisualLine(this,new Double(previousTimeUnit+70, previousTimeUnitBestValue, currentTimeUnit+70, maxHeight() - (currentTimeUnitBestValue/currentTimeUnitValuesNumber) + heightAdapter(minYValueDisplayed)))
+      bestLine.outerCol_$eq(Color.green)
+    }
+    val line = new VisualLine(this, new Double(previousTimeUnit+70, previousTimeUnitValue, currentTimeUnit+70, maxHeight() - (currentTimeUnitValue/currentTimeUnitValuesNumber) + heightAdapter(minYValueDisplayed)))
+    //line.outerCol_$eq(xColorValues.last)
+    line.borderWidth = 3
   }
 
   /**
@@ -275,7 +296,7 @@ class ObjFunctionGraphic(width:Int,height:Int) extends FunctionGraphic(){
 
   /**
     * Return the value of the X axis's border
- *
+    *
     * @param minTimeValue The minimum objective's time of occurrence that will be drawn
     * @param maxTimeValue The maximum objective's time of occurrence that will be drawn
     * @return The left and right border of the X axis
@@ -294,13 +315,8 @@ class ObjFunctionGraphic(width:Int,height:Int) extends FunctionGraphic(){
 
   /**
     * Draw the axis. We draw blank rectangle to erase the parts of the curve that overstep the axes.
- *
-    * @param minY The bottom border of the Y axis
-    * @param maxY The top border of the Y axis
-    * @param minX The left border of the X axis
-    * @param maxX The right border of the X axis
     */
-  def drawAxis(minY:Long, maxY:Long, minX:Long, maxX:Long): Unit ={
+  def drawAxis(): Unit ={
     val rectLeft = new VisualRectangle(this, new Rectangle2D.Double(0,0,minWidth,getHeight))
     rectLeft.innerCol_=(Color.white)
     rectLeft.outerCol_=(Color.white)
@@ -313,19 +329,29 @@ class ObjFunctionGraphic(width:Int,height:Int) extends FunctionGraphic(){
     absLine.outerCol_$eq(Color.black)
 
     //We determine the step of the scale
-    val objStep = (maxY - minY)/10
+    val objStep = diffOrd()/10
     for(i <- 1 to 10){
-      val scaleHeight = maxHeight() - heightAdapter((i*objStep) + minY)
-      new VisualText(this,5,scaleHeight,(minY+(objStep*i)).toString,false,new Rectangle2D.Double(0, 0, 1, 1))
+      val scaleHeight = maxHeight() - heightAdapter((i*objStep) + minOrd)
+      new VisualText(this,5,scaleHeight,(minOrd+(objStep*i)).toString,false,new Rectangle2D.Double(0, 0, 1, 1))
       new VisualLine(this,new Double(minWidth-10,scaleHeight,minWidth,scaleHeight))
+      val smallObjStep = objStep/10
+      for(j <- 1 to 9){
+        val scaleHeight = maxHeight() - heightAdapter(((i-1)*objStep) + j*smallObjStep + minOrd)
+        new VisualLine(this,new Double(minWidth-5,scaleHeight,minWidth,scaleHeight))
+      }
     }
-    val timeStep = (maxX - minX)/10
+    val timeStep = diffAbs()/10
     for(i <- 1 to 10){
-      val scaleWidth = widthAdapter((i*timeStep) + minX)
-      new VisualText(this,scaleWidth,maxHeight()+20,((timeStep*i) + minX).toString,true,new Rectangle2D.Double(0, 0, 1, 1))
+      val scaleWidth = widthAdapter((i*timeStep) + minAbs)
+      new VisualText(this,scaleWidth,maxHeight()+20,((timeStep*i) + minAbs).toString,true,new Rectangle2D.Double(0, 0, 1, 1))
       new VisualLine(this,new Double(scaleWidth,maxHeight(),scaleWidth,maxHeight()+10))
+      val smallTimeStep = timeStep/10
+      for(j <- 1 to 9){
+        val scaleWidth = widthAdapter(((i-1)*timeStep) + (j*smallTimeStep) + minAbs)
+        new VisualLine(this,new Double(scaleWidth,maxHeight(),scaleWidth,maxHeight()+5))
+      }
     }
-    val rectTop = new VisualRectangle(this, new Rectangle2D.Double(minWidth,0,getWidth,10))
+    val rectTop = new VisualRectangle(this, new Rectangle2D.Double(minWidth,0,getWidth,8))
     rectTop.innerCol_=(Color.white)
     rectTop.outerCol_=(Color.white)
     val rectRight = new VisualRectangle(this, new Rectangle2D.Double(maxWidth(),0,getWidth,getHeight))
@@ -334,5 +360,43 @@ class ObjFunctionGraphic(width:Int,height:Int) extends FunctionGraphic(){
     val rectBottomLeft = new VisualRectangle(this, new Rectangle2D.Double(0,maxHeight(),minWidth,getHeight))
     val bestText = new VisualText(this,minWidth/2,maxHeight()+20,"Best",true,new Rectangle2D.Double(0,0,1,1))
     bestText.fontColor= if (displayBest) Color.green else Color.red
+  }
+
+  /**
+    * Draw the neighborhood statistics. For each time step, the method count the number of occurences of each neighborhood encountered
+    * And whit this information it draws small rectangles in the background representing the proportion of each neighborhood.
+    */
+  def drawStatistics(): Unit ={
+    val timeStep = diffAbs()/10
+    val colorSums:Array[Map[Color,Int]] = Array.tabulate(10)(n => Map[Color,Int]())
+    var i = 0
+
+    while(i < xColorValues.size && Math.floor((xValues(i) - minAbs)/timeStep).toInt < 10){
+      val columnNumber = Math.floor((xValues(i) - minAbs)/timeStep).toInt
+      if(columnNumber >= 0){
+        colorSums(columnNumber).get(xColorValues(i)) match{
+          case Some(s:Int) => colorSums(columnNumber) += xColorValues(i) -> (1 + s)
+          case None => colorSums(columnNumber) += xColorValues(i) -> 1
+        }
+      }
+      i += 1
+    }
+    val totalColors = colorSums.map(_.foldLeft(0)((c,d) => c + d._2))
+    val maxColor  = totalColors.max
+    for(i <- 1 to 10){
+      val leftBorder = Math.max(widthAdapter((i*timeStep) + minAbs),minWidth)
+      val rightBorder = widthAdapter(((i+1)*timeStep) + minAbs)-leftBorder
+      var previousHeight:Float = 0
+      for(color <- colorSums(i-1)){
+        val colorHeight:Float = color._2/maxColor.toFloat
+        previousHeight += colorHeight
+        val coloredHistogram = new VisualRectangle(this,new Rectangle2D.Double(
+            leftBorder, maxHeight() - previousHeight*diffHeight(),
+            rightBorder, colorHeight*diffHeight()))
+        coloredHistogram.innerCol = color._1
+        coloredHistogram.outerCol = color._1
+      }
+      new VisualLine(this,new Double(leftBorder,maxHeight(),leftBorder,minHeight)).outerCol = Color.white
+    }
   }
 }

@@ -26,7 +26,7 @@ import oscar.visual.shapes.VisualCircle
 trait PickupAndDeliveryPoints extends  MatrixMap{
 
   override def drawPoints(): Unit ={
-    var v = vrp.V
+    var v = V
     for(p <- pointsList){
       if(v > 0){
         val tempPoint = new VisualCircle(this,p._1.toInt,p._2.toInt,5)

@@ -18,7 +18,7 @@ package oscar.examples.cbls.routing.visual.MatrixMap
   */
 
 import java.awt.BorderLayout
-import javax.swing.JInternalFrame
+import javax.swing.{JPanel, JInternalFrame}
 
 import oscar.cbls.routing.model.VRP
 
@@ -29,7 +29,7 @@ import scala.swing._
   */
 
 
-class RoutingMatrixVisual(title:String = "Routing map", pickupAndDeliveryPoints: Boolean = false) extends JInternalFrame(title){
+class RoutingMatrixVisual(title:String = "Routing map", pickupAndDeliveryPoints: Boolean = false) extends JPanel with Runnable{
   setLayout(new BorderLayout())
 
   var routingMatrix:MatrixMap = null
@@ -38,9 +38,29 @@ class RoutingMatrixVisual(title:String = "Routing map", pickupAndDeliveryPoints:
   else
     routingMatrix = new RoutingMatrixMap
 
-  def drawRoutes(): Unit ={
-    routingMatrix.drawRoutes()
-    validate()
+  var mustRefresh:Boolean = false
+
+  var routes:List[List[Int]] = Nil
+
+  def run(): Unit ={
+    var tempRoute:List[List[Int]] = Nil
+    while (true) {
+      try {
+        Thread.sleep(500)
+        routes.synchronized{
+          if (mustRefresh) {
+            tempRoute = routes
+            mustRefresh = false
+          }
+        }
+        if(tempRoute != Nil)
+          routingMatrix.drawRoutes(tempRoute)
+        tempRoute = Nil
+      }catch{
+        case ie:InterruptedException => return
+        case e:Exception => e.printStackTrace()
+      }
+    }
   }
 
   def drawPoints(): Unit ={
@@ -52,16 +72,12 @@ class RoutingMatrixVisual(title:String = "Routing map", pickupAndDeliveryPoints:
     routingMatrix.setColorValues(colorValues)
   }
 
-  def setPointsList(pointsList:List[(Int,Int)]): Unit ={
-    routingMatrix.setPointsList(pointsList)
+  def setPointsList(pointsList:List[(Int,Int)],V:Int): Unit ={
+    routingMatrix.setPointsList(pointsList,V)
   }
 
   def setMapSize(mapSize:Int): Unit ={
     routingMatrix.setMapSize(mapSize)
-  }
-
-  def setVRP(vrp:VRP): Unit ={
-    routingMatrix.setVRP(vrp)
   }
 
   def clear(): Unit ={
@@ -78,13 +94,12 @@ class RoutingMatrixVisualWithAttribute(title:String = "Routing map",
                                        mapSize:Int,
                                        pointsList:scala.List[(Int,Int)],
                                        colorValues:Array[Color],
-                                       dimension:Dimension = new Dimension(960,540)) extends RoutingMatrixVisual{
+                                       dimension:Dimension = new Dimension(960,960)) extends RoutingMatrixVisual{
   setPreferredSize(dimension)
   setSize(dimension)
   routingMatrix.setPreferredSize(dimension)
   routingMatrix.setSize(dimension)
-  routingMatrix.setVRP(vrp)
   routingMatrix.setMapSize(mapSize)
-  routingMatrix.setPointsList(pointsList)
+  routingMatrix.setPointsList(pointsList,vrp.V)
   routingMatrix.setColorValues(colorValues)
 }
