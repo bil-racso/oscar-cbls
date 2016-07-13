@@ -1,18 +1,28 @@
+/*******************************************************************************
+  * OscaR is free software: you can redistribute it and/or modify
+  * it under the terms of the GNU Lesser General Public License as published by
+  * the Free Software Foundation, either version 2.1 of the License, or
+  * (at your option) any later version.
+  *
+  * OscaR is distributed in the hope that it will be useful,
+  * but WITHOUT ANY WARRANTY; without even the implied warranty of
+  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  * GNU Lesser General Public License  for more details.
+  *
+  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
+  ******************************************************************************/
+
 package oscar.des.flow.lib
 
-import oscar.des.engine.Model
 import oscar.des.flow.core.Inputter
 import oscar.des.flow.core.ItemClassHelper._
 
-import scala.collection.immutable.SortedMap
+/** Represents activable processes
+  * @author renaud.delandtsheer@cetic.be
+  */
 
-//TODO: remove Activable, ActivableProcess is enough
-abstract class Activable{
-  def setUnderControl()
-  def activate(intensity:Int)
-}
-
-abstract class ActivableProcess(val name:String, verbosity:String=>Unit, val id:Int) extends Activable{
+abstract class ActivableProcess(val name:String, verbosity:String=>Unit, val id:Int) {
   def isRunning:Boolean
   def completedBatchCount(outputPort:Int = -1):Int
   def startedBatchCount:Int
@@ -22,12 +32,12 @@ abstract class ActivableProcess(val name:String, verbosity:String=>Unit, val id:
 
   var productionBatch:LIFOStorage = null
 
-  override def setUnderControl(){
+  def setUnderControl(){
     productionBatch = new LIFOStorage(Int.MaxValue,List.empty,"productionWindow_" + this.name, verbosity, false,-1)
     addPreliminaryInput(productionBatch)
   }
 
-  override def activate(intensity: Int): Unit ={
+  def activate(intensity: Int): Unit ={
     productionBatch.put(intensity,zeroItemClass)({()=>})
   }
 

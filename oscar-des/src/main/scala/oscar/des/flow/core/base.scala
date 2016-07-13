@@ -26,8 +26,8 @@ trait Putable {
   /**
    * put the amount of goods into the putable.
    * This is potentially blocking
-   * @param amount: the items to be put in the puteable
-   * @param block
+   * @param amount the items to be put in the puteable
+   * @param block the code to be executed after the put
    */
   def put(amount:Int,i:ItemClass)(block : () => Unit)
 }
@@ -39,7 +39,7 @@ trait Fetchable {
   /**
    * fetch the amount of goods from the putable.
    * This is potentially blocking
-   * @param amount
+   * @param amount the items to be fetched from the fetchable
    * @param block the block to execute once the items are actually fetched. these are bigen to the block method
    */
   def fetch(amount:Int)(block : ItemClass => Unit)
@@ -63,8 +63,8 @@ trait RichFetchable extends Fetchable {
   }
 
   /**
-   * @param amount
-   * @return what remains to be fetched, whas has been fetched
+   * @param amount the items to be internally fetched from the fetchable
+   * @return what remains to be fetched, what has been fetched
    */
   protected def internalFetch(amount:Int,hasBeenFetch:ItemClass = ItemClassHelper.zeroItemClass):(Int,ItemClass)
 
@@ -124,7 +124,7 @@ trait RichPutable extends Putable {
   def isThereAnyWaitingPut:Boolean = waitingPuts.nonEmpty
 
   /**
-   * @param l
+   * @param l the items to be internally put
    * @return what remains to be pt after this put, and what has been put
    */
   protected def internalPut(l:List[(Int,ItemClass)], hasBeenPut:Int = 0):(List[(Int,ItemClass)],Int)
@@ -133,7 +133,7 @@ trait RichPutable extends Putable {
    * put the amount of goods into the putable.
    * This is potentially blocking
    * @param l the items to be put
-   * @param block
+   * @param block the block to execute after the put
    */
   protected def appendPut(l:List[(Int,ItemClass)])(block : () => Unit): Unit = {
     waitingPuts.append((l, block))
@@ -187,7 +187,7 @@ trait RichPutable extends Putable {
   def recordPut(put:List[(Int,ItemClass)]){}
 }
 
-/** This class counts a set of event,and calls a callback method
+/** This class counts a set of events,and calls a callback method
   * once a defined number of such events have happened.
   * @author renaud.delandtsheer@cetic.be
   *
@@ -207,7 +207,7 @@ case class CounterGate(var waitedNotification:Int, gate: ItemClass => Unit, var 
   * @author renaud.delandtsheer@cetic.be
   */
 class Outputter(outputs:Array[(() => Int, Putable)]) {
-  val outputCount = outputs.size
+  val outputCount = outputs.length
   /**returns the number of output items*/
   def performOutput(i:ItemClass, block: () => Unit){
     val gate = CounterGate(outputCount +1, _ => block())
@@ -226,7 +226,7 @@ class Outputter(outputs:Array[(() => Int, Putable)]) {
   * @author renaud.delandtsheer@cetic.be
   */
 class Inputter(inputs:Array[(() => Int, Fetchable)]) {
-  val inputCount = inputs.size
+  val inputCount = inputs.length
   def addPreliminaryInput(preliminaryInput:Fetchable){
     require(this.preliminaryInput == null)
     this.preliminaryInput = preliminaryInput

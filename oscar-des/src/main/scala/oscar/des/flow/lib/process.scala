@@ -17,13 +17,10 @@ package oscar.des.flow.lib
 
 import oscar.des.engine.Model
 import oscar.des.flow.DoublyLinkedList
+import oscar.des.flow.core.ItemClassHelper._
 import oscar.des.flow.core._
 
-import scala.collection.immutable.SortedMap
 import scala.language.implicitConversions
-import oscar.des.flow.core.ItemClassHelper._
-
-
 
 /**
  * a process inputs some inputs, and produces its outputs at a given rate.

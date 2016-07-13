@@ -7,11 +7,10 @@ import scala.collection.immutable.SortedMap
 import scala.language.implicitConversions
 import scala.util.Random
 
-
 /**
  * defines an attribute symbol table.
  * this serves to attribute an intr value to each attribute
- * @param l
+ * @param l the sequence of attribute names
  */
 class AttributeDefinitions(l:String*){
   require(l.length <= 31, "maximum 31 attributes can be declared in a simulation model")
@@ -56,15 +55,15 @@ class Attribute(val name:String, val id:Int,val convention:AttributeDefinitions)
 
 object AttributeSet{
   def apply(convention:AttributeDefinitions, attributesString:String*) =
-    new AttributeSet(SortedSet.empty[Attribute].++(attributesString.map((s: String) => (convention.get(s)))), convention)
+    new AttributeSet(SortedSet.empty[Attribute].++(attributesString.map((s: String) => { convention.get(s) })), convention)
 }
 
 /**
  * this represents a set of attributes, or an ItemClass
- * @param attributes
- * @param convention
+ * @param attributes a sorted set of attributes
+ * @param convention the convention that defines the attributes
  */
-case class AttributeSet(attributes:SortedSet[Attribute], val convention:AttributeDefinitions){
+case class AttributeSet(attributes:SortedSet[Attribute], convention:AttributeDefinitions){
   def mask:Int = attributes.foldLeft(0)((acc,l) => acc | l.mask)
   implicit def itemClass:ItemClass = mask
   override def toString: String = {
@@ -118,7 +117,7 @@ case class RemoveAttribute(a:Attribute) extends ItemClassTransformFunction{
  */
 case class AddAttribute(a:Attribute) extends ItemClassTransformFunction{
   override def slowApply(l:AttributeSet):AttributeSet = AttributeSet(l.attributes.+(a),l.convention)
-  override val disjunctionMask:Int = (1 << a.id)
+  override val disjunctionMask:Int = 1 << a.id
 }
 
 /**
@@ -224,10 +223,10 @@ case class AttributeTerminal(a:Attribute) extends AttributeCondition{
 
 /**
  * a function that defines the output integer sent back
- * @param outputValue
- * @param attr
+ * @param outputValue the function that chooses the output port
+ * @param attr the transformation function for item classes
  */
-case class OutputValue(outputValue:PortChoice,attr:ItemClassTransformFunction = Identity()) extends ItemClassTransformWitAdditionalOutput{
+case class OutputValue(outputValue:PortChoice, attr:ItemClassTransformFunction = Identity()) extends ItemClassTransformWitAdditionalOutput{
   override def slowApply(l: AttributeSet): (Int, AttributeSet) =
     (outputValue(),attr.slowApply(l))
 
@@ -244,13 +243,13 @@ case class ConstantPort(port:Int) extends PortChoice{
 case class DiscreteChoice(choices:List[(Int,Double)]) extends PortChoice{
   val totalWeights = choices.foldLeft(0.0)((acc,newVal) => {
     require(newVal._2 > 0.0)
-    (acc + newVal._2)
+    acc + newVal._2
   })
 
   def apply():Int = getValue(choices,Random.nextDouble()*totalWeights)
 
-  private def getValue(l:List[(Int,Double)],offset:Double):Int = {
-    l match{
+  private def getValue(lvalues:List[(Int,Double)],offset:Double):Int = {
+    lvalues match{
       case List(l) => l._1
       case (value,weight)::t =>
         if (weight < offset) getValue(t,offset - weight)
