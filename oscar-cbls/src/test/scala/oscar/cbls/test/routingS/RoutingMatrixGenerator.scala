@@ -74,7 +74,7 @@ object RoutingMatrixGenerator {
 
     while(tWCoupleGenerated < maxCouples){
       val nbOfCouplesToAdd = Math.min(maxCouples - tWCoupleGenerated,random.nextInt(v))
-      println(nbOfCouplesToAdd)
+      //println(nbOfCouplesToAdd)
       for(inc <- 0 until nbOfCouplesToAdd){
         val incDelivery = random.nextInt(50)
         timeWindows(pickups(tWCoupleGenerated+inc)) = (timeUnitDelta*(currentTimeUnit+1),(0,timeUnitDelta*currentTimeUnit))

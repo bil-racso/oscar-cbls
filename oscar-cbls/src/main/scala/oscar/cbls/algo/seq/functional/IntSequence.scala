@@ -208,7 +208,9 @@ class ConcreteIntSequence(private[seq] val internalPositionToValue:RedBlackTreeM
 
   override def check {
     externalToInternalPosition.checkBijection()
-    require(internalPositionToValue.content.sortBy(_._1) equals valueToInternalPositions.content.flatMap({case (a, b) => b.keys.map(x => (x, a))}).sortBy(_._1))
+    require(internalPositionToValue.content.sortBy(_._1) equals valueToInternalPositions.content.flatMap({case (a, b) => b.keys.map(x => (x, a))}).sortBy(_._1),
+      "internalPositionToValue:" + internalPositionToValue.content.sortBy(_._1) + " valueToInternalPositions:" + valueToInternalPositions.content.flatMap({case (a, b) => b.keys.map(x => (x, a))}).sortBy(_._1)
+    )
   }
 
   def size : Int = internalPositionToValue.size
@@ -335,8 +337,9 @@ class ConcreteIntSequence(private[seq] val internalPositionToValue:RedBlackTreeM
       remove(largestInternalPosition)
 
     val newValueToInternalPositions =
-      internalInsertToValueToInternalPositions(valueAtLargestInternalPosition, largestInternalPosition,
-        internalRemoveFromValueToInternalPositions(value, internalPosition, valueToInternalPositions))
+      internalInsertToValueToInternalPositions(valueAtLargestInternalPosition, internalPosition,
+        internalRemoveFromValueToInternalPositions(valueAtLargestInternalPosition, largestInternalPosition,
+          internalRemoveFromValueToInternalPositions(value, internalPosition, valueToInternalPositions)))
 
     //now, update the fct knowing the move and remove
     val externalPositionAssociatedToLargestInternalPosition = externalToInternalPosition.backward(largestInternalPosition)
@@ -641,47 +644,47 @@ object MovedIntSequence{
     }
   }
 
-/*
-  def bijectionForMoveArray(startPositionIncluded:Int,
-                            endPositionIncluded:Int,
-                            moveAfterPosition:Int,
-                            flip:Boolean):Array[Pivot]= {
-    if(moveAfterPosition + 1 == startPositionIncluded) {
-      //not moving
-      if(flip) { //just flipping
-        if(startPositionIncluded == 0){
-          Array(
-            new Pivot(0,new LinearTransform(endPositionIncluded,true)),
-            new Pivot(endPositionIncluded+1,LinearTransform.identity))
+  /*
+    def bijectionForMoveArray(startPositionIncluded:Int,
+                              endPositionIncluded:Int,
+                              moveAfterPosition:Int,
+                              flip:Boolean):Array[Pivot]= {
+      if(moveAfterPosition + 1 == startPositionIncluded) {
+        //not moving
+        if(flip) { //just flipping
+          if(startPositionIncluded == 0){
+            Array(
+              new Pivot(0,new LinearTransform(endPositionIncluded,true)),
+              new Pivot(endPositionIncluded+1,LinearTransform.identity))
+          }else{
+            Array(
+              new Pivot(0,LinearTransform.identity),
+              new Pivot(startPositionIncluded,new LinearTransform(endPositionIncluded + startPositionIncluded,true)),
+              new Pivot(endPositionIncluded+1,LinearTransform.identity))
+          }
         }else{
-          Array(
-            new Pivot(0,LinearTransform.identity),
-            new Pivot(startPositionIncluded,new LinearTransform(endPositionIncluded + startPositionIncluded,true)),
-            new Pivot(endPositionIncluded+1,LinearTransform.identity))
+          Array.fill(0)(null)
         }
-      }else{
-        Array.fill(0)(null)
-      }
-    }else {
-      if (moveAfterPosition > startPositionIncluded) {
-        //move upwards
-        Array(
-          new Pivot(0,LinearTransform.identity), //TODO: pas sûr su'ils soient ordonnés correctement
-          new Pivot(startPositionIncluded, LinearTransform(endPositionIncluded + 1 - startPositionIncluded, false)),
-          new Pivot(moveAfterPosition + startPositionIncluded - endPositionIncluded,
-            LinearTransform(if (flip) startPositionIncluded + moveAfterPosition else endPositionIncluded - moveAfterPosition, flip)),
-          new Pivot(moveAfterPosition + 1,LinearTransform.identity))
-      } else {
-        //move downwards
-        PiecewiseLinearBijectionNaive.identity.updateBefore(
-          (moveAfterPosition + 1, moveAfterPosition + endPositionIncluded - startPositionIncluded + 1,
-            LinearTransform(if (flip) endPositionIncluded + moveAfterPosition + 1 else startPositionIncluded - moveAfterPosition - 1, flip)),
-          (moveAfterPosition + endPositionIncluded - startPositionIncluded + 2, endPositionIncluded,
-            LinearTransform(startPositionIncluded - endPositionIncluded - 1, false)))
+      }else {
+        if (moveAfterPosition > startPositionIncluded) {
+          //move upwards
+          Array(
+            new Pivot(0,LinearTransform.identity), //TODO: pas sûr su'ils soient ordonnés correctement
+            new Pivot(startPositionIncluded, LinearTransform(endPositionIncluded + 1 - startPositionIncluded, false)),
+            new Pivot(moveAfterPosition + startPositionIncluded - endPositionIncluded,
+              LinearTransform(if (flip) startPositionIncluded + moveAfterPosition else endPositionIncluded - moveAfterPosition, flip)),
+            new Pivot(moveAfterPosition + 1,LinearTransform.identity))
+        } else {
+          //move downwards
+          PiecewiseLinearBijectionNaive.identity.updateBefore(
+            (moveAfterPosition + 1, moveAfterPosition + endPositionIncluded - startPositionIncluded + 1,
+              LinearTransform(if (flip) endPositionIncluded + moveAfterPosition + 1 else startPositionIncluded - moveAfterPosition - 1, flip)),
+            (moveAfterPosition + endPositionIncluded - startPositionIncluded + 2, endPositionIncluded,
+              LinearTransform(startPositionIncluded - endPositionIncluded - 1, false)))
+        }
       }
     }
-  }
-  */
+    */
 }
 
 class MovedIntSequence(val seq:IntSequence,

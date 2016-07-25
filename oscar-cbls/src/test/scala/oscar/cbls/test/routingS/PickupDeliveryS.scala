@@ -128,8 +128,8 @@ object PickupDeliveryS extends App{
     relevantPointsToRemove = () => myPDP.getRoutedPickups,
     vrp = myPDP),
     (moveResult1:RemovePointMove) =>{
-      println(moveResult1.pointToRemove)
-      println(myPDP.getRelatedDelivery(moveResult1.pointToRemove))
+      //println(moveResult1.pointToRemove)
+      //println(myPDP.getRelatedDelivery(moveResult1.pointToRemove))
       new RemovePoint(
         relevantPointsToRemove = () => List(myPDP.getRelatedDelivery(moveResult1.pointToRemove)),
         vrp = myPDP)
@@ -144,12 +144,12 @@ object PickupDeliveryS extends App{
         //We first remove a PD couple from a first route
         new DynAndThen(new RemovePoint(
           relevantPointsToRemove = () => {
-            println(myPDP)
+            //println(myPDP)
             myPDP.getRoutedPickups
           },
           vrp = myPDP, best = true),
           (moveResult1:RemovePointMove) =>{
-            println(moveResult1.toString)
+            //println(moveResult1.toString)
             firstVehicle = myPDP.getVehicleOfNode(myPDP.getRelatedDelivery(moveResult1.pointToRemove))
             new RemovePoint(
               relevantPointsToRemove = () => List(myPDP.getRelatedDelivery(moveResult1.pointToRemove)),
@@ -157,13 +157,13 @@ object PickupDeliveryS extends App{
         )
         ,(moveResult2:CompositeMove) =>{
           //Then we move a PD couple from a second route to the first route
-          println(firstVehicle)
+          //println(firstVehicle)
           new DynAndThen(
             new DynAndThen(OnePointMove(
               nodesToMove = () => myPDP.notOnSameVehicle(myPDP.getRoutedPickups,firstVehicle),
               relevantNewPredecessors = () => (i:Int) => myPDP.getNodesOfVehicle(firstVehicle),
               vrp = myPDP), (moveResult3:OnePointMoveMove) =>{
-              println(moveResult3.toString)
+             // println(moveResult3.toString)
               secondVehicle = myPDP.getVehicleOfNode(myPDP.getRelatedDelivery(moveResult3.movedPoint))
               OnePointMove(
                 nodesToMove = () => List(myPDP.getRelatedDelivery(moveResult3.movedPoint)),
@@ -174,8 +174,8 @@ object PickupDeliveryS extends App{
               //And finally we insert the first couple in the second route
               new DynAndThen(InsertPointUnroutedFirst(
                 unroutedNodesToInsert = () => {
-                  println(moveResult2.ml.head.asInstanceOf[RemovePointMove].pointToRemove)
-                  println(secondVehicle)
+                 // println(moveResult2.ml.head.asInstanceOf[RemovePointMove].pointToRemove)
+                  //println(secondVehicle)
                   Iterable(moveResult2.ml.head.asInstanceOf[RemovePointMove].pointToRemove)
                 },
                 relevantPredecessor = () => (i:Int) => myPDP.getNodesOfVehicle(secondVehicle),
@@ -199,8 +199,8 @@ object PickupDeliveryS extends App{
   val searchWithRrestart = search onExhaustRestartAfter(Atomic(removeCouple maxMoves((n-v)/2)),5,myPDP.obj)
 
 
-  searchWithRrestart.verbose = 2
-  removeCouple.verbose = 4
+  searchWithRrestart.verbose = 1
+  removeCouple.verbose = 1
 
   //  search.verboseWithExtraInfo(4,()=>myVRP.toString)
   searchWithRrestart.paddingLength = 300
