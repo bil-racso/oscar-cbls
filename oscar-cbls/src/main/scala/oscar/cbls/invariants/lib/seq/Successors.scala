@@ -17,6 +17,7 @@ package oscar.cbls.invariants.lib.seq
 
 import oscar.cbls.algo.seq.functional.IntSequence
 import oscar.cbls.invariants.core.computation._
+import oscar.cbls.invariants.core.propagation.Checker
 
 import scala.collection.immutable.SortedSet
 
@@ -26,14 +27,15 @@ object Successors {
    * Maintains and array telling, for each value (indice of the array) the set of value that can succeed it in the sequence.
    * There are multiple successors although we only consider the next value
    * because a value can appear several time in the sequence, it can therefore have several successors.
-   * @param seq
+    *
+    * @param seq
    * @return the array of SetVar that mention the set of successor for each possible value.
    * @author renaud.delandtsheer@cetic.be
    */
   def apply(seq : ChangingSeqValue) : Array[CBLSSetVar] = {
 
     val succ: Array[CBLSSetVar] =
-      Array.tabulate(seq.max - 1)(v => CBLSSetVar(seq.model, name = "next Value of" + v))
+      Array.tabulate(seq.max)(v => CBLSSetVar(seq.model, name = "next Value of" + v))
 
     new Successors(seq, succ)
 
@@ -45,7 +47,8 @@ object Successors {
  * Maintains and array telling, for each value (indice of the array) the set of value that can succeed it in the sequence.
  * There are multiple successors although we only consider the next value
  * because a value can appear several time in the sequence, it can therefore have several successors.
- * @param sequence
+  *
+  * @param sequence
  * @param successorValues
  * @author renaud.delandtsheer@cetic.be
  */
@@ -58,6 +61,7 @@ class Successors(sequence:ChangingSeqValue, successorValues:Array[CBLSSetVar])
   finishInitialization()
   for(i <- successorValues) i.setDefiningInvariant(this)
 
+  computeAllFromScratch(sequence.value)
 
   override def notifySeqChanges(v: ChangingSeqValue, d: Int, changes: SeqUpdate) {
     performUpdate(changes:SeqUpdate)
@@ -146,4 +150,35 @@ class Successors(sequence:ChangingSeqValue, successorValues:Array[CBLSSetVar])
         true
     }){}
   }
+
+  /*
+  def computeAllFromScratchNoAffect(seq:IntSequence):Array[SortedSet[Int]] = {
+    val emptySet = SortedSet.empty[Int]
+    val successorValues = Array.tabulate(sequence.max)(v => emptySet)
+
+    try{
+    var explorer = seq.explorerAtPosition(0).head
+    while(explorer.next match{
+      case None =>
+        false
+      case Some(next) =>
+        successorValues(explorer.value) += next.value
+        explorer = next
+        true
+    }){}
+    }catch{
+      case e: Exception =>
+    }
+
+    successorValues
+  }
+
+  override def checkInternals(c : Checker){
+    val fromScratch = computeAllFromScratchNoAffect(sequence.value)
+    println(successorValues.map(_.value).toList)
+    for(node <- 0 until sequence.value.size){
+      c.check(successorValues(node).value == fromScratch(node),
+        Some("error on next for node " + node + ": " + successorValues(node).value + " should== " + fromScratch(node)))
+    }
+  }*/
 }

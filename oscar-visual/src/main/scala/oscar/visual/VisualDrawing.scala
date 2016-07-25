@@ -87,43 +87,43 @@ class VisualDrawing(flipped: Boolean, scalable: Boolean) extends JPanel {
     val g2d = g.asInstanceOf[Graphics2D]
     transform = new AffineTransform() // start with identity transform   
 
-    if (!shapes.isEmpty) {
+      if (!shapes.isEmpty) {
 
-      // Shapes size
-      val (minX, maxX, minY, maxY) = findBounds(shapes)
-      val sWidth = maxX - minX
-      val sHeight = maxY - minY
+        // Shapes size
+        val (minX, maxX, minY, maxY) = findBounds(shapes)
+        val sWidth = maxX - minX
+        val sHeight = maxY - minY
 
-      // Drawing size
-      val dWidth = getWidth()
-      val dHeight = getHeight()
-      
-      // Flip
-      if (flipped) {
-        transform.translate(0, dHeight)
-        transform.scale(1*scale, -1*scale)
-      } else {
-        transform.scale(1*scale, 1*scale)
-      }
+        // Drawing size
+        val dWidth = getWidth()
+        val dHeight = getHeight()
 
-      // Scale
-      if (scalable) {
-        // Compute the scaling ratio
-        val ratioX = dWidth / (marginR + marginL + sWidth)
-        val ratioY = dHeight / (marginT + marginB + sHeight)
-        val ratio = math.min(ratioX, ratioY) // Maintain proportions
-        transform.scale(ratio, ratio)
-        
-        // Translate
-        val translateX: Int = (marginL - minX).toInt
-        val translateY: Int = ((if (flipped) marginB else marginT) - minY).toInt 
-        transform.translate(translateX,translateY)
+        // Flip
+        if (flipped) {
+          transform.translate(0, dHeight)
+          transform.scale(1 * scale, -1 * scale)
+        } else {
+          transform.scale(1 * scale, 1 * scale)
+        }
+
+        // Scale
+        if (scalable) {
+          // Compute the scaling ratio
+          val ratioX = dWidth / (marginR + marginL + sWidth)
+          val ratioY = dHeight / (marginT + marginB + sHeight)
+          val ratio = math.min(ratioX, ratioY) // Maintain proportions
+          transform.scale(ratio, ratio)
+
+          // Translate
+          val translateX: Int = (marginL - minX).toInt
+          val translateY: Int = ((if (flipped) marginB else marginT) - minY).toInt
+          transform.translate(translateX, translateY)
+        }
+        g2d.transform(transform)
+        for (s <- shapes) {
+          s.draw(g2d);
+        }
       }
-	  g2d.transform(transform)
-      for (s <- shapes) {
-        s.draw(g2d);
-      }
-    }
   }
   
   def invertTransform(p: Point2D): Point2D = {

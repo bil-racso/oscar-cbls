@@ -70,4 +70,15 @@ object ColorGenerator {
     val b = ((absHash/255)/255)%255
     new Color(r,g,b)
   }
+
+
+  def getAverageColor(colors:List[Color]): Color = {
+    var (r,g,b) = (0,0,0)
+    for(c <- colors){
+      r += c.getRed
+      g += c.getGreen
+      b += c.getBlue
+    }
+    new Color(r/colors.size,g/colors.size,b/colors.size)
+  }
 }

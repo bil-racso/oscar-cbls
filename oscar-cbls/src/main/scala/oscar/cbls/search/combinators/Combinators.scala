@@ -17,16 +17,15 @@
 package oscar.cbls.search.combinators
 
 import java.awt.{Color, Dimension}
+import javax.swing.{SwingUtilities, JFrame}
 
 import oscar.cbls.algo.heap.{BinomialHeap, BinomialHeapWithMove}
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.objective.{CascadingObjective, Objective}
-import oscar.cbls.routing.model.VRP
 import oscar.cbls.search.StopWatch
 import oscar.cbls.search.core.{NoMoveFound, _}
 import oscar.cbls.search.move._
-import oscar.examples.cbls.routing.visual.FunctionGraphic.{Zoom, AdjustMaxValue, ObjFunctionGraphicContainer, ObjFunctionGraphic}
-import oscar.visual.VisualFrame
+import oscar.cbls.visual.FunctionGraphic.{ObjFunctionGraphicContainer, AdjustMaxValue, Zoom}
 
 import scala.language.implicitConversions
 import scala.util.control.Breaks._
@@ -66,24 +65,27 @@ abstract class NeighborhoodCombinatorNoProfile(a: Neighborhood*) extends Neighbo
   * This combinator create a frame that draw the evolution curve of the objective function.
   * The drawn curve possess a scrollbar on the right that allow the user to decrease or
   * increase the number of value displayed.
+  *
   * @param a a neighborhood
   * @param obj the objective function
   * @param stopWatch the StopWatch attached to the Test
   * @param withZoom if true the Zoom thread will be used in stead of the AdjustMaxValues trait
   * @param neighborhoodColors a function used to defined the color of each neighborhood encountered during the search
   *                           the default function use the generateColorFromHash method of the ColorGenerator object.
-  *
   * @author fabian.germeau@student.vinci.be
   */
 class ShowObjectiveFunction(a: Neighborhood, obj: Objective, stopWatch: StopWatch, withZoom:Boolean, neighborhoodColors: String => Color) extends NeighborhoodCombinator(a){
   //objGraphic is an internal frame that contains the curve itself and visualFrame is a basic frame that contains objGraphic
   val objGraphic = if(withZoom) new ObjFunctionGraphicContainer(dimension = new Dimension(940,500)) with Zoom
                     else new ObjFunctionGraphicContainer(dimension = new Dimension(960,540)) with AdjustMaxValue
-  val visualFrame = new VisualFrame("The Objective Function")
+
+  new Thread(objGraphic,"Graphic Thread").start()
+
+  val visualFrame = new JFrame()
   visualFrame.setPreferredSize(new Dimension(960,540))
-  visualFrame.addFrame(objGraphic, size = (940,500))
+  visualFrame.add(objGraphic)
   visualFrame.pack()
-  visualFrame.revalidate()
+  visualFrame.setVisible(true)
 
   override def getMove(obj: Objective, acceptanceCriteria: (Int, Int) => Boolean): SearchResult ={
     a.getMove(obj, acceptanceCriteria) match {
@@ -98,8 +100,9 @@ class ShowObjectiveFunction(a: Neighborhood, obj: Objective, stopWatch: StopWatc
     and then we write the curve
    */
   def notifyNewObjValue(m:Move): Unit ={
-    objGraphic.notifyNewObjectiveValue(obj.value,stopWatch.getWatch,m.neighborhoodName,neighborhoodColors(m.neighborhoodName))
-    objGraphic.drawGlobalCurve()
+    objGraphic.objCurveDatas.synchronized{
+      objGraphic.objCurveDatas = (obj.value,stopWatch.getWatch,m.neighborhoodName,neighborhoodColors(m.neighborhoodName)) :: objGraphic.objCurveDatas
+    }
   }
 }
 

@@ -21,34 +21,36 @@
 package oscar.examples.cbls.routing
 
 import java.awt._
+import java.awt.event.{ActionEvent, ActionListener}
 import javax.swing._
 
 import oscar.cbls.invariants.core.computation.IntValue
 import oscar.cbls.search.StopWatch
+import oscar.cbls.visual.FunctionGraphic.{ObjFunctionGraphicContainer, Zoom}
 import oscar.examples.cbls.routing.visual.ColorGenerator
-import oscar.examples.cbls.routing.visual.FunctionGraphic._
 import oscar.examples.cbls.routing.visual.MatrixMap.RoutingMatrixVisual
-import oscar.visual.VisualFrame
 
 import scala.swing.{Dimension, Insets}
 
 object DemoRoutingView extends StopWatch{
   val controller:DemoRoutingController = new DemoRoutingController
 
-  val f = new VisualFrame("The Traveling Salesman Problem")
-  val tb = f.createToolBar()
+  val f = new JFrame("The Traveling Salesman Problem")
+  val tb = new JToolBar()
+  val mainPanel = new JPanel()
   val gbc = new GridBagConstraints()
 
   var mapSize:Int = Int.MaxValue
   var pointsList:scala.List[(Int, Int)] = Nil
   var colorValues:Array[Color] = null
-  var movesCounter:Int = 0
-  val movesBeforeRepaint:Int = 10
 
   val routingMap = new RoutingMatrixVisual(pickupAndDeliveryPoints = true)
+  //new Thread(routingMap,"RoutingMap Thread").start()
 
   val objGraph = new ObjFunctionGraphicContainer(dimension = new Dimension(f.getWidth-routingMap.getWidth,360)) with Zoom
-  val result = f.createFrame("Results of the routing")
+  new Thread(objGraph,"Graphic Thread").start()
+
+  val result = new JPanel()
   val carsPanel = new JPanel()
   val routesPanel = new JPanel()
   val neighborhoodsPanel = new JPanel()
@@ -70,8 +72,13 @@ object DemoRoutingView extends StopWatch{
 
   def main(args: Array[String]): Unit = {
 
-    f.setMinimumSize(f.getSize)
+    val dim = Toolkit.getDefaultToolkit.getScreenSize
+    f.setPreferredSize(new Dimension(dim.getWidth.toInt,(14*dim.getHeight/15).toInt))
+    f.setSize(new Dimension(dim.getWidth.toInt,(14*dim.getHeight/15).toInt))
+    f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE)
     f.setResizable(false)
+
+    mainPanel.setLayout(new BorderLayout())
 
     tb.setLayout(new FlowLayout(FlowLayout.LEFT,10,1))
     val tempPanelCustomers = new JPanel(new GridBagLayout())
@@ -104,35 +111,53 @@ object DemoRoutingView extends StopWatch{
     tb.add(tempPanelCars)
     tb.add(tempPanelSize)
     tb.add(tempPanelPenality)
-    tb.addButton("Inititiate the problem", { runInThread(initiateProblem()) })
-    tb.addButton("Reset", {runInThread(resetProblem())})
-    tb.addButton("Resolve", { runInThread(resolveProblem()) })
+    val initButton = new JButton("Initiate the problem")
+    initButton.addActionListener(new ActionListener{
+      override def actionPerformed(e: ActionEvent): Unit = runInThread(initiateProblem())
+    })
+    val resetButton = new JButton("Reset")
+    resetButton.addActionListener(new ActionListener {
+      override def actionPerformed(e: ActionEvent): Unit = runInThread(resetProblem())
+    })
+    val resolveButton = new JButton("Resolve")
+    resolveButton.addActionListener(new ActionListener {
+      override def actionPerformed(e: ActionEvent): Unit = runInThread(resolveProblem())
+    })
+    tb.add(initButton)
+    tb.add(resetButton)
+    tb.add(resolveButton)
+    mainPanel.add(tb, BorderLayout.NORTH)
 
     for(i <- jTextFields.indices){
       jTextFields(i).setText(jTextFieldsDefaultValue(i))
       jTextFields(i).setHorizontalAlignment(SwingConstants.LEFT)
     }
 
-    f.addFrame(routingMap, location = (0,0), size = (f.getHeight - tb.getHeight - 38,f.getHeight - tb.getHeight - 38), resizable = false)
+    routingMap.setPreferredSize(new Dimension(f.getHeight - tb.getHeight,f.getHeight - tb.getHeight))
+    routingMap.setSize(new Dimension(f.getHeight - tb.getHeight,f.getHeight - tb.getHeight))
 
-    f.addFrame(objGraph, location = (routingMap.getWidth,0), size = (f.getWidth-routingMap.getWidth,360), resizable = false)
+    mainPanel.add(routingMap,BorderLayout.WEST)
 
-    result.setLocation(routingMap.getWidth,objGraph.getHeight)
-    result.setSize(new Dimension(f.getWidth - routingMap.getWidth, f.getHeight - objGraph.getHeight - tb.getHeight - 38))
-    result.setLayout(new GridLayout(2,1))
-    result.setResizable(false)
+    result.setSize(new Dimension(f.getWidth - routingMap.getWidth, f.getHeight - tb.getHeight))
+    result.setLayout(new GridLayout(3,1))
+
+    objGraph.setSize(new Dimension(f.getWidth-routingMap.getWidth,360))
+    result.add(objGraph)
 
     carsPanel.setLayout(new BorderLayout())
-    carsPanel.setMaximumSize(new Dimension(result.getWidth,result.getHeight/2))
+    carsPanel.setSize(new Dimension(result.getWidth,(result.getHeight - 360)/2))
     routesPanel.setBackground(Color.white)
     carsPanel.add(new JScrollPane(routesPanel))
     result.add(carsPanel)
 
-    neighborhoodsPanel.setMaximumSize(new Dimension(result.getWidth,result.getHeight/2))
+    neighborhoodsPanel.setSize(new Dimension(result.getWidth,(result.getHeight - 360)/2))
     neighborhoodsPanel.setBackground(Color.white)
     result.add(new JScrollPane(neighborhoodsPanel))
+    mainPanel.add(result, BorderLayout.CENTER)
 
+    f.add(mainPanel)
     f.pack()
+    f.setVisible(true)
   }
 
   def initiateProblem():Unit={
@@ -184,20 +209,21 @@ object DemoRoutingView extends StopWatch{
     * DO NOT switch setMapSize and setPointsList (setPointsList needs the mapSize)
     */
   def initiateMap(mapSize:Int,points:scala.List[(Int,Int)]): Unit ={
-    routingMap.setVRP(controller.myVRP)
     routingMap.setColorValues(colorValues)
     routingMap.setMapSize(mapSize)
-    routingMap.setPointsList(points)
+    routingMap.setPointsList(points,warehouseNumber)
     routingMap.drawPoints()
     f.validate()
   }
 
   def drawMove(routes:scala.List[scala.List[Int]],objInfo:(Int,Long,String), hopDistances:Array[IntValue]): Unit ={
-    movesCounter += 1
-
-    if(movesCounter%movesBeforeRepaint == 0)routingMap.drawRoutes()
-    objGraph.notifyNewObjectiveValue(objInfo._1,objInfo._2,objInfo._3,ColorGenerator.generateColorFromHash(objInfo._3.hashCode))
-    objGraph.validate()
+    objGraph.objCurveDatas.synchronized{
+      objGraph.objCurveDatas = (objInfo._1,objInfo._2,objInfo._3,ColorGenerator.generateColorFromHash(objInfo.hashCode())) :: objGraph.objCurveDatas
+    }
+    routingMap.routes.synchronized{
+      routingMap.routes = scala.List.tabulate(warehouseNumber)(route => controller.myVRP.getRouteOfVehicle(route))
+      routingMap.mustRefresh = true
+    }
     updateRoutes(hopDistances)
   }
 
@@ -244,7 +270,6 @@ object DemoRoutingView extends StopWatch{
   def resetProblem() = {
     mapSize = Int.MaxValue
     pointsList = Nil
-    movesCounter = 0
     routingMap.clear()
     objGraph.clear()
     controller.resetProblem
@@ -255,9 +280,6 @@ object DemoRoutingView extends StopWatch{
 
   def resolveProblem() = {
     if(!controller.resolveProblem)JOptionPane.showMessageDialog(f, "Please first initiate the problem")
-    val routesList:scala.List[scala.List[Int]] = (for(c <- 0 until controller.carsNumber)yield controller.myVRP.getRouteOfVehicle(c)).toList
-    routingMap.drawRoutes()
-    objGraph.drawGlobalCurve()
   }
 
 }

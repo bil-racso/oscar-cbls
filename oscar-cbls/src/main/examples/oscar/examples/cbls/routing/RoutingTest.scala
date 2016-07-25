@@ -22,17 +22,11 @@ import oscar.cbls.invariants.core.computation.Store
 import oscar.cbls.invariants.lib.logic.Int2Int
 import oscar.cbls.invariants.lib.minmax.{Max, Min}
 import oscar.cbls.invariants.lib.numeric.{Abs, Sum}
-import oscar.cbls.objective.Objective
 import oscar.cbls.routing.model._
 import oscar.cbls.routing.neighborhood._
 import oscar.cbls.search.StopWatch
 import oscar.cbls.search.combinators.{Atomic, RoundRobin, Profile, BestSlopeFirst}
 import oscar.cbls.modeling.Algebra._
-import oscar.cbls.search.move.Move
-import oscar.examples.cbls.routing.visual.MatrixMap.RoutingMatrixVisualWithAttribute
-import oscar.examples.cbls.routing.visual.FunctionGraphic._
-import oscar.examples.cbls.routing.visual.ColorGenerator
-import oscar.visual.VisualFrame
 import scala.language.implicitConversions
 
 /**

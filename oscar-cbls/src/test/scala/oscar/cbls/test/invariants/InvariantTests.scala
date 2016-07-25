@@ -24,9 +24,11 @@ import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.lib.logic.{DenseCount, Elements, Filter, IntElement, IntITE, SelectLEHeapHeap, SetElement, _}
 import oscar.cbls.invariants.lib.minmax.{ArgMax, ArgMin, Max2, MaxArray, MaxLin, MaxSet, Min2, MinArray, MinLin, MinSet}
 import oscar.cbls.invariants.lib.numeric.{Abs, Div, Minus, Mod, Prod, Prod2, ProdElements, RoundUpModulo, Step, Sum, Sum2, SumElements}
+import oscar.cbls.invariants.lib.seq._
 import oscar.cbls.invariants.lib.set.{Cardinality, Diff, Inter, Interval, MakeSet, SetProd, SetSum, TakeAny, Union}
 import oscar.cbls.modeling.Algebra._
 import oscar.cbls.test.invariants.bench.{InvBench, InvGen}
+import oscar.cbls.test.routingS.RoutingMatrixGenerator
 import scala.collection.immutable.SortedMap
 import oscar.cbls.invariants.lib.set.UnionAll
 
@@ -482,5 +484,71 @@ class InvariantTests extends FunSuite with Checkers {
     bench.run
   }
   */
+
+
+  test ("ConcatenateVars concatenates two ChangingSeqValue") {
+    val bench = new InvBench(verbose)
+    //val seqVars = bench.genIntSeqVars(2)
+    val seqVar = bench.genIntSeqVar()
+    val seqVar2 = bench.genIntSeqVar()
+    new Concatenate(seqVar,seqVar2,4,20)
+    bench.run
+  }
+
+  /**
+    * This invariant isn't possible to test because in one the test we remove all the element of the sequence
+    * So the referenced point isn't anymore in the sequence and it throws a NoSuchElementException
+    *
+    * test ("PositionsOf maintains the positions of a value"){
+    * val bench = new InvBench(verbose)
+    * val seqVar = bench.genIntSeqVar()
+    * val value = seqVar.value.valueAtPosition(0).get
+    * PositionsOf(seqVar,value)
+    * bench.run
+    * }*/
+
+  test ("Map "){
+    val bench = new InvBench(verbose)
+    val seqVar = bench.genIntSeqVar()
+    oscar.cbls.invariants.lib.seq.Map(seqVar, Array.tabulate(5)(n => n))
+    bench.run
+  }
+
+  test ("Precedence"){
+    val bench = new InvBench(verbose)
+    val seqVar = bench.genIntSeqVar(100)
+    println(seqVar.value.toString)
+    /*val precedences = RoutingMatrixGenerator.generatePrecedence(seqVar.value.size,0,seqVar.value.size/2)
+    new Precedence(seqVar,precedences)*/
+    bench.run()
+  }
+
+  test ("Successors"){
+    val bench = new InvBench(verbose)
+    val seqVar = bench.genIntSeqVar(25)
+    Successors(seqVar)
+    bench.run()
+  }
+
+  test ("Size maintains the size of the sequence"){
+    val bench = new InvBench(verbose)
+    val seqVar = bench.genIntSeqVar(25)
+    new Size(seqVar)
+    bench.run()
+  }
+
+  test ("OccurenceOf maintains the occurence of a certain value"){
+    val bench = new InvBench(verbose)
+    val seqVar = bench.genIntSeqVar()
+    new OccurrencesOf(seqVar,Gen.choose(0, 100).sample.get)
+    bench.run()
+  }
+
+  test("Content maintains the content of the intSeq"){
+    val bench = new InvBench(verbose)
+    val seqVar = bench.genIntSeqVar()
+    Content(seqVar)
+    bench.run()
+  }
 }
 

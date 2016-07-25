@@ -15,6 +15,9 @@ package oscar.cbls.routing.seq.model
   * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
   ******************************************************************************/
 
+import java.awt.Dimension
+import javax.swing.SwingUtilities
+
 import oscar.cbls.algo.seq.functional.IntSequence
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.lib.numeric.Sum
@@ -22,8 +25,10 @@ import oscar.cbls.invariants.lib.routing._
 import oscar.cbls.invariants.lib.seq.{Content, Size}
 import oscar.cbls.invariants.lib.set.Diff
 import oscar.cbls.modeling.Algebra._
-import oscar.cbls.objective.Objective
 import oscar.cbls.algo.search.KSmallest
+import oscar.examples.cbls.routing.visual.ColorGenerator
+import oscar.examples.cbls.routing.visual.MatrixMap.RoutingMatrixVisual
+import oscar.visual.VisualFrame
 
 import scala.collection.immutable.SortedSet
 import scala.math._
@@ -130,6 +135,7 @@ class VRP(val n: Int, val v: Int, val m: Store, maxPivotPerValuePercent:Int = 4)
 
   /**
     * This method generate all the nodes preceding a specific position
+    *
     * @param node the node
     * @return
     */
@@ -152,6 +158,7 @@ class VRP(val n: Int, val v: Int, val m: Store, maxPivotPerValuePercent:Int = 4)
 
   /**
     * This method generate all the nodes following a specific position
+    *
     * @param node the node
     * @return
     */
@@ -450,6 +457,33 @@ trait VehicleOfNode extends CloneOfRouteForLightPartialPropagation{
 
   override def isRouted(node: Int): Boolean = vehicleOfNode(node).value!=v
 
+}
+
+trait RoutingMapDisplay extends VRP with ConstantDistancePerVehicle{
+  val routingMap = new RoutingMatrixVisual()
+  routingMap.setColorValues(ColorGenerator.generateRandomColors(v))
+  routingMap.drawPoints()
+
+  val visualFrame = new VisualFrame("Routing Map")
+  visualFrame.setPreferredSize(new Dimension(960,960))
+  visualFrame.add(routingMap)
+  visualFrame.pack()
+  visualFrame.revalidate()
+
+  def setMapSize(mapSize:Int): Unit ={
+    routingMap.setMapSize(mapSize)
+  }
+
+  def setPointsList(list:Array[(Int,Int)]): Unit = {
+    routingMap.setPointsList(list.toList, v)
+  }
+
+  new Thread(routingMap,"routing thread").start()
+  routingMap.allRoutes = routes
+
+  def drawRoutes(): Unit ={
+    routingMap.setMustRefresh(true)
+  }
 }
 
 

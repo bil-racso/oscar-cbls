@@ -5,10 +5,10 @@ import oscar.cbls.constraints.lib.basic.{GE, EQ, LE}
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.lib.logic.{IntInt2Int, IntITE}
 import oscar.cbls.invariants.lib.minmax.Max2
-import oscar.cbls.invariants.lib.routing.{VehicleOfNodes, RouteSuccessorAndPredecessors}
+import oscar.cbls.invariants.lib.routing.VehicleOfNodes
 import oscar.cbls.invariants.lib.seq.Precedence
 import oscar.cbls.modeling.Algebra._
-import oscar.cbls.objective.{IntVarObjective, CascadingObjective, Objective}
+import oscar.cbls.objective.IntVarObjective
 
 /**
   * Created by fabian on 04-07-16.
@@ -158,41 +158,29 @@ class PDP(override val n:Int, override val v:Int, override val m:Store, maxPivot
     for(i <- route.indices){
       if(isPickup(route(i))){
         //If the node is a pickup one, we add the node to all the active segment and we create a new one
-        for(j <- segmentsArray.indices){
-          if(segmentsArray(j) != null) {
-            if (segmentsArray(j)._1 != 0) {
-              val currentSegment = segmentsArray(j)._2 :+ route(i)
-              val nbOfSinglePickup = segmentsArray(j)._1 + 1
-              segmentsArray(j) = (nbOfSinglePickup, currentSegment)
-            }
-          }
-        }
-        val nodeList:List[Int] = route(i)::Nil
-        segmentsArray(i) = (1,nodeList)
+        for(j <- segmentsArray.indices)
+          if(segmentsArray(j) != null)
+            if (segmentsArray(j)._1 != 0)
+              segmentsArray(j) = (segmentsArray(j)._1 + 1, segmentsArray(j)._2 :+ route(i))
+        segmentsArray(i) = (1,route(i)::Nil)
       }
       else{
-        for(j <- segmentsArray.indices){
-          if(segmentsArray(j) != null) {
+        for(j <- segmentsArray.indices)
+          if(segmentsArray(j) != null)
             if (segmentsArray(j)._1 != 0) {
               /**
                 * If the segment doesn't contain the related pickup node it means that the related pickup node is before
                 * the beginning of the segment and thus this is not possible to create a complete segment beginning
                 * at this position.
                 */
-              if (!segmentsArray(j)._2.contains(getRelatedPickup(route(i)))) {
+              if (!segmentsArray(j)._2.contains(getRelatedPickup(route(i))))
                 segmentsArray(j) = null
-
-                /**
-                  * Else we decrement the number of single pickup
-                  */
-              }else {
-                val currentSegment = segmentsArray(j)._2 :+ route(i)
-                val nbOfSinglePickup = segmentsArray(j)._1 - 1
-                segmentsArray(j) = (nbOfSinglePickup, currentSegment)
-              }
+              /**
+                * Else we decrement the number of single pickup
+                */
+              else
+                segmentsArray(j) = (segmentsArray(j)._1 - 1, segmentsArray(j)._2 :+ route(i))
             }
-          }
-        }
       }
     }
 
@@ -215,6 +203,27 @@ class PDP(override val n:Int, override val v:Int, override val m:Store, maxPivot
       }
     }
     completeSegments
+  }
+
+
+  def getUnCompleteSegments(routeNumber:Int): List[List[Int]] ={
+    var unCompleteSegmentsList:List[List[Int]] = Nil
+    var currentList:List[Int] = Nil
+    val route = getRouteOfVehicle(routeNumber)
+    for(node <- route){
+      if(isPickup(node))
+        currentList = node :: currentList
+      else if(isDelivery(node)){
+        if(!currentList.contains(getRelatedPickup(node)))
+          currentList = node :: currentList
+        else{
+          val pos = currentList.indexOf(getRelatedPickup(node))
+          unCompleteSegmentsList = currentList.reverse :: unCompleteSegmentsList
+          currentList = node :: currentList.dropRight(currentList.size-pos)
+        }
+      }
+    }
+    currentList.reverse :: unCompleteSegmentsList
   }
 
 
@@ -322,8 +331,6 @@ class PDP(override val n:Int, override val v:Int, override val m:Store, maxPivot
     slowConstraints.post(GE(arrivalTime(node), startWindow - maxWaiting).nameConstraint("end of time window on node (with duration)" + node))
   }
 
-
-
   def setTravelTimeFunctions(travelCosts: TravelTimeFunction) {
     travelDurationMatrix = travelCosts
     for (i <- 0 until n) {
@@ -334,7 +341,6 @@ class PDP(override val n:Int, override val v:Int, override val m:Store, maxPivot
     }
   }
 
-
   def setTimeWindows(timeWindows: Array[(Int,(Int,Int))]): Unit ={
     initiateTimeWindowInvariants()
     addTimeWidowStringInfo()
@@ -342,6 +348,13 @@ class PDP(override val n:Int, override val v:Int, override val m:Store, maxPivot
     for(i <- timeWindows.indices if i >= v) {
       setEndWindow(i,timeWindows(i)._1)
       setNodeDuration(i,timeWindows(i)._2._1, timeWindows(i)._2._2)
+    }
+  }
+
+  def setMaxTravelDistancePDConstraint(){
+    for(p <- getPickups) {
+      val d = getRelatedDelivery(p)
+      slowConstraints.post(LE(arrivalTime(d) - leaveTime(p), 2*travelDurationMatrix.getTravelDuration(p, leaveTime(p).value, d)))
     }
   }
 }

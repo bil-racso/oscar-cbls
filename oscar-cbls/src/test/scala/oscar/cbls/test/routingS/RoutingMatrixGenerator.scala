@@ -56,7 +56,7 @@ object RoutingMatrixGenerator {
     val maxCouples = maxNodes/2
     val random = new Random(0)
     val timeWindows = Array.tabulate(n)(tw => (0,(0,0)))
-    val nbOfNodesPerTimeUnit = Array.tabulate(8000)(i => 0)
+    val nbOfNodesPerTimeUnit = Array.tabulate(n*timeUnitDelta)(i => 0)
     var tWGenerated = 0
     var tWCoupleGenerated = 0
     var currentTimeUnit = 0
@@ -96,11 +96,9 @@ object RoutingMatrixGenerator {
 
   def generateLinearTravelTimeFunction(n:Int,distanceMatrix: Array[Array[Int]]): TTFMatrix = {
     val ttf = new TTFMatrix(n, new TTFConst(500))
-    for (i <- 0 until n) {
-      for (j <- 0 until n) {
+    for (i <- 0 until n)
+      for (j <- 0 until n)
         ttf.setTTF(i, j, new TTFConst(distanceMatrix(i)(j)))
-      }
-    }
     ttf
   }
 }
