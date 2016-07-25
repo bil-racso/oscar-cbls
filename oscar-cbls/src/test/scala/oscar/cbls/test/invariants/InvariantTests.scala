@@ -509,8 +509,8 @@ class InvariantTests extends FunSuite with Checkers {
 
   test ("Map "){
     val bench = new InvBench(verbose)
-    val seqVar = bench.genIntSeqVar()
-    oscar.cbls.invariants.lib.seq.Map(seqVar, Array.tabulate(5)(n => n))
+    val seqVar = bench.genIntSeqVar(range = 0 to 100)
+    oscar.cbls.invariants.lib.seq.Map(seqVar, Array.tabulate(101)(n => 2*n))
     bench.run
   }
 

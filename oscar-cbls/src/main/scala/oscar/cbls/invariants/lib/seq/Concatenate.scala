@@ -3,6 +3,7 @@ package oscar.cbls.invariants.lib.seq
 import oscar.cbls.algo.quick.QList
 import oscar.cbls.algo.seq.functional.IntSequence
 import oscar.cbls.invariants.core.computation._
+import oscar.cbls.invariants.core.propagation.Checker
 
 /*******************************************************************************
   * OscaR is free software: you can redistribute it and/or modify
@@ -39,6 +40,8 @@ object Concatenate {
 class Concatenate(a:ChangingSeqValue,b:ChangingSeqValue,maxPivotPerValuePercent: Int, maxHistorySize:Int)
   extends SeqInvariant(IntSequence(a.value ++ b.value), math.max(a.max,b.max), maxPivotPerValuePercent, maxHistorySize)
   with SeqNotificationTarget {
+
+  require(a != b)
 
   registerStaticAndDynamicDependency(a, 0)
   registerStaticAndDynamicDependency(b, 1)
@@ -94,6 +97,11 @@ class Concatenate(a:ChangingSeqValue,b:ChangingSeqValue,maxPivotPerValuePercent:
       case SeqUpdateSet(value : IntSequence) =>
         false
     }
+  }
+
+  override def checkInternals(c : Checker) : Unit = {
+    println("coucou")
+    c.check((a.value.toList ++ b.value.toList) equals this.value.toList,Some("a.value.toList:" + a.value.toList + " b.value.toList:" + b.value.toList + " should== this.value.toList" + this.value.toList))
   }
 }
 
@@ -158,6 +166,11 @@ class ConcatenateFirstConstant(a:List[Int],b:ChangingSeqValue,maxPivotPerValuePe
         false
     }
   }
+
+  override def checkInternals(c : Checker) : Unit = {
+    println("coucou")
+    c.check((a ++ b.value.toList) equals this.value.toList,Some("a.value.toList:" + a+ " b.value.toList:" + b.value.toList + " should== this.value.toList" + this.value.toList))
+  }
 }
 
 
@@ -218,5 +231,10 @@ class ConcatenateSecondConstant(a:ChangingSeqValue,b:List[Int],maxPivotPerValueP
       case SeqUpdateSet(value : IntSequence) =>
         false
     }
+  }
+
+  override def checkInternals(c : Checker) : Unit = {
+    println("coucou")
+    c.check((a.value.toList ++ b) equals this.value.toList,Some("a.value.toList:" + a.value.toList + " b.value.toList:" + b + " should== this.value.toList" + this.value.toList))
   }
 }

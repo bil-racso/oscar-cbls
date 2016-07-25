@@ -318,28 +318,28 @@ case class RandomIntSeqVar(intSeqVar: CBLSSeqVar) extends RandomVar{
     println(move.toString)
     move match{
       case PlusOne() =>
-        randomVar().insertAtPosition(Gen.choose(randomVar().min,randomVar().max).sample.get,Gen.choose(randomVar().min,randomVar().value.size).sample.get)
+        randomVar().insertAtPosition(Gen.choose(randomVar().min,randomVar().max).sample.get,Gen.choose(randomVar().min,randomVar().newValue.size).sample.get)
       case MinusOne() =>
-        if(!randomVar().value.isEmpty) randomVar().remove(Gen.choose(randomVar().min,randomVar().value.size-1).sample.get)
+        if(!randomVar().newValue.isEmpty) randomVar().remove(Gen.choose(randomVar().min,randomVar().newValue.size-1).sample.get)
       case ToZero() =>
-        for(i <- randomVar().min until randomVar().value.size)
+        for(i <- randomVar().min until randomVar().newValue.size)
           randomVar().remove(0)
       case ToMax() =>
-        (randomVar().min to randomVar().max).foreach(v => if(randomVar().value.size < randomVar().max) randomVar().insertAtPosition(v,Gen.choose(randomVar().min,randomVar().value.size).sample.get))
+        (randomVar().min to randomVar().max).foreach(v => if(randomVar().newValue.size < randomVar().max) randomVar().insertAtPosition(v,Gen.choose(randomVar().min,randomVar().newValue.size).sample.get))
       case ToMin() =>
-        for(i <- randomVar().min until randomVar().value.size)
+        for(i <- randomVar().min until randomVar().newValue.size)
           randomVar().remove(0)
         randomVar().insertAtPosition(Gen.choose(randomVar().min,randomVar().max).sample.get,0)
       case Random() =>
-        val newSize = Gen.choose(1, Math.min(randomVar().value.size + 1,randomVar().max)).sample.get
+        val newSize = Gen.choose(1, Math.min(randomVar().newValue.size + 1,randomVar().max)).sample.get
         val newVal = Gen.containerOfN[Iterable, Int](newSize,
           Gen.choose(randomVar().min, randomVar().max)).sample.get
         randomVar() := IntSequence(newVal)
       case RandomDiff() =>
-        val newSize = Gen.choose(1, Math.min(randomVar().value.size + 1,randomVar().max)).sample.get
+        val newSize = Gen.choose(1, Math.min(randomVar().newValue.size + 1,randomVar().max)).sample.get
         val newValOpt = Gen.containerOfN[Iterable, Int](newSize,
           Gen.choose(randomVar().min, randomVar().max)
-            suchThat (!randomVar().value.contains(_))).sample
+            suchThat (!randomVar().newValue.contains(_))).sample
         if (newValOpt.isDefined) randomVar := IntSequence(newValOpt.get)
       /*case Shuffle() =>
         for(p <- 0 until randomVar().value.size){
@@ -373,7 +373,7 @@ case class RandomIntSeqVar(intSeqVar: CBLSSeqVar) extends RandomVar{
 class InvBench(verbose: Int = 0) {
   var property: Prop = false
   val checker = new InvariantChecker(verbose)
-  val model = new Store(false, Some(checker), false, false, false)
+  val model = new Store(false, Some(checker), true, false, false)
 
 
 
