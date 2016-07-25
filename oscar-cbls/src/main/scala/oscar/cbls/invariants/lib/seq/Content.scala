@@ -113,7 +113,6 @@ case class Content(v:SeqValue)
   }
 
   override def checkInternals(c: Checker) {
-    require(v.value quickEquals latestVal)
     c.check(this.newValue.toList.sorted equals v.value.unorderedContentNoDuplicate.sorted,
       Some("this.value:" + this.value + " == v.value.content:" + v.value.unorderedContentNoDuplicate.sorted + " too much in output:" + this.value.diff(SortedSet.empty[Int] ++ v.value.unorderedContentNoDuplicate.sorted) + " missing in output:" + (SortedSet.empty[Int] ++ v.value.unorderedContentNoDuplicate.sorted).diff(this.value)+ " v:" + v))
   }
