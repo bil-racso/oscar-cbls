@@ -595,11 +595,9 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], val maxValue: Int, 
   //-1 for first position
   protected def move(fromIncludedPosition:Int,toIncludedPosition:Int,afterPosition:Int,flip:Boolean){
 
-    require(toNotify.newValue.size > fromIncludedPosition)
     require(toNotify.newValue.size > toIncludedPosition)
     require(toNotify.newValue.size > afterPosition)
     require(0 <= fromIncludedPosition)
-    require(0<=toIncludedPosition)
     require(-1<=afterPosition)
     require(fromIncludedPosition <= toIncludedPosition, "fromIncludedPosition=" + fromIncludedPosition + "should <= toIncludedPosition=" + toIncludedPosition)
     toNotify  = SeqUpdateMove(fromIncludedPosition,toIncludedPosition,afterPosition,flip,toNotify)
@@ -807,8 +805,6 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], val maxValue: Int, 
   protected def releaseCurrentCheckpointAtCheckpoint(){
     // println("drop checkpoint")
     val checkpoint = toNotify.newValue
-    assert(toNotify.newValue equals topCheckpoint)
-    require(!topCheckpointIsActive || topCheckpointIsActiveDeactivated || (toNotify.newValue quickEquals topCheckpoint))
     notifiedSinceTopCheckpoint = SeqUpdateLastNotified(checkpoint)
 
     popToNotifyUntilCheckpointDeclarationAtCheckpoint(toNotify,toNotify.newValue,true) match{
