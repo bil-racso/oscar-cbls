@@ -75,8 +75,8 @@ class ObjFunctionGraphicContainer(title:String = "Evolution of the objective fun
   var objCurveDatas:List[(Int,Long,String,Color)] = Nil
 
   def run(): Unit ={
-    var ancientNumberOfMove = 0
     var temp:List[(Int,Long,String,Color)] = Nil
+
     while(true){
       try {
         Thread.sleep(100)
@@ -90,6 +90,7 @@ class ObjFunctionGraphicContainer(title:String = "Evolution of the objective fun
             notifyNewObjectiveValue(temp(j)._1,temp(j)._2,temp(j)._3,temp(j)._4)
           }
           drawGlobalCurve()
+          temp = Nil
         }
       }catch{
         case ie:InterruptedException => return

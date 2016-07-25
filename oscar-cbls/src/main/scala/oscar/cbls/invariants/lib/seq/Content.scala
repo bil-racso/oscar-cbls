@@ -113,6 +113,8 @@ case class Content(v:SeqValue)
   }
 
   override def checkInternals(c: Checker) {
+    println(this.value.toList.sorted)
+    println(v.value.unorderedContentNoDuplicate.sorted)
     c.check(this.value.toList.sorted equals v.value.unorderedContentNoDuplicate.sorted,
       Some("this.value:" + this.value + " == v.value.content:" + v.value.unorderedContentNoDuplicate + " v:" + v))
   }

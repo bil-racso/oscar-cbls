@@ -21,6 +21,7 @@ import java.awt._
 import java.awt.event.{MouseListener, MouseEvent}
 import java.awt.geom.Line2D.Double
 import java.awt.geom.Rectangle2D
+import javax.swing.SwingUtilities
 
 import oscar.cbls.search.StopWatch
 import oscar.visual.VisualDrawing
@@ -121,7 +122,7 @@ abstract class FunctionGraphic() extends VisualDrawing(false,false) with StopWat
   }
 
   def drawGlobalCurve(): Unit ={
-    repaint()
+    //repaint()
   }
 
   def setTimeBorders(position:Int){}

@@ -18,8 +18,10 @@ package oscar.examples.cbls.routing.visual.MatrixMap
   */
 
 import java.awt.BorderLayout
-import javax.swing.{JPanel, JInternalFrame}
+import javax.swing.{SwingUtilities, JPanel, JInternalFrame}
 
+import oscar.cbls.algo.seq.functional.IntSequence
+import oscar.cbls.invariants.core.computation.CBLSSeqVar
 import oscar.cbls.routing.model.VRP
 
 import scala.swing._
@@ -38,24 +40,18 @@ class RoutingMatrixVisual(title:String = "Routing map", pickupAndDeliveryPoints:
   else
     routingMatrix = new RoutingMatrixMap
 
-  var mustRefresh:Boolean = false
+  var mustRefresh = false
+
+  var allRoutes:CBLSSeqVar = null
 
   var routes:List[List[Int]] = Nil
 
   def run(): Unit ={
-    var tempRoute:List[List[Int]] = Nil
     while (true) {
       try {
         Thread.sleep(500)
-        routes.synchronized{
-          if (mustRefresh) {
-            tempRoute = routes
-            mustRefresh = false
-          }
-        }
-        if(tempRoute != Nil)
-          routingMatrix.drawRoutes(tempRoute)
-        tempRoute = Nil
+        if(setMustRefresh(false))
+          routingMatrix.drawRoutes(allRoutes.value)
       }catch{
         case ie:InterruptedException => return
         case e:Exception => e.printStackTrace()
@@ -63,9 +59,21 @@ class RoutingMatrixVisual(title:String = "Routing map", pickupAndDeliveryPoints:
     }
   }
 
+  def setMustRefresh(toSet:Boolean): Boolean = {
+    this.synchronized{
+      var res = false
+      if(toSet && !mustRefresh)
+        mustRefresh = true
+      else if(!toSet && mustRefresh) {
+        mustRefresh = false
+        res = true
+      }
+      res
+    }
+  }
+
   def drawPoints(): Unit ={
     routingMatrix.drawPoints()
-    validate()
   }
 
   def setColorValues(colorValues:Array[Color]): Unit ={
@@ -82,10 +90,10 @@ class RoutingMatrixVisual(title:String = "Routing map", pickupAndDeliveryPoints:
 
   def clear(): Unit ={
     routingMatrix.clear()
-    validate()
   }
   add(routingMatrix, BorderLayout.CENTER)
   setVisible(true)
+
 }
 
 

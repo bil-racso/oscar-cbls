@@ -16,18 +16,18 @@ package oscar.cbls.test.routingS
   ******************************************************************************/
 
 import oscar.cbls.invariants.core.computation.Store
-import oscar.cbls.invariants.core.propagation.ErrorChecker
 import oscar.cbls.invariants.lib.routing.RouteSuccessorAndPredecessors
 import oscar.cbls.invariants.lib.seq.Size
 import oscar.cbls.modeling.Algebra._
 import oscar.cbls.objective.Objective
 import oscar.cbls.routing.seq.model._
 import oscar.cbls.routing.seq.neighborhood._
-import oscar.cbls.search.combinators.{DoOnMove, BestSlopeFirst, Profile}
+import oscar.cbls.search.combinators.{BestSlopeFirst, Profile}
 
 class MySimpleRoutingWithUnroutedPointsAndNext(n:Int,v:Int,symmetricDistance:Array[Array[Int]],m:Store, maxPivot:Int, pointsList:Array[(Int,Int)] = null)
   extends VRP(n,v,m,maxPivot)
   with TotalConstantDistance with ClosestNeighbors with RoutedAndUnrouted
+  with RoutingMapDisplay
 {
 
   setSymmetricDistanceMatrix(symmetricDistance)
@@ -50,16 +50,16 @@ class MySimpleRoutingWithUnroutedPointsAndNext(n:Int,v:Int,symmetricDistance:Arr
   this.addToStringInfo(() => "next:" + next.map(_.value).mkString(","))
   this.addToStringInfo(() => "prev:" + prev.map(_.value).mkString(","))
 
-  /*if(pointsList != null)
-    setPointsList(pointsList)*/
+  if(pointsList != null)
+    setPointsList(pointsList)
 
 
 }
 
 object TestNext extends App{
 
-  val n = 1000
-  val v = 1
+  val n = 2000
+  val v = 10
 
   val maxPivotPerValuePercent = 4
 
@@ -84,7 +84,7 @@ object TestNext extends App{
 
   def threeOpt(k:Int, breakSym:Boolean) = Profile(new ThreeOpt(myVRP.routed, ()=>myVRP.kFirst(k,myVRP.closestNeighboursForward,myVRP.isRouted), myVRP,breakSymmetry = breakSym, neighborhoodName = "ThreeOpt(k=" + k + ")"))
 
-  val search = (BestSlopeFirst(List(routeUnroutdPoint2, routeUnroutdPoint, onePtMove(10),twoOpt, threeOpt(10,true))) exhaust threeOpt(20,true)) showObjectiveFunction(myVRP.obj,withZoom = true) //afterMove(myVRP.drawRoutes())
+  val search = (BestSlopeFirst(List(routeUnroutdPoint2, routeUnroutdPoint, onePtMove(10),twoOpt, threeOpt(10,true))) exhaust threeOpt(20,true)) showObjectiveFunction(myVRP.obj,withZoom = true) afterMove(myVRP.drawRoutes())
 
  // val search = (new RoundRobin(List(routeUnroutdPoint2,onePtMove(10) guard (() => myVRP.unrouted.value.size != 0)),10)) exhaust BestSlopeFirst(List(onePtMove(20),twoOpt, threeOpt(10,true))) exhaust threeOpt(20,true)
 

@@ -479,12 +479,10 @@ trait RoutingMapDisplay extends VRP with ConstantDistancePerVehicle{
   }
 
   new Thread(routingMap,"routing thread").start()
+  routingMap.allRoutes = routes
 
   def drawRoutes(): Unit ={
-    routingMap.routes.synchronized{
-      routingMap.routes = List.tabulate(v)(route => getRouteOfVehicle(route))
-      routingMap.mustRefresh = true
-    }
+    routingMap.setMustRefresh(true)
   }
 }
 
