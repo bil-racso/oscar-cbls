@@ -276,6 +276,7 @@ class ConcreteIntSequence(private[seq] val internalPositionToValue:RedBlackTreeM
     valueToInternalPositions.get(value) match {
       case None => valueToInternalPositions
       case Some(l) =>
+        assert(l.contains(internalPosition))
         val newSet = l.remove(internalPosition)
         if (newSet.isEmpty) valueToInternalPositions.remove(value)
         else valueToInternalPositions.insert(value, newSet)
@@ -334,8 +335,8 @@ class ConcreteIntSequence(private[seq] val internalPositionToValue:RedBlackTreeM
       remove(largestInternalPosition)
 
     val newValueToInternalPositions =
-      internalInsertToValueToInternalPositions(valueAtLargestInternalPosition, internalPosition,
-        internalRemoveFromValueToInternalPositions(value, largestInternalPosition, valueToInternalPositions))
+      internalInsertToValueToInternalPositions(valueAtLargestInternalPosition, largestInternalPosition,
+        internalRemoveFromValueToInternalPositions(value, internalPosition, valueToInternalPositions))
 
     //now, update the fct knowing the move and remove
     val externalPositionAssociatedToLargestInternalPosition = externalToInternalPosition.backward(largestInternalPosition)
@@ -950,7 +951,7 @@ class RemovedIntSequence(seq:IntSequence,
   override def nbOccurrence(value : Int) : Int = if(value == this.removedValue) seq.nbOccurrence(value) - 1 else seq.nbOccurrence(value)
 
   override def unorderedContentNoDuplicate : List[Int] =
-    if(nbOccurrence(removedValue) != 0) seq.unorderedContentNoDuplicate
+    if(seq.nbOccurrence(removedValue) > 1) seq.unorderedContentNoDuplicate
     else seq.unorderedContentNoDuplicate.filter(_ != removedValue)
 
   override val size : Int = seq.size - 1
