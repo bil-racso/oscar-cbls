@@ -144,12 +144,12 @@ case class Store(override val verbose:Boolean = false,
   /**calls this when you have declared all your invariants and variables.
     * This must be called before any query and update can be made on the model,
     * and after all the invariants and variables have been declared.
-    * @param DropStaticGraph true if you want to drop the static propagation graph to free memory. It takes little time
+    * @param dropStaticGraph true if you want to drop the static propagation graph to free memory. It takes little time
     */
-  def close(DropStaticGraph: Boolean = true){
+  def close(dropStaticGraph: Boolean = true){
     assert(!closed, "cannot close a model twice")
     performCallsBeforeClose()
-    setupPropagationStructure(DropStaticGraph)
+    setupPropagationStructure(dropStaticGraph)
     killBulker() //we won't create any new model artifacts, thus we can kill the bulker and free its memory
     closed=true
   }

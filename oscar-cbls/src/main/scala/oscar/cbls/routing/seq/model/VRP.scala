@@ -196,7 +196,7 @@ class VRP(val n: Int, val v: Int, val m: Store, maxPivotPerValuePercent:Int = 4)
   /**
    *
    * @param node a node
-   * @return the vehicle reachingthe node, v is it is unrouted
+   * @return the vehicle reaching the node, v is it is unrouted
    */
   def getVehicleOfNode(node:Int):Int = {
     val routeValue = routes.value

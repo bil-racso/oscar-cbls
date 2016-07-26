@@ -516,7 +516,8 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], val maxValue: Int, 
   }
 
   protected def remove(position:Int){
-    require(toNotify.newValue.size > position && position >=0, "removing at position " + position + " size is " + newValue.size)
+    require(toNotify.newValue.size > position && position >=0,
+      "removing at position " + position + " size is " + newValue.size)
     toNotify = SeqUpdateRemove(position, toNotify)
     if(performedSinceTopCheckpoint != null)
       performedSinceTopCheckpoint = SeqUpdateRemove(position, performedSinceTopCheckpoint, toNotify.newValue)

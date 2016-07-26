@@ -47,6 +47,8 @@ class Precedence(seq:ChangingSeqValue,
   extends IntInvariant()
   with SeqNotificationTarget {
 
+  setName("PrecedenceViolation")
+
   registerStaticAndDynamicDependency(seq)
   finishInitialization()
 
