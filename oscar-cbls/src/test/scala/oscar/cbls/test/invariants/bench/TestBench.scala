@@ -159,17 +159,18 @@ object InvGen {
   /**
     * Method to generate a fixed IntSeqVar of size equal to the given limit.
     */
-  def fixedIntSeqVar(upToSize: Int, range: Range, model: Store) = for {
+  def notRandomIntSeqVar(upToSize: Int, model: Store) = for {
     c <- Gen.alphaChar
-  } yield new RandomIntSeqVar(
-    new CBLSSeqVar(model, IntSequence(List.tabulate(upToSize)(n => n)), range.max, c.toString.toUpperCase))
+    s <- Gen.choose(1, upToSize)
+  } yield new NotRandomIntSeqVar(
+    new CBLSSeqVar(model, IntSequence(List.tabulate(s)(n => n)), s, c.toString.toUpperCase))
 
   /**
     * Method to generate a list of IntSeqVars. Uses fixedIntSeqVar.
     */
-  def fixedIntSeqVars(nbVars: Int, upToSize: Int, range: Range, model: Store) = {
-    Gen.containerOfN[List, RandomIntSeqVar](nbVars,
-      randomIntSeqVar(upToSize, range, model))
+  def notRandomIntSeqVars(nbVars: Int, upToSize: Int, range: Range, model: Store) = {
+    Gen.containerOfN[List, NotRandomIntSeqVar](nbVars,
+      notRandomIntSeqVar(upToSize, model))
   }
 }
 
@@ -297,7 +298,7 @@ case class RandomIntSetVar(intSetVar: CBLSSetVar) extends RandomVar {
 }
 
 /**
-  * A RandomIntSetVar is a RandomVar containing an IntSeqVar.
+  * A RandomIntSeqVar is a RandomVar containing an IntSeqVar.
   */
 case class RandomIntSeqVar(intSeqVar: CBLSSeqVar) extends RandomVar{
   override def randomVar(): CBLSSeqVar = intSeqVar
@@ -341,6 +342,65 @@ case class RandomIntSeqVar(intSeqVar: CBLSSeqVar) extends RandomVar{
           Gen.choose(randomVar().min, randomVar().max)
             suchThat (!randomVar().newValue.contains(_))).sample
         if (newValOpt.isDefined) randomVar := IntSequence(newValOpt.get)
+      /*case Shuffle() =>
+        for(p <- 0 until randomVar().value.size){
+          randomVar().move(p,p,Gen.choose(0, randomVar().value.size).suchThat (_ != p).sample.get, false)
+        }*/
+
+    }
+    println(randomVar().value.toString)
+  }
+}
+
+/**
+  * A NotRandomIntSeqVar is a NotRandomVar containing an IntSeqVar.
+  */
+case class NotRandomIntSeqVar(intSeqVar: CBLSSeqVar) extends RandomVar{
+  override def randomVar(): CBLSSeqVar = intSeqVar
+
+  /**
+    * Defines the different possible moves for a RandomIntSeqVar.
+    * PlusOne adds a new random value to the seq whereas MinusOne removes one,
+    * ToZero makes the seq an empty one, ToMax adds all the values of the
+    * variable range to the seq whereas ToMin makes the seq a singleton (of
+    * which value is randomly chosen).
+    * Random replaces the seq with a random one (values and size are random)
+    * but to avoid explosions, new size cannot be more than current size + 1.
+    * RandomDiff replaces it with a random one with which intersection is empty,
+    * if such a change is not possible, nothing's done.
+    * Shuffle shuffles the positions of each value contained in the seq
+    */
+  override def move(move: Move)= {
+    println(move.toString)
+    val inSeq = randomVar().newValue.unorderedContentNoDuplicate
+    val notInSeq = List.tabulate(randomVar().max)(i => i).filterNot(inSeq.contains(_))
+    println(inSeq,notInSeq)
+    move match{
+      case PlusOne() =>
+        if(!notInSeq.isEmpty)
+          randomVar().insertAtPosition(Gen.oneOf(notInSeq).sample.get,Gen.choose(0,inSeq.size).sample.get)
+      case MinusOne() =>
+        if(!randomVar().newValue.isEmpty) randomVar().remove(Gen.choose(0,inSeq.size-1).sample.get)
+      case ToZero() =>
+        for(i <- randomVar().min until randomVar().newValue.size)
+          randomVar().remove(0)
+      case ToMax() =>
+        notInSeq.foreach(v => if(randomVar().newValue.size < randomVar().max) randomVar().insertAtPosition(v,Gen.choose(randomVar().min,randomVar().newValue.size).sample.get))
+      case ToMin() =>
+        for(i <- randomVar().min until randomVar().newValue.size)
+          randomVar().remove(0)
+        randomVar().insertAtPosition(Gen.choose(randomVar().min,randomVar().max).sample.get,0)
+      case Random() =>
+        val newSize = Gen.choose(1, Math.min(randomVar().newValue.size + 1,randomVar().max)).sample.get
+        val fullList = scala.util.Random.shuffle(List.tabulate(randomVar().max)(n => n))
+        val newVal = List.tabulate(newSize)(n => fullList(n)).toIterable
+        randomVar() := IntSequence(newVal)
+      case RandomDiff() =>
+        val newSize = Gen.choose(0, Math.max(randomVar().min,randomVar().max - randomVar().newValue.size)).sample.get
+        val fullList = scala.util.Random.shuffle(notInSeq)
+        val newVal = List.tabulate(newSize)(n => fullList(n)).toIterable
+
+        if (newVal != null) randomVar := IntSequence(newVal)
       /*case Shuffle() =>
         for(p <- 0 until randomVar().value.size){
           randomVar().move(p,p,Gen.choose(0, randomVar().value.size).suchThat (_ != p).sample.get, false)
@@ -518,6 +578,15 @@ class InvBench(verbose: Int = 0) {
       risv.randomVar
     }).toArray
   }
+
+  def genNotRandomIntSeqVar(
+                            upToSize: Int = 20,
+                            isInput: Boolean = true) = {
+    val risVar = InvGen.notRandomIntSeqVar(upToSize,model).sample.get
+    addVar(isInput,risVar)
+    risVar.randomVar
+  }
+
 
   /**
    * For debug only

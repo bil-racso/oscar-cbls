@@ -100,7 +100,6 @@ class Concatenate(a:ChangingSeqValue,b:ChangingSeqValue,maxPivotPerValuePercent:
   }
 
   override def checkInternals(c : Checker) : Unit = {
-    println("coucou")
     c.check((a.value.toList ++ b.value.toList) equals this.value.toList,Some("a.value.toList:" + a.value.toList + " b.value.toList:" + b.value.toList + " should== this.value.toList" + this.value.toList))
   }
 }
