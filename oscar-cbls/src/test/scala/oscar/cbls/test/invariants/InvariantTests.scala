@@ -489,9 +489,18 @@ class InvariantTests extends FunSuite with Checkers {
   test ("ConcatenateVars concatenates two ChangingSeqValue") {
     val bench = new InvBench(verbose)
     //val seqVars = bench.genIntSeqVars(2)
-    val seqVar = bench.genIntSeqVar()
+    val seqVar1 = bench.genIntSeqVar()
     val seqVar2 = bench.genIntSeqVar()
-    new Concatenate(seqVar,seqVar2,4,20)
+    Size(new Concatenate(seqVar1,seqVar2,4,20))
+    bench.run
+  }
+
+
+  test ("ConcatenateList Var concatenates List and ChangingSeqValue") {
+    val bench = new InvBench(verbose)
+    //val seqVars = bench.genIntSeqVars(2)
+    val seqVar2 = bench.genIntSeqVar()
+    Size(new ConcatenateFirstConstant(List(1,6,8,30),seqVar2,4,20))
     bench.run
   }
 
