@@ -494,16 +494,15 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], val maxValue: Int, 
   def toStringNoPropagate: String = name + ":=" + toNotify.newValue.toString()
 
   private def trimUpdatesCheckpointDefinitionsForbidden(updates:SeqUpdate,maxDepth:Int):SeqUpdate = {
-      if(updates.depth < -1 || updates.depth > maxDepth){
-        //there is a set, and one or more incremental updates afterwards
-        //or simply exceeding the max depth
-        SeqUpdateSet(updates.newValue.regularizeToMaxPivot(maxPivotPerValuePercent))
-      }else{
-        updates
-      }
+    if(updates.depth < -1 || updates.depth > maxDepth){
+      //there is a set, and one or more incremental updates afterwards
+      //or simply exceeding the max depth
+      SeqUpdateSet(updates.newValue.regularizeToMaxPivot(maxPivotPerValuePercent))
+    }else{
+      updates
+    }
   }
-
-
+  
   protected def insertAtPosition(value:Int,pos:Int){
     assert(pos <= toNotify.newValue.size)
     assert(pos >= 0)
@@ -653,9 +652,9 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], val maxValue: Int, 
 
             require(performedSinceCheckpointAndToReverse.reverse(topCheckpoint,stillToNotify).newValue equals checkpoint)
 
-             toNotify = SeqUpdateRollBackToCheckpoint(checkpoint,() => {
-               performedSinceCheckpointAndToReverse.reverse(checkpoint,stillToNotify)
-             })
+            toNotify = SeqUpdateRollBackToCheckpoint(checkpoint,() => {
+              performedSinceCheckpointAndToReverse.reverse(checkpoint,stillToNotify)
+            })
           }
         }else{
           //Asking for rollback on an inactive checkpoint, we go for a set...
@@ -706,7 +705,7 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], val maxValue: Int, 
 
       case SeqUpdateLastNotified(value:IntSequence) =>
         //check for equality
-       NoSimplificationPerformed
+        NoSimplificationPerformed
 
       case SeqUpdateDefineCheckpoint(prev:SeqUpdate,isActive:Boolean) =>
         //here
