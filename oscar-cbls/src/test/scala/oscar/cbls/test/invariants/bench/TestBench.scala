@@ -37,7 +37,7 @@ case class ToMin() extends Move
 case class ToMax() extends Move
 case class Random() extends Move
 case class RandomDiff() extends Move
-//case class Shuffle()  extends Move
+case class Shuffle() extends Move
 
 /**
  * This object contains a set of functions and methods to generate random
@@ -49,9 +49,6 @@ object InvGen {
   /**
    * Function to generate a random move.
    */
-  val move = Gen.oneOf(PlusOne(), MinusOne(), ToZero(), ToMin(), ToMax(),
-    Random(), RandomDiff())
-
   def randomTuples(nbVal: Int, range: Range): List[(Int, Int)] = {
     val valList = Gen.containerOfN[List, Int](nbVal,
       Gen.choose(range.min, range.max).sample.get).sample.get
@@ -168,10 +165,18 @@ object InvGen {
   /**
     * Method to generate a list of IntSeqVars. Uses fixedIntSeqVar.
     */
-  def notRandomIntSeqVars(nbVars: Int, upToSize: Int, range: Range, model: Store) = {
+  def notRandomIntSeqVars(nbVars: Int, upToSize: Int, model: Store) = {
     Gen.containerOfN[List, NotRandomIntSeqVar](nbVars,
       notRandomIntSeqVar(upToSize, model))
   }
+
+  /**
+    * Method to generate an empty routeOfNodes used to test routing invariants.
+    */
+  def routeOfNodes(upToSize: Int, v: Int, model: Store) = for {
+    c <- Gen.alphaChar
+  } yield new RouteOfNodes(
+    new CBLSSeqVar(model, IntSequence(0 until v), upToSize, c.toString.toUpperCase),v)
 }
 
 /**
@@ -342,11 +347,12 @@ case class RandomIntSeqVar(intSeqVar: CBLSSeqVar) extends RandomVar{
           Gen.choose(randomVar().min, randomVar().max)
             suchThat (!randomVar().newValue.contains(_))).sample
         if (newValOpt.isDefined) randomVar := IntSequence(newValOpt.get)
-      /*case Shuffle() =>
-        for(p <- 0 until randomVar().value.size){
-          randomVar().move(p,p,Gen.choose(0, randomVar().value.size).suchThat (_ != p).sample.get, false)
-        }*/
-
+      case Shuffle() =>
+        for(p <- 0 until randomVar().newValue.size) {
+          val newPos = Gen.choose(1, randomVar().newValue.size - 1).sample.get
+          if (newPos != p)
+            randomVar().move(p, p, newPos, false)
+        }
     }
     println(randomVar().value.toString)
   }
@@ -371,10 +377,8 @@ case class NotRandomIntSeqVar(intSeqVar: CBLSSeqVar) extends RandomVar{
     * Shuffle shuffles the positions of each value contained in the seq
     */
   override def move(move: Move)= {
-    println(move.toString)
     val inSeq = randomVar().newValue.unorderedContentNoDuplicate
     val notInSeq = List.tabulate(randomVar().max)(i => i).filterNot(inSeq.contains(_))
-    println(inSeq,notInSeq)
     move match{
       case PlusOne() =>
         if(!notInSeq.isEmpty)
@@ -401,11 +405,96 @@ case class NotRandomIntSeqVar(intSeqVar: CBLSSeqVar) extends RandomVar{
         val newVal = List.tabulate(newSize)(n => fullList(n)).toIterable
 
         if (newVal != null) randomVar := IntSequence(newVal)
-      /*case Shuffle() =>
-        for(p <- 0 until randomVar().value.size){
-          randomVar().move(p,p,Gen.choose(0, randomVar().value.size).suchThat (_ != p).sample.get, false)
-        }*/
+      case Shuffle() =>
+        for(p <- 0 until randomVar().newValue.size) {
+          val newPos = Gen.choose(1, randomVar().newValue.size - 1).sample.get
+          if (newPos != p)
+            randomVar().move(p, p, newPos, false)
+        }
 
+    }
+    println(randomVar().value.toString)
+  }
+}
+
+/**
+  * A RouteOfNodes is a Var containing an IntSeqVar build for routing problems.
+  */
+case class RouteOfNodes(intSeqVar: CBLSSeqVar, v:Int) extends RandomVar{
+  override def randomVar(): CBLSSeqVar = intSeqVar
+
+  /**
+    * Defines the different possible moves for a RandomIntSeqVar.
+    * PlusOne adds a new random value to the seq whereas MinusOne removes one,
+    * ToZero makes the seq an empty one, ToMax adds all the values of the
+    * variable range to the seq whereas ToMin makes the seq a singleton (of
+    * which value is randomly chosen).
+    * Random replaces the seq with a random one (values and size are random)
+    * but to avoid explosions, new size cannot be more than current size + 1.
+    * RandomDiff replaces it with a random one with which intersection is empty,
+    * if such a change is not possible, nothing's done.
+    * Shuffle shuffles the positions of each value contained in the seq
+    */
+  override def move(move: Move)= {
+    println(move.toString)
+    val inSeq = randomVar().newValue.dropWhile(_ != 0).toList
+    val notInSeq = List.tabulate(randomVar().max)(n => n).filterNot(inSeq.contains(_))
+    println(inSeq,notInSeq)
+    move match{
+      case PlusOne() =>
+        if(notInSeq.nonEmpty)
+          randomVar().insertAtPosition(Gen.oneOf(notInSeq).sample.get,Gen.choose(1,inSeq.size).sample.get)
+      case MinusOne() =>
+        if(inSeq.size > v) randomVar().remove(inSeq.indexOf(Gen.oneOf(inSeq.filterNot(_ < v)).sample.get))
+      case ToZero() =>
+        if(inSeq.size > v){
+          var currentPos = 1
+          while(randomVar().newValue.size > v) {
+            if(randomVar().newValue.valueAtPosition(currentPos).get < v)
+              currentPos += 1
+            else
+              randomVar().remove(currentPos)
+          }
+        }
+      case ToMax() =>
+        var valuesInserted = 0
+        notInSeq.foreach(value =>{
+          randomVar().insertAtPosition(value,Gen.choose(1,randomVar().newValue.size).sample.get)
+          valuesInserted += 1
+        })
+      case ToMin() =>
+        if(inSeq.size > v){
+          var currentPos = 1
+          while(randomVar().newValue.size > v) {
+            if(randomVar().newValue.valueAtPosition(currentPos).get < v)
+              currentPos += 1
+            else
+              randomVar().remove(currentPos)
+          }
+        }
+        randomVar().insertAtPosition(Gen.choose(v,randomVar().max-1).sample.get,Gen.choose(1,v).sample.get)
+      case Random() =>
+        val nbOfValueToAdd = Gen.choose(0, Math.min(randomVar().newValue.size + 1,randomVar().max)-v).sample.get
+        val fullList = scala.util.Random.shuffle(List.tabulate(randomVar().max-v)(n => n+v))
+        val newVal = List.tabulate(v)(n => n)
+        randomVar() := IntSequence(newVal)
+        for(i <- 0 until nbOfValueToAdd)
+          randomVar().insertAtPosition(fullList(i),Gen.choose(1,randomVar().newValue.size-1).sample.get)
+      case RandomDiff() =>
+        val nbOfValueToAdd = Gen.choose(0, Math.max(randomVar().min,notInSeq.size)).sample.get
+        val fullList = scala.util.Random.shuffle(notInSeq)
+        val newVal = List.tabulate(v)(n => n)
+        randomVar() := IntSequence(newVal)
+        for(i <- 0 until nbOfValueToAdd)
+          randomVar().insertAtPosition(fullList(i),Gen.choose(1,randomVar().newValue.size-1).sample.get)
+      case Shuffle() =>
+        for(p <- 0 until randomVar().value.size){
+          if(randomVar().newValue.valueAtPosition(p).get>=v) {
+            val newPos = Gen.choose(1, randomVar().newValue.size - 1).sample.get
+            if (newPos != p)
+              randomVar().move(p, p, newPos, false)
+          }
+        }
     }
     println(randomVar().value.toString)
   }
@@ -430,12 +519,12 @@ case class NotRandomIntSeqVar(intSeqVar: CBLSSeqVar) extends RandomVar{
   *
   * @author yoann.guyot@cetic.be
  */
-class InvBench(verbose: Int = 0) {
+class InvBench(verbose: Int = 0, moves:List[Move]) {
   var property: Prop = false
   val checker = new InvariantChecker(verbose)
   val model = new Store(false, Some(checker), true, false, false)
 
-
+  val move = Gen.oneOf(moves)
 
   var inputVars: List[RandomVar] = List()
   var outputVars: List[RandomVar] = List()
@@ -587,6 +676,14 @@ class InvBench(verbose: Int = 0) {
     risVar.randomVar
   }
 
+  def genRouteOfNodes(
+                     upToSize: Int = 20,
+                     v: Int = 5,
+                     isInput: Boolean = true) = {
+    val risVar = InvGen.routeOfNodes(upToSize,v,model).sample.get
+    addVar(isInput,risVar)
+    risVar.randomVar
+  }
 
   /**
    * For debug only
@@ -608,7 +705,7 @@ class InvBench(verbose: Int = 0) {
     model.propagate()
 
     try {
-      property = org.scalacheck.Prop.forAll(InvGen.move) {
+      property = org.scalacheck.Prop.forAll(move) {
         randomMove: Move =>
           if (verbose > 0) {
             println("---------------------------------------------------")
