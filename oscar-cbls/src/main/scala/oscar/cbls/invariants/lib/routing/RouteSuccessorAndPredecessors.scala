@@ -99,7 +99,7 @@ class RouteSuccessorAndPredecessors(routes:ChangingSeqValue,
       case SeqUpdateLastNotified(value) =>
         require (value quickEquals routes.value)
         Some(SortedSet.empty[Int]) //we are starting from the previous value
-      case SeqUpdateSet(value : IntSequence) =>
+      case SeqUpdateAssign(value : IntSequence) =>
         None //impossible to go incremental
       case SeqUpdateDefineCheckpoint(prev:SeqUpdate,_) =>
         computeStartValuesOfImpactedZone(prev)

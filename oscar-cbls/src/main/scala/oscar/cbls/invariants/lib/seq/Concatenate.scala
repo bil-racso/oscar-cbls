@@ -95,7 +95,7 @@ class Concatenate(a:ChangingSeqValue,b:ChangingSeqValue,maxPivotPerValuePercent:
       case SeqUpdateLastNotified(value) =>
         true
 
-      case SeqUpdateSet(value : IntSequence) =>
+      case SeqUpdateAssign(value : IntSequence) =>
         false
     }
   }
@@ -164,7 +164,7 @@ class ConcatenateFirstConstant(a:List[Int],b:ChangingSeqValue,maxPivotPerValuePe
       case SeqUpdateLastNotified(value) =>
         true
 
-      case SeqUpdateSet(value : IntSequence) =>
+      case SeqUpdateAssign(value : IntSequence) =>
         false
     }
   }
@@ -231,7 +231,7 @@ class ConcatenateSecondConstant(a:ChangingSeqValue,b:List[Int],maxPivotPerValueP
       case SeqUpdateLastNotified(value) =>
         true
 
-      case SeqUpdateSet(value : IntSequence) =>
+      case SeqUpdateAssign(value : IntSequence) =>
         false
     }
   }

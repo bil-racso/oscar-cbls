@@ -22,7 +22,7 @@ import oscar.cbls.invariants.lib.seq.{PositionsOf, Size}
 import oscar.cbls.modeling.Algebra._
 import oscar.cbls.objective.{CascadingObjective, Objective}
 import oscar.cbls.routing.seq.model._
-import oscar.cbls.routing.seq.neighborhood.{OnePointMove, ThreeOpt, TwoOpt1}
+import oscar.cbls.routing.seq.neighborhood.{SegmentExchange, OnePointMove, ThreeOpt, TwoOpt1}
 import oscar.cbls.search.combinators.{BestSlopeFirst, Profile}
 
 import scala.util.Random
@@ -90,14 +90,19 @@ object routingS extends App{
   val onePtMove = Profile(new OnePointMove(() => nodes, ()=>myVRP.kFirst(40,myVRP.closestNeighboursForward), myVRP))
 
   val onePtMoveSolvingRestrictions = Profile(
-    new OnePointMove(myVRP.nodesThanShouldBeMovedToOtherVehicle, ()=>myVRP.kFirst(20,myVRP.closestNeighboursForward), myVRP)
-      exhaust OnePointMove(myVRP.nodesThanShouldBeMovedToOtherVehicle, ()=>myVRP.kFirst(100,myVRP.closestNeighboursForward), myVRP)
+    (OnePointMove(myVRP.nodesThanShouldBeMovedToOtherVehicle, ()=>myVRP.kFirst(20,myVRP.closestNeighboursForward), myVRP)
+      exhaust OnePointMove(myVRP.nodesThanShouldBeMovedToOtherVehicle, ()=>myVRP.kFirst(100,myVRP.closestNeighboursForward), myVRP))
       guard(() => myVRP.totalViolationOnRestriction.value >0)
       name "MoveForRestr")
 
   val twoOpt = Profile(new TwoOpt1(() => nodes, ()=>myVRP.kFirst(40,myVRP.closestNeighboursForward), myVRP))
 
   def threeOpt(k:Int, breakSym:Boolean) = Profile(new ThreeOpt(() => nodes, ()=>myVRP.kFirst(k,myVRP.closestNeighboursForward), myVRP,breakSymmetry = breakSym, neighborhoodName = "ThreeOpt(k=" + k + ")"))
+
+  //This neighborhood is useless given the other one, and for this kind of routing problem, yet we leave it for doc purpose
+  val segExchange = SegmentExchange(myVRP,
+    ()=>myVRP.kFirst(40,myVRP.computeClosestNeighborsMinFWBW()), //must be routed
+    vehicles=() => myVRP.vehicles)
 
   val search = BestSlopeFirst(List(onePtMove,twoOpt, threeOpt(10,true),onePtMoveSolvingRestrictions)) exhaust threeOpt(20,true)
 

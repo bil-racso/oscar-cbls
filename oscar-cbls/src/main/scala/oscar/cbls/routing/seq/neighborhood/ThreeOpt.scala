@@ -27,9 +27,8 @@
 
 package oscar.cbls.routing.seq.neighborhood
 
-import oscar.cbls.invariants.lib.routing.RoutingConventionMethods
+import oscar.cbls.algo.search.{HotRestart, Pairs}
 import oscar.cbls.routing.seq.model.VRP
-import oscar.cbls.algo.search.{Pairs, HotRestart}
 import oscar.cbls.search.core.EasyNeighborhood
 
 /**
@@ -50,7 +49,9 @@ case class ThreeOpt(potentialInsertionPoints:()=>Iterable[Int], //must be routed
                     best:Boolean = false,
                     hotRestart:Boolean = true,
                     skipOnePointMove:Boolean = false,
-                    breakSymmetry:Boolean = true) extends EasyNeighborhood[ThreeOptMove](best,neighborhoodName) {
+                    breakSymmetry:Boolean = true,
+                    tryFlip:Boolean = true)
+  extends EasyNeighborhood[ThreeOptMove](best,neighborhoodName) {
 
   //the indice to start with for the exploration
   var startIndice: Int = 0
@@ -116,28 +117,32 @@ case class ThreeOpt(potentialInsertionPoints:()=>Iterable[Int], //must be routed
                     return
                   }
                 }
-                /*
-                //try move with flip
-                flipForInstantiation = true
-                doMove(insertionPosition, segmentStartPosition, segmentEndPosition, true)
 
-                if (evaluateCurrentMoveObjTrueIfStopRequired(evalObjAndRollBack())) {
-                  seq.releaseCurrentCheckpointAtCheckpoint()
-                  startIndice = insertionPoint + 1
-                  return
-                }*/
+                if(tryFlip) {
+                  //try move with flip
+                  flipForInstantiation = true
+                  doMove(insertionPosition, segmentStartPosition, segmentEndPosition, true)
+
+                  if (evaluateCurrentMoveObjTrueIfStopRequired(evalObjAndRollBack())) {
+                    seq.releaseCurrentCheckpointAtCheckpoint()
+                    startIndice = insertionPoint + 1
+                    segmentStartPositionForInstantiation = -1
+                    return
+                  }
+                }
               }
             }
           }
       }
     }
     seq.releaseCurrentCheckpointAtCheckpoint()
+    segmentStartPositionForInstantiation = -1
   }
 
-  var segmentStartPositionForInstantiation:Int = 0
-  var segmentEndPositionForInstantiation:Int = 0
-  var insertionPointPositionForInstantiation:Int = 0
-  var insertionPointForInstantiation:Int = 0
+  var segmentStartPositionForInstantiation:Int = -1
+  var segmentEndPositionForInstantiation:Int = -1
+  var insertionPointPositionForInstantiation:Int = -1
+  var insertionPointForInstantiation:Int = -1
   var flipForInstantiation:Boolean = false
 
   override def instantiateCurrentMove(newObj: Int) =
@@ -171,7 +176,7 @@ case class ThreeOptMove(segmentStartPosition:Int,
                         override val neighborhoodName:String = "ThreeOptMove")
   extends VRPSMove(objAfter, neighborhood, neighborhoodName,neighborhood.vrp){
 
-  override def impactedPoints: Iterable[Int] =  neighborhood.vrp.routes.value.valuesBetweenPositions(segmentStartPosition,segmentEndPosition) + insertionPoint
+  override def impactedPoints: Iterable[Int] = neighborhood.vrp.routes.value.valuesBetweenPositions(segmentStartPosition,segmentEndPosition) + insertionPoint
 
   // overriding methods
   override def commit() {
