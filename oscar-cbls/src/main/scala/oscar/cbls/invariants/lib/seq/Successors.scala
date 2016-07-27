@@ -35,7 +35,7 @@ object Successors {
   def apply(seq : ChangingSeqValue) : Array[CBLSSetVar] = {
 
     val succ: Array[CBLSSetVar] =
-      Array.tabulate(seq.max)(v => CBLSSetVar(seq.model, name = "next Value of" + v))
+      Array.tabulate(seq.max+1)(v => CBLSSetVar(seq.model, name = "next Value of" + v))
 
     new Successors(seq, succ)
 
@@ -72,7 +72,7 @@ class Successors(sequence:ChangingSeqValue, successorValues:Array[CBLSSetVar])
       case None =>
       computeAllFromScratch(changes.newValue)
       case Some(values) =>
-
+        computeForValues(changes.newValue,values)
     }
   }
 
@@ -154,7 +154,7 @@ class Successors(sequence:ChangingSeqValue, successorValues:Array[CBLSSetVar])
 
   def computeAllFromScratchNoAffect(seq:IntSequence):Array[SortedSet[Int]] = {
     val emptySet = SortedSet.empty[Int]
-    val successorValues = Array.tabulate(sequence.max)(v => emptySet)
+    val successorValues = Array.tabulate(sequence.max+1)(v => emptySet)
 
     try{
     var explorer = seq.explorerAtPosition(0).head
