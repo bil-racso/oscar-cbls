@@ -18,8 +18,10 @@ package oscar.examples.cbls.routing.visual.MatrixMap
   */
 
 import java.awt.BorderLayout
-import javax.swing.JInternalFrame
+import javax.swing.{SwingUtilities, JPanel, JInternalFrame}
 
+import oscar.cbls.algo.seq.functional.IntSequence
+import oscar.cbls.invariants.core.computation.CBLSSeqVar
 import oscar.cbls.routing.model.VRP
 
 import scala.swing._
@@ -29,7 +31,7 @@ import scala.swing._
   */
 
 
-class RoutingMatrixVisual(title:String = "Routing map", pickupAndDeliveryPoints: Boolean = false) extends JInternalFrame(title){
+class RoutingMatrixVisual(title:String = "Routing map", pickupAndDeliveryPoints: Boolean = false) extends JPanel with Runnable{
   setLayout(new BorderLayout())
 
   var routingMatrix:MatrixMap = null
@@ -38,38 +40,60 @@ class RoutingMatrixVisual(title:String = "Routing map", pickupAndDeliveryPoints:
   else
     routingMatrix = new RoutingMatrixMap
 
-  def drawRoutes(): Unit ={
-    routingMatrix.drawRoutes()
-    validate()
+  var mustRefresh = false
+
+  var allRoutes:CBLSSeqVar = null
+
+  var routes:List[List[Int]] = Nil
+
+  def run(): Unit ={
+    while (true) {
+      try {
+        Thread.sleep(500)
+        if(setMustRefresh(false))
+          routingMatrix.drawRoutes(allRoutes.value)
+      }catch{
+        case ie:InterruptedException => return
+        case e:Exception => e.printStackTrace()
+      }
+    }
+  }
+
+  def setMustRefresh(toSet:Boolean): Boolean = {
+    this.synchronized{
+      var res = false
+      if(toSet && !mustRefresh)
+        mustRefresh = true
+      else if(!toSet && mustRefresh) {
+        mustRefresh = false
+        res = true
+      }
+      res
+    }
   }
 
   def drawPoints(): Unit ={
     routingMatrix.drawPoints()
-    validate()
   }
 
   def setColorValues(colorValues:Array[Color]): Unit ={
     routingMatrix.setColorValues(colorValues)
   }
 
-  def setPointsList(pointsList:List[(Int,Int)]): Unit ={
-    routingMatrix.setPointsList(pointsList)
+  def setPointsList(pointsList:List[(Int,Int)],V:Int): Unit ={
+    routingMatrix.setPointsList(pointsList,V)
   }
 
   def setMapSize(mapSize:Int): Unit ={
     routingMatrix.setMapSize(mapSize)
   }
 
-  def setVRP(vrp:VRP): Unit ={
-    routingMatrix.setVRP(vrp)
-  }
-
   def clear(): Unit ={
     routingMatrix.clear()
-    validate()
   }
   add(routingMatrix, BorderLayout.CENTER)
   setVisible(true)
+
 }
 
 
@@ -78,13 +102,12 @@ class RoutingMatrixVisualWithAttribute(title:String = "Routing map",
                                        mapSize:Int,
                                        pointsList:scala.List[(Int,Int)],
                                        colorValues:Array[Color],
-                                       dimension:Dimension = new Dimension(960,540)) extends RoutingMatrixVisual{
+                                       dimension:Dimension = new Dimension(960,960)) extends RoutingMatrixVisual{
   setPreferredSize(dimension)
   setSize(dimension)
   routingMatrix.setPreferredSize(dimension)
   routingMatrix.setSize(dimension)
-  routingMatrix.setVRP(vrp)
   routingMatrix.setMapSize(mapSize)
-  routingMatrix.setPointsList(pointsList)
+  routingMatrix.setPointsList(pointsList,vrp.V)
   routingMatrix.setColorValues(colorValues)
 }

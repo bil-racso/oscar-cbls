@@ -136,7 +136,7 @@ abstract class PropagationStructure(val verbose: Boolean, val checker: Option[Ch
    */
   def isAcyclic: Boolean = acyclic
 
-  private var StronglyConnexComponentsList: List[StronglyConnectedComponent] = List.empty
+  private var stronglyConnectedComponentsList: List[StronglyConnectedComponent] = List.empty
 
   /**
    * To call when one has defined all the propagation elements on which propagation will ever be triggered.
@@ -152,13 +152,13 @@ abstract class PropagationStructure(val verbose: Boolean, val checker: Option[Ch
       //identification des composantes connexes
       val storageForTarjan = this.getNodeStorage[TarjanNodeData]
       storageForTarjan.initialize(() => new TarjanNodeData)
-      val StrognlyConnectedComponents: List[QList[PropagationElement]] = TarjanWithExternalStorage.getStronlyConnexComponents[PropagationElement](
+      val stronglyConnectedComponents: List[QList[PropagationElement]] = TarjanWithExternalStorage.getStronlyConnexComponents[PropagationElement](
         getPropagationElements,
         p => p.getStaticallyListeningElements,
         storageForTarjan.get)
       acyclic = true
-      StronglyConnexComponentsList = List.empty
-      StrognlyConnectedComponents.map((a: QList[PropagationElement]) =>
+      stronglyConnectedComponentsList = List.empty
+      stronglyConnectedComponents.map((a: QList[PropagationElement]) =>
         if (a.tail == null) {
           a.head
         } else {
@@ -166,7 +166,7 @@ abstract class PropagationStructure(val verbose: Boolean, val checker: Option[Ch
 
           val c: StronglyConnectedComponent = if (sortScc) new StronglyConnectedComponentTopologicalSort(a, this, GetNextID())
           else new StronglyConnectedComponentNoSort(a, this, GetNextID())
-          StronglyConnexComponentsList = c :: StronglyConnexComponentsList
+          stronglyConnectedComponentsList = c :: stronglyConnectedComponentsList
           c
         })
     }
@@ -198,7 +198,7 @@ abstract class PropagationStructure(val verbose: Boolean, val checker: Option[Ch
       it.next().rescheduleIfNeeded()
     }
 
-    for (scc <- StronglyConnexComponentsList) {
+    for (scc <- stronglyConnectedComponentsList) {
       scc.rescheduleIfNeeded()
     }
     //propagate() we do not propagate anymore here since the first query might require a partial propagation only
@@ -371,7 +371,7 @@ abstract class PropagationStructure(val verbose: Boolean, val checker: Option[Ch
         }
     }
 
-    for (scc <- StronglyConnexComponentsList) {
+    for (scc <- stronglyConnectedComponentsList) {
       Track(scc.uniqueID) = Track(scc.propagationElements.head.uniqueID)
     }
     Track
@@ -608,8 +608,8 @@ abstract class PropagationStructure(val verbose: Boolean, val checker: Option[Ch
       "  sortScc:" + sortScc + "\n" +
       "  actuallyAcyclic:" + acyclic + "\n" +
       "  TotalPropagationElementCount:" + getPropagationElements.size + "\n" +
-      "  StronglyConnectedComponentsCount:" + StronglyConnexComponentsList.size + "\n" +
-      StronglyConnexComponentsList.map(_.stats).mkString("\n") + "\n" +
+      "  StronglyConnectedComponentsCount:" + stronglyConnectedComponentsList.size + "\n" +
+      stronglyConnectedComponentsList.map(_.stats).mkString("\n") + "\n" +
       "  PropagationElementsNotInSCC:{" + "\n    " + getPropagationElements.filter(_.schedulingHandler == this).map(_.getClass.getSimpleName).groupBy((name: String) => name).map(a => a._1 + ":" + a._2.size).mkString("\n    ") + "\n" +
       "  }\n" +
       ")"

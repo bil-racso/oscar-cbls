@@ -18,12 +18,12 @@ package oscar.cbls.invariants.lib.seq
 
 import oscar.cbls.algo.seq.functional.IntSequence
 import oscar.cbls.invariants.core.computation._
+import oscar.cbls.invariants.core.propagation.Checker
 
 object Map {
   def apply(seq:ChangingSeqValue,mapArray:Array[Int]):MapConstantFun = {
     new MapConstantFun(seq,mapArray,InvariantHelper.getMinMaxBoundsInt(mapArray)._2)
   }
-
 }
 
 class MapConstantFun(seq:ChangingSeqValue,
@@ -66,6 +66,10 @@ with SeqNotificationTarget{
       case SeqUpdateAssign(seq) =>
         this := seq.map(transform)
     }
+  }
+
+  override def checkInternals(c : Checker) : Unit = {
+    c.check(this.value.toList equals seq.value.toList.map(transform))
   }
 }
 
@@ -113,6 +117,10 @@ class MapThroughArray(seq:ChangingSeqValue,
       case SeqUpdateAssign(seq) =>
         this := seq.map(v => transform(v).value)
     }
+  }
+
+  override def checkInternals(c : Checker) : Unit = {
+    c.check(this.value.toList equals seq.value.toList.map(x => transform(x).value))
   }
 }
 

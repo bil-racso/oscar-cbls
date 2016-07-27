@@ -64,7 +64,7 @@ object flowShopShiftRestart  extends CBLSModel with App {
     onExhaustRestartAfter (shuffleNeighborhood(jobSequence, numberOfShuffledPositions=() => nbJobs/2),3,obj)
   onExhaustRestartAfter (shuffleNeighborhood(jobSequence),2,obj))
 
-  search.verbose = 1
+  search.verbose = 2
 
   search.doAllMoves(_ => false,obj)
 

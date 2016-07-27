@@ -108,7 +108,7 @@ case class Store(override val verbose:Boolean = false,
     * @return a unique identifier that will be used to distinguish variables. basically, variables use this value to set up an arbitrary ordering for use in dictionnaries.
     */
   def registerVariable(v:AbstractVariable):Int = {
-    assert(!closed,"model is closed, cannot add variables")
+    require(!closed,"model is closed, cannot add variables")
     //ici on utilise des listes parce-que on ne peut pas utiliser des dictionnaires
     // vu que les variables n'ont pas encore recu leur unique ID.
     variables = QList(v,variables)
@@ -121,7 +121,7 @@ case class Store(override val verbose:Boolean = false,
     * @return a unique identifier that will be used to distinguish invariants. basically, invariants use this value to set up an arbitrary ordering for use in dictionnaries.
     */
   def registerInvariant(i:Invariant):Int = {
-    assert(!closed,"model is closed, cannot add invariant")
+    require(!closed,"model is closed, cannot add invariant")
     propagationElements = QList(i,propagationElements)
     GetNextID()
   }
@@ -144,12 +144,12 @@ case class Store(override val verbose:Boolean = false,
   /**calls this when you have declared all your invariants and variables.
     * This must be called before any query and update can be made on the model,
     * and after all the invariants and variables have been declared.
-    * @param DropStaticGraph true if you want to drop the static propagation graph to free memory. It takes little time
+    * @param dropStaticGraph true if you want to drop the static propagation graph to free memory. It takes little time
     */
-  def close(DropStaticGraph: Boolean = true){
+  def close(dropStaticGraph: Boolean = true){
     assert(!closed, "cannot close a model twice")
     performCallsBeforeClose()
-    setupPropagationStructure(DropStaticGraph)
+    setupPropagationStructure(dropStaticGraph)
     killBulker() //we won't create any new model artifacts, thus we can kill the bulker and free its memory
     closed=true
   }

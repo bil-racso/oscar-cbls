@@ -15,15 +15,20 @@ package oscar.cbls.routing.seq.model
   * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
   ******************************************************************************/
 
+import java.awt.Dimension
+import javax.swing.SwingUtilities
+
 import oscar.cbls.algo.seq.functional.IntSequence
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.lib.numeric.Sum
-import oscar.cbls.invariants.lib.routing.{VehicleOfNodes, RoutingConventionMethods, NodeOfVehicle, ConstantRoutingDistance}
+import oscar.cbls.invariants.lib.routing._
 import oscar.cbls.invariants.lib.seq.{Content, Size}
 import oscar.cbls.invariants.lib.set.Diff
 import oscar.cbls.modeling.Algebra._
-import oscar.cbls.objective.Objective
 import oscar.cbls.algo.search.KSmallest
+import oscar.examples.cbls.routing.visual.ColorGenerator
+import oscar.examples.cbls.routing.visual.MatrixMap.RoutingMatrixVisual
+import oscar.visual.VisualFrame
 
 import scala.collection.immutable.SortedSet
 import scala.math._
@@ -36,7 +41,8 @@ import scala.math._
  * they all have a different depot (but yo ucan put them at the same place if you want)
  *
  * Info: after instantiation, each customer point is unrouted, and each vehicle loop on his deposit.
- * @param n the number of points (deposits and customers) in the problem.
+  *
+  * @param n the number of points (deposits and customers) in the problem.
  * @param v the number of vehicles.
  * @param m the model.
  * @author renaud.delandtsheer@cetic.be
@@ -60,16 +66,20 @@ class VRP(val n: Int, val v: Int, val m: Store, maxPivotPerValuePercent:Int = 4)
    */
   val vehicles = 0 until v
 
+  val (next,prev) = RouteSuccessorAndPredecessors(routes,v,n)
+
   /**
    * Returns if a given point is a depot.
-   * @param n the point queried.
+    *
+    * @param n the point queried.
    * @return true if the point is a depot, else false.
    */
   def isADepot(n: Int): Boolean = { n < v }
 
   /**
    * Returns if a given point is still routed.
-   * @param n the point queried.
+    *
+    * @param n the point queried.
    * @return true if the point is still routed, else false.
    */
   def isRouted(n: Int): Boolean = {routes.value.contains(n)}
@@ -81,7 +91,7 @@ class VRP(val n: Int, val v: Int, val m: Store, maxPivotPerValuePercent:Int = 4)
    */
   def setCircuit(nodes: Iterable[Int]): Unit = {
     routes := IntSequence(nodes)
-    for(v <- 0 until v) require(routes.newValue.contains(v))
+    for(v <- 0 until v) require(routes.value.contains(v))
   }
 
   /**
@@ -102,12 +112,13 @@ class VRP(val n: Int, val v: Int, val m: Store, maxPivotPerValuePercent:Int = 4)
 
   /**
    * the route of the vehicle, starting at the vehicle node, and not including the last vehicle node
-   * @param vehicle
+    *
+    * @param vehicle
    * @return
    */
   def getRouteOfVehicle(vehicle:Int):List[Int] = {
     require(vehicle < v)
-    var currentVExplorer = routes.newValue.explorerAtAnyOccurrence(vehicle).head.next
+    var currentVExplorer = routes.value.explorerAtAnyOccurrence(vehicle).head.next
     var acc:List[Int] = List(vehicle)
     while (currentVExplorer match{
       case Some(x) if x.value >= v =>
@@ -121,10 +132,71 @@ class VRP(val n: Int, val v: Int, val m: Store, maxPivotPerValuePercent:Int = 4)
   def getNodesOfVehicle(vehicle:Int):SortedSet[Int] = getNodesOfVehicleFromScratch(vehicle)
 
   def getNodesOfVehicleFromScratch(vehicle:Int):SortedSet[Int] = SortedSet.empty[Int] ++ getRouteOfVehicle(vehicle)
+
+  /**
+    * This method generate all the nodes preceding a specific position
+    *
+    * @param node the node
+    * @return
+    */
+  def getNodesBeforePosition()(node:Int): List[Int] ={
+    val position = routes.value.positionOfAnyOccurrence(node).head
+
+    var i = v-1
+    while(routes.value.explorerAtAnyOccurrence(i).head.position > position)
+      i -= 1
+    var currentVExplorer = routes.value.explorerAtAnyOccurrence(i).head.next
+    var acc:List[Int] = List(i)
+    while (currentVExplorer match{
+      case Some(x) if x.position < position && x.value >= v =>
+        acc = x.value :: acc
+        currentVExplorer = x.next
+        true
+      case _ => false}) {}
+    acc.reverse
+  }
+
+  /**
+    * This method generate all the nodes following a specific position
+    *
+    * @param node the node
+    * @return
+    */
+  def getNodesAfterPosition()(node:Int): List[Int] ={
+    val position = routes.value.positionOfAnyOccurrence(node).head
+
+    var i = v-1
+    while(routes.value.explorerAtAnyOccurrence(i).head.position > position)
+      i -= 1
+
+    var currentVExplorer = routes.value.explorerAtAnyOccurrence(i).head.next
+    var acc:List[Int] = List()
+    while (currentVExplorer match{
+      case Some(x) if x.position >= position && x.value >= v =>
+        acc = x.value :: acc
+        currentVExplorer = x.next
+        true
+      case _ => false}) {}
+    acc.reverse
+  }
+
+  def notOnSameVehicle(nodes: Iterable[Int], vehicle:Int): Iterable[Int]={
+    nodes.filterNot(getVehicleOfNode(_) == vehicle)
+  }
+
+  def notOnSameVehicle(nodes: Array[Iterable[Int]])(vehicle:Int): Array[Iterable[Int]]={
+    val resNodes = nodes.clone()
+    for(i <- resNodes.indices){
+      resNodes(i) = nodes(i).filterNot(getVehicleOfNode(_) == vehicle)
+    }
+    require(nodes != resNodes,"ERROR")
+    resNodes
+  }
+
   /**
    *
    * @param node a node
-   * @return the vehicle reachingthe node, v is it is unrouted
+   * @return the vehicle reaching the node, v is it is unrouted
    */
   def getVehicleOfNode(node:Int):Int = {
     val routeValue = routes.value
@@ -169,7 +241,8 @@ class VRP(val n: Int, val v: Int, val m: Store, maxPivotPerValuePercent:Int = 4)
 
   /**
    * Redefine the toString method.
-   * @return the VRP problem as a String.
+    *
+    * @return the VRP problem as a String.
    */
   override def toString: String = {
     var toReturn = unroutedToString
@@ -190,16 +263,13 @@ class VRP(val n: Int, val v: Int, val m: Store, maxPivotPerValuePercent:Int = 4)
   }
 
   def onTheSameRoute(node1:Int,node2:Int):Boolean = getVehicleOfNode(node1) == getVehicleOfNode(node2)
-
-  def next(node:Int):Int = RoutingConventionMethods.routingSuccVal2Val(node, routes.value, v)
-  def prev(node:Int):Int = RoutingConventionMethods.routingPredVal2Val(node, routes.value, v)
 }
 
 trait ConstantDistancePerVehicle extends TotalConstantDistance{
   var distancePerVehicle:Array[CBLSIntVar] = null
 
   override def setSymmetricDistanceMatrix(symmetricDistanceMatrix:Array[Array[Int]]){
-    this.distanceMatrix = distanceMatrix
+    this.distanceMatrix = symmetricDistanceMatrix
     this.matrixIsSymmetric = true
     require(distancePerVehicle == null)
     distancePerVehicle = ConstantRoutingDistance(routes, v ,false, symmetricDistanceMatrix, true, precomputeFW = true)
@@ -207,7 +277,7 @@ trait ConstantDistancePerVehicle extends TotalConstantDistance{
   }
 
   override def setAsymmetricDistanceMatrix(asymetricDistanceMatrix:Array[Array[Int]]){
-    this.distanceMatrix = distanceMatrix
+    this.distanceMatrix = asymetricDistanceMatrix
     this.matrixIsSymmetric = false
     require(distancePerVehicle == null)
     distancePerVehicle = ConstantRoutingDistance(routes, v ,false, asymetricDistanceMatrix, false, precomputeFW = true, precomputeBW = true)
@@ -231,14 +301,14 @@ trait TotalConstantDistance extends VRP{
   def setSymmetricDistanceMatrix(symmetricDistanceMatrix:Array[Array[Int]]){
     require(totalDistance == null)
     assert(ConstantRoutingDistance.isDistanceSymmetric(symmetricDistanceMatrix))
-    this.distanceMatrix = distanceMatrix
+    this.distanceMatrix = symmetricDistanceMatrix
     this.matrixIsSymmetric = true
     totalDistance = ConstantRoutingDistance(routes, v ,false, symmetricDistanceMatrix, true)(0)
   }
 
   def setAsymmetricDistanceMatrix(asymetricDistanceMatrix:Array[Array[Int]]){
     require(totalDistance == null)
-    this.distanceMatrix = distanceMatrix
+    this.distanceMatrix = asymetricDistanceMatrix
     this.matrixIsSymmetric = false
     totalDistance = ConstantRoutingDistance(routes, v ,false, asymetricDistanceMatrix, false,precomputeFW = true, precomputeBW = true)(0)
   }
@@ -247,7 +317,8 @@ trait TotalConstantDistance extends VRP{
 /**
  * Computes the nearest neighbors of each point.
  * Used by some neighborhood searches.
- * @author renaud.delandtsheer@cetic.be
+  *
+  * @author renaud.delandtsheer@cetic.be
  * @author Florent Ghilain (UMONS)
  * @author yoann.guyot@cetic.be
  */
@@ -293,7 +364,8 @@ trait ClosestNeighbors extends VRP {
    * It allows us to add a filter (optional) on the neighbor.
    *
    * Info : it uses the Currying feature.
-   * @param k the parameter k.
+    *
+    * @param k the parameter k.
    * @param filter the filter.
    * @param node the given node.
    * @return the k nearest neighbor as an iterable list of Int.
@@ -322,7 +394,8 @@ trait ClosestNeighbors extends VRP {
 /**
  * Maintains the set of unrouted nodes.
  * Info : those whose next is N.
- * @author renaud.delandtsheer@cetic.be
+  *
+  * @author renaud.delandtsheer@cetic.be
  * @author Florent Ghilain (UMONS)
  * @author yoann.guyot@cetic.be
  */
@@ -348,7 +421,8 @@ trait AbstractPenaltyForUnrouted extends VRP{
 
 /**
  * Maintains and fixes a penalty weight of unrouted nodes.
- * @author renaud.delandtsheer@cetic.be
+  *
+  * @author renaud.delandtsheer@cetic.be
  * @author Florent Ghilain (UMONS)
  * @author yoann.guyot@cetic.be
  */
@@ -367,7 +441,7 @@ trait StandardPenaltyForUnrouted extends AbstractPenaltyForUnrouted {
 }
 
 trait CloneOfRouteForLightPartialPropagation extends VRP{
-  val cloneOfRoute = routes.createClone()
+  val cloneOfRoute = routes
 }
 
 trait NodesOfVehicle extends CloneOfRouteForLightPartialPropagation{
@@ -383,6 +457,33 @@ trait VehicleOfNode extends CloneOfRouteForLightPartialPropagation{
 
   override def isRouted(node: Int): Boolean = vehicleOfNode(node).value!=v
 
+}
+
+trait RoutingMapDisplay extends VRP with ConstantDistancePerVehicle{
+  val routingMap = new RoutingMatrixVisual()
+  routingMap.setColorValues(ColorGenerator.generateRandomColors(v))
+  routingMap.drawPoints()
+
+  val visualFrame = new VisualFrame("Routing Map")
+  visualFrame.setPreferredSize(new Dimension(960,960))
+  visualFrame.add(routingMap)
+  visualFrame.pack()
+  visualFrame.revalidate()
+
+  def setMapSize(mapSize:Int): Unit ={
+    routingMap.setMapSize(mapSize)
+  }
+
+  def setPointsList(list:Array[(Int,Int)]): Unit = {
+    routingMap.setPointsList(list.toList, v)
+  }
+
+  new Thread(routingMap,"routing thread").start()
+  routingMap.allRoutes = routes
+
+  def drawRoutes(): Unit ={
+    routingMap.setMustRefresh(true)
+  }
 }
 
 

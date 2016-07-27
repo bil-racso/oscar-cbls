@@ -43,6 +43,7 @@ class InvariantChecker(verbose: Int = 0) extends Checker {
   }
 
   def isChecked() = {
+    if(firstCheck) println("no check performed so far")
     invariantChecked
   }
 }

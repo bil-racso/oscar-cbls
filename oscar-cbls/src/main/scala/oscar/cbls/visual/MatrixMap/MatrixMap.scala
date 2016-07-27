@@ -20,10 +20,12 @@ package oscar.examples.cbls.routing.visual.MatrixMap
 import java.awt.Color
 import java.awt.geom.Line2D.Double
 
+import oscar.cbls.algo.seq.functional.IntSequence
+import oscar.cbls.invariants.core.computation.CBLSSeqVar
 import oscar.cbls.routing.model.VRP
 import oscar.examples.cbls.routing.visual.ColorGenerator
 import oscar.visual.VisualDrawing
-import oscar.visual.shapes.{VisualArrow, VisualCircle, VisualLine}
+import oscar.visual.shapes.{VisualShape, VisualArrow, VisualCircle, VisualLine}
 
 import scala.collection.mutable.ListBuffer
 
@@ -34,26 +36,27 @@ abstract class MatrixMap extends VisualDrawing(false,false){
 
   var pointsList:scala.List[(Int, Int)] = Nil
   var colorValues:Array[Color] = null
-  var vrp:VRP = null
-  var mapSize = 0
+  var V:Int = 0
+  var mapSize = 10000
+
+  override def addShape(shape: VisualShape, repaintAfter: Boolean = true): Unit ={
+    super.addShape(shape,false)
+  }
 
   def drawPoints()
 
-  def drawRoutes()
-
-  def setVRP(vrp:VRP): Unit ={
-    this.vrp = vrp
-  }
+  def drawRoutes(seqRoutes:IntSequence)
 
   def setColorValues(colorValues:Array[Color]): Unit ={
     if(colorValues == null){
-      this.colorValues = ColorGenerator.generateRandomColors(vrp.V)
+      this.colorValues = ColorGenerator.generateRandomColors(V)
     }else{
       this.colorValues = colorValues
     }
   }
 
-  def setPointsList(pointsList:scala.List[(Int,Int)]): Unit ={
+  def setPointsList(pointsList:scala.List[(Int,Int)],V:Int): Unit ={
+    this.V = V
     val tempList:ListBuffer[(Int,Int)] = new ListBuffer[(Int,Int)]
     for(p <- pointsList){
       val tempP = (p._1*getHeight/mapSize, p._2*getHeight/mapSize)
@@ -74,7 +77,7 @@ abstract class MatrixMap extends VisualDrawing(false,false){
 class RoutingMatrixMap extends MatrixMap{
 
   def drawPoints() ={
-    var v = vrp.V
+    var v = V
     for(p <- pointsList){
       if(v > 0){
         val tempPoint = new VisualCircle(this,p._1.toInt,p._2.toInt,5)
@@ -88,23 +91,34 @@ class RoutingMatrixMap extends MatrixMap{
     }
   }
 
-  def drawRoutes(): Unit ={
+  def drawRoutes(seqRoutes:IntSequence): Unit ={
     clear()
     drawPoints()
 
-    val routes = (for(c <- 0 until vrp.V)yield vrp.getRouteOfVehicle(c)).toList
-    for(r <- 0 until vrp.V){
-      val color:Color = colorValues(r)
-      val points = routes(r)
-      var old = points.head
-      for(p <- points){
-        val tempRoute = new VisualArrow(this,new Double(pointsList(old)._1, pointsList(old)._2,pointsList(p)._1,pointsList(p)._2),4)
+    val points = seqRoutes.toIterable.toList
+    var previousPoint = -1
+    var currentVehicle = -1
+    var color:Color = null
+    for(p <- points){
+      if(p >= V && previousPoint != -1){
+        val tempRoute = new VisualArrow(this,new Double(pointsList(previousPoint)._1, pointsList(previousPoint)._2,pointsList(p)._1,pointsList(p)._2),4)
         tempRoute.outerCol_$eq(color)
         tempRoute.borderWidth = 2
-        old = p
+        previousPoint = p
       }
-      val tempRoute = new VisualArrow(this,new Double(pointsList(old)._1, pointsList(old)._2,pointsList(points.head)._1,pointsList(points.head)._2),5)
-      tempRoute.outerCol_$eq(color)
+      else if(p < V){
+        if(currentVehicle > -1) {
+          val tempRoute = new VisualArrow(this, new Double(pointsList(previousPoint)._1, pointsList(previousPoint)._2, pointsList(currentVehicle)._1, pointsList(currentVehicle)._2), 4)
+          tempRoute.outerCol_$eq(color)
+          tempRoute.borderWidth = 2
+        }
+        previousPoint = p
+        currentVehicle = p
+        color = colorValues(p)
+      }
     }
+    val tempRoute = new VisualArrow(this, new Double(pointsList(previousPoint)._1, pointsList(previousPoint)._2, pointsList(currentVehicle)._1, pointsList(currentVehicle)._2), 4)
+    tempRoute.outerCol_$eq(color)
+    tempRoute.borderWidth = 2
   }
 }

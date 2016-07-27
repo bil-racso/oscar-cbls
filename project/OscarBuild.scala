@@ -51,6 +51,7 @@ object OscarBuild extends Build {
     val xypron = "Xypron Release" at "http://rsync.xypron.de/repository/"
     val leadoperations = "AWS S3 Release Repository" at "http://maven.leadoperations.co/release"
     val cogcomp = "Cognitive Computation Group" at "http://cogcomp.cs.illinois.edu/m2repo/"
+    val mvnrepository = "Maven Repository" at "https://mvnrepository.com/artifact/"
   }
 
   object Dependencies {
@@ -69,6 +70,9 @@ object OscarBuild extends Build {
     val swingx = "org.swinglabs" % "swingx" % "latest.milestone"
     val swingxWs = "org.swinglabs" % "swingx-ws" % "latest.milestone"
     val xmlApisExt = "xml-apis" % "xml-apis-ext" % "latest.milestone"
+    val jxl = "net.sourceforge.jexcelapi" % "jxl" % "2.6.12"
+    val javaxJson = "org.glassfish" % "javax.json" % "1.0.4"
+    val graphhopper = "com.graphhopper" % "graphhopper" % "0.7.0"
     
     // Test libraries
     val junit = "junit" % "junit" % "latest.milestone" % Test
@@ -120,7 +124,8 @@ object OscarBuild extends Build {
       commonSettings ++
       packAutoSettings ++
       Seq(
-        libraryDependencies ++= testDeps :+ scalaSwing,
+      	resolvers ++= Seq(mvnrepository),
+        libraryDependencies ++= testDeps :+ scalaSwing :+ jxl :+ javaxJson :+ graphhopper,
         packGenerateWindowsBatFile := false
       ),
     dependencies = Seq(oscarVisual)

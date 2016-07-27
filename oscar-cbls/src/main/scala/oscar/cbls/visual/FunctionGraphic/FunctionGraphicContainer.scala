@@ -1,4 +1,4 @@
-package oscar.examples.cbls.routing.visual.FunctionGraphic
+package oscar.cbls.visual.FunctionGraphic
 
 /**
   * *****************************************************************************
@@ -32,10 +32,9 @@ import scala.swing.Dimension
   * @author fabian.germeau@student.vinci.be
   */
 
-abstract class FunctionGraphicContainer(title:String,dimension: Dimension) extends JInternalFrame(title){
+abstract class FunctionGraphicContainer(title:String,dimension: Dimension) extends JPanel{
 
   setSize(dimension)
-  setPreferredSize(dimension)
   setLayout(new BorderLayout())
   setVisible(true)
 
@@ -60,9 +59,9 @@ abstract class FunctionGraphicContainer(title:String,dimension: Dimension) exten
   * @param dimension The dimension of the JInternalFrame
   * @author fabian.germeau@student.vinci.be
   */
-class ObjFunctionGraphicContainer(title:String = "Evolution of the objective function", dimension: Dimension) extends FunctionGraphicContainer(title, dimension){
+class ObjFunctionGraphicContainer(title:String = "Evolution of the objective function", dimension: Dimension) extends FunctionGraphicContainer(title, dimension) with Runnable{
 
-  graphic = new ObjFunctionGraphic(getWidth,getHeight)
+  graphic = new ObjFunctionGraphic
   add(graphic, BorderLayout.CENTER)
 
   val neighborhoodColorLabel = new JLabel(" ")
@@ -72,6 +71,33 @@ class ObjFunctionGraphicContainer(title:String = "Evolution of the objective fun
   //A map that contains the color of all neighborhood encountered during the search
   //(useful for the functionGraphicContainer)
   var xColorMap:Map[String,Color] = new HashMap[String,Color]
+
+  var objCurveDatas:List[(Int,Long,String,Color)] = Nil
+
+  def run(): Unit ={
+    var temp:List[(Int,Long,String,Color)] = Nil
+
+    while(true){
+      try {
+        Thread.sleep(100)
+        objCurveDatas.synchronized{
+          temp = objCurveDatas.take(objCurveDatas.size)
+          objCurveDatas = Nil
+        }
+        if (temp.nonEmpty) {
+          for(i <- temp.indices){
+            val j = temp.size - 1 - i
+            notifyNewObjectiveValue(temp(j)._1,temp(j)._2,temp(j)._3,temp(j)._4)
+          }
+          drawGlobalCurve()
+          temp = Nil
+        }
+      }catch{
+        case ie:InterruptedException => return
+        case e:Exception => e.printStackTrace()
+      }
+    }
+  }
 
   /**
     * This method init the drawing of the curve and add a legend for the neighborhood present in the graphic
