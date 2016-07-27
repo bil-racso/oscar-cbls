@@ -151,7 +151,7 @@ class Successors(sequence:ChangingSeqValue, successorValues:Array[CBLSSetVar])
     }){}
   }
 
-  /*
+
   def computeAllFromScratchNoAffect(seq:IntSequence):Array[SortedSet[Int]] = {
     val emptySet = SortedSet.empty[Int]
     val successorValues = Array.tabulate(sequence.max)(v => emptySet)
@@ -180,5 +180,5 @@ class Successors(sequence:ChangingSeqValue, successorValues:Array[CBLSSetVar])
       c.check(successorValues(node).value == fromScratch(node),
         Some("error on next for node " + node + ": " + successorValues(node).value + " should== " + fromScratch(node)))
     }
-  }*/
+  }
 }
