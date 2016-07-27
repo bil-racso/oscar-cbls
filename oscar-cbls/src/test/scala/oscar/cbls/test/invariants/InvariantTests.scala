@@ -527,8 +527,8 @@ class InvariantTests extends FunSuite with Checkers {
     val bench = new InvBench(verbose)
     val seqVar = bench.genIntSeqVar(100)
     println(seqVar.value.toString)
-    /*val precedences = RoutingMatrixGenerator.generatePrecedence(seqVar.value.size,0,seqVar.value.size/2)
-    new Precedence(seqVar,precedences)*/
+    val precedences = RoutingMatrixGenerator.generatePrecedence(seqVar.value.size,0,seqVar.value.size/2)
+    new Precedence(seqVar,precedences)
     bench.run()
   }
 
