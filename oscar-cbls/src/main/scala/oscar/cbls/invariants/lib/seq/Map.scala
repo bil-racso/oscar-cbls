@@ -24,7 +24,6 @@ object Map {
   def apply(seq:ChangingSeqValue,mapArray:Array[Int]):MapConstantFun = {
     new MapConstantFun(seq,mapArray,InvariantHelper.getMinMaxBoundsInt(mapArray)._2)
   }
-
 }
 
 class MapConstantFun(seq:ChangingSeqValue,
