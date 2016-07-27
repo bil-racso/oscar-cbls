@@ -321,7 +321,6 @@ case class RandomIntSeqVar(intSeqVar: CBLSSeqVar) extends RandomVar{
     * Shuffle shuffles the positions of each value contained in the seq
     */
   override def move(move: Move)= {
-    println(move.toString)
     move match{
       case PlusOne() =>
         randomVar().insertAtPosition(Gen.choose(randomVar().min,randomVar().max).sample.get,Gen.choose(randomVar().min,randomVar().newValue.size).sample.get)
@@ -349,12 +348,11 @@ case class RandomIntSeqVar(intSeqVar: CBLSSeqVar) extends RandomVar{
         if (newValOpt.isDefined) randomVar := IntSequence(newValOpt.get)
       case Shuffle() =>
         for(p <- 0 until randomVar().newValue.size) {
-          val newPos = Gen.choose(1, randomVar().newValue.size - 1).sample.get
+          val newPos = Gen.choose(0, randomVar().newValue.size - 1).sample.get
           if (newPos != p)
             randomVar().move(p, p, newPos, false)
         }
     }
-    println(randomVar().value.toString)
   }
 }
 
@@ -407,13 +405,12 @@ case class NotRandomIntSeqVar(intSeqVar: CBLSSeqVar) extends RandomVar{
         if (newVal != null) randomVar := IntSequence(newVal)
       case Shuffle() =>
         for(p <- 0 until randomVar().newValue.size) {
-          val newPos = Gen.choose(1, randomVar().newValue.size - 1).sample.get
+          val newPos = Gen.choose(0, randomVar().newValue.size - 1).sample.get
           if (newPos != p)
             randomVar().move(p, p, newPos, false)
         }
 
     }
-    println(randomVar().value.toString)
   }
 }
 
@@ -436,10 +433,8 @@ case class RouteOfNodes(intSeqVar: CBLSSeqVar, v:Int) extends RandomVar{
     * Shuffle shuffles the positions of each value contained in the seq
     */
   override def move(move: Move)= {
-    println(move.toString)
     val inSeq = randomVar().newValue.dropWhile(_ != 0).toList
     val notInSeq = List.tabulate(randomVar().max)(n => n).filterNot(inSeq.contains(_))
-    println(inSeq,notInSeq)
     move match{
       case PlusOne() =>
         if(notInSeq.nonEmpty)
@@ -496,7 +491,6 @@ case class RouteOfNodes(intSeqVar: CBLSSeqVar, v:Int) extends RandomVar{
           }
         }
     }
-    println(randomVar().value.toString)
   }
 }
 

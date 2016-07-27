@@ -505,8 +505,18 @@ class InvariantTests extends FunSuite with Checkers {
   test ("ConcatenateVars concatenates two ChangingSeqValue") {
     val bench = new InvBench(verbose,List(PlusOne(), MinusOne(), ToZero(), ToMin(), ToMax(), Random(), RandomDiff()))
     //val seqVars = bench.genIntSeqVars(2)
-    val seqVars = bench.genIntSeqVars(2)
-    new Concatenate(seqVars(0),seqVars(1),4,20)
+    val seqVar1 = bench.genIntSeqVar()
+    val seqVar2 = bench.genIntSeqVar()
+    Size(new Concatenate(seqVar1,seqVar2,4,20))
+    bench.run
+  }
+
+
+  test ("ConcatenateList Var concatenates List and ChangingSeqValue") {
+    val bench = new InvBench(verbose)
+    //val seqVars = bench.genIntSeqVars(2)
+    val seqVar2 = bench.genIntSeqVar()
+    Size(new ConcatenateFirstConstant(List(1,6,8,30),seqVar2,4,20))
     bench.run
   }
 
@@ -528,9 +538,7 @@ class InvariantTests extends FunSuite with Checkers {
   test ("Precedence"){
     val bench = new InvBench(verbose,List(PlusOne(), MinusOne(), ToZero(), ToMin(), ToMax(), Random(), RandomDiff()))
     val seqVar = bench.genNotRandomIntSeqVar(100)
-    println(seqVar.value.toString)
     val precedences = RoutingMatrixGenerator.generatePrecedence(seqVar.value.size,0,seqVar.value.size/2)
-    println(precedences.toString())
     Precedence(seqVar,precedences)
     bench.run()
   }

@@ -178,6 +178,7 @@ class Precedence(seq:ChangingSeqValue,
         true
 
       case SeqUpdateInsert(value : Int, pos : Int, prev : SeqUpdate) =>
+
         if (!digestUpdates(prev, skipNewCheckpoints)) return false
 
         var precedencesStartingAtInsertedValue = beforesToPrecedences(value)
@@ -200,6 +201,7 @@ class Precedence(seq:ChangingSeqValue,
         }
 
         var precedencesEndingAtInsertedValue = aftersToPrecedences(value)
+
         while (precedencesEndingAtInsertedValue != null) {
           val precedenceToCheck = precedencesEndingAtInsertedValue.head
           precedencesEndingAtInsertedValue = precedencesEndingAtInsertedValue.tail
@@ -208,8 +210,9 @@ class Precedence(seq:ChangingSeqValue,
           val startValueOfPrecedence = this.precedencesArray(precedenceToCheck)._1
           cachedPositionFinderAtCheckpoint.positionOfAnyOccurrence(prev.newValue,startValueOfPrecedence) match {
             case None => ; //the precedence is fine
+
             case Some(positionOfStartValueOfPrecedence) =>
-              if (pos < positionOfStartValueOfPrecedence) {
+              if (pos <= positionOfStartValueOfPrecedence) {
                 //precedence is violated!
                 saveViolationForCheckpoint(precedenceToCheck)
                 this :+= 1
@@ -406,7 +409,8 @@ class Precedence(seq:ChangingSeqValue,
               c.check(!isPrecedenceViolated(precedenceID))
             case Some(positionOfEndValue) =>
               c.check(isPrecedenceViolated(precedenceID) == (positionOfStartValue > positionOfEndValue),
-                Some("error on violation of precedence " + precedenceID + ":(" + precedencesArray(precedenceID) + ")"))
+                Some("error on violation of precedence " + precedenceID + " considered as violated:" + isPrecedenceViolated(precedenceID)
+              + ":(" + precedencesArray(precedenceID) + ")"))
               if(isPrecedenceViolated(precedenceID)) nbViol += 1
           }
       }

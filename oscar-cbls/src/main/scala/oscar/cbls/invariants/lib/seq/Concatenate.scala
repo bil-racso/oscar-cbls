@@ -45,6 +45,7 @@ class Concatenate(a:ChangingSeqValue,b:ChangingSeqValue,maxPivotPerValuePercent:
 
   registerStaticAndDynamicDependency(a, 0)
   registerStaticAndDynamicDependency(b, 1)
+  finishInitialization()
 
   var outputToRecompute:Boolean = false
 
@@ -110,6 +111,8 @@ class ConcatenateFirstConstant(a:List[Int],b:ChangingSeqValue,maxPivotPerValuePe
   with SeqNotificationTarget {
 
   registerStaticAndDynamicDependency(b)
+
+  finishInitialization()
 
   var checkpoint:IntSequence = null
   var outputAtCheckpoint:IntSequence = null
@@ -178,6 +181,7 @@ class ConcatenateSecondConstant(a:ChangingSeqValue,b:List[Int],maxPivotPerValueP
   with SeqNotificationTarget {
 
   registerStaticAndDynamicDependency(a)
+  finishInitialization()
 
   var checkpoint:IntSequence = null
   var outputAtCheckpoint:IntSequence = null
