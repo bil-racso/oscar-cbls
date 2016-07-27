@@ -349,7 +349,7 @@ case class RandomIntSeqVar(intSeqVar: CBLSSeqVar) extends RandomVar{
         if (newValOpt.isDefined) randomVar := IntSequence(newValOpt.get)
       case Shuffle() =>
         for(p <- 0 until randomVar().newValue.size) {
-          val newPos = Gen.choose(1, randomVar().newValue.size - 1).sample.get
+          val newPos = Gen.choose(0, randomVar().newValue.size - 1).sample.get
           if (newPos != p)
             randomVar().move(p, p, newPos, false)
         }

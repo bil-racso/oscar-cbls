@@ -286,9 +286,11 @@ class NodeVehicleRestrictions(routes:ChangingSeqValue,
         true
       case SeqUpdateInsert(value : Int, pos : Int, prev : SeqUpdate) =>
         //on which vehicle did we insert?
+
         if (!digestUpdates(prev, skipNewCheckpoints)) return false
 
-        val vehicleOfInsert = vehicleSearcher(prev.newValue, pos)
+        val vehicleOfInsert = vehicleSearcher(changes.newValue, pos)
+
         if (isForbidden(value, vehicleOfInsert)) {
           violationPerVehicle(vehicleOfInsert) :+= 1
         }
