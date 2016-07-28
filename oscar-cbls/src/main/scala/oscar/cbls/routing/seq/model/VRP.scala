@@ -197,6 +197,10 @@ class VRP(val n: Int, val v: Int, val m: Store, maxPivotPerValuePercent:Int = 4)
     getVehicleOfNode(node1)==getVehicleOfNode(node2)
   }
 
+  def notOnSameVehicle()(node1:Int,node2:Int): Boolean={
+    getVehicleOfNode(node1)!=getVehicleOfNode(node2)
+  }
+
   /**
    *
    * @param node a node
@@ -334,6 +338,14 @@ trait ClosestNeighbors extends VRP {
     def arrayOfAllNodes = Array.tabulate(n)(node => node)
     Array.tabulate(n)(node =>
       KSmallest.lazySort(arrayOfAllNodes.filter(filter(node,_)),
+        neighbor => getDistance(node, neighbor)
+      ))
+  }
+
+  def computeClosestNeighborsForwardOneValueFilter(filter : ((Int) => Boolean) = _ => true):Array[Iterable[Int]] = {
+    def arrayOfAllNodes = Array.tabulate(n)(node => node)
+    Array.tabulate(n)(node =>
+      KSmallest.lazySort(arrayOfAllNodes.filter(filter(_)),
         neighbor => getDistance(node, neighbor)
       ))
   }

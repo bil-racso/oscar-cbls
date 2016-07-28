@@ -10,6 +10,8 @@ import oscar.cbls.invariants.lib.seq.Precedence
 import oscar.cbls.modeling.Algebra._
 import oscar.cbls.objective.IntVarObjective
 
+import scala.collection.immutable.List
+
 /**
   * Created by fabian on 04-07-16.
   */
@@ -138,7 +140,7 @@ class PDP(override val n:Int, override val v:Int, override val m:Store, maxPivot
     * Still Usefull ???
     *
     * This method search all the complete segments contained in a specified route.
-    * A segment is considered as complete when you can move it to another branch
+    * A segment is considered as complete when you can move it to another place
     * without breaking the precedence constraint.
     * It runs through the specified route and try to create the smallest complete segments possible
     * After that it try to combine adjacent segment
@@ -193,11 +195,11 @@ class PDP(override val n:Int, override val v:Int, override val m:Store, maxPivot
       val currentSegment = segmentsArray(i)._2
       completeSegments = (currentSegment.head, currentSegment.last) :: completeSegments
       var j = i-1
-      var currentPreds = prev.element(route(i)).value
+      var currentPreds = prev(route(i)).value
       while(j != -1){
         if(segmentsArray(j) != null && currentPreds == segmentsArray(j)._2.last){
           completeSegments = (segmentsArray(j)._2.head, currentSegment.last) :: completeSegments
-          currentPreds = prev.element(route(j)).value
+          currentPreds = prev(route(j)).value
         }
         j -= 1
       }
@@ -262,6 +264,10 @@ class PDP(override val n:Int, override val v:Int, override val m:Store, maxPivot
       slowConstraints.post(LE(arrivalLoadValue(i), vehicleMaxCapacity.element(vehicleOfNodes(i))))
   }
 
+  def isNotFull()(node:Int): Boolean ={
+    arrivalLoadValue(node).value < 5
+  }
+
   //---- Time Windows ----//
 
   var defaultArrivalTime:CBLSIntConst = null
@@ -308,7 +314,7 @@ class PDP(override val n:Int, override val v:Int, override val m:Store, maxPivot
 
   def setEndWindow(node: Int, endWindow: Int) {
     require(node >= v, "only for specifying time windows on nodes, not on vehicles")
-    slowConstraints.post(LE(IntITE(next(node), 0, leaveTime(node), n - 1), endWindow).nameConstraint("end of time window on node " + node))
+    slowConstraints.post(LE(IntITE(next(node), 0, leaveTime(node), n), endWindow).nameConstraint("end of time window on node " + node))
   }
 
   def setVehicleEnd(vehicle: Int, endTime: Int) {

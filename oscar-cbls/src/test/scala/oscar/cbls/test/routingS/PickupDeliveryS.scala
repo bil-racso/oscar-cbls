@@ -34,7 +34,9 @@ class MyPDP(n:Int, v:Int, m:Store,
   this.addToStringInfo(() => "n:" + n + " v:" + v)
 
   val closestNeighboursForward = computeClosestNeighborsForward()
-  val closestNeighboursForwardOnSameRoute = computeClosestNeighborsForward(onSameVehicle())
+  def closestNeighboursForwardNotFull = computeClosestNeighborsForwardOneValueFilter(isNotFull())
+  def closestNeighboursForwardNotSameRoute = computeClosestNeighborsForward(notOnSameVehicle())
+  def closestNeighboursForwardOnSameRoute = computeClosestNeighborsForward(onSameVehicle())
 
   def size = routes.value.size
 
@@ -46,8 +48,8 @@ class MyPDP(n:Int, v:Int, m:Store,
   setArrivalLeaveLoadValue()
   setVehiclesMaxCargo(5)
   setVehiclesCapacityStrongConstraint()
-  //setTimeWindows(timeWindows)
-  //setTravelTimeFunctions(ttf)
+  setTimeWindows(timeWindows)
+  setTravelTimeFunctions(ttf)
 
   val obj = new CascadingObjective(fastConstraints,
     new CascadingObjective(slowConstraints,
@@ -55,7 +57,7 @@ class MyPDP(n:Int, v:Int, m:Store,
 }
 
 object PickupDeliveryS extends App{
-  val n = 1010
+  val n = 30
   val v = 10
 
   val maxPivotPerValuePercent = 4
@@ -92,7 +94,7 @@ object PickupDeliveryS extends App{
   val insertCoupleSlow = Profile(DynAndThen(
     InsertPointUnroutedFirst(
       unroutedNodesToInsert = () => myPDP.getUnroutedPickups,
-      relevantPredecessor = ()=>myPDP.kFirst(n/2,myPDP.closestNeighboursForward,myPDP.isRouted),
+      relevantPredecessor = ()=>myPDP.kFirst(n/5,myPDP.closestNeighboursForward,myPDP.isRouted),
       vrp = myPDP),
     (moveResult:InsertPointMove) => InsertPointUnroutedFirst(
       unroutedNodesToInsert = () => Iterable(myPDP.getRelatedDelivery(moveResult.insertedPoint)),
@@ -101,7 +103,7 @@ object PickupDeliveryS extends App{
 
   val oneCoupleMove = Profile(DynAndThen(OnePointMove(
     nodesToMove = () => myPDP.getRoutedPickups,
-    relevantNewPredecessors= () => myPDP.kFirst(20,myPDP.closestNeighboursForward,myPDP.isRouted),
+    relevantNewPredecessors= () => myPDP.kFirst(20,myPDP.closestNeighboursForwardOnSameRoute,myPDP.isRouted),
     vrp = myPDP),
     (moveResult:OnePointMoveMove) => OnePointMove(
       nodesToMove = () => List(myPDP.getRelatedDelivery(moveResult.movedPoint)),
@@ -118,12 +120,12 @@ object PickupDeliveryS extends App{
 
   val pickupDeliveryCoupleShift = Profile(DynAndThen(OnePointMove(
     nodesToMove = () => myPDP.getRoutedPickups,
-    relevantNewPredecessors = () => myPDP.kFirst(n/10,myPDP.closestNeighboursForwardOnSameRoute,myPDP.isRouted),
+    relevantNewPredecessors = () => myPDP.kFirst(20,myPDP.closestNeighboursForwardNotSameRoute,myPDP.isRouted),
     vrp = myPDP),
     (moveResult:OnePointMoveMove) => OnePointMove(
       nodesToMove = () => List(myPDP.getRelatedDelivery(moveResult.movedPoint)),
       relevantNewPredecessors = () => myPDP.getNodesAfterRelatedPickup(),
-      vrp = myPDP))name "pickupDeliveryCoupleShift")
+      vrp = myPDP, best = true))name "pickupDeliveryCoupleShift")
 
   val removeCouple = Profile(new DynAndThen(new RemovePoint(
     relevantPointsToRemove = () => myPDP.getRoutedPickups,
@@ -186,7 +188,7 @@ object PickupDeliveryS extends App{
     )
   }
 
-  def threeOpt(k:Int, breakSym:Boolean) = Profile(new ThreeOpt(() => nodes, ()=>myPDP.kFirst(k,myPDP.closestNeighboursForward), myPDP,breakSymmetry = breakSym,neighborhoodName = "ThreeOpt(k=" + k + ")"))
+  def threeOpt(k:Int, breakSym:Boolean) = Profile(new ThreeOpt(() => nodes, ()=>myPDP.kFirst(k,myPDP.closestNeighboursForwardNotFull), myPDP,breakSymmetry = breakSym,neighborhoodName = "ThreeOpt(k=" + k + ")"))
 
   val search = /*BestSlopeFirst(List(insertCoupleFast,onePointMovePD)) exhaust*/
     new BestSlopeFirst(List(pickupDeliveryCoupleShift,oneCoupleMove,insertCoupleSlow,onePointMovePD, threeOpt(20,true)))
@@ -195,9 +197,8 @@ object PickupDeliveryS extends App{
 
 
   search.verbose = 2
-  removeCouple.verbose = 4
 
-  //  search.verboseWithExtraInfo(4,()=>myVRP.toString)
+  search.verboseWithExtraInfo(4,()=>myPDP.toString)
   search.paddingLength = 300
 
   search.doAllMoves(obj=myPDP.obj)
