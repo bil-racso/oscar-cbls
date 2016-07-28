@@ -24,7 +24,6 @@ object Map {
   def apply(seq:ChangingSeqValue,mapArray:Array[Int]):MapConstantFun = {
     new MapConstantFun(seq,mapArray,InvariantHelper.getMinMaxBoundsInt(mapArray)._2)
   }
-
 }
 
 class MapConstantFun(seq:ChangingSeqValue,
@@ -64,7 +63,7 @@ with SeqNotificationTarget{
       case x@SeqUpdateRollBackToCheckpoint(checkpoint) =>
         require(checkpoint quickEquals inputCheckpoint)
         rollbackToCurrentCheckpoint(this.checkpoint)
-      case SeqUpdateSet(seq) =>
+      case SeqUpdateAssign(seq) =>
         this := seq.map(transform)
     }
   }
@@ -115,7 +114,7 @@ class MapThroughArray(seq:ChangingSeqValue,
         remove(position)
       case x@SeqUpdateRollBackToCheckpoint(checkpoint) =>
         digestUdpate(x.howToRollBack)
-      case SeqUpdateSet(seq) =>
+      case SeqUpdateAssign(seq) =>
         this := seq.map(v => transform(v).value)
     }
   }

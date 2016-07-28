@@ -70,31 +70,32 @@ case class OnePointMove(nodesToMove: () => Iterable[Int],
 
     val movedPointsIt = iterationSchemeOnZone.iterator
     while (movedPointsIt.hasNext) {
-      movedPoint = movedPointsIt.next()
+      movedPointForInstantiation = movedPointsIt.next()
 
-      if(!vrp.isADepot(movedPoint)) {
+      if(!vrp.isADepot(movedPointForInstantiation)) {
         //depots cannot be moved at all.
-        startValue.positionOfAnyOccurrence(movedPoint) match {
+        startValue.positionOfAnyOccurrence(movedPointForInstantiation) match {
           case None => ;//was not routed, actually
           case Some(positionOfMovedPoint) =>
-            this.positionOfMovedPoint = positionOfMovedPoint
+            this.positionOfMovedPointForInstantiation = positionOfMovedPoint
 
-            val insertionPointIt = relevantNeighborsNow(movedPoint).iterator
+            val insertionPointIt = relevantNeighborsNow(movedPointForInstantiation).iterator
             while (insertionPointIt.hasNext) {
-              newPredecessor = insertionPointIt.next()
-              if (movedPoint != newPredecessor) {
+              newPredecessorForInstantiation = insertionPointIt.next()
+              if (movedPointForInstantiation != newPredecessorForInstantiation) {
 
-                startValue.positionOfAnyOccurrence(newPredecessor) match {
+                startValue.positionOfAnyOccurrence(newPredecessorForInstantiation) match {
                   case None => ;
                   case Some(positionOfNewPredecessor) =>
                     if(positionOfNewPredecessor+1 != positionOfMovedPoint) {
-                      this.positionOfNewPredecessor = positionOfNewPredecessor
+                      this.positionOfNewPredecessorForInstantiation = positionOfNewPredecessor
 
                       doMove(positionOfMovedPoint, positionOfNewPredecessor)
 
                       if (evaluateCurrentMoveObjTrueIfStopRequired(evalObjAndRollBack())) {
                         seq.releaseCurrentCheckpointAtCheckpoint()
-                        startIndice = movedPoint + 1
+                        startIndice = movedPointForInstantiation + 1
+                        positionOfMovedPointForInstantiation = -1
                         return
                       }
                     }
@@ -105,14 +106,15 @@ case class OnePointMove(nodesToMove: () => Iterable[Int],
       }
     }
     seq.releaseCurrentCheckpointAtCheckpoint()
+    positionOfMovedPointForInstantiation = -1
   }
-  var movedPoint:Int = 0
-  var newPredecessor:Int = 0
-  var positionOfMovedPoint:Int = 0
-  var positionOfNewPredecessor:Int = 0
+  var movedPointForInstantiation:Int = -1
+  var newPredecessorForInstantiation:Int = -1
+  var positionOfMovedPointForInstantiation:Int = -1
+  var positionOfNewPredecessorForInstantiation:Int = -1
 
   override def instantiateCurrentMove(newObj: Int) =
-    OnePointMoveMove(movedPoint, positionOfMovedPoint, newPredecessor, positionOfNewPredecessor, newObj, this, neighborhoodName)
+    OnePointMoveMove(movedPointForInstantiation, positionOfMovedPointForInstantiation, newPredecessorForInstantiation, positionOfNewPredecessorForInstantiation, newObj, this, neighborhoodName)
 
   override def reset(): Unit = {
     startIndice = 0

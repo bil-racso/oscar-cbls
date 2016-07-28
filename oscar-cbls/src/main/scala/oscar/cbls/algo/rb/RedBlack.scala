@@ -44,7 +44,8 @@ private object RedBlackTreeMapLib{
 
 import RedBlackTreeMapLib._
 
-//must use trait here because of specialization, so we ensure that this trait is compiled into a java interface by avoiding method code altogether. in the trait.
+//must use trait here because of specialization, a trait is needed here.
+// we ensure that this trait is compiled into a java interface by avoiding method code in the trait.
 //as a consequence, there are duplicates in the classes implementing this trait.
 trait RedBlackTreeMap[@specialized(Int) V]{
 
@@ -65,10 +66,7 @@ trait RedBlackTreeMap[@specialized(Int) V]{
   // get: Retrieve a value for a key.
   def get(k : Int) : Option[V]
 
-  def getOrElse(k:Int,default: =>V):V = get(k) match{
-    case None => default
-    case Some(x) => x
-  }
+  def getOrElse(k:Int,default: =>V):V
 
   def contains(k:Int):Boolean
 
@@ -113,6 +111,11 @@ trait RedBlackTreeMap[@specialized(Int) V]{
 case class L[@specialized(Int) V]() extends RedBlackTreeMap[V]  {
 
   def get(k : Int) : Option[V] = None
+
+  def getOrElse(k:Int,default: =>V):V = get(k) match{
+    case None => default
+    case Some(x) => x
+  }
 
   override def contains(k : Int) : Boolean = false
 
@@ -177,6 +180,11 @@ case class T[@specialized(Int) V](c : Boolean, l : RedBlackTreeMap[V], k : Int, 
     if (k < this.k) l.get(k)
     else if (k > this.k) r.get(k)
     else v
+  }
+
+  def getOrElse(k:Int,default: =>V):V = get(k) match{
+    case None => default
+    case Some(x) => x
   }
 
   override def contains(k : Int) : Boolean = {

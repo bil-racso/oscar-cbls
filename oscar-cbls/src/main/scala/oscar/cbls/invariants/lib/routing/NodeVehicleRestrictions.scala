@@ -123,7 +123,6 @@ class NodeVehicleRestrictions(routes:ChangingSeqValue,
     else nodeRestrictions._2
   }
 
-  //il faut mettre à jour les pré-calculs par véhicules, et uniquement lorsqu'on fait au moins une requête sur un véhicule à partir du checkpoint pour un mouvement qui a besoin de cette struture (3-opt)
   var checkpoint : IntSequence = null
   var violationAtCheckpoint:Array[Int] = Array.fill(v)(-1)
 
@@ -286,9 +285,11 @@ class NodeVehicleRestrictions(routes:ChangingSeqValue,
         true
       case SeqUpdateInsert(value : Int, pos : Int, prev : SeqUpdate) =>
         //on which vehicle did we insert?
+
         if (!digestUpdates(prev, skipNewCheckpoints)) return false
 
-        val vehicleOfInsert = vehicleSearcher(prev.newValue, pos)
+        val vehicleOfInsert = vehicleSearcher(changes.newValue, pos)
+
         if (isForbidden(value, vehicleOfInsert)) {
           violationPerVehicle(vehicleOfInsert) :+= 1
         }
@@ -375,7 +376,7 @@ class NodeVehicleRestrictions(routes:ChangingSeqValue,
 
       case SeqUpdateLastNotified(value : IntSequence) =>
         true //we are starting from the previous value
-      case SeqUpdateSet(value : IntSequence) =>
+      case SeqUpdateAssign(value : IntSequence) =>
         false //impossible to go incremental
     }
   }

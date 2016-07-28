@@ -79,7 +79,7 @@ object PrecedenceRouting extends App{
   def onePtMove = Profile(OnePointMove(() => nodes, ()=>myVRP.kFirst(10,myVRP.nearestForward), myVRP))
 
   val twoPointMove = (OnePointMove(() => nodes, ()=>myVRP.kFirst(40,myVRP.nearestForward), myVRP,"firstPointMove") andThen OnePointMove(() => nodes, ()=>myVRP.kFirst(40,myVRP.nearestForward), myVRP,"secondPointMove")) name("TwoPointMove")
-  val twoPointMoveSmart = Profile((OnePointMove(() => myVRP.nodesStartingAPrecedence, ()=>myVRP.kFirst(40,myVRP.nearestForward), myVRP,"firstPointMove") dynAndThen ((o:OnePointMoveMove) => {
+  val twoPointMoveSmart = Profile((OnePointMove(() => myVRP.nodesStartingAPrecedence, ()=>myVRP.kFirst(40,myVRP.nearestForward), myVRP,"firstPointMove",best=true) dynAndThen ((o:OnePointMoveMove) => {
     OnePointMove(() => myVRP.nodesEndingAPrecedenceStartedAt(o.movedPoint), ()=>myVRP.kFirst(40,myVRP.nearestForward), myVRP,"secondPointMove",best=true)})) name("SmartTwoPtMove"))
 
   val twoOpt = Profile(new TwoOpt1(() => nodes, ()=>myVRP.kFirst(40,myVRP.nearestForward), myVRP))

@@ -122,7 +122,7 @@ class NodeOfVehicle(routes:ChangingSeqValue,
         nodesOfVehicleOrUnrouted(v) :+= removedValue
         recordMovedPoint(removedValue, impactedVehicle, v)
         true
-      case SeqUpdateSet(value : IntSequence) =>
+      case SeqUpdateAssign(value : IntSequence) =>
         false //impossible to go incremental
       case SeqUpdateLastNotified(value:IntSequence) =>
         true //we are starting from the previous value

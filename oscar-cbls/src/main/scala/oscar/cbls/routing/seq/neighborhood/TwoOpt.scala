@@ -43,8 +43,8 @@ abstract class TwoOpt(vrp: VRP,
     seq.flip(fromPositionIncluded,toPositionIncluded)
   }
 
-  var segmentStartPositionForInstantiate:Int = 0
-  var segmentEndPositionForInstantiate:Int = 0
+  var segmentStartPositionForInstantiate:Int = -1
+  var segmentEndPositionForInstantiate:Int = -1
 
   override def instantiateCurrentMove(newObj: Int) =
     TwoOptMove(segmentStartPositionForInstantiate, segmentEndPositionForInstantiate, newObj, this, vrp, neighborhoodName)
@@ -123,12 +123,14 @@ case class TwoOpt1(segmentStartValues:()=>Iterable[Int],
           if (evaluateCurrentMoveObjTrueIfStopRequired(evalObjAndRollBack())) {
             seq.releaseCurrentCheckpointAtCheckpoint()
             startIndice = segmentStartValue + 1
+            segmentStartPositionForInstantiate = -1
             return
           }
         }
       }
     }
     seq.releaseCurrentCheckpointAtCheckpoint()
+    segmentStartPositionForInstantiate = -1
   }
 
   //this resets the internal state of the Neighborhood
@@ -211,12 +213,14 @@ case class TwoOpt2(segmentStartValues:()=>Iterable[Int],
           if (evaluateCurrentMoveObjTrueIfStopRequired(evalObjAndRollBack())) {
             seq.releaseCurrentCheckpointAtCheckpoint()
             startIndice = segmentStartValue + 1
+            segmentStartPositionForInstantiate = -1
             return
           }
         }
       }
     }
     seq.releaseCurrentCheckpointAtCheckpoint()
+    segmentStartPositionForInstantiate = -1
   }
 
   //this resets the internal state of the Neighborhood

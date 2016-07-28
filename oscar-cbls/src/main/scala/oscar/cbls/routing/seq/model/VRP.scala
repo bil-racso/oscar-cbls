@@ -193,6 +193,10 @@ class VRP(val n: Int, val v: Int, val m: Store, maxPivotPerValuePercent:Int = 4)
     resNodes
   }
 
+  def onSameVehicle()(node1:Int,node2:Int): Boolean={
+    getVehicleOfNode(node1)==getVehicleOfNode(node2)
+  }
+
   /**
    *
    * @param node a node
@@ -272,7 +276,7 @@ trait ConstantDistancePerVehicle extends TotalConstantDistance{
     this.distanceMatrix = symmetricDistanceMatrix
     this.matrixIsSymmetric = true
     require(distancePerVehicle == null)
-    distancePerVehicle = ConstantRoutingDistance(routes, v ,false,symmetricDistanceMatrix,true)
+    distancePerVehicle = ConstantRoutingDistance(routes, v ,false, symmetricDistanceMatrix, true, precomputeFW = true)
     totalDistance = Sum(distancePerVehicle)
   }
 
@@ -280,7 +284,7 @@ trait ConstantDistancePerVehicle extends TotalConstantDistance{
     this.distanceMatrix = asymetricDistanceMatrix
     this.matrixIsSymmetric = false
     require(distancePerVehicle == null)
-    distancePerVehicle = ConstantRoutingDistance(routes, v ,false,asymetricDistanceMatrix,false)
+    distancePerVehicle = ConstantRoutingDistance(routes, v ,false, asymetricDistanceMatrix, false, precomputeFW = true, precomputeBW = true)
     totalDistance = Sum(distancePerVehicle)
   }
 }
@@ -303,14 +307,14 @@ trait TotalConstantDistance extends VRP{
     assert(ConstantRoutingDistance.isDistanceSymmetric(symmetricDistanceMatrix))
     this.distanceMatrix = symmetricDistanceMatrix
     this.matrixIsSymmetric = true
-    totalDistance = ConstantRoutingDistance(routes, v ,false,symmetricDistanceMatrix,true)(0)
+    totalDistance = ConstantRoutingDistance(routes, v ,false, symmetricDistanceMatrix, true)(0)
   }
 
   def setAsymmetricDistanceMatrix(asymetricDistanceMatrix:Array[Array[Int]]){
     require(totalDistance == null)
     this.distanceMatrix = asymetricDistanceMatrix
     this.matrixIsSymmetric = false
-    totalDistance = ConstantRoutingDistance(routes, v ,false,asymetricDistanceMatrix,false)(0)
+    totalDistance = ConstantRoutingDistance(routes, v ,false, asymetricDistanceMatrix, false,precomputeFW = true, precomputeBW = true)(0)
   }
 }
 
@@ -326,10 +330,10 @@ trait ClosestNeighbors extends VRP {
 
   protected def getDistance(from: Int, to: Int): Int
 
-  def computeClosestNeighborsForward():Array[Iterable[Int]] = {
+  def computeClosestNeighborsForward(filter : ((Int,Int) => Boolean) = (_,_) => true):Array[Iterable[Int]] = {
     def arrayOfAllNodes = Array.tabulate(n)(node => node)
     Array.tabulate(n)(node =>
-      KSmallest.lazySort(arrayOfAllNodes,
+      KSmallest.lazySort(arrayOfAllNodes.filter(filter(node,_)),
         neighbor => getDistance(node, neighbor)
       ))
   }
@@ -346,6 +350,14 @@ trait ClosestNeighbors extends VRP {
     def arrayOfAllNodes = Array.tabulate(n)(node => node)
     Array.tabulate(n)(node =>
       KSmallest.lazySort(arrayOfAllNodes,
+        neighbor => min(getDistance(neighbor, node), getDistance(node, neighbor))
+      ))
+  }
+
+  def computeClosestNeighborsOnSameRouteForward():Array[Iterable[Int]] = {
+    def arrayOfAllNodes = Array.tabulate(n)(node => node)
+    Array.tabulate(n)(node =>
+      KSmallest.lazySort(arrayOfAllNodes.filter((_) => true),
         neighbor => min(getDistance(neighbor, node), getDistance(node, neighbor))
       ))
   }
