@@ -7,7 +7,7 @@ import scala.util.Random
 object RoutingMatrixGenerator {
   val random = new Random(0)
 
-  def apply(N: Int, side: Int = 10000): (Array[Array[Int]],Array[(Int,Int)]) = {
+  def apply(N: Int, side: Int = 1000): (Array[Array[Int]],Array[(Int,Int)]) = {
 
     //we generate te cost distance matrix
     def randomXY: Int = (random.nextFloat() * side).toInt
@@ -56,20 +56,8 @@ object RoutingMatrixGenerator {
     val maxCouples = maxNodes/2
     val random = new Random(0)
     val timeWindows = Array.tabulate(n)(tw => (0,(0,0)))
-    val nbOfNodesPerTimeUnit = Array.tabulate(n*timeUnitDelta)(i => 0)
-    var tWGenerated = 0
     var tWCoupleGenerated = 0
     var currentTimeUnit = 0
-
-    def currentTWGenerated(): Int ={
-      var res = 0
-      var i = 0
-      while(i < currentTimeUnit) {
-        res += nbOfNodesPerTimeUnit(i)
-        i += 1
-      }
-      res
-    }
 
 
     while(tWCoupleGenerated < maxCouples){
@@ -79,12 +67,9 @@ object RoutingMatrixGenerator {
         val incDelivery = random.nextInt(50)
         timeWindows(pickups(tWCoupleGenerated+inc)) = (timeUnitDelta*(currentTimeUnit+1),(timeUnitDelta,timeUnitDelta*currentTimeUnit))
         timeWindows(deliveries(tWCoupleGenerated+inc)) = (timeUnitDelta*(currentTimeUnit+1+incDelivery),(timeUnitDelta, timeUnitDelta*(currentTimeUnit+incDelivery)))
-        nbOfNodesPerTimeUnit(currentTimeUnit+incDelivery) += 1
       }
-      nbOfNodesPerTimeUnit(currentTimeUnit) += nbOfCouplesToAdd
-      tWGenerated = currentTWGenerated()
       tWCoupleGenerated += nbOfCouplesToAdd
-      currentTimeUnit += random.nextInt(10000/timeUnitDelta)
+      currentTimeUnit += random.nextInt(10*1000/timeUnitDelta)
     }
     timeWindows
   }

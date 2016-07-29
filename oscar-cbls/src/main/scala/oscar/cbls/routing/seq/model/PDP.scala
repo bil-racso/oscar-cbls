@@ -69,7 +69,7 @@ class PDP(override val n:Int, override val v:Int, override val m:Store, maxPivot
     assert(pickups.intersect(deliveries).length == 0,
       "One node can't be a pickup node and a delivery node at the same time")
 
-    var precedenceList = List.tabulate((n-v)/2)(c => (pickups(c),deliveries(c)))
+    val precedenceList = List.tabulate((n-v)/2)(c => (pickups(c),deliveries(c)))
     precedenceObj = new IntVarObjective(Precedence(routes,precedenceList))
     for(i <- pickups.indices){
       addPickupDeliveryCouple(pickups(i),deliveries(i),i)
@@ -314,7 +314,7 @@ class PDP(override val n:Int, override val v:Int, override val m:Store, maxPivot
 
   def setEndWindow(node: Int, endWindow: Int) {
     require(node >= v, "only for specifying time windows on nodes, not on vehicles")
-    slowConstraints.post(LE(IntITE(next(node), 0, leaveTime(node), n), endWindow).nameConstraint("end of time window on node " + node))
+    slowConstraints.post(LE(IntITE(next(node), 0, leaveTime(node), n-1), endWindow).nameConstraint("end of time window on node " + node))
   }
 
   def setVehicleEnd(vehicle: Int, endTime: Int) {

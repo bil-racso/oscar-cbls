@@ -169,8 +169,8 @@ class VRP(val n: Int, val v: Int, val m: Store, maxPivotPerValuePercent:Int = 4)
     while(routes.value.explorerAtAnyOccurrence(i).head.position > position)
       i -= 1
 
-    var currentVExplorer = routes.value.explorerAtAnyOccurrence(i).head.next
-    var acc:List[Int] = List()
+    var currentVExplorer = routes.value.explorerAtAnyOccurrence(node).head.next
+    var acc:List[Int] = List(node,i)
     while (currentVExplorer match{
       case Some(x) if x.position >= position && x.value >= v =>
         acc = x.value :: acc

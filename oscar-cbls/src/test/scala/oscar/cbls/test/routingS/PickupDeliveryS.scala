@@ -48,8 +48,8 @@ class MyPDP(n:Int, v:Int, m:Store,
   setArrivalLeaveLoadValue()
   setVehiclesMaxCargo(5)
   setVehiclesCapacityStrongConstraint()
-  setTimeWindows(timeWindows)
-  setTravelTimeFunctions(ttf)
+  //setTimeWindows(timeWindows)
+  //setTravelTimeFunctions(ttf)
 
   val obj = new CascadingObjective(fastConstraints,
     new CascadingObjective(slowConstraints,
@@ -57,7 +57,7 @@ class MyPDP(n:Int, v:Int, m:Store,
 }
 
 object PickupDeliveryS extends App{
-  val n = 30
+  val n = 310
   val v = 10
 
   val maxPivotPerValuePercent = 4
@@ -78,6 +78,8 @@ object PickupDeliveryS extends App{
 
   val myPDP = new MyPDP(n,v,model,symmetricDistanceMatrix,maxPivotPerValuePercent,pickups,deliveries,timeWindows,ttf)
   val nodes = myPDP.nodes
+
+
 
   model.close()
 
@@ -198,11 +200,11 @@ object PickupDeliveryS extends App{
 
   search.verbose = 2
 
-  search.verboseWithExtraInfo(4,()=>myPDP.toString)
   search.paddingLength = 300
 
   search.doAllMoves(obj=myPDP.obj)
 
   println(myPDP)
   println(search.profilingStatistics)
+
 }
