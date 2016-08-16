@@ -502,9 +502,9 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], val maxValue: Int, 
   def toStringNoPropagate: String = name + ":=" + toNotify.newValue.toString()
 
   private def trimUpdatesCheckpointDefinitionsForbidden(updates:SeqUpdate,maxDepth:Int):SeqUpdate = {
-    if(updates.depth < -1 || updates.depth > maxDepth){
-      //there is a set, and one or more incremental updates afterwards
-      //or simply exceeding the max depth
+    if(updates.depth < - maxDepth || updates.depth > maxDepth){
+      //exceeding the max depth
+      //we keep the latest moves, since they might be annihilated, as we play undo-redo, and annihilation is faster than regularization
       SeqUpdateAssign(updates.newValue.regularizeToMaxPivot(maxPivotPerValuePercent))
     }else{
       updates

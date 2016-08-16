@@ -21,8 +21,21 @@ import oscar.cbls.invariants.core.propagation.Checker
   ******************************************************************************/
 
 
+/**
+ * helper object for concatenation invariant between sequences of integers
+ */
 object Concatenate {
 
+  /**
+   * builds a changing seq value that is maintained as the concatenation of a and b.
+   * if either of them is a constant, the instantiated class is adapted
+   *
+   * @param a
+   * @param b
+   * @param maxPivotPerValuePercent
+   * @param maxHistorySize
+   * @return
+   */
   def apply(a : SeqValue, b : SeqValue, maxPivotPerValuePercent : Int = 4, maxHistorySize : Int = 20) : SeqValue = {
     (a,b) match {
       case (ac : CBLSSeqConst,bc : CBLSSeqConst) =>
@@ -170,7 +183,6 @@ class ConcatenateFirstConstant(a:List[Int],b:ChangingSeqValue,maxPivotPerValuePe
   }
 
   override def checkInternals(c : Checker) : Unit = {
-    println("coucou")
     c.check((a ++ b.value.toList) equals this.value.toList,Some("a.value.toList:" + a+ " b.value.toList:" + b.value.toList + " should== this.value.toList" + this.value.toList))
   }
 }
@@ -237,7 +249,6 @@ class ConcatenateSecondConstant(a:ChangingSeqValue,b:List[Int],maxPivotPerValueP
   }
 
   override def checkInternals(c : Checker) : Unit = {
-    println("coucou")
     c.check((a.value.toList ++ b) equals this.value.toList,Some("a.value.toList:" + a.value.toList + " b.value.toList:" + b + " should== this.value.toList" + this.value.toList))
   }
 }

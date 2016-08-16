@@ -62,7 +62,9 @@ abstract class IntSequence(protected[cbls] val uniqueID:Int = IntSequence.getNew
 
   def size : Int
 
-  def isEmpty : Boolean = size > 0
+  def isEmpty : Boolean = size == 0
+
+  def nonEmpty:Boolean = !isEmpty
 
   def iterator : Iterator[Int] = new IntSequenceIterator(this.explorerAtPosition(0))
 
@@ -168,6 +170,10 @@ abstract class IntSequence(protected[cbls] val uniqueID:Int = IntSequence.getNew
   def insertAtPosition(value:Int, pos:Int, fast:Boolean = false, autoRework:Boolean = true):IntSequence
   def delete(pos:Int, fast:Boolean=false,autoRework:Boolean = false):IntSequence
   def moveAfter(startPositionIncluded:Int, endPositionIncluded:Int, moveAfterPosition:Int, flip:Boolean, fast:Boolean = false, autoRework:Boolean = true):IntSequence
+
+  def flip(fast:Boolean = false, autoRework:Boolean = true):IntSequence =
+    if(this.isEmpty) this
+    else moveAfter(0, this.size, -1, flip = true, fast, autoRework)
 
   def regularizeToMaxPivot(maxPivotPerValuePercent: Int, targetUniqueID: Int = this.uniqueID) :ConcreteIntSequence
 
@@ -368,6 +374,7 @@ class ConcreteIntSequence(private[seq] val internalPositionToValue:RedBlackTreeM
       newExternalToInternalPosition,
       startFreeRangeForInternalPosition - 1)
   }
+
 
   def moveAfter(startPositionIncluded : Int, endPositionIncluded : Int, moveAfterPosition : Int, flip : Boolean, fast : Boolean, autoRework : Boolean) : IntSequence = {
     //println(this + ".moveAfter(startPositionIncluded:" + startPositionIncluded + " endPositionIncluded:" + endPositionIncluded + " moveAfterPosition:" + moveAfterPosition + " flip:" + flip + ")")
@@ -667,12 +674,12 @@ object MovedIntSequence{
 
   //this is another impleme of the above method, supposedly faster because using arrays and not requiring log(n) inserts into the redBlack.
   //This is not as efficient as possible because there is another sort performed anyway since it is a bijection.
-    def bijectionForMoveArray(startPositionIncluded:Int,
-                              endPositionIncluded:Int,
-                              moveAfterPosition:Int,
+  def bijectionForMoveArray(startPositionIncluded:Int,
+                            endPositionIncluded:Int,
+                            moveAfterPosition:Int,
                             flip:Boolean):PiecewiseLinearBijectionNaive= {
     if (moveAfterPosition + 1 == startPositionIncluded) {
-        //not moving
+      //not moving
       if (flip) {
         //just flipping
         if (startPositionIncluded == 0) {
@@ -684,10 +691,10 @@ object MovedIntSequence{
             (0, new Pivot(0, LinearTransform.identity)),
             (startPositionIncluded, new Pivot(startPositionIncluded, new LinearTransform(endPositionIncluded + startPositionIncluded, true))),
             (endPositionIncluded + 1, new Pivot(endPositionIncluded + 1, LinearTransform.identity))))))
-          }
+        }
       } else {
         PiecewiseLinearBijectionNaive.identity
-        }
+      }
     } else {
 
       bijectionForMoveNaive(startPositionIncluded : Int,
