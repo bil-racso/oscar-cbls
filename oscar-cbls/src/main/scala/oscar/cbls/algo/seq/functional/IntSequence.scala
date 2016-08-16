@@ -173,7 +173,7 @@ abstract class IntSequence(protected[cbls] val uniqueID:Int = IntSequence.getNew
 
   def flip(fast:Boolean = false, autoRework:Boolean = true):IntSequence =
     if(this.isEmpty) this
-    else moveAfter(0, this.size, -1, flip = true, fast, autoRework)
+    else moveAfter(0, this.size-1, -1, flip = true, fast, autoRework)
 
   def regularizeToMaxPivot(maxPivotPerValuePercent: Int, targetUniqueID: Int = this.uniqueID) :ConcreteIntSequence
 

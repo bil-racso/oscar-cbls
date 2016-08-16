@@ -38,13 +38,13 @@ case class Flip(v: SeqValue,override val maxPivotPerValuePercent:Int = 10, overr
 
       case SeqUpdateMove(fromIncluded : Int, toIncluded : Int, after : Int, flip : Boolean, prev : SeqUpdate) =>
         if (!digestChanges(prev)) return false
-        val prevSize = prev.newValue.size
+        val prevSize = prev.newValue.size-1
         this.move(prevSize - fromIncluded, prevSize - toIncluded, prevSize - after, flip)
         true
 
       case r@SeqUpdateRemove(position : Int, prev : SeqUpdate) =>
         if (!digestChanges(prev)) return false
-        this.remove(prev.newValue.size - position)
+        this.remove(prev.newValue.size-1 - position)
         true
 
       case u@SeqUpdateRollBackToCheckpoint(checkpoint) =>
@@ -75,7 +75,8 @@ case class Flip(v: SeqValue,override val maxPivotPerValuePercent:Int = 10, overr
   }
 
   override def checkInternals(c: Checker) {
-    println(this.value,v.value.size)
+    println(this.value,this.value.size)
+    println(v.value,v.value.size)
     c.check(this.value.toList equals v.value.toList.reverse, Some("this.value == v.value.flip"))
     c.check(this.value.toList.reverse equals v.value.toList, Some("this.value.flip == v.value"))
   }

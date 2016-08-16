@@ -556,7 +556,6 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], val maxValue: Int, 
 
   //-1 for first position
   protected def move(fromIncludedPosition:Int,toIncludedPosition:Int,afterPosition:Int,flip:Boolean){
-
     require(toNotify.newValue.size > toIncludedPosition)
     require(toNotify.newValue.size > afterPosition)
     require(0 <= fromIncludedPosition)

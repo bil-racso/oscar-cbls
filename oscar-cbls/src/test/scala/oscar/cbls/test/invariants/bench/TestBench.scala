@@ -321,6 +321,7 @@ case class RandomIntSeqVar(intSeqVar: CBLSSeqVar) extends RandomVar{
     * Shuffle shuffles the positions of each value contained in the seq
     */
   override def move(move: Move)= {
+    println(move.toString)
     move match{
       case PlusOne() =>
         randomVar().insertAtPosition(Gen.choose(randomVar().min,randomVar().max).sample.get,Gen.choose(randomVar().min,randomVar().newValue.size).sample.get)
@@ -349,8 +350,8 @@ case class RandomIntSeqVar(intSeqVar: CBLSSeqVar) extends RandomVar{
       case Shuffle() =>
         for(p <- 0 until randomVar().newValue.size) {
           val newPos = Gen.choose(0, randomVar().newValue.size - 1).sample.get
-          if (newPos != p)
-            randomVar().move(p, p, newPos, false)
+          if (newPos-1 != p)
+            randomVar().move(p, p, newPos-1, false)
         }
     }
   }
