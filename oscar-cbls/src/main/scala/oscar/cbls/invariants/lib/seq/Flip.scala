@@ -34,13 +34,19 @@ case class Flip(v: SeqValue,override val maxPivotPerValuePercent:Int = 10, overr
     changes match {
       case s@SeqUpdateInsert(value : Int, pos : Int, prev : SeqUpdate) =>
         if (!digestChanges(prev)) return false
-        this.insertAtPosition(value, prev.newValue.size - pos)
+        this.insertAtPosition(value, prev.newValue.size - pos) //TODO: build on the original value instead of maintaining two data structs? , changes.newValue.flip(fast=true)
         true
 
       case SeqUpdateMove(fromIncluded : Int, toIncluded : Int, after : Int, flip : Boolean, prev : SeqUpdate) =>
         if (!digestChanges(prev)) return false
         val prevSize = prev.newValue.size
-        this.move(prevSize - toIncluded - 1, prevSize - fromIncluded - 1, prevSize - after -2, flip)
+        println("digesting " + changes)
+
+        val tentativeFlippedAfter = prevSize - after - 2
+        val flippedFromIncluded = prevSize - toIncluded - 1
+        val flippedToIncluded = prevSize - fromIncluded - 1
+        val flippedAfter = if(tentativeFlippedAfter == flippedToIncluded) flippedFromIncluded - 1 else tentativeFlippedAfter
+        this.move(flippedFromIncluded, flippedToIncluded, flippedAfter, flip)
         true
 
       case r@SeqUpdateRemove(position : Int, prev : SeqUpdate) =>
