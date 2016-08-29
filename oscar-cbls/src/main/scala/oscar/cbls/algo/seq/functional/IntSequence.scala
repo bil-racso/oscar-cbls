@@ -173,7 +173,7 @@ abstract class IntSequence(protected[cbls] val uniqueID:Int = IntSequence.getNew
 
   def flip(fast:Boolean = false, autoRework:Boolean = true):IntSequence =
     if(this.isEmpty) this
-    else moveAfter(0, this.size, -1, flip = true, fast, autoRework)
+    else moveAfter(0, this.size-1, -1, flip = true, fast, autoRework)
 
   def regularizeToMaxPivot(maxPivotPerValuePercent: Int, targetUniqueID: Int = this.uniqueID) :ConcreteIntSequence
 
@@ -379,7 +379,7 @@ class ConcreteIntSequence(private[seq] val internalPositionToValue:RedBlackTreeM
   def moveAfter(startPositionIncluded : Int, endPositionIncluded : Int, moveAfterPosition : Int, flip : Boolean, fast : Boolean, autoRework : Boolean) : IntSequence = {
     //println(this + ".moveAfter(startPositionIncluded:" + startPositionIncluded + " endPositionIncluded:" + endPositionIncluded + " moveAfterPosition:" + moveAfterPosition + " flip:" + flip + ")")
     require(startPositionIncluded >= 0 && startPositionIncluded < size, "startPositionIncluded should be in [0,size[ in UniqueIntSequence.moveAfter")
-    require(endPositionIncluded >= 0 && endPositionIncluded < size, "endPositionIncluded should be in [0,size[ in UniqueIntSequence.moveAfter")
+    require(endPositionIncluded >= 0 && endPositionIncluded < size, "endPositionIncluded(=" + endPositionIncluded+ ") should be in [0,size(="+size+")[ in UniqueIntSequence.moveAfter")
     require(moveAfterPosition >= -1 && moveAfterPosition < size, "moveAfterPosition=" + moveAfterPosition + " should be in [-1,size=" + size+"[ in UniqueIntSequence.moveAfter")
 
     require(

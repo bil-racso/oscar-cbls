@@ -2,7 +2,7 @@ package oscar.cbls.invariants.lib.seq
 
 import oscar.cbls.algo.seq.functional.IntSequence
 import oscar.cbls.invariants.core.computation._
-import oscar.cbls.invariants.core.propagation.Checker
+import oscar.cbls.invariants.core.propagation.{ErrorChecker, Checker}
 
 /**
  * maintains this as the flipped value of v
@@ -21,6 +21,7 @@ case class Flip(v: SeqValue,override val maxPivotPerValuePercent:Int = 10, overr
   finishInitialization()
 
   override def notifySeqChanges(v: ChangingSeqValue, d: Int, changes: SeqUpdate) {
+    checkInternals(new ErrorChecker())
     if (!digestChanges(changes)) {
       this := changes.newValue.flip(true,true)
     }
@@ -39,12 +40,12 @@ case class Flip(v: SeqValue,override val maxPivotPerValuePercent:Int = 10, overr
       case SeqUpdateMove(fromIncluded : Int, toIncluded : Int, after : Int, flip : Boolean, prev : SeqUpdate) =>
         if (!digestChanges(prev)) return false
         val prevSize = prev.newValue.size
-        this.move(prevSize - fromIncluded, prevSize - toIncluded, prevSize - after, flip)
+        this.move(prevSize - fromIncluded - 1, prevSize - toIncluded - 1, prevSize - after -1, flip)
         true
 
       case r@SeqUpdateRemove(position : Int, prev : SeqUpdate) =>
         if (!digestChanges(prev)) return false
-        this.remove(prev.newValue.size - position)
+        this.remove(prev.newValue.size - position - 1)
         true
 
       case u@SeqUpdateRollBackToCheckpoint(checkpoint) =>
@@ -75,9 +76,9 @@ case class Flip(v: SeqValue,override val maxPivotPerValuePercent:Int = 10, overr
   }
 
   override def checkInternals(c: Checker) {
-    println(this.value,v.value.size)
-    c.check(this.value.toList equals v.value.toList.reverse, Some("this.value == v.value.flip"))
-    c.check(this.value.toList.reverse equals v.value.toList, Some("this.value.flip == v.value"))
+    println(this.newValue,v.value.size)
+    c.check(this.newValue.toList equals v.value.toList.reverse, Some("this.value == v.value.flip"))
+    c.check(this.newValue.toList.reverse equals v.value.toList, Some("this.value.flip == v.value"))
   }
 }
 
