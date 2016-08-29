@@ -40,7 +40,7 @@ case class Flip(v: SeqValue,override val maxPivotPerValuePercent:Int = 10, overr
       case SeqUpdateMove(fromIncluded : Int, toIncluded : Int, after : Int, flip : Boolean, prev : SeqUpdate) =>
         if (!digestChanges(prev)) return false
         val prevSize = prev.newValue.size
-        this.move(prevSize - fromIncluded - 1, prevSize - toIncluded - 1, prevSize - after -1, flip)
+        this.move(prevSize - toIncluded - 1, prevSize - fromIncluded - 1, prevSize - after -2, flip)
         true
 
       case r@SeqUpdateRemove(position : Int, prev : SeqUpdate) =>
@@ -77,8 +77,8 @@ case class Flip(v: SeqValue,override val maxPivotPerValuePercent:Int = 10, overr
 
   override def checkInternals(c: Checker) {
     println(this.newValue,v.value.size)
-    c.check(this.newValue.toList equals v.value.toList.reverse, Some("this.value == v.value.flip"))
-    c.check(this.newValue.toList.reverse equals v.value.toList, Some("this.value.flip == v.value"))
+    c.check(this.newValue.toList equals v.value.toList.reverse, Some("this.newValue(=" + this.newValue.toList + ") == v.value.flip(=" + v.value.toList.reverse + ")"))
+    c.check(this.newValue.toList.reverse equals v.value.toList, Some("this.newValue.flip(="+ this.newValue.toList.reverse +") == v.value(="+ v.value.toList+ ")"))
   }
 }
 
