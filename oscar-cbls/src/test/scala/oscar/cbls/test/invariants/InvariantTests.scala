@@ -577,6 +577,13 @@ class InvariantTests extends FunSuite with Checkers {
     bench.run()
   }
 
+  test("Sum maintains the sum of all values in a sequence"){
+    val bench = new InvBench(verbose,List(PlusOne(), MinusOne(), ToZero(), ToMin(), ToMax(), Random(), RandomDiff(),Shuffle()))
+    val seqVar = bench.genIntSeqVar(range = 0 to 5)
+    SeqSum(seqVar)
+    bench.run()
+  }
+
   // ---- Routing tests ---- //
   test("Node of vehicle"){
     val bench = new InvBench(verbose,List(PlusOne(), MinusOne(), ToZero(), ToMin(), ToMax(), Random(), RandomDiff(),Shuffle()))
