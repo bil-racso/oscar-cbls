@@ -629,7 +629,7 @@ class InvariantTests extends FunSuite with Checkers {
   test("VehicleOfNodes"){
     val bench = new InvBench(verbose,List(PlusOne(), MinusOne(), ToZero(), ToMin(), ToMax(), Random(), RandomDiff(), Shuffle()))
     val n = 100
-    val v = 5
+    val v = 2
     val route = bench.genRouteOfNodes(n,v)
     VehicleOfNodes(route,v)
     bench.run()
