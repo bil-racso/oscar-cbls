@@ -15,9 +15,6 @@ package oscar.cbls.routing.seq.model
   * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
   ******************************************************************************/
 
-import java.awt.Dimension
-import javax.swing.SwingUtilities
-
 import oscar.cbls.algo.seq.functional.IntSequence
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.lib.numeric.Sum
@@ -27,8 +24,7 @@ import oscar.cbls.invariants.lib.set.Diff
 import oscar.cbls.modeling.Algebra._
 import oscar.cbls.algo.search.KSmallest
 import oscar.examples.cbls.routing.visual.ColorGenerator
-import oscar.examples.cbls.routing.visual.MatrixMap.RoutingMatrixVisual
-import oscar.visual.VisualFrame
+import oscar.cbls.visual.MatrixMap.RoutingMatrixVisual
 
 import scala.collection.immutable.SortedSet
 import scala.math._
@@ -83,6 +79,14 @@ class VRP(val n: Int, val v: Int, val m: Store, maxPivotPerValuePercent:Int = 4)
    * @return true if the point is still routed, else false.
    */
   def isRouted(n: Int): Boolean = {routes.value.contains(n)}
+
+  /**
+    * Returns if a given point is still routed.
+    *
+    * @param n the point queried.
+    * @return true if the point is still routed, else false.
+    */
+  def isUnrouted(n: Int): Boolean = {!routes.value.contains(n)}
 
   /**
    * This function is intended to be used for testing only.
@@ -201,6 +205,14 @@ class VRP(val n: Int, val v: Int, val m: Store, maxPivotPerValuePercent:Int = 4)
     getVehicleOfNode(node1)!=getVehicleOfNode(node2)
   }
 
+  def onVehicle(vehicle:Int)(node:Int): Boolean={
+    getVehicleOfNode(vehicle)==getVehicleOfNode(node)
+  }
+
+  def notOnVehicle(vehicle:Int)(node:Int): Boolean={
+    getVehicleOfNode(vehicle)!=getVehicleOfNode(node)
+  }
+
   /**
    *
    * @param node a node
@@ -276,19 +288,19 @@ class VRP(val n: Int, val v: Int, val m: Store, maxPivotPerValuePercent:Int = 4)
 trait ConstantDistancePerVehicle extends TotalConstantDistance{
   var distancePerVehicle:Array[CBLSIntVar] = null
 
-  override def setSymmetricDistanceMatrix(symmetricDistanceMatrix:Array[Array[Int]]){
+  override def setSymmetricDistanceMatrix(symmetricDistanceMatrix:Array[Array[Int]],precomputeFW : Boolean = true, precomputeBW : Boolean = true){
     this.distanceMatrix = symmetricDistanceMatrix
     this.matrixIsSymmetric = true
     require(distancePerVehicle == null)
-    distancePerVehicle = ConstantRoutingDistance(routes, v ,false, symmetricDistanceMatrix, true, precomputeFW = true)
+    distancePerVehicle = ConstantRoutingDistance(routes, v ,true, symmetricDistanceMatrix, true, precomputeFW = true)
     totalDistance = Sum(distancePerVehicle)
   }
 
-  override def setAsymmetricDistanceMatrix(asymetricDistanceMatrix:Array[Array[Int]]){
+  override def setAsymmetricDistanceMatrix(asymetricDistanceMatrix:Array[Array[Int]],precomputeFW : Boolean = true, precomputeBW : Boolean = true){
     this.distanceMatrix = asymetricDistanceMatrix
     this.matrixIsSymmetric = false
     require(distancePerVehicle == null)
-    distancePerVehicle = ConstantRoutingDistance(routes, v ,false, asymetricDistanceMatrix, false, precomputeFW = true, precomputeBW = true)
+    distancePerVehicle = ConstantRoutingDistance(routes, v ,true, asymetricDistanceMatrix, false, precomputeFW, precomputeBW)
     totalDistance = Sum(distancePerVehicle)
   }
 }
@@ -306,7 +318,7 @@ trait TotalConstantDistance extends VRP{
     }
   }
 
-  def setSymmetricDistanceMatrix(symmetricDistanceMatrix:Array[Array[Int]]){
+  def setSymmetricDistanceMatrix(symmetricDistanceMatrix:Array[Array[Int]],precomputeFW : Boolean = true, precomputeBW : Boolean = true){
     require(totalDistance == null)
     assert(ConstantRoutingDistance.isDistanceSymmetric(symmetricDistanceMatrix))
     this.distanceMatrix = symmetricDistanceMatrix
@@ -314,7 +326,7 @@ trait TotalConstantDistance extends VRP{
     totalDistance = ConstantRoutingDistance(routes, v ,false, symmetricDistanceMatrix, true)(0)
   }
 
-  def setAsymmetricDistanceMatrix(asymetricDistanceMatrix:Array[Array[Int]]){
+  def setAsymmetricDistanceMatrix(asymetricDistanceMatrix:Array[Array[Int]],precomputeFW : Boolean = true, precomputeBW : Boolean = true){
     require(totalDistance == null)
     this.distanceMatrix = asymetricDistanceMatrix
     this.matrixIsSymmetric = false
@@ -366,10 +378,10 @@ trait ClosestNeighbors extends VRP {
       ))
   }
 
-  def computeClosestNeighborsOnSameRouteForward():Array[Iterable[Int]] = {
+  def computeClosestNeighborsOnRouteForward(vehicle:Int, filter : ((Int,Int) => Boolean) = (_,_) => true):Array[Iterable[Int]] = {
     def arrayOfAllNodes = Array.tabulate(n)(node => node)
     Array.tabulate(n)(node =>
-      KSmallest.lazySort(arrayOfAllNodes.filter((_) => true),
+      KSmallest.lazySort(arrayOfAllNodes.filter(getRouteOfVehicle(vehicle).contains(_)),
         neighbor => min(getDistance(neighbor, node), getDistance(node, neighbor))
       ))
   }
@@ -484,28 +496,27 @@ trait VehicleOfNode extends CloneOfRouteForLightPartialPropagation{
 }
 
 trait RoutingMapDisplay extends VRP with ConstantDistancePerVehicle{
-  val routingMap = new RoutingMatrixVisual()
-  routingMap.setColorValues(ColorGenerator.generateRandomColors(v))
-  routingMap.drawPoints()
+  var routingMap:RoutingMatrixVisual = null
 
-  val visualFrame = new VisualFrame("Routing Map")
-  visualFrame.setPreferredSize(new Dimension(960,960))
-  visualFrame.add(routingMap)
-  visualFrame.pack()
-  visualFrame.revalidate()
-
-  def setMapSize(mapSize:Int): Unit ={
+  /**
+    * This method initialize the routing map of the problem
+    * @param list this is the list of nodes that need to be drawn
+    * @param mapSize the size of the map, do not specify it if you use the geoRoutingMap (it doesn't need this)
+    * @param pickupAndDeliveryNodes if true, the map will show specific information about pickup and delivery nodes
+    * @param geolocalisationMap if true, the geoRoutingMap will be used
+    */
+  def initializeRoutingMap(list:Array[(Double,Double)], mapSize: Int = 0, pickupAndDeliveryNodes: Boolean = false, geolocalisationMap: Boolean = false): Unit ={
+    routingMap = new RoutingMatrixVisual(vrp = this, pickupAndDeliveryPoints = pickupAndDeliveryNodes, geolocalisationMap = geolocalisationMap)
     routingMap.setMapSize(mapSize)
-  }
-
-  def setPointsList(list:Array[(Int,Int)]): Unit = {
     routingMap.setPointsList(list.toList, v)
+    routingMap.setColorValues(ColorGenerator.generateRandomColors(v))
+    routingMap.drawPoints()
+    new Thread(routingMap,"routing thread").start()
   }
 
-  new Thread(routingMap,"routing thread").start()
-  routingMap.allRoutes = routes
 
   def drawRoutes(): Unit ={
+    routingMap.allRoutes = Array.tabulate(v)(vehicle => getRouteOfVehicle(vehicle))
     routingMap.setMustRefresh(true)
   }
 }

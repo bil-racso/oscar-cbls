@@ -30,14 +30,14 @@ class DemoRoutingController extends StopWatch{
   var myVRP:MyVRP = null
   var model:Store = null
 
-  def initiateProblem(customers:Int, cars:Int, s:Int,u:Int):List[(Int,Int)]={
+  def initiateProblem(customers:Int, cars:Int, s:Int,u:Int):List[(Double,Double)]={
     val generatedMatrix = RoutingMatrixGenerator(customers,s)
     customersNumber = customers
     carsNumber = cars
     model = new Store()
     myVRP = new MyVRP(customers,cars,model,generatedMatrix._1,u)
     model.close()
-    generatedMatrix._2.toList
+    Array.tabulate(customers)(n => (generatedMatrix._2(n)._1.toDouble, generatedMatrix._2(n)._2.toDouble)).toList
   }
 
   def resetProblem = {

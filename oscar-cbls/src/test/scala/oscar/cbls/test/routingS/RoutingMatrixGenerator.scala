@@ -50,12 +50,12 @@ object RoutingMatrixGenerator {
     toReturn
   }
 
-  def generateTimeWindows(n:Int, v:Int, pickups:Array[Int], deliveries:Array[Int], timeUnitDelta:Int = 50): Array[(Int,(Int,Int))] ={
+  def generateTimeWindows(n:Int, v:Int, pickups:Array[Int], deliveries:Array[Int], timeUnitDelta:Int = 50): Array[(Int,Int,Int,Int)] ={
 
     val maxNodes = n-v
     val maxCouples = maxNodes/2
     val random = new Random(0)
-    val timeWindows = Array.tabulate(n)(tw => (0,(0,0)))
+    val timeWindows = Array.tabulate(n)(tw => (0,0,0,0))
     var tWCoupleGenerated = 0
     var currentTimeUnit = 0
 
@@ -65,8 +65,8 @@ object RoutingMatrixGenerator {
       //println(nbOfCouplesToAdd)
       for(inc <- 0 until nbOfCouplesToAdd){
         val incDelivery = random.nextInt(50)
-        timeWindows(pickups(tWCoupleGenerated+inc)) = (timeUnitDelta*(currentTimeUnit+1),(timeUnitDelta,timeUnitDelta*currentTimeUnit))
-        timeWindows(deliveries(tWCoupleGenerated+inc)) = (timeUnitDelta*(currentTimeUnit+1+incDelivery),(timeUnitDelta, timeUnitDelta*(currentTimeUnit+incDelivery)))
+        timeWindows(pickups(tWCoupleGenerated+inc)) = (timeUnitDelta*(currentTimeUnit+1),-1,timeUnitDelta,-1)
+        timeWindows(deliveries(tWCoupleGenerated+inc)) = (timeUnitDelta*(currentTimeUnit+1+incDelivery),-1,timeUnitDelta,-1)
       }
       tWCoupleGenerated += nbOfCouplesToAdd
       currentTimeUnit += random.nextInt(10*1000/timeUnitDelta)

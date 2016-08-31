@@ -186,8 +186,6 @@ abstract class Neighborhood(name:String = null) {
     def padToLength(s: String, l: Int) = (s + nStrings(l, " ")).substring(0, l)
     def trimToLength(s: String, l: Int) = if (s.length >= l) s.substring(0, l) else s
 
-    println(Thread.currentThread().getName)
-
     if (verbose != 0){
       println("start doAllMove at " + java.time.LocalDateTime.now)
       println("initial objective function:" + obj)
