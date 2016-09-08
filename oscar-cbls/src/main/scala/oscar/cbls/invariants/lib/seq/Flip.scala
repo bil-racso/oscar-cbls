@@ -21,7 +21,6 @@ case class Flip(v: SeqValue,override val maxPivotPerValuePercent:Int = 10, overr
   finishInitialization()
 
   override def notifySeqChanges(v: ChangingSeqValue, d: Int, changes: SeqUpdate) {
-    checkInternals(new ErrorChecker())
     if (!digestChanges(changes)) {
       this := changes.newValue.flip(true,true)
     }

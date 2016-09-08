@@ -62,7 +62,7 @@ object flowShopShiftRestart  extends CBLSModel with App {
 
   val search = (BestSlopeFirst(List(shiftNeighborhood(jobSequence), rollNeighborhood(jobSequence), SwapsNeighborhood(jobSequence)))
     onExhaustRestartAfter (shuffleNeighborhood(jobSequence, numberOfShuffledPositions=() => nbJobs/2),3,obj)
-  onExhaustRestartAfter (shuffleNeighborhood(jobSequence),2,obj))
+    onExhaustRestartAfter (shuffleNeighborhood(jobSequence),2,obj))
 
   search.verbose = 2
 

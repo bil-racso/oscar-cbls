@@ -572,14 +572,14 @@ class InvariantTests extends FunSuite with Checkers {
 
   test("Flip maintains a flipped sequence"){
     val bench = new InvBench(verbose,List(PlusOne(), MinusOne(), ToZero(), ToMin(), ToMax(), Random(), RandomDiff(),Shuffle()))
-    val seqVar = bench.genIntSeqVar(range = 0 to 5)
+    val seqVar = bench.genIntSeqVar()
     Flip(seqVar)
     bench.run()
   }
 
-  test("Sum maintains the sum of all values in a sequence"){
+  test("SeqSum maintains the sum of all values in a sequence"){
     val bench = new InvBench(verbose,List(PlusOne(), MinusOne(), ToZero(), ToMin(), ToMax(), Random(), RandomDiff(),Shuffle()))
-    val seqVar = bench.genIntSeqVar(range = 0 to 5)
+    val seqVar = bench.genIntSeqVar()
     SeqSum(seqVar)
     bench.run()
   }

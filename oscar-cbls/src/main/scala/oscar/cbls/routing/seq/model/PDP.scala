@@ -5,7 +5,7 @@ import oscar.cbls.constraints.lib.basic.{GE, EQ, LE}
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.lib.logic.{IntInt2Int, IntITE}
 import oscar.cbls.invariants.lib.minmax.Max2
-import oscar.cbls.invariants.lib.routing.VehicleOfNodes
+import oscar.cbls.invariants.lib.routing.{RouteSuccessorAndPredecessors, VehicleOfNodes}
 import oscar.cbls.invariants.lib.seq.Precedence
 import oscar.cbls.modeling.Algebra._
 import oscar.cbls.objective.IntVarObjective
@@ -14,7 +14,7 @@ import oscar.cbls.objective.IntVarObjective
   * Created by fabian on 04-07-16.
   */
 class PDP(override val n:Int, override val v:Int, override val m:Store, maxPivotPerValuePercent:Int = 4)
-  extends VRP(n,v,m,maxPivotPerValuePercent){
+  extends VRP(n,v,m,maxPivotPerValuePercent) with NextAndPrev{
 
   /**
     * The array that maintains pickup and delivery node.

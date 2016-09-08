@@ -365,7 +365,7 @@ class ConstantRoutingDistance(routes:ChangingSeqValue,
   private def recordTouchedVehicle(v:Int){
     if(perVehicle){
       if(checkpoint!= null && !touchedRoutesSinceCheckpointArray(v)){
-        savedValues(v) = distance(v).value
+        savedValues(v) = distance(v).newValue
         touchedRoutesSinceCheckpointArray(v) = true
         touchedRoutesSinceCheckpointList = QList(v,touchedRoutesSinceCheckpointList)
       }

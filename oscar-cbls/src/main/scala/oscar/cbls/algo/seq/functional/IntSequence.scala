@@ -643,7 +643,8 @@ object MovedIntSequence{
       moveAfterPosition:Int,
       flip:Boolean)
 
-  def bijectionForMoveNaive(startPositionIncluded:Int,
+  @inline
+  private def bijectionForMoveNaive(startPositionIncluded:Int,
                             endPositionIncluded:Int,
                             moveAfterPosition:Int,
                             flip:Boolean):PiecewiseLinearBijectionNaive = {

@@ -45,7 +45,7 @@ class MySimpleRoutingWithUnroutedPoints(n:Int,v:Int,symmetricDistance:Array[Arra
 
 object TSProutePoints extends App{
 
-  val n = 1000
+  val n = 10000
   val v = 1
 
   val maxPivotPerValuePercent = 4

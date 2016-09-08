@@ -99,6 +99,7 @@ case class SeqSum(v: SeqValue)
   }
 
   override def checkInternals(c: Checker) {
+    c.check(this.newValue == v.value.toList.foldLeft(0)(_+_))
     c.check(this.newValue == computeSumFromScratch(v.value),Some("this.newValue(="+ this.newValue+") == Sum(v.value(="+ computeSumFromScratch(v.value)+ ")"))
   }
 }
