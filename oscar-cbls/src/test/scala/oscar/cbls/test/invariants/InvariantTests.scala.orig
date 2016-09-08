@@ -511,7 +511,11 @@ class InvariantTests extends FunSuite with Checkers {
 
 
   test ("ConcatenateList Var concatenates List and ChangingSeqValue") {
+<<<<<<< local
+    val bench = new InvBench(verbose,List(PlusOne(), Random(), Shuffle()))
+=======
     val bench = new InvBench(verbose,List(PlusOne(), MinusOne(), ToZero(), ToMin(), ToMax(), Random(), RandomDiff()))
+>>>>>>> other
     //val seqVars = bench.genIntSeqVars(2)
     val seqVar2 = bench.genIntSeqVar()
     Size(new ConcatenateFirstConstant(List(1,6,8,30),seqVar2,4,20))
@@ -569,13 +573,6 @@ class InvariantTests extends FunSuite with Checkers {
     bench.run()
   }
 
-  test("Flip"){
-    val bench = new InvBench(verbose, List(PlusOne(), MinusOne(), ToZero(), ToMin(), ToMax(), Random(), RandomDiff(), Shuffle()))
-    val seqVar = bench.genIntSeqVar()
-    Flip(seqVar)
-    bench.run
-  }
-
   // ---- Routing tests ---- //
   test("Node of vehicle"){
     val bench = new InvBench(verbose,List(PlusOne(), MinusOne(), ToZero(), ToMin(), ToMax(), Random(), RandomDiff(),Shuffle()))
@@ -617,7 +614,7 @@ class InvariantTests extends FunSuite with Checkers {
   }
 
   test("RouteSuccessorsAndPredecessors"){
-    val bench = new InvBench(verbose,List(PlusOne(), MinusOne(), ToZero(), ToMin(), ToMax(), Random(), RandomDiff(), Shuffle()))
+    val bench = new InvBench(verbose,List(PlusOne(), MinusOne(), ToZero(), ToMin(), ToMax(), Random(), RandomDiff(),Shuffle()))
     val n = 100
     val v = 5
     val route = bench.genRouteOfNodes(n,v)
@@ -627,22 +624,11 @@ class InvariantTests extends FunSuite with Checkers {
   }
 
   test("VehicleOfNodes"){
-    val bench = new InvBench(verbose,List(PlusOne(), MinusOne(), ToZero(), ToMin(), ToMax(), Random(), RandomDiff(), Shuffle()))
+    val bench = new InvBench(verbose,List(PlusOne(), MinusOne(), ToZero(), ToMin(), ToMax(), Random(), RandomDiff(),Shuffle()))
     val n = 100
     val v = 5
     val route = bench.genRouteOfNodes(n,v)
     VehicleOfNodes(route,v)
-    bench.run()
-  }
-
-  // ---- checkpoint Tests ---- //
-
-  test("Star exploration"){
-    val bench = new InvBench(verbose,List(PlusOne(), MinusOne(), Shuffle(), MultipleMove()))
-    val n = 20
-    val v = 5
-    val route = bench.genRouteOfNodesForCheckPoint(n,v)
-
     bench.run()
   }
 }

@@ -38,6 +38,7 @@ case class ToMax() extends Move
 case class Random() extends Move
 case class RandomDiff() extends Move
 case class Shuffle() extends Move
+case class MultipleMove() extends Move
 
 /**
  * This object contains a set of functions and methods to generate random
@@ -177,6 +178,14 @@ object InvGen {
     c <- Gen.alphaChar
   } yield new RouteOfNodes(
     new CBLSSeqVar(model, IntSequence(0 until v), upToSize, c.toString.toUpperCase),v)
+
+  /**
+    * Method to generate an empty routeOfNodes used to test checkPoints.
+    */
+  def routeOfNodesForCheckPoint(upToSize: Int, v: Int, model: Store, checker:InvariantChecker) = for {
+    c <- Gen.alphaChar
+  } yield new RouteOfNodesForCheckPoint(
+    new CBLSSeqVar(model, IntSequence(0 until v), upToSize, c.toString.toUpperCase),v,checker)
 }
 
 /**
@@ -350,11 +359,10 @@ case class RandomIntSeqVar(intSeqVar: CBLSSeqVar) extends RandomVar{
       case Shuffle() =>
         for(p <- 0 until randomVar().newValue.size) {
           val newPos = Gen.choose(0, randomVar().newValue.size - 1).sample.get
-          if (newPos != p)
-            randomVar().move(p, p, newPos, false)
+          if (newPos-1 != p)
+            randomVar().move(p, p, newPos-1, false)
         }
     }
-    println(randomVar().value.toString)
   }
 }
 
@@ -407,13 +415,12 @@ case class NotRandomIntSeqVar(intSeqVar: CBLSSeqVar) extends RandomVar{
         if (newVal != null) randomVar := IntSequence(newVal)
       case Shuffle() =>
         for(p <- 0 until randomVar().newValue.size) {
-          val newPos = Gen.choose(1, randomVar().newValue.size - 1).sample.get
+          val newPos = Gen.choose(0, randomVar().newValue.size - 1).sample.get
           if (newPos != p)
             randomVar().move(p, p, newPos, false)
         }
 
     }
-    println(randomVar().value.toString)
   }
 }
 
@@ -436,10 +443,8 @@ case class RouteOfNodes(intSeqVar: CBLSSeqVar, v:Int) extends RandomVar{
     * Shuffle shuffles the positions of each value contained in the seq
     */
   override def move(move: Move)= {
-    println(move.toString)
     val inSeq = randomVar().newValue.dropWhile(_ != 0).toList
     val notInSeq = List.tabulate(randomVar().max)(n => n).filterNot(inSeq.contains(_))
-    println(inSeq,notInSeq)
     move match{
       case PlusOne() =>
         if(notInSeq.nonEmpty)
@@ -496,7 +501,109 @@ case class RouteOfNodes(intSeqVar: CBLSSeqVar, v:Int) extends RandomVar{
           }
         }
     }
-    println(randomVar().value.toString)
+  }
+}
+
+/**
+  * A RouteOfNodesForCheckPoint is a Var containing an IntSeqVar build for routing problems.
+  * The aim of this case class is to test the checkPoint  mechanism.
+  */
+case class RouteOfNodesForCheckPoint(intSeqVar: CBLSSeqVar, v:Int, checker:InvariantChecker) extends RandomVar{
+  override def randomVar(): CBLSSeqVar = intSeqVar
+
+  /**
+    * Defines the different possible moves for a RandomIntSeqVar.
+    * PlusOne adds a new random value to the seq whereas MinusOne removes one,
+    * ToZero makes the seq an empty one, ToMax adds all the values of the
+    * variable range to the seq whereas ToMin makes the seq a singleton (of
+    * which value is randomly chosen).
+    * Random replaces the seq with a random one (values and size are random)
+    * but to avoid explosions, new size cannot be more than current size + 1.
+    * RandomDiff replaces it with a random one with which intersection is empty,
+    * if such a change is not possible, nothing's done.
+    * Shuffle shuffles the positions of each value contained in the seq
+    */
+  override def move(move: Move)= {
+    var inSeq = randomVar().newValue.toList
+    var notInSeq = List.tabulate(randomVar().max)(n => n).filterNot(inSeq.contains(_))
+    move match{
+      case PlusOne() =>
+        val checkPoint = randomVar().defineCurrentValueAsCheckpoint(true)
+        for(nbOfMove <- notInSeq.indices) {
+          for (i <- 0 until nbOfMove+1) {
+            inSeq = randomVar().newValue.toList
+            notInSeq = List.tabulate(randomVar().max)(n => n).filterNot(inSeq.contains(_))
+            randomVar().insertAtPosition(Gen.oneOf(notInSeq).sample.get, Gen.choose(1, inSeq.size).sample.get)
+          }
+          randomVar().rollbackToCurrentCheckpoint(checkPoint)
+          checker.check(randomVar().value == checkPoint)
+        }
+        inSeq = randomVar().newValue.toList
+        notInSeq = List.tabulate(randomVar().max)(n => n).filterNot(inSeq.contains(_))
+        if(notInSeq.nonEmpty)
+          randomVar().insertAtPosition(Gen.oneOf(notInSeq).sample.get, Gen.choose(1, inSeq.size).sample.get)
+      case MinusOne() =>
+        val checkPoint = randomVar().defineCurrentValueAsCheckpoint(true)
+        for(nbOfMove <- inSeq.filterNot(_ < v).indices) {
+          for (i <- 0 until nbOfMove+1) {
+            inSeq = randomVar().newValue.toList
+            randomVar().remove(inSeq.indexOf(Gen.oneOf(inSeq.filterNot(_ < v)).sample.get))
+          }
+          randomVar().rollbackToCurrentCheckpoint(checkPoint)
+          checker.check(randomVar().value == checkPoint)
+        }
+        inSeq = randomVar().newValue.toList
+        if(inSeq.size > v)
+          randomVar().remove(inSeq.indexOf(Gen.oneOf(inSeq.filterNot(_ < v)).sample.get))
+      case Shuffle() =>
+        val checkPoint = randomVar().defineCurrentValueAsCheckpoint(true)
+        for(nbOfMove <- inSeq.indices) {
+          for (i <- 0 until nbOfMove+1){
+            if(randomVar().newValue.valueAtPosition(i).get>=v) {
+              val newPos = Gen.choose(1, randomVar().newValue.size - 1).sample.get
+              if (newPos != i)
+                randomVar().move(i, i, newPos, false)
+            }
+          }
+          randomVar().rollbackToCurrentCheckpoint(checkPoint)
+          checker.check(randomVar().value == checkPoint)
+        }
+        for(p <- 0 until randomVar().value.size){
+          if(randomVar().newValue.valueAtPosition(p).get>=v) {
+            val newPos = Gen.choose(1, randomVar().newValue.size - 1).sample.get
+            if (newPos != p)
+              randomVar().move(p, p, newPos, false)
+          }
+        }
+
+      case MultipleMove() =>
+        val checkPoint = randomVar().defineCurrentValueAsCheckpoint(true)
+        val moves = List("add", "remove", "shuffle")
+        for(nbOfMove <- 1 to 50) {
+          for (i <- 0 until nbOfMove) {
+            inSeq = randomVar().newValue.toList
+            notInSeq = List.tabulate(randomVar().max)(n => n).filterNot(inSeq.contains(_))
+            Gen.oneOf(moves).sample.get match{
+              case "add" =>
+                if(notInSeq.nonEmpty)
+                  randomVar().insertAtPosition(Gen.oneOf(notInSeq).sample.get, Gen.choose(1, inSeq.size).sample.get)
+              case "remove" =>
+                if(inSeq.size > v)
+                  randomVar().remove(inSeq.indexOf(Gen.oneOf(inSeq.filterNot(_ < v)).sample.get))
+              case "shuffle" =>
+                if(i < inSeq.size) {
+                  if (randomVar().newValue.valueAtPosition(i).get >= v) {
+                    val newPos = Gen.choose(1, randomVar().newValue.size - 1).sample.get
+                    if (newPos != i)
+                      randomVar().move(i, i, newPos, false)
+                  }
+                }
+            }
+          }
+          randomVar().rollbackToCurrentCheckpoint(checkPoint)
+          checker.check(randomVar().value == checkPoint)
+        }
+    }
   }
 }
 
@@ -677,10 +784,19 @@ class InvBench(verbose: Int = 0, moves:List[Move]) {
   }
 
   def genRouteOfNodes(
-                     upToSize: Int = 20,
-                     v: Int = 5,
-                     isInput: Boolean = true) = {
+                       upToSize: Int = 20,
+                       v: Int = 5,
+                       isInput: Boolean = true) = {
     val risVar = InvGen.routeOfNodes(upToSize,v,model).sample.get
+    addVar(isInput,risVar)
+    risVar.randomVar
+  }
+
+  def genRouteOfNodesForCheckPoint(
+                       upToSize: Int = 20,
+                       v: Int = 5,
+                       isInput: Boolean = true) = {
+    val risVar = InvGen.routeOfNodesForCheckPoint(upToSize,v,model,checker).sample.get
     addVar(isInput,risVar)
     risVar.randomVar
   }

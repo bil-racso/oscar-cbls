@@ -1,4 +1,4 @@
-package oscar.examples.cbls.routing.visual.MatrixMap
+package oscar.cbls.visual.MatrixMap
 
 /**
   * *****************************************************************************
@@ -17,41 +17,72 @@ package oscar.examples.cbls.routing.visual.MatrixMap
   * ****************************************************************************
   */
 
-import java.awt.BorderLayout
-import javax.swing.{SwingUtilities, JPanel, JInternalFrame}
+import java.awt.{BorderLayout, Color, Dimension}
+import java.awt.event.{ItemEvent, ItemListener}
+import javax.swing.{BoxLayout, JCheckBox, JFrame, JPanel}
 
-import oscar.cbls.algo.seq.functional.IntSequence
-import oscar.cbls.invariants.core.computation.CBLSSeqVar
-import oscar.cbls.routing.model.VRP
+import oscar.cbls.routing.seq.model.VRP
 
-import scala.swing._
 
 /**
   * @author fabian.germeau@student.vinci.be
   */
 
 
-class RoutingMatrixVisual(title:String = "Routing map", pickupAndDeliveryPoints: Boolean = false) extends JPanel with Runnable{
+class RoutingMatrixVisual(title:String = "Routing map", vrp:VRP = null, pickupAndDeliveryPoints: Boolean = false, geolocalisationMap: Boolean = false) extends JFrame with Runnable{
   setLayout(new BorderLayout())
 
-  var routingMatrix:MatrixMap = null
-  if(pickupAndDeliveryPoints)
-    routingMatrix = new RoutingMatrixMap() with PickupAndDeliveryPoints
-  else
-    routingMatrix = new RoutingMatrixMap
+  var routingMap:JPanel with RoutingMap = _
+
+  (pickupAndDeliveryPoints, geolocalisationMap) match {
+    case (false, false) => routingMap = new BasicRoutingMap
+    case (true, false) => routingMap = new BasicRoutingMap() with PickupAndDeliveryPoints
+    case (false, true) => routingMap = new GeoRoutingMap()
+    case (true,true) => routingMap = new GeoRoutingMap() with GeoPickupAndDeliveryPoints
+      routingMap.asInstanceOf[GeoRoutingMap with GeoPickupAndDeliveryPoints].setPDP(vrp)
+    case _ => ()
+  }
 
   var mustRefresh = false
 
-  var allRoutes:CBLSSeqVar = null
+  var allRoutes:Array[List[Int]] = _
 
   var routes:List[List[Int]] = Nil
+
+  var routesToDisplay:Array[Boolean] = if(vrp != null)Array.tabulate(vrp.v)(v =>false) else Array.empty
+
+  if(vrp != null) {
+    val vehicleSelectionPane = new JPanel()
+    vehicleSelectionPane.setLayout(new BoxLayout(vehicleSelectionPane,BoxLayout.Y_AXIS))
+    val allCheckBox = new JCheckBox("All")
+    allCheckBox.addItemListener(new ItemListener {
+      override def itemStateChanged(e: ItemEvent): Unit = {
+        for(c <- vehicleSelectionPane.getComponents) {
+          val box = c.asInstanceOf[JCheckBox]
+          box.setSelected(e.getStateChange == ItemEvent.SELECTED)
+        }
+      }
+    })
+    vehicleSelectionPane.add(allCheckBox)
+    for (i <- 0 until vrp.v){
+      val checkBox = new JCheckBox("Vehicle : " + i)
+      checkBox.addItemListener(new ItemListener {
+        override def itemStateChanged(e: ItemEvent): Unit = {
+          routesToDisplay(i) = e.getStateChange == ItemEvent.SELECTED
+          routingMap.drawRoutes(allRoutes,routesToDisplay)
+        }
+      })
+      vehicleSelectionPane.add(checkBox)
+    }
+    add(vehicleSelectionPane, BorderLayout.EAST)
+  }
 
   def run(): Unit ={
     while (true) {
       try {
         Thread.sleep(500)
         if(setMustRefresh(false))
-          routingMatrix.drawRoutes(allRoutes.value)
+          routingMap.drawRoutes(allRoutes)
       }catch{
         case ie:InterruptedException => return
         case e:Exception => e.printStackTrace()
@@ -73,41 +104,24 @@ class RoutingMatrixVisual(title:String = "Routing map", pickupAndDeliveryPoints:
   }
 
   def drawPoints(): Unit ={
-    routingMatrix.drawPoints()
+    routingMap.drawPoints()
   }
 
-  def setColorValues(colorValues:Array[Color]): Unit ={
-    routingMatrix.setColorValues(colorValues)
+  def setColorValues(colorValues:Array[Color] = null): Unit ={
+    routingMap.setColorValues(colorValues)
   }
 
-  def setPointsList(pointsList:List[(Int,Int)],V:Int): Unit ={
-    routingMatrix.setPointsList(pointsList,V)
+  def setPointsList(pointsList:List[(Double,Double)],V:Int): Unit ={
+    routingMap.setPointsList(pointsList,V)
   }
 
   def setMapSize(mapSize:Int): Unit ={
-    routingMatrix.setMapSize(mapSize)
+    routingMap.setMapSize(mapSize)
   }
 
-  def clear(): Unit ={
-    routingMatrix.clear()
-  }
-  add(routingMatrix, BorderLayout.CENTER)
+  setPreferredSize(new Dimension(960,960))
+  add(routingMap, BorderLayout.CENTER)
+  pack()
+  revalidate()
   setVisible(true)
-
-}
-
-
-class RoutingMatrixVisualWithAttribute(title:String = "Routing map",
-                                       vrp:VRP,
-                                       mapSize:Int,
-                                       pointsList:scala.List[(Int,Int)],
-                                       colorValues:Array[Color],
-                                       dimension:Dimension = new Dimension(960,960)) extends RoutingMatrixVisual{
-  setPreferredSize(dimension)
-  setSize(dimension)
-  routingMatrix.setPreferredSize(dimension)
-  routingMatrix.setSize(dimension)
-  routingMatrix.setMapSize(mapSize)
-  routingMatrix.setPointsList(pointsList,vrp.V)
-  routingMatrix.setColorValues(colorValues)
 }
