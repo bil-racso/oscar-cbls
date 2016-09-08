@@ -28,7 +28,7 @@ abstract class TravelTimeFunction {
   *
   * @author renaud.delandtsheer@cetic.be
   */
-trait Time extends VRP {
+trait Time extends VRP with NextAndPrev{
   val defaultArrivalTime = new CBLSIntConst(0)
   //TODO: on peut améliorer le codate en enlevant des variables.
   val arrivalTime = Array.tabulate(n) {
