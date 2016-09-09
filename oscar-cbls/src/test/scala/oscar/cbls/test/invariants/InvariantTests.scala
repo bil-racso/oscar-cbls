@@ -536,7 +536,6 @@ class InvariantTests extends FunSuite with Checkers {
   test ("Precedence"){
     val bench = new InvBench(verbose,List(PlusOne(), MinusOne(), ToZero(), ToMin(), ToMax(), Random(), RandomDiff()))
     val seqVar = bench.genNotRandomIntSeqVar(100)
-    println(seqVar.value.toString)
     val precedences = RoutingMatrixGenerator.generatePrecedence(seqVar.value.size,0,seqVar.value.size/2)
     Precedence(seqVar,precedences)
     bench.run()
@@ -625,7 +624,7 @@ class InvariantTests extends FunSuite with Checkers {
   }
 
   test("RouteSuccessorsAndPredecessors"){
-    val bench = new InvBench(verbose,List(PlusOne(), MinusOne(), ToZero(), ToMin(), ToMax(), Random(), RandomDiff(),Shuffle()))
+    val bench = new InvBench(verbose,List(PlusOne(), MinusOne(), ToZero(), ToMin(), ToMax(), Random(), RandomDiff(), Shuffle()))
     val n = 100
     val v = 5
     val route = bench.genRouteOfNodes(n,v)
@@ -635,11 +634,22 @@ class InvariantTests extends FunSuite with Checkers {
   }
 
   test("VehicleOfNodes"){
-    val bench = new InvBench(verbose,List(PlusOne(), MinusOne(), ToZero(), ToMin(), ToMax(), Random(), RandomDiff(),Shuffle()))
+    val bench = new InvBench(verbose,List(PlusOne(), MinusOne(), ToZero(), ToMin(), ToMax(), Random(), RandomDiff(), Shuffle()))
     val n = 100
     val v = 5
     val route = bench.genRouteOfNodes(n,v)
     VehicleOfNodes(route,v)
+    bench.run()
+  }
+
+  // ---- checkpoint Tests ---- //
+
+  test("Star exploration"){
+    val bench = new InvBench(verbose,List(PlusOne(), MinusOne(), Shuffle(), MultipleMove()))
+    val n = 20
+    val v = 5
+    val route = bench.genRouteOfNodesForCheckPoint(n,v)
+
     bench.run()
   }
 }

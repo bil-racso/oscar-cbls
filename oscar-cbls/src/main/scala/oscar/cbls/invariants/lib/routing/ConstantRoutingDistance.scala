@@ -441,7 +441,7 @@ class ConstantRoutingDistance(routes:ChangingSeqValue,
     if(perVehicle){
       val values = computeValueFromScratch(routes.value)
       for (vehicle <- 0 to v-1){
-        c.check(distance(vehicle).value == values(vehicle))
+        c.check(distance(vehicle).value == values(vehicle),Some("distance("+vehicle+").value=" + distance(vehicle).newValue + " should== computeValueFromScratch(routes.value)(0)" + values(vehicle)))
       }
 
       if(checkpoint != null) {

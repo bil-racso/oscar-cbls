@@ -10,6 +10,8 @@ import oscar.cbls.invariants.lib.seq.Precedence
 import oscar.cbls.modeling.Algebra._
 import oscar.cbls.objective.IntVarObjective
 
+import scala.collection.immutable.List
+
 /**
   * Created by fabian on 04-07-16.
   */
@@ -22,11 +24,11 @@ class PDP(override val n:Int, override val v:Int, override val m:Store, maxPivot
     * (negative value for a delivery node, positive for a pickup node and 0 for a depot)
     * and the value of the related node.
     */
-  private val pickupDeliveryNodes:Array[(Int,Int)] = new Array[(Int, Int)](n)
+   val pickupDeliveryNodes:Array[(Int,Int)] = new Array[(Int, Int)](n)
   for(i <- 0 until v)pickupDeliveryNodes(i) = (0,i)
 
   val pickupNodes:Array[Int] = new Array[Int]((n-v)/2)
-  private val deliveryNodes:Array[Int] = new Array[Int]((n-v)/2)
+  val deliveryNodes:Array[Int] = new Array[Int]((n-v)/2)
 
   val vehicleOfNodes = VehicleOfNodes(routes,v)
 
@@ -58,8 +60,9 @@ class PDP(override val n:Int, override val v:Int, override val m:Store, maxPivot
     *
     * @param pickups the pickup points array
     * @param deliveries the delivery points array
+    * @param nbPassengers the number of passengers for the ride (leave empty if you want to use the one passenger per ride scenario)
     */
-  def addPickupDeliveryCouples(pickups:Array[Int], deliveries:Array[Int]): Unit ={
+  def addPickupDeliveryCouples(pickups:Array[Int], deliveries:Array[Int], nbPassengers:Array[Int] = Array.tabulate((n-v)/2)(p => 1)): Unit ={
     assert(pickups.length == deliveries.length,
       "The pickup array and the delivery array must have the same length.")
     assert(!pickups.exists(_ >= n) || !deliveries.exists(_ >= n),
@@ -67,10 +70,10 @@ class PDP(override val n:Int, override val v:Int, override val m:Store, maxPivot
     assert(pickups.intersect(deliveries).length == 0,
       "One node can't be a pickup node and a delivery node at the same time")
 
-    var precedenceList = List.tabulate((n-v)/2)(c => (pickups(c),deliveries(c)))
+    val precedenceList = List.tabulate((n-v)/2)(c => (pickups(c),deliveries(c)))
     precedenceObj = new IntVarObjective(Precedence(routes,precedenceList))
     for(i <- pickups.indices){
-      addPickupDeliveryCouple(pickups(i),deliveries(i),i)
+      addPickupDeliveryCouple(pickups(i),deliveries(i),i,nbPassengers(i))
     }
   }
 
@@ -81,6 +84,8 @@ class PDP(override val n:Int, override val v:Int, override val m:Store, maxPivot
     * @return
     */
   def isPickup(index:Int): Boolean = pickupDeliveryNodes(index)._1 > 0
+
+  def isUnroutedPickup(index:Int): Boolean = isPickup(index) && isUnrouted(index)
 
   /**
     * This method check if the given node is a delivery one. (if his load value is < 0 it's a delivery node)
@@ -138,7 +143,7 @@ class PDP(override val n:Int, override val v:Int, override val m:Store, maxPivot
     * Still Usefull ???
     *
     * This method search all the complete segments contained in a specified route.
-    * A segment is considered as complete when you can move it to another branch
+    * A segment is considered as complete when you can move it to another place
     * without breaking the precedence constraint.
     * It runs through the specified route and try to create the smallest complete segments possible
     * After that it try to combine adjacent segment
@@ -193,11 +198,11 @@ class PDP(override val n:Int, override val v:Int, override val m:Store, maxPivot
       val currentSegment = segmentsArray(i)._2
       completeSegments = (currentSegment.head, currentSegment.last) :: completeSegments
       var j = i-1
-      var currentPreds = prev.element(route(i)).value
+      var currentPreds = prev(route(i)).value
       while(j != -1){
         if(segmentsArray(j) != null && currentPreds == segmentsArray(j)._2.last){
           completeSegments = (segmentsArray(j)._2.head, currentSegment.last) :: completeSegments
-          currentPreds = prev.element(route(j)).value
+          currentPreds = prev(route(j)).value
         }
         j -= 1
       }
@@ -262,6 +267,10 @@ class PDP(override val n:Int, override val v:Int, override val m:Store, maxPivot
       slowConstraints.post(LE(arrivalLoadValue(i), vehicleMaxCapacity.element(vehicleOfNodes(i))))
   }
 
+  def isNotFull()(node:Int): Boolean ={
+    arrivalLoadValue(node).value < 5
+  }
+
   //---- Time Windows ----//
 
   var defaultArrivalTime:CBLSIntConst = null
@@ -306,16 +315,16 @@ class PDP(override val n:Int, override val v:Int, override val m:Store, maxPivot
     addToStringInfo(() => "arrivalTimeToNext:" + arrivalTimeToNext.toList.mkString(","))
   }
 
+  //Leave before ...
   def setEndWindow(node: Int, endWindow: Int) {
     require(node >= v, "only for specifying time windows on nodes, not on vehicles")
-    slowConstraints.post(LE(IntITE(next(node), 0, leaveTime(node), n - 1), endWindow).nameConstraint("end of time window on node " + node))
+    slowConstraints.post(LE(IntITE(next(node), 0, leaveTime(node), n-1), endWindow).nameConstraint("end of time window on node " + node))
   }
 
   def setVehicleEnd(vehicle: Int, endTime: Int) {
     require(vehicle < v, "only for specifying end time of vehicles")
     slowConstraints.post(LE(arrivalTime(vehicle), endTime).nameConstraint("end of time for vehicle " + vehicle))
   }
-
 
   def setNodeDuration(node: Int, duration: IntValue) {
     assert(node >= v)
@@ -341,13 +350,30 @@ class PDP(override val n:Int, override val v:Int, override val m:Store, maxPivot
     }
   }
 
-  def setTimeWindows(timeWindows: Array[(Int,(Int,Int))]): Unit ={
+  /**
+    * This method initialize the differents variable used to represent time windows
+    * @param timeWindows contains an array of the time to attribute.
+    *                    Each value of this array represents these values :
+    *                    - The time after which we may arrive to this point
+    *                    - The time before which we must have reach this point
+    *                    - The execution's duration of the task related to this point
+    *                    - The max waiting time of this point
+    *                    If you don't want to use one of them simply set the corresponding value to -1
+    */
+  def setTimeWindows(timeWindows : Array[(Int,Int,Int,Int)]): Unit ={
     initiateTimeWindowInvariants()
     addTimeWidowStringInfo()
 
-    for(i <- timeWindows.indices if i >= v) {
-      setEndWindow(i,timeWindows(i)._1)
-      setNodeDuration(i,timeWindows(i)._2._1, timeWindows(i)._2._2)
+    for(i <- timeWindows.indices) {
+      if(timeWindows(i)._1 >= 0) {
+        if (timeWindows(i)._4 >= 0)
+          setNodeDuration(i+v, math.max(0, timeWindows(i)._3), timeWindows(i)._1, timeWindows(i)._4)
+        else
+          setNodeDuration(i+v, math.max(0, timeWindows(i)._3), timeWindows(i)._1)
+      }else
+        setNodeDuration(i+v,math.max(0, timeWindows(i)._3))
+      if(timeWindows(i)._2 >= 0)
+        setEndWindow(i+v, timeWindows(i)._2)
     }
   }
 

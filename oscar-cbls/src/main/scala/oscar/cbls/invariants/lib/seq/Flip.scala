@@ -38,7 +38,7 @@ case class Flip(v: SeqValue,override val maxPivotPerValuePercent:Int = 10, overr
 
       case SeqUpdateMove(fromIncluded : Int, toIncluded : Int, after : Int, flip : Boolean, prev : SeqUpdate) =>
         if (!digestChanges(prev)) return false
-        val prevSize = prev.newValue.size
+        val prevSize = prev.newValue.size-1
         println("digesting " + changes)
 
         val tentativeFlippedAfter = prevSize - after - 2
