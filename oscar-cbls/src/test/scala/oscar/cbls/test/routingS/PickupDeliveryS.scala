@@ -68,7 +68,7 @@ object PickupDeliveryS extends App{
 
   val symmetricDistanceMatrix = routingMatrix._1
 
-  val model = new Store(noCycle = false)
+  val model = new Store(noCycle = false, checker = Some(new ErrorChecker))
 
   val (pickups,deliveries) = RoutingMatrixGenerator.generatePickupDeliveryCouples(n,v)
 

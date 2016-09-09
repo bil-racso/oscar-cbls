@@ -295,6 +295,7 @@ trait ConstantDistancePerVehicle extends TotalConstantDistance{
   var distancePerVehicle:Array[CBLSIntVar] = null
 
   override def setSymmetricDistanceMatrix(symmetricDistanceMatrix:Array[Array[Int]],precomputeFW : Boolean = true, precomputeBW : Boolean = true){
+    assert(ConstantRoutingDistance.isDistanceSymmetric(symmetricDistanceMatrix))
     this.distanceMatrix = symmetricDistanceMatrix
     this.matrixIsSymmetric = true
     require(distancePerVehicle == null)

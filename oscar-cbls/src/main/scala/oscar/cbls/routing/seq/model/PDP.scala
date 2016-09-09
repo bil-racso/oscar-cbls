@@ -1,9 +1,10 @@
 package oscar.cbls.routing.seq.model
 
+import oscar.cbls.algo.search.KSmallest
 import oscar.cbls.constraints.core.ConstraintSystem
-import oscar.cbls.constraints.lib.basic.{GE, EQ, LE}
+import oscar.cbls.constraints.lib.basic.{EQ, GE, LE}
 import oscar.cbls.invariants.core.computation._
-import oscar.cbls.invariants.lib.logic.{IntInt2Int, IntITE}
+import oscar.cbls.invariants.lib.logic.{IntITE, IntInt2Int}
 import oscar.cbls.invariants.lib.minmax.Max2
 import oscar.cbls.invariants.lib.routing.{RouteSuccessorAndPredecessors, VehicleOfNodes}
 import oscar.cbls.invariants.lib.seq.Precedence
@@ -11,6 +12,8 @@ import oscar.cbls.modeling.Algebra._
 import oscar.cbls.objective.IntVarObjective
 
 import scala.collection.immutable.List
+import scala.collection.mutable.ArrayBuffer
+import scala.math._
 
 /**
   * Created by fabian on 04-07-16.
@@ -24,7 +27,7 @@ class PDP(override val n:Int, override val v:Int, override val m:Store, maxPivot
     * (negative value for a delivery node, positive for a pickup node and 0 for a depot)
     * and the value of the related node.
     */
-   val pickupDeliveryNodes:Array[(Int,Int)] = new Array[(Int, Int)](n)
+  val pickupDeliveryNodes:Array[(Int,Int)] = new Array[(Int, Int)](n)
   for(i <- 0 until v)pickupDeliveryNodes(i) = (0,i)
 
   val pickupNodes:Array[Int] = new Array[Int]((n-v)/2)
@@ -273,17 +276,19 @@ class PDP(override val n:Int, override val v:Int, override val m:Store, maxPivot
 
   //---- Time Windows ----//
 
-  var defaultArrivalTime:CBLSIntConst = null
+  var defaultArrivalTime:CBLSIntConst = _
 
-  var arrivalTime:Array[CBLSIntVar] = null
+  var arrivalTime:Array[CBLSIntVar] = Array.empty
 
-  var leaveTime:Array[CBLSIntVar] = null
+  var leaveTime:Array[CBLSIntVar] = Array.empty
 
-  var travelOutDuration:Array[CBLSIntVar] = null
+  var travelOutDuration:Array[CBLSIntVar] = Array.empty
 
-  var arrivalTimeToNext:Array[IntValue] = null
+  var arrivalTimeToNext:Array[IntValue] = Array.empty
 
-  var travelDurationMatrix: TravelTimeFunction = null
+  var travelDurationMatrix: TravelTimeFunction = _
+
+  var timeWindows: Array[(Int,Int,Int,Int)] = Array.empty
 
   def initiateTimeWindowInvariants(): Unit ={
     defaultArrivalTime = new CBLSIntConst(0)
@@ -355,7 +360,7 @@ class PDP(override val n:Int, override val v:Int, override val m:Store, maxPivot
     * @param timeWindows contains an array of the time to attribute.
     *                    Each value of this array represents these values :
     *                    - The time after which we may arrive to this point
-    *                    - The time before which we must have reach this point
+    *                    - The time before which we must have reach and performed the task of this point
     *                    - The execution's duration of the task related to this point
     *                    - The max waiting time of this point
     *                    If you don't want to use one of them simply set the corresponding value to -1
@@ -363,18 +368,24 @@ class PDP(override val n:Int, override val v:Int, override val m:Store, maxPivot
   def setTimeWindows(timeWindows : Array[(Int,Int,Int,Int)]): Unit ={
     initiateTimeWindowInvariants()
     addTimeWidowStringInfo()
+    val tWS:ArrayBuffer[(Int,Int,Int,Int)] = new ArrayBuffer[(Int,Int,Int,Int)]
+
+    for(k <- 0 until v)
+      tWS.append((-1,-1,-1,-1))
 
     for(i <- timeWindows.indices) {
-      if(timeWindows(i)._1 >= 0) {
+      if (timeWindows(i)._1 >= 0) {
         if (timeWindows(i)._4 >= 0)
-          setNodeDuration(i+v, math.max(0, timeWindows(i)._3), timeWindows(i)._1, timeWindows(i)._4)
+          setNodeDuration(i + v, math.max(0, timeWindows(i)._3), timeWindows(i)._1, timeWindows(i)._4)
         else
-          setNodeDuration(i+v, math.max(0, timeWindows(i)._3), timeWindows(i)._1)
+          setNodeDuration(i + v, math.max(0, timeWindows(i)._3), timeWindows(i)._1)
       }else
-        setNodeDuration(i+v,math.max(0, timeWindows(i)._3))
-      if(timeWindows(i)._2 >= 0)
-        setEndWindow(i+v, timeWindows(i)._2)
+         setNodeDuration(i + v, math.max(0, timeWindows(i)._3))
+      if (timeWindows(i)._2 >= 0)
+        setEndWindow(i + v, timeWindows(i)._2)
+      tWS.append(timeWindows(i))
     }
+    this.timeWindows = tWS.toArray
   }
 
   def setMaxTravelDistancePDConstraint(){
@@ -382,5 +393,31 @@ class PDP(override val n:Int, override val v:Int, override val m:Store, maxPivot
       val d = getRelatedDelivery(p)
       slowConstraints.post(LE(arrivalTime(d) - leaveTime(p), 2*travelDurationMatrix.getTravelDuration(p, leaveTime(p).value, d)))
     }
+  }
+
+  /**
+    * This method compute the closest neighbor of a node base on time window and TimeMatrice.
+    *
+    */
+  def computeClosestNeighborInTime(filter : ((Int,Int) => Boolean) = (_,_) => true): Array[Iterable[Int]] ={
+    def arrayOfAllNodes = Array.tabulate(n)(node => node)
+    Array.tabulate(n)(node =>{
+      KSmallest.lazySort(arrayOfAllNodes,
+        neighbor => {
+          if(!filter(node,neighbor))
+            Int.MaxValue
+          else if((leaveTime(neighbor).value + travelDurationMatrix.getTravelDuration(neighbor, 0, node)) > (if(timeWindows(node)._2<0)Int.MaxValue else timeWindows(node)._2))
+            Int.MaxValue
+          else {
+            val neighborToNode = max(leaveTime(neighbor).value + travelDurationMatrix.getTravelDuration(neighbor, 0, node), timeWindows(node)._1)
+            val neighborToNodeToNext = neighborToNode + timeWindows(node)._3 + travelDurationMatrix.getTravelDuration(node, 0, next(neighbor).value)
+            if(neighborToNodeToNext > (if(timeWindows(next(neighbor).value)._2<0)Int.MaxValue else timeWindows(next(neighbor).value)._2))
+              Int.MaxValue
+            else
+              neighborToNodeToNext - leaveTime(neighbor).value
+          }
+        }
+      )}
+    )
   }
 }

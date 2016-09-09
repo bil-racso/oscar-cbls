@@ -144,6 +144,7 @@ class ConstantRoutingDistance(routes:ChangingSeqValue,
         val newDistance = distanceMatrix(oldPrev)(value) + distanceMatrix(value)(oldSucc)
         val nodeCost = distanceMatrix(value)(value)
 
+
         if(perVehicle) {
           val vehicle = vehicleSearcher(newSeq, pos)
           recordTouchedVehicle(vehicle)
@@ -176,8 +177,14 @@ class ConstantRoutingDistance(routes:ChangingSeqValue,
             val vehicleOfMovedSegment = vehicleSearcher(prev.newValue, fromIncluded)
             val deltaDistance = if(distanceIsSymmetric) 0 else {
               //there is a flip and distance is asymmetric
-              (computeValueBetween(prev.newValue,vehicleOfMovedSegment, toIncluded, toValue, fromIncluded, fromValue)
-              - computeValueBetween(prev.newValue, vehicleOfMovedSegment, fromIncluded, fromValue, toIncluded, toValue))
+              computeValueBetween(prev.newValue,
+                vehicleOfMovedSegment,
+                toIncluded, toValue,
+                fromIncluded, fromValue) -
+                computeValueBetween(prev.newValue,
+                vehicleOfMovedSegment,
+                fromIncluded, fromValue,
+                toIncluded, toValue)
             }
             recordTouchedVehicle(vehicleOfMovedSegment)
             distance(vehicleOfMovedSegment) :+= (newHopBeforeMovedSegment + newHopAfterMovedSegment
@@ -186,14 +193,14 @@ class ConstantRoutingDistance(routes:ChangingSeqValue,
           val deltaDistance = if(distanceIsSymmetric) 0 else {
               val vehicleOfMovedSegment = vehicleSearcher(prev.newValue, fromIncluded)
               //there is a flip and distance is asymmetric
-              (computeValueBetween(prev.newValue,
+              computeValueBetween(prev.newValue,
                 vehicleOfMovedSegment,
                 toIncluded, toValue,
-                fromIncluded, fromValue)
-              - computeValueBetween(prev.newValue,
+                fromIncluded, fromValue) -
+                computeValueBetween(prev.newValue,
                 vehicleOfMovedSegment,
                 fromIncluded, fromValue,
-                toIncluded, toValue))
+                toIncluded, toValue)
             }
             distance(0) :+= (newHopBeforeMovedSegment + newHopAfterMovedSegment
               - (oldHopBeforeMovedSegment + oldHopAfterMovedSegment) + deltaDistance)
@@ -227,14 +234,14 @@ class ConstantRoutingDistance(routes:ChangingSeqValue,
             val deltaDistance = if(distanceIsSymmetric || !flip) 0 //no delta on distance
             else { //there is a flip and distance is asymmetric
             val vehicleOfMovedSegment = vehicleSearcher(prev.newValue, fromIncluded)
-              (computeValueBetween(prev.newValue,
+              computeValueBetween(prev.newValue,
                 vehicleOfMovedSegment,
                 toIncluded, toValue,
-                fromIncluded, fromValue)
-              -computeValueBetween(prev.newValue,
+                fromIncluded, fromValue) -
+                computeValueBetween(prev.newValue,
                 vehicleOfMovedSegment,
                 fromIncluded, fromValue,
-                toIncluded, toValue))
+                toIncluded, toValue)
 
             }
             distance(0) :+= (
@@ -252,14 +259,14 @@ class ConstantRoutingDistance(routes:ChangingSeqValue,
 
               val (deltaDistance) = if(distanceIsSymmetric || !flip) 0 else {
                 //there is a flip and distance is asymmetric
-                (computeValueBetween(prev.newValue,
+                computeValueBetween(prev.newValue,
                   vehicleOfMovedSegment,
                   toIncluded, toValue,
-                  fromIncluded, fromValue)
-                - computeValueBetween(prev.newValue,
+                  fromIncluded, fromValue) -
+                computeValueBetween(prev.newValue,
                   vehicleOfMovedSegment,
                   fromIncluded, fromValue,
-                  toIncluded, toValue))
+                  toIncluded, toValue)
               }
 
               recordTouchedVehicle(vehicleOfMovedSegment)
@@ -305,7 +312,7 @@ class ConstantRoutingDistance(routes:ChangingSeqValue,
         val positionOfDelete = x.position
 
         val oldPrevValue = prev.newValue.valueAtPosition(positionOfDelete-1).head //vehicles are never deleted
-      val oldSuccValue = RoutingConventionMethods.routingSuccPos2Val(positionOfDelete, prev.newValue,v)
+        val oldSuccValue = RoutingConventionMethods.routingSuccPos2Val(positionOfDelete, prev.newValue,v)
         val newDistance = distanceMatrix(oldPrevValue)(oldSuccValue)
         val oldDistanceBefore = distanceMatrix(oldPrevValue)(removedValue)
         val oldDistanceAfter = distanceMatrix(removedValue)(oldSuccValue)
@@ -390,10 +397,10 @@ class ConstantRoutingDistance(routes:ChangingSeqValue,
       }
       toReturn
     }else{
-      var e = s.explorerAtPosition(toPosIncluded).head
+      var e = s.explorerAtPosition(fromPosIncluded).head
       var toReturn = distanceMatrix(e.value)(e.value)
 
-      while (e.position > fromPosIncluded) {
+      while (e.position > toPosIncluded) {
         val prevPos = e.prev.head
         toReturn += distanceMatrix(e.value)(prevPos.value) + distanceMatrix(prevPos.value)(prevPos.value)
         e = prevPos

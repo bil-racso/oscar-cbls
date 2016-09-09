@@ -89,7 +89,7 @@ class BasicRoutingMap extends VisualDrawing(false,false) with RoutingMap{
     for(r <- routesToDisplay.indices if routesToDisplay(r)) {
       color = colorValues(r)
       for (p <- routes(r)) {
-        if(previousPoint <= 0){
+        if(previousPoint >= 0){
           val tempRoute = new VisualArrow(this, new Double(pointsList(previousPoint)._1, pointsList(previousPoint)._2, pointsList(p)._1, pointsList(p)._2), 4)
           tempRoute.outerCol_$eq(color)
           tempRoute.borderWidth = 2
@@ -99,6 +99,7 @@ class BasicRoutingMap extends VisualDrawing(false,false) with RoutingMap{
       val tempRoute = new VisualArrow(this, new Double(pointsList(previousPoint)._1, pointsList(previousPoint)._2, pointsList(r)._1, pointsList(r)._2), 4)
       tempRoute.outerCol_$eq(color)
       tempRoute.borderWidth = 2
+      previousPoint = -1
     }
   }
 
