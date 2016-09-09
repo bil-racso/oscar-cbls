@@ -536,7 +536,7 @@ case class RouteOfNodesForCheckPoint(intSeqVar: CBLSSeqVar, v:Int, checker:Invar
             randomVar().insertAtPosition(Gen.oneOf(notInSeq).sample.get, Gen.choose(1, inSeq.size).sample.get)
           }
           randomVar().rollbackToCurrentCheckpoint(checkPoint)
-          checker.check(randomVar().value == checkPoint)
+          checker.check(randomVar().value == checkPoint, Some("Error : " + randomVar().value.toString + ", or : " + randomVar().newValue.toString + " != " + checkPoint.toString))
         }
         inSeq = randomVar().newValue.toList
         notInSeq = List.tabulate(randomVar().max)(n => n).filterNot(inSeq.contains(_))
@@ -550,30 +550,33 @@ case class RouteOfNodesForCheckPoint(intSeqVar: CBLSSeqVar, v:Int, checker:Invar
             randomVar().remove(inSeq.indexOf(Gen.oneOf(inSeq.filterNot(_ < v)).sample.get))
           }
           randomVar().rollbackToCurrentCheckpoint(checkPoint)
-          checker.check(randomVar().value == checkPoint)
+          checker.check(randomVar().value == checkPoint, Some("Error : " + randomVar().value.toString + ", or : " + randomVar().newValue.toString + " != " + checkPoint.toString))
         }
+        checker.check(randomVar().value == checkPoint, Some("Error : " + randomVar().value.toString + ", or : " + randomVar().newValue.toString + " != " + checkPoint.toString))
         inSeq = randomVar().newValue.toList
         if(inSeq.size > v)
           randomVar().remove(inSeq.indexOf(Gen.oneOf(inSeq.filterNot(_ < v)).sample.get))
       case Shuffle() =>
         val checkPoint = randomVar().defineCurrentValueAsCheckpoint(true)
-        for(nbOfMove <- inSeq.indices) {
+        for(nbOfMove <- inSeq.filterNot(_ < v).indices) {
           for (i <- 0 until nbOfMove+1){
-            if(randomVar().newValue.valueAtPosition(i).get>=v) {
-              val newPos = Gen.choose(1, randomVar().newValue.size - 1).sample.get
-              if (newPos != i)
-                randomVar().move(i, i, newPos, false)
-            }
+            inSeq = randomVar().newValue.toList
+            val p1 = inSeq.indexOf(Gen.oneOf(inSeq.filterNot(_ < v)).sample.get)
+            val p2 = inSeq.indexOf(Gen.oneOf(inSeq.drop(p1).takeWhile(_ >= v)).sample.get)
+            val newPos = Gen.choose(1, inSeq.size - 1).sample.get
+            if(newPos < p1 || newPos > p2)
+              randomVar().move(p1, p2, newPos, false)
           }
           randomVar().rollbackToCurrentCheckpoint(checkPoint)
-          checker.check(randomVar().value == checkPoint)
+          checker.check(randomVar().value == checkPoint, Some("Error : " + randomVar().value.toString + ", or : " + randomVar().newValue.toString + " != " + checkPoint.toString))
         }
-        for(p <- 0 until randomVar().value.size){
-          if(randomVar().newValue.valueAtPosition(p).get>=v) {
-            val newPos = Gen.choose(1, randomVar().newValue.size - 1).sample.get
-            if (newPos != p)
-              randomVar().move(p, p, newPos, false)
-          }
+        for(i <- 0 until inSeq.size - v){
+          inSeq = randomVar().newValue.toList
+          val p1 = inSeq.indexOf(Gen.oneOf(inSeq.filterNot(_ < v)).sample.get)
+          val p2 = inSeq.indexOf(Gen.oneOf(inSeq.drop(p1).takeWhile(_ >= v)).sample.get)
+          val newPos = Gen.choose(1, randomVar().newValue.size - 1).sample.get
+          if(newPos < p1 || newPos > p2)
+            randomVar().move(p1, p2, newPos, false)
         }
 
       case MultipleMove() =>
@@ -591,17 +594,17 @@ case class RouteOfNodesForCheckPoint(intSeqVar: CBLSSeqVar, v:Int, checker:Invar
                 if(inSeq.size > v)
                   randomVar().remove(inSeq.indexOf(Gen.oneOf(inSeq.filterNot(_ < v)).sample.get))
               case "shuffle" =>
-                if(i < inSeq.size) {
-                  if (randomVar().newValue.valueAtPosition(i).get >= v) {
-                    val newPos = Gen.choose(1, randomVar().newValue.size - 1).sample.get
-                    if (newPos != i)
-                      randomVar().move(i, i, newPos, false)
-                  }
+                if(inSeq.size > v) {
+                  val p1 = inSeq.indexOf(Gen.oneOf(inSeq.filterNot(_ < v)).sample.get)
+                  val p2 = inSeq.indexOf(Gen.oneOf(inSeq.drop(p1).takeWhile(_ >= v)).sample.get)
+                  val newPos = Gen.choose(1, randomVar().newValue.size - 1).sample.get
+                  if(newPos < p1 || newPos > p2)
+                    randomVar().move(p1, p2, newPos, false)
                 }
             }
           }
           randomVar().rollbackToCurrentCheckpoint(checkPoint)
-          checker.check(randomVar().value == checkPoint)
+          checker.check(randomVar().value == checkPoint, Some("Error : " + randomVar().value.toString + ", or : " + randomVar().newValue.toString + " != " + checkPoint.toString))
         }
     }
   }

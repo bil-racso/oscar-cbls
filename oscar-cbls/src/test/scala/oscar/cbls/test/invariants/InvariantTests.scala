@@ -629,7 +629,7 @@ class InvariantTests extends FunSuite with Checkers {
   test("VehicleOfNodes"){
     val bench = new InvBench(verbose,List(PlusOne(), MinusOne(), ToZero(), ToMin(), ToMax(), Random(), RandomDiff(), Shuffle()))
     val n = 100
-    val v = 5
+    val v = 2
     val route = bench.genRouteOfNodes(n,v)
     VehicleOfNodes(route,v)
     bench.run()
@@ -639,10 +639,11 @@ class InvariantTests extends FunSuite with Checkers {
 
   test("Star exploration"){
     val bench = new InvBench(verbose,List(PlusOne(), MinusOne(), Shuffle(), MultipleMove()))
-    val n = 20
-    val v = 5
+    val n = 100
+    val v = 4
     val route = bench.genRouteOfNodesForCheckPoint(n,v)
-
+    val distanceMatrix = RoutingMatrixGenerator(n)._1
+    ConstantRoutingDistance(route,v,true,distanceMatrix,true)
     bench.run()
   }
 }

@@ -144,6 +144,7 @@ class ConstantRoutingDistance(routes:ChangingSeqValue,
         val newDistance = distanceMatrix(oldPrev)(value) + distanceMatrix(value)(oldSucc)
         val nodeCost = distanceMatrix(value)(value)
 
+
         if(perVehicle) {
           val vehicle = vehicleSearcher(newSeq, pos)
           recordTouchedVehicle(vehicle)
@@ -179,8 +180,8 @@ class ConstantRoutingDistance(routes:ChangingSeqValue,
               computeValueBetween(prev.newValue,
                 vehicleOfMovedSegment,
                 toIncluded, toValue,
-                fromIncluded, fromValue)
-              - computeValueBetween(prev.newValue,
+                fromIncluded, fromValue) -
+                computeValueBetween(prev.newValue,
                 vehicleOfMovedSegment,
                 fromIncluded, fromValue,
                 toIncluded, toValue)
@@ -195,8 +196,8 @@ class ConstantRoutingDistance(routes:ChangingSeqValue,
               computeValueBetween(prev.newValue,
                 vehicleOfMovedSegment,
                 toIncluded, toValue,
-                fromIncluded, fromValue)
-              - computeValueBetween(prev.newValue,
+                fromIncluded, fromValue) -
+                computeValueBetween(prev.newValue,
                 vehicleOfMovedSegment,
                 fromIncluded, fromValue,
                 toIncluded, toValue)
@@ -236,8 +237,8 @@ class ConstantRoutingDistance(routes:ChangingSeqValue,
               computeValueBetween(prev.newValue,
                 vehicleOfMovedSegment,
                 toIncluded, toValue,
-                fromIncluded, fromValue)
-              -computeValueBetween(prev.newValue,
+                fromIncluded, fromValue) -
+                computeValueBetween(prev.newValue,
                 vehicleOfMovedSegment,
                 fromIncluded, fromValue,
                 toIncluded, toValue)
@@ -261,8 +262,8 @@ class ConstantRoutingDistance(routes:ChangingSeqValue,
                 computeValueBetween(prev.newValue,
                   vehicleOfMovedSegment,
                   toIncluded, toValue,
-                  fromIncluded, fromValue)
-                - computeValueBetween(prev.newValue,
+                  fromIncluded, fromValue) -
+                computeValueBetween(prev.newValue,
                   vehicleOfMovedSegment,
                   fromIncluded, fromValue,
                   toIncluded, toValue)
@@ -365,7 +366,7 @@ class ConstantRoutingDistance(routes:ChangingSeqValue,
   private def recordTouchedVehicle(v:Int){
     if(perVehicle){
       if(checkpoint!= null && !touchedRoutesSinceCheckpointArray(v)){
-        savedValues(v) = distance(v).value
+        savedValues(v) = distance(v).newValue
         touchedRoutesSinceCheckpointArray(v) = true
         touchedRoutesSinceCheckpointList = QList(v,touchedRoutesSinceCheckpointList)
       }
@@ -396,10 +397,10 @@ class ConstantRoutingDistance(routes:ChangingSeqValue,
       }
       toReturn
     }else{
-      var e = s.explorerAtPosition(toPosIncluded).head
+      var e = s.explorerAtPosition(fromPosIncluded).head
       var toReturn = distanceMatrix(e.value)(e.value)
 
-      while (e.position > fromPosIncluded) {
+      while (e.position > toPosIncluded) {
         val prevPos = e.prev.head
         toReturn += distanceMatrix(e.value)(prevPos.value) + distanceMatrix(prevPos.value)(prevPos.value)
         e = prevPos

@@ -37,7 +37,6 @@ case class Size(v: SeqValue)
   }
 
   override def checkInternals(c: Checker) {
-    println(this.value,v.value.size)
     c.check(this.value == v.value.size, Some("this.value == v.value.size"))
   }
 }
