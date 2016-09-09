@@ -14,7 +14,7 @@ import oscar.cbls.search.combinators.{BestSlopeFirst, DynAndThen, Profile}
   * Created by f.germeau on 07/09/2016.
   */
 class MyVRP(n:Int,v:Int,model:Store,symmetricDistanceMatrix:Array[Array[Int]]) extends VRP(n,v,model)
-  with TotalConstantDistance with ClosestNeighbors with RoutedAndUnrouted{
+  with TotalConstantDistance with ClosestNeighbors with RoutedAndUnrouted with NextAndPrev{
 
   setSymmetricDistanceMatrix(symmetricDistanceMatrix)
 
@@ -23,8 +23,6 @@ class MyVRP(n:Int,v:Int,model:Store,symmetricDistanceMatrix:Array[Array[Int]]) e
   val penaltyForUnrouted = 10000
 
   val obj = Objective(totalDistance + (penaltyForUnrouted*(n - Size(routes))))
-
-  override val (next,prev) = RouteSuccessorAndPredecessors(routes,v,n)
 
   val closestNeighborsForward = computeClosestNeighborsForward()
 }
