@@ -76,6 +76,8 @@ abstract class IntSequence(protected[cbls] val uniqueID:Int = IntSequence.getNew
 
   def unorderedContentNoDuplicate : List[Int]
 
+  def unorderedContentNoDuplicateWithNBOccurences : List[(Int,Int)]
+
   def valueAtPosition(position : Int) : Option[Int]
 
   def positionsOfValue(value : Int) : SortedSet[Int]
@@ -379,7 +381,7 @@ class ConcreteIntSequence(private[seq] val internalPositionToValue:RedBlackTreeM
   def moveAfter(startPositionIncluded : Int, endPositionIncluded : Int, moveAfterPosition : Int, flip : Boolean, fast : Boolean, autoRework : Boolean) : IntSequence = {
     //println(this + ".moveAfter(startPositionIncluded:" + startPositionIncluded + " endPositionIncluded:" + endPositionIncluded + " moveAfterPosition:" + moveAfterPosition + " flip:" + flip + ")")
     require(startPositionIncluded >= 0 && startPositionIncluded < size, "startPositionIncluded should be in [0,size[ in UniqueIntSequence.moveAfter")
-    require(endPositionIncluded >= 0 && endPositionIncluded < size, "endPositionIncluded should be in [0,size[ in UniqueIntSequence.moveAfter")
+    require(endPositionIncluded >= 0 && endPositionIncluded < size, "endPositionIncluded(=" + endPositionIncluded+ ") should be in [0,size(="+size+")[ in UniqueIntSequence.moveAfter")
     require(moveAfterPosition >= -1 && moveAfterPosition < size, "moveAfterPosition=" + moveAfterPosition + " should be in [-1,size=" + size+"[ in UniqueIntSequence.moveAfter")
 
     require(
@@ -493,6 +495,8 @@ class ConcreteIntSequence(private[seq] val internalPositionToValue:RedBlackTreeM
   override def commitPendingMoves : IntSequence = this
 
   override def unorderedContentNoDuplicate : List[Int] = valueToInternalPositions.keys
+
+  override def unorderedContentNoDuplicateWithNBOccurences : List[(Int,Int)] = valueToInternalPositions.content.map({case ((value,positions)) => ((value,positions.size))})
 }
 
 class IntSequenceIterator(var crawler:Option[IntSequenceExplorer]) extends Iterator[Int] {
@@ -639,7 +643,8 @@ object MovedIntSequence{
       moveAfterPosition:Int,
       flip:Boolean)
 
-  def bijectionForMoveNaive(startPositionIncluded:Int,
+  @inline
+  private def bijectionForMoveNaive(startPositionIncluded:Int,
                             endPositionIncluded:Int,
                             moveAfterPosition:Int,
                             flip:Boolean):PiecewiseLinearBijectionNaive = {
@@ -733,6 +738,9 @@ class MovedIntSequence(val seq:IntSequence,
 
 
   override def unorderedContentNoDuplicate : List[Int] = seq.unorderedContentNoDuplicate
+
+
+  override def unorderedContentNoDuplicateWithNBOccurences : List[(Int, Int)] = seq.unorderedContentNoDuplicateWithNBOccurences
 
   override def descriptorString : String = seq.descriptorString + ".moved(startPos:" + startPositionIncluded + " endPos:" + endPositionIncluded + " targetPos:" + moveAfterPosition + " flip:" + flip + ")"
 
@@ -865,6 +873,9 @@ class InsertedIntSequence(seq:IntSequence,
 
   override def nbOccurrence(value : Int) : Int = if(value == this.insertedValue) seq.nbOccurrence(value) + 1 else seq.nbOccurrence(value)
 
+  override def unorderedContentNoDuplicateWithNBOccurences : List[(Int, Int)] =
+    unorderedContentNoDuplicate.map(value => (value,if(value == insertedValue) seq.nbOccurrence(value) +1 else seq.nbOccurrence(value)))
+
   override def descriptorString : String = seq.descriptorString + ".inserted(val:" + insertedValue + " pos:" + pos + ")"
 
   override def unorderedContentNoDuplicate : List[Int] = if(seq.nbOccurrence(insertedValue) == 0) insertedValue :: seq.unorderedContentNoDuplicate else seq.unorderedContentNoDuplicate
@@ -993,6 +1004,13 @@ class RemovedIntSequence(seq:IntSequence,
   override def unorderedContentNoDuplicate : List[Int] =
     if(seq.nbOccurrence(removedValue) > 1) seq.unorderedContentNoDuplicate
     else seq.unorderedContentNoDuplicate.filter(_ != removedValue)
+
+  override def unorderedContentNoDuplicateWithNBOccurences : List[(Int, Int)] =
+    unorderedContentNoDuplicate.flatMap(value => if(value == removedValue) {
+      val occurencesBefore = seq.nbOccurrence(value)
+      if (occurencesBefore == 1) None
+      else Some((value, occurencesBefore - 1))
+    }else Some((value, seq.nbOccurrence(value))))
 
   override val size : Int = seq.size - 1
 

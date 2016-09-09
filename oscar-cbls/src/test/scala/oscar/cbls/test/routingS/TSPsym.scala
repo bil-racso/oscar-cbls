@@ -51,8 +51,8 @@ class MySimpleRouting(n:Int,v:Int,symmetricDistance:Array[Array[Int]],m:Store, m
 
 object TSPsym extends App{
 
-  val n = 1000
-  val v = 10
+  val n = 10000
+  val v = 1
 
   val maxPivotPerValuePercent = 4
 
@@ -78,7 +78,7 @@ object TSPsym extends App{
 
   //val search = BestSlopeFirst(List(onePtMove,twoOpt, threeOpt(10,true))) exhaust threeOpt(20,true)
 
-  val search = threeOpt(20,true)
+  val search = threeOpt(10,true)
 
   search.verbose = 1
   search.paddingLength = 100

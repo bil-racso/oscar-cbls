@@ -2,7 +2,7 @@ package oscar.cbls.invariants.lib.seq
 
 import oscar.cbls.algo.seq.functional.IntSequence
 import oscar.cbls.invariants.core.computation._
-import oscar.cbls.invariants.core.propagation.Checker
+import oscar.cbls.invariants.core.propagation.{ErrorChecker, Checker}
 
 /**
  * maintains this as the flipped value of v
@@ -33,18 +33,24 @@ case class Flip(v: SeqValue,override val maxPivotPerValuePercent:Int = 10, overr
     changes match {
       case s@SeqUpdateInsert(value : Int, pos : Int, prev : SeqUpdate) =>
         if (!digestChanges(prev)) return false
-        this.insertAtPosition(value, prev.newValue.size - pos)
+        this.insertAtPosition(value, prev.newValue.size - pos) //TODO: build on the original value instead of maintaining two data structs? , changes.newValue.flip(fast=true)
         true
 
       case SeqUpdateMove(fromIncluded : Int, toIncluded : Int, after : Int, flip : Boolean, prev : SeqUpdate) =>
         if (!digestChanges(prev)) return false
         val prevSize = prev.newValue.size-1
-        this.move(prevSize - fromIncluded, prevSize - toIncluded, prevSize - after, flip)
+        println("digesting " + changes)
+
+        val tentativeFlippedAfter = prevSize - after - 2
+        val flippedFromIncluded = prevSize - toIncluded - 1
+        val flippedToIncluded = prevSize - fromIncluded - 1
+        val flippedAfter = if(tentativeFlippedAfter == flippedToIncluded) flippedFromIncluded - 1 else tentativeFlippedAfter
+        this.move(flippedFromIncluded, flippedToIncluded, flippedAfter, flip)
         true
 
       case r@SeqUpdateRemove(position : Int, prev : SeqUpdate) =>
         if (!digestChanges(prev)) return false
-        this.remove(prev.newValue.size-1 - position)
+        this.remove(prev.newValue.size - position - 1)
         true
 
       case u@SeqUpdateRollBackToCheckpoint(checkpoint) =>
@@ -75,8 +81,9 @@ case class Flip(v: SeqValue,override val maxPivotPerValuePercent:Int = 10, overr
   }
 
   override def checkInternals(c: Checker) {
-    c.check(this.value.toList equals v.value.toList.reverse, Some("this.value == v.value.flip"))
-    c.check(this.value.toList.reverse equals v.value.toList, Some("this.value.flip == v.value"))
+    println(this.newValue,v.value.size)
+    c.check(this.newValue.toList equals v.value.toList.reverse, Some("this.newValue(=" + this.newValue.toList + ") == v.value.flip(=" + v.value.toList.reverse + ")"))
+    c.check(this.newValue.toList.reverse equals v.value.toList, Some("this.newValue.flip(="+ this.newValue.toList.reverse +") == v.value(="+ v.value.toList+ ")"))
   }
 }
 

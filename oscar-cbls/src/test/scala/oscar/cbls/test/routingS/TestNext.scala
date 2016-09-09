@@ -45,7 +45,8 @@ class MySimpleRoutingWithUnroutedPointsAndNext(n:Int,v:Int,symmetricDistance:Arr
 
   def size = routes.value.size
 
-  override val (next,prev) = RouteSuccessorAndPredecessors(routes,v,n)
+  //TODO: how about using NextAndPRev trait? or use a clone of route?
+  val (next,prev) = RouteSuccessorAndPredecessors(routes,v,n)
 
   this.addToStringInfo(() => "next:" + next.map(_.value).mkString(","))
   this.addToStringInfo(() => "prev:" + prev.map(_.value).mkString(","))
