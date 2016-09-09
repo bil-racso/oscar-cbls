@@ -8,13 +8,6 @@ import oscar.cbls.search.{SearchEngine, SearchEngineTrait}
 import oscar.cbls.search.core.EasyNeighborhood
 
 
-/**
- * @param p the planning to flatten
- * @param maxIterations the max number of the flattening.
- *                      This is a safety parameter to prevent infinite loop,
- *                      you can set it to (p.activityCount * (p.activityCount - 1)) / 2
- * @param estimateMakespanExpansionForNewDependency
- */
 case class FlattenOne(p: Planning,
                       resourcesForFlattening:Planning=> Iterable[Resource] = (p:Planning) => List(p.resourceArray(SearchEngine.selectFrom(p.worseOvershotResource.value))),
                       timesForFlattening:Resource => Iterable[Int] = (r:Resource) => List(r.worseOverShootTime),
@@ -64,7 +57,7 @@ case class AddDynamicPrecedence(from:Activity,to:Activity) extends Move{
   /** to actually take the move */
   override def commit(): Unit = from.addDynamicPredecessor(to)
 }
-
+/*
 case class FlattenOneSuperActivity(p: Planning,
                                    priorityToPrecedenceToMovableActivities: Boolean = true)
   extends EasyNeighborhood with SearchEngineTrait {
@@ -101,3 +94,4 @@ case class FlattenOneSuperActivity(p: Planning,
     }
   }
 }
+*/
