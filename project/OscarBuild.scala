@@ -70,9 +70,7 @@ object OscarBuild extends Build {
     val swingx = "org.swinglabs" % "swingx" % "latest.milestone"
     val swingxWs = "org.swinglabs" % "swingx-ws" % "latest.milestone"
     val xmlApisExt = "xml-apis" % "xml-apis-ext" % "latest.milestone"
-    val jxl = "net.sourceforge.jexcelapi" % "jxl" % "2.6.12"
-    val javaxJson = "org.glassfish" % "javax.json" % "1.0.4"
-    val graphhopper = "com.graphhopper" % "graphhopper" % "0.7.0"
+    val jxmapviever2 = "org.jxmapviewer" % "jxmapviewer2" % "2.2"
     
     // Test libraries
     val junit = "junit" % "junit" % "latest.milestone" % Test
@@ -125,7 +123,7 @@ object OscarBuild extends Build {
       packAutoSettings ++
       Seq(
       	resolvers ++= Seq(mvnrepository),
-        libraryDependencies ++= testDeps :+ scalaSwing :+ jxl :+ javaxJson :+ graphhopper,
+        libraryDependencies ++= testDeps :+ scalaSwing :+ jxmapviever2,
         packGenerateWindowsBatFile := false
       ),
     dependencies = Seq(oscarVisual)

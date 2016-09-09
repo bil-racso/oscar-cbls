@@ -75,8 +75,6 @@ case class Flip(v: SeqValue,override val maxPivotPerValuePercent:Int = 10, overr
   }
 
   override def checkInternals(c: Checker) {
-    println(this.value,this.value.size)
-    println(v.value,v.value.size)
     c.check(this.value.toList equals v.value.toList.reverse, Some("this.value == v.value.flip"))
     c.check(this.value.toList.reverse equals v.value.toList, Some("this.value.flip == v.value"))
   }
