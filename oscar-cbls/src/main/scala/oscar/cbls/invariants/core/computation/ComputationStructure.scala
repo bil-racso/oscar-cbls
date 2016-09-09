@@ -20,7 +20,7 @@
 
 package oscar.cbls.invariants.core.computation
 
-import oscar.cbls.invariants.core.algo.quick.QList
+import oscar.cbls.algo.quick.QList
 import oscar.cbls.invariants.core.propagation._
 
 import scala.collection.immutable.{SortedMap, SortedSet}
@@ -53,6 +53,7 @@ case class Store(override val verbose:Boolean = false,
   extends PropagationStructure(verbose,checker,noCycle,topologicalSort, sortScc)
   with Bulker with StorageUtilityManager{
 
+
   assert({println("You are using a CBLS store with asserts activated. It makes the engine slower. Recompile it with -Xdisable-assertions"); true})
 
   private[this] var variables:QList[AbstractVariable] = null
@@ -78,41 +79,19 @@ case class Store(override val verbose:Boolean = false,
     * @param inputOnly if set to true (as by default) the solution will only contain the variables that are not derived through an invariant
     */
   def solution(inputOnly:Boolean = true):Solution = {
-    var assignationInt:List[(ChangingIntValue,Int)] = List.empty
-    var assignationIntSet:List[(ChangingSetValue,SortedSet[Int])] = List.empty
-
-    val VariablesToSave = if(inputOnly) {
+    val variablesToSave = if(inputOnly) {
       decisionVariables()
     }else variables
-
-    var currentPos = VariablesToSave
-    while(currentPos != null){
-      val v:AbstractVariable = currentPos.head
-      currentPos = currentPos.tail
-      v match {
-        case i:ChangingIntValue =>
-          assignationInt = ((i, i.value)) :: assignationInt
-        case s:ChangingSetValue =>
-          assignationIntSet = ((s, s.value)) :: assignationIntSet
-      }
-    }
-    Solution(assignationInt,assignationIntSet,this)
+    Solution(variablesToSave.map(_.snapshot),this)
   }
 
   /**this is to be used as a backtracking point in a search engine
     * you can only save variables that are not controlled*/
-  def saveValues(vars:Variable*):Solution = {
-    var assignationInt:List[(ChangingIntValue,Int)] = List.empty
-    var assignationIntSet:List[(ChangingSetValue,SortedSet[Int])] = List.empty
-    for (v:Variable <- vars if v.isDecisionVariable){
-      if(v.isInstanceOf[CBLSIntVar]){
-        assignationInt = ((v.asInstanceOf[CBLSIntVar], v.asInstanceOf[CBLSIntVar].getValue(true))) :: assignationInt
-      }else if(v.isInstanceOf[CBLSSetVar]){
-        assignationIntSet = ((v.asInstanceOf[CBLSSetVar], v.asInstanceOf[CBLSSetVar].getValue(true))) :: assignationIntSet
-      }
-    }
-    Solution(assignationInt,assignationIntSet,this)
+  def saveValues(vars:Iterable[Variable]):Solution = {
+    Solution(vars.map(_.snapshot),this)
   }
+
+  def snapShot(toRecord:Iterable[AbstractVariable]) = new Snapshot(toRecord,this)
 
   /**To restore a saved solution
     * notice that only the variables that are not derived will be restored; others will be derived lazily at the next propagation wave.
@@ -121,12 +100,7 @@ case class Store(override val verbose:Boolean = false,
     */
   def restoreSolution(s:Solution){
     assert(s.model==this)
-    for((intvar,int) <- s.assignationInt if intvar.isDecisionVariable){
-      intvar.asInstanceOf[CBLSIntVar] := int
-    }
-    for((intsetvar,intset) <- s.assignationIntSet if intsetvar.isDecisionVariable){
-      intsetvar.asInstanceOf[CBLSSetVar]:= intset
-    }
+    s.restoreDecisionVariables()
   }
 
   /**Called by each variable to register themselves to the model
@@ -134,7 +108,7 @@ case class Store(override val verbose:Boolean = false,
     * @return a unique identifier that will be used to distinguish variables. basically, variables use this value to set up an arbitrary ordering for use in dictionnaries.
     */
   def registerVariable(v:AbstractVariable):Int = {
-    assert(!closed,"model is closed, cannot add variables")
+    require(!closed,"model is closed, cannot add variables")
     //ici on utilise des listes parce-que on ne peut pas utiliser des dictionnaires
     // vu que les variables n'ont pas encore recu leur unique ID.
     variables = QList(v,variables)
@@ -147,7 +121,7 @@ case class Store(override val verbose:Boolean = false,
     * @return a unique identifier that will be used to distinguish invariants. basically, invariants use this value to set up an arbitrary ordering for use in dictionnaries.
     */
   def registerInvariant(i:Invariant):Int = {
-    assert(!closed,"model is closed, cannot add invariant")
+    require(!closed,"model is closed, cannot add invariant")
     propagationElements = QList(i,propagationElements)
     GetNextID()
   }
@@ -162,7 +136,6 @@ case class Store(override val verbose:Boolean = false,
     toCallBeforeClose = (toCallBeforeCloseProc) :: toCallBeforeClose
   }
 
-
   protected def performCallsBeforeClose() {
     for (p <- toCallBeforeClose) p()
     toCallBeforeClose = List.empty
@@ -171,12 +144,12 @@ case class Store(override val verbose:Boolean = false,
   /**calls this when you have declared all your invariants and variables.
     * This must be called before any query and update can be made on the model,
     * and after all the invariants and variables have been declared.
-    * @param DropStaticGraph true if you want to drop the static propagation graph to free memory. It takes little time
+    * @param dropStaticGraph true if you want to drop the static propagation graph to free memory. It takes little time
     */
-  def close(DropStaticGraph: Boolean = true){
+  def close(dropStaticGraph: Boolean = true){
     assert(!closed, "cannot close a model twice")
     performCallsBeforeClose()
-    setupPropagationStructure(DropStaticGraph)
+    setupPropagationStructure(dropStaticGraph)
     killBulker() //we won't create any new model artifacts, thus we can kill the bulker and free its memory
     closed=true
   }
@@ -202,7 +175,7 @@ case class Store(override val verbose:Boolean = false,
 
   var NotifiedInvariant:Invariant=null
 
-  override def toString:String = variables.toString()
+  override def toString:String = "Store(vars:{" + variables.toIterable.mkString(";") + "})"
 
   //returns the set of source variable that define this one.
   // This exploration procedure explores passed dynamic invariants,
@@ -210,26 +183,26 @@ case class Store(override val verbose:Boolean = false,
   def sourceVariables(v:AbstractVariable):SortedSet[Variable] = {
     var ToExplore: QList[PropagationElement] = QList(v)
     var SourceVariables:SortedSet[Variable] = SortedSet.empty
-    while(ToExplore != null){
+    while(ToExplore != null) {
       val head = ToExplore.head
       ToExplore = ToExplore.tail
-      //TODO: we can have both var and invar in the same class now.
-      if(head.isInstanceOf[Variable]){
-        val v:Variable = head.asInstanceOf[Variable]
-        if(!SourceVariables.contains(v)){
-          SourceVariables += v
-          for(listened <- v.getStaticallyListenedElements)
-            ToExplore = QList(listened,ToExplore)
-        }
-        //TODO: keep a set of the explored invariants, to speed up this thing?
-      }else if(head.isInstanceOf[Invariant]){
-        val i:Invariant = head.asInstanceOf[Invariant]
-        for (listened <- i.getStaticallyListenedElements){
-          if (listened.propagationStructure != null && (!listened.isInstanceOf[Variable] || !SourceVariables.contains(listened.asInstanceOf[Variable]))){
-            ToExplore = QList(listened,ToExplore)
+      head match {
+        case v : Variable =>
+          if (!SourceVariables.contains(v)) {
+            SourceVariables += v
+            for (listened <- v.getStaticallyListenedElements)
+              ToExplore = QList(listened, ToExplore)
           }
-        }
-      }else{assert(false,"propagation element that is not a variable, and not an invariant??")}
+        //TODO: keep a set of the explored invariants, to speed up this thing?
+        case i : Invariant =>
+          for (listened <- i.getStaticallyListenedElements) {
+            if (listened.propagationStructure != null && (!listened.isInstanceOf[Variable] || !SourceVariables.contains(listened.asInstanceOf[Variable]))) {
+              ToExplore = QList(listened, ToExplore)
+            }
+          }
+        case _ =>
+          require(false, "propagation element that is not a variable, and not an invariant??")
+      }
     }
     SourceVariables
   }
@@ -253,29 +226,32 @@ case class Store(override val verbose:Boolean = false,
   * you cannot pass it over a network connection for instance.
   * see methods getSolution and restoreSolution in [[oscar.cbls.invariants.core.computation.Store]]
   */
-case class Solution(assignationInt:List[(ChangingIntValue,Int)],
-                    assignationIntSet:List[(ChangingSetValue,SortedSet[Int])],
-                    model:Store){
+case class Solution(saves:Iterable[AbstractVariableSnapShot],model:Store){
 
   /**converts the solution to a human-readable string*/
   override def toString:String = {
-    var acc:String = ""
-    var started = false
-    acc = "IntVars("
-    for(v <-assignationInt){
-      if(started) acc += ","
-      started = true
-      acc += v._1.name + ":=" + v._2
-    }
-    acc +=")  IntSetVars("
-    started = false
-    for(v <-assignationIntSet){
-      if(started) acc += ","
-      started = true
-      acc += v._1.name + ":=" + (if (v._2.isEmpty){"null"}else{"{" + v._2.foldLeft("")((acc,intval) => if(acc.equalsIgnoreCase("")) ""+intval else acc+","+intval) + "}"})
-    }
-    acc + ")"
+    "Solution(\n" + saves.mkString(",\n\t") + "\n)"
   }
+
+  def restoreDecisionVariables() {
+    for(snapshot <- saves) snapshot.restoreIfDecisionVariable()
+  }
+}
+
+/**
+ * a snapshot is moreless the same as a solution, except that the snapshot can be queried for the value of the variables.
+ * there is an overhead in creating a snapshot because it cretes a dictionary to store the values.
+ * @param toRecord the variables to save
+ * @param model
+ */
+class Snapshot(toRecord:Iterable[AbstractVariable], val model:Store) {
+  val varDico:SortedMap[AbstractVariable, AbstractVariableSnapShot] = SortedMap.empty[AbstractVariable, AbstractVariableSnapShot] ++ toRecord.map(v => ((v,v.snapshot)))
+
+  def restoreDecisionVariables() {
+    for(snapshot <- varDico.values) snapshot.restoreIfDecisionVariable()
+  }
+
+  def apply(a:AbstractVariable):AbstractVariableSnapShot = varDico(a)
 }
 
 object Invariant{
@@ -287,7 +263,7 @@ object Invariant{
 trait VaryingDependencies extends Invariant with VaryingDependenciesPE{
 
   /**register to determining element. It must be in the static dependency graph*/
-  def registerDeterminingDependency(v:Value,i:Any = -1){
+  def registerDeterminingDependency(v:Value,i:Int = -1){
     registerDeterminingElement(v,i)
   }
 
@@ -298,7 +274,7 @@ trait VaryingDependencies extends Invariant with VaryingDependenciesPE{
     * @param i: an integer value that will be passed when updates on this variable are notified to the invariant
     * @return a handle that is required to remove the listened var from the dynamically listened ones
     */
-  override def registerDynamicDependency(v:Value,i:Any = -1):KeyForElementRemoval = {
+  override def registerDynamicDependency(v:Value,i:Int = -1):KeyForElementRemoval = {
     registerDynamicallyListenedElement(v,i)
   }
 
@@ -318,7 +294,6 @@ trait VaryingDependencies extends Invariant with VaryingDependenciesPE{
 
 /**This is be base class for all invariants.
   * Invariants also register to the model, but they identify the model they are associated to by querying the variables they are monitoring.
-  *
   */
 trait Invariant extends PropagationElement{
 
@@ -372,12 +347,12 @@ trait Invariant extends PropagationElement{
     * @param v the variable that we want to register to
     * @param i the integer value that will be passed to the invariant to notify some changes in the value of this variable
     */
-  def registerStaticAndDynamicDependency(v:Value,i:Any = -1){
+  def registerStaticAndDynamicDependency(v:Value,i:Int = -1){
     registerStaticDependency(v)
     registerDynamicDependency(v,i)
   }
 
-  def registerStaticAndDynamicDependencies(v:((Value,Any))*){
+  def registerStaticAndDynamicDependencies(v:((Value,Int))*){
     for (varint <- v){
       registerStaticDependency(varint._1)
       registerDynamicDependency(varint._1,varint._2)
@@ -423,29 +398,12 @@ trait Invariant extends PropagationElement{
     * @param i: an integer value that will be passed when updates on this variable are notified to the invariant
     * @return null
     */
-  def registerDynamicDependency(v:Value,i:Any = -1):KeyForElementRemoval = {
+  def registerDynamicDependency(v:Value,i:Int = -1):KeyForElementRemoval = {
     registerDynamicallyListenedElement(v,i)
     null
   }
 
-  //we are only notified for the variable we really want to listen (cfr. mGetReallyListenedElements, registerDynamicDependency, unregisterDynamicDependency)
-  def notifyIntChangedAny(v: ChangingIntValue, i: Any, OldVal: Int, NewVal: Int) {notifyIntChanged(v, i.asInstanceOf[Int], OldVal, NewVal)}
 
-  def notifyIntChanged(v: ChangingIntValue, i: Int, OldVal: Int, NewVal: Int) {notifyIntChanged(v, OldVal, NewVal)}
-
-  def notifyIntChanged(v: ChangingIntValue, OldVal: Int, NewVal: Int) {}
-
-  def notifyInsertOnAny(v: ChangingSetValue,i:Any,value:Int){notifyInsertOn(v,i.asInstanceOf[Int],value)}
-
-  def notifyInsertOn(v: ChangingSetValue,i:Int,value:Int){notifyInsertOn(v,value)}
-
-  def notifyInsertOn(v: ChangingSetValue,value:Int){}
-
-  def notifyDeleteOnAny(v:ChangingSetValue,i:Any,value:Int){notifyDeleteOn(v,i.asInstanceOf[Int],value)}
-
-  def notifyDeleteOn(v: ChangingSetValue,i:Int,value:Int){notifyDeleteOn(v,value)}
-
-  def notifyDeleteOn(v: ChangingSetValue,value:Int){}
 
   /**To override whenever possible to spot errors in invariants.
     * this will be called for each invariant after propagation is performed.
@@ -564,9 +522,28 @@ trait Variable extends AbstractVariable{
   }
 }
 
+abstract class AbstractVariableSnapShot(val a:AbstractVariable){
+
+  final def restore() {
+    a match {
+      case v : Variable if v.isDecisionVariable => doRestore()
+      case _ => throw new Error("can only re-assign decision variable, not " + a)
+    }
+  }
+
+  final def restoreIfDecisionVariable(){
+    a match {
+      case v : Variable if v.isDecisionVariable => doRestore()
+      case _ => ;
+    }
+  }
+  protected def doRestore()
+}
+
+
 object Variable{
   implicit val ord:Ordering[Variable] = new Ordering[Variable]{
-    def compare(o1: Variable, o2: Variable) = o1.compare(o2)
+    def compare(o1: Variable, o2: Variable) = o1.compare(o2) //that the compare of propagation element, actually
   }
 }
 
@@ -585,6 +562,8 @@ trait AbstractVariable
   def model = propagationStructure.asInstanceOf[Store]
 
   def hasModel:Boolean = hasPropagationStructure
+
+  def snapshot:AbstractVariableSnapShot
 
   def name:String
 
@@ -613,20 +592,10 @@ trait AbstractVariable
     * @return a string similar to the toString method
     */
   def toStringNoPropagate:String
-
-  def getDotColor:String = {
-    if (getStaticallyListeningElements.isEmpty){
-      "blue"
-    }else if (getStaticallyListenedElements.isEmpty){
-      "green"
-    }else{
-      "black"
-    }
-  }
 }
 
 object AbstractVariable{
   implicit val ord:Ordering[AbstractVariable] = new Ordering[AbstractVariable]{
-    def compare(o1: AbstractVariable, o2: AbstractVariable) = o1.compare(o2)
+    def compare(o1: AbstractVariable, o2: AbstractVariable) = o1.compare(o2) //that the compare of propagation element, actually
   }
 }

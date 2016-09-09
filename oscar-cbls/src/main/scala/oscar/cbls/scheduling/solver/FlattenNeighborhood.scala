@@ -18,15 +18,19 @@ import oscar.cbls.search.core.EasyNeighborhood
 case class FlattenOne(p: Planning,
                       resourcesForFlattening:Planning=> Iterable[Resource] = (p:Planning) => List(p.resourceArray(SearchEngine.selectFrom(p.worseOvershotResource.value))),
                       timesForFlattening:Resource => Iterable[Int] = (r:Resource) => List(r.worseOverShootTime),
-                     candidatesForDependency:(Resource,Int) => Iterable[Activity] = (r:Resource,t:Int) => r.conflictingActivities(t),
+                      candidatesForDependency:(Resource,Int) => Iterable[Activity] = (r:Resource,t:Int) => r.conflictingActivities(t),
                       best:Boolean = false,
                       neighborhoodName:String=null,
                       priorityToPrecedenceToMovableActivities: Boolean = true)
-  extends EasySchedulingNeighborhood(best,neighborhoodName) with SearchEngineTrait {
+  extends EasySchedulingNeighborhood[AddDynamicPrecedence](best,neighborhoodName) with SearchEngineTrait {
   require(p.isClosed)
 
   //this resets the internal state of the Neighborhood
   override def reset() {}
+
+  var fromActivityForInstantiation:Activity = null
+  var toActivityForInstantiation:Activity = null
+
 
   /** This is the method you must implement and that performs the search of your neighborhood.
     * every time you explore a neighbor, you must perform the calls to notifyMoveExplored or moveRequested(newObj) && submitFoundMove(myMove)){
@@ -40,12 +44,19 @@ case class FlattenOne(p: Planning,
 
         for (fromActivity <- conflictActivities){
           for (toActivity <- conflictActivities if toActivity != fromActivity){
-            if(moveRequested(obj.addDPrecedenceVal(fromActivity,toActivity)) &&
-              submitFoundMove(AddDynamicPrecedence(fromActivity,toActivity)))
-              return;
+            fromActivityForInstantiation = fromActivity
+            toActivityForInstantiation = toActivity
+            if (evaluateCurrentMoveObjTrueIfStopRequired(obj.addDPrecedenceVal(fromActivity,toActivity))) {
+              return
             }
           }
         }
+      }
+    }
+  }
+
+  override def instantiateCurrentMove(newObj : Int) : AddDynamicPrecedence = {
+    AddDynamicPrecedence(fromActivityForInstantiation,toActivityForInstantiation)
   }
 }
 
@@ -57,7 +68,8 @@ case class AddDynamicPrecedence(from:Activity,to:Activity) extends Move{
 case class FlattenOneSuperActivity(p: Planning,
                                    priorityToPrecedenceToMovableActivities: Boolean = true)
   extends EasyNeighborhood with SearchEngineTrait {
-  (supportForSuperActivities: Boolean = p.isThereAnySuperActitity)
+
+  val supportForSuperActivities: Boolean = p.isThereAnySuperActitity
 
 
 

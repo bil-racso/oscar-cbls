@@ -66,6 +66,7 @@ object NQueensBench1 extends SearchEngine(true) with StopWatch{
         SolveNQueen(n)
         System.gc()
       }
+
     } else {
       val N:Int=args(0).toInt
       println("Runing NQueen - this takes time depending on N")
@@ -122,5 +123,6 @@ object NQueensBench1 extends SearchEngine(true) with StopWatch{
     }
 
     println(padToLength("" + getWatch, 15) + it.value)
+    //println(m.stats)
   }
 }

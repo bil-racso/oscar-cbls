@@ -20,6 +20,7 @@
 
 package oscar.cbls.invariants.core.computation
 
+import oscar.cbls.algo.seq.functional.UniqueIntSequence
 import oscar.cbls.invariants.core.propagation.{Checker, PropagationElement}
 import scala.collection.mutable.{Map => MMap}
 import scala.language.implicitConversions
@@ -59,6 +60,10 @@ object IntValue {
   }
 }
 
+trait IntNotificationTarget{
+  def notifyIntChanged(v: ChangingIntValue, id: Int, OldVal: Int, NewVal: Int)
+}
+
 /**An IntVar is a variable managed by the [[oscar.cbls.invariants.core.computation.Store]] whose type is integer.
   *
   * @param initialDomain is the domain value of the variable. Some invariants exploit this value to declare fixed size arrays
@@ -68,54 +73,56 @@ abstract class ChangingIntValue(initialValue:Int, initialDomain:Domain)
   extends AbstractVariable with IntValue{
 
   assert(initialDomain.contains(initialValue),initialValue+ " is not in the domain of "+this.name+"("+initialDomain+"). This might indicate an integer overflow.")
-  
+
+  override def snapshot : ChangingIntValueSnapShot = new ChangingIntValueSnapShot(this,this.value)
+  def valueAtSnapShot(s:Snapshot):Int = s(this) match{case s:ChangingIntValueSnapShot => s.savedValue case _ => throw new Error("cannot find value of " + this + " in snapshot")}
+
   private var privatedomain:Domain = initialDomain
-  private var Value: Int = initialValue
-  private var OldValue = Value
+  private var mNewValue: Int = initialValue
+  private var mOldValue = mNewValue
 
   def domain:Domain = privatedomain
 
   def restrictDomain(d:Domain): Unit = {
     privatedomain = privatedomain.restrict(d)
-    if(!privatedomain.contains(Value)){
+    if(!privatedomain.contains(mNewValue)){
         this := privatedomain.min
       }
   }
 
   override def toString = {
-    if(model != null && model.propagateOnToString) s"$name:=$value" else s"$name:=$Value"
+    if(model != null && model.propagateOnToString) s"$name:=$value" else s"$name:=$mNewValue"
   }
-  override def toStringNoPropagate = s"$name:=$Value"
+  override def toStringNoPropagate = s"$name:=$mNewValue"
 
   def setValue(v:Int){
-    if (v != Value){
+    if (v != mNewValue){
       assert(domain.contains(v),v+ " is not in the domain of "+this+"("+min+".."+max+"). This might indicate an integer overflow.")
-      Value = v
+      mNewValue = v
       notifyChanged()
     }
   }
 
-  override def value: Int = getValue()
+  override def value: Int = {
+    if (model == null) return mNewValue
+    val propagating = model.propagating
+    if (definingInvariant == null && !propagating) return mNewValue //the new value, actually!
+    if(!propagating) model.propagate(this)
+    mOldValue
+  }
 
-  def getValue(NewValue: Boolean = false): Int = {
-    if(NewValue){
-      assert(model.checkExecutingInvariantOK(definingInvariant),"variable [" + this
-        + "] queried for latest val by non-controlling invariant")
-      Value
-    } else{
-      if (model == null) return Value
-      if (definingInvariant == null && !model.propagating) return Value
-      model.propagate(this)
-      OldValue
-    }
+  def newValue:Int = {
+    assert(model.checkExecutingInvariantOK(definingInvariant),"variable [" + this
+      + "] queried for latest val by non-controlling invariant")
+    mNewValue
   }
 
   override def performPropagation(){performIntPropagation()}
 
   final protected def performIntPropagation(){
-    if(OldValue!=Value){
-      val old=OldValue
-      OldValue=Value
+    if(mOldValue!=mNewValue){
+      val old=mOldValue
+      mOldValue=mNewValue  //TODO: the change should be made AFTER the notification
 
       val dynListElements = getDynamicallyListeningElements
       val headPhantom = dynListElements.headPhantom
@@ -123,23 +130,16 @@ abstract class ChangingIntValue(initialValue:Int, initialDomain:Domain)
       while(currentElement != headPhantom){
         val e = currentElement.elem
         currentElement = currentElement.next
-        val inv:Invariant = e._1.asInstanceOf[Invariant]
-        assert({this.model.NotifiedInvariant=inv; true})
-        inv.notifyIntChangedAny(this,e._2,old,Value)
+        val inv:IntNotificationTarget = e._1.asInstanceOf[IntNotificationTarget]
+        assert({this.model.NotifiedInvariant=inv.asInstanceOf[Invariant]; true})
+        inv.notifyIntChanged(this,e._2,old,mNewValue)
         assert({this.model.NotifiedInvariant=null; true})
       }
-      /*
-      for (e:((PropagationElement,Any)) <- getDynamicallyListeningElements){
-      val inv:Invariant = e._1.asInstanceOf[Invariant]
-        assert({this.model.NotifiedInvariant=inv; true})
-        inv.notifyIntChangedAny(this,e._2,old,Value)
-        assert({this.model.NotifiedInvariant=null; true})
-      }*/
     }
   }
 
   override def checkInternals(c:Checker){
-    c.check(OldValue == Value)
+    c.check(mOldValue == mNewValue)
   }
 
   protected def :=(v: Int) {
@@ -147,24 +147,22 @@ abstract class ChangingIntValue(initialValue:Int, initialDomain:Domain)
   }
 
   protected def :+=(v: Int) {
-    setValue(v + getValue(true))
+    setValue(v + newValue)
   }
 
   protected def :*=(v: Int) {
-    setValue(v * getValue(true))
+    setValue(v * newValue)
   }
 
   protected def :-=(v:Int) {
-    setValue(getValue(true) - v)
+    setValue(newValue - v)
   }
 
   /** increments the variable by one
     */
   protected def ++ {
-    setValue(1 + getValue(true))
+    setValue(1 + newValue)
   }
-
-  def getDotNode = "[label = \"IntVar(" + name + ")\" shape = oval color = " + getDotColor + "]"
 
   def compare(that: ChangingIntValue): Int = {
     assert(this.uniqueID != -1, "cannot compare non-registered PropagationElements this: [" + this + "] that: [" + that + "]")
@@ -177,6 +175,10 @@ object ChangingIntValue{
   implicit val ord:Ordering[ChangingIntValue] = new Ordering[ChangingIntValue]{
     def compare(o1: ChangingIntValue, o2: ChangingIntValue) = o1.compare(o2)
   }
+}
+
+class ChangingIntValueSnapShot(val variable:ChangingIntValue,val savedValue:Int) extends AbstractVariableSnapShot(variable){
+  override protected def doRestore() : Unit = {variable.asInstanceOf[CBLSIntVar] := savedValue}
 }
 
 /**An IntVar is a variable managed by the [[oscar.cbls.invariants.core.computation.Store]] whose type is integer.
@@ -200,21 +202,21 @@ class CBLSIntVar(givenModel: Store, initialValue: Int, initialDomain:Domain, n: 
   }
 
   override def :+=(v: Int) {
-    setValue(v + getValue(true))
+    setValue(v + newValue)
   }
 
   override def :*=(v: Int) {
-    setValue(v * getValue(true))
+    setValue(v * newValue)
   }
 
   override def :-=(v:Int) {
-    setValue(getValue(true) - v)
+    setValue(newValue - v)
   }
 
   /** increments the variable by one
     */
   override def ++ {
-    setValue(1 + getValue(true))
+    setValue(1 + newValue)
   }
 
   /**this operator swaps the value of two IntVar*/
@@ -255,7 +257,7 @@ class CBLSIntConst(override val value:Int)
   override def domain: SingleValueDomain = new SingleValueDomain(value)
   override def min: Int = value
   override def max: Int = value
-  override def name = "" + value
+  override def name = value.toString
   override def restrictDomain(d:Domain){
     require(d.contains(value))
   }
@@ -320,14 +322,14 @@ object IdentityInt{
 /** an invariant that is the identity function
   * @author renaud.delandtsheer@cetic.be
   */
-class IdentityInt(toValue:CBLSIntVar, fromValue:IntValue) extends Invariant{
+class IdentityInt(toValue:CBLSIntVar, fromValue:IntValue) extends Invariant with IntNotificationTarget{
   registerStaticAndDynamicDependency(fromValue)
   toValue.setDefiningInvariant(this)
   finishInitialization()
 
   toValue := fromValue.value
 
-  override def notifyIntChanged(v: ChangingIntValue, OldVal: Int, NewVal: Int) {
+  override def notifyIntChanged(v: ChangingIntValue, id:Int, OldVal: Int, NewVal: Int) {
     toValue := NewVal
   }
 

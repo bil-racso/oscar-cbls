@@ -22,7 +22,7 @@
 
 package oscar.cbls.invariants.lib.logic
 
-import oscar.cbls.invariants.core.algo.heap.{BinomialHeap, BinomialHeapWithMove}
+import oscar.cbls.algo.heap.{BinomialHeap, BinomialHeapWithMove}
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.core.propagation.Checker
 
@@ -37,7 +37,8 @@ import scala.collection.mutable.Queue
  * @author renaud.delandtsheer@cetic.be
  * */
 case class SelectLEHeapHeap(values: Array[IntValue], boundary: IntValue)
-  extends SetInvariant(SortedSet.empty[Int], values.indices.start to values.indices.end) {
+  extends SetInvariant(SortedSet.empty[Int], values.indices.start to values.indices.end)
+  with IntNotificationTarget{
 
   for (v <- values.indices) registerStaticAndDynamicDependency(values(v), v)
   registerStaticAndDynamicDependency(boundary)
@@ -126,14 +127,14 @@ case class SelectLEHeapHeap(values: Array[IntValue], boundary: IntValue)
  * @author renaud.delandtsheer@cetic.be
  * */
 case class SelectLESetQueue(values: Array[IntValue], boundary: IntValue)
-  extends SetInvariant(initialDomain = values.indices.start to values.indices.end) {
+  extends SetInvariant(initialDomain = values.indices.start to values.indices.end)
+  with IntNotificationTarget{
 
   for (v <- values.indices) registerStaticAndDynamicDependency(values(v), v)
   registerStaticAndDynamicDependency(boundary)
   finishInitialization()
 
   val QueueAbove: Queue[Int] = new Queue[Int]
-
 
   this := SortedSet.empty[Int]
   val HeapAbove: BinomialHeap[Int] = new BinomialHeap((i: Int) => values(i).value, values.size)

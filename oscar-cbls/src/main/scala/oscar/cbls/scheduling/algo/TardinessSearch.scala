@@ -1,6 +1,6 @@
 package oscar.cbls.scheduling.algo
 
-import oscar.cbls.invariants.core.computation.{Solution, Store}
+import oscar.cbls.invariants.core.computation.{Variable, Solution, Store}
 import oscar.cbls.scheduling.algo.CriticalPathFinder.nonSolidCriticalPath
 import oscar.cbls.scheduling.model.{Activity, Deadlines, Planning, TotalResourcesOvershootEvaluation, VariableResources}
 import oscar.cbls.search.SearchEngine
@@ -161,8 +161,8 @@ class TardinessSearch(planning: Planning with Deadlines with TotalResourcesOvers
   private def swap(from: Activity, to: Activity): (Int, Solution) = {
     val successors = to.allSucceedingActivities.value.toList.map(planning.activityArray(_))
     val successorsPredecessors = successors.map(_.additionalPredecessors)
-    val activitiesToSnap = from.additionalPredecessors :: to.additionalPredecessors :: successorsPredecessors
-    val snapshot = planning.model.saveValues(activitiesToSnap: _*)
+    val activitiesToSnap:List[Variable] = from.additionalPredecessors :: to.additionalPredecessors :: successorsPredecessors
+    val snapshot = planning.model.saveValues(activitiesToSnap)
 
     val previousTardiness = planning.totalTardiness.value
     val gain = if (to.canAddPrecedence) {

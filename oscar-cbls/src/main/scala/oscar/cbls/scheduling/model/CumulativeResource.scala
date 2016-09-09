@@ -25,11 +25,11 @@ package oscar.cbls.scheduling.model
  * ****************************************************************************
  */
 
+import oscar.cbls.algo.conflict.ConflictSearch
 import oscar.cbls.invariants.core.computation.{CBLSIntVar, IntValue}
 import oscar.cbls.invariants.lib.logic.Cumulative
 import oscar.cbls.invariants.lib.minmax.{ArgMax, Max}
 import oscar.cbls.modeling.Algebra._
-import oscar.cbls.scheduling.algo.ConflictSearch
 import oscar.cbls.search.SearchEngineTrait
 
 import scala.collection.SortedMap

@@ -1,5 +1,20 @@
 package oscar.cbls.test.routing
 
+/*******************************************************************************
+  * OscaR is free software: you can redistribute it and/or modify
+  * it under the terms of the GNU Lesser General Public License as published by
+  * the Free Software Foundation, either version 2.1 of the License, or
+  * (at your option) any later version.
+  *
+  * OscaR is distributed in the hope that it will be useful,
+  * but WITHOUT ANY WARRANTY; without even the implied warranty of
+  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  * GNU Lesser General Public License  for more details.
+  *
+  * You should have received a copy of the GNU Lesser General Public License along with OscaR.
+  * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
+  ******************************************************************************/
+
 import scala.math.pow
 import scala.math.round
 import scala.math.sqrt
@@ -22,7 +37,7 @@ import oscar.cbls.routing.model.RoutedAndUnrouted
 import oscar.cbls.routing.model.UnroutedImpl
 import oscar.cbls.routing.model.VRP
 import oscar.cbls.routing.model.VRPObjective
-import oscar.cbls.routing.neighborhood.InsertPoint
+import oscar.cbls.routing.neighborhood.InsertPointUnroutedFirst
 import oscar.cbls.routing.neighborhood.OnePointMove
 import oscar.cbls.routing.neighborhood.OnePointMoveMove
 import oscar.cbls.routing.neighborhood.Swap
@@ -41,7 +56,7 @@ object RandomInsert {
    */
   def apply(vrp: VRP with RoutedAndUnrouted with VRPObjective with PositionInRouteAndRouteNr) {
     print("Applying random insert heuristic...")
-    InsertPoint(vrp.unrouted,
+    InsertPointUnroutedFirst(vrp.unrouted,
       () => (n: Int) => vrp.routed.value,
       vrp: VRP,
       "Random insert",

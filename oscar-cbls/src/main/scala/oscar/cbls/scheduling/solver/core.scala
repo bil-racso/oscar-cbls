@@ -3,6 +3,7 @@ package oscar.cbls.scheduling.solver
 import oscar.cbls.objective.{IntVarObjective, Objective}
 import oscar.cbls.scheduling.model.{Planning, Activity}
 import oscar.cbls.search.core.EasyNeighborhood
+import oscar.cbls.search.move.Move
 
 /**
  * this neighborhood wants to flatten while minimizing the makepan increase
@@ -53,7 +54,7 @@ class MakeSpanWithDifferentialEstimatorThroughLSDLED(p:Planning) extends IntVarO
   }
 }
 
-abstract class EasySchedulingNeighborhood(best:Boolean = false, neighborhoodName:String=null) extends EasyNeighborhood(best,neighborhoodName){
+abstract class EasySchedulingNeighborhood[M<:Move](best:Boolean = false, neighborhoodName:String=null) extends EasyNeighborhood[M](best,neighborhoodName){
   var private_obj: SchedulingObjective = null
   override protected def obj_=(o:Objective){
     o match{

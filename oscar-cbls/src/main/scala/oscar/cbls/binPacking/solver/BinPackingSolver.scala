@@ -20,7 +20,7 @@ package oscar.cbls.binPacking.solver
 import oscar.cbls.binPacking.model.{Bin, BinPackingProblem, Item}
 import oscar.cbls.objective.Objective
 import oscar.cbls.search.SearchEngineTrait
-import oscar.cbls.search.algo.IdenticalAggregator
+import oscar.cbls.algo.search.IdenticalAggregator
 import oscar.cbls.search.core.{Neighborhood, NoMoveFound, SearchResult}
 import oscar.cbls.search.move.{AssignMove, CompositeMove, SwapMove}
 
@@ -99,7 +99,7 @@ case class MoveItem(p:BinPackingProblem,
     match{
       case (item, newBin) =>
         val objAfter = p.overallViolation.assignVal(item.bin, newBin.number)
-        if(acceptanceCriteria(oldViolation,objAfter)) AssignMove(item.bin,newBin.number,objAfter, "ItemMove")
+        if(acceptanceCriteria(oldViolation,objAfter)) AssignMove(item.bin,newBin.number,objAfter, item.number,"ItemMove")
         else{
           if (printPerformedSearches) println("ItemMove: no improvement found")
           NoMoveFound
@@ -171,7 +171,7 @@ case class SwapItems(p:BinPackingProblem,
     match {
       case (item1, item2) =>
         val newObj = p.overallViolation.swapVal(item1.bin, item2.bin)
-        if(acceptanceCriteria(oldViolation,newObj)) SwapMove(item1.bin, item2.bin, newObj, "ItemsSwap")
+        if(acceptanceCriteria(oldViolation,newObj)) SwapMove(item1.bin, item2.bin, item1.number,item2.number,newObj, "ItemsSwap")
         else{
           if (printPerformedSearches) println("ItemsSwap: no improvement found")
           NoMoveFound
@@ -213,7 +213,7 @@ case class JumpSwapItems(p:BinPackingProblem)
     match {
       case (item1,item2) =>
         if (printPerformedSearches) println("Jump: swapping bins of " + item1 + " and " + item2)
-        SwapMove(item1.bin, item2.bin, Int.MaxValue, "Jump")
+        SwapMove(item1.bin, item2.bin, item1.number,item2.number,Int.MaxValue, "Jump")
       case null =>
         if (printPerformedSearches) println("Jump: no move found")
         NoMoveFound
@@ -244,7 +244,7 @@ case class EmptyMostViolatedBin(p:BinPackingProblem)
       bin1.items.value.toList.map(itemid => {
         val item = p.items(itemid)
         val newBin = selectFrom(binList, (bin:Bin) => bin.number != bin1.number)
-        AssignMove(item.bin,newBin.number,Int.MaxValue)
+        AssignMove(item.bin,newBin.number,item.number,Int.MaxValue)
       }), Int.MaxValue, "Jump, Emptying bin " + bin1.number
     )
   }
