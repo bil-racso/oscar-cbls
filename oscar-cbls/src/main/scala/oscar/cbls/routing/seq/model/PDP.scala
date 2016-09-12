@@ -124,10 +124,6 @@ class PDP(override val n:Int, override val v:Int, override val m:Store, maxPivot
 
   def getRoutedDeliverys: Iterable[Int] = deliveryNodes.filter(isRouted(_))
 
-  def getRoutedPickupsPredecessors: Iterable[Int] = getRoutedPickups.map(prev(_).value)
-
-  def getRoutedDeliverysPredecessors: Iterable[Int] = getRoutedDeliverys.map(prev(_).value)
-
   def getUnroutedPickups: Iterable[Int] = pickupNodes.filter(!isRouted(_))
 
   def getUnroutedDeliverys: Iterable[Int] = deliveryNodes.filter(!isRouted(_))
@@ -201,11 +197,11 @@ class PDP(override val n:Int, override val v:Int, override val m:Store, maxPivot
       val currentSegment = segmentsArray(i)._2
       completeSegments = (currentSegment.head, currentSegment.last) :: completeSegments
       var j = i-1
-      var currentPreds = prev(route(i)).value
+      var currentPreds = route(i-1)
       while(j != -1){
         if(segmentsArray(j) != null && currentPreds == segmentsArray(j)._2.last){
           completeSegments = (segmentsArray(j)._2.head, currentSegment.last) :: completeSegments
-          currentPreds = prev(route(j)).value
+          currentPreds = route(j-1)
         }
         j -= 1
       }
@@ -401,6 +397,7 @@ class PDP(override val n:Int, override val v:Int, override val m:Store, maxPivot
     */
   def computeClosestNeighborInTime(filter : ((Int,Int) => Boolean) = (_,_) => true): Array[Iterable[Int]] ={
     def arrayOfAllNodes = Array.tabulate(n)(node => node)
+    val route = routes.value.toArray
     Array.tabulate(n)(node =>{
       KSmallest.lazySort(arrayOfAllNodes,
         neighbor => {
@@ -410,8 +407,8 @@ class PDP(override val n:Int, override val v:Int, override val m:Store, maxPivot
             Int.MaxValue
           else {
             val neighborToNode = max(leaveTime(neighbor).value + travelDurationMatrix.getTravelDuration(neighbor, 0, node), timeWindows(node)._1)
-            val neighborToNodeToNext = neighborToNode + timeWindows(node)._3 + travelDurationMatrix.getTravelDuration(node, 0, next(neighbor).value)
-            if(neighborToNodeToNext > (if(timeWindows(next(neighbor).value)._2<0)Int.MaxValue else timeWindows(next(neighbor).value)._2))
+            val neighborToNodeToNext = neighborToNode + timeWindows(node)._3 + travelDurationMatrix.getTravelDuration(node, 0, route(neighbor+1))
+            if(neighborToNodeToNext > (if(timeWindows(route(neighbor+1))._2<0)Int.MaxValue else timeWindows(route(neighbor+1))._2))
               Int.MaxValue
             else
               neighborToNodeToNext - leaveTime(neighbor).value

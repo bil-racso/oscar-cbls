@@ -24,7 +24,7 @@ import oscar.cbls.invariants.lib.set.Diff
 import oscar.cbls.modeling.Algebra._
 import oscar.cbls.algo.search.KSmallest
 import oscar.examples.cbls.routing.visual.ColorGenerator
-import oscar.cbls.visual.MatrixMap.RoutingMatrixVisual
+import oscar.cbls.visual.MatrixMap.RoutingMatrixContainer
 
 import scala.collection.immutable.SortedSet
 import scala.math._
@@ -503,7 +503,7 @@ trait VehicleOfNode extends CloneOfRouteForLightPartialPropagation{
 }
 
 trait RoutingMapDisplay extends VRP with ConstantDistancePerVehicle{
-  var routingMap:RoutingMatrixVisual = null
+  var routingMap:RoutingMatrixContainer = null
 
   /**
     * This method initialize the routing map of the problem
@@ -513,7 +513,7 @@ trait RoutingMapDisplay extends VRP with ConstantDistancePerVehicle{
     * @param geolocalisationMap if true, the geoRoutingMap will be used
     */
   def initializeRoutingMap(list:Array[(Double,Double)], mapSize: Int = 0, pickupAndDeliveryNodes: Boolean = false, geolocalisationMap: Boolean = false): Unit ={
-    routingMap = new RoutingMatrixVisual(vrp = this, pickupAndDeliveryPoints = pickupAndDeliveryNodes, geolocalisationMap = geolocalisationMap)
+    routingMap = new RoutingMatrixContainer(myVRP = this, pickupAndDeliveryPoints = pickupAndDeliveryNodes, geolocalisationMap = geolocalisationMap)
     routingMap.setMapSize(mapSize)
     routingMap.setPointsList(list.toList, v)
     routingMap.setColorValues(ColorGenerator.generateRandomColors(v))

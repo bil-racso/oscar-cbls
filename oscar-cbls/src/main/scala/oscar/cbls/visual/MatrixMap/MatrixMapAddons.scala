@@ -16,10 +16,14 @@ package oscar.cbls.visual.MatrixMap
   ******************************************************************************/
 
 import java.awt._
-import java.awt.event.{MouseEvent, MouseListener}
+import java.awt.event.{ItemEvent, ItemListener, MouseEvent, MouseListener}
+import javax.swing.{BoxLayout, JCheckBox, JPanel}
 
+import oscar.cbls.invariants.lib.logic.Cluster
 import oscar.cbls.routing.seq.model.{PDP, VRP}
 import oscar.visual.shapes.VisualCircle
+
+import scala.List
 
 /**
   * Created by fabian on 23-02-16.
@@ -48,11 +52,10 @@ trait PickupAndDeliveryPoints extends BasicRoutingMap{
 }
 
 trait GeoPickupAndDeliveryPoints extends GeoRoutingMap{
-  var pdp:PDP = _
+  def pdp:PDP
+  require(pdp != null, "In order to use the GeoPickupAndDeliveryPoints trait you must specify a PDP object.")
 
-  def setPDP(vrp:VRP): Unit ={
-    pdp = vrp.asInstanceOf[PDP]
-  }
+  //val cluster = Cluster.MakeDenseAssumingMinMax(pdp.arrivalTime, 0, 86400)
 
   getMainMap.addMouseListener(new MouseListener {
     override def mouseExited(e: MouseEvent): Unit = {}
@@ -78,4 +81,37 @@ trait GeoPickupAndDeliveryPoints extends GeoRoutingMap{
 
     override def mouseReleased(e: MouseEvent): Unit = {}
   })
+}
+
+trait RouteToDisplay extends RoutingMap{
+  def container:RoutingMatrixContainer
+  require(container != null, "In order to use the RouteToDisplay trait you must specify a RoutingMatrixContainer object.")
+  def vrp:VRP
+  require(vrp != null, "In order to use the RouteToDisplay trait you must specify a VRP object.")
+
+  val routesToDisplay:Array[Boolean] = Array.tabulate(vrp.v)(v =>false)
+
+  val vehicleSelectionPane = new JPanel()
+  vehicleSelectionPane.setLayout(new BoxLayout(vehicleSelectionPane,BoxLayout.Y_AXIS))
+  val allCheckBox = new JCheckBox("All")
+  allCheckBox.addItemListener(new ItemListener {
+    override def itemStateChanged(e: ItemEvent): Unit = {
+      for(c <- vehicleSelectionPane.getComponents) {
+        val box = c.asInstanceOf[JCheckBox]
+        box.setSelected(e.getStateChange == ItemEvent.SELECTED)
+      }
+    }
+  })
+  vehicleSelectionPane.add(allCheckBox)
+  for (i <- 0 until vrp.v){
+    val checkBox = new JCheckBox("Vehicle : " + i)
+    checkBox.addItemListener(new ItemListener {
+      override def itemStateChanged(e: ItemEvent): Unit = {
+        routesToDisplay(i) = e.getStateChange == ItemEvent.SELECTED
+        drawRoutes(container.allRoutes,routesToDisplay)
+      }
+    })
+    vehicleSelectionPane.add(checkBox)
+  }
+  container.add(vehicleSelectionPane, BorderLayout.EAST)
 }
