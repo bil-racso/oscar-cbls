@@ -40,10 +40,11 @@ trait RoutingMap{
   var colorValues:Array[Color] = null
   var v = 0
   var mapSize = 10000
+  var routesToDraw:Array[List[Int]] = Array.empty
 
   def drawPoints()
 
-  def drawRoutes(routes:Array[List[Int]], vehicles:Array[Boolean] = Array.empty)
+  def drawRoutes()
 
   def setColorValues(colorValues:Array[Color]): Unit ={
     if(colorValues == null){
@@ -56,6 +57,11 @@ trait RoutingMap{
   def setPointsList(pointsList:scala.List[(scala.Double,scala.Double)],V:Int)
 
   def setMapSize(mapSize:Int)
+
+  def setRouteToDisplay(rtd:Array[List[Int]]): Unit ={
+    routesToDraw = rtd
+    drawRoutes()
+  }
 }
 
 class BasicRoutingMap extends VisualDrawing(false,false) with RoutingMap{
@@ -79,16 +85,15 @@ class BasicRoutingMap extends VisualDrawing(false,false) with RoutingMap{
     }
   }
 
-  def drawRoutes(routes:Array[List[Int]], vehicles:Array[Boolean] = Array.empty): Unit ={
+  def drawRoutes(): Unit ={
     clear()
     drawPoints()
 
     var previousPoint = -1
     var color:Color = null
-    val routesToDisplay = if(vehicles.isEmpty)Array.tabulate(routes.length)(v => true) else vehicles
-    for(r <- routesToDisplay.indices if routesToDisplay(r)) {
+    for(r <- routesToDraw.indices) {
       color = colorValues(r)
-      for (p <- routes(r)) {
+      for (p <- routesToDraw(r)) {
         if(previousPoint >= 0){
           val tempRoute = new VisualArrow(this, new Double(pointsList(previousPoint)._1, pointsList(previousPoint)._2, pointsList(p)._1, pointsList(p)._2), 4)
           tempRoute.outerCol_$eq(color)
@@ -129,7 +134,6 @@ class GeoRoutingMap extends JXMapKit with RoutingMap {
   setZoomSliderVisible(false)
   setMiniMapVisible(false)
   setZoom(7)
-  var routes:Array[List[Int]] = Array.empty
   var zoomChanged = false
   var geoCoords:List[(scala.Double,scala.Double)] = List.empty
 
@@ -158,8 +162,7 @@ class GeoRoutingMap extends JXMapKit with RoutingMap {
     getMainMap.setOverlayPainter(painter)
   }
 
-  override def drawRoutes(routes: Array[List[Int]], vehicles:Array[Boolean] = Array.empty): Unit = {
-    this.routes = routes
+  override def drawRoutes(): Unit = {
     val painter = new Painter[JXMapViewer]{
       override def paint(g: Graphics2D, t: JXMapViewer, i: Int, i1: Int): Unit = {
         val rect:Rectangle = getMainMap.getViewportBounds
@@ -202,9 +205,8 @@ class GeoRoutingMap extends JXMapKit with RoutingMap {
           g.draw(new Ellipse2D.Double(p._1, p._2, 2, 2))
 
         var from = 0
-        val routesToDisplay = if(vehicles.isEmpty)Array.tabulate(routes.length)(v => true) else vehicles
-        for(vehicle <- routesToDisplay.indices if routesToDisplay(vehicle)) {
-          val route = routes(vehicle)
+        for(vehicle <- routesToDraw.indices) {
+          val route = routesToDraw(vehicle)
           if (route.length > 1) {
             g.setColor(colorValues(vehicle))
             for (node <- route) {

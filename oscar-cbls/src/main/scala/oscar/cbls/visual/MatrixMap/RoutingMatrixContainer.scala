@@ -91,7 +91,7 @@ class RoutingMatrixContainer(title:String = "Routing map",
       try {
         Thread.sleep(500)
         if(setMustRefresh(false))
-          routingMap.drawRoutes(allRoutes)
+          routingMap.setRouteToDisplay(allRoutes)
       }catch{
         case ie:InterruptedException => return
         case e:Exception => e.printStackTrace()

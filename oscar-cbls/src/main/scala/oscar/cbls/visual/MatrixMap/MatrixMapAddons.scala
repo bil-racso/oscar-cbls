@@ -19,7 +19,6 @@ import java.awt._
 import java.awt.event.{ItemEvent, ItemListener, MouseEvent, MouseListener}
 import javax.swing.{BoxLayout, JCheckBox, JPanel}
 
-import oscar.cbls.invariants.lib.logic.Cluster
 import oscar.cbls.routing.seq.model.{PDP, VRP}
 import oscar.visual.shapes.VisualCircle
 
@@ -29,6 +28,9 @@ import scala.List
   * Created by fabian on 23-02-16.
   */
 trait PickupAndDeliveryPoints extends BasicRoutingMap{
+
+  def pdp:PDP
+  require(pdp != null, "In order to use the RouteToDisplay trait you must specify a VRP object.")
 
   override def drawPoints(): Unit ={
     var v = this.v
@@ -47,7 +49,11 @@ trait PickupAndDeliveryPoints extends BasicRoutingMap{
   }
 
   def getPointInformation(point:(Int,Int)): String ={
-    "Some informations about the point"
+    val i = pointsList.indexOf(point)
+    "Some informations about the point : " + i + "\n" +
+      "Arrival time : " + pdp.arrivalTime(i).value + "\n" +
+      "Leave time : " + pdp.leaveTime(i).value + "\n" +
+      "Passengers on board : " + pdp.arrivalLoadValue(i).value
   }
 }
 
@@ -108,7 +114,7 @@ trait RouteToDisplay extends RoutingMap{
     checkBox.addItemListener(new ItemListener {
       override def itemStateChanged(e: ItemEvent): Unit = {
         routesToDisplay(i) = e.getStateChange == ItemEvent.SELECTED
-        drawRoutes(container.allRoutes,routesToDisplay)
+        setRouteToDisplay(Array.tabulate(vrp.v)(v => if(routesToDisplay(v))container.allRoutes(v) else List.empty))
       }
     })
     vehicleSelectionPane.add(checkBox)
