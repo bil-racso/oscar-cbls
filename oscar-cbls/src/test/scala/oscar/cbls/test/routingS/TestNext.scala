@@ -52,7 +52,7 @@ class MySimpleRoutingWithUnroutedPointsAndNext(n:Int,v:Int,symmetricDistance:Arr
   this.addToStringInfo(() => "prev:" + prev.map(_.value).mkString(","))
 
   if(pointsList != null)
-    initializeRoutingMap(Array.tabulate(n)(node => (pointsList(node)._1.toDouble, pointsList(node)._2.toDouble)),1000)
+    initializeRoutingMap(Array.tabulate(n)(node => (pointsList(node)._1.toDouble, pointsList(node)._2.toDouble)),this,1000)
 
 
 }

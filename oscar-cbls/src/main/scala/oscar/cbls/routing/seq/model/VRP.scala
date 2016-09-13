@@ -512,10 +512,10 @@ trait RoutingMapDisplay extends VRP with ConstantDistancePerVehicle{
     * @param pickupAndDeliveryNodes if true, the map will show specific information about pickup and delivery nodes
     * @param geolocalisationMap if true, the geoRoutingMap will be used
     */
-  def initializeRoutingMap(list:Array[(Double,Double)], mapSize: Int = 0, pickupAndDeliveryNodes: Boolean = false, geolocalisationMap: Boolean = false): Unit ={
-    routingMap = new RoutingMatrixContainer(myVRP = this, pickupAndDeliveryPoints = pickupAndDeliveryNodes, geolocalisationMap = geolocalisationMap)
+  def initializeRoutingMap(list:Array[(Double,Double)], vrp:VRP = this, mapSize: Int = 0, pickupAndDeliveryNodes: Boolean = false, geolocalisationMap: Boolean = false): Unit ={
+    routingMap = new RoutingMatrixContainer(myVRP = vrp, pickupAndDeliveryPoints = pickupAndDeliveryNodes, geolocalisationMap = geolocalisationMap)
     routingMap.setMapSize(mapSize)
-    routingMap.setPointsList(list.toList, v)
+    routingMap.setPointsList(list.toList)
     routingMap.setColorValues(ColorGenerator.generateRandomColors(v))
     routingMap.drawPoints()
     new Thread(routingMap,"routing thread").start()

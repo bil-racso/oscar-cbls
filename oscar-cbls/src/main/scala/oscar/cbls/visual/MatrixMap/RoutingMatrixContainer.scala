@@ -17,8 +17,9 @@ package oscar.cbls.visual.MatrixMap
   * ****************************************************************************
   */
 
+import java.awt.event.{ItemEvent, ItemListener}
 import java.awt.{BorderLayout, Color, Dimension}
-import javax.swing.{JFrame, JPanel}
+import javax.swing.{BoxLayout, JCheckBox, JFrame, JPanel}
 
 import oscar.cbls.routing.seq.model.{PDP, VRP}
 
@@ -41,44 +42,16 @@ class RoutingMatrixContainer(title:String = "Routing map",
 
   var routingMap:JPanel with RoutingMap = _
 
-  println("Changes applied")
-
-  routingMap = (geolocalisationMap,pickupAndDeliveryPoints,routeToDisplay) match {
-    case(true,true,true) =>
-      new GeoRoutingMap with GeoPickupAndDeliveryPoints with RouteToDisplay{
-        val pdp = myVRP.asInstanceOf[PDP]
-        val vrp = myVRP
-        val container = thiss
-      }
-    case(true,true,false) =>
-      new GeoRoutingMap with GeoPickupAndDeliveryPoints{
-        val pdp = myVRP.asInstanceOf[PDP]
-      }
-    case(true,false,false) =>
-      new GeoRoutingMap
-    case(true,false,true) =>
-      new GeoRoutingMap with RouteToDisplay{
-      val vrp = myVRP
-      val container = thiss
-    }
-    case(false,true,true) =>
-      new BasicRoutingMap with PickupAndDeliveryPoints with RouteToDisplay{
-        val pdp = myVRP.asInstanceOf[PDP]
-        val vrp = myVRP
-        val container = thiss
-      }
-    case(false,true,false) =>
-      new BasicRoutingMap with PickupAndDeliveryPoints{
-        val pdp = myVRP.asInstanceOf[PDP]
-      }
-    case(false,false,false) =>
-      new BasicRoutingMap
-    case(false,false,true) =>
-      new GeoRoutingMap with RouteToDisplay{
-        val vrp = myVRP
-        val container = thiss
-      }
+  routingMap = (geolocalisationMap,routeToDisplay) match {
+    case(true,true) => new GeoRoutingMap with RouteToDisplay{val container = thiss}
+    case(true,false) => new GeoRoutingMap
+    case(false,true) => new BasicRoutingMap with RouteToDisplay{val container = thiss}
+    case(false,false) => new BasicRoutingMap
   }
+  if(pickupAndDeliveryPoints)
+    routingMap.setPDP(myVRP.asInstanceOf[PDP])
+  else
+    routingMap.setVRP(myVRP)
 
   var mustRefresh = false
 
@@ -120,8 +93,8 @@ class RoutingMatrixContainer(title:String = "Routing map",
     routingMap.setColorValues(colorValues)
   }
 
-  def setPointsList(pointsList:List[(Double,Double)],V:Int): Unit ={
-    routingMap.setPointsList(pointsList,V)
+  def setPointsList(pointsList:List[(Double,Double)]): Unit ={
+    routingMap.setPointsList(pointsList)
   }
 
   def setMapSize(mapSize:Int): Unit ={

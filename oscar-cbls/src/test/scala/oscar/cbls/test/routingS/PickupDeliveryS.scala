@@ -38,6 +38,8 @@ class MyPDP(n:Int, v:Int, m:Store,
   def closestNeighboursForwardNotSameRoute = computeClosestNeighborsForward(notOnSameVehicle())
   def closestNeighboursForwardOnSameRoute = computeClosestNeighborsForward(onSameVehicle())
 
+  def closestNeighboursInTime = computeClosestNeighborInTime()
+
   def size = routes.value.size
 
   this.addToStringInfo(() => "next:" + next.map(_.value).mkString(","))
@@ -86,7 +88,7 @@ object PickupDeliveryS extends App{
   val insertCoupleFast = Profile(DynAndThen(
     InsertPointUnroutedFirst(
       unroutedNodesToInsert = () => myPDP.getUnroutedPickups,
-      relevantPredecessor = ()=>myPDP.kFirst(n/10,myPDP.closestNeighboursForward,myPDP.isRouted),
+      relevantPredecessor = ()=>myPDP.kFirst(n/10,myPDP.closestNeighboursInTime,myPDP.isRouted),
       vrp = myPDP),
     (moveResult:InsertPointMove) => InsertPointUnroutedFirst(
       unroutedNodesToInsert = () => Iterable(myPDP.getRelatedDelivery(moveResult.insertedPoint)),
@@ -96,12 +98,13 @@ object PickupDeliveryS extends App{
   val insertCoupleSlow = Profile(DynAndThen(
     InsertPointUnroutedFirst(
       unroutedNodesToInsert = () => myPDP.getUnroutedPickups,
-      relevantPredecessor = ()=> myPDP.kFirst(n/5,myPDP.closestNeighboursForward,myPDP.isRouted),
+      relevantPredecessor = ()=> myPDP.kFirst(n/5,myPDP.closestNeighboursInTime,myPDP.isRouted),
       vrp = myPDP),
     (moveResult:InsertPointMove) => InsertPointUnroutedFirst(
       unroutedNodesToInsert = () => Iterable(myPDP.getRelatedDelivery(moveResult.insertedPoint)),
       relevantPredecessor = () => myPDP.getNodesAfterRelatedPickup(),
       vrp = myPDP, best = true))name "insertCoupleSlow")
+/*
 
   val insertCoupleCloseToDepot = Profile(DynAndThen(
     InsertPointUnroutedFirst(
@@ -112,16 +115,16 @@ object PickupDeliveryS extends App{
         }
         tempList
       },
-      relevantPredecessor = () => myPDP.kFirst(n/10,myPDP.closestNeighboursForward,myPDP.isRouted),
+      relevantPredecessor = () => myPDP.kFirst(n/10,myPDP.closestNeighboursInTime,myPDP.isRouted),
       vrp = myPDP),
     (moveResult:InsertPointMove) => InsertPointUnroutedFirst(
       unroutedNodesToInsert =  () => Iterable(myPDP.getRelatedDelivery(moveResult.insertedPoint)),
       relevantPredecessor = () => myPDP.getNodesAfterRelatedPickup(),
-      vrp = myPDP, best = true))name "insertCoupleCloseToDepot")
+      vrp = myPDP, best = true))name "insertCoupleCloseToDepot")*/
 
   val oneCoupleMove = Profile(DynAndThen(OnePointMove(
     nodesToMove = () => myPDP.getRoutedPickups,
-    relevantNewPredecessors= () => myPDP.kFirst(20,myPDP.closestNeighboursForwardOnSameRoute,myPDP.isRouted),
+    relevantNewPredecessors= () => myPDP.kFirst(20,myPDP.closestNeighboursInTime,myPDP.isRouted),
     vrp = myPDP),
     (moveResult:OnePointMoveMove) => OnePointMove(
       nodesToMove = () => List(myPDP.getRelatedDelivery(moveResult.movedPoint)),
@@ -138,7 +141,7 @@ object PickupDeliveryS extends App{
 
   val pickupDeliveryCoupleShift = Profile(DynAndThen(OnePointMove(
     nodesToMove = () => myPDP.getRoutedPickups,
-    relevantNewPredecessors = () => myPDP.kFirst(20,myPDP.closestNeighboursForwardNotSameRoute,myPDP.isRouted),
+    relevantNewPredecessors = () => myPDP.kFirst(20,myPDP.closestNeighboursInTime,myPDP.isRouted),
     vrp = myPDP),
     (moveResult:OnePointMoveMove) => OnePointMove(
       nodesToMove = () => List(myPDP.getRelatedDelivery(moveResult.movedPoint)),
@@ -208,7 +211,7 @@ object PickupDeliveryS extends App{
 
   def threeOpt(k:Int, breakSym:Boolean) = Profile(new ThreeOpt(() => nodes, ()=>myPDP.kFirst(k,myPDP.closestNeighboursForwardNotFull), myPDP,breakSymmetry = breakSym,neighborhoodName = "ThreeOpt(k=" + k + ")"))
 
-  val search = BestSlopeFirst(List(insertCoupleCloseToDepot,onePointMovePD)) exhaust
+  val search = BestSlopeFirst(List(insertCoupleFast,onePointMovePD)) exhaust
     new BestSlopeFirst(List(pickupDeliveryCoupleShift,oneCoupleMove,insertCoupleSlow,onePointMovePD, threeOpt(20,true)))
 
   val searchWithRrestart = search onExhaustRestartAfter(Atomic(removeCouple maxMoves((n-v)/2)),5,myPDP.obj)

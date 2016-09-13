@@ -4,8 +4,9 @@ import oscar.cbls.algo.search.KSmallest
 import oscar.cbls.constraints.core.ConstraintSystem
 import oscar.cbls.constraints.lib.basic.{EQ, GE, LE}
 import oscar.cbls.invariants.core.computation._
-import oscar.cbls.invariants.lib.logic.{IntITE, IntInt2Int}
+import oscar.cbls.invariants.lib.logic.{Cluster, DenseCluster, IntITE, IntInt2Int}
 import oscar.cbls.invariants.lib.minmax.Max2
+import oscar.cbls.invariants.lib.numeric.Div
 import oscar.cbls.invariants.lib.routing.{RouteSuccessorAndPredecessors, VehicleOfNodes}
 import oscar.cbls.invariants.lib.seq.Precedence
 import oscar.cbls.modeling.Algebra._
@@ -286,6 +287,8 @@ class PDP(override val n:Int, override val v:Int, override val m:Store, maxPivot
 
   var timeWindows: Array[(Int,Int,Int,Int)] = Array.empty
 
+  var arrivalTimeCluster: DenseCluster[IntValue] = _
+
   def initiateTimeWindowInvariants(): Unit ={
     defaultArrivalTime = new CBLSIntConst(0)
 
@@ -307,6 +310,7 @@ class PDP(override val n:Int, override val v:Int, override val m:Store, maxPivot
     for (i <- 0 until n) {
       arrivalTime(i) <== arrivalTimeToNext.element(prev(i))
     }
+    arrivalTimeCluster = Cluster.MakeDenseAssumingMinMax(arrivalTime.map(x => Div(x,900)),0,192)
   }
 
   def addTimeWidowStringInfo() {
@@ -392,29 +396,18 @@ class PDP(override val n:Int, override val v:Int, override val m:Store, maxPivot
   }
 
   /**
-    * This method compute the closest neighbor of a node base on time window and TimeMatrice.
+    * This method compute the closest neighbor of a node base on arrivalTime.
     *
     */
-  def computeClosestNeighborInTime(filter : ((Int,Int) => Boolean) = (_,_) => true): Array[Iterable[Int]] ={
+  def computeClosestNeighborInTime(): Array[Iterable[Int]] ={
     def arrayOfAllNodes = Array.tabulate(n)(node => node)
     val route = routes.value.toArray
-    Array.tabulate(n)(node =>{
-      KSmallest.lazySort(arrayOfAllNodes,
-        neighbor => {
-          if(!filter(node,neighbor))
-            Int.MaxValue
-          else if((leaveTime(neighbor).value + travelDurationMatrix.getTravelDuration(neighbor, 0, node)) > (if(timeWindows(node)._2<0)Int.MaxValue else timeWindows(node)._2))
-            Int.MaxValue
-          else {
-            val neighborToNode = max(leaveTime(neighbor).value + travelDurationMatrix.getTravelDuration(neighbor, 0, node), timeWindows(node)._1)
-            val neighborToNodeToNext = neighborToNode + timeWindows(node)._3 + travelDurationMatrix.getTravelDuration(node, 0, route(neighbor+1))
-            if(neighborToNodeToNext > (if(timeWindows(route(neighbor+1))._2<0)Int.MaxValue else timeWindows(route(neighbor+1))._2))
-              Int.MaxValue
-            else
-              neighborToNodeToNext - leaveTime(neighbor).value
-          }
-        }
-      )}
-    )
+    Array.tabulate(n)(node => {
+      val nodeCluster = arrivalTimeCluster.values(node).value
+      var res:List[Int] = List.empty
+      for(i <- 0 to nodeCluster)
+        res = arrivalTimeCluster.clusters(i).value.toList ::: res
+      res
+    })
   }
 }
