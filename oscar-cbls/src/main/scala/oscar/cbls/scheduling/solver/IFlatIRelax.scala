@@ -49,7 +49,7 @@ class IFlatIRelax(p: Planning,
   /**
    * This solves the jobshop by iterative relaxation and flattening
    * @param maxIt the max number of iterations of the search
-   * @param stable the number of no successive noimprove that will cause the search to stop
+   * @param stable the number of no successive noImprove that will cause the search to stop
    */
   def solve(maxIt: Int, stable: Int) {
     var finished = false;

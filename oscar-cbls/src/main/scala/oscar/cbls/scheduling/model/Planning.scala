@@ -145,13 +145,14 @@ class Planning(val model: Store, val maxDuration: Int) {
       for (t2 <- activity.allSucceedingActivities.value if t2 != activity.ID && t2 != sentinelActivity.ID) {
         val activity2 = activityArray(t2)
         if (activity2.additionalPredecessors.value.contains(activity.ID)) {
-          toreturnAdditional += activity.name + " -> " + activity2.name + "\n"
+          toreturnAdditional += " " + activity.name + " -> " + activity2.name + "\n"
         } else {
-          toreturnInitial += activity.name + " ->> " + activity2.name + "\n"
+          toreturnInitial += " " + activity.name + " -> " + activity2.name + "\n"
         }
       }
     }
-    toreturnInitial + toreturnAdditional
+    "initial dependencies:\n" + toreturnAdditional +
+    "added dependencies:\n" + toreturnInitial
   }
 
   def resourceUsage: String = {

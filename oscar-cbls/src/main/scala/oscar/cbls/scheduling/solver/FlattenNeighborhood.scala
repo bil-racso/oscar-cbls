@@ -24,7 +24,6 @@ case class FlattenOne(p: Planning,
   var fromActivityForInstantiation:Activity = null
   var toActivityForInstantiation:Activity = null
 
-
   /** This is the method you must implement and that performs the search of your neighborhood.
     * every time you explore a neighbor, you must perform the calls to notifyMoveExplored or moveRequested(newObj) && submitFoundMove(myMove)){
     * as explained in the documentation of this class
@@ -57,14 +56,13 @@ case class AddDynamicPrecedence(from:Activity,to:Activity) extends Move{
   /** to actually take the move */
   override def commit(): Unit = from.addDynamicPredecessor(to)
 }
+
 /*
 case class FlattenOneSuperActivity(p: Planning,
                                    priorityToPrecedenceToMovableActivities: Boolean = true)
   extends EasyNeighborhood with SearchEngineTrait {
 
   val supportForSuperActivities: Boolean = p.isThereAnySuperActitity
-
-
 
   def flattenOneWithSuperTaskHandling(r: Resource, t: Int): Unit = {
     val conflictActivities = r.conflictingActivities(t)
