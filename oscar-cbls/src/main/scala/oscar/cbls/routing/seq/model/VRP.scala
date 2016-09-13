@@ -24,7 +24,7 @@ import oscar.cbls.invariants.lib.set.Diff
 import oscar.cbls.modeling.Algebra._
 import oscar.cbls.algo.search.KSmallest
 import oscar.examples.cbls.routing.visual.ColorGenerator
-import oscar.cbls.visual.MatrixMap.RoutingMatrixContainer
+import oscar.cbls.visual.MatrixMap.{RouteToDisplay, RoutingMatrixContainer}
 
 import scala.collection.immutable.SortedSet
 import scala.math._
@@ -512,8 +512,8 @@ trait RoutingMapDisplay extends VRP with ConstantDistancePerVehicle{
     * @param pickupAndDeliveryNodes if true, the map will show specific information about pickup and delivery nodes
     * @param geolocalisationMap if true, the geoRoutingMap will be used
     */
-  def initializeRoutingMap(list:Array[(Double,Double)], vrp:VRP = this, mapSize: Int = 0, pickupAndDeliveryNodes: Boolean = false, geolocalisationMap: Boolean = false): Unit ={
-    routingMap = new RoutingMatrixContainer(myVRP = vrp, pickupAndDeliveryPoints = pickupAndDeliveryNodes, geolocalisationMap = geolocalisationMap)
+  def initializeRoutingMap(list:Array[(Double,Double)], vrp:VRP = this, mapSize: Int = 0, pickupAndDeliveryNodes: Boolean = false, geolocalisationMap: Boolean = false, routeToDisplay: Boolean = false): Unit ={
+    routingMap = new RoutingMatrixContainer(myVRP = vrp, pickupAndDeliveryPoints = pickupAndDeliveryNodes, geolocalisationMap = geolocalisationMap, routeToDisplay = routeToDisplay)
     routingMap.setMapSize(mapSize)
     routingMap.setPointsList(list.toList)
     routingMap.setColorValues(ColorGenerator.generateRandomColors(v))

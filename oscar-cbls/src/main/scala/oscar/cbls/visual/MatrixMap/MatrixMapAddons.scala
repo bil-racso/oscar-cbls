@@ -26,35 +26,37 @@ import scala.List
   */
 
 trait RouteToDisplay extends RoutingMap{
-  def container:RoutingMatrixContainer
-  require(container != null, "In order to use the RouteToDisplay trait you must specify a RoutingMatrixContainer object.")
-  require(vrp != null, "In order to use the RouteToDisplay trait you must specify a VRP object.")
+  var container:RoutingMatrixContainer = _
 
-  val routesToDisplay:Array[Boolean] = Array.tabulate(vrp.v)(v =>false)
+  def initRouteToDisplay(container:RoutingMatrixContainer) {
+    this.container = container
 
-  val vehicleSelectionPane = new JPanel()
-  vehicleSelectionPane.setLayout(new BoxLayout(vehicleSelectionPane,BoxLayout.Y_AXIS))
-  val allCheckBox = new JCheckBox("All")
-  allCheckBox.addItemListener(new ItemListener {
-    override def itemStateChanged(e: ItemEvent): Unit = {
-      for(c <- vehicleSelectionPane.getComponents) {
-        val box = c.asInstanceOf[JCheckBox]
-        box.setSelected(e.getStateChange == ItemEvent.SELECTED)
-      }
-    }
-  })
-  vehicleSelectionPane.add(allCheckBox)
-  for (i <- 0 until vrp.v){
-    val checkBox = new JCheckBox("Vehicle : " + i)
-    checkBox.addItemListener(new ItemListener {
+    val routesToDisplay:Array[Boolean] = Array.tabulate(vrp.v)(v =>false)
+
+    val vehicleSelectionPane = new JPanel()
+    vehicleSelectionPane.setLayout(new BoxLayout(vehicleSelectionPane, BoxLayout.Y_AXIS))
+    val allCheckBox = new JCheckBox("All")
+    allCheckBox.addItemListener(new ItemListener {
       override def itemStateChanged(e: ItemEvent): Unit = {
-        routesToDisplay(i) = e.getStateChange == ItemEvent.SELECTED
-        setRouteToDisplay(container.allRoutes.map(x => if(routesToDisplay(container.allRoutes.indexOf(x))) x else List.empty))
+        for (c <- vehicleSelectionPane.getComponents) {
+          val box = c.asInstanceOf[JCheckBox]
+          box.setSelected(e.getStateChange == ItemEvent.SELECTED)
+        }
       }
     })
-    vehicleSelectionPane.add(checkBox)
+    vehicleSelectionPane.add(allCheckBox)
+    for (i <- 0 until vrp.v) {
+      val checkBox = new JCheckBox("Vehicle : " + i)
+      checkBox.addItemListener(new ItemListener {
+        override def itemStateChanged(e: ItemEvent): Unit = {
+          routesToDisplay(i) = e.getStateChange == ItemEvent.SELECTED
+          setRouteToDisplay(container.allRoutes.map(x => if (routesToDisplay(container.allRoutes.indexOf(x))) x else List.empty))
+        }
+      })
+      vehicleSelectionPane.add(checkBox)
+    }
+    container.add(vehicleSelectionPane, BorderLayout.EAST)
   }
-  container.add(vehicleSelectionPane, BorderLayout.EAST)
 
   override def setRouteToDisplay(rtd: Array[List[Int]]): Unit = {
     super.setRouteToDisplay(rtd)

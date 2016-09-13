@@ -43,15 +43,17 @@ class RoutingMatrixContainer(title:String = "Routing map",
   var routingMap:JPanel with RoutingMap = _
 
   routingMap = (geolocalisationMap,routeToDisplay) match {
-    case(true,true) => new GeoRoutingMap with RouteToDisplay{val container = thiss}
+    case(true,true) => new GeoRoutingMap with RouteToDisplay
     case(true,false) => new GeoRoutingMap
-    case(false,true) => new BasicRoutingMap with RouteToDisplay{val container = thiss}
+    case(false,true) => new BasicRoutingMap with RouteToDisplay
     case(false,false) => new BasicRoutingMap
   }
   if(pickupAndDeliveryPoints)
     routingMap.setPDP(myVRP.asInstanceOf[PDP])
   else
     routingMap.setVRP(myVRP)
+  if(routeToDisplay)
+    routingMap.asInstanceOf[RoutingMap with RouteToDisplay].initRouteToDisplay(thiss)
 
   var mustRefresh = false
 
