@@ -691,7 +691,7 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], val maxValue: Int, 
             val stillToNotify = toNotify
             val performedSinceCheckpointAndToReverse = performedSinceTopCheckpoint
 
-            require(performedSinceCheckpointAndToReverse.reverse(topCheckpoint,stillToNotify).newValue equals checkpoint)
+            assert(performedSinceCheckpointAndToReverse.reverse(topCheckpoint,stillToNotify).newValue equals checkpoint)
 
             toNotify = SeqUpdateRollBackToCheckpoint(checkpoint,() => {
               performedSinceCheckpointAndToReverse.reverse(checkpoint,stillToNotify)
@@ -812,7 +812,6 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], val maxValue: Int, 
 
   protected def releaseCurrentCheckpointAtCheckpoint(){
     // println("drop checkpoint")
-    val checkpoint = toNotify.newValue
 
     //the checkpoint might not have been communicated yet, so we look for newValue, since we are at the checkpoint.
     popToNotifyUntilCheckpointDeclaration(toNotify,toNotify.newValue,true) match{
