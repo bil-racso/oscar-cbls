@@ -28,7 +28,7 @@ import scala.collection.immutable.SortedSet
 
 class MySimpleRoutingP(n:Int,v:Int,symmetricDistance:Array[Array[Int]],m:Store, maxPivot:Int, precedences:List[(Int,Int)])
   extends VRP(n,v,m,maxPivot)
-  with TotalConstantDistance with ClosestNeighbors{
+  with TotalConstantDistance with ClosestNeighbors with NextAndPrev{
 
   override protected def getDistance(from : Int, to : Int) : Int = symmetricDistance(from)(to)
 
@@ -52,7 +52,7 @@ class MySimpleRoutingP(n:Int,v:Int,symmetricDistance:Array[Array[Int]],m:Store, 
   val nearestForward:Array[Iterable[Int]] = computeClosestNeighborsForward()
 }
 
-object PrecedenceRouting extends App{
+object RoutingWithPrecedence extends App{
 
   val n = 100
   val v = 1
@@ -89,13 +89,22 @@ object PrecedenceRouting extends App{
   //,,(onePtMove andThen onePtMove) name ("twoPointMove")
   val search = new BestSlopeFirst(List(threeOpt(10,true),onePtMove,twoOpt,twoPointMoveSmart),refresh = 10) exhaust threeOpt(20,true)
 
+  val search2 = twoPointMoveSmart guard {()=>myVRP.precedenceInvar.value!=0} exhaust (twoPointMove maxMoves 20)
+
+
   //val search = threeOpt(20,true)
   //search.verboseWithExtraInfo(2, ()=> "" + myVRP)
-  search.verbose = 1
-  search.paddingLength = 100
+  search2.verbose = 1
+  search2.paddingLength = 100
 
-  search.doAllMoves(obj=myVRP.obj)
 
+  search2.doAllMoves(obj=myVRP.obj)
+
+  println("final propagation: ")
+  model.propagate()
+  println("done.")
+
+  println(model.getPropagationElements.toList)
   model.propagate()
 
   println
