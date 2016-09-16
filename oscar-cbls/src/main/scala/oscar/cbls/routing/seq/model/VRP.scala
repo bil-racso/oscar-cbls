@@ -286,7 +286,7 @@ class VRP(val n: Int, val v: Int, val m: Store, maxPivotPerValuePercent:Int = 4)
 
 trait NextAndPrev extends VRP{
   //TODO: ensure that we REALLY need such an expensive invariant, if yes, use it from the adequate trait, and use clone to speed up exploration!!!
-  val (next,prev) = RouteSuccessorAndPredecessors(routes.createClone(),v,n)
+  val (next,prev) = RouteSuccessorAndPredecessors(routes,v,n)
 
 }
 

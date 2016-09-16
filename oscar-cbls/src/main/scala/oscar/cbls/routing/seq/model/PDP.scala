@@ -13,7 +13,7 @@ import oscar.cbls.modeling.Algebra._
 import oscar.cbls.objective.IntVarObjective
 
 import scala.collection.immutable.List
-import scala.collection.mutable.ArrayBuffer
+import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 import scala.math._
 
 /**
@@ -289,6 +289,8 @@ class PDP(override val n:Int, override val v:Int, override val m:Store, maxPivot
 
   var arrivalTimeCluster: DenseCluster[IntValue] = _
 
+  var waitingDuration: Array[IntValue] = Array.empty
+
   def initiateTimeWindowInvariants(): Unit ={
     defaultArrivalTime = new CBLSIntConst(0)
 
@@ -310,6 +312,7 @@ class PDP(override val n:Int, override val v:Int, override val m:Store, maxPivot
     for (i <- 0 until n) {
       arrivalTime(i) <== arrivalTimeToNext.element(prev(i))
     }
+
     arrivalTimeCluster = Cluster.MakeDenseAssumingMinMax(arrivalTime.map(x => Div(x,900)),0,192)
   }
 
@@ -333,11 +336,11 @@ class PDP(override val n:Int, override val v:Int, override val m:Store, maxPivot
 
   def setNodeDuration(node: Int, duration: IntValue) {
     assert(node >= v)
-    leaveTime(node) <== arrivalTime(node) + duration
+    leaveTime(node) <== (arrivalTime(node) + duration)*(0-((next(node)/n)-1))
   }
 
   def setNodeDuration(node: Int, durationWithoutWait: IntValue, startWindow: Int) {
-    leaveTime(node) <== Max2(arrivalTime(node), startWindow) + durationWithoutWait
+    leaveTime(node) <== (Max2(arrivalTime(node), startWindow) + durationWithoutWait)*(0-((next(node)/n)-1))
   }
 
   def setNodeDuration(node: Int, durationWithoutWait: IntValue, startWindow: Int, maxWaiting: Int) {
@@ -386,12 +389,21 @@ class PDP(override val n:Int, override val v:Int, override val m:Store, maxPivot
       tWS.append(timeWindows(i))
     }
     this.timeWindows = tWS.toArray
+
+
+    waitingDuration = Array.tabulate(n){
+      (i:Int) =>
+        if(i >= v)
+          Max2(leaveTime(i) - timeWindows(i-v)._3 - arrivalTime(i), CBLSIntConst(0))
+        else
+          new CBLSIntConst(0)
+    }
   }
 
-  def setMaxTravelDistancePDConstraint(){
+  def setMaxTravelDistancePDConstraint(multiplier:Double){
     for(p <- getPickups) {
       val d = getRelatedDelivery(p)
-      slowConstraints.post(LE(arrivalTime(d) - leaveTime(p), 2*travelDurationMatrix.getTravelDuration(p, leaveTime(p).value, d)))
+      slowConstraints.post(LE(arrivalTime(d) - leaveTime(p), (multiplier*travelDurationMatrix.getTravelDuration(p, leaveTime(p).value, d)).toInt))
     }
   }
 
@@ -399,15 +411,50 @@ class PDP(override val n:Int, override val v:Int, override val m:Store, maxPivot
     * This method compute the closest neighbor of a node base on arrivalTime.
     *
     */
-  def computeClosestNeighborInTime(): Array[Iterable[Int]] ={
-    def arrayOfAllNodes = Array.tabulate(n)(node => node)
+  def computeClosestNeighborInTimeWithCluster(): Array[Iterable[Int]] ={
+    def arrayOfAllNodes = routes.value.toArray
+    val positionOfAllNodes = getRoutePositionOfAllNode
     val route = routes.value.toArray
     Array.tabulate(n)(node => {
       val nodeCluster = arrivalTimeCluster.values(node).value
-      var res:List[Int] = List.empty
-      for(i <- 0 to nodeCluster)
-        res = arrivalTimeCluster.clusters(i).value.toList ::: res
-      res
+      var res:ListBuffer[Int] = new ListBuffer[Int]()
+      for(i <- 1 to nodeCluster)
+        for(neighbor <- arrivalTimeCluster.clusters(i).value.toList)
+          if(leaveTime(neighbor).value+travelDurationMatrix.getTravelDuration(neighbor, 0, node) < (if(timeWindows(node)._2<0)Int.MaxValue else timeWindows(node)._2)) {
+            val nextOfNeighbor = arrayOfAllNodes(positionOfAllNodes(neighbor) + 1)
+            val neighborToNode = max(leaveTime(neighbor).value + travelDurationMatrix.getTravelDuration(neighbor, 0, node), timeWindows(node)._1)
+            val neighborToNodeToNext = neighborToNode + timeWindows(node)._3 + travelDurationMatrix.getTravelDuration(node, 0, nextOfNeighbor)
+            if(neighborToNodeToNext < (if(timeWindows(nextOfNeighbor)._2<0)Int.MaxValue else timeWindows(nextOfNeighbor)._2))
+              res.append(neighbor)
+          }
+      res.reverse.toList
     })
+  }
+
+  /**
+   * This method compute the closest neighbor of a node base on time window and TimeMatrice.
+   */
+  def computeClosestNeighborInTime(filter : ((Int,Int) => Boolean) = (_,_) => true): Array[Iterable[Int]] ={
+    def arrayOfAllNodes = routes.value.toArray
+    val positionOfAllNodes = getRoutePositionOfAllNode
+    Array.tabulate(n)(node =>{
+      KSmallest.lazySort(arrayOfAllNodes,
+        neighbor => {
+          if(!filter(node,neighbor))
+            Int.MaxValue
+          else if((leaveTime(neighbor).value + travelDurationMatrix.getTravelDuration(neighbor, 0, node)) > (if(timeWindows(node)._2<0)Int.MaxValue else timeWindows(node)._2))
+            Int.MaxValue
+          else {
+            val nextOfNeighbor = arrayOfAllNodes(positionOfAllNodes(neighbor)+1)
+            val neighborToNode = max(leaveTime(neighbor).value + travelDurationMatrix.getTravelDuration(neighbor, 0, node), timeWindows(node)._1)
+            val neighborToNodeToNext = neighborToNode + timeWindows(node)._3 + travelDurationMatrix.getTravelDuration(node, 0, nextOfNeighbor)
+            if(neighborToNodeToNext > (if(timeWindows(nextOfNeighbor)._2<0)Int.MaxValue else timeWindows(nextOfNeighbor)._2))
+              Int.MaxValue
+            else
+              neighborToNodeToNext - leaveTime(neighbor).value
+          }
+        }
+      )}
+    )
   }
 }
