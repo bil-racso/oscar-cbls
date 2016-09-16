@@ -318,7 +318,7 @@ class PDP(override val n:Int, override val v:Int, override val m:Store, maxPivot
       arrivalTime(i) <== arrivalTimeToNext.element(prev(i))
     }
 
-    arrivalTimeCluster = Cluster.MakeDenseAssumingMinMax(arrivalTime.map(x => Div(x,900)),0,192)
+    arrivalTimeCluster = Cluster.MakeDenseAssumingMinMax(arrivalTime.map(x => Div(x,900)),192,192)
   }
 
   def addTimeWidowStringInfo() {
@@ -423,7 +423,7 @@ class PDP(override val n:Int, override val v:Int, override val m:Store, maxPivot
     Array.tabulate(n)(node => {
       val nodeCluster = arrivalTimeCluster.values(node).value
       var res:ListBuffer[Int] = new ListBuffer[Int]()
-      for(i <- 1 to nodeCluster)
+      for(i <- 0 to Math.min(arrivalTimeCluster.clusters.length, nodeCluster))
         for(neighbor <- arrivalTimeCluster.clusters(i).value.toList)
           if(leaveTime(neighbor).value+travelDurationMatrix.getTravelDuration(neighbor, 0, node) < (if(timeWindows(node)._2<0)Int.MaxValue else timeWindows(node)._2)) {
             val nextOfNeighbor = arrayOfAllNodes(positionOfAllNodes(neighbor) + 1)
