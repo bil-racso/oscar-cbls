@@ -109,6 +109,11 @@ class PDP(override val n:Int, override val v:Int, override val m:Store, maxPivot
     pickupDeliveryNodes(p)._2
   }
 
+  def getRelatedNode(node:Int): Int ={
+    require(node >= v, "You must specify a node, not a vehicle")
+    pickupDeliveryNodes(node)._2
+  }
+
   /**
     * @param n the index of a node
     * @return the load value of the node
