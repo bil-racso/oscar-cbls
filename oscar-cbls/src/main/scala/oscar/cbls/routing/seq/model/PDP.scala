@@ -141,7 +141,7 @@ class PDP(override val n:Int, override val v:Int, override val m:Store, maxPivot
 
   def getNodesAfterRelatedPickup()(node: Int): Iterable[Int] = {
     assert(isDelivery(node), "The referenced node must be a delivery one !")
-    getNodesAfterPosition()(getRelatedPickup(node))
+    getNodesAfterNode()(getRelatedPickup(node))
   }
 
   /**

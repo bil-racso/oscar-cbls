@@ -164,7 +164,7 @@ class VRP(val n: Int, val v: Int, val m: Store, maxPivotPerValuePercent:Int = 4)
     * @param node the node
     * @return
     */
-  def getNodesAfterPosition()(node:Int): List[Int] ={
+  def getNodesAfterNode()(node:Int): List[Int] ={
     val position = routes.value.positionOfAnyOccurrence(node).head
 
     var i = v-1
