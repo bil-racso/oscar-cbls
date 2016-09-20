@@ -46,6 +46,7 @@ with SeqNotificationTarget{
   def digestUdpate(changes : SeqUpdate) {
     changes match {
       case SeqUpdateDefineCheckpoint(prev, isActive) =>
+        //TODO: checkpoint release is not fine
         digestUdpate(prev)
         inputCheckpoint = prev.newValue
         checkpoint = this.newValue

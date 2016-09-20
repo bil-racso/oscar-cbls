@@ -16,7 +16,7 @@ package oscar.cbls.algo.seq.functional
 
 import oscar.cbls.algo.fun.{PiecewiseLinearFun, LinearTransform, PiecewiseLinearBijectionNaive, Pivot}
 import oscar.cbls.algo.quick.QList
-import oscar.cbls.algo.rb.{RBTMPosition, RedBlackTreeMap}
+import oscar.cbls.algo.rb.{RedBlackTreeMapExplorer, RedBlackTreeMap}
 
 import scala.collection.immutable.{SortedMap, SortedSet}
 import scala.language.implicitConversions
@@ -261,7 +261,7 @@ class ConcreteIntSequence(private[seq] val internalPositionToValue:RedBlackTreeM
     if (position >= this.size) None
     else {
       val currentPivotPosition = externalToInternalPosition.forward.pivotWithPositionApplyingTo(position)
-      val (pivotAbovePosition : Option[RBTMPosition[Pivot]], internalPosition) = currentPivotPosition match {
+      val (pivotAbovePosition : Option[RedBlackTreeMapExplorer[Pivot]], internalPosition) = currentPivotPosition match {
         case None => (externalToInternalPosition.forward.firstPivotAndPosition, position)
         case Some(p) => (p.next, p.value.f(position))
       }
@@ -523,9 +523,9 @@ abstract class IntSequenceExplorer{
 
 class ConcreteIntSequenceExplorer(sequence:ConcreteIntSequence,
                                   override val position:Int,
-                                  positionInRB:RBTMPosition[Int],
-                                  currentPivotPosition:Option[RBTMPosition[Pivot]],
-                                  pivotAbovePosition:Option[RBTMPosition[Pivot]])(
+                                  positionInRB:RedBlackTreeMapExplorer[Int],
+                                  currentPivotPosition:Option[RedBlackTreeMapExplorer[Pivot]],
+                                  pivotAbovePosition:Option[RedBlackTreeMapExplorer[Pivot]])(
                                    limitAboveForCurrentPivot:Int = pivotAbovePosition match{
                                      case None => Int.MaxValue
                                      case Some(p) => p.value.fromValue-1},
@@ -782,8 +782,8 @@ class MovedIntSequence(val seq:IntSequence,
 class MovedIntSequenceExplorer(sequence:MovedIntSequence,
                                override val position:Int,
                                positionInBasicSequence:IntSequenceExplorer,
-                               currentPivotPosition:Option[RBTMPosition[Pivot]],
-                               pivotAbovePosition:Option[RBTMPosition[Pivot]])(
+                               currentPivotPosition:Option[RedBlackTreeMapExplorer[Pivot]],
+                               pivotAbovePosition:Option[RedBlackTreeMapExplorer[Pivot]])(
                                 limitAboveForCurrentPivot:Int = pivotAbovePosition match{
                                   case None => Int.MaxValue
                                   case Some(p) => p.value.fromValue-1},

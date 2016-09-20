@@ -161,6 +161,7 @@ class ConcatenateFirstConstant(a:List[Int],b:ChangingSeqValue,maxPivotPerValuePe
         true
 
       case SeqUpdateDefineCheckpoint(prev : SeqUpdate, isActive) =>
+        //TODO: checkpoint release is not fine
         if(!digestChanges(prev)){
           checkpoint = prev.newValue
           outputAtCheckpoint =IntSequence(a ++ prev.newValue)
@@ -183,7 +184,9 @@ class ConcatenateFirstConstant(a:List[Int],b:ChangingSeqValue,maxPivotPerValuePe
   }
 
   override def checkInternals(c : Checker) : Unit = {
-    c.check((a ++ b.value.toList) equals this.value.toList,Some("a.value.toList:" + a+ " b.value.toList:" + b.value.toList + " should== this.value.toList" + this.value.toList))
+    c.check((a ++ b.value.toList) equals this.value.toList,
+      Some("a.value.toList:" + a + " b.value.toList:" +
+        b.value.toList + " should== this.value.toList" + this.value.toList))
   }
 }
 

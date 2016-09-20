@@ -59,6 +59,7 @@ case class Flip(v: SeqValue,override val maxPivotPerValuePercent:Int = 10, overr
         true
 
       case SeqUpdateDefineCheckpoint(prev : SeqUpdate, isActive) =>
+        this.releaseCheckpoint()
         if(!digestChanges(prev)){
           checkpoint = prev.newValue
           outputAtCheckpoint = changes.newValue.flip(false,true) //we do a rework since a checkpoint is defined
