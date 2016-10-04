@@ -1,6 +1,5 @@
 package oscar.cbls.routing.seq.neighborhood
 
-import oscar.cbls.algo.seq.functional.IntSequence
 import oscar.cbls.routing.seq.model.{ClosestNeighbors, PDP}
 import oscar.cbls.search.core.EasyNeighborhood
 
@@ -33,7 +32,7 @@ case class PickupDeliveryCoupleExchange(vrp: PDP with ClosestNeighbors,
 
   var startIndice = 0
 
-  var seqValue:IntSequence = _
+
 
   /**
     * This is the method you must implement and that performs the search of your neighborhood.
@@ -41,7 +40,8 @@ case class PickupDeliveryCoupleExchange(vrp: PDP with ClosestNeighbors,
     * as explained in the documentation of this class
     */
   override def exploreNeighborhood(): Unit = {
-    seqValue = seq.defineCurrentValueAsCheckpoint(true)
+
+    val seqValue = seq.defineCurrentValueAsCheckpoint(true)
 
     def evalObjAndRollBack() : Int = {
       val a = obj.value
@@ -53,7 +53,7 @@ case class PickupDeliveryCoupleExchange(vrp: PDP with ClosestNeighbors,
       vrp.getVehicleOfNode(x) == v && x != p && x != d
     }
 
-    val closestRoutedNeighboursInTime = vrp.computeClosestNeighborInTimeWithCluster()
+    val closestRoutedNeighboursInTime = vrp.computeClosestNeighborInTime()
     for(r1 <- 0 until vrp.v-1){
       exchange(0) = r1
       for(p1 <- vrp.getRoutedPickups.filter(vrp.getVehicleOfNode(_) == r1)){
@@ -68,10 +68,10 @@ case class PickupDeliveryCoupleExchange(vrp: PDP with ClosestNeighbors,
             val closestNeighborsForP2 = vrp.kFirst(k,closestRoutedNeighboursInTime)(p2).filter(customFilter(_,r1,p1,exchange(2)))
             val closestNeighborsForD1 = vrp.kFirst(k,closestRoutedNeighboursInTime)(exchange(2)).filter(customFilter(_,r2,p2,exchange(7)))
             val closestNeighborsForD2 = vrp.kFirst(k,closestRoutedNeighboursInTime)(exchange(7)).filter(customFilter(_,r1,p1,exchange(2)))
-            for(newPredsP1 <- closestNeighborsForP1){
-              for(newPredsD1 <- closestNeighborsForD1){
-                for(newPredsP2 <- closestNeighborsForP2){
-                  for(newPredsD2 <- closestNeighborsForD2){
+            for(newPredsP2 <- closestNeighborsForP2){
+              for(newPredsD2 <- closestNeighborsForD2){
+                for(newPredsP1 <- closestNeighborsForP1){
+                  for(newPredsD1 <- closestNeighborsForD1){
                     exchange(3) = newPredsP2
                     exchange(4) = newPredsD2
                     exchange(8) = newPredsP1
@@ -82,6 +82,8 @@ case class PickupDeliveryCoupleExchange(vrp: PDP with ClosestNeighbors,
                       exchange(5), exchange(6), exchange(7),
                       exchange(8), exchange(9))
                     if (evaluateCurrentMoveObjTrueIfStopRequired(evalObjAndRollBack())) {
+                      seq.releaseCurrentCheckpointAtCheckpoint()
+                      seq.releaseCurrentCheckpointAtCheckpoint()
                       seq.releaseCurrentCheckpointAtCheckpoint()
                       //startIndice = insertionPoint + 1
                       return
@@ -97,8 +99,6 @@ case class PickupDeliveryCoupleExchange(vrp: PDP with ClosestNeighbors,
     seq.releaseCurrentCheckpointAtCheckpoint()
   }
 
-
-
   def doMove(firstRoute: Int, firstPickup: Int, firstDelivery: Int,
              secondPickupNewPreds: Int, secondDeliveryNewPreds: Int,
              secondRoute: Int, secondPickup: Int, secondDelivery: Int,
@@ -113,7 +113,7 @@ case class PickupDeliveryCoupleExchange(vrp: PDP with ClosestNeighbors,
     assert(vrp.getVehicleOfNode(firstPickupNewPreds) == secondRoute, "The first pickup insertion location must be on the second route")
     assert(vrp.getVehicleOfNode(firstDeliveryNewPreds) == secondRoute, "The first delivery insertion location must be on the second route")
 
-    seq.remove(seqValue.positionOfAnyOccurrence(firstPickup).get)
+    seq.remove(seq.newValue.positionOfAnyOccurrence(firstPickup).get)
     seq.remove(seq.newValue.positionOfAnyOccurrence(firstDelivery).get)
 
     val secondDeliveryPos = seq.newValue.positionOfAnyOccurrence(secondDelivery).get

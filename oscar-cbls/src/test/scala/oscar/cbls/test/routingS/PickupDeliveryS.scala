@@ -59,7 +59,7 @@ class MyPDP(n:Int, v:Int, m:Store,
 }
 
 object PickupDeliveryS extends App{
-  val n = 310
+  val n = 110
   val v = 10
 
   val maxPivotPerValuePercent = 4
@@ -70,7 +70,7 @@ object PickupDeliveryS extends App{
 
   val symmetricDistanceMatrix = routingMatrix._1
 
-  val model = new Store(noCycle = false, checker = Some(new ErrorChecker))
+  val model = new Store(noCycle = false)
 
   val (pickups,deliveries) = RoutingMatrixGenerator.generatePickupDeliveryCouples(n,v)
 
@@ -84,6 +84,8 @@ object PickupDeliveryS extends App{
 
 
   model.close()
+
+  println(model.stats)
 
   val insertCoupleFast = Profile(DynAndThen(
     InsertPointUnroutedFirst(
