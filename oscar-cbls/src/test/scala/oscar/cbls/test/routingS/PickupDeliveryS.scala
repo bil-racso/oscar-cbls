@@ -33,11 +33,6 @@ class MyPDP(n:Int, v:Int, m:Store,
   this.addToStringInfo(() => "objective: " + obj.value)
   this.addToStringInfo(() => "n:" + n + " v:" + v)
 
-  val closestNeighboursForward = computeClosestNeighborsForward()
-  def closestNeighboursForwardNotFull = computeClosestNeighborsForwardOneValueFilter(isNotFull())
-  def closestNeighboursForwardNotSameRoute = computeClosestNeighborsForward(notOnSameVehicle())
-  def closestNeighboursForwardOnSameRoute = computeClosestNeighborsForward(onSameVehicle())
-
   def closestNeighboursInTime = computeClosestNeighborInTime()
 
   def size = routes.value.size
@@ -59,7 +54,7 @@ class MyPDP(n:Int, v:Int, m:Store,
 }
 
 object PickupDeliveryS extends App{
-  val n = 110
+  val n = 510
   val v = 10
 
   val maxPivotPerValuePercent = 4
@@ -162,6 +157,10 @@ object PickupDeliveryS extends App{
     }, maximalIntermediaryDegradation = Int.MaxValue)
   )
 
+  val pickupDeliveryCoupleExchange = Profile(PickupDeliveryCoupleExchange(myPDP,k = 5)name "PD-CoupleExchange")
+
+  val pickupDeliverySegmentExchange = Profile(PickupDeliverySegmentExchange(myPDP, relevantNeighbors = ()=>myPDP.kFirst((n-v)/2,myPDP.closestNeighboursInTime),hotRestart = false)name "PD-SegmentExchange")
+
   def dynAndThenCoupleExchange = {
     var firstVehicle = 10
     var secondVehicle = 10
@@ -211,10 +210,10 @@ object PickupDeliveryS extends App{
     )
   }
 
-  def threeOpt(k:Int, breakSym:Boolean) = Profile(new ThreeOpt(() => nodes, ()=>myPDP.kFirst(k,myPDP.closestNeighboursForwardNotFull), myPDP,breakSymmetry = breakSym,neighborhoodName = "ThreeOpt(k=" + k + ")"))
+  def threeOpt(k:Int, breakSym:Boolean) = Profile(new ThreeOpt(() => nodes, ()=>myPDP.kFirst(k,myPDP.closestNeighboursInTime), myPDP,breakSymmetry = breakSym,neighborhoodName = "ThreeOpt(k=" + k + ")"))
 
   val search = BestSlopeFirst(List(insertCoupleFast,onePointMovePD)) exhaust
-    new BestSlopeFirst(List(pickupDeliveryCoupleShift,oneCoupleMove,insertCoupleSlow,onePointMovePD, threeOpt(20,true)))
+    new BestSlopeFirst(List(pickupDeliveryCoupleShift,oneCoupleMove,insertCoupleSlow,onePointMovePD, pickupDeliveryCoupleExchange, pickupDeliverySegmentExchange, threeOpt(20,true)))
 
   val searchWithRrestart = search onExhaustRestartAfter(Atomic(removeCouple maxMoves((n-v)/2)),5,myPDP.obj)
 

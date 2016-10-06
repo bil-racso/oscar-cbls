@@ -237,7 +237,8 @@ case class SegmentExchangeMove(firstSegmentStartPosition:Int,
   * @param best true if you want the best move false if you want the first acceptable move
   */
 case class PickupDeliverySegmentExchange(pdp: PDP,
-                                             neighborhoodName:String = "PickupDeliverySegmentExchange",
+                                         relevantNeighbors:()=>Int=>Iterable[Int], //must be routed
+                                         neighborhoodName:String = "PickupDeliverySegmentExchange",
                                              hotRestart:Boolean = true,
                                              best:Boolean = false)
   extends EasyNeighborhood[PickupDeliverySegmentExchangeMove](best,neighborhoodName){
@@ -256,6 +257,7 @@ case class PickupDeliverySegmentExchange(pdp: PDP,
 
   override def exploreNeighborhood(): Unit = {
     val seqValue = seq.defineCurrentValueAsCheckpoint(true)
+    def positionsOfValue(value:Int) = pdp.routes.newValue.positionOfAnyOccurrence(value)
 
     def evalObjAndRollBack() : Int = {
       val a = obj.value
@@ -267,21 +269,40 @@ case class PickupDeliverySegmentExchange(pdp: PDP,
 
     if(!hotRestart)startVehicle = 0
 
+    val relevantNeighborsNow = relevantNeighbors()
     for(firstVehicle <- startVehicle until pdp.v - 1){
       for(firstSegment <- completeSegments(firstVehicle)){
-        firstSegmentStartPosition = firstSegment._1
-        firstSegmentEndPosition = firstSegment._2
+        firstSegmentStartPosition = positionsOfValue(firstSegment._1).get
+        firstSegmentEndPosition = positionsOfValue(firstSegment._2).get
         for(secondVehicle <- firstVehicle+1 until pdp.v){
-          for(secondSegment <- completeSegments(secondVehicle)){
-            secondSegmentStartPosition = secondSegment._1
-            secondSegmentEndPosition = secondSegment._2
+          for(secondSegment <- completeSegments(secondVehicle) if relevantNeighborsNow(firstSegment._1).toList.contains(pdp.prev(secondSegment._1).value)){
+            secondSegmentStartPosition = positionsOfValue(secondSegment._1).get
+            secondSegmentEndPosition = positionsOfValue(secondSegment._2).get
 
-            if (evaluateCurrentMoveObjTrueIfStopRequired(evalObjAndRollBack())) {
-              seq.releaseCurrentCheckpointAtCheckpoint()
-              startVehicle = firstVehicle + 1
-              return
+            val (firstStartEarly,firstStartDead) = (if(pdp.timeWindows(firstSegment._1)._1 == -1)Int.MaxValue else pdp.timeWindows(firstSegment._1)._1,
+              if(pdp.timeWindows(firstSegment._1)._2 == -1)Int.MaxValue else pdp.timeWindows(firstSegment._1)._2)
+            val (firstEndEarly,firstEndDead) = (if(pdp.timeWindows(firstSegment._2)._1 == -1)Int.MaxValue else pdp.timeWindows(firstSegment._2)._1,
+              if(pdp.timeWindows(firstSegment._2)._2 == -1)Int.MaxValue else pdp.timeWindows(firstSegment._2)._2)
+            val (secondStartEarly,secondStartDead) = (if(pdp.timeWindows(secondSegment._1)._1 == -1)Int.MaxValue else pdp.timeWindows(secondSegment._1)._1,
+              if(pdp.timeWindows(secondSegment._1)._2 == -1)Int.MaxValue else pdp.timeWindows(secondSegment._1)._2)
+            val (secondEndEarly,secondEndDead) = (if(pdp.timeWindows(secondSegment._2)._1 == -1)Int.MaxValue else pdp.timeWindows(secondSegment._2)._1,
+              if(pdp.timeWindows(secondSegment._2)._2 == -1)Int.MaxValue else pdp.timeWindows(secondSegment._2)._2)
+
+
+            if(secondStartEarly != Int.MaxValue && firstStartDead != Int.MaxValue && secondStartEarly > firstStartDead){}
+            else if(secondStartDead != Int.MaxValue && firstStartEarly != Int.MaxValue && secondStartDead < firstStartEarly){}
+            else if(secondEndEarly != Int.MaxValue && firstEndDead != Int.MaxValue && secondEndEarly > firstEndDead){}
+            else if(secondEndDead != Int.MaxValue && firstEndEarly != Int.MaxValue && secondEndDead < firstEndEarly){}
+            else if(secondStartEarly != Int.MaxValue && firstEndDead != Int.MaxValue && secondStartEarly > firstEndDead){}
+            else if(secondEndDead != Int.MaxValue && firstStartEarly != Int.MaxValue && secondEndDead < firstStartEarly){}
+            else {
+              doMove(firstSegmentStartPosition, firstSegmentEndPosition, secondSegmentStartPosition, secondSegmentEndPosition)
+              if (evaluateCurrentMoveObjTrueIfStopRequired(evalObjAndRollBack())) {
+                seq.releaseCurrentCheckpointAtCheckpoint()
+                startVehicle = firstVehicle + 1
+                return
+              }
             }
-
           }
         }
       }

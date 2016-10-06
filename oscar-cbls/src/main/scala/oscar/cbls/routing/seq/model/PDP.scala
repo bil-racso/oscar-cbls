@@ -145,8 +145,6 @@ class PDP(override val n:Int, override val v:Int, override val m:Store, maxPivot
   }
 
   /**
-    * Still Usefull ???
-    *
     * This method search all the complete segments contained in a specified route.
     * A segment is considered as complete when you can move it to another place
     * without breaking the precedence constraint.
@@ -403,22 +401,28 @@ class PDP(override val n:Int, override val v:Int, override val m:Store, maxPivot
     }
   }
 
-  def setUniqueMaxTravelDistance(multiplier:Double){
+  def setUniqueMaxTravelDistance(value:Double, multiple:Boolean = false){
     for(p <- getPickups) {
       val d = getRelatedDelivery(p)
 
       //TODO: on ne peu pas appeler leaveTime(p).value; c'est hors du moteur d'optim.
       //à prioris, on cherche plutôt la durée du trajet à l'heure de pick-up demandée
-      slowConstraints.post(LE(arrivalTime(d) - leaveTime(p), (multiplier*travelDurationMatrix.getTravelDuration(p, 0, d)).toInt))
+      if(multiple)
+        slowConstraints.post(LE(arrivalTime(d) - leaveTime(p), (value*travelDurationMatrix.getTravelDuration(p, 0, d)).toInt))
+      else
+        slowConstraints.post(LE(arrivalTime(d) - leaveTime(p), (value+travelDurationMatrix.getTravelDuration(p, 0, d)).toInt))
     }
   }
   
-  def setMultipleMaxTravelDistance(multipliers:Array[Double]): Unit ={
-    require(multipliers.length == (n-v)/2, "The size of the multipliers variable must be equals to the number of couple pickup/delivery")
-    for(i <- multipliers.indices){
+  def setMultipleMaxTravelDistance(values:Array[Double], multiple:Boolean = false): Unit ={
+    require(values.length == (n-v)/2, "The size of values must be equals to the number of couple pickup/delivery")
+    for(i <- values.indices){
       val p = pickupNodes(i)
       val d = getRelatedDelivery(p)
-      slowConstraints.post(LE(arrivalTime(d) - leaveTime(p), (multipliers(i)*travelDurationMatrix.getTravelDuration(p, leaveTime(p).value, d)).toInt))
+      if(multiple)
+        slowConstraints.post(LE(arrivalTime(d) - leaveTime(p), (values(i)*travelDurationMatrix.getTravelDuration(p, leaveTime(p).value, d)).toInt))
+      else
+        slowConstraints.post(LE(arrivalTime(d) - leaveTime(p), (values(i)+travelDurationMatrix.getTravelDuration(p, leaveTime(p).value, d)).toInt))
     }
   }
 
@@ -427,12 +431,11 @@ class PDP(override val n:Int, override val v:Int, override val m:Store, maxPivot
     *
     */
   def computeClosestNeighborInTime(filter : ((Int,Int) => Boolean) = (_,_) => true): Array[Iterable[Int]] ={
-    def arrayOfAllNodes = routes.value.toArray
     Array.tabulate(n)(node => {
       val nodeCluster = arrivalTimeCluster.values(node).value
-      var res:ListBuffer[Int] = new ListBuffer[Int]()
+      val res:ListBuffer[Int] = new ListBuffer[Int]()
       for(i <- 0 to Math.min(arrivalTimeCluster.clusters.length, nodeCluster))
-        for(neighbor <- arrivalTimeCluster.clusters(i).value.toList if(isRouted(neighbor)))
+        for(neighbor <- arrivalTimeCluster.clusters(i).value.toList if isRouted(neighbor) && filter(n,neighbor))
           if(leaveTime(neighbor).value+travelDurationMatrix.getTravelDuration(neighbor, 0, node) < (if(timeWindows(node)._2<0)Int.MaxValue else timeWindows(node)._2)) {
             val nextOfNeighbor = next(neighbor).value
             val neighborToNode = max(leaveTime(neighbor).value + travelDurationMatrix.getTravelDuration(neighbor, 0, node), timeWindows(node)._1)
