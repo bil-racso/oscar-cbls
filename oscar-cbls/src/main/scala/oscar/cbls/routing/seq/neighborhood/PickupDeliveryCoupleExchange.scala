@@ -6,7 +6,7 @@ import oscar.cbls.search.core.EasyNeighborhood
 /**
   * Created by f.germeau on 16/09/2016.
   */
-case class PickupDeliveryCoupleExchange(vrp: PDP with ClosestNeighbors,
+case class PickupDeliveryCoupleExchange(pdp: PDP with ClosestNeighbors,
                                         neighborhoodName:String = "PickupDeliveryCoupleExchange",
                                         best:Boolean = false,
                                         hotRestart:Boolean = true,
@@ -28,7 +28,7 @@ case class PickupDeliveryCoupleExchange(vrp: PDP with ClosestNeighbors,
     */
   val exchange = Array.tabulate(10)(n => 0)
 
-  val seq = vrp.routes
+  val seq = pdp.routes
 
   var startIndice = 0
 
@@ -50,24 +50,24 @@ case class PickupDeliveryCoupleExchange(vrp: PDP with ClosestNeighbors,
     }
 
     def customFilter(x:Int,v:Int,p:Int,d:Int): Boolean ={
-      vrp.getVehicleOfNode(x) == v && x != p && x != d
+      pdp.getVehicleOfNode(x) == v && x != p && x != d
     }
 
-    val closestRoutedNeighboursInTime = vrp.computeClosestNeighborInTime()
-    for(r1 <- 0 until vrp.v-1){
+    val closestRoutedNeighboursInTime = pdp.computeClosestNeighborInTime()
+    for(r1 <- 0 until pdp.v-1){
       exchange(0) = r1
-      for(p1 <- vrp.getRoutedPickups.filter(vrp.getVehicleOfNode(_) == r1)){
+      for(p1 <- pdp.getRoutedPickups.filter(pdp.getVehicleOfNode(_) == r1)){
         exchange(1) = p1
-        exchange(2) = vrp.getRelatedDelivery(p1)
-        for(r2 <- r1+1 until vrp.v){
+        exchange(2) = pdp.getRelatedDelivery(p1)
+        for(r2 <- r1+1 until pdp.v){
           exchange(5) = r2
-          for(p2 <- vrp.getRoutedPickups.filter(vrp.getVehicleOfNode(_) == r2)){
+          for(p2 <- pdp.getRoutedPickups.filter(pdp.getVehicleOfNode(_) == r2)){
             exchange(6) = p2
-            exchange(7) = vrp.getRelatedDelivery(p2)
-            val closestNeighborsForP1 = vrp.kFirst(k,closestRoutedNeighboursInTime)(p1).filter(customFilter(_,r2,p2,exchange(7)))
-            val closestNeighborsForP2 = vrp.kFirst(k,closestRoutedNeighboursInTime)(p2).filter(customFilter(_,r1,p1,exchange(2)))
-            val closestNeighborsForD1 = vrp.kFirst(k,closestRoutedNeighboursInTime)(exchange(2)).filter(customFilter(_,r2,p2,exchange(7)))
-            val closestNeighborsForD2 = vrp.kFirst(k,closestRoutedNeighboursInTime)(exchange(7)).filter(customFilter(_,r1,p1,exchange(2)))
+            exchange(7) = pdp.getRelatedDelivery(p2)
+            val closestNeighborsForP1 = pdp.kFirst(k,closestRoutedNeighboursInTime)(p1).filter(customFilter(_,r2,p2,exchange(7)))
+            val closestNeighborsForP2 = pdp.kFirst(k,closestRoutedNeighboursInTime)(p2).filter(customFilter(_,r1,p1,exchange(2)))
+            val closestNeighborsForD1 = pdp.kFirst(k,closestRoutedNeighboursInTime)(exchange(2)).filter(customFilter(_,r2,p2,exchange(7)))
+            val closestNeighborsForD2 = pdp.kFirst(k,closestRoutedNeighboursInTime)(exchange(7)).filter(customFilter(_,r1,p1,exchange(2)))
             for(newPredsP2 <- closestNeighborsForP2){
               for(newPredsD2 <- closestNeighborsForD2){
                 for(newPredsP1 <- closestNeighborsForP1){
@@ -104,14 +104,14 @@ case class PickupDeliveryCoupleExchange(vrp: PDP with ClosestNeighbors,
              secondRoute: Int, secondPickup: Int, secondDelivery: Int,
              firstPickupNewPreds: Int, firstDeliveryNewPreds: Int) ={
     assert(firstRoute != secondRoute,"The first and the second route selected must be different")
-    assert(vrp.getVehicleOfNode(firstPickup) == firstRoute, "The first pickup node must be removed from the first route")
-    assert(vrp.getVehicleOfNode(firstDelivery) == firstRoute, "The first delivery node must be removed from the first route")
-    assert(vrp.getVehicleOfNode(secondPickupNewPreds) == firstRoute, "The second pickup insertion location must be on the first route")
-    assert(vrp.getVehicleOfNode(secondDeliveryNewPreds) == firstRoute, "The second delivery insertion location must be on the first route")
-    assert(vrp.getVehicleOfNode(secondPickup) == secondRoute, "The second pickup node must be removed from the second route")
-    assert(vrp.getVehicleOfNode(secondDelivery) == secondRoute, "The second delivery node must be removed from the second route")
-    assert(vrp.getVehicleOfNode(firstPickupNewPreds) == secondRoute, "The first pickup insertion location must be on the second route")
-    assert(vrp.getVehicleOfNode(firstDeliveryNewPreds) == secondRoute, "The first delivery insertion location must be on the second route")
+    assert(pdp.getVehicleOfNode(firstPickup) == firstRoute, "The first pickup node must be removed from the first route")
+    assert(pdp.getVehicleOfNode(firstDelivery) == firstRoute, "The first delivery node must be removed from the first route")
+    assert(pdp.getVehicleOfNode(secondPickupNewPreds) == firstRoute, "The second pickup insertion location must be on the first route")
+    assert(pdp.getVehicleOfNode(secondDeliveryNewPreds) == firstRoute, "The second delivery insertion location must be on the first route")
+    assert(pdp.getVehicleOfNode(secondPickup) == secondRoute, "The second pickup node must be removed from the second route")
+    assert(pdp.getVehicleOfNode(secondDelivery) == secondRoute, "The second delivery node must be removed from the second route")
+    assert(pdp.getVehicleOfNode(firstPickupNewPreds) == secondRoute, "The first pickup insertion location must be on the second route")
+    assert(pdp.getVehicleOfNode(firstDeliveryNewPreds) == secondRoute, "The first delivery insertion location must be on the second route")
 
     seq.remove(seq.newValue.positionOfAnyOccurrence(firstPickup).get)
     seq.remove(seq.newValue.positionOfAnyOccurrence(firstDelivery).get)
@@ -143,7 +143,7 @@ case class PickupDeliveryCoupleExchangeMove(firstRoute: Int, firstPickup: Int, f
                                             firstPickupNewPreds: Int, firstDeliveryNewPreds: Int,
                                             override val objAfter: Int, override val neighborhood:PickupDeliveryCoupleExchange,
                                             override val neighborhoodName:String = "PickupDeliveryCoupleExchangeMove"
-                                           )extends VRPSMove(objAfter, neighborhood, neighborhoodName, neighborhood.vrp){
+                                           )extends VRPSMove(objAfter, neighborhood, neighborhoodName, neighborhood.pdp){
   override def impactedPoints: Iterable[Int] =
     Iterable(firstRoute,firstPickup,firstDelivery,
       secondPickupNewPreds,secondDeliveryNewPreds,

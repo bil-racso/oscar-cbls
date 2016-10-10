@@ -365,11 +365,10 @@ class PDP(override val n:Int, override val v:Int, override val m:Store, maxPivot
     * This method initialize the differents variable used to represent time windows
     * @param timeWindows contains an array of the time to attribute.
     *                    Each value of this array represents these values :
-    *                    - The time after which we may arrive to this point
-    *                    - The time before which we must have reach and performed the task of this point
-    *                    - The execution's duration of the task related to this point
-    *                    - The max waiting time of this point
-    *                    If you don't want to use one of them simply set the corresponding value to -1
+    *                    - The time after which we may arrive to this point (Default value = -1)
+    *                    - The time before which we must have reach and performed the task of this point (Default value = Int.MaxValue)
+    *                    - The execution's duration of the task related to this point (Default value = 0)
+    *                    - The max waiting time of this point (Default value = 0)
     */
   def setTimeWindows(timeWindows : Array[(Int,Int,Int,Int)]): Unit ={
     initiateTimeWindowInvariants()
@@ -377,15 +376,15 @@ class PDP(override val n:Int, override val v:Int, override val m:Store, maxPivot
     val tWS:Array[(Int,Int,Int,Int)] = new Array[(Int,Int,Int,Int)](n)
 
     for(k <- 0 until v)
-      tWS(k) = (-1,-1,-1,-1)
+      tWS(k) = (-1,Int.MaxValue,0,0)
 
     for(i <- timeWindows.indices){
       (timeWindows(i)._1, timeWindows(i)._4) match {
-        case (-1,-1) => setNodeDuration(i + v, math.max(0, timeWindows(i)._3))
-        case (_,-1) => setNodeDuration(i + v, math.max(0, timeWindows(i)._3), timeWindows(i)._1)
-        case (_,_) => setNodeDuration(i + v, math.max(0, timeWindows(i)._3), timeWindows(i)._1, timeWindows(i)._4)
+        case (-1,0) => setNodeDuration(i + v, timeWindows(i)._3)
+        case (_,0) => setNodeDuration(i + v, timeWindows(i)._3, timeWindows(i)._1)
+        case (_,_) => setNodeDuration(i + v, timeWindows(i)._3, timeWindows(i)._1, timeWindows(i)._4)
       }
-      if(timeWindows(i)._2 >= 0)
+      if(timeWindows(i)._2 < Int.MaxValue)
         setEndWindow(i + v, timeWindows(i)._2)
       tWS(i+v) = timeWindows(i)
     }
@@ -436,11 +435,11 @@ class PDP(override val n:Int, override val v:Int, override val m:Store, maxPivot
       val res:ListBuffer[Int] = new ListBuffer[Int]()
       for(i <- 0 to Math.min(arrivalTimeCluster.clusters.length, nodeCluster))
         for(neighbor <- arrivalTimeCluster.clusters(i).value.toList if isRouted(neighbor) && filter(n,neighbor))
-          if(leaveTime(neighbor).value+travelDurationMatrix.getTravelDuration(neighbor, 0, node) < (if(timeWindows(node)._2<0)Int.MaxValue else timeWindows(node)._2)) {
+          if(leaveTime(neighbor).value+travelDurationMatrix.getTravelDuration(neighbor, 0, node) < timeWindows(node)._2) {
             val nextOfNeighbor = next(neighbor).value
             val neighborToNode = max(leaveTime(neighbor).value + travelDurationMatrix.getTravelDuration(neighbor, 0, node), timeWindows(node)._1)
             val neighborToNodeToNext = neighborToNode + timeWindows(node)._3 + travelDurationMatrix.getTravelDuration(node, 0, nextOfNeighbor)
-            if(neighborToNodeToNext < (if(timeWindows(nextOfNeighbor)._2<0)Int.MaxValue else timeWindows(nextOfNeighbor)._2))
+            if(neighborToNodeToNext < timeWindows(nextOfNeighbor)._2)
               res.append(neighbor)
           }
       res.reverse.toList
