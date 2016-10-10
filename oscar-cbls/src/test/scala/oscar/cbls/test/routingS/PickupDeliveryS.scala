@@ -54,7 +54,7 @@ class MyPDP(n:Int, v:Int, m:Store,
 }
 
 object PickupDeliveryS extends App{
-  val n = 510
+  val n = 110
   val v = 10
 
   val maxPivotPerValuePercent = 4
