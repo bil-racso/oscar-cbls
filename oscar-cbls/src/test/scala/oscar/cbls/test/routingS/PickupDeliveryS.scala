@@ -294,8 +294,6 @@ object PickupDeliveryS extends App{
 
   search4.verbose = 2
 
-  search4.paddingLength = 300
-
   search4.doAllMoves(obj=myPDP.obj)
 
   println(myPDP)

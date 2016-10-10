@@ -81,7 +81,6 @@ object TSPsym extends App{
   val search = threeOpt(10,true)
 
   search.verbose = 1
-  search.paddingLength = 100
 
   search.doAllMoves(obj=myVRP.obj)
 

@@ -161,9 +161,6 @@ abstract class Neighborhood(name:String = null) {
   protected def printExploredNeighbors: Boolean = verbose >= 4
 
 
-  //the number of characters to display in case a verbose approach is deployed.
-  var paddingLength: Int = 100
-
   /**
    * @return true if a move has been performed, false otherwise
    */
@@ -229,7 +226,7 @@ abstract class Neighborhood(name:String = null) {
               else "   ") + m.objAfter
 
               val smallPaddingLength = 20
-              println(firstPrefix + secondPrefix + padToLength(moveSynthesis.toList.map({case ((name,n)) => padToLength(trimToLength(name, smallPaddingLength-4)+ ":"+n, smallPaddingLength)}).mkString(" "), paddingLength) + " ")
+              println(firstPrefix + secondPrefix + moveSynthesis.toList.map({case ((name,n)) => padToLength(trimToLength(name, smallPaddingLength-4)+ ":"+n, smallPaddingLength)}).mkString(" "))
 
               moveSynthesis = SortedMap.empty[String,Int]
               nanoTimeAtNextSynthesis = System.nanoTime() + (1000*1000*100) //100ms
@@ -257,10 +254,10 @@ abstract class Neighborhood(name:String = null) {
               } else if (m.objAfter == bestObj) " ° "
               else "   ") + " " + m.objAfter
 
-              println(firstPrefix + secondPrefix + "   " + padToLength(m.toString(), paddingLength))
+              println(firstPrefix + secondPrefix + "   " + m.toString())
             } else {
               prevObj = m.objAfter
-              println(trimToLength(m.toString(), paddingLength))
+              println(m.toString())
             }
 
             m.commit()
