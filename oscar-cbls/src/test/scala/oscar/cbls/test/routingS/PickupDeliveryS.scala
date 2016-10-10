@@ -148,14 +148,71 @@ object PickupDeliveryS extends App{
   val removeCouple = Profile(new DynAndThen(new RemovePoint(
     relevantPointsToRemove = () => myPDP.getRoutedPickups,
     vrp = myPDP),
-    (moveResult1:RemovePointMove) =>{
-      println(moveResult1.pointToRemove)
-      println(myPDP.getRelatedDelivery(moveResult1.pointToRemove))
+    (moveResult1:RemovePointMove) =>
       new RemovePoint(
         relevantPointsToRemove = () => List(myPDP.getRelatedDelivery(moveResult1.pointToRemove)),
         vrp = myPDP)
-    }, maximalIntermediaryDegradation = Int.MaxValue)
+    , maximalIntermediaryDegradation = Int.MaxValue)
   )
+
+  val smartInsertCoupleNotFair = Profile(DynAndThen(
+    DynAndThen(InsertPointUnroutedFirst(
+      unroutedNodesToInsert = () => myPDP.getUnroutedPickups,
+      relevantPredecessor = () => myPDP.kFirst(n/10, myPDP.closestNeighboursInTime,myPDP.isRouted),
+      vrp = myPDP
+    ),
+      (moveResult1:InsertPointMove) => {
+        RemovePoint(
+          relevantPointsToRemove = () => {
+            val nextNode = myPDP.routes.value.valueAtPosition(moveResult1.insertAtPosition+1)
+            if (nextNode.isDefined && nextNode.get >= v)
+              Iterable(nextNode.get)
+            else
+              Iterable.empty
+          },
+          vrp = myPDP
+        )
+      }
+    ),
+    (moveResult2:CompositeMove) =>{
+      DynAndThen(RemovePoint(
+        relevantPointsToRemove = () => Iterable(myPDP.getRelatedNode(moveResult2.ml(1).asInstanceOf[RemovePointMove].pointToRemove)),
+        vrp = myPDP
+      ),
+        (moveResult3: RemovePointMove) => InsertPointUnroutedFirst(
+          unroutedNodesToInsert = () => Iterable(myPDP.getRelatedDelivery(moveResult2.ml.head.asInstanceOf[InsertPointMove].insertedPoint)),
+          relevantPredecessor = () => myPDP.getNodesAfterRelatedPickup(),
+          vrp = myPDP
+        ))
+    })name "smartInsertCoupleNotFair")
+
+  val insertCoupleNotFair = Profile(DynAndThen(
+    DynAndThen(RemovePoint(
+      relevantPointsToRemove = () => myPDP.getRoutedPickups,
+      vrp = myPDP
+    ),
+      (moveResult1:RemovePointMove) => RemovePoint(
+        relevantPointsToRemove = () => Iterable(myPDP.getRelatedDelivery(moveResult1.pointToRemove)),
+        vrp = myPDP
+      )
+    ),
+    (moveResult2:CompositeMove) =>{
+      val removedPickup = (moveResult2.ml.head.asInstanceOf[RemovePointMove].pointToRemove,
+        moveResult2.ml.head.asInstanceOf[RemovePointMove].positionOfPointToRemove)
+      val removedDelivery = (myPDP.getRelatedDelivery(removedPickup._1),
+        moveResult2.ml(1).asInstanceOf[RemovePointMove].positionOfPointToRemove)
+      DynAndThen(InsertPointUnroutedFirst(
+        unroutedNodesToInsert = () => myPDP.getUnroutedDeliverys.filter(_ != removedDelivery._1),
+        relevantPredecessor = () => (x:Int) => Iterable(myPDP.routes.value.valueAtPosition(removedDelivery._2-1).get),
+        vrp = myPDP
+      ),
+        (moveResult3:InsertPointMove) => InsertPointUnroutedFirst(
+          unroutedNodesToInsert = () => Iterable(myPDP.getRelatedPickup(moveResult3.insertedPoint)),
+          relevantPredecessor = () => (x:Int) => Iterable(myPDP.routes.value.valueAtPosition(removedPickup._2-1).get),
+          vrp = myPDP
+        )
+      )}
+  )name "insertCoupleNotFair")
 
   val pickupDeliveryCoupleExchange = Profile(PickupDeliveryCoupleExchange(myPDP,k = 5)name "PD-CoupleExchange")
 
@@ -212,19 +269,36 @@ object PickupDeliveryS extends App{
 
   def threeOpt(k:Int, breakSym:Boolean) = Profile(new ThreeOpt(() => nodes, ()=>myPDP.kFirst(k,myPDP.closestNeighboursInTime), myPDP,breakSymmetry = breakSym,neighborhoodName = "ThreeOpt(k=" + k + ")"))
 
+  val treeopt = threeOpt(n/10,true)
+
+
+
   val search = BestSlopeFirst(List(insertCoupleFast,onePointMovePD)) exhaust
     new BestSlopeFirst(List(pickupDeliveryCoupleShift,oneCoupleMove,insertCoupleSlow,onePointMovePD, pickupDeliveryCoupleExchange, pickupDeliverySegmentExchange, threeOpt(20,true)))
 
   val searchWithRrestart = search onExhaustRestartAfter(Atomic(removeCouple maxMoves((n-v)/2)),5,myPDP.obj)
 
+  val removeOnExhaust = removeCouple maxMoves((n-v)/20)
 
-  search.verbose = 2
+  val removeMaxCouple = Profile(Atomic(removeOnExhaust) name "remove Some Couples") afterMove(removeOnExhaust reset())
 
-  search.paddingLength = 300
+  val search4 = BestSlopeFirst(List(insertCoupleFast,onePointMovePD),refresh = 5) exhaust
+    (BestSlopeFirst(List(insertCoupleSlow,
+      oneCoupleMove,onePointMovePD,
+      treeopt,pickupDeliveryCoupleExchange,
+      smartInsertCoupleNotFair, insertCoupleNotFair),
+      refresh = 10)
+      exhaust pickupDeliverySegmentExchange
+      onExhaustRestartAfter (removeMaxCouple,2,myPDP.obj))
 
-  search.doAllMoves(obj=myPDP.obj)
+
+  search4.verbose = 2
+
+  search4.paddingLength = 300
+
+  search4.doAllMoves(obj=myPDP.obj)
 
   println(myPDP)
-  println(search.profilingStatistics)
+  println(search4.profilingStatistics)
 
 }
