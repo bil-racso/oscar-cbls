@@ -1,6 +1,7 @@
 package oscar.cbls.test.invariants.algo
 
-import oscar.cbls.algo.boolArray.MagicBoolArray$
+import oscar.cbls.algo.boolArray.MagicBoolArray
+
 import scala.util.Random
 
 /**
