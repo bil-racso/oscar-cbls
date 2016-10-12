@@ -108,7 +108,6 @@ object RoutingWithNodeVehicleRestriction extends App{
 
   search.verbose = 1
   //  search.verboseWithExtraInfo(4,()=>myVRP.toString)
-  search.paddingLength = 100
 
   search.doAllMoves(obj=myVRP.obj)
 

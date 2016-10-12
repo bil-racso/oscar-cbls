@@ -24,7 +24,7 @@ import oscar.cbls.invariants.lib.set.Diff
 import oscar.cbls.modeling.Algebra._
 import oscar.cbls.algo.search.KSmallest
 import oscar.examples.cbls.routing.visual.ColorGenerator
-import oscar.cbls.visual.MatrixMap.RoutingMatrixVisual
+import oscar.cbls.visual.MatrixMap.{RouteToDisplay, RoutingMatrixContainer}
 
 import scala.collection.immutable.SortedSet
 import scala.math._
@@ -164,7 +164,7 @@ class VRP(val n: Int, val v: Int, val m: Store, maxPivotPerValuePercent:Int = 4)
     * @param node the node
     * @return
     */
-  def getNodesAfterPosition()(node:Int): List[Int] ={
+  def getNodesAfterNode()(node:Int): List[Int] ={
     val position = routes.value.positionOfAnyOccurrence(node).head
 
     var i = v-1
@@ -503,7 +503,7 @@ trait VehicleOfNode extends CloneOfRouteForLightPartialPropagation{
 }
 
 trait RoutingMapDisplay extends VRP with ConstantDistancePerVehicle{
-  var routingMap:RoutingMatrixVisual = null
+  var routingMap:RoutingMatrixContainer = null
 
   /**
     * This method initialize the routing map of the problem
@@ -512,10 +512,10 @@ trait RoutingMapDisplay extends VRP with ConstantDistancePerVehicle{
     * @param pickupAndDeliveryNodes if true, the map will show specific information about pickup and delivery nodes
     * @param geolocalisationMap if true, the geoRoutingMap will be used
     */
-  def initializeRoutingMap(list:Array[(Double,Double)], mapSize: Int = 0, pickupAndDeliveryNodes: Boolean = false, geolocalisationMap: Boolean = false): Unit ={
-    routingMap = new RoutingMatrixVisual(vrp = this, pickupAndDeliveryPoints = pickupAndDeliveryNodes, geolocalisationMap = geolocalisationMap)
+  def initializeRoutingMap(list:Array[(Double,Double)], vrp:VRP = this, mapSize: Int = 0, pickupAndDeliveryNodes: Boolean = false, geolocalisationMap: Boolean = false, routeToDisplay: Boolean = false): Unit ={
+    routingMap = new RoutingMatrixContainer(myVRP = vrp, pickupAndDeliveryPoints = pickupAndDeliveryNodes, geolocalisationMap = geolocalisationMap, routeToDisplay = routeToDisplay)
     routingMap.setMapSize(mapSize)
-    routingMap.setPointsList(list.toList, v)
+    routingMap.setPointsList(list.toList)
     routingMap.setColorValues(ColorGenerator.generateRandomColors(v))
     routingMap.drawPoints()
     new Thread(routingMap,"routing thread").start()

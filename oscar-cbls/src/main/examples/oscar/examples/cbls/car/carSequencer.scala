@@ -140,7 +140,6 @@ object carSequencer  extends CBLSModel with App {
   val search = search3
 
   search.verbose = 1
-  search.paddingLength = 150
   search.doAllMoves(_ => c.isTrue,obj)
 
   println(search.profilingStatistics)

@@ -81,7 +81,6 @@ object TSProutePoints extends App{
 
   search.verbose = 1
   //search.verboseWithExtraInfo(1, ()=> "" + myVRP)
-  search.paddingLength = 100
 
   search.doAllMoves(obj=myVRP.obj)
 
