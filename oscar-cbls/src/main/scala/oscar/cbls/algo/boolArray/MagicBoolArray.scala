@@ -1,4 +1,4 @@
-package oscar.cbls.algo.magicalBoolean
+package oscar.cbls.algo.boolArray
 
 /*******************************************************************************
   * OscaR is free software: you can redistribute it and/or modify
@@ -16,15 +16,15 @@ package oscar.cbls.algo.magicalBoolean
   ******************************************************************************/
 
 
-object MagicalBooleanArray {
+object MagicBoolArray {
   /**
    * create a Magical Array Of Boolean of given length
    * @param n the length
    * @return a Magical Array Of Boolean or null if length is less than zero
    */
-  def apply(n:Int):MagicalBooleanArray ={
+  def apply(n:Int):MagicBoolArray ={
     require(n >= 0, "cannot create magic array of negative size")
-    new MagicalBooleanArray(n)
+    new MagicBoolArray(n)
   }
 }
 
@@ -33,7 +33,7 @@ object MagicalBooleanArray {
   * @author Jannou Brohée on 3/10/16.
   * @param length Maximum length of magical array
   */
-class MagicalBooleanArray(val length:Int){
+class MagicBoolArray(val length:Int){
 
   private val threshold:Int = Int.MaxValue-1
 

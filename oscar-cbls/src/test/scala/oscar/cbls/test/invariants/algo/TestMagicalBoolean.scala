@@ -1,6 +1,6 @@
 package oscar.cbls.test.invariants.algo
 
-import oscar.cbls.algo.magicalBoolean.MagicalBooleanArray
+import oscar.cbls.algo.boolArray.MagicBoolArray$
 import scala.util.Random
 
 /**
@@ -8,14 +8,14 @@ import scala.util.Random
   */
 object TestMagicalBoolean extends App{
 
-  def checkEqual(a:Array[Boolean],b:MagicalBooleanArray) {
+  def checkEqual(a:Array[Boolean],b:MagicBoolArray) {
     require(a.length == b.length)
     for (id <- 0 until a.length - 1) {
       require(a(id) == b.get(id))
     }
   }
   var reference: Array[Boolean] =  Array.ofDim(10000)
-  var sut:MagicalBooleanArray  = MagicalBooleanArray(10000)
+  var sut:MagicBoolArray  = MagicBoolArray(10000)
   val random = new Random()
 
   for(it <- 0 to 9999){
@@ -45,7 +45,7 @@ object TestMagicalBoolean extends App{
   checkEqual(reference,sut)
   var reference2: Array[Boolean] =  Array[Boolean](false,false,false,false,false,false,false,false,false,false)
   var reference3: Array[Boolean] =  Array[Boolean](true,true,true,true,true,true,true,true,true,true)
-  sut  = MagicalBooleanArray(10)
+  sut  = MagicBoolArray(10)
   var tim:Long = System.currentTimeMillis()
  /* for(it <-0 to Int.MaxValue-2){
     val value = random.nextBoolean()
