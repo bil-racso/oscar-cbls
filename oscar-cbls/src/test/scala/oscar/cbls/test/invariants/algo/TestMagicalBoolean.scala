@@ -1,6 +1,6 @@
 package oscar.cbls.test.invariants.algo
 
-import oscar.cbls.algo.magicalBoolean.MagicalBoolean
+import oscar.cbls.algo.magicalBoolean.MagicalBooleanArray
 import scala.util.Random
 
 /**
@@ -8,15 +8,14 @@ import scala.util.Random
   */
 object TestMagicalBoolean extends App{
 
-  def checkEqual(a:Array[Boolean],b:MagicalBoolean) {
-    require(a.length == b.size)
+  def checkEqual(a:Array[Boolean],b:MagicalBooleanArray) {
+    require(a.length == b.length)
     for (id <- 0 until a.length - 1) {
       require(a(id) == b.get(id))
     }
   }
   var reference: Array[Boolean] =  Array.ofDim(10000)
-  require( MagicalBoolean(-10000)==null)
-  var sut:MagicalBoolean  = MagicalBoolean(10000)
+  var sut:MagicalBooleanArray  = MagicalBooleanArray(10000)
   val random = new Random()
 
   for(it <- 0 to 9999){
@@ -24,10 +23,10 @@ object TestMagicalBoolean extends App{
     reference(it)=value
     sut.set(it,value)
   }
-  var iter= sut.iterator
+  var iter= sut.indicesAtTrue
   var iterString :String ="["
   var iter2List = iter.toList
-  iter= sut.iterator
+  iter= sut.indicesAtTrue
   while(iter.hasNext){
     val tmp:Int = iter.next()
     iterString+= tmp.toString
@@ -46,7 +45,7 @@ object TestMagicalBoolean extends App{
   checkEqual(reference,sut)
   var reference2: Array[Boolean] =  Array[Boolean](false,false,false,false,false,false,false,false,false,false)
   var reference3: Array[Boolean] =  Array[Boolean](true,true,true,true,true,true,true,true,true,true)
-  sut  = MagicalBoolean(10)
+  sut  = MagicalBooleanArray(10)
   var tim:Long = System.currentTimeMillis()
  /* for(it <-0 to Int.MaxValue-2){
     val value = random.nextBoolean()
