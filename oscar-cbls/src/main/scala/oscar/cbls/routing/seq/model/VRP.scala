@@ -62,8 +62,6 @@ class VRP(val n: Int, val v: Int, val m: Store, maxPivotPerValuePercent:Int = 4)
    */
   val vehicles = 0 until v
 
-  val (next,prev) = RouteSuccessorAndPredecessors(routes,v,n)
-
   /**
    * Returns if a given point is a depot.
     *
@@ -284,6 +282,14 @@ class VRP(val n: Int, val v: Int, val m: Store, maxPivotPerValuePercent:Int = 4)
 
   def onTheSameRoute(node1:Int,node2:Int):Boolean = getVehicleOfNode(node1) == getVehicleOfNode(node2)
 }
+
+
+trait NextAndPrev extends VRP{
+  //TODO: ensure that we REALLY need such an expensive invariant, if yes, use it from the adequate trait, and use clone to speed up exploration!!!
+  val (next,prev) = RouteSuccessorAndPredecessors(routes.createClone(),v,n)
+
+}
+
 
 trait ConstantDistancePerVehicle extends TotalConstantDistance{
   var distancePerVehicle:Array[CBLSIntVar] = null

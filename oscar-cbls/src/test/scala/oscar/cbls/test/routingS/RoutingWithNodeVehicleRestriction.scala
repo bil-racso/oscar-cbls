@@ -28,7 +28,7 @@ import oscar.cbls.search.combinators.{BestSlopeFirst, Profile}
 import scala.util.Random
 
 
-class MyRouting(n:Int,v:Int,symmetricDistance:Array[Array[Int]],m:Store, maxPivot:Int, nodeVehicleRestriction:Iterable[(Int,Int)])
+class VRPWithNodeVehicleRestriction(n:Int,v:Int,symmetricDistance:Array[Array[Int]],m:Store, maxPivot:Int, nodeVehicleRestriction:Iterable[(Int,Int)])
   extends VRP(n,v,m,maxPivot)
   with TotalConstantDistance with ClosestNeighbors with VehicleOfNode{
 
@@ -64,7 +64,7 @@ class MyRouting(n:Int,v:Int,symmetricDistance:Array[Array[Int]],m:Store, maxPivo
   val closestNeighboursForward = computeClosestNeighborsForward()
 }
 
-object routingS extends App{
+object RoutingWithNodeVehicleRestriction extends App{
 
   val n = 1000
   val v = 10
@@ -80,7 +80,7 @@ object routingS extends App{
   //  println("restrictions:" + restrictions)
   val model = new Store() //checker = Some(new ErrorChecker()))
 
-  val myVRP = new MyRouting(n,v,symmetricDistanceMatrix,model,maxPivotPerValuePercent,restrictions)
+  val myVRP = new VRPWithNodeVehicleRestriction(n,v,symmetricDistanceMatrix,model,maxPivotPerValuePercent,restrictions)
   val nodes = myVRP.nodes
 
   model.close()

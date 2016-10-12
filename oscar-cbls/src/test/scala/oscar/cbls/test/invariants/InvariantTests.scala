@@ -569,11 +569,18 @@ class InvariantTests extends FunSuite with Checkers {
     bench.run()
   }
 
-  test("Flip"){
-    val bench = new InvBench(verbose, List(PlusOne(), MinusOne(), ToZero(), ToMin(), ToMax(), Random(), RandomDiff(), Shuffle()))
+  test("Flip maintains a flipped sequence"){
+    val bench = new InvBench(verbose,List(PlusOne(), MinusOne(), ToZero(), ToMin(), ToMax(), Random(), RandomDiff(),Shuffle()))
     val seqVar = bench.genIntSeqVar()
     Flip(seqVar)
-    bench.run
+    bench.run()
+  }
+
+  test("SeqSum maintains the sum of all values in a sequence"){
+    val bench = new InvBench(verbose,List(PlusOne(), MinusOne(), ToZero(), ToMin(), ToMax(), Random(), RandomDiff(),Shuffle()))
+    val seqVar = bench.genIntSeqVar()
+    SeqSum(seqVar)
+    bench.run()
   }
 
   // ---- Routing tests ---- //
