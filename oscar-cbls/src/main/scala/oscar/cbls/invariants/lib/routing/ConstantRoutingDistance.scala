@@ -523,7 +523,7 @@ class ConstantRoutingDistancePrecompute(routes:ChangingSeqValue,
     var explorerOPt = seq.explorerAtAnyOccurrence(vehicle).head.next
     var prevValue = vehicle
     while(explorerOPt match{
-      case None => throw new Error("end of sequence reached before toValueIncluded?!")
+      case None => false
       case Some(explorer) =>
         val value = explorer.value
         if(value != vehicle+1) {
