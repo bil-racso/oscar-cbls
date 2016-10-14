@@ -47,7 +47,7 @@ class MagicBoolArray(val length:Int){
     * @param value the new element's value (true/false)
     * @note in O(1) // trivial
     */
-  def set(id:Int, value:Boolean){
+  def update(id:Int, value:Boolean){
     assert(id<length && 0<=id)
     if(value) internalArray(id)=global
     else internalArray(id)=global-1
@@ -59,7 +59,7 @@ class MagicBoolArray(val length:Int){
     * @return true or false
     * @note complexity is O(1)
     */
-  def get(id:Int): Boolean ={
+  def apply(id:Int): Boolean ={
     assert(0<=id && id<length)
     internalArray(id)>=global
   }
@@ -68,7 +68,7 @@ class MagicBoolArray(val length:Int){
     * Sets the value of each element to "value"
     * @note complexity is O(1)
     */
-  def setAll(value:Boolean): Unit ={
+  def all_=(value:Boolean): Unit ={
     if(value) {
       if (Math.abs(global) == threshold) {
         global = 0
@@ -102,8 +102,6 @@ class MagicBoolArray(val length:Int){
   }
 
   override def toString: String = "["+indicesAtTrue.mkString(",")+"]"
-
-
 }
 
 

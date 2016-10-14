@@ -1,6 +1,6 @@
 package oscar.cbls.test.invariants.algo
 
-import oscar.cbls.algo.boolArray.MagicBoolArray$
+import oscar.cbls.algo.boolArray.{MagicBoolArray}
 import scala.util.Random
 
 /**
@@ -11,7 +11,7 @@ object TestMagicalBoolean extends App{
   def checkEqual(a:Array[Boolean],b:MagicBoolArray) {
     require(a.length == b.length)
     for (id <- 0 until a.length - 1) {
-      require(a(id) == b.get(id))
+      require(a(id) == b(id))
     }
   }
   var reference: Array[Boolean] =  Array.ofDim(10000)
@@ -21,7 +21,7 @@ object TestMagicalBoolean extends App{
   for(it <- 0 to 9999){
     val value = random.nextBoolean()
     reference(it)=value
-    sut.set(it,value)
+    sut(it) = value
   }
   var iter= sut.indicesAtTrue
   var iterString :String ="["
@@ -31,7 +31,7 @@ object TestMagicalBoolean extends App{
     val tmp:Int = iter.next()
     iterString+= tmp.toString
     if(iter.hasNext) iterString+=","
-    require(sut.get(tmp))
+    require(sut(tmp))
   }
   iterString+="]"
   //check toString()
@@ -39,7 +39,7 @@ object TestMagicalBoolean extends App{
 
   //check if there are elements  "true" which is not in the iterator
   for(n<- 0 until sut.length-1){
-    if(!iter2List.contains(n)) require(!sut.get(n))
+    if(!iter2List.contains(n)) require(!sut(n))
   }
 
   checkEqual(reference,sut)
