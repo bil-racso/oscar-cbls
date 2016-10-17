@@ -180,7 +180,6 @@ case class SplittingSingleBatchProcess(m:Model,
 
   def isWaiting = waiting
 
-
   override def cloneReset(m:Migrator): ActivableProcess = {
     SplittingSingleBatchProcess(m.newModel,
       batchDuration,
