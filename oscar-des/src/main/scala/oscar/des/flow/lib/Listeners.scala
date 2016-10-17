@@ -187,6 +187,7 @@ class MetricsStore(val rootExpressions:List[(String, Expression)],verbosity:Stri
 
   //the last updateMetrics must have been performed on the last state
   def finish(time:Double){
+    if(verbosity!=null) verbosity("finish query eval; time on finish:" + time)
     nonAccumulatingExpressions.foreach(_.update(time))
   }
 
