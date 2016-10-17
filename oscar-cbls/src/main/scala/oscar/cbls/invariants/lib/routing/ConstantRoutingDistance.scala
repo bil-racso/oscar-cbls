@@ -22,6 +22,17 @@ import oscar.cbls.invariants.core.propagation.Checker
 
 object ConstantRoutingDistance {
 
+  /**
+   *
+   * @param routes
+   * @param v
+   * @param perVehicle
+   * @param distanceMatrix
+   * @param distanceIsSymmetric
+   * @param precomputeFW performs forward pre-computation, only useful if multiple vehicle and per vehicle disatnce or asymetric matrix
+   * @param precomputeBW performs backward pre-computation, only useful if assymetric matrix
+   * @return
+   */
   def apply(routes : ChangingSeqValue,
             v : Int,
             perVehicle:Boolean,
