@@ -55,7 +55,7 @@ case class Flip(v: SeqValue,override val maxPivotPerValuePercent:Int = 10, overr
 
       case u@SeqUpdateRollBackToCheckpoint(checkpoint) =>
         require(checkpoint quickEquals this.checkpoint)
-        this.rollbackToCurrentCheckpoint(outputAtCheckpoint)
+        this.rollbackToTopCheckpoint(outputAtCheckpoint)
         true
 
       case SeqUpdateDefineCheckpoint(prev : SeqUpdate, isActive) =>

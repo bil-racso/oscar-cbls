@@ -69,7 +69,7 @@ case class PickupDeliveryThreeOpt(potentialInsertionPoints:()=>Iterable[Int], //
 
     def evalObjAndRollBack() : Int = {
       val a = obj.value
-      seq.rollbackToCurrentCheckpoint(seqValue)
+      seq.rollbackToTopCheckpoint(seqValue)
       a
     }
 
@@ -109,7 +109,7 @@ case class PickupDeliveryThreeOpt(potentialInsertionPoints:()=>Iterable[Int], //
                     doMove(insertionPosition, segmentStartPosition, segmentEndPosition, false)
 
                     if (evaluateCurrentMoveObjTrueIfStopRequired(evalObjAndRollBack())) {
-                      seq.releaseCurrentCheckpointAtCheckpoint()
+                      seq.releaseTopCheckpointAtCheckpoint()
                       startIndice = insertionPoint + 1
                       return
                     }
@@ -121,7 +121,7 @@ case class PickupDeliveryThreeOpt(potentialInsertionPoints:()=>Iterable[Int], //
                     doMove(insertionPosition, segmentStartPosition, segmentEndPosition, true)
 
                     if (evaluateCurrentMoveObjTrueIfStopRequired(evalObjAndRollBack())) {
-                      seq.releaseCurrentCheckpointAtCheckpoint()
+                      seq.releaseTopCheckpointAtCheckpoint()
                       startIndice = insertionPoint + 1
                       segmentStartPositionForInstantiation = -1
                       return
@@ -133,7 +133,7 @@ case class PickupDeliveryThreeOpt(potentialInsertionPoints:()=>Iterable[Int], //
           }
       }
     }
-    seq.releaseCurrentCheckpointAtCheckpoint()
+    seq.releaseTopCheckpointAtCheckpoint()
     segmentStartPositionForInstantiation = -1
   }
 

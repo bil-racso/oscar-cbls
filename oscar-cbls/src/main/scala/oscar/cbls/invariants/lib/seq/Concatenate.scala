@@ -157,7 +157,7 @@ class ConcatenateFirstConstant(a:List[Int],b:ChangingSeqValue,maxPivotPerValuePe
 
       case u@SeqUpdateRollBackToCheckpoint(checkpoint) =>
         require(checkpoint quickEquals this.checkpoint)
-        this.rollbackToCurrentCheckpoint(outputAtCheckpoint)
+        this.rollbackToTopCheckpoint(outputAtCheckpoint)
         true
 
       case SeqUpdateDefineCheckpoint(prev : SeqUpdate, isActive) =>
@@ -226,7 +226,7 @@ class ConcatenateSecondConstant(a:ChangingSeqValue,b:List[Int],maxPivotPerValueP
 
       case u@SeqUpdateRollBackToCheckpoint(checkpoint) =>
         require(checkpoint quickEquals this.checkpoint)
-        this.rollbackToCurrentCheckpoint(outputAtCheckpoint)
+        this.rollbackToTopCheckpoint(outputAtCheckpoint)
         true
 
       case SeqUpdateDefineCheckpoint(prev : SeqUpdate, isActive) =>

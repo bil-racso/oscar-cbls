@@ -64,7 +64,7 @@ case class SegmentExchange(val vrp: VRP,
 
     def evalObjAndRollBack() : Int = {
       val a = obj.value
-      seq.rollbackToCurrentCheckpoint(seqValue)
+      seq.rollbackToTopCheckpoint(seqValue)
       a
     }
 
@@ -148,7 +148,7 @@ case class SegmentExchange(val vrp: VRP,
                         secondSegmentStartPosition, secondSegmentEndPosition, flipSecondSegment)
 
                       if (evaluateCurrentMoveObjTrueIfStopRequired(evalObjAndRollBack())) {
-                        seq.releaseCurrentCheckpointAtCheckpoint()
+                        seq.releaseTopCheckpointAtCheckpoint()
                         startVehicle = firstVehicle + 1
                         return
                       }
@@ -159,7 +159,7 @@ case class SegmentExchange(val vrp: VRP,
                           secondSegmentStartPosition, secondSegmentEndPosition, flipSecondSegment)
 
                         if (evaluateCurrentMoveObjTrueIfStopRequired(evalObjAndRollBack())) {
-                          seq.releaseCurrentCheckpointAtCheckpoint()
+                          seq.releaseTopCheckpointAtCheckpoint()
                           startVehicle = firstVehicle + 1
                           return
                         }
@@ -174,7 +174,7 @@ case class SegmentExchange(val vrp: VRP,
       }//end loop on first node first segment
 
     }//end loop on vehicles
-    seq.releaseCurrentCheckpointAtCheckpoint()
+    seq.releaseTopCheckpointAtCheckpoint()
   } //end def
 
   override def instantiateCurrentMove(newObj: Int): SegmentExchangeMove = {

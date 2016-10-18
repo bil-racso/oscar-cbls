@@ -65,7 +65,7 @@ object TestSeqVar extends App{
   require(5 == size2.value)
 
   println("\n\n")
-  a.rollbackToCurrentCheckpoint(checkpoint)
+  a.rollbackToTopCheckpoint(checkpoint)
   require(size2.value == 5, "size2 " + size2 + " should==5 " + a.toStringNoPropagate)
   require(content.value equals SortedSet(1,2,3,5,45))
   println(content)

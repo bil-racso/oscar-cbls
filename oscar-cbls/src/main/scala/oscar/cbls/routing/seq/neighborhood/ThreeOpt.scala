@@ -68,7 +68,7 @@ case class ThreeOpt(potentialInsertionPoints:()=>Iterable[Int], //must be routed
 
     def evalObjAndRollBack() : Int = {
       val a = obj.value
-      seq.rollbackToCurrentCheckpoint(seqValue)
+      seq.rollbackToTopCheckpoint(seqValue)
       a
     }
 
@@ -112,7 +112,7 @@ case class ThreeOpt(potentialInsertionPoints:()=>Iterable[Int], //must be routed
                   doMove(insertionPosition, segmentStartPosition, segmentEndPosition, false)
 
                   if (evaluateCurrentMoveObjTrueIfStopRequired(evalObjAndRollBack())) {
-                    seq.releaseCurrentCheckpointAtCheckpoint()
+                    seq.releaseTopCheckpointAtCheckpoint()
                     startIndice = insertionPoint + 1
                     return
                   }
@@ -124,7 +124,7 @@ case class ThreeOpt(potentialInsertionPoints:()=>Iterable[Int], //must be routed
                   doMove(insertionPosition, segmentStartPosition, segmentEndPosition, true)
 
                   if (evaluateCurrentMoveObjTrueIfStopRequired(evalObjAndRollBack())) {
-                    seq.releaseCurrentCheckpointAtCheckpoint()
+                    seq.releaseTopCheckpointAtCheckpoint()
                     startIndice = insertionPoint + 1
                     segmentStartPositionForInstantiation = -1
                     return
@@ -135,7 +135,7 @@ case class ThreeOpt(potentialInsertionPoints:()=>Iterable[Int], //must be routed
           }
       }
     }
-    seq.releaseCurrentCheckpointAtCheckpoint()
+    seq.releaseTopCheckpointAtCheckpoint()
     segmentStartPositionForInstantiation = -1
   }
 

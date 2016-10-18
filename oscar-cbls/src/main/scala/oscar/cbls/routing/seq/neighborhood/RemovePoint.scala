@@ -64,7 +64,7 @@ case class RemovePoint(relevantPointsToRemove:()=>Iterable[Int],
 
     def evalObjAndRollBack() : Int = {
       val a = obj.value
-      seq.rollbackToCurrentCheckpoint(seqValue)
+      seq.rollbackToTopCheckpoint(seqValue)
       a
     }
 
@@ -82,13 +82,13 @@ case class RemovePoint(relevantPointsToRemove:()=>Iterable[Int],
           positionOfPointToRemove = p
           doMove(positionOfPointToRemove)
           if (evaluateCurrentMoveObjTrueIfStopRequired(evalObjAndRollBack())) {
-            seq.releaseCurrentCheckpointAtCheckpoint()
+            seq.releaseTopCheckpointAtCheckpoint()
             startIndice = pointToRemove + 1
             return
           }
       }
     }
-    seq.releaseCurrentCheckpointAtCheckpoint()
+    seq.releaseTopCheckpointAtCheckpoint()
   }
 
   override def instantiateCurrentMove(newObj: Int) =

@@ -38,12 +38,6 @@ object IntSequence{
   )
 
   implicit def toIterable(seq:IntSequence):IterableIntSequence = new IterableIntSequence(seq)
-
-  private var nextUniqueID:Int = Int.MinValue
-  def getNewUniqueID():Int = {
-    nextUniqueID +=1
-    nextUniqueID
-  }
 }
 
 class IterableIntSequence(sequence:IntSequence) extends Iterable[Int]{
@@ -58,7 +52,14 @@ class IterableIntSequence(sequence:IntSequence) extends Iterable[Int]{
   override def lastOption : Option[Int] = sequence.valueAtPosition(sequence.size-1)
 }
 
-abstract class IntSequence(protected[cbls] val uniqueID:Int = IntSequence.getNewUniqueID()) {
+
+class Token()
+object Token{
+  def apply():Token = new Token()
+}
+
+
+abstract class IntSequence(protected[cbls] val token: Token = Token()) {
 
   def size : Int
 
@@ -177,14 +178,14 @@ abstract class IntSequence(protected[cbls] val uniqueID:Int = IntSequence.getNew
     if(this.isEmpty) this
     else moveAfter(0, this.size-1, -1, flip = true, fast, autoRework)
 
-  def regularizeToMaxPivot(maxPivotPerValuePercent: Int, targetUniqueID: Int = this.uniqueID) :ConcreteIntSequence
+  def regularizeToMaxPivot(maxPivotPerValuePercent: Int, targetToken: Token = this.token) :ConcreteIntSequence
 
-  def regularize(targetUniqueID:Int = this.uniqueID):ConcreteIntSequence
+  def regularize(targetToken:Token = this.token):ConcreteIntSequence
   def commitPendingMoves:IntSequence
 
   def check{}
 
-  def quickEquals(that:IntSequence):Boolean = that != null && this.uniqueID == that.uniqueID
+  def quickEquals(that:IntSequence):Boolean = that != null && this.token == that.token
   def equals(that:IntSequence):Boolean = {
     quickEquals(that) || (that != null && (this.toList equals that.toList))
   }
@@ -204,11 +205,12 @@ abstract class IntSequence(protected[cbls] val uniqueID:Int = IntSequence.getNew
   }
 }
 
+
 class ConcreteIntSequence(private[seq] val internalPositionToValue:RedBlackTreeMap[Int],
                           private[seq] val valueToInternalPositions:RedBlackTreeMap[RedBlackTreeMap[Int]],
                           private[seq] val externalToInternalPosition:PiecewiseLinearBijectionNaive,
                           private[seq] val startFreeRangeForInternalPosition:Int,
-                          uniqueID:Int = IntSequence.getNewUniqueID()) extends IntSequence(uniqueID) {
+                          token:Token = Token()) extends IntSequence(token) {
 
   override def descriptorString : String = "[" + this.iterator.toList.mkString(",") + "]_impl:concrete"
 
@@ -444,20 +446,20 @@ class ConcreteIntSequence(private[seq] val internalPositionToValue:RedBlackTreeM
     }
   }
 
-  override def regularizeToMaxPivot(maxPivotPerValuePercent: Int, targetUniqueID: Int = this.uniqueID) :ConcreteIntSequence = {
+  override def regularizeToMaxPivot(maxPivotPerValuePercent: Int, targetToken: Token = this.token) :ConcreteIntSequence = {
     if(this.externalToInternalPosition.forward.nbPivot * 100 > maxPivotPerValuePercent * this.size){
-      regularize(targetUniqueID)
+      regularize(targetToken)
     }else{
-      if (targetUniqueID != this.uniqueID){
+      if (targetToken != this.token){
         new ConcreteIntSequence(internalPositionToValue,
           valueToInternalPositions,
           externalToInternalPosition,
-          size, targetUniqueID)
+          size, targetToken)
       }else this
     }
   }
 
-  def regularize(targetUniqueID : Int = this.uniqueID) : ConcreteIntSequence = {
+  def regularize(targetToken : Token = this.token) : ConcreteIntSequence = {
     //TODO: maybe we can go faster with newValueToInternalPositions?
     var explorer = this.explorerAtPosition(0)
     val newInternalPositionToValues:Array[(Int,Int)] = Array.fill[(Int,Int)](this.size)(null)
@@ -489,7 +491,7 @@ class ConcreteIntSequence(private[seq] val internalPositionToValue:RedBlackTreeM
     new ConcreteIntSequence(RedBlackTreeMap.makeFromSortedArray(newInternalPositionToValues),
       RedBlackTreeMap.makeFromSortedArray(sortedValuesAndEmptyAccumulatorsArray.map({case (value,accumulator) => (value,accumulator.positions)})),
       PiecewiseLinearBijectionNaive.identity,
-      newInternalPositionToValues.length, targetUniqueID)
+      newInternalPositionToValues.length, targetToken)
   }
 
   override def commitPendingMoves : IntSequence = this
@@ -627,10 +629,10 @@ abstract class StackedUpdateIntSequence extends IntSequence(){
   }
 
 
-  override def regularizeToMaxPivot(maxPivotPerValuePercent: Int, targetUniqueID: Int = this.uniqueID) : ConcreteIntSequence =
-    commitPendingMoves.regularizeToMaxPivot(maxPivotPerValuePercent : Int, targetUniqueID : Int)
+  override def regularizeToMaxPivot(maxPivotPerValuePercent: Int, targetToken: Token = this.token) : ConcreteIntSequence =
+    commitPendingMoves.regularizeToMaxPivot(maxPivotPerValuePercent, targetToken)
 
-  override def regularize(targetUniqueID:Int = this.uniqueID) : ConcreteIntSequence = commitPendingMoves.regularize(targetUniqueID)
+  override def regularize(targetToken:Token = this.token) : ConcreteIntSequence = commitPendingMoves.regularize(targetToken)
 }
 
 object MovedIntSequence{

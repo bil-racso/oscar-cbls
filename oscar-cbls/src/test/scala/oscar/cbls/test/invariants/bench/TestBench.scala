@@ -535,7 +535,7 @@ case class RouteOfNodesForCheckPoint(intSeqVar: CBLSSeqVar, v:Int, checker:Invar
             notInSeq = List.tabulate(randomVar().max)(n => n).filterNot(inSeq.contains(_))
             randomVar().insertAtPosition(Gen.oneOf(notInSeq).sample.get, Gen.choose(1, inSeq.size).sample.get)
           }
-          randomVar().rollbackToCurrentCheckpoint(checkPoint)
+          randomVar().rollbackToTopCheckpoint(checkPoint)
           checker.check(randomVar().value == checkPoint, Some("Error : " + randomVar().value.toString + ", or : " + randomVar().newValue.toString + " != " + checkPoint.toString))
         }
         inSeq = randomVar().newValue.toList
@@ -549,7 +549,7 @@ case class RouteOfNodesForCheckPoint(intSeqVar: CBLSSeqVar, v:Int, checker:Invar
             inSeq = randomVar().newValue.toList
             randomVar().remove(inSeq.indexOf(Gen.oneOf(inSeq.filterNot(_ < v)).sample.get))
           }
-          randomVar().rollbackToCurrentCheckpoint(checkPoint)
+          randomVar().rollbackToTopCheckpoint(checkPoint)
           checker.check(randomVar().value == checkPoint, Some("Error : " + randomVar().value.toString + ", or : " + randomVar().newValue.toString + " != " + checkPoint.toString))
         }
         checker.check(randomVar().value == checkPoint, Some("Error : " + randomVar().value.toString + ", or : " + randomVar().newValue.toString + " != " + checkPoint.toString))
@@ -567,7 +567,7 @@ case class RouteOfNodesForCheckPoint(intSeqVar: CBLSSeqVar, v:Int, checker:Invar
             if(newPos < p1 || newPos > p2)
               randomVar().move(p1, p2, newPos, false)
           }
-          randomVar().rollbackToCurrentCheckpoint(checkPoint)
+          randomVar().rollbackToTopCheckpoint(checkPoint)
           checker.check(randomVar().value == checkPoint, Some("Error : " + randomVar().value.toString + ", or : " + randomVar().newValue.toString + " != " + checkPoint.toString))
         }
         for(i <- 0 until inSeq.size - v){
@@ -603,7 +603,7 @@ case class RouteOfNodesForCheckPoint(intSeqVar: CBLSSeqVar, v:Int, checker:Invar
                 }
             }
           }
-          randomVar().rollbackToCurrentCheckpoint(checkPoint)
+          randomVar().rollbackToTopCheckpoint(checkPoint)
           checker.check(randomVar().value == checkPoint, Some("Error : " + randomVar().value.toString + ", or : " + randomVar().newValue.toString + " != " + checkPoint.toString))
         }
     }

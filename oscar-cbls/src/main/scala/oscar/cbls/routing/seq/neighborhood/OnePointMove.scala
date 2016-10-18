@@ -63,7 +63,7 @@ case class OnePointMove(nodesToMove: () => Iterable[Int],
 
     def evalObjAndRollBack() : Int = {
       val a = obj.value
-      seq.rollbackToCurrentCheckpoint(startValue)
+      seq.rollbackToTopCheckpoint(startValue)
       a
     }
 
@@ -94,7 +94,7 @@ case class OnePointMove(nodesToMove: () => Iterable[Int],
                       doMove(positionOfMovedPoint, positionOfNewPredecessor)
 
                       if (evaluateCurrentMoveObjTrueIfStopRequired(evalObjAndRollBack())) {
-                        seq.releaseCurrentCheckpointAtCheckpoint()
+                        seq.releaseTopCheckpointAtCheckpoint()
                         startIndice = movedPointForInstantiation + 1
                         positionOfMovedPointForInstantiation = -1
                         return
@@ -106,7 +106,7 @@ case class OnePointMove(nodesToMove: () => Iterable[Int],
         }
       }
     }
-    seq.releaseCurrentCheckpointAtCheckpoint()
+    seq.releaseTopCheckpointAtCheckpoint()
     positionOfMovedPointForInstantiation = -1
   }
   var movedPointForInstantiation:Int = -1

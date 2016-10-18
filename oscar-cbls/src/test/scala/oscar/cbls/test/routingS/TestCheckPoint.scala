@@ -86,7 +86,7 @@ object TestCheckPoint extends App{
 
   val search = Profile(BestSlopeFirst(List(insertPoint,onePointMove,twoOpt,threeOpt,doubleInsert))).afterMove({
     if(moves == movesBeforeRollBack && movesBeforeRollBack < maxMovesBeforeRollBack) {
-      myVRP.routes.rollbackToCurrentCheckpoint(checkPoint)
+      myVRP.routes.rollbackToTopCheckpoint(checkPoint)
       println("rolled back")
       movesBeforeRollBack += 1
       moves = 0

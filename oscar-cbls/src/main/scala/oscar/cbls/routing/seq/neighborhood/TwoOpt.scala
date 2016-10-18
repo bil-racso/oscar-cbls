@@ -83,7 +83,7 @@ case class TwoOpt1(segmentStartValues:()=>Iterable[Int],
 
     def evalObjAndRollBack() : Int = {
       val a = obj.value
-      seq.rollbackToCurrentCheckpoint(seqValue)
+      seq.rollbackToTopCheckpoint(seqValue)
       a
     }
 
@@ -121,7 +121,7 @@ case class TwoOpt1(segmentStartValues:()=>Iterable[Int],
           doMove(segmentStartPosition, segmentEndPosition)
 
           if (evaluateCurrentMoveObjTrueIfStopRequired(evalObjAndRollBack())) {
-            seq.releaseCurrentCheckpointAtCheckpoint()
+            seq.releaseTopCheckpointAtCheckpoint()
             startIndice = segmentStartValue + 1
             segmentStartPositionForInstantiate = -1
             return
@@ -129,7 +129,7 @@ case class TwoOpt1(segmentStartValues:()=>Iterable[Int],
         }
       }
     }
-    seq.releaseCurrentCheckpointAtCheckpoint()
+    seq.releaseTopCheckpointAtCheckpoint()
     segmentStartPositionForInstantiate = -1
   }
 
@@ -173,7 +173,7 @@ case class TwoOpt2(segmentStartValues:()=>Iterable[Int],
 
     def evalObjAndRollBack() : Int = {
       val a = obj.value
-      seq.rollbackToCurrentCheckpoint(seqValue)
+      seq.rollbackToTopCheckpoint(seqValue)
       a
     }
 
@@ -211,7 +211,7 @@ case class TwoOpt2(segmentStartValues:()=>Iterable[Int],
           doMove(segmentStartPosition, segmentEndPosition)
 
           if (evaluateCurrentMoveObjTrueIfStopRequired(evalObjAndRollBack())) {
-            seq.releaseCurrentCheckpointAtCheckpoint()
+            seq.releaseTopCheckpointAtCheckpoint()
             startIndice = segmentStartValue + 1
             segmentStartPositionForInstantiate = -1
             return
@@ -219,7 +219,7 @@ case class TwoOpt2(segmentStartValues:()=>Iterable[Int],
         }
       }
     }
-    seq.releaseCurrentCheckpointAtCheckpoint()
+    seq.releaseTopCheckpointAtCheckpoint()
     segmentStartPositionForInstantiate = -1
   }
 

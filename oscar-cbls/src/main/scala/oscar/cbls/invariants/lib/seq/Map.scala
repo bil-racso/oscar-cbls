@@ -63,7 +63,7 @@ with SeqNotificationTarget{
         remove(position)
       case x@SeqUpdateRollBackToCheckpoint(checkpoint) =>
         require(checkpoint quickEquals inputCheckpoint)
-        rollbackToCurrentCheckpoint(this.checkpoint)
+        rollbackToTopCheckpoint(this.checkpoint)
       case SeqUpdateAssign(seq) =>
         this := seq.map(transform)
     }

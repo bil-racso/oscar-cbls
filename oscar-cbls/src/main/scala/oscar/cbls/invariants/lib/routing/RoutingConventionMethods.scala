@@ -118,10 +118,10 @@ class CachedPositionOf(maxValue:Int){
   private val cachedAnyPosition:Array[Int] = Array.fill(maxValue+1)(-2)
 
   def updateToCheckpoint(checkpoint:IntSequence){
-    currentCheckpointID = checkpoint.uniqueID
+    currentCheckpointID = checkpoint.token
   }
   def positionOfAnyOccurrence(seq:IntSequence,value:Int):Option[Int] = {
-    val seqID = seq.uniqueID
+    val seqID = seq.token
     if(currentCheckpointID == seqID){
       if(checkpointIDOfSavedValue(value) == seqID){
         val pos = cachedAnyPosition(value)
@@ -141,7 +141,7 @@ class CachedPositionOf(maxValue:Int){
   }
 
   def savePos(seq:IntSequence,value:Int,position:Option[Int]){
-    if(seq.uniqueID == currentCheckpointID){
+    if(seq.token == currentCheckpointID){
       checkpointIDOfSavedValue(value) = currentCheckpointID
       position match{
         case None => cachedAnyPosition(value) = -1
