@@ -16,7 +16,7 @@ package oscar.cbls.invariants.lib.routing
   ******************************************************************************/
 
 import oscar.cbls.algo.rb.RedBlackTreeMap
-import oscar.cbls.algo.seq.functional.IntSequence
+import oscar.cbls.algo.seq.functional.{Token, IntSequence}
 
 object RoutingConventionMethods {
 
@@ -112,23 +112,23 @@ object RoutingConventionMethods {
 
 class CachedPositionOf(maxValue:Int){
 
-  private var currentCheckpointID:Int = Int.MaxValue
-  private val checkpointIDOfSavedValue:Array[Int] = Array.fill(maxValue+1)(Int.MinValue)
+  private var tokenOfCurrentCheckpoint:Token = null
+  private val checkpointIDOfSavedValue:Array[Token] = Array.fill(maxValue+1)(null)
   //-1 stands for NONE, -2 is an error
   private val cachedAnyPosition:Array[Int] = Array.fill(maxValue+1)(-2)
 
   def updateToCheckpoint(checkpoint:IntSequence){
-    currentCheckpointID = checkpoint.token
+    tokenOfCurrentCheckpoint = checkpoint.token
   }
   def positionOfAnyOccurrence(seq:IntSequence,value:Int):Option[Int] = {
     val seqID = seq.token
-    if(currentCheckpointID == seqID){
+    if(tokenOfCurrentCheckpoint == seqID){
       if(checkpointIDOfSavedValue(value) == seqID){
         val pos = cachedAnyPosition(value)
         if (pos == -1) None else Some(pos)
       }else{
         val pos = seq.positionOfAnyOccurrence(value)
-        checkpointIDOfSavedValue(value) = currentCheckpointID
+        checkpointIDOfSavedValue(value) = tokenOfCurrentCheckpoint
         pos match{
           case None => cachedAnyPosition(value) = -1
           case Some(x) => cachedAnyPosition(value) = x
@@ -141,8 +141,8 @@ class CachedPositionOf(maxValue:Int){
   }
 
   def savePos(seq:IntSequence,value:Int,position:Option[Int]){
-    if(seq.token == currentCheckpointID){
-      checkpointIDOfSavedValue(value) = currentCheckpointID
+    if(seq.token == tokenOfCurrentCheckpoint){
+      checkpointIDOfSavedValue(value) = tokenOfCurrentCheckpoint
       position match{
         case None => cachedAnyPosition(value) = -1
         case Some(x) => cachedAnyPosition(value) = x

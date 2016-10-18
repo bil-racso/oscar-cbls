@@ -102,7 +102,7 @@ class Concatenate(a:ChangingSeqValue,b:ChangingSeqValue,maxPivotPerValuePercent:
       case u@SeqUpdateRollBackToCheckpoint(checkpoint) =>
         digestChanges(isFirst, u.howToRollBack)
 
-      case SeqUpdateDefineCheckpoint(prev : SeqUpdate, isActive) =>
+      case SeqUpdateDefineCheckpoint(prev : SeqUpdate, isStarMode) =>
         digestChanges(isFirst, prev)
 
       case SeqUpdateLastNotified(value) =>

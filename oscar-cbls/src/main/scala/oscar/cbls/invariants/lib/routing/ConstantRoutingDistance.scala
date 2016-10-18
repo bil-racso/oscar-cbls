@@ -129,7 +129,9 @@ class ConstantRoutingDistance(routes:ChangingSeqValue,
 
   private def digestUpdates(changes:SeqUpdate,skipNewCheckpoints:Boolean):Boolean = {
     changes match {
-      case SeqUpdateDefineCheckpoint(prev:SeqUpdate,isActive:Boolean) =>
+      case SeqUpdateDefineCheckpoint(prev:SeqUpdate,isStarMode:Boolean) =>
+        //TODO: manage levels!
+
         if(!digestUpdates(prev,true)){
           affect(computeValueFromScratch(changes.newValue))
         }

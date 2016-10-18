@@ -101,7 +101,7 @@ class RouteSuccessorAndPredecessors(routes:ChangingSeqValue,
         Some(SortedSet.empty[Int]) //we are starting from the previous value
       case SeqUpdateAssign(value : IntSequence) =>
         None //impossible to go incremental
-      case SeqUpdateDefineCheckpoint(prev:SeqUpdate,_) =>
+      case SeqUpdateDefineCheckpoint(prev:SeqUpdate,_,_) =>
         computeStartValuesOfImpactedZone(prev)
       case u@SeqUpdateRollBackToCheckpoint(checkpoint:IntSequence) =>
         computeStartValuesOfImpactedZone(u.howToRollBack)

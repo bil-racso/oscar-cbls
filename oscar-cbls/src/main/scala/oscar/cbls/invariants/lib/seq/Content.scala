@@ -86,8 +86,8 @@ case class Content(v:SeqValue)
       case SeqUpdateAssign(value:IntSequence) =>
         //raw assign, no incremental possible
         false
-      case SeqUpdateDefineCheckpoint(prev:SeqUpdate,isActive:Boolean) =>
-        if(skipNewCheckpoints || !isActive) {
+      case SeqUpdateDefineCheckpoint(prev:SeqUpdate,isStarMode:Boolean) =>
+        if(skipNewCheckpoints || !isStarMode) {
           digestUpdates(prev,true)
         } else {
           if(!digestUpdates(prev,true)){
