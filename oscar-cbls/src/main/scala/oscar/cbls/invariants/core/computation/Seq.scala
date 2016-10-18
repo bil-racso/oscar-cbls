@@ -902,6 +902,8 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], val maxValue: Int, 
         //checkpoint could not be removed, but a part of history could be simplified
         toNotify = newToNotify
       case NoSimplificationPerformed =>
+      //there is nothing to do here because the chackpoint has been communicated anyway,
+      // and we are in the latest checkpoint fashion wher checkpoints are implicitly released when a new one is communicated
     }
 
     //in all cases, we must pop the checkpoint from the checkpoint stack since it is working on the NewValues
