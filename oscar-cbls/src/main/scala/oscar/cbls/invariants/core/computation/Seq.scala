@@ -916,7 +916,7 @@ abstract class ChangingSeqValueAllCheckpoints(initialValue: Iterable[Int], overr
         }else{
           SeqUpdatesCleanedUntilQuickEqualValueReachedCheckpointDeclarationNotRemoved(updates)
         }
-      case SeqUpdateRollBackToCheckpoint(checkpointValue:IntSequence) =>
+      case SeqUpdateRollBackToCheckpoint(checkpointValue:IntSequence, level:Int) =>
         NoSimplificationPerformed
     }
   }
@@ -964,7 +964,7 @@ abstract class ChangingSeqValueAllCheckpoints(initialValue: Iterable[Int], overr
         require(updates.newValue quickEquals searchedCheckpoint,
           "require fail on quick equals: " + updates.newValue + "should== " + searchedCheckpoint)
         CheckpointDeclarationReachedAndRemoved(prev)
-      case SeqUpdateRollBackToCheckpoint(checkpointValue:IntSequence) =>
+      case SeqUpdateRollBackToCheckpoint(checkpointValue:IntSequence,level:Int) =>
         NoSimplificationPerformed
     }
   }
@@ -1102,7 +1102,12 @@ class IdentitySeq(fromValue:ChangingSeqValue, toValue:CBLSSeqVar)
       case SeqUpdateLastNotified(value:IntSequence) =>
         //nothing to do here
         assert(value equals toValue.newValue)
-      case SeqUpdateRollBackToCheckpoint(value:IntSequence) =>
+      case SeqUpdateRollBackToCheckpoint(value:IntSequence,level:Int) =>
+        //roll back might free some checkpoints implicitly
+        while(level > levelTopCheckpoint){
+          toValue.releaseTopCheckpoint(topCheckpoint)
+          popTopCheckpoint()
+        }
         require(value quickEquals topCheckpoint)
         toValue.rollbackToTopCheckpoint(value)
       case SeqUpdateDefineCheckpoint(prev:SeqUpdate,activeCheckpoint:Boolean,level:Int) =>
