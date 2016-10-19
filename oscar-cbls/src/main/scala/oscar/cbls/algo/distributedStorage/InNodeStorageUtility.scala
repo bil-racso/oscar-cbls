@@ -12,7 +12,7 @@
   * You should have received a copy of the GNU Lesser General Public License along with OscaR.
   * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
   ******************************************************************************/
-package oscar.cbls.invariants.core.computation
+package oscar.cbls.algo.distributedStorage
 
 import scala.collection.immutable.SortedMap
 
@@ -50,7 +50,7 @@ trait DistributedStorageUtility {
 }
 
 /**
- * integrate this trait somewhere as he dictionary defining unique keys for the [[oscar.cbls.invariants.core.computation.DistributedStorageUtility]]
+ * integrate this trait somewhere as he dictionary defining unique keys for the [[oscar.cbls.algo.distributedStorage.DistributedStorageUtility]]
  * @author renaud.delandtsheer@cetic.be
  */
 trait StorageUtilityManager {

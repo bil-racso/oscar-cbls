@@ -112,6 +112,8 @@ class ConstantRoutingDistance(routes:ChangingSeqValue,
   //TODO: handle inactive checkpoints
   private val savedValues:Array[Int] = computeValueFromScratch(routes.value)
   protected var checkpoint = routes.value
+
+  //TODO: use magic array here.
   private val touchedRoutesSinceCheckpointArray:Array[Boolean] = Array.fill(v)(false)
   protected var touchedRoutesSinceCheckpointList:QList[Int] = null
 
@@ -508,10 +510,23 @@ class ConstantRoutingDistancePrecompute(routes:ChangingSeqValue,
 
   val n = routes.maxValue + 1
 
+  //TODO: for stacked updates, we will use someting like magic arrays here, indiced by level of checkpoints, with constant limit on the stack, so that all arrays can be allocated at startups
   val isFWPrecomputeUpToDate:Array[Boolean] = Array.fill(v)(false)
   val isBWPrecomputeUpToDate:Array[Boolean] = Array.fill(v)(false)
   private val precomputedForwardCumulatedCostAtCheckpoint : Array[Int] = if(precomputeFW) Array.fill(n)(0) else null
   private val precomputedBackwardCumulatedCostAtCheckpont : Array[Int] = if(precomputeBW) Array.fill(n)(0) else null
+
+
+  /* forward pour commencer
+  * node => distance
+  *
+  * is vehicle pre-computed: array v->bool
+  * is vehicle changed:
+  * push --> reset array at this level, all out of date
+  *
+  *
+  *
+  * */
 
   def computePrecomputedForwardCumulatedCostAtCheckpoint(vehicle : Int, seq : IntSequence) {
     var explorerOPt = seq.explorerAtAnyOccurrence(vehicle).head.next

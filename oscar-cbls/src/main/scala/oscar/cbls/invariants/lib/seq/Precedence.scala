@@ -68,6 +68,7 @@ class Precedence(seq:ChangingSeqValue,
 
   private val isPrecedenceViolated : Array[Boolean] = Array.fill(nbPecedences)(false)
 
+  //TODO: use magic array here
   private val isViolationChangedSinceCheckpoint:Array[Boolean] = Array.fill(nbPecedences)(false)
   private var changedPrecedenceViolationsSinceCheckpoint:QList[Int] = null
   private val savedViolationAtCheckpoint:Array[Boolean] = Array.fill(nbPecedences)(false)

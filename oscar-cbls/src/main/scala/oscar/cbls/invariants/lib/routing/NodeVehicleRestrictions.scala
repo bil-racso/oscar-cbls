@@ -129,6 +129,8 @@ class NodeVehicleRestrictions(routes:ChangingSeqValue,
   //TODO: improve complexity of the pre-computation: make them lazy per vehicle, only pre-compute when needed
   //node n => vehicle v => number of node from start of vehicle reaching n that cannot be reached by vehicle v
   val precomputationAtCheckpoint:Array[Array[Int]] = Array.tabulate(n)(_=>Array.fill(v)(0))
+  //TODO use magic array here
+
   val vehicleChangedSinceCheckpoint:Array[Boolean] = Array.fill(v)(true)
   var changedVehicleSinceCheckpoint:QList[Int] = vehicles.foldLeft[QList[Int]](null)((acc,v) => QList(v,acc))
 

@@ -318,14 +318,14 @@ class SeqUpdateDefineCheckpoint(mprev:SeqUpdate,val activeCheckpoint:Boolean, ma
 }
 
 object SeqUpdateRollBackToCheckpoint{
-  def apply(checkpointValue:IntSequence,howToRollBackfct:()=>SeqUpdate):SeqUpdateRollBackToCheckpoint = {
-    new SeqUpdateRollBackToCheckpoint(checkpointValue, howToRollBackfct)
+  def apply(checkpointValue:IntSequence,howToRollBackfct:()=>SeqUpdate,level:Int):SeqUpdateRollBackToCheckpoint = {
+    new SeqUpdateRollBackToCheckpoint(checkpointValue, howToRollBackfct,level)
   }
 
-  def unapply(u:SeqUpdateRollBackToCheckpoint):Option[IntSequence] = Some(u.checkpointValue)
+  def unapply(u:SeqUpdateRollBackToCheckpoint):Option[(IntSequence,Int)] = Some(u.checkpointValue,u.level)
 }
 
-class SeqUpdateRollBackToCheckpoint(val checkpointValue:IntSequence,howToRollBackFct:()=>SeqUpdate)
+class SeqUpdateRollBackToCheckpoint(val checkpointValue:IntSequence,howToRollBackFct:()=>SeqUpdate, val level:Int)
   extends SeqUpdate(checkpointValue){
   override protected[computation] def regularize(maxPivot:Int) : SeqUpdate = this
 
@@ -749,6 +749,7 @@ abstract class ChangingSeqValueAllCheckpoints(initialValue: Iterable[Int], overr
     toNotify.newValue
   }
 
+  //TODO: we can also roll back to a checkpoint that is not the top checkpoint!
   override protected def rollbackToTopCheckpoint(checkpoint : IntSequence){
     require(checkpoint quickEquals topCheckpoint)
 
@@ -1121,110 +1122,15 @@ class IdentitySeq(fromValue:ChangingSeqValue, toValue:CBLSSeqVar)
   }
 }
 
-//TODO: an identitySeq that wipes out subcheckpoints, and only keeps the top one, and performs complete incremental roll back at each move.
-
-
 /**
- * checkpoints higher than the topmost are managed how?
- * first option: topmost is a circle mode checkpoint, and roll back are performed as updates
- *     (the value is taken from the sent value, so that we do not need to compute it, actually)
- * second option: we always roll back to the topmost, and redo the first moves
+ *  roll backs to checkpoints above the top of the stack are translated into a linear set of instructions,
+ *  so that hte topmost checkpoint is actually managed in a circle fashion, although it is not declared so.
+ *  internal mechanisms ensure that the stacked representation of IntSequence does not grow monotonically with each move
+ * @param fromValue
+ * @param toValue
+ * @param maxStack
  */
-class IdentitySeqTopMostCheckpoint(fromValue:ChangingSeqValue, toValue:CBLSSeqVar, maxStack:Int, rollBackToTopMostCheckpoint:Boolean)
-  extends Invariant
-  with SeqNotificationTarget{
-
-  registerStaticAndDynamicDependency(fromValue)
-  toValue.setDefiningInvariant(this)
-  finishInitialization()
-
-  toValue := fromValue.value
-
-  override def notifySeqChanges(v: ChangingSeqValue, d: Int, changes: SeqUpdate) {
-    assert(v == fromValue)
-    digestChanges(changes)
-  }
-
-  private var checkPointStackNotTop:List[(IntSequence,SeqUpdate)] = List.empty
-
-  private var topCheckpoint:IntSequence = null
-  private var performedSinceTopCheckpoint:SeqUpdate = null
-
-  private var levelTopCheckpoint:Int = -1
-
-  private def popTopCheckpoint(){
-    checkPointStackNotTop match{
-      case (cp,done) :: tail =>
-        topCheckpoint = cp
-        performedSinceTopCheckpoint = performedSinceTopCheckpoint.prepend(done)
-        assert(levelTopCheckpoint +1 == checkPointStackNotTop.size)
-        levelTopCheckpoint -= 1
-      case _ =>
-        topCheckpoint = null
-        levelTopCheckpoint = -1
-        performedSinceTopCheckpoint = null
-    }
-  }
-
-  private def pushTopCheckpoint(newCheckpoint:IntSequence){
-    if(topCheckpoint != null) {
-      checkPointStackNotTop = (topCheckpoint,) :: checkPointStackNotTop
-      topCheckpoint = newCheckpoint
-      levelTopCheckpoint += 1
-      performedSinceTopCheckpoint = LastNotified
-    }else{
-      topCheckpoint = newCheckpoint
-      levelTopCheckpoint += 1
-      performedSinceTopCheckpoint = LastNotified
-    }
-  }
-
-  def digestChanges(changes:SeqUpdate){
-    changes match{
-      case SeqUpdateInsert(value:Int,pos:Int,prev:SeqUpdate) =>
-        digestChanges(prev)
-        toValue.insertAtPosition(value,pos,changes.newValue)
-      case SeqUpdateMove(fromIncluded:Int,toIncluded:Int,after:Int,flip:Boolean,prev:SeqUpdate) =>
-        digestChanges(prev)
-        toValue.move(fromIncluded,toIncluded,after,flip,changes.newValue)
-      case SeqUpdateRemove(position:Int,prev:SeqUpdate) =>
-        digestChanges(prev)
-        toValue.remove(position,changes.newValue)
-      case SeqUpdateAssign(s) =>
-        toValue.setValue(s)
-      case SeqUpdateLastNotified(value:IntSequence) =>
-        //nothing to do here
-        assert(value equals toValue.newValue)
-      case SeqUpdateRollBackToCheckpoint(value:IntSequence) =>
-        require(value quickEquals topCheckpoint)
-
-        if(levelTopCheckpoint > maxStack){
-          //this checkpoint has not been communicated, so we translate with the howTo
-          if(rollBackToTopMostCheckpoint){
-            //we perform a roll back to the topmost communicated checkpoint
-            //and after this roll back, we perform the moves that come back to this point
-          }
-        }
-        toValue.rollbackToTopCheckpoint(value)
-      case SeqUpdateDefineCheckpoint(prev:SeqUpdate,activeCheckpoint:Boolean,level:Int) =>
-        digestChanges(prev)
-        while(level > levelTopCheckpoint){
-          toValue.releaseTopCheckpoint(topCheckpoint)
-          popTopCheckpoint()
-        }
-        pushTopCheckpoint(changes.newValue)
-        toValue.defineCurrentValueAsCheckpoint(activeCheckpoint)
-    }
-  }
-
-  override def checkInternals(c:Checker){
-    c.check(toValue.value equals fromValue.value,
-      Some("IdentitySeq: toValue.value=" +toValue.value + " should equal fromValue.value=" + fromValue.value))
-  }
-}
-
-
-class IdentitySeqLatestCheckpoint(fromValue:ChangingSeqValue, toValue:CBLSSeqVar)
+class IdentitySeqTopMostCheckpointCircleAbove(fromValue:ChangingSeqValue, toValue:CBLSSeqVar, maxStack:Int)
   extends Invariant
   with SeqNotificationTarget{
 
@@ -1240,14 +1146,14 @@ class IdentitySeqLatestCheckpoint(fromValue:ChangingSeqValue, toValue:CBLSSeqVar
   }
 
   private var checkPointStackNotTop:List[IntSequence] = List.empty
-
   private var topCheckpoint:IntSequence = null
+
   private var levelTopCheckpoint:Int = -1
 
   private def popTopCheckpoint(){
     checkPointStackNotTop match{
-      case (cp) :: tail =>
-        topCheckpoint= cp
+      case (cp,done) :: tail =>
+        topCheckpoint = cp
         assert(levelTopCheckpoint +1 == checkPointStackNotTop.size)
         levelTopCheckpoint -= 1
       case _ =>
@@ -1259,9 +1165,12 @@ class IdentitySeqLatestCheckpoint(fromValue:ChangingSeqValue, toValue:CBLSSeqVar
   private def pushTopCheckpoint(newCheckpoint:IntSequence){
     if(topCheckpoint != null) {
       checkPointStackNotTop = topCheckpoint :: checkPointStackNotTop
+      topCheckpoint = newCheckpoint
+      levelTopCheckpoint += 1
+    }else{
+      topCheckpoint = newCheckpoint
+      levelTopCheckpoint += 1
     }
-    topCheckpoint = newCheckpoint
-    levelTopCheckpoint += 1
   }
 
   def digestChanges(changes:SeqUpdate){
@@ -1280,31 +1189,57 @@ class IdentitySeqLatestCheckpoint(fromValue:ChangingSeqValue, toValue:CBLSSeqVar
       case SeqUpdateLastNotified(value:IntSequence) =>
         //nothing to do here
         assert(value equals toValue.newValue)
-      case SeqUpdateRollBackToCheckpoint(value:IntSequence) =>
+      case r@SeqUpdateRollBackToCheckpoint(value:IntSequence,level:Int) =>
+        while(level > levelTopCheckpoint){
+          if(levelTopCheckpoint <= maxStack) {
+            toValue.releaseTopCheckpoint(topCheckpoint)
+          }
+          popTopCheckpoint()
+        }
         require(value quickEquals topCheckpoint)
-        toValue.rollbackToTopCheckpoint(value)
+        if(levelTopCheckpoint > maxStack) {
+          //this checkpoint has not been communicated, so we translate with the howTo
+          digestChanges(r.howToRollBack)
+        }else{
+          //we perform a roll back to the topmost communicated checkpoint
+          //and after this roll back, we perform the moves that come back to this point
+          toValue.rollbackToTopCheckpoint(value)
+        }
       case SeqUpdateDefineCheckpoint(prev:SeqUpdate,activeCheckpoint:Boolean,level:Int) =>
         digestChanges(prev)
         while(level > levelTopCheckpoint){
-          toValue.releaseTopCheckpoint(topCheckpoint)
+          if(levelTopCheckpoint <= maxStack) {
+            toValue.releaseTopCheckpoint(topCheckpoint)
+          }
           popTopCheckpoint()
         }
         pushTopCheckpoint(changes.newValue)
-        toValue.defineCurrentValueAsCheckpoint(activeCheckpoint)
+        require(level == levelTopCheckpoint)
+        if(levelTopCheckpoint <= maxStack) {
+          toValue.defineCurrentValueAsCheckpoint(activeCheckpoint)
+        }
     }
   }
 
   override def checkInternals(c:Checker){
     c.check(toValue.value equals fromValue.value,
-      Some("IdentitySeq: toValue.value=" +toValue.value + " should equal fromValue.value=" + fromValue.value))
+      Some("IdentitySeqTopMostCheckpointCircleAbove: toValue.value=" +toValue.value + " should equal fromValue.value=" + fromValue.value))
   }
 }
 
 
 
 
+class IdentitySeqLatestCheckpoint(fromValue:ChangingSeqValue, toValue:CBLSSeqVar)
+  extends Invariant
+  with SeqNotificationTarget{
 
 
+}
+
+
+
+/*
 abstract class ChangingSeqValueLatestCheckpoint(initialValue: Iterable[Int], override val maxValue: Int, override val maxPivotPerValuePercent: Int, override val maxHistorySize:Int)
   extends ChangingSeqValue(initialValue, maxValue, maxPivotPerValuePercent, maxHistorySize){
 
@@ -1645,3 +1580,4 @@ abstract class ChangingSeqValueLatestCheckpoint(initialValue: Iterable[Int], ove
   }
 }
 
+*/

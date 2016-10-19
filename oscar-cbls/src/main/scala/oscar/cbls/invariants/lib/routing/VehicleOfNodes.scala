@@ -58,6 +58,7 @@ class VehicleOfNodes(routes:ChangingSeqValue,
   vehicleOrUnroutedOfNode.foreach(_.setDefiningInvariant(this))
 
   private var savedCheckpoint:IntSequence = null
+  //TODO: use magic array here
   private val movedNodesSinceCheckpointArray:Array[Boolean] = Array.fill(n)(false)
   private var movedNodesSinceCheckpointList:QList[Int] = null
   private val vehicleOfNodeAtCheckpointForMovedPoints:Array[Int] = Array.fill(n)(0)
