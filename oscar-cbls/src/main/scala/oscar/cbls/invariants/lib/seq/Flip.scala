@@ -26,15 +26,30 @@ case class Flip(v: SeqValue,override val maxPivotPerValuePercent:Int = 10, overr
     }
   }
 
-  var checkpoint:IntSequence = null
-  var outputAtCheckpoint:IntSequence = null
+  //checkpointValue,FlippedValue
+  var checkpointStack:List[(IntSequence,IntSequence)] = List.empty
+  var checkpointStackLevel:Int = -1
 
-    def digestChanges(changes : SeqUpdate) : Boolean = {
+  private def popCheckpointStackToLevel(level:Int,included:Boolean){
+    if(included){
+      while(checkpointStackLevel>=level) {
+        checkpointStack = checkpointStack.tail
+      }
+    }else{
+      while(checkpointStackLevel>level) {
+        checkpointStack = checkpointStack.tail
+      }
+    }
+  }
+
+  def digestChanges(changes : SeqUpdate) : Boolean = {
     changes match {
       case s@SeqUpdateInsert(value : Int, pos : Int, prev : SeqUpdate) =>
         if (!digestChanges(prev)) return false
-        this.insertAtPosition(value, prev.newValue.size - pos)
+
         //TODO: build on the original value instead of maintaining two data structs? , changes.newValue.flip(fast=true)
+        this.insertAtPosition(value, prev.newValue.size - pos)
+
         true
 
       case SeqUpdateMove(fromIncluded : Int, toIncluded : Int, after : Int, flip : Boolean, prev : SeqUpdate) =>
@@ -51,28 +66,36 @@ case class Flip(v: SeqValue,override val maxPivotPerValuePercent:Int = 10, overr
 
       case r@SeqUpdateRemove(position : Int, prev : SeqUpdate) =>
         if (!digestChanges(prev)) return false
-        this.remove(prev.newValue.size - position - 1)
+        this.remove(prev.newValue.size - position - 1,changes.newValue.flip(fast=true))
         true
 
-      case u@SeqUpdateRollBackToCheckpoint(checkpoint) =>
-        require(checkpoint quickEquals this.checkpoint)
-        this.rollbackToTopCheckpoint(outputAtCheckpoint)
+      case u@SeqUpdateRollBackToCheckpoint(checkpoint,level) =>
+        releaseTopCheckpointsToLevel(level,false)
+        popCheckpointStackToLevel(level,false)
+
+        require(checkpoint quickEquals this.checkpointStack.head._1)
+
+        this.rollbackToTopCheckpoint(checkpointStack.head._2)
+        assert(this.newValue quickEquals checkpointStack.head._2)
+
         true
 
-      case SeqUpdateDefineCheckpoint(prev : SeqUpdate, isStarMode) =>
-        this.releaseCheckpoint()
+      case SeqUpdateDefineCheckpoint(prev : SeqUpdate, isStarMode, level) =>
         if(!digestChanges(prev)){
-          checkpoint = prev.newValue
-          outputAtCheckpoint = changes.newValue.flip(false,true) //we do a rework since a checkpoint is defined
-          this := outputAtCheckpoint
-          this.defineCurrentValueAsCheckpoint(true)
-          true
-        }else{
-          checkpoint = prev.newValue
-          outputAtCheckpoint = this.newValue
-          this.defineCurrentValueAsCheckpoint(true)
-          true
+          this := changes.newValue.flip(false,true)
         }
+
+        releaseTopCheckpointsToLevel(level,true)
+        popCheckpointStackToLevel(level,true)
+
+        val checkpointIn = changes.newValue
+        val checkpointOut = this.newValue
+        checkpointStack = (checkpointIn,checkpointOut) :: checkpointStack
+        checkpointStackLevel += 1
+        require(checkpointStackLevel == level)
+
+        this.defineCurrentValueAsCheckpoint(isStarMode)
+        true
 
       case SeqUpdateLastNotified(value) =>
         true

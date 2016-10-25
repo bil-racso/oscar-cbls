@@ -100,7 +100,7 @@ case class InsertPointUnroutedFirst(unroutedNodesToInsert: () => Iterable[Int],
             doMove(insertedPointForInstantiation, insertAtPositionForInstantiation)
 
             if (evaluateCurrentMoveObjTrueIfStopRequired(evalObjAndRollBack())) {
-              seq.releaseTopCheckpointAtCheckpoint()
+              seq.releaseTopCheckpoint()
               startIndice = if (hotRestartOnNextSymmetryClass) {
                 if (iterationSchemeIterator.hasNext)
                   iterationSchemeIterator.next()
@@ -113,7 +113,7 @@ case class InsertPointUnroutedFirst(unroutedNodesToInsert: () => Iterable[Int],
       }
     }
 
-    seq.releaseTopCheckpointAtCheckpoint()
+    seq.releaseTopCheckpoint()
     insertAtPositionForInstantiation = -1
   }
 
@@ -187,7 +187,7 @@ case class InsertPointRoutedFirst(insertionPoints:()=>Iterable[Int],
             doMove(insertedPointForInstantiation, insertAtPositionForInstantiation)
 
             if (evaluateCurrentMoveObjTrueIfStopRequired(evalObjAndRollBack())) {
-              seq.releaseTopCheckpointAtCheckpoint()
+              seq.releaseTopCheckpoint()
               startIndice = pointWhereToInsertAfter + 1
               insertAtPositionForInstantiation = -1
               return
@@ -197,7 +197,7 @@ case class InsertPointRoutedFirst(insertionPoints:()=>Iterable[Int],
 
 
     }
-    seq.releaseTopCheckpointAtCheckpoint()
+    seq.releaseTopCheckpoint()
     insertAtPositionForInstantiation = -1
   }
 

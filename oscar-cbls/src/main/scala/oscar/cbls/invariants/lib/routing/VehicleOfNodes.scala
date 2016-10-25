@@ -98,7 +98,7 @@ class VehicleOfNodes(routes:ChangingSeqValue,
           val targetVehicleOfMove = RoutingConventionMethods.searchVehicleReachingPosition(after,oldValue,v)
           if(vehicleOfMovedSegment != targetVehicleOfMove){
             //we moved all the points to another vehicle
-            for(movedValue <- x.movedValues) {
+            for(movedValue <- x.movedValuesQList) {
               vehicleOrUnroutedOfNode(movedValue) := targetVehicleOfMove
               recordMovedPoint(movedValue, vehicleOfMovedSegment)
             }

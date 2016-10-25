@@ -148,7 +148,7 @@ case class SegmentExchange(val vrp: VRP,
                         secondSegmentStartPosition, secondSegmentEndPosition, flipSecondSegment)
 
                       if (evaluateCurrentMoveObjTrueIfStopRequired(evalObjAndRollBack())) {
-                        seq.releaseTopCheckpointAtCheckpoint()
+                        seq.releaseTopCheckpoint()
                         startVehicle = firstVehicle + 1
                         return
                       }
@@ -159,7 +159,7 @@ case class SegmentExchange(val vrp: VRP,
                           secondSegmentStartPosition, secondSegmentEndPosition, flipSecondSegment)
 
                         if (evaluateCurrentMoveObjTrueIfStopRequired(evalObjAndRollBack())) {
-                          seq.releaseTopCheckpointAtCheckpoint()
+                          seq.releaseTopCheckpoint()
                           startVehicle = firstVehicle + 1
                           return
                         }
@@ -174,7 +174,7 @@ case class SegmentExchange(val vrp: VRP,
       }//end loop on first node first segment
 
     }//end loop on vehicles
-    seq.releaseTopCheckpointAtCheckpoint()
+    seq.releaseTopCheckpoint()
   } //end def
 
   override def instantiateCurrentMove(newObj: Int): SegmentExchangeMove = {
@@ -206,8 +206,8 @@ case class SegmentExchangeMove(firstSegmentStartPosition:Int,
   extends VRPSMove(objAfter, neighborhood, neighborhoodName,neighborhood.vrp){
 
   override def impactedPoints: Iterable[Int] =
-    neighborhood.vrp.routes.value.valuesBetweenPositions(firstSegmentStartPosition,firstSegmentEndPosition) ++
-      neighborhood.vrp.routes.value.valuesBetweenPositions(secondSegmentStartPosition,secondSegmentEndPosition)
+    neighborhood.vrp.routes.value.valuesBetweenPositionsQList(firstSegmentStartPosition,firstSegmentEndPosition) ++
+      neighborhood.vrp.routes.value.valuesBetweenPositionsQList(secondSegmentStartPosition,secondSegmentEndPosition)
 
   override def commit() {
     neighborhood.doMove(

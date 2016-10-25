@@ -94,7 +94,7 @@ abstract class IntSequence(protected[cbls] val token: Token = Token()) {
     IntSequence.apply(l2)
   }
 
-  def valuesBetweenPositions(fromPositionIncluded:Int,toPositionIncluded:Int):SortedSet[Int] = {
+  def valuesBetweenPositionsSet(fromPositionIncluded:Int,toPositionIncluded:Int):SortedSet[Int] = {
     var toReturn = SortedSet.empty[Int]
     var e = explorerAtPosition(fromPositionIncluded)
     while(e match{
@@ -102,6 +102,21 @@ abstract class IntSequence(protected[cbls] val token: Token = Token()) {
       case Some(explorer) =>
         if (explorer.position <= toPositionIncluded){
           toReturn = toReturn + explorer.value
+          e = explorer.next
+          true
+        }else false
+    }){}
+    toReturn
+  }
+
+  def valuesBetweenPositionsQList(fromPositionIncluded:Int,toPositionIncluded:Int):QList[Int] = {
+    var toReturn:QList[Int] = null
+    var e = explorerAtPosition(fromPositionIncluded)
+    while(e match{
+      case None => false
+      case Some(explorer) =>
+        if (explorer.position <= toPositionIncluded){
+          toReturn = QList(explorer.value,toReturn)
           e = explorer.next
           true
         }else false

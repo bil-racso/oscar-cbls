@@ -262,7 +262,7 @@ class Precedence(seq:ChangingSeqValue,
           // not the ones ended at the flipped values
 
           //TODO: making and querying this set costs more-less 1/2 of the run time
-          val valuesInFlip:SortedSet[Int] = prev.newValue.valuesBetweenPositions(fromIncluded,toIncluded)
+          val valuesInFlip:SortedSet[Int] = prev.newValue.valuesBetweenPositionsSet(fromIncluded,toIncluded)
 
           for(value <- valuesInFlip){
             //violations involved in value

@@ -27,6 +27,7 @@
 
 package oscar.cbls.routing.seq.neighborhood
 
+import oscar.cbls.algo.quick.QList
 import oscar.cbls.algo.search.{HotRestart, Pairs}
 import oscar.cbls.routing.seq.model.{PDP, VRP}
 import oscar.cbls.search.core.EasyNeighborhood
@@ -109,7 +110,7 @@ case class PickupDeliveryThreeOpt(potentialInsertionPoints:()=>Iterable[Int], //
                     doMove(insertionPosition, segmentStartPosition, segmentEndPosition, false)
 
                     if (evaluateCurrentMoveObjTrueIfStopRequired(evalObjAndRollBack())) {
-                      seq.releaseTopCheckpointAtCheckpoint()
+                      seq.releaseTopCheckpoint()
                       startIndice = insertionPoint + 1
                       return
                     }
@@ -121,7 +122,7 @@ case class PickupDeliveryThreeOpt(potentialInsertionPoints:()=>Iterable[Int], //
                     doMove(insertionPosition, segmentStartPosition, segmentEndPosition, true)
 
                     if (evaluateCurrentMoveObjTrueIfStopRequired(evalObjAndRollBack())) {
-                      seq.releaseTopCheckpointAtCheckpoint()
+                      seq.releaseTopCheckpoint()
                       startIndice = insertionPoint + 1
                       segmentStartPositionForInstantiation = -1
                       return
@@ -133,7 +134,7 @@ case class PickupDeliveryThreeOpt(potentialInsertionPoints:()=>Iterable[Int], //
           }
       }
     }
-    seq.releaseTopCheckpointAtCheckpoint()
+    seq.releaseTopCheckpoint()
     segmentStartPositionForInstantiation = -1
   }
 
@@ -174,7 +175,7 @@ case class PickupDeliveryThreeOptMove(segmentStartPosition:Int,
                         override val neighborhoodName:String = "PickupDeliveryThreeOptMove")
   extends VRPSMove(objAfter, neighborhood, neighborhoodName,neighborhood.pdp){
 
-  override def impactedPoints: Iterable[Int] = neighborhood.pdp.routes.value.valuesBetweenPositions(segmentStartPosition,segmentEndPosition) + insertionPoint
+  override def impactedPoints: Iterable[Int] = QList(insertionPoint,neighborhood.pdp.routes.value.valuesBetweenPositionsQList(segmentStartPosition,segmentEndPosition))
 
   // overriding methods
   override def commit() {

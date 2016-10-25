@@ -94,7 +94,7 @@ case class OnePointMove(nodesToMove: () => Iterable[Int],
                       doMove(positionOfMovedPoint, positionOfNewPredecessor)
 
                       if (evaluateCurrentMoveObjTrueIfStopRequired(evalObjAndRollBack())) {
-                        seq.releaseTopCheckpointAtCheckpoint()
+                        seq.releaseTopCheckpoint()
                         startIndice = movedPointForInstantiation + 1
                         positionOfMovedPointForInstantiation = -1
                         return
@@ -106,7 +106,7 @@ case class OnePointMove(nodesToMove: () => Iterable[Int],
         }
       }
     }
-    seq.releaseTopCheckpointAtCheckpoint()
+    seq.releaseTopCheckpoint()
     positionOfMovedPointForInstantiation = -1
   }
   var movedPointForInstantiation:Int = -1

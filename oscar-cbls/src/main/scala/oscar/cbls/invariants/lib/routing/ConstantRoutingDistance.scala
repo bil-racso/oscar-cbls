@@ -117,6 +117,14 @@ class ConstantRoutingDistance(routes:ChangingSeqValue,
   private val touchedRoutesSinceCheckpointArray:Array[Boolean] = Array.fill(v)(false)
   protected var touchedRoutesSinceCheckpointList:QList[Int] = null
 
+  /*
+   * stacked checkpoint will use a pre-set maximal stack depth
+   * the stack is used hereto save output values.
+   * in the with precomputation, it is also used to save pre-computations
+   * (remember that they are performed on demand, so that they will be attributed to the oldest checkpoint)
+   */
+
+
   protected var vehicleSearcher:((IntSequence,Int)=>Int) = if(v == 1) ((_,_) => 0) else
     RoutingConventionMethods.cachedVehicleReachingPosition(routes.value, v)
 
@@ -139,10 +147,12 @@ class ConstantRoutingDistance(routes:ChangingSeqValue,
         }
         saveCurrentCheckpoint(changes.newValue)
         true
+
       case SeqUpdateRollBackToCheckpoint(checkpoint:IntSequence) =>
         require (checkpoint quickEquals this.checkpoint)
         restoreCheckpoint()
         true
+
       case SeqUpdateInsert(value : Int, pos : Int, prev : SeqUpdate) =>
         //on which vehicle did we insert?
         if(!digestUpdates(prev,skipNewCheckpoints)) return false
@@ -159,7 +169,6 @@ class ConstantRoutingDistance(routes:ChangingSeqValue,
         val newDistance = distanceMatrix(oldPrev)(value) + distanceMatrix(value)(oldSucc)
         val nodeCost = distanceMatrix(value)(value)
 
-
         if(perVehicle) {
           val vehicle = vehicleSearcher(newSeq, pos)
           recordTouchedVehicle(vehicle)
@@ -168,6 +177,7 @@ class ConstantRoutingDistance(routes:ChangingSeqValue,
           distance(0) :+= (newDistance + nodeCost - oldDistance)
         }
         true
+
       case x@SeqUpdateMove(fromIncluded : Int, toIncluded : Int, after : Int, flip : Boolean, prev : SeqUpdate) =>
         //on which vehicle did we move?
         //also from --> to cannot include a vehicle start.
@@ -350,6 +360,11 @@ class ConstantRoutingDistance(routes:ChangingSeqValue,
     }
   }
 
+  /**
+   * engages the saving of output values at this checkpoint.
+   * you also must call  recordTouchedVehicle(v:Int) for this saving to be effective.
+   * @param s
+   */
   protected def saveCurrentCheckpoint(s:IntSequence){
     checkpoint = s
     if(perVehicle) {
@@ -424,6 +439,11 @@ class ConstantRoutingDistance(routes:ChangingSeqValue,
     }
   }
 
+  /**
+   *
+   * @param s a sequence of integers representing routes
+   * @return the distance per vehicle or the total distance in a singleton array, according to the global "perVehicle" flag
+   */
   private def computeValueFromScratch(s:IntSequence):Array[Int] = {
     val toReturn = Array.tabulate(v)(v => distanceMatrix(v)(v))
     val it = s.iterator

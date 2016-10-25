@@ -218,13 +218,13 @@ class NodeVehicleRestrictions(routes:ChangingSeqValue,
     //TODO: propose something more incremental that supports a few vehicle changes before reverting to inefficient update
     if(vehicleChangedSinceCheckpoint(vehicle)){
       violationOnNodesFromScratch(
-        seqWithSegment.valuesBetweenPositions(
+        seqWithSegment.valuesBetweenPositionsQList(
           seqWithSegment.positionOfAnyOccurrence(fromValue).head,
           seqWithSegment.positionOfAnyOccurrence(toValue).head),vehicle)
     }else{
       val toReturn = violationOnSegmentFromPrecomputation(fromValue,toValue,vehicle)
       assert(toReturn == violationOnNodesFromScratch(
-        seqWithSegment.valuesBetweenPositions(
+        seqWithSegment.valuesBetweenPositionsQList(
           seqWithSegment.positionOfAnyOccurrence(fromValue).head,
           seqWithSegment.positionOfAnyOccurrence(toValue).head),vehicle))
       toReturn
@@ -234,14 +234,14 @@ class NodeVehicleRestrictions(routes:ChangingSeqValue,
   def violationOnVehicle(vehicle:Int,seq:IntSequence):Int = {
     if(vehicleChangedSinceCheckpoint(vehicle)){
       violationOnNodesFromScratch(
-        seq.valuesBetweenPositions(
+        seq.valuesBetweenPositionsQList(
           seq.positionOfAnyOccurrence(vehicle).head,
           if(vehicle == v-1) seq.size-1 else seq.positionOfAnyOccurrence(vehicle+1).head),
         vehicle)
     }else{
       val toReturn = violationOnSegmentFromPrecomputation(vehicle,if(vehicle == v-1) seq.last else seq.predecessorPos2Val(seq.positionOfAnyOccurrence(vehicle+1).head).head,vehicle)
       assert(toReturn == violationOnNodesFromScratch(
-        seq.valuesBetweenPositions(
+        seq.valuesBetweenPositionsQList(
           seq.positionOfAnyOccurrence(vehicle).head,
           if(vehicle == v-1) seq.size-1 else seq.positionOfAnyOccurrence(vehicle+1).head),
         vehicle))

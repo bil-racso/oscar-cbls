@@ -121,7 +121,7 @@ case class TwoOpt1(segmentStartValues:()=>Iterable[Int],
           doMove(segmentStartPosition, segmentEndPosition)
 
           if (evaluateCurrentMoveObjTrueIfStopRequired(evalObjAndRollBack())) {
-            seq.releaseTopCheckpointAtCheckpoint()
+            seq.releaseTopCheckpoint()
             startIndice = segmentStartValue + 1
             segmentStartPositionForInstantiate = -1
             return
@@ -129,7 +129,7 @@ case class TwoOpt1(segmentStartValues:()=>Iterable[Int],
         }
       }
     }
-    seq.releaseTopCheckpointAtCheckpoint()
+    seq.releaseTopCheckpoint()
     segmentStartPositionForInstantiate = -1
   }
 
@@ -211,7 +211,7 @@ case class TwoOpt2(segmentStartValues:()=>Iterable[Int],
           doMove(segmentStartPosition, segmentEndPosition)
 
           if (evaluateCurrentMoveObjTrueIfStopRequired(evalObjAndRollBack())) {
-            seq.releaseTopCheckpointAtCheckpoint()
+            seq.releaseTopCheckpoint()
             startIndice = segmentStartValue + 1
             segmentStartPositionForInstantiate = -1
             return
@@ -219,7 +219,7 @@ case class TwoOpt2(segmentStartValues:()=>Iterable[Int],
         }
       }
     }
-    seq.releaseTopCheckpointAtCheckpoint()
+    seq.releaseTopCheckpoint()
     segmentStartPositionForInstantiate = -1
   }
 
@@ -245,7 +245,7 @@ case class TwoOptMove(segmentStartPosition:Int,
                       override val neighborhoodName:String = "TwoOptMove")
   extends VRPSMove(objAfter, neighborhood, neighborhoodName, vrp){
 
-  override def impactedPoints: Iterable[Int] = vrp.routes.value.valuesBetweenPositions(segmentStartPosition,segmentEndPosition)
+  override def impactedPoints: Iterable[Int] = vrp.routes.value.valuesBetweenPositionsQList(segmentStartPosition,segmentEndPosition)
 
   override def commit() {
     neighborhood.doMove(segmentStartPosition, segmentEndPosition)
