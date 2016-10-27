@@ -21,6 +21,7 @@ import oscar.cbls.modeling.Algebra._
 import oscar.cbls.objective.Objective
 import oscar.cbls.routing.seq.model._
 import oscar.cbls.routing.seq.neighborhood._
+import oscar.cbls.search.StopWatch
 import oscar.cbls.search.combinators.{BestSlopeFirst, Profile}
 
 class MySimpleRoutingWithUnroutedPoints(n:Int,v:Int,symmetricDistance:Array[Array[Int]],m:Store, maxPivot:Int)
@@ -43,17 +44,44 @@ class MySimpleRoutingWithUnroutedPoints(n:Int,v:Int,symmetricDistance:Array[Arra
   def size = routes.value.size
 }
 
-object TSProutePoints extends App{
+object TSProutePoints extends App {
 
   val n = 10000
   val v = 100
 
-  val maxPivotPerValuePercent = 4
 
-  println("VRP(n:" + n + " v:" + v + ")")
+
+  new TSPRoutePointsS(1000,1,4)
+
+  println()
+  println("n\tv\tpercent\ttime\ttime\ttime")
+
+  for(n <- 1000 to 11000 by 2000){
+      for (maxPivotPerValuePercent <- List(20)){
+        for(v <- List(100)){
+          print(n + "\t" + v + "\t" + maxPivotPerValuePercent + "\t")
+          new TSPRoutePointsS(n,v,maxPivotPerValuePercent)
+          print("\t")
+          System.gc()
+          new TSPRoutePointsS(n,v,maxPivotPerValuePercent)
+          print("\t")
+          System.gc()
+          new TSPRoutePointsS(n,v,maxPivotPerValuePercent)
+          print("\n")
+          System.gc()
+      }
+    }
+  }
+}
+
+class TSPRoutePointsS(n:Int,v:Int,maxPivotPerValuePercent:Int) extends StopWatch{
+
+
+
 
   val symmetricDistanceMatrix = RoutingMatrixGenerator(n)._1
 
+  startWatch()
   //  println("restrictions:" + restrictions)
   val model = new Store() //checker = Some(new ErrorChecker()))
 
@@ -62,8 +90,6 @@ object TSProutePoints extends App{
 
   model.close()
 
-  println(myVRP)
-
   val routeUnroutdPoint =  Profile(new InsertPointUnroutedFirst(myVRP.unrouted,()=>myVRP.kFirst(10,myVRP.closestNeighboursForward,myVRP.isRouted), myVRP,neighborhoodName = "InsertUF"))
 
   //TODO: using post-filters on k-nearest is probably crap
@@ -71,7 +97,7 @@ object TSProutePoints extends App{
 
   def onePtMove(k:Int) = Profile(new OnePointMove(myVRP.routed, () => myVRP.kFirst(k,myVRP.closestNeighboursForward,myVRP.isRouted), myVRP))
 
-  val twoOpt = Profile(new TwoOpt1(myVRP.routed, ()=>myVRP.kFirst(40,myVRP.closestNeighboursForward,myVRP.isRouted), myVRP))
+  val twoOpt = Profile(new TwoOpt1(myVRP.routed, ()=>myVRP.kFirst(20,myVRP.closestNeighboursForward,myVRP.isRouted), myVRP))
 
   def threeOpt(k:Int, breakSym:Boolean) = Profile(new ThreeOpt(myVRP.routed, ()=>myVRP.kFirst(k,myVRP.closestNeighboursForward,myVRP.isRouted), myVRP,breakSymmetry = breakSym, neighborhoodName = "ThreeOpt(k=" + k + ")"))
 
@@ -79,17 +105,11 @@ object TSProutePoints extends App{
 
  // val search = (new RoundRobin(List(routeUnroutdPoint2,onePtMove(10) guard (() => myVRP.unrouted.value.size != 0)),10)) exhaust BestSlopeFirst(List(onePtMove(20),twoOpt, threeOpt(10,true))) exhaust threeOpt(20,true)
 
-  search.verbose = 1
+  search.verbose = 0
   //search.verboseWithExtraInfo(1, ()=> "" + myVRP)
   search.paddingLength = 100
 
   search.doAllMoves(obj=myVRP.obj)
 
-  model.propagate()
-
-  println
-  println(myVRP)
-  println
-  println(search.profilingStatistics)
-  println(model.stats)
+  print(getWatch)
 }

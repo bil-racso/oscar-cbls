@@ -165,6 +165,7 @@ class NodeVehicleRestrictions(routes:ChangingSeqValue,
     val explorerAtVehicleStart = checkpoint.explorerAtAnyOccurrence(vehicle).head
     var restrictionsForPrev = precomputationAtCheckpoint(explorerAtVehicleStart.value)
     var explorerAtCurrentNode = explorerAtVehicleStart.next
+    //TODO: put a while(true) here, and say that this is Gustav's suggestion in the comit
     while(explorerAtCurrentNode match{
       case None => return restrictionsForPrev(vehicle); false
       case Some(position) =>
