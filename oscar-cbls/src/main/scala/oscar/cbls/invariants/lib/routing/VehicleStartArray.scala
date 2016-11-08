@@ -25,11 +25,11 @@ package oscar.cbls.invariants.lib.routing
 
 
 
-/*
+
 object VehicleStartArray{
-  def apply(size:Int): VehicleStartArray = new VehicleStartArray(size)
+  def apply(_numberOfVehicle:Int): VehicleStartArray = new VehicleStartArray(_numberOfVehicle)
 }
-*/
+
 
 /**
   * Implementation providing an array stocking the vehicle start position and methods to update the array
@@ -40,13 +40,32 @@ class VehicleStartArray(_numberOfVehicle:Int) {
   private val nbrOfVehicle:Int = _numberOfVehicle
   private val startPositionOfVehicle : Array[Int]= Array.tabulate(nbrOfVehicle)(((car:Int)=> Int.MinValue))
 
+  /**
+    * Set the start position of the given vehicle
+    * @param vehicle the vehicle to consider
+    * @param startPosition the new start position
+    */
+  def update(vehicle:Int, startPosition:Int){
+    assert(startPosition>=0 && startPosition <=Int.MaxValue && vehicle < nbrOfVehicle && vehicle>=0)
+    startPositionOfVehicle(vehicle)=startPosition
+  }
+
+  /**
+    *
+    * @param vehicle
+    * @return
+    */
+  def apply(vehicle:Int): Int ={
+    assert(vehicle < nbrOfVehicle && vehicle>=0)
+    startPositionOfVehicle(vehicle)
+  }
 
   /**
     * Updates the array of vehicles start position following a insert
     * @param position the position where the insert occur
     */
   def updateForInsert(position:Int): Unit ={
-    val vehicleNextVehicleReachingPosition = vehicleReachingPosition(position)+1
+    val vehicleNextVehicleReachingPosition = vehicleReachingPosition(position-1)+1
     for(pos <- vehicleNextVehicleReachingPosition until nbrOfVehicle) startPositionOfVehicle(pos)+=1
   }
 
