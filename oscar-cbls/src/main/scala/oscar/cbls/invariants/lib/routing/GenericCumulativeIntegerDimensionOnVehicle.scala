@@ -19,7 +19,7 @@ package oscar.cbls.invariants.lib.routing
 import oscar.cbls.algo.quick.QList
 import oscar.cbls.algo.seq.functional.IntSequence
 import oscar.cbls.invariants.core.computation._
-import oscar.cbls.invariants.core.propagation.Checker
+import oscar.cbls.invariants.core.propagation.{Checker, ErrorChecker}
 
 /**
   * Created by  Jannou Brohée on 3/10/16.
@@ -58,8 +58,6 @@ object GenericCumulativeIntegerDimensionOnVehicle {
 class GenericCumulativeIntegerDimensionOnVehicle(routes:ChangingSeqValue, n:Int, v:Int, op :(Int,Int,Int)=>Int, initValue :Array[Int], output:Array[CBLSIntVar])
   extends Invariant()
     with SeqNotificationTarget {
-
-
   require(initValue.length==v)
   require( output.length==n)
 
@@ -73,13 +71,36 @@ class GenericCumulativeIntegerDimensionOnVehicle(routes:ChangingSeqValue, n:Int,
   computeContentAndVehicleStartPositionsFromScratch(routes.newValue)
 
   override def notifySeqChanges(v: ChangingSeqValue, d: Int, changes: SeqUpdate){
+    // println(changes)
     val zoneToCompute = updateVehicleStartPositionsAndSearchZoneToUpdate(changes)
     zoneToCompute match {
       case null => computeContentAndVehicleStartPositionsFromScratch(routes.newValue)
-      case list => if (zoneToCompute.nonEmpty)computeCapacityFromSomWhere(routes.newValue,zoneToCompute)
+      case list => if (zoneToCompute.nonEmpty)updateContentForSelectedZones(routes.newValue,zoneToCompute)
     }
+    this.checkInternals(new ErrorChecker())
   }
 
+  private def smartPrepend(zoneStart: Int, zoneEnd:Int, list:List[(Int,Int)]): List[(Int,Int)] ={
+    // println("ADD ("+zoneStart+","+zoneEnd+") to list ?"+list +"("+(if(list.nonEmpty)list.tail+","+list.head else ""))
+    require(zoneStart<=zoneEnd)
+    assert(list.sortWith((lft:(Int,Int),rgt:(Int,Int))=> lft._1<rgt._1 && lft._2<rgt._2).eq(list))
+    val toReturn = (list match{
+      case Nil => (zoneStart,zoneEnd) :: list
+      case (a,b)::tail =>
+        if(zoneEnd>=a-1 && zoneEnd<=b) {
+          (Math.min(zoneStart,a), Math.max(zoneEnd,b)) :: tail
+
+        } else if(a<zoneEnd ) {
+          throw new Error("not sorted :( ")
+        }else {
+          // a > end
+
+          (zoneStart,zoneEnd)::list
+        }
+    })
+    //println(toReturn)
+    toReturn
+  }
 
   /**
     * Search the zones where changes occur following a SeqUpdate
@@ -93,54 +114,346 @@ class GenericCumulativeIntegerDimensionOnVehicle(routes:ChangingSeqValue, n:Int,
           case null => null
           case list =>
             //update vehciles pos
-            for(id<- RoutingConventionMethods.cachedVehicleReachingPosition(routes.newValue,v)(s.newValue,pos)+1 until v) startPosOfVehicle.update(id,startPosOfVehicle(id)+1)
-            var tmp = list
-            val test = tmp.filterNot((elt:(Int,Int))=> elt._2<pos)
-            var toReinsert:QList[(Int,Int)]=null
-            for(elt <- test){
-              if (elt._2>=pos && elt._1>=pos ) toReinsert = QList((s.oldPosToNewPos(elt._1).get, s.oldPosToNewPos(elt._2).get), toReinsert)
-              else if (elt._1<pos && elt._2>=pos) toReinsert = QList((elt._1, s.oldPosToNewPos(elt._2).get), toReinsert)
+            for(id<- RoutingConventionMethods.searchVehicleReachingPosition(pos,s.newValue, v)+1 until v) startPosOfVehicle.update(id,startPosOfVehicle(id)+1)
+
+
+
+
+            def updateListOfZoneToUpdateAndSearchZoneToUpdateAfterInsert(list:List[(Int,Int)]=list,lastZone :(Int,Int)=null):List[(Int,Int)]= {
+              if (list.isEmpty && lastZone!=null){
+                if(lastZone._2<pos-1) {
+                  val car = RoutingConventionMethods.searchVehicleReachingPosition(pos,changes.newValue, v)
+                  var tmpLastZone = (pos, math.min(pos + 1, if (car != v - 1) startPosOfVehicle(car + 1) - 1 else changes.newValue.size - 1))
+                  return smartPrepend(tmpLastZone._1,tmpLastZone._2, List.empty[(Int,Int)])
+                } else list
+              } else if(list.isEmpty && lastZone==null){
+                val car = RoutingConventionMethods.searchVehicleReachingPosition(pos,changes.newValue, v)
+                var tmpLastZone = (pos, math.min(pos + 1, if (car != v - 1) startPosOfVehicle(car + 1) - 1 else changes.newValue.size - 1))
+                return smartPrepend(tmpLastZone._1,tmpLastZone._2, List.empty[(Int,Int)])
+              } else {
+                val currentZone = list.head
+                // println(currentZone + " pos inser " + pos + "seq " + s.newValue.mkString(","))
+                var start = currentZone._1
+                var end = s.oldPosToNewPos(currentZone._2).get
+                if (currentZone._1 > pos) {
+                  // check si last est plus petit de pos ==> insert
+                  if(lastZone==null || lastZone._2< pos-1){
+                    val car = RoutingConventionMethods.searchVehicleReachingPosition(pos,changes.newValue,v)
+                    var zone = (pos, math.min(pos + 1, if (car != v - 1) startPosOfVehicle(car + 1) - 1 else changes.newValue.size - 1))
+                    return smartPrepend(zone._1,zone._2, updateListOfZoneToUpdateAndSearchZoneToUpdateAfterInsert(list, zone))
+                  } else{
+                    start = s.oldPosToNewPos(currentZone._1).get
+                    val zone = (start, end)
+                    return smartPrepend(zone._1,zone._2, updateListOfZoneToUpdateAndSearchZoneToUpdateAfterInsert(list.drop(1), zone))
+                  }
+                } else if (currentZone._1 == pos ) {
+                  start = pos
+                  val zone = (start, end)
+                  return smartPrepend(zone._1,zone._2, updateListOfZoneToUpdateAndSearchZoneToUpdateAfterInsert(list.drop(1), zone))
+                } else { // pos est après cur1
+                  if(currentZone._2<pos-1){
+                    return smartPrepend(currentZone._1,currentZone._2,updateListOfZoneToUpdateAndSearchZoneToUpdateAfterInsert(list.drop(1),currentZone))
+                  } else if(currentZone._2>=pos ){
+                    val zone = (start, end)
+                    return smartPrepend(zone._1,zone._2, updateListOfZoneToUpdateAndSearchZoneToUpdateAfterInsert(list.drop(1), zone))
+                  }else if(end==pos-1){
+                    //  println("2pos "+pos+" end "+end)
+                    val car = RoutingConventionMethods.searchVehicleReachingPosition(pos,changes.newValue,v)
+                    end = math.min(pos + 1, if (car != v - 1) startPosOfVehicle(car + 1) - 1 else changes.newValue.size - 1)
+                    val zone = (start, end)
+                    return smartPrepend(zone._1,zone._2, updateListOfZoneToUpdateAndSearchZoneToUpdateAfterInsert(list.drop(1), zone))
+                  } else {
+                    //println("pos "+pos+" end "+end)
+                    val zone = (start, pos)
+                    return smartPrepend(zone._1,zone._2, updateListOfZoneToUpdateAndSearchZoneToUpdateAfterInsert(list.drop(1), zone))
+                  }
+                }
+              }
             }
-            tmp = tmp.diff(test)
-            var iter = toReinsert.iterator
-            while(iter.hasNext){
-              val item = iter.next()
-              tmp = insertInList(tmp,item._1,item._2)
+
+            /* TODO DRAFT
+
+             def updateListOfZoneToUpdateAfterInsertReverse(list:List[(Int,Int)]=list,lastZone :(Int,Int)=null):List[(Int,Int)]= {
+              if (list.isEmpty && lastZone!=null){ //debut de la liste
+                if(lastZone._2<pos-1) {
+                  val car = RoutingConventionMethods.searchVehicleReachingPosition(pos,changes.newValue, v)
+                  var tmpLastZone = (pos, math.min(pos + 1, if (car != v - 1) startPosOfVehicle(car + 1) - 1 else changes.newValue.size - 1))
+                  return smartPrepend(tmpLastZone._1,tmpLastZone._2, List.empty[(Int,Int)])
+                } else list
+              } else if(list.isEmpty && lastZone==null){ // liste vide
+                val car = RoutingConventionMethods.searchVehicleReachingPosition(pos,changes.newValue, v)
+                var tmpLastZone = (pos, math.min(pos + 1, if (car != v - 1) startPosOfVehicle(car + 1) - 1 else changes.newValue.size - 1))
+                return smartPrepend(tmpLastZone._1,tmpLastZone._2, List.empty[(Int,Int)])
+              } else {
+                val currentZone = list.last
+                // println(currentZone + " pos inser " + pos + "seq " + s.newValue.mkString(","))
+                var start = s.oldPosToNewPos(currentZone._1).get
+                var end = s.oldPosToNewPos(currentZone._2).get
+                if (start > pos) { // on continue
+                  // check si last est plus petit de pos ==> insert
+                  if(lastZone==null ){
+                    val car = RoutingConventionMethods.searchVehicleReachingPosition(pos,changes.newValue,v)
+                    var zone = (pos, math.min(pos + 1, if (car != v - 1) startPosOfVehicle(car + 1) - 1 else changes.newValue.size - 1))
+                    return smartPrepend(zone._1,zone._2, updateListOfZoneToUpdateAndSearchZoneToUpdateAfterInsert(list, zone))
+                  } else{ //cas de base
+                    start = s.oldPosToNewPos(currentZone._1).get
+                    val zone = (start, end)
+                    return smartPrepend(zone._1,zone._2, updateListOfZoneToUpdateAndSearchZoneToUpdateAfterInsert(list.drop(1), zone))
+                  }
+                } else if (currentZone._1 == pos ) {
+                  start = pos
+                  val zone = (start, end)
+                  return smartPrepend(zone._1,zone._2, updateListOfZoneToUpdateAndSearchZoneToUpdateAfterInsert(list.drop(1), zone))
+                } else { // pos est après cur1
+                  if(currentZone._2<pos-1){
+                    //fin ici
+                    return smartPrepend(currentZone._1,currentZone._2,updateListOfZoneToUpdateAndSearchZoneToUpdateAfterInsert(list.drop(1),currentZone))
+                  } else if(currentZone._2>=pos ){
+                    val zone = (start, end)
+                    return smartPrepend(zone._1,zone._2, updateListOfZoneToUpdateAndSearchZoneToUpdateAfterInsert(list.drop(1), zone))
+                  }else if(end==pos-1){
+                    //  println("2pos "+pos+" end "+end)
+                    val car = RoutingConventionMethods.searchVehicleReachingPosition(pos,changes.newValue,v)
+                    end = math.min(pos + 1, if (car != v - 1) startPosOfVehicle(car + 1) - 1 else changes.newValue.size - 1)
+                    val zone = (start, end)
+                    return smartPrepend(zone._1,zone._2, updateListOfZoneToUpdateAndSearchZoneToUpdateAfterInsert(list.drop(1), zone))
+                  } else {
+                    //println("pos "+pos+" end "+end)
+                    val zone = (start, pos)
+                    return smartPrepend(zone._1,zone._2, updateListOfZoneToUpdateAndSearchZoneToUpdateAfterInsert(list.drop(1), zone))
+                  }
+                }
+              }
             }
-            val car = RoutingConventionMethods.cachedVehicleReachingPosition(routes.newValue,v)(changes.newValue,pos)
-            insertInList(tmp,pos,math.min(pos+1, if( car != v-1 ) startPosOfVehicle(car+1)-1 else changes.newValue.size-1))
-            //compute zone
+             */
+
+
+            /*var tmp = list
+              val test = tmp.filterNot((elt:(Int,Int))=> elt._2<pos)
+              var toReinsert:QList[(Int,Int)]=null
+              for(elt <- test){
+                if (elt._2>=pos && elt._1>=pos ) toReinsert = QList((s.oldPosToNewPos(elt._1).get, s.oldPosToNewPos(elt._2).get), toReinsert)
+                else if (elt._1<pos && elt._2>=pos) toReinsert = QList((elt._1, s.oldPosToNewPos(elt._2).get), toReinsert)
+              }
+              tmp = tmp.diff(test)
+              var iter = toReinsert.iterator
+              while(iter.hasNext){
+                val item = iter.next()
+                tmp = insertInList(tmp,item._1,item._2)
+              }
+              val car = RoutingConventionMethods.searchVehicleReachingPosition(pos,changes.newValue, v)
+              insertInList(tmp,pos,math.min(pos+1, if( car != v-1 ) startPosOfVehicle(car+1)-1 else changes.newValue.size-1))
+            */
+              updateListOfZoneToUpdateAndSearchZoneToUpdateAfterInsert()
+
         }
       case r@SeqUpdateRemove(pos : Int, prev : SeqUpdate) =>
         updateVehicleStartPositionsAndSearchZoneToUpdate(prev) match{
           case null => null
           case list =>
-            val car = RoutingConventionMethods.cachedVehicleReachingPosition(routes.newValue,v)(prev.newValue,pos)
+            val car = RoutingConventionMethods.searchVehicleReachingPosition(pos,prev.newValue, v)
             for(id<- car+1 until v) startPosOfVehicle.update(id,startPosOfVehicle(id)-1)
-            var tmp = list
-            var test = tmp.filterNot((elt:(Int,Int))=> elt._2<pos)
-            var toReinsert:QList[(Int,Int)]=null
-            for(elt <- test){
-              if (elt._1>pos )  toReinsert =  QList((r.oldPosToNewPos(elt._1).get, r.oldPosToNewPos(elt._2).get), toReinsert)
-              else if (elt._1<pos && elt._2>pos)  toReinsert =   QList((elt._1, r.oldPosToNewPos(elt._2).get), toReinsert)
-              else if( elt._1==pos && elt._2 > pos)  toReinsert =   QList((elt._1+1, r.oldPosToNewPos(elt._2).get), toReinsert)
-              else if( elt._1 < pos &&  elt._2==pos)  toReinsert =   QList((elt._1, elt._2-1), toReinsert)
+           // println("remov pose "+pos)
+
+
+
+           /* if (elt._1>pos )  toReinsert =  QList((r.oldPosToNewPos(elt._1).get, r.oldPosToNewPos(elt._2).get), toReinsert) // cas base update
+            else if (elt._1<pos && elt._2>pos)  toReinsert =   QList((elt._1, r.oldPosToNewPos(elt._2).get), toReinsert)  //remov dans zone
+            else if( elt._1==pos && elt._2 > pos)  toReinsert =   QList((elt._1+1, r.oldPosToNewPos(elt._2).get), toReinsert)  //start remove
+            else if( elt._1 < pos &&  elt._2==pos)  toReinsert =   QList((elt._1, elt._2-1), toReinsert) // end remove*/
+
+            def updateListOfZoneToUpdateAndSearchZoneToUpdateAfterRemove(list:List[(Int,Int)]=list,lastZone :(Int,Int)=null):List[(Int,Int)]= {
+              if (list.isEmpty && lastZone!=null){
+                if(lastZone._2<pos-1) {
+                  val car = RoutingConventionMethods.searchVehicleReachingPosition(pos,prev.newValue, v)
+                  var tmpLastZone = (pos, pos)
+                  // println("myCond = "+((car != v-1 && pos!=startPosOfVehicle(car+1)) || (car == v-1 && (pos < changes.newValue.size))))
+                  return if((car != v-1 && pos!=startPosOfVehicle(car+1)) || (car == v-1 && (pos < changes.newValue.size)))
+                    smartPrepend(tmpLastZone._1,tmpLastZone._2, List.empty[(Int,Int)])
+                  else  list
+                } else list
+              } else if(list.isEmpty && lastZone==null){
+                val car = RoutingConventionMethods.searchVehicleReachingPosition(pos,prev.newValue, v)
+                var tmpLastZone = (pos, pos)
+               // println("myCond = "+((car != v-1 && pos!=startPosOfVehicle(car+1)) || (car == v-1 && (pos < changes.newValue.size))))
+                return if((car != v-1 && pos!=startPosOfVehicle(car+1)) || (car == v-1 && (pos < changes.newValue.size)))
+                   smartPrepend(tmpLastZone._1,tmpLastZone._2, List.empty[(Int,Int)])
+                else  list
+              } else {
+                val currentZone = list.head
+                // println(currentZone + " pos inser " + pos + "seq " + s.newValue.mkString(","))
+                var start = currentZone._1
+                val tmp = r.oldPosToNewPos(currentZone._2)
+                var end = if(tmp.nonEmpty) tmp.get else 0
+                if (currentZone._1 > pos) { // ==> juste mettre a jour pcq on delace de 1 ers gauche
+                  // check si last est plus petit de pos ==> insert
+                  start = r.oldPosToNewPos(currentZone._1).get
+                  val zone = (start, end)
+                  return smartPrepend(zone._1,zone._2, updateListOfZoneToUpdateAndSearchZoneToUpdateAfterRemove(list.drop(1), zone))
+
+                } else if (currentZone._1 == pos ) { // remove start
+                  val zone = (start, end)
+                  if(currentZone._2>currentZone._1) return smartPrepend(zone._1,zone._2, updateListOfZoneToUpdateAndSearchZoneToUpdateAfterRemove(list.drop(1), zone))
+                  else  return updateListOfZoneToUpdateAndSearchZoneToUpdateAfterRemove(list.drop(1), lastZone)
+                } else { // pos est après cur1
+                  if(currentZone._2<pos){ // pos plus loin
+                    return smartPrepend(currentZone._1,currentZone._2,updateListOfZoneToUpdateAndSearchZoneToUpdateAfterRemove(list.drop(1),currentZone))
+                  } else if(currentZone._2==pos ){ // end = remove
+                    end = r.oldPosToNewPos(currentZone._2-1).get
+                    val zone = (start, end) // attention
+                    if(currentZone._2>currentZone._1) return smartPrepend(zone._1,zone._2, updateListOfZoneToUpdateAndSearchZoneToUpdateAfterRemove(list.drop(1), zone))
+                    else  return updateListOfZoneToUpdateAndSearchZoneToUpdateAfterRemove(list.drop(1), lastZone)
+                    return smartPrepend(zone._1,zone._2, updateListOfZoneToUpdateAndSearchZoneToUpdateAfterRemove(list.drop(1), zone))
+                  } else { // remove dans zone
+                  //println("pos "+pos+" end "+end)
+                    val zone = (start, end)
+                    return smartPrepend(zone._1,zone._2, updateListOfZoneToUpdateAndSearchZoneToUpdateAfterRemove(list.drop(1), zone))
+                  }
+                }
+              }
             }
-            tmp = tmp.diff(test)
-            var iter = toReinsert.iterator
-            while(iter.hasNext){
-              val item = iter.next()
-              tmp = insertInList(tmp,item._1,item._2)
-            }
-            var cond1 = (pos < changes.newValue.size)
-            var cond2 = (car != v-1 && pos!=startPosOfVehicle(car+1))
-            if(cond2 || (car == v-1 && cond1)) insertInList(list,pos,pos) else tmp
+
+
+
+           /* def updateListOfZoneToUpdateAfterRemoveWhitIndex(list:List[(Int,Int)]=list,lastZone :(Int,Int)=null,inde:Int=0):List[(Int,Int)]= {
+              if (list.isEmpty && lastZone!=null){
+                if(lastZone._2<pos-1) {
+                  val car = RoutingConventionMethods.searchVehicleReachingPosition(pos,prev.newValue, v)
+                  var tmpLastZone = (pos, math.min(pos + 1, if (car != v - 1) startPosOfVehicle(car + 1) - 1 else changes.newValue.size - 1))
+                  return smartPrepend(tmpLastZone._1,tmpLastZone._2, List.empty[(Int,Int)])
+                } else list
+              } else if(list.isEmpty && lastZone==null){
+                val car = RoutingConventionMethods.searchVehicleReachingPosition(pos,prev.newValue, v)
+                var tmpLastZone = (pos, pos)
+                // println("myCond = "+((car != v-1 && pos!=startPosOfVehicle(car+1)) || (car == v-1 && (pos < changes.newValue.size))))
+                return if((car != v-1 && pos!=startPosOfVehicle(car+1)) || (car == v-1 && (pos < changes.newValue.size)))
+                  smartPrepend(tmpLastZone._1,tmpLastZone._2, List.empty[(Int,Int)])
+                else  List.empty[(Int,Int)]
+              } else {
+                val currentZone = list.head
+                // println(currentZone + " pos inser " + pos + "seq " + s.newValue.mkString(","))
+                var start = currentZone._1
+                val tmp = r.oldPosToNewPos(currentZone._2)
+                var end = if(tmp.nonEmpty) tmp.get else 0
+                if (currentZone._1 > pos) { // ==> juste mettre a jour pcq on delace de 1 ers gauche
+                  // check si last est plus petit de pos ==> insert
+                  start = r.oldPosToNewPos(currentZone._1).get
+                  val zone = (start, end)
+                  return smartPrepend(zone._1,zone._2, updateListOfZoneToUpdateAfterRemoveWhitIndex(list.drop(1), zone))
+
+                } else if (currentZone._1 == pos ) { // remove start
+                val zone = (start, end)
+                  if(currentZone._2>currentZone._1) return smartPrepend(zone._1,zone._2, updateListOfZoneToUpdateAfterRemoveWhitIndex(list.drop(1), zone))
+                  else  return updateListOfZoneToUpdateAfterRemoveWhitIndex(list.drop(1), lastZone)
+                } else { // pos est après cur1
+                  if(currentZone._2<pos){ // pos plus loin
+                    println(inde)
+                    updateListOfZoneToUpdateAfterRemoveWhitIndex(list.drop(1),currentZone,inde+1)
+                   // smartPrepend(currentZone._1,currentZone._2,updateListOfZoneToUpdateAfterRemoveWhitIndex(list.drop(1),currentZone))
+                  } else if(currentZone._2==pos ){ // end = remove
+                    end = r.oldPosToNewPos(currentZone._2-1).get
+                    val zone = (start, end) // attention
+                    if(currentZone._2>currentZone._1) return smartPrepend(zone._1,zone._2, updateListOfZoneToUpdateAfterRemoveWhitIndex(list.drop(1), zone))
+                    else  return updateListOfZoneToUpdateAfterRemoveWhitIndex(list.drop(1), lastZone)
+                    return smartPrepend(zone._1,zone._2, updateListOfZoneToUpdateAfterRemoveWhitIndex(list.drop(1), zone))
+                  } else { // remove dans zone
+                  //println("pos "+pos+" end "+end)
+                  val zone = (start, end)
+                    return smartPrepend(zone._1,zone._2, updateListOfZoneToUpdateAfterRemoveWhitIndex(list.drop(1), zone))
+                  }
+                }
+              }
+            }*/
+
+
+            /*
+              //var tmp:List[(Int,Int)] = if(pos >0) List.apply((0,0)) else list
+              var tmp = list
+              val toRetour2 = updateListOfZoneToUpdateAndSearchZoneToUpdateAfterRemove(tmp)
+
+              var test = tmp.filterNot((elt:(Int,Int))=> elt._2<pos)
+              var toReinsert:QList[(Int,Int)]=null
+              for(elt <- test){
+                if (elt._1>pos )  toReinsert =  QList((r.oldPosToNewPos(elt._1).get, r.oldPosToNewPos(elt._2).get), toReinsert)
+                else if (elt._1<pos && elt._2>pos)  toReinsert =   QList((elt._1, r.oldPosToNewPos(elt._2).get), toReinsert)
+                else if( elt._1==pos && elt._2 > pos)  toReinsert =   QList((elt._1+1, r.oldPosToNewPos(elt._2).get), toReinsert)
+                else if( elt._1 < pos &&  elt._2==pos)  toReinsert =   QList((elt._1, elt._2-1), toReinsert)
+              }
+              tmp = tmp.diff(test)
+              var iter = toReinsert.iterator
+              while(iter.hasNext){
+                val item = iter.next()
+                tmp = insertInList(tmp,item._1,item._2)
+              }
+              var cond1 = (pos < changes.newValue.size)
+              var cond2 = (car != v-1 && pos!=startPosOfVehicle(car+1))
+            //  println("conde  = "+((cond2 || (car == v-1 && cond1))))
+              val toRe = if(cond2 || (car == v-1 && cond1)) insertInList(list,pos,pos) else tmp
+              //require(toRe.equals(toRetour2))
+             if(toRetour2.diff(toRe).nonEmpty){ println("pos "+pos+" list "+list.mkString(",")+"\n"+ toRetour2.diff(toRe) +" old : "+toRe.mkString(",")+"<- new >"+toRetour2.mkString(",")+"\nseq "+changes)
+              System.exit(0)}
+              toRe
+            */ updateListOfZoneToUpdateAndSearchZoneToUpdateAfterRemove()
+
 
         }
       case m@SeqUpdateMove(fromIncluded : Int, toIncluded : Int, after : Int, flip : Boolean, prev : SeqUpdate) =>
         updateVehicleStartPositionsAndSearchZoneToUpdate(prev) match{
           case null => null
           case list =>
+
+
+            /* TODO draft
+            def updateListOfZoneToUpdateAfterMove(list:List[(Int,Int)]=list,lastZone :(Int,Int)=null):List[(Int,Int)]= {
+              if (list.isEmpty && lastZone!=null){
+                if(lastZone._2<pos-1) {
+                  val car = RoutingConventionMethods.searchVehicleReachingPosition(pos,prev.newValue, v)
+                  var tmpLastZone = (pos, math.min(pos + 1, if (car != v - 1) startPosOfVehicle(car + 1) - 1 else changes.newValue.size - 1))
+                  return smartPrepend(tmpLastZone._1,tmpLastZone._2, List.empty[(Int,Int)])
+                } else list
+              } else if(list.isEmpty && lastZone==null){
+                val car = RoutingConventionMethods.searchVehicleReachingPosition(pos,prev.newValue, v)
+                var tmpLastZone = (pos, pos)
+                // println("myCond = "+((car != v-1 && pos!=startPosOfVehicle(car+1)) || (car == v-1 && (pos < changes.newValue.size))))
+                return if((car != v-1 && pos!=startPosOfVehicle(car+1)) || (car == v-1 && (pos < changes.newValue.size)))
+                  smartPrepend(tmpLastZone._1,tmpLastZone._2, List.empty[(Int,Int)])
+                else  List.empty[(Int,Int)]
+              } else {
+                val currentZone = list.head
+                // println(currentZone + " pos inser " + pos + "seq " + s.newValue.mkString(","))
+                var start = currentZone._1
+                val tmp = m.oldPosToNewPos(currentZone._2)
+                var end = if(tmp.nonEmpty) tmp.get else 0
+                if (currentZone._1 > pos) { // ==> juste mettre a jour pcq on delace de 1 ers gauche
+                  // check si last est plus petit de pos ==> insert
+                  start = m.oldPosToNewPos(currentZone._1).get
+                  val zone = (start, end)
+                  return smartPrepend(zone._1,zone._2, updateListOfZoneToUpdateAfterMove(list.drop(1), zone))
+
+                } else if (currentZone._1 == pos ) { // remove start
+                val zone = (start, end)
+                  if(currentZone._2>currentZone._1) return smartPrepend(zone._1,zone._2, updateListOfZoneToUpdateAfterMove(list.drop(1), zone))
+                  else  return updateListOfZoneToUpdateAfterMove(list.drop(1), lastZone)
+                } else { // pos est après cur1
+                  if(currentZone._2<pos){ // pos plus loin
+                    return smartPrepend(currentZone._1,currentZone._2,updateListOfZoneToUpdateAfterMove(list.drop(1),currentZone))
+                  } else if(currentZone._2==pos ){ // end = remove
+                    end = m.oldPosToNewPos(currentZone._2-1).get
+                    val zone = (start, end) // attention
+                    if(currentZone._2>currentZone._1) return smartPrepend(zone._1,zone._2, updateListOfZoneToUpdateAfterMove(list.drop(1), zone))
+                    else  return updateListOfZoneToUpdateAfterMove(list.drop(1), lastZone)
+                    return smartPrepend(zone._1,zone._2, updateListOfZoneToUpdateAfterMove(list.drop(1), zone))
+                  } else { // remove dans zone
+                  //println("pos "+pos+" end "+end)
+                  val zone = (start, end)
+                    return smartPrepend(zone._1,zone._2, updateListOfZoneToUpdateAfterMove(list.drop(1), zone))
+                  }
+                }
+              }
+            }
+*/
+
+
             val initVehicule = RoutingConventionMethods.cachedVehicleReachingPosition(routes.newValue,v)(prev.newValue,fromIncluded)
             val destVehicule = RoutingConventionMethods.cachedVehicleReachingPosition(routes.newValue,v)(prev.newValue,after)
             var tmp = list
@@ -186,6 +499,20 @@ class GenericCumulativeIntegerDimensionOnVehicle(routes:ChangingSeqValue, n:Int,
               val item = iter.next()
               tmp = insertInList(tmp,item._1,item._2)
             }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
             // maj position des marqueur de vehicule
             if (initVehicule!= destVehicule) {
@@ -298,7 +625,8 @@ class GenericCumulativeIntegerDimensionOnVehicle(routes:ChangingSeqValue, n:Int,
     * @param s the sequence after the SeqUpdate
     * @param lst the list containing positions where calculations must be performed
     */
-  def computeCapacityFromSomWhere(s:IntSequence, lst: List[(Int, Int)]){
+  def updateContentForSelectedZones(s:IntSequence, lst: List[(Int, Int)]){
+    //println(lst.mkString(","))
     val iter = lst.toIterator
     var pair = iter.next()
     var start = pair._1
@@ -417,6 +745,7 @@ class GenericCumulativeIntegerDimensionOnVehicle(routes:ChangingSeqValue, n:Int,
     *         NB : the list is sorted
     */
   private def insertInList(list:List[(Int,Int)],start:Int,end:Int) : List[(Int,Int)] = {
+
     require(start <= end)
     var concernedByNewPair = list.filterNot((elt:(Int,Int))=> elt._1> end+1 || elt._2< start-1)
     var effectiveStart = if(!concernedByNewPair.isEmpty ) math.min(start,concernedByNewPair.head._1)  else start
@@ -439,7 +768,7 @@ class GenericCumulativeIntegerDimensionOnVehicle(routes:ChangingSeqValue, n:Int,
 
     }
     for (node <- routes.newValue) {
-      c.check(getRemainingCapacityOfNode(node,outputCheck) equals getRemainingCapacityOfNode(node), Some("Founded Capacity at node(" + node + "):=" + getRemainingCapacityOfNode(node) + " should be :=" + getRemainingCapacityOfNode(node,outputCheck)+" seq :"+routes.newValue.mkString(",")))
+      c.check(getRemainingCapacityOfNode(node,outputCheck) equals getRemainingCapacityOfNode(node), Some("Founded Capacity at node(" + node + ") pos ("+routes.newValue.positionsOfValue(node).firstKey +"):=" + getRemainingCapacityOfNode(node) + " should be :=" + getRemainingCapacityOfNode(node,outputCheck)+" seq :"+routes.newValue.mkString(",")))
     }
 
   }

@@ -15,14 +15,13 @@
 
 
 package oscar.cbls.invariants.lib.routing
-
 import oscar.cbls.algo.quick.QList
 import oscar.cbls.algo.seq.functional.IntSequence
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.core.propagation.Checker
 
 /**
-  * Created by  Jannou Brohée on 3/10/16.
+  * Created by  Jannou Brohée on 8/11/16.
   */
 
 object GenericCumulativeIntegerDimensionOnVehicleUsingVehicleStartArray {
@@ -64,7 +63,7 @@ class GenericCumulativeIntegerDimensionOnVehicleUsingVehicleStartArray(routes:Ch
   require( output.length==n)
 
 
-  private var startPosOfVehicle =  VehicleStartArray(v) // this will be updated by computeContentAndVehicleStartPositionsFromScratch
+  private var startPosOfVehicle =  vehicleStartArray(v) // this will be updated by computeContentAndVehicleStartPositionsFromScratch
   registerStaticAndDynamicDependency(routes)
   finishInitialization()
   for(i <- output) {

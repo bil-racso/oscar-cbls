@@ -23,19 +23,11 @@ package oscar.cbls.invariants.lib.routing
   */
 
 
-
-
-
-object VehicleStartArray{
-  def apply(_numberOfVehicle:Int): VehicleStartArray = new VehicleStartArray(_numberOfVehicle)
-}
-
-
 /**
   * Implementation providing an array stocking the vehicle start position and methods to update the array
   * @param _numberOfVehicle the number of vehicles to consider
   */
-class VehicleStartArray(_numberOfVehicle:Int) {
+case class VehicleStartArray(_numberOfVehicle:Int) {
 
   private val nbrOfVehicle:Int = _numberOfVehicle
   private val startPositionOfVehicle : Array[Int]= Array.tabulate(nbrOfVehicle)(((car:Int)=> Int.MinValue))
