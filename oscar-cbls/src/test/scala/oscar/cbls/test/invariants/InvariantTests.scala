@@ -642,11 +642,105 @@ class InvariantTests extends FunSuite with Checkers {
     bench.run()
   }
 
+  test("GenericCumulativeIntegerDimensionOnVehicle"){
+    val bench = new InvBench(verbose,List(PlusOne(), MinusOne(), ToZero(), ToMin(), ToMax(), Random(), RandomDiff(), Shuffle()))
+    //val bench = new InvBench(verbose,List( MinusOne(),RandomDiff()))
+    val n = 1000
+    val v = 200
+    val route = bench.genRouteOfNodes(n,v)
 
-  test("GenericCumulativeIntegerDimensionOnVehicle and GenericCumulativeConstraint"){
+
+    val limite = 10
+    def genMatrix(node:Int):Array[Array[Int]] = {
+      val init = Int.MinValue
+      val matrix: Array[Array[Int]] = Array.tabulate(n,n)((n1:Int,n2:Int)=>init)
+      for (elt <- 0 until node) {
+        for (elt1 <- 0 until node) {
+          matrix(elt)(elt1) =  if(elt==elt1) 0 else scala.util.Random.nextInt(limite)
+        }
+      }
+      matrix
+    }
+    val matrix = genMatrix(n)
+    def genOperation(node:Int):Array[Array[Int]] = {
+      val oper: Array[Array[Int]] = Array.ofDim(n, n)
+      var t1:Array[Int] =Array.ofDim(n)
+      for (elt <- 0 until node) {
+        for (elt1 <- 0 until node) {
+          oper(elt)(elt1) =  if(matrix(elt)(elt1)==0) scala.util.Random.nextInt(3) else scala.util.Random.nextInt(4)
+        }
+      }
+      oper
+    }
+
+    val oper = genOperation(n)
+    def op(n1:Int,n2:Int,c:Int): Int= {
+      oper(n1)(n2) match {
+        case 0 => c + matrix(n1)(n2)
+        case 1 => c - matrix(n1)(n2)
+        case 2 => c * matrix(n1)(n2)
+        case 3 => c % matrix(n1)(n2)
+      }
+    }
+
+    def start() : Array[Int]= { Array.tabulate(v)((car:Int)=> scala.util.Random.nextInt(limite))}
+    val  s = start()
+    GenericCumulativeIntegerDimensionOnVehicle(route,n,v,op,s)
+    println("n ="+n+" v ="+v)
+    bench.run()
+  }
+
+  test("GenericCumulativeIntegerDimensionOnVehicleUsingVehicleStartArray"){
     val bench = new InvBench(verbose,List(PlusOne(), MinusOne(), ToZero(), ToMin(), ToMax(), Random(), RandomDiff(), Shuffle()))
     val n = 1000
-    val v = 300
+    val v = 200
+    val route = bench.genRouteOfNodes(n,v)
+
+
+    val limite = 10
+    def genMatrix(node:Int):Array[Array[Int]] = {
+      val init = Int.MinValue
+      val matrix: Array[Array[Int]] = Array.tabulate(n,n)((n1:Int,n2:Int)=>init)
+      for (elt <- 0 until node) {
+        for (elt1 <- 0 until node) {
+          matrix(elt)(elt1) =  if(elt==elt1) 0 else scala.util.Random.nextInt(limite)
+        }
+      }
+      matrix
+    }
+    val matrix = genMatrix(n)
+    def genOperation(node:Int):Array[Array[Int]] = {
+      val oper: Array[Array[Int]] = Array.ofDim(n, n)
+      var t1:Array[Int] =Array.ofDim(n)
+      for (elt <- 0 until node) {
+        for (elt1 <- 0 until node) {
+          oper(elt)(elt1) =  if(matrix(elt)(elt1)==0) scala.util.Random.nextInt(3) else scala.util.Random.nextInt(4)
+        }
+      }
+      oper
+    }
+
+    val oper = genOperation(n)
+    def op(n1:Int,n2:Int,c:Int): Int= {
+      oper(n1)(n2) match {
+        case 0 => c + matrix(n1)(n2)
+        case 1 => c - matrix(n1)(n2)
+        case 2 => c * matrix(n1)(n2)
+        case 3 => c % matrix(n1)(n2)
+      }
+    }
+
+    def start() : Array[Int]= { Array.tabulate(v)((car:Int)=> scala.util.Random.nextInt(limite))}
+    val  s = start()
+    GenericCumulativeIntegerDimensionOnVehicleUsingVehicleStartArray(route,n,v,op,s)
+    println("n ="+n+" v ="+v)
+    bench.run()
+  }
+
+  test("GenericCumulativeConstraint"){
+    val bench = new InvBench(verbose,List(PlusOne(), MinusOne(), ToZero(), ToMin(), ToMax(), Random(), RandomDiff(), Shuffle()))
+    val n = 1000
+    val v = 200
     val route = bench.genRouteOfNodes(n,v)
 
 
@@ -686,10 +780,11 @@ class InvariantTests extends FunSuite with Checkers {
     def start() : Array[Int]= { Array.tabulate(v)((car:Int)=> scala.util.Random.nextInt(limite))}
     val  s = start()
     GenericCumulativeConstraint(route,n,v,op,limite,s)
-    GenericCumulativeIntegerDimensionOnVehicle(route,n,v,op,s)
     println("n ="+n+" v ="+v)
     bench.run()
   }
+
+
 
 
   // ---- checkpoint Tests ---- //

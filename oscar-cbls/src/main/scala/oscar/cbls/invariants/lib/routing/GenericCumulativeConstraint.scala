@@ -95,6 +95,38 @@ class GenericCumulativeConstraint(routes:ChangingSeqValue, n:Int, v:Int, op :(In
     //this.checkInternals(new ErrorChecker())
   }
 
+
+
+  /**
+    *
+    * @param zoneStart
+    * @param zoneEnd
+    * @param list
+    * @return
+    *        @author renaud.delandtsheer@cetic.be
+    */
+  private def smartPrepend(zoneStart: Int, zoneEnd:Int, list:List[(Int,Int)]): List[(Int,Int)] ={
+    // println("ADD ("+zoneStart+","+zoneEnd+") ")
+    require(zoneStart<=zoneEnd)
+    assert(list.sortWith((lft:(Int,Int),rgt:(Int,Int))=> lft._1<rgt._1 && lft._2<rgt._2).eq(list))
+    list match{
+      case Nil => (zoneStart,zoneEnd) :: list
+      case (a,b)::tail =>
+        if(zoneEnd>=a-1 && zoneEnd<=b) {
+          (Math.min(zoneStart,a), Math.max(zoneEnd,b)) :: tail
+        }else if (b>=zoneStart && a <=zoneStart){
+          smartPrepend(a, Math.max(zoneEnd,b), tail)
+        } else if(b<zoneStart ) {
+          throw new Error("not sorted :( b:"+b+"zoneStart:"+zoneStart)
+        }else {
+          // a > end
+          (zoneStart,zoneEnd)::list
+        }
+    }
+  }
+
+
+
   /**
     * Search the zones where changes occur following a SeqUpdate
     * @param changes the SeqUpdate
@@ -107,22 +139,36 @@ class GenericCumulativeConstraint(routes:ChangingSeqValue, n:Int, v:Int, op :(In
       case s@SeqUpdateInsert(value : Int, pos : Int, prev : SeqUpdate) =>
         searchZoneToCompute(prev) match{
           case null => null
-          case list => for(id<- RoutingConventionMethods.cachedVehicleReachingPosition(routes.newValue,v)(s.newValue,pos)+1 until v) recordChangeOfVehicleTag(id,startPosOfVehicle(id)+1)
-            var tmp = list
-            var test = tmp.filterNot((elt:(Int,Int))=> elt._2<pos)
-            var toReinsert:QList[(Int,Int)]=null
-            for(elt <- test){
-              if (elt._2>=pos && elt._1>=pos ) toReinsert = QList((s.oldPosToNewPos(elt._1).get, s.oldPosToNewPos(elt._2).get), toReinsert)
-              else if (elt._1<pos && elt._2>=pos) toReinsert = QList((elt._1, s.oldPosToNewPos(elt._2).get), toReinsert)
-            }
-            tmp = tmp.diff(test)
-            var iter = toReinsert.iterator
-            while(iter.hasNext){
-              val item = iter.next()
-              tmp = insertInList(tmp,item._1,item._2)
-            }
+          case list =>
+            for(id<- RoutingConventionMethods.cachedVehicleReachingPosition(routes.newValue,v)(s.newValue,pos)+1 until v) recordChangeOfVehicleTag(id,startPosOfVehicle(id)+1)
             val car = RoutingConventionMethods.cachedVehicleReachingPosition(routes.newValue,v)(changes.newValue,pos)
-            insertInList(tmp,pos,math.min(pos+1, if( car != v-1 ) startPosOfVehicle(car+1)-1 else changes.newValue.size-1))
+            def shiftByOne(list:List[(Int,Int)]):List[(Int,Int)]= {
+              list match {
+                case Nil => list
+                case (a,b) :: tail => smartPrepend(s.oldPosToNewPos(a).get,s.oldPosToNewPos(b).get, shiftByOne(tail))
+              }
+            }
+            /**
+              *
+              * @param list
+              * @return
+              *         @author renaud.delandtsheer@cetic.be
+              */
+            def updateListOfZoneToUpdateAndSearchZoneToUpdateAfterInsert(list:List[(Int,Int)]):List[(Int,Int)]= {
+              list match{
+                case Nil =>
+                  List((pos,math.min(pos + 1, if (car != v - 1) startPosOfVehicle(car + 1) - 1 else changes.newValue.size - 1)))
+                case (a,b) :: tail =>
+                  if(b < pos) smartPrepend(a,b,updateListOfZoneToUpdateAndSearchZoneToUpdateAfterInsert(tail))
+                  else if(b == pos) smartPrepend(a,b+1,shiftByOne(tail))
+                  else /*b est après pos*/ smartPrepend(pos,math.min(pos + 1, if (car != v - 1) startPosOfVehicle(car + 1) - 1 else changes.newValue.size - 1),shiftByOne(list))
+              }
+            }
+
+            updateListOfZoneToUpdateAndSearchZoneToUpdateAfterInsert(list)
+
+
+
         }
       case r@SeqUpdateRemove(pos : Int, prev : SeqUpdate) =>
         searchZoneToCompute(prev) match{
@@ -131,29 +177,36 @@ class GenericCumulativeConstraint(routes:ChangingSeqValue, n:Int, v:Int, op :(In
             val car = RoutingConventionMethods.cachedVehicleReachingPosition(routes.newValue,v)(prev.newValue,pos)
             for(id<- car+1 until v)
               recordChangeOfVehicleTag(id,startPosOfVehicle(id)-1)
-            var tmp = list
-            var test = tmp.filterNot((elt:(Int,Int))=> elt._2<pos)
-            var toReinsert:QList[(Int,Int)]=null
-            for(elt <- test){
-              if (elt._1>pos )  toReinsert =  QList((r.oldPosToNewPos(elt._1).get, r.oldPosToNewPos(elt._2).get), toReinsert)
-              else if (elt._1<pos && elt._2>pos)  toReinsert =   QList((elt._1, r.oldPosToNewPos(elt._2).get), toReinsert)
-              else if( elt._1==pos && elt._2 > pos)  toReinsert =   QList((elt._1+1, r.oldPosToNewPos(elt._2).get), toReinsert)
-              else if( elt._1 < pos &&  elt._2==pos)  toReinsert =   QList((elt._1, elt._2-1), toReinsert)
+
+            def shiftByOne(list:List[(Int,Int)]):List[(Int,Int)]= {
+              list match {
+                case Nil => list
+                case (a,b) :: tail => smartPrepend(r.oldPosToNewPos(a).get,r.oldPosToNewPos(b).get, shiftByOne(tail))
+              }
             }
-            tmp = tmp.diff(test)
-            var iter = toReinsert.iterator
-            while(iter.hasNext){
-              val item = iter.next()
-              tmp = insertInList(tmp,item._1,item._2)
+
+            def updateListOfZoneToUpdateAndSearchZoneToUpdateAfterRemove(list:List[(Int,Int)]=list,lastZone :(Int,Int)=null):List[(Int,Int)]= {
+              list match {
+                case Nil => {
+                  if ((car != v - 1 && pos != startPosOfVehicle(car + 1)) || (car == v - 1 && (pos < changes.newValue.size)))  List((pos, pos))
+                  else list
+                }
+                case (a, b) :: tail =>
+                  if (b < pos) smartPrepend(a, b, updateListOfZoneToUpdateAndSearchZoneToUpdateAfterRemove(tail))
+                  else if (b == pos)  if(b>a) smartPrepend(a, r.oldPosToNewPos(b-1).get, shiftByOne(tail)) else  shiftByOne(tail)
+                  else if (a == pos) if(b>a) smartPrepend(a, r.oldPosToNewPos(b-1).get, shiftByOne(tail)) else  shiftByOne(tail)
+                  else smartPrepend(a, r.oldPosToNewPos(b).get, shiftByOne(tail))
+              }
             }
             val capa = getRemainingCapacityOfNode(r.removedValue,changedNodeSinceCheckpoint(r.removedValue))
             val violationToRemove = if(capa>cMax) capa-cMax else if(capa<0) math.abs(capa) else 0
             recordChangeOfVehicleViolation(car,getViolationOfVehicle(car)-violationToRemove)
             recordChangeOfGlobalViolation(GlobalViolation.newValue-violationToRemove)
             setRemainingCapacityOfNode(r.removedValue, 0,recordMove(r.removedValue))
-            var cond1 = (pos < changes.newValue.size)
-            var cond2 = (car != v-1 && pos!=startPosOfVehicle(car+1))
-            if(cond2 || (car == v-1 && cond1)) insertInList(list,pos,pos) else tmp
+            updateListOfZoneToUpdateAndSearchZoneToUpdateAfterRemove()
+
+
+
         }
       case m@SeqUpdateMove(fromIncluded : Int, toIncluded : Int, after : Int, flip : Boolean, prev : SeqUpdate) =>
         searchZoneToCompute(prev) match{
