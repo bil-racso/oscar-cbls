@@ -17,13 +17,15 @@ package oscar.cbls.visual.MatrixMap
   * ****************************************************************************
   */
 
+import java.awt.event.{MouseEvent, MouseListener}
 import java.awt.geom.Ellipse2D
-import java.awt.{BasicStroke, Color, Graphics2D, Rectangle, RenderingHints}
+import java.awt.{BasicStroke, Color, Graphics2D, Point, Rectangle, RenderingHints}
 import java.awt.geom.Line2D.Double
 
 import org.jxmapviewer.{JXMapKit, JXMapViewer}
 import org.jxmapviewer.painter.Painter
 import org.jxmapviewer.viewer.GeoPosition
+import oscar.cbls.routing.seq.model.{PDP, VRP}
 import oscar.examples.cbls.routing.visual.ColorGenerator
 import oscar.visual.VisualDrawing
 import oscar.visual.shapes.{VisualArrow, VisualCircle, VisualShape}
@@ -36,59 +38,81 @@ import scala.collection.mutable.ListBuffer
 
 trait RoutingMap{
 
-  var pointsList:scala.List[(Int, Int)] = Nil
-  var colorValues:Array[Color] = null
-  var v = 0
+  var pointsList:scala.List[(Int, Int)] = List.empty
+  var colorValues:Array[Color] = Array.empty
+  var vrp:VRP = _
+  var pdp:PDP = _
   var mapSize = 10000
+  var routesToDraw:Array[List[Int]] = Array.empty
 
   def drawPoints()
 
-  def drawRoutes(routes:Array[List[Int]], vehicles:Array[Boolean] = Array.empty)
+  def drawRoutes()
 
   def setColorValues(colorValues:Array[Color]): Unit ={
     if(colorValues == null){
-      this.colorValues = ColorGenerator.generateRandomColors(v)
+      this.colorValues = ColorGenerator.generateRandomColors(vrp.v)
     }else{
       this.colorValues = colorValues
     }
   }
 
-  def setPointsList(pointsList:scala.List[(scala.Double,scala.Double)],V:Int)
+  def setPointsList(pointsList:scala.List[(scala.Double,scala.Double)])
 
   def setMapSize(mapSize:Int)
+
+  protected  def setPointsInformation()
+
+  def setRouteToDisplay(rtd:Array[List[Int]]): Unit ={
+    routesToDraw = rtd
+    drawRoutes()
+  }
+
+  def setVRP(vrp:VRP): Unit ={
+    this.vrp = vrp
+  }
+
+  def setPDP(pdp:PDP): Unit ={
+    this.pdp = pdp
+    this.vrp = pdp
+    setPointsInformation()
+  }
 }
 
 class BasicRoutingMap extends VisualDrawing(false,false) with RoutingMap{
+
+  val points:Array[VisualCircle] = new Array[VisualCircle](vrp.n)
 
   override def addShape(shape: VisualShape, repaintAfter: Boolean = true): Unit ={
     super.addShape(shape,false)
   }
 
   def drawPoints() ={
-    var currentV = v
+    var index = 0
     for(p <- pointsList){
-      if(currentV > 0){
+      if(index > vrp.v){
         val tempPoint = new VisualCircle(this,p._1.toInt,p._2.toInt,5)
         tempPoint.innerCol_$eq(colorValues(pointsList.indexOf(p)))
+        points(index) = tempPoint
       }
       else{
         val tempPoint = new VisualCircle(this,p._1.toInt,p._2.toInt,3)
         tempPoint.innerCol_$eq(Color.black)
+        points(index) = tempPoint
       }
-      currentV -= 1
+      index += 1
     }
   }
 
-  def drawRoutes(routes:Array[List[Int]], vehicles:Array[Boolean] = Array.empty): Unit ={
+  def drawRoutes(): Unit ={
     clear()
     drawPoints()
 
     var previousPoint = -1
     var color:Color = null
-    val routesToDisplay = if(vehicles.isEmpty)Array.tabulate(routes.length)(v => true) else vehicles
-    for(r <- routesToDisplay.indices if routesToDisplay(r)) {
+    for(r <- routesToDraw.indices) {
       color = colorValues(r)
-      for (p <- routes(r)) {
+      for (p <- routesToDraw(r)) {
         if(previousPoint >= 0){
           val tempRoute = new VisualArrow(this, new Double(pointsList(previousPoint)._1, pointsList(previousPoint)._2, pointsList(p)._1, pointsList(p)._2), 4)
           tempRoute.outerCol_$eq(color)
@@ -107,8 +131,7 @@ class BasicRoutingMap extends VisualDrawing(false,false) with RoutingMap{
     super.clear()
   }
 
-  override def setPointsList(pointsList: List[(scala.Double, scala.Double)], v: Int): Unit = {
-    this.v = v
+  override def setPointsList(pointsList: List[(scala.Double, scala.Double)]): Unit = {
     val tempList:ListBuffer[(Int,Int)] = new ListBuffer[(Int,Int)]
     for(p <- pointsList){
       val tempP = (p._1.toInt*getHeight/mapSize, p._2.toInt*getHeight/mapSize)
@@ -120,6 +143,21 @@ class BasicRoutingMap extends VisualDrawing(false,false) with RoutingMap{
   override def setMapSize(mapSize: Int): Unit = {
     this.mapSize = mapSize
   }
+
+  override def setPointsInformation(): Unit ={
+    require(pdp != null, "In order to use the RouteToDisplay trait you must specify a VRP object.")
+
+    for(p <- points.indices){
+      points(p).toolTip_=(getPointInformation(p))
+    }
+
+    def getPointInformation(p:Int): String ={
+      "Some informations about the point : " + p + "\n" +
+        "Arrival time : " + pdp.arrivalTime(p).value + "\n" +
+        "Leave time : " + pdp.leaveTime(p).value + "\n" +
+        "Passengers on board : " + pdp.arrivalLoadValue(p).value
+    }
+  }
 }
 
 
@@ -129,7 +167,6 @@ class GeoRoutingMap extends JXMapKit with RoutingMap {
   setZoomSliderVisible(false)
   setMiniMapVisible(false)
   setZoom(7)
-  var routes:Array[List[Int]] = Array.empty
   var zoomChanged = false
   var geoCoords:List[(scala.Double,scala.Double)] = List.empty
 
@@ -158,8 +195,7 @@ class GeoRoutingMap extends JXMapKit with RoutingMap {
     getMainMap.setOverlayPainter(painter)
   }
 
-  override def drawRoutes(routes: Array[List[Int]], vehicles:Array[Boolean] = Array.empty): Unit = {
-    this.routes = routes
+  override def drawRoutes(): Unit = {
     val painter = new Painter[JXMapViewer]{
       override def paint(g: Graphics2D, t: JXMapViewer, i: Int, i1: Int): Unit = {
         val rect:Rectangle = getMainMap.getViewportBounds
@@ -202,9 +238,8 @@ class GeoRoutingMap extends JXMapKit with RoutingMap {
           g.draw(new Ellipse2D.Double(p._1, p._2, 2, 2))
 
         var from = 0
-        val routesToDisplay = if(vehicles.isEmpty)Array.tabulate(routes.length)(v => true) else vehicles
-        for(vehicle <- routesToDisplay.indices if routesToDisplay(vehicle)) {
-          val route = routes(vehicle)
+        for(vehicle <- routesToDraw.indices) {
+          val route = routesToDraw(vehicle)
           if (route.length > 1) {
             g.setColor(colorValues(vehicle))
             for (node <- route) {
@@ -221,8 +256,7 @@ class GeoRoutingMap extends JXMapKit with RoutingMap {
     getMainMap.setOverlayPainter(painter)
   }
 
-  override def setPointsList(pointsList: List[(scala.Double, scala.Double)], v: Int): Unit = {
-    this.v = v
+  override def setPointsList(pointsList: List[(scala.Double, scala.Double)]): Unit = {
     val rect:Rectangle = getMainMap.getViewportBounds
     geoCoords = pointsList
     val tempList:ListBuffer[(Int,Int)] = new ListBuffer[(Int,Int)]
@@ -244,5 +278,34 @@ class GeoRoutingMap extends JXMapKit with RoutingMap {
   override def setZoom(zoom: Int): Unit = {
     zoomChanged = true
     super.setZoom(zoom)
+  }
+
+  override def setPointsInformation(): Unit ={
+    require(pdp != null, "In order to use the GeoPickupAndDeliveryPoints trait you must specify a PDP object.")
+
+    getMainMap.addMouseListener(new MouseListener {
+      override def mouseExited(e: MouseEvent): Unit = {}
+
+      override def mouseClicked(e: MouseEvent): Unit = {
+        val rect = getMainMap.getViewportBounds
+        for(i <- pointsList.indices){
+          val point = new Point(pointsList(i)._1.toInt - rect.x, pointsList(i)._2.toInt - rect.y)
+          if(point.distance(e.getPoint) < 10) {
+            println("Some informations about the point : " + i)
+            println("Arrival time : " + pdp.arrivalTime(i).value)
+            println("Leave time : " + pdp.leaveTime(i).value)
+            println("Passengers on board : " + pdp.arrivalLoadValue(i).value)
+            println()
+          }
+        }
+        println()
+      }
+
+      override def mouseEntered(e: MouseEvent): Unit = {}
+
+      override def mousePressed(e: MouseEvent): Unit = {}
+
+      override def mouseReleased(e: MouseEvent): Unit = {}
+    })
   }
 }
