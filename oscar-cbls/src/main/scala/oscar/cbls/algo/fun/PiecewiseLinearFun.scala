@@ -16,7 +16,7 @@ package oscar.cbls.algo.fun
  * ****************************************************************************
  */
 
-import oscar.cbls.algo.rb.{RedBlackTreeMap, RBTMPosition}
+import oscar.cbls.algo.rb.{RedBlackTreeMap, RedBlackTreeMapExplorer}
 
 import scala.language.implicitConversions
 
@@ -73,7 +73,7 @@ class PiecewiseLinearFun(private[fun] val transformation: RedBlackTreeMap[Pivot]
 
   def firstPivot:Option[(Int,Pivot)] = transformation.smallestBiggerOrEqual(Int.MinValue)
 
-  def positionOfValue(value:Int):Option[RBTMPosition[(Pivot)]] = transformation.positionOf(value)
+  def positionOfValue(value:Int):Option[RedBlackTreeMapExplorer[(Pivot)]] = transformation.positionOf(value)
 
   def isIdentity = transformation.isEmpty
 
@@ -145,7 +145,7 @@ class PiecewiseLinearFun(private[fun] val transformation: RedBlackTreeMap[Pivot]
           val (nextCurrentIncludedFrom, nextPivotPosition) = if (isAdditionaFNegativeSlope) {
             (toIncluded+1, None)
           } else {
-            val nextPivotPosition:Option[RBTMPosition[Pivot]] = transformation.smallestPosition
+            val nextPivotPosition:Option[RedBlackTreeMapExplorer[Pivot]] = transformation.smallestPosition
             (nextPivotPosition match{case None => toIncluded+1 case Some(position) => additionalFAppliedBefore.unApply(position.value.fromValue)},
               nextPivotPosition)
           }
@@ -220,14 +220,14 @@ class PiecewiseLinearFun(private[fun] val transformation: RedBlackTreeMap[Pivot]
     null
   }
 
-  def pivotWithPositionApplyingTo(value:Int):Option[RBTMPosition[Pivot]] = {
+  def pivotWithPositionApplyingTo(value:Int):Option[RedBlackTreeMapExplorer[Pivot]] = {
     transformation.biggestLowerOrEqual(value) match{
       case None => None
       case Some((fromValueOfPivot,_)) => transformation.positionOf(fromValueOfPivot)
     }
   }
 
-  def pivotWithPositionAfter(value:Int):Option[RBTMPosition[Pivot]] = {
+  def pivotWithPositionAfter(value:Int):Option[RedBlackTreeMapExplorer[Pivot]] = {
     transformation.smallestBiggerOrEqual(value) match{
       case None => None
       case Some((fromValueOfPivot,_)) => transformation.positionOf(fromValueOfPivot)
@@ -248,14 +248,14 @@ class PiecewiseLinearFun(private[fun] val transformation: RedBlackTreeMap[Pivot]
     }
   }
 
-  def firstPivotAndPosition:Option[RBTMPosition[Pivot]] = {
+  def firstPivotAndPosition:Option[RedBlackTreeMapExplorer[Pivot]] = {
     transformation.smallest match{
       case None => None
       case Some((fromValueOfPivot,_)) => transformation.positionOf(fromValueOfPivot)
     }
   }
 
-  def lastPivotAndPosition:Option[RBTMPosition[Pivot]] = {
+  def lastPivotAndPosition:Option[RedBlackTreeMapExplorer[Pivot]] = {
     transformation.biggest match{
       case None => None
       case Some((fromValueOfPivot,_)) => transformation.positionOf(fromValueOfPivot)

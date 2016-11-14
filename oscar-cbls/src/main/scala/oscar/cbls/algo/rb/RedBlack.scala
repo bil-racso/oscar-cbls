@@ -80,9 +80,9 @@ trait RedBlackTreeMap[@specialized(Int) V]{
 
   def biggest:Option[(Int,V)]
 
-  def biggestPosition:Option[RBTMPosition[V]]
+  def biggestPosition:Option[RedBlackTreeMapExplorer[V]]
 
-  def smallestPosition:Option[RBTMPosition[V]]
+  def smallestPosition:Option[RedBlackTreeMapExplorer[V]]
 
   protected[rb] def getSmallestBiggerAcc(k:Int, bestSoFar:(Int,V)):Option[(Int,V)]
 
@@ -103,8 +103,8 @@ trait RedBlackTreeMap[@specialized(Int) V]{
   def keys:List[Int]
   protected [rb] def keysAcc(keysAfter:List[Int]):List[Int]
 
-  def positionOf(k: Int):Option[RBTMPosition[V]]
-  protected[rb] def positionOfAcc(k:Int,positionAcc:QList[(T[V],Boolean)]):Option[RBTMPosition[V]]
+  def positionOf(k: Int):Option[RedBlackTreeMapExplorer[V]]
+  protected[rb] def positionOfAcc(k:Int,positionAcc:QList[(T[V],Boolean)]):Option[RedBlackTreeMapExplorer[V]]
 }
 
 // A leaf node.
@@ -141,7 +141,7 @@ case class L[@specialized(Int) V]() extends RedBlackTreeMap[V]  {
   protected [rb] def contentAcc(valuesAfter:List[(Int,V)]):List[(Int,V)] = valuesAfter
   protected [rb] def keysAcc(keysAfter:List[Int]):List[Int] = keysAfter
 
-  protected[rb] override def positionOfAcc(k : Int, positionAcc : QList[(T[V],Boolean)]) : Option[RBTMPosition[V]] = None
+  protected[rb] override def positionOfAcc(k : Int, positionAcc : QList[(T[V],Boolean)]) : Option[RedBlackTreeMapExplorer[V]] = None
 
 
   //duplicates
@@ -151,7 +151,7 @@ case class L[@specialized(Int) V]() extends RedBlackTreeMap[V]  {
 
   override def keys : List[Int] = List.empty
 
-  override def positionOf(k: Int):Option[RBTMPosition[V]] = None
+  override def positionOf(k: Int):Option[RedBlackTreeMapExplorer[V]] = None
 
   // insert: Insert a value at a key.
   override def insert (k : Int, v : V) =  T(B, L(), k , Some(v), L())
@@ -163,9 +163,9 @@ case class L[@specialized(Int) V]() extends RedBlackTreeMap[V]  {
 
   override def biggest:Option[(Int,V)] = None
 
-  override def biggestPosition:Option[RBTMPosition[V]] = None
+  override def biggestPosition:Option[RedBlackTreeMapExplorer[V]] = None
 
-  override def smallestPosition:Option[RBTMPosition[V]] = None
+  override def smallestPosition:Option[RedBlackTreeMapExplorer[V]] = None
 }
 
 // A tree node.
@@ -243,10 +243,10 @@ case class T[@specialized(Int) V](c : Boolean, l : RedBlackTreeMap[V], k : Int, 
 
   protected [rb] def keysAcc(keysAfter:List[Int]):List[Int] = l.keysAcc(k :: r.keysAcc(keysAfter))
 
-  protected[rb] override def positionOfAcc(k : Int, positionAcc : QList[(T[V],Boolean)]) : Option[RBTMPosition[V]] = {
+  protected[rb] override def positionOfAcc(k : Int, positionAcc : QList[(T[V],Boolean)]) : Option[RedBlackTreeMapExplorer[V]] = {
     if (k < this.k) l.positionOfAcc(k, QList((this,false),positionAcc))
     else if (k > this.k) r.positionOfAcc(k, QList((this,true),positionAcc))
-    else Some(new RBTMPosition[V](QList((this,true),positionAcc)))
+    else Some(new RedBlackTreeMapExplorer[V](QList((this,true),positionAcc)))
   }
 
   def hasLeft:Boolean = l.isInstanceOf[T[V]]
@@ -259,7 +259,7 @@ case class T[@specialized(Int) V](c : Boolean, l : RedBlackTreeMap[V], k : Int, 
 
   override def keys : List[Int] = keysAcc(List.empty)
 
-  override def positionOf(k: Int):Option[RBTMPosition[V]] = positionOfAcc(k:Int,null)
+  override def positionOf(k: Int):Option[RedBlackTreeMapExplorer[V]] = positionOfAcc(k:Int,null)
 
   // insert: Insert a value at a key.
   override def insert (k : Int, v : V) = blacken(modWith(k, (_,_) => Some(v)))
@@ -271,14 +271,14 @@ case class T[@specialized(Int) V](c : Boolean, l : RedBlackTreeMap[V], k : Int, 
 
   override def biggest:Option[(Int,V)] = biggestLowerOrEqual(Int.MaxValue)
 
-  override def biggestPosition:Option[RBTMPosition[V]] = {
+  override def biggestPosition:Option[RedBlackTreeMapExplorer[V]] = {
     biggestLowerOrEqual(Int.MaxValue) match{
       case Some((k,_)) => positionOf(k)
       case None => None
     }
   }
 
-  override def smallestPosition:Option[RBTMPosition[V]] = {
+  override def smallestPosition:Option[RedBlackTreeMapExplorer[V]] = {
     smallestBiggerOrEqual(Int.MinValue) match{
       case Some((k,_)) => positionOf(k)
       case None => None
@@ -356,13 +356,13 @@ object RedBlackTreeMap {
 }
 
 //le booléen: true le noeud a déjà été montré (dans un parcour gauche à droite)
-class RBTMPosition[@specialized(Int) V](position:QList[(T[V],Boolean)]){
+class RedBlackTreeMapExplorer[@specialized(Int) V](position:QList[(T[V],Boolean)]){
   def key:Int = position.head._1.k
   def value:V = position.head._1.v.head
 
   override def toString : String = "RBPosition(key:" + key + " value:" + value + " stack:" + position.toList + ")"
 
-  def next:Option[RBTMPosition[V]] = {
+  def next:Option[RedBlackTreeMapExplorer[V]] = {
 
     def unstack1(position:QList[(T[V],Boolean)]):QList[(T[V],Boolean)] = {
       if (position == null) return null
@@ -390,10 +390,10 @@ class RBTMPosition[@specialized(Int) V](position:QList[(T[V],Boolean)]){
     }
 
     if(newStack == null) None
-    else Some(new RBTMPosition[V](newStack))
+    else Some(new RedBlackTreeMapExplorer[V](newStack))
   }
 
-  def prev:Option[RBTMPosition[V]] = {
+  def prev:Option[RedBlackTreeMapExplorer[V]] = {
     def unstack1(position:QList[(T[V],Boolean)]):QList[(T[V],Boolean)] = {
       if (position == null) return null
       val head = position.head
@@ -421,8 +421,8 @@ class RBTMPosition[@specialized(Int) V](position:QList[(T[V],Boolean)]){
 
     if(newStack == null) None
     else {
-      assert(new RBTMPosition[V](newStack).next.head.key == this.key, "prev.next.key != this.key; this:" + this + " prev:" + new RBTMPosition[V](newStack))
-      Some(new RBTMPosition[V](newStack))
+      assert(new RedBlackTreeMapExplorer[V](newStack).next.head.key == this.key, "prev.next.key != this.key; this:" + this + " prev:" + new RedBlackTreeMapExplorer[V](newStack))
+      Some(new RedBlackTreeMapExplorer[V](newStack))
     }
   }
 }

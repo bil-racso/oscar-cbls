@@ -219,13 +219,13 @@ abstract class Neighborhood(name:String = null) {
 
               prevObj = m.objAfter
 
+              val smallPaddingLength = 20
+
               val secondPrefix = (if (m.objAfter < bestObj) {
                 bestObj = m.objAfter
                 " # "
               } else if (m.objAfter == bestObj) " ° "
-              else "   ") + m.objAfter
-
-              val smallPaddingLength = 20
+              else "   ") + padToLength(m.objAfter.toString,smallPaddingLength)
               println(firstPrefix + secondPrefix + moveSynthesis.toList.map({case ((name,n)) => padToLength(trimToLength(name, smallPaddingLength-4)+ ":"+n, smallPaddingLength)}).mkString(" "))
 
               moveSynthesis = SortedMap.empty[String,Int]
