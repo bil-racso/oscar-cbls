@@ -74,7 +74,7 @@ class PiecewiseLinearBijectionIncremental(val forward:PiecewiseLinearFun, val ba
         val endOfIntervalIncluded = explorerInForwardFunction.next match{
           case None => endPositionIncluded
           case Some(nextExplorerOfPivot) =>
-            if(nextExplorerOfPivot.key <= endPositionIncluded) nextExplorerOfPivot.key
+            if(nextExplorerOfPivot.key <= endPositionIncluded) nextExplorerOfPivot.key-1
             else endPositionIncluded
         }
         val newF = fun.invert
@@ -107,7 +107,7 @@ class PiecewiseLinearBijectionIncremental(val forward:PiecewiseLinearFun, val ba
   def updateBefore(updates:(Int,Int,LinearTransform)*):PiecewiseLinearBijectionIncremental ={
 
     val updatedForward = forward.updateForCompositionBefore(updates:_*)
-    val maintainReverseIncrementally = true //(numberOfSegmentsInIntervals(updates)*10<forward.nbPivot)
+    val maintainReverseIncrementally = false //(forward.nbPivot > 100) //(numberOfSegmentsInIntervals(updates)*20<forward.nbPivot)
 
     if(maintainReverseIncrementally){
       val startEnd:List[(Int,Int)] = updates.toList.map(update => (update._1,update._2))
@@ -117,7 +117,8 @@ class PiecewiseLinearBijectionIncremental(val forward:PiecewiseLinearFun, val ba
         .foldLeft(backward)({
           case (backward,(startZoneToUpdate,endZoneToUpdate)) =>
             updateReverseOnZone(backward,startZoneToUpdate,endZoneToUpdate,updatedForward)})
-      require(updatedBackward equals PiecewiseLinearFun.createFromPivots(PiecewiseLinearBijectionIncremental.computeInvertedPivots(null, updatedForward.pivots, null)),"error in incremental backward update: got:\n " + updatedBackward + "\n should be:\n" + PiecewiseLinearFun.createFromPivots(PiecewiseLinearBijectionIncremental.computeInvertedPivots(null, updatedForward.pivots, null)))
+
+//      require(updatedBackward equals PiecewiseLinearFun.createFromPivots(PiecewiseLinearBijectionIncremental.computeInvertedPivots(null, updatedForward.pivots, null)),"error in incremental backward update: got:\n " + updatedBackward + "\n should be:\n" + PiecewiseLinearFun.createFromPivots(PiecewiseLinearBijectionIncremental.computeInvertedPivots(null, updatedForward.pivots, null)) + "\nupdates:\n" + updates.mkString("\n"))
       new PiecewiseLinearBijectionIncremental(updatedForward,updatedBackward)
     }else{
       new PiecewiseLinearBijectionIncremental(updatedForward)
