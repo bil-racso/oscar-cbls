@@ -107,7 +107,6 @@ class TSPRoutePointsS(n:Int,v:Int,maxPivotPerValuePercent:Int) extends StopWatch
 
   search.verbose = 0
   //search.verboseWithExtraInfo(1, ()=> "" + myVRP)
-  search.paddingLength = 100
 
   search.doAllMoves(obj=myVRP.obj)
 

@@ -28,7 +28,7 @@ import oscar.cbls.invariants.core.computation.IntValue
 import oscar.cbls.search.StopWatch
 import oscar.cbls.visual.FunctionGraphic.{ObjFunctionGraphicContainer, Zoom}
 import oscar.examples.cbls.routing.visual.ColorGenerator
-import oscar.cbls.visual.MatrixMap.RoutingMatrixVisual
+import oscar.cbls.visual.MatrixMap.RoutingMatrixContainer
 
 import scala.swing.{Dimension, Insets}
 
@@ -44,7 +44,7 @@ object DemoRoutingView extends StopWatch{
   var pointsList:scala.List[(Int, Int)] = Nil
   var colorValues:Array[Color] = null
 
-  val routingMap = new RoutingMatrixVisual(pickupAndDeliveryPoints = true)
+  val routingMap = new RoutingMatrixContainer(myVRP = controller.myVRP,pickupAndDeliveryPoints = true)
   //new Thread(routingMap,"RoutingMap Thread").start()
 
   val objGraph = new ObjFunctionGraphicContainer(dimension = new Dimension(f.getWidth-routingMap.getWidth,360)) with Zoom
@@ -211,7 +211,7 @@ object DemoRoutingView extends StopWatch{
   def initiateMap(mapSize:Int,points:scala.List[(Double,Double)]): Unit ={
     routingMap.setColorValues(colorValues)
     routingMap.setMapSize(mapSize)
-    routingMap.setPointsList(points,warehouseNumber)
+    routingMap.setPointsList(points)
     routingMap.drawPoints()
     f.validate()
   }

@@ -4,15 +4,16 @@ import oscar.cbls.algo.search.KSmallest
 import oscar.cbls.constraints.core.ConstraintSystem
 import oscar.cbls.constraints.lib.basic.{EQ, GE, LE}
 import oscar.cbls.invariants.core.computation._
-import oscar.cbls.invariants.lib.logic.{IntITE, IntInt2Int}
+import oscar.cbls.invariants.lib.logic.{Cluster, DenseCluster, IntITE, IntInt2Int}
 import oscar.cbls.invariants.lib.minmax.Max2
+import oscar.cbls.invariants.lib.numeric.Div
 import oscar.cbls.invariants.lib.routing.{RouteSuccessorAndPredecessors, VehicleOfNodes}
 import oscar.cbls.invariants.lib.seq.Precedence
 import oscar.cbls.modeling.Algebra._
 import oscar.cbls.objective.IntVarObjective
 
 import scala.collection.immutable.List
-import scala.collection.mutable.ArrayBuffer
+import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 import scala.math._
 
 /**
@@ -108,12 +109,17 @@ class PDP(override val n:Int, override val v:Int, override val m:Store, maxPivot
     pickupDeliveryNodes(p)._2
   }
 
+  def getRelatedNode(node:Int): Int ={
+    require(node >= v, "You must specify a node, not a vehicle")
+    pickupDeliveryNodes(node)._2
+  }
+
   /**
-    * @param n the index of a node
+    * @param index the index of a node
     * @return the load value of the node
     */
-  def deltaAtNode(n:Int): Int ={
-    pickupDeliveryNodes(n)._1
+  def loadValueAtNode(index:Int): Int ={
+    pickupDeliveryNodes(index)._1
   }
 
   def getPickups: Iterable[Int] = pickupNodes
@@ -123,10 +129,6 @@ class PDP(override val n:Int, override val v:Int, override val m:Store, maxPivot
   def getRoutedPickups: Iterable[Int] = pickupNodes.filter(isRouted(_))
 
   def getRoutedDeliverys: Iterable[Int] = deliveryNodes.filter(isRouted(_))
-
-  def getRoutedPickupsPredecessors: Iterable[Int] = getRoutedPickups.map(prev(_).value)
-
-  def getRoutedDeliverysPredecessors: Iterable[Int] = getRoutedDeliverys.map(prev(_).value)
 
   def getUnroutedPickups: Iterable[Int] = pickupNodes.filter(!isRouted(_))
 
@@ -139,12 +141,10 @@ class PDP(override val n:Int, override val v:Int, override val m:Store, maxPivot
 
   def getNodesAfterRelatedPickup()(node: Int): Iterable[Int] = {
     assert(isDelivery(node), "The referenced node must be a delivery one !")
-    getNodesAfterPosition()(getRelatedPickup(node))
+    getNodesAfterNode()(getRelatedPickup(node))
   }
 
   /**
-    * Still Usefull ???
-    *
     * This method search all the complete segments contained in a specified route.
     * A segment is considered as complete when you can move it to another place
     * without breaking the precedence constraint.
@@ -201,11 +201,11 @@ class PDP(override val n:Int, override val v:Int, override val m:Store, maxPivot
       val currentSegment = segmentsArray(i)._2
       completeSegments = (currentSegment.head, currentSegment.last) :: completeSegments
       var j = i-1
-      var currentPreds = prev(route(i)).value
+      var currentPreds = route(i-1)
       while(j != -1){
         if(segmentsArray(j) != null && currentPreds == segmentsArray(j)._2.last){
           completeSegments = (segmentsArray(j)._2.head, currentSegment.last) :: completeSegments
-          currentPreds = prev(route(j)).value
+          currentPreds = route(j-1)
         }
         j -= 1
       }
@@ -253,7 +253,7 @@ class PDP(override val n:Int, override val v:Int, override val m:Store, maxPivot
         if(i == n || i < v)
           defaultArrivalLoadValue
         else
-          arrivalLoadValue(i) + deltaAtNode(i)
+          arrivalLoadValue(i) + loadValueAtNode(i)
     }
     for(i <- 0 until n){
       arrivalLoadValue(i) <== leaveLoadValue.element(prev(i))
@@ -290,6 +290,10 @@ class PDP(override val n:Int, override val v:Int, override val m:Store, maxPivot
 
   var timeWindows: Array[(Int,Int,Int,Int)] = Array.empty
 
+  var arrivalTimeCluster: DenseCluster[IntValue] = _
+
+  var waitingDuration: Array[IntValue] = Array.empty
+
   def initiateTimeWindowInvariants(): Unit ={
     defaultArrivalTime = new CBLSIntConst(0)
 
@@ -311,9 +315,11 @@ class PDP(override val n:Int, override val v:Int, override val m:Store, maxPivot
     for (i <- 0 until n) {
       arrivalTime(i) <== arrivalTimeToNext.element(prev(i))
     }
+
+    arrivalTimeCluster = Cluster.MakeDenseAssumingMinMax(leaveTime.map(x => Div(x,900)),0,192)
   }
 
-  def addTimeWidowStringInfo() {
+  def addTimeWindowStringInfo() {
     addToStringInfo(() => "arrivalTime:      " + arrivalTime.toList.mkString(","))
     addToStringInfo(() => "leaveTime:        " + leaveTime.toList.mkString(","))
     addToStringInfo(() => "travelOutDuration:" + travelOutDuration.toList.mkString(","))
@@ -333,11 +339,11 @@ class PDP(override val n:Int, override val v:Int, override val m:Store, maxPivot
 
   def setNodeDuration(node: Int, duration: IntValue) {
     assert(node >= v)
-    leaveTime(node) <== arrivalTime(node) + duration
+    leaveTime(node) <== (arrivalTime(node) + duration)
   }
 
   def setNodeDuration(node: Int, durationWithoutWait: IntValue, startWindow: Int) {
-    leaveTime(node) <== Max2(arrivalTime(node), startWindow) + durationWithoutWait
+    leaveTime(node) <== (Max2(arrivalTime(node), startWindow) + durationWithoutWait)
   }
 
   def setNodeDuration(node: Int, durationWithoutWait: IntValue, startWindow: Int, maxWaiting: Int) {
@@ -359,65 +365,85 @@ class PDP(override val n:Int, override val v:Int, override val m:Store, maxPivot
     * This method initialize the differents variable used to represent time windows
     * @param timeWindows contains an array of the time to attribute.
     *                    Each value of this array represents these values :
-    *                    - The time after which we may arrive to this point
-    *                    - The time before which we must have reach and performed the task of this point
-    *                    - The execution's duration of the task related to this point
-    *                    - The max waiting time of this point
-    *                    If you don't want to use one of them simply set the corresponding value to -1
+    *                    - The time after which we may arrive to this point (Default value = -1)
+    *                    - The time before which we must have reach and performed the task of this point (Default value = Int.MaxValue)
+    *                    - The execution's duration of the task related to this point (Default value = 0)
+    *                    - The max waiting time of this point (Default value = 0)
     */
   def setTimeWindows(timeWindows : Array[(Int,Int,Int,Int)]): Unit ={
     initiateTimeWindowInvariants()
-    addTimeWidowStringInfo()
-    val tWS:ArrayBuffer[(Int,Int,Int,Int)] = new ArrayBuffer[(Int,Int,Int,Int)]
+    addTimeWindowStringInfo()
+    val tWS:Array[(Int,Int,Int,Int)] = new Array[(Int,Int,Int,Int)](n)
 
     for(k <- 0 until v)
-      tWS.append((-1,-1,-1,-1))
+      tWS(k) = (-1,Int.MaxValue,0,0)
 
-    for(i <- timeWindows.indices) {
-      if (timeWindows(i)._1 >= 0) {
-        if (timeWindows(i)._4 >= 0)
-          setNodeDuration(i + v, math.max(0, timeWindows(i)._3), timeWindows(i)._1, timeWindows(i)._4)
-        else
-          setNodeDuration(i + v, math.max(0, timeWindows(i)._3), timeWindows(i)._1)
-      }else
-         setNodeDuration(i + v, math.max(0, timeWindows(i)._3))
-      if (timeWindows(i)._2 >= 0)
+    for(i <- timeWindows.indices){
+      (timeWindows(i)._1, timeWindows(i)._4) match {
+        case (-1,0) => setNodeDuration(i + v, timeWindows(i)._3)
+        case (_,0) => setNodeDuration(i + v, timeWindows(i)._3, timeWindows(i)._1)
+        case (_,_) => setNodeDuration(i + v, timeWindows(i)._3, timeWindows(i)._1, timeWindows(i)._4)
+      }
+      if(timeWindows(i)._2 < Int.MaxValue)
         setEndWindow(i + v, timeWindows(i)._2)
-      tWS.append(timeWindows(i))
+      tWS(i+v) = timeWindows(i)
     }
-    this.timeWindows = tWS.toArray
+    this.timeWindows = tWS
+
+
+    waitingDuration = Array.tabulate(n){
+      (i:Int) =>
+        if(i >= v)
+          Max2(leaveTime(i) - timeWindows(i-v)._3 - arrivalTime(i), CBLSIntConst(0))
+        else
+          new CBLSIntConst(0)
+    }
   }
 
-  def setMaxTravelDistancePDConstraint(){
+  def setUniqueMaxTravelDistance(value:Double, multiple:Boolean = false){
     for(p <- getPickups) {
       val d = getRelatedDelivery(p)
-      slowConstraints.post(LE(arrivalTime(d) - leaveTime(p), 2*travelDurationMatrix.getTravelDuration(p, leaveTime(p).value, d)))
+
+      //TODO: on ne peu pas appeler leaveTime(p).value; c'est hors du moteur d'optim.
+      //à prioris, on cherche plutôt la durée du trajet à l'heure de pick-up demandée
+      if(multiple)
+        slowConstraints.post(LE(arrivalTime(d) - leaveTime(p), (value*travelDurationMatrix.getTravelDuration(p, 0, d)).toInt))
+      else
+        slowConstraints.post(LE(arrivalTime(d) - leaveTime(p), (value+travelDurationMatrix.getTravelDuration(p, 0, d)).toInt))
+    }
+  }
+  
+  def setMultipleMaxTravelDistance(values:Array[Double], multiple:Boolean = false): Unit ={
+    require(values.length == (n-v)/2, "The size of values must be equals to the number of couple pickup/delivery")
+    for(i <- values.indices){
+      val p = pickupNodes(i)
+      val d = getRelatedDelivery(p)
+      if(multiple)
+        slowConstraints.post(LE(arrivalTime(d) - leaveTime(p), (values(i)*travelDurationMatrix.getTravelDuration(p, leaveTime(p).value, d)).toInt))
+      else
+        slowConstraints.post(LE(arrivalTime(d) - leaveTime(p), (values(i)+travelDurationMatrix.getTravelDuration(p, leaveTime(p).value, d)).toInt))
     }
   }
 
   /**
-    * This method compute the closest neighbor of a node base on time window and TimeMatrice.
+    * This method compute the closest neighbor of a node base on arrivalTime.
     *
     */
   def computeClosestNeighborInTime(filter : ((Int,Int) => Boolean) = (_,_) => true): Array[Iterable[Int]] ={
-    def arrayOfAllNodes = Array.tabulate(n)(node => node)
-    Array.tabulate(n)(node =>{
-      KSmallest.lazySort(arrayOfAllNodes,
-        neighbor => {
-          if(!filter(node,neighbor))
-            Int.MaxValue
-          else if((leaveTime(neighbor).value + travelDurationMatrix.getTravelDuration(neighbor, 0, node)) > (if(timeWindows(node)._2<0)Int.MaxValue else timeWindows(node)._2))
-            Int.MaxValue
-          else {
+    Array.tabulate(n)(node => {
+      val nodeCluster = arrivalTimeCluster.values(node).value
+      val res:ListBuffer[Int] = new ListBuffer[Int]()
+      for(i <- 0 to Math.min(arrivalTimeCluster.clusters.length, nodeCluster))
+        for(neighbor <- arrivalTimeCluster.clusters(i).value.toList if isRouted(neighbor) && filter(n,neighbor))
+          if(leaveTime(neighbor).value+travelDurationMatrix.getTravelDuration(neighbor, 0, node) < timeWindows(node)._2) {
+            val nextOfNeighbor = next(neighbor).value
             val neighborToNode = max(leaveTime(neighbor).value + travelDurationMatrix.getTravelDuration(neighbor, 0, node), timeWindows(node)._1)
-            val neighborToNodeToNext = neighborToNode + timeWindows(node)._3 + travelDurationMatrix.getTravelDuration(node, 0, next(neighbor).value)
-            if(neighborToNodeToNext > (if(timeWindows(next(neighbor).value)._2<0)Int.MaxValue else timeWindows(next(neighbor).value)._2))
-              Int.MaxValue
-            else
-              neighborToNodeToNext - leaveTime(neighbor).value
+            val neighborToNodeToNext = neighborToNode + timeWindows(node)._3 + travelDurationMatrix.getTravelDuration(node, 0, nextOfNeighbor)
+            if(neighborToNodeToNext < timeWindows(nextOfNeighbor)._2)
+              res.append(neighbor)
           }
-        }
-      )}
-    )
+      res.reverse.toList
+    })
   }
+
 }

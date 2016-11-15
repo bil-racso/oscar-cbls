@@ -28,9 +28,3 @@ abstract class VRPSMove(override val objAfter: Int,
 
   override def touchedVariables: List[Variable] = List(vrp.routes)
 }
-
-abstract class EasyRoutingSNeighborhood extends EasyNeighborhood{
-
-  def evalObjAndRollBack
-
-}
