@@ -32,6 +32,16 @@ object PiecewiseLinearFun{
     }
     new PiecewiseLinearFun(acc)
   }
+
+  def areEqual(a:PiecewiseLinearFun,b:PiecewiseLinearFun):Boolean = {
+    if(a.nbPivot != b.nbPivot) return false
+    val zippedSegments = a.zip(b)
+    for((pivotA,pivotB) <- zippedSegments){
+      if (pivotA.fromValue != pivotB.fromValue) return false
+      if(! (pivotA.f equals pivotB.f)) return false
+    }
+    return true
+  }
 }
 
 class CachedPiecewiseLinearFun(f:PiecewiseLinearFun) extends PiecewiseLinearFun(f.transformation){
@@ -70,6 +80,10 @@ class CachedPiecewiseLinearFun(f:PiecewiseLinearFun) extends PiecewiseLinearFun(
 
 
 class PiecewiseLinearFun(private[fun] val transformation: RedBlackTreeMap[Pivot] = RedBlackTreeMap.empty) {
+
+  def equals(that:PiecewiseLinearFun):Boolean = {
+    PiecewiseLinearFun.areEqual(this,that)
+  }
 
   def firstPivot:Option[(Int,Pivot)] = transformation.smallestBiggerOrEqual(Int.MinValue)
 
@@ -262,92 +276,22 @@ class PiecewiseLinearFun(private[fun] val transformation: RedBlackTreeMap[Pivot]
     }
   }
 
-
-
-
-  def composeAfter(fromIncluded: Int, toIncluded: Int, additionalFAppliedAfter: LinearTransform): PiecewiseLinearFun = {
-    if(additionalFAppliedAfter.isIdentity) this
-    else new PiecewiseLinearFun(updatePivotsForCompositionAfter(fromIncluded, toIncluded, additionalFAppliedAfter))
-  }
-
-  private def updatePivotsForCompositionAfter(fromIncluded: Int, toIncluded: Int, additionalFAppliedAfter: LinearTransform): RedBlackTree[Pivot] = {
-    //println("updatePivotsForCompositionAfter(from:" + fromIncluded + ", to:" + toIncluded + ", fct:" + additionalFAppliedAfter + ")")
-
-    transformation.getBiggestLowerOrEqual(fromIncluded) match {
-      case Some((_,pivot)) if (pivot.fromValue == fromIncluded) =>
-        updateFromPivotForCompositionAfter(pivot, toIncluded, additionalFAppliedAfter, transformation)
-      case Some((_,pivot)) =>
-        //there is a pivot below the point
-        //need to add an intermediary pivot, with same transform as previous one
-        val newPivot = new Pivot(fromIncluded, pivot.f)
-        updateFromPivotForCompositionAfter(newPivot, toIncluded, additionalFAppliedAfter, transformation.insert(fromIncluded, newPivot))
-      case None =>
-        transformation.getSmallestBiggerOrEqual(fromIncluded) match{
-          case None =>
-            //need to add a first pivot from this point
-            val newPivot = new Pivot(fromIncluded, LinearTransform.identity)
-            updateFromPivotForCompositionAfter(newPivot, toIncluded, additionalFAppliedAfter, transformation.insert(fromIncluded, newPivot))
-          case Some((_,next)) =>
-            val newPivot = new Pivot(fromIncluded, LinearTransform.identity)
-            updateFromPivotForCompositionAfter(newPivot, toIncluded, additionalFAppliedAfter,transformation.insert(fromIncluded, newPivot))
-        }
+  def setPivot(fromIncluded:Int,toIncluded:Int,f:LinearTransform):PiecewiseLinearFun = {
+    //First, delete all pivots between fromValue and toValue
+    val cleanedFun = removePivotsBetween(fromIncluded,toIncluded, transformation)
+    //then check the previous pivot, to see if it aligns with the desired f
+    val applyingFunction = cleanedFun.biggestLowerOrEqual(fromIncluded) match{
+      case None => LinearTransform.identity
+      case Some((pivotStart,pivot)) => pivot.f
     }
-  }
-
-  private def updateFromPivotForCompositionAfter(pivot: Pivot, toIncluded: Int, additionalFAppliedAfter: LinearTransform, transformation: RedBlackTree[Pivot]):RedBlackTree[Pivot] = {
-    if (pivot.fromValue == toIncluded+1) return transformation //finished the correction
-
-    val previousCorrection = pivot.f
-    val newCorrection = additionalFAppliedAfter(previousCorrection)
-
-    val newPivot = new Pivot(pivot.fromValue,newCorrection)
-    val transformWithNewPivot = transformation.insert(pivot.fromValue,newPivot)
-
-    val prevPivot = transformWithNewPivot.getBiggestLowerOrEqual(pivot.fromValue-1)
-
-    val removeCurrentPivot = prevPivot match{
-      case None => newCorrection.isIdentity
-      case Some((fromValue,pivot)) =>
-        pivot.f.equals(newCorrection)
-    }
-
-    val(newPrev,newTransform) = if(removeCurrentPivot){
-      (prevPivot,transformWithNewPivot.remove(pivot.fromValue))
+    if(applyingFunction equals f){
+      new PiecewiseLinearFun(deleteUnnecessaryPivotStartingJustAfter(toIncluded,cleanedFun))
     }else{
-      (Some(pivot.fromValue,newPivot),transformWithNewPivot)
-    }
-
-    newTransform.getSmallestBiggerOrEqual(pivot.fromValue+1) match{
-      case None =>
-        if (newPrev == null) newTransform
-        //We have an open correction, and need to close it with the previous value previousCorrection
-        else newTransform.insert(toIncluded+1, new Pivot(toIncluded+1, previousCorrection))
-      case Some((nextFromValue,nextPivot)) =>
-        if (nextFromValue > toIncluded + 1) {
-          //need to add a new intermediary pivot
-          newPrev match{
-            case None =>
-              newTransform
-            case Some((newPrevFromValue,newPrevPivot)) =>
-              if (newPrevPivot.f.equals(previousCorrection)) newTransform
-              else newTransform.insert(toIncluded + 1, new Pivot(toIncluded + 1, previousCorrection))
-          }
-        } else if (nextFromValue < toIncluded+1){
-          //there is a next such that next.value is <= correctedTo
-          //so recurse to it
-          updateFromPivotForCompositionAfter(nextPivot, toIncluded, additionalFAppliedAfter,newTransform)
-        }else {
-          //check that next pivot should not be removed, actually
-          newPrev match {
-            case None if nextPivot.f.isIdentity => newTransform.remove(nextFromValue)
-            case Some((newPrevFromValue, newPrevPivot)) if nextPivot.f.equals(newPrevPivot.f) => newTransform.remove(nextFromValue)
-            case _ => newTransform
-          }
-        }
+      //just add the pivot
+      //and check if it is aligned with the segment after the zone; in this case this pivot can be deleted
+      new PiecewiseLinearFun(deleteUnnecessaryPivotStartingJustAfter(toIncluded,cleanedFun.insert(fromIncluded,new Pivot(fromIncluded,f))))
     }
   }
-
-
 }
 
 class Pivot(val fromValue:Int, val f: LinearTransform){

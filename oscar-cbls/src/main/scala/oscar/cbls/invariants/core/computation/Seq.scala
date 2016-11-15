@@ -15,7 +15,7 @@ package oscar.cbls.invariants.core.computation
   * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
   ******************************************************************************/
 
-import oscar.cbls.algo.fun.PiecewiseLinearBijectionNaive
+import oscar.cbls.algo.fun.PiecewiseLinearBijectionIncremental
 import oscar.cbls.algo.seq.functional._
 import oscar.cbls.invariants.core.propagation.Checker
 
@@ -168,7 +168,7 @@ class SeqUpdateMove(val fromIncluded:Int,val toIncluded:Int,val after:Int, val f
   assert({seq match{case m:MovedIntSequence => m.localBijection.checkBijection() case _ => ;};true})
 
   //TODO: find O(1) solution
-  private var localBijection:PiecewiseLinearBijectionNaive = null
+  private var localBijection:PiecewiseLinearBijectionIncremental = null
   private def ensureBijection(){
     if(localBijection == null) localBijection = MovedIntSequence.bijectionForMove(fromIncluded, toIncluded, after, flip)
   }

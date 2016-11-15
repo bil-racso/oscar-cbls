@@ -29,6 +29,12 @@ class LinearTransform(val offset:Int,val minus:Boolean){
   def apply(value:Int) = if(minus) offset - value else offset + value
   def unApply(value:Int) = if(minus) offset - value else value - offset
 
+  def apply(interval:(Int,Int)):(Int,Int) = {
+    val a = this(interval._1)
+    val b = this(interval._2)
+    if(a > b) (b,a) else (a,b)
+  }
+
   /**
    * delivers a new linear transform that is equal to this(that(value))
    * @param that

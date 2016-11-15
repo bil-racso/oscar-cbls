@@ -15,7 +15,7 @@ package oscar.cbls.algo.seq.functional
   * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
   ******************************************************************************/
 
-import oscar.cbls.algo.fun.{LinearTransform, PiecewiseLinearBijectionNaive, Pivot}
+import oscar.cbls.algo.fun.{LinearTransform, PiecewiseLinearBijectionIncremental, Pivot}
 import oscar.cbls.algo.lazyIt.LazyFilter
 import oscar.cbls.algo.rb.{RedBlackTreeMapExplorer, RedBlackTreeMap}
 
@@ -33,7 +33,7 @@ object UniqueIntSequence{
   def empty():UniqueIntSequence = new ConcreteUniqueIntSequence(
     RedBlackTreeMap.empty[Int],
     RedBlackTreeMap.empty[Int],
-    PiecewiseLinearBijectionNaive.identity,
+    PiecewiseLinearBijectionIncremental.identity,
     0
   )
 
@@ -132,7 +132,7 @@ abstract class UniqueIntSequence(protected[seq] val uniqueID:Int = UniqueIntSequ
 
 class ConcreteUniqueIntSequence(private[seq] val internalPositionToValue:RedBlackTreeMap[Int],
                                 private[seq] val valueToInternalPosition:RedBlackTreeMap[Int],
-                                private[seq] val externalToInternalPosition:PiecewiseLinearBijectionNaive,
+                                private[seq] val externalToInternalPosition:PiecewiseLinearBijectionIncremental,
                                 private[seq] val startFreeRangeForInternalPosition:Int,
                                 uniqueID:Int = UniqueIntSequence.getNewUniqueID()) extends UniqueIntSequence(uniqueID){
 
@@ -335,7 +335,7 @@ class ConcreteUniqueIntSequence(private[seq] val internalPositionToValue:RedBlac
 
     new ConcreteUniqueIntSequence(newInternalPositionToValues,
       newValueToInternalPosition,
-      PiecewiseLinearBijectionNaive.identity,
+      PiecewiseLinearBijectionIncremental.identity,
       newInternalPositionToValues.size,targetUniqueID)
   }
 
@@ -490,15 +490,15 @@ class MovedUniqueIntSequence(val seq:UniqueIntSequence,
     if(moveAfterPosition + 1 == startPositionIncluded) {
       //not moving
       if(flip) { //just flipping
-        PiecewiseLinearBijectionNaive.identity.updateBefore(
+        PiecewiseLinearBijectionIncremental.identity.updateBefore(
           (startPositionIncluded,endPositionIncluded,LinearTransform(endPositionIncluded + startPositionIncluded,true)))
       }else{
-        PiecewiseLinearBijectionNaive.identity
+        PiecewiseLinearBijectionIncremental.identity
       }
     }else {
       if (moveAfterPosition > startPositionIncluded) {
         //move upwards
-        PiecewiseLinearBijectionNaive.identity.updateBefore(
+        PiecewiseLinearBijectionIncremental.identity.updateBefore(
           (startPositionIncluded, moveAfterPosition + startPositionIncluded - endPositionIncluded - 1,
             LinearTransform(endPositionIncluded + 1 - startPositionIncluded, false)),
           (startPositionIncluded + moveAfterPosition - endPositionIncluded,moveAfterPosition,
@@ -506,7 +506,7 @@ class MovedUniqueIntSequence(val seq:UniqueIntSequence,
             else endPositionIncluded - moveAfterPosition, flip)))
       } else {
         //move downwards
-        PiecewiseLinearBijectionNaive.identity.updateBefore(
+        PiecewiseLinearBijectionIncremental.identity.updateBefore(
           (moveAfterPosition + 1, moveAfterPosition + endPositionIncluded - startPositionIncluded + 1,
             LinearTransform(if (flip) endPositionIncluded + moveAfterPosition + 1 else startPositionIncluded - moveAfterPosition - 1, flip)),
           (moveAfterPosition + endPositionIncluded - startPositionIncluded + 2, endPositionIncluded,

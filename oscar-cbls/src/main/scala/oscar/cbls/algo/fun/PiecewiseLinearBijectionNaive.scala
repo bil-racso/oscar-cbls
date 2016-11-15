@@ -45,7 +45,7 @@ object PiecewiseLinearBijectionNaive{
 class PiecewiseLinearBijectionNaive(val forward:PiecewiseLinearFun, val backward:PiecewiseLinearFun){
 
   def this(forward:PiecewiseLinearFun)= {
-    this(forward,PiecewiseLinearFun.createFromPivots(PiecewiseLinearBijectionNaive.computeInvertedPivots(null, forward.pivots, null)))
+    this(forward,PiecewiseLinearFun.createFromPivots(PiecewiseLinearBijectionIncremental.computeInvertedPivots(null, forward.pivots, null)))
   }
 
   def invert:PiecewiseLinearBijectionNaive = new PiecewiseLinearBijectionNaive(backward,forward)

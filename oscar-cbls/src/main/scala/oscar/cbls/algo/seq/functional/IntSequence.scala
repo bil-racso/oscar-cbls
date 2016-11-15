@@ -14,7 +14,7 @@ package oscar.cbls.algo.seq.functional
   * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
   ******************************************************************************/
 
-import oscar.cbls.algo.fun.{PiecewiseLinearFun, LinearTransform, PiecewiseLinearBijectionNaive, Pivot}
+import oscar.cbls.algo.fun.{PiecewiseLinearFun, LinearTransform, PiecewiseLinearBijectionIncremental, Pivot}
 import oscar.cbls.algo.quick.QList
 import oscar.cbls.algo.rb.{RedBlackTreeMapExplorer, RedBlackTreeMap}
 
@@ -33,7 +33,7 @@ object IntSequence{
   def empty():IntSequence = new ConcreteIntSequence(
     RedBlackTreeMap.empty[Int],
     RedBlackTreeMap.empty[RedBlackTreeMap[Int]],
-    PiecewiseLinearBijectionNaive.identity,
+    PiecewiseLinearBijectionIncremental.identity,
     0
   )
 
@@ -206,7 +206,7 @@ abstract class IntSequence(protected[cbls] val uniqueID:Int = IntSequence.getNew
 
 class ConcreteIntSequence(private[seq] val internalPositionToValue:RedBlackTreeMap[Int],
                           private[seq] val valueToInternalPositions:RedBlackTreeMap[RedBlackTreeMap[Int]],
-                          private[seq] val externalToInternalPosition:PiecewiseLinearBijectionNaive,
+                          private[seq] val externalToInternalPosition:PiecewiseLinearBijectionIncremental,
                           private[seq] val startFreeRangeForInternalPosition:Int,
                           uniqueID:Int = IntSequence.getNewUniqueID()) extends IntSequence(uniqueID) {
 
@@ -488,7 +488,7 @@ class ConcreteIntSequence(private[seq] val internalPositionToValue:RedBlackTreeM
 
     new ConcreteIntSequence(RedBlackTreeMap.makeFromSortedArray(newInternalPositionToValues),
       RedBlackTreeMap.makeFromSortedArray(sortedValuesAndEmptyAccumulatorsArray.map({case (value,accumulator) => (value,accumulator.positions)})),
-      PiecewiseLinearBijectionNaive.identity,
+      PiecewiseLinearBijectionIncremental.identity,
       newInternalPositionToValues.length, targetUniqueID)
   }
 
@@ -637,7 +637,7 @@ object MovedIntSequence{
   def bijectionForMove(startPositionIncluded:Int,
                        endPositionIncluded:Int,
                        moveAfterPosition:Int,
-                       flip:Boolean):PiecewiseLinearBijectionNaive =
+                       flip:Boolean):PiecewiseLinearBijectionIncremental =
     bijectionForMoveNaive(startPositionIncluded:Int,
       endPositionIncluded:Int,
       moveAfterPosition:Int,
@@ -647,19 +647,19 @@ object MovedIntSequence{
   private def bijectionForMoveNaive(startPositionIncluded:Int,
                             endPositionIncluded:Int,
                             moveAfterPosition:Int,
-                            flip:Boolean):PiecewiseLinearBijectionNaive = {
+                            flip:Boolean):PiecewiseLinearBijectionIncremental = {
     if(moveAfterPosition + 1 == startPositionIncluded) {
       //not moving
       if(flip) { //just flipping
-        PiecewiseLinearBijectionNaive.identity.updateBefore(
+        PiecewiseLinearBijectionIncremental.identity.updateBefore(
           (startPositionIncluded,endPositionIncluded,LinearTransform(endPositionIncluded + startPositionIncluded,true)))
       }else{
-        PiecewiseLinearBijectionNaive.identity
+        PiecewiseLinearBijectionIncremental.identity
       }
     }else {
       if (moveAfterPosition > startPositionIncluded) {
         //move upwards
-        PiecewiseLinearBijectionNaive.identity.updateBefore(
+        PiecewiseLinearBijectionIncremental.identity.updateBefore(
           (startPositionIncluded, moveAfterPosition + startPositionIncluded - endPositionIncluded - 1,
             LinearTransform(endPositionIncluded + 1 - startPositionIncluded, false)),
           (startPositionIncluded + moveAfterPosition - endPositionIncluded,moveAfterPosition,
@@ -667,7 +667,7 @@ object MovedIntSequence{
             else endPositionIncluded - moveAfterPosition, flip)))
       } else {
         //move downwards
-        PiecewiseLinearBijectionNaive.identity.updateBefore(
+        PiecewiseLinearBijectionIncremental.identity.updateBefore(
           (moveAfterPosition + 1, moveAfterPosition + endPositionIncluded - startPositionIncluded + 1,
             LinearTransform(if (flip) endPositionIncluded + moveAfterPosition + 1 else startPositionIncluded - moveAfterPosition - 1, flip)),
           (moveAfterPosition + endPositionIncluded - startPositionIncluded + 2, endPositionIncluded,
@@ -682,23 +682,23 @@ object MovedIntSequence{
   def bijectionForMoveArray(startPositionIncluded:Int,
                             endPositionIncluded:Int,
                             moveAfterPosition:Int,
-                            flip:Boolean):PiecewiseLinearBijectionNaive= {
+                            flip:Boolean):PiecewiseLinearBijectionIncremental= {
     if (moveAfterPosition + 1 == startPositionIncluded) {
       //not moving
       if (flip) {
         //just flipping
         if (startPositionIncluded == 0) {
-          PiecewiseLinearBijectionNaive(new PiecewiseLinearFun(RedBlackTreeMap.makeFromSortedArray(Array(
+          PiecewiseLinearBijectionIncremental(new PiecewiseLinearFun(RedBlackTreeMap.makeFromSortedArray(Array(
             (0, new Pivot(0, new LinearTransform(endPositionIncluded, true))),
             (endPositionIncluded + 1, new Pivot(endPositionIncluded + 1, LinearTransform.identity))))))
         } else {
-          PiecewiseLinearBijectionNaive(new PiecewiseLinearFun(RedBlackTreeMap.makeFromSortedArray(Array(
+          PiecewiseLinearBijectionIncremental(new PiecewiseLinearFun(RedBlackTreeMap.makeFromSortedArray(Array(
             (0, new Pivot(0, LinearTransform.identity)),
             (startPositionIncluded, new Pivot(startPositionIncluded, new LinearTransform(endPositionIncluded + startPositionIncluded, true))),
             (endPositionIncluded + 1, new Pivot(endPositionIncluded + 1, LinearTransform.identity))))))
         }
       } else {
-        PiecewiseLinearBijectionNaive.identity
+        PiecewiseLinearBijectionIncremental.identity
       }
     } else {
 
