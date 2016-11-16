@@ -85,7 +85,7 @@ object TestNext extends App{
 
   def threeOpt(k:Int, breakSym:Boolean) = Profile(new ThreeOpt(myVRP.routed, ()=>myVRP.kFirst(k,myVRP.closestNeighboursForward,myVRP.isRouted), myVRP,breakSymmetry = breakSym, neighborhoodName = "ThreeOpt(k=" + k + ")"))
 
-  val search = (BestSlopeFirst(List(routeUnroutedPoint2, routeUnroutedPoint, onePtMove(10),twoOpt, threeOpt(10,true))) exhaust threeOpt(20,true)) afterMove(/*myVRP.drawRoutes()*/)
+  val search = (BestSlopeFirst(List(routeUnroutedPoint2, routeUnroutedPoint, onePtMove(10),twoOpt, threeOpt(10,true))) exhaust threeOpt(20,true))// afterMove(/*myVRP.drawRoutes()*/)
 
  // val search = (new RoundRobin(List(routeUnroutdPoint2,onePtMove(10) guard (() => myVRP.unrouted.value.size != 0)),10)) exhaust BestSlopeFirst(List(onePtMove(20),twoOpt, threeOpt(10,true))) exhaust threeOpt(20,true)
 
@@ -98,7 +98,4 @@ object TestNext extends App{
   search.doAllMoves(obj = myVRP.obj)
   model.propagate()
   println(search.profilingStatistics)
-
-
-
 }
