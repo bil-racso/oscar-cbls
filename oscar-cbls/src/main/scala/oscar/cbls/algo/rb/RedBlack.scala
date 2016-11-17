@@ -31,7 +31,7 @@ private object RedBlackTreeMapLib{
   }
 
   // balance: Balance a tree with balanced subtrees.
-  def balance[V] (c : Boolean) (l : RedBlackTreeMap[V]) (k : Int) (v : Option[V]) (r : RedBlackTreeMap[V]) : RedBlackTreeMap[V] = {
+  def balance[V] (c : Boolean,l : RedBlackTreeMap[V],k : Int,v : Option[V],r : RedBlackTreeMap[V]) : RedBlackTreeMap[V] = {
     (c,l,k,v,r) match {
       case (B,T(R,T(R,a,xK,xV,b),yK,yV,c),zK,zV,d) => T(R,T(B,a,xK,xV,b),yK,yV,T(B,c,zK,zV,d))
       case (B,T(R,a,xK,xV,T(R,b,yK,yV,c)),zK,zV,d) => T(R,T(B,a,xK,xV,b),yK,yV,T(B,c,zK,zV,d))
@@ -72,7 +72,7 @@ trait RedBlackTreeMap[@specialized(Int) V]{
 
   def biggestLowerOrEqual(k:Int):Option[(Int,V)]
 
-  protected[rb] def getBiggestLowerAcc(k:Int, bestoFar:(Int,V)):Option[(Int,V)]
+  protected[rb] def getBiggestLowerAcc(k:Int, bestKSoFar:Int,bestVSoFar:V):(Int,V)
 
   def smallestBiggerOrEqual(k:Int):Option[(Int,V)]
 
@@ -128,7 +128,7 @@ case class L[@specialized(Int) V]() extends RedBlackTreeMap[V]  {
 
   def biggestLowerOrEqual(k:Int):Option[(Int,V)] = None
 
-  override protected[rb] def getBiggestLowerAcc(k:Int, bestSoFar:(Int,V)) = Some(bestSoFar)
+  override protected[rb] def getBiggestLowerAcc(k:Int, bestKSoFar:Int,bestVSoFar:V) = (bestKSoFar,bestVSoFar)
 
   override def smallestBiggerOrEqual(k: Int):Option[(Int,V)] = None
 
@@ -168,8 +168,30 @@ case class L[@specialized(Int) V]() extends RedBlackTreeMap[V]  {
   override def smallestPosition:Option[RedBlackTreeMapExplorer[V]] = None
 }
 
+object T{
+  def unapply[V](t:T[V]):Option[(Boolean, RedBlackTreeMap[V], Int, Option[V], RedBlackTreeMap[V])] = {
+    t.unapply
+  }
+
+  def apply[V](c : Boolean, l : RedBlackTreeMap[V], k : Int, v : Option[V], r : RedBlackTreeMap[V]) =
+  new T(c,l,k,v,r)
+}
+
 // A tree node.
-case class T[@specialized(Int) V](c : Boolean, l : RedBlackTreeMap[V], k : Int, v : Option[V], r : RedBlackTreeMap[V]) extends RedBlackTreeMap[V] {
+class T[@specialized(Int) V](private[this]val c : Boolean,
+                             private[this] val l : RedBlackTreeMap[V],
+                             private[this] val k : Int,
+                             private[this] val v : Option[V],
+                             private[this] val r : RedBlackTreeMap[V])
+  extends RedBlackTreeMap[V] {
+
+  def unapply = Some(c,l,k,v,r)
+
+  def pk = k
+  def pl = l
+  def pr = r
+  def pv = v
+
   assert(v.nonEmpty)
 
   lazy val mSize = l.size + r.size + 1
@@ -195,30 +217,30 @@ case class T[@specialized(Int) V](c : Boolean, l : RedBlackTreeMap[V], k : Int, 
 
   def biggestLowerOrEqual(k:Int):Option[(Int,V)] = {
     if (k < this.k) l.biggestLowerOrEqual(k)
-    else if (this.k < k) r.getBiggestLowerAcc(k,(this.k,v.head))
-    else Some(k,v.head)
+    else if (this.k < k) Some(r.getBiggestLowerAcc(k,this.k,v.get))
+    else Some(k,v.get)
   }
 
-  override protected[rb] def getBiggestLowerAcc(k:Int, bestSoFar:(Int,V)):Option[(Int,V)] = {
-    if (k < this.k) l.getBiggestLowerAcc(k, bestSoFar)
-    else if (this.k < k) r.getBiggestLowerAcc(k, (this.k, v.head))
-    else Some(k,v.head)
+  override protected[rb] def getBiggestLowerAcc(k:Int, bestKSoFar:Int, bestVSoFar:V):(Int,V) = {
+    if (k < this.k) l.getBiggestLowerAcc(k, bestKSoFar, bestVSoFar)
+    else if (this.k < k) r.getBiggestLowerAcc(k, this.k, v.get)
+    else (k,v.get)
   }
 
   override def smallestBiggerOrEqual(k: Int):Option[(Int,V)] = {
-    if (k < this.k) l.getSmallestBiggerAcc(k, (this.k, v.head))
+    if (k < this.k) l.getSmallestBiggerAcc(k, (this.k, v.get))
     else if (this.k < k) r.smallestBiggerOrEqual(k)
-    else Some(k,v.head)
+    else Some(k,v.get)
   }
 
   override protected[rb] def getSmallestBiggerAcc(k: Int, bestSoFar: (Int,V)):Option[(Int,V)] = {
-    if (k < this.k) l.getSmallestBiggerAcc(k, (this.k, v.head))
+    if (k < this.k) l.getSmallestBiggerAcc(k, (this.k, v.get))
     else if (this.k < k) r.getSmallestBiggerAcc(k, bestSoFar)
-    else Some(k,v.head)
+    else Some(k,v.get)
   }
 
   override protected[rb] def modWith (k : Int, f : (Int, Option[V]) => Option[V]) : RedBlackTreeMap[V] = {
-    if (k <  this.k) balance (c) (l.modWith(k,f)) (this.k) (this.v) (r)
+    if (k <  this.k) balance(c,l.modWith(k,f),this.k,this.v,r)
     else if (k == this.k) {
       f(this.k, this.v) match{
         case None =>
@@ -233,13 +255,13 @@ case class T[@specialized(Int) V](c : Boolean, l : RedBlackTreeMap[V], k : Int, 
         case x => T(c, l, k, x, r)
       }
     }else {
-      balance(c)(l)(this.k)(this.v)(r.modWith(k, f))
+      balance(c,l,this.k,this.v,r.modWith(k, f))
     }
   }
 
-  override protected[rb] def valuesAcc(valuesAfter : List[V]) : List[V] = l.valuesAcc(v.head :: r.valuesAcc(valuesAfter))
+  override protected[rb] def valuesAcc(valuesAfter : List[V]) : List[V] = l.valuesAcc(v.get :: r.valuesAcc(valuesAfter))
 
-  protected [rb] def contentAcc(valuesAfter:List[(Int,V)]):List[(Int,V)] = l.contentAcc((k,v.head) :: r.contentAcc(valuesAfter))
+  protected [rb] def contentAcc(valuesAfter:List[(Int,V)]):List[(Int,V)] = l.contentAcc((k,v.get) :: r.contentAcc(valuesAfter))
 
   protected [rb] def keysAcc(keysAfter:List[Int]):List[Int] = l.keysAcc(k :: r.keysAcc(keysAfter))
 
@@ -357,8 +379,8 @@ object RedBlackTreeMap {
 
 //le booléen: true le noeud a déjà été montré (dans un parcour gauche à droite)
 class RedBlackTreeMapExplorer[@specialized(Int) V](position:QList[(T[V],Boolean)]){
-  def key:Int = position.head._1.k
-  def value:V = position.head._1.v.head
+  def key:Int = position.head._1.pk
+  def value:V = position.head._1.pv.get
 
   override def toString : String = "RBPosition(key:" + key + " value:" + value + " stack:" + position.toList + ")"
 
@@ -378,13 +400,13 @@ class RedBlackTreeMapExplorer[@specialized(Int) V](position:QList[(T[V],Boolean)
 
     def descendToLeftMost(position:QList[(T[V],Boolean)]):QList[(T[V],Boolean)] = {
       val headTree = position.head._1
-      headTree.l match{
+      headTree.pl match{
         case t:T[V] => descendToLeftMost(QList((t,false),position))
         case _ => QList((headTree,true),position.tail)
       }
     }
 
-    val newStack = position.head._1.r match {
+    val newStack = position.head._1.pr match {
       case t : T[V] => descendToLeftMost(QList((t,false),position))
       case _ => unstack1(position)
     }
@@ -408,13 +430,13 @@ class RedBlackTreeMapExplorer[@specialized(Int) V](position:QList[(T[V],Boolean)
 
     def descendToRightMost(position:QList[(T[V],Boolean)]):QList[(T[V],Boolean)] = {
       val headTree = position.head._1
-      headTree.r match{
+      headTree.pr match{
         case t:T[V] => descendToRightMost(QList((t,true),position))
         case _ => QList((headTree,true),position.tail)
       }
     }
 
-    val newStack = position.head._1.l match {
+    val newStack = position.head._1.pl match {
       case t : T[V] => descendToRightMost(QList((t,true),QList((position.head._1,false),position.tail)))
       case _ => unstack1(position.tail)
     }

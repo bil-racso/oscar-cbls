@@ -17,11 +17,13 @@ package oscar.cbls.visual.MatrixMap
   * ****************************************************************************
   */
 
-import java.awt.{BorderLayout, Color, Dimension}
 import java.awt.event.{ItemEvent, ItemListener}
+import java.awt.{BorderLayout, Color, Dimension}
 import javax.swing.{BoxLayout, JCheckBox, JFrame, JPanel}
 
-import oscar.cbls.routing.seq.model.VRP
+import oscar.cbls.routing.seq.model.{PDP, VRP}
+
+import scala.collection.immutable.HashMap
 
 
 /**
@@ -29,19 +31,29 @@ import oscar.cbls.routing.seq.model.VRP
   */
 
 
-class RoutingMatrixVisual(title:String = "Routing map", vrp:VRP = null, pickupAndDeliveryPoints: Boolean = false, geolocalisationMap: Boolean = false) extends JFrame with Runnable{
+class RoutingMatrixContainer(title:String = "Routing map",
+                             myVRP:VRP = null,
+                             geolocalisationMap: Boolean = false,
+                             pickupAndDeliveryPoints: Boolean = false,
+                             routeToDisplay:Boolean = false
+                            ) extends JFrame with Runnable{
   setLayout(new BorderLayout())
+  val thiss = this
 
   var routingMap:JPanel with RoutingMap = _
 
-  (pickupAndDeliveryPoints, geolocalisationMap) match {
-    case (false, false) => routingMap = new BasicRoutingMap
-    case (true, false) => routingMap = new BasicRoutingMap() with PickupAndDeliveryPoints
-    case (false, true) => routingMap = new GeoRoutingMap()
-    case (true,true) => routingMap = new GeoRoutingMap() with GeoPickupAndDeliveryPoints
-      routingMap.asInstanceOf[GeoRoutingMap with GeoPickupAndDeliveryPoints].setPDP(vrp)
-    case _ => ()
+  routingMap = (geolocalisationMap,routeToDisplay) match {
+    case(true,true) => new GeoRoutingMap with RouteToDisplay
+    case(true,false) => new GeoRoutingMap
+    case(false,true) => new BasicRoutingMap with RouteToDisplay
+    case(false,false) => new BasicRoutingMap
   }
+  if(pickupAndDeliveryPoints)
+    routingMap.setPDP(myVRP.asInstanceOf[PDP])
+  else
+    routingMap.setVRP(myVRP)
+  if(routeToDisplay)
+    routingMap.asInstanceOf[RoutingMap with RouteToDisplay].initRouteToDisplay(thiss)
 
   var mustRefresh = false
 
@@ -49,40 +61,12 @@ class RoutingMatrixVisual(title:String = "Routing map", vrp:VRP = null, pickupAn
 
   var routes:List[List[Int]] = Nil
 
-  var routesToDisplay:Array[Boolean] = if(vrp != null)Array.tabulate(vrp.v)(v =>false) else Array.empty
-
-  if(vrp != null) {
-    val vehicleSelectionPane = new JPanel()
-    vehicleSelectionPane.setLayout(new BoxLayout(vehicleSelectionPane,BoxLayout.Y_AXIS))
-    val allCheckBox = new JCheckBox("All")
-    allCheckBox.addItemListener(new ItemListener {
-      override def itemStateChanged(e: ItemEvent): Unit = {
-        for(c <- vehicleSelectionPane.getComponents) {
-          val box = c.asInstanceOf[JCheckBox]
-          box.setSelected(e.getStateChange == ItemEvent.SELECTED)
-        }
-      }
-    })
-    vehicleSelectionPane.add(allCheckBox)
-    for (i <- 0 until vrp.v){
-      val checkBox = new JCheckBox("Vehicle : " + i)
-      checkBox.addItemListener(new ItemListener {
-        override def itemStateChanged(e: ItemEvent): Unit = {
-          routesToDisplay(i) = e.getStateChange == ItemEvent.SELECTED
-          routingMap.drawRoutes(allRoutes,routesToDisplay)
-        }
-      })
-      vehicleSelectionPane.add(checkBox)
-    }
-    add(vehicleSelectionPane, BorderLayout.EAST)
-  }
-
   def run(): Unit ={
     while (true) {
       try {
         Thread.sleep(500)
         if(setMustRefresh(false))
-          routingMap.drawRoutes(allRoutes)
+          routingMap.setRouteToDisplay(allRoutes)
       }catch{
         case ie:InterruptedException => return
         case e:Exception => e.printStackTrace()
@@ -111,8 +95,8 @@ class RoutingMatrixVisual(title:String = "Routing map", vrp:VRP = null, pickupAn
     routingMap.setColorValues(colorValues)
   }
 
-  def setPointsList(pointsList:List[(Double,Double)],V:Int): Unit ={
-    routingMap.setPointsList(pointsList,V)
+  def setPointsList(pointsList:List[(Double,Double)]): Unit ={
+    routingMap.setPointsList(pointsList)
   }
 
   def setMapSize(mapSize:Int): Unit ={
