@@ -31,7 +31,7 @@ private object RedBlackTreeMapLib{
   }
 
   // balance: Balance a tree with balanced subtrees.
-  def balance[V] (c : Boolean) (l : RedBlackTreeMap[V]) (k : Int) (v : Option[V]) (r : RedBlackTreeMap[V]) : RedBlackTreeMap[V] = {
+  def balance[V] (c : Boolean,l : RedBlackTreeMap[V],k : Int,v : Option[V],r : RedBlackTreeMap[V]) : RedBlackTreeMap[V] = {
     (c,l,k,v,r) match {
       case (B,T(R,T(R,a,xK,xV,b),yK,yV,c),zK,zV,d) => T(R,T(B,a,xK,xV,b),yK,yV,T(B,c,zK,zV,d))
       case (B,T(R,a,xK,xV,T(R,b,yK,yV,c)),zK,zV,d) => T(R,T(B,a,xK,xV,b),yK,yV,T(B,c,zK,zV,d))
@@ -240,7 +240,7 @@ class T[@specialized(Int) V](private[this]val c : Boolean,
   }
 
   override protected[rb] def modWith (k : Int, f : (Int, Option[V]) => Option[V]) : RedBlackTreeMap[V] = {
-    if (k <  this.k) balance (c) (l.modWith(k,f)) (this.k) (this.v) (r)
+    if (k <  this.k) balance(c,l.modWith(k,f),this.k,this.v,r)
     else if (k == this.k) {
       f(this.k, this.v) match{
         case None =>
@@ -255,7 +255,7 @@ class T[@specialized(Int) V](private[this]val c : Boolean,
         case x => T(c, l, k, x, r)
       }
     }else {
-      balance(c)(l)(this.k)(this.v)(r.modWith(k, f))
+      balance(c,l,this.k,this.v,r.modWith(k, f))
     }
   }
 
