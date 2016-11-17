@@ -45,7 +45,7 @@ case class PickupDeliveryCoupleExchange(pdp: PDP with ClosestNeighbors,
 
     def evalObjAndRollBack() : Int = {
       val a = obj.value
-      seq.rollbackToCurrentCheckpoint(seqValue)
+      seq.rollbackToTopCheckpoint(seqValue)
       a
     }
 

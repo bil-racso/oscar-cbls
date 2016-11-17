@@ -261,7 +261,7 @@ case class PickupDeliverySegmentExchange(pdp: PDP,
 
     def evalObjAndRollBack() : Int = {
       val a = obj.value
-      seq.rollbackToCurrentCheckpoint(seqValue)
+      seq.rollbackToTopCheckpoint(seqValue)
       a
     }
 
@@ -298,7 +298,7 @@ case class PickupDeliverySegmentExchange(pdp: PDP,
             else {
               doMove(firstSegmentStartPosition, firstSegmentEndPosition, secondSegmentStartPosition, secondSegmentEndPosition)
               if (evaluateCurrentMoveObjTrueIfStopRequired(evalObjAndRollBack())) {
-                seq.releaseCurrentCheckpointAtCheckpoint()
+                seq.releaseTopCheckpoint()
                 startVehicle = firstVehicle + 1
                 return
               }
@@ -307,7 +307,7 @@ case class PickupDeliverySegmentExchange(pdp: PDP,
         }
       }
     }
-    seq.releaseCurrentCheckpointAtCheckpoint()
+    seq.releaseTopCheckpoint()
   }
 
   override def instantiateCurrentMove(newObj: Int): PickupDeliverySegmentExchangeMove = {

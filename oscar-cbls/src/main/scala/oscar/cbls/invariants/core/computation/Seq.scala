@@ -823,6 +823,7 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], val maxValue: Int, 
    * @note You do not need to be at the top checkpoint value to call this, you can do it later no worries.
    */
   protected def releaseTopCheckpoint() {
+    c'est pas cohérent ici!!
     require(topCheckpoint quickEquals toNotify.newValue)
     require(topCheckpoint != null)
 
