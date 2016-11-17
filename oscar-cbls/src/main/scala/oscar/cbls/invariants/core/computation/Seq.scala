@@ -1118,7 +1118,7 @@ class IdentitySeq(fromValue:ChangingSeqValue, toValue:CBLSSeqVar)
         assert(value equals toValue.newValue)
       case SeqUpdateRollBackToCheckpoint(value:IntSequence,level:Int) =>
         //roll back might free some checkpoints implicitly
-        while(level > levelTopCheckpoint){
+        while(level >= levelTopCheckpoint){
           toValue.releaseTopCheckpoint()
           popTopCheckpoint()
         }
@@ -1126,7 +1126,7 @@ class IdentitySeq(fromValue:ChangingSeqValue, toValue:CBLSSeqVar)
         toValue.rollbackToTopCheckpoint(value)
       case SeqUpdateDefineCheckpoint(prev:SeqUpdate,activeCheckpoint:Boolean,level:Int) =>
         digestChanges(prev)
-        while(level > levelTopCheckpoint){
+        while(level >= levelTopCheckpoint){
           toValue.releaseTopCheckpoint()
           popTopCheckpoint()
         }

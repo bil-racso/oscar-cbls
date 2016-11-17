@@ -154,33 +154,38 @@ class Precedence(seq:ChangingSeqValue,
   }
 
   override def notifySeqChanges(v : ChangingSeqValue, d : Int, changes : SeqUpdate) {
-    if (!digestUpdates(changes, false)) {
+    if (!digestUpdates(changes)) {
       //this also updates checkpoint links
       computeAndAffectViolationsFromScratch(changes.newValue)
     }
   }
 
-  private def digestUpdates(changes : SeqUpdate, skipNewCheckpoints : Boolean) : Boolean = {
+  private def digestUpdates(changes : SeqUpdate) : Boolean = {
     changes match {
-      case SeqUpdateDefineCheckpoint(prev : SeqUpdate, isActive : Boolean) =>
+      case SeqUpdateDefineCheckpoint(prev : SeqUpdate, isActive : Boolean, checkpointLevel:Int) =>
         //println("define checkpoint")
-        if(!skipNewCheckpoints) {
-          if(!digestUpdates(prev, true)){
+        if(checkpointLevel == 0){
+          if(!digestUpdates(prev)){
             computeAndAffectViolationsFromScratch(changes.newValue)
           }
           defineCheckpoint(changes.newValue)
           true
         }else{
-          digestUpdates(prev, true)
+          digestUpdates(prev)
         }
-      case x@SeqUpdateRollBackToCheckpoint(rollBackCheckpoint) =>
-        require(checkpoint quickEquals rollBackCheckpoint)
-        reloadViolationsAtCheckpoint()
-        true
+
+      case x@SeqUpdateRollBackToCheckpoint(rollBackCheckpoint, checkpointLevel) =>
+        if(checkpointLevel == 0) {
+          require(checkpoint quickEquals rollBackCheckpoint)
+          reloadViolationsAtCheckpoint()
+          true
+        }else{
+          digestUpdates(x.howToRollBack)
+        }
 
       case SeqUpdateInsert(value : Int, pos : Int, prev : SeqUpdate) =>
 
-        if (!digestUpdates(prev, skipNewCheckpoints)) return false
+        if (!digestUpdates(prev)) return false
 
         var precedencesStartingAtInsertedValue = beforesToPrecedences(value)
         while (precedencesStartingAtInsertedValue != null) {
@@ -224,7 +229,7 @@ class Precedence(seq:ChangingSeqValue,
         true
 
       case x@SeqUpdateRemove(position : Int, prev : SeqUpdate) =>
-        if (!digestUpdates(prev, skipNewCheckpoints)) return false
+        if (!digestUpdates(prev)) return false
         val removedValue = x.removedValue
         cachedPositionFinderAtCheckpoint.savePos(prev.newValue,removedValue,Some(position))
 
@@ -250,7 +255,7 @@ class Precedence(seq:ChangingSeqValue,
         //println("move")
         //on which vehicle did we move?
         //also from --> to cannot include a vehicle start.
-        if (!digestUpdates(prev, skipNewCheckpoints)) false
+        if (!digestUpdates(prev)) false
         else if (x.isNop) true
         else if (x.isSimpleFlip) {
           //this is a simple flip
@@ -411,7 +416,7 @@ class Precedence(seq:ChangingSeqValue,
             case Some(positionOfEndValue) =>
               c.check(isPrecedenceViolated(precedenceID) == (positionOfStartValue > positionOfEndValue),
                 Some("error on violation of precedence " + precedenceID + " considered as violated:" + isPrecedenceViolated(precedenceID)
-              + ":(" + precedencesArray(precedenceID) + ")"))
+                  + ":(" + precedencesArray(precedenceID) + ")"))
               if(isPrecedenceViolated(precedenceID)) nbViol += 1
           }
       }

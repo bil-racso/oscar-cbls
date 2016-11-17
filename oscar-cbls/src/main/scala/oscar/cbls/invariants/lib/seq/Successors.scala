@@ -115,10 +115,10 @@ class Successors(sequence:ChangingSeqValue, successorValues:Array[CBLSSetVar])
             Some(impactedValues + r.removedValue ++ oldSeq.predecessorPos2Val(position))
         }
 
-      case u@SeqUpdateRollBackToCheckpoint(checkpoint) =>
+      case u@SeqUpdateRollBackToCheckpoint(checkpoint,checkpointLevel) =>
         computeImpactedValues(u.howToRollBack)
 
-      case SeqUpdateDefineCheckpoint(prev:SeqUpdate,isActive) =>
+      case SeqUpdateDefineCheckpoint(prev:SeqUpdate,isActive,checkpointLevel) =>
         computeImpactedValues(prev)
 
       case SeqUpdateLastNotified(value) =>
