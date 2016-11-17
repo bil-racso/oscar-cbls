@@ -337,8 +337,8 @@ case class PickupDeliverySegmentExchangeMove(firstSegmentStartPosition:Int,
   extends VRPSMove(objAfter, neighborhood, neighborhoodName,neighborhood.pdp){
 
   override def impactedPoints: Iterable[Int] =
-    neighborhood.pdp.routes.value.valuesBetweenPositions(firstSegmentStartPosition,firstSegmentEndPosition) ++
-      neighborhood.pdp.routes.value.valuesBetweenPositions(secondSegmentStartPosition,secondSegmentEndPosition)
+    neighborhood.pdp.routes.value.valuesBetweenPositionsQList(firstSegmentStartPosition,firstSegmentEndPosition) ++
+      neighborhood.pdp.routes.value.valuesBetweenPositionsQList(secondSegmentStartPosition,secondSegmentEndPosition)
 
   override def commit() {
     neighborhood.doMove(
