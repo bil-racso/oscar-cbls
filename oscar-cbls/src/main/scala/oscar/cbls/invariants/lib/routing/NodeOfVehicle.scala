@@ -127,20 +127,28 @@ class NodeOfVehicle(routes:ChangingSeqValue,
         false //impossible to go incremental
       case SeqUpdateLastNotified(value:IntSequence) =>
         true //we are starting from the previous value
-      case SeqUpdateDefineCheckpoint(prev,isStarMode) =>
-        //TODO: manage levels!
-
-        if(!digestUpdates(prev)) {
-          affect(computeValueFromScratch(changes.newValue))
+      case SeqUpdateDefineCheckpoint(prev,isStarMode,checkpointLevel) =>
+        if(checkpointLevel == 0) {
+          if (!digestUpdates(prev)) {
+            affect(computeValueFromScratch(changes.newValue))
+          }
+          saveCurrentCheckpoint(prev.newValue)
+          true
+        }else{
+          //we do not handle other checkpoint, so ignore declaration
+          digestUpdates(prev)
         }
-        saveCurrentCheckpoint(prev.newValue)
-        true
-      case SeqUpdateRollBackToCheckpoint(checkpoint) =>
+      case r@SeqUpdateRollBackToCheckpoint(checkpoint,checkpointLevel) =>
+
         if(checkpoint == null) false //it has been dropped following a Set
         else {
-          require(checkpoint quickEquals savedCheckpoint)
-          restoreCheckpoint()
-          true
+          if(checkpointLevel == 0) {
+            require(checkpoint quickEquals savedCheckpoint)
+            restoreCheckpoint()
+            true
+          }else{
+            digestUpdates(r.howToRollBack)
+          }
         }
     }
   }

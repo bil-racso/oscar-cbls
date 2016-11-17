@@ -112,17 +112,11 @@ class ConstantRoutingDistance(routes:ChangingSeqValue,
   //TODO: handle inactive checkpoints
   private val savedValues:Array[Int] = computeValueFromScratch(routes.value)
   protected var checkpoint = routes.value
-  //TODO: use magic array here?
-  protected[this] val isVehicleChangedSinceCheckpoint:Array[Boolean] = Array.fill(v)(false)
+
+  protected[this] val isVehicleChangedSinceCheckpoint:Array[Boolean] = Array.fill(v)(true)
   protected var changedVehiclesSinceCheckpoint:QList[Int] = null
 
-  /*
-   * stacked checkpoint will use a pre-set maximal stack depth
-   * the stack is used hereto save output values.
-   * in the with precomputation, it is also used to save pre-computations
-   * (remember that they are performed on demand, so that they will be attributed to the oldest checkpoint)
-   */
-
+  //only one level of stack for checkpoint here.
 
   protected var vehicleSearcher:((IntSequence,Int)=>Int) = if(v == 1) ((_,_) => 0) else
     RoutingConventionMethods.cachedVehicleReachingPosition(routes.value, v)
@@ -130,31 +124,40 @@ class ConstantRoutingDistance(routes:ChangingSeqValue,
   affect(savedValues)
 
   override def notifySeqChanges(v: ChangingSeqValue, d: Int, changes: SeqUpdate) {
-    if(!digestUpdates(changes,false)) {
+    if(!digestUpdates(changes)) {
       for(v <- 0 until this.v) recordTouchedVehicle(v)
       affect(computeValueFromScratch(changes.newValue))
     }
   }
 
-  private def digestUpdates(changes:SeqUpdate,skipNewCheckpoints:Boolean):Boolean = {
+  private def digestUpdates(changes:SeqUpdate):Boolean = {
     changes match {
-      case SeqUpdateDefineCheckpoint(prev:SeqUpdate,isStarMode:Boolean) =>
-        //TODO: manage levels!
+      case SeqUpdateDefineCheckpoint(prev,isStarMode,checkpointLevel) =>
+        //we only consider level 0; other are not managed.
+        if(checkpointLevel == 0) {
 
-        if(!digestUpdates(prev,true)){
-          affect(computeValueFromScratch(changes.newValue))
+          if (!digestUpdates(prev)) {
+            affect(computeValueFromScratch(changes.newValue))
+          }
+          saveCurrentCheckpoint(changes.newValue)
+          true
+        }else{
+          //ignore it altogether
+          digestUpdates(prev)
         }
-        saveCurrentCheckpoint(changes.newValue)
-        true
 
-      case SeqUpdateRollBackToCheckpoint(checkpoint:IntSequence) =>
-        require (checkpoint quickEquals this.checkpoint)
-        restoreCheckpoint()
-        true
+      case r@SeqUpdateRollBackToCheckpoint(checkpoint:IntSequence,checkpointLevel:Int) =>
+        if(checkpointLevel == 0) {
+          require(checkpoint quickEquals this.checkpoint)
+          restoreCheckpoint()
+          true
+        }else{
+          digestUpdates(r.howToRollBack)
+        }
 
       case SeqUpdateInsert(value : Int, pos : Int, prev : SeqUpdate) =>
         //on which vehicle did we insert?
-        if(!digestUpdates(prev,skipNewCheckpoints)) return false
+        if(!digestUpdates(prev)) return false
         val newSeq = changes.newValue
 
         val oldPrev = prev.newValue.valueAtPosition(pos-1).head
@@ -180,7 +183,7 @@ class ConstantRoutingDistance(routes:ChangingSeqValue,
       case x@SeqUpdateMove(fromIncluded : Int, toIncluded : Int, after : Int, flip : Boolean, prev : SeqUpdate) =>
         //on which vehicle did we move?
         //also from --> to cannot include a vehicle start.
-        if(!digestUpdates(prev,skipNewCheckpoints)) false
+        if(!digestUpdates(prev)) false
         else if(x.isNop) true
         else if(x.isSimpleFlip){
           //this is a simple flip
@@ -331,7 +334,7 @@ class ConstantRoutingDistance(routes:ChangingSeqValue,
         //on which vehicle did we insert?
         val removedValue = x.removedValue
         //node cost to be considered
-        if(!digestUpdates(prev,skipNewCheckpoints)) return false
+        if(!digestUpdates(prev)) return false
 
         val positionOfDelete = x.position
 
@@ -593,7 +596,8 @@ class ConstantRoutingDistancePrecompute(routes:ChangingSeqValue,
 
     if(fromPosIncluded == toPosIncluded) {
       distanceMatrix(fromValueIncluded)(fromValueIncluded)
-    } else if((atCheckpoint || !isVehicleChangedSinceCheckpoint(vehicle))&& precomputeFW && forwardRequired){
+    } else if(((atCheckpoint && !perVehicle)|| (perVehicle && !isVehicleChangedSinceCheckpoint(vehicle)))&& precomputeFW && forwardRequired){
+      //we need the or here above because we could be in single vehicle mode, where isVehicleChanged is always true
       //Forward
       doFWPrecomputeForVehicle(vehicle)
       val toReturn = (precomputedForwardCumulatedCostAtCheckpoint(toValueIncluded)
@@ -609,7 +613,7 @@ class ConstantRoutingDistancePrecompute(routes:ChangingSeqValue,
         - precomputedBackwardCumulatedCostAtCheckpont(toValueIncluded))
       assert(toReturn == super.computeValueBetween(s, vehicle, fromPosIncluded, fromValueIncluded, toPosIncluded, toValueIncluded))
       toReturn
-    }else if((atCheckpoint || !isVehicleChangedSinceCheckpoint(vehicle)) && (precomputeFW || precomputeBW) && distanceIsSymmetric){
+    }else if(((atCheckpoint && !perVehicle) || (perVehicle && !isVehicleChangedSinceCheckpoint(vehicle))) && (precomputeFW || precomputeBW) && distanceIsSymmetric){
       //gt the other distance from the available pre-compute
       if(precomputeFW){
         //getting a BW distance from a FW precompute

@@ -43,6 +43,7 @@ with SeqNotificationTarget{
 
   var inputCheckpoint:IntSequence = null
   var checkpoint:IntSequence = null
+
   def digestUdpate(changes : SeqUpdate) {
     changes match {
       case SeqUpdateDefineCheckpoint(prev, isActive) =>

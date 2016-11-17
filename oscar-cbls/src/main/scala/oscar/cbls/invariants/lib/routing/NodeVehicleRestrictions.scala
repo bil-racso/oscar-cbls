@@ -251,7 +251,7 @@ class NodeVehicleRestrictions(routes:ChangingSeqValue,
   }
 
   override def notifySeqChanges(v : ChangingSeqValue, d : Int, changes : SeqUpdate) {
-    if (!digestUpdates(changes, false)) {
+    if (!digestUpdates(changes)) {
       setAllVehicleChangedSinceCheckpoint()
       for (vehicle <- vehicles) {
         violationPerVehicle(vehicle) := violationOnVehicle(vehicle:Int,changes.newValue)
@@ -259,16 +259,12 @@ class NodeVehicleRestrictions(routes:ChangingSeqValue,
     }
   }
 
-  private def digestUpdates(changes : SeqUpdate, skipNewCheckpoints : Boolean) : Boolean = {
+  private def digestUpdates(changes : SeqUpdate) : Boolean = {
     changes match {
-      case SeqUpdateDefineCheckpoint(prev : SeqUpdate, isStarMode : Boolean) =>
-        //TODO: manage levels!
+      case SeqUpdateDefineCheckpoint(prev : SeqUpdate, isStarMode : Boolean, checkpointLevel:Int) =>
 
-
-        if(skipNewCheckpoints) {
-          digestUpdates(prev, true)
-        }else{
-          if (!digestUpdates(prev, true)) {
+        if(checkpointLevel == 0){
+          if (!digestUpdates(prev)) {
             this.checkpoint = prev.newValue
             doUpdateAllPrecomputationsToCheckpointAndSaveCheckpoint()
             for(vehicle <- vehicles) violationPerVehicle(vehicle) := violationOnVehicle(vehicle,checkpoint)
@@ -278,21 +274,27 @@ class NodeVehicleRestrictions(routes:ChangingSeqValue,
           }
           vehicleSearcher = RoutingConventionMethods.cachedVehicleReachingPosition(checkpoint, v)
           true
-        }
-      case SeqUpdateRollBackToCheckpoint(checkpoint : IntSequence) =>
-        require(checkpoint quickEquals this.checkpoint)
-        while(changedVehicleSinceCheckpoint!=null){
-          val vehicle = changedVehicleSinceCheckpoint.head
-          changedVehicleSinceCheckpoint = changedVehicleSinceCheckpoint.tail
-          violationPerVehicle(vehicle) := violationAtCheckpoint(vehicle)
-          vehicleChangedSinceCheckpoint(vehicle) = false
+        }else{
+          digestUpdates(prev)
         }
 
-        true
+      case r@SeqUpdateRollBackToCheckpoint(checkpoint : IntSequence, checkpointLevel:Int) =>
+        if(checkpointLevel == 0) {
+          require(checkpoint quickEquals this.checkpoint)
+          while (changedVehicleSinceCheckpoint != null) {
+            val vehicle = changedVehicleSinceCheckpoint.head
+            changedVehicleSinceCheckpoint = changedVehicleSinceCheckpoint.tail
+            violationPerVehicle(vehicle) := violationAtCheckpoint(vehicle)
+            vehicleChangedSinceCheckpoint(vehicle) = false
+          }
+          true
+        }else{
+          digestUpdates(r.howToRollBack)
+        }
       case SeqUpdateInsert(value : Int, pos : Int, prev : SeqUpdate) =>
         //on which vehicle did we insert?
 
-        if (!digestUpdates(prev, skipNewCheckpoints)) return false
+        if (!digestUpdates(prev)) return false
 
         val vehicleOfInsert = vehicleSearcher(changes.newValue, pos)
 
@@ -305,7 +307,7 @@ class NodeVehicleRestrictions(routes:ChangingSeqValue,
       case x@SeqUpdateMove(fromIncluded : Int, toIncluded : Int, after : Int, flip : Boolean, prev : SeqUpdate) =>
         //on which vehicle did we move?
         //also from --> to cannot include a vehicle start.
-        if (!digestUpdates(prev, skipNewCheckpoints)) false
+        if (!digestUpdates(prev)) false
         else if (x.isNop) true
         else if (x.isSimpleFlip) {
           //this is a simple flip, no change on vehicle violation, since obeys routing rule!
@@ -369,7 +371,7 @@ class NodeVehicleRestrictions(routes:ChangingSeqValue,
 
       case x@SeqUpdateRemove(position : Int, prev : SeqUpdate) =>
         //on which vehicle did we remove?
-        if (!digestUpdates(prev, skipNewCheckpoints)) return false
+        if (!digestUpdates(prev)) return false
         val removedNode = x.removedValue
         val vehicleOfMovedSegment = vehicleSearcher(prev.newValue, position)
         if(isForbidden(removedNode,vehicleOfMovedSegment)){

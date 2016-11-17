@@ -42,6 +42,7 @@ class MagicBoolArrayWithFastIteratorOnTrueOverApproximated(override val length:I
   private var nbTrue:Int = if(initVal) length else 0
 
   val nbIndicesAtTrue:Int = nbTrue
+
   /**
    * Sets the value of each element to "value"
    * @note complexity is O(1)

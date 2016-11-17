@@ -46,7 +46,7 @@ case class Content(v:SeqValue)
 
   override def notifySeqChanges(v: ChangingSeqValue, d: Int, changes: SeqUpdate) : Unit = {
 
-    if(!digestUpdates(changes,false)) {
+    if(!digestUpdates(changes)) {
       updateFromScratch(changes.newValue)
       savedCheckpoint = null
       updatesFromThisCheckpointInReverseOrder = null
@@ -58,27 +58,31 @@ case class Content(v:SeqValue)
   }
 
   //true if could be incremental, false otherwise
-  def digestUpdates(changes : SeqUpdate, skipNewCheckpoints:Boolean):Boolean = {
+  def digestUpdates(changes : SeqUpdate):Boolean = {
     changes match {
       case SeqUpdateInsert(value : Int, pos : Int, prev : SeqUpdate) =>
-        if (!digestUpdates(prev, skipNewCheckpoints)) return false
+        if (!digestUpdates(prev)) return false
         updatesFromThisCheckpointInReverseOrder = QList((value, true), updatesFromThisCheckpointInReverseOrder)
         this :+= value
         true
       case SeqUpdateMove(fromIncluded : Int, toIncluded : Int, after : Int, flip : Boolean, prev : SeqUpdate) =>
-        digestUpdates(prev, skipNewCheckpoints)
+        digestUpdates(prev)
       case r@SeqUpdateRemove(position : Int, prev : SeqUpdate) =>
-        if (!digestUpdates(prev, skipNewCheckpoints)) return false
+        if (!digestUpdates(prev)) return false
         val value = r.removedValue
         if (changes.newValue.nbOccurrence(value) == 0){
           this :-= value
           updatesFromThisCheckpointInReverseOrder = QList((value, false), updatesFromThisCheckpointInReverseOrder)
         }
         true
-      case SeqUpdateRollBackToCheckpoint(checkpoint:IntSequence) =>
-        require(checkpoint quickEquals savedCheckpoint)
-        comeBackToSavedCheckPoint()
-        true
+      case r@SeqUpdateRollBackToCheckpoint(checkpoint:IntSequence,checkpointLevel:Int) =>
+        if(checkpointLevel == 0) {
+          require(checkpoint quickEquals savedCheckpoint)
+          comeBackToSavedCheckPoint()
+          true
+        }else{
+          digestUpdates(r.howToRollBack)
+        }
       case SeqUpdateLastNotified(value) =>
         require(value quickEquals v.value)
         //start at the previous value; easy game.
@@ -86,16 +90,16 @@ case class Content(v:SeqValue)
       case SeqUpdateAssign(value:IntSequence) =>
         //raw assign, no incremental possible
         false
-      case SeqUpdateDefineCheckpoint(prev:SeqUpdate,isStarMode:Boolean) =>
-        if(skipNewCheckpoints || !isStarMode) {
-          digestUpdates(prev,true)
-        } else {
-          if(!digestUpdates(prev,true)){
+      case SeqUpdateDefineCheckpoint(prev:SeqUpdate,isStarMode:Boolean,checkpointLevel) =>
+        if(checkpointLevel == 0){
+          if(!digestUpdates(prev)){
             //update was not incremental, do the computation now
             updateFromScratch(prev.newValue)
           }
           saveNewCheckpoint(prev.newValue)
           true
+        }else{
+          digestUpdates(prev)
         }
     }
   }

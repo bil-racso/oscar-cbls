@@ -103,7 +103,7 @@ class RouteSuccessorAndPredecessors(routes:ChangingSeqValue,
         None //impossible to go incremental
       case SeqUpdateDefineCheckpoint(prev:SeqUpdate,_,_) =>
         computeStartValuesOfImpactedZone(prev)
-      case u@SeqUpdateRollBackToCheckpoint(checkpoint:IntSequence) =>
+      case u@SeqUpdateRollBackToCheckpoint(_,_) =>
         computeStartValuesOfImpactedZone(u.howToRollBack)
     }
   }
