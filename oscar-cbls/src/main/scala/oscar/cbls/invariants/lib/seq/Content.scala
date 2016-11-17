@@ -22,6 +22,8 @@ import oscar.cbls.invariants.core.propagation.Checker
 
 import scala.collection.immutable.SortedSet
 
+il faut corriger la gestion de stack!
+
 /**
  * content of v
  * @param v is a SeqValue, the values appearing in the sequence

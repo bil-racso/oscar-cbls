@@ -1601,3 +1601,44 @@ abstract class ChangingSeqValueLatestCheckpoint(initialValue: Iterable[Int], ove
 }
 
 */
+
+
+class SeqCheckpointedValueStack[T]{
+  var checkpointStack:List[(IntSequence,T)] = List.empty
+  var checkpointStackLevel:Int = -1
+
+  private def popCheckpointStackToLevel(level:Int,included:Boolean){
+    if(included){
+      while(checkpointStackLevel>=level) {
+        checkpointStack = checkpointStack.tail
+      }
+    }else{
+      while(checkpointStackLevel>level) {
+        checkpointStack = checkpointStack.tail
+      }
+    }
+  }
+
+  def outputAtTopCheckpoint(checkpoint:IntSequence):T = {
+    val head = checkpointStack.head
+    require(head._1 quickEquals checkpoint)
+    head._2
+  }
+
+  def defineTopCheckpoint(checkpoint:IntSequence,savedValue:T) = {
+    checkpointStack = (checkpoint,savedValue) :: checkpointStack
+    checkpointStackLevel += 1
+  }
+
+  def rollBackAndOutputValue(checkpoint:IntSequence,checkpointLevel:Int):T = {
+    popCheckpointStackToLevel(checkpointLevel,false)
+    outputAtTopCheckpoint(checkpoint)
+  }
+
+  def defineCheckpoint(checkpoint:IntSequence,checkpointLevel:Int,savedValue:T){
+    popCheckpointStackToLevel(checkpointLevel,true)
+    defineTopCheckpoint(checkpoint:IntSequence,savedValue:T)
+  }
+
+  def topCheckpoint:IntSequence = checkpointStack.head._1
+}

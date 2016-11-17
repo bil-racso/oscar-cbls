@@ -35,6 +35,9 @@ case class SeqSum(v: SeqValue)
   finishInitialization()
 
   this := computeSumFromScratch(v.value)
+
+  val checkpointStack = new SeqCheckpointedValueStack[Int]()
+
   override def notifySeqChanges(v: ChangingSeqValue, d: Int, changes: SeqUpdate) {
     checkInternals(new ErrorChecker())
     if (!digestChanges(changes)) {
@@ -55,9 +58,6 @@ case class SeqSum(v: SeqValue)
     0
   }
 
-  var checkpoint:IntSequence = null
-  var outputAtCheckpoint:Int = -1
-
   def digestChanges(changes : SeqUpdate) : Boolean = {
     changes match {
       case s@SeqUpdateInsert(value : Int, pos : Int, prev : SeqUpdate) =>
@@ -73,20 +73,18 @@ case class SeqSum(v: SeqValue)
         this :-= r.removedValue
         true
 
-      case u@SeqUpdateRollBackToCheckpoint(checkpoint) =>
-        require(checkpoint quickEquals this.checkpoint)
-        this := outputAtCheckpoint
+      case u@SeqUpdateRollBackToCheckpoint(checkpoint:IntSequence,checkpointLevel:Int) =>
+        this := checkpointStack.rollBackAndOutputValue(checkpoint,checkpointLevel)
         true
 
-      case SeqUpdateDefineCheckpoint(prev : SeqUpdate, isActive) =>
+      case SeqUpdateDefineCheckpoint(prev : SeqUpdate, isActive,checkpointLevel) =>
         if(!digestChanges(prev)){
-          checkpoint = prev.newValue
-          outputAtCheckpoint = computeSumFromScratch(changes.newValue)
-          this := outputAtCheckpoint
+          val myOutput = computeSumFromScratch(changes.newValue)
+          checkpointStack.defineCheckpoint(prev.newValue,checkpointLevel,myOutput)
+          this := myOutput
           true
         }else{
-          checkpoint = prev.newValue
-          outputAtCheckpoint = this.newValue
+          checkpointStack.defineCheckpoint(prev.newValue,checkpointLevel,this.newValue)
           true
         }
 

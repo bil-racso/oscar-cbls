@@ -62,16 +62,7 @@ case class SubSequence(v: SeqValue,index:Int, length: Int,
     }
   }
 
-  var checkpointStack:List[(IntSequence,IntSequence)] = List.empty
-  var currentCheckpointLevel = -1
-
-  def myReleaseCheckpointToAndIncluding(level:Int){
-    while(currentCheckpointLevel >= level){
-      checkpointStack = checkpointStack.tail
-      currentCheckpointLevel -=1
-      releaseTopCheckpoint()
-    }
-  }
+  val checkpointStack = new SeqCheckpointedValueStack[IntSequence]()
 
   def digestChanges(changes : SeqUpdate) : Boolean = {
     changes match {
@@ -118,11 +109,10 @@ case class SubSequence(v: SeqValue,index:Int, length: Int,
 
         true
 
-      case u@SeqUpdateRollBackToCheckpoint(checkpoint,checkpointLevel) =>
-        myReleaseCheckpointToAndIncluding(checkpointLevel+1)
+      case u@SeqUpdateRollBackToCheckpoint(checkpoint,checkPointLevel) =>
 
-        require(checkpointStack.head._1 quickEquals checkpoint)
-        rollbackToTopCheckpoint(checkpointStack.head._2)
+        this.releaseTopCheckpointsToLevel(checkPointLevel,false)
+        rollbackToTopCheckpoint(checkpointStack.rollBackAndOutputValue(checkpoint,checkPointLevel))
         true
 
       case SeqUpdateDefineCheckpoint(prev : SeqUpdate, isActive, checkpointLevel) =>
@@ -130,13 +120,10 @@ case class SubSequence(v: SeqValue,index:Int, length: Int,
           this := computeFromScratch(prev.newValue)
         }
 
-        myReleaseCheckpointToAndIncluding(checkpointLevel)
-
+        releaseTopCheckpointsToLevel(checkpointLevel,true)
         this.defineCurrentValueAsCheckpoint(isActive)
         //we perform this after the define checkpoint above, so that hte saved value is the regularized one (I do not know, but his might be a good idea)
-        checkpointStack = (prev.newValue,this.newValue) :: checkpointStack
-        currentCheckpointLevel += 1
-
+        checkpointStack.defineCheckpoint(prev.newValue,checkpointLevel,this.newValue)
         true
 
       case SeqUpdateLastNotified(value) =>
@@ -306,7 +293,5 @@ case class SubSequenceVar(originalSeq: SeqValue, index:ChangingIntValue, length:
     println(this.newValue,originalSeq.value.size)
     c.check(this.newValue.toList equals computeFromScratch(originalSeq.value,index.value).toList, Some("this.newValue(=" + this.newValue.toList + ") == v.value.subSequence(=" + originalSeq.value.toList.reverse + ")"))
   }
-
-
 }
 

@@ -42,27 +42,16 @@ with SeqNotificationTarget{
     digestUdpate(changes : SeqUpdate)
   }
 
-  var checkpointStack:List[(IntSequence,IntSequence)] = List.empty
-  var currentCheckpointLevel = -1
-
-  def myReleaseCheckpointToAndIncluding(level:Int){
-    while(currentCheckpointLevel >= level){
-      checkpointStack = checkpointStack.tail
-      currentCheckpointLevel -=1
-      releaseTopCheckpoint()
-    }
-  }
-
+  var checkpointStack = new SeqCheckpointedValueStack[IntSequence]()
 
   def digestUdpate(changes : SeqUpdate) {
     changes match {
       case SeqUpdateDefineCheckpoint(prev, isActive, checkpointLevel) =>
         digestUdpate(prev)
 
-        myReleaseCheckpointToAndIncluding(checkpointLevel)
-
+        this.releaseTopCheckpointsToLevel(checkpointLevel,true)
         defineCurrentValueAsCheckpoint(isActive)
-        checkpointStack = (prev.newValue,this.newValue) :: checkpointStack
+        checkpointStack.defineCheckpoint(prev.newValue,checkpointLevel,this.newValue)
 
       case SeqUpdateInsert(value, position, prev) =>
         digestUdpate(prev)
@@ -80,10 +69,10 @@ with SeqNotificationTarget{
 
       case x@SeqUpdateRollBackToCheckpoint(checkpoint,checkpointLevel) =>
 
-        myReleaseCheckpointToAndIncluding(checkpointLevel+1)
+        this.releaseTopCheckpointsToLevel(checkpointLevel,false)
+        rollbackToTopCheckpoint(checkpointStack.rollBackAndOutputValue(checkpoint,checkpointLevel))
+        require(checkpointStack.topCheckpoint quickEquals checkpoint)
 
-        require(checkpointStack.head._1 quickEquals checkpoint)
-        rollbackToTopCheckpoint(this.checkpointStack.head._2)
 
       case SeqUpdateAssign(seq) =>
         this := seq.map(transform)

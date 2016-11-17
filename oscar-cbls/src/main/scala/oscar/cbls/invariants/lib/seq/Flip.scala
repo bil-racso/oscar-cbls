@@ -26,28 +26,14 @@ case class Flip(v: SeqValue,override val maxPivotPerValuePercent:Int = 10, overr
     }
   }
 
-  //checkpointValue,FlippedValue
-  var checkpointStack:List[(IntSequence,IntSequence)] = List.empty
-  var checkpointStackLevel:Int = -1
-
-  private def popCheckpointStackToLevel(level:Int,included:Boolean){
-    if(included){
-      while(checkpointStackLevel>=level) {
-        checkpointStack = checkpointStack.tail
-      }
-    }else{
-      while(checkpointStackLevel>level) {
-        checkpointStack = checkpointStack.tail
-      }
-    }
-  }
+  val checkpointStack = new SeqCheckpointedValueStack[IntSequence]()
 
   def digestChanges(changes : SeqUpdate) : Boolean = {
     changes match {
       case s@SeqUpdateInsert(value : Int, pos : Int, prev : SeqUpdate) =>
         if (!digestChanges(prev)) return false
 
-        //TODO: build on the original value instead of maintaining two data structs? , changes.newValue.flip(fast=true)
+        //build on the original value instead of maintaining two data structs? , changes.newValue.flip(fast=true)
         this.insertAtPosition(value, prev.newValue.size - pos)
 
         true
@@ -69,15 +55,11 @@ case class Flip(v: SeqValue,override val maxPivotPerValuePercent:Int = 10, overr
         this.remove(prev.newValue.size - position - 1,changes.newValue.flip(fast=true))
         true
 
-      case u@SeqUpdateRollBackToCheckpoint(checkpoint,level) =>
+      case u@SeqUpdateRollBackToCheckpoint(checkPoint,level) =>
         releaseTopCheckpointsToLevel(level,false)
-        popCheckpointStackToLevel(level,false)
-
-        require(checkpoint quickEquals this.checkpointStack.head._1)
-
-        this.rollbackToTopCheckpoint(checkpointStack.head._2)
-        assert(this.newValue quickEquals checkpointStack.head._2)
-
+        this.rollbackToTopCheckpoint(checkpointStack.rollBackAndOutputValue(checkPoint,level))
+        require(checkPoint quickEquals checkpointStack.topCheckpoint)
+        assert(this.newValue quickEquals checkpointStack.outputAtTopCheckpoint(checkPoint))
         true
 
       case SeqUpdateDefineCheckpoint(prev : SeqUpdate, isStarMode, level) =>
@@ -86,15 +68,8 @@ case class Flip(v: SeqValue,override val maxPivotPerValuePercent:Int = 10, overr
         }
 
         releaseTopCheckpointsToLevel(level,true)
-        popCheckpointStackToLevel(level,true)
-
-        val checkpointIn = changes.newValue
-        val checkpointOut = this.newValue
-        checkpointStack = (checkpointIn,checkpointOut) :: checkpointStack
-        checkpointStackLevel += 1
-        require(checkpointStackLevel == level)
-
         this.defineCurrentValueAsCheckpoint(isStarMode)
+        checkpointStack.defineCheckpoint(prev.newValue,level,this.newValue)
         true
 
       case SeqUpdateLastNotified(value) =>
