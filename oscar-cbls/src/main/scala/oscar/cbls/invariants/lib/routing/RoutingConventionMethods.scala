@@ -150,11 +150,5 @@ class CachedPositionOf(maxValue:Int){
     }
   }
 }
-/**
-  * Implementation providing an array stocking the vehicle start position and methods to update the array
-  * @param _numberOfVehicle the number of vehicles to consider
-  */
-object vehicleStartArray{
-  def apply(_numberOfVehicle:Int): VehicleStartArray = new VehicleStartArray(_numberOfVehicle)
-}
+
 

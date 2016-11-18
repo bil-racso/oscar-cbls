@@ -25,7 +25,7 @@ import oscar.cbls.invariants.core.propagation.{Checker, ErrorChecker}
   * Created by  Jannou Brohée on 8/11/16.
   */
 
-object GenericCumulativeIntegerDimensionOnVehicleUsingVehicleStartArray {
+object GenericCumulativeIntegerDimensionOnVehicleUsingStackedVehicleLocation {
 
   /**
     * Implements a GenericCumulativeIntegerDimensionOnVehicle Invariant
@@ -39,7 +39,7 @@ object GenericCumulativeIntegerDimensionOnVehicleUsingVehicleStartArray {
   def apply(routes:ChangingSeqValue,n:Int,v:Int,op :(Int,Int,Int)=>Int,initValue:Array[Int]):Array[CBLSIntVar] ={
     //TODO change routes.domain
     var output: Array[CBLSIntVar] = Array.tabulate(n)((node: Int) => CBLSIntVar(routes.model, Int.MinValue, routes.domain, "capacity at node("+node.toString+")"))
-    new GenericCumulativeIntegerDimensionOnVehicleUsingVehicleStartArray(routes, n, v, op, initValue,output)
+    new GenericCumulativeIntegerDimensionOnVehicleUsingStackedVehicleLocation(routes, n, v, op, initValue,output)
     output
   }
 }
@@ -55,33 +55,36 @@ object GenericCumulativeIntegerDimensionOnVehicleUsingVehicleStartArray {
   * @param initValue an array giving the initial capacity of a vehicle at his starting node (0, v-1)
   * @param output The array which store, for any node, the capacity of the vehicle associated at the node
   */
-class GenericCumulativeIntegerDimensionOnVehicleUsingVehicleStartArray(routes:ChangingSeqValue, n:Int, v:Int, op :(Int,Int,Int)=>Int, initValue :Array[Int], output:Array[CBLSIntVar])
+class GenericCumulativeIntegerDimensionOnVehicleUsingStackedVehicleLocation(routes:ChangingSeqValue, n:Int, v:Int, op :(Int,Int,Int)=>Int, initValue :Array[Int], output:Array[CBLSIntVar])
   extends Invariant()
     with SeqNotificationTarget {
 
   require(initValue.length==v)
   require( output.length==n)
-  private var startPosOfVehicle =  vehicleStartArray(v) // this will be updated by computeContentAndVehicleStartPositionsFromScratch
+  //VehiculeLocation=ConcreteVehicleLocation(Array.tabulate(v)(((car:Int)=> -1))) // this will be updated by computeContentAndVehicleStartPositionsFromScratch
   registerStaticAndDynamicDependency(routes)
   finishInitialization()
   for(i <- output) {
     i.setDefiningInvariant(this)
   }
 
-  computeContentAndVehicleStartPositionsFromScratch(routes.newValue)
-
+  private var stack = computeContentAndVehicleStartPositionsFromScratch(routes.newValue)
+  // println("stack after scratch ?  "+stack)
   override def notifySeqChanges(v: ChangingSeqValue, d: Int, changes: SeqUpdate){
-    //toprintln=" "
+    // println(changes)
+    // stack=stack.regularize()
     val zoneToCompute = updateVehicleStartPositionsAndSearchZoneToUpdate(changes)
+    //println("stack for changes ? "+stack)
     zoneToCompute match {
-      case null => computeContentAndVehicleStartPositionsFromScratch(routes.newValue)
+      case null => stack = computeContentAndVehicleStartPositionsFromScratch(routes.newValue)
       case tree =>
         for(car <- tree.keys)  {
           val lst = zoneToCompute.get(car).get
-          if (lst.nonEmpty) updateContentForSelectedZones(routes.newValue,lst,startPosOfVehicle(car),car)
+
+          if (lst.nonEmpty) updateContentForSelectedZones(routes.newValue,lst,stack.posOfVehicle(car),car)
         }
     }
-   // this.checkInternals(new ErrorChecker())
+    this.checkInternals(new ErrorChecker())
   }
 
 
@@ -94,7 +97,7 @@ class GenericCumulativeIntegerDimensionOnVehicleUsingVehicleStartArray(routes:Ch
     *        @author renaud.delandtsheer@cetic.be
     */
   private def smartPrepend(zoneStart: Int, zoneEnd:Int, list:List[(Int,Int)]): List[(Int,Int)] ={
-   // println("smart "+zoneStart+" , "+zoneEnd)
+    // println("smart "+zoneStart+" , "+zoneEnd)
     require(zoneStart<=zoneEnd)
     assert(list.sortWith((lft:(Int,Int),rgt:(Int,Int))=> lft._1<rgt._1 && lft._2<rgt._2).eq(list))
     list match{
@@ -119,9 +122,10 @@ class GenericCumulativeIntegerDimensionOnVehicleUsingVehicleStartArray(routes:Ch
         updateVehicleStartPositionsAndSearchZoneToUpdate(prev) match{
           case null => null
           case tree =>
-            startPosOfVehicle.updateForInsert(pos) //up tag pos
-            val car = startPosOfVehicle.vehicleReachingPosition(pos)
-            val posOfTag = startPosOfVehicle(car)
+            // println("ici  ? ")
+            stack = stack.push((posit)=>s.oldPosToNewPos(posit)) //up tag pos
+          val car = stack.vehicleReachingPosition(pos)
+            val posOfTag = stack.posOfVehicle(car)
 
             def shiftBy(list:List[(Int,Int)],deltaStart:Int=1):List[(Int,Int)]= {
               list match {
@@ -133,11 +137,11 @@ class GenericCumulativeIntegerDimensionOnVehicleUsingVehicleStartArray(routes:Ch
             val relativePos = pos - posOfTag
             def updateListOfZoneToUpdateAndSearchZoneToUpdateAfterInsert(list:List[(Int,Int)]):List[(Int,Int)]= {
               list match {
-                case Nil => List((relativePos, (math.min(pos + 1, if (car != v - 1) startPosOfVehicle(car + 1) - 1 else changes.newValue.size - 1) )- posOfTag))
+                case Nil => List((relativePos, (math.min(pos + 1, if (car != v - 1) stack.posOfVehicle(car + 1) - 1 else changes.newValue.size - 1) )- posOfTag))
                 case (startZone, endZone) :: tail =>
                   if (endZone < relativePos) smartPrepend(startZone, endZone, updateListOfZoneToUpdateAndSearchZoneToUpdateAfterInsert(tail))
                   else if (endZone == relativePos) smartPrepend(startZone, endZone + 1, shiftBy(tail))
-                  else smartPrepend(relativePos, (math.min(pos + 1, if (car != v - 1) startPosOfVehicle(car + 1) - 1 else changes.newValue.size - 1) - posOfTag), shiftBy(list, if (startZone  < relativePos && endZone > relativePos) 0 else 1))
+                  else smartPrepend(relativePos, (math.min(pos + 1, if (car != v - 1) stack.posOfVehicle(car + 1) - 1 else changes.newValue.size - 1) - posOfTag), shiftBy(list, if (startZone  < relativePos && endZone > relativePos) 0 else 1))
               }
             }
             /*def updateListOfZoneToUpdateAndSearchZoneToUpdateAfterInsert(list:List[(Int,Int)]):List[(Int,Int)]= {
@@ -157,11 +161,11 @@ class GenericCumulativeIntegerDimensionOnVehicleUsingVehicleStartArray(routes:Ch
         updateVehicleStartPositionsAndSearchZoneToUpdate(prev) match{
           case null => null
           case tree =>
-
-            val car = startPosOfVehicle.vehicleReachingPosition(pos)
-            startPosOfVehicle.updateForDelete(pos)
-            val posOfTag = startPosOfVehicle(car)
-
+            //  println("stack for changes ? "+stack)
+            //println("REMOVE at pos :"+pos+" "+changes.newValue.mkString(",")+" <== "+prev.newValue.mkString(","))
+            val car = stack.vehicleReachingPosition(pos)
+            stack = stack.push((posit)=>r.oldPosToNewPos(posit))//.updateForDelete(pos)
+          val relativePos = pos - stack.posOfVehicle(car)
 
             def shiftByOne(list:List[(Int,Int)]):List[(Int,Int)]= {
               list match {
@@ -170,12 +174,11 @@ class GenericCumulativeIntegerDimensionOnVehicleUsingVehicleStartArray(routes:Ch
               }
             }
 
-            val relativePos = pos - posOfTag
             def updateListOfZoneToUpdateAndSearchZoneToUpdateAfterRemove(list:List[(Int,Int)]):List[(Int,Int)]= {
               list match {
-                case Nil => if ((car != v - 1 && pos != startPosOfVehicle(car + 1)) || (car == v - 1 && (pos < changes.newValue.size)))
-                    List((relativePos, relativePos))
-                  else list
+                case Nil => if ((car != v - 1 && pos != stack.posOfVehicle(car + 1)) || (car == v - 1 && (pos < changes.newValue.size)))
+                  List((relativePos, relativePos))
+                else list
                 case (startZone, endZone) :: tail =>
                   if (endZone < relativePos) smartPrepend(startZone, endZone, updateListOfZoneToUpdateAndSearchZoneToUpdateAfterRemove(tail))
                   else if (endZone >= relativePos && startZone <= relativePos)
@@ -186,23 +189,6 @@ class GenericCumulativeIntegerDimensionOnVehicleUsingVehicleStartArray(routes:Ch
               }
             }
 
-            /*
-            def updateListOfZoneToUpdateAndSearchZoneToUpdateAfterRemove(list:List[(Int,Int)]):List[(Int,Int)]= {
-              list match {
-                case Nil => if ((car != v - 1 && pos != startPosOfVehicle(car + 1)) || (car == v - 1 && (pos < changes.newValue.size)))
-                    List((pos-posOfTag, pos-posOfTag))
-                  else list
-                case (startZone, endZone) :: tail =>
-                  val start = startZone + posOfTag
-                  val end = endZone + posOfTag
-                  if (end < pos) smartPrepend(startZone, endZone, updateListOfZoneToUpdateAndSearchZoneToUpdateAfterRemove(tail))
-                  else if (end == pos) if(end>start) smartPrepend(startZone, r.oldPosToNewPos(end-1).get-startPosOfVehicle(car), shiftByOne(tail)) else  shiftByOne(tail)
-                  else if (start == pos) if(end>start) smartPrepend(startZone, r.oldPosToNewPos(end-1).get-startPosOfVehicle(car), shiftByOne(tail)) else  shiftByOne(tail)
-                  else smartPrepend(startZone, r.oldPosToNewPos(end).get-startPosOfVehicle(car), shiftByOne(tail))
-              }
-            }
-             */
-
             tree.insert(car, updateListOfZoneToUpdateAndSearchZoneToUpdateAfterRemove(tree.getOrElse(car,List.empty[(Int,Int)])))
         }
 
@@ -210,15 +196,14 @@ class GenericCumulativeIntegerDimensionOnVehicleUsingVehicleStartArray(routes:Ch
         updateVehicleStartPositionsAndSearchZoneToUpdate(prev) match{
           case null => null
           case tree =>
-           // println("from "+fromIncluded+" to "+toIncluded+" after "+after +" is flip ? "+(flip)+ "\n"+changes.newValue.mkString(",")+"\n"+prev.newValue.mkString(","))
-            val vehicleSource = startPosOfVehicle.vehicleReachingPosition(fromIncluded)
-            val vehicleDestination =startPosOfVehicle.vehicleReachingPosition(after)
-            val vehiculeOfSrc = startPosOfVehicle.vehicleReachingPosition(fromIncluded-1)
-            val vehiculeOfNodeFollowingAfter = startPosOfVehicle.vehicleReachingPosition(after+1)
+            val vehicleSource = stack.vehicleReachingPosition(fromIncluded)
+            val vehicleDestination =stack.vehicleReachingPosition(after)
+            val vehiculeOfSrc = stack.vehicleReachingPosition(fromIncluded-1)
+            val vehiculeOfNodeFollowingAfter = stack.vehicleReachingPosition(after+1)
             val case1:Boolean = after<fromIncluded
-            val relativeFromIncluded = fromIncluded - startPosOfVehicle(vehicleSource)
-            val relativeToIncluded = toIncluded -startPosOfVehicle(vehicleSource)
-            val relativeAfter = after - startPosOfVehicle(vehicleDestination)
+            val relativeFromIncluded = fromIncluded - stack.posOfVehicle(vehicleSource)
+            val relativeToIncluded = toIncluded -stack.posOfVehicle(vehicleSource)
+            val relativeAfter = after - stack.posOfVehicle(vehicleDestination)
             val delta = toIncluded - fromIncluded +1
             val  newAfter = m.oldPosToNewPos(after).get
             val beforeFrom = fromIncluded-1
@@ -269,27 +254,27 @@ class GenericCumulativeIntegerDimensionOnVehicleUsingVehicleStartArray(routes:Ch
             tmp=  tmp.insert(vehicleDestination,updateListOfZoneToUpdateAfterMove(tmp.getOrElse(vehicleDestination, List.empty[(Int,Int)]),false))//, startPosOfVehicle(vehicleDestination)
 
 
-            startPosOfVehicle.updateForMove(fromIncluded,toIncluded,after,if(case1) toIncluded-fromIncluded+1 else -(toIncluded-fromIncluded+1));
-
-            val newRelativeAfter = newAfter - startPosOfVehicle(vehicleDestination)
+            stack = stack.push((pos)=>m.oldPosToNewPos(pos)) // .updateForMove(fromIncluded,toIncluded,after,if(case1) toIncluded-fromIncluded+1 else -(toIncluded-fromIncluded+1));
+          //println("check ? "+startPosOfVehicle)
+          val newRelativeAfter = newAfter - stack.posOfVehicle(vehicleDestination)
             var toReinsertInTheDestinationSideList:List[(Int,Int)]=List.empty[(Int,Int)]
 
             // peut mieux faire  ? TODO
             for(elt <- toReinsertInTheOtherSide) toReinsertInTheDestinationSideList = ((newRelativeAfter+1+elt._1), (newRelativeAfter+1+elt._2)) :: toReinsertInTheDestinationSideList
 
             if(case1) {
-              var dst =  if (vehicleDestination != v - 1)  math.min(m.oldPosToNewPos(after+1).get, startPosOfVehicle(vehicleDestination + 1)-1)-startPosOfVehicle(vehicleDestination) // juste pour savoir si
-              else  math.min(m.oldPosToNewPos(after+1).get, routes.newValue.size-1)-startPosOfVehicle(vehicleDestination)
-              toReinsertInTheDestinationSideList =  if (flip) insertInList(toReinsertInTheDestinationSideList, List.apply((m.oldPosToNewPos(toIncluded).get-startPosOfVehicle(vehicleDestination), dst)))
-              else insertInList(insertInList(toReinsertInTheDestinationSideList,List.apply((dst,dst)) ) , List.apply((m.oldPosToNewPos(fromIncluded).get-startPosOfVehicle(vehicleDestination), m.oldPosToNewPos(fromIncluded).get-startPosOfVehicle(vehicleDestination)) ))
+              var dst =  if (vehicleDestination != v - 1)  math.min(m.oldPosToNewPos(after+1).get, stack.posOfVehicle(vehicleDestination + 1)-1)-stack.posOfVehicle(vehicleDestination) // juste pour savoir si
+              else  math.min(m.oldPosToNewPos(after+1).get, routes.newValue.size-1)-stack.posOfVehicle(vehicleDestination)
+              toReinsertInTheDestinationSideList =  if (flip) insertInList(toReinsertInTheDestinationSideList, List.apply((m.oldPosToNewPos(toIncluded).get-stack.posOfVehicle(vehicleDestination), dst)))
+              else insertInList(insertInList(toReinsertInTheDestinationSideList,List.apply((dst,dst)) ) , List.apply((m.oldPosToNewPos(fromIncluded).get-stack.posOfVehicle(vehicleDestination), m.oldPosToNewPos(fromIncluded).get-stack.posOfVehicle(vehicleDestination)) ))
 
-              dst = if ((vehiculeOfSrc == v - 1 || m.oldPosToNewPos(toIncluded + 1).get < startPosOfVehicle(vehiculeOfSrc + 1)) && toIncluded+1 <= routes.newValue.size-1) toIncluded+1  -startPosOfVehicle(vehicleSource) else -1
+              dst = if ((vehiculeOfSrc == v - 1 || m.oldPosToNewPos(toIncluded + 1).get < stack.posOfVehicle(vehiculeOfSrc + 1)) && toIncluded+1 <= routes.newValue.size-1) toIncluded+1  -stack.posOfVehicle(vehicleSource) else -1
               if(dst != -1) tmp = tmp.insert(vehicleSource,insertInList(tmp.getOrElse(vehicleSource, List.empty[(Int,Int)]),List.apply((dst,dst))))
 
             }
             else {
-              var dst = if (vehiculeOfSrc == v - 1 || m.oldPosToNewPos(toIncluded + 1).get < startPosOfVehicle(vehiculeOfSrc + 1)) fromIncluded else -1
-              dst-= startPosOfVehicle(vehicleSource)
+              var dst = if (vehiculeOfSrc == v - 1 || m.oldPosToNewPos(toIncluded + 1).get < stack.posOfVehicle(vehiculeOfSrc + 1)) fromIncluded else -1
+              dst-= stack.posOfVehicle(vehicleSource)
               if(dst > -1)   tmp = tmp.insert(vehicleSource,insertInList(tmp.getOrElse(vehicleSource, List.empty[(Int,Int)]),List.apply((dst,dst))))
               dst = if((after == routes.newValue.size-1) || ( vehiculeOfNodeFollowingAfter!=vehicleDestination ))  newRelativeAfter+delta else newRelativeAfter+delta+1
               toReinsertInTheDestinationSideList = if (flip) insertInList(toReinsertInTheDestinationSideList,List.apply((newRelativeAfter+1, dst)))
@@ -298,7 +283,9 @@ class GenericCumulativeIntegerDimensionOnVehicleUsingVehicleStartArray(routes:Ch
 
             tmp.insert(vehicleDestination,insertInList(tmp.getOrElse(vehicleDestination, List.empty[(Int,Int)]),toReinsertInTheDestinationSideList))
         }
-      case SeqUpdateAssign(value : IntSequence) => null
+      case SeqUpdateAssign(value : IntSequence) =>
+        stack=stack.regularize()
+        null
       case SeqUpdateLastNotified(value:IntSequence) =>
         require (value quickEquals routes.value)
         RedBlackTreeMap.empty[List[(Int,Int)]]
@@ -335,10 +322,12 @@ class GenericCumulativeIntegerDimensionOnVehicleUsingVehicleStartArray(routes:Ch
     * @param outputInternal the array containing the capacitys
     * @param startPosOfVehiculeInternal the array which store, for any vehicles, the position of the starting node of the vehicle
     */
-  def computeContentAndVehicleStartPositionsFromScratch(s:IntSequence, outputInternal: Array[CBLSIntVar] = output, startPosOfVehiculeInternal : VehicleStartArray = startPosOfVehicle) {
-    var current = s.explorerAtPosition(0).get
+  def computeContentAndVehicleStartPositionsFromScratch(s:IntSequence, outputInternal: Array[CBLSIntVar] = output): VehicleLocation ={ // todo changes output en array int ;)
+  var current = s.explorerAtPosition(0).get
     var currentCar = current.value
-    startPosOfVehiculeInternal(currentCar) = current.position
+    //println("scratch " +currentCar+" "+current.value)
+    var tmp : Array[Int]=Array.tabulate(v)(((car:Int)=> 0))
+    tmp(currentCar) = current.position
     var valueOfCurrentNode =  initValue(current.value)
     setRemainingCapacityOfNode(current.value, valueOfCurrentNode, outputInternal)
     while(!current.next.isEmpty){
@@ -348,14 +337,15 @@ class GenericCumulativeIntegerDimensionOnVehicleUsingVehicleStartArray(routes:Ch
       if(current.value < v){
         //sauver valeur du dernier node du vehicule
         currentCar = current.value
-        startPosOfVehiculeInternal(currentCar) = current.position
+        //println("scratch " +currentCar+" "+current.value)
+        tmp(currentCar) = current.position
         valueOfCurrentNode = initValue(current.value)
       }
       //sinon on continue sur le meme vehicule
       else valueOfCurrentNode =  op(previous.value,current.value,valueOfPresiousNode)
-
       setRemainingCapacityOfNode(current.value, valueOfCurrentNode,outputInternal )
     }
+    new ConcreteVehicleLocation(tmp)
   }
 
   /**
@@ -364,6 +354,7 @@ class GenericCumulativeIntegerDimensionOnVehicleUsingVehicleStartArray(routes:Ch
     * @param lst the list containing positions where calculations must be performed
     */
   def updateContentForSelectedZones(s:IntSequence, lst: List[(Int, Int)],posOfTag:Int,car:Int){
+    // println("car ? "+ car +"\nseq ="+s.mkString(","))
     val iter = lst.toIterator
     var nextZone = iter.next()
     var start = 0
@@ -376,7 +367,7 @@ class GenericCumulativeIntegerDimensionOnVehicleUsingVehicleStartArray(routes:Ch
 
     var cdt:Boolean =  false
     def takeNextZone(): Unit ={nextZone = if(iter.hasNext)  iter.next() else null}
-    var upperBound =  if (car != v - 1) startPosOfVehicle(car + 1) else routes.newValue.size
+    var upperBound =  if (car != v - 1) stack.posOfVehicle(car + 1) else routes.newValue.size
     computePositionOfZone()
     var current = s.explorerAtPosition(start).get// first is mandatory ...
     def checkIfNextZoneAndUpdate(): Unit ={
@@ -387,8 +378,11 @@ class GenericCumulativeIntegerDimensionOnVehicleUsingVehicleStartArray(routes:Ch
         takeNextZone
       }
     }
-
-    var previousPos = s.explorerAtPosition(startPosOfVehicle(startPosOfVehicle.vehicleReachingPosition(current.position))).get
+    //println(stack.vehicleReachingPosition(current.position)+" must be the car : " +car )
+    // require(car == stack.vehicleReachingPosition(current.position))
+    //println(stack.posOfVehicle(stack.vehicleReachingPosition(current.position))+" must be := "+s.positionsOfValue(stack.vehicleReachingPosition(current.position)).firstKey )
+    //require(s.positionsOfValue(car).firstKey==stack.posOfVehicle(stack.vehicleReachingPosition(current.position)))
+    var previousPos = s.explorerAtPosition(stack.posOfVehicle(stack.vehicleReachingPosition(current.position))).get
     var valueOfPreviousNode=initValue(previousPos.value)// valeur du noeud précédent
 
     if(current.position > previousPos.position) {// maj noeud precedent s'il existe
@@ -434,15 +428,16 @@ class GenericCumulativeIntegerDimensionOnVehicleUsingVehicleStartArray(routes:Ch
   }
 
   override def checkInternals(c: Checker): Unit = {
+    // println(startPosOfVehicle)
     var outputCheck: Array[CBLSIntVar] = Array.tabulate(n)((node: Int) => CBLSIntVar(new Store(), Int.MinValue, routes.domain, "capacity at this f**king piece of cr*p of node :D ("+node.toString+")"))
-    var startPosOfVehiculeCheck : VehicleStartArray = vehicleStartArray(v)// Array[Int]= Array.tabulate(v)(((car:Int)=> 0))
-    computeContentAndVehicleStartPositionsFromScratch(routes.newValue, outputCheck,startPosOfVehiculeCheck)
+    var startPosOfVehiculeCheck : VehicleLocation =  computeContentAndVehicleStartPositionsFromScratch(routes.newValue, outputCheck)//vehicleStartArray(v)// Array[Int]= Array.tabulate(v)(((car:Int)=> 0))
+
     for(car <- 0 until v){
-      c.check(startPosOfVehiculeCheck(car) equals startPosOfVehicle(car ), Some("Founded start of car(" + car + "):=" + startPosOfVehicle(car) + " should be :=" + startPosOfVehiculeCheck(car)+" seq :"+routes.newValue.mkString(",")))
+      c.check(startPosOfVehiculeCheck.posOfVehicle(car) equals stack.posOfVehicle(car ), Some("Founded start of car(" + car + "):=" + stack.posOfVehicle(car) + " should be :=" + startPosOfVehiculeCheck.posOfVehicle(car)+" seq :"+routes.newValue.mkString(",")))
 
     }
     for (node <- routes.newValue) {
-      c.check(getRemainingCapacityOfNode(node,outputCheck) equals getRemainingCapacityOfNode(node), Some("Founded Capacity at node(" + node + ") at pos : "+ routes.newValue.positionsOfValue(node).firstKey +"  at car :"+startPosOfVehicle.vehicleReachingPosition(routes.newValue.positionsOfValue(node).firstKey)+" :=" + getRemainingCapacityOfNode(node) + " should be :=" + getRemainingCapacityOfNode(node,outputCheck)));//+ "\nstack : "+toprintln + "\nlastlast = "+lastlastChanges+"\nlast = "+lastChanges+ "\nseq :"+routes.newValue.mkString(",")))
+      c.check(getRemainingCapacityOfNode(node,outputCheck) equals getRemainingCapacityOfNode(node), Some("Founded Capacity at node(" + node + ") at pos : "+ routes.newValue.positionsOfValue(node).firstKey +"  at car :"+stack.vehicleReachingPosition(routes.newValue.positionsOfValue(node).firstKey)+" :=" + getRemainingCapacityOfNode(node) + " should be :=" + getRemainingCapacityOfNode(node,outputCheck)));//+ "\nstack : "+toprintln + "\nlastlast = "+lastlastChanges+"\nlast = "+lastChanges+ "\nseq :"+routes.newValue.mkString(",")))
     }
 
   }

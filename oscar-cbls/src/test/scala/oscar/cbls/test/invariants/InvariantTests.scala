@@ -636,13 +636,13 @@ class InvariantTests extends FunSuite with Checkers {
   test("VehicleOfNodes"){
     val bench = new InvBench(verbose,List(PlusOne(), MinusOne(), ToZero(), ToMin(), ToMax(), Random(), RandomDiff(), Shuffle()))
     val n = 100
-    val v = 2
+    val v = 5
     val route = bench.genRouteOfNodes(n,v)
     VehicleOfNodes(route,v)
     bench.run()
   }
 
-  test("GenericCumulativeIntegerDimensionOnVehicle"){
+  test("GenericCumulativeIntegerDimensionOnVehicleUsingVehicleStartArray"){
     val bench = new InvBench(verbose,List(PlusOne(), MinusOne(), ToZero(), ToMin(), ToMax(), Random(), RandomDiff(), Shuffle()))
     //val bench = new InvBench(verbose,List( MinusOne(),RandomDiff()))
     val n = 1000
@@ -685,12 +685,12 @@ class InvariantTests extends FunSuite with Checkers {
 
     def start() : Array[Int]= { Array.tabulate(v)((car:Int)=> scala.util.Random.nextInt(limite))}
     val  s = start()
-    GenericCumulativeIntegerDimensionOnVehicle(route,n,v,op,s)
+    GenericCumulativeIntegerDimensionOnVehicleUsingVehicleStartArray(route,n,v,op,s)
     println("n ="+n+" v ="+v)
     bench.run()
   }
 
-  test("GenericCumulativeIntegerDimensionOnVehicleUsingVehicleStartArray"){
+  test("GenericCumulativeIntegerDimensionOnVehicleUsingStackedVehicleLocation"){
     val bench = new InvBench(verbose,List(PlusOne(), MinusOne(), ToZero(), ToMin(), ToMax(), Random(), RandomDiff(), Shuffle()))
     val n = 1000
     val v = 200
@@ -732,8 +732,9 @@ class InvariantTests extends FunSuite with Checkers {
 
     def start() : Array[Int]= { Array.tabulate(v)((car:Int)=> scala.util.Random.nextInt(limite))}
     val  s = start()
-    GenericCumulativeIntegerDimensionOnVehicleUsingVehicleStartArray(route,n,v,op,s)
+    GenericCumulativeIntegerDimensionOnVehicleUsingStackedVehicleLocation(route,n,v,op,s)
     println("n ="+n+" v ="+v)
+
     bench.run()
   }
 
