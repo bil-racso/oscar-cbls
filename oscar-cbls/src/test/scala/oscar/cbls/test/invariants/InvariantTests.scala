@@ -15,6 +15,8 @@ package oscar.cbls.test.invariants
   * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
   ******************************************************************************/
 
+import java.lang
+
 import org.scalacheck.Gen
 import org.scalatest.FunSuite
 import org.scalatest.prop.Checkers
@@ -47,6 +49,8 @@ class InvariantTests extends FunSuite with Checkers {
 
   val verbose = 0
 
+  val N = 700
+  val V = 699
   test("BelongsTo maintains the violation of a membership.") {
     val bench = new InvBench(verbose,List(PlusOne(), MinusOne(), ToZero(), ToMin(), ToMax(),
       Random(), RandomDiff()))
@@ -645,15 +649,14 @@ class InvariantTests extends FunSuite with Checkers {
   test("GenericCumulativeIntegerDimensionOnVehicleUsingVehicleStartArray"){
     val bench = new InvBench(verbose,List(PlusOne(), MinusOne(), ToZero(), ToMin(), ToMax(), Random(), RandomDiff(), Shuffle()))
     //val bench = new InvBench(verbose,List( MinusOne(),RandomDiff()))
-    val n = 1000
-    val v = 200
-    val route = bench.genRouteOfNodes(n,v)
+
+    val route = bench.genRouteOfNodes(N,V)
 
 
     val limite = 10
     def genMatrix(node:Int):Array[Array[Int]] = {
       val init = Int.MinValue
-      val matrix: Array[Array[Int]] = Array.tabulate(n,n)((n1:Int,n2:Int)=>init)
+      val matrix: Array[Array[Int]] = Array.tabulate(N,N)((n1:Int,n2:Int)=>init)
       for (elt <- 0 until node) {
         for (elt1 <- 0 until node) {
           matrix(elt)(elt1) =  if(elt==elt1) 0 else scala.util.Random.nextInt(limite)
@@ -661,10 +664,10 @@ class InvariantTests extends FunSuite with Checkers {
       }
       matrix
     }
-    val matrix = genMatrix(n)
+    val matrix = genMatrix(N)
     def genOperation(node:Int):Array[Array[Int]] = {
-      val oper: Array[Array[Int]] = Array.ofDim(n, n)
-      var t1:Array[Int] =Array.ofDim(n)
+      val oper: Array[Array[Int]] = Array.ofDim(N,N)
+      var t1:Array[Int] =Array.ofDim(N)
       for (elt <- 0 until node) {
         for (elt1 <- 0 until node) {
           oper(elt)(elt1) =  if(matrix(elt)(elt1)==0) scala.util.Random.nextInt(3) else scala.util.Random.nextInt(4)
@@ -673,7 +676,7 @@ class InvariantTests extends FunSuite with Checkers {
       oper
     }
 
-    val oper = genOperation(n)
+    val oper = genOperation(N)
     def op(n1:Int,n2:Int,c:Int): Int= {
       oper(n1)(n2) match {
         case 0 => c + matrix(n1)(n2)
@@ -683,24 +686,25 @@ class InvariantTests extends FunSuite with Checkers {
       }
     }
 
-    def start() : Array[Int]= { Array.tabulate(v)((car:Int)=> scala.util.Random.nextInt(limite))}
+    def start() : Array[Int]= { Array.tabulate(V)((car:Int)=> scala.util.Random.nextInt(limite))}
     val  s = start()
-    GenericCumulativeIntegerDimensionOnVehicleUsingVehicleStartArray(route,n,v,op,s)
-    println("n ="+n+" v ="+v)
+    GenericCumulativeIntegerDimensionOnVehicleUsingVehicleStartArray(route,N,V,op,s)
+    println("n ="+N+" v ="+V)
+    val go = System.nanoTime()
     bench.run()
+    println("GenericCumulativeIntegerDimensionOnVehicleUsingVehicleStartArray : "+((System.nanoTime()-go)/Math.pow(10,9))+" s")
   }
 
   test("GenericCumulativeIntegerDimensionOnVehicleUsingStackedVehicleLocation"){
     val bench = new InvBench(verbose,List(PlusOne(), MinusOne(), ToZero(), ToMin(), ToMax(), Random(), RandomDiff(), Shuffle()))
-    val n = 1000
-    val v = 200
-    val route = bench.genRouteOfNodes(n,v)
+
+    val route = bench.genRouteOfNodes(N,V)
 
 
     val limite = 10
     def genMatrix(node:Int):Array[Array[Int]] = {
       val init = Int.MinValue
-      val matrix: Array[Array[Int]] = Array.tabulate(n,n)((n1:Int,n2:Int)=>init)
+      val matrix: Array[Array[Int]] = Array.tabulate(N,N)((n1:Int,n2:Int)=>init)
       for (elt <- 0 until node) {
         for (elt1 <- 0 until node) {
           matrix(elt)(elt1) =  if(elt==elt1) 0 else scala.util.Random.nextInt(limite)
@@ -708,10 +712,10 @@ class InvariantTests extends FunSuite with Checkers {
       }
       matrix
     }
-    val matrix = genMatrix(n)
+    val matrix = genMatrix(N)
     def genOperation(node:Int):Array[Array[Int]] = {
-      val oper: Array[Array[Int]] = Array.ofDim(n, n)
-      var t1:Array[Int] =Array.ofDim(n)
+      val oper: Array[Array[Int]] = Array.ofDim(N,N)
+      var t1:Array[Int] =Array.ofDim(N)
       for (elt <- 0 until node) {
         for (elt1 <- 0 until node) {
           oper(elt)(elt1) =  if(matrix(elt)(elt1)==0) scala.util.Random.nextInt(3) else scala.util.Random.nextInt(4)
@@ -720,7 +724,7 @@ class InvariantTests extends FunSuite with Checkers {
       oper
     }
 
-    val oper = genOperation(n)
+    val oper = genOperation(N)
     def op(n1:Int,n2:Int,c:Int): Int= {
       oper(n1)(n2) match {
         case 0 => c + matrix(n1)(n2)
@@ -730,12 +734,14 @@ class InvariantTests extends FunSuite with Checkers {
       }
     }
 
-    def start() : Array[Int]= { Array.tabulate(v)((car:Int)=> scala.util.Random.nextInt(limite))}
+    def start() : Array[Int]= { Array.tabulate(V)((car:Int)=> scala.util.Random.nextInt(limite))}
     val  s = start()
-    GenericCumulativeIntegerDimensionOnVehicleUsingStackedVehicleLocation(route,n,v,op,s)
-    println("n ="+n+" v ="+v)
+    GenericCumulativeIntegerDimensionOnVehicleUsingStackedVehicleLocation(route,N,V,op,s)
+    //println("n ="+n+" v ="+v)
 
+    val go = System.nanoTime()
     bench.run()
+    println("GenericCumulativeIntegerDimensionOnVehicleUsingStackedVehicleLocation : "+((System.nanoTime()-go)/Math.pow(10,9))+" s")
   }
 
   test("GenericCumulativeConstraint"){
@@ -782,7 +788,9 @@ class InvariantTests extends FunSuite with Checkers {
     val  s = start()
     GenericCumulativeConstraint(route,n,v,op,limite,s)
     println("n ="+n+" v ="+v)
+    val go = System.nanoTime()
     bench.run()
+    println("Time : "+((System.nanoTime()-go)/Math.pow(10,9)))
   }
 
 

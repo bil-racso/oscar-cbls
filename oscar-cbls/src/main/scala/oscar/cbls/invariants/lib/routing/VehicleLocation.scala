@@ -55,15 +55,15 @@ abstract class VehicleLocation(_v : Int){
   }
 }
 
-/*
 
+/*
 
 object ConcreteVehicleLocation{
   def apply(value: Array[Int]): ConcreteVehicleLocation = new ConcreteVehicleLocation(value)
   def unapply(arg: ConcreteVehicleLocation): Option[Array[Int]] =Some(arg.startPositionOfVehicle)
 }
 
-class ConcreteVehicleLocation(value:Array[Int]) extends VehiculeLocation(value.length){
+class ConcreteVehicleLocation(value:Array[Int]) extends VehicleLocation(value.length){
 
   private val startPositionOfVehicle : Array[Int]= Array.tabulate(v)(((car:Int)=> value(car)))
 
@@ -73,31 +73,31 @@ class ConcreteVehicleLocation(value:Array[Int]) extends VehiculeLocation(value.l
   }
 
   override def regularize(): ConcreteVehicleLocation = this
-  override def push(function:(Int)=> Option[Int]): VehiculeLocation = StackedVehicleLocation((posit)=>function(posOfVehicle(posit)),this)
+  override def push(function:(Int)=> Option[Int]): VehicleLocation = StackedVehicleLocation((posit)=>function(posOfVehicle(posit)),this)
   override def posOfVehicle(vehicle: Int): Int = startPositionOfVehicle(vehicle)
 
   override def toString: String = "concrete "+startPositionOfVehicle.mkString(",")
 }
 
 object StackedVehicleLocation{
-  def apply(function:(Int)=> Option[Int], origin: VehiculeLocation): StackedVehicleLocation = new StackedVehicleLocation( function, origin)
-  def unapply(arg: StackedVehicleLocation): Option[( (Int=>Option[Int]),VehiculeLocation)] = Some( arg.function,arg.origin)
+  def apply(function:(Int)=> Option[Int], origin: VehicleLocation): StackedVehicleLocation = new StackedVehicleLocation( function, origin)
+  def unapply(arg: StackedVehicleLocation): Option[( (Int=>Option[Int]),VehicleLocation)] = Some( arg.function,arg.origin)
 }
 
-class StackedVehicleLocation( val function:Int=> Option[Int], val origin: VehiculeLocation) extends VehiculeLocation(origin.v){
+class StackedVehicleLocation( val function:Int=> Option[Int], val origin: VehicleLocation) extends VehicleLocation(origin.v){
 
-  override def push(oldToNewfunction:(Int)=> Option[Int]): VehiculeLocation = StackedVehicleLocation((posit) =>  oldToNewfunction(posOfVehicle(posit)),origin)
+  override def push(oldToNewfunction:(Int)=> Option[Int]): VehicleLocation = StackedVehicleLocation((posit) =>  oldToNewfunction(posOfVehicle(posit)),origin)
   override def posOfVehicle(vehicle: Int): Int = function(vehicle).get
 
   override def toString: String = " stacked ( origin : "+origin+")"
 }
 
-
-
-
-
-
 */
+
+
+
+
+
 
 object ConcreteVehicleLocation{
   def apply(value: Array[Int]): ConcreteVehicleLocation = new ConcreteVehicleLocation(value)
@@ -131,3 +131,4 @@ class StackedVehicleLocation( val function:Int=> Int, val origin: VehicleLocatio
 
   override def toString: String = " stacked ( origin : "+origin+")"
 }
+
