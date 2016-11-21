@@ -154,6 +154,7 @@ class Precedence(seq:ChangingSeqValue,
   }
 
   override def notifySeqChanges(v : ChangingSeqValue, d : Int, changes : SeqUpdate) {
+    println("precedence.notifySeqChanges(" + changes.getClass.getSimpleName + ")")
     if (!digestUpdates(changes)) {
       //this also updates checkpoint links
       computeAndAffectViolationsFromScratch(changes.newValue)
@@ -161,7 +162,9 @@ class Precedence(seq:ChangingSeqValue,
   }
 
   private def digestUpdates(changes : SeqUpdate) : Boolean = {
+    println("precedence.digestUpdate(" + changes.getClass.getSimpleName + ")")
     changes match {
+      case null => throw new Error()
       case SeqUpdateDefineCheckpoint(prev : SeqUpdate, isActive : Boolean, checkpointLevel:Int) =>
         //println("define checkpoint")
         if(checkpointLevel == 0){
@@ -180,6 +183,7 @@ class Precedence(seq:ChangingSeqValue,
           reloadViolationsAtCheckpoint()
           true
         }else{
+          println("Digest SeqUpdateRollBackToCheckpoint with howTo" + x.howToRollBack)
           digestUpdates(x.howToRollBack)
         }
 

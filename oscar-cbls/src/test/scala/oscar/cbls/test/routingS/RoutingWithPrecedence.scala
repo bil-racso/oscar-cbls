@@ -94,7 +94,7 @@ object RoutingWithPrecedence extends App{
 
   //val search = threeOpt(20,true)
   //search.verboseWithExtraInfo(2, ()=> "" + myVRP)
-  search2.verbose = 1
+  search2.verbose = 3
 
 
   search2.doAllMoves(obj=myVRP.obj)

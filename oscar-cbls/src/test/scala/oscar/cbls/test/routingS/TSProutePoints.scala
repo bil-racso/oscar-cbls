@@ -49,35 +49,32 @@ object TSProutePoints extends App {
   val n = 10000
   val v = 100
 
+  val verbose = 1
+  val maxPivotPerValuePercent = 4
+  new TSPRoutePointsS(1000,100,4,verbose)
 
-
-  new TSPRoutePointsS(1000,1,4)
-
+/*
   println()
   println("n\tv\tpercent\ttime\ttime\ttime")
 
   for(n <- 1000 to 11000 by 2000){
-      for (maxPivotPerValuePercent <- List(20)){
-        for(v <- List(100)){
-          print(n + "\t" + v + "\t" + maxPivotPerValuePercent + "\t")
-          new TSPRoutePointsS(n,v,maxPivotPerValuePercent)
-          print("\t")
-          System.gc()
-          new TSPRoutePointsS(n,v,maxPivotPerValuePercent)
-          print("\t")
-          System.gc()
-          new TSPRoutePointsS(n,v,maxPivotPerValuePercent)
-          print("\n")
-          System.gc()
-      }
+    for(v <- List(100)){
+      print(n + "\t" + v + "\t" + maxPivotPerValuePercent + "\t")
+      new TSPRoutePointsS(n,v,maxPivotPerValuePercent,verbose)
+      print("\t")
+      System.gc()
+      new TSPRoutePointsS(n,v,maxPivotPerValuePercent,verbose)
+      print("\t")
+      System.gc()
+      new TSPRoutePointsS(n,v,maxPivotPerValuePercent,verbose)
+      print("\n")
+      System.gc()
     }
   }
+  */
 }
 
-class TSPRoutePointsS(n:Int,v:Int,maxPivotPerValuePercent:Int) extends StopWatch{
-
-
-
+class TSPRoutePointsS(n:Int,v:Int,maxPivotPerValuePercent:Int, verbose:Int) extends StopWatch{
 
   val symmetricDistanceMatrix = RoutingMatrixGenerator(n)._1
 
@@ -103,9 +100,9 @@ class TSPRoutePointsS(n:Int,v:Int,maxPivotPerValuePercent:Int) extends StopWatch
 
   val search = (BestSlopeFirst(List(routeUnroutdPoint2, routeUnroutdPoint, onePtMove(10),twoOpt, threeOpt(10,true))) exhaust threeOpt(20,true))
 
- // val search = (new RoundRobin(List(routeUnroutdPoint2,onePtMove(10) guard (() => myVRP.unrouted.value.size != 0)),10)) exhaust BestSlopeFirst(List(onePtMove(20),twoOpt, threeOpt(10,true))) exhaust threeOpt(20,true)
+  // val search = (new RoundRobin(List(routeUnroutdPoint2,onePtMove(10) guard (() => myVRP.unrouted.value.size != 0)),10)) exhaust BestSlopeFirst(List(onePtMove(20),twoOpt, threeOpt(10,true))) exhaust threeOpt(20,true)
 
-  search.verbose = 0
+  search.verbose = verbose
   //search.verboseWithExtraInfo(1, ()=> "" + myVRP)
 
   search.doAllMoves(obj=myVRP.obj)

@@ -159,7 +159,8 @@ object SeqUpdateMove{
    * @param move
    * @return fromIncluded,toIncluded,after,flip,prev
    */
-  def unapply(move:SeqUpdateMove):Option[(Int,Int,Int,Boolean,SeqUpdate)] = Some(move.fromIncluded,move.toIncluded,move.after,move.flip,move.prev)
+  def unapply(move:SeqUpdateMove):Option[(Int,Int,Int,Boolean,SeqUpdate)] =
+    Some(move.fromIncluded,move.toIncluded,move.after,move.flip,move.prev)
 }
 
 
@@ -309,7 +310,7 @@ case class SeqUpdateLastNotified(value:IntSequence) extends SeqUpdate(value){
   override protected[computation] def regularize(maxPivot:Int) : SeqUpdate = SeqUpdateLastNotified(value.regularizeToMaxPivot(maxPivot))
 
   override protected[computation] def prepend(u : SeqUpdate) : SeqUpdate = {
-    require(u.newValue quickEquals value)
+    require(u.newValue quickEquals value, "error on prepend; prepending " + u + " expected:" + this.newValue + " eq:" + (u.newValue.toList equals this.newValue.toList))
     u
   }
 
@@ -557,14 +558,14 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], val maxValue: Int, 
   protected def insertAtPosition(value:Int,pos:Int){
     assert(pos <= toNotify.newValue.size)
     assert(pos >= 0)
-    recordPerformedUpdate(SeqUpdateInsert(value,pos,_))
+    recordPerformedUpdate((prev,newSeq) => if(newSeq == null) SeqUpdateInsert(value,pos,prev) else SeqUpdateInsert(value,pos,prev,newSeq))
     notifyChanged()
   }
 
   protected def insertAtPosition(value:Int,pos:Int,seqAfter:IntSequence){
     assert(pos <= toNotify.newValue.size)
     assert(pos >= 0)
-    recordPerformedUpdate(SeqUpdateInsert(value,pos,_,seqAfter))
+    recordPerformedUpdate((prev,_) => SeqUpdateInsert(value,pos,prev,seqAfter))
     // println(" notify insert " + toNotify)
     notifyChanged()
   }
@@ -572,14 +573,14 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], val maxValue: Int, 
   protected def remove(position:Int){
     require(toNotify.newValue.size > position && position >=0,
       "removing at position " + position + " size is " + newValue.size)
-    recordPerformedUpdate(SeqUpdateRemove(position, _))
+    recordPerformedUpdate((prev,newSeq) => if(newSeq == null) SeqUpdateRemove(position, prev) else SeqUpdateRemove(position, prev,newSeq))
     //println(" notify remove " + toNotify)
     notifyChanged()
   }
 
   protected def remove(position:Int,seqAfter:IntSequence){
     require(toNotify.newValue.size > position && position >=0, "removing at position " + position + " size is " + newValue.size)
-    recordPerformedUpdate(SeqUpdateRemove(position,_,seqAfter))
+    recordPerformedUpdate((prev,_) => SeqUpdateRemove(position,prev,seqAfter))
     //println(" notify remove " + toNotify)
     notifyChanged()
   }
@@ -600,7 +601,9 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], val maxValue: Int, 
       afterPosition < fromIncludedPosition || afterPosition > toIncludedPosition,
       "afterPosition=" + afterPosition + " cannot be between fromIncludedPosition=" + fromIncludedPosition + " and toIncludedPosition=" + toIncludedPosition)
 
-    recordPerformedUpdate(SeqUpdateMove(fromIncludedPosition,toIncludedPosition,afterPosition,flip,_))
+    recordPerformedUpdate((prev,newSeq) =>
+      if(newSeq == null) SeqUpdateMove(fromIncludedPosition,toIncludedPosition,afterPosition,flip,prev)
+      else SeqUpdateMove(fromIncludedPosition,toIncludedPosition,afterPosition,flip,prev,newSeq))
     //println("notified move " + toNotify)
     notifyChanged()
   }
@@ -616,7 +619,7 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], val maxValue: Int, 
     require(-1<=afterPosition)
     require(fromIncludedPosition <= toIncludedPosition)
 
-    recordPerformedUpdate(SeqUpdateMove(fromIncludedPosition,toIncludedPosition,afterPosition,flip,_,seqAfter))
+    recordPerformedUpdate((prev,_) => SeqUpdateMove(fromIncludedPosition,toIncludedPosition,afterPosition,flip,prev,seqAfter))
     //println("notified move " + toNotify)
     notifyChanged()
   }
@@ -652,7 +655,7 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], val maxValue: Int, 
   protected [computation] def setValue(seq:IntSequence){
     // println("setValue:" + seq)
     assert(!toNotify.anyCheckpointDefinition)
-    recordPerformedUpdate(_ => SeqUpdateAssign(seq))
+    recordPerformedUpdate((_,_) => SeqUpdateAssign(seq))
     notifyChanged()
   }
 
@@ -729,12 +732,13 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], val maxValue: Int, 
   }
 
   @inline
-  private def recordPerformedUpdate(updatefct:SeqUpdate => SeqUpdate) {
+  private def recordPerformedUpdate(updatefct:(SeqUpdate,IntSequence) => SeqUpdate) {
     //for notification recording
-    toNotify = updatefct(toNotify)
+    toNotify = updatefct(toNotify,null)
+    val tmp = toNotify.newValue
     //for checkpint recording
     if (performedSinceTopCheckpoint != null) {
-      performedSinceTopCheckpoint = updatefct(performedSinceTopCheckpoint)
+      performedSinceTopCheckpoint = updatefct(performedSinceTopCheckpoint,tmp)
       if (performedSinceTopCheckpoint.depth < -maxHistorySize || performedSinceTopCheckpoint.depth > maxHistorySize) {
         performedSinceTopCheckpoint = null //we do not record anymore, an assign will be generated in case of rollBack.
       }
@@ -812,10 +816,12 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], val maxValue: Int, 
           //the purpose of transferring performedSinceTopCheckpoint to a tmp value if to ensure that the function created
           // herebelow is not affected by a change in the variable, as it is modified later on
           val tmp = performedSinceTopCheckpoint
+          val tmpToNotify = toNotify
+          println("performedSinceTopCheckpoint:" + performedSinceTopCheckpoint)
           //we specify a roll back and give the instructions that must be undone, just in case.
           toNotify = SeqUpdateRollBackToCheckpoint(
             checkpoint,
-            () => {tmp.reverse(checkpoint,toNotify)},              //TODO check that we do not create an infinite roll back loop here
+            () => {tmp.reverse(checkpoint,tmpToNotify)},              //TODO check that we do not create an infinite roll back loop here
             level = levelOfTopCheckpoint)
 
         }else{
