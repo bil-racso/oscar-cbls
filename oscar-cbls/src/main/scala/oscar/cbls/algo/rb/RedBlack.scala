@@ -174,7 +174,7 @@ object T{
   }
 
   def apply[V](c : Boolean, l : RedBlackTreeMap[V], k : Int, v : Option[V], r : RedBlackTreeMap[V]) =
-  new T(c,l,k,v,r)
+    new T(c,l,k,v,r)
 }
 
 // A tree node.
@@ -326,14 +326,14 @@ object RedBlackTreeMap {
 
 
   /**
-    * make the red black tree out of already sorted couples (key,value)
-    * they must be sorted by increasing order of key, and a key can only be present once.
-    * There is no check of these properties
-    * This is O(n); thus faster than a n*log(n) if you were building it from unsorted pairs
-    * @param args
-    * @tparam V
-    * @return
-    */
+   * make the red black tree out of already sorted couples (key,value)
+   * they must be sorted by increasing order of key, and a key can only be present once.
+   * There is no check of these properties
+   * This is O(n); thus faster than a n*log(n) if you were building it from unsorted pairs
+   * @param args
+   * @tparam V
+   * @return
+   */
   def makeFromSorted[@specialized(Int) V](args:Iterable [(Int,V)]): RedBlackTreeMap[V] = {
     //root is to be black, beside alternate red and black
     val a = args.toArray
@@ -341,15 +341,40 @@ object RedBlackTreeMap {
     else myMakeFromSorted(a,0,a.length-1,false)
   }
 
+  def makeFromSortedContinuousArray[@specialized V](args:Array[V]):RedBlackTreeMap[V] = {
+    if(args.size == 0) RedBlackTreeMap.empty [V]
+    else myMakeFromContinuousSorted(args, 0, args.length - 1, false)
+  }
+
+  private def myMakeFromContinuousSorted[@specialized(Int) V](args:Array[V],fromIncluded:Int,toIncluded:Int,targetIsRed:Boolean): RedBlackTreeMap[V] = {
+    //root is to be black, beside alternate red and black
+    if(fromIncluded == toIncluded){
+      val value = args(fromIncluded)
+      T(targetIsRed, L(),  fromIncluded, Some(value), L())
+    }else if (fromIncluded + 1 == toIncluded) {
+      val valueL = args(fromIncluded)
+      val valueH = args(toIncluded)
+      T(targetIsRed, T(!targetIsRed, L(),  fromIncluded, Some(valueL), L()),  toIncluded, Some(valueH), L())
+    }else{
+      //there is a middle point
+      val middlePoint = (fromIncluded + toIncluded)/2
+      val left = myMakeFromContinuousSorted(args,fromIncluded,middlePoint-1,!targetIsRed)
+      val right = myMakeFromContinuousSorted(args,middlePoint+1,toIncluded,!targetIsRed)
+      val value = args(middlePoint)
+      T(targetIsRed, left,  middlePoint, Some(value), right)
+    }
+  }
+
+
   /**
-    * make the red black tree out of already sorted couples (key,value)
-    * they must be sorted by increasing order of key, and a key can only be present once.
-    * There is no check of these properties
-    * This is O(n); thus faster than a n*log(n) if you were building it from unsorted pairs
-    * @param args
-    * @tparam V
-    * @return
-    */
+   * make the red black tree out of already sorted couples (key,value)
+   * they must be sorted by increasing order of key, and a key can only be present once.
+   * There is no check of these properties
+   * This is O(n); thus faster than a n*log(n) if you were building it from unsorted pairs
+   * @param args
+   * @tparam V
+   * @return
+   */
   def makeFromSortedArray[@specialized(Int) V](args:Array[(Int,V)]): RedBlackTreeMap[V] = {
     //root is to be black, beside alternate red and black
     if(args.length <=3) this.apply(args)

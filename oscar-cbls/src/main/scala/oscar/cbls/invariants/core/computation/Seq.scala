@@ -189,7 +189,15 @@ class SeqUpdateMove(val fromIncluded:Int,val toIncluded:Int,val after:Int, val f
   //TODO: find O(1) solution
   private var localBijection:PiecewiseLinearBijectionNaive = null
   private def ensureBijection(){
-    if(localBijection == null) localBijection = MovedIntSequence.bijectionForMove(fromIncluded, toIncluded, after, flip)
+    if(localBijection == null) {
+      localBijection = seq match{
+        case m:MovedIntSequence
+          if ((m.seq quickEquals prev.newValue) && m.startPositionIncluded == fromIncluded
+            && m.endPositionIncluded == toIncluded && m.moveAfterPosition == after && m.flip == flip) =>
+          m.localBijection
+        case _ => MovedIntSequence.bijectionForMove(fromIncluded, toIncluded, after, flip)
+      }
+    }
   }
 
   override def oldPosToNewPos(oldPos : Int) : Option[Int] = {
@@ -591,9 +599,10 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], val maxValue: Int, 
 
   //-1 for first position
   protected def move(fromIncludedPosition:Int,toIncludedPosition:Int,afterPosition:Int,flip:Boolean){
+    println("seq.move(fromIncludedPosition:" + fromIncludedPosition + " toIncludedPosition:" + toIncludedPosition +" afterPosition:" + afterPosition + " flip:" + flip+ ")")
     require(toNotify.newValue.size > toIncludedPosition)
     require(toNotify.newValue.size > afterPosition, "toNotify.newValue.size(=" + toNotify.newValue.size + ") > afterPosition(=" + afterPosition + ")")
-    require(0 <= fromIncludedPosition)
+    require(0 <= fromIncludedPosition,"move with fromIncludedPosition=" + fromIncludedPosition)
     require(-1<=afterPosition)
     require(fromIncludedPosition <= toIncludedPosition, "fromIncludedPosition=" + fromIncludedPosition + "should <= toIncludedPosition=" + toIncludedPosition)
 

@@ -38,14 +38,13 @@ object PiecewiseLinearBijectionNaive{
     }
   }
 
-  def apply(forward:PiecewiseLinearFun, backward:PiecewiseLinearFun):PiecewiseLinearBijectionNaive = new PiecewiseLinearBijectionNaive(forward,backward)
   def apply(forward:PiecewiseLinearFun) = new PiecewiseLinearBijectionNaive(forward)
 }
 
-class PiecewiseLinearBijectionNaive(val forward:PiecewiseLinearFun, val backward:PiecewiseLinearFun){
-
-  def this(forward:PiecewiseLinearFun)= {
-    this(forward,PiecewiseLinearFun.createFromPivots(PiecewiseLinearBijectionNaive.computeInvertedPivots(null, forward.pivots, null)))
+class PiecewiseLinearBijectionNaive(val forward:PiecewiseLinearFun, givenBackward:PiecewiseLinearFun = null){
+  lazy val backward:PiecewiseLinearFun = {
+    if(givenBackward != null) givenBackward
+    else PiecewiseLinearFun.createFromPivots(PiecewiseLinearBijectionNaive.computeInvertedPivots(null, forward.pivots, null))
   }
 
   def invert:PiecewiseLinearBijectionNaive = new PiecewiseLinearBijectionNaive(backward,forward)

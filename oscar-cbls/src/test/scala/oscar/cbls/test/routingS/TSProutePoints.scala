@@ -51,8 +51,8 @@ object TSProutePoints extends App {
 
   val verbose = 1
   val maxPivotPerValuePercent = 4
-  new TSPRoutePointsS(1000,100,4,verbose)
-  new TSPRoutePointsS(1000,100,4,verbose)
+  new TSPRoutePointsS(1000,10,4,verbose)
+  new TSPRoutePointsS(1000,10,4,verbose)
 /*
   println()
   println("n\tv\tpercent\ttime\ttime\ttime")

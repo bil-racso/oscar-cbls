@@ -34,7 +34,7 @@ object RoutingConventionMethods {
 
   def batchVehicleReachingPosition(seq:IntSequence,v:Int):(Int=>Int) = {
     val vehiclePositionArray:Array[(Int,Int)] =
-      Array.tabulate(v)(vehicle => (seq.positionOfAnyOccurrence(vehicle).head, vehicle))
+      Array.tabulate(v)(vehicle => (seq.positionOfAnyOccurrence(vehicle).get, vehicle))
 
     val vehiclePositionRB = RedBlackTreeMap.makeFromSorted(vehiclePositionArray)
 
@@ -49,19 +49,19 @@ object RoutingConventionMethods {
 
   def searchVehicleReachingPosition(position:Int, seq:IntSequence, v:Int):Int = {
     var upperVehicle = v-1
-    var upperVehiclePosition = seq.positionOfAnyOccurrence(upperVehicle).head
+    var upperVehiclePosition = seq.positionOfAnyOccurrence(upperVehicle).get
 
     if(position >= upperVehiclePosition) return upperVehicle
 
     var lowerVehicle = 0
     var lowerVehiclePosition = 0
 
-    assert(seq.positionOfAnyOccurrence(lowerVehicle).head == 0)
+    assert(seq.positionOfAnyOccurrence(lowerVehicle).get == 0)
     require(lowerVehiclePosition <= upperVehiclePosition)
 
     while(lowerVehicle + 1 < upperVehicle){
       val midVehicle = (lowerVehicle + upperVehicle) /2
-      val midVehiclePosition = seq.positionOfAnyOccurrence(midVehicle).head
+      val midVehiclePosition = seq.positionOfAnyOccurrence(midVehicle).get
       if(midVehiclePosition == position){
         return midVehicle
       }
@@ -77,7 +77,7 @@ object RoutingConventionMethods {
   }
 
   def routingSuccVal2Val(value:Int, seq:IntSequence, v:Int):Int =
-    routingSuccPos2Val(seq.positionOfAnyOccurrence(value).head, seq, v)
+    routingSuccPos2Val(seq.positionOfAnyOccurrence(value).get, seq, v)
 
   def routingSuccPos2Val(position:Int, seq:IntSequence, v:Int):Int = {
     seq.valueAtPosition(position + 1) match{
@@ -91,20 +91,20 @@ object RoutingConventionMethods {
         //looking for the end node of vehicle value
         if(value == v-1) {
           //it is the last vehicle
-          seq.valueAtPosition(seq.size-1).head
+          seq.valueAtPosition(seq.size-1).get
         }else {
           //there is oe vehicle above
-          seq.valueAtPosition(seq.positionOfAnyOccurrence(value+1).head-1).head
+          seq.valueAtPosition(seq.positionOfAnyOccurrence(value+1).get-1).get
         }
     }else {
       //simple predecessor
-      seq.valueAtPosition(seq.positionOfAnyOccurrence(value).head-1).head
+      seq.valueAtPosition(seq.positionOfAnyOccurrence(value).get-1).get
     }
   }
 
 
   def routingPredPos2Val(position:Int, seq:IntSequence, v:Int):Int = {
-    routingPredVal2Val(seq.valueAtPosition(position).head, seq, v)
+    routingPredVal2Val(seq.valueAtPosition(position).get, seq, v)
   }
 }
 

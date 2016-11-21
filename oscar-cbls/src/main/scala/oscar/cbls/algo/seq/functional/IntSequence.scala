@@ -23,11 +23,26 @@ import scala.language.implicitConversions
 
 object IntSequence{
   def apply(values:Iterable[Int]):IntSequence = {
-    var toReturn = empty()
-    for (i <- values) {
-      toReturn = toReturn.insertAtPosition(i, toReturn.size, false, false)
+    val valuesArray = values.toArray
+    val forwardRedBlack = RedBlackTreeMap.makeFromSortedContinuousArray(values.toArray)
+    val backwardRedBlack:RedBlackTreeMap[RedBlackTreeMap[Int]] = aggregatePosOnValToInternalPosFrom(valuesArray)
+
+    new ConcreteIntSequence(
+      forwardRedBlack,
+      backwardRedBlack,
+      PiecewiseLinearBijectionNaive.identity,
+      valuesArray.length
+    )
+  }
+
+  private def aggregatePosOnValToInternalPosFrom(values:Array[Int]):RedBlackTreeMap[RedBlackTreeMap[Int]] = {
+    var valToPoses = RedBlackTreeMap.empty[RedBlackTreeMap[Int]]
+    for(pos <- values.indices){
+      val value = values(pos)
+      val existingPos = valToPoses.getOrElse(value,RedBlackTreeMap.empty[Int])
+      valToPoses = valToPoses.insert(value,existingPos.insert(pos,pos))
     }
-    toReturn
+    valToPoses
   }
 
   def empty():IntSequence = new ConcreteIntSequence(
@@ -659,6 +674,9 @@ object MovedIntSequence{
       //not moving
       if(flip) {
         //just flipping
+        val x = PiecewiseLinearBijectionNaive.identity.updateBefore(
+          (startPositionIncluded,endPositionIncluded,LinearTransform(endPositionIncluded + startPositionIncluded,true)))
+
         if (startPositionIncluded == 0) {
           PiecewiseLinearBijectionNaive(new PiecewiseLinearFun(RedBlackTreeMap.makeFromSortedArray(Array(
             (0, new Pivot(0, new LinearTransform(endPositionIncluded, true))),
@@ -669,9 +687,7 @@ object MovedIntSequence{
             (startPositionIncluded, new Pivot(startPositionIncluded, new LinearTransform(endPositionIncluded + startPositionIncluded, true))),
             (endPositionIncluded + 1, new Pivot(endPositionIncluded + 1, LinearTransform.identity))))))
         }
-        /*PiecewiseLinearBijectionNaive.identity.updateBefore(
-          (startPositionIncluded,endPositionIncluded,LinearTransform(endPositionIncluded + startPositionIncluded,true)))
-          */
+
       }else{
         //nop
         PiecewiseLinearBijectionNaive.identity
@@ -679,6 +695,7 @@ object MovedIntSequence{
     }else{
       if (moveAfterPosition > startPositionIncluded) {
         //move upwards
+        //TODO: this is WAY TOO SLOW; should be like O(1) because used very intensively
         PiecewiseLinearBijectionNaive.identity.updateBefore(
           (startPositionIncluded, moveAfterPosition + startPositionIncluded - endPositionIncluded - 1,
             LinearTransform(endPositionIncluded + 1 - startPositionIncluded, false)),
@@ -687,6 +704,7 @@ object MovedIntSequence{
             else endPositionIncluded - moveAfterPosition, flip)))
       } else {
         //move downwards
+        //TODO: this is WAY TOO SLOW; should be like O(1) because used very intensively
         PiecewiseLinearBijectionNaive.identity.updateBefore(
           (moveAfterPosition + 1, moveAfterPosition + endPositionIncluded - startPositionIncluded + 1,
             LinearTransform(if (flip) endPositionIncluded + moveAfterPosition + 1 else startPositionIncluded - moveAfterPosition - 1, flip)),
@@ -746,10 +764,10 @@ object MovedIntSequence{
 }
 
 class MovedIntSequence(val seq:IntSequence,
-                       startPositionIncluded:Int,
-                       endPositionIncluded:Int,
-                       moveAfterPosition:Int,
-                       flip:Boolean)
+                       val startPositionIncluded:Int,
+                       val endPositionIncluded:Int,
+                       val moveAfterPosition:Int,
+                       val flip:Boolean)
   extends StackedUpdateIntSequence{
 
   override def unorderedContentNoDuplicate : List[Int] = seq.unorderedContentNoDuplicate
