@@ -1,6 +1,7 @@
 package oscar.cbls.algo.boolArray
 
 import oscar.cbls.algo.quick.QList
+import scala.language.postfixOps
 
 /*******************************************************************************
   * OscaR is free software: you can redistribute it and/or modify
@@ -47,7 +48,7 @@ class MagicBoolArrayWithFastIteratorOnTrueOverApproximated(override val length:I
    * Sets the value of each element to "value"
    * @note complexity is O(1)
    */
-  override def all_=(value : Boolean) : Unit = {
+  override def all_= (value : Boolean) : Unit = {
     super.all_=(value)
     if(value){
       positionsAtTrueOverApproximated = null
@@ -143,7 +144,7 @@ class MagicBoolArray(val length:Int,initVal:Boolean = false){
    * Sets the value of each element to "value"
    * @note complexity is O(1)
    */
-  def all_=(value:Boolean): Unit ={
+  def all_= (value:Boolean): Unit ={
     if(value) {
       if (Math.abs(global) == threshold) {
         global = 0
@@ -160,6 +161,8 @@ class MagicBoolArray(val length:Int,initVal:Boolean = false){
       }
     }
   }
+
+  def all:Boolean = ???
 
   @inline
   private [this] def resetArray(){

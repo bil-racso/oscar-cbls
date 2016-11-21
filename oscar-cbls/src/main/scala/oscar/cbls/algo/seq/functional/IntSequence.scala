@@ -52,12 +52,10 @@ class IterableIntSequence(sequence:IntSequence) extends Iterable[Int]{
   override def lastOption : Option[Int] = sequence.valueAtPosition(sequence.size-1)
 }
 
-
 class Token()
 object Token{
   def apply():Token = new Token()
 }
-
 
 abstract class IntSequence(protected[cbls] val token: Token = Token()) {
 
