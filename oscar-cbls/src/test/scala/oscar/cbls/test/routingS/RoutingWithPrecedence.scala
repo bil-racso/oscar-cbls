@@ -87,17 +87,16 @@ object RoutingWithPrecedence extends App{
   def threeOpt(k:Int, breakSym:Boolean) = Profile(new ThreeOpt(() => nodes, ()=>myVRP.kFirst(k,myVRP.nearestForward), myVRP,breakSymmetry = breakSym, neighborhoodName = "ThreeOpt(k=" + k + ")"))
 
   //,,(onePtMove andThen onePtMove) name ("twoPointMove")
-  val search = new BestSlopeFirst(List(threeOpt(10,true),onePtMove,twoOpt,twoPointMoveSmart),refresh = 10) exhaust threeOpt(20,true)
-
-  val search2 = twoPointMoveSmart guard {()=>myVRP.precedenceInvar.value!=0} exhaust (twoPointMove maxMoves 20)
-
+  val search = (
+    new BestSlopeFirst(List(threeOpt(10,true),onePtMove,twoOpt,twoPointMoveSmart),refresh = 10)
+      exhaust new BestSlopeFirst(List(threeOpt(20,true))))
 
   //val search = threeOpt(20,true)
   //search.verboseWithExtraInfo(2, ()=> "" + myVRP)
-  search2.verbose = 3
+  search.verbose = 1
 
 
-  search2.doAllMoves(obj=myVRP.obj)
+  search.doAllMoves(obj=myVRP.obj)
 
   println("final propagation: ")
   model.propagate()

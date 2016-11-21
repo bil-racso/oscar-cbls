@@ -817,7 +817,7 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], val maxValue: Int, 
           // herebelow is not affected by a change in the variable, as it is modified later on
           val tmp = performedSinceTopCheckpoint
           val tmpToNotify = toNotify
-          println("performedSinceTopCheckpoint:" + performedSinceTopCheckpoint)
+          //println("performedSinceTopCheckpoint:" + performedSinceTopCheckpoint)
           //we specify a roll back and give the instructions that must be undone, just in case.
           toNotify = SeqUpdateRollBackToCheckpoint(
             checkpoint,
