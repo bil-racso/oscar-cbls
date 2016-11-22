@@ -20,7 +20,7 @@ import oscar.cbls.algo.seq.functional.IntSequence
 import oscar.cbls.invariants.core.computation._
 
 /**
-  * Created by  Jannou Brohée on 8/11/16.
+  * Created by  Jannou Brohée on 3/10/16.
   */
 
 object GenericCumulativeIntegerDimensionOnVehicleUsingStackedVehicleLocation {
