@@ -21,27 +21,23 @@ import oscar.cbls.algo.seq.functional.IntSequence
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.core.propagation.Checker
 
+
 /**
   * Created by  Jannou Brohée on 18/11/16.
   */
 
 
-// todo
 /**
-  *
+  * Maintains the content of vehicles at each node and the starting position of each vehicle
   * @param routes The sequence representing the route associated at each vehicle
-  * @param _n The maximum number of nodes
-  * @param _v The number of vehicles
+  * @param n The maximum number of nodes
+  * @param v The number of vehicles
   * @param initInt The initial capacity of a node when it is not yet in the route
   * @param initValue An array giving the initial capacity of a vehicle at his starting node (0, v-1)
   * @param op A function which returns the capacity change between two nodes : (startingNode,destinationNode,capacityAtStartingNode)=> capacityAtDestinationNode
   */
-abstract class AbstractVehicleCapacity(routes:ChangingSeqValue, _n:Int, _v:Int, initInt:Int, initValue:Array[Int], op :(Int,Int,Int)=>Int )
+abstract class AbstractVehicleCapacity(routes:ChangingSeqValue, n:Int, v:Int, initInt:Int, initValue:Array[Int], op :(Int,Int,Int)=>Int )
   extends Invariant()  with SeqNotificationTarget {
-
-  private val n = _n
-  private val v = _v
-
 
   /**
     * Returns the capacity associated with a node.
@@ -77,9 +73,9 @@ abstract class AbstractVehicleCapacity(routes:ChangingSeqValue, _n:Int, _v:Int, 
 
 
   /**
-    *
-    * @param s
-    * @return
+    *Computes content of vehicle and their starting position from scratch
+    * @param s the sequence
+    * @return (contentAtnode,VehicleLocation)
     */
   def computeContentAndVehicleStartPositionsFromScratch(s:IntSequence):(Array[Int],VehicleLocation) = {
     var current = s.explorerAtPosition(0).get
@@ -102,6 +98,10 @@ abstract class AbstractVehicleCapacity(routes:ChangingSeqValue, _n:Int, _v:Int, 
     }
     (tmpCapacity,ConcreteVehicleLocation(tmpVehicleLocation))
   }
+
+
+
+
 
 
   /**
@@ -129,7 +129,7 @@ abstract class AbstractVehicleCapacity(routes:ChangingSeqValue, _n:Int, _v:Int, 
 
 
   /**
-    * Update
+    * Updates vehicles starting positions and list zones of position of nodes which content have to be updated after the insert
     * @param map
     * @param s
     * @param changes
@@ -166,7 +166,7 @@ abstract class AbstractVehicleCapacity(routes:ChangingSeqValue, _n:Int, _v:Int, 
 
 
   /**
-    *
+    * Updates vehicles starting positions and list zones of position of nodes which content have to be updated after the remove
     * @param map
     * @param r
     * @param changes
@@ -206,7 +206,7 @@ abstract class AbstractVehicleCapacity(routes:ChangingSeqValue, _n:Int, _v:Int, 
   }
 
   /**
-    *
+    * Updates vehicles starting positions and list zones of position of nodes which content have to be updated after the move
     * @param map
     * @param m
     * @param changes
@@ -301,7 +301,7 @@ abstract class AbstractVehicleCapacity(routes:ChangingSeqValue, _n:Int, _v:Int, 
 
 
   /**
-    *
+    * Updates vehicles starting positions and list zones of position of nodes which content have to be updated after last notified
     * @param value
     * @return
     */
@@ -311,7 +311,7 @@ abstract class AbstractVehicleCapacity(routes:ChangingSeqValue, _n:Int, _v:Int, 
   }
 
   /**
-    *
+    * Updates vehicles starting positions and list zones of position of nodes which content have to be updated after the last assign
     * @param value
     * @return
     */
@@ -391,8 +391,8 @@ abstract class AbstractVehicleCapacity(routes:ChangingSeqValue, _n:Int, _v:Int, 
 
 
   /**
-    *
-    * @param oldToNewfunction
+    * Update the stack of vehicles location
+    * @param oldToNewfunction  a function representing the change of vehicles location
     */
   def pushOnTopOfStack(oldToNewfunction:(Int)=> Option[Int]) :Unit
 

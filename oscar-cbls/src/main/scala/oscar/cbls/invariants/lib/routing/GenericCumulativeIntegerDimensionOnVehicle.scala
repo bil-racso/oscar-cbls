@@ -18,7 +18,6 @@ package oscar.cbls.invariants.lib.routing
 import oscar.cbls.algo.rb.RedBlackTreeMap
 import oscar.cbls.algo.seq.functional.IntSequence
 import oscar.cbls.invariants.core.computation._
-import oscar.cbls.invariants.core.propagation.Checker
 
 /**
   * Created by  Jannou Brohée on 8/11/16.
@@ -36,11 +35,10 @@ object GenericCumulativeIntegerDimensionOnVehicleUsingStackedVehicleLocation {
     */
   def apply(routes:ChangingSeqValue,n:Int,v:Int,op :(Int,Int,Int)=>Int,initValue:Array[Int]):Array[CBLSIntVar] ={
     var output: Array[CBLSIntVar] = Array.tabulate(n)((node: Int) => CBLSIntVar(routes.model, Int.MinValue, routes.domain, "capacity at node("+node.toString+")"))
-    new GenericCumulativeIntegerDimensionOnVehicleUsingStackedVehicleLocation(routes, n, v, op, initValue,output)
+    new GenericCumulativeIntegerDimensionOnVehicleUsingStackedVehicleLocation(routes, n, v, op, initValue,output).getOutput()
     output
   }
 }
-
 
 /**
   * Maintains the current capacity of each vehicle at each node after a SeqUpdate
@@ -59,25 +57,18 @@ class GenericCumulativeIntegerDimensionOnVehicleUsingStackedVehicleLocation(rout
 
   private var stack:VehicleLocation = ConcreteVehicleLocation(Array.tabulate(n)((node:Int)=> 0))
 
-
   require(initValue.length==v)
   require( output.length==n)
   registerStaticAndDynamicDependency(routes)
   finishInitialization()
   for(i <- output) i.setDefiningInvariant(this)
 
-  def initializeAbstractVehicleCapacity(): Unit ={
-    var tmp = computeContentAndVehicleStartPositionsFromScratch(routes.newValue)
-    stack = tmp._2
-    contentAtNode = tmp._1
-  }
-
-  initializeAbstractVehicleCapacity()
+  computeAndAffectContentAndVehicleStartPositionsFromScratch()
 
   override def notifySeqChanges(v: ChangingSeqValue, d: Int, changes: SeqUpdate){
     val zoneToCompute = digestUpdatesAndUpdateVehicleStartPositionsAndSearchZoneToUpdate(changes)
     zoneToCompute match {
-      case null => initializeAbstractVehicleCapacity()
+      case null => computeAndAffectContentAndVehicleStartPositionsFromScratch()
       case tree =>
         for(car <- tree.keys)  {
           val lst = zoneToCompute.get(car).get
@@ -92,62 +83,43 @@ class GenericCumulativeIntegerDimensionOnVehicleUsingStackedVehicleLocation(rout
     * @param changes the SeqUpdate
     * @return a list that specify mandatory zones which must be computed. A zone is represented by his start and end position : (startPositionIncluded, endPositionIncluded). Note that the list is sorted by position ((x,y) <= (x',y') iff y <= x'  )
     */
-  def digestUpdatesAndUpdateVehicleStartPositionsAndSearchZoneToUpdate(changes:SeqUpdate) : RedBlackTreeMap[List[(Int,Int)]] = {
+  private def digestUpdatesAndUpdateVehicleStartPositionsAndSearchZoneToUpdate(changes:SeqUpdate) : RedBlackTreeMap[List[(Int,Int)]] = {
     changes match {
-
-      case s@SeqUpdateInsert(value : Int, pos : Int, prev : SeqUpdate) => updateVehicleStartPositionsAndSearchZoneToUpdateAfterLastInsert(digestUpdatesAndUpdateVehicleStartPositionsAndSearchZoneToUpdate(prev),s,changes)
-
-      case r@SeqUpdateRemove(pos : Int, prev : SeqUpdate) => updateVehicleStartPositionsAndSearchZoneToUpdateAfterLastRemove(digestUpdatesAndUpdateVehicleStartPositionsAndSearchZoneToUpdate(prev),r,changes)
-
-      case m@SeqUpdateMove(fromIncluded : Int, toIncluded : Int, after : Int, flip : Boolean, prev : SeqUpdate) => updateVehicleStartPositionsAndSearchZoneToUpdateAfterLastMove(digestUpdatesAndUpdateVehicleStartPositionsAndSearchZoneToUpdate(prev),m,changes)
-
-      case SeqUpdateAssign(value : IntSequence) => UpdateVehicleStartPositionsAndSearchZoneToUpdateAfterAssign(value)
-
-      case SeqUpdateLastNotified(value:IntSequence) => updateVehicleStartPositionsAndSearchZoneToUpdateAfterLastNotified(value )
-
-      case s@SeqUpdateDefineCheckpoint(prev:SeqUpdate,_) => digestUpdatesAndUpdateVehicleStartPositionsAndSearchZoneToUpdate(prev)
-
-      case u@SeqUpdateRollBackToCheckpoint(checkpoint:IntSequence) => digestUpdatesAndUpdateVehicleStartPositionsAndSearchZoneToUpdate(u.howToRollBack)
-
+      case s@SeqUpdateInsert(value : Int, pos : Int, prev : SeqUpdate) =>
+        updateVehicleStartPositionsAndSearchZoneToUpdateAfterLastInsert(digestUpdatesAndUpdateVehicleStartPositionsAndSearchZoneToUpdate(prev),s,changes)
+      case r@SeqUpdateRemove(pos : Int, prev : SeqUpdate) =>
+        updateVehicleStartPositionsAndSearchZoneToUpdateAfterLastRemove(digestUpdatesAndUpdateVehicleStartPositionsAndSearchZoneToUpdate(prev),r,changes)
+      case m@SeqUpdateMove(fromIncluded : Int, toIncluded : Int, after : Int, flip : Boolean, prev : SeqUpdate) =>
+        updateVehicleStartPositionsAndSearchZoneToUpdateAfterLastMove(digestUpdatesAndUpdateVehicleStartPositionsAndSearchZoneToUpdate(prev),m,changes)
+      case SeqUpdateAssign(value : IntSequence) =>
+        UpdateVehicleStartPositionsAndSearchZoneToUpdateAfterAssign(value)
+      case SeqUpdateLastNotified(value:IntSequence) =>
+        updateVehicleStartPositionsAndSearchZoneToUpdateAfterLastNotified(value )
+      case s@SeqUpdateDefineCheckpoint(prev:SeqUpdate,_) =>
+        digestUpdatesAndUpdateVehicleStartPositionsAndSearchZoneToUpdate(prev)
+      case u@SeqUpdateRollBackToCheckpoint(checkpoint:IntSequence) =>
+        digestUpdatesAndUpdateVehicleStartPositionsAndSearchZoneToUpdate(u.howToRollBack)
     }
   }
 
-
-  /**
-    * Overridden the old capacity of a node by the new value.
-    *
-    * @param currentNode        the id of the node
-    * @param valueOfCurrentNode the new capacity associated with the node
-    * @param save               false to override the current capacity, true to save the current capacity
-    */
   override def setVehicleContentAtNode(currentNode: Int,currentPosition: Int, valueOfCurrentNode: Int): Unit = contentAtNode(currentNode) =valueOfCurrentNode
 
-
-  /**
-    * Returns the capacity associated with a node.
-    *
-    * @param nodeId the id of the node
-    * @param save   false to return the capacity save at the previous checpoint, true to return the capacity calculated at the last movement
-    * @return the capacity of the node
-    */
   override def getVehicleContentAtNode(nodeId: Int): Int =   contentAtNode(nodeId)
 
-
-
-
-  /**
-    * Saves the current context (capacity of each node and the global violation)
-    *
-    * @param _chk true to save false otherwise (false will not drop the saved capacity if there is
-    */
   override def positionOfVehicle(vehicle: Int): Int = stack.posOfVehicle(vehicle)
 
   override def vehicleReachingPosition(position: Int): Int = stack.vehicleReachingPosition(position)
 
-
   override def pushOnTopOfStack(oldToNewfunction: (Int) => Option[Int]): Unit = stack = stack.push(oldToNewfunction)
 
-  def getOutput(){
+
+  private def computeAndAffectContentAndVehicleStartPositionsFromScratch(): Unit ={
+    var tmp = computeContentAndVehicleStartPositionsFromScratch(routes.newValue)
+    stack = tmp._2
+    contentAtNode = tmp._1
+  }
+
+  private def getOutput(){
     for(node <- 0 until n) {
       output(node) := getVehicleContentAtNode(node)
     }
