@@ -53,7 +53,12 @@ object GenericCumulativeIntegerDimensionOnVehicleUsingStackedVehicleLocation {
   * @param output The array which store, for any node, the capacity of the vehicle associated at the node
   */
 class GenericCumulativeIntegerDimensionOnVehicleUsingStackedVehicleLocation(routes:ChangingSeqValue, n:Int, v:Int, op :(Int,Int,Int)=>Int, initValue :Array[Int], output:Array[CBLSIntVar])
-  extends Invariant() with SeqNotificationTarget {
+  extends AbstractVehicleCapacity(routes,n,v,-1,initValue  ,op) {
+
+  private var contentAtNode : Array[Int]= Array.tabulate(n)((node:Int)=> -1)
+
+  private var stack:VehicleLocation = ConcreteVehicleLocation(Array.tabulate(n)((node:Int)=> 0))
+
 
   require(initValue.length==v)
   require( output.length==n)
@@ -61,321 +66,90 @@ class GenericCumulativeIntegerDimensionOnVehicleUsingStackedVehicleLocation(rout
   finishInitialization()
   for(i <- output) i.setDefiningInvariant(this)
 
-  private var stack = computeContentAndVehicleStartPositionsFromScratch(routes.newValue)
+  def initializeAbstractVehicleCapacity(): Unit ={
+    var tmp = computeContentAndVehicleStartPositionsFromScratch(routes.newValue)
+    stack = tmp._2
+    contentAtNode = tmp._1
+  }
+
+  initializeAbstractVehicleCapacity()
 
   override def notifySeqChanges(v: ChangingSeqValue, d: Int, changes: SeqUpdate){
-    val zoneToCompute = updateVehicleStartPositionsAndSearchZoneToUpdate(changes)
+    val zoneToCompute = digestUpdatesAndUpdateVehicleStartPositionsAndSearchZoneToUpdate(changes)
     zoneToCompute match {
-      case null => stack = computeContentAndVehicleStartPositionsFromScratch(routes.newValue)
+      case null => initializeAbstractVehicleCapacity()
       case tree =>
         for(car <- tree.keys)  {
           val lst = zoneToCompute.get(car).get
-          if (lst.nonEmpty) updateContentForSelectedZones(routes.newValue,lst,stack.posOfVehicle(car),car)
+          if (lst.nonEmpty) updateContentForSelectedZones(routes.newValue,lst,  positionOfVehicle(car)  ,car)
         }
-    }
-   // this.checkInternals(new ErrorChecker())
-  }
-
-  /**
-    *
-    * @param zoneStart
-    * @param zoneEnd
-    * @param list
-    * @return
-    *        @author renaud.delandtsheer@cetic.be
-    */
-  private def smartPrepend(zoneStart: Int, zoneEnd:Int, list:List[(Int,Int)]): List[(Int,Int)] ={
-    require(zoneStart<=zoneEnd)
-    assert(list.sortWith((lft:(Int,Int),rgt:(Int,Int))=> lft._1<rgt._1 && lft._2<rgt._2).eq(list))
-    list match{
-      case Nil => (zoneStart,zoneEnd) :: list
-      case (a,b)::tail =>
-        if(zoneEnd>=a-1 && zoneEnd<=b) (Math.min(zoneStart,a), Math.max(zoneEnd,b)) :: tail
-        else if (b>=zoneStart && a <=zoneStart)smartPrepend(a, Math.max(zoneEnd,b), tail)
-        else if(b<zoneStart ) throw new Error("not sorted :( b:"+b+"zoneStart:"+zoneStart)
-        else (zoneStart,zoneEnd)::list
     }
   }
 
   /**
     * Search the zones where changes occur following a SeqUpdate
+    *
     * @param changes the SeqUpdate
     * @return a list that specify mandatory zones which must be computed. A zone is represented by his start and end position : (startPositionIncluded, endPositionIncluded). Note that the list is sorted by position ((x,y) <= (x',y') iff y <= x'  )
     */
-  private def updateVehicleStartPositionsAndSearchZoneToUpdate(changes:SeqUpdate) : RedBlackTreeMap[List[(Int,Int)]] = {
+  def digestUpdatesAndUpdateVehicleStartPositionsAndSearchZoneToUpdate(changes:SeqUpdate) : RedBlackTreeMap[List[(Int,Int)]] = {
     changes match {
-      case s@SeqUpdateInsert(value : Int, pos : Int, prev : SeqUpdate) =>
-        updateVehicleStartPositionsAndSearchZoneToUpdate(prev) match{
-          case null => null
-          case tree =>
-            stack = stack.push((posit)=>s.oldPosToNewPos(posit))
-            val car = stack.vehicleReachingPosition(pos)
-            val posOfTag = stack.posOfVehicle(car)
 
-            def shiftBy(list:List[(Int,Int)],deltaStart:Int=1):List[(Int,Int)]= {
-              list match {
-                case Nil => list
-                case (a,b) :: tail => (a+deltaStart,b+1) :: shiftBy(tail)
-              }
-            }
+      case s@SeqUpdateInsert(value : Int, pos : Int, prev : SeqUpdate) => updateVehicleStartPositionsAndSearchZoneToUpdateAfterLastInsert(digestUpdatesAndUpdateVehicleStartPositionsAndSearchZoneToUpdate(prev),s,changes)
 
-            val relativePos = pos - posOfTag
-            def updateListOfZoneToUpdateAndSearchZoneToUpdateAfterInsert(list:List[(Int,Int)]):List[(Int,Int)]= {
-              list match {
-                case Nil => List((relativePos, (math.min(pos + 1, if (car != v - 1) stack.posOfVehicle(car + 1) - 1 else changes.newValue.size - 1) )- posOfTag))
-                case (startZone, endZone) :: tail =>
-                  if (endZone < relativePos) smartPrepend(startZone, endZone, updateListOfZoneToUpdateAndSearchZoneToUpdateAfterInsert(tail))
-                  else if (endZone == relativePos) smartPrepend(startZone, endZone + 1, shiftBy(tail))
-                  else smartPrepend(relativePos, (math.min(pos + 1, if (car != v - 1) stack.posOfVehicle(car + 1) - 1 else changes.newValue.size - 1) - posOfTag), shiftBy(list, if (startZone  < relativePos && endZone > relativePos) 0 else 1))
-              }
-            }
+      case r@SeqUpdateRemove(pos : Int, prev : SeqUpdate) => updateVehicleStartPositionsAndSearchZoneToUpdateAfterLastRemove(digestUpdatesAndUpdateVehicleStartPositionsAndSearchZoneToUpdate(prev),r,changes)
 
-            tree.insert(car,updateListOfZoneToUpdateAndSearchZoneToUpdateAfterInsert(tree.getOrElse(car,List.empty[(Int,Int)])) )
-        }
-      case r@SeqUpdateRemove(pos : Int, prev : SeqUpdate) =>
-        updateVehicleStartPositionsAndSearchZoneToUpdate(prev) match{
-          case null => null
-          case tree =>
-            val car = stack.vehicleReachingPosition(pos)
-            stack = stack.push((posit)=>r.oldPosToNewPos(posit))
-            val relativePos = pos - stack.posOfVehicle(car)
+      case m@SeqUpdateMove(fromIncluded : Int, toIncluded : Int, after : Int, flip : Boolean, prev : SeqUpdate) => updateVehicleStartPositionsAndSearchZoneToUpdateAfterLastMove(digestUpdatesAndUpdateVehicleStartPositionsAndSearchZoneToUpdate(prev),m,changes)
 
-            def shiftByOne(list:List[(Int,Int)]):List[(Int,Int)]= {
-              list match {
-                case Nil => list
-                case (a,b) :: tail =>  smartPrepend(a-1,b-1, shiftByOne(tail))
-              }
-            }
+      case SeqUpdateAssign(value : IntSequence) => UpdateVehicleStartPositionsAndSearchZoneToUpdateAfterAssign(value)
 
-            def updateListOfZoneToUpdateAndSearchZoneToUpdateAfterRemove(list:List[(Int,Int)]):List[(Int,Int)]= {
-              list match {
-                case Nil => if ((car != v - 1 && pos != stack.posOfVehicle(car + 1)) || (car == v - 1 && (pos < changes.newValue.size)))
-                  List((relativePos, relativePos))
-                else list
-                case (startZone, endZone) :: tail =>
-                  if (endZone < relativePos) smartPrepend(startZone, endZone, updateListOfZoneToUpdateAndSearchZoneToUpdateAfterRemove(tail))
-                  else if (endZone >= relativePos && startZone <= relativePos)
-                    if(endZone >startZone ) smartPrepend(startZone, endZone-1, shiftByOne(tail)) else  shiftByOne(tail)
-                  else{
-                    smartPrepend(relativePos, relativePos, shiftByOne(list))
-                  }
-              }
-            }
+      case SeqUpdateLastNotified(value:IntSequence) => updateVehicleStartPositionsAndSearchZoneToUpdateAfterLastNotified(value )
 
-            tree.insert(car, updateListOfZoneToUpdateAndSearchZoneToUpdateAfterRemove(tree.getOrElse(car,List.empty[(Int,Int)])))
-        }
+      case s@SeqUpdateDefineCheckpoint(prev:SeqUpdate,_) => digestUpdatesAndUpdateVehicleStartPositionsAndSearchZoneToUpdate(prev)
 
-      case m@SeqUpdateMove(fromIncluded : Int, toIncluded : Int, after : Int, flip : Boolean, prev : SeqUpdate) =>
-        updateVehicleStartPositionsAndSearchZoneToUpdate(prev) match{
-          case null => null
-          case tree =>
-            val vehicleSource = stack.vehicleReachingPosition(fromIncluded)
-            val vehicleDestination =stack.vehicleReachingPosition(after)
-            val vehiculeOfSrc = stack.vehicleReachingPosition(fromIncluded-1)
-            val vehiculeOfNodeFollowingAfter = stack.vehicleReachingPosition(after+1)
-            val case1:Boolean = after<fromIncluded
-            val relativeFromIncluded = fromIncluded - stack.posOfVehicle(vehicleSource)
-            val relativeToIncluded = toIncluded -stack.posOfVehicle(vehicleSource)
-            val relativeAfter = after - stack.posOfVehicle(vehicleDestination)
-            val delta = toIncluded - fromIncluded +1
-            val  newAfter = m.oldPosToNewPos(after).get
-            val beforeFrom = fromIncluded-1
-            val newBeforeFrom = m.oldPosToNewPos(beforeFrom).get
-            var toReinsertInTheOtherSide= List.empty[(Int,Int)]
+      case u@SeqUpdateRollBackToCheckpoint(checkpoint:IntSequence) => digestUpdatesAndUpdateVehicleStartPositionsAndSearchZoneToUpdate(u.howToRollBack)
 
-            def insertInList(lst:List[(Int,Int)], toInsert:List[(Int,Int)]):List[(Int,Int)] ={
-              toInsert match{
-                case Nil => lst
-                case (s,e)::tail =>
-                  lst match{
-                    case Nil =>  toInsert
-                    case (start,end)::tail =>
-                      if(s>end) (start,end) :: insertInList(lst.drop(1),toInsert)
-                      else if(s==start && end == e) insertInList(lst,toInsert.drop(1))
-                      else smartPrepend(s,e, insertInList(lst,toInsert.drop(1)))
-                  }
-              }
-            }
-
-            def updateListOfZoneToUpdateAfterMove(listOfZonesForVehicle:List[(Int,Int)],sourceSide:Boolean=true):List[(Int,Int)]={
-              listOfZonesForVehicle match {
-                case Nil => listOfZonesForVehicle
-                case (startZone, endZone) :: tail =>
-                  if (sourceSide) {// traitement du coté [from,to]
-                    if (endZone < relativeFromIncluded) smartPrepend(startZone, endZone, updateListOfZoneToUpdateAfterMove(tail)) // on avance
-                    else if (startZone > relativeToIncluded) smartPrepend(startZone - delta, endZone - delta, updateListOfZoneToUpdateAfterMove(tail))// on decale
-                    else {// on gere les deplacement due au mouvement
-                      if(!flip)  toReinsertInTheOtherSide = (Math.max(startZone, relativeFromIncluded)-relativeFromIncluded,Math.min(relativeToIncluded, endZone)-relativeFromIncluded) ::toReinsertInTheOtherSide
-                      val toReturn = if (endZone > relativeToIncluded) smartPrepend(relativeToIncluded+1 - delta, endZone - delta, updateListOfZoneToUpdateAfterMove(tail))
-                      else updateListOfZoneToUpdateAfterMove(tail)
-                      if (startZone >= relativeFromIncluded) toReturn
-                      else smartPrepend(startZone, relativeFromIncluded - 1,toReturn)
-                    }
-                  }
-                  else{// traitement coté after
-                    if (endZone <= relativeAfter) smartPrepend(startZone, endZone, updateListOfZoneToUpdateAfterMove(tail,sourceSide))// on avance
-                    else if(startZone>relativeAfter) smartPrepend(startZone+delta,endZone+delta,updateListOfZoneToUpdateAfterMove(tail,sourceSide))// on decale
-                    else  smartPrepend(startZone,relativeAfter,smartPrepend(relativeAfter+1+delta,endZone+delta,updateListOfZoneToUpdateAfterMove(tail,sourceSide)))// si la zone contient after+1
-                  }
-              }
-            }
-
-            var tmp = tree.insert(vehicleSource,updateListOfZoneToUpdateAfterMove(tree.getOrElse(vehicleSource, List.empty[(Int,Int)])))
-            tmp=  tmp.insert(vehicleDestination,updateListOfZoneToUpdateAfterMove(tmp.getOrElse(vehicleDestination, List.empty[(Int,Int)]),false))//, startPosOfVehicle(vehicleDestination)
-
-            stack = stack.push((pos)=>m.oldPosToNewPos(pos))
-            val newRelativeAfter = newAfter - stack.posOfVehicle(vehicleDestination)
-            var toReinsertInTheDestinationSideList:List[(Int,Int)]=List.empty[(Int,Int)]
-
-            for(elt <- toReinsertInTheOtherSide) toReinsertInTheDestinationSideList = ((newRelativeAfter+1+elt._1), (newRelativeAfter+1+elt._2)) :: toReinsertInTheDestinationSideList
-
-            if(case1) {
-              var dst =  if (vehicleDestination != v - 1)  math.min(m.oldPosToNewPos(after+1).get, stack.posOfVehicle(vehicleDestination + 1)-1)-stack.posOfVehicle(vehicleDestination) // juste pour savoir si
-              else  math.min(m.oldPosToNewPos(after+1).get, routes.newValue.size-1)-stack.posOfVehicle(vehicleDestination)
-              toReinsertInTheDestinationSideList =  if (flip) insertInList(toReinsertInTheDestinationSideList, List.apply((m.oldPosToNewPos(toIncluded).get-stack.posOfVehicle(vehicleDestination), dst)))
-              else insertInList(insertInList(toReinsertInTheDestinationSideList,List.apply((dst,dst)) ) , List.apply((m.oldPosToNewPos(fromIncluded).get-stack.posOfVehicle(vehicleDestination), m.oldPosToNewPos(fromIncluded).get-stack.posOfVehicle(vehicleDestination)) ))
-              dst = if ((vehiculeOfSrc == v - 1 || m.oldPosToNewPos(toIncluded + 1).get < stack.posOfVehicle(vehiculeOfSrc + 1)) && toIncluded+1 <= routes.newValue.size-1) toIncluded+1  -stack.posOfVehicle(vehicleSource) else -1
-              if(dst != -1) tmp = tmp.insert(vehicleSource,insertInList(tmp.getOrElse(vehicleSource, List.empty[(Int,Int)]),List.apply((dst,dst))))
-            }
-            else {
-              var dst = if (vehiculeOfSrc == v - 1 || m.oldPosToNewPos(toIncluded + 1).get < stack.posOfVehicle(vehiculeOfSrc + 1)) fromIncluded else -1
-              dst-= stack.posOfVehicle(vehicleSource)
-              if(dst > -1)   tmp = tmp.insert(vehicleSource,insertInList(tmp.getOrElse(vehicleSource, List.empty[(Int,Int)]),List.apply((dst,dst))))
-              dst = if((after == routes.newValue.size-1) || ( vehiculeOfNodeFollowingAfter!=vehicleDestination ))  newRelativeAfter+delta else newRelativeAfter+delta+1
-              toReinsertInTheDestinationSideList = if (flip) insertInList(toReinsertInTheDestinationSideList,List.apply((newRelativeAfter+1, dst)))
-              else insertInList(insertInList(toReinsertInTheDestinationSideList, List.apply((dst, dst))), List.apply((newRelativeAfter+1,newRelativeAfter+1)))
-            }
-
-            tmp.insert(vehicleDestination,insertInList(tmp.getOrElse(vehicleDestination, List.empty[(Int,Int)]),toReinsertInTheDestinationSideList))
-        }
-      case SeqUpdateAssign(value : IntSequence) =>
-        stack=stack.regularize()
-        null
-      case SeqUpdateLastNotified(value:IntSequence) =>
-        require (value quickEquals routes.value)
-        RedBlackTreeMap.empty[List[(Int,Int)]]
-      case s@SeqUpdateDefineCheckpoint(prev:SeqUpdate,_) => updateVehicleStartPositionsAndSearchZoneToUpdate(prev)
-      case u@SeqUpdateRollBackToCheckpoint(checkpoint:IntSequence) => updateVehicleStartPositionsAndSearchZoneToUpdate(u.howToRollBack)
     }
   }
-
-  /**
-    * Returns the capacity associated with a node.
-    * @param nodeId the id of the node
-    * @param outputInternal the array to consult
-    * @return the capacity of the node
-    */
-  private def getRemainingCapacityOfNode(nodeId: Int, outputInternal : Array[CBLSIntVar]=output): Int = outputInternal(nodeId).newValue
 
 
   /**
     * Overridden the old capacity of a node by the new value.
-    * @param currentNode the id of the node
+    *
+    * @param currentNode        the id of the node
     * @param valueOfCurrentNode the new capacity associated with the node
-    * @param outputInternal the array containing the capacity to override
+    * @param save               false to override the current capacity, true to save the current capacity
     */
-  private def setRemainingCapacityOfNode(currentNode: Int, valueOfCurrentNode: Int, outputInternal : Array[CBLSIntVar] = output): Unit = outputInternal(currentNode) := valueOfCurrentNode
+  override def setVehicleContentAtNode(currentNode: Int,currentPosition: Int, valueOfCurrentNode: Int): Unit = contentAtNode(currentNode) =valueOfCurrentNode
+
 
   /**
-    * Computes the capacity of each node from scratch
-    * @param s sequence of Integers representing the routes
-    * @param outputInternal the array containing the capacitys
-    * @param startPosOfVehiculeInternal the array which store, for any vehicles, the position of the starting node of the vehicle
+    * Returns the capacity associated with a node.
+    *
+    * @param nodeId the id of the node
+    * @param save   false to return the capacity save at the previous checpoint, true to return the capacity calculated at the last movement
+    * @return the capacity of the node
     */
-  def computeContentAndVehicleStartPositionsFromScratch(s:IntSequence, outputInternal: Array[CBLSIntVar] = output): VehicleLocation ={ // todo changes output en array int ;)
-  var current = s.explorerAtPosition(0).get
-    var currentCar = current.value
-    var tmp : Array[Int]=Array.tabulate(v)(((car:Int)=> 0))
-    tmp(currentCar) = current.position
-    var valueOfCurrentNode =  initValue(current.value)
-    setRemainingCapacityOfNode(current.value, valueOfCurrentNode, outputInternal)
-    while(!current.next.isEmpty){
-      val previous = current
-      val valueOfPresiousNode = valueOfCurrentNode
-      current = current.next.get
-      if(current.value < v){
-        currentCar = current.value
-        tmp(currentCar) = current.position
-        valueOfCurrentNode = initValue(current.value)
-      } else valueOfCurrentNode =  op(previous.value,current.value,valueOfPresiousNode)
-      setRemainingCapacityOfNode(current.value, valueOfCurrentNode,outputInternal )
-    }
-    new ConcreteVehicleLocation(tmp)
-  }
+  override def getVehicleContentAtNode(nodeId: Int): Int =   contentAtNode(nodeId)
+
+
+
 
   /**
-    * Computes the capacity of nodes concerned by a SeqUpdate
-    * @param s the sequence after the SeqUpdate
-    * @param lst the list containing positions where calculations must be performed
+    * Saves the current context (capacity of each node and the global violation)
+    *
+    * @param _chk true to save false otherwise (false will not drop the saved capacity if there is
     */
-  def updateContentForSelectedZones(s:IntSequence, lst: List[(Int, Int)],posOfTag:Int,car:Int){
-    val iter = lst.toIterator
-    var nextZone = iter.next()
-    var start = 0
-    var end = 0
+  override def positionOfVehicle(vehicle: Int): Int = stack.posOfVehicle(vehicle)
 
-    def computePositionOfZone(): Unit ={
-      start = nextZone._1 + posOfTag
-      end = nextZone._2 + posOfTag
+  override def vehicleReachingPosition(position: Int): Int = stack.vehicleReachingPosition(position)
+
+
+  override def pushOnTopOfStack(oldToNewfunction: (Int) => Option[Int]): Unit = stack = stack.push(oldToNewfunction)
+
+  def getOutput(){
+    for(node <- 0 until n) {
+      output(node) := getVehicleContentAtNode(node)
     }
-
-    var cdt:Boolean =  false
-    def takeNextZone(): Unit ={nextZone = if(iter.hasNext)  iter.next() else null}
-    var upperBound =  if (car != v - 1) stack.posOfVehicle(car + 1) else routes.newValue.size
-    computePositionOfZone()
-    var current = s.explorerAtPosition(start).get// first is mandatory ...
-    def checkIfNextZoneAndUpdate(): Unit ={
-      if((cdt || current.position==upperBound-1 ) && nextZone != null){// si on peut arreter pour cette zone ==> recup zone suivant sinon on fait rien et on continue
-        cdt = false
-        computePositionOfZone()
-        current= s.explorerAtPosition( Math.max(start-1,current.position)).get
-        takeNextZone
-      }
-    }
-    var previousPos = s.explorerAtPosition(stack.posOfVehicle(stack.vehicleReachingPosition(current.position))).get
-    var valueOfPreviousNode=initValue(previousPos.value)// valeur du noeud précédent
-
-    if(current.position > previousPos.position) {// maj noeud precedent s'il existe
-      previousPos = s.explorerAtPosition(current.position-1).get
-      valueOfPreviousNode = getRemainingCapacityOfNode(previousPos.value) }
-
-    var valueOfCurrentNode = op(previousPos.value,current.value,valueOfPreviousNode)// calcule  valeur du noeud
-    var oldValueOfCurrentNode = getRemainingCapacityOfNode(current.value)
-
-    if(current.position==end ) cdt = valueOfCurrentNode==oldValueOfCurrentNode
-    if(!cdt) setRemainingCapacityOfNode(current.value, valueOfCurrentNode)//maj capa
-
-    if(current.position==end ) /* si fin de zone et qu'il en reste encore */ checkIfNextZoneAndUpdate()
-
-    // tant qu'on doit continuer et qu'on depasse pas le vehicule des noeud qu'on veut maj
-    while(!cdt && current.position<upperBound-1 ){
-      previousPos=current// maj noeud precedent
-      current = current.next.get//maj noeud courant
-      if(current.position <= end){// tant qu'on est dans la zone mandat
-        valueOfPreviousNode=getRemainingCapacityOfNode(previousPos.value)
-        valueOfCurrentNode = op(previousPos.value,current.value,valueOfPreviousNode)
-        oldValueOfCurrentNode = getRemainingCapacityOfNode(current.value)
-        setRemainingCapacityOfNode(current.value,valueOfCurrentNode)
-        if(current.position==end ){
-          cdt=  valueOfCurrentNode==oldValueOfCurrentNode
-          checkIfNextZoneAndUpdate()
-        }
-      } else{ //sinon
-        if(nextZone != null && current.position >=nextZone._1 +posOfTag && current.position ==nextZone._2 +posOfTag) takeNextZone // si je depasse deja la prochaine nextZone de pos je recupère la suivante
-        valueOfPreviousNode = valueOfCurrentNode
-        valueOfCurrentNode = op(previousPos.value,current.value,valueOfPreviousNode)
-        oldValueOfCurrentNode = getRemainingCapacityOfNode(current.value)
-        cdt = valueOfCurrentNode==oldValueOfCurrentNode //verif cond ( on est plus dans la zone mandat donc dès que cdt ==> on arrete (ou on passe a la zone suivant s'il y en a )
-        if(!cdt) setRemainingCapacityOfNode(current.value,valueOfCurrentNode)// maj capa si on doit la changer
-        checkIfNextZoneAndUpdate()
-      }
-    }
-  }
-
-  override def checkInternals(c: Checker): Unit = {
-    val outputCheck: Array[CBLSIntVar] = Array.tabulate(n)((node: Int) => CBLSIntVar(new Store(), Int.MinValue, routes.domain, "capacity at node  (" + node.toString + ")"))
-    val startPosOfVehiculeCheck: VehicleLocation = computeContentAndVehicleStartPositionsFromScratch(routes.newValue, outputCheck)
-    for (car <- 0 until v) c.check(startPosOfVehiculeCheck.posOfVehicle(car) equals stack.posOfVehicle(car), Some("Founded start of car(" + car + "):=" + stack.posOfVehicle(car) + " should be :=" + startPosOfVehiculeCheck.posOfVehicle(car) + " seq :" + routes.newValue.mkString(",")))
-    for (node <- routes.newValue) c.check(getRemainingCapacityOfNode(node, outputCheck) equals getRemainingCapacityOfNode(node), Some("Founded Capacity at node(" + node + ")  :=" + getRemainingCapacityOfNode(node) + " should be :=" + getRemainingCapacityOfNode(node, outputCheck)))
   }
 }
