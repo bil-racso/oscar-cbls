@@ -15,13 +15,15 @@ package oscar.cbls.test.invariants
   * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
   ******************************************************************************/
 
-import java.lang
+import java.io.{FileWriter, PrintWriter}
 
 import org.scalacheck.Gen
 import org.scalatest.FunSuite
 import org.scalatest.prop.Checkers
 import oscar.cbls.constraints.lib.basic.{BelongsTo, EQ, G, GE, L, LE, NE}
 import oscar.cbls.constraints.lib.global.{AllDiff, AtLeast, AtMost, MultiKnapsack, Sequence}
+import oscar.cbls.invariants.core.computation
+import oscar.cbls.invariants.core.computation.CBLSIntVar
 import oscar.cbls.invariants.lib.logic.{DenseCount, Elements, Filter, IntElement, IntITE, SelectLEHeapHeap, SetElement, _}
 import oscar.cbls.invariants.lib.minmax.{ArgMax, ArgMin, Max2, MaxArray, MaxLin, MaxSet, Min2, MinArray, MinLin, MinSet}
 import oscar.cbls.invariants.lib.numeric.{Abs, Div, Minus, Mod, Prod, Prod2, ProdElements, RoundUpModulo, Step, Sum, Sum2, SumElements}
@@ -686,12 +688,11 @@ class InvariantTests extends FunSuite with Checkers {
 
     def start() : Array[Int]= { Array.tabulate(v)((car:Int)=> scala.util.Random.nextInt(limite))}
     val  s = start()
-    val inv = GenericCumulativeIntegerDimensionOnVehicleUsingStackedVehicleLocation(route,n,v,op,s)
+    val inv = GenericCumulativeIntegerDimensionOnVehicle(route,n,v,op,s)
 
-    println("n ="+n+" v ="+v)
     val go = System.nanoTime()
     bench.run()
-    println("GenericCumulativeIntegerDimensionOnVehicle : "+((System.nanoTime()-go)/Math.pow(10,9))+" s")
+    println("GenericCumulativeIntegerDimensionOnVehicle(n =\"+n+\" v =\"+v+\") : "+((System.nanoTime()-go)/Math.pow(10,9))+" s")
   }
 
   test("GenericCumulativeConstraint"){
@@ -739,12 +740,89 @@ class InvariantTests extends FunSuite with Checkers {
 
     val inv = GenericCumulativeConstraint(route,n,v,op,limite,s,Array.tabulate(v)((car:Int) =>0))
 
-    println("n ="+n+" v ="+v)
     val go = System.nanoTime()
     bench.run()
-    println("GenericCumulativeConstraint : "+((System.nanoTime()-go)/Math.pow(10,9)) + "s")
+    println("GenericCumulativeConstraint(n =\"+n+\" v =\"+v+\") : "+((System.nanoTime()-go)/Math.pow(10,9)) + "s")
   }
 
+
+
+
+  test("GenericCumulativeIntegerDimensionOnVehicleWithVar"){
+
+
+    System.err.println("/!\\  GenericCumulativeIntegerDimensionOnVehicleWithVar : FAIL IF Shuffle()"+" so this test is not a high accuracy test ".toUpperCase)
+
+    val bench = new InvBench(verbose,List(PlusOne(), MinusOne(), ToZero(), ToMin(), ToMax(), Random(), RandomDiff()))//, Shuffle()))
+
+    val n = 100
+    val v = 5
+
+    val route = bench.genRouteOfNodes(n,v)
+    val limite = 10
+    def genMatrix(node:Int):Array[Array[Int]] = {
+      val init = Int.MinValue
+      val matrix: Array[Array[Int]] = Array.tabulate(n,n)((n1:Int,n2:Int)=>init)
+      for (elt <- 0 until node) {
+        for (elt1 <- 0 until node) {
+          matrix(elt)(elt1) =  if(elt==elt1) 0 else scala.util.Random.nextInt(limite)
+        }
+      }
+      matrix
+    }
+    val matrix = genMatrix(n)
+    def genOperation(node:Int):Array[Array[Int]] = {
+      val oper: Array[Array[Int]] = Array.ofDim(n,n)
+      var t1:Array[Int] =Array.ofDim(n)
+      for (elt <- 0 until node) {
+        for (elt1 <- 0 until node) {
+          oper(elt)(elt1) =  if(matrix(elt)(elt1)==0) scala.util.Random.nextInt(3) else scala.util.Random.nextInt(4)
+        }
+      }
+      oper
+    }
+
+    val oper = genOperation(n)
+    def op(n1:Int,n2:Int,c:Int): Int= {
+      oper(n1)(n2) match {
+        case 0 => c + matrix(n1)(n2)
+        case 1 => c - matrix(n1)(n2)
+        case 2 => c * matrix(n1)(n2)
+        case 3 => c % matrix(n1)(n2)
+      }
+    }
+/*
+    var pw = new PrintWriter(new FileWriter("/home/nanabaskint/Documents/Matrix.txt"));
+    
+
+    for (nod1<-0 until n ) {
+      for(nod2 <- 0 until n ){
+        oper(nod1)(nod2) match {
+          case 0 => pw.println("op("+nod1+","+nod2+",0) = + "+ matrix(nod1)(nod2))
+          case 1 => pw.println("op("+nod1+","+nod2+",0) = - "+ matrix(nod1)(nod2))
+          case 2 => pw.println("op("+nod1+","+nod2+",0) = * "+ matrix(nod1)(nod2))
+          case 3 => pw.println("op("+nod1+","+nod2+",0) = % "+ matrix(nod1)(nod2))
+        }
+
+      }
+    }
+    pw.close();*/
+
+    def start() : Array[CBLSIntVar]= { Array.tabulate(v)((car:Int)=> CBLSIntVar(route.model,op(car,car,0)))}
+    val  s = start()
+
+
+    //for(car <- 0 until v) test(car) = CBLSIntVar(route.model,(route.newValue.positionsOfValue(car).head))
+
+
+
+    val test = bench.genIntVarsArray(v)
+    var inv = GenericCumulativeIntegerDimensionOnVehicleWithVar(route,n,v,op,test)
+    val go = System.nanoTime()
+    bench.run()
+    print("GenericCumulativeIntegerDimensionOnVehicleWithVar(n ="+n+" v ="+v+") : "+((System.nanoTime()-go)/Math.pow(10,9))+" s")
+
+  }
 
 
 

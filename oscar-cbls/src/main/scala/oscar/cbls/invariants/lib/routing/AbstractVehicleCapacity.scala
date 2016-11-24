@@ -17,9 +17,9 @@ package oscar.cbls.invariants.lib.routing
 
 import oscar.cbls.algo.boolArray.MagicBoolArray
 import oscar.cbls.algo.rb.RedBlackTreeMap
-import oscar.cbls.algo.seq.functional.IntSequence
+import oscar.cbls.algo.seq.functional.{IntSequence, IntSequenceExplorer}
 import oscar.cbls.invariants.core.computation._
-import oscar.cbls.invariants.core.propagation.Checker
+import oscar.cbls.invariants.core.propagation.{Checker, SchedulingHandler}
 
 
 /**
@@ -37,7 +37,7 @@ import oscar.cbls.invariants.core.propagation.Checker
   * @param op A function which returns the capacity change between two nodes : (startingNode,destinationNode,capacityAtStartingNode)=> capacityAtDestinationNode
   */
 abstract class AbstractVehicleCapacity(routes:ChangingSeqValue, n:Int, v:Int, initInt:Int, initValue:Array[Int], op :(Int,Int,Int)=>Int )
-  extends Invariant()  with SeqNotificationTarget {
+  extends Invariant()   {
 
   /**
     * Returns the capacity associated with a node.
@@ -81,9 +81,9 @@ abstract class AbstractVehicleCapacity(routes:ChangingSeqValue, n:Int, v:Int, in
     var current = s.explorerAtPosition(0).get
     var currentCar = current.value
     var tmpVehicleLocation : Array[Int]=Array.tabulate(v)(((car:Int)=> 0))
-    var tmpCapacity : Array[Int]=Array.tabulate(n)(((node:Int)=> -1))
+    var tmpCapacity : Array[Int]=Array.tabulate(n)(((node:Int)=> initInt))
     tmpVehicleLocation(currentCar) = current.position
-    var valueOfCurrentNode =  initValue(current.value)
+    var valueOfCurrentNode =  contentAtStartingNodeOfVehicle(current.value)
     tmpCapacity(current.value)= valueOfCurrentNode
     while(!current.next.isEmpty){
       val previous = current
@@ -92,7 +92,7 @@ abstract class AbstractVehicleCapacity(routes:ChangingSeqValue, n:Int, v:Int, in
       if(current.value < v){
         currentCar = current.value
         tmpVehicleLocation(currentCar) = current.position
-        valueOfCurrentNode = initValue(current.value)
+        valueOfCurrentNode = contentAtStartingNodeOfVehicle(current.value)
       } else valueOfCurrentNode =  op(previous.value,current.value,valueOfPresiousNode)
       tmpCapacity(current.value)= valueOfCurrentNode
     }
@@ -112,7 +112,7 @@ abstract class AbstractVehicleCapacity(routes:ChangingSeqValue, n:Int, v:Int, in
     * @return
     *        @author renaud.delandtsheer@cetic.be
     */
-  private def smartPrepend(zoneStart: Int, zoneEnd:Int, list:List[(Int,Int)]): List[(Int,Int)] ={
+  def smartPrepend(zoneStart: Int, zoneEnd:Int, list:List[(Int,Int)]): List[(Int,Int)] ={
     require(zoneStart<=zoneEnd)
     assert(list.sortWith((lft:(Int,Int),rgt:(Int,Int))=> lft._1<rgt._1 && lft._2<rgt._2).eq(list))
     list match{
@@ -184,7 +184,7 @@ abstract class AbstractVehicleCapacity(routes:ChangingSeqValue, n:Int, v:Int, in
         def shiftByOne(list:List[(Int,Int)]):List[(Int,Int)]= {
           list match {
             case Nil => list
-            case (a,b) :: tail =>  smartPrepend(a-1,b-1, shiftByOne(tail))
+            case (a, b) :: tail => (a - 1, b - 1) :: shiftByOne(tail)
           }
         }
 
@@ -238,7 +238,7 @@ abstract class AbstractVehicleCapacity(routes:ChangingSeqValue, n:Int, v:Int, in
               lst match{
                 case Nil =>  toInsert
                 case (start,end)::tail =>
-                  if(s>end) (start,end) :: insertInList(lst.drop(1),toInsert)
+                  if(s>end) smartPrepend(start,end, insertInList(lst.drop(1),toInsert))
                   else if(s==start && end == e) insertInList(lst,toInsert.drop(1))
                   else smartPrepend(s,e, insertInList(lst,toInsert.drop(1)))
               }
@@ -293,7 +293,6 @@ abstract class AbstractVehicleCapacity(routes:ChangingSeqValue, n:Int, v:Int, in
           toReinsertInTheDestinationSideList = if (m.flip) insertInList(toReinsertInTheDestinationSideList,List.apply((newRelativeAfter+1, dst)))
           else insertInList(insertInList(toReinsertInTheDestinationSideList, List.apply((dst, dst))), List.apply((newRelativeAfter+1,newRelativeAfter+1)))
         }
-
         tmp.insert(vehicleDestination,insertInList(tmp.getOrElse(vehicleDestination, List.empty[(Int,Int)]),toReinsertInTheDestinationSideList))
     }
 
@@ -324,69 +323,84 @@ abstract class AbstractVehicleCapacity(routes:ChangingSeqValue, n:Int, v:Int, in
     * @param lst the list containing positions where calculations must be performed
     */
   def updateContentForSelectedZones(s:IntSequence, lst: List[(Int, Int)],posOfTag:Int,car:Int){
+    /*
+               Initialisation of variable and def methods
+                                                                  */
+    var upperBound =  if (car != v - 1) positionOfVehicle(car + 1) else routes.newValue.size//upper is start of next vehicle OR end of seq
     val iter = lst.toIterator
-    var nextZone = iter.next()
-    var start = 0
-    var end = 0
-
-    def computePositionOfZone(): Unit ={
-      start = nextZone._1 + posOfTag
-      end = nextZone._2 + posOfTag
+    var nextZone : (Int,Int) = null
+    var startOfCurrentZone = 0
+    var endOfCurrentZone = 0
+    var valueOfCurrentNode =0
+    var oldValueOfCurrentNode =0
+    var valueOfPreviousNode=0
+    var previousPos:IntSequenceExplorer = null
+    def updateStartAndEndOfZone(): Unit ={
+      startOfCurrentZone = nextZone._1 + posOfTag
+      endOfCurrentZone = nextZone._2 + posOfTag
     }
-
-    var cdt:Boolean =  false
     def takeNextZone(): Unit ={nextZone = if(iter.hasNext)  iter.next() else null}
-    var upperBound =  if (car != v - 1) positionOfVehicle(car + 1) else routes.newValue.size
-    computePositionOfZone()
-    var current = s.explorerAtPosition(start).get// first is mandatory ...
-    def checkIfNextZoneAndUpdate(): Unit ={
-      if((cdt || current.position==upperBound-1 ) && nextZone != null){// si on peut arreter pour cette zone ==> recup zone suivant sinon on fait rien et on continue
-        cdt = false
-        computePositionOfZone()
-        current= s.explorerAtPosition( Math.max(start-1,current.position)).get
-        takeNextZone
+    takeNextZone()// take first Zone
+    updateStartAndEndOfZone()
+    takeNextZone()
+    var current = s.explorerAtPosition(startOfCurrentZone).get
+    var haveToVisitNextNode:Boolean = true
+    def  checkIfHaveToVisitNextNode(): Unit ={ haveToVisitNextNode = oldValueOfCurrentNode!=valueOfCurrentNode}
+    def updateZoneToVisit(): Unit ={
+      if((!haveToVisitNextNode || current.position==upperBound-1 ) && nextZone != null){// si on peut arreter pour cette zone ==> recup zone suivant sinon on fait rien et on continue
+        haveToVisitNextNode = true
+        updateStartAndEndOfZone()
+        current= s.explorerAtPosition( Math.max(startOfCurrentZone-1,current.position)).get
+        takeNextZone()
       }
     }
+    /*
 
-    var previousPos = s.explorerAtPosition(positionOfVehicle(vehicleReachingPosition(current.position))).get
-    var valueOfPreviousNode=initValue(previousPos.value)// valeur du noeud précédent
+               And now, here's how to do the job
+                                                                */
+    // handle first node
+    previousPos = s.explorerAtPosition(positionOfVehicle(vehicleReachingPosition(current.position))).get
+    valueOfCurrentNode = contentAtStartingNodeOfVehicle(car)
+    oldValueOfCurrentNode = getVehicleContentAtNode(current.value)
 
     if(current.position > previousPos.position) {// maj noeud precedent s'il existe
       previousPos = s.explorerAtPosition(current.position-1).get
-      valueOfPreviousNode = getVehicleContentAtNode(previousPos.value) }
+      valueOfPreviousNode = getVehicleContentAtNode(previousPos.value)
+      valueOfCurrentNode = op(previousPos.value,current.value,valueOfPreviousNode)// maj  valeur du noeud
+    }
 
-    var valueOfCurrentNode = op(previousPos.value,current.value,valueOfPreviousNode)// calcule  valeur du noeud
-    var oldValueOfCurrentNode = getVehicleContentAtNode(current.value)
-
-    if(current.position==end ) cdt = valueOfCurrentNode==oldValueOfCurrentNode
-    if(!cdt) setVehicleContentAtNode(current.value,current.position, valueOfCurrentNode)//maj capa
-
-    if(current.position==end )checkIfNextZoneAndUpdate()
-
+    if(current.position==endOfCurrentZone ){
+      checkIfHaveToVisitNextNode()
+      updateZoneToVisit()
+    }
+    if(haveToVisitNextNode) setVehicleContentAtNode(current.value,current.position, valueOfCurrentNode)//maj capa
 
     // tant qu'on doit continuer et qu'on depasse pas le vehicule des noeud qu'on veut maj
-    while(!cdt && current.position<upperBound-1 ){
+    while(haveToVisitNextNode && current.position<upperBound-1 ){
       previousPos=current// maj noeud precedent
-      current = current.next.get//maj noeud courant
-      if(current.position <= end){// tant qu'on est dans la zone mandat
+      current = current.next.get
+      oldValueOfCurrentNode = getVehicleContentAtNode(current.value)
+      if(current.position <= endOfCurrentZone){// tant qu'on est dans la zone mandat
         valueOfPreviousNode=getVehicleContentAtNode(previousPos.value)
         valueOfCurrentNode = op(previousPos.value,current.value,valueOfPreviousNode)
-        oldValueOfCurrentNode = getVehicleContentAtNode(current.value)
         setVehicleContentAtNode(current.value,current.position, valueOfCurrentNode)
-        if(current.position==end ){
-          cdt=  valueOfCurrentNode==oldValueOfCurrentNode
-          checkIfNextZoneAndUpdate()
+        if(current.position==endOfCurrentZone ){
+          checkIfHaveToVisitNextNode()
+          updateZoneToVisit()
         }
-      } else{ //sinon
-        if(nextZone != null && current.position >=nextZone._1 +posOfTag && current.position ==nextZone._2 +posOfTag) takeNextZone // si je depasse deja la prochaine nextZone de pos je recupère la suivante
+      }
+
+      else{ // on sort de la zone car la propagation du changement n'est pas terminé
+        if(nextZone != null && current.position >=nextZone._1 +posOfTag && current.position ==nextZone._2 +posOfTag) takeNextZone() // si je depasse deja la prochaine nextZone de pos je recupère la suivante
         valueOfPreviousNode = valueOfCurrentNode
         valueOfCurrentNode = op(previousPos.value,current.value,valueOfPreviousNode)
-        oldValueOfCurrentNode = getVehicleContentAtNode(current.value)
-        cdt = valueOfCurrentNode==oldValueOfCurrentNode //verif cond ( on est plus dans la zone mandat donc dès que cdt ==> on arrete (ou on passe a la zone suivant s'il y en a )
-        if(!cdt) setVehicleContentAtNode(current.value,current.position, valueOfCurrentNode)// maj capa si on doit la changer
-        checkIfNextZoneAndUpdate()
+        checkIfHaveToVisitNextNode() //verif cond ( on est plus dans la zone mandat donc dès que haveToVisitNextNode ==> on arrete (ou on passe a la zone suivant s'il y en a )
+        if(haveToVisitNextNode) setVehicleContentAtNode(current.value,current.position, valueOfCurrentNode)// maj capa si on doit la changer
+        updateZoneToVisit()
       }
     }
+
+
   }
 
 
@@ -397,17 +411,13 @@ abstract class AbstractVehicleCapacity(routes:ChangingSeqValue, n:Int, v:Int, in
   def pushOnTopOfStack(oldToNewfunction:(Int)=> Option[Int]) :Unit
 
 
+  def contentAtStartingNodeOfVehicle(vehicle:Int): Int = initValue(vehicle)
+
 
   override def checkInternals(c: Checker): Unit = {
-    var (capaToChekc, stackToChekc) = computeContentAndVehicleStartPositionsFromScratch(routes.newValue)
-
-    for(node <- 0 until n){
-      c.check(capaToChekc(node) equals getVehicleContentAtNode(node), Some("Founded Capacity at node(" + node + ") at pos : "+ routes.newValue.positionsOfValue(node)+ " :=" + capaToChekc(node) + " should be :=" + getVehicleContentAtNode(node)))
-    }
+    val (capaToChekc, stackToChekc) = computeContentAndVehicleStartPositionsFromScratch(routes.newValue)
+    for(node <- 0 until n) c.check(capaToChekc(node) equals getVehicleContentAtNode(node), Some("Founded Capacity at node(" + node + ") at pos : "+ routes.newValue.positionsOfValue(node)+ " :=" + capaToChekc(node) + " should be :=" + getVehicleContentAtNode(node)))
     for(car <- 0 until v)c.check(stackToChekc.posOfVehicle(car) equals positionOfVehicle(car ), Some("Founded start of car(" + car + "):=" + positionOfVehicle(car) + " should be :=" + stackToChekc.posOfVehicle(car)+" seq :"+routes.newValue.mkString(",")))
-
   }
-
-
 }
 

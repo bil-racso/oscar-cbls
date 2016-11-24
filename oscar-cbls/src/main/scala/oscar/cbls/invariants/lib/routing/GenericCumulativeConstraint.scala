@@ -27,9 +27,7 @@ import oscar.cbls.invariants.core.propagation.{Checker}
   */
 
 object GenericCumulativeConstraint {
-
-
-
+//TODO ScalaDoc
   /**
     *
     * @param routes The sequence representing the route associated at each vehicle
@@ -48,9 +46,9 @@ object GenericCumulativeConstraint {
   def apply(routes:ChangingSeqValue,n:Int,v:Int,op :(Int,Int,Int)=>Int,cMax:Int,
             initValue:Array[Int], initVehiclePosition:Array[Int], initContent: Int=0 , minContent :Int=Int.MinValue, maxContent:Int=Int.MaxValue, maxStack:Int=4):(CBLSIntVar,Array[Int]) ={
     var violPerV: Array[Int] = Array.tabulate(v)((car: Int) => 0)
-    var globalViol:CBLSIntVar=  CBLSIntVar(routes.model,0,routes.domain,"Global Violation of Capacity")
+    var globalViol:CBLSIntVar=  CBLSIntVar(routes.model,0,Domain.coupleToDomain(minContent,maxContent),"Global Violation of Capacity")
     //globalViol= new GenericCumulativeConstraint(routes,n,v,op,cMax,initContent ,initValue,globalViol,violPerV).GlobalViolation
-    new GenericCumulativeConstraint(routes,n,v,op,cMax,initContent ,initValue,initVehiclePosition,globalViol,violPerV,maxStack).getOutput()
+    new GenericCumulativeConstraint(routes,n,v,op,cMax,initContent ,initValue,initVehiclePosition,globalViol,violPerV,maxStack)//.getOutput()
     (globalViol,violPerV)
 
   }
@@ -73,10 +71,10 @@ object GenericCumulativeConstraint {
   */
 class GenericCumulativeConstraint(routes:ChangingSeqValue, n:Int, v:Int, op :(Int,Int,Int)=>Int, cMax:Int, initContent: Int ,initValue :Array[Int],initVehiclePosition:Array[Int],
                                   globalViolation: CBLSIntVar, vehicleViolation:Array[Int], maxStack:Int)
-  extends AbstractVehicleCapacity(routes,n,v,initContent,initValue  ,op) {
+  extends AbstractVehicleCapacity(routes,n,v,initContent,initValue  ,op)  with SeqNotificationTarget {
 
   private var contentAtNode : Array[Int]= Array.tabulate(n)((node:Int)=> initContent)
-  private var stack:VehicleLocation = ConcreteVehicleLocation(initVehiclePosition)
+  private var stack:VehicleLocation = null
 
   private var changedNodeSinceCheckpoint:MagicBoolArray= null
   private var changedVehicleViolationSinceCheckpoint:MagicBoolArray= null
@@ -85,7 +83,7 @@ class GenericCumulativeConstraint(routes:ChangingSeqValue, n:Int, v:Int, op :(In
   private var changedGlobalViolation:Int=  0
   private var changedVehicleViolation: Array[Int] = Array.tabulate(v)((car: Int) => 0)
   private var changedContentAtNode : Array[Int]= Array.tabulate(n)((node:Int)=> initContent)
-  private var stackSinceAtCheckPoint:VehicleLocation = null
+  private var stackAtCheckPoint:VehicleLocation = null
 
   require(initValue.length==v)
   require( vehicleViolation.length==v)
@@ -101,42 +99,25 @@ class GenericCumulativeConstraint(routes:ChangingSeqValue, n:Int, v:Int, op :(In
   }
 
   private def computeAndAffectContentAndVehicleStartPositionsFromScratch(): Unit ={
-    var tmp = myComputeContentAndVehicleStartPositionsFromScratch(routes.newValue)
+    var tmp = computeContentAndVehicleStartPositionsFromScratch(routes.newValue)
     stack = tmp._2
     contentAtNode = tmp._1.clone()
-    for(car <- 0 until v) vehicleViolation(car ) = tmp._3(car)
-    globalViolation := tmp._3.sum
+    var currentCar = 0
+    var valueOfCurrentNode = initContent
+    var currentNode = routes.newValue.explorerAtPosition(0)
+    while(currentNode.nonEmpty){
+      if(currentNode.get.value < v ){
+        currentCar = currentNode.get.value
+        vehicleViolation(currentCar) = 0
+      }
+      valueOfCurrentNode = contentAtNode(currentNode.get.value)
+      vehicleViolation(currentCar) +=  (if (valueOfCurrentNode > cMax) valueOfCurrentNode-cMax else if (valueOfCurrentNode < 0)  Math.abs(valueOfCurrentNode) else 0)
+      currentNode = currentNode.get.next
+    }
+    globalViolation := vehicleViolation.sum
   }
 
-  /**
-    *Computes content of vehicle and their starting position from scratch
-    * @param s the sequence
-    * @return (contentAtnode,VehicleLocation, violationPerVehicle, globalViolation)
-    */
-  private def myComputeContentAndVehicleStartPositionsFromScratch(s: IntSequence): (Array[Int], VehicleLocation, Array[Int],Int) = {
-    var current = s.explorerAtPosition(0).get
-    var currentCar = current.value
-    var tmpVehicleLocation : Array[Int]=Array.tabulate(v)((car:Int)=> initVehiclePosition(car))
-    var tmpCapacity : Array[Int]=Array.tabulate(n)((node:Int)=> initContent)
-    val tmpViolPerV : Array[Int]= Array.tabulate(v)((node:Int)=> 0)
-    tmpVehicleLocation(currentCar) = current.position
-    var valueOfCurrentNode =  initValue(current.value)
-    tmpCapacity(current.value)= valueOfCurrentNode
-    tmpViolPerV(currentCar) +=  (if (valueOfCurrentNode > cMax) cMax - valueOfCurrentNode else if (valueOfCurrentNode < 0)  Math.abs(valueOfCurrentNode) else 0)
-    while(!current.next.isEmpty){
-      val previous = current
-      val valueOfPresiousNode = valueOfCurrentNode
-      current = current.next.get
-      if(current.value < v){
-        currentCar = current.value
-        tmpVehicleLocation(currentCar) = current.position
-        valueOfCurrentNode = initValue(current.value)
-      } else valueOfCurrentNode =  op(previous.value,current.value,valueOfPresiousNode)
-      tmpCapacity(current.value)= valueOfCurrentNode
-      tmpViolPerV(currentCar) +=  (if (valueOfCurrentNode > cMax) valueOfCurrentNode- cMax  else if (valueOfCurrentNode < 0)  Math.abs(valueOfCurrentNode) else 0)
-    }
-    (tmpCapacity,ConcreteVehicleLocation(tmpVehicleLocation), tmpViolPerV, tmpViolPerV.sum)
-  }
+
 
   override def notifySeqChanges(v: ChangingSeqValue, d: Int, changes: SeqUpdate){
     val zoneToCompute = digestUpdatesAndUpdateVehicleStartPositionsAndSearchZoneToUpdate(changes)
@@ -245,7 +226,7 @@ class GenericCumulativeConstraint(routes:ChangingSeqValue, n:Int, v:Int, op :(In
       changedNodeSinceCheckpoint.all_=(false)
     } else changedNodeSinceCheckpoint = MagicBoolArray(n)
 
-    stackSinceAtCheckPoint= stack.regularize()
+    stackAtCheckPoint= stack.regularize()
   }
 
   /**
@@ -265,7 +246,7 @@ class GenericCumulativeConstraint(routes:ChangingSeqValue, n:Int, v:Int, op :(In
     changedNodeSinceCheckpoint=null
     changedVehicleViolationSinceCheckpoint=null
     changedGlobalViolationSinceCheckpoint = false
-    stack = stackSinceAtCheckPoint
+    stack = stackAtCheckPoint
   }
 
   /**
@@ -337,13 +318,26 @@ class GenericCumulativeConstraint(routes:ChangingSeqValue, n:Int, v:Int, op :(In
   }
 
   override def checkInternals(c: Checker): Unit = {
-    var tmp = myComputeContentAndVehicleStartPositionsFromScratch(routes.newValue)
+    val tmp = computeContentAndVehicleStartPositionsFromScratch(routes.newValue)
+
     for(node <- 0 until n) c.check(tmp._1(node) equals getVehicleContentAtNode(node), Some("GenericCumulativeConstraint : Founded Capacity at node(" + node + ") at pos : "+ routes.newValue.positionsOfValue(node)+ " :=" + tmp._1(node) + " should be :=" + getVehicleContentAtNode(node)))
+
+    var currentCar = 0
+    var valueOfCurrentNode = initContent
+    var currentNode = routes.newValue.explorerAtPosition(0)
+    var tmpViolPerV = Array.tabulate(v)((car :Int)=> 0)
+    lazy val globalViolation = tmpViolPerV.sum
+    while(currentNode.nonEmpty){
+      if(currentNode.get.value < v ) currentCar = currentNode.get.value
+      valueOfCurrentNode = tmp._1(currentNode.get.value)
+      tmpViolPerV(currentCar) +=  (if (valueOfCurrentNode > cMax) valueOfCurrentNode-cMax else if (valueOfCurrentNode < 0)  Math.abs(valueOfCurrentNode) else 0)
+      currentNode = currentNode.get.next
+    }
     for(car <- 0 until v){
       c.check(tmp._2.posOfVehicle(car) equals positionOfVehicle(car ), Some("GenericCumulativeConstraint : Founded start of car(" + car + "):=" + positionOfVehicle(car) + " should be :=" + tmp._2.posOfVehicle(car)+" seq :"+routes.newValue.mkString(",")))
-      c.check(getViolationOfVehicle(car) equals tmp._3(car), Some("GenericCumulativeConstraint : Founded violation of vehicle("+car+") :="+getViolationOfVehicle(car)+" should be :="+tmp._3(car)))
+      c.check(getViolationOfVehicle(car) equals tmpViolPerV(car), Some("GenericCumulativeConstraint : Founded violation of vehicle("+car+") :="+getViolationOfVehicle(car)+" should be :="+tmpViolPerV(car)))
     }
-    c.check(GlobalViolation equals tmp._4, Some("GenericCumulativeConstraint : Founded Violation :="+GlobalViolation+" should be :="+tmp._4))
+    c.check(GlobalViolation equals globalViolation, Some("GenericCumulativeConstraint : Founded Violation :="+GlobalViolation+" should be :="+globalViolation))
   }
 }
 

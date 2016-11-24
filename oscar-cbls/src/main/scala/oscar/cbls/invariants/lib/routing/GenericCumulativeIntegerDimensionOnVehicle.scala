@@ -23,7 +23,7 @@ import oscar.cbls.invariants.core.computation._
   * Created by  Jannou Brohée on 3/10/16.
   */
 
-object GenericCumulativeIntegerDimensionOnVehicleUsingStackedVehicleLocation {
+object GenericCumulativeIntegerDimensionOnVehicle {
   /**
     * Implements a GenericCumulativeIntegerDimensionOnVehicle Invariant
     *
@@ -33,25 +33,38 @@ object GenericCumulativeIntegerDimensionOnVehicleUsingStackedVehicleLocation {
     * @param op a function which returns the capacity change between two nodes : (startingNode,destinationNode,capacityAtStartingNode)=> capacityAtDestinationNode
     * @return the capacity of each node in the sequence representinf the route associeted at each vehicle
     */
-  def apply(routes:ChangingSeqValue,n:Int,v:Int,op :(Int,Int,Int)=>Int,initValue:Array[Int]):Array[CBLSIntVar] ={
-    var output: Array[CBLSIntVar] = Array.tabulate(n)((node: Int) => CBLSIntVar(routes.model, Int.MinValue, routes.domain, "capacity at node("+node.toString+")"))
-    new GenericCumulativeIntegerDimensionOnVehicleUsingStackedVehicleLocation(routes, n, v, op, initValue,output).getOutput()
+
+  /**
+    *
+    * @param routes
+    * @param n
+    * @param v
+    * @param op
+    * @param initValue
+    * @param maxStack
+    * @return
+    */
+  def apply(routes:ChangingSeqValue,n:Int,v:Int,op :(Int,Int,Int)=>Int,initValue:Array[Int],minContent :Int=Int.MinValue, maxContent:Int=Int.MaxValue,maxStack:Int =4):Array[CBLSIntVar] ={
+    var output: Array[CBLSIntVar] = Array.tabulate(n)((node: Int) => CBLSIntVar(routes.model, 0, Domain.coupleToDomain(minContent,maxContent), "capacity at node("+node.toString+")"))
+    new GenericCumulativeIntegerDimensionOnVehicleInvariant(routes, n, v, op, initValue,output,maxStack).getOutput()
     output
   }
 }
+
 
 /**
   * Maintains the current capacity of each vehicle at each node after a SeqUpdate
   *
   * @param routes The sequence representing the route associated at each vehicle
-  * @param n the maximum number of nodes
-  * @param v the number of vehicles
-  * @param op a function which returns the capacity change between two nodes : (startingNode,destinationNode,capacityAtStartingNode)=> capacityAtDestinationNode
-  * @param initValue an array giving the initial capacity of a vehicle at his starting node (0, v-1)
+  * @param n The maximum number of nodes
+  * @param v The number of vehicles
+  * @param op A function which returns the capacity change between two nodes : (startingNode,destinationNode,capacityAtStartingNode)=> capacityAtDestinationNode
+  * @param initValue An array giving the initial capacity of a vehicle at his starting node (0, v-1)
   * @param output The array which store, for any node, the capacity of the vehicle associated at the node
+  * @param maxStack
   */
-class GenericCumulativeIntegerDimensionOnVehicleUsingStackedVehicleLocation(routes:ChangingSeqValue, n:Int, v:Int, op :(Int,Int,Int)=>Int, initValue :Array[Int], output:Array[CBLSIntVar])
-  extends AbstractVehicleCapacity(routes,n,v,-1,initValue  ,op) {
+class GenericCumulativeIntegerDimensionOnVehicle(routes:ChangingSeqValue, n:Int, v:Int, op :(Int,Int,Int)=>Int, initValue :Array[Int], output:Array[CBLSIntVar],maxStack:Int)
+  extends AbstractVehicleCapacity(routes,n,v,-1,initValue  ,op) with SeqNotificationTarget{
 
   private var contentAtNode : Array[Int]= Array.tabulate(n)((node:Int)=> -1)
 
@@ -59,9 +72,6 @@ class GenericCumulativeIntegerDimensionOnVehicleUsingStackedVehicleLocation(rout
 
   require(initValue.length==v)
   require( output.length==n)
-  registerStaticAndDynamicDependency(routes)
-  finishInitialization()
-  for(i <- output) i.setDefiningInvariant(this)
 
   computeAndAffectContentAndVehicleStartPositionsFromScratch()
 
@@ -83,7 +93,7 @@ class GenericCumulativeIntegerDimensionOnVehicleUsingStackedVehicleLocation(rout
     * @param changes the SeqUpdate
     * @return a list that specify mandatory zones which must be computed. A zone is represented by his start and end position : (startPositionIncluded, endPositionIncluded). Note that the list is sorted by position ((x,y) <= (x',y') iff y <= x'  )
     */
-  private def digestUpdatesAndUpdateVehicleStartPositionsAndSearchZoneToUpdate(changes:SeqUpdate) : RedBlackTreeMap[List[(Int,Int)]] = {
+  def digestUpdatesAndUpdateVehicleStartPositionsAndSearchZoneToUpdate(changes:SeqUpdate) : RedBlackTreeMap[List[(Int,Int)]] = {
     changes match {
       case s@SeqUpdateInsert(value : Int, pos : Int, prev : SeqUpdate) =>
         updateVehicleStartPositionsAndSearchZoneToUpdateAfterLastInsert(digestUpdatesAndUpdateVehicleStartPositionsAndSearchZoneToUpdate(prev),s,changes)
@@ -110,18 +120,34 @@ class GenericCumulativeIntegerDimensionOnVehicleUsingStackedVehicleLocation(rout
 
   override def vehicleReachingPosition(position: Int): Int = stack.vehicleReachingPosition(position)
 
-  override def pushOnTopOfStack(oldToNewfunction: (Int) => Option[Int]): Unit = stack = stack.push(oldToNewfunction)
+  override def pushOnTopOfStack(oldToNewfunction: (Int) => Option[Int]): Unit ={
+    stack = stack.push(oldToNewfunction)
+    if(stack.depth>maxStack) stack = stack.regularize()
+  }
 
 
-  private def computeAndAffectContentAndVehicleStartPositionsFromScratch(): Unit ={
+  def computeAndAffectContentAndVehicleStartPositionsFromScratch(): Unit ={
     var tmp = computeContentAndVehicleStartPositionsFromScratch(routes.newValue)
     stack = tmp._2
     contentAtNode = tmp._1
   }
 
-  private def getOutput(){
+  def getOutput(){
     for(node <- 0 until n) {
       output(node) := getVehicleContentAtNode(node)
     }
   }
+}
+
+
+
+
+class GenericCumulativeIntegerDimensionOnVehicleInvariant(routes:ChangingSeqValue, n:Int, v:Int, op :(Int,Int,Int)=>Int, initValue :Array[Int], output:Array[CBLSIntVar],maxStack:Int)
+  extends GenericCumulativeIntegerDimensionOnVehicle(routes, n, v, op, initValue,output,maxStack) {
+
+  registerStaticAndDynamicDependency(routes)
+  finishInitialization()
+  for(i <- output) i.setDefiningInvariant(this)
+
+ // override def notifySeqChanges(v: ChangingSeqValue, d: Int, changes: SeqUpdate): Unit = super.notifySeqChanges(v, d, changes)
 }
