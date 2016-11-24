@@ -1,17 +1,19 @@
 package oscar.cbls.invariants.lib.routing.draft
 
+/*
 import oscar.cbls.algo.boolArray.MagicBoolArrayWithFastIteratorOnTrueOverApproximated
 import oscar.cbls.algo.quick.QList
-import oscar.cbls.algo.rb.RedBlackTreeMap
+import oscar.cbls.algo.rb.{RedBlackTreeMapExplorer, RedBlackTreeMap}
 import oscar.cbls.algo.seq.functional.IntSequence
 import oscar.cbls.invariants.core.computation._
+import oscar.cbls.invariants.core.propagation.Checker
 import oscar.cbls.invariants.lib.routing.RoutingConventionMethods
 
 class VehicleCapacity(routes:ChangingSeqValue,
                       v:Int,
                       deltaAtNode:Array[Int], //the initial content of a vehicle is the delta at its starting node.
                       maxCapacity:Int, //shared by all vehicles
-                      violation:Array[CBLSIntVar], //violation of each vehicle; thje integral of overshoot over nodes
+                      violation:Array[CBLSIntVar], //violation of each vehicle; the integral of overshoot over nodes
                       contentAtEndOfVehicleRoute:Array[CBLSIntVar]) //violation per vehicle is the integral of overshoot over leaves, counted on nodeLeave
   extends Invariant() with SeqNotificationTarget{
 
@@ -65,7 +67,132 @@ class VehicleCapacity(routes:ChangingSeqValue,
     addTo.insert(level,addTo.getOrElse(level,0))
   }
 
-  def integralOfAboveThreshold(numberOfOccurrences:RedBlackTreeMap[Int],threshold:Int):Int = {
+
+  /**
+   * computes the integral on x of(toFunction(x) - fromFunction(x)) with x in [minValueIncluded, maxValueIncluded]
+   * @param fromFunction
+   * @param toFunction
+   * @param minValueIncluded
+   * @param maxValueIncluded
+   * @return
+   */
+  def computeIntegralInBounds(fromFunction:RedBlackTreeMap[Int], toFunction:RedBlackTreeMap[Int], minValueIncluded:Int,maxValueIncluded:Int):Int = {
+
+    //the integral goes from high to low values
+
+    //position of integrator is not included yet in the integral
+    def computeIntegralInBoundsEnd(positionOfIntegrator:Int, width:Int, acc:Int):Int = {
+      if(positionOfIntegrator >= maxValueIncluded){
+        acc + width * (minValueIncluded - maxValueIncluded + 1)
+      }else if (positionOfIntegrator >= minValueIncluded){
+        acc + width * (positionOfIntegrator - minValueIncluded + 1)
+      }else{
+        acc
+      }
+    }
+
+    def computeIntegralInBoundsWithOptFromNoTo(nextPositionOnFromOpt:Option[RedBlackTreeMapExplorer[Int]],
+                                               positionOfIntegrator:Int, width:Int, acc:Int):Int = {
+      nextPositionOnFromOpt match{
+        case None => computeIntegralInBoundsEnd(positionOfIntegrator, width, acc)
+        case Some(nextPositionOnFrom) => computeIntegralInBoundsWithFromNoTo(nextPositionOnFrom,
+          positionOfIntegrator, width, acc)
+      }
+    }
+
+    def computeIntegralInBoundsWithFromNoTo(nextPositionOnFrom:RedBlackTreeMapExplorer[Int],
+                                            positionOfIntegrator:Int, width:Int, acc:Int):Int = {
+      val pivotValue = nextPositionOnFrom.key
+      val substractedWidth = nextPositionOnFrom.value
+
+      if(pivotValue > maxValueIncluded) {
+        //this pivot is till above the integration box
+        computeIntegralInBoundsWithOptFromNoTo(
+          nextPositionOnFrom.prev,
+          pivotValue,
+          width - substractedWidth,
+          acc)
+      }else{
+        //this pivot is below or equal to the maxValueIncluded
+        val valueAboveIncluded = if(positionOfIntegrator > maxValueIncluded) maxValueIncluded else positionOfIntegrator
+        if(pivotValue >= minValueIncluded) {
+          //just a square added, and carry on
+          computeIntegralInBoundsWithOptFromNoTo(
+            nextPositionOnFrom.prev,
+            pivotValue,
+            width - substractedWidth,
+            acc + (valueAboveIncluded - pivotValue) * width)
+        }else{
+          acc + (valueAboveIncluded - minValueIncluded + 1) * width
+          //add a square and finish
+        }
+      }
+    }
+
+    def computeIntegralInBoundsNoFromWithOptTo(nextPositionOnToOpt:Option[RedBlackTreeMapExplorer[Int]],
+      positionOfIntegrator:Int, width:Int, acc:Int):Int = {
+      nextPositionOnToOpt match{
+        case None => computeIntegralInBoundsEnd(positionOfIntegrator, width, acc)
+        case Some(nextPositionOnTo) => computeIntegralInBoundsNoFromWithTo(nextPositionOnTo,
+          positionOfIntegrator, width, acc)
+      }
+    }
+
+    def computeIntegralInBoundsNoFromWithTo(nextPositionOnTo:RedBlackTreeMapExplorer[Int],
+                                            positionOfIntegrator:Int, width:Int, acc:Int):Int = {
+      val pivotValue = nextPositionOnTo.key
+      val addedWidth = nextPositionOnTo.value
+
+      if(pivotValue > maxValueIncluded) {
+        //this pivot is till above the integration box
+        computeIntegralInBoundsNoFromWithOptTo(
+          nextPositionOnTo.prev,
+          pivotValue,
+          width + addedWidth,
+          acc)
+      }else{
+        //this pivot is below or equal to the maxValueIncluded
+        val valueAboveIncluded = if(positionOfIntegrator > maxValueIncluded) maxValueIncluded else positionOfIntegrator
+        if(pivotValue >= minValueIncluded) {
+          //just a square added, and carry on
+          computeIntegralInBoundsNoFromWithOptTo(
+            nextPositionOnTo.prev,
+            pivotValue,
+            width + addedWidth,
+            acc + (valueAboveIncluded - pivotValue) * width)
+        }else{
+          acc + (valueAboveIncluded - minValueIncluded + 1) * width
+          //add a square and finish
+        }
+      }
+    }
+
+    def computeIntegralInBoundsWithFromWithTo(nextPositionOnFrom:RedBlackTreeMapExplorer[Int],
+                                              nextPositionOnTo:RedBlackTreeMapExplorer[Int],
+                                              positionOfIntegrator:Int, width:Int, acc:Int):Int = {
+    }
+
+
+    def computeIntegralInBoundsOptFromOptTo(nextPositionOnToOpt:Option[RedBlackTreeMapExplorer[Int]],
+                                            nextPositionOnFromOpt:Option[RedBlackTreeMapExplorer[Int]],
+                                               positionOfIntegrator:Int, width:Int, acc:Int):Int = {
+      (nextPositionOnToOpt, nextPositionOnFromOpt) match {
+        case (None, None) =>
+          computeIntegralInBoundsEnd(positionOfIntegrator, width, acc)
+        case (Some(nextPositionOnFrom), None) =>
+          computeIntegralInBoundsWithFromNoTo(nextPositionOnFrom, positionOfIntegrator, width, acc)
+        case (None, Some(nextPositionOnTo)) =>
+          computeIntegralInBoundsNoFromWithTo(nextPositionOnTo, positionOfIntegrator, width, acc)
+        case (Some(nextPositionOnFrom), Some(nextPositionOnTo)) =>
+          computeIntegralInBoundsWithFromWithTo(nextPositionOnFrom, nextPositionOnTo, positionOfIntegrator, width, acc)
+      }
+    }
+
+    computeIntegralInBoundsOptFromOptTo(fromFunction.biggestPosition,toFunction.biggestPosition, Int.MaxValue, 0,0)
+  }
+
+
+  def integralOfAboveOrEqualToThreshold(numberOfOccurrences:RedBlackTreeMap[Int],threshold:Int):Int = {
     var integral = 0
     var width = 0
     var positionOfIntegrator = Int.MaxValue
@@ -89,7 +216,7 @@ class VehicleCapacity(routes:ChangingSeqValue,
     integral
   }
 
-  def integralOfFreeSpaceBelowThreshold(numberOfOccurrences:RedBlackTreeMap[Int],threshold:Int,maxWidth:Int):Int = {
+  def integralOfFreeSpaceBelowOrEqualToThreshold(numberOfOccurrences:RedBlackTreeMap[Int],threshold:Int,maxWidth:Int):Int = {
     var integral = 0
     var width = 0
     var positionOfIntegrator = Int.MaxValue
@@ -114,10 +241,10 @@ class VehicleCapacity(routes:ChangingSeqValue,
     integral
   }
 
-  def integralOfDeltaAboveThreshold(integralFrom:RedBlackTreeMap[Int],
-                                    integralTo:RedBlackTreeMap[Int],
-                                    threshold:Int):Int = {
-    integralOfAboveThreshold(integralTo,threshold) - integralOfAboveThreshold(integralFrom,threshold)
+  def integralOfDeltaAboveOrEqualToThreshold(integralFrom:RedBlackTreeMap[Int],
+                                             integralTo:RedBlackTreeMap[Int],
+                                             threshold:Int):Int = {
+    integralOfAboveOrEqualToThreshold(integralTo,threshold) - integralOfAboveOrEqualToThreshold(integralFrom,threshold)
   }
 
   def integralOfBetweenThresholds(numberOfOccurrences:RedBlackTreeMap[Int],
@@ -238,6 +365,12 @@ class VehicleCapacity(routes:ChangingSeqValue,
     }
   }
 
+  /**
+   *
+   * @param seq
+   * @param vehicle
+   * @return (the violation of the vehicle; the content of the vehicle when returning to its home)
+   */
   def computeViolationFromScratchNoPrecompute(seq:IntSequence,vehicle:Int):(Int,Int) = {
 
     var viol = 0
@@ -488,4 +621,13 @@ class VehicleCapacity(routes:ChangingSeqValue,
     }
   }
 
+
+  override def checkInternals(c : Checker) : Unit = {
+    for(v <- vehicles){
+      val (viol,contentAtEnd) = computeViolationFromScratchNoPrecompute(routes.value,v)
+      c.check(violation(v).value == viol, Some("Error on violation of vehicle " + v + " expected:" + viol + " actual output:" + violation(v).value))
+      c.check(contentAtEndOfVehicleRoute(v).value == contentAtEnd, Some("Error on content at end of vehicle route v:" + v + " expected:" + contentAtEnd + " actual output:" + contentAtEndOfVehicleRoute(v).value))
+    }
+  }
 }
+*/

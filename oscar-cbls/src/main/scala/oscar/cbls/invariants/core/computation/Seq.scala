@@ -599,7 +599,7 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], val maxValue: Int, 
 
   //-1 for first position
   protected def move(fromIncludedPosition:Int,toIncludedPosition:Int,afterPosition:Int,flip:Boolean){
-    println("seq.move(fromIncludedPosition:" + fromIncludedPosition + " toIncludedPosition:" + toIncludedPosition +" afterPosition:" + afterPosition + " flip:" + flip+ ")")
+    //println("seq.move(fromIncludedPosition:" + fromIncludedPosition + " toIncludedPosition:" + toIncludedPosition +" afterPosition:" + afterPosition + " flip:" + flip+ ")")
     require(toNotify.newValue.size > toIncludedPosition)
     require(toNotify.newValue.size > afterPosition, "toNotify.newValue.size(=" + toNotify.newValue.size + ") > afterPosition(=" + afterPosition + ")")
     require(0 <= fromIncludedPosition,"move with fromIncludedPosition=" + fromIncludedPosition)
@@ -1104,6 +1104,7 @@ class IdentitySeq(fromValue:ChangingSeqValue, toValue:CBLSSeqVar)
     checkPointStackNotTop match{
       case (cp) :: tail =>
         topCheckpoint = cp
+        checkPointStackNotTop = tail
         assert(levelTopCheckpoint +1 == checkPointStackNotTop.size)
         levelTopCheckpoint -= 1
       case _ =>
@@ -1143,7 +1144,7 @@ class IdentitySeq(fromValue:ChangingSeqValue, toValue:CBLSSeqVar)
           popTopCheckpoint()
         }
         require(level == levelTopCheckpoint)
-        require(value quickEquals topCheckpoint)
+        require(value quickEquals topCheckpoint, "fail on quick equals equals=" + (value.toList equals topCheckpoint.toList)+ " value:" + value + " topCheckpoint:" + topCheckpoint)
         toValue.rollbackToTopCheckpoint(value)
       case SeqUpdateDefineCheckpoint(prev:SeqUpdate,activeCheckpoint:Boolean,level:Int) =>
         digestChanges(prev)

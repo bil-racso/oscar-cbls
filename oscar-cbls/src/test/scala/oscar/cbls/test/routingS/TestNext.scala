@@ -16,6 +16,7 @@ package oscar.cbls.test.routingS
   ******************************************************************************/
 
 import oscar.cbls.invariants.core.computation.Store
+import oscar.cbls.invariants.core.propagation.ErrorChecker
 import oscar.cbls.invariants.lib.routing.RouteSuccessorAndPredecessors
 import oscar.cbls.invariants.lib.seq.Size
 import oscar.cbls.modeling.Algebra._
@@ -68,7 +69,7 @@ object TestNext extends App{
 
   val (symmetricDistanceMatrix,pointsList) = RoutingMatrixGenerator(n)
   //  println("restrictions:" + restrictions)
-  val model = new Store()
+  val model = new Store(checker = Some(new ErrorChecker()))
 
   val myVRP = new MySimpleRoutingWithUnroutedPointsAndNext(n,v,symmetricDistanceMatrix,model,maxPivotPerValuePercent,pointsList)
 

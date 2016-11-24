@@ -15,6 +15,7 @@ package oscar.cbls.invariants.lib.seq
   * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
   ******************************************************************************/
 
+import oscar.cbls.algo.boolArray.MagicBoolArray
 import oscar.cbls.algo.quick.QList
 import oscar.cbls.algo.seq.functional.IntSequence
 import oscar.cbls.invariants.core.computation._
@@ -160,6 +161,10 @@ class Precedence(seq:ChangingSeqValue,
     }
   }
 
+
+  //should always be false when not in use
+  val tmpArrayForDigestUpdate = MagicBoolArray(seq.maxValue+1,false)
+
   private def digestUpdates(changes : SeqUpdate) : Boolean = {
     //println("precedence.digestUpdate(" + changes.getClass.getSimpleName + ")")
     changes match {
@@ -268,14 +273,18 @@ class Precedence(seq:ChangingSeqValue,
           //that'w why there is only the loop on precedences considering the precedences started at the flipped values,
           // not the ones ended at the flipped values
 
-          //TODO: making and querying this set costs more-less 1/2 of the run time
-          val valuesInFlip:SortedSet[Int] = prev.newValue.valuesBetweenPositionsSet(fromIncluded,toIncluded)
+          var movedValues = x.movedValuesQList
+          tmpArrayForDigestUpdate.all = false
+          while(movedValues != null) {
+            tmpArrayForDigestUpdate(movedValues.head)
+            movedValues = movedValues.tail
+          }
 
-          for(value <- valuesInFlip){
+          for(value <- movedValues){
             //violations involved in value
             for(precedenceThatShouldOpenAtValue <- this.beforesToPrecedences(value)){
               val endValueOfPrecedence = precedencesArray(precedenceThatShouldOpenAtValue)._2
-              if(valuesInFlip.contains(endValueOfPrecedence)){
+              if(tmpArrayForDigestUpdate(endValueOfPrecedence)){
                 //the violation of this precedence is inverted
                 if(isPrecedenceViolated(precedenceThatShouldOpenAtValue)){
                   //was violated, so flip to false

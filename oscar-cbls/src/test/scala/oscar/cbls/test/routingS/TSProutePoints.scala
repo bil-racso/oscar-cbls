@@ -49,29 +49,30 @@ object TSProutePoints extends App {
   val n = 10000
   val v = 100
 
-  val verbose = 1
+  val verbose = 0
   val maxPivotPerValuePercent = 4
-  new TSPRoutePointsS(1000,10,4,verbose)
-  new TSPRoutePointsS(1000,10,4,verbose)
-/*
+  new TSPRoutePointsS(1000,100,4,verbose)
+
   println()
   println("n\tv\tpercent\ttime\ttime\ttime")
 
   for(n <- 1000 to 11000 by 2000){
     for(v <- List(100)){
-      print(n + "\t" + v + "\t" + maxPivotPerValuePercent + "\t")
-      new TSPRoutePointsS(n,v,maxPivotPerValuePercent,verbose)
-      print("\t")
-      System.gc()
-      new TSPRoutePointsS(n,v,maxPivotPerValuePercent,verbose)
-      print("\t")
-      System.gc()
-      new TSPRoutePointsS(n,v,maxPivotPerValuePercent,verbose)
-      print("\n")
-      System.gc()
+      for (maxPivotPerValuePercent <- List(0,1,2,3,4,5,20)) {
+        print(n + "\t" + v + "\t" + maxPivotPerValuePercent + "\t")
+        new TSPRoutePointsS(n, v, maxPivotPerValuePercent, verbose)
+        print("\t")
+        System.gc()
+        new TSPRoutePointsS(n, v, maxPivotPerValuePercent, verbose)
+        print("\t")
+        System.gc()
+        new TSPRoutePointsS(n, v, maxPivotPerValuePercent, verbose)
+        print("\n")
+        System.gc()
+      }
     }
   }
-  */
+
 }
 
 class TSPRoutePointsS(n:Int,v:Int,maxPivotPerValuePercent:Int, verbose:Int) extends StopWatch{
