@@ -1,6 +1,6 @@
 package oscar.cbls.invariants.lib.routing
 
-import oscar.cbls.algo.boolArray.MagicBoolArray
+import oscar.cbls.algo.magicArray.MagicBoolArray
 
 
 /*******************************************************************************

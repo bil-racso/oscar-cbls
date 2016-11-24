@@ -652,7 +652,6 @@ class InvariantTests extends FunSuite with Checkers {
     val v = 5
     val route = bench.genRouteOfNodes(n,v)
 
-
     val limite = 10
     def genMatrix(node:Int):Array[Array[Int]] = {
       val init = Int.MinValue
@@ -692,7 +691,7 @@ class InvariantTests extends FunSuite with Checkers {
 
     val go = System.nanoTime()
     bench.run()
-    println("GenericCumulativeIntegerDimensionOnVehicle(n =\"+n+\" v =\"+v+\") : "+((System.nanoTime()-go)/Math.pow(10,9))+" s")
+    println("GenericCumulativeIntegerDimensionOnVehicle(n ="+n+" v ="+v+") : "+((System.nanoTime()-go)/Math.pow(10,9))+" s")
   }
 
   test("GenericCumulativeConstraint"){
@@ -738,27 +737,26 @@ class InvariantTests extends FunSuite with Checkers {
     def start() : Array[Int]= { Array.tabulate(v)((car:Int)=> scala.util.Random.nextInt(limite))}
     val  s = start()
 
-    val inv = GenericCumulativeConstraint(route,n,v,op,limite,s,Array.tabulate(v)((car:Int) =>0))
+    val inv = GenericCumulativeConstraint(route,n,v,op,limite,s)
 
     val go = System.nanoTime()
     bench.run()
-    println("GenericCumulativeConstraint(n =\"+n+\" v =\"+v+\") : "+((System.nanoTime()-go)/Math.pow(10,9)) + "s")
+    println("GenericCumulativeConstraint(n ="+n+" v ="+v+") : "+((System.nanoTime()-go)/Math.pow(10,9)) + "s")
   }
-
-
-
 
   test("GenericCumulativeIntegerDimensionOnVehicleWithVar"){
 
 
     System.err.println("/!\\  GenericCumulativeIntegerDimensionOnVehicleWithVar : FAIL IF Shuffle()"+" so this test is not a high accuracy test ".toUpperCase)
 
-    val bench = new InvBench(verbose,List(PlusOne(), MinusOne(), ToZero(), ToMin(), ToMax(), Random(), RandomDiff()))//, Shuffle()))
+    val bench = new InvBench(verbose,List(PlusOne(), MinusOne(), ToZero(), ToMin(), ToMax(), Random(), RandomDiff(), Shuffle()))
 
     val n = 100
     val v = 5
 
     val route = bench.genRouteOfNodes(n,v)
+    val test = bench.genIntVarsArray(v)
+
     val limite = 10
     def genMatrix(node:Int):Array[Array[Int]] = {
       val init = Int.MinValue
@@ -816,7 +814,7 @@ class InvariantTests extends FunSuite with Checkers {
 
 
 
-    val test = bench.genIntVarsArray(v)
+
     var inv = GenericCumulativeIntegerDimensionOnVehicleWithVar(route,n,v,op,test)
     val go = System.nanoTime()
     bench.run()

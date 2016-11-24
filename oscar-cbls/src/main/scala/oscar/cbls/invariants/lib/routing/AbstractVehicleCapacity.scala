@@ -15,7 +15,7 @@ package oscar.cbls.invariants.lib.routing
   * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
   ******************************************************************************/
 
-import oscar.cbls.algo.boolArray.MagicBoolArray
+import oscar.cbls.algo.magicArray.MagicBoolArray
 import oscar.cbls.algo.rb.RedBlackTreeMap
 import oscar.cbls.algo.seq.functional.{IntSequence, IntSequenceExplorer}
 import oscar.cbls.invariants.core.computation._
@@ -368,15 +368,13 @@ abstract class AbstractVehicleCapacity(routes:ChangingSeqValue, n:Int, v:Int, in
       valueOfPreviousNode = getVehicleContentAtNode(previousPos.value)
       valueOfCurrentNode = op(previousPos.value,current.value,valueOfPreviousNode)// maj  valeur du noeud
     }
-
+    setVehicleContentAtNode(current.value,current.position, valueOfCurrentNode)//maj capa
     if(current.position==endOfCurrentZone ){
       checkIfHaveToVisitNextNode()
       updateZoneToVisit()
     }
-    if(haveToVisitNextNode) setVehicleContentAtNode(current.value,current.position, valueOfCurrentNode)//maj capa
-
     // tant qu'on doit continuer et qu'on depasse pas le vehicule des noeud qu'on veut maj
-    while(haveToVisitNextNode && current.position<upperBound-1 ){
+    while(haveToVisitNextNode && current.position<=upperBound-2 ){
       previousPos=current// maj noeud precedent
       current = current.next.get
       oldValueOfCurrentNode = getVehicleContentAtNode(current.value)
@@ -398,9 +396,10 @@ abstract class AbstractVehicleCapacity(routes:ChangingSeqValue, n:Int, v:Int, in
         if(haveToVisitNextNode) setVehicleContentAtNode(current.value,current.position, valueOfCurrentNode)// maj capa si on doit la changer
         updateZoneToVisit()
       }
+
+
+
     }
-
-
   }
 
 
@@ -416,7 +415,7 @@ abstract class AbstractVehicleCapacity(routes:ChangingSeqValue, n:Int, v:Int, in
 
   override def checkInternals(c: Checker): Unit = {
     val (capaToChekc, stackToChekc) = computeContentAndVehicleStartPositionsFromScratch(routes.newValue)
-    for(node <- 0 until n) c.check(capaToChekc(node) equals getVehicleContentAtNode(node), Some("Founded Capacity at node(" + node + ") at pos : "+ routes.newValue.positionsOfValue(node)+ " :=" + capaToChekc(node) + " should be :=" + getVehicleContentAtNode(node)))
+    for(node <- 0 until n) c.check(capaToChekc(node) equals getVehicleContentAtNode(node), Some("Founded Capacity at node(" + node + ") at pos : "+ routes.newValue.positionsOfValue(node)+ " :=" + getVehicleContentAtNode(node) + " should be :=" + capaToChekc(node)))
     for(car <- 0 until v)c.check(stackToChekc.posOfVehicle(car) equals positionOfVehicle(car ), Some("Founded start of car(" + car + "):=" + positionOfVehicle(car) + " should be :=" + stackToChekc.posOfVehicle(car)+" seq :"+routes.newValue.mkString(",")))
   }
 }

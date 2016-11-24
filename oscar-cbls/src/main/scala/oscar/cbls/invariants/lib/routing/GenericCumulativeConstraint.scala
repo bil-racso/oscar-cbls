@@ -16,18 +16,17 @@
 
 package oscar.cbls.invariants.lib.routing
 
-import oscar.cbls.algo.boolArray.MagicBoolArray
+import oscar.cbls.algo.magicArray.{MagicBoolArray, MagicIntArray}
 import oscar.cbls.algo.quick.QList
 import oscar.cbls.algo.rb.RedBlackTreeMap
 import oscar.cbls.algo.seq.functional.IntSequence
 import oscar.cbls.invariants.core.computation._
-import oscar.cbls.invariants.core.propagation.{Checker}
+import oscar.cbls.invariants.core.propagation.{Checker, ErrorChecker}
 /**
   * Created by  Jannou Brohée on 17/10/16.
   */
 
 object GenericCumulativeConstraint {
-//TODO ScalaDoc
   /**
     *
     * @param routes The sequence representing the route associated at each vehicle
@@ -44,11 +43,10 @@ object GenericCumulativeConstraint {
     * @return
     */
   def apply(routes:ChangingSeqValue,n:Int,v:Int,op :(Int,Int,Int)=>Int,cMax:Int,
-            initValue:Array[Int], initVehiclePosition:Array[Int], initContent: Int=0 , minContent :Int=Int.MinValue, maxContent:Int=Int.MaxValue, maxStack:Int=4):(CBLSIntVar,Array[Int]) ={
+            initValue:Array[Int],  initContent: Int=0 , minContent :Int=Int.MinValue, maxContent:Int=Int.MaxValue, maxStack:Int=4):(CBLSIntVar,Array[Int]) ={
     var violPerV: Array[Int] = Array.tabulate(v)((car: Int) => 0)
     var globalViol:CBLSIntVar=  CBLSIntVar(routes.model,0,Domain.coupleToDomain(minContent,maxContent),"Global Violation of Capacity")
-    //globalViol= new GenericCumulativeConstraint(routes,n,v,op,cMax,initContent ,initValue,globalViol,violPerV).GlobalViolation
-    new GenericCumulativeConstraint(routes,n,v,op,cMax,initContent ,initValue,initVehiclePosition,globalViol,violPerV,maxStack)//.getOutput()
+    new GenericCumulativeConstraint(routes,n,v,op,cMax,initContent ,initValue,globalViol,violPerV,maxStack).getOutput()
     (globalViol,violPerV)
 
   }
@@ -69,20 +67,15 @@ object GenericCumulativeConstraint {
   * @param vehicleViolation
   * @param maxStack
   */
-class GenericCumulativeConstraint(routes:ChangingSeqValue, n:Int, v:Int, op :(Int,Int,Int)=>Int, cMax:Int, initContent: Int ,initValue :Array[Int],initVehiclePosition:Array[Int],
+class GenericCumulativeConstraint(routes:ChangingSeqValue, n:Int, v:Int, op :(Int,Int,Int)=>Int, cMax:Int, initContent: Int ,initValue :Array[Int],
                                   globalViolation: CBLSIntVar, vehicleViolation:Array[Int], maxStack:Int)
   extends AbstractVehicleCapacity(routes,n,v,initContent,initValue  ,op)  with SeqNotificationTarget {
 
-  private var contentAtNode : Array[Int]= Array.tabulate(n)((node:Int)=> initContent)
-  private var stack:VehicleLocation = null
-
-  private var changedNodeSinceCheckpoint:MagicBoolArray= null
-  private var changedVehicleViolationSinceCheckpoint:MagicBoolArray= null
+  private var contentAtNode : MagicIntArray= null
+  private val vehiclesViolation : MagicIntArray= MagicIntArray(v, 0,vehicleViolation)
   private var changedGlobalViolationSinceCheckpoint : Boolean = false
-
   private var changedGlobalViolation:Int=  0
-  private var changedVehicleViolation: Array[Int] = Array.tabulate(v)((car: Int) => 0)
-  private var changedContentAtNode : Array[Int]= Array.tabulate(n)((node:Int)=> initContent)
+  private var stack:VehicleLocation = null
   private var stackAtCheckPoint:VehicleLocation = null
 
   require(initValue.length==v)
@@ -95,23 +88,23 @@ class GenericCumulativeConstraint(routes:ChangingSeqValue, n:Int, v:Int, op :(In
 
   private def getOutput() = {
     globalViolation := GlobalViolation
-    for(car <- 0 until v ) vehicleViolation(car) = getViolationOfVehicle(car)
+    for(car <- 0 until v ) vehicleViolation(car) = vehiclesViolation(car)
   }
 
   private def computeAndAffectContentAndVehicleStartPositionsFromScratch(): Unit ={
     var tmp = computeContentAndVehicleStartPositionsFromScratch(routes.newValue)
     stack = tmp._2
-    contentAtNode = tmp._1.clone()
+    contentAtNode = MagicIntArray(n, initContent,tmp._1.clone())
     var currentCar = 0
     var valueOfCurrentNode = initContent
     var currentNode = routes.newValue.explorerAtPosition(0)
     while(currentNode.nonEmpty){
       if(currentNode.get.value < v ){
         currentCar = currentNode.get.value
-        vehicleViolation(currentCar) = 0
+        vehiclesViolation(currentCar) = 0
       }
       valueOfCurrentNode = contentAtNode(currentNode.get.value)
-      vehicleViolation(currentCar) +=  (if (valueOfCurrentNode > cMax) valueOfCurrentNode-cMax else if (valueOfCurrentNode < 0)  Math.abs(valueOfCurrentNode) else 0)
+      vehiclesViolation(currentCar) = vehiclesViolation(currentCar)+  (if (valueOfCurrentNode > cMax) valueOfCurrentNode-cMax else if (valueOfCurrentNode < 0)  Math.abs(valueOfCurrentNode) else 0)
       currentNode = currentNode.get.next
     }
     globalViolation := vehicleViolation.sum
@@ -129,6 +122,7 @@ class GenericCumulativeConstraint(routes:ChangingSeqValue, n:Int, v:Int, op :(In
           if (lst.nonEmpty) updateContentForSelectedZones(routes.newValue,lst,  positionOfVehicle(car)  ,car)
         }
     }
+    this.checkInternals(ErrorChecker())
   }
 
   /**
@@ -144,11 +138,11 @@ class GenericCumulativeConstraint(routes:ChangingSeqValue, n:Int, v:Int, op :(In
       case r@SeqUpdateRemove(pos : Int, prev : SeqUpdate) => {
         val car = stack.vehicleReachingPosition(pos)
         val toReturn = updateVehicleStartPositionsAndSearchZoneToUpdateAfterLastRemove(digestUpdatesAndUpdateVehicleStartPositionsAndSearchZoneToUpdate(prev),r,changes)
-        val capa = getInternalContentAtNode(r.removedValue)
+        val capa = contentAtNode(r.removedValue)
         val violationToRemove = if(capa>cMax) capa-cMax else if(capa<0) math.abs(capa) else 0
-        recordChangeOfVehicleViolation(car,getViolationOfVehicle(car)-violationToRemove)
+        vehiclesViolation(car) = vehiclesViolation(car)-violationToRemove
         recordChangeOfGlobalViolation(GlobalViolation-violationToRemove)
-        setInternalContentAtNode(r.removedValue, initContent)
+        contentAtNode(r.removedValue) = initContent
         toReturn
       }
       case m@SeqUpdateMove(fromIncluded : Int, toIncluded : Int, after : Int, flip : Boolean, prev : SeqUpdate) => {
@@ -158,11 +152,11 @@ class GenericCumulativeConstraint(routes:ChangingSeqValue, n:Int, v:Int, op :(In
         while(work){
           val newVehicle = RoutingConventionMethods.cachedVehicleReachingPosition(routes.newValue,v)(changes.newValue,m.oldPosToNewPos(node.position).get)
           val oldVehcile = RoutingConventionMethods.cachedVehicleReachingPosition(routes.newValue,v)(prev.newValue,node.position)
-          val capOfNode = getInternalContentAtNode(node.value)
+          val capOfNode = contentAtNode(node.value)
           val violationAtNode = if (capOfNode>cMax) capOfNode-cMax else if (capOfNode<0) Math.abs(capOfNode) else 0
           if( newVehicle != oldVehcile)  {
-            recordChangeOfVehicleViolation(oldVehcile, getViolationOfVehicle(oldVehcile)-violationAtNode)
-            recordChangeOfVehicleViolation(newVehicle,getViolationOfVehicle(newVehicle)+ violationAtNode)
+            vehiclesViolation(oldVehcile)  = vehiclesViolation(oldVehcile)-violationAtNode
+            vehiclesViolation(newVehicle) = vehiclesViolation(newVehicle)+ violationAtNode
           }
           work = node.position<toIncluded
           if(work) node = node.next.get
@@ -185,12 +179,12 @@ class GenericCumulativeConstraint(routes:ChangingSeqValue, n:Int, v:Int, op :(In
   }
 
   override def setVehicleContentAtNode(currentNode: Int,currentPosition:Int, valueOfCurrentNode: Int): Unit = {
-    val oldContentOfNode= getVehicleContentAtNode(currentNode)
-    setInternalContentAtNode(currentNode,valueOfCurrentNode)
+    val oldContentOfNode= contentAtNode(currentNode)
+    contentAtNode(currentNode) =valueOfCurrentNode
     computeViolationOfNode(currentNode,oldContentOfNode ,vehicleReachingPosition(currentPosition) )
   }
 
-  override def getVehicleContentAtNode(nodeId: Int): Int =  getInternalContentAtNode(nodeId)
+  override def getVehicleContentAtNode(nodeId: Int): Int =  contentAtNode(nodeId)
 
   override def positionOfVehicle(vehicle: Int): Int = stack.posOfVehicle(vehicle)
 
@@ -201,52 +195,36 @@ class GenericCumulativeConstraint(routes:ChangingSeqValue, n:Int, v:Int, op :(In
     if(stack.depth>maxStack) stack = stack.regularize()
   }
 
+  override def UpdateVehicleStartPositionsAndSearchZoneToUpdateAfterAssign(value: IntSequence): RedBlackTreeMap[List[(Int, Int)]] = {
+    contentAtNode.drop()
+    super.UpdateVehicleStartPositionsAndSearchZoneToUpdateAfterAssign(value)
+  }
+
   /**
     * Saves the current context (capacity of each node and the global violation)
+    *
     * @param _chk true to save false otherwise
     */
   private def saveCheckPoint(): Unit ={
     globalViolation:=GlobalViolation
     changedGlobalViolationSinceCheckpoint = false
-    if (changedVehicleViolationSinceCheckpoint!= null){
-      val iter =   changedVehicleViolationSinceCheckpoint.indicesAtTrue
-      while(iter.hasNext){
-        val id  = iter.next()
-        recordChangeOfVehicleViolation(id,getViolationOfVehicle(id),false)
-      }
-      changedVehicleViolationSinceCheckpoint.all_=(false)
-    } else changedVehicleViolationSinceCheckpoint = MagicBoolArray(v)
-
-    if (changedNodeSinceCheckpoint!= null) {
-      val iter = changedNodeSinceCheckpoint.indicesAtTrue
-      while (iter.hasNext) {
-        val tmp = iter.next()
-        setInternalContentAtNode(tmp, getInternalContentAtNode(tmp, true), false)
-      }
-      changedNodeSinceCheckpoint.all_=(false)
-    } else changedNodeSinceCheckpoint = MagicBoolArray(n)
-
+    contentAtNode.save()
+    vehiclesViolation.save()
     stackAtCheckPoint= stack.regularize()
   }
 
-  /**
-    * Returns the violation degree of the given vehicle
-    * @param vehicle the vehicle to consider
-    * @param save only for checkInternals
-    * @return the current violation of the vehicle
-    */
-  private def getViolationOfVehicle(vehicle:Int, saved:Boolean =changedVehicleViolationSinceCheckpoint!=null): Int ={
-    if(saved && changedVehicleViolationSinceCheckpoint(vehicle)) changedVehicleViolation(vehicle) else vehicleViolation(vehicle)
-  }
+
 
   /**
     * Recovers the saved context
     */
   private def recovery(): Unit ={
-    changedNodeSinceCheckpoint=null
-    changedVehicleViolationSinceCheckpoint=null
     changedGlobalViolationSinceCheckpoint = false
+    vehiclesViolation.reload()
+    contentAtNode.reload()
     stack = stackAtCheckPoint
+    for(car <- 0 until v ) require(vehiclesViolation(car) ==  vehiclesViolation(car,false))
+    for(no <- 0 until n ) require(contentAtNode(no) ==  contentAtNode(no,false))
   }
 
   /**
@@ -261,44 +239,14 @@ class GenericCumulativeConstraint(routes:ChangingSeqValue, n:Int, v:Int, op :(In
     * @param save true if checkpoint false otherwise
     */
   private def recordChangeOfGlobalViolation(value:Int) {
-    if(changedNodeSinceCheckpoint != null) {
+    if(contentAtNode.saveChanges()) {
       changedGlobalViolationSinceCheckpoint= true
       changedGlobalViolation = value
     } else  globalViolation.:=(value)
   }
 
-  /**
-    * Records the last violation degree of the given vehicle
-    * @param vehicle the vehicle to consider
-    * @param value the new value of violation
-    * @param save (optional) true if checkpoint, false otherwise
-    */
-  private def recordChangeOfVehicleViolation(vehicle:Int, value:Int, save:Boolean=changedNodeSinceCheckpoint != null) {
-    if(save) {
-      changedVehicleViolationSinceCheckpoint(vehicle)=true
-      changedVehicleViolation(vehicle) = value
-    } else  vehicleViolation(vehicle) = value
-  }
 
-  /**
-    * Returns the capacity associated with a node.
-    * @param nodeId the id of the node
-    * @param save true for value at checkpoint false otherwise
-    * @return the capacity of the node
-    */
-  private def getInternalContentAtNode(nodeId: Int, save:Boolean = changedNodeSinceCheckpoint!= null ): Int = if(save &&changedNodeSinceCheckpoint(nodeId) ) changedContentAtNode(nodeId) else contentAtNode(nodeId)
 
-  /**
-    * Overridden the old capacity of a node by the new value.
-    * @param currentNode the id of the node
-    * @param valueOfCurrentNode the new capacity associated with the node
-    * @param save false to override the current capacity, true to save the current capacity
-    */
-  private def setInternalContentAtNode(currentNode: Int, valueOfCurrentNode: Int, save:Boolean = changedNodeSinceCheckpoint!= null): Unit =
-  if (save) {
-    changedNodeSinceCheckpoint.update(currentNode,true)
-    changedContentAtNode(currentNode) =valueOfCurrentNode
-  }  else contentAtNode(currentNode) =valueOfCurrentNode
 
   /**
     * Compute the Global degree of violation after a update of the capacity of a node
@@ -306,22 +254,20 @@ class GenericCumulativeConstraint(routes:ChangingSeqValue, n:Int, v:Int, op :(In
     * @param oldValueOfCurrentNode the old capacity of the node
     */
   private def computeViolationOfNode(currentNode: Int, oldValueOfCurrentNode:Int, vehicle:Int ): Unit = {
-    val currentCapacityOfNode = getInternalContentAtNode(currentNode)
+    val currentCapacityOfNode = contentAtNode(currentNode)
     // old violation
     val oldViolationOfNode = if (oldValueOfCurrentNode > cMax)  oldValueOfCurrentNode - cMax
     else if (oldValueOfCurrentNode < 0)  Math.abs(oldValueOfCurrentNode) else 0
     // nw viol
     val currentViolation = if (currentCapacityOfNode > cMax) currentCapacityOfNode-  cMax  else if (currentCapacityOfNode < 0)  Math.abs(currentCapacityOfNode) else 0
-    var oldViolation = getViolationOfVehicle(vehicle)
-    recordChangeOfVehicleViolation(vehicle, oldViolation+ (currentViolation-oldViolationOfNode))
-    recordChangeOfGlobalViolation(GlobalViolation+(getViolationOfVehicle(vehicle)-oldViolation))
+    var oldViolation = vehiclesViolation(vehicle)
+    vehiclesViolation(vehicle) = oldViolation+ currentViolation-oldViolationOfNode
+    recordChangeOfGlobalViolation(GlobalViolation+(vehiclesViolation(vehicle)-oldViolation))
   }
 
   override def checkInternals(c: Checker): Unit = {
     val tmp = computeContentAndVehicleStartPositionsFromScratch(routes.newValue)
-
-    for(node <- 0 until n) c.check(tmp._1(node) equals getVehicleContentAtNode(node), Some("GenericCumulativeConstraint : Founded Capacity at node(" + node + ") at pos : "+ routes.newValue.positionsOfValue(node)+ " :=" + tmp._1(node) + " should be :=" + getVehicleContentAtNode(node)))
-
+    for(node <- routes.newValue) c.check(tmp._1(node) equals getVehicleContentAtNode(node), Some("GenericCumulativeConstraint : Founded Capacity at node(" + node + ") at pos : "+ routes.newValue.positionsOfValue(node)+ " :=" + getVehicleContentAtNode(node) + " should be :=" + tmp._1(node)))
     var currentCar = 0
     var valueOfCurrentNode = initContent
     var currentNode = routes.newValue.explorerAtPosition(0)
@@ -335,7 +281,7 @@ class GenericCumulativeConstraint(routes:ChangingSeqValue, n:Int, v:Int, op :(In
     }
     for(car <- 0 until v){
       c.check(tmp._2.posOfVehicle(car) equals positionOfVehicle(car ), Some("GenericCumulativeConstraint : Founded start of car(" + car + "):=" + positionOfVehicle(car) + " should be :=" + tmp._2.posOfVehicle(car)+" seq :"+routes.newValue.mkString(",")))
-      c.check(getViolationOfVehicle(car) equals tmpViolPerV(car), Some("GenericCumulativeConstraint : Founded violation of vehicle("+car+") :="+getViolationOfVehicle(car)+" should be :="+tmpViolPerV(car)))
+      c.check(vehiclesViolation(car) equals tmpViolPerV(car), Some("GenericCumulativeConstraint : Founded violation of vehicle("+car+") :="+vehiclesViolation(car)+" should be :="+tmpViolPerV(car)))
     }
     c.check(GlobalViolation equals globalViolation, Some("GenericCumulativeConstraint : Founded Violation :="+GlobalViolation+" should be :="+globalViolation))
   }
