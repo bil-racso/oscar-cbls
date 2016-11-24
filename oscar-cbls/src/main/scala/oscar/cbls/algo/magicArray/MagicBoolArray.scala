@@ -1,4 +1,4 @@
-package oscar.cbls.algo.boolArray
+package oscar.cbls.algo.magicArray
 
 import oscar.cbls.algo.quick.QList
 import scala.language.postfixOps

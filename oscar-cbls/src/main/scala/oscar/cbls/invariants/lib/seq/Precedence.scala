@@ -15,7 +15,7 @@ package oscar.cbls.invariants.lib.seq
   * If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
   ******************************************************************************/
 
-import oscar.cbls.algo.boolArray.MagicBoolArray
+import oscar.cbls.algo.magicArray.MagicBoolArray
 import oscar.cbls.algo.quick.QList
 import oscar.cbls.algo.seq.functional.IntSequence
 import oscar.cbls.invariants.core.computation._

@@ -201,9 +201,41 @@ class SeqUpdateMove(val fromIncluded:Int,val toIncluded:Int,val after:Int, val f
   }
 
   override def oldPosToNewPos(oldPos : Int) : Option[Int] = {
-    ensureBijection()
-    Some(localBijection.backward(oldPos))
+    if(isNop) Some(oldPos)
+    else if(isSimpleFlip){
+      if(oldPos < fromIncluded || oldPos > toIncluded) Some(oldPos)
+      else Some(fromIncluded + toIncluded - oldPos)
+    }else if(moveUpwards){
+      //println("move upwards")
+      if(oldPos < fromIncluded || oldPos > after) Some(oldPos)
+      else if(oldPos <= toIncluded){
+        //println("in the moved segment")
+        if(flip){
+          Some(fromIncluded - oldPos + after - 1)
+        }else{
+          Some(oldPos + after - toIncluded)
+        }
+      }else{
+        //println("not in the moved segment")
+        Some(oldPos - toIncluded + fromIncluded - 1)
+      }
+    }else{
+      //println("move downwards")
+      if(oldPos <= after || oldPos > toIncluded) Some(oldPos)
+      else if(oldPos < fromIncluded){
+        //println("not in the moved segment")
+        Some(oldPos + toIncluded - fromIncluded + 1)
+      }else{
+        //println("in the moved segment")
+        if(flip){
+          Some(fromIncluded - oldPos + after - 1)
+        }else{
+          Some(oldPos + after - fromIncluded + 1)
+        }
+      }
+    }
   }
+
   override def newPos2OldPos(newPos : Int) : Option[Int] = {
     ensureBijection()
     Some(localBijection.forward(newPos))
@@ -794,7 +826,7 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], val maxValue: Int, 
 
   protected def rollbackToTopCheckpoint(checkpoint : IntSequence){
 
-   // println("ChangingSeqValue got rollback to top checkpoint my level:" + levelOfTopCheckpoint)
+    // println("ChangingSeqValue got rollback to top checkpoint my level:" + levelOfTopCheckpoint)
     require(checkpoint quickEquals topCheckpoint,
       "given checkpoint not quickequal to my top checkpoint; equal=" +
         (checkpoint equals topCheckpoint) + " checkpoint:" + checkpoint + " my topCheckpoint:" + topCheckpoint)
@@ -873,7 +905,7 @@ abstract class ChangingSeqValue(initialValue: Iterable[Int], val maxValue: Int, 
     require(topCheckpoint != null)
     require(levelOfTopCheckpoint >= 0)
 
-  //  println("changing seq got release top checkpoint current level is: " + levelOfTopCheckpoint)
+    //  println("changing seq got release top checkpoint current level is: " + levelOfTopCheckpoint)
 
     //the checkpoint might not have been communicated yet, so we look for newValue, since we are at the checkpoint.
     val checkPointWipedOut =
@@ -1148,7 +1180,7 @@ class IdentitySeq(fromValue:ChangingSeqValue, toValue:CBLSSeqVar)
         toValue.rollbackToTopCheckpoint(value)
       case SeqUpdateDefineCheckpoint(prev:SeqUpdate,activeCheckpoint:Boolean,level:Int) =>
         digestChanges(prev)
-       // println("IdentitySeq got define checkpoint level=" + level + " my level=" + levelTopCheckpoint)
+        // println("IdentitySeq got define checkpoint level=" + level + " my level=" + levelTopCheckpoint)
         while(level <= levelTopCheckpoint){
           toValue.releaseTopCheckpoint()
           popTopCheckpoint()
