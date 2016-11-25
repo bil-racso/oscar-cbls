@@ -1,4 +1,6 @@
-package oscar.cbls.algo.boolArray
+package oscar.cbls.algo.magicArray
+
+import oscar.cbls.algo.quick.QList
 
 /*******************************************************************************
   * OscaR is free software: you can redistribute it and/or modify
@@ -86,19 +88,21 @@ class MagicBoolArray(val length:Int){
     }
   }
 
+  def all:Boolean = ???
+
   /**
     * Creates a new iterator over the indexes of elements which value is true.
     * this is a O(this.length) method
     * @return the new iterator
     */
   def indicesAtTrue:Iterator[Int] ={
-    val ret=Array.newBuilder[Int]
-    for(n <-0 until length-1){
+    var toReturn:QList[Int]=null
+    for(n <-0 until length){
       if(internalArray(n)>=global){
-        ret.+=(n)
+        toReturn = QList(n,toReturn)
       }
     }
-    ret.result().iterator
+    toReturn.toIterator
   }
 
   override def toString: String = "["+indicesAtTrue.mkString(",")+"]"
