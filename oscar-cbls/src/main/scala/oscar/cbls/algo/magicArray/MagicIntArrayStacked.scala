@@ -1,9 +1,9 @@
 package oscar.cbls.algo.magicArray
 
-class MagicIntArrayStacked(maxLevel:Int, initVal:(Int => Int), size:Int) extends Iterable{
+class MagicIntArrayStacked(maxLevel:Int, initVal:(Int => Int), size:Int) extends Iterable[Int]{
 
   private[this] val levelToArray:Array[Array[Int]] = Array.tabulate(maxLevel+1)(level => if(level == 0) Array.tabulate(size)(initVal) else Array.fill(size)(0))
-  private[this] val levelToIsValueChangedAtNextLevel:Array[MagicBoolArray] = Array.tabulate(maxLevel)(level => MagicBoolArray(size,false))
+  private[this] val levelToIsValueChangedAtNextLevel:Array[IterableMagicBoolArray] = Array.tabulate(maxLevel)(level => new IterableMagicBoolArray(size,false))
   private[this] var currentLevel:Int = 0
 
   def update(indice:Int,value:Int){
@@ -36,7 +36,7 @@ class MagicIntArrayStacked(maxLevel:Int, initVal:(Int => Int), size:Int) extends
       currentLevel -= 1
     }else{
       val newLevel = currentLevel - 1
-      for(changedID <- levelToIsValueChangedAtNextLevel(currentLevel)){
+      for(changedID <- levelToIsValueChangedAtNextLevel(currentLevel).indicesAtTrue){
         levelToArray(newLevel)(changedID) = levelToArray(currentLevel)(changedID)
       }
       currentLevel = newLevel

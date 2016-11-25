@@ -1,4 +1,4 @@
-package oscar.cbls.invariants.lib.routing
+package oscar.cbls.invariants.lib.routing.convention
 
 /*******************************************************************************
   * OscaR is free software: you can redistribute it and/or modify
@@ -16,10 +16,9 @@ package oscar.cbls.invariants.lib.routing
   ******************************************************************************/
 
 import oscar.cbls.algo.rb.RedBlackTreeMap
-import oscar.cbls.algo.seq.functional.{Token, IntSequence}
-
+import oscar.cbls.algo.seq.functional.{IntSequence, Token}
+@deprecated("use the VehicleLocation method isntead","we use stacked chackpoints")
 object RoutingConventionMethods {
-
 
   def cachedVehicleReachingPosition(checkpoint:IntSequence,v:Int):((IntSequence,Int) => Int) = {
 
@@ -109,7 +108,7 @@ object RoutingConventionMethods {
 }
 
 
-
+@deprecated("use the VehicleLocation method isntead","we use stacked chackpoints")
 class CachedPositionOf(maxValue:Int){
 
   private var tokenOfCurrentCheckpoint:Token = null

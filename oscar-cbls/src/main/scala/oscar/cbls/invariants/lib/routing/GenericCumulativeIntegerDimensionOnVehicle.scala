@@ -18,6 +18,7 @@ package oscar.cbls.invariants.lib.routing
 import oscar.cbls.algo.rb.RedBlackTreeMap
 import oscar.cbls.algo.seq.functional.IntSequence
 import oscar.cbls.invariants.core.computation._
+import oscar.cbls.invariants.lib.routing.convention.{ConcreteVehicleLocation, VehicleLocation}
 
 /**
   * Created by  Jannou Brohée on 3/10/16.
@@ -55,7 +56,6 @@ object GenericCumulativeIntegerDimensionOnVehicle {
   * @param output The array which store, for any node, the capacity of the vehicle associated at the node
   * @param maxStack
   */
-
 class GenericCumulativeIntegerDimensionOnVehicle(routes:ChangingSeqValue, n:Int, v:Int, op :(Int,Int,Int)=>Int, initValue :Array[Int], output:Array[CBLSIntVar],maxStack:Int)
   extends AbstractVehicleCapacity(routes,n,v,-1,initValue  ,op) with SeqNotificationTarget{
 
@@ -76,7 +76,7 @@ class GenericCumulativeIntegerDimensionOnVehicle(routes:ChangingSeqValue, n:Int,
       case tree =>
         for(car <- tree.keys)  {
           val lst = zoneToCompute.get(car).get
-          if (lst.nonEmpty) updateContentForSelectedZones(routes.newValue,lst,  positionOfVehicle(car)  ,car)
+          if (lst.nonEmpty) updateVehicleContent(routes.newValue,lst,  positionOfVehicle(car)  ,car)
         }
     }
   }
@@ -114,7 +114,7 @@ class GenericCumulativeIntegerDimensionOnVehicle(routes:ChangingSeqValue, n:Int,
 
   override def getVehicleContentAtNode(nodeId: Int): Int =   contentAtNode(nodeId)
 
-  override def positionOfVehicle(vehicle: Int): Int = stack.posOfVehicle(vehicle)
+  override def positionOfVehicle(vehicle: Int): Int = stack.startPosOfVehicle(vehicle)
 
   override def vehicleReachingPosition(position: Int): Int = stack.vehicleReachingPosition(position)
 

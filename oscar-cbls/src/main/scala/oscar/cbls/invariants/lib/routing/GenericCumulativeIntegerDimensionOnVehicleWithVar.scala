@@ -99,7 +99,7 @@ class GenericCumulativeIntegerDimensionOnVehicleWithVar(routes:ChangingSeqValue,
       case tree =>
         for(car <- tree.keys)  {
           val lst = todo.get(car).get
-          if (lst.nonEmpty) updateContentForSelectedZones(routes.newValue,lst,  positionOfVehicle(car)  ,car)
+          if (lst.nonEmpty) updateVehicleContent(routes.newValue,lst,  positionOfVehicle(car)  ,car)
         }
     }
     todo= RedBlackTreeMap.empty[List[(Int,Int)]]

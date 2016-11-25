@@ -1,6 +1,7 @@
 package oscar.cbls.algo.magicArray
 
 import oscar.cbls.algo.quick.QList
+
 import scala.language.postfixOps
 
 /*******************************************************************************
@@ -31,73 +32,6 @@ object MagicBoolArray {
   }
 }
 
-class MagicBoolArrayWithFastIteratorOnTrueOverApproximated(override val length:Int,initVal:Boolean = false)
-  extends MagicBoolArray(length,initVal){
-
-  private var positionsAtTrueOverApproximated:QList[Int] = null
-  private val isPositionInOverApproximationQList:MagicBoolArray = MagicBoolArray(length,false)
-  private var overApproximationIsComplete:Boolean = initVal
-
-  private var anyIndividualSetToFalse:Boolean = false
-
-  private var nbTrue:Int = if(initVal) length else 0
-
-  val nbIndicesAtTrue:Int = nbTrue
-
-  /**
-   * Sets the value of each element to "value"
-   * @note complexity is O(1)
-   */
-  override def all_= (value : Boolean) : Unit = {
-    super.all_=(value)
-    if(value){
-      positionsAtTrueOverApproximated = null
-      isPositionInOverApproximationQList.all_=(false)
-      overApproximationIsComplete = true
-    }else{
-      positionsAtTrueOverApproximated = null
-      isPositionInOverApproximationQList.all_=(false)
-      overApproximationIsComplete = false
-    }
-    nbTrue= if(value) length else 0
-  }
-
-  override def update(id : Int, value : Boolean):Boolean = {
-    val oldValue = super.update(id, value)
-    if(value){
-      if(!oldValue){
-        if (!overApproximationIsComplete) {
-          if (!isPositionInOverApproximationQList.update(id,true)) {
-            positionsAtTrueOverApproximated = QList(id, positionsAtTrueOverApproximated)
-          }
-        }
-        nbTrue += 1
-      }
-    }else{
-      if(oldValue){
-        anyIndividualSetToFalse = true
-        nbTrue -= 1
-      }
-    }
-    oldValue
-  }
-
-  override def indicesAtTrue : Iterator[Int] = {
-    if(overApproximationIsComplete){
-      if(anyIndividualSetToFalse){
-        super.indicesAtTrue
-      }else{
-        indices.toIterator
-      }
-    }else{
-      if(anyIndividualSetToFalse){
-        positionsAtTrueOverApproximated.filter(this(_)).toIterator
-      }else{
-        positionsAtTrueOverApproximated.toIterator
-      }
-    }
-  }
-}
 
 /**
  * This represents an array of boolean with O(1) setAll and O(1) clearAll

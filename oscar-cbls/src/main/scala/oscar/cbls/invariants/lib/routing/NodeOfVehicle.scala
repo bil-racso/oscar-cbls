@@ -19,6 +19,7 @@ import oscar.cbls.algo.quick.QList
 import oscar.cbls.algo.seq.functional.IntSequence
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.core.propagation.Checker
+import oscar.cbls.invariants.lib.routing.convention.RoutingConventionMethods
 
 import scala.collection.immutable.SortedSet
 

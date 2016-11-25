@@ -19,6 +19,7 @@ import oscar.cbls.algo.seq.functional.IntSequence
 import oscar.cbls.invariants.core.computation._
 import oscar.cbls.invariants.lib.numeric.Sum
 import oscar.cbls.invariants.lib.routing._
+import oscar.cbls.invariants.lib.routing.convention.RoutingConventionMethods
 import oscar.cbls.invariants.lib.seq.{Content, Size}
 import oscar.cbls.invariants.lib.set.Diff
 import oscar.cbls.modeling.Algebra._
